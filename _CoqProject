@@ -1,0 +1,4 @@
+-Q theories NTS.Proofs
+
+theories/Distance.v
+theories/Orientation.v
