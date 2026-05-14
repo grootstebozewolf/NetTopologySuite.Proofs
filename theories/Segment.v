@@ -118,6 +118,45 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* The "on infinite line" relation is symmetric in the line's endpoints.      *)
+(* (Falls out of cross_swap_first_two: swapping flips the sign, but a sign-   *)
+(* flipped zero is still zero.)                                               *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma on_line_symmetric : forall P0 P1 Q,
+  on_line P0 P1 Q <-> on_line P1 P0 Q.
+Proof.
+  intros P0 P1 Q. unfold on_line.
+  rewrite (cross_swap_first_two P0 P1 Q).
+  split; intros H.
+  - apply Ropp_eq_compat in H. rewrite Ropp_involutive, Ropp_0 in H. exact H.
+  - rewrite H. apply Ropp_0.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* A point on a closed segment has each coordinate within the closed range    *)
+(* spanned by the corresponding coordinates of the endpoints.  This is the    *)
+(* algebraic basis for envelope/bounding-box rejection tests in NTS.          *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma between_in_coord_range : forall P0 P1 Q,
+  between P0 P1 Q ->
+  Rmin (px P0) (px P1) <= px Q <= Rmax (px P0) (px P1) /\
+  Rmin (py P0) (py P1) <= py Q <= Rmax (py P0) (py P1).
+Proof.
+  intros P0 P1 Q [t [Ht0 [Ht1 [HXx HXy]]]].
+  split; split.
+  - rewrite HXx. pose proof (Rmin_l (px P0) (px P1)).
+    pose proof (Rmin_r (px P0) (px P1)). nra.
+  - rewrite HXx. pose proof (Rmax_l (px P0) (px P1)).
+    pose proof (Rmax_r (px P0) (px P1)). nra.
+  - rewrite HXy. pose proof (Rmin_l (py P0) (py P1)).
+    pose proof (Rmin_r (py P0) (py P1)). nra.
+  - rewrite HXy. pose proof (Rmax_l (py P0) (py P1)).
+    pose proof (Rmax_r (py P0) (py P1)). nra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above are pure ring + linear arithmetic       *)
 (* over real numbers; no axiom is introduced beyond the standard library's    *)
 (* classical real arithmetic.                                                 *)

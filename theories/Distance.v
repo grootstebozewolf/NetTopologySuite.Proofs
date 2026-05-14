@@ -118,6 +118,41 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Distance (with sqrt) properties.                                           *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma dist_nonneg : forall p q, 0 <= dist p q.
+Proof.
+  intros p q. unfold dist. apply sqrt_pos.
+Qed.
+
+Lemma dist_refl : forall p, dist p p = 0.
+Proof.
+  intros p. unfold dist.
+  replace (dist_sq p p) with 0.
+  - apply sqrt_0.
+  - unfold dist_sq. ring.
+Qed.
+
+Lemma dist_sym : forall p q, dist p q = dist q p.
+Proof.
+  intros p q. unfold dist. rewrite (dist_sq_sym p q). reflexivity.
+Qed.
+
+Theorem dist_eq_zero_iff : forall p q,
+  dist p q = 0 <-> (px p = px q /\ py p = py q).
+Proof.
+  intros p q. unfold dist. split.
+  - intros H.
+    apply sqrt_eq_0 in H; [| apply dist_sq_nonneg].
+    apply dist_sq_zero_iff_eq. exact H.
+  - intros Hxy.
+    replace (dist_sq p q) with 0.
+    + apply sqrt_0.
+    + symmetry. apply dist_sq_zero_iff_eq. exact Hxy.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above rely only on the constructions of the   *)
 (* standard library's classical real arithmetic.  Run with `make` or          *)
 (* `rocq compile theories/Distance.v` and inspect the `Print Assumptions`     *)

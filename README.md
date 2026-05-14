@@ -46,23 +46,30 @@ kernel-checked proof. Not "yes, the tests pass."
 
 ### `theories/Distance.v` — Euclidean distance
 
+- `sqr_nonneg`, `sqr_eq_zero` — companion identities used throughout.
 - `dist_sq_nonneg` — squared distance is non-negative.
-- `dist_sq_sym` — distance is symmetric.
-- `dist_sq_zero_iff_eq` — two points are at distance zero exactly when their
-  coordinates are equal.
+- `dist_sq_sym` — squared distance is symmetric.
+- `dist_sq_zero_iff_eq` — two points are at squared distance zero exactly
+  when their coordinates are equal.
 - `sq_monotone_nonneg` — on the non-negative reals, squaring is monotone.
 - **`dist_le_iff_dist_sq_le`** — for any non-negative threshold *t*,
-  `dist(p, q) ≤ t` iff `dist_sq(p, q) ≤ t²`. This is the formal
-  justification for the optimisation tracked in
+  `dist(p, q) ≤ t` iff `dist_sq(p, q) ≤ t²`. The formal justification
+  for the optimisation tracked in
   [locationtech/jts#1111](https://github.com/locationtech/jts/pull/1111) and
   the gap noted for `LineStringSnapper` in the JTS 1.21 alignment audit on
   [NetTopologySuite#828](https://github.com/NetTopologySuite/NetTopologySuite/issues/828).
+- `dist_nonneg`, `dist_refl`, `dist_sym` — distance (with `sqrt`) is
+  non-negative, reflexive, symmetric.
+- `dist_eq_zero_iff` — `dist(p, q) = 0` iff `p = q` coordinate-wise.
 
 ### `theories/Orientation.v` — orientation predicate
 
 - `cross_antisymmetric` — swapping the second and third arguments of the
   cross product flips the sign. (Justifies "directed orientation" being
   a coherent concept.)
+- `cross_swap_first_two` — swapping the first two arguments also flips
+  the sign. Together with `cross_antisymmetric`, generates the full S₃
+  sign action on the three arguments.
 - `cross_collinear_sym` — collinearity is preserved under argument swap.
 - `cross_at_P0_is_collinear` / `cross_at_P1_is_collinear` — degenerate
   triangles have zero signed area.
@@ -92,6 +99,11 @@ correspondence.
 - `off_line_not_between` — contrapositive: a point with non-zero cross
   product against the segment line cannot lie on the segment. The form
   used by intersection-rejection fast paths.
+- `on_line_symmetric` — the on-line relation does not depend on which
+  endpoint of the segment is listed first.
+- `between_in_coord_range` — a point on a segment has each coordinate
+  within the closed range spanned by the corresponding coordinates of
+  the endpoints. The algebraic basis for envelope/bbox rejection.
 
 ### `theories/Intersect.v` — segment intersection (soundness direction)
 
@@ -115,6 +127,45 @@ This is the soundness direction: every intersection-rejection decision
 based on the cross-product sign test is justified, because a rejected
 pair cannot have a common point. The converse (sign conditions imply a
 shared point exists) is the next roadmap item.
+
+### `theories/Vec.v` — 2D vector algebra
+
+NTS uses 2D vectors implicitly throughout — direction vectors for
+segments, normals for buffer offsets, basis transformations in affine
+maps. This module spells out the algebraic laws so downstream theorems
+can cite them rather than rebuild the ring reasoning.
+
+- `Vec` record + zero / addition / negation / subtraction / scalar
+  multiplication / dot product / squared magnitude.
+- `Vec_eq` — extensionality principle: equal components ⇒ equal vectors.
+- `vadd_comm`, `vadd_assoc`, `vadd_zero_l`, `vadd_zero_r`,
+  `vadd_neg_r` — the abelian-group laws of vector addition.
+- `vscale_distrib_add`, `vscale_assoc` — scalar multiplication laws.
+- `vdot_comm`, `vdot_distrib_l` — dot product is symmetric and
+  bilinear.
+- **`vmag_sq_nonneg`** — squared magnitude is non-negative. The
+  algebraic kernel of every "buffer thickness is non-negative" style
+  reasoning downstream.
+
+### `theories/Bbox.v` — axis-aligned bounding boxes
+
+Every `LineIntersector` in NTS short-circuits on bounding-box
+disjointness before doing any cross-product arithmetic. This module
+verifies that short-circuit is sound.
+
+- `Bbox` record + `in_bbox` predicate + `bbox_of_seg` construction +
+  `bbox_disjoint` predicate.
+- `bbox_of_seg_contains_sp0`, `bbox_of_seg_contains_sp1` — a segment's
+  bounding box contains both endpoints.
+- `bbox_of_seg_contains_between` — generalisation: the bbox contains
+  every point on the segment.
+- `bbox_disjoint_sym` — disjointness is symmetric.
+- `shared_point_implies_not_disjoint` — if a point lies in both
+  bounding boxes, they cannot be disjoint.
+- **`disjoint_bboxes_imply_no_shared_point`** — the headline theorem.
+  If two segments have disjoint bounding boxes, they share no point.
+  The formal justification for envelope-based rejection in
+  `LineIntersector` and friends.
 
 ## Roadmap
 
@@ -154,9 +205,11 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
   bridge.
 - **2026-05-14**: added `Intersect.v`, proving the forward (soundness)
   direction of the cross-product segment intersection test — every
-  rejection by the sign-product check is justified. The completeness
-  direction (constructing the intersection point from sign conditions)
-  is now the top roadmap item.
+  rejection by the sign-product check is justified.
+- **2026-05-14**: doubled the catalogue: extended `Distance.v` /
+  `Orientation.v` / `Segment.v`, added `Vec.v` (2D vector algebra) and
+  `Bbox.v` (axis-aligned bounding boxes + envelope-rejection
+  soundness). Total: **45 kernel-checked theorems** across 6 modules.
 
 ## What this is NOT
 

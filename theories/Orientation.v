@@ -97,6 +97,18 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Swapping the first two arguments also flips the sign.  Distinct from       *)
+(* `cross_antisymmetric` (which swaps the last two): together they generate   *)
+(* the full sign action of the symmetric group S_3 on the three arguments.    *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem cross_swap_first_two : forall P0 P1 Q,
+  cross P0 P1 Q = - cross P1 P0 Q.
+Proof.
+  intros P0 P1 Q. unfold cross. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. All theorems in this file are purely algebraic and       *)
 (* depend on `ring`-equivalent reasoning over the real field. No classical    *)
 (* axioms (excluded middle, irrelevance, choice) are introduced.              *)
