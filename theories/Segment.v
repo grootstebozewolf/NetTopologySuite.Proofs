@@ -221,6 +221,71 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Midpoint properties.                                                        *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma midpoint_symmetric : forall P Q, midpoint P Q = midpoint Q P.
+Proof. intros. unfold midpoint. simpl. f_equal; field. Qed.
+
+Lemma midpoint_self : forall P, midpoint P P = P.
+Proof. intros [a b]. unfold midpoint. simpl. f_equal; field. Qed.
+
+Lemma midpoint_x : forall P Q, px (midpoint P Q) = (px P + px Q) / 2.
+Proof. intros. reflexivity. Qed.
+
+Lemma midpoint_y : forall P Q, py (midpoint P Q) = (py P + py Q) / 2.
+Proof. intros. reflexivity. Qed.
+
+Lemma midpoint_collinear : forall P Q,
+  cross P Q (midpoint P Q) = 0.
+Proof. intros. unfold cross, midpoint. simpl. field. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Coordinate-range corollaries.                                              *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma between_px_le_max : forall P0 P1 Q,
+  between P0 P1 Q -> px Q <= Rmax (px P0) (px P1).
+Proof.
+  intros. apply (between_in_coord_range P0 P1 Q) in H. tauto.
+Qed.
+
+Lemma between_px_ge_min : forall P0 P1 Q,
+  between P0 P1 Q -> Rmin (px P0) (px P1) <= px Q.
+Proof.
+  intros. apply (between_in_coord_range P0 P1 Q) in H. tauto.
+Qed.
+
+Lemma between_py_le_max : forall P0 P1 Q,
+  between P0 P1 Q -> py Q <= Rmax (py P0) (py P1).
+Proof.
+  intros. apply (between_in_coord_range P0 P1 Q) in H. tauto.
+Qed.
+
+Lemma between_py_ge_min : forall P0 P1 Q,
+  between P0 P1 Q -> Rmin (py P0) (py P1) <= py Q.
+Proof.
+  intros. apply (between_in_coord_range P0 P1 Q) in H. tauto.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* on_line properties (algebraic).                                            *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma on_line_swap_args : forall P0 P1 Q,
+  on_line P0 P1 Q -> on_line P1 P0 Q.
+Proof. intros. apply on_line_symmetric. exact H. Qed.
+
+Lemma on_line_at_P0 : forall P0 P1, on_line P0 P1 P0.
+Proof. intros. unfold on_line. apply cross_at_P0_is_collinear. Qed.
+
+Lemma on_line_at_P1 : forall P0 P1, on_line P0 P1 P1.
+Proof. intros. unfold on_line. apply cross_at_P1_is_collinear. Qed.
+
+Lemma on_line_degenerate : forall P Q, on_line P P Q.
+Proof. intros. unfold on_line. apply cross_degenerate_base. Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above are pure ring + linear arithmetic       *)
 (* over real numbers; no axiom is introduced beyond the standard library's    *)
 (* classical real arithmetic.                                                 *)

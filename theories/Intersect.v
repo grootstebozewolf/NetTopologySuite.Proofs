@@ -157,6 +157,46 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Reformulation lemmas.                                                       *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma shared_point_implies_AB_opposite_sides : forall A B C D X,
+  between A B X -> between C D X ->
+  cross A B C * cross A B D <= 0.
+Proof.
+  intros. apply (segments_share_point_implies_opposite_sides A B C D X);
+                assumption.
+Qed.
+
+Lemma shared_point_implies_CD_opposite_sides : forall A B C D X,
+  between A B X -> between C D X ->
+  cross C D A * cross C D B <= 0.
+Proof.
+  intros. apply (segments_share_point_implies_opposite_sides A B C D X);
+                assumption.
+Qed.
+
+Lemma cross_AB_positive_implies_no_shared : forall A B C D,
+  cross A B C * cross A B D > 0 ->
+  ~ exists X, between A B X /\ between C D X.
+Proof.
+  intros A B C D H. apply same_side_rejection_is_sound. left. exact H.
+Qed.
+
+Lemma cross_CD_positive_implies_no_shared : forall A B C D,
+  cross C D A * cross C D B > 0 ->
+  ~ exists X, between A B X /\ between C D X.
+Proof.
+  intros A B C D H. apply same_side_rejection_is_sound. right. exact H.
+Qed.
+
+Lemma trivial_self_intersection : forall A B,
+  exists X, between A B X /\ between A B X.
+Proof.
+  intros A B. exists A. split; apply between_P0.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 

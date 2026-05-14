@@ -125,6 +125,128 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Side-length-squared definitions and basic properties.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Definition side_AB_sq (t : Triangle) : R := dist_sq (tA t) (tB t).
+Definition side_BC_sq (t : Triangle) : R := dist_sq (tB t) (tC t).
+Definition side_CA_sq (t : Triangle) : R := dist_sq (tC t) (tA t).
+
+Lemma side_AB_sq_nonneg : forall t, 0 <= side_AB_sq t.
+Proof. intros. unfold side_AB_sq. apply dist_sq_nonneg. Qed.
+
+Lemma side_BC_sq_nonneg : forall t, 0 <= side_BC_sq t.
+Proof. intros. unfold side_BC_sq. apply dist_sq_nonneg. Qed.
+
+Lemma side_CA_sq_nonneg : forall t, 0 <= side_CA_sq t.
+Proof. intros. unfold side_CA_sq. apply dist_sq_nonneg. Qed.
+
+Lemma side_AB_sq_sym : forall A B C,
+  side_AB_sq (mkTriangle A B C) = side_AB_sq (mkTriangle B A C).
+Proof. intros. unfold side_AB_sq. simpl. apply dist_sq_sym. Qed.
+
+Lemma side_AB_sq_zero_iff : forall t,
+  side_AB_sq t = 0 <-> (px (tA t) = px (tB t) /\ py (tA t) = py (tB t)).
+Proof. intros. unfold side_AB_sq. apply dist_sq_zero_iff_eq. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Two further degeneracy characterisations.                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma is_degenerate_iff_area2_zero : forall t,
+  is_degenerate t <-> area2 t = 0.
+Proof. intros. unfold is_degenerate. tauto. Qed.
+
+Lemma area2_unfold : forall t,
+  area2 t = (px (tB t) - px (tA t)) * (py (tC t) - py (tA t))
+          - (px (tC t) - px (tA t)) * (py (tB t) - py (tA t)).
+Proof. intros. unfold area2, cross. reflexivity. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Vertex-position lemmas.                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma area2_translate_A : forall A B C dx dy,
+  area2 (mkTriangle (translate A dx dy) (translate B dx dy) (translate C dx dy))
+  = area2 (mkTriangle A B C).
+Proof.
+  intros. unfold area2. simpl. apply cross_translation_invariant.
+Qed.
+
+Lemma area2_AB_aligned : forall A B,
+  area2 (mkTriangle A B (mkPoint (px A) (py A))) = 0.
+Proof.
+  intros A B. unfold area2, cross. simpl. ring.
+Qed.
+
+Lemma area2_neg_cancel : forall t,
+  area2 t + area2 (mkTriangle (tA t) (tC t) (tB t)) = 0.
+Proof.
+  intros. unfold area2, cross. simpl. ring.
+Qed.
+
+Lemma area2_double_AC : forall A C,
+  area2 (mkTriangle A C A) = 0.
+Proof. intros. unfold area2. simpl. apply cross_at_P0_is_collinear. Qed.
+
+Lemma area2_double_BC : forall A B,
+  area2 (mkTriangle A B B) = 0.
+Proof. intros. unfold area2. simpl. apply cross_at_P1_is_collinear. Qed.
+
+Lemma area2_with_AA : forall A C,
+  area2 (mkTriangle A A C) = 0.
+Proof. intros. unfold area2. simpl. apply cross_degenerate_base. Qed.
+
+Lemma side_AB_sq_at_collapsed : forall A C,
+  side_AB_sq (mkTriangle A A C) = 0.
+Proof.
+  intros. unfold side_AB_sq, dist_sq. simpl. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Perimeter (squared sum) and basic bound.                                   *)
+(* -------------------------------------------------------------------------- *)
+
+Definition sum_sides_sq (t : Triangle) : R :=
+  side_AB_sq t + side_BC_sq t + side_CA_sq t.
+
+Lemma sum_sides_sq_nonneg : forall t, 0 <= sum_sides_sq t.
+Proof.
+  intros. unfold sum_sides_sq.
+  pose proof (side_AB_sq_nonneg t).
+  pose proof (side_BC_sq_nonneg t).
+  pose proof (side_CA_sq_nonneg t).
+  lra.
+Qed.
+
+Lemma sum_sides_sq_zero_implies_all_coincide : forall A B C,
+  sum_sides_sq (mkTriangle A B C) = 0 ->
+  side_AB_sq (mkTriangle A B C) = 0 /\
+  side_BC_sq (mkTriangle A B C) = 0 /\
+  side_CA_sq (mkTriangle A B C) = 0.
+Proof.
+  intros A B C H. unfold sum_sides_sq in H.
+  pose proof (side_AB_sq_nonneg (mkTriangle A B C)).
+  pose proof (side_BC_sq_nonneg (mkTriangle A B C)).
+  pose proof (side_CA_sq_nonneg (mkTriangle A B C)).
+  split; [|split]; lra.
+Qed.
+
+Lemma sum_sides_sq_translate : forall A B C dx dy,
+  sum_sides_sq (mkTriangle (translate A dx dy) (translate B dx dy) (translate C dx dy))
+  = sum_sides_sq (mkTriangle A B C).
+Proof.
+  intros. unfold sum_sides_sq, side_AB_sq, side_BC_sq, side_CA_sq, dist_sq, translate.
+  simpl. ring.
+Qed.
+
+Lemma area2_swap_AC : forall A B C,
+  area2 (mkTriangle A B C) = - area2 (mkTriangle C B A).
+Proof.
+  intros. unfold area2, cross. simpl. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 

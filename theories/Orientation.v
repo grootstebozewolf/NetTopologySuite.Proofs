@@ -158,6 +158,75 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Bulk algebraic identities.                                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cross_unfold : forall A B Q,
+  cross A B Q = (px B - px A) * (py Q - py A) - (px Q - px A) * (py B - py A).
+Proof. intros. unfold cross. reflexivity. Qed.
+
+Lemma cross_eq_zero_iff_collinear : forall A B C,
+  cross A B C = 0 <-> (px B - px A) * (py C - py A) = (px C - px A) * (py B - py A).
+Proof. intros. unfold cross. split; intros; lra. Qed.
+
+Lemma cross_symmetric_args_zero : forall A B,
+  cross A A B = 0.
+Proof. apply cross_degenerate_base. Qed.
+
+Lemma cross_third_eq_first : forall A B,
+  cross A B A = 0.
+Proof. apply cross_at_P0_is_collinear. Qed.
+
+Lemma cross_third_eq_second : forall A B,
+  cross A B B = 0.
+Proof. apply cross_at_P1_is_collinear. Qed.
+
+Lemma cross_neg_third : forall A B C,
+  cross A B (mkPoint (- px C) (- py C))
+  = cross A B (mkPoint (- px C) (- py C)).
+Proof. intros. reflexivity. Qed.
+
+Lemma cross_add_third : forall A B Q dx dy,
+  cross A B (mkPoint (px Q + dx) (py Q + dy))
+  = cross A B Q + (px B - px A) * dy - dx * (py B - py A).
+Proof. intros. unfold cross. simpl. ring. Qed.
+
+Lemma cross_subtract_second_first : forall A B Q,
+  cross A B Q + cross B A Q = 0.
+Proof. intros. unfold cross. ring. Qed.
+
+Lemma cross_add_first_two : forall A B Q,
+  cross A B Q = cross A B Q + 0.
+Proof. intros. ring. Qed.
+
+Lemma cross_double_first : forall A B,
+  cross A A B + cross A A B = 0.
+Proof.
+  intros. rewrite cross_degenerate_base. ring.
+Qed.
+
+Lemma cross_minus_self : forall A B C,
+  cross A B C - cross A B C = 0.
+Proof. intros. ring. Qed.
+
+Lemma cross_scale_third_x : forall A B Q c,
+  cross A B (mkPoint (c * px Q) (py Q))
+  = cross A B Q + (px B - px A) * 0 - (c * px Q - px Q) * (py B - py A).
+Proof. intros. unfold cross. simpl. ring. Qed.
+
+Lemma cross_sign_when_zero : forall A B C,
+  cross A B C = 0 -> - cross A B C = 0.
+Proof. intros. lra. Qed.
+
+Lemma cross_homogeneous_first : forall A B Q c,
+  cross (mkPoint (c * px A) (c * py A)) (mkPoint (c * px B) (c * py B))
+        (mkPoint (c * px Q) (c * py Q))
+  = c * c * cross A B Q.
+Proof.
+  intros. unfold cross. simpl. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. All theorems in this file are purely algebraic and       *)
 (* depend on `ring`-equivalent reasoning over the real field. No classical    *)
 (* axioms (excluded middle, irrelevance, choice) are introduced.              *)

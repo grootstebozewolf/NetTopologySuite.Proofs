@@ -1,5 +1,7 @@
 -Q theories NTS.Proofs
 
+theories/Real.v
+theories/Lattice.v
 theories/Distance.v
 theories/Orientation.v
 theories/Segment.v
@@ -9,3 +11,10 @@ theories/Bbox.v
 theories/Triangle.v
 theories/Convex.v
 theories/LexOrder.v
+theories/LineEq.v
+theories/Direction.v
+theories/Reflection.v
+theories/Disk.v
+theories/Parallel.v
+theories/Centroid.v
+theories/Polynomial.v

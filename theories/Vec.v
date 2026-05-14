@@ -200,6 +200,114 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Bulk algebraic identities (ring-closed).                                   *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma vadd_neg_l : forall v, vadd (vneg v) v = vzero.
+Proof. intros v. vec_eq. Qed.
+
+Lemma vsub_zero_r : forall v, vsub v vzero = v.
+Proof. intros v. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vsub_zero_l : forall v, vsub vzero v = vneg v.
+Proof. intros v. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vneg_add : forall v w, vneg (vadd v w) = vadd (vneg v) (vneg w).
+Proof. intros v w. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vneg_sub : forall v w, vneg (vsub v w) = vsub w v.
+Proof. intros v w. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vsub_neg_r : forall v w, vsub v (vneg w) = vadd v w.
+Proof. intros v w. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vsub_assoc : forall u v w, vsub (vsub u v) w = vsub u (vadd v w).
+Proof. intros. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vadd_sub_cancel : forall v w, vsub (vadd v w) w = v.
+Proof. intros. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vsub_add_cancel : forall v w, vadd (vsub v w) w = v.
+Proof. intros. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vscale_neg : forall c v, vscale (- c) v = vneg (vscale c v).
+Proof. intros. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vscale_neg_v : forall c v, vscale c (vneg v) = vneg (vscale c v).
+Proof. intros. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vscale_sub : forall c v w, vscale c (vsub v w) = vsub (vscale c v) (vscale c w).
+Proof. intros. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+Lemma vdot_neg_l : forall v w, vdot (vneg v) w = - vdot v w.
+Proof. intros v w. unfold vdot, vneg. cbn. ring. Qed.
+
+Lemma vdot_neg_r : forall v w, vdot v (vneg w) = - vdot v w.
+Proof. intros v w. unfold vdot, vneg. cbn. ring. Qed.
+
+Lemma vdot_sub_l : forall u v w, vdot (vsub u v) w = vdot u w - vdot v w.
+Proof. intros. unfold vdot, vsub, vadd, vneg. cbn. ring. Qed.
+
+Lemma vdot_sub_r : forall u v w, vdot u (vsub v w) = vdot u v - vdot u w.
+Proof. intros. unfold vdot, vsub, vadd, vneg. cbn. ring. Qed.
+
+Lemma vdot_scale_r : forall c v w, vdot v (vscale c w) = c * vdot v w.
+Proof. intros. unfold vdot, vscale. cbn. ring. Qed.
+
+Lemma vdot_zero_r : forall v, vdot v vzero = 0.
+Proof. intros. rewrite vdot_comm. apply vdot_zero_l. Qed.
+
+Lemma vdot_self_eq_mag_sq : forall v, vdot v v = vmag_sq v.
+Proof. intros. unfold vmag_sq. reflexivity. Qed.
+
+Lemma vmag_sq_neg : forall v, vmag_sq (vneg v) = vmag_sq v.
+Proof. intros. unfold vmag_sq, vdot, vneg. cbn. ring. Qed.
+
+Lemma vmag_sq_zero : vmag_sq vzero = 0.
+Proof. unfold vmag_sq, vdot, vzero. cbn. ring. Qed.
+
+Lemma vmag_sq_sub_expand : forall v w,
+  vmag_sq (vsub v w) = vmag_sq v - 2 * vdot v w + vmag_sq w.
+Proof. intros. unfold vmag_sq, vdot, vsub, vadd, vneg. cbn. ring. Qed.
+
+Lemma vcross_self : forall v, vcross v v = 0.
+Proof. intros. unfold vcross. ring. Qed.
+
+Lemma vcross_zero_r : forall v, vcross v vzero = 0.
+Proof. intros. unfold vcross, vzero. cbn. ring. Qed.
+
+Lemma vcross_zero_l : forall v, vcross vzero v = 0.
+Proof. intros. unfold vcross, vzero. cbn. ring. Qed.
+
+Lemma vcross_scale_l : forall c v w, vcross (vscale c v) w = c * vcross v w.
+Proof. intros. unfold vcross, vscale. cbn. ring. Qed.
+
+Lemma vcross_scale_r : forall c v w, vcross v (vscale c w) = c * vcross v w.
+Proof. intros. unfold vcross, vscale. cbn. ring. Qed.
+
+Lemma vcross_neg_l : forall v w, vcross (vneg v) w = - vcross v w.
+Proof. intros. unfold vcross, vneg. cbn. ring. Qed.
+
+Lemma vcross_neg_r : forall v w, vcross v (vneg w) = - vcross v w.
+Proof. intros. unfold vcross, vneg. cbn. ring. Qed.
+
+Lemma vcross_add_l : forall u v w, vcross (vadd u v) w = vcross u w + vcross v w.
+Proof. intros. unfold vcross, vadd. cbn. ring. Qed.
+
+Lemma vcross_add_r : forall u v w, vcross u (vadd v w) = vcross u v + vcross u w.
+Proof. intros. unfold vcross, vadd. cbn. ring. Qed.
+
+Lemma vadd_cancel_l : forall u v w, vadd u v = vadd u w -> v = w.
+Proof.
+  intros u v w H.
+  assert (vsub (vadd u v) u = vsub (vadd u w) u) by (rewrite H; reflexivity).
+  rewrite ?vsub_zero_r, ?vsub_zero_l in H0.
+  unfold vsub in H0. apply Vec_eq.
+  - destruct v, w, u. cbn in *. inversion H. lra.
+  - destruct v, w, u. cbn in *. inversion H. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 

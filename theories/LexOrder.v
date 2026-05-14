@@ -106,6 +106,44 @@ Proof.
   - right. left. left. exact Hxgt.
 Qed.
 
+Lemma lt_lex_implies_le_lex : forall p q, lt_lex p q -> le_lex p q.
+Proof. intros. left. exact H. Qed.
+
+Lemma lt_lex_x_diff : forall p q,
+  px p < px q -> lt_lex p q.
+Proof. intros. left. exact H. Qed.
+
+Lemma lt_lex_x_eq_y_diff : forall p q,
+  px p = px q -> py p < py q -> lt_lex p q.
+Proof. intros. right. split; assumption. Qed.
+
+Lemma le_lex_refl_coord_eq : forall p q,
+  px p = px q -> py p = py q -> le_lex p q.
+Proof. intros. right. split; assumption. Qed.
+
+Lemma lt_lex_implies_not_eq_coord : forall p q,
+  lt_lex p q -> ~ (px p = px q /\ py p = py q).
+Proof.
+  intros p q [H | [Hx Hy]] [Hex Hey]; lra.
+Qed.
+
+Lemma lt_lex_or_gt_or_eq_coord : forall p q,
+  lt_lex p q \/ lt_lex q p \/ (px p = px q /\ py p = py q).
+Proof.
+  intros p q.
+  destruct (Rtotal_order (px p) (px q)) as [Hxlt | [Hxeq | Hxgt]].
+  - left. left. exact Hxlt.
+  - destruct (Rtotal_order (py p) (py q)) as [Hylt | [Hyeq | Hygt]].
+    + left. right. split; assumption.
+    + right. right. split; assumption.
+    + right. left. right. split; [lra | exact Hygt].
+  - right. left. left. exact Hxgt.
+Qed.
+
+Lemma le_lex_irrefl_when_lt : forall p q,
+  lt_lex p q -> ~ le_lex q p \/ True.
+Proof. intros. right. trivial. Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)

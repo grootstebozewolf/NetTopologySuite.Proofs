@@ -19,7 +19,7 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
-From NTS.Proofs Require Import Distance Segment.
+From NTS.Proofs Require Import Distance Segment Lattice.
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -174,6 +174,103 @@ Proof.
   rewrite (Rmin_comm (py P0) (py P1)), (Rmax_comm (py P0) (py P1)).
   reflexivity.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Additional bbox operations.                                                *)
+(* -------------------------------------------------------------------------- *)
+
+Definition bbox_union (b1 b2 : Bbox) : Bbox :=
+  mkBbox (Rmin (xlo b1) (xlo b2)) (Rmax (xhi b1) (xhi b2))
+         (Rmin (ylo b1) (ylo b2)) (Rmax (yhi b1) (yhi b2)).
+
+Definition bbox_intersect (b1 b2 : Bbox) : Bbox :=
+  mkBbox (Rmax (xlo b1) (xlo b2)) (Rmin (xhi b1) (xhi b2))
+         (Rmax (ylo b1) (ylo b2)) (Rmin (yhi b1) (yhi b2)).
+
+Lemma bbox_union_contains_l : forall b1 b2 p,
+  in_bbox b1 p -> in_bbox (bbox_union b1 b2) p.
+Proof.
+  intros b1 b2 p [[Hx1 Hx2] [Hy1 Hy2]]. unfold in_bbox, bbox_union. simpl.
+  pose proof (Rmin_l (xlo b1) (xlo b2)). pose proof (Rmax_l (xhi b1) (xhi b2)).
+  pose proof (Rmin_l (ylo b1) (ylo b2)). pose proof (Rmax_l (yhi b1) (yhi b2)).
+  split; split; lra.
+Qed.
+
+Lemma bbox_union_contains_r : forall b1 b2 p,
+  in_bbox b2 p -> in_bbox (bbox_union b1 b2) p.
+Proof.
+  intros b1 b2 p [[Hx1 Hx2] [Hy1 Hy2]]. unfold in_bbox, bbox_union. simpl.
+  pose proof (Rmin_r (xlo b1) (xlo b2)). pose proof (Rmax_r (xhi b1) (xhi b2)).
+  pose proof (Rmin_r (ylo b1) (ylo b2)). pose proof (Rmax_r (yhi b1) (yhi b2)).
+  split; split; lra.
+Qed.
+
+Lemma bbox_intersect_contains_iff : forall b1 b2 p,
+  in_bbox (bbox_intersect b1 b2) p <-> in_bbox b1 p /\ in_bbox b2 p.
+Proof.
+  intros. unfold in_bbox, bbox_intersect. simpl. split.
+  - intros [[Hx1 Hx2] [Hy1 Hy2]].
+    pose proof (Rmax_l (xlo b1) (xlo b2)).
+    pose proof (Rmax_r (xlo b1) (xlo b2)).
+    pose proof (Rmin_l (xhi b1) (xhi b2)).
+    pose proof (Rmin_r (xhi b1) (xhi b2)).
+    pose proof (Rmax_l (ylo b1) (ylo b2)).
+    pose proof (Rmax_r (ylo b1) (ylo b2)).
+    pose proof (Rmin_l (yhi b1) (yhi b2)).
+    pose proof (Rmin_r (yhi b1) (yhi b2)).
+    split; (split; split); lra.
+  - intros [[[Hx1a Hx2a] [Hy1a Hy2a]] [[Hx1b Hx2b] [Hy1b Hy2b]]].
+    split; split.
+    + apply Rmax_le_iff; split; assumption.
+    + apply Rmin_le_iff; split; assumption.
+    + apply Rmax_le_iff; split; assumption.
+    + apply Rmin_le_iff; split; assumption.
+Qed.
+
+Lemma in_bbox_extensionality : forall b p,
+  xlo b <= px p -> px p <= xhi b ->
+  ylo b <= py p -> py p <= yhi b -> in_bbox b p.
+Proof. intros. unfold in_bbox. lra. Qed.
+
+Lemma bbox_union_comm : forall b1 b2,
+  bbox_union b1 b2 = bbox_union b2 b1.
+Proof.
+  intros. unfold bbox_union. f_equal; (apply Rmin_comm || apply Rmax_comm).
+Qed.
+
+Lemma bbox_intersect_comm : forall b1 b2,
+  bbox_intersect b1 b2 = bbox_intersect b2 b1.
+Proof.
+  intros. unfold bbox_intersect. f_equal; (apply Rmin_comm || apply Rmax_comm).
+Qed.
+
+Lemma in_bbox_implies_x_bounds : forall b p,
+  in_bbox b p -> xlo b <= px p /\ px p <= xhi b.
+Proof. intros. unfold in_bbox in H. tauto. Qed.
+
+Lemma in_bbox_implies_y_bounds : forall b p,
+  in_bbox b p -> ylo b <= py p /\ py p <= yhi b.
+Proof. intros. unfold in_bbox in H. tauto. Qed.
+
+Lemma bbox_self : forall b p,
+  xlo b <= px p <= xhi b -> ylo b <= py p <= yhi b -> in_bbox b p.
+Proof. intros. unfold in_bbox. lra. Qed.
+
+Lemma bbox_of_seg_xlo_eq : forall P0 P1,
+  xlo (bbox_of_seg (mkSegment P0 P1)) = Rmin (px P0) (px P1).
+Proof. reflexivity. Qed.
+
+Lemma bbox_of_seg_xhi_eq : forall P0 P1,
+  xhi (bbox_of_seg (mkSegment P0 P1)) = Rmax (px P0) (px P1).
+Proof. reflexivity. Qed.
+
+Lemma bbox_of_seg_ylo_eq : forall P0 P1,
+  ylo (bbox_of_seg (mkSegment P0 P1)) = Rmin (py P0) (py P1).
+Proof. reflexivity. Qed.
+
+Lemma bbox_of_seg_yhi_eq : forall P0 P1,
+  yhi (bbox_of_seg (mkSegment P0 P1)) = Rmax (py P0) (py P1).
+Proof. reflexivity. Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)

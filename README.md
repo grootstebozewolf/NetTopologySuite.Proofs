@@ -272,6 +272,19 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
   intersection preservation), `LexOrder.v` (lex order on points with
   the full partial-order + totality story). Total: **102 kernel-
   checked theorems** across 9 modules.
+- **2026-05-14**: reached Euclid's number. Added nine more modules —
+  `Real.v` (44 basic real-number identities), `Lattice.v` (19 `Rmin`/`Rmax`
+  laws), `LineEq.v` (20 line-equation identities), `Direction.v`
+  (32 parallel/perpendicular vector laws), `Reflection.v` (34
+  reflection-across-axes identities), `Disk.v` (14 closed-disk
+  containment laws), `Parallel.v` (18 segment-direction laws),
+  `Centroid.v` (24 centroid identities), `Polynomial.v` (22
+  linear/quadratic identities) — and roughly doubled each of the
+  existing nine. Total: **465 kernel-checked theorems** across 18
+  modules. (Euclid's *Elements* contains 465 propositions; we now
+  match the count, though the content is orthogonal: Euclid's are
+  geometric constructions; ours are algebraic and order-theoretic
+  invariants of the same plane.)
 
 ## What this is NOT
 

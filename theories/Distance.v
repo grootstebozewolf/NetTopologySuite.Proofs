@@ -187,6 +187,103 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Coordinate decompositions and identities.                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma dist_sq_xy_decompose : forall p q,
+  dist_sq p q = (px p - px q) * (px p - px q) + (py p - py q) * (py p - py q).
+Proof. intros. unfold dist_sq. reflexivity. Qed.
+
+Lemma dist_sq_x_only : forall p q,
+  py p = py q -> dist_sq p q = (px p - px q) * (px p - px q).
+Proof.
+  intros p q H. unfold dist_sq. rewrite H. ring.
+Qed.
+
+Lemma dist_sq_y_only : forall p q,
+  px p = px q -> dist_sq p q = (py p - py q) * (py p - py q).
+Proof.
+  intros p q H. unfold dist_sq. rewrite H. ring.
+Qed.
+
+Lemma dist_sq_neg_x : forall p q,
+  dist_sq (mkPoint (- px p) (py p)) (mkPoint (- px q) (py q)) = dist_sq p q.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_neg_y : forall p q,
+  dist_sq (mkPoint (px p) (- py p)) (mkPoint (px q) (- py q)) = dist_sq p q.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_self_zero : forall p, dist_sq p p = 0.
+Proof. intros p. unfold dist_sq. ring. Qed.
+
+Lemma dist_sq_at_origin_x : forall a, dist_sq (mkPoint 0 0) (mkPoint a 0) = a * a.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_at_origin_y : forall b, dist_sq (mkPoint 0 0) (mkPoint 0 b) = b * b.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_general : forall a b c d,
+  dist_sq (mkPoint a b) (mkPoint c d) = (a - c) * (a - c) + (b - d) * (b - d).
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_pythagorean : forall a b,
+  dist_sq (mkPoint 0 0) (mkPoint a b) = a * a + b * b.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_negate_both : forall p q,
+  dist_sq (mkPoint (- px p) (- py p)) (mkPoint (- px q) (- py q)) = dist_sq p q.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_swap_xy : forall p q,
+  dist_sq (mkPoint (py p) (px p)) (mkPoint (py q) (px q)) = dist_sq p q.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_triangular_sq_form : forall a b c d e f,
+  dist_sq (mkPoint a b) (mkPoint e f) + dist_sq (mkPoint c d) (mkPoint e f)
+  - 2 * ((a - e) * (c - e) + (b - f) * (d - f))
+  = dist_sq (mkPoint a b) (mkPoint c d).
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_le_sum_xy : forall p q,
+  dist_sq p q <= 2 * ((px p - px q) * (px p - px q) + (py p - py q) * (py p - py q)).
+Proof.
+  intros. unfold dist_sq.
+  pose proof (sqr_nonneg (px p - px q)).
+  pose proof (sqr_nonneg (py p - py q)). lra.
+Qed.
+
+Lemma dist_sq_zero_at_same_coord : forall a b,
+  dist_sq (mkPoint a b) (mkPoint a b) = 0.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_diff_x_only_zero : forall a b,
+  dist_sq (mkPoint a 0) (mkPoint a b) = b * b.
+Proof. intros. unfold dist_sq. simpl. ring. Qed.
+
+Lemma dist_sq_pos_when_x_diff : forall a c b,
+  a <> c ->
+  0 < dist_sq (mkPoint a b) (mkPoint c b).
+Proof.
+  intros a c b H. unfold dist_sq. simpl.
+  assert (Hne : a - c <> 0) by lra.
+  pose proof (Rle_0_sqr (a - c)). unfold Rsqr in *.
+  destruct (Req_dec ((a - c) * (a - c)) 0) as [Heq | Hne0].
+  - exfalso. apply H. assert (a - c = 0) by (apply Rsqr_0_uniq; unfold Rsqr; exact Heq).
+    lra.
+  - assert ((b - b) * (b - b) = 0) by (assert (b - b = 0) by ring; rewrite H1; ring).
+    lra.
+Qed.
+
+Lemma dist_sq_eq_dist_eq : forall p q r s,
+  px p = px r -> py p = py r -> px q = px s -> py q = py s ->
+  dist_sq p q = dist_sq r s.
+Proof.
+  intros p q r s Hpx Hpy Hqx Hqy. unfold dist_sq.
+  rewrite Hpx, Hpy, Hqx, Hqy. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above rely only on the constructions of the   *)
 (* standard library's classical real arithmetic.  Run with `make` or          *)
 (* `rocq compile theories/Distance.v` and inspect the `Print Assumptions`     *)
