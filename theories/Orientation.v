@@ -109,6 +109,55 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Cyclic permutation of the three arguments preserves the cross product.    *)
+(* An even permutation, so no sign change.                                    *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem cross_cyclic : forall A B C,
+  cross A B C = cross B C A.
+Proof. intros A B C. unfold cross. ring. Qed.
+
+Theorem cross_cyclic_2 : forall A B C,
+  cross A B C = cross C A B.
+Proof. intros A B C. unfold cross. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Translating only the third argument: cross becomes cross of the translate. *)
+(* More general than `cross_translation_invariant`.                           *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cross_translate_third : forall A B Q vx vy,
+  cross A B (translate Q vx vy) = cross A B Q
+    + (px B - px A) * vy - vx * (py B - py A).
+Proof. intros A B Q vx vy. unfold cross, translate. simpl. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Coincident base: cross(A, A, Q) = 0 for any Q.  A line through a single   *)
+(* point has no defined orientation; the cross product reflects this by      *)
+(* vanishing.                                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem cross_degenerate_base : forall A Q,
+  cross A A Q = 0.
+Proof. intros A Q. unfold cross. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Scaling all three points by the same factor scales the cross product by    *)
+(* the factor squared.  Combined with sign analysis, this gives positive-    *)
+(* scaling-preserves-orientation as a corollary.                              *)
+(* -------------------------------------------------------------------------- *)
+
+Definition pt_scale_o (c : R) (p : Point) : Point :=
+  mkPoint (c * px p) (c * py p).
+
+Theorem cross_scale : forall c A B Q,
+  cross (pt_scale_o c A) (pt_scale_o c B) (pt_scale_o c Q)
+  = c * c * cross A B Q.
+Proof.
+  intros c A B Q. unfold cross, pt_scale_o. simpl. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. All theorems in this file are purely algebraic and       *)
 (* depend on `ring`-equivalent reasoning over the real field. No classical    *)
 (* axioms (excluded middle, irrelevance, choice) are introduced.              *)

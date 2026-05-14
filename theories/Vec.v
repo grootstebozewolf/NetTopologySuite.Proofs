@@ -89,6 +89,37 @@ Lemma vdot_distrib_l : forall u v w,
 Proof. intros u v w. unfold vdot, vadd. simpl. ring. Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* More identity / inverse laws.                                              *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma vneg_involutive : forall v, vneg (vneg v) = v.
+Proof. intros v. vec_eq. Qed.
+
+Lemma vscale_0 : forall v, vscale 0 v = vzero.
+Proof. intros v. vec_eq. Qed.
+
+Lemma vscale_1 : forall v, vscale 1 v = v.
+Proof. intros v. vec_eq. Qed.
+
+Lemma vsub_self : forall v, vsub v v = vzero.
+Proof. intros v. unfold vsub. apply Vec_eq; cbn; ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Additional dot-product properties.                                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma vdot_distrib_r : forall u v w,
+  vdot (vadd u v) w = vdot u w + vdot v w.
+Proof. intros u v w. unfold vdot, vadd. cbn. ring. Qed.
+
+Lemma vdot_scale_l : forall c v w,
+  vdot (vscale c v) w = c * vdot v w.
+Proof. intros c v w. unfold vdot, vscale. cbn. ring. Qed.
+
+Lemma vdot_zero_l : forall v, vdot vzero v = 0.
+Proof. intros v. unfold vdot, vzero. cbn. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Squared magnitude is non-negative; it is zero exactly at the zero vector.  *)
 (* The first is the algebraic kernel of any "buffer thickness is non-         *)
 (* negative" reasoning downstream.                                            *)
@@ -102,9 +133,77 @@ Proof.
   lra.
 Qed.
 
+Lemma vmag_sq_scale : forall c v,
+  vmag_sq (vscale c v) = c * c * vmag_sq v.
+Proof. intros c v. unfold vmag_sq, vdot, vscale. cbn. ring. Qed.
+
+Lemma vmag_sq_zero_iff : forall v, vmag_sq v = 0 <-> v = vzero.
+Proof.
+  intros v. split.
+  - intros H. unfold vmag_sq, vdot in H.
+    pose proof (sqr_nonneg (vx v)) as Hx.
+    pose proof (sqr_nonneg (vy v)) as Hy.
+    assert (Hxz : vx v * vx v = 0) by lra.
+    assert (Hyz : vy v * vy v = 0) by lra.
+    apply sqr_eq_zero in Hxz.
+    apply sqr_eq_zero in Hyz.
+    apply Vec_eq; cbn; assumption.
+  - intros H. rewrite H. unfold vmag_sq, vdot, vzero. cbn. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Polarisation: expanding the squared magnitude of a sum.                    *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem vmag_sq_expand : forall v w,
+  vmag_sq (vadd v w) = vmag_sq v + 2 * vdot v w + vmag_sq w.
+Proof. intros v w. unfold vmag_sq, vdot, vadd. cbn. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* The 2D vector "cross product" — a scalar (the z-component of the           *)
+(* corresponding 3D cross).  Distinct from `cross` in `Orientation.v`, which  *)
+(* is the signed-area triple-argument predicate; this one is binary.          *)
+(* -------------------------------------------------------------------------- *)
+
+Definition vcross (v w : Vec) : R := vx v * vy w - vy v * vx w.
+
+Lemma vcross_antisym : forall v w, vcross v w = - vcross w v.
+Proof. intros v w. unfold vcross. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Lagrange's identity in 2D:                                                 *)
+(*                                                                            *)
+(*     |v|² · |w|²  =  (v · w)²  +  (v × w)²                                  *)
+(*                                                                            *)
+(* A clean algebraic statement provable by `ring`. The geometric content is   *)
+(* "the squared area of the parallelogram spanned by v and w plus the         *)
+(* squared dot product equals the product of squared magnitudes". The         *)
+(* Cauchy-Schwarz inequality squared falls out of it directly.                *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem lagrange_identity : forall v w,
+  vmag_sq v * vmag_sq w =
+  vdot v w * vdot v w + vcross v w * vcross v w.
+Proof. intros v w. unfold vmag_sq, vdot, vcross. cbn. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* The squared Cauchy-Schwarz inequality.  Falls out of Lagrange + the        *)
+(* fact that a square is non-negative.                                        *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem cauchy_schwarz_sq : forall v w,
+  vdot v w * vdot v w <= vmag_sq v * vmag_sq w.
+Proof.
+  intros v w.
+  rewrite (lagrange_identity v w).
+  pose proof (sqr_nonneg (vcross v w)). lra.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions vadd_assoc.
 Print Assumptions vmag_sq_nonneg.
+Print Assumptions vmag_sq_zero_iff.
+Print Assumptions cauchy_schwarz_sq.

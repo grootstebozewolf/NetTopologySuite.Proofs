@@ -126,6 +126,56 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Bounding boxes built from segments are well-formed (lo <= hi).  An       *)
+(* invariant the rest of the system can rely on without re-checking.        *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma bbox_of_seg_xlo_le_xhi : forall s,
+  xlo (bbox_of_seg s) <= xhi (bbox_of_seg s).
+Proof.
+  intros s. unfold bbox_of_seg. simpl.
+  destruct (Rle_or_lt (px (sp0 s)) (px (sp1 s))) as [H | H].
+  - rewrite Rmin_left, Rmax_right; lra.
+  - rewrite Rmin_right, Rmax_left; lra.
+Qed.
+
+Lemma bbox_of_seg_ylo_le_yhi : forall s,
+  ylo (bbox_of_seg s) <= yhi (bbox_of_seg s).
+Proof.
+  intros s. unfold bbox_of_seg. simpl.
+  destruct (Rle_or_lt (py (sp0 s)) (py (sp1 s))) as [H | H].
+  - rewrite Rmin_left, Rmax_right; lra.
+  - rewrite Rmin_right, Rmax_left; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* in_bbox is reflexive when the bbox is well-formed: every box contains its *)
+(* own four corner points.  Stated for one specific corner (xlo, ylo); the   *)
+(* others follow by symmetry.                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma bbox_contains_lo_corner : forall b,
+  xlo b <= xhi b -> ylo b <= yhi b ->
+  in_bbox b (mkPoint (xlo b) (ylo b)).
+Proof.
+  intros b Hx Hy. unfold in_bbox. simpl. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* The bounding box of a segment does not depend on which endpoint is        *)
+(* listed first: swapping sp0 and sp1 yields the same box.                   *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma bbox_of_seg_symmetric : forall P0 P1,
+  bbox_of_seg (mkSegment P0 P1) = bbox_of_seg (mkSegment P1 P0).
+Proof.
+  intros P0 P1. unfold bbox_of_seg. simpl.
+  rewrite (Rmin_comm (px P0) (px P1)), (Rmax_comm (px P0) (px P1)).
+  rewrite (Rmin_comm (py P0) (py P1)), (Rmax_comm (py P0) (py P1)).
+  reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 

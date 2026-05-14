@@ -157,6 +157,70 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* The midpoint of a segment lies on the segment (with parameter t = 1/2).    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition midpoint (P0 P1 : Point) : Point :=
+  mkPoint ((px P0 + px P1) / 2) ((py P0 + py P1) / 2).
+
+Lemma midpoint_between : forall P0 P1, between P0 P1 (midpoint P0 P1).
+Proof.
+  intros P0 P1. exists (1/2).
+  split; [lra |].
+  split; [lra |].
+  split; unfold midpoint; cbn; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Endpoint coincidence: when P0 = P1, the "segment" is a single point, and  *)
+(* the only point on it is P0 itself.                                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma between_degenerate : forall P Q,
+  between P P Q -> px Q = px P /\ py Q = py P.
+Proof.
+  intros P Q [t [_ [_ [Hx Hy]]]].
+  split.
+  - rewrite Hx. ring.
+  - rewrite Hy. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Transitivity of the betweenness relation through an interior point.       *)
+(* If X is between A and B, and Y is between A and X, then Y is also         *)
+(* between A and B.  This is the property polyline-traversal proofs use.    *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma between_transitive : forall A B X Y,
+  between A B X -> between A X Y -> between A B Y.
+Proof.
+  intros A B X Y [tx [Htx0 [Htx1 [HXx HXy]]]] [ty [Hty0 [Hty1 [HYx HYy]]]].
+  exists (ty * tx).
+  split; [nra |].
+  split; [nra |].
+  split.
+  - rewrite HYx, HXx. ring.
+  - rewrite HYy, HXy. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* A point is on the closed segment iff it can be written as a convex        *)
+(* combination of the endpoints.  This is the parametric definition restated *)
+(* as an iff for use as a rewriting principle downstream.                    *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma between_iff_convex_combination : forall P0 P1 Q,
+  between P0 P1 Q <->
+  exists t : R, 0 <= t <= 1 /\
+    px Q = (1 - t) * px P0 + t * px P1 /\
+    py Q = (1 - t) * py P0 + t * py P1.
+Proof.
+  intros P0 P1 Q. split.
+  - intros [t [Ht0 [Ht1 [Hx Hy]]]]. exists t. split; [lra | split; assumption].
+  - intros [t [[Ht0 Ht1] [Hx Hy]]]. exists t. repeat split; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above are pure ring + linear arithmetic       *)
 (* over real numbers; no axiom is introduced beyond the standard library's    *)
 (* classical real arithmetic.                                                 *)

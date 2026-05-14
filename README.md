@@ -166,6 +166,60 @@ verifies that short-circuit is sound.
   If two segments have disjoint bounding boxes, they share no point.
   The formal justification for envelope-based rejection in
   `LineIntersector` and friends.
+- `bbox_of_seg_xlo_le_xhi`, `bbox_of_seg_ylo_le_yhi` — well-formedness
+  of segment-derived bounding boxes.
+- `bbox_contains_lo_corner` — every well-formed bbox contains its
+  bottom-left corner.
+- `bbox_of_seg_symmetric` — segment-bbox doesn't depend on endpoint order.
+
+### `theories/Triangle.v` — triangles
+
+Triangles in the plane: signed-area function via the cross product,
+degeneracy, the permutation action on vertices, translation and
+scaling invariance.
+
+- `Triangle` record + `area2` (signed twice-area) + `is_degenerate`.
+- `area2_zero_iff_collinear` — the degenerate triangle is the
+  collinear-vertices one.
+- `area2_swap_AB`, `area2_swap_BC` — vertex swap flips signed area.
+- `area2_cyclic_ABC_BCA`, `area2_cyclic_ABC_CAB` — cyclic permutations
+  preserve signed area.
+- `area2_AA_degenerate`, `area2_AB_at_A_degenerate`,
+  `area2_AB_at_B_degenerate` — coincident-vertex cases all degenerate.
+- `area2_translation_invariant` — translation preserves area.
+- `area2_scale` — scaling vertices by *c* scales signed area by *c²*.
+
+### `theories/Convex.v` — convex combinations and convex sets
+
+The foundational closure properties of convex sets, with worked
+examples (half-planes, the whole plane, intersections of convex sets).
+Underpins later results about convex hulls and polygon containment.
+
+- `convex_combination` — two-point convex combination with parameter t.
+- `convex_combination_at_0`, `convex_combination_at_1`,
+  `convex_combination_self`, `convex_combination_symmetric` —
+  basic identities.
+- `between_iff_convex_combo` — bridges `Segment.v`'s `between` with
+  the convex-combination formulation.
+- `is_convex` — predicate: set closed under convex combinations.
+- `whole_plane_is_convex` — the trivial case.
+- **`intersection_is_convex`** — convexity is preserved under
+  intersection. (The seed for "intersection of *n* half-planes is
+  convex", and hence for convex-polygon membership.)
+- `half_plane_is_convex`, `half_plane_ge_is_convex` — both signs of
+  the closed half-plane defined by a linear inequality are convex.
+
+### `theories/LexOrder.v` — lexicographic order on points
+
+The standard lex order used by NTS's `Coordinate.CompareTo`: smaller x
+wins, ties broken by smaller y. Standard order-theoretic properties.
+
+- `lt_lex`, `le_lex` — strict and non-strict variants.
+- `lt_lex_irrefl`, `lt_lex_asym`, `lt_lex_trans` — strict-order laws.
+- `le_lex_refl`, `le_lex_antisym`, `le_lex_trans` — partial-order laws
+  (antisymmetry up to coordinate equality).
+- **`le_lex_total`** — totality: for any two points, one is ≤ the
+  other. (Uses classical decidability on the reals.)
 
 ## Roadmap
 
@@ -210,6 +264,14 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
   `Orientation.v` / `Segment.v`, added `Vec.v` (2D vector algebra) and
   `Bbox.v` (axis-aligned bounding boxes + envelope-rejection
   soundness). Total: **45 kernel-checked theorems** across 6 modules.
+- **2026-05-14**: crossed the first order of magnitude. Extended all
+  six existing modules with another 26 results — including Lagrange's
+  identity and the squared Cauchy-Schwarz inequality in `Vec.v` — and
+  added three new modules: `Triangle.v` (signed-area arithmetic and
+  vertex-permutation laws), `Convex.v` (convex sets, half-planes,
+  intersection preservation), `LexOrder.v` (lex order on points with
+  the full partial-order + totality story). Total: **102 kernel-
+  checked theorems** across 9 modules.
 
 ## What this is NOT
 

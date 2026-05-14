@@ -6,3 +6,6 @@ theories/Segment.v
 theories/Intersect.v
 theories/Vec.v
 theories/Bbox.v
+theories/Triangle.v
+theories/Convex.v
+theories/LexOrder.v

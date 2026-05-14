@@ -124,6 +124,39 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Symmetry: if AB and CD share a point, so do CD and AB.  Trivially true     *)
+(* but states the relation symmetry explicitly so downstream proofs can use   *)
+(* it as a rewrite.                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma shared_point_symmetric : forall A B C D,
+  (exists X, between A B X /\ between C D X) <->
+  (exists X, between C D X /\ between A B X).
+Proof.
+  intros A B C D. split; intros [X [H1 H2]]; exists X; tauto.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Degenerate case: a segment with coincident endpoints (P = P) intersects   *)
+(* a second segment iff that point lies on the second segment.                *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma degenerate_segment_shares_iff : forall P C D,
+  (exists X, between P P X /\ between C D X) <-> between C D P.
+Proof.
+  intros P C D. split.
+  - intros [X [HPP HCD]].
+    apply between_degenerate in HPP.
+    destruct HPP as [Hpx Hpy].
+    destruct C as [cx cy]. destruct D as [dx dy]. destruct P as [px0 py0].
+    destruct X as [xx xy].
+    simpl in *. subst. exact HCD.
+  - intros HCD. exists P. split.
+    + apply between_P0.
+    + exact HCD.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 

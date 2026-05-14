@@ -153,6 +153,40 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Squared-distance properties (translation invariance, scaling, strictness). *)
+(* -------------------------------------------------------------------------- *)
+
+Definition pt_translate (p : Point) (vx vy : R) : Point :=
+  mkPoint (px p + vx) (py p + vy).
+
+Lemma dist_sq_translation_invariant : forall p q vx vy,
+  dist_sq (pt_translate p vx vy) (pt_translate q vx vy) = dist_sq p q.
+Proof.
+  intros p q vx vy. unfold dist_sq, pt_translate. simpl. ring.
+Qed.
+
+Definition pt_scale (c : R) (p : Point) : Point :=
+  mkPoint (c * px p) (c * py p).
+
+Lemma dist_sq_scale : forall c p q,
+  dist_sq (pt_scale c p) (pt_scale c q) = c * c * dist_sq p q.
+Proof.
+  intros c p q. unfold dist_sq, pt_scale. simpl. ring.
+Qed.
+
+Lemma dist_sq_pos_iff_distinct : forall p q,
+  0 < dist_sq p q <-> ~ (px p = px q /\ py p = py q).
+Proof.
+  intros p q. split.
+  - intros H Hxy. apply dist_sq_zero_iff_eq in Hxy. lra.
+  - intros H.
+    pose proof (dist_sq_nonneg p q) as Hnn.
+    destruct (Req_dec (dist_sq p q) 0) as [Heq | Hne].
+    + exfalso. apply H. apply dist_sq_zero_iff_eq. exact Heq.
+    + lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above rely only on the constructions of the   *)
 (* standard library's classical real arithmetic.  Run with `make` or          *)
 (* `rocq compile theories/Distance.v` and inspect the `Print Assumptions`     *)
