@@ -1,0 +1,54 @@
+name: build proofs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  rocq:
+    name: Build with Rocq ${{ matrix.rocq-version }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rocq-version: ['9.1.1']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Homebrew Rocq install
+        id: cache-rocq
+        uses: actions/cache@v4
+        with:
+          path: |
+            /opt/homebrew/Cellar/rocq
+            /opt/homebrew/Cellar/ocaml*
+            /opt/homebrew/Cellar/zarith*
+          key: rocq-${{ matrix.rocq-version }}-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install Rocq via Homebrew
+        if: steps.cache-rocq.outputs.cache-hit != 'true'
+        run: brew install rocq
+
+      - name: Link Rocq binaries (when restored from cache)
+        if: steps.cache-rocq.outputs.cache-hit == 'true'
+        run: brew link --force rocq ocaml ocaml-findlib ocaml-zarith || true
+
+      - name: Show Rocq version
+        run: rocq -v
+
+      - name: Generate Makefile
+        run: coq_makefile -f _CoqProject -o Makefile
+
+      - name: Build proofs
+        run: make
+
+      - name: Verify no .v file is missing a Qed (no Admitted, no Axiom, no Parameter)
+        run: |
+          if grep -nE 'Admitted|^\s*Axiom\b|^\s*Parameter\b|admit\.' theories/*.v; then
+            echo "::error::Found unsoundness markers in theories/. The repo's invariant is that every proof terminates with Qed."
+            exit 1
+          fi
+          echo "All theorems Qed-closed."

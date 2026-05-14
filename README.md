@@ -1,13 +1,26 @@
 # NetTopologySuite.Proofs
 
+[![build proofs](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml/badge.svg)](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml)
+
 Mechanically-verified formal proofs of foundational properties of the
 algorithms in [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite).
 
 Proofs are written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 Every theorem in this repository terminates with `Qed.` — meaning the kernel
 has checked the proof and rejected any unsound step. There are no admitted
-lemmas. There is no `Axiom` declared beyond the standard library's classical
-real arithmetic.
+lemmas. The only axioms used are the three standard ones bundled with Rocq's
+classical real arithmetic library (printed at the end of each `.v` file
+under `Print Assumptions` for transparency):
+
+```
+ClassicalDedekindReals.sig_not_dec
+ClassicalDedekindReals.sig_forall_dec
+FunctionalExtensionality.functional_extensionality_dep
+```
+
+These are the standard classical real-number axioms; no library-specific
+or load-bearing axiom is introduced anywhere in this repo. CI fails if any
+`Admitted`, `Axiom`, `Parameter`, or `admit.` appears in `theories/`.
 
 ## Why this exists
 
@@ -97,18 +110,23 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
 
 ## Build
 
-```sh
-# One-time setup (macOS via Homebrew):
-brew install rocq
+Local (macOS via Homebrew):
 
-# Build all proofs:
+```sh
+brew install rocq
 coq_makefile -f _CoqProject -o Makefile
 make
 ```
 
-A successful `make` ends with `theories/*.vo` files and no errors. That
-output is the certificate: each `.vo` file is a kernel-checked term whose
-type is the corresponding theorem statement.
+CI runs the same sequence on `macos-latest` (see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml)) plus a sanity grep
+that fails if any unsoundness marker (`Admitted`, `Axiom`, `Parameter`,
+`admit.`) appears in `theories/`.
+
+A successful `make` ends with `theories/*.vo` files and no errors. Each
+`.vo` file is a kernel-checked term whose type is the corresponding theorem
+statement. Build output also includes the `Print Assumptions` reports
+(see top of this README).
 
 ## Licence
 

@@ -116,3 +116,12 @@ Proof.
   rewrite sqrt_sqrt by exact Hd.
   reflexivity.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Assumption audit. The proofs above rely only on the constructions of the   *)
+(* standard library's classical real arithmetic.  Run with `make` or          *)
+(* `rocq compile theories/Distance.v` and inspect the `Print Assumptions`     *)
+(* output: any axiom not part of the classical Reals stdlib is a red flag.    *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions dist_le_iff_dist_sq_le.

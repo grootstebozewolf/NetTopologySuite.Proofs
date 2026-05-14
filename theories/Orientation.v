@@ -95,3 +95,12 @@ Theorem cross_translation_invariant : forall P0 P1 Q vx vy,
 Proof.
   intros P0 P1 Q vx vy. unfold cross, translate. simpl. ring.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Assumption audit. All theorems in this file are purely algebraic and       *)
+(* depend on `ring`-equivalent reasoning over the real field. No classical    *)
+(* axioms (excluded middle, irrelevance, choice) are introduced.              *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions cross_antisymmetric.
+Print Assumptions cross_translation_invariant.
