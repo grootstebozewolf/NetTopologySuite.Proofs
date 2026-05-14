@@ -18,23 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Cache Homebrew Rocq install
-        id: cache-rocq
-        uses: actions/cache@v5
-        with:
-          path: |
-            /opt/homebrew/Cellar/rocq
-            /opt/homebrew/Cellar/ocaml*
-            /opt/homebrew/Cellar/zarith*
-          key: rocq-${{ matrix.rocq-version }}-${{ runner.os }}-${{ runner.arch }}
-
       - name: Install Rocq via Homebrew
-        if: steps.cache-rocq.outputs.cache-hit != 'true'
+        # Bottled install ~30s; caching the Cellar misses Homebrew's
+        # config files under /opt/homebrew/etc/, which breaks ocamlfind.
+        # Easier to install fresh each run.
         run: brew install rocq
-
-      - name: Link Rocq binaries (when restored from cache)
-        if: steps.cache-rocq.outputs.cache-hit == 'true'
-        run: brew link --force rocq ocaml ocaml-findlib ocaml-zarith || true
 
       - name: Show Rocq version
         run: rocq -v
