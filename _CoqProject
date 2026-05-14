@@ -2,3 +2,4 @@
 
 theories/Distance.v
 theories/Orientation.v
+theories/Segment.v
