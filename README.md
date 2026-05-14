@@ -93,16 +93,40 @@ correspondence.
   product against the segment line cannot lie on the segment. The form
   used by intersection-rejection fast paths.
 
+### `theories/Intersect.v` — segment intersection (soundness direction)
+
+The forward direction of the cross-product based segment intersection
+test used by `RobustLineIntersector` and the overlay machinery. If two
+segments share any common point, then neither segment's line strictly
+separates the other segment's endpoints.
+
+- `convex_combination_zero_opposite_signs` — auxiliary: for *t* ∈ [0, 1],
+  if `(1-t)·a + t·b = 0` then `a · b ≤ 0`.
+- `cross_affine_in_third` — bilinearity of the cross product in its
+  third argument; the algebraic fact powering the rest of the file.
+- **`segments_share_point_implies_opposite_sides`** — the headline
+  theorem. If `between A B X` and `between C D X`, then
+  `cross(A,B,C) · cross(A,B,D) ≤ 0` **and** `cross(C,D,A) · cross(C,D,B) ≤ 0`.
+- `same_side_rejection_is_sound` — corollary in the form NTS's
+  intersection-rejection fast paths use. If either cross-product
+  product is strictly positive, no shared point exists.
+
+This is the soundness direction: every intersection-rejection decision
+based on the cross-product sign test is justified, because a rejected
+pair cannot have a common point. The converse (sign conditions imply a
+shared point exists) is the next roadmap item.
+
 ## Roadmap
 
 Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
 "effort":
 
-1. **Segment intersection proper-cross predicate** — given two segments
-   AB and CD, prove that `cross(A, B, C) * cross(A, B, D) < 0` together
-   with `cross(C, D, A) * cross(C, D, B) < 0` implies the segments share
-   an interior point. This is the missing converse direction of the
-   bridge already proved in `Segment.v`, and would formally close out the
+1. **Segment intersection — completeness direction** — the converse of
+   `segments_share_point_implies_opposite_sides`. Given strict opposite-side
+   conditions on both cross products, construct the intersection point
+   (Cramer's rule yields *t* = cross(C,D,A) / [cross(C,D,A) − cross(C,D,B)],
+   similar for *s*) and prove both parameters lie in (0, 1) and that the
+   resulting points coincide. This closes out the full bidirectional
    robustness story for `RobustLineIntersector.computeIntersect`.
 2. **Robust orientation predicate** — Shewchuk-style filter conditions.
    Prove the unfiltered cross product agrees with the DD-arithmetic
@@ -127,8 +151,12 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
 
 - **2026-05-13**: seed commit with `Distance.v` and `Orientation.v`. CI green.
 - **2026-05-14**: added `Segment.v` and the `between_implies_on_line`
-  bridge. Roadmap item 1 ("proper-cross predicate") is the natural
-  next step now that the parametric/predicate connection is established.
+  bridge.
+- **2026-05-14**: added `Intersect.v`, proving the forward (soundness)
+  direction of the cross-product segment intersection test — every
+  rejection by the sign-product check is justified. The completeness
+  direction (constructing the intersection point from sign conditions)
+  is now the top roadmap item.
 
 ## What this is NOT
 
