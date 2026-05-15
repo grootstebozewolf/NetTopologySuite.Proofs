@@ -387,10 +387,35 @@ Flocq; the corpus-wide no-`Admitted` invariant applies here too.
   `oracle/driver.ml` to build the RocqRefRunner standalone binary.
 
 The R-bridge soundness theorem (`greedy_simplify_binary64_sound` —
-threading Flocq's `Bplus_correct` / `Bmult_correct` no-overflow
-preconditions through the `Fixpoint`) is not yet proven and is not
-stubbed with `Admitted`; the `PROOF STATUS` block at the top of the
-file says so explicitly.
+threading the no-overflow preconditions through the `Fixpoint`) is
+not yet proven and is not stubbed with `Admitted`; the `PROOF STATUS`
+block at the top of the file says so explicitly.  The per-op lifts
+that this theorem composes are now available in
+[`B64_bridge.v`](theories-flocq/B64_bridge.v) (`b64_plus_correct`,
+`b64_minus_correct`, `b64_mult_correct`).
+
+### `theories-flocq/B64_bridge.v` — binary64 ↔ ℝ correctness lifts
+
+Thin wrappers around Flocq's `Bplus_correct` / `Bminus_correct` /
+`Bmult_correct` for the `b64_plus` / `b64_minus` / `b64_mult` helpers
+from `Validate_binary64.v`.  Each theorem takes finiteness of the two
+operands and a no-overflow precondition stated as an R-valued
+inequality on the rounded result, and concludes that the binary64
+operation's `B2R` is exactly the rounded `B2R x ⊕ B2R y` and the
+result is finite.  Same 4-axiom set as the rest of the corpus.
+
+The lifts are deliberately small.  The interesting work moves to the
+caller:
+
+- For the simplifier R-bridge, threading the precondition through
+  the recursive structure of `greedy_simplify_perp_b64`.
+- For Stage A's arithmetic identities (antisymmetry, cyclic
+  permutation, translation invariance), composing two or three lifts
+  per identity under a shared precondition.
+- For Stages B / C of orient2d, threading the precondition through
+  the expansion-arithmetic primitives (`grow-expansion`,
+  `fast-expansion-sum`, `expansion-product`) — see
+  [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md).
 
 ### `theories-flocq/Orientation_b64.v` — Phase 0 chokepoint
 
@@ -490,10 +515,20 @@ into a definite sign) lives in
 [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md).
 Bottom line: Flocq 4.2.2 ships TwoSum, Dekker's TwoProduct, and
 Veltkamp splitting; the missing piece is Shewchuk's expansion
-arithmetic on top of those.  Critical-path dependency is a
-binary64↔ℝ bridge module that simultaneously unlocks the simplifier
-R-bridge, Stage A's arithmetic identities, and Stages B / C of
-orientation — three blocked theorems, one piece of machinery.
+arithmetic on top of those.
+
+The critical-path piece identified in the audit — a binary64↔ℝ
+bridge for the `b64_plus` / `b64_minus` / `b64_mult` helpers — is
+now Qed-closed in
+[`theories-flocq/B64_bridge.v`](theories-flocq/B64_bridge.v).
+Three theorems (`b64_plus_correct`, `b64_minus_correct`,
+`b64_mult_correct`) each state that, under finiteness of operands
+plus a no-overflow precondition, the operation's `B2R` equals the
+exact rounded `B2R x ⊕ B2R y` and the result is finite.  Same
+4-axiom set as the rest of the corpus.  This unblocks three
+downstream targets that were each waiting on the same machinery:
+the simplifier R-bridge, Stage A's arithmetic identities for
+`b64_orient2d`, and Shewchuk Stages B / C of orient2d.
 
 ### Original targets (still relevant, partially complete)
 
@@ -634,6 +669,17 @@ orientation — three blocked theorems, one piece of machinery.
   `OrientSignRobust` enum.  Result: 396 / 396 GreedyPerp +
   RobustOrientation tests bit-exact against the RocqRefRunner — naive
   + filtered modes both green.
+- **2026-05-15**: critical-path module landed.
+  Added `theories-flocq/B64_bridge.v` with `b64_plus_correct`,
+  `b64_minus_correct`, `b64_mult_correct` — thin wrappers around
+  Flocq's `Bplus_correct` / `Bminus_correct` / `Bmult_correct` lifted
+  to the binary64 helpers `b64_plus` / `b64_minus` / `b64_mult` from
+  `Validate_binary64.v`.  Same 4-axiom set as the rest of the corpus;
+  no `Admitted`, no new dependencies beyond Flocq.  This unblocks the
+  simplifier R-bridge, Stage A's arithmetic identities for
+  `b64_orient2d`, and Shewchuk Stages B / C of orient2d — three
+  downstream theorems waiting on the same lift mechanism, see
+  `docs/audit-shewchuk-stages.md`.
 
 ## What this is NOT
 

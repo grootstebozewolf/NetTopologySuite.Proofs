@@ -102,18 +102,12 @@
    Critical-path dependency.  The whole theorem rests on a binary64-to-R
    bridge that wraps Flocq's `Bplus_correct` / `Bmult_correct` for our
    specific `b64_plus` / `b64_minus` / `b64_mult` helpers under the
-   `no_overflow_precond`.  That bridge module does not exist yet; it is
-   the single highest-leverage piece of work in the corpus, unlocking
-   simultaneously:
-
-     - `greedy_simplify_binary64_sound` (the simplifier R-bridge).
-     - The arithmetic identities for `b64_orient2d` (antisymmetry,
-       cyclic permutation, translation invariance).
-     - `b64_orient2d_exact_sound` above.
-
-   Three blocked theorems, one piece of machinery.  See
-   `docs/audit-shewchuk-stages.md` for the full library-reuse map and
-   the expected ordering of work.
+   `no_overflow_precond`.  The per-op lifts (`b64_plus_correct`,
+   `b64_minus_correct`, `b64_mult_correct`) are now Qed-closed in
+   `theories-flocq/B64_bridge.v`.  The remaining work is threading the
+   precondition through the recursive / expansion structure of each
+   downstream theorem.  See `docs/audit-shewchuk-stages.md` for the
+   expected ordering of work.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
