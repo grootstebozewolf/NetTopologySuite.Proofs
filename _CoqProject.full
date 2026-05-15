@@ -40,6 +40,11 @@ theories-flocq/B64_bridge.v
 # of the per-op lifts in B64_bridge.  First downstream consumer of the
 # bridge; establishes the pattern other identities will reuse.
 theories-flocq/Orient_b64_R.v
+# Soundness bridge for the Stage A filter.  Today: decoder consistency
+# (filter's sign matches B2R sign of the rounded value).  Future:
+# cross_R soundness via Shewchuk Stage A forward-error analysis -- see
+# the PROOF STATUS block at the top of the file.
+theories-flocq/Orient_b64_sound.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract

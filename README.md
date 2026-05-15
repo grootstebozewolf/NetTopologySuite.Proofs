@@ -418,6 +418,17 @@ caller:
   `fast-expansion-sum`, `expansion-product`) — see
   [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md).
 
+### `theories-flocq/Orient_b64_sound.v` — soundness bridge for the Stage A filter
+
+First soundness statement for `b64_orient_sign_filtered`.  Currently
+proves *decoder consistency*: the five-valued sign returned by the
+filter agrees with the sign of the rounded binary64 `b64_orient2d`
+value (under `b64_orient2d_safe`).  Defines `cross_R_BP` (the exact
+R-valued cross product on `BPoint` inputs) as the target of the
+future cross_R-soundness theorem.  See the file's PROOF STATUS block
+for the precise statement of that theorem and the Shewchuk Stage A
+forward-error lemma it needs.
+
 ### `theories-flocq/Orient_b64_R.v` — R-side identities for `b64_orient2d`
 
 First downstream consumer of `B64_bridge`.  Bundles the seven
@@ -754,6 +765,42 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   rolled `Valid_exp (SpecFloat.fexp prec emax)` instance because
   the standard FLT instance doesn't unify through definitional
   equality.
+- **2026-05-15**: soundness bridge -- decoder consistency.
+  Added `theories-flocq/Orient_b64_sound.v` with `cross_R_BP`
+  (the exact R-valued cross product on `BPoint` via `B2R` on each
+  coordinate -- the mathematical standard the binary64 evaluation
+  is eventually compared against), `b64_orient2d_finite_of_safe`
+  (chains finiteness through the orient2d composition under
+  `b64_orient2d_safe`), and `b64_orient_sign_filtered_consistent_with_b64`:
+
+      forall P0 P1 Q,
+        b64_orient2d_safe P0 P1 Q ->
+        match b64_orient_sign_filtered P0 P1 Q with
+        | OrientRPos       => 0 < B2R (b64_orient2d P0 P1 Q)
+        | OrientRNeg       => B2R (b64_orient2d P0 P1 Q) < 0
+        | OrientRZero      => B2R (b64_orient2d P0 P1 Q) = 0
+        | OrientRNan       => True
+        | OrientRUncertain => True
+        end.
+
+  The "internal consistency" half of soundness: the five-valued
+  sign decoder agrees with the sign of the rounded binary64 value.
+  Same 4-axiom set, Qed-closed.
+
+  The cross_R-valued soundness theorem -- relating the decoder's
+  sign to the *exact* mathematical cross product -- is documented
+  as a future target in the file's PROOF STATUS block.  It requires
+  the Shewchuk Stage A forward-error theorem:
+
+      Rabs (B2R (b64_orient2d P0 P1 Q) - cross_R_BP P0 P1 Q)
+        <= b64_errbound_A_coeff_value * detsum
+
+  which is the substantive proof slice (~1-3 days), needing per-op
+  forward-error lemmas (`Plus_error.plus_error`, etc.) plus the
+  accumulation analysis through the four `b64_minus` / two
+  `b64_mult` / outer `b64_minus` chain.  Once that lemma lands,
+  cross_R soundness follows mechanically by composition with the
+  decoder-consistency theorem from this slice.
 
 ## What this is NOT
 
