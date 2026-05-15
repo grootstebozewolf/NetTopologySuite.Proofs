@@ -1,17 +1,23 @@
 (* ============================================================================
    NetTopologySuite.Proofs.Flocq.Validate_binary64
    ----------------------------------------------------------------------------
-   Sound executable validation using Flocq's binary64 representation.
-
-   Bridge to the R-based proofs in Simplify.v / Linearise.v under the
-   pattern of Boldo, Jourdan, Leroy, Melquiond (JAR 2015, sec 5):
+   Sound executable validation using Flocq's binary64 representation:
+   the computational + structural layer of the binary64 simplifier.
 
      - A `binary64` type instantiating Flocq's `binary_float prec emax`.
      - A `BPoint` record of two binary64 coordinates.
-     - A `B2R_pt` coercion to the corpus's `Point` (R-valued).
-     - Computable validators that work directly on binary64 values
-       (executable, extractable) and whose soundness is stated relative
-       to the R-valued spec via `B2R_pt`.
+     - Executable binary64 arithmetic helpers (`b64_plus` / `b64_minus`
+       / `b64_mult` / `b64_le`) and the geometric `b64_cross` /
+       `b64_dist_sq`.
+     - The greedy perpendicular-distance simplifier on `list BPoint`.
+     - Structural Qed-closed invariants about the simplifier.
+
+   This file does NOT import the classical real line.  The R-bridge
+   wrappers (`b64_to_R`, `B2R_pt`, `map_B2R`, `is_finite_bp`) and the
+   semantic soundness theorem against `Simplify.simp_star` live in the
+   companion file `Validate_binary64_bridge.v`.  Splitting the two keeps
+   this file's axiom footprint minimal -- the classical-reals axioms
+   only get paid for when soundness against the R-spec is actually used.
 
    Lives in `theories-flocq/` rather than `theories/` because the file
    depends on Flocq, which is not available on the host CI runner.  Only
@@ -25,26 +31,40 @@
    ============
    - Computational implementation : complete + extracted to OCaml.
    - Structural invariants        : fully Qed-closed
-                                    (`_nil`, `_singleton`, `_never_none`,
-                                    `_aux_head`, `_preserves_head`).
-   - Semantic soundness bridge    : NOT YET CLAIMED.  The R-side
-       statement -- "for finite inputs whose intermediate Bplus/Bmult
-       results do not overflow, the binary64 simplifier output is
-       simp_star-related to the input under B2R" -- requires threading
-       Flocq's `Bplus_correct` / `Bmult_correct` no-overflow preconditions
-       through the Fixpoint's recursive case.  That is a dedicated proof
-       slice (Phase 0/1 of the chokepoint roadmap, see README), explicitly
-       deferred rather than stubbed with `Admitted`.
+                                    (`_nil`, `_singleton`, `_two_points`,
+                                    `_never_none`, `_some_eq`, `_aux_head`,
+                                    `_preserves_head`, `_aux_nonempty`,
+                                    `_nonempty`, `_aux_length_le`,
+                                    `_length_le`, `_aux_in_kept`,
+                                    `_in_head`).
+   - Semantic soundness bridge    : NOT YET CLAIMED.  Lives in the
+       companion bridge file together with the `B2R`-based statements.
+       Requires threading Flocq's `Bplus_correct` / `Bmult_correct`
+       no-overflow preconditions through the Fixpoint -- a dedicated
+       proof slice (Phase 0/1 of the chokepoint roadmap, see README),
+       explicitly deferred rather than stubbed with `Admitted`.
 
    EXPECTED AXIOMS (verified by `Print Assumptions` at end of file):
      - ClassicalDedekindReals.sig_not_dec
      - ClassicalDedekindReals.sig_forall_dec
      - FunctionalExtensionality.functional_extensionality_dep
      - Classical_Prop.classic
-   All four are pulled in transitively by `From Stdlib Require Import
-   Reals` -- the corpus's `Real.v` and downstream R-bearing modules all
-   sit on top of Coq's classical real line.  Any axiom beyond these four
-   indicates a regression.
+   Empirical boundary of axiom hygiene in this file (probed with in-file
+   diagnostic lemmas that are now removed, see commit history):
+     - Pure list/nat/boolean proofs                              -> Closed.
+     - Refl-style proofs about BPoint                            -> Closed.
+     - `destruct (b64_le _ _)` alone                             -> Closed.
+     - Anything traversing `greedy_simplify_perp_b64_aux`'s body -> 4 axioms.
+   The four axioms enter through `Binary.Bplus` / `Bminus` / `Bmult`,
+   which Flocq defines in terms of R-valued rounding (`Round_NE_pt`).
+   `Bcompare` itself is structural and axiom-clean.  Dropping the
+   `Stdlib.Reals` and `NTS.Proofs.*` imports (done) did not reduce the
+   set -- Flocq itself pulls them in transitively through the rounding
+   semantics of its arithmetic operations.
+   A future axiom-free structural layer would parametrize the Fixpoint
+   over abstract `le` / `mult` / `cross` / `dist_sq` operations and
+   instantiate them with the Flocq versions only at the bridge file --
+   tracked as a follow-up, not in scope for the current slice.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -52,7 +72,6 @@
      Assisted-by: Claude (Opus-4.7)
    ========================================================================== *)
 
-From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lia.
 From Stdlib Require Import List.
@@ -62,9 +81,12 @@ From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import IEEE754.BinarySingleNaN.
 From Flocq Require Import Core.
 
-From NTS.Proofs Require Import Distance Linearise Simplify Tin.
-
-Local Open Scope R_scope.
+(* Deliberately NO imports from `Stdlib.Reals` or `NTS.Proofs.*` here.  This *)
+(* file is the executable + structural layer for the binary64 simplifier:   *)
+(* nothing it proves needs the classical real line.  The R-bridge wrappers  *)
+(* (`b64_to_R`, `B2R_pt`, `map_B2R`, `is_finite_bp`) live in a separate     *)
+(* `_bridge.v` file, paid for only when the semantic soundness theorem is   *)
+(* tackled.                                                                  *)
 
 (* -------------------------------------------------------------------------- *)
 (* Binary64 setup: IEEE 754 double precision = binary_float 53 1024.          *)
@@ -72,29 +94,10 @@ Local Open Scope R_scope.
 
 Definition prec  : Z := 53.
 Definition emax  : Z := 1024.
-(* Force the IEEE754.Binary type explicitly -- BinarySingleNaN also exports *)
-(* a `binary_float` with the same name but a distinct type, and `Import`   *)
-(* order makes which one wins fragile.  Qualifying once here keeps the     *)
-(* rest of the file uniformly on the Binary side.                          *)
 Definition binary64 := Binary.binary_float prec emax.
 
 Record BPoint : Type := mkBP { bx : binary64; by_ : binary64 }.
 (* `by` is a reserved tactical token in Rocq; using `by_` to avoid the clash. *)
-
-(* Flocq's `B2R` and `is_finite` take `prec` and `emax` as explicit          *)
-(* arguments.  Thin wrappers pin both to our binary64 instance so the rest  *)
-(* of the file reads cleanly.                                                *)
-Definition b64_to_R (x : binary64) : R := Binary.B2R prec emax x.
-Definition b64_is_finite (x : binary64) : bool := Binary.is_finite prec emax x.
-
-Definition B2R_pt (p : BPoint) : Point :=
-  mkPoint (b64_to_R (bx p)) (b64_to_R (by_ p)).
-
-Definition map_B2R (pts : list BPoint) : list Point :=
-  map B2R_pt pts.
-
-Definition is_finite_bp (p : BPoint) : bool :=
-  b64_is_finite (bx p) && b64_is_finite (by_ p).
 
 (* -------------------------------------------------------------------------- *)
 (* Flocq plumbing: pin prec/emax proof witnesses, NaN handler, rounding mode. *)
@@ -357,7 +360,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Axiom audit -- must show only the three classical-reals axioms.           *)
+(* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions greedy_simplify_perp_b64_preserves_head.
