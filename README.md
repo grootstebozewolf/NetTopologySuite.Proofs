@@ -732,6 +732,28 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   not for its binary64 evaluation in general; provable only under
   much stronger preconditions (Sterbenz exactness throughout) or as
   an error-bounded version.
+- **2026-05-15**: magnitude-bounded interface (Flavour B from the
+  Phase 0 audit).  Added to `B64_bridge.v`: `bpow_succ_radix2`,
+  `valid_exp_b64_fexp` (instance bridging `SpecFloat.fexp` to
+  `FLT_exp_valid`), `b64_safe_coord_bound := bpow radix2 500`,
+  `b64_coord_safe`, `generic_format_bpow_b64`,
+  `b64_round_abs_le_bpow`, `b64_safe_minus_of_bounded`,
+  `b64_minus_bounded_R`, `b64_mult_bounded_R`,
+  `b64_safe_minus_of_products_bounded`.  Composed in
+  `Orient_b64_R.v` as `b64_orient2d_inputs_safe P0 P1 Q :=
+  /\ b64_coord_safe (bx P0) ... (by_ Q)` (six conjuncts) plus
+  `Theorem b64_orient2d_inputs_safe_imp_safe` deriving the
+  seven-conjunct `b64_orient2d_safe` from coord-magnitude bounds.
+  This is the ergonomic interface the audit identified: callers
+  state one `b64_coord_safe` per coordinate (a clean condition
+  expressible in human terms as `|coord| <= 2^500`) instead of
+  seven sub-op no-overflow bounds.  Same 4-axiom set, Qed-closed.
+  Cost of getting there: several Coq typeclass-resolution snags
+  documented in the commit message; the proof structure ended up
+  needing explicit `apply round_le radix2 ...` calls and a hand-
+  rolled `Valid_exp (SpecFloat.fexp prec emax)` instance because
+  the standard FLT instance doesn't unify through definitional
+  equality.
 
 ## What this is NOT
 

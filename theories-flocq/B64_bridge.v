@@ -29,6 +29,8 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Lra.
 
 From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import IEEE754.BinarySingleNaN.
@@ -272,6 +274,229 @@ Proof.
   apply (b64_mult_correct _ _ Hsafe).
 Qed.
 
+(* ============================================================================
+   Magnitude-bounded interface (Flavour B from the Phase 0 audit).
+   ----------------------------------------------------------------------------
+   The `b64_safe op x y` predicates above package operand finiteness + a
+   no-overflow check stated as `Rabs (b64_round (op (B2R x) (B2R y))) <
+   bpow emax`.  That's the natural shape for stating per-op correctness,
+   but it's painful for downstream callers: an orient2d soundness theorem
+   needs seven such checks, one per sub-operation, and the bound itself
+   refers to internal rounded values that the caller doesn't directly
+   see.
+
+   The magnitude-bounded interface replaces those seven checks with one
+   coordinate-magnitude bound per input.  Concrete choice: every
+   coordinate has `Rabs (B2R coord) <= 2^500`.  This is comfortably below
+   the overflow threshold (`2^1024`); the chain of intermediate
+   operations in `b64_orient2d` (four subtractions producing values up to
+   `2^501`, two multiplications producing values up to `2^1002`, one
+   outer subtraction producing values up to `2^1003`) never approaches
+   overflow.
+
+   With this interface a downstream caller writes one `b64_coord_safe`
+   per coordinate and gets the corresponding `b64_safe op` predicates
+   for free through the helpers below.
+   ============================================================================ *)
+
+(* Helper: `bpow radix2 (e + 1) = 2 * bpow radix2 e`.  Needed throughout *)
+(* the magnitude chain below; centralised to avoid re-deriving the      *)
+(* `IZR (radix_val radix2) = 2` step inline.                            *)
+Lemma bpow_succ_radix2 :
+  forall e : Z, bpow radix2 (e + 1) = 2 * bpow radix2 e.
+Proof.
+  intros e.
+  rewrite bpow_plus.
+  rewrite bpow_1.
+  simpl.
+  ring.
+Qed.
+
+(* The Valid_exp instance for `SpecFloat.fexp prec emax`.  Flocq's       *)
+(* `FLT_exp_valid` covers the FLT form `FLT_exp emin prec`; we bridge    *)
+(* via `change` because `SpecFloat.fexp prec emax` is definitionally     *)
+(* `FLT_exp (3 - emax - prec) prec` but Coq's typeclass resolution does  *)
+(* not see through the definitional unfolding.  Registering this         *)
+(* instance lets `round_le` and other Flocq lemmas resolve their         *)
+(* implicit `Valid_exp` hypotheses automatically.                         *)
+Instance valid_exp_b64_fexp : Valid_exp (SpecFloat.fexp prec emax).
+Proof.
+  change (SpecFloat.fexp prec emax) with (FLT_exp (3 - emax - prec) prec).
+  apply FLT_exp_valid.
+  exact prec_gt_0_b64.
+Qed.
+
+(* The magnitude bound chosen for safe orient2d (and similar few-step      *)
+(* compositions).  `bpow radix2 500 ≈ 3.3 * 10^150`.  Leaves ~24 binades  *)
+(* of headroom before overflow, enough for orient2d's three-stage chain.  *)
+Definition b64_safe_coord_bound : R := bpow radix2 500.
+
+(* A binary64 value is "coord-safe" if it is finite and its R-image lies *)
+(* within the coordinate bound above.  Six of these per orient2d call    *)
+(* (one per coordinate of the three input points) is enough to discharge *)
+(* every `b64_safe` obligation in `b64_orient2d_safe`.                    *)
+Definition b64_coord_safe (x : binary64) : Prop :=
+  Binary.is_finite prec emax x = true /\
+  Rabs (Binary.B2R prec emax x) <= b64_safe_coord_bound.
+
+(* The bound is positive; used throughout the chain. *)
+Lemma b64_safe_coord_bound_pos : 0 < b64_safe_coord_bound.
+Proof. unfold b64_safe_coord_bound. apply bpow_gt_0. Qed.
+
+(* `bpow e` is in the FLT format when `e + 1 - prec >= emin`, i.e. for     *)
+(* binary64 when `e >= -1020`.  Our chain only uses bpow at e in [500,    *)
+(* 1010], well within range.  Phrased as a re-usable helper.              *)
+Lemma generic_format_bpow_b64 :
+  forall e : Z,
+    (3 - emax <= e + 1)%Z ->
+    generic_format radix2 (SpecFloat.fexp prec emax) (bpow radix2 e).
+Proof.
+  intros e He.
+  apply generic_format_bpow.
+  change (SpecFloat.fexp prec emax (e + 1))
+    with (Z.max (e + 1 - 53) (3 - 1024 - 53)).
+  unfold prec, emax in He.
+  apply Z.max_lub; lia.
+Qed.
+
+(* Round-to-nearest-even preserves the magnitude bound `bpow e` whenever  *)
+(* the input's magnitude is already `<= bpow e`, provided bpow e is in    *)
+(* the format (the side-condition discharged by `generic_format_bpow_b64`).*)
+Lemma b64_round_abs_le_bpow :
+  forall x : R, forall e : Z,
+    (3 - emax <= e + 1)%Z ->
+    Rabs x <= bpow radix2 e ->
+    Rabs (b64_round x) <= bpow radix2 e.
+Proof.
+  intros x e He Hx.
+  pose proof (generic_format_bpow_b64 e He) as Hfmt.
+  pose proof (generic_format_opp _ _ _ Hfmt) as Hfmt_neg.
+  apply Rabs_le_inv in Hx.
+  apply Rabs_le.
+  split.
+  - rewrite <- (round_generic radix2 (SpecFloat.fexp prec emax)
+                  (round_mode mode_b64) (- bpow radix2 e) Hfmt_neg).
+    apply (round_le radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64)).
+    tauto.
+  - rewrite <- (round_generic radix2 (SpecFloat.fexp prec emax)
+                  (round_mode mode_b64) (bpow radix2 e) Hfmt).
+    apply (round_le radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64)).
+    tauto.
+Qed.
+
+(* Coord-safe operands give a safe `b64_minus`: the rounded difference   *)
+(* has magnitude at most `bpow 501`, well below `bpow emax = bpow 1024`. *)
+Lemma b64_safe_minus_of_bounded :
+  forall x y : binary64,
+    b64_coord_safe x -> b64_coord_safe y ->
+    b64_safe Rminus x y.
+Proof.
+  intros x y [Fx Hx] [Fy Hy].
+  unfold b64_safe.
+  split; [exact Fx | split; [exact Fy | ]].
+  apply (Rle_lt_trans _ (bpow radix2 501)).
+  - apply b64_round_abs_le_bpow.
+    + unfold emax. lia.
+    + unfold Rminus.
+      apply (Rle_trans _ (Rabs (Binary.B2R prec emax x)
+                          + Rabs (- Binary.B2R prec emax y))).
+      * apply Rabs_triang.
+      * rewrite Rabs_Ropp.
+        unfold b64_safe_coord_bound in Hx, Hy.
+        replace 501%Z with (500 + 1)%Z by lia.
+        rewrite bpow_succ_radix2.
+        lra.
+  - apply bpow_lt. unfold emax. lia.
+Qed.
+
+(* The result of a coord-safe `b64_minus` is itself bounded by `bpow 501`,  *)
+(* and is finite.  Needed for chaining: the products in orient2d multiply   *)
+(* these differences, so we need bounds on them.                            *)
+Lemma b64_minus_bounded_R :
+  forall x y : binary64,
+    b64_coord_safe x -> b64_coord_safe y ->
+    Rabs (Binary.B2R prec emax (b64_minus x y)) <= bpow radix2 501
+    /\ Binary.is_finite prec emax (b64_minus x y) = true.
+Proof.
+  intros x y Hx Hy.
+  pose proof (b64_safe_minus_of_bounded _ _ Hx Hy) as Hsafe.
+  pose proof (b64_minus_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [|exact Hfin].
+  rewrite HB2R.
+  apply b64_round_abs_le_bpow; [unfold emax; lia |].
+  destruct Hx as [_ Hx_bound].
+  destruct Hy as [_ Hy_bound].
+  unfold Rminus.
+  apply (Rle_trans _ (Rabs (Binary.B2R prec emax x)
+                      + Rabs (- Binary.B2R prec emax y))).
+  - apply Rabs_triang.
+  - rewrite Rabs_Ropp.
+    unfold b64_safe_coord_bound in Hx_bound, Hy_bound.
+    replace 501%Z with (500 + 1)%Z by lia.
+    rewrite bpow_succ_radix2.
+    lra.
+Qed.
+
+(* The mult counterpart: if both operands are bounded by bpow 501 (the     *)
+(* output of one coord-safe minus), the rounded product is bounded by     *)
+(* bpow 1002 and finite.                                                    *)
+Lemma b64_mult_bounded_R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 501 ->
+    Rabs (Binary.B2R prec emax y) <= bpow radix2 501 ->
+    Rabs (Binary.B2R prec emax (b64_mult x y)) <= bpow radix2 1002
+    /\ Binary.is_finite prec emax (b64_mult x y) = true.
+Proof.
+  intros x y Fx Fy Hx Hy.
+  assert (Hsafe : b64_safe Rmult x y).
+  { repeat split; try assumption.
+    apply (Rle_lt_trans _ (bpow radix2 1002)).
+    - apply b64_round_abs_le_bpow; [unfold emax; lia |].
+      rewrite Rabs_mult.
+      replace 1002%Z with (501 + 501)%Z by lia.
+      rewrite bpow_plus.
+      apply Rmult_le_compat; try apply Rabs_pos; assumption.
+    - apply bpow_lt. unfold emax. lia. }
+  pose proof (b64_mult_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [|exact Hfin].
+  rewrite HB2R.
+  apply b64_round_abs_le_bpow; [unfold emax; lia |].
+  rewrite Rabs_mult.
+  replace 1002%Z with (501 + 501)%Z by lia.
+  rewrite bpow_plus.
+  apply Rmult_le_compat; try apply Rabs_pos; assumption.
+Qed.
+
+(* Finally, the outer subtraction in orient2d: if both products are       *)
+(* bounded by bpow 1002, their rounded difference is bounded by bpow 1003 *)
+(* and finite -- and `bpow 1003 < bpow emax = bpow 1024`, so we have a    *)
+(* safe outer minus.                                                       *)
+Lemma b64_safe_minus_of_products_bounded :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 1002 ->
+    Rabs (Binary.B2R prec emax y) <= bpow radix2 1002 ->
+    b64_safe Rminus x y.
+Proof.
+  intros x y Fx Fy Hx Hy.
+  unfold b64_safe.
+  split; [exact Fx | split; [exact Fy | ]].
+  apply (Rle_lt_trans _ (bpow radix2 1003)).
+  - apply b64_round_abs_le_bpow; [unfold emax; lia |].
+    unfold Rminus.
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax x)
+                        + Rabs (- Binary.B2R prec emax y))).
+    + apply Rabs_triang.
+    + rewrite Rabs_Ropp.
+      replace 1003%Z with (1002 + 1)%Z by lia.
+      rewrite bpow_succ_radix2.
+      lra.
+  - apply bpow_lt. unfold emax. lia.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
@@ -282,3 +507,5 @@ Print Assumptions b64_mult_correct.
 Print Assumptions b64_minus_self_R.
 Print Assumptions b64_mult_zero_l_R.
 Print Assumptions b64_mult_zero_r_R.
+Print Assumptions b64_safe_minus_of_bounded.
+Print Assumptions b64_mult_bounded_R.

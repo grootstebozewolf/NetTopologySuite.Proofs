@@ -54,6 +54,7 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
+From Stdlib Require Import Lia.
 
 From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import Core.
@@ -123,6 +124,79 @@ Proof.
   rewrite <- round_NE_opp.
   rewrite Ropp_minus_distr.
   reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Magnitude-bounded interface (Flavour B).                                  *)
+(*                                                                            *)
+(* `b64_orient2d_inputs_safe P0 P1 Q` packages the six coord-magnitude       *)
+(* obligations (one per coordinate of the three input points) that suffice   *)
+(* to discharge every `b64_safe` premise in `b64_orient2d_safe`.  The bound *)
+(* `2^500` is comfortably below the overflow threshold; intermediate ops    *)
+(* in the orient2d chain go up to ~`2^1003`, still below `2^1024`.           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_orient2d_inputs_safe (P0 P1 Q : BPoint) : Prop :=
+  b64_coord_safe (bx P0)  /\
+  b64_coord_safe (by_ P0) /\
+  b64_coord_safe (bx P1)  /\
+  b64_coord_safe (by_ P1) /\
+  b64_coord_safe (bx Q)   /\
+  b64_coord_safe (by_ Q).
+
+Theorem b64_orient2d_inputs_safe_imp_safe :
+  forall P0 P1 Q : BPoint,
+    b64_orient2d_inputs_safe P0 P1 Q ->
+    b64_orient2d_safe P0 P1 Q.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  unfold b64_orient2d_safe.
+  (* The four coordinate-difference safe predicates come straight from      *)
+  (* `b64_safe_minus_of_bounded` on each pair.                              *)
+  split; [apply b64_safe_minus_of_bounded; assumption|].
+  split; [apply b64_safe_minus_of_bounded; assumption|].
+  split; [apply b64_safe_minus_of_bounded; assumption|].
+  split; [apply b64_safe_minus_of_bounded; assumption|].
+  (* The two product safe predicates use `b64_mult_bounded_R`'s precondition:
+     each operand is the result of a coord-safe minus, hence bounded by
+     `bpow 501` and finite.                                                  *)
+  destruct (b64_minus_bounded_R _ _ HxP1 HxP0) as [Bdx1 Fdx1].
+  destruct (b64_minus_bounded_R _ _ HyQ  HyP0) as [Bdy1 Fdy1].
+  destruct (b64_minus_bounded_R _ _ HxQ  HxP0) as [Bdx2 Fdx2].
+  destruct (b64_minus_bounded_R _ _ HyP1 HyP0) as [Bdy2 Fdy2].
+  split.
+  { (* b64_safe Rmult dx1 dy1 *)
+    assert (Hsafe : b64_safe Rmult
+                      (b64_minus (bx P1) (bx P0))
+                      (b64_minus (by_ Q) (by_ P0))).
+    { repeat split; try assumption.
+      apply (Rle_lt_trans _ (bpow radix2 1002)).
+      - apply b64_round_abs_le_bpow; [unfold emax; lia |].
+        rewrite Rabs_mult.
+        replace 1002%Z with (501 + 501)%Z by lia.
+        rewrite bpow_plus.
+        apply Rmult_le_compat; try apply Rabs_pos; assumption.
+      - apply bpow_lt. unfold emax. lia. }
+    exact Hsafe. }
+  split.
+  { (* b64_safe Rmult dx2 dy2 *)
+    assert (Hsafe : b64_safe Rmult
+                      (b64_minus (bx Q) (bx P0))
+                      (b64_minus (by_ P1) (by_ P0))).
+    { repeat split; try assumption.
+      apply (Rle_lt_trans _ (bpow radix2 1002)).
+      - apply b64_round_abs_le_bpow; [unfold emax; lia |].
+        rewrite Rabs_mult.
+        replace 1002%Z with (501 + 501)%Z by lia.
+        rewrite bpow_plus.
+        apply Rmult_le_compat; try apply Rabs_pos; assumption.
+      - apply bpow_lt. unfold emax. lia. }
+    exact Hsafe. }
+  (* Final outer subtraction: both products are bounded by bpow 1002 and    *)
+  (* finite.                                                                *)
+  destruct (b64_mult_bounded_R _ _ Fdx1 Fdy1 Bdx1 Bdy1) as [Bt1 Ft1].
+  destruct (b64_mult_bounded_R _ _ Fdx2 Fdy2 Bdx2 Bdy2) as [Bt2 Ft2].
+  apply (b64_safe_minus_of_products_bounded _ _ Ft1 Ft2 Bt1 Bt2).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
