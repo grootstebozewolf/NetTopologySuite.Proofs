@@ -75,7 +75,7 @@ let run_orient () =
   let p0 = parse_point (input_line stdin) in
   let p1 = parse_point (input_line stdin) in
   let q  = parse_point (input_line stdin) in
-  let s = b64_orient_sign p0 p1 q in
+  let s = b64_orient_sign_naive p0 p1 q in
   let v = b64_orient2d p0 p1 q in
   Printf.printf "%s %h\n" (sign_string s) v
 

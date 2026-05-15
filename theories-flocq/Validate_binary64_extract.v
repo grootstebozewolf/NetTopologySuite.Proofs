@@ -107,5 +107,5 @@ Extraction Language OCaml.
 Extraction "oracle/extracted.ml"
   greedy_simplify_perp_b64
   b64_orient2d
-  b64_orient_sign
+  b64_orient_sign_naive
   b64_orient_sign_filtered.
