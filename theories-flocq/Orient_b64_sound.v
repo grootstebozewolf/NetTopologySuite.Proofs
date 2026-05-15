@@ -40,7 +40,19 @@
          | OrientRUncertain => True
          end.
 
-   This theorem requires the Shewchuk Stage A forward-error bound:
+   STRATEGY NOTE (see docs/soundness-strategy.md).  Two paths to this
+   theorem are open.  Path 1 = Shewchuk-style forward-error analysis
+   (slices 2a/2b/2c + 3 described below).  Slice 2a shipped in
+   B64_bridge.v; the remaining slices are scaffolding-heavy.  Path 2 =
+   an integer-coordinate exact regime, where |coord| <= 2^25 implies
+   every binary64 op in the orient2d chain is bit-exact (Sterbenz + the
+   53-bit integer-exactness window).  Path 2 ships an end-to-end
+   headline for a restricted regime in one move; Path 1 covers the full
+   bounded regime but takes several sessions.  The slices documented
+   below describe Path 1; current development is on Path 2.
+
+   Under Path 1 this theorem requires the Shewchuk Stage A forward-
+   error bound:
 
      Theorem b64_orient2d_forward_error :
        forall P0 P1 Q,

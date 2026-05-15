@@ -426,8 +426,11 @@ filter agrees with the sign of the rounded binary64 `b64_orient2d`
 value (under `b64_orient2d_safe`).  Defines `cross_R_BP` (the exact
 R-valued cross product on `BPoint` inputs) as the target of the
 future cross_R-soundness theorem.  See the file's PROOF STATUS block
-for the precise statement of that theorem and the Shewchuk Stage A
-forward-error lemma it needs.
+for the precise statement of that theorem, and
+[`docs/soundness-strategy.md`](docs/soundness-strategy.md) for the
+two open paths to it (a Shewchuk-style forward-error analysis that
+was attempted and demoted, and an integer-coordinate exact regime
+currently in progress).
 
 ### `theories-flocq/Orient_b64_R.v` — R-side identities for `b64_orient2d`
 
