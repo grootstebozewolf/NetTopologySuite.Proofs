@@ -38,8 +38,14 @@ jobs:
         # is about which CI runner builds the file (host vs container),
         # not about which proof standard it meets.  Same Qed-closed rule
         # applies uniformly.
+        #
+        # The regex anchors each keyword to the start of a line (modulo
+        # leading whitespace) so prose mentions in comments like
+        # "No Admitted, no Axiom" do not trip the check -- only actual
+        # Rocq proof-script keywords do.  `admit.` keeps its word-boundary
+        # form because it appears mid-line as a tactic.
         run: |
-          if grep -nE 'Admitted|^\s*Axiom\b|^\s*Parameter\b|admit\.' theories/*.v theories-flocq/*.v; then
+          if grep -nE '^[[:space:]]*Admitted[[:space:]]*\.|^[[:space:]]*Axiom\b|^[[:space:]]*Parameter\b|\badmit\.' theories/*.v theories-flocq/*.v; then
             echo "::error::Found unsoundness markers. The repo's invariant is that every proof terminates with Qed in BOTH theories/ and theories-flocq/."
             exit 1
           fi
