@@ -302,6 +302,55 @@ Qed.
 Definition segments_1d_overlap (A B C D : Point) : Prop :=
   between C D A \/ between C D B \/ between A B C \/ between A B D.
 
+(* General version: the four cross-zero premises aren't actually needed   *)
+(* -- the proof is pure witness selection.  Whenever the 1D overlap        *)
+(* predicate holds (some endpoint of one segment is between the endpoints *)
+(* of the other), the shared point is that endpoint itself.  This single  *)
+(* theorem covers all three "positive claim" sub-cases of                  *)
+(* `IntersectCollinear`:                                                    *)
+(*                                                                          *)
+(*   - Shared endpoint (e.g. A = C):                                        *)
+(*       `between C D A` holds via `between_P0`.                            *)
+(*   - T-junction (one endpoint strictly inside opposite segment):          *)
+(*       e.g. A strictly between C and D, captured by `between C D A`      *)
+(*       with the parameter in `(0, 1)`.                                    *)
+(*   - Full collinear overlap:                                              *)
+(*       At least one endpoint of one segment lies inside the other --      *)
+(*       same disjunction.                                                  *)
+(*                                                                          *)
+(* The DETECTION of these cases from raw coordinates (i.e., recognising    *)
+(* `between A B C` from cross-zero + coord-range checks) needs a converse  *)
+(* of `between_in_coord_range`:                                             *)
+(*                                                                          *)
+(*   Lemma between_of_on_line_and_coord_range :                             *)
+(*     cross P0 P1 Q = 0 ->                                                 *)
+(*     Rmin (px P0) (px P1) <= px Q <= Rmax (px P0) (px P1) ->              *)
+(*     Rmin (py P0) (py P1) <= py Q <= Rmax (py P0) (py P1) ->              *)
+(*     between P0 P1 Q.                                                     *)
+(*                                                                          *)
+(* That converse is a 1-2 hour case-split (axis-aligned segments,           *)
+(* vertical-only, degenerate `P0 = P1`) and is the natural follow-up for   *)
+(* the full T-junction detection function.  This slice ships the general    *)
+(* "premise carries a `between` witness" theorem -- callers with their      *)
+(* own way of producing the witness use it directly.                        *)
+
+Theorem segments_1d_overlap_share :
+  forall A B C D : Point,
+    segments_1d_overlap A B C D ->
+    exists P, between A B P /\ between C D P.
+Proof.
+  intros A B C D Hov.
+  destruct Hov as [HA | [HB | [HC | HD]]].
+  - exists A. split; [apply between_P0 | exact HA].
+  - exists B. split; [apply between_P1 | exact HB].
+  - exists C. split; [exact HC | apply between_P0].
+  - exists D. split; [exact HD | apply between_P1].
+Qed.
+
+(* Backward-compatible corollary with the cross-zero premises spelled out. *)
+(* Useful when callers want to document that the geometric configuration   *)
+(* is "all four points mutually collinear", even though the proof does     *)
+(* not technically need that.                                              *)
 Theorem collinear_overlap_completeness :
   forall A B C D,
     cross A B C = 0 -> cross A B D = 0 ->
@@ -310,11 +359,7 @@ Theorem collinear_overlap_completeness :
     exists P, between A B P /\ between C D P.
 Proof.
   intros A B C D _ _ _ _ Hov.
-  destruct Hov as [HA | [HB | [HC | HD]]].
-  - exists A. split; [apply between_P0 | exact HA].
-  - exists B. split; [apply between_P1 | exact HB].
-  - exists C. split; [exact HC | apply between_P0].
-  - exists D. split; [exact HD | apply between_P1].
+  apply segments_1d_overlap_share. exact Hov.
 Qed.
 
 (* Symmetry: swapping the two segments leaves the 1D-overlap predicate     *)
@@ -368,6 +413,7 @@ Qed.
 Print Assumptions segments_share_point_implies_opposite_sides.
 Print Assumptions same_side_rejection_is_sound.
 Print Assumptions strict_completeness.
+Print Assumptions segments_1d_overlap_share.
 Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
 Print Assumptions segments_1d_overlap_shared_endpoint.
