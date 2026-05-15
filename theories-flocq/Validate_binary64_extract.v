@@ -1,11 +1,18 @@
 (* ============================================================================
    NetTopologySuite.Proofs.Flocq.Validate_binary64_extract
    ----------------------------------------------------------------------------
-   Native-float OCaml extraction of the verified binary64 simplifier.
+   Native-float OCaml extraction for the RocqRefRunner binary.
 
-   This file produces the standalone `oracle/extracted.ml` used by the
-   companion oracle binary under `oracle/`, which the differential test
-   harness in NetTopologySuite.Curve shells out to during fuzzing.
+   Currently extracts:
+     - `greedy_simplify_perp_b64`   from `Validate_binary64.v`
+     - `b64_orient2d`               from `Orientation_b64.v`
+     - `b64_orient_sign`            from `Orientation_b64.v`
+
+   The companion `oracle/driver.ml` dispatches on a mode line on stdin
+   (`SIMPLIFY` or `ORIENT`) and routes the rest of the input through the
+   appropriate function.  Producing a single binary lets the C# side
+   point one env var (`ROCQ_REF_BIN`) at one path for both Phase 0a
+   (simplifier) and Phase 0 (orientation).
 
    IMPORTANT: this extraction is NOT part of the trusted proof base.
    The Coq proofs in `Validate_binary64.v` stay on Flocq's abstract
@@ -30,6 +37,7 @@
    ========================================================================== *)
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
+From NTS.Proofs.Flocq Require Import Orientation_b64.
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -77,4 +85,11 @@ Extraction Language OCaml.
 (* Write the extracted code to `oracle/extracted.ml` (relative to the    *)
 (* project root, which is the cwd of the makefile).  The driver in      *)
 (* `oracle/driver.ml` consumes the extracted module.                     *)
-Extraction "oracle/extracted.ml" greedy_simplify_perp_b64.
+(*                                                                       *)
+(* All RocqRefRunner-facing functions are listed in one call so the      *)
+(* dependency closure (BPoint, binary64, b64_le, b64_cross, ...) is      *)
+(* emitted exactly once.                                                  *)
+Extraction "oracle/extracted.ml"
+  greedy_simplify_perp_b64
+  b64_orient2d
+  b64_orient_sign.
