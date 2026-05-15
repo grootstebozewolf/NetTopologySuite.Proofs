@@ -559,7 +559,7 @@ publishable.
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
 | 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stages B/C/D expansion refinement (in particular Stage D's renormalization) + general bounded-magnitude cross_R soundness deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
-| 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked | 0% |
+| 1 | `Intersect_b64.v` — predicate-level robust segment intersection | **predicate complete** — five-valued `IntersectSign` filter built on top of Phase 0's `b64_orient_sign_filtered`; structural lemmas Qed-closed (decidability, totality, 10-way distinctness, NaN propagation); integer-regime cross_R soundness for both `IntersectNone` (no shared point) and `IntersectPoint` (exists shared interior point) via the R-side `strict_completeness` theorem in `theories/Intersect.v`; `IntersectCollinear` sub-case disambiguation + intersection-point coordinate computation deferred — see [`docs/phase1-completion.md`](docs/phase1-completion.md) | **predicate-complete** — `Robust.Intersect.RobustLineIntersector` (`SignFiltered` returning 5-valued `IntersectSign`) bit-exact against RocqRefRunner `INTERSECT_FILTERED` mode, 187 / 187 differential cases including integer-regime adversarial family |
 | 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
 | 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future | 0% |
@@ -901,6 +901,48 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   deliver, just achieved via exactness rather than expansion
   arithmetic.  No middle ground exists between "the integer regime as
   shipped" and "full B/C/D".
+- **2026-05-15**: Phase 1 first slice -- `Intersect_b64.v`.  Five-valued
+  segment-pair intersection predicate built on top of Phase 0's Stage A
+  filter, four orientation tests + case dispatch.  Structural lemmas
+  (decidability, totality, 10-way distinctness, NaN propagation) and
+  the integer-regime `IntersectNone` rejection-soundness theorem all
+  Qed-closed in this slice.  `IntersectPoint` / `IntersectCollinear`
+  soundness deferred pending the R-side completeness theorem.
+- **2026-05-15**: Phase 1 oracle + .Curve port shipped.  Added
+  `INTERSECT_FILTERED` mode to `RocqRefRunner` (extraction list +
+  `oracle/driver.ml`); ported `Robust.Intersect.RobustLineIntersector`
+  in
+  [NetTopologySuite.Curve PR #11](https://github.com/NetTopologySuite/NetTopologySuite.Curve/pull/11).
+  187 / 187 differential tests bit-equal: 7 deterministic fixtures, 80
+  random uniforms, 8 NaN positions, 5 huge-magnitude, 7 integer-regime
+  boundary fixtures, 80 random integer fuzz.
+- **2026-05-15**: R-side `strict_completeness` -- the deferred converse
+  of rejection-soundness in `theories/Intersect.v`.  Constructive
+  witness via Cramer's rule: `X = lerp t C D` where
+  `t = cross A B C / (cross A B C - cross A B D)`.  Helper
+  `div_in_unit_interval` clears the `nra`-through-`Rdiv` issue with an
+  inverse-product hint.  Closes the proper-crossing direction; the
+  full `<= 0` converse remains FALSE (collinear-disjoint
+  counter-example documented inline).
+- **2026-05-15**: Phase 1 headline -- match-on-five soundness.
+  `b64_intersect_sign_filtered_sound_small_int` composes
+  `strict_completeness` with the existing rejection-soundness to claim:
+  `IntersectNone` ⇒ no shared point and `IntersectPoint` ⇒ shared
+  interior point exists, both in the integer regime.
+  `IntersectCollinear` remains the only branch making no positive
+  claim -- the parallel to Phase 0's `IntersectUncertain`.
+- **2026-05-15**: Phase 1 consolidation point.  See
+  [`docs/phase1-completion.md`](docs/phase1-completion.md) for the
+  full inventory + deferral rationale.  The predicate-level
+  intersection deliverable is shipped end-to-end (Coq soundness + C#
+  port + 187/187 differential).  Two pieces are deferred and parallel
+  Phase 0's deferred work: `IntersectCollinear` sub-case
+  disambiguation (parallel to `IntersectUncertain` -- the predicate
+  honestly declines to commit) and intersection-point coordinate
+  computation (parallel to Stage D -- requires `b64_div` + forward
+  error analysis, multi-session engagement).  No middle ground between
+  "the predicate as shipped" and the full coordinate / sub-case story
+  buys meaningful intermediate value.
 
 ## What this is NOT
 
