@@ -28,8 +28,8 @@
                                               OrientRNan and OrientRUncertain
                                               make no claim.
 
-   Path 2 (shipped in `Orient_b64_exact.v`): the cross_R-valued
-   soundness theorem restricted to the integer regime.
+   Path 2 (shipped, Qed-closed): cross_R-valued soundness restricted to
+   the integer regime, in `Orient_b64_exact.v`.
 
      Theorem b64_orient_sign_filtered_sound_small_int :
        forall P0 P1 Q,
@@ -49,20 +49,28 @@
    nose -- composing with this file's decoder-consistency lemma gives
    the headline.
 
-   Still open (Path 1, the general bounded-magnitude regime):
-     Theorem b64_orient_sign_filtered_sound :
-       forall P0 P1 Q,
-         b64_orient2d_inputs_safe P0 P1 Q ->
-         match b64_orient_sign_filtered P0 P1 Q with ... end.
+   Companion R-side identities in the same regime (Orient_b64_exact.v):
+     - b64_orient2d_cyclic_int_R, _cyclic2_int_R -- the two cyclic
+       permutations of (P0, P1, Q).
 
-   STRATEGY NOTE (see docs/soundness-strategy.md).  Two paths to the
-   general theorem are documented there.  Path 1 = Shewchuk-style
-   forward-error analysis (slices 2a/2b/2c + 3 described below).
-   Slice 2a is in B64_bridge.v; remaining slices are scaffolding-heavy.
-   Path 2 was the integer-coordinate exact regime documented above and
-   shipped in `Orient_b64_exact.v`.
+   And in `Orient_b64_R.v` under the safe-magnitude regime:
+     - b64_orient2d_antisymmetric_R
+     - b64_orient2d_at_P0_R, _at_P1_R, _at_P0_eq_P1_R -- vertex
+       coincidences and degenerate base.
 
-   Under Path 1 the general theorem requires the Shewchuk Stage A
+   Open (and the only remaining gap for Phase 0 soundness): cross_R
+   soundness for the *general* bounded-magnitude regime
+   `b64_orient2d_inputs_safe` (`|coord| <= 2^500`).  Closing it
+   requires Shewchuk's Stages B/C/D -- in particular Stage D
+   (renormalization + reliable sign-of-expansion extraction), which is
+   qualitatively harder than the work shipped so far.  See
+   `docs/soundness-strategy.md` for the consolidation discussion.
+
+   Path 1 below (forward-error analysis) is the alternative angle on
+   the same gap.  Slice 2a is in B64_bridge.v; remaining slices are
+   scaffolding-heavy and were demoted from critical path on 2026-05-15.
+
+   Under Path 1 the general theorem would require the Shewchuk Stage A
    forward-error bound:
 
      Theorem b64_orient2d_forward_error :

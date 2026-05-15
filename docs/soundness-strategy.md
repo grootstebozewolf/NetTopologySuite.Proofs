@@ -7,6 +7,43 @@ the alternative path now being pursued. Both paths remain technically
 viable; the choice between them is a question of effort vs. coverage,
 not correctness.
 
+## Current state (2026-05-15, consolidation point)
+
+**Shipped, Qed-closed.** Cross_R-valued soundness for
+`b64_orient_sign_filtered`, restricted to integer-valued coordinates
+with `|coord| <= 2^25`. Headline theorem
+`b64_orient_sign_filtered_sound_small_int` in
+[`Orient_b64_exact.v`](../theories-flocq/Orient_b64_exact.v). R-side
+identities in the same regime:
+
+- antisymmetry — `b64_orient2d_antisymmetric_R`
+- vertex coincidences — `b64_orient2d_at_P0_R`, `_at_P1_R`,
+  `_at_P0_eq_P1_R`
+- cyclic permutations — `b64_orient2d_cyclic_int_R`, `_cyclic2_int_R`
+
+In this regime `B2R (b64_orient2d P0 P1 Q) = cross_R_BP P0 P1 Q` on the
+nose: every operation in the chain is bit-exact because every
+intermediate stays within binary64's 53-bit integer-exactness window.
+The naive evaluator's sign is already correct without filter or
+expansion arithmetic. Stage D is unnecessary here.
+
+**Open.** Cross_R-valued soundness for the general bounded-magnitude
+regime (`|coord| <= 2^500` in `b64_orient2d_inputs_safe`). This requires
+Shewchuk's Stages B/C/D — and in particular Stage D
+(*renormalization + reliable sign-of-expansion extraction*), which is
+qualitatively harder than the work shipped so far. Stages B and C alone
+are mechanically worthless without D: they produce a more expensive way
+to compute a value whose sign you still can't trust. Path 1 below
+documents the forward-error attempt that addressed the same gap from a
+different angle; that attempt was demoted to "useful primitive" rather
+than critical path.
+
+**The integer regime *is* the scoped-down complete-soundness an
+abbreviated Stage D would otherwise have to deliver** — just achieved
+via exactness rather than expansion arithmetic. There is no
+intermediate scope between "the integer regime as shipped" and "full
+B/C/D" that adds value over what's already in.
+
 ## Goal
 
 Close the cross-product soundness theorem for the Stage A filter:

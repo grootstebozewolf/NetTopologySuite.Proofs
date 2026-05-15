@@ -558,7 +558,7 @@ publishable.
 | Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v`); Stages B/C/D expansion refinement + general bounded-magnitude cross_R soundness deferred (Path 1 in [`docs/soundness-strategy.md`](docs/soundness-strategy.md)) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stages B/C/D expansion refinement (in particular Stage D's renormalization) + general bounded-magnitude cross_R soundness deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
 | 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked | 0% |
 | 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
@@ -873,6 +873,34 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   no inequality.  Composes mechanically with the decoder-consistency
   theorem from `Orient_b64_sound.v`.  Same 4-axiom set, Qed-closed.
   The general bounded-magnitude regime remains an open Path 1.
+- **2026-05-15**: vertex coincidence identities completed -- `at_P1`
+  (Q = P1) and `at_P0_eq_P1` (degenerate base) added to
+  `Orient_b64_R.v`.  Both reuse the zero-arithmetic helpers in
+  `B64_bridge.v`.  Three classic vertex-degeneracy cases now covered.
+- **2026-05-15**: cyclic permutation in the integer regime
+  (`b64_orient2d_cyclic_int_R`, `_cyclic2_int_R` in
+  `Orient_b64_exact.v`).  The two non-trivial cyclic permutations of
+  three vertices now produce equal `B2R (b64_orient2d ...)` under
+  `orient2d_inputs_int_safe`.  Proof is mechanical: exactness lifts
+  each side to its `cross_R_BP` value, and `ring` closes the polynomial
+  identity.  This is the identity deferred in `Orient_b64_R.v` for the
+  general regime (where rounding errors don't structurally cancel) --
+  in the integer regime the errors are zero, so the obstruction
+  vanishes.
+- **2026-05-15**: Phase 0 consolidation point.  Soundness story for
+  `b64_orient_sign_filtered` is closed for the integer regime
+  (`|coord| <= 2^25` integer-valued): headline cross_R soundness +
+  antisymmetry + all three vertex degeneracies + both cyclic
+  permutations, all Qed-closed.  The general bounded-magnitude regime
+  remains open and requires Shewchuk's Stages B/C/D -- in particular
+  Stage D (renormalization + reliable sign-of-expansion extraction),
+  which is qualitatively harder than the work shipped so far.  See
+  [`docs/soundness-strategy.md`](docs/soundness-strategy.md) for the
+  consolidation discussion: the integer regime *is* the scoped-down
+  complete-soundness an abbreviated Stage D would otherwise have to
+  deliver, just achieved via exactness rather than expansion
+  arithmetic.  No middle ground exists between "the integer regime as
+  shipped" and "full B/C/D".
 
 ## What this is NOT
 
