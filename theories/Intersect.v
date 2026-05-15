@@ -197,8 +197,84 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Strict completeness (the partial converse of                               *)
+(* `segments_share_point_implies_opposite_sides`).                            *)
+(*                                                                            *)
+(* If BOTH cross-product products are strictly negative, the segments share   *)
+(* an interior point.  This is the "proper crossing" case: all four signs    *)
+(* are non-zero, with opposite signs in each pair.  Witness is constructed   *)
+(* explicitly via Cramer's rule on the parametric form: the intersection     *)
+(* point is `lerp t C D` where `t = cross A B C / (cross A B C - cross A B D)` *)
+(* lies in `(0, 1)` under the premises.                                      *)
+(*                                                                            *)
+(* The FULL converse (with `<= 0` instead of `< 0` -- i.e., including the   *)
+(* degenerate / collinear cases) is FALSE.  Counter-example:                  *)
+(*   A=(0,0) B=(1,0) C=(2,0) D=(3,0)                                          *)
+(* All four crosses are zero (so both products are 0 ≤ 0), but the segments  *)
+(* are disjoint collinear segments on the x-axis sharing no point.  Handling *)
+(* the `= 0` cases requires the algorithmic case analysis that NTS's         *)
+(* `RobustLineIntersector` performs explicitly; that's `IntersectCollinear`  *)
+(* in the Coq binary64 layer.                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+(* Helper: under opposite-sign hypothesis on `a` and `b`, the ratio          *)
+(* `a / (a - b)` lies in the unit interval.  Proved via `nra` after          *)
+(* exposing the multiplicative identity `(a - b) * /(a - b) = 1` so the     *)
+(* nonlinear-arithmetic decision procedure can clear the division.          *)
+Lemma div_in_unit_interval :
+  forall a b : R, a * b < 0 -> 0 <= a / (a - b) <= 1.
+Proof.
+  intros a b H.
+  assert (Hd : a - b <> 0) by nra.
+  unfold Rdiv.
+  destruct (Rtotal_order (a - b) 0) as [Hd_neg | [Hd_zero | Hd_pos]];
+    [| exfalso; apply Hd; exact Hd_zero |].
+  - (* a - b < 0:  /(a-b) < 0; the multiplicative identity is still
+       `(a-b) * /(a-b) = 1`, signs cooperate via `nra`. *)
+    assert (Hkey : (a - b) * /(a - b) = 1) by (apply Rinv_r; exact Hd).
+    assert (Hinv_neg : /(a - b) < 0) by (apply Rinv_lt_0_compat; exact Hd_neg).
+    split; nra.
+  - (* a - b > 0: standard positive denominator. *)
+    assert (Hkey : (a - b) * /(a - b) = 1) by (apply Rinv_r; exact Hd).
+    assert (Hinv_pos : 0 < /(a - b)) by (apply Rinv_pos; exact Hd_pos).
+    split; nra.
+Qed.
+
+Theorem strict_completeness :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    exists X, between A B X /\ between C D X.
+Proof.
+  intros A B C D HABCD HCDAB.
+  assert (Hden_t : cross A B C - cross A B D <> 0) by nra.
+  assert (Hden_s : cross C D A - cross C D B <> 0) by nra.
+  set (t := cross A B C / (cross A B C - cross A B D)).
+  set (s := cross C D A / (cross C D A - cross C D B)).
+  pose proof (div_in_unit_interval _ _ HABCD) as [Ht_lo Ht_hi].
+  fold t in Ht_lo, Ht_hi.
+  pose proof (div_in_unit_interval _ _ HCDAB) as [Hs_lo Hs_hi].
+  fold s in Hs_lo, Hs_hi.
+  (* Witness X = lerp t C D.  Show simultaneously between A B X by giving s
+     as the AB-parameter; the coordinate identity X = lerp s A B holds as a
+     polynomial identity over R, closed by `field` once denominators are
+     known nonzero.                                                          *)
+  set (X := mkPoint
+              ((1 - t) * px C + t * px D)
+              ((1 - t) * py C + t * py D)).
+  exists X.
+  split.
+  - exists s.
+    repeat split; try assumption.
+    + unfold X. simpl. unfold s, t, cross. field. split; assumption.
+    + unfold X. simpl. unfold s, t, cross. field. split; assumption.
+  - exists t. repeat split; try assumption; unfold X; reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions segments_share_point_implies_opposite_sides.
 Print Assumptions same_side_rejection_is_sound.
+Print Assumptions strict_completeness.
