@@ -41,10 +41,20 @@ theories-flocq/B64_bridge.v
 # bridge; establishes the pattern other identities will reuse.
 theories-flocq/Orient_b64_R.v
 # Soundness bridge for the Stage A filter.  Today: decoder consistency
-# (filter's sign matches B2R sign of the rounded value).  Future:
-# cross_R soundness via Shewchuk Stage A forward-error analysis -- see
-# the PROOF STATUS block at the top of the file.
+# (filter's sign matches B2R sign of the rounded value).  Cross_R-valued
+# soundness for the general bounded regime is documented as a deferred
+# Path 1 in docs/soundness-strategy.md.
 theories-flocq/Orient_b64_sound.v
+# Cross_R-valued soundness in the integer-coordinate exact regime (Path 2
+# from docs/soundness-strategy.md).  Headline:
+#   orient2d_inputs_int_safe P0 P1 Q ->
+#   match b64_orient_sign_filtered P0 P1 Q with
+#     OrientRPos  => 0 < cross_R_BP P0 P1 Q
+#   | OrientRNeg  => cross_R_BP P0 P1 Q < 0
+#   | OrientRZero => cross_R_BP P0 P1 Q = 0
+#   | _           => True end.
+# Bit-exact -- no rounding error -- for |coord| <= 2^25 integer inputs.
+theories-flocq/Orient_b64_exact.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract
