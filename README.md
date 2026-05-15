@@ -398,11 +398,12 @@ that this theorem composes are now available in
 
 Thin wrappers around Flocq's `Bplus_correct` / `Bminus_correct` /
 `Bmult_correct` for the `b64_plus` / `b64_minus` / `b64_mult` helpers
-from `Validate_binary64.v`.  Each theorem takes finiteness of the two
-operands and a no-overflow precondition stated as an R-valued
-inequality on the rounded result, and concludes that the binary64
-operation's `B2R` is exactly the rounded `B2R x ⊕ B2R y` and the
-result is finite.  Same 4-axiom set as the rest of the corpus.
+from `Validate_binary64.v`.  Each theorem takes a bundled
+`b64_safe op x y` precondition (operand finiteness + no-overflow on
+the rounded result, parameterised by the R-side op) and concludes
+that the binary64 operation's `B2R` is exactly the rounded
+`B2R x ⊕ B2R y` and the result is finite.  Same 4-axiom set as the
+rest of the corpus.
 
 The lifts are deliberately small.  The interesting work moves to the
 caller:
@@ -416,6 +417,30 @@ caller:
   the expansion-arithmetic primitives (`grow-expansion`,
   `fast-expansion-sum`, `expansion-product`) — see
   [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md).
+
+### `theories-flocq/Orient_b64_R.v` — R-side identities for `b64_orient2d`
+
+First downstream consumer of `B64_bridge`.  Bundles the seven
+no-overflow obligations of one `b64_orient2d` call into a single
+predicate `b64_orient2d_safe P0 P1 Q : Prop` (four `b64_safe Rminus`
+on the coordinate differences, two `b64_safe Rmult` on the product
+terms, one `b64_safe Rminus` on the outer subtraction).
+
+The headline theorem proved Qed-closed today:
+
+```coq
+Theorem b64_orient2d_antisymmetric_R :
+  forall P0 P1 Q,
+    b64_orient2d_safe P0 P1 Q ->
+    b64_orient2d_safe P0 Q  P1 ->
+    B2R (b64_orient2d P0 P1 Q) = - B2R (b64_orient2d P0 Q P1).
+```
+
+Cyclic permutation and translation invariance follow the same pattern
+and are the immediate follow-ups.  A magnitude-bounded variant of the
+precondition (one `|coord| < 2^N` per input + a helper lemma that
+derives the seven `b64_safe` obligations from it) is the slice after,
+producing a more ergonomic interface for downstream callers.
 
 ### `theories-flocq/Orientation_b64.v` — Phase 0 chokepoint
 
@@ -674,12 +699,25 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   `b64_minus_correct`, `b64_mult_correct` — thin wrappers around
   Flocq's `Bplus_correct` / `Bminus_correct` / `Bmult_correct` lifted
   to the binary64 helpers `b64_plus` / `b64_minus` / `b64_mult` from
-  `Validate_binary64.v`.  Same 4-axiom set as the rest of the corpus;
-  no `Admitted`, no new dependencies beyond Flocq.  This unblocks the
-  simplifier R-bridge, Stage A's arithmetic identities for
-  `b64_orient2d`, and Shewchuk Stages B / C of orient2d — three
-  downstream theorems waiting on the same lift mechanism, see
-  `docs/audit-shewchuk-stages.md`.
+  `Validate_binary64.v`.  Premises bundled into one parameterised
+  predicate `b64_safe (op : R -> R -> R) (x y : binary64) : Prop`.
+  Same 4-axiom set as the rest of the corpus; no `Admitted`, no new
+  dependencies beyond Flocq.  This unblocks the simplifier R-bridge,
+  Stage A's arithmetic identities for `b64_orient2d`, and Shewchuk
+  Stages B / C of orient2d — three downstream theorems waiting on the
+  same lift mechanism, see `docs/audit-shewchuk-stages.md`.
+- **2026-05-15**: first downstream consumer of `B64_bridge`.  Added
+  `theories-flocq/Orient_b64_R.v` with `b64_orient2d_safe` (the
+  seven-conjunct no-overflow precondition for one orient2d call) and
+  `b64_orient2d_antisymmetric_R`: under the precondition,
+  `B2R (b64_orient2d P0 P1 Q) = - B2R (b64_orient2d P0 Q P1)`.
+  Proof is mechanical: lift the two outer `b64_minus` calls via
+  `b64_minus_correct`, then `round_NE_opp` + `Ropp_minus_distr` close
+  it.  Validates the composition pattern.  Same 4-axiom set, Qed-
+  closed.  Cyclic permutation and translation invariance are the
+  natural follow-ups; the magnitude-bounded variant of the
+  precondition (Flavour B from the audit discussion) is the
+  immediately-after-that slice.
 
 ## What this is NOT
 
