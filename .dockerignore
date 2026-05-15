@@ -1,0 +1,19 @@
+# Host-generated build artefacts that would otherwise be baked into the image.
+# These get re-derived inside the container by `rocq makefile`.
+Makefile.gen
+Makefile.gen.conf
+.Makefile.d
+.Makefile.gen.d
+.nra.cache
+theories/*.vo
+theories/*.vos
+theories/*.vok
+theories/*.glob
+theories/.*.aux
+
+# Editor / IDE state
+.vscode/
+*.swp
+
+# Local opam state if anyone has a switch directly inside the repo
+_opam/

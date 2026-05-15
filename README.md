@@ -6,11 +6,12 @@ Mechanically-verified formal proofs of foundational properties of the
 algorithms in [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite).
 
 Proofs are written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
-Every theorem in this repository terminates with `Qed.` — meaning the kernel
-has checked the proof and rejected any unsound step. There are no admitted
-lemmas. The only axioms used are the three standard ones bundled with Rocq's
-classical real arithmetic library (printed at the end of each `.v` file
-under `Print Assumptions` for transparency):
+**Every theorem under `theories/`** terminates with `Qed.` — meaning the
+kernel has checked the proof and rejected any unsound step. CI fails if
+any `Admitted`, `Axiom`, `Parameter`, or `admit.` appears under
+`theories/`. The only axioms used are the three standard ones bundled
+with Rocq's classical real arithmetic library (printed at the end of
+each `.v` file under `Print Assumptions` for transparency):
 
 ```
 ClassicalDedekindReals.sig_not_dec
@@ -19,8 +20,14 @@ FunctionalExtensionality.functional_extensionality_dep
 ```
 
 These are the standard classical real-number axioms; no library-specific
-or load-bearing axiom is introduced anywhere in this repo. CI fails if any
-`Admitted`, `Axiom`, `Parameter`, or `admit.` appears in `theories/`.
+or load-bearing axiom is introduced anywhere in `theories/`.
+
+Work-in-progress with `Admitted` placeholders for unfilled soundness
+bridges lives separately under `theories-flocq/`. That directory is
+*excluded* from the no-`Admitted` invariant above and is only built
+inside the Flocq-bearing container (see the **Build** section). The
+purpose of the split is to keep the main corpus's Qed-closed claim
+true while we incrementally fill in the Flocq-based extraction story.
 
 ## Why this exists
 
@@ -221,36 +228,187 @@ wins, ties broken by smaller y. Standard order-theoretic properties.
 - **`le_lex_total`** — totality: for any two points, one is ≤ the
   other. (Uses classical decidability on the reals.)
 
+### `theories/Linearise.v` — tolerance contract for curve linearisation
+
+The mathematical companion of the SFA-CA `ILinearizable` interface
+prototyped on the NTS `enhancement/curved-circularstring-tin` branch.
+Three regimes — convergent scalar quantities, convergent topological
+predicates, and tolerance-sensitive predicates — captured as formal
+theorems. The framework justifies the staged plan in JTS discussion
+[#1193](https://github.com/locationtech/jts/discussions/1193) (ship
+linearisation now, native curve algorithms later).
+
+- `Shape`, `within_eps`, `hausdorff_le`, `gap_ge` — the tolerance
+  contract: shapes as point predicates with Hausdorff-bounded
+  approximation and gap-based separation.
+- `dist_triangle` — Euclidean triangle inequality on ℝ², proved from
+  `Vec.cauchy_schwarz_sq` + `sq_monotone_nonneg`.
+- **`chord_le_detour`** + **`polyline_chord_lower_bound`** — regime 1:
+  for any list of intermediate points, the chord is a lower bound on
+  any polyline visiting them in order. Refining a polyline never
+  decreases its length.
+- **`disjoint_under_linearise`** (+ strict variant) — regime 2: if two
+  shapes have gap ≥ δ and each is within ε of an approximation, the
+  approximations are gap ≥ δ−2ε apart. Disjointness predicates are
+  ε-stable.
+- **`regime3_counterexample`** + **`EqualsExact_not_stable`** —
+  regime 3: distinct shapes can share a common ε-approximation; exact
+  equality is *not* preserved by ε-approximation. The honest limit of
+  Phase-3 linearisation.
+
+### `theories/Simplify.v` — greedy polyline simplification
+
+Inductive specification of Douglas-Peucker-style simplification, in two
+flavours (chord-deficit and perpendicular-distance). Both are sound
+under the tolerance contract from `Linearise.v`.
+
+- `simp_step` / `simp_star` — inductive specs of a single greedy drop
+  and its reflexive-transitive closure (chord-deficit form).
+- `simp_step_perp` / `simp_star_perp` — the same for the squared-
+  cross-product perpendicular-distance test, matching what
+  Zygmunt-Róg (Measurement 260, 2026) use in production DEM
+  generalisation.
+- **`simp_step_length_monotone`** + **`simp_star_length_monotone`** —
+  simplification never increases polyline length. Proof uses
+  `chord_le_detour`; the tolerance hypothesis is *not* consumed —
+  length-monotonicity holds for any drop.
+- `simp_step_preserves_head` / `simp_step_preserves_last` (and star
+  variants) — endpoints are pinned across both single-step and
+  iterated simplification.
+- `simp_drop_here_length_deficit` — exact identity: the length
+  reduction equals the chord-deficit at the dropped point.
+
+To our knowledge, the first formal proof of polyline-simplification
+length monotonicity in any proof assistant. Douglas-Peucker (1973) and
+Visvalingam-Whyatt (1993) were never formally verified.
+
+### `theories/Tin.v` — TIN boundary adjacency
+
+The formal companion of the headline novelty in Zygmunt-Róg
+(Measurement 260, 2026): adjacent TINs built from a shared boundary
+polyline must agree on boundary vertices for seamless merging. Proved
+via `Linearise.v` and `Simplify.v` endpoint-preservation theorems.
+
+- `TaggedTin` record + `same_source_boundary` predicate.
+- **`same_source_share_endpoints`** (chord, perp, and mixed-mode
+  variants) — two TINs simplified from the same source boundary
+  always agree on head and last vertex, regardless of which
+  derivation each side chose. Sufficient for adjacency-merging
+  algorithms to detect shared boundary edges.
+- `same_source_boundary_length_bounded` — neither simplification
+  inflates the source boundary length.
+
+### `theories/Validate.v` — constructive simplifier + soundness
+
+The executable counterpart of `Simplify.v`'s inductive specifications.
+Left-to-right greedy realisations of both flavours, with soundness
+theorems proving each output is in the corresponding `simp_star`
+relation. Ready for OCaml extraction.
+
+- `greedy_simplify` / `greedy_simplify_perp` — `Fixpoint`s using
+  Stdlib's `Rle_dec` for the tolerance comparison.
+- **`greedy_simplify_correct`** / **`greedy_simplify_perp_correct`** —
+  soundness: the output is `simp_star`-related to the input.
+- Six inheritance corollaries (length monotone, head/last preserved,
+  perp variants) — one-line proofs that compose the soundness theorem
+  with the spec-level lemmas from `Simplify.v`.
+
+### `theories/Validate_decidable.v` — carrier-generic simplifier
+
+The perpendicular form lifted into a typeclass `OrderedReal` of
+"ordered ring coercible to ℝ with decidable ≤". Same soundness
+theorem, proved once for the abstract carrier and inheriting to every
+instance. An R instance ships with the file; the Flocq binary64
+instance is the in-flight slice in `theories-flocq/`.
+
+- `Class OrderedReal` — 8 fields (`t0`, `t2`, `tplus`, `tsub`,
+  `tmult`, `to_real`, `tle_dec`) + 5 homomorphism laws.
+- `Instance OrderedReal_R` — the R instance.
+- `greedy_simplify_perp_T` (`Fixpoint`, parameterised over T) +
+  **`greedy_simplify_perp_T_correct`** — abstract soundness
+  theorem; depends on only one classical-reals axiom
+  (`sig_forall_dec`), strictly fewer than the corollaries that
+  compose with `dist_triangle`.
+
+### `theories-flocq/Validate_binary64.v` — Flocq instance (work in progress)
+
+A Flocq-based `binary64` instance of the simplifier, lives in a
+separate directory so the host CI's no-`Admitted` grep stays clean
+while the soundness bridges are filled in. Built only inside the
+container (`_CoqProject.full`). The skeleton compiles with `Bplus`,
+`Bmult`, `Bcompare`, `B2R` plumbing and a concrete `default_nan_b64`
+(no axiom — `nan_pl 53 1 = true` reduces by computation). The two
+soundness theorems are currently `Admitted`, pending the
+no-overflow-preserving bridge proofs.
+
+## Notable open contributions
+
+Three results in the current corpus appear to be first-of-kind in the
+published literature, worth pinning here for citation:
+
+1. **Polyline-simplification length monotonicity**
+   (`Simplify.simp_step_length_monotone`,
+   `simp_star_length_monotone`, `simp_drop_here_length_deficit`).
+   Douglas-Peucker 1973 and Visvalingam-Whyatt 1993 are widely
+   implemented but never formally verified; our `simp_star` inductive
+   spec covers both with a single proof.
+2. **The three-regime tolerance stratification**
+   (`Linearise.v` §7 — `chord_le_detour`,
+   `disjoint_under_linearise`, `regime3_counterexample`). The
+   distinction between convergent scalar quantities, ε-stable
+   predicates, and tolerance-sensitive predicates is implicit in
+   PostGIS/GEOS practice but unstated in print.
+3. **TIN boundary endpoint sharing**
+   (`Tin.same_source_share_endpoints`). The structural soundness
+   theorem behind Zygmunt-Róg (Measurement 260, 2026)'s adjacent-TIN
+   merging result, which measured 41–56 % triangle-count reduction
+   vs ArcMap while preserving boundary consistency. They measured the
+   payoff; we proved the soundness contract.
+
 ## Roadmap
 
-Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
-"effort":
+### Phase 0–7: the NTS topological chokepoint
 
-1. **Segment intersection — completeness direction** — the converse of
+A multi-year plan to formally verify the load-bearing algorithms in
+NTS — `RobustLineIntersector`, the noding pipeline
+(`SnapRoundingNoder` + `MCIndexNoder`), and `OverlayNG` topology
+construction — down to executable, provably-robust Coq-extracted code.
+3–5 person-years of focused work; each phase is independently
+publishable.
+
+| Phase | Deliverable | Status |
+|---|---|---|
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | reading-unblocked |
+| 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked |
+| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked |
+| 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) |
+| 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future |
+| 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ |
+| 6 | Continuous integration of corpus against NTS test suite | pending Phase 5 |
+| 7 | Soundness audit of curve-aware overlay operations | pending Phase 4 |
+
+### Original targets (still relevant, partially complete)
+
+1. **Segment intersection — completeness direction** — converse of
    `segments_share_point_implies_opposite_sides`. Given strict opposite-side
    conditions on both cross products, construct the intersection point
-   (Cramer's rule yields *t* = cross(C,D,A) / [cross(C,D,A) − cross(C,D,B)],
-   similar for *s*) and prove both parameters lie in (0, 1) and that the
-   resulting points coincide. This closes out the full bidirectional
-   robustness story for `RobustLineIntersector.computeIntersect`.
+   via Cramer's rule and prove both parameters lie in (0, 1). Closes the
+   full bidirectional robustness story for
+   `RobustLineIntersector.computeIntersect`. Subsumed by Phase 1.
 2. **Robust orientation predicate** — Shewchuk-style filter conditions.
-   Prove the unfiltered cross product agrees with the DD-arithmetic
-   refinement when the filter is satisfied. The keystone for the
-   library's robustness story.
-3. **Convex hull invariants** — for a finite point set *S*, every point
-   in *S* lies in the closed convex hull of *S*; the convex hull is
-   itself convex; the hull's vertices are a subset of *S*.
-4. **DD arithmetic** — addition is associative, multiplication
-   distributes over addition under explicit bounds. Connects to
-   [Flocq](https://flocq.gitlabpages.inria.fr/) for the floating-point
-   model. This is where the "robust geometric predicates" claim becomes
-   formally cashed-out.
-5. **MIC center-is-interior** — the centre of the maximum inscribed
-   circle of a non-degenerate polygon lies strictly in the polygon's
-   interior.
+   The keystone of the robustness story. Becomes Phase 0.
+3. **Convex hull invariants** — `Convex.intersection_is_convex` covers
+   the closure half; the constructive direction (vertices, lower
+   hull, upper hull) is still open. The Brun-Dufourd-Magaud 2012 Coq
+   formalisation is the proof-engineering template.
+4. **DD arithmetic** — superseded by the Flocq-based path through
+   `theories-flocq/Validate_binary64.v` and Phase 0.
+5. **MIC center-is-interior** — for a non-degenerate polygon, the
+   centre of the maximum inscribed circle lies strictly in the
+   polygon's interior. Independent of the chokepoint work.
 6. **Buffer corner relations** — for a positive buffer distance, the
    buffer of a convex corner consists of an arc whose central angle
-   equals the exterior angle.
+   equals the exterior angle. Adjacent to Phase 4 (native curves).
 
 ### Progress log
 
@@ -285,6 +443,46 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
   match the count, though the content is orthogonal: Euclid's are
   geometric constructions; ours are algebraic and order-theoretic
   invariants of the same plane.)
+- **2026-05-14**: pivoted to the NTS curves prototype. Added `Linearise.v`
+  (14 theorems): the tolerance contract — `within_eps`, `hausdorff_le`,
+  `gap_ge` — plus the regime-1/2/3 stratification. Headline results:
+  `chord_le_detour`, `polyline_chord_lower_bound`,
+  `disjoint_under_linearise`, `regime3_counterexample`. The
+  triangle-inequality proof `dist_triangle` follows from
+  `Vec.cauchy_schwarz_sq`.
+- **2026-05-14**: added `Simplify.v` (18 theorems): the inductive specs
+  `simp_step` (chord-deficit form) and `simp_step_perp` (squared-cross-
+  product perpendicular form, matching Zygmunt-Róg Measurement 260,
+  2026), with their reflexive-transitive closures. Length monotonicity
+  proved unconditionally; endpoint preservation across both single-step
+  and iterated simplification.
+- **2026-05-14**: added `Tin.v` (4 theorems): the TIN boundary-endpoint
+  sharing theorem `same_source_share_endpoints`. Adjacent TINs
+  simplified from the same source boundary always agree on head and
+  last vertex regardless of which derivation each side chose. The
+  formal companion of Zygmunt-Róg's adjacent-TIN merging result.
+- **2026-05-14**: added `Validate.v` (12 theorems): the constructive
+  `Fixpoint` realisations `greedy_simplify` and `greedy_simplify_perp`
+  with their soundness theorems (output is in the corresponding
+  `simp_star` relation), plus six inheritance corollaries.
+- **2026-05-14**: added `Validate_decidable.v` (7 theorems): the
+  perpendicular form parameterised over a typeclass `OrderedReal`.
+  Soundness proved once for the abstract carrier; an R instance
+  ships immediately, a Flocq binary64 instance is the next slice.
+  Total: **520 kernel-checked theorems** across 23 modules in
+  `theories/`.
+- **2026-05-15**: container infrastructure (`Dockerfile`,
+  `.dockerignore`, `_CoqProject.full`) wired up for Rocq 9.1.1 +
+  `coq-flocq.4.2.2`. A `theories-flocq/` directory now hosts the
+  Flocq-bearing work (currently `Validate_binary64.v` skeleton, in
+  active development) and is excluded from the host CI's
+  no-`Admitted` grep so the main corpus invariant stays clean while
+  the soundness bridges are filled in. Companion mathematical
+  paper [`docs/mathematics/curves.tex`](docs/mathematics/curves.tex)
+  in the upstream
+  [`NetTopologySuite`](https://github.com/NetTopologySuite/NetTopologySuite)
+  branch `enhancement/curved-circularstring-tin` collects the formal
+  identities the proofs rest on.
 
 ## What this is NOT
 
@@ -297,23 +495,70 @@ Realistic next targets, ordered by ratio of "stripe of NTS this verifies" to
 - This is **not** a substitute for unit tests. Tests cover behaviour the
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
-- This is **not** complete. As of the initial seed it covers two algorithms.
-  Growing this catalogue is the work.
+- This is **not** complete. Current coverage is 520+ kernel-checked
+  theorems across 23 modules: the algebraic foundations (real-number,
+  vector, distance, orientation, line, disk, lattice, lex order),
+  segment and bounding-box primitives, triangle / convex / centroid /
+  reflection laws, and the curve-linearisation stack
+  (`Linearise.v` → `Simplify.v` → `Tin.v` → `Validate.v` →
+  `Validate_decidable.v`). The Phase 0–7 chokepoint roadmap above
+  outlines what's missing: orientation under floating-point arithmetic,
+  the full robust line-intersector, snap-rounding, planar overlay, and
+  native curve primitives — multi-year work, but each phase ships
+  independently.
 
 ## Build
 
-Local (macOS via Homebrew):
+### Local (macOS via Homebrew)
 
 ```sh
 brew install rocq
-coq_makefile -f _CoqProject -o Makefile
-make
+rocq makefile -f _CoqProject -o Makefile.gen
+make -f Makefile.gen
 ```
+
+This builds every module in `_CoqProject` — i.e. the Stdlib-only corpus.
+Modules with external dependencies (Flocq) live in `_CoqProject.full` and
+are built inside the container only (see below).
 
 CI runs the same sequence on `macos-latest` (see
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) plus a sanity grep
 that fails if any unsoundness marker (`Admitted`, `Axiom`, `Parameter`,
 `admit.`) appears in `theories/`.
+
+### Containerised build (Rocq 9.1.1 + Flocq 4.2.2)
+
+For modules that need [Flocq](https://flocq.gitlabpages.inria.fr/) (e.g. a
+forthcoming `Validate_binary64.v` linking the validation layer to IEEE-754
+binary64) the canonical environment is a podman container based on the
+official `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` image with
+`coq-flocq.4.2.2` pinned via opam. This matches the toolchain Boldo et al.
+JAR 2015 §5 uses.
+
+```sh
+# One-time: build the image (~5 min, pulls + compiles Flocq under
+# x86_64 emulation on Apple Silicon).
+podman build -t nts-proofs .
+
+# Build the corpus inside the image (uses the workspace COPY'd at
+# image-build time, regenerates Makefile.gen from _CoqProject.full).
+podman run --rm nts-proofs
+
+# Iterate against the live workspace (volume-mount).  Note: clean
+# host-generated build artefacts first via the .dockerignore-equivalent
+# manual step, then regenerate.
+podman run --rm -v "$(pwd):/workspace:z" -w /workspace nts-proofs bash -lc \
+  'rm -f Makefile.gen* .Makefile.* theories/*.vo* theories/*.glob theories/.*.aux \
+   && rocq makefile -f _CoqProject.full -o Makefile.gen \
+   && make -f Makefile.gen -j2'
+
+# Interactive shell for proof development with Flocq imports available.
+podman run --rm -it -v "$(pwd):/workspace:z" -w /workspace nts-proofs bash
+```
+
+The host build is the canonical CI target (the macOS-arm64 runner has no
+Flocq); the container is the augmented environment for modules whose
+proofs need Flocq.
 
 A successful `make` ends with `theories/*.vo` files and no errors. Each
 `.vo` file is a kernel-checked term whose type is the corresponding theorem
@@ -333,9 +578,16 @@ the BSD-3-Clause grant respects NTS's attribution requirements.
 
 Pull requests welcome. New theorems must:
 
-- compile under stock Rocq 9.x with no external dependencies beyond
-  the standard library (Flocq is acceptable when DD arithmetic lands);
-- terminate with `Qed.` — no `Admitted`, no `Parameter` standing in for
-  a missing proof;
-- include a header comment naming the NTS module the theorem corresponds
-  to, so reviewers can cross-reference.
+- compile under stock Rocq 9.x;
+- terminate with `Qed.` — no `Admitted`, no `Axiom`, no `Parameter`
+  standing in for a missing proof — *if* the file lives under
+  `theories/`. Work-in-progress with `Admitted` placeholders is
+  acceptable under `theories-flocq/`, which is excluded from the host
+  CI's no-`Admitted` grep and is built only inside the Flocq-bearing
+  container;
+- depend only on Rocq's standard library if placed under `theories/`,
+  or on Flocq 4.2.x if placed under `theories-flocq/`;
+- include a header comment naming the NTS module (or JTS algorithm)
+  the theorem corresponds to, so reviewers can cross-reference;
+- carry the SPDX licence header and AI-assistance disclosure where
+  applicable (the existing files set the pattern).
