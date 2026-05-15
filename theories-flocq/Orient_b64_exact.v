@@ -426,6 +426,71 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Cyclic permutation in the integer regime.                                  *)
+(*                                                                            *)
+(* `cross_R_BP P0 P1 Q = cross_R_BP P1 Q P0 = cross_R_BP Q P0 P1` is a        *)
+(* polynomial identity over `R` (the signed twice-area of a triangle is       *)
+(* invariant under cyclic permutation of its vertices) -- `ring` closes it    *)
+(* in one tactic.  Lifting via `b64_orient2d_exact_for_small_int` (each       *)
+(* binary64 orient2d call equals its R-cross product on the nose in the       *)
+(* integer regime) propagates the identity to the binary64 evaluations.       *)
+(*                                                                            *)
+(* The deferred-cyclic discussion in `Orient_b64_R.v` notes that this is      *)
+(* not Provable in general -- the intermediate `b64_minus` / `b64_mult`       *)
+(* values differ syntactically between the two calls, and rounding errors    *)
+(* don't structurally cancel.  Inside the integer regime, the rounding        *)
+(* errors are zero, so the obstruction disappears.                            *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma orient2d_inputs_int_safe_cycl :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    orient2d_inputs_int_safe P1 Q P0.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  repeat split; assumption.
+Qed.
+
+Lemma orient2d_inputs_int_safe_cycl2 :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    orient2d_inputs_int_safe Q P0 P1.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  repeat split; assumption.
+Qed.
+
+Theorem b64_orient2d_cyclic_int_R :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    Binary.B2R prec emax (b64_orient2d P0 P1 Q)
+      = Binary.B2R prec emax (b64_orient2d P1 Q P0).
+Proof.
+  intros P0 P1 Q Hint.
+  pose proof (b64_orient2d_exact_for_small_int _ _ _ Hint) as H1.
+  pose proof (orient2d_inputs_int_safe_cycl _ _ _ Hint) as Hint'.
+  pose proof (b64_orient2d_exact_for_small_int _ _ _ Hint') as H2.
+  rewrite H1, H2.
+  unfold cross_R_BP.
+  ring.
+Qed.
+
+Theorem b64_orient2d_cyclic2_int_R :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    Binary.B2R prec emax (b64_orient2d P0 P1 Q)
+      = Binary.B2R prec emax (b64_orient2d Q P0 P1).
+Proof.
+  intros P0 P1 Q Hint.
+  pose proof (b64_orient2d_exact_for_small_int _ _ _ Hint) as H1.
+  pose proof (orient2d_inputs_int_safe_cycl2 _ _ _ Hint) as Hint'.
+  pose proof (b64_orient2d_exact_for_small_int _ _ _ Hint') as H2.
+  rewrite H1, H2.
+  unfold cross_R_BP.
+  ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
 
@@ -437,3 +502,5 @@ Print Assumptions coord_int_safe_imp_coord_safe.
 Print Assumptions orient2d_inputs_int_safe_imp_safe.
 Print Assumptions b64_orient2d_exact_for_small_int.
 Print Assumptions b64_orient_sign_filtered_sound_small_int.
+Print Assumptions b64_orient2d_cyclic_int_R.
+Print Assumptions b64_orient2d_cyclic2_int_R.
