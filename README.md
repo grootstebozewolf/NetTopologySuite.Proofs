@@ -339,16 +339,36 @@ instance is the in-flight slice in `theories-flocq/`.
   (`sig_forall_dec`), strictly fewer than the corollaries that
   compose with `dist_triangle`.
 
-### `theories-flocq/Validate_binary64.v` — Flocq instance (work in progress)
+### `theories-flocq/Validate_binary64.v` — Flocq instance + RocqRefRunner
 
-A Flocq-based `binary64` instance of the simplifier, lives in a
-separate directory so the host CI's no-`Admitted` grep stays clean
-while the soundness bridges are filled in. Built only inside the
-container (`_CoqProject.full`). The skeleton compiles with `Bplus`,
-`Bmult`, `Bcompare`, `B2R` plumbing and a concrete `default_nan_b64`
-(no axiom — `nan_pl 53 1 = true` reduces by computation). The two
-soundness theorems are currently `Admitted`, pending the
-no-overflow-preserving bridge proofs.
+A Flocq-based `binary64` instance of the perpendicular-distance
+simplifier, paired with a native-float OCaml extraction (`oracle/`)
+that compiles to the **RocqRefRunner** binary used as a differential
+testing reference by the C# implementation in
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
+Lives in a separate directory only because the host CI doesn't have
+Flocq; the corpus-wide no-`Admitted` invariant applies here too.
+
+- `BPoint` record + `binary64` arithmetic helpers (`b64_plus`,
+  `b64_minus`, `b64_mult`, `b64_le` — NaN-safe via `Bcompare`) and
+  geometric helpers (`b64_cross`, `b64_dist_sq`).
+- `greedy_simplify_perp_b64_aux` / `greedy_simplify_perp_b64` — the
+  greedy perpendicular-distance simplifier as a Coq `Fixpoint`.
+- 14 Qed-closed structural lemmas: `_nil`, `_singleton`,
+  `_two_points`, `_never_none`, `_some_eq`, `_aux_head`,
+  `_preserves_head`, `_aux_nonempty`, `_nonempty`, `_aux_length_le`,
+  `_length_le`, `_aux_in_kept`, `_in_head`.
+- Companion file `Validate_binary64_extract.v` adds the native-float
+  extraction directives (binding `Binary.binary_float` to OCaml `float`
+  and overriding `Bplus`/`Bminus`/`Bmult`/`Bcompare` with the native
+  operators). Produces `oracle/extracted.ml`, which links with
+  `oracle/driver.ml` to build the RocqRefRunner standalone binary.
+
+The R-bridge soundness theorem (`greedy_simplify_binary64_sound` —
+threading Flocq's `Bplus_correct` / `Bmult_correct` no-overflow
+preconditions through the `Fixpoint`) is not yet proven and is not
+stubbed with `Admitted`; the `PROOF STATUS` block at the top of the
+file says so explicitly.
 
 ## Notable open contributions
 
@@ -385,16 +405,25 @@ construction — down to executable, provably-robust Coq-extracted code.
 3–5 person-years of focused work; each phase is independently
 publishable.
 
-| Phase | Deliverable | Status |
-|---|---|---|
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | reading-unblocked |
-| 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked |
-| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked |
-| 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) |
-| 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future |
-| 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ |
-| 6 | Continuous integration of corpus against NTS test suite | pending Phase 5 |
-| 7 | Soundness audit of curve-aware overlay operations | pending Phase 4 |
+| Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
+|---|---|---|---|
+| Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | reading-unblocked | 0% |
+| 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked | 0% |
+| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
+| 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
+| 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future | 0% |
+| 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ | 0% |
+| 6 | Continuous integration of corpus against NTS test suite | pending Phase 5 | 0% |
+| 7 | Soundness audit of curve-aware overlay operations | pending Phase 4 | 0% |
+
+The "consumer" column tracks delivery on the C# side in
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve)
+under `NetTopologySuite.Robust.*`.  100% means the algorithm is implemented,
+its structural facts are mirrored as unit tests, and the implementation is
+bit-exact with the Coq-extracted reference (RocqRefRunner) on every shipped
+test case.  Full semantic soundness against the real-number model is a
+separate axis — currently not claimed end-to-end on any phase.
 
 ### Original targets (still relevant, partially complete)
 
@@ -483,15 +512,30 @@ publishable.
 - **2026-05-15**: container infrastructure (`Dockerfile`,
   `.dockerignore`, `_CoqProject.full`) wired up for Rocq 9.1.1 +
   `coq-flocq.4.2.2`. A `theories-flocq/` directory now hosts the
-  Flocq-bearing work (currently `Validate_binary64.v` skeleton, in
-  active development) and is excluded from the host CI's
-  no-`Admitted` grep so the main corpus invariant stays clean while
-  the soundness bridges are filled in. Companion mathematical
-  paper [`docs/mathematics/curves.tex`](docs/mathematics/curves.tex)
-  in the upstream
+  Flocq-bearing work and is excluded from the host CI's no-`Admitted`
+  grep so the main corpus invariant stays clean while the soundness
+  bridges are filled in. Companion mathematical paper
+  [`docs/mathematics/curves.tex`](docs/mathematics/curves.tex) in the
+  upstream
   [`NetTopologySuite`](https://github.com/NetTopologySuite/NetTopologySuite)
   branch `enhancement/curved-circularstring-tin` collects the formal
   identities the proofs rest on.
+- **2026-05-15**: closed the `Validate_binary64.v` simplifier slice end-
+  to-end. The two original soundness `Admitted` theorems are replaced
+  by 14 Qed-closed structural lemmas (head preservation, length
+  monotonicity, NaN safety, etc.) — the corpus-wide no-`Admitted`
+  invariant now applies uniformly across `theories/` and
+  `theories-flocq/`, and the CI grep is anchored so prose mentions
+  in module headers no longer false-trip. A companion file
+  `Validate_binary64_extract.v` adds native-float OCaml extraction
+  directives; `oracle/driver.ml` + `oracle/Makefile` build the
+  RocqRefRunner standalone binary. The C# consumer
+  `Robust.Simplify.GreedyPerpSimplifier` in
+  [NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve)
+  is bit-exact against RocqRefRunner on 262 / 262 tests (14 unit
+  mirroring the Coq lemmas + 248 differential cases across random
+  and adversarial families). The R-bridge soundness theorem stays
+  deferred (not stubbed with `Admitted`).
 
 ## What this is NOT
 
