@@ -56,6 +56,65 @@
    No `Admitted` theorems.  The corpus-wide invariant applies: properties
    that are not yet proven are absent from the file rather than stubbed.
 
+   TARGET THEOREM (Stages B / C, planned, not yet stated as Coq syntax)
+   ===================================================================
+   The endgame of Phase 0 is an `exact` predicate that closes the
+   robustness loop by resolving `OrientRUncertain` cases via Shewchuk
+   expansion arithmetic.  Sketch of the planned theorem (prose only,
+   no `Admitted` Lemma in the corpus -- see also the companion audit
+   in `docs/audit-shewchuk-stages.md`):
+
+       Definition no_overflow_precond (p0 p1 q : BPoint) : Prop :=
+         is_finite_bp p0 = true  /\
+         is_finite_bp p1 = true  /\
+         is_finite_bp q  = true  /\
+         coords_bounded_by p0 p1 q two_to_the_500.
+         (* Conservative: |coord| < 2^500 leaves ~24 bits of margin    *)
+         (* for intermediate expansion ops before overflow risk.       *)
+
+       Inductive orient_sign_exact : Type :=
+       | OrientXPos
+       | OrientXNeg
+       | OrientXZero.
+
+       Definition b64_orient2d_exact (p0 p1 q : BPoint)
+                : option orient_sign_exact.
+         (* On `OrientRPos` / `OrientRNeg` / `OrientRZero` from Stage A,
+            return the corresponding `OrientX*`.  On `OrientRUncertain`,
+            run the expansion-arithmetic refinement.  On `OrientRNan`,
+            return None -- the caller falls back to MPFR or rationals. *)
+
+       Theorem b64_orient2d_exact_sound :
+         forall p0 p1 q,
+           no_overflow_precond p0 p1 q ->
+           match b64_orient2d_exact p0 p1 q with
+           | Some OrientXPos  => 0 < cross_R (B2R_pt p0) (B2R_pt p1) (B2R_pt q)
+           | Some OrientXNeg  => cross_R (B2R_pt p0) (B2R_pt p1) (B2R_pt q) < 0
+           | Some OrientXZero => cross_R (B2R_pt p0) (B2R_pt p1) (B2R_pt q) = 0
+           | None             => True  (* no claim; caller must fall back *)
+           end.
+
+   Where `cross_R` is the R-valued cross product on the corpus's `Point`
+   record (see `theories/Orientation.v`) and `B2R_pt` lifts a `BPoint`
+   to a `Point` via `Binary.B2R` on each coordinate (the same lift used
+   by the simplifier R-bridge target).
+
+   Critical-path dependency.  The whole theorem rests on a binary64-to-R
+   bridge that wraps Flocq's `Bplus_correct` / `Bmult_correct` for our
+   specific `b64_plus` / `b64_minus` / `b64_mult` helpers under the
+   `no_overflow_precond`.  That bridge module does not exist yet; it is
+   the single highest-leverage piece of work in the corpus, unlocking
+   simultaneously:
+
+     - `greedy_simplify_binary64_sound` (the simplifier R-bridge).
+     - The arithmetic identities for `b64_orient2d` (antisymmetry,
+       cyclic permutation, translation invariance).
+     - `b64_orient2d_exact_sound` above.
+
+   Three blocked theorems, one piece of machinery.  See
+   `docs/audit-shewchuk-stages.md` for the full library-reuse map and
+   the expected ordering of work.
+
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.

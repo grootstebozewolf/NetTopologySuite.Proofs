@@ -484,6 +484,17 @@ bit-exact with the Coq-extracted reference (RocqRefRunner) on every shipped
 test case.  Full semantic soundness against the real-number model is a
 separate axis — currently not claimed end-to-end on any phase.
 
+The library audit for closing Phase 0 Stages B / C / D
+(expansion-arithmetic refinement that resolves `OrientRUncertain`
+into a definite sign) lives in
+[`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md).
+Bottom line: Flocq 4.2.2 ships TwoSum, Dekker's TwoProduct, and
+Veltkamp splitting; the missing piece is Shewchuk's expansion
+arithmetic on top of those.  Critical-path dependency is a
+binary64↔ℝ bridge module that simultaneously unlocks the simplifier
+R-bridge, Stage A's arithmetic identities, and Stages B / C of
+orientation — three blocked theorems, one piece of machinery.
+
 ### Original targets (still relevant, partially complete)
 
 1. **Segment intersection — completeness direction** — converse of
