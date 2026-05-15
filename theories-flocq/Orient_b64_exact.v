@@ -302,6 +302,98 @@ Definition orient2d_inputs_int_safe (P0 P1 Q : BPoint) : Prop :=
   coord_int_safe (by_ Q).
 
 (* -------------------------------------------------------------------------- *)
+(* Tiny regime (`|coord| <= 2^22`).  Stricter than `coord_int_safe`; the     *)
+(* magnitude buffer needed to prove that the Stage A filter is always       *)
+(* decisive on non-zero cross-products.  In this regime `detsum <= 2^47`,    *)
+(* `errbound ~= 2^-50`, `b64_bnd <= 2^-3 < 1`, so a non-zero integer det    *)
+(* always exceeds the filter threshold.                                      *)
+(*                                                                            *)
+(* The headline decisive theorem is documented below as deferred follow-up. *)
+(* Shipping the predicate + weakening helper now lets future-slice consumers *)
+(* state and use the tiny regime without needing the decisive theorem        *)
+(* proved.                                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition coord_tiny_int_safe (x : binary64) : Prop :=
+  Binary.is_finite prec emax x = true /\
+  exists n : Z, Binary.B2R prec emax x = IZR n /\ (Z.abs n <= 2 ^ 22)%Z.
+
+Definition orient2d_inputs_tiny_int_safe (P0 P1 Q : BPoint) : Prop :=
+  coord_tiny_int_safe (bx P0)  /\
+  coord_tiny_int_safe (by_ P0) /\
+  coord_tiny_int_safe (bx P1)  /\
+  coord_tiny_int_safe (by_ P1) /\
+  coord_tiny_int_safe (bx Q)   /\
+  coord_tiny_int_safe (by_ Q).
+
+(* Weakening: tiny regime implies the standard integer regime.  Mechanical *)
+(* (any `n` with `|n| <= 2^22` also satisfies `|n| <= 2^25`).               *)
+Lemma coord_tiny_int_safe_imp_coord_int_safe :
+  forall x, coord_tiny_int_safe x -> coord_int_safe x.
+Proof.
+  intros x (Fx & n & HxR & Hxb).
+  unfold coord_int_safe.
+  split; [exact Fx |].
+  exists n. split; [exact HxR |].
+  apply (Z.le_trans _ (2 ^ 22)); [exact Hxb | lia].
+Qed.
+
+Lemma orient2d_inputs_tiny_int_safe_imp_int_safe :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_tiny_int_safe P0 P1 Q ->
+    orient2d_inputs_int_safe P0 P1 Q.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  unfold orient2d_inputs_int_safe.
+  repeat split; apply coord_tiny_int_safe_imp_coord_int_safe; assumption.
+Qed.
+
+(* --------------------------------------------------------------------------
+   Deferred: tiny-regime decisive theorem and its proof obstruction.
+
+     Theorem b64_orient_sign_filtered_tiny_regime_decisive :
+       forall P0 P1 Q : BPoint,
+         orient2d_inputs_tiny_int_safe P0 P1 Q ->
+         cross_R_BP P0 P1 Q <> 0 ->
+         b64_orient_sign_filtered P0 P1 Q <> OrientRUncertain.
+
+   Statement: in the tiny regime, the Stage A filter is fully decisive on
+   non-zero cross-products -- `OrientRUncertain` cannot fire for inputs
+   with non-zero `cross_R_BP`.
+
+   Proof outline (the chain that needs to land):
+     1. Tiny regime + exactness => `B2R det = cross_R_BP` (Phase 0).
+     2. `cross_R_BP` integer-valued and non-zero => `|B2R det| >= 1`.
+     3. detsum <= `bpow 47` in tiny regime (each diff <= 2^23,
+        product <= 2^46, sum <= 2^47).
+     4. `Rabs (B2R b64_errbound_A_coeff) <= bpow(-50)` -- the substantive
+        sub-lemma.  Proof requires three round-is-exact discharges:
+          a. `b64_round (16 * 2^-52) = 2^-48`  (power-of-2, in format).
+          b. `b64_round (3 + 2^-48) = 3 + 2^-48`  (50-bit mantissa fits
+             in 53).
+          c. `b64_round ((3 + 2^-48) * 2^-52) = 3*2^-52 + 2^-100`.
+        Each step uses `round_generic` with a `generic_format_F2R'`
+        construction -- straightforward but tedious cexp / mag
+        bookkeeping.
+     5. `b64_bnd <= bpow(-3) < 1` (composes 3, 4 via
+        `b64_round_abs_le_bpow`).
+     6. `b64_compare bnd abs_det = Some Lt` (1 > b64_bnd).
+     7. Plug into the filter's match: returns `OrientRPos` / `OrientRNeg`,
+        never `OrientRUncertain`.
+
+   Effort:
+     - Step 4 is the substantive piece (~1 hour of careful Coq, three
+       analogous `round_generic` lemmas plus mantissa-fits-in-53-bits
+       arguments).
+     - Steps 1-3, 5-7 are mechanical (~30 min total).
+     - Total: 1-2 hours, not a 30-min slice.
+
+   The blocker is structural (Flocq bound chasing through three binary64
+   multiplications in the errbound constant), not a wall.  A follow-up
+   slice can ship the whole theorem cleanly when prioritised.
+   ------------------------------------------------------------------------ *)
+
+(* -------------------------------------------------------------------------- *)
 (* Bridge to the magnitude regime: int-safe coords are coord-safe (Flavour B).*)
 (* This lets us inherit `b64_orient2d_inputs_safe_imp_safe` for the seven    *)
 (* no-overflow `b64_safe` premises of `b64_orient2d_safe`, which            *)
@@ -602,3 +694,5 @@ Print Assumptions b64_orient_sign_filtered_sound_small_int.
 Print Assumptions b64_orient2d_cyclic_int_R.
 Print Assumptions b64_orient2d_cyclic2_int_R.
 Print Assumptions b64_orient2d_translation_int_R.
+Print Assumptions coord_tiny_int_safe_imp_coord_int_safe.
+Print Assumptions orient2d_inputs_tiny_int_safe_imp_int_safe.
