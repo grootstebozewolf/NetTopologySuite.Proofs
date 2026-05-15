@@ -47,6 +47,22 @@ Local Notation b64_fexp := (SpecFloat.fexp prec emax).
 Local Notation b64_round := (round radix2 b64_fexp (round_mode mode_b64)).
 
 (* -------------------------------------------------------------------------- *)
+(* Bundled precondition predicate for per-op correctness.                     *)
+(*                                                                            *)
+(* `b64_safe op x y` packages the three obligations each per-op lift          *)
+(* needs (finiteness of both operands + no-overflow on the rounded result).   *)
+(* Parameterised by the R-side operation so the same shape works for plus,    *)
+(* minus and mult; downstream consumers state one premise per op call         *)
+(* instead of three.                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_safe (op : R -> R -> R) (x y : binary64) : Prop :=
+  Binary.is_finite prec emax x = true /\
+  Binary.is_finite prec emax y = true /\
+  Rabs (b64_round (op (Binary.B2R prec emax x) (Binary.B2R prec emax y)))
+    < bpow radix2 emax.
+
+(* -------------------------------------------------------------------------- *)
 (* `b64_plus_correct`: under finiteness of both operands and a no-overflow    *)
 (* precondition stated as `R`-side inequality, `b64_plus x y` is bit-exactly  *)
 (* the rounded sum of `B2R x + B2R y`, and the result is finite.              *)
@@ -54,15 +70,12 @@ Local Notation b64_round := (round radix2 b64_fexp (round_mode mode_b64)).
 
 Theorem b64_plus_correct :
   forall x y : binary64,
-    Binary.is_finite prec emax x = true ->
-    Binary.is_finite prec emax y = true ->
-    Rabs (b64_round (Binary.B2R prec emax x + Binary.B2R prec emax y))
-      < bpow radix2 emax ->
+    b64_safe Rplus x y ->
     Binary.B2R prec emax (b64_plus x y)
       = b64_round (Binary.B2R prec emax x + Binary.B2R prec emax y)
     /\ Binary.is_finite prec emax (b64_plus x y) = true.
 Proof.
-  intros x y Fx Fy Hbnd.
+  intros x y (Fx & Fy & Hbnd).
   pose proof (Binary.Bplus_correct prec emax prec_gt_0_b64 prec_lt_emax_b64
                 default_nan_b64 mode_b64 x y Fx Fy) as H.
   apply Rlt_bool_true in Hbnd.
@@ -80,15 +93,12 @@ Qed.
 
 Theorem b64_minus_correct :
   forall x y : binary64,
-    Binary.is_finite prec emax x = true ->
-    Binary.is_finite prec emax y = true ->
-    Rabs (b64_round (Binary.B2R prec emax x - Binary.B2R prec emax y))
-      < bpow radix2 emax ->
+    b64_safe Rminus x y ->
     Binary.B2R prec emax (b64_minus x y)
       = b64_round (Binary.B2R prec emax x - Binary.B2R prec emax y)
     /\ Binary.is_finite prec emax (b64_minus x y) = true.
 Proof.
-  intros x y Fx Fy Hbnd.
+  intros x y (Fx & Fy & Hbnd).
   pose proof (Binary.Bminus_correct prec emax prec_gt_0_b64 prec_lt_emax_b64
                 default_nan_b64 mode_b64 x y Fx Fy) as H.
   apply Rlt_bool_true in Hbnd.
@@ -106,15 +116,12 @@ Qed.
 
 Theorem b64_mult_correct :
   forall x y : binary64,
-    Binary.is_finite prec emax x = true ->
-    Binary.is_finite prec emax y = true ->
-    Rabs (b64_round (Binary.B2R prec emax x * Binary.B2R prec emax y))
-      < bpow radix2 emax ->
+    b64_safe Rmult x y ->
     Binary.B2R prec emax (b64_mult x y)
       = b64_round (Binary.B2R prec emax x * Binary.B2R prec emax y)
     /\ Binary.is_finite prec emax (b64_mult x y) = true.
 Proof.
-  intros x y Fx Fy Hbnd.
+  intros x y (Fx & Fy & Hbnd).
   pose proof (Binary.Bmult_correct prec emax prec_gt_0_b64 prec_lt_emax_b64
                 default_nan_b64 mode_b64 x y) as H.
   apply Rlt_bool_true in Hbnd.
