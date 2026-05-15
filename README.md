@@ -63,7 +63,11 @@ the load-bearing primitives: the handful of small algorithms that, if
 wrong, make everything above them suspect.  Orientation, distance, the
 convex-hull invariants, the buffer-curve angle relations.
 
-## What's in scope right now
+## Core primitives
+
+Foundational geometry modules.  These are the algebraic and structural
+facts that downstream work cites; they sit on top of Stdlib only and
+build on the host CI runner without Flocq.
 
 ### `theories/Distance.v` — Euclidean distance
 
@@ -241,6 +245,14 @@ wins, ties broken by smaller y. Standard order-theoretic properties.
   (antisymmetry up to coordinate equality).
 - **`le_lex_total`** — totality: for any two points, one is ≤ the
   other. (Uses classical decidability on the reals.)
+
+## Extensions: curve linearisation
+
+Applied stack atop the core primitives, in active development.  Covers
+the SFA-CA curves prototype tracked on the upstream
+[`enhancement/curved-circularstring-tin`](https://github.com/NetTopologySuite/NetTopologySuite)
+branch, and feeds the binary64 instance consumed by
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
 
 ### `theories/Linearise.v` — tolerance contract for curve linearisation
 
