@@ -235,6 +235,52 @@ Proof.
   apply b64_round_IZR_exact. exact Hbnd.
 Qed.
 
+(* The plus counterpart: needed for translation invariance below.            *)
+(* Translation by a vector V adds two integer-valued binary64s, which is     *)
+(* bit-exact when their sum stays within binary64's 53-bit integer window.   *)
+Lemma b64_plus_int_exact :
+  forall x y : binary64,
+  forall a b : Z,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax x = IZR a ->
+    Binary.B2R prec emax y = IZR b ->
+    (Z.abs (a + b) <= 2 ^ prec)%Z ->
+    Binary.B2R prec emax (b64_plus x y) = IZR (a + b)
+    /\ Binary.is_finite prec emax (b64_plus x y) = true.
+Proof.
+  intros x y a b Fx Fy HxR HyR Hbnd.
+  assert (Hsafe : b64_safe Rplus x y).
+  { unfold b64_safe.
+    split; [exact Fx | split; [exact Fy | ]].
+    rewrite HxR, HyR, <- plus_IZR.
+    apply b64_round_IZR_abs_lt_bpow_emax. exact Hbnd. }
+  pose proof (b64_plus_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [|exact Hfin].
+  rewrite HB2R, HxR, HyR, <- plus_IZR.
+  apply b64_round_IZR_exact. exact Hbnd.
+Qed.
+
+(* Specialisation for the translation-invariance proof.  If both operands   *)
+(* are `coord_int_safe`, their sum is integer-valued with magnitude         *)
+(* `<= 2^26 < 2^prec`, hence bit-exact under `b64_plus`.  Returns the        *)
+(* R-side identity directly (drops the integer-witness existential).        *)
+Lemma b64_plus_B2R_of_coord_int_safe :
+  forall x y : binary64,
+    coord_int_safe x ->
+    coord_int_safe y ->
+    Binary.B2R prec emax (b64_plus x y)
+      = Binary.B2R prec emax x + Binary.B2R prec emax y.
+Proof.
+  intros x y (Fx & a & HxR & Hxb) (Fy & b & HyR & Hyb).
+  assert (Hbnd : (Z.abs (a + b) <= 2 ^ prec)%Z).
+  { apply (Z.le_trans _ (2 ^ 26)).
+    - replace (2 ^ 26)%Z with (2 ^ 25 + 2 ^ 25)%Z by lia. lia.
+    - unfold prec. lia. }
+  pose proof (b64_plus_int_exact x y a b Fx Fy HxR HyR Hbnd) as [HB2R _].
+  rewrite HB2R, HxR, HyR. apply plus_IZR.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Input regime predicate.                                                    *)
 (*                                                                            *)
@@ -491,6 +537,55 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Translation invariance in the integer regime.                              *)
+(*                                                                            *)
+(* The cross product is translation-invariant in R-arithmetic: shifting all   *)
+(* three vertices by the same vector V leaves the signed twice-area           *)
+(* unchanged.  This was deferred in `Orient_b64_R.v` for the general          *)
+(* binary64 regime because rounding errors in the four `b64_plus` operands    *)
+(* don't structurally cancel against the four `b64_minus` operands at the     *)
+(* start of `b64_orient2d`.  Inside the integer regime, `b64_plus` is         *)
+(* bit-exact (each translated coord stays within the 53-bit integer-          *)
+(* exactness window), so the binary64 evaluation matches the R-side           *)
+(* identity on the nose.                                                       *)
+(*                                                                            *)
+(* Precondition shape: caller supplies (a) `orient2d_inputs_int_safe` on the  *)
+(* original triple, (b) `coord_int_safe` on each component of the translation *)
+(* vector V, AND (c) `orient2d_inputs_int_safe` on the translated triple.     *)
+(* Condition (c) is a genuine constraint -- it forces V to be small enough    *)
+(* (relative to the originals) that every post-translation coord lands at or  *)
+(* under `2^25`.  In practice this is the natural use case: translating to a  *)
+(* nearby origin for grid normalisation, where both endpoints of the          *)
+(* translation are well inside the integer regime by construction.            *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_orient2d_translation_int_R :
+  forall (P0 P1 Q : BPoint) (vx vy : binary64),
+    let P0' := mkBP (b64_plus (bx P0) vx) (b64_plus (by_ P0) vy) in
+    let P1' := mkBP (b64_plus (bx P1) vx) (b64_plus (by_ P1) vy) in
+    let Q'  := mkBP (b64_plus (bx Q)  vx) (b64_plus (by_ Q)  vy) in
+    orient2d_inputs_int_safe P0 P1 Q ->
+    coord_int_safe vx ->
+    coord_int_safe vy ->
+    orient2d_inputs_int_safe P0' P1' Q' ->
+    Binary.B2R prec emax (b64_orient2d P0 P1 Q)
+      = Binary.B2R prec emax (b64_orient2d P0' P1' Q').
+Proof.
+  intros P0 P1 Q vx vy P0' P1' Q' Hpre Hvx Hvy Hpost.
+  rewrite (b64_orient2d_exact_for_small_int _ _ _ Hpre).
+  rewrite (b64_orient2d_exact_for_small_int _ _ _ Hpost).
+  unfold cross_R_BP. simpl.
+  destruct Hpre as (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  rewrite (b64_plus_B2R_of_coord_int_safe _ _ HxP0 Hvx).
+  rewrite (b64_plus_B2R_of_coord_int_safe _ _ HyP0 Hvy).
+  rewrite (b64_plus_B2R_of_coord_int_safe _ _ HxP1 Hvx).
+  rewrite (b64_plus_B2R_of_coord_int_safe _ _ HyP1 Hvy).
+  rewrite (b64_plus_B2R_of_coord_int_safe _ _ HxQ  Hvx).
+  rewrite (b64_plus_B2R_of_coord_int_safe _ _ HyQ  Hvy).
+  ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
 
@@ -498,9 +593,12 @@ Print Assumptions generic_format_IZR_le_bpow_prec.
 Print Assumptions b64_round_IZR_exact.
 Print Assumptions b64_minus_int_exact.
 Print Assumptions b64_mult_int_exact.
+Print Assumptions b64_plus_int_exact.
+Print Assumptions b64_plus_B2R_of_coord_int_safe.
 Print Assumptions coord_int_safe_imp_coord_safe.
 Print Assumptions orient2d_inputs_int_safe_imp_safe.
 Print Assumptions b64_orient2d_exact_for_small_int.
 Print Assumptions b64_orient_sign_filtered_sound_small_int.
 Print Assumptions b64_orient2d_cyclic_int_R.
 Print Assumptions b64_orient2d_cyclic2_int_R.
+Print Assumptions b64_orient2d_translation_int_R.
