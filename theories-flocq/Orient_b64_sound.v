@@ -48,11 +48,35 @@
          Rabs (B2R (b64_orient2d P0 P1 Q) - cross_R_BP P0 P1 Q)
            <= B2R b64_errbound_A_coeff * b64_detsum_R P0 P1 Q.
 
-   The forward-error theorem in turn needs per-op forward-error lemmas
-   (`Plus_error.plus_error`, `Mult_error.mult_error_FLT`, etc.) plus an
-   accumulation analysis through the four `b64_minus` and two `b64_mult`
-   sub-operations.  That is the substantive proof slice -- approximately
-   1-3 days of focused work, mirroring Shewchuk 1997 §4.
+   Building blocks now in `B64_bridge.v` (Slice 2a, shipped this commit):
+
+     b64_plus_abs_error :  Rabs (B2R (b64_plus x y) - (B2R x + B2R y))
+                           <= ulp (B2R x + B2R y).
+     b64_minus_abs_error : analogous for `b64_minus`.
+     b64_mult_abs_error  : analogous for `b64_mult`.
+
+   These give per-operation absolute error bounds (unconditional --
+   no normal-range precondition).  Loose: `ulp v` is up to `bpow(-prec+1)
+   * |v|` for normal v, so the bound is a constant factor worse than
+   the relative-error version below.
+
+   Still pending (Slice 2b, ~1-2 sessions):
+
+     Relative-error versions: `b64_*_rel_error` giving
+       `Rabs (error) <= (1/2) * bpow(-prec+1) * Rabs (exact_op ...)`
+     under the precondition that `Rabs (exact_op ...) >= bpow(emin + prec - 1)`
+     (above the smallest normal binary64).  Builds on
+     `Prop.Relative.relative_error_N_FLT`.  These are what Shewchuk's
+     analysis directly uses.
+
+   Still pending (Slice 2c, ~2-3 sessions):
+
+     Chain composition: thread the per-op errors through the four
+     `b64_minus` / two `b64_mult` / outer `b64_minus` chain of
+     `b64_orient2d` to derive the Shewchuk Stage A bound
+     `(3 + 16 * eps) * eps * (|t1| + |t2|)`.  The "3 * eps" is the
+     contribution of three rounding operations (two products + outer
+     subtraction); the "16 * eps" is higher-order cross terms.
 
    Once the forward-error theorem lands, the cross_R soundness follows
    mechanically from this file's decoder-consistency lemma:

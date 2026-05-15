@@ -497,6 +497,80 @@ Proof.
   - apply bpow_lt. unfold emax. lia.
 Qed.
 
+(* ============================================================================
+   Forward-error lemmas (Slice 2 of the Phase 0 chokepoint).
+   ----------------------------------------------------------------------------
+   Per-operation bounds on `|B2R(b64_op x y) - exact_op(B2R x, B2R y)|`.
+   Building blocks for the eventual Shewchuk Stage A forward-error
+   theorem (Slice 2 deliverable) and from there the cross_R-valued
+   soundness theorem (Slice 3) in `Orient_b64_sound.v`.
+
+   Two flavours each:
+
+   - **Absolute** -- `Rabs (error) <= ulp (exact_op (B2R x) (B2R y))`.
+     Unconditional (no normal-range precondition).  Looser bound but
+     always applicable.  Builds on `error_le_ulp` from
+     `Flocq.Core.Ulp`.
+
+   - **Relative** (deferred).  `Rabs (error) <= (1/2) * bpow(-prec+1) *
+     Rabs (exact_op ...)`.  Tighter (this is the eps_half = 2^-52 form
+     that Shewchuk's analysis uses), but conditional on the exact
+     value being above the smallest normal binary64 magnitude
+     (`bpow (emin + prec - 1) = bpow (-1022)`).  Builds on
+     `Prop.Relative.relative_error_N_FLT`.
+
+   The absolute version below is sufficient to *state* the chain
+   bound; the relative version is what's needed to *match*
+   Shewchuk's specific `(3 + 16 * eps) * eps` coefficient.  The
+   relative-version lemmas are documented in PROOF STATUS as
+   the next slice.
+   ============================================================================ *)
+
+Lemma b64_minus_abs_error :
+  forall x y : binary64,
+    b64_safe Rminus x y ->
+    Rabs (Binary.B2R prec emax (b64_minus x y)
+          - (Binary.B2R prec emax x - Binary.B2R prec emax y))
+      <= ulp radix2 (SpecFloat.fexp prec emax)
+                    (Binary.B2R prec emax x - Binary.B2R prec emax y).
+Proof.
+  intros x y Hsafe.
+  pose proof (b64_minus_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R.
+  apply (error_le_ulp radix2 (SpecFloat.fexp prec emax)
+                      (round_mode mode_b64)).
+Qed.
+
+Lemma b64_plus_abs_error :
+  forall x y : binary64,
+    b64_safe Rplus x y ->
+    Rabs (Binary.B2R prec emax (b64_plus x y)
+          - (Binary.B2R prec emax x + Binary.B2R prec emax y))
+      <= ulp radix2 (SpecFloat.fexp prec emax)
+                    (Binary.B2R prec emax x + Binary.B2R prec emax y).
+Proof.
+  intros x y Hsafe.
+  pose proof (b64_plus_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R.
+  apply (error_le_ulp radix2 (SpecFloat.fexp prec emax)
+                      (round_mode mode_b64)).
+Qed.
+
+Lemma b64_mult_abs_error :
+  forall x y : binary64,
+    b64_safe Rmult x y ->
+    Rabs (Binary.B2R prec emax (b64_mult x y)
+          - Binary.B2R prec emax x * Binary.B2R prec emax y)
+      <= ulp radix2 (SpecFloat.fexp prec emax)
+                    (Binary.B2R prec emax x * Binary.B2R prec emax y).
+Proof.
+  intros x y Hsafe.
+  pose proof (b64_mult_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R.
+  apply (error_le_ulp radix2 (SpecFloat.fexp prec emax)
+                      (round_mode mode_b64)).
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
@@ -509,3 +583,6 @@ Print Assumptions b64_mult_zero_l_R.
 Print Assumptions b64_mult_zero_r_R.
 Print Assumptions b64_safe_minus_of_bounded.
 Print Assumptions b64_mult_bounded_R.
+Print Assumptions b64_plus_abs_error.
+Print Assumptions b64_minus_abs_error.
+Print Assumptions b64_mult_abs_error.

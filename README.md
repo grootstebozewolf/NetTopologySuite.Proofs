@@ -801,6 +801,23 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   `b64_mult` / outer `b64_minus` chain.  Once that lemma lands,
   cross_R soundness follows mechanically by composition with the
   decoder-consistency theorem from this slice.
+- **2026-05-15**: forward-error building blocks (slice 2a of the
+  soundness bridge).  Added to `B64_bridge.v`: `b64_plus_abs_error`,
+  `b64_minus_abs_error`, `b64_mult_abs_error`, each giving the
+  per-operation absolute error bound
+
+      Rabs (B2R (b64_op x y) - exact_op (B2R x) (B2R y))
+        <= ulp radix2 (SpecFloat.fexp prec emax) (exact_op ...).
+
+  Built on Flocq's `error_le_ulp` from `Core/Ulp.v`; unconditional
+  (no normal-range precondition).  These are the per-step pieces
+  the Shewchuk Stage A chain composition will eventually thread
+  through the four `b64_minus` / two `b64_mult` / outer `b64_minus`
+  structure of `b64_orient2d`.  Same 4-axiom set, Qed-closed.
+  Two further sub-slices documented in `Orient_b64_sound.v`'s
+  PROOF STATUS: (2b) tighter relative-error versions under normal-
+  range precondition via `relative_error_N_FLT`; (2c) the chain
+  composition itself.
 
 ## What this is NOT
 
