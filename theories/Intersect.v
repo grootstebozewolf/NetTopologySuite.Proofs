@@ -272,9 +272,83 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Collinear overlap completeness.                                            *)
+(*                                                                            *)
+(* Companion to `strict_completeness`: when all four cross-products are       *)
+(* simultaneously zero (i.e., A, B, C, D are mutually collinear), the two    *)
+(* segments AB and CD share a point iff at least one endpoint of one         *)
+(* segment lies on the other.                                                 *)
+(*                                                                            *)
+(* The condition `segments_1d_overlap A B C D` packages the four-disjunct    *)
+(* algorithmic check.  This is exactly how NTS's `RobustLineIntersector`     *)
+(* probes the collinear-overlap case: it tests `between A B C`,              *)
+(* `between A B D`, `between C D A`, `between C D B` and reports a shared    *)
+(* point whenever any one is true.                                            *)
+(*                                                                            *)
+(* The "completeness" direction proved here is the existential one (overlap *)
+(* witness ⇒ share-point witness).  Its proof is direct witness selection:   *)
+(* each disjunct yields a vertex that lies on both segments.  The four       *)
+(* cross-zero premises aren't needed for this direction -- they're carried   *)
+(* through the statement so callers using the binary64 layer's               *)
+(* `IntersectCollinear` branch can compose with the cross-product            *)
+(* evidence they already have.                                                *)
+(*                                                                            *)
+(* The converse direction (collinear + share ⇒ overlap) is more subtle:      *)
+(* it requires parametrising the shared point on segment AB (which needs    *)
+(* A ≠ B in general) and case-splitting on which of t_C, t_D, t_X lies in   *)
+(* [0, 1].  Documented as the natural follow-up; not in this slice.          *)
+(* -------------------------------------------------------------------------- *)
+
+Definition segments_1d_overlap (A B C D : Point) : Prop :=
+  between C D A \/ between C D B \/ between A B C \/ between A B D.
+
+Theorem collinear_overlap_completeness :
+  forall A B C D,
+    cross A B C = 0 -> cross A B D = 0 ->
+    cross C D A = 0 -> cross C D B = 0 ->
+    segments_1d_overlap A B C D ->
+    exists P, between A B P /\ between C D P.
+Proof.
+  intros A B C D _ _ _ _ Hov.
+  destruct Hov as [HA | [HB | [HC | HD]]].
+  - exists A. split; [apply between_P0 | exact HA].
+  - exists B. split; [apply between_P1 | exact HB].
+  - exists C. split; [exact HC | apply between_P0].
+  - exists D. split; [exact HD | apply between_P1].
+Qed.
+
+(* Symmetry: swapping the two segments leaves the 1D-overlap predicate     *)
+(* unchanged.  Useful when downstream proofs want to canonicalise the      *)
+(* argument order.                                                          *)
+Lemma segments_1d_overlap_sym :
+  forall A B C D, segments_1d_overlap A B C D <-> segments_1d_overlap C D A B.
+Proof.
+  intros A B C D. unfold segments_1d_overlap. tauto.
+Qed.
+
+(* Endpoint-coincidence sufficiency: if one segment's endpoint equals one  *)
+(* of the other's, the overlap predicate holds trivially.  Captures the    *)
+(* common "shared endpoint" sub-case of `IntersectCollinear`.               *)
+Lemma segments_1d_overlap_shared_endpoint :
+  forall A B C D,
+    (A = C \/ A = D \/ B = C \/ B = D) ->
+    segments_1d_overlap A B C D.
+Proof.
+  intros A B C D [HAC | [HAD | [HBC | HBD]]];
+    unfold segments_1d_overlap.
+  - left.  subst. apply between_P0.
+  - left.  subst. apply between_P1.
+  - right; left.  subst. apply between_P0.
+  - right; left.  subst. apply between_P1.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions segments_share_point_implies_opposite_sides.
 Print Assumptions same_side_rejection_is_sound.
 Print Assumptions strict_completeness.
+Print Assumptions collinear_overlap_completeness.
+Print Assumptions segments_1d_overlap_sym.
+Print Assumptions segments_1d_overlap_shared_endpoint.

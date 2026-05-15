@@ -499,6 +499,48 @@ Proof.
   - apply (b64_intersect_sign_filtered_point_sound_small_int _ _ _ _ Hsafe Eres).
 Qed.
 
+(* ============================================================================
+   Collinear-overlap soundness (binary64 bridge).
+
+   Companion to the R-side `collinear_overlap_completeness` in
+   theories/Intersect.v: lifts to BPoint inputs.  Premises:
+
+   * All four cross-products of input vertices are zero -- A, B, C, D are
+     mutually collinear.
+   * The 1D-overlap predicate holds (some endpoint of one segment is
+     between the endpoints of the other).
+
+   Conclusion: a shared point exists.
+
+   This claim is layer-agnostic (pure R-arithmetic via `cross_R_BP`'s
+   identity with `cross (BP2P _)`).  Integer-regime callers can derive
+   the cross-zero premises from the orient soundness theorem when the
+   four `b64_orient_sign_filtered` results are all `OrientRZero`; that
+   composition is a one-liner left to consumers rather than baked into
+   this slice.
+
+   The other sub-cases of `IntersectCollinear` (T-junction, shared
+   endpoint, collinear without overlap) still make no positive claim in
+   the headline match-on-five soundness theorem -- they remain `True` by
+   design until the algorithmic disambiguation is shipped separately.
+   ============================================================================ *)
+
+Theorem b64_collinear_overlap_share :
+  forall P0 P1 Q0 Q1 : BPoint,
+    cross_R_BP P0 P1 Q0 = 0 ->
+    cross_R_BP P0 P1 Q1 = 0 ->
+    cross_R_BP Q0 Q1 P0 = 0 ->
+    cross_R_BP Q0 Q1 P1 = 0 ->
+    segments_1d_overlap (BP2P P0) (BP2P P1) (BP2P Q0) (BP2P Q1) ->
+    exists X : Point,
+      between (BP2P P0) (BP2P P1) X /\
+      between (BP2P Q0) (BP2P Q1) X.
+Proof.
+  intros P0 P1 Q0 Q1 H1 H2 H3 H4 Hov.
+  rewrite cross_R_BP_eq_cross_BP2P in H1, H2, H3, H4.
+  apply collinear_overlap_completeness; assumption.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
@@ -519,3 +561,4 @@ Print Assumptions b64_intersect_sign_filtered_none_sound_small_int.
 Print Assumptions b64_intersect_sign_filtered_point_sound_small_int.
 Print Assumptions b64_intersect_sign_filtered_sound_small_int.
 Print Assumptions b64_intersect_point_none_unless_point.
+Print Assumptions b64_collinear_overlap_share.
