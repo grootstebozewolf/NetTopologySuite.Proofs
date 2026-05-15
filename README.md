@@ -246,12 +246,21 @@ wins, ties broken by smaller y. Standard order-theoretic properties.
 - **`le_lex_total`** — totality: for any two points, one is ≤ the
   other. (Uses classical decidability on the reals.)
 
-## Extensions: curve linearisation
+## In-flight work
 
-Applied stack atop the core primitives, in active development.  Covers
-the SFA-CA curves prototype tracked on the upstream
-[`enhancement/curved-circularstring-tin`](https://github.com/NetTopologySuite/NetTopologySuite)
-branch, and feeds the binary64 instance consumed by
+Modules atop the core primitives in active development.  Two threads
+currently live here:
+
+- The **curve-linearisation stack** (`Linearise` → `Simplify` → `Tin` →
+  `Validate` → `Validate_decidable` → `Validate_binary64`), tracking the
+  SFA-CA curves prototype on the upstream
+  [`enhancement/curved-circularstring-tin`](https://github.com/NetTopologySuite/NetTopologySuite)
+  branch.
+- The **Phase 0 chokepoint** (`Orientation_b64`), the first slice of
+  the multi-year roadmap toward `RobustLineIntersector` / overlay-
+  topology verification.
+
+Both feed binary64 implementations consumed by
 [NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
 
 ### `theories/Linearise.v` — tolerance contract for curve linearisation
@@ -383,6 +392,39 @@ preconditions through the `Fixpoint`) is not yet proven and is not
 stubbed with `Admitted`; the `PROOF STATUS` block at the top of the
 file says so explicitly.
 
+### `theories-flocq/Orientation_b64.v` — Phase 0 chokepoint, naive layer
+
+The first chokepoint module.  Ships the *naive* cross-product
+orientation predicate in binary64 and the four-valued sign decoder,
+end-to-end through extraction and into the
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve)
+`Robust.Orientation` namespace.  The Shewchuk-adaptive filter and the
+soundness bridge to ℝ-valued `cross` are the next slice, explicitly
+not stubbed.
+
+- `b64_orient2d P0 P1 Q` — signed twice-area of the triangle
+  `(P0, P1, Q)`, reusing the `b64_minus` / `b64_mult` / `bx` / `by_`
+  helpers from `Validate_binary64.v`.
+- `Inductive orient_sign := OrientPos | OrientNeg | OrientZero | OrientNan` —
+  four-valued result that admits NaN explicitly rather than
+  collapsing it.  Downstream callers MUST handle `OrientNan`.
+- `b64_orient_sign` — routes through `b64_compare` against `+0`.
+- Qed-closed structural lemmas: `orient_sign_eq_dec`,
+  `b64_orient_sign_total`, `orient_sign_distinct`,
+  `b64_orient_sign_non_nan_iff_compare_some`.
+- Same 4-axiom set as `Validate_binary64.v` (the three classical-reals
+  axioms + `Classical_Prop.classic`, all transitive from Flocq).
+
+The arithmetic identities that hold over ℝ (antisymmetry, cyclic
+permutation, translation invariance) are NOT YET CLAIMED here —
+they need Flocq's `Bminus_correct` / `Bmult_correct` no-overflow
+preconditions, the same proof slice deferred for the simplifier R-
+bridge.  Both close together when that slice lands.
+
+`Orientation_b64.v` is plumbed into `Validate_binary64_extract.v`, so
+the RocqRefRunner now dispatches on a stdin mode line (`SIMPLIFY` /
+`ORIENT`) into the appropriate extracted function.
+
 ## Roadmap
 
 ### Phase 0–7: the NTS topological chokepoint
@@ -397,7 +439,7 @@ publishable.
 | Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | reading-unblocked | 0% |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | naive cross-product layer Qed-closed (decidability, totality, NaN-safety); Shewchuk filter + soundness bridge deferred | **partial** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign`) bit-exact against RocqRefRunner ORIENT mode; adaptive filter port pending |
 | 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked | 0% |
 | 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
@@ -525,6 +567,19 @@ separate axis — currently not claimed end-to-end on any phase.
   mirroring the Coq lemmas + 248 differential cases across random
   and adversarial families). The R-bridge soundness theorem stays
   deferred (not stubbed with `Admitted`).
+- **2026-05-15**: Phase 0 chokepoint first slice.  Added
+  `theories-flocq/Orientation_b64.v` (naive binary64 orientation
+  predicate + four-valued sign decoder with NaN explicitly admitted)
+  with Qed-closed decidability / totality / distinctness / non-NaN-
+  iff-compare-Some lemmas.  `Validate_binary64_extract.v` now extracts
+  both the simplifier and the orientation functions into a single
+  `oracle/extracted.ml`, and `oracle/driver.ml` dispatches on a stdin
+  mode line (`SIMPLIFY` / `ORIENT`).  C# consumer
+  `Robust.Orientation.RobustOrientation` (with `OrientSign` enum)
+  is bit-exact against RocqRefRunner on the full test suite — 385 /
+  385 GreedyPerp + RobustOrientation tests pass on Apple Silicon.
+  The arithmetic identities and the Shewchuk-adaptive filter are
+  explicitly the next slice, not stubbed.
 
 ## What this is NOT
 
