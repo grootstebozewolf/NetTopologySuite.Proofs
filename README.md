@@ -560,7 +560,7 @@ publishable.
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
 | 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stages B/C/D expansion refinement (in particular Stage D's renormalization) + general bounded-magnitude cross_R soundness deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
 | 1 | `Intersect_b64.v` — predicate-level robust segment intersection | **predicate complete** — five-valued `IntersectSign` filter built on top of Phase 0's `b64_orient_sign_filtered`; structural lemmas Qed-closed (decidability, totality, 10-way distinctness, NaN propagation); integer-regime cross_R soundness for both `IntersectNone` (no shared point) and `IntersectPoint` (exists shared interior point) via the R-side `strict_completeness` theorem in `theories/Intersect.v`; `IntersectCollinear` sub-case disambiguation + intersection-point coordinate computation deferred — see [`docs/phase1-completion.md`](docs/phase1-completion.md) | **predicate-complete** — `Robust.Intersect.RobustLineIntersector` (`SignFiltered` returning 5-valued `IntersectSign`) bit-exact against RocqRefRunner `INTERSECT_FILTERED` mode, 187 / 187 differential cases including integer-regime adversarial family |
-| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
+| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **audit-doc shipped** — scope, reusable foundations from Phase 0/1, and first-slice plan in [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md); first slice `HotPixel.v` + `HotPixel_b64.v` queued; full topological correctness theorem identified as the major thesis-shaped piece (6-10 weeks) | 0% |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
 | 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future | 0% |
 | 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ | 0% |
@@ -943,6 +943,19 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   error analysis, multi-session engagement).  No middle ground between
   "the predicate as shipped" and the full coordinate / sub-case story
   buys meaningful intermediate value.
+- **2026-05-15**: Phase 2 opened -- snap-rounding noder audit doc.
+  [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md)
+  inventories what snap rounding is (Hobby 1999 + Halperin & Packer
+  2002), why NTS needs it (overlay needs topologically consistent
+  input), what's reusable from Phase 0/1 (orientation + intersection
+  predicates, integer-regime soundness, R-side machinery), what's
+  greenfield (hot-pixel data structure, pass-through relation, the
+  algorithm, the topological correctness theorem), and the first-slice
+  plan (`HotPixel.v` + `HotPixel_b64.v`).  Phase 2 is qualitatively
+  larger than 0 or 1 -- the topological correctness theorem is
+  identified as 6-10 weeks of focused work and genuinely
+  research-shaped.  No turnkey vendor target exists; phase 2 is
+  greenfield in the formal-methods sense.
 
 ## What this is NOT
 
