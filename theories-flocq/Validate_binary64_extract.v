@@ -38,6 +38,7 @@
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
 From NTS.Proofs.Flocq Require Import Orientation_b64.
+From NTS.Proofs.Flocq Require Import Intersect_b64.
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -108,4 +109,5 @@ Extraction "oracle/extracted.ml"
   greedy_simplify_perp_b64
   b64_orient2d
   b64_orient_sign_naive
-  b64_orient_sign_filtered.
+  b64_orient_sign_filtered
+  b64_intersect_sign_filtered.

@@ -26,6 +26,15 @@
         output:       single line "<sign> <signed_area_hex>".
                       sign is one of: POS / NEG / ZERO / NAN / UNCERTAIN.
 
+     INTERSECT_FILTERED -- segment-pair intersection predicate, Stage A.
+        line 2:       <x0> <y0>     -- P0
+        line 3:       <x1> <y1>     -- P1
+        line 4:       <xq0> <yq0>   -- Q0
+        line 5:       <xq1> <yq1>   -- Q1
+        EOF.
+        output:       single token "<sign>".
+                      sign is one of: NONE / POINT / COLLINEAR / NAN / UNCERTAIN.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -94,6 +103,23 @@ let run_orient_filtered () =
   let v = b64_orient2d p0 p1 q in
   Printf.printf "%s %h\n" (sign_robust_string s) v
 
+(* ----- INTERSECT_FILTERED mode. ------------------------------------------ *)
+
+let intersect_sign_string = function
+  | IntersectNone      -> "NONE"
+  | IntersectPoint     -> "POINT"
+  | IntersectCollinear -> "COLLINEAR"
+  | IntersectNan       -> "NAN"
+  | IntersectUncertain -> "UNCERTAIN"
+
+let run_intersect_filtered () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let q0 = parse_point (input_line stdin) in
+  let q1 = parse_point (input_line stdin) in
+  let s = b64_intersect_sign_filtered p0 p1 q0 q1 in
+  Printf.printf "%s\n" (intersect_sign_string s)
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 let () =
@@ -102,7 +128,8 @@ let () =
     if line = "" then read_mode () else line
   in
   match read_mode () with
-  | "SIMPLIFY"        -> run_simplify ()
-  | "ORIENT"          -> run_orient ()
-  | "ORIENT_FILTERED" -> run_orient_filtered ()
-  | other             -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)
+  | "SIMPLIFY"           -> run_simplify ()
+  | "ORIENT"             -> run_orient ()
+  | "ORIENT_FILTERED"    -> run_orient_filtered ()
+  | "INTERSECT_FILTERED" -> run_intersect_filtered ()
+  | other                -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)
