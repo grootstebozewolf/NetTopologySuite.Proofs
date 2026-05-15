@@ -29,3 +29,8 @@ theories/Validate_decidable.v
 # Admitted markers does not pick up in-progress soundness bridges.
 -Q theories-flocq NTS.Proofs.Flocq
 theories-flocq/Validate_binary64.v
+# Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
+# the oracle binary in `oracle/` for differential testing against the C#
+# port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract
+# binary_float (see header of Validate_binary64_extract.v for caveats).
+theories-flocq/Validate_binary64_extract.v
