@@ -6,45 +6,47 @@
 
    PROOF STATUS
    ============
-   Currently in the file:
+   In this file (general safe-magnitude regime, `b64_orient2d_safe`):
      - `b64_orient2d_safe P0 P1 Q`         -- bundled no-overflow precondition
                                               for one call to `b64_orient2d`.
-     - `b64_orient2d_antisymmetric_R`      -- swapping the last two arguments
-                                              negates the R-valued result.
-                                              Holds because the intermediate
-                                              binary64 values are identical
-                                              between the two calls and
-                                              `round_NE_opp` closes the outer
-                                              subtraction.
-     - `b64_orient2d_at_P0_R`              -- vertex coincidence Q = P0: the
-                                              R-valued result is exactly
-                                              zero, no rounding error.
+     - `b64_orient2d_inputs_safe`          -- magnitude-bounded interface
+                                              (Flavour B): `|coord| <= 2^500`
+                                              per input + the chain helper
+                                              `b64_orient2d_inputs_safe_imp_safe`
+                                              that discharges all seven
+                                              `b64_safe` premises.
+     - `b64_orient2d_antisymmetric_R`      -- swap-args negation.
+     - `b64_orient2d_at_P0_R`              -- vertex coincidence Q = P0.
+     - `b64_orient2d_at_P1_R`              -- vertex coincidence Q = P1.
+     - `b64_orient2d_at_P0_eq_P1_R`        -- degenerate base P0 = P1.
 
-   Deliberately not here (with reasons):
-     - Cyclic permutation `B2R (b64_orient2d A B C) = B2R (b64_orient2d B C A)`.
-       The two calls compute *different* intermediate `b64_minus` and
-       `b64_mult` values; lifting via `b64_*_correct` produces nested
-       `b64_round(b64_round(...) * b64_round(...))` terms that are not
-       syntactically equal under cyclic permutation.  In R-arithmetic the
-       identity holds by `ring`; in binary64 the accumulated rounding
-       errors don't structurally cancel.  Provable only with much stronger
-       preconditions (Sterbenz exactness on every subtraction), or as an
-       error-bounded version.  Deferred.
-     - Translation invariance.  Same issue -- `(x + v) - (y + v)` in
-       binary64 is generally not equal to `x - y` after rounding.
-       Sterbenz exactness can rescue it in restricted regimes; full
-       generality needs more work.  Deferred.
-     - Magnitude-bounded variant of the precondition + the
-       "bounded inputs imply safe chain" helper (Flavour B in the audit
-       discussion).  One-time work that buys easier callers; do
-       immediately after the remaining vertex-coincidence theorems.
+   In `Orient_b64_exact.v` (integer regime, `orient2d_inputs_int_safe`,
+   `|coord| <= 2^25` integer-valued):
+     - `b64_orient2d_exact_for_small_int`  -- `B2R det = cross_R_BP` on the
+                                              nose (bit-exact in the regime).
+     - `b64_orient_sign_filtered_sound_small_int`
+                                           -- cross_R-valued soundness.
+     - `b64_orient2d_cyclic_int_R`, `_cyclic2_int_R`
+                                           -- both non-trivial cyclic
+                                              permutations.
+     - `b64_orient2d_translation_int_R`    -- invariance under integer-valued
+                                              translation by (vx, vy).
 
-   What's true about cyclic / translation but not directly Provable here:
-   they hold for the *exact* ℝ-valued `cross` predicate in
-   `theories/Orientation.v`, just not for its binary64 evaluation.
-   The eventual `b64_orient2d_exact_sound` theorem (Shewchuk Stages B/C)
-   restores them by routing `OrientRUncertain` through expansion
-   arithmetic.
+   So the three classic identities (antisymmetry / cyclic permutation /
+   translation invariance) are all complete: antisymmetry in this file
+   under the general safe regime, cyclic and translation in
+   `Orient_b64_exact.v` under the integer regime.  The general-magnitude
+   cyclic/translation cases remain open and would need the same
+   forward-error machinery the strategy doc demoted from critical path.
+
+   Why those general-regime cases stay open: the two `b64_orient2d` calls
+   in cyclic permutation compute *different* intermediate `b64_minus` and
+   `b64_mult` values; lifting via `b64_*_correct` produces nested
+   `b64_round(b64_round(...) * b64_round(...))` terms that aren't
+   syntactically equal.  In R-arithmetic both identities hold by `ring`;
+   in binary64 the accumulated rounding errors don't structurally cancel.
+   The integer regime sidesteps the issue entirely by making every
+   `b64_round` invocation exact.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
