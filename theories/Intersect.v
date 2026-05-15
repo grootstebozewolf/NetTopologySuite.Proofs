@@ -342,6 +342,25 @@ Proof.
   - right; left.  subst. apply between_P1.
 Qed.
 
+(* Shared-endpoint completeness.  When one endpoint of one segment equals  *)
+(* one endpoint of the other, the segments share that point trivially.    *)
+(* No cross-product premise needed -- pure point-equality witness          *)
+(* selection.  This is the "shared endpoint" sub-case of                  *)
+(* `IntersectCollinear` that the predicate's algorithmic dispatch flags    *)
+(* generically but cannot distinguish without coordinate-equality          *)
+(* probing on the C# side.                                                  *)
+Theorem shared_endpoint_share_point :
+  forall A B C D : Point,
+    (A = C \/ A = D \/ B = C \/ B = D) ->
+    exists X, between A B X /\ between C D X.
+Proof.
+  intros A B C D [HAC | [HAD | [HBC | HBD]]].
+  - subst. exists C. split; apply between_P0.
+  - subst. exists D. split; [apply between_P0 | apply between_P1].
+  - subst. exists C. split; [apply between_P1 | apply between_P0].
+  - subst. exists D. split; [apply between_P1 | apply between_P1].
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
@@ -352,3 +371,4 @@ Print Assumptions strict_completeness.
 Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
 Print Assumptions segments_1d_overlap_shared_endpoint.
+Print Assumptions shared_endpoint_share_point.

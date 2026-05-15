@@ -541,6 +541,106 @@ Proof.
   apply collinear_overlap_completeness; assumption.
 Qed.
 
+(* ============================================================================
+   Shared-endpoint disambiguation.
+
+   When two segments share an endpoint, the intersection predicate
+   classifies as `IntersectCollinear` (because the corresponding orient
+   tests return Zero), but the predicate alone doesn't distinguish this
+   sub-case from a T-junction or full collinear overlap.  The functions
+   below detect the shared-endpoint configuration by direct bit-equality
+   on the four pairs of endpoint coordinates -- callers can use this to
+   recover a concrete shared-point witness without further computation.
+
+   Bit-equality is decided by Flocq's `Bcompare`: returns `Some Eq` iff
+   both operands are finite and `B2R x = B2R y` (NaN inputs give `None`).
+   The witness function tries the four pairings and returns the
+   coinciding endpoint as the shared point.
+   ============================================================================ *)
+
+Definition b64_bpoint_eq (p q : BPoint) : bool :=
+  match b64_compare (bx p) (bx q), b64_compare (by_ p) (by_ q) with
+  | Some Eq, Some Eq => true
+  | _, _             => false
+  end.
+
+Definition b64_shared_endpoint_witness
+    (P0 P1 Q0 Q1 : BPoint) : option BPoint :=
+  if b64_bpoint_eq P0 Q0 then Some P0
+  else if b64_bpoint_eq P0 Q1 then Some P0
+  else if b64_bpoint_eq P1 Q0 then Some P1
+  else if b64_bpoint_eq P1 Q1 then Some P1
+  else None.
+
+(* The key bridge: bit-equal finite binary64 values lift to equal R         *)
+(* coordinates via `Bcompare_correct`.  Combined with the BP2P record       *)
+(* equality, two BPoints with all four coords bit-equal lift to equal       *)
+(* Points.                                                                   *)
+Lemma b64_bpoint_eq_imp_BP2P_eq :
+  forall p q : BPoint,
+    Binary.is_finite prec emax (bx p)  = true ->
+    Binary.is_finite prec emax (by_ p) = true ->
+    Binary.is_finite prec emax (bx q)  = true ->
+    Binary.is_finite prec emax (by_ q) = true ->
+    b64_bpoint_eq p q = true ->
+    BP2P p = BP2P q.
+Proof.
+  intros p q Fxp Fyp Fxq Fyq Heq.
+  unfold b64_bpoint_eq in Heq.
+  unfold b64_compare in Heq.
+  rewrite (Binary.Bcompare_correct prec emax _ _ Fxp Fxq) in Heq.
+  rewrite (Binary.Bcompare_correct prec emax _ _ Fyp Fyq) in Heq.
+  destruct (Rcompare (Binary.B2R prec emax (bx p))
+                     (Binary.B2R prec emax (bx q))) eqn:Excmp;
+    try discriminate.
+  destruct (Rcompare (Binary.B2R prec emax (by_ p))
+                     (Binary.B2R prec emax (by_ q))) eqn:Eycmp;
+    try discriminate.
+  apply Rcompare_Eq_inv in Excmp.
+  apply Rcompare_Eq_inv in Eycmp.
+  unfold BP2P. rewrite Excmp, Eycmp. reflexivity.
+Qed.
+
+(* Soundness: when the witness function commits, the witness lies on both *)
+(* segments.  Requires all eight input coordinates to be finite.  The     *)
+(* proof composes `b64_bpoint_eq_imp_BP2P_eq` with the R-side             *)
+(* `shared_endpoint_share_point`.                                         *)
+
+Theorem b64_shared_endpoint_witness_sound :
+  forall P0 P1 Q0 Q1 X : BPoint,
+    Binary.is_finite prec emax (bx P0)  = true ->
+    Binary.is_finite prec emax (by_ P0) = true ->
+    Binary.is_finite prec emax (bx P1)  = true ->
+    Binary.is_finite prec emax (by_ P1) = true ->
+    Binary.is_finite prec emax (bx Q0)  = true ->
+    Binary.is_finite prec emax (by_ Q0) = true ->
+    Binary.is_finite prec emax (bx Q1)  = true ->
+    Binary.is_finite prec emax (by_ Q1) = true ->
+    b64_shared_endpoint_witness P0 P1 Q0 Q1 = Some X ->
+    between (BP2P P0) (BP2P P1) (BP2P X) /\
+    between (BP2P Q0) (BP2P Q1) (BP2P X).
+Proof.
+  intros P0 P1 Q0 Q1 X FxP0 FyP0 FxP1 FyP1 FxQ0 FyQ0 FxQ1 FyQ1 Hres.
+  unfold b64_shared_endpoint_witness in Hres.
+  destruct (b64_bpoint_eq P0 Q0) eqn:E00.
+  { inversion Hres; subst.
+    pose proof (b64_bpoint_eq_imp_BP2P_eq _ _ FxP0 FyP0 FxQ0 FyQ0 E00) as HE.
+    split; [apply between_P0 | rewrite <- HE; apply between_P0]. }
+  destruct (b64_bpoint_eq P0 Q1) eqn:E01.
+  { inversion Hres; subst.
+    pose proof (b64_bpoint_eq_imp_BP2P_eq _ _ FxP0 FyP0 FxQ1 FyQ1 E01) as HE.
+    split; [apply between_P0 | rewrite <- HE; apply between_P1]. }
+  destruct (b64_bpoint_eq P1 Q0) eqn:E10.
+  { inversion Hres; subst.
+    pose proof (b64_bpoint_eq_imp_BP2P_eq _ _ FxP1 FyP1 FxQ0 FyQ0 E10) as HE.
+    split; [apply between_P1 | rewrite <- HE; apply between_P0]. }
+  destruct (b64_bpoint_eq P1 Q1) eqn:E11.
+  { inversion Hres; subst.
+    pose proof (b64_bpoint_eq_imp_BP2P_eq _ _ FxP1 FyP1 FxQ1 FyQ1 E11) as HE.
+    split; [apply between_P1 | rewrite <- HE; apply between_P1]. }
+  discriminate Hres.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
@@ -562,3 +662,5 @@ Print Assumptions b64_intersect_sign_filtered_point_sound_small_int.
 Print Assumptions b64_intersect_sign_filtered_sound_small_int.
 Print Assumptions b64_intersect_point_none_unless_point.
 Print Assumptions b64_collinear_overlap_share.
+Print Assumptions b64_bpoint_eq_imp_BP2P_eq.
+Print Assumptions b64_shared_endpoint_witness_sound.
