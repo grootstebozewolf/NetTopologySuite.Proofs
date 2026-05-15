@@ -40,17 +40,26 @@
    - `BP2P` + `cross_R_BP_eq_cross_BP2P`    -- bridge from BPoint to the
                                                R-side `Point`.
    - `b64_intersect_sign_filtered_none_sound_small_int`
-                                            -- the headline: `IntersectNone`
-                                               in the integer regime implies
-                                               the R-side segments don't share
-                                               a point (composing with
-                                               `cross_AB_positive_implies_no_shared`
-                                               from `theories/Intersect.v`).
+                                            -- `IntersectNone` ⇒ R-side
+                                               segments don't share a point
+                                               (rejection direction).
+   - `b64_intersect_sign_filtered_point_sound_small_int`
+                                            -- `IntersectPoint` ⇒ R-side
+                                               segments share an interior
+                                               point (existence direction).
+   - `b64_intersect_sign_filtered_sound_small_int`
+                                            -- HEADLINE.  Match-on-five form
+                                               bundling both directions; the
+                                               `IntersectCollinear` /
+                                               `IntersectNan` /
+                                               `IntersectUncertain` branches
+                                               make no positive claim (`True`)
+                                               by design.
 
    NOT yet claimed:
-   - Soundness for `IntersectPoint` / `IntersectCollinear`: needs the
-     completeness direction of `theories/Intersect.v` (constructive
-     intersection point), which is deferred there too.
+   - Soundness for `IntersectCollinear`: distinguishing shared endpoint /
+     T-junction / collinear overlap requires the algorithmic case analysis
+     NTS's `RobustLineIntersector` performs explicitly.
    - Stage A error-bound filter at the intersection level: each
      individual orientation call's filter is in play, but the
      intersection-level decision doesn't add its own filter.
@@ -352,6 +361,71 @@ Proof.
       | apply cross_CD_positive_implies_no_shared; nra ]).
 Qed.
 
+(* ============================================================================
+   IntersectPoint soundness in the integer regime.
+
+   When the filter commits to `IntersectPoint`, all four orientation calls
+   returned strict Pos / Neg with opposite signs in both pairs.  By the
+   integer-regime orientation soundness, both cross-product products are
+   strictly negative.  `strict_completeness` (theories/Intersect.v) then
+   gives the existence of a shared interior point.
+   ============================================================================ *)
+
+Theorem b64_intersect_sign_filtered_point_sound_small_int :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_inputs_int_safe P0 P1 Q0 Q1 ->
+    b64_intersect_sign_filtered P0 P1 Q0 Q1 = IntersectPoint ->
+    exists X : Point,
+      between (BP2P P0) (BP2P P1) X /\
+      between (BP2P Q0) (BP2P Q1) X.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe Hres.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_P0P1Q0 _ _ _ _ Hsafe)) as Hpq0.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_P0P1Q1 _ _ _ _ Hsafe)) as Hpq1.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hsafe)) as Hqp0.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hsafe)) as Hqp1.
+  unfold b64_intersect_sign_filtered in Hres.
+  destruct (b64_orient_sign_filtered P0 P1 Q0) eqn:Epq0;
+    destruct (b64_orient_sign_filtered P0 P1 Q1) eqn:Epq1;
+    destruct (b64_orient_sign_filtered Q0 Q1 P0) eqn:Eqp0;
+    destruct (b64_orient_sign_filtered Q0 Q1 P1) eqn:Eqp1;
+    cbn in Hres; try discriminate Hres;
+    rewrite cross_R_BP_eq_cross_BP2P in Hpq0, Hpq1, Hqp0, Hqp1;
+    apply strict_completeness; nra.
+Qed.
+
+(* ============================================================================
+   Headline: full match-on-five soundness in the integer regime.
+
+   Bundles `_none_sound` and `_point_sound` into the canonical
+   match-on-five form, dropping claims for `Collinear` / `Nan` /
+   `Uncertain` (those branches make no positive claim by design).
+   ============================================================================ *)
+
+Theorem b64_intersect_sign_filtered_sound_small_int :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_inputs_int_safe P0 P1 Q0 Q1 ->
+    match b64_intersect_sign_filtered P0 P1 Q0 Q1 with
+    | IntersectNone =>
+        ~ exists X, between (BP2P P0) (BP2P P1) X /\ between (BP2P Q0) (BP2P Q1) X
+    | IntersectPoint =>
+        exists X, between (BP2P P0) (BP2P P1) X /\ between (BP2P Q0) (BP2P Q1) X
+    | IntersectCollinear => True
+    | IntersectNan       => True
+    | IntersectUncertain => True
+    end.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_sign_filtered P0 P1 Q0 Q1) eqn:Eres;
+    try exact I.
+  - apply (b64_intersect_sign_filtered_none_sound_small_int _ _ _ _ Hsafe Eres).
+  - apply (b64_intersect_sign_filtered_point_sound_small_int _ _ _ _ Hsafe Eres).
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
@@ -369,3 +443,5 @@ Print Assumptions intersect_inputs_int_safe_Q0Q1P0.
 Print Assumptions intersect_inputs_int_safe_Q0Q1P1.
 Print Assumptions cross_R_BP_eq_cross_BP2P.
 Print Assumptions b64_intersect_sign_filtered_none_sound_small_int.
+Print Assumptions b64_intersect_sign_filtered_point_sound_small_int.
+Print Assumptions b64_intersect_sign_filtered_sound_small_int.
