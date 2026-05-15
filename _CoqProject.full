@@ -55,6 +55,14 @@ theories-flocq/Orient_b64_sound.v
 #   | _           => True end.
 # Bit-exact -- no rounding error -- for |coord| <= 2^25 integer inputs.
 theories-flocq/Orient_b64_exact.v
+# Phase 1 first slice: binary64 segment-pair intersection predicate built
+# on top of Stage A filter.  Five-valued result (None / Point / Collinear /
+# Nan / Uncertain).  Ships the predicate, structural lemmas (decidability,
+# totality, 10-way distinctness, NaN-propagation), and a first soundness
+# theorem in the integer regime: IntersectNone implies the underlying
+# R-side segments don't share a point (composing decoder soundness with
+# the rejection-sound direction of theories/Intersect.v).
+theories-flocq/Intersect_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract
