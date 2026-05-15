@@ -246,3 +246,80 @@ Proof.
   (* Outer b64_minus on two R-zero finite values: B2R = 0. *)
   apply (b64_minus_zeros_R _ _ Ft1 Ft2 Ht1_R Ht2_R).
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Vertex coincidence: Q = P1.                                                *)
+(*                                                                            *)
+(* When Q = P1, both `b64_orient2d_terms` components share the same           *)
+(* expression -- `b64_mult (b64_minus (bx P1) (bx P0)) (b64_minus (by_ P1)    *)
+(* (by_ P0))` -- so the outer subtraction is `b64_minus t t`, which is        *)
+(* exactly zero by `b64_minus_self_R`.  Single premise: the product is       *)
+(* safe (which, via `b64_mult_correct`, gives the finiteness needed for       *)
+(* `b64_minus_self_R`).                                                       *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_orient2d_at_P1_R :
+  forall P0 P1 : BPoint,
+    b64_safe Rmult (b64_minus (bx P1) (bx P0))
+                   (b64_minus (by_ P1) (by_ P0)) ->
+    Binary.B2R prec emax (b64_orient2d P0 P1 P1) = 0.
+Proof.
+  intros P0 P1 Hprod.
+  pose proof (b64_mult_correct _ _ Hprod) as [_ Fprod].
+  unfold b64_orient2d, Orientation_b64.b64_orient2d_terms.
+  cbn iota.
+  apply b64_minus_self_R.
+  exact Fprod.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Degenerate base: P0 = P1.                                                  *)
+(*                                                                            *)
+(* When the two "base" points coincide, the first factor of `t1`              *)
+(* (`b64_minus (bx P1) (bx P0)` with P1 = P0) and the second factor of `t2`   *)
+(* (`b64_minus (by_ P1) (by_ P0)` with P1 = P0) are both self-subtractions,   *)
+(* whose `B2R` is exactly zero.  Each product then collapses via              *)
+(* `b64_mult_zero_l_R` / `b64_mult_zero_r_R`, and the outer subtraction is    *)
+(* `0 - 0 = 0`.  Mirrors `b64_orient2d_at_P0_R`'s structure, modulo which     *)
+(* factor of each product carries the zero.                                   *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_orient2d_at_P0_eq_P1_R :
+  forall P Q : BPoint,
+    b64_safe Rminus (bx Q)  (bx P) ->
+    b64_safe Rminus (by_ Q) (by_ P) ->
+    Binary.B2R prec emax (b64_orient2d P P Q) = 0.
+Proof.
+  intros P Q Hdx Hdy.
+  pose proof Hdx as Hdx'.
+  pose proof Hdy as Hdy'.
+  destruct Hdx as (FxQ & FxP & _).
+  destruct Hdy as (FyQ & FyP & _).
+  unfold b64_orient2d, Orientation_b64.b64_orient2d_terms.
+  cbn iota.
+  (* Self subtractions on (bx P) and (by_ P): R-zero, finite. *)
+  pose proof (b64_minus_self_R (bx P) FxP) as Hdx1_R.
+  pose proof (b64_minus_self_finite (bx P) FxP) as Fdx1.
+  pose proof (b64_minus_self_R (by_ P) FyP) as Hdy2_R.
+  pose proof (b64_minus_self_finite (by_ P) FyP) as Fdy2.
+  (* Non-self subtractions: finiteness from b64_minus_correct. *)
+  pose proof (b64_minus_correct _ _ Hdy') as [_ Fdy1].
+  pose proof (b64_minus_correct _ _ Hdx') as [_ Fdx2].
+  (* t1 = b64_mult (zero-left) (...)  ->  zero. *)
+  pose proof (b64_mult_zero_l_R _ _ Fdx1 Fdy1 Hdx1_R) as Ht1_R.
+  pose proof (b64_mult_zero_l_finite _ _ Fdx1 Fdy1 Hdx1_R) as Ft1.
+  (* t2 = b64_mult (...) (zero-right) ->  zero. *)
+  pose proof (b64_mult_zero_r_R _ _ Fdx2 Fdy2 Hdy2_R) as Ht2_R.
+  pose proof (b64_mult_zero_r_finite _ _ Fdx2 Fdy2 Hdy2_R) as Ft2.
+  apply (b64_minus_zeros_R _ _ Ft1 Ft2 Ht1_R Ht2_R).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Axiom audit.                                                              *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions b64_orient2d_antisymmetric_R.
+Print Assumptions b64_orient2d_inputs_safe_imp_safe.
+Print Assumptions b64_orient2d_at_P0_R.
+Print Assumptions b64_orient2d_at_P1_R.
+Print Assumptions b64_orient2d_at_P0_eq_P1_R.
