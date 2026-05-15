@@ -21,11 +21,12 @@ identities in the same regime:
   `_at_P0_eq_P1_R`
 - cyclic permutations — `b64_orient2d_cyclic_int_R`, `_cyclic2_int_R`
 
-In this regime `B2R (b64_orient2d P0 P1 Q) = cross_R_BP P0 P1 Q` on the
-nose: every operation in the chain is bit-exact because every
-intermediate stays within binary64's 53-bit integer-exactness window.
-The naive evaluator's sign is already correct without filter or
-expansion arithmetic. Stage D is unnecessary here.
+In the integer regime (`orient2d_inputs_int_safe`), the naive evaluator
+is already *exactly* equal to the mathematical `cross_R_BP` (no
+rounding error occurs at any step in the chain), so Stage A filtering
+is sufficient and Stages B/C/D are unnecessary. Every operation lands
+on a representable integer within binary64's 53-bit integer-exactness
+window.
 
 **Open.** Cross_R-valued soundness for the general bounded-magnitude
 regime (`|coord| <= 2^500` in `b64_orient2d_inputs_safe`). This requires
