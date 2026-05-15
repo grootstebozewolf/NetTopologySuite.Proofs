@@ -1,40 +1,57 @@
 (* ============================================================================
    NetTopologySuite.Proofs.Flocq.Orientation_b64
    ----------------------------------------------------------------------------
-   Executable binary64 orientation predicate.  This is Phase 0 of the NTS
-   topological chokepoint sequence (see README).
+   Executable binary64 orientation predicate.  Phase 0 of the NTS topological
+   chokepoint sequence (see README), two layers:
 
-   The plain `cross`-based orientation in binary64 is NOT robust at near-
-   collinear inputs -- the rounding error can flip the sign.  Shewchuk's
-   1997 adaptive-precision algorithm is the canonical fix and is the
-   long-term target for this file.  The first slice below sets up the
-   ground for it:
+     - Naive layer
+         `b64_orient2d`            : the cross-product signed twice-area.
+         `Inductive orient_sign`    : four-valued Pos / Neg / Zero / Nan.
+         `b64_orient_sign_naive`    : sign of the naive cross product, can
+                                      flip at near-collinear inputs due
+                                      to rounding.
 
-     - `b64_orient2d`        — the cross-product signed area, in binary64.
-     - `b64_orient_sign`     — a 4-valued sign type (Pos / Neg / Zero / Nan)
-                               that explicitly admits the NaN case rather
-                               than collapsing it.
-     - Companion file `Orientation_b64_extract.v` extracts the executable
-       layer to OCaml native float, mirroring the simplifier pattern.
+     - Shewchuk Stage A filter
+         `b64_three`, `b64_sixteen`, `b64_eps`
+                                   : Flocq constants for the error bound.
+         `b64_errbound_A_coeff`    : `(3 + 16 * eps) * eps`, Shewchuk's
+                                      Stage A forward-error coefficient.
+         `b64_orient2d_detsum`     : `|t1| + |t2|`, the operand-magnitude
+                                      budget.
+         `b64_orient2d_errbound`   : `errbound_A_coeff * detsum`.
+         `Inductive orient_sign_robust`
+                                   : five-valued, adds OrientRUncertain.
+         `b64_orient_sign_filtered`: refuses to commit to a sign when
+                                      `|det|` is within the bound of zero.
+
+   Both layers extract to OCaml native float through
+   `Validate_binary64_extract.v` and ship into the
+   [NetTopologySuite.Curve] `Robust.Orientation` namespace.
 
    PROOF STATUS
    ============
-   - Computational implementation : complete + extracted to OCaml.
-   - Structural invariants        : limited.  Decidability of the sign type
-                                    and totality of `b64_orient_sign` are
-                                    Qed-closed.  Arithmetic identities
-                                    (antisymmetry, cyclic permutation,
-                                    translation invariance) hold in ℝ but
-                                    in binary64 require Flocq's
-                                    `Bminus_correct` / `Bmult_correct` no-
-                                    overflow preconditions.  They are NOT
-                                    YET CLAIMED here -- the same proof
-                                    slice that closes the simplifier R-
-                                    bridge will close them in one pass.
-   - Shewchuk-adaptive filter     : NOT YET claimed.  This file is the
-                                    naive cross-product layer; the
-                                    filter + expansion-arithmetic fallback
-                                    is the next slice.
+   - Computational implementation : both layers complete + extracted to OCaml.
+   - Structural invariants        : Qed-closed.  Decidable equality on the
+                                    four- and five-valued sign types;
+                                    totality of `b64_orient_sign_naive` and
+                                    `b64_orient_sign_filtered`; pairwise
+                                    distinctness of constructors; non-NaN
+                                    naive sign iff `b64_compare` returned
+                                    `Some _`.
+   - Arithmetic identities        : NOT YET CLAIMED.  Antisymmetry, cyclic
+                                    permutation, translation invariance
+                                    hold over ℝ but in binary64 need
+                                    Flocq's `Bminus_correct` /
+                                    `Bmult_correct` no-overflow
+                                    preconditions -- the same proof slice
+                                    deferred for the simplifier R-bridge.
+                                    Both close together when that slice
+                                    lands.
+   - Shewchuk Stages B / C / D    : NOT YET CLAIMED.  Expansion-arithmetic
+                                    refinement that would resolve
+                                    `OrientRUncertain` into a definite
+                                    Pos / Neg / Zero is the next slice on
+                                    top of Stage A.
 
    No `Admitted` theorems.  The corpus-wide invariant applies: properties
    that are not yet proven are absent from the file rather than stubbed.
@@ -63,7 +80,10 @@ From NTS.Proofs.Flocq Require Import Validate_binary64.
 (* sign decoder calls `_terms` once and reuses the pair.                     *)
 (* -------------------------------------------------------------------------- *)
 
-Definition b64_orient2d_terms (P0 P1 Q : BPoint) : binary64 * binary64 :=
+(* Internal sharing helper.  `Local` so it doesn't pollute the         *)
+(* `NTS.Proofs.Flocq` namespace -- the only callers are inside this    *)
+(* file.  Extraction still emits it (referenced transitively).         *)
+Local Definition b64_orient2d_terms (P0 P1 Q : BPoint) : binary64 * binary64 :=
   (b64_mult (b64_minus (bx P1) (bx P0)) (b64_minus (by_ Q)  (by_ P0)),
    b64_mult (b64_minus (bx Q)  (bx P0)) (b64_minus (by_ P1) (by_ P0))).
 
