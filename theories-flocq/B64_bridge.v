@@ -135,9 +135,150 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Zero-arithmetic helpers.                                                   *)
+(*                                                                            *)
+(* Small facts that the per-op correctness theorems make trivial to derive    *)
+(* but that downstream vertex-coincidence proofs need over and over.  Worth   *)
+(* factoring once here so the orient2d degenerate cases stay short.           *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_round_0 : b64_round 0 = 0.
+Proof. apply round_0. apply valid_rnd_N. Qed.
+
+(* Subtracting any finite binary64 from itself gives exactly zero in R.       *)
+(* The no-overflow precondition is trivially discharged: `b64_round 0 = 0`    *)
+(* and `Rabs 0 = 0 < bpow emax`.                                              *)
+Lemma b64_minus_self_R :
+  forall x : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.B2R prec emax (b64_minus x x) = 0.
+Proof.
+  intros x Fx.
+  assert (Hsafe : b64_safe Rminus x x).
+  { repeat split; try assumption.
+    rewrite Rminus_diag, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  pose proof (b64_minus_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R, Rminus_diag.
+  apply b64_round_0.
+Qed.
+
+(* Multiplying a binary64 whose B2R is zero by any finite binary64 gives      *)
+(* exactly zero in R.  Same trivial no-overflow story: `b64_round 0 = 0`.    *)
+Lemma b64_mult_zero_l_R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax x = 0 ->
+    Binary.B2R prec emax (b64_mult x y) = 0.
+Proof.
+  intros x y Fx Fy HxR.
+  assert (Hsafe : b64_safe Rmult x y).
+  { repeat split; try assumption.
+    rewrite HxR, Rmult_0_l, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  pose proof (b64_mult_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R, HxR, Rmult_0_l.
+  apply b64_round_0.
+Qed.
+
+Lemma b64_mult_zero_r_R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax y = 0 ->
+    Binary.B2R prec emax (b64_mult x y) = 0.
+Proof.
+  intros x y Fx Fy HyR.
+  assert (Hsafe : b64_safe Rmult x y).
+  { repeat split; try assumption.
+    rewrite HyR, Rmult_0_r, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  pose proof (b64_mult_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R, HyR, Rmult_0_r.
+  apply b64_round_0.
+Qed.
+
+(* `b64_minus` preserves finiteness when there is no overflow.  Convenience  *)
+(* corollary of `b64_minus_correct`'s second conjunct, separated out so       *)
+(* downstream proofs can chain finiteness through several b64_* without       *)
+(* re-destructing each correctness tuple.                                     *)
+Lemma b64_minus_self_finite :
+  forall x : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax (b64_minus x x) = true.
+Proof.
+  intros x Fx.
+  assert (Hsafe : b64_safe Rminus x x).
+  { repeat split; try assumption.
+    rewrite Rminus_diag, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  apply (b64_minus_correct _ _ Hsafe).
+Qed.
+
+(* `b64_minus` of any two finite binary64 values whose `B2R`s are zero gives *)
+(* exactly zero in R.  Generalises `b64_minus_self_R` from `x = y` to        *)
+(* `B2R x = 0 /\ B2R y = 0`, which is what the vertex-coincidence proofs    *)
+(* need after lifting both products through `b64_mult_zero_{l,r}_R`.        *)
+Lemma b64_minus_zeros_R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax x = 0 ->
+    Binary.B2R prec emax y = 0 ->
+    Binary.B2R prec emax (b64_minus x y) = 0.
+Proof.
+  intros x y Fx Fy HxR HyR.
+  assert (Hsafe : b64_safe Rminus x y).
+  { repeat split; try assumption.
+    rewrite HxR, HyR, Rminus_0_r, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  pose proof (b64_minus_correct _ _ Hsafe) as [HB2R _].
+  rewrite HB2R, HxR, HyR, Rminus_0_r.
+  apply b64_round_0.
+Qed.
+
+(* Finiteness lemmas for `b64_mult` when one operand has `B2R = 0`.  Used   *)
+(* in the same chain as the `_R` lemmas above so the downstream proof can   *)
+(* satisfy `b64_safe`'s finiteness conjuncts without re-applying            *)
+(* `b64_mult_correct` for each.                                              *)
+Lemma b64_mult_zero_l_finite :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax x = 0 ->
+    Binary.is_finite prec emax (b64_mult x y) = true.
+Proof.
+  intros x y Fx Fy HxR.
+  assert (Hsafe : b64_safe Rmult x y).
+  { repeat split; try assumption.
+    rewrite HxR, Rmult_0_l, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  apply (b64_mult_correct _ _ Hsafe).
+Qed.
+
+Lemma b64_mult_zero_r_finite :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax y = 0 ->
+    Binary.is_finite prec emax (b64_mult x y) = true.
+Proof.
+  intros x y Fx Fy HyR.
+  assert (Hsafe : b64_safe Rmult x y).
+  { repeat split; try assumption.
+    rewrite HyR, Rmult_0_r, b64_round_0, Rabs_R0.
+    apply bpow_gt_0. }
+  apply (b64_mult_correct _ _ Hsafe).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions b64_plus_correct.
 Print Assumptions b64_minus_correct.
 Print Assumptions b64_mult_correct.
+Print Assumptions b64_minus_self_R.
+Print Assumptions b64_mult_zero_l_R.
+Print Assumptions b64_mult_zero_r_R.

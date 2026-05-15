@@ -714,10 +714,24 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   Proof is mechanical: lift the two outer `b64_minus` calls via
   `b64_minus_correct`, then `round_NE_opp` + `Ropp_minus_distr` close
   it.  Validates the composition pattern.  Same 4-axiom set, Qed-
-  closed.  Cyclic permutation and translation invariance are the
-  natural follow-ups; the magnitude-bounded variant of the
-  precondition (Flavour B from the audit discussion) is the
-  immediately-after-that slice.
+  closed.
+- **2026-05-15**: vertex coincidence on binary64.  Added zero-arithmetic
+  helpers to `B64_bridge.v` (`b64_round_0`, `b64_minus_self_R`,
+  `b64_mult_zero_{l,r}_R`, `b64_minus_zeros_R`, plus finiteness
+  companions) and proved `b64_orient2d_at_P0_R` in `Orient_b64_R.v`:
+  `B2R (b64_orient2d P0 P1 P0) = 0` under two `b64_safe Rminus`
+  premises (one for each non-self subtraction; the self subtractions
+  discharge trivially via `b64_round 0 = 0`).  Holds genuinely in
+  binary64 -- not a rounded approximation -- because every degenerate
+  case has an exact-zero factor.
+  Cyclic permutation was analysed and deferred: lifting via
+  `b64_*_correct` produces nested `b64_round` terms that aren't
+  syntactically equal under cyclic permutation, and the accumulated
+  rounding error doesn't structurally cancel between the two calls.
+  The identity holds for the exact ℝ-valued `cross` predicate but
+  not for its binary64 evaluation in general; provable only under
+  much stronger preconditions (Sterbenz exactness throughout) or as
+  an error-bounded version.
 
 ## What this is NOT
 
