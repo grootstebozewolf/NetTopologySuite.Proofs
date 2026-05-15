@@ -28,31 +28,42 @@
                                               OrientRNan and OrientRUncertain
                                               make no claim.
 
-   NOT YET claimed (the real-valued soundness):
-     Theorem b64_orient_sign_filtered_sound :
+   Path 2 (shipped in `Orient_b64_exact.v`): the cross_R-valued
+   soundness theorem restricted to the integer regime.
+
+     Theorem b64_orient_sign_filtered_sound_small_int :
        forall P0 P1 Q,
-         b64_orient2d_inputs_safe P0 P1 Q ->
+         orient2d_inputs_int_safe P0 P1 Q ->
          match b64_orient_sign_filtered P0 P1 Q with
          | OrientRPos       => 0 < cross_R_BP P0 P1 Q
          | OrientRNeg       => cross_R_BP P0 P1 Q < 0
-         | OrientRZero      => cross_R_BP P0 P1 Q = 0   (* may need adjusting *)
+         | OrientRZero      => cross_R_BP P0 P1 Q = 0
          | OrientRNan       => True
          | OrientRUncertain => True
          end.
 
-   STRATEGY NOTE (see docs/soundness-strategy.md).  Two paths to this
-   theorem are open.  Path 1 = Shewchuk-style forward-error analysis
-   (slices 2a/2b/2c + 3 described below).  Slice 2a shipped in
-   B64_bridge.v; the remaining slices are scaffolding-heavy.  Path 2 =
-   an integer-coordinate exact regime, where |coord| <= 2^25 implies
-   every binary64 op in the orient2d chain is bit-exact (Sterbenz + the
-   53-bit integer-exactness window).  Path 2 ships an end-to-end
-   headline for a restricted regime in one move; Path 1 covers the full
-   bounded regime but takes several sessions.  The slices documented
-   below describe Path 1; current development is on Path 2.
+   `orient2d_inputs_int_safe` says each input coordinate is an integer-
+   valued binary64 with `|coord| <= 2^25`.  In that regime every
+   intermediate value in the orient2d chain stays within binary64's
+   53-bit integer-exactness window, so `B2R det = cross_R_BP` on the
+   nose -- composing with this file's decoder-consistency lemma gives
+   the headline.
 
-   Under Path 1 this theorem requires the Shewchuk Stage A forward-
-   error bound:
+   Still open (Path 1, the general bounded-magnitude regime):
+     Theorem b64_orient_sign_filtered_sound :
+       forall P0 P1 Q,
+         b64_orient2d_inputs_safe P0 P1 Q ->
+         match b64_orient_sign_filtered P0 P1 Q with ... end.
+
+   STRATEGY NOTE (see docs/soundness-strategy.md).  Two paths to the
+   general theorem are documented there.  Path 1 = Shewchuk-style
+   forward-error analysis (slices 2a/2b/2c + 3 described below).
+   Slice 2a is in B64_bridge.v; remaining slices are scaffolding-heavy.
+   Path 2 was the integer-coordinate exact regime documented above and
+   shipped in `Orient_b64_exact.v`.
+
+   Under Path 1 the general theorem requires the Shewchuk Stage A
+   forward-error bound:
 
      Theorem b64_orient2d_forward_error :
        forall P0 P1 Q,

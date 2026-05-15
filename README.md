@@ -420,17 +420,44 @@ caller:
 
 ### `theories-flocq/Orient_b64_sound.v` — soundness bridge for the Stage A filter
 
-First soundness statement for `b64_orient_sign_filtered`.  Currently
-proves *decoder consistency*: the five-valued sign returned by the
-filter agrees with the sign of the rounded binary64 `b64_orient2d`
-value (under `b64_orient2d_safe`).  Defines `cross_R_BP` (the exact
-R-valued cross product on `BPoint` inputs) as the target of the
-future cross_R-soundness theorem.  See the file's PROOF STATUS block
-for the precise statement of that theorem, and
-[`docs/soundness-strategy.md`](docs/soundness-strategy.md) for the
-two open paths to it (a Shewchuk-style forward-error analysis that
-was attempted and demoted, and an integer-coordinate exact regime
-currently in progress).
+First soundness statement for `b64_orient_sign_filtered`.  Proves
+*decoder consistency*: the five-valued sign returned by the filter
+agrees with the sign of the rounded binary64 `b64_orient2d` value
+(under `b64_orient2d_safe`).  Defines `cross_R_BP` (the exact R-valued
+cross product on `BPoint` inputs) as the target of the cross_R-
+soundness theorem.  The cross_R headline for the integer regime ships
+in `Orient_b64_exact.v`; the general bounded regime is documented in
+[`docs/soundness-strategy.md`](docs/soundness-strategy.md) as an open
+Path 1 (Shewchuk-style forward-error analysis).
+
+### `theories-flocq/Orient_b64_exact.v` — cross_R soundness, integer regime
+
+Closes the Stage A filter's cross_R-valued soundness for integer-
+valued coordinates with `|coord| <= 2^25`.  In that regime every
+intermediate value in `b64_orient2d` stays within binary64's 53-bit
+integer-exactness window, so `B2R (b64_orient2d P0 P1 Q) = cross_R_BP
+P0 P1 Q` *on the nose* -- no error bound, no inequality.  Composing
+with decoder consistency gives the headline (Qed-closed):
+
+```coq
+Theorem b64_orient_sign_filtered_sound_small_int :
+  forall P0 P1 Q,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    match b64_orient_sign_filtered P0 P1 Q with
+    | OrientRPos       => 0 < cross_R_BP P0 P1 Q
+    | OrientRNeg       => cross_R_BP P0 P1 Q < 0
+    | OrientRZero      => cross_R_BP P0 P1 Q = 0
+    | OrientRNan       => True
+    | OrientRUncertain => True
+    end.
+```
+
+This is Path 2 from
+[`docs/soundness-strategy.md`](docs/soundness-strategy.md): a
+restricted regime in exchange for an end-to-end headline today.  The
+general bounded-magnitude regime remains open (Path 1) and would
+require the Shewchuk Stage A forward-error analysis; see the strategy
+doc for the trade-off rationale.
 
 ### `theories-flocq/Orient_b64_R.v` — R-side identities for `b64_orient2d`
 
@@ -531,7 +558,7 @@ publishable.
 | Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); Stages B/C/D expansion refinement + soundness bridge deferred | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v`); Stages B/C/D expansion refinement + general bounded-magnitude cross_R soundness deferred (Path 1 in [`docs/soundness-strategy.md`](docs/soundness-strategy.md)) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
 | 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked | 0% |
 | 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
@@ -814,13 +841,38 @@ the simplifier R-bridge, Stage A's arithmetic identities for
 
   Built on Flocq's `error_le_ulp` from `Core/Ulp.v`; unconditional
   (no normal-range precondition).  These are the per-step pieces
-  the Shewchuk Stage A chain composition will eventually thread
+  the Shewchuk Stage A chain composition would eventually thread
   through the four `b64_minus` / two `b64_mult` / outer `b64_minus`
   structure of `b64_orient2d`.  Same 4-axiom set, Qed-closed.
-  Two further sub-slices documented in `Orient_b64_sound.v`'s
-  PROOF STATUS: (2b) tighter relative-error versions under normal-
-  range precondition via `relative_error_N_FLT`; (2c) the chain
-  composition itself.
+- **2026-05-15**: pivot rationale documented; integer-exactness path
+  chosen over forward-error scaffolding.  Slice 2a is correct but
+  doesn't move the substantive ball -- the remaining slices (relative
+  error + chain composition + sound composition) are ~3 more sessions
+  before a payoff.  Demoted from critical path to "useful primitive,
+  reusable for whoever picks up Path 1 later".  Pivot rationale in
+  [`docs/soundness-strategy.md`](docs/soundness-strategy.md).
+- **2026-05-15**: cross_R-valued soundness shipped, integer regime
+  (Path 2).  Added `theories-flocq/Orient_b64_exact.v` with
+
+      Theorem b64_orient_sign_filtered_sound_small_int :
+        forall P0 P1 Q,
+          orient2d_inputs_int_safe P0 P1 Q ->
+          match b64_orient_sign_filtered P0 P1 Q with
+          | OrientRPos       => 0 < cross_R_BP P0 P1 Q
+          | OrientRNeg       => cross_R_BP P0 P1 Q < 0
+          | OrientRZero      => cross_R_BP P0 P1 Q = 0
+          | OrientRNan       => True
+          | OrientRUncertain => True
+          end.
+
+  This is the cross_R headline the project was working toward,
+  restricted to the integer regime: each input coordinate is integer-
+  valued with `|coord| <= 2^25`.  In that regime every intermediate in
+  the orient2d chain stays within binary64's 53-bit integer-exactness
+  window, so `B2R det = cross_R_BP` *on the nose* -- no rounding error,
+  no inequality.  Composes mechanically with the decoder-consistency
+  theorem from `Orient_b64_sound.v`.  Same 4-axiom set, Qed-closed.
+  The general bounded-magnitude regime remains an open Path 1.
 
 ## What this is NOT
 

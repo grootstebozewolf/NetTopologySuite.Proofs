@@ -103,7 +103,7 @@ The slice 2a lemmas stay in `B64_bridge.v`. They are reusable building
 blocks for whoever does pick up Path 1 in the future. They are not
 deleted, just demoted from "critical path" to "useful primitive".
 
-## Path 2 (in progress): integer-coordinate exact regime
+## Path 2 (shipped): integer-coordinate exact regime
 
 The novel approach. Restrict the soundness claim to a coordinate
 *regime* in which `b64_orient2d` is bit-exact — no rounding error at
@@ -156,34 +156,64 @@ integer coordinates rather than the full `|coord| <= 2^500` bound that
   not closed off — Path 1 remains available if/when someone wants to
   invest the effort.
 
-### What gets built
+### What got built
 
-In a new file (likely `theories-flocq/Orient_b64_exact.v`):
+`theories-flocq/Orient_b64_exact.v` (commit `cdff99a`), Qed-closed,
+no `Admitted` / `Axiom` / `Parameter`.
+
+Building blocks:
 
 ```coq
-Definition coord_small_integer (x : binary64) : Prop := ...
+Definition coord_int_safe (x : binary64) : Prop :=
+  is_finite x = true /\
+  exists n : Z, B2R x = IZR n /\ (Z.abs n <= 2^25)%Z.
 
-Lemma b64_minus_exact_small_int :
-  forall x y, coord_small_integer x -> coord_small_integer y ->
-    B2R (b64_minus x y) = B2R x - B2R y.
+Lemma generic_format_IZR_le_bpow_prec :
+  forall n, (Z.abs n <= 2^prec)%Z ->
+    generic_format radix2 (SpecFloat.fexp prec emax) (IZR n).
 
-Lemma b64_mult_exact_of_bounded_int :
-  forall x y : binary64,
-    (exists nx, B2R x = IZR nx /\ Z.abs nx <= 2^26) ->
-    (exists ny, B2R y = IZR ny /\ Z.abs ny <= 2^26) ->
-    B2R (b64_mult x y) = B2R x * B2R y.
+Lemma b64_round_IZR_exact :
+  forall n, (Z.abs n <= 2^prec)%Z -> b64_round (IZR n) = IZR n.
 
-(* compose through the orient2d chain *)
-Theorem b64_orient2d_exact_for_small_integers :
+Lemma b64_minus_int_exact :
+  forall x y : binary64, forall a b : Z,
+    is_finite x = true -> is_finite y = true ->
+    B2R x = IZR a -> B2R y = IZR b -> (Z.abs (a - b) <= 2^prec)%Z ->
+    B2R (b64_minus x y) = IZR (a - b) /\ is_finite (b64_minus x y) = true.
+
+Lemma b64_mult_int_exact :  (* analogous for products *)
+```
+
+Bridge to the magnitude regime so the existing
+`b64_orient2d_inputs_safe_imp_safe` discharges the seven `b64_safe`
+premises of decoder consistency:
+
+```coq
+Lemma coord_int_safe_imp_coord_safe :
+  forall x, coord_int_safe x -> b64_coord_safe x.
+
+Lemma orient2d_inputs_int_safe_imp_safe :
   forall P0 P1 Q,
-    (forall c, In c [bx P0; by_ P0; bx P1; by_ P1; bx Q; by_ Q] ->
-       coord_small_integer c) ->
-    B2R (b64_orient2d P0 P1 Q) = cross_R_BP P0 P1 Q.
+    orient2d_inputs_int_safe P0 P1 Q -> b64_orient2d_safe P0 P1 Q.
+```
 
+Exactness through the orient2d chain — every intermediate stays
+within `[-2^53, 2^53]` so each `b64_*` operation is bit-exact:
+
+```coq
+Theorem b64_orient2d_exact_for_small_int :
+  forall P0 P1 Q,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    B2R (b64_orient2d P0 P1 Q) = cross_R_BP P0 P1 Q.
+```
+
+Headline — exactness composed with the decoder-consistency theorem
+from `Orient_b64_sound.v`:
+
+```coq
 Theorem b64_orient_sign_filtered_sound_small_int :
   forall P0 P1 Q,
-    (forall c, In c [...] -> coord_small_integer c) ->
-    b64_orient2d_safe P0 P1 Q ->
+    orient2d_inputs_int_safe P0 P1 Q ->
     match b64_orient_sign_filtered P0 P1 Q with
     | OrientRPos       => 0 < cross_R_BP P0 P1 Q
     | OrientRNeg       => cross_R_BP P0 P1 Q < 0
@@ -193,9 +223,8 @@ Theorem b64_orient_sign_filtered_sound_small_int :
     end.
 ```
 
-The exactness theorem is independent of the filter — once it's proved,
-the headline composes mechanically with
-`b64_orient_sign_filtered_consistent_with_b64`.
+This is the cross_R-valued soundness theorem the project was working
+toward, just restricted to the integer regime.
 
 ## Future paths left open
 
