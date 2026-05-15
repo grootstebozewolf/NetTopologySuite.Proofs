@@ -6,10 +6,16 @@ Mechanically-verified formal proofs of foundational properties of the
 algorithms in [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite).
 
 Proofs are written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
-**Every theorem under `theories/`** terminates with `Qed.` — meaning the
-kernel has checked the proof and rejected any unsound step. CI fails if
-any `Admitted`, `Axiom`, `Parameter`, or `admit.` appears under
-`theories/`. The only axioms used are the three standard ones bundled
+
+**The invariant**: every `.v` file in `theories/` and `theories-flocq/`
+ends each proof with `Qed.` (or `Defined.` for computable terms). No
+`Admitted`. Structural sanity lemmas are closed. Semantic soundness
+bridges that are not yet proven are explicitly marked as future work in
+the file header *and have no `Admitted` theorem standing in for them* —
+they are absent rather than stubbed.
+
+CI fails if any `Admitted`, `Axiom`, `Parameter`, or `admit.` appears in
+any `.v` file. The only axioms used are the three standard ones bundled
 with Rocq's classical real arithmetic library (printed at the end of
 each `.v` file under `Print Assumptions` for transparency):
 
@@ -20,14 +26,17 @@ FunctionalExtensionality.functional_extensionality_dep
 ```
 
 These are the standard classical real-number axioms; no library-specific
-or load-bearing axiom is introduced anywhere in `theories/`.
+or load-bearing axiom is introduced anywhere.
 
-Work-in-progress with `Admitted` placeholders for unfilled soundness
-bridges lives separately under `theories-flocq/`. That directory is
-*excluded* from the no-`Admitted` invariant above and is only built
-inside the Flocq-bearing container (see the **Build** section). The
-purpose of the split is to keep the main corpus's Qed-closed claim
-true while we incrementally fill in the Flocq-based extraction story.
+The repository has two source directories:
+
+- **`theories/`** — Stdlib-only modules. Builds on the host runner
+  (macOS-latest with Homebrew Rocq); this is the CI canonical target.
+- **`theories-flocq/`** — modules that additionally depend on Flocq.
+  Builds inside the container only (host CI runner has no Flocq). The
+  no-`Admitted` invariant above applies HERE TOO — the directory split
+  is purely about which CI runner builds the file, not about which
+  proof standard it meets.
 
 ## Why this exists
 
@@ -580,11 +589,8 @@ Pull requests welcome. New theorems must:
 
 - compile under stock Rocq 9.x;
 - terminate with `Qed.` — no `Admitted`, no `Axiom`, no `Parameter`
-  standing in for a missing proof — *if* the file lives under
-  `theories/`. Work-in-progress with `Admitted` placeholders is
-  acceptable under `theories-flocq/`, which is excluded from the host
-  CI's no-`Admitted` grep and is built only inside the Flocq-bearing
-  container;
+  standing in for a missing proof. The rule applies in `theories/`
+  and in `theories-flocq/` alike;
 - depend only on Rocq's standard library if placed under `theories/`,
   or on Flocq 4.2.x if placed under `theories-flocq/`;
 - include a header comment naming the NTS module (or JTS algorithm)

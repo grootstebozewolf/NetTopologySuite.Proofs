@@ -13,15 +13,36 @@
        (executable, extractable) and whose soundness is stated relative
        to the R-valued spec via `B2R_pt`.
 
-   Lives in `theories-flocq/` rather than `theories/` so the host CI grep
-   for `Admitted` does not catch the in-progress soundness bridges below.
-   The host build (driven by `_CoqProject`) does not see this directory;
-   only the containerised build (driven by `_CoqProject.full` plus
-   `coq-flocq.4.2.2`) compiles it.
+   Lives in `theories-flocq/` rather than `theories/` because the file
+   depends on Flocq, which is not available on the host CI runner.  Only
+   the containerised build (driven by `_CoqProject.full` plus
+   `coq-flocq.4.2.2`) compiles it.  The corpus's "no Admitted, no Axiom,
+   no Parameter" invariant applies HERE TOO -- the directory split is
+   about which CI builds the file, not about which proof standard it
+   meets.
 
-   Status: SKELETON.  `greedy_simplify_binary64` currently returns its
-   input unchanged; the soundness bridges are stubbed with `Admitted`.
-   Both are filled in incrementally in follow-up slices.
+   PROOF STATUS
+   ============
+   - Computational implementation : complete + extracted to OCaml.
+   - Structural invariants        : fully Qed-closed
+                                    (`_nil`, `_singleton`, `_never_none`,
+                                    `_aux_head`, `_preserves_head`).
+   - Semantic soundness bridge    : NOT YET CLAIMED.  The R-side
+       statement -- "for finite inputs whose intermediate Bplus/Bmult
+       results do not overflow, the binary64 simplifier output is
+       simp_star-related to the input under B2R" -- requires threading
+       Flocq's `Bplus_correct` / `Bmult_correct` no-overflow preconditions
+       through the Fixpoint's recursive case.  That is a dedicated proof
+       slice (Phase 0/1 of the chokepoint roadmap, see README), explicitly
+       deferred rather than stubbed with `Admitted`.
+
+   EXPECTED AXIOMS (verified by `Print Assumptions` at end of file):
+     - ClassicalDedekindReals.sig_not_dec
+     - ClassicalDedekindReals.sig_forall_dec
+     - FunctionalExtensionality.functional_extensionality_dep
+   Any axiom beyond these three indicates a regression -- the corpus
+   invariant is that the only axioms used are Rocq's classical-reals
+   axioms, transitively inherited from Real.v.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -185,32 +206,69 @@ Definition greedy_simplify_binary64
   Some (greedy_simplify_perp_b64 eps pts).
 
 (* -------------------------------------------------------------------------- *)
-(* Soundness bridges -- ADMITTED in this skeleton.                           *)
+(* Structural Qed-closed lemmas about the binary64 simplifier.               *)
 (*                                                                            *)
-(* The finite-input precondition is what unlocks Flocq's `Bplus_correct`,   *)
-(* `Bmult_correct` etc. inside the eventual proof: on finite inputs whose   *)
-(* sum/product does not overflow, `B2R (Bop x y) = B2R x + B2R y`, which is *)
-(* the homomorphism law needed to lift the binary64-level computation to    *)
-(* the R-level `simp_star` relation in `Simplify.v`.                        *)
+(* The corpus's "no Admitted, no Axiom, no Parameter" invariant applies to   *)
+(* BOTH theories/ and theories-flocq/ -- the directory split is about which *)
+(* CI runner builds the file (host vs container), not about which standard  *)
+(* the proofs meet.  Anything we claim here must close with Qed.            *)
+(*                                                                            *)
+(* The headline soundness bridge -- "the binary64 result is simp_star-      *)
+(* related to the input under the R interpretation, provided no             *)
+(* intermediate computation overflows" -- requires threading Flocq's        *)
+(* Bplus_correct / Bmult_correct no-overflow preconditions through the      *)
+(* recursive case of the Fixpoint.  That's a substantial proof slice (Phase *)
+(* 0/1 of the chokepoint roadmap, see README) and is deferred until a       *)
+(* dedicated work item.  Until then this file ships the executable function *)
+(* + extraction directive + a small set of structural sanity lemmas.        *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem greedy_simplify_binary64_sound :
-  forall (eps : binary64) (src tgt : list BPoint),
-    greedy_simplify_binary64 eps src = Some tgt ->
-    (forall p, In p (src ++ tgt) -> is_finite_bp p = true) ->
-    simp_star (b64_to_R eps) (map_B2R src) (map_B2R tgt) /\
-    polyline_length (map_B2R tgt) <= polyline_length (map_B2R src).
-Proof.
-Admitted.
+Lemma greedy_simplify_perp_b64_nil :
+  forall eps, greedy_simplify_perp_b64 eps [] = [].
+Proof. reflexivity. Qed.
 
-Theorem greedy_simplify_perp_binary64_sound :
-  forall (eps : binary64) (src tgt : list BPoint),
-    greedy_simplify_binary64 eps src = Some tgt ->
-    (forall p, In p (src ++ tgt) -> is_finite_bp p = true) ->
-    simp_star_perp (b64_to_R eps) (map_B2R src) (map_B2R tgt) /\
-    polyline_length (map_B2R tgt) <= polyline_length (map_B2R src).
+Lemma greedy_simplify_perp_b64_singleton :
+  forall eps p, greedy_simplify_perp_b64 eps [p] = [p].
+Proof. reflexivity. Qed.
+
+(* greedy_simplify_binary64 is greedy_simplify_perp_b64 wrapped in `Some`.  *)
+Lemma greedy_simplify_binary64_never_none :
+  forall eps pts, greedy_simplify_binary64 eps pts <> None.
+Proof. intros eps pts. unfold greedy_simplify_binary64. discriminate. Qed.
+
+(* Structural head preservation: the auxiliary-form output begins with the *)
+(* `kept` argument.                                                         *)
+Lemma greedy_simplify_perp_b64_aux_head :
+  forall eps kept rest default,
+    hd default (greedy_simplify_perp_b64_aux eps kept rest) = kept.
 Proof.
-Admitted.
+  intros eps kept rest d. revert kept.
+  induction rest as [| q more IH]; intros kept.
+  - reflexivity.
+  - destruct more as [| r tail].
+    + reflexivity.
+    + cbn.
+      destruct (b64_le _ _).
+      * apply IH.
+      * reflexivity.
+Qed.
+
+(* Top-level head preservation: for non-empty input, head of output equals *)
+(* head of input.                                                          *)
+Theorem greedy_simplify_perp_b64_preserves_head :
+  forall eps p rest default,
+    hd default (greedy_simplify_perp_b64 eps (p :: rest)) = p.
+Proof.
+  intros eps p rest d.
+  unfold greedy_simplify_perp_b64.
+  apply greedy_simplify_perp_b64_aux_head.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Axiom audit -- must show only the three classical-reals axioms.           *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions greedy_simplify_perp_b64_preserves_head.
 
 (* -------------------------------------------------------------------------- *)
 (* Extraction directive.  M-fast style: no native-float binding yet --       *)

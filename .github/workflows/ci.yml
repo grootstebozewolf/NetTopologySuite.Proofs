@@ -34,9 +34,13 @@ jobs:
         run: make
 
       - name: Verify no .v file is missing a Qed (no Admitted, no Axiom, no Parameter)
+        # Scans BOTH theories/ and theories-flocq/.  The directory split
+        # is about which CI runner builds the file (host vs container),
+        # not about which proof standard it meets.  Same Qed-closed rule
+        # applies uniformly.
         run: |
-          if grep -nE 'Admitted|^\s*Axiom\b|^\s*Parameter\b|admit\.' theories/*.v; then
-            echo "::error::Found unsoundness markers in theories/. The repo's invariant is that every proof terminates with Qed."
+          if grep -nE 'Admitted|^\s*Axiom\b|^\s*Parameter\b|admit\.' theories/*.v theories-flocq/*.v; then
+            echo "::error::Found unsoundness markers. The repo's invariant is that every proof terminates with Qed in BOTH theories/ and theories-flocq/."
             exit 1
           fi
           echo "All theorems Qed-closed."
