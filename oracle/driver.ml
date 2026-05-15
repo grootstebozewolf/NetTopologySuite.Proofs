@@ -13,13 +13,18 @@
         EOF           terminates the polyline.
         output:       one "<x> <y>" hex-float line per kept point.
 
-     ORIENT          -- 2D orientation predicate.
+     ORIENT          -- 2D orientation predicate, naive layer.
         line 2:       <x0> <y0>
         line 3:       <x1> <y1>
         line 4:       <x2> <y2>
         EOF.
         output:       single line "<sign> <signed_area_hex>".
                       sign is one of: POS / NEG / ZERO / NAN.
+
+     ORIENT_FILTERED -- 2D orientation with Shewchuk Stage A filter.
+        line 2..4:    points as above.
+        output:       single line "<sign> <signed_area_hex>".
+                      sign is one of: POS / NEG / ZERO / NAN / UNCERTAIN.
 
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
@@ -74,6 +79,21 @@ let run_orient () =
   let v = b64_orient2d p0 p1 q in
   Printf.printf "%s %h\n" (sign_string s) v
 
+let sign_robust_string = function
+  | OrientRPos       -> "POS"
+  | OrientRNeg       -> "NEG"
+  | OrientRZero      -> "ZERO"
+  | OrientRNan       -> "NAN"
+  | OrientRUncertain -> "UNCERTAIN"
+
+let run_orient_filtered () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let q  = parse_point (input_line stdin) in
+  let s = b64_orient_sign_filtered p0 p1 q in
+  let v = b64_orient2d p0 p1 q in
+  Printf.printf "%s %h\n" (sign_robust_string s) v
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 let () =
@@ -82,6 +102,7 @@ let () =
     if line = "" then read_mode () else line
   in
   match read_mode () with
-  | "SIMPLIFY" -> run_simplify ()
-  | "ORIENT"   -> run_orient ()
-  | other      -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)
+  | "SIMPLIFY"        -> run_simplify ()
+  | "ORIENT"          -> run_orient ()
+  | "ORIENT_FILTERED" -> run_orient_filtered ()
+  | other             -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)

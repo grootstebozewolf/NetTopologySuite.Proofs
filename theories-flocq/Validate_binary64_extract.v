@@ -80,6 +80,21 @@ Extract Constant Binary.Bcompare => "fun _ _ x y ->
   if (x <> x) || (y <> y) then None
   else Some (if x < y then Lt else if x > y then Gt else Eq)".
 
+(* `Babs`: native float absolute value.  Three leading args (prec, emax,  *)
+(* nan handler) are erased.                                                *)
+Extract Constant Binary.Babs => "fun _ _ _ x -> abs_float x".
+
+(* Coq-side numeric constants (`b64_eps`, `b64_three`, `b64_sixteen`)     *)
+(* are defined via Flocq's `binary_normalize`, which under extraction     *)
+(* eventually reaches the B754_finite constructor stub above.  Override   *)
+(* them with native float literals so the OCaml side picks the exact      *)
+(* IEEE 754 binary64 values without going through the failwith path.      *)
+(* The Coq computation produces the same values, so downstream            *)
+(* arithmetic remains coherent.                                            *)
+Extract Constant Orientation_b64.b64_three   => "3.0".
+Extract Constant Orientation_b64.b64_sixteen => "16.0".
+Extract Constant Orientation_b64.b64_eps     => "ldexp 1.0 (-52)".
+
 Extraction Language OCaml.
 
 (* Write the extracted code to `oracle/extracted.ml` (relative to the    *)
@@ -92,4 +107,5 @@ Extraction Language OCaml.
 Extraction "oracle/extracted.ml"
   greedy_simplify_perp_b64
   b64_orient2d
-  b64_orient_sign.
+  b64_orient_sign
+  b64_orient_sign_filtered.

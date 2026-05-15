@@ -392,15 +392,14 @@ preconditions through the `Fixpoint`) is not yet proven and is not
 stubbed with `Admitted`; the `PROOF STATUS` block at the top of the
 file says so explicitly.
 
-### `theories-flocq/Orientation_b64.v` — Phase 0 chokepoint, naive layer
+### `theories-flocq/Orientation_b64.v` — Phase 0 chokepoint
 
-The first chokepoint module.  Ships the *naive* cross-product
-orientation predicate in binary64 and the four-valued sign decoder,
-end-to-end through extraction and into the
+The first chokepoint module.  Ships the binary64 orientation
+predicate end-to-end through extraction and into the
 [NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve)
-`Robust.Orientation` namespace.  The Shewchuk-adaptive filter and the
-soundness bridge to ℝ-valued `cross` are the next slice, explicitly
-not stubbed.
+`Robust.Orientation` namespace, in two layers.
+
+**Naive layer** (the cross-product evaluated directly in binary64):
 
 - `b64_orient2d P0 P1 Q` — signed twice-area of the triangle
   `(P0, P1, Q)`, reusing the `b64_minus` / `b64_mult` / `bx` / `by_`
@@ -409,21 +408,50 @@ not stubbed.
   four-valued result that admits NaN explicitly rather than
   collapsing it.  Downstream callers MUST handle `OrientNan`.
 - `b64_orient_sign` — routes through `b64_compare` against `+0`.
-- Qed-closed structural lemmas: `orient_sign_eq_dec`,
-  `b64_orient_sign_total`, `orient_sign_distinct`,
-  `b64_orient_sign_non_nan_iff_compare_some`.
-- Same 4-axiom set as `Validate_binary64.v` (the three classical-reals
-  axioms + `Classical_Prop.classic`, all transitive from Flocq).
 
-The arithmetic identities that hold over ℝ (antisymmetry, cyclic
-permutation, translation invariance) are NOT YET CLAIMED here —
-they need Flocq's `Bminus_correct` / `Bmult_correct` no-overflow
-preconditions, the same proof slice deferred for the simplifier R-
-bridge.  Both close together when that slice lands.
+**Shewchuk Stage A filter** (forward-error filter on top of the naive
+layer):
+
+- `b64_three`, `b64_sixteen`, `b64_eps` — Flocq-constructed binary64
+  constants via `binary_normalize`; `b64_eps = 2^-52` is the spacing
+  at 1.0 in IEEE 754 binary64.
+- `b64_errbound_A_coeff = (3 + 16·eps) * eps` — Shewchuk's Stage A
+  forward-error coefficient, computed in binary64 via the same
+  `Bplus` / `Bmult` primitives.  Approximately 6.66·10⁻¹⁶.
+- `b64_abs` — absolute value with a concrete NaN handler.
+- `b64_orient2d_detsum P0 P1 Q` — `|t1| + |t2|`, the operand-magnitude
+  budget for the filter bound.
+- `b64_orient2d_errbound P0 P1 Q = errbound_A_coeff * detsum` — the
+  per-triangle threshold.
+- `Inductive orient_sign_robust := OrientRPos | OrientRNeg | OrientRZero | OrientRNan | OrientRUncertain` —
+  five-valued result, extending `orient_sign` with the Uncertain case
+  the filter returns when `|det|` is within the error bound of zero.
+- `b64_orient_sign_filtered` — the Stage A decoder.  If
+  `|det| > errbound`, the naive sign is reliable; otherwise the
+  filter returns `OrientRUncertain` rather than risk a sign flip.
+
+Qed-closed structural lemmas across both layers: `orient_sign_eq_dec`,
+`b64_orient_sign_total`, `orient_sign_distinct`,
+`b64_orient_sign_non_nan_iff_compare_some`,
+`orient_sign_robust_eq_dec`, `b64_orient_sign_filtered_total`,
+`orient_sign_robust_distinct`.  Same 4-axiom set as
+`Validate_binary64.v`.
+
+What is NOT YET claimed here:
+
+- The arithmetic identities that hold over ℝ (antisymmetry, cyclic
+  permutation, translation invariance) need Flocq's `Bminus_correct`
+  / `Bmult_correct` no-overflow preconditions — same proof slice
+  deferred for the simplifier R-bridge.
+- Shewchuk's **Stages B / C / D** — the expansion-arithmetic
+  refinement that resolves `OrientRUncertain` into a definite
+  Pos/Neg/Zero — are deferred to a later slice.  Callers facing
+  `OrientRUncertain` today fall back to a higher-precision predicate
+  or treat the triangle as collinear with a documented caveat.
 
 `Orientation_b64.v` is plumbed into `Validate_binary64_extract.v`, so
-the RocqRefRunner now dispatches on a stdin mode line (`SIMPLIFY` /
-`ORIENT`) into the appropriate extracted function.
+the RocqRefRunner dispatches on a stdin mode line (`SIMPLIFY` /
+`ORIENT` / `ORIENT_FILTERED`) into the appropriate extracted function.
 
 ## Roadmap
 
@@ -439,7 +467,7 @@ publishable.
 | Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | naive cross-product layer Qed-closed (decidability, totality, NaN-safety); Shewchuk filter + soundness bridge deferred | **partial** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign`) bit-exact against RocqRefRunner ORIENT mode; adaptive filter port pending |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); Stages B/C/D expansion refinement + soundness bridge deferred | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
 | 1 | `RobustLineIntersector_b64.v` — including all degeneracies | reading-unblocked | 0% |
 | 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | reading-unblocked | 0% |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
@@ -580,6 +608,21 @@ separate axis — currently not claimed end-to-end on any phase.
   385 GreedyPerp + RobustOrientation tests pass on Apple Silicon.
   The arithmetic identities and the Shewchuk-adaptive filter are
   explicitly the next slice, not stubbed.
+- **2026-05-15**: Phase 0 chokepoint — Stage A filter complete.
+  Added `b64_three` / `b64_sixteen` / `b64_eps` (Flocq-constructed via
+  `binary_normalize`), `b64_errbound_A_coeff = (3 + 16·eps)·eps`,
+  `b64_abs`, `b64_orient2d_detsum`, `b64_orient2d_errbound`, the
+  five-valued `Inductive orient_sign_robust` (with `OrientRUncertain`),
+  and `b64_orient_sign_filtered` — Shewchuk's Stage A filter that
+  refuses to commit to a sign when `|det|` is within the forward-error
+  bound of zero.  Qed-closed lemmas: `orient_sign_robust_eq_dec`,
+  `b64_orient_sign_filtered_total`, `orient_sign_robust_distinct`.
+  Stages B/C/D expansion-arithmetic refinement is the next slice.
+  `oracle/driver.ml` gains an `ORIENT_FILTERED` mode; the C# port
+  exposes `RobustOrientation.SignFiltered` with the 5-valued
+  `OrientSignRobust` enum.  Result: 396 / 396 GreedyPerp +
+  RobustOrientation tests bit-exact against the RocqRefRunner — naive
+  + filtered modes both green.
 
 ## What this is NOT
 
