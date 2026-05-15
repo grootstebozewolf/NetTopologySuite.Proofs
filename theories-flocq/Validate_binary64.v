@@ -40,9 +40,11 @@
      - ClassicalDedekindReals.sig_not_dec
      - ClassicalDedekindReals.sig_forall_dec
      - FunctionalExtensionality.functional_extensionality_dep
-   Any axiom beyond these three indicates a regression -- the corpus
-   invariant is that the only axioms used are Rocq's classical-reals
-   axioms, transitively inherited from Real.v.
+     - Classical_Prop.classic
+   All four are pulled in transitively by `From Stdlib Require Import
+   Reals` -- the corpus's `Real.v` and downstream R-bearing modules all
+   sit on top of Coq's classical real line.  Any axiom beyond these four
+   indicates a regression.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -264,11 +266,103 @@ Proof.
   apply greedy_simplify_perp_b64_aux_head.
 Qed.
 
+(* Two-point base case: no decision is made because there is no third       *)
+(* point to triangulate against, so output is the input verbatim.           *)
+Lemma greedy_simplify_perp_b64_two_points :
+  forall eps p q, greedy_simplify_perp_b64 eps [p; q] = [p; q].
+Proof. reflexivity. Qed.
+
+(* The auxiliary form always emits at least the `kept` point.               *)
+Lemma greedy_simplify_perp_b64_aux_nonempty :
+  forall eps kept rest, greedy_simplify_perp_b64_aux eps kept rest <> [].
+Proof.
+  intros eps kept rest. revert kept.
+  induction rest as [| q more IH]; intros kept.
+  - cbn. discriminate.
+  - destruct more as [| r tail].
+    + cbn. discriminate.
+    + cbn. destruct (b64_le _ _).
+      * apply IH.
+      * discriminate.
+Qed.
+
+(* Top-level: non-empty input gives non-empty output.                       *)
+Lemma greedy_simplify_perp_b64_nonempty :
+  forall eps p rest, greedy_simplify_perp_b64 eps (p :: rest) <> [].
+Proof.
+  intros eps p rest.
+  unfold greedy_simplify_perp_b64.
+  apply greedy_simplify_perp_b64_aux_nonempty.
+Qed.
+
+(* Length bound on the auxiliary form: output has at most `S (length rest)` *)
+(* points -- one for `kept` plus one per remaining input.  The simplifier   *)
+(* may drop but never inserts.                                              *)
+Lemma greedy_simplify_perp_b64_aux_length_le :
+  forall eps kept rest,
+    (length (greedy_simplify_perp_b64_aux eps kept rest) <= S (length rest))%nat.
+Proof.
+  intros eps kept rest. revert kept.
+  induction rest as [| q more IH]; intros kept.
+  - cbn. lia.
+  - destruct more as [| r tail].
+    + cbn. lia.
+    + cbn. destruct (b64_le _ _).
+      * (* drop q: recurse with the same kept *)
+        specialize (IH kept). cbn in IH. lia.
+      * (* keep kept, recurse with q *)
+        cbn. specialize (IH q). cbn in IH. lia.
+Qed.
+
+(* Top-level length bound: output length never exceeds input length.        *)
+Lemma greedy_simplify_perp_b64_length_le :
+  forall eps pts,
+    (length (greedy_simplify_perp_b64 eps pts) <= length pts)%nat.
+Proof.
+  intros eps [|p rest].
+  - cbn. lia.
+  - unfold greedy_simplify_perp_b64.
+    pose proof (greedy_simplify_perp_b64_aux_length_le eps p rest) as H.
+    cbn. lia.
+Qed.
+
+(* `greedy_simplify_binary64` is `Some` of the perp-form output.            *)
+(* Strengthens `_never_none` by giving the exact body.                      *)
+Lemma greedy_simplify_binary64_some_eq :
+  forall eps pts,
+    greedy_simplify_binary64 eps pts = Some (greedy_simplify_perp_b64 eps pts).
+Proof. reflexivity. Qed.
+
+(* Membership: `kept` appears in the auxiliary-form output for any `rest`.  *)
+Lemma greedy_simplify_perp_b64_aux_in_kept :
+  forall eps kept rest, In kept (greedy_simplify_perp_b64_aux eps kept rest).
+Proof.
+  intros eps kept rest. revert kept.
+  induction rest as [| q more IH]; intros kept.
+  - cbn. left; reflexivity.
+  - destruct more as [| r tail].
+    + cbn. left; reflexivity.
+    + cbn. destruct (b64_le _ _).
+      * apply IH.
+      * left; reflexivity.
+Qed.
+
+(* Top-level: the head of the input appears in the output.                  *)
+Lemma greedy_simplify_perp_b64_in_head :
+  forall eps p rest, In p (greedy_simplify_perp_b64 eps (p :: rest)).
+Proof.
+  intros eps p rest.
+  unfold greedy_simplify_perp_b64.
+  apply greedy_simplify_perp_b64_aux_in_kept.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit -- must show only the three classical-reals axioms.           *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions greedy_simplify_perp_b64_preserves_head.
+Print Assumptions greedy_simplify_perp_b64_aux_length_le.
+Print Assumptions greedy_simplify_perp_b64_aux_in_kept.
 
 (* -------------------------------------------------------------------------- *)
 (* Extraction directive.  M-fast style: no native-float binding yet --       *)
