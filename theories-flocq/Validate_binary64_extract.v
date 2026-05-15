@@ -74,6 +74,7 @@ Extract Inductive Binary.binary_float => "float" [
 Extract Constant Binary.Bplus    => "fun _ _ _ _ x y -> x +. y".
 Extract Constant Binary.Bminus   => "fun _ _ _ _ x y -> x -. y".
 Extract Constant Binary.Bmult    => "fun _ _ _ _ x y -> x *. y".
+Extract Constant Binary.Bdiv     => "fun _ _ _ _ x y -> x /. y".
 
 (* Bcompare's signature is (prec emax x y).  Returns `None` on NaN,      *)
 (* matching the Coq semantics that drive `b64_le`'s NaN-safety.          *)
@@ -110,4 +111,5 @@ Extraction "oracle/extracted.ml"
   b64_orient2d
   b64_orient_sign_naive
   b64_orient_sign_filtered
-  b64_intersect_sign_filtered.
+  b64_intersect_sign_filtered
+  b64_intersect_point.

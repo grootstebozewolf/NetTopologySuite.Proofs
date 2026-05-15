@@ -137,6 +137,37 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* `b64_div_correct`: lift of Flocq's `Bdiv_correct`.  Division has a         *)
+(* different precondition shape than +/-/* -- the divisor must be non-zero    *)
+(* (an `R`-side condition, not just `is_finite`).  Phase 1's intersection-     *)
+(* point computation is the first consumer.                                    *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_div_correct :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax y <> 0 ->
+    Rabs (b64_round (Binary.B2R prec emax x / Binary.B2R prec emax y))
+      < bpow radix2 emax ->
+    Binary.B2R prec emax (b64_div x y)
+      = b64_round (Binary.B2R prec emax x / Binary.B2R prec emax y)
+    /\ Binary.is_finite prec emax (b64_div x y) = true.
+Proof.
+  intros x y Fx Fy Hy_nonzero Hbnd.
+  pose proof (Binary.Bdiv_correct prec emax prec_gt_0_b64 prec_lt_emax_b64
+                default_nan_b64 mode_b64 x y Hy_nonzero) as H.
+  apply Rlt_bool_true in Hbnd.
+  unfold b64_div.
+  destruct (Rlt_bool _ _) eqn:E in H.
+  - destruct H as [HB2R [Hfin _]].
+    split.
+    + exact HB2R.
+    + rewrite Hfin. exact Fx.
+  - rewrite E in Hbnd. discriminate.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Zero-arithmetic helpers.                                                   *)
 (*                                                                            *)
 (* Small facts that the per-op correctness theorems make trivial to derive    *)

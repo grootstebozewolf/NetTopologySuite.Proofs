@@ -136,6 +136,17 @@ Definition b64_minus (x y : binary64) : binary64 :=
 Definition b64_mult  (x y : binary64) : binary64 :=
   Binary.Bmult  prec emax prec_gt_0_b64 prec_lt_emax_b64 default_nan_b64 mode_b64 x y.
 
+(* Division.  Like Bplus/Bminus/Bmult, Bdiv takes a NaN handler and a       *)
+(* rounding mode.  Phase 1 intersection-point computation is the first      *)
+(* consumer; division is needed for the t-parameter of a segment            *)
+(* intersection.  Unlike the other ops, division is not exact even in the   *)
+(* integer regime -- two integer-valued binary64s with |a|, |b| <= 2^25     *)
+(* can give a non-integer quotient.  Soundness theorems for divisions       *)
+(* therefore have a forward-error shape rather than the bit-exactness       *)
+(* shape Phase 0/1 enjoyed for + / - / *.                                    *)
+Definition b64_div   (x y : binary64) : binary64 :=
+  Binary.Bdiv   prec emax prec_gt_0_b64 prec_lt_emax_b64 default_nan_b64 mode_b64 x y.
+
 Definition b64_compare (x y : binary64) : option comparison :=
   Binary.Bcompare prec emax x y.
 

@@ -35,6 +35,13 @@
         output:       single token "<sign>".
                       sign is one of: NONE / POINT / COLLINEAR / NAN / UNCERTAIN.
 
+     INTERSECT_POINT_FILTERED -- intersection point coordinates.
+        line 2..5:    four points as above.
+        EOF.
+        output:       single line, one of:
+                        "NONE"                 (no intersection or non-Point result)
+                        "POINT <x_hex> <y_hex>" (rounded intersection coordinates)
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -120,6 +127,17 @@ let run_intersect_filtered () =
   let s = b64_intersect_sign_filtered p0 p1 q0 q1 in
   Printf.printf "%s\n" (intersect_sign_string s)
 
+(* ----- INTERSECT_POINT_FILTERED mode. ------------------------------------ *)
+
+let run_intersect_point_filtered () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let q0 = parse_point (input_line stdin) in
+  let q1 = parse_point (input_line stdin) in
+  match b64_intersect_point p0 p1 q0 q1 with
+  | None    -> print_endline "NONE"
+  | Some bp -> Printf.printf "POINT %h %h\n" bp.bx bp.by_
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 let () =
@@ -128,8 +146,9 @@ let () =
     if line = "" then read_mode () else line
   in
   match read_mode () with
-  | "SIMPLIFY"           -> run_simplify ()
-  | "ORIENT"             -> run_orient ()
-  | "ORIENT_FILTERED"    -> run_orient_filtered ()
-  | "INTERSECT_FILTERED" -> run_intersect_filtered ()
-  | other                -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)
+  | "SIMPLIFY"                 -> run_simplify ()
+  | "ORIENT"                   -> run_orient ()
+  | "ORIENT_FILTERED"          -> run_orient_filtered ()
+  | "INTERSECT_FILTERED"       -> run_intersect_filtered ()
+  | "INTERSECT_POINT_FILTERED" -> run_intersect_point_filtered ()
+  | other                      -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)

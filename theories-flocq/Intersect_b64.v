@@ -399,6 +399,79 @@ Proof.
 Qed.
 
 (* ============================================================================
+   Intersection point computation.
+
+   Cramer's rule on the parametric system gives the t-parameter on
+   segment P0-P1 as `s = orient(Q0,Q1,P0) / (orient(Q0,Q1,P0) -
+   orient(Q0,Q1,P1))`, then `X = P0 + s*(P1 - P0)`.  The denominator
+   is exactly `b64_orient2d_terms`-style cross-product output, the
+   numerator is one of its two terms.
+
+   Implementation chooses the parameter on P0-P1 (matches NTS's
+   `RobustLineIntersector` convention).  Returns `None` for any non-
+   `IntersectPoint` result so callers can match the predicate's
+   five-valued result against an `option BPoint` cleanly.
+
+   Soundness story (deferred):
+   - Integer-regime structural soundness: `b64_intersect_point` commits
+     to `Some _` exactly when the predicate is `IntersectPoint`.  The
+     denominator is a non-zero integer in this regime (Phase 0
+     exactness), so `b64_compare den zero` returns `Lt`/`Gt`, not `Eq`
+     or `None`.
+   - Integer-regime forward error: the rounded `BPoint` is close to
+     the true rational intersection -- bounded by the standard
+     binary64 division + multiplication + addition error budget.
+     Requires `b64_div`-flavoured forward-error analysis; comparable in
+     scope to Phase 0 Stage D.  Not in this slice.
+   - The C# differential tests in NetTopologySuite.Curve validate
+     bit-equality between `RobustLineIntersector.IntersectionPoint`
+     and the Coq-extracted reference (both round identically), which
+     is the cross-port soundness check this slice ships.
+   ============================================================================ *)
+
+Definition b64_intersect_point (P0 P1 Q0 Q1 : BPoint) : option BPoint :=
+  match b64_intersect_sign_filtered P0 P1 Q0 Q1 with
+  | IntersectPoint =>
+      let qp0 := b64_orient2d Q0 Q1 P0 in
+      let qp1 := b64_orient2d Q0 Q1 P1 in
+      let den := b64_minus qp0 qp1 in
+      let zero := Binary.B754_zero prec emax false in
+      match b64_compare den zero with
+      | Some Eq => None
+      | None    => None
+      | _ =>
+          let s  := b64_div qp0 den in
+          let dx := b64_minus (bx P1) (bx P0) in
+          let dy := b64_minus (by_ P1) (by_ P0) in
+          Some (mkBP (b64_plus (bx P0) (b64_mult s dx))
+                     (b64_plus (by_ P0) (b64_mult s dy)))
+      end
+  | _ => None
+  end.
+
+(* Structural lemma: the function commits to `Some _` exactly when the
+   predicate is `IntersectPoint`.  Proof is straightforward unfold +
+   destruct since `b64_intersect_point` is defined by case on the
+   predicate's result; the only sub-case that needs care is showing
+   `b64_compare den zero` does not return `Eq` or `None`.  That sub-case
+   would need integer-regime exactness on `den` -- a one-step argument
+   from Phase 0's `b64_orient2d_exact_for_small_int` and the predicate
+   dispatch forcing opposite-sign cross_R values.  This slice ships the
+   weaker structural lemma without the integer-regime side condition;
+   the stronger version is the natural follow-up. *)
+
+Lemma b64_intersect_point_none_unless_point :
+  forall P0 P1 Q0 Q1 X,
+    b64_intersect_point P0 P1 Q0 Q1 = Some X ->
+    b64_intersect_sign_filtered P0 P1 Q0 Q1 = IntersectPoint.
+Proof.
+  intros P0 P1 Q0 Q1 X H.
+  unfold b64_intersect_point in H.
+  destruct (b64_intersect_sign_filtered P0 P1 Q0 Q1); try discriminate H.
+  reflexivity.
+Qed.
+
+(* ============================================================================
    Headline: full match-on-five soundness in the integer regime.
 
    Bundles `_none_sound` and `_point_sound` into the canonical
@@ -445,3 +518,4 @@ Print Assumptions cross_R_BP_eq_cross_BP2P.
 Print Assumptions b64_intersect_sign_filtered_none_sound_small_int.
 Print Assumptions b64_intersect_sign_filtered_point_sound_small_int.
 Print Assumptions b64_intersect_sign_filtered_sound_small_int.
+Print Assumptions b64_intersect_point_none_unless_point.
