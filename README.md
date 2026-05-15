@@ -38,25 +38,30 @@ The repository has two source directories:
   is purely about which CI runner builds the file, not about which
   proof standard it meets.
 
+**Status.** The foundational layer (real-number, vector, distance,
+orientation, segment, bbox, triangle, convex, lex-order, plus their
+companions) is Qed-closed.  The curve-linearisation stack
+(`Linearise` → `Simplify` → `Tin` → `Validate` → `Validate_decidable`)
+is Qed-closed in the abstract.  The binary64 instance
+(`Validate_binary64.v` + RocqRefRunner) is shipping to
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve);
+its R-bridge soundness theorem is the next open item.  The Phase 0–7
+chokepoint sequence (robust orientation, line intersection, snap
+rounding, planar overlay) is the next major direction and is currently
+at 0% on the C# side.
+
 ## Why this exists
 
-NetTopologySuite is a port of JTS. JTS is itself a port of academic
-computational-geometry algorithms with subtle robustness properties — the
-kind that you find a bug in three years later when an unusual coordinate
-configuration trips a sign flip. Unit tests sample the behaviour at
-finitely many points and produce green CI. Formal proofs cover all of
-ℝ² simultaneously.
+Computational-geometry algorithms have subtle robustness properties — the
+kind of bug you find three years later when an unusual coordinate
+configuration trips a sign flip.  Unit tests sample behaviour at finitely
+many points; formal proofs cover all of ℝ² simultaneously.
 
-The intent is not to verify every line of NetTopologySuite. That's
-infeasible for a library this size, and most of the C# code is mechanical
-plumbing where formal verification adds little value. The intent is to
-verify the **load-bearing primitives** — the handful of small algorithms
-that, if wrong, make everything above them suspect. Orientation, distance,
-the convex-hull invariants, the buffer-curve angle relations.
-
-When someone asks "are you sure the squared-distance optimisation can't
-flip a result?", the answer is `Distance.dist_le_iff_dist_sq_le` and the
-kernel-checked proof. Not "yes, the tests pass."
+The intent is not to verify every line of NetTopologySuite — that's
+infeasible.  Most of the C# code is plumbing.  The intent is to verify
+the load-bearing primitives: the handful of small algorithms that, if
+wrong, make everything above them suspect.  Orientation, distance, the
+convex-hull invariants, the buffer-curve angle relations.
 
 ## What's in scope right now
 
@@ -131,10 +136,10 @@ separates the other segment's endpoints.
 - `convex_combination_zero_opposite_signs` — auxiliary: for *t* ∈ [0, 1],
   if `(1-t)·a + t·b = 0` then `a · b ≤ 0`.
 - `cross_affine_in_third` — bilinearity of the cross product in its
-  third argument; the algebraic fact powering the rest of the file.
-- **`segments_share_point_implies_opposite_sides`** — the headline
-  theorem. If `between A B X` and `between C D X`, then
-  `cross(A,B,C) · cross(A,B,D) ≤ 0` **and** `cross(C,D,A) · cross(C,D,B) ≤ 0`.
+  third argument; used throughout the rest of the file.
+- **`segments_share_point_implies_opposite_sides`** — if `between A B X`
+  and `between C D X`, then `cross(A,B,C) · cross(A,B,D) ≤ 0` **and**
+  `cross(C,D,A) · cross(C,D,B) ≤ 0`.
 - `same_side_rejection_is_sound` — corollary in the form NTS's
   intersection-rejection fast paths use. If either cross-product
   product is strictly positive, no shared point exists.
@@ -178,10 +183,10 @@ verifies that short-circuit is sound.
 - `bbox_disjoint_sym` — disjointness is symmetric.
 - `shared_point_implies_not_disjoint` — if a point lies in both
   bounding boxes, they cannot be disjoint.
-- **`disjoint_bboxes_imply_no_shared_point`** — the headline theorem.
-  If two segments have disjoint bounding boxes, they share no point.
-  The formal justification for envelope-based rejection in
-  `LineIntersector` and friends.
+- **`disjoint_bboxes_imply_no_shared_point`** — if two segments have
+  disjoint bounding boxes, they share no point.  The formal
+  justification for envelope-based rejection in `LineIntersector` and
+  friends.
 - `bbox_of_seg_xlo_le_xhi`, `bbox_of_seg_ylo_le_yhi` — well-formedness
   of segment-derived bounding boxes.
 - `bbox_contains_lo_corner` — every well-formed bbox contains its
@@ -262,8 +267,8 @@ linearisation now, native curve algorithms later).
   ε-stable.
 - **`regime3_counterexample`** + **`EqualsExact_not_stable`** —
   regime 3: distinct shapes can share a common ε-approximation; exact
-  equality is *not* preserved by ε-approximation. The honest limit of
-  Phase-3 linearisation.
+  equality is *not* preserved by ε-approximation.  The limit of what
+  Phase-3 linearisation can preserve.
 
 ### `theories/Simplify.v` — greedy polyline simplification
 
@@ -287,16 +292,12 @@ under the tolerance contract from `Linearise.v`.
 - `simp_drop_here_length_deficit` — exact identity: the length
   reduction equals the chord-deficit at the dropped point.
 
-To our knowledge, the first formal proof of polyline-simplification
-length monotonicity in any proof assistant. Douglas-Peucker (1973) and
-Visvalingam-Whyatt (1993) were never formally verified.
-
 ### `theories/Tin.v` — TIN boundary adjacency
 
-The formal companion of the headline novelty in Zygmunt-Róg
-(Measurement 260, 2026): adjacent TINs built from a shared boundary
-polyline must agree on boundary vertices for seamless merging. Proved
-via `Linearise.v` and `Simplify.v` endpoint-preservation theorems.
+Formalises the merging condition in Zygmunt-Róg (Measurement 260,
+2026): adjacent TINs built from a shared boundary polyline must agree
+on boundary vertices for seamless merging.  Proved via `Linearise.v`
+and `Simplify.v` endpoint-preservation theorems.
 
 - `TaggedTin` record + `same_source_boundary` predicate.
 - **`same_source_share_endpoints`** (chord, perp, and mixed-mode
@@ -370,30 +371,6 @@ preconditions through the `Fixpoint`) is not yet proven and is not
 stubbed with `Admitted`; the `PROOF STATUS` block at the top of the
 file says so explicitly.
 
-## Notable open contributions
-
-Three results in the current corpus appear to be first-of-kind in the
-published literature, worth pinning here for citation:
-
-1. **Polyline-simplification length monotonicity**
-   (`Simplify.simp_step_length_monotone`,
-   `simp_star_length_monotone`, `simp_drop_here_length_deficit`).
-   Douglas-Peucker 1973 and Visvalingam-Whyatt 1993 are widely
-   implemented but never formally verified; our `simp_star` inductive
-   spec covers both with a single proof.
-2. **The three-regime tolerance stratification**
-   (`Linearise.v` §7 — `chord_le_detour`,
-   `disjoint_under_linearise`, `regime3_counterexample`). The
-   distinction between convergent scalar quantities, ε-stable
-   predicates, and tolerance-sensitive predicates is implicit in
-   PostGIS/GEOS practice but unstated in print.
-3. **TIN boundary endpoint sharing**
-   (`Tin.same_source_share_endpoints`). The structural soundness
-   theorem behind Zygmunt-Róg (Measurement 260, 2026)'s adjacent-TIN
-   merging result, which measured 41–56 % triangle-count reduction
-   vs ArcMap while preserving boundary consistency. They measured the
-   payoff; we proved the soundness contract.
-
 ## Roadmap
 
 ### Phase 0–7: the NTS topological chokepoint
@@ -459,7 +436,7 @@ separate axis — currently not claimed end-to-end on any phase.
 - **2026-05-14**: doubled the catalogue: extended `Distance.v` /
   `Orientation.v` / `Segment.v`, added `Vec.v` (2D vector algebra) and
   `Bbox.v` (axis-aligned bounding boxes + envelope-rejection
-  soundness). Total: **45 kernel-checked theorems** across 6 modules.
+  soundness). Total: **45 Qed-closed theorems** across 6 modules.
 - **2026-05-14**: crossed the first order of magnitude. Extended all
   six existing modules with another 26 results — including Lagrange's
   identity and the squared Cauchy-Schwarz inequality in `Vec.v` — and
@@ -476,10 +453,10 @@ separate axis — currently not claimed end-to-end on any phase.
   containment laws), `Parallel.v` (18 segment-direction laws),
   `Centroid.v` (24 centroid identities), `Polynomial.v` (22
   linear/quadratic identities) — and roughly doubled each of the
-  existing nine. Total: **465 kernel-checked theorems** across 18
-  modules. (Euclid's *Elements* contains 465 propositions; we now
-  match the count, though the content is orthogonal: Euclid's are
-  geometric constructions; ours are algebraic and order-theoretic
+  existing nine. Total: **465 Qed-closed theorems** across 18
+  modules. (Euclid's *Elements* contains 465 propositions; the count
+  now matches.  The content is orthogonal — Euclid's propositions are
+  geometric constructions; these are algebraic and order-theoretic
   invariants of the same plane.)
 - **2026-05-14**: pivoted to the NTS curves prototype. Added `Linearise.v`
   (14 theorems): the tolerance contract — `within_eps`, `hausdorff_le`,
@@ -507,7 +484,7 @@ separate axis — currently not claimed end-to-end on any phase.
   perpendicular form parameterised over a typeclass `OrderedReal`.
   Soundness proved once for the abstract carrier; an R instance
   ships immediately, a Flocq binary64 instance is the next slice.
-  Total: **520 kernel-checked theorems** across 23 modules in
+  Total: **520 Qed-closed theorems** across 23 modules in
   `theories/`.
 - **2026-05-15**: container infrastructure (`Dockerfile`,
   `.dockerignore`, `_CoqProject.full`) wired up for Rocq 9.1.1 +
@@ -548,7 +525,7 @@ separate axis — currently not claimed end-to-end on any phase.
 - This is **not** a substitute for unit tests. Tests cover behaviour the
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
-- This is **not** complete. Current coverage is 520+ kernel-checked
+- This is **not** complete. Current coverage is 520+ Qed-closed
   theorems across 23 modules: the algebraic foundations (real-number,
   vector, distance, orientation, line, disk, lattice, lex order),
   segment and bounding-box primitives, triangle / convex / centroid /
