@@ -601,35 +601,26 @@ Definition b64_TwoSum_chain3 (a b c : binary64) : binary64 * binary64 * binary64
   let '(s2, e2) := b64_TwoSum s1 c in
   (s2, e2, e1).
 
-(* The 12 safety preconditions, split as two `b64_TwoSum_safe` blocks.       *)
-(* The second block is on `(s1, c)` where `s1 = b64_plus a b = fst           *)
-(* (b64_TwoSum a b)`.  Expressed explicitly in terms of `(a, b, c)` to       *)
-(* avoid binding `s1` in the theorem's hypotheses (Coq's `let` in hypothesis *)
-(* position is awkward; we inline the definition).                           *)
+(* Safety predicate for a single `b64_TwoSum x y` -- the six per-operation  *)
+(* `b64_safe` conjuncts packaged as one Prop.  Used by the chain_n          *)
+(* compositions below to keep their preconditions compact.                    *)
+Definition b64_TwoSum_safe (x y : binary64) : Prop :=
+  b64_safe Rplus  x y /\
+  b64_safe Rminus (b64_plus x y) x /\
+  b64_safe Rminus (b64_plus x y) (b64_minus (b64_plus x y) x) /\
+  b64_safe Rminus x
+    (b64_minus (b64_plus x y) (b64_minus (b64_plus x y) x)) /\
+  b64_safe Rminus y (b64_minus (b64_plus x y) x) /\
+  b64_safe Rplus
+    (b64_minus x
+      (b64_minus (b64_plus x y) (b64_minus (b64_plus x y) x)))
+    (b64_minus y (b64_minus (b64_plus x y) x)).
+
+(* Chain composition's safety: a TwoSum on `(a, b)` followed by a TwoSum on *)
+(* `(s1, c)` where `s1 = b64_plus a b`.                                     *)
 Definition b64_TwoSum_chain3_safe (a b c : binary64) : Prop :=
-  let s1 := b64_plus a b in
-  (* TwoSum (a, b) -- six preconditions. *)
-  b64_safe Rplus  a b /\
-  b64_safe Rminus (b64_plus a b) a /\
-  b64_safe Rminus (b64_plus a b) (b64_minus (b64_plus a b) a) /\
-  b64_safe Rminus a
-    (b64_minus (b64_plus a b) (b64_minus (b64_plus a b) a)) /\
-  b64_safe Rminus b (b64_minus (b64_plus a b) a) /\
-  b64_safe Rplus
-    (b64_minus a
-      (b64_minus (b64_plus a b) (b64_minus (b64_plus a b) a)))
-    (b64_minus b (b64_minus (b64_plus a b) a)) /\
-  (* TwoSum (s1, c) -- six preconditions. *)
-  b64_safe Rplus  s1 c /\
-  b64_safe Rminus (b64_plus s1 c) s1 /\
-  b64_safe Rminus (b64_plus s1 c) (b64_minus (b64_plus s1 c) s1) /\
-  b64_safe Rminus s1
-    (b64_minus (b64_plus s1 c) (b64_minus (b64_plus s1 c) s1)) /\
-  b64_safe Rminus c (b64_minus (b64_plus s1 c) s1) /\
-  b64_safe Rplus
-    (b64_minus s1
-      (b64_minus (b64_plus s1 c) (b64_minus (b64_plus s1 c) s1)))
-    (b64_minus c (b64_minus (b64_plus s1 c) s1)).
+  b64_TwoSum_safe a b /\
+  b64_TwoSum_safe (b64_plus a b) c.
 
 Theorem b64_TwoSum_chain3_correct :
   forall a b c : binary64,
@@ -639,16 +630,59 @@ Theorem b64_TwoSum_chain3_correct :
       = Binary.B2R prec emax a + Binary.B2R prec emax b + Binary.B2R prec emax c.
 Proof.
   intros a b c Hsafe.
-  unfold b64_TwoSum_chain3_safe in Hsafe. cbv zeta in Hsafe.
-  destruct Hsafe as
-    [Hsa1 [Hsb1 [Hsc1 [Hsd1 [Hse1 [Hsf1
-     [Hsa2 [Hsb2 [Hsc2 [Hsd2 [Hse2 Hsf2]]]]]]]]]]].
+  destruct Hsafe as [Hsab Hsbc].
+  unfold b64_TwoSum_safe in Hsab, Hsbc.
+  destruct Hsab as [Hsa1 [Hsb1 [Hsc1 [Hsd1 [Hse1 Hsf1]]]]].
+  destruct Hsbc as [Hsa2 [Hsb2 [Hsc2 [Hsd2 [Hse2 Hsf2]]]]].
   pose proof (b64_TwoSum_correct a b Hsa1 Hsb1 Hsc1 Hsd1 Hse1 Hsf1) as HTS1.
   pose proof (b64_TwoSum_correct (b64_plus a b) c
                 Hsa2 Hsb2 Hsc2 Hsd2 Hse2 Hsf2) as HTS2.
   unfold b64_TwoSum in HTS1, HTS2.
   cbv beta iota zeta in HTS1, HTS2.
   unfold b64_TwoSum_chain3. unfold b64_TwoSum. cbv beta iota zeta.
+  lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* b64_TwoSum_chain4.  Four-element chain via three TwoSums.  Tests whether *)
+(* the chain_n pattern scales mechanically beyond chain3.                   *)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_TwoSum_chain4 (a b c d : binary64)
+  : binary64 * binary64 * binary64 * binary64 :=
+  let '(s1, e1) := b64_TwoSum a b in
+  let '(s2, e2) := b64_TwoSum s1 c in
+  let '(s3, e3) := b64_TwoSum s2 d in
+  (s3, e3, e2, e1).
+
+Definition b64_TwoSum_chain4_safe (a b c d : binary64) : Prop :=
+  b64_TwoSum_safe a b /\
+  b64_TwoSum_safe (b64_plus a b) c /\
+  b64_TwoSum_safe (b64_plus (b64_plus a b) c) d.
+
+Theorem b64_TwoSum_chain4_correct :
+  forall a b c d : binary64,
+    b64_TwoSum_chain4_safe a b c d ->
+    let '(s3, e3, e2, e1) := b64_TwoSum_chain4 a b c d in
+    Binary.B2R prec emax s3 + Binary.B2R prec emax e3
+      + Binary.B2R prec emax e2 + Binary.B2R prec emax e1
+      = Binary.B2R prec emax a + Binary.B2R prec emax b
+        + Binary.B2R prec emax c + Binary.B2R prec emax d.
+Proof.
+  intros a b c d Hsafe.
+  destruct Hsafe as [Hsab [Hsbc Hscd]].
+  unfold b64_TwoSum_safe in Hsab, Hsbc, Hscd.
+  destruct Hsab as [Hsa1 [Hsb1 [Hsc1 [Hsd1 [Hse1 Hsf1]]]]].
+  destruct Hsbc as [Hsa2 [Hsb2 [Hsc2 [Hsd2 [Hse2 Hsf2]]]]].
+  destruct Hscd as [Hsa3 [Hsb3 [Hsc3 [Hsd3 [Hse3 Hsf3]]]]].
+  pose proof (b64_TwoSum_correct a b Hsa1 Hsb1 Hsc1 Hsd1 Hse1 Hsf1) as HTS1.
+  pose proof (b64_TwoSum_correct (b64_plus a b) c
+                Hsa2 Hsb2 Hsc2 Hsd2 Hse2 Hsf2) as HTS2.
+  pose proof (b64_TwoSum_correct (b64_plus (b64_plus a b) c) d
+                Hsa3 Hsb3 Hsc3 Hsd3 Hse3 Hsf3) as HTS3.
+  unfold b64_TwoSum in HTS1, HTS2, HTS3.
+  cbv beta iota zeta in HTS1, HTS2, HTS3.
+  unfold b64_TwoSum_chain4. unfold b64_TwoSum. cbv beta iota zeta.
   lra.
 Qed.
 
@@ -665,6 +699,7 @@ Print Assumptions b64_Dekker_correct.
 Print Assumptions b64_TwoSum_nonoverlap.
 Print Assumptions b64_Dekker_nonoverlap.
 Print Assumptions b64_TwoSum_chain3_correct.
+Print Assumptions b64_TwoSum_chain4_correct.
 
 (* -------------------------------------------------------------------------- *)
 (* Next slices on this bridge                                                 *)
