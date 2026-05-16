@@ -529,6 +529,56 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* b64_Dekker_nonoverlap.  Parallel to b64_TwoSum_nonoverlap: the error term *)
+(* of Dekker's TwoProduct is bounded by half a ulp of the rounded product.  *)
+(*                                                                            *)
+(* Reuses b64_Dekker_correct's exact equality (x*y = B2R r + B2R t under     *)
+(* safety + underflow), so the error term is B2R x * B2R y - B2R r where    *)
+(* r = b64_mult x y.  Apply `error_le_half_ulp_round` to that residual:     *)
+(* the half-ulp bound holds on the rounded value, which is exactly B2R r.   *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_Dekker_nonoverlap :
+  forall x y : binary64,
+    b64_Dekker_safe x y ->
+    (Binary.B2R prec emax x * Binary.B2R prec emax y = 0
+     \/ bpow radix2 (3 - emax - prec + 2 * prec - 1)
+        <= Rabs (Binary.B2R prec emax x * Binary.B2R prec emax y)) ->
+    let '(r, t) := b64_Dekker x y in
+    Rabs (Binary.B2R prec emax t)
+      <= ulp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax r) / 2.
+Proof.
+  intros x y Hsafe Hund.
+  pose proof (b64_Dekker_correct x y Hsafe Hund) as HDC.
+  unfold b64_Dekker in HDC.
+  cbv beta iota zeta in HDC.
+  unfold b64_Dekker. cbv beta iota zeta.
+  destruct Hsafe as
+    [_ [_ [_ [_ [_ [_ [_ [_
+     [_ [_ [_ [_ [Hr [_ [_ [_ _]]]]]]]]]]]]]]]].
+  pose proof (b64_mult_correct x y Hr) as [HBr _].
+  pose proof (@error_le_half_ulp_round radix2 (SpecFloat.fexp prec emax)
+                (fexp_correct prec emax prec_gt_0_b64)
+                (fexp_monotone prec emax)
+                (fun z => negb (Z.even z))
+                (Binary.B2R prec emax x * Binary.B2R prec emax y)) as Herr.
+  change (Znearest (fun z => negb (Z.even z)))
+    with (round_mode mode_b64) in Herr.
+  rewrite <- HBr in Herr.
+  (* From HDC:  B2R x * B2R y = B2R (b64_mult x y) + B2R t.                  *)
+  (* So       B2R t = B2R x * B2R y - B2R (b64_mult x y).                    *)
+  match goal with
+  | |- Rabs ?e <= _ =>
+      replace e with
+        (Binary.B2R prec emax x * Binary.B2R prec emax y
+         - Binary.B2R prec emax (b64_mult x y))
+        by lra
+  end.
+  rewrite Rabs_minus_sym.
+  lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -537,6 +587,9 @@ Print Assumptions b64_choice_sym.
 Print Assumptions b64_Fast2Sum_correct.
 Print Assumptions b64_TwoSum_correct.
 Print Assumptions b64_veltkamp_C_R.
+Print Assumptions b64_Dekker_correct.
+Print Assumptions b64_TwoSum_nonoverlap.
+Print Assumptions b64_Dekker_nonoverlap.
 
 (* -------------------------------------------------------------------------- *)
 (* Next slices on this bridge                                                 *)
