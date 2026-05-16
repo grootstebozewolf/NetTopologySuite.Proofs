@@ -24,6 +24,7 @@ theories/Tin.v
 theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
+theories/Azimuth.v
 
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
