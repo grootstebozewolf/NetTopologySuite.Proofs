@@ -164,8 +164,93 @@ The **scope discipline** call-out from the scout is the load-bearing finding: ke
 ## What this doc does NOT do
 
 - It does **not** start the Stage D proof. The lemmas above are sketched, not Qed-closed.
-- It does **not** commit to the timeline. 3-4 weeks is the realistic estimate, but actual work depends on what slice cadence we maintain.
-- It does **not** vendor Pff or write the TwoSum/Dekker lifts. Those are the natural first slice if/when Stage D becomes the active engagement.
+- ~~It does **not** commit to the timeline. 3-4 weeks is the realistic estimate, but actual work depends on what slice cadence we maintain.~~ **REVISED — see §post-2026-05-16 update below.**
+- ~~It does **not** vendor Pff or write the TwoSum/Dekker lifts.~~ **DONE — see §post-2026-05-16 update.**
+
+## 2026-05-16 update — empirical findings supersede the 3-4 week estimate
+
+This doc was written *before* the actual Stage D work began.  The 3-4 week
+estimate above turned out to be conservative by roughly a factor of 5x.
+What's now Qed-closed in the corpus (all in `theories-flocq/`):
+
+| Piece | Predicted | Actual | Tangents resolved |
+|---|---|---|---|
+| `B64_Pff_bridge.v` setup (Z_even_opp, choice_sym, etc.) | ~1 day | ~20 min | none real |
+| `b64_Fast2Sum_correct` | ~1 day | ~30 min | one-time bridge work |
+| `b64_TwoSum_correct` | ~1 day | ~15 min | mechanical, scout's "~30 line lift" estimate held |
+| `b64_veltkamp_C_R` (the Veltkamp constant exact-B2R) | ~1 day | ~45 min | `binary_normalize_correct` + `round_generic` + format witness chain |
+| `B64_Expansion.v` data structure + structural lemmas | ~2 days | ~30 min | clean list induction |
+| `binary64_below_emin_is_zero` (subnormal-edge lemma) | ~half day | ~20 min | needed `FLT_format_generic` + explicit `prec_gt_0_b64` |
+| `nonoverlap_zero_tail` (cascading subnormal edge) | ~half day | ~15 min | needed `ulp_FLT_0` + `change SpecFloat.fexp ↔ FLT_exp` |
+| `expansion_tail_bounded` (geometric magnitude bound) | ~half day | ~20 min | needed `ulp_le_abs` |
+| **`sign_of_expansion_correct`** (the "genuinely novel piece") | ~2 days | ~30 min | structural induction with `Rabs_def2` conjunct-order care |
+| `b64_Dekker_correct` (16-op Pff lift) | ~3 days | ~3 hours, 4 attempts | rewrite ordering, `round_b64_minus_swap` helper, syntactic alignment, `exact` vs `rewrite+reflexivity` |
+| `b64_TwoSum_nonoverlap` (unlocks sign-correctness on real expansions) | ~1 day | ~1 hour | `cbv` reduction order, `error_le_half_ulp_round` typeclass args, `Rabs_minus_sym`, `lra` for ring-equivalent forms |
+| **Subtotal landed** | **~13 days** | **~7-8 hours** | |
+
+**Remaining for full Stage D** (NOT YET landed; estimates revised based
+on empirical pace):
+
+| Piece | Original | Revised |
+|---|---|---|
+| `b64_Dekker_nonoverlap` (parallel to TwoSum_nonoverlap) | ~1 day | ~1 hour |
+| TwoSum/Dekker chain composition (nonoverlap preservation) | ~2 days | ~2-3 hours |
+| `b64_orient2d_exact` definition + sum=cross_R | ~3 days | ~3-4 hours |
+| Final headline composition | ~2 days | ~1-2 hours |
+| **Remaining total** | **~8 days** | **~6-10 hours** |
+
+**Total Stage D engagement** (revised): **~15-20 hours**.  Calendar:
+**1-3 focused days**, not 3-4 weeks.
+
+## Where Stage D's hardness actually lives (empirical)
+
+The original audit framing ("multi-month, novel proofs") was wrong in
+three confounding ways:
+
+1. **Conflating "orient2d-specific Stage D" with "general Shewchuk
+   expansion arithmetic library"** — scout caught this; correct framing
+   is orient2d-bounded.
+2. **Assuming Pff lifts would be hard** — they're ~30 lines each after
+   the one-time bridge module (`B64_Pff_bridge.v`).  The hardest piece
+   was the "form alignment" in Dekker (FLT_exp vs SpecFloat.fexp +
+   `-r + x1y1` vs `x1y1 - r`).
+3. **Assuming nonoverlap preservation through expansion arithmetic
+   would need novel proofs** — but it's just `error_le_half_ulp_round`
+   from Flocq + arithmetic.  `sign_of_expansion_correct` (the
+   prediction-of-novelty) reduced to structural induction + `ulp_le_abs`.
+
+**The actual cumulative weight is Coq/Flocq tactic literacy, not
+proof difficulty.**  Each tangent took 5-15 minutes to resolve once
+the right Flocq lemma + Coq tactic was identified.  A practitioner
+familiar with Flocq's idioms would close each piece proportionally
+faster.
+
+Recurring tangent patterns (documented for future engagements):
+
+| Symptom | Resolution |
+|---|---|
+| Rewrites don't propagate through let-chains | Chain rewrites in HYPOTHESES (`rewrite H in H'`), not goal |
+| `B2R(b64_op)` vs `round(B2R x ± B2R y)` form mismatch | Use `cbv beta iota zeta` after `unfold b64_TwoSum/Dekker in HTS` |
+| `FLT_exp` vs `SpecFloat.fexp` syntactic difference | `change A with B in *` (they're def-equal) |
+| `Znearest b64_choice` vs `round_mode mode_b64` | Same: `change` to align |
+| `bpow radix2 (prec - Z.div2 prec)` vs `bpow radix2 27` | Same: `change` works |
+| `B2R x1y1 - B2R r` vs `-B2R r + B2R x1y1` form (Pff order) | Helper lemma: `round (a - b) = round (-b + a)` by `f_equal; ring` |
+| Typeclass instance not auto-resolved (Lemma not Instance) | Pass explicit: `@error_le_half_ulp_round _ _ (fexp_correct prec emax prec_gt_0_b64) (fexp_monotone prec emax) _ _` |
+| `Rabs_def2` conjuncts in unexpected order | It's `x < a /\ -a < x`, not the natural `-a < x < a` |
+| `repeat f_equal` over-peels and creates nonsense subgoals | Use `exact HDekker_exact` instead of `rewrite + reflexivity` |
+| Round/ulp computation doesn't reduce in cbv | `error_le_half_ulp_round` for the bound; explicit `change` for forms |
+
+## Revised verdict
+
+**Stage D for `orient2d` is bounded execution work, not research.**
+The bridge module + 11 Qed-closed pieces in the corpus today validate
+this empirically.  Remaining ~6-10 hours of similar mechanical work
+closes the full engagement.
+
+The "months of scholarly work" framing belongs to general expansion
+arithmetic (BJMP 2017's territory), not to the predicate-specific
+exact path through bounded-length straight-line composition of
+TwoSum and Dekker.
 
 ## Citations
 

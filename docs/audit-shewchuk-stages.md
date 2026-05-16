@@ -345,3 +345,37 @@ resolution in practice — if yes, B/C jumps the queue; if no, it stays
 as a documented deeper-soundness option without a fixed timeline.
 
 ---
+
+## 8. 2026-05-16: Stage D execution empirical findings
+
+After this audit was amended in §7, Stage D execution started as an
+opportunistic engagement.  Eleven Qed-closed pieces landed across
+`theories-flocq/B64_Pff_bridge.v` and `theories-flocq/B64_Expansion.v`,
+covering: the bridge setup, three Pff lifts (Fast2Sum, TwoSum, Veltkamp
+constant), the expansion data structure, the genuinely novel
+`sign_of_expansion_correct` headline, Dekker's TwoProduct, and
+TwoSum's nonoverlap property.
+
+**The §7.2 estimate (~5-6 weeks for B/C with the proof-engineering
+tax) was conservative by ~5x.**  Empirical pace: ~1-3 hours per piece,
+total ~7-8 hours for what's landed.  Remaining ~6-10 hours for
+`b64_Dekker_nonoverlap` + chain composition + `b64_orient2d_exact`
++ headline.  See [`stage-d-feasibility.md`](stage-d-feasibility.md)
+§"2026-05-16 update" for the line-by-line breakdown.
+
+The hardness is not in any single proof — every piece is bounded.
+The cumulative weight is **Coq/Flocq tactic literacy**: which
+specific lemma (`ulp_le_abs`, `error_le_half_ulp_round`,
+`FLT_format_generic`, `ulp_FLT_0`) and which specific tactic
+(`change A with B in *`, `cbv beta iota zeta delta [...]`,
+`replace ... by ring`) resolves each tangent.  Documented in the
+feasibility doc as a tangent-pattern table for future engagements.
+
+**Revised verdict on the §7.3 stance (thin-wire takes precedence
+over B/C engagement):**  the wire still takes precedence for
+*sequencing*, but the cost differential narrows substantially.
+B/C is now a ~2-3 day engagement, not a ~5-6 week one.  If
+Phase 3 surfaces a need for Uncertain-case resolution, B/C is
+cheap to execute.
+
+---
