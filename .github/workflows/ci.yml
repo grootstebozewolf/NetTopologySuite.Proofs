@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  FLOCQ_IMAGE: nts-proofs-flocq:ci
+
 jobs:
   rocq:
     name: Build with Rocq ${{ matrix.rocq-version }}
@@ -88,7 +91,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: nts-proofs-flocq:ci
+          tags: ${{ env.FLOCQ_IMAGE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -98,7 +101,7 @@ jobs:
         # `_CoqProject.full`, then `make`s the entire corpus including
         # all Flocq-dependent modules.  Failure here = a `.v` file in
         # theories-flocq/ does not compile.
-        run: docker run --rm nts-proofs-flocq:ci
+        run: docker run --rm "$FLOCQ_IMAGE"
 
       - name: Sequential build + per-theorem axiom audit (guardrails 1 + 4)
         # Re-builds the full corpus inside the same container with -j1
@@ -115,7 +118,7 @@ jobs:
         # has a PA block containing an axiom outside the allowlist.
         run: |
           docker run --rm \
-            nts-proofs-flocq:ci \
+            "$FLOCQ_IMAGE" \
             bash -lc '
               rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d \
                     .nra.cache theories/*.vo* theories/*.glob theories/.*.aux \
