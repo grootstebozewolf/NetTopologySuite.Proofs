@@ -242,6 +242,77 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* When the leading binary64 has B2R = 0, the entire tail cascades to 0      *)
+(* via repeated application of the subnormal-edge lemma.  Crucial for the   *)
+(* main induction: lets us handle the "leading is zero" case at any depth.  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma nonoverlap_zero_tail :
+  forall (xs : b64_expansion) (a : binary64),
+    Binary.B2R prec emax a = 0 ->
+    nonoverlap_strict (a :: xs) ->
+    expansion_R xs = 0 /\ sign_of_expansion xs = ExpZero.
+Proof.
+  induction xs as [|b bs IH]; intros a Hzero Hno.
+  - split; reflexivity.
+  - simpl in Hno. destruct Hno as [Hsucc Hno_tail].
+    unfold strict_succ_b64 in Hsucc. rewrite Hzero in Hsucc.
+    change (SpecFloat.fexp prec emax)
+      with (FLT_exp (3 - emax - prec)%Z prec) in Hsucc.
+    rewrite (@ulp_FLT_0 radix2 (3 - emax - prec)%Z prec prec_gt_0_b64) in Hsucc.
+    assert (Hb_below : Rabs (Binary.B2R prec emax b)
+                      < bpow radix2 (3 - emax - prec)).
+    { apply Rle_lt_trans with (bpow radix2 (3 - emax - prec) / 2).
+      - exact Hsucc.
+      - assert (Hpos : 0 < bpow radix2 (3 - emax - prec)) by apply bpow_gt_0.
+        lra. }
+    pose proof (binary64_below_emin_is_zero b Hb_below) as Hb0.
+    specialize (IH b Hb0 Hno_tail). destruct IH as [HsumR HsignR].
+    split.
+    + simpl. rewrite Hb0, HsumR. lra.
+    + simpl. rewrite Hb0.
+      replace (Rcompare 0 0) with Eq by (symmetry; apply Rcompare_Eq; reflexivity).
+      exact HsignR.
+Qed.
+
+(* Magnitude bound: for a non-zero-leading expansion under nonoverlap_strict, *)
+(* the absolute sum of the tail is STRICTLY less than the magnitude of the   *)
+(* leading element.  Geometric series argument; handles the cascading        *)
+(* subnormal edge case via nonoverlap_zero_tail at each step.                *)
+Lemma expansion_tail_bounded :
+  forall (xs : b64_expansion) (a : binary64),
+    Binary.B2R prec emax a <> 0 ->
+    nonoverlap_strict (a :: xs) ->
+    Rabs (expansion_R xs) < Rabs (Binary.B2R prec emax a).
+Proof.
+  induction xs as [|b bs IH]; intros a Hane Hno.
+  - simpl. rewrite Rabs_R0. apply Rabs_pos_lt. exact Hane.
+  - simpl in Hno. destruct Hno as [Hsucc Hno_tail].
+    unfold strict_succ_b64 in Hsucc.
+    pose proof (Binary.generic_format_B2R prec emax a) as FaR.
+    pose proof (ulp_le_abs radix2 (SpecFloat.fexp prec emax)
+                  (Binary.B2R prec emax a) Hane FaR) as Hu.
+    destruct (Req_dec (Binary.B2R prec emax b) 0) as [Hb0 | Hbne].
+    + destruct (nonoverlap_zero_tail bs b Hb0 Hno_tail) as [HsumR _].
+      simpl. rewrite Hb0, HsumR.
+      replace (0 + 0) with 0 by lra.
+      rewrite Rabs_R0. apply Rabs_pos_lt. exact Hane.
+    + specialize (IH b Hbne Hno_tail).
+      simpl.
+      apply Rle_lt_trans
+        with (Rabs (Binary.B2R prec emax b) + Rabs (expansion_R bs)).
+      * apply Rabs_triang.
+      * apply Rlt_le_trans
+          with (2 * Rabs (Binary.B2R prec emax b)).
+        -- lra.
+        -- apply Rle_trans
+             with (ulp radix2 (SpecFloat.fexp prec emax)
+                        (Binary.B2R prec emax a)).
+           ++ lra.
+           ++ exact Hu.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Length-2 case: now complete via the subnormal-edge lemma above.            *)
 (* -------------------------------------------------------------------------- *)
 
@@ -291,6 +362,53 @@ Proof.
     destruct Hsucc as [Hb_lo Hb_hi].
     rewrite Rabs_right in Hu by lra.
     lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* HEADLINE: sign_of_expansion_correct -- the genuinely novel piece of Stage D *)
+(* -------------------------------------------------------------------------- *)
+(*                                                                            *)
+(* For any expansion satisfying `nonoverlap_strict`, the sign of the leading *)
+(* non-zero element (or Zero if all-zero) equals the sign of the exact sum. *)
+(* Proven by induction on the list using:                                    *)
+(*   - `nonoverlap_zero_tail`: zero-leading cascades to zero tail.           *)
+(*   - `expansion_tail_bounded`: |tail| < |leading| for non-zero leading.    *)
+(*   - `ulp_le_abs`: ulp(x) <= |x| for non-zero x (Flocq Core/Ulp.v:167).   *)
+(*   - `binary64_below_emin_is_zero`: subnormal edge.                        *)
+(*                                                                            *)
+(* This is the SOUNDNESS of `sign_of_expansion` for arbitrary-length         *)
+(* bounded expansions -- exactly what Stage D needs to extract a definite   *)
+(* orient2d sign from a 16-component exact determinant.                      *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem sign_of_expansion_correct :
+  forall e : b64_expansion,
+    nonoverlap_strict e ->
+    match sign_of_expansion e with
+    | ExpPos  => 0 < expansion_R e
+    | ExpNeg  => expansion_R e < 0
+    | ExpZero => expansion_R e = 0
+    end.
+Proof.
+  induction e as [|a xs IH]; intros Hno.
+  - simpl. reflexivity.
+  - simpl.
+    destruct (Rcompare (Binary.B2R prec emax a) 0) eqn:Ea.
+    + apply Rcompare_Eq_inv in Ea.
+      destruct (nonoverlap_zero_tail xs a Ea Hno) as [HsumR HsignR].
+      rewrite HsignR. lra.
+    + apply Rcompare_Lt_inv in Ea.
+      assert (Hane : Binary.B2R prec emax a <> 0) by lra.
+      pose proof (expansion_tail_bounded xs a Hane Hno) as Hbnd.
+      rewrite (Rabs_left (Binary.B2R prec emax a)) in Hbnd by exact Ea.
+      apply Rabs_def2 in Hbnd. destruct Hbnd as [Hbnd_upper _].
+      lra.
+    + apply Rcompare_Gt_inv in Ea.
+      assert (Hane : Binary.B2R prec emax a <> 0) by lra.
+      pose proof (expansion_tail_bounded xs a Hane Hno) as Hbnd.
+      rewrite (Rabs_right (Binary.B2R prec emax a)) in Hbnd by lra.
+      apply Rabs_def2 in Hbnd. destruct Hbnd as [_ Hbnd_lower].
+      lra.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
