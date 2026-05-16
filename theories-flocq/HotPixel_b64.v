@@ -60,11 +60,9 @@ From NTS.Proofs        Require Import Distance HotPixel.
 From NTS.Proofs.Flocq  Require Import Validate_binary64.
 From NTS.Proofs.Flocq  Require Import Orientation_b64.
 From NTS.Proofs.Flocq  Require Import B64_bridge.
+From NTS.Proofs.Flocq  Require Import B64_lib.
 
 Local Open Scope R_scope.
-
-Local Notation b64_fexp := (SpecFloat.fexp prec emax).
-Local Notation b64_round := (round radix2 b64_fexp (round_mode mode_b64)).
 
 (* -------------------------------------------------------------------------- *)
 (* Bridge: BPoint -> R-side Point.  Mirrors the helper in Intersect_b64;     *)

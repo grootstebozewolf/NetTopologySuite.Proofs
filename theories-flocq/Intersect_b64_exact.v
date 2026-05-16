@@ -90,11 +90,9 @@ From NTS.Proofs.Flocq  Require Import Orient_b64_R.
 From NTS.Proofs.Flocq  Require Import Orient_b64_sound.
 From NTS.Proofs.Flocq  Require Import Orient_b64_exact.
 From NTS.Proofs.Flocq  Require Import Intersect_b64.
+From NTS.Proofs.Flocq  Require Import B64_lib.
 
 Local Open Scope R_scope.
-
-Local Notation b64_fexp := (SpecFloat.fexp prec emax).
-Local Notation b64_round := (round radix2 b64_fexp (round_mode mode_b64)).
 
 (* -------------------------------------------------------------------------- *)
 (* BPoint -> R-side Point bridge.  Duplicated from Intersect_b64.v one-liner *)

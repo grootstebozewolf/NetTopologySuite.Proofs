@@ -37,6 +37,16 @@ theories-flocq/Orientation_b64.v
 # docs/audit-shewchuk-stages.md: unlocks the simplifier R-bridge, the
 # orient2d arithmetic identities, and Shewchuk Stages B/C of orient2d.
 theories-flocq/B64_bridge.v
+# Forward-looking wrapper module.  Promotes the `Local Notation b64_*`
+# boilerplate to module-level, registers Flocq typeclass instances for
+# binary64 (Prec_gt_0, Valid_exp, Monotone_exp), and re-exports
+# pre-instantiated Flocq lemmas (ulp_le_abs, ulp_FLT_0,
+# error_le_half_ulp_round, etc.) plus helpers accumulated during
+# Stage D (round_minus_swap, etc.).  Placed here -- right after its
+# upstream B64_bridge -- so downstream files (Orient_b64_exact,
+# Intersect_b64_exact, HotPixel_b64) can `Require Import B64_lib`
+# instead of repeating the Local Notation boilerplate.
+theories-flocq/B64_lib.v
 # R-side arithmetic identities for b64_orient2d, proved via composition
 # of the per-op lifts in B64_bridge.  First downstream consumer of the
 # bridge; establishes the pattern other identities will reuse.
@@ -71,14 +81,6 @@ theories-flocq/Intersect_b64.v
 # thin leading wire for future curve primitives.  Round-chain identity
 # (Scope B) and forward-error bound (Scope C) are deferred.
 theories-flocq/Intersect_b64_exact.v
-# Forward-looking wrapper module.  Promotes the `Local Notation b64_*`
-# boilerplate to module-level, registers Flocq typeclass instances for
-# binary64 (Prec_gt_0, Valid_exp, Monotone_exp), and re-exports
-# pre-instantiated Flocq lemmas (ulp_le_abs, ulp_FLT_0,
-# error_le_half_ulp_round, etc.) plus helpers accumulated during
-# Stage D (round_minus_swap, etc.).  New code should `Require Import
-# B64_lib` instead of repeating the Local Notation boilerplate.
-theories-flocq/B64_lib.v
 # Stage D bridge module: discharges Pff2Flocq's section parameters for
 # binary64 (specifically: choice_sym for round_mode mode_NE = ZnearestE).
 # One-time work that unblocks every subsequent Pff2Flocq lift.  Ships
