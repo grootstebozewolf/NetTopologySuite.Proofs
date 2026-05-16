@@ -47,6 +47,22 @@
                                            bit-exact (cross-product on R).
    - `b64_intersect_dx_R` / `dy_R`      -- two coord differences are
                                            bit-exact integers and finite.
+   - `cross_R_BP_int_witness`           -- (Scope B.1) cross_R_BP is an
+                                           integer of magnitude <= 2^53.
+   - `cross_R_BP_abs_le_bpow_53`        -- (Scope B.1) Rabs <= bpow 53.
+   - `b64_intersect_qp0_finite` / `qp1_finite`
+                                        -- (Scope B.1) the two outer
+                                           orient2d calls are finite.
+   - `b64_intersect_den_safe`           -- (Scope B.1) the denominator
+                                           subtraction is no-overflow safe.
+   - `b64_intersect_den_R_round`        -- (Scope B.1) B2R of the
+                                           denominator equals b64_round
+                                           of the R cross-product
+                                           difference; finite.
+   - `b64_intersect_den_B2R_nonzero`    -- (Scope B.1) the denominator's
+                                           B2R is non-zero, so
+                                           b64_div_correct's R-side
+                                           premise is discharged.
    - `HasIntersect` typeclass + `BPoint` instance -- curve-extension hook.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
@@ -76,6 +92,9 @@ From NTS.Proofs.Flocq  Require Import Orient_b64_exact.
 From NTS.Proofs.Flocq  Require Import Intersect_b64.
 
 Local Open Scope R_scope.
+
+Local Notation b64_fexp := (SpecFloat.fexp prec emax).
+Local Notation b64_round := (round radix2 b64_fexp (round_mode mode_b64)).
 
 (* -------------------------------------------------------------------------- *)
 (* BPoint -> R-side Point bridge.  Duplicated from Intersect_b64.v one-liner *)
@@ -203,8 +222,210 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* `HasIntersect` typeclass: the thin leading wire for future curve          *)
-(* primitives.                                                                *)
+(* Scope B.1: denominator round-chain pieces.                                 *)
+(*                                                                            *)
+(* The denominator `den = b64_minus qp0 qp1` is the gate between Scope A's   *)
+(* bit-exact prefix and the rest of the chain (`b64_div`, `b64_mult`,        *)
+(* `b64_plus`).  This sub-slice ships the three lemmas about `den` that     *)
+(* `b64_div_correct` needs:                                                  *)
+(*                                                                            *)
+(*   - `b64_intersect_den_safe`            -- the `b64_minus` is no-overflow. *)
+(*   - `b64_intersect_den_R_round`         -- B2R(den) = b64_round of the R  *)
+(*                                            cross-product difference;     *)
+(*                                            and the result is finite.     *)
+(*   - `b64_intersect_den_B2R_nonzero`     -- B2R(den) <> 0 in R, so        *)
+(*                                            b64_div_correct's premise     *)
+(*                                            is satisfied.                  *)
+(*                                                                            *)
+(* Scope B.2 (next slice): division, multiplication, and addition round-    *)
+(* chain pieces composing into the full headline                            *)
+(*   `B2R (b64_intersect_point_x ...)`                                       *)
+(*    = `b64_round (B2R (bx P0) + b64_round (b64_round (qp0_R / b64_round  *)
+(*       (qp0_R - qp1_R)) * (B2R (bx P1) - B2R (bx P0))))`.                  *)
+(*                                                                            *)
+(* No `B2R = intersect_x_R` claim anywhere in Scope B -- that's Scope C     *)
+(* (forward-error bound), NOT exactness.                                    *)
+(* -------------------------------------------------------------------------- *)
+
+(* Witness lemma: the cross product is an integer of magnitude at most 2^53. *)
+(* Lifts the existing `diff_bound_2p26` / `prod_bound_2p52` / `outer_bound_2p53` *)
+(* chain from `Orient_b64_exact.v` to the R side via the cross_R_BP unfold.  *)
+Lemma cross_R_BP_int_witness :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    exists n : Z,
+      cross_R_BP P0 P1 Q = IZR n /\ (Z.abs n <= 2 ^ 53)%Z.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  destruct HxP0 as (_ & nxP0 & HxP0R & HxP0b).
+  destruct HyP0 as (_ & nyP0 & HyP0R & HyP0b).
+  destruct HxP1 as (_ & nxP1 & HxP1R & HxP1b).
+  destruct HyP1 as (_ & nyP1 & HyP1R & HyP1b).
+  destruct HxQ  as (_ & nxQ  & HxQR  & HxQb).
+  destruct HyQ  as (_ & nyQ  & HyQR  & HyQb).
+  exists ((nxP1 - nxP0) * (nyQ - nyP0) - (nxQ - nxP0) * (nyP1 - nyP0))%Z.
+  split.
+  - unfold cross_R_BP.
+    rewrite HxP0R, HyP0R, HxP1R, HyP1R, HxQR, HyQR.
+    rewrite minus_IZR, mult_IZR, mult_IZR, minus_IZR, minus_IZR, minus_IZR, minus_IZR.
+    reflexivity.
+  - apply outer_bound_2p53;
+      (apply prod_bound_2p52; apply diff_bound_2p26; assumption).
+Qed.
+
+Lemma cross_R_BP_abs_le_bpow_53 :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    Rabs (cross_R_BP P0 P1 Q) <= bpow radix2 53.
+Proof.
+  intros P0 P1 Q Hsafe.
+  destruct (cross_R_BP_int_witness P0 P1 Q Hsafe) as [n [Hne Hbd]].
+  rewrite Hne, <- abs_IZR.
+  apply (Rle_trans _ (IZR (2 ^ 53))).
+  - apply IZR_le. exact Hbd.
+  - rewrite <- IZR_Zpower by lia. apply Rle_refl.
+Qed.
+
+(* Both outer orient2d evaluations are finite (they appear inside `b64_minus` *)
+(* in the denominator, so we need this before the b64_minus_correct step).   *)
+Lemma b64_intersect_qp0_finite :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.is_finite prec emax (b64_orient2d Q0 Q1 P0) = true.
+Proof.
+  intros P0 P1 Q0 Q1 [Hint _].
+  pose proof (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hint) as Hint0.
+  pose proof (orient2d_inputs_int_safe_imp_safe _ _ _ Hint0) as Hsafe0.
+  destruct Hsafe0 as (_ & _ & _ & _ & _ & _ & Sdet).
+  pose proof (b64_minus_correct _ _ Sdet) as [_ Fdet]. exact Fdet.
+Qed.
+
+Lemma b64_intersect_qp1_finite :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.is_finite prec emax (b64_orient2d Q0 Q1 P1) = true.
+Proof.
+  intros P0 P1 Q0 Q1 [Hint _].
+  pose proof (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hint) as Hint1.
+  pose proof (orient2d_inputs_int_safe_imp_safe _ _ _ Hint1) as Hsafe1.
+  destruct Hsafe1 as (_ & _ & _ & _ & _ & _ & Sdet).
+  pose proof (b64_minus_correct _ _ Sdet) as [_ Fdet]. exact Fdet.
+Qed.
+
+(* Triangle-inequality helper.  Not in stdlib under this exact name.        *)
+Lemma Rabs_minus_le_add :
+  forall a b : R, Rabs (a - b) <= Rabs a + Rabs b.
+Proof.
+  intros a b.
+  replace (a - b) with (a + - b) by ring.
+  eapply Rle_trans; [apply Rabs_triang|].
+  rewrite Rabs_Ropp. apply Rle_refl.
+Qed.
+
+(* The denominator subtraction is no-overflow safe.  Magnitude argument:    *)
+(* |qp0_R - qp1_R| <= 2 * 2^53 = 2^54, and `b64_round_abs_le_bpow` preserves *)
+(* the bpow 54 bound on the rounded result, which is << bpow emax.          *)
+Lemma b64_intersect_den_safe :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    b64_safe Rminus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  pose proof (b64_intersect_qp0_finite _ _ _ _ Hsafe) as Fqp0.
+  pose proof (b64_intersect_qp1_finite _ _ _ _ Hsafe) as Fqp1.
+  pose proof (b64_intersect_qp0_R _ _ _ _ Hsafe) as Hqp0R.
+  pose proof (b64_intersect_qp1_R _ _ _ _ Hsafe) as Hqp1R.
+  destruct Hsafe as [Hint _].
+  pose proof (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hint) as Hint0.
+  pose proof (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hint) as Hint1.
+  pose proof (cross_R_BP_abs_le_bpow_53 _ _ _ Hint0) as Bqp0R.
+  pose proof (cross_R_BP_abs_le_bpow_53 _ _ _ Hint1) as Bqp1R.
+  unfold b64_safe. split; [exact Fqp0 | split; [exact Fqp1 | ]].
+  apply Rle_lt_trans with (bpow radix2 54);
+    [|apply bpow_lt; unfold emax; lia].
+  apply b64_round_abs_le_bpow; [unfold emax; lia |].
+  rewrite Hqp0R, Hqp1R.
+  apply Rle_trans with (Rabs (cross_R_BP Q0 Q1 P0) + Rabs (cross_R_BP Q0 Q1 P1)).
+  - apply Rabs_minus_le_add.
+  - replace (bpow radix2 54) with (bpow radix2 53 + bpow radix2 53)
+      by (simpl; lra).
+    apply Rplus_le_compat; assumption.
+Qed.
+
+(* Denominator: B2R is the rounded R-side difference, and the result is     *)
+(* finite.  Direct application of `b64_minus_correct` under the safety just *)
+(* proved.                                                                  *)
+Lemma b64_intersect_den_R_round :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.B2R prec emax
+      (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1))
+    = b64_round (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1)
+    /\ Binary.is_finite prec emax
+        (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1)) = true.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  pose proof (b64_intersect_den_safe _ _ _ _ Hsafe) as Hden_safe.
+  pose proof (b64_minus_correct _ _ Hden_safe) as [HB2R Hfin].
+  rewrite (b64_intersect_qp0_R _ _ _ _ Hsafe) in HB2R.
+  rewrite (b64_intersect_qp1_R _ _ _ _ Hsafe) in HB2R.
+  split; assumption.
+Qed.
+
+(* Denominator non-zero on R.  Integer-difference argument: `qp0_R - qp1_R`  *)
+(* is a non-zero integer (from the safety predicate), and `b64_round` of a  *)
+(* non-zero integer with magnitude `<= 2^54` is either the exact integer    *)
+(* (when `|.| <= 2^53`) or the rounded-to-even neighbour (when in (2^53,   *)
+(* 2^54])).  In both cases the rounded value is non-zero, since the nearest  *)
+(* representable to a non-zero integer of magnitude `>= 1` is at least 1.    *)
+Lemma b64_intersect_den_B2R_nonzero :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.B2R prec emax
+      (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1)) <> 0.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_den_R_round _ _ _ _ Hsafe) as [HB2R _].
+  rewrite HB2R. clear HB2R.
+  destruct Hsafe as [Hint Hne].
+  pose proof (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hint) as Hint0.
+  pose proof (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hint) as Hint1.
+  destruct (cross_R_BP_int_witness _ _ _ Hint0) as [n0 [Hn0 _]].
+  destruct (cross_R_BP_int_witness _ _ _ Hint1) as [n1 [Hn1 _]].
+  rewrite Hn0, Hn1, <- minus_IZR.
+  assert (Hne_n : n0 <> n1).
+  { intros Heq. apply Hne. rewrite Hn0, Hn1, Heq. reflexivity. }
+  assert (Hne_diff : (n0 - n1)%Z <> 0%Z) by lia.
+  (* `1` and `-1` are in the binary64 generic_format, so round fixes them. *)
+  assert (Hformat_1 : Generic_fmt.generic_format radix2 b64_fexp 1).
+  { change 1 with (bpow radix2 0).
+    apply generic_format_bpow_b64. unfold emax; lia. }
+  assert (Hround_1 : b64_round 1 = 1).
+  { apply Generic_fmt.round_generic;
+      [apply valid_rnd_round_mode | exact Hformat_1]. }
+  assert (Hformat_neg1 : Generic_fmt.generic_format radix2 b64_fexp (-1)).
+  { replace (-1) with (- (1)) by ring.
+    apply Generic_fmt.generic_format_opp. exact Hformat_1. }
+  assert (Hround_neg1 : b64_round (-1) = -1).
+  { apply Generic_fmt.round_generic;
+      [apply valid_rnd_round_mode | exact Hformat_neg1]. }
+  intros Hround_zero.
+  assert (Hround_zero_R : b64_round 0 = 0).
+  { apply Generic_fmt.round_0. apply valid_rnd_round_mode. }
+  destruct (Z.lt_total (n0 - n1) 0) as [Hlt | [Heq | Hgt]].
+  - assert (HIZR_le : IZR (n0 - n1) <= -1) by (apply IZR_le; lia).
+    pose proof (Generic_fmt.round_le radix2 b64_fexp (round_mode mode_b64)
+                  _ _ HIZR_le) as Hr.
+    rewrite Hround_neg1 in Hr.
+    rewrite Hround_zero in Hr. lra.
+  - exfalso. apply Hne_diff. exact Heq.
+  - assert (HIZR_ge : 1 <= IZR (n0 - n1)) by (apply IZR_le; lia).
+    pose proof (Generic_fmt.round_le radix2 b64_fexp (round_mode mode_b64)
+                  _ _ HIZR_ge) as Hr.
+    rewrite Hround_1 in Hr.
+    rewrite Hround_zero in Hr. lra.
+Qed.
+
 (*                                                                            *)
 (* The interface is deliberately MINIMAL for this slice: operations +        *)
 (* safety predicate only, no proof fields.  Once Scope B (round-chain        *)
@@ -239,20 +460,17 @@ Print Assumptions b64_intersect_qp0_R.
 Print Assumptions b64_intersect_qp1_R.
 Print Assumptions b64_intersect_dx_R.
 Print Assumptions b64_intersect_dy_R.
+Print Assumptions cross_R_BP_int_witness.
+Print Assumptions cross_R_BP_abs_le_bpow_53.
+Print Assumptions b64_intersect_den_safe.
+Print Assumptions b64_intersect_den_R_round.
+Print Assumptions b64_intersect_den_B2R_nonzero.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
 (* -------------------------------------------------------------------------- *)
 (*                                                                            *)
-(* 1. Denominator finite + B2R non-zero.                                     *)
-(*    The `b64_minus qp0 qp1` step is mostly mechanical: both operands are  *)
-(*    integer-valued with magnitude <= 2^53 (via `outer_bound_2p53` applied *)
-(*    in cross_R_BP), their R-difference is bounded by 2^54, and the rounded *)
-(*    result is bounded by `bpow 54 << bpow emax` via                       *)
-(*    `b64_round_abs_le_bpow`.  Non-zero on R follows from the safety       *)
-(*    premise + exact integer round.  Pulled out as a follow-up so this    *)
-(*    foundations slice ships with a tight, focused set of bit-exact        *)
-(*    lemmas only.                                                          *)
+(* 1. [SHIPPED in Scope B.1] Denominator finite + B2R non-zero.              *)
 (*                                                                            *)
 (* 2. Returns-`Some` corollary.                                              *)
 (*    Under safety, `b64_intersect_point P0 P1 Q0 Q1 = Some _` (the option- *)
@@ -261,13 +479,18 @@ Print Assumptions b64_intersect_dy_R.
 (*    `b64_intersect_sign_filtered` with the predicate-dispatch in          *)
 (*    `b64_intersect_point`.                                                 *)
 (*                                                                            *)
-(* 3. Scope B: round-chain identity.                                         *)
+(* 3. Scope B.2: full round-chain identity.                                  *)
 (*       B2R (b64_intersect_point_x ...)                                    *)
 (*       = b64_round (B2R (bx P0)                                           *)
-(*                    + b64_round (b64_round (qp0 / den)                    *)
+(*                    + b64_round (b64_round (qp0_R                         *)
+(*                                  / b64_round (qp0_R - qp1_R))            *)
 (*                                  * (B2R (bx P1) - B2R (bx P0)))).        *)
-(*    Precise structural identity, no integer-regime claim beyond what's   *)
-(*    proved here.                                                         *)
+(*    Builds on Scope B.1's denominator triple via `b64_div_correct`,       *)
+(*    `b64_mult_correct`, and `b64_plus_correct`, each with its own         *)
+(*    bound-chain safety lemma.  May be SKIPPED entirely if Scope C        *)
+(*    (forward-error bound) becomes the primary consumer -- the round-     *)
+(*    chain identity is an intermediate characterisation; callers              *)
+(*    typically want the magnitude bound, not the precise structural form.  *)
 (*                                                                            *)
 (* 4. Scope C: forward-error bound.                                         *)
 (*       |B2R (b64_intersect_point_x ...) - intersect_x_R (BP2P P0) ...|   *)
