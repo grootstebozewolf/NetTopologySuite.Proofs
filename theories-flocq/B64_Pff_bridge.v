@@ -734,51 +734,56 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* TANGENT (2026-05-16):                                                      *)
-(* `b64_DekkerPair_sum_correct` -- compose two Dekker TwoProducts with         *)
-(* chain4 to get an exact 4-element representation of `a*b + c*d` -- attempted *)
-(* and hit a tangent at the closing `lra`.                                   *)
-(*                                                                            *)
-(* HYPOTHESIS THAT FAILED.  Building on chain3 + chain4 + Dekker_correct, the *)
-(* 2-Dekker sum should Qed via two applications of Dekker_correct and one    *)
-(* application of chain4_correct, combined with `lra`.  The expected friction *)
-(* was just bookkeeping (nested safety preconditions).                        *)
-(*                                                                            *)
-(* WHAT ACTUALLY FAILED.  `chain4_correct`'s statement has the shape         *)
-(*                                                                            *)
-(*   forall a b c d, safe -> let '(s3, e3, e2, e1) := chain4 a b c d in ...  *)
-(*                                                                            *)
-(* When `pose proof`-ed, the resulting hypothesis carries the `let '(...) := *)
-(* chain4 X Y Z W in ...` shape with X Y Z W bound to specific Dekker        *)
-(* outputs (`fst (b64_Dekker a b)`, etc.).  `lra` cannot see through the     *)
-(* unreduced let-pair destructure to extract the equation it needs.          *)
-(*                                                                            *)
-(* Naive attempts to reduce via `cbv beta iota zeta` / `simpl fst` /          *)
-(* `unfold b64_Dekker` produced different normalisation between the          *)
-(* hypothesis and the goal, leaving `lra` unable to unify the two            *)
-(* expressions even though they are extensionally equal.                     *)
-(*                                                                            *)
-(* WHY THIS IS A REAL TANGENT, NOT JUST BOOKKEEPING.  The friction is the    *)
-(* same shape as the chain-composition nonoverlap tangent already documented *)
-(* in stage-d-feasibility.md: composing more than two `let`-pair-returning    *)
-(* operations creates a normalisation problem that the current proof recipes *)
-(* don't handle uniformly.  For sum-correctness this is provable -- the      *)
-(* equation is true mathematically -- but writing the proof requires either  *)
-(* (a) `remember`/`destruct` on each Dekker output to bind r/t as free vars  *)
-(* before `pose proof`-ing chain4_correct, or (b) a different formulation of *)
-(* chain4_correct that returns its equation in `forall`-prefix-with-pair-     *)
-(* equation-hypothesis style instead of `let`-shape conclusion.               *)
-(*                                                                            *)
-(* Either fix is mechanical (~30 lines) but is its own slice of work.  Per   *)
-(* the red workflow (stop at first tangent, document, don't grind), leaving  *)
-(* it here for a future engagement that can pick (a) or (b).                  *)
-(*                                                                            *)
-(* The TwoSum-only chain3/chain4 sum-correctness lemmas above remain         *)
-(* shippable; their proofs work because chain_n_correct's let-shape          *)
-(* destructure resolves cleanly when applied to ABSTRACT inputs.  The        *)
-(* problem only appears when the inputs are themselves let-shape pairs        *)
-(* (i.e., Dekker outputs).                                                    *)
+(* b64_DekkerPair_sum.  Compose two Dekker TwoProducts with chain4 to produce *)
+(* an exact 4-component representation of `a*b + c*d`.                        *)
 (* -------------------------------------------------------------------------- *)
+
+Definition b64_DekkerPair_sum (a b c d : binary64)
+  : binary64 * binary64 * binary64 * binary64 :=
+  let '(r1, t1) := b64_Dekker a b in
+  let '(r2, t2) := b64_Dekker c d in
+  b64_TwoSum_chain4 r1 r2 t1 t2.
+
+Definition b64_DekkerPair_sum_safe (a b c d : binary64) : Prop :=
+  let '(r1, t1) := b64_Dekker a b in
+  let '(r2, t2) := b64_Dekker c d in
+  b64_Dekker_safe a b /\
+  b64_Dekker_safe c d /\
+  b64_TwoSum_chain4_safe r1 r2 t1 t2.
+
+Theorem b64_DekkerPair_sum_correct :
+  forall a b c d : binary64,
+    b64_DekkerPair_sum_safe a b c d ->
+    (Binary.B2R prec emax a * Binary.B2R prec emax b = 0
+     \/ bpow radix2 (3 - emax - prec + 2 * prec - 1)
+        <= Rabs (Binary.B2R prec emax a * Binary.B2R prec emax b)) ->
+    (Binary.B2R prec emax c * Binary.B2R prec emax d = 0
+     \/ bpow radix2 (3 - emax - prec + 2 * prec - 1)
+        <= Rabs (Binary.B2R prec emax c * Binary.B2R prec emax d)) ->
+    let '(s3, e3, e2, e1) := b64_DekkerPair_sum a b c d in
+    Binary.B2R prec emax s3 + Binary.B2R prec emax e3
+      + Binary.B2R prec emax e2 + Binary.B2R prec emax e1
+      = Binary.B2R prec emax a * Binary.B2R prec emax b
+        + Binary.B2R prec emax c * Binary.B2R prec emax d.
+Proof.
+  intros a b c d Hsafe Hundab Hundcd.
+  unfold b64_DekkerPair_sum_safe in Hsafe.
+  destruct (b64_Dekker a b) as [r1 t1] eqn:Hdek_ab.
+  destruct (b64_Dekker c d) as [r2 t2] eqn:Hdek_cd.
+  cbv beta iota zeta in Hsafe.
+  destruct Hsafe as [Hsafe_ab [Hsafe_cd Hsafe_chain4]].
+  pose proof (b64_Dekker_correct a b Hsafe_ab Hundab) as Hdek1.
+  pose proof (b64_Dekker_correct c d Hsafe_cd Hundcd) as Hdek2.
+  rewrite Hdek_ab in Hdek1.
+  rewrite Hdek_cd in Hdek2.
+  cbv beta iota zeta in Hdek1, Hdek2.
+  pose proof (b64_TwoSum_chain4_correct r1 r2 t1 t2 Hsafe_chain4) as Hchain4.
+  unfold b64_DekkerPair_sum.
+  rewrite Hdek_ab, Hdek_cd.
+  unfold b64_TwoSum_chain4 in Hchain4 |- *.
+  cbv beta iota zeta in Hchain4 |- *.
+  lra.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
@@ -795,6 +800,7 @@ Print Assumptions b64_Dekker_nonoverlap.
 Print Assumptions b64_TwoSum_chain3_correct.
 Print Assumptions b64_TwoSum_chain4_correct.
 Print Assumptions b64_Dekker_then_TwoSum_correct.
+Print Assumptions b64_DekkerPair_sum_correct.
 
 (* -------------------------------------------------------------------------- *)
 (* Next slices on this bridge                                                 *)
