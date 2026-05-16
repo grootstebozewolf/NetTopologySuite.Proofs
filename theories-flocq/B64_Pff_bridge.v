@@ -235,27 +235,137 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* `b64_Dekker_correct` deferred to its own slice                             *)
-(*                                                                            *)
-(* Pff2Flocq.Dekker has 16 internal rounded operations + a conjunctive       *)
-(* conclusion (exact-result-under-underflow-precondition + universal error  *)
-(* bound).  Lifting it to binary64 requires:                                 *)
-(*                                                                            *)
-(*   - 16 `b64_safe` hypotheses (one per op): bookkeeping-dense (~60 lines  *)
-(*     in the theorem signature alone).                                     *)
-(*   - 16 `b64_*_correct` applications + 16 rewrites in the proof body.     *)
-(*   - Projection from Pff2Flocq.Dekker's conjunction to just the exact     *)
-(*     case (the universal error bound is universally true but loose for   *)
-(*     our integer regime).                                                 *)
-(*   - The underflow precondition `bpow (emin + 2*prec - 1) <= Rabs(x*y)`   *)
-(*     to be supplied by the caller; for the integer regime it's trivial   *)
-(*     (products land between bpow 0 and bpow 52, far above bpow(-969)).   *)
-(*                                                                            *)
-(* Mechanical, ~100 lines.  Stage D's bookkeeping crescendo, not its       *)
-(* novelty.  Pushed to a follow-up slice so this file ships the bridge     *)
-(* + the three SCOUT-VALIDATED claims (Fast2Sum lift, TwoSum lift,         *)
-(* Veltkamp constant exact-B2R).                                          *)
+(* Dekker's TwoProduct: x*y = r + t exactly (under an underflow precondition).*)
 (* -------------------------------------------------------------------------- *)
+
+Definition b64_Dekker (x y : binary64) : binary64 * binary64 :=
+  let px := b64_mult x b64_veltkamp_C in
+  let qx := b64_minus x px in
+  let hx := b64_plus qx px in
+  let tx := b64_minus x hx in
+  let py := b64_mult y b64_veltkamp_C in
+  let qy := b64_minus y py in
+  let hy := b64_plus qy py in
+  let ty := b64_minus y hy in
+  let x1y1 := b64_mult hx hy in
+  let x1y2 := b64_mult hx ty in
+  let x2y1 := b64_mult tx hy in
+  let x2y2 := b64_mult tx ty in
+  let r := b64_mult x y in
+  let t1 := b64_minus x1y1 r in
+  let t2 := b64_plus t1 x1y2 in
+  let t3 := b64_plus t2 x2y1 in
+  let t4 := b64_plus t3 x2y2 in
+  (r, t4).
+
+(* The 16 safety preconditions, one per b64 op.  Bookkeeping-dense but       *)
+(* mechanically deriveable from input magnitude bounds for typical NTS      *)
+(* use (|coord| <= 2^25 => all intermediates < bpow 52, safely finite).     *)
+Definition b64_Dekker_safe (x y : binary64) : Prop :=
+  let px := b64_mult x b64_veltkamp_C in
+  let qx := b64_minus x px in
+  let hx := b64_plus qx px in
+  let tx := b64_minus x hx in
+  let py := b64_mult y b64_veltkamp_C in
+  let qy := b64_minus y py in
+  let hy := b64_plus qy py in
+  let ty := b64_minus y hy in
+  let x1y1 := b64_mult hx hy in
+  let x1y2 := b64_mult hx ty in
+  let x2y1 := b64_mult tx hy in
+  let x2y2 := b64_mult tx ty in
+  let r := b64_mult x y in
+  let t1 := b64_minus x1y1 r in
+  let t2 := b64_plus t1 x1y2 in
+  let t3 := b64_plus t2 x2y1 in
+  b64_safe Rmult x b64_veltkamp_C /\         (* px *)
+  b64_safe Rminus x px /\                    (* qx *)
+  b64_safe Rplus qx px /\                    (* hx *)
+  b64_safe Rminus x hx /\                    (* tx *)
+  b64_safe Rmult y b64_veltkamp_C /\         (* py *)
+  b64_safe Rminus y py /\                    (* qy *)
+  b64_safe Rplus qy py /\                    (* hy *)
+  b64_safe Rminus y hy /\                    (* ty *)
+  b64_safe Rmult hx hy /\                    (* x1y1 *)
+  b64_safe Rmult hx ty /\                    (* x1y2 *)
+  b64_safe Rmult tx hy /\                    (* x2y1 *)
+  b64_safe Rmult tx ty /\                    (* x2y2 *)
+  b64_safe Rmult x y /\                      (* r *)
+  b64_safe Rminus x1y1 r /\                  (* t1 *)
+  b64_safe Rplus t1 x1y2 /\                  (* t2 *)
+  b64_safe Rplus t2 x2y1 /\                  (* t3 *)
+  b64_safe Rplus t3 (b64_mult tx ty).         (* t4 *)
+
+(* b64_Dekker_correct -- TANGENT documented, deferred to follow-up slice.    *)
+(*                                                                            *)
+(* The 16-rewrite chain after `unfold b64_Dekker; cbv zeta` runs into TWO   *)
+(* compounding issues that I empirically validated:                          *)
+(*                                                                            *)
+(*   1. Outside-in rewrite ordering doesn't fully propagate even with        *)
+(*      `repeat (... !rewrite ...)`.  Some `B2R (b64_plus ...)` occurrences *)
+(*      inside nested b64 operations never become exposed because the path *)
+(*      to expose them requires firing rewrites in a specific dependency-  *)
+(*      ordered sequence that the `repeat` heuristic doesn't find.          *)
+(*                                                                            *)
+(*   2. Pff2Flocq.Dekker uses `round_flt (-r + x1y1)` for t1 (note the `-r *)
+(*      first` order); the natural b64 definition uses `b64_minus x1y1 r`. *)
+(*      The two expressions are equal under `Rplus_comm` but NOT under     *)
+(*      Coq's syntactic rewrite unification.  Aligning them needs a        *)
+(*      `replace` step + ring-style normalization at every t-level.        *)
+(*                                                                            *)
+(* These are bounded but unpleasant.  Empirical effort spent: 30 min on    *)
+(* three failed proof attempts (single-fire rewrites, !-rewrites, repeat   *)
+(* with `||`).  Realistic resolution: ~2-3 more hours of careful           *)
+(* `replace`-based alignment + a custom Ltac to thread the rewrites.       *)
+(*                                                                            *)
+(* The Definition + safety predicate are kept; the proof is the next       *)
+(* slice.  The SPEC is recorded below for API documentation.                *)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_Dekker_correct_statement : Prop :=
+  forall x y : binary64,
+    b64_Dekker_safe x y ->
+    (Binary.B2R prec emax x * Binary.B2R prec emax y = 0
+     \/ bpow radix2 (3 - emax - prec + 2 * prec - 1)
+        <= Rabs (Binary.B2R prec emax x * Binary.B2R prec emax y)) ->
+    let '(r, t) := b64_Dekker x y in
+    Binary.B2R prec emax x * Binary.B2R prec emax y
+      = Binary.B2R prec emax r + Binary.B2R prec emax t.
+(*                                                                            *)
+(* The 16-rewrite chain after `unfold b64_Dekker + cbv zeta` does NOT       *)
+(* propagate cleanly outside-in OR inside-out.  Concrete failure:           *)
+(*                                                                            *)
+(*   After rewriting HBpx, HBpy (substituting `B2R (b64_mult x C)` to      *)
+(*   `round(B2R x * (bpow 27 + 1))` after `b64_veltkamp_C_R`), the         *)
+(*   subsequent `rewrite HBhy` fails because its LHS pattern               *)
+(*     `B2R (b64_plus (b64_minus y (b64_mult y b64_veltkamp_C))            *)
+(*                    (b64_mult y b64_veltkamp_C))`                        *)
+(*   is structurally NOT in the goal -- the inner `b64_mult y b64_veltkamp_C`*)
+(*   instances are *unchanged* by HBpy (which only touches B2R-wrapped     *)
+(*   instances), but Coq's unifier still won't match because the goal has *)
+(*   them at a different syntactic location than HBhy expects.             *)
+(*                                                                            *)
+(* Resolving this requires:                                                  *)
+(*   (a) `rewrite ... in HB*` to PROPAGATE the substitutions through each  *)
+(*       hypothesis BEFORE rewriting the goal -- threading 16 rewrites     *)
+(*       through 16 hypotheses, O(n^2);                                    *)
+(*   (b) OR using `change` to pre-align b64_veltkamp_C to bpow 27 + 1 in   *)
+(*       the goal early so the rewrites all see the same form;             *)
+(*   (c) OR proving each step's B2R via a custom Lemma and threading them.  *)
+(*                                                                            *)
+(* Realistic effort: 1-2 hours of careful debug + restructure.  The proof  *)
+(* IS bounded but the bookkeeping is genuinely non-trivial -- the          *)
+(* "trivial mechanical" framing in the previous commit was OVERSOLD.       *)
+(*                                                                            *)
+(* This is the legitimate hardness of Dekker that the original audit       *)
+(* warned about, just at a finer granularity than the audit suggested:     *)
+(* not "novel proofs" but "Coq let-zeta + rewrite ordering puzzles" at     *)
+(* 16-deep nested structure.                                                *)
+(*                                                                            *)
+(* The Definition + safety predicate are kept in the file; the proof       *)
+(* statement is recorded as the spec of a follow-up slice.                  *)
+(* -------------------------------------------------------------------------- *)
+
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
