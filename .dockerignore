@@ -1,19 +1,44 @@
 # Host-generated build artefacts that would otherwise be baked into the image.
 # These get re-derived inside the container by `rocq makefile`.
+
+# Generated Makefile artefacts (both _CoqProject and _CoqProject.full)
+Makefile
+Makefile.conf
 Makefile.gen
 Makefile.gen.conf
+Makefile.full
+Makefile.full.conf
 .Makefile.d
 .Makefile.gen.d
 .nra.cache
-theories/*.vo
-theories/*.vos
-theories/*.vok
-theories/*.glob
-theories/.*.aux
+
+# Compiled Rocq artefacts (both layers)
+**/*.vo
+**/*.vos
+**/*.vok
+**/*.glob
+**/.*.aux
+
+# Generated OCaml extraction + oracle binary (extracted.ml is regenerated
+# from Validate_binary64_extract.v by the container build)
+oracle/extracted.ml
+oracle/extracted.mli
+oracle/oracle_bin
+oracle/*.cmi
+oracle/*.cmo
+oracle/*.cmx
+oracle/*.o
+oracle/*.cmt
+oracle/*.cmti
 
 # Editor / IDE state
 .vscode/
+.idea/
 *.swp
+*.swo
 
 # Local opam state if anyone has a switch directly inside the repo
 _opam/
+
+# OS noise
+.DS_Store

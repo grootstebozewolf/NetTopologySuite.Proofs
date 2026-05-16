@@ -50,3 +50,45 @@ jobs:
             exit 1
           fi
           echo "All theorems Qed-closed."
+
+  rocq-flocq:
+    # Container-based build of the Flocq-dependent corpus
+    # (`theories-flocq/`).  The host-runner `rocq` job above only builds
+    # `theories/` -- it grep-scans `theories-flocq/` for the corpus
+    # invariant but does not compile those files.  This job closes that
+    # gap by running the project's pinned Dockerfile end-to-end, which
+    # uses `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` + opam-installed
+    # `coq-flocq.4.2.2` to build the full `_CoqProject.full` corpus.
+    #
+    # The Dockerfile's CMD does a clean-and-build using
+    # `_CoqProject.full`; if any `.v` file fails to compile, the
+    # container exits non-zero and this step fails.
+    name: Build theories-flocq in pinned container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build container image with Flocq corpus
+        # `--load` so the resulting image is available to the local
+        # docker daemon for the next step's `docker run`.  Cache the
+        # build via the GitHub Actions runner cache so the slow
+        # `opam install coq-flocq.4.2.2` step (~5 min) is reused on
+        # subsequent runs.
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: nts-proofs-flocq:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Compile theories-flocq inside container
+        # Runs the Dockerfile's CMD: cleans host-leaked Makefile
+        # artefacts, regenerates the Rocq makefile from
+        # `_CoqProject.full`, then `make`s the entire corpus including
+        # all Flocq-dependent modules.  Failure here = a `.v` file in
+        # theories-flocq/ does not compile.
+        run: docker run --rm nts-proofs-flocq:ci
