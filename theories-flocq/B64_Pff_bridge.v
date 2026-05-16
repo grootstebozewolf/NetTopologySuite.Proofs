@@ -296,7 +296,127 @@ Definition b64_Dekker_safe (x y : binary64) : Prop :=
   b64_safe Rplus t2 x2y1 /\                  (* t3 *)
   b64_safe Rplus t3 (b64_mult tx ty).         (* t4 *)
 
-(* b64_Dekker_correct -- TANGENT documented, deferred to follow-up slice.    *)
+(* b64_Dekker_correct: fourth attempt with `change` + `replace`.            *)
+
+(* Helper: round of (a - b) equals round of (-b + a). *)
+Lemma round_b64_minus_swap :
+  forall a b : R,
+    round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (a - b)
+    = round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64)
+        (- b + a).
+Proof. intros; f_equal; ring. Qed.
+
+Theorem b64_Dekker_correct :
+  forall x y : binary64,
+    b64_Dekker_safe x y ->
+    (Binary.B2R prec emax x * Binary.B2R prec emax y = 0
+     \/ bpow radix2 (3 - emax - prec + 2 * prec - 1)
+        <= Rabs (Binary.B2R prec emax x * Binary.B2R prec emax y)) ->
+    let '(r, t) := b64_Dekker x y in
+    Binary.B2R prec emax x * Binary.B2R prec emax y
+      = Binary.B2R prec emax r + Binary.B2R prec emax t.
+Proof.
+  intros x y Hsafe Hund.
+  unfold b64_Dekker. cbv zeta.
+  unfold b64_Dekker_safe in Hsafe. cbv zeta in Hsafe.
+  destruct Hsafe as
+    [Hpx [Hqx [Hhx [Htx [Hpy [Hqy [Hhy [Hty
+     [Hx1y1 [Hx1y2 [Hx2y1 [Hx2y2 [Hr [Ht1 [Ht2 [Ht3 Ht4]]]]]]]]]]]]]]]].
+  pose proof (b64_mult_correct  _ _ Hpx)  as [HBpx _].
+  pose proof (b64_minus_correct _ _ Hqx)  as [HBqx _].
+  pose proof (b64_plus_correct  _ _ Hhx)  as [HBhx _].
+  pose proof (b64_minus_correct _ _ Htx)  as [HBtx _].
+  pose proof (b64_mult_correct  _ _ Hpy)  as [HBpy _].
+  pose proof (b64_minus_correct _ _ Hqy)  as [HBqy _].
+  pose proof (b64_plus_correct  _ _ Hhy)  as [HBhy _].
+  pose proof (b64_minus_correct _ _ Hty)  as [HBty _].
+  pose proof (b64_mult_correct  _ _ Hx1y1) as [HBx1y1 _].
+  pose proof (b64_mult_correct  _ _ Hx1y2) as [HBx1y2 _].
+  pose proof (b64_mult_correct  _ _ Hx2y1) as [HBx2y1 _].
+  pose proof (b64_mult_correct  _ _ Hx2y2) as [HBx2y2 _].
+  pose proof (b64_mult_correct  _ _ Hr)   as [HBr _].
+  pose proof (b64_minus_correct _ _ Ht1)  as [HBt1 _].
+  pose proof (b64_plus_correct  _ _ Ht2)  as [HBt2 _].
+  pose proof (b64_plus_correct  _ _ Ht3)  as [HBt3 _].
+  pose proof (b64_plus_correct  _ _ Ht4)  as [HBt4 _].
+  rewrite b64_veltkamp_C_R in HBpx, HBpy.
+  rewrite HBpx in HBqx, HBhx.
+  rewrite HBpy in HBqy, HBhy.
+  rewrite HBqx in HBhx.
+  rewrite HBqy in HBhy.
+  rewrite HBhx in HBtx, HBx1y1, HBx1y2.
+  rewrite HBhy in HBty, HBx1y1, HBx2y1.
+  rewrite HBtx in HBx2y1, HBx2y2.
+  rewrite HBty in HBx1y2, HBx2y2.
+  rewrite HBr in HBt1.
+  rewrite HBx1y1 in HBt1.
+  (* At this point HBt1 has the t1 in `B2R x1y1 - B2R r` form.  Swap to     *)
+  (* match Pff's `- B2R r + B2R x1y1` form via the helper.                 *)
+  rewrite round_b64_minus_swap in HBt1.
+  rewrite HBt1 in HBt2.
+  rewrite HBx1y2 in HBt2.
+  rewrite HBt2 in HBt3.
+  rewrite HBx2y1 in HBt3.
+  rewrite HBt3 in HBt4.
+  rewrite HBx2y2 in HBt4.
+  rewrite HBt4, HBr.
+  pose proof (Binary.generic_format_B2R prec emax x) as FxR.
+  pose proof (Binary.generic_format_B2R prec emax y) as FyR.
+  pose proof (Dekker radix2 (3 - emax - prec)%Z prec b64_choice
+                ltac:(unfold prec; lia) ltac:(unfold prec, emax; lia)
+                (Binary.B2R prec emax x) (Binary.B2R prec emax y)
+                FxR FyR (or_introl eq_refl)) as [HDekker_exact _].
+  specialize (HDekker_exact Hund).
+  change (FLT_exp (3 - emax - prec) prec) with (SpecFloat.fexp prec emax) in *.
+  change (Znearest b64_choice) with (round_mode mode_b64) in *.
+  change (bpow radix2 (prec - Z.div2 prec)) with (bpow radix2 27) in *.
+  exact HDekker_exact.
+Qed.
+(*                                                                            *)
+(* Three attempts logged.  The chain-rewrites-in-hypotheses approach WORKS    *)
+(* (attempt 3 cleanly built up HBt4 with the fully expanded R-side           *)
+(* expression).  The remaining friction is the GOAL-side comparison with    *)
+(* Pff's Dekker conclusion.                                                  *)
+(*                                                                            *)
+(* The b64 chain and the Pff chain differ in ONE specific way:               *)
+(*                                                                            *)
+(*   t1 in b64:  round_b64 (B2R x1y1 - B2R r)                                *)
+(*   t1 in Pff:  round_flt (- B2R r + B2R x1y1)                              *)
+(*                                                                            *)
+(* (Plus three syntactic name differences that are definitionally equal:    *)
+(*  `SpecFloat.fexp prec emax` = `FLT_exp (3 - emax - prec) prec`;          *)
+(*  `round_mode mode_b64` = `Znearest b64_choice`;                          *)
+(*  `bpow radix2 27` = `bpow radix2 (prec - Z.div2 prec)`.)                 *)
+(*                                                                            *)
+(* `repeat f_equal` over-peels and creates ~14 nonsense subgoals (because  *)
+(* it doesn't know when to stop -- it descends through every round/+ in    *)
+(* the chain trying to make things equal).                                  *)
+(*                                                                            *)
+(* The bounded resolutions:                                                  *)
+(*                                                                            *)
+(*  Option A.  Define `b64_neg r := Binary.Bopp prec emax nan_h r`, then    *)
+(*    redefine `t1 := b64_plus (b64_neg r) x1y1`.  This makes b64 match    *)
+(*    Pff exactly at the t1 level.  ~30 line refactor of `b64_Dekker`.    *)
+(*                                                                            *)
+(*  Option B.  Prove a helper                                                *)
+(*    `Lemma round_b64_minus_swap : round (a - b) = round (- b + a)`        *)
+(*    by `f_equal; ring`.  Apply it at the t1 occurrence inside the        *)
+(*    chain via `rewrite (round_b64_minus_swap (B2R x1y1) (B2R r))`.       *)
+(*    Then align FLT_exp/SpecFloat.fexp via `change`.  ~20 lines.          *)
+(*                                                                            *)
+(*  Option C.  Replace `repeat f_equal` with a CONTROLLED cascade:         *)
+(*    `f_equal; [reflexivity | f_equal; [...| f_equal; ring]]`.  Manually  *)
+(*    threading through the round nesting.  ~40 lines.                     *)
+(*                                                                            *)
+(* All three are bounded (~1-2 hours).  Each is its own mini-engagement;    *)
+(* dispatching to one of them is the next slice's first decision.          *)
+(*                                                                            *)
+(* The Definition + safety predicate ARE in this file (they compile).      *)
+(* The SPEC of the deferred theorem is recorded below.  This is genuinely  *)
+(* where Dekker stops being "trivial bookkeeping" -- the deep nested-round *)
+(* alignment with Pff's syntactic forms is REAL friction, not imagined.   *)
+(* -------------------------------------------------------------------------- *)
+
 (*                                                                            *)
 (* The 16-rewrite chain after `unfold b64_Dekker; cbv zeta` runs into TWO   *)
 (* compounding issues that I empirically validated:                          *)
@@ -322,15 +442,6 @@ Definition b64_Dekker_safe (x y : binary64) : Prop :=
 (* slice.  The SPEC is recorded below for API documentation.                *)
 (* -------------------------------------------------------------------------- *)
 
-Definition b64_Dekker_correct_statement : Prop :=
-  forall x y : binary64,
-    b64_Dekker_safe x y ->
-    (Binary.B2R prec emax x * Binary.B2R prec emax y = 0
-     \/ bpow radix2 (3 - emax - prec + 2 * prec - 1)
-        <= Rabs (Binary.B2R prec emax x * Binary.B2R prec emax y)) ->
-    let '(r, t) := b64_Dekker x y in
-    Binary.B2R prec emax x * Binary.B2R prec emax y
-      = Binary.B2R prec emax r + Binary.B2R prec emax t.
 (*                                                                            *)
 (* The 16-rewrite chain after `unfold b64_Dekker + cbv zeta` does NOT       *)
 (* propagate cleanly outside-in OR inside-out.  Concrete failure:           *)
