@@ -82,6 +82,14 @@ theories-flocq/Intersect_b64.v
 # thin leading wire for future curve primitives.  Round-chain identity
 # (Scope B) and forward-error bound (Scope C) are deferred.
 theories-flocq/Intersect_b64_exact.v
+# R-bridge soundness for the binary64 simplifier.  Ships R-projection
+# wrappers (B2R_bp, map_B2R_bp, is_finite_bp, point_int_safe,
+# points_int_safe), the b64_cross / b64_orient2d connector, the
+# integer-regime exactness lemmas for b64_cross and b64_dist_sq, plus
+# the dist_sq_R_BP witness.  Splits the soundness obligations away from
+# the structural file (Validate_binary64.v) so the four Stdlib classical-
+# reals axioms are only paid when the soundness surface is consumed.
+theories-flocq/Validate_binary64_bridge.v
 # Stage D bridge module: discharges Pff2Flocq's section parameters for
 # binary64 (specifically: choice_sym for round_mode mode_NE = ZnearestE).
 # One-time work that unblocks every subsequent Pff2Flocq lift.  Ships
