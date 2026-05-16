@@ -579,6 +579,80 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* b64_TwoSum_chain3.  Two chained TwoSums representing the exact sum of     *)
+(* three binary64 values as a 3-component tuple `(s2, e2, e1)`.              *)
+(*                                                                            *)
+(* Algorithm:                                                                  *)
+(*   (s1, e1) := b64_TwoSum a b   -- s1 + e1 = a + b exactly                 *)
+(*   (s2, e2) := b64_TwoSum s1 c  -- s2 + e2 = s1 + c exactly                *)
+(*   Result: (s2, e2, e1)          -- s2 + e2 + e1 = a + b + c exactly       *)
+(*                                                                            *)
+(* This file proves SUM correctness (the equality).  Nonoverlap of the       *)
+(* resulting triple `[s2; e2; e1]` is the tangent documented in              *)
+(* docs/stage-d-feasibility.md (2026-05-16 update) and is NOT proved here.  *)
+(* The triple under naive ordering is not `nonoverlap_strict` in general;   *)
+(* establishing nonoverlap requires either an explicit algorithmic           *)
+(* re-ordering (Shewchuk's expansion-sum merge) or a magnitude-tracking      *)
+(* invariant that this lemma does not need.                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_TwoSum_chain3 (a b c : binary64) : binary64 * binary64 * binary64 :=
+  let '(s1, e1) := b64_TwoSum a b in
+  let '(s2, e2) := b64_TwoSum s1 c in
+  (s2, e2, e1).
+
+(* The 12 safety preconditions, split as two `b64_TwoSum_safe` blocks.       *)
+(* The second block is on `(s1, c)` where `s1 = b64_plus a b = fst           *)
+(* (b64_TwoSum a b)`.  Expressed explicitly in terms of `(a, b, c)` to       *)
+(* avoid binding `s1` in the theorem's hypotheses (Coq's `let` in hypothesis *)
+(* position is awkward; we inline the definition).                           *)
+Definition b64_TwoSum_chain3_safe (a b c : binary64) : Prop :=
+  let s1 := b64_plus a b in
+  (* TwoSum (a, b) -- six preconditions. *)
+  b64_safe Rplus  a b /\
+  b64_safe Rminus (b64_plus a b) a /\
+  b64_safe Rminus (b64_plus a b) (b64_minus (b64_plus a b) a) /\
+  b64_safe Rminus a
+    (b64_minus (b64_plus a b) (b64_minus (b64_plus a b) a)) /\
+  b64_safe Rminus b (b64_minus (b64_plus a b) a) /\
+  b64_safe Rplus
+    (b64_minus a
+      (b64_minus (b64_plus a b) (b64_minus (b64_plus a b) a)))
+    (b64_minus b (b64_minus (b64_plus a b) a)) /\
+  (* TwoSum (s1, c) -- six preconditions. *)
+  b64_safe Rplus  s1 c /\
+  b64_safe Rminus (b64_plus s1 c) s1 /\
+  b64_safe Rminus (b64_plus s1 c) (b64_minus (b64_plus s1 c) s1) /\
+  b64_safe Rminus s1
+    (b64_minus (b64_plus s1 c) (b64_minus (b64_plus s1 c) s1)) /\
+  b64_safe Rminus c (b64_minus (b64_plus s1 c) s1) /\
+  b64_safe Rplus
+    (b64_minus s1
+      (b64_minus (b64_plus s1 c) (b64_minus (b64_plus s1 c) s1)))
+    (b64_minus c (b64_minus (b64_plus s1 c) s1)).
+
+Theorem b64_TwoSum_chain3_correct :
+  forall a b c : binary64,
+    b64_TwoSum_chain3_safe a b c ->
+    let '(s2, e2, e1) := b64_TwoSum_chain3 a b c in
+    Binary.B2R prec emax s2 + Binary.B2R prec emax e2 + Binary.B2R prec emax e1
+      = Binary.B2R prec emax a + Binary.B2R prec emax b + Binary.B2R prec emax c.
+Proof.
+  intros a b c Hsafe.
+  unfold b64_TwoSum_chain3_safe in Hsafe. cbv zeta in Hsafe.
+  destruct Hsafe as
+    [Hsa1 [Hsb1 [Hsc1 [Hsd1 [Hse1 [Hsf1
+     [Hsa2 [Hsb2 [Hsc2 [Hsd2 [Hse2 Hsf2]]]]]]]]]]].
+  pose proof (b64_TwoSum_correct a b Hsa1 Hsb1 Hsc1 Hsd1 Hse1 Hsf1) as HTS1.
+  pose proof (b64_TwoSum_correct (b64_plus a b) c
+                Hsa2 Hsb2 Hsc2 Hsd2 Hse2 Hsf2) as HTS2.
+  unfold b64_TwoSum in HTS1, HTS2.
+  cbv beta iota zeta in HTS1, HTS2.
+  unfold b64_TwoSum_chain3. unfold b64_TwoSum. cbv beta iota zeta.
+  lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -590,6 +664,7 @@ Print Assumptions b64_veltkamp_C_R.
 Print Assumptions b64_Dekker_correct.
 Print Assumptions b64_TwoSum_nonoverlap.
 Print Assumptions b64_Dekker_nonoverlap.
+Print Assumptions b64_TwoSum_chain3_correct.
 
 (* -------------------------------------------------------------------------- *)
 (* Next slices on this bridge                                                 *)
