@@ -1,0 +1,17 @@
+# Axiom allowlist for NetTopologySuite.Proofs
+#
+# Each non-comment, non-blank line lists exactly one axiom that the
+# per-theorem `Print Assumptions` check is allowed to surface.  An axiom
+# appearing in any `Print Assumptions` block that is NOT on this list and
+# whose containing file is NOT in `docs/audit-exceptions.txt` causes the
+# axiom audit step in CI to fail.
+#
+# The list below is the README's documented set (README.md lines 18-29 at
+# the time of writing).  It must stay in sync with that text; the script
+# `scripts/check_readme_axioms.sh` enforces the consistency.
+#
+# Format: one fully-qualified axiom name per line, exactly as it appears
+# in `Print Assumptions` output (without the trailing colon or type).
+ClassicalDedekindReals.sig_not_dec
+ClassicalDedekindReals.sig_forall_dec
+FunctionalExtensionality.functional_extensionality_dep

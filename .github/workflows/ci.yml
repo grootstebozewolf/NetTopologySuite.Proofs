@@ -51,6 +51,13 @@ jobs:
           fi
           echo "All theorems Qed-closed."
 
+      - name: README <-> allowlist consistency (guardrail 3)
+        # Verifies the README's prose claim about "the three standard
+        # axioms" matches docs/axiom-allowlist.txt verbatim.  Catches
+        # silent drift of either source from the other.  See
+        # scripts/check_readme_axioms.sh for the exact check.
+        run: bash scripts/check_readme_axioms.sh
+
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus
     # (`theories-flocq/`).  The host-runner `rocq` job above only builds
@@ -92,3 +99,33 @@ jobs:
         # all Flocq-dependent modules.  Failure here = a `.v` file in
         # theories-flocq/ does not compile.
         run: docker run --rm nts-proofs-flocq:ci
+
+      - name: Sequential build + per-theorem axiom audit (guardrails 1 + 4)
+        # Re-builds the full corpus inside the same container with -j1
+        # (sequential) so that `ROCQ compile <file>` lines and their
+        # subsequent `Print Assumptions` output blocks are not
+        # interleaved by parallel make.  Parallel attribution proved
+        # unreliable during the May 2026 axiom-leak investigation; the
+        # -j1 build is the load-bearing prerequisite for accurate
+        # per-file violation reporting in `scripts/audit_axioms.sh`.
+        #
+        # The script enforces docs/axiom-allowlist.txt against every
+        # per-theorem PA block, with file-level exemptions from
+        # docs/audit-exceptions.txt.  Failure mode: any non-exempt file
+        # has a PA block containing an axiom outside the allowlist.
+        run: |
+          docker run --rm \
+            nts-proofs-flocq:ci \
+            bash -lc '
+              rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d \
+                    .nra.cache theories/*.vo* theories/*.glob theories/.*.aux \
+                    theories-flocq/*.vo* theories-flocq/*.glob \
+                    theories-flocq/.*.aux
+              rocq makefile -f _CoqProject.full -o Makefile.gen
+              make -f Makefile.gen -j1
+            ' > /tmp/build_seq.log 2>&1 || {
+              echo "::error::Sequential build failed; see /tmp/build_seq.log"
+              tail -50 /tmp/build_seq.log
+              exit 1
+            }
+          bash scripts/audit_axioms.sh /tmp/build_seq.log

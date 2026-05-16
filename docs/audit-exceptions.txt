@@ -1,0 +1,43 @@
+# Audit exceptions for `scripts/audit_axioms.sh`
+#
+# Each non-comment, non-blank line names a file (relative to repo root)
+# whose `Print Assumptions` blocks are exempted from the allowlist check.
+# Listed files may pull axioms beyond `docs/axiom-allowlist.txt`; their
+# contamination is the *known, transitional* state captured below.
+#
+# The discipline this file enforces:
+#   - Files NOT listed here MUST satisfy the allowlist on every CI run.
+#   - Files listed here are tracked for cleanup; removing a file from this
+#     list is the final step of refactoring it to be classic-clean.
+#   - Adding a file to this list requires PR justification (a comment
+#     immediately above the file line explaining what makes the file
+#     Category C / transitional and the planned resolution).
+#
+# Current state (2026-05-16): 11 files in `theories-flocq/` pull
+# `Classical_Prop.classic` per theorem because their theorem statements
+# substantively reference `Binary.Bplus` / `Bminus` / `Bmult`, which
+# carry `classic` in their definition closure.  This contamination is a
+# pre-existing condition the corpus inherited; the parametric-architecture
+# refactor (started in commit b010037 on `Validate_binary64.v`) is
+# clearing files one by one.  Removal from this list is the per-file
+# completion criterion.
+
+# Transitional: clean of `classic` once parametric-architecture refactor
+# applied per the policy designed in `docs/category-c-policy.md`
+# (to be written).
+theories-flocq/Orient_b64_exact.v
+theories-flocq/Intersect_b64.v
+theories-flocq/B64_bridge.v
+theories-flocq/Intersect_b64_exact.v
+theories-flocq/B64_lib.v
+theories-flocq/Orient_b64_R.v
+theories-flocq/Validate_binary64_bridge.v
+theories-flocq/Orientation_b64.v
+theories-flocq/HotPixel_b64.v
+theories-flocq/B64_Pff_bridge.v
+theories-flocq/Orient_b64_sound.v
+
+# Category C: one explicitly-documented theorem whose statement cannot be
+# parametrised without losing content.  See the `(* CATEGORY C *)` block
+# in the file itself; resolution pending policy decision.
+theories-flocq/Validate_binary64.v
