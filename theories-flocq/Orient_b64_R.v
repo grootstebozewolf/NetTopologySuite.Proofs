@@ -48,6 +48,19 @@
    The integer regime sidesteps the issue entirely by making every
    `b64_round` invocation exact.
 
+   CHORD-PARADIGM SCOPE
+   ====================
+   Every identity in this file -- antisymmetry, cyclic permutation,
+   translation invariance, vertex coincidence -- holds for *chords*: the
+   three `BPoint` arguments name a straight triangle, and `cross_R_BP`
+   computes its signed area.  See `docs/audit-phase4-curves.md` for the
+   strategic stance.  An arc-aware variant (arc-arc orientation, arc-
+   point orientation) would live in a parallel `Orient_arc_R.v` with
+   its own carrier (e.g. `ArcTriplet` = 3 control points per arc) and
+   its own R-side witness; the lemmas here would *not* generalise
+   without re-proof.  See the dovetail block at the foot of
+   `Orient_b64_exact.v` for the full anticipatory plan.
+
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.

@@ -60,3 +60,35 @@ The `NetTopologySuite.Curve` extension is the empirical proof: it exists, it wor
 - `Curve` / `CircularString` are still marked PLAYGROUND on a 10-year-old branch.
 
 **Personal tripwire**: If by 2031 the failure conditions hold, treat the chord paradigm as load-bearing for the foreseeable future. Forking to build an arc-native geometry stack with the formal predicates as the foundation becomes a legitimate strategic option, not an emotional reaction.
+
+## 6. Dovetailing Status (2026-05-16 — documentation-only)
+
+Per §4's stance ("do *not* prematurely abstract the predicate signatures") the corpus has now applied a **documentation-only** dovetail rather than introducing typeclass shells. Three anchors are in place:
+
+- **`theories-flocq/Orient_b64_exact.v`** — chord-paradigm dovetail block between the last theorem and the axiom audit. Names the chord carrier (`BPoint`), the chord-chord witness (`cross_R_BP`), and the three pieces an arc-bearing variant would need (an `ArcTriplet` carrier, a separate `b64_orient2d_arc` primitive with its own Stage-A filter, and a chord-refinement bridge theorem). Explicitly *no* `HasOrient` typeclass introduced.
+- **`theories-flocq/Orient_b64_R.v`** — chord-paradigm scope callout in the header. Notes that the four R-side identities (antisymmetry / cyclic / translation / vertex coincidence) would *not* generalise without re-proof on an arc-aware witness, and points downstream to the Orient_b64_exact dovetail.
+- **`theories-flocq/Intersect_b64_exact.v`** — refined the existing `HasIntersect` aspirational comment. Previous wording suggested "a future `ArcTriplet` instance" of the same typeclass; this was confused because the 4-point signature `T -> T -> T -> T -> binary64` is chord-paradigm-specific (two chord-chord segments = four endpoints). The arc-bearing analog needs a **parallel** typeclass with a 2-argument signature (two arcs, not four points), not a new instance of `HasIntersect`. The two typeclasses coexist; bridging between them composes refinement bounds with the existing chord instance.
+
+`coqchk -silent -o` post-dovetail diff against the pre-dovetail baseline: **zero output**. Pure documentation, byte-identical axiom closure.
+
+What this preserves:
+- No abstraction tax paid today on predicate signatures.
+- The seam is named at the source-file level, not just in this audit document, so future arc-aware work has visible landing points.
+- A correctness slip in the existing `HasIntersect` aspirational comment is fixed (its old `ArcTriplet` instance hint did not match the 4-point signature).
+
+What this defers:
+- Any concrete `HasArcIntersect` / `Orient_arc_*` modules.
+- Any refinement-bridge lemma between chord and arc paths.
+- Re-evaluation at the start of Phase 4 once a consumer (e.g. `NetTopologySuite.Curve`, an upstream PR) is asking for arc-aware predicates.
+
+### 6.1 Clothoid case — external-development citation seam
+
+The `Intersect_b64_exact.v` dovetail block now covers a **family** of parallel typeclasses (chord today, arc / clothoid / ... as future hooks), not just an arc-arc analog. The clothoid case is the first concrete future hook where an external formal-verification effort has already discharged the R-side mathematics:
+
+- **External project**: [`grootstebozewolf/clothoid-halley-coq`](https://github.com/grootstebozewolf/clothoid-halley-coq) (Merkator Group, 2026). Coq 8.13.1 / 8.20.1 + Coquelicot 3.x. Proves the six derivative identities for the chord-length residual `f(L) = L²(P²+Q²) - d²` used in Halley iteration for the G¹ Hermite clothoid interpolation problem (Bertolazzi-Frego 2015 / 2018). No `Admitted`, no `Axiom` beyond the four standard Coquelicot axioms.
+- **Stack mismatch (porting cost)**: that project uses Coquelicot's real-analysis primitives (`RInt`, `is_derive`, `Derive`). Our corpus targets Rocq 9.1.1 + Flocq 4.2.2. The R-side identities would need re-proof in Flocq's native `Reals` framework (Coquelicot's `RInt` ↔ `RiemannInt`, `is_derive` ↔ Flocq's derivative predicate). Estimated ~3-5 days of mechanical translation: the tactic recipes (`auto_derive`, `Derive` rewrites, `ring`) are tactic-name preserved.
+- **Licence**: clothoid-halley-coq is **proprietary, source-available** (`LicenseRef-Merkator-Proprietary-NoAITraining`) with explicit permission for *academic citation* and *unmodified reproduction of paper results*. Theorem statements may be **cited** and parallel proofs **re-derived** in our BSD-3-Clause corpus; theorem text and proof scripts may **not** be copied without a separate licence.
+- **Differential-testing oracle already available**: the 9,058-record `golden_vectors.json` from ProRail Spoorgeometrie clothoid transitions, bit-identical across Python / C# / Java / TypeScript implementations within 1e-9 m chord-length agreement and matching iteration counts. Symmetric infrastructure to our `oracle/extracted.ml` (see `theories-flocq/Validate_binary64_extract.v`): a future `b64_clothoid_intersect` extraction can be bit-compared against this oracle before any Flocq-side soundness claim is made.
+- **Termination model**: the L-form residual under the monotone-branch precondition (from clothoid-halley-coq's filtering pipeline) converges to machine precision in ≤4 Halley iterations on the empirical 9,058-record corpus (Merkator paper, table 3). In our Rocq formalisation this becomes a **bounded-iteration** termination lemma — not a fixpoint-domain argument — which is structurally simpler than a general convergence proof.
+
+This places clothoid integration **strategically ahead** of the arc-arc case (which has no comparable external formalisation or golden oracle), even though tactically both remain deferred until a downstream consumer appears.
