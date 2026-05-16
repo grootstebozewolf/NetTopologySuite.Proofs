@@ -64,6 +64,12 @@ theories-flocq/Orient_b64_exact.v
 # R-side segments don't share a point (composing decoder soundness with
 # the rejection-sound direction of theories/Intersect.v).
 theories-flocq/Intersect_b64.v
+# Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
+# the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
+# soundness against a rounded-pixel R-side semantics.  Integer-regime
+# exactness (bridging the rounded pixel to the exact `in_hot_pixel`) is
+# the next slice; see the deferred block at the foot of HotPixel_b64.v.
+theories-flocq/HotPixel_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract
