@@ -263,3 +263,85 @@ today.
   long expansions.  For typical NTS inputs (well-conditioned triangles)
   Stage C is already sufficient.  Stage D can be deferred indefinitely
   — most published implementations of "robust orient2d" stop at C.
+
+---
+
+## 7. 2026-05-16 update: post-bridge state and revised stance
+
+This section amends the audit with the state of the corpus several months
+on.  It supersedes §5's "next steps" framing but leaves the body of the
+audit (§§1-6) intact as the original analysis.
+
+### 7.1 What landed since the original audit
+
+The bridge module called out in §5 step 1 (the "single highest-leverage
+piece of work in the corpus today") shipped as `theories-flocq/B64_bridge.v`,
+joined by `Orient_b64_R.v` and `Orient_b64_exact.v`.  That validated the
+audit's critical-path read: subsequent work has been able to lift cleanly
+through the bridge without reinventing the no-overflow threading.
+
+Concretely, since the bridge landed:
+
+- **Phase 0 Path 2** (integer-regime exactness for `b64_orient2d`):
+  shipped via `Orient_b64_exact.v`.  Headline: under `coord_int_safe`
+  inputs (|coord| ≤ 2^25 integers), `B2R (b64_orient2d ...) = cross_R_BP`
+  on the nose.
+- **Tiny-regime decisive theorem**: shipped (`b64_orient_sign_filtered_tiny_regime_decisive`).
+  Under |coord| ≤ 2^22 integers, the Stage A filter is guaranteed to
+  fire on every non-zero cross.
+- **Phase 1 first slices**: predicate (`Intersect_b64.v`), shared-endpoint
+  disambiguation, collinear-overlap completeness, and Scope A first-stage
+  exactness for intersection-point coords (`Intersect_b64_exact.v` +
+  `HasIntersect` typeclass).
+- **Phase 2 foundations**: HotPixel R-side scaffold and binary64 mirror
+  with rounded-pixel soundness (`HotPixel.v` + `HotPixel_b64.v`).
+- **Phase 4 audit**: documented why native curve support is stalled in
+  NTS (`Coordinate[]` data plane in `SegmentString`); chord-first
+  direction confirmed through Phase 3.
+
+### 7.2 Stages B/C/D: still the deeper-soundness path, not the next slice
+
+The §4 estimate ("~3 weeks of focused proof work for Stages B/C
+end-to-end") remains broadly accurate, but with a practical tax: the
+proof-engineering overhead observed across landed slices runs at roughly
+1.5–2× the pure mathematical effort.  Realistic estimate today:
+
+| Stage | Pure math | With tax | Notes |
+|---|---|---|---|
+| FastTwoSum + non-overlapping predicate | ~half day | ~1 day | small slice |
+| `grow-expansion` + `fast-expansion-sum` | ~5-7 days | ~2 weeks | |
+| `expansion-product` + `sign-of-expansion` | ~3-4 days | ~1 week | |
+| Compose into Stage B/C `orient2d_exact` | ~3-5 days | ~1.5 weeks | |
+| **B/C total** | **~2 weeks** | **~5-6 weeks** | |
+| Stage D | (multi-month, novel proofs) | indefinite | renormalization is the qualitative jump |
+
+### 7.3 Revised stance: thin leading wire takes precedence
+
+The current direction (recorded in [`audit-phase4-curves.md`](audit-phase4-curves.md)
+and reflected in the `HasIntersect` typeclass in `Intersect_b64_exact.v`)
+is *incremental predicate-layer enablement* rather than a multi-month
+B/C engagement.  Concretely:
+
+1. **Finish Phase 1 Scope B/C** (round-chain identity and forward-error
+   bound for intersection coords).  These give callers a usable forward-
+   error contract without paying for full Stages B/C/D.
+2. **Phase 2 HotPixel rewriter** (snap-rounding noder) once Phase 1
+   coords stabilise.  The HotPixel foundations slice is already in.
+3. **First arc-arc orientation primitive** (Phase 4 first concrete piece)
+   as a non-`BPoint` instance of `HasIntersect` / a parallel
+   `HasOrient2d`.  Tests whether the thin-wire interface actually
+   composes.
+
+Stages B/C remain the natural deeper-soundness path and the §4 reuse
+table remains accurate as a vendor/reprove call.  But they are *not*
+the next slice: they would commit ~5-6 weeks to refining `OrientRUncertain`
+when Phase 1's forward-error bound (Scope C, ~2-4 sessions) gives most
+callers more practical value with much less effort.
+
+**Decision**: Stages B/C/D remain queued.  Re-evaluate at the start of
+Phase 3 (proper-crossing overlay) once we know whether the HotPixel
+rewriter's intersection-snapping step actually needs Uncertain-case
+resolution in practice — if yes, B/C jumps the queue; if no, it stays
+as a documented deeper-soundness option without a fixed timeline.
+
+---
