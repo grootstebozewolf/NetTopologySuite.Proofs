@@ -169,7 +169,7 @@ Lemma intersect_inputs_int_safe_P0P1Q0 :
 Proof.
   intros P0 P1 Q0 Q1
     (HxP0 & HyP0 & HxP1 & HyP1 & HxQ0 & HyQ0 & _ & _).
-  unfold orient2d_inputs_int_safe; repeat split; assumption.
+  unfold orient2d_inputs_int_safe; tauto.
 Qed.
 
 Lemma intersect_inputs_int_safe_P0P1Q1 :
@@ -179,7 +179,7 @@ Lemma intersect_inputs_int_safe_P0P1Q1 :
 Proof.
   intros P0 P1 Q0 Q1
     (HxP0 & HyP0 & HxP1 & HyP1 & _ & _ & HxQ1 & HyQ1).
-  unfold orient2d_inputs_int_safe; repeat split; assumption.
+  unfold orient2d_inputs_int_safe; tauto.
 Qed.
 
 Lemma intersect_inputs_int_safe_Q0Q1P0 :
@@ -189,7 +189,7 @@ Lemma intersect_inputs_int_safe_Q0Q1P0 :
 Proof.
   intros P0 P1 Q0 Q1
     (HxP0 & HyP0 & _ & _ & HxQ0 & HyQ0 & HxQ1 & HyQ1).
-  unfold orient2d_inputs_int_safe; repeat split; assumption.
+  unfold orient2d_inputs_int_safe; tauto.
 Qed.
 
 Lemma intersect_inputs_int_safe_Q0Q1P1 :
@@ -199,7 +199,7 @@ Lemma intersect_inputs_int_safe_Q0Q1P1 :
 Proof.
   intros P0 P1 Q0 Q1
     (_ & _ & HxP1 & HyP1 & HxQ0 & HyQ0 & HxQ1 & HyQ1).
-  unfold orient2d_inputs_int_safe; repeat split; assumption.
+  unfold orient2d_inputs_int_safe; tauto.
 Qed.
 
 (* ============================================================================

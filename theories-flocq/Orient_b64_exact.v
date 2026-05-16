@@ -71,6 +71,7 @@ From Stdlib Require Import Lia.
 From Stdlib Require Import Lra.
 
 From Flocq Require Import IEEE754.Binary.
+From Flocq Require Import IEEE754.BinarySingleNaN.
 From Flocq Require Import Core.
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
@@ -92,7 +93,7 @@ Lemma bpow_radix2_eq_IZR_pow :
   forall e : Z, (0 <= e)%Z -> bpow radix2 e = IZR (2 ^ e).
 Proof.
   intros e He.
-  rewrite IZR_Zpower by exact He.
+  rewrite <- IZR_Zpower by exact He.
   reflexivity.
 Qed.
 
@@ -117,16 +118,16 @@ Proof.
   - (* |n| = 2^prec: n = +/- 2^prec *)
     destruct (Z_lt_le_dec n 0) as [Hneg | Hpos].
     + (* n < 0, so n = -2^prec *)
-      assert (Hn_eq : n = - (2 ^ prec))%Z by lia.
+      assert (Hn_eq : (n = - (2 ^ prec))%Z) by lia.
       rewrite Hn_eq, opp_IZR.
       apply generic_format_opp.
       rewrite <- bpow_radix2_eq_IZR_pow by (unfold prec; lia).
-      apply generic_format_bpow_b64. unfold emax. lia.
+      apply generic_format_bpow_b64. unfold prec, emax. lia.
     + (* n > 0, so n = 2^prec *)
-      assert (Hn_eq : n = 2 ^ prec)%Z by lia.
+      assert (Hn_eq : (n = 2 ^ prec)%Z) by lia.
       rewrite Hn_eq.
       rewrite <- bpow_radix2_eq_IZR_pow by (unfold prec; lia).
-      apply generic_format_bpow_b64. unfold emax. lia.
+      apply generic_format_bpow_b64. unfold prec, emax. lia.
   - (* |n| < 2^prec *)
     assert (Hstrict' : (Z.abs n < 2 ^ prec)%Z) by lia.
     replace (IZR n) with (F2R (Float radix2 n 0)).
@@ -141,9 +142,8 @@ Proof.
       - rewrite <- abs_IZR.
         rewrite bpow_radix2_eq_IZR_pow by (unfold prec; lia).
         apply IZR_lt. exact Hstrict'. }
-    unfold SpecFloat.fexp. apply Z.max_lub.
-    + lia.
-    + unfold prec, emax. lia.
+    unfold SpecFloat.fexp.
+    apply Z.max_lub; unfold SpecFloat.emin, emax, prec in *; lia.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -261,6 +261,18 @@ Proof.
   apply b64_round_IZR_exact. exact Hbnd.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Input regime predicate.                                                    *)
+(*                                                                            *)
+(* `coord_int_safe x` := x is finite, integer-valued, and `|x| <= 2^25`.     *)
+(* The 25-bit bound is what propagates through the orient2d chain to keep    *)
+(* every intermediate value within the 53-bit integer-exactness window.       *)
+(* -------------------------------------------------------------------------- *)
+
+Definition coord_int_safe (x : binary64) : Prop :=
+  Binary.is_finite prec emax x = true /\
+  exists n : Z, Binary.B2R prec emax x = IZR n /\ (Z.abs n <= 2 ^ 25)%Z.
+
 (* Specialisation for the translation-invariance proof.  If both operands   *)
 (* are `coord_int_safe`, their sum is integer-valued with magnitude         *)
 (* `<= 2^26 < 2^prec`, hence bit-exact under `b64_plus`.  Returns the        *)
@@ -280,18 +292,6 @@ Proof.
   pose proof (b64_plus_int_exact x y a b Fx Fy HxR HyR Hbnd) as [HB2R _].
   rewrite HB2R, HxR, HyR. apply plus_IZR.
 Qed.
-
-(* -------------------------------------------------------------------------- *)
-(* Input regime predicate.                                                    *)
-(*                                                                            *)
-(* `coord_int_safe x` := x is finite, integer-valued, and `|x| <= 2^25`.     *)
-(* The 25-bit bound is what propagates through the orient2d chain to keep    *)
-(* every intermediate value within the 53-bit integer-exactness window.       *)
-(* -------------------------------------------------------------------------- *)
-
-Definition coord_int_safe (x : binary64) : Prop :=
-  Binary.is_finite prec emax x = true /\
-  exists n : Z, Binary.B2R prec emax x = IZR n /\ (Z.abs n <= 2 ^ 25)%Z.
 
 Definition orient2d_inputs_int_safe (P0 P1 Q : BPoint) : Prop :=
   coord_int_safe (bx P0)  /\
@@ -560,7 +560,8 @@ Proof.
   pose proof (orient2d_inputs_int_safe_imp_safe _ _ _ Hint) as Hsafe.
   pose proof (b64_orient2d_exact_for_small_int _ _ _ Hint) as Hexact.
   pose proof (b64_orient_sign_filtered_consistent_with_b64 _ _ _ Hsafe) as Hcons.
-  destruct (b64_orient_sign_filtered P0 P1 Q); rewrite Hexact in Hcons; exact Hcons.
+  destruct (b64_orient_sign_filtered P0 P1 Q);
+    try (rewrite Hexact in Hcons); exact Hcons.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -586,7 +587,7 @@ Lemma orient2d_inputs_int_safe_cycl :
     orient2d_inputs_int_safe P1 Q P0.
 Proof.
   intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
-  repeat split; assumption.
+  unfold orient2d_inputs_int_safe; tauto.
 Qed.
 
 Lemma orient2d_inputs_int_safe_cycl2 :
@@ -595,7 +596,7 @@ Lemma orient2d_inputs_int_safe_cycl2 :
     orient2d_inputs_int_safe Q P0 P1.
 Proof.
   intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
-  repeat split; assumption.
+  unfold orient2d_inputs_int_safe; tauto.
 Qed.
 
 Theorem b64_orient2d_cyclic_int_R :
