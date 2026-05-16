@@ -64,6 +64,13 @@ theories-flocq/Orient_b64_exact.v
 # R-side segments don't share a point (composing decoder soundness with
 # the rejection-sound direction of theories/Intersect.v).
 theories-flocq/Intersect_b64.v
+# Phase 1 Scope A: first-stage bit-exactness for the binary64 intersection-
+# point computation (the prefix of Cramer's rule before division).  Ships
+# the safety predicate, the four first-stage exactness lemmas (qp0, qp1,
+# dx, dy), and a minimal `HasIntersect` typeclass + BPoint instance as the
+# thin leading wire for future curve primitives.  Round-chain identity
+# (Scope B) and forward-error bound (Scope C) are deferred.
+theories-flocq/Intersect_b64_exact.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

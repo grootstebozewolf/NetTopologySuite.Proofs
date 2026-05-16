@@ -185,3 +185,33 @@ In rough order of payoff vs. cost:
 - **No silent narrowing of contracts.**  `IntersectCollinear` is `True`
   in the soundness theorem, mirroring `IntersectUncertain`'s
   treatment in `b64_orient_sign_filtered_sound_small_int`.
+
+## 2026-05-16: Scope A first-stage exactness landed
+
+`theories-flocq/Intersect_b64_exact.v` ships:
+
+- Total binary64 projections `b64_intersect_point_x` / `b64_intersect_point_y`
+  (return `binary64`, not `option binary64`).
+- Safety predicate `intersect_point_inputs_int_safe` (eight `coord_int_safe`
+  premises + R-side denominator non-zero).
+- Four first-stage bit-exactness lemmas: the two outer orient2d evaluations
+  (`qp0`, `qp1`) and the two coordinate differences (`dx`, `dy`) are
+  bit-exact integer-valued binary64 under the safety predicate.
+- `HasIntersect` typeclass + `BPoint` instance — operations + safety
+  predicate only (no soundness field yet); acts as the extension point
+  for future curve primitives (arc-arc, arc-segment) per the Phase 4
+  audit's "thin leading wire" direction.
+
+What's still deferred under `Future paths` item 2:
+
+- Denominator finite + B2R non-zero (mechanical, needs the
+  `b64_round_abs_le_bpow` chain).
+- **Scope B**: round-chain identity for the full coordinate computation.
+- **Scope C**: forward-error bound
+  `|B2R(b64_intersect_point_x ...) − intersect_x_R| ≤ K · max_coord · ε`.
+
+Bit-exact equality `B2R(...) = intersect_x_R(...)` on the integer regime
+is *not* a target — Cramer's rule has a division step (`s = qp0 / den`)
+that rounds for non-dyadic ratios (e.g. `1/3`), so the equality fails by
+counterexample.  Scope C (forward-error bound) is the real downstream
+target for callers.
