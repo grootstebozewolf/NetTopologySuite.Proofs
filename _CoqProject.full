@@ -71,6 +71,14 @@ theories-flocq/Intersect_b64.v
 # thin leading wire for future curve primitives.  Round-chain identity
 # (Scope B) and forward-error bound (Scope C) are deferred.
 theories-flocq/Intersect_b64_exact.v
+# Forward-looking wrapper module.  Promotes the `Local Notation b64_*`
+# boilerplate to module-level, registers Flocq typeclass instances for
+# binary64 (Prec_gt_0, Valid_exp, Monotone_exp), and re-exports
+# pre-instantiated Flocq lemmas (ulp_le_abs, ulp_FLT_0,
+# error_le_half_ulp_round, etc.) plus helpers accumulated during
+# Stage D (round_minus_swap, etc.).  New code should `Require Import
+# B64_lib` instead of repeating the Local Notation boilerplate.
+theories-flocq/B64_lib.v
 # Stage D bridge module: discharges Pff2Flocq's section parameters for
 # binary64 (specifically: choice_sym for round_mode mode_NE = ZnearestE).
 # One-time work that unblocks every subsequent Pff2Flocq lift.  Ships
