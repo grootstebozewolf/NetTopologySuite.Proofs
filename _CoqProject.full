@@ -77,6 +77,12 @@ theories-flocq/Intersect_b64_exact.v
 # b64_Fast2Sum_correct as the first Stage D primitive landed via the
 # bridge -- validates the scout's "subsequent lifts ~30 lines" estimate.
 theories-flocq/B64_Pff_bridge.v
+# Stage D expansion arithmetic foundations.  Ships the data structure
+# (b64_expansion = list binary64), non-overlap predicate, sum/sign
+# definitions, and the structural lemmas.  HEADLINE
+# `sign_of_expansion_correct` is deferred; this is where the GENUINELY
+# NOVEL Stage D work lives (no Pff helper).
+theories-flocq/B64_Expansion.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

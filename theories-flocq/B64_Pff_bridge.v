@@ -25,6 +25,7 @@
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lia.
+From Stdlib Require Import Lra.
 From Stdlib Require Import Bool.
 
 From Flocq Require Import IEEE754.Binary.
@@ -34,6 +35,7 @@ From Flocq Require Import Pff.Pff2Flocq.
 
 From NTS.Proofs.Flocq  Require Import Validate_binary64.
 From NTS.Proofs.Flocq  Require Import B64_bridge.
+From NTS.Proofs.Flocq  Require Import Orient_b64_exact.
 
 Local Open Scope R_scope.
 
@@ -194,6 +196,68 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Veltkamp splitting constant: 2^27 + 1, exactly representable in binary64. *)
+(* Used inside Dekker's TwoProduct as the multiplier for the precision split.*)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_veltkamp_C : binary64 :=
+  Binary.binary_normalize prec emax prec_gt_0_b64 prec_lt_emax_b64
+    mode_NE (2^27 + 1)%Z 0%Z false.
+
+Lemma b64_veltkamp_C_R :
+  Binary.B2R prec emax b64_veltkamp_C = bpow radix2 27 + 1.
+Proof.
+  unfold b64_veltkamp_C.
+  pose proof (Binary.binary_normalize_correct prec emax
+                prec_gt_0_b64 prec_lt_emax_b64 mode_NE
+                (2^27 + 1)%Z 0%Z false) as H.
+  assert (HF2R : F2R (Float radix2 (2^27 + 1)%Z 0%Z) = IZR (2^27 + 1)).
+  { unfold F2R; simpl. lra. }
+  rewrite HF2R in H.
+  assert (Hround : Generic_fmt.round radix2 (SpecFloat.fexp prec emax)
+                    (round_mode mode_NE) (IZR (2^27 + 1)%Z)
+                  = IZR (2^27 + 1)%Z).
+  { apply Generic_fmt.round_generic;
+      [apply valid_rnd_round_mode |].
+    apply generic_format_IZR_le_bpow_prec. unfold prec; lia. }
+  rewrite Hround in H.
+  assert (Hbnd : Rabs (IZR (2^27 + 1)) < bpow radix2 emax).
+  { rewrite <- abs_IZR.
+    apply (Rlt_trans _ (bpow radix2 53)).
+    - rewrite bpow_radix2_eq_IZR_pow by lia.
+      apply IZR_lt. lia.
+    - apply bpow_lt; unfold emax; lia. }
+  apply Rlt_bool_true in Hbnd. rewrite Hbnd in H.
+  destruct H as [HB2R _].
+  rewrite HB2R.
+  rewrite plus_IZR. rewrite <- bpow_radix2_eq_IZR_pow by lia.
+  simpl. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* `b64_Dekker_correct` deferred to its own slice                             *)
+(*                                                                            *)
+(* Pff2Flocq.Dekker has 16 internal rounded operations + a conjunctive       *)
+(* conclusion (exact-result-under-underflow-precondition + universal error  *)
+(* bound).  Lifting it to binary64 requires:                                 *)
+(*                                                                            *)
+(*   - 16 `b64_safe` hypotheses (one per op): bookkeeping-dense (~60 lines  *)
+(*     in the theorem signature alone).                                     *)
+(*   - 16 `b64_*_correct` applications + 16 rewrites in the proof body.     *)
+(*   - Projection from Pff2Flocq.Dekker's conjunction to just the exact     *)
+(*     case (the universal error bound is universally true but loose for   *)
+(*     our integer regime).                                                 *)
+(*   - The underflow precondition `bpow (emin + 2*prec - 1) <= Rabs(x*y)`   *)
+(*     to be supplied by the caller; for the integer regime it's trivial   *)
+(*     (products land between bpow 0 and bpow 52, far above bpow(-969)).   *)
+(*                                                                            *)
+(* Mechanical, ~100 lines.  Stage D's bookkeeping crescendo, not its       *)
+(* novelty.  Pushed to a follow-up slice so this file ships the bridge     *)
+(* + the three SCOUT-VALIDATED claims (Fast2Sum lift, TwoSum lift,         *)
+(* Veltkamp constant exact-B2R).                                          *)
+(* -------------------------------------------------------------------------- *)
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -201,6 +265,7 @@ Print Assumptions Z_even_opp.
 Print Assumptions b64_choice_sym.
 Print Assumptions b64_Fast2Sum_correct.
 Print Assumptions b64_TwoSum_correct.
+Print Assumptions b64_veltkamp_C_R.
 
 (* -------------------------------------------------------------------------- *)
 (* Next slices on this bridge                                                 *)
