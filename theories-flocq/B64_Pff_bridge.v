@@ -479,6 +479,56 @@ Qed.
 
 
 (* -------------------------------------------------------------------------- *)
+(* b64_TwoSum_nonoverlap -- the lemma that unlocks sign_of_expansion_correct  *)
+(* for output of actual TwoSum chains in Stage D.                             *)
+(*                                                                            *)
+(* Without this, sign_of_expansion_correct is unusable on Stage D output:    *)
+(* it requires nonoverlap_strict which holds INSIDE the algorithm but isn't  *)
+(* provable without a specific magnitude argument about TwoSum's `e`.        *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_TwoSum_nonoverlap :
+  forall x y : binary64,
+    b64_safe Rplus  x y ->
+    b64_safe Rminus (b64_plus x y) x ->
+    b64_safe Rminus (b64_plus x y) (b64_minus (b64_plus x y) x) ->
+    b64_safe Rminus x
+      (b64_minus (b64_plus x y) (b64_minus (b64_plus x y) x)) ->
+    b64_safe Rminus y (b64_minus (b64_plus x y) x) ->
+    b64_safe Rplus
+      (b64_minus x
+        (b64_minus (b64_plus x y) (b64_minus (b64_plus x y) x)))
+      (b64_minus y (b64_minus (b64_plus x y) x)) ->
+    let '(s, e) := b64_TwoSum x y in
+    Rabs (Binary.B2R prec emax e)
+      <= ulp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax s) / 2.
+Proof.
+  intros x y Hsa Hsxp Hsaxp Hsdx Hsdy Hsb.
+  pose proof (b64_TwoSum_correct x y Hsa Hsxp Hsaxp Hsdx Hsdy Hsb) as HTS.
+  unfold b64_TwoSum in HTS.
+  cbv beta iota zeta in HTS.
+  unfold b64_TwoSum. cbv beta iota zeta.
+  pose proof (b64_plus_correct x y Hsa) as [HBs _].
+  pose proof (@error_le_half_ulp_round radix2 (SpecFloat.fexp prec emax)
+                (fexp_correct prec emax prec_gt_0_b64)
+                (fexp_monotone prec emax)
+                (fun z => negb (Z.even z))
+                (Binary.B2R prec emax x + Binary.B2R prec emax y)) as Herr.
+  change (Znearest (fun z => negb (Z.even z)))
+    with (round_mode mode_b64) in Herr.
+  rewrite <- HBs in Herr.
+  match goal with
+  | |- Rabs ?e <= _ =>
+      replace e with
+        (Binary.B2R prec emax x + Binary.B2R prec emax y
+         - Binary.B2R prec emax (b64_plus x y))
+        by lra
+  end.
+  rewrite Rabs_minus_sym.
+  lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
