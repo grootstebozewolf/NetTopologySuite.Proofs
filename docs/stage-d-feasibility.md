@@ -240,6 +240,76 @@ Recurring tangent patterns (documented for future engagements):
 | `repeat f_equal` over-peels and creates nonsense subgoals | Use `exact HDekker_exact` instead of `rewrite + reflexivity` |
 | Round/ulp computation doesn't reduce in cbv | `error_le_half_ulp_round` for the bound; explicit `change` for forms |
 
+## 2026-05-16 update: the tangent the doc's optimism didn't see
+
+`b64_Dekker_nonoverlap` shipped first attempt, ~10 minutes from first read
+to Qed.  Predicted 1 hour; consistent with the prior 5-30× compression
+pattern.  Smell holds in the expected direction for that piece.
+
+**Chain composition (`TwoSum/Dekker chain composition`) hit a real
+tangent — the doc's 2-3 hour estimate undersold the work.**
+
+Concrete attempt: the naive 3-element chain `[s2; e2; e1]` produced by
+two TwoSums chained on `(a, b)` then `(s1, c)` does **not** satisfy
+`nonoverlap_strict`.  The required relation `Rabs e1 <= ulp(e2)/2`
+fails in general because `|s1| >> |e2|` typically, so
+`ulp(s1) > ulp(e2)` and the step-1 bound `Rabs e1 <= ulp(s1)/2`
+does not carry into the step-2 bound.
+
+This is qualitatively different from the prior Stage D pieces:
+
+- `b64_TwoSum_correct`, `b64_Dekker_correct` were Pff lifts: ~30 lines
+  of `change`/`rewrite` ceremony to align Flocq's `SpecFloat.fexp` with
+  Pff's `FLT_exp`.  Pure bookkeeping; no algorithmic choice involved.
+- `b64_TwoSum_nonoverlap`, `b64_Dekker_nonoverlap` are single-operation
+  bounds: ~10-15 lines applying `error_le_half_ulp_round` to the
+  underlying real arithmetic.  Still no algorithmic choice.
+- `sign_of_expansion_correct` is genuinely novel — structural induction
+  on the expansion — but the *input* (a non-overlapping expansion) is
+  assumed.  The proof doesn't have to CONSTRUCT the expansion or its
+  nonoverlap property.
+
+Chain composition is different in kind:
+
+1. **Algorithmic choice required.**  Shewchuk's "expansion-sum"
+   interleaves and re-sorts components by magnitude.  We need to pick
+   an algorithm (Shewchuk-style merge, fast-expansion-sum, or a custom
+   bounded variant) and formalise it.
+2. **Nonoverlap is not preserved by naive composition.**  The
+   structural fact has to be proved as part of the algorithm's
+   specification, not as a corollary of the per-operation bounds.
+3. **Magnitude tracking enters.**  The nonoverlap chain
+   `ulp(s_i) >= ulp(s_{i+1})` is what allows the proof to go through.
+   Without explicit magnitude bookkeeping (or input regime restrictions
+   like `coord_int_safe`), the inequality fails.
+
+**Revised estimate for chain composition: 1-3 days, not 2-3 hours.**
+The work involves picking an algorithm, formalising it as a Coq
+fixpoint or straight-line construction, and proving nonoverlap is
+preserved either through a length-induction argument or through
+magnitude-tracking invariants.  Both genuinely new content.
+
+This is precisely the "good signal" the May 2026 directive asked for:
+the difference between an "estimate corrected by 5-30×" (the previous
+Stage D pieces) and an "estimate that hides a tangent" (this one) is
+useful information about which parts of Stage D are routine and which
+require fresh thinking.
+
+**Implication for the remaining Stage D estimates:**
+
+| Piece | Original | Revised pre-tangent | Revised post-tangent |
+|---|---|---|---|
+| ~~`b64_Dekker_nonoverlap`~~ | ~1 day | ~1 hour | ~10 min (DONE) |
+| TwoSum/Dekker chain composition | ~2 days | ~2-3 hours | **1-3 days** |
+| `b64_orient2d_exact` definition + sum=cross_R | ~3 days | ~3-4 hours | ~3-4 hours **if chain composition lands** |
+| Final headline composition | ~2 days | ~1-2 hours | ~1-2 hours |
+| **Remaining total** | ~8 days | ~6-10 hours | **2-4 days** |
+
+The total still beats the original "5-6 weeks" framing by a wide
+margin.  The tangent is bounded and named, not multi-month.  But the
+2-3 hour estimate for chain composition was wrong in the *opposite*
+direction from the rest of the corrections.
+
 ## Revised verdict
 
 **Stage D for `orient2d` is bounded execution work, not research.**
