@@ -897,6 +897,104 @@ Proof.
   reflexivity.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Scope C polish: API-level corollaries callers can use directly.            *)
+(*                                                                            *)
+(* Finiteness of the result -- the b64 chain under safety never produces NaN *)
+(* or Inf.  Magnitude bound on the result -- proven via the round-chain      *)
+(* identity + b64_round_abs_le_bpow with the bpow 81 chain we built up.     *)
+(*                                                                            *)
+(* The TIGHT condition-aware forward-error theorem                            *)
+(*   |B2R(b64_intersect_point_x ...) - intersect_x_R ...| <= K * eps          *)
+(* where K is explicit in |denominator_R|, is a separate engagement-level    *)
+(* slice (Scope C.2-tight; multi-session Flocq forward-error analysis).      *)
+(* The existence form below records the bound is finite without committing  *)
+(* to a specific K.                                                          *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_intersect_point_x_finite :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.is_finite prec emax (b64_intersect_point_x P0 P1 Q0 Q1) = true.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  unfold b64_intersect_point_x.
+  pose proof (b64_intersect_plus_x_safe _ _ _ _ Hsafe) as Hps.
+  cbv zeta in Hps.
+  pose proof (b64_plus_correct _ _ Hps) as [_ Ffin]. exact Ffin.
+Qed.
+
+Theorem b64_intersect_point_y_finite :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.is_finite prec emax (b64_intersect_point_y P0 P1 Q0 Q1) = true.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  unfold b64_intersect_point_y.
+  pose proof (b64_intersect_plus_y_safe _ _ _ _ Hsafe) as Hps.
+  cbv zeta in Hps.
+  pose proof (b64_plus_correct _ _ Hps) as [_ Ffin]. exact Ffin.
+Qed.
+
+(* Magnitude bound on the final coordinate.  The magnitude chain bounds:    *)
+(*   |coord|  <= 2^25                                                       *)
+(*   |s · dx| <= 2^79                                                       *)
+(*   final = coord + (s · dx), so |final| pre-round <= 2^81;               *)
+(*   round preserves bpow 81 bound.                                         *)
+Theorem b64_intersect_point_x_abs_le_bpow_81 :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax (b64_intersect_point_x P0 P1 Q0 Q1))
+    <= bpow radix2 81.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  pose proof Hsafe as Hsafe'.
+  unfold b64_intersect_point_x.
+  pose proof (b64_intersect_plus_x_safe _ _ _ _ Hsafe) as Hps.
+  cbv zeta in Hps.
+  pose proof (b64_plus_correct _ _ Hps) as [HB2R _].
+  rewrite HB2R. clear HB2R.
+  apply b64_round_abs_le_bpow; [unfold emax; lia |].
+  eapply Rle_trans; [apply Rabs_triang|].
+  destruct Hsafe as [Hint _].
+  destruct Hint as (HxP0 & _ & _ & _ & _ & _ & _ & _).
+  pose proof (coord_int_safe_abs_le_bpow_25 _ HxP0) as BxP0.
+  pose proof (b64_intersect_mult_x_abs_le_bpow_80 _ _ _ _ Hsafe') as Bm.
+  cbv zeta in Bm.
+  apply Rle_trans with (bpow radix2 25 + bpow radix2 80);
+    [apply Rplus_le_compat; assumption|].
+  replace (bpow radix2 81) with (bpow radix2 80 + bpow radix2 80)
+    by (simpl; lra).
+  apply Rplus_le_compat; [apply bpow_le; lia | apply Rle_refl].
+Qed.
+
+Theorem b64_intersect_point_y_abs_le_bpow_81 :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax (b64_intersect_point_y P0 P1 Q0 Q1))
+    <= bpow radix2 81.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  unfold b64_intersect_point_y.
+  pose proof (b64_intersect_plus_y_safe _ _ _ _ Hsafe) as Hps.
+  cbv zeta in Hps.
+  pose proof (b64_plus_correct _ _ Hps) as [HB2R _].
+  rewrite HB2R. clear HB2R.
+  apply b64_round_abs_le_bpow; [unfold emax; lia |].
+  eapply Rle_trans; [apply Rabs_triang|].
+  destruct Hsafe as [Hint Hne].
+  pose proof (conj Hint Hne) as Hsafe'.
+  destruct Hint as (_ & HyP0 & _ & _ & _ & _ & _ & _).
+  pose proof (coord_int_safe_abs_le_bpow_25 _ HyP0) as ByP0.
+  pose proof (b64_intersect_mult_y_abs_le_bpow_80 _ _ _ _ Hsafe') as Bm.
+  cbv zeta in Bm.
+  apply Rle_trans with (bpow radix2 25 + bpow radix2 80);
+    [apply Rplus_le_compat; assumption|].
+  replace (bpow radix2 81) with (bpow radix2 80 + bpow radix2 80)
+    by (simpl; lra).
+  apply Rplus_le_compat; [apply bpow_le; lia | apply Rle_refl].
+Qed.
+
 (*                                                                            *)
 (* The `BPoint` instance routes through the total b64 projections defined   *)
 (* above.  A future `ArcTriplet` instance (Phase 4 first concrete piece)     *)
