@@ -109,11 +109,15 @@ Record BPoint : Type := mkBP { bx : binary64; by_ : binary64 }.
 (* operators in zero-argument-overhead helpers.                              *)
 (* -------------------------------------------------------------------------- *)
 
+(* Transparent (`Defined.`) so `vm_compute` / `cbv` can reduce through
+   `Binary.binary_normalize`-style constructors that take these as
+   prop-level witnesses.  The proof bodies are trivial `lia`s; making them
+   transparent doesn't expand the API or weaken the spec. *)
 Lemma prec_gt_0_b64 : FLX.Prec_gt_0 prec.
-Proof. unfold prec, FLX.Prec_gt_0. lia. Qed.
+Proof. unfold prec, FLX.Prec_gt_0. lia. Defined.
 
 Lemma prec_lt_emax_b64 : Prec_lt_emax prec emax.
-Proof. unfold prec, emax, Prec_lt_emax. lia. Qed.
+Proof. unfold prec, emax, Prec_lt_emax. lia. Defined.
 
 (* Default NaN-propagation convention: produce a quiet NaN with payload 1.  *)
 (* The IEEE-754 standard underspecifies NaN payload propagation; CompCert  *)

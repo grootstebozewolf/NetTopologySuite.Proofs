@@ -56,6 +56,29 @@
                                            nose.
    - `b64_orient_sign_filtered_sound_small_int` -- the cross_R-valued
                                            headline.
+   - `orient2d_inputs_tiny_int_safe` predicate -- decisive sub-regime
+                                           (|coord| <= 2^22) where the
+                                           Stage A filter is guaranteed
+                                           to fire on every non-zero
+                                           cross product.
+   - `b64_orient_sign_filtered_tiny_regime_decisive`
+                                        -- in the tiny regime,
+                                           `OrientRUncertain` never
+                                           fires when the R-cross is
+                                           non-zero (so the decoder
+                                           always returns a usable
+                                           Pos/Neg/Zero verdict).
+                                           Proof composes:
+                                           (1) integer-regime exactness
+                                               (`b64_orient2d_exact_for_small_int`),
+                                           (2) `b64_errbound_A_coeff_bound`
+                                               (errbound coeff <= bpow(-49)),
+                                           (3) `b64_orient2d_detsum_tiny_bound`
+                                               (detsum <= bpow 47),
+                                           giving
+                                           `errbound*detsum <= bpow(-2)
+                                            = 1/4 < 1 <= |integer det|`,
+                                           so the filter passes.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -349,49 +372,376 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   Deferred: tiny-regime decisive theorem and its proof obstruction.
-
-     Theorem b64_orient_sign_filtered_tiny_regime_decisive :
-       forall P0 P1 Q : BPoint,
-         orient2d_inputs_tiny_int_safe P0 P1 Q ->
-         cross_R_BP P0 P1 Q <> 0 ->
-         b64_orient_sign_filtered P0 P1 Q <> OrientRUncertain.
+   Tiny-regime decisive theorem.
 
    Statement: in the tiny regime, the Stage A filter is fully decisive on
-   non-zero cross-products -- `OrientRUncertain` cannot fire for inputs
-   with non-zero `cross_R_BP`.
+   non-zero cross-products -- `OrientRUncertain` cannot fire when
+   `cross_R_BP` is non-zero.
 
-   Proof outline (the chain that needs to land):
-     1. Tiny regime + exactness => `B2R det = cross_R_BP` (Phase 0).
-     2. `cross_R_BP` integer-valued and non-zero => `|B2R det| >= 1`.
-     3. detsum <= `bpow 47` in tiny regime (each diff <= 2^23,
+   Proof structure (everything below is Qed-closed):
+     1. Three magnitude bounds for the binary64 constants:
+        `b64_three`, `b64_sixteen`, `b64_eps` via a generic
+        `binary_normalize_b64_bounded_and_finite` helper.
+     2. Generic chain helpers for `b64_mult`, `b64_plus`, `b64_minus`
+        composing bounds through the Stage A constant arithmetic.
+     3. `b64_errbound_A_coeff_bound` -- bounds the constant by
+        `bpow radix2 (-49)` (composes 1, 2).
+     4. `b64_orient2d_detsum_tiny_bound` -- bounds detsum by
+        `bpow radix2 47` in the tiny regime (each diff <= 2^23,
         product <= 2^46, sum <= 2^47).
-     4. `Rabs (B2R b64_errbound_A_coeff) <= bpow(-50)` -- the substantive
-        sub-lemma.  Proof requires three round-is-exact discharges:
-          a. `b64_round (16 * 2^-52) = 2^-48`  (power-of-2, in format).
-          b. `b64_round (3 + 2^-48) = 3 + 2^-48`  (50-bit mantissa fits
-             in 53).
-          c. `b64_round ((3 + 2^-48) * 2^-52) = 3*2^-52 + 2^-100`.
-        Each step uses `round_generic` with a `generic_format_F2R'`
-        construction -- straightforward but tedious cexp / mag
-        bookkeeping.
-     5. `b64_bnd <= bpow(-3) < 1` (composes 3, 4 via
-        `b64_round_abs_le_bpow`).
-     6. `b64_compare bnd abs_det = Some Lt` (1 > b64_bnd).
-     7. Plug into the filter's match: returns `OrientRPos` / `OrientRNeg`,
-        never `OrientRUncertain`.
-
-   Effort:
-     - Step 4 is the substantive piece (~1 hour of careful Coq, three
-       analogous `round_generic` lemmas plus mantissa-fits-in-53-bits
-       arguments).
-     - Steps 1-3, 5-7 are mechanical (~30 min total).
-     - Total: 1-2 hours, not a 30-min slice.
-
-   The blocker is structural (Flocq bound chasing through three binary64
-   multiplications in the errbound constant), not a wall.  A follow-up
-   slice can ship the whole theorem cleanly when prioritised.
+     5. `b64_stage_a_bound_tiny_bound` -- composes 3, 4: the threshold
+        `b64_mult errbound detsum` is bounded by `bpow radix2 (-2) = 1/4`.
+     6. `cross_R_BP_tiny_int` -- the cross is integer-valued in the
+        tiny regime.
+     7. The headline `b64_orient_sign_filtered_tiny_regime_decisive`:
+        |B2R det| = |IZR n| >= 1 > 1/4 >= B2R bnd, so the filter's
+        threshold comparison returns Lt and the result is
+        OrientRPos / OrientRNeg, never OrientRUncertain.
    ------------------------------------------------------------------------ *)
+
+(* Generic binary_normalize bound + finiteness. *)
+Lemma binary_normalize_b64_bounded_and_finite :
+  forall (m : Z) (e : Z) (e_bound : Z),
+    Rabs (F2R (Float radix2 m e)) <= bpow radix2 e_bound ->
+    (3 - emax <= e_bound + 1)%Z ->
+    (e_bound < emax)%Z ->
+    let r := Binary.binary_normalize prec emax prec_gt_0_b64 prec_lt_emax_b64
+               mode_NE m e false in
+    Rabs (Binary.B2R prec emax r) <= bpow radix2 e_bound
+    /\ Binary.is_finite prec emax r = true.
+Proof.
+  intros m e e_bound HF Hfmt Hlt.
+  pose proof (Binary.binary_normalize_correct prec emax
+                prec_gt_0_b64 prec_lt_emax_b64 mode_NE m e false) as H.
+  assert (Hround_bound :
+    Rabs (round radix2 (SpecFloat.fexp prec emax) (round_mode mode_NE)
+                (F2R (Float radix2 m e))) <= bpow radix2 e_bound).
+  { apply b64_round_abs_le_bpow; assumption. }
+  assert (Hno_overflow :
+    Rlt_bool (Rabs (round radix2 (SpecFloat.fexp prec emax)
+                          (round_mode mode_NE) (F2R (Float radix2 m e))))
+             (bpow radix2 emax) = true).
+  { apply Rlt_bool_true.
+    eapply Rle_lt_trans; [exact Hround_bound|].
+    apply bpow_lt. exact Hlt. }
+  rewrite Hno_overflow in H.
+  destruct H as [HB2R [Hfin _]].
+  split; [rewrite HB2R; exact Hround_bound | exact Hfin].
+Qed.
+
+Lemma b64_three_bnd_fin :
+  Rabs (Binary.B2R prec emax b64_three) <= bpow radix2 2
+  /\ Binary.is_finite prec emax b64_three = true.
+Proof.
+  unfold b64_three.
+  apply binary_normalize_b64_bounded_and_finite with (e := 0%Z).
+  - unfold F2R; simpl. rewrite Rmult_1_r.
+    change (IZR 3) with 3. rewrite Rabs_pos_eq by lra. simpl. lra.
+  - unfold emax. lia.
+  - unfold emax. lia.
+Qed.
+
+Lemma b64_sixteen_bnd_fin :
+  Rabs (Binary.B2R prec emax b64_sixteen) <= bpow radix2 5
+  /\ Binary.is_finite prec emax b64_sixteen = true.
+Proof.
+  unfold b64_sixteen.
+  apply binary_normalize_b64_bounded_and_finite with (e := 0%Z).
+  - unfold F2R; simpl. rewrite Rmult_1_r.
+    change (IZR 16) with 16. rewrite Rabs_pos_eq by lra. simpl. lra.
+  - unfold emax. lia.
+  - unfold emax. lia.
+Qed.
+
+Lemma b64_eps_bnd_fin :
+  Rabs (Binary.B2R prec emax b64_eps) <= bpow radix2 (-52)
+  /\ Binary.is_finite prec emax b64_eps = true.
+Proof.
+  unfold b64_eps.
+  apply binary_normalize_b64_bounded_and_finite with (e := (-52)%Z).
+  - rewrite F2R_bpow. rewrite Rabs_pos_eq by (apply bpow_ge_0). apply Rle_refl.
+  - unfold emax. lia.
+  - unfold emax. lia.
+Qed.
+
+(* Generic chain helpers: bounded inputs give bounded outputs through
+   `b64_mult` / `b64_plus` / `b64_minus`. *)
+
+Lemma b64_mult_bounded_chain :
+  forall (x y : binary64) (ex ey : Z),
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 ex ->
+    Rabs (Binary.B2R prec emax y) <= bpow radix2 ey ->
+    (3 - emax <= ex + ey + 1)%Z ->
+    (ex + ey < emax)%Z ->
+    Rabs (Binary.B2R prec emax (b64_mult x y)) <= bpow radix2 (ex + ey)
+    /\ Binary.is_finite prec emax (b64_mult x y) = true.
+Proof.
+  intros x y ex ey Fx Fy Hx Hy Hfmt Hlt.
+  assert (Hsafe : b64_safe Rmult x y).
+  { unfold b64_safe. split; [exact Fx | split; [exact Fy | ]].
+    eapply Rle_lt_trans.
+    { apply b64_round_abs_le_bpow.
+      - exact Hfmt.
+      - rewrite Rabs_mult, bpow_plus.
+        apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+    apply bpow_lt. exact Hlt. }
+  pose proof (b64_mult_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [|exact Hfin].
+  rewrite HB2R. apply b64_round_abs_le_bpow; [exact Hfmt|].
+  rewrite Rabs_mult, bpow_plus.
+  apply Rmult_le_compat; try apply Rabs_pos; assumption.
+Qed.
+
+Lemma b64_plus_bounded_chain :
+  forall (x y : binary64) (e_bound : Z),
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 (e_bound - 1) ->
+    Rabs (Binary.B2R prec emax y) <= bpow radix2 (e_bound - 1) ->
+    (3 - emax <= e_bound + 1)%Z ->
+    (e_bound < emax)%Z ->
+    Rabs (Binary.B2R prec emax (b64_plus x y)) <= bpow radix2 e_bound
+    /\ Binary.is_finite prec emax (b64_plus x y) = true.
+Proof.
+  intros x y e_bound Fx Fy Hx Hy Hfmt Hlt.
+  assert (Htri : Rabs (Binary.B2R prec emax x + Binary.B2R prec emax y)
+                 <= bpow radix2 e_bound).
+  { eapply Rle_trans; [apply Rabs_triang|].
+    replace (bpow radix2 e_bound)
+       with (bpow radix2 (e_bound - 1) + bpow radix2 (e_bound - 1)).
+    - apply Rplus_le_compat; assumption.
+    - replace e_bound with ((e_bound - 1) + 1)%Z at 3 by lia.
+      rewrite bpow_plus. simpl. lra. }
+  assert (Hsafe : b64_safe Rplus x y).
+  { unfold b64_safe. split; [exact Fx | split; [exact Fy | ]].
+    eapply Rle_lt_trans.
+    { apply b64_round_abs_le_bpow; [exact Hfmt | exact Htri]. }
+    apply bpow_lt. exact Hlt. }
+  pose proof (b64_plus_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [|exact Hfin].
+  rewrite HB2R. apply b64_round_abs_le_bpow; [exact Hfmt | exact Htri].
+Qed.
+
+Lemma b64_minus_bounded_chain :
+  forall (x y : binary64) (e_bound : Z),
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 (e_bound - 1) ->
+    Rabs (Binary.B2R prec emax y) <= bpow radix2 (e_bound - 1) ->
+    (3 - emax <= e_bound + 1)%Z ->
+    (e_bound < emax)%Z ->
+    Rabs (Binary.B2R prec emax (b64_minus x y)) <= bpow radix2 e_bound
+    /\ Binary.is_finite prec emax (b64_minus x y) = true.
+Proof.
+  intros x y e_bound Fx Fy Hx Hy Hfmt Hlt.
+  assert (Htri : Rabs (Binary.B2R prec emax x - Binary.B2R prec emax y)
+                 <= bpow radix2 e_bound).
+  { unfold Rminus. eapply Rle_trans; [apply Rabs_triang|].
+    rewrite Rabs_Ropp.
+    replace (bpow radix2 e_bound)
+       with (bpow radix2 (e_bound - 1) + bpow radix2 (e_bound - 1)).
+    - apply Rplus_le_compat; assumption.
+    - replace e_bound with ((e_bound - 1) + 1)%Z at 3 by lia.
+      rewrite bpow_plus. simpl. lra. }
+  assert (Hsafe : b64_safe Rminus x y).
+  { unfold b64_safe. split; [exact Fx | split; [exact Fy | ]].
+    eapply Rle_lt_trans.
+    { apply b64_round_abs_le_bpow; [exact Hfmt | exact Htri]. }
+    apply bpow_lt. exact Hlt. }
+  pose proof (b64_minus_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [|exact Hfin].
+  rewrite HB2R. apply b64_round_abs_le_bpow; [exact Hfmt | exact Htri].
+Qed.
+
+(* The Stage A error coefficient is bounded by bpow(-49). *)
+Lemma b64_errbound_A_coeff_bound :
+  Rabs (Binary.B2R prec emax b64_errbound_A_coeff) <= bpow radix2 (-49).
+Proof.
+  unfold b64_errbound_A_coeff.
+  destruct b64_three_bnd_fin as [B3 F3].
+  destruct b64_sixteen_bnd_fin as [B16 F16].
+  destruct b64_eps_bnd_fin as [Beps Feps].
+  destruct (b64_mult_bounded_chain b64_sixteen b64_eps 5 (-52)%Z
+              F16 Feps B16 Beps
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [B16eps F16eps].
+  replace (5 + -52)%Z with (-47)%Z in B16eps by lia.
+  assert (B3_2 : Rabs (Binary.B2R prec emax b64_three) <= bpow radix2 (3 - 1)).
+  { replace (3 - 1)%Z with 2%Z by lia. exact B3. }
+  assert (B16eps_2 : Rabs (Binary.B2R prec emax (b64_mult b64_sixteen b64_eps))
+                     <= bpow radix2 (3 - 1)).
+  { eapply Rle_trans; [exact B16eps|]. apply bpow_le. lia. }
+  destruct (b64_plus_bounded_chain b64_three (b64_mult b64_sixteen b64_eps) 3
+              F3 F16eps B3_2 B16eps_2
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bsum Fsum].
+  destruct (b64_mult_bounded_chain
+              (b64_plus b64_three (b64_mult b64_sixteen b64_eps))
+              b64_eps 3 (-52)%Z
+              Fsum Feps Bsum Beps
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bres _].
+  replace (3 + -52)%Z with (-49)%Z in Bres by lia.
+  exact Bres.
+Qed.
+
+(* In tiny regime, each coord has magnitude bounded by bpow 22. *)
+Lemma coord_tiny_int_safe_bpow22 :
+  forall x : binary64, coord_tiny_int_safe x ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 22.
+Proof.
+  intros x (Fx & n & HxR & Hxb).
+  rewrite HxR, <- abs_IZR.
+  apply (Rle_trans _ (IZR (2 ^ 22))).
+  - apply IZR_le. exact Hxb.
+  - rewrite <- IZR_Zpower by lia. apply Rle_refl.
+Qed.
+
+Lemma coord_tiny_int_safe_finite :
+  forall x, coord_tiny_int_safe x -> Binary.is_finite prec emax x = true.
+Proof. intros x (Fx & _). exact Fx. Qed.
+
+(* `b64_abs` of a bounded finite value is bounded and finite. *)
+Lemma b64_abs_bounded :
+  forall (x : binary64) (e : Z),
+    Binary.is_finite prec emax x = true ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 e ->
+    Rabs (Binary.B2R prec emax (b64_abs x)) <= bpow radix2 e
+    /\ Binary.is_finite prec emax (b64_abs x) = true.
+Proof.
+  intros x e Fx Hx.
+  unfold b64_abs.
+  pose proof (@Binary.B2R_Babs prec emax default_abs_nan_b64 x) as HB2R.
+  pose proof (@Binary.is_finite_Babs prec emax default_abs_nan_b64 x) as Hfin.
+  split.
+  - rewrite HB2R, Rabs_Rabsolu. exact Hx.
+  - rewrite Hfin. exact Fx.
+Qed.
+
+(* In tiny regime, detsum is bounded by bpow 47. *)
+Lemma b64_orient2d_detsum_tiny_bound :
+  forall P0 P1 Q,
+    orient2d_inputs_tiny_int_safe P0 P1 Q ->
+    Rabs (Binary.B2R prec emax (b64_orient2d_detsum P0 P1 Q))
+      <= bpow radix2 47
+    /\ Binary.is_finite prec emax (b64_orient2d_detsum P0 P1 Q) = true.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  pose proof (coord_tiny_int_safe_bpow22 _ HxP0) as BxP0.
+  pose proof (coord_tiny_int_safe_bpow22 _ HyP0) as ByP0.
+  pose proof (coord_tiny_int_safe_bpow22 _ HxP1) as BxP1.
+  pose proof (coord_tiny_int_safe_bpow22 _ HyP1) as ByP1.
+  pose proof (coord_tiny_int_safe_bpow22 _ HxQ) as BxQ.
+  pose proof (coord_tiny_int_safe_bpow22 _ HyQ) as ByQ.
+  pose proof (coord_tiny_int_safe_finite _ HxP0) as FxP0.
+  pose proof (coord_tiny_int_safe_finite _ HyP0) as FyP0.
+  pose proof (coord_tiny_int_safe_finite _ HxP1) as FxP1.
+  pose proof (coord_tiny_int_safe_finite _ HyP1) as FyP1.
+  pose proof (coord_tiny_int_safe_finite _ HxQ) as FxQ.
+  pose proof (coord_tiny_int_safe_finite _ HyQ) as FyQ.
+  destruct (b64_minus_bounded_chain (bx P1) (bx P0) 23 FxP1 FxP0
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact BxP1)
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact BxP0)
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bdx1 Fdx1].
+  destruct (b64_minus_bounded_chain (by_ Q) (by_ P0) 23 FyQ FyP0
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact ByQ)
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact ByP0)
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bdy1 Fdy1].
+  destruct (b64_minus_bounded_chain (bx Q) (bx P0) 23 FxQ FxP0
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact BxQ)
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact BxP0)
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bdx2 Fdx2].
+  destruct (b64_minus_bounded_chain (by_ P1) (by_ P0) 23 FyP1 FyP0
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact ByP1)
+              ltac:(replace (23 - 1)%Z with 22%Z by lia; exact ByP0)
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bdy2 Fdy2].
+  destruct (b64_mult_bounded_chain _ _ 23 23 Fdx1 Fdy1 Bdx1 Bdy1
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bt1 Ft1].
+  destruct (b64_mult_bounded_chain _ _ 23 23 Fdx2 Fdy2 Bdx2 Bdy2
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bt2 Ft2].
+  replace (23 + 23)%Z with 46%Z in Bt1, Bt2 by lia.
+  destruct (b64_abs_bounded _ 46 Ft1 Bt1) as [Babs1 Fabs1].
+  destruct (b64_abs_bounded _ 46 Ft2 Bt2) as [Babs2 Fabs2].
+  unfold b64_orient2d_detsum, Orientation_b64.b64_orient2d_terms.
+  cbn iota.
+  apply (b64_plus_bounded_chain _ _ 47 Fabs1 Fabs2);
+    try (replace (47 - 1)%Z with 46%Z by lia; assumption);
+    unfold emax; lia.
+Qed.
+
+(* The threshold `errbound * detsum` is bounded by bpow(-2) = 1/4. *)
+Lemma b64_stage_a_bound_tiny_bound :
+  forall P0 P1 Q,
+    orient2d_inputs_tiny_int_safe P0 P1 Q ->
+    Rabs (Binary.B2R prec emax
+           (b64_mult b64_errbound_A_coeff (b64_orient2d_detsum P0 P1 Q)))
+      <= bpow radix2 (-2)
+    /\ Binary.is_finite prec emax
+         (b64_mult b64_errbound_A_coeff (b64_orient2d_detsum P0 P1 Q)) = true.
+Proof.
+  intros P0 P1 Q Htiny.
+  destruct (b64_orient2d_detsum_tiny_bound _ _ _ Htiny) as [Bdetsum Fdetsum].
+  (* Derive Ferrbound by recomputing the chain. *)
+  destruct b64_three_bnd_fin as [B3 F3].
+  destruct b64_sixteen_bnd_fin as [B16 F16].
+  destruct b64_eps_bnd_fin as [Beps Feps].
+  destruct (b64_mult_bounded_chain b64_sixteen b64_eps 5 (-52)%Z
+              F16 Feps B16 Beps
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [_ F16eps].
+  assert (B3_2 : Rabs (Binary.B2R prec emax b64_three) <= bpow radix2 (3 - 1))
+    by (replace (3 - 1)%Z with 2%Z by lia; exact B3).
+  assert (B16eps_2 : Rabs (Binary.B2R prec emax (b64_mult b64_sixteen b64_eps))
+                     <= bpow radix2 (3 - 1)).
+  { destruct (b64_mult_bounded_chain b64_sixteen b64_eps 5 (-52)%Z
+                F16 Feps B16 Beps
+                ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [B' _].
+    replace (5 + -52)%Z with (-47)%Z in B' by lia.
+    eapply Rle_trans; [exact B'|]. apply bpow_le. lia. }
+  destruct (b64_plus_bounded_chain b64_three (b64_mult b64_sixteen b64_eps) 3
+              F3 F16eps B3_2 B16eps_2
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [_ Fsum].
+  destruct (b64_mult_bounded_chain
+              (b64_plus b64_three (b64_mult b64_sixteen b64_eps))
+              b64_eps 3 (-52)%Z
+              Fsum Feps
+              ltac:(destruct (b64_plus_bounded_chain b64_three
+                                (b64_mult b64_sixteen b64_eps) 3
+                                F3 F16eps B3_2 B16eps_2
+                                ltac:(unfold emax; lia)
+                                ltac:(unfold emax; lia)) as [B _]; exact B)
+              Beps
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [_ Ferrbound].
+  pose proof b64_errbound_A_coeff_bound as Berrbound.
+  destruct (b64_mult_bounded_chain
+              b64_errbound_A_coeff (b64_orient2d_detsum P0 P1 Q)
+              (-49) 47 Ferrbound Fdetsum Berrbound Bdetsum
+              ltac:(unfold emax; lia) ltac:(unfold emax; lia)) as [Bres Fres].
+  replace (-49 + 47)%Z with (-2)%Z in Bres by lia.
+  split; assumption.
+Qed.
+
+(* In the tiny regime, the cross product is integer-valued. *)
+Lemma cross_R_BP_tiny_int :
+  forall P0 P1 Q,
+    orient2d_inputs_tiny_int_safe P0 P1 Q ->
+    exists n : Z, cross_R_BP P0 P1 Q = IZR n.
+Proof.
+  intros P0 P1 Q (HxP0 & HyP0 & HxP1 & HyP1 & HxQ & HyQ).
+  destruct HxP0 as (_ & nxP0 & HxP0R & _).
+  destruct HyP0 as (_ & nyP0 & HyP0R & _).
+  destruct HxP1 as (_ & nxP1 & HxP1R & _).
+  destruct HyP1 as (_ & nyP1 & HyP1R & _).
+  destruct HxQ  as (_ & nxQ  & HxQR  & _).
+  destruct HyQ  as (_ & nyQ  & HyQR  & _).
+  unfold cross_R_BP.
+  rewrite HxP0R, HyP0R, HxP1R, HyP1R, HxQR, HyQR.
+  exists ((nxP1 - nxP0) * (nyQ - nyP0) - (nxQ - nxP0) * (nyP1 - nyP0))%Z.
+  rewrite minus_IZR, mult_IZR, mult_IZR, minus_IZR, minus_IZR, minus_IZR, minus_IZR.
+  reflexivity.
+Qed.
+
+(* The tiny-regime headline theorem `b64_orient_sign_filtered_tiny_regime_decisive`
+   is stated and proved further below, after `b64_orient2d_exact_for_small_int`
+   (the integer-regime exactness theorem it depends on). *)
 
 (* -------------------------------------------------------------------------- *)
 (* Bridge to the magnitude regime: int-safe coords are coord-safe (Flavour B).*)
@@ -565,6 +915,83 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Tiny-regime decisive headline:                                             *)
+(* in the tiny regime, OrientRUncertain never fires on a non-zero cross.     *)
+(* Sits here because the proof depends on `b64_orient2d_exact_for_small_int` *)
+(* and `orient2d_inputs_int_safe_imp_safe` above.                             *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_orient_sign_filtered_tiny_regime_decisive :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_tiny_int_safe P0 P1 Q ->
+    cross_R_BP P0 P1 Q <> 0 ->
+    b64_orient_sign_filtered P0 P1 Q <> OrientRUncertain.
+Proof.
+  intros P0 P1 Q Htiny Hcross.
+  pose proof (orient2d_inputs_tiny_int_safe_imp_int_safe _ _ _ Htiny) as Hint.
+  pose proof (b64_orient2d_exact_for_small_int _ _ _ Hint) as Hexact.
+  pose proof (orient2d_inputs_int_safe_imp_safe _ _ _ Hint) as Hsafe.
+  destruct Hsafe as (_ & _ & _ & _ & _ & _ & Sdet).
+  pose proof (b64_minus_correct _ _ Sdet) as [_ Fdet].
+  pose proof (cross_R_BP_tiny_int _ _ _ Htiny) as [n Hcross_eq].
+  rewrite Hcross_eq in Hcross.
+  assert (Hn_ne : n <> 0%Z) by (intros ->; apply Hcross; reflexivity).
+  assert (Habs_det :
+    1 <= Rabs (Binary.B2R prec emax (b64_orient2d P0 P1 Q))).
+  { rewrite Hexact, Hcross_eq, <- abs_IZR. apply IZR_le. lia. }
+  destruct (b64_stage_a_bound_tiny_bound _ _ _ Htiny) as [Bbnd Fbnd].
+  (* Build folded-form facts about `b64_orient2d P0 P1 Q` first; then unfold *)
+  (* everything together so the rewrites Fdet -> HabsFin all align.         *)
+  pose proof (@Binary.B2R_Babs prec emax default_abs_nan_b64
+                (b64_orient2d P0 P1 Q)) as HabsB2R.
+  pose proof (@Binary.is_finite_Babs prec emax default_abs_nan_b64
+                (b64_orient2d P0 P1 Q)) as HabsFin.
+  assert (HB2R_det_ne : Binary.B2R prec emax (b64_orient2d P0 P1 Q) <> 0).
+  { rewrite Hexact, Hcross_eq. apply IZR_neq. exact Hn_ne. }
+  apply Rabs_le_inv in Bbnd.
+  (* Universal `b64_compare _ zero` rewrite at any finite operand --           *)
+  (* mirrors the trick used in `b64_orient_sign_filtered_consistent_with_b64`. *)
+  assert (Fzero : Binary.is_finite prec emax
+                    (Binary.B754_zero prec emax false) = true) by reflexivity.
+  assert (Hcmp_gen : forall d : binary64,
+            Binary.is_finite prec emax d = true ->
+            b64_compare d (Binary.B754_zero prec emax false)
+            = Some (Rcompare (Binary.B2R prec emax d) 0)).
+  { intros d Fd.
+    unfold b64_compare.
+    rewrite (Binary.Bcompare_correct prec emax _ _ Fd Fzero).
+    replace (Binary.B2R prec emax
+               (Binary.B754_zero prec emax false)) with 0 by reflexivity.
+    reflexivity. }
+  unfold b64_orient_sign_filtered, b64_orient2d, b64_compare,
+         b64_orient2d_errbound, b64_orient2d_detsum,
+         Orientation_b64.b64_orient2d_terms in *.
+  cbv beta iota in *.
+  unfold b64_abs in *.
+  rewrite Fdet in HabsFin.
+  rewrite Hcmp_gen by exact Fdet.
+  pose proof (Binary.Bcompare_correct prec emax _ _ Fbnd HabsFin) as Hcmp_bnd.
+  destruct (Rcompare _ 0) eqn:Ecmp_det.
+  - apply Rcompare_Eq_inv in Ecmp_det. exfalso. apply HB2R_det_ne. exact Ecmp_det.
+  - (* Lt branch. *)
+    rewrite Hcmp_bnd, HabsB2R.
+    rewrite Rcompare_Lt.
+    + discriminate.
+    + eapply Rle_lt_trans; [destruct Bbnd; eassumption|].
+      eapply Rlt_le_trans; [|exact Habs_det].
+      change (bpow radix2 (-2)) with (/ IZR (Z.pow_pos 2 2)).
+      change (IZR (Z.pow_pos 2 2)) with 4. lra.
+  - (* Gt branch.  Symmetric. *)
+    rewrite Hcmp_bnd, HabsB2R.
+    rewrite Rcompare_Lt.
+    + discriminate.
+    + eapply Rle_lt_trans; [destruct Bbnd; eassumption|].
+      eapply Rlt_le_trans; [|exact Habs_det].
+      change (bpow radix2 (-2)) with (/ IZR (Z.pow_pos 2 2)).
+      change (IZR (Z.pow_pos 2 2)) with 4. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Cyclic permutation in the integer regime.                                  *)
 (*                                                                            *)
 (* `cross_R_BP P0 P1 Q = cross_R_BP P1 Q P0 = cross_R_BP Q P0 P1` is a        *)
@@ -697,3 +1124,8 @@ Print Assumptions b64_orient2d_cyclic2_int_R.
 Print Assumptions b64_orient2d_translation_int_R.
 Print Assumptions coord_tiny_int_safe_imp_coord_int_safe.
 Print Assumptions orient2d_inputs_tiny_int_safe_imp_int_safe.
+Print Assumptions b64_errbound_A_coeff_bound.
+Print Assumptions b64_orient2d_detsum_tiny_bound.
+Print Assumptions b64_stage_a_bound_tiny_bound.
+Print Assumptions cross_R_BP_tiny_int.
+Print Assumptions b64_orient_sign_filtered_tiny_regime_decisive.
