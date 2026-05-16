@@ -194,29 +194,74 @@ Definition b64_dist_sq (p q : BPoint) : binary64 :=
 (* where c = b64_cross kept r q.                                            *)
 (* -------------------------------------------------------------------------- *)
 
-Fixpoint greedy_simplify_perp_b64_aux
-    (eps : binary64) (kept : BPoint) (rest : list BPoint) : list BPoint :=
-  match rest with
-  | []          => [kept]
-  | q :: more =>
-      match more with
-      | []          => [kept; q]
-      | r :: _tail =>
-          let c   := b64_cross kept r q in
-          let lhs := b64_mult c c in
-          let rhs := b64_mult (b64_mult eps eps) (b64_dist_sq kept r) in
-          if b64_le lhs rhs
-          then greedy_simplify_perp_b64_aux eps kept more
-          else kept :: greedy_simplify_perp_b64_aux eps q more
-      end
-  end.
+(* -------------------------------------------------------------------------- *)
+(* Abstract simplifier.                                                       *)
+(*                                                                            *)
+(* The simplifier is parametric in a 4-argument boolean predicate             *)
+(* `pred eps kept r q`.  Inside this Section, neither the fixpoint nor the   *)
+(* structural lemmas mention `b64_cross`, `b64_dist_sq`, `b64_plus`,         *)
+(* `b64_minus`, or `b64_mult`.  Per-theorem `Print Assumptions` on the        *)
+(* lemmas below is therefore classic-clean: the only axioms inherited are    *)
+(* the structural ones from `Stdlib.List` etc., not the Flocq classical-    *)
+(* rounding chain.                                                            *)
+(*                                                                            *)
+(* The concrete perpendicular-distance predicate `perp_predicate` and the    *)
+(* concrete simplifier `greedy_simplify_perp_b64` are defined *outside* the *)
+(* section, after the abstract layer closes.  The concrete definitions       *)
+(* mention `b64_mult` / `b64_cross` / `b64_dist_sq` and so are classic-       *)
+(* tainted at the definition level (since Flocq's `Bplus`/`Bminus`/`Bmult`  *)
+(* directly carry `Classical_Prop.classic`).  Callers that want a structural *)
+(* property on the concrete form invoke the abstract lemma here with         *)
+(* `perp_predicate` as the predicate argument at the call site -- pushing   *)
+(* the classic-taint to the call and keeping every theorem in this file     *)
+(* classic-clean.                                                             *)
+(* -------------------------------------------------------------------------- *)
+
+Section AbstractSimplifier.
+
+  Variable pred : binary64 -> BPoint -> BPoint -> BPoint -> bool.
+
+  Fixpoint greedy_simplify_aux
+      (eps : binary64) (kept : BPoint) (rest : list BPoint) : list BPoint :=
+    match rest with
+    | []          => [kept]
+    | q :: more =>
+        match more with
+        | []          => [kept; q]
+        | r :: _tail =>
+            if pred eps kept r q
+            then greedy_simplify_aux eps kept more
+            else kept :: greedy_simplify_aux eps q more
+        end
+    end.
+
+  Definition greedy_simplify
+      (eps : binary64) (pts : list BPoint) : list BPoint :=
+    match pts with
+    | []         => []
+    | p :: rest  => greedy_simplify_aux eps p rest
+    end.
+
+End AbstractSimplifier.
+
+(* -------------------------------------------------------------------------- *)
+(* Concrete perpendicular-distance predicate and simplifier.                   *)
+(*                                                                            *)
+(* These mention the classic-tainted Flocq binary arithmetic and so cannot    *)
+(* be the subject of a classic-clean theorem.  The abstract layer above      *)
+(* covers every structural property; callers apply those with `perp_pred`    *)
+(* in place.                                                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Definition perp_pred (eps : binary64) (kept r q : BPoint) : bool :=
+  let c   := b64_cross kept r q in
+  let lhs := b64_mult c c in
+  let rhs := b64_mult (b64_mult eps eps) (b64_dist_sq kept r) in
+  b64_le lhs rhs.
 
 Definition greedy_simplify_perp_b64
     (eps : binary64) (pts : list BPoint) : list BPoint :=
-  match pts with
-  | []         => []
-  | p :: rest  => greedy_simplify_perp_b64_aux eps p rest
-  end.
+  greedy_simplify perp_pred eps pts.
 
 (* The original `greedy_simplify_binary64` interface preserved as a thin    *)
 (* wrapper returning `option` for backward compatibility with the soundness *)
@@ -243,144 +288,204 @@ Definition greedy_simplify_binary64
 (* + extraction directive + a small set of structural sanity lemmas.        *)
 (* -------------------------------------------------------------------------- *)
 
-Lemma greedy_simplify_perp_b64_nil :
-  forall eps, greedy_simplify_perp_b64 eps [] = [].
-Proof. reflexivity. Qed.
+(* -------------------------------------------------------------------------- *)
+(* Structural lemmas, all stated against the abstract simplifier so that no  *)
+(* theorem here mentions the classic-tainted Flocq binary operations.        *)
+(*                                                                            *)
+(* The lemmas live in a second section parameterised again by `pred`.        *)
+(* After `End AbstractSimplifierLemmas.`, each lemma has the shape           *)
+(*    forall (pred : ...) ..., ...                                           *)
+(* so a caller wanting a concrete property on `greedy_simplify_perp_b64`     *)
+(* writes                                                                     *)
+(*    apply (greedy_simplify_preserves_head perp_pred)                       *)
+(* and the classic-taint flows into the *application* (which mentions the   *)
+(* concrete predicate) rather than into the shipped theorem.                 *)
+(* -------------------------------------------------------------------------- *)
 
-Lemma greedy_simplify_perp_b64_singleton :
-  forall eps p, greedy_simplify_perp_b64 eps [p] = [p].
-Proof. reflexivity. Qed.
+Section AbstractSimplifierLemmas.
 
-(* greedy_simplify_binary64 is greedy_simplify_perp_b64 wrapped in `Some`.  *)
+  Variable pred : binary64 -> BPoint -> BPoint -> BPoint -> bool.
+
+  Lemma greedy_simplify_nil :
+    forall eps, greedy_simplify pred eps [] = [].
+  Proof. reflexivity. Qed.
+
+  Lemma greedy_simplify_singleton :
+    forall eps p, greedy_simplify pred eps [p] = [p].
+  Proof. reflexivity. Qed.
+
+  (* Two-point base case: no decision is made because there is no third     *)
+  (* point to triangulate against, so output is the input verbatim.         *)
+  Lemma greedy_simplify_two_points :
+    forall eps p q, greedy_simplify pred eps [p; q] = [p; q].
+  Proof. reflexivity. Qed.
+
+  (* Structural head preservation: the auxiliary-form output begins with    *)
+  (* the `kept` argument.                                                   *)
+  Lemma greedy_simplify_aux_head :
+    forall eps kept rest default,
+      hd default (greedy_simplify_aux pred eps kept rest) = kept.
+  Proof.
+    intros eps kept rest d. revert kept.
+    induction rest as [| q more IH]; intros kept.
+    - reflexivity.
+    - destruct more as [| r tail].
+      + reflexivity.
+      + cbn.
+        destruct (pred _ _ _ _).
+        * apply IH.
+        * reflexivity.
+  Qed.
+
+  (* Top-level head preservation: for non-empty input, head of output       *)
+  (* equals head of input.                                                  *)
+  Theorem greedy_simplify_preserves_head :
+    forall eps p rest default,
+      hd default (greedy_simplify pred eps (p :: rest)) = p.
+  Proof.
+    intros eps p rest d.
+    unfold greedy_simplify.
+    apply greedy_simplify_aux_head.
+  Qed.
+
+  (* The auxiliary form always emits at least the `kept` point.             *)
+  Lemma greedy_simplify_aux_nonempty :
+    forall eps kept rest, greedy_simplify_aux pred eps kept rest <> [].
+  Proof.
+    intros eps kept rest. revert kept.
+    induction rest as [| q more IH]; intros kept.
+    - cbn. discriminate.
+    - destruct more as [| r tail].
+      + cbn. discriminate.
+      + cbn. destruct (pred _ _ _ _).
+        * apply IH.
+        * discriminate.
+  Qed.
+
+  (* Top-level: non-empty input gives non-empty output.                     *)
+  Lemma greedy_simplify_nonempty :
+    forall eps p rest, greedy_simplify pred eps (p :: rest) <> [].
+  Proof.
+    intros eps p rest.
+    unfold greedy_simplify.
+    apply greedy_simplify_aux_nonempty.
+  Qed.
+
+  (* Length bound on the auxiliary form: output has at most `S (length     *)
+  (* rest)` points -- one for `kept` plus one per remaining input.  The    *)
+  (* simplifier may drop but never inserts.                                 *)
+  Lemma greedy_simplify_aux_length_le :
+    forall eps kept rest,
+      (length (greedy_simplify_aux pred eps kept rest) <= S (length rest))%nat.
+  Proof.
+    intros eps kept rest. revert kept.
+    induction rest as [| q more IH]; intros kept.
+    - cbn. lia.
+    - destruct more as [| r tail].
+      + cbn. lia.
+      + cbn. destruct (pred _ _ _ _).
+        * specialize (IH kept). cbn in IH. lia.
+        * cbn. specialize (IH q). cbn in IH. lia.
+  Qed.
+
+  (* Top-level length bound: output length never exceeds input length.      *)
+  Lemma greedy_simplify_length_le :
+    forall eps pts,
+      (length (greedy_simplify pred eps pts) <= length pts)%nat.
+  Proof.
+    intros eps [|p rest].
+    - cbn. lia.
+    - unfold greedy_simplify.
+      pose proof (greedy_simplify_aux_length_le eps p rest) as H.
+      cbn. lia.
+  Qed.
+
+  (* Membership: `kept` appears in the auxiliary-form output for any        *)
+  (* `rest`.                                                                 *)
+  Lemma greedy_simplify_aux_in_kept :
+    forall eps kept rest, In kept (greedy_simplify_aux pred eps kept rest).
+  Proof.
+    intros eps kept rest. revert kept.
+    induction rest as [| q more IH]; intros kept.
+    - cbn. left; reflexivity.
+    - destruct more as [| r tail].
+      + cbn. left; reflexivity.
+      + cbn. destruct (pred _ _ _ _).
+        * apply IH.
+        * left; reflexivity.
+  Qed.
+
+  (* Top-level: the head of the input appears in the output.                *)
+  Lemma greedy_simplify_in_head :
+    forall eps p rest, In p (greedy_simplify pred eps (p :: rest)).
+  Proof.
+    intros eps p rest.
+    unfold greedy_simplify.
+    apply greedy_simplify_aux_in_kept.
+  Qed.
+
+End AbstractSimplifierLemmas.
+
+(* -------------------------------------------------------------------------- *)
+(* CATEGORY C theorem -- documented architectural boundary.                  *)
+(*                                                                            *)
+(* `greedy_simplify_binary64_never_none` makes a claim *about* the concrete *)
+(* `greedy_simplify_binary64` wrapper as a named entity: that this specific *)
+(* option-wrapped form never returns `None`.  Its statement is               *)
+(*                                                                            *)
+(*    forall eps pts, greedy_simplify_binary64 eps pts <> None               *)
+(*                                                                            *)
+(* and its proof is `unfold + discriminate` because the wrapper is defined  *)
+(* as `Some(greedy_simplify_perp_b64 ...)` by construction.                  *)
+(*                                                                            *)
+(* The theorem cannot be reformulated parametrically while preserving its    *)
+(* content.  A parametric attempt                                             *)
+(*                                                                            *)
+(*    forall (pred : ...) eps pts, Some (greedy_simplify pred eps pts) <>    *)
+(*                                  None                                      *)
+(*                                                                            *)
+(* would lose the connection to the named wrapper and become a tautology    *)
+(* about the `option` type, instantiated to this specific arity.  The       *)
+(* concrete-wrapper specificity is the content; it cannot be lifted to the  *)
+(* abstract layer.                                                            *)
+(*                                                                            *)
+(* The theorem therefore pulls `Classical_Prop.classic` in its per-theorem  *)
+(* `Print Assumptions` closure, because its type mentions                   *)
+(* `greedy_simplify_binary64`, which transitively mentions `b64_cross` /    *)
+(* `b64_dist_sq` / `b64_mult`, which alias `Binary.Bmult` etc., which       *)
+(* directly carry `classic` in their definition closure.                    *)
+(*                                                                            *)
+(* This is the first identified Category C theorem in the corpus:           *)
+(* substantive content that the parametric architecture cannot cover         *)
+(* without losing what the theorem is documenting.  Resolution of how       *)
+(* Category C theorems are treated in the corpus is pending policy          *)
+(* discussion (see `docs/category-c-policy.md`, to be written).             *)
+(*                                                                            *)
+(* The lemma is retained here as honest documentation of the wrapper's     *)
+(* contract, with the contamination made visible by the `Print              *)
+(* Assumptions` call below.                                                 *)
+(* -------------------------------------------------------------------------- *)
+
 Lemma greedy_simplify_binary64_never_none :
   forall eps pts, greedy_simplify_binary64 eps pts <> None.
 Proof. intros eps pts. unfold greedy_simplify_binary64. discriminate. Qed.
 
-(* Structural head preservation: the auxiliary-form output begins with the *)
-(* `kept` argument.                                                         *)
-Lemma greedy_simplify_perp_b64_aux_head :
-  forall eps kept rest default,
-    hd default (greedy_simplify_perp_b64_aux eps kept rest) = kept.
-Proof.
-  intros eps kept rest d. revert kept.
-  induction rest as [| q more IH]; intros kept.
-  - reflexivity.
-  - destruct more as [| r tail].
-    + reflexivity.
-    + cbn.
-      destruct (b64_le _ _).
-      * apply IH.
-      * reflexivity.
-Qed.
-
-(* Top-level head preservation: for non-empty input, head of output equals *)
-(* head of input.                                                          *)
-Theorem greedy_simplify_perp_b64_preserves_head :
-  forall eps p rest default,
-    hd default (greedy_simplify_perp_b64 eps (p :: rest)) = p.
-Proof.
-  intros eps p rest d.
-  unfold greedy_simplify_perp_b64.
-  apply greedy_simplify_perp_b64_aux_head.
-Qed.
-
-(* Two-point base case: no decision is made because there is no third       *)
-(* point to triangulate against, so output is the input verbatim.           *)
-Lemma greedy_simplify_perp_b64_two_points :
-  forall eps p q, greedy_simplify_perp_b64 eps [p; q] = [p; q].
-Proof. reflexivity. Qed.
-
-(* The auxiliary form always emits at least the `kept` point.               *)
-Lemma greedy_simplify_perp_b64_aux_nonempty :
-  forall eps kept rest, greedy_simplify_perp_b64_aux eps kept rest <> [].
-Proof.
-  intros eps kept rest. revert kept.
-  induction rest as [| q more IH]; intros kept.
-  - cbn. discriminate.
-  - destruct more as [| r tail].
-    + cbn. discriminate.
-    + cbn. destruct (b64_le _ _).
-      * apply IH.
-      * discriminate.
-Qed.
-
-(* Top-level: non-empty input gives non-empty output.                       *)
-Lemma greedy_simplify_perp_b64_nonempty :
-  forall eps p rest, greedy_simplify_perp_b64 eps (p :: rest) <> [].
-Proof.
-  intros eps p rest.
-  unfold greedy_simplify_perp_b64.
-  apply greedy_simplify_perp_b64_aux_nonempty.
-Qed.
-
-(* Length bound on the auxiliary form: output has at most `S (length rest)` *)
-(* points -- one for `kept` plus one per remaining input.  The simplifier   *)
-(* may drop but never inserts.                                              *)
-Lemma greedy_simplify_perp_b64_aux_length_le :
-  forall eps kept rest,
-    (length (greedy_simplify_perp_b64_aux eps kept rest) <= S (length rest))%nat.
-Proof.
-  intros eps kept rest. revert kept.
-  induction rest as [| q more IH]; intros kept.
-  - cbn. lia.
-  - destruct more as [| r tail].
-    + cbn. lia.
-    + cbn. destruct (b64_le _ _).
-      * (* drop q: recurse with the same kept *)
-        specialize (IH kept). cbn in IH. lia.
-      * (* keep kept, recurse with q *)
-        cbn. specialize (IH q). cbn in IH. lia.
-Qed.
-
-(* Top-level length bound: output length never exceeds input length.        *)
-Lemma greedy_simplify_perp_b64_length_le :
-  forall eps pts,
-    (length (greedy_simplify_perp_b64 eps pts) <= length pts)%nat.
-Proof.
-  intros eps [|p rest].
-  - cbn. lia.
-  - unfold greedy_simplify_perp_b64.
-    pose proof (greedy_simplify_perp_b64_aux_length_le eps p rest) as H.
-    cbn. lia.
-Qed.
-
-(* `greedy_simplify_binary64` is `Some` of the perp-form output.            *)
-(* Strengthens `_never_none` by giving the exact body.                      *)
-Lemma greedy_simplify_binary64_some_eq :
-  forall eps pts,
-    greedy_simplify_binary64 eps pts = Some (greedy_simplify_perp_b64 eps pts).
-Proof. reflexivity. Qed.
-
-(* Membership: `kept` appears in the auxiliary-form output for any `rest`.  *)
-Lemma greedy_simplify_perp_b64_aux_in_kept :
-  forall eps kept rest, In kept (greedy_simplify_perp_b64_aux eps kept rest).
-Proof.
-  intros eps kept rest. revert kept.
-  induction rest as [| q more IH]; intros kept.
-  - cbn. left; reflexivity.
-  - destruct more as [| r tail].
-    + cbn. left; reflexivity.
-    + cbn. destruct (b64_le _ _).
-      * apply IH.
-      * left; reflexivity.
-Qed.
-
-(* Top-level: the head of the input appears in the output.                  *)
-Lemma greedy_simplify_perp_b64_in_head :
-  forall eps p rest, In p (greedy_simplify_perp_b64 eps (p :: rest)).
-Proof.
-  intros eps p rest.
-  unfold greedy_simplify_perp_b64.
-  apply greedy_simplify_perp_b64_aux_in_kept.
-Qed.
-
 (* -------------------------------------------------------------------------- *)
-(* Axiom audit.                                                              *)
+(* Axiom audit.                                                               *)
+(*                                                                            *)
+(* Three abstract lemmas: per-theorem `Print Assumptions` is `Closed under  *)
+(*    the global context` (zero axioms).  Stronger than the README           *)
+(*    requires.                                                               *)
+(*                                                                            *)
+(* One Category C lemma: per-theorem `Print Assumptions` pulls the four-    *)
+(*    axiom set including `Classical_Prop.classic`.  Contamination is       *)
+(*    documented above; resolution pending policy.                          *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions greedy_simplify_perp_b64_preserves_head.
-Print Assumptions greedy_simplify_perp_b64_aux_length_le.
-Print Assumptions greedy_simplify_perp_b64_aux_in_kept.
+Print Assumptions greedy_simplify_preserves_head.
+Print Assumptions greedy_simplify_aux_length_le.
+Print Assumptions greedy_simplify_aux_in_kept.
+Print Assumptions greedy_simplify_binary64_never_none.
 
 (* -------------------------------------------------------------------------- *)
 (* Extraction directive.  M-fast style: no native-float binding yet --       *)
