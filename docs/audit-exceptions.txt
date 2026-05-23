@@ -41,3 +41,16 @@ theories-flocq/Orient_b64_sound.v
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
 theories-flocq/Validate_binary64.v
+
+# Stage D chain composition design artifact (Approach A).  Headline
+# theorems `b64_grow_expansion_correct` and `b64_grow_expansion_nonoverlap`
+# are Admitted in this session -- the design survey
+# (`docs/stage-d-chain-composition-approach.md`) commits to Shewchuk's
+# GROW-EXPANSION algorithm and lands the definitions + statements as
+# spec; the proofs land in the follow-up session.  Per-theorem PA blocks
+# would surface the Admitted axiom while the proofs are open; the file
+# is exempted here for the duration.  Comes off this list when the
+# proofs are Qed-closed.  Also flagged by CI's Qed-invariant grep on
+# every push of this branch -- that flag is the correct behaviour, see
+# the design doc and the companion commit message.
+theories-flocq/B64_FastExpansionSum.v
