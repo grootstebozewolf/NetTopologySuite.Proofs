@@ -319,24 +319,152 @@ Admitted.
    helper.
    ============================================================================ *)
 
-(* TANGENT: this helper is provable for positive non-boundary x via   *)
-(* `round_N_le_midp` + `succ_eq_pos`.  The negative case is symmetric *)
-(* via `round_NE_opp`.  Positive binade boundaries (`x = 2^k`) need a *)
-(* stricter precondition (`|y| < ulp(x)/4` due to asymmetric pred --  *)
-(* the lower-binade ulp is half the upper).  Documented as the        *)
-(* immediate follow-up; not blocking the cascade-structure work       *)
-(* below.                                                              *)
+(* ============================================================================
+   COUNTEREXAMPLE: the naive helper `|y| < ulp(x)/2` is FALSE at
+   binade boundaries (`x = 2^k`).
+   ----------------------------------------------------------------------------
+   Witness:  x = 1 (= bpow 0, a positive binade boundary).
+             y = -3 * bpow(-55).
+   - |y| = 3 * bpow(-55) < bpow(-53) = ulp(1)/2.  Precondition HOLDS.
+   - pred 1 = 1 - ulp(pred 1) = 1 - bpow(-53)  (lower binade has half ulp).
+   - midpoint = (1 + pred 1) / 2 = 1 - bpow(-54).
+   - x + y = 1 - 3 * bpow(-55) < 1 - bpow(-54).
+   - So round(x + y) <= pred 1 < 1.  Conclusion FAILS.
+   ============================================================================ *)
+
+Lemma b64_bpow_minus_53_eq_4 :
+  bpow radix2 (-53) = 4 * bpow radix2 (-55).
+Proof.
+  assert (Hbpow2 : bpow radix2 2 = 4).
+  simpl. lra.
+  rewrite <- Hbpow2.
+  rewrite <- bpow_plus.
+  reflexivity.
+Qed.
+
+Lemma b64_bpow_minus_54_eq_2 :
+  bpow radix2 (-54) = 2 * bpow radix2 (-55).
+Proof.
+  assert (Hbpow1 : bpow radix2 1 = 2).
+  simpl. lra.
+  rewrite <- Hbpow1.
+  rewrite <- bpow_plus.
+  reflexivity.
+Qed.
+
+(* P1: the witness's |y| satisfies the loose precondition |y| < ulp(x)/2. *)
+Lemma counterex_loose_precondition_holds :
+  Rabs (- (3 * bpow radix2 (-55))) < bpow radix2 (-53).
+Proof.
+  rewrite Rabs_Ropp.
+  rewrite Rabs_pos_eq.
+  - rewrite b64_bpow_minus_53_eq_4.
+    pose proof (bpow_gt_0 radix2 (-55)).
+    lra.
+  - pose proof (bpow_gt_0 radix2 (-55)).
+    lra.
+Qed.
+
+(* P2: the witness x + y is strictly below the FLT midpoint. *)
+Lemma counterex_below_midpoint :
+  1 + - (3 * bpow radix2 (-55)) < 1 - bpow radix2 (-54).
+Proof.
+  rewrite b64_bpow_minus_54_eq_2.
+  pose proof (bpow_gt_0 radix2 (-55)).
+  lra.
+Qed.
+
+(* P3: the gap magnitude. |y| = 3 * bpow(-55) sits STRICTLY between
+   the boundary-needed bound ulp(pred x)/2 = bpow(-54) and the loose
+   ulp(x)/2 = bpow(-53).  Factor of 2 violation at the boundary. *)
+Lemma counterex_gap_magnitude :
+  bpow radix2 (-54) < 3 * bpow radix2 (-55) < bpow radix2 (-53).
+Proof.
+  rewrite b64_bpow_minus_53_eq_4.
+  rewrite b64_bpow_minus_54_eq_2.
+  pose proof (bpow_gt_0 radix2 (-55)).
+  split; lra.
+Qed.
+
+(* ============================================================================
+   PATH A: TIGHTER PRECONDITION using `ulp(pred x) / 2` instead of
+   `ulp(x) / 2`.  At interior `x` this is the same (ulp constant within
+   binade); at boundary `x = 2^k` this is half as much (the lower-binade
+   ulp).  The counterexample witness is excluded under this stricter
+   bound by the gap (P3 above).
+
+   `round_eq_pathA_positive` is Qed-closed: positive x in any binade,
+   strict ulp-of-pred dominance => round(x+y) = x.  The negative case
+   is the next bounded tangent.
+   ============================================================================ *)
+
+Lemma round_eq_pathA_positive :
+  forall x y : R,
+    0 < x ->
+    generic_format radix2 (SpecFloat.fexp prec emax) x ->
+    Rabs y < ulp radix2 (SpecFloat.fexp prec emax)
+                  (pred radix2 (SpecFloat.fexp prec emax) x) / 2 ->
+    round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (x + y) = x.
+Proof.
+  intros x y Hxpos Hfx Hy.
+  pose proof (@pred_ge_0 radix2 _ b64_fexp_valid x Hxpos Hfx) as Hpred_ge0.
+  pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax) x) as Hpred_le_x.
+  pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone _ _
+                Hpred_ge0 Hpred_le_x) as Hulp_le.
+  apply Rle_antisym.
+  - change (round_mode mode_b64) with (Znearest (fun n => negb (Z.even n))).
+    apply (@round_N_le_midp radix2 (SpecFloat.fexp prec emax) b64_fexp_valid
+             (fun n => negb (Z.even n)) x (x + y) Hfx).
+    rewrite (succ_eq_pos radix2 _ _ (Rlt_le _ _ Hxpos)).
+    apply Rabs_lt_inv in Hy. lra.
+  - change (round_mode mode_b64) with (Znearest (fun n => negb (Z.even n))).
+    apply (@round_N_ge_midp radix2 (SpecFloat.fexp prec emax) b64_fexp_valid
+             (fun n => negb (Z.even n)) x (x + y) Hfx).
+    apply Rabs_lt_inv in Hy.
+    pose proof (@pred_plus_ulp radix2 _ b64_fexp_valid x Hxpos Hfx) as Hpp.
+    lra.
+Qed.
+
+(* The original loose-precondition helper -- NOT provable as stated
+   (counterexample above).  Kept as documentation of the failed
+   hypothesis; the cascade theorem migrates to Path A's tighter
+   precondition. *)
 Lemma round_eq_under_strict_dominance :
   forall x y : R,
     generic_format radix2 (SpecFloat.fexp prec emax) x ->
     Rabs y < ulp radix2 (SpecFloat.fexp prec emax) x / 2 ->
     round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (x + y) = x.
 Proof.
-  (* TANGENT: positive non-boundary case discharged via round_N_le_midp +
-     succ_eq_pos.  Negative + boundary cases deferred to follow-up. *)
+  (* TANGENT: FALSE at binade boundaries x = 2^k.  See counterexample
+     lemmas counterex_loose_precondition_holds, counterex_below_midpoint,
+     counterex_gap_magnitude above (all Qed-closed).  Resolution: migrate
+     to `round_eq_pathA_positive` with tighter precondition `|y| < ulp(pred x)/2`. *)
 Admitted.
 
-(* Under strict dominance, `b64_plus x y = x` at the R-level.          *)
+(* Under strict dominance, `b64_plus x y = x` at the R-level.  This is
+   the Path A version using the tighter `ulp(pred x)/2` bound and
+   restricted to positive x.  Qed-closed. *)
+Lemma b64_plus_under_pathA_dominance :
+  forall x y : binary64,
+    0 < Binary.B2R prec emax x ->
+    b64_safe Rplus x y ->
+    Rabs (Binary.B2R prec emax y) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (pred radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax x)) / 2 ->
+    Binary.B2R prec emax (b64_plus x y) = Binary.B2R prec emax x.
+Proof.
+  intros x y Hxpos Hsafe Hy.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  rewrite HB2R.
+  apply round_eq_pathA_positive.
+  - exact Hxpos.
+  - apply b64_format_B2R.
+  - exact Hy.
+Qed.
+
+(* The original `b64_plus_under_strict_dominance` is admitted because  *)
+(* it cites the false `round_eq_under_strict_dominance`.  Kept as the  *)
+(* historical statement; consumers should use Path A's variant.        *)
 Lemma b64_plus_under_strict_dominance :
   forall x y : binary64,
     b64_safe Rplus x y ->

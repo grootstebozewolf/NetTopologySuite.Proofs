@@ -583,3 +583,104 @@ remains the larger open theorem.  The dominated case unblocks
 specific Stage D use cases (e.g., when the new value `c` in chain3 is
 small relative to the existing expansion); the general case requires
 either Fast2Sum redesign or a separate proof structure.
+
+## 13. 2026-05-23 continuation: boundary case resolved -- Path A Qed-closed for positive x
+
+The boundary case from §11 has been confirmed via Coq-verified
+counterexample AND resolved by adopting Path A (tighter precondition).
+The Path A positive case is Qed-closed.
+
+### Counterexample to the loose precondition (Coq-verified)
+
+Witness:  `x = 1` (= `bpow 0`, positive binade boundary).  `y = -3 * bpow(-55)`.
+
+Three Qed-closed lemmas in `B64_FastExpansionSum.v` establish the
+gap:
+
+```coq
+Lemma counterex_loose_precondition_holds :
+  Rabs (- (3 * bpow radix2 (-55))) < bpow radix2 (-53).
+(* |y| = 3 * bpow(-55) < bpow(-53) = ulp(1)/2.   *)
+(* The LOOSE precondition holds.                 *)
+
+Lemma counterex_below_midpoint :
+  1 + - (3 * bpow radix2 (-55)) < 1 - bpow radix2 (-54).
+(* x + y < midpoint (1 + pred 1)/2 = 1 - bpow(-54). *)
+(* So round(x + y) <= pred 1 < 1.  Conclusion FAILS. *)
+
+Lemma counterex_gap_magnitude :
+  bpow radix2 (-54) < 3 * bpow radix2 (-55) < bpow radix2 (-53).
+(* The witness |y| sits STRICTLY between the boundary-needed     *)
+(* `ulp(pred x)/2 = bpow(-54)` and the loose `ulp(x)/2 = bpow(-53)`. *)
+```
+
+All three Qed-close cleanly via `bpow_plus` + `bpow_gt_0` + `lra`.
+
+### Path A's helper Qed-closed (positive case)
+
+```coq
+Lemma round_eq_pathA_positive :
+  forall x y : R,
+    0 < x ->
+    generic_format radix2 (SpecFloat.fexp prec emax) x ->
+    Rabs y < ulp radix2 (SpecFloat.fexp prec emax)
+                  (pred radix2 (SpecFloat.fexp prec emax) x) / 2 ->
+    round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (x + y) = x.
+```
+
+The proof structure:
+  - Upper half (`round v <= x`) via `round_N_le_midp` + `succ_eq_pos`,
+    using `ulp_le_pos` to bridge `ulp(pred x) <= ulp(x)` so the loose
+    bound suffices.
+  - Lower half (`x <= round v`) via `round_N_ge_midp` + `pred_plus_ulp`
+    (which gives `x - pred x = ulp(pred x)` exactly).  The tighter
+    precondition matches the asymmetric midpoint at the boundary.
+
+Key Flocq lemmas used: `pred_ge_0`, `pred_le_id`, `ulp_le_pos`,
+`succ_eq_pos`, `pred_plus_ulp`, `round_N_le_midp`, `round_N_ge_midp`.
+All in `Flocq.Core.Ulp`.
+
+### The cascade theorem migrates to Path A
+
+`b64_grow_expansion_nonoverlap_dominated` should be re-stated to use
+the Path A precondition.  Specifically, the input precondition
+`nonoverlap_strict (e ++ [b])` should be tightened to use
+`ulp(pred (last e)) / 2` instead of `ulp(last e) / 2`.  This rules out
+the counterexample's binade-boundary witness.
+
+The cascade-structure invariant (each TwoSum step exact) then follows
+from Path A's helper at each step.
+
+### Remaining work (Option C / Path A track)
+
+  1. **Negative-x case of Path A's helper**: by symmetry via
+     `round_NE_opp`.  Estimate: ~1-2 hours.
+
+  2. **Zero case** (x = 0): trivial, `round(0 + y) = round(y)`, and
+     `|y| < ulp(0)/2 = bpow_emin/2` forces `y` to be in the subnormal
+     range that rounds to 0.  Estimate: ~30 minutes.
+
+  3. **Path A cascade-structure invariant**: induction on `es`
+     applying the helper at each step.  Requires the Path A
+     precondition propagating through the cascade (each `Q_i` is
+     positive and satisfies the next step's dominance).  Estimate:
+     ~1 day.
+
+  4. **`b64_grow_expansion_nonoverlap_dominated` Qed**: composition.
+     Estimate: ~couple of hours.
+
+Total remaining: ~1.5-2 days for the dominated theorem under Path A.
+
+### The general (non-dominated) case remains open
+
+`b64_grow_expansion_nonoverlap` (without the dominance precondition)
+is still not provable as stated -- the cascade with cancellation
+intermediates breaks any nonoverlap predicate.  Resolution requires
+either:
+  - Algorithm change (Fast2Sum cascade, possibly with sort/merge step
+    to handle arbitrary `b`).
+  - Predicate change (weakening to Shewchuk's basic non-overlap).
+
+This is the larger open question.  The Path A dominated theorem
+unblocks specific Stage D use cases (chain3 with small `c`); the
+general case is still multi-session work.
