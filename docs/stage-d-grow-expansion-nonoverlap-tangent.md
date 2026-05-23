@@ -286,13 +286,172 @@ Estimated next-session scope:
 If the re-proof of `sign_of_expansion_correct` runs longer than one
 session, fall back to Option B as the bounded alternative.
 
-## 8. Stopping condition
+## 9. Update (2026-05-23, continuation): Option B is also insufficient
 
-**Tangent stop — design choice required**.  The cascade-invariant
-formulation in `docs/stage-d-chain-composition-approach.md` §6 is
-incompatible with `nonoverlap_strict` as it stands.  No further proof
-work without resolving the predicate question.
+After the initial tangent doc was written, an attempt to implement Option B
+surfaced a deeper structural issue: **`compress` alone does not produce a
+`nonoverlap_strict` output either**.  A second counterexample (verified in
+Coq) shows the cascade can produce a compressed output whose adjacent
+non-zero elements violate the half-ulp bound.
 
-The Coq goal state and the counterexample are durable artifacts; the
-next session picks up by making the Option A / B call on evidence,
-then writing the predicate (Option A) or the compress + lemma (Option B).
+### Second counterexample (Coq-verified)
+
+Take the same input expansion `e = [2^200; 2^100; 2^45]` (strongly
+nonoverlap), and `b = -2^100 + 2^50` (representable: bits at positions
+100 and 50, spread = 51).
+
+Cascade execution:
+  1. `TwoSum(2^45, b)`:
+     - Computed value: `2^45 + b = -2^100 + 2^50 + 2^45`.
+     - `|b|` is in binade `[2^99, 2^100)`, ulp = `2^47`.
+     - `2^45 < ulp/2 = 2^46`, rounds to `b`.
+     - `Q_1 = b = -2^100 + 2^50`, `h_1 = 2^45`.
+  2. `TwoSum(2^100, Q_1)`:
+     - `2^100 + (-2^100 + 2^50) = 2^50`.  **Exact** (cancellation).
+     - `Q_2 = 2^50`, `h_2 = 0`.
+  3. `TwoSum(2^200, 2^50)`:
+     - `2^200 + 2^50`, rounds to `2^200`.
+     - `Q_3 = 2^200`, `h_3 = 2^50`.
+
+Cascade output: `[Q_3; h_3; h_2; h_1] = [2^200; 2^50; 0; 2^45]`.
+
+After `compress`: `[2^200; 2^50; 2^45]`.
+
+Check `nonoverlap_strict`:
+  - Pair `(2^200, 2^50)`: `|2^50| <= ulp(2^200)/2 = 2^147`.  ✓
+  - Pair `(2^50, 2^45)`: `|2^45| <= ulp(2^50)/2 = 2^(-3)`.  **FAILS**: `2^45 ≫ 2^(-3)`.
+
+Violation by factor of `2^48`.
+
+### Coq verification of the second counterexample
+
+```coq
+From Coq Require Import Reals Lra ZArith Lia.
+From Flocq Require Import Core IEEE754.Binary.
+
+Open Scope R_scope.
+
+Lemma input_pair_1 : bpow radix2 100 <= bpow radix2 148 / 2.
+Proof.
+  replace (bpow radix2 148 / 2) with (bpow radix2 147).
+  - apply bpow_le. lia.
+  - replace 148%Z with (147 + 1)%Z at 1 by lia.
+    rewrite bpow_plus. simpl. lra.
+Qed.
+
+Lemma input_pair_2 : bpow radix2 45 <= bpow radix2 48 / 2.
+Proof.
+  replace (bpow radix2 48 / 2) with (bpow radix2 47).
+  - apply bpow_le. lia.
+  - replace 48%Z with (47 + 1)%Z at 1 by lia.
+    rewrite bpow_plus. simpl. lra.
+Qed.
+
+Lemma compress_violates : ~ (bpow radix2 45 <= bpow radix2 (-3)).
+Proof.
+  intro H.
+  pose proof (bpow_lt radix2 (-3) 45 ltac:(lia)).
+  lra.
+Qed.
+
+Lemma compress_violation_magnitude :
+  bpow radix2 45 = bpow radix2 48 * bpow radix2 (-3).
+Proof.
+  rewrite <- bpow_plus. reflexivity.
+Qed.
+```
+
+All four lemmas Qed-close (Coq 8.18 + Flocq 4.1.3 in the sandbox).
+
+### What this means
+
+The structural property that fails: **the cascade with cancellation
+intermediates produces non-zero `h_i` and `h_j` that, after compress,
+are adjacent but at magnitudes whose ratio does not match the
+`nonoverlap_strict` half-ulp bound**.
+
+In the counterexample: cancellation at step 2 (`2^100 + (-2^100 + 2^50)
+= 2^50` exactly) "drops" the accumulator from `~2^100` to `2^50`.  Then
+step 3 produces `h_3 = 2^50`, which is much smaller than what `h_1 = 2^45`
+would need to be paired with under `nonoverlap_strict`.
+
+The root cause is that **Shewchuk's GROW-EXPANSION (the algorithm
+underlying our cascade) only preserves Shewchuk's *basic*
+nonoverlapping (Def 2.4: `|x| < ulp(y)`), not the half-ulp variant
+that our `nonoverlap_strict` encodes**.  Compress alone cannot bridge
+the gap — even Shewchuk's basic nonoverlap fails for our counterexample
+at the `(2^50, 2^45)` pair (`|2^45| < ulp(2^50) = 2^(-2)` is also
+false).
+
+This means the algorithm `b64_grow_expansion` as implemented (TwoSum
+chain, no Fast2Sum magnitude precondition) does NOT preserve even
+Shewchuk's basic nonoverlap in adversarial cases.  This suggests the
+algorithm itself needs revisiting, not just the predicate.
+
+### Implications for the design call
+
+Both Option A (weaken predicate to basic nonoverlap) and Option B
+(compress) are **insufficient** as standalone fixes:
+
+  - **Option A** (weaken to `|b| <= ulp(a)`):  The cascade still
+    produces outputs that violate this in cancellation cases
+    (the `(2^50, 2^45)` pair in the second counterexample violates
+    even the looser bound).
+
+  - **Option B** (compress + keep nonoverlap_strict):  Insufficient
+    by the counterexample above.
+
+A third option is required:
+
+### Option C: redesign with Fast2Sum + magnitude precondition
+
+Shewchuk's actual algorithm uses `Fast2Sum` (not `TwoSum`) for the
+cascade body, which requires `|Q| >= |e_i|` at each step.  Under that
+precondition + the input being strongly nonoverlapping, the cascade
+produces a strongly nonoverlapping output (Shewchuk Theorem 13 for
+FAST-EXPANSION-SUM, but the same machinery applies to a properly
+magnitude-ordered GROW-EXPANSION).
+
+This requires:
+  - Re-implementing `b64_grow_expansion_aux` with `Fast2Sum`.
+  - Adding a magnitude precondition: `b` is bounded relative to the
+    smallest element of `e`, OR the cascade interleaves an explicit
+    sort by magnitude.
+  - Possibly using a different entry-point function for cases where
+    the precondition cannot be guaranteed.
+
+This is a substantive redesign, not a localised fix.
+
+### Revised recommendation
+
+**Option C is required**.  Both A and B as initially scoped are
+demonstrably insufficient by Coq-verified counterexamples.  The
+algorithm `b64_grow_expansion` must be redesigned to use Fast2Sum +
+appropriate magnitude preconditions to produce an output that
+satisfies any meaningful nonoverlap predicate.
+
+The next session's work expands accordingly:
+  - Define `b64_grow_expansion_fast` using `b64_Fast2Sum`.
+  - Add the magnitude precondition (likely: `|b| <= ulp(smallest e)` or
+    similar; details from Shewchuk's analysis).
+  - Prove the cascade preserves `nonoverlap_strict` under these
+    preconditions.
+  - Replace `b64_grow_expansion` for nonoverlap-requiring consumers.
+
+Estimated scope: 2-4 days of focused work (Shewchuk's Theorem 13
+formalisation, roughly).  The sum-correctness theorem
+`b64_grow_expansion_correct` (already Qed-closed for the TwoSum
+version) is reusable for the Fast2Sum version after a minor proof
+adjustment.
+
+## 10. Stopping condition (revised)
+
+**Tangent stop — design call escalated**.  Both Options A and B
+from the initial analysis are insufficient.  Option C (algorithm
+redesign with Fast2Sum + magnitude precondition) is the next
+session's scope.
+
+The two counterexamples (this section + §3) are the durable
+artifacts; they are Coq-verified and unambiguous.  The next session
+picks up by implementing Option C, with Shewchuk Theorem 13's proof
+structure as the template.
