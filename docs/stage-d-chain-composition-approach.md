@@ -206,3 +206,64 @@ deliverable is:
     with Admitted theorem statements and explicit TANGENT markers.
 
 The next session picks up by attempting the proofs in the Coq file.
+
+## 9. 2026-05-23 update: Options A and B both insufficient — Option C is the active path
+
+This doc's original framing (Approach A: Shewchuk's fast-expansion-sum;
+Approach B: bounded-magnitude compress) committed to the
+`b64_grow_expansion` algorithm with `b64_TwoSum` as the cascade body,
+and proposed two design knobs for the nonoverlap predicate.  The
+follow-up proof sessions surfaced obstructions to both knobs:
+
+  - **Sum-correctness landed** (commit `e54b9da`): the cascade's
+    arithmetic invariant is preserved exactly by every `b64_TwoSum`
+    step.  Qed-closed.
+
+  - **`nonoverlap_strict` (commit `c521d06`)**: counterexample showed
+    the predicate is incompatible with the algorithm — internal zeros
+    in the cascade output, which `nonoverlap_strict` cannot tolerate.
+
+  - **`compress` (commit `937955c`)**: counterexample showed even
+    after filtering zeros, the compressed output can violate
+    `nonoverlap_strict` and even Shewchuk's basic non-overlap.  Root
+    cause: the cascade with `b64_TwoSum` (no magnitude precondition)
+    does not preserve any meaningful nonoverlap predicate in
+    cancellation cases.
+
+Full diagnosis and the two Coq-verified counterexamples are in
+`docs/stage-d-grow-expansion-nonoverlap-tangent.md` §3 and §9.
+
+### Option C: redesign with Fast2Sum + magnitude precondition
+
+Shewchuk's GROW-EXPANSION as actually formalised in his 1997 paper
+uses `Fast2Sum` (with `|Q| >= |e_i|` precondition), not `TwoSum`.  The
+TwoSum-based version we landed in `e54b9da` is sufficient for
+sum-correctness but not for any structural nonoverlap claim.
+
+The next session implements `b64_grow_expansion_fast` using
+`b64_Fast2Sum_correct` (already lifted in
+`theories-flocq/B64_Pff_bridge.v`), with the magnitude precondition
+derived from the input expansion's structure.  Sum-correctness carries
+over from the existing proof (minor adjustment for Fast2Sum's
+safety-conjunct shape).
+
+The proof of `b64_grow_expansion_fast_nonoverlap` follows Shewchuk
+Theorem 13's structure: induction on the cascade, with the magnitude
+precondition giving the chain `ulp(Q_i) <= ulp(h_{i+1})` needed to
+close the half-ulp bound.
+
+### Implication for the corpus
+
+`b64_TwoSum_chain3_sorted` and `b64_grow_expansion` (the entry points
+introduced in commit `22b6ffe`) are retained as the sum-correctness
+entry points.  A parallel `_fast` variant is added for nonoverlap-
+requiring consumers, with appropriate magnitude precondition.  No
+existing Qed-closed theorem is invalidated.
+
+### Status
+
+The chain-composition slice continues to be the substantive
+engagement on Stage D's critical path.  The work has been
+**re-scoped** from "make the predicate-or-compress design choice"
+to "implement the magnitude-preserving Fast2Sum variant and prove
+its nonoverlap structurally".
