@@ -425,6 +425,60 @@ Proof.
     lra.
 Qed.
 
+(* The negative-x case via `round_NE_opp` symmetry.  For x < 0, the
+   asymmetric midpoint flips: succ x (not pred x) has the boundary
+   issue, so the precondition uses `ulp(succ x) / 2`. *)
+Lemma round_eq_pathA_negative :
+  forall x y : R,
+    x < 0 ->
+    generic_format radix2 (SpecFloat.fexp prec emax) x ->
+    Rabs y < ulp radix2 (SpecFloat.fexp prec emax)
+                  (succ radix2 (SpecFloat.fexp prec emax) x) / 2 ->
+    round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (x + y) = x.
+Proof.
+  intros x y Hxneg Hfx Hy.
+  assert (Hxopp : 0 < -x) by lra.
+  assert (Hfx_opp : generic_format radix2 (SpecFloat.fexp prec emax) (-x)).
+  { apply generic_format_opp. exact Hfx. }
+  assert (Hy_opp : Rabs (-y) <
+                   ulp radix2 (SpecFloat.fexp prec emax)
+                       (pred radix2 (SpecFloat.fexp prec emax) (-x)) / 2).
+  { rewrite Rabs_Ropp. rewrite pred_opp. rewrite ulp_opp. exact Hy. }
+  pose proof (round_eq_pathA_positive (-x) (-y) Hxopp Hfx_opp Hy_opp) as Hr.
+  replace (-x + -y) with (-(x + y)) in Hr by ring.
+  rewrite round_NE_opp in Hr.
+  apply (f_equal Ropp) in Hr.
+  rewrite !Ropp_involutive in Hr.
+  exact Hr.
+Qed.
+
+(* The zero case: x = 0.  The round-to-0 interval is symmetric
+   (-ulp(0)/2, +ulp(0)/2) since both pred 0 and succ 0 are at distance
+   ulp(0).  Simpler than positive/negative because no binade boundary. *)
+Lemma round_eq_pathA_zero :
+  forall y : R,
+    Rabs y < ulp radix2 (SpecFloat.fexp prec emax) 0 / 2 ->
+    round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (0 + y) = 0.
+Proof.
+  intros y Hy.
+  rewrite Rplus_0_l.
+  pose proof (pred_0 radix2 (SpecFloat.fexp prec emax)) as Hp.
+  pose proof (succ_0 radix2 (SpecFloat.fexp prec emax)) as Hs.
+  apply Rle_antisym.
+  - change (round_mode mode_b64) with (Znearest (fun n => negb (Z.even n))).
+    apply (@round_N_le_midp radix2 (SpecFloat.fexp prec emax) b64_fexp_valid
+             (fun n => negb (Z.even n)) 0 y).
+    + apply generic_format_0.
+    + rewrite Hs.
+      apply Rabs_lt_inv in Hy. lra.
+  - change (round_mode mode_b64) with (Znearest (fun n => negb (Z.even n))).
+    apply (@round_N_ge_midp radix2 (SpecFloat.fexp prec emax) b64_fexp_valid
+             (fun n => negb (Z.even n)) 0 y).
+    + apply generic_format_0.
+    + rewrite Hp.
+      apply Rabs_lt_inv in Hy. lra.
+Qed.
+
 (* The original loose-precondition helper -- NOT provable as stated
    (counterexample above).  Kept as documentation of the failed
    hypothesis; the cascade theorem migrates to Path A's tighter
