@@ -821,3 +821,148 @@ The Path A artifacts stay in the corpus — they prove a clean
 narrow theorem and serve as a partial template for the fast-
 expansion-sum work (the per-step exactness lemma reuses
 trivially, the B2R-compat helper is needed identically).
+
+## 15. 2026-05-23 prerequisite check for Slice A: nonoverlap_strict vs Shewchuk
+
+Applying the discipline that should have preceded commit `22b6ffe`:
+**confirm the composition question before the design session, not
+during.**  Before framing Slice A (fast-expansion-sum), check whether
+the algorithm's output predicate matches the corpus's
+`nonoverlap_strict`.
+
+### Predicates compared
+
+  - **Our `nonoverlap_strict`** (B64_Expansion.v:86-94):
+    `|next| <= ulp(prev) / 2`.  Half-ulp, non-strict, NO internal
+    zeros tolerated (since `ulp(0) = bpow_emin` and the predicate
+    forces `|x| <= bpow_emin / 2 ~ 0`).
+
+  - **Shewchuk Def 2.4 (basic non-overlapping)**: `|next| < ulp(prev)`.
+    Full-ulp, strict.
+
+  - **Shewchuk Def 2.5 (strongly non-overlapping)**: basic + "no
+    power of 2 between any two components", with explicit tolerance
+    for internal zeros (Shewchuk's algorithms produce zeros at
+    exact-step boundaries; his predicate is designed to handle them).
+
+  - **Fast-expansion-sum's guarantee (Shewchuk Theorem 13)**: input
+    strongly non-overlapping → output strongly non-overlapping.
+    Internal zeros allowed throughout.
+
+### The gap
+
+| Property | Ours `nonoverlap_strict` | Shewchuk strongly | Match? |
+|---|---|---|---|
+| ULP factor | `<= ulp(prev)/2` | `< ulp(prev)/2` (effectively) | ≈ match |
+| Internal zeros | **Forbidden** | Allowed | **GAP** |
+| Direction | Non-strict (`<=`) | Strict (`<`) at boundaries | minor |
+
+The internal-zero gap is the same one the Path A counterexamples in
+§3 and §9 already documented.  Fast-expansion-sum can produce
+intermediate zeros when a Fast2Sum step is exact — the same
+failure mode as grow-expansion.
+
+### What `sign_of_expansion_correct` actually needs
+
+The proof structure of `expansion_tail_bounded` (B64_Expansion.v:282)
+uses `|next| <= ulp(prev)/2` + `ulp(prev) <= |prev|` to derive
+`|next| <= |prev|/2`, giving `|tail| < |head|` via geometric series.
+
+Under the WEAKER `|next| <= ulp(prev)` (Shewchuk's basic): still
+`|next| <= |prev| / 2^52`, so
+
+```
+|tail| <= |x_1| * (1 + 2^(-52) + 2^(-104) + ...)
+       <  2 * |x_1|
+       <= 2 * ulp(x_0)
+       <= 2 * |x_0| / 2^52
+       =  |x_0| / 2^51
+       <  |x_0|.
+```
+
+So `sign_of_expansion_correct` is provable under Shewchuk's basic
+(full-ulp) non-overlap too.  The geometric series tolerates the
+factor-of-2 weakening cleanly.
+
+### Conclusion: Slice A is feasible, with one extra piece
+
+The answer is **"yes, with a predicate adaptation"**.  Slice A's
+scope expands by one ~30-60 line piece: re-prove
+`sign_of_expansion_correct` under a weakened predicate that
+tolerates internal zeros AND uses Shewchuk's full-ulp bound.
+
+### Slice A's structure
+
+  1. **Define `nonoverlap_shewchuk`**: basic non-overlap with zero
+     tolerance.  Allows internal zeros (skip them in the pair
+     analysis).  Uses `|next| <= ulp(prev)` (full-ulp).
+
+  2. **Re-prove `sign_of_expansion_correct` under
+     `nonoverlap_shewchuk`**: ~30-60 lines.  Geometric series
+     argument is essentially the same; needs handling of zero-skip
+     in the recursive case.
+
+  3. **Define fast-expansion-sum**: Shewchuk's canonical merge +
+     Fast2Sum cascade.  ~1 day.
+
+  4. **Prove fast-expansion-sum sum-correctness**: template lift
+     from existing `b64_grow_expansion_correct`.  ~1 day.
+
+  5. **Prove fast-expansion-sum preserves `nonoverlap_shewchuk`**:
+     Shewchuk Theorem 13 formalisation.  ~2-3 days.  Magnitude
+     bookkeeping through the merge.
+
+  6. **Compose into orient2d_exact**:  ~1 day.  Each TwoProduct
+     output is a 2-component expansion (already
+     `nonoverlap_shewchuk`); 4 such expansions combined via 3
+     fast-expansion-sum calls.
+
+  7. **Headline**: `b64_orient2d_exact_sign_correct` under
+     `b64_orient2d_inputs_safe`.
+
+### Revised scope
+
+Estimated **6-8 days** for Slice A (was 5-6; bumped by the
+predicate adaptation in pieces 1+2).
+
+### What gets reused from Path A
+
+  - `nonoverlap_strict_B2R_compat`: the structural argument carries
+    over directly to `nonoverlap_shewchuk` (predicate depends only
+    on B2R values).
+  - `nonoverlap_strict_snoc`: re-derivable for the new predicate
+    with minor adjustments.
+  - `b64_TwoSum_pathA_exact_step`, `b64_plus_under_pathA_dominance`:
+    not directly useful for general magnitudes, but the proof
+    pattern (round-equality via midpoint arguments) carries over
+    to Fast2Sum's correctness proof.
+  - The counterexample lemmas: documentation of what NOT to
+    attempt; save future implementers from rediscovering the
+    wrong predicate.
+
+The Path A track is a solid foundation, not wasted work.  The
+counterexamples make Slice A's design choices DEFENSIBLE rather
+than arbitrary — the predicate weakening + full-ulp choice is
+necessary, not optional.
+
+### Discipline note
+
+This prerequisite check took **20 minutes** (read predicates,
+verify geometric series with the looser bound, formulate scope
+adjustment).  Had it preceded commit `22b6ffe`, the project would
+have gone directly to Slice A without the Path A detour.
+
+The Path A track was still valuable (it produced the
+counterexamples, the per-step helpers, and the B2R-compat lemmas
+all reusable), but the headline-composition question should be the
+FIRST check when framing any new slice that aspires to unblock a
+downstream consumer.
+
+The lesson generalises: precondition-fit checks apply at TWO levels:
+
+  - Inside the slice (verify the proof's local preconditions thread).
+  - Across slices (verify the slice's output composes into the next
+    consumer).
+
+The cross-slice check is the one that was missed before `22b6ffe`.
+Applying it consistently for Slice A.
