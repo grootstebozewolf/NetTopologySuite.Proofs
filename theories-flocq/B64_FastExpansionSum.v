@@ -558,10 +558,132 @@ Proof.
   (* TANGENT: proof depends on `round_eq_under_strict_dominance`        *)
   (* (admitted above pending boundary-case resolution) AND the cascade  *)
   (* invariant lemma that the cascade output equals `e ++ [b]` under    *)
-  (* this precondition.  Both are concrete follow-up work; the goal     *)
-  (* state at the point of attempting the cascade lemma is captured in  *)
-  (* `docs/stage-d-grow-expansion-nonoverlap-tangent.md` §11.            *)
+  (* this precondition.  The cascade invariant has been proved below as *)
+  (* `b64_grow_expansion_aux_pathA_matches`; the remaining work is the  *)
+  (* compress + nonoverlap-from-B2R lemmas to finish the composition.    *)
 Admitted.
+
+(* ============================================================================
+   PATH A CASCADE-STRUCTURE INVARIANT (Qed-closed).
+
+   Three new artifacts piece together the cascade-structure argument:
+
+     - `strict_succ_pathA_R` / `cascade_pathA_dominates_aux`:
+       the Path A predicate chain on B2R values.
+
+     - `b64_TwoSum_pathA_exact_step`: under Path A's pairwise strict
+       precondition + positivity, the TwoSum step is R-exact:
+       `B2R (fst (b64_TwoSum e q)) = B2R e` AND
+       `B2R (snd (b64_TwoSum e q)) = B2R q`.
+
+     - `b64_grow_expansion_aux_pathA_matches`: the load-bearing
+       invariant.  Under cascade_pathA_dominates_aux on (q, es) +
+       per-op safety, the cascade output's B2R values match
+       `rev es ++ [q]` componentwise.
+
+   With these, the composition into `b64_grow_expansion_nonoverlap_*`
+   is mechanical: combine with a nonoverlap-preserves-under-B2R-equiv
+   lemma plus a compress-no-op-when-nonzero argument.  Both are bounded
+   list-shape lemmas, ~30-50 lines each.  Total remaining: ~couple of
+   hours for the composition.
+   ============================================================================ *)
+
+Definition strict_succ_pathA_R (a b : R) : Prop :=
+  Rabs b < ulp radix2 (SpecFloat.fexp prec emax)
+                 (pred radix2 (SpecFloat.fexp prec emax) a) / 2.
+
+Fixpoint cascade_pathA_dominates_aux
+  (q : binary64) (es : list binary64) : Prop :=
+  match es with
+  | nil => True
+  | e :: es' =>
+      0 < Binary.B2R prec emax e /\
+      strict_succ_pathA_R (Binary.B2R prec emax e) (Binary.B2R prec emax q) /\
+      cascade_pathA_dominates_aux e es'
+  end.
+
+Lemma b64_TwoSum_pathA_exact_step :
+  forall e q : binary64,
+    0 < Binary.B2R prec emax e ->
+    strict_succ_pathA_R (Binary.B2R prec emax e) (Binary.B2R prec emax q) ->
+    b64_TwoSum_safe e q ->
+    Binary.B2R prec emax (fst (b64_TwoSum e q)) = Binary.B2R prec emax e /\
+    Binary.B2R prec emax (snd (b64_TwoSum e q))
+      = Binary.B2R prec emax q.
+Proof.
+  intros e q He Hpw Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 [Hs2 [Hs3 [Hs4 [Hs5 Hs6]]]]].
+  pose proof (b64_TwoSum_correct e q Hs1 Hs2 Hs3 Hs4 Hs5 Hs6) as HTC.
+  destruct (b64_TwoSum e q) as [a b] eqn:HTS.
+  cbn [fst snd] in *.
+  assert (Ha : a = b64_plus e q).
+  { rewrite <- (b64_TwoSum_fst e q). rewrite HTS. reflexivity. }
+  subst a.
+  pose proof (b64_plus_under_pathA_dominance e q He Hs1 Hpw) as HBplus_eq.
+  split. exact HBplus_eq. lra.
+Qed.
+
+Lemma cascade_pathA_dominates_aux_B2R_compat :
+  forall a b es,
+    Binary.B2R prec emax a = Binary.B2R prec emax b ->
+    cascade_pathA_dominates_aux a es ->
+    cascade_pathA_dominates_aux b es.
+Proof.
+  intros a b es Hab Hdom.
+  destruct es as [|e es']; cbn [cascade_pathA_dominates_aux] in *.
+  exact I.
+  destruct Hdom as [He [Hpw Hchain]].
+  split. exact He. split. rewrite <- Hab. exact Hpw. exact Hchain.
+Qed.
+
+Definition cascade_output_R_matches
+  (hs : list binary64) (qfinal : binary64)
+  (q : binary64) (es : list binary64) : Prop :=
+  map (Binary.B2R prec emax) (qfinal :: rev hs)
+  = map (Binary.B2R prec emax) (rev es ++ q :: nil).
+
+(* The headline cascade-structure invariant: under Path A's chain
+   precondition + safety, the cascade output's B2R values match
+   `rev es ++ [q]` componentwise. *)
+Lemma b64_grow_expansion_aux_pathA_matches :
+  forall (es : list binary64) (q : binary64),
+    b64_grow_expansion_aux_safe q es ->
+    cascade_pathA_dominates_aux q es ->
+    let '(hs, qfinal) := b64_grow_expansion_aux q es in
+    cascade_output_R_matches hs qfinal q es.
+Proof.
+  induction es as [|e es' IH]; intros q Hsafe Hdom.
+  - cbn [b64_grow_expansion_aux].
+    unfold cascade_output_R_matches.
+    cbn. reflexivity.
+  - cbn [b64_grow_expansion_aux].
+    cbn [b64_grow_expansion_aux_safe] in Hsafe.
+    destruct Hsafe as [Hstep Hrest].
+    cbn [cascade_pathA_dominates_aux] in Hdom.
+    destruct Hdom as [He [Hpw Hchain]].
+    destruct (b64_TwoSum e q) as [qnew hh] eqn:HTS.
+    pose proof (b64_TwoSum_pathA_exact_step e q He Hpw Hstep) as [Hqnew Hhh].
+    rewrite HTS in Hqnew, Hhh. cbn [fst snd] in Hqnew, Hhh.
+    assert (Hqnew_eq : qnew = b64_plus e q).
+    { rewrite <- (b64_TwoSum_fst e q). rewrite HTS. reflexivity. }
+    rewrite <- Hqnew_eq in Hrest.
+    pose proof (cascade_pathA_dominates_aux_B2R_compat e qnew es'
+                  (eq_sym Hqnew) Hchain) as Hchain'.
+    specialize (IH qnew Hrest Hchain').
+    destruct (b64_grow_expansion_aux qnew es') as [hs' qfinal'] eqn:Hrec.
+    unfold cascade_output_R_matches in IH.
+    unfold cascade_output_R_matches.
+    cbn [rev]. cbn [rev] in IH.
+    rewrite app_comm_cons.
+    rewrite map_app, map_app, map_app.
+    rewrite map_app in IH.
+    cbn [map] in IH |- *.
+    rewrite Hqnew in IH.
+    rewrite Hhh.
+    f_equal.
+    exact IH.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
