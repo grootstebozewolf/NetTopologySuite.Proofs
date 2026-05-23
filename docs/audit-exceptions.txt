@@ -43,19 +43,22 @@ theories-flocq/Orient_b64_sound.v
 theories-flocq/Validate_binary64.v
 
 # Stage D chain composition.  `b64_grow_expansion_correct` (sum
-# preservation) is Qed-closed; `b64_grow_expansion_nonoverlap` (the
-# load-bearing nonoverlap theorem) is Admitted with TANGENT status --
-# see `docs/stage-d-grow-expansion-nonoverlap-tangent.md` for the
-# concrete binary64 counterexample showing the theorem is NOT provable
-# as stated.  The next session resolves the design call (predicate
-# weakening or algorithm-side compress).  The Print Assumptions block
-# for the closed theorem pulls `Classical_Prop.classic` transitively
-# via `b64_TwoSum_correct`'s closure (same Category C contamination as
-# the other expansion-arithmetic files); the file-level exemption
-# covers both that PA leak and the tangent Admitted's audit footprint.
-# Comes off this list when the nonoverlap design call is made and the
-# theorem (possibly under a new predicate or against a compressed
-# output) is Qed-closed.  Also flagged by CI's Qed-invariant grep for
-# the remaining Admitted -- that flag is the correct behaviour and
-# names the tangent, see the design doc and commit messages.
+# preservation) and `b64_plus_under_strict_dominance` (the Option C
+# helper-corollary) are Qed-closed; three Admitted theorems remain
+# (all with TANGENT comments pointing to the doc):
+#   - `b64_grow_expansion_nonoverlap` -- original general theorem; NOT
+#     provable as stated, two Coq-verified counterexamples in the doc.
+#   - `round_eq_under_strict_dominance` -- helper, blocked on
+#     binade-boundary case analysis (captured Coq goal state in §11).
+#   - `b64_grow_expansion_nonoverlap_dominated` -- restricted Option C
+#     theorem, depends on the helper + cascade-structure induction.
+# See `docs/stage-d-grow-expansion-nonoverlap-tangent.md` §3, §9, §11
+# for the full design history.  The Print Assumptions block for the
+# closed theorems pulls `Classical_Prop.classic` transitively via
+# `b64_TwoSum_correct`'s closure (same Category C contamination as the
+# other expansion-arithmetic files); the file-level exemption covers
+# both the PA leak and the three Admitteds' audit footprint.  Comes
+# off this list when all three Admitteds are resolved.  Also flagged
+# by CI's Qed-invariant grep for the three Admitteds -- that flag is
+# the correct behaviour and names the tangents.
 theories-flocq/B64_FastExpansionSum.v

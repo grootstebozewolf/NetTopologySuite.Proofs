@@ -455,3 +455,131 @@ The two counterexamples (this section + §3) are the durable
 artifacts; they are Coq-verified and unambiguous.  The next session
 picks up by implementing Option C, with Shewchuk Theorem 13's proof
 structure as the template.
+
+## 11. 2026-05-23 continuation: Option C attempted, two new tangents surfaced
+
+The Option C scaffolding lands in
+`theories-flocq/B64_FastExpansionSum.v`:
+
+  - `round_eq_under_strict_dominance` — helper lemma (Admitted with
+    TANGENT comment).  Hypothesis: under `|y| < ulp(x)/2` strict and
+    `x` in format, `round(x + y) = x`.
+  - `b64_plus_under_strict_dominance` — derived from the helper; this
+    one Qed-closes (modulo the helper's admit).
+  - `b64_grow_expansion_nonoverlap_dominated` — the restricted Option C
+    theorem (Admitted with TANGENT comment).  Hypothesis: under the
+    appended chain `nonoverlap_strict (e ++ [b])`, the cascade output
+    is structurally `e ++ [b]` and hence nonoverlap_strict.
+
+### Captured Coq goal state: helper lemma's negative-x tangent
+
+After `intros + apply Rle_antisym + apply round_N_le_midp` and case
+splitting on the sign of `x`, the negative-x branch surfaces:
+
+```
+1 goal
+
+  x, y : R
+  Hfx : b64_format x
+  Hy : Rabs y < b64_ulp x / 2
+  Hxneg : x < 0
+  ============================
+  x + y < (x + succ radix2 b64_fexp x) / 2
+```
+
+The positive case closes via `succ_eq_pos` (`succ x = x + ulp(x)` for
+`x >= 0`) + `Rabs_lt_inv` + `lra`.  The negative case requires the
+mirror image — `succ` of negative non-zero non-boundary `x` is
+`x + ulp(x)` only when not at boundary; at boundary `succ x = x + ulp(x)/2`.
+Symmetric to the lower-bound case below.
+
+### Captured Coq goal state: helper lemma's boundary tangent (lower half)
+
+Even in the positive case, the LOWER-bound half of the helper hits a
+binade-boundary asymmetry.  `round_N_ge_midp` requires
+`(x + pred x) / 2 < x + y`:
+
+```
+1 goal
+
+  x, y : R
+  Hxpos : 0 < x
+  Hfx : b64_format x
+  Hy : Rabs y < b64_ulp x / 2
+  ============================
+  (x + pred radix2 b64_fexp x) / 2 < x + y
+```
+
+For positive `x` NOT at a binade boundary (`x ≠ 2^k`):
+`pred x = x - ulp(x)`, so `(x + pred x)/2 = x - ulp(x)/2`.  Goal
+becomes `y > -ulp(x)/2`, which follows from `|y| < ulp(x)/2`.  ✓
+
+For positive `x` AT a binade boundary (`x = 2^k`):
+`pred x = x - ulp(x)/2` (lower binade has half-sized ulp), so
+`(x + pred x)/2 = x - ulp(x)/4`.  Goal becomes `y > -ulp(x)/4`.
+Our `|y| < ulp(x)/2` is INSUFFICIENT — it only gives `y > -ulp(x)/2`,
+factor of 2 weaker than needed.
+
+**Resolution options for the helper**:
+  - Tighten precondition to `|y| < ulp(x)/4`.  Always sufficient, but
+    incompatible with `nonoverlap_strict`'s `|y| <= ulp(x)/2`.
+  - Add `~ exists k, x = bpow radix2 k` (not on a binade boundary) as
+    additional precondition.  Allows the original `<` but excludes
+    binade-boundary `x` values.  Restrictive but matches what most
+    real cascade values satisfy.
+  - Case-split on whether `x` is a binade boundary, prove each case
+    separately.  Most general; requires Flocq's binade-boundary
+    machinery.
+
+### The cascade theorem (`_dominated`) status
+
+`b64_grow_expansion_nonoverlap_dominated` is stated and the file
+compiles, but its proof is `Admitted` pending:
+  1. The helper lemma's boundary tangent resolution (above).
+  2. The cascade-structure induction: showing that under the
+     appended-chain precondition, each TwoSum step is exact and the
+     cascade output equals `e ++ [b]`.
+
+Both are concrete, bounded follow-up work.  The cascade-structure
+induction is the larger piece (~50-100 lines), with the helper-lemma
+boundary resolution being the smaller (~20-30 lines once the
+boundary discrimination is set up).
+
+### Workflow note: the upgraded toolset
+
+This session used the apt-installed Coq 8.18 + Flocq 4.1.3 sandbox
+(set up in the previous session) with sed-translation of `Stdlib` ->
+`Coq` and the stubbed `B64_Pff_bridge`.  Iteration was fast:
+
+  - Identify which Flocq lemma to use: `grep round_N_le_midp` in
+    `/usr/lib/ocaml/coq/user-contrib/Flocq/Core/Ulp.v`.
+  - Confirm signature: `Check @round_N_le_midp.` via piped coqtop.
+  - Attempt the apply with explicit instance arguments.
+  - Coq surfaces the residual goal verbatim, which becomes the
+    documented tangent state.
+
+Each tangent state above was captured via `Show.` + `Admitted.` and
+`coqc` invocation that printed the goal block in standard format.
+The two captured goals are reproduced verbatim in this doc.
+
+## 12. Updated next-session task
+
+The next session's work narrows further:
+
+  1. Resolve `round_eq_under_strict_dominance` for all `x` (positive
+     non-boundary, positive boundary via tighter precondition or
+     case-split, negative cases via `round_NE_opp` symmetry).
+     Estimate: ~half day.
+
+  2. Implement `b64_grow_expansion_aux_dominated_invariant`: the
+     cascade-structure lemma showing each TwoSum step is exact under
+     the appended-chain precondition.  Estimate: ~1 day.
+
+  3. Compose into `b64_grow_expansion_nonoverlap_dominated` Qed.
+     Estimate: ~couple of hours after (1) and (2).
+
+The general (non-dominated) case `b64_grow_expansion_nonoverlap`
+remains the larger open theorem.  The dominated case unblocks
+specific Stage D use cases (e.g., when the new value `c` in chain3 is
+small relative to the existing expansion); the general case requires
+either Fast2Sum redesign or a separate proof structure.

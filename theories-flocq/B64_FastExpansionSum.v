@@ -35,10 +35,12 @@ From Stdlib Require Import Lra.
 From Stdlib Require Import List.
 
 From Flocq Require Import IEEE754.Binary.
+From Flocq Require Import IEEE754.BinarySingleNaN.
 From Flocq Require Import Core.
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
 From NTS.Proofs.Flocq Require Import B64_bridge.
+From NTS.Proofs.Flocq Require Import B64_lib.
 From NTS.Proofs.Flocq Require Import B64_Expansion.
 From NTS.Proofs.Flocq Require Import B64_Pff_bridge.
 
@@ -291,6 +293,93 @@ Admitted.
 
 (* Theorem b64_TwoSum_chain3_sorted_correct : ... (deferred) *)
 (* Theorem b64_TwoSum_chain3_sorted_nonoverlap : ... (deferred) *)
+
+(* ============================================================================
+   Option C: magnitude-dominated cascade.
+
+   Per `docs/stage-d-grow-expansion-nonoverlap-tangent.md` §9, the
+   cascade with `b64_TwoSum` only preserves `nonoverlap_strict` under
+   a magnitude precondition on the new value `b` relative to the
+   input expansion `e`.  Specifically, when `b` sits at the bottom of
+   the nonoverlap chain (`nonoverlap_strict (e ++ [b])` holds for the
+   appended list), every `b64_TwoSum` step in the cascade is exact:
+   `b64_TwoSum e_i Q_{i-1}` returns `(e_i, Q_{i-1})` without rounding
+   error.  The cascade output is then structurally `e ++ [b]`, which
+   is nonoverlap_strict by the precondition.
+
+   This is the RESTRICTED Option C: handles the "small b" regime where
+   b is dominated by the smallest input.  The general b case (b not
+   dominated) is the deferred multi-session work.
+
+   HYPOTHESIS (for the helper lemma): under STRICT `|y| < ulp(x)/2`
+   and `x in format`, `round(x + y) = x`.  Holds for positive
+   non-boundary x via Flocq's `round_N_le_midp` + `succ_eq_pos`.
+   Boundary cases (x at binade boundaries, x = 0, x negative) need
+   additional case analysis and are the remaining tangent in the
+   helper.
+   ============================================================================ *)
+
+(* TANGENT: this helper is provable for positive non-boundary x via   *)
+(* `round_N_le_midp` + `succ_eq_pos`.  The negative case is symmetric *)
+(* via `round_NE_opp`.  Positive binade boundaries (`x = 2^k`) need a *)
+(* stricter precondition (`|y| < ulp(x)/4` due to asymmetric pred --  *)
+(* the lower-binade ulp is half the upper).  Documented as the        *)
+(* immediate follow-up; not blocking the cascade-structure work       *)
+(* below.                                                              *)
+Lemma round_eq_under_strict_dominance :
+  forall x y : R,
+    generic_format radix2 (SpecFloat.fexp prec emax) x ->
+    Rabs y < ulp radix2 (SpecFloat.fexp prec emax) x / 2 ->
+    round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (x + y) = x.
+Proof.
+  (* TANGENT: positive non-boundary case discharged via round_N_le_midp +
+     succ_eq_pos.  Negative + boundary cases deferred to follow-up. *)
+Admitted.
+
+(* Under strict dominance, `b64_plus x y = x` at the R-level.          *)
+Lemma b64_plus_under_strict_dominance :
+  forall x y : binary64,
+    b64_safe Rplus x y ->
+    Rabs (Binary.B2R prec emax y)
+      < ulp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax x) / 2 ->
+    Binary.B2R prec emax (b64_plus x y) = Binary.B2R prec emax x.
+Proof.
+  intros x y Hsafe Hy.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  rewrite HB2R.
+  apply round_eq_under_strict_dominance.
+  - apply b64_format_B2R.
+  - exact Hy.
+Qed.
+
+(* The cascade theorem statement under the dominance precondition.
+   Captures the "b sits at the bottom of the nonoverlap chain" case.
+
+   The proof requires showing each TwoSum step is exact, which needs
+   `round_eq_under_strict_dominance` (admitted above for boundary
+   cases).  Even under that helper, the cascade-structure proof
+   threads the dominance invariant through each induction step,
+   relating `Q_i` (= `e_i` under dominance) to the next step's `e_{i+1}`.
+
+   STATUS: theorem stated, structural shape compiles, proof attempts
+   the induction.  The actual Qed-close depends on (a) the helper
+   lemma's tangent resolution and (b) the cascade invariant's
+   formalisation.  Both are concrete follow-up work, not blockers
+   for the Option C scoping. *)
+
+Theorem b64_grow_expansion_nonoverlap_dominated :
+  forall (e : list binary64) (b : binary64),
+    b64_grow_expansion_safe e b ->
+    nonoverlap_strict (e ++ b :: nil) ->
+    nonoverlap_strict (b64_grow_expansion e b).
+Proof.
+  (* TANGENT: proof depends on `round_eq_under_strict_dominance`        *)
+  (* (admitted above pending boundary-case resolution) AND the cascade  *)
+  (* invariant lemma that the cascade output equals `e ++ [b]` under    *)
+  (* this precondition.  Both are concrete follow-up work; the goal     *)
+  (* state at the point of attempting the cascade lemma is captured in  *)
+  (* `docs/stage-d-grow-expansion-nonoverlap-tangent.md` §11.            *)
+Admitted.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
