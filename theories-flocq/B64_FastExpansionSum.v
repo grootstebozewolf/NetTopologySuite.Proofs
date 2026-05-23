@@ -252,13 +252,20 @@ Qed.
 (* every consumer of `sign_of_expansion_correct` on a chain output relies   *)
 (* on this property to discharge the precondition.                            *)
 (*                                                                            *)
-(* Proof plan (next session):                                                *)
-(*   - Induction on the cascade.  At each step, the TwoSum's output         *)
-(*     satisfies `|h_i| <= ulp(Q_i) / 2` via `b64_TwoSum_nonoverlap`.       *)
-(*   - The chained `Q_i` accumulator is monotonically larger in magnitude   *)
-(*     than the previous `h_{i-1}`, giving the chain                          *)
-(*     `|h_{i-1}| <= ulp(Q_i) / 2 <= ulp(h_i_prev) / 2`.                     *)
-(*   - The exact invariant carrying the cascade is the deferred work.       *)
+(* STATUS: TANGENT.  The theorem is NOT provable as stated.                   *)
+(* See `docs/stage-d-grow-expansion-nonoverlap-tangent.md` for the full      *)
+(* analysis: `nonoverlap_strict` (B64_Expansion.v:90) does not tolerate      *)
+(* internal zeros, but the cascade naturally produces zeros at any step      *)
+(* whose TwoSum is exact.  A binary64 counterexample is documented in the   *)
+(* tangent doc (input `e = [2^100; 2^45]`, `b = 2^48 - 2^45 + 2^(-5)`):     *)
+(* the cascade output `[2^100 + 2^48; 0; 2^(-5)]` violates                  *)
+(* `strict_succ_b64 0 (2^(-5))` by a factor of `2^(1070)`.                  *)
+(*                                                                            *)
+(* The next session makes a design call between two options:                 *)
+(*   A. Weaken `nonoverlap_strict` to tolerate internal zeros, re-prove     *)
+(*      `sign_of_expansion_correct` for the weaker predicate.                *)
+(*   B. Add a `compress` step to `b64_grow_expansion` that filters zeros.   *)
+(* The tangent doc recommends Option A on three grounds.                     *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem b64_grow_expansion_nonoverlap :
@@ -267,7 +274,9 @@ Theorem b64_grow_expansion_nonoverlap :
     nonoverlap_strict e ->
     nonoverlap_strict (b64_grow_expansion e b).
 Proof.
-  (* TANGENT: proof deferred pending design validation *)
+  (* TANGENT: documented in docs/stage-d-grow-expansion-nonoverlap-tangent.md *)
+  (* Theorem statement is incompatible with the algorithm; the next session  *)
+  (* picks the predicate-weakening or compress-filter resolution.            *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)

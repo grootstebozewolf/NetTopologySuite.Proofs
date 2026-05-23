@@ -44,13 +44,18 @@ theories-flocq/Validate_binary64.v
 
 # Stage D chain composition.  `b64_grow_expansion_correct` (sum
 # preservation) is Qed-closed; `b64_grow_expansion_nonoverlap` (the
-# load-bearing nonoverlap theorem) is still Admitted, deferred to the
-# follow-up session.  The Print Assumptions block for the closed
-# theorem pulls `Classical_Prop.classic` transitively via
-# `b64_TwoSum_correct`'s closure (same Category C contamination as the
-# other expansion-arithmetic files); the file-level exemption covers
-# both that PA leak and the remaining Admitted's audit footprint.
-# Comes off this list when both theorems are Qed-closed.  Also flagged
-# by CI's Qed-invariant grep for the remaining Admitted -- that flag
-# is the correct behaviour, see the design doc and commit messages.
+# load-bearing nonoverlap theorem) is Admitted with TANGENT status --
+# see `docs/stage-d-grow-expansion-nonoverlap-tangent.md` for the
+# concrete binary64 counterexample showing the theorem is NOT provable
+# as stated.  The next session resolves the design call (predicate
+# weakening or algorithm-side compress).  The Print Assumptions block
+# for the closed theorem pulls `Classical_Prop.classic` transitively
+# via `b64_TwoSum_correct`'s closure (same Category C contamination as
+# the other expansion-arithmetic files); the file-level exemption
+# covers both that PA leak and the tangent Admitted's audit footprint.
+# Comes off this list when the nonoverlap design call is made and the
+# theorem (possibly under a new predicate or against a compressed
+# output) is Qed-closed.  Also flagged by CI's Qed-invariant grep for
+# the remaining Admitted -- that flag is the correct behaviour and
+# names the tangent, see the design doc and commit messages.
 theories-flocq/B64_FastExpansionSum.v
