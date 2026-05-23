@@ -322,6 +322,72 @@ arithmetic (BJMP 2017's territory), not to the predicate-specific
 exact path through bounded-length straight-line composition of
 TwoSum and Dekker.
 
+## 2026-05-23 update: chain-composition re-scoped, sum-correctness Qed-closed
+
+The chain-composition tangent flagged in the 2026-05-16 update has
+gone through three follow-up sessions.  Updated empirical findings:
+
+| Piece | 2026-05-16 estimate | Actual outcome |
+|---|---|---|
+| Chain composition: Approach A design commit | "1-3 days, algorithmic design" | ~1 session (commit `22b6ffe`); design committed, Admitted theorems |
+| Chain composition: sum-correctness proof | included above | ~1 session (commit `e54b9da`); Qed-closed |
+| Chain composition: nonoverlap design call | included above | ~1 session (commit `c521d06`); tangent documented, Options A/B proposed |
+| Chain composition: Option B attempt | included above | ~1 session (commit `937955c`); Option B insufficient (Coq-verified counterexample), Option C is the active path |
+
+**Sum-correctness for the TwoSum-chained cascade is Qed-closed** under
+the new `b64_grow_expansion` entry point.  **Nonoverlap remains the
+open work**, now re-scoped to Option C (Fast2Sum + magnitude
+precondition) per the diagnosis in
+`docs/stage-d-grow-expansion-nonoverlap-tangent.md` §9.
+
+### Why two counterexamples were needed
+
+The first counterexample (`docs/stage-d-grow-expansion-nonoverlap-tangent.md` §3)
+ruled out keeping `nonoverlap_strict` with the existing
+`b64_TwoSum`-based cascade: internal zeros in the cascade output
+violate `strict_succ_b64 0 (nonzero)`.
+
+The second counterexample (§9 same doc) ruled out the
+`compress`-the-output workaround: even after filtering zeros, the
+cascade with cancellation intermediates produces non-zero adjacent
+elements that violate the half-ulp bound.
+
+Both counterexamples are Coq-verified via Flocq's `bpow_lt` machinery
+(reproduced in the tangent doc).  The findings are unambiguous.
+
+### Revised Stage D remaining estimate
+
+| Piece | 2026-05-16 estimate | 2026-05-23 estimate |
+|---|---|---|
+| Chain composition: sum-correctness | included in "1-3 days" | DONE (commit `e54b9da`) |
+| Chain composition: nonoverlap via Option C | included in "1-3 days" | **2-4 days** (Fast2Sum redesign + Shewchuk Theorem 13 formalisation) |
+| `b64_orient2d_exact` definition + sum=cross_R | ~3-4 hours | ~3-4 hours (unchanged, depends on chain composition) |
+| Final headline composition | ~1-2 hours | ~1-2 hours (unchanged) |
+| **Remaining total** | ~2-4 days | **2-4 days for chain composition + small finish work** |
+
+The 2026-05-16 estimate of "1-3 days" for chain composition was for
+the WHOLE design + proof.  The actual split: design and sum-correctness
+landed in two short sessions; nonoverlap is harder than initially
+scoped because the algorithm itself needs revision (not just the
+predicate).
+
+### Re-confirmed: this is still bounded execution work, not research
+
+Each session produced a durable artifact:
+
+  - Commit `22b6ffe`: Approach A design (definitions, theorem statements).
+  - Commit `e54b9da`: sum-correctness Qed-closed.
+  - Commit `c521d06`: tangent on `nonoverlap_strict` incompatibility.
+  - Commit `937955c`: tangent on `compress` insufficiency, Option C scoping.
+
+The pace stayed mechanical (~1 session per artifact).  No multi-month
+"scholarly work" surfaced.  Option C's 2-4 days is a CALENDAR estimate
+for the Fast2Sum redesign, comparable to the algorithm itself in
+Shewchuk's paper (a few pages of pseudocode + analysis).
+
+The "months of scholarly work" framing remains parked at general
+expansion arithmetic, not at our scoped Stage D.
+
 ## Citations
 
 Scout findings + literature:

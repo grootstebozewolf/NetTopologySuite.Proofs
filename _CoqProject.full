@@ -102,6 +102,20 @@ theories-flocq/B64_Pff_bridge.v
 # `sign_of_expansion_correct` is deferred; this is where the GENUINELY
 # NOVEL Stage D work lives (no Pff helper).
 theories-flocq/B64_Expansion.v
+# Stage D chain composition design artifact (Approach A).  Ships the
+# Coq definitions for `b64_grow_expansion` (Shewchuk's GROW-EXPANSION
+# primitive at binary64) and the two headline theorem statements
+# (`b64_grow_expansion_correct`, `b64_grow_expansion_nonoverlap`),
+# both Admitted with `(* TANGENT: proof deferred pending design
+# validation *)` markers.  Replaces the naive `b64_TwoSum_chain3` as
+# the entry point for nonoverlap-requiring consumers because the naive
+# triple `(s2, e2, e1)` does NOT satisfy `nonoverlap_strict` -- design
+# survey + counterexample in `docs/stage-d-chain-composition-approach.md`.
+# CI's Qed-invariant grep flags this file's Admitted statements on
+# every push; that flag is the correct behaviour and is acknowledged
+# in the companion commit message.  Comes off the exceptions list when
+# the proofs land in the follow-up session.
+theories-flocq/B64_FastExpansionSum.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

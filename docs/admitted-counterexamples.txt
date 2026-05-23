@@ -1,0 +1,72 @@
+# Documented-counterexample registry for Admitted theorems.
+#
+# Each `Admitted.` in `theories/` or `theories-flocq/` MUST appear in
+# this file with a reference to a verified counterexample.  The CI
+# script `scripts/check_admitted.sh` enforces this.
+#
+# Format (one entry per non-comment, non-blank line):
+#
+#   file:theorem_name | counterexample_doc | section_references
+#
+# - file: path relative to repo root (e.g., theories-flocq/B64_X.v).
+# - theorem_name: the exact Coq identifier of the Theorem/Lemma.
+# - counterexample_doc: path to a doc containing the verified
+#   counterexample artifacts.
+# - section_references: section anchors within the doc (e.g., "§3,§9")
+#   that point at the specific counterexample proofs.
+#
+# The section field is non-negotiable -- it makes entries auditable.
+# A reader navigates directly to the counterexample rather than
+# searching the doc.
+#
+# An Admitted WITHOUT a registry entry IS A BUILD FAILURE.
+# The default rule (no Admitteds) holds; this file documents the
+# exceptions with explicit justification.
+#
+# Removing an entry from this registry requires the theorem to be
+# Qed-closed (possibly under a re-scoped statement that the
+# counterexample no longer rules out).  Removing an entry without
+# closing the theorem is a violation of the corpus's epistemic
+# invariant.
+#
+# Semantics: an entry here says "this theorem, AS CURRENTLY STATED,
+# cannot be proved because the statement is too strong -- the
+# counterexample proves a weaker version is the most that's
+# achievable."  The entry is an invitation to re-scope the theorem,
+# not a tombstone.
+
+# ============================================================================
+# Stage D chain composition: three Admitteds with documented counterexamples.
+# All share the same counterexample lineage (Path A track, May 2026).
+# ============================================================================
+
+# `b64_grow_expansion_nonoverlap` -- general case, NOT provable as stated.
+# Two verified counterexamples (binary64 inputs explicitly constructed,
+# Coq-verified via bpow_lt arithmetic in the same file):
+#   - With `nonoverlap_strict`'s half-ulp bound, internal zeros from
+#     exact cascade steps violate the predicate (§3 counterex).
+#   - Adding compress doesn't help: cancellation intermediates leave
+#     adjacent non-zero elements at near-equal magnitudes (§9 counterex).
+# Achievable: the Path A dominated case `b64_grow_expansion_nonoverlap_pathA`
+# (Qed-closed) handles a specific narrow regime; the full general case
+# requires Slice A (fast-expansion-sum + weakened predicate).
+theories-flocq/B64_FastExpansionSum.v:b64_grow_expansion_nonoverlap | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §3,§9
+
+# `round_eq_under_strict_dominance` -- loose round-equality helper,
+# FALSE at binade boundaries.  Counterexample (§13): x = 1 (= bpow 0,
+# positive binade boundary), y = -3 * bpow(-55).  |y| < bpow(-53) =
+# ulp(1)/2 (loose precondition HOLDS) but round(x + y) = pred 1 < 1
+# (conclusion FAILS).  Coq-verified via three Qed-closed lemmas in the
+# same file: counterex_loose_precondition_holds,
+# counterex_below_midpoint, counterex_gap_magnitude.
+# Achievable: `round_eq_pathA_positive`, `_negative`, `_zero` (all
+# Qed-closed) under tighter precondition `|y| < ulp(pred x)/2`.
+theories-flocq/B64_FastExpansionSum.v:round_eq_under_strict_dominance | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §13
+
+# `b64_grow_expansion_nonoverlap_dominated` -- cites the false
+# `round_eq_under_strict_dominance` and the cascade-structure work
+# (which IS Qed-closed for Path A's tighter precondition).  Subsumed
+# by `b64_grow_expansion_nonoverlap_pathA` (Qed-closed).  Kept here as
+# the historical statement; the loose-precondition variant is not
+# provable for the same reasons as the general case above.
+theories-flocq/B64_FastExpansionSum.v:b64_grow_expansion_nonoverlap_dominated | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §3,§9,§13

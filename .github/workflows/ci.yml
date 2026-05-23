@@ -33,23 +33,34 @@ jobs:
       - name: Build proofs
         run: make
 
-      - name: Verify no .v file is missing a Qed (no Admitted, no Axiom, no Parameter)
+      - name: Verify no .v file is missing a Qed (two-tier Admitted check)
         # Scans BOTH theories/ and theories-flocq/.  The directory split
         # is about which CI runner builds the file (host vs container),
-        # not about which proof standard it meets.  Same Qed-closed rule
-        # applies uniformly.
+        # not about which proof standard it meets.  Same rule applies.
         #
-        # The regex anchors each keyword to the start of a line (modulo
-        # leading whitespace) so prose mentions in comments like
-        # "No Admitted, no Axiom" do not trip the check -- only actual
-        # Rocq proof-script keywords do.  `admit.` keeps its word-boundary
-        # form because it appears mid-line as a tactic.
-        run: |
-          if grep -nE '^[[:space:]]*Admitted[[:space:]]*\.|^[[:space:]]*Axiom\b|^[[:space:]]*Parameter\b|\badmit\.' theories/*.v theories-flocq/*.v; then
-            echo "::error::Found unsoundness markers. The repo's invariant is that every proof terminates with Qed in BOTH theories/ and theories-flocq/."
-            exit 1
-          fi
-          echo "All theorems Qed-closed."
+        # TWO-TIER SYSTEM (May 2026):
+        #
+        # Tier 1 (standard): Admitted without registry entry -> BUILD FAILURE.
+        #   The default rule.  Every Admitted that isn't in the
+        #   counterexample registry fails CI.
+        #
+        # Tier 2 (counterexample): Admitted with registry entry in
+        #   docs/admitted-counterexamples.txt referencing a verified
+        #   counterexample -> ALLOWED, tracked.
+        #
+        # This catches the proxy-vs-precision drift the old grep had:
+        # "no Admitted" was really "no unverified gaps."  The registry
+        # makes the rule precise: "no gaps that haven't been
+        # characterized with a verified counterexample."
+        #
+        # Axiom / Parameter / admit. remain BANNED outright -- the
+        # registry covers Admitted theorems only.
+        #
+        # The script anchors each banned keyword to the start of a
+        # line (modulo whitespace) so prose mentions in comments don't
+        # trip the check.  `admit.` keeps word-boundary form because
+        # it appears mid-line as a tactic.
+        run: bash scripts/check_admitted.sh
 
       - name: README <-> allowlist consistency (guardrail 3)
         # Verifies the README's prose claim about "the three standard

@@ -41,3 +41,23 @@ theories-flocq/Orient_b64_sound.v
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
 theories-flocq/Validate_binary64.v
+
+# Category C: Stage D chain composition.  This file pulls
+# `Classical_Prop.classic` transitively via `b64_TwoSum_correct`'s
+# closure (same lineage as the other expansion-arithmetic files
+# listed above).
+#
+# The file also contains THREE Admitted theorems with verified
+# counterexamples, each registered in `docs/admitted-counterexamples.txt`
+# and enforced by `scripts/check_admitted.sh`.  These are
+# known-unprovable-as-stated:
+#   - `b64_grow_expansion_nonoverlap` (loose general case).
+#   - `round_eq_under_strict_dominance` (loose round-eq helper).
+#   - `b64_grow_expansion_nonoverlap_dominated` (loose dominated variant).
+# The achievable versions (`b64_grow_expansion_nonoverlap_pathA`,
+# `round_eq_pathA_{positive, negative, zero}`, etc.) are all Qed-closed
+# in this same file.
+#
+# See `docs/stage-d-grow-expansion-nonoverlap-tangent.md` for the full
+# design history and the verified counterexample arithmetic.
+theories-flocq/B64_FastExpansionSum.v
