@@ -784,14 +784,14 @@ Proof.
   unfold b64_DekkerPair.
   destruct (b64_Dekker a b) as [r1 t1] eqn:HD1.
   destruct (b64_Dekker c d) as [r2 t2] eqn:HD2.
-  (* Push HD1/HD2 through HDC1, HDC2 and Hchain_safe so each carries only   *)
-  (* the destructured free variables -- the manoeuvre that unblocks `lra`. *)
-  rewrite HD1 in HDC1. cbn iota in HDC1.
-  rewrite HD2 in HDC2. cbn iota in HDC2.
-  rewrite HD1, HD2 in Hchain_safe. cbn [fst snd] in Hchain_safe.
+  (* `destruct ... eqn:` already substitutes the discriminee everywhere     *)
+  (* (goal + hypotheses) and iota-reduces the resulting let-patterns, so    *)
+  (* HDC1/HDC2 are in their abstract-r/t form already.  Hchain_safe still   *)
+  (* carries `fst (r1,t1)` / `snd (r1,t1)` shapes that `cbn [fst snd]`     *)
+  (* collapses to bare `r1 t1 r2 t2`.                                       *)
+  cbn [fst snd] in Hchain_safe.
   pose proof (b64_TwoSum_chain4_correct r1 t1 r2 t2 Hchain_safe) as HC4.
   destruct (b64_TwoSum_chain4 r1 t1 r2 t2) as [[[s e3] e2] e1] eqn:HCeqn.
-  rewrite HCeqn in HC4. cbn iota in HC4.
   lra.
 Qed.
 
