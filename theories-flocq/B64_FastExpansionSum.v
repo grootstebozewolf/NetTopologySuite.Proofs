@@ -685,8 +685,139 @@ Proof.
     exact IH.
 Qed.
 
+(* ============================================================================
+   PATH A COMPOSITION (Piece-3): the final theorem under the strict
+   Path A precondition.
+
+   `b64_grow_expansion_nonoverlap_pathA` Qed-closes:  under
+   `cascade_pathA_dominates_aux b (rev e)` + safety, the cascade output
+   is `nonoverlap_strict`.
+
+   Three structural helpers + the composition.  Total ~80 lines.
+   ============================================================================ *)
+
+(* Helper P3-1: nonoverlap_strict is B2R-componentwise compatible. *)
+Lemma nonoverlap_strict_B2R_compat :
+  forall xs ys : list binary64,
+    map (Binary.B2R prec emax) xs = map (Binary.B2R prec emax) ys ->
+    nonoverlap_strict xs <-> nonoverlap_strict ys.
+Proof.
+  induction xs as [|x xs IH]; intros ys Hmap.
+  - destruct ys as [|y ys].
+    + split; intros; cbn; exact I.
+    + simpl in Hmap. discriminate.
+  - destruct ys as [|y ys].
+    + simpl in Hmap. discriminate.
+    + simpl in Hmap. inversion Hmap as [[Hxy Hxsys]].
+      destruct xs as [|x' xs'].
+      * destruct ys as [|y' ys'].
+        -- split; intros _; exact I.
+        -- simpl in Hxsys. discriminate.
+      * destruct ys as [|y' ys'].
+        -- simpl in Hxsys. discriminate.
+        -- simpl in Hxsys. inversion Hxsys as [[Hxy' Hrest]].
+           split; intros [Hsucc Hno].
+           ++ split.
+              ** unfold strict_succ_b64 in *. rewrite <- Hxy, <- Hxy'. exact Hsucc.
+              ** specialize (IH (y' :: ys')).
+                 simpl in IH.
+                 destruct (IH ltac:(simpl; f_equal; auto)) as [Hxy_imp _].
+                 apply Hxy_imp. exact Hno.
+           ++ split.
+              ** unfold strict_succ_b64 in *. rewrite Hxy, Hxy'. exact Hsucc.
+              ** specialize (IH (y' :: ys')).
+                 destruct (IH ltac:(simpl; f_equal; auto)) as [_ Hyx_imp].
+                 apply Hyx_imp. exact Hno.
+Qed.
+
+(* Helper P3-2: snoc preserves nonoverlap_strict when the new tail is
+   in strict_succ relation with the (current) last element. *)
+Lemma nonoverlap_strict_snoc :
+  forall xs x y,
+    nonoverlap_strict (xs ++ x :: nil) ->
+    strict_succ_b64 x y ->
+    nonoverlap_strict (xs ++ x :: y :: nil).
+Proof.
+  induction xs as [|x' xs' IH]; intros x y Hno Hsucc.
+  - cbn in Hno |- *.
+    split. exact Hsucc. exact I.
+  - cbn in Hno |- *.
+    destruct xs' as [|x'' xs''] eqn:Hxs'.
+    + cbn in *. destruct Hno as [Hsucc' _].
+      split. exact Hsucc'. split. exact Hsucc. exact I.
+    + cbn in *. destruct Hno as [Hsucc' Hrest].
+      split. exact Hsucc'. apply IH. exact Hrest. exact Hsucc.
+Qed.
+
+(* Path A's strict bound implies the loose `strict_succ_b64`. *)
+Lemma strict_succ_pathA_R_implies_strict_succ_b64 :
+  forall a b : binary64,
+    0 < Binary.B2R prec emax a ->
+    strict_succ_pathA_R (Binary.B2R prec emax a) (Binary.B2R prec emax b) ->
+    strict_succ_b64 a b.
+Proof.
+  intros a b Ha Hpw.
+  unfold strict_succ_pathA_R in Hpw.
+  unfold strict_succ_b64.
+  pose proof (b64_format_B2R a) as Hfa.
+  pose proof (@pred_ge_0 radix2 _ b64_fexp_valid (Binary.B2R prec emax a) Ha Hfa) as Hpa.
+  pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax a)) as Hpa_le.
+  pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone _ _
+                Hpa Hpa_le) as Hulp_le.
+  lra.
+Qed.
+
+(* Helper P3-3: cascade_pathA_dominates_aux implies nonoverlap_strict
+   on the appended chain (rev es ++ [b]). *)
+Lemma cascade_pathA_dominates_implies_nonoverlap :
+  forall es b,
+    cascade_pathA_dominates_aux b es ->
+    nonoverlap_strict (rev es ++ b :: nil).
+Proof.
+  induction es as [|e es' IH]; intros b Hdom.
+  - cbn. exact I.
+  - cbn [cascade_pathA_dominates_aux] in Hdom.
+    destruct Hdom as [He [Hpw Hchain]].
+    specialize (IH e Hchain).
+    cbn [rev]. rewrite <- app_assoc. cbn [app].
+    apply nonoverlap_strict_snoc.
+    + exact IH.
+    + apply strict_succ_pathA_R_implies_strict_succ_b64; assumption.
+Qed.
+
+(* HEADLINE: under the Path A precondition + safety, the cascade
+   output is `nonoverlap_strict`.  Composition of the cascade
+   invariant + the B2R-compat lemma + the dominates-implies-nonoverlap
+   chain.
+
+   Differs from the original `b64_grow_expansion_nonoverlap_dominated`
+   in using the STRICTER `cascade_pathA_dominates_aux` precondition
+   instead of the loose `nonoverlap_strict (e ++ [b])`.  The latter
+   is not sufficient at binade boundaries (see counterexample
+   lemmas above); the Path A precondition rules those out. *)
+Theorem b64_grow_expansion_nonoverlap_pathA :
+  forall (e : list binary64) (b : binary64),
+    b64_grow_expansion_safe e b ->
+    cascade_pathA_dominates_aux b (rev e) ->
+    nonoverlap_strict (b64_grow_expansion e b).
+Proof.
+  intros e b Hsafe Hdom.
+  unfold b64_grow_expansion.
+  unfold b64_grow_expansion_safe in Hsafe.
+  destruct (b64_grow_expansion_aux b (rev e)) as [hs qfinal] eqn:Hrec.
+  pose proof (b64_grow_expansion_aux_pathA_matches (rev e) b Hsafe Hdom) as Hinv.
+  rewrite Hrec in Hinv.
+  unfold cascade_output_R_matches in Hinv.
+  rewrite rev_involutive in Hinv.
+  pose proof (cascade_pathA_dominates_implies_nonoverlap (rev e) b Hdom) as Hno_input.
+  rewrite rev_involutive in Hno_input.
+  apply (proj2 (nonoverlap_strict_B2R_compat _ _ Hinv)).
+  exact Hno_input.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions b64_grow_expansion_correct.
+Print Assumptions b64_grow_expansion_nonoverlap_pathA.
