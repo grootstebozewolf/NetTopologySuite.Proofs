@@ -684,3 +684,140 @@ either:
 This is the larger open question.  The Path A dominated theorem
 unblocks specific Stage D use cases (chain3 with small `c`); the
 general case is still multi-session work.
+
+## 14. 2026-05-23 continuation: Path A track complete + bridge analysis
+
+The Path A track is Qed-closed end-to-end (commits `385f5fe`,
+`8427cc7`, `dc583ad`, `a4bbfc4`):
+
+  - `round_eq_pathA_{positive, negative, zero}`: all signs.
+  - `b64_plus_under_pathA_dominance`: binary64 lift.
+  - `b64_TwoSum_pathA_exact_step`: per-step exactness.
+  - `b64_grow_expansion_aux_pathA_matches`: cascade invariant.
+  - `cascade_pathA_dominates_implies_nonoverlap`: precondition chain.
+  - `nonoverlap_strict_B2R_compat`, `nonoverlap_strict_snoc`,
+    `strict_succ_pathA_R_implies_strict_succ_b64`: structural helpers.
+  - `b64_grow_expansion_nonoverlap_pathA`: HEADLINE.
+
+File: 22 Qed, 3 Admitted.  The 3 Admitteds are all loose-precondition
+variants for which the corpus has verified counterexamples — known-
+unprovable-as-stated, not "we couldn't prove these."
+
+### Bridge analysis: does orient2d_exact satisfy Path A?
+
+Path A's `cascade_pathA_dominates_aux b (rev e)` for chain3 with
+input expansion `e = [s_1; e_1]` and new value `c` requires:
+
+  1. `0 < B2R s_1` AND `0 < B2R e_1` (positivity at every step).
+  2. `|B2R c| < ulp(pred (B2R e_1)) / 2 ≈ |B2R e_1| · 2^(-54)`.
+  3. `|B2R e_1| < ulp(pred (B2R s_1)) / 2 ≈ |B2R s_1| · 2^(-54)`.
+
+Orient2d's actual chain3 inputs under `b64_orient2d_inputs_safe`
+(`|coord| <= 2^500`):
+
+  - Coordinates: up to `2^500`, ARBITRARY sign.
+  - Coordinate differences: up to `2^501`, arbitrary sign.
+  - Products: up to `2^1002`, arbitrary sign.
+  - Outer sum `s_1`: up to `2^1003`.
+  - TwoSum error `e_1`: `|e_1| <= ulp(s_1)/2`, can be ZERO.
+
+**Three failure modes:**
+
+  - **(a) Positivity:** violated.  Coordinate differences and
+    products can be negative.  Path A's `0 < B2R e` precondition at
+    each step FAILS for general orient2d.
+
+  - **(b) Strict bound `|c| < |e_1| · 2^(-54)`:** with `|c|` up to
+    `2^1002` (for products) or `2^501` (for diffs), and `|e_1|` up
+    to `|s_1| · 2^(-53) ≈ 2^950`, the dominance requires
+    `|c| < 2^896`.  Products at `2^1002` violate this by factor
+    `2^106`.
+
+  - **(c) Zero-error case:** when the TwoSum is exact and `e_1 = 0`,
+    `ulp(pred 0)/2 = bpow_emin/2 ≈ 2^(-1075)`.  Dominance requires
+    `|c| < 2^(-1075)`, impossible for any non-trivial `c`.
+
+### Conclusion: Path A does not unblock orient2d_exact
+
+The current Path A theorem is mathematically clean but its precondition
+is NOT satisfied by orient2d's general inputs.  The Path A track
+**unblocks specific narrow regimes** (e.g., all-positive expansion
+with extreme magnitude separation between components and the new
+value) but **NOT the b64_orient2d_exact_sign_correct headline**.
+
+What Path A actually covers:
+
+  - Synthetic or test inputs designed to satisfy dominance.
+  - The integer regime (`coord_int_safe`, `|coord| <= 2^25`), but
+    that regime is already handled in `Orient_b64_exact.v` without
+    expansion arithmetic (everything is exact).
+  - Possibly: very specific orient2d sub-regimes with positive
+    coordinates and constrained magnitude ratios.
+
+The Stage D headline `b64_orient2d_exact_sign_correct` for general
+orient2d inputs **still requires the chain-composition work**, and
+the Path A result is not directly composable.
+
+### Three candidate next slices
+
+  - **Slice A: Formalize FAST-EXPANSION-SUM** (Shewchuk's canonical
+    merge of two expansions of comparable magnitude).  Larger work
+    (~3-5 days) but matches orient2d's actual algorithmic structure.
+    The 4 TwoProduct outputs in orient2d_exact's accumulator chain
+    are 2-component expansions of comparable magnitude; merging them
+    requires fast-expansion-sum, not grow-expansion.
+
+  - **Slice B: Investigate a weaker predicate that allows internal
+    zeros AND is provable for the cascade AND is sufficient for
+    `sign_of_expansion_correct`.**  Smaller work (~1-2 days) but
+    uncertain feasibility.  The counterexamples in §3 and §9 rule
+    out the obvious weakenings; a successful predicate would have
+    to thread between them.
+
+  - **Slice C: Tighten orient2d's input regime** to where Path A
+    applies.  E.g., positive-coordinate-only sub-regime with
+    magnitude separation constraints.  Smaller work (~1 day) but
+    produces a narrow result that doesn't cover the headline.
+
+### Session's calibration data
+
+Piece-2 (cascade-structure invariant) was correctly identified as
+the load-bearing piece.  It Qed-closed.  Composition was mechanical
+as predicted.  Compress lemma was unnecessary — verified before
+attempting (the framing prediction).
+
+The bridge analysis above is the one calibration miss: the Path A
+result, while clean, doesn't compose into the orient2d headline.
+This was visible in the precondition shape (`0 < B2R e` is a strong
+condition for arbitrary coordinates) but only confirmed via the
+numeric magnitude analysis above.
+
+The discipline note from the previous session's framing — "do the
+analysis BEFORE writing Coq" — applies again.  The bridge analysis
+took 15 minutes; if it had been done before Path A's design choice,
+the session might have steered toward Slice A directly.
+
+### Recommendation
+
+**Slice A (FAST-EXPANSION-SUM)** is the substantive next direction.
+Shewchuk's algorithm is well-known, the proof structure has
+formalization precedent (BJMP ITP 2017 §4 covers a similar
+primitive), and the result directly unblocks orient2d_exact.
+
+Estimated scope (per BJMP's experience + our pace):
+
+  - Algorithm definition (merge by magnitude, Fast2Sum cascade):
+    ~1 day.
+  - Sum-correctness proof: ~1 day (template lift from current
+    `b64_grow_expansion_correct`).
+  - Nonoverlap-preservation proof: ~2-3 days (Shewchuk Theorem 13
+    formalization, with careful magnitude bookkeeping).
+  - Composition into orient2d_exact: ~1 day.
+
+Total: ~5-6 days for Slice A.  Comparable to the Path A track's
+total time but produces an orient2d-applicable result.
+
+The Path A artifacts stay in the corpus — they prove a clean
+narrow theorem and serve as a partial template for the fast-
+expansion-sum work (the per-step exactness lemma reuses
+trivially, the B2R-compat helper is needed identically).
