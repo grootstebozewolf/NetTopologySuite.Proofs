@@ -61,3 +61,12 @@ theories-flocq/Validate_binary64.v
 # See `docs/stage-d-grow-expansion-nonoverlap-tangent.md` for the full
 # design history and the verified counterexample arithmetic.
 theories-flocq/B64_FastExpansionSum.v
+
+# Category C: Slice A pieces 1+2.  This file defines `nonoverlap_shewchuk`
+# (weakened predicate tolerating internal zeros) and proves
+# `sign_of_expansion_correct_shewchuk` (Qed-closed).  Pulls
+# `Classical_Prop.classic` transitively via `sign_of_expansion_correct`'s
+# closure on `Binary.B2R` -- same lineage as the other expansion-arithmetic
+# files listed above.  No Admitteds in this file.  Foundation for Slice A
+# pieces 3-7 (fast-expansion-sum + orient2d_exact composition).
+theories-flocq/B64_Expansion_Shewchuk.v

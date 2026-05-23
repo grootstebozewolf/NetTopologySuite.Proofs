@@ -116,6 +116,18 @@ theories-flocq/B64_Expansion.v
 # in the companion commit message.  Comes off the exceptions list when
 # the proofs land in the follow-up session.
 theories-flocq/B64_FastExpansionSum.v
+# Slice A pieces 1+2: weakened expansion predicate `nonoverlap_shewchuk`
+# (tolerating internal zeros) and the corresponding sign-correctness
+# theorem `sign_of_expansion_correct_shewchuk`.  Lifts the existing
+# `sign_of_expansion_correct` via two compress-invariance lemmas
+# (`expansion_R_compress`, `sign_of_expansion_compress`).  The
+# predicate matches what Shewchuk's fast-expansion-sum actually
+# produces; the corpus's stricter `nonoverlap_strict` is provably
+# not preserved by the algorithm (see two counterexamples in
+# `docs/stage-d-grow-expansion-nonoverlap-tangent.md` §3,§9).
+# Foundation for Slice A pieces 3-7 (fast-expansion-sum definition,
+# sum-correctness, nonoverlap preservation, orient2d_exact composition).
+theories-flocq/B64_Expansion_Shewchuk.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
