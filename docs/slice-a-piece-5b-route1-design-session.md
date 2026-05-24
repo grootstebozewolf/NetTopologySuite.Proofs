@@ -336,6 +336,31 @@ dominance lemma** — it is **Shewchuk Theorem 13 itself**, restated
 in cascade form.  Route 1's `cs_prov` augmentation is necessary
 (provenance is genuinely needed in the proof) but **not sufficient**.
 
+> ### ⬛ Key insight — the load-bearing recommendation for any successor session ⬛
+>
+> **The h-chain (consecutive cascade errors satisfying `|h_{k-1}| <=
+> ulp(h_k) / 2`) cannot be encoded as an invariant clause.**  It is
+> not a property of state; it is a property the cascade *step* must
+> establish, with `cs_prov` and the per-source nonoverlap hypotheses
+> available in proof context.
+>
+> Any third-design session should structure the proof as:
+>
+>   1. `cascade_invariant` carries only output-well-formed (clause a),
+>      magnitude (clause b), and a **simple** clause (c) saying "next
+>      step is safe to take".
+>   2. The h-chain is a **separate cascade-step lemma**
+>      (`cascade_h_chain`) that takes `cascade_invariant` + sort and
+>      per-source nonoverlap hypotheses, applies the four-way
+>      `(sign x, sign cs_carry)` case-split (with `cs_prov`
+>      supplying the magnitude bound in same-source cases), and
+>      establishes the new h's relationship to the previous h.
+>
+> Trying to fold the h-chain back into the invariant repeats Route 2's
+> mistake at a different scale: any predicate strong enough to imply
+> the h-chain needs information that does not propagate as a clean
+> state predicate.
+
 ## Task 4.  Re-prove `cascade_invariant_empty` under modified definition
 
 The initial state at the start of the cascade:

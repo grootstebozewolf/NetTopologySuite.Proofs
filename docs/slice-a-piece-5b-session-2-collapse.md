@@ -277,16 +277,15 @@ cascade-state augmentation would need to carry:
   Definition cascade_state_v1 : Type :=
     binary64 * provenance * list binary64.
 
-  (* OR a richer history: *)
+  (* Or, as a Record matching the Route 1 design session's choice: *)
+  Record cascade_state_v1 := mk_cs {
+    cs_carry  : binary64;
+    cs_prov   : provenance;
+    cs_output : list binary64
+  }.
 
-  Inductive q_history : Type :=
-    | q_from_source : provenance -> q_history     (* last input was from this source *)
-    | q_from_both : q_history.                    (* mixed; need extra reasoning *)
-
-  Definition cascade_state_v1' : Type :=
-    binary64 * q_history * list binary64.
-
-With provenance attached to `q`, the inductive step can case-split:
+With provenance attached to `q` (read: `cs_prov`), the inductive step
+can case-split:
 
   Case (p_q = from_e, p_x = from_e): same-source consecutive in e.
     By nonoverlap_shewchuk e, the *previous* from_e input has
@@ -305,7 +304,7 @@ With provenance attached to `q`, the inductive step can case-split:
   1. **Do not start Route 1 in this session.**  A fresh session with
      this artifact as its red-phase input is the correct procedure
      (per Session 2's stopping condition).  Route 1's design must
-     additionally specify how the `q_history` propagates through the
+     additionally specify how `cs_prov` propagates through the
      cascade (it is not simply `p` of the last input, because the
      accumulator can absorb several from one source then one from
      another in a single cascade step's downstream effect on
