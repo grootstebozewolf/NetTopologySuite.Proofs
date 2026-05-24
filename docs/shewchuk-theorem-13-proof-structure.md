@@ -234,63 +234,115 @@ predicate or by carrying provenance in the cascade state).
 - BJMP ITP 2017 (HAL hal-01512417) §4: formalises a similar primitive
   (`Add` in their terminology) for general expansion arithmetic.
 
-## §6. Resumption checklist for the follow-up session
+## §6. Route 2 (list-indexing invariant) -- selected design
 
-When resuming this proof:
+After the 2026-05-24 verification ruled out Route 3, and Route 1 was
+deemed too invasive (touches all existing Qed-closed cascade
+correctness lemmas), Route 2 is the committed design.
+
+### §6.1 The provenance tagging
+
+Define an auxiliary tag set:
+
+```coq
+Inductive provenance : Set := from_e | from_f.
+```
+
+The cascade input `sort_by_abs (e ++ f)` is paired with a list of
+tags `ps : list provenance` such that:
+  - `length ps = length (sort_by_abs (e ++ f))`.
+  - `length (filter (fun p => p = from_e) ps) = length e`.
+  - Similarly for `from_f`.
+
+The tagging is computable from the sort process (stable sort,
+prepending tags), but the predicate is what matters for the proof.
+
+### §6.2 The invariant
+
+```coq
+Definition cascade_invariant
+  (state_q : binary64)
+  (state_hs : list binary64)  (* smallest-first, as produced *)
+  (remaining_inputs : list (binary64 * provenance))
+  : Prop :=
+  (* Three clauses: *)
+  (* (a) Output well-formed: *)
+  nonoverlap_shewchuk (state_q :: rev state_hs) /\
+  (* (b) Magnitude bound on state_q relative to last processed: *)
+  (forall last_input, last_processed_input remaining_inputs = Some last_input ->
+     Rabs (B2R state_q) <= 2 * Rabs (B2R last_input)) /\
+  (* (c) Chain handover compatible with next TwoSum: *)
+  (forall next_input next_prov,
+     remaining_inputs = (next_input, next_prov) :: _ ->
+     (* Next step's b64_TwoSum produces a result that preserves *)
+     (* nonoverlap_shewchuk on the new state. *)
+     ...).
+```
+
+The exact form of clause (c) is what the proof's inductive step
+needs.  Refined statement is part of the next session's work --
+likely "either same-provenance (strict_succ_b64 from source
+precondition) or mixed-provenance (TwoSum produces zero-h or
+near-zero-h that compress filters)".
+
+### §6.3 The inductive structure
+
+The cascade preservation lemma:
+
+```coq
+Lemma cascade_step_preserves_invariant :
+  forall q hs x p xs',
+    cascade_invariant q hs ((x, p) :: xs') ->
+    b64_TwoSum_safe x q ->
+    let '(qnew, h) := b64_TwoSum x q in
+    cascade_invariant qnew (h :: hs) xs'.
+```
+
+The proof case-splits on the provenance of `(x, p)` relative to the
+last processed input.  Same-provenance cases use the strict_succ_b64
+chain inherited from `nonoverlap_shewchuk e` or
+`nonoverlap_shewchuk f`.  Mixed-provenance cases use the absorbing
+behavior of TwoSum on non-overlapping pairs (which the corpus's
+counterexample registry already characterises).
+
+### §6.4 Resumption checklist (Route 2 specific)
 
   1. Confirm `sort_by_abs_sorted` is still Qed-closed in the corpus.
-  2. The same-sign and strict-precondition mixed-sign sub-cases of
-     the per-step bound are already formalised (see "Incremental
-     progress" above).  These are not directly usable for §2.1 as
-     originally stated -- but they are useful for the
-     per-provenance-chain reasoning that the corrected §2.1 needs.
-  3. **Design decision for per-provenance tracking** (the blocker):
-     pick one of:
-     - **Augment `b64_grow_expansion_aux` with a provenance tag**:
-       change the cascade state to `list (binary64 * provenance)` and
-       carry the tag through.  Modular but invasive (touches the
-       existing Qed-closed correctness lemmas).
-     - **Express the invariant as a list-indexing property**: add an
-       auxiliary `cascade_invariant : list binary64 -> list provenance
-       -> Prop` that the headline theorem instantiates.  Keeps the
-       cascade definition untouched.
-     - **Restate the theorem to require a stronger source predicate**:
-       e.g. `nonoverlap_shewchuk (sort_by_abs (e ++ f))` as an
-       additional hypothesis.  This is logically weaker (provable in
-       fewer cases) but matches the proof structure §2.1 originally
-       had.  Useful only if the orient2d_exact use case actually
-       satisfies it (verify before committing).
-  4. State and prove `cascade_qnew_dominates` (corrected §2.1) under
-     whichever route step 3 chose.
-  5. State `cascade_step_half_ulp` (§2.2).
-  6. Compose into `fast_expansion_sum_nonoverlap_shewchuk`.
-  7. Remove the entry from `docs/admitted-deferred-proofs.txt`.
+  2. Define `provenance`, `tagged_sort_by_abs`, and prove
+     length/membership properties relating the tagging to `e` and `f`.
+  3. Define `cascade_invariant` with the three clauses above.
+     Refining clause (c) is the load-bearing design step.
+  4. Prove `cascade_step_preserves_invariant` by case-analysis on
+     provenance.  Uses the already-Qed-closed `b64_TwoSum_step_dominates_*`
+     lemmas for the same-sign sub-cases.
+  5. Bootstrap the invariant from the headline's preconditions:
+     `nonoverlap_shewchuk e` + `nonoverlap_shewchuk f` →
+     `cascade_invariant (head of sort) nil (tail of sort)`.
+  6. Run `cascade_step_preserves_invariant` through the cascade by
+     induction, deriving the final state's invariant.
+  7. Extract `nonoverlap_shewchuk (fast_expansion_sum e f)` from the
+     final state's clause (a).
+  8. Remove the entry from `docs/admitted-deferred-proofs.txt`.
 
-**Revised session count estimate**: 3-4 sessions.  Up from the
-original 2-3 because step 3's design decision plus per-provenance
-tracking adds genuine formalisation surface.
+**Revised session count estimate**: 3-4 sessions.
+  - Session 1: §6.1 + §6.2 + define clauses (~150 lines).
+  - Session 2: §6.3 + §6.4 step 4 (cascade_step_preserves_invariant)
+    case-split (~200-300 lines).
+  - Session 3-4: bootstrapping + composition + audit (~100 lines).
 
-**Cheaper alternative verification (2026-05-24)**: Checked whether
-`orient2d_exact`'s use of `fast_expansion_sum` sidesteps the
-per-provenance work.  Result: it does not.
+### §6.5 Risk analysis
 
-For orient2d_exact in the general regime (not the small-int regime,
-which is already Qed-closed without `fast_expansion_sum`), the
-inputs are 2-component expansions `[s_i, e_i]` from `TwoProduct`,
-where `s_i` is the high part and `e_i` is the rounding error
-satisfying `|e_i| <= ulp(s_i) / 2`.
+The biggest risk in Route 2 is clause (c) of the invariant.  The
+inductive step needs a precondition strong enough to derive the
+next state's clause (a) (output well-formed) from the current
+state's clauses + the next TwoSum step's properties.
 
-Concrete failing example: `s_1 = 2^53`, `e_1 = 1`,
-`s_2 = 0.5`, `e_2 = 2^(-54)`.  Each `[s_i, e_i]` is individually
-`nonoverlap_shewchuk` (singleton + valid TwoProduct error).
-`sort_by_abs ([s_1, e_1] ++ [s_2, e_2])` ascending =
-`[e_2, s_2, e_1, s_1]`.  Reversed = `[s_1, e_1, s_2, e_2]`.
+If clause (c) ends up requiring the FULL strict_succ_b64 chain on
+the input list (which we know is false), Route 2 collapses back to
+Route 3's territory.  The escape valve is the compress step: zero
+h's are filtered, so clause (a) only needs nonoverlap_strict on the
+non-zero subsequence -- which the per-provenance argument may give.
 
-Adjacent-pair check on reversed:
-  - `(s_1=2^53, e_1=1)`: `|1| <= ulp(2^53)/2 = 1`.  Boundary, just OK.
-  - `(e_1=1, s_2=0.5)`: `|0.5| <= ulp(1)/2 = 2^(-53)`?  **FALSE**.
-    `|0.5|` exceeds the bound by 53 orders of magnitude.
-
-So the merged-sorted list of typical orient2d products is NOT
-`nonoverlap_shewchuk`.  Route 3 (theorem strengthening) is out;
-the per-provenance work is genuinely required.
+**If Route 2 collapses**: pivot to Route 1 (cascade-state
+augmentation) as the next-best option, accepting the
+already-Qed-closed-lemma churn.

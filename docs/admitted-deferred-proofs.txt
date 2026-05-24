@@ -89,9 +89,13 @@
 # building blocks for the per-provenance-chain reasoning that the
 # corrected statement needs.
 #
-# What remains: design decision for per-provenance tracking + cascade
-# induction + §2.2 half-ulp chain + composition.  Revised estimate:
-# 3-4 sessions of focused work.  See proof structure doc §6 for the
-# three design routes (cascade-state augmentation, list-indexing
-# invariant, or theorem-statement strengthening).
-theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6
+# Design route selected (2026-05-24): Route 2 (list-indexing invariant).
+# Adds an auxiliary `cascade_invariant` predicate over the input list +
+# provenance tags; cascade definition and all existing Qed-closed
+# correctness lemmas remain untouched.  See proof structure doc §6
+# (especially §6.1-§6.5) for the full design.
+#
+# What remains: define cascade_invariant + provenance tagging + prove
+# preservation lemma + compose into headline.  Revised estimate:
+# 3-4 sessions of focused work.
+theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6,§6.1,§6.2,§6.3,§6.4,§6.5
