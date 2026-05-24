@@ -137,6 +137,17 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # (sum-correctness and nonoverlap_shewchuk preservation of the full
 # algorithm) are deferred to follow-up commits.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v
+# Slice A piece 6: orient2d via fast-expansion-sum.  Composes
+# b64_Dekker + fast_expansion_sum into b64_orient2d_expansion.
+# Sum-correctness Qed-closed under an explicit
+# `b64_orient2d_expansion_diffs_exact` precondition (the differences
+# round to themselves; holds in small_int regime and under Sterbenz).
+# Nonoverlap and sign-correctness chain through
+# fast_expansion_sum_nonoverlap_shewchuk, currently deferred-proof
+# Admitted in B64_FastExpansionSum_Shewchuk.v.  Sign-correctness
+# composes with the already-Qed-closed
+# sign_of_expansion_correct_shewchuk.
+theories-flocq/Orient_b64_expansion.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

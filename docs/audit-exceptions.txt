@@ -81,3 +81,16 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # in this file; pieces 4 and 5 (sum-correctness and
 # nonoverlap_shewchuk preservation) are next.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v
+
+# Category C: Slice A piece 6.  Composes b64_Dekker + fast_expansion_sum
+# into b64_orient2d_expansion.  Pulls `Classical_Prop.classic`
+# transitively via the B2R chain (same lineage as the expansion-arithmetic
+# files above).  Sum-correctness is Qed-closed (under an explicit
+# diffs_exact precondition).  Nonoverlap and sign-correctness theorems
+# reference `fast_expansion_sum_nonoverlap_shewchuk` (currently Admitted
+# in B64_FastExpansionSum_Shewchuk.v with deferred-proof registry entry).
+# That Admitted reference shows up in the file's Print Assumptions
+# blocks as an extra axiom; this exception entry covers it.  Per the
+# deferred-proof discipline, once Piece 5b closes, the reference becomes
+# Qed-closed and only the Category C lineage remains.
+theories-flocq/Orient_b64_expansion.v
