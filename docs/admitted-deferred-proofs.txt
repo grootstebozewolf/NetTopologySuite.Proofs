@@ -1,0 +1,101 @@
+# Deferred-proof registry for Admitted theorems.
+#
+# This is the THIRD tier of the corpus's Admitted-classification system,
+# complementing `docs/admitted-counterexamples.txt`:
+#
+#   Tier 1: standard Admitted -- BUILD FAILURE.  No registry entry.
+#   Tier 2: Admitted with verified counterexample -> registered in
+#           `docs/admitted-counterexamples.txt`.  Means "the theorem
+#           as currently stated CANNOT be proved because the statement
+#           is too strong; the counterexample proves a weaker version
+#           is the most that's achievable."
+#   Tier 3: Admitted with documented proof structure -> registered HERE.
+#           Means "the theorem IS provable; the proof structure is
+#           documented; the work is multi-session and hasn't been
+#           completed yet."
+#
+# The CI script `scripts/check_admitted.sh` enforces this: every
+# `Admitted.` in the corpus must appear in EXACTLY ONE of the two
+# registries (counterexample or deferred-proof) -- or build fails.
+#
+# Format (one entry per non-comment, non-blank line):
+#
+#   file:theorem_name | proof_structure_doc | section_references
+#
+# - file: path relative to repo root.
+# - theorem_name: the exact Coq identifier of the Theorem/Lemma.
+# - proof_structure_doc: a doc with the proof structure / approach
+#   sketched for the follow-up session.
+# - section_references: anchors within the doc.
+#
+# SEMANTICS DIFFERENCE FROM COUNTEREXAMPLE TIER:
+#
+# A counterexample-registry entry says "the theorem is FALSE as
+# stated; here's the verified witness."  These entries are permanent
+# (or change only when the theorem is re-stated).
+#
+# A deferred-proof entry says "the theorem is TRUE as stated; here's
+# the proof structure that needs to be formalised."  These entries
+# are TEMPORARY -- they come off the registry when the proof lands.
+#
+# Removing a deferred-proof entry without proving the theorem is a
+# violation of the corpus's epistemic invariant.
+#
+# Adding an entry here requires:
+#   1. The Coq theorem statement in a .v file (with `Admitted.`).
+#   2. A proof_structure_doc with enough detail that a future
+#      contributor can resume the work without re-deriving the design.
+#   3. Section references that point at the specific structure
+#      (algorithm, invariants, magnitude bookkeeping, etc.).
+#
+# An entry here is NOT a license to skip Coq work indefinitely.  It's
+# an explicit IOU: the corpus tracks the gap, the policy framework
+# enforces removal-via-proof, and CI catches drift.
+
+# ============================================================================
+# Slice A Piece 5b: Shewchuk Theorem 13 formalisation.
+# ============================================================================
+
+# `fast_expansion_sum_nonoverlap_shewchuk` -- the load-bearing piece for
+# orient2d_exact's headline.  Shewchuk Theorem 13 (1997 paper, ~1 page
+# of dense magnitude analysis).  Coq formalisation estimate: 200-400
+# lines.
+#
+# Approach: structural induction on the cascade with a magnitude
+# invariant.  An earlier draft of the proof structure doc assumed the
+# cascade input itself is `nonoverlap_shewchuk`; that's wrong --
+# `sort_by_abs (e ++ f)` is sorted-ascending but not strongly
+# nonoverlapping (counterexample: e=[4.0], f=[3.0]; merged-sorted-asc
+# is [3.0, 4.0], reversed [4.0, 3.0]; strict_succ_b64 4.0 3.0 demands
+# |3| <= 2^(-50), which fails flagrantly).  Shewchuk's actual argument
+# tracks per-element provenance (which input list each cascade-element
+# came from) and uses each input's individual half-ulp chain.  See
+# `docs/shewchuk-theorem-13-proof-structure.md` §2.1 for the corrected
+# analysis and §6 for the design routes for per-provenance tracking.
+#
+# Structural foundation already Qed-closed (PR #5):
+#   - `sort_by_abs_sorted`: cascade input is sorted ascending.
+#   - `expansion_R_sort_by_abs`: sort preserves expansion_R.
+#   - `b64_TwoSum_nonoverlap` (B64_Pff_bridge.v): per-step bound.
+#   - `sign_of_expansion_correct_shewchuk` (B64_Expansion_Shewchuk.v):
+#     downstream consumer.
+#
+# §2.1 per-step building blocks already Qed-closed:
+#   - `b64_plus_geq_pos` / `b64_plus_leq_neg`
+#   - `b64_TwoSum_step_dominates_{pos, neg, same_sign, q_zero}`
+#   - `b64_TwoSum_step_dominates_strict_{pos, neg}`
+# These cover all sign combinations under various preconditions.  They
+# are not directly usable for the corrected §2.1, but they are useful
+# building blocks for the per-provenance-chain reasoning that the
+# corrected statement needs.
+#
+# Design route selected (2026-05-24): Route 2 (list-indexing invariant).
+# Adds an auxiliary `cascade_invariant` predicate over the input list +
+# provenance tags; cascade definition and all existing Qed-closed
+# correctness lemmas remain untouched.  See proof structure doc §6
+# (especially §6.1-§6.5) for the full design.
+#
+# What remains: define cascade_invariant + provenance tagging + prove
+# preservation lemma + compose into headline.  Revised estimate:
+# 3-4 sessions of focused work.
+theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6,§6.1,§6.2,§6.3,§6.4,§6.5

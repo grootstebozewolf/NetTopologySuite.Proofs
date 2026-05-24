@@ -136,24 +136,366 @@ Definition fast_expansion_sum (e f : list binary64) : list binary64 :=
   end.
 
 (* -------------------------------------------------------------------------- *)
-(* PIECE 4 / 5 PROOF OBLIGATIONS (deferred to follow-up commits)              *)
+(* PIECE 4: sum-correctness of fast_expansion_sum.                            *)
+(*                                                                            *)
+(* Composes three structural results:                                         *)
+(*   1. `expansion_R_sort_by_abs` (this file): sort preserves expansion_R.   *)
+(*   2. `expansion_R_app` (B64_FastExpansionSum.v): expansion_R distributes  *)
+(*      over append.                                                          *)
+(*   3. `b64_grow_expansion_aux_correct` (B64_FastExpansionSum.v):           *)
+(*      cascade preserves the running sum.                                    *)
+(*                                                                            *)
+(* Safety: the cascade input (head of sorted list as accumulator, tail as    *)
+(* cascade input) must satisfy the per-step TwoSum safety chain.             *)
 (* -------------------------------------------------------------------------- *)
-(*                                                                            *)
-(* Piece 4 (sum-correctness): under appropriate safety preconditions,        *)
-(*   `expansion_R (fast_expansion_sum e f) = expansion_R e + expansion_R f`. *)
-(* Proof structure: combine `expansion_R_sort_by_abs` (this file) with the  *)
-(* existing `b64_grow_expansion_aux_correct` (B64_FastExpansionSum.v).      *)
-(*                                                                            *)
-(* Piece 5 (nonoverlap-preservation): under input expansions being          *)
-(* `nonoverlap_shewchuk` AND appropriate safety, the output is              *)
-(* `nonoverlap_shewchuk`.  Proof structure: Shewchuk Theorem 13              *)
-(* formalisation; per-step `b64_TwoSum_nonoverlap` carries the half-ulp     *)
-(* invariant, magnitude bookkeeping through the sort ensures the chain      *)
-(* propagates correctly.                                                     *)
-(*                                                                            *)
-(* This file lands the definition (piece 3) + the sort-level sum            *)
-(* invariance (piece-4 dependency).  Pieces 4/5 are next commits.            *)
+
+Definition fast_expansion_sum_safe (e f : list binary64) : Prop :=
+  match sort_by_abs (e ++ f) with
+  | nil => True
+  | x :: xs => b64_grow_expansion_aux_safe x xs
+  end.
+
+Theorem fast_expansion_sum_correct :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    expansion_R (fast_expansion_sum e f) = expansion_R e + expansion_R f.
+Proof.
+  intros e f Hsafe.
+  unfold fast_expansion_sum, fast_expansion_sum_safe in *.
+  destruct (sort_by_abs (e ++ f)) as [|x xs] eqn:Hsort.
+  - (* Sorted list is empty -- e ++ f had expansion_R 0. *)
+    cbn [expansion_R].
+    pose proof (expansion_R_sort_by_abs (e ++ f)) as Hsum.
+    rewrite Hsort in Hsum. cbn in Hsum.
+    pose proof (expansion_R_app e f) as Happ.
+    lra.
+  - (* Apply the cascade invariant. *)
+    destruct (b64_grow_expansion_aux x xs) as [hs qfinal] eqn:Hrec.
+    pose proof (b64_grow_expansion_aux_correct xs x Hsafe hs qfinal Hrec) as Hinv.
+    cbn [expansion_R].
+    rewrite expansion_R_rev.
+    pose proof (expansion_R_sort_by_abs (e ++ f)) as Hsum.
+    rewrite Hsort in Hsum. cbn [expansion_R] in Hsum.
+    rewrite expansion_R_app in Hsum.
+    lra.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
+(* PIECE 5a: sort correctness.                                                *)
+(*                                                                            *)
+(* `sort_by_abs` produces an ascending-by-magnitude list.  Standard           *)
+(* insertion-sort correctness.  Structural foundation for piece 5b            *)
+(* (the cascade-nonoverlap proof, deferred to a follow-up).                   *)
+(* -------------------------------------------------------------------------- *)
+
+Inductive sorted_asc : list binary64 -> Prop :=
+  | sorted_asc_nil : sorted_asc nil
+  | sorted_asc_singleton : forall x, sorted_asc (x :: nil)
+  | sorted_asc_cons : forall x y rest,
+      Rabs (Binary.B2R prec emax x) <= Rabs (Binary.B2R prec emax y) ->
+      sorted_asc (y :: rest) ->
+      sorted_asc (x :: y :: rest).
+
+Lemma sorted_asc_tail :
+  forall x xs, sorted_asc (x :: xs) -> sorted_asc xs.
+Proof.
+  intros x xs H. inversion H; subst.
+  - apply sorted_asc_nil.
+  - assumption.
+Qed.
+
+Lemma sorted_asc_cons_head :
+  forall x xs,
+    sorted_asc xs ->
+    (forall y rest, xs = y :: rest ->
+      Rabs (Binary.B2R prec emax x) <= Rabs (Binary.B2R prec emax y)) ->
+    sorted_asc (x :: xs).
+Proof.
+  intros x xs Hxs Hbnd.
+  destruct xs as [|y rest].
+  - apply sorted_asc_singleton.
+  - apply sorted_asc_cons.
+    + apply (Hbnd y rest). reflexivity.
+    + exact Hxs.
+Qed.
+
+Lemma insert_by_abs_sorted :
+  forall (x : binary64) (xs : list binary64),
+    sorted_asc xs ->
+    sorted_asc (insert_by_abs x xs).
+Proof.
+  intros x xs.
+  induction xs as [|y ys IH]; intros Hsorted.
+  - cbn. apply sorted_asc_singleton.
+  - cbn.
+    destruct (Rle_dec (Rabs (Binary.B2R prec emax x))
+                      (Rabs (Binary.B2R prec emax y))) as [Hle | Hgt].
+    + apply sorted_asc_cons; assumption.
+    + assert (Hgt' : Rabs (Binary.B2R prec emax y)
+                     <= Rabs (Binary.B2R prec emax x)) by lra.
+      apply sorted_asc_cons_head.
+      * apply IH. apply (sorted_asc_tail y). exact Hsorted.
+      * intros z rest Hz.
+        destruct ys as [|w ws].
+        -- cbn in Hz. inversion Hz; subst. exact Hgt'.
+        -- cbn in Hz.
+           destruct (Rle_dec (Rabs (Binary.B2R prec emax x))
+                             (Rabs (Binary.B2R prec emax w))) as [Hxw | Hxw].
+           ++ inversion Hz; subst. exact Hgt'.
+           ++ inversion Hz; subst.
+              inversion Hsorted; subst. assumption.
+Qed.
+
+Lemma sort_by_abs_sorted :
+  forall xs : list binary64,
+    sorted_asc (sort_by_abs xs).
+Proof.
+  induction xs as [|x xs IH].
+  - cbn. apply sorted_asc_nil.
+  - cbn. apply insert_by_abs_sorted. exact IH.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* PIECE 5b: nonoverlap_shewchuk preservation.                                *)
+(*                                                                            *)
+(* Shewchuk Theorem 13 (1997, ~1 page of dense magnitude analysis).  Stated  *)
+(* here with `Admitted` and registered in                                     *)
+(* `docs/admitted-deferred-proofs.txt` as a deferred-proof obligation.       *)
+(*                                                                            *)
+(* The proof structure is documented in                                       *)
+(* `docs/shewchuk-theorem-13-proof-structure.md` with enough detail that      *)
+(* a follow-up session can resume without re-deriving the design:             *)
+(*   §1 algorithmic background                                                *)
+(*   §2 cascade invariant (the two key lemmas needed)                         *)
+(*   §3 composition into the headline                                         *)
+(*   §4 intuition (why this works under sorted-ascending input)              *)
+(*   §5 references (Shewchuk 1997, BJMP ITP 2017)                            *)
+(*   §6 resumption checklist                                                  *)
+(*                                                                            *)
+(* Estimated 200-400 lines of Coq, 2-3 sessions of focused work.              *)
+(* -------------------------------------------------------------------------- *)
+
+(* -------------------------------------------------------------------------- *)
+(* Supporting machinery for §2.1 (cascade magnitude monotonicity).            *)
+(*                                                                            *)
+(* Per-step monotonicity: under the cascade step `b64_TwoSum e q`, the       *)
+(* new accumulator `fst (b64_TwoSum e q) = b64_plus e q` has magnitude       *)
+(* >= the previous accumulator `q`.                                           *)
+(*                                                                            *)
+(* These same-sign and zero-q cases are the building blocks for the full    *)
+(* sign-general per-step bound that §2.1 needs.  The general case requires   *)
+(* the strict_succ_b64 precondition (|q| <= ulp(e)/2) to handle              *)
+(* mixed-sign cancellation, which is deferred to a follow-up session.        *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_plus_geq_pos :
+  forall x y : binary64,
+    0 < Binary.B2R prec emax x ->
+    0 < Binary.B2R prec emax y ->
+    b64_safe Rplus x y ->
+    Binary.B2R prec emax y <= Binary.B2R prec emax (b64_plus x y).
+Proof.
+  intros x y Hx Hy Hsafe.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  rewrite HB2R.
+  pose proof (b64_format_B2R y) as Hfy.
+  rewrite <- (round_generic radix2 (SpecFloat.fexp prec emax)
+                (round_mode mode_b64) (Binary.B2R prec emax y) Hfy) at 1.
+  apply (round_le radix2 (SpecFloat.fexp prec emax)
+                  (round_mode mode_b64)).
+  lra.
+Qed.
+
+Lemma b64_plus_leq_neg :
+  forall x y : binary64,
+    Binary.B2R prec emax x < 0 ->
+    Binary.B2R prec emax y < 0 ->
+    b64_safe Rplus x y ->
+    Binary.B2R prec emax (b64_plus x y) <= Binary.B2R prec emax y.
+Proof.
+  intros x y Hx Hy Hsafe.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  rewrite HB2R.
+  pose proof (b64_format_B2R y) as Hfy.
+  rewrite <- (round_generic radix2 (SpecFloat.fexp prec emax)
+                (round_mode mode_b64) (Binary.B2R prec emax y) Hfy) at 2.
+  apply (round_le radix2 (SpecFloat.fexp prec emax)
+                  (round_mode mode_b64)).
+  lra.
+Qed.
+
+Lemma b64_TwoSum_step_dominates_pos :
+  forall e q : binary64,
+    0 < Binary.B2R prec emax e ->
+    0 < Binary.B2R prec emax q ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_geq_pos e q He Hq Hs1) as Hgeq.
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq.
+  rewrite Rabs_pos_eq by lra.
+  rewrite Rabs_pos_eq; [exact Hgeq | lra].
+Qed.
+
+Lemma b64_TwoSum_step_dominates_neg :
+  forall e q : binary64,
+    Binary.B2R prec emax e < 0 ->
+    Binary.B2R prec emax q < 0 ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_leq_neg e q He Hq Hs1) as Hleq.
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq.
+  rewrite Rabs_left by lra.
+  rewrite Rabs_left; [lra | lra].
+Qed.
+
+Lemma b64_TwoSum_step_dominates_same_sign :
+  forall e q : binary64,
+    (0 < Binary.B2R prec emax e /\ 0 < Binary.B2R prec emax q) \/
+    (Binary.B2R prec emax e < 0 /\ Binary.B2R prec emax q < 0) ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q [[He Hq] | [He Hq]] Hsafe.
+  - apply b64_TwoSum_step_dominates_pos; assumption.
+  - apply b64_TwoSum_step_dominates_neg; assumption.
+Qed.
+
+Lemma b64_TwoSum_step_dominates_q_zero :
+  forall e q : binary64,
+    Binary.B2R prec emax q = 0 ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q Hq.
+  rewrite Hq, Rabs_R0.
+  apply Rabs_pos.
+Qed.
+
+(* Mixed-sign dominance under the STRICT Path A precondition.  Under     *)
+(* `|q| < ulp(pred e)/2` (positive e) or `|q| < ulp(succ e)/2` (negative *)
+(* e), b64_plus absorbs q exactly (Path A's absorption, already          *)
+(* Qed-closed in B64_FastExpansionSum.v), so the cascade accumulator is *)
+(* unchanged in magnitude.  Composes with the same-sign cases above to  *)
+(* cover all sign combinations EXCEPT the boundary equality              *)
+(* `|q| = ulp(e)/2` -- which is the round-to-even boundary documented   *)
+(* in `docs/stage-d-grow-expansion-nonoverlap-tangent.md`.                *)
+Lemma b64_TwoSum_step_dominates_strict_pos :
+  forall e q : binary64,
+    0 < Binary.B2R prec emax e ->
+    Rabs (Binary.B2R prec emax q) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (pred radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax e)) / 2 ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_under_pathA_dominance e q He Hs1 Hq) as Habs.
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq, Habs.
+  pose proof (b64_format_B2R e) as Hfe.
+  pose proof (@pred_ge_0 radix2 _ b64_fexp_valid (Binary.B2R prec emax e) He Hfe)
+    as Hpred_ge0.
+  pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax e))
+    as Hpred_le.
+  pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone _ _
+                Hpred_ge0 Hpred_le) as Hulp_le.
+  pose proof (b64_ulp_le_abs (Binary.B2R prec emax e) (Rgt_not_eq _ _ He) Hfe)
+    as Hulp_le_abs.
+  rewrite (Rabs_pos_eq (Binary.B2R prec emax e)) by lra.
+  apply Rlt_le.
+  eapply Rlt_le_trans; [exact Hq | ].
+  rewrite Rabs_pos_eq in Hulp_le_abs by lra.
+  assert (Hchain : ulp radix2 (SpecFloat.fexp prec emax)
+                     (pred radix2 (SpecFloat.fexp prec emax)
+                        (Binary.B2R prec emax e))
+                   <= Binary.B2R prec emax e).
+  { eapply Rle_trans; [exact Hulp_le | exact Hulp_le_abs]. }
+  lra.
+Qed.
+
+Lemma b64_TwoSum_step_dominates_strict_neg :
+  forall e q : binary64,
+    Binary.B2R prec emax e < 0 ->
+    Rabs (Binary.B2R prec emax q) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (succ radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax e)) / 2 ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_correct e q Hs1) as [HB2R _].
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq, HB2R.
+  pose proof (b64_format_B2R e) as Hfe.
+  pose proof (round_eq_pathA_negative (Binary.B2R prec emax e)
+                (Binary.B2R prec emax q) He Hfe Hq) as Habs.
+  rewrite Habs.
+  assert (Heopp_pos : 0 < - Binary.B2R prec emax e) by lra.
+  assert (Hfe_opp : b64_format (- Binary.B2R prec emax e)).
+  { apply generic_format_opp. exact Hfe. }
+  pose proof (@pred_ge_0 radix2 _ b64_fexp_valid (- Binary.B2R prec emax e)
+                Heopp_pos Hfe_opp) as Hpred_ge0.
+  pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax)
+                (- Binary.B2R prec emax e)) as Hpred_le.
+  pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone _ _
+                Hpred_ge0 Hpred_le) as Hulp_le.
+  pose proof (b64_ulp_le_abs (- Binary.B2R prec emax e)
+                (Rgt_not_eq _ _ Heopp_pos) Hfe_opp) as Hulp_le_abs.
+  rewrite Rabs_pos_eq in Hulp_le_abs by lra.
+  rewrite (Rabs_left (Binary.B2R prec emax e)) by exact He.
+  apply Rlt_le.
+  eapply Rlt_le_trans; [exact Hq | ].
+  rewrite <- (Ropp_involutive (succ radix2 (SpecFloat.fexp prec emax)
+                                 (Binary.B2R prec emax e))).
+  rewrite <- pred_opp.
+  rewrite ulp_opp.
+  assert (Hchain : ulp radix2 (SpecFloat.fexp prec emax)
+                     (pred radix2 (SpecFloat.fexp prec emax)
+                        (- Binary.B2R prec emax e))
+                   <= - Binary.B2R prec emax e).
+  { eapply Rle_trans; [exact Hulp_le | exact Hulp_le_abs]. }
+  lra.
+Qed.
+
+Theorem fast_expansion_sum_nonoverlap_shewchuk :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+Proof.
+  (* DEFERRED: see docs/shewchuk-theorem-13-proof-structure.md.
+     Registered in docs/admitted-deferred-proofs.txt.
+     Building blocks for §2.1 are formalised above
+     (b64_plus_geq_pos, b64_plus_leq_neg, b64_TwoSum_step_dominates_pos,
+     ..._neg, ..._same_sign, ..._q_zero, ..._strict_pos, ..._strict_neg).
+     Remaining work: bridge from the boundary equality (|q| = ulp(e)/2)
+     to the strict precondition + cascade induction + §2.2 half-ulp
+     chain. *)
+Admitted.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
@@ -161,3 +503,13 @@ Definition fast_expansion_sum (e f : list binary64) : list binary64 :=
 
 Print Assumptions fast_expansion_sum.
 Print Assumptions expansion_R_sort_by_abs.
+Print Assumptions fast_expansion_sum_correct.
+Print Assumptions sort_by_abs_sorted.
+Print Assumptions b64_plus_geq_pos.
+Print Assumptions b64_plus_leq_neg.
+Print Assumptions b64_TwoSum_step_dominates_pos.
+Print Assumptions b64_TwoSum_step_dominates_neg.
+Print Assumptions b64_TwoSum_step_dominates_same_sign.
+Print Assumptions b64_TwoSum_step_dominates_q_zero.
+Print Assumptions b64_TwoSum_step_dominates_strict_pos.
+Print Assumptions b64_TwoSum_step_dominates_strict_neg.
