@@ -1033,6 +1033,12 @@ The host build is the canonical CI target (the macOS-arm64 runner has no
 Flocq); the container is the augmented environment for modules whose
 proofs need Flocq.
 
+If the container path is blocked by your network policy (e.g. Debian
+apt or `coq.inria.fr/opam/released` returns 403), see
+[`docs/development-environment.md`](docs/development-environment.md)
+for a host-install fallback that matches the container's package
+versions exactly and builds locally on Ubuntu in ~5 minutes.
+
 A successful `make` ends with `theories/*.vo` files and no errors. Each
 `.vo` file is a kernel-checked term whose type is the corresponding theorem
 statement. Build output also includes the `Print Assumptions` reports
