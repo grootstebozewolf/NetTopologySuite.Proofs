@@ -136,23 +136,63 @@ Definition fast_expansion_sum (e f : list binary64) : list binary64 :=
   end.
 
 (* -------------------------------------------------------------------------- *)
-(* PIECE 4 / 5 PROOF OBLIGATIONS (deferred to follow-up commits)              *)
+(* PIECE 4: sum-correctness of fast_expansion_sum.                            *)
+(*                                                                            *)
+(* Composes three structural results:                                         *)
+(*   1. `expansion_R_sort_by_abs` (this file): sort preserves expansion_R.   *)
+(*   2. `expansion_R_app` (B64_FastExpansionSum.v): expansion_R distributes  *)
+(*      over append.                                                          *)
+(*   3. `b64_grow_expansion_aux_correct` (B64_FastExpansionSum.v):           *)
+(*      cascade preserves the running sum.                                    *)
+(*                                                                            *)
+(* Safety: the cascade input (head of sorted list as accumulator, tail as    *)
+(* cascade input) must satisfy the per-step TwoSum safety chain.             *)
+(* -------------------------------------------------------------------------- *)
+
+Definition fast_expansion_sum_safe (e f : list binary64) : Prop :=
+  match sort_by_abs (e ++ f) with
+  | nil => True
+  | x :: xs => b64_grow_expansion_aux_safe x xs
+  end.
+
+Theorem fast_expansion_sum_correct :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    expansion_R (fast_expansion_sum e f) = expansion_R e + expansion_R f.
+Proof.
+  intros e f Hsafe.
+  unfold fast_expansion_sum, fast_expansion_sum_safe in *.
+  destruct (sort_by_abs (e ++ f)) as [|x xs] eqn:Hsort.
+  - (* Sorted list is empty -- e ++ f had expansion_R 0. *)
+    cbn [expansion_R].
+    pose proof (expansion_R_sort_by_abs (e ++ f)) as Hsum.
+    rewrite Hsort in Hsum. cbn in Hsum.
+    pose proof (expansion_R_app e f) as Happ.
+    lra.
+  - (* Apply the cascade invariant. *)
+    destruct (b64_grow_expansion_aux x xs) as [hs qfinal] eqn:Hrec.
+    pose proof (b64_grow_expansion_aux_correct xs x Hsafe hs qfinal Hrec) as Hinv.
+    cbn [expansion_R].
+    rewrite expansion_R_rev.
+    pose proof (expansion_R_sort_by_abs (e ++ f)) as Hsum.
+    rewrite Hsort in Hsum. cbn [expansion_R] in Hsum.
+    rewrite expansion_R_app in Hsum.
+    lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* PIECE 5 PROOF OBLIGATION (deferred to follow-up commit)                    *)
 (* -------------------------------------------------------------------------- *)
 (*                                                                            *)
-(* Piece 4 (sum-correctness): under appropriate safety preconditions,        *)
-(*   `expansion_R (fast_expansion_sum e f) = expansion_R e + expansion_R f`. *)
-(* Proof structure: combine `expansion_R_sort_by_abs` (this file) with the  *)
-(* existing `b64_grow_expansion_aux_correct` (B64_FastExpansionSum.v).      *)
-(*                                                                            *)
-(* Piece 5 (nonoverlap-preservation): under input expansions being          *)
-(* `nonoverlap_shewchuk` AND appropriate safety, the output is              *)
+(* Piece 5 (nonoverlap-preservation): under input expansions being           *)
+(* `nonoverlap_shewchuk` AND appropriate safety, the output is               *)
 (* `nonoverlap_shewchuk`.  Proof structure: Shewchuk Theorem 13              *)
 (* formalisation; per-step `b64_TwoSum_nonoverlap` carries the half-ulp     *)
 (* invariant, magnitude bookkeeping through the sort ensures the chain      *)
 (* propagates correctly.                                                     *)
 (*                                                                            *)
-(* This file lands the definition (piece 3) + the sort-level sum            *)
-(* invariance (piece-4 dependency).  Pieces 4/5 are next commits.            *)
+(* This file now lands pieces 3 and 4 (definition + sum-correctness).        *)
+(* Piece 5 is the next commit.                                               *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
@@ -161,3 +201,4 @@ Definition fast_expansion_sum (e f : list binary64) : list binary64 :=
 
 Print Assumptions fast_expansion_sum.
 Print Assumptions expansion_R_sort_by_abs.
+Print Assumptions fast_expansion_sum_correct.
