@@ -181,18 +181,111 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* PIECE 5 PROOF OBLIGATION (deferred to follow-up commit)                    *)
+(* PIECE 5a: sort correctness.                                                *)
+(*                                                                            *)
+(* `sort_by_abs` produces an ascending-by-magnitude list.  Standard           *)
+(* insertion-sort correctness.  Structural foundation for piece 5b            *)
+(* (the cascade-nonoverlap proof, deferred to a follow-up).                   *)
 (* -------------------------------------------------------------------------- *)
+
+Inductive sorted_asc : list binary64 -> Prop :=
+  | sorted_asc_nil : sorted_asc nil
+  | sorted_asc_singleton : forall x, sorted_asc (x :: nil)
+  | sorted_asc_cons : forall x y rest,
+      Rabs (Binary.B2R prec emax x) <= Rabs (Binary.B2R prec emax y) ->
+      sorted_asc (y :: rest) ->
+      sorted_asc (x :: y :: rest).
+
+Lemma sorted_asc_tail :
+  forall x xs, sorted_asc (x :: xs) -> sorted_asc xs.
+Proof.
+  intros x xs H. inversion H; subst.
+  - apply sorted_asc_nil.
+  - assumption.
+Qed.
+
+Lemma sorted_asc_cons_head :
+  forall x xs,
+    sorted_asc xs ->
+    (forall y rest, xs = y :: rest ->
+      Rabs (Binary.B2R prec emax x) <= Rabs (Binary.B2R prec emax y)) ->
+    sorted_asc (x :: xs).
+Proof.
+  intros x xs Hxs Hbnd.
+  destruct xs as [|y rest].
+  - apply sorted_asc_singleton.
+  - apply sorted_asc_cons.
+    + apply (Hbnd y rest). reflexivity.
+    + exact Hxs.
+Qed.
+
+Lemma insert_by_abs_sorted :
+  forall (x : binary64) (xs : list binary64),
+    sorted_asc xs ->
+    sorted_asc (insert_by_abs x xs).
+Proof.
+  intros x xs.
+  induction xs as [|y ys IH]; intros Hsorted.
+  - cbn. apply sorted_asc_singleton.
+  - cbn.
+    destruct (Rle_dec (Rabs (Binary.B2R prec emax x))
+                      (Rabs (Binary.B2R prec emax y))) as [Hle | Hgt].
+    + apply sorted_asc_cons; assumption.
+    + assert (Hgt' : Rabs (Binary.B2R prec emax y)
+                     <= Rabs (Binary.B2R prec emax x)) by lra.
+      apply sorted_asc_cons_head.
+      * apply IH. apply (sorted_asc_tail y). exact Hsorted.
+      * intros z rest Hz.
+        destruct ys as [|w ws].
+        -- cbn in Hz. inversion Hz; subst. exact Hgt'.
+        -- cbn in Hz.
+           destruct (Rle_dec (Rabs (Binary.B2R prec emax x))
+                             (Rabs (Binary.B2R prec emax w))) as [Hxw | Hxw].
+           ++ inversion Hz; subst. exact Hgt'.
+           ++ inversion Hz; subst.
+              inversion Hsorted; subst. assumption.
+Qed.
+
+Lemma sort_by_abs_sorted :
+  forall xs : list binary64,
+    sorted_asc (sort_by_abs xs).
+Proof.
+  induction xs as [|x xs IH].
+  - cbn. apply sorted_asc_nil.
+  - cbn. apply insert_by_abs_sorted. exact IH.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* PIECE 5b: nonoverlap_shewchuk preservation (DEFERRED).                     *)
 (*                                                                            *)
-(* Piece 5 (nonoverlap-preservation): under input expansions being           *)
-(* `nonoverlap_shewchuk` AND appropriate safety, the output is               *)
-(* `nonoverlap_shewchuk`.  Proof structure: Shewchuk Theorem 13              *)
-(* formalisation; per-step `b64_TwoSum_nonoverlap` carries the half-ulp     *)
-(* invariant, magnitude bookkeeping through the sort ensures the chain      *)
-(* propagates correctly.                                                     *)
+(* Theorem statement (NOT compiled here -- the proof is multi-session work):  *)
 (*                                                                            *)
-(* This file now lands pieces 3 and 4 (definition + sum-correctness).        *)
-(* Piece 5 is the next commit.                                               *)
+(*   Theorem fast_expansion_sum_nonoverlap_shewchuk :                          *)
+(*     forall (e f : list binary64),                                           *)
+(*       fast_expansion_sum_safe e f ->                                        *)
+(*       nonoverlap_shewchuk e ->                                              *)
+(*       nonoverlap_shewchuk f ->                                              *)
+(*       nonoverlap_shewchuk (fast_expansion_sum e f).                         *)
+(*                                                                            *)
+(* This is Shewchuk Theorem 13 (1997, ~1 page of dense magnitude analysis).  *)
+(* Coq formalization estimate: 200-400 lines.  Requires:                      *)
+(*                                                                            *)
+(*   - A cascade invariant relating each accumulator Q_i to the inputs        *)
+(*     processed so far (smallest-first, by sort_by_abs_sorted above).        *)
+(*   - A magnitude chain showing the cascade's error sequence h_1, h_2,...   *)
+(*     forms an appropriately ordered set after rev'ing.                      *)
+(*   - The compress step (in nonoverlap_shewchuk's definition) removes any   *)
+(*     internal zeros from exact-cascade steps; the magnitude chain on        *)
+(*     non-zero h's gives the half-ulp bound that nonoverlap_strict needs.   *)
+(*                                                                            *)
+(* The sort-correctness lemmas above give the structural foundation: the     *)
+(* cascade input is provably ordered, which is what Shewchuk's analysis      *)
+(* relies on.                                                                 *)
+(*                                                                            *)
+(* Per the corpus's epistemic invariant (`scripts/check_admitted.sh`), the   *)
+(* theorem is NOT stated here -- stating it without a proof OR a verified    *)
+(* counterexample would create an unregistered gap.  Follow-up commits will  *)
+(* land the proof when ready.                                                 *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
@@ -202,3 +295,4 @@ Qed.
 Print Assumptions fast_expansion_sum.
 Print Assumptions expansion_R_sort_by_abs.
 Print Assumptions fast_expansion_sum_correct.
+Print Assumptions sort_by_abs_sorted.
