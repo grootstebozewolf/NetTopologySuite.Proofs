@@ -21,6 +21,28 @@ This document captures the proof structure with enough detail that a
 follow-up session can land the proof without re-deriving the design.
 Estimated 200-400 lines of Coq, 2-3 days of focused work.
 
+**Incremental progress** (in
+`theories-flocq/B64_FastExpansionSum_Shewchuk.v`):
+  - `b64_plus_geq_pos`: positive-case `b64_plus` monotonicity (Qed).
+  - `b64_plus_leq_neg`: negative-case `b64_plus` monotonicity (Qed).
+  - `b64_TwoSum_step_dominates_pos`: per-step magnitude bound, positive
+    operands (Qed).
+  - `b64_TwoSum_step_dominates_neg`: per-step magnitude bound, negative
+    operands (Qed).
+  - `b64_TwoSum_step_dominates_same_sign`: per-step magnitude bound,
+    same-sign composition (Qed).
+  - `b64_TwoSum_step_dominates_q_zero`: per-step magnitude bound when
+    `q = 0` (Qed).
+
+These cover the trivial cases of §2.1's per-step bound.  The remaining
+gap is the **mixed-sign cancellation case**: when `e` and `q` have
+opposite signs, the cascade step `b64_plus e q` can shrink in magnitude
+(`|q| > |b64_plus e q|`) without the `strict_succ_b64` precondition.
+With `strict_succ_b64 e q` (i.e. `|q| <= ulp(e)/2`), the rounded sum
+absorbs `q` and the magnitude is preserved -- but the Coq proof of
+this requires the round-to-nearest analysis on Flocq's `round_NE_pt`,
+which is the next sub-session's focus.
+
 ## §1. Algorithmic background
 
 `fast_expansion_sum e f` is defined in `B64_FastExpansionSum_Shewchuk.v`:
@@ -139,14 +161,35 @@ exactly `nonoverlap_strict` (after compressing zeros).
 
 When resuming this proof:
   1. Confirm `sort_by_abs_sorted` is still Qed-closed in the corpus.
-  2. State `cascade_qnew_dominates` (§2.1).  Attempt by induction.
-     Key subgoal: at each cons step, the new accumulator's magnitude
-     is bounded.  Will likely need a stronger invariant carrying both
-     the magnitude bound and the per-step exactness.
-  3. State `cascade_step_half_ulp` (§2.2).  Attempt by induction
+  2. The same-sign and zero-q sub-cases of §2.1's per-step bound are
+     already formalised (see "Incremental progress" above).  The next
+     sub-step is the **mixed-sign cancellation** case: prove
+     ```coq
+     Lemma b64_plus_absorbs_under_strict_succ :
+       forall x q : binary64,
+         strict_succ_b64 x q ->
+         b64_safe Rplus x q ->
+         Binary.B2R prec emax (b64_plus x q) = Binary.B2R prec emax x.
+     ```
+     Or, weaker but sufficient for monotonicity:
+     ```coq
+     Lemma b64_TwoSum_step_dominates_mixed_sign :
+       forall e q : binary64,
+         strict_succ_b64 e q ->
+         b64_TwoSum_safe e q ->
+         Rabs (Binary.B2R prec emax q)
+           <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+     ```
+     Approach: split on `sign(B2R x) * sign(B2R q)`.  If same sign or
+     `q = 0`, the existing lemmas close it.  If opposite signs, use
+     the half-ulp bound on `|q|` against `ulp(B2R x)/2` and Flocq's
+     `round_N_pt`/`round_le` to bound `|round(x + q)|` from below.
+  3. Use the unified per-step bound to prove `cascade_qnew_dominates`
+     (§2.1) by induction.
+  4. State `cascade_step_half_ulp` (§2.2).  Attempt by induction
      after §2.1 is in place.
-  4. Compose into the headline `fast_expansion_sum_nonoverlap_shewchuk`.
-  5. Remove the entry from `docs/admitted-deferred-proofs.txt`.
+  5. Compose into the headline `fast_expansion_sum_nonoverlap_shewchuk`.
+  6. Remove the entry from `docs/admitted-deferred-proofs.txt`.
 
-Estimated session count: 2-3 sessions of focused work, depending on
-how much friction the magnitude invariant produces.
+Estimated session count: 2 more sessions of focused work, depending on
+how much friction the mixed-sign case produces.

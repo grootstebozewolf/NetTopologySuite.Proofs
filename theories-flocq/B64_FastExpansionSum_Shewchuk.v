@@ -275,6 +275,117 @@ Qed.
 (* Estimated 200-400 lines of Coq, 2-3 sessions of focused work.              *)
 (* -------------------------------------------------------------------------- *)
 
+(* -------------------------------------------------------------------------- *)
+(* Supporting machinery for §2.1 (cascade magnitude monotonicity).            *)
+(*                                                                            *)
+(* Per-step monotonicity: under the cascade step `b64_TwoSum e q`, the       *)
+(* new accumulator `fst (b64_TwoSum e q) = b64_plus e q` has magnitude       *)
+(* >= the previous accumulator `q`.                                           *)
+(*                                                                            *)
+(* These same-sign and zero-q cases are the building blocks for the full    *)
+(* sign-general per-step bound that §2.1 needs.  The general case requires   *)
+(* the strict_succ_b64 precondition (|q| <= ulp(e)/2) to handle              *)
+(* mixed-sign cancellation, which is deferred to a follow-up session.        *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_plus_geq_pos :
+  forall x y : binary64,
+    0 < Binary.B2R prec emax x ->
+    0 < Binary.B2R prec emax y ->
+    b64_safe Rplus x y ->
+    Binary.B2R prec emax y <= Binary.B2R prec emax (b64_plus x y).
+Proof.
+  intros x y Hx Hy Hsafe.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  rewrite HB2R.
+  pose proof (b64_format_B2R y) as Hfy.
+  rewrite <- (round_generic radix2 (SpecFloat.fexp prec emax)
+                (round_mode mode_b64) (Binary.B2R prec emax y) Hfy) at 1.
+  apply (round_le radix2 (SpecFloat.fexp prec emax)
+                  (round_mode mode_b64)).
+  lra.
+Qed.
+
+Lemma b64_plus_leq_neg :
+  forall x y : binary64,
+    Binary.B2R prec emax x < 0 ->
+    Binary.B2R prec emax y < 0 ->
+    b64_safe Rplus x y ->
+    Binary.B2R prec emax (b64_plus x y) <= Binary.B2R prec emax y.
+Proof.
+  intros x y Hx Hy Hsafe.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  rewrite HB2R.
+  pose proof (b64_format_B2R y) as Hfy.
+  rewrite <- (round_generic radix2 (SpecFloat.fexp prec emax)
+                (round_mode mode_b64) (Binary.B2R prec emax y) Hfy) at 2.
+  apply (round_le radix2 (SpecFloat.fexp prec emax)
+                  (round_mode mode_b64)).
+  lra.
+Qed.
+
+Lemma b64_TwoSum_step_dominates_pos :
+  forall e q : binary64,
+    0 < Binary.B2R prec emax e ->
+    0 < Binary.B2R prec emax q ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_geq_pos e q He Hq Hs1) as Hgeq.
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq.
+  rewrite Rabs_pos_eq by lra.
+  rewrite Rabs_pos_eq; [exact Hgeq | lra].
+Qed.
+
+Lemma b64_TwoSum_step_dominates_neg :
+  forall e q : binary64,
+    Binary.B2R prec emax e < 0 ->
+    Binary.B2R prec emax q < 0 ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_leq_neg e q He Hq Hs1) as Hleq.
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq.
+  rewrite Rabs_left by lra.
+  rewrite Rabs_left; [lra | lra].
+Qed.
+
+Lemma b64_TwoSum_step_dominates_same_sign :
+  forall e q : binary64,
+    (0 < Binary.B2R prec emax e /\ 0 < Binary.B2R prec emax q) \/
+    (Binary.B2R prec emax e < 0 /\ Binary.B2R prec emax q < 0) ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q [[He Hq] | [He Hq]] Hsafe.
+  - apply b64_TwoSum_step_dominates_pos; assumption.
+  - apply b64_TwoSum_step_dominates_neg; assumption.
+Qed.
+
+Lemma b64_TwoSum_step_dominates_q_zero :
+  forall e q : binary64,
+    Binary.B2R prec emax q = 0 ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q Hq.
+  rewrite Hq, Rabs_R0.
+  apply Rabs_pos.
+Qed.
+
 Theorem fast_expansion_sum_nonoverlap_shewchuk :
   forall (e f : list binary64),
     fast_expansion_sum_safe e f ->
@@ -283,7 +394,12 @@ Theorem fast_expansion_sum_nonoverlap_shewchuk :
     nonoverlap_shewchuk (fast_expansion_sum e f).
 Proof.
   (* DEFERRED: see docs/shewchuk-theorem-13-proof-structure.md.
-     Registered in docs/admitted-deferred-proofs.txt. *)
+     Registered in docs/admitted-deferred-proofs.txt.
+     Building blocks for §2.1 are formalised above
+     (b64_plus_geq_pos, b64_plus_leq_neg, b64_TwoSum_step_dominates_pos,
+     ..._neg, ..._same_sign, ..._q_zero).
+     Remaining work: sign-general step bound (mixed-sign cancellation
+     via strict_succ_b64) + cascade induction + §2.2 half-ulp chain. *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)
@@ -294,3 +410,9 @@ Print Assumptions fast_expansion_sum.
 Print Assumptions expansion_R_sort_by_abs.
 Print Assumptions fast_expansion_sum_correct.
 Print Assumptions sort_by_abs_sorted.
+Print Assumptions b64_plus_geq_pos.
+Print Assumptions b64_plus_leq_neg.
+Print Assumptions b64_TwoSum_step_dominates_pos.
+Print Assumptions b64_TwoSum_step_dominates_neg.
+Print Assumptions b64_TwoSum_step_dominates_same_sign.
+Print Assumptions b64_TwoSum_step_dominates_q_zero.
