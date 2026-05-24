@@ -82,6 +82,21 @@ nonoverlap_shewchuk-per-list): Route 2 has collapsed.  Stop.  Write a
 short "Route 2 collapse" doc capturing the candidate clause (c) and
 the missing property, and open a fresh design session for Route 1.
 
+**Route 1 reference** (for the collapse case).  Route 1 is the
+cascade-state augmentation approach considered and deferred at the
+start of the Route 2 work.  It changes
+`b64_grow_expansion_aux` to operate on `list (binary64 * provenance)`
+(state carries provenance through the cascade), rather than adding an
+auxiliary invariant alongside.  Modular but invasive: the existing
+Qed-closed correctness lemmas
+(`fast_expansion_sum_correct`, `expansion_R_sort_by_abs`,
+`sort_by_abs_sorted`, plus consumers in `Orient_b64_expansion.v` and
+`Orient_b64_stage_d.v`) all need re-proving against the new
+signature.  See `docs/shewchuk-theorem-13-proof-structure.md` §6
+intro + §6.5 for the original framing.  The collapse doc should
+include the verified-failing candidate clause (c) so Route 1's design
+session has the precise pivot trigger documented.
+
 ### Task 3.  Re-check `cascade_invariant_empty` after clause (c) refinement.
 
 Session 1's `cascade_invariant_empty` proved the initial state
