@@ -33,15 +33,27 @@ Estimated 200-400 lines of Coq, 2-3 days of focused work.
     same-sign composition (Qed).
   - `b64_TwoSum_step_dominates_q_zero`: per-step magnitude bound when
     `q = 0` (Qed).
+  - `b64_TwoSum_step_dominates_strict_pos`: per-step magnitude bound
+    for any-sign `q` under the STRICT precondition
+    `|B2R q| < ulp(pred (B2R e))/2` and `0 < B2R e` (Qed).  Uses the
+    existing Path A absorption `b64_plus_under_pathA_dominance`.
+  - `b64_TwoSum_step_dominates_strict_neg`: symmetric for negative
+    `B2R e`, via `round_eq_pathA_negative` (Qed).
 
-These cover the trivial cases of §2.1's per-step bound.  The remaining
-gap is the **mixed-sign cancellation case**: when `e` and `q` have
-opposite signs, the cascade step `b64_plus e q` can shrink in magnitude
-(`|q| > |b64_plus e q|`) without the `strict_succ_b64` precondition.
-With `strict_succ_b64 e q` (i.e. `|q| <= ulp(e)/2`), the rounded sum
-absorbs `q` and the magnitude is preserved -- but the Coq proof of
-this requires the round-to-nearest analysis on Flocq's `round_NE_pt`,
-which is the next sub-session's focus.
+These cover all sign combinations EXCEPT the **boundary equality**
+`|B2R q| = ulp(B2R e) / 2`.  The Path A absorption requires the strict
+inequality `<`; the registered-counterexample
+`round_eq_under_strict_dominance` proves the non-strict `<=` case has
+verified counterexamples at power-of-2 boundaries (round-to-even).
+
+What remains for §2.1: bridge from `strict_succ_b64 e q` (`<=`) to
+the Path A precondition (`<` on `ulp(pred e)`).  Two routes:
+  1. **Strengthen the cascade's source predicate**: require `<`
+     instead of `<=` in `strict_succ_b64`, restating
+     `nonoverlap_shewchuk`.  Trades elegance for absorption.
+  2. **Direct boundary-case proof**: at the boundary
+     `|q| = ulp(e)/2`, prove `|round(e + q)| >= |q|` by case-analysis
+     on the round-to-even tie-break.  Genuinely 50-100 lines.
 
 ## §1. Algorithmic background
 

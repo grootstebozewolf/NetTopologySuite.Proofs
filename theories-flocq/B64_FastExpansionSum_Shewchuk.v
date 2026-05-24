@@ -386,6 +386,100 @@ Proof.
   apply Rabs_pos.
 Qed.
 
+(* Mixed-sign dominance under the STRICT Path A precondition.  Under     *)
+(* `|q| < ulp(pred e)/2` (positive e) or `|q| < ulp(succ e)/2` (negative *)
+(* e), b64_plus absorbs q exactly (Path A's absorption, already          *)
+(* Qed-closed in B64_FastExpansionSum.v), so the cascade accumulator is *)
+(* unchanged in magnitude.  Composes with the same-sign cases above to  *)
+(* cover all sign combinations EXCEPT the boundary equality              *)
+(* `|q| = ulp(e)/2` -- which is the round-to-even boundary documented   *)
+(* in `docs/stage-d-grow-expansion-nonoverlap-tangent.md`.                *)
+Lemma b64_TwoSum_step_dominates_strict_pos :
+  forall e q : binary64,
+    0 < Binary.B2R prec emax e ->
+    Rabs (Binary.B2R prec emax q) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (pred radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax e)) / 2 ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_under_pathA_dominance e q He Hs1 Hq) as Habs.
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq, Habs.
+  pose proof (b64_format_B2R e) as Hfe.
+  pose proof (@pred_ge_0 radix2 _ b64_fexp_valid (Binary.B2R prec emax e) He Hfe)
+    as Hpred_ge0.
+  pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax e))
+    as Hpred_le.
+  pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone _ _
+                Hpred_ge0 Hpred_le) as Hulp_le.
+  pose proof (b64_ulp_le_abs (Binary.B2R prec emax e) (Rgt_not_eq _ _ He) Hfe)
+    as Hulp_le_abs.
+  rewrite (Rabs_pos_eq (Binary.B2R prec emax e)) by lra.
+  apply Rlt_le.
+  eapply Rlt_le_trans; [exact Hq | ].
+  rewrite Rabs_pos_eq in Hulp_le_abs by lra.
+  assert (Hchain : ulp radix2 (SpecFloat.fexp prec emax)
+                     (pred radix2 (SpecFloat.fexp prec emax)
+                        (Binary.B2R prec emax e))
+                   <= Binary.B2R prec emax e).
+  { eapply Rle_trans; [exact Hulp_le | exact Hulp_le_abs]. }
+  lra.
+Qed.
+
+Lemma b64_TwoSum_step_dominates_strict_neg :
+  forall e q : binary64,
+    Binary.B2R prec emax e < 0 ->
+    Rabs (Binary.B2R prec emax q) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (succ radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax e)) / 2 ->
+    b64_TwoSum_safe e q ->
+    Rabs (Binary.B2R prec emax q)
+      <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
+Proof.
+  intros e q He Hq Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 _].
+  pose proof (b64_plus_correct e q Hs1) as [HB2R _].
+  assert (Heq : fst (b64_TwoSum e q) = b64_plus e q).
+  { reflexivity. }
+  rewrite Heq, HB2R.
+  pose proof (b64_format_B2R e) as Hfe.
+  pose proof (round_eq_pathA_negative (Binary.B2R prec emax e)
+                (Binary.B2R prec emax q) He Hfe Hq) as Habs.
+  rewrite Habs.
+  assert (Heopp_pos : 0 < - Binary.B2R prec emax e) by lra.
+  assert (Hfe_opp : b64_format (- Binary.B2R prec emax e)).
+  { apply generic_format_opp. exact Hfe. }
+  pose proof (@pred_ge_0 radix2 _ b64_fexp_valid (- Binary.B2R prec emax e)
+                Heopp_pos Hfe_opp) as Hpred_ge0.
+  pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax)
+                (- Binary.B2R prec emax e)) as Hpred_le.
+  pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone _ _
+                Hpred_ge0 Hpred_le) as Hulp_le.
+  pose proof (b64_ulp_le_abs (- Binary.B2R prec emax e)
+                (Rgt_not_eq _ _ Heopp_pos) Hfe_opp) as Hulp_le_abs.
+  rewrite Rabs_pos_eq in Hulp_le_abs by lra.
+  rewrite (Rabs_left (Binary.B2R prec emax e)) by exact He.
+  apply Rlt_le.
+  eapply Rlt_le_trans; [exact Hq | ].
+  rewrite <- (Ropp_involutive (succ radix2 (SpecFloat.fexp prec emax)
+                                 (Binary.B2R prec emax e))).
+  rewrite <- pred_opp.
+  rewrite ulp_opp.
+  assert (Hchain : ulp radix2 (SpecFloat.fexp prec emax)
+                     (pred radix2 (SpecFloat.fexp prec emax)
+                        (- Binary.B2R prec emax e))
+                   <= - Binary.B2R prec emax e).
+  { eapply Rle_trans; [exact Hulp_le | exact Hulp_le_abs]. }
+  lra.
+Qed.
+
 Theorem fast_expansion_sum_nonoverlap_shewchuk :
   forall (e f : list binary64),
     fast_expansion_sum_safe e f ->
@@ -397,9 +491,10 @@ Proof.
      Registered in docs/admitted-deferred-proofs.txt.
      Building blocks for §2.1 are formalised above
      (b64_plus_geq_pos, b64_plus_leq_neg, b64_TwoSum_step_dominates_pos,
-     ..._neg, ..._same_sign, ..._q_zero).
-     Remaining work: sign-general step bound (mixed-sign cancellation
-     via strict_succ_b64) + cascade induction + §2.2 half-ulp chain. *)
+     ..._neg, ..._same_sign, ..._q_zero, ..._strict_pos, ..._strict_neg).
+     Remaining work: bridge from the boundary equality (|q| = ulp(e)/2)
+     to the strict precondition + cascade induction + §2.2 half-ulp
+     chain. *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)
@@ -416,3 +511,5 @@ Print Assumptions b64_TwoSum_step_dominates_pos.
 Print Assumptions b64_TwoSum_step_dominates_neg.
 Print Assumptions b64_TwoSum_step_dominates_same_sign.
 Print Assumptions b64_TwoSum_step_dominates_q_zero.
+Print Assumptions b64_TwoSum_step_dominates_strict_pos.
+Print Assumptions b64_TwoSum_step_dominates_strict_neg.
