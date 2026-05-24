@@ -268,6 +268,26 @@ correctness lemmas), Route 2 is the committed design.
 > uncovered by any clause-(c) framing.  Recommendation: state the
 > h-chain as a separate cascade-step lemma rather than an invariant
 > clause.
+>
+> **Status note (Route 1 Session 2 — collapse confirmed against live Coq).**
+>
+> **→ Full collapse artifact:
+> [`docs/slice-a-piece-5b-route1-session-2-collapse.md`](slice-a-piece-5b-route1-session-2-collapse.md).**
+>
+> Summary: with the host toolchain available, Route 1 Session 2 ran
+> the green-phase attempt in Coq.  The refined clause (c) (five-arm
+> disjunction over the `b64_TwoSum_step_dominates_xxx` family's
+> preconditions) Qed-closes `cascade_invariant_empty` under hypothesis,
+> but `cascade_step_preserves_invariant` bails at the clause-(a)
+> subgoal `nonoverlap_shewchuk (qnew :: h :: rev (cs_output state))`.
+> The load-bearing sub-link `strict_succ_b64 h h_prev` (the h-chain
+> between consecutive cascade errors) is not propagated by any
+> clause-(c) shape — it is a property of the cascade's STEP
+> TRANSITION, not of the state, and `cs_prov` only supplies the right
+> hypothesis context for same-source consecutive transitions.  The
+> recommendation stands: state the h-chain as a separate
+> cascade-step lemma (`cascade_h_chain`) and compose it with
+> `cascade_invariant`'s clause (a) to prove preservation.
 
 ### §6.1 The provenance tagging
 

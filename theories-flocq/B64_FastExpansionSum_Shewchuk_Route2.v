@@ -293,12 +293,45 @@ Definition cascade_invariant_magnitude
   Rabs (Binary.B2R prec emax q) <= max_abs_b64 processed
   \/ processed = nil.
 
-(* Placeholder for clause (c).  See the comment block above:               *)
-(* keeping this `True` is deliberate -- the h-chain magnitude argument     *)
-(* lives in a separate lemma, not in the invariant.                        *)
+(* Refined clause (c) -- Route 1 Session 2.                                 *)
+(*                                                                          *)
+(* Encodes: the next TwoSum step is in coverage of one of the existing      *)
+(* b64_TwoSum_step_dominates_xxx lemmas.  Five-arm disjunction over the     *)
+(* preconditions:                                                           *)
+(*   - same-sign positive (pos)                                             *)
+(*   - same-sign negative (neg)                                             *)
+(*   - zero carry (q_zero)                                                  *)
+(*   - any-sign with strict magnitude bound on |q| for positive x           *)
+(*     (strict_pos)                                                         *)
+(*   - any-sign with strict magnitude bound on |q| for negative x           *)
+(*     (strict_neg)                                                         *)
+(* Plus a `b64_TwoSum_safe` conjunct so the lemmas can fire.                *)
+(*                                                                          *)
+(* This is the strongest clause (c) form provable from the                  *)
+(* dominates_* family alone.  Per the Route 1 design artifact               *)
+(* (docs/slice-a-piece-5b-route1-design-session.md §Task 3), this           *)
+(* disjunction covers all SAME-SIGN inputs and all STRICT-MAGNITUDE         *)
+(* cases; it is the right starting point for the inductive case             *)
+(* analysis.                                                                *)
 Definition cascade_invariant_handover
-  (q : binary64) (remaining : list tagged_b64) : Prop :=
-  True.
+  (state : cascade_state) (remaining : list tagged_b64) : Prop :=
+  match remaining with
+  | nil => True
+  | (x, _) :: _ =>
+      let q  := cs_carry state in
+      let qR := Binary.B2R prec emax q in
+      let xR := Binary.B2R prec emax x in
+      b64_TwoSum_safe x q /\
+      ( (0 < qR /\ 0 < xR)
+        \/ (qR < 0 /\ xR < 0)
+        \/ qR = 0
+        \/ (0 < xR /\ Rabs qR <
+              ulp radix2 (SpecFloat.fexp prec emax)
+                (pred radix2 (SpecFloat.fexp prec emax) xR) / 2)
+        \/ (xR < 0 /\ Rabs qR <
+              ulp radix2 (SpecFloat.fexp prec emax)
+                (succ radix2 (SpecFloat.fexp prec emax) xR) / 2) )
+  end.
 
 Definition cascade_invariant
   (state : cascade_state)
@@ -307,24 +340,28 @@ Definition cascade_invariant
   : Prop :=
   cascade_invariant_output (cs_carry state) (cs_output state) /\
   cascade_invariant_magnitude (cs_carry state) processed /\
-  cascade_invariant_handover (cs_carry state) remaining.
+  cascade_invariant_handover state remaining.
 
 (* -------------------------------------------------------------------------- *)
-(* Sanity check: empty-state invariant.                                       *)
+(* Sanity check: empty-state invariant under refined clause (c).              *)
 (*                                                                            *)
 (* When the cascade hasn't processed any inputs yet, the state is             *)
 (* mk_cascade_state q_initial p_initial nil where (q_initial, p_initial) is  *)
-(* the head of the tagged input.  The invariant holds trivially because:    *)
-(*   - (a) output is just [q_initial], trivially nonoverlap_shewchuk.        *)
-(*   - (b) processed = nil, so the disjunction's right branch fires.        *)
-(*   - (c) placeholder True.                                                 *)
+(* the head of the tagged input.  Clauses (a) and (b) hold trivially:         *)
+(*   - (a) output is just [q_initial], trivially nonoverlap_shewchuk.         *)
+(*   - (b) processed = nil, so the disjunction's right branch fires.         *)
+(* Clause (c) is no longer vacuous; it is taken as a hypothesis.  The         *)
+(* bootstrap lemma `fast_expansion_sum_bootstrap` discharges this             *)
+(* hypothesis from the input preconditions (sorted-ascending merge +          *)
+(* per-source nonoverlap_shewchuk).                                           *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma cascade_invariant_empty :
   forall q p remaining,
+    cascade_invariant_handover (mk_cascade_state q p nil) remaining ->
     cascade_invariant (mk_cascade_state q p nil) nil remaining.
 Proof.
-  intros q p remaining.
+  intros q p remaining Hho.
   unfold cascade_invariant.
   cbn [cs_carry cs_prov cs_output rev].
   split; [|split].
@@ -337,9 +374,86 @@ Proof.
       cbn [nonoverlap_strict]; exact I.
   - (* (b) magnitude *)
     right. reflexivity.
-  - (* (c) placeholder *)
-    exact I.
+  - (* (c) handover -- supplied as hypothesis. *)
+    exact Hho.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* GREEN-PHASE ATTEMPT: cascade_step_preserves_invariant.                     *)
+(*                                                                            *)
+(* Per docs/shewchuk-theorem-13-proof-structure.md §6.3, after one cascade   *)
+(* step consuming (x, prov_x) from the head of remaining:                     *)
+(*   - cs_carry := fst (b64_TwoSum x q_old)                                   *)
+(*   - cs_prov  := prov_x                                                     *)
+(*   - cs_output := cs_output_old ++ [snd (b64_TwoSum x q_old)]               *)
+(*     (APPEND to oldest-first convention so cascade_invariant_output's       *)
+(*     `q :: rev hs` shape is preserved.)                                     *)
+(*                                                                            *)
+(* Clause (a) preservation requires nonoverlap_shewchuk on                    *)
+(* (qnew :: rev (hs ++ [h])) = (qnew :: h :: rev hs).                         *)
+(* That decomposes into:                                                      *)
+(*   (1) strict_succ qnew h        -- TwoSum's |h| <= ulp(qnew)/2 property    *)
+(*   (2) strict_succ h h_prev      -- THE H-CHAIN, between consecutive errs   *)
+(*   (3) rest of the chain         -- inherited from old clause (a)           *)
+(*                                                                            *)
+(* (2) is the load-bearing claim per the Route 1 design artifact.  It is     *)
+(* not in the refined clause (c) (which is about q's relationship to the     *)
+(* NEXT x), nor in clause (b) (max-abs bound), nor derivable from the        *)
+(* existing dominates_* family alone.                                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cascade_step_preserves_invariant :
+  forall (state : cascade_state)
+         (processed : list binary64)
+         (x : binary64) (prov : provenance)
+         (rest : list tagged_b64),
+    cascade_invariant state processed ((x, prov) :: rest) ->
+    cascade_invariant
+      (mk_cascade_state
+         (fst (b64_TwoSum x (cs_carry state)))
+         prov
+         (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]))
+      (processed ++ [x])
+      rest.
+Proof.
+  intros state processed x prov rest Hinv.
+  unfold cascade_invariant in Hinv.
+  destruct Hinv as [Ha [Hb Hc]].
+  unfold cascade_invariant_handover in Hc.
+  cbn [cs_carry] in Hc.
+  destruct Hc as [Hsafe Hcases].
+  unfold cascade_invariant.
+  cbn [cs_carry cs_prov cs_output].
+  split; [|split].
+  - (* (a) Output well-formed.                                                 *)
+    (*                                                                          *)
+    (* GOAL: nonoverlap_shewchuk                                                *)
+    (*         (fst (b64_TwoSum x (cs_carry state))                             *)
+    (*          :: rev (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]))*)
+    (*       = nonoverlap_shewchuk                                              *)
+    (*         (qnew :: h :: rev (cs_output state))                             *)
+    (*                                                                          *)
+    (* by rev_app_distr and rev (cons h nil) = [h].                             *)
+    (*                                                                          *)
+    (* The hypothesis Ha gives us:                                              *)
+    (*   nonoverlap_shewchuk (cs_carry state :: rev (cs_output state))         *)
+    (* i.e., (q_old :: rev hs_old).                                             *)
+    (*                                                                          *)
+    (* We need to establish a chain:                                            *)
+    (*   strict_succ_b64 qnew h        (after compress)                         *)
+    (*   strict_succ_b64 h h_prev      (where h_prev is head of rev hs_old)    *)
+    (*   ... rest of chain from Ha                                              *)
+    (*                                                                          *)
+    (* The second link, `strict_succ_b64 h h_prev`, is the H-CHAIN claim       *)
+    (* that the Route 1 design artifact and Route 2 collapse artifact          *)
+    (* identified as Shewchuk Theorem 13's load-bearing content.  It is        *)
+    (* NOT in the refined clause (c); clause (c) is about q's relationship    *)
+    (* to the NEXT input x, not about h_prev's relationship to the new h.     *)
+    (*                                                                          *)
+    (* COLLAPSE: this subgoal cannot be discharged from Ha + Hb + Hcases       *)
+    (* + the input preconditions alone.  See                                    *)
+    (* docs/slice-a-piece-5b-route1-session-2-collapse.md.                      *)
+Abort.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
