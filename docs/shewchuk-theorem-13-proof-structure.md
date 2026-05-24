@@ -270,11 +270,27 @@ When resuming this proof:
 original 2-3 because step 3's design decision plus per-provenance
 tracking adds genuine formalisation surface.
 
-**Cheaper alternative worth considering before step 3**: if
-`orient2d_exact`'s use of `fast_expansion_sum` always feeds in
-expansions whose merged-sorted-ascending form happens to be
-`nonoverlap_shewchuk` (which the orient2d case might satisfy for
-specific structural reasons -- needs verification), the headline can
-be specialised to that case and the general theorem deferred further.
-Verify by computing the predicate on a typical orient2d inputs before
-committing to the per-provenance work.
+**Cheaper alternative verification (2026-05-24)**: Checked whether
+`orient2d_exact`'s use of `fast_expansion_sum` sidesteps the
+per-provenance work.  Result: it does not.
+
+For orient2d_exact in the general regime (not the small-int regime,
+which is already Qed-closed without `fast_expansion_sum`), the
+inputs are 2-component expansions `[s_i, e_i]` from `TwoProduct`,
+where `s_i` is the high part and `e_i` is the rounding error
+satisfying `|e_i| <= ulp(s_i) / 2`.
+
+Concrete failing example: `s_1 = 2^53`, `e_1 = 1`,
+`s_2 = 0.5`, `e_2 = 2^(-54)`.  Each `[s_i, e_i]` is individually
+`nonoverlap_shewchuk` (singleton + valid TwoProduct error).
+`sort_by_abs ([s_1, e_1] ++ [s_2, e_2])` ascending =
+`[e_2, s_2, e_1, s_1]`.  Reversed = `[s_1, e_1, s_2, e_2]`.
+
+Adjacent-pair check on reversed:
+  - `(s_1=2^53, e_1=1)`: `|1| <= ulp(2^53)/2 = 1`.  Boundary, just OK.
+  - `(e_1=1, s_2=0.5)`: `|0.5| <= ulp(1)/2 = 2^(-53)`?  **FALSE**.
+    `|0.5|` exceeds the bound by 53 orders of magnitude.
+
+So the merged-sorted list of typical orient2d products is NOT
+`nonoverlap_shewchuk`.  Route 3 (theorem strengthening) is out;
+the per-provenance work is genuinely required.
