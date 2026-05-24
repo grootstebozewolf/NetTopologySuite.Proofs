@@ -148,6 +148,17 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v
 # composes with the already-Qed-closed
 # sign_of_expansion_correct_shewchuk.
 theories-flocq/Orient_b64_expansion.v
+# Slice A piece 7: Stage D headline.  Composes Piece 6's
+# b64_orient2d_expansion_sign_correct with the existing Stage A
+# filter to produce:
+#   - b64_orient_sign_exact: expansion-based decoder with
+#     orient_sign_robust output (Qed-closed modulo Piece 5b).
+#   - b64_orient_sign_stage_d: full decoder, try filter then fall
+#     back to expansion (Qed-closed modulo Piece 5b under combined
+#     small-int + expansion safety).
+#   - b64_orient_sign_stage_d_tiny_regime_decisive: in tiny regime,
+#     never returns Uncertain (Qed-closed).
+theories-flocq/Orient_b64_stage_d.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

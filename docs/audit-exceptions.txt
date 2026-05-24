@@ -94,3 +94,12 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v
 # deferred-proof discipline, once Piece 5b closes, the reference becomes
 # Qed-closed and only the Category C lineage remains.
 theories-flocq/Orient_b64_expansion.v
+
+# Category C: Slice A piece 7.  Stage D headline.  Composes Piece 6's
+# expansion-based decoder with the existing Stage A filter into the
+# full b64_orient_sign_stage_d decoder + soundness theorem.  Same
+# audit lineage as Piece 6: Classical_Prop.classic transitively via
+# the B2R chain + fast_expansion_sum_nonoverlap_shewchuk reference
+# (deferred-proof, removable when Piece 5b closes).  The tiny-regime
+# decisive theorem is Qed-closed without the deferred reference.
+theories-flocq/Orient_b64_stage_d.v
