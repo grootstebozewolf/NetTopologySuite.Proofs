@@ -137,6 +137,37 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # (sum-correctness and nonoverlap_shewchuk preservation of the full
 # algorithm) are deferred to follow-up commits.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v
+# Slice A piece 5b -- Route 2 framework (Session 1 of 3-4).  Defines
+# provenance tagging on the cascade input (Inductive provenance +
+# tagged sort + length/membership lemmas) and states the
+# cascade_invariant predicate with its three clauses (output
+# well-formed, magnitude bound, chain-handover).  All theorems in
+# this file Qed-closed; the load-bearing
+# cascade_step_preserves_invariant is deferred to Session 2.  See
+# docs/shewchuk-theorem-13-proof-structure.md §6.1-§6.5.
+theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
+# Slice A piece 6: orient2d via fast-expansion-sum.  Composes
+# b64_Dekker + fast_expansion_sum into b64_orient2d_expansion.
+# Sum-correctness Qed-closed under an explicit
+# `b64_orient2d_expansion_diffs_exact` precondition (the differences
+# round to themselves; holds in small_int regime and under Sterbenz).
+# Nonoverlap and sign-correctness chain through
+# fast_expansion_sum_nonoverlap_shewchuk, currently deferred-proof
+# Admitted in B64_FastExpansionSum_Shewchuk.v.  Sign-correctness
+# composes with the already-Qed-closed
+# sign_of_expansion_correct_shewchuk.
+theories-flocq/Orient_b64_expansion.v
+# Slice A piece 7: Stage D headline.  Composes Piece 6's
+# b64_orient2d_expansion_sign_correct with the existing Stage A
+# filter to produce:
+#   - b64_orient_sign_exact: expansion-based decoder with
+#     orient_sign_robust output (Qed-closed modulo Piece 5b).
+#   - b64_orient_sign_stage_d: full decoder, try filter then fall
+#     back to expansion (Qed-closed modulo Piece 5b under combined
+#     small-int + expansion safety).
+#   - b64_orient_sign_stage_d_tiny_regime_decisive: in tiny regime,
+#     never returns Uncertain (Qed-closed).
+theories-flocq/Orient_b64_stage_d.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

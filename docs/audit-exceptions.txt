@@ -71,6 +71,16 @@ theories-flocq/B64_FastExpansionSum.v
 # pieces 3-7 (fast-expansion-sum + orient2d_exact composition).
 theories-flocq/B64_Expansion_Shewchuk.v
 
+# Category C: Slice A piece 5b Route 2 framework (Session 1).  Defines
+# provenance tagging on the cascade input plus the cascade_invariant
+# predicate.  Pulls `Classical_Prop.classic` transitively via the
+# B2R chain (same lineage as the other expansion-arithmetic files).
+# No Admitteds in this file; the load-bearing
+# cascade_step_preserves_invariant is deferred to a follow-up session
+# (still covered by the existing deferred-proof entry for
+# fast_expansion_sum_nonoverlap_shewchuk).
+theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
+
 # Category C: Slice A piece 3.  Defines `fast_expansion_sum`
 # (Shewchuk's canonical algorithm: insertion sort by magnitude
 # ascending + TwoSum cascade) and the sort-level sum-preservation
@@ -81,3 +91,25 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # in this file; pieces 4 and 5 (sum-correctness and
 # nonoverlap_shewchuk preservation) are next.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v
+
+# Category C: Slice A piece 6.  Composes b64_Dekker + fast_expansion_sum
+# into b64_orient2d_expansion.  Pulls `Classical_Prop.classic`
+# transitively via the B2R chain (same lineage as the expansion-arithmetic
+# files above).  Sum-correctness is Qed-closed (under an explicit
+# diffs_exact precondition).  Nonoverlap and sign-correctness theorems
+# reference `fast_expansion_sum_nonoverlap_shewchuk` (currently Admitted
+# in B64_FastExpansionSum_Shewchuk.v with deferred-proof registry entry).
+# That Admitted reference shows up in the file's Print Assumptions
+# blocks as an extra axiom; this exception entry covers it.  Per the
+# deferred-proof discipline, once Piece 5b closes, the reference becomes
+# Qed-closed and only the Category C lineage remains.
+theories-flocq/Orient_b64_expansion.v
+
+# Category C: Slice A piece 7.  Stage D headline.  Composes Piece 6's
+# expansion-based decoder with the existing Stage A filter into the
+# full b64_orient_sign_stage_d decoder + soundness theorem.  Same
+# audit lineage as Piece 6: Classical_Prop.classic transitively via
+# the B2R chain + fast_expansion_sum_nonoverlap_shewchuk reference
+# (deferred-proof, removable when Piece 5b closes).  The tiny-regime
+# decisive theorem is Qed-closed without the deferred reference.
+theories-flocq/Orient_b64_stage_d.v
