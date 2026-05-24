@@ -71,6 +71,16 @@ theories-flocq/B64_FastExpansionSum.v
 # pieces 3-7 (fast-expansion-sum + orient2d_exact composition).
 theories-flocq/B64_Expansion_Shewchuk.v
 
+# Category C: Slice A piece 5b Route 2 framework (Session 1).  Defines
+# provenance tagging on the cascade input plus the cascade_invariant
+# predicate.  Pulls `Classical_Prop.classic` transitively via the
+# B2R chain (same lineage as the other expansion-arithmetic files).
+# No Admitteds in this file; the load-bearing
+# cascade_step_preserves_invariant is deferred to a follow-up session
+# (still covered by the existing deferred-proof entry for
+# fast_expansion_sum_nonoverlap_shewchuk).
+theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
+
 # Category C: Slice A piece 3.  Defines `fast_expansion_sum`
 # (Shewchuk's canonical algorithm: insertion sort by magnitude
 # ascending + TwoSum cascade) and the sort-level sum-preservation

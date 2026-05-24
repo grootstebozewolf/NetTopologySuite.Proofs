@@ -137,6 +137,15 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # (sum-correctness and nonoverlap_shewchuk preservation of the full
 # algorithm) are deferred to follow-up commits.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v
+# Slice A piece 5b -- Route 2 framework (Session 1 of 3-4).  Defines
+# provenance tagging on the cascade input (Inductive provenance +
+# tagged sort + length/membership lemmas) and states the
+# cascade_invariant predicate with its three clauses (output
+# well-formed, magnitude bound, chain-handover).  All theorems in
+# this file Qed-closed; the load-bearing
+# cascade_step_preserves_invariant is deferred to Session 2.  See
+# docs/shewchuk-theorem-13-proof-structure.md §6.1-§6.5.
+theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
 # Slice A piece 6: orient2d via fast-expansion-sum.  Composes
 # b64_Dekker + fast_expansion_sum into b64_orient2d_expansion.
 # Sum-correctness Qed-closed under an explicit
