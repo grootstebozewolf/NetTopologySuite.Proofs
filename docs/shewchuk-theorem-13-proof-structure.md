@@ -240,6 +240,19 @@ After the 2026-05-24 verification ruled out Route 3, and Route 1 was
 deemed too invasive (touches all existing Qed-closed cascade
 correctness lemmas), Route 2 is the committed design.
 
+> **Status note (Session 2 outcome).** Route 2 has collapsed.  See
+> `docs/slice-a-piece-5b-session-2-collapse.md` for the full red-phase
+> analysis.  Summary: every candidate clause (c) over the
+> Session-1-framework state `(q : binary64, hs : list binary64)` either
+> requires the strict_succ_b64 chain on the merged input (rejected by
+> §2.1's counterexample) or cannot establish the upper-bound
+> propagation `|qnew| <= |head of remaining|` needed for the
+> mixed-provenance inductive step (no upper-bound lemma on `b64_plus`
+> in the corpus, and the per-source nonoverlap arguments require
+> tracking `q`'s provenance, which Route 2 deliberately doesn't).  The
+> collapse artifact names the Route 1 trigger (attach a `q_history`
+> provenance field to the cascade state).
+
 ### §6.1 The provenance tagging
 
 Define an auxiliary tag set:
