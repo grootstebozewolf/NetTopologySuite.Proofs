@@ -62,11 +62,16 @@
 # lines.
 #
 # Approach: structural induction on the cascade with a magnitude
-# invariant relating each accumulator Q_i to the inputs processed so
-# far (smallest-first, by `sort_by_abs_sorted` which is Qed-closed in
-# the same file).  The invariant carries the half-ulp chain through
-# the cascade; the compress step in `nonoverlap_shewchuk` handles any
-# internal zeros from exact-cascade steps.
+# invariant.  An earlier draft of the proof structure doc assumed the
+# cascade input itself is `nonoverlap_shewchuk`; that's wrong --
+# `sort_by_abs (e ++ f)` is sorted-ascending but not strongly
+# nonoverlapping (counterexample: e=[4.0], f=[3.0]; merged-sorted-asc
+# is [3.0, 4.0], reversed [4.0, 3.0]; strict_succ_b64 4.0 3.0 demands
+# |3| <= 2^(-50), which fails flagrantly).  Shewchuk's actual argument
+# tracks per-element provenance (which input list each cascade-element
+# came from) and uses each input's individual half-ulp chain.  See
+# `docs/shewchuk-theorem-13-proof-structure.md` §2.1 for the corrected
+# analysis and §6 for the design routes for per-provenance tracking.
 #
 # Structural foundation already Qed-closed (PR #5):
 #   - `sort_by_abs_sorted`: cascade input is sorted ascending.
@@ -75,6 +80,18 @@
 #   - `sign_of_expansion_correct_shewchuk` (B64_Expansion_Shewchuk.v):
 #     downstream consumer.
 #
-# What remains: the magnitude bookkeeping through the cascade.
-# Estimated 2-3 days of focused work.
-theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2,§3
+# §2.1 per-step building blocks already Qed-closed:
+#   - `b64_plus_geq_pos` / `b64_plus_leq_neg`
+#   - `b64_TwoSum_step_dominates_{pos, neg, same_sign, q_zero}`
+#   - `b64_TwoSum_step_dominates_strict_{pos, neg}`
+# These cover all sign combinations under various preconditions.  They
+# are not directly usable for the corrected §2.1, but they are useful
+# building blocks for the per-provenance-chain reasoning that the
+# corrected statement needs.
+#
+# What remains: design decision for per-provenance tracking + cascade
+# induction + §2.2 half-ulp chain + composition.  Revised estimate:
+# 3-4 sessions of focused work.  See proof structure doc §6 for the
+# three design routes (cascade-state augmentation, list-indexing
+# invariant, or theorem-statement strengthening).
+theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6

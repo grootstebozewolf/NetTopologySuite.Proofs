@@ -40,20 +40,17 @@ Estimated 200-400 lines of Coq, 2-3 days of focused work.
   - `b64_TwoSum_step_dominates_strict_neg`: symmetric for negative
     `B2R e`, via `round_eq_pathA_negative` (Qed).
 
-These cover all sign combinations EXCEPT the **boundary equality**
-`|B2R q| = ulp(B2R e) / 2`.  The Path A absorption requires the strict
-inequality `<`; the registered-counterexample
-`round_eq_under_strict_dominance` proves the non-strict `<=` case has
-verified counterexamples at power-of-2 boundaries (round-to-even).
+These cover all sign combinations under various preconditions, but the
+**precondition required by the cascade is weaker than `strict_succ_b64`**.
+See §2.1 below for the corrected analysis of what `fast_expansion_sum`'s
+cascade input actually satisfies.
 
-What remains for §2.1: bridge from `strict_succ_b64 e q` (`<=`) to
-the Path A precondition (`<` on `ulp(pred e)`).  Two routes:
-  1. **Strengthen the cascade's source predicate**: require `<`
-     instead of `<=` in `strict_succ_b64`, restating
-     `nonoverlap_shewchuk`.  Trades elegance for absorption.
-  2. **Direct boundary-case proof**: at the boundary
-     `|q| = ulp(e)/2`, prove `|round(e + q)| >= |q|` by case-analysis
-     on the round-to-even tie-break.  Genuinely 50-100 lines.
+> **Status note (2026-05-24)**: A prior version of this doc claimed §2.1
+> needed only a bridge from `strict_succ_b64 e q` (`<=`) to the Path A
+> precondition (`<` on `ulp(pred e)`).  That analysis was wrong: the
+> cascade input doesn't satisfy `strict_succ_b64` to begin with, so the
+> "bridge" is not the bottleneck.  See §2.1 for the corrected lemma
+> statement.
 
 ## §1. Algorithmic background
 
@@ -85,25 +82,75 @@ For this to thread inductively, the cascade needs a magnitude
 invariant on each accumulator `q_i` relative to the inputs processed
 so far.
 
-### §2.1 Magnitude monotonicity (under nonoverlap_shewchuk input)
+### §2.1 Magnitude monotonicity (corrected analysis)
 
-Lemma needed (not yet stated):
+**What an earlier version of this doc got wrong**: it stated
+`cascade_qnew_dominates` with the precondition
+`nonoverlap_shewchuk (rev (q :: xs))` -- i.e. the cascade input is
+itself strongly nonoverlapping in descending order.  That precondition
+is **not satisfied** by `fast_expansion_sum`'s actual cascade input.
+
+**Counterexample (sorted merge isn't strongly nonoverlapping)**:
+Let `e = [4.0]` and `f = [3.0]`.  Both are trivially
+`nonoverlap_shewchuk` (singletons).  After
+`sort_by_abs (e ++ f)` ascending: `[3.0, 4.0]`.  Reversed:
+`[4.0, 3.0]`.  For `nonoverlap_shewchuk [4.0, 3.0]` we'd need
+`strict_succ_b64 4.0 3.0`, i.e. `Rabs 3.0 <= ulp 4.0 / 2 = 2^(-50)`.
+Flagrantly false: `Rabs 3.0 = 3`.
+
+So `nonoverlap_shewchuk e + nonoverlap_shewchuk f + sort_by_abs (e ++ f)`
+does not imply `nonoverlap_shewchuk` on the merged list.  The cascade
+input only satisfies `sorted_asc`.
+
+**What the cascade actually sees**: at step `i`, accumulator `q_{i-1}`
+and next input `x_i` with `|q_{i-1}| <= |x_i|` (sorted-ascending).
+That's the *only* relationship guaranteed by the source preconditions
+applied to the merge.
+
+In particular, `|q_{i-1}|` can range over `(0, |x_i|]`; the boundary
+case `|q_{i-1}| = ulp(x_i)/2` is one specific point in that range and
+is **not** vacuous -- mixed-adjacent pairs from `e` and `f` routinely
+produce `|q_{i-1}|` comparable to `|x_i|`.
+
+**Corrected lemma statement** (not yet attempted):
 
 ```coq
 Lemma cascade_qnew_dominates :
   forall (xs : list binary64) (q : binary64),
     sorted_asc (q :: xs) ->
-    nonoverlap_shewchuk (rev (q :: xs)) ->
     b64_grow_expansion_aux_safe q xs ->
     forall hs qfinal,
       b64_grow_expansion_aux q xs = (hs, qfinal) ->
       Rabs (B2R q) <= Rabs (B2R qfinal).
 ```
 
-This says: under sorted-ascending input + the nonoverlap precondition
-+ safety, the cascade's final accumulator dominates the initial one
-in magnitude.  Proof: induction on `xs` with each TwoSum step's
-magnitude analysis.
+Note: no `nonoverlap_shewchuk` precondition.  Only `sorted_asc` and
+safety.
+
+**Why this should still be provable**: under `sorted_asc`, each step
+has `|q_{i-1}| <= |x_i|`.  The same-sign case is covered by the
+already-Qed-closed `b64_TwoSum_step_dominates_pos / _neg`.  The
+mixed-sign case is NOT covered by the strict Path A absorption (which
+needs `|q| < ulp(pred x)/2`), but a weaker bound suffices: under
+`|q_{i-1}| <= |x_i|`, the rounded sum `round(x_i + q_{i-1})` has
+magnitude `>= ||x_i| - |q_{i-1}||` modulo rounding error.  This isn't
+absorption; it's a coarser magnitude-preservation argument.
+
+**Why Shewchuk Theorem 13 still works**: Shewchuk's actual proof
+tracks per-element provenance (which `x_i` came from `e` vs from `f`)
+and uses the fact that consecutive *same-provenance* elements satisfy
+`strict_succ_b64` (since `e` and `f` are individually strongly
+nonoverlapping).  Mixed-provenance adjacent pairs in the merge get a
+weaker treatment.  The cascade's accumulator after processing a run
+of same-provenance elements ends up with magnitude bounded by the
+last element processed, which combines with the next-provenance
+element's magnitude via TwoSum's bound.
+
+This per-provenance tracking is the genuinely multi-session
+formalisation work.  The current `b64_grow_expansion_aux` definition
+threads only `q` and `xs`; tracking provenance would either require
+augmenting the cascade state or expressing the invariant as a list
+property over the input.
 
 ### §2.2 Per-step half-ulp on the cascade's output
 
@@ -143,24 +190,42 @@ Given §2.1 and §2.2:
 
 Composition: `~30 lines` once §2.1 and §2.2 are Qed-closed.
 
-## §4. Why this works (intuition)
+## §4. Why this works (intuition, corrected)
 
-For sorted-ascending input `[x_1; x_2; ...; x_n]` with each `x_{i+1}`
-much larger than `x_i` (the nonoverlap_shewchuk precondition):
+The "each `x_{i+1}` much larger than `x_i`" version of the intuition
+held under the (wrong) assumption that the cascade input satisfies
+`nonoverlap_shewchuk` directly.  Under the actual precondition
+(`sorted_asc` only, from `sort_by_abs (e ++ f)`), `x_{i+1}` is only
+guaranteed `>=` `x_i`, not `>>`.
 
-- At cascade step `i`, the accumulator `q_{i-1}` has magnitude
-  `~|x_{i-1}|` (the previous-largest input).
-- The next step adds `x_i` (larger).  `q_i = round(x_i + q_{i-1})`
-  has magnitude `~|x_i|`.
-- The error `h_i` has magnitude `~|q_{i-1}|` (the part of `x_i + q_{i-1}`
-  that doesn't fit in `q_i`'s mantissa).
-- So `h_i` has magnitude `~|x_{i-1}|`, which is at most half-ulp of
-  `q_i ~ x_i` (by the strongly-nonoverlapping precondition).
-- The h's form a magnitude-decreasing sequence, mirroring the inputs.
+The right intuition tracks per-element provenance:
 
-After reversal, the output `qfinal :: rev hs` is in descending magnitude
-order, with each adjacent pair satisfying the half-ulp bound.  This is
-exactly `nonoverlap_strict` (after compressing zeros).
+- Each `x_i` came from `e` or from `f`.  Call this `provenance(i)`.
+- Consecutive same-provenance pairs in the sorted merge come from
+  the same input list (either both from `e` or both from `f`).
+  Since `e` and `f` are individually strongly nonoverlapping,
+  consecutive same-provenance elements DO satisfy `strict_succ_b64`
+  in descending order (or equivalently, ascending order after
+  reversal).
+- Mixed-provenance pairs have only the sorted-ascending guarantee:
+  `|x_i| <= |x_{i+1}|`.
+
+The cascade processes inputs smallest-to-largest.  At step `i`, the
+accumulator `q_{i-1}` carries the sum of all previously-processed
+inputs.  Shewchuk's Theorem 13 argument shows:
+
+- Each TwoSum step produces `(qnew, h)` where `qnew` absorbs the
+  "high" part and `h` is the "low" part (the error).
+- The cascade's invariant: after processing the first `k` inputs,
+  the output `(q_k, h_k, h_{k-1}, ..., h_1)` (largest first) is
+  strongly nonoverlapping.
+- The key inductive step uses BOTH chains' nonoverlap properties to
+  bound the new error `h_i`'s magnitude relative to `q_i`.
+
+This is Shewchuk's paper §4's argument, which is one page of dense
+magnitude bookkeeping.  Coq formalisation will need to track
+provenance explicitly (either via an auxiliary list-indexing
+predicate or by carrying provenance in the cascade state).
 
 ## §5. References
 
@@ -172,36 +237,44 @@ exactly `nonoverlap_strict` (after compressing zeros).
 ## §6. Resumption checklist for the follow-up session
 
 When resuming this proof:
-  1. Confirm `sort_by_abs_sorted` is still Qed-closed in the corpus.
-  2. The same-sign and zero-q sub-cases of §2.1's per-step bound are
-     already formalised (see "Incremental progress" above).  The next
-     sub-step is the **mixed-sign cancellation** case: prove
-     ```coq
-     Lemma b64_plus_absorbs_under_strict_succ :
-       forall x q : binary64,
-         strict_succ_b64 x q ->
-         b64_safe Rplus x q ->
-         Binary.B2R prec emax (b64_plus x q) = Binary.B2R prec emax x.
-     ```
-     Or, weaker but sufficient for monotonicity:
-     ```coq
-     Lemma b64_TwoSum_step_dominates_mixed_sign :
-       forall e q : binary64,
-         strict_succ_b64 e q ->
-         b64_TwoSum_safe e q ->
-         Rabs (Binary.B2R prec emax q)
-           <= Rabs (Binary.B2R prec emax (fst (b64_TwoSum e q))).
-     ```
-     Approach: split on `sign(B2R x) * sign(B2R q)`.  If same sign or
-     `q = 0`, the existing lemmas close it.  If opposite signs, use
-     the half-ulp bound on `|q|` against `ulp(B2R x)/2` and Flocq's
-     `round_N_pt`/`round_le` to bound `|round(x + q)|` from below.
-  3. Use the unified per-step bound to prove `cascade_qnew_dominates`
-     (§2.1) by induction.
-  4. State `cascade_step_half_ulp` (§2.2).  Attempt by induction
-     after §2.1 is in place.
-  5. Compose into the headline `fast_expansion_sum_nonoverlap_shewchuk`.
-  6. Remove the entry from `docs/admitted-deferred-proofs.txt`.
 
-Estimated session count: 2 more sessions of focused work, depending on
-how much friction the mixed-sign case produces.
+  1. Confirm `sort_by_abs_sorted` is still Qed-closed in the corpus.
+  2. The same-sign and strict-precondition mixed-sign sub-cases of
+     the per-step bound are already formalised (see "Incremental
+     progress" above).  These are not directly usable for §2.1 as
+     originally stated -- but they are useful for the
+     per-provenance-chain reasoning that the corrected §2.1 needs.
+  3. **Design decision for per-provenance tracking** (the blocker):
+     pick one of:
+     - **Augment `b64_grow_expansion_aux` with a provenance tag**:
+       change the cascade state to `list (binary64 * provenance)` and
+       carry the tag through.  Modular but invasive (touches the
+       existing Qed-closed correctness lemmas).
+     - **Express the invariant as a list-indexing property**: add an
+       auxiliary `cascade_invariant : list binary64 -> list provenance
+       -> Prop` that the headline theorem instantiates.  Keeps the
+       cascade definition untouched.
+     - **Restate the theorem to require a stronger source predicate**:
+       e.g. `nonoverlap_shewchuk (sort_by_abs (e ++ f))` as an
+       additional hypothesis.  This is logically weaker (provable in
+       fewer cases) but matches the proof structure §2.1 originally
+       had.  Useful only if the orient2d_exact use case actually
+       satisfies it (verify before committing).
+  4. State and prove `cascade_qnew_dominates` (corrected §2.1) under
+     whichever route step 3 chose.
+  5. State `cascade_step_half_ulp` (§2.2).
+  6. Compose into `fast_expansion_sum_nonoverlap_shewchuk`.
+  7. Remove the entry from `docs/admitted-deferred-proofs.txt`.
+
+**Revised session count estimate**: 3-4 sessions.  Up from the
+original 2-3 because step 3's design decision plus per-provenance
+tracking adds genuine formalisation surface.
+
+**Cheaper alternative worth considering before step 3**: if
+`orient2d_exact`'s use of `fast_expansion_sum` always feeds in
+expansions whose merged-sorted-ascending form happens to be
+`nonoverlap_shewchuk` (which the orient2d case might satisfy for
+specific structural reasons -- needs verification), the headline can
+be specialised to that case and the general theorem deferred further.
+Verify by computing the predicate on a typical orient2d inputs before
+committing to the per-provenance work.
