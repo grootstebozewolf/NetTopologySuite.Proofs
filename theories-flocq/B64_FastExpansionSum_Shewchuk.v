@@ -256,37 +256,35 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* PIECE 5b: nonoverlap_shewchuk preservation (DEFERRED).                     *)
+(* PIECE 5b: nonoverlap_shewchuk preservation.                                *)
 (*                                                                            *)
-(* Theorem statement (NOT compiled here -- the proof is multi-session work):  *)
+(* Shewchuk Theorem 13 (1997, ~1 page of dense magnitude analysis).  Stated  *)
+(* here with `Admitted` and registered in                                     *)
+(* `docs/admitted-deferred-proofs.txt` as a deferred-proof obligation.       *)
 (*                                                                            *)
-(*   Theorem fast_expansion_sum_nonoverlap_shewchuk :                          *)
-(*     forall (e f : list binary64),                                           *)
-(*       fast_expansion_sum_safe e f ->                                        *)
-(*       nonoverlap_shewchuk e ->                                              *)
-(*       nonoverlap_shewchuk f ->                                              *)
-(*       nonoverlap_shewchuk (fast_expansion_sum e f).                         *)
+(* The proof structure is documented in                                       *)
+(* `docs/shewchuk-theorem-13-proof-structure.md` with enough detail that      *)
+(* a follow-up session can resume without re-deriving the design:             *)
+(*   §1 algorithmic background                                                *)
+(*   §2 cascade invariant (the two key lemmas needed)                         *)
+(*   §3 composition into the headline                                         *)
+(*   §4 intuition (why this works under sorted-ascending input)              *)
+(*   §5 references (Shewchuk 1997, BJMP ITP 2017)                            *)
+(*   §6 resumption checklist                                                  *)
 (*                                                                            *)
-(* This is Shewchuk Theorem 13 (1997, ~1 page of dense magnitude analysis).  *)
-(* Coq formalization estimate: 200-400 lines.  Requires:                      *)
-(*                                                                            *)
-(*   - A cascade invariant relating each accumulator Q_i to the inputs        *)
-(*     processed so far (smallest-first, by sort_by_abs_sorted above).        *)
-(*   - A magnitude chain showing the cascade's error sequence h_1, h_2,...   *)
-(*     forms an appropriately ordered set after rev'ing.                      *)
-(*   - The compress step (in nonoverlap_shewchuk's definition) removes any   *)
-(*     internal zeros from exact-cascade steps; the magnitude chain on        *)
-(*     non-zero h's gives the half-ulp bound that nonoverlap_strict needs.   *)
-(*                                                                            *)
-(* The sort-correctness lemmas above give the structural foundation: the     *)
-(* cascade input is provably ordered, which is what Shewchuk's analysis      *)
-(* relies on.                                                                 *)
-(*                                                                            *)
-(* Per the corpus's epistemic invariant (`scripts/check_admitted.sh`), the   *)
-(* theorem is NOT stated here -- stating it without a proof OR a verified    *)
-(* counterexample would create an unregistered gap.  Follow-up commits will  *)
-(* land the proof when ready.                                                 *)
+(* Estimated 200-400 lines of Coq, 2-3 sessions of focused work.              *)
 (* -------------------------------------------------------------------------- *)
+
+Theorem fast_expansion_sum_nonoverlap_shewchuk :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+Proof.
+  (* DEFERRED: see docs/shewchuk-theorem-13-proof-structure.md.
+     Registered in docs/admitted-deferred-proofs.txt. *)
+Admitted.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)

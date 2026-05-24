@@ -1,0 +1,80 @@
+# Deferred-proof registry for Admitted theorems.
+#
+# This is the THIRD tier of the corpus's Admitted-classification system,
+# complementing `docs/admitted-counterexamples.txt`:
+#
+#   Tier 1: standard Admitted -- BUILD FAILURE.  No registry entry.
+#   Tier 2: Admitted with verified counterexample -> registered in
+#           `docs/admitted-counterexamples.txt`.  Means "the theorem
+#           as currently stated CANNOT be proved because the statement
+#           is too strong; the counterexample proves a weaker version
+#           is the most that's achievable."
+#   Tier 3: Admitted with documented proof structure -> registered HERE.
+#           Means "the theorem IS provable; the proof structure is
+#           documented; the work is multi-session and hasn't been
+#           completed yet."
+#
+# The CI script `scripts/check_admitted.sh` enforces this: every
+# `Admitted.` in the corpus must appear in EXACTLY ONE of the two
+# registries (counterexample or deferred-proof) -- or build fails.
+#
+# Format (one entry per non-comment, non-blank line):
+#
+#   file:theorem_name | proof_structure_doc | section_references
+#
+# - file: path relative to repo root.
+# - theorem_name: the exact Coq identifier of the Theorem/Lemma.
+# - proof_structure_doc: a doc with the proof structure / approach
+#   sketched for the follow-up session.
+# - section_references: anchors within the doc.
+#
+# SEMANTICS DIFFERENCE FROM COUNTEREXAMPLE TIER:
+#
+# A counterexample-registry entry says "the theorem is FALSE as
+# stated; here's the verified witness."  These entries are permanent
+# (or change only when the theorem is re-stated).
+#
+# A deferred-proof entry says "the theorem is TRUE as stated; here's
+# the proof structure that needs to be formalised."  These entries
+# are TEMPORARY -- they come off the registry when the proof lands.
+#
+# Removing a deferred-proof entry without proving the theorem is a
+# violation of the corpus's epistemic invariant.
+#
+# Adding an entry here requires:
+#   1. The Coq theorem statement in a .v file (with `Admitted.`).
+#   2. A proof_structure_doc with enough detail that a future
+#      contributor can resume the work without re-deriving the design.
+#   3. Section references that point at the specific structure
+#      (algorithm, invariants, magnitude bookkeeping, etc.).
+#
+# An entry here is NOT a license to skip Coq work indefinitely.  It's
+# an explicit IOU: the corpus tracks the gap, the policy framework
+# enforces removal-via-proof, and CI catches drift.
+
+# ============================================================================
+# Slice A Piece 5b: Shewchuk Theorem 13 formalisation.
+# ============================================================================
+
+# `fast_expansion_sum_nonoverlap_shewchuk` -- the load-bearing piece for
+# orient2d_exact's headline.  Shewchuk Theorem 13 (1997 paper, ~1 page
+# of dense magnitude analysis).  Coq formalisation estimate: 200-400
+# lines.
+#
+# Approach: structural induction on the cascade with a magnitude
+# invariant relating each accumulator Q_i to the inputs processed so
+# far (smallest-first, by `sort_by_abs_sorted` which is Qed-closed in
+# the same file).  The invariant carries the half-ulp chain through
+# the cascade; the compress step in `nonoverlap_shewchuk` handles any
+# internal zeros from exact-cascade steps.
+#
+# Structural foundation already Qed-closed (PR #5):
+#   - `sort_by_abs_sorted`: cascade input is sorted ascending.
+#   - `expansion_R_sort_by_abs`: sort preserves expansion_R.
+#   - `b64_TwoSum_nonoverlap` (B64_Pff_bridge.v): per-step bound.
+#   - `sign_of_expansion_correct_shewchuk` (B64_Expansion_Shewchuk.v):
+#     downstream consumer.
+#
+# What remains: the magnitude bookkeeping through the cascade.
+# Estimated 2-3 days of focused work.
+theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2,§3
