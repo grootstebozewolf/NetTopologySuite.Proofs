@@ -602,6 +602,32 @@ Proof.
                       (round_mode mode_b64)).
 Qed.
 
+(* The division primitive uses `b64_div_correct`'s four-precondition shape
+   instead of the unified `b64_safe Rdiv` because Rdiv has a non-zero-divisor
+   side condition that doesn't fit the `b64_safe` pattern.  Otherwise the
+   proof is structurally identical to the other three abs_error lemmas: lift
+   to the rounded form, then `error_le_ulp`.  Sibling of the three other
+   `b64_*_abs_error` lemmas above; provides the absolute-error primitive
+   `b64_div` callers need to bound the rounding error of a division step. *)
+Lemma b64_div_abs_error :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax y <> 0 ->
+    Rabs (b64_round (Binary.B2R prec emax x / Binary.B2R prec emax y))
+      < bpow radix2 emax ->
+    Rabs (Binary.B2R prec emax (b64_div x y)
+          - (Binary.B2R prec emax x / Binary.B2R prec emax y))
+      <= ulp radix2 (SpecFloat.fexp prec emax)
+                    (Binary.B2R prec emax x / Binary.B2R prec emax y).
+Proof.
+  intros x y Fx Fy Hy_nz Hbnd.
+  pose proof (b64_div_correct _ _ Fx Fy Hy_nz Hbnd) as [HB2R _].
+  rewrite HB2R.
+  apply (error_le_ulp radix2 (SpecFloat.fexp prec emax)
+                      (round_mode mode_b64)).
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                              *)
 (* -------------------------------------------------------------------------- *)
@@ -617,3 +643,4 @@ Print Assumptions b64_mult_bounded_R.
 Print Assumptions b64_plus_abs_error.
 Print Assumptions b64_minus_abs_error.
 Print Assumptions b64_mult_abs_error.
+Print Assumptions b64_div_abs_error.
