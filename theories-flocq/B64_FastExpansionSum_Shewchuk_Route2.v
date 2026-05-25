@@ -2142,6 +2142,89 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 14 -- attempting the general theorem (Session 17).             *)
+(*                                                                            *)
+(* The Admitted fast_expansion_sum_nonoverlap_shewchuk at                    *)
+(* B64_FastExpansionSum_Shewchuk.v:483 takes ARBITRARY inputs.  Session 17  *)
+(* attempts it.                                                              *)
+(*                                                                            *)
+(* The corpus has Sessions 1-12 building cascade_pathA_chain machinery.     *)
+(* Session 12's `cascade_run_output_nonoverlap` gives the cascade output as *)
+(* nonoverlap_shewchuk CONDITIONAL on cascade_pathA_chain.  The gap is       *)
+(* deriving cascade_pathA_chain from arbitrary nonoverlap_shewchuk inputs.   *)
+(*                                                                            *)
+(* This session: prove a CONDITIONAL general theorem -- the general headline *)
+(* follows from cascade_pathA_chain holding on the initial cascade state.  *)
+(* The conditional theorem is Qed-closed; the remaining gap is precisely    *)
+(* `cascade_pathA_chain` derivability, which is the deferred-proof obstacle.*)
+(* -------------------------------------------------------------------------- *)
+
+(* Bridge: fast_expansion_sum's output equals cascade_run's output shape.     *)
+(* This connects the algorithm's UNTAGGED computation to the cascade state-  *)
+(* machine's TAGGED iteration via untag_tagged_input (Session 1).            *)
+Lemma fast_expansion_sum_via_cascade_run :
+  forall (e f : list binary64) (x : binary64) (prov : provenance)
+         (rest : list tagged_b64),
+    tagged_input e f = (x, prov) :: rest ->
+    fast_expansion_sum e f =
+      cs_carry (cascade_run (initial_cascade_state x prov) rest)
+      :: rev (cs_output (cascade_run (initial_cascade_state x prov) rest)).
+Proof.
+  intros e f x prov rest Htagged.
+  unfold fast_expansion_sum.
+  pose proof (untag_tagged_input e f) as Huntag.
+  rewrite Htagged in Huntag.
+  cbn [untag map tagged_val] in Huntag.
+  rewrite <- Huntag.
+  rewrite cascade_run_cs_carry, cascade_run_cs_output.
+  unfold untag.
+  destruct prov;
+    cbn [initial_cascade_state cs_carry cs_output app tagged_val fst snd];
+    rewrite (surjective_pairing
+              (b64_grow_expansion_aux x (map tagged_val rest)));
+    cbn [fst snd]; reflexivity.
+Qed.
+
+(* The CONDITIONAL general theorem: under cascade_pathA_chain on the         *)
+(* initial cascade state (the structural property cascade_pathA_chain         *)
+(* requires), the general headline follows.                                  *)
+(*                                                                            *)
+(* Discharging the cascade_pathA_chain hypothesis from arbitrary input        *)
+(* hypotheses (nonoverlap_shewchuk e + nonoverlap_shewchuk f + safety) IS    *)
+(* the persistent deferred-proof obstacle -- Shewchuk Theorem 13's deep     *)
+(* magnitude bookkeeping.                                                    *)
+Theorem fast_expansion_sum_nonoverlap_shewchuk_general_conditional :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    (match tagged_input e f with
+     | nil => True
+     | (x, prov) :: rest =>
+         cascade_invariant_handover (initial_cascade_state x prov) rest /\
+         cascade_pathA_chain (initial_cascade_state x prov) rest
+     end) ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+Proof.
+  intros e f Hsafe Hcond.
+  destruct (tagged_input e f) as [|p rest] eqn:Htagged.
+  - (* Empty tagged input: also empty sort, empty output. *)
+    unfold fast_expansion_sum.
+    pose proof (untag_tagged_input e f) as Huntag.
+    rewrite Htagged in Huntag.
+    cbn [untag map] in Huntag.
+    rewrite <- Huntag.
+    unfold nonoverlap_shewchuk. cbn [compress nonoverlap_strict]. exact I.
+  - (* Non-empty: apply cascade_run_output_nonoverlap. *)
+    destruct p as [x prov].
+    destruct Hcond as [Hho Hchain].
+    rewrite (fast_expansion_sum_via_cascade_run e f x prov rest Htagged).
+    apply cascade_run_output_nonoverlap.
+    + (* cascade_invariant on initial_cascade_state -- from S5. *)
+      apply cascade_invariant_empty. exact Hho.
+    + (* cascade_pathA_chain -- the hypothesis. *)
+      exact Hchain.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -2189,3 +2272,5 @@ Print Assumptions list_abs_b2r_sum_sort_by_abs.
 Print Assumptions Forall_int_safe_to_witnesses.
 Print Assumptions list_abs_b2r_sum_int_witnesses.
 Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs.
+Print Assumptions fast_expansion_sum_via_cascade_run.
+Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_general_conditional.
