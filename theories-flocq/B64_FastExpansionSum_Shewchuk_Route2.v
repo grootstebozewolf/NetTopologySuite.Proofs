@@ -496,6 +496,81 @@ Definition cascade_h_chain_statement : Prop :=
            (snd (b64_TwoSum x (cs_carry state)))) / 2.
 
 (* -------------------------------------------------------------------------- *)
+(* PRECONDITION TEST: what does the existing invariant actually provide       *)
+(* about `h_prev`?                                                            *)
+(*                                                                            *)
+(* From `cascade_invariant state ... ` with `cs_output state = hs_tail ++    *)
+(* [h_prev]` we can decompose clause (a):                                     *)
+(*                                                                            *)
+(*   nonoverlap_shewchuk (cs_carry state :: rev (cs_output state))            *)
+(* = nonoverlap_shewchuk (cs_carry state :: h_prev :: rev hs_tail)            *)
+(*                                                                            *)
+(* When neither cs_carry state nor h_prev is zero (so `compress` does not    *)
+(* remove them), the head of the half-ulp chain gives:                       *)
+(*                                                                            *)
+(*   strict_succ_b64 (cs_carry state) h_prev                                  *)
+(*   = |h_prev| <= ulp(cs_carry state) / 2.                                   *)
+(*                                                                            *)
+(* That bound is Qed-closed below.                                            *)
+(*                                                                            *)
+(* THE GAP.  `cascade_h_chain_statement`'s conclusion is:                     *)
+(*                                                                            *)
+(*   |h_prev| <= ulp(snd (b64_TwoSum x (cs_carry state))) / 2.                *)
+(*                                                                            *)
+(* The "snd b64_TwoSum" value `h := snd (b64_TwoSum x q)` is the rounding   *)
+(* error of `b64_plus x q`.  By the TwoSum theorem |h| <= ulp(qnew)/2 with  *)
+(* `qnew := b64_plus x q`; in particular |h| is in `qnew`'s low binade,     *)
+(* so `ulp(h)` is roughly `ulp(qnew) * 2^-53 ≈ ulp(q) * 2^-53` in the       *)
+(* generic no-cancellation case.                                              *)
+(*                                                                            *)
+(* The invariant gives `|h_prev| <= ulp(q)/2`.                                *)
+(* The h-chain wants `|h_prev| <= ulp(h)/2 ≈ ulp(q) * 2^-54`.                *)
+(*                                                                            *)
+(* Gap: the invariant's bound is roughly **2^53 too loose**.  Closing the   *)
+(* gap requires showing that `h_prev` is not merely below `ulp(q)/2` but   *)
+(* far below it -- specifically below `ulp(h)/2`.  This needs the          *)
+(* magnitude bookkeeping of Shewchuk §4 (provenance + sort ordering +      *)
+(* per-source nonoverlap) that the invariant alone does not encode.        *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma test_invariant_implies_h_prev_bound :
+  forall (state : cascade_state)
+         (processed : list binary64)
+         (remaining : list tagged_b64)
+         (h_prev : binary64) (hs_tail : list binary64),
+    cascade_invariant state processed remaining ->
+    cs_output state = hs_tail ++ [h_prev] ->
+    Binary.B2R prec emax (cs_carry state) <> 0 ->
+    Binary.B2R prec emax h_prev <> 0 ->
+    Rabs (Binary.B2R prec emax h_prev) <=
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (Binary.B2R prec emax (cs_carry state)) / 2.
+Proof.
+  intros state processed remaining h_prev hs_tail Hinv Hout Hcq Hch.
+  unfold cascade_invariant in Hinv.
+  destruct Hinv as [Ha _].
+  unfold cascade_invariant_output in Ha.
+  rewrite Hout in Ha.
+  rewrite rev_app_distr in Ha. cbn [rev app] in Ha.
+  unfold nonoverlap_shewchuk in Ha.
+  cbn [compress] in Ha.
+  destruct (Rcompare (Binary.B2R prec emax (cs_carry state)) 0) eqn:Hcq_cmp.
+  - apply Rcompare_Eq_inv in Hcq_cmp. contradiction.
+  - destruct (Rcompare (Binary.B2R prec emax h_prev) 0) eqn:Hch_cmp.
+    + apply Rcompare_Eq_inv in Hch_cmp. contradiction.
+    + cbn [nonoverlap_strict] in Ha.
+      destruct Ha as [Hss _]. unfold strict_succ_b64 in Hss. exact Hss.
+    + cbn [nonoverlap_strict] in Ha.
+      destruct Ha as [Hss _]. unfold strict_succ_b64 in Hss. exact Hss.
+  - destruct (Rcompare (Binary.B2R prec emax h_prev) 0) eqn:Hch_cmp.
+    + apply Rcompare_Eq_inv in Hch_cmp. contradiction.
+    + cbn [nonoverlap_strict] in Ha.
+      destruct Ha as [Hss _]. unfold strict_succ_b64 in Hss. exact Hss.
+    + cbn [nonoverlap_strict] in Ha.
+      destruct Ha as [Hss _]. unfold strict_succ_b64 in Hss. exact Hss.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -504,3 +579,4 @@ Print Assumptions untag_tagged_input.
 Print Assumptions length_tagged_input.
 Print Assumptions cascade_invariant_empty.
 Print Assumptions cascade_h_chain_statement.
+Print Assumptions test_invariant_implies_h_prev_bound.
