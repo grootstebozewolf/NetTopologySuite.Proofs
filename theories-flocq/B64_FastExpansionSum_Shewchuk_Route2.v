@@ -62,6 +62,9 @@ From NTS.Proofs.Flocq Require Import B64_Expansion_Shewchuk.
 From NTS.Proofs.Flocq Require Import B64_Pff_bridge.
 From NTS.Proofs.Flocq Require Import B64_FastExpansionSum.
 From NTS.Proofs.Flocq Require Import B64_FastExpansionSum_Shewchuk.
+(* Session 13: integer-safe specialised headline pulls in coord_int_safe   *)
+(* + b64_plus_int_exact from Orient_b64_exact.                              *)
+From NTS.Proofs.Flocq Require Import Orient_b64_exact.
 
 Import ListNotations.
 
@@ -1596,6 +1599,123 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 9 -- integer-safe specialisation (Session 13).                 *)
+(*                                                                            *)
+(* Per the Session 12 prerequisite analysis, the integer regime has its own  *)
+(* structural path to the headline: every b64_TwoSum step on int-exact       *)
+(* operands produces snd = 0 in B2R, so the cascade output's h's are all     *)
+(* zero, and `compress` filters them to leave a singleton -- trivially       *)
+(* nonoverlap_shewchuk.                                                       *)
+(*                                                                            *)
+(* This bypasses cascade_pathA_chain entirely (Path A fails in the integer  *)
+(* regime since |cs_carry| >= 1 while ulp(pred x)/2 << 1).                   *)
+(* -------------------------------------------------------------------------- *)
+
+(* compress filters all-zero lists to nil. *)
+Lemma compress_all_zero_nil :
+  forall zs : list binary64,
+    Forall (fun z => Binary.B2R prec emax z = 0) zs ->
+    compress zs = nil.
+Proof.
+  induction zs as [|z zs IH]; intros Hall.
+  - reflexivity.
+  - inversion Hall as [|? ? Hz Hrest]; subst.
+    cbn [compress].
+    rewrite (Rcompare_Eq _ _ Hz).
+    apply IH. exact Hrest.
+Qed.
+
+(* nonoverlap_shewchuk holds for any list whose first element is followed     *)
+(* only by B2R-zero elements: after `compress`, the result is at most a      *)
+(* singleton, trivially nonoverlap.                                          *)
+Lemma nonoverlap_shewchuk_first_then_zeros :
+  forall (x : binary64) (zs : list binary64),
+    Forall (fun z => Binary.B2R prec emax z = 0) zs ->
+    nonoverlap_shewchuk (x :: zs).
+Proof.
+  intros x zs Hall.
+  unfold nonoverlap_shewchuk.
+  cbn [compress].
+  rewrite (compress_all_zero_nil zs Hall).
+  destruct (Rcompare (Binary.B2R prec emax x) 0);
+    cbn [nonoverlap_strict]; exact I.
+Qed.
+
+(* Under integer exactness, b64_TwoSum's snd has B2R = 0: the sum has no    *)
+(* rounding error, so the "low bits" of TwoSum are exactly zero.            *)
+Lemma b64_TwoSum_snd_B2R_zero_under_int_exact :
+  forall (x y : binary64) (a b : Z),
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax x = IZR a ->
+    Binary.B2R prec emax y = IZR b ->
+    (Z.abs (a + b) <= 2 ^ prec)%Z ->
+    b64_TwoSum_safe x y ->
+    Binary.B2R prec emax (snd (b64_TwoSum x y)) = 0.
+Proof.
+  intros x y a b Hfx Hfy HxR HyR Hbnd Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 [Hs2 [Hs3 [Hs4 [Hs5 Hs6]]]]].
+  pose proof (b64_TwoSum_correct x y Hs1 Hs2 Hs3 Hs4 Hs5 Hs6) as HTC.
+  destruct (b64_TwoSum x y) as [fst_v snd_v] eqn:Hts.
+  cbn [snd] in *.
+  assert (Hfst_eq : fst_v = b64_plus x y).
+  { rewrite <- (b64_TwoSum_fst x y). rewrite Hts. reflexivity. }
+  subst fst_v.
+  pose proof (b64_plus_int_exact x y a b Hfx Hfy HxR HyR Hbnd) as [HB2R _].
+  rewrite HB2R, HxR, HyR in HTC.
+  rewrite <- plus_IZR in HTC.
+  lra.
+Qed.
+
+(* The two-singletons int-safe headline: for fast_expansion_sum [a] [b]    *)
+(* on integer-valued operands with sum bounded by 2^prec, the output is    *)
+(* nonoverlap_shewchuk.                                                    *)
+(*                                                                          *)
+(* This is the cleanest concrete int-regime headline: the cascade has one *)
+(* step, produces an error of zero (in B2R), and compress filters it to   *)
+(* a singleton output.                                                     *)
+Theorem fast_expansion_sum_nonoverlap_shewchuk_int_safe_singletons :
+  forall (a b : binary64) (na nb : Z),
+    fast_expansion_sum_safe [a] [b] ->
+    Binary.is_finite prec emax a = true ->
+    Binary.is_finite prec emax b = true ->
+    Binary.B2R prec emax a = IZR na ->
+    Binary.B2R prec emax b = IZR nb ->
+    (Z.abs (na + nb) <= 2 ^ prec)%Z ->
+    nonoverlap_shewchuk (fast_expansion_sum [a] [b]).
+Proof.
+  intros a b na nb Hsafe Hfa Hfb HaR HbR Hbnd.
+  unfold fast_expansion_sum, fast_expansion_sum_safe in *.
+  cbn [app sort_by_abs insert_by_abs] in *.
+  destruct (Rle_dec (Rabs (Binary.B2R prec emax a))
+                    (Rabs (Binary.B2R prec emax b))) as [Hle | Hgt].
+  - (* sorted = [a; b], cascade processes [b] starting from a. *)
+    cbn [b64_grow_expansion_aux b64_grow_expansion_aux_safe] in *.
+    destruct Hsafe as [Hts_safe _].
+    destruct (b64_TwoSum b a) as [qnew h] eqn:Hts.
+    cbn [fst snd rev].
+    apply nonoverlap_shewchuk_first_then_zeros.
+    constructor; [|constructor].
+    (* Goal: B2R h = 0. *)
+    pose proof (b64_TwoSum_snd_B2R_zero_under_int_exact
+                  b a nb na Hfb Hfa HbR HaR) as Hzero.
+    rewrite Z.add_comm in Hzero.
+    specialize (Hzero Hbnd Hts_safe).
+    rewrite Hts in Hzero. cbn [snd] in Hzero. exact Hzero.
+  - (* sorted = [b; a], cascade processes [a] starting from b. *)
+    cbn [b64_grow_expansion_aux b64_grow_expansion_aux_safe] in *.
+    destruct Hsafe as [Hts_safe _].
+    destruct (b64_TwoSum a b) as [qnew h] eqn:Hts.
+    cbn [fst snd rev].
+    apply nonoverlap_shewchuk_first_then_zeros.
+    constructor; [|constructor].
+    pose proof (b64_TwoSum_snd_B2R_zero_under_int_exact
+                  a b na nb Hfa Hfb HaR HbR Hbnd Hts_safe) as Hzero.
+    rewrite Hts in Hzero. cbn [snd] in Hzero. exact Hzero.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1628,3 +1748,7 @@ Print Assumptions cascade_run_cs_carry.
 Print Assumptions cascade_run_cs_output.
 Print Assumptions cascade_run_preserves_invariant_under_pathA.
 Print Assumptions cascade_run_output_nonoverlap.
+Print Assumptions compress_all_zero_nil.
+Print Assumptions nonoverlap_shewchuk_first_then_zeros.
+Print Assumptions b64_TwoSum_snd_B2R_zero_under_int_exact.
+Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_int_safe_singletons.
