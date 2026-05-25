@@ -1933,6 +1933,215 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 13 -- the (2,2) orient2d-targeted headline (Session 16).       *)
+(*                                                                            *)
+(* Per the Session 15 outcome: combine the inductive cascade lemma            *)
+(* (b64_grow_expansion_aux_int_zero_hs) with sort preservation, witness     *)
+(* extraction, and the Forall_rev + nonoverlap_shewchuk_first_then_zeros    *)
+(* composition.                                                               *)
+(*                                                                            *)
+(* The result is a CONCRETE UNCONDITIONAL HEADLINE FOR ORIENT2D-SHAPED        *)
+(* INPUTS: fast_expansion_sum [r; t] [r'; t'] is nonoverlap_shewchuk when    *)
+(* r, r' are integer-valued products (from Dekker) and t, t' are their       *)
+(* zero error terms.  This bypasses Path 1's cascade_pathA_chain entirely. *)
+(*                                                                            *)
+(* The general fast_expansion_sum_nonoverlap_shewchuk for ARBITRARY inputs   *)
+(* remains the deferred-proof registry entry (the Admitted in                *)
+(* B64_FastExpansionSum_Shewchuk.v:483).  Session 17 attempts that general  *)
+(* case directly.                                                             *)
+(* -------------------------------------------------------------------------- *)
+
+(* Forall preservation under the insertion-sort building blocks. *)
+Lemma insert_by_abs_preserves_Forall :
+  forall (P : binary64 -> Prop) (x : binary64) (xs : list binary64),
+    P x -> Forall P xs -> Forall P (insert_by_abs x xs).
+Proof.
+  intros P x xs Hx Hall.
+  induction xs as [|y ys IH].
+  - cbn. constructor; [exact Hx | constructor].
+  - cbn.
+    destruct (Rle_dec (Rabs (Binary.B2R prec emax x))
+                      (Rabs (Binary.B2R prec emax y))).
+    + constructor; [exact Hx | exact Hall].
+    + inversion Hall as [|? ? Hy Hys]; subst.
+      constructor; [exact Hy | apply IH; exact Hys].
+Qed.
+
+Lemma insert_by_abs_never_nil :
+  forall (x : binary64) (xs : list binary64),
+    insert_by_abs x xs <> nil.
+Proof.
+  intros x xs. destruct xs.
+  - cbn. discriminate.
+  - cbn. destruct (Rle_dec _ _); discriminate.
+Qed.
+
+Lemma sort_by_abs_preserves_Forall :
+  forall (P : binary64 -> Prop) (xs : list binary64),
+    Forall P xs -> Forall P (sort_by_abs xs).
+Proof.
+  intros P xs Hall.
+  induction xs as [|x xs IH].
+  - cbn. constructor.
+  - inversion Hall as [|? ? Hx Hxs]; subst.
+    cbn.
+    apply insert_by_abs_preserves_Forall;
+      [exact Hx | apply IH; exact Hxs].
+Qed.
+
+(* R-side sum of |B2R x| over a list -- invariant under sort_by_abs. *)
+Fixpoint list_abs_b2r_sum (xs : list binary64) : R :=
+  match xs with
+  | nil => 0
+  | x :: xs' => Rabs (Binary.B2R prec emax x) + list_abs_b2r_sum xs'
+  end.
+
+Lemma list_abs_b2r_sum_insert_by_abs :
+  forall (x : binary64) (xs : list binary64),
+    list_abs_b2r_sum (insert_by_abs x xs)
+      = Rabs (Binary.B2R prec emax x) + list_abs_b2r_sum xs.
+Proof.
+  intros x xs.
+  induction xs as [|y ys IH].
+  - cbn. lra.
+  - cbn.
+    destruct (Rle_dec (Rabs (Binary.B2R prec emax x))
+                      (Rabs (Binary.B2R prec emax y))).
+    + cbn. reflexivity.
+    + cbn. rewrite IH. lra.
+Qed.
+
+Lemma list_abs_b2r_sum_sort_by_abs :
+  forall (xs : list binary64),
+    list_abs_b2r_sum (sort_by_abs xs) = list_abs_b2r_sum xs.
+Proof.
+  induction xs as [|x xs IH].
+  - cbn. reflexivity.
+  - cbn.
+    rewrite list_abs_b2r_sum_insert_by_abs.
+    rewrite IH.
+    reflexivity.
+Qed.
+
+(* Witness extraction: from Forall (exists witness) to Forall2 with explicit *)
+(* witness list, with length agreement.                                       *)
+Lemma Forall_int_safe_to_witnesses :
+  forall (xs : list binary64),
+    Forall (fun x =>
+      Binary.is_finite prec emax x = true /\
+      exists n : Z, Binary.B2R prec emax x = IZR n) xs ->
+    exists ns : list Z,
+      length ns = length xs /\
+      Forall2 (fun x n =>
+        Binary.is_finite prec emax x = true /\
+        Binary.B2R prec emax x = IZR n) xs ns.
+Proof.
+  intros xs Hall.
+  induction xs as [|x xs IH].
+  - exists nil. split; [reflexivity | constructor].
+  - inversion Hall as [|? ? Hxhd Hxtl]; subst.
+    destruct Hxhd as [Hfx [n HxR]].
+    specialize (IH Hxtl). destruct IH as [ns [Hlen IHF2]].
+    exists (n :: ns). split.
+    + cbn. f_equal. exact Hlen.
+    + constructor; [split; assumption | exact IHF2].
+Qed.
+
+(* Bridge: for int-safe lists, R-side sum equals IZR of Z-side sum.            *)
+Lemma list_abs_b2r_sum_int_witnesses :
+  forall (xs : list binary64) (ns : list Z),
+    Forall2 (fun x n =>
+      Binary.is_finite prec emax x = true /\
+      Binary.B2R prec emax x = IZR n) xs ns ->
+    list_abs_b2r_sum xs = IZR (sum_abs_int_witnesses ns).
+Proof.
+  induction xs as [|x xs IH]; intros ns Hfa2.
+  - inversion Hfa2; subst. cbn. lra.
+  - inversion Hfa2 as [|? ? ? ? [Hfx HxR] Hfa2_tail]; subst.
+    cbn.
+    rewrite HxR, (IH _ Hfa2_tail).
+    rewrite <- abs_IZR.
+    rewrite <- plus_IZR. reflexivity.
+Qed.
+
+(* The orient2d-targeted (2,2) headline. *)
+Theorem fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs :
+  forall (r1 t1 r2 t2 : binary64) (m1 m2 : Z),
+    fast_expansion_sum_safe [r1; t1] [r2; t2] ->
+    Binary.is_finite prec emax r1 = true ->
+    Binary.is_finite prec emax t1 = true ->
+    Binary.is_finite prec emax r2 = true ->
+    Binary.is_finite prec emax t2 = true ->
+    Binary.B2R prec emax r1 = IZR m1 ->
+    Binary.B2R prec emax t1 = 0 ->
+    Binary.B2R prec emax r2 = IZR m2 ->
+    Binary.B2R prec emax t2 = 0 ->
+    (Z.abs m1 + Z.abs m2 <= 2 ^ prec)%Z ->
+    nonoverlap_shewchuk (fast_expansion_sum [r1; t1] [r2; t2]).
+Proof.
+  intros r1 t1 r2 t2 m1 m2 Hsafe
+         Hfr1 Hft1 Hfr2 Hft2 Hr1R Ht1R Hr2R Ht2R Hbnd.
+  unfold fast_expansion_sum, fast_expansion_sum_safe in *.
+  (* Establish int-safety on the unsorted input. *)
+  assert (Hint_safe_input :
+    Forall (fun x =>
+      Binary.is_finite prec emax x = true /\
+      exists n : Z, Binary.B2R prec emax x = IZR n) ([r1; t1] ++ [r2; t2])).
+  { cbn [app].
+    constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]];
+      (split; [assumption|]).
+    - exists m1. exact Hr1R.
+    - exists 0%Z. cbn. rewrite Ht1R. reflexivity.
+    - exists m2. exact Hr2R.
+    - exists 0%Z. cbn. rewrite Ht2R. reflexivity. }
+  (* Apply sort preservation. *)
+  pose proof (sort_by_abs_preserves_Forall _ _ Hint_safe_input)
+    as Hint_safe_sorted.
+  (* The R-side sum equals |B2R r1| + 0 + |B2R r2| + 0 = IZR (|m1| + |m2|). *)
+  assert (Hsum_rhs : list_abs_b2r_sum ([r1; t1] ++ [r2; t2])
+                      = IZR (Z.abs m1 + Z.abs m2)).
+  { cbn [list_abs_b2r_sum app].
+    rewrite Hr1R, Ht1R, Hr2R, Ht2R, Rabs_R0.
+    rewrite <- !abs_IZR.
+    rewrite plus_IZR. lra. }
+  pose proof (list_abs_b2r_sum_sort_by_abs ([r1; t1] ++ [r2; t2]))
+    as Hsum_sort.
+  rewrite Hsum_rhs in Hsum_sort.
+  (* Case-split on the sorted output. *)
+  destruct (sort_by_abs ([r1; t1] ++ [r2; t2])) as [|x xs] eqn:Hsort.
+  - (* Empty sort -- impossible: sort_by_abs unfolds to insert_by_abs   *)
+    (* which is never nil.                                              *)
+    cbn [app sort_by_abs] in Hsort.
+    exfalso. eapply insert_by_abs_never_nil. exact Hsort.
+  - (* xs has 3 elements (and at least one, since input has 4).  Apply
+       cascade lemma. *)
+    inversion Hint_safe_sorted as [|? ? Hxsafe Hxs_safe]; subst.
+    destruct Hxsafe as [Hfx [nq HxR]].
+    pose proof (Forall_int_safe_to_witnesses xs Hxs_safe) as [ns [_ Hns_f2]].
+    (* Sum bound on Z side. *)
+    pose proof (list_abs_b2r_sum_int_witnesses xs ns Hns_f2) as Hxs_sum.
+    cbn [list_abs_b2r_sum] in Hsum_sort.
+    rewrite HxR, <- abs_IZR, Hxs_sum in Hsum_sort.
+    rewrite <- plus_IZR in Hsum_sort.
+    apply eq_IZR in Hsum_sort.
+    assert (Hbnd_cascade :
+      (Z.abs nq + sum_abs_int_witnesses ns <= 2 ^ prec)%Z) by lia.
+    (* Hsafe was already rewritten by destruct eqn:Hsort.  In the cons    *)
+    (* branch Hsafe is b64_grow_expansion_aux_safe x xs.                  *)
+    (* Apply b64_grow_expansion_aux_int_zero_hs. *)
+    pose proof (b64_grow_expansion_aux_int_zero_hs
+                  xs x nq ns Hfx HxR Hns_f2 Hbnd_cascade Hsafe) as Hzeros.
+    (* Output: fst (b64_grow_expansion_aux x xs) :: rev (snd ...).  Wait, *)
+    (* the cascade returns (hs, qfinal); fast_expansion_sum's output is  *)
+    (* qfinal :: rev hs.                                                 *)
+    destruct (b64_grow_expansion_aux x xs) as [hs qfinal] eqn:Hrec.
+    cbn [fst] in Hzeros.
+    apply nonoverlap_shewchuk_first_then_zeros.
+    apply Forall_rev.
+    exact Hzeros.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1973,3 +2182,10 @@ Print Assumptions nonoverlap_shewchuk_pair.
 Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_two_singletons.
 Print Assumptions sum_abs_int_witnesses_nonneg.
 Print Assumptions b64_grow_expansion_aux_int_zero_hs.
+Print Assumptions insert_by_abs_never_nil.
+Print Assumptions insert_by_abs_preserves_Forall.
+Print Assumptions sort_by_abs_preserves_Forall.
+Print Assumptions list_abs_b2r_sum_sort_by_abs.
+Print Assumptions Forall_int_safe_to_witnesses.
+Print Assumptions list_abs_b2r_sum_int_witnesses.
+Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs.
