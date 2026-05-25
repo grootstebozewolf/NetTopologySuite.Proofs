@@ -828,10 +828,59 @@ Proof.
   exact Hhprev.
 Qed.
 
-(* Negative-x analog: symmetric structure via round_eq_pathA_negative.       *)
-(* Mechanical to derive once b64_TwoSum_pathA_exact_step_negative is added  *)
-(* to B64_FastExpansionSum.v (a Session 8 task; the structure mirrors the  *)
-(* positive case via Ropp).                                                  *)
+(* b64_TwoSum exact-step for negative x.  Mirrors the corpus's              *)
+(* b64_TwoSum_pathA_exact_step (positive x) via round_eq_pathA_negative.     *)
+Lemma b64_TwoSum_pathA_exact_step_negative :
+  forall e q : binary64,
+    Binary.B2R prec emax e < 0 ->
+    Rabs (Binary.B2R prec emax q) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (succ radix2 (SpecFloat.fexp prec emax)
+          (Binary.B2R prec emax e)) / 2 ->
+    b64_TwoSum_safe e q ->
+    Binary.B2R prec emax (fst (b64_TwoSum e q)) = Binary.B2R prec emax e /\
+    Binary.B2R prec emax (snd (b64_TwoSum e q)) = Binary.B2R prec emax q.
+Proof.
+  intros e q He Hpw Hsafe.
+  unfold b64_TwoSum_safe in Hsafe.
+  destruct Hsafe as [Hs1 [Hs2 [Hs3 [Hs4 [Hs5 Hs6]]]]].
+  pose proof (b64_TwoSum_correct e q Hs1 Hs2 Hs3 Hs4 Hs5 Hs6) as HTC.
+  destruct (b64_TwoSum e q) as [a b] eqn:HTS.
+  cbn [fst snd] in *.
+  assert (Ha : a = b64_plus e q).
+  { rewrite <- (b64_TwoSum_fst e q). rewrite HTS. reflexivity. }
+  subst a.
+  pose proof (b64_plus_correct e q Hs1) as [HBplus _].
+  pose proof (b64_format_B2R e) as Hfe.
+  pose proof (round_eq_pathA_negative
+                (Binary.B2R prec emax e) (Binary.B2R prec emax q)
+                He Hfe Hpw) as Hround.
+  assert (HBplus_eq :
+    Binary.B2R prec emax (b64_plus e q) = Binary.B2R prec emax e).
+  { rewrite HBplus. exact Hround. }
+  split. exact HBplus_eq. lra.
+Qed.
+
+(* The cascade_h_chain link, negative case. *)
+Lemma cascade_h_chain_pathA_neg :
+  forall (x q h_prev : binary64),
+    Binary.B2R prec emax x < 0 ->
+    Rabs (Binary.B2R prec emax q) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (succ radix2 (SpecFloat.fexp prec emax)
+          (Binary.B2R prec emax x)) / 2 ->
+    Rabs (Binary.B2R prec emax h_prev)
+      <= b64_ulp (Binary.B2R prec emax q) / 2 ->
+    b64_TwoSum_safe x q ->
+    Rabs (Binary.B2R prec emax h_prev)
+      <= b64_ulp (Binary.B2R prec emax (snd (b64_TwoSum x q))) / 2.
+Proof.
+  intros x q h_prev Hx Hpw Hhprev Hsafe.
+  pose proof (b64_TwoSum_pathA_exact_step_negative x q Hx Hpw Hsafe)
+    as [_ Hsnd_eq].
+  rewrite Hsnd_eq.
+  exact Hhprev.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* SESSION 6 OUTCOME: clause (d') preservation lemmas Qed-closed above.       *)
@@ -1145,6 +1194,137 @@ Proof.
       + cbn [nonoverlap_strict] in *. exact Ha. }
 Qed.
 
+(* Clause (a) preservation under Path A, negative x.                         *)
+(*                                                                            *)
+(* Mirrors cascade_step_clause_a_pathA_pos but uses                          *)
+(* b64_TwoSum_pathA_exact_step_negative for the B2R equalities and           *)
+(* derives ulp(succ x) <= ulp(x) (for x < 0) via succ_opp + pred_le_id        *)
+(* + ulp_le_pos + ulp_opp.                                                    *)
+Lemma cascade_step_clause_a_pathA_neg :
+  forall (state : cascade_state) (processed : list binary64)
+         (x : binary64) (prov : provenance) (rest : list tagged_b64),
+    cascade_invariant state processed ((x, prov) :: rest) ->
+    Binary.B2R prec emax x < 0 ->
+    Rabs (Binary.B2R prec emax (cs_carry state)) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (succ radix2 (SpecFloat.fexp prec emax)
+          (Binary.B2R prec emax x)) / 2 ->
+    Binary.B2R prec emax (cs_carry state) <> 0 ->
+    cascade_invariant_output
+      (fst (b64_TwoSum x (cs_carry state)))
+      (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]).
+Proof.
+  intros state processed x prov rest Hinv Hx Hpw Hcq.
+  unfold cascade_invariant_output.
+  rewrite rev_app_distr. cbn [rev app].
+  unfold cascade_invariant in Hinv.
+  destruct Hinv as [Ha [_ [Hc _]]].
+  unfold cascade_invariant_handover in Hc.
+  cbn [cs_carry] in Hc.
+  destruct Hc as [Hsafe _].
+  pose proof (b64_TwoSum_pathA_exact_step_negative
+                x (cs_carry state) Hx Hpw Hsafe) as [Hfst Hsnd].
+  apply (nonoverlap_shewchuk_B2R_compat
+    (fst (b64_TwoSum x (cs_carry state)) ::
+     snd (b64_TwoSum x (cs_carry state)) :: rev (cs_output state))
+    (x :: (cs_carry state) :: rev (cs_output state))).
+  { cbn [map]. rewrite Hfst, Hsnd. reflexivity. }
+  unfold cascade_invariant_output in Ha.
+  unfold nonoverlap_shewchuk in *.
+  cbn [compress].
+  destruct (Rcompare (Binary.B2R prec emax x) 0) eqn:Hxcmp.
+  { apply Rcompare_Eq_inv in Hxcmp. lra. }
+  2: { apply Rcompare_Gt_inv in Hxcmp. lra. }
+  (* Now x < 0 branch. *)
+  destruct (Rcompare (Binary.B2R prec emax (cs_carry state)) 0) eqn:Hccmp.
+  { apply Rcompare_Eq_inv in Hccmp. contradiction. }
+  (* Both Lt and Gt sub-cases for cs_carry have the same structure: derive  *)
+  (* ulp(succ x) <= ulp(x) for x < 0 using succ_opp + ulp_opp + pred_le_id. *)
+  - cbn [nonoverlap_strict].
+    split.
+    + (* strict_succ_b64 x cs_carry under x < 0. *)
+      unfold strict_succ_b64.
+      rewrite <- (Ropp_involutive (succ radix2 (SpecFloat.fexp prec emax)
+                                     (Binary.B2R prec emax x))) in Hpw.
+      rewrite <- pred_opp in Hpw.
+      rewrite ulp_opp in Hpw.
+      assert (Hxopp_pos : 0 < - Binary.B2R prec emax x) by lra.
+      pose proof (b64_format_B2R x) as Hfx.
+      assert (Hfx_opp : generic_format radix2 (SpecFloat.fexp prec emax)
+                         (- Binary.B2R prec emax x)).
+      { apply generic_format_opp. exact Hfx. }
+      pose proof (@pred_ge_0 radix2 _ b64_fexp_valid
+                    (- Binary.B2R prec emax x) Hxopp_pos Hfx_opp) as Hpred_ge.
+      pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax)
+                    (- Binary.B2R prec emax x)) as Hpred_le.
+      pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone
+                    _ _ Hpred_ge Hpred_le) as Hulp_le.
+      rewrite (ulp_opp radix2 (SpecFloat.fexp prec emax)
+                 (Binary.B2R prec emax x)) in Hulp_le.
+      lra.
+    + cbn [compress] in Ha.
+      rewrite Hccmp in Ha.
+      cbn [nonoverlap_strict] in Ha.
+      destruct (compress (rev (cs_output state))).
+      * cbn [nonoverlap_strict] in *. exact I.
+      * cbn [nonoverlap_strict] in *. exact Ha.
+  - cbn [nonoverlap_strict].
+    split.
+    + unfold strict_succ_b64.
+      rewrite <- (Ropp_involutive (succ radix2 (SpecFloat.fexp prec emax)
+                                     (Binary.B2R prec emax x))) in Hpw.
+      rewrite <- pred_opp in Hpw.
+      rewrite ulp_opp in Hpw.
+      assert (Hxopp_pos : 0 < - Binary.B2R prec emax x) by lra.
+      pose proof (b64_format_B2R x) as Hfx.
+      assert (Hfx_opp : generic_format radix2 (SpecFloat.fexp prec emax)
+                         (- Binary.B2R prec emax x)).
+      { apply generic_format_opp. exact Hfx. }
+      pose proof (@pred_ge_0 radix2 _ b64_fexp_valid
+                    (- Binary.B2R prec emax x) Hxopp_pos Hfx_opp) as Hpred_ge.
+      pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax)
+                    (- Binary.B2R prec emax x)) as Hpred_le.
+      pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone
+                    _ _ Hpred_ge Hpred_le) as Hulp_le.
+      rewrite (ulp_opp radix2 (SpecFloat.fexp prec emax)
+                 (Binary.B2R prec emax x)) in Hulp_le.
+      lra.
+    + cbn [compress] in Ha.
+      rewrite Hccmp in Ha.
+      cbn [nonoverlap_strict] in Ha.
+      destruct (compress (rev (cs_output state))).
+      * cbn [nonoverlap_strict] in *. exact I.
+      * cbn [nonoverlap_strict] in *. exact Ha.
+Qed.
+
+(* Combined clause (a) preservation under Path A.  Dispatches to the         *)
+(* positive or negative case based on the sign of B2R x.  Covers all          *)
+(* nonzero-x Path A scenarios.                                                *)
+Lemma cascade_step_clause_a_pathA :
+  forall (state : cascade_state) (processed : list binary64)
+         (x : binary64) (prov : provenance) (rest : list tagged_b64),
+    cascade_invariant state processed ((x, prov) :: rest) ->
+    Binary.B2R prec emax x <> 0 ->
+    Binary.B2R prec emax (cs_carry state) <> 0 ->
+    ((0 < Binary.B2R prec emax x /\
+      strict_succ_pathA_R (Binary.B2R prec emax x)
+                          (Binary.B2R prec emax (cs_carry state)))
+     \/
+     (Binary.B2R prec emax x < 0 /\
+      Rabs (Binary.B2R prec emax (cs_carry state)) <
+        ulp radix2 (SpecFloat.fexp prec emax)
+          (succ radix2 (SpecFloat.fexp prec emax)
+            (Binary.B2R prec emax x)) / 2)) ->
+    cascade_invariant_output
+      (fst (b64_TwoSum x (cs_carry state)))
+      (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]).
+Proof.
+  intros state processed x prov rest Hinv Hxnz Hcq Hcases.
+  destruct Hcases as [[Hx Hpw] | [Hx Hpw]].
+  - eapply cascade_step_clause_a_pathA_pos; eassumption.
+  - eapply cascade_step_clause_a_pathA_neg; eassumption.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -1166,3 +1346,7 @@ Print Assumptions cascade_h_chain_step.
 Print Assumptions compress_map_B2R_eq.
 Print Assumptions nonoverlap_shewchuk_B2R_compat.
 Print Assumptions cascade_step_clause_a_pathA_pos.
+Print Assumptions b64_TwoSum_pathA_exact_step_negative.
+Print Assumptions cascade_h_chain_pathA_neg.
+Print Assumptions cascade_step_clause_a_pathA_neg.
+Print Assumptions cascade_step_clause_a_pathA.
