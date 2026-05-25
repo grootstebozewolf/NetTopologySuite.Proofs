@@ -794,6 +794,46 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 3 -- the h-chain link.                                         *)
+(*                                                                            *)
+(* Under Path A's strict precondition `|q| < ulp(pred x) / 2` (positive x),  *)
+(* `b64_TwoSum_pathA_exact_step` (Qed-closed in B64_FastExpansionSum.v) gives *)
+(* `B2R(snd(b64_TwoSum x q)) = B2R q` exactly: the rounding error is the     *)
+(* small operand itself.  This means `ulp(snd) = ulp(q)`, so a bound          *)
+(* `|h_prev| <= ulp(q)/2` lifts directly to the h-chain link                   *)
+(* `|h_prev| <= ulp(snd)/2` -- which is the load-bearing claim of             *)
+(* cascade_h_chain_statement, restricted to positive within-source            *)
+(* continuation.                                                              *)
+(*                                                                            *)
+(* This closes the Route 1 series for the typical Stage D path.  The         *)
+(* negative-x analog needs a symmetric `pathA_exact_step_negative` lemma     *)
+(* (not currently in the corpus); the zero-x edge case is the round-to-even *)
+(* boundary tangent the prompt warned about.                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cascade_h_chain_pathA_pos :
+  forall (x q h_prev : binary64),
+    0 < Binary.B2R prec emax x ->
+    strict_succ_pathA_R (Binary.B2R prec emax x)
+                        (Binary.B2R prec emax q) ->
+    Rabs (Binary.B2R prec emax h_prev)
+      <= b64_ulp (Binary.B2R prec emax q) / 2 ->
+    b64_TwoSum_safe x q ->
+    Rabs (Binary.B2R prec emax h_prev)
+      <= b64_ulp (Binary.B2R prec emax (snd (b64_TwoSum x q))) / 2.
+Proof.
+  intros x q h_prev Hx Hpw Hhprev Hsafe.
+  pose proof (b64_TwoSum_pathA_exact_step x q Hx Hpw Hsafe) as [_ Hsnd_eq].
+  rewrite Hsnd_eq.
+  exact Hhprev.
+Qed.
+
+(* Negative-x analog: symmetric structure via round_eq_pathA_negative.       *)
+(* Mechanical to derive once b64_TwoSum_pathA_exact_step_negative is added  *)
+(* to B64_FastExpansionSum.v (a Session 8 task; the structure mirrors the  *)
+(* positive case via Ropp).                                                  *)
+
+(* -------------------------------------------------------------------------- *)
 (* SESSION 6 OUTCOME: clause (d') preservation lemmas Qed-closed above.       *)
 (*                                                                            *)
 (* Three Qed-closed lemmas:                                                   *)
@@ -939,3 +979,4 @@ Print Assumptions b64_plus_abs_bound_with_normal.
 Print Assumptions run_bound_absorb_e.
 Print Assumptions run_bound_absorb_f.
 Print Assumptions run_bound_step_preserves.
+Print Assumptions cascade_h_chain_pathA_pos.
