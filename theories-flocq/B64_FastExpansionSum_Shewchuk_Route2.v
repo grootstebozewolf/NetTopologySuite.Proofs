@@ -456,6 +456,46 @@ Proof.
 Abort.
 
 (* -------------------------------------------------------------------------- *)
+(* MISSING PROPERTY -- the h-chain link between consecutive cascade errors.   *)
+(*                                                                            *)
+(* Stated here as a Prop type so the corpus type-checks the obligation that  *)
+(* the Route 1 Session 2 collapse identified.  NOT proved -- a successor     *)
+(* session targets this lemma as a SEPARATE cascade-step result, not as an  *)
+(* invariant clause.                                                          *)
+(*                                                                            *)
+(* Reads:                                                                     *)
+(*                                                                            *)
+(*   Given the invariant before a step (state + processed + remaining =     *)
+(*   (x, prov_x) :: rest), assume cs_output has at least one element with   *)
+(*   h_prev at its tail (the most recently produced cascade error, before  *)
+(*   reversal).  Assume the cascade input is the sorted-by-magnitude merge *)
+(*   of two per-source-nonoverlap_shewchuk expansions e and f.  Then the   *)
+(*   new error h := snd (b64_TwoSum x (cs_carry state)) dominates h_prev   *)
+(*   in the half-ulp sense.                                                 *)
+(*                                                                            *)
+(* This is Shewchuk Theorem 13's load-bearing magnitude claim, restated in   *)
+(* cascade form.  Estimated 200-400 lines of Coq; requires deep magnitude   *)
+(* case analysis on provenance + sign + binade position.                     *)
+(* -------------------------------------------------------------------------- *)
+
+Definition cascade_h_chain_statement : Prop :=
+  forall (state : cascade_state)
+         (processed : list binary64)
+         (x : binary64) (prov_x : provenance)
+         (rest : list tagged_b64)
+         (h_prev : binary64) (hs_tail : list binary64)
+         (e f : list binary64),
+    cascade_invariant state processed ((x, prov_x) :: rest) ->
+    cs_output state = hs_tail ++ [h_prev] ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    sorted_asc (untag (tagged_input e f)) ->
+    Rabs (Binary.B2R prec emax h_prev) <=
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (Binary.B2R prec emax
+           (snd (b64_TwoSum x (cs_carry state)))) / 2.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -463,3 +503,4 @@ Print Assumptions tagged_input.
 Print Assumptions untag_tagged_input.
 Print Assumptions length_tagged_input.
 Print Assumptions cascade_invariant_empty.
+Print Assumptions cascade_h_chain_statement.
