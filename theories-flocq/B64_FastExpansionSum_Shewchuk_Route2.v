@@ -1716,6 +1716,151 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 10 -- general two-singleton headline (Session 14).             *)
+(*                                                                            *)
+(* For arbitrary binary64 a, b (no integer-safe assumption),                  *)
+(* fast_expansion_sum [a] [b] produces a nonoverlap_shewchuk output.  The    *)
+(* proof: one cascade step, b64_TwoSum_nonoverlap gives strict_succ_b64 on  *)
+(* the resulting pair, which is exactly the half-ulp chain.                  *)
+(*                                                                            *)
+(* This is the FIRST unconditional general-case headline -- no Path A, no    *)
+(* integer-safe, no special structural assumption on inputs.  Only           *)
+(* fast_expansion_sum_safe (the safety chain).                                *)
+(* -------------------------------------------------------------------------- *)
+
+(* Pair-form nonoverlap_shewchuk: a chain of two elements where the second  *)
+(* is half-ulp-bounded by the first.  Handles all four compress cases.      *)
+Lemma nonoverlap_shewchuk_pair :
+  forall (a b : binary64),
+    strict_succ_b64 a b ->
+    nonoverlap_shewchuk (a :: b :: nil).
+Proof.
+  intros a b Hss.
+  unfold nonoverlap_shewchuk.
+  cbn [compress].
+  destruct (Rcompare (Binary.B2R prec emax a) 0);
+    destruct (Rcompare (Binary.B2R prec emax b) 0);
+    cbn [nonoverlap_strict].
+  - exact I.
+  - exact I.
+  - exact I.
+  - exact I.
+  - split; [exact Hss | exact I].
+  - split; [exact Hss | exact I].
+  - exact I.
+  - split; [exact Hss | exact I].
+  - split; [exact Hss | exact I].
+Qed.
+
+Theorem fast_expansion_sum_nonoverlap_shewchuk_two_singletons :
+  forall (a b : binary64),
+    fast_expansion_sum_safe [a] [b] ->
+    nonoverlap_shewchuk (fast_expansion_sum [a] [b]).
+Proof.
+  intros a b Hsafe.
+  unfold fast_expansion_sum, fast_expansion_sum_safe in *.
+  cbn [app sort_by_abs insert_by_abs] in *.
+  destruct (Rle_dec (Rabs (Binary.B2R prec emax a))
+                    (Rabs (Binary.B2R prec emax b))) as [Hle | Hgt].
+  - (* sorted = [a; b].  Cascade processes [b] starting from a. *)
+    cbn [b64_grow_expansion_aux b64_grow_expansion_aux_safe] in *.
+    destruct Hsafe as [Hts_safe _].
+    unfold b64_TwoSum_safe in Hts_safe.
+    destruct Hts_safe as [Hs1 [Hs2 [Hs3 [Hs4 [Hs5 Hs6]]]]].
+    pose proof (b64_TwoSum_nonoverlap b a Hs1 Hs2 Hs3 Hs4 Hs5 Hs6) as Hno.
+    destruct (b64_TwoSum b a) as [qnew h] eqn:Hts.
+    cbn [fst snd rev].
+    apply nonoverlap_shewchuk_pair.
+    unfold strict_succ_b64.
+    exact Hno.
+  - (* sorted = [b; a].  Cascade processes [a] starting from b. *)
+    cbn [b64_grow_expansion_aux b64_grow_expansion_aux_safe] in *.
+    destruct Hsafe as [Hts_safe _].
+    unfold b64_TwoSum_safe in Hts_safe.
+    destruct Hts_safe as [Hs1 [Hs2 [Hs3 [Hs4 [Hs5 Hs6]]]]].
+    pose proof (b64_TwoSum_nonoverlap a b Hs1 Hs2 Hs3 Hs4 Hs5 Hs6) as Hno.
+    destruct (b64_TwoSum a b) as [qnew h] eqn:Hts.
+    cbn [fst snd rev].
+    apply nonoverlap_shewchuk_pair.
+    unfold strict_succ_b64.
+    exact Hno.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 11 -- general case attempt (Session 14).                       *)
+(*                                                                            *)
+(* Attempt the full Admitted headline from B64_FastExpansionSum_Shewchuk.v   *)
+(* directly.  Drops the integer-safe and Path-A hypotheses; takes only the   *)
+(* fast_expansion_sum_safe + nonoverlap_shewchuk preconditions of the        *)
+(* original Admitted Theorem.                                                 *)
+(*                                                                            *)
+(* The proof structure: case-split on sort_by_abs's length.                  *)
+(*   - Length 0: nonoverlap_shewchuk nil = True.                              *)
+(*   - Length 1: nonoverlap_shewchuk [x] = True.                              *)
+(*   - Length 2: cascade has one step; b64_TwoSum_nonoverlap gives the chain.*)
+(*   - Length 3+: cascade has 2+ steps; the h-chain link between consecutive *)
+(*     h's is the open obstacle.                                              *)
+(*                                                                            *)
+(* This lemma reaches Length 3+ and Aborts.  The Aborted goal is the        *)
+(* concrete demonstration of the deferred-proof obstacle: from the          *)
+(* invariant + nonoverlap_shewchuk inputs, deriving strict_succ_b64 between *)
+(* consecutive cascade errors requires Shewchuk Theorem 13's deep magnitude *)
+(* bookkeeping (Path A everywhere, or the cross-prov-with-snd=0 case        *)
+(* analysis).                                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma fast_expansion_sum_nonoverlap_shewchuk_route1_attempt :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+Proof.
+  intros e f Hsafe Hne Hnf.
+  unfold fast_expansion_sum, fast_expansion_sum_safe in *.
+  destruct (sort_by_abs (e ++ f)) as [|x xs] eqn:Hsort.
+  - (* Length 0: nonoverlap_shewchuk nil. *)
+    unfold nonoverlap_shewchuk. cbn [compress nonoverlap_strict]. exact I.
+  - destruct xs as [|x' xs'].
+    + (* Length 1: nonoverlap_shewchuk on singleton. *)
+      cbn [b64_grow_expansion_aux rev].
+      unfold nonoverlap_shewchuk. cbn [compress].
+      destruct (Rcompare (Binary.B2R prec emax x) 0);
+        cbn [nonoverlap_strict]; exact I.
+    + destruct xs' as [|x'' xs''].
+      * (* Length 2: single cascade step, b64_TwoSum_nonoverlap suffices. *)
+        cbn [b64_grow_expansion_aux b64_grow_expansion_aux_safe] in *.
+        destruct Hsafe as [Hts_safe _].
+        unfold b64_TwoSum_safe in Hts_safe.
+        destruct Hts_safe as [Hs1 [Hs2 [Hs3 [Hs4 [Hs5 Hs6]]]]].
+        pose proof (b64_TwoSum_nonoverlap x' x Hs1 Hs2 Hs3 Hs4 Hs5 Hs6) as Hno.
+        destruct (b64_TwoSum x' x) as [qnew h] eqn:Hts.
+        cbn [fst snd rev].
+        apply nonoverlap_shewchuk_pair.
+        unfold strict_succ_b64. exact Hno.
+      * (* Length 3+: cascade has 2+ steps.  Output is qfinal :: rev hs       *)
+        (* with |hs| >= 2.  After compress (assuming no zeros), need the     *)
+        (* h-chain link strict_succ_b64 h_k h_{k-1} between consecutive      *)
+        (* cascade errors.                                                    *)
+        (*                                                                    *)
+        (* This is the load-bearing claim from Sessions 1-12: under Path A   *)
+        (* it holds (cascade_h_chain_pathA_pos/_neg); for arbitrary inputs   *)
+        (* with non-Path-A configurations it remains the deferred-proof      *)
+        (* obstacle.                                                          *)
+        (*                                                                    *)
+        (* The Sessions 1-12 machinery (cascade_invariant, cascade_step_-    *)
+        (* preserves_invariant_pathA, cascade_run_output_nonoverlap) closes  *)
+        (* this case CONDITIONAL on cascade_pathA_chain.  For arbitrary      *)
+        (* inputs, cascade_pathA_chain is not directly derivable from        *)
+        (* nonoverlap_shewchuk e + nonoverlap_shewchuk f + fast_expansion_-  *)
+        (* sum_safe.                                                          *)
+        (*                                                                    *)
+        (* WALL: this is where the proof bails.  Aborting documents the      *)
+        (* concrete point where the original deferred-proof obstacle         *)
+        (* surfaces.                                                          *)
+Abort.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1752,3 +1897,5 @@ Print Assumptions compress_all_zero_nil.
 Print Assumptions nonoverlap_shewchuk_first_then_zeros.
 Print Assumptions b64_TwoSum_snd_B2R_zero_under_int_exact.
 Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_int_safe_singletons.
+Print Assumptions nonoverlap_shewchuk_pair.
+Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_two_singletons.
