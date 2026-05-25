@@ -1492,6 +1492,110 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 8 -- cascade_pathA_chain and the conditional headline.         *)
+(*                                                                            *)
+(* `cascade_pathA_chain state xs` asserts that EVERY step processing xs       *)
+(* from state satisfies Path A's hypotheses (sign + strict_succ +             *)
+(* within-source + normal-range + handover-for-next).  Recursive in xs.       *)
+(*                                                                            *)
+(* Under this chain, the cascade's invariant is preserved throughout, so      *)
+(* clause (a) on the final state gives nonoverlap_shewchuk on the cascade   *)
+(* output -- which is precisely fast_expansion_sum's output (via              *)
+(* cascade_run_cs_carry / cascade_run_cs_output).                             *)
+(*                                                                            *)
+(* The chain hypothesis is the cut point: Stage D consumers discharge it     *)
+(* via input-specific reasoning, or via the not-yet-formalised               *)
+(* cross-prov-with-snd=0 case analysis.                                       *)
+(* -------------------------------------------------------------------------- *)
+
+Fixpoint cascade_pathA_chain
+  (state : cascade_state) (xs : list tagged_b64) : Prop :=
+  match xs with
+  | nil => True
+  | (x, prov) :: rest =>
+      Binary.B2R prec emax x <> 0 /\
+      Binary.B2R prec emax (cs_carry state) <> 0 /\
+      ((0 < Binary.B2R prec emax x /\
+        strict_succ_pathA_R (Binary.B2R prec emax x)
+                            (Binary.B2R prec emax (cs_carry state)))
+       \/
+       (Binary.B2R prec emax x < 0 /\
+        Rabs (Binary.B2R prec emax (cs_carry state)) <
+          ulp radix2 (SpecFloat.fexp prec emax)
+            (succ radix2 (SpecFloat.fexp prec emax)
+              (Binary.B2R prec emax x)) / 2)) /\
+      (match prov with
+       | from_e =>
+           Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+             b64_ulp (Binary.B2R prec emax x) / 2
+           /\ Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+                Rabs (Binary.B2R prec emax x)
+       | from_f =>
+           Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+             b64_ulp (Binary.B2R prec emax x) / 2
+           /\ Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+                Rabs (Binary.B2R prec emax x)
+       end) /\
+      bpow radix2 (b64_emin + prec - 1) <=
+        Rabs (Binary.B2R prec emax x) /\
+      bpow radix2 (b64_emin + prec - 1) <=
+        Rabs (Binary.B2R prec emax (b64_plus x (cs_carry state))) /\
+      cascade_invariant_handover (cascade_step_state state x prov) rest /\
+      cascade_pathA_chain (cascade_step_state state x prov) rest
+  end.
+
+(* The cascade processes xs from state under Path A throughout: the invariant *)
+(* on (state, xs) lifts to the invariant on (final state, nil) at the end.   *)
+Lemma cascade_run_preserves_invariant_under_pathA :
+  forall xs state processed,
+    cascade_invariant state processed xs ->
+    cascade_pathA_chain state xs ->
+    cascade_invariant (cascade_run state xs)
+                      (processed ++ untag xs) nil.
+Proof.
+  induction xs as [|tx xs IH]; intros state processed Hinv Hchain.
+  - cbn [cascade_run untag map].
+    rewrite app_nil_r.
+    (* Hinv : cascade_invariant state processed nil.  Conclusion: same.    *)
+    exact Hinv.
+  - destruct tx as [x prov].
+    cbn [cascade_pathA_chain] in Hchain.
+    destruct Hchain as [Hxnz [Hcq [Hpath [Hwithin
+                       [Hxnorm [Hpnorm [Hho_new Hchain']]]]]]].
+    cbn [cascade_run].
+    rewrite untag_cons_pair.
+    (* Goal: cascade_invariant ... (processed ++ (x :: untag xs)) nil. *)
+    (* Rearrange to ((processed ++ [x]) ++ untag xs) form for IH.       *)
+    change (processed ++ x :: untag xs)
+      with (processed ++ [x] ++ untag xs).
+    rewrite app_assoc.
+    apply IH.
+    + (* cascade_invariant on the new state after one step *)
+      eapply cascade_step_preserves_invariant_pathA; eassumption.
+    + exact Hchain'.
+Qed.
+
+(* The headline output predicate: under Path A throughout, the cascade       *)
+(* output is nonoverlap_shewchuk.  Direct consequence of clause (a) on the   *)
+(* final state.                                                               *)
+Lemma cascade_run_output_nonoverlap :
+  forall init_state tagged_rest,
+    cascade_invariant init_state nil tagged_rest ->
+    cascade_pathA_chain init_state tagged_rest ->
+    nonoverlap_shewchuk
+      (cs_carry (cascade_run init_state tagged_rest)
+       :: rev (cs_output (cascade_run init_state tagged_rest))).
+Proof.
+  intros init_state tagged_rest Hinv Hchain.
+  pose proof (cascade_run_preserves_invariant_under_pathA
+                tagged_rest init_state nil Hinv Hchain) as Hfinal.
+  unfold cascade_invariant in Hfinal.
+  destruct Hfinal as [Ha _].
+  unfold cascade_invariant_output in Ha.
+  exact Ha.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1522,3 +1626,5 @@ Print Assumptions cascade_step_preserves_invariant_pathA.
 Print Assumptions untag_cons_pair.
 Print Assumptions cascade_run_cs_carry.
 Print Assumptions cascade_run_cs_output.
+Print Assumptions cascade_run_preserves_invariant_under_pathA.
+Print Assumptions cascade_run_output_nonoverlap.
