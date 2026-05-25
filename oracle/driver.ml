@@ -42,6 +42,24 @@
                         "NONE"                 (no intersection or non-Point result)
                         "POINT <x_hex> <y_hex>" (rounded intersection coordinates)
 
+     INTERSECT_POINT_XY -- intersection point coordinates via verified
+                           total projections (Phase 1 Scope C.2-tight).
+        line 2..5:    four points as above.
+        EOF.
+        output:       single line "XY <x_hex> <y_hex>" -- unconditional
+                      output of `b64_intersect_point_x` / `_y` from
+                      `Intersect_b64_exact.v`.  No option layer and no
+                      filter pre-check: callers responsible for first
+                      consulting `INTERSECT_FILTERED` (or holding the
+                      `intersect_point_inputs_int_safe` precondition
+                      externally) to determine whether the returned
+                      coordinates are meaningful.  Outside that regime
+                      the totals still return a binary64, but its
+                      relation to the geometric intersection is not
+                      formally guaranteed -- see
+                      `b64_intersect_point_x_forward_error_vs_intersect_x_R`
+                      for the verified soundness statement.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -138,6 +156,23 @@ let run_intersect_point_filtered () =
   | None    -> print_endline "NONE"
   | Some bp -> Printf.printf "POINT %h %h\n" bp.bx bp.by_
 
+(* ----- INTERSECT_POINT_XY mode. ------------------------------------------ *)
+
+(* Calls the verified total projections b64_intersect_point_x / _y from
+   `theories-flocq/Intersect_b64_exact.v` (Phase 1 Scope C.2-tight) directly,
+   without the option-wrapping or pre-filter check.  Useful for the .Curve
+   C# differential corpus when comparing bit-for-bit against a C# port that
+   pattern-matches on the predicate first and then computes coordinates
+   unconditionally on the IntersectPoint branch. *)
+let run_intersect_point_xy () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let q0 = parse_point (input_line stdin) in
+  let q1 = parse_point (input_line stdin) in
+  let x = b64_intersect_point_x p0 p1 q0 q1 in
+  let y = b64_intersect_point_y p0 p1 q0 q1 in
+  Printf.printf "XY %h %h\n" x y
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 let () =
@@ -151,4 +186,5 @@ let () =
   | "ORIENT_FILTERED"          -> run_orient_filtered ()
   | "INTERSECT_FILTERED"       -> run_intersect_filtered ()
   | "INTERSECT_POINT_FILTERED" -> run_intersect_point_filtered ()
+  | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
   | other                      -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)
