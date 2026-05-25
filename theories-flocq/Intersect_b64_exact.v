@@ -1217,6 +1217,118 @@ Proof.
     rewrite <- bpow_plus. simpl. apply Rle_refl.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Scope C.2-tight Session 3 -- layer 2 forward-error closure.                *)
+(*                                                                            *)
+(* Lands Delta_round (the b64_round error on the quotient) and composes it    *)
+(* with Session 2's Delta_carry into the full layer-2 forward-error bound.    *)
+(*                                                                            *)
+(* The Delta_round bound is |b64_round (qp0_R/den_R) - qp0_R/den_R| <= 1.     *)
+(* Proof: half-ulp at magnitude <= bpow 53.  Uniform across normal/subnormal  *)
+(* /zero regimes via `ulp_FLT_small` (constant ulp = bpow emin in subnormal   *)
+(* range and at zero) + `ulp_FLT_le` (relative bound in normal range).        *)
+(*                                                                            *)
+(* Composition: B2R(b64_div ...) - qp0_R/(qp0_R - qp1_R)                      *)
+(*            = Delta_round + Delta_carry                                      *)
+(* with |total| <= 1 + bpow 54 / |qp0_R - qp1_R|.                              *)
+(* -------------------------------------------------------------------------- *)
+
+(* Auxiliary: at magnitude <= bpow 53, b64_ulp is uniformly bounded by        *)
+(* bpow 1 = 2 across all regimes (normal, subnormal, zero).                   *)
+Lemma b64_ulp_le_at_magnitude_53_uniform :
+  forall x : R,
+    Rabs x <= bpow radix2 53 ->
+    b64_ulp x <= bpow radix2 1.
+Proof.
+  intros x Hle.
+  destruct (Rlt_le_dec (Rabs x) (bpow radix2 (b64_emin + prec))) as [Hsmall|Hbig].
+  - assert (Hulp_small : b64_ulp x = bpow radix2 b64_emin)
+      by (apply (@ulp_FLT_small radix2 b64_emin prec _ x Hsmall)).
+    rewrite Hulp_small.
+    apply bpow_le. unfold b64_emin, emax, prec; lia.
+  - pose proof (ulp_FLT_le radix2 b64_emin prec x) as Hulp.
+    assert (Hpre : bpow radix2 (b64_emin + prec - 1) <= Rabs x).
+    { apply Rle_trans with (bpow radix2 (b64_emin + prec)); [|exact Hbig].
+      apply bpow_le; lia. }
+    specialize (Hulp Hpre).
+    apply Rle_trans with (Rabs x * bpow radix2 (1 - prec)); [exact Hulp|].
+    replace (bpow radix2 1) with (bpow radix2 53 * bpow radix2 (1 - prec)).
+    + apply Rmult_le_compat_r; [apply bpow_ge_0|exact Hle].
+    + rewrite <- bpow_plus. apply f_equal. unfold prec; lia.
+Qed.
+
+(* Delta_round: the b64_round error on the layer-2 quotient.                  *)
+Lemma b64_intersect_s_round_error :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax
+            (b64_div (b64_orient2d Q0 Q1 P0)
+                     (b64_minus (b64_orient2d Q0 Q1 P0)
+                                (b64_orient2d Q0 Q1 P1)))
+          - cross_R_BP Q0 Q1 P0
+            / Binary.B2R prec emax
+                (b64_minus (b64_orient2d Q0 Q1 P0)
+                           (b64_orient2d Q0 Q1 P1)))
+    <= 1.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_s_R_round _ _ _ _ Hsafe) as [HB2R _].
+  cbv zeta in HB2R. rewrite HB2R.
+  pose proof (b64_intersect_qp0_R _ _ _ _ Hsafe) as Hqp0R.
+  rewrite Hqp0R.
+  set (qp0_R := cross_R_BP Q0 Q1 P0).
+  set (den_R := Binary.B2R prec emax
+                  (b64_minus (b64_orient2d Q0 Q1 P0)
+                             (b64_orient2d Q0 Q1 P1))).
+  pose proof (b64_error_le_half_ulp_round (qp0_R / den_R)) as Herr.
+  eapply Rle_trans; [exact Herr|].
+  assert (Hbnd : Rabs (b64_round (qp0_R / den_R)) <= bpow radix2 53).
+  { pose proof (b64_intersect_s_abs_le_bpow_53 _ _ _ _ Hsafe) as Bs.
+    cbv zeta in Bs.
+    destruct (b64_intersect_s_R_round _ _ _ _ Hsafe) as [HB2R2 _].
+    cbv zeta in HB2R2.
+    rewrite HB2R2 in Bs.
+    rewrite (b64_intersect_qp0_R _ _ _ _ Hsafe) in Bs.
+    exact Bs. }
+  pose proof (b64_ulp_le_at_magnitude_53_uniform _ Hbnd) as Hulp.
+  apply Rle_trans with (bpow radix2 1 / 2); [|simpl; lra].
+  unfold Rdiv.
+  apply Rmult_le_compat_r; [lra | exact Hulp].
+Qed.
+
+(* Layer 2 full forward-error bound: composition of Delta_round (Session 3)  *)
+(* and Delta_carry (Session 2).                                              *)
+Theorem b64_intersect_s_forward_error :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax
+            (b64_div (b64_orient2d Q0 Q1 P0)
+                     (b64_minus (b64_orient2d Q0 Q1 P0)
+                                (b64_orient2d Q0 Q1 P1)))
+          - cross_R_BP Q0 Q1 P0
+            / (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1))
+    <= 1 + bpow radix2 54
+            / Rabs (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  set (qp0_R := cross_R_BP Q0 Q1 P0).
+  set (qp1_R := cross_R_BP Q0 Q1 P1).
+  set (den_R := Binary.B2R prec emax
+                  (b64_minus (b64_orient2d Q0 Q1 P0)
+                             (b64_orient2d Q0 Q1 P1))).
+  set (s_R := Binary.B2R prec emax
+                (b64_div (b64_orient2d Q0 Q1 P0)
+                         (b64_minus (b64_orient2d Q0 Q1 P0)
+                                    (b64_orient2d Q0 Q1 P1)))).
+  replace (s_R - qp0_R / (qp0_R - qp1_R))
+    with ((s_R - qp0_R / den_R) + (qp0_R / den_R - qp0_R / (qp0_R - qp1_R)))
+    by ring.
+  eapply Rle_trans; [apply Rabs_triang|].
+  apply Rplus_le_compat.
+  - apply (b64_intersect_s_round_error _ _ _ _ Hsafe).
+  - apply (b64_intersect_s_carry_error _ _ _ _ Hsafe).
+Qed.
+
 (*                                                                            *)
 (* The `BPoint` instance routes through the total b64 projections defined   *)
 (* above.                                                                    *)
@@ -1355,6 +1467,9 @@ Print Assumptions b64_intersect_point_returns_some_when_point.
 Print Assumptions b64_ulp_le_at_magnitude_54.
 Print Assumptions b64_intersect_den_forward_error.
 Print Assumptions b64_intersect_s_carry_error.
+Print Assumptions b64_ulp_le_at_magnitude_53_uniform.
+Print Assumptions b64_intersect_s_round_error.
+Print Assumptions b64_intersect_s_forward_error.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
