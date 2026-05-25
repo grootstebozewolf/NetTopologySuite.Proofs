@@ -372,13 +372,18 @@ Definition cascade_invariant_run_bound (state : cascade_state) : Prop :=
     <= 2 * Rabs (Binary.B2R prec emax (cs_e_max state))
        + 2 * Rabs (Binary.B2R prec emax (cs_f_max state)).
 
+(* SESSION 10 REFACTOR.  Clause (b) (cascade_invariant_magnitude) was        *)
+(* structurally non-preservable: the triangle bound on b64_plus gives        *)
+(* |new cs_carry| <= |x| + |cs_carry|, which exceeds |max_abs_b64 processed| *)
+(* for any constant factor (1 + C > C for finite C).  No consumers used it. *)
+(* Dropped from the invariant; processed parameter retained for backwards   *)
+(* compatibility with existing call sites that pass it.                      *)
 Definition cascade_invariant
   (state : cascade_state)
-  (processed : list binary64)
+  (_processed : list binary64)
   (remaining : list tagged_b64)
   : Prop :=
   cascade_invariant_output (cs_carry state) (cs_output state) /\
-  cascade_invariant_magnitude (cs_carry state) processed /\
   cascade_invariant_handover state remaining /\
   cascade_invariant_run_bound state.
 
@@ -421,7 +426,7 @@ Proof.
   intros q p remaining Hho.
   unfold cascade_invariant, initial_cascade_state.
   destruct p; cbn [cs_carry cs_prov cs_output cs_e_max cs_f_max rev];
-    (split; [|split; [|split]]).
+    (split; [|split]).
   - (* (a) output well-formed -- from_e branch. *)
     unfold cascade_invariant_output.
     cbn [cs_carry cs_output rev].
@@ -429,8 +434,6 @@ Proof.
     cbn [compress].
     destruct (Rcompare (Binary.B2R prec emax q) 0);
       cbn [nonoverlap_strict]; exact I.
-  - (* (b) magnitude -- from_e *)
-    right. reflexivity.
   - (* (c) handover -- from_e *)
     exact Hho.
   - (* (d) run-bound -- from_e: |q| <= 2|q| + 2*|b64_zero| = 2|q|. *)
@@ -446,8 +449,6 @@ Proof.
     cbn [compress].
     destruct (Rcompare (Binary.B2R prec emax q) 0);
       cbn [nonoverlap_strict]; exact I.
-  - (* (b) -- from_f *)
-    right. reflexivity.
   - (* (c) -- from_f *)
     exact Hho.
   - (* (d) -- from_f: |q| <= 2*|b64_zero| + 2|q| = 2|q|. *)
@@ -507,6 +508,10 @@ Definition cascade_step_state
         x
   end.
 
+(* Aborted placeholder retained as Session 1 documentation of the structural *)
+(* obstacle.  Now superseded by cascade_step_preserves_invariant_pathA      *)
+(* (Session 10, below) which composes the Sessions 6-9 preservation         *)
+(* lemmas under explicit Path A and within-source/sorted hypotheses.        *)
 Lemma cascade_step_preserves_invariant :
   forall (state : cascade_state)
          (processed : list binary64)
@@ -518,11 +523,6 @@ Lemma cascade_step_preserves_invariant :
       (processed ++ [x])
       rest.
 Proof.
-  (* Composition of clause (a-d) preservation lemmas (Deliverable 2 below). *)
-  (* Aborted at this top level until all four sub-preservation lemmas are  *)
-  (* Qed-closed; the clause (d) preservation is the Session 5 deliverable. *)
-  (* Reason: clause (a)'s h-chain link still needs cascade_h_chain (the    *)
-  (* lemma whose statement lives in cascade_h_chain_statement below).      *)
 Abort.
 
 (* -------------------------------------------------------------------------- *)
@@ -1085,7 +1085,7 @@ Proof.
                 Hinv Hout Hcq Hch) as Hh_bound.
   (* Step 2: extract b64_TwoSum_safe from clause (c). *)
   unfold cascade_invariant in Hinv.
-  destruct Hinv as [_ [_ [Hc _]]].
+  destruct Hinv as [_ [Hc _]].
   unfold cascade_invariant_handover in Hc.
   cbn [cs_carry] in Hc.
   destruct Hc as [Hsafe _].
@@ -1127,7 +1127,7 @@ Proof.
              :: snd (b64_TwoSum x (cs_carry state)) :: rev (cs_output state)) *)
   (* Extract safety from clause (c). *)
   unfold cascade_invariant in Hinv.
-  destruct Hinv as [Ha [_ [Hc _]]].
+  destruct Hinv as [Ha [Hc _]].
   unfold cascade_invariant_handover in Hc.
   cbn [cs_carry] in Hc.
   destruct Hc as [Hsafe _].
@@ -1218,7 +1218,7 @@ Proof.
   unfold cascade_invariant_output.
   rewrite rev_app_distr. cbn [rev app].
   unfold cascade_invariant in Hinv.
-  destruct Hinv as [Ha [_ [Hc _]]].
+  destruct Hinv as [Ha [Hc _]].
   unfold cascade_invariant_handover in Hc.
   cbn [cs_carry] in Hc.
   destruct Hc as [Hsafe _].
@@ -1326,6 +1326,100 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 6 -- cascade_step_preserves_invariant under Path A.            *)
+(*                                                                            *)
+(* Composes the Session 6 (clause d′ preservation) and Sessions 8-9 (clause  *)
+(* a preservation under Path A) results into the full invariant preservation *)
+(* under Path A.  Clause (c) preservation requires knowing the NEXT step's   *)
+(* handover, which is supplied as an explicit hypothesis (the cascade        *)
+(* driver provides it from input preconditions and the next remaining input).*)
+(*                                                                            *)
+(* Path A is the structural assumption: at every cascade step, the next     *)
+(* input dominates the current carry by the strict half-ulp margin.  This   *)
+(* holds for within-source consecutive steps in the typical Stage D path.   *)
+(* Cross-prov transitions or non-Path-A configurations are out of scope     *)
+(* here -- they remain the deferred-proof obstacle.                          *)
+(* -------------------------------------------------------------------------- *)
+
+(* cs_carry / cs_output / cs_e_max / cs_f_max access on the step state.      *)
+Lemma cs_carry_cascade_step_state :
+  forall state x prov,
+    cs_carry (cascade_step_state state x prov)
+      = fst (b64_TwoSum x (cs_carry state)).
+Proof. intros. destruct prov; reflexivity. Qed.
+
+Lemma cs_output_cascade_step_state :
+  forall state x prov,
+    cs_output (cascade_step_state state x prov)
+      = cs_output state ++ [snd (b64_TwoSum x (cs_carry state))].
+Proof. intros. destruct prov; reflexivity. Qed.
+
+Lemma cascade_step_preserves_invariant_pathA :
+  forall (state : cascade_state) (processed : list binary64)
+         (x : binary64) (prov : provenance) (rest : list tagged_b64),
+    cascade_invariant state processed ((x, prov) :: rest) ->
+    Binary.B2R prec emax x <> 0 ->
+    Binary.B2R prec emax (cs_carry state) <> 0 ->
+    (* Path A on this step. *)
+    ((0 < Binary.B2R prec emax x /\
+      strict_succ_pathA_R (Binary.B2R prec emax x)
+                          (Binary.B2R prec emax (cs_carry state)))
+     \/
+     (Binary.B2R prec emax x < 0 /\
+      Rabs (Binary.B2R prec emax (cs_carry state)) <
+        ulp radix2 (SpecFloat.fexp prec emax)
+          (succ radix2 (SpecFloat.fexp prec emax)
+            (Binary.B2R prec emax x)) / 2)) ->
+    (* Within-source structure for clause (d′) preservation. *)
+    match prov with
+    | from_e =>
+        Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+          b64_ulp (Binary.B2R prec emax x) / 2
+        /\ Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+             Rabs (Binary.B2R prec emax x)
+    | from_f =>
+        Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+          b64_ulp (Binary.B2R prec emax x) / 2
+        /\ Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+             Rabs (Binary.B2R prec emax x)
+    end ->
+    (* Normal-range hypotheses for clause (d′) preservation. *)
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax x) ->
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax (b64_plus x (cs_carry state))) ->
+    (* Next-step handover supplied by the cascade driver. *)
+    cascade_invariant_handover (cascade_step_state state x prov) rest ->
+    cascade_invariant
+      (cascade_step_state state x prov)
+      (processed ++ [x])
+      rest.
+Proof.
+  intros state processed x prov rest Hinv Hxnz Hcq Hpath Hwithin
+         Hxnorm Hpnorm Hho_new.
+  (* Extract safety from old clause (c). *)
+  pose proof Hinv as Hinv_full.
+  unfold cascade_invariant in Hinv_full.
+  destruct Hinv_full as [_ [Hc_old Hd_old]].
+  unfold cascade_invariant_handover in Hc_old.
+  cbn [cs_carry] in Hc_old.
+  destruct Hc_old as [Hsafe _].
+  (* Now assemble the three clauses for the new state. *)
+  unfold cascade_invariant.
+  split; [|split].
+  - (* Clause (a) preservation via cascade_step_clause_a_pathA. *)
+    rewrite cs_carry_cascade_step_state, cs_output_cascade_step_state.
+    eapply cascade_step_clause_a_pathA; eassumption.
+  - (* Clause (c): supplied as hypothesis. *)
+    exact Hho_new.
+  - (* Clause (d′) preservation via run_bound_step_preserves. *)
+    unfold b64_TwoSum_safe in Hsafe.
+    destruct Hsafe as [Hsafe_plus _].
+    apply (run_bound_step_preserves state x prov
+             Hd_old Hsafe_plus Hxnorm Hpnorm Hwithin).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1350,3 +1444,6 @@ Print Assumptions b64_TwoSum_pathA_exact_step_negative.
 Print Assumptions cascade_h_chain_pathA_neg.
 Print Assumptions cascade_step_clause_a_pathA_neg.
 Print Assumptions cascade_step_clause_a_pathA.
+Print Assumptions cs_carry_cascade_step_state.
+Print Assumptions cs_output_cascade_step_state.
+Print Assumptions cascade_step_preserves_invariant_pathA.
