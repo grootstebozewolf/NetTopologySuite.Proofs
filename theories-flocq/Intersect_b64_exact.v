@@ -1103,6 +1103,120 @@ Proof.
   apply Rmult_le_compat_r; [lra|exact Hulp_le].
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Scope C.2-tight Session 2 -- denominator-carryover bound for layer 2.      *)
+(*                                                                            *)
+(* Layer 2 of the b64 intersection chain rounds the EXACT-numerator over     *)
+(* ROUNDED-denominator quotient:                                              *)
+(*    B2R(s) = b64_round (qp0_R / B2R(den))                                    *)
+(*    s_exact = qp0_R / (qp0_R - qp1_R)                                        *)
+(*                                                                            *)
+(* The full layer-2 forward error decomposes algebraically:                   *)
+(*    B2R(s) - s_exact                                                         *)
+(*  = (b64_round(qp0_R/den_R) - qp0_R/den_R)              [Delta_round]       *)
+(*  + (qp0_R/den_R - qp0_R/den_exact)                      [Delta_carry]       *)
+(*                                                                            *)
+(* This session lands Delta_carry only -- the pure-R perturbation of the      *)
+(* quotient under denominator rounding.  Session 3 lands Delta_round (which   *)
+(* needs subnormal-range ulp bookkeeping for b64_round of the division) and  *)
+(* composes both into the full layer-2 bound.                                *)
+(*                                                                            *)
+(* Algebraic identity:                                                        *)
+(*    qp0_R / den_R - qp0_R / den_exact                                       *)
+(*  = qp0_R * (den_exact - den_R) / (den_R * den_exact)                       *)
+(* Bound chain:                                                               *)
+(*    |Delta_carry|                                                            *)
+(*  <= |qp0_R| * (Session 1 bound) / (|den_R| * |den_exact|)                  *)
+(*  <= bpow 53 * bpow 1 / (1 * |den_exact|)                                    *)
+(*  =  bpow 54 / |den_exact|.                                                  *)
+(*                                                                            *)
+(* The 1/|den_exact| factor exposes the classical condition number for the    *)
+(* Cramer division step.                                                      *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_intersect_s_carry_error :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (cross_R_BP Q0 Q1 P0
+            / Binary.B2R prec emax
+                (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1))
+          - cross_R_BP Q0 Q1 P0
+            / (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1))
+    <= bpow radix2 54
+       / Rabs (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  set (qp0_R := cross_R_BP Q0 Q1 P0).
+  set (qp1_R := cross_R_BP Q0 Q1 P1).
+  set (den_R := Binary.B2R prec emax
+                  (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1))).
+  set (den_exact := qp0_R - qp1_R).
+  (* Step 1: facts about den_R and den_exact. *)
+  assert (Hden_exact_ne : den_exact <> 0).
+  { unfold den_exact, qp0_R, qp1_R. destruct Hsafe as [_ Hne]. lra. }
+  assert (Hden_R_ne : den_R <> 0).
+  { unfold den_R. apply (b64_intersect_den_B2R_nonzero _ _ _ _ Hsafe). }
+  assert (Hden_R_ge1 : 1 <= Rabs den_R).
+  { unfold den_R. apply (b64_intersect_den_B2R_abs_ge_1 _ _ _ _ Hsafe). }
+  assert (Hden_exact_ge1 : 1 <= Rabs den_exact).
+  { unfold den_exact, qp0_R, qp1_R.
+    destruct Hsafe as [Hint Hne].
+    pose proof (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hint) as Hint0.
+    pose proof (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hint) as Hint1.
+    destruct (cross_R_BP_int_witness _ _ _ Hint0) as [n0 [Hn0 _]].
+    destruct (cross_R_BP_int_witness _ _ _ Hint1) as [n1 [Hn1 _]].
+    rewrite Hn0, Hn1, <- minus_IZR, <- abs_IZR.
+    apply IZR_le.
+    assert (Hne_n : n0 <> n1).
+    { intros Heq. apply Hne. rewrite Hn0, Hn1, Heq. reflexivity. }
+    lia. }
+  assert (Hqp0_R_bnd : Rabs qp0_R <= bpow radix2 53).
+  { unfold qp0_R.
+    destruct Hsafe as [Hint _].
+    apply (cross_R_BP_abs_le_bpow_53 _ _ _
+             (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hint)). }
+  assert (Hden_err : Rabs (den_R - den_exact) <= bpow radix2 1).
+  { unfold den_R, den_exact, qp0_R, qp1_R.
+    apply (b64_intersect_den_forward_error _ _ _ _ Hsafe). }
+  (* Step 2: algebraic identity for the perturbation. *)
+  assert (Hpos_R : 0 < Rabs den_R) by (apply Rabs_pos_lt; exact Hden_R_ne).
+  assert (Hpos_exact : 0 < Rabs den_exact)
+    by (apply Rabs_pos_lt; exact Hden_exact_ne).
+  replace (qp0_R / den_R - qp0_R / den_exact)
+    with (qp0_R * (den_exact - den_R) / (den_R * den_exact))
+    by (field; split; assumption).
+  (* Step 3: factor Rabs through the division and bound. *)
+  unfold Rdiv at 1.
+  rewrite Rabs_mult.
+  rewrite Rabs_inv.
+  rewrite (Rabs_mult qp0_R (den_exact - den_R)).
+  rewrite (Rabs_mult den_R den_exact).
+  (* Now: |qp0_R| * |den_exact - den_R| / (|den_R| * |den_exact|)               *)
+  (*    <= bpow 54 / |den_exact|.                                                *)
+  apply Rle_trans
+    with ((bpow radix2 53 * bpow radix2 1) / (1 * Rabs den_exact)).
+  - apply Rmult_le_compat;
+      [ apply Rmult_le_pos; apply Rabs_pos
+      | apply Rlt_le, Rinv_0_lt_compat, Rmult_lt_0_compat; assumption
+      |
+      | ].
+    + (* Numerator: |qp0_R| * |den_exact - den_R| <= bpow 53 * bpow 1. *)
+      apply Rmult_le_compat;
+        [apply Rabs_pos|apply Rabs_pos|exact Hqp0_R_bnd|].
+      replace (Rabs (den_exact - den_R)) with (Rabs (den_R - den_exact))
+        by (rewrite <- Rabs_Ropp; f_equal; ring).
+      exact Hden_err.
+    + (* Denominator inverse: 1/(|den_R| * |den_exact|) <= 1/(1 * |den_exact|). *)
+      apply Rinv_le_contravar.
+      * rewrite Rmult_1_l. exact Hpos_exact.
+      * apply Rmult_le_compat_r; [apply Rlt_le; exact Hpos_exact|exact Hden_R_ge1].
+  - (* Simplify constants: bpow 53 * bpow 1 = bpow 54, divide by 1. *)
+    rewrite Rmult_1_l.
+    apply Rmult_le_compat_r;
+      [apply Rlt_le, Rinv_0_lt_compat; exact Hpos_exact|].
+    rewrite <- bpow_plus. simpl. apply Rle_refl.
+Qed.
+
 (*                                                                            *)
 (* The `BPoint` instance routes through the total b64 projections defined   *)
 (* above.                                                                    *)
@@ -1240,6 +1354,7 @@ Print Assumptions b64_intersect_den_B2R_nonzero.
 Print Assumptions b64_intersect_point_returns_some_when_point.
 Print Assumptions b64_ulp_le_at_magnitude_54.
 Print Assumptions b64_intersect_den_forward_error.
+Print Assumptions b64_intersect_s_carry_error.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
