@@ -960,8 +960,13 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   near-parallel and dropping for well-separated segments.  See
   [`docs/phase1-c2-tight-retro.md`](docs/phase1-c2-tight-retro.md)
   for the cascade structure, calibration vs Slice A, and what's
-  open.  Optional Session 6: link the reference to `intersect_x_R
-  (BP2P ...)` + plug into the `HasIntersect_sound` typeclass field.
+  open.  Session 6 closed the reference bridge + soundness typeclass:
+  `b64_intersect_point_{x,y}_forward_error_vs_intersect_{x,y}_R`
+  state the same bound against the canonical
+  `intersect_{x,y}_R (BP2P ...)` reference, and
+  `HasIntersect_sound_BPoint` plugs the bound into a soundness
+  typeclass layered on `HasIntersect`.  Phase 1 fully shipped
+  end-to-end.
 - **2026-05-15**: Phase 2 opened -- snap-rounding noder audit doc.
   [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md)
   inventories what snap rounding is (Hobby 1999 + Halperin & Packer

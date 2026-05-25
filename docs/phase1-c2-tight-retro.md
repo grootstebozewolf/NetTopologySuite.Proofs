@@ -1,6 +1,8 @@
 # Phase 1 Scope C.2-tight Retro — forward-error theorem
 
-**Date.** May 2026. 5 sessions across two engagements.
+**Date.** May 2026. 6 sessions across two engagements.  Session 6
+closed the reference bridge + soundness typeclass after the initial
+five-session cascade landed.
 
 **Starting state.** Phase 1 had Scopes A, B.1, B.2, and Scope C polish
 already shipped on `main` (commit `8deea45` "Scope C polish" + commit
@@ -57,9 +59,12 @@ where `exact_reference = B2R(bx P0) + s_exact * B2R(b64_minus (bx P1)
 | 3       | Layer 2 Delta_round + composition + `_53_uniform` aux               | 115   | Qed     |
 | 4       | Layer 3 (full) + `_uniform` aux (generalised)                       | 206   | Qed     |
 | 5       | Layer 4 Delta_round_plus + composed headline                        | 155   | Qed     |
+| Refactor| Y-coordinate mirror + ulp aux consolidation + footer cleanup        | ~250  | Qed     |
+| 6       | Reference bridge + `HasIntersect_sound` typeclass + instance        | ~110  | Qed     |
 
-Total: 11 new Qed-closed theorems (5 layer-bound theorems + 6 helper
-lemmas for the cascade).  ~666 lines added.
+Total: 21 Qed-closed theorems (5 x-layer bounds + 5 y-layer bounds +
+aux + 2 reference bridges + 2 restated headlines + 1 typeclass instance
++ helpers).  ~1030 lines added.
 
 ## The Session 2 wall and how it cleared
 
@@ -162,12 +167,17 @@ non-parallel.
 
 ## What's open
 
-**Session 6 (optional):** Link the C.2-tight reference to
-`intersect_x_R (BP2P P0) ...`, restate as `K * eps`, plug into
-`HasIntersect_sound`.  ~50-80 lines.  Not on the critical path for
-Phase 2 — Phase 2's intersection consumers (the C# port) work with
-the existing `intersect_inputs_int_safe` + `b64_intersect_point`
-API which is already complete.
+**Session 6 closed (post-refactor).**  The reference bridge
+(`c2tight_ref_{x,y}_eq_intersect_{x,y}_R`) + restated headlines
+(`b64_intersect_point_{x,y}_forward_error_vs_intersect_{x,y}_R`) +
+the `HasIntersect_sound` typeclass + `HasIntersect_sound_BPoint`
+instance landed in ~110 lines.  Phase 1 Scope C.2-tight is now
+fully shipped end-to-end.
+
+**Optional refinement.**  K * eps restatement (`|forward error| <=
+K(|den_exact|) * eps` with `K(|d|) = bpow 82 + bpow 133 / |d|`) is
+an algebraic restatement of the current bound; equivalent, no new
+content.  Skipped pending an explicit caller need.
 
 **Mirror to other operations.**  Phase 2 may need analogous bounds
 for line distance, point-on-segment classification, or other

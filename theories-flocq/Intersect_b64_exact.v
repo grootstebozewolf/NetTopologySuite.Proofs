@@ -99,8 +99,8 @@ Local Open Scope R_scope.
 (* so the layer stays independent.                                          *)
 (* -------------------------------------------------------------------------- *)
 
-Definition BP2P (p : BPoint) : Point :=
-  mkPoint (Binary.B2R prec emax (bx p)) (Binary.B2R prec emax (by_ p)).
+(* `BP2P` is imported from `Intersect_b64.v`; the bridge lemma                 *)
+(* `cross_R_BP_eq_cross_BP2P` over there carries the same definition.         *)
 
 (* -------------------------------------------------------------------------- *)
 (* R-side Cramer's-rule reference expressions.                                *)
@@ -2021,9 +2021,88 @@ Qed.
 (* bounds with `HasIntersect_BPoint`, not a new instance of either class. *)
 (* -------------------------------------------------------------------------- *)
 
-(* Soundness field is deferred to Scope B (round-chain identity) or Scope C *)
-(* (forward-error bound).  Until one of those slices lands, the interface  *)
-(* is operations + safety predicate only.                                   *)
+(* -------------------------------------------------------------------------- *)
+(* Phase 1 Session 6 -- reference bridge + soundness typeclass.               *)
+(*                                                                            *)
+(* The Scope C.2-tight headlines state the forward-error bound against the    *)
+(* internal reference `B2R(bx P0) + s_exact * B2R(b64_minus (bx P1) (bx P0))`.*)
+(* Under int-safe inputs the `b64_minus` step is bit-exact (Session 1's       *)
+(* `b64_intersect_dx_R`) and `cross_R_BP = cross (BP2P ...)` (Intersect_b64's *)
+(* `cross_R_BP_eq_cross_BP2P`), so the reference equals                       *)
+(* `intersect_x_R (BP2P P0, BP2P P1, BP2P Q0, BP2P Q1)` exactly.              *)
+(*                                                                            *)
+(* This section threads that bridge, restates the headlines against the       *)
+(* canonical `intersect_x_R`/`intersect_y_R` references, and plugs the bound  *)
+(* into a `HasIntersect_sound` typeclass layered on `HasIntersect`.           *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma c2tight_ref_x_eq_intersect_x_R :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.B2R prec emax (bx P0)
+    + cross_R_BP Q0 Q1 P0
+      / (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1)
+      * Binary.B2R prec emax (b64_minus (bx P1) (bx P0))
+    = intersect_x_R (BP2P P0) (BP2P P1) (BP2P Q0) (BP2P Q1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_dx_R _ _ _ _ Hsafe) as [Hdx _].
+  rewrite Hdx.
+  unfold intersect_x_R, intersect_param_s, BP2P, px.
+  rewrite (cross_R_BP_eq_cross_BP2P Q0 Q1 P0).
+  rewrite (cross_R_BP_eq_cross_BP2P Q0 Q1 P1).
+  unfold BP2P, px.
+  reflexivity.
+Qed.
+
+Lemma c2tight_ref_y_eq_intersect_y_R :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Binary.B2R prec emax (by_ P0)
+    + cross_R_BP Q0 Q1 P0
+      / (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1)
+      * Binary.B2R prec emax (b64_minus (by_ P1) (by_ P0))
+    = intersect_y_R (BP2P P0) (BP2P P1) (BP2P Q0) (BP2P Q1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_dy_R _ _ _ _ Hsafe) as [Hdy _].
+  rewrite Hdy.
+  unfold intersect_y_R, intersect_param_s, BP2P, py.
+  rewrite (cross_R_BP_eq_cross_BP2P Q0 Q1 P0).
+  rewrite (cross_R_BP_eq_cross_BP2P Q0 Q1 P1).
+  unfold BP2P, py.
+  reflexivity.
+Qed.
+
+(* Restated headline against the canonical intersect_x_R reference. *)
+Theorem b64_intersect_point_x_forward_error_vs_intersect_x_R :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax (b64_intersect_point_x P0 P1 Q0 Q1)
+          - intersect_x_R (BP2P P0) (BP2P P1) (BP2P Q0) (BP2P Q1))
+    <= bpow radix2 29
+       + bpow radix2 80
+         / Rabs (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  rewrite <- (c2tight_ref_x_eq_intersect_x_R _ _ _ _ Hsafe).
+  apply (b64_intersect_point_x_forward_error _ _ _ _ Hsafe).
+Qed.
+
+Theorem b64_intersect_point_y_forward_error_vs_intersect_y_R :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax (b64_intersect_point_y P0 P1 Q0 Q1)
+          - intersect_y_R (BP2P P0) (BP2P P1) (BP2P Q0) (BP2P Q1))
+    <= bpow radix2 29
+       + bpow radix2 80
+         / Rabs (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1).
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  rewrite <- (c2tight_ref_y_eq_intersect_y_R _ _ _ _ Hsafe).
+  apply (b64_intersect_point_y_forward_error _ _ _ _ Hsafe).
+Qed.
+
 Class HasIntersect (T : Type) : Type := {
   intersect_x          : T -> T -> T -> T -> binary64;
   intersect_y          : T -> T -> T -> T -> binary64;
@@ -2034,6 +2113,42 @@ Instance HasIntersect_BPoint : HasIntersect BPoint := {
   intersect_x          := b64_intersect_point_x;
   intersect_y          := b64_intersect_point_y;
   intersect_inputs_safe := intersect_point_inputs_int_safe;
+}.
+
+(* Soundness layer: caller-facing forward-error contract.  Each instance      *)
+(* supplies a reference value (`intersect_ref_x/y`) and an error bound        *)
+(* (`intersect_error_bound`) that depends on the inputs; the two soundness    *)
+(* obligations require the b64 result to be within the bound of the          *)
+(* reference under the safety predicate.                                      *)
+Class HasIntersect_sound (T : Type) `{HasIntersect T} : Type := {
+  intersect_ref_x       : T -> T -> T -> T -> R;
+  intersect_ref_y       : T -> T -> T -> T -> R;
+  intersect_error_bound : T -> T -> T -> T -> R;
+  intersect_x_sound :
+    forall a b c d : T,
+      intersect_inputs_safe a b c d ->
+      Rabs (Binary.B2R prec emax (intersect_x a b c d)
+            - intersect_ref_x a b c d)
+      <= intersect_error_bound a b c d;
+  intersect_y_sound :
+    forall a b c d : T,
+      intersect_inputs_safe a b c d ->
+      Rabs (Binary.B2R prec emax (intersect_y a b c d)
+            - intersect_ref_y a b c d)
+      <= intersect_error_bound a b c d;
+}.
+
+Instance HasIntersect_sound_BPoint : HasIntersect_sound BPoint := {
+  intersect_ref_x       := fun A B C D =>
+                             intersect_x_R (BP2P A) (BP2P B) (BP2P C) (BP2P D);
+  intersect_ref_y       := fun A B C D =>
+                             intersect_y_R (BP2P A) (BP2P B) (BP2P C) (BP2P D);
+  intersect_error_bound := fun A B C D =>
+                             bpow radix2 29
+                             + bpow radix2 80
+                               / Rabs (cross_R_BP C D A - cross_R_BP C D B);
+  intersect_x_sound     := b64_intersect_point_x_forward_error_vs_intersect_x_R;
+  intersect_y_sound     := b64_intersect_point_y_forward_error_vs_intersect_y_R;
 }.
 
 (* -------------------------------------------------------------------------- *)
@@ -2065,6 +2180,10 @@ Print Assumptions b64_intersect_mult_y_carry_error.
 Print Assumptions b64_intersect_mult_y_forward_error.
 Print Assumptions b64_intersect_plus_y_round_error.
 Print Assumptions b64_intersect_point_y_forward_error.
+Print Assumptions c2tight_ref_x_eq_intersect_x_R.
+Print Assumptions c2tight_ref_y_eq_intersect_y_R.
+Print Assumptions b64_intersect_point_x_forward_error_vs_intersect_x_R.
+Print Assumptions b64_intersect_point_y_forward_error_vs_intersect_y_R.
 
 (* -------------------------------------------------------------------------- *)
 (* Phase 1 deliverable map                                                    *)
@@ -2092,36 +2211,35 @@ Print Assumptions b64_intersect_point_y_forward_error.
 (*    `_abs_le_bpow_81` / `_y_abs_le_bpow_81` (coarse magnitude),             *)
 (*    `b64_intersect_point_returns_some_when_point` (Some-commits under safe).*)
 (*                                                                            *)
-(* 4. Scope C.2-tight (forward-error decomposition, x coordinate):            *)
-(*    Four-layer cascade landed in five sessions S1-S5:                       *)
+(* 4. Scope C.2-tight (forward-error decomposition, x + y coordinates):       *)
+(*    Four-layer cascade landed in five sessions S1-S5 for x, mirrored to y  *)
+(*    in the refactor pass:                                                   *)
 (*      Layer 1 (den):     `b64_intersect_den_forward_error`                  *)
 (*                         <= bpow 1                                          *)
 (*      Layer 2 (s):       `b64_intersect_s_forward_error`                    *)
 (*                         <= 1 + bpow 54 / |qp0_R - qp1_R|                   *)
-(*      Layer 3 (s*dx):    `b64_intersect_mult_x_forward_error`               *)
+(*      Layer 3 (s*d_):    `b64_intersect_mult_{x,y}_forward_error`           *)
 (*                         <= bpow 27 + bpow 26 + bpow 80 / |qp0_R - qp1_R|   *)
-(*      Layer 4 (final):   `b64_intersect_point_x_forward_error`              *)
+(*      Layer 4 (final):   `b64_intersect_point_{x,y}_forward_error`          *)
 (*                         <= bpow 29 + bpow 80 / |qp0_R - qp1_R|             *)
-(*    Reference: `B2R(bx P0) + s_exact * B2R(b64_minus (bx P1) (bx P0))`,    *)
-(*    which equals `intersect_x_R (BP2P P0) ... (BP2P Q1)` up to the bit-exact*)
-(*    dx step (Session 6 bridges).                                            *)
 (*                                                                            *)
-(* DEFERRED (optional)                                                        *)
+(* 5. Session 6 -- reference bridge + soundness typeclass:                    *)
+(*    `b64_intersect_point_{x,y}_forward_error_vs_intersect_{x,y}_R`          *)
+(*    state the same bound against the canonical `intersect_{x,y}_R          *)
+(*    (BP2P P0) ... (BP2P Q1)` reference via `c2tight_ref_{x,y}_eq_           *)
+(*    intersect_{x,y}_R` (bridges through `b64_intersect_d{x,y}_R` and        *)
+(*    `cross_R_BP_eq_cross_BP2P`).                                            *)
 (*                                                                            *)
-(* A. Y-coordinate mirror of Scope C.2-tight.                                 *)
-(*    A parallel cascade `b64_intersect_point_y_forward_error` would mirror   *)
-(*    the x-coordinate bound.  Layers 1-2 (den/s) are shared; layers 3-4 use *)
-(*    the existing `_y_safe` / `_y_abs_le_bpow_*` lemmas symmetrically.       *)
+(*    `HasIntersect_sound` typeclass layers on top of `HasIntersect` with     *)
+(*    three fields (`intersect_ref_x`, `intersect_ref_y`,                     *)
+(*    `intersect_error_bound`) and two soundness obligations.                 *)
+(*    `HasIntersect_sound_BPoint` instance plugs in the C.2-tight headlines.  *)
 (*                                                                            *)
-(* B. K * eps restatement + reference bridge.                                 *)
-(*    Rewrite the layer-4 bound as                                            *)
+(* OPTIONAL                                                                   *)
+(*                                                                            *)
+(* A. K * eps restatement.  Rewrite the layer-4 bound as                      *)
 (*       |B2R(b64_intersect_point_x ...) - intersect_x_R (BP2P P0) ...|       *)
 (*       <= K(|den_exact|) * eps                                              *)
 (*    with `K(|d|) = bpow 82 + bpow 133 / |d|` and `eps = bpow(-prec)`.       *)
-(*    Bridge the `B2R(b64_minus ...)` reference to `intersect_x_R` via        *)
-(*    `b64_intersect_dx_R` (bit-exact under int-safe).                        *)
-(*                                                                            *)
-(* C. `HasIntersect_sound` typeclass field.                                   *)
-(*    Plug Scope C.2-tight's K * eps bound into the typeclass at line ~1750  *)
-(*    above.  Currently the class has operations + safety predicate only.    *)
+(*    Equivalent to the current bound; algebraic restatement only.            *)
 (* -------------------------------------------------------------------------- *)
