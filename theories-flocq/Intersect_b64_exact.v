@@ -1109,6 +1109,53 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Tight integer-regime variant of Layer 1.                                   *)
+(*                                                                            *)
+(* `b64_intersect_den_forward_error` above bounds the denominator rounding   *)
+(* error by `bpow 1 = 2` -- derived via output-form half-ulp on a denominator *)
+(* with `|den_R| <= bpow 54`, yielding ulp/2 <= bpow 2 / 2 = 2.                *)
+(*                                                                            *)
+(* The tight integer-regime fact: `qp0_R - qp1_R` is an INTEGER (each         *)
+(* cross_R_BP is an integer in the integer regime, per `cross_R_BP_int_witness`),*)
+(* with `|.| <= 2^(prec+1) = 2^54`.  Rounding such an integer in binary64    *)
+(* introduces an error of at most 1 (exact for |.| <= 2^prec; half-ulp = 1   *)
+(* in the strict mid-band; exact at the boundary 2^(prec+1) which is a power *)
+(* of 2).  This is 2x tighter than the bpow-1 form above.                    *)
+(*                                                                            *)
+(* Foundation: `b64_round_IZR_error_le_1` in Orient_b64_exact.v.              *)
+(*                                                                            *)
+(* The parallel chain below (`_s_carry_error_tight`,                          *)
+(* `_mult_x_carry_error_tight`, ..., `_point_x_forward_error_tight`) cites    *)
+(* this lemma instead of `b64_intersect_den_forward_error` and propagates    *)
+(* the 2x tightening through Layers 2-4 to a tighter headline K constant in  *)
+(* the final `_vs_intersect_x_R` corollary.                                   *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_intersect_den_error_le_1 :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax
+            (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1))
+          - (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1))
+    <= 1.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_den_R_round _ _ _ _ Hsafe) as [HB2R _].
+  rewrite HB2R. clear HB2R.
+  destruct Hsafe as [Hint _].
+  pose proof (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hint) as Hint0.
+  pose proof (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hint) as Hint1.
+  destruct (cross_R_BP_int_witness _ _ _ Hint0) as [n0 [Hn0_eq Hn0_bnd]].
+  destruct (cross_R_BP_int_witness _ _ _ Hint1) as [n1 [Hn1_eq Hn1_bnd]].
+  rewrite Hn0_eq, Hn1_eq, <- minus_IZR.
+  apply b64_round_IZR_error_le_1.
+  apply Z.abs_le in Hn0_bnd.
+  apply Z.abs_le in Hn1_bnd.
+  apply Z.abs_le.
+  unfold prec in *. simpl in *. lia.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Scope C.2-tight Session 2 -- denominator-carryover bound for layer 2.      *)
 (*                                                                            *)
 (* Layer 2 of the b64 intersection chain rounds the EXACT-numerator over     *)

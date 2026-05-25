@@ -183,6 +183,76 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Integer-rounding tight error bound for the [-2^(prec+1), 2^(prec+1)]      *)
+(* window.  In this window the rounded value is at most 1 unit away from    *)
+(* the input -- exact for `|n| <= 2^prec` (via b64_round_IZR_exact), exact  *)
+(* at the boundary `|n| = 2^(prec+1)` (a power of 2 is always in format),   *)
+(* and within half an ulp = 1 for the strict mid-band                        *)
+(* `2^prec < |n| < 2^(prec+1)` (input-form `error_le_half_ulp` with         *)
+(* `ulp(IZR n) <= bpow 1 = 2`).                                              *)
+(*                                                                            *)
+(* Consumer: Intersect_b64_exact.v's tight Step 1 bound (the Scope C.2-tight *)
+(* parallel chain), which uses this to get |B2R(den) - den_R| <= 1 in the    *)
+(* integer regime -- 2x tighter than the loose `bpow 1 = 2` bound used by    *)
+(* main's primary chain.                                                      *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_round_IZR_error_le_1 :
+  forall n : Z,
+    (Z.abs n <= 2 ^ (prec + 1))%Z ->
+    Rabs (b64_round (IZR n) - IZR n) <= 1.
+Proof.
+  intros n Hn.
+  destruct (Z.eq_dec (Z.abs n) (2 ^ (prec + 1))) as [Hboundary | Hne_bdry].
+  - (* Boundary: |n| = 2^(prec+1) = 2^54, so n = +/- 2^54 = +/- bpow 54, in format. *)
+    assert (Hn_pow : IZR n = bpow radix2 (prec + 1)
+                   \/ IZR n = - bpow radix2 (prec + 1)).
+    { destruct (Z_lt_le_dec n 0) as [Hneg | Hpos].
+      - right. assert (Hn_eq : (n = - (2 ^ (prec + 1)))%Z) by lia.
+        rewrite Hn_eq, opp_IZR, bpow_radix2_eq_IZR_pow by (unfold prec; lia).
+        reflexivity.
+      - left. assert (Hn_eq : (n = 2 ^ (prec + 1))%Z) by lia.
+        rewrite Hn_eq, bpow_radix2_eq_IZR_pow by (unfold prec; lia).
+        reflexivity. }
+    assert (Hfmt_pos : generic_format radix2 b64_fexp (bpow radix2 (prec + 1))).
+    { apply generic_format_bpow_b64. unfold prec, emax. lia. }
+    destruct Hn_pow as [Heq | Heq]; rewrite Heq.
+    + rewrite round_generic; [|apply valid_rnd_N|exact Hfmt_pos].
+      replace (bpow radix2 (prec + 1) - bpow radix2 (prec + 1)) with 0 by ring.
+      rewrite Rabs_R0. lra.
+    + rewrite round_generic;
+        [|apply valid_rnd_N|apply generic_format_opp; exact Hfmt_pos].
+      replace (- bpow radix2 (prec + 1) - - bpow radix2 (prec + 1)) with 0 by ring.
+      rewrite Rabs_R0. lra.
+  - (* Strict: |n| < 2^(prec+1).  Apply input-form half-ulp with ulp <= bpow 1. *)
+    assert (Hstrict : (Z.abs n < 2 ^ (prec + 1))%Z) by lia.
+    destruct (Z.eq_dec n 0) as [Hzero | Hnz].
+    + subst. simpl.
+      rewrite round_0 by apply valid_rnd_N.
+      replace (0 - 0) with 0 by lra. rewrite Rabs_R0. lra.
+    + assert (HnR : IZR n <> 0).
+      { intros HR. apply Hnz. apply eq_IZR_R0. exact HR. }
+      assert (HabsR : Rabs (IZR n) < bpow radix2 (prec + 1)).
+      { rewrite <- abs_IZR.
+        rewrite bpow_radix2_eq_IZR_pow by (unfold prec; lia).
+        apply IZR_lt. exact Hstrict. }
+      pose proof (@error_le_half_ulp radix2 b64_fexp _
+                    (fun z => negb (Z.even z)) (IZR n)) as Hhalf.
+      change (Znearest (fun z => negb (Z.even z)))
+        with (round_mode mode_b64) in Hhalf.
+      eapply Rle_trans; [exact Hhalf|].
+      rewrite ulp_neq_0 by exact HnR.
+      assert (Hmag : (mag radix2 (IZR n) <= prec + 1)%Z)
+        by (apply mag_le_bpow; assumption).
+      assert (Hcexp : (cexp radix2 b64_fexp (IZR n) <= 1)%Z).
+      { unfold cexp, b64_fexp, SpecFloat.fexp.
+        apply Z.max_lub; unfold SpecFloat.emin, emax, prec in *; lia. }
+      eapply Rle_trans.
+      * apply Rmult_le_compat_l; [lra | apply bpow_le; exact Hcexp].
+      * simpl; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* No-overflow check is automatic for integer-valued results within `2^prec`. *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1154,6 +1224,7 @@ Qed.
 
 Print Assumptions generic_format_IZR_le_bpow_prec.
 Print Assumptions b64_round_IZR_exact.
+Print Assumptions b64_round_IZR_error_le_1.
 Print Assumptions b64_minus_int_exact.
 Print Assumptions b64_mult_int_exact.
 Print Assumptions b64_plus_int_exact.
