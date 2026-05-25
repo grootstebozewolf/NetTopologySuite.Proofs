@@ -47,6 +47,7 @@
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lra.
+From Stdlib Require Import Lia.
 From Stdlib Require Import List.
 
 From Flocq Require Import IEEE754.Binary.
@@ -554,39 +555,257 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* SESSION 5 STATUS: clause (d') preservation -- structure documented,        *)
-(* ulp-control sub-obligation deferred.                                        *)
+(* eps_b64 -- the binary64 round-off relative error bound.                    *)
 (*                                                                            *)
-(* The preservation proof for, e.g., within-run from_e (other three cases    *)
-(* symmetric) decomposes as follows:                                          *)
+(* For normal-range binary64, `ulp(x) <= |x| * eps_b64` (via                  *)
+(* `ulp_FLT_le_eps_b64` below).  Numerically `eps_b64 = 2^-52`.               *)
+(* -------------------------------------------------------------------------- *)
+
+Definition eps_b64 : R := / IZR (Z.pow_pos 2 52).
+
+Lemma eps_b64_pos : 0 < eps_b64.
+Proof. unfold eps_b64. apply Rinv_0_lt_compat. apply IZR_lt. lia. Qed.
+
+Lemma eps_b64_le_quarter : eps_b64 <= / 4.
+Proof.
+  unfold eps_b64. apply Rinv_le_contravar; [lra|].
+  assert (4 <= IZR (Z.pow_pos 2 52)) by (apply IZR_le; lia).
+  lra.
+Qed.
+
+Lemma eps_b64_eq_bpow : eps_b64 = bpow radix2 (1 - prec).
+Proof. unfold eps_b64. reflexivity. Qed.
+
+(* Tight ulp bound for normal-range binary64: ulp(x) <= |x| * eps_b64. *)
+Lemma ulp_FLT_le_eps_b64 :
+  forall x : R,
+    bpow radix2 (b64_emin + prec - 1) <= Rabs x ->
+    b64_ulp x <= Rabs x * eps_b64.
+Proof.
+  intros x Hnorm.
+  rewrite eps_b64_eq_bpow.
+  apply (ulp_FLT_le radix2 b64_emin prec).
+  exact Hnorm.
+Qed.
+
+(* The clause-(d') preservation workhorse.  Combines b64_plus_abs_bound      *)
+(* with the normal-range ulp bound on the result, giving a clean form that  *)
+(* feeds nra/lra without nonlinear-witness hunting.                          *)
+Lemma b64_plus_abs_bound_with_normal :
+  forall x y : binary64,
+    b64_safe Rplus x y ->
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax (b64_plus x y)) ->
+    Rabs (Binary.B2R prec emax (b64_plus x y))
+      * (1 - eps_b64 / 2)
+      <= Rabs (Binary.B2R prec emax x)
+         + Rabs (Binary.B2R prec emax y).
+Proof.
+  intros x y Hsafe Hpn.
+  pose proof (b64_plus_abs_bound x y Hsafe) as Hbnd.
+  pose proof (ulp_FLT_le_eps_b64 _ Hpn) as Hulp.
+  (* Hbnd: |b64_plus x y| <= |x| + |y| + ulp(b64_plus x y) / 2
+     Hulp: ulp(b64_plus x y) <= |b64_plus x y| * eps_b64
+     So:   ulp(b64_plus x y) / 2 <= |b64_plus x y| * eps_b64 / 2
+     Hbnd: |b64_plus x y| <= |x| + |y| + |b64_plus x y| * eps_b64 / 2
+     =>    |b64_plus x y| * (1 - eps_b64/2) <= |x| + |y|. *)
+  nra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 2 -- clause (d') preservation lemmas.                          *)
 (*                                                                            *)
-(*   Given:                                                                   *)
-(*     - Hd  : |cs_carry| <= 2|cs_e_max| + 2|cs_f_max|       (clause d')      *)
-(*     - Hgap: |cs_e_max| <= ulp(B2R x) / 2                  (within-source)  *)
-(*     - Hsafe: b64_safe Rplus x (cs_carry state)                              *)
+(* Two cases (not four), parameterised by the new step's provenance.          *)
+(* The within-run vs cross-prov distinction collapses to the SAME proof       *)
+(* because the within-source hypothesis (|cs_X_max| <= ulp(x)/2) holds        *)
+(* whenever the new x is from source X, regardless of what was last           *)
+(* absorbed: by sort_by_abs_sorted, OLD cs_X_max and new x are consecutive   *)
+(* in X (any intervening sorted-merge elements come from the OTHER source).  *)
 (*                                                                            *)
-(*   Show:                                                                    *)
-(*     |b64_plus x (cs_carry state)| <= 2|x| + 2|cs_f_max|                    *)
+(* This is a nicer structural property than the prompt anticipated.          *)
+(* -------------------------------------------------------------------------- *)
+
+(* Absorb an e-element: clause (d') preservation when new prov = from_e.    *)
+(* Uses |cs_e_max| <= ulp(x)/2 (within-e nonoverlap) and |cs_f_max| <= |x|   *)
+(* (sorted-ascending).                                                       *)
+Lemma run_bound_absorb_e :
+  forall (state : cascade_state) (x : binary64),
+    cascade_invariant_run_bound state ->
+    (* Within-source structure on cs_e_max. *)
+    Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+      b64_ulp (Binary.B2R prec emax x) / 2 ->
+    b64_safe Rplus x (cs_carry state) ->
+    (* Normal range on x. *)
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax x) ->
+    (* Normal range on b64_plus result. *)
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax
+              (b64_plus x (cs_carry state))) ->
+    (* Sorted: |cs_f_max| <= |x|. *)
+    Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+      Rabs (Binary.B2R prec emax x) ->
+    cascade_invariant_run_bound
+      (cascade_step_state state x from_e).
+Proof.
+  intros state x Hd Hgap Hsafe Hxn Hpn Hfsort.
+  unfold cascade_invariant_run_bound in *.
+  unfold cascade_step_state.
+  cbn [cs_carry cs_e_max cs_f_max].
+  pose proof (b64_plus_abs_bound_with_normal x (cs_carry state) Hsafe Hpn) as Hbnd.
+  pose proof (ulp_FLT_le_eps_b64 _ Hxn) as Hux.
+  pose proof eps_b64_pos as Heps_pos.
+  pose proof eps_b64_le_quarter as Heps_small.
+  pose proof (Rabs_pos (Binary.B2R prec emax (cs_e_max state))) as HE_pos.
+  pose proof (Rabs_pos (Binary.B2R prec emax (cs_f_max state))) as HF_pos.
+  pose proof (Rabs_pos (Binary.B2R prec emax (cs_carry state))) as HQ_pos.
+  pose proof (Rabs_pos (Binary.B2R prec emax x)) as HX_pos.
+  pose proof (Rabs_pos
+                (Binary.B2R prec emax (b64_plus x (cs_carry state)))) as HA_pos.
+  pose proof (ulp_ge_0 radix2 b64_fexp (Binary.B2R prec emax x)) as HUX_pos.
+  (* Stage the chain.  Let:                                                   *)
+  (*   E := |cs_e_max|, F := |cs_f_max|, Q := |cs_carry|, X := |x|            *)
+  (*   A := |b64_plus x cs_carry|, UX := ulp x, eps := eps_b64.               *)
+  (* Hd:    Q <= 2*E + 2*F.                                                   *)
+  (* Hgap:  E <= UX / 2.                                                      *)
+  (* Hbnd:  A * (1 - eps/2) <= X + Q.                                         *)
+  (* Hux:   UX <= X * eps.                                                    *)
+  (* Hfsort: F <= X.                                                          *)
+  set (E := Rabs (Binary.B2R prec emax (cs_e_max state))) in *.
+  set (F := Rabs (Binary.B2R prec emax (cs_f_max state))) in *.
+  set (Q := Rabs (Binary.B2R prec emax (cs_carry state))) in *.
+  set (X := Rabs (Binary.B2R prec emax x)) in *.
+  set (A := Rabs (Binary.B2R prec emax
+                    (b64_plus x (cs_carry state)))) in *.
+  set (UX := b64_ulp (Binary.B2R prec emax x)) in *.
+  set (eps := eps_b64) in *.
+  (* Step 1: Q <= UX + 2*F. *)
+  assert (HQ_UX : Q <= UX + 2 * F) by lra.
+  (* Step 2: Q <= X*eps + 2*F. *)
+  assert (HQ_X : Q <= X * eps + 2 * F) by nra.
+  (* Step 3: A * (1 - eps/2) <= X + X*eps + 2*F. *)
+  assert (HA_1 : A * (1 - eps / 2) <= X + X * eps + 2 * F) by lra.
+  (* Step 4: (2*X + 2*F) * (1 - eps/2) >= X + X*eps + 2*F.                    *)
+  (* Equivalent: 2*X - X*eps + 2*F - F*eps >= X + X*eps + 2*F                 *)
+  (* i.e., X*(1 - 2*eps) >= F*eps, which holds since F <= X and 3*eps <= 1.   *)
+  assert (Hgoal_aux : X * (1 - 2 * eps) >= F * eps) by nra.
+  assert (Htarget_expand :
+    (2 * X + 2 * F) * (1 - eps / 2) >= X + X * eps + 2 * F) by nra.
+  (* Step 5: Combine HA_1 + Htarget_expand to get A <= 2*X + 2*F.             *)
+  assert (Hpos_factor : 0 < 1 - eps / 2) by lra.
+  assert (Hmul_compare : A * (1 - eps / 2) <= (2 * X + 2 * F) * (1 - eps / 2))
+    by lra.
+  (* Cancel the positive factor (1 - eps/2). *)
+  apply (Rmult_le_reg_r (1 - eps / 2) A (2 * X + 2 * F)
+            Hpos_factor Hmul_compare).
+Qed.
+
+(* Absorb an f-element: symmetric to run_bound_absorb_e.  Uses                *)
+(* |cs_f_max| <= ulp(x)/2 (within-f nonoverlap) and |cs_e_max| <= |x|         *)
+(* (sorted-ascending).                                                       *)
+Lemma run_bound_absorb_f :
+  forall (state : cascade_state) (x : binary64),
+    cascade_invariant_run_bound state ->
+    Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+      b64_ulp (Binary.B2R prec emax x) / 2 ->
+    b64_safe Rplus x (cs_carry state) ->
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax x) ->
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax
+              (b64_plus x (cs_carry state))) ->
+    Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+      Rabs (Binary.B2R prec emax x) ->
+    cascade_invariant_run_bound
+      (cascade_step_state state x from_f).
+Proof.
+  intros state x Hd Hgap Hsafe Hxn Hpn Hesort.
+  unfold cascade_invariant_run_bound in *.
+  unfold cascade_step_state.
+  cbn [cs_carry cs_e_max cs_f_max].
+  pose proof (b64_plus_abs_bound_with_normal x (cs_carry state) Hsafe Hpn) as Hbnd.
+  pose proof (ulp_FLT_le_eps_b64 _ Hxn) as Hux.
+  pose proof eps_b64_pos as Heps_pos.
+  pose proof eps_b64_le_quarter as Heps_small.
+  pose proof (Rabs_pos (Binary.B2R prec emax (cs_e_max state))) as HE_pos.
+  pose proof (Rabs_pos (Binary.B2R prec emax (cs_f_max state))) as HF_pos.
+  pose proof (Rabs_pos (Binary.B2R prec emax (cs_carry state))) as HQ_pos.
+  pose proof (Rabs_pos (Binary.B2R prec emax x)) as HX_pos.
+  pose proof (Rabs_pos
+                (Binary.B2R prec emax (b64_plus x (cs_carry state)))) as HA_pos.
+  pose proof (ulp_ge_0 radix2 b64_fexp (Binary.B2R prec emax x)) as HUX_pos.
+  (* Symmetric to run_bound_absorb_e: |cs_f_max| <= ulp(x)/2 plays the role  *)
+  (* of |cs_e_max| <= ulp(x)/2, with E and F swapped in the chain.           *)
+  set (E := Rabs (Binary.B2R prec emax (cs_e_max state))) in *.
+  set (F := Rabs (Binary.B2R prec emax (cs_f_max state))) in *.
+  set (Q := Rabs (Binary.B2R prec emax (cs_carry state))) in *.
+  set (X := Rabs (Binary.B2R prec emax x)) in *.
+  set (A := Rabs (Binary.B2R prec emax
+                    (b64_plus x (cs_carry state)))) in *.
+  set (UX := b64_ulp (Binary.B2R prec emax x)) in *.
+  set (eps := eps_b64) in *.
+  assert (HQ_UX : Q <= 2 * E + UX) by lra.
+  assert (HQ_X : Q <= 2 * E + X * eps) by nra.
+  assert (HA_1 : A * (1 - eps / 2) <= X + 2 * E + X * eps) by lra.
+  assert (Hgoal_aux : X * (1 - 2 * eps) >= E * eps) by nra.
+  assert (Htarget_expand :
+    (2 * E + 2 * X) * (1 - eps / 2) >= X + 2 * E + X * eps) by nra.
+  assert (Hpos_factor : 0 < 1 - eps / 2) by lra.
+  assert (Hmul_compare : A * (1 - eps / 2) <= (2 * E + 2 * X) * (1 - eps / 2))
+    by lra.
+  apply (Rmult_le_reg_r (1 - eps / 2) A (2 * E + 2 * X)
+            Hpos_factor Hmul_compare).
+Qed.
+
+(* Composition: clause (d') preservation under any cascade step.              *)
 (*                                                                            *)
-(*   Chain:                                                                   *)
-(*     |b64_plus x q| <= |x| + |q| + ulp(b64_plus x q) / 2          [aux]    *)
-(*                    <= |x| + ulp(x) + 2|cs_f_max| + ulp(b64_plus)/2  [d+gap]*)
+(* Given a state satisfying clause (d') and a step (x, prov) with the         *)
+(* appropriate within-source hypothesis on x's source max plus the sorted    *)
+(* hypothesis on the other source's max, plus the normal-range and safety    *)
+(* hypotheses, clause (d') is preserved.                                      *)
+Lemma run_bound_step_preserves :
+  forall (state : cascade_state) (x : binary64) (prov : provenance),
+    cascade_invariant_run_bound state ->
+    b64_safe Rplus x (cs_carry state) ->
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax x) ->
+    bpow radix2 (b64_emin + prec - 1) <=
+      Rabs (Binary.B2R prec emax
+              (b64_plus x (cs_carry state))) ->
+    (* The within-source gap is on the active source's max. *)
+    match prov with
+    | from_e =>
+        Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+          b64_ulp (Binary.B2R prec emax x) / 2
+        /\ Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+             Rabs (Binary.B2R prec emax x)
+    | from_f =>
+        Rabs (Binary.B2R prec emax (cs_f_max state)) <=
+          b64_ulp (Binary.B2R prec emax x) / 2
+        /\ Rabs (Binary.B2R prec emax (cs_e_max state)) <=
+             Rabs (Binary.B2R prec emax x)
+    end ->
+    cascade_invariant_run_bound (cascade_step_state state x prov).
+Proof.
+  intros state x prov Hd Hsafe Hxn Hpn Hprov.
+  destruct prov as [|]; destruct Hprov as [Hgap Hsort].
+  - apply run_bound_absorb_e; assumption.
+  - apply run_bound_absorb_f; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* SESSION 6 OUTCOME: clause (d') preservation lemmas Qed-closed above.       *)
 (*                                                                            *)
-(*   Closing the bound to `2|x| + 2|cs_f_max|` requires:                     *)
-(*     ulp(x) + ulp(b64_plus x q) / 2 <= |x|.                                 *)
+(* Three Qed-closed lemmas:                                                   *)
+(*   - run_bound_absorb_e   (covers continue-run from_e + cross-prov to e)    *)
+(*   - run_bound_absorb_f   (covers continue-run from_f + cross-prov to f)    *)
+(*   - run_bound_step_preserves (compositional case split on prov)            *)
 (*                                                                            *)
-(*   With the loose `b64_ulp_le_abs` (ulp(x) <= |x|), the first term already *)
-(*   saturates the budget.  Closing needs the TIGHT normal-range bound      *)
-(*   `ulp(x) <= |x| * 2^-52`, plus a similar bound on `ulp(b64_plus x q)`.  *)
-(*                                                                            *)
-(*   The tight bound holds for binary64 inputs outside the subnormal range  *)
-(*   (`|x| >= bpow b64_emin * 2^prec`), which is the standard precondition  *)
-(*   for the Stage D corpus.  Formalising it requires a normal-range        *)
-(*   precondition or the Flocq `ulp_FLT_small` family.                      *)
-(*                                                                            *)
-(* The Session 5 outcome documents this as the structural sub-obligation    *)
-(* for Session 6 to discharge.  See                                          *)
-(* docs/slice-a-piece-5b-route1-session-5-outcome.md.                        *)
+(* The four-case decomposition collapsed to two by observing that the         *)
+(* within-source nonoverlap hypothesis on cs_X_max is the SAME in both       *)
+(* "continue run" and "cross-prov" cases (since sort_by_abs places           *)
+(* same-source elements consecutively in their source even when interleaved  *)
+(* with the other source in the merge).                                       *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
@@ -714,3 +933,9 @@ Print Assumptions length_tagged_input.
 Print Assumptions cascade_invariant_empty.
 Print Assumptions cascade_h_chain_statement.
 Print Assumptions test_invariant_implies_h_prev_bound.
+Print Assumptions b64_plus_abs_bound.
+Print Assumptions ulp_FLT_le_eps_b64.
+Print Assumptions b64_plus_abs_bound_with_normal.
+Print Assumptions run_bound_absorb_e.
+Print Assumptions run_bound_absorb_f.
+Print Assumptions run_bound_step_preserves.
