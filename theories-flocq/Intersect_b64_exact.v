@@ -1030,6 +1030,79 @@ Proof.
   - eexists. reflexivity.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Scope C.2-tight Session 1 -- forward-error bound for layer 1 (denominator).*)
+(*                                                                            *)
+(* The b64 intersection chain has four nested rounds (from the                *)
+(* `b64_intersect_point_x_round_chain` identity):                             *)
+(*                                                                            *)
+(*   layer 1 -- den   = b64_round (qp0_R - qp1_R)                             *)
+(*   layer 2 -- s     = b64_round (qp0_R / den)                               *)
+(*   layer 3 -- s*dx  = b64_round (s * (B2R(bx P1) - B2R(bx P0)))             *)
+(*   layer 4 -- final = b64_round (B2R(bx P0) + s*dx)                         *)
+(*                                                                            *)
+(* The Scope C.2-tight goal is the propagated forward-error theorem           *)
+(*    |B2R(b64_intersect_point_x ...) - intersect_x_R (BP2P P0) ...|         *)
+(*     <= K * eps                                                              *)
+(* where `K` is explicit in the input magnitude and the denominator           *)
+(* separation.                                                                *)
+(*                                                                            *)
+(* This session lands LAYER 1: the absolute forward-error bound on the        *)
+(* denominator's round.  `qp0_R - qp1_R` is an integer of magnitude <= 2^54,  *)
+(* so the round error is bounded by ulp/2 = 2^54 * 2^-52 / 2 = bpow 1.        *)
+(* The bound is sharp at the bottom bit: one half-ulp of a maximum-magnitude  *)
+(* denominator equals 2 = bpow 1.                                             *)
+(* -------------------------------------------------------------------------- *)
+
+(* Auxiliary: for x with 1 <= |x| <= 2^54, ulp x <= 2^2 = 4.  Comes from      *)
+(* `ulp_FLT_le`'s relative bound `ulp <= |x| * 2^-52` combined with the       *)
+(* magnitude cap.                                                             *)
+Lemma b64_ulp_le_at_magnitude_54 :
+  forall x : R,
+    1 <= Rabs x ->
+    Rabs x <= bpow radix2 54 ->
+    b64_ulp x <= bpow radix2 2.
+Proof.
+  intros x Hge Hle.
+  pose proof (ulp_FLT_le radix2 b64_emin prec x) as Hulp.
+  assert (Hpre : bpow radix2 (b64_emin + prec - 1) <= Rabs x).
+  { apply Rle_trans with 1; [|exact Hge].
+    change 1 with (bpow radix2 0).
+    apply bpow_le. unfold b64_emin, emax, prec. lia. }
+  specialize (Hulp Hpre).
+  apply Rle_trans with (Rabs x * bpow radix2 (1 - prec)); [exact Hulp|].
+  replace (bpow radix2 2) with (bpow radix2 54 * bpow radix2 (1 - prec)).
+  - apply Rmult_le_compat_r; [apply bpow_ge_0|exact Hle].
+  - rewrite <- bpow_plus. apply f_equal. unfold prec. lia.
+Qed.
+
+(* Layer 1 forward-error bound: B2R of the denominator deviates from the     *)
+(* exact R-side integer difference by at most bpow 1 = 2.                    *)
+Theorem b64_intersect_den_forward_error :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    Rabs (Binary.B2R prec emax
+            (b64_minus (b64_orient2d Q0 Q1 P0) (b64_orient2d Q0 Q1 P1))
+          - (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1))
+    <= bpow radix2 1.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe.
+  destruct (b64_intersect_den_R_round _ _ _ _ Hsafe) as [HB2R _].
+  rewrite HB2R.
+  pose proof (b64_error_le_half_ulp_round
+                (cross_R_BP Q0 Q1 P0 - cross_R_BP Q0 Q1 P1)) as Herr.
+  eapply Rle_trans; [exact Herr|].
+  pose proof (b64_intersect_den_B2R_abs_le_bpow_54 _ _ _ _ Hsafe) as Bden.
+  rewrite HB2R in Bden.
+  pose proof (b64_intersect_den_B2R_abs_ge_1 _ _ _ _ Hsafe) as Bden_ge.
+  rewrite HB2R in Bden_ge.
+  pose proof (b64_ulp_le_at_magnitude_54 _ Bden_ge Bden) as Hulp_le.
+  apply Rle_trans
+    with (bpow radix2 2 / 2); [|simpl; lra].
+  unfold Rdiv.
+  apply Rmult_le_compat_r; [lra|exact Hulp_le].
+Qed.
+
 (*                                                                            *)
 (* The `BPoint` instance routes through the total b64 projections defined   *)
 (* above.                                                                    *)
@@ -1165,6 +1238,8 @@ Print Assumptions b64_intersect_den_safe.
 Print Assumptions b64_intersect_den_R_round.
 Print Assumptions b64_intersect_den_B2R_nonzero.
 Print Assumptions b64_intersect_point_returns_some_when_point.
+Print Assumptions b64_ulp_le_at_magnitude_54.
+Print Assumptions b64_intersect_den_forward_error.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
