@@ -272,15 +272,30 @@ Qed.
 (* cs_output : the accumulated h's (smallest-first, as produced by the     *)
 (*             cascade -- reversed at the end to put largest-first for     *)
 (*             nonoverlap_strict).                                          *)
-(* cs_run_max: the largest (by magnitude) element absorbed from cs_prov's    *)
-(* source list since the last provenance flip.  Added in Route 1 Session 4   *)
-(* to carry the run-bound used by clause (d).                                *)
+(* Per-source maxes -- Route 1 Session 5 refinement of the Session 4         *)
+(* single-cs_run_max formulation.                                             *)
+(*                                                                            *)
+(* cs_e_max : largest-by-magnitude element from `e` absorbed so far.          *)
+(* cs_f_max : largest-by-magnitude element from `f` absorbed so far.          *)
+(*                                                                            *)
+(* Either field is `b64_zero` (sign-agnostic +0) when no element from that   *)
+(* source has yet been absorbed.  Per-source nonoverlap_shewchuk on e and f *)
+(* gives the within-source half-ulp gap that the preservation proof uses.    *)
 Record cascade_state : Type := mk_cascade_state {
   cs_carry   : binary64;
   cs_prov    : provenance;
   cs_output  : list binary64;
-  cs_run_max : binary64
+  cs_e_max   : binary64;
+  cs_f_max   : binary64
 }.
+
+(* Canonical zero element for cascade-state initialisation.  B2R = 0, sign *)
+(* +0.  Used when one source has had no absorptions yet.                    *)
+Definition b64_zero : binary64 :=
+  Binary.B754_zero prec emax false.
+
+Lemma B2R_b64_zero : Binary.B2R prec emax b64_zero = 0.
+Proof. reflexivity. Qed.
 
 (* The maximum magnitude of a list of binary64s.  Zero on empty. *)
 Fixpoint max_abs_b64 (xs : list binary64) : R :=
@@ -338,35 +353,23 @@ Definition cascade_invariant_handover
                 (succ radix2 (SpecFloat.fexp prec emax) xR) / 2) )
   end.
 
-(* Clause (d) -- Route 1 Session 4 run-bound conjunct.                       *)
+(* Clause (d) -- Route 1 Session 5 per-source run-bound conjunct.            *)
 (*                                                                            *)
-(* The carry's magnitude is bounded by twice the largest element absorbed    *)
-(* from the current same-provenance run.  Per Shewchuk §4, this is the       *)
-(* invariant that closes the 2^53 gap identified in Route 1 Session 3        *)
-(* (`test_invariant_implies_h_prev_bound`).                                   *)
+(* The carry's magnitude is bounded by the sum (with constant 2) of the      *)
+(* per-source maxes.  Each source individually satisfies                     *)
+(* nonoverlap_shewchuk, so each source's accumulated contribution to the    *)
+(* carry is bounded by 2 * (largest absorbed in that source) via the         *)
+(* half-ulp geometric sum.  The two contributions add, giving the bound     *)
+(* below.                                                                     *)
 (*                                                                            *)
-(* SESSION 4 OUTCOME -- per-source refinement required.  This                *)
-(* single-cs_run_max formulation is preserved in the continue-run case      *)
-(* (where within-source nonoverlap gives a 2^53 magnitude gap that          *)
-(* dominates the triangle bound), but FAILS preservation in the cross-     *)
-(* prov case (where the OLD cs_run_max is from the other source, only     *)
-(* bounded by sorted-ascending |OLD cs_run_max| <= |x|).  Cross-prov goal *)
-(* `|qnew| <= 2|x|` reduces by the triangle bound to `3|x| <= 2|x|`,       *)
-(* false; and no fixed constant C closes the bound (would require           *)
-(* `1 + C <= C`).                                                            *)
-(*                                                                            *)
-(* The refined invariant tracks per-source maxes:                            *)
-(*                                                                            *)
-(*   |cs_carry| <= 2|cs_e_max| + 2|cs_f_max|                                *)
-(*                                                                            *)
-(* with `cs_e_max` and `cs_f_max` as separate cascade_state fields.  This   *)
-(* preserves under both continue-run and cross-prov via per-source           *)
-(* nonoverlap_shewchuk.  See                                                  *)
-(* docs/slice-a-piece-5b-route1-session-4-outcome.md for the full            *)
-(* derivation and Session 5 plan.                                            *)
+(* This is the Session 4 outcome's refined clause (d').  Session 4 verified *)
+(* on paper that this preserves under both continue-run and cross-prov       *)
+(* cascade steps via per-source nonoverlap_shewchuk.  Session 5 formalises  *)
+(* the preservation in Coq.                                                  *)
 Definition cascade_invariant_run_bound (state : cascade_state) : Prop :=
   Rabs (Binary.B2R prec emax (cs_carry state))
-    <= 2 * Rabs (Binary.B2R prec emax (cs_run_max state)).
+    <= 2 * Rabs (Binary.B2R prec emax (cs_e_max state))
+       + 2 * Rabs (Binary.B2R prec emax (cs_f_max state)).
 
 Definition cascade_invariant
   (state : cascade_state)
@@ -379,44 +382,77 @@ Definition cascade_invariant
   cascade_invariant_run_bound state.
 
 (* -------------------------------------------------------------------------- *)
+(* Initial cascade state -- helper for the bootstrap.                         *)
+(*                                                                            *)
+(* The first absorbed element x_0 has provenance p_0.  The "active" max     *)
+(* (matching p_0) is set to x_0; the other source's max is b64_zero (no    *)
+(* absorption yet).  Clause (d) then becomes:                                *)
+(*                                                                            *)
+(*   |x_0| <= 2|x_0| + 2*|b64_zero| = 2|x_0|.                                *)
+(*                                                                            *)
+(* which holds trivially.                                                     *)
+(* -------------------------------------------------------------------------- *)
+
+Definition initial_cascade_state
+  (q : binary64) (p : provenance) : cascade_state :=
+  match p with
+  | from_e => mk_cascade_state q p nil q       b64_zero
+  | from_f => mk_cascade_state q p nil b64_zero q
+  end.
+
+(* -------------------------------------------------------------------------- *)
 (* Sanity check: empty-state invariant under refined clauses (c) and (d).     *)
 (*                                                                            *)
-(* When the cascade hasn't processed any inputs yet, the state is             *)
-(* mk_cascade_state q_init p_init nil q_init -- the initial carry is the    *)
-(* first absorbed element, and cs_run_max is set to the same value (the     *)
-(* first element IS the current run's max).  Clauses (a), (b), (d) hold     *)
-(* trivially:                                                                 *)
-(*   - (a) output is just [q_init], trivially nonoverlap_shewchuk.            *)
+(* Clauses (a), (b), (d) hold trivially:                                      *)
+(*   - (a) output is just [q], trivially nonoverlap_shewchuk.                 *)
 (*   - (b) processed = nil, so the disjunction's right branch fires.          *)
-(*   - (d) |cs_carry| <= 2|cs_run_max| with cs_carry = cs_run_max becomes   *)
-(*     |q| <= 2|q|, trivially true (Rabs is non-negative, multiplied by 2).  *)
+(*   - (d) per-source bound: |q| <= 2|q| + 0 (one source's max is q, the   *)
+(*     other is b64_zero with |B2R| = 0).                                    *)
 (* Clause (c) is taken as a hypothesis; the bootstrap discharges it from     *)
 (* input preconditions.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma cascade_invariant_empty :
   forall q p remaining,
-    cascade_invariant_handover (mk_cascade_state q p nil q) remaining ->
-    cascade_invariant (mk_cascade_state q p nil q) nil remaining.
+    cascade_invariant_handover (initial_cascade_state q p) remaining ->
+    cascade_invariant (initial_cascade_state q p) nil remaining.
 Proof.
   intros q p remaining Hho.
-  unfold cascade_invariant.
-  cbn [cs_carry cs_prov cs_output cs_run_max rev].
-  split; [|split; [|split]].
-  - (* (a) output well-formed *)
+  unfold cascade_invariant, initial_cascade_state.
+  destruct p; cbn [cs_carry cs_prov cs_output cs_e_max cs_f_max rev];
+    (split; [|split; [|split]]).
+  - (* (a) output well-formed -- from_e branch. *)
     unfold cascade_invariant_output.
     cbn [cs_carry cs_output rev].
     unfold nonoverlap_shewchuk.
     cbn [compress].
     destruct (Rcompare (Binary.B2R prec emax q) 0);
       cbn [nonoverlap_strict]; exact I.
-  - (* (b) magnitude *)
+  - (* (b) magnitude -- from_e *)
     right. reflexivity.
-  - (* (c) handover -- supplied as hypothesis. *)
+  - (* (c) handover -- from_e *)
     exact Hho.
-  - (* (d) run-bound: cs_carry = cs_run_max = q, so |q| <= 2|q|. *)
+  - (* (d) run-bound -- from_e: |q| <= 2|q| + 2*|b64_zero| = 2|q|. *)
     unfold cascade_invariant_run_bound.
-    cbn [cs_carry cs_run_max].
+    cbn [cs_carry cs_e_max cs_f_max].
+    rewrite B2R_b64_zero, Rabs_R0.
+    pose proof (Rabs_pos (Binary.B2R prec emax q)) as Hpos.
+    lra.
+  - (* (a) -- from_f branch. *)
+    unfold cascade_invariant_output.
+    cbn [cs_carry cs_output rev].
+    unfold nonoverlap_shewchuk.
+    cbn [compress].
+    destruct (Rcompare (Binary.B2R prec emax q) 0);
+      cbn [nonoverlap_strict]; exact I.
+  - (* (b) -- from_f *)
+    right. reflexivity.
+  - (* (c) -- from_f *)
+    exact Hho.
+  - (* (d) -- from_f: |q| <= 2*|b64_zero| + 2|q| = 2|q|. *)
+    unfold cascade_invariant_run_bound.
+    cbn [cs_carry cs_e_max cs_f_max].
+    rewrite B2R_b64_zero, Rabs_R0.
     pose proof (Rabs_pos (Binary.B2R prec emax q)) as Hpos.
     lra.
 Qed.
@@ -445,6 +481,31 @@ Qed.
 (* existing dominates_* family alone.                                         *)
 (* -------------------------------------------------------------------------- *)
 
+(* The cascade step's effect on cs_e_max / cs_f_max.                          *)
+(*                                                                            *)
+(* After absorbing (x, prov), the active source's max updates to x (sorted   *)
+(* ascending guarantees x is the new largest in its source absorbed so far);  *)
+(* the other source's max stays unchanged.                                    *)
+Definition cascade_step_state
+  (state : cascade_state) (x : binary64) (prov : provenance)
+  : cascade_state :=
+  match prov with
+  | from_e =>
+      mk_cascade_state
+        (fst (b64_TwoSum x (cs_carry state)))
+        prov
+        (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))])
+        x
+        (cs_f_max state)
+  | from_f =>
+      mk_cascade_state
+        (fst (b64_TwoSum x (cs_carry state)))
+        prov
+        (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))])
+        (cs_e_max state)
+        x
+  end.
+
 Lemma cascade_step_preserves_invariant :
   forall (state : cascade_state)
          (processed : list binary64)
@@ -452,52 +513,81 @@ Lemma cascade_step_preserves_invariant :
          (rest : list tagged_b64),
     cascade_invariant state processed ((x, prov) :: rest) ->
     cascade_invariant
-      (mk_cascade_state
-         (fst (b64_TwoSum x (cs_carry state)))
-         prov
-         (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))])
-         x)
+      (cascade_step_state state x prov)
       (processed ++ [x])
       rest.
 Proof.
-  intros state processed x prov rest Hinv.
-  unfold cascade_invariant in Hinv.
-  destruct Hinv as [Ha [Hb [Hc _Hd]]].
-  unfold cascade_invariant_handover in Hc.
-  cbn [cs_carry] in Hc.
-  destruct Hc as [Hsafe Hcases].
-  unfold cascade_invariant.
-  cbn [cs_carry cs_prov cs_output cs_run_max].
-  split; [|split; [|split]].
-  - (* (a) Output well-formed.                                                 *)
-    (*                                                                          *)
-    (* GOAL: nonoverlap_shewchuk                                                *)
-    (*         (fst (b64_TwoSum x (cs_carry state))                             *)
-    (*          :: rev (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]))*)
-    (*       = nonoverlap_shewchuk                                              *)
-    (*         (qnew :: h :: rev (cs_output state))                             *)
-    (*                                                                          *)
-    (* by rev_app_distr and rev (cons h nil) = [h].                             *)
-    (*                                                                          *)
-    (* The hypothesis Ha gives us:                                              *)
-    (*   nonoverlap_shewchuk (cs_carry state :: rev (cs_output state))         *)
-    (* i.e., (q_old :: rev hs_old).                                             *)
-    (*                                                                          *)
-    (* We need to establish a chain:                                            *)
-    (*   strict_succ_b64 qnew h        (after compress)                         *)
-    (*   strict_succ_b64 h h_prev      (where h_prev is head of rev hs_old)    *)
-    (*   ... rest of chain from Ha                                              *)
-    (*                                                                          *)
-    (* The second link, `strict_succ_b64 h h_prev`, is the H-CHAIN claim       *)
-    (* that the Route 1 design artifact and Route 2 collapse artifact          *)
-    (* identified as Shewchuk Theorem 13's load-bearing content.  It is        *)
-    (* NOT in the refined clause (c); clause (c) is about q's relationship    *)
-    (* to the NEXT input x, not about h_prev's relationship to the new h.     *)
-    (*                                                                          *)
-    (* COLLAPSE: this subgoal cannot be discharged from Ha + Hb + Hcases       *)
-    (* + the input preconditions alone.  See                                    *)
-    (* docs/slice-a-piece-5b-route1-session-2-collapse.md.                      *)
+  (* Composition of clause (a-d) preservation lemmas (Deliverable 2 below). *)
+  (* Aborted at this top level until all four sub-preservation lemmas are  *)
+  (* Qed-closed; the clause (d) preservation is the Session 5 deliverable. *)
+  (* Reason: clause (a)'s h-chain link still needs cascade_h_chain (the    *)
+  (* lemma whose statement lives in cascade_h_chain_statement below).      *)
 Abort.
+
+(* -------------------------------------------------------------------------- *)
+(* AUXILIARY -- absolute-error bound on b64_plus.                             *)
+(*                                                                            *)
+(* The cornerstone of the clause (d') preservation: after b64_plus,           *)
+(* the result is within a half-ulp of the exact sum, so its magnitude is     *)
+(* bounded by the triangle-sum plus a half-ulp slack.                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_plus_abs_bound :
+  forall x y : binary64,
+    b64_safe Rplus x y ->
+    Rabs (Binary.B2R prec emax (b64_plus x y)) <=
+      Rabs (Binary.B2R prec emax x)
+      + Rabs (Binary.B2R prec emax y)
+      + b64_ulp (Binary.B2R prec emax (b64_plus x y)) / 2.
+Proof.
+  intros x y Hsafe.
+  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
+  pose proof (b64_error_le_half_ulp_round
+                (Binary.B2R prec emax x + Binary.B2R prec emax y)) as Herr.
+  rewrite <- HB2R in Herr.
+  pose proof (Rabs_triang_inv
+                (Binary.B2R prec emax (b64_plus x y))
+                (Binary.B2R prec emax x + Binary.B2R prec emax y)) as Htri.
+  pose proof (Rabs_triang (Binary.B2R prec emax x) (Binary.B2R prec emax y))
+    as Hsum.
+  lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* SESSION 5 STATUS: clause (d') preservation -- structure documented,        *)
+(* ulp-control sub-obligation deferred.                                        *)
+(*                                                                            *)
+(* The preservation proof for, e.g., within-run from_e (other three cases    *)
+(* symmetric) decomposes as follows:                                          *)
+(*                                                                            *)
+(*   Given:                                                                   *)
+(*     - Hd  : |cs_carry| <= 2|cs_e_max| + 2|cs_f_max|       (clause d')      *)
+(*     - Hgap: |cs_e_max| <= ulp(B2R x) / 2                  (within-source)  *)
+(*     - Hsafe: b64_safe Rplus x (cs_carry state)                              *)
+(*                                                                            *)
+(*   Show:                                                                    *)
+(*     |b64_plus x (cs_carry state)| <= 2|x| + 2|cs_f_max|                    *)
+(*                                                                            *)
+(*   Chain:                                                                   *)
+(*     |b64_plus x q| <= |x| + |q| + ulp(b64_plus x q) / 2          [aux]    *)
+(*                    <= |x| + ulp(x) + 2|cs_f_max| + ulp(b64_plus)/2  [d+gap]*)
+(*                                                                            *)
+(*   Closing the bound to `2|x| + 2|cs_f_max|` requires:                     *)
+(*     ulp(x) + ulp(b64_plus x q) / 2 <= |x|.                                 *)
+(*                                                                            *)
+(*   With the loose `b64_ulp_le_abs` (ulp(x) <= |x|), the first term already *)
+(*   saturates the budget.  Closing needs the TIGHT normal-range bound      *)
+(*   `ulp(x) <= |x| * 2^-52`, plus a similar bound on `ulp(b64_plus x q)`.  *)
+(*                                                                            *)
+(*   The tight bound holds for binary64 inputs outside the subnormal range  *)
+(*   (`|x| >= bpow b64_emin * 2^prec`), which is the standard precondition  *)
+(*   for the Stage D corpus.  Formalising it requires a normal-range        *)
+(*   precondition or the Flocq `ulp_FLT_small` family.                      *)
+(*                                                                            *)
+(* The Session 5 outcome documents this as the structural sub-obligation    *)
+(* for Session 6 to discharge.  See                                          *)
+(* docs/slice-a-piece-5b-route1-session-5-outcome.md.                        *)
+(* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
 (* MISSING PROPERTY -- the h-chain link between consecutive cascade errors.   *)
