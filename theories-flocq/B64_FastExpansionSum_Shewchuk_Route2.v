@@ -46,6 +46,7 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
+From Stdlib Require Import Lra.
 From Stdlib Require Import List.
 
 From Flocq Require Import IEEE754.Binary.
@@ -271,10 +272,14 @@ Qed.
 (* cs_output : the accumulated h's (smallest-first, as produced by the     *)
 (*             cascade -- reversed at the end to put largest-first for     *)
 (*             nonoverlap_strict).                                          *)
+(* cs_run_max: the largest (by magnitude) element absorbed from cs_prov's    *)
+(* source list since the last provenance flip.  Added in Route 1 Session 4   *)
+(* to carry the run-bound used by clause (d).                                *)
 Record cascade_state : Type := mk_cascade_state {
-  cs_carry  : binary64;
-  cs_prov   : provenance;
-  cs_output : list binary64
+  cs_carry   : binary64;
+  cs_prov    : provenance;
+  cs_output  : list binary64;
+  cs_run_max : binary64
 }.
 
 (* The maximum magnitude of a list of binary64s.  Zero on empty. *)
@@ -333,6 +338,36 @@ Definition cascade_invariant_handover
                 (succ radix2 (SpecFloat.fexp prec emax) xR) / 2) )
   end.
 
+(* Clause (d) -- Route 1 Session 4 run-bound conjunct.                       *)
+(*                                                                            *)
+(* The carry's magnitude is bounded by twice the largest element absorbed    *)
+(* from the current same-provenance run.  Per Shewchuk §4, this is the       *)
+(* invariant that closes the 2^53 gap identified in Route 1 Session 3        *)
+(* (`test_invariant_implies_h_prev_bound`).                                   *)
+(*                                                                            *)
+(* SESSION 4 OUTCOME -- per-source refinement required.  This                *)
+(* single-cs_run_max formulation is preserved in the continue-run case      *)
+(* (where within-source nonoverlap gives a 2^53 magnitude gap that          *)
+(* dominates the triangle bound), but FAILS preservation in the cross-     *)
+(* prov case (where the OLD cs_run_max is from the other source, only     *)
+(* bounded by sorted-ascending |OLD cs_run_max| <= |x|).  Cross-prov goal *)
+(* `|qnew| <= 2|x|` reduces by the triangle bound to `3|x| <= 2|x|`,       *)
+(* false; and no fixed constant C closes the bound (would require           *)
+(* `1 + C <= C`).                                                            *)
+(*                                                                            *)
+(* The refined invariant tracks per-source maxes:                            *)
+(*                                                                            *)
+(*   |cs_carry| <= 2|cs_e_max| + 2|cs_f_max|                                *)
+(*                                                                            *)
+(* with `cs_e_max` and `cs_f_max` as separate cascade_state fields.  This   *)
+(* preserves under both continue-run and cross-prov via per-source           *)
+(* nonoverlap_shewchuk.  See                                                  *)
+(* docs/slice-a-piece-5b-route1-session-4-outcome.md for the full            *)
+(* derivation and Session 5 plan.                                            *)
+Definition cascade_invariant_run_bound (state : cascade_state) : Prop :=
+  Rabs (Binary.B2R prec emax (cs_carry state))
+    <= 2 * Rabs (Binary.B2R prec emax (cs_run_max state)).
+
 Definition cascade_invariant
   (state : cascade_state)
   (processed : list binary64)
@@ -340,34 +375,37 @@ Definition cascade_invariant
   : Prop :=
   cascade_invariant_output (cs_carry state) (cs_output state) /\
   cascade_invariant_magnitude (cs_carry state) processed /\
-  cascade_invariant_handover state remaining.
+  cascade_invariant_handover state remaining /\
+  cascade_invariant_run_bound state.
 
 (* -------------------------------------------------------------------------- *)
-(* Sanity check: empty-state invariant under refined clause (c).              *)
+(* Sanity check: empty-state invariant under refined clauses (c) and (d).     *)
 (*                                                                            *)
 (* When the cascade hasn't processed any inputs yet, the state is             *)
-(* mk_cascade_state q_initial p_initial nil where (q_initial, p_initial) is  *)
-(* the head of the tagged input.  Clauses (a) and (b) hold trivially:         *)
-(*   - (a) output is just [q_initial], trivially nonoverlap_shewchuk.         *)
-(*   - (b) processed = nil, so the disjunction's right branch fires.         *)
-(* Clause (c) is no longer vacuous; it is taken as a hypothesis.  The         *)
-(* bootstrap lemma `fast_expansion_sum_bootstrap` discharges this             *)
-(* hypothesis from the input preconditions (sorted-ascending merge +          *)
-(* per-source nonoverlap_shewchuk).                                           *)
+(* mk_cascade_state q_init p_init nil q_init -- the initial carry is the    *)
+(* first absorbed element, and cs_run_max is set to the same value (the     *)
+(* first element IS the current run's max).  Clauses (a), (b), (d) hold     *)
+(* trivially:                                                                 *)
+(*   - (a) output is just [q_init], trivially nonoverlap_shewchuk.            *)
+(*   - (b) processed = nil, so the disjunction's right branch fires.          *)
+(*   - (d) |cs_carry| <= 2|cs_run_max| with cs_carry = cs_run_max becomes   *)
+(*     |q| <= 2|q|, trivially true (Rabs is non-negative, multiplied by 2).  *)
+(* Clause (c) is taken as a hypothesis; the bootstrap discharges it from     *)
+(* input preconditions.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma cascade_invariant_empty :
   forall q p remaining,
-    cascade_invariant_handover (mk_cascade_state q p nil) remaining ->
-    cascade_invariant (mk_cascade_state q p nil) nil remaining.
+    cascade_invariant_handover (mk_cascade_state q p nil q) remaining ->
+    cascade_invariant (mk_cascade_state q p nil q) nil remaining.
 Proof.
   intros q p remaining Hho.
   unfold cascade_invariant.
-  cbn [cs_carry cs_prov cs_output rev].
-  split; [|split].
+  cbn [cs_carry cs_prov cs_output cs_run_max rev].
+  split; [|split; [|split]].
   - (* (a) output well-formed *)
     unfold cascade_invariant_output.
-    cbn [rev].
+    cbn [cs_carry cs_output rev].
     unfold nonoverlap_shewchuk.
     cbn [compress].
     destruct (Rcompare (Binary.B2R prec emax q) 0);
@@ -376,6 +414,11 @@ Proof.
     right. reflexivity.
   - (* (c) handover -- supplied as hypothesis. *)
     exact Hho.
+  - (* (d) run-bound: cs_carry = cs_run_max = q, so |q| <= 2|q|. *)
+    unfold cascade_invariant_run_bound.
+    cbn [cs_carry cs_run_max].
+    pose proof (Rabs_pos (Binary.B2R prec emax q)) as Hpos.
+    lra.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -412,19 +455,20 @@ Lemma cascade_step_preserves_invariant :
       (mk_cascade_state
          (fst (b64_TwoSum x (cs_carry state)))
          prov
-         (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]))
+         (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))])
+         x)
       (processed ++ [x])
       rest.
 Proof.
   intros state processed x prov rest Hinv.
   unfold cascade_invariant in Hinv.
-  destruct Hinv as [Ha [Hb Hc]].
+  destruct Hinv as [Ha [Hb [Hc _Hd]]].
   unfold cascade_invariant_handover in Hc.
   cbn [cs_carry] in Hc.
   destruct Hc as [Hsafe Hcases].
   unfold cascade_invariant.
-  cbn [cs_carry cs_prov cs_output].
-  split; [|split].
+  cbn [cs_carry cs_prov cs_output cs_run_max].
+  split; [|split; [|split]].
   - (* (a) Output well-formed.                                                 *)
     (*                                                                          *)
     (* GOAL: nonoverlap_shewchuk                                                *)
