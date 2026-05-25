@@ -943,6 +943,25 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   error analysis, multi-session engagement).  No middle ground between
   "the predicate as shipped" and the full coordinate / sub-case story
   buys meaningful intermediate value.
+- **2026-05-25**: Phase 1 Scope C.2-tight closed.  Five-session
+  cascade lands the forward-error bound for the coordinate-valued
+  `b64_intersect_point_x/y`:
+
+  ```
+  |B2R(b64_intersect_point_x P0 P1 Q0 Q1)
+   - (B2R(bx P0) + s_exact * B2R(b64_minus (bx P1) (bx P0)))|
+  <= bpow 29 + bpow 80 / |qp0_R - qp1_R|
+  ```
+
+  in `K * eps` form `K(|d|) = bpow 82 + bpow 133 / |d|` with
+  `eps = bpow(-prec)`.  Both x and y headlines Qed-closed.  The
+  `1/|den_exact|` factor is the classical Cramer condition number
+  — the bound is fundamentally condition-number-bounded, saturating
+  near-parallel and dropping for well-separated segments.  See
+  [`docs/phase1-c2-tight-retro.md`](docs/phase1-c2-tight-retro.md)
+  for the cascade structure, calibration vs Slice A, and what's
+  open.  Optional Session 6: link the reference to `intersect_x_R
+  (BP2P ...)` + plug into the `HasIntersect_sound` typeclass field.
 - **2026-05-15**: Phase 2 opened -- snap-rounding noder audit doc.
   [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md)
   inventories what snap rounding is (Hobby 1999 + Halperin & Packer
