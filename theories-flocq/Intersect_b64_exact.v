@@ -993,6 +993,43 @@ Proof.
   apply Rplus_le_compat; [apply bpow_le; lia | apply Rle_refl].
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Phase 1 -- Returns-Some corollary.                                          *)
+(*                                                                            *)
+(* Under intersect_point_inputs_int_safe + sign_filtered = IntersectPoint,    *)
+(* b64_intersect_point commits to `Some _` (the function does not return      *)
+(* None on the IntersectPoint branch's inner `b64_compare den zero` check).  *)
+(*                                                                            *)
+(* Discharges the den-finite + den-B2R-nonzero side conditions in the         *)
+(* IntersectPoint branch by composing b64_intersect_den_safe +                *)
+(* b64_minus_correct + b64_intersect_den_B2R_nonzero (all Qed-closed in     *)
+(* Scope B.1 above).                                                          *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_intersect_point_returns_some_when_point :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_point_inputs_int_safe P0 P1 Q0 Q1 ->
+    b64_intersect_sign_filtered P0 P1 Q0 Q1 = IntersectPoint ->
+    exists X : BPoint, b64_intersect_point P0 P1 Q0 Q1 = Some X.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe Hpoint.
+  unfold b64_intersect_point.
+  rewrite Hpoint.
+  pose proof (b64_intersect_den_safe P0 P1 Q0 Q1 Hsafe) as Hden_safe.
+  pose proof (b64_minus_correct _ _ Hden_safe) as [Hden_R Fden].
+  pose proof (b64_intersect_den_B2R_nonzero P0 P1 Q0 Q1 Hsafe) as Hden_nz.
+  set (zero := Binary.B754_zero prec emax false).
+  assert (Hzero_finite : Binary.is_finite prec emax zero = true) by reflexivity.
+  assert (HzeroR : Binary.B2R prec emax zero = 0) by reflexivity.
+  unfold b64_compare.
+  rewrite (Binary.Bcompare_correct prec emax _ _ Fden Hzero_finite).
+  rewrite HzeroR.
+  destruct (Rcompare _ 0) eqn:Hcmp.
+  - apply Rcompare_Eq_inv in Hcmp. contradiction.
+  - eexists. reflexivity.
+  - eexists. reflexivity.
+Qed.
+
 (*                                                                            *)
 (* The `BPoint` instance routes through the total b64 projections defined   *)
 (* above.                                                                    *)
@@ -1127,6 +1164,7 @@ Print Assumptions cross_R_BP_abs_le_bpow_53.
 Print Assumptions b64_intersect_den_safe.
 Print Assumptions b64_intersect_den_R_round.
 Print Assumptions b64_intersect_den_B2R_nonzero.
+Print Assumptions b64_intersect_point_returns_some_when_point.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -1134,12 +1172,11 @@ Print Assumptions b64_intersect_den_B2R_nonzero.
 (*                                                                            *)
 (* 1. [SHIPPED in Scope B.1] Denominator finite + B2R non-zero.              *)
 (*                                                                            *)
-(* 2. Returns-`Some` corollary.                                              *)
-(*    Under safety, `b64_intersect_point P0 P1 Q0 Q1 = Some _` (the option- *)
-(*    valued variant in Intersect_b64.v commits to `Some`).  Requires       *)
-(*    composing the integer-regime decisive theorem for                    *)
-(*    `b64_intersect_sign_filtered` with the predicate-dispatch in          *)
-(*    `b64_intersect_point`.                                                 *)
+(* 2. [SHIPPED in Phase 1 Session 1] Returns-`Some` corollary.               *)
+(*    Under intersect_point_inputs_int_safe + sign_filtered = IntersectPoint, *)
+(*    `b64_intersect_point` commits to `Some _`.  Discharged via              *)
+(*    b64_intersect_den_safe + b64_minus_correct +                             *)
+(*    b64_intersect_den_B2R_nonzero composed with Bcompare_correct.            *)
 (*                                                                            *)
 (* 3. Scope B.2: full round-chain identity.                                  *)
 (*       B2R (b64_intersect_point_x ...)                                    *)
