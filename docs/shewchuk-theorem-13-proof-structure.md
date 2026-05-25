@@ -284,10 +284,32 @@ correctness lemmas), Route 2 is the committed design.
 > between consecutive cascade errors) is not propagated by any
 > clause-(c) shape — it is a property of the cascade's STEP
 > TRANSITION, not of the state, and `cs_prov` only supplies the right
-> hypothesis context for same-source consecutive transitions.  The
-> recommendation stands: state the h-chain as a separate
-> cascade-step lemma (`cascade_h_chain`) and compose it with
-> `cascade_invariant`'s clause (a) to prove preservation.
+> hypothesis context for same-source consecutive transitions.
+>
+> **Status note (Route 1 Session 3 — 2^53 gap quantified + §4 analysis).**
+>
+> The collapse artifact above carries the §4 analysis that closes the
+> Session 2 finding.  Key results (Qed-closed in
+> `theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v`):
+>
+>   - `test_invariant_implies_h_prev_bound`: the existing invariant
+>     gives `|h_prev| <= ulp(cs_carry)/2`, but
+>     `cascade_h_chain_statement` requires `|h_prev| <=
+>     ulp(snd (b64_TwoSum x cs_carry))/2 ≈ ulp(cs_carry)/2 * 2^-53`.
+>     The invariant's bound is **roughly 2^53 too loose**.
+>   - §4 closes the gap via run-bound tracking: same-prov consecutive
+>     within a run uses per-source nonoverlap one-time;
+>     cross-prov uses step-by-step cumulative reasoning about the
+>     current run's maximum element.  Neither Option A (richer
+>     precondition only) nor Option C (intermediate lemma over
+>     inputs only) suffices — both fail at the cross-prov boundary.
+>     **Option B with a `cs_run_max` conjunct** is the right path.
+>
+> **→ Successor prompt:
+> [`docs/slice-a-piece-5b-route1-session-4-prompt.md`](slice-a-piece-5b-route1-session-4-prompt.md).**
+> Three deliverables: clause (d) + `cs_run_max`, two intermediate
+> lemmas (within-run and cross-prov), and `cascade_h_chain` by case
+> split on provenance continuity.  Estimated 220-300 lines.
 
 ### §6.1 The provenance tagging
 

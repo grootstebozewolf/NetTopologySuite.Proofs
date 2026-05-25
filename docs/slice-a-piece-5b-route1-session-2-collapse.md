@@ -309,33 +309,166 @@ Route 1 design session.  Estimated 200-400 lines of Coq, requires
 deep magnitude case analysis on provenance + sign + binade position.
 ```
 
-## Recommendation for a successor session
+## Recommendation for a successor session — Option B with run-bound conjunct
 
-The Route 1 design session already recommended a *third design* where
-the h-chain is established as a **separate cascade-step lemma**
-(`cascade_h_chain`) with `cs_prov` and per-source `nonoverlap_shewchuk`
-in hypothesis context.  This session's collapse confirms that
-recommendation against a live Coq goal state.
+> **Updated 2026-05-25 after the §4 run-bound analysis** (see commit
+> log of this branch).  The earlier "third design" pointer (separate
+> `cascade_h_chain` lemma with only `cs_prov` + per-source nonoverlap
+> hypotheses) is **superseded** by the analysis below.  The previous
+> pointer was insufficient: it would fail at the cross-prov boundary
+> because the cascade history cannot be reconstructed from
+> `(state, remaining)` alone.
 
-The successor session should:
+### The 2^53 gap (Route 1 Session 3 finding)
 
-  1. Keep the Route 1 framework: `cascade_state` record with `cs_prov`,
-     `cascade_invariant` with three clauses.  These are not the
-     problem.
-  2. Keep the refined clause (c) above OR weaken it back to a
-     `b64_TwoSum_safe`-only form — clause (c) is not load-bearing in
-     either form.
-  3. State `cascade_h_chain` as above (or a refined form thereof) as a
-     **separate lemma**, NOT as a clause of the invariant.
-  4. Compose `cascade_h_chain` with `cascade_invariant`'s clause (a)
-     to prove `cascade_step_preserves_invariant`.
+After this collapse landed, a follow-on precondition test
+(`test_invariant_implies_h_prev_bound`, Qed-closed in
+`theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v`) extracted what
+the existing invariant actually provides about `h_prev`:
 
-This separation matches Shewchuk's own paper structure: §2.1 is the
-invariant maintenance argument (analogous to our clause (a)); §4 is
-the magnitude bookkeeping (analogous to our missing `cascade_h_chain`
-lemma).  Trying to fold §4's content into §2.1's invariant — as both
-Route 2 and Route 1 attempted — repeats the structural mistake at a
-different scale.
+  - **Invariant provides**: `|h_prev| <= ulp(cs_carry state) / 2`
+    (when `cs_carry` and `h_prev` are nonzero, from clause (a)'s
+    `nonoverlap_shewchuk` chain peeled off via `compress`).
+  - **`cascade_h_chain_statement` needs**:
+    `|h_prev| <= ulp(snd (b64_TwoSum x (cs_carry state))) / 2`.
+
+Since `snd (b64_TwoSum x q) =: h` lives in `b64_plus x q`'s low binade,
+`ulp(h) ≈ ulp(q) * 2^-53` in the generic no-cancellation case.  The
+invariant's bound is therefore **roughly 2^53 too loose**.
+
+This is a mathematical gap, not a tactic issue or a missing Flocq
+lemma.  Closing it requires a strictly tighter bound on `h_prev`
+than `cascade_invariant`'s clause (a) exposes.
+
+### Shewchuk §4's argument — what it actually uses
+
+Re-reading
+`docs/shewchuk-theorem-13-proof-structure.md` §4 (lines 193-228) plus
+the design artifact's case-analysis (lines 246-277 of
+`docs/slice-a-piece-5b-route1-design-session.md`), §4's tightening
+decomposes into two regimes:
+
+  - **Same-prov consecutive (within a same-provenance run)**.  When
+    `cs_prov = prov_x` and the two elements are adjacent in the
+    sorted merge, they must be adjacent in their source.  Then
+    `nonoverlap_shewchuk e` (or `f`) gives `|x_curr|/|x_prev| >=
+    2^53`, which directly yields the required factor-of-2^53
+    tightening.  This part **is a one-time derivation** from the
+    input preconditions + sort order; detectable from `cs_prov` +
+    next `prov` alone, no history required.
+
+  - **Cross-prov (run boundary)**.  When `cs_prov <> prov_x`,
+    sorted-ascending only gives `|x_curr| >= |x_prev|` — a constant
+    factor, not 2^53.  §4's argument here is *not* a one-time bound
+    from inputs; it is the cumulative claim that
+    > "the cascade's accumulator after processing a run of
+    > same-provenance elements ends up with magnitude bounded by the
+    > last element processed, which combines with the
+    > next-provenance element's magnitude via TwoSum's bound."
+
+    That "after processing a run … bounded by the last element
+    processed" is **cascade history**: a property maintained
+    step-by-step about the current run's structure.  It is not
+    derivable from the immediate `(state, remaining)` because the
+    bound depends on what previous steps absorbed.
+
+### Why Option A and Option C alone are insufficient
+
+  - **Option A (richer precondition only)** — pass
+    `nonoverlap_shewchuk e`, `nonoverlap_shewchuk f`, and the sorted
+    merge as hypotheses to `cascade_h_chain` without changing the
+    invariant.  Handles the same-prov case (the within-run 2^53 gap
+    is in the inputs).  **Fails the cross-prov case** because the
+    run-boundary bound on `cs_carry` cannot be reconstructed from
+    immediate hypotheses.
+
+  - **Option C (intermediate lemma over inputs)** — prove
+    `cascade_bound_from_sorted_merge` as a one-time result about the
+    inputs, then use it in `cascade_h_chain`.  Same defect as A:
+    no input-only lemma characterises the cascade's mid-run state.
+
+### Option B with run-bound conjunct — the load-bearing recommendation
+
+Augment `cascade_invariant` with a **clause (d)** that tracks the
+current same-provenance run's maximum-magnitude element
+`cs_run_max`.  Two specific design decisions must be made before any
+Coq is written:
+
+  - **Decision 1 — field vs parameter.**  Add `cs_run_max` as a field
+    of the `cascade_state` record, OR thread it as a parameter to
+    `cascade_invariant`.  The blast-radius criterion (grep for
+    `cascade_state | cs_carry | cs_prov | cs_output | mk_cascade`)
+    decides: small radius -> field; large radius -> parameter.
+  - **Decision 2 — initial value.**  At the cascade's first step,
+    `cs_run_max` is the first absorbed element (so `|cs_carry| <=
+    2 |cs_run_max|` holds trivially with the first element equal to
+    both).
+
+Clause (d), as content:
+
+```coq
+Rabs (Binary.B2R prec emax (cs_carry state))
+  <= 2 * Rabs (Binary.B2R prec emax (cs_run_max state)).
+```
+
+The constant `2` covers the geometric-sum factor within a run
+(a half-ulp chain's partial sums are bounded by `2 * largest`).
+
+**Preservation under cascade step splits on continuity:**
+
+  - **Continue run** (new step has `prov = cs_prov state`):
+    `cs_run_max` stays the same; the within-source nonoverlap
+    closes the 2^53 gap for `h_prev` algebraically; clause (d) is
+    maintained.
+  - **Start new run** (new step has `prov <> cs_prov state`):
+    `cs_run_max` resets to the new `x`; the TwoSum bound on the
+    run-boundary step gives `|h_new| <= ulp(x) / 2`; clause (d)'s
+    new instance follows from `|cs_carry| <= 2 |x_prev_run_max| <=
+    2 |x|` (sorted) plus TwoSum.
+
+The two preservation cases lift the Option C "intermediate lemma"
+machinery into Option B's framework:
+
+  - `run_bound_propagates_under_same_prov` (within-run, ~50-80
+    lines): the within-run portion derived from per-source
+    `nonoverlap_shewchuk` + sort.
+  - `run_bound_resets_under_prov_flip` (cross-prov, ~80-120 lines):
+    the cumulative cross-prov claim that §4 establishes through
+    deep magnitude bookkeeping.
+
+`cascade_h_chain` then composes the two via a case split on
+`provenance_eq_dec p (cs_prov state)`, in ~10 lines.
+
+### Mapping to Shewchuk's paper structure
+
+  - Clause (a) of `cascade_invariant` = Shewchuk §2.1's
+    "running output is non-overlapping" (the chain itself).
+  - Clause (d) of `cascade_invariant` = Shewchuk §4's run-bound
+    bookkeeping (the deeper magnitude argument).
+  - `run_bound_propagates_under_same_prov` = the within-run
+    portion of §4.
+  - `run_bound_resets_under_prov_flip` = the cross-prov portion of §4.
+
+This matches the paper's own decomposition, with the run-boundary as
+the locus of the non-trivial reasoning.
+
+### Cost estimate
+
+| Deliverable                                  | Lines       |
+|----------------------------------------------|-------------|
+| Clause (d) definition + `cs_run_max` tracking| ~30         |
+| `cascade_invariant_empty` re-proof           | ~10         |
+| `run_bound_propagates_under_same_prov`       | ~50-80      |
+| `run_bound_resets_under_prov_flip`           | ~80-120     |
+| `cascade_h_chain` composition                | ~50         |
+| **Total**                                    | **~220-300**|
+
+One focused session if the run-bound formulation is right.  Two if
+the cross-prov lemma surfaces a sub-obligation (the design doc
+warns about the round-to-even boundary as a possible sub-tangent).
+
+The successor prompt landing this plan is
+`docs/slice-a-piece-5b-route1-session-4-prompt.md`.
 
 ## What this session leaves committed
 
