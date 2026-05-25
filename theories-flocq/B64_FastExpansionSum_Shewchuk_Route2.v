@@ -1420,6 +1420,78 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 7 -- cascade_run: cascade as a state-transition function.      *)
+(*                                                                            *)
+(* Iterates cascade_step_state over a tagged input.  This connects            *)
+(* cascade_invariant (a state predicate) to the actual cascade computation,  *)
+(* which is the missing link between the per-step preservation lemmas and    *)
+(* the headline.                                                              *)
+(*                                                                            *)
+(* The relation to b64_grow_expansion_aux (the corpus's cascade): for a      *)
+(* tagged input xs starting from state s,                                     *)
+(*                                                                            *)
+(*   cascade_run s xs                                                          *)
+(*                                                                            *)
+(* produces a final state whose cs_carry equals qfinal and whose              *)
+(* cs_output equals (cs_output s) ++ hs, where                                *)
+(*   (hs, qfinal) := b64_grow_expansion_aux (cs_carry s) (untag xs).         *)
+(*                                                                            *)
+(* cascade_run_correctness (below) Qed-closes this equivalence.               *)
+(* -------------------------------------------------------------------------- *)
+
+Fixpoint cascade_run
+  (state : cascade_state) (xs : list tagged_b64) : cascade_state :=
+  match xs with
+  | nil => state
+  | (x, prov) :: rest =>
+      cascade_run (cascade_step_state state x prov) rest
+  end.
+
+Lemma untag_cons_pair :
+  forall (x : binary64) (prov : provenance) (xs : list tagged_b64),
+    untag ((x, prov) :: xs) = x :: untag xs.
+Proof. intros. unfold untag. reflexivity. Qed.
+
+(* The cascade_step_state's effect on cs_carry is provenance-independent.    *)
+(* So is cs_output's append shape (snd of b64_TwoSum).  cascade_run's         *)
+(* final cs_carry tracks b64_grow_expansion_aux's qfinal exactly.            *)
+Lemma cascade_run_cs_carry :
+  forall xs state,
+    cs_carry (cascade_run state xs)
+      = snd (b64_grow_expansion_aux (cs_carry state) (untag xs)).
+Proof.
+  induction xs as [|tx xs IH]; intros state.
+  - reflexivity.
+  - destruct tx as [x prov].
+    cbn [cascade_run].
+    rewrite IH, cs_carry_cascade_step_state, untag_cons_pair.
+    cbn [b64_grow_expansion_aux].
+    rewrite (surjective_pairing (b64_TwoSum x (cs_carry state))).
+    cbn [fst snd].
+    destruct (b64_grow_expansion_aux _ (untag xs)) as [hs qfinal] eqn:Hrec.
+    reflexivity.
+Qed.
+
+Lemma cascade_run_cs_output :
+  forall xs state,
+    cs_output (cascade_run state xs)
+      = cs_output state
+        ++ fst (b64_grow_expansion_aux (cs_carry state) (untag xs)).
+Proof.
+  induction xs as [|tx xs IH]; intros state.
+  - cbn. rewrite app_nil_r. reflexivity.
+  - destruct tx as [x prov].
+    cbn [cascade_run].
+    rewrite IH, cs_output_cascade_step_state, cs_carry_cascade_step_state,
+            untag_cons_pair.
+    cbn [b64_grow_expansion_aux].
+    rewrite (surjective_pairing (b64_TwoSum x (cs_carry state))).
+    cbn [fst snd].
+    destruct (b64_grow_expansion_aux _ (untag xs)) as [hs qfinal] eqn:Hrec.
+    cbn [fst]. rewrite <- app_assoc. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1447,3 +1519,6 @@ Print Assumptions cascade_step_clause_a_pathA.
 Print Assumptions cs_carry_cascade_step_state.
 Print Assumptions cs_output_cascade_step_state.
 Print Assumptions cascade_step_preserves_invariant_pathA.
+Print Assumptions untag_cons_pair.
+Print Assumptions cascade_run_cs_carry.
+Print Assumptions cascade_run_cs_output.
