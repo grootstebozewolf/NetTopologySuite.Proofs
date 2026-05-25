@@ -964,6 +964,188 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 4 -- cascade-level h-chain step.                               *)
+(*                                                                            *)
+(* Composes test_invariant_implies_h_prev_bound (clause (a) gives             *)
+(* |h_prev| <= ulp(cs_carry)/2) with cascade_h_chain_pathA_pos (under         *)
+(* Path A, ulp(snd) = ulp(cs_carry), so the bound lifts).                     *)
+(*                                                                            *)
+(* This is the cascade-level h-chain link: at a Path A step (positive x,     *)
+(* small carry, nonzero cs_carry/h_prev), the cascade's most-recent error   *)
+(* h_prev is bounded by half-ulp of the NEW error h_new.  This is the        *)
+(* load-bearing claim for clause (a) preservation when Path A holds.        *)
+(*                                                                            *)
+(* The remaining structural work (for cascade_step_preserves_invariant       *)
+(* clause (a) under non-Path-A cases) is documented for Session 9.           *)
+(* -------------------------------------------------------------------------- *)
+
+(* compress preserves map B2R equality.  Two binary64 lists with the same    *)
+(* sequence of B2R values produce compressed lists with the same B2R         *)
+(* sequence (the binary64 representations may differ, but the values match). *)
+Lemma compress_map_B2R_eq :
+  forall xs ys : list binary64,
+    map (Binary.B2R prec emax) xs = map (Binary.B2R prec emax) ys ->
+    map (Binary.B2R prec emax) (compress xs)
+      = map (Binary.B2R prec emax) (compress ys).
+Proof.
+  induction xs as [|x xs IH]; intros ys Hmap.
+  - destruct ys; [reflexivity | discriminate].
+  - destruct ys as [|y ys]; [discriminate|].
+    simpl in Hmap. inversion Hmap as [[Hxy Hrest]].
+    cbn [compress].
+    rewrite Hxy.
+    destruct (Rcompare (Binary.B2R prec emax y) 0) eqn:Hcmp.
+    + apply IH; exact Hrest.
+    + simpl. f_equal; [exact Hxy | apply IH; exact Hrest].
+    + simpl. f_equal; [exact Hxy | apply IH; exact Hrest].
+Qed.
+
+(* nonoverlap_shewchuk preserves under map-B2R equality. *)
+Lemma nonoverlap_shewchuk_B2R_compat :
+  forall xs ys : list binary64,
+    map (Binary.B2R prec emax) xs = map (Binary.B2R prec emax) ys ->
+    nonoverlap_shewchuk xs <-> nonoverlap_shewchuk ys.
+Proof.
+  intros xs ys Hmap.
+  unfold nonoverlap_shewchuk.
+  apply nonoverlap_strict_B2R_compat.
+  apply compress_map_B2R_eq. exact Hmap.
+Qed.
+
+Lemma cascade_h_chain_step :
+  forall (state : cascade_state) (processed : list binary64)
+         (x : binary64) (prov_x : provenance)
+         (rest : list tagged_b64)
+         (h_prev : binary64) (hs_tail : list binary64),
+    cascade_invariant state processed ((x, prov_x) :: rest) ->
+    cs_output state = hs_tail ++ [h_prev] ->
+    0 < Binary.B2R prec emax x ->
+    strict_succ_pathA_R (Binary.B2R prec emax x)
+                        (Binary.B2R prec emax (cs_carry state)) ->
+    Binary.B2R prec emax (cs_carry state) <> 0 ->
+    Binary.B2R prec emax h_prev <> 0 ->
+    Rabs (Binary.B2R prec emax h_prev)
+      <= b64_ulp (Binary.B2R prec emax
+                    (snd (b64_TwoSum x (cs_carry state)))) / 2.
+Proof.
+  intros state processed x prov_x rest h_prev hs_tail
+         Hinv Hout Hx Hpw Hcq Hch.
+  (* Step 1: extract |h_prev| <= ulp(cs_carry)/2 from clause (a). *)
+  pose proof (test_invariant_implies_h_prev_bound
+                state processed ((x, prov_x) :: rest) h_prev hs_tail
+                Hinv Hout Hcq Hch) as Hh_bound.
+  (* Step 2: extract b64_TwoSum_safe from clause (c). *)
+  unfold cascade_invariant in Hinv.
+  destruct Hinv as [_ [_ [Hc _]]].
+  unfold cascade_invariant_handover in Hc.
+  cbn [cs_carry] in Hc.
+  destruct Hc as [Hsafe _].
+  (* Step 3: apply cascade_h_chain_pathA_pos. *)
+  exact (cascade_h_chain_pathA_pos x (cs_carry state) h_prev
+            Hx Hpw Hh_bound Hsafe).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 5 -- clause (a) preservation under Path A.                     *)
+(*                                                                            *)
+(* Under Path A's hypothesis (positive x, |cs_carry| < ulp(pred x)/2) and    *)
+(* cs_carry ≠ 0, b64_TwoSum_pathA_exact_step gives B2R(fst) = B2R x and      *)
+(* B2R(snd) = B2R cs_carry.  Then nonoverlap_shewchuk_B2R_compat lifts the   *)
+(* output predicate from the new state to (x :: cs_carry :: rev cs_output), *)
+(* where the chain reduces to (Path A precondition) + (old clause (a)).      *)
+(*                                                                            *)
+(* The cs_carry = 0 case is degenerate (perfect cancellation in the cascade *)
+(* history); excluded here as an explicit hypothesis.                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cascade_step_clause_a_pathA_pos :
+  forall (state : cascade_state) (processed : list binary64)
+         (x : binary64) (prov : provenance) (rest : list tagged_b64),
+    cascade_invariant state processed ((x, prov) :: rest) ->
+    0 < Binary.B2R prec emax x ->
+    strict_succ_pathA_R (Binary.B2R prec emax x)
+                        (Binary.B2R prec emax (cs_carry state)) ->
+    Binary.B2R prec emax (cs_carry state) <> 0 ->
+    cascade_invariant_output
+      (fst (b64_TwoSum x (cs_carry state)))
+      (cs_output state ++ [snd (b64_TwoSum x (cs_carry state))]).
+Proof.
+  intros state processed x prov rest Hinv Hx Hpw Hcq.
+  unfold cascade_invariant_output.
+  rewrite rev_app_distr. cbn [rev app].
+  (* Goal: nonoverlap_shewchuk
+            (fst (b64_TwoSum x (cs_carry state))
+             :: snd (b64_TwoSum x (cs_carry state)) :: rev (cs_output state)) *)
+  (* Extract safety from clause (c). *)
+  unfold cascade_invariant in Hinv.
+  destruct Hinv as [Ha [_ [Hc _]]].
+  unfold cascade_invariant_handover in Hc.
+  cbn [cs_carry] in Hc.
+  destruct Hc as [Hsafe _].
+  (* Apply b64_TwoSum_pathA_exact_step: B2R fst = B2R x, B2R snd = B2R q. *)
+  pose proof (b64_TwoSum_pathA_exact_step x (cs_carry state) Hx Hpw Hsafe)
+    as [Hfst Hsnd].
+  (* Lift via B2R compat to the goal with x and cs_carry in place. *)
+  apply (nonoverlap_shewchuk_B2R_compat
+    (fst (b64_TwoSum x (cs_carry state)) ::
+     snd (b64_TwoSum x (cs_carry state)) :: rev (cs_output state))
+    (x :: (cs_carry state) :: rev (cs_output state))).
+  { cbn [map].
+    rewrite Hfst, Hsnd. reflexivity. }
+  (* Now show nonoverlap_shewchuk (x :: cs_carry :: rev cs_output).         *)
+  unfold cascade_invariant_output in Ha.
+  unfold nonoverlap_shewchuk in *.
+  cbn [compress].
+  (* Rcompare (B2R x) 0 = Gt (since 0 < B2R x). *)
+  destruct (Rcompare (Binary.B2R prec emax x) 0) eqn:Hxcmp.
+  { apply Rcompare_Eq_inv in Hxcmp. lra. }
+  { apply Rcompare_Lt_inv in Hxcmp. lra. }
+  (* Rcompare (B2R cs_carry) 0 = Lt or Gt (since nonzero). *)
+  destruct (Rcompare (Binary.B2R prec emax (cs_carry state)) 0) eqn:Hccmp.
+  { apply Rcompare_Eq_inv in Hccmp. contradiction. }
+  (* Lt case *)
+  { cbn [nonoverlap_strict].
+    split.
+    - (* strict_succ_b64 x cs_carry: |cs_carry| <= ulp(x)/2 from Path A. *)
+      unfold strict_succ_b64.
+      unfold strict_succ_pathA_R in Hpw.
+      pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax)
+                    (Binary.B2R prec emax x)) as Hpred_le.
+      pose proof (b64_format_B2R x) as Hfx.
+      pose proof (@pred_ge_0 radix2 _ b64_fexp_valid
+                    (Binary.B2R prec emax x) Hx Hfx) as Hpred_ge.
+      pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone
+                    _ _ Hpred_ge Hpred_le) as Hulp_le.
+      lra.
+    - (* nonoverlap_strict (cs_carry :: compress (rev cs_output)) from Ha. *)
+      cbn [compress] in Ha.
+      rewrite Hccmp in Ha.
+      cbn [nonoverlap_strict] in Ha.
+      destruct (compress (rev (cs_output state))).
+      + cbn [nonoverlap_strict] in *. exact I.
+      + cbn [nonoverlap_strict] in *. exact Ha. }
+  (* Gt case (symmetric) *)
+  { cbn [nonoverlap_strict].
+    split.
+    - unfold strict_succ_b64.
+      unfold strict_succ_pathA_R in Hpw.
+      pose proof (pred_le_id radix2 (SpecFloat.fexp prec emax)
+                    (Binary.B2R prec emax x)) as Hpred_le.
+      pose proof (b64_format_B2R x) as Hfx.
+      pose proof (@pred_ge_0 radix2 _ b64_fexp_valid
+                    (Binary.B2R prec emax x) Hx Hfx) as Hpred_ge.
+      pose proof (@ulp_le_pos radix2 _ b64_fexp_valid b64_fexp_monotone
+                    _ _ Hpred_ge Hpred_le) as Hulp_le.
+      lra.
+    - cbn [compress] in Ha.
+      rewrite Hccmp in Ha.
+      cbn [nonoverlap_strict] in Ha.
+      destruct (compress (rev (cs_output state))).
+      + cbn [nonoverlap_strict] in *. exact I.
+      + cbn [nonoverlap_strict] in *. exact Ha. }
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -980,3 +1162,7 @@ Print Assumptions run_bound_absorb_e.
 Print Assumptions run_bound_absorb_f.
 Print Assumptions run_bound_step_preserves.
 Print Assumptions cascade_h_chain_pathA_pos.
+Print Assumptions cascade_h_chain_step.
+Print Assumptions compress_map_B2R_eq.
+Print Assumptions nonoverlap_shewchuk_B2R_compat.
+Print Assumptions cascade_step_clause_a_pathA_pos.
