@@ -1861,6 +1861,78 @@ Proof.
 Abort.
 
 (* -------------------------------------------------------------------------- *)
+(* DELIVERABLE 12 -- inductive int-safe cascade lemma (Session 15).           *)
+(*                                                                            *)
+(* Under integer-exactness throughout the cascade (every operand is integer  *)
+(* with bounded sum), every b64_TwoSum step produces snd = 0 (B2R-wise).     *)
+(* This generalises Session 13's snd-zero result from one step to the entire *)
+(* cascade.                                                                   *)
+(*                                                                            *)
+(* The proof is by induction on the cascade input list.  At each step,       *)
+(* `b64_plus_int_exact` preserves the carry's integer witness, and          *)
+(* `b64_TwoSum_snd_B2R_zero_under_int_exact` (Session 13) gives the          *)
+(* zero-h claim.                                                              *)
+(* -------------------------------------------------------------------------- *)
+
+Fixpoint sum_abs_int_witnesses (ns : list Z) : Z :=
+  match ns with
+  | nil => 0
+  | n :: ns' => Z.abs n + sum_abs_int_witnesses ns'
+  end.
+
+Lemma sum_abs_int_witnesses_nonneg :
+  forall ns, (0 <= sum_abs_int_witnesses ns)%Z.
+Proof.
+  induction ns as [|n ns IH].
+  - reflexivity.
+  - cbn. pose proof (Z.abs_nonneg n). lia.
+Qed.
+
+Lemma b64_grow_expansion_aux_int_zero_hs :
+  forall (xs : list binary64) (q : binary64) (nq : Z) (ns : list Z),
+    Binary.is_finite prec emax q = true ->
+    Binary.B2R prec emax q = IZR nq ->
+    Forall2 (fun x n =>
+      Binary.is_finite prec emax x = true /\
+      Binary.B2R prec emax x = IZR n) xs ns ->
+    (Z.abs nq + sum_abs_int_witnesses ns <= 2 ^ prec)%Z ->
+    b64_grow_expansion_aux_safe q xs ->
+    Forall (fun h => Binary.B2R prec emax h = 0)
+      (fst (b64_grow_expansion_aux q xs)).
+Proof.
+  induction xs as [|x xs IH]; intros q nq ns Hfq HqR Hfa2 Hbnd Hsafe.
+  - cbn [b64_grow_expansion_aux fst]. constructor.
+  - destruct ns as [|n0 ns0]; [inversion Hfa2|].
+    inversion Hfa2 as [| ? ? ? ? [Hfx HxR] Hfa2_tail]; subst.
+    cbn [b64_grow_expansion_aux b64_grow_expansion_aux_safe] in *.
+    destruct Hsafe as [Hts_safe Hsafe_rec].
+    assert (Hsum_bnd : (Z.abs (n0 + nq) <= 2 ^ prec)%Z).
+    { eapply Z.le_trans; [apply Z.abs_triangle | ].
+      cbn [sum_abs_int_witnesses] in Hbnd.
+      pose proof (sum_abs_int_witnesses_nonneg ns0). lia. }
+    pose proof (b64_TwoSum_snd_B2R_zero_under_int_exact
+                  x q n0 nq Hfx Hfq HxR HqR Hsum_bnd Hts_safe) as Hsnd_zero.
+    pose proof (b64_plus_int_exact x q n0 nq Hfx Hfq HxR HqR Hsum_bnd)
+      as [HqnewR Hfqnew].
+    assert (Hbnd_rec :
+      (Z.abs (n0 + nq) + sum_abs_int_witnesses ns0 <= 2 ^ prec)%Z).
+    { cbn [sum_abs_int_witnesses] in Hbnd.
+      pose proof (Z.abs_triangle n0 nq) as Htri.
+      lia. }
+    pose proof (IH (b64_plus x q) (n0 + nq)%Z ns0 Hfqnew HqnewR
+                   Hfa2_tail Hbnd_rec Hsafe_rec) as IH'.
+    (* Unfold the cascade step structure. *)
+    rewrite (surjective_pairing (b64_TwoSum x q)).
+    cbn [fst snd].
+    rewrite (surjective_pairing
+              (b64_grow_expansion_aux (fst (b64_TwoSum x q)) xs)).
+    cbn [fst snd].
+    constructor.
+    + exact Hsnd_zero.
+    + rewrite (b64_TwoSum_fst x q) in *. exact IH'.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1899,3 +1971,5 @@ Print Assumptions b64_TwoSum_snd_B2R_zero_under_int_exact.
 Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_int_safe_singletons.
 Print Assumptions nonoverlap_shewchuk_pair.
 Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_two_singletons.
+Print Assumptions sum_abs_int_witnesses_nonneg.
+Print Assumptions b64_grow_expansion_aux_int_zero_hs.
