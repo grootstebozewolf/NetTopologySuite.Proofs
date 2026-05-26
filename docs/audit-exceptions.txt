@@ -113,3 +113,15 @@ theories-flocq/Orient_b64_expansion.v
 # (deferred-proof, removable when Piece 5b closes).  The tiny-regime
 # decisive theorem is Qed-closed without the deferred reference.
 theories-flocq/Orient_b64_stage_d.v
+
+# Category C: Phase 0 Ozaki filter soundness.  Ships the gamma_2 constant
+# (`b64_gamma2 = 2u/(1-2u)`), its structural bounds, the abstract
+# generic-soundness lemma (any forward-error bound + filter check =>
+# signs match), and the small-int composition headline against
+# `cross_R_BP` (via `b64_orient2d_exact_for_small_int`).  Pulls
+# `Classical_Prop.classic` transitively via the B2R chain (same lineage
+# as `Orient_b64_exact.v`, `Orient_b64_stage_d.v`).  No Admitteds in this
+# file; the general-regime forward-error instantiation is the deferred
+# Slice 2c work prosaically documented in `Orient_b64_sound.v`.  Formal
+# certificate accompanying JTS PR locationtech/jts#1093.
+theories-flocq/Orient_b64_Ozaki.v

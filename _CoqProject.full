@@ -168,6 +168,18 @@ theories-flocq/Orient_b64_expansion.v
 #   - b64_orient_sign_stage_d_tiny_regime_decisive: in tiny regime,
 #     never returns Uncertain (Qed-closed).
 theories-flocq/Orient_b64_stage_d.v
+# Phase 0 Ozaki filter: gamma_2 = 2u/(1-2u) constant + soundness for the
+# Ozaki/Rump-style orient2d filter adopted by JTS PR locationtech/jts#1093.
+# Ships the constant + structural bounds, an abstract generic-soundness
+# lemma (any forward-error bound + filter check => signs match), and the
+# headline small-int composition vs `cross_R_BP` via
+# `b64_orient2d_exact_for_small_int`.  Same interpretation discipline as
+# `b64_orient_sign_stage_d_sound`: decides the sign of the exact
+# mathematical determinant of the actual double inputs.  The general-
+# regime forward-error instantiation (Shewchuk Stage A relative-error
+# chain) is the deferred Slice 2c documented in `Orient_b64_sound.v`'s
+# prose.
+theories-flocq/Orient_b64_Ozaki.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
