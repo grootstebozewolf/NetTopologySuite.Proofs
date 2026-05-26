@@ -965,6 +965,142 @@ Proof.
     + split; assumption.
 Qed.
 
+(* ============================================================================
+   Slice 6 (3e partial): open-edge crossing via opposite-edge midpoint.
+   ----------------------------------------------------------------------------
+   For top/right (open) edges, the explicit-t* edge-crossing witness lies on
+   the EXCLUDED boundary and fails the strict inequality in in_hot_pixel.
+   Path A solution for the "passes through opposite edges" case: take the
+   midpoint of t_top and t_bot (or t_left and t_right).  By linearity of
+   the convex combination, the principal coordinate at the midpoint equals
+   the PIXEL CENTER exactly:
+     y(midpoint) = (y(t_top) + y(t_bot)) / 2 = ((cy + 1/2) + (cy - 1/2)) / 2 = cy.
+   The pixel center is strictly inside the half-open pixel on its own axis
+   (cy - 1/2 <= cy < cy + 1/2), so the witness is valid.
+
+   This slice ships the two opposite-edge cases (top+bottom, left+right).
+   Adjacent-edge crossings (top+left, top+right, bottom+left, bottom+right)
+   require different witness constructions and remain deferred to future
+   slices.  A universal IVT-based construction would replace all four
+   adjacent cases with one lemma but requires composing linear-function
+   continuity proofs from Stdlib.
+   ============================================================================ *)
+
+Lemma b64_segment_crosses_top_and_bottom_sound :
+  forall (P0 P1 C : BPoint) (t_top t_bot : R),
+    (* Segment passes through the pixel from above the top edge to below
+       the bottom edge (or symmetric).  This implies BOTH a sign-change on
+       y at the top edge AND a sign-change on y at the bottom edge. *)
+    (Binary.B2R prec emax (by_ P0) > Binary.B2R prec emax (by_ C) + / 2
+     /\ Binary.B2R prec emax (by_ P1) < Binary.B2R prec emax (by_ C) - / 2)
+    \/ (Binary.B2R prec emax (by_ P1) > Binary.B2R prec emax (by_ C) + / 2
+        /\ Binary.B2R prec emax (by_ P0) < Binary.B2R prec emax (by_ C) - / 2) ->
+    (* Top and bottom crossing parameters. *)
+    t_top = (Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    t_bot = (Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    (* x at the midpoint is in the pixel x-range [cx - 1/2, cx + 1/2). *)
+    Binary.B2R prec emax (bx C) - / 2
+      <= (1 - (t_top + t_bot) / 2) * Binary.B2R prec emax (bx P0)
+         + ((t_top + t_bot) / 2) * Binary.B2R prec emax (bx P1)
+      < Binary.B2R prec emax (bx C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_top t_bot Hcross Ht_top_def Ht_bot_def Hxrange.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  set (t_witness := (t_top + t_bot) / 2).
+  exists t_witness.
+  assert (Hdenom_ne : Binary.B2R prec emax (by_ P1)
+                      - Binary.B2R prec emax (by_ P0) <> 0).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_top_y :
+    t_top * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_top_def. field. exact Hdenom_ne. }
+  assert (Ht_bot_y :
+    t_bot * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_bot_def. field. exact Hdenom_ne. }
+  assert (Ht_top_bnds : 0 < t_top < 1).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_bot_bnds : 0 < t_bot < 1).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_witness_bnds : 0 < t_witness < 1).
+  { unfold t_witness. lra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hxrange as [Hxlo Hxhi].
+    (* By linearity, y(midpoint) = (y(t_top) + y(t_bot))/2 = cy. *)
+    assert (Hy_eq :
+      (1 - t_witness) * Binary.B2R prec emax (by_ P0)
+      + t_witness * Binary.B2R prec emax (by_ P1)
+      = Binary.B2R prec emax (by_ C)).
+    { unfold t_witness. nra. }
+    rewrite Hy_eq.
+    split.
+    + split; assumption.
+    + split; lra.
+Qed.
+
+Lemma b64_segment_crosses_left_and_right_sound :
+  forall (P0 P1 C : BPoint) (t_left t_right : R),
+    (* Segment passes through the pixel from left of the left edge to
+       right of the right edge (or symmetric). *)
+    (Binary.B2R prec emax (bx P0) < Binary.B2R prec emax (bx C) - / 2
+     /\ Binary.B2R prec emax (bx P1) > Binary.B2R prec emax (bx C) + / 2)
+    \/ (Binary.B2R prec emax (bx P1) < Binary.B2R prec emax (bx C) - / 2
+        /\ Binary.B2R prec emax (bx P0) > Binary.B2R prec emax (bx C) + / 2) ->
+    t_left = (Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+             / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    t_right = (Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0))
+              / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    (* y at the midpoint is in the pixel y-range [cy - 1/2, cy + 1/2). *)
+    Binary.B2R prec emax (by_ C) - / 2
+      <= (1 - (t_left + t_right) / 2) * Binary.B2R prec emax (by_ P0)
+         + ((t_left + t_right) / 2) * Binary.B2R prec emax (by_ P1)
+      < Binary.B2R prec emax (by_ C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_left t_right Hcross Ht_left_def Ht_right_def Hyrange.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  set (t_witness := (t_left + t_right) / 2).
+  exists t_witness.
+  assert (Hdenom_ne : Binary.B2R prec emax (bx P1)
+                      - Binary.B2R prec emax (bx P0) <> 0).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_left_x :
+    t_left * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_left_def. field. exact Hdenom_ne. }
+  assert (Ht_right_x :
+    t_right * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_right_def. field. exact Hdenom_ne. }
+  assert (Ht_left_bnds : 0 < t_left < 1).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_right_bnds : 0 < t_right < 1).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_witness_bnds : 0 < t_witness < 1).
+  { unfold t_witness. lra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hyrange as [Hylo Hyhi].
+    assert (Hx_eq :
+      (1 - t_witness) * Binary.B2R prec emax (bx P0)
+      + t_witness * Binary.B2R prec emax (bx P1)
+      = Binary.B2R prec emax (bx C)).
+    { unfold t_witness. nra. }
+    rewrite Hx_eq.
+    split.
+    + split; lra.
+    + split; assumption.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -984,6 +1120,8 @@ Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound.
 Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound_R.
 Print Assumptions b64_segment_crosses_bottom_edge_sound.
 Print Assumptions b64_segment_crosses_left_edge_sound.
+Print Assumptions b64_segment_crosses_top_and_bottom_sound.
+Print Assumptions b64_segment_crosses_left_and_right_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -1040,13 +1178,20 @@ Print Assumptions b64_segment_crosses_left_edge_sound.
 (*        witness.  The closed lower bound (<= in in_hot_pixel) makes the *)
 (*        t*-on-edge witness valid without epsilon-shift.                  *)
 (*                                                                            *)
-(*        The open-edge (top + right) cases remain deferred: the explicit *)
-(*        t* witness lies on the EXCLUDED upper boundary of the half-open *)
-(*        pixel, so soundness needs an epsilon-shift past the crossing    *)
-(*        point or a midpoint construction between entry and exit         *)
-(*        crossings.  IVT (Stdlib's `IVT_cor` in Rsqrt_def.v) on the      *)
-(*        linear convex-combination function is the natural tool; that is *)
-(*        the next engagement.                                              *)
+(*        Slice 6 lands the PASSES-THROUGH cases for opposite-edge pairs   *)
+(*        (top+bottom, left+right) via the midpoint-of-crossings           *)
+(*        construction.  Key insight: by linearity of the convex           *)
+(*        combination, the principal coordinate at the midpoint            *)
+(*        t_witness = (t_top + t_bot) / 2 equals the pixel center exactly *)
+(*        ((cy + 1/2 + cy - 1/2) / 2 = cy), satisfying both the closed    *)
+(*        lower and strict upper bounds.  No epsilon-shift or IVT needed. *)
+(*                                                                            *)
+(*        Adjacent-edge crossings (top+left, top+right, bottom+left,       *)
+(*        bottom+right) remain deferred -- each pattern needs its own      *)
+(*        witness construction.  A universal IVT-based construction would *)
+(*        unify all four but requires composing linear-function           *)
+(*        continuity proofs (`continuity_const + continuity_mult +        *)
+(*        continuity_plus`) before invoking `IVT_cor`.                      *)
 (*                                                                            *)
 (* 4. Integer-regime exact-radius theorem: when `scale` is a positive       *)
 (*    power of two within the safe range, `b64_hot_pixel_radius scale` is  *)
