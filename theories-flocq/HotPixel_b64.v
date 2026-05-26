@@ -783,6 +783,82 @@ Proof.
   intros P0 P1 C H. exact H.
 Qed.
 
+(* ============================================================================
+   Slice 3 (partial): b64_segment_touches_hot_pixel_endpoints -- form (b)
+   endpoint-only decidable filter.
+   ----------------------------------------------------------------------------
+   Form (b)'s soundness target is form (a) -- the chain (b) -> (a) -> R-side
+   requires form (b) to be a STRICT SUBSET of form (a) (no false positives).
+   A naive BB-overlap test fails this: BB-overlap is a necessary but not
+   sufficient condition for the segment to touch the pixel (counter-example:
+   segment (0, 1) -> (2, -1) has BB overlapping pixel-at-(1.5, 0.4)'s BB
+   but does not pass through the pixel).
+
+   The full form (b) -- including segment-crosses-pixel-boundary detection --
+   requires IVT (Stdlib's `IVT_cor` in Rsqrt_def.v) applied to the linear
+   convex-combination function.  That is the next engagement.
+
+   This slice ships the ENDPOINT-ONLY subset under an explicit
+   `_endpoints` suffix:
+     b64_segment_touches_hot_pixel_endpoints P0 P1 C :=
+       b64_in_hot_pixel P0 C b64_one || b64_in_hot_pixel P1 C b64_one
+
+   This is sound against form (a) by Slice 2's `_spec_l` and `_spec_r`
+   (witnesses t=0 and t=1).  The unqualified name
+   `b64_segment_touches_hot_pixel` is intentionally reserved for when the
+   IVT-based crossing test lands -- a future slice extends this with the
+   crossing disjunct and ships the full form (b) under the unqualified
+   name.
+   ============================================================================ *)
+
+Definition b64_segment_touches_hot_pixel_endpoints
+    (P0 P1 C : BPoint) : bool :=
+  b64_in_hot_pixel P0 C b64_one || b64_in_hot_pixel P1 C b64_one.
+
+(* Endpoint-only soundness: a `true` from the endpoint filter implies the
+   form (a) parametric existential.  Case-splits on which disjunct fired
+   and cites Slice 2's `_spec_l` (t = 0) or `_spec_r` (t = 1). *)
+Theorem b64_segment_touches_hot_pixel_endpoints_sound :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  -> coord_int_safe (by_ P0) ->
+    coord_int_safe (bx P1)  -> coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   -> coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    b64_segment_touches_hot_pixel_endpoints P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Hb.
+  unfold b64_segment_touches_hot_pixel_endpoints in Hb.
+  apply Bool.orb_true_iff in Hb. destruct Hb as [HbP0 | HbP1].
+  - apply (b64_segment_touches_hot_pixel_spec_l _ _ _
+             HiP0x HiP0y HiCx HiCy Hsafe0 HbP0).
+  - apply (b64_segment_touches_hot_pixel_spec_r _ _ _
+             HiP1x HiP1y HiCx HiCy Hsafe1 HbP1).
+Qed.
+
+(* Full soundness chain when composed through Slice 2's spec_sound:
+       b64_segment_touches_hot_pixel_endpoints P0 P1 C = true
+         -> b64_segment_touches_hot_pixel_spec P0 P1 C       [endpoints_sound]
+         -> segment_touches_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1  [spec_sound]
+   This corollary collapses the two steps for callers who want to skip
+   the form-(a) middle layer. *)
+Corollary b64_segment_touches_hot_pixel_endpoints_sound_R :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  -> coord_int_safe (by_ P0) ->
+    coord_int_safe (bx P1)  -> coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   -> coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    b64_segment_touches_hot_pixel_endpoints P0 P1 C = true ->
+    segment_touches_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Hb.
+  apply b64_segment_touches_hot_pixel_sound.
+  apply (b64_segment_touches_hot_pixel_endpoints_sound _ _ _
+           HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Hb).
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -798,6 +874,8 @@ Print Assumptions b64_segment_touches_hot_pixel_spec_l.
 Print Assumptions b64_segment_touches_hot_pixel_spec_r.
 Print Assumptions b64_segment_touches_hot_pixel_spec_degenerate.
 Print Assumptions b64_segment_touches_hot_pixel_sound.
+Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound.
+Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound_R.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -828,9 +906,19 @@ Print Assumptions b64_segment_touches_hot_pixel_sound.
 (*        the R-side as the identity unfolding.  Form (a) is the middle   *)
 (*        layer in the eventual soundness chain (b) -> (a) -> R-side.     *)
 (*    (b) decidable bounding-box filter (segment endpoints inside, or       *)
-(*        the segment crosses the pixel's bounding box).  Form (b) is the   *)
-(*        one a real noder would use; form (a) is easier for proofs.        *)
-(*    Form (b) deferred -- next engagement, soundness target is form (a).   *)
+(*        the segment crosses the pixel's bounding box).                     *)
+(*        [PARTIAL, Slice 3] -- the endpoint-only subset has landed as       *)
+(*        `b64_segment_touches_hot_pixel_endpoints` (a bool returning       *)
+(*        true if either endpoint passes `b64_in_hot_pixel`).  Sound to    *)
+(*        form (a) via Slice 2's `_spec_l` and `_spec_r`.  The unqualified *)
+(*        name `b64_segment_touches_hot_pixel` is reserved for when the    *)
+(*        IVT-based segment-crosses-pixel-boundary test lands and extends  *)
+(*        the disjunctive filter; that is the next engagement.  Form (b)  *)
+(*        cannot be a pure BB-overlap test -- BB-overlap is necessary but  *)
+(*        not sufficient for the segment to touch the pixel (a diagonal   *)
+(*        segment can have BB overlapping a pixel's BB while passing      *)
+(*        outside the pixel), so soundness to form (a) requires the actual *)
+(*        crossing test via IVT (Stdlib's `IVT_cor` in Rsqrt_def.v).        *)
 (*                                                                            *)
 (* 4. Integer-regime exact-radius theorem: when `scale` is a positive       *)
 (*    power of two within the safe range, `b64_hot_pixel_radius scale` is  *)
