@@ -692,6 +692,97 @@ Proof.
   split; [split | split]; assumption.
 Qed.
 
+(* ============================================================================
+   Slice 2: b64_segment_touches_hot_pixel_spec -- form (a) parametric
+   existential.
+   ----------------------------------------------------------------------------
+   The proof-friendly form of "segment touches pixel" -- mirrors the R-side
+   `segment_touches_hot_pixel` directly via BP2P composition.  Form (b) (a
+   decidable bounding-box filter) is a future engagement that will prove
+   soundness against THIS predicate; form (a) is the middle layer in the
+   soundness chain (b) -> (a) -> R-side.
+
+   The definition is propositionally equivalent to the R-side predicate
+   composed with BP2P -- this slice's value is in the three endpoint lemmas
+   that bridge from the b64 boolean decision `b64_in_hot_pixel = true` to
+   the b64-side existential, citing Slice 1.5's `b64_in_hot_pixel_sound`.
+   ============================================================================ *)
+
+Definition b64_segment_touches_hot_pixel_spec (P0 P1 C : BPoint) : Prop :=
+  segment_touches_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1.
+
+(* Endpoint at P0 (t = 0): if P0 lies in the b64 unit-grid pixel, then the
+   segment [P0, P1] touches the pixel.  Bridges from the b64 boolean
+   decision via b64_in_hot_pixel_sound (Slice 1.5), then applies the R-side
+   segment_touches_hot_pixel_l. *)
+Lemma b64_segment_touches_hot_pixel_spec_l :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  ->
+    coord_int_safe (by_ P0) ->
+    coord_int_safe (bx C)   ->
+    coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_in_hot_pixel P0 C b64_one = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiCx HiCy Hsafe Hb.
+  unfold b64_segment_touches_hot_pixel_spec.
+  apply segment_touches_hot_pixel_l.
+  apply (b64_in_hot_pixel_sound _ _ HiP0x HiP0y HiCx HiCy Hsafe Hb).
+Qed.
+
+(* Endpoint at P1 (t = 1): symmetric to _l. *)
+Lemma b64_segment_touches_hot_pixel_spec_r :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P1)  ->
+    coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   ->
+    coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    b64_in_hot_pixel P1 C b64_one = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C HiP1x HiP1y HiCx HiCy Hsafe Hb.
+  unfold b64_segment_touches_hot_pixel_spec.
+  apply segment_touches_hot_pixel_r.
+  apply (b64_in_hot_pixel_sound _ _ HiP1x HiP1y HiCx HiCy Hsafe Hb).
+Qed.
+
+(* Degenerate segment (P0 = P1): touches iff the single endpoint lies in
+   the pixel.  Lifts segment_touches_hot_pixel_degenerate (HotPixel.v:184)
+   in the forward direction (in_hot_pixel -> segment_touches). *)
+Lemma b64_segment_touches_hot_pixel_spec_degenerate :
+  forall P C : BPoint,
+    coord_int_safe (bx P)  ->
+    coord_int_safe (by_ P) ->
+    coord_int_safe (bx C)  ->
+    coord_int_safe (by_ C) ->
+    b64_hot_pixel_eval_safe P C b64_one ->
+    b64_in_hot_pixel P C b64_one = true ->
+    b64_segment_touches_hot_pixel_spec P P C.
+Proof.
+  intros P C HiPx HiPy HiCx HiCy Hsafe Hb.
+  unfold b64_segment_touches_hot_pixel_spec.
+  apply segment_touches_hot_pixel_degenerate.
+  apply (b64_in_hot_pixel_sound _ _ HiPx HiPy HiCx HiCy Hsafe Hb).
+Qed.
+
+(* Soundness: the b64-side predicate implies the R-side predicate composed
+   with BP2P.  This is the identity unfolding (the spec IS defined as the
+   R-side predicate composed with BP2P); stated explicitly so form (b) --
+   the decidable bounding-box filter -- can cite it as the middle layer
+   of the soundness chain
+        (b) decidable BB filter
+          \-> b64_segment_touches_hot_pixel_spec       [this slice]
+              \-> segment_touches_hot_pixel (R-side)   [via this theorem]   *)
+Theorem b64_segment_touches_hot_pixel_sound :
+  forall P0 P1 C : BPoint,
+    b64_segment_touches_hot_pixel_spec P0 P1 C ->
+    segment_touches_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1.
+Proof.
+  intros P0 P1 C H. exact H.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -703,6 +794,10 @@ Print Assumptions b64_hot_pixel_radius_at_one.
 Print Assumptions b64_minus_half_int_exact.
 Print Assumptions b64_plus_half_int_exact.
 Print Assumptions b64_in_hot_pixel_sound.
+Print Assumptions b64_segment_touches_hot_pixel_spec_l.
+Print Assumptions b64_segment_touches_hot_pixel_spec_r.
+Print Assumptions b64_segment_touches_hot_pixel_spec_degenerate.
+Print Assumptions b64_segment_touches_hot_pixel_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -724,11 +819,18 @@ Print Assumptions b64_in_hot_pixel_sound.
 (*    primitives use.                                                       *)
 (*                                                                            *)
 (* 3. `b64_segment_touches_hot_pixel`: two natural forms --                  *)
-(*    (a) parametric existential matching the R-side definition;            *)
+(*    (a) [LANDED, Slice 2] parametric existential matching the R-side      *)
+(*        definition.  `b64_segment_touches_hot_pixel_spec` composes the   *)
+(*        R-side `segment_touches_hot_pixel` with `BP2P`; three endpoint   *)
+(*        lemmas (_spec_l/r/degenerate) lift from the boolean              *)
+(*        `b64_in_hot_pixel = true` via Slice 1.5's `b64_in_hot_pixel_sound`.*)
+(*        `b64_segment_touches_hot_pixel_sound` documents the bridge to   *)
+(*        the R-side as the identity unfolding.  Form (a) is the middle   *)
+(*        layer in the eventual soundness chain (b) -> (a) -> R-side.     *)
 (*    (b) decidable bounding-box filter (segment endpoints inside, or       *)
 (*        the segment crosses the pixel's bounding box).  Form (b) is the   *)
 (*        one a real noder would use; form (a) is easier for proofs.        *)
-(*    Defer until the Phase 2 noder slice opens.                             *)
+(*    Form (b) deferred -- next engagement, soundness target is form (a).   *)
 (*                                                                            *)
 (* 4. Integer-regime exact-radius theorem: when `scale` is a positive       *)
 (*    power of two within the safe range, `b64_hot_pixel_radius scale` is  *)
