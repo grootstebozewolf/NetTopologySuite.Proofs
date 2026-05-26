@@ -7,6 +7,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Opt into Node.js 24 for JavaScript actions (actions/checkout,
+# docker/* actions etc.).  GitHub Actions deprecated the Node.js 20
+# runtime on 2025-09-19 and forces Node.js 24 as the default on
+# 2026-06-02; setting this flag now silences the transitional
+# deprecation warning and verifies the workflow runs cleanly on the
+# new runtime before the cutover.  See
+# https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   rocq:
     name: Build with Rocq ${{ matrix.rocq-version }}
