@@ -196,6 +196,103 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Counterexample: bounding-box overlap does NOT imply segment_touches.       *)
+(*                                                                            *)
+(* This certifies the design observation that motivates the layered          *)
+(* form-(a)/form-(b) structure in the binary64 mirror.  A noder filter       *)
+(* defined as pure BB-overlap would have false positives -- it would         *)
+(* claim "segment touches pixel" when in fact the segment passes outside.   *)
+(* Hence a sound form-(b) filter must include an actual edge-crossing test, *)
+(* not just BB-overlap.                                                       *)
+(*                                                                            *)
+(* Witness: P0 = (0, 1), P1 = (3/2, -1), C = (3/2, 1/2), scale = 1.          *)
+(*   Pixel-at-C with radius 1/2 covers [1, 2) x [0, 1).                      *)
+(*   Segment x-range: [0, 3/2], y-range: [-1, 1].                            *)
+(*   BBs overlap in [1, 3/2] x [0, 1) -- non-empty.                          *)
+(*   But the segment's parametrization is (3t/2, 1 - 2t):                    *)
+(*     - x in [1, 2): requires t >= 2/3.                                     *)
+(*     - y in [0, 1):  requires 0 < t <= 1/2.                                *)
+(*   These ranges are disjoint, so no t produces a point in the pixel.       *)
+(*                                                                            *)
+(* The lemma certifies both halves: BB-overlap holds, and                    *)
+(* segment_touches_hot_pixel does not.                                        *)
+(* -------------------------------------------------------------------------- *)
+
+(* Load-bearing claim: the segment defined by the witness coordinates does
+   not touch the half-open pixel.  The BB-overlap of the witness is
+   trivial and is recorded as separate lemmas below. *)
+Lemma bb_overlap_witness_segment_does_not_touch :
+  ~ segment_touches_hot_pixel
+      (mkPoint 0 1) (mkPoint (3 / 2) (- (1))) (mkPoint (3 / 2) (1 / 2)) 1.
+Proof.
+  intros [t [[Ht0 Ht1] Hin]].
+  unfold in_hot_pixel, hot_pixel_radius, segment_point, px, py in Hin.
+  simpl in Hin.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  (* Hxlo : 3/2 - / (2 * 1) <= (1 - t) * 0 + t * (3/2)
+     Hxhi : (1 - t) * 0 + t * (3/2) < 3/2 + / (2 * 1)
+     Hylo : 1/2 - / (2 * 1) <= (1 - t) * 1 + t * (- (1))
+     Hyhi : (1 - t) * 1 + t * (- (1)) < 1/2 + / (2 * 1)
+     Hxlo forces t >= 2/3; Hyhi forces t <= 1/2; contradiction. *)
+  lra.
+Qed.
+
+(* BB-overlap facts for the witness, recorded explicitly so the
+   counterexample's premises are auditable. *)
+Lemma bb_overlap_witness_x_overlap :
+  Rmin (px (mkPoint 0 1)) (px (mkPoint (3 / 2) (- (1))))
+    <= px (mkPoint (3 / 2) (1 / 2)) + hot_pixel_radius 1
+  /\
+  px (mkPoint (3 / 2) (1 / 2)) - hot_pixel_radius 1
+    <= Rmax (px (mkPoint 0 1)) (px (mkPoint (3 / 2) (- (1)))).
+Proof.
+  unfold hot_pixel_radius, px. simpl.
+  split.
+  - apply (Rle_trans _ 0); [apply Rmin_l|]. lra.
+  - apply (Rle_trans _ (3 / 2)); [|apply Rmax_r]. lra.
+Qed.
+
+Lemma bb_overlap_witness_y_overlap :
+  Rmin (py (mkPoint 0 1)) (py (mkPoint (3 / 2) (- (1))))
+    <= py (mkPoint (3 / 2) (1 / 2)) + hot_pixel_radius 1
+  /\
+  py (mkPoint (3 / 2) (1 / 2)) - hot_pixel_radius 1
+    <= Rmax (py (mkPoint 0 1)) (py (mkPoint (3 / 2) (- (1)))).
+Proof.
+  unfold hot_pixel_radius, py. simpl.
+  split.
+  - apply (Rle_trans _ (- (1))); [apply Rmin_r|]. lra.
+  - apply (Rle_trans _ 1); [|apply Rmax_l]. lra.
+Qed.
+
+(* Headline: certifies that BB-overlap is not sufficient for touch. *)
+Theorem bb_overlap_not_sufficient_for_touches :
+  exists P0 P1 C : Point,
+    (* BB-overlap on both axes *)
+    Rmin (px P0) (px P1) <= px C + hot_pixel_radius 1 /\
+    px C - hot_pixel_radius 1 <= Rmax (px P0) (px P1) /\
+    Rmin (py P0) (py P1) <= py C + hot_pixel_radius 1 /\
+    py C - hot_pixel_radius 1 <= Rmax (py P0) (py P1) /\
+    (* But the segment does not touch the half-open pixel *)
+    ~ segment_touches_hot_pixel P0 P1 C 1.
+Proof.
+  exists (mkPoint 0 1), (mkPoint (3 / 2) (- (1))), (mkPoint (3 / 2) (1 / 2)).
+  pose proof bb_overlap_witness_x_overlap as [Hx1 Hx2].
+  pose proof bb_overlap_witness_y_overlap as [Hy1 Hy2].
+  pose proof bb_overlap_witness_segment_does_not_touch as Hntouch.
+  repeat split; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Assumption audit.                                                          *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions bb_overlap_witness_segment_does_not_touch.
+Print Assumptions bb_overlap_witness_x_overlap.
+Print Assumptions bb_overlap_witness_y_overlap.
+Print Assumptions bb_overlap_not_sufficient_for_touches.
+
+(* -------------------------------------------------------------------------- *)
 (* Deferred: full snap-rounding rewriter.                                     *)
 (*                                                                            *)
 (* The snap-rounding noder (JTS HotPixelIndex + MCIndexSnapRounder) does     *)
