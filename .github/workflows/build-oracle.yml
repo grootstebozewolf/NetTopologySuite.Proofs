@@ -1,0 +1,102 @@
+name: Build and publish oracle_bin
+
+# Build the standalone `oracle_bin` (the RocqRefRunner used by
+# NetTopologySuite.Curve's differential-test harness) and publish it as a
+# GHA artifact on every push to main.  On release events the same binary
+# is attached to the release as a downloadable asset, giving .Curve's CI
+# a stable URL to consume.
+#
+# Toolchain pin: reuses the project's Dockerfile (rocq 9.1.1 + ocaml
+# 4.14.2-flambda + coq-flocq.4.2.2 + ocamlfind), shared with the
+# `build proofs / rocq-flocq` job in ci.yml via the GHA Docker layer
+# cache, so the slow `opam install coq-flocq.4.2.2` step is not repeated.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'oracle/**'
+      - 'theories-flocq/**'
+      - '_CoqProject.full'
+      - 'Dockerfile'
+      - '.github/workflows/build-oracle.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build-oracle:
+    name: Build oracle_bin in pinned rocq 9.1.1 + flocq 4.2.2 container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build container image (rocq 9.1.1 + flocq 4.2.2)
+        # Reuses the existing Dockerfile + GHA Docker layer cache, so the
+        # `opam install coq-flocq.4.2.2` step is shared with ci.yml's
+        # `rocq-flocq` job.  On a warm cache this step is ~30s; cold it
+        # is ~5 min (coq-flocq compile).
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: nts-proofs-oracle:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build corpus, extract, link oracle_bin
+        # Inside the pinned container:
+        #   1. opam install ocamlfind (idempotent; needed for oracle/Makefile).
+        #   2. Clean host-leaked build artefacts (mirrors Dockerfile CMD).
+        #   3. rocq makefile -f _CoqProject.full -o Makefile.gen.
+        #   4. make -f Makefile.gen -- builds the full flocq-dependent
+        #      corpus, including Validate_binary64_extract.v's extraction
+        #      target, which writes oracle/extracted.ml + oracle/extracted.mli.
+        #   5. make -C oracle/ -- links extracted.cmx + driver.cmx against
+        #      -package str (the only OCaml dep beyond the stdlib; confirmed
+        #      from oracle/Makefile line 34).
+        # The container's /workspace was populated by the Dockerfile's
+        # `COPY --chown=rocq:rocq . /workspace` at image-build time, so it
+        # reflects this checkout.  After the build, `docker cp` extracts
+        # the resulting binary to the host runner for the upload step.
+        run: |
+          docker run --name oracle-build nts-proofs-oracle:ci \
+            bash -lc '
+              set -euxo pipefail
+              opam install --confirm-level=unsafe-yes ocamlfind
+              eval $(opam env)
+              rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d \
+                    .nra.cache theories/*.vo* theories/*.glob theories/.*.aux \
+                    theories-flocq/*.vo* theories-flocq/*.glob \
+                    theories-flocq/.*.aux
+              rocq makefile -f _CoqProject.full -o Makefile.gen
+              make -f Makefile.gen -j2
+              test -f oracle/extracted.ml
+              test -f oracle/extracted.mli
+              make -C oracle/
+              test -x oracle/oracle_bin
+            '
+          docker cp oracle-build:/workspace/oracle/oracle_bin ./oracle_bin
+          docker rm oracle-build
+
+      - name: Sanity check artifact
+        run: |
+          test -x ./oracle_bin
+          file ./oracle_bin
+          ls -la ./oracle_bin
+
+      - name: Upload oracle_bin artifact (90-day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-bin-linux
+          path: oracle_bin
+          retention-days: 90
+
+      - name: Attach oracle_bin to release (release events only)
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: oracle_bin
