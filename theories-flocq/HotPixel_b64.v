@@ -859,6 +859,112 @@ Proof.
            HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Hb).
 Qed.
 
+(* ============================================================================
+   Slice 5 (3d): closed-edge crossing soundness -- bottom + left edges.
+   ----------------------------------------------------------------------------
+   Per the half-open in_hot_pixel definition:
+     px C - r <= px P < px C + r  /\  py C - r <= py P < py C + r
+   the LEFT and BOTTOM edges are closed (<=); the RIGHT and TOP edges are
+   open (<).  For the closed edges, the explicit-t* crossing witness lands
+   on the edge with equality, which satisfies the closed lower bound -- the
+   witness is valid without an epsilon-shift.
+
+   For each closed edge we ship a soundness lemma in Prop form: given a
+   strict sign-change condition on the appropriate coordinate plus the
+   transverse coordinate range condition, the crossing t* produces a form
+   (a) witness.
+
+   The open-edge cases (top + right) remain deferred -- they need an
+   epsilon-shift or midpoint construction since the explicit-t* witness
+   lands on the EXCLUDED upper boundary.
+   ============================================================================ *)
+
+Lemma b64_segment_crosses_bottom_edge_sound :
+  forall (P0 P1 C : BPoint) (t_star : R),
+    (* Strict sign change on y across the bottom edge y = cy - 1/2. *)
+    (Binary.B2R prec emax (by_ P0) < Binary.B2R prec emax (by_ C) - / 2
+     /\ Binary.B2R prec emax (by_ C) - / 2 < Binary.B2R prec emax (by_ P1))
+    \/ (Binary.B2R prec emax (by_ P1) < Binary.B2R prec emax (by_ C) - / 2
+        /\ Binary.B2R prec emax (by_ C) - / 2 < Binary.B2R prec emax (by_ P0)) ->
+    (* The explicit witness for the crossing. *)
+    t_star = (Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+             / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    (* At t*, x lies in the pixel's x-range [cx - 1/2, cx + 1/2). *)
+    Binary.B2R prec emax (bx C) - / 2
+      <= (1 - t_star) * Binary.B2R prec emax (bx P0)
+         + t_star * Binary.B2R prec emax (bx P1)
+      < Binary.B2R prec emax (bx C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_star Hcross Ht_def Hxrange.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  exists t_star.
+  assert (Hdenom_ne : Binary.B2R prec emax (by_ P1)
+                      - Binary.B2R prec emax (by_ P0) <> 0).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_y :
+    t_star * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_def. field. exact Hdenom_ne. }
+  assert (Ht_bnds : 0 < t_star < 1).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; nra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hxrange as [Hxlo Hxhi].
+    assert (Hy_eq :
+      (1 - t_star) * Binary.B2R prec emax (by_ P0)
+      + t_star * Binary.B2R prec emax (by_ P1)
+      = Binary.B2R prec emax (by_ C) - / 2) by nra.
+    rewrite Hy_eq.
+    split.
+    + split; assumption.
+    + split; lra.
+Qed.
+
+Lemma b64_segment_crosses_left_edge_sound :
+  forall (P0 P1 C : BPoint) (t_star : R),
+    (* Strict sign change on x across the left edge x = cx - 1/2. *)
+    (Binary.B2R prec emax (bx P0) < Binary.B2R prec emax (bx C) - / 2
+     /\ Binary.B2R prec emax (bx C) - / 2 < Binary.B2R prec emax (bx P1))
+    \/ (Binary.B2R prec emax (bx P1) < Binary.B2R prec emax (bx C) - / 2
+        /\ Binary.B2R prec emax (bx C) - / 2 < Binary.B2R prec emax (bx P0)) ->
+    t_star = (Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+             / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    Binary.B2R prec emax (by_ C) - / 2
+      <= (1 - t_star) * Binary.B2R prec emax (by_ P0)
+         + t_star * Binary.B2R prec emax (by_ P1)
+      < Binary.B2R prec emax (by_ C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_star Hcross Ht_def Hyrange.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  exists t_star.
+  assert (Hdenom_ne : Binary.B2R prec emax (bx P1)
+                      - Binary.B2R prec emax (bx P0) <> 0).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_x :
+    t_star * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_def. field. exact Hdenom_ne. }
+  assert (Ht_bnds : 0 < t_star < 1).
+  { destruct Hcross as [[H0 H1] | [H0 H1]]; nra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hyrange as [Hylo Hyhi].
+    assert (Hx_eq :
+      (1 - t_star) * Binary.B2R prec emax (bx P0)
+      + t_star * Binary.B2R prec emax (bx P1)
+      = Binary.B2R prec emax (bx C) - / 2) by nra.
+    rewrite Hx_eq.
+    split.
+    + split; lra.
+    + split; assumption.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -876,6 +982,8 @@ Print Assumptions b64_segment_touches_hot_pixel_spec_degenerate.
 Print Assumptions b64_segment_touches_hot_pixel_sound.
 Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound.
 Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound_R.
+Print Assumptions b64_segment_crosses_bottom_edge_sound.
+Print Assumptions b64_segment_crosses_left_edge_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -921,13 +1029,24 @@ Print Assumptions b64_segment_touches_hot_pixel_endpoints_sound_R.
 (*        (Slice 4): witness P0=(0,1), P1=(3/2,-1), C=(3/2,1/2) has        *)
 (*        BB-overlap on both axes but no t in [0,1] places the convex      *)
 (*        combination inside the half-open pixel.  Hence soundness to form *)
-(*        (a) requires the actual crossing test via per-edge analysis or  *)
-(*        IVT (Stdlib's `IVT_cor` in Rsqrt_def.v); the half-open pixel    *)
-(*        semantics complicate the top/right (open) edges, where the      *)
-(*        edge-crossing witness lies on the excluded boundary and an      *)
-(*        epsilon-shift or midpoint construction is needed.  That is the  *)
-(*        next engagement -- this slice ships only the design-observation *)
-(*        certificate.                                                      *)
+(*        (a) requires the actual crossing test, not just BB-overlap.       *)
+(*                                                                            *)
+(*        Slice 5 lands the CLOSED-edge (bottom + left) crossing soundness *)
+(*        lemmas in Prop form -- `b64_segment_crosses_bottom_edge_sound`   *)
+(*        and `b64_segment_crosses_left_edge_sound`.  Each takes a strict *)
+(*        sign-change on the principal coordinate plus the transverse    *)
+(*        coordinate's pixel-range condition at t*, then exhibits         *)
+(*        t* = (edge - coord0) / (coord1 - coord0) as the form-(a)        *)
+(*        witness.  The closed lower bound (<= in in_hot_pixel) makes the *)
+(*        t*-on-edge witness valid without epsilon-shift.                  *)
+(*                                                                            *)
+(*        The open-edge (top + right) cases remain deferred: the explicit *)
+(*        t* witness lies on the EXCLUDED upper boundary of the half-open *)
+(*        pixel, so soundness needs an epsilon-shift past the crossing    *)
+(*        point or a midpoint construction between entry and exit         *)
+(*        crossings.  IVT (Stdlib's `IVT_cor` in Rsqrt_def.v) on the      *)
+(*        linear convex-combination function is the natural tool; that is *)
+(*        the next engagement.                                              *)
 (*                                                                            *)
 (* 4. Integer-regime exact-radius theorem: when `scale` is a positive       *)
 (*    power of two within the safe range, `b64_hot_pixel_radius scale` is  *)
