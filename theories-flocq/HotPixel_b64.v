@@ -1641,16 +1641,218 @@ Proof.
   - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
 Qed.
 
-(* Partial bool filter: endpoint OR the four landed crossing cases.       *)
-(* Sound to form (a); not complete (adjacent-edge crossings deferred).    *)
-(* The unqualified `b64_segment_touches_hot_pixel` stays reserved until   *)
-(* the filter is complete.                                                 *)
+(* Adjacent-edge crossings, decidable (wrapping the Slice 7 Prop lemmas). *)
+Definition b64_crosses_top_left_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let ttop  := (cy + / 2 - y0) / (y1 - y0) in
+  let tleft := (cx - / 2 - x0) / (x1 - x0) in
+  (((((Rlt_bool (cy + / 2) y0 && Rlt_bool y1 (cy + / 2))
+      || (Rlt_bool (cy + / 2) y1 && Rlt_bool y0 (cy + / 2)))
+     && ((Rlt_bool x0 (cx - / 2) && Rlt_bool (cx - / 2) x1)
+         || (Rlt_bool x1 (cx - / 2) && Rlt_bool (cx - / 2) x0)))
+    && Rle_bool (cx - / 2) ((1 - ttop) * x0 + ttop * x1)
+    && Rlt_bool ((1 - ttop) * x0 + ttop * x1) (cx + / 2))
+   && Rle_bool (cy - / 2) ((1 - tleft) * y0 + tleft * y1))
+  && Rlt_bool ((1 - tleft) * y0 + tleft * y1) (cy + / 2).
+
+Lemma b64_crosses_top_left_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_top_left_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_top_left_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hyhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hylo].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxlo].
+  apply Bool.andb_true_iff in H. destruct H as [HsY HsX].
+  apply (b64_segment_crosses_top_left_sound P0 P1 C
+           ((Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))
+           ((Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))).
+  - apply Bool.orb_true_iff in HsY. destruct HsY as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - apply Bool.orb_true_iff in HsX. destruct HsX as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+Definition b64_crosses_top_right_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let ttop   := (cy + / 2 - y0) / (y1 - y0) in
+  let tright := (cx + / 2 - x0) / (x1 - x0) in
+  (((((Rlt_bool (cy + / 2) y0 && Rlt_bool y1 (cy + / 2))
+      || (Rlt_bool (cy + / 2) y1 && Rlt_bool y0 (cy + / 2)))
+     && ((Rlt_bool x0 (cx + / 2) && Rlt_bool (cx + / 2) x1)
+         || (Rlt_bool x1 (cx + / 2) && Rlt_bool (cx + / 2) x0)))
+    && Rle_bool (cx - / 2) ((1 - ttop) * x0 + ttop * x1)
+    && Rlt_bool ((1 - ttop) * x0 + ttop * x1) (cx + / 2))
+   && Rle_bool (cy - / 2) ((1 - tright) * y0 + tright * y1))
+  && Rlt_bool ((1 - tright) * y0 + tright * y1) (cy + / 2).
+
+Lemma b64_crosses_top_right_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_top_right_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_top_right_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hyhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hylo].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxlo].
+  apply Bool.andb_true_iff in H. destruct H as [HsY HsX].
+  apply (b64_segment_crosses_top_right_sound P0 P1 C
+           ((Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))
+           ((Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))).
+  - apply Bool.orb_true_iff in HsY. destruct HsY as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - apply Bool.orb_true_iff in HsX. destruct HsX as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+Definition b64_crosses_bottom_left_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let tbot  := (cy - / 2 - y0) / (y1 - y0) in
+  let tleft := (cx - / 2 - x0) / (x1 - x0) in
+  (((((Rlt_bool (cy - / 2) y0 && Rlt_bool y1 (cy - / 2))
+      || (Rlt_bool (cy - / 2) y1 && Rlt_bool y0 (cy - / 2)))
+     && ((Rlt_bool x0 (cx - / 2) && Rlt_bool (cx - / 2) x1)
+         || (Rlt_bool x1 (cx - / 2) && Rlt_bool (cx - / 2) x0)))
+    && Rle_bool (cx - / 2) ((1 - tbot) * x0 + tbot * x1)
+    && Rlt_bool ((1 - tbot) * x0 + tbot * x1) (cx + / 2))
+   && Rle_bool (cy - / 2) ((1 - tleft) * y0 + tleft * y1))
+  && Rlt_bool ((1 - tleft) * y0 + tleft * y1) (cy + / 2).
+
+Lemma b64_crosses_bottom_left_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_bottom_left_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_bottom_left_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hyhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hylo].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxlo].
+  apply Bool.andb_true_iff in H. destruct H as [HsY HsX].
+  apply (b64_segment_crosses_bottom_left_sound P0 P1 C
+           ((Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))
+           ((Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))).
+  - apply Bool.orb_true_iff in HsY. destruct HsY as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - apply Bool.orb_true_iff in HsX. destruct HsX as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+Definition b64_crosses_bottom_right_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let tbot   := (cy - / 2 - y0) / (y1 - y0) in
+  let tright := (cx + / 2 - x0) / (x1 - x0) in
+  (((((Rlt_bool (cy - / 2) y0 && Rlt_bool y1 (cy - / 2))
+      || (Rlt_bool (cy - / 2) y1 && Rlt_bool y0 (cy - / 2)))
+     && ((Rlt_bool x0 (cx + / 2) && Rlt_bool (cx + / 2) x1)
+         || (Rlt_bool x1 (cx + / 2) && Rlt_bool (cx + / 2) x0)))
+    && Rle_bool (cx - / 2) ((1 - tbot) * x0 + tbot * x1)
+    && Rlt_bool ((1 - tbot) * x0 + tbot * x1) (cx + / 2))
+   && Rle_bool (cy - / 2) ((1 - tright) * y0 + tright * y1))
+  && Rlt_bool ((1 - tright) * y0 + tright * y1) (cy + / 2).
+
+Lemma b64_crosses_bottom_right_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_bottom_right_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_bottom_right_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hyhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hylo].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxhi].
+  apply Bool.andb_true_iff in H. destruct H as [H Hxlo].
+  apply Bool.andb_true_iff in H. destruct H as [HsY HsX].
+  apply (b64_segment_crosses_bottom_right_sound P0 P1 C
+           ((Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))
+           ((Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))).
+  - apply Bool.orb_true_iff in HsY. destruct HsY as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - apply Bool.orb_true_iff in HsX. destruct HsX as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+(* Partial bool filter: endpoint OR all eight crossing cases (closed,      *)
+(* opposite, adjacent).  Sound to form (a).  Still NOT proven complete --  *)
+(* the classification argument (form (a) -> filter = true) is the          *)
+(* remaining piece; until then the unqualified                             *)
+(* `b64_segment_touches_hot_pixel` stays reserved.                          *)
 Definition b64_segment_touches_hot_pixel_partial (P0 P1 C : BPoint) : bool :=
   b64_segment_touches_hot_pixel_endpoints P0 P1 C
   || b64_crosses_bottom_edge_dec P0 P1 C
   || b64_crosses_left_edge_dec P0 P1 C
   || b64_crosses_top_bottom_dec P0 P1 C
-  || b64_crosses_left_right_dec P0 P1 C.
+  || b64_crosses_left_right_dec P0 P1 C
+  || b64_crosses_top_left_dec P0 P1 C
+  || b64_crosses_top_right_dec P0 P1 C
+  || b64_crosses_bottom_left_dec P0 P1 C
+  || b64_crosses_bottom_right_dec P0 P1 C.
 
 Theorem b64_segment_touches_hot_pixel_partial_sound :
   forall P0 P1 C : BPoint,
@@ -1664,6 +1866,14 @@ Theorem b64_segment_touches_hot_pixel_partial_sound :
 Proof.
   intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 H.
   unfold b64_segment_touches_hot_pixel_partial in H.
+  apply Bool.orb_true_iff in H. destruct H as [H | Hbr].
+  2: { apply b64_crosses_bottom_right_dec_sound. exact Hbr. }
+  apply Bool.orb_true_iff in H. destruct H as [H | Hbl].
+  2: { apply b64_crosses_bottom_left_dec_sound. exact Hbl. }
+  apply Bool.orb_true_iff in H. destruct H as [H | Htr].
+  2: { apply b64_crosses_top_right_dec_sound. exact Htr. }
+  apply Bool.orb_true_iff in H. destruct H as [H | Htl].
+  2: { apply b64_crosses_top_left_dec_sound. exact Htl. }
   apply Bool.orb_true_iff in H. destruct H as [H | He].
   2: { apply b64_crosses_left_right_dec_sound. exact He. }
   apply Bool.orb_true_iff in H. destruct H as [H | Hd].
@@ -1724,6 +1934,10 @@ Print Assumptions b64_segment_crosses_top_left_sound.
 Print Assumptions b64_segment_crosses_top_right_sound.
 Print Assumptions b64_segment_crosses_bottom_left_sound.
 Print Assumptions b64_segment_crosses_bottom_right_sound.
+Print Assumptions b64_crosses_top_left_dec_sound.
+Print Assumptions b64_crosses_top_right_dec_sound.
+Print Assumptions b64_crosses_bottom_left_dec_sound.
+Print Assumptions b64_crosses_bottom_right_dec_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
