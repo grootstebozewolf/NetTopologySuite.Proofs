@@ -179,6 +179,11 @@ theories-flocq/HotPixel_b64.v
 # through a hot pixel still does so after snapping), on both the R-side spec
 # and binary64.  Builds on HotPixel_b64's passes-through relation and snap.
 theories-flocq/SnapRounding_b64.v
+# Phase 2 milestone 4 (Slice 13): topological correctness of snap-rounding.
+# Shared-hot-pixel preservation (the provable local kernel of the audit doc's
+# share_point => shared-vertex conjunct) on the R-side and binary64, plus a
+# whole-arrangement (list-of-segments) lift.  Builds on SnapRounding_b64.
+theories-flocq/TopologicalCorrectness_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract

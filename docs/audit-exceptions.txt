@@ -50,6 +50,15 @@ theories-flocq/Orient_b64_sound.v
 # this file; the three deliverable theorems are Qed-closed.
 theories-flocq/SnapRounding_b64.v
 
+# Category C: Phase 2 milestone 4 (Slice 13) topological correctness.
+# Every theorem references `snap_round` / `b64_snap` (via SnapRounding_b64),
+# whose closure pulls `Classical_Prop.classic` through Flocq's `round` /
+# `round_mode` -- the identical lineage that exempts SnapRounding_b64.v and
+# HotPixel_b64.v.  Intrinsic to any theorem about `snap_round`; not removable
+# without a parametric refactor of the snap layer.  No Admitteds in this file;
+# the three deliverable theorems are Qed-closed.
+theories-flocq/TopologicalCorrectness_b64.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
