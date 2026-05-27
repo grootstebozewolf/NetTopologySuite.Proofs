@@ -30,9 +30,12 @@
    This is the Phase 2 foundations slice on the binary64 side.  Three
    pieces are deferred to follow-up slices:
 
-     1. `b64_hot_pixel_center` -- snapping a coordinate to the grid via
-        round-to-integer.  Needs `Binary.Bnearbyint` and a finiteness /
-        no-overflow analysis tailored to the round-to-int primitive.
+     1. `b64_hot_pixel_center` -- producing a FINITE snapped *center*.
+        Slice 11 uses `Binary.Bnearbyint` for `b64_snap` and exploits its
+        UNCONDITIONAL B2R equation (no finiteness side-condition) for the
+        exact `b64_snap_coord_B2R` bridge.  What remains deferred here is
+        only the finiteness / no-overflow analysis needed to guarantee the
+        snapped value is itself finite (not the B2R equation).
      2. `b64_segment_touches_hot_pixel` -- the parametric or decidable
         bounding-box variant.  Easier to state alongside the noder
         (Phase 2 proper).
@@ -1903,6 +1906,549 @@ Proof.
            HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 H).
 Qed.
 
+(* ============================================================================
+   Slice 9 (3g-point): point-in-pixel completeness.
+   ----------------------------------------------------------------------------
+   The converse of the Slice 1.5 bridge: under coord_int_safe + eval-safety,
+   the exact R-side `in_hot_pixel` IMPLIES the binary64 boolean decision
+   `b64_in_hot_pixel = true`.  Combined with Slice 1.5's soundness this makes
+   the boolean decision a faithful (sound + complete) test of pixel
+   membership in the integer regime.
+
+   As a corollary, the partial segment filter is COMPLETE for the
+   endpoint-in-pixel case: if either segment endpoint lies in the pixel,
+   `b64_segment_touches_hot_pixel_partial = true`.  Completeness for the
+   crossing cases (the geometric classification: any touching segment with
+   both endpoints outside must cross via one of the eight edge patterns)
+   remains the deferred 3g-crossing piece.
+   ============================================================================ *)
+
+(* Completeness of the boolean comparisons (converses of b64_le_R_of_true
+   / b64_lt_R_of_true). *)
+Lemma b64_le_complete :
+  forall a b : binary64,
+    Binary.is_finite prec emax a = true ->
+    Binary.is_finite prec emax b = true ->
+    Binary.B2R prec emax a <= Binary.B2R prec emax b ->
+    b64_le a b = true.
+Proof.
+  intros a b Fa Fb Hle.
+  unfold b64_le, b64_compare.
+  rewrite Binary.Bcompare_correct by assumption.
+  destruct (Rcompare (Binary.B2R prec emax a)
+                     (Binary.B2R prec emax b)) eqn:E.
+  - reflexivity.
+  - reflexivity.
+  - apply Rcompare_Gt_inv in E. lra.
+Qed.
+
+Lemma b64_lt_complete :
+  forall a b : binary64,
+    Binary.is_finite prec emax a = true ->
+    Binary.is_finite prec emax b = true ->
+    Binary.B2R prec emax a < Binary.B2R prec emax b ->
+    b64_lt a b = true.
+Proof.
+  intros a b Fa Fb Hlt.
+  unfold b64_lt, b64_compare.
+  rewrite Binary.Bcompare_correct by assumption.
+  destruct (Rcompare (Binary.B2R prec emax a)
+                     (Binary.B2R prec emax b)) eqn:E.
+  - apply Rcompare_Eq_inv in E. lra.
+  - reflexivity.
+  - apply Rcompare_Gt_inv in E. lra.
+Qed.
+
+(* The four pixel-bound expressions are bit-exact (B2R = center +/- 1/2) and
+   finite, under coord_int_safe on the center + eval-safety.  Shared by the
+   completeness theorem below; mirrors the inline derivation in
+   b64_in_hot_pixel_sound (Slice 1.5) but also retains the finiteness
+   components that the soundness proof discarded. *)
+Lemma b64_hot_pixel_bounds_exact :
+  forall P C : BPoint,
+    coord_int_safe (bx C) ->
+    coord_int_safe (by_ C) ->
+    b64_hot_pixel_eval_safe P C b64_one ->
+    let r := b64_hot_pixel_radius b64_one in
+    (Binary.B2R prec emax (b64_minus (bx C) r)
+       = Binary.B2R prec emax (bx C) - / 2
+     /\ Binary.is_finite prec emax (b64_minus (bx C) r) = true)
+    /\ (Binary.B2R prec emax (b64_plus (bx C) r)
+          = Binary.B2R prec emax (bx C) + / 2
+        /\ Binary.is_finite prec emax (b64_plus (bx C) r) = true)
+    /\ (Binary.B2R prec emax (b64_minus (by_ C) r)
+          = Binary.B2R prec emax (by_ C) - / 2
+        /\ Binary.is_finite prec emax (b64_minus (by_ C) r) = true)
+    /\ (Binary.B2R prec emax (b64_plus (by_ C) r)
+          = Binary.B2R prec emax (by_ C) + / 2
+        /\ Binary.is_finite prec emax (b64_plus (by_ C) r) = true).
+Proof.
+  intros P C HiCx HiCy Hsafe.
+  pose proof b64_hot_pixel_radius_at_one as [HrR HrF].
+  set (r := b64_hot_pixel_radius b64_one) in *.
+  destruct HiCx as (FxC & ncx & HcxR & Hcxb).
+  destruct HiCy as (FyC & ncy & HcyR & Hcyb).
+  destruct Hsafe as (_ & _ & _ & _ & _ & Smx & Spx & Smy & Spy).
+  repeat split.
+  - (* B2R (b64_minus (bx C) r) = B2R (bx C) - 1/2 *)
+    pose proof (b64_minus_correct _ _ Smx) as [HmxR _].
+    fold r in HmxR. rewrite HmxR, HrR.
+    apply b64_round_generic. rewrite HcxR.
+    assert (Heq : IZR ncx - / 2 = F2R (Float radix2 (2 * ncx - 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, minus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_minus_correct _ _ Smx) as [_ HmxF]. fold r in HmxF. exact HmxF.
+  - pose proof (b64_plus_correct _ _ Spx) as [HpxR _].
+    fold r in HpxR. rewrite HpxR, HrR.
+    apply b64_round_generic. rewrite HcxR.
+    assert (Heq : IZR ncx + / 2 = F2R (Float radix2 (2 * ncx + 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, plus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_plus_correct _ _ Spx) as [_ HpxF]. fold r in HpxF. exact HpxF.
+  - pose proof (b64_minus_correct _ _ Smy) as [HmyR _].
+    fold r in HmyR. rewrite HmyR, HrR.
+    apply b64_round_generic. rewrite HcyR.
+    assert (Heq : IZR ncy - / 2 = F2R (Float radix2 (2 * ncy - 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, minus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_minus_correct _ _ Smy) as [_ HmyF]. fold r in HmyF. exact HmyF.
+  - pose proof (b64_plus_correct _ _ Spy) as [HpyR _].
+    fold r in HpyR. rewrite HpyR, HrR.
+    apply b64_round_generic. rewrite HcyR.
+    assert (Heq : IZR ncy + / 2 = F2R (Float radix2 (2 * ncy + 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, plus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_plus_correct _ _ Spy) as [_ HpyF]. fold r in HpyF. exact HpyF.
+Qed.
+
+Theorem b64_in_hot_pixel_complete :
+  forall P C : BPoint,
+    coord_int_safe (bx P)  ->
+    coord_int_safe (by_ P) ->
+    coord_int_safe (bx C)  ->
+    coord_int_safe (by_ C) ->
+    b64_hot_pixel_eval_safe P C b64_one ->
+    in_hot_pixel (BP2P P) (BP2P C) 1 ->
+    b64_in_hot_pixel P C b64_one = true.
+Proof.
+  intros P C HiPx HiPy HiCx HiCy Hsafe Hin.
+  pose proof (b64_hot_pixel_bounds_exact P C HiCx HiCy Hsafe)
+    as [[HmxR HmxF] [[HpxR HpxF] [[HmyR HmyF] [HpyR HpyF]]]].
+  set (r := b64_hot_pixel_radius b64_one) in *.
+  destruct HiPx as (FxP & _).
+  destruct HiPy as (FyP & _).
+  unfold in_hot_pixel, BP2P, px, py in Hin. simpl in Hin.
+  unfold hot_pixel_radius in Hin.
+  replace (/ (2 * 1)) with (/ 2) in Hin by lra.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  unfold b64_in_hot_pixel. fold r.
+  apply andb_true_intro; split;
+    [ apply andb_true_intro; split;
+      [ apply andb_true_intro; split | ] | ].
+  - apply b64_le_complete; [exact HmxF | exact FxP |]. rewrite HmxR. lra.
+  - apply b64_lt_complete; [exact FxP | exact HpxF |]. rewrite HpxR. lra.
+  - apply b64_le_complete; [exact HmyF | exact FyP |]. rewrite HmyR. lra.
+  - apply b64_lt_complete; [exact FyP | exact HpyF |]. rewrite HpyR. lra.
+Qed.
+
+(* Filter completeness for the endpoint case: if either endpoint lies in
+   the pixel, the partial filter fires. *)
+Theorem b64_segment_touches_hot_pixel_endpoint_complete :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  -> coord_int_safe (by_ P0) ->
+    coord_int_safe (bx P1)  -> coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   -> coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    in_hot_pixel (BP2P P0) (BP2P C) 1 \/ in_hot_pixel (BP2P P1) (BP2P C) 1 ->
+    b64_segment_touches_hot_pixel_partial P0 P1 C = true.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Hin.
+  unfold b64_segment_touches_hot_pixel_partial,
+         b64_segment_touches_hot_pixel_endpoints.
+  destruct Hin as [Hin0 | Hin1].
+  - rewrite (b64_in_hot_pixel_complete _ _ HiP0x HiP0y HiCx HiCy Hsafe0 Hin0).
+    reflexivity.
+  - rewrite (b64_in_hot_pixel_complete _ _ HiP1x HiP1y HiCx HiCy Hsafe1 Hin1).
+    rewrite Bool.orb_true_r. reflexivity.
+Qed.
+
+(* ============================================================================
+   Slice 10 (3g-LB): Liang-Barsky parameter-interval filter.
+   ----------------------------------------------------------------------------
+   Replaces the eight pattern-decs (sound but incomplete -- they miss
+   corner/edge-tangent touches) with a single parameter-interval filter that
+   is COMPLETE against the half-open form (a) and SOUND against the closed
+   pixel.  For the noder, completeness (no false negatives -- a vertex is
+   inserted at every pixel a segment passes through) is the load-bearing
+   property; a complete-but-conservative filter over-nodes only on a
+   measure-zero boundary set, which is safe.
+
+   The filter computes, per axis, the t-interval [Rmin a b, Rmax a b] of the
+   slab crossings (a = (lo - c0)/(c1 - c0), b = (hi - c0)/(c1 - c0)), guarding
+   the degenerate c1 = c0 (axis-parallel) case, intersects with [0,1], and
+   returns whether the result is non-empty.
+
+   Key algebra (no sign(c1-c0) case split needed):
+     ((1-t)c0 + t c1 - lo) * ((1-t)c0 + t c1 - hi)
+       = (t - a)(t - b)(c1 - c0)^2
+   so membership in the slab <-> (t-a)(t-b) <= 0 <-> t in [Rmin a b, Rmax a b].
+
+   Filter operates on exact reals (B2R values via Rlt_bool/Rle_bool); no
+   binary64 rounding enters.  (Rlt_bool/Rle_bool route through classical
+   Rcompare, so this is a bool-valued logical decision, not an extractable
+   computation -- a runnable noder filter over b64_lt/b64_le with outward
+   rounding is a separate extraction-facing slice.)
+   ============================================================================ *)
+
+(* Per-axis lower / upper t-bound of the closed slab [lo, hi], with the
+   degenerate (axis-parallel) case c1 = c0 clipped to [0, 1]. *)
+Definition lb_tlo (c0 c1 lo hi : R) : R :=
+  if Req_dec_T c1 c0 then 0
+  else Rmin ((lo - c0) / (c1 - c0)) ((hi - c0) / (c1 - c0)).
+
+Definition lb_thi (c0 c1 lo hi : R) : R :=
+  if Req_dec_T c1 c0 then 1
+  else Rmax ((lo - c0) / (c1 - c0)) ((hi - c0) / (c1 - c0)).
+
+(* Degenerate guard: for an axis-parallel segment, is the constant
+   coordinate inside the slab?  (Always "true" in the non-degenerate case --
+   the t-bounds carry the constraint there.) *)
+Definition lb_inslab (c0 c1 lo hi : R) : bool :=
+  if Req_dec_T c1 c0 then (Rle_bool lo c0 && Rle_bool c0 hi) else true.
+
+Definition b64_liang_barsky_touches (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let xlo := cx - / 2 in let xhi := cx + / 2 in
+  let ylo := cy - / 2 in let yhi := cy + / 2 in
+  lb_inslab x0 x1 xlo xhi && lb_inslab y0 y1 ylo yhi
+  && Rle_bool (Rmax 0 (Rmax (lb_tlo x0 x1 xlo xhi) (lb_tlo y0 y1 ylo yhi)))
+              (Rmin 1 (Rmin (lb_thi x0 x1 xlo xhi) (lb_thi y0 y1 ylo yhi))).
+
+(* Closed-pixel touch predicate (soundness target). *)
+Definition in_hot_pixel_closed (P C : Point) (scale : R) : Prop :=
+  px C - hot_pixel_radius scale <= px P <= px C + hot_pixel_radius scale /\
+  py C - hot_pixel_radius scale <= py P <= py C + hot_pixel_radius scale.
+
+Definition b64_segment_touches_hot_pixel_closed_spec
+    (P0 P1 C : BPoint) : Prop :=
+  exists t : R, 0 <= t <= 1 /\
+    in_hot_pixel_closed (segment_point (BP2P P0) (BP2P P1) t) (BP2P C) 1.
+
+(* Per-axis correctness: t in the clipped slab interval <-> the coordinate is
+   in the closed slab (given 0 <= t <= 1 for the degenerate direction). *)
+Lemma lb_axis_sound :
+  forall c0 c1 lo hi t,
+    lo <= hi ->
+    lb_inslab c0 c1 lo hi = true ->
+    lb_tlo c0 c1 lo hi <= t ->
+    t <= lb_thi c0 c1 lo hi ->
+    lo <= (1 - t) * c0 + t * c1 <= hi.
+Proof.
+  intros c0 c1 lo hi t Hlohi Hslab Htlo Hthi.
+  unfold lb_inslab, lb_tlo, lb_thi in *.
+  destruct (Req_dec_T c1 c0) as [Heq | Hne].
+  - apply Bool.andb_true_iff in Hslab. destruct Hslab as [Hl Hh].
+    apply Rle_bool_elim in Hl. apply Rle_bool_elim in Hh.
+    rewrite Heq. nra.
+  - assert (Hd : c1 - c0 <> 0) by lra.
+    set (a := (lo - c0) / (c1 - c0)) in *.
+    set (b := (hi - c0) / (c1 - c0)) in *.
+    assert (Hva : (1 - a) * c0 + a * c1 = lo) by (unfold a; field; exact Hd).
+    assert (Hvb : (1 - b) * c0 + b * c1 = hi) by (unfold b; field; exact Hd).
+    assert (Hprod : (t - a) * (t - b) <= 0).
+    { revert Htlo Hthi. unfold Rmin, Rmax.
+      destruct (Rle_dec a b); nra. }
+    assert (Hvlo : (1 - t) * c0 + t * c1 - lo = (t - a) * (c1 - c0))
+      by (rewrite <- Hva; ring).
+    assert (Hvhi : (1 - t) * c0 + t * c1 - hi = (t - b) * (c1 - c0))
+      by (rewrite <- Hvb; ring).
+    assert (Hkey : ((1 - t) * c0 + t * c1 - lo)
+                   * ((1 - t) * c0 + t * c1 - hi) <= 0).
+    { rewrite Hvlo, Hvhi.
+      replace ((t - a) * (c1 - c0) * ((t - b) * (c1 - c0)))
+        with ((t - a) * (t - b) * ((c1 - c0) * (c1 - c0))) by ring.
+      assert (Hsq : 0 <= (c1 - c0) * (c1 - c0)) by nra.
+      nra. }
+    nra.
+Qed.
+
+Lemma lb_axis_complete :
+  forall c0 c1 lo hi t,
+    0 <= t <= 1 ->
+    lo <= (1 - t) * c0 + t * c1 <= hi ->
+    lb_inslab c0 c1 lo hi = true
+    /\ lb_tlo c0 c1 lo hi <= t
+    /\ t <= lb_thi c0 c1 lo hi.
+Proof.
+  intros c0 c1 lo hi t [Ht0 Ht1] [Hlo Hhi].
+  unfold lb_inslab, lb_tlo, lb_thi.
+  destruct (Req_dec_T c1 c0) as [Heq | Hne].
+  - rewrite Heq in Hlo, Hhi.
+    repeat split.
+    + apply Bool.andb_true_iff. split; apply Rle_bool_true; nra.
+    + exact Ht0.
+    + exact Ht1.
+  - assert (Hd : c1 - c0 <> 0) by lra.
+    set (a := (lo - c0) / (c1 - c0)) in *.
+    set (b := (hi - c0) / (c1 - c0)) in *.
+    assert (Hva : (1 - a) * c0 + a * c1 = lo) by (unfold a; field; exact Hd).
+    assert (Hvb : (1 - b) * c0 + b * c1 = hi) by (unfold b; field; exact Hd).
+    assert (Hvlo : (1 - t) * c0 + t * c1 - lo = (t - a) * (c1 - c0))
+      by (rewrite <- Hva; ring).
+    assert (Hvhi : (1 - t) * c0 + t * c1 - hi = (t - b) * (c1 - c0))
+      by (rewrite <- Hvb; ring).
+    (* (t-a)(t-b)(c1-c0)^2 = (v-lo)(v-hi) <= 0; divide out the square. *)
+    assert (Hprod : (t - a) * (t - b) <= 0).
+    { assert (Hsq : (t - a) * (t - b) * ((c1 - c0) * (c1 - c0)) <= 0).
+      { replace ((t - a) * (t - b) * ((c1 - c0) * (c1 - c0)))
+          with (((1 - t) * c0 + t * c1 - lo)
+                * ((1 - t) * c0 + t * c1 - hi))
+          by (rewrite Hvlo, Hvhi; ring).
+        nra. }
+      assert (Hsqpos : 0 < (c1 - c0) * (c1 - c0))
+        by (destruct (Rdichotomy _ _ Hd); nra).
+      nra. }
+    repeat split.
+    + unfold Rmin. destruct (Rle_dec a b); nra.
+    + unfold Rmax. destruct (Rle_dec a b); nra.
+Qed.
+
+Theorem b64_liang_barsky_sound_closed :
+  forall P0 P1 C : BPoint,
+    b64_liang_barsky_touches P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_closed_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_liang_barsky_touches in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hcmp].
+  apply Bool.andb_true_iff in H. destruct H as [Hsx Hsy].
+  apply Rle_bool_elim in Hcmp.
+  set (tex := lb_tlo (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                     (Binary.B2R prec emax (bx C) - / 2)
+                     (Binary.B2R prec emax (bx C) + / 2)) in *.
+  set (tey := lb_tlo (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                     (Binary.B2R prec emax (by_ C) - / 2)
+                     (Binary.B2R prec emax (by_ C) + / 2)) in *.
+  set (txx := lb_thi (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                     (Binary.B2R prec emax (bx C) - / 2)
+                     (Binary.B2R prec emax (bx C) + / 2)) in *.
+  set (txy := lb_thi (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                     (Binary.B2R prec emax (by_ C) - / 2)
+                     (Binary.B2R prec emax (by_ C) + / 2)) in *.
+  set (te := Rmax 0 (Rmax tex tey)) in *.
+  exists te.
+  assert (Hte0 : 0 <= te) by (unfold te; apply Rmax_l).
+  assert (Hte1 : te <= 1) by (eapply Rle_trans; [exact Hcmp | apply Rmin_l]).
+  split; [split; assumption|].
+  unfold in_hot_pixel_closed, segment_point, BP2P, px, py, hot_pixel_radius.
+  simpl. replace (/ (2 * 1)) with (/ 2) by lra.
+  split.
+  - apply lb_axis_sound; [lra | exact Hsx | |].
+    + (* tex <= te *)
+      unfold te. eapply Rle_trans; [apply Rmax_l | apply Rmax_r].
+    + (* te <= txx *)
+      eapply Rle_trans; [exact Hcmp|].
+      eapply Rle_trans; [apply Rmin_r | apply Rmin_l].
+  - apply lb_axis_sound; [lra | exact Hsy | |].
+    + unfold te. eapply Rle_trans; [apply Rmax_r | apply Rmax_r].
+    + eapply Rle_trans; [exact Hcmp|].
+      eapply Rle_trans; [apply Rmin_r | apply Rmin_r].
+Qed.
+
+Theorem b64_liang_barsky_complete :
+  forall P0 P1 C : BPoint,
+    b64_segment_touches_hot_pixel_spec P0 P1 C ->
+    b64_liang_barsky_touches P0 P1 C = true.
+Proof.
+  intros P0 P1 C [t [Ht Hin]].
+  unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius in Hin.
+  simpl in Hin. replace (/ (2 * 1)) with (/ 2) in Hin by lra.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  pose proof (lb_axis_complete
+                (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                (Binary.B2R prec emax (bx C) - / 2)
+                (Binary.B2R prec emax (bx C) + / 2) t Ht
+                (conj Hxlo (Rlt_le _ _ Hxhi))) as [Hsx [Htlox Hthix]].
+  pose proof (lb_axis_complete
+                (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                (Binary.B2R prec emax (by_ C) - / 2)
+                (Binary.B2R prec emax (by_ C) + / 2) t Ht
+                (conj Hylo (Rlt_le _ _ Hyhi))) as [Hsy [Htloy Hthiy]].
+  destruct Ht as [Ht0 Ht1].
+  unfold b64_liang_barsky_touches.
+  rewrite Hsx, Hsy. simpl.
+  apply Rle_bool_true.
+  apply Rle_trans with t.
+  - apply Rmax_lub; [exact Ht0 | apply Rmax_lub; assumption].
+  - apply Rmin_glb; [exact Ht1 | apply Rmin_glb; assumption].
+Qed.
+
+(* ============================================================================
+   Slice 11: the passes-through relation (Phase 2 milestone 2).
+   ----------------------------------------------------------------------------
+   `passes_through_hot_pixel P0 P1 C scale` is the snap-rounding invariant:
+   the segment [P0,P1] touches the pixel C AND the snap-rounded segment
+   [snap P0, snap P1] still touches C.  The snap-rounding algorithm (Phase 2
+   milestone 3) preserves this relation; getting the snap semantics exact
+   here is what keeps that proof a mechanical composition.
+
+   Snap semantics.  We snap to the integer grid via round-to-nearest-even,
+   the IEEE default and the mode (`mode_b64 = mode_NE`) already used by every
+   b64 arithmetic op in the corpus.  Crucially `Bnearbyint_correct` gives an
+   UNCONDITIONAL B2R equation
+       B2R (Bnearbyint .. mode_NE x) = round radix2 (FIX_exp 0) ZnearestE (B2R x)
+   with no finiteness side-condition, so `b64_snap_coord_B2R` is EXACT -- no
+   approximation, no deferred-proof entry.  (The deferred item 2,
+   `b64_hot_pixel_center`, concerns producing a finite snapped *center* and
+   needs overflow reasoning; the B2R equation used here does not.)
+
+   The R-side `snap_round` / `passes_through_hot_pixel` predicates are
+   genuinely R-valued (over `Point`), but live in this Flocq-importing file
+   because their snap semantics are PINNED to Flocq's `round` so the bridge
+   is exact; `theories/HotPixel.v` stays Flocq-free.
+
+   Mirroring Slice 10, the b64 bool filter brackets the exact relation:
+     - complete vs the HALF-OPEN relation (`b64_passes_through_complete`) --
+       the noder-critical direction (no false negatives);
+     - sound vs the CLOSED relation (`b64_passes_through_sound`) -- a
+       conservative over-approximation, safe for the noder.
+
+   NOT proved here: "a point in a pixel snaps into that same pixel"
+   (`passes_through_self`).  It is FALSE in general -- at the included lower
+   boundary x = cx - 1/2 with an odd center cx, round-half-to-even snaps to
+   cx-1, the neighbouring pixel.  Which pixel a boundary point snaps to is a
+   genuine snap-rounding subtlety, handled at the algorithm milestone, not a
+   structural lemma.
+   ============================================================================ *)
+
+(* Unary NaN payload handler for Bnearbyint (cf. the binary default_nan_b64
+   used by Bplus/Bmult/Bdiv). *)
+Definition nearbyint_nan_b64 (x : binary64)
+  : { z : Binary.binary_float prec emax | Binary.is_nan prec emax z = true } :=
+  exist _ (Binary.B754_nan prec emax false 1 eq_refl) eq_refl.
+
+(* R-side snap: round a coordinate to the nearest grid point of spacing
+   1/scale, via round-half-to-even (matching the b64 mode). *)
+Definition snap_round_coord (x scale : R) : R :=
+  round radix2 (FIX_exp 0) (round_mode mode_NE) (x * scale) / scale.
+
+Definition snap_round (P : Point) (scale : R) : Point :=
+  mkPoint (snap_round_coord (px P) scale) (snap_round_coord (py P) scale).
+
+(* The half-open and closed touch relations, and their passes-through forms.
+   `segment_touches_hot_pixel` (half-open) is from theories/HotPixel.v;
+   `in_hot_pixel_closed` is from Slice 10 above. *)
+Definition segment_touches_hot_pixel_closed (P0 P1 C : Point) (scale : R) : Prop :=
+  exists t : R, 0 <= t <= 1 /\ in_hot_pixel_closed (segment_point P0 P1 t) C scale.
+
+Definition passes_through_hot_pixel (P0 P1 C : Point) (scale : R) : Prop :=
+  segment_touches_hot_pixel P0 P1 C scale /\
+  segment_touches_hot_pixel (snap_round P0 scale) (snap_round P1 scale) C scale.
+
+Definition passes_through_hot_pixel_closed (P0 P1 C : Point) (scale : R) : Prop :=
+  segment_touches_hot_pixel_closed P0 P1 C scale /\
+  segment_touches_hot_pixel_closed
+    (snap_round P0 scale) (snap_round P1 scale) C scale.
+
+(* Binary64 snap. *)
+Definition b64_snap_coord (x : binary64) : binary64 :=
+  Binary.Bnearbyint prec emax prec_lt_emax_b64 nearbyint_nan_b64 mode_NE x.
+
+Definition b64_snap (P : BPoint) : BPoint :=
+  mkBP (b64_snap_coord (bx P)) (b64_snap_coord (by_ P)).
+
+Definition b64_passes_through_hot_pixel (P0 P1 C : BPoint) : bool :=
+  b64_liang_barsky_touches P0 P1 C &&
+  b64_liang_barsky_touches (b64_snap P0) (b64_snap P1) C.
+
+(* Exact snap bridge: snapping a binary64 coordinate then reading B2R agrees
+   with snapping the real value (unit grid).  Unconditional. *)
+Lemma b64_snap_coord_B2R :
+  forall x : binary64,
+    Binary.B2R prec emax (b64_snap_coord x)
+      = snap_round_coord (Binary.B2R prec emax x) 1.
+Proof.
+  intros x. unfold b64_snap_coord, snap_round_coord.
+  rewrite (proj1 (Binary.Bnearbyint_correct prec emax prec_lt_emax_b64
+                    nearbyint_nan_b64 mode_NE x)).
+  rewrite Rmult_1_r, Rdiv_1_r. reflexivity.
+Qed.
+
+(* Point-level corollary: the bridged snapped b64 point is the R-side snap of
+   the bridged point (unit grid). *)
+Lemma BP2P_b64_snap :
+  forall P : BPoint, BP2P (b64_snap P) = snap_round (BP2P P) 1.
+Proof.
+  intros P. unfold BP2P, b64_snap, snap_round, px, py. simpl.
+  rewrite !b64_snap_coord_B2R. reflexivity.
+Qed.
+
+(* Snapped coordinates land on the grid: round to FIX_exp 0 is an integer. *)
+Lemma round_FIX0_IZR :
+  forall r : R,
+    round radix2 (FIX_exp 0) (round_mode mode_NE) r
+      = IZR (round_mode mode_NE r).
+Proof.
+  intros r. unfold round, scaled_mantissa, cexp, FIX_exp, F2R. simpl.
+  rewrite !Rmult_1_r. reflexivity.
+Qed.
+
+Lemma snap_round_on_grid :
+  forall (P : Point) (scale : R), 0 < scale -> on_grid (snap_round P scale) scale.
+Proof.
+  intros P scale Hs. unfold on_grid, snap_round, snap_round_coord, px, py. simpl.
+  split; [exact Hs|].
+  exists (round_mode mode_NE (px P * scale)), (round_mode mode_NE (py P * scale)).
+  rewrite !round_FIX0_IZR. split; reflexivity.
+Qed.
+
+(* Completeness (noder-critical): the half-open passes-through relation implies
+   the b64 filter fires.  Mechanical composition of LB completeness (twice)
+   with the exact snap bridge. *)
+Theorem b64_passes_through_complete :
+  forall P0 P1 C : BPoint,
+    passes_through_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1 ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C [H1 H2].
+  unfold b64_passes_through_hot_pixel. rewrite Bool.andb_true_iff. split.
+  - apply b64_liang_barsky_complete. exact H1.
+  - apply b64_liang_barsky_complete.
+    unfold b64_segment_touches_hot_pixel_spec.
+    rewrite !BP2P_b64_snap. exact H2.
+Qed.
+
+(* Soundness (conservative): the b64 filter implies the CLOSED passes-through
+   relation.  Mechanical composition of LB closed-soundness (twice) with the
+   exact snap bridge. *)
+Theorem b64_passes_through_sound :
+  forall P0 P1 C : BPoint,
+    b64_passes_through_hot_pixel P0 P1 C = true ->
+    passes_through_hot_pixel_closed (BP2P P0) (BP2P P1) (BP2P C) 1.
+Proof.
+  intros P0 P1 C H.
+  apply Bool.andb_true_iff in H. destruct H as [H1 H2].
+  split.
+  - exact (b64_liang_barsky_sound_closed _ _ _ H1).
+  - pose proof (b64_liang_barsky_sound_closed _ _ _ H2) as Hs.
+    unfold b64_segment_touches_hot_pixel_closed_spec in Hs.
+    rewrite !BP2P_b64_snap in Hs. exact Hs.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -1938,6 +2484,20 @@ Print Assumptions b64_crosses_top_left_dec_sound.
 Print Assumptions b64_crosses_top_right_dec_sound.
 Print Assumptions b64_crosses_bottom_left_dec_sound.
 Print Assumptions b64_crosses_bottom_right_dec_sound.
+Print Assumptions b64_le_complete.
+Print Assumptions b64_lt_complete.
+Print Assumptions b64_hot_pixel_bounds_exact.
+Print Assumptions b64_in_hot_pixel_complete.
+Print Assumptions b64_segment_touches_hot_pixel_endpoint_complete.
+Print Assumptions lb_axis_sound.
+Print Assumptions lb_axis_complete.
+Print Assumptions b64_liang_barsky_sound_closed.
+Print Assumptions b64_liang_barsky_complete.
+Print Assumptions b64_snap_coord_B2R.
+Print Assumptions BP2P_b64_snap.
+Print Assumptions snap_round_on_grid.
+Print Assumptions b64_passes_through_complete.
+Print Assumptions b64_passes_through_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)

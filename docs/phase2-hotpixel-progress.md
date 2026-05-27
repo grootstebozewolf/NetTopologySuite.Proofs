@@ -96,6 +96,20 @@ inside — crucially holding for the OPEN top/right edges, since
 `avg(in-range, edge) < edge`. All eight crossing patterns now have
 Prop-form soundness. (4 theorems.)
 
+### Slice 9 — point-in-pixel completeness (item 3g, point)
+
+The converse of the Slice 1.5 bridge: under `coord_int_safe` +
+eval-safety, the exact R-side `in_hot_pixel` IMPLIES the binary64
+boolean decision `b64_in_hot_pixel = true`. Completeness helpers
+`b64_le_complete` / `b64_lt_complete` (converses of the Slice 1.5
+soundness helpers), a shared `b64_hot_pixel_bounds_exact` (the four
+bounds' B2R values + finiteness), `b64_in_hot_pixel_complete`, and
+`b64_segment_touches_hot_pixel_endpoint_complete` (the filter fires
+whenever an endpoint lies in the pixel). With Slice 1.5 this makes the
+boolean pixel decision sound AND complete in the integer regime. The
+crossing-case filter completeness (the geometric classification) stays
+deferred. (5 theorems.)
+
 ### Slices 3f + 8 — decidable bool wrappers (item 3f)
 
 Forward-elimination helpers `Rlt_bool_elim` / `Rle_bool_elim` over
@@ -133,28 +147,108 @@ slices.)
 | 3d | form (b) closed-edge crossing | **landed** (Slice 5) |
 | 3e | form (b) open + adjacent crossing | **landed** (Slices 6 + 7; all 8 patterns) |
 | 3f | form (b) decidable bool wrapper | **landed** (Slices 3f + 8; all 8 patterns) |
-| 3g | form (b) **completeness** | **deferred** — the classification argument |
+| 3g-point | point-in-pixel completeness + endpoint-case filter completeness | **landed** (Slice 9) |
+| 3g-LB | Liang-Barsky filter: complete vs half-open form (a) + sound vs closed pixel | **landed** (Slice 10) |
 | 4 | integer-regime exact-radius | deferred |
 
-## What remains before the unqualified `b64_segment_touches_hot_pixel`
+### Slice 10 — Liang-Barsky parameter-interval filter (item 3g-LB)
 
-The partial filter is **sound** (`partial = true` -> touches) but not
-yet **complete** (touches -> `partial = true`). The remaining piece
-(3g) is the classification argument: prove that any segment genuinely
-touching the half-open pixel must trigger one of the nine disjuncts
-(endpoint-in, or one of the eight edge-crossing patterns) — i.e. the
-disjunction is exhaustive over all the ways a chord can meet a convex
-half-open cell.
+The pattern-dec approach is retired: corner/edge-tangent touches satisfy
+form (a) but fire no strict sign-change disjunct, so the eight-dec filter
+is provably incomplete over degenerate touches. Slice 10 replaces it with
+`b64_liang_barsky_touches` — a single parameter-interval filter that
+computes, per axis, the clipped slab-crossing t-interval and tests
+non-emptiness. Two theorems:
 
-A noder needs *completeness* (no false negatives — it must insert a
-vertex at every pixel a segment passes through, or snap-rounding misses
-required vertices). Completeness is therefore the gate before the
-unqualified `b64_segment_touches_hot_pixel` ships with the full
-sound-and-complete contract, and before the passes-through relation
-(the next Phase 2 milestone) can be stated computationally.
+- `b64_liang_barsky_complete` — touch (half-open form (a)) implies the
+  filter fires. The noder-critical direction (no false negatives).
+- `b64_liang_barsky_sound_closed` — the filter implies a touch of the
+  CLOSED pixel. A complete-but-conservative filter over-nodes only on a
+  measure-zero boundary set, which is safe for the noder.
+
+Both directions avoid any `sign(c1 - c0)` case split via the identity
+`(v(t) - lo)(v(t) - hi) = (t - a)(t - b)(c1 - c0)^2`, so slab membership
+reduces to `(t - a)(t - b) <= 0`. Helpers `lb_axis_sound` /
+`lb_axis_complete` carry the per-axis argument; the degenerate
+(axis-parallel `c1 = c0`) case is guarded by `lb_inslab`. (4 theorems +
+3 definitions + the closed-pixel predicate.)
+
+### Slice 11 — passes-through relation (Phase 2 milestone 2)
+
+The snap-rounding invariant. `passes_through_hot_pixel P0 P1 C scale`
+holds when the segment touches the pixel **and** the snap-rounded
+segment `[snap P0, snap P1]` still touches it. The b64 bool mirror is
+`b64_passes_through_hot_pixel := b64_liang_barsky_touches P0 P1 C &&
+b64_liang_barsky_touches (b64_snap P0) (b64_snap P1) C`.
+
+**Snap is exact, not approximate.** `b64_snap` snaps to the integer grid
+via `Binary.Bnearbyint … mode_NE` (round-half-to-even — the IEEE default
+and the mode `mode_b64` every b64 op already uses). `Bnearbyint_correct`
+gives an **unconditional** B2R equation (no finiteness side-condition),
+so `b64_snap_coord_B2R : B2R (b64_snap_coord x) = snap_round_coord (B2R
+x) 1` is exact. The R-side `snap_round` is pinned to the same Flocq
+`round radix2 (FIX_exp 0) (round_mode mode_NE)`, so no rounding-mode
+mismatch enters — and **no deferred-proof entry is needed**. (This is
+why the R-side `snap_round` / `passes_through` predicates live in the
+Flocq-importing `HotPixel_b64.v` rather than the Flocq-free
+`theories/HotPixel.v`.)
+
+Mirroring Slice 10, the bool brackets the exact relation, both
+directions mechanical compositions over `BP2P_b64_snap`:
+
+- `b64_passes_through_complete` — half-open passes-through implies the
+  bool fires (noder-critical; LB completeness ×2).
+- `b64_passes_through_sound` — the bool implies the CLOSED
+  passes-through (conservative; LB closed-soundness ×2).
+
+`snap_round_on_grid` records that snapped coordinates land on the grid
+(`round` to `FIX_exp 0` is an integer, via `round_FIX0_IZR`).
+
+**Deliberately not proved:** `passes_through_self` ("a point in a pixel
+snaps into that same pixel") is **false in general** — at the included
+lower boundary `x = cx − 1/2` with odd center `cx`, round-half-to-even
+snaps to `cx − 1`, the neighbouring pixel. Which pixel a boundary point
+snaps to is a real snap-rounding subtlety for the algorithm milestone,
+not a structural lemma. (6 theorems + 4 definitions + 2 touch/relation
+predicates.)
+
+## Filter status and what remains
+
+Two filters now coexist, and together they bracket the exact touch
+predicate:
+
+- **Pattern filter** (`b64_segment_touches_hot_pixel_partial`, Slices
+  3–8): **sound** vs form (a), but **incomplete** — it misses
+  corner/edge-tangent touches (no strict sign-change fires).
+- **Liang–Barsky filter** (`b64_liang_barsky_touches`, Slice 10):
+  **complete** vs the half-open form (a) and **sound** vs the closed
+  pixel. This is the noder-relevant contract: a noder needs no false
+  negatives (a vertex at every pixel a segment passes through), and a
+  complete-but-conservative filter over-nodes only on a measure-zero
+  boundary set, which is safe.
+
+The one piece not yet formalised is the **exact half-open
+both-directions** filter (sound *and* complete against the half-open
+form (a) simultaneously). It requires strict/non-strict bound tracking
+that flips with `sign(c1 - c0)` plus the degenerate guards — a larger
+engagement, and not required for noder correctness given the
+Liang–Barsky completeness above. The unqualified
+`b64_segment_touches_hot_pixel` name is reserved for that exact filter
+if/when it lands; downstream noder work should consume
+`b64_liang_barsky_touches` (complete) directly.
+
+The passes-through relation (Slice 11, above) is now stated and
+bracketed computationally on top of the complete Liang–Barsky filter.
+The next Phase 2 milestone is the snap-rounding algorithm: process a set
+of segments and hot pixels, snap all endpoints to the grid, and prove
+that every segment that passed through a pixel still does after
+snapping. Its correctness theorem cites `passes_through_hot_pixel` as
+its invariant; with `b64_snap` exact and `b64_passes_through_{sound,
+complete}` in hand, that proof should be mechanical composition rather
+than new design work.
 
 ## Cumulative
 
-44 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
+59 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
 Phase 2 foundations, zero `Admitted`, only the four standard
 classical-reals axioms throughout.
