@@ -1903,6 +1903,181 @@ Proof.
            HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 H).
 Qed.
 
+(* ============================================================================
+   Slice 9 (3g-point): point-in-pixel completeness.
+   ----------------------------------------------------------------------------
+   The converse of the Slice 1.5 bridge: under coord_int_safe + eval-safety,
+   the exact R-side `in_hot_pixel` IMPLIES the binary64 boolean decision
+   `b64_in_hot_pixel = true`.  Combined with Slice 1.5's soundness this makes
+   the boolean decision a faithful (sound + complete) test of pixel
+   membership in the integer regime.
+
+   As a corollary, the partial segment filter is COMPLETE for the
+   endpoint-in-pixel case: if either segment endpoint lies in the pixel,
+   `b64_segment_touches_hot_pixel_partial = true`.  Completeness for the
+   crossing cases (the geometric classification: any touching segment with
+   both endpoints outside must cross via one of the eight edge patterns)
+   remains the deferred 3g-crossing piece.
+   ============================================================================ *)
+
+(* Completeness of the boolean comparisons (converses of b64_le_R_of_true
+   / b64_lt_R_of_true). *)
+Lemma b64_le_complete :
+  forall a b : binary64,
+    Binary.is_finite prec emax a = true ->
+    Binary.is_finite prec emax b = true ->
+    Binary.B2R prec emax a <= Binary.B2R prec emax b ->
+    b64_le a b = true.
+Proof.
+  intros a b Fa Fb Hle.
+  unfold b64_le, b64_compare.
+  rewrite Binary.Bcompare_correct by assumption.
+  destruct (Rcompare (Binary.B2R prec emax a)
+                     (Binary.B2R prec emax b)) eqn:E.
+  - reflexivity.
+  - reflexivity.
+  - apply Rcompare_Gt_inv in E. lra.
+Qed.
+
+Lemma b64_lt_complete :
+  forall a b : binary64,
+    Binary.is_finite prec emax a = true ->
+    Binary.is_finite prec emax b = true ->
+    Binary.B2R prec emax a < Binary.B2R prec emax b ->
+    b64_lt a b = true.
+Proof.
+  intros a b Fa Fb Hlt.
+  unfold b64_lt, b64_compare.
+  rewrite Binary.Bcompare_correct by assumption.
+  destruct (Rcompare (Binary.B2R prec emax a)
+                     (Binary.B2R prec emax b)) eqn:E.
+  - apply Rcompare_Eq_inv in E. lra.
+  - reflexivity.
+  - apply Rcompare_Gt_inv in E. lra.
+Qed.
+
+(* The four pixel-bound expressions are bit-exact (B2R = center +/- 1/2) and
+   finite, under coord_int_safe on the center + eval-safety.  Shared by the
+   completeness theorem below; mirrors the inline derivation in
+   b64_in_hot_pixel_sound (Slice 1.5) but also retains the finiteness
+   components that the soundness proof discarded. *)
+Lemma b64_hot_pixel_bounds_exact :
+  forall P C : BPoint,
+    coord_int_safe (bx C) ->
+    coord_int_safe (by_ C) ->
+    b64_hot_pixel_eval_safe P C b64_one ->
+    let r := b64_hot_pixel_radius b64_one in
+    (Binary.B2R prec emax (b64_minus (bx C) r)
+       = Binary.B2R prec emax (bx C) - / 2
+     /\ Binary.is_finite prec emax (b64_minus (bx C) r) = true)
+    /\ (Binary.B2R prec emax (b64_plus (bx C) r)
+          = Binary.B2R prec emax (bx C) + / 2
+        /\ Binary.is_finite prec emax (b64_plus (bx C) r) = true)
+    /\ (Binary.B2R prec emax (b64_minus (by_ C) r)
+          = Binary.B2R prec emax (by_ C) - / 2
+        /\ Binary.is_finite prec emax (b64_minus (by_ C) r) = true)
+    /\ (Binary.B2R prec emax (b64_plus (by_ C) r)
+          = Binary.B2R prec emax (by_ C) + / 2
+        /\ Binary.is_finite prec emax (b64_plus (by_ C) r) = true).
+Proof.
+  intros P C HiCx HiCy Hsafe.
+  pose proof b64_hot_pixel_radius_at_one as [HrR HrF].
+  set (r := b64_hot_pixel_radius b64_one) in *.
+  destruct HiCx as (FxC & ncx & HcxR & Hcxb).
+  destruct HiCy as (FyC & ncy & HcyR & Hcyb).
+  destruct Hsafe as (_ & _ & _ & _ & _ & Smx & Spx & Smy & Spy).
+  repeat split.
+  - (* B2R (b64_minus (bx C) r) = B2R (bx C) - 1/2 *)
+    pose proof (b64_minus_correct _ _ Smx) as [HmxR _].
+    fold r in HmxR. rewrite HmxR, HrR.
+    apply b64_round_generic. rewrite HcxR.
+    assert (Heq : IZR ncx - / 2 = F2R (Float radix2 (2 * ncx - 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, minus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_minus_correct _ _ Smx) as [_ HmxF]. fold r in HmxF. exact HmxF.
+  - pose proof (b64_plus_correct _ _ Spx) as [HpxR _].
+    fold r in HpxR. rewrite HpxR, HrR.
+    apply b64_round_generic. rewrite HcxR.
+    assert (Heq : IZR ncx + / 2 = F2R (Float radix2 (2 * ncx + 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, plus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_plus_correct _ _ Spx) as [_ HpxF]. fold r in HpxF. exact HpxF.
+  - pose proof (b64_minus_correct _ _ Smy) as [HmyR _].
+    fold r in HmyR. rewrite HmyR, HrR.
+    apply b64_round_generic. rewrite HcyR.
+    assert (Heq : IZR ncy - / 2 = F2R (Float radix2 (2 * ncy - 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, minus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_minus_correct _ _ Smy) as [_ HmyF]. fold r in HmyF. exact HmyF.
+  - pose proof (b64_plus_correct _ _ Spy) as [HpyR _].
+    fold r in HpyR. rewrite HpyR, HrR.
+    apply b64_round_generic. rewrite HcyR.
+    assert (Heq : IZR ncy + / 2 = F2R (Float radix2 (2 * ncy + 1)%Z (-1))).
+    { unfold F2R, Fnum, Fexp.
+      assert (Hb : bpow radix2 (-1) = / 2) by (simpl; lra).
+      rewrite Hb, plus_IZR, mult_IZR. simpl. lra. }
+    rewrite Heq. apply generic_format_F2R_27bit_exp_neg1. lia.
+  - pose proof (b64_plus_correct _ _ Spy) as [_ HpyF]. fold r in HpyF. exact HpyF.
+Qed.
+
+Theorem b64_in_hot_pixel_complete :
+  forall P C : BPoint,
+    coord_int_safe (bx P)  ->
+    coord_int_safe (by_ P) ->
+    coord_int_safe (bx C)  ->
+    coord_int_safe (by_ C) ->
+    b64_hot_pixel_eval_safe P C b64_one ->
+    in_hot_pixel (BP2P P) (BP2P C) 1 ->
+    b64_in_hot_pixel P C b64_one = true.
+Proof.
+  intros P C HiPx HiPy HiCx HiCy Hsafe Hin.
+  pose proof (b64_hot_pixel_bounds_exact P C HiCx HiCy Hsafe)
+    as [[HmxR HmxF] [[HpxR HpxF] [[HmyR HmyF] [HpyR HpyF]]]].
+  set (r := b64_hot_pixel_radius b64_one) in *.
+  destruct HiPx as (FxP & _).
+  destruct HiPy as (FyP & _).
+  unfold in_hot_pixel, BP2P, px, py in Hin. simpl in Hin.
+  unfold hot_pixel_radius in Hin.
+  replace (/ (2 * 1)) with (/ 2) in Hin by lra.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  unfold b64_in_hot_pixel. fold r.
+  apply andb_true_intro; split;
+    [ apply andb_true_intro; split;
+      [ apply andb_true_intro; split | ] | ].
+  - apply b64_le_complete; [exact HmxF | exact FxP |]. rewrite HmxR. lra.
+  - apply b64_lt_complete; [exact FxP | exact HpxF |]. rewrite HpxR. lra.
+  - apply b64_le_complete; [exact HmyF | exact FyP |]. rewrite HmyR. lra.
+  - apply b64_lt_complete; [exact FyP | exact HpyF |]. rewrite HpyR. lra.
+Qed.
+
+(* Filter completeness for the endpoint case: if either endpoint lies in
+   the pixel, the partial filter fires. *)
+Theorem b64_segment_touches_hot_pixel_endpoint_complete :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  -> coord_int_safe (by_ P0) ->
+    coord_int_safe (bx P1)  -> coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   -> coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    in_hot_pixel (BP2P P0) (BP2P C) 1 \/ in_hot_pixel (BP2P P1) (BP2P C) 1 ->
+    b64_segment_touches_hot_pixel_partial P0 P1 C = true.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Hin.
+  unfold b64_segment_touches_hot_pixel_partial,
+         b64_segment_touches_hot_pixel_endpoints.
+  destruct Hin as [Hin0 | Hin1].
+  - rewrite (b64_in_hot_pixel_complete _ _ HiP0x HiP0y HiCx HiCy Hsafe0 Hin0).
+    reflexivity.
+  - rewrite (b64_in_hot_pixel_complete _ _ HiP1x HiP1y HiCx HiCy Hsafe1 Hin1).
+    rewrite Bool.orb_true_r. reflexivity.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -1938,6 +2113,11 @@ Print Assumptions b64_crosses_top_left_dec_sound.
 Print Assumptions b64_crosses_top_right_dec_sound.
 Print Assumptions b64_crosses_bottom_left_dec_sound.
 Print Assumptions b64_crosses_bottom_right_dec_sound.
+Print Assumptions b64_le_complete.
+Print Assumptions b64_lt_complete.
+Print Assumptions b64_hot_pixel_bounds_exact.
+Print Assumptions b64_in_hot_pixel_complete.
+Print Assumptions b64_segment_touches_hot_pixel_endpoint_complete.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)

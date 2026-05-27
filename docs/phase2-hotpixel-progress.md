@@ -96,6 +96,20 @@ inside — crucially holding for the OPEN top/right edges, since
 `avg(in-range, edge) < edge`. All eight crossing patterns now have
 Prop-form soundness. (4 theorems.)
 
+### Slice 9 — point-in-pixel completeness (item 3g, point)
+
+The converse of the Slice 1.5 bridge: under `coord_int_safe` +
+eval-safety, the exact R-side `in_hot_pixel` IMPLIES the binary64
+boolean decision `b64_in_hot_pixel = true`. Completeness helpers
+`b64_le_complete` / `b64_lt_complete` (converses of the Slice 1.5
+soundness helpers), a shared `b64_hot_pixel_bounds_exact` (the four
+bounds' B2R values + finiteness), `b64_in_hot_pixel_complete`, and
+`b64_segment_touches_hot_pixel_endpoint_complete` (the filter fires
+whenever an endpoint lies in the pixel). With Slice 1.5 this makes the
+boolean pixel decision sound AND complete in the integer regime. The
+crossing-case filter completeness (the geometric classification) stays
+deferred. (5 theorems.)
+
 ### Slices 3f + 8 — decidable bool wrappers (item 3f)
 
 Forward-elimination helpers `Rlt_bool_elim` / `Rle_bool_elim` over
@@ -133,18 +147,21 @@ slices.)
 | 3d | form (b) closed-edge crossing | **landed** (Slice 5) |
 | 3e | form (b) open + adjacent crossing | **landed** (Slices 6 + 7; all 8 patterns) |
 | 3f | form (b) decidable bool wrapper | **landed** (Slices 3f + 8; all 8 patterns) |
-| 3g | form (b) **completeness** | **deferred** — the classification argument |
+| 3g-point | point-in-pixel completeness + endpoint-case filter completeness | **landed** (Slice 9) |
+| 3g-crossing | crossing-case filter completeness | **deferred** — the geometric classification argument |
 | 4 | integer-regime exact-radius | deferred |
 
 ## What remains before the unqualified `b64_segment_touches_hot_pixel`
 
-The partial filter is **sound** (`partial = true` -> touches) but not
-yet **complete** (touches -> `partial = true`). The remaining piece
-(3g) is the classification argument: prove that any segment genuinely
-touching the half-open pixel must trigger one of the nine disjuncts
-(endpoint-in, or one of the eight edge-crossing patterns) — i.e. the
-disjunction is exhaustive over all the ways a chord can meet a convex
-half-open cell.
+The partial filter is **sound** (`partial = true` -> touches). The
+ENDPOINT half of completeness is now in hand (Slice 9:
+`b64_segment_touches_hot_pixel_endpoint_complete` — if either endpoint
+lies in the pixel, the filter fires). The remaining piece
+(3g-crossing) is the harder classification argument: prove that any
+segment genuinely touching the half-open pixel **with both endpoints
+outside** must trigger one of the eight edge-crossing disjuncts — i.e.
+the disjunction is exhaustive over all the ways a chord can enter a
+convex half-open cell.
 
 A noder needs *completeness* (no false negatives — it must insert a
 vertex at every pixel a segment passes through, or snap-rounding misses
@@ -155,6 +172,6 @@ sound-and-complete contract, and before the passes-through relation
 
 ## Cumulative
 
-44 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
+49 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
 Phase 2 foundations, zero `Admitted`, only the four standard
 classical-reals axioms throughout.
