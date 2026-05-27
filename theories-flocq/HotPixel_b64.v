@@ -1101,6 +1101,236 @@ Proof.
     + split; assumption.
 Qed.
 
+(* ============================================================================
+   Slice 3f: decidable bool wrapper over the crossing soundness lemmas.
+   ----------------------------------------------------------------------------
+   The Slice 5/6 crossing lemmas take Prop-form sign-change and range
+   preconditions.  For the noder's filter step we need a bool decision
+   function.  This section wraps each landed crossing case with Flocq's
+   Rlt_bool / Rle_bool (decidable real comparisons) and composes them with
+   the endpoint filter into a partial bool filter.
+
+   "Partial": covers endpoint + closed-edge (bottom, left) + opposite-edge
+   (top+bottom, left+right) crossings.  Adjacent-edge crossings remain
+   deferred (3e adjacent), so the filter is sound but not complete -- the
+   unqualified `b64_segment_touches_hot_pixel` name stays reserved.
+   ============================================================================ *)
+
+(* Forward elimination for Flocq's boolean real comparisons. *)
+Lemma Rlt_bool_elim : forall x y : R, Rlt_bool x y = true -> (x < y)%R.
+Proof.
+  intros x y H. revert H.
+  destruct (Rlt_bool_spec x y) as [Hlt | Hge]; intros H.
+  - exact Hlt.
+  - discriminate.
+Qed.
+
+Lemma Rle_bool_elim : forall x y : R, Rle_bool x y = true -> (x <= y)%R.
+Proof.
+  intros x y H. revert H.
+  destruct (Rle_bool_spec x y) as [Hle | Hgt]; intros H.
+  - exact Hle.
+  - discriminate.
+Qed.
+
+(* Bottom-edge crossing, decidable. *)
+Definition b64_crosses_bottom_edge_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let t  := (cy - / 2 - y0) / (y1 - y0)   in
+  (((Rlt_bool y0 (cy - / 2) && Rlt_bool (cy - / 2) y1)
+    || (Rlt_bool y1 (cy - / 2) && Rlt_bool (cy - / 2) y0))
+   && Rle_bool (cx - / 2) ((1 - t) * x0 + t * x1))
+  && Rlt_bool ((1 - t) * x0 + t * x1) (cx + / 2).
+
+Lemma b64_crosses_bottom_edge_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_bottom_edge_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_bottom_edge_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hhi].
+  apply Bool.andb_true_iff in H. destruct H as [Hsign Hlo].
+  apply (b64_segment_crosses_bottom_edge_sound P0 P1 C
+           ((Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))).
+  - apply Bool.orb_true_iff in Hsign. destruct Hsign as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+(* Left-edge crossing, decidable. *)
+Definition b64_crosses_left_edge_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let t  := (cx - / 2 - x0) / (x1 - x0)   in
+  (((Rlt_bool x0 (cx - / 2) && Rlt_bool (cx - / 2) x1)
+    || (Rlt_bool x1 (cx - / 2) && Rlt_bool (cx - / 2) x0))
+   && Rle_bool (cy - / 2) ((1 - t) * y0 + t * y1))
+  && Rlt_bool ((1 - t) * y0 + t * y1) (cy + / 2).
+
+Lemma b64_crosses_left_edge_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_left_edge_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_left_edge_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hhi].
+  apply Bool.andb_true_iff in H. destruct H as [Hsign Hlo].
+  apply (b64_segment_crosses_left_edge_sound P0 P1 C
+           ((Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))).
+  - apply Bool.orb_true_iff in Hsign. destruct Hsign as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+(* Top+bottom pass-through crossing, decidable. *)
+Definition b64_crosses_top_bottom_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let ttop := (cy + / 2 - y0) / (y1 - y0) in
+  let tbot := (cy - / 2 - y0) / (y1 - y0) in
+  let tm   := (ttop + tbot) / 2           in
+  (((Rlt_bool (cy + / 2) y0 && Rlt_bool y1 (cy - / 2))
+    || (Rlt_bool (cy + / 2) y1 && Rlt_bool y0 (cy - / 2)))
+   && Rle_bool (cx - / 2) ((1 - tm) * x0 + tm * x1))
+  && Rlt_bool ((1 - tm) * x0 + tm * x1) (cx + / 2).
+
+Lemma b64_crosses_top_bottom_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_top_bottom_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_top_bottom_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hhi].
+  apply Bool.andb_true_iff in H. destruct H as [Hsign Hlo].
+  apply (b64_segment_crosses_top_and_bottom_sound P0 P1 C
+           ((Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))
+           ((Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)))).
+  - apply Bool.orb_true_iff in Hsign. destruct Hsign as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+(* Left+right pass-through crossing, decidable. *)
+Definition b64_crosses_left_right_dec (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let tl := (cx - / 2 - x0) / (x1 - x0)   in
+  let tr := (cx + / 2 - x0) / (x1 - x0)   in
+  let tm := (tl + tr) / 2                 in
+  (((Rlt_bool x0 (cx - / 2) && Rlt_bool (cx + / 2) x1)
+    || (Rlt_bool x1 (cx - / 2) && Rlt_bool (cx + / 2) x0))
+   && Rle_bool (cy - / 2) ((1 - tm) * y0 + tm * y1))
+  && Rlt_bool ((1 - tm) * y0 + tm * y1) (cy + / 2).
+
+Lemma b64_crosses_left_right_dec_sound :
+  forall P0 P1 C : BPoint,
+    b64_crosses_left_right_dec P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_crosses_left_right_dec in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hhi].
+  apply Bool.andb_true_iff in H. destruct H as [Hsign Hlo].
+  apply (b64_segment_crosses_left_and_right_sound P0 P1 C
+           ((Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))
+           ((Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0))
+            / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)))).
+  - apply Bool.orb_true_iff in Hsign. destruct Hsign as [Hs | Hs];
+      apply Bool.andb_true_iff in Hs; destruct Hs as [Hs0 Hs1].
+    + left.  split; apply Rlt_bool_elim; assumption.
+    + right. split; apply Rlt_bool_elim; assumption.
+  - reflexivity.
+  - reflexivity.
+  - split; [apply Rle_bool_elim | apply Rlt_bool_elim]; assumption.
+Qed.
+
+(* Partial bool filter: endpoint OR the four landed crossing cases.       *)
+(* Sound to form (a); not complete (adjacent-edge crossings deferred).    *)
+(* The unqualified `b64_segment_touches_hot_pixel` stays reserved until   *)
+(* the filter is complete.                                                 *)
+Definition b64_segment_touches_hot_pixel_partial (P0 P1 C : BPoint) : bool :=
+  b64_segment_touches_hot_pixel_endpoints P0 P1 C
+  || b64_crosses_bottom_edge_dec P0 P1 C
+  || b64_crosses_left_edge_dec P0 P1 C
+  || b64_crosses_top_bottom_dec P0 P1 C
+  || b64_crosses_left_right_dec P0 P1 C.
+
+Theorem b64_segment_touches_hot_pixel_partial_sound :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  -> coord_int_safe (by_ P0) ->
+    coord_int_safe (bx P1)  -> coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   -> coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    b64_segment_touches_hot_pixel_partial P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 H.
+  unfold b64_segment_touches_hot_pixel_partial in H.
+  apply Bool.orb_true_iff in H. destruct H as [H | He].
+  2: { apply b64_crosses_left_right_dec_sound. exact He. }
+  apply Bool.orb_true_iff in H. destruct H as [H | Hd].
+  2: { apply b64_crosses_top_bottom_dec_sound. exact Hd. }
+  apply Bool.orb_true_iff in H. destruct H as [H | Hc].
+  2: { apply b64_crosses_left_edge_dec_sound. exact Hc. }
+  apply Bool.orb_true_iff in H. destruct H as [Ha | Hb].
+  - apply (b64_segment_touches_hot_pixel_endpoints_sound _ _ _
+             HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 Ha).
+  - apply b64_crosses_bottom_edge_dec_sound. exact Hb.
+Qed.
+
+(* Soundness collapsed to the R-side predicate. *)
+Corollary b64_segment_touches_hot_pixel_partial_sound_R :
+  forall P0 P1 C : BPoint,
+    coord_int_safe (bx P0)  -> coord_int_safe (by_ P0) ->
+    coord_int_safe (bx P1)  -> coord_int_safe (by_ P1) ->
+    coord_int_safe (bx C)   -> coord_int_safe (by_ C)  ->
+    b64_hot_pixel_eval_safe P0 C b64_one ->
+    b64_hot_pixel_eval_safe P1 C b64_one ->
+    b64_segment_touches_hot_pixel_partial P0 P1 C = true ->
+    segment_touches_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1.
+Proof.
+  intros P0 P1 C HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 H.
+  apply b64_segment_touches_hot_pixel_sound.
+  apply (b64_segment_touches_hot_pixel_partial_sound _ _ _
+           HiP0x HiP0y HiP1x HiP1y HiCx HiCy Hsafe0 Hsafe1 H).
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -1122,6 +1352,12 @@ Print Assumptions b64_segment_crosses_bottom_edge_sound.
 Print Assumptions b64_segment_crosses_left_edge_sound.
 Print Assumptions b64_segment_crosses_top_and_bottom_sound.
 Print Assumptions b64_segment_crosses_left_and_right_sound.
+Print Assumptions b64_crosses_bottom_edge_dec_sound.
+Print Assumptions b64_crosses_left_edge_dec_sound.
+Print Assumptions b64_crosses_top_bottom_dec_sound.
+Print Assumptions b64_crosses_left_right_dec_sound.
+Print Assumptions b64_segment_touches_hot_pixel_partial_sound.
+Print Assumptions b64_segment_touches_hot_pixel_partial_sound_R.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -1192,6 +1428,17 @@ Print Assumptions b64_segment_crosses_left_and_right_sound.
 (*        unify all four but requires composing linear-function           *)
 (*        continuity proofs (`continuity_const + continuity_mult +        *)
 (*        continuity_plus`) before invoking `IVT_cor`.                      *)
+(*                                                                            *)
+(*        Slice 3f wraps the Slice 5/6 Prop-form crossing lemmas with      *)
+(*        Flocq's Rlt_bool / Rle_bool into decidable bool predicates       *)
+(*        (`b64_crosses_bottom_edge_dec`, `_left_edge_dec`,                *)
+(*        `_top_bottom_dec`, `_left_right_dec`) and composes them with the *)
+(*        endpoint filter into `b64_segment_touches_hot_pixel_partial`,    *)
+(*        a SOUND bool filter (true -> form (a) -> R-side).  It is NOT     *)
+(*        complete -- adjacent-edge crossings are still missing -- so the  *)
+(*        `_partial` suffix is retained and the unqualified name stays     *)
+(*        reserved until the adjacent cases land (3e adjacent) and the     *)
+(*        filter is shown complete.                                         *)
 (*                                                                            *)
 (* 4. Integer-regime exact-radius theorem: when `scale` is a positive       *)
 (*    power of two within the safe range, `b64_hot_pixel_radius scale` is  *)
