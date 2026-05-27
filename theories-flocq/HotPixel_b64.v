@@ -1102,6 +1102,368 @@ Proof.
 Qed.
 
 (* ============================================================================
+   Slice 7 (3e adjacent): adjacent-edge crossing via two-crossing midpoint.
+   ----------------------------------------------------------------------------
+   For a segment entering through one edge and exiting through an ADJACENT
+   edge (e.g. top + left), the two crossing parameters t_h (horizontal edge)
+   and t_v (vertical edge) bracket the in-pixel portion.  The midpoint
+   t_m = (t_h + t_v) / 2 is strictly interior.
+
+   The key averaging facts (by linearity of the convex combination):
+     x(t_m) = (x(t_h) + x(t_v)) / 2,   y(t_m) = (y(t_h) + y(t_v)) / 2.
+   At the vertical-edge crossing, x(t_v) is exactly the edge x-value; at the
+   horizontal-edge crossing, y(t_h) is exactly the edge y-value.  Averaging
+   the edge value with the OTHER crossing's in-range coordinate lands the
+   midpoint strictly inside the half-open pixel -- including the open
+   top/right edges, since averaging with a value < edge keeps the result
+   < edge.
+
+   Preconditions per pattern: a strict sign-change at each of the two edges
+   (yielding t_h, t_v in (0,1)) plus the requirement that each crossing
+   lands within the pixel's transverse extent (so the crossing is on the
+   actual edge segment, not its extension).
+   ============================================================================ *)
+
+Lemma b64_segment_crosses_top_left_sound :
+  forall (P0 P1 C : BPoint) (t_top t_left : R),
+    (* Strict sign change on y at the top edge cy + 1/2. *)
+    (Binary.B2R prec emax (by_ P0) > Binary.B2R prec emax (by_ C) + / 2
+     /\ Binary.B2R prec emax (by_ P1) < Binary.B2R prec emax (by_ C) + / 2)
+    \/ (Binary.B2R prec emax (by_ P1) > Binary.B2R prec emax (by_ C) + / 2
+        /\ Binary.B2R prec emax (by_ P0) < Binary.B2R prec emax (by_ C) + / 2) ->
+    (* Strict sign change on x at the left edge cx - 1/2. *)
+    (Binary.B2R prec emax (bx P0) < Binary.B2R prec emax (bx C) - / 2
+     /\ Binary.B2R prec emax (bx P1) > Binary.B2R prec emax (bx C) - / 2)
+    \/ (Binary.B2R prec emax (bx P1) < Binary.B2R prec emax (bx C) - / 2
+        /\ Binary.B2R prec emax (bx P0) > Binary.B2R prec emax (bx C) - / 2) ->
+    t_top = (Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    t_left = (Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+             / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    (* Top crossing lands within the pixel's x-extent. *)
+    Binary.B2R prec emax (bx C) - / 2
+      <= (1 - t_top) * Binary.B2R prec emax (bx P0)
+         + t_top * Binary.B2R prec emax (bx P1)
+      < Binary.B2R prec emax (bx C) + / 2 ->
+    (* Left crossing lands within the pixel's y-extent. *)
+    Binary.B2R prec emax (by_ C) - / 2
+      <= (1 - t_left) * Binary.B2R prec emax (by_ P0)
+         + t_left * Binary.B2R prec emax (by_ P1)
+      < Binary.B2R prec emax (by_ C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_top t_left Hcy Hcx Ht_top_def Ht_left_def Hxr Hyr.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  set (t_m := (t_top + t_left) / 2).
+  exists t_m.
+  assert (Hdy_ne : Binary.B2R prec emax (by_ P1)
+                   - Binary.B2R prec emax (by_ P0) <> 0).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Hdx_ne : Binary.B2R prec emax (bx P1)
+                   - Binary.B2R prec emax (bx P0) <> 0).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_top_y :
+    t_top * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_top_def. field. exact Hdy_ne. }
+  assert (Ht_left_x :
+    t_left * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_left_def. field. exact Hdx_ne. }
+  assert (Ht_top_bnds : 0 < t_top < 1).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_left_bnds : 0 < t_left < 1).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_m_bnds : 0 < t_m < 1).
+  { unfold t_m. lra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hxr as [Hx_lo Hx_hi].
+    destruct Hyr as [Hy_lo Hy_hi].
+    (* Edge coordinates at the two crossings. *)
+    assert (Hy_at_top :
+      (1 - t_top) * Binary.B2R prec emax (by_ P0)
+      + t_top * Binary.B2R prec emax (by_ P1)
+      = Binary.B2R prec emax (by_ C) + / 2) by nra.
+    assert (Hx_at_left :
+      (1 - t_left) * Binary.B2R prec emax (bx P0)
+      + t_left * Binary.B2R prec emax (bx P1)
+      = Binary.B2R prec emax (bx C) - / 2) by nra.
+    split.
+    + (* x at midpoint = avg of x(t_top) and x(t_left)=cx-1/2. *)
+      assert (Hx_m :
+        (1 - t_m) * Binary.B2R prec emax (bx P0)
+        + t_m * Binary.B2R prec emax (bx P1)
+        = (((1 - t_top) * Binary.B2R prec emax (bx P0)
+            + t_top * Binary.B2R prec emax (bx P1))
+           + ((1 - t_left) * Binary.B2R prec emax (bx P0)
+              + t_left * Binary.B2R prec emax (bx P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hx_m, Hx_at_left. split; lra.
+    + (* y at midpoint = avg of y(t_top)=cy+1/2 and y(t_left). *)
+      assert (Hy_m :
+        (1 - t_m) * Binary.B2R prec emax (by_ P0)
+        + t_m * Binary.B2R prec emax (by_ P1)
+        = (((1 - t_top) * Binary.B2R prec emax (by_ P0)
+            + t_top * Binary.B2R prec emax (by_ P1))
+           + ((1 - t_left) * Binary.B2R prec emax (by_ P0)
+              + t_left * Binary.B2R prec emax (by_ P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hy_m, Hy_at_top. split; lra.
+Qed.
+
+Lemma b64_segment_crosses_top_right_sound :
+  forall (P0 P1 C : BPoint) (t_top t_right : R),
+    (Binary.B2R prec emax (by_ P0) > Binary.B2R prec emax (by_ C) + / 2
+     /\ Binary.B2R prec emax (by_ P1) < Binary.B2R prec emax (by_ C) + / 2)
+    \/ (Binary.B2R prec emax (by_ P1) > Binary.B2R prec emax (by_ C) + / 2
+        /\ Binary.B2R prec emax (by_ P0) < Binary.B2R prec emax (by_ C) + / 2) ->
+    (Binary.B2R prec emax (bx P0) < Binary.B2R prec emax (bx C) + / 2
+     /\ Binary.B2R prec emax (bx P1) > Binary.B2R prec emax (bx C) + / 2)
+    \/ (Binary.B2R prec emax (bx P1) < Binary.B2R prec emax (bx C) + / 2
+        /\ Binary.B2R prec emax (bx P0) > Binary.B2R prec emax (bx C) + / 2) ->
+    t_top = (Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    t_right = (Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0))
+              / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    Binary.B2R prec emax (bx C) - / 2
+      <= (1 - t_top) * Binary.B2R prec emax (bx P0)
+         + t_top * Binary.B2R prec emax (bx P1)
+      < Binary.B2R prec emax (bx C) + / 2 ->
+    Binary.B2R prec emax (by_ C) - / 2
+      <= (1 - t_right) * Binary.B2R prec emax (by_ P0)
+         + t_right * Binary.B2R prec emax (by_ P1)
+      < Binary.B2R prec emax (by_ C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_top t_right Hcy Hcx Ht_top_def Ht_right_def Hxr Hyr.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  set (t_m := (t_top + t_right) / 2).
+  exists t_m.
+  assert (Hdy_ne : Binary.B2R prec emax (by_ P1)
+                   - Binary.B2R prec emax (by_ P0) <> 0).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Hdx_ne : Binary.B2R prec emax (bx P1)
+                   - Binary.B2R prec emax (bx P0) <> 0).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_top_y :
+    t_top * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) + / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_top_def. field. exact Hdy_ne. }
+  assert (Ht_right_x :
+    t_right * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_right_def. field. exact Hdx_ne. }
+  assert (Ht_top_bnds : 0 < t_top < 1).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_right_bnds : 0 < t_right < 1).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_m_bnds : 0 < t_m < 1).
+  { unfold t_m. lra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hxr as [Hx_lo Hx_hi].
+    destruct Hyr as [Hy_lo Hy_hi].
+    assert (Hy_at_top :
+      (1 - t_top) * Binary.B2R prec emax (by_ P0)
+      + t_top * Binary.B2R prec emax (by_ P1)
+      = Binary.B2R prec emax (by_ C) + / 2) by nra.
+    assert (Hx_at_right :
+      (1 - t_right) * Binary.B2R prec emax (bx P0)
+      + t_right * Binary.B2R prec emax (bx P1)
+      = Binary.B2R prec emax (bx C) + / 2) by nra.
+    split.
+    + assert (Hx_m :
+        (1 - t_m) * Binary.B2R prec emax (bx P0)
+        + t_m * Binary.B2R prec emax (bx P1)
+        = (((1 - t_top) * Binary.B2R prec emax (bx P0)
+            + t_top * Binary.B2R prec emax (bx P1))
+           + ((1 - t_right) * Binary.B2R prec emax (bx P0)
+              + t_right * Binary.B2R prec emax (bx P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hx_m, Hx_at_right. split; lra.
+    + assert (Hy_m :
+        (1 - t_m) * Binary.B2R prec emax (by_ P0)
+        + t_m * Binary.B2R prec emax (by_ P1)
+        = (((1 - t_top) * Binary.B2R prec emax (by_ P0)
+            + t_top * Binary.B2R prec emax (by_ P1))
+           + ((1 - t_right) * Binary.B2R prec emax (by_ P0)
+              + t_right * Binary.B2R prec emax (by_ P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hy_m, Hy_at_top. split; lra.
+Qed.
+
+Lemma b64_segment_crosses_bottom_left_sound :
+  forall (P0 P1 C : BPoint) (t_bot t_left : R),
+    (Binary.B2R prec emax (by_ P0) > Binary.B2R prec emax (by_ C) - / 2
+     /\ Binary.B2R prec emax (by_ P1) < Binary.B2R prec emax (by_ C) - / 2)
+    \/ (Binary.B2R prec emax (by_ P1) > Binary.B2R prec emax (by_ C) - / 2
+        /\ Binary.B2R prec emax (by_ P0) < Binary.B2R prec emax (by_ C) - / 2) ->
+    (Binary.B2R prec emax (bx P0) < Binary.B2R prec emax (bx C) - / 2
+     /\ Binary.B2R prec emax (bx P1) > Binary.B2R prec emax (bx C) - / 2)
+    \/ (Binary.B2R prec emax (bx P1) < Binary.B2R prec emax (bx C) - / 2
+        /\ Binary.B2R prec emax (bx P0) > Binary.B2R prec emax (bx C) - / 2) ->
+    t_bot = (Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    t_left = (Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0))
+             / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    Binary.B2R prec emax (bx C) - / 2
+      <= (1 - t_bot) * Binary.B2R prec emax (bx P0)
+         + t_bot * Binary.B2R prec emax (bx P1)
+      < Binary.B2R prec emax (bx C) + / 2 ->
+    Binary.B2R prec emax (by_ C) - / 2
+      <= (1 - t_left) * Binary.B2R prec emax (by_ P0)
+         + t_left * Binary.B2R prec emax (by_ P1)
+      < Binary.B2R prec emax (by_ C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_bot t_left Hcy Hcx Ht_bot_def Ht_left_def Hxr Hyr.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  set (t_m := (t_bot + t_left) / 2).
+  exists t_m.
+  assert (Hdy_ne : Binary.B2R prec emax (by_ P1)
+                   - Binary.B2R prec emax (by_ P0) <> 0).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Hdx_ne : Binary.B2R prec emax (bx P1)
+                   - Binary.B2R prec emax (bx P0) <> 0).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_bot_y :
+    t_bot * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_bot_def. field. exact Hdy_ne. }
+  assert (Ht_left_x :
+    t_left * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) - / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_left_def. field. exact Hdx_ne. }
+  assert (Ht_bot_bnds : 0 < t_bot < 1).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_left_bnds : 0 < t_left < 1).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_m_bnds : 0 < t_m < 1).
+  { unfold t_m. lra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hxr as [Hx_lo Hx_hi].
+    destruct Hyr as [Hy_lo Hy_hi].
+    assert (Hy_at_bot :
+      (1 - t_bot) * Binary.B2R prec emax (by_ P0)
+      + t_bot * Binary.B2R prec emax (by_ P1)
+      = Binary.B2R prec emax (by_ C) - / 2) by nra.
+    assert (Hx_at_left :
+      (1 - t_left) * Binary.B2R prec emax (bx P0)
+      + t_left * Binary.B2R prec emax (bx P1)
+      = Binary.B2R prec emax (bx C) - / 2) by nra.
+    split.
+    + assert (Hx_m :
+        (1 - t_m) * Binary.B2R prec emax (bx P0)
+        + t_m * Binary.B2R prec emax (bx P1)
+        = (((1 - t_bot) * Binary.B2R prec emax (bx P0)
+            + t_bot * Binary.B2R prec emax (bx P1))
+           + ((1 - t_left) * Binary.B2R prec emax (bx P0)
+              + t_left * Binary.B2R prec emax (bx P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hx_m, Hx_at_left. split; lra.
+    + assert (Hy_m :
+        (1 - t_m) * Binary.B2R prec emax (by_ P0)
+        + t_m * Binary.B2R prec emax (by_ P1)
+        = (((1 - t_bot) * Binary.B2R prec emax (by_ P0)
+            + t_bot * Binary.B2R prec emax (by_ P1))
+           + ((1 - t_left) * Binary.B2R prec emax (by_ P0)
+              + t_left * Binary.B2R prec emax (by_ P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hy_m, Hy_at_bot. split; lra.
+Qed.
+
+Lemma b64_segment_crosses_bottom_right_sound :
+  forall (P0 P1 C : BPoint) (t_bot t_right : R),
+    (Binary.B2R prec emax (by_ P0) > Binary.B2R prec emax (by_ C) - / 2
+     /\ Binary.B2R prec emax (by_ P1) < Binary.B2R prec emax (by_ C) - / 2)
+    \/ (Binary.B2R prec emax (by_ P1) > Binary.B2R prec emax (by_ C) - / 2
+        /\ Binary.B2R prec emax (by_ P0) < Binary.B2R prec emax (by_ C) - / 2) ->
+    (Binary.B2R prec emax (bx P0) < Binary.B2R prec emax (bx C) + / 2
+     /\ Binary.B2R prec emax (bx P1) > Binary.B2R prec emax (bx C) + / 2)
+    \/ (Binary.B2R prec emax (bx P1) < Binary.B2R prec emax (bx C) + / 2
+        /\ Binary.B2R prec emax (bx P0) > Binary.B2R prec emax (bx C) + / 2) ->
+    t_bot = (Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0))
+            / (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0)) ->
+    t_right = (Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0))
+              / (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0)) ->
+    Binary.B2R prec emax (bx C) - / 2
+      <= (1 - t_bot) * Binary.B2R prec emax (bx P0)
+         + t_bot * Binary.B2R prec emax (bx P1)
+      < Binary.B2R prec emax (bx C) + / 2 ->
+    Binary.B2R prec emax (by_ C) - / 2
+      <= (1 - t_right) * Binary.B2R prec emax (by_ P0)
+         + t_right * Binary.B2R prec emax (by_ P1)
+      < Binary.B2R prec emax (by_ C) + / 2 ->
+    b64_segment_touches_hot_pixel_spec P0 P1 C.
+Proof.
+  intros P0 P1 C t_bot t_right Hcy Hcx Ht_bot_def Ht_right_def Hxr Hyr.
+  unfold b64_segment_touches_hot_pixel_spec, segment_touches_hot_pixel.
+  set (t_m := (t_bot + t_right) / 2).
+  exists t_m.
+  assert (Hdy_ne : Binary.B2R prec emax (by_ P1)
+                   - Binary.B2R prec emax (by_ P0) <> 0).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Hdx_ne : Binary.B2R prec emax (bx P1)
+                   - Binary.B2R prec emax (bx P0) <> 0).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; lra. }
+  assert (Ht_bot_y :
+    t_bot * (Binary.B2R prec emax (by_ P1) - Binary.B2R prec emax (by_ P0))
+    = Binary.B2R prec emax (by_ C) - / 2 - Binary.B2R prec emax (by_ P0)).
+  { rewrite Ht_bot_def. field. exact Hdy_ne. }
+  assert (Ht_right_x :
+    t_right * (Binary.B2R prec emax (bx P1) - Binary.B2R prec emax (bx P0))
+    = Binary.B2R prec emax (bx C) + / 2 - Binary.B2R prec emax (bx P0)).
+  { rewrite Ht_right_def. field. exact Hdx_ne. }
+  assert (Ht_bot_bnds : 0 < t_bot < 1).
+  { destruct Hcy as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_right_bnds : 0 < t_right < 1).
+  { destruct Hcx as [[H0 H1] | [H0 H1]]; nra. }
+  assert (Ht_m_bnds : 0 < t_m < 1).
+  { unfold t_m. lra. }
+  split.
+  - lra.
+  - unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius. simpl.
+    replace (/ (2 * 1)) with (/ 2) by lra.
+    destruct Hxr as [Hx_lo Hx_hi].
+    destruct Hyr as [Hy_lo Hy_hi].
+    assert (Hy_at_bot :
+      (1 - t_bot) * Binary.B2R prec emax (by_ P0)
+      + t_bot * Binary.B2R prec emax (by_ P1)
+      = Binary.B2R prec emax (by_ C) - / 2) by nra.
+    assert (Hx_at_right :
+      (1 - t_right) * Binary.B2R prec emax (bx P0)
+      + t_right * Binary.B2R prec emax (bx P1)
+      = Binary.B2R prec emax (bx C) + / 2) by nra.
+    split.
+    + assert (Hx_m :
+        (1 - t_m) * Binary.B2R prec emax (bx P0)
+        + t_m * Binary.B2R prec emax (bx P1)
+        = (((1 - t_bot) * Binary.B2R prec emax (bx P0)
+            + t_bot * Binary.B2R prec emax (bx P1))
+           + ((1 - t_right) * Binary.B2R prec emax (bx P0)
+              + t_right * Binary.B2R prec emax (bx P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hx_m, Hx_at_right. split; lra.
+    + assert (Hy_m :
+        (1 - t_m) * Binary.B2R prec emax (by_ P0)
+        + t_m * Binary.B2R prec emax (by_ P1)
+        = (((1 - t_bot) * Binary.B2R prec emax (by_ P0)
+            + t_bot * Binary.B2R prec emax (by_ P1))
+           + ((1 - t_right) * Binary.B2R prec emax (by_ P0)
+              + t_right * Binary.B2R prec emax (by_ P1))) / 2).
+      { unfold t_m. field. }
+      rewrite Hy_m, Hy_at_bot. split; lra.
+Qed.
+
+(* ============================================================================
    Slice 3f: decidable bool wrapper over the crossing soundness lemmas.
    ----------------------------------------------------------------------------
    The Slice 5/6 crossing lemmas take Prop-form sign-change and range
@@ -1358,6 +1720,10 @@ Print Assumptions b64_crosses_top_bottom_dec_sound.
 Print Assumptions b64_crosses_left_right_dec_sound.
 Print Assumptions b64_segment_touches_hot_pixel_partial_sound.
 Print Assumptions b64_segment_touches_hot_pixel_partial_sound_R.
+Print Assumptions b64_segment_crosses_top_left_sound.
+Print Assumptions b64_segment_crosses_top_right_sound.
+Print Assumptions b64_segment_crosses_bottom_left_sound.
+Print Assumptions b64_segment_crosses_bottom_right_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
@@ -1422,12 +1788,21 @@ Print Assumptions b64_segment_touches_hot_pixel_partial_sound_R.
 (*        ((cy + 1/2 + cy - 1/2) / 2 = cy), satisfying both the closed    *)
 (*        lower and strict upper bounds.  No epsilon-shift or IVT needed. *)
 (*                                                                            *)
-(*        Adjacent-edge crossings (top+left, top+right, bottom+left,       *)
-(*        bottom+right) remain deferred -- each pattern needs its own      *)
-(*        witness construction.  A universal IVT-based construction would *)
-(*        unify all four but requires composing linear-function           *)
-(*        continuity proofs (`continuity_const + continuity_mult +        *)
-(*        continuity_plus`) before invoking `IVT_cor`.                      *)
+(*        Slice 7 lands the four ADJACENT-edge crossing lemmas (top+left, *)
+(*        top+right, bottom+left, bottom+right), also via the             *)
+(*        two-crossing midpoint -- but with range preconditions on BOTH   *)
+(*        crossings (each must land within the pixel's transverse extent).*)
+(*        At the midpoint, each coordinate is the average of one edge     *)
+(*        value and the other crossing's in-range coordinate, landing     *)
+(*        strictly inside the half-open pixel (including the open         *)
+(*        top/right edges).  No IVT needed -- pure field + nra + lra.      *)
+(*                                                                            *)
+(*        All eight crossing patterns now have Prop-form soundness lemmas. *)
+(*        Wrapping the four adjacent cases in bool (mirroring Slice 3f)    *)
+(*        and proving the partial filter COMPLETE (form (a) -> filter, the *)
+(*        classification argument over which edges a touching segment      *)
+(*        crosses) remain the follow-ups before the unqualified           *)
+(*        `b64_segment_touches_hot_pixel` can ship.                        *)
 (*                                                                            *)
 (*        Slice 3f wraps the Slice 5/6 Prop-form crossing lemmas with      *)
 (*        Flocq's Rlt_bool / Rle_bool into decidable bool predicates       *)
