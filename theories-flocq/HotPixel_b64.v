@@ -2078,6 +2078,222 @@ Proof.
     rewrite Bool.orb_true_r. reflexivity.
 Qed.
 
+(* ============================================================================
+   Slice 10 (3g-LB): Liang-Barsky parameter-interval filter.
+   ----------------------------------------------------------------------------
+   Replaces the eight pattern-decs (sound but incomplete -- they miss
+   corner/edge-tangent touches) with a single parameter-interval filter that
+   is COMPLETE against the half-open form (a) and SOUND against the closed
+   pixel.  For the noder, completeness (no false negatives -- a vertex is
+   inserted at every pixel a segment passes through) is the load-bearing
+   property; a complete-but-conservative filter over-nodes only on a
+   measure-zero boundary set, which is safe.
+
+   The filter computes, per axis, the t-interval [Rmin a b, Rmax a b] of the
+   slab crossings (a = (lo - c0)/(c1 - c0), b = (hi - c0)/(c1 - c0)), guarding
+   the degenerate c1 = c0 (axis-parallel) case, intersects with [0,1], and
+   returns whether the result is non-empty.
+
+   Key algebra (no sign(c1-c0) case split needed):
+     ((1-t)c0 + t c1 - lo) * ((1-t)c0 + t c1 - hi)
+       = (t - a)(t - b)(c1 - c0)^2
+   so membership in the slab <-> (t-a)(t-b) <= 0 <-> t in [Rmin a b, Rmax a b].
+
+   Filter operates on exact reals (B2R values via Rlt_bool/Rle_bool); no
+   binary64 rounding enters.  (Rlt_bool/Rle_bool route through classical
+   Rcompare, so this is a bool-valued logical decision, not an extractable
+   computation -- a runnable noder filter over b64_lt/b64_le with outward
+   rounding is a separate extraction-facing slice.)
+   ============================================================================ *)
+
+(* Per-axis lower / upper t-bound of the closed slab [lo, hi], with the
+   degenerate (axis-parallel) case c1 = c0 clipped to [0, 1]. *)
+Definition lb_tlo (c0 c1 lo hi : R) : R :=
+  if Req_dec_T c1 c0 then 0
+  else Rmin ((lo - c0) / (c1 - c0)) ((hi - c0) / (c1 - c0)).
+
+Definition lb_thi (c0 c1 lo hi : R) : R :=
+  if Req_dec_T c1 c0 then 1
+  else Rmax ((lo - c0) / (c1 - c0)) ((hi - c0) / (c1 - c0)).
+
+(* Degenerate guard: for an axis-parallel segment, is the constant
+   coordinate inside the slab?  (Always "true" in the non-degenerate case --
+   the t-bounds carry the constraint there.) *)
+Definition lb_inslab (c0 c1 lo hi : R) : bool :=
+  if Req_dec_T c1 c0 then (Rle_bool lo c0 && Rle_bool c0 hi) else true.
+
+Definition b64_liang_barsky_touches (P0 P1 C : BPoint) : bool :=
+  let x0 := Binary.B2R prec emax (bx P0)  in
+  let x1 := Binary.B2R prec emax (bx P1)  in
+  let y0 := Binary.B2R prec emax (by_ P0) in
+  let y1 := Binary.B2R prec emax (by_ P1) in
+  let cx := Binary.B2R prec emax (bx C)   in
+  let cy := Binary.B2R prec emax (by_ C)  in
+  let xlo := cx - / 2 in let xhi := cx + / 2 in
+  let ylo := cy - / 2 in let yhi := cy + / 2 in
+  lb_inslab x0 x1 xlo xhi && lb_inslab y0 y1 ylo yhi
+  && Rle_bool (Rmax 0 (Rmax (lb_tlo x0 x1 xlo xhi) (lb_tlo y0 y1 ylo yhi)))
+              (Rmin 1 (Rmin (lb_thi x0 x1 xlo xhi) (lb_thi y0 y1 ylo yhi))).
+
+(* Closed-pixel touch predicate (soundness target). *)
+Definition in_hot_pixel_closed (P C : Point) (scale : R) : Prop :=
+  px C - hot_pixel_radius scale <= px P <= px C + hot_pixel_radius scale /\
+  py C - hot_pixel_radius scale <= py P <= py C + hot_pixel_radius scale.
+
+Definition b64_segment_touches_hot_pixel_closed_spec
+    (P0 P1 C : BPoint) : Prop :=
+  exists t : R, 0 <= t <= 1 /\
+    in_hot_pixel_closed (segment_point (BP2P P0) (BP2P P1) t) (BP2P C) 1.
+
+(* Per-axis correctness: t in the clipped slab interval <-> the coordinate is
+   in the closed slab (given 0 <= t <= 1 for the degenerate direction). *)
+Lemma lb_axis_sound :
+  forall c0 c1 lo hi t,
+    lo <= hi ->
+    lb_inslab c0 c1 lo hi = true ->
+    lb_tlo c0 c1 lo hi <= t ->
+    t <= lb_thi c0 c1 lo hi ->
+    lo <= (1 - t) * c0 + t * c1 <= hi.
+Proof.
+  intros c0 c1 lo hi t Hlohi Hslab Htlo Hthi.
+  unfold lb_inslab, lb_tlo, lb_thi in *.
+  destruct (Req_dec_T c1 c0) as [Heq | Hne].
+  - apply Bool.andb_true_iff in Hslab. destruct Hslab as [Hl Hh].
+    apply Rle_bool_elim in Hl. apply Rle_bool_elim in Hh.
+    rewrite Heq. nra.
+  - assert (Hd : c1 - c0 <> 0) by lra.
+    set (a := (lo - c0) / (c1 - c0)) in *.
+    set (b := (hi - c0) / (c1 - c0)) in *.
+    assert (Hva : (1 - a) * c0 + a * c1 = lo) by (unfold a; field; exact Hd).
+    assert (Hvb : (1 - b) * c0 + b * c1 = hi) by (unfold b; field; exact Hd).
+    assert (Hprod : (t - a) * (t - b) <= 0).
+    { revert Htlo Hthi. unfold Rmin, Rmax.
+      destruct (Rle_dec a b); nra. }
+    assert (Hvlo : (1 - t) * c0 + t * c1 - lo = (t - a) * (c1 - c0))
+      by (rewrite <- Hva; ring).
+    assert (Hvhi : (1 - t) * c0 + t * c1 - hi = (t - b) * (c1 - c0))
+      by (rewrite <- Hvb; ring).
+    assert (Hkey : ((1 - t) * c0 + t * c1 - lo)
+                   * ((1 - t) * c0 + t * c1 - hi) <= 0).
+    { rewrite Hvlo, Hvhi.
+      replace ((t - a) * (c1 - c0) * ((t - b) * (c1 - c0)))
+        with ((t - a) * (t - b) * ((c1 - c0) * (c1 - c0))) by ring.
+      assert (Hsq : 0 <= (c1 - c0) * (c1 - c0)) by nra.
+      nra. }
+    nra.
+Qed.
+
+Lemma lb_axis_complete :
+  forall c0 c1 lo hi t,
+    0 <= t <= 1 ->
+    lo <= (1 - t) * c0 + t * c1 <= hi ->
+    lb_inslab c0 c1 lo hi = true
+    /\ lb_tlo c0 c1 lo hi <= t
+    /\ t <= lb_thi c0 c1 lo hi.
+Proof.
+  intros c0 c1 lo hi t [Ht0 Ht1] [Hlo Hhi].
+  unfold lb_inslab, lb_tlo, lb_thi.
+  destruct (Req_dec_T c1 c0) as [Heq | Hne].
+  - rewrite Heq in Hlo, Hhi.
+    repeat split.
+    + apply Bool.andb_true_iff. split; apply Rle_bool_true; nra.
+    + exact Ht0.
+    + exact Ht1.
+  - assert (Hd : c1 - c0 <> 0) by lra.
+    set (a := (lo - c0) / (c1 - c0)) in *.
+    set (b := (hi - c0) / (c1 - c0)) in *.
+    assert (Hva : (1 - a) * c0 + a * c1 = lo) by (unfold a; field; exact Hd).
+    assert (Hvb : (1 - b) * c0 + b * c1 = hi) by (unfold b; field; exact Hd).
+    assert (Hvlo : (1 - t) * c0 + t * c1 - lo = (t - a) * (c1 - c0))
+      by (rewrite <- Hva; ring).
+    assert (Hvhi : (1 - t) * c0 + t * c1 - hi = (t - b) * (c1 - c0))
+      by (rewrite <- Hvb; ring).
+    (* (t-a)(t-b)(c1-c0)^2 = (v-lo)(v-hi) <= 0; divide out the square. *)
+    assert (Hprod : (t - a) * (t - b) <= 0).
+    { assert (Hsq : (t - a) * (t - b) * ((c1 - c0) * (c1 - c0)) <= 0).
+      { replace ((t - a) * (t - b) * ((c1 - c0) * (c1 - c0)))
+          with (((1 - t) * c0 + t * c1 - lo)
+                * ((1 - t) * c0 + t * c1 - hi))
+          by (rewrite Hvlo, Hvhi; ring).
+        nra. }
+      assert (Hsqpos : 0 < (c1 - c0) * (c1 - c0))
+        by (destruct (Rdichotomy _ _ Hd); nra).
+      nra. }
+    repeat split.
+    + unfold Rmin. destruct (Rle_dec a b); nra.
+    + unfold Rmax. destruct (Rle_dec a b); nra.
+Qed.
+
+Theorem b64_liang_barsky_sound_closed :
+  forall P0 P1 C : BPoint,
+    b64_liang_barsky_touches P0 P1 C = true ->
+    b64_segment_touches_hot_pixel_closed_spec P0 P1 C.
+Proof.
+  intros P0 P1 C H.
+  unfold b64_liang_barsky_touches in H.
+  apply Bool.andb_true_iff in H. destruct H as [H Hcmp].
+  apply Bool.andb_true_iff in H. destruct H as [Hsx Hsy].
+  apply Rle_bool_elim in Hcmp.
+  set (tex := lb_tlo (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                     (Binary.B2R prec emax (bx C) - / 2)
+                     (Binary.B2R prec emax (bx C) + / 2)) in *.
+  set (tey := lb_tlo (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                     (Binary.B2R prec emax (by_ C) - / 2)
+                     (Binary.B2R prec emax (by_ C) + / 2)) in *.
+  set (txx := lb_thi (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                     (Binary.B2R prec emax (bx C) - / 2)
+                     (Binary.B2R prec emax (bx C) + / 2)) in *.
+  set (txy := lb_thi (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                     (Binary.B2R prec emax (by_ C) - / 2)
+                     (Binary.B2R prec emax (by_ C) + / 2)) in *.
+  set (te := Rmax 0 (Rmax tex tey)) in *.
+  exists te.
+  assert (Hte0 : 0 <= te) by (unfold te; apply Rmax_l).
+  assert (Hte1 : te <= 1) by (eapply Rle_trans; [exact Hcmp | apply Rmin_l]).
+  split; [split; assumption|].
+  unfold in_hot_pixel_closed, segment_point, BP2P, px, py, hot_pixel_radius.
+  simpl. replace (/ (2 * 1)) with (/ 2) by lra.
+  split.
+  - apply lb_axis_sound; [lra | exact Hsx | |].
+    + (* tex <= te *)
+      unfold te. eapply Rle_trans; [apply Rmax_l | apply Rmax_r].
+    + (* te <= txx *)
+      eapply Rle_trans; [exact Hcmp|].
+      eapply Rle_trans; [apply Rmin_r | apply Rmin_l].
+  - apply lb_axis_sound; [lra | exact Hsy | |].
+    + unfold te. eapply Rle_trans; [apply Rmax_r | apply Rmax_r].
+    + eapply Rle_trans; [exact Hcmp|].
+      eapply Rle_trans; [apply Rmin_r | apply Rmin_r].
+Qed.
+
+Theorem b64_liang_barsky_complete :
+  forall P0 P1 C : BPoint,
+    b64_segment_touches_hot_pixel_spec P0 P1 C ->
+    b64_liang_barsky_touches P0 P1 C = true.
+Proof.
+  intros P0 P1 C [t [Ht Hin]].
+  unfold in_hot_pixel, segment_point, BP2P, px, py, hot_pixel_radius in Hin.
+  simpl in Hin. replace (/ (2 * 1)) with (/ 2) in Hin by lra.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  pose proof (lb_axis_complete
+                (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                (Binary.B2R prec emax (bx C) - / 2)
+                (Binary.B2R prec emax (bx C) + / 2) t Ht
+                (conj Hxlo (Rlt_le _ _ Hxhi))) as [Hsx [Htlox Hthix]].
+  pose proof (lb_axis_complete
+                (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                (Binary.B2R prec emax (by_ C) - / 2)
+                (Binary.B2R prec emax (by_ C) + / 2) t Ht
+                (conj Hylo (Rlt_le _ _ Hyhi))) as [Hsy [Htloy Hthiy]].
+  destruct Ht as [Ht0 Ht1].
+  unfold b64_liang_barsky_touches.
+  rewrite Hsx, Hsy. simpl.
+  apply Rle_bool_true.
+  apply Rle_trans with t.
+  - apply Rmax_lub; [exact Ht0 | apply Rmax_lub; assumption].
+  - apply Rmin_glb; [exact Ht1 | apply Rmin_glb; assumption].
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -2118,6 +2334,10 @@ Print Assumptions b64_lt_complete.
 Print Assumptions b64_hot_pixel_bounds_exact.
 Print Assumptions b64_in_hot_pixel_complete.
 Print Assumptions b64_segment_touches_hot_pixel_endpoint_complete.
+Print Assumptions lb_axis_sound.
+Print Assumptions lb_axis_complete.
+Print Assumptions b64_liang_barsky_sound_closed.
+Print Assumptions b64_liang_barsky_complete.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)

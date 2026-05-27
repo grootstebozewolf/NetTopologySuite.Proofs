@@ -148,30 +148,62 @@ slices.)
 | 3e | form (b) open + adjacent crossing | **landed** (Slices 6 + 7; all 8 patterns) |
 | 3f | form (b) decidable bool wrapper | **landed** (Slices 3f + 8; all 8 patterns) |
 | 3g-point | point-in-pixel completeness + endpoint-case filter completeness | **landed** (Slice 9) |
-| 3g-crossing | crossing-case filter completeness | **deferred** — the geometric classification argument |
+| 3g-LB | Liang-Barsky filter: complete vs half-open form (a) + sound vs closed pixel | **landed** (Slice 10) |
 | 4 | integer-regime exact-radius | deferred |
 
-## What remains before the unqualified `b64_segment_touches_hot_pixel`
+### Slice 10 — Liang-Barsky parameter-interval filter (item 3g-LB)
 
-The partial filter is **sound** (`partial = true` -> touches). The
-ENDPOINT half of completeness is now in hand (Slice 9:
-`b64_segment_touches_hot_pixel_endpoint_complete` — if either endpoint
-lies in the pixel, the filter fires). The remaining piece
-(3g-crossing) is the harder classification argument: prove that any
-segment genuinely touching the half-open pixel **with both endpoints
-outside** must trigger one of the eight edge-crossing disjuncts — i.e.
-the disjunction is exhaustive over all the ways a chord can enter a
-convex half-open cell.
+The pattern-dec approach is retired: corner/edge-tangent touches satisfy
+form (a) but fire no strict sign-change disjunct, so the eight-dec filter
+is provably incomplete over degenerate touches. Slice 10 replaces it with
+`b64_liang_barsky_touches` — a single parameter-interval filter that
+computes, per axis, the clipped slab-crossing t-interval and tests
+non-emptiness. Two theorems:
 
-A noder needs *completeness* (no false negatives — it must insert a
-vertex at every pixel a segment passes through, or snap-rounding misses
-required vertices). Completeness is therefore the gate before the
-unqualified `b64_segment_touches_hot_pixel` ships with the full
-sound-and-complete contract, and before the passes-through relation
-(the next Phase 2 milestone) can be stated computationally.
+- `b64_liang_barsky_complete` — touch (half-open form (a)) implies the
+  filter fires. The noder-critical direction (no false negatives).
+- `b64_liang_barsky_sound_closed` — the filter implies a touch of the
+  CLOSED pixel. A complete-but-conservative filter over-nodes only on a
+  measure-zero boundary set, which is safe for the noder.
+
+Both directions avoid any `sign(c1 - c0)` case split via the identity
+`(v(t) - lo)(v(t) - hi) = (t - a)(t - b)(c1 - c0)^2`, so slab membership
+reduces to `(t - a)(t - b) <= 0`. Helpers `lb_axis_sound` /
+`lb_axis_complete` carry the per-axis argument; the degenerate
+(axis-parallel `c1 = c0`) case is guarded by `lb_inslab`. (4 theorems +
+3 definitions + the closed-pixel predicate.)
+
+## Filter status and what remains
+
+Two filters now coexist, and together they bracket the exact touch
+predicate:
+
+- **Pattern filter** (`b64_segment_touches_hot_pixel_partial`, Slices
+  3–8): **sound** vs form (a), but **incomplete** — it misses
+  corner/edge-tangent touches (no strict sign-change fires).
+- **Liang–Barsky filter** (`b64_liang_barsky_touches`, Slice 10):
+  **complete** vs the half-open form (a) and **sound** vs the closed
+  pixel. This is the noder-relevant contract: a noder needs no false
+  negatives (a vertex at every pixel a segment passes through), and a
+  complete-but-conservative filter over-nodes only on a measure-zero
+  boundary set, which is safe.
+
+The one piece not yet formalised is the **exact half-open
+both-directions** filter (sound *and* complete against the half-open
+form (a) simultaneously). It requires strict/non-strict bound tracking
+that flips with `sign(c1 - c0)` plus the degenerate guards — a larger
+engagement, and not required for noder correctness given the
+Liang–Barsky completeness above. The unqualified
+`b64_segment_touches_hot_pixel` name is reserved for that exact filter
+if/when it lands; downstream noder work should consume
+`b64_liang_barsky_touches` (complete) directly.
+
+The next Phase 2 milestone is the passes-through relation, which can
+now be stated computationally on top of the complete Liang–Barsky
+filter.
 
 ## Cumulative
 
-49 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
+53 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
 Phase 2 foundations, zero `Admitted`, only the four standard
 classical-reals axioms throughout.
