@@ -560,7 +560,7 @@ publishable.
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
 | 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stages B/C/D expansion refinement (in particular Stage D's renormalization) + general bounded-magnitude cross_R soundness deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
 | 1 | `Intersect_b64.v` — predicate-level robust segment intersection | **predicate complete** — five-valued `IntersectSign` filter built on top of Phase 0's `b64_orient_sign_filtered`; structural lemmas Qed-closed (decidability, totality, 10-way distinctness, NaN propagation); integer-regime cross_R soundness for both `IntersectNone` (no shared point) and `IntersectPoint` (exists shared interior point) via the R-side `strict_completeness` theorem in `theories/Intersect.v`; `IntersectCollinear` sub-case disambiguation + intersection-point coordinate computation deferred — see [`docs/phase1-completion.md`](docs/phase1-completion.md) | **predicate-complete** — `Robust.Intersect.RobustLineIntersector` (`SignFiltered` returning 5-valued `IntersectSign`) bit-exact against RocqRefRunner `INTERSECT_FILTERED` mode, 187 / 187 differential cases including integer-regime adversarial family |
-| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **audit-doc shipped** — scope, reusable foundations from Phase 0/1, and first-slice plan in [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md); first slice `HotPixel.v` + `HotPixel_b64.v` queued; full topological correctness theorem identified as the major thesis-shaped piece (6-10 weeks) | 0% |
+| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **foundations in progress** — hot-pixel layer (`HotPixel.v` + `HotPixel_b64.v`) shipped through the segment-touches-pixel filter: `b64_in_hot_pixel_sound` exact-pixel bridge, form (a) parametric existential `b64_segment_touches_hot_pixel_spec`, and a decidable bool filter `b64_segment_touches_hot_pixel_partial` that **soundly** decides all eight edge-crossing patterns + both endpoint cases (44 theorems Qed-closed, 0 Admitted); filter **completeness** (the classification argument) + the snap-rounding algorithm + topological correctness theorem (the major thesis-shaped piece, 6-10 weeks) remain — see [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md) (scope) and [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md) (slice-by-slice progress) | predicate-foundations |
 | 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
 | 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future | 0% |
 | 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ | 0% |
@@ -980,6 +980,22 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   identified as 6-10 weeks of focused work and genuinely
   research-shaped.  No turnkey vendor target exists; phase 2 is
   greenfield in the formal-methods sense.
+- **2026-05-27**: Phase 2 hot-pixel foundations shipped through the
+  segment-touches-pixel filter (44 theorems Qed-closed, 0 Admitted).
+  `b64_in_hot_pixel_sound` bridges the binary64 pixel decision to the
+  exact R-side `in_hot_pixel` (unit-grid scale, via the 27-bit
+  `(2n +/- 1)/2` exactness argument); `b64_segment_touches_hot_pixel_spec`
+  is the form (a) parametric existential; and
+  `b64_segment_touches_hot_pixel_partial` is a decidable bool filter
+  that SOUNDLY decides all eight edge-crossing patterns (closed,
+  opposite, adjacent) + both endpoint cases, each crossing witnessed by
+  an explicit `t*` or a two-crossing midpoint (no IVT needed -- the
+  half-open open-edge cases are handled by averaging an in-range
+  coordinate with the edge value).  Filter COMPLETENESS (the
+  classification argument: touches -> filter = true), the snap-rounding
+  algorithm, and the topological correctness theorem remain.  Slice-by-
+  slice record in
+  [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md).
 
 ## What this is NOT
 
