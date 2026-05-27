@@ -173,6 +173,45 @@ reduces to `(t - a)(t - b) <= 0`. Helpers `lb_axis_sound` /
 (axis-parallel `c1 = c0`) case is guarded by `lb_inslab`. (4 theorems +
 3 definitions + the closed-pixel predicate.)
 
+### Slice 11 — passes-through relation (Phase 2 milestone 2)
+
+The snap-rounding invariant. `passes_through_hot_pixel P0 P1 C scale`
+holds when the segment touches the pixel **and** the snap-rounded
+segment `[snap P0, snap P1]` still touches it. The b64 bool mirror is
+`b64_passes_through_hot_pixel := b64_liang_barsky_touches P0 P1 C &&
+b64_liang_barsky_touches (b64_snap P0) (b64_snap P1) C`.
+
+**Snap is exact, not approximate.** `b64_snap` snaps to the integer grid
+via `Binary.Bnearbyint … mode_NE` (round-half-to-even — the IEEE default
+and the mode `mode_b64` every b64 op already uses). `Bnearbyint_correct`
+gives an **unconditional** B2R equation (no finiteness side-condition),
+so `b64_snap_coord_B2R : B2R (b64_snap_coord x) = snap_round_coord (B2R
+x) 1` is exact. The R-side `snap_round` is pinned to the same Flocq
+`round radix2 (FIX_exp 0) (round_mode mode_NE)`, so no rounding-mode
+mismatch enters — and **no deferred-proof entry is needed**. (This is
+why the R-side `snap_round` / `passes_through` predicates live in the
+Flocq-importing `HotPixel_b64.v` rather than the Flocq-free
+`theories/HotPixel.v`.)
+
+Mirroring Slice 10, the bool brackets the exact relation, both
+directions mechanical compositions over `BP2P_b64_snap`:
+
+- `b64_passes_through_complete` — half-open passes-through implies the
+  bool fires (noder-critical; LB completeness ×2).
+- `b64_passes_through_sound` — the bool implies the CLOSED
+  passes-through (conservative; LB closed-soundness ×2).
+
+`snap_round_on_grid` records that snapped coordinates land on the grid
+(`round` to `FIX_exp 0` is an integer, via `round_FIX0_IZR`).
+
+**Deliberately not proved:** `passes_through_self` ("a point in a pixel
+snaps into that same pixel") is **false in general** — at the included
+lower boundary `x = cx − 1/2` with odd center `cx`, round-half-to-even
+snaps to `cx − 1`, the neighbouring pixel. Which pixel a boundary point
+snaps to is a real snap-rounding subtlety for the algorithm milestone,
+not a structural lemma. (6 theorems + 4 definitions + 2 touch/relation
+predicates.)
+
 ## Filter status and what remains
 
 Two filters now coexist, and together they bracket the exact touch
@@ -198,12 +237,18 @@ Liang–Barsky completeness above. The unqualified
 if/when it lands; downstream noder work should consume
 `b64_liang_barsky_touches` (complete) directly.
 
-The next Phase 2 milestone is the passes-through relation, which can
-now be stated computationally on top of the complete Liang–Barsky
-filter.
+The passes-through relation (Slice 11, above) is now stated and
+bracketed computationally on top of the complete Liang–Barsky filter.
+The next Phase 2 milestone is the snap-rounding algorithm: process a set
+of segments and hot pixels, snap all endpoints to the grid, and prove
+that every segment that passed through a pixel still does after
+snapping. Its correctness theorem cites `passes_through_hot_pixel` as
+its invariant; with `b64_snap` exact and `b64_passes_through_{sound,
+complete}` in hand, that proof should be mechanical composition rather
+than new design work.
 
 ## Cumulative
 
-53 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
+59 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
 Phase 2 foundations, zero `Admitted`, only the four standard
 classical-reals axioms throughout.

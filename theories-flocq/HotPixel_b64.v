@@ -30,9 +30,12 @@
    This is the Phase 2 foundations slice on the binary64 side.  Three
    pieces are deferred to follow-up slices:
 
-     1. `b64_hot_pixel_center` -- snapping a coordinate to the grid via
-        round-to-integer.  Needs `Binary.Bnearbyint` and a finiteness /
-        no-overflow analysis tailored to the round-to-int primitive.
+     1. `b64_hot_pixel_center` -- producing a FINITE snapped *center*.
+        Slice 11 uses `Binary.Bnearbyint` for `b64_snap` and exploits its
+        UNCONDITIONAL B2R equation (no finiteness side-condition) for the
+        exact `b64_snap_coord_B2R` bridge.  What remains deferred here is
+        only the finiteness / no-overflow analysis needed to guarantee the
+        snapped value is itself finite (not the B2R equation).
      2. `b64_segment_touches_hot_pixel` -- the parametric or decidable
         bounding-box variant.  Easier to state alongside the noder
         (Phase 2 proper).
@@ -2294,6 +2297,158 @@ Proof.
   - apply Rmin_glb; [exact Ht1 | apply Rmin_glb; assumption].
 Qed.
 
+(* ============================================================================
+   Slice 11: the passes-through relation (Phase 2 milestone 2).
+   ----------------------------------------------------------------------------
+   `passes_through_hot_pixel P0 P1 C scale` is the snap-rounding invariant:
+   the segment [P0,P1] touches the pixel C AND the snap-rounded segment
+   [snap P0, snap P1] still touches C.  The snap-rounding algorithm (Phase 2
+   milestone 3) preserves this relation; getting the snap semantics exact
+   here is what keeps that proof a mechanical composition.
+
+   Snap semantics.  We snap to the integer grid via round-to-nearest-even,
+   the IEEE default and the mode (`mode_b64 = mode_NE`) already used by every
+   b64 arithmetic op in the corpus.  Crucially `Bnearbyint_correct` gives an
+   UNCONDITIONAL B2R equation
+       B2R (Bnearbyint .. mode_NE x) = round radix2 (FIX_exp 0) ZnearestE (B2R x)
+   with no finiteness side-condition, so `b64_snap_coord_B2R` is EXACT -- no
+   approximation, no deferred-proof entry.  (The deferred item 2,
+   `b64_hot_pixel_center`, concerns producing a finite snapped *center* and
+   needs overflow reasoning; the B2R equation used here does not.)
+
+   The R-side `snap_round` / `passes_through_hot_pixel` predicates are
+   genuinely R-valued (over `Point`), but live in this Flocq-importing file
+   because their snap semantics are PINNED to Flocq's `round` so the bridge
+   is exact; `theories/HotPixel.v` stays Flocq-free.
+
+   Mirroring Slice 10, the b64 bool filter brackets the exact relation:
+     - complete vs the HALF-OPEN relation (`b64_passes_through_complete`) --
+       the noder-critical direction (no false negatives);
+     - sound vs the CLOSED relation (`b64_passes_through_sound`) -- a
+       conservative over-approximation, safe for the noder.
+
+   NOT proved here: "a point in a pixel snaps into that same pixel"
+   (`passes_through_self`).  It is FALSE in general -- at the included lower
+   boundary x = cx - 1/2 with an odd center cx, round-half-to-even snaps to
+   cx-1, the neighbouring pixel.  Which pixel a boundary point snaps to is a
+   genuine snap-rounding subtlety, handled at the algorithm milestone, not a
+   structural lemma.
+   ============================================================================ *)
+
+(* Unary NaN payload handler for Bnearbyint (cf. the binary default_nan_b64
+   used by Bplus/Bmult/Bdiv). *)
+Definition nearbyint_nan_b64 (x : binary64)
+  : { z : Binary.binary_float prec emax | Binary.is_nan prec emax z = true } :=
+  exist _ (Binary.B754_nan prec emax false 1 eq_refl) eq_refl.
+
+(* R-side snap: round a coordinate to the nearest grid point of spacing
+   1/scale, via round-half-to-even (matching the b64 mode). *)
+Definition snap_round_coord (x scale : R) : R :=
+  round radix2 (FIX_exp 0) (round_mode mode_NE) (x * scale) / scale.
+
+Definition snap_round (P : Point) (scale : R) : Point :=
+  mkPoint (snap_round_coord (px P) scale) (snap_round_coord (py P) scale).
+
+(* The half-open and closed touch relations, and their passes-through forms.
+   `segment_touches_hot_pixel` (half-open) is from theories/HotPixel.v;
+   `in_hot_pixel_closed` is from Slice 10 above. *)
+Definition segment_touches_hot_pixel_closed (P0 P1 C : Point) (scale : R) : Prop :=
+  exists t : R, 0 <= t <= 1 /\ in_hot_pixel_closed (segment_point P0 P1 t) C scale.
+
+Definition passes_through_hot_pixel (P0 P1 C : Point) (scale : R) : Prop :=
+  segment_touches_hot_pixel P0 P1 C scale /\
+  segment_touches_hot_pixel (snap_round P0 scale) (snap_round P1 scale) C scale.
+
+Definition passes_through_hot_pixel_closed (P0 P1 C : Point) (scale : R) : Prop :=
+  segment_touches_hot_pixel_closed P0 P1 C scale /\
+  segment_touches_hot_pixel_closed
+    (snap_round P0 scale) (snap_round P1 scale) C scale.
+
+(* Binary64 snap. *)
+Definition b64_snap_coord (x : binary64) : binary64 :=
+  Binary.Bnearbyint prec emax prec_lt_emax_b64 nearbyint_nan_b64 mode_NE x.
+
+Definition b64_snap (P : BPoint) : BPoint :=
+  mkBP (b64_snap_coord (bx P)) (b64_snap_coord (by_ P)).
+
+Definition b64_passes_through_hot_pixel (P0 P1 C : BPoint) : bool :=
+  b64_liang_barsky_touches P0 P1 C &&
+  b64_liang_barsky_touches (b64_snap P0) (b64_snap P1) C.
+
+(* Exact snap bridge: snapping a binary64 coordinate then reading B2R agrees
+   with snapping the real value (unit grid).  Unconditional. *)
+Lemma b64_snap_coord_B2R :
+  forall x : binary64,
+    Binary.B2R prec emax (b64_snap_coord x)
+      = snap_round_coord (Binary.B2R prec emax x) 1.
+Proof.
+  intros x. unfold b64_snap_coord, snap_round_coord.
+  rewrite (proj1 (Binary.Bnearbyint_correct prec emax prec_lt_emax_b64
+                    nearbyint_nan_b64 mode_NE x)).
+  rewrite Rmult_1_r, Rdiv_1_r. reflexivity.
+Qed.
+
+(* Point-level corollary: the bridged snapped b64 point is the R-side snap of
+   the bridged point (unit grid). *)
+Lemma BP2P_b64_snap :
+  forall P : BPoint, BP2P (b64_snap P) = snap_round (BP2P P) 1.
+Proof.
+  intros P. unfold BP2P, b64_snap, snap_round, px, py. simpl.
+  rewrite !b64_snap_coord_B2R. reflexivity.
+Qed.
+
+(* Snapped coordinates land on the grid: round to FIX_exp 0 is an integer. *)
+Lemma round_FIX0_IZR :
+  forall r : R,
+    round radix2 (FIX_exp 0) (round_mode mode_NE) r
+      = IZR (round_mode mode_NE r).
+Proof.
+  intros r. unfold round, scaled_mantissa, cexp, FIX_exp, F2R. simpl.
+  rewrite !Rmult_1_r. reflexivity.
+Qed.
+
+Lemma snap_round_on_grid :
+  forall (P : Point) (scale : R), 0 < scale -> on_grid (snap_round P scale) scale.
+Proof.
+  intros P scale Hs. unfold on_grid, snap_round, snap_round_coord, px, py. simpl.
+  split; [exact Hs|].
+  exists (round_mode mode_NE (px P * scale)), (round_mode mode_NE (py P * scale)).
+  rewrite !round_FIX0_IZR. split; reflexivity.
+Qed.
+
+(* Completeness (noder-critical): the half-open passes-through relation implies
+   the b64 filter fires.  Mechanical composition of LB completeness (twice)
+   with the exact snap bridge. *)
+Theorem b64_passes_through_complete :
+  forall P0 P1 C : BPoint,
+    passes_through_hot_pixel (BP2P P0) (BP2P P1) (BP2P C) 1 ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C [H1 H2].
+  unfold b64_passes_through_hot_pixel. rewrite Bool.andb_true_iff. split.
+  - apply b64_liang_barsky_complete. exact H1.
+  - apply b64_liang_barsky_complete.
+    unfold b64_segment_touches_hot_pixel_spec.
+    rewrite !BP2P_b64_snap. exact H2.
+Qed.
+
+(* Soundness (conservative): the b64 filter implies the CLOSED passes-through
+   relation.  Mechanical composition of LB closed-soundness (twice) with the
+   exact snap bridge. *)
+Theorem b64_passes_through_sound :
+  forall P0 P1 C : BPoint,
+    b64_passes_through_hot_pixel P0 P1 C = true ->
+    passes_through_hot_pixel_closed (BP2P P0) (BP2P P1) (BP2P C) 1.
+Proof.
+  intros P0 P1 C H.
+  apply Bool.andb_true_iff in H. destruct H as [H1 H2].
+  split.
+  - exact (b64_liang_barsky_sound_closed _ _ _ H1).
+  - pose proof (b64_liang_barsky_sound_closed _ _ _ H2) as Hs.
+    unfold b64_segment_touches_hot_pixel_closed_spec in Hs.
+    rewrite !BP2P_b64_snap in Hs. exact Hs.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -2338,6 +2493,11 @@ Print Assumptions lb_axis_sound.
 Print Assumptions lb_axis_complete.
 Print Assumptions b64_liang_barsky_sound_closed.
 Print Assumptions b64_liang_barsky_complete.
+Print Assumptions b64_snap_coord_B2R.
+Print Assumptions BP2P_b64_snap.
+Print Assumptions snap_round_on_grid.
+Print Assumptions b64_passes_through_complete.
+Print Assumptions b64_passes_through_sound.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred to follow-up slices                                               *)
