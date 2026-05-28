@@ -25,6 +25,20 @@ theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
+# Phase 3 milestone 1: foundational definitions for the overlay correctness
+# theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
+# point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +
+# point-set semantics for boolean_op, OGC 06-103r4 §6 valid_geometry, and
+# five structural lemmas.  Self-contained: imports Reals, Lra, List, and
+# the corpus's Distance.  No Admitted; no Classical_Prop.classic.
+theories/Overlay.v
+# Phase 3 milestone 2: planar topology graph type.  TopologyGraph
+# record (vertices, edges with EdgeLabel), valid_topology_graph
+# well-formedness predicate, three construction helpers (empty_graph,
+# add_vertex, add_edge), five Qed-closed structural lemmas.  Shape Y
+# representation (separate validity predicate) matches Milestone 1.
+# No Flocq dependency; no Classical_Prop.classic pull.
+theories/OverlayGraph.v
 
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
