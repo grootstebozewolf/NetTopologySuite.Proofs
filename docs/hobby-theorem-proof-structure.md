@@ -148,9 +148,37 @@ opposite to R's; see §4 below) must be aligned with the paper before
 attempting the proof, since the boundary case is where lattice-point
 monotonicity could fail at the segment endpoints.  See §7.
 
-## §4 — Lemma 4.3 (piecewise-linear ordering)
+## §4 — Lemma 4.3 (piecewise-linear ordering) — refactored
 
-**Statement (corpus form).**
+**Status (May 2026).** `hobby_lemma_4_3` is now Qed-closed by
+composition, but the load-bearing thesis-shaped piece survives in a
+narrower sub-lemma.  The refactor splits Lemma 4.3 along the
+disjunctive structure of `segments_intersect_only_at_endpoints`:
+
+  - **`hobby_lemma_4_3_shared_endpoint`** -- Qed-closed.  If the
+    originals share a literal endpoint (`P0 = Q0 \/ P0 = Q1 \/ P1 = Q0
+    \/ P1 = Q1`), the snapped versions share that snapped endpoint.
+    Trivial: `snap_round` is a deterministic function.
+
+  - **`hobby_lemma_4_3_no_proper`** -- Admitted, deferred-proof
+    registry.  If the originals don't intersect properly, neither do
+    the snapped versions.  This is the genuine thesis-shaped piece
+    (4-6 weeks); proof structure below.
+
+  - **`hobby_lemma_4_3`** -- Qed-closed via case split on the
+    `segments_intersect_only_at_endpoints (P0, P1) (Q0, Q1)`
+    hypothesis, dispatching each branch to the appropriate sub-lemma.
+    Statement unchanged; `hobby_theorem_4_1_conditional`'s premise
+    shape unchanged.
+
+Net registry effect: the deferred-proof entry moves from
+`hobby_lemma_4_3` to `hobby_lemma_4_3_no_proper`.  Count unchanged
+(2 deferred + 3 counterexample = 5 total).  The actual load-bearing
+work is now sharper -- it doesn't contain the trivial
+shared-endpoint disjunct.
+
+**Statement (corpus form, original `hobby_lemma_4_3` -- now
+Qed-closed via composition).**
 
 ```coq
 Lemma hobby_lemma_4_3 :
