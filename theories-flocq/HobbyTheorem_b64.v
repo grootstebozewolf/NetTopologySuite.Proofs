@@ -85,10 +85,18 @@ Definition snap_round_segments (segs : list (Point * Point)) : list (Point * Poi
    the integer-grid points lying weakly lower-left of some point on the
    segment.  Used in Lemma 4.2's monotone-coordinate statement.
 
-   Resumption note (see proof-structure §7): Hobby's exact R^- has a specific
-   half-open boundary convention OPPOSITE to R's; the form here is the
-   closed-staircase rendering and the boundary refinement is the first
-   resumption item. *)
+   ** KNOWN DEFINITION DEFECT ** (see docs/hobby-lemma-4-2-session-1-
+   outcome.md): the rendering below is a lower-left quadrant, not a
+   near-segment strip, which makes `hobby_lemma_4_2` FALSE as written
+   (concrete three-point counterexample on the segment (0,0)-(2,2)).
+   Hobby's R^- is the strip of integer points whose hot pixel meets
+   the segment.  The intended fix is to replace this definition with
+   roughly `segment_touches_hot_pixel P0 P1 p 1` from
+   theories/HotPixel.v; that work is the first item on the §7
+   resumption checklist.  Leaving the broken definition in place for
+   now to avoid invalidating callers (`hobby_lemma_4_3` references it
+   indirectly through Lemma 4.2's conclusion only); the definition is
+   `Admitted`-adjacent through the lemma's Admitted status. *)
 Definition in_snap_region (P0 P1 p : Point) : Prop :=
   (exists nx ny : Z, px p = IZR nx /\ py p = IZR ny) /\
   exists t : R, 0 <= t <= 1 /\
