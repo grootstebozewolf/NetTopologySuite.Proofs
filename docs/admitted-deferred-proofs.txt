@@ -99,3 +99,41 @@
 # preservation lemma + compose into headline.  Revised estimate:
 # 3-4 sessions of focused work.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6,§6.1,§6.2,§6.3,§6.4,§6.5
+
+# ============================================================================
+# Phase 2 Hobby Theorem 4.1 supporting lemmas.
+# ============================================================================
+
+# `hobby_lemma_4_2` -- the monotone-coordinate lemma underlying Hobby's
+# Section 4.  For any non-degenerate segment, there is a diagonal direction
+# (1, +/-1) in which distinct integer points in the segment's snap region
+# have distinct linear projections.  Proof sketch:
+# docs/hobby-theorem-proof-structure.md §3.
+#
+# Tools: IZR, ceiling-of-Z monotonicity, pure real arithmetic.  Independent
+# of Flocq.  Estimated scope: 2-3 sessions.
+#
+# Status: statement landed; the exact half-open boundary convention of
+# Hobby's R^- (p.210-211) is the first refinement during the proof attempt
+# (see proof-structure §7 resumption checklist).
+theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_2 | docs/hobby-theorem-proof-structure.md | §3,§7
+
+# `hobby_lemma_4_3` -- the piecewise-linear ordering lemma; the CORE of
+# Hobby's correctness argument.  Snap-rounding preserves "intersect only at
+# endpoints" for any pair of fully-intersected segments.  Proof sketch:
+# docs/hobby-theorem-proof-structure.md §4.
+#
+# Approach: use Lemma 4.2 to obtain a (xi, eta) coordinate rotation; express
+# D_T(s1) and D_T(s2) as piecewise-linear functions F_1, F_2 in (xi, eta);
+# use the tolerance-square bound |F_j(xi) - beta_j - gamma_j * xi| < 1/2,
+# combined with the original ordering beta_1 + gamma_1 * xi <=
+# beta_2 + gamma_2 * xi, to close the ordering at snap-rounded endpoints.
+# Key subtlety: R^- uses the half-open convention OPPOSITE to R
+# (Hobby p.210-211).
+#
+# Tools: piecewise-linear function representation, linear change of
+# coordinates, Rle composition.  Estimated scope: 4-6 weeks. Thesis-shaped.
+#
+# Consumer: hobby_theorem_4_1_conditional already Qed-closed; discharging
+# this lemma closes Hobby Theorem 4.1 unconditionally.
+theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3 | docs/hobby-theorem-proof-structure.md | §4,§7

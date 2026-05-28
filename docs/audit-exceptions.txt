@@ -37,6 +37,36 @@ theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
+# Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
+# Every theorem here references `snap_round` / `b64_snap` /
+# `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements
+# pull `Classical_Prop.classic` transitively via Flocq's `round` with
+# `round_mode mode_NE` (the real-comparison closure `Rcompare`/`total_order_T`
+# behind round-to-nearest-even) and the Liang-Barsky `Rle_bool`/`Req_dec_T`
+# machinery -- the SAME lineage that exempts HotPixel_b64.v, where these very
+# predicates are defined.  This is intrinsic to any theorem about `snap_round`
+# (even the pure-R `snap_round_coord_idem` surfaces `classic`); it is not
+# removable without a parametric refactor of the snap layer.  No Admitteds in
+# this file; the three deliverable theorems are Qed-closed.
+theories-flocq/SnapRounding_b64.v
+
+# Category C: Phase 2 milestone 4 (Slice 13) topological correctness.
+# Every theorem references `snap_round` / `b64_snap` (via SnapRounding_b64),
+# whose closure pulls `Classical_Prop.classic` through Flocq's `round` /
+# `round_mode` -- the identical lineage that exempts SnapRounding_b64.v and
+# HotPixel_b64.v.  Intrinsic to any theorem about `snap_round`; not removable
+# without a parametric refactor of the snap layer.  No Admitteds in this file;
+# the three deliverable theorems are Qed-closed.
+theories-flocq/TopologicalCorrectness_b64.v
+
+# Category C: Phase 2 Hobby Theorem 4.1 infrastructure.
+# Definitions + conditional theorem + two Admitted supporting lemmas
+# (hobby_lemma_4_2, hobby_lemma_4_3 registered in
+# docs/admitted-deferred-proofs.txt).  References `snap_round` via
+# `snap_round_segments`, pulling `Classical_Prop.classic` through Flocq's
+# `round` / `round_mode` -- identical lineage to the other snap files.
+theories-flocq/HobbyTheorem_b64.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
