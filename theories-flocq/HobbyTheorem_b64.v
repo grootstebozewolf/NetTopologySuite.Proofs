@@ -36,6 +36,8 @@
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import List.
+From Stdlib Require Import Lra.
+From Stdlib Require Import Lia.
 
 From NTS.Proofs        Require Import Distance HotPixel.
 From NTS.Proofs.Flocq  Require Import Validate_binary64.
@@ -118,8 +120,26 @@ Definition in_snap_region (P0 P1 p : Point) : Prop :=
 
 (* For any non-degenerate segment there is a diagonal direction (1, +/-1)
    such that distinct integer points in the segment's snap region have
-   distinct linear projections.  Hobby chooses alpha_y as sign(slope); the
-   monotonicity then follows from a ceiling-of-IZR argument over Z. *)
+   distinct linear projections.  Hobby chooses alpha_y by the sign of
+   the slope product (px P1 - px P0) * (py P1 - py P0):
+     non-negative product (slope >= 0, horizontal, or vertical):
+       alpha_y = +1.
+     negative product (slope < 0): alpha_y = -1.
+   The proof: from f(p) = f(q) with p <> q, integer-injectivity of IZR
+   forces a same-sum or same-difference relation on the integer coords.
+   WLOG one coord differs by k >= 1, the other by -k or +k accordingly.
+   The R^- strip bounds (half-open with strict lower / closed upper)
+   then force px qp > px qq and py qp <> py qq with specific signs;
+   colocation on the segment then forces the segment-direction product
+   sign to be the OPPOSITE of the chosen-alpha_y case, contradicting
+   the case assumption.
+
+   The half-open R^- convention is load-bearing: the strict lower
+   `-1/2 < ...` (rather than `<=`) is what forces strict inequalities
+   in `px qp - px qq` and `py qp - py qq` and avoids boundary collisions
+   (e.g., (1,0) and (0,1) for segment (0,0)-(1,1) are EXCLUDED from
+   R^- by this strict bound, even though they sit at the half-open
+   boundary of the natural pixel tiles). *)
 Lemma hobby_lemma_4_2 :
   forall (P0 P1 : Point),
     P0 <> P1 ->
@@ -130,7 +150,168 @@ Lemma hobby_lemma_4_2 :
         in_snap_region P0 P1 q ->
         p <> q ->
         px p + alpha_y * py p <> px q + alpha_y * py q.
-Admitted.
+Proof.
+  intros P0 P1 Hne.
+  destruct (Rle_or_lt 0 ((px P1 - px P0) * (py P1 - py P0))) as [Hprod | Hprod].
+  - (* Product >= 0: choose alpha_y = +1 *)
+    exists 1. split.
+    { left. reflexivity. }
+    intros p q Hp Hq Hpq Heq.
+    destruct Hp as [[np [mp [Hnp Hmp]]] [tp [Htp [[Hxp_lo Hxp_hi] [Hyp_lo Hyp_hi]]]]].
+    destruct Hq as [[nq [mq [Hnq Hmq]]] [tq [Htq [[Hxq_lo Hxq_hi] [Hyq_lo Hyq_hi]]]]].
+    unfold segment_point in *. simpl in *.
+    (* From Heq (with alpha_y = 1): (px p - px q) + (py p - py q) = 0. *)
+    (* Substituting IZR: IZR ((np - nq) + (mp - mq)) = 0. *)
+    assert (Hsum_z : ((np - nq) + (mp - mq))%Z = 0%Z).
+    { apply eq_IZR_R0.
+      rewrite plus_IZR, !minus_IZR, <- Hnp, <- Hnq, <- Hmp, <- Hmq.
+      lra. }
+    (* Case split: np = nq? *)
+    destruct (Z.eq_dec np nq) as [Hnn | Hnn].
+    + (* np = nq: then mp = mq from Hsum_z, so px p = px q and py p = py q. *)
+      subst nq. assert (Hmm : mp = mq) by lia. subst mq.
+      apply Hpq. destruct p as [pxp pyp], q as [pxq pyq]. simpl in *.
+      rewrite Hnp, Hmp, Hnq, Hmq. reflexivity.
+    + (* np <> nq.  WLOG np > nq via Z trichotomy. *)
+      destruct (Ztrichotomy_inf np nq) as [[Hlt | Heq_z] | Hgt].
+      * (* np < nq: swap roles of p, q (symmetric case). *)
+        (* From Hsum_z and np < nq: mp - mq = -(np - nq) > 0, so mq < mp. *)
+        assert (Hk : (nq - np >= 1)%Z) by lia.
+        assert (Hk' : (mp - mq >= 1)%Z) by lia.
+        (* Strip bounds: px qp ∈ [px p - 1/2, px p + 1/2), etc. *)
+        (* With nq - np >= 1: px q >= px p + 1, so px qq > px qp. *)
+        (* With mp - mq >= 1: py p >= py q + 1, so py qp > py qq. *)
+        (* Segment monotonicity: (px qq - px qp) = (tq - tp)*(px P1 - px P0) > 0. *)
+        (*                       (py qp - py qq) = (tp - tq)*(py P1 - py P0) > 0. *)
+        (* So sign(tq - tp) = sign(px P1 - px P0), *)
+        (*    sign(tp - tq) = sign(py P1 - py P0). *)
+        (* These are opposite, so (px P1 - px P0)*(py P1 - py P0) < 0. *)
+        (* Contradicts Hprod : (px P1 - px P0)*(py P1 - py P0) >= 0. *)
+        assert (Hpx_pq : px p + 1 <= px q).
+        { rewrite Hnp, Hnq.
+          replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR.
+          apply IZR_le. lia. }
+        assert (Hpy_pq : py q + 1 <= py p).
+        { rewrite Hmp, Hmq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        (* From strip: px qp < px p + 1/2 (from Hxp_lo: -1/2 < px p - px qp). *)
+        (* px qq >= px q - 1/2 (from Hxq_hi: px q - px qq <= 1/2). *)
+        (* So px qq - px qp >= (px q - 1/2) - (px p + 1/2) = (px q - px p) - 1 >= 0. *)
+        (* But we need STRICT > 0.  *)
+        (* Use the strict half: px qp < px p + 1/2 (Hxp_lo is strict). *)
+        assert (Hqq_qp_x : (1-tq) * px P0 + tq * px P1 > (1-tp) * px P0 + tp * px P1).
+        { lra. }
+        assert (Hqp_qq_y : (1-tp) * py P0 + tp * py P1 > (1-tq) * py P0 + tq * py P1).
+        { lra. }
+        (* Rewrite as (tq - tp) * (px P1 - px P0) > 0. *)
+        assert (Hsx : (tq - tp) * (px P1 - px P0) > 0) by nra.
+        assert (Hsy : (tp - tq) * (py P1 - py P0) > 0) by nra.
+        (* Case split on sign of (tq - tp) to make the nonlinear
+           combination tractable for nra. *)
+        destruct (Rtotal_order tq tp) as [Htlt | [Hteq | Htgt]].
+        -- (* tq < tp: derive sign of each segment difference, then product. *)
+           assert (Hpx_neg : px P1 - px P0 < 0) by nra.
+           assert (Hpy_pos : py P1 - py P0 > 0) by nra.
+           nra.
+        -- (* tq = tp: Hsx says 0 > 0, contradiction. *)
+           subst tq. lra.
+        -- (* tq > tp: symmetric. *)
+           assert (Hpx_pos : px P1 - px P0 > 0) by nra.
+           assert (Hpy_neg : py P1 - py P0 < 0) by nra.
+           nra.
+      * (* np = nq -- already handled by the earlier `destruct` case. *)
+        exfalso. apply Hnn. exact Heq_z.
+      * (* np > nq: the symmetric path of the previous bullet. *)
+        assert (Hk : (np - nq >= 1)%Z) by lia.
+        assert (Hk' : (mq - mp >= 1)%Z) by lia.
+        assert (Hpx_qp : px q + 1 <= px p).
+        { rewrite Hnp, Hnq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        assert (Hpy_qp : py p + 1 <= py q).
+        { rewrite Hmp, Hmq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        assert (Hqp_qq_x : (1-tp) * px P0 + tp * px P1 > (1-tq) * px P0 + tq * px P1).
+        { lra. }
+        assert (Hqq_qp_y : (1-tq) * py P0 + tq * py P1 > (1-tp) * py P0 + tp * py P1).
+        { lra. }
+        assert (Hsx : (tp - tq) * (px P1 - px P0) > 0) by nra.
+        assert (Hsy : (tq - tp) * (py P1 - py P0) > 0) by nra.
+        destruct (Rtotal_order tp tq) as [Htlt | [Hteq | Htgt]].
+        -- assert (Hpx_neg : px P1 - px P0 < 0) by nra.
+           assert (Hpy_pos : py P1 - py P0 > 0) by nra.
+           nra.
+        -- subst tq. lra.
+        -- assert (Hpx_pos : px P1 - px P0 > 0) by nra.
+           assert (Hpy_neg : py P1 - py P0 < 0) by nra.
+           nra.
+  - (* Product < 0: choose alpha_y = -1 *)
+    exists (-1). split.
+    { right. reflexivity. }
+    intros p q Hp Hq Hpq Heq.
+    destruct Hp as [[np [mp [Hnp Hmp]]] [tp [Htp [[Hxp_lo Hxp_hi] [Hyp_lo Hyp_hi]]]]].
+    destruct Hq as [[nq [mq [Hnq Hmq]]] [tq [Htq [[Hxq_lo Hxq_hi] [Hyq_lo Hyq_hi]]]]].
+    unfold segment_point in *. simpl in *.
+    (* From Heq (alpha_y = -1): (px p - px q) - (py p - py q) = 0. *)
+    assert (Hsum_z : ((np - nq) - (mp - mq))%Z = 0%Z).
+    { apply eq_IZR_R0.
+      rewrite minus_IZR, !minus_IZR, <- Hnp, <- Hnq, <- Hmp, <- Hmq.
+      lra. }
+    destruct (Z.eq_dec np nq) as [Hnn | Hnn].
+    + subst nq. assert (Hmm : mp = mq) by lia. subst mq.
+      apply Hpq. destruct p as [pxp pyp], q as [pxq pyq]. simpl in *.
+      rewrite Hnp, Hmp, Hnq, Hmq. reflexivity.
+    + destruct (Ztrichotomy_inf np nq) as [[Hlt | Heq_z] | Hgt].
+      * (* np < nq: same-sign differences. *)
+        assert (Hk : (nq - np >= 1)%Z) by lia.
+        assert (Hk' : (mq - mp >= 1)%Z) by lia.
+        assert (Hpx_pq : px p + 1 <= px q).
+        { rewrite Hnp, Hnq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        assert (Hpy_pq : py p + 1 <= py q).
+        { rewrite Hmp, Hmq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        assert (Hqq_qp_x : (1-tq) * px P0 + tq * px P1 > (1-tp) * px P0 + tp * px P1).
+        { lra. }
+        assert (Hqq_qp_y : (1-tq) * py P0 + tq * py P1 > (1-tp) * py P0 + tp * py P1).
+        { lra. }
+        assert (Hsx : (tq - tp) * (px P1 - px P0) > 0) by nra.
+        assert (Hsy : (tq - tp) * (py P1 - py P0) > 0) by nra.
+        (* alpha_y = -1 case: same sign of (tq - tp) in both, so both
+           segment differences have the same sign as (tq - tp).  Hence
+           their product is positive, contradicting Hprod < 0. *)
+        destruct (Rtotal_order tq tp) as [Htlt | [Hteq | Htgt]].
+        -- assert (Hpx_neg : px P1 - px P0 < 0) by nra.
+           assert (Hpy_neg : py P1 - py P0 < 0) by nra.
+           nra.
+        -- subst tq. lra.
+        -- assert (Hpx_pos : px P1 - px P0 > 0) by nra.
+           assert (Hpy_pos : py P1 - py P0 > 0) by nra.
+           nra.
+      * exfalso. apply Hnn. exact Heq_z.
+      * assert (Hk : (np - nq >= 1)%Z) by lia.
+        assert (Hk' : (mp - mq >= 1)%Z) by lia.
+        assert (Hpx_qp : px q + 1 <= px p).
+        { rewrite Hnp, Hnq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        assert (Hpy_qp : py q + 1 <= py p).
+        { rewrite Hmp, Hmq. replace 1 with (IZR 1) by reflexivity.
+          rewrite <- plus_IZR. apply IZR_le. lia. }
+        assert (Hqp_qq_x : (1-tp) * px P0 + tp * px P1 > (1-tq) * px P0 + tq * px P1).
+        { lra. }
+        assert (Hqp_qq_y : (1-tp) * py P0 + tp * py P1 > (1-tq) * py P0 + tq * py P1).
+        { lra. }
+        assert (Hsx : (tp - tq) * (px P1 - px P0) > 0) by nra.
+        assert (Hsy : (tp - tq) * (py P1 - py P0) > 0) by nra.
+        destruct (Rtotal_order tp tq) as [Htlt | [Hteq | Htgt]].
+        -- assert (Hpx_neg : px P1 - px P0 < 0) by nra.
+           assert (Hpy_neg : py P1 - py P0 < 0) by nra.
+           nra.
+        -- subst tq. lra.
+        -- assert (Hpx_pos : px P1 - px P0 > 0) by nra.
+           assert (Hpy_pos : py P1 - py P0 > 0) by nra.
+           nra.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §3 Hobby Lemma 4.3 -- piecewise-linear ordering.                           *)

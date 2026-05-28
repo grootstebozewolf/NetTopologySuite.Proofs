@@ -332,3 +332,103 @@ with the strengthening that the closed-box rendering is not merely
 strictness-deficient but **structurally** wrong (a quadrant rather
 than a strip), so the fix is a redefinition rather than a boundary
 flip.
+
+## Session 2 — proof closed
+
+**Session.** Lemma 4.2 proof attempt against the corrected predicate,
+follow-up branch `claude/hobby-lemma-4-2-session-2`.
+
+**Outcome.** `hobby_lemma_4_2` is now **Qed-closed** in
+`theories-flocq/HobbyTheorem_b64.v`.  Deferred-proof registry: 3 → 2
+entries.
+
+### Proof structure (matches `docs/hobby-theorem-proof-structure.md` §3)
+
+Case split on `(px P1 - px P0) * (py P1 - py P0)` (the slope-product
+sign), via `Rle_or_lt`:
+
+  - **Product ≥ 0** (non-negative slope, horizontal, or vertical):
+    choose `alpha_y = +1`.
+  - **Product < 0** (negative slope): choose `alpha_y = -1`.
+
+In each case, suppose `f(p) = f(q)` with `p ≠ q` and both in
+`in_snap_region`.  Then:
+
+  1. Destructure both `in_snap_region` witnesses (integer points
+     `(np, mp)`, `(nq, mq)` and segment parameters `tp`, `tq`).
+  2. From `f(p) = f(q)` and the IZR-encoded coordinates: derive a
+     Z-equation via `eq_IZR_R0` plus `plus_IZR` / `minus_IZR`.  For
+     `alpha_y = +1`: `(np - nq) + (mp - mq) = 0`.  For `alpha_y = -1`:
+     `(np - nq) - (mp - mq) = 0`.
+  3. Case split on `Z.eq_dec np nq`:
+       - `np = nq`: forces `mp = mq` (from the Z-equation), so `p = q`,
+         contradicting `p ≠ q`.
+       - `np ≠ nq`: trichotomy on `Ztrichotomy_inf np nq` reduces to
+         `np > nq` (the `np < nq` branch is symmetric).
+  4. With `np - nq ≥ 1`: integer arithmetic via `IZR_le` gives
+     `px p ≥ px q + 1` (and analogously for `py` from the Z-equation).
+  5. R⁻ strip bounds (half-open: strict lower `-1/2 <`, closed upper
+     `≤ 1/2`) combine with the integer differences to force strict
+     inequalities `(1-tp)*px P0 + tp*px P1 > (1-tq)*px P0 + tq*px P1`
+     etc., closed by `lra`.
+  6. These rearrange (`nra`) to `(tp - tq) * (px P1 - px P0) > 0` and
+     a corresponding `py` inequality.
+  7. Final case split on `Rtotal_order tp tq`:
+       - `tp = tq`: contradicts step 6's strict inequality (`lra`).
+       - `tp < tq` or `tp > tq`: assert the sign of each segment
+         difference (`px P1 - px P0`, `py P1 - py P0`) via `nra`, then
+         conclude the slope product has the OPPOSITE sign of the case
+         assumption (`nra` against `Hprod`).
+
+The explicit sign-assertion step (`Hpx_neg`/`Hpx_pos`,
+`Hpy_pos`/`Hpy_neg`) is the deliberate hint that lets the final `nra`
+close — `nra` cannot find the witness in one step from the raw
+hypothesis set, but the two-line assertion breaks the nonlinear
+inference into pieces it can handle.
+
+### Why the half-open boundary convention is load-bearing
+
+The R⁻ strict-lower / closed-upper boundary is what gives **strict**
+inequalities `(1-tp)*px P0 + tp*px P1 > (1-tq)*px P0 + tq*px P1` in
+step 5.  A closed boundary on both sides would give only `≥`, which
+doesn't yield contradiction at the trichotomy step 7.
+
+This justifies the Session 1 design choice (Minkowski sum with R⁻
+rather than `segment_touches_hot_pixel`, which uses the opposite
+convention).
+
+### Boundary cases handled implicitly
+
+  - **Vertical segment** (`px P1 = px P0`): step 6 derives
+    `(tp - tq) * (px P1 - px P0) > 0` with `px P1 - px P0 = 0`, giving
+    `0 > 0` -- immediate contradiction.  Handled by `nra`.
+  - **Horizontal segment** (`py P1 = py P0`): symmetric.
+  - **Slope = ±1**: handled by the product-sign case split.  For slope
+    = +1, product > 0 (Case 1, `alpha_y = +1` works).  For slope = -1,
+    product < 0 (Case 2, `alpha_y = -1`).  No special-case needed.
+
+### Build verification
+
+  - `make -f Makefile.gen -j2 theories-flocq/HobbyTheorem_b64.vo`
+    -> clean compile, 47.6 KB `.vo`.
+  - `Print Assumptions hobby_lemma_4_2`:
+    * `ClassicalDedekindReals.sig_forall_dec`
+    * `FunctionalExtensionality.functional_extensionality_dep`
+    Both on the README allowlist.  Notably, the per-theorem footprint
+    does NOT include `Classical_Prop.classic` -- the proof avoids the
+    Flocq-binary content that pulls `classic` elsewhere in this file.
+  - `scripts/check_admitted.sh` -> 5 entries (3 counterexample, 2
+    deferred-proof, down from 3).
+
+### Imports added
+
+  - `From Stdlib Require Import Lra.` -- for `lra`.
+  - `From Stdlib Require Import Lia.` -- for `lia`.
+
+### Next session
+
+Hobby Lemma 4.3 (piecewise-linear ordering).  This is the
+thesis-shaped piece; estimated 4-6 weeks per
+`docs/hobby-theorem-proof-structure.md` §4.  Lemma 4.2's proof above
+provides one of the two building blocks; the tolerance-square
+`|F_j(xi) - beta_j - gamma_j * xi| < 1/2` bound is the other.

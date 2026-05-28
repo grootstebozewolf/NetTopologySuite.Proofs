@@ -81,7 +81,28 @@ gives endpoint-only after snapping.  That lift IS
 `hobby_theorem_4_1_conditional` in the corpus; it is **Qed-closed** modulo
 Lemma 4.3 as an explicit hypothesis.
 
-## §3 — Lemma 4.2 (monotone coordinate)
+## §3 — Lemma 4.2 (monotone coordinate) — CLOSED
+
+**Status.** Qed-closed (May 2026, session 2) against the corrected
+strip-shaped `in_snap_region`.  Per-theorem `Print Assumptions`: only
+the two README-allowlisted classical-reals axioms; no
+`Classical_Prop.classic` pull.  Deferred-proof registry: 3 → 2.
+
+**Proof technique.** Case split on `(px P1 - px P0) * (py P1 - py P0)`:
+≥ 0 use `alpha_y = +1`; < 0 use `alpha_y = -1`.  From `f(p) = f(q)`,
+`IZR` injectivity (`eq_IZR`) extracts a Z-equality on the integer
+coordinates; the strip half-open bounds plus integer-difference ≥ 1
+then force the segment-direction product to have the OPPOSITE sign of
+the case assumption, yielding contradiction.  Final closure uses
+`Rtotal_order tp tq` to handle the nonlinear sign argument; each branch
+closes via two explicit-sign assertions plus `nra`.  Vertical and
+horizontal segments fall out as zero-derivative sub-cases of the same
+argument.
+
+The half-open R⁻ boundary convention is load-bearing: the strict lower
+`-1/2 <` (rather than `<=`) forces the strip-difference inequalities to
+be strict, which is what excludes boundary-collision cases such as
+`(1, 0)` and `(0, 1)` for segment `(0,0)-(1,1)`.
 
 **Statement (corpus form).**
 
