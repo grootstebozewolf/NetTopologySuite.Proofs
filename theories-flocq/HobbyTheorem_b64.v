@@ -320,9 +320,62 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 (* Snap-rounding preserves "intersect only at endpoints" for any pair of
-   segments.  The CORE of Hobby's correctness argument: a rotated-coordinate
-   piecewise-linear ordering argument using Lemma 4.2 + the tolerance-square
-   |F_j(xi) - beta_j - gamma_j * xi| < 1/2 bound. *)
+   segments.  The CORE of Hobby's correctness argument.
+
+   The lemma's hypothesis `segments_intersect_only_at_endpoints` is a
+   disjunction:
+     (a) The originals don't intersect properly, OR
+     (b) The originals share a literal endpoint.
+
+   These two cases have very different proof complexity:
+     (a) is the thesis-shaped piece -- requires a rotated-coordinate
+         piecewise-linear ordering argument using Lemma 4.2 + the
+         tolerance-square |F_j(xi) - beta_j - gamma_j * xi| < 1/2 bound.
+         Estimated 4-6 weeks (Hobby Lemma 4.3 proper).
+     (b) is trivial -- snap_round is a deterministic function, so
+         literal equality of endpoints is preserved.
+
+   We refactor `hobby_lemma_4_3` to compose these two pieces.  The
+   shared-endpoint half (`hobby_lemma_4_3_shared_endpoint`) is
+   Qed-closed below; the no-proper-intersection half
+   (`hobby_lemma_4_3_no_proper`) inherits the thesis-shaped scope and
+   stays Admitted with the deferred-proof registry entry pointing at
+   it.  Net effect on the registry: the deferred entry is sharpened
+   from the disjunctive lemma to the genuinely-hard sub-lemma.
+   `hobby_theorem_4_1_conditional`'s premise shape is unchanged. *)
+
+(* Sub-lemma (a): the thesis-shaped piece.  If the originals don't
+   intersect properly, neither do the snapped versions.  Hobby (1999)
+   §4's piecewise-linear ordering argument.  Estimated 4-6 weeks
+   (matches the prior `hobby_lemma_4_3` scope estimate). *)
+Lemma hobby_lemma_4_3_no_proper :
+  forall (P0 P1 Q0 Q1 : Point),
+    ~ segments_intersect_properly P0 P1 Q0 Q1 ->
+    ~ segments_intersect_properly
+        (snap_round P0 1) (snap_round P1 1)
+        (snap_round Q0 1) (snap_round Q1 1).
+Admitted.
+
+(* Sub-lemma (b): if the originals share a literal endpoint, the
+   snapped versions share that snapped endpoint.  Qed-closed via
+   determinism of `snap_round`. *)
+Lemma hobby_lemma_4_3_shared_endpoint :
+  forall (P0 P1 Q0 Q1 : Point),
+    P0 = Q0 \/ P0 = Q1 \/ P1 = Q0 \/ P1 = Q1 ->
+    snap_round P0 1 = snap_round Q0 1 \/
+    snap_round P0 1 = snap_round Q1 1 \/
+    snap_round P1 1 = snap_round Q0 1 \/
+    snap_round P1 1 = snap_round Q1 1.
+Proof.
+  intros P0 P1 Q0 Q1 [H | [H | [H | H]]].
+  - left.            rewrite H. reflexivity.
+  - right. left.     rewrite H. reflexivity.
+  - right. right. left.  rewrite H. reflexivity.
+  - right. right. right. rewrite H. reflexivity.
+Qed.
+
+(* Composition: `hobby_lemma_4_3` is now Qed-closed by case-splitting on
+   the hypothesis disjunction and dispatching to the two sub-lemmas. *)
 Lemma hobby_lemma_4_3 :
   forall (P0 P1 Q0 Q1 : Point),
     segments_intersect_only_at_endpoints (P0, P1) (Q0, Q1) ->
@@ -331,7 +384,22 @@ Lemma hobby_lemma_4_3 :
       In sigma2 (snap_round_segments [(Q0, Q1)]) ->
       sigma1 <> sigma2 ->
       segments_intersect_only_at_endpoints sigma1 sigma2.
-Admitted.
+Proof.
+  intros P0 P1 Q0 Q1 Horig sigma1 sigma2 Hin1 Hin2 Hne.
+  (* Extract sigma1, sigma2 from the singleton-list `In` premises. *)
+  simpl in Hin1, Hin2.
+  destruct Hin1 as [Heq1 | []].
+  destruct Hin2 as [Heq2 | []].
+  subst sigma1 sigma2.
+  simpl.
+  destruct Horig as [Hnoprop | Hshare].
+  - (* Case (a): originals don't intersect properly.  Apply
+       hobby_lemma_4_3_no_proper. *)
+    left. apply hobby_lemma_4_3_no_proper. exact Hnoprop.
+  - (* Case (b): originals share a literal endpoint.  Apply
+       hobby_lemma_4_3_shared_endpoint. *)
+    right. apply hobby_lemma_4_3_shared_endpoint. exact Hshare.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §4 Hobby Theorem 4.1 -- conditional.                                       *)
