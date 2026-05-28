@@ -189,6 +189,7 @@ theories-flocq/TopologicalCorrectness_b64.v
 # entries.  Mirrors the docs/shewchuk-theorem-13-proof-structure.md treatment
 # for Shewchuk Theorem 13.  See docs/hobby-theorem-proof-structure.md.
 theories-flocq/HobbyTheorem_b64.v
+theories-flocq/PassesThroughHalfopen_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract

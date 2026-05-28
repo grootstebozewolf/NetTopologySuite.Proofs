@@ -67,6 +67,15 @@ theories-flocq/TopologicalCorrectness_b64.v
 # `round` / `round_mode` -- identical lineage to the other snap files.
 theories-flocq/HobbyTheorem_b64.v
 
+# Category C: Phase 2 follow-up -- b64_passes_through_hot_pixel_halfopen.
+# Strict half-open filter (tight characterisation of in_hot_pixel's `<= , <`
+# slab convention) used as the b64 mirror of the oracle's PASSES_THROUGH_HALFOPEN
+# mode.  References snap_round / b64_snap directly (the snap layer's
+# Classical_Prop.classic via Flocq's `round` / `round_mode`).  Same lineage
+# as the other snap files.  No Admitteds; sound/complete/bracket all
+# Qed-closed.
+theories-flocq/PassesThroughHalfopen_b64.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
