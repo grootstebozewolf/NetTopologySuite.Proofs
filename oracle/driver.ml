@@ -60,10 +60,42 @@
                       `b64_intersect_point_x_forward_error_vs_intersect_x_R`
                       for the verified soundness statement.
 
+     PASSES_THROUGH_FILTER -- hot-pixel passes-through, closed-pixel filter.
+        line 2:       <x0> <y0>     -- P0   (segment endpoint)
+        line 3:       <x1> <y1>     -- P1   (segment endpoint)
+        line 4:       <cx> <cy>     -- C    (hot pixel center, unit grid)
+        output:       single token "TRUE" or "FALSE".
+        Coq mirror:   `b64_passes_through_hot_pixel` (HotPixel_b64.v:2374).
+                      Sound vs the CLOSED hot pixel, complete vs the
+                      HALF-OPEN hot pixel.
+
+     PASSES_THROUGH_HALFOPEN -- hot-pixel passes-through, half-open filter.
+        line 2:       <x0> <y0>     -- P0
+        line 3:       <x1> <y1>     -- P1
+        line 4:       <cx> <cy>     -- C    (hot pixel center)
+        output:       single token "TRUE" or "FALSE".
+        Coq mirror:   `b64_passes_through_hot_pixel_halfopen`
+                      (PassesThroughHalfopen_b64.v).  Sound AND complete
+                      vs the HALF-OPEN hot pixel.
+
+   Option-layer pin (oracle-level, mirrors the Coq bracket lemma):
+       HALFOPEN = TRUE  =>  FILTER = TRUE.
+   Divergence cases (closed accepts, half-open rejects) characterise the
+   boundary category -- segments grazing the closed upper boundary x=xhi
+   (or y=yhi) of the unit-grid pixel.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
    consumers can round-trip bits exactly.
+
+   Persistent-mode dispatch.  All modes except SIMPLIFY return after
+   emitting their reply and loop back to read the next mode line.  This
+   lets a long-running C# differential test process keep a single
+   oracle_bin instance alive across many calls.  SIMPLIFY exits the
+   process (it reads its input until EOF, so a subsequent mode line
+   would be misinterpreted).  EOF on the mode-reading branch shuts
+   down cleanly.
    ========================================================================== *)
 
 open Extracted
@@ -173,18 +205,160 @@ let run_intersect_point_xy () =
   let y = b64_intersect_point_y p0 p1 q0 q1 in
   Printf.printf "XY %h %h\n" x y
 
+(* ----- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN modes. ------------ *)
+
+(* Native OCaml mirrors of the corpus's hot-pixel predicates.  Equivalent
+   to extracting `b64_passes_through_hot_pixel` and `_halfopen` from
+   `HotPixel_b64.v` / `PassesThroughHalfopen_b64.v`, with the same trust
+   pattern as the existing `Bplus -> ( +. )` extracts: on IEEE 754
+   binary64 hardware in round-to-nearest-even mode (the OCaml default
+   under SSE2/NEON, which is what oracle_bin runs on), native float ops
+   realise Flocq's R semantics for the operations used in the LB filter.
+
+   Implemented directly here -- not via Coq's `Extract Constant` -- to
+   sidestep the R-module hierarchy that Coq's stdlib emits for
+   `Reals.Rdefinitions.RbaseSymbolsImpl` (abstract `coq_R` type via a
+   module signature, distinct from the toplevel `Rplus` symbol that
+   `Extract Inlined Constant` reaches).  The corpus's bracket lemma
+   `b64_passes_through_hot_pixel_halfopen_implies_closed` is the
+   formally-proved option-layer pin; this code is the runtime mirror. *)
+
+(* Round to nearest integer with ties to even (IEEE 754 default, the
+   semantics of `Bnearbyint mode_NE` from HotPixel_b64.v's b64_snap_coord).
+   OCaml 4.14 stdlib's `Float.round` is half-away-from-zero, so we
+   implement half-to-even via floor + parity-of-remainder. *)
+let round_half_to_even (x : float) : float =
+  if x <> x then x                                  (* NaN passthrough *)
+  else if x = infinity || x = neg_infinity then x   (* infinities pass *)
+  else
+    let f = Float.floor x in
+    let d = x -. f in
+    if d < 0.5 then f
+    else if d > 0.5 then f +. 1.0
+    else if Float.rem f 2.0 = 0.0 then f else f +. 1.0
+
+let snap_coord_native (x : float) : float = round_half_to_even x
+
+let snap_native (p : bPoint) : bPoint =
+  { bx = snap_coord_native p.bx; by_ = snap_coord_native p.by_ }
+
+(* Per-axis slab membership for the degenerate (axis-parallel) case.
+   Non-degenerate axes pass through unconditionally (the t-bounds carry
+   the constraint).  Closed variant for the FILTER mode. *)
+let lb_inslab_closed c0 c1 lo hi : bool =
+  if c1 = c0 then lo <= c0 && c0 <= hi else true
+
+(* Half-open variant: strict upper, matching `in_hot_pixel`'s `< xhi`
+   on the upper bound. *)
+let lb_inslab_halfopen c0 c1 lo hi : bool =
+  if c1 = c0 then lo <= c0 && c0 < hi else true
+
+(* Per-axis t-bounds.  For non-degenerate axes the two t-values
+   (lo - c0)/(c1 - c0) and (hi - c0)/(c1 - c0) sit at the slab boundaries;
+   `lb_tlo` is the smaller and `lb_thi` is the larger, regardless of
+   orientation.  Degenerate case returns [0, 1] (the segment parameter
+   range itself) so the t-overlap check below reduces to "non-empty
+   segment". *)
+let lb_tlo c0 c1 lo hi : float =
+  if c1 = c0 then 0.0
+  else Float.min ((lo -. c0) /. (c1 -. c0)) ((hi -. c0) /. (c1 -. c0))
+
+let lb_thi c0 c1 lo hi : float =
+  if c1 = c0 then 1.0
+  else Float.max ((lo -. c0) /. (c1 -. c0)) ((hi -. c0) /. (c1 -. c0))
+
+(* Closed-filter Liang-Barsky touch: `b64_liang_barsky_touches`. *)
+let lb_touches p0 p1 c : bool =
+  let x0 = p0.bx and y0 = p0.by_
+  and x1 = p1.bx and y1 = p1.by_
+  and cx = c.bx  and cy = c.by_ in
+  let xlo = cx -. 0.5 and xhi = cx +. 0.5
+  and ylo = cy -. 0.5 and yhi = cy +. 0.5 in
+  lb_inslab_closed x0 x1 xlo xhi
+  && lb_inslab_closed y0 y1 ylo yhi
+  && Float.max 0.0 (Float.max (lb_tlo x0 x1 xlo xhi)
+                              (lb_tlo y0 y1 ylo yhi))
+     <= Float.min 1.0 (Float.min (lb_thi x0 x1 xlo xhi)
+                                 (lb_thi y0 y1 ylo yhi))
+
+(* Half-open-filter Liang-Barsky touch: `b64_liang_barsky_touches_halfopen`.
+   Closed conditions PLUS explicit strict-upper midpoint checks
+   `x(tmid) < xhi`, `y(tmid) < yhi` -- the corpus's midpoint-witness
+   characterisation that captures half-open across both orientations
+   of (c0, c1). *)
+let lb_touches_halfopen p0 p1 c : bool =
+  let x0 = p0.bx and y0 = p0.by_
+  and x1 = p1.bx and y1 = p1.by_
+  and cx = c.bx  and cy = c.by_ in
+  let xlo = cx -. 0.5 and xhi = cx +. 0.5
+  and ylo = cy -. 0.5 and yhi = cy +. 0.5 in
+  let tmin = Float.max 0.0 (Float.max (lb_tlo x0 x1 xlo xhi)
+                                      (lb_tlo y0 y1 ylo yhi))
+  and tmax = Float.min 1.0 (Float.min (lb_thi x0 x1 xlo xhi)
+                                      (lb_thi y0 y1 ylo yhi)) in
+  let tmid = (tmin +. tmax) /. 2.0 in
+  let xmid = (1.0 -. tmid) *. x0 +. tmid *. x1
+  and ymid = (1.0 -. tmid) *. y0 +. tmid *. y1 in
+  lb_inslab_halfopen x0 x1 xlo xhi
+  && lb_inslab_halfopen y0 y1 ylo yhi
+  && tmin <= tmax
+  && xmid < xhi
+  && ymid < yhi
+
+(* `b64_passes_through_hot_pixel`: closed-filter conjunction on the
+   original AND snapped segment. *)
+let passes_through_filter p0 p1 c : bool =
+  lb_touches p0 p1 c
+  && lb_touches (snap_native p0) (snap_native p1) c
+
+(* `b64_passes_through_hot_pixel_halfopen`: half-open conjunction. *)
+let passes_through_halfopen p0 p1 c : bool =
+  lb_touches_halfopen p0 p1 c
+  && lb_touches_halfopen (snap_native p0) (snap_native p1) c
+
+let bool_string b = if b then "TRUE" else "FALSE"
+
+let run_passes_through_filter () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let c  = parse_point (input_line stdin) in
+  print_endline (bool_string (passes_through_filter p0 p1 c))
+
+let run_passes_through_halfopen () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let c  = parse_point (input_line stdin) in
+  print_endline (bool_string (passes_through_halfopen p0 p1 c))
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
+(* Persistent loop: SIMPLIFY exits after one call (it reads its input
+   until EOF); every other mode emits its reply, flushes stdout, and
+   loops back to read the next mode line.  EOF on the mode line exits
+   cleanly. *)
 let () =
   let rec read_mode () =
-    let line = String.trim (input_line stdin) in
-    if line = "" then read_mode () else line
+    match try Some (input_line stdin) with End_of_file -> None with
+    | None -> None
+    | Some raw ->
+      let line = String.trim raw in
+      if line = "" then read_mode () else Some line
   in
-  match read_mode () with
-  | "SIMPLIFY"                 -> run_simplify ()
-  | "ORIENT"                   -> run_orient ()
-  | "ORIENT_FILTERED"          -> run_orient_filtered ()
-  | "INTERSECT_FILTERED"       -> run_intersect_filtered ()
-  | "INTERSECT_POINT_FILTERED" -> run_intersect_point_filtered ()
-  | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
-  | other                      -> failwith (Printf.sprintf "oracle: unknown mode: %s" other)
+  let rec loop () =
+    match read_mode () with
+    | None -> ()
+    | Some mode ->
+      (match mode with
+       | "SIMPLIFY"                 -> run_simplify (); exit 0
+       | "ORIENT"                   -> run_orient ()
+       | "ORIENT_FILTERED"          -> run_orient_filtered ()
+       | "INTERSECT_FILTERED"       -> run_intersect_filtered ()
+       | "INTERSECT_POINT_FILTERED" -> run_intersect_point_filtered ()
+       | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
+       | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
+       | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
+       | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
+      flush stdout;
+      loop ()
+  in
+  loop ()
