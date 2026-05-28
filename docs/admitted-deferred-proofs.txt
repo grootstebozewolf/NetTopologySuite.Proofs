@@ -113,9 +113,17 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_she
 # Tools: IZR, ceiling-of-Z monotonicity, pure real arithmetic.  Independent
 # of Flocq.  Estimated scope: 2-3 sessions.
 #
-# Status: statement landed; the exact half-open boundary convention of
-# Hobby's R^- (p.210-211) is the first refinement during the proof attempt
-# (see proof-structure §7 resumption checklist).
+# Status: statement landed; BLOCKED on predicate redefinition.  Lemma
+# 4.2 Session 1 (docs/hobby-lemma-4-2-session-1-outcome.md) showed the
+# lemma is FALSE as stated under the current closed-staircase
+# `in_snap_region`: a concrete three-point counterexample on the
+# segment (0,0)-(2,2) defeats every choice of alpha_y in {+1,-1}.
+# The closed-staircase form is a lower-left quadrant rather than a
+# near-segment strip, so the fix is structural (replace with
+# `segment_touches_hot_pixel P0 P1 p 1`), not a boundary flip.  See
+# proof-structure §7's revised first item.  Resumption: short design
+# session to correct `in_snap_region`, then a fresh Lemma 4.2
+# attempt against the corrected predicate.
 theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_2 | docs/hobby-theorem-proof-structure.md | §3,§7
 
 # `hobby_lemma_4_3` -- the piecewise-linear ordering lemma; the CORE of

@@ -243,14 +243,22 @@ is needed on the headline — only the two supporting lemmas remain.
 
 In order:
 
-  - [ ] **Refine `in_snap_region`'s boundary convention** against Hobby's
-        p.210-211 R⁻ definition (closed-staircase vs half-open vs
-        opposite-half-open).  The current rendering uses a closed
-        convention; the paper's exact form is to be confirmed.  Fix
-        before attempting Lemma 4.2.
+  - [ ] **Redefine `in_snap_region` against Hobby's p.210-211 R⁻** —
+        not merely a boundary flip.  Lemma 4.2 Session 1
+        (`docs/hobby-lemma-4-2-session-1-outcome.md`) exhibits a
+        concrete three-point counterexample under the current
+        closed-staircase rendering: the predicate as written is an
+        entire lower-left quadrant, not a near-segment strip, so the
+        monotone-coordinate lemma is **false** as stated.  Proposed
+        fix: replace the closed-staircase form with
+        `segment_touches_hot_pixel P0 P1 p 1`, which is
+        strip-shaped and matches Hobby's R⁻.  Fix before any further
+        attempt at Lemma 4.2.
   - [ ] **Prove `hobby_lemma_4_2`** via IZR plus ceiling monotonicity
         over Z.  Choose `alpha_y` based on the sign of the segment's
-        slope; reduce to a Z-level monotonicity argument.  2-3 sessions.
+        slope; reduce to a Z-level monotonicity argument.  2-3 sessions
+        — but only after the predicate is corrected; the §3 sketch is
+        valid against the corrected predicate, not the current one.
   - [ ] **Define a piecewise-linear function representation** suitable
         for §4's `F_j(ξ)`.  A list of breakpoints with per-segment linear
         coefficients suffices; provide an evaluation function and
