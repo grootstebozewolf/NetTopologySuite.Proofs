@@ -199,6 +199,122 @@ can pick up the proof against the corrected definition.  The proof
 sketch in §3 of the proof-structure doc remains valid — only the
 predicate it's quantifying over needs to change.
 
+## Design session outcome — predicate fixed
+
+**Session.** Follow-up design session, branch
+`claude/hobby-in-snap-region-fix`.
+
+**Outcome.** `in_snap_region` replaced with the strip-shaped Minkowski
+sum per Hobby (1999) p.210.  The counterexample evaporates as
+predicted, and `hobby_theorem_4_1_conditional` continues to compile
+unchanged.  No proof attempted; that is Session 2's work.
+
+### The corrected definition
+
+`theories-flocq/HobbyTheorem_b64.v` (replacing the closed-staircase
+form):
+
+```coq
+Definition in_snap_region (P0 P1 p : Point) : Prop :=
+  (exists nx ny : Z, px p = IZR nx /\ py p = IZR ny) /\
+  exists t : R, 0 <= t <= 1 /\
+    let q := segment_point P0 P1 t in
+    - (1/2) < px p - px q <= 1/2 /\
+    - (1/2) < py p - py q <= 1/2.
+```
+
+Equivalent to `p in ℤ² ∩ (segment(P0,P1) + R⁻)` for Hobby's
+
+    R⁻ = {(x, y) | -1/2 < x ≤ 1/2, -1/2 < y ≤ 1/2}
+
+— the half-open unit square with bottom/left OPEN, top/right CLOSED.
+Opposite half-open convention to `in_hot_pixel` (which uses
+`[-1/2, 1/2) × [-1/2, 1/2)`); Session 1's proposed
+`segment_touches_hot_pixel P0 P1 p 1` form would have inherited the
+wrong convention.
+
+### Choice of formulation vs. session 1's recommendation
+
+Session 1 above proposed `segment_touches_hot_pixel P0 P1 p 1` (an
+existing predicate in `theories/HotPixel.v`).  That predicate uses
+`in_hot_pixel`'s `R` convention `[-1/2, 1/2) × [-1/2, 1/2)`, which is
+the OPPOSITE half-open convention to Hobby's `R⁻`.  The original
+file comment on the pre-fix definition (lines 88-91) already flagged
+this:
+
+> "Hobby's exact R^- has a specific half-open boundary convention
+> OPPOSITE to R's; the form here is the closed-staircase rendering
+> and the boundary refinement is the first resumption item."
+
+The Minkowski-sum form used in the fix preserves Hobby's exact
+convention without going through `in_hot_pixel`.  This matters for
+Lemma 4.3's piecewise-linear argument, which exploits the
+complementary boundary inclusion (Hobby p.211-212).
+
+### Counterexample evaporation, verified in Coq
+
+Three sanity lemmas (out-of-tree check, not committed to the
+corpus):
+
+  - `counterexample_evaporates`: `~ in_snap_region (mkPoint 0 0)
+    (mkPoint 2 2) (mkPoint 1 (-1))`.  Proof by `lra` after
+    unfolding: the y-condition `-1/2 < -1 - 2t` forces `t < -1/4`,
+    contradicting `t >= 0`.
+  - `origin_still_in_region`: `in_snap_region (mkPoint 0 0)
+    (mkPoint 2 2) (mkPoint 0 0)` with witness `t = 0`.
+  - `midpoint_still_in_region`: `in_snap_region (mkPoint 0 0)
+    (mkPoint 2 2) (mkPoint 1 1)` with witness `t = 1/2`.
+
+All three close with `lra` against `unfold in_snap_region;
+unfold segment_point; simpl`.  This validates that the corrected
+predicate excludes the off-diagonal counterexample point while
+keeping the on-segment integer points.
+
+### Downstream impact
+
+  - `hobby_theorem_4_1_conditional`: unchanged.  Does not reference
+    `in_snap_region` (only `snap_round_segments` and
+    `segments_intersect_only_at_endpoints`).  Verified by grep and
+    by re-compiling `HobbyTheorem_b64.vo` clean.
+  - `hobby_lemma_4_3`: unchanged statement (does not reference
+    `in_snap_region` directly), but its eventual proof plan in
+    `docs/hobby-theorem-proof-structure.md` §4 is now stated
+    against the correct snap region.
+  - `hobby_lemma_4_2`: statement unchanged (uses `alpha_y : R` and
+    the `R`-form linear projection `px p + alpha_y * py p`; the
+    integer-point condition inside `in_snap_region` is what carries
+    the discretisation).  Proof now plausibly closable along the
+    §3 sketch in the proof-structure doc.
+
+### Registry
+
+`docs/admitted-deferred-proofs.txt`: no entry change.  The
+`hobby_lemma_4_2` entry stays present because the lemma remains
+Admitted; the deferred-proof status changes from "predicate
+defective" (informal) to "predicate fixed, proof ready" (this
+session).  The registry format does not capture this transition —
+it is recorded here in the design doc.
+
+### Build verification
+
+  - `make -f Makefile.gen -j2 theories-flocq/HobbyTheorem_b64.vo`
+    -> clean compile, 9.2 KB `.vo`.
+  - The four standard axioms appear in the per-theorem `Print
+    Assumptions` block (the three README-allowlisted plus
+    `Classical_Prop.classic` -- the file is in
+    `audit-exceptions.txt` for the Flocq-binary lineage; unchanged
+    by this fix).
+  - Counterexample-evaporation sanity check (`/tmp/counterexample_
+    check.v`, out-of-tree): three lemmas, all `Qed`-closed.
+
+### Next session
+
+"Hobby Lemma 4.2 Session 2": attempt the proof against the
+corrected predicate.  Proof structure: `docs/hobby-theorem-proof-
+structure.md` §3 (unchanged -- the sketch was always against the
+strip-shaped snap region, the corpus's earlier rendering was the
+mismatch).
+
 ## Stopping condition
 
 This stop matches the **first** listed stopping condition in the
@@ -216,3 +332,103 @@ with the strengthening that the closed-box rendering is not merely
 strictness-deficient but **structurally** wrong (a quadrant rather
 than a strip), so the fix is a redefinition rather than a boundary
 flip.
+
+## Session 2 — proof closed
+
+**Session.** Lemma 4.2 proof attempt against the corrected predicate,
+follow-up branch `claude/hobby-lemma-4-2-session-2`.
+
+**Outcome.** `hobby_lemma_4_2` is now **Qed-closed** in
+`theories-flocq/HobbyTheorem_b64.v`.  Deferred-proof registry: 3 → 2
+entries.
+
+### Proof structure (matches `docs/hobby-theorem-proof-structure.md` §3)
+
+Case split on `(px P1 - px P0) * (py P1 - py P0)` (the slope-product
+sign), via `Rle_or_lt`:
+
+  - **Product ≥ 0** (non-negative slope, horizontal, or vertical):
+    choose `alpha_y = +1`.
+  - **Product < 0** (negative slope): choose `alpha_y = -1`.
+
+In each case, suppose `f(p) = f(q)` with `p ≠ q` and both in
+`in_snap_region`.  Then:
+
+  1. Destructure both `in_snap_region` witnesses (integer points
+     `(np, mp)`, `(nq, mq)` and segment parameters `tp`, `tq`).
+  2. From `f(p) = f(q)` and the IZR-encoded coordinates: derive a
+     Z-equation via `eq_IZR_R0` plus `plus_IZR` / `minus_IZR`.  For
+     `alpha_y = +1`: `(np - nq) + (mp - mq) = 0`.  For `alpha_y = -1`:
+     `(np - nq) - (mp - mq) = 0`.
+  3. Case split on `Z.eq_dec np nq`:
+       - `np = nq`: forces `mp = mq` (from the Z-equation), so `p = q`,
+         contradicting `p ≠ q`.
+       - `np ≠ nq`: trichotomy on `Ztrichotomy_inf np nq` reduces to
+         `np > nq` (the `np < nq` branch is symmetric).
+  4. With `np - nq ≥ 1`: integer arithmetic via `IZR_le` gives
+     `px p ≥ px q + 1` (and analogously for `py` from the Z-equation).
+  5. R⁻ strip bounds (half-open: strict lower `-1/2 <`, closed upper
+     `≤ 1/2`) combine with the integer differences to force strict
+     inequalities `(1-tp)*px P0 + tp*px P1 > (1-tq)*px P0 + tq*px P1`
+     etc., closed by `lra`.
+  6. These rearrange (`nra`) to `(tp - tq) * (px P1 - px P0) > 0` and
+     a corresponding `py` inequality.
+  7. Final case split on `Rtotal_order tp tq`:
+       - `tp = tq`: contradicts step 6's strict inequality (`lra`).
+       - `tp < tq` or `tp > tq`: assert the sign of each segment
+         difference (`px P1 - px P0`, `py P1 - py P0`) via `nra`, then
+         conclude the slope product has the OPPOSITE sign of the case
+         assumption (`nra` against `Hprod`).
+
+The explicit sign-assertion step (`Hpx_neg`/`Hpx_pos`,
+`Hpy_pos`/`Hpy_neg`) is the deliberate hint that lets the final `nra`
+close — `nra` cannot find the witness in one step from the raw
+hypothesis set, but the two-line assertion breaks the nonlinear
+inference into pieces it can handle.
+
+### Why the half-open boundary convention is load-bearing
+
+The R⁻ strict-lower / closed-upper boundary is what gives **strict**
+inequalities `(1-tp)*px P0 + tp*px P1 > (1-tq)*px P0 + tq*px P1` in
+step 5.  A closed boundary on both sides would give only `≥`, which
+doesn't yield contradiction at the trichotomy step 7.
+
+This justifies the Session 1 design choice (Minkowski sum with R⁻
+rather than `segment_touches_hot_pixel`, which uses the opposite
+convention).
+
+### Boundary cases handled implicitly
+
+  - **Vertical segment** (`px P1 = px P0`): step 6 derives
+    `(tp - tq) * (px P1 - px P0) > 0` with `px P1 - px P0 = 0`, giving
+    `0 > 0` -- immediate contradiction.  Handled by `nra`.
+  - **Horizontal segment** (`py P1 = py P0`): symmetric.
+  - **Slope = ±1**: handled by the product-sign case split.  For slope
+    = +1, product > 0 (Case 1, `alpha_y = +1` works).  For slope = -1,
+    product < 0 (Case 2, `alpha_y = -1`).  No special-case needed.
+
+### Build verification
+
+  - `make -f Makefile.gen -j2 theories-flocq/HobbyTheorem_b64.vo`
+    -> clean compile, 47.6 KB `.vo`.
+  - `Print Assumptions hobby_lemma_4_2`:
+    * `ClassicalDedekindReals.sig_forall_dec`
+    * `FunctionalExtensionality.functional_extensionality_dep`
+    Both on the README allowlist.  Notably, the per-theorem footprint
+    does NOT include `Classical_Prop.classic` -- the proof avoids the
+    Flocq-binary content that pulls `classic` elsewhere in this file.
+  - `scripts/check_admitted.sh` -> 5 entries (3 counterexample, 2
+    deferred-proof, down from 3).
+
+### Imports added
+
+  - `From Stdlib Require Import Lra.` -- for `lra`.
+  - `From Stdlib Require Import Lia.` -- for `lia`.
+
+### Next session
+
+Hobby Lemma 4.3 (piecewise-linear ordering).  This is the
+thesis-shaped piece; estimated 4-6 weeks per
+`docs/hobby-theorem-proof-structure.md` §4.  Lemma 4.2's proof above
+provides one of the two building blocks; the tolerance-square
+`|F_j(xi) - beta_j - gamma_j * xi| < 1/2` bound is the other.
