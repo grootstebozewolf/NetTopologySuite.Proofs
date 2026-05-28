@@ -184,6 +184,11 @@ theories-flocq/SnapRounding_b64.v
 # share_point => shared-vertex conjunct) on the R-side and binary64, plus a
 # whole-arrangement (list-of-segments) lift.  Builds on SnapRounding_b64.
 theories-flocq/TopologicalCorrectness_b64.v
+# Phase 2 Hobby Theorem 4.1: definitions + conditional theorem (Qed-closed) +
+# two Admitted supporting lemmas (4.2, 4.3) registered as deferred-proof
+# entries.  Mirrors the docs/shewchuk-theorem-13-proof-structure.md treatment
+# for Shewchuk Theorem 13.  See docs/hobby-theorem-proof-structure.md.
+theories-flocq/HobbyTheorem_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract

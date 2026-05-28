@@ -59,6 +59,14 @@ theories-flocq/SnapRounding_b64.v
 # the three deliverable theorems are Qed-closed.
 theories-flocq/TopologicalCorrectness_b64.v
 
+# Category C: Phase 2 Hobby Theorem 4.1 infrastructure.
+# Definitions + conditional theorem + two Admitted supporting lemmas
+# (hobby_lemma_4_2, hobby_lemma_4_3 registered in
+# docs/admitted-deferred-proofs.txt).  References `snap_round` via
+# `snap_round_segments`, pulling `Classical_Prop.classic` through Flocq's
+# `round` / `round_mode` -- identical lineage to the other snap files.
+theories-flocq/HobbyTheorem_b64.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
