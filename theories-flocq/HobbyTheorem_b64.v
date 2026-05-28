@@ -81,27 +81,34 @@ Definition fully_intersected (segs : list (Point * Point)) : Prop :=
 Definition snap_round_segments (segs : list (Point * Point)) : list (Point * Point) :=
   List.map (fun s => (snap_round (fst s) 1, snap_round (snd s) 1)) segs.
 
-(* Snap region for a segment (Hobby p.210-211, written R^- in the paper):
-   the integer-grid points lying weakly lower-left of some point on the
-   segment.  Used in Lemma 4.2's monotone-coordinate statement.
+(* Snap region for a segment (Hobby 1999 p.210, written R^- in the
+   paper).  The set of integer-grid points `p` such that some point
+   `q = segment_point P0 P1 t` lies within R^- of `p`:
 
-   ** KNOWN DEFINITION DEFECT ** (see docs/hobby-lemma-4-2-session-1-
-   outcome.md): the rendering below is a lower-left quadrant, not a
-   near-segment strip, which makes `hobby_lemma_4_2` FALSE as written
-   (concrete three-point counterexample on the segment (0,0)-(2,2)).
-   Hobby's R^- is the strip of integer points whose hot pixel meets
-   the segment.  The intended fix is to replace this definition with
-   roughly `segment_touches_hot_pixel P0 P1 p 1` from
-   theories/HotPixel.v; that work is the first item on the §7
-   resumption checklist.  Leaving the broken definition in place for
-   now to avoid invalidating callers (`hobby_lemma_4_3` references it
-   indirectly through Lemma 4.2's conclusion only); the definition is
-   `Admitted`-adjacent through the lemma's Admitted status. *)
+       R^- = {(x, y) | -1/2 < x <= 1/2, -1/2 < y <= 1/2}
+
+   i.e., the half-open unit square with the bottom and left edges
+   OPEN and the top and right edges CLOSED.  This is the OPPOSITE
+   half-open convention to `in_hot_pixel`'s R = [-1/2, 1/2) x
+   [-1/2, 1/2) -- Hobby's R^- is the "negated" pixel tile, with the
+   complementary boundary inclusion that makes Lemma 4.3's
+   piecewise-linear argument compose cleanly.
+
+   Equivalently, this is the Minkowski sum of the segment with R^-:
+   `p in segment(P0,P1) + R^-` constrained to integer coordinates.
+   That formulation is strip-shaped (a thin neighbourhood of the
+   segment), not the closed-staircase / lower-left-quadrant that the
+   pre-fix rendering produced.
+
+   Used in Lemma 4.2's monotone-coordinate statement.  See
+   docs/hobby-lemma-4-2-session-1-outcome.md for the design history
+   (counterexample on segment (0,0)-(2,2) that drove this fix). *)
 Definition in_snap_region (P0 P1 p : Point) : Prop :=
   (exists nx ny : Z, px p = IZR nx /\ py p = IZR ny) /\
   exists t : R, 0 <= t <= 1 /\
-    px p <= px (segment_point P0 P1 t) /\
-    py p <= py (segment_point P0 P1 t).
+    let q := segment_point P0 P1 t in
+    - (1/2) < px p - px q <= 1/2 /\
+    - (1/2) < py p - py q <= 1/2.
 
 (* -------------------------------------------------------------------------- *)
 (* §2 Hobby Lemma 4.2 -- monotone coordinate.                                 *)

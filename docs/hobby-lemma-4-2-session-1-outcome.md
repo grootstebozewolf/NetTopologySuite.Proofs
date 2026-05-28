@@ -199,6 +199,122 @@ can pick up the proof against the corrected definition.  The proof
 sketch in §3 of the proof-structure doc remains valid — only the
 predicate it's quantifying over needs to change.
 
+## Design session outcome — predicate fixed
+
+**Session.** Follow-up design session, branch
+`claude/hobby-in-snap-region-fix`.
+
+**Outcome.** `in_snap_region` replaced with the strip-shaped Minkowski
+sum per Hobby (1999) p.210.  The counterexample evaporates as
+predicted, and `hobby_theorem_4_1_conditional` continues to compile
+unchanged.  No proof attempted; that is Session 2's work.
+
+### The corrected definition
+
+`theories-flocq/HobbyTheorem_b64.v` (replacing the closed-staircase
+form):
+
+```coq
+Definition in_snap_region (P0 P1 p : Point) : Prop :=
+  (exists nx ny : Z, px p = IZR nx /\ py p = IZR ny) /\
+  exists t : R, 0 <= t <= 1 /\
+    let q := segment_point P0 P1 t in
+    - (1/2) < px p - px q <= 1/2 /\
+    - (1/2) < py p - py q <= 1/2.
+```
+
+Equivalent to `p in ℤ² ∩ (segment(P0,P1) + R⁻)` for Hobby's
+
+    R⁻ = {(x, y) | -1/2 < x ≤ 1/2, -1/2 < y ≤ 1/2}
+
+— the half-open unit square with bottom/left OPEN, top/right CLOSED.
+Opposite half-open convention to `in_hot_pixel` (which uses
+`[-1/2, 1/2) × [-1/2, 1/2)`); Session 1's proposed
+`segment_touches_hot_pixel P0 P1 p 1` form would have inherited the
+wrong convention.
+
+### Choice of formulation vs. session 1's recommendation
+
+Session 1 above proposed `segment_touches_hot_pixel P0 P1 p 1` (an
+existing predicate in `theories/HotPixel.v`).  That predicate uses
+`in_hot_pixel`'s `R` convention `[-1/2, 1/2) × [-1/2, 1/2)`, which is
+the OPPOSITE half-open convention to Hobby's `R⁻`.  The original
+file comment on the pre-fix definition (lines 88-91) already flagged
+this:
+
+> "Hobby's exact R^- has a specific half-open boundary convention
+> OPPOSITE to R's; the form here is the closed-staircase rendering
+> and the boundary refinement is the first resumption item."
+
+The Minkowski-sum form used in the fix preserves Hobby's exact
+convention without going through `in_hot_pixel`.  This matters for
+Lemma 4.3's piecewise-linear argument, which exploits the
+complementary boundary inclusion (Hobby p.211-212).
+
+### Counterexample evaporation, verified in Coq
+
+Three sanity lemmas (out-of-tree check, not committed to the
+corpus):
+
+  - `counterexample_evaporates`: `~ in_snap_region (mkPoint 0 0)
+    (mkPoint 2 2) (mkPoint 1 (-1))`.  Proof by `lra` after
+    unfolding: the y-condition `-1/2 < -1 - 2t` forces `t < -1/4`,
+    contradicting `t >= 0`.
+  - `origin_still_in_region`: `in_snap_region (mkPoint 0 0)
+    (mkPoint 2 2) (mkPoint 0 0)` with witness `t = 0`.
+  - `midpoint_still_in_region`: `in_snap_region (mkPoint 0 0)
+    (mkPoint 2 2) (mkPoint 1 1)` with witness `t = 1/2`.
+
+All three close with `lra` against `unfold in_snap_region;
+unfold segment_point; simpl`.  This validates that the corrected
+predicate excludes the off-diagonal counterexample point while
+keeping the on-segment integer points.
+
+### Downstream impact
+
+  - `hobby_theorem_4_1_conditional`: unchanged.  Does not reference
+    `in_snap_region` (only `snap_round_segments` and
+    `segments_intersect_only_at_endpoints`).  Verified by grep and
+    by re-compiling `HobbyTheorem_b64.vo` clean.
+  - `hobby_lemma_4_3`: unchanged statement (does not reference
+    `in_snap_region` directly), but its eventual proof plan in
+    `docs/hobby-theorem-proof-structure.md` §4 is now stated
+    against the correct snap region.
+  - `hobby_lemma_4_2`: statement unchanged (uses `alpha_y : R` and
+    the `R`-form linear projection `px p + alpha_y * py p`; the
+    integer-point condition inside `in_snap_region` is what carries
+    the discretisation).  Proof now plausibly closable along the
+    §3 sketch in the proof-structure doc.
+
+### Registry
+
+`docs/admitted-deferred-proofs.txt`: no entry change.  The
+`hobby_lemma_4_2` entry stays present because the lemma remains
+Admitted; the deferred-proof status changes from "predicate
+defective" (informal) to "predicate fixed, proof ready" (this
+session).  The registry format does not capture this transition —
+it is recorded here in the design doc.
+
+### Build verification
+
+  - `make -f Makefile.gen -j2 theories-flocq/HobbyTheorem_b64.vo`
+    -> clean compile, 9.2 KB `.vo`.
+  - The four standard axioms appear in the per-theorem `Print
+    Assumptions` block (the three README-allowlisted plus
+    `Classical_Prop.classic` -- the file is in
+    `audit-exceptions.txt` for the Flocq-binary lineage; unchanged
+    by this fix).
+  - Counterexample-evaporation sanity check (`/tmp/counterexample_
+    check.v`, out-of-tree): three lemmas, all `Qed`-closed.
+
+### Next session
+
+"Hobby Lemma 4.2 Session 2": attempt the proof against the
+corrected predicate.  Proof structure: `docs/hobby-theorem-proof-
+structure.md` §3 (unchanged -- the sketch was always against the
+strip-shaped snap region, the corpus's earlier rendering was the
+mismatch).
+
 ## Stopping condition
 
 This stop matches the **first** listed stopping condition in the
