@@ -40,6 +40,15 @@ theories/Overlay.v
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
 
+# Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
+# types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
+# CurveGeometry) + validity predicates + chord approximation bridge
+# (chord_approx_arc / chord_approx_segment / chord_approx_ring /
+# to_geometry).  Option B (chord approximation, confirmed in
+# docs/audit-phase4-chord-overfitting.md §7).  Six Qed-closed
+# structural lemmas; no Admitteds; no Classical_Prop.classic.
+theories/CurveGeometry.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
