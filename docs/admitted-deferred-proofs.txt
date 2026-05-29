@@ -84,7 +84,13 @@
 #
 # WHAT REMAINS OPEN -- the general unconditional headline only:
 #   Deriving `cascade_pathA_chain (initial_cascade_state x prov) rest`
-#   from arbitrary `nonoverlap_shewchuk e + nonoverlap_shewchuk f`.
+#   from the actual preconditions of the theorem, namely
+#     `fast_expansion_sum_safe e f /\
+#      nonoverlap_shewchuk e /\
+#      nonoverlap_shewchuk f`
+#   for arbitrary expansions `e f` (i.e. closing
+#   `_general_conditional` by discharging its `cascade_pathA_chain`
+#   hypothesis from these three assumptions rather than positing it).
 #   This is precisely Shewchuk Theorem 13's deep magnitude bookkeeping:
 #   per-element provenance tracking + cross-prov mixed-sign
 #   similar-magnitude case analysis + round-to-even boundary handling.
