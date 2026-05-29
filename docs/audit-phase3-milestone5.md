@@ -685,10 +685,21 @@ S10  (done):  valid_geometry_extract (Qed-closed).  Mechanical
               Inherits the deferred-proof status of `extract_rings_valid`
               transitively -- Qed itself doesn't add an Admitted but its
               correctness depends on the S9 gap being eventually closed.
-S11:          DCEL adoption (if S9 chose the heavier path):
-              extend tg_edges to half-edge structure + twin/next
-              pointers.  Re-prove the M2-M4 + S2.5 structural
-              lemmas.
+S11  (done):  overlay_correct_at_edges -- the EDGE-LEVEL overlay
+              correctness theorem.  Qed-closed, UNCONDITIONAL (no
+              JCT, no DCEL dependency).
+                forall A B op p q,
+                  (exists l, In (p, q, l) tg_edges /\ edge_in_result op l = true)
+                  <-> edge_geometrically_in_result op p q A B.
+              The strongest unconditional Phase 3 correctness result.
+              Helper: `graph_has_edge_for_source` (produces a graph
+              entry from a source-list membership, via S3.5's
+              merge_in_*_backward).
+              Falls short of the full point-set headline only by the
+              JCT (§4.2) and DCEL (§4.3) gaps.  Originally scheduled
+              for DCEL adoption.
+S11-alt:      DCEL adoption (the heavier path to closing S9's
+              extract_rings_valid):
 S12:          DCEL ring assembly correctness (continued from S11).
 S13:          point_set ∘ extract → boolean_op (forward direction
               of the headline equivalence).  Conditional on

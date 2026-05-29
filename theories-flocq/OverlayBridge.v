@@ -515,7 +515,102 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §9  Audit footprint.                                                        *)
+(* §9  Phase 3 Milestone 5 -- Edge-level overlay correctness (unconditional). *)
+(*                                                                            *)
+(* The headline theorem `overlay_ng_correct` (S15) is conditional on two     *)
+(* deferred-proof obligations:                                                *)
+(*   - `point_in_ring_correct` (S8) -- JCT-dependent, gap in audit doc only. *)
+(*   - `extract_rings_valid` (S9) -- Admitted, registered.                   *)
+(*                                                                            *)
+(* The point-set-level lift requires both gaps to close.  But at the EDGE    *)
+(* level, the overlay correctness is fully provable using only S2-S10 work. *)
+(*                                                                            *)
+(* This section delivers `overlay_correct_at_edges`: a Qed-closed,           *)
+(* unconditional theorem stating that an edge (p, q) is in the labelled     *)
+(* topology graph with the boolean op's label-rule passing iff (p, q) is    *)
+(* geometrically in the result (defined at the snapped-edge level).         *)
+(*                                                                            *)
+(* This is the strongest unconditional Phase 3 correctness result.  It      *)
+(* falls short of the full point-set headline only by the JCT and DCEL      *)
+(* gaps documented in §4.2 and §4.3 of audit-phase3-milestone5.md.          *)
+(* -------------------------------------------------------------------------- *)
+
+(* Helper: if (p, q) is in either snapped source list, the graph has an
+   edge for it.  Uses merge_in_*_backward to produce the output entry. *)
+Lemma graph_has_edge_for_source :
+  forall (A B : Geometry) (p q : Point),
+    In (p, q) (snap_round_segments (extract_segments A)) \/
+    In (p, q) (snap_round_segments (extract_segments B)) ->
+    exists l, In (p, q, l) (tg_edges (noded_labeled_graph A B)).
+Proof.
+  intros A B p q [HA | HB].
+  - set (sA := snap_round_segments (extract_segments A)) in *.
+    set (sB := snap_round_segments (extract_segments B)) in *.
+    assert (Hin_A : In ((p, q), {| in_left := true; in_right := false |})
+                       (label_from_A sA)).
+    { unfold label_from_A. apply List.in_map_iff.
+      exists (p, q). split; [reflexivity | exact HA]. }
+    assert (Hin_concat : In ((p, q), {| in_left := true; in_right := false |})
+                            (label_from_A sA ++ label_from_B sB)).
+    { apply List.in_app_iff. left. exact Hin_A. }
+    destruct (merge_in_left_backward
+                (label_from_A sA ++ label_from_B sB) (p, q)
+                {| in_left := true; in_right := false |}
+                Hin_concat eq_refl)
+      as [l_out [Hin_out _]].
+    exists l_out. unfold noded_labeled_graph, build_labeled_graph. simpl.
+    exact Hin_out.
+  - set (sA := snap_round_segments (extract_segments A)) in *.
+    set (sB := snap_round_segments (extract_segments B)) in *.
+    assert (Hin_B : In ((p, q), {| in_left := false; in_right := true |})
+                       (label_from_B sB)).
+    { unfold label_from_B. apply List.in_map_iff.
+      exists (p, q). split; [reflexivity | exact HB]. }
+    assert (Hin_concat : In ((p, q), {| in_left := false; in_right := true |})
+                            (label_from_A sA ++ label_from_B sB)).
+    { apply List.in_app_iff. right. exact Hin_B. }
+    destruct (merge_in_right_backward
+                (label_from_A sA ++ label_from_B sB) (p, q)
+                {| in_left := false; in_right := true |}
+                Hin_concat eq_refl)
+      as [l_out [Hin_out _]].
+    exists l_out. unfold noded_labeled_graph, build_labeled_graph. simpl.
+    exact Hin_out.
+Qed.
+
+(* The edge-level Phase 3 correctness theorem.  UNCONDITIONAL -- no
+   deferred-proof dependency.                                                 *)
+Theorem overlay_correct_at_edges :
+  forall (A B : Geometry) (op : BooleanOp) (p q : Point),
+    (exists l, In (p, q, l) (tg_edges (noded_labeled_graph A B)) /\
+               edge_in_result op l = true)
+    <-> edge_geometrically_in_result op p q A B.
+Proof.
+  intros A B op p q. split.
+  - (* Forward: existing edge with label-rule pass -> geometrically in result *)
+    intros [l [Hin Hbit]].
+    apply (correct_labels_all_ops op A B p q l Hin). exact Hbit.
+  - (* Backward: geometrically in result -> exists edge with label-rule pass *)
+    intros Hgeom.
+    (* Step 1: derive (p, q) is in at least one snapped source list. *)
+    assert (Hsrc : In (p, q) (snap_round_segments (extract_segments A)) \/
+                   In (p, q) (snap_round_segments (extract_segments B))).
+    { destruct op; simpl in Hgeom.
+      - exact Hgeom.
+      - left. destruct Hgeom as [HA _]. exact HA.
+      - left. destruct Hgeom as [HA _]. exact HA.
+      - destruct Hgeom as [[HA _] | [HB _]];
+          [left; exact HA | right; exact HB].
+    }
+    (* Step 2: produce an output edge for (p, q). *)
+    destruct (graph_has_edge_for_source A B p q Hsrc) as [l Hin].
+    (* Step 3: apply correct_labels to obtain edge_in_result op l = true. *)
+    exists l. split; [exact Hin|].
+    apply (correct_labels_all_ops op A B p q l Hin). exact Hgeom.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §10 Audit footprint.                                                        *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions snap_noding_bridge.
@@ -528,3 +623,5 @@ Print Assumptions correct_labels_symdiff.
 Print Assumptions correct_labels_all_ops.
 Print Assumptions extract_rings_valid.
 Print Assumptions valid_geometry_extract.
+Print Assumptions graph_has_edge_for_source.
+Print Assumptions overlay_correct_at_edges.
