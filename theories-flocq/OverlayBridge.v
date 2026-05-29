@@ -494,6 +494,27 @@ Lemma extract_rings_valid :
 Admitted.
 
 (* -------------------------------------------------------------------------- *)
+(* Phase 3 Milestone 5 Session 10: valid_geometry of the extracted Geometry. *)
+(*                                                                            *)
+(* Mechanical corollary of `extract_rings_valid` (S9) using the definition   *)
+(* of `valid_geometry` ("every polygon satisfies valid_polygon").             *)
+(* Conditional on `extract_rings_valid` being closed (currently Admitted).   *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem valid_geometry_extract :
+  forall (op : BooleanOp) (A B : Geometry),
+    valid_geometry A ->
+    valid_geometry B ->
+    fully_intersected (noded_segments A B) ->
+    valid_geometry (extract op (noded_labeled_graph A B)).
+Proof.
+  intros op A B HA HB Hfi.
+  unfold valid_geometry.
+  intros poly Hin.
+  apply (extract_rings_valid op A B HA HB Hfi poly Hin).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §9  Audit footprint.                                                        *)
 (* -------------------------------------------------------------------------- *)
 
@@ -506,3 +527,4 @@ Print Assumptions correct_labels_difference.
 Print Assumptions correct_labels_symdiff.
 Print Assumptions correct_labels_all_ops.
 Print Assumptions extract_rings_valid.
+Print Assumptions valid_geometry_extract.
