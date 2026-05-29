@@ -69,6 +69,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import List.
+From Stdlib Require Import Reals.
 From NTS.Proofs Require Import Distance.
 
 Import ListNotations.
@@ -198,6 +199,121 @@ Qed.
 
 (* The empty graph has no edges. *)
 Lemma empty_graph_no_edges : tg_edges empty_graph = [].
+Proof.
+  reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §5  Phase 3 Milestone 3: `build_graph`.                                    *)
+(*                                                                            *)
+(* Discretization-operator-shaped construction of a TopologyGraph from a      *)
+(* list of snap-rounded segments.  Mirrors Hobby's `D_T(A)` informally:       *)
+(* collect endpoints as vertices (deduplicated), emit one edge per input     *)
+(* segment with a `default_label`.  Labels are assigned in Milestone 4        *)
+(* (`correct_labels`).                                                        *)
+(*                                                                            *)
+(* TYPE NOTE.  The Phase 2 noding infrastructure                              *)
+(* (`fully_intersected`, `snap_round_segments`,                               *)
+(*  `hobby_theorem_4_1_conditional`) is stated over `list (Point * Point)`,   *)
+(* not `list Segment` from theories/Segment.v.  build_graph therefore takes   *)
+(* `list (Point * Point)` to compose with the Phase 2 corpus without a        *)
+(* coercion layer.  Milestone 3's audit-doc sketch suggested `list Segment`; *)
+(* this milestone's grep confirmed the noding types use point pairs, so the  *)
+(* coercion is unnecessary.                                                   *)
+(* -------------------------------------------------------------------------- *)
+
+(* Decidable equality on Point, required by `List.nodup` for vertex
+   deduplication.  Uses Stdlib's `Req_EM_T` on each coordinate.  Axioms
+   inherited: the two README-allowlisted classical-reals decidability
+   axioms (`ClassicalDedekindReals.sig_not_dec`, `sig_forall_dec`).  No
+   `Classical_Prop.classic`. *)
+Definition point_eq_dec (p q : Point) : {p = q} + {p <> q}.
+Proof.
+  destruct p as [px1 py1]. destruct q as [px2 py2].
+  destruct (Req_EM_T px1 px2) as [Hx | Hx].
+  - destruct (Req_EM_T py1 py2) as [Hy | Hy].
+    + left. subst. reflexivity.
+    + right. intros H. inversion H. contradiction.
+  - right. intros H. inversion H. contradiction.
+Defined.
+
+(* Collect all endpoints from a list of segment-pairs. *)
+Definition segment_endpoints (segs : list (Point * Point)) : list Point :=
+  List.flat_map (fun s => [fst s; snd s]) segs.
+
+(* Deduplicated vertex list. *)
+Definition dedup_vertices (pts : list Point) : list Point :=
+  List.nodup point_eq_dec pts.
+
+(* Default unlabelled edge label; Milestone 4 fills in the real labels. *)
+Definition default_label : EdgeLabel := {|
+  in_left  := false;
+  in_right := false
+|}.
+
+(* The Phase 3 Milestone 3 headline: a function constructing a
+   TopologyGraph from a list of snap-rounded segment pairs. *)
+Definition build_graph (segs : list (Point * Point)) : TopologyGraph := {|
+  tg_vertices := dedup_vertices (segment_endpoints segs);
+  tg_edges    := List.map
+                   (fun s => (fst s, snd s, default_label))
+                   segs
+|}.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  Structural correctness of `build_graph`.                                *)
+(* -------------------------------------------------------------------------- *)
+
+(* Helper: a segment's first endpoint is in the endpoint list. *)
+Lemma segment_endpoints_fst :
+  forall s segs,
+    In s segs ->
+    In (fst s) (segment_endpoints segs).
+Proof.
+  intros s segs Hin. unfold segment_endpoints.
+  apply List.in_flat_map. exists s. split.
+  - exact Hin.
+  - simpl. left. reflexivity.
+Qed.
+
+(* Helper: a segment's second endpoint is in the endpoint list. *)
+Lemma segment_endpoints_snd :
+  forall s segs,
+    In s segs ->
+    In (snd s) (segment_endpoints segs).
+Proof.
+  intros s segs Hin. unfold segment_endpoints.
+  apply List.in_flat_map. exists s. split.
+  - exact Hin.
+  - simpl. right. left. reflexivity.
+Qed.
+
+(* The Phase 3 Milestone 3 correctness theorem: every `build_graph` of a
+   segment list satisfies `valid_topology_graph`.  Structural -- no
+   `fully_intersected` precondition needed at this level.  The
+   topology-aware bridge (linking `fully_intersected` from Phase 2 to
+   downstream label-correctness via `hobby_theorem_4_1_conditional`)
+   lands in Milestone 4 when `extract_segments` and `noded_segments`
+   get concrete definitions. *)
+Theorem valid_topology_graph_build_graph :
+  forall segs : list (Point * Point),
+    valid_topology_graph (build_graph segs).
+Proof.
+  intros segs.
+  unfold valid_topology_graph, build_graph. simpl.
+  intros p q l Hedge.
+  apply List.in_map_iff in Hedge.
+  destruct Hedge as [s [Heq Hin]].
+  inversion Heq. subst.
+  split.
+  - apply (proj2 (List.nodup_In point_eq_dec _ _)).
+    apply segment_endpoints_fst. exact Hin.
+  - apply (proj2 (List.nodup_In point_eq_dec _ _)).
+    apply segment_endpoints_snd. exact Hin.
+Qed.
+
+(* The empty segment list yields the empty graph. *)
+Lemma build_graph_nil : build_graph [] = empty_graph.
 Proof.
   reflexivity.
 Qed.
