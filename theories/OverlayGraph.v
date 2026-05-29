@@ -70,7 +70,9 @@
 
 From Stdlib Require Import List.
 From Stdlib Require Import Reals.
+From Stdlib Require Import Bool.
 From NTS.Proofs Require Import Distance.
+From NTS.Proofs Require Import Overlay.
 
 Import ListNotations.
 
@@ -316,4 +318,199 @@ Qed.
 Lemma build_graph_nil : build_graph [] = empty_graph.
 Proof.
   reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Phase 3 Milestone 4 (R-side): extract_segments + labelling rules +     *)
+(*     labelled-graph construction.                                            *)
+(*                                                                            *)
+(* This section bridges geometry (M1) and the topology graph (M2-M3) to the   *)
+(* per-operation labelling rules (M4) the noding-aware pipeline needs.        *)
+(*                                                                            *)
+(* What lives HERE (R-side, Flocq-free):                                      *)
+(*   - extract_segments: Geometry -> list (Point * Point) -- ring edges       *)
+(*     collected via the M1 `ring_edges` Fixpoint.                            *)
+(*   - edge_in_result: per-BooleanOp labelling rule (Union = orb,             *)
+(*     Intersection = andb, Difference = andb-then-negb, SymDiff = xorb).     *)
+(*   - label_from_A / label_from_B: assign edges to a source geometry by     *)
+(*     setting in_left / in_right.                                            *)
+(*   - build_labeled_graph: assemble a TopologyGraph from two pre-snapped     *)
+(*     (or pre-noded) segment lists with labels attached.                     *)
+(*   - valid_topology_graph_build_labeled_graph: structural correctness.      *)
+(*                                                                            *)
+(* What lives in theories-flocq/OverlayBridge.v (Flocq layer):                 *)
+(*   - noded_segments A B (uses snap_round_segments from HobbyTheorem_b64).   *)
+(*   - snap_noding_bridge (the conditional-precondition theorem citing        *)
+(*     hobby_theorem_4_1_conditional).                                        *)
+(*                                                                            *)
+(* The R-side / Flocq-side split keeps theories/ Flocq-free (the corpus       *)
+(* convention), and keeps Classical_Prop.classic confined to theories-flocq/. *)
+(*                                                                            *)
+(* `correct_labels` itself -- the Prop tying `edge_in_result` to the          *)
+(* geometric notion "this edge belongs to the boolean-operation result" --   *)
+(* is deferred to Milestone 5 because its RHS requires `extract op g` and    *)
+(* `point_set` composition, both M5 deliverables.                             *)
+(* -------------------------------------------------------------------------- *)
+
+(* Collect the edges of a polygon: outer ring edges plus all hole edges. *)
+Definition polygon_to_pairs (poly : Polygon) : list (Point * Point) :=
+  ring_edges (outer_ring poly) ++
+  List.flat_map ring_edges (hole_rings poly).
+
+(* Collect all edges from a Geometry as a flat list of point pairs.
+   This is the "Geometry -> noding input" coercion. *)
+Definition extract_segments (g : Geometry) : list (Point * Point) :=
+  List.flat_map polygon_to_pairs g.
+
+(* -------------------------------------------------------------------------- *)
+(* §8  Labelling rules per BooleanOp.                                          *)
+(* -------------------------------------------------------------------------- *)
+
+(* Edge inclusion in the result for each boolean operation.  Matches
+   docs/audit-phase3-overlay.md §3.5 exactly:
+     Union:        in_left \/ in_right
+     Intersection: in_left /\ in_right
+     Difference:   in_left /\ ~in_right
+     SymDiff:      in_left  xor in_right *)
+Definition edge_in_result (op : BooleanOp) (l : EdgeLabel) : bool :=
+  match op with
+  | Union        => orb  (in_left l) (in_right l)
+  | Intersection => andb (in_left l) (in_right l)
+  | Difference   => andb (in_left l) (negb (in_right l))
+  | SymDiff      => xorb (in_left l) (in_right l)
+  end.
+
+(* Assign labels to a list of edges as "from geometry A" or "from
+   geometry B". *)
+Definition label_from_A
+    (segs : list (Point * Point)) : list (Point * Point * EdgeLabel) :=
+  List.map (fun s => (fst s, snd s,
+                      {| in_left := true; in_right := false |})) segs.
+
+Definition label_from_B
+    (segs : list (Point * Point)) : list (Point * Point * EdgeLabel) :=
+  List.map (fun s => (fst s, snd s,
+                      {| in_left := false; in_right := true |})) segs.
+
+(* Build a labelled topology graph from two pre-noded segment lists
+   (one per source geometry).  Vertices = dedup of all endpoints.
+   Edges = A-labelled snapped edges ++ B-labelled snapped edges.
+   The caller is responsible for the snap-rounding (Flocq layer);
+   this function is pure list manipulation. *)
+Definition build_labeled_graph
+    (snapped_A snapped_B : list (Point * Point)) : TopologyGraph := {|
+  tg_vertices := dedup_vertices
+                   (segment_endpoints (snapped_A ++ snapped_B));
+  tg_edges    := label_from_A snapped_A ++ label_from_B snapped_B
+|}.
+
+(* -------------------------------------------------------------------------- *)
+(* §9  Structural correctness of the labelled graph.                           *)
+(* -------------------------------------------------------------------------- *)
+
+(* Helper: an A-labelled edge's endpoints lie in segment_endpoints of A. *)
+Lemma label_from_A_endpoints_in_pairs :
+  forall snapped p q l,
+    In (p, q, l) (label_from_A snapped) ->
+    In p (segment_endpoints snapped) /\ In q (segment_endpoints snapped).
+Proof.
+  intros snapped p q l Hin.
+  unfold label_from_A in Hin. apply List.in_map_iff in Hin.
+  destruct Hin as [s [Heq Hin']]. inversion Heq. subst.
+  split.
+  - apply segment_endpoints_fst. exact Hin'.
+  - apply segment_endpoints_snd. exact Hin'.
+Qed.
+
+(* Same for B-labelled. *)
+Lemma label_from_B_endpoints_in_pairs :
+  forall snapped p q l,
+    In (p, q, l) (label_from_B snapped) ->
+    In p (segment_endpoints snapped) /\ In q (segment_endpoints snapped).
+Proof.
+  intros snapped p q l Hin.
+  unfold label_from_B in Hin. apply List.in_map_iff in Hin.
+  destruct Hin as [s [Heq Hin']]. inversion Heq. subst.
+  split.
+  - apply segment_endpoints_fst. exact Hin'.
+  - apply segment_endpoints_snd. exact Hin'.
+Qed.
+
+(* segment_endpoints of an app is the app of segment_endpoints. *)
+Lemma segment_endpoints_app :
+  forall xs ys,
+    segment_endpoints (xs ++ ys) =
+    segment_endpoints xs ++ segment_endpoints ys.
+Proof.
+  intros xs ys. unfold segment_endpoints.
+  apply List.flat_map_app.
+Qed.
+
+(* The M4 headline: every build_labeled_graph yields a valid topology
+   graph.  Structural -- no fully_intersected precondition.  The
+   topology-aware bridge (via hobby_theorem_4_1_conditional) lands in
+   the Flocq-layer file. *)
+Theorem valid_topology_graph_build_labeled_graph :
+  forall sA sB : list (Point * Point),
+    valid_topology_graph (build_labeled_graph sA sB).
+Proof.
+  intros sA sB.
+  unfold valid_topology_graph, build_labeled_graph. simpl.
+  intros p q l Hedge.
+  apply List.in_app_iff in Hedge.
+  rewrite segment_endpoints_app.
+  destruct Hedge as [HA | HB].
+  - (* Edge came from A *)
+    apply label_from_A_endpoints_in_pairs in HA. destruct HA as [Hp Hq].
+    split; apply (proj2 (List.nodup_In point_eq_dec _ _));
+      apply List.in_app_iff; left; assumption.
+  - (* Edge came from B *)
+    apply label_from_B_endpoints_in_pairs in HB. destruct HB as [Hp Hq].
+    split; apply (proj2 (List.nodup_In point_eq_dec _ _));
+      apply List.in_app_iff; right; assumption.
+Qed.
+
+(* Empty inputs yield empty graph. *)
+Lemma build_labeled_graph_nil :
+  build_labeled_graph [] [] = empty_graph.
+Proof.
+  reflexivity.
+Qed.
+
+(* Constructor sanity: the four BooleanOp operations are pairwise
+   distinct (used downstream by case analysis on `op`). *)
+Lemma edge_in_result_union_true :
+  forall l, in_left l = true \/ in_right l = true ->
+            edge_in_result Union l = true.
+Proof.
+  intros l [HL | HR]; simpl.
+  - rewrite HL. reflexivity.
+  - rewrite HR. apply orb_true_r.
+Qed.
+
+Lemma edge_in_result_intersection_true :
+  forall l, in_left l = true -> in_right l = true ->
+            edge_in_result Intersection l = true.
+Proof.
+  intros l HL HR. simpl. rewrite HL, HR. reflexivity.
+Qed.
+
+Lemma edge_in_result_difference_iff :
+  forall l, edge_in_result Difference l = true <->
+            in_left l = true /\ in_right l = false.
+Proof.
+  intros l. simpl. split.
+  - intros H. apply andb_true_iff in H. destruct H as [HL HR].
+    split; [exact HL | now apply negb_true_iff in HR].
+  - intros [HL HR]. rewrite HL, HR. reflexivity.
+Qed.
+
+Lemma edge_in_result_symdiff_iff :
+  forall l, edge_in_result SymDiff l = true <->
+            in_left l <> in_right l.
+Proof.
+  intros l. simpl. unfold xorb.
+  destruct (in_left l), (in_right l); simpl; split;
+    try discriminate; try congruence; try reflexivity;
+    intros _; reflexivity.
 Qed.

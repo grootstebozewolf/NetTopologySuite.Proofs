@@ -152,3 +152,12 @@ theories-flocq/Orient_b64_expansion.v
 # (deferred-proof, removable when Piece 5b closes).  The tiny-regime
 # decisive theorem is Qed-closed without the deferred reference.
 theories-flocq/Orient_b64_stage_d.v
+
+# Category C: Phase 3 Milestone 4 (Flocq layer) -- noding-to-graph bridge.
+# Defines noded_segments and proves snap_noding_bridge +
+# valid_topology_graph_noded_labeled_graph by lifting the R-side
+# `valid_topology_graph_build_graph` / `valid_topology_graph_build_labeled_graph`
+# through Phase 2's snap_round_segments.  Inherits Classical_Prop.classic
+# transitively from HobbyTheorem_b64's snap_round_segments (Flocq binary
+# arithmetic closure).  No Admitteds added by this file.
+theories-flocq/OverlayBridge.v
