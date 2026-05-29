@@ -25,8 +25,12 @@ Confirm clean baseline before writing any Coq.
 Phase 3 M5 Sessions 2–8 (PRs #31–#36, all merged to main) landed:
 
   - **S2**: `extract op g` (theories/OverlayGraph.v) — filters edges
-    by `edge_in_result op l` and emits a `Geometry` as a degenerate
-    one-edge-per-polygon list.  No DCEL.  Naive carrier (`Geometry`).
+    by `edge_in_result op l`, then emits a `Geometry` that is either
+    `[]` (no surviving edge) or a *single* degenerate polygon whose
+    `outer_ring` is the `flat_map` concatenation of the endpoints
+    (`fst`/`snd`) of all surviving edges, with `hole_rings := []`.
+    Edge labels are dropped at this step.  No DCEL.  Naive carrier
+    (`Geometry`).
   - **S2.5**: M4 refactor — `merge_labeled_edges` collapses duplicate
     `(p, q)` pairs into single edges with OR-combined labels.
     `build_labeled_graph` rewritten to use it.
@@ -134,11 +138,23 @@ Then: write down the proof shape on paper.
   3. Use Hypothesis 1 to get `valid_polygon poly`.
   4. Use Hypothesis 2 to convert `point_in_ring p r` to the
      topological-interior form.
-  5. The extracted polygon's edges are labelled with
-     `edge_in_result op l = true` (by `extract`'s filter).
-  6. Use `correct_labels_all_ops` to convert: every edge in the
-     extracted polygon's boundary is `edge_geometrically_in_result
-     op p q A B`.
+  5. NOTE: `extract` drops labels — the polygon's `outer_ring` is the
+     endpoint concatenation of the *filtered labelled edges* of
+     `noded_labeled_graph A B` (those `e` with
+     `edge_in_result op (snd e) = true`), NOT a labelled-edge list.
+     So step 6 cannot read labels off the ring directly; it must work
+     from the filtered labelled edges in the graph and relate the ring
+     boundary back to them.  This relation is an *extra hypothesis*
+     (call it `ring_edges_from_filtered`: each boundary segment of
+     `outer_ring poly` is the `(fst, snd)` of some surviving labelled
+     edge, and the ring introduces no spurious adjacency segments) —
+     it must be stated explicitly, as it does not follow from
+     `extract` alone for the flat-list carrier.
+  6. Use `correct_labels_all_ops` on those *filtered labelled edges*:
+     each surviving edge `(p, q, l)` with `edge_in_result op l = true`
+     satisfies `edge_geometrically_in_result op p q A B`.  Combined
+     with the step-5 hypothesis, every boundary segment of the
+     extracted polygon is geometrically in the result.
   7. The boundary edges geometrically come from A's or B's snapped
      segments (combined per `op`'s combinator).  This is the bridge
      from per-edge geometric membership to per-region containment.
