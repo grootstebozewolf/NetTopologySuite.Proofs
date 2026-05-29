@@ -392,16 +392,66 @@ Definition label_from_B
   List.map (fun s => (fst s, snd s,
                       {| in_left := false; in_right := true |})) segs.
 
-(* Build a labelled topology graph from two pre-noded segment lists
-   (one per source geometry).  Vertices = dedup of all endpoints.
-   Edges = A-labelled snapped edges ++ B-labelled snapped edges.
-   The caller is responsible for the snap-rounding (Flocq layer);
-   this function is pure list manipulation. *)
+(* Merge two labels via boolean OR on each flag.  When the same edge
+   (p, q) appears with two different labels (e.g., once with
+   in_left=true from label_from_A and once with in_right=true from
+   label_from_B), merging produces a single combined label that
+   correctly tracks both sources.
+
+   M4-refactor finding: without this merge, Intersection / Difference /
+   SymDiff cases of correct_labels are FALSE for noded_labeled_graph
+   (see theories-flocq/OverlayBridge.v §6 in the M5-S2 commit for the
+   discovery).  This merge fixes the labelling so all four boolean
+   ops can be proven correct uniformly. *)
+Definition merge_labels (l1 l2 : EdgeLabel) : EdgeLabel := {|
+  in_left  := orb (in_left l1) (in_left l2);
+  in_right := orb (in_right l1) (in_right l2)
+|}.
+
+(* Bool equality on pairs of points, decidable via point_eq_dec. *)
+Definition pair_eq_dec :
+  forall p q : Point * Point, {p = q} + {p <> q}.
+Proof.
+  intros [a b] [c d].
+  destruct (point_eq_dec a c) as [Hac | Hac]; subst.
+  - destruct (point_eq_dec b d) as [Hbd | Hbd]; subst.
+    + left. reflexivity.
+    + right. intros H. inversion H. contradiction.
+  - right. intros H. inversion H. contradiction.
+Defined.
+
+(* Insert a labelled edge into a list, merging the label if an edge
+   with the same (p, q) is already present. *)
+Fixpoint insert_or_merge_edge
+    (e : Point * Point * EdgeLabel)
+    (edges : list (Point * Point * EdgeLabel)) :
+    list (Point * Point * EdgeLabel) :=
+  match edges with
+  | nil => [e]
+  | e' :: rest =>
+      if pair_eq_dec (fst e) (fst e')
+      then (fst e', merge_labels (snd e) (snd e')) :: rest
+      else e' :: insert_or_merge_edge e rest
+  end.
+
+(* Fold the merge over a labelled edge list. *)
+Definition merge_labeled_edges
+    (edges : list (Point * Point * EdgeLabel)) :
+    list (Point * Point * EdgeLabel) :=
+  List.fold_right insert_or_merge_edge nil edges.
+
+(* Build a labelled topology graph from two pre-noded segment lists.
+   M4-refactor (Phase 3): the edge list is now MERGED so identical
+   (p, q) pairs from sA and sB collapse into a single edge with
+   combined { in_left := A_has; in_right := B_has } label.
+   This fixes the M5-S2 finding documented in
+   theories-flocq/OverlayBridge.v §6.  Vertices unchanged. *)
 Definition build_labeled_graph
     (snapped_A snapped_B : list (Point * Point)) : TopologyGraph := {|
   tg_vertices := dedup_vertices
                    (segment_endpoints (snapped_A ++ snapped_B));
-  tg_edges    := label_from_A snapped_A ++ label_from_B snapped_B
+  tg_edges    := merge_labeled_edges
+                   (label_from_A snapped_A ++ label_from_B snapped_B)
 |}.
 
 (* -------------------------------------------------------------------------- *)
@@ -446,10 +496,66 @@ Proof.
   apply List.flat_map_app.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* §9.5  Merge-aware structural lemmas (M4 refactor).                          *)
+(*                                                                            *)
+(* Every edge in the merged output corresponds to an input edge with the      *)
+(* same (p, q) but possibly different label.  This is the load-bearing        *)
+(* invariant linking the merged edge list back to its sources.                *)
+(* -------------------------------------------------------------------------- *)
+
+(* Insert preserves "exists same (p,q) in input or new edge has same (p,q)
+   as the one being inserted". *)
+Lemma insert_or_merge_edge_in_or :
+  forall e edges p q l,
+    In (p, q, l) (insert_or_merge_edge e edges) ->
+    (p, q) = fst e \/ (exists l', In (p, q, l') edges).
+Proof.
+  intros e edges. induction edges as [|e' rest IH]; intros p q l Hin; simpl in Hin.
+  - (* edges = []: inserted gives [e]. *)
+    destruct Hin as [Heq | []].
+    left. destruct e as [pq_e l_e]. simpl. inversion Heq. reflexivity.
+  - (* edges = e' :: rest *)
+    destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+    + (* merged at head *)
+      destruct Hin as [Heq | Hin_tail].
+      * (* (fst e', merge ...) = (p, q, l) *)
+        destruct e' as [pq_e' l_e']. simpl in *.
+        inversion Heq. subst pq_e'.
+        right. exists l_e'. left. reflexivity.
+      * right. exists l. right. exact Hin_tail.
+    + destruct Hin as [Heq | Hin_tail].
+      * right. exists l. left. exact Heq.
+      * specialize (IH p q l Hin_tail).
+        destruct IH as [Hpq | [l' Hin_rest]].
+        -- left. exact Hpq.
+        -- right. exists l'. right. exact Hin_rest.
+Qed.
+
+(* Key structural lemma: if (p, q, l) appears in the merge output, then
+   some (p, q, l') appears in the input.  Used by validity proofs to
+   trace each output edge back to its source. *)
+Lemma merge_in_implies_in_input :
+  forall edges p q l,
+    In (p, q, l) (merge_labeled_edges edges) ->
+    exists l', In (p, q, l') edges.
+Proof.
+  intros edges. unfold merge_labeled_edges. induction edges as [|e rest IH];
+    intros p q l Hin; simpl in Hin.
+  - contradiction.
+  - apply insert_or_merge_edge_in_or in Hin.
+    destruct Hin as [Hpq | [l' Hrest]].
+    + (* (p, q) = fst e: so e = (p, q, snd e) and e is at head of (e::rest). *)
+      destruct e as [pq_e l_e]. simpl in Hpq. subst pq_e.
+      exists l_e. left. reflexivity.
+    + destruct (IH p q l' Hrest) as [l'' Hrest'].
+      exists l''. right. exact Hrest'.
+Qed.
+
 (* The M4 headline: every build_labeled_graph yields a valid topology
-   graph.  Structural -- no fully_intersected precondition.  The
-   topology-aware bridge (via hobby_theorem_4_1_conditional) lands in
-   the Flocq-layer file. *)
+   graph.  M4-refactor: proof updated for the merged edge list -- now
+   uses `merge_in_implies_in_input` to trace each output edge back to
+   either label_from_A or label_from_B input. *)
 Theorem valid_topology_graph_build_labeled_graph :
   forall sA sB : list (Point * Point),
     valid_topology_graph (build_labeled_graph sA sB).
@@ -457,15 +563,15 @@ Proof.
   intros sA sB.
   unfold valid_topology_graph, build_labeled_graph. simpl.
   intros p q l Hedge.
-  apply List.in_app_iff in Hedge.
+  apply merge_in_implies_in_input in Hedge.
+  destruct Hedge as [l' Hin].
+  apply List.in_app_iff in Hin.
   rewrite segment_endpoints_app.
-  destruct Hedge as [HA | HB].
-  - (* Edge came from A *)
-    apply label_from_A_endpoints_in_pairs in HA. destruct HA as [Hp Hq].
+  destruct Hin as [HA | HB].
+  - apply label_from_A_endpoints_in_pairs in HA. destruct HA as [Hp Hq].
     split; apply (proj2 (List.nodup_In point_eq_dec _ _));
       apply List.in_app_iff; left; assumption.
-  - (* Edge came from B *)
-    apply label_from_B_endpoints_in_pairs in HB. destruct HB as [Hp Hq].
+  - apply label_from_B_endpoints_in_pairs in HB. destruct HB as [Hp Hq].
     split; apply (proj2 (List.nodup_In point_eq_dec _ _));
       apply List.in_app_iff; right; assumption.
 Qed.

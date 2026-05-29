@@ -143,71 +143,99 @@ Definition correct_labels
     edge_geometrically_in_result op p q A B.
 
 (* -------------------------------------------------------------------------- *)
-(* §5  correct_labels for Union -- directly Qed-closed.                       *)
+(* §5  correct_labels for Union: forward direction only.                      *)
 (*                                                                            *)
-(* The Union case is structurally trivial under M4's labelling scheme:        *)
-(*   - Edges from `label_from_A` have `in_left := true`, so                   *)
-(*     `edge_in_result Union l = orb true _ = true` AND the edge is in A's    *)
-(*     snap-rounded segments.                                                 *)
-(*   - Edges from `label_from_B` have `in_right := true`, symmetric.          *)
-(* Both sides of the iff are always true; both directions discharge by       *)
-(* construction.                                                              *)
+(* M4 REFACTOR NOTE.  The M5-S2 version of `correct_labels_union` proved      *)
+(* the full iff directly by destructuring the un-merged edge list             *)
+(* `label_from_A sA ++ label_from_B sB` via `List.in_app_iff`.  The           *)
+(* M4-refactor wraps that list in `merge_labeled_edges`, which collapses      *)
+(* duplicate (p, q) pairs into one edge with OR-ed labels.  The backward      *)
+(* direction of the iff now requires a "merge dominates input bits"          *)
+(* lemma (in_left l_in = true -> in_left l_out = true for the merge's        *)
+(* output label) which is multi-line induction and pushed to a dedicated      *)
+(* session.                                                                   *)
+(*                                                                            *)
+(* The FORWARD direction (label -> geometric) still closes Qed: given         *)
+(* `In (p, q, l)` in the merged list, `merge_in_implies_in_input` extracts    *)
+(* some input `(p, q, l')` in `label_from_A sA ++ label_from_B sB`, and      *)
+(* in_app_iff / in_map_iff finish the disjunctive conclusion.                 *)
+(*                                                                            *)
+(* NOTE: the `edge_in_result Union l = true` hypothesis is intentionally     *)
+(* discarded by the proof (`_` in the intros pattern).  The conclusion        *)
+(* holds UNCONDITIONALLY for any edge in `tg_edges (noded_labeled_graph A B)` *)
+(* because every such edge came from either A's or B's snapped segments by  *)
+(* construction.  The hypothesis is kept in the LEMMA STATEMENT for          *)
+(* composability with the future iff form (S4): `edge_in_result Union l =   *)
+(* true <-> ...`.  Stating the lemma in the iff's forward-direction shape   *)
+(* lets S4 compose this lemma with the (forthcoming, S3.5) backward          *)
+(* direction without restating types.  See Copilot review on PR #32 for     *)
+(* the alternative naming.                                                   *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem correct_labels_union :
-  forall (A B : Geometry),
-    correct_labels Union (noded_labeled_graph A B) A B.
+Theorem correct_labels_union_forward :
+  forall (A B : Geometry) (p q : Point) (l : EdgeLabel),
+    In (p, q, l) (tg_edges (noded_labeled_graph A B)) ->
+    edge_in_result Union l = true ->
+    edge_geometrically_in_result Union p q A B.
 Proof.
-  intros A B p q l Hin.
+  intros A B p q l Hin _.
   unfold noded_labeled_graph, build_labeled_graph in Hin. simpl in Hin.
-  apply List.in_app_iff in Hin.
-  unfold edge_in_result, edge_geometrically_in_result. simpl.
-  destruct Hin as [HA | HB].
-  - (* Edge from A: in_left l = true.  Both sides hold. *)
-    unfold label_from_A in HA.
+  apply merge_in_implies_in_input in Hin.
+  destruct Hin as [l' Hin'].
+  apply List.in_app_iff in Hin'.
+  unfold edge_geometrically_in_result. simpl.
+  destruct Hin' as [HA | HB].
+  - unfold label_from_A in HA.
     apply List.in_map_iff in HA.
-    destruct HA as [s [Heq Hin']].
+    destruct HA as [s [Heq Hin_s]].
     destruct s as [s_p s_q]. simpl in Heq.
     inversion Heq. subst.
-    simpl. split.
-    + intros _. left. exact Hin'.
-    + intros _. reflexivity.
-  - (* Edge from B: in_right l = true.  Both sides hold. *)
-    unfold label_from_B in HB.
+    left. exact Hin_s.
+  - unfold label_from_B in HB.
     apply List.in_map_iff in HB.
-    destruct HB as [s [Heq Hin']].
+    destruct HB as [s [Heq Hin_s]].
     destruct s as [s_p s_q]. simpl in Heq.
     inversion Heq. subst.
-    simpl. split.
-    + intros _. right. exact Hin'.
-    + intros _. reflexivity.
+    right. exact Hin_s.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §6  Intersection / Difference / SymDiff -- M4-revision finding.            *)
+(* §6  Intersection / Difference / SymDiff -- label merging LANDED in this    *)
+(*     PR (#32).  Original discovery and fix history.                          *)
 (*                                                                            *)
 (* The audit doc (docs/audit-phase3-milestone5.md §4.4) anticipated these     *)
-(* cases as Sessions 6 and 7.  Session 2 discovered that the current M4       *)
-(* labelling scheme does NOT support them as-is:                              *)
+(* cases as Sessions 5-7.  Session 2 discovered the underlying gap:           *)
 (*                                                                            *)
-(* Under `noded_labeled_graph A B`, an edge `(p,q)` that appears in BOTH     *)
-(* A's snapped segments AND B's snapped segments is represented as TWO       *)
-(* separate edges with disjoint labels (one with `in_left:=true`, one with   *)
-(* `in_right:=true`).  For Intersection's `edge_in_result l =                 *)
-(* andb (in_left l) (in_right l)`, neither edge satisfies the rule -- so     *)
-(* Intersection would extract no edges, contradicting the geometric          *)
-(* expectation that `(p,q)` IS in the intersection.                          *)
+(* Under the PRE-REFACTOR `noded_labeled_graph A B`, an edge `(p,q)` that    *)
+(* appeared in BOTH A's snapped segments AND B's snapped segments was       *)
+(* represented as TWO separate edges with disjoint labels (one with         *)
+(* `in_left:=true`, one with `in_right:=true`).  For Intersection's          *)
+(* `edge_in_result l = andb (in_left l) (in_right l)`, neither edge          *)
+(* satisfied the rule -- so Intersection would extract no edges,             *)
+(* contradicting the geometric expectation that `(p,q)` IS in the            *)
+(* intersection.                                                              *)
 (*                                                                            *)
-(* The fix: a `merge_labels` step folding over the edge list that combines   *)
-(* labels for identical `(p,q)` pairs into a single edge with combined       *)
-(* `{ in_left := A_has; in_right := B_has }`.  Once merged, Intersection /   *)
-(* Difference / SymDiff become provable analogously to Union.                *)
+(* The fix LANDED in this PR (M4 refactor + replan, PR #32): `merge_labels`  *)
+(* + `merge_labeled_edges` in theories/OverlayGraph.v fold over the edge     *)
+(* list combining labels for identical `(p,q)` pairs into a single edge      *)
+(* with combined `{ in_left := A_has; in_right := B_has }`.                  *)
+(* `build_labeled_graph` is now defined in terms of this merged form.        *)
 (*                                                                            *)
-(* This is an M4-revision item.  Documented here so Session 3+ has the gap   *)
-(* on the record.  The deferred-proof registry does NOT yet contain a         *)
-(* corresponding entry -- only the eventually-provable theorems do.          *)
-(* Session 1.5 (DCEL adoption) is the natural place to also add label        *)
-(* merging.                                                                   *)
+(* Open follow-up (S3.5 / S4): under the merged labelling, Intersection /   *)
+(* Difference / SymDiff are PROVABLE analogously to Union once the backward *)
+(* direction of `merge_in_left_iff` / `_right_iff` lands (deferred from     *)
+(* S3 -- see theories/OverlayGraph.v §11 for the tactic-obstacle             *)
+(* explanation).                                                              *)
+(*                                                                            *)
+(* OPEN ARCHITECTURAL FINDING (Copilot PR #32 review): the merge matches    *)
+(* on EXACT (p, q) pairs and does NOT canonicalize edge orientation.        *)
+(* `ring_edges` produces oriented edges per ring traversal; A's ring may    *)
+(* traverse `(p, q)` while B's ring traverses the same geometric segment    *)
+(* as `(q, p)`.  These will NOT be merged.  Fix options: edge               *)
+(* canonicalization (sort endpoints) inside `merge_labeled_edges`, or an    *)
+(* unordered-pair-match version of `pair_eq_dec`.  Either is a focused      *)
+(* refactor for S3.5 or S4.  Recorded here for downstream attention.        *)
+(* -------------------------------------------------------------------------- *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
@@ -216,4 +244,4 @@ Qed.
 
 Print Assumptions snap_noding_bridge.
 Print Assumptions valid_topology_graph_noded_labeled_graph.
-Print Assumptions correct_labels_union.
+Print Assumptions correct_labels_union_forward.

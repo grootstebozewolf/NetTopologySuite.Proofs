@@ -568,63 +568,97 @@ discharging the conditions becomes future Phase 3.X work.
 
 ---
 
-## 7. 10-session plan
+## 7. 16-session plan (replanned May 2026)
 
-Two variants depending on the §5.3 decision.
+**Replan context.**  The original 10-session plan was an
+under-estimate.  The M5-S2 session (May 2026) discovered the
+label-merging gap (`theories-flocq/OverlayBridge.v` §6 — Intersection
+/ Difference / SymDiff cases of `correct_labels` are FALSE for the
+un-merged M4 labelling).  The session-2.5 / "M4 refactor" landed
+the label-merging machinery itself but invalidated M5-S2's
+`correct_labels_union` proof in the process; the backward direction
+of the Union iff now requires a non-trivial "merge dominates input
+bits" lemma that was previously assumed-trivial.
 
-### Variant A: DCEL adopted in Session 1.5 (recommended)
+Combined with the audit doc's existing observations that JCT-for-polygons
+and DCEL face-traversal are both individually thesis-shaped, the
+honest re-plan adds six sessions of headroom for:
 
-```
-S1   (this):  audit doc.
-S1.5:         M4 revision -- extend build_labeled_graph output to
-              DCEL-shaped record.  Re-prove the M4 structural lemmas.
-S2:           Define `extract : BooleanOp -> TopologyGraph -> Geometry`
-              via filter + DCEL face traversal.
-S3:           Search JCT.  If found: import and use.
-              If not: state `point_in_ring_correct` as Admitted with
-              registry entry.  State
-              `overlay_ng_correct_conditional`.
-S4:           `extract_rings_valid` -- show the assembled rings
-              satisfy `valid_polygon`.  Conditional on `point_in_ring_correct`
-              if §4.3 needs it for ring simplicity.
-S5:           `correct_labels` for Union.
-S6:           `correct_labels` for Intersection.
-S7:           `correct_labels` for Difference + SymDiff.
-S8:           `valid_geometry (extract op g)`.
-S9:           `point_set ∘ extract → boolean_op` (forward).
-S10:          `boolean_op → point_set ∘ extract` (backward) +
-              `overlay_ng_correct_bounded` corollary.
-```
+  - The merge-dominates-input structural lemma (S3 new).
+  - Reproving `correct_labels_union` against the merged labelling (S4 new).
+  - Discovery / mitigation budget across the harder sub-problems.
 
-### Variant B: keep flat edge list, weaken the headline
+### The revised plan (16 sessions)
 
 ```
-S1   (this):  audit doc.
-S2:           Define `extract` returning `list (Point * Point)`
-              instead of `Geometry`.  Headline weakens to:
-                extract_correct: edge is in extract iff its label
-                  matches edge_in_result op.
-S3:           `point_in_ring_correct` (same options as Variant A).
-S4-S10:       Weaker correctness theorems chained on top.
-              Final theorem is point-set equivalence at the edge
-              level, not at the assembled-Geometry level.
+S1   (done):  audit doc.
+S2   (done):  extract op g + correct_labels (definition) +
+              correct_labels_union (now invalid -- needs S4 redo).
+S2.5 (done):  M4 refactor -- label merging.  build_labeled_graph
+              rewritten to use merge_labeled_edges.  Forward
+              direction of correct_labels_union proved as
+              correct_labels_union_forward.  Backward direction
+              of the iff is deferred to S4.
+S3   (next):  Structural lemmas for merge_labeled_edges:
+                merge_label_iff_source -- the iff connecting
+                  output label bits to input source membership.
+                merge_unique -- the merge output has unique
+                  (p, q) per edge.
+              Loadbearing for S4-S7 correctness proofs.
+S4:           correct_labels Union (full iff, against merged
+              version).  Combines S3's structural lemmas with
+              S2's correct_labels_union_forward.
+S5:           correct_labels Intersection.  The previously
+              "impossible" case now becomes provable post-merge.
+S6:           correct_labels Difference.
+S7:           correct_labels SymDiff.
+S8:           Search JCT.  If found: import and use for
+              point_in_ring_correct.  If not: state Admitted with
+              registry entry and proceed with the conditional
+              strategy from §6.
+S9:           extract_rings_valid -- structural correctness of
+              extract op g's output Geometry.  Requires DCEL adoption
+              OR a weaker statement that defers ring validity.
+              Decision point: full DCEL revision (~2 sessions
+              swallowed) or weaker statement that punts on ring
+              assembly.
+S10:          valid_geometry (extract op g).  Conditional on
+              extract_rings_valid (S9).
+S11:          DCEL adoption (if S9 chose the heavier path):
+              extend tg_edges to half-edge structure + twin/next
+              pointers.  Re-prove the M2-M4 + S2.5 structural
+              lemmas.
+S12:          DCEL ring assembly correctness (continued from S11).
+S13:          point_set ∘ extract → boolean_op (forward direction
+              of the headline equivalence).  Conditional on
+              correct_labels (S4-S7) and point_in_ring_correct (S8).
+S14:          boolean_op → point_set ∘ extract (backward direction).
+              The harder direction -- requires that the extracted
+              geometry's interior captures every point of the
+              boolean-op result.
+S15:          overlay_ng_correct headline theorem (Qed-closed,
+              conditional in form).  Composes S13 + S14.
+S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
+              from Option A).  Final cleanup + documentation
+              update.
 ```
-
-Variant B is honest about the assembly problem but loses the
-"full overlay correctness" goal.  Variant A is what `overlay_ng_correct`
-*should* mean — DCEL is the cost of getting there.
-
-**Strong recommendation: Variant A.**  Take the Session 1.5 hit;
-the 10-session plan then closes the conditional theorem honestly.
 
 ### Likely landing point
 
-  - Unconditional `overlay_ng_correct` is out of reach in 10 sessions.
-  - `overlay_ng_correct_conditional` (conditional on JCT + DCEL ring
-    validity, both deferred-proof) is the realistic closure.  Like
-    `hobby_theorem_4_1_conditional`, it makes the corpus's
-    correctness story complete in conditional form, with the
-    remaining gaps named and registered.
+  - **Unconditional** `overlay_ng_correct` is still out of reach
+    even in 16 sessions.  JCT for polygons + DCEL ring assembly
+    are individually multi-month works; neither is realistically
+    closed Qed inside the 16-session budget.
+  - **Conditional** `overlay_ng_correct_conditional` (conditional
+    on `point_in_ring_correct` + `extract_rings_valid`) is the
+    realistic Qed-closing target by S15.  Same shape as
+    `hobby_theorem_4_1_conditional`: the corpus's correctness
+    story complete in conditional form, with both gaps named and
+    registered in `docs/admitted-deferred-proofs.txt`.
+  - **Variant B (flat edges, weaker headline)** -- this is the
+    fallback if DCEL adoption (S11-S12) hits an unanticipated wall.
+    Headline weakens to edge-level equivalence rather than
+    point-set-level.  Documented but not preferred.
 
 ---
 
@@ -645,42 +679,68 @@ the 10-session plan then closes the conditional theorem honestly.
         "Computational Geometry: Algorithms and Applications" §2.2)
         before Session 1.5 / S2.
   - [ ] **Decide conditional vs unconditional headline** before
-        Session 9.  If DCEL ring validity (§4.3) didn't close in
-        Session 4, the headline must be conditional.
-  - [ ] Confirm `build_labeled_graph`'s output type (decision from
-        §5.3) is locked-in before Session 2's `extract` definition.
-  - [ ] Option B corollary: 2-line derivation after S10 closes
+        Session 15.  If DCEL ring validity (S9 / S11-S12) didn't
+        close in budget, the headline must be conditional.
+  - [ ] Two related-but-distinct decisions, both locked-in:
+        - §5.3 CARRIER decision (`extract`'s output type): Option (i)
+          `Geometry` (locked in S2).  `build_labeled_graph` itself
+          always returns `TopologyGraph`; only `extract`'s carrier
+          was up for negotiation.
+        - Edge-list construction (`build_labeled_graph`'s internals):
+          label-merging via `merge_labeled_edges` (locked in S2.5
+          refactor).  Independent of the carrier decision.
+  - [ ] Option B corollary: 2-line derivation after S15 closes
         Option A (or its conditional form).
   - [ ] Update `docs/audit-phase3-overlay.md`'s §3.6 and §4 as
         Sessions land — keep the milestone-tracking doc in sync.
+  - [ ] **M4 refactor decision (resolved S2.5)**: label-merging
+        machinery has landed.  Full DCEL adoption is now budgeted
+        to S11-S12 as an optional escalation if S9 finds the weaker
+        statement insufficient.
 
 ---
 
-## 9. Audit summary
+## 9. Audit summary (replanned for 16 sessions)
 
-| Concept                              | Status                       | Estimate     |
-| ------------------------------------ | ---------------------------- | ------------ |
-| `overlay_ng_correct` (Option A)      | targeted                     | S9-S10       |
-| `overlay_ng_correct_bounded`         | corollary                    | S10 tail     |
-| `extract : BooleanOp → G → Geometry` | new, S2 def                  | 1 session    |
-| Edge → ring assembly correctness     | new, S4 — thesis-shaped      | 3-8 sessions |
-| `point_in_ring_correct`              | new, JCT-dep                 | conditional  |
-| `correct_labels` × 4 ops             | new, S5-S7                   | 3 sessions   |
-| `valid_geometry (extract op g)`      | new, S8                      | 1-2 sessions |
-| `point_set = boolean_op` (forward)   | new, S9                      | 1 session    |
-| `point_set = boolean_op` (backward)  | new, S10                     | 1 session    |
-| DCEL data structure (S1.5)           | M4 revision                  | 1-2 sessions |
+| Concept                                 | Status                       | Session(s)    |
+| --------------------------------------- | ---------------------------- | ------------- |
+| Audit doc                               | done                         | S1            |
+| `extract : BooleanOp → G → Geometry`    | done (naive)                 | S2            |
+| `correct_labels` definition             | done                         | S2            |
+| `correct_labels_union_forward`          | done                         | S2.5          |
+| Label merging (M4 refactor)             | done                         | S2.5          |
+| `merge_in_implies_in_input`             | done                         | S2.5          |
+| `merge_label_iff_source`                | pending                      | S3            |
+| `merge_unique`                          | pending                      | S3            |
+| `correct_labels_union` (full iff)       | pending                      | S4            |
+| `correct_labels_intersection`           | pending                      | S5            |
+| `correct_labels_difference`             | pending                      | S6            |
+| `correct_labels_symdiff`                | pending                      | S7            |
+| `point_in_ring_correct` (or conditional)| pending (JCT-dep)            | S8            |
+| `extract_rings_valid`                   | pending                      | S9            |
+| `valid_geometry (extract op g)`         | pending                      | S10           |
+| DCEL adoption (optional)                | pending                      | S11-S12       |
+| `point_set → boolean_op` (forward)      | pending                      | S13           |
+| `boolean_op → point_set` (backward)     | pending                      | S14           |
+| `overlay_ng_correct_conditional`        | pending (Qed-target)         | S15           |
+| `overlay_ng_correct_bounded`            | pending (corollary)          | S16           |
 
-  - **Reuse from M1-M4:** all geometry types, the topology graph,
-    M4's labelling rules, the noding-to-graph bridge.
-  - **Build in M5:** `extract`, `correct_labels`,
-    `overlay_ng_correct` (likely conditional).
+  - **Reuse from M1-M4 (post-S2.5 refactor):** all geometry types,
+    the topology graph, M4's labelling rules (now merged), the
+    noding-to-graph bridge.
+  - **Build in M5:** `extract`, `correct_labels` (4 cases),
+    `overlay_ng_correct_conditional`.
   - **Thesis-shaped sub-problems:** JCT for polygons (§5.1), DCEL
     formalisation (§5.2).  Both candidates for deferral with
     conditional headline.
-  - **Critical decisions:** §5.3 (output type) before S2; conditional
-    vs unconditional before S9.
-  - **Realistic landing:** `overlay_ng_correct_conditional` —
-    Qed-closed with two named hypotheses, both registered as
-    deferred-proof entries, mirroring
-    `hobby_theorem_4_1_conditional`'s Phase 2 pattern.
+  - **Realistic landing (S15):** `overlay_ng_correct_conditional` —
+    Qed-closed with two named hypotheses (`point_in_ring_correct`,
+    `extract_rings_valid`), both registered as deferred-proof
+    entries, mirroring `hobby_theorem_4_1_conditional`'s Phase 2
+    pattern.
+  - **Buffer relative to original 10-session plan:** +6 sessions
+    spread across the merge-aware structural lemmas (S3), the
+    correct_labels redo (S4 + Intersection through SymDiff), and
+    the DCEL adoption (S11-S12).  Buffer absorbs discovery cost
+    surfaced in S2 and S2.5 and gives realistic budget for the
+    JCT search + DCEL ring assembly.
