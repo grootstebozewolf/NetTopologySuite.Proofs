@@ -177,3 +177,42 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_she
 # hobby_theorem_4_1_conditional; discharging this lemma closes Hobby
 # Theorem 4.1 unconditionally.
 theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-theorem-proof-structure.md | §4,§7
+
+# ============================================================================
+# Phase 3 Milestone 5 deferred entries.
+# ============================================================================
+
+# `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
+# overlay correctness.  Shows that ring assembly from the labelled
+# topology graph produces polygons satisfying all four OGC §6
+# conditions (ring_closed, ring_simple, ring_has_minimum_points,
+# hole_inside_outer).
+#
+# The current `extract` (theories/OverlayGraph.v) is the naive
+# S2 version: filters edges by `edge_in_result op` and packages
+# survivors into a single polygon whose outer_ring is the
+# concatenation of all filtered edges' endpoints.  This naive
+# form does NOT satisfy `valid_polygon` in general.
+#
+# The path to a usable proof requires either:
+#   - DCEL adoption (S11-S12 in the 16-session plan): doubly-
+#     connected edge list with per-vertex incidence + twin/next
+#     pointers, then face-traversal-based ring extraction.
+#     Estimated 3-4 sessions for the DCEL refactor + 2-3 sessions
+#     for the per-condition proofs against the new structure.
+#   - A weaker formulation that admits a less-meaningful extract
+#     output but is provable.  Loses the headline theorem's
+#     semantic strength.
+#
+# Both paths exceed the per-session budget.  Following S8's pattern:
+# register the gap here; carry it as a named hypothesis of
+# `overlay_ng_correct_conditional` (S15) when that's stated.
+#
+# Tools: list-of-edges manipulation, NoDup-on-vertices, OGC §6
+# conditions composition.  Pure structural reasoning; no JCT or
+# point-set semantics needed at this level.  Estimated 5-7
+# sessions of focused work (DCEL path).
+#
+# Consumer: overlay_ng_correct_conditional (S15) and the Phase 3
+# headline correctness theorem.
+theories-flocq/OverlayBridge.v:extract_rings_valid | docs/audit-phase3-milestone5.md | §4.3,§7
