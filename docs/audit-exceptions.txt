@@ -161,3 +161,15 @@ theories-flocq/Orient_b64_stage_d.v
 # transitively from HobbyTheorem_b64's snap_round_segments (Flocq binary
 # arithmetic closure).  No Admitteds added by this file.
 theories-flocq/OverlayBridge.v
+
+# Category C: Phase 3 Milestone 5 Session 15 -- the conditional headline.
+# Defines and proves overlay_ng_correct_conditional (Qed-closed) plus
+# its forward/backward corollaries.  Imports OverlayBridge for
+# correct_labels_all_ops + valid_topology_graph_noded_labeled_graph,
+# which transitively pull Classical_Prop.classic via snap_round_segments
+# (same lineage as OverlayBridge above).  Three named hypotheses
+# (JCT, DCEL valid polygons, semantic bridge) carried in the theorem's
+# signature -- the corpus's epistemic invariant is preserved by
+# Section-scoping the geometric_interior Variable.  No Admitteds added
+# by this file.
+theories-flocq/OverlayCorrectness.v

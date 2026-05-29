@@ -690,8 +690,26 @@ S14:          boolean_op → point_set ∘ extract (backward direction).
               The harder direction -- requires that the extracted
               geometry's interior captures every point of the
               boolean-op result.
-S15:          overlay_ng_correct headline theorem (Qed-closed,
-              conditional in form).  Composes S13 + S14.
+S13-S14 (consolidated into S15 via top-down framing):
+              direct conditional headline with three named hypotheses
+              (JCT + DCEL valid polygons + semantic bridge) carried
+              in the theorem's signature.  Original S13/S14 (per-
+              direction proofs from edge-level correct_labels to
+              point-set semantics) would require defining
+              geometric_interior or equivalent topology toolkit -- not
+              available in the corpus.  The consolidated form keeps
+              the load-bearing gap explicit and Coq-statable.
+S15 (done):   overlay_ng_correct_conditional (Qed-closed).
+              theories-flocq/OverlayCorrectness.v.  Three named gaps:
+                H1 (JCT): point_in_ring iff geometric_interior on
+                          valid rings.  Section-scoped Variable.
+                H2 (DCEL): extract assembles valid_geometry from any
+                          valid topology graph.
+                H_bridge: combined semantic bridge.
+              Plus _forward and _backward corollaries (Qed-closed).
+              No Admitteds added; audit-exceptions entry added for
+              the Classical_Prop.classic lineage shared with
+              OverlayBridge.
 S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
               from Option A).  Final cleanup + documentation
               update.
@@ -777,8 +795,9 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
 | DCEL adoption (optional)                | pending                      | S11-S12       |
 | `point_set → boolean_op` (forward)      | pending                      | S13           |
 | `boolean_op → point_set` (backward)     | pending                      | S14           |
-| `overlay_ng_correct_conditional`        | pending (Qed-target)         | S15           |
-| `overlay_ng_correct_bounded`            | pending (corollary)          | S16           |
+| `overlay_ng_correct_conditional`        | **done** (Qed-closed, 3 named gaps) | S15  |
+| `overlay_ng_correct_forward`/`_backward` | **done** (corollaries)      | S15           |
+| `overlay_ng_correct_bounded`            | pending (Option B corollary) | S16           |
 
   - **Reuse from M1-M4 (post-S2.5 refactor):** all geometry types,
     the topology graph, M4's labelling rules (now merged), the
