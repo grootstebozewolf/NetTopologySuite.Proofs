@@ -59,6 +59,19 @@ theories/CurveGeometry.v
 # pulls.
 theories/ArcOrient.v
 
+# Phase 4 Session 4: arc-chord and arc-arc intersection predicates
+# (R-side, Prop-valued).  Defines arc_span_contains (Option S: chord
+# cross-product sign for arcs < pi), arc_chord_intersects (existence
+# of a point on chord segment that is also on the arc),
+# arc_arc_intersects (existence of a point on both arcs), and
+# chord_crosses_arc_circle (necessary-condition filter).  Six Qed-closed
+# structural lemmas (boundary span membership + symmetry).  No new
+# typeclass (HasArcIntersect parallel deferred per
+# Intersect_b64_exact.v §6 dovetail).  Soundness theorem (IVT-based
+# existence from sign-change) deferred to follow-up.  No Admitteds; no
+# classical-prop pulls.
+theories/ArcIntersect.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
