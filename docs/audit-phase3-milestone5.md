@@ -678,8 +678,13 @@ S9   (done):  extract_rings_valid -- registered as deferred-proof.
               named hypothesis to be carried by
               `overlay_ng_correct_conditional` in S15.
               Registry: 2 -> 3 deferred-proof entries.
-S10:          valid_geometry (extract op g).  Conditional on
-              extract_rings_valid (S9).
+S10  (done):  valid_geometry_extract (Qed-closed).  Mechanical
+              one-line corollary of `extract_rings_valid` (S9): unfold
+              `valid_geometry` to `forall poly, In poly g -> valid_polygon
+              poly`, then apply `extract_rings_valid` to each polygon.
+              Inherits the deferred-proof status of `extract_rings_valid`
+              transitively -- Qed itself doesn't add an Admitted but its
+              correctness depends on the S9 gap being eventually closed.
 S11:          DCEL adoption (if S9 chose the heavier path):
               extend tg_edges to half-edge structure + twin/next
               pointers.  Re-prove the M2-M4 + S2.5 structural
@@ -775,7 +780,7 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
 | `correct_labels_symdiff`                | pending                      | S7            |
 | `point_in_ring_correct` (or conditional)| pending (JCT-dep)            | S8            |
 | `extract_rings_valid`                   | **deferred (registered)**    | S9            |
-| `valid_geometry (extract op g)`         | pending                      | S10           |
+| `valid_geometry (extract op g)`         | **done** (cond. on S9)       | S10           |
 | DCEL adoption (optional)                | pending                      | S11-S12       |
 | `point_set → boolean_op` (forward)      | pending                      | S13           |
 | `boolean_op → point_set` (backward)     | pending                      | S14           |
