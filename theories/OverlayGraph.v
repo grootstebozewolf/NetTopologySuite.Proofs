@@ -963,3 +963,207 @@ Qed.
 (*   - `merge_in_left_backward`, `merge_in_right_backward`.                  *)
 (*   - Full bidirectional `merge_label_iff_source` then composes.            *)
 (* -------------------------------------------------------------------------- *)
+
+(* -------------------------------------------------------------------------- *)
+(* §12  Phase 3 Milestone 5 Session 3.5: backward direction lemmas.            *)
+(*                                                                            *)
+(* S3 hit a tactic obstacle attempting backward direction proofs: `destruct   *)
+(* (pair_eq_dec X Y) as [Hpeq | Hpneq]` did not propagate the substitution    *)
+(* into the if-then-else inside `insert_or_merge_edge`, leaving the goal      *)
+(* with an unreduced conditional.                                             *)
+(*                                                                            *)
+(* RESOLUTION (this session): the issue was that `simpl` left the goal with  *)
+(* `pair_eq_dec (fst (pq, l)) (fst e')` while the destruct argument was      *)
+(* `pair_eq_dec pq (fst e')` (with the `fst (pq, l)` reduced).  These ARE     *)
+(* definitionally equal but not syntactically equal -- Coq's `destruct` does  *)
+(* propagate substitution when the destructed term is syntactically present  *)
+(* in the goal.  The fix: use `cbn` before `destruct`, which reduces both    *)
+(* uses to the same `pair_eq_dec pq (fst e')` form.  Then the destruct       *)
+(* substitutes the conditional, and each branch reduces cleanly.             *)
+(*                                                                            *)
+(* No refactor of `insert_or_merge_edge` was needed; the obstacle was         *)
+(* purely tactical.                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+(* Insertion of an edge with in_left=true produces an output entry at the
+   same key with in_left=true. *)
+Lemma insert_or_merge_inserts_left_bit :
+  forall pq l acc,
+    in_left l = true ->
+    exists l_out,
+      In (pq, l_out) (insert_or_merge_edge (pq, l) acc) /\
+      in_left l_out = true.
+Proof.
+  intros pq l acc. induction acc as [|e' rest IH]; intros Hbit.
+  - simpl. exists l. split; [left; reflexivity | exact Hbit].
+  - cbn.
+    destruct (pair_eq_dec pq (fst e')) as [Hpeq | Hpneq].
+    + (* head merges *)
+      exists (merge_labels l (snd e')). split.
+      * left. f_equal. symmetry. exact Hpeq.
+      * unfold merge_labels. cbn. rewrite Hbit. reflexivity.
+    + specialize (IH Hbit). destruct IH as [l_out [Hin Hbit_out]].
+      exists l_out. split.
+      * right. exact Hin.
+      * exact Hbit_out.
+Qed.
+
+(* Symmetric for in_right. *)
+Lemma insert_or_merge_inserts_right_bit :
+  forall pq l acc,
+    in_right l = true ->
+    exists l_out,
+      In (pq, l_out) (insert_or_merge_edge (pq, l) acc) /\
+      in_right l_out = true.
+Proof.
+  intros pq l acc. induction acc as [|e' rest IH]; intros Hbit.
+  - simpl. exists l. split; [left; reflexivity | exact Hbit].
+  - cbn.
+    destruct (pair_eq_dec pq (fst e')) as [Hpeq | Hpneq].
+    + exists (merge_labels l (snd e')). split.
+      * left. f_equal. symmetry. exact Hpeq.
+      * unfold merge_labels. cbn. rewrite Hbit. reflexivity.
+    + specialize (IH Hbit). destruct IH as [l_out [Hin Hbit_out]].
+      exists l_out. split.
+      * right. exact Hin.
+      * exact Hbit_out.
+Qed.
+
+(* Insertion preserves existing left-bit entries in the accumulator. *)
+Lemma insert_or_merge_preserves_left_bit :
+  forall e pq l_acc acc,
+    In (pq, l_acc) acc ->
+    in_left l_acc = true ->
+    exists l_out,
+      In (pq, l_out) (insert_or_merge_edge e acc) /\
+      in_left l_out = true.
+Proof.
+  intros e pq l_acc acc. induction acc as [|e' rest IH]; intros Hin Hbit.
+  - inversion Hin.
+  - cbn in Hin.
+    destruct Hin as [Heq | Hin_rest].
+    + (* (pq, l_acc) is at head of acc *)
+      cbn.
+      destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+      * (* head merged *)
+        exists (merge_labels (snd e) (snd e')). split.
+        -- left. assert (Hpqeq : pq = fst e').
+           { destruct e' as [pq' l']. simpl in Heq. inversion Heq.
+             reflexivity. }
+           rewrite Hpqeq. reflexivity.
+        -- assert (Hbit' : in_left (snd e') = true).
+           { destruct e' as [pq' l']. simpl in Heq. inversion Heq.
+             subst. exact Hbit. }
+           unfold merge_labels. cbn. rewrite Hbit'. apply orb_true_r.
+      * exists l_acc. split; [left; exact Heq | exact Hbit].
+    + cbn.
+      destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+      * (* merged at head: rest unchanged *)
+        exists l_acc. split; [right; exact Hin_rest | exact Hbit].
+      * specialize (IH Hin_rest Hbit).
+        destruct IH as [l_out [Hin Hbit_out]].
+        exists l_out. split; [right; exact Hin | exact Hbit_out].
+Qed.
+
+Lemma insert_or_merge_preserves_right_bit :
+  forall e pq l_acc acc,
+    In (pq, l_acc) acc ->
+    in_right l_acc = true ->
+    exists l_out,
+      In (pq, l_out) (insert_or_merge_edge e acc) /\
+      in_right l_out = true.
+Proof.
+  intros e pq l_acc acc. induction acc as [|e' rest IH]; intros Hin Hbit.
+  - inversion Hin.
+  - cbn in Hin.
+    destruct Hin as [Heq | Hin_rest].
+    + cbn.
+      destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+      * exists (merge_labels (snd e) (snd e')). split.
+        -- left. assert (Hpqeq : pq = fst e').
+           { destruct e' as [pq' l']. simpl in Heq. inversion Heq.
+             reflexivity. }
+           rewrite Hpqeq. reflexivity.
+        -- assert (Hbit' : in_right (snd e') = true).
+           { destruct e' as [pq' l']. simpl in Heq. inversion Heq.
+             subst. exact Hbit. }
+           unfold merge_labels. cbn. rewrite Hbit'. apply orb_true_r.
+      * exists l_acc. split; [left; exact Heq | exact Hbit].
+    + cbn.
+      destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+      * exists l_acc. split; [right; exact Hin_rest | exact Hbit].
+      * specialize (IH Hin_rest Hbit).
+        destruct IH as [l_out [Hin Hbit_out]].
+        exists l_out. split; [right; exact Hin | exact Hbit_out].
+Qed.
+
+(* The S3.5 headline: backward direction of merge_in_left_iff. *)
+Theorem merge_in_left_backward :
+  forall edges pq l_in,
+    In (pq, l_in) edges ->
+    in_left l_in = true ->
+    exists l_out,
+      In (pq, l_out) (merge_labeled_edges edges) /\
+      in_left l_out = true.
+Proof.
+  intros edges. unfold merge_labeled_edges.
+  induction edges as [|e rest IH]; intros pq l_in Hin Hbit; simpl in Hin.
+  - inversion Hin.
+  - destruct Hin as [Heq | Hin_rest].
+    + (* head match: e = (pq, l_in) *)
+      destruct e as [pq_e l_e]. simpl in Heq. inversion Heq. subst.
+      apply insert_or_merge_inserts_left_bit. exact Hbit.
+    + (* tail: propagate IH through the insert *)
+      specialize (IH _ _ Hin_rest Hbit).
+      destruct IH as [l_acc [Hin_acc Hbit_acc]].
+      apply (insert_or_merge_preserves_left_bit e pq l_acc _ Hin_acc Hbit_acc).
+Qed.
+
+Theorem merge_in_right_backward :
+  forall edges pq l_in,
+    In (pq, l_in) edges ->
+    in_right l_in = true ->
+    exists l_out,
+      In (pq, l_out) (merge_labeled_edges edges) /\
+      in_right l_out = true.
+Proof.
+  intros edges. unfold merge_labeled_edges.
+  induction edges as [|e rest IH]; intros pq l_in Hin Hbit; simpl in Hin.
+  - inversion Hin.
+  - destruct Hin as [Heq | Hin_rest].
+    + destruct e as [pq_e l_e]. simpl in Heq. inversion Heq. subst.
+      apply insert_or_merge_inserts_right_bit. exact Hbit.
+    + specialize (IH _ _ Hin_rest Hbit).
+      destruct IH as [l_acc [Hin_acc Hbit_acc]].
+      apply (insert_or_merge_preserves_right_bit e pq l_acc _ Hin_acc Hbit_acc).
+Qed.
+
+(* Bidirectional iff connecting the merged output's label bits to input
+   source-label bits. *)
+Theorem merge_in_left_iff :
+  forall edges p q,
+    (exists l_out, In (p, q, l_out) (merge_labeled_edges edges) /\
+                   in_left l_out = true)
+    <-> (exists l_in, In (p, q, l_in) edges /\ in_left l_in = true).
+Proof.
+  intros edges p q. split.
+  - intros [l_out [Hin Hbit]].
+    destruct (merge_in_left_forward edges p q l_out Hin Hbit) as [l' [Hin' Hbit']].
+    exists l'. split; assumption.
+  - intros [l_in [Hin Hbit]].
+    apply (merge_in_left_backward edges (p, q) l_in Hin Hbit).
+Qed.
+
+Theorem merge_in_right_iff :
+  forall edges p q,
+    (exists l_out, In (p, q, l_out) (merge_labeled_edges edges) /\
+                   in_right l_out = true)
+    <-> (exists l_in, In (p, q, l_in) edges /\ in_right l_in = true).
+Proof.
+  intros edges p q. split.
+  - intros [l_out [Hin Hbit]].
+    destruct (merge_in_right_forward edges p q l_out Hin Hbit) as [l' [Hin' Hbit']].
+    exists l'. split; assumption.
+  - intros [l_in [Hin Hbit]].
+    apply (merge_in_right_backward edges (p, q) l_in Hin Hbit).
+Qed.
