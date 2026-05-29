@@ -316,7 +316,7 @@ function becomes large).
 is one session (Session 2).  Proving its correctness — that the
 output rings are well-formed — is **Session 4** (separate, harder).
 
-### 4.2 `point_in_ring_correct` — Session 3 (JCT-dep)
+### 4.2 `point_in_ring_correct` — JCT search outcome (S8)
 
 The statement:
 
@@ -333,20 +333,59 @@ bounded region enclosed by `r` — the standard Jordan-curve-theorem
 notion.
 
 **This requires the Jordan Curve Theorem for simple polygons.**
-Pre-existing Coq formalizations of JCT:
-  - **mathcomp-analysis** has continuous-curve JCT but not in a form
-    that directly applies to polygonal rings without translation.
-  - **coq-community/jordan-curve-theorem** (search needed) — if it
-    exists, it's the right import.
-  - **Bauer & Stone (2007)** — formalized JCT in Mizar/Isabelle; no
-    Coq port known.
 
-**If no usable JCT formalization exists**, this becomes a
-multi-month thesis-shaped piece on its own.  The realistic plan is:
-state `point_in_ring_correct` as a Lemma with `Admitted`, register it
-in the deferred-proof registry, and proceed with overlay_ng_correct
-**conditional** on it.  This matches the pattern of
-`hobby_lemma_4_3_no_proper`.
+#### S8 JCT ecosystem search outcome (May 2026)
+
+Searched the available opam ecosystem for a usable JCT formalization:
+
+| Search target | Result |
+| --- | --- |
+| `opam search jordan` | No matches |
+| `opam search topology` (Coq packages) | No matches |
+| `opam search fourcolor` | No matches |
+| `opam search planar` / graph-theory | No matches |
+| `opam search analysis` (Coq math libs) | No matches |
+| `opam list` installed packages | Only `rocq-core`, `rocq-stdlib`, dune, ocaml |
+| `find /root/.opam -name "*.v" | xargs grep -l Jordan...` | No hits |
+
+The default opam repository (`opam.ocaml.org`) is the only repository
+configured for the corpus's switch.  Community Coq packages (Coq
+mathcomp-analysis, coq-community, Coquelicot, fourcolor) are
+typically distributed via `coq.inria.fr/opam/released`, which the
+corpus's network policy does not permit (per
+`docs/development-environment.md` §2).  No suitable JCT formalization
+is available.
+
+#### Decision: Path B — register deferred + conditional headline
+
+Per the prompt's expected outcome:
+  - **No new `point_in_ring_correct` Admitted lemma added to Overlay.v** —
+    a faithful statement requires an externally-defined
+    `geometric_interior` Prop (topological interior), and the corpus
+    has no toolkit for stating that abstractly without either an
+    Axiom (forbidden) or a Parameter (forbidden) or a trivial
+    placeholder that hides the gap.
+  - **The JCT gap is recorded HERE in the audit doc**, not in the
+    deferred-proof registry, because there is no Coq statement to
+    track yet.  When a JCT formalization lands in the ecosystem, S8
+    will be re-opened to import it and prove the theorem.
+  - The Phase 3 correctness headline (`overlay_ng_correct_conditional`,
+    S15) will explicitly carry the JCT gap as a hypothesis,
+    mirroring `hobby_theorem_4_1_conditional`'s pattern.
+
+This S8 closure is documentation-only on the Coq side; no Admitted
+addition, no registry change.  The session's Coq deliverable is the
+small `correct_labels_all_ops` composition lemma in OverlayBridge.v
+which collapses S4-S7's per-op theorems into a uniform statement —
+useful for S15's structural proof.
+
+**Estimate if proved from scratch (no JCT library):**  3-5 months.
+Out of the 16-session budget.
+
+**Estimate if JCT library lands later:**  ~1 week to import + prove.
+
+The conditional strategy in §6 is the working assumption for the
+rest of M5.
 
 **Scope estimate (conditional path).**  Session 3 ~= 1 day:
   - 2 hours: search for usable JCT formalization.
@@ -614,17 +653,23 @@ S3.5:         Backward direction lemmas.  Stalled in S3 on a
               `pair_eq_dec` sumbool inside `insert_or_merge_edge`.
               Once that closes, the full bidirectional iff form is
               available for S4-S7.
-S4:           correct_labels Union (full iff, against merged
-              version).  Combines S3's structural lemmas with
-              S2's correct_labels_union_forward.
-S5:           correct_labels Intersection.  The previously
-              "impossible" case now becomes provable post-merge.
-S6:           correct_labels Difference.
-S7:           correct_labels SymDiff.
-S8:           Search JCT.  If found: import and use for
-              point_in_ring_correct.  If not: state Admitted with
-              registry entry and proceed with the conditional
-              strategy from §6.
+S4-S7 (CONSOLIDATED, done): correct_labels for all four BooleanOps.
+              Union, Intersection, Difference, SymDiff all close via
+              the same proof pattern (helper iff lemmas
+              `in_left_iff_in_A` / `in_right_iff_in_B` composed with
+              Boolean algebra) once S3 + S3.5 closed.  Total: ~180
+              lines, 6 Qed-closed theorems (4 headline + 2 helpers).
+              Sessions saved: 3.
+S8   (done):  JCT search.  No JCT formalization found in the available
+              opam ecosystem (default `opam.ocaml.org` repo only;
+              `coq.inria.fr/opam/released` not reachable).  Path B
+              taken: gap recorded in audit doc §4.2; no Admitted
+              added to Coq corpus (a faithful statement requires an
+              externally-defined topological interior Prop which the
+              corpus has no toolkit for).  When a JCT formalization
+              becomes available, S8 will be re-opened to import + prove.
+              Coq deliverable: `correct_labels_all_ops` -- case-on-op
+              uniform composition of S4-S7's per-op theorems.
 S9:           extract_rings_valid -- structural correctness of
               extract op g's output Geometry.  Requires DCEL adoption
               OR a weaker statement that defers ring validity.

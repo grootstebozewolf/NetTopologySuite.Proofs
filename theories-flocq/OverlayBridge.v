@@ -421,7 +421,30 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
-(* §7  Audit footprint.                                                        *)
+(* §7  Phase 3 Milestone 5 Session 8: correct_labels uniform composition.     *)
+(*                                                                            *)
+(* Case-on-op composition of the four operation-specific correct_labels      *)
+(* theorems.  Useful in S15 for the headline theorem's structural proof:     *)
+(* given any op, the labels are correct on `noded_labeled_graph A B`.        *)
+(*                                                                            *)
+(* This is the only Coq deliverable of S8.  The session's primary content    *)
+(* is documentation (audit-phase3-milestone5.md updated with JCT-search      *)
+(* outcome and S8 closure note).                                              *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem correct_labels_all_ops :
+  forall (op : BooleanOp) (A B : Geometry),
+    correct_labels op (noded_labeled_graph A B) A B.
+Proof.
+  intros op A B. destruct op.
+  - apply correct_labels_union.
+  - apply correct_labels_intersection.
+  - apply correct_labels_difference.
+  - apply correct_labels_symdiff.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §8  Audit footprint.                                                        *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions snap_noding_bridge.
@@ -431,3 +454,4 @@ Print Assumptions correct_labels_union.
 Print Assumptions correct_labels_intersection.
 Print Assumptions correct_labels_difference.
 Print Assumptions correct_labels_symdiff.
+Print Assumptions correct_labels_all_ops.
