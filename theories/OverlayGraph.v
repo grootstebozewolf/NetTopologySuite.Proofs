@@ -514,3 +514,61 @@ Proof.
     try discriminate; try congruence; try reflexivity;
     intros _; reflexivity.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §10  Phase 3 Milestone 5 Session 2: `extract op g`.                        *)
+(*                                                                            *)
+(* Filter the labelled edges of `g` by `edge_in_result op` and package the    *)
+(* survivors into a `Geometry`-typed value.  This is the FORWARD direction    *)
+(* of the extract_segments/extract pair: extract_segments goes Geometry to    *)
+(* edges (M4); extract goes labelled graph back to Geometry.                  *)
+(*                                                                            *)
+(* DESIGN DECISION (audit-phase3-milestone5.md §5.3, Option (i)).  Return     *)
+(* type is `Geometry` because the headline theorem `overlay_ng_correct`       *)
+(* needs `point_set : Geometry -> Point -> Prop` to match.  Returning a       *)
+(* flat edge list or `list Segment` would require redefining `point_set`     *)
+(* over the alternative carrier -- larger blast radius.                       *)
+(*                                                                            *)
+(* THE NAIVE IMPLEMENTATION.  The function below assembles the filtered       *)
+(* edges into a SINGLE polygon whose outer ring is the concatenation of      *)
+(* all surviving edges' endpoints.  This ring is NOT, in general,             *)
+(* `ring_simple` or `ring_closed` -- it may self-intersect, may not close,    *)
+(* and may not satisfy `ring_has_minimum_points` for small inputs.            *)
+(*                                                                            *)
+(* The function compiles and has the right type so downstream theorem        *)
+(* statements (`overlay_ng_correct`, `correct_labels`) can reference it.      *)
+(* Genuine ring-assembly correctness -- showing the assembled rings           *)
+(* satisfy `valid_polygon` for valid inputs -- is the deferred-proof          *)
+(* obligation `extract_rings_valid` (audit-phase3-milestone5.md §4.3 +       *)
+(* §5.2; estimated 3-8 sessions; requires DCEL adoption in a Session 1.5      *)
+(* of M4-revision).                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition extract (op : BooleanOp) (g : TopologyGraph) : Geometry :=
+  let filtered : list (Point * Point * EdgeLabel) :=
+    List.filter (fun e => edge_in_result op (snd e)) (tg_edges g) in
+  let ring : Ring :=
+    List.flat_map (fun e => [fst (fst e); snd (fst e)]) filtered in
+  match ring with
+  | nil       => nil
+  | _ :: _    => [{| outer_ring := ring; hole_rings := [] |}]
+  end.
+
+(* The empty graph extracts to the empty geometry. *)
+Lemma extract_empty_graph :
+  forall op, extract op empty_graph = [].
+Proof.
+  intros op. unfold extract, empty_graph. simpl. reflexivity.
+Qed.
+
+(* If every edge filters out (no edge satisfies the op's rule), the
+   extracted geometry is empty.  Used in Union/Intersection edge-case
+   downstream. *)
+Lemma extract_no_surviving_edges :
+  forall op g,
+    List.filter (fun e => edge_in_result op (snd e)) (tg_edges g) = [] ->
+    extract op g = [].
+Proof.
+  intros op g Hempty. unfold extract.
+  rewrite Hempty. simpl. reflexivity.
+Qed.
