@@ -678,3 +678,288 @@ Proof.
   intros op g Hempty. unfold extract.
   rewrite Hempty. simpl. reflexivity.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §11  Phase 3 Milestone 5 Session 3: merge_label_iff_source + merge_unique. *)
+(*                                                                            *)
+(* Structural invariants linking the OUTPUT of `merge_labeled_edges` to its   *)
+(* INPUT.  These unblock `correct_labels` for all four BooleanOps in S4-S7.   *)
+(* -------------------------------------------------------------------------- *)
+
+(* Keys (the (p, q) pair, ignoring labels) of an edge list. *)
+Definition edge_keys (edges : list (Point * Point * EdgeLabel))
+    : list (Point * Point) :=
+  List.map fst edges.
+
+(* Inserting an edge produces output keys exactly the input keys plus the
+   inserted edge's key (no other keys appear). *)
+Lemma insert_or_merge_edge_keys :
+  forall e edges k,
+    In k (edge_keys (insert_or_merge_edge e edges)) ->
+    k = fst e \/ In k (edge_keys edges).
+Proof.
+  intros e edges. induction edges as [|e' rest IH]; intros k Hin;
+    simpl in Hin.
+  - (* edges = [] *)
+    destruct Hin as [Heq | []]. left. symmetry. exact Heq.
+  - (* edges = e' :: rest *)
+    destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+    + (* merged at head: keys unchanged *)
+      simpl in Hin. destruct Hin as [Heq | Hin_tail].
+      * right. left. exact Heq.
+      * right. right. exact Hin_tail.
+    + (* recurse on tail *)
+      simpl in Hin. destruct Hin as [Heq | Hin_tail].
+      * right. left. exact Heq.
+      * apply IH in Hin_tail.
+        destruct Hin_tail as [Heq | Hin'].
+        -- left. exact Heq.
+        -- right. right. exact Hin'.
+Qed.
+
+(* Insertion preserves the no-duplicates-on-keys invariant. *)
+Lemma insert_or_merge_edge_NoDup :
+  forall e edges,
+    NoDup (edge_keys edges) ->
+    NoDup (edge_keys (insert_or_merge_edge e edges)).
+Proof.
+  intros e edges. induction edges as [|e' rest IH]; intros Hnd; simpl.
+  - constructor. intros []. constructor.
+  - destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+    + (* merged at head: keys identical to input *)
+      simpl. exact Hnd.
+    + simpl. inversion Hnd as [|h tl Hnotin Hnd_tail]. subst.
+      constructor.
+      * (* fst e' not in keys after insert *)
+        intros Hin. apply insert_or_merge_edge_keys in Hin.
+        destruct Hin as [Heq | Hin_rest].
+        -- (* fst e' = fst e: but we assumed they're not equal *)
+           symmetry in Heq. contradiction.
+        -- (* fst e' in keys(rest): contradicts Hnotin *)
+           contradiction.
+      * apply IH. exact Hnd_tail.
+Qed.
+
+(* The merge output has unique (p, q) keys. *)
+Lemma merge_NoDup_keys :
+  forall edges, NoDup (edge_keys (merge_labeled_edges edges)).
+Proof.
+  intros edges. unfold merge_labeled_edges. induction edges as [|e rest IH].
+  - simpl. constructor.
+  - simpl. apply insert_or_merge_edge_NoDup. exact IH.
+Qed.
+
+(* `In (p, q, l) edges` lets us split the keys list: take/drop on the
+   In witness. *)
+Lemma in_implies_key_in_edge_keys :
+  forall edges p q l,
+    In (p, q, l) edges -> In (p, q) (edge_keys edges).
+Proof.
+  intros edges. induction edges as [|e rest IH]; intros p q l Hin.
+  - inversion Hin.
+  - simpl in Hin. destruct Hin as [Heq | Hin'].
+    + simpl. left. destruct e as [pq_e l_e]. simpl in Heq. inversion Heq.
+      reflexivity.
+    + simpl. right. apply (IH _ _ _ Hin').
+Qed.
+
+(* On any list of labelled edges, NoDup on the keys forces label
+   uniqueness: two In witnesses with the same (p, q) have the same
+   label. *)
+Lemma NoDup_keys_label_unique :
+  forall (edges : list (Point * Point * EdgeLabel)) p q l1 l2,
+    NoDup (edge_keys edges) ->
+    In (p, q, l1) edges ->
+    In (p, q, l2) edges ->
+    l1 = l2.
+Proof.
+  intros edges. induction edges as [|e rest IH]; intros p q l1 l2 Hnd Hin1 Hin2.
+  - inversion Hin1.
+  - simpl in Hin1, Hin2.
+    simpl in Hnd. inversion Hnd as [|h tl Hnotin Hnd_tail]. subst.
+    destruct Hin1 as [Heq1 | Hin1'].
+    + (* (p, q, l1) is at head *)
+      destruct Hin2 as [Heq2 | Hin2'].
+      * (* both at head *)
+        subst e. inversion Heq2. reflexivity.
+      * (* l1 at head, l2 in tail *)
+        exfalso. apply Hnotin.
+        destruct e as [pq_e l_e]. simpl in Heq1. inversion Heq1. subst.
+        apply (in_implies_key_in_edge_keys rest p q l2 Hin2').
+    + (* (p, q, l1) in tail *)
+      destruct Hin2 as [Heq2 | Hin2'].
+      * (* l1 in tail, l2 at head *)
+        exfalso. apply Hnotin.
+        destruct e as [pq_e l_e]. simpl in Heq2. inversion Heq2. subst.
+        apply (in_implies_key_in_edge_keys rest p q l1 Hin1').
+      * (* both in tail *)
+        apply (IH _ _ _ _ Hnd_tail Hin1' Hin2').
+Qed.
+
+(* Merge uniqueness: same key in the merged output implies same label. *)
+Theorem merge_unique :
+  forall edges p q l1 l2,
+    In (p, q, l1) (merge_labeled_edges edges) ->
+    In (p, q, l2) (merge_labeled_edges edges) ->
+    l1 = l2.
+Proof.
+  intros edges p q l1 l2 Hin1 Hin2.
+  apply (NoDup_keys_label_unique _ p q l1 l2
+           (merge_NoDup_keys edges) Hin1 Hin2).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* The merge-output-bit lemmas.                                                *)
+(*                                                                            *)
+(* These connect output label bits to "some matching input edge has the       *)
+(* corresponding bit set".  Two directions, each by induction on the merge   *)
+(* fold.  Once proved, `merge_label_iff_source` is a specialisation.          *)
+(* -------------------------------------------------------------------------- *)
+
+(* The label bit at a key in the insert output is determined by:
+   - the inserted edge's bit (if its key matches the queried key), AND
+   - the input edge's bit at that key (if such an input edge exists). *)
+
+(* Forward (output bit true ⇒ some matching input has the bit). *)
+Lemma insert_or_merge_in_left_forward :
+  forall e edges p q l,
+    In (p, q, l) (insert_or_merge_edge e edges) ->
+    in_left l = true ->
+    (fst e = (p, q) /\ in_left (snd e) = true) \/
+    (exists l', In (p, q, l') edges /\ in_left l' = true).
+Proof.
+  intros e edges. induction edges as [|e' rest IH]; intros p q l Hin Hbit;
+    simpl in Hin.
+  - destruct Hin as [Heq | []].
+    left. destruct e as [pq_e l_e]. simpl in Heq. inversion Heq. subst.
+    split; [reflexivity | exact Hbit].
+  - destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+    + (* merged at head *)
+      destruct Hin as [Heq | Hin_tail].
+      * (* head merged entry: l = merge_labels (snd e) (snd e') *)
+        destruct e as [pq_e l_e]. destruct e' as [pq_e' l_e']. simpl in *.
+        subst pq_e'. inversion Heq. subst pq_e l.
+        unfold merge_labels in Hbit. simpl in Hbit.
+        apply orb_true_iff in Hbit. destruct Hbit as [Hl | Hr].
+        -- (* in_left from e *)
+           left. split; [reflexivity|]. exact Hl.
+        -- (* in_left from e' (existing) *)
+           right. exists l_e'. split; [left; reflexivity | exact Hr].
+      * (* tail unchanged *)
+        right. exists l. split; [right; exact Hin_tail | exact Hbit].
+    + (* no head match *)
+      destruct Hin as [Heq | Hin_tail].
+      * (* head e' kept: l = snd e' *)
+        right. exists l. split; [left; exact Heq | exact Hbit].
+      * specialize (IH p q l Hin_tail Hbit).
+        destruct IH as [Hsame | [l' [Hin' Hbit']]].
+        -- left. exact Hsame.
+        -- right. exists l'. split; [right; exact Hin' | exact Hbit'].
+Qed.
+
+(* Symmetric for in_right. *)
+Lemma insert_or_merge_in_right_forward :
+  forall e edges p q l,
+    In (p, q, l) (insert_or_merge_edge e edges) ->
+    in_right l = true ->
+    (fst e = (p, q) /\ in_right (snd e) = true) \/
+    (exists l', In (p, q, l') edges /\ in_right l' = true).
+Proof.
+  intros e edges. induction edges as [|e' rest IH]; intros p q l Hin Hbit;
+    simpl in Hin.
+  - destruct Hin as [Heq | []].
+    left. destruct e as [pq_e l_e]. simpl in Heq. inversion Heq. subst.
+    split; [reflexivity | exact Hbit].
+  - destruct (pair_eq_dec (fst e) (fst e')) as [Hpeq | Hpneq].
+    + destruct Hin as [Heq | Hin_tail].
+      * destruct e as [pq_e l_e]. destruct e' as [pq_e' l_e']. simpl in *.
+        subst pq_e'. inversion Heq. subst pq_e l.
+        unfold merge_labels in Hbit. simpl in Hbit.
+        apply orb_true_iff in Hbit. destruct Hbit as [Hl | Hr].
+        -- left. split; [reflexivity|]. exact Hl.
+        -- right. exists l_e'. split; [left; reflexivity | exact Hr].
+      * right. exists l. split; [right; exact Hin_tail | exact Hbit].
+    + destruct Hin as [Heq | Hin_tail].
+      * right. exists l. split; [left; exact Heq | exact Hbit].
+      * specialize (IH p q l Hin_tail Hbit).
+        destruct IH as [Hsame | [l' [Hin' Hbit']]].
+        -- left. exact Hsame.
+        -- right. exists l'. split; [right; exact Hin' | exact Hbit'].
+Qed.
+
+(* Forward direction on the merge fold: output bit true ⇒ some matching
+   input edge has the corresponding bit set. *)
+Lemma merge_in_left_forward :
+  forall edges p q l,
+    In (p, q, l) (merge_labeled_edges edges) ->
+    in_left l = true ->
+    exists l', In (p, q, l') edges /\ in_left l' = true.
+Proof.
+  intros edges. unfold merge_labeled_edges.
+  induction edges as [|e rest IH]; intros p q l Hin Hbit; simpl in Hin.
+  - contradiction.
+  - apply insert_or_merge_in_left_forward in Hin; [|exact Hbit].
+    destruct Hin as [[Hpq Hbit_e] | [l' [Hin' Hbit']]].
+    + (* (p, q) = fst e *)
+      exists (snd e). split.
+      * left. destruct e as [pq_e l_e]. simpl in Hpq. subst pq_e. reflexivity.
+      * exact Hbit_e.
+    + (* tail *)
+      specialize (IH p q l' Hin' Hbit').
+      destruct IH as [l'' [Hin'' Hbit'']].
+      exists l''. split; [right; exact Hin'' | exact Hbit''].
+Qed.
+
+Lemma merge_in_right_forward :
+  forall edges p q l,
+    In (p, q, l) (merge_labeled_edges edges) ->
+    in_right l = true ->
+    exists l', In (p, q, l') edges /\ in_right l' = true.
+Proof.
+  intros edges. unfold merge_labeled_edges.
+  induction edges as [|e rest IH]; intros p q l Hin Hbit; simpl in Hin.
+  - contradiction.
+  - apply insert_or_merge_in_right_forward in Hin; [|exact Hbit].
+    destruct Hin as [[Hpq Hbit_e] | [l' [Hin' Hbit']]].
+    + exists (snd e). split.
+      * left. destruct e as [pq_e l_e]. simpl in Hpq. subst pq_e. reflexivity.
+      * exact Hbit_e.
+    + specialize (IH p q l' Hin' Hbit').
+      destruct IH as [l'' [Hin'' Hbit'']].
+      exists l''. split; [right; exact Hin'' | exact Hbit''].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Backward direction (input bit ⇒ output bit) -- DEFERRED to S3.5 / S4.       *)
+(*                                                                            *)
+(* The backward direction requires showing every input bit propagates         *)
+(* through the merge fold to the (unique) output entry at its key.  The       *)
+(* proof structure is sound but stalled on a Coq tactic obstacle: `destruct`  *)
+(* on `pair_eq_dec` does NOT substitute the function call in the goal, so     *)
+(* the if-then-else inside `insert_or_merge_edge`'s body fails to reduce      *)
+(* after case-splitting.                                                      *)
+(*                                                                            *)
+(* Three fixes tried this session, none compiled cleanly:                     *)
+(*   - `destruct ... eqn:Hdec; rewrite Hdec`: Coq's `eqn:` syntax doesn't     *)
+(*     propagate the substitution through the un-reduced fixpoint body.       *)
+(*   - `remember ... as decres eqn:Hdec`: same issue at the if site.          *)
+(*   - `cbn` + `destruct`: cbn doesn't fully reduce the conditional.          *)
+(*                                                                            *)
+(* The clean fix is structural: refactor `insert_or_merge_edge` to use a      *)
+(* boolean predicate `pair_eq_b : Point * Point -> Point * Point -> bool`     *)
+(* (defined via `pair_eq_dec`) instead of `if pair_eq_dec ... then ... else`. *)
+(* Then `destruct ... eqn:` on the bool naturally substitutes via `congr_arg` *)
+(* or `case_eq`.                                                              *)
+(*                                                                            *)
+(* Session-3 OUTCOME landed:                                                  *)
+(*   - `merge_unique`: Qed-closed via `NoDup_keys_label_unique` +              *)
+(*     `merge_NoDup_keys`.                                                    *)
+(*   - Forward direction (`merge_in_left_forward`,                            *)
+(*     `merge_in_right_forward`) Qed-closed.  Enough to prove the FORWARD    *)
+(*     side of `correct_labels_*` in S4-S7.                                   *)
+(*                                                                            *)
+(* Session-3.5 (a half-session) should land:                                  *)
+(*   - The `insert_or_merge_edge` boolean-predicate refactor.                 *)
+(*   - `merge_in_left_backward`, `merge_in_right_backward`.                  *)
+(*   - Full bidirectional `merge_label_iff_source` then composes.            *)
+(* -------------------------------------------------------------------------- *)

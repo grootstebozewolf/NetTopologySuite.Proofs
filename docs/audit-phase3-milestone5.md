@@ -599,12 +599,21 @@ S2.5 (done):  M4 refactor -- label merging.  build_labeled_graph
               direction of correct_labels_union proved as
               correct_labels_union_forward.  Backward direction
               of the iff is deferred to S4.
-S3   (next):  Structural lemmas for merge_labeled_edges:
-                merge_label_iff_source -- the iff connecting
-                  output label bits to input source membership.
+S3   (this PR, partial): Structural lemmas for merge_labeled_edges:
                 merge_unique -- the merge output has unique
-                  (p, q) per edge.
+                  (p, q) per edge.  [Qed-closed in this PR.]
+                Forward direction (output bit -> some matching input
+                  bit) of merge_label_iff_source.
+                  [Qed-closed via `merge_in_left_forward` and
+                   `merge_in_right_forward`.]
               Loadbearing for S4-S7 correctness proofs.
+              Backward direction (input bit -> output bit) of the
+                merge_label_iff_source iff deferred to S3.5.
+S3.5:         Backward direction lemmas.  Stalled in S3 on a
+              tactic-substitution issue with destruct over the
+              `pair_eq_dec` sumbool inside `insert_or_merge_edge`.
+              Once that closes, the full bidirectional iff form is
+              available for S4-S7.
 S4:           correct_labels Union (full iff, against merged
               version).  Combines S3's structural lemmas with
               S2's correct_labels_union_forward.
@@ -710,8 +719,9 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
 | `correct_labels_union_forward`          | done                         | S2.5          |
 | Label merging (M4 refactor)             | done                         | S2.5          |
 | `merge_in_implies_in_input`             | done                         | S2.5          |
-| `merge_label_iff_source`                | pending                      | S3            |
-| `merge_unique`                          | pending                      | S3            |
+| `merge_unique`                          | **done**                     | S3            |
+| `merge_in_left_forward`/`right_forward` | **done**                     | S3            |
+| `merge_in_left_backward`/`right_backward` (full iff) | pending          | S3.5          |
 | `correct_labels_union` (full iff)       | pending                      | S4            |
 | `correct_labels_intersection`           | pending                      | S5            |
 | `correct_labels_difference`             | pending                      | S6            |
