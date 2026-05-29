@@ -56,48 +56,68 @@
 # Slice A Piece 5b: Shewchuk Theorem 13 formalisation.
 # ============================================================================
 
-# `fast_expansion_sum_nonoverlap_shewchuk` -- the load-bearing piece for
-# orient2d_exact's headline.  Shewchuk Theorem 13 (1997 paper, ~1 page
-# of dense magnitude analysis).  Coq formalisation estimate: 200-400
-# lines.
+# `fast_expansion_sum_nonoverlap_shewchuk` -- general unconditional
+# headline for Shewchuk Theorem 13 (1997, ~1 page of dense magnitude
+# analysis).  THESIS-SCALE.  Re-classified 2026-05-29 after 17 sessions
+# of cumulative work established the structural floor; previous estimate
+# of "3-4 sessions" did not survive contact with the Route 1 collapse
+# artifacts.  Reclassification rationale below.
 #
-# Approach: structural induction on the cascade with a magnitude
-# invariant.  An earlier draft of the proof structure doc assumed the
-# cascade input itself is `nonoverlap_shewchuk`; that's wrong --
-# `sort_by_abs (e ++ f)` is sorted-ascending but not strongly
-# nonoverlapping (counterexample: e=[4.0], f=[3.0]; merged-sorted-asc
-# is [3.0, 4.0], reversed [4.0, 3.0]; strict_succ_b64 4.0 3.0 demands
-# |3| <= 2^(-50), which fails flagrantly).  Shewchuk's actual argument
-# tracks per-element provenance (which input list each cascade-element
-# came from) and uses each input's individual half-ulp chain.  See
-# `docs/shewchuk-theorem-13-proof-structure.md` §2.1 for the corrected
-# analysis and §6 for the design routes for per-provenance tracking.
+# WHAT IS QED-CLOSED in
+# `theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v`:
+#   - `fast_expansion_sum_nonoverlap_shewchuk_general_conditional`:
+#     under `cascade_pathA_chain` on the initial state, the headline
+#     follows.  This is the load-bearing composition step; the
+#     "Work is composition, not new mathematics" path lands here.
+#   - `fast_expansion_sum_nonoverlap_shewchuk_two_singletons`:
+#     UNCONDITIONAL length-2 headline.
+#   - `fast_expansion_sum_nonoverlap_shewchuk_int_safe_singletons`:
+#     UNCONDITIONAL length-2 int-safe headline.
+#   - `fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs`:
+#     UNCONDITIONAL (2,2) int-safe headline.  Covers all practical
+#     orient2d-shaped Stage D inputs under `coord_int_safe`.
 #
-# Structural foundation already Qed-closed (PR #5):
-#   - `sort_by_abs_sorted`: cascade input is sorted ascending.
-#   - `expansion_R_sort_by_abs`: sort preserves expansion_R.
-#   - `b64_TwoSum_nonoverlap` (B64_Pff_bridge.v): per-step bound.
-#   - `sign_of_expansion_correct_shewchuk` (B64_Expansion_Shewchuk.v):
-#     downstream consumer.
+# Plus the supporting machinery (200+ lemmas): cascade_invariant,
+# cascade_run, cascade_h_chain under Path A (pos + neg),
+# run_bound_step_preserves, b64_plus_int_exact + integer cascade,
+# compress structural lemmas, sort-by-abs Forall preservation, etc.
 #
-# §2.1 per-step building blocks already Qed-closed:
-#   - `b64_plus_geq_pos` / `b64_plus_leq_neg`
-#   - `b64_TwoSum_step_dominates_{pos, neg, same_sign, q_zero}`
-#   - `b64_TwoSum_step_dominates_strict_{pos, neg}`
-# These cover all sign combinations under various preconditions.  They
-# are not directly usable for the corrected §2.1, but they are useful
-# building blocks for the per-provenance-chain reasoning that the
-# corrected statement needs.
+# WHAT REMAINS OPEN -- the general unconditional headline only:
+#   Deriving `cascade_pathA_chain (initial_cascade_state x prov) rest`
+#   from arbitrary `nonoverlap_shewchuk e + nonoverlap_shewchuk f`.
+#   This is precisely Shewchuk Theorem 13's deep magnitude bookkeeping:
+#   per-element provenance tracking + cross-prov mixed-sign
+#   similar-magnitude case analysis + round-to-even boundary handling.
+#   Session 3 quantified the gap as "roughly 2^53 too loose" between
+#   the cascade invariant's natural bound and the h-chain link
+#   required for arbitrary inputs.
 #
-# Design route selected (2026-05-24): Route 2 (list-indexing invariant).
-# Adds an auxiliary `cascade_invariant` predicate over the input list +
-# provenance tags; cascade definition and all existing Qed-closed
-# correctness lemmas remain untouched.  See proof structure doc §6
-# (especially §6.1-§6.5) for the full design.
+# Session history (collapse artifacts in `docs/`):
+#   - Route 3 (descending strict_succ chain on input): ruled out
+#     2026-05-24 by `e=[4.0], f=[3.0]` counterexample.
+#   - Route 2 Session 2: clause (c) collapse on Form A state.
+#   - Route 1 design session: third design recommended.
+#   - Route 1 Sessions 2-12: cascade_state augmentation (Form B with
+#     cs_prov + per-source max), refined clauses, h-chain split as
+#     a separate cascade-step lemma; established the 2^53 gap
+#     structurally and Qed-closed the conditional headline.
+#   - Route 1 Sessions 13-16: integer-safe specialised headlines
+#     (the three UNCONDITIONAL Qed-closures listed above).
+#   - Route 1 Session 17 (`route1_attempt`, Aborted at length 3+):
+#     concrete demonstration of the deferred-proof obstacle inside
+#     the corpus.
 #
-# What remains: define cascade_invariant + provenance tagging + prove
-# preservation lemma + compose into headline.  Revised estimate:
-# 3-4 sessions of focused work.
+# PRACTICAL IMPACT.  For NetTopologySuite consumers, `_int_safe_two_pairs`
+# covers all orient2d Stage D inputs under coord_int_safe (the integer
+# geometry contract).  The general unconditional headline is a
+# theoretical completion (thesis-scale), not a practical blocker for
+# Phase 3 or downstream geometry correctness.
+#
+# Estimate: thesis-scale (multiple months of focused magnitude
+# bookkeeping, comparable in shape to `hobby_lemma_4_3_no_proper`).
+# Not attempted in further single-session work without a published
+# magnitude-bookkeeping framework (Shewchuk §4-style provenance
+# tracking) to lean on.
 theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6,§6.1,§6.2,§6.3,§6.4,§6.5
 
 # ============================================================================
