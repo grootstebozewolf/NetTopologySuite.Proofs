@@ -216,3 +216,9 @@ theories-flocq/Validate_binary64_extract.v
 # Listed in audit-exceptions.txt due to Classical_Prop.classic transitively
 # pulled from HobbyTheorem_b64's snap_round_segments closure.
 theories-flocq/OverlayBridge.v
+
+# Phase 3 Milestone 5 Session 15: overlay_ng_correct_conditional --
+# the headline correctness theorem stated as a Qed-closed conditional
+# theorem under three named hypotheses (JCT, DCEL, semantic bridge).
+# Mirrors hobby_theorem_4_1_conditional's Phase 2 pattern.
+theories-flocq/OverlayCorrectness.v

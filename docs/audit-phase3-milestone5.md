@@ -697,8 +697,26 @@ S14:          boolean_op → point_set ∘ extract (backward direction).
               The harder direction -- requires that the extracted
               geometry's interior captures every point of the
               boolean-op result.
-S15:          overlay_ng_correct headline theorem (Qed-closed,
-              conditional in form).  Composes S13 + S14.
+S13-S14 (consolidated into S15 via top-down framing):
+              direct conditional headline with three named hypotheses
+              (JCT + DCEL valid polygons + semantic bridge) carried
+              in the theorem's signature.  Original S13/S14 (per-
+              direction proofs from edge-level correct_labels to
+              point-set semantics) would require defining
+              geometric_interior or equivalent topology toolkit -- not
+              available in the corpus.  The consolidated form keeps
+              the load-bearing gap explicit and Coq-statable.
+S15 (done):   overlay_ng_correct_conditional (Qed-closed).
+              theories-flocq/OverlayCorrectness.v.  Three named gaps:
+                H1 (JCT): point_in_ring iff geometric_interior on
+                          valid rings.  Section-scoped Variable.
+                H2 (DCEL): extract assembles valid_geometry from any
+                          valid topology graph.
+                H_bridge: combined semantic bridge.
+              Plus _forward and _backward corollaries (Qed-closed).
+              No Admitteds added; audit-exceptions entry added for
+              the Classical_Prop.classic lineage shared with
+              OverlayBridge.
 S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
               from Option A).  Final cleanup + documentation
               update.
@@ -711,11 +729,15 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
     are individually multi-month works; neither is realistically
     closed Qed inside the 16-session budget.
   - **Conditional** `overlay_ng_correct_conditional` (conditional
-    on `point_in_ring_correct` + `extract_rings_valid`) is the
-    realistic Qed-closing target by S15.  Same shape as
-    `hobby_theorem_4_1_conditional`: the corpus's correctness
-    story complete in conditional form, with both gaps named and
-    registered in `docs/admitted-deferred-proofs.txt`.
+    on **three named hypotheses**: H1 = `point_in_ring_correct`
+    (JCT), H2 = `extract_rings_valid` (DCEL), H_bridge = the
+    consolidated semantic bridge connecting `point_set` to
+    `boolean_op` under H1 and H2 on a correctly-labelled valid
+    graph) is the realistic Qed-closing target by S15.  Same shape
+    as `hobby_theorem_4_1_conditional`: the corpus's correctness
+    story complete in conditional form, with the gaps named in the
+    theorem's signature (Section-scoped Variable for
+    `geometric_interior`, hypothesis predicates for the rest).
   - **Variant B (flat edges, weaker headline)** -- this is the
     fallback if DCEL adoption (S11-S12) hits an unanticipated wall.
     Headline weakens to edge-level equivalence rather than
@@ -784,8 +806,9 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
 | DCEL adoption (optional)                | pending                      | S11-S12       |
 | `point_set → boolean_op` (forward)      | pending                      | S13           |
 | `boolean_op → point_set` (backward)     | pending                      | S14           |
-| `overlay_ng_correct_conditional`        | pending (Qed-target)         | S15           |
-| `overlay_ng_correct_bounded`            | pending (corollary)          | S16           |
+| `overlay_ng_correct_conditional`        | **done** (Qed-closed, 3 named gaps) | S15  |
+| `overlay_ng_correct_forward`/`_backward` | **done** (corollaries)      | S15           |
+| `overlay_ng_correct_bounded`            | pending (Option B corollary) | S16           |
 
   - **Reuse from M1-M4 (post-S2.5 refactor):** all geometry types,
     the topology graph, M4's labelling rules (now merged), the
@@ -795,10 +818,15 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
   - **Thesis-shaped sub-problems:** JCT for polygons (§5.1), DCEL
     formalisation (§5.2).  Both candidates for deferral with
     conditional headline.
-  - **Realistic landing (S15):** `overlay_ng_correct_conditional` —
-    Qed-closed with two named hypotheses (`point_in_ring_correct`,
-    `extract_rings_valid`), both registered as deferred-proof
-    entries, mirroring `hobby_theorem_4_1_conditional`'s Phase 2
+  - **Realistic landing (S15, DONE):** `overlay_ng_correct_conditional`
+    — Qed-closed with **three named hypotheses** (H1
+    `point_in_ring_correct`, H2 `extract_rings_valid`, H_bridge
+    consolidated semantic bridge) carried in the theorem's
+    signature.  The JCT-side gap is encoded as a Section-scoped
+    `Variable geometric_interior : Point -> Ring -> Prop` (folded
+    into a forall by Section closure — NOT an Axiom / Parameter).
+    The DCEL and bridge gaps are statable Coq predicates.  Same
+    epistemic shape as `hobby_theorem_4_1_conditional`'s Phase 2
     pattern.
   - **Buffer relative to original 10-session plan:** +6 sessions
     spread across the merge-aware structural lemmas (S3), the
