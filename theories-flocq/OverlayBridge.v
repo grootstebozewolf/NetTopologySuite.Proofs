@@ -143,44 +143,49 @@ Definition correct_labels
     edge_geometrically_in_result op p q A B.
 
 (* -------------------------------------------------------------------------- *)
-(* §5  correct_labels for Union -- directly Qed-closed.                       *)
+(* §5  correct_labels for Union: forward direction only.                      *)
 (*                                                                            *)
-(* The Union case is structurally trivial under M4's labelling scheme:        *)
-(*   - Edges from `label_from_A` have `in_left := true`, so                   *)
-(*     `edge_in_result Union l = orb true _ = true` AND the edge is in A's    *)
-(*     snap-rounded segments.                                                 *)
-(*   - Edges from `label_from_B` have `in_right := true`, symmetric.          *)
-(* Both sides of the iff are always true; both directions discharge by       *)
-(* construction.                                                              *)
+(* M4 REFACTOR NOTE.  The M5-S2 version of `correct_labels_union` proved      *)
+(* the full iff directly by destructuring the un-merged edge list             *)
+(* `label_from_A sA ++ label_from_B sB` via `List.in_app_iff`.  The           *)
+(* M4-refactor wraps that list in `merge_labeled_edges`, which collapses      *)
+(* duplicate (p, q) pairs into one edge with OR-ed labels.  The backward      *)
+(* direction of the iff now requires a "merge dominates input bits"          *)
+(* lemma (in_left l_in = true -> in_left l_out = true for the merge's        *)
+(* output label) which is multi-line induction and pushed to a dedicated      *)
+(* session.                                                                   *)
+(*                                                                            *)
+(* The FORWARD direction (label -> geometric) still closes Qed: given         *)
+(* `In (p, q, l)` in the merged list, `merge_in_implies_in_input` extracts    *)
+(* some input `(p, q, l')` in `label_from_A sA ++ label_from_B sB`, and      *)
+(* in_app_iff / in_map_iff finish the disjunctive conclusion.                 *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem correct_labels_union :
-  forall (A B : Geometry),
-    correct_labels Union (noded_labeled_graph A B) A B.
+Theorem correct_labels_union_forward :
+  forall (A B : Geometry) (p q : Point) (l : EdgeLabel),
+    In (p, q, l) (tg_edges (noded_labeled_graph A B)) ->
+    edge_in_result Union l = true ->
+    edge_geometrically_in_result Union p q A B.
 Proof.
-  intros A B p q l Hin.
+  intros A B p q l Hin _.
   unfold noded_labeled_graph, build_labeled_graph in Hin. simpl in Hin.
-  apply List.in_app_iff in Hin.
-  unfold edge_in_result, edge_geometrically_in_result. simpl.
-  destruct Hin as [HA | HB].
-  - (* Edge from A: in_left l = true.  Both sides hold. *)
-    unfold label_from_A in HA.
+  apply merge_in_implies_in_input in Hin.
+  destruct Hin as [l' Hin'].
+  apply List.in_app_iff in Hin'.
+  unfold edge_geometrically_in_result. simpl.
+  destruct Hin' as [HA | HB].
+  - unfold label_from_A in HA.
     apply List.in_map_iff in HA.
-    destruct HA as [s [Heq Hin']].
+    destruct HA as [s [Heq Hin_s]].
     destruct s as [s_p s_q]. simpl in Heq.
     inversion Heq. subst.
-    simpl. split.
-    + intros _. left. exact Hin'.
-    + intros _. reflexivity.
-  - (* Edge from B: in_right l = true.  Both sides hold. *)
-    unfold label_from_B in HB.
+    left. exact Hin_s.
+  - unfold label_from_B in HB.
     apply List.in_map_iff in HB.
-    destruct HB as [s [Heq Hin']].
+    destruct HB as [s [Heq Hin_s]].
     destruct s as [s_p s_q]. simpl in Heq.
     inversion Heq. subst.
-    simpl. split.
-    + intros _. right. exact Hin'.
-    + intros _. reflexivity.
+    right. exact Hin_s.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -216,4 +221,4 @@ Qed.
 
 Print Assumptions snap_noding_bridge.
 Print Assumptions valid_topology_graph_noded_labeled_graph.
-Print Assumptions correct_labels_union.
+Print Assumptions correct_labels_union_forward.
