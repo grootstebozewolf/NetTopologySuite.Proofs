@@ -90,6 +90,19 @@ theories/ArcIntersect.v
 # classical-prop pulls.
 theories/ArcHotPixel.v
 
+# Phase 4 Session 6: sagitta + chord approximation foundations (R-side).
+# Defines arc_radius_sq, chord_half_length_sq, chord_half_length, and
+# sagitta (using Rmax to keep the sqrt argument non-negative
+# definitionally).  Headline lemma: arc_center_equidistant proves the
+# three control points are equidistant from arc_center (closed via
+# `field` after unfolding the explicit circumcenter formula).
+# Fifteen Qed-closed lemmas covering sagitta non-negativity,
+# sagitta_le_arc_radius, and the bridge arc_radius = sqrt arc_radius_sq.
+# The full chord_approx_error_bound headline is deferred to a follow-up
+# (depends on arc_radius_sq_ge_chord_half_length_sq + perpendicular-
+# bisector geometry + S4's IVT-blocked soundness).  No Admitteds.
+theories/ArcChordApprox.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
