@@ -75,6 +75,21 @@ theories/ArcOrient.v
 # No Admitteds; no classical-prop pulls.
 theories/ArcIntersect.v
 
+# Phase 4 Session 5: arc-in-hot-pixel predicate (R-side).  Defines
+# pixel_bottom_left / _bottom_right / _top_right / _top_left corner
+# helpers parameterised by (C : Point, scale : R).
+# arc_passes_through_hot_pixel: six-way disjunction (four arc-chord
+# edge crossings + two endpoint containment tests).
+# arc_touches_hot_pixel: the SPEC predicate (existential -- a point on
+# the arc is in the pixel).  Eight Qed-closed structural lemmas: six
+# disjunct-introduction lemmas + two endpoint soundness lemmas
+# (passes_through endpoint case => touches).  Edge-crossing soundness
+# direction deferred (depends on S4's arc_chord_intersect_sound
+# IVT gap).  Half-open convention mirrors Phase 2's in_hot_pixel
+# (bottom/left CLOSED, top/right OPEN).  No Admitteds; no
+# classical-prop pulls.
+theories/ArcHotPixel.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
