@@ -103,6 +103,20 @@ theories/ArcHotPixel.v
 # bisector geometry + S4's IVT-blocked soundness).  No Admitteds.
 theories/ArcChordApprox.v
 
+# Phase 4 Session 7: arc overlay correctness conditional headline.
+# The Option B headline -- same epistemic position as Phase 3's
+# overlay_ng_correct_conditional.  Defines arcs_of: CurveGeometry ->
+# list CircularArc, max_sagitta: CurveGeometry -> CurveGeometry -> R
+# (the chord-approximation tolerance), arc_close_to_curves: the
+# conclusion predicate (q is within eps of some arc point in A or B).
+# Headline `arc_overlay_correct_chord_approx` Qed-closed via case-split
+# on BooleanOp under two named gap hypotheses (H_A_bridge, H_B_bridge
+# encapsulating the deferred chord_approx_error_bound + polygon
+# traversal lifts).  Plus six Qed-closed structural lemmas
+# (max_sagitta_nonneg, arcs_of_nil/_cons/_segment_chord/_segment_arc,
+# forward corollary).  No Admitteds; no classical-prop pulls.
+theories/ArcOverlay.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
