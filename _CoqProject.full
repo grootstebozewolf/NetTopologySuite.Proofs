@@ -59,6 +59,64 @@ theories/CurveGeometry.v
 # pulls.
 theories/ArcOrient.v
 
+# Phase 4 Session 4: arc-chord and arc-arc intersection predicates
+# (R-side, Prop-valued).  Defines arc_span_contains (Option S: chord
+# cross-product sign for arcs < pi), arc_chord_intersects (existence
+# of a point on chord segment that is also on the arc -- uses the
+# existing `between` predicate from theories/Segment.v),
+# arc_arc_intersects (existence of a point on both arcs), and
+# chord_crosses_arc_circle (a SUFFICIENT-condition positive filter
+# under IVT: opposite inCircle_R signs guarantee a crossing; NOT a
+# rejection filter -- both endpoints can be outside while the chord
+# still crosses twice).  Six Qed-closed structural lemmas (boundary
+# span membership + symmetry).  No new typeclass (HasArcIntersect
+# parallel deferred per Intersect_b64_exact.v §6 dovetail).  Soundness
+# theorem (IVT-based existence from sign-change) deferred to follow-up.
+# No Admitteds; no classical-prop pulls.
+theories/ArcIntersect.v
+
+# Phase 4 Session 5: arc-in-hot-pixel predicate (R-side).  Defines
+# pixel_bottom_left / _bottom_right / _top_right / _top_left corner
+# helpers parameterised by (C : Point, scale : R).
+# arc_passes_through_hot_pixel: six-way disjunction (four arc-chord
+# edge crossings + two endpoint containment tests).
+# arc_touches_hot_pixel: the SPEC predicate (existential -- a point on
+# the arc is in the pixel).  Eight Qed-closed structural lemmas: six
+# disjunct-introduction lemmas + two endpoint soundness lemmas
+# (passes_through endpoint case => touches).  Edge-crossing soundness
+# direction deferred (depends on S4's arc_chord_intersect_sound
+# IVT gap).  Half-open convention mirrors Phase 2's in_hot_pixel
+# (bottom/left CLOSED, top/right OPEN).  No Admitteds; no
+# classical-prop pulls.
+theories/ArcHotPixel.v
+
+# Phase 4 Session 6: sagitta + chord approximation foundations (R-side).
+# Defines arc_radius_sq, chord_half_length_sq, chord_half_length, and
+# sagitta (using Rmax to keep the sqrt argument non-negative
+# definitionally).  Headline lemma: arc_center_equidistant proves the
+# three control points are equidistant from arc_center (closed via
+# `field` after unfolding the explicit circumcenter formula).
+# Fifteen Qed-closed lemmas covering sagitta non-negativity,
+# sagitta_le_arc_radius, and the bridge arc_radius = sqrt arc_radius_sq.
+# The full chord_approx_error_bound headline is deferred to a follow-up
+# (depends on arc_radius_sq_ge_chord_half_length_sq + perpendicular-
+# bisector geometry + S4's IVT-blocked soundness).  No Admitteds.
+theories/ArcChordApprox.v
+
+# Phase 4 Session 7: arc overlay correctness conditional headline.
+# The Option B headline -- same epistemic position as Phase 3's
+# overlay_ng_correct_conditional.  Defines arcs_of: CurveGeometry ->
+# list CircularArc, max_sagitta: CurveGeometry -> CurveGeometry -> R
+# (the chord-approximation tolerance), arc_close_to_curves: the
+# conclusion predicate (q is within eps of some arc point in A or B).
+# Headline `arc_overlay_correct_chord_approx` Qed-closed via case-split
+# on BooleanOp under two named gap hypotheses (H_A_bridge, H_B_bridge
+# encapsulating the deferred chord_approx_error_bound + polygon
+# traversal lifts).  Plus six Qed-closed structural lemmas
+# (max_sagitta_nonneg, arcs_of_nil/_cons/_segment_chord/_segment_arc,
+# forward corollary).  No Admitteds; no classical-prop pulls.
+theories/ArcOverlay.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
