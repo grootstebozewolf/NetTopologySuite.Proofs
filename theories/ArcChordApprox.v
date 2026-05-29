@@ -30,8 +30,6 @@ From Stdlib Require Import Field.
 
 From NTS.Proofs Require Import Distance.
 From NTS.Proofs Require Import CurveGeometry.
-From NTS.Proofs Require Import ArcOrient.
-From NTS.Proofs Require Import ArcHotPixel.
 
 Local Open Scope R_scope.
 
@@ -91,16 +89,25 @@ Qed.
 Definition arc_radius_sq (a : CircularArc) : R :=
   dist_sq (arc_center a) (arc_start a).
 
-(* The squared radius equals dist_sq to each defining point. *)
+(* The squared radius equals dist_sq to each defining point.  Both proofs
+   destruct `arc_center_equidistant` explicitly and use the relevant
+   conjunct -- clearer intent than relying on `apply` unifying through
+   the conjunction. *)
 Lemma arc_radius_sq_eq_mid :
   forall a, valid_arc a ->
     arc_radius_sq a = dist_sq (arc_center a) (arc_mid a).
-Proof. intros. unfold arc_radius_sq. apply arc_center_equidistant; assumption. Qed.
+Proof.
+  intros a Hva. unfold arc_radius_sq.
+  destruct (arc_center_equidistant a Hva) as [Hsm _]. exact Hsm.
+Qed.
 
 Lemma arc_radius_sq_eq_end :
   forall a, valid_arc a ->
     arc_radius_sq a = dist_sq (arc_center a) (arc_end a).
-Proof. intros. unfold arc_radius_sq. apply arc_center_equidistant; assumption. Qed.
+Proof.
+  intros a Hva. unfold arc_radius_sq.
+  destruct (arc_center_equidistant a Hva) as [_ Hse]. exact Hse.
+Qed.
 
 (* arc_radius_sq is non-negative. *)
 Lemma arc_radius_sq_nonneg :
