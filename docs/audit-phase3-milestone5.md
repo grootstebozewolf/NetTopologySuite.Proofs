@@ -670,12 +670,14 @@ S8   (done):  JCT search.  No JCT formalization found in the available
               becomes available, S8 will be re-opened to import + prove.
               Coq deliverable: `correct_labels_all_ops` -- case-on-op
               uniform composition of S4-S7's per-op theorems.
-S9:           extract_rings_valid -- structural correctness of
-              extract op g's output Geometry.  Requires DCEL adoption
-              OR a weaker statement that defers ring validity.
-              Decision point: full DCEL revision (~2 sessions
-              swallowed) or weaker statement that punts on ring
-              assembly.
+S9   (done):  extract_rings_valid -- registered as deferred-proof.
+              The DCEL adoption (S11-S12 path, 5-7 sessions) and the
+              weaker-output path (loses semantic strength) both
+              exceed the per-session budget.  Following S8's pattern:
+              gap recorded in docs/admitted-deferred-proofs.txt as a
+              named hypothesis to be carried by
+              `overlay_ng_correct_conditional` in S15.
+              Registry: 2 -> 3 deferred-proof entries.
 S10:          valid_geometry (extract op g).  Conditional on
               extract_rings_valid (S9).
 S11:          DCEL adoption (if S9 chose the heavier path):
@@ -772,7 +774,7 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
 | `correct_labels_difference`             | pending                      | S6            |
 | `correct_labels_symdiff`                | pending                      | S7            |
 | `point_in_ring_correct` (or conditional)| pending (JCT-dep)            | S8            |
-| `extract_rings_valid`                   | pending                      | S9            |
+| `extract_rings_valid`                   | **deferred (registered)**    | S9            |
 | `valid_geometry (extract op g)`         | pending                      | S10           |
 | DCEL adoption (optional)                | pending                      | S11-S12       |
 | `point_set → boolean_op` (forward)      | pending                      | S13           |

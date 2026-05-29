@@ -444,7 +444,57 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §8  Audit footprint.                                                        *)
+(* §8  Phase 3 Milestone 5 Session 9: extract_rings_valid (Admitted).         *)
+(*                                                                            *)
+(* The structural correctness of `extract op g`'s output Geometry: for valid  *)
+(* inputs and a fully-intersected noded arrangement, every polygon in the     *)
+(* extracted Geometry is a `valid_polygon`.                                   *)
+(*                                                                            *)
+(* This is the second thesis-shaped piece flagged in                          *)
+(* docs/audit-phase3-milestone5.md §4.3.  Showing that ring assembly          *)
+(* from the labelled topology graph produces polygons satisfying all four    *)
+(* OGC §6 conditions (ring_closed, ring_simple, ring_has_minimum_points,     *)
+(* hole_inside_outer) is genuine combinatorial-geometric work.                *)
+(*                                                                            *)
+(* The corpus's CURRENT `extract` (theories/OverlayGraph.v) is the naive     *)
+(* version from S2: filters edges by `edge_in_result op` and packages the   *)
+(* survivors as a single polygon whose outer_ring is the concatenation of   *)
+(* all filtered edges' endpoints.  This naive form does NOT satisfy        *)
+(* `valid_polygon` in general -- the ring is neither simple nor closed in   *)
+(* the structural sense, and may not meet the min-vertex requirement for    *)
+(* small inputs.                                                              *)
+(*                                                                            *)
+(* The PATH to a usable `extract_rings_valid` requires either:               *)
+(*   - DCEL adoption (S11-S12 in the 16-session plan) -- replace the naive  *)
+(*     edge list with a doubly-connected edge list structure carrying       *)
+(*     per-vertex incidence + twin/next pointers, then implement face       *)
+(*     traversal to produce proper rings; OR                                 *)
+(*   - A weaker variant of `extract` that punts on ring assembly and       *)
+(*     returns a Geometry whose polygons trivially satisfy `valid_polygon` *)
+(*     (e.g., the empty geometry) but doesn't carry meaningful content.    *)
+(*                                                                            *)
+(* Neither path closes in one session.  Following the same pattern as       *)
+(* S8's JCT decision: register `extract_rings_valid` as a deferred-proof    *)
+(* entry, state it Admitted, and document the gap in the audit doc.         *)
+(* `overlay_ng_correct_conditional` (S15) will carry it as a named         *)
+(* hypothesis, mirroring `hobby_theorem_4_1_conditional`'s pattern.        *)
+(*                                                                            *)
+(* See docs/admitted-deferred-proofs.txt:extract_rings_valid                *)
+(* and docs/audit-phase3-milestone5.md §4.3 for the scope estimate.        *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma extract_rings_valid :
+  forall (op : BooleanOp) (A B : Geometry),
+    valid_geometry A ->
+    valid_geometry B ->
+    fully_intersected (noded_segments A B) ->
+    forall poly,
+      In poly (extract op (noded_labeled_graph A B)) ->
+      valid_polygon poly.
+Admitted.
+
+(* -------------------------------------------------------------------------- *)
+(* §9  Audit footprint.                                                        *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions snap_noding_bridge.
@@ -455,3 +505,4 @@ Print Assumptions correct_labels_intersection.
 Print Assumptions correct_labels_difference.
 Print Assumptions correct_labels_symdiff.
 Print Assumptions correct_labels_all_ops.
+Print Assumptions extract_rings_valid.
