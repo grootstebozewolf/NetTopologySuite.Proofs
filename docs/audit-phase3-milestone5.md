@@ -681,9 +681,14 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
   - [ ] **Decide conditional vs unconditional headline** before
         Session 15.  If DCEL ring validity (S9 / S11-S12) didn't
         close in budget, the headline must be conditional.
-  - [ ] Confirm `build_labeled_graph`'s output type (decision from
-        §5.3, locked in S2 / S2.5: Option (i) Geometry with
-        label-merged edge list).
+  - [ ] Two related-but-distinct decisions, both locked-in:
+        - §5.3 CARRIER decision (`extract`'s output type): Option (i)
+          `Geometry` (locked in S2).  `build_labeled_graph` itself
+          always returns `TopologyGraph`; only `extract`'s carrier
+          was up for negotiation.
+        - Edge-list construction (`build_labeled_graph`'s internals):
+          label-merging via `merge_labeled_edges` (locked in S2.5
+          refactor).  Independent of the carrier decision.
   - [ ] Option B corollary: 2-line derivation after S15 closes
         Option A (or its conditional form).
   - [ ] Update `docs/audit-phase3-overlay.md`'s §3.6 and §4 as
