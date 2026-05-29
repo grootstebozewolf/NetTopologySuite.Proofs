@@ -49,6 +49,16 @@ theories/OverlayGraph.v
 # structural lemmas; no Admitteds; no Classical_Prop.classic.
 theories/CurveGeometry.v
 
+# Phase 4 Session 3: arc orientation predicate.  Two R-side tools:
+# cross_R_pt (Stdlib lift of cross_R_BP) and inCircle_R (the 4-point
+# lifted determinant from Shewchuk 1997).  Arc orientation built on
+# top: arc_side_chord, arc_interior_side, arc_orient (ArcInterior /
+# ArcExterior / ArcOnChord trichotomy).  Plus arc_coord_safe R-side
+# precondition for future b64 work.  No new typeclass (HasOrient2d
+# deferred).  Eleven Qed-closed lemmas; no Admitteds; no classical-prop
+# pulls.
+theories/ArcOrient.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
