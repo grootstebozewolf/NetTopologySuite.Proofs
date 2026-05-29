@@ -50,15 +50,11 @@
      Assisted-by: Claude (Opus-4.7)
    ========================================================================== *)
 
-From Stdlib Require Import List.
-
 From NTS.Proofs        Require Import Distance.
 From NTS.Proofs        Require Import Overlay.
 From NTS.Proofs        Require Import OverlayGraph.
 From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64.
 From NTS.Proofs.Flocq  Require Import OverlayBridge.
-
-Import ListNotations.
 
 (* -------------------------------------------------------------------------- *)
 (* §1  The conditional headline.                                              *)
@@ -122,7 +118,7 @@ Section OverlayCorrectness.
       point_set (extract op (noded_labeled_graph A B)) p <->
       boolean_op op A B p.
   Proof.
-    intros A B op p HA HB Hfi H1 H2 H_bridge.
+    intros A B op p _ _ _ H1 H2 H_bridge.
     apply H_bridge.
     - apply valid_topology_graph_noded_labeled_graph.
     - apply correct_labels_all_ops.

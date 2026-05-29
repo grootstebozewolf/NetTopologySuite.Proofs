@@ -722,11 +722,15 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
     are individually multi-month works; neither is realistically
     closed Qed inside the 16-session budget.
   - **Conditional** `overlay_ng_correct_conditional` (conditional
-    on `point_in_ring_correct` + `extract_rings_valid`) is the
-    realistic Qed-closing target by S15.  Same shape as
-    `hobby_theorem_4_1_conditional`: the corpus's correctness
-    story complete in conditional form, with both gaps named and
-    registered in `docs/admitted-deferred-proofs.txt`.
+    on **three named hypotheses**: H1 = `point_in_ring_correct`
+    (JCT), H2 = `extract_rings_valid` (DCEL), H_bridge = the
+    consolidated semantic bridge connecting `point_set` to
+    `boolean_op` under H1 and H2 on a correctly-labelled valid
+    graph) is the realistic Qed-closing target by S15.  Same shape
+    as `hobby_theorem_4_1_conditional`: the corpus's correctness
+    story complete in conditional form, with the gaps named in the
+    theorem's signature (Section-scoped Variable for
+    `geometric_interior`, hypothesis predicates for the rest).
   - **Variant B (flat edges, weaker headline)** -- this is the
     fallback if DCEL adoption (S11-S12) hits an unanticipated wall.
     Headline weakens to edge-level equivalence rather than
@@ -807,10 +811,15 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
   - **Thesis-shaped sub-problems:** JCT for polygons (§5.1), DCEL
     formalisation (§5.2).  Both candidates for deferral with
     conditional headline.
-  - **Realistic landing (S15):** `overlay_ng_correct_conditional` —
-    Qed-closed with two named hypotheses (`point_in_ring_correct`,
-    `extract_rings_valid`), both registered as deferred-proof
-    entries, mirroring `hobby_theorem_4_1_conditional`'s Phase 2
+  - **Realistic landing (S15, DONE):** `overlay_ng_correct_conditional`
+    — Qed-closed with **three named hypotheses** (H1
+    `point_in_ring_correct`, H2 `extract_rings_valid`, H_bridge
+    consolidated semantic bridge) carried in the theorem's
+    signature.  The JCT-side gap is encoded as a Section-scoped
+    `Variable geometric_interior : Point -> Ring -> Prop` (folded
+    into a forall by Section closure — NOT an Axiom / Parameter).
+    The DCEL and bridge gaps are statable Coq predicates.  Same
+    epistemic shape as `hobby_theorem_4_1_conditional`'s Phase 2
     pattern.
   - **Buffer relative to original 10-session plan:** +6 sessions
     spread across the merge-aware structural lemmas (S3), the
