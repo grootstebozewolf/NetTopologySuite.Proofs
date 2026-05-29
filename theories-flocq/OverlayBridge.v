@@ -236,6 +236,188 @@ Qed.
 (* unordered-pair-match version of `pair_eq_dec`.  Either is a focused      *)
 (* refactor for S3.5 or S4.  Recorded here for downstream attention.        *)
 (* -------------------------------------------------------------------------- *)
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Phase 3 Milestone 5 Sessions 4-7 (consolidated): correct_labels for    *)
+(*     all four BooleanOps.                                                    *)
+(*                                                                            *)
+(* With S3 + S3.5 closed (`merge_in_left_iff` / `merge_in_right_iff` full),  *)
+(* `correct_labels_*` collapses to mechanical composition through two helper *)
+(* iff lemmas linking output bits to source membership.                       *)
+(*                                                                            *)
+(* Originally scheduled as S4 (Union), S5 (Intersection), S6 (Difference),   *)
+(* S7 (SymDiff).  Same proof pattern across all four; consolidated.          *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma in_left_iff_in_A :
+  forall (A B : Geometry) (p q : Point) (l : EdgeLabel),
+    In (p, q, l) (tg_edges (noded_labeled_graph A B)) ->
+    in_left l = true <->
+    In (p, q) (snap_round_segments (extract_segments A)).
+Proof.
+  intros A B p q l Hin.
+  unfold noded_labeled_graph, build_labeled_graph in Hin. simpl in Hin.
+  split.
+  - (* forward *)
+    intros Hbit.
+    apply (merge_in_left_forward _ p q l Hin) in Hbit.
+    destruct Hbit as [l' [Hin' Hbit']].
+    apply List.in_app_iff in Hin'.
+    destruct Hin' as [HA | HB].
+    + unfold label_from_A in HA. apply List.in_map_iff in HA.
+      destruct HA as [s [Heq Hin_s]].
+      destruct s as [s_p s_q]. simpl in Heq. inversion Heq. subst.
+      exact Hin_s.
+    + unfold label_from_B in HB. apply List.in_map_iff in HB.
+      destruct HB as [s [Heq Hin_s]].
+      destruct s as [s_p s_q]. simpl in Heq. inversion Heq. subst.
+      simpl in Hbit'. discriminate.
+  - (* backward *)
+    intros HA_mem.
+    set (sA := snap_round_segments (extract_segments A)) in *.
+    set (sB := snap_round_segments (extract_segments B)) in *.
+    assert (Hin_A : In ((p, q), {| in_left := true; in_right := false |})
+                       (label_from_A sA)).
+    { unfold label_from_A. apply List.in_map_iff.
+      exists (p, q). split; [reflexivity | exact HA_mem]. }
+    assert (Hin_concat : In ((p, q), {| in_left := true; in_right := false |})
+                            (label_from_A sA ++ label_from_B sB)).
+    { apply List.in_app_iff. left. exact Hin_A. }
+    destruct (merge_in_left_backward
+                (label_from_A sA ++ label_from_B sB) (p, q)
+                {| in_left := true; in_right := false |}
+                Hin_concat eq_refl)
+      as [l_out [Hin_out Hbit_out]].
+    pose proof (merge_unique _ p q l l_out Hin Hin_out) as Heq_l.
+    rewrite Heq_l. exact Hbit_out.
+Qed.
+
+Lemma in_right_iff_in_B :
+  forall (A B : Geometry) (p q : Point) (l : EdgeLabel),
+    In (p, q, l) (tg_edges (noded_labeled_graph A B)) ->
+    in_right l = true <->
+    In (p, q) (snap_round_segments (extract_segments B)).
+Proof.
+  intros A B p q l Hin.
+  unfold noded_labeled_graph, build_labeled_graph in Hin. simpl in Hin.
+  split.
+  - intros Hbit.
+    apply (merge_in_right_forward _ p q l Hin) in Hbit.
+    destruct Hbit as [l' [Hin' Hbit']].
+    apply List.in_app_iff in Hin'.
+    destruct Hin' as [HA | HB].
+    + unfold label_from_A in HA. apply List.in_map_iff in HA.
+      destruct HA as [s [Heq Hin_s]].
+      destruct s as [s_p s_q]. simpl in Heq. inversion Heq. subst.
+      simpl in Hbit'. discriminate.
+    + unfold label_from_B in HB. apply List.in_map_iff in HB.
+      destruct HB as [s [Heq Hin_s]].
+      destruct s as [s_p s_q]. simpl in Heq. inversion Heq. subst.
+      exact Hin_s.
+  - intros HB_mem.
+    set (sA := snap_round_segments (extract_segments A)) in *.
+    set (sB := snap_round_segments (extract_segments B)) in *.
+    assert (Hin_B : In ((p, q), {| in_left := false; in_right := true |})
+                       (label_from_B sB)).
+    { unfold label_from_B. apply List.in_map_iff.
+      exists (p, q). split; [reflexivity | exact HB_mem]. }
+    assert (Hin_concat : In ((p, q), {| in_left := false; in_right := true |})
+                            (label_from_A sA ++ label_from_B sB)).
+    { apply List.in_app_iff. right. exact Hin_B. }
+    destruct (merge_in_right_backward
+                (label_from_A sA ++ label_from_B sB) (p, q)
+                {| in_left := false; in_right := true |}
+                Hin_concat eq_refl)
+      as [l_out [Hin_out Hbit_out]].
+    pose proof (merge_unique _ p q l l_out Hin Hin_out) as Heq_l.
+    rewrite Heq_l. exact Hbit_out.
+Qed.
+
+(* Bool helper: in_right l = false iff in_right l <> true. *)
+Lemma in_right_false_iff_not_true :
+  forall l : EdgeLabel,
+    in_right l = false <-> in_right l <> true.
+Proof.
+  intros l. destruct (in_right l).
+  - split; intro H; [discriminate | exfalso; apply H; reflexivity].
+  - split; intro H; [discriminate | reflexivity].
+Qed.
+
+(* S4 headline: correct_labels for Union. *)
+Theorem correct_labels_union :
+  forall (A B : Geometry),
+    correct_labels Union (noded_labeled_graph A B) A B.
+Proof.
+  intros A B p q l Hin.
+  unfold edge_in_result, edge_geometrically_in_result.
+  rewrite Bool.orb_true_iff.
+  rewrite (in_left_iff_in_A A B p q l Hin).
+  rewrite (in_right_iff_in_B A B p q l Hin).
+  reflexivity.
+Qed.
+
+(* S5: correct_labels for Intersection. *)
+Theorem correct_labels_intersection :
+  forall (A B : Geometry),
+    correct_labels Intersection (noded_labeled_graph A B) A B.
+Proof.
+  intros A B p q l Hin.
+  unfold edge_in_result, edge_geometrically_in_result.
+  rewrite Bool.andb_true_iff.
+  rewrite (in_left_iff_in_A A B p q l Hin).
+  rewrite (in_right_iff_in_B A B p q l Hin).
+  reflexivity.
+Qed.
+
+(* S6: correct_labels for Difference. *)
+Theorem correct_labels_difference :
+  forall (A B : Geometry),
+    correct_labels Difference (noded_labeled_graph A B) A B.
+Proof.
+  intros A B p q l Hin.
+  unfold edge_in_result, edge_geometrically_in_result.
+  rewrite Bool.andb_true_iff.
+  rewrite Bool.negb_true_iff.
+  rewrite (in_left_iff_in_A A B p q l Hin).
+  rewrite (in_right_false_iff_not_true l).
+  rewrite (in_right_iff_in_B A B p q l Hin).
+  reflexivity.
+Qed.
+
+(* S7: correct_labels for SymDiff. *)
+Theorem correct_labels_symdiff :
+  forall (A B : Geometry),
+    correct_labels SymDiff (noded_labeled_graph A B) A B.
+Proof.
+  intros A B p q l Hin.
+  unfold edge_in_result, edge_geometrically_in_result. unfold xorb.
+  pose proof (in_left_iff_in_A A B p q l Hin) as HL.
+  pose proof (in_right_iff_in_B A B p q l Hin) as HR.
+  destruct (in_left l) eqn:HLeq; destruct (in_right l) eqn:HReq; simpl.
+  - (* both true: edge_in_result xorb true true = false; geometric must fail *)
+    split; intro H; [discriminate|].
+    exfalso. destruct H as [[Ha Hb] | [Ha Hb]].
+    + apply Hb. apply HR. reflexivity.
+    + apply Hb. apply HL. reflexivity.
+  - (* in_left true, in_right false: edge_in_result xorb true false = true *)
+    split; intros _.
+    + left. split.
+      * apply HL. reflexivity.
+      * intros Hin_B. apply HR in Hin_B. congruence.
+    + reflexivity.
+  - (* in_left false, in_right true *)
+    split; intros _.
+    + right. split.
+      * apply HR. reflexivity.
+      * intros Hin_A. apply HL in Hin_A. congruence.
+    + reflexivity.
+  - (* both false: edge_in_result xorb false false = false *)
+    split; intro H; [discriminate|].
+    exfalso. destruct H as [[Ha Hb] | [Ha Hb]].
+    + apply HL in Ha. congruence.
+    + apply HR in Ha. congruence.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
@@ -245,3 +427,7 @@ Qed.
 Print Assumptions snap_noding_bridge.
 Print Assumptions valid_topology_graph_noded_labeled_graph.
 Print Assumptions correct_labels_union_forward.
+Print Assumptions correct_labels_union.
+Print Assumptions correct_labels_intersection.
+Print Assumptions correct_labels_difference.
+Print Assumptions correct_labels_symdiff.
