@@ -55,6 +55,7 @@ From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
 
 From NTS.Proofs Require Import Distance.
+From NTS.Proofs Require Import Segment.
 From NTS.Proofs Require Import CurveGeometry.
 From NTS.Proofs Require Import ArcOrient.
 
@@ -88,10 +89,8 @@ Definition arc_span_contains (a : CircularArc) (P : Point) : Prop :=
 
 Definition arc_chord_intersects
     (a : CircularArc) (P Q : Point) : Prop :=
-  exists (X : Point) (t : R),
-    0 <= t <= 1 /\
-    px X = (1 - t) * px P + t * px Q /\
-    py X = (1 - t) * py P + t * py Q /\
+  exists X : Point,
+    between P Q X /\
     inCircle_R (arc_start a) (arc_mid a) (arc_end a) X = 0 /\
     arc_span_contains a X.
 
@@ -111,13 +110,20 @@ Definition arc_arc_intersects
     arc_span_contains a2 X.
 
 (* -------------------------------------------------------------------------- *)
-(* §4  Necessary-condition predicate: chord crosses circumcircle.             *)
+(* §4  SUFFICIENT-condition predicate: chord crosses circumcircle.            *)
 (*                                                                            *)
-(* `chord_crosses_arc_circle a P Q`: the inCircle_R signs at P and Q differ. *)
-(* This is the sign-change condition that an IVT argument would use to show  *)
-(* existence of a circle-crossing point along the chord.  Computable from   *)
-(* point coordinates alone (no existential).  Useful as a fast filter        *)
-(* before the more expensive `arc_chord_intersects` test.                    *)
+(* `chord_crosses_arc_circle a P Q`: the inCircle_R signs at P and Q differ  *)
+(* strictly.  Under the IVT this is SUFFICIENT for the chord to cross the    *)
+(* circle (one endpoint inside, one outside guarantees a transition through  *)
+(* the circle).  It is NOT NECESSARY: both endpoints can lie outside while   *)
+(* the chord crosses the circle twice (passes through and back out), in     *)
+(* which case both inCircle_R values have the same sign and their product   *)
+(* is positive.  Also, the strict `< 0` excludes endpoint-on-circle hits     *)
+(* (product = 0); callers needing those should compose this filter with     *)
+(* explicit endpoint-on-circle tests, or use `<= 0` if relaxation is safe.   *)
+(*                                                                            *)
+(* Useful as a fast positive filter (when this fires, an IVT-based proof    *)
+(* of `arc_chord_intersects` is in scope), not as a rejection filter.        *)
 (* -------------------------------------------------------------------------- *)
 
 Definition chord_crosses_arc_circle
@@ -155,28 +161,23 @@ Proof.
   apply arc_interior_side_mid. exact Hva.
 Qed.
 
-(* Arc-chord intersection is symmetric in the chord direction. *)
+(* Arc-chord intersection is symmetric in the chord direction.
+   Uses `between_symmetric` from theories/Segment.v to flip P and Q. *)
 Lemma arc_chord_intersects_sym :
   forall (a : CircularArc) (P Q : Point),
     arc_chord_intersects a P Q <->
     arc_chord_intersects a Q P.
 Proof.
   intros a P Q.
-  split; intros [X [t [Ht [Hpx [Hpy [Hcirc Hspan]]]]]];
-    exists X, (1 - t);
-    repeat split.
-  - lra.
-  - lra.
-  - rewrite Hpx. ring.
-  - rewrite Hpy. ring.
-  - exact Hcirc.
-  - exact Hspan.
-  - lra.
-  - lra.
-  - rewrite Hpx. ring.
-  - rewrite Hpy. ring.
-  - exact Hcirc.
-  - exact Hspan.
+  split; intros [X [Hbtw [Hcirc Hspan]]]; exists X.
+  - split; [|split].
+    + apply between_symmetric. exact Hbtw.
+    + exact Hcirc.
+    + exact Hspan.
+  - split; [|split].
+    + apply between_symmetric. exact Hbtw.
+    + exact Hcirc.
+    + exact Hspan.
 Qed.
 
 (* Arc-arc intersection is symmetric in arc order. *)
