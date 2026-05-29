@@ -265,10 +265,11 @@ This is the load-bearing decision before Session 2.
         degree-4 arc intersection.  **Action**: postpone to
         Session 4-5 if Option A is chosen; not relevant to
         Option B.
-  - [ ] **STRATEGIC DECISION before Session 2**: exact arc geometry
-        (Option A, 20+ sessions, includes research gap) vs chord
-        approximation (Option B, 7 sessions, mirrors NTS
-        implementation).  **Recommendation**: Option B.
+  - [x] **STRATEGIC DECISION before Session 2** — **CONFIRMED
+        2026-05-29: Option B (chord approximation, 7 sessions).**
+        Exact arc geometry (Option A, 20+ sessions, includes
+        research gap) deferred to a potential Phase 5 contingent on
+        downstream demand.
   - [ ] After Session 7 (or whichever Phase 4 endpoint),
         re-evaluate whether downstream consumers (NetTopologySuite,
         upstream JTS PRs) are asking for exact arc support.  If
@@ -280,12 +281,14 @@ This is the load-bearing decision before Session 2.
 ## §7 — Strategic-decision summary
 
 The decision flagged in §6 (Option A exact arc vs Option B chord
-approximation) is the load-bearing question for Phase 4.  This audit
-recommends:
+approximation) is the load-bearing question for Phase 4.
+
+**DECISION (2026-05-29): Option B confirmed.**
 
 ```
 ═══════════════════════════════════════════════════════════════
-  RECOMMENDATION: Option B (chord approximation, 7 sessions).
+  DECISION CONFIRMED 2026-05-29:
+    Option B (chord approximation, 7 sessions).
 ═══════════════════════════════════════════════════════════════
 
 Rationale:
@@ -306,10 +309,10 @@ When to choose Option A:
 ═══════════════════════════════════════════════════════════════
 ```
 
-This decision should be **explicit** before Session 2 starts —
-either confirmed (Option B) or revised (Option A).  The 7-session
-plan in §5 assumes Option B; switching to Option A invalidates
-Sessions 4-7 and adds Sessions 11-20+.
+**Decision recorded 2026-05-29: Option B (chord approximation).**
+The 7-session plan in §5 is now the committed Phase 4 program.
+Session 2 (CircularArc type + chord approximation function) is
+the next concrete deliverable.
 
 ---
 
@@ -321,7 +324,8 @@ Sessions 4-7 and adds Sessions 11-20+.
     classification** (~15 TRANSFER, ~7 GENERALIZE, ~9 NEW PROOF).
   - Confirms the HasIntersect abstraction question (parallel
     typeclasses, no refactor needed).
-  - Frames the load-bearing Option A vs Option B decision for
-    Session 2 with explicit recommendation.
+  - **Records the load-bearing Option B decision (chord
+    approximation, 7 sessions).**  Phase 4 program now committed;
+    Session 2 ready to start.
 
 No `.v` changes.  No Admitteds.  Registry: unchanged.
