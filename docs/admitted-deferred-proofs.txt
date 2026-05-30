@@ -216,3 +216,45 @@ theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-theorem
 # Consumer: overlay_ng_correct_conditional (S15) and the Phase 3
 # headline correctness theorem.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/audit-phase3-milestone5.md | §4.3,§7
+
+# ============================================================================
+# Phase 4 Session C deferred entry.
+# ============================================================================
+
+# `b64_inCircle_R_exact` -- binary64 mirror of inCircle_R is bit-exact
+# under arc_coord_int_safe inputs (|n| <= 2^11).
+#
+# Discharges the Section Variable `b64_inCircle_R_correct` from
+# theories-flocq/ArcOrient_b64.v / ArcIntersect_b64.v.  Once landed,
+# unblocks unconditional soundness of the b64_inCircle_sign decision
+# procedure + b64_chord_crosses_arc_circle + INCIRCLE_SIGN extracted
+# oracle mode.
+#
+# Status: Admitted pending restructuring.  An initial monolithic
+# Ltac script of the full ~22-step chain triggered an OOM kill
+# (exit 137) during Coq term elaboration -- cumulative size of the
+# integer-bound hypotheses + the final B2R-equals-inCircle_R
+# reflexivity over fully-unfolded BPoint accessors exceeded the
+# build environment's memory budget.
+#
+# The proof IS provable; what remains is restructuring into per-
+# tier sub-lemmas with bounded contexts:
+#   Tier 1 (6x b64_minus_int_exact)  -- differences, |.| <= 2^12.
+#   Tier 2 (6x b64_mult_int_exact)   -- squared diffs, |.| <= 2^24.
+#   Tier 3 (3x b64_plus_int_exact)   -- na, nb, nc, |.| <= 2^25.
+#   Tier 4 (6x b64_mult + 3x b64_minus) -- degree-3, |.| <= 2^38.
+#   Tier 5 (3x b64_mult_int_exact)   -- degree-4 rows, |.| <= 2^50.
+#   Tier 6 (1x b64_minus + 1x b64_plus) -- final, |.| <= 2^52.
+# Plus a small composition theorem matching the inCircle_R R-side
+# expansion (IZR distributes over the integer determinant terms).
+#
+# Tools: existing Orient_b64_exact.v b64_*_int_exact lemmas, the
+# magnitude-budget chain in arc_coord_int_safe (2^11 -> 2^12 -> ... -> 2^52).
+# Pure mechanical algebra; no JCT or new mathematical content.
+# Estimated 1-2 sessions of focused factoring.
+#
+# Consumer: b64_inCircle_sign_sound_unconditional and the
+# Phase 4 Session B b64_chord_crosses_arc_circle_sound; replacing
+# the hand-rolled INCIRCLE_SIGN / ARC_CHORD_CROSSES_CIRCLE oracle
+# modes with extracted versions backed by this exactness.
+theories-flocq/ArcOrient_b64_exact.v:b64_inCircle_R_exact | theories-flocq/ArcOrient_b64_exact.v | §1,§2

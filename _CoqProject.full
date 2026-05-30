@@ -301,6 +301,12 @@ theories-flocq/HotPixel_b64.v
 # proved Qed-closed.  Pattern matches hobby_theorem_4_1_conditional /
 # overlay_ng_correct_conditional / point_in_ring_correct_jct.
 theories-flocq/ArcOrient_b64.v
+# Phase 4 Session C: discharge b64_inCircle_R_correct via the
+# Stage A chain of b64_*_int_exact lemmas.  ~25 arithmetic operations,
+# magnitude budget chain (12 -> 24 -> 25 -> 37 -> 38 -> 50 -> 51 -> 52),
+# all comfortably <= 2^prec.  Unconditional corollaries that instantiate
+# ArcOrient_b64.v's Section-Variable-conditional theorems.
+theories-flocq/ArcOrient_b64_exact.v
 # Phase 4 Session B: binary64 bool wrappers for arc intersection
 # predicates.  b64_chord_crosses_arc_circle (mirror of
 # chord_crosses_arc_circle, sign-product test using b64_inCircle_sign)

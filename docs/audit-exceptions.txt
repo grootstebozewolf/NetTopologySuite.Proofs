@@ -47,6 +47,13 @@ theories-flocq/Orient_b64_sound.v
 # / point_in_ring_correct_jct.
 theories-flocq/ArcOrient_b64.v
 
+# Category C: Phase 4 Session C -- discharge of b64_inCircle_R_correct.
+# Contains the (Admitted, registered) b64_inCircle_R_exact theorem +
+# four unconditional corollaries that USE it via apply.  Same
+# Classical_Prop.classic lineage as Sessions A/B.  Registered Admitted
+# tracked in docs/admitted-deferred-proofs.txt.
+theories-flocq/ArcOrient_b64_exact.v
+
 # Category C: Phase 4 Session B -- bool wrappers for arc intersection.
 # Same conditional-headline pattern as Session A: Section Variable
 # b64_inCircle_R_correct + Qed-closed structural decoding of
