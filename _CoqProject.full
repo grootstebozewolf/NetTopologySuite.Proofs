@@ -301,6 +301,15 @@ theories-flocq/HotPixel_b64.v
 # proved Qed-closed.  Pattern matches hobby_theorem_4_1_conditional /
 # overlay_ng_correct_conditional / point_in_ring_correct_jct.
 theories-flocq/ArcOrient_b64.v
+# Phase 4 Session B: binary64 bool wrappers for arc intersection
+# predicates.  b64_chord_crosses_arc_circle (mirror of
+# chord_crosses_arc_circle, sign-product test using b64_inCircle_sign)
+# and b64_arc_passes_through_hot_pixel_filter (mirror of the six-way
+# disjunction from arc_passes_through_hot_pixel).  Soundness theorem
+# is CONDITIONAL on b64_inCircle_R_correct (Section Variable, same as
+# Session A).  Pixel-filter full soundness deferred -- needs b64
+# pixel-corner bridges.
+theories-flocq/ArcIntersect_b64.v
 # Phase 2 milestone 3 (Slice 12): snap-rounding algorithm correctness.
 # The per-segment snap step + the preservation invariant (a segment passing
 # through a hot pixel still does so after snapping), on both the R-side spec

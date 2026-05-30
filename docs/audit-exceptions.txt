@@ -47,6 +47,15 @@ theories-flocq/Orient_b64_sound.v
 # / point_in_ring_correct_jct.
 theories-flocq/ArcOrient_b64.v
 
+# Category C: Phase 4 Session B -- bool wrappers for arc intersection.
+# Same conditional-headline pattern as Session A: Section Variable
+# b64_inCircle_R_correct + Qed-closed structural decoding of
+# b64_chord_crosses_arc_circle.  Inherits Classical_Prop.classic via the
+# b64_compare lineage (Bcompare_correct routes through classical Rcompare).
+# Pixel-filter (b64_arc_passes_through_hot_pixel_filter) defined; full
+# soundness deferred -- needs b64 pixel-corner bridges.  No Admitteds.
+theories-flocq/ArcIntersect_b64.v
+
 # Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
 # Every theorem here references `snap_round` / `b64_snap` /
 # `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements
