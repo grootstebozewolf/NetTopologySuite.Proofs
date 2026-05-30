@@ -316,6 +316,13 @@ theories-flocq/ArcOrient_b64_exact.v
 # Session A).  Pixel-filter full soundness deferred -- needs b64
 # pixel-corner bridges.
 theories-flocq/ArcIntersect_b64.v
+# Phase 4 Session D: pixel-corner bridges + unit-grid filter scope.
+# arc_coord_int_safe -> coord_int_safe (precondition strengthening).
+# Four corner-BPoint -> R-side pixel-corner bridges (b64_pixel_*_bridge)
+# Qed-closed, depending on two registered Admitteds for the single-
+# coord radius bridges (b64_minus_radius_bridge, b64_plus_radius_bridge)
+# whose discharge mirrors b64_minus_half_int_exact pattern from Phase 2.
+theories-flocq/ArcHotPixel_b64.v
 # Phase 2 milestone 3 (Slice 12): snap-rounding algorithm correctness.
 # The per-segment snap step + the preservation invariant (a segment passing
 # through a hot pixel still does so after snapping), on both the R-side spec

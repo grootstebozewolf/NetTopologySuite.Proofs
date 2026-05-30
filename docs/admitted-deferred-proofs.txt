@@ -258,3 +258,33 @@ theories-flocq/OverlayBridge.v:extract_rings_valid | docs/audit-phase3-milestone
 # the hand-rolled INCIRCLE_SIGN / ARC_CHORD_CROSSES_CIRCLE oracle
 # modes with extracted versions backed by this exactness.
 theories-flocq/ArcOrient_b64_exact.v:b64_inCircle_R_exact | theories-flocq/ArcOrient_b64_exact.v | §1,§2
+
+# ============================================================================
+# Phase 4 Session D deferred entries.
+# ============================================================================
+
+# `b64_minus_radius_bridge` / `b64_plus_radius_bridge` -- pixel-corner
+# single-coord BPoint-to-R bridges at unit-grid (scale = b64_one).
+#
+# Each states: under coord_int_safe x,
+#   B2R (b64_minus x (b64_hot_pixel_radius b64_one)) = B2R x - /2
+#   /\ is_finite ... = true
+# (and the analogous + version).
+#
+# Status: Admitted pending discharge.  Proof structure mirrors
+# `b64_minus_half_int_exact` / `b64_plus_half_int_exact` from
+# HotPixel_b64.v, with `b64_hot_pixel_radius b64_one` substituted
+# for `b64_half` -- both have the same B2R = /2 via
+# `b64_hot_pixel_radius_at_one`.  Each lemma ~30-50 lines of
+# straightforward generic-format reasoning + b64_safe + b64_minus/
+# plus_correct.  Bounded scope (one operation each), so no OOM
+# concern.
+#
+# Tools: HotPixel_b64.v's b64_hot_pixel_radius_at_one,
+# generic_format_F2R_27bit_exp_neg1, b64_round_generic.
+# Pure mechanical algebra.  Estimated 1/2 session combined.
+#
+# Consumer: b64_pixel_*_bridge (Qed-closed) and any future
+# b64_arc_passes_through_hot_pixel_filter_unit_sound.
+theories-flocq/ArcHotPixel_b64.v:b64_minus_radius_bridge | theories-flocq/ArcHotPixel_b64.v | §2
+theories-flocq/ArcHotPixel_b64.v:b64_plus_radius_bridge  | theories-flocq/ArcHotPixel_b64.v | §2

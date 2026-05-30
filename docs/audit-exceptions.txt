@@ -63,6 +63,14 @@ theories-flocq/ArcOrient_b64_exact.v
 # soundness deferred -- needs b64 pixel-corner bridges.  No Admitteds.
 theories-flocq/ArcIntersect_b64.v
 
+# Category C: Phase 4 Session D -- pixel-corner bridges at unit-grid.
+# Four BPoint-to-R-pixel-corner bridges (Qed-closed) depending on two
+# registered Admitteds (b64_minus_radius_bridge, b64_plus_radius_bridge)
+# whose discharge mirrors HotPixel_b64.v's b64_minus_half_int_exact at
+# b64_hot_pixel_radius b64_one (B2R = /2 by b64_hot_pixel_radius_at_one).
+# Same Classical_Prop.classic lineage via b64_minus_correct.
+theories-flocq/ArcHotPixel_b64.v
+
 # Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
 # Every theorem here references `snap_round` / `b64_snap` /
 # `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements
