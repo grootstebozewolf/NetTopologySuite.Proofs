@@ -26,8 +26,6 @@
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
 From Stdlib Require Import List.
-From Stdlib Require Import Ratan.
-From Stdlib Require Import Rtrigo1.
 
 From NTS.Proofs Require Import Distance.
 From NTS.Proofs Require Import Overlay.
@@ -37,65 +35,24 @@ Import ListNotations.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* §1  Tangent 5A: atan2 definition + trivial property.                       *)
+(* §1  Tangent 5A: atan2 — DOCUMENTED ONLY, not landed in code.               *)
 (* -------------------------------------------------------------------------- *)
 
-(* Standard quadrant-corrected arctangent.  Convention: at the origin
-   (x = 0, y = 0) we return 0 (Coq's standard, also matches IEEE 754 atan2
-   when the inputs are ordinary zeros). *)
-Definition atan2 (y x : R) : R :=
-  if Rgt_dec x 0 then atan (y / x)
-  else if Rlt_dec x 0 then
-    if Rge_dec y 0 then atan (y / x) + PI
-    else atan (y / x) - PI
-  else  (* x = 0 *)
-    if Rgt_dec y 0 then PI / 2
-    else if Rlt_dec y 0 then - (PI / 2)
-    else 0.
+(* The Tangent 5A `atan2` definition + properties (atan2_pos_x,
+   atan2_neg_x_pos_y, atan2_zero_x_pos_y, atan2_origin) close cleanly
+   but transitively pull `Classical_Prop.classic` because Stdlib's
+   `atan` (Ratan.v:549) is itself defined classically (via `pre_atan`
+   over the completeness axiom).  Any use of `atan` -- including a
+   trivial `atan 0 = 0` -- pulls `classic` into the axiom footprint.
 
-Lemma atan2_pos_x :
-  forall y x : R,
-    x > 0 ->
-    atan2 y x = atan (y / x).
-Proof.
-  intros y x Hx.
-  unfold atan2.
-  destruct (Rgt_dec x 0) as [_ | Hcontra]; [reflexivity|].
-  exfalso; apply Hcontra; exact Hx.
-Qed.
-
-(* Bonus -- a few more simple atan2 properties that close cleanly. *)
-Lemma atan2_neg_x_pos_y :
-  forall y x : R,
-    x < 0 -> y >= 0 ->
-    atan2 y x = atan (y / x) + PI.
-Proof.
-  intros y x Hx Hy.
-  unfold atan2.
-  destruct (Rgt_dec x 0) as [Hgt | _]; [lra|].
-  destruct (Rlt_dec x 0) as [_ | Hc]; [|contradiction].
-  destruct (Rge_dec y 0) as [_ | Hc]; [reflexivity|contradiction].
-Qed.
-
-Lemma atan2_zero_x_pos_y :
-  forall y : R, y > 0 -> atan2 y 0 = PI / 2.
-Proof.
-  intros y Hy.
-  unfold atan2.
-  destruct (Rgt_dec 0 0) as [Hc | _]; [lra|].
-  destruct (Rlt_dec 0 0) as [Hc | _]; [lra|].
-  destruct (Rgt_dec y 0) as [_ | Hc]; [reflexivity|contradiction].
-Qed.
-
-Lemma atan2_origin : atan2 0 0 = 0.
-Proof.
-  unfold atan2.
-  destruct (Rgt_dec 0 0) as [Hc | _]; [lra|].
-  destruct (Rlt_dec 0 0) as [Hc | _]; [lra|].
-  destruct (Rgt_dec 0 0) as [Hc | _]; [lra|].
-  destruct (Rlt_dec 0 0) as [Hc | _]; [lra|].
-  reflexivity.
-Qed.
+   Per the green workflow's "no axiom expansion" discipline, atan2
+   is documented in `docs/point-in-ring-tangent-attempts.md` §5A but
+   NOT landed in code.  Landing it would require either:
+     1. Adding `theories/PointInRingTangents.v` to
+        `docs/audit-exceptions.txt`, OR
+     2. Putting atan2 in a dedicated file (e.g. `theories/Atan2.v`)
+        that is itself exempted.
+   Both are policy-level decisions deferred to a future session. *)
 
 (* -------------------------------------------------------------------------- *)
 (* §2  Tangent 5D: Option C bypass theorem.                                   *)
@@ -303,9 +260,6 @@ Qed.
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions atan2_pos_x.
-Print Assumptions atan2_neg_x_pos_y.
-Print Assumptions atan2_origin.
 Print Assumptions point_in_ring_correct_via_crossing.
 Print Assumptions count_crossings_correct_via_crossing.
 Print Assumptions not_geometric_interior_on_edge.
