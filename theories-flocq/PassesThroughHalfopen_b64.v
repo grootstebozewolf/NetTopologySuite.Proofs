@@ -491,37 +491,171 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §8 Divergence witness -- DEFERRED.                                         *)
+(* §8 Divergence witness.                                                     *)
+(*                                                                            *)
+(* There exist b64 inputs where the closed filter accepts (`= true`) and the *)
+(* half-open filter rejects (`= false`).  Construction:                       *)
+(*                                                                            *)
+(*   P0 = (1, 0), P1 = (1, 0), C = (1/2, 0).                                  *)
+(*                                                                            *)
+(* Pixel slabs at this center: x in [0, 1] (closed) vs [0, 1) (half-open),    *)
+(* y in [-1/2, 1/2] vs [-1/2, 1/2).  The segment is the degenerate point     *)
+(* (1, 0) on the upper x-boundary of the closed slab (which the closed       *)
+(* filter accepts) but outside the half-open slab (which the half-open       *)
+(* filter rejects via `lb_inslab_halfopen_x = false`).  Snap is identity     *)
+(* at integer coordinates so the snapped filter agrees with the original.    *)
+(*                                                                            *)
+(* The bracket lemma above is the option-layer pin's load-bearing piece;     *)
+(* this witness formalises the bracket gap's non-vacuity, evident at the    *)
+(* spec level from `in_hot_pixel`'s `<= , <` shape.                          *)
 (* -------------------------------------------------------------------------- *)
 
-(* There exist inputs where the closed filter accepts and the half-open
-   filter rejects.  Construction sketch:
+(* Local b64 zero -- the IEEE positive zero. *)
+Definition b64_zero : binary64 := Binary.B754_zero prec emax false.
 
-     P0 = (1, 0), P1 = (1, 0), C = (1/2, 0).
-   Pixel slabs: x = [0, 1), y = [-1/2, 1/2).  The segment is the degenerate
-   point (1, 0) on the upper x-boundary of the closed slab [0, 1] (which
-   the closed filter accepts) but outside the half-open slab [0, 1) (which
-   the half-open filter rejects via `lb_inslab_halfopen_x = false`).
-   snap is identity at integer coordinates, so the snapped filter
-   evaluation matches the original.
+Lemma B2R_b64_zero : Binary.B2R prec emax b64_zero = 0.
+Proof. reflexivity. Qed.
 
-   Status: deferred to a small follow-up because the proof obligation
-   reduces to symbolic boolean evaluation over b64 constants
-   (`b64_one`, `b64_half`, `b64_zero`), which in turn requires invoking
-   Flocq's `binary_normalize_correct` to get
-   `Binary.B2R prec emax b64_half = / 2` etc. (the `reflexivity` proofs
-   do not work because `binary_normalize` is opaque under cbv).  ~30-50
-   lines of focused Flocq lemma plumbing -- separable from this session's
-   load-bearing sound/complete/bracket trio.  The proof of the divergence
-   lemma itself, once the b64-constant B2R bridge lemmas are in hand,
-   is mechanical (unfold filter, destruct `Req_dec_T` on the degenerate
-   axis, evaluate `Rle_bool` / `Rlt_bool` via `lra`).
+(* `snap_round_coord 1 1 = 1`: 1 is already on the unit integer grid, so
+   round-to-nearest-even is the identity. *)
+Lemma snap_round_coord_one : snap_round_coord 1 1 = 1.
+Proof.
+  unfold snap_round_coord. rewrite Rmult_1_r, Rdiv_1_r.
+  apply round_generic; auto with typeclass_instances.
+  apply generic_format_FIX.
+  exists (Defs.Float radix2 1%Z 0%Z); simpl.
+  - unfold F2R; simpl. lra.
+  - reflexivity.
+Qed.
 
-   The bracket lemma above is the option-layer pin's load-bearing piece
-   (`halfopen TRUE -> closed TRUE`); the divergence witness only
-   formalises the bracket gap's non-vacuity, which is also evident at
-   the spec level from in_hot_pixel's `<= , <` shape (the upper-boundary
-   point grazes the closed pixel but not the half-open one). *)
+(* `snap_round_coord 0 1 = 0`. *)
+Lemma snap_round_coord_zero : snap_round_coord 0 1 = 0.
+Proof.
+  unfold snap_round_coord. rewrite Rmult_0_l, Rdiv_1_r.
+  apply round_0; auto with typeclass_instances.
+Qed.
+
+(* B2R of the snapped b64_one is 1 (1 stays on the integer grid). *)
+Lemma B2R_b64_snap_one :
+  Binary.B2R prec emax (b64_snap_coord b64_one) = 1.
+Proof.
+  rewrite b64_snap_coord_B2R, B2R_b64_one.
+  apply snap_round_coord_one.
+Qed.
+
+(* B2R of the snapped b64_zero is 0. *)
+Lemma B2R_b64_snap_zero :
+  Binary.B2R prec emax (b64_snap_coord b64_zero) = 0.
+Proof.
+  rewrite b64_snap_coord_B2R, B2R_b64_zero.
+  apply snap_round_coord_zero.
+Qed.
+
+(* lb_inslab on the degenerate axis at x = upper boundary: closed = true. *)
+Lemma lb_inslab_one_one_zero_one : lb_inslab 1 1 0 1 = true.
+Proof.
+  unfold lb_inslab.
+  destruct (Req_dec_T 1 1) as [_ | Hne]; [|exfalso; apply Hne; reflexivity].
+  apply Bool.andb_true_iff. split; apply Rle_bool_true; lra.
+Qed.
+
+(* lb_inslab_halfopen on the degenerate axis at x = upper boundary: false
+   (the strict `c0 < hi` check excludes the boundary). *)
+Lemma lb_inslab_halfopen_one_one_zero_one :
+  lb_inslab_halfopen 1 1 0 1 = false.
+Proof.
+  unfold lb_inslab_halfopen.
+  destruct (Req_dec_T 1 1) as [_ | Hne]; [|exfalso; apply Hne; reflexivity].
+  apply Bool.andb_false_iff. right.
+  apply Rlt_bool_false. lra.
+Qed.
+
+(* lb_inslab on the degenerate y-axis at y=0 in slab [-1/2, 1/2]: true. *)
+Lemma lb_inslab_zero_zero_halfneg_half : lb_inslab 0 0 (- / 2) (/ 2) = true.
+Proof.
+  unfold lb_inslab.
+  destruct (Req_dec_T 0 0) as [_ | Hne]; [|exfalso; apply Hne; reflexivity].
+  apply Bool.andb_true_iff. split; apply Rle_bool_true; lra.
+Qed.
+
+(* lb_tlo at the degenerate axis: 0. *)
+Lemma lb_tlo_degenerate : forall c lo hi, lb_tlo c c lo hi = 0.
+Proof.
+  intros. unfold lb_tlo.
+  destruct (Req_dec_T c c) as [_ | Hne]; [reflexivity|].
+  exfalso; apply Hne; reflexivity.
+Qed.
+
+(* lb_thi at the degenerate axis: 1. *)
+Lemma lb_thi_degenerate : forall c lo hi, lb_thi c c lo hi = 1.
+Proof.
+  intros. unfold lb_thi.
+  destruct (Req_dec_T c c) as [_ | Hne]; [reflexivity|].
+  exfalso; apply Hne; reflexivity.
+Qed.
+
+(* The boundary divergence witness.  Closed filter accepts, half-open
+   rejects, on the same b64 input. *)
+Theorem b64_passes_through_hot_pixel_boundary_diverges :
+  exists P0 P1 C : BPoint,
+    b64_passes_through_hot_pixel P0 P1 C = true /\
+    b64_passes_through_hot_pixel_halfopen P0 P1 C = false.
+Proof.
+  exists (mkBP b64_one b64_zero).
+  exists (mkBP b64_one b64_zero).
+  exists (mkBP b64_half b64_zero).
+  split.
+  - (* CLOSED filter: true. *)
+    unfold b64_passes_through_hot_pixel.
+    apply Bool.andb_true_iff. split.
+    + (* Original segment (1,0)-(1,0) at center (1/2, 0). *)
+      unfold b64_liang_barsky_touches.
+      cbn [bx by_].
+      rewrite B2R_b64_one, B2R_b64_half, B2R_b64_zero.
+      replace (/ 2 - / 2) with 0 by lra.
+      replace (/ 2 + / 2) with 1 by lra.
+      replace (0 - / 2) with (- / 2) by lra.
+      replace (0 + / 2) with (/ 2) by lra.
+      rewrite lb_inslab_one_one_zero_one.
+      rewrite lb_inslab_zero_zero_halfneg_half.
+      rewrite !lb_tlo_degenerate, !lb_thi_degenerate.
+      simpl andb.
+      apply Rle_bool_true.
+      apply Rmax_lub;
+        [apply Rmin_glb; [lra | apply Rmin_glb; lra]
+        |apply Rmax_lub;
+           [apply Rmin_glb; [lra | apply Rmin_glb; lra]
+           |apply Rmin_glb; [lra | apply Rmin_glb; lra]]].
+    + (* Snapped segment.  Snap of (1, 0) stays (B2R = 1, B2R = 0). *)
+      unfold b64_liang_barsky_touches.
+      cbn [bx by_ b64_snap].
+      rewrite B2R_b64_snap_one, B2R_b64_snap_zero.
+      rewrite B2R_b64_half, B2R_b64_zero.
+      replace (/ 2 - / 2) with 0 by lra.
+      replace (/ 2 + / 2) with 1 by lra.
+      replace (0 - / 2) with (- / 2) by lra.
+      replace (0 + / 2) with (/ 2) by lra.
+      rewrite lb_inslab_one_one_zero_one.
+      rewrite lb_inslab_zero_zero_halfneg_half.
+      rewrite !lb_tlo_degenerate, !lb_thi_degenerate.
+      simpl andb.
+      apply Rle_bool_true.
+      apply Rmax_lub;
+        [apply Rmin_glb; [lra | apply Rmin_glb; lra]
+        |apply Rmax_lub;
+           [apply Rmin_glb; [lra | apply Rmin_glb; lra]
+           |apply Rmin_glb; [lra | apply Rmin_glb; lra]]].
+  - (* HALFOPEN filter: false. *)
+    unfold b64_passes_through_hot_pixel_halfopen.
+    apply Bool.andb_false_iff. left.
+    unfold b64_liang_barsky_touches_halfopen.
+    cbn [bx by_].
+    rewrite B2R_b64_one, B2R_b64_half, B2R_b64_zero.
+    replace (/ 2 - / 2) with 0 by lra.
+    replace (/ 2 + / 2) with 1 by lra.
+    rewrite lb_inslab_halfopen_one_one_zero_one.
+    reflexivity.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
@@ -530,3 +664,7 @@ Qed.
 Print Assumptions b64_passes_through_hot_pixel_halfopen_sound.
 Print Assumptions b64_passes_through_hot_pixel_halfopen_complete.
 Print Assumptions b64_passes_through_hot_pixel_halfopen_implies_closed.
+Print Assumptions B2R_b64_zero.
+Print Assumptions snap_round_coord_one.
+Print Assumptions snap_round_coord_zero.
+Print Assumptions b64_passes_through_hot_pixel_boundary_diverges.
