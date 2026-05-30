@@ -41,6 +41,8 @@ From NTS.Proofs.Flocq Require Import Orientation_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64_exact.
 From NTS.Proofs       Require Import OverlayGraph.   (* edge_in_result *)
+From NTS.Proofs.Flocq Require Import ArcOrient_b64.    (* b64_inCircle_R / _sign *)
+From NTS.Proofs.Flocq Require Import ArcIntersect_b64. (* b64_chord_crosses_arc_circle *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -99,6 +101,13 @@ Extract Constant Orientation_b64.b64_three   => "3.0".
 Extract Constant Orientation_b64.b64_sixteen => "16.0".
 Extract Constant Orientation_b64.b64_eps     => "ldexp 1.0 (-52)".
 
+(* Phase 4 b64 constants used inside `b64_hot_pixel_radius` and the arc
+   layer.  Defined via `binary_normalize`, which under extraction reaches
+   the B754_finite constructor stub; override with native literals. *)
+Extract Constant HotPixel_b64.b64_one  => "1.0".
+Extract Constant HotPixel_b64.b64_two  => "2.0".
+Extract Constant HotPixel_b64.b64_half => "0.5".
+
 Extraction Language OCaml.
 
 (* Write the extracted code to `oracle/extracted.ml` (relative to the    *)
@@ -117,4 +126,8 @@ Extraction "oracle/extracted.ml"
   b64_intersect_point
   b64_intersect_point_x
   b64_intersect_point_y
-  edge_in_result.
+  edge_in_result
+  b64_inCircle_R
+  b64_inCircle_sign
+  b64_chord_crosses_arc_circle
+  b64_arc_passes_through_hot_pixel_filter.
