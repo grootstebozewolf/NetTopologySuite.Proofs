@@ -271,21 +271,19 @@ still gated by Seam 5/6 of the seam map (thesis-scale).
 ```coq
 Definition no_horizontal_edge_at (p : Point) (r : Ring) : Prop :=
   Forall (fun e : Edge => py (fst e) <> py (snd e)) (ring_edges r).
-
-Lemma no_horizontal_edge_at_implies_bool_matches_prop :
-  forall (p : Point) (e : Edge),
-    py (fst e) <> py (snd e) ->
-    let '(A, B) := e in
-    segment_crosses_ray p A B = true <-> edge_crosses_ray p (A, B).
 ```
+
+The per-edge agreement (`segment_crosses_ray P A B = true <->
+edge_crosses_ray P (A, B)` under `py A <> py B`) is exactly
+`segment_crosses_ray_matches_edge_crosses_ray` from §2.  Combined
+with `Forall_forall` over `no_horizontal_edge_at`, downstream callers
+get per-edge bool/Prop agreement without a wrapper lemma.
 
 ### Outcome
 
-**Qed** on the per-edge agreement lemma.
-
-`no_horizontal_edge_at` definition lands.  The simpler per-edge
-bool/Prop agreement is a direct corollary of
-`segment_crosses_ray_matches_edge_crosses_ray`.
+`no_horizontal_edge_at` definition lands.  Per-edge bool/Prop
+agreement reduces to the §2 lemma applied via `Forall_forall`; no
+new lemma needed.
 
 ### What does NOT close
 
@@ -354,7 +352,7 @@ px A) > px P` with explicit denominator hypotheses, instead of
 | 3: `geometric_interior` via fourcolor   | Stuck (Real.structure bridge) | 2-3 sessions |
 | 4: `point_in_ring_correct_conditional`  | **Qed (vacuous)** | — (gated by Seam 3) |
 | 5: `winding_number` definition          | Stuck (atan2 / Coquelicot) | 1-2 sessions |
-| 6: `no_horizontal_edge_at` per-edge     | **Qed** (per-edge only) | 1 session (list-level, joint with Seam 2) |
+| 6: `no_horizontal_edge_at` definition   | Defined (per-edge via §2 lemma) | 1 session (list-level, joint with Seam 2) |
 | 7: cross_R_pt forward direction         | **Qed** (forward only) | ½ session (reverse direction) |
 
 **Qed-closed Coq results landed:**
@@ -368,8 +366,7 @@ px A) > px P` with explicit denominator hypotheses, instead of
   - `segment_crosses_ray_non_horizontal` (bool firing implies
     non-horizontal segment).
   - `point_in_ring_correct_conditional` (vacuous, records shape).
-  - `no_horizontal_edge_at` (definition) +
-    `no_horizontal_edge_at_implies_bool_matches_prop`.
+  - `no_horizontal_edge_at` (definition).
   - `segment_crosses_ray_implies_right`.
   - `segment_crosses_ray_implies_cross_R_pt` (forward direction).
 

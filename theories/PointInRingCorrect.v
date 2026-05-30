@@ -20,7 +20,6 @@ From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
 From Stdlib Require Import List.
 From Stdlib Require Import Bool.
-From Stdlib Require Import Arith.
 
 From NTS.Proofs Require Import Distance.
 From NTS.Proofs Require Import ArcOrient.   (* cross_R_pt *)
@@ -79,14 +78,12 @@ Lemma segment_crosses_ray_sound :
 Proof.
   intros P A B H.
   unfold segment_crosses_ray in H.
-  destruct (Rlt_b (py A) (py P)) eqn:HAlt;
-  destruct (Rlt_b (py P) (py B)) eqn:HPB;
-  cbn [andb] in H.
+  set (t := (py P - py A) / (py B - py A)) in *.
+  destruct (Rlt_b (py A) (py P) && Rlt_b (py P) (py B)) eqn:HC1.
   - (* Case 1: py A < py P < py B *)
-    apply Rlt_b_iff_true in HAlt. apply Rlt_b_iff_true in HPB.
-    apply Rlt_b_iff_true in H.
+    apply andb_true_iff in HC1 as [HAlt HPB].
+    apply Rlt_b_iff_true in HAlt, HPB, H.
     assert (Hd : 0 < py B - py A) by lra.
-    set (t := (py P - py A) / (py B - py A)) in *.
     exists t. split; [|split].
     + unfold t; split.
       * apply Rdiv_lt_0_compat; lra.
@@ -94,62 +91,18 @@ Proof.
         unfold Rdiv. rewrite Rmult_assoc, Rinv_l by lra. lra.
     + unfold t. field. lra.
     + unfold t.
-      assert (Heq : px A + (py P - py A) / (py B - py A) * (px B - px A)
-                  = px A + (px B - px A) * (py P - py A) / (py B - py A))
+      replace (px A + (py P - py A) / (py B - py A) * (px B - px A))
+        with (px A + (px B - px A) * (py P - py A) / (py B - py A))
         by (field; lra).
-      rewrite Heq. exact H.
-  - (* HAlt = true, HPB = false: fall through to case 2 *)
-    destruct (Rlt_b (py B) (py P)) eqn:HBlt;
-    destruct (Rlt_b (py P) (py A)) eqn:HPA;
-    cbn [andb] in H; try discriminate.
-    apply Rlt_b_iff_true in HBlt. apply Rlt_b_iff_true in HPA.
-    apply Rlt_b_iff_true in H.
-    apply Rlt_b_iff_true in HAlt.
-    (* py A < py P AND py P < py A -- contradiction *)
-    lra.
-  - (* HAlt = false: skip case 1, check case 2 *)
-    destruct (Rlt_b (py B) (py P)) eqn:HBlt;
-    destruct (Rlt_b (py P) (py A)) eqn:HPA;
-    cbn [andb] in H; try discriminate.
-    apply Rlt_b_iff_true in HBlt. apply Rlt_b_iff_true in HPA.
-    apply Rlt_b_iff_true in H.
-    assert (Hd : 0 < py A - py B) by lra.
-    set (t := (py P - py A) / (py B - py A)) in *.
-    exists t. split; [|split].
-    + assert (Hdneg : py B - py A < 0) by lra.
-      assert (Hnum : py P - py A < 0) by lra.
-      unfold t; split.
-      * unfold Rdiv.
-        assert (Hinv : / (py B - py A) < 0)
-          by (apply Rinv_lt_0_compat; lra).
-        nra.
-      * (* t = (py P - py A) / (py B - py A); both negative.
-           Show t < 1 i.e. (py P - py A) > (py B - py A) since denom neg flips.
-           From HPA: py P < py A so py P - py A < 0.
-           From HBlt: py B < py P so py B - py P < 0 i.e. py B - py A < py P - py A.
-         *)
-        unfold Rdiv.
-        apply (Rmult_lt_reg_r (- (py B - py A))); [lra|].
-        replace ((py P - py A) * / (py B - py A) * - (py B - py A))
-          with (py A - py P) by (field; lra).
-        lra.
-    + unfold t. field. lra.
-    + unfold t.
-      assert (Heq : px A + (py P - py A) / (py B - py A) * (px B - px A)
-                  = px B + (px A - px B) * (py P - py B) / (py A - py B))
-        by (field; lra).
-      rewrite Heq. exact H.
-  - (* Both HAlt and HPB false: case 1 false, check case 2 *)
-    destruct (Rlt_b (py B) (py P)) eqn:HBlt;
-    destruct (Rlt_b (py P) (py A)) eqn:HPA;
-    cbn [andb] in H; try discriminate.
-    apply Rlt_b_iff_true in HBlt. apply Rlt_b_iff_true in HPA.
-    apply Rlt_b_iff_true in H.
+      exact H.
+  - (* Case 1 fails; check Case 2: py B < py P < py A *)
+    destruct (Rlt_b (py B) (py P) && Rlt_b (py P) (py A)) eqn:HC2;
+      [|discriminate].
+    apply andb_true_iff in HC2 as [HBlt HPA].
+    apply Rlt_b_iff_true in HBlt, HPA, H.
     assert (Hd : py B < py A) by lra.
-    set (t := (py P - py A) / (py B - py A)) in *.
     exists t. split; [|split].
     + assert (Hdneg : py B - py A < 0) by lra.
-      assert (Hnum : py P - py A < 0) by lra.
       unfold t; split.
       * unfold Rdiv.
         assert (Hinv : / (py B - py A) < 0)
@@ -162,10 +115,10 @@ Proof.
         lra.
     + unfold t. field. lra.
     + unfold t.
-      assert (Heq : px A + (py P - py A) / (py B - py A) * (px B - px A)
-                  = px B + (px A - px B) * (py P - py B) / (py A - py B))
+      replace (px A + (py P - py A) / (py B - py A) * (px B - px A))
+        with (px B + (px A - px B) * (py P - py B) / (py A - py B))
         by (field; lra).
-      rewrite Heq. exact H.
+      exact H.
 Qed.
 
 (* Completeness: a parametric witness yields the bool predicate.
@@ -419,8 +372,9 @@ Section ConditionalPointInRingCorrect.
   (* Trivially true.  The point of the statement is to record the
      SHAPE of the bidirectional correctness lemma we eventually want
      to discharge -- with `interior` plugged in by a future JCT
-     toolkit. *)
-  Theorem point_in_ring_correct_conditional :
+     toolkit.  `Lemma` not `Theorem` because the statement is
+     vacuous; no `Print Assumptions` ceremony warranted. *)
+  Lemma point_in_ring_correct_conditional :
     forall (p : Point) (r : Ring),
       ring_simple r ->
       ring_closed r ->
@@ -524,21 +478,14 @@ Definition no_horizontal_edge_at (p : Point) (r : Ring) : Prop :=
    doesn't follow from the count without the bool/Prop classifier
    alignment which IS the load-bearing step. *)
 
-(* A safer, narrower statement that DOES close: under no-horizontal-edge,
-   `segment_crosses_ray` matches `edge_crosses_ray` EDGE BY EDGE
-   (existing Seam 2 auxiliary), and `count_crossings_ray` equals the
-   number of edges satisfying `edge_crosses_ray`.  The list-level
-   parity match is the missing step. *)
-
-Lemma no_horizontal_edge_at_implies_bool_matches_prop :
-  forall (p : Point) (e : Edge),
-    py (fst e) <> py (snd e) ->
-    let '(A, B) := e in
-    segment_crosses_ray p A B = true <-> edge_crosses_ray p (A, B).
-Proof.
-  intros p [A B] H. cbn in H.
-  apply segment_crosses_ray_matches_edge_crosses_ray. exact H.
-Qed.
+(* Under no-horizontal-edge, the per-edge agreement between bool
+   `segment_crosses_ray` and Prop `edge_crosses_ray` is exactly
+   `segment_crosses_ray_matches_edge_crosses_ray` (§2 auxiliary)
+   applied per edge of the `Forall`.  No new lemma needed; downstream
+   callers extract per-edge non-horizontality from
+   `no_horizontal_edge_at` via `Forall_forall` and apply the §2
+   lemma directly.  The list-level parity match (the load-bearing
+   step) remains the stuck piece. *)
 
 (* -------------------------------------------------------------------------- *)
 (* §7  Seam 7: segment_crosses_ray agrees with cross_R_pt orientation.        *)
@@ -669,6 +616,5 @@ Print Assumptions segment_crosses_ray_complete.
 Print Assumptions segment_crosses_ray_correct.
 Print Assumptions segment_crosses_ray_matches_edge_crosses_ray.
 Print Assumptions point_in_ring_correct_conditional.
-Print Assumptions no_horizontal_edge_at_implies_bool_matches_prop.
 Print Assumptions segment_crosses_ray_implies_right.
 Print Assumptions segment_crosses_ray_implies_cross_R_pt.
