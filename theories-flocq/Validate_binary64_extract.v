@@ -40,6 +40,7 @@ From NTS.Proofs.Flocq Require Import Validate_binary64.
 From NTS.Proofs.Flocq Require Import Orientation_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64_exact.
+From NTS.Proofs       Require Import OverlayGraph.   (* edge_in_result *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -115,4 +116,5 @@ Extraction "oracle/extracted.ml"
   b64_intersect_sign_filtered
   b64_intersect_point
   b64_intersect_point_x
-  b64_intersect_point_y.
+  b64_intersect_point_y
+  edge_in_result.
