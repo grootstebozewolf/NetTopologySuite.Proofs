@@ -84,6 +84,15 @@
    boundary category -- segments grazing the closed upper boundary x=xhi
    (or y=yhi) of the unit-grid pixel.
 
+     EDGE_IN_RESULT  -- boolean overlay-result membership for an edge.
+        line 2:       <op>         UNION | INTERSECTION | DIFFERENCE | SYMDIFF
+        line 3:       <in_left>    true | false
+        line 4:       <in_right>   true | false
+        output:       single token "TRUE" or "FALSE".
+        Coq mirror:   `edge_in_result` (OverlayGraph.v:375), DIRECTLY
+                      extracted -- no native mirror.  Pure bool
+                      computation over BooleanOp + EdgeLabel.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -330,6 +339,32 @@ let run_passes_through_halfopen () =
   let c  = parse_point (input_line stdin) in
   print_endline (bool_string (passes_through_halfopen p0 p1 c))
 
+(* ----- EDGE_IN_RESULT mode (Phase 3, extracted). ------------------------- *)
+
+(* Direct extract of `edge_in_result` from `theories/OverlayGraph.v:375`.
+   BooleanOp constructors come through as-is from `Inductive BooleanOp`
+   (Overlay.v:212).  EdgeLabel extracts to an OCaml record with `in_left`
+   / `in_right : bool` fields. *)
+
+let parse_op s = match String.uppercase_ascii (String.trim s) with
+  | "UNION"        -> Union
+  | "INTERSECTION" -> Intersection
+  | "DIFFERENCE"   -> Difference
+  | "SYMDIFF"      -> SymDiff
+  | other -> failwith (Printf.sprintf "oracle: unknown BooleanOp: %s" other)
+
+let parse_bool s = match String.lowercase_ascii (String.trim s) with
+  | "true"  -> true
+  | "false" -> false
+  | other -> failwith (Printf.sprintf "oracle: unknown bool: %s" other)
+
+let run_edge_in_result () =
+  let op       = parse_op   (input_line stdin) in
+  let in_left  = parse_bool (input_line stdin) in
+  let in_right = parse_bool (input_line stdin) in
+  let label    = { in_left; in_right } in
+  print_endline (bool_string (edge_in_result op label))
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -357,6 +392,7 @@ let () =
        | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
        | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
+       | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
