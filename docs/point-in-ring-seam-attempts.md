@@ -76,47 +76,59 @@ Definition count_crossings_ray (p : Point) (r : Ring) : nat :=
                   if segment_crosses_ray p A B then S acc else acc)
     (ring_edges r) 0%nat.
 
-Lemma point_in_ring_eq_parity :
+Theorem point_in_ring_eq_parity :
   forall (p : Point) (r : Ring),
+    no_horizontal_edge_at p r ->
     point_in_ring p r <-> Nat.odd (count_crossings_ray p r) = true.
 ```
 
 ### Outcome
 
-**Partial.**  Definition `count_crossings_ray` lands.
-`segment_crosses_ray_matches_edge_crosses_ray` lemma closes (per-edge
-agreement between bool and Prop forms under `py A <> py B`).
+**Qed** under the `no_horizontal_edge_at` precondition.  Bridge lemma
+`ray_parity_fold_bridge` closes; `point_in_ring_eq_parity` and
+`point_outside_ring_eq_even_parity` follow as direct corollaries.
 
-The list-level parity agreement (`point_in_ring p r <-> Nat.odd
-(count_crossings_ray p r) = true`) does NOT close.
+### How it landed
 
-### Stuck at
+Three supporting lemmas:
 
-The fold_left accumulator's parity does not align with the mutual
-inductive `ray_parity_odd`/`ray_parity_even` directly.  The fold
-seeds at 0 and toggles per crossing edge; `ray_parity_odd` /
-`ray_parity_even` toggle in the same way over the edge list — but
-the proof requires:
+  - `count_aux p l acc` — auxiliary `fold_left`-with-accumulator
+    helper.
+  - `count_aux_acc` — accumulator generalisation:
+    `count_aux p l acc = (acc + count_aux p l 0)%nat`.
+  - `count_aux_cons` — cons-form: `count_aux p ((A,B)::l) 0` is
+    `S (count_aux p l 0)` or `count_aux p l 0` per bool firing.
 
-  1. A generalised induction lemma where the fold accumulator is
-     left abstract (any starting nat, not just 0), and
-  2. A bridge `forall acc l, Nat.odd (fold_left ... l acc) =
-     xorb (Nat.odd acc) (Nat.odd (fold_left ... l 0))` or similar.
+Then the bridge:
 
-These exist in `Stdlib.NArith` / `Stdlib.Nat` but tying them to
-the mutual inductive's structure requires careful destructuring of
-both the `Forall (fun e => py (fst e) <> py (snd e))` precondition
-(needed per-edge) AND the inductive's constructors.
+```coq
+Lemma ray_parity_fold_bridge :
+  forall (p : Point) (edges : list Edge),
+    Forall (fun e => py (fst e) <> py (snd e)) edges ->
+    (ray_parity_odd  p edges <-> Nat.odd  (count_aux p edges 0%nat) = true) /\
+    (ray_parity_even p edges <-> Nat.even (count_aux p edges 0%nat) = true).
+```
 
-### Missing piece
+Stated as a conjunction so the odd-half and even-half IHs are
+simultaneously available at each induction step.  Proof uses
+`Nat.odd_succ` + `Nat.even_succ` for the parity flip on the
+crossing branch, and the §2 per-edge `segment_crosses_ray_matches_
+edge_crosses_ray` to bridge between bool case-split and Prop
+constructor application.
 
-The fold-vs-mutual-inductive bridge.  Standard list-level induction
-pattern, 2-3 hours of careful proof engineering.
+### Note on the precondition
+
+The `no_horizontal_edge_at` (= `Forall ... py (fst e) <> py (snd e)`)
+precondition is essential: the per-edge bool/Prop agreement
+(`segment_crosses_ray_matches_edge_crosses_ray`) only holds under
+non-horizontality.  This is the generic-position convention, also
+required by Seam 6 — the two seams close as one bridge with this
+precondition baked in.
 
 ### Cost to close
 
-1 session (2-4 hours of routine list induction + Nat.odd
-distributing over fold_left).
+Closed.  ~80 lines including the helper lemmas and accumulator
+generalisation.
 
 ---
 
@@ -271,19 +283,32 @@ still gated by Seam 5/6 of the seam map (thesis-scale).
 ```coq
 Definition no_horizontal_edge_at (p : Point) (r : Ring) : Prop :=
   Forall (fun e : Edge => py (fst e) <> py (snd e)) (ring_edges r).
-```
 
-The per-edge agreement (`segment_crosses_ray P A B = true <->
-edge_crosses_ray P (A, B)` under `py A <> py B`) is exactly
-`segment_crosses_ray_matches_edge_crosses_ray` from §2.  Combined
-with `Forall_forall` over `no_horizontal_edge_at`, downstream callers
-get per-edge bool/Prop agreement without a wrapper lemma.
+Theorem point_outside_ring_eq_even_parity :
+  forall (p : Point) (r : Ring),
+    no_horizontal_edge_at p r ->
+    ray_parity_even p (ring_edges r) <->
+    Nat.even (count_crossings_ray p r) = true.
+```
 
 ### Outcome
 
-`no_horizontal_edge_at` definition lands.  Per-edge bool/Prop
-agreement reduces to the §2 lemma applied via `Forall_forall`; no
-new lemma needed.
+**Qed** — `no_horizontal_edge_at` definition lands AND the list-level
+even-parity dual (outside-the-ring side) closes as a direct corollary
+of `ray_parity_fold_bridge` (the same bridge that closes Seam 2).
+
+### How it landed
+
+Seam 6's list-level conclusion is the dual of Seam 2 — the same
+bridge gives both the odd characterisation (`point_in_ring_eq_parity`)
+and the even characterisation (`point_outside_ring_eq_even_parity`).
+The `no_horizontal_edge_at` precondition is exactly the
+`Forall (py (fst e) <> py (snd e)) (ring_edges r)` shape the
+bridge requires.
+
+### Cost to close
+
+Closed jointly with Seam 2 — same bridge lemma serves both.
 
 ### What does NOT close
 
@@ -348,11 +373,11 @@ px A) > px P` with explicit denominator hypotheses, instead of
 | Seam | Outcome | Cost-to-close (delta) |
 |------|---------|----------------------|
 | 1: `segment_crosses_ray_correct`        | **Qed** | — |
-| 2: `count_crossings_ray` ↔ `point_in_ring` | Partial (defn + per-edge Qed; list-level stuck) | 1 session |
+| 2: `count_crossings_ray` ↔ `point_in_ring` (list-level) | **Qed** (under `no_horizontal_edge_at`) | — |
 | 3: `geometric_interior` via fourcolor   | Stuck (Real.structure bridge) | 2-3 sessions |
 | 4: `point_in_ring_correct_conditional`  | **Qed (vacuous)** | — (gated by Seam 3) |
 | 5: `winding_number` definition          | Stuck (atan2 / Coquelicot) | 1-2 sessions |
-| 6: `no_horizontal_edge_at` definition   | Defined (per-edge via §2 lemma) | 1 session (list-level, joint with Seam 2) |
+| 6: `no_horizontal_edge_at` (list-level) | **Qed** (joint with Seam 2) | — |
 | 7: cross_R_pt forward direction         | **Qed** (forward only) | ½ session (reverse direction) |
 
 **Qed-closed Coq results landed:**
@@ -367,13 +392,19 @@ px A) > px P` with explicit denominator hypotheses, instead of
     non-horizontal segment).
   - `point_in_ring_correct_conditional` (vacuous, records shape).
   - `no_horizontal_edge_at` (definition).
+  - `count_aux` + `count_aux_acc` + `count_aux_cons` (fold-left
+    accumulator helpers).
+  - `ray_parity_fold_bridge` — the load-bearing fold ↔ mutual
+    inductive bridge under `Forall (py (fst e) <> py (snd e))`.
+  - `point_in_ring_eq_parity` — list-level Seam 2 corollary.
+  - `point_outside_ring_eq_even_parity` — list-level Seam 6
+    corollary (even-parity dual).
   - `segment_crosses_ray_implies_right`.
   - `segment_crosses_ray_implies_cross_R_pt` (forward direction).
 
 **Tractable next steps (Qed-able in 1-2 sessions each, no JCT
 dependency):**
 
-  - Seam 2/6 joint closure: fold ↔ mutual inductive bridge.
   - Seam 7 reverse direction: hand-rolled algebra.
   - Coquelicot import OR hand-rolled `atan2` for Seam 5.
 

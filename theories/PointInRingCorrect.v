@@ -18,6 +18,8 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Arith.
 From Stdlib Require Import List.
 From Stdlib Require Import Bool.
 
@@ -481,11 +483,139 @@ Definition no_horizontal_edge_at (p : Point) (r : Ring) : Prop :=
 (* Under no-horizontal-edge, the per-edge agreement between bool
    `segment_crosses_ray` and Prop `edge_crosses_ray` is exactly
    `segment_crosses_ray_matches_edge_crosses_ray` (§2 auxiliary)
-   applied per edge of the `Forall`.  No new lemma needed; downstream
-   callers extract per-edge non-horizontality from
-   `no_horizontal_edge_at` via `Forall_forall` and apply the §2
-   lemma directly.  The list-level parity match (the load-bearing
-   step) remains the stuck piece. *)
+   applied per edge of the `Forall`.  Downstream callers extract
+   per-edge non-horizontality from `no_horizontal_edge_at` via
+   `Forall_forall` and apply the §2 lemma directly. *)
+
+(* -------------------------------------------------------------------------- *)
+(* §6b  ray_parity_fold_bridge -- closes Seam 2 + Seam 6 list-level.          *)
+(* -------------------------------------------------------------------------- *)
+
+(* Helper: the count_crossings_ray's fold_left as a binary function of the
+   accumulator -- so we can prove an accumulator-generalisation lemma. *)
+Definition count_aux (p : Point) (l : list Edge) (acc : nat) : nat :=
+  fold_left
+    (fun a e => let '(A, B) := e in
+                if segment_crosses_ray p A B then S a else a)
+    l acc.
+
+(* `count_aux` agrees with `count_crossings_ray` on `ring_edges r`. *)
+Lemma count_crossings_ray_unfold :
+  forall (p : Point) (r : Ring),
+    count_crossings_ray p r = count_aux p (ring_edges r) 0.
+Proof. reflexivity. Qed.
+
+(* Standard fold_left-accumulator generalisation: starting from any acc is
+   like starting from 0 and adding acc. *)
+Lemma count_aux_acc :
+  forall (p : Point) (l : list Edge) (acc : nat),
+    count_aux p l acc = (acc + count_aux p l 0)%nat.
+Proof.
+  intros p l. induction l as [|[A B] l' IH]; intro acc.
+  - simpl. rewrite Nat.add_0_r. reflexivity.
+  - simpl. destruct (segment_crosses_ray p A B).
+    + rewrite (IH (S acc)), (IH 1%nat). lia.
+    + rewrite (IH acc), (IH 0%nat). lia.
+Qed.
+
+(* Cons-form for count_aux at accumulator 0. *)
+Lemma count_aux_cons :
+  forall (p : Point) (A B : Point) (l : list Edge),
+    count_aux p ((A, B) :: l) 0%nat
+    = (if segment_crosses_ray p A B
+       then S (count_aux p l 0%nat)
+       else count_aux p l 0%nat).
+Proof.
+  intros p A B l.
+  change (count_aux p ((A, B) :: l) 0%nat)
+    with (count_aux p l (if segment_crosses_ray p A B then 1%nat else 0%nat)).
+  destruct (segment_crosses_ray p A B).
+  - rewrite (count_aux_acc p l 1%nat). lia.
+  - reflexivity.
+Qed.
+
+(* The bridge: under `no_horizontal_edge_at`-style edge-list precondition,
+   the Prop-side mutual inductive `ray_parity_odd` / `ray_parity_even`
+   matches the bool-side fold parity.  Proved as a CONJUNCTION so the
+   odd-half and even-half IHs are simultaneously available at each step. *)
+Lemma ray_parity_fold_bridge :
+  forall (p : Point) (edges : list Edge),
+    Forall (fun e : Edge => py (fst e) <> py (snd e)) edges ->
+    (ray_parity_odd  p edges <-> Nat.odd  (count_aux p edges 0%nat) = true) /\
+    (ray_parity_even p edges <-> Nat.even (count_aux p edges 0%nat) = true).
+Proof.
+  intros p edges Hnh.
+  induction edges as [|[A B] rest IH].
+  - (* Base case: empty edge list. *)
+    split; split; intro H.
+    + inversion H.
+    + cbn in H. discriminate.
+    + reflexivity.
+    + constructor.
+  - (* Inductive step: (A, B) :: rest. *)
+    inversion Hnh as [|? ? Hnh_ab Hnh_rest]; subst.
+    cbn in Hnh_ab.
+    pose proof (IH Hnh_rest) as [IH_odd IH_even].
+    pose proof (segment_crosses_ray_matches_edge_crosses_ray p A B Hnh_ab)
+      as [Hbool_to_prop Hprop_to_bool].
+    rewrite count_aux_cons.
+    destruct (segment_crosses_ray p A B) eqn:Hscr.
+    + (* Edge crosses (bool = true): count grows by 1; parity flips. *)
+      assert (Hec : edge_crosses_ray p (A, B)) by (apply Hbool_to_prop; reflexivity).
+      rewrite Nat.odd_succ, Nat.even_succ.
+      split; split; intro H.
+      * (* odd ((A,B)::rest) -> even (count rest) *)
+        inversion H; subst.
+        -- apply IH_even. assumption.
+        -- contradiction.
+      * (* even (count rest) -> odd ((A,B)::rest) *)
+        apply rpo_cross; [exact Hec | apply IH_even; exact H].
+      * (* even ((A,B)::rest) -> odd (count rest) *)
+        inversion H; subst.
+        -- apply IH_odd. assumption.
+        -- contradiction.
+      * (* odd (count rest) -> even ((A,B)::rest) *)
+        apply rpe_cross; [exact Hec | apply IH_odd; exact H].
+    + (* Edge doesn't cross (bool = false): count unchanged; parity preserved. *)
+      assert (Hnec : ~ edge_crosses_ray p (A, B)).
+      { intro Hec. apply Hprop_to_bool in Hec. congruence. }
+      split; split; intro H.
+      * inversion H; subst.
+        -- contradiction.
+        -- apply IH_odd. assumption.
+      * apply rpo_skip; [exact Hnec | apply IH_odd; exact H].
+      * inversion H; subst.
+        -- contradiction.
+        -- apply IH_even. assumption.
+      * apply rpe_skip; [exact Hnec | apply IH_even; exact H].
+Qed.
+
+(* Seam 2 list-level corollary: under no_horizontal_edge_at, point_in_ring
+   agrees with the bool-side crossing-count parity. *)
+Theorem point_in_ring_eq_parity :
+  forall (p : Point) (r : Ring),
+    no_horizontal_edge_at p r ->
+    point_in_ring p r <-> Nat.odd (count_crossings_ray p r) = true.
+Proof.
+  intros p r Hnh.
+  unfold point_in_ring, no_horizontal_edge_at in *.
+  rewrite count_crossings_ray_unfold.
+  apply (ray_parity_fold_bridge p (ring_edges r) Hnh).
+Qed.
+
+(* Seam 6 list-level corollary: the even-parity dual, useful for outside-
+   the-ring callers. *)
+Theorem point_outside_ring_eq_even_parity :
+  forall (p : Point) (r : Ring),
+    no_horizontal_edge_at p r ->
+    ray_parity_even p (ring_edges r) <->
+    Nat.even (count_crossings_ray p r) = true.
+Proof.
+  intros p r Hnh.
+  unfold no_horizontal_edge_at in *.
+  rewrite count_crossings_ray_unfold.
+  apply (ray_parity_fold_bridge p (ring_edges r) Hnh).
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §7  Seam 7: segment_crosses_ray agrees with cross_R_pt orientation.        *)
@@ -616,5 +746,10 @@ Print Assumptions segment_crosses_ray_complete.
 Print Assumptions segment_crosses_ray_correct.
 Print Assumptions segment_crosses_ray_matches_edge_crosses_ray.
 Print Assumptions point_in_ring_correct_conditional.
+Print Assumptions count_aux_acc.
+Print Assumptions count_aux_cons.
+Print Assumptions ray_parity_fold_bridge.
+Print Assumptions point_in_ring_eq_parity.
+Print Assumptions point_outside_ring_eq_even_parity.
 Print Assumptions segment_crosses_ray_implies_right.
 Print Assumptions segment_crosses_ray_implies_cross_R_pt.
