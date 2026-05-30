@@ -232,6 +232,125 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §6b  Perpendicular bisector geometry (follow-up session, 2026-05-29).      *)
+(*                                                                            *)
+(* The Pythagorean identity for the chord and its midpoint, and the           *)
+(* immediate inequality arc_radius_sq >= chord_half_length_sq.                *)
+(*                                                                            *)
+(* These were originally documented as deferred in §7 below.  This block      *)
+(* closes the first half of that deferral.                                    *)
+(* -------------------------------------------------------------------------- *)
+
+(* Midpoint of the chord between arc_start and arc_end. *)
+Definition chord_midpoint (a : CircularArc) : Point :=
+  mkPoint ((px (arc_start a) + px (arc_end a)) / 2)
+          ((py (arc_start a) + py (arc_end a)) / 2).
+
+(* Median length formula -- pure algebra (no hypothesis needed).
+   For any three points A, B, C:
+     dist_sq C A + dist_sq C B = 2 * dist_sq C M + dist_sq A B / 2
+   where M is the midpoint of (A, B).  Closes by `ring` after unfolding
+   dist_sq and the midpoint. *)
+Lemma median_length_formula :
+  forall A B C : Point,
+    dist_sq C A + dist_sq C B
+      = 2 * dist_sq C (mkPoint ((px A + px B) / 2) ((py A + py B) / 2))
+        + dist_sq A B / 2.
+Proof.
+  intros A B C. unfold dist_sq. cbn [px py]. field.
+Qed.
+
+(* Pythagorean decomposition under equidistance.
+   For a valid arc:
+     arc_radius_sq = dist_sq (arc_center) (chord_midpoint)
+                   + chord_half_length_sq.
+   The right triangle is (arc_center, chord_midpoint, arc_start),
+   right-angled at chord_midpoint because arc_center is on the
+   perpendicular bisector of (arc_start, arc_end) -- which it is
+   precisely because arc_center_equidistant says the center is
+   equidistant from the chord endpoints. *)
+Lemma arc_radius_sq_pythagorean :
+  forall a : CircularArc,
+    valid_arc a ->
+    arc_radius_sq a
+      = dist_sq (arc_center a) (chord_midpoint a)
+        + chord_half_length_sq a.
+Proof.
+  intros a Hva.
+  pose proof (median_length_formula (arc_start a) (arc_end a) (arc_center a))
+    as Hmed.
+  destruct (arc_center_equidistant a Hva) as [_ Hse].
+  (* Hmed: dist_sq center start + dist_sq center end =
+           2 * dist_sq center M + dist_sq start end / 2 *)
+  (* Hse:  dist_sq center start = dist_sq center end. *)
+  unfold arc_radius_sq, chord_half_length_sq, chord_midpoint.
+  rewrite <- Hse in Hmed.
+  lra.
+Qed.
+
+(* The geometric inequality: half-chord-length squared <= radius squared. *)
+Lemma arc_radius_sq_ge_chord_half_length_sq :
+  forall a : CircularArc,
+    valid_arc a ->
+    chord_half_length_sq a <= arc_radius_sq a.
+Proof.
+  intros a Hva.
+  rewrite (arc_radius_sq_pythagorean a Hva).
+  pose proof (dist_sq_nonneg (arc_center a) (chord_midpoint a)).
+  lra.
+Qed.
+
+(* Refined sagitta inner under the Pythagorean identity.
+   When valid_arc a, the Rmax 0 in sagitta_sq_inner doesn't trigger:
+   sagitta_sq_inner a = arc_radius_sq a - chord_half_length_sq a
+                       = dist_sq (arc_center) (chord_midpoint).
+   This pins down the exact perpendicular distance squared. *)
+Lemma sagitta_sq_inner_eq_centerline_sq :
+  forall a : CircularArc,
+    valid_arc a ->
+    sagitta_sq_inner a = dist_sq (arc_center a) (chord_midpoint a).
+Proof.
+  intros a Hva. unfold sagitta_sq_inner.
+  pose proof (arc_radius_sq_pythagorean a Hva) as Hpy.
+  rewrite Rmax_right.
+  - lra.
+  - pose proof (dist_sq_nonneg (arc_center a) (chord_midpoint a)). lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6c  What remains after this session.                                      *)
+(*                                                                            *)
+(* The prompt-suggested `arc_mid_within_sagitta` (Chebyshev bound: arc_mid    *)
+(* component-wise within sagitta of chord_midpoint) is MATHEMATICALLY FALSE   *)
+(* in general for the corpus's CircularArc record: nothing in the record     *)
+(* definition forces arc_mid to be the arc's apex.  arc_mid can be ANY       *)
+(* point on the arc between arc_start and arc_end -- specifically a non-     *)
+(* apex placement (e.g. near arc_start in a tightly-curved arc) puts         *)
+(* arc_mid far from chord_midpoint despite still being on the circle.        *)
+(*                                                                            *)
+(* What IS true:                                                              *)
+(*   - sagitta IS the maximum perpendicular distance from the chord to any   *)
+(*     point on the arc.                                                      *)
+(*   - The PERPENDICULAR component of (arc_mid - chord_midpoint) is at most  *)
+(*     sagitta.                                                                *)
+(*   - The Chebyshev / L^infinity bound on (arc_mid - chord_midpoint) does   *)
+(*     NOT hold in general.                                                    *)
+(*                                                                            *)
+(* For Phase 4's `chord_approx_error_bound` headline this means the right    *)
+(* witness construction for a chord-approximated point P is the              *)
+(* PERPENDICULAR PROJECTION of P onto the arc, NOT arc_mid itself.  That     *)
+(* projection is the closest arc point to P, and IS within sagitta of P      *)
+(* perpendicular-wise.  Formalising the projection requires the perpendicular *)
+(* foot of P on the chord-orthogonal direction -- another small geometry     *)
+(* session.  Deferred.                                                         *)
+(*                                                                            *)
+(* Also deferred: the n-chord (n >= 2) refinement of chord_approx_arc with   *)
+(* the sagitta-scaled by sub-arc decomposition.  Currently chord_approx_arc  *)
+(* is the degenerate 3-point stub (arc_start, arc_mid, arc_end); the         *)
+(* n-chord trigonometric version needs sin/cos manipulation.                  *)
+(* -------------------------------------------------------------------------- *)
+
+(* -------------------------------------------------------------------------- *)
 (* §7  What this session DOES NOT close (and why).                            *)
 (*                                                                            *)
 (* The headline `chord_approx_error_bound` -- "if the chord approximation     *)
@@ -285,3 +404,7 @@ Print Assumptions sagitta_le_radius_sqrt.
 Print Assumptions arc_radius_eq_sqrt.
 Print Assumptions arc_radius_nonneg.
 Print Assumptions sagitta_le_arc_radius.
+Print Assumptions median_length_formula.
+Print Assumptions arc_radius_sq_pythagorean.
+Print Assumptions arc_radius_sq_ge_chord_half_length_sq.
+Print Assumptions sagitta_sq_inner_eq_centerline_sq.
