@@ -331,40 +331,47 @@ Same as Seam 2: fold-vs-mutual-inductive bridge.
 ### Statement
 
 ```coq
-Lemma segment_crosses_ray_implies_cross_R_pt :
+Theorem segment_crosses_ray_iff_cross_R_pt :
   forall (P A B : Point),
-    segment_crosses_ray P A B = true ->
+    segment_crosses_ray P A B = true <->
     ( (py A < py P < py B /\ 0 < cross_R_pt P A B) \/
       (py B < py P < py A /\ cross_R_pt P A B < 0) ).
 ```
 
 ### Outcome
 
-**Qed** on the forward direction.
+**Qed** — full biconditional closed.
 
-Companion lemma `segment_crosses_ray_non_horizontal` (bool firing
-implies `py A <> py B`) closes in 8 lines via tactic-driven
-destructuring.
+Three lemmas:
+  - `segment_crosses_ray_implies_cross_R_pt` (forward direction)
+  - `cross_R_pt_implies_segment_crosses_ray` (reverse direction)
+  - `segment_crosses_ray_iff_cross_R_pt` (composition)
+  - `segment_crosses_ray_non_horizontal` (helper; bool firing →
+    non-horizontal segment).
 
-### What does NOT close
+### How the reverse direction landed
 
-The full biconditional (reverse direction: cross-product sign +
-y-straddle implies bool fires).  Reverse direction requires
-algebraic re-derivation via `field_simplify`; its denominator-
-nonvanishing side conditions interact poorly with the bool case-
-split.  Several attempts via `Rmult_lt_reg_r` + `field_simplify`
-produced `Found no subterm matching` errors mid-tactic.
+The previous attempt got stuck on `field_simplify` whose
+denominator-nonvanishing side conditions interacted poorly with
+the bool case-split.  Fix: avoid `field_simplify` entirely.
+Instead, in each y-orientation branch:
 
-### Missing piece
+  1. Multiply both sides of `px P < intersection_x` by `py B - py A`
+     (Case 1) or `py A - py B` (Case 2) -- the sign is known
+     positive in each branch from the y-straddle hypothesis, so
+     `Rmult_lt_reg_r` applies cleanly.
+  2. Use `replace ... by (field; lra)` ONCE to clear the inner
+     division -- the side condition `py B - py A <> 0` discharges
+     trivially via `lra` in each branch.
+  3. The resulting goal becomes a linear inequality between the
+     y-straddle hypothesis and `cross_R_pt > 0` (or `< 0`); `nra`
+     closes after `unfold cross_R_pt in Hcross`.
 
-The reverse-direction algebra.  Hand-rolled proof rearranging
-`cross_R_pt P A B * sign(py B - py A) > 0` into `px A + t * (px B -
-px A) > px P` with explicit denominator hypotheses, instead of
-`field_simplify`.
+Total: ~50 lines for both directions + composition.
 
 ### Cost to close
 
-½ session (2-3 hours of careful algebra in two case branches).
+Closed.
 
 ---
 
@@ -378,7 +385,7 @@ px A) > px P` with explicit denominator hypotheses, instead of
 | 4: `point_in_ring_correct_conditional`  | **Qed (vacuous)** | — (gated by Seam 3) |
 | 5: `winding_number` definition          | Stuck (atan2 / Coquelicot) | 1-2 sessions |
 | 6: `no_horizontal_edge_at` (list-level) | **Qed** (joint with Seam 2) | — |
-| 7: cross_R_pt forward direction         | **Qed** (forward only) | ½ session (reverse direction) |
+| 7: `segment_crosses_ray` ↔ `cross_R_pt` | **Qed** (full biconditional) | — |
 
 **Qed-closed Coq results landed:**
 
@@ -401,11 +408,12 @@ px A) > px P` with explicit denominator hypotheses, instead of
     corollary (even-parity dual).
   - `segment_crosses_ray_implies_right`.
   - `segment_crosses_ray_implies_cross_R_pt` (forward direction).
+  - `cross_R_pt_implies_segment_crosses_ray` (reverse direction).
+  - `segment_crosses_ray_iff_cross_R_pt` (full biconditional).
 
 **Tractable next steps (Qed-able in 1-2 sessions each, no JCT
 dependency):**
 
-  - Seam 7 reverse direction: hand-rolled algebra.
   - Coquelicot import OR hand-rolled `atan2` for Seam 5.
 
 **Library-gated next steps:**

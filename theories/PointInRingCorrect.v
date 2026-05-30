@@ -681,11 +681,8 @@ Proof.
   lra.
 Qed.
 
-(* FORWARD direction.  The reverse direction (cross-product sign +
-   y-straddle implies bool fires) requires algebraic re-derivation
-   via `field_simplify` whose denominator-nonvanishing side conditions
-   interact poorly with the bool case-split; the forward direction is
-   sufficient as a downstream consumer's primitive. *)
+(* FORWARD direction: bool firing implies the y-straddle + cross-product
+   sign disjunction. *)
 Lemma segment_crosses_ray_implies_cross_R_pt :
   forall (P A B : Point),
     segment_crosses_ray P A B = true ->
@@ -737,6 +734,70 @@ Proof.
     nra.
 Qed.
 
+(* REVERSE direction: y-straddle + cross-product sign implies bool fires.
+   The previous attempt got stuck on `field_simplify` whose denominator-
+   nonvanishing side conditions interacted poorly with the bool case-split.
+   Fix: avoid `field_simplify`; instead multiply both sides of the bool
+   x-condition by `py B - py A` (whose sign is known from y-straddle), then
+   substitute the cleared form via `replace ... by (field; ...)` once -- the
+   side condition discharges cleanly on each case branch where the
+   y-orientation is fixed. *)
+Lemma cross_R_pt_implies_segment_crosses_ray :
+  forall (P A B : Point),
+    ( (py A < py P < py B /\ 0 < cross_R_pt P A B) \/
+      (py B < py P < py A /\ cross_R_pt P A B < 0) ) ->
+    segment_crosses_ray P A B = true.
+Proof.
+  intros P A B [[Hy Hcross] | [Hy Hcross]].
+  - (* Case 1: py A < py P < py B AND 0 < cross_R_pt P A B *)
+    unfold segment_crosses_ray.
+    assert (HAlt : Rlt_b (py A) (py P) = true)
+      by (apply Rlt_b_iff_true; lra).
+    assert (HPB : Rlt_b (py P) (py B) = true)
+      by (apply Rlt_b_iff_true; lra).
+    rewrite HAlt, HPB. cbn [andb].
+    apply Rlt_b_iff_true.
+    assert (Hd : py B - py A > 0) by lra.
+    apply (Rmult_lt_reg_r (py B - py A)); [lra|].
+    replace ((px A + (px B - px A) * (py P - py A) / (py B - py A))
+              * (py B - py A))
+      with (px A * (py B - py A) + (px B - px A) * (py P - py A))
+      by (field; lra).
+    unfold cross_R_pt in Hcross.
+    nra.
+  - (* Case 2: py B < py P < py A AND cross_R_pt P A B < 0 *)
+    unfold segment_crosses_ray.
+    assert (HAlt : Rlt_b (py A) (py P) = false)
+      by (apply Rlt_b_iff_false; lra).
+    rewrite HAlt. cbn [andb].
+    assert (HBlt : Rlt_b (py B) (py P) = true)
+      by (apply Rlt_b_iff_true; lra).
+    assert (HPA : Rlt_b (py P) (py A) = true)
+      by (apply Rlt_b_iff_true; lra).
+    rewrite HBlt, HPA. cbn [andb].
+    apply Rlt_b_iff_true.
+    assert (Hd : py A - py B > 0) by lra.
+    apply (Rmult_lt_reg_r (py A - py B)); [lra|].
+    replace ((px B + (px A - px B) * (py P - py B) / (py A - py B))
+              * (py A - py B))
+      with (px B * (py A - py B) + (px A - px B) * (py P - py B))
+      by (field; lra).
+    unfold cross_R_pt in Hcross.
+    nra.
+Qed.
+
+(* Full biconditional: composes forward + reverse. *)
+Theorem segment_crosses_ray_iff_cross_R_pt :
+  forall (P A B : Point),
+    segment_crosses_ray P A B = true <->
+    ( (py A < py P < py B /\ 0 < cross_R_pt P A B) \/
+      (py B < py P < py A /\ cross_R_pt P A B < 0) ).
+Proof.
+  intros P A B; split.
+  - apply segment_crosses_ray_implies_cross_R_pt.
+  - apply cross_R_pt_implies_segment_crosses_ray.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
@@ -753,3 +814,5 @@ Print Assumptions point_in_ring_eq_parity.
 Print Assumptions point_outside_ring_eq_even_parity.
 Print Assumptions segment_crosses_ray_implies_right.
 Print Assumptions segment_crosses_ray_implies_cross_R_pt.
+Print Assumptions cross_R_pt_implies_segment_crosses_ray.
+Print Assumptions segment_crosses_ray_iff_cross_R_pt.
