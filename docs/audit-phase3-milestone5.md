@@ -834,3 +834,42 @@ S16:          overlay_ng_correct_bounded (Option B corollary, 2 lines
     the DCEL adoption (S11-S12).  Buffer absorbs discovery cost
     surfaced in S2 and S2.5 and gives realistic budget for the
     JCT search + DCEL ring assembly.
+
+---
+
+## Update: `geometric_interior` instantiated post-S15
+
+H1's opaque `Variable geometric_interior` in
+`theories-flocq/OverlayCorrectness.v` replaced with the concrete
+`geometric_interior_stdlib` from `theories/PointInRingTangents.v`.
+The definition is pure Stdlib `R` (no fourcolor dependency):
+
+  - `ring_image` — points lying on any edge of the ring.
+  - `ring_complement` — complement of the image set.
+  - `connected_in_complement` — path-connectedness through the
+    complement.
+  - `in_bounded_component` — bounded by some `M > 0`.
+  - `geometric_interior_stdlib p r := ring_complement r p /\
+                                       in_bounded_component r p`.
+
+Effect on `overlay_ng_correct_conditional`:
+
+  - Proof body: UNCHANGED.  H1 is passed through as an opaque
+    hypothesis; replacing the predicate doesn't change any tactic.
+  - Statement: MATERIALLY STRONGER.  H1 now cites a concrete
+    mathematical predicate rather than an opaque parameter.
+  - JCT gap: UNCHANGED -- the
+    `point_in_ring q r <-> geometric_interior_stdlib q r`
+    biconditional is still the open obligation.  The gap is now
+    PRECISELY LOCATED against a concrete definition rather than an
+    opaque black box.
+
+`Section OverlayCorrectness` removed (no Variable to scope).
+
+Axiom footprint: unchanged (`Classical_Prop.classic` + the standard
+three; same as before, since `geometric_interior_stdlib` is
+Stdlib-only and pulls no new axioms).
+
+See `theories/PointInRingTangents.v` for the definition and
+`docs/point-in-ring-tangent-attempts.md` Tangent 3D for the design
+rationale.

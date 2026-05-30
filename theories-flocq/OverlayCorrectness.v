@@ -53,22 +53,21 @@
 From NTS.Proofs        Require Import Distance.
 From NTS.Proofs        Require Import Overlay.
 From NTS.Proofs        Require Import OverlayGraph.
+From NTS.Proofs        Require Import PointInRingTangents.
 From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64.
 From NTS.Proofs.Flocq  Require Import OverlayBridge.
 
 (* -------------------------------------------------------------------------- *)
 (* §1  The conditional headline.                                              *)
 (*                                                                            *)
-(* Section-scoped to keep the JCT-shaped Variable `geometric_interior` local. *)
-(* On Section close, the theorem's signature carries the Variable as an       *)
-(* additional `forall geometric_interior, ...` quantification.                 *)
+(* H1 instantiated post-S15 with the concrete `geometric_interior_stdlib`     *)
+(* from `theories/PointInRingTangents.v` -- pure Stdlib R definition of the   *)
+(* topological interior (ring_complement + in_bounded_component).  The opaque *)
+(* Section Variable `geometric_interior : Point -> Ring -> Prop` has been     *)
+(* eliminated; the JCT gap remains in the H1 biconditional's content (not    *)
+(* in the definition itself).  See docs/audit-phase3-milestone5.md "Update:   *)
+(* geometric_interior instantiated".                                          *)
 (* -------------------------------------------------------------------------- *)
-
-Section OverlayCorrectness.
-
-  (* JCT gap (H1 input): the topological-interior predicate.  Opaque inside
-     this Section; concrete consumers instantiate it from their JCT toolkit. *)
-  Variable geometric_interior : Point -> Ring -> Prop.
 
   (* ------------------------------------------------------------------------ *)
   (* §1.1  The headline theorem.                                              *)
@@ -95,7 +94,7 @@ Section OverlayCorrectness.
          deferred-proof entry since the JCT toolkit is absent). *)
       (forall (q : Point) (r : Ring),
          ring_closed r -> ring_simple r ->
-         point_in_ring q r <-> geometric_interior q r) ->
+         point_in_ring q r <-> geometric_interior_stdlib q r) ->
       (* H2 (DCEL gap): for any valid topology graph, extract assembles
          a valid geometry.  Stand-in for the future `extract_rings_valid`
          theorem (audit doc §4.3 / §5.2). *)
@@ -113,7 +112,7 @@ Section OverlayCorrectness.
          valid_geometry (extract op g) ->
          (forall (q : Point) (r : Ring),
             ring_closed r -> ring_simple r ->
-            point_in_ring q r <-> geometric_interior q r) ->
+            point_in_ring q r <-> geometric_interior_stdlib q r) ->
          (point_set (extract op g) p <-> boolean_op op A B p)) ->
       point_set (extract op (noded_labeled_graph A B)) p <->
       boolean_op op A B p.
@@ -141,7 +140,7 @@ Section OverlayCorrectness.
       fully_intersected (noded_segments A B) ->
       (forall (q : Point) (r : Ring),
          ring_closed r -> ring_simple r ->
-         point_in_ring q r <-> geometric_interior q r) ->
+         point_in_ring q r <-> geometric_interior_stdlib q r) ->
       (forall (op' : BooleanOp) (g : TopologyGraph),
          valid_topology_graph g ->
          valid_geometry (extract op' g)) ->
@@ -151,7 +150,7 @@ Section OverlayCorrectness.
          valid_geometry (extract op g) ->
          (forall (q : Point) (r : Ring),
             ring_closed r -> ring_simple r ->
-            point_in_ring q r <-> geometric_interior q r) ->
+            point_in_ring q r <-> geometric_interior_stdlib q r) ->
          (point_set (extract op g) p <-> boolean_op op A B p)) ->
       point_set (extract op (noded_labeled_graph A B)) p ->
       boolean_op op A B p.
@@ -169,7 +168,7 @@ Section OverlayCorrectness.
       fully_intersected (noded_segments A B) ->
       (forall (q : Point) (r : Ring),
          ring_closed r -> ring_simple r ->
-         point_in_ring q r <-> geometric_interior q r) ->
+         point_in_ring q r <-> geometric_interior_stdlib q r) ->
       (forall (op' : BooleanOp) (g : TopologyGraph),
          valid_topology_graph g ->
          valid_geometry (extract op' g)) ->
@@ -179,7 +178,7 @@ Section OverlayCorrectness.
          valid_geometry (extract op g) ->
          (forall (q : Point) (r : Ring),
             ring_closed r -> ring_simple r ->
-            point_in_ring q r <-> geometric_interior q r) ->
+            point_in_ring q r <-> geometric_interior_stdlib q r) ->
          (point_set (extract op g) p <-> boolean_op op A B p)) ->
       boolean_op op A B p ->
       point_set (extract op (noded_labeled_graph A B)) p.
@@ -189,7 +188,7 @@ Section OverlayCorrectness.
     exact Hin.
   Qed.
 
-End OverlayCorrectness.
+(* Section closed *)
 
 (* -------------------------------------------------------------------------- *)
 (* §2  Audit footprint.                                                       *)

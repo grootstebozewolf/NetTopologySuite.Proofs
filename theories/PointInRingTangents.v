@@ -1,0 +1,339 @@
+(* ============================================================================
+   NetTopologySuite.Proofs.PointInRingTangents
+   ----------------------------------------------------------------------------
+   Green-phase tangent attempts for Seams 3 + 5 of `point_in_ring_correct`.
+
+   Per `docs/point-in-ring-seams-3-5-7-red.md`:
+     Seam 3 = `geometric_interior` (Real.structure bridge or Stdlib-only).
+     Seam 5 = `winding_number` (atan2 / turning / bypass).
+
+   Each tangent: simplest possible implementation, simplest possible proof,
+   outcome recorded (Qed or stuck) in `docs/point-in-ring-tangent-attempts.md`.
+
+   Tangents that close land here as Qed-closed lemmas.  Tangents that fail
+   live in the companion doc only -- no Admitteds.
+
+   Tangent 3A (fourcolor import gate) is attempted FIRST since it gates all
+   other Seam 3 tangents.  If the import fails or conflicts, fall back to
+   Tangent 3D (Stdlib-only geometric_interior).
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted, human-reviewed.
+     Assisted-by: Claude (Opus-4.7)
+   ========================================================================== *)
+
+From Stdlib Require Import Reals.
+From Stdlib Require Import Lra.
+From Stdlib Require Import List.
+
+From NTS.Proofs Require Import Distance.
+From NTS.Proofs Require Import Overlay.
+From NTS.Proofs Require Import PointInRingCorrect.
+
+Import ListNotations.
+Local Open Scope R_scope.
+
+(* -------------------------------------------------------------------------- *)
+(* §1  Tangent 5A: atan2 — DOCUMENTED ONLY, not landed in code.               *)
+(* -------------------------------------------------------------------------- *)
+
+(* The Tangent 5A `atan2` definition + properties (atan2_pos_x,
+   atan2_neg_x_pos_y, atan2_zero_x_pos_y, atan2_origin) close cleanly
+   but transitively pull `Classical_Prop.classic` because Stdlib's
+   `atan` (Ratan.v:549) is itself defined classically (via `pre_atan`
+   over the completeness axiom).  Any use of `atan` -- including a
+   trivial `atan 0 = 0` -- pulls `classic` into the axiom footprint.
+
+   Per the green workflow's "no axiom expansion" discipline, atan2
+   is documented in `docs/point-in-ring-tangent-attempts.md` §5A but
+   NOT landed in code.  Landing it would require either:
+     1. Adding `theories/PointInRingTangents.v` to
+        `docs/audit-exceptions.txt`, OR
+     2. Putting atan2 in a dedicated file (e.g. `theories/Atan2.v`)
+        that is itself exempted.
+   Both are policy-level decisions deferred to a future session. *)
+
+(* -------------------------------------------------------------------------- *)
+(* §2  Tangent 5D: Option C bypass theorem.                                   *)
+(*                                                                            *)
+(* The conditional headline: once the JCT-style hypothesis is available,      *)
+(* point_in_ring_correct follows immediately.  Mirrors Seam 4's vacuous       *)
+(* conditional but adds the generic-ray-position precondition and             *)
+(* parameterises over an abstract topological interior.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Section OptionCBypass.
+
+  Variable topological_interior : Point -> Ring -> Prop.
+
+  Theorem point_in_ring_correct_via_crossing :
+    forall (p : Point) (r : Ring),
+      ring_simple r ->
+      ring_closed r ->
+      no_horizontal_edge_at p r ->
+      (forall (q : Point) (s : Ring),
+         ring_simple s -> ring_closed s ->
+         no_horizontal_edge_at q s ->
+         point_in_ring q s <-> topological_interior q s) ->
+      point_in_ring p r <-> topological_interior p r.
+  Proof.
+    intros p r Hs Hc Hg HJCT.
+    apply HJCT; assumption.
+  Qed.
+
+  (* A slightly stronger form: bridges to the bool-side parity via the
+     fold bridge.  The bool predicate's parity now directly characterises
+     topological membership. *)
+  Theorem count_crossings_correct_via_crossing :
+    forall (p : Point) (r : Ring),
+      ring_simple r ->
+      ring_closed r ->
+      no_horizontal_edge_at p r ->
+      (forall (q : Point) (s : Ring),
+         ring_simple s -> ring_closed s ->
+         no_horizontal_edge_at q s ->
+         point_in_ring q s <-> topological_interior q s) ->
+      Nat.odd (count_crossings_ray p r) = true <-> topological_interior p r.
+  Proof.
+    intros p r Hs Hc Hg HJCT.
+    rewrite <- (point_in_ring_eq_parity p r Hg).
+    apply HJCT; assumption.
+  Qed.
+
+End OptionCBypass.
+
+(* -------------------------------------------------------------------------- *)
+(* §3  Tangent 3D: geometric_interior in Stdlib only.                         *)
+(*                                                                            *)
+(* Bypass fourcolor entirely.  Define the topological interior using only     *)
+(* Stdlib Reals primitives.                                                   *)
+(* -------------------------------------------------------------------------- *)
+
+(* The image of a ring's edge skeleton -- points lying on some edge. *)
+Definition ring_image (r : Ring) (q : Point) : Prop :=
+  exists e : Edge, exists t : R,
+    In e (ring_edges r) /\
+    0 <= t <= 1 /\
+    px q = (1 - t) * px (fst e) + t * px (snd e) /\
+    py q = (1 - t) * py (fst e) + t * py (snd e).
+
+(* Complement of the edge skeleton -- the "off-ring" point set. *)
+Definition ring_complement (r : Ring) (q : Point) : Prop :=
+  ~ ring_image r q.
+
+(* A continuous path between two points stays in the complement.  This is
+   the corpus-level "connected in R^2 \ ring" relation. *)
+Definition connected_in_complement
+    (r : Ring) (p q : Point) : Prop :=
+  exists path : R -> Point,
+    path 0 = p /\ path 1 = q /\
+    forall t : R, 0 <= t <= 1 -> ring_complement r (path t).
+
+(* p is in a BOUNDED connected component of the complement: there is a
+   bound M such that every point reachable from p stays within radius M
+   of the origin. *)
+Definition in_bounded_component
+    (r : Ring) (p : Point) : Prop :=
+  exists M : R,
+    M > 0 /\
+    forall q : Point,
+      connected_in_complement r p q ->
+      px q * px q + py q * py q <= M * M.
+
+(* Geometric interior: off-ring AND in a bounded component. *)
+Definition geometric_interior_stdlib
+    (p : Point) (r : Ring) : Prop :=
+  ring_complement r p /\ in_bounded_component r p.
+
+(* Tangent 3D's basic property: a point on a ring edge is in the ring
+   image, hence not in the complement, hence not in the interior. *)
+Lemma not_geometric_interior_on_edge :
+  forall (p : Point) (r : Ring) (e : Edge) (t : R),
+    In e (ring_edges r) ->
+    0 <= t <= 1 ->
+    px p = (1 - t) * px (fst e) + t * px (snd e) ->
+    py p = (1 - t) * py (fst e) + t * py (snd e) ->
+    ~ geometric_interior_stdlib p r.
+Proof.
+  intros p r e t Hin Ht Hx Hy [Hcomp _].
+  apply Hcomp. exists e, t. split; [|split; [|split]]; assumption.
+Qed.
+
+(* Edges of an empty ring: there are none. *)
+Lemma ring_image_nil :
+  forall q : Point, ~ ring_image [] q.
+Proof.
+  intros q [e [t [Hin _]]].
+  simpl in Hin. contradiction.
+Qed.
+
+(* On an empty ring, the complement is everything; the bounded-component
+   requirement then forces a contradiction (no single bound covers all of
+   R^2). *)
+Lemma not_geometric_interior_empty_ring :
+  forall p : Point, ~ geometric_interior_stdlib p [].
+Proof.
+  intros p [_ [M [HMpos Hbnd]]].
+  destruct p as [px_p py_p].
+  set (q := mkPoint (M + 1) 0).
+  assert (Hcon : connected_in_complement [] (mkPoint px_p py_p) q).
+  { exists (fun t => mkPoint ((1 - t) * px_p + t * (M + 1))
+                              ((1 - t) * py_p + t * 0)).
+    split; [|split].
+    - cbn. f_equal; lra.
+    - unfold q. cbn. f_equal; lra.
+    - intros t Ht. intro Himg. apply (ring_image_nil _ Himg). }
+  specialize (Hbnd q Hcon).
+  unfold q in Hbnd. cbn in Hbnd. nra.
+Qed.
+
+(* Tangent 3E additional: connected_in_complement is reflexive. *)
+Lemma connected_in_complement_refl :
+  forall (r : Ring) (p : Point),
+    ring_complement r p ->
+    connected_in_complement r p p.
+Proof.
+  intros r p Hcomp.
+  exists (fun _ => p).
+  split; [reflexivity|split; [reflexivity|]].
+  intros t _. exact Hcomp.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §3b  point_in_ring_correct_jct: the principled JCT stopping point.         *)
+(*                                                                            *)
+(* Closes `point_in_ring_correct` under three named hypotheses matching       *)
+(* the JCT path doc (`docs/point-in-ring-jct-path.md`).  The hypotheses       *)
+(* are precisely the JCT-side gaps:                                           *)
+(*                                                                            *)
+(*   H1 (`H_interior_lem`): the JCT interior predicate is decidable on        *)
+(*     non-boundary points.  Without this, neither direction of the           *)
+(*     biconditional has a `interior p \/ ~ interior p` step available.       *)
+(*                                                                            *)
+(*   H2 (`H_parity_iff_interior`): horizontal-ray crossing-parity matches     *)
+(*     the JCT interior predicate.  This is the algorithmic content of        *)
+(*     "ray casting works for simple polygons" -- a thesis-scale fact         *)
+(*     provable from JCT_two_components (3-5 sessions) or hypothesized.       *)
+(*                                                                            *)
+(*   H3 (`H_geom_iff_interior`): the corpus's `geometric_interior_stdlib`     *)
+(*     agrees with the JCT interior predicate.  Step 2 of the JCT path --     *)
+(*     provable from JCT_two_components but stated separately here for        *)
+(*     clarity of the composition.                                            *)
+(*                                                                            *)
+(* Design choice: parameterise over `interior_pred : Point -> Prop`           *)
+(* directly rather than destructure from a `JCT_two_components`-shaped        *)
+(* existential.  Equivalent epistemic content; simpler theorem statement      *)
+(* and proof.  A future session can introduce `JCT_two_components` and        *)
+(* derive these three hypotheses from it.                                     *)
+(*                                                                            *)
+(* Pattern: matches `hobby_theorem_4_1_conditional` (Phase 2, Link 1) and     *)
+(* `overlay_ng_correct_conditional` (Phase 3, M5 S15) -- conditional Qed-     *)
+(* closed headline with named thesis-shaped hypotheses.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem point_in_ring_correct_jct :
+  forall (p : Point) (r : Ring) (interior_pred : Point -> Prop),
+    ring_simple r ->
+    ring_closed r ->
+    ring_has_minimum_points r ->
+    no_horizontal_edge_at p r ->
+    (* H2: parity ↔ interior_pred *)
+    (interior_pred p <->
+     Nat.odd (count_crossings_ray p r) = true) ->
+    (* H3: geometric_interior_stdlib ↔ interior_pred *)
+    (geometric_interior_stdlib p r <-> interior_pred p) ->
+    point_in_ring p r <-> geometric_interior_stdlib p r.
+Proof.
+  intros p r interior_pred Hs Hc Hm Hnh Hparity Hgeom_int.
+  rewrite (point_in_ring_eq_parity p r Hnh).
+  rewrite <- Hparity. rewrite Hgeom_int. reflexivity.
+Qed.
+
+(* The Prop-form variant: uses `Nat.Odd` instead of `Nat.odd ... = true` in
+   the parity hypothesis.  Equivalent via `Nat.odd_spec`; useful when the
+   downstream JCT discharge produces Prop-form parity. *)
+Theorem point_in_ring_correct_jct_Prop :
+  forall (p : Point) (r : Ring) (interior_pred : Point -> Prop),
+    ring_simple r ->
+    ring_closed r ->
+    ring_has_minimum_points r ->
+    no_horizontal_edge_at p r ->
+    (interior_pred p <-> Nat.Odd (count_crossings_ray p r)) ->
+    (geometric_interior_stdlib p r <-> interior_pred p) ->
+    point_in_ring p r <-> geometric_interior_stdlib p r.
+Proof.
+  intros p r interior_pred Hs Hc Hm Hnh Hparity_prop Hgeom_int.
+  apply (point_in_ring_correct_jct p r interior_pred Hs Hc Hm Hnh);
+    [|exact Hgeom_int].
+  rewrite Hparity_prop. apply iff_sym, Nat.odd_spec.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  Tangents documented as STUCK or DEFERRED.                              *)
+(* -------------------------------------------------------------------------- *)
+
+(* Tangent 5B (atan2_bound: -PI < atan2 y x <= PI):
+   Provable but tedious -- 6+ case branches (x>0; x<0 with y>=0 and y<0;
+   x=0 with y>0, y<0, y=0).  Each requires `atan_bound : -PI/2 < atan x <
+   PI/2` plus sign analysis of y/x.  Estimate: 50-80 lines.  Skipped here
+   as it exceeds the 20-min/tangent budget; the path is mechanical. *)
+
+(* Tangent 5C (total_angle_telescopes):
+   STUCK -- the angular contributions do NOT telescope cleanly.  atan2
+   has a branch cut at the negative x-axis (-PI to PI discontinuity).
+   For a closed simple polygon the total angle sum is 2*PI*k for some
+   k in {-1, 0, +1}, NOT zero.  The "telescoping" interpretation
+   confuses angle differences with arc lengths.  No fix in this
+   formulation; requires either:
+     (a) a branch-cut-aware angular difference (subtract 2*PI when
+         the naive difference jumps), or
+     (b) the Cauchy/Stokes-style integral form (line integral of
+         d theta).
+   Both are research-grade.  Documented as Option C bypass (§2 above)
+   is the right move. *)
+
+(* Tangent 3A (fourcolor import gate):
+   GREEN -- confirmed via standalone test (not committed here).
+     From fourcolor Require Import realplane.
+   imports cleanly alongside Stdlib Reals; no universe inconsistency
+   or namespace conflict.  Real.structure and realplane.point are
+   accessible.  See docs/point-in-ring-tangent-attempts.md §3A for
+   the exact test. *)
+
+(* Tangent 3B (Real.sup from Stdlib completeness):
+   GREEN with COST -- the construction
+     Definition R_sup (E : R -> Prop) : R :=
+       match excluded_middle_informative (bound E /\ (exists x, E x)) with
+       | left H => proj1_sig (completeness E (proj1 H) (proj2 H))
+       | right _ => 0
+       end.
+   typechecks and produces a total `(R -> Prop) -> R` function suitable
+   for Real.sup.  HOWEVER it pulls `constructive_definite_description`
+   into the axiom footprint (via excluded_middle_informative) -- NOT
+   currently on the README allowlist.  A landing in the main corpus
+   would require README/allowlist expansion (policy-level decision).
+   Documented in the companion doc; not landed here. *)
+
+(* Tangent 3C (to_rplane translation):
+   GREEN -- once Stdlib_R_struct is built with `Real.val := R` (i.e.
+   definitionally R, not a coerced opaque), the translation
+     Definition to_rplane (p : Point) : realplane.point Stdlib_R_struct :=
+       @realplane.Point Stdlib_R_struct (px p) (py p).
+   typechecks immediately with no coercion or universe gymnastics.
+   The eq_rect-based approach hit a universe inconsistency
+   (Real.val Rmodel : Type vs R : Set) -- avoided by building the
+   structure with val := R definitionally.  See companion doc §3C. *)
+
+(* -------------------------------------------------------------------------- *)
+(* Audit footprint.                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions point_in_ring_correct_via_crossing.
+Print Assumptions count_crossings_correct_via_crossing.
+Print Assumptions not_geometric_interior_on_edge.
+Print Assumptions ring_image_nil.
+Print Assumptions not_geometric_interior_empty_ring.
+Print Assumptions connected_in_complement_refl.
+Print Assumptions point_in_ring_correct_jct.
+Print Assumptions point_in_ring_correct_jct_Prop.

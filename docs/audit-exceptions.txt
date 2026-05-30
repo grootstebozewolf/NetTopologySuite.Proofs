@@ -169,7 +169,12 @@ theories-flocq/OverlayBridge.v
 # which transitively pull Classical_Prop.classic via snap_round_segments
 # (same lineage as OverlayBridge above).  Three named hypotheses
 # (JCT, DCEL valid polygons, semantic bridge) carried in the theorem's
-# signature -- the corpus's epistemic invariant is preserved by
-# Section-scoping the geometric_interior Variable.  No Admitteds added
-# by this file.
+# signature.  Post-S15 update: the opaque Section Variable
+# `geometric_interior` was replaced with the concrete
+# `geometric_interior_stdlib` from `theories/PointInRingTangents.v`
+# -- the topological-interior definition (pure Stdlib R, no fourcolor),
+# strengthening the H1 hypothesis from "any predicate" to "the concrete
+# bounded-component-of-complement predicate".  The JCT gap remains
+# in the H1 biconditional's content, not in the predicate definition.
+# No Admitteds added by this file.
 theories-flocq/OverlayCorrectness.v

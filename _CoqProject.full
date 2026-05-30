@@ -32,6 +32,20 @@ theories/Azimuth.v
 # five structural lemmas.  Self-contained: imports Reals, Lra, List, and
 # the corpus's Distance.  No Admitted; no Classical_Prop.classic.
 theories/Overlay.v
+# Green-phase point_in_ring_correct seam attempts (PointInRingCorrect.v).
+# Probes the seven seams from docs/point-in-ring-correct-seam-map.md
+# with simplest-possible implementations.  Seams 1, 2 (partial), 4, 6
+# (partial), 7 close as Qed; Seams 3 and 5 documented as deferred
+# without Coq surface (Real.structure / atan2 dependencies).  See
+# docs/point-in-ring-seam-attempts.md for per-seam outcomes.
+# No Admitted, no Axiom, no Parameter.
+theories/PointInRingCorrect.v
+# Green-phase Seam 3 + Seam 5 tangent attempts.  Probes the four
+# tangents identified in docs/point-in-ring-seams-3-5-7-red.md per
+# seam with simplest-possible implementations.  Tangents that close
+# land here; tangents that don't are documented in
+# docs/point-in-ring-tangent-attempts.md.  No Admitted.
+theories/PointInRingTangents.v
 # Phase 3 milestone 2: planar topology graph type.  TopologyGraph
 # record (vertices, edges with EdgeLabel), valid_topology_graph
 # well-formedness predicate, three construction helpers (empty_graph,
