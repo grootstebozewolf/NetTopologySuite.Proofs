@@ -37,6 +37,16 @@ theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
+# Category C: Phase 4 Session A -- binary64 mirror of inCircle_R.  The
+# conditional-headline pattern (Section Variable b64_inCircle_R_correct +
+# Qed-closed structural decoding) pulls Classical_Prop.classic via Flocq's
+# b64_compare path (Bcompare_correct routes through Rcompare + the
+# classical-reals decision lemmas).  No Admitteds in this file; the
+# load-bearing inCircle_R_correct fact is a named Section hypothesis,
+# mirroring hobby_theorem_4_1_conditional / overlay_ng_correct_conditional
+# / point_in_ring_correct_jct.
+theories-flocq/ArcOrient_b64.v
+
 # Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
 # Every theorem here references `snap_round` / `b64_snap` /
 # `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements

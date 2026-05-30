@@ -292,6 +292,15 @@ theories-flocq/Orient_b64_stage_d.v
 # exactness (bridging the rounded pixel to the exact `in_hot_pixel`) is
 # the next slice; see the deferred block at the foot of HotPixel_b64.v.
 theories-flocq/HotPixel_b64.v
+# Phase 4 Session A: binary64 mirror of inCircle_R.  Defines
+# b64_inCircle_R, the InCircleSign sumtype, b64_inCircle_sign decision
+# procedure, and arc_coord_int_safe (|n| <= 2^11) precondition tighter
+# than coord_int_safe (2^25) because inCircle_R has degree-4 expansion.
+# Soundness theorem is CONDITIONAL on a load-bearing
+# b64_inCircle_R_correct lemma (Section Variable); structural decoding
+# proved Qed-closed.  Pattern matches hobby_theorem_4_1_conditional /
+# overlay_ng_correct_conditional / point_in_ring_correct_jct.
+theories-flocq/ArcOrient_b64.v
 # Phase 2 milestone 3 (Slice 12): snap-rounding algorithm correctness.
 # The per-segment snap step + the preservation invariant (a segment passing
 # through a hot pixel still does so after snapping), on both the R-side spec
