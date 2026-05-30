@@ -93,6 +93,42 @@
                       extracted -- no native mirror.  Pure bool
                       computation over BooleanOp + EdgeLabel.
 
+     INCIRCLE_SIGN   -- 4-point in-circle determinant sign.
+        line 2..5:    A, B, C, P (four BPoints, one per line)
+        output:       single line "<sign> <det_hex>".
+                      sign is one of: POS / NEG / ZERO / NAN.
+        Coq mirror:   `inCircle_R` (ArcOrient.v:88), HAND-ROLLED native
+                      arithmetic (Phase 4 R-side; no b64 bridge yet).
+                      POS iff (A,B,C) is CCW AND P strictly inside the
+                      circumscribed circle.  CW flips the sign.
+
+     ARC_CHORD_CROSSES_CIRCLE -- bool sufficient condition for an arc's
+                                 circumcircle being crossed by a chord.
+        line 2..6:    arc_start, arc_mid, arc_end, chord_P, chord_Q
+                      (five BPoints, one per line)
+        output:       single token "TRUE" or "FALSE".
+        Coq mirror:   `chord_crosses_arc_circle` (ArcIntersect.v:129) +
+                      IVT-witnessed `chord_crosses_arc_circle_implies_
+                      circle_intersection` (ArcIntersectIVT.v).
+                      HAND-ROLLED: sign-product of inCircle_R at the two
+                      chord endpoints.  SUFFICIENT only -- TRUE => chord
+                      crosses circumcircle; FALSE does NOT imply
+                      non-crossing (both endpoints same side may still
+                      cross twice).
+
+     ARC_PASSES_THROUGH_PIXEL -- bool sufficient condition for an arc
+                                 passing through a hot pixel.
+        line 2..5:    arc_start, arc_mid, arc_end, pixel_center (four
+                      BPoints)
+        line 6:       <scale>   pixel-side length as a float (e.g. 1.0
+                                for unit-grid pixels)
+        output:       single token "TRUE" or "FALSE".
+        Coq mirror:   `arc_passes_through_hot_pixel` (ArcHotPixel.v:95)
+                      six-way disjunction: 4 edge-crossing sign tests +
+                      2 endpoint-in-pixel tests.  Endpoint tests use the
+                      half-open convention (bottom + left CLOSED, top +
+                      right OPEN).  SUFFICIENT only.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -365,6 +401,141 @@ let run_edge_in_result () =
   let label    = { in_left; in_right } in
   print_endline (bool_string (edge_in_result op label))
 
+(* ----- INCIRCLE_SIGN mode (Phase 4, hand-rolled). ------------------------ *)
+
+(* Native OCaml mirror of `inCircle_R` (theories/ArcOrient.v:88).  Cofactor
+   expansion along the first column of the 3x3 lifted determinant.  This is
+   a HAND-ROLLED implementation, parallel to the Phase 2 hot-pixel modes:
+   the Coq predicate is R-side (not yet bridged to BPoint / binary64), so
+   extraction is structurally not possible without first adding a b64-side
+   parallel `b64_inCircle_R` to theories-flocq/.  The native float
+   arithmetic realises Flocq's R semantics under IEEE 754 binary64
+   round-to-nearest-even (same trust pattern as the existing
+   PASSES_THROUGH_* modes).
+
+   Pin: `inCircle_R A B C P` at ArcOrient.v:88.
+     ax := px A - px P;  ay := py A - py P;
+     bx := px B - px P;  by := py B - py P;
+     cx := px C - px P;  cy := py C - py P;
+     na := ax*ax + ay*ay;
+     nb := bx*bx + by*by;
+     nc := cx*cx + cy*cy;
+     ax * (by * nc - cy * nb)
+     - ay * (bx * nc - cx * nb)
+     + na * (bx * cy - cx * by).
+
+   Sign convention: positive iff (A, B, C) is CCW AND P is strictly inside
+   the circumscribed circle.  For CW (A, B, C) the sign flips. *)
+
+let incircle_r_native
+    (a : bPoint) (b : bPoint) (c : bPoint) (p : bPoint) : float =
+  let ax = a.bx -. p.bx and ay = a.by_ -. p.by_ in
+  let bx = b.bx -. p.bx and by_ = b.by_ -. p.by_ in
+  let cx = c.bx -. p.bx and cy = c.by_ -. p.by_ in
+  let na = ax *. ax +. ay *. ay in
+  let nb = bx *. bx +. by_ *. by_ in
+  let nc = cx *. cx +. cy *. cy in
+  ax *. (by_ *. nc -. cy *. nb)
+  -. ay *. (bx *. nc -. cx *. nb)
+  +. na *. (bx *. cy -. cx *. by_)
+
+let incircle_sign_string (v : float) : string =
+  if v <> v then "NAN"
+  else if v > 0.0 then "POS"
+  else if v < 0.0 then "NEG"
+  else "ZERO"
+
+let run_incircle_sign () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  let p = parse_point (input_line stdin) in
+  let v = incircle_r_native a b c p in
+  Printf.printf "%s %h\n" (incircle_sign_string v) v
+
+(* ----- ARC_CHORD_CROSSES_CIRCLE mode (Phase 4, hand-rolled). ------------- *)
+
+(* Sufficient condition for `arc_chord_intersects` (theories/ArcIntersect.v:90)
+   via the sign-product test on `inCircle_R`.
+
+   Pin: `chord_crosses_arc_circle a P Q` at ArcIntersect.v:129 -- the
+   sP * sQ < 0 form where sP, sQ are the inCircle signs at the chord
+   endpoints relative to (arc_start, arc_mid, arc_end).
+
+   Soundness: `chord_crosses_arc_circle_implies_circle_intersection`
+   (theories/ArcIntersectIVT.v) -- the IVT-witnessed circle crossing
+   theorem.
+
+   This is a SUFFICIENT condition only.  When TRUE, the chord crosses
+   the arc's circumcircle.  When FALSE, the chord may still cross
+   (both endpoints on the same side, with the chord passing through
+   the circle in between), so callers must not interpret FALSE as
+   non-crossing. *)
+
+let run_arc_chord_crosses_circle () =
+  let arc_start = parse_point (input_line stdin) in
+  let arc_mid   = parse_point (input_line stdin) in
+  let arc_end   = parse_point (input_line stdin) in
+  let chord_p   = parse_point (input_line stdin) in
+  let chord_q   = parse_point (input_line stdin) in
+  let sp = incircle_r_native arc_start arc_mid arc_end chord_p in
+  let sq = incircle_r_native arc_start arc_mid arc_end chord_q in
+  print_endline (bool_string (sp *. sq < 0.0))
+
+(* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, hand-rolled). ------------- *)
+
+(* Sufficient condition for `arc_passes_through_hot_pixel`
+   (theories/ArcHotPixel.v:95): the six-way disjunction over the four pixel
+   edges plus the two arc endpoints.
+
+   Each edge crossing test uses the inCircle sign-product form
+   (matching `chord_crosses_arc_circle`).  Each endpoint test uses the
+   half-open hot-pixel membership predicate (matching Phase 2's
+   in_hot_pixel half-open convention: bottom + left CLOSED, top + right
+   OPEN).
+
+   Pixel layout at center C, scale s (radius r = s/2):
+     bottom-left  = (cx - r, cy - r)
+     bottom-right = (cx + r, cy - r)
+     top-right    = (cx + r, cy + r)
+     top-left     = (cx - r, cy + r)
+
+   Pin: arc_passes_through_hot_pixel a C scale at ArcHotPixel.v:95
+   (six-way disjunction: 4 edge crossings + start_in + end_in).
+
+   Sufficient condition only.  TRUE => arc passes through pixel.
+   FALSE => unclear (the disjunction covers the typical case but is
+   sufficient, not necessary). *)
+
+let in_hot_pixel_halfopen
+    (p : bPoint) (c : bPoint) (scale : float) : bool =
+  let r = scale *. 0.5 in
+  p.bx >= c.bx -. r && p.bx < c.bx +. r &&
+  p.by_ >= c.by_ -. r && p.by_ < c.by_ +. r
+
+let run_arc_passes_through_pixel () =
+  let arc_start = parse_point (input_line stdin) in
+  let arc_mid   = parse_point (input_line stdin) in
+  let arc_end   = parse_point (input_line stdin) in
+  let center    = parse_point (input_line stdin) in
+  let scale     = float_of_string (String.trim (input_line stdin)) in
+  let r = scale *. 0.5 in
+  let bl = { bx = center.bx -. r; by_ = center.by_ -. r } in
+  let br = { bx = center.bx +. r; by_ = center.by_ -. r } in
+  let tr = { bx = center.bx +. r; by_ = center.by_ +. r } in
+  let tl = { bx = center.bx -. r; by_ = center.by_ +. r } in
+  let crosses p q =
+    let sp = incircle_r_native arc_start arc_mid arc_end p in
+    let sq = incircle_r_native arc_start arc_mid arc_end q in
+    sp *. sq < 0.0
+  in
+  let result =
+    crosses bl br || crosses br tr || crosses tr tl || crosses tl bl
+    || in_hot_pixel_halfopen arc_start center scale
+    || in_hot_pixel_halfopen arc_end   center scale
+  in
+  print_endline (bool_string result)
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -393,6 +564,9 @@ let () =
        | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
+       | "INCIRCLE_SIGN"            -> run_incircle_sign ()
+       | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
+       | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
