@@ -618,6 +618,39 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §6c  Steps 5+6 of the JCT path: Prop-form parity directional corollaries.  *)
+(*                                                                            *)
+(* The bool-form bridges above use `Nat.odd ... = true`.  The JCT path lemmas *)
+(* `ray_parity_iff_interior` are stated in Prop form using `Nat.Odd` /        *)
+(* `Nat.Even`.  These corollaries bridge the bool and Prop forms via          *)
+(* `Nat.odd_spec` / `Nat.even_spec` so downstream callers can use either      *)
+(* shape.                                                                     *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma odd_crossings_implies_point_in_ring :
+  forall (p : Point) (r : Ring),
+    no_horizontal_edge_at p r ->
+    Nat.Odd (count_crossings_ray p r) ->
+    point_in_ring p r.
+Proof.
+  intros p r Hnh Hodd.
+  apply (point_in_ring_eq_parity p r Hnh).
+  apply Nat.odd_spec. exact Hodd.
+Qed.
+
+Lemma even_crossings_implies_not_point_in_ring :
+  forall (p : Point) (r : Ring),
+    no_horizontal_edge_at p r ->
+    Nat.Even (count_crossings_ray p r) ->
+    ~ point_in_ring p r.
+Proof.
+  intros p r Hnh Heven Hpir.
+  apply (point_in_ring_eq_parity p r Hnh) in Hpir.
+  apply Nat.odd_spec in Hpir.
+  apply (Nat.Even_Odd_False _ Heven Hpir).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §7  Seam 7: segment_crosses_ray agrees with cross_R_pt orientation.        *)
 (* -------------------------------------------------------------------------- *)
 
@@ -812,6 +845,8 @@ Print Assumptions count_aux_cons.
 Print Assumptions ray_parity_fold_bridge.
 Print Assumptions point_in_ring_eq_parity.
 Print Assumptions point_outside_ring_eq_even_parity.
+Print Assumptions odd_crossings_implies_point_in_ring.
+Print Assumptions even_crossings_implies_not_point_in_ring.
 Print Assumptions segment_crosses_ray_implies_right.
 Print Assumptions segment_crosses_ray_implies_cross_R_pt.
 Print Assumptions cross_R_pt_implies_segment_crosses_ray.

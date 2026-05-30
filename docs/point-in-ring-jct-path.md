@@ -494,16 +494,38 @@ SAME two atomic facts the rest of the literature names.
   - `JCT_two_components` — the topological theorem.
   - `ray_parity_iff_interior` — the algorithmic theorem.
 
-**Provable today (no JCT):**
+**Provable today (no JCT) — LANDED:**
 
-  - `odd_crossings_implies_point_in_ring`.
-  - `even_crossings_implies_not_point_in_ring`.
+  - `odd_crossings_implies_point_in_ring` — Qed-closed in
+    `theories/PointInRingCorrect.v` §6c.
+  - `even_crossings_implies_not_point_in_ring` — Qed-closed in
+    `theories/PointInRingCorrect.v` §6c.
+  - `point_in_ring_correct_jct` — Qed-closed conditional shell in
+    `theories/PointInRingTangents.v` §3b.  Two named hypotheses
+    (parity ↔ interior_pred, geometric_interior_stdlib ↔
+    interior_pred) discharged when JCT lands.
+  - `point_in_ring_correct_jct_Prop` — Prop-form variant.
 
-**Provable once hypotheses are available:**
+**Provable once JCT_two_components is available:**
 
-  - `geometric_interior_eq_JCT_interior`.
-  - `JCT_path_separation`.
-  - `point_in_ring_correct_jct` (composition).
+  - `geometric_interior_eq_JCT_interior` (Step 2).
+  - `JCT_path_separation` (Step 3).
+  - Derivation of the two `point_in_ring_correct_jct` hypotheses
+    from `JCT_two_components` (composition of Steps 2 + 4).
+
+**Current corpus state (post-session):**
+
+  - `point_in_ring_correct_jct` Qed-closed under two named
+    hypotheses (parity ↔ interior_pred + geometric_interior_stdlib
+    ↔ interior_pred).
+  - Both hypotheses are precisely-stated Coq predicates that
+    discharge from `JCT_two_components` (the actual thesis-scale
+    gap).
+  - The corpus has reached the same epistemic position for
+    `point_in_ring_correct` as it has for `hobby_theorem_4_1`
+    (Phase 2) and `overlay_ng_correct` (Phase 3): conditional
+    Qed-closed under thesis-shaped hypotheses, principled stopping
+    point.
 
 **Trigger to re-open this work:**
 

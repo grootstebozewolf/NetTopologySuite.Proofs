@@ -201,6 +201,75 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §3b  point_in_ring_correct_jct: the principled JCT stopping point.         *)
+(*                                                                            *)
+(* Closes `point_in_ring_correct` under three named hypotheses matching       *)
+(* the JCT path doc (`docs/point-in-ring-jct-path.md`).  The hypotheses       *)
+(* are precisely the JCT-side gaps:                                           *)
+(*                                                                            *)
+(*   H1 (`H_interior_lem`): the JCT interior predicate is decidable on        *)
+(*     non-boundary points.  Without this, neither direction of the           *)
+(*     biconditional has a `interior p \/ ~ interior p` step available.       *)
+(*                                                                            *)
+(*   H2 (`H_parity_iff_interior`): horizontal-ray crossing-parity matches     *)
+(*     the JCT interior predicate.  This is the algorithmic content of        *)
+(*     "ray casting works for simple polygons" -- a thesis-scale fact         *)
+(*     provable from JCT_two_components (3-5 sessions) or hypothesized.       *)
+(*                                                                            *)
+(*   H3 (`H_geom_iff_interior`): the corpus's `geometric_interior_stdlib`     *)
+(*     agrees with the JCT interior predicate.  Step 2 of the JCT path --     *)
+(*     provable from JCT_two_components but stated separately here for        *)
+(*     clarity of the composition.                                            *)
+(*                                                                            *)
+(* Design choice: parameterise over `interior_pred : Point -> Prop`           *)
+(* directly rather than destructure from a `JCT_two_components`-shaped        *)
+(* existential.  Equivalent epistemic content; simpler theorem statement      *)
+(* and proof.  A future session can introduce `JCT_two_components` and        *)
+(* derive these three hypotheses from it.                                     *)
+(*                                                                            *)
+(* Pattern: matches `hobby_theorem_4_1_conditional` (Phase 2, Link 1) and     *)
+(* `overlay_ng_correct_conditional` (Phase 3, M5 S15) -- conditional Qed-     *)
+(* closed headline with named thesis-shaped hypotheses.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem point_in_ring_correct_jct :
+  forall (p : Point) (r : Ring) (interior_pred : Point -> Prop),
+    ring_simple r ->
+    ring_closed r ->
+    ring_has_minimum_points r ->
+    no_horizontal_edge_at p r ->
+    (* H2: parity ↔ interior_pred *)
+    (interior_pred p <->
+     Nat.odd (count_crossings_ray p r) = true) ->
+    (* H3: geometric_interior_stdlib ↔ interior_pred *)
+    (geometric_interior_stdlib p r <-> interior_pred p) ->
+    point_in_ring p r <-> geometric_interior_stdlib p r.
+Proof.
+  intros p r interior_pred Hs Hc Hm Hnh Hparity Hgeom_int.
+  rewrite (point_in_ring_eq_parity p r Hnh).
+  rewrite <- Hparity. rewrite Hgeom_int. reflexivity.
+Qed.
+
+(* The Prop-form variant: uses `Nat.Odd` instead of `Nat.odd ... = true` in
+   the parity hypothesis.  Equivalent via `Nat.odd_spec`; useful when the
+   downstream JCT discharge produces Prop-form parity. *)
+Theorem point_in_ring_correct_jct_Prop :
+  forall (p : Point) (r : Ring) (interior_pred : Point -> Prop),
+    ring_simple r ->
+    ring_closed r ->
+    ring_has_minimum_points r ->
+    no_horizontal_edge_at p r ->
+    (interior_pred p <-> Nat.Odd (count_crossings_ray p r)) ->
+    (geometric_interior_stdlib p r <-> interior_pred p) ->
+    point_in_ring p r <-> geometric_interior_stdlib p r.
+Proof.
+  intros p r interior_pred Hs Hc Hm Hnh Hparity_prop Hgeom_int.
+  apply (point_in_ring_correct_jct p r interior_pred Hs Hc Hm Hnh);
+    [|exact Hgeom_int].
+  rewrite Hparity_prop. apply iff_sym, Nat.odd_spec.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §4  Tangents documented as STUCK or DEFERRED.                              *)
 (* -------------------------------------------------------------------------- *)
 
@@ -266,3 +335,5 @@ Print Assumptions not_geometric_interior_on_edge.
 Print Assumptions ring_image_nil.
 Print Assumptions not_geometric_interior_empty_ring.
 Print Assumptions connected_in_complement_refl.
+Print Assumptions point_in_ring_correct_jct.
+Print Assumptions point_in_ring_correct_jct_Prop.
