@@ -120,14 +120,14 @@ theories/ArcOverlay.v
 # IVT gap closure: chord_crosses_arc_circle_implies_circle_intersection.
 # Defines chord_point (parametric chord at t in [0,1]) and
 # inCircle_along_chord (inCircle_R applied to the parametrised chord,
-# viewed as R -> R).  Proves continuity via the Ranalysis composition
-# lemmas + custom continuity_pt_id, then applies Stdlib's IVT_cor
-# (sign-product form) to discharge: sign change at endpoints implies
-# a circle-crossing chord point.  Strengthening to arc_chord_intersects
-# (adding arc_span_contains on the witness) is deferred to a separate
-# session.  Nine Qed-closed lemmas; no Admitteds; pulls Ranalysis chain
-# (sig_not_dec, sig_forall_dec, functional_extensionality_dep --
-# README-allowlisted).
+# viewed as R -> R).  Proves derivability via Ranalysis_reg's `reg`
+# tactic, then lifts to global continuity via `derivable_continuous`,
+# then applies Stdlib's IVT_cor (sign-product form) to discharge:
+# sign change at endpoints implies a circle-crossing chord point.
+# Strengthening to arc_chord_intersects (adding arc_span_contains on
+# the witness) is deferred to a separate session.  Eight Qed-closed
+# lemmas/theorems; no Admitteds; pulls Ranalysis chain (sig_not_dec,
+# sig_forall_dec, functional_extensionality_dep -- README-allowlisted).
 theories/ArcIntersectIVT.v
 
 # Flocq-dependent modules (built only in the container; require coq-flocq).
