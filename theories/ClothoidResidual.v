@@ -45,12 +45,21 @@
    `Axiom`, a `Parameter`, or an `admit` -- `Print Assumptions` on the closed
    theorems shows only the three classical-reals axioms (see the audit footer).
 
-   The argument itself is ordinary real analysis: Stdlib's mean value theorem
-   (`MVT_cor2`) turns a positive derivative on the branch into a positive
-   secant slope, hence strict monotonicity, hence at most one root (the
-   solver's well-posedness).  No transcendental angle is materialised --
-   consistent with Azimuth.v's "sign + ratio only" stance; the branch
-   precondition is stated directly with Stdlib `Rabs` / `PI`.
+   The argument itself is ordinary real analysis: the mean value theorem
+   turns a positive derivative on the branch into a positive secant slope,
+   hence strict monotonicity, hence at most one root (the solver's
+   well-posedness).  The mean value step enters as a third Section hypothesis
+   `H_mvt` rather than a direct call to Stdlib's `MVT_cor2`, because
+   `MVT_cor2` transitively depends on `Classical_Prop.classic` -- the full
+   law of excluded middle -- which is OUTSIDE this corpus's three-axiom
+   allowlist (the constructive Dedekind-reals decidability axioms plus
+   functional extensionality; see docs/axiom-allowlist.txt).  Threading MVT as
+   a discharged premise keeps this file's `Print Assumptions` to exactly those
+   three axioms; the consumer supplies `MVT_cor2`, absorbing `classic` into
+   their own budget (in the companion clothoid-halley-coq, Coquelicot's MVT
+   plays that role).  No transcendental angle is materialised -- consistent
+   with Azimuth.v's "sign + ratio only" stance; the branch precondition is
+   stated directly with Stdlib `Rabs` / `PI`.
 
    Pin: clothoid-halley-coq coq/Clothoid_L.v  f'(L)  (companion witness for
         H_deriv and H_fprime_pos; relicensing collapses these hypotheses into
@@ -68,8 +77,7 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
-From Stdlib Require Import Ranalysis1.
-From Stdlib Require Import MVT.
+From Stdlib Require Import Ranalysis1.   (* derivable_pt_lim *)
 From NTS.Proofs Require Import Real.
 (* Azimuth.v names this file as its downstream cross-corpus target and the
    scholarly bridge (turn_sign_eq_cross, sin_half_turn_sq, miter_ratio_le_iff).
@@ -106,6 +114,19 @@ Hypothesis H_deriv : forall L : R, derivable_pt_lim f L (f' L).
 Hypothesis H_fprime_pos :
   forall L : R, 0 < L -> Rabs (kappa * L) <= PI -> 0 < f' L.
 
+(* H_mvt: the mean value theorem for f on [a, b], in the exact shape of
+   Stdlib's `MVT_cor2` specialised to f and f'.  Threaded as a premise rather
+   than invoked directly because `MVT_cor2` transitively pulls
+   `Classical_Prop.classic`, which is not on this corpus's three-axiom
+   allowlist; see the header.  The consumer discharges it with `MVT_cor2`
+   (its derivability premise is fed by H_deriv), absorbing `classic` into
+   their own axiom budget.  Pin: Clothoid_L.v f'(L) -> H_deriv -> H_mvt. *)
+Hypothesis H_mvt :
+  forall a b : R,
+    a < b ->
+    (forall c : R, a <= c <= b -> derivable_pt_lim f c (f' c)) ->
+    exists c : R, f b - f a = f' c * (b - a) /\ a < c < b.
+
 (* -------------------------------------------------------------------------- *)
 (* Helper: the branch precondition propagates inward.  If |kappa * L2| <= pi  *)
 (* and 0 < c <= L2, then |kappa * c| <= pi.  (|kappa| * c <= |kappa| * L2.)    *)
@@ -127,7 +148,8 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* The Qed-closed headline: strict monotonicity of f on the monotone branch.  *)
-(* Pure mean-value-theorem argument relative to the two hypotheses.           *)
+(* Mean-value-theorem argument relative to the hypotheses (H_deriv feeds the   *)
+(* derivability premise of H_mvt; H_fprime_pos gives the positive slope).      *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem clothoid_residual_strictly_increasing :
@@ -138,8 +160,9 @@ Theorem clothoid_residual_strictly_increasing :
     f L1 < f L2.
 Proof.
   intros L1 L2 HL1 HL12 Hbranch.
-  (* Mean value theorem: some c in (L1, L2) with the secant = f' c. *)
-  destruct (MVT_cor2 f f' L1 L2 HL12 (fun c _ => H_deriv c)) as [c [Hfc Hcin]].
+  (* Mean value theorem (premise H_mvt, derivability fed by H_deriv):
+     some c in (L1, L2) with the secant slope = f' c. *)
+  destruct (H_mvt L1 L2 HL12 (fun c _ => H_deriv c)) as [c [Hfc Hcin]].
   (* c is interior and positive. *)
   assert (Hc0 : 0 < c) by lra.
   (* The branch holds at c (c <= L2), so the derivative is positive there. *)
