@@ -25,3 +25,4 @@ theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
+theories/ClothoidResidual.v
