@@ -1,10 +1,7 @@
 # Reading guide — who reads what
 
-The corpus's docs cover several actors with different reading needs.
-This index maps each actor to their starting point and recommended
-path through the docs.
-
-Names are mnemonic — they alliterate with the role so they stick.
+Maps each actor to a starting point and reading path.  Names alliterate
+with the role.
 
 ---
 
@@ -18,13 +15,8 @@ Names are mnemonic — they alliterate with the role so they stick.
 proof ends with `Qed`, no `Admitted`, only three classical axioms
 allowed".  That's the headline.
 
-**Read further if you ever want to:** understand what's mechanically
-proved about computational geometry algorithms.  Then graduate to
-GIS Gus's path.
-
-**Next-up.** If your interest is GIS algorithms, GIS Gus's path is
-the next step.  If you build with curves and arcs, BIM Bea's path.
-If you'd contribute, Newbie Nate's path.
+**Next-up.** GIS algorithms → GIS Gus.  Curves/arcs → BIM Bea.
+Contributing → Newbie Nate.
 
 ---
 
@@ -51,10 +43,9 @@ which geometric primitives have formal proofs.
 Shewchuk Theorem 13 deep-dives (research-grade), and the Hobby-lemma
 docs (cell-snap-rounding internals).
 
-**Take away.** The corpus has Qed-closed soundness for orient2d,
-intersection, snap-rounding's preservation invariant, and conditional
-headlines for polygon overlay and curve overlay.  Gaps are precisely
-named, not handwaved.
+**Take away.** Qed-closed soundness for orient2d, intersection,
+snap-rounding's preservation invariant; conditional headlines for
+polygon and curve overlay.
 
 ---
 
@@ -114,12 +105,8 @@ fails).
 `scripts/audit_axioms.sh`, `scripts/check_readme_axioms.sh` — they're
 the per-PR sanity net.
 
-**Skip.** Per-session forensic traces unless investigating a specific
-Admitted's lineage.
-
-**Take away.** The corpus's epistemic invariants are machine-checkable;
-the maintainer's job is to keep the registries in sync with the
-`.v` files and review PRs against them.
+**Take away.** Keep the registries in sync with the `.v` files; the
+CI scripts catch drift.
 
 **When a new Admitted lands.** Add an entry to
 `admitted-deferred-proofs.txt` (provable) or
@@ -160,19 +147,17 @@ engagement-level syntheses.
      when you need to verify the chronology or read precise stuck
      goals).
 
-**Take away.** Two patterns to watch: the **conditional headline**
-(Qed-closed theorem under named thesis-shaped hypotheses) and the
-**deferred-proof registry** (Admitted with documented discharge
-plan).  Both make load-bearing gaps precise.
+**Take away.** Two patterns: the **conditional headline**
+(Qed-closed under named thesis-shaped hypotheses) and the
+**deferred-proof registry** (Admitted with discharge plan).  Both
+make load-bearing gaps precise.
 
-**Methodology meta-pattern.** Four current headlines instantiate
-the conditional pattern (`hobby_theorem_4_1_conditional`,
+**Methodology meta-pattern.** Four headlines instantiate the
+conditional pattern (`hobby_theorem_4_1_conditional`,
 `overlay_ng_correct_conditional`, `arc_overlay_correct_chord_approx`,
-`point_in_ring_correct_jct`).  Each is Qed-closed under 2-3 named
-thesis-shaped hypotheses; the corpus's contribution is the
-structural composition plus the precise naming of the load-bearing
-gaps, not the discharge of those gaps.  This pattern is the corpus's
-shipping discipline; cite as such.
+`point_in_ring_correct_jct`).  The corpus's contribution is the
+structural composition + precise naming of load-bearing gaps, not
+their discharge.  Cite as such.
 
 ---
 
@@ -196,17 +181,11 @@ sessions.
 
 **Skip.** Per-session outcomes — the retros aggregate them.
 
-**Take away.** The conditional-headline pattern means "what's the
-next thesis-scale gap to discharge or the next library to import" is
-the right next-work granularity.  Don't budget for ad-hoc work; budget
-for one registry entry at a time.
-
-**Session sizing rule of thumb.** A session typically lands 1-3
-Qed-closed deliverables; ~10% collapse outright (documented as
-collapse artifacts).  Multi-session engagements (Slice A Piece 5b
-Route 1 ran 17 sessions; Phase 1 C.2-tight ran 6) close one
-deferred-proof registry entry.  When scoping a new entry, multiply
-the estimated session count by 1.5x for unknown unknowns.
+**Take away.** Budget per registry entry, not ad-hoc.  A session
+lands 1-3 Qed-closed deliverables; ~10% collapse outright.
+Multi-session engagements (Slice A Piece 5b ran 17; Phase 1
+C.2-tight ran 6) close one entry.  Multiply estimated session count
+by 1.5x for unknown unknowns.
 
 ---
 
@@ -226,25 +205,18 @@ sessions.
      and the corresponding `-outcome.md` — prompt → outcome cadence
      for any session.
 
-**Pattern to look for.** The session prompts use a "Red phase / Green
-phase / Refactor phase / Stopping conditions" structure.  Outcomes
-report `LANDED` / `PARTIAL` / `COLLAPSED` against deliverables.
+**Outcome vocabulary.** `LANDED` / `PARTIAL` / `COLLAPSED` against
+declared deliverables.
 
-**Take away.** Sessions average 1-3 deliverables; collapses happen
-~10% of the time and are documented; the cadence is stable.
-
-**Session structure template.** Prompts follow a five-phase shape:
+**Session structure template** (five phases, use when proposing new
+sessions):
   - **Grep first**: gather corpus state before writing.
-  - **Red phase**: state the simplest target lemma + predicted
-    tangents in order of likelihood.
-  - **Green phase**: deliverables in order, stop at first genuine
-    tangent.
+  - **Red phase**: simplest target lemma + predicted tangents.
+  - **Green phase**: deliverables in order, stop at first tangent.
   - **Refactor phase**: gauntlet (`check_admitted`, `audit_axioms`,
     `check_readme_axioms`).
-  - **Stopping conditions**: explicit full-success and tangent-stop
-    criteria.
-Use this template when proposing new sessions.  The discipline of
-stating stopping conditions up front prevents scope creep mid-session.
+  - **Stopping conditions**: explicit full-success + tangent-stop
+    criteria.  Stating them up front prevents scope creep.
 
 ---
 
@@ -273,15 +245,12 @@ discipline.
   - Hand-rolled OCaml mirrors when an extracted version exists.
   - Wrappers around existing lemmas with no new content.
 
-**Stacked PR cascades.** The corpus uses branch-stacking when one
-session's output gates the next (Phase 4 Sessions A→B→C→D→E
-produced 5 stacked branches).  Review the BOTTOM PR first; the rest
-inherit its content.  When the bottom merges, the next rebases onto
-main and so on.  See Phase 4 audit's session-chain section for the
-documented pattern.
+**Stacked PR cascades.** When sessions chain (Phase 4 A→B→C→D→E
+= 5 stacked branches), review the BOTTOM PR first; the rest inherit
+its content.  When the bottom merges, the next rebases onto main.
 
-**Take away.** The corpus's epistemic discipline is the primary
-review axis.  Code-quality review is secondary.
+**Take away.** Epistemic discipline is the primary review axis;
+code-quality is secondary.
 
 ---
 
@@ -299,25 +268,19 @@ build, audit scripts, oracle extraction).
   2. `Dockerfile` — the container image both workflows reuse.
   3. `scripts/*.sh` — the three CI scripts that read the registries.
 
-**Skip.** Anything mathematical.
+**Take away.** Two workflows on a shared Docker layer cache.  Adding
+a CI step = script + invocation in `ci.yml` (or `build-oracle.yml`
+for oracle-side).
 
-**Take away.** The pipeline is two workflows on a shared Docker layer
-cache.  Adding a CI step means adding a script + an invocation in
-`ci.yml` (or `build-oracle.yml` for oracle-side changes).
+**Oracle binary publication.** `build-oracle.yml` extracts +
+links + uploads `oracle_bin` as a 90-day GitHub Actions artifact;
+on `release` events it attaches to the release.  Downstream `.Curve`
+consumes it via env var `ROCQ_REF_BIN`.
 
-**Oracle binary publication.** `build-oracle.yml` extracts the
-Coq-extracted OCaml into `oracle/extracted.ml`, links it with
-`oracle/driver.ml`, and uploads `oracle_bin` as a GitHub Actions
-artifact (90-day retention).  On `release` events the same binary
-attaches to the release as a downloadable asset.  Downstream
-`.Curve` differential tests consume the binary by env var
-`ROCQ_REF_BIN`.
-
-**Pinned vs host-install duality.** The pinned-container workflow
-is canonical; the host-install fallback (documented in
-`development-environment.md`) is for environments where the Docker
-build is blocked.  Both produce the same `.vo` files but the
-container is what CI runs.
+**Pinned vs host-install.** Pinned container is canonical
+(`Dockerfile`); host-install (`development-environment.md`) is the
+fallback when Docker is blocked.  Same `.vo` files either way; CI
+runs the container.
 
 ---
 
@@ -341,17 +304,14 @@ container is what CI runs.
   - Or pick a `WHAT IS QED-CLOSED / WHAT REMAINS OPEN` item from
     one of the audits.
 
-**Skip.** The Slice A piece 5b cascade-invariant work — it's deep and
+**Skip.** Slice A piece 5b cascade-invariant work — deep,
 non-onboarding-friendly.
 
-**Take away.** The bar is high but the discipline is documented.
-Read one full PR (e.g. the recent Phase 4 Session A) to see the
-shape.
+**Take away.** Read one full PR end-to-end (e.g. Phase 4 Session A)
+to see the shape.
 
-**Where to ask questions.** Open a GitHub Issue on this repo for
-substantive questions; for "is this PR ready?" drop a comment on
-the PR.  Review cadence is typically same-day for PR triage, 1-3
-days for full review.
+**Questions.** GitHub Issues for substantive questions; PR comments
+for "is this ready?".  Triage: same-day; full review: 1-3 days.
 
 ---
 
@@ -376,31 +336,25 @@ machine-checkable invariants.
      (oracle modes): Coq theorem → extraction directive → OCaml
      symbol → runtime invocation.
 
-**Skip.** Audit docs (they describe the methodology); your job is to
-verify it independently.
+**Skip.** Audit docs — they describe the methodology; verify
+independently.
 
-**Take away.** The corpus's load-bearing assumptions are precisely
-named and CI-enforced.  Independent verification is mechanical for
-the structural invariants and human for the discharge-plan
-plausibility.
+**Take away.** Load-bearing assumptions are precisely named and
+CI-enforced.  Mechanical verification for structural invariants;
+human verification for discharge-plan plausibility.
 
-**The two-tier Admitted system.** Two registries with distinct
-semantics:
+**Two-tier Admitted system.**
   - `admitted-counterexamples.txt`: theorem-as-stated is FALSE;
-    counterexample is verified.  Entry is permanent (or changes
-    only when the theorem is re-stated).
-  - `admitted-deferred-proofs.txt`: theorem IS true; the proof
-    structure is sketched but not formalised.  Entry is TEMPORARY;
-    it comes off the registry when the proof lands.
-Removing a deferred-proof entry without proving the theorem violates
-the corpus's epistemic invariant; `check_admitted.sh` catches drift.
+    counterexample verified.  Permanent.
+  - `admitted-deferred-proofs.txt`: theorem is true; proof
+    structure sketched.  Temporary — comes off when proof lands.
+  - Removing a deferred-proof entry without proof violates the
+    invariant; `check_admitted.sh` catches drift.
 
-**Category C exemptions.** `audit-exceptions.txt` lists files whose
-per-theorem `Print Assumptions` is exempted from the strict
-allowlist.  These are transitional: each file's Classical_Prop pull
-is inherited from a snap-rounding / Flocq lineage being cleared by
-the parametric-architecture refactor.  Listing a new file requires
-PR justification.
+**Category C exemptions.** `audit-exceptions.txt` lists files
+exempted from the strict axiom allowlist.  Transitional — each
+file's `Classical_Prop` pull is inherited from the snap-rounding /
+Flocq lineage.  Listing a new file requires PR justification.
 
 ---
 
@@ -423,24 +377,18 @@ proof-structure docs (Scholar Sam's path).
   4. `audit-phase3-milestone5.md` § 6 (Conditional strategy) — how
      the conditional-headline decision was made.
 
-**Take away.** Design sessions produce mermaid diagrams + named-
-hypothesis decompositions; implementation sessions discharge or
-defer them.  Two-route design (when uncertain) is documented as a
-methodology.
-
-**Methodology patterns to lean on.**
-  - **Two-route design**: when the load-bearing approach is
-    uncertain, design both routes in parallel.  One typically
-    collapses (e.g. Slice A Piece 5b Route 2 collapsed at Session
-    2); the surviving route inherits the design insights.
-  - **Seam map**: when a target theorem decomposes into N
-    sub-problems, write each as a "seam" with what-exists / what's-
-    missing / cost-per-seam.  See
-    `point-in-ring-correct-seam-map.md` as the exemplar.
-  - **Red/green workflow**: red = state simplest target + predicted
-    tangents; green = attempt each, stop at first genuine tangent.
-    The recent `point-in-ring-seams-3-5-7-red.md` +
-    `point-in-ring-tangent-attempts.md` pair shows the cadence.
+**Methodology patterns.**
+  - **Two-route design** (when the load-bearing approach is
+    uncertain): design both in parallel; one typically collapses
+    (Slice A Piece 5b Route 2 collapsed at Session 2), the survivor
+    inherits the insights.
+  - **Seam map** (when the target decomposes into N sub-problems):
+    one seam per sub-problem with what-exists / what's-missing /
+    cost.  Exemplar: `point-in-ring-correct-seam-map.md`.
+  - **Red/green workflow**: red = simplest target + predicted
+    tangents; green = attempt each, stop at first tangent.  See
+    `point-in-ring-seams-3-5-7-red.md` +
+    `point-in-ring-tangent-attempts.md`.
 
 ---
 
@@ -463,20 +411,17 @@ protocol reference).
   3. The Phase 4 audit + recent `Arc*_b64.v` headers for the trust
      chain of the Phase 4 modes.
 
-**Skip.** Internal Coq proof structures — you trust the Qed.
+**Skip.** Internal Coq proof structures — trust the Qed.
 
-**Take away.** Each oracle mode either extracts directly from a
-Coq-verified function or is hand-rolled with an explicit Coq pin
-comment.  Phase 4 modes recently swapped from hand-rolled to
-extracted (commit `bd6d01f` on `claude/oracle-arc-extracted`).
+**Take away.** Each oracle mode either extracts from a Coq function
+or is hand-rolled with an explicit Coq pin comment.  Phase 4 modes
+are extracted as of late May 2026.
 
-**Differential test pattern.** The intended consumer workflow:
-keep one long-running `oracle_bin` instance; the C# differential
-runner sends a mode line + inputs over stdin; the binary replies
-on stdout in hex-float format ("%h") so consumers can round-trip
-bits exactly.  Persistent-mode dispatch is the design (every mode
-except SIMPLIFY loops back).  See Phase 0 `.Curve` C# port for the
-reference implementation.
+**Differential test pattern.** Keep one long-running `oracle_bin`
+instance; send mode line + inputs over stdin; read hex-float
+("%h") output to round-trip bits exactly.  Persistent dispatch =
+every mode except SIMPLIFY loops back.  Reference: Phase 0
+`.Curve` C# port.
 
 ---
 
@@ -541,18 +486,16 @@ is too strong" entries.
 **Skip.** Anything Qed-closed without a registry entry — that's the
 trust-yes side.
 
-**Take away.** Three Admitted tiers exist:
-  1. **Tier 1** (forbidden): bare `Admitted.` without registration
-     — CI rejects.
-  2. **Tier 2** (counterexample): theorem-as-stated is false; the
-     theorem needs re-stating, not proving.
+**Take away — three Admitted tiers.**
+  1. **Tier 1** (forbidden): bare `Admitted.` without registration —
+     CI rejects.
+  2. **Tier 2** (counterexample): theorem-as-stated is false;
+     permanent; needs re-stating, not proving.
   3. **Tier 3** (deferred-proof): theorem is true; proof structure
-     documented but not yet formalised.
+     documented; temporary, closes when proof lands.
 
-The risk surface = Tier 2 + Tier 3 entries.  Tier 2 is permanent
-(unless the theorem is re-stated).  Tier 3 is temporary (closes
-when proof lands).  Both are precisely characterised; nothing is
-"sort of" verified.
+Risk surface = Tier 2 + Tier 3.  Both precisely characterised;
+nothing is "sort of" verified.
 
 ---
 
