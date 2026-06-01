@@ -120,6 +120,47 @@ Definition intersect_y_R (P0 P1 Q0 Q1 : Point) : R :=
   py P0 + intersect_param_s P0 P1 Q0 Q1 * (py P1 - py P0).
 
 (* -------------------------------------------------------------------------- *)
+(* Dovetail with the clean-lane closed form (theories/Intersect.v).           *)
+(*                                                                            *)
+(* `Intersect.strict_intersection_point A B C D` (the convex combination of   *)
+(* C and D at t = cross A B C / (cross A B C - cross A B D)) is the named      *)
+(* closed form of *the* proper-crossing intersection point, proved to equal   *)
+(* every shared point by `Intersect.strict_intersection_eq_formula`.          *)
+(*                                                                            *)
+(* `intersect_x_R` / `intersect_y_R` are the exact R-side targets that        *)
+(* `b64_intersect_point_{x,y}_forward_error` bound the rounded binary64        *)
+(* projections against (and which the oracle's INTERSECT_POINT_XY mode         *)
+(* computes).  Our convention runs along P0->P1 using cross(Q0,Q1,.), so with  *)
+(* A:=Q0, B:=Q1, C:=P0, D:=P1 the reference IS that closed form -- and it      *)
+(* holds UNCONDITIONALLY (no proper-crossing hypothesis), since both sides are *)
+(* the same Cramer expression: a pure `ring` identity in the parameter.       *)
+(* Hence the forward-error story is stated against the canonical closed-form   *)
+(* intersection point, not an ad-hoc Cramer expression.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma intersect_x_R_eq_strict_point :
+  forall P0 P1 Q0 Q1 : Point,
+    intersect_x_R P0 P1 Q0 Q1
+      = px (Intersect.strict_intersection_point Q0 Q1 P0 P1).
+Proof.
+  intros P0 P1 Q0 Q1.
+  unfold intersect_x_R, intersect_param_s,
+         Intersect.strict_intersection_point, px.
+  simpl. ring.
+Qed.
+
+Lemma intersect_y_R_eq_strict_point :
+  forall P0 P1 Q0 Q1 : Point,
+    intersect_y_R P0 P1 Q0 Q1
+      = py (Intersect.strict_intersection_point Q0 Q1 P0 P1).
+Proof.
+  intros P0 P1 Q0 Q1.
+  unfold intersect_y_R, intersect_param_s,
+         Intersect.strict_intersection_point, py.
+  simpl. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Total binary64 projections.                                                *)
 (* -------------------------------------------------------------------------- *)
 
