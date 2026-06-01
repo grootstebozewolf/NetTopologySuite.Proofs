@@ -3,20 +3,25 @@
 [![build proofs](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml/badge.svg)](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml)
 
 Mechanically-verified formal proofs of foundational properties of the
-algorithms in [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite).
+geometry algorithms in
+[NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite),
+written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 
-Proofs are written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
-
-**The invariant**: every `.v` file in `theories/` and `theories-flocq/`
-ends each proof with `Qed.` (or `Defined.` for computable terms). The
-corpus is overwhelmingly Qed-closed — over 1,100 theorems — and the
-handful of exceptions are tracked explicitly rather than hidden.
-`Axiom`, `Parameter`, and the `admit.` tactic are banned outright and
-appear nowhere. `Admitted` is permitted only for a theorem listed in one
-of two registries (see below); at present exactly **6** theorems are
-`Admitted`, every one registered. Semantic soundness bridges that are
-not yet proven are either absent (no theorem stands in for them) or
-recorded as a deferred proof — never silently stubbed.
+**Over 1,100 theorems — every proof sealed with `Qed.`** (or `Defined.`
+for computable terms), **resting on three axioms.** Those three are the
+standard classical-reals trio Rocq ships with; this corpus introduces
+none of its own, and `Axiom`, `Parameter`, and the `admit.` tactic are
+banned outright and appear nowhere. The *only* proofs not closed by
+`Qed.` are **6** `Admitted` theorems — and an unregistered `Admitted`
+fails the build, so there is no quiet middle ground. Those six fall into
+exactly two honest categories, each with a concrete seam on file: **3
+counterexamples** (the theorem as stated is *false*, with a verified
+counterexample committed) and **3 deferred proofs** (the theorem is
+*true*, its proof structure documented and the remaining work scoped).
+No soundness bridge is silently stubbed — each is proven, absent, or
+registered. (The Flocq-dependent lane inherits one further axiom
+structurally from Flocq's binary64 model — not load-bearing, and
+detailed below.)
 
 CI (`scripts/check_admitted.sh`) enforces a three-tier `Admitted`
 discipline across both directories:
