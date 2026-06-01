@@ -272,6 +272,165 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Proper-crossing uniqueness.                                                *)
+(*                                                                            *)
+(* Companion to `strict_completeness`: under the proper-crossing sign         *)
+(* condition the shared point not only EXISTS but is UNIQUE.  This is what    *)
+(* justifies speaking of *the* intersection point -- e.g. the binary64        *)
+(* intersection-point forward-error bound bounds the error against a single   *)
+(* well-defined target.                                                       *)
+(*                                                                            *)
+(* The two segment directions B - A and D - C are linearly independent in     *)
+(* this regime: their 2x2 determinant equals `cross A B D - cross A B C`,     *)
+(* which is nonzero because the two cross-products have strictly opposite     *)
+(* signs.  Any point shared by both segments lies on both lines, so two       *)
+(* shared points X, Y satisfy (t_X - t_Y)*(B - A) = (s_X - s_Y)*(D - C);      *)
+(* independence forces t_X = t_Y, hence X = Y.  Only the AB-direction         *)
+(* non-degeneracy is actually used; the second hypothesis is kept so the      *)
+(* statement reads as the exact companion to `strict_completeness`.           *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem strict_intersection_unique :
+  forall A B C D X Y,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    between A B X -> between C D X ->
+    between A B Y -> between C D Y ->
+    X = Y.
+Proof.
+  intros A B C D X Y HAB _ HABX HCDX HABY HCDY.
+  destruct HABX as [tx [_ [_ [HXx_ab HXy_ab]]]].
+  destruct HCDX as [sx [_ [_ [HXx_cd HXy_cd]]]].
+  destruct HABY as [ty [_ [_ [HYx_ab HYy_ab]]]].
+  destruct HCDY as [sy [_ [_ [HYx_cd HYy_cd]]]].
+  (* The direction determinant equals cross A B D - cross A B C, hence <> 0. *)
+  assert (Hdet_id :
+            (px B - px A) * (py D - py C) - (py B - py A) * (px D - px C)
+            = cross A B D - cross A B C) by (unfold cross; ring).
+  assert (Hdet :
+            (px B - px A) * (py D - py C) - (py B - py A) * (px D - px C) <> 0).
+  { rewrite Hdet_id. intro H. nra. }
+  (* X - Y expressed on the AB axis equals its expression on the CD axis. *)
+  assert (Heqx : (tx - ty) * (px B - px A) = (sx - sy) * (px D - px C)) by nra.
+  assert (Heqy : (tx - ty) * (py B - py A) = (sx - sy) * (py D - py C)) by nra.
+  (* (t_X - t_Y) * determinant = 0 by substituting the two identities. *)
+  assert (Ha :
+            (tx - ty)
+            * ((px B - px A) * (py D - py C) - (py B - py A) * (px D - px C))
+            = 0).
+  { replace ((tx - ty)
+             * ((px B - px A) * (py D - py C) - (py B - py A) * (px D - px C)))
+      with (((tx - ty) * (px B - px A)) * (py D - py C)
+            - ((tx - ty) * (py B - py A)) * (px D - px C)) by ring.
+    rewrite Heqx, Heqy. ring. }
+  assert (Etxy : tx = ty).
+  { destruct (Rmult_integral _ _ Ha) as [H | H].
+    - lra.
+    - exfalso. apply Hdet. exact H. }
+  destruct X as [Xx Xy]. destruct Y as [Yx Yy].
+  simpl in HXx_ab, HXy_ab, HYx_ab, HYy_ab.
+  f_equal.
+  - rewrite HXx_ab, HYx_ab, Etxy. ring.
+  - rewrite HXy_ab, HYy_ab, Etxy. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Closed form of the proper-crossing intersection point.                     *)
+(*                                                                            *)
+(* `strict_completeness` constructs the shared point as a convex combination  *)
+(* of C and D with parameter t = cross A B C / (cross A B C - cross A B D).    *)
+(* We name that point and, via `strict_intersection_unique`, show every       *)
+(* shared point equals it -- so it is the closed-form coordinates of *the*    *)
+(* intersection point.  This is the explicit target the binary64              *)
+(* intersection-point forward-error analysis approximates.                    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition strict_intersection_point (A B C D : Point) : Point :=
+  mkPoint
+    ((1 - cross A B C / (cross A B C - cross A B D)) * px C
+       + cross A B C / (cross A B C - cross A B D) * px D)
+    ((1 - cross A B C / (cross A B C - cross A B D)) * py C
+       + cross A B C / (cross A B C - cross A B D) * py D).
+
+(* The named point is genuinely shared by both segments -- the witness        *)
+(* construction of `strict_completeness`, specialised to this point.          *)
+Lemma strict_intersection_point_shared :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    between A B (strict_intersection_point A B C D)
+    /\ between C D (strict_intersection_point A B C D).
+Proof.
+  intros A B C D HABCD HCDAB.
+  assert (Hden_t : cross A B C - cross A B D <> 0) by nra.
+  assert (Hden_s : cross C D A - cross C D B <> 0) by nra.
+  unfold strict_intersection_point.
+  set (t := cross A B C / (cross A B C - cross A B D)).
+  set (s := cross C D A / (cross C D A - cross C D B)).
+  pose proof (div_in_unit_interval _ _ HABCD) as [Ht_lo Ht_hi]; fold t in Ht_lo, Ht_hi.
+  pose proof (div_in_unit_interval _ _ HCDAB) as [Hs_lo Hs_hi]; fold s in Hs_lo, Hs_hi.
+  split.
+  - exists s. repeat split; try assumption.
+    + simpl. unfold s, t, cross. field. split; assumption.
+    + simpl. unfold s, t, cross. field. split; assumption.
+  - exists t. repeat split; try assumption; reflexivity.
+Qed.
+
+(* Closed form: under the proper-crossing condition, any shared point IS      *)
+(* `strict_intersection_point A B C D`.                                       *)
+Theorem strict_intersection_eq_formula :
+  forall A B C D X,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    between A B X -> between C D X ->
+    X = strict_intersection_point A B C D.
+Proof.
+  intros A B C D X H1 H2 HABX HCDX.
+  destruct (strict_intersection_point_shared A B C D H1 H2) as [HABP HCDP].
+  apply (strict_intersection_unique A B C D X (strict_intersection_point A B C D)
+           H1 H2 HABX HCDX HABP HCDP).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Canonical headline: under the proper-crossing condition the two segments   *)
+(* cross in EXACTLY ONE point.  This packages existence                       *)
+(* (`strict_completeness`, via the named witness) and uniqueness              *)
+(* (`strict_intersection_unique`) as a single `exists!` statement.            *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem strict_unique_shared_point :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    exists! X, between A B X /\ between C D X.
+Proof.
+  intros A B C D H1 H2.
+  destruct (strict_intersection_point_shared A B C D H1 H2) as [HAB HCD].
+  exists (strict_intersection_point A B C D).
+  split.
+  - split; assumption.
+  - intros Y [HABY HCDY].
+    apply (strict_intersection_unique A B C D (strict_intersection_point A B C D) Y
+             H1 H2 HAB HCD HABY HCDY).
+Qed.
+
+(* The proper-crossing point does not depend on which segment is listed       *)
+(* first: both orderings name the same unique shared point.                   *)
+Theorem strict_intersection_point_sym :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    strict_intersection_point A B C D = strict_intersection_point C D A B.
+Proof.
+  intros A B C D H1 H2.
+  destruct (strict_intersection_point_shared A B C D H1 H2) as [HAB1 HCD1].
+  destruct (strict_intersection_point_shared C D A B H2 H1) as [HCD2 HAB2].
+  apply (strict_intersection_unique A B C D
+           (strict_intersection_point A B C D) (strict_intersection_point C D A B)
+           H1 H2 HAB1 HCD1 HAB2 HCD2).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Collinear overlap completeness.                                            *)
 (*                                                                            *)
 (* Companion to `strict_completeness`: when all four cross-products are       *)
@@ -649,12 +808,129 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Collinearity transfer.                                                     *)
+(*                                                                            *)
+(* If A <> B and two points C, D both lie on line AB (cross A B C = 0 and     *)
+(* cross A B D = 0), then any further point X on line AB also lies on line    *)
+(* CD: cross C D X = 0.  Geometrically, C and D pin down line AB, so line CD  *)
+(* coincides with it (or, when C = D, cross C D X is degenerately zero).      *)
+(*                                                                            *)
+(* Non-vertical case: with u := px B - px A <> 0, the two collinearity        *)
+(* equations give u*(py D - py C) = v*(px D - px C) and the analogue for X,   *)
+(* whence u * cross C D X = 0; u <> 0 finishes.  Vertical case: all four      *)
+(* x-coordinates coincide (via `collinear_vertical_px`), so cross C D X = 0   *)
+(* outright.  Only A <> B is needed -- C = D is fine.                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cross_collinear_transfer : forall A B C D X,
+  A <> B ->
+  cross A B C = 0 -> cross A B D = 0 -> cross A B X = 0 ->
+  cross C D X = 0.
+Proof.
+  intros A B C D X HAB HABC HABD HABX.
+  destruct (Req_dec (px A) (px B)) as [HxAB | HxABne].
+  - (* Vertical line AB: px A = px B, so py A <> py B. *)
+    assert (Hpy : py A <> py B).
+    { intro Hpy. apply HAB. apply points_eq_of_coords; assumption. }
+    pose proof (collinear_vertical_px A B C HxAB Hpy HABC) as HpxC.
+    pose proof (collinear_vertical_px A B D HxAB Hpy HABD) as HpxD.
+    pose proof (collinear_vertical_px A B X HxAB Hpy HABX) as HpxX.
+    unfold cross. rewrite HpxC, HpxD, HpxX. ring.
+  - (* Non-vertical line AB: u := px B - px A <> 0. *)
+    set (u := px B - px A). set (v := py B - py A).
+    assert (Hu : u <> 0).
+    { unfold u. intro Hz. apply HxABne. lra. }
+    assert (Hi : u * (py D - py C) = v * (px D - px C)).
+    { unfold u, v, cross in *. nra. }
+    assert (Hii : u * (py X - py C) = v * (px X - px C)).
+    { unfold u, v, cross in *. nra. }
+    assert (H0 : u * cross C D X = 0).
+    { unfold cross.
+      replace (u * ((px D - px C) * (py X - py C)
+                    - (px X - px C) * (py D - py C)))
+        with ((px D - px C) * (u * (py X - py C))
+              - (px X - px C) * (u * (py D - py C))) by ring.
+      rewrite Hi, Hii. ring. }
+    destruct (Rmult_integral _ _ H0) as [Hbad | Hgood].
+    + exfalso. apply Hu. exact Hbad.
+    + exact Hgood.
+Qed.
+
+(* The collinear share/overlap biconditional from just two cross-zero         *)
+(* premises plus A <> B -- the form callers actually have (e.g. the binary64  *)
+(* `IntersectCollinear` verdict establishes that C, D lie on line AB).  The   *)
+(* other two cross-zeros are supplied by `cross_collinear_transfer`.          *)
+Theorem collinear_share_iff_1d_overlap_2premise : forall A B C D,
+  A <> B ->
+  cross A B C = 0 -> cross A B D = 0 ->
+  ((exists X, between A B X /\ between C D X) <-> segments_1d_overlap A B C D).
+Proof.
+  intros A B C D HAB HABC HABD.
+  assert (HABA : cross A B A = 0) by (unfold cross; ring).
+  assert (HABB : cross A B B = 0) by (unfold cross; ring).
+  pose proof (cross_collinear_transfer A B C D A HAB HABC HABD HABA) as HCDA.
+  pose proof (cross_collinear_transfer A B C D B HAB HABC HABD HABB) as HCDB.
+  exact (collinear_share_iff_1d_overlap A B C D HABC HABD HCDA HCDB).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Phase-1 capstone: the complete segment-intersection decision.              *)
+(*                                                                            *)
+(* NTS's `RobustLineIntersector` dispatches on the four orientation tests     *)
+(* cross A B C, cross A B D, cross C D A, cross C D B.  This theorem bundles  *)
+(* the three regimes already proven above -- each an independently Qed-closed *)
+(* result -- into the single decision the algorithm implements:               *)
+(*                                                                            *)
+(*   (1) PROPER CROSSING -- both endpoint pairs strictly opposite-signed:     *)
+(*       the segments share a point (`strict_completeness`).                  *)
+(*   (2) REJECTION -- either pair strictly same-signed: no shared point       *)
+(*       (`same_side_rejection_is_sound`).                                    *)
+(*   (3) COLLINEAR -- all four cross-products zero: the segments share a      *)
+(*       point iff their 1D extents overlap (`collinear_share_iff_1d_overlap`).*)
+(*                                                                            *)
+(* The conjunction is the citable Phase-1 R-side statement behind the         *)
+(* binary64 predicate `b64_intersect_sign_filtered`: its NaN/Uncertain        *)
+(* paths aside, each verdict it returns is one of these three branches.  The  *)
+(* mixed-boundary sign patterns (exactly one or two crosses zero -- an        *)
+(* endpoint grazing the interior of the other segment) are not folded into    *)
+(* this three-way headline; they are covered by the `between`-witness route   *)
+(* of `segments_1d_overlap_share`.                                            *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem segment_intersection_decision : forall A B C D : Point,
+  (* (1) proper crossing *)
+  (cross A B C * cross A B D < 0 ->
+   cross C D A * cross C D B < 0 ->
+   exists X, between A B X /\ between C D X)
+  /\
+  (* (2) rejection *)
+  (cross A B C * cross A B D > 0 \/ cross C D A * cross C D B > 0 ->
+   ~ exists X, between A B X /\ between C D X)
+  /\
+  (* (3) collinear regime *)
+  (cross A B C = 0 -> cross A B D = 0 ->
+   cross C D A = 0 -> cross C D B = 0 ->
+   ((exists X, between A B X /\ between C D X) <-> segments_1d_overlap A B C D)).
+Proof.
+  intros A B C D. split; [| split].
+  - intros H1 H2. exact (strict_completeness A B C D H1 H2).
+  - intros H. exact (same_side_rejection_is_sound A B C D H).
+  - intros HABC HABD HCDA HCDB.
+    exact (collinear_share_iff_1d_overlap A B C D HABC HABD HCDA HCDB).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions segments_share_point_implies_opposite_sides.
 Print Assumptions same_side_rejection_is_sound.
 Print Assumptions strict_completeness.
+Print Assumptions strict_intersection_unique.
+Print Assumptions strict_intersection_point_shared.
+Print Assumptions strict_intersection_eq_formula.
+Print Assumptions strict_unique_shared_point.
+Print Assumptions strict_intersection_point_sym.
 Print Assumptions segments_1d_overlap_share.
 Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
@@ -663,3 +939,6 @@ Print Assumptions shared_endpoint_share_point.
 Print Assumptions range_overlap_endpoint_in.
 Print Assumptions collinear_share_implies_1d_overlap.
 Print Assumptions collinear_share_iff_1d_overlap.
+Print Assumptions cross_collinear_transfer.
+Print Assumptions collinear_share_iff_1d_overlap_2premise.
+Print Assumptions segment_intersection_decision.

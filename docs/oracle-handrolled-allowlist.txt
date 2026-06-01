@@ -1,0 +1,52 @@
+# Oracle hand-rolled-arithmetic allowlist (credibility ratchet)
+# =============================================================================
+# Frozen baseline for scripts/check_oracle_handrolled.sh.
+#
+# Each name is a function in oracle/driver.ml that performs binary64
+# arithmetic WITHOUT routing through a Coq-extracted function in
+# oracle/extracted.ml.  These pre-date the ratchet; they are the technical
+# debt to be migrated to extracted definitions (see
+# docs/oracle-handroll-migration.md), ordered by risk/cost.
+#
+# RULES (enforced by CI):
+#   - This list may only SHRINK.  Adding a new hand-rolled kernel fails CI.
+#   - When a kernel is migrated to an extracted call (or removed), delete its
+#     line here in the same change, or CI fails on the stale entry.
+#
+# One function name per line; `#` comments and blank lines ignored.
+# =============================================================================
+
+# --- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN : MIGRATED -------------
+# (item 1, done) The driver now calls the extracted computational predicates
+# b64_passes_through_hot_pixel_compute / _halfopen_compute
+# (theories-flocq/PassesThrough_b64_compute.v); the native round_half_to_even
+# / lb_tlo / lb_thi / lb_touches / lb_touches_halfopen kernels were deleted.
+# Bit-exact with the old native code (2e6-case check, oracle/test_pt.ml).
+# Remaining: forward-error soundness of the rounded predicate to the
+# geometric relation (docs/oracle-handroll-migration.md item 1).
+
+# --- INCIRCLE_SIGN : MIGRATED -----------------------------------------------
+# (item 2, done) The in-circle determinant is now the extracted b64_inCircle
+# (theories-flocq/InCircle_b64_compute.v); native incircle_r_native deleted and
+# all three modes (INCIRCLE_SIGN + both ARC_* sign-products) route through it.
+# Bit-exact with the old native code (2e6-case check, oracle/test_ic.ml).
+# Remaining: integer-regime exactness of the b64 sign vs inCircle_R
+# (|coord| <= 2^12, no division -> exact; docs/oracle-handroll-migration.md item 2).
+
+# --- ARC_CHORD_CROSSES_CIRCLE : MIGRATED ------------------------------------
+# (item 3, done) Now the extracted b64_chord_crosses_arc_circle
+# (theories-flocq/ArcCircle_b64_compute.v); native `sp *. sq < 0` glue gone.
+# Bit-exact (2e6-case check, oracle/test_arc.ml).
+
+# --- ARC_PASSES_THROUGH_PIXEL : MIGRATED ------------------------------------
+# (item 4, done) Now the extracted b64_arc_passes_through_hot_pixel
+# (theories-flocq/ArcPixel_b64_compute.v); native in_hot_pixel_halfopen and the
+# run_arc_passes_through_pixel glue deleted.  Bit-exact (2e6-case check,
+# oracle/test_pixel.ml).
+#
+# ============================================================================
+# ALLOWLIST EMPTY -- migration done-criterion met.  Every oracle mode now
+# computes via a Coq-extracted function (oracle/extracted.ml); no hand-rolled
+# float arithmetic remains in oracle/driver.ml.  The ratchet
+# (scripts/check_oracle_handrolled.sh) reports 0 frozen kernels.
+# ============================================================================

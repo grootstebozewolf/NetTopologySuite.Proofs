@@ -252,114 +252,21 @@ let run_intersect_point_xy () =
 
 (* ----- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN modes. ------------ *)
 
-(* Native OCaml mirrors of the corpus's hot-pixel predicates.  Equivalent
-   to extracting `b64_passes_through_hot_pixel` and `_halfopen` from
-   `HotPixel_b64.v` / `PassesThroughHalfopen_b64.v`, with the same trust
-   pattern as the existing `Bplus -> ( +. )` extracts: on IEEE 754
-   binary64 hardware in round-to-nearest-even mode (the OCaml default
-   under SSE2/NEON, which is what oracle_bin runs on), native float ops
-   realise Flocq's R semantics for the operations used in the LB filter.
+(* Extracted from Coq: `b64_passes_through_hot_pixel_compute` and
+   `_halfopen_compute` (theories-flocq/PassesThrough_b64_compute.v) -- the
+   computational binary64 Liang-Barsky predicates.  The R-spec versions in
+   HotPixel_b64 / PassesThroughHalfopen_b64 read coordinates through `B2R`
+   and decide with exact-real arithmetic, so they are not extractable; the
+   `_compute` versions mirror them on the b64 layer and extract to native
+   float code.  They are bit-exact with the previous hand-rolled kernels
+   (2,000,000-case differential check, oracle/test_pt.ml), via the usual
+   `Bplus -> ( +. )` / `Float.min` / round-half-even extraction overrides in
+   Validate_binary64_extract.v.
 
-   Implemented directly here -- not via Coq's `Extract Constant` -- to
-   sidestep the R-module hierarchy that Coq's stdlib emits for
-   `Reals.Rdefinitions.RbaseSymbolsImpl` (abstract `coq_R` type via a
-   module signature, distinct from the toplevel `Rplus` symbol that
-   `Extract Inlined Constant` reaches).  The corpus's bracket lemma
-   `b64_passes_through_hot_pixel_halfopen_implies_closed` is the
-   formally-proved option-layer pin; this code is the runtime mirror. *)
-
-(* Round to nearest integer with ties to even (IEEE 754 default, the
-   semantics of `Bnearbyint mode_NE` from HotPixel_b64.v's b64_snap_coord).
-   OCaml 4.14 stdlib's `Float.round` is half-away-from-zero, so we
-   implement half-to-even via floor + parity-of-remainder. *)
-let round_half_to_even (x : float) : float =
-  if x <> x then x                                  (* NaN passthrough *)
-  else if x = infinity || x = neg_infinity then x   (* infinities pass *)
-  else
-    let f = Float.floor x in
-    let d = x -. f in
-    if d < 0.5 then f
-    else if d > 0.5 then f +. 1.0
-    else if Float.rem f 2.0 = 0.0 then f else f +. 1.0
-
-let snap_coord_native (x : float) : float = round_half_to_even x
-
-let snap_native (p : bPoint) : bPoint =
-  { bx = snap_coord_native p.bx; by_ = snap_coord_native p.by_ }
-
-(* Per-axis slab membership for the degenerate (axis-parallel) case.
-   Non-degenerate axes pass through unconditionally (the t-bounds carry
-   the constraint).  Closed variant for the FILTER mode. *)
-let lb_inslab_closed c0 c1 lo hi : bool =
-  if c1 = c0 then lo <= c0 && c0 <= hi else true
-
-(* Half-open variant: strict upper, matching `in_hot_pixel`'s `< xhi`
-   on the upper bound. *)
-let lb_inslab_halfopen c0 c1 lo hi : bool =
-  if c1 = c0 then lo <= c0 && c0 < hi else true
-
-(* Per-axis t-bounds.  For non-degenerate axes the two t-values
-   (lo - c0)/(c1 - c0) and (hi - c0)/(c1 - c0) sit at the slab boundaries;
-   `lb_tlo` is the smaller and `lb_thi` is the larger, regardless of
-   orientation.  Degenerate case returns [0, 1] (the segment parameter
-   range itself) so the t-overlap check below reduces to "non-empty
-   segment". *)
-let lb_tlo c0 c1 lo hi : float =
-  if c1 = c0 then 0.0
-  else Float.min ((lo -. c0) /. (c1 -. c0)) ((hi -. c0) /. (c1 -. c0))
-
-let lb_thi c0 c1 lo hi : float =
-  if c1 = c0 then 1.0
-  else Float.max ((lo -. c0) /. (c1 -. c0)) ((hi -. c0) /. (c1 -. c0))
-
-(* Closed-filter Liang-Barsky touch: `b64_liang_barsky_touches`. *)
-let lb_touches p0 p1 c : bool =
-  let x0 = p0.bx and y0 = p0.by_
-  and x1 = p1.bx and y1 = p1.by_
-  and cx = c.bx  and cy = c.by_ in
-  let xlo = cx -. 0.5 and xhi = cx +. 0.5
-  and ylo = cy -. 0.5 and yhi = cy +. 0.5 in
-  lb_inslab_closed x0 x1 xlo xhi
-  && lb_inslab_closed y0 y1 ylo yhi
-  && Float.max 0.0 (Float.max (lb_tlo x0 x1 xlo xhi)
-                              (lb_tlo y0 y1 ylo yhi))
-     <= Float.min 1.0 (Float.min (lb_thi x0 x1 xlo xhi)
-                                 (lb_thi y0 y1 ylo yhi))
-
-(* Half-open-filter Liang-Barsky touch: `b64_liang_barsky_touches_halfopen`.
-   Closed conditions PLUS explicit strict-upper midpoint checks
-   `x(tmid) < xhi`, `y(tmid) < yhi` -- the corpus's midpoint-witness
-   characterisation that captures half-open across both orientations
-   of (c0, c1). *)
-let lb_touches_halfopen p0 p1 c : bool =
-  let x0 = p0.bx and y0 = p0.by_
-  and x1 = p1.bx and y1 = p1.by_
-  and cx = c.bx  and cy = c.by_ in
-  let xlo = cx -. 0.5 and xhi = cx +. 0.5
-  and ylo = cy -. 0.5 and yhi = cy +. 0.5 in
-  let tmin = Float.max 0.0 (Float.max (lb_tlo x0 x1 xlo xhi)
-                                      (lb_tlo y0 y1 ylo yhi))
-  and tmax = Float.min 1.0 (Float.min (lb_thi x0 x1 xlo xhi)
-                                      (lb_thi y0 y1 ylo yhi)) in
-  let tmid = (tmin +. tmax) /. 2.0 in
-  let xmid = (1.0 -. tmid) *. x0 +. tmid *. x1
-  and ymid = (1.0 -. tmid) *. y0 +. tmid *. y1 in
-  lb_inslab_halfopen x0 x1 xlo xhi
-  && lb_inslab_halfopen y0 y1 ylo yhi
-  && tmin <= tmax
-  && xmid < xhi
-  && ymid < yhi
-
-(* `b64_passes_through_hot_pixel`: closed-filter conjunction on the
-   original AND snapped segment. *)
-let passes_through_filter p0 p1 c : bool =
-  lb_touches p0 p1 c
-  && lb_touches (snap_native p0) (snap_native p1) c
-
-(* `b64_passes_through_hot_pixel_halfopen`: half-open conjunction. *)
-let passes_through_halfopen p0 p1 c : bool =
-  lb_touches_halfopen p0 p1 c
-  && lb_touches_halfopen (snap_native p0) (snap_native p1) c
+   Soundness of the rounded predicate to the geometric hot-pixel relation is
+   the forward-error / integer-regime obligation tracked in
+   docs/oracle-handroll-migration.md item 1 (the R-spec carries the exact
+   soundness; bridging the rounded compute to it is deferred). *)
 
 let bool_string b = if b then "TRUE" else "FALSE"
 
@@ -367,13 +274,14 @@ let run_passes_through_filter () =
   let p0 = parse_point (input_line stdin) in
   let p1 = parse_point (input_line stdin) in
   let c  = parse_point (input_line stdin) in
-  print_endline (bool_string (passes_through_filter p0 p1 c))
+  print_endline (bool_string (b64_passes_through_hot_pixel_compute p0 p1 c))
 
 let run_passes_through_halfopen () =
   let p0 = parse_point (input_line stdin) in
   let p1 = parse_point (input_line stdin) in
   let c  = parse_point (input_line stdin) in
-  print_endline (bool_string (passes_through_halfopen p0 p1 c))
+  print_endline
+    (bool_string (b64_passes_through_hot_pixel_halfopen_compute p0 p1 c))
 
 (* ----- EDGE_IN_RESULT mode (Phase 3, extracted). ------------------------- *)
 
@@ -403,41 +311,20 @@ let run_edge_in_result () =
 
 (* ----- INCIRCLE_SIGN mode (Phase 4, hand-rolled). ------------------------ *)
 
-(* Native OCaml mirror of `inCircle_R` (theories/ArcOrient.v:88).  Cofactor
-   expansion along the first column of the 3x3 lifted determinant.  This is
-   a HAND-ROLLED implementation, parallel to the Phase 2 hot-pixel modes:
-   the Coq predicate is R-side (not yet bridged to BPoint / binary64), so
-   extraction is structurally not possible without first adding a b64-side
-   parallel `b64_inCircle_R` to theories-flocq/.  The native float
-   arithmetic realises Flocq's R semantics under IEEE 754 binary64
-   round-to-nearest-even (same trust pattern as the existing
-   PASSES_THROUGH_* modes).
-
-   Pin: `inCircle_R A B C P` at ArcOrient.v:88.
-     ax := px A - px P;  ay := py A - py P;
-     bx := px B - px P;  by := py B - py P;
-     cx := px C - px P;  cy := py C - py P;
-     na := ax*ax + ay*ay;
-     nb := bx*bx + by*by;
-     nc := cx*cx + cy*cy;
-     ax * (by * nc - cy * nb)
-     - ay * (bx * nc - cx * nb)
-     + na * (bx * cy - cx * by).
+(* The in-circle determinant is the extracted `b64_inCircle`
+   (theories-flocq/InCircle_b64_compute.v), which mirrors `inCircle_R`
+   (theories/ArcOrient.v:88) on the b64 layer.  `inCircle_R` is R-side, hence
+   not extractable; `b64_inCircle` is its binary64 evaluator and is bit-exact
+   with the previous hand-rolled `incircle_r_native` (2,000,000-case
+   differential check, oracle/test_ic.ml).  Used by INCIRCLE_SIGN and by the
+   ARC_* sign-products below.
 
    Sign convention: positive iff (A, B, C) is CCW AND P is strictly inside
-   the circumscribed circle.  For CW (A, B, C) the sign flips. *)
+   the circumscribed circle.  For CW (A, B, C) the sign flips.
 
-let incircle_r_native
-    (a : bPoint) (b : bPoint) (c : bPoint) (p : bPoint) : float =
-  let ax = a.bx -. p.bx and ay = a.by_ -. p.by_ in
-  let bx = b.bx -. p.bx and by_ = b.by_ -. p.by_ in
-  let cx = c.bx -. p.bx and cy = c.by_ -. p.by_ in
-  let na = ax *. ax +. ay *. ay in
-  let nb = bx *. bx +. by_ *. by_ in
-  let nc = cx *. cx +. cy *. cy in
-  ax *. (by_ *. nc -. cy *. nb)
-  -. ay *. (bx *. nc -. cx *. nb)
-  +. na *. (bx *. cy -. cx *. by_)
+   Soundness of the b64 sign to inCircle_R's sign (clean integer-regime
+   exactness, |coord| <= 2^12, since the determinant has no division) is
+   deferred -- docs/oracle-handroll-migration.md item 2. *)
 
 let incircle_sign_string (v : float) : string =
   if v <> v then "NAN"
@@ -450,13 +337,16 @@ let run_incircle_sign () =
   let b = parse_point (input_line stdin) in
   let c = parse_point (input_line stdin) in
   let p = parse_point (input_line stdin) in
-  let v = incircle_r_native a b c p in
+  let v = b64_inCircle a b c p in
   Printf.printf "%s %h\n" (incircle_sign_string v) v
 
-(* ----- ARC_CHORD_CROSSES_CIRCLE mode (Phase 4, hand-rolled). ------------- *)
+(* ----- ARC_CHORD_CROSSES_CIRCLE mode (Phase 4, extracted). --------------- *)
 
-(* Sufficient condition for `arc_chord_intersects` (theories/ArcIntersect.v:90)
-   via the sign-product test on `inCircle_R`.
+(* The extracted `b64_chord_crosses_arc_circle`
+   (theories-flocq/ArcCircle_b64_compute.v): the sign-product test
+   `b64_inCircle(S,M,E,P) * b64_inCircle(S,M,E,Q) < 0` on the b64 layer,
+   bit-exact with the previous hand-rolled glue (2,000,000-case check,
+   oracle/test_arc.ml).
 
    Pin: `chord_crosses_arc_circle a P Q` at ArcIntersect.v:129 -- the
    sP * sQ < 0 form where sP, sQ are the inCircle signs at the chord
@@ -478,40 +368,21 @@ let run_arc_chord_crosses_circle () =
   let arc_end   = parse_point (input_line stdin) in
   let chord_p   = parse_point (input_line stdin) in
   let chord_q   = parse_point (input_line stdin) in
-  let sp = incircle_r_native arc_start arc_mid arc_end chord_p in
-  let sq = incircle_r_native arc_start arc_mid arc_end chord_q in
-  print_endline (bool_string (sp *. sq < 0.0))
+  print_endline
+    (bool_string
+       (b64_chord_crosses_arc_circle arc_start arc_mid arc_end chord_p chord_q))
 
-(* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, hand-rolled). ------------- *)
+(* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, extracted). -------------- *)
 
-(* Sufficient condition for `arc_passes_through_hot_pixel`
-   (theories/ArcHotPixel.v:95): the six-way disjunction over the four pixel
-   edges plus the two arc endpoints.
+(* The extracted `b64_arc_passes_through_hot_pixel`
+   (theories-flocq/ArcPixel_b64_compute.v): the six-way disjunction over the
+   four pixel edges (inCircle sign-products via `b64_chord_crosses_arc_circle`)
+   plus the two arc-endpoint half-open membership tests.  Bit-exact with the
+   previous hand-rolled kernels (2,000,000-case check, oracle/test_pixel.ml).
 
-   Each edge crossing test uses the inCircle sign-product form
-   (matching `chord_crosses_arc_circle`).  Each endpoint test uses the
-   half-open hot-pixel membership predicate (matching Phase 2's
-   in_hot_pixel half-open convention: bottom + left CLOSED, top + right
-   OPEN).
-
-   Pixel layout at center C, scale s (radius r = s/2):
-     bottom-left  = (cx - r, cy - r)
-     bottom-right = (cx + r, cy - r)
-     top-right    = (cx + r, cy + r)
-     top-left     = (cx - r, cy + r)
-
-   Pin: arc_passes_through_hot_pixel a C scale at ArcHotPixel.v:95
-   (six-way disjunction: 4 edge crossings + start_in + end_in).
-
-   Sufficient condition only.  TRUE => arc passes through pixel.
-   FALSE => unclear (the disjunction covers the typical case but is
-   sufficient, not necessary). *)
-
-let in_hot_pixel_halfopen
-    (p : bPoint) (c : bPoint) (scale : float) : bool =
-  let r = scale *. 0.5 in
-  p.bx >= c.bx -. r && p.bx < c.bx +. r &&
-  p.by_ >= c.by_ -. r && p.by_ < c.by_ +. r
+   Pin: `arc_passes_through_hot_pixel a C scale` at ArcHotPixel.v:95.
+   Sufficient condition only: TRUE => arc passes through pixel; FALSE
+   inconclusive. *)
 
 let run_arc_passes_through_pixel () =
   let arc_start = parse_point (input_line stdin) in
@@ -519,22 +390,10 @@ let run_arc_passes_through_pixel () =
   let arc_end   = parse_point (input_line stdin) in
   let center    = parse_point (input_line stdin) in
   let scale     = float_of_string (String.trim (input_line stdin)) in
-  let r = scale *. 0.5 in
-  let bl = { bx = center.bx -. r; by_ = center.by_ -. r } in
-  let br = { bx = center.bx +. r; by_ = center.by_ -. r } in
-  let tr = { bx = center.bx +. r; by_ = center.by_ +. r } in
-  let tl = { bx = center.bx -. r; by_ = center.by_ +. r } in
-  let crosses p q =
-    let sp = incircle_r_native arc_start arc_mid arc_end p in
-    let sq = incircle_r_native arc_start arc_mid arc_end q in
-    sp *. sq < 0.0
-  in
-  let result =
-    crosses bl br || crosses br tr || crosses tr tl || crosses tl bl
-    || in_hot_pixel_halfopen arc_start center scale
-    || in_hot_pixel_halfopen arc_end   center scale
-  in
-  print_endline (bool_string result)
+  print_endline
+    (bool_string
+       (b64_arc_passes_through_hot_pixel
+          arc_start arc_mid arc_end center scale))
 
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 

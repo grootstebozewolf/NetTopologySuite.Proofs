@@ -20,6 +20,20 @@ on:
       - '_CoqProject.full'
       - 'Dockerfile'
       - '.github/workflows/build-oracle.yml'
+  # Gate `oracle/driver.ml` (the RocqRefRunner sources) on PRs into main.
+  # Without this trigger the oracle is only compiled AFTER merge to main:
+  # ci.yml never runs `make -C oracle/`, so a syntax/type error in a new
+  # driver mode (e.g. CLOTHOID_INTERSECT) would otherwise reach main
+  # unvalidated.  Same `paths:` filter as the push trigger keeps the slow
+  # container build off PRs that don't touch the oracle/flocq corpus.
+  pull_request:
+    branches: [main]
+    paths:
+      - 'oracle/**'
+      - 'theories-flocq/**'
+      - '_CoqProject.full'
+      - 'Dockerfile'
+      - '.github/workflows/build-oracle.yml'
   workflow_dispatch:
   release:
     types: [published]
