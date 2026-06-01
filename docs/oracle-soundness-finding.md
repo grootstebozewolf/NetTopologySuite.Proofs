@@ -1,5 +1,11 @@
 # Oracle soundness finding — the `compute ⇒ spec` bridge is FALSE
 
+> **Filename caveat (read first).** This file records that *soundness* vs the
+> sharp closed pixel is **disproved**, and that the real obligation is
+> **completeness** (`spec ⇒ compute`, "never drop a real pass"). The word
+> "soundness" in the filename predates this framing; do not read it as a
+> claim. Soundness is not claimed anywhere.
+
 **Date:** 2026-06-01. **Toolchain:** Rocq 9.1.1 + Flocq 4.2.2 (host fallback);
 exact-real spec evaluated with Zarith `Q` (`Q.of_float` is exact — every
 binary64 is a dyadic rational).
@@ -84,3 +90,59 @@ provable, useful statements are:
 
 What is **not** provable, and should not be claimed: `compute = true ⇒` exact
 geometric pass for arbitrary binary64 inputs (disproved above).
+
+## C2 — completeness (`spec ⇒ compute`): strongly evidenced, proof BLOCKED
+
+**This is COMPLETENESS, not soundness** — the snap-rounding-noder safety
+direction "every real pass is flagged; never drop a crossing". Soundness stays
+disproved (above) and unclaimed.
+
+**Target** (real signature from Phase S — `BPoint` args, no tol, scale = 1):
+
+```coq
+Theorem b64_passes_through_complete_compute :
+  forall P0 P1 C : BPoint,
+    b64_passes_through_hot_pixel P0 P1 C = true ->        (* exact-real spec *)
+    b64_passes_through_hot_pixel_compute P0 P1 C = true.  (* rounded compute *)
+```
+
+Composed with the `Qed` lemma `b64_passes_through_complete` (R ⇒ spec) this
+gives **R ⇒ compute** = "the oracle never drops a real crossing". Phase S: no
+such lemma exists; not definitional (exact `B2R` vs rounded `b64_*`).
+
+**Empirics (extending the table above).** No completeness counterexample
+exists in any sampling, including the boundary band where one would live:
+
+| sampling | cases | completeness viol. (`spec&&!compute`) | dual (`compute&&!spec`) |
+|---|---|---|---|
+| exhaustive half-integer grid | 36,864 | 0 | 0 |
+| ULP-band: ±3 ulp on every grid coord | 217,728 | **0** | 3,246 |
+
+(`oracle/test_c2.ml`, `test_c2b.ml`.) The asymmetry is the whole story:
+`compute` is a robust **over-approximation** of `spec` — it never under-accepts
+even at tangency, while it over-accepts thousands of times in the same band.
+
+**BLOCKER (grounded, real Coq).** `intros; unfold; apply andb` reduces the
+target to a touch-level goal in which the hypothesis `H1` is the **exact-real**
+touch (`Binary.B2R …` + `Rle_bool (Rmax 0 (Rmax (lb_tlo …) …)) (Rmin 1 …)`,
+exact `Rminus`/`Rinv` bounds) and the goal is the **binary64-rounded** touch
+(`b64_div`/`b64_le`/`b64_min`/`b64_max`). The final comparison needs
+
+```
+B2R (b64_max 0 (b64_max tlo'_x tlo'_y))  <=  B2R (b64_min 1 (b64_min thi'_x thi'_y))
+```
+
+after which `b64_le_complete` (`B2R a <= B2R b -> b64_le a b = true`, present,
+`Qed`) closes it. But `B2R (b64_div …) = round((lo-c0)/(c1-c0))` rounds the
+**lower** t-bounds up and the **upper** t-bounds down, and round-to-**nearest**
+gives no outward guarantee. So `H1`'s exact `LHS <= RHS` does **not** imply the
+rounded `LHS <= RHS`: `b64_le_complete` is available but its hypothesis is
+exactly the step monotonicity cannot discharge.
+
+**Documented tangent.** Expected a forward-error/monotonicity bridge (exact
+pass ⇒ rounded pass). The goal instead demands a *computation-specific* proof
+that the round-to-nearest errors in this divide-and-clip never align to flip
+the composite comparison inward — the ulp-band the 217,728-case probe (and 18M
+random) never broke, but which monotonicity cannot rule out. Closing it needs
+that deep argument (or a measure-~2⁻¹⁰⁴ counterexample search). **No `Admitted`
+was left in the corpus**; C2 remains an open, strongly-evidenced obligation.
