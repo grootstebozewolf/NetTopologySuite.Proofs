@@ -265,6 +265,38 @@ let run_orient_exact () =
     let s = orient_exact_sign p0 p1 q in
     print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
 
+(* ----- TWOSUM / GROW_EXPANSION modes. ------------------------------------ *)
+
+(* Introspection on the Shewchuk fast-expansion-sum cascade, for validating
+   counterexamples about its magnitude behaviour in seconds (rather than
+   constructing binary64 literals inside Coq).  TWOSUM runs Knuth/Dekker
+   b64_TwoSum; GROW_EXPANSION runs the whole b64_grow_expansion_aux cascade
+   and reports the final carry + the settled error chain. *)
+
+let rec read_floats acc =
+  match (try Some (input_line stdin) with End_of_file -> None) with
+  | None -> List.rev acc
+  | Some line ->
+      let t = String.trim line in
+      if t = "" then read_floats acc
+      else read_floats (float_of_string t :: acc)
+
+(* b64_TwoSum x y = (sum, err): sum = round(x+y), err = x+y-sum exactly. *)
+let run_twosum () =
+  let x = float_of_string (String.trim (input_line stdin)) in
+  let y = float_of_string (String.trim (input_line stdin)) in
+  let (s, e) = b64_TwoSum x y in
+  Printf.printf "SUM %h ERR %h\n" s e
+
+(* GROW_EXPANSION: line 1 = q (initial carry), remaining lines = xs.
+   Output: "QFINAL <hex>" then one "H <hex>" per settled error. *)
+let run_grow_expansion () =
+  let q = float_of_string (String.trim (input_line stdin)) in
+  let xs = read_floats [] in
+  let (hs, qfinal) = b64_grow_expansion_aux q xs in
+  Printf.printf "QFINAL %h\n" qfinal;
+  List.iter (fun h -> Printf.printf "H %h\n" h) hs
+
 (* ----- INTERSECT_FILTERED mode. ------------------------------------------ *)
 
 let intersect_sign_string = function
@@ -478,6 +510,8 @@ let () =
        | "ORIENT"                   -> run_orient ()
        | "ORIENT_FILTERED"          -> run_orient_filtered ()
        | "ORIENT_EXACT"             -> run_orient_exact ()
+       | "TWOSUM"                   -> run_twosum ()
+       | "GROW_EXPANSION"           -> run_grow_expansion ()
        | "INTERSECT_FILTERED"       -> run_intersect_filtered ()
        | "INTERSECT_POINT_FILTERED" -> run_intersect_point_filtered ()
        | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()

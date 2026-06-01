@@ -626,11 +626,15 @@ covers `SIMPLIFY`, `ORIENT` / `ORIENT_FILTERED` / `ORIENT_EXACT`,
 `INTERSECT_FILTERED` /
 `INTERSECT_POINT_FILTERED` / `INTERSECT_POINT_XY`,
 `PASSES_THROUGH_FILTER` / `PASSES_THROUGH_HALFOPEN`, `EDGE_IN_RESULT`,
-`INCIRCLE_SIGN`, `ARC_CHORD_CROSSES_CIRCLE`, and
-`ARC_PASSES_THROUGH_PIXEL`. `ORIENT_EXACT` is the exact dyadic/bignum
-ground-truth orientation over arbitrary binary64 (mirroring the Qed-proven
-`b64_orient2d_exact`), for the JTS #1106 differential test against
-double-double `Orientation.index`.
+`INCIRCLE_SIGN`, `ARC_CHORD_CROSSES_CIRCLE`,
+`ARC_PASSES_THROUGH_PIXEL`, and `TWOSUM` / `GROW_EXPANSION`. `ORIENT_EXACT`
+is the exact dyadic/bignum ground-truth orientation over arbitrary binary64
+(mirroring the Qed-proven `b64_orient2d_exact`), for the JTS #1106
+differential test against double-double `Orientation.index`. `TWOSUM` and
+`GROW_EXPANSION` expose the Shewchuk fast-expansion-sum cascade
+(`b64_TwoSum` / `b64_grow_expansion_aux`) so magnitude counterexamples for
+the deferred Theorem 13 can be validated by computation in seconds rather
+than constructed as Coq literals.
 
 ### Phase 0 Stage D — exact orientation via expansion arithmetic
 

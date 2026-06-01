@@ -178,6 +178,17 @@ safety.
 > does not hold either: `|round(x+q)| >= ||x|-|q||` is true but useless here,
 > because `||x|-|q|| = |-4|-|3| = 1 < 3 = |q|`.  The carry genuinely shrinks.
 >
+> **Oracle-validated** (runs the *extracted* `b64_grow_expansion_aux`, seconds,
+> no Coq literal construction):
+> ```
+> $ printf 'GROW_EXPANSION\n3\n-4\n' | oracle_bin   ->  QFINAL -0x1p+0   (= -1)
+> $ printf 'TWOSUM\n-4\n3\n'         | oracle_bin   ->  SUM -0x1p+0 ERR 0x0p+0
+> $ printf 'GROW_EXPANSION\n3\n4\n'  | oracle_bin   ->  QFINAL 0x1.cp+2   (= 7, same-sign grows)
+> ```
+> `|QFINAL| = 1 < 3 = |q|`.  Modes `TWOSUM` / `GROW_EXPANSION` added to the
+> RocqRefRunner specifically to make cascade-magnitude counterexamples
+> checkable by computation.
+>
 > **Consequence.** §2.1 → §2.2 → §3 as written is broken: there is no carry
 > magnitude-monotonicity lemma to anchor the half-ulp chain.  What is actually
 > invariant is the **output's** `nonoverlap_shewchuk` (on the *compressed*
