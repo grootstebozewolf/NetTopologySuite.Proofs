@@ -1,5 +1,11 @@
 # Verified Claims — NetTopologySuite.Proofs
 
+> **Living, CI-verified document.** Every theorem cited below (in
+> `<module> : <name>` form) is cross-checked against the source by
+> [`scripts/validate-claims.sh`](../scripts/validate-claims.sh) on each CI run;
+> a renamed or removed theorem orphans its claim and fails the build. (Qed-
+> closure itself is enforced corpus-wide by `scripts/check_admitted.sh`.)
+
 Citable index of what is actually proved (Rocq 9.1.1; Flocq 4.2.2 for the
 binary64 layer). Each row: `file : theorem`, plain meaning, axiom footprint,
 regime. These are *soundness* statements, not a verified re-implementation.

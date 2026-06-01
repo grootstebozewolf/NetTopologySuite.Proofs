@@ -79,6 +79,13 @@ jobs:
         # scripts/check_readme_axioms.sh for the exact check.
         run: bash scripts/check_readme_axioms.sh
 
+      - name: verified-claims.md references exist (guardrail 5)
+        # Keeps docs/verified-claims.md honest: every `Module.v : theorem`
+        # it cites must resolve to a real definition in theories/ or
+        # theories-flocq/.  A rename/removal that orphans a claim fails
+        # here instead of silently rotting.  Grep-only (no build needed).
+        run: bash scripts/validate-claims.sh
+
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus
     # (`theories-flocq/`).  The host-runner `rocq` job above only builds
