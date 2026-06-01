@@ -185,6 +185,7 @@ theories-flocq/Orient_b64_sound.v
 #   | _           => True end.
 # Bit-exact -- no rounding error -- for |coord| <= 2^25 integer inputs.
 theories-flocq/Orient_b64_exact.v
+theories-flocq/Orient_b64_exact_full.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
 # on top of Stage A filter.  Five-valued result (None / Point / Collinear /
 # Nan / Uncertain).  Ships the predicate, structural lemmas (decidability,
