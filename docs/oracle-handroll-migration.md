@@ -59,10 +59,17 @@ layer (mirroring the deleted native kernels op-for-op); they are extracted
 native round-half-even overrides in `Validate_binary64_extract.v`) and the
 driver calls them. Bit-exact with the old native code over 2,000,000 random +
 boundary-stressed cases (`oracle/test_pt.ml`); full corpus builds green.
-**Remaining (deferred):** forward-error / integer-regime soundness of the
-*rounded* compute predicate to `b64_segment_touches_hot_pixel_closed_spec`
-(the R-spec carries the exact geometric soundness; bridging the rounding is
-the open obligation — `b64_div` rounds, so it is not an equality).
+**Remaining (deferred) — direction CORRECTED, see
+[`docs/oracle-soundness-finding.md`](oracle-soundness-finding.md):**
+the naive `compute ⇒ spec` bridge is **false** — the rounded `b64_div`
+over-accepts within O(ulp) of tangency (oracle-confirmed counterexample;
+4916/8M adversarial). The provable, useful obligations are instead
+**(C1)** grid exactness (`compute = spec` on integer/half-integer coords;
+5M cases, 0 divergence) and **(C2)** completeness (`spec ⇒ compute`; 18M
+cases, 0 violations) — the latter gives oracle completeness vs geometry
+through `b64_passes_through_complete` ("never miss a real pass"). Soundness
+vs the *sharp* closed pixel for arbitrary binary64 is not provable and is
+not claimed.
 
 Original analysis follows. Most scaffolding already exists, which is why this is still first: the snap
 half (`b64_snap_coord` via `Bnearbyint`) is computational and needs only an
