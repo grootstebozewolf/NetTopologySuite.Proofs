@@ -265,6 +265,7 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v
 # cascade_step_preserves_invariant is deferred to Session 2.  See
 # docs/shewchuk-theorem-13-proof-structure.md §6.1-§6.5.
 theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
+theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v
 # Slice A piece 6: orient2d via fast-expansion-sum.  Composes
 # b64_Dekker + fast_expansion_sum into b64_orient2d_expansion.
 # Sum-correctness Qed-closed under an explicit

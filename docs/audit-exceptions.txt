@@ -120,6 +120,14 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # fast_expansion_sum_nonoverlap_shewchuk).
 theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
 
+# Category C: verified finding that the Route-2 `cascade_pathA_chain`
+# reduction is too strong (false on a cross-source opposite-sign leading
+# pair).  Single Qed lemma `cascade_handover_fails_mixed_sign`; pulls
+# `Classical_Prop.classic` transitively via the same B2R/expansion lineage.
+# No Admitteds.  Redirects the deferred fast_expansion_sum_nonoverlap_shewchuk
+# proof toward a pathA-OR-pathB invariant.
+theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v
+
 # Category C: Slice A piece 3.  Defines `fast_expansion_sum`
 # (Shewchuk's canonical algorithm: insertion sort by magnitude
 # ascending + TwoSum cascade) and the sort-level sum-preservation

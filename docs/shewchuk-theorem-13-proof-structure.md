@@ -17,6 +17,41 @@ Theorem fast_expansion_sum_nonoverlap_shewchuk :
 **Status**: Admitted with deferred-proof registration in
 `docs/admitted-deferred-proofs.txt`.
 
+> ## ⚠️ FINDING (verified) — the Route-2 `cascade_pathA_chain` reduction is too strong; go back to square 1
+>
+> Do **not** try to prove `cascade_pathA_chain_from_nonoverlap` (discharging
+> the Route-2 conditional headline's hypothesis from `nonoverlap` inputs).
+> **It is false**, so it can never be discharged. The headline itself is
+> still true — the *reduction* is unsound.
+>
+> - The conditional headline's hypothesis requires
+>   `cascade_invariant_handover (initial_cascade_state x prov) ((x2,_)::_)`
+>   for the two magnitude-smallest inputs `x` (= initial carry) and `x2`:
+>   they must be same-sign, or `x = 0`, or the carry must be `< ½ ulp` of
+>   (pred/succ of) `x2` — i.e. ~53 bits smaller.
+> - `nonoverlap_shewchuk` constrains only **same-source** consecutive
+>   elements. After the magnitude merge-sort the two globally-smallest can
+>   be **cross-source, similar magnitude, opposite sign** — no half-ulp
+>   separation — so every handover disjunct fails.
+> - **Verified core**: `cascade_handover_fails_mixed_sign` in
+>   `theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v` (Qed) proves the
+>   handover is unsatisfiable for `0 < B2R x`, `B2R x2 < 0`,
+>   `½ ulp(succ (B2R x2)) ≤ B2R x`.
+> - **Concrete witness**: `e = [1.0]`, `f = [-1.0]`. Premises hold (singletons
+>   are trivially `nonoverlap_shewchuk`); `fast_expansion_sum` sums to 0 →
+>   compresses to `[]` → headline `nonoverlap_shewchuk [] = True`. Yet
+>   `cascade_pathA_chain` is **False** (apply the lemma with `B2R x = 1`,
+>   `B2R x2 = -1`, `½ ulp(succ(-1)) ≈ 2⁻⁵³ ≤ 1`).
+>
+> **Redirect for the next session.** The fix is to generalise the per-step
+> invariant from pathA-only to **pathA ∨ pathB**, where pathB is the
+> mixed-provenance cancellation case: an opposite-sign similar-magnitude pair
+> makes `b64_TwoSum` produce a zero / sub-normal high part that `compress`
+> deletes, and the cascade continues. The entire Route-2 framework
+> (`cascade_run_output_nonoverlap`, the conditional headline, the magnitude
+> lemmas) is sound and Qed — only the invariant `cascade_pathA_chain` must be
+> widened, then re-discharged. Don't grind the pathA chain.
+
 This document captures the proof structure with enough detail that a
 follow-up session can land the proof without re-deriving the design.
 Estimated 200-400 lines of Coq, 2-3 days of focused work.
