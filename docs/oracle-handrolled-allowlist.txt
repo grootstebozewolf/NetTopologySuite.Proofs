@@ -16,19 +16,14 @@
 # One function name per line; `#` comments and blank lines ignored.
 # =============================================================================
 
-# --- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN ------------------------
-# b64_passes_through_hot_pixel (HotPixel_b64.v) and _halfopen
-# (PassesThroughHalfopen_b64.v) EXIST but are R-VALUED SPECIFICATIONS:
-# they compute via `Binary.B2R ... : R` + Rmax/Rmin/Rle_bool, which is NOT
-# extractable to runnable OCaml.  Migration needs a NEW *computational*
-# binary64 Liang-Barsky predicate (b64_minus/b64_div/b64_le) proved sound
-# (B2R) against that spec.  b64_snap_coord IS computational (Bnearbyint).
-# See docs/oracle-handroll-migration.md item 1 -- NOT extraction-only.
-round_half_to_even
-lb_tlo
-lb_thi
-lb_touches
-lb_touches_halfopen
+# --- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN : MIGRATED -------------
+# (item 1, done) The driver now calls the extracted computational predicates
+# b64_passes_through_hot_pixel_compute / _halfopen_compute
+# (theories-flocq/PassesThrough_b64_compute.v); the native round_half_to_even
+# / lb_tlo / lb_thi / lb_touches / lb_touches_halfopen kernels were deleted.
+# Bit-exact with the old native code (2e6-case check, oracle/test_pt.ml).
+# Remaining: forward-error soundness of the rounded predicate to the
+# geometric relation (docs/oracle-handroll-migration.md item 1).
 
 # --- INCIRCLE_SIGN ----------------------------------------------------------
 # Mirrors inCircle_R (ArcOrient.v:88), which is R-side only.  Needs a new

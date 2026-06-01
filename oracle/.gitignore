@@ -10,3 +10,4 @@ extracted.mli
 *.cmt
 *.cmti
 oracle_bin
+test_pt

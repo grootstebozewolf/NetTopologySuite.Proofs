@@ -42,16 +42,29 @@ is genuine multi-session Rocq work; there is no extraction-only shortcut.
 
 | Mode(s) | Hand-rolled kernels in `driver.ml` | Coq side today |
 |---|---|---|
-| `PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN` | `round_half_to_even`, `lb_tlo`, `lb_thi`, `lb_touches`, `lb_touches_halfopen` (+ no-arith wrappers `snap_coord_native`, `snap_native`, `lb_inslab_*`, `passes_through_*`) | **R-spec only** (`b64_liang_barsky_touches` via `B2R`); `b64_snap_coord` computational |
+| ~~`PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN`~~ **MIGRATED** | — (extracted `b64_passes_through_hot_pixel_compute` / `_halfopen_compute`) | computational `PassesThrough_b64_compute.v`; R-spec carries exact soundness |
 | `INCIRCLE_SIGN` | `incircle_r_native` | R-side only (`inCircle_R`, `ArcOrient.v:88`) |
 | `ARC_CHORD_CROSSES_CIRCLE` | `run_arc_chord_crosses_circle` | R-side only (`chord_crosses_arc_circle`, `ArcIntersect.v:129`) |
 | `ARC_PASSES_THROUGH_PIXEL` | `in_hot_pixel_halfopen`, `run_arc_passes_through_pixel` | R-side only (`arc_passes_through_hot_pixel`, `ArcHotPixel.v:95`) |
 
 ## Migration order (risk/cost ascending)
 
-### 1. PASSES_THROUGH_* — new computational Liang-Barsky + soundness  *(lowest cost, but NOT plumbing)*
+### 1. PASSES_THROUGH_* — new computational Liang-Barsky  ✅ DONE (compute path)
 
-Most scaffolding already exists, which is why this is still first: the snap
+**Status:** the compute path is migrated. `theories-flocq/PassesThrough_b64_compute.v`
+defines `b64_liang_barsky_touches_compute` / `_halfopen_compute` and
+`b64_passes_through_hot_pixel_compute` / `_halfopen_compute` on the `b64_*`
+layer (mirroring the deleted native kernels op-for-op); they are extracted
+(with `b64_min`→`Float.min`, `b64_one/two/half`→literals, `b64_snap_coord`→
+native round-half-even overrides in `Validate_binary64_extract.v`) and the
+driver calls them. Bit-exact with the old native code over 2,000,000 random +
+boundary-stressed cases (`oracle/test_pt.ml`); full corpus builds green.
+**Remaining (deferred):** forward-error / integer-regime soundness of the
+*rounded* compute predicate to `b64_segment_touches_hot_pixel_closed_spec`
+(the R-spec carries the exact geometric soundness; bridging the rounding is
+the open obligation — `b64_div` rounds, so it is not an equality).
+
+Original analysis follows. Most scaffolding already exists, which is why this is still first: the snap
 half (`b64_snap_coord` via `Bnearbyint`) is computational and needs only an
 `Extract Constant Binary.Bnearbyint => <native round-half-even>`; and the
 R-spec (`b64_liang_barsky_touches`), its per-axis lemma (`lb_axis_sound`),
