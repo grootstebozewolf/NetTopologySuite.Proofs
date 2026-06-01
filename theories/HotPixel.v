@@ -147,6 +147,31 @@ Proof.
   intros P C scale [[HxL HxR] [HyL HyR]]; split; apply Rabs_le; lra.
 Qed.
 
+(* Convexity of the hot pixel.  The pixel is an axis-aligned half-open box,  *)
+(* hence convex: any convex combination of two in-pixel points is in-pixel.  *)
+(* Equivalently, if both endpoints of a segment lie in the pixel then the    *)
+(* whole segment does.  The half-open upper bound is preserved because       *)
+(* (1-t)*a + t*b < hi whenever a < hi, b < hi and 0 <= t <= 1.               *)
+Lemma in_hot_pixel_convex :
+  forall (P0 P1 C : Point) (scale t : R),
+    0 <= t <= 1 ->
+    in_hot_pixel P0 C scale ->
+    in_hot_pixel P1 C scale ->
+    in_hot_pixel (segment_point P0 P1 t) C scale.
+Proof.
+  intros P0 P1 C scale t [Ht0 Ht1] H0 H1.
+  unfold in_hot_pixel, segment_point in *.
+  destruct P0 as [x0 y0], P1 as [x1 y1]. simpl in *.
+  destruct H0 as [[Hx0L Hx0R] [Hy0L Hy0R]].
+  destruct H1 as [[Hx1L Hx1R] [Hy1L Hy1R]].
+  (* Case split on t = 1 so the strict upper bound has a clear witness:      *)
+  (* for t < 1 it comes from 1 - t > 0; for t = 1 it is x1 < hi directly.    *)
+  destruct (Req_dec t 1) as [Heq | Hne].
+  - subst t. repeat split; nra.
+  - assert (Hlt : t < 1) by lra.
+    repeat split; nra.
+Qed.
+
 (* Endpoint-inside is a special case of segment-touches (taking t = 0).      *)
 Lemma segment_touches_hot_pixel_l :
   forall (P0 P1 C : Point) (scale : R),
@@ -287,6 +312,7 @@ Qed.
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
+Print Assumptions in_hot_pixel_convex.
 Print Assumptions bb_overlap_witness_segment_does_not_touch.
 Print Assumptions bb_overlap_witness_x_overlap.
 Print Assumptions bb_overlap_witness_y_overlap.
