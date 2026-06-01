@@ -323,6 +323,9 @@ theories-flocq/ArcCircle_b64_compute.v
 # Computational (extractable) binary64 arc / hot-pixel predicate.  Oracle
 # compute path for ARC_PASSES_THROUGH_PIXEL.  See docs/oracle-handroll-migration.md item 4.
 theories-flocq/ArcPixel_b64_compute.v
+# Dovetail: in_hot_pixel_convex (clean lane) lifted to b64-bridged points --
+# the rounding-free endpoint route (cf docs/oracle-soundness-finding.md).
+theories-flocq/HotPixelConvex_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract
