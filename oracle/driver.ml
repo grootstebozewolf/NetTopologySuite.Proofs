@@ -129,27 +129,6 @@
                       half-open convention (bottom + left CLOSED, top +
                       right OPEN).  SUFFICIENT only.
 
-     CLOTHOID_INTERSECT -- chord-length parameter L of a clothoid (Euler
-                           spiral) segment via Halley iteration on the
-                           G^1 Hermite L-form residual.  TOLERANCE oracle
-                           (see the mode comment): there is no Flocq-side
-                           `b64_clothoid_intersect` yet, so this realises
-                           the R-side mathematics numerically rather than
-                           bit-exactly.
-        line 2:       <kappa_0>    curvature at tau=0
-        line 3:       <kappa_1>    curvature at tau=1
-        line 4:       <d>          target chord length (>= 0)
-        line 5:       <L0>         initial guess for L (> 0)
-        line 6:       <max_iters>  iteration cap (decimal integer)
-        output:       single line "<status> <L_hex> <iters>".
-                      status is one of: CONV / MAXITER / NAN.
-        Reference:    `HasClothoidIntersect` aspirational block in
-                      `theories-flocq/Intersect_b64_exact.v` +
-                      `docs/audit-phase4-curves.md` 6.1.  R-side
-                      derivative identities proved (and CITED, not
-                      imported) in the companion proprietary corpus
-                      `clothoid-halley-coq` (Merkator Group, 2026).
-
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -557,135 +536,6 @@ let run_arc_passes_through_pixel () =
   in
   print_endline (bool_string result)
 
-(* ----- CLOTHOID_INTERSECT mode (Phase 4, hand-rolled, TOLERANCE oracle). -- *)
-
-(* Numeric reference for the chord-length parameter L of a clothoid (Euler
-   spiral) segment under the G^1 Hermite L-form residual
-
-       f(L) = L^2 * (P(L)^2 + Q(L)^2) - d^2
-
-   solved by Halley iteration.  This is the deferred "future hook" sketched
-   in `theories-flocq/Intersect_b64_exact.v`'s `HasClothoidIntersect`
-   aspirational block and `docs/audit-phase4-curves.md` 6.1: the R-side
-   mathematics is discharged in the companion proprietary corpus
-   `clothoid-halley-coq` (Merkator Group, 2026, Coquelicot 3.x), CITED here
-   per its academic-citation licence, not imported.
-
-   There is no Flocq-side `b64_clothoid_intersect` yet, so -- unlike every
-   bit-exact mode above -- this is a TOLERANCE oracle: it realises the
-   R-side L-form numerically (composite-Simpson quadrature for the
-   Fresnel-type integrals + Halley iteration) for differential comparison
-   against clothoid-halley-coq's 9,058-record `golden_vectors.json` within
-   the corpus's stated 1e-9 m chord-length agreement.  It is NOT a verified
-   reference; callers must not treat its output as bit-exact, and the
-   reported iteration count matches the upstream corpus only insofar as the
-   stopping rule below mirrors it.
-
-   Arc-length-normalised tangent angle (tau in [0,1], s = L*tau):
-
-       psi(tau) = kappa_0 * tau + (kappa_1 - kappa_0) * tau^2 / 2.
-
-   Fresnel-type integrals at parameter L (P' = -T, Q' = R, R' = -S2s,
-   T' = S2c -- the six identities proved in clothoid-halley-coq):
-
-       P(L)   = int_0^1 cos(L*psi) dtau
-       Q(L)   = int_0^1 sin(L*psi) dtau
-       R(L)   = int_0^1 psi*cos(L*psi) dtau
-       T(L)   = int_0^1 psi*sin(L*psi) dtau
-       S2c(L) = int_0^1 psi^2*cos(L*psi) dtau
-       S2s(L) = int_0^1 psi^2*sin(L*psi) dtau
-
-   give the residual and its first two derivatives:
-
-       f(L)   = L^2 (P^2 + Q^2) - d^2
-       f'(L)  = 2 L (P^2 + Q^2) + 2 L^2 (Q R - P T)
-       f''(L) = 2 (P^2 + Q^2) + 8 L (Q R - P T)
-                + 2 L^2 (R^2 + T^2 - P S2c - Q S2s)
-
-   and the Halley step is  L <- L - 2 f f' / (2 f'^2 - f f''). *)
-
-(* Composite-Simpson panel count (even).  The rail-transition regime keeps
-   |kappa_i * L| <= pi (clothoid-halley-coq monotone branch), so the
-   integrands oscillate over at most ~half a period; 1024 panels put the
-   quadrature error well below the 1e-9 m differential tolerance. *)
-let clothoid_simpson_panels = 1024
-
-let clothoid_psi kappa0 kappa1 tau =
-  kappa0 *. tau +. (kappa1 -. kappa0) *. tau *. tau *. 0.5
-
-(* One composite-Simpson pass returning all six integrals at parameter L,
-   sharing the psi / cos / sin evaluations across the integrand family. *)
-let clothoid_integrals kappa0 kappa1 l =
-  let n = clothoid_simpson_panels in
-  let h = 1.0 /. float_of_int n in
-  let p = ref 0.0 and q = ref 0.0 and r = ref 0.0
-  and t = ref 0.0 and s2c = ref 0.0 and s2s = ref 0.0 in
-  for i = 0 to n do
-    let tau = float_of_int i *. h in
-    let psi = clothoid_psi kappa0 kappa1 tau in
-    let a = l *. psi in
-    let c = cos a and s = sin a in
-    (* Simpson weights: 1 at the endpoints, 4 at odd nodes, 2 at even
-       interior nodes. *)
-    let w =
-      if i = 0 || i = n then 1.0
-      else if i land 1 = 1 then 4.0
-      else 2.0
-    in
-    p   := !p   +. w *. c;
-    q   := !q   +. w *. s;
-    r   := !r   +. w *. (psi *. c);
-    t   := !t   +. w *. (psi *. s);
-    s2c := !s2c +. w *. (psi *. psi *. c);
-    s2s := !s2s +. w *. (psi *. psi *. s)
-  done;
-  let k = h /. 3.0 in
-  (k *. !p, k *. !q, k *. !r, k *. !t, k *. !s2c, k *. !s2s)
-
-(* Relative stopping tolerances.  Convergence is declared on either a small
-   relative residual or a small relative Halley step; cubic convergence of
-   Halley drops the step below `clothoid_step_tol` in a handful of
-   iterations within the monotone branch. *)
-let clothoid_res_tol  = 1e-12
-let clothoid_step_tol = 1e-14
-
-let run_clothoid_intersect () =
-  let kappa0 = float_of_string (String.trim (input_line stdin)) in
-  let kappa1 = float_of_string (String.trim (input_line stdin)) in
-  let d      = float_of_string (String.trim (input_line stdin)) in
-  let l0     = float_of_string (String.trim (input_line stdin)) in
-  let max_it = int_of_string   (String.trim (input_line stdin)) in
-  let d2 = d *. d in
-  let rec iterate l iters =
-    if not (Float.is_finite l) then
-      Printf.printf "NAN %h %d\n" l iters
-    else
-      let (p, q, r, t, s2c, s2s) = clothoid_integrals kappa0 kappa1 l in
-      let pq   = p *. p +. q *. q in
-      let qrpt = q *. r -. p *. t in
-      let f    = l *. l *. pq -. d2 in
-      if Float.abs f <= clothoid_res_tol *. (1.0 +. d2) then
-        Printf.printf "CONV %h %d\n" l iters
-      else if iters >= max_it then
-        Printf.printf "MAXITER %h %d\n" l iters
-      else
-        let f'  = 2.0 *. l *. pq +. 2.0 *. l *. l *. qrpt in
-        let f'' = 2.0 *. pq +. 8.0 *. l *. qrpt
-                  +. 2.0 *. l *. l
-                     *. (r *. r +. t *. t -. p *. s2c -. q *. s2s) in
-        let denom = 2.0 *. f' *. f' -. f *. f'' in
-        if denom = 0.0 then
-          Printf.printf "MAXITER %h %d\n" l iters
-        else
-          let l_next = l -. (2.0 *. f *. f') /. denom in
-          if Float.abs (l_next -. l)
-             <= clothoid_step_tol *. (1.0 +. Float.abs l_next) then
-            Printf.printf "CONV %h %d\n" l_next (iters + 1)
-          else
-            iterate l_next (iters + 1)
-  in
-  iterate l0 0
-
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -717,7 +567,6 @@ let () =
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
-       | "CLOTHOID_INTERSECT"       -> run_clothoid_intersect ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
