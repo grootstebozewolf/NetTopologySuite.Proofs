@@ -335,6 +335,63 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Closed form of the proper-crossing intersection point.                     *)
+(*                                                                            *)
+(* `strict_completeness` constructs the shared point as a convex combination  *)
+(* of C and D with parameter t = cross A B C / (cross A B C - cross A B D).    *)
+(* We name that point and, via `strict_intersection_unique`, show every       *)
+(* shared point equals it -- so it is the closed-form coordinates of *the*    *)
+(* intersection point.  This is the explicit target the binary64              *)
+(* intersection-point forward-error analysis approximates.                    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition strict_intersection_point (A B C D : Point) : Point :=
+  mkPoint
+    ((1 - cross A B C / (cross A B C - cross A B D)) * px C
+       + cross A B C / (cross A B C - cross A B D) * px D)
+    ((1 - cross A B C / (cross A B C - cross A B D)) * py C
+       + cross A B C / (cross A B C - cross A B D) * py D).
+
+(* The named point is genuinely shared by both segments -- the witness        *)
+(* construction of `strict_completeness`, specialised to this point.          *)
+Lemma strict_intersection_point_shared :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    between A B (strict_intersection_point A B C D)
+    /\ between C D (strict_intersection_point A B C D).
+Proof.
+  intros A B C D HABCD HCDAB.
+  assert (Hden_t : cross A B C - cross A B D <> 0) by nra.
+  assert (Hden_s : cross C D A - cross C D B <> 0) by nra.
+  unfold strict_intersection_point.
+  set (t := cross A B C / (cross A B C - cross A B D)).
+  set (s := cross C D A / (cross C D A - cross C D B)).
+  pose proof (div_in_unit_interval _ _ HABCD) as [Ht_lo Ht_hi]; fold t in Ht_lo, Ht_hi.
+  pose proof (div_in_unit_interval _ _ HCDAB) as [Hs_lo Hs_hi]; fold s in Hs_lo, Hs_hi.
+  split.
+  - exists s. repeat split; try assumption.
+    + simpl. unfold s, t, cross. field. split; assumption.
+    + simpl. unfold s, t, cross. field. split; assumption.
+  - exists t. repeat split; try assumption; reflexivity.
+Qed.
+
+(* Closed form: under the proper-crossing condition, any shared point IS      *)
+(* `strict_intersection_point A B C D`.                                       *)
+Theorem strict_intersection_eq_formula :
+  forall A B C D X,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    between A B X -> between C D X ->
+    X = strict_intersection_point A B C D.
+Proof.
+  intros A B C D X H1 H2 HABX HCDX.
+  destruct (strict_intersection_point_shared A B C D H1 H2) as [HABP HCDP].
+  apply (strict_intersection_unique A B C D X (strict_intersection_point A B C D)
+           H1 H2 HABX HCDX HABP HCDP).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Collinear overlap completeness.                                            *)
 (*                                                                            *)
 (* Companion to `strict_completeness`: when all four cross-products are       *)
@@ -765,6 +822,8 @@ Print Assumptions segments_share_point_implies_opposite_sides.
 Print Assumptions same_side_rejection_is_sound.
 Print Assumptions strict_completeness.
 Print Assumptions strict_intersection_unique.
+Print Assumptions strict_intersection_point_shared.
+Print Assumptions strict_intersection_eq_formula.
 Print Assumptions segments_1d_overlap_share.
 Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
