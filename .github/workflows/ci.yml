@@ -86,6 +86,16 @@ jobs:
         # here instead of silently rotting.  Grep-only (no build needed).
         run: bash scripts/validate-claims.sh
 
+      - name: Oracle hand-roll ratchet (guardrail 6)
+        # The RocqRefRunner is credible only if every mode is bit-exact
+        # against a Coq-EXTRACTED reference.  This ratchet freezes the
+        # existing hand-rolled float kernels in oracle/driver.ml
+        # (docs/oracle-handrolled-allowlist.txt) so the set can only
+        # shrink: a new hand-rolled mode, or a stale allowlist entry left
+        # after a migration, fails here.  Backlog for shrinking it:
+        # docs/oracle-handroll-migration.md.  perl/awk-only (no build).
+        run: bash scripts/check_oracle_handrolled.sh
+
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus
     # (`theories-flocq/`).  The host-runner `rocq` job above only builds

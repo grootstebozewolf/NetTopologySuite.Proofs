@@ -1,0 +1,42 @@
+# Oracle hand-rolled-arithmetic allowlist (credibility ratchet)
+# =============================================================================
+# Frozen baseline for scripts/check_oracle_handrolled.sh.
+#
+# Each name is a function in oracle/driver.ml that performs binary64
+# arithmetic WITHOUT routing through a Coq-extracted function in
+# oracle/extracted.ml.  These pre-date the ratchet; they are the technical
+# debt to be migrated to extracted definitions (see
+# docs/oracle-handroll-migration.md), ordered by risk/cost.
+#
+# RULES (enforced by CI):
+#   - This list may only SHRINK.  Adding a new hand-rolled kernel fails CI.
+#   - When a kernel is migrated to an extracted call (or removed), delete its
+#     line here in the same change, or CI fails on the stale entry.
+#
+# One function name per line; `#` comments and blank lines ignored.
+# =============================================================================
+
+# --- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN ------------------------
+# Mirror b64_passes_through_hot_pixel (HotPixel_b64.v) and
+# b64_passes_through_hot_pixel_halfopen (PassesThroughHalfopen_b64.v), which
+# ALREADY EXIST and are verified -- they were simply never added to the
+# extraction list.  Migration is extraction-only (no new proofs).
+round_half_to_even
+lb_tlo
+lb_thi
+lb_touches
+lb_touches_halfopen
+
+# --- INCIRCLE_SIGN ----------------------------------------------------------
+# Mirrors inCircle_R (ArcOrient.v:88), which is R-side only.  Needs a new
+# b64_inCircle definition + integer-regime soundness bridge in theories-flocq/.
+incircle_r_native
+
+# --- ARC_CHORD_CROSSES_CIRCLE / ARC_PASSES_THROUGH_PIXEL --------------------
+# Sign-product / six-way disjunction over inCircle plus a hot-pixel membership
+# test.  Consume the b64_inCircle migration above; mirror R-side
+# chord_crosses_arc_circle (ArcIntersect.v:129) and arc_passes_through_hot_pixel
+# (ArcHotPixel.v:95).
+run_arc_chord_crosses_circle
+in_hot_pixel_halfopen
+run_arc_passes_through_pixel
