@@ -392,6 +392,45 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Canonical headline: under the proper-crossing condition the two segments   *)
+(* cross in EXACTLY ONE point.  This packages existence                       *)
+(* (`strict_completeness`, via the named witness) and uniqueness              *)
+(* (`strict_intersection_unique`) as a single `exists!` statement.            *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem strict_unique_shared_point :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    exists! X, between A B X /\ between C D X.
+Proof.
+  intros A B C D H1 H2.
+  destruct (strict_intersection_point_shared A B C D H1 H2) as [HAB HCD].
+  exists (strict_intersection_point A B C D).
+  split.
+  - split; assumption.
+  - intros Y [HABY HCDY].
+    apply (strict_intersection_unique A B C D (strict_intersection_point A B C D) Y
+             H1 H2 HAB HCD HABY HCDY).
+Qed.
+
+(* The proper-crossing point does not depend on which segment is listed       *)
+(* first: both orderings name the same unique shared point.                   *)
+Theorem strict_intersection_point_sym :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    strict_intersection_point A B C D = strict_intersection_point C D A B.
+Proof.
+  intros A B C D H1 H2.
+  destruct (strict_intersection_point_shared A B C D H1 H2) as [HAB1 HCD1].
+  destruct (strict_intersection_point_shared C D A B H2 H1) as [HCD2 HAB2].
+  apply (strict_intersection_unique A B C D
+           (strict_intersection_point A B C D) (strict_intersection_point C D A B)
+           H1 H2 HAB1 HCD1 HAB2 HCD2).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Collinear overlap completeness.                                            *)
 (*                                                                            *)
 (* Companion to `strict_completeness`: when all four cross-products are       *)
@@ -824,6 +863,8 @@ Print Assumptions strict_completeness.
 Print Assumptions strict_intersection_unique.
 Print Assumptions strict_intersection_point_shared.
 Print Assumptions strict_intersection_eq_formula.
+Print Assumptions strict_unique_shared_point.
+Print Assumptions strict_intersection_point_sym.
 Print Assumptions segments_1d_overlap_share.
 Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
