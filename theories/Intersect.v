@@ -272,6 +272,69 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Proper-crossing uniqueness.                                                *)
+(*                                                                            *)
+(* Companion to `strict_completeness`: under the proper-crossing sign         *)
+(* condition the shared point not only EXISTS but is UNIQUE.  This is what    *)
+(* justifies speaking of *the* intersection point -- e.g. the binary64        *)
+(* intersection-point forward-error bound bounds the error against a single   *)
+(* well-defined target.                                                       *)
+(*                                                                            *)
+(* The two segment directions B - A and D - C are linearly independent in     *)
+(* this regime: their 2x2 determinant equals `cross A B D - cross A B C`,     *)
+(* which is nonzero because the two cross-products have strictly opposite     *)
+(* signs.  Any point shared by both segments lies on both lines, so two       *)
+(* shared points X, Y satisfy (t_X - t_Y)*(B - A) = (s_X - s_Y)*(D - C);      *)
+(* independence forces t_X = t_Y, hence X = Y.  Only the AB-direction         *)
+(* non-degeneracy is actually used; the second hypothesis is kept so the      *)
+(* statement reads as the exact companion to `strict_completeness`.           *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem strict_intersection_unique :
+  forall A B C D X Y,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    between A B X -> between C D X ->
+    between A B Y -> between C D Y ->
+    X = Y.
+Proof.
+  intros A B C D X Y HAB _ HABX HCDX HABY HCDY.
+  destruct HABX as [tx [_ [_ [HXx_ab HXy_ab]]]].
+  destruct HCDX as [sx [_ [_ [HXx_cd HXy_cd]]]].
+  destruct HABY as [ty [_ [_ [HYx_ab HYy_ab]]]].
+  destruct HCDY as [sy [_ [_ [HYx_cd HYy_cd]]]].
+  (* The direction determinant equals cross A B D - cross A B C, hence <> 0. *)
+  assert (Hdet_id :
+            (px B - px A) * (py D - py C) - (py B - py A) * (px D - px C)
+            = cross A B D - cross A B C) by (unfold cross; ring).
+  assert (Hdet :
+            (px B - px A) * (py D - py C) - (py B - py A) * (px D - px C) <> 0).
+  { rewrite Hdet_id. intro H. nra. }
+  (* X - Y expressed on the AB axis equals its expression on the CD axis. *)
+  assert (Heqx : (tx - ty) * (px B - px A) = (sx - sy) * (px D - px C)) by nra.
+  assert (Heqy : (tx - ty) * (py B - py A) = (sx - sy) * (py D - py C)) by nra.
+  (* (t_X - t_Y) * determinant = 0 by substituting the two identities. *)
+  assert (Ha :
+            (tx - ty)
+            * ((px B - px A) * (py D - py C) - (py B - py A) * (px D - px C))
+            = 0).
+  { replace ((tx - ty)
+             * ((px B - px A) * (py D - py C) - (py B - py A) * (px D - px C)))
+      with (((tx - ty) * (px B - px A)) * (py D - py C)
+            - ((tx - ty) * (py B - py A)) * (px D - px C)) by ring.
+    rewrite Heqx, Heqy. ring. }
+  assert (Etxy : tx = ty).
+  { destruct (Rmult_integral _ _ Ha) as [H | H].
+    - lra.
+    - exfalso. apply Hdet. exact H. }
+  destruct X as [Xx Xy]. destruct Y as [Yx Yy].
+  simpl in HXx_ab, HXy_ab, HYx_ab, HYy_ab.
+  f_equal.
+  - rewrite HXx_ab, HYx_ab, Etxy. ring.
+  - rewrite HXy_ab, HYy_ab, Etxy. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Collinear overlap completeness.                                            *)
 (*                                                                            *)
 (* Companion to `strict_completeness`: when all four cross-products are       *)
@@ -701,6 +764,7 @@ Qed.
 Print Assumptions segments_share_point_implies_opposite_sides.
 Print Assumptions same_side_rejection_is_sound.
 Print Assumptions strict_completeness.
+Print Assumptions strict_intersection_unique.
 Print Assumptions segments_1d_overlap_share.
 Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
