@@ -198,6 +198,19 @@ safety.
 > see `B64_Shewchuk_Thm13_pathA_defect.v`).  Square 1 for the magnitude side is
 > the per-provenance run structure, stated over the tagged input — not a carry
 > monotonicity lemma.
+>
+> **Lean on the already-proven exactness, not magnitude.** Shewchuk's real
+> guarantee for `grow_expansion` (Thm 10) is *exactness + ordering*, not
+> magnitude monotonicity — and exactness is ALREADY `Qed` in the corpus:
+> `b64_grow_expansion_aux_correct` (`expansion_R hs + B2R qfinal =
+> expansion_R es + B2R q`) and `fast_expansion_sum_correct`
+> (`expansion_R (fast_expansion_sum e f) = expansion_R e + expansion_R f`).
+> So the only open content of Theorem 13 is the **nonoverlapping/ordering**
+> preservation; the next session should compose it from the proven exactness
+> + the per-provenance ordering, and must NOT re-introduce a carry-magnitude
+> lemma (false, per the box above). NB: the cancellation that falsifies
+> magnitude monotonicity is exactly what the tail/error words exist to
+> capture — it is correct expansion behaviour, not a bug.
 
 **Why this should still be provable** (NOTE: superseded by the box above —
 the carry-monotonicity framing is false; retained for context): under
