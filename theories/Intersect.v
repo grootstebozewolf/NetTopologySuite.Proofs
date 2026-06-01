@@ -649,6 +649,52 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Phase-1 capstone: the complete segment-intersection decision.              *)
+(*                                                                            *)
+(* NTS's `RobustLineIntersector` dispatches on the four orientation tests     *)
+(* cross A B C, cross A B D, cross C D A, cross C D B.  This theorem bundles  *)
+(* the three regimes already proven above -- each an independently Qed-closed *)
+(* result -- into the single decision the algorithm implements:               *)
+(*                                                                            *)
+(*   (1) PROPER CROSSING -- both endpoint pairs strictly opposite-signed:     *)
+(*       the segments share a point (`strict_completeness`).                  *)
+(*   (2) REJECTION -- either pair strictly same-signed: no shared point       *)
+(*       (`same_side_rejection_is_sound`).                                    *)
+(*   (3) COLLINEAR -- all four cross-products zero: the segments share a      *)
+(*       point iff their 1D extents overlap (`collinear_share_iff_1d_overlap`).*)
+(*                                                                            *)
+(* The conjunction is the citable Phase-1 R-side statement behind the         *)
+(* binary64 predicate `b64_intersect_sign_filtered`: its NaN/Uncertain        *)
+(* paths aside, each verdict it returns is one of these three branches.  The  *)
+(* mixed-boundary sign patterns (exactly one or two crosses zero -- an        *)
+(* endpoint grazing the interior of the other segment) are not folded into    *)
+(* this three-way headline; they are covered by the `between`-witness route   *)
+(* of `segments_1d_overlap_share`.                                            *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem segment_intersection_decision : forall A B C D : Point,
+  (* (1) proper crossing *)
+  (cross A B C * cross A B D < 0 ->
+   cross C D A * cross C D B < 0 ->
+   exists X, between A B X /\ between C D X)
+  /\
+  (* (2) rejection *)
+  (cross A B C * cross A B D > 0 \/ cross C D A * cross C D B > 0 ->
+   ~ exists X, between A B X /\ between C D X)
+  /\
+  (* (3) collinear regime *)
+  (cross A B C = 0 -> cross A B D = 0 ->
+   cross C D A = 0 -> cross C D B = 0 ->
+   ((exists X, between A B X /\ between C D X) <-> segments_1d_overlap A B C D)).
+Proof.
+  intros A B C D. split; [| split].
+  - intros H1 H2. exact (strict_completeness A B C D H1 H2).
+  - intros H. exact (same_side_rejection_is_sound A B C D H).
+  - intros HABC HABD HCDA HCDB.
+    exact (collinear_share_iff_1d_overlap A B C D HABC HABD HCDA HCDB).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
@@ -663,3 +709,4 @@ Print Assumptions shared_endpoint_share_point.
 Print Assumptions range_overlap_endpoint_in.
 Print Assumptions collinear_share_implies_1d_overlap.
 Print Assumptions collinear_share_iff_1d_overlap.
+Print Assumptions segment_intersection_decision.
