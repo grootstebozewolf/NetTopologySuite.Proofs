@@ -222,9 +222,8 @@ Proof.
       { destruct Hy as [Hlo Hhi]. rewrite <- Hpye in Hlo, Hhi.
         rewrite (Rmin_left (py P0) (py P0) (Rle_refl _)) in Hlo.
         rewrite (Rmax_left (py P0) (py P0) (Rle_refl _)) in Hhi. lra. }
+      (* with Hqx, Hqy in context the parameter-0 equations close by lra *)
       exists 0. repeat split; try lra.
-      * rewrite Hqx. ring.
-      * rewrite Hqy. ring.
     + (* vertical segment: take the parameter from the y coordinate *)
       assert (Hd : py P1 - py P0 <> 0) by (intro Hc; apply Hpyne; lra).
       pose (t := (py Q - py P0) / (py P1 - py P0)).
