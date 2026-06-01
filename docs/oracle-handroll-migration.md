@@ -15,38 +15,59 @@ is the **backlog** for shrinking it — a multi-session Rocq effort, ordered by
 risk/cost (cheapest and safest first). Each item, when done, deletes its
 kernels from the allowlist in the same change (CI enforces this).
 
+## The computational-vs-spec gap (read this first)
+
+The modes that are *already* extracted (`ORIENT*`, `INTERSECT*`, `SIMPLIFY`,
+`EDGE_IN_RESULT`) compute on the **`binary64` / `binary_float` layer**:
+`b64_orient2d` threads coordinates through `b64_minus` → `Binary.Bminus`,
+which `Validate_binary64_extract.v` overrides with native `-.`. Such
+functions extract to runnable OCaml and are bit-exact by construction.
+
+The hand-rolled modes are different. Their Coq "b64" namesakes are
+**specifications over Coq's axiomatic real type `R`**, not evaluators:
+
+- `b64_liang_barsky_touches` (`HotPixel_b64.v:2128`) computes via
+  `Binary.B2R prec emax (...) : R`, then `Rmax`/`Rmin`/`Rle_bool`/`Req_dec_T`.
+  `R` and its order are non-computational, so this **cannot be extracted** to
+  running OCaml. (`b64_snap_coord` *is* computational — `Binary.Bnearbyint`.)
+- `inCircle_R`, `chord_crosses_arc_circle`, `arc_passes_through_hot_pixel`
+  are defined on `Point` / `R` outright — pure spec, no binary64 layer.
+
+So **no hand-rolled mode has a computational Coq counterpart today.** Every
+item below requires authoring a *new* computational `binary64` definition
+(on `b64_*` ops) and proving it `B2R`-sound against the existing R-spec. This
+is genuine multi-session Rocq work; there is no extraction-only shortcut.
+
 ## Current hand-rolled surface
 
 | Mode(s) | Hand-rolled kernels in `driver.ml` | Coq side today |
 |---|---|---|
-| `PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN` | `round_half_to_even`, `lb_tlo`, `lb_thi`, `lb_touches`, `lb_touches_halfopen` (+ the no-arith wrappers `snap_coord_native`, `snap_native`, `lb_inslab_*`, `passes_through_*`) | **Verified b64 functions already exist**, just not extracted |
+| `PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN` | `round_half_to_even`, `lb_tlo`, `lb_thi`, `lb_touches`, `lb_touches_halfopen` (+ no-arith wrappers `snap_coord_native`, `snap_native`, `lb_inslab_*`, `passes_through_*`) | **R-spec only** (`b64_liang_barsky_touches` via `B2R`); `b64_snap_coord` computational |
 | `INCIRCLE_SIGN` | `incircle_r_native` | R-side only (`inCircle_R`, `ArcOrient.v:88`) |
 | `ARC_CHORD_CROSSES_CIRCLE` | `run_arc_chord_crosses_circle` | R-side only (`chord_crosses_arc_circle`, `ArcIntersect.v:129`) |
 | `ARC_PASSES_THROUGH_PIXEL` | `in_hot_pixel_halfopen`, `run_arc_passes_through_pixel` | R-side only (`arc_passes_through_hot_pixel`, `ArcHotPixel.v:95`) |
 
 ## Migration order (risk/cost ascending)
 
-### 1. PASSES_THROUGH_* — extraction-only, no new proofs  *(lowest cost)*
+### 1. PASSES_THROUGH_* — new computational Liang-Barsky + soundness  *(lowest cost, but NOT plumbing)*
 
-The verified Flocq definitions already exist and are cited by the driver
-comments:
+Most scaffolding already exists, which is why this is still first: the snap
+half (`b64_snap_coord` via `Bnearbyint`) is computational and needs only an
+`Extract Constant Binary.Bnearbyint => <native round-half-even>`; and the
+R-spec (`b64_liang_barsky_touches`), its per-axis lemma (`lb_axis_sound`),
+and the snap bridge (`b64_snap_coord_B2R`) are proved.
 
-- `b64_passes_through_hot_pixel` — `HotPixel_b64.v:2374`
-- `b64_passes_through_hot_pixel_halfopen` — `PassesThroughHalfopen_b64.v:434`
-- supporting `b64_liang_barsky_touches` (`HotPixel_b64.v:2128`),
-  `b64_liang_barsky_touches_halfopen` (`PassesThroughHalfopen_b64.v:141`),
-  `b64_snap_coord` / `b64_snap` (`HotPixel_b64.v:2368`/`2371`).
-
-They were hand-rolled only because they were never added to the extraction
-list. **Work:** add `b64_passes_through_hot_pixel` and
-`b64_passes_through_hot_pixel_halfopen` to the `Extraction` call in
-`Validate_binary64_extract.v`; replace `run_passes_through_filter` /
-`run_passes_through_halfopen` bodies with the extracted calls; delete
+**Work:** author a *computational* `b64_liang_barsky_touches_compute : BPoint
+-> BPoint -> BPoint -> bool` on `b64_minus` / `b64_div` / `b64_le` /
+`Bcompare` (mirroring the native `lb_*` arithmetic); prove it equals the
+R-valued `b64_liang_barsky_touches` under a no-overflow precondition; build
+`b64_passes_through_hot_pixel_compute` on top; extract it (plus the Bnearbyint
+constant); replace the `run_passes_through_*` bodies; delete
 `round_half_to_even`, `lb_tlo`, `lb_thi`, `lb_touches`, `lb_touches_halfopen`
-(and the now-orphaned no-arith wrappers) from `driver.ml`; drop those five
-names from the allowlist. **Risk:** low — no new mathematics; the extracted
-functions carry their own soundness theorems. Validate bit-exactness against
-the existing differential corpus.
+(and orphaned wrappers); drop those five names from the allowlist.
+**Risk:** medium-low — the division `(lo-c0)/(c1-c0)` needs a non-zero /
+no-overflow guard; reuse the existing degenerate-axis split (`lb_inslab` /
+`Req_dec_T`). Validate bit-exactness against the existing differential corpus.
 
 ### 2. INCIRCLE_SIGN — new b64_inCircle + integer-regime soundness  *(medium)*
 

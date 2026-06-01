@@ -17,10 +17,13 @@
 # =============================================================================
 
 # --- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN ------------------------
-# Mirror b64_passes_through_hot_pixel (HotPixel_b64.v) and
-# b64_passes_through_hot_pixel_halfopen (PassesThroughHalfopen_b64.v), which
-# ALREADY EXIST and are verified -- they were simply never added to the
-# extraction list.  Migration is extraction-only (no new proofs).
+# b64_passes_through_hot_pixel (HotPixel_b64.v) and _halfopen
+# (PassesThroughHalfopen_b64.v) EXIST but are R-VALUED SPECIFICATIONS:
+# they compute via `Binary.B2R ... : R` + Rmax/Rmin/Rle_bool, which is NOT
+# extractable to runnable OCaml.  Migration needs a NEW *computational*
+# binary64 Liang-Barsky predicate (b64_minus/b64_div/b64_le) proved sound
+# (B2R) against that spec.  b64_snap_coord IS computational (Bnearbyint).
+# See docs/oracle-handroll-migration.md item 1 -- NOT extraction-only.
 round_half_to_even
 lb_tlo
 lb_thi
