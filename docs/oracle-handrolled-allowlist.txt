@@ -33,13 +33,15 @@
 # Remaining: integer-regime exactness of the b64 sign vs inCircle_R
 # (|coord| <= 2^12, no division -> exact; docs/oracle-handroll-migration.md item 2).
 
-# --- ARC_CHORD_CROSSES_CIRCLE / ARC_PASSES_THROUGH_PIXEL --------------------
-# These now CALL extracted b64_inCircle, but still hand-roll their own glue:
-# run_arc_chord_crosses_circle does the sign-product `sp *. sq < 0`;
-# run_arc_passes_through_pixel composes four such products with the half-open
-# pixel membership test in_hot_pixel_halfopen.  Items 3/4: extract
-# chord_crosses_arc_circle (ArcIntersect.v:129) and arc_passes_through_hot_pixel
-# (ArcHotPixel.v:95) so these glue kernels also leave the allowlist.
-run_arc_chord_crosses_circle
+# --- ARC_CHORD_CROSSES_CIRCLE : MIGRATED ------------------------------------
+# (item 3, done) Now the extracted b64_chord_crosses_arc_circle
+# (theories-flocq/ArcCircle_b64_compute.v); native `sp *. sq < 0` glue gone.
+# Bit-exact (2e6-case check, oracle/test_arc.ml).
+
+# --- ARC_PASSES_THROUGH_PIXEL -----------------------------------------------
+# (item 4, remaining) run_arc_passes_through_pixel composes four inCircle
+# sign-products (now via b64_inCircle) with the half-open pixel membership
+# test in_hot_pixel_halfopen.  Extract arc_passes_through_hot_pixel
+# (ArcHotPixel.v:95) so this glue and in_hot_pixel_halfopen leave the allowlist.
 in_hot_pixel_halfopen
 run_arc_passes_through_pixel

@@ -340,10 +340,13 @@ let run_incircle_sign () =
   let v = b64_inCircle a b c p in
   Printf.printf "%s %h\n" (incircle_sign_string v) v
 
-(* ----- ARC_CHORD_CROSSES_CIRCLE mode (Phase 4, hand-rolled). ------------- *)
+(* ----- ARC_CHORD_CROSSES_CIRCLE mode (Phase 4, extracted). --------------- *)
 
-(* Sufficient condition for `arc_chord_intersects` (theories/ArcIntersect.v:90)
-   via the sign-product test on `inCircle_R`.
+(* The extracted `b64_chord_crosses_arc_circle`
+   (theories-flocq/ArcCircle_b64_compute.v): the sign-product test
+   `b64_inCircle(S,M,E,P) * b64_inCircle(S,M,E,Q) < 0` on the b64 layer,
+   bit-exact with the previous hand-rolled glue (2,000,000-case check,
+   oracle/test_arc.ml).
 
    Pin: `chord_crosses_arc_circle a P Q` at ArcIntersect.v:129 -- the
    sP * sQ < 0 form where sP, sQ are the inCircle signs at the chord
@@ -365,9 +368,9 @@ let run_arc_chord_crosses_circle () =
   let arc_end   = parse_point (input_line stdin) in
   let chord_p   = parse_point (input_line stdin) in
   let chord_q   = parse_point (input_line stdin) in
-  let sp = b64_inCircle arc_start arc_mid arc_end chord_p in
-  let sq = b64_inCircle arc_start arc_mid arc_end chord_q in
-  print_endline (bool_string (sp *. sq < 0.0))
+  print_endline
+    (bool_string
+       (b64_chord_crosses_arc_circle arc_start arc_mid arc_end chord_p chord_q))
 
 (* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, hand-rolled). ------------- *)
 

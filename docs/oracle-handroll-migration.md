@@ -44,7 +44,7 @@ is genuine multi-session Rocq work; there is no extraction-only shortcut.
 |---|---|---|
 | ~~`PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN`~~ **MIGRATED** | — (extracted `b64_passes_through_hot_pixel_compute` / `_halfopen_compute`) | computational `PassesThrough_b64_compute.v`; R-spec carries exact soundness |
 | ~~`INCIRCLE_SIGN`~~ **MIGRATED** | — (extracted `b64_inCircle`, also feeds the ARC_* sign-products) | computational `InCircle_b64_compute.v`; integer-regime exactness deferred |
-| `ARC_CHORD_CROSSES_CIRCLE` | `run_arc_chord_crosses_circle` | R-side only (`chord_crosses_arc_circle`, `ArcIntersect.v:129`) |
+| ~~`ARC_CHORD_CROSSES_CIRCLE`~~ **MIGRATED** | — (extracted `b64_chord_crosses_arc_circle`) | computational `ArcCircle_b64_compute.v` (sign-product over `b64_inCircle`) |
 | `ARC_PASSES_THROUGH_PIXEL` | `in_hot_pixel_halfopen`, `run_arc_passes_through_pixel` | R-side only (`arc_passes_through_hot_pixel`, `ArcHotPixel.v:95`) |
 
 ## Migration order (risk/cost ascending)
@@ -109,7 +109,19 @@ Extract `b64_inCircle`; replace `incircle_r_native`; drop it from the
 allowlist. **Risk:** medium — the bound analysis is the load-bearing part.
 This unblocks items 3 and 4.
 
-### 3. ARC_CHORD_CROSSES_CIRCLE — sign-product over extracted incircle  *(medium, after 2)*
+### 3. ARC_CHORD_CROSSES_CIRCLE — sign-product over extracted incircle  ✅ DONE (compute path)
+
+**Status:** migrated. `theories-flocq/ArcCircle_b64_compute.v` defines
+`b64_chord_crosses_arc_circle S M E P Q := b64_lt (b64_mult (b64_inCircle S M E P)
+(b64_inCircle S M E Q)) b64_zero`, extracted and called by the driver; the
+native `sp *. sq < 0` glue is gone. Bit-exact over 2,000,000 cases
+(`oracle/test_arc.ml`); full corpus green. **Remaining (deferred):** rides on
+the item-2 `b64_inCircle` sign bridge; the predicate stays a *sufficient*
+filter (TRUE ⇒ crossing, via the `ArcIntersectIVT` witness; FALSE inconclusive).
+
+Original analysis follows.
+
+### 3-orig. ARC_CHORD_CROSSES_CIRCLE — sign-product over extracted incircle  *(medium, after 2)*
 
 Depends on item 2. Once `b64_inCircle` is extracted, the sign-product test
 becomes a thin wrapper over two extracted calls. **Work:** either compute the
