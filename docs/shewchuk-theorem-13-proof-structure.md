@@ -162,14 +162,39 @@ Lemma cascade_qnew_dominates :
 Note: no `nonoverlap_shewchuk` precondition.  Only `sorted_asc` and
 safety.
 
-**Why this should still be provable**: under `sorted_asc`, each step
-has `|q_{i-1}| <= |x_i|`.  The same-sign case is covered by the
-already-Qed-closed `b64_TwoSum_step_dominates_pos / _neg`.  The
+> ## ⚠️ `cascade_qnew_dominates` AS STATED IS FALSE (rigorous, exact-integer witness)
+>
+> Carry magnitude is **not** monotone: opposite-sign cancellation shrinks it.
+> `sorted_asc` is by **absolute value** (`Rabs (B2R x) <= Rabs (B2R y)`), so a
+> larger-magnitude opposite-sign element legitimately follows a smaller one.
+>
+> **Witness** (both exact binary64, integer-regime — no rounding at all):
+> `q = 3`, `xs = [-4]`.  `sorted_asc (3 :: [-4])` holds (`|3| <= |-4|`).
+> `b64_grow_expansion_aux 3 [-4]` computes `b64_TwoSum (-4) 3 = (-1, 0)`
+> exactly (`-1` is representable, error `0`), so `qfinal = -1`.  The claimed
+> conclusion `Rabs (B2R q) <= Rabs (B2R qfinal)` is `3 <= 1` — **false**.
+>
+> So the "weaker bound suffices / coarser magnitude-preservation" hope below
+> does not hold either: `|round(x+q)| >= ||x|-|q||` is true but useless here,
+> because `||x|-|q|| = |-4|-|3| = 1 < 3 = |q|`.  The carry genuinely shrinks.
+>
+> **Consequence.** §2.1 → §2.2 → §3 as written is broken: there is no carry
+> magnitude-monotonicity lemma to anchor the half-ulp chain.  What is actually
+> invariant is the **output's** `nonoverlap_shewchuk` (on the *compressed*
+> carry::output, which tolerates cancellation zeros), maintained by Shewchuk's
+> **per-provenance run argument** (§4) — not by any single-quantity carry
+> bound.  Third falsified naive invariant this lineage (after the pathA chain,
+> see `B64_Shewchuk_Thm13_pathA_defect.v`).  Square 1 for the magnitude side is
+> the per-provenance run structure, stated over the tagged input — not a carry
+> monotonicity lemma.
+
+**Why this should still be provable** (NOTE: superseded by the box above —
+the carry-monotonicity framing is false; retained for context): under
+`sorted_asc`, each step has `|q_{i-1}| <= |x_i|`.  The same-sign case is
+covered by the already-Qed-closed `b64_TwoSum_step_dominates_pos / _neg`.  The
 mixed-sign case is NOT covered by the strict Path A absorption (which
-needs `|q| < ulp(pred x)/2`), but a weaker bound suffices: under
-`|q_{i-1}| <= |x_i|`, the rounded sum `round(x_i + q_{i-1})` has
-magnitude `>= ||x_i| - |q_{i-1}||` modulo rounding error.  This isn't
-absorption; it's a coarser magnitude-preservation argument.
+needs `|q| < ulp(pred x)/2`), and — per the box above — is NOT rescued by a
+coarser carry bound either; the carry can shrink below its initial magnitude.
 
 **Why Shewchuk Theorem 13 still works**: Shewchuk's actual proof
 tracks per-element provenance (which `x_i` came from `e` vs from `f`)
