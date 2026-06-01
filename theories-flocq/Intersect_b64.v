@@ -542,6 +542,81 @@ Proof.
 Qed.
 
 (* ============================================================================
+   Full collinear biconditional (BPoint lift).
+
+   Upgrades `b64_collinear_overlap_share` (forward only) to an iff by lifting
+   the R-side `collinear_share_iff_1d_overlap` (theories/Intersect.v).  When
+   the four input vertices are mutually collinear (all four cross-products
+   zero), the two segments share a point IFF their 1D extents overlap.  The
+   non-trivial converse (share => overlap) is the collinear-intersection
+   characterisation closed on the R side; this is its layer-agnostic lift.
+
+   Integer-regime callers obtain the four cross-zero premises from the
+   orientation soundness theorem when all four `b64_orient_sign_filtered`
+   results are `OrientRZero`.  (When only *some* are zero -- the general
+   `IntersectCollinear` verdict -- see
+   `b64_intersect_collinear_implies_some_collinear` below.)
+   ============================================================================ *)
+
+Theorem b64_collinear_share_iff_1d_overlap :
+  forall P0 P1 Q0 Q1 : BPoint,
+    cross_R_BP P0 P1 Q0 = 0 ->
+    cross_R_BP P0 P1 Q1 = 0 ->
+    cross_R_BP Q0 Q1 P0 = 0 ->
+    cross_R_BP Q0 Q1 P1 = 0 ->
+    ((exists X : Point,
+        between (BP2P P0) (BP2P P1) X /\ between (BP2P Q0) (BP2P Q1) X)
+     <-> segments_1d_overlap (BP2P P0) (BP2P P1) (BP2P Q0) (BP2P Q1)).
+Proof.
+  intros P0 P1 Q0 Q1 H1 H2 H3 H4.
+  rewrite cross_R_BP_eq_cross_BP2P in H1, H2, H3, H4.
+  apply collinear_share_iff_1d_overlap; assumption.
+Qed.
+
+(* ============================================================================
+   What the `IntersectCollinear` verdict guarantees (integer regime).
+
+   The dispatch returns `IntersectCollinear` exactly when -- after ruling out
+   NaN, Uncertain, and same-strict-side rejection -- at least one of the four
+   orientation tests is `Zero`.  In the integer regime an orientation `Zero`
+   is exact, so it pins the corresponding cross-product to 0.  Hence the
+   verdict implies that at least one endpoint lies on the other segment's
+   supporting line.  This converts the headline soundness theorem's
+   `IntersectCollinear => True` branch into a usable disjunction; the
+   fully-collinear sub-case (all four zero) then feeds
+   `b64_collinear_share_iff_1d_overlap`.
+   ============================================================================ *)
+
+Theorem b64_intersect_collinear_implies_some_collinear :
+  forall P0 P1 Q0 Q1 : BPoint,
+    intersect_inputs_int_safe P0 P1 Q0 Q1 ->
+    b64_intersect_sign_filtered P0 P1 Q0 Q1 = IntersectCollinear ->
+    cross_R_BP P0 P1 Q0 = 0 \/ cross_R_BP P0 P1 Q1 = 0 \/
+    cross_R_BP Q0 Q1 P0 = 0 \/ cross_R_BP Q0 Q1 P1 = 0.
+Proof.
+  intros P0 P1 Q0 Q1 Hsafe Hres.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_P0P1Q0 _ _ _ _ Hsafe)) as Hpq0.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_P0P1Q1 _ _ _ _ Hsafe)) as Hpq1.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_Q0Q1P0 _ _ _ _ Hsafe)) as Hqp0.
+  pose proof (b64_orient_sign_filtered_sound_small_int _ _ _
+                (intersect_inputs_int_safe_Q0Q1P1 _ _ _ _ Hsafe)) as Hqp1.
+  unfold b64_intersect_sign_filtered in Hres.
+  destruct (b64_orient_sign_filtered P0 P1 Q0) eqn:Epq0;
+    destruct (b64_orient_sign_filtered P0 P1 Q1) eqn:Epq1;
+    destruct (b64_orient_sign_filtered Q0 Q1 P0) eqn:Eqp0;
+    destruct (b64_orient_sign_filtered Q0 Q1 P1) eqn:Eqp1;
+    cbn in Hres, Hpq0, Hpq1, Hqp0, Hqp1;
+    try discriminate Hres;
+    first [ left; exact Hpq0
+          | right; left; exact Hpq1
+          | right; right; left; exact Hqp0
+          | right; right; right; exact Hqp1 ].
+Qed.
+
+(* ============================================================================
    Shared-endpoint disambiguation.
 
    When two segments share an endpoint, the intersection predicate
@@ -662,5 +737,7 @@ Print Assumptions b64_intersect_sign_filtered_point_sound_small_int.
 Print Assumptions b64_intersect_sign_filtered_sound_small_int.
 Print Assumptions b64_intersect_point_none_unless_point.
 Print Assumptions b64_collinear_overlap_share.
+Print Assumptions b64_collinear_share_iff_1d_overlap.
+Print Assumptions b64_intersect_collinear_implies_some_collinear.
 Print Assumptions b64_bpoint_eq_imp_BP2P_eq.
 Print Assumptions b64_shared_endpoint_witness_sound.
