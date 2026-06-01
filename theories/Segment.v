@@ -160,6 +160,114 @@ Qed.
 (* The midpoint of a segment lies on the segment (with parameter t = 1/2).    *)
 (* -------------------------------------------------------------------------- *)
 
+(* -------------------------------------------------------------------------- *)
+(* Converse of `between_in_coord_range`.  For a point collinear with the        *)
+(* endpoints (`cross = 0`), the two coordinate-range bounds are SUFFICIENT for  *)
+(* betweenness.  This is the detection direction the overlay/intersection layer *)
+(* needs to recognise the collinear sub-cases of `IntersectCollinear` -- shared *)
+(* endpoint, T-junction, full overlap -- from raw coordinates.  See the         *)
+(* follow-up note in theories/Intersect.v (segments_1d_overlap section).        *)
+(* -------------------------------------------------------------------------- *)
+
+(* The affine parameter (c - a) / (b - a) of a coordinate c lying in the closed *)
+(* range spanned by a and b is itself in [0, 1].  Coordinate-agnostic helper;   *)
+(* used for both axes in the converse below.                                    *)
+Lemma ratio_in_unit_interval : forall a b c : R,
+  a <> b ->
+  Rmin a b <= c <= Rmax a b ->
+  0 <= (c - a) / (b - a) <= 1.
+Proof.
+  intros a b c Hab [Hlo Hhi].
+  destruct (Rtotal_order a b) as [Hlt | [Heq | Hgt]].
+  - (* a < b : Rmin a b = a, Rmax a b = b *)
+    rewrite (Rmin_left a b (Rlt_le _ _ Hlt)) in Hlo.
+    rewrite (Rmax_right a b (Rlt_le _ _ Hlt)) in Hhi.
+    split.
+    + apply Rmult_le_pos; [lra | left; apply Rinv_0_lt_compat; lra].
+    + apply Rmult_le_reg_r with (r := b - a); [lra |].
+      unfold Rdiv. rewrite Rmult_assoc. rewrite Rinv_l by lra. lra.
+  - exfalso. apply Hab. exact Heq.
+  - (* b < a : Rmin a b = b, Rmax a b = a *)
+    rewrite (Rmin_right a b (Rlt_le _ _ Hgt)) in Hlo.
+    rewrite (Rmax_left a b (Rlt_le _ _ Hgt)) in Hhi.
+    split.
+    + apply Rmult_le_reg_r with (r := a - b); [lra |].
+      rewrite Rmult_0_l. unfold Rdiv.
+      replace ((c - a) * / (b - a) * (a - b))
+        with (- ((c - a) * (/ (b - a) * (b - a)))) by ring.
+      rewrite Rinv_l by lra. lra.
+    + apply Rmult_le_reg_r with (r := a - b); [lra |].
+      unfold Rdiv.
+      replace ((c - a) * / (b - a) * (a - b))
+        with (- ((c - a) * (/ (b - a) * (b - a)))) by ring.
+      rewrite Rinv_l by lra. lra.
+Qed.
+
+Lemma between_of_on_line_and_coord_range : forall P0 P1 Q,
+  cross P0 P1 Q = 0 ->
+  Rmin (px P0) (px P1) <= px Q <= Rmax (px P0) (px P1) ->
+  Rmin (py P0) (py P1) <= py Q <= Rmax (py P0) (py P1) ->
+  between P0 P1 Q.
+Proof.
+  intros P0 P1 Q Hcross Hx Hy.
+  destruct (Req_dec (px P0) (px P1)) as [Hpxe | Hpxne].
+  - (* x-extent degenerate: px Q is pinned to px P0 = px P1 *)
+    assert (Hqx : px Q = px P0).
+    { destruct Hx as [Hlo Hhi]. rewrite <- Hpxe in Hlo, Hhi.
+      rewrite (Rmin_left (px P0) (px P0) (Rle_refl _)) in Hlo.
+      rewrite (Rmax_left (px P0) (px P0) (Rle_refl _)) in Hhi. lra. }
+    destruct (Req_dec (py P0) (py P1)) as [Hpye | Hpyne].
+    + (* P0 = P1 : a single point, t = 0 *)
+      assert (Hqy : py Q = py P0).
+      { destruct Hy as [Hlo Hhi]. rewrite <- Hpye in Hlo, Hhi.
+        rewrite (Rmin_left (py P0) (py P0) (Rle_refl _)) in Hlo.
+        rewrite (Rmax_left (py P0) (py P0) (Rle_refl _)) in Hhi. lra. }
+      exists 0. repeat split; try lra.
+      * rewrite Hqx. ring.
+      * rewrite Hqy. ring.
+    + (* vertical segment: take the parameter from the y coordinate *)
+      assert (Hd : py P1 - py P0 <> 0) by (intro Hc; apply Hpyne; lra).
+      pose (t := (py Q - py P0) / (py P1 - py P0)).
+      assert (Hbounds := ratio_in_unit_interval (py P0) (py P1) (py Q) Hpyne Hy).
+      assert (Hty : t * (py P1 - py P0) = py Q - py P0).
+      { unfold t, Rdiv. rewrite Rmult_assoc, (Rinv_l _ Hd). ring. }
+      exists t. repeat split; try (unfold t; lra).
+      * (* px Q = (1-t)*px P0 + t*px P1, with px P1 = px P0 *)
+        rewrite <- Hpxe. rewrite Hqx. ring.
+      * (* py Q = (1-t)*py P0 + t*py P1 *)
+        replace ((1 - t) * py P0 + t * py P1)
+          with (py P0 + t * (py P1 - py P0)) by ring.
+        rewrite Hty. lra.
+  - (* x-extent non-degenerate: take the parameter from the x coordinate *)
+    assert (Hd : px P1 - px P0 <> 0) by (intro Hc; apply Hpxne; lra).
+    pose (t := (px Q - px P0) / (px P1 - px P0)).
+    assert (Hbounds := ratio_in_unit_interval (px P0) (px P1) (px Q) Hpxne Hx).
+    assert (Htx : t * (px P1 - px P0) = px Q - px P0).
+    { unfold t, Rdiv. rewrite Rmult_assoc, (Rinv_l _ Hd). ring. }
+    assert (Hty : t * (py P1 - py P0) = py Q - py P0).
+    { assert (Hk : (px P1 - px P0) * (t * (py P1 - py P0) - (py Q - py P0)) = 0).
+      { replace ((px P1 - px P0) * (t * (py P1 - py P0) - (py Q - py P0)))
+          with ((t * (px P1 - px P0)) * (py P1 - py P0)
+                - (px P1 - px P0) * (py Q - py P0)) by ring.
+        rewrite Htx. unfold cross in Hcross. lra. }
+      apply Rmult_integral in Hk. destruct Hk as [H0 | H0].
+      - exfalso. apply Hd. exact H0.
+      - lra. }
+    exists t. repeat split; try (unfold t; lra).
+    + (* px Q = (1-t)*px P0 + t*px P1 *)
+      replace ((1 - t) * px P0 + t * px P1)
+        with (px P0 + t * (px P1 - px P0)) by ring.
+      rewrite Htx. lra.
+    + (* py Q = (1-t)*py P0 + t*py P1 *)
+      replace ((1 - t) * py P0 + t * py P1)
+        with (py P0 + t * (py P1 - py P0)) by ring.
+      rewrite Hty. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* The midpoint of a segment lies on the segment (with parameter t = 1/2).     *)
+(* -------------------------------------------------------------------------- *)
+
 Definition midpoint (P0 P1 : Point) : Point :=
   mkPoint ((px P0 + px P1) / 2) ((py P0 + py P1) / 2).
 
@@ -293,3 +401,5 @@ Proof. intros. unfold on_line. apply cross_degenerate_base. Qed.
 
 Print Assumptions between_implies_on_line.
 Print Assumptions off_line_not_between.
+Print Assumptions ratio_in_unit_interval.
+Print Assumptions between_of_on_line_and_coord_range.
