@@ -11,3 +11,4 @@ extracted.mli
 *.cmti
 oracle_bin
 test_pt
+test_ic

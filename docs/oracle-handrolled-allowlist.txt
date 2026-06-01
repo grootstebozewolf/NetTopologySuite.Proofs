@@ -25,16 +25,21 @@
 # Remaining: forward-error soundness of the rounded predicate to the
 # geometric relation (docs/oracle-handroll-migration.md item 1).
 
-# --- INCIRCLE_SIGN ----------------------------------------------------------
-# Mirrors inCircle_R (ArcOrient.v:88), which is R-side only.  Needs a new
-# b64_inCircle definition + integer-regime soundness bridge in theories-flocq/.
-incircle_r_native
+# --- INCIRCLE_SIGN : MIGRATED -----------------------------------------------
+# (item 2, done) The in-circle determinant is now the extracted b64_inCircle
+# (theories-flocq/InCircle_b64_compute.v); native incircle_r_native deleted and
+# all three modes (INCIRCLE_SIGN + both ARC_* sign-products) route through it.
+# Bit-exact with the old native code (2e6-case check, oracle/test_ic.ml).
+# Remaining: integer-regime exactness of the b64 sign vs inCircle_R
+# (|coord| <= 2^12, no division -> exact; docs/oracle-handroll-migration.md item 2).
 
 # --- ARC_CHORD_CROSSES_CIRCLE / ARC_PASSES_THROUGH_PIXEL --------------------
-# Sign-product / six-way disjunction over inCircle plus a hot-pixel membership
-# test.  Consume the b64_inCircle migration above; mirror R-side
+# These now CALL extracted b64_inCircle, but still hand-roll their own glue:
+# run_arc_chord_crosses_circle does the sign-product `sp *. sq < 0`;
+# run_arc_passes_through_pixel composes four such products with the half-open
+# pixel membership test in_hot_pixel_halfopen.  Items 3/4: extract
 # chord_crosses_arc_circle (ArcIntersect.v:129) and arc_passes_through_hot_pixel
-# (ArcHotPixel.v:95).
+# (ArcHotPixel.v:95) so these glue kernels also leave the allowlist.
 run_arc_chord_crosses_circle
 in_hot_pixel_halfopen
 run_arc_passes_through_pixel

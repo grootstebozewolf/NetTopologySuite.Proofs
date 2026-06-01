@@ -311,41 +311,20 @@ let run_edge_in_result () =
 
 (* ----- INCIRCLE_SIGN mode (Phase 4, hand-rolled). ------------------------ *)
 
-(* Native OCaml mirror of `inCircle_R` (theories/ArcOrient.v:88).  Cofactor
-   expansion along the first column of the 3x3 lifted determinant.  This is
-   a HAND-ROLLED implementation, parallel to the Phase 2 hot-pixel modes:
-   the Coq predicate is R-side (not yet bridged to BPoint / binary64), so
-   extraction is structurally not possible without first adding a b64-side
-   parallel `b64_inCircle_R` to theories-flocq/.  The native float
-   arithmetic realises Flocq's R semantics under IEEE 754 binary64
-   round-to-nearest-even (same trust pattern as the existing
-   PASSES_THROUGH_* modes).
-
-   Pin: `inCircle_R A B C P` at ArcOrient.v:88.
-     ax := px A - px P;  ay := py A - py P;
-     bx := px B - px P;  by := py B - py P;
-     cx := px C - px P;  cy := py C - py P;
-     na := ax*ax + ay*ay;
-     nb := bx*bx + by*by;
-     nc := cx*cx + cy*cy;
-     ax * (by * nc - cy * nb)
-     - ay * (bx * nc - cx * nb)
-     + na * (bx * cy - cx * by).
+(* The in-circle determinant is the extracted `b64_inCircle`
+   (theories-flocq/InCircle_b64_compute.v), which mirrors `inCircle_R`
+   (theories/ArcOrient.v:88) on the b64 layer.  `inCircle_R` is R-side, hence
+   not extractable; `b64_inCircle` is its binary64 evaluator and is bit-exact
+   with the previous hand-rolled `incircle_r_native` (2,000,000-case
+   differential check, oracle/test_ic.ml).  Used by INCIRCLE_SIGN and by the
+   ARC_* sign-products below.
 
    Sign convention: positive iff (A, B, C) is CCW AND P is strictly inside
-   the circumscribed circle.  For CW (A, B, C) the sign flips. *)
+   the circumscribed circle.  For CW (A, B, C) the sign flips.
 
-let incircle_r_native
-    (a : bPoint) (b : bPoint) (c : bPoint) (p : bPoint) : float =
-  let ax = a.bx -. p.bx and ay = a.by_ -. p.by_ in
-  let bx = b.bx -. p.bx and by_ = b.by_ -. p.by_ in
-  let cx = c.bx -. p.bx and cy = c.by_ -. p.by_ in
-  let na = ax *. ax +. ay *. ay in
-  let nb = bx *. bx +. by_ *. by_ in
-  let nc = cx *. cx +. cy *. cy in
-  ax *. (by_ *. nc -. cy *. nb)
-  -. ay *. (bx *. nc -. cx *. nb)
-  +. na *. (bx *. cy -. cx *. by_)
+   Soundness of the b64 sign to inCircle_R's sign (clean integer-regime
+   exactness, |coord| <= 2^12, since the determinant has no division) is
+   deferred -- docs/oracle-handroll-migration.md item 2. *)
 
 let incircle_sign_string (v : float) : string =
   if v <> v then "NAN"
@@ -358,7 +337,7 @@ let run_incircle_sign () =
   let b = parse_point (input_line stdin) in
   let c = parse_point (input_line stdin) in
   let p = parse_point (input_line stdin) in
-  let v = incircle_r_native a b c p in
+  let v = b64_inCircle a b c p in
   Printf.printf "%s %h\n" (incircle_sign_string v) v
 
 (* ----- ARC_CHORD_CROSSES_CIRCLE mode (Phase 4, hand-rolled). ------------- *)
@@ -386,8 +365,8 @@ let run_arc_chord_crosses_circle () =
   let arc_end   = parse_point (input_line stdin) in
   let chord_p   = parse_point (input_line stdin) in
   let chord_q   = parse_point (input_line stdin) in
-  let sp = incircle_r_native arc_start arc_mid arc_end chord_p in
-  let sq = incircle_r_native arc_start arc_mid arc_end chord_q in
+  let sp = b64_inCircle arc_start arc_mid arc_end chord_p in
+  let sq = b64_inCircle arc_start arc_mid arc_end chord_q in
   print_endline (bool_string (sp *. sq < 0.0))
 
 (* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, hand-rolled). ------------- *)
@@ -433,8 +412,8 @@ let run_arc_passes_through_pixel () =
   let tr = { bx = center.bx +. r; by_ = center.by_ +. r } in
   let tl = { bx = center.bx -. r; by_ = center.by_ +. r } in
   let crosses p q =
-    let sp = incircle_r_native arc_start arc_mid arc_end p in
-    let sq = incircle_r_native arc_start arc_mid arc_end q in
+    let sp = b64_inCircle arc_start arc_mid arc_end p in
+    let sq = b64_inCircle arc_start arc_mid arc_end q in
     sp *. sq < 0.0
   in
   let result =

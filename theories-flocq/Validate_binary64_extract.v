@@ -43,6 +43,7 @@ From NTS.Proofs.Flocq Require Import Intersect_b64_exact.
 From NTS.Proofs       Require Import OverlayGraph.   (* edge_in_result *)
 From NTS.Proofs.Flocq Require Import HotPixel_b64.    (* b64_snap_coord, b64_one/two/half *)
 From NTS.Proofs.Flocq Require Import PassesThrough_b64_compute.
+From NTS.Proofs.Flocq Require Import InCircle_b64_compute.   (* b64_inCircle *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -151,4 +152,5 @@ Extraction "oracle/extracted.ml"
   b64_intersect_point_y
   edge_in_result
   b64_passes_through_hot_pixel_compute
-  b64_passes_through_hot_pixel_halfopen_compute.
+  b64_passes_through_hot_pixel_halfopen_compute
+  b64_inCircle.

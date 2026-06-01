@@ -43,7 +43,7 @@ is genuine multi-session Rocq work; there is no extraction-only shortcut.
 | Mode(s) | Hand-rolled kernels in `driver.ml` | Coq side today |
 |---|---|---|
 | ~~`PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN`~~ **MIGRATED** | — (extracted `b64_passes_through_hot_pixel_compute` / `_halfopen_compute`) | computational `PassesThrough_b64_compute.v`; R-spec carries exact soundness |
-| `INCIRCLE_SIGN` | `incircle_r_native` | R-side only (`inCircle_R`, `ArcOrient.v:88`) |
+| ~~`INCIRCLE_SIGN`~~ **MIGRATED** | — (extracted `b64_inCircle`, also feeds the ARC_* sign-products) | computational `InCircle_b64_compute.v`; integer-regime exactness deferred |
 | `ARC_CHORD_CROSSES_CIRCLE` | `run_arc_chord_crosses_circle` | R-side only (`chord_crosses_arc_circle`, `ArcIntersect.v:129`) |
 | `ARC_PASSES_THROUGH_PIXEL` | `in_hot_pixel_halfopen`, `run_arc_passes_through_pixel` | R-side only (`arc_passes_through_hot_pixel`, `ArcHotPixel.v:95`) |
 
@@ -82,7 +82,22 @@ constant); replace the `run_passes_through_*` bodies; delete
 no-overflow guard; reuse the existing degenerate-axis split (`lb_inslab` /
 `Req_dec_T`). Validate bit-exactness against the existing differential corpus.
 
-### 2. INCIRCLE_SIGN — new b64_inCircle + integer-regime soundness  *(medium)*
+### 2. INCIRCLE_SIGN — new b64_inCircle  ✅ DONE (compute path)
+
+**Status:** migrated. `theories-flocq/InCircle_b64_compute.v` defines
+`b64_inCircle` (mirroring `inCircle_R` op-for-op on the `b64_*` layer);
+extracted and called by INCIRCLE_SIGN *and* both ARC_* sign-products, so the
+shared `incircle_r_native` kernel is deleted. Bit-exact with the old native
+code over 2,000,000 random + integer-regime cases (`oracle/test_ic.ml`); full
+corpus builds green. **Remaining (deferred):** integer-regime exactness of the
+b64 sign vs `inCircle_R` — clean here because the determinant has *no
+division*, so for `|coord| <= 2^12` every op is exact (`4k+2 <= 53`) and the
+binary64 sign equals `inCircle_R`'s sign (an exactness theorem in the
+`Orient_b64_exact._sound_small_int` style, not a forward-error bound).
+
+Original analysis follows.
+
+### 2-orig. INCIRCLE_SIGN — new b64_inCircle + integer-regime soundness  *(medium)*
 
 No b64 side exists. **Work:** define `b64_inCircle` in `theories-flocq/`
 (cofactor expansion mirroring `inCircle_R`), prove `B2R (b64_inCircle ...) =
