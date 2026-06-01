@@ -411,6 +411,244 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* The converse: collinear + share => 1D overlap.                             *)
+(*                                                                            *)
+(* This closes the "more subtle" direction deferred in the comment above      *)
+(* (collinear + share-a-point => some endpoint of one segment lies on the     *)
+(* other).  Combined with `segments_1d_overlap_share` it yields the full      *)
+(* biconditional characterisation of collinear-segment intersection, which    *)
+(* is the complete R-side positive-claim story for `IntersectCollinear`.      *)
+(* -------------------------------------------------------------------------- *)
+
+(* Two collinear points with equal coordinates are equal. *)
+Lemma points_eq_of_coords : forall R S : Point,
+  px R = px S -> py R = py S -> R = S.
+Proof. intros [rx ry] [sx sy] Hx Hy. cbn in *. subst. reflexivity. Qed.
+
+(* A point on a collapsed (single-point) segment is that point. *)
+Lemma between_collapse_to_endpoint : forall A B X,
+  px A = px B -> py A = py B -> between A B X -> X = A.
+Proof.
+  intros A B X Hx Hy [t [_ [_ [Hbx Hby]]]].
+  apply points_eq_of_coords.
+  - rewrite Hbx. rewrite <- Hx. ring.
+  - rewrite Hby. rewrite <- Hy. ring.
+Qed.
+
+(* On a non-vertical line, distinct x forces distinct points (contrapositive
+   form): collinear R, S with equal x are equal. *)
+Lemma collinear_nonvert_eq : forall P Q R S,
+  px P <> px Q -> cross P Q R = 0 -> cross P Q S = 0 ->
+  px R = px S -> R = S.
+Proof.
+  intros P Q R S Hpq HR HS Hxe.
+  apply points_eq_of_coords; [exact Hxe |].
+  assert (Hd : px Q - px P <> 0) by (intro H; apply Hpq; lra).
+  assert (Hk : (px Q - px P) * (py R - py S) = 0).
+  { unfold cross in HR, HS. rewrite Hxe in HR.
+    replace ((px Q - px P) * (py R - py S))
+      with (((px Q - px P) * (py R - py P) - (px S - px P) * (py Q - py P))
+            - ((px Q - px P) * (py S - py P) - (px S - px P) * (py Q - py P)))
+      by ring.
+    rewrite HR, HS. ring. }
+  apply Rmult_integral in Hk. destruct Hk as [H0 | H0].
+  - exfalso. apply Hd. exact H0.
+  - lra.
+Qed.
+
+(* On a vertical line (px P = px Q, py P <> py Q), every collinear point shares
+   the common x-coordinate. *)
+Lemma collinear_vertical_px : forall A B C,
+  px A = px B -> py A <> py B -> cross A B C = 0 -> px C = px A.
+Proof.
+  intros A B C Hx Hy Hc.
+  assert (Hd : py B - py A <> 0) by (intro H; apply Hy; lra).
+  unfold cross in Hc. rewrite <- Hx in Hc.
+  assert (Hk : (px C - px A) * (py B - py A) = 0).
+  { replace ((px C - px A) * (py B - py A))
+      with (- ((px A - px A) * (py C - py A) - (px C - px A) * (py B - py A)))
+      by ring.
+    rewrite Hc. ring. }
+  apply Rmult_integral in Hk. destruct Hk as [H0 | H0].
+  - lra.
+  - exfalso. apply Hd. exact H0.
+Qed.
+
+(* Collinearity transfers an x-range bound to a y-range bound (non-vertical). *)
+Lemma collinear_x_range_implies_y_range : forall P Q R,
+  cross P Q R = 0 -> px P <> px Q ->
+  Rmin (px P) (px Q) <= px R <= Rmax (px P) (px Q) ->
+  Rmin (py P) (py Q) <= py R <= Rmax (py P) (py Q).
+Proof.
+  intros P Q R Hc Hpq Hx.
+  assert (Hd : px Q - px P <> 0) by (intro H; apply Hpq; lra).
+  pose (r := (px R - px P) / (px Q - px P)).
+  assert (Hr := ratio_in_unit_interval (px P) (px Q) (px R) Hpq Hx).
+  assert (Hrx : r * (px Q - px P) = px R - px P)
+    by (unfold r, Rdiv; rewrite Rmult_assoc, (Rinv_l _ Hd); ring).
+  assert (Hry : r * (py Q - py P) = py R - py P).
+  { assert (Hk : (px Q - px P) * (r * (py Q - py P) - (py R - py P)) = 0).
+    { replace ((px Q - px P) * (r * (py Q - py P) - (py R - py P)))
+        with ((r * (px Q - px P)) * (py Q - py P)
+              - (px Q - px P) * (py R - py P)) by ring.
+      rewrite Hrx. unfold cross in Hc. lra. }
+    apply Rmult_integral in Hk. destruct Hk as [H0 | H0].
+    - exfalso. apply Hd. exact H0.
+    - lra. }
+  assert (Hbet : between P Q R).
+  { exists r. repeat split; try (unfold r; lra).
+    - replace ((1 - r) * px P + r * px Q) with (px P + r * (px Q - px P)) by ring.
+      rewrite Hrx. lra.
+    - replace ((1 - r) * py P + r * py Q) with (py P + r * (py Q - py P)) by ring.
+      rewrite Hry. lra. }
+  apply between_in_coord_range in Hbet. destruct Hbet as [_ Hyr]. exact Hyr.
+Qed.
+
+(* Symmetric transfer: y-range bound to x-range bound (non-horizontal). *)
+Lemma collinear_y_range_implies_x_range : forall P Q R,
+  cross P Q R = 0 -> py P <> py Q ->
+  Rmin (py P) (py Q) <= py R <= Rmax (py P) (py Q) ->
+  Rmin (px P) (px Q) <= px R <= Rmax (px P) (px Q).
+Proof.
+  intros P Q R Hc Hpq Hy.
+  assert (Hd : py Q - py P <> 0) by (intro H; apply Hpq; lra).
+  pose (r := (py R - py P) / (py Q - py P)).
+  assert (Hr := ratio_in_unit_interval (py P) (py Q) (py R) Hpq Hy).
+  assert (Hry : r * (py Q - py P) = py R - py P)
+    by (unfold r, Rdiv; rewrite Rmult_assoc, (Rinv_l _ Hd); ring).
+  assert (Hrx : r * (px Q - px P) = px R - px P).
+  { assert (Hk : (py Q - py P) * (r * (px Q - px P) - (px R - px P)) = 0).
+    { replace ((py Q - py P) * (r * (px Q - px P) - (px R - px P)))
+        with ((px Q - px P) * (r * (py Q - py P))
+              - (px R - px P) * (py Q - py P)) by ring.
+      rewrite Hry. unfold cross in Hc. lra. }
+    apply Rmult_integral in Hk. destruct Hk as [H0 | H0].
+    - exfalso. apply Hd. exact H0.
+    - lra. }
+  assert (Hbet : between P Q R).
+  { exists r. repeat split; try (unfold r; lra).
+    - replace ((1 - r) * px P + r * px Q) with (px P + r * (px Q - px P)) by ring.
+      rewrite Hrx. lra.
+    - replace ((1 - r) * py P + r * py Q) with (py P + r * (py Q - py P)) by ring.
+      rewrite Hry. lra. }
+  apply between_in_coord_range in Hbet. destruct Hbet as [Hxr _]. exact Hxr.
+Qed.
+
+(* For a collinear point, an x-range bound alone (on a non-vertical segment)
+   already gives betweenness. *)
+Lemma between_of_collinear_x : forall P Q R,
+  px P <> px Q -> cross P Q R = 0 ->
+  Rmin (px P) (px Q) <= px R <= Rmax (px P) (px Q) ->
+  between P Q R.
+Proof.
+  intros P Q R Hpq Hc Hx.
+  apply between_of_on_line_and_coord_range.
+  - exact Hc.
+  - exact Hx.
+  - apply collinear_x_range_implies_y_range; assumption.
+Qed.
+
+Lemma between_of_collinear_y : forall P Q R,
+  py P <> py Q -> cross P Q R = 0 ->
+  Rmin (py P) (py Q) <= py R <= Rmax (py P) (py Q) ->
+  between P Q R.
+Proof.
+  intros P Q R Hpq Hc Hy.
+  apply between_of_on_line_and_coord_range.
+  - exact Hc.
+  - apply collinear_y_range_implies_x_range; assumption.
+  - exact Hy.
+Qed.
+
+(* 1D core: two closed real intervals that share a point have an endpoint of
+   one inside the other. *)
+Lemma range_overlap_endpoint_in : forall a b c d x : R,
+  Rmin a b <= x <= Rmax a b ->
+  Rmin c d <= x <= Rmax c d ->
+  (Rmin c d <= a <= Rmax c d) \/ (Rmin c d <= b <= Rmax c d) \/
+  (Rmin a b <= c <= Rmax a b) \/ (Rmin a b <= d <= Rmax a b).
+Proof.
+  intros a b c d x [Hax Hxb] [Hcx Hxd].
+  unfold Rmin, Rmax in *.
+  destruct (Rle_dec a b), (Rle_dec c d),
+           (Rle_dec a c), (Rle_dec a d), (Rle_dec b c), (Rle_dec b d);
+    solve [ left; split; lra
+          | right; left; split; lra
+          | right; right; left; split; lra
+          | right; right; right; split; lra ].
+Qed.
+
+Theorem collinear_share_implies_1d_overlap : forall A B C D,
+  cross A B C = 0 -> cross A B D = 0 ->
+  cross C D A = 0 -> cross C D B = 0 ->
+  (exists X, between A B X /\ between C D X) ->
+  segments_1d_overlap A B C D.
+Proof.
+  intros A B C D HABC HABD HCDA HCDB [X [HabX HcdX]].
+  unfold segments_1d_overlap.
+  destruct (between_in_coord_range A B X HabX) as [HXabx HXaby].
+  destruct (between_in_coord_range C D X HcdX) as [HXcdx HXcdy].
+  destruct (Req_dec (px A) (px B)) as [HxAB | HxABne].
+  - (* px A = px B *)
+    destruct (Req_dec (py A) (py B)) as [HyAB | HyABne].
+    + (* A = B : X = A, so A lies on [C,D] *)
+      assert (HXA : X = A) by (apply (between_collapse_to_endpoint A B X); auto).
+      left. rewrite <- HXA. exact HcdX.
+    + (* AB is vertical and non-degenerate *)
+      destruct (Req_dec (py C) (py D)) as [HyCD | HyCDne].
+      * (* C, D share x (= px A) and y, hence C = D : X = C lies on [A,B] *)
+        assert (HxCA : px C = px A) by (apply (collinear_vertical_px A B C); auto).
+        assert (HxDA : px D = px A) by (apply (collinear_vertical_px A B D); auto).
+        assert (HXC : X = C).
+        { apply (between_collapse_to_endpoint C D X);
+            [rewrite HxCA, HxDA; reflexivity | exact HyCD | exact HcdX]. }
+        right; right; left. rewrite <- HXC. exact HabX.
+      * (* y axis is faithful : run the 1D core on y *)
+        destruct (range_overlap_endpoint_in (py A) (py B) (py C) (py D) (py X)
+                    HXaby HXcdy) as [HA | [HB | [HC | HD]]].
+        -- left.                apply between_of_collinear_y;
+                                  [exact HyCDne | exact HCDA | exact HA].
+        -- right; left.         apply between_of_collinear_y;
+                                  [exact HyCDne | exact HCDB | exact HB].
+        -- right; right; left.  apply between_of_collinear_y;
+                                  [exact HyABne | exact HABC | exact HC].
+        -- right; right; right. apply between_of_collinear_y;
+                                  [exact HyABne | exact HABD | exact HD].
+  - (* px A <> px B : the line is non-vertical, x axis is faithful *)
+    destruct (Req_dec (px C) (px D)) as [HxCD | HxCDne].
+    + (* C, D collinear with the non-vertical line and share x, hence C = D *)
+      assert (HCD : C = D)
+        by (apply (collinear_nonvert_eq A B C D);
+            [exact HxABne | exact HABC | exact HABD | exact HxCD]).
+      assert (HXC : X = C).
+      { apply (between_collapse_to_endpoint C D X);
+          [exact HxCD | rewrite HCD; reflexivity | exact HcdX]. }
+      right; right; left. rewrite <- HXC. exact HabX.
+    + destruct (range_overlap_endpoint_in (px A) (px B) (px C) (px D) (px X)
+                  HXabx HXcdx) as [HA | [HB | [HC | HD]]].
+      * left.                apply between_of_collinear_x;
+                              [exact HxCDne | exact HCDA | exact HA].
+      * right; left.         apply between_of_collinear_x;
+                              [exact HxCDne | exact HCDB | exact HB].
+      * right; right; left.  apply between_of_collinear_x;
+                              [exact HxABne | exact HABC | exact HC].
+      * right; right; right. apply between_of_collinear_x;
+                              [exact HxABne | exact HABD | exact HD].
+Qed.
+
+(* The full biconditional: for collinear segments, sharing a point is
+   equivalent to 1D overlap of their extents. *)
+Theorem collinear_share_iff_1d_overlap : forall A B C D,
+  cross A B C = 0 -> cross A B D = 0 ->
+  cross C D A = 0 -> cross C D B = 0 ->
+  ((exists X, between A B X /\ between C D X) <-> segments_1d_overlap A B C D).
+Proof.
+  intros A B C D HABC HABD HCDA HCDB. split.
+  - intro H. exact (collinear_share_implies_1d_overlap A B C D HABC HABD HCDA HCDB H).
+  - apply segments_1d_overlap_share.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
@@ -422,3 +660,6 @@ Print Assumptions collinear_overlap_completeness.
 Print Assumptions segments_1d_overlap_sym.
 Print Assumptions segments_1d_overlap_shared_endpoint.
 Print Assumptions shared_endpoint_share_point.
+Print Assumptions range_overlap_endpoint_in.
+Print Assumptions collinear_share_implies_1d_overlap.
+Print Assumptions collinear_share_iff_1d_overlap.
