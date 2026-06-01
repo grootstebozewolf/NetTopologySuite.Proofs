@@ -808,6 +808,72 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Collinearity transfer.                                                     *)
+(*                                                                            *)
+(* If A <> B and two points C, D both lie on line AB (cross A B C = 0 and     *)
+(* cross A B D = 0), then any further point X on line AB also lies on line    *)
+(* CD: cross C D X = 0.  Geometrically, C and D pin down line AB, so line CD  *)
+(* coincides with it (or, when C = D, cross C D X is degenerately zero).      *)
+(*                                                                            *)
+(* Non-vertical case: with u := px B - px A <> 0, the two collinearity        *)
+(* equations give u*(py D - py C) = v*(px D - px C) and the analogue for X,   *)
+(* whence u * cross C D X = 0; u <> 0 finishes.  Vertical case: all four      *)
+(* x-coordinates coincide (via `collinear_vertical_px`), so cross C D X = 0   *)
+(* outright.  Only A <> B is needed -- C = D is fine.                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cross_collinear_transfer : forall A B C D X,
+  A <> B ->
+  cross A B C = 0 -> cross A B D = 0 -> cross A B X = 0 ->
+  cross C D X = 0.
+Proof.
+  intros A B C D X HAB HABC HABD HABX.
+  destruct (Req_dec (px A) (px B)) as [HxAB | HxABne].
+  - (* Vertical line AB: px A = px B, so py A <> py B. *)
+    assert (Hpy : py A <> py B).
+    { intro Hpy. apply HAB. apply points_eq_of_coords; assumption. }
+    pose proof (collinear_vertical_px A B C HxAB Hpy HABC) as HpxC.
+    pose proof (collinear_vertical_px A B D HxAB Hpy HABD) as HpxD.
+    pose proof (collinear_vertical_px A B X HxAB Hpy HABX) as HpxX.
+    unfold cross. rewrite HpxC, HpxD, HpxX. ring.
+  - (* Non-vertical line AB: u := px B - px A <> 0. *)
+    set (u := px B - px A). set (v := py B - py A).
+    assert (Hu : u <> 0).
+    { unfold u. intro Hz. apply HxABne. lra. }
+    assert (Hi : u * (py D - py C) = v * (px D - px C)).
+    { unfold u, v, cross in *. nra. }
+    assert (Hii : u * (py X - py C) = v * (px X - px C)).
+    { unfold u, v, cross in *. nra. }
+    assert (H0 : u * cross C D X = 0).
+    { unfold cross.
+      replace (u * ((px D - px C) * (py X - py C)
+                    - (px X - px C) * (py D - py C)))
+        with ((px D - px C) * (u * (py X - py C))
+              - (px X - px C) * (u * (py D - py C))) by ring.
+      rewrite Hi, Hii. ring. }
+    destruct (Rmult_integral _ _ H0) as [Hbad | Hgood].
+    + exfalso. apply Hu. exact Hbad.
+    + exact Hgood.
+Qed.
+
+(* The collinear share/overlap biconditional from just two cross-zero         *)
+(* premises plus A <> B -- the form callers actually have (e.g. the binary64  *)
+(* `IntersectCollinear` verdict establishes that C, D lie on line AB).  The   *)
+(* other two cross-zeros are supplied by `cross_collinear_transfer`.          *)
+Theorem collinear_share_iff_1d_overlap_2premise : forall A B C D,
+  A <> B ->
+  cross A B C = 0 -> cross A B D = 0 ->
+  ((exists X, between A B X /\ between C D X) <-> segments_1d_overlap A B C D).
+Proof.
+  intros A B C D HAB HABC HABD.
+  assert (HABA : cross A B A = 0) by (unfold cross; ring).
+  assert (HABB : cross A B B = 0) by (unfold cross; ring).
+  pose proof (cross_collinear_transfer A B C D A HAB HABC HABD HABA) as HCDA.
+  pose proof (cross_collinear_transfer A B C D B HAB HABC HABD HABB) as HCDB.
+  exact (collinear_share_iff_1d_overlap A B C D HABC HABD HCDA HCDB).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Phase-1 capstone: the complete segment-intersection decision.              *)
 (*                                                                            *)
 (* NTS's `RobustLineIntersector` dispatches on the four orientation tests     *)
@@ -873,4 +939,6 @@ Print Assumptions shared_endpoint_share_point.
 Print Assumptions range_overlap_endpoint_in.
 Print Assumptions collinear_share_implies_1d_overlap.
 Print Assumptions collinear_share_iff_1d_overlap.
+Print Assumptions cross_collinear_transfer.
+Print Assumptions collinear_share_iff_1d_overlap_2premise.
 Print Assumptions segment_intersection_decision.
