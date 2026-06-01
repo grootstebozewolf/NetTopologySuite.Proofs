@@ -40,8 +40,13 @@ fail=0
 checked=0
 
 # Pull every `Module.v : name` reference (name may carry a {a,b} brace group).
-mapfile -t refs < <(grep -oP '`[A-Za-z0-9_]+\.v[[:space:]]*:[[:space:]]*[A-Za-z0-9_{},]+`' "$DOC" \
-                    | tr -d '`' | sort -u)
+# Portable: grep -oE (BSD/GNU) + a read loop, no `grep -P` and no `mapfile`
+# (the host CI runner is macOS / bash 3.2 / BSD grep).
+refs=()
+while IFS= read -r ref; do
+  [ -n "$ref" ] && refs+=("$ref")
+done < <(grep -oE '`[A-Za-z0-9_]+\.v[[:space:]]*:[[:space:]]*[A-Za-z0-9_{},]+`' "$DOC" \
+         | tr -d '`' | sort -u)
 
 if [ "${#refs[@]}" -eq 0 ]; then
   echo "[validate-claims] ERROR: no \`Module.v : name\` claims found in $DOC"
