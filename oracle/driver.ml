@@ -26,6 +26,15 @@
         output:       single line "<sign> <signed_area_hex>".
                       sign is one of: POS / NEG / ZERO / NAN / UNCERTAIN.
 
+     ORIENT_EXACT    -- EXACT orientation over arbitrary binary64 (the
+                        ground-truth reference for the JTS #1106 differential
+                        test).  Dyadic-rational/bignum determinant; sign is
+                        exact for ALL finite inputs (no |coord| <= 2^25
+                        restriction).  Mirrors the Qed-proven `b64_orient2d_exact`
+                        (theories-flocq/Orient_b64_exact_full.v).
+        line 2..4:    points as above.
+        output:       single token "<sign>": POS / NEG / ZERO / NAN.
+
      INTERSECT_FILTERED -- segment-pair intersection predicate, Stage A.
         line 2:       <x0> <y0>     -- P0
         line 3:       <x1> <y1>     -- P1
@@ -143,6 +152,10 @@
    down cleanly.
    ========================================================================== *)
 
+(* zarith's bignum module, captured before `open Extracted` shadows `Z`
+   with the Coq-extracted `Z` inductive.  Used by the ORIENT_EXACT mode. *)
+module BigZ = Z
+
 open Extracted
 
 (* ----- Common: point parsing + hex output. ------------------------------- *)
@@ -204,6 +217,53 @@ let run_orient_filtered () =
   let s = b64_orient_sign_filtered p0 p1 q in
   let v = b64_orient2d p0 p1 q in
   Printf.printf "%s %h\n" (sign_robust_string s) v
+
+(* ----- ORIENT_EXACT mode. ------------------------------------------------ *)
+
+(* EXACT ground-truth orientation over arbitrary binary64 coordinates -- the
+   reference for the JTS #1106 differential test (exact vs the double-double
+   `Orientation.index`).
+
+   Every finite binary64 is a dyadic rational m * 2^e, so the orientation
+   determinant is computed EXACTLY with bignums (zarith).  This mirrors the
+   Qed-proven algorithm `b64_orient2d_exact` and its full-double soundness
+   theorem `b64_orient2d_exact_sound` (theories-flocq/Orient_b64_exact_full.v):
+   for all finite inputs the sign returned here equals the true real
+   orientation sign -- no |coord| <= 2^25 restriction.
+
+   It is a faithful re-implementation rather than an extraction: the oracle's
+   native-float extraction maps Flocq's `binary_float` to OCaml `float` and
+   stubs the `B754_finite` decode, so the Coq decode cannot be extracted; the
+   theorem certifies this algorithm.  (Oracle code is not the trusted base.) *)
+
+(* value = m * 2^e, m a bignum *)
+let dyad_of_float (d : float) : BigZ.t * int =
+  if d = 0.0 then (BigZ.zero, 0)
+  else
+    let (f, k) = Float.frexp d in          (* d = f * 2^k, 0.5 <= |f| < 1 *)
+    (BigZ.of_int64 (Int64.of_float (Float.ldexp f 53)), k - 53)
+
+let dyad_sub (m1, e1) (m2, e2) =           (* align to the smaller exponent *)
+  let e = min e1 e2 in
+  (BigZ.sub (BigZ.shift_left m1 (e1 - e)) (BigZ.shift_left m2 (e2 - e)), e)
+
+let dyad_mul (m1, e1) (m2, e2) = (BigZ.mul m1 m2, e1 + e2)
+
+let orient_exact_sign (p0 : bPoint) (p1 : bPoint) (q : bPoint) : int =
+  let f = dyad_of_float in
+  let t1 = dyad_mul (dyad_sub (f p1.bx) (f p0.bx)) (dyad_sub (f q.by_) (f p0.by_)) in
+  let t2 = dyad_mul (dyad_sub (f q.bx) (f p0.bx)) (dyad_sub (f p1.by_) (f p0.by_)) in
+  BigZ.sign (fst (dyad_sub t1 t2))
+
+let run_orient_exact () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let q  = parse_point (input_line stdin) in
+  let finite p = Float.is_finite p.bx && Float.is_finite p.by_ in
+  if not (finite p0 && finite p1 && finite q) then print_endline "NAN"
+  else
+    let s = orient_exact_sign p0 p1 q in
+    print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
 
 (* ----- INTERSECT_FILTERED mode. ------------------------------------------ *)
 
@@ -417,6 +477,7 @@ let () =
        | "SIMPLIFY"                 -> run_simplify (); exit 0
        | "ORIENT"                   -> run_orient ()
        | "ORIENT_FILTERED"          -> run_orient_filtered ()
+       | "ORIENT_EXACT"             -> run_orient_exact ()
        | "INTERSECT_FILTERED"       -> run_intersect_filtered ()
        | "INTERSECT_POINT_FILTERED" -> run_intersect_point_filtered ()
        | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()

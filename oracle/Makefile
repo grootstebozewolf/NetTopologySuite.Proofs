@@ -28,10 +28,10 @@ extracted.cmx: extracted.ml extracted.cmi
 	$(OCAMLOPT) -c extracted.ml
 
 driver.cmx: driver.ml extracted.cmi
-	$(OCAMLOPT) -c $<
+	$(OCAMLOPT) -package zarith -c $<
 
 $(TARGET): extracted.cmx driver.cmx
-	$(OCAMLOPT) -package str extracted.cmx driver.cmx -o $@
+	$(OCAMLOPT) -package str,zarith -linkpkg extracted.cmx driver.cmx -o $@
 
 clean:
 	rm -f *.cmi *.cmo *.cmx *.o $(TARGET)

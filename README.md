@@ -619,11 +619,15 @@ What is NOT YET claimed here:
 `Orientation_b64.v` is plumbed into `Validate_binary64_extract.v`, so
 the RocqRefRunner dispatches on a stdin mode line into the appropriate
 extracted function. The mode set has grown with each phase and now
-covers `SIMPLIFY`, `ORIENT` / `ORIENT_FILTERED`, `INTERSECT_FILTERED` /
+covers `SIMPLIFY`, `ORIENT` / `ORIENT_FILTERED` / `ORIENT_EXACT`,
+`INTERSECT_FILTERED` /
 `INTERSECT_POINT_FILTERED` / `INTERSECT_POINT_XY`,
 `PASSES_THROUGH_FILTER` / `PASSES_THROUGH_HALFOPEN`, `EDGE_IN_RESULT`,
 `INCIRCLE_SIGN`, `ARC_CHORD_CROSSES_CIRCLE`, and
-`ARC_PASSES_THROUGH_PIXEL`.
+`ARC_PASSES_THROUGH_PIXEL`. `ORIENT_EXACT` is the exact dyadic/bignum
+ground-truth orientation over arbitrary binary64 (mirroring the Qed-proven
+`b64_orient2d_exact`), for the JTS #1106 differential test against
+double-double `Orientation.index`.
 
 ### Phase 0 Stage D — exact orientation via expansion arithmetic
 
