@@ -372,36 +372,17 @@ let run_arc_chord_crosses_circle () =
     (bool_string
        (b64_chord_crosses_arc_circle arc_start arc_mid arc_end chord_p chord_q))
 
-(* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, hand-rolled). ------------- *)
+(* ----- ARC_PASSES_THROUGH_PIXEL mode (Phase 4, extracted). -------------- *)
 
-(* Sufficient condition for `arc_passes_through_hot_pixel`
-   (theories/ArcHotPixel.v:95): the six-way disjunction over the four pixel
-   edges plus the two arc endpoints.
+(* The extracted `b64_arc_passes_through_hot_pixel`
+   (theories-flocq/ArcPixel_b64_compute.v): the six-way disjunction over the
+   four pixel edges (inCircle sign-products via `b64_chord_crosses_arc_circle`)
+   plus the two arc-endpoint half-open membership tests.  Bit-exact with the
+   previous hand-rolled kernels (2,000,000-case check, oracle/test_pixel.ml).
 
-   Each edge crossing test uses the inCircle sign-product form
-   (matching `chord_crosses_arc_circle`).  Each endpoint test uses the
-   half-open hot-pixel membership predicate (matching Phase 2's
-   in_hot_pixel half-open convention: bottom + left CLOSED, top + right
-   OPEN).
-
-   Pixel layout at center C, scale s (radius r = s/2):
-     bottom-left  = (cx - r, cy - r)
-     bottom-right = (cx + r, cy - r)
-     top-right    = (cx + r, cy + r)
-     top-left     = (cx - r, cy + r)
-
-   Pin: arc_passes_through_hot_pixel a C scale at ArcHotPixel.v:95
-   (six-way disjunction: 4 edge crossings + start_in + end_in).
-
-   Sufficient condition only.  TRUE => arc passes through pixel.
-   FALSE => unclear (the disjunction covers the typical case but is
-   sufficient, not necessary). *)
-
-let in_hot_pixel_halfopen
-    (p : bPoint) (c : bPoint) (scale : float) : bool =
-  let r = scale *. 0.5 in
-  p.bx >= c.bx -. r && p.bx < c.bx +. r &&
-  p.by_ >= c.by_ -. r && p.by_ < c.by_ +. r
+   Pin: `arc_passes_through_hot_pixel a C scale` at ArcHotPixel.v:95.
+   Sufficient condition only: TRUE => arc passes through pixel; FALSE
+   inconclusive. *)
 
 let run_arc_passes_through_pixel () =
   let arc_start = parse_point (input_line stdin) in
@@ -409,22 +390,10 @@ let run_arc_passes_through_pixel () =
   let arc_end   = parse_point (input_line stdin) in
   let center    = parse_point (input_line stdin) in
   let scale     = float_of_string (String.trim (input_line stdin)) in
-  let r = scale *. 0.5 in
-  let bl = { bx = center.bx -. r; by_ = center.by_ -. r } in
-  let br = { bx = center.bx +. r; by_ = center.by_ -. r } in
-  let tr = { bx = center.bx +. r; by_ = center.by_ +. r } in
-  let tl = { bx = center.bx -. r; by_ = center.by_ +. r } in
-  let crosses p q =
-    let sp = b64_inCircle arc_start arc_mid arc_end p in
-    let sq = b64_inCircle arc_start arc_mid arc_end q in
-    sp *. sq < 0.0
-  in
-  let result =
-    crosses bl br || crosses br tr || crosses tr tl || crosses tl bl
-    || in_hot_pixel_halfopen arc_start center scale
-    || in_hot_pixel_halfopen arc_end   center scale
-  in
-  print_endline (bool_string result)
+  print_endline
+    (bool_string
+       (b64_arc_passes_through_hot_pixel
+          arc_start arc_mid arc_end center scale))
 
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 

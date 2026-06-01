@@ -45,7 +45,7 @@ is genuine multi-session Rocq work; there is no extraction-only shortcut.
 | ~~`PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN`~~ **MIGRATED** | — (extracted `b64_passes_through_hot_pixel_compute` / `_halfopen_compute`) | computational `PassesThrough_b64_compute.v`; R-spec carries exact soundness |
 | ~~`INCIRCLE_SIGN`~~ **MIGRATED** | — (extracted `b64_inCircle`, also feeds the ARC_* sign-products) | computational `InCircle_b64_compute.v`; integer-regime exactness deferred |
 | ~~`ARC_CHORD_CROSSES_CIRCLE`~~ **MIGRATED** | — (extracted `b64_chord_crosses_arc_circle`) | computational `ArcCircle_b64_compute.v` (sign-product over `b64_inCircle`) |
-| `ARC_PASSES_THROUGH_PIXEL` | `in_hot_pixel_halfopen`, `run_arc_passes_through_pixel` | R-side only (`arc_passes_through_hot_pixel`, `ArcHotPixel.v:95`) |
+| ~~`ARC_PASSES_THROUGH_PIXEL`~~ **MIGRATED** | — (extracted `b64_arc_passes_through_hot_pixel`) | computational `ArcPixel_b64_compute.v` |
 
 ## Migration order (risk/cost ascending)
 
@@ -133,7 +133,20 @@ sign-product in driver glue (still hand-rolled comparison — prefer the former
 so it leaves the allowlist cleanly). Drop `run_arc_chord_crosses_circle`.
 **Risk:** medium, mostly inherited from item 2.
 
-### 4. ARC_PASSES_THROUGH_PIXEL — composition of incircle + hot-pixel  *(highest, after 1 & 2)*
+### 4. ARC_PASSES_THROUGH_PIXEL — composition of incircle + hot-pixel  ✅ DONE (compute path)
+
+**Status:** migrated. `theories-flocq/ArcPixel_b64_compute.v` defines
+`b64_in_hot_pixel_halfopen` and `b64_arc_passes_through_hot_pixel` (the six-way
+disjunction: four edges via the extracted `b64_chord_crosses_arc_circle` + two
+half-open endpoint memberships); extracted and called by the driver, with the
+native `in_hot_pixel_halfopen` and the `crosses`/disjunction glue deleted.
+Bit-exact over 2,000,000 cases (`oracle/test_pixel.ml`); full corpus green;
+allowlist now empty. **Remaining (deferred):** sufficient-filter soundness
+rides on items 2/3 plus the S4 IVT bridge `arc_chord_intersect_sound`.
+
+Original analysis follows.
+
+### 4-orig. ARC_PASSES_THROUGH_PIXEL — composition of incircle + hot-pixel  *(highest, after 1 & 2)*
 
 Depends on items 1 and 2. The six-way disjunction composes four edge-crossing
 incircle sign tests with two half-open hot-pixel membership tests.
@@ -145,9 +158,20 @@ from the allowlist. **Risk:** highest — it is the composition, and the
 endpoint membership must use exactly the Phase 2 half-open convention to stay
 sound. Do last.
 
-## Done criteria
+## Done criteria — ✅ MET
 
-The migration is complete when `docs/oracle-handrolled-allowlist.txt` is
-empty (only comments) and `scripts/check_oracle_handrolled.sh` reports
-`0 frozen hand-rolled kernel(s)` — i.e. every oracle mode is backed by an
-extracted, soundness-carrying Coq function.
+The compute-path migration is complete: `docs/oracle-handrolled-allowlist.txt`
+is empty (comments only) and `scripts/check_oracle_handrolled.sh` reports
+`0 frozen hand-rolled kernel(s)`. Every oracle mode now computes via a
+Coq-extracted function in `oracle/extracted.ml`; no hand-rolled float
+arithmetic remains in `oracle/driver.ml`. Each migration was validated
+bit-exact against the prior native kernel over 2,000,000 cases
+(`oracle/test_{pt,ic,arc,pixel}.ml`), and the full `_CoqProject.full` corpus
+builds green under the pinned Rocq 9.1.1 + Flocq 4.2.2 toolchain.
+
+**Remaining (orthogonal, deferred):** the *soundness* of the extracted
+binary64 predicates to their R-side geometric specs — integer-regime exactness
+for the division-free determinants (`b64_inCircle`, items 2/3/4) and
+forward-error/regime bounds for the Liang-Barsky filter with division (item 1).
+These are the open Flocq obligations; the compute paths are de-hand-rolled and
+single-sourced regardless.

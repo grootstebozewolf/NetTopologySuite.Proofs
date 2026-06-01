@@ -38,10 +38,15 @@
 # (theories-flocq/ArcCircle_b64_compute.v); native `sp *. sq < 0` glue gone.
 # Bit-exact (2e6-case check, oracle/test_arc.ml).
 
-# --- ARC_PASSES_THROUGH_PIXEL -----------------------------------------------
-# (item 4, remaining) run_arc_passes_through_pixel composes four inCircle
-# sign-products (now via b64_inCircle) with the half-open pixel membership
-# test in_hot_pixel_halfopen.  Extract arc_passes_through_hot_pixel
-# (ArcHotPixel.v:95) so this glue and in_hot_pixel_halfopen leave the allowlist.
-in_hot_pixel_halfopen
-run_arc_passes_through_pixel
+# --- ARC_PASSES_THROUGH_PIXEL : MIGRATED ------------------------------------
+# (item 4, done) Now the extracted b64_arc_passes_through_hot_pixel
+# (theories-flocq/ArcPixel_b64_compute.v); native in_hot_pixel_halfopen and the
+# run_arc_passes_through_pixel glue deleted.  Bit-exact (2e6-case check,
+# oracle/test_pixel.ml).
+#
+# ============================================================================
+# ALLOWLIST EMPTY -- migration done-criterion met.  Every oracle mode now
+# computes via a Coq-extracted function (oracle/extracted.ml); no hand-rolled
+# float arithmetic remains in oracle/driver.ml.  The ratchet
+# (scripts/check_oracle_handrolled.sh) reports 0 frozen kernels.
+# ============================================================================
