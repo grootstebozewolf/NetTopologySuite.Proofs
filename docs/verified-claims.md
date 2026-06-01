@@ -11,8 +11,9 @@ binary64 layer). Each row: `file : theorem`, plain meaning, axiom footprint,
 regime. These are *soundness* statements, not a verified re-implementation.
 
 **Regimes.** `[exact]` exact reals · `[int-b64]` integer-coordinate binary64
-(`|coord| ≤ 2²⁵`) · `[cond]` holds under named hypotheses · `[oracle]`
-extracted, differential-testable against the C# port.
+(`|coord| ≤ 2²⁵`) · `[full-b64]` *all* finite binary64 (exact, no magnitude
+limit) · `[cond]` holds under named hypotheses · `[oracle]` extracted,
+differential-testable against the C# port.
 
 **Axioms.** `theories/` uses 3 classical-reals axioms (`sig_not_dec`,
 `sig_forall_dec`, `functional_extensionality_dep`); `theories-flocq/` adds
@@ -33,12 +34,24 @@ headline", never as solved; offer the oracle to reproduce a concrete case.
 | `Orientation.v : cross_translation_invariant` | Translation preserves orientation `[exact]` | 3 |
 | `Orientation.v : cross_at_P0_is_collinear` (+`_P1`,`_degenerate_base`) | Coincident points ⇒ sign 0 `[exact]` | 3 |
 | `Orient_b64_exact.v : b64_orient2d_exact_for_small_int` | binary64 determinant = exact cross on integer coords `[int-b64]` | 4 |
-| `Orient_b64_exact.v : b64_orient_sign_filtered_sound_small_int` | **Headline.** Filtered predicate's Pos/Neg/Zero agree with the true sign on integer coords `[int-b64]` | 4 |
+| `Orient_b64_exact.v : b64_orient_sign_filtered_sound_small_int` | Filtered (fast) predicate's Pos/Neg/Zero agree with the true sign on integer coords `[int-b64]` | 4 |
+| `Orient_b64_exact_full.v : b64_orient2d_exact_sound` | **Full-plane headline.** The *exact* predicate's Pos/Neg/Zero agree with the true orientation sign for **all finite binary64** — no `\|coord\| ≤ 2²⁵` limit `[full-b64]` | 3 |
 
-`[oracle]` `RobustOrientation` bit-exact vs `ORIENT`/`ORIENT_FILTERED`.
-**Open:** general bounded-magnitude soundness (Shewchuk Stages B–D) is a
-registered deferred proof. Defensible today: *filter is sound; complete on
-integer coords.*
+`[oracle]` `RobustOrientation` bit-exact vs `ORIENT`/`ORIENT_FILTERED`;
+`ORIENT_EXACT` is the exact full-plane reference (mirrors `b64_orient2d_exact`).
+
+**Exact predicate — full plane, 3 axioms.** `b64_orient2d_exact` is proven
+sound over the *entire* binary64 plane (every finite double is a dyadic
+`m·2ᵉ`; the determinant sign is computed exactly in `ℤ`). Unusually for
+`theories-flocq/`, it stays at **3 axioms** (no `Classical_Prop.classic`) —
+it uses only the `B2R` decode + exact `ℤ` arithmetic, no float ops.
+
+**Still open / honest scope.** The *fast* Shewchuk-adaptive filter
+(`b64_orient_sign_filtered`) is proven only on integer coords (Stage A); its
+general bounded-magnitude soundness (Stages B–D) remains a registered
+deferred proof. And JTS/NTS double-double `Orientation.index` is **not**
+proven sound — the exact predicate is the ground-truth spec it should be
+diffed against (JTS #1106).
 
 ## Phase 1 — Robust segment intersection (`RobustLineIntersector`)
 
