@@ -242,13 +242,40 @@ Proof. intros. unfold inCircle_R. ring. Qed.
 
 (* Translation invariance: shifting all four points by the same vector leaves *)
 (* the predicate unchanged (the defining offsets from P are preserved).       *)
-Lemma inCircle_R_translation_invariant : forall A B C P vx vy : R,
+Lemma inCircle_R_translation_invariant : forall (A B C P : Point) (vx vy : R),
   inCircle_R (mkPoint (px A + vx) (py A + vy))
              (mkPoint (px B + vx) (py B + vy))
              (mkPoint (px C + vx) (py C + vy))
              (mkPoint (px P + vx) (py P + vy))
   = inCircle_R A B C P.
 Proof. intros. unfold inCircle_R. cbn. ring. Qed.
+
+(* Scaling homogeneity: inCircle_R is degree 4 (two linear offset factors x   *)
+(* two squared-norm factors), so a uniform scale by `s` multiplies it by      *)
+(* s^4.  With translation invariance above and the (deferred) rotation case,  *)
+(* this makes the *sign* a similarity invariant -- the geometric basis of the *)
+(* Delaunay / incircle test.                                                   *)
+Lemma inCircle_R_scaling : forall (A B C P : Point) (s : R),
+  inCircle_R (mkPoint (s * px A) (s * py A)) (mkPoint (s * px B) (s * py B))
+             (mkPoint (s * px C) (s * py C)) (mkPoint (s * px P) (s * py P))
+  = (s * s * s * s) * inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. cbn. ring. Qed.
+
+(* Positive uniform scaling preserves the incircle sign (s^4 > 0). *)
+Lemma inCircle_R_scale_pos_iff_pos : forall (A B C P : Point) (s : R),
+  0 < s ->
+  (0 < inCircle_R (mkPoint (s * px A) (s * py A)) (mkPoint (s * px B) (s * py B))
+                  (mkPoint (s * px C) (s * py C)) (mkPoint (s * px P) (s * py P))
+   <-> 0 < inCircle_R A B C P).
+Proof.
+  intros A B C P s Hs.
+  rewrite (inCircle_R_scaling A B C P s).
+  assert (Hpos : 0 < s * s * s * s) by (repeat apply Rmult_lt_0_compat; exact Hs).
+  split; intro H.
+  - apply (Rmult_lt_reg_l (s * s * s * s)); [exact Hpos|].
+    rewrite Rmult_0_r. exact H.
+  - apply Rmult_lt_0_compat; [exact Hpos | exact H].
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §5  arc_coord_safe -- R-side precondition for exact 3x3 determinant.       *)
