@@ -327,7 +327,7 @@ correctness lemmas), Route 2 is the committed design.
 > **Status note (Session 2 outcome — Route 2 collapsed).**
 >
 > **→ Full collapse artifact:
-> [`docs/slice-a-piece-5b-session-2-collapse.md`](slice-a-piece-5b-session-2-collapse.md).**
+> [`docs/history/sessions/slice-a-piece-5b-session-2-collapse.md`](history/sessions/slice-a-piece-5b-session-2-collapse.md).**
 >
 > Summary: every candidate clause (c) over the Session-1-framework
 > state `(q : binary64, hs : list binary64)` either requires the
@@ -342,7 +342,7 @@ correctness lemmas), Route 2 is the committed design.
 > **Status note (Route 1 design session — red phase, third-design recommended).**
 >
 > **→ Full design artifact:
-> [`docs/slice-a-piece-5b-route1-design-session.md`](slice-a-piece-5b-route1-design-session.md).**
+> [`docs/history/sessions/slice-a-piece-5b-route1-design-session.md`](history/sessions/slice-a-piece-5b-route1-design-session.md).**
 >
 > Summary: `cs_prov` is necessary but not sufficient.  The four-way
 > case-split must be on **sign** of `B2R` values (not provenance, which
@@ -356,7 +356,7 @@ correctness lemmas), Route 2 is the committed design.
 > **Status note (Route 1 Session 2 — collapse confirmed against live Coq).**
 >
 > **→ Full collapse artifact:
-> [`docs/slice-a-piece-5b-route1-session-2-collapse.md`](slice-a-piece-5b-route1-session-2-collapse.md).**
+> [`docs/history/sessions/slice-a-piece-5b-route1-session-2-collapse.md`](history/sessions/slice-a-piece-5b-route1-session-2-collapse.md).**
 >
 > Summary: with the host toolchain available, Route 1 Session 2 ran
 > the green-phase attempt in Coq.  The refined clause (c) (five-arm
@@ -390,7 +390,7 @@ correctness lemmas), Route 2 is the committed design.
 >     **Option B with a `cs_run_max` conjunct** is the right path.
 >
 > **→ Successor prompt:
-> [`docs/slice-a-piece-5b-route1-session-4-prompt.md`](slice-a-piece-5b-route1-session-4-prompt.md).**
+> [`docs/history/sessions/slice-a-piece-5b-route1-session-4-prompt.md`](history/sessions/slice-a-piece-5b-route1-session-4-prompt.md).**
 > Three deliverables: clause (d) + `cs_run_max`, two intermediate
 > lemmas (within-run and cross-prov), and `cascade_h_chain` by case
 > split on provenance continuity.  Estimated 220-300 lines.

@@ -1,5 +1,8 @@
 name: build proofs
 
+# For CI / Quality Gatekeeper (formerly CI Cara): see docs/HELP.md + docs/READING-GUIDE.md (Quality Gatekeeper card)
+# for the full path. The registries and scripts/check_* are the core.
+
 on:
   push:
     branches: [main]
