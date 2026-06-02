@@ -309,6 +309,40 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Soundness of the BB-overlap pre-filter: touches => BB-overlap.             *)
+(*                                                                            *)
+(* The exact complement of `bb_overlap_not_sufficient_for_touches`.  Together *)
+(* they pin BB-overlap down as a SOUND but INCOMPLETE filter: it never        *)
+(* produces a false negative (if the segment really touches the pixel the     *)
+(* bounding boxes must overlap, so a noder may safely reject on BB-disjoint), *)
+(* yet it can produce false positives (the counterexample).                   *)
+(*                                                                            *)
+(* Proof: the touching point is the convex combination (1-t)*P0 + t*P1, which *)
+(* lies between Rmin and Rmax of the endpoint coordinates on each axis; it    *)
+(* also lies in the pixel's [C - r, C + r) range -- so the two ranges meet.   *)
+(* No positivity of `scale` is needed; the radius is treated opaquely.        *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem segment_touches_implies_bb_overlap :
+  forall P0 P1 C scale,
+    segment_touches_hot_pixel P0 P1 C scale ->
+    Rmin (px P0) (px P1) <= px C + hot_pixel_radius scale /\
+    px C - hot_pixel_radius scale <= Rmax (px P0) (px P1) /\
+    Rmin (py P0) (py P1) <= py C + hot_pixel_radius scale /\
+    py C - hot_pixel_radius scale <= Rmax (py P0) (py P1).
+Proof.
+  intros P0 P1 C scale [t [[Ht0 Ht1] Hin]].
+  unfold in_hot_pixel, segment_point in Hin.
+  destruct P0 as [x0 y0], P1 as [x1 y1]. simpl in Hin.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  pose proof (Rmin_l x0 x1). pose proof (Rmin_r x0 x1).
+  pose proof (Rmax_l x0 x1). pose proof (Rmax_r x0 x1).
+  pose proof (Rmin_l y0 y1). pose proof (Rmin_r y0 y1).
+  pose proof (Rmax_l y0 y1). pose proof (Rmax_r y0 y1).
+  simpl. repeat split; nra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
@@ -317,6 +351,7 @@ Print Assumptions bb_overlap_witness_segment_does_not_touch.
 Print Assumptions bb_overlap_witness_x_overlap.
 Print Assumptions bb_overlap_witness_y_overlap.
 Print Assumptions bb_overlap_not_sufficient_for_touches.
+Print Assumptions segment_touches_implies_bb_overlap.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred: full snap-rounding rewriter.                                     *)
