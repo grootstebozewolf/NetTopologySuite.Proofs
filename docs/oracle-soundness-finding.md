@@ -41,6 +41,13 @@ t-bounds lets the filter **over-accept within O(ulp) of tangency**.
 > `tlo_x = 2⁴⁹/(2⁴⁹+1) > thi_y = (2⁴⁹−1)/2⁴⁹` (an `N² > N²−1` sub-ulp gap),
 > so the clipped parameter interval is empty. Same three classical-reals
 > axioms + Flocq's `Classical_Prop.classic`; no `Admitted`.
+>
+> The **half-open** mode (`PASSES_THROUGH_HALFOPEN`) is likewise disproved:
+> `b64_passes_through_halfopen_compute_unsound` in
+> [`theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v`](../theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v),
+> witnessed by the same triple with x negated (reflecting the tangency to the
+> bottom-left so the half-open strict midpoint checks pass while the exact
+> miss is unchanged).
 
 **Oracle-confirmed counterexample** (hex-float, exact bits):
 

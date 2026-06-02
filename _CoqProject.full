@@ -323,6 +323,11 @@ theories-flocq/PassesThrough_b64_compute_unsound.v
 # than the closed one (the COMPUTE analog of the proven spec-level
 # b64_liang_barsky_touches_halfopen_implies_closed).  Pure boolean structure.
 theories-flocq/PassesThrough_b64_compute_refine.v
+# Machine-checked counterexample (half-open mode): the rounded half-open
+# compute filter is NOT sound vs the exact half-open spec.  Companion to
+# PassesThrough_b64_compute_unsound.v for the PASSES_THROUGH_HALFOPEN mode;
+# witness = the closed-mode witness with x negated (bottom-left tangency).
+theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
 # Computational (extractable) binary64 in-circle determinant.  Oracle compute
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.
