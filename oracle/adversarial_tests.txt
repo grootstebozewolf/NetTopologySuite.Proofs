@@ -1,0 +1,44 @@
+# Adversarial tests via RocqRefRunner (exact oracle = ground truth).
+# Emitted only when a cheap predicate is DEFINITELY WRONG vs the exact sign.
+# Sound punts (filter UNCERTAIN / NAN) are not failures and are omitted.
+
+## A: near-collinear product-collision  P=(0,0),(2^k+1,2^k+2),(2^k,2^k+1)  (true=POS, det=1)
+  k=27 coord=2^27 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=28 coord=2^28 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=29 coord=2^29 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=30 coord=2^30 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=31 coord=2^31 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=32 coord=2^32 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=33 coord=2^33 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=34 coord=2^34 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=35 coord=2^35 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=36 coord=2^36 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=37 coord=2^37 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=38 coord=2^38 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=39 coord=2^39 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=40 coord=2^40 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=41 coord=2^41 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=42 coord=2^42 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=43 coord=2^43 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=44 coord=2^44 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=45 coord=2^45 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=46 coord=2^46 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=47 coord=2^47 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=48 coord=2^48 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=49 coord=2^49 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=50 coord=2^50 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=51 coord=2^51 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  k=52 coord=2^52 naive=ZERO filtered=ZERO EXACT=POS  <- NAIVE_WRONG,FILTER_UNSOUND
+  (threshold: naive first wrong at 2^27; filter first commits-wrong at 2^27 -- just past the proven |coord|<=2^25 boundary)
+
+## C: in-circle overflow  A=(2^k,0) B=(0,2^k) C=(-2^k,0) P=(0,0)  (true=POS)
+  k=400 float_incircle=NAN EXACT=POS  <- FILTER_FLOAT_WRONG
+  k=510 float_incircle=NAN EXACT=POS  <- FILTER_FLOAT_WRONG
+  k=512 float_incircle=NAN EXACT=POS  <- FILTER_FLOAT_WRONG
+  k=513 float_incircle=NAN EXACT=POS  <- FILTER_FLOAT_WRONG
+  k=520 float_incircle=NAN EXACT=POS  <- FILTER_FLOAT_WRONG
+  k=600 float_incircle=NAN EXACT=POS  <- FILTER_FLOAT_WRONG
+
+## Note (orientation overflow, non-cancelling): P=(0,0),(2^k,0),(0,2^k) gives a single
+## positive product -> +inf, whose SIGN is still correct (naive=POS=EXACT); the filter
+## conservatively PUNTS (UNCERTAIN).  Not adversarial -- documented for completeness.
