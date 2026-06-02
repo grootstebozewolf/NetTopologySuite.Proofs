@@ -26,6 +26,22 @@ pixel).
 `compute ⇒ spec` is **false**. The rounded `b64_div` in the Liang-Barsky
 t-bounds lets the filter **over-accept within O(ulp) of tangency**.
 
+> **Now machine-checked (2026-06-02).** This disproof is no longer
+> oracle-evidence-only: it is a `Qed`-closed Rocq theorem,
+> `b64_passes_through_compute_unsound` in
+> [`theories-flocq/PassesThrough_b64_compute_unsound.v`](../theories-flocq/PassesThrough_b64_compute_unsound.v):
+> ```coq
+> Theorem b64_passes_through_compute_unsound :
+>   exists P0 P1 C : BPoint,
+>     b64_passes_through_hot_pixel_compute P0 P1 C = true /\
+>     b64_passes_through_hot_pixel P0 P1 C = false.
+> ```
+> The witness is the hex-float triple below. `compute = true` is decided by
+> `vm_compute`; `spec = false` reduces to the exact rational inequality
+> `tlo_x = 2⁴⁹/(2⁴⁹+1) > thi_y = (2⁴⁹−1)/2⁴⁹` (an `N² > N²−1` sub-ulp gap),
+> so the clipped parameter interval is empty. Same three classical-reals
+> axioms + Flocq's `Classical_Prop.classic`; no `Admitted`.
+
 **Oracle-confirmed counterexample** (hex-float, exact bits):
 
 ```

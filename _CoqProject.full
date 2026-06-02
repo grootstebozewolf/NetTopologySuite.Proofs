@@ -315,6 +315,10 @@ theories-flocq/PassesThroughHalfopen_b64.v
 # HotPixel_b64 / PassesThroughHalfopen_b64 are non-computational (B2R), so the
 # driver previously hand-rolled these.  See docs/oracle-handroll-migration.md.
 theories-flocq/PassesThrough_b64_compute.v
+# Machine-checked counterexample: the rounded compute filter is NOT sound vs
+# the exact-real spec (compute=true, spec=false on an oracle-confirmed sub-ulp
+# tangency witness).  Promotes docs/oracle-soundness-finding.md to a Qed.
+theories-flocq/PassesThrough_b64_compute_unsound.v
 # Computational (extractable) binary64 in-circle determinant.  Oracle compute
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.
