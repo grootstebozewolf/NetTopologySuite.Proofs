@@ -111,6 +111,15 @@
                       POS iff (A,B,C) is CCW AND P strictly inside the
                       circumscribed circle.  CW flips the sign.
 
+     INCIRCLE_EXACT  -- EXACT 4-point in-circle sign over arbitrary binary64
+                        (Delaunay ground truth; inCircle analogue of
+                        ORIENT_EXACT).  Dyadic/bignum determinant, exact for
+                        ALL finite inputs (no overflow/underflow band limit).
+        line 2..5:    A, B, C, P (four BPoints).
+        output:       single token: POS / NEG / ZERO / NAN.
+                      Sign convention proven in ArcOrient.v
+                      (inCircle_R_swap_* / _cyclic / _scaling).
+
      ARC_CHORD_CROSSES_CIRCLE -- bool sufficient condition for an arc's
                                  circumcircle being crossed by a chord.
         line 2..6:    arc_start, arc_mid, arc_end, chord_P, chord_Q
@@ -249,6 +258,10 @@ let dyad_sub (m1, e1) (m2, e2) =           (* align to the smaller exponent *)
 
 let dyad_mul (m1, e1) (m2, e2) = (BigZ.mul m1 m2, e1 + e2)
 
+let dyad_add (m1, e1) (m2, e2) =           (* align to the smaller exponent *)
+  let e = min e1 e2 in
+  (BigZ.add (BigZ.shift_left m1 (e1 - e)) (BigZ.shift_left m2 (e2 - e)), e)
+
 let orient_exact_sign (p0 : bPoint) (p1 : bPoint) (q : bPoint) : int =
   let f = dyad_of_float in
   let t1 = dyad_mul (dyad_sub (f p1.bx) (f p0.bx)) (dyad_sub (f q.by_) (f p0.by_)) in
@@ -263,6 +276,40 @@ let run_orient_exact () =
   if not (finite p0 && finite p1 && finite q) then print_endline "NAN"
   else
     let s = orient_exact_sign p0 p1 q in
+    print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
+
+(* ----- INCIRCLE_EXACT mode. ---------------------------------------------- *)
+
+(* EXACT 4-point in-circle determinant sign over arbitrary binary64 -- the
+   Delaunay-robustness ground truth, the inCircle analogue of ORIENT_EXACT.
+   inCircle_R A B C P = det[ax ay na; bx by nb; cx cy nc] with offsets
+   (X - P) and lifted norms na = ax^2 + ay^2.  Computed exactly with bignums
+   (no overflow/underflow band limit, unlike float DD).  Sign convention is
+   the one proven in theories/ArcOrient.v (inCircle_R_swap_* / _cyclic /
+   _scaling): POS iff P is inside the circumcircle of a CCW triangle A,B,C;
+   ZERO iff the four points are cocircular (or degenerate). *)
+let incircle_exact_sign (a : bPoint) (b : bPoint) (c : bPoint) (p : bPoint) : int =
+  let f = dyad_of_float in
+  let ax = dyad_sub (f a.bx) (f p.bx) and ay = dyad_sub (f a.by_) (f p.by_) in
+  let bx = dyad_sub (f b.bx) (f p.bx) and by_ = dyad_sub (f b.by_) (f p.by_) in
+  let cx = dyad_sub (f c.bx) (f p.bx) and cy = dyad_sub (f c.by_) (f p.by_) in
+  let na = dyad_add (dyad_mul ax ax) (dyad_mul ay ay) in
+  let nb = dyad_add (dyad_mul bx bx) (dyad_mul by_ by_) in
+  let nc = dyad_add (dyad_mul cx cx) (dyad_mul cy cy) in
+  let t1 = dyad_mul ax (dyad_sub (dyad_mul by_ nc) (dyad_mul cy nb)) in
+  let t2 = dyad_mul ay (dyad_sub (dyad_mul bx nc) (dyad_mul cx nb)) in
+  let t3 = dyad_mul na (dyad_sub (dyad_mul bx cy) (dyad_mul cx by_)) in
+  BigZ.sign (fst (dyad_add (dyad_sub t1 t2) t3))
+
+let run_incircle_exact () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  let p = parse_point (input_line stdin) in
+  let finite q = Float.is_finite q.bx && Float.is_finite q.by_ in
+  if not (finite a && finite b && finite c && finite p) then print_endline "NAN"
+  else
+    let s = incircle_exact_sign a b c p in
     print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
 
 (* ----- TWOSUM / GROW_EXPANSION modes. ------------------------------------ *)
@@ -519,6 +566,7 @@ let () =
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
+       | "INCIRCLE_EXACT"           -> run_incircle_exact ()
        | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
