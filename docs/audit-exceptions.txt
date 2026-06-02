@@ -85,6 +85,14 @@ theories-flocq/PassesThroughHalfopen_b64.v
 # Admitteds; the counterexample theorem is Qed-closed.
 theories-flocq/PassesThrough_b64_compute_unsound.v
 
+# Category C: compute-level half-open => closed refinement.  Pure boolean
+# structural lemmas, but their statements reference the compute predicates
+# (`b64_liang_barsky_touches_compute` etc.), whose definition closure threads
+# `b64_div` / `Binary.Bdiv` and so pulls `Classical_Prop.classic` -- the same
+# Flocq-float lineage that exempts the other b64 files.  No Admitteds; the
+# refinement theorem is Qed-closed.
+theories-flocq/PassesThrough_b64_compute_refine.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.

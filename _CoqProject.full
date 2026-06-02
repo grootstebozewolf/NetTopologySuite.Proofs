@@ -319,6 +319,10 @@ theories-flocq/PassesThrough_b64_compute.v
 # the exact-real spec (compute=true, spec=false on an oracle-confirmed sub-ulp
 # tangency witness).  Promotes docs/oracle-soundness-finding.md to a Qed.
 theories-flocq/PassesThrough_b64_compute_unsound.v
+# Compute-level refinement: the half-open compute filter is strictly tighter
+# than the closed one (the COMPUTE analog of the proven spec-level
+# b64_liang_barsky_touches_halfopen_implies_closed).  Pure boolean structure.
+theories-flocq/PassesThrough_b64_compute_refine.v
 # Computational (extractable) binary64 in-circle determinant.  Oracle compute
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.
