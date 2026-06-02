@@ -212,6 +212,45 @@ Corollary inCircle_R_arc_mid_zero :
 Proof. intros. apply inCircle_R_at_C. Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* inCircle_R algebraic sign family.                                          *)
+(*                                                                            *)
+(* `inCircle_R A B C P` is the 3x3 determinant of the lifted rows             *)
+(* [ax ay na; bx by nb; cx cy nc] (coordinates relative to P, lifted by the   *)
+(* squared norm).  So it obeys the determinant symmetries: swapping two of    *)
+(* A,B,C swaps two rows and flips the sign; a cyclic permutation is an even   *)
+(* permutation and preserves it; and the predicate is translation-invariant   *)
+(* (it depends only on the offsets from P).  These are the Delaunay           *)
+(* sign-convention foundations -- the inCircle analogue of Phase 0's          *)
+(* cross_antisymmetric / cross_cyclic / cross_translation_invariant.          *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma inCircle_R_swap_AB : forall A B C P : Point,
+  inCircle_R B A C P = - inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
+Lemma inCircle_R_swap_BC : forall A B C P : Point,
+  inCircle_R A C B P = - inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
+Lemma inCircle_R_swap_AC : forall A B C P : Point,
+  inCircle_R C B A P = - inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
+Lemma inCircle_R_cyclic : forall A B C P : Point,
+  inCircle_R B C A P = inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
+(* Translation invariance: shifting all four points by the same vector leaves *)
+(* the predicate unchanged (the defining offsets from P are preserved).       *)
+Lemma inCircle_R_translation_invariant : forall A B C P vx vy : R,
+  inCircle_R (mkPoint (px A + vx) (py A + vy))
+             (mkPoint (px B + vx) (py B + vy))
+             (mkPoint (px C + vx) (py C + vy))
+             (mkPoint (px P + vx) (py P + vy))
+  = inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. cbn. ring. Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §5  arc_coord_safe -- R-side precondition for exact 3x3 determinant.       *)
 (*                                                                            *)
 (* Magnitude bound on coordinates suitable for the inCircle_R arithmetic.    *)
@@ -254,5 +293,10 @@ Print Assumptions inCircle_R_at_C.
 Print Assumptions inCircle_R_at_B.
 Print Assumptions inCircle_R_at_A.
 Print Assumptions inCircle_R_arc_mid_zero.
+Print Assumptions inCircle_R_swap_AB.
+Print Assumptions inCircle_R_swap_BC.
+Print Assumptions inCircle_R_swap_AC.
+Print Assumptions inCircle_R_cyclic.
+Print Assumptions inCircle_R_translation_invariant.
 Print Assumptions arc_coord_safe_px.
 Print Assumptions arc_coord_safe_py.
