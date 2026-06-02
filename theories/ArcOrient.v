@@ -236,6 +236,23 @@ Lemma inCircle_R_swap_AC : forall A B C P : Point,
   inCircle_R C B A P = - inCircle_R A B C P.
 Proof. intros. unfold inCircle_R. ring. Qed.
 
+(* Full 4-point antisymmetry: swapping the test point P with a defining point
+   ALSO flips the sign.  inCircle_R equals the antisymmetric 4-point lifted
+   cocircularity determinant regardless of which point is subtracted as the
+   origin, so all four rows are interchangeable.  This justifies treating any
+   of the four points as the "test" point in the Delaunay sign convention. *)
+Lemma inCircle_R_swap_CP : forall A B C P : Point,
+  inCircle_R A B P C = - inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
+Lemma inCircle_R_swap_AP : forall A B C P : Point,
+  inCircle_R P B C A = - inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
+Lemma inCircle_R_swap_BP : forall A B C P : Point,
+  inCircle_R A P C B = - inCircle_R A B C P.
+Proof. intros. unfold inCircle_R. ring. Qed.
+
 Lemma inCircle_R_cyclic : forall A B C P : Point,
   inCircle_R B C A P = inCircle_R A B C P.
 Proof. intros. unfold inCircle_R. ring. Qed.
@@ -323,6 +340,9 @@ Print Assumptions inCircle_R_arc_mid_zero.
 Print Assumptions inCircle_R_swap_AB.
 Print Assumptions inCircle_R_swap_BC.
 Print Assumptions inCircle_R_swap_AC.
+Print Assumptions inCircle_R_swap_CP.
+Print Assumptions inCircle_R_swap_AP.
+Print Assumptions inCircle_R_swap_BP.
 Print Assumptions inCircle_R_cyclic.
 Print Assumptions inCircle_R_translation_invariant.
 Print Assumptions arc_coord_safe_px.
