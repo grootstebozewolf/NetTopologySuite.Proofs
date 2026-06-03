@@ -37,6 +37,24 @@ theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
+# Category C: fast-path orientation predicate sound over the ENTIRE binary64
+# plane.  Defines `b64_orient_robust` = Stage-A float filter fast path with an
+# EXACT bignum fallback: the filter's committed Pos/Neg are trusted, but its
+# Zero / Uncertain / Nan verdicts -- which include the unguarded float-zero
+# case (the adversarial `Some Eq => OrientRZero` unsoundness past 2^25) and
+# EVERY out-of-band overflow-to-NaN case -- are routed to `b64_orient2d_exact`
+# (proven sound over all finite binary64 by `b64_orient2d_exact_sound`, itself
+# 3-axiom / classic-clean).  The headline `b64_orient_robust_sound` is sound
+# over the whole plane under the single named `filter_forward_sound`
+# hypothesis (the Stage-A forward-error on committed signs); the
+# `..._small_int` corollary discharges that hypothesis UNCONDITIONALLY on the
+# integer regime via `b64_orient_sign_filtered_sound_small_int`.
+# `Classical_Prop.classic` enters purely through the float filter's definition
+# closure (`Bcompare` / `Rcompare` / `total_order_T`) -- the SAME lineage that
+# exempts Orientation_b64.v and Orient_b64_sound.v above; the exact-fallback
+# half is classic-clean.  No Admitteds in this file; both theorems Qed-closed.
+theories-flocq/Orient_b64_robust.v
+
 # Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
 # Every theorem here references `snap_round` / `b64_snap` /
 # `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements
