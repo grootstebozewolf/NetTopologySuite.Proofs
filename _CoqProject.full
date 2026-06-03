@@ -333,6 +333,11 @@ theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
 # noder-unsafe direction).  Witness grazes the open top edge; the rounded
 # midpoint rounds onto the excluded boundary and rejects.
 theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
+# Machine-checked counterexample (both modes): the rounded passes-through
+# compute filter is NOT SYMMETRIC under segment reversal P0<->P1 -- the
+# order-dependent-noding root behind JTS#752 / JTS#1133.  Witness coordinates
+# are exact powers of two; both halves decided by vm_compute.
+theories-flocq/PassesThrough_b64_compute_asymmetric.v
 # Computational (extractable) binary64 in-circle determinant.  Oracle compute
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.

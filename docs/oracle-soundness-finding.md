@@ -218,3 +218,39 @@ axioms, no `Admitted`. This is the formal companion to the closed-filter
 over-acceptance theorem (`PassesThrough_b64_compute_unsound.v`): together they
 pin both unsound directions — the closed filter only over-accepts, the half-open
 filter can also *under*-accept.
+
+## Rounded filter is NOT symmetric under segment reversal (2026-06-03, Qed)
+
+A noder treats an edge as the **unordered** segment `{P0,P1}`: which hot pixels
+it passes through must not depend on the stored endpoint order. The exact-real
+spec has this symmetry (the Liang-Barsky `t`-interval of `P0→P1` is the mirror
+of `P1→P0` under `t ↦ 1−t`, and the interval-nonempty test is invariant). The
+**rounded** `_compute` filter is not: it computes each per-axis `t`-bound as
+`b64_div (lo−c0) (c1−c0)` from the `c0` end, so reversing divides by `(c0−c1)`
+from the other end with a *different* round-to-nearest error. Near a pixel
+corner the two roundings straddle the `tmin ≤ tmax` overlap boundary and the
+verdict flips. Machine-checked in
+`theories-flocq/PassesThrough_b64_compute_asymmetric.v`:
+
+```coq
+Theorem b64_passes_through_compute_asymmetric :          (* + _halfopen_ variant *)
+  exists P0 P1 C : BPoint,
+    b64_passes_through_hot_pixel_compute P0 P1 C = true /\
+    b64_passes_through_hot_pixel_compute P1 P0 C = false.
+```
+
+Witness (closed, all coordinates exact powers of two): `P0=(1, 2⁻⁵³)`,
+`P1=(2⁻⁵², −1)`, `C=(0,0)` — forward `true`, reversed `false`. Half-open:
+`P0=(−1, 2⁻⁵³)`, `P1=(−2⁻⁵³, −1)`. Both halves are `vm_compute` (a purely
+computational fact — no `B2R`, no spec). 4 standard axioms, no `Admitted`.
+
+**Noder relevance (JTS#752, JTS#1133).** Order-dependence is exactly how a
+floating-precision snap-rounding noder produces inconsistent results: the same
+edge, visited with swapped endpoints by different code paths, gets contradictory
+"passes through vertex" verdicts → an inconsistent noding graph → a
+`TopologyException` (JTS#752, `UnaryUnionNG` under a floating `PrecisionModel`)
+or a degenerate `MultiLineString` / dropped ring (JTS#1133). The robust noder
+primitive is the **exact R-spec** (`b64_passes_through_hot_pixel`), which is
+symmetric and sound by construction; the rounded compute filter is now
+machine-checked to be simultaneously unsound (over-accepts), incomplete
+(half-open under-accepts), and order-dependent.
