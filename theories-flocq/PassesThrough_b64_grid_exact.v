@@ -331,6 +331,63 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 5: the max / min composition bridge (division-free).
+
+   The t-bound comparison clips with b64_max 0 / b64_min 1 over the per-axis
+   bounds.  b64_max / b64_min are operand-selecting (by b64_le), so on finite
+   operands they bridge exactly to Rmax / Rmin on the B2R values.  This reduces
+   the whole clipped-interval test to a comparison of the REAL values of the
+   (rounded) t-bounds -- isolating the division rounding to the per-bound level,
+   the last layer before the hard core.
+   ---------------------------------------------------------------------------- *)
+
+Lemma is_finite_b64_max :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.is_finite prec emax (b64_max x y) = true.
+Proof. intros x y Fx Fy. unfold b64_max. destruct (b64_le x y); assumption. Qed.
+
+Lemma is_finite_b64_min :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.is_finite prec emax (b64_min x y) = true.
+Proof. intros x y Fx Fy. unfold b64_min. destruct (b64_le x y); assumption. Qed.
+
+Lemma b64_max_B2R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax (b64_max x y)
+      = Rmax (Binary.B2R prec emax x) (Binary.B2R prec emax y).
+Proof.
+  intros x y Fx Fy. unfold b64_max. destruct (b64_le x y) eqn:E.
+  - symmetry. apply Rmax_right. apply b64_le_R_of_true; assumption.
+  - symmetry. apply Rmax_left.
+    destruct (Rle_lt_dec (Binary.B2R prec emax x) (Binary.B2R prec emax y))
+      as [Hle | Hlt].
+    + apply b64_le_complete in Hle; [ congruence | assumption | assumption ].
+    + lra.
+Qed.
+
+Lemma b64_min_B2R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax (b64_min x y)
+      = Rmin (Binary.B2R prec emax x) (Binary.B2R prec emax y).
+Proof.
+  intros x y Fx Fy. unfold b64_min. destruct (b64_le x y) eqn:E.
+  - symmetry. apply Rmin_left. apply b64_le_R_of_true; assumption.
+  - symmetry. apply Rmin_right.
+    destruct (Rle_lt_dec (Binary.B2R prec emax x) (Binary.B2R prec emax y))
+      as [Hle | Hlt].
+    + apply b64_le_complete in Hle; [ congruence | assumption | assumption ].
+    + lra.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard, multi-session core -- NOT an axiom).
 
      Open goal (single-touch grid exactness), strongly evidenced (0/5e6):
