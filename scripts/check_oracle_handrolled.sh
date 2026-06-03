@@ -74,25 +74,21 @@ perl -0777 -e '
 
 # 2. Emit each top-level function whose (comment-free) body does float
 #    arithmetic.  A function spans from its `let` at column 0 to the next.
-awk '
-  /^let / {
-    if (fn != "" && hit) print fn
-    hit = 0
-    l = $0; sub(/^let +(rec +)?/, "", l)
-    match(l, /[a-zA-Z_][a-zA-Z0-9_'\'']*/)
-    fn = substr(l, RSTART, RLENGTH)
+#    Done in PERL, not awk, for cross-platform regex parity: the macOS CI
+#    runner's BSD/one-true-awk diverges from gawk/mawk on regex char classes
+#    ("/" inside [...]) and word boundaries (\< \>), and even mis-parses
+#    function names -- perl behaves identically everywhere (and is already
+#    used in step 1).  "Does float arithmetic" = a binary64 operator
+#    (+. -. *. /.), a float math call as a whole word, or a Float.* call.
+perl -ne '
+  if (/^let\s+(?:rec\s+)?([A-Za-z_][A-Za-z0-9_]*)/) {
+    print "$cur\n" if $cur && $hit;
+    $cur = $1; $hit = 0;
   }
-  {
-    # Float binary64 operators (+. -. *. /.) via POSIX index() -- avoids a
-    # "/" inside a regex char class, which BSD/one-true-awk (the macOS CI
-    # runner) rejects as a "nonterminated character class".
-    if (index($0,"+.") || index($0,"-.") || index($0,"*.") || index($0,"/.")) hit = 1
-    # Float math calls as whole words.  Portable word boundaries via explicit
-    # non-identifier neighbours, not the GNU \< \> boundaries (BSD awk lacks them).
-    if ($0 ~ /(^|[^A-Za-z0-9_])(acos|asin|atan2|atan|cos|sin|tan|sqrt|exp|log)([^A-Za-z0-9_]|$)/) hit = 1
-    if ($0 ~ /Float\.(min|max|abs|is_finite|is_nan)/) hit = 1
-  }
-  END { if (fn != "" && hit) print fn }
+  $hit = 1 if m{[-+*/]\.};
+  $hit = 1 if m{\b(?:acos|asin|atan2|atan|cos|sin|tan|sqrt|exp|log)\b};
+  $hit = 1 if m{Float\.(?:min|max|abs|is_finite|is_nan)};
+  END { print "$cur\n" if $cur && $hit; }
 ' "$CODE" | sort -u > "$DETECTED"
 
 # 3. Allowlist: one function name per line; `#` comments and blanks ignored.
