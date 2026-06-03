@@ -129,6 +129,12 @@ theories/Atan2.v
 # atan2_range Qed-closed; no Admitteds.
 theories/AngleBetween.v
 
+# Category C (R-side): issue #64 Option-A foundation 3, exact arc length.
+# chord_subtended_sq is 3-axiom, but chord_le_arc_length uses Stdlib `sin_lt_x`
+# (whose proof pulls Classical_Prop.classic), so the file is 4-axiom.  No
+# Admitteds; both headlines Qed-closed.
+theories/ArcLength.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.

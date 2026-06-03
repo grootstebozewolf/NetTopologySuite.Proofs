@@ -38,6 +38,12 @@ theories/Atan2.v
 # identity; plus atan2_range (-PI, PI].  Pulls classic via atan (see
 # audit-exceptions).  No Admitted.
 theories/AngleBetween.v
+# Issue #64 / Option-A foundation 3 (ask #1): exact arc length s = r*theta with
+# the chord/arc soundness relations.  Headlines chord_le_arc_length (chord <=
+# arc, arc analogue of chord_le_detour) and chord_subtended_sq (half-angle
+# bridge chord^2 = 2 r^2 (1 - cos theta)).  Pulls classic via Stdlib sin_lt_x
+# (see audit-exceptions).  No Admitted.
+theories/ArcLength.v
 # Phase 3 milestone 1: foundational definitions for the overlay correctness
 # theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
 # point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +
