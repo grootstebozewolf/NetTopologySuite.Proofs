@@ -5,6 +5,10 @@
    This is the RocqRefRunner binary used by the differential test harness in
    NetTopologySuite.Curve.
 
+   For Consumer Connie / NTS-Upstream Norm: see docs/HELP.md + docs/READING-GUIDE.md
+   (Consumer Connie path) + the phase completion/audit docs for the mapping of
+   oracle modes to verified Coq theorems.
+
    Protocol (text, ASCII).  The first non-blank line is the mode:
 
      SIMPLIFY        -- greedy perpendicular-distance polyline simplifier.

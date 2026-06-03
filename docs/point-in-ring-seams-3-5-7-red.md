@@ -7,7 +7,7 @@ lemma, mental proof trace, exact obstacle, cost.
 
 **Companion documents:**
 
-  - `docs/point-in-ring-correct-seam-map.md` — original seven-seam
+  - `docs/point-in-ring-jct-path.md` — JCT path and seam inventory (serves as the seam-map exemplar)
     inventory.
   - `docs/point-in-ring-seam-attempts.md` — green-phase outcomes
     per seam.

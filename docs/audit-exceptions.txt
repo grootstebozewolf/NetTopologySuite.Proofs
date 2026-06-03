@@ -13,14 +13,13 @@
 #     immediately above the file line explaining what makes the file
 #     Category C / transitional and the planned resolution).
 #
-# Current state (2026-05-16): 11 files in `theories-flocq/` pull
-# `Classical_Prop.classic` per theorem because their theorem statements
-# substantively reference `Binary.Bplus` / `Bminus` / `Bmult`, which
-# carry `classic` in their definition closure.  This contamination is a
-# pre-existing condition the corpus inherited; the parametric-architecture
-# refactor (started in commit b010037 on `Validate_binary64.v`) is
-# clearing files one by one.  Removal from this list is the per-file
-# completion criterion.
+# Current state: 24 files in `theories-flocq/` are listed below (initial ~11
+# for binary ops Bplus/Bminus/Bmult pulling `Classical_Prop.classic` via Flocq,
+# plus additional Category C for snap-rounding, overlay, expansion-arithmetic,
+# and Stage D as documented per-file).  This contamination is a pre-existing
+# condition the corpus inherited from Flocq's binary model; the parametric
+# refactor clears files one by one where possible.  Removal from this list is
+# the per-file completion criterion for the binary-op lineage.
 
 # Transitional: clean of `classic` once parametric-architecture refactor
 # applied per the policy designed in `docs/category-c-policy.md`

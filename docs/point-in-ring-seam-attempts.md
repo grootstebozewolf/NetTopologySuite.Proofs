@@ -1,7 +1,7 @@
 # `point_in_ring_correct` — seam attempts
 
 **Companion to** `theories/PointInRingCorrect.v` and
-`docs/point-in-ring-correct-seam-map.md`.
+`docs/point-in-ring-seams-3-5-7-red.md` (seam map exemplar).
 
 **Status.**  Green-phase outcomes per seam.  Every seam was attempted
 at the simplest-possible level.  Some closed (Qed); some surfaced

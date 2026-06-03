@@ -2,7 +2,8 @@
 # =============================================================================
 # scripts/check_admitted.sh
 # -----------------------------------------------------------------------------
-# Three-tier verification of Admitted theorems:
+# Three-tier verification of Admitted theorems (see docs/HELP.md, docs/READING-GUIDE.md,
+# docs/FOR-AI-AGENTS.md, CONTRIBUTING.md for actor paths and process):
 #   - Tier 1 (standard): Admitted without registry entry -> BUILD FAILURE.
 #   - Tier 2 (counterexample): Admitted with entry in
 #     `docs/admitted-counterexamples.txt` -> ALLOWED.  Means "the theorem
