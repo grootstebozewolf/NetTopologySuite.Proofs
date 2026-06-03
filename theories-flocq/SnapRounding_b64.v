@@ -65,6 +65,7 @@ From Stdlib Require Import ZArith.
 From Stdlib Require Import Lra.
 
 From Flocq Require Import IEEE754.Binary.
+From Flocq Require Import IEEE754.BinarySingleNaN.
 From Flocq Require Import Core.
 
 From NTS.Proofs        Require Import Distance HotPixel.
@@ -134,6 +135,58 @@ Lemma b64_snap_coord_B2R_idem :
       = Binary.B2R prec emax (b64_snap_coord x).
 Proof.
   intros x. rewrite !b64_snap_coord_B2R. apply snap_round_coord_idem.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Snap idempotence -- the binary64 side, at the FLOAT (bit-equality) level.  *)
+(* -------------------------------------------------------------------------- *)
+
+(* The comment above notes the filter only needs B2R-level idempotence.  The
+   stronger FLOAT-level statement `b64_snap (b64_snap P) = b64_snap P` (the
+   actual precision-reducer / GeometryPrecisionReducer idempotence: re-reducing
+   yields the identical binary64, not merely an equal real) holds on the FINITE
+   coordinate regime -- the geometry contract.  `Bnearbyint` preserves
+   `is_finite` and (away from NaN) the sign, B2R is idempotent (above), and
+   `B2R_Bsign_inj` pins two finite floats with equal B2R and sign equal -- this
+   covers the zero case the bare `B2R_inj` would miss.  NaN/inf inputs are out
+   of contract and excluded by the `is_finite` hypothesis. *)
+
+Lemma is_finite_not_nan :
+  forall b : binary64, Binary.is_finite prec emax b = true ->
+    Binary.is_nan prec emax b = false.
+Proof. intros b H. destruct b; simpl in *; (reflexivity || discriminate). Qed.
+
+Lemma b64_snap_coord_idem_finite :
+  forall x : binary64,
+    Binary.is_finite prec emax x = true ->
+    b64_snap_coord (b64_snap_coord x) = b64_snap_coord x.
+Proof.
+  intros x Hx.
+  pose proof (Binary.Bnearbyint_correct prec emax prec_lt_emax_b64
+                nearbyint_nan_b64 mode_NE x) as [_ [Hfin1 _]].
+  assert (Hf1 : Binary.is_finite prec emax (b64_snap_coord x) = true)
+    by (unfold b64_snap_coord; rewrite Hfin1; exact Hx).
+  pose proof (Binary.Bnearbyint_correct prec emax prec_lt_emax_b64
+                nearbyint_nan_b64 mode_NE (b64_snap_coord x)) as [_ [Hfin2 Hsgn2]].
+  assert (Hf2 : Binary.is_finite prec emax (b64_snap_coord (b64_snap_coord x)) = true)
+    by (unfold b64_snap_coord at 1; rewrite Hfin2; exact Hf1).
+  apply Binary.B2R_Bsign_inj.
+  - exact Hf2.
+  - exact Hf1.
+  - apply b64_snap_coord_B2R_idem.
+  - unfold b64_snap_coord at 1. apply Hsgn2.
+    apply is_finite_not_nan. exact Hf2.
+Qed.
+
+(* Point-level float idempotence for finite coordinates. *)
+Lemma b64_snap_idempotent_finite :
+  forall P : BPoint,
+    Binary.is_finite prec emax (bx P) = true ->
+    Binary.is_finite prec emax (by_ P) = true ->
+    b64_snap (b64_snap P) = b64_snap P.
+Proof.
+  intros P Hx Hy. unfold b64_snap. simpl.
+  f_equal; apply b64_snap_coord_idem_finite; assumption.
 Qed.
 
 (* The filter depends only on the B2R values of the six coordinates. *)

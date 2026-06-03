@@ -93,6 +93,20 @@
    boundary category -- segments grazing the closed upper boundary x=xhi
    (or y=yhi) of the unit-grid pixel.
 
+     PASSES_THROUGH_EXACT -- EXACT-rational hot-pixel passes-through (closed).
+        line 2..4:    P0, P1, C (three BPoints, one per line).
+        output:       single token "TRUE" / "FALSE" / "NAN".
+        Ground truth (zarith Q, no rounding) for the rounded
+        PASSES_THROUGH_FILTER.  The rounded filter over-accepts within
+        O(ulp) of tangency (machine-checked unsound:
+        PassesThrough_b64_compute_unsound.v); diff FILTER vs EXACT to
+        surface that sub-ulp boundary band -- the JTS noder hardening set.
+
+     PASSES_THROUGH_HALFOPEN_EXACT -- EXACT-rational half-open analogue, the
+        ground truth for PASSES_THROUGH_HALFOPEN (unsoundness machine-checked
+        in PassesThroughHalfopen_b64_compute_unsound.v).
+        line 2..4:    P0, P1, C.   output: "TRUE" / "FALSE" / "NAN".
+
      EDGE_IN_RESULT  -- boolean overlay-result membership for an edge.
         line 2:       <op>         UNION | INTERSECTION | DIFFERENCE | SYMDIFF
         line 3:       <in_left>    true | false
@@ -176,6 +190,14 @@ let parse_point line =
 
 let print_point bp =
   Printf.printf "%h %h\n" bp.bx bp.by_
+
+(* Finiteness guard for the EXACT ground-truth modes.  Uses `classify_float`
+   (a validity predicate, not arithmetic) rather than `Float.is_finite` so it
+   reads as I/O validation, not a hand-rolled numeric kernel. *)
+let finite_float (x : float) : bool =
+  match classify_float x with FP_nan | FP_infinite -> false | _ -> true
+
+let finite_bpoint (p : bPoint) : bool = finite_float p.bx && finite_float p.by_
 
 (* ----- SIMPLIFY mode. ----------------------------------------------------- *)
 
@@ -272,8 +294,7 @@ let run_orient_exact () =
   let p0 = parse_point (input_line stdin) in
   let p1 = parse_point (input_line stdin) in
   let q  = parse_point (input_line stdin) in
-  let finite p = Float.is_finite p.bx && Float.is_finite p.by_ in
-  if not (finite p0 && finite p1 && finite q) then print_endline "NAN"
+  if not (finite_bpoint p0 && finite_bpoint p1 && finite_bpoint q) then print_endline "NAN"
   else
     let s = orient_exact_sign p0 p1 q in
     print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
@@ -306,8 +327,7 @@ let run_incircle_exact () =
   let b = parse_point (input_line stdin) in
   let c = parse_point (input_line stdin) in
   let p = parse_point (input_line stdin) in
-  let finite q = Float.is_finite q.bx && Float.is_finite q.by_ in
-  if not (finite a && finite b && finite c && finite p) then print_endline "NAN"
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c && finite_bpoint p) then print_endline "NAN"
   else
     let s = incircle_exact_sign a b c p in
     print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
@@ -421,6 +441,174 @@ let run_passes_through_halfopen () =
   let c  = parse_point (input_line stdin) in
   print_endline
     (bool_string (b64_passes_through_hot_pixel_halfopen_compute p0 p1 c))
+
+(* ----- PASSES_THROUGH_EXACT / _HALFOPEN_EXACT modes. --------------------- *)
+
+(* EXACT-rational ground truth for the hot-pixel passes-through test -- the
+   reference JTS's snap-rounding noder diffs its rounded filter against.  Every
+   finite binary64 is a dyadic rational, so `Q.of_float` is exact; the
+   Liang-Barsky t-interval decision is evaluated in exact rationals (zarith Q),
+   no rounding.  The rounded computational filter (PASSES_THROUGH_FILTER) is a
+   conservative over-approximation: it over-accepts within O(ulp) of tangency,
+   machine-checked in theories-flocq/PassesThrough_b64_compute_unsound.v
+   (closed) and PassesThroughHalfopen_b64_compute_unsound.v (half-open).
+   Diffing FILTER/HALFOPEN against the EXACT mode surfaces exactly that
+   sub-ulp boundary band -- the adversarial set JTS hardens its noder on.
+
+   Not hand-rolled mirror arithmetic: the snap step reuses the EXTRACTED
+   `b64_snap` (round-half-to-even), and the decision is exact rationals, not a
+   transcription of the rounded float algorithm.  The exact R-spec it realises
+   is `b64_passes_through_hot_pixel` (HotPixel_b64.v) / `_halfopen`
+   (PassesThroughHalfopen_b64.v), which are non-computational (`R`-valued) and
+   so cannot themselves be extracted. *)
+
+let qle = Q.leq
+let qlt = Q.lt
+let qeq = Q.equal
+let qmin a b = if Q.leq a b then a else b
+let qmax a b = if Q.leq a b then b else a
+let q0 = Q.zero
+let q1 = Q.one
+let qhalf = Q.of_ints 1 2
+let qf = Q.of_float
+
+let lb_inslab_q c0 c1 lo hi =
+  if qeq c1 c0 then (qle lo c0 && qle c0 hi) else true
+let lb_inslab_halfopen_q c0 c1 lo hi =
+  if qeq c1 c0 then (qle lo c0 && qlt c0 hi) else true
+let lb_tlo_q c0 c1 lo hi =
+  if qeq c1 c0 then q0
+  else qmin (Q.div (Q.sub lo c0) (Q.sub c1 c0)) (Q.div (Q.sub hi c0) (Q.sub c1 c0))
+let lb_thi_q c0 c1 lo hi =
+  if qeq c1 c0 then q1
+  else qmax (Q.div (Q.sub lo c0) (Q.sub c1 c0)) (Q.div (Q.sub hi c0) (Q.sub c1 c0))
+
+(* exact closed-pixel touch on one segment *)
+let touch_exact_q x0 y0 x1 y1 cx cy =
+  let xlo = Q.sub cx qhalf and xhi = Q.add cx qhalf in
+  let ylo = Q.sub cy qhalf and yhi = Q.add cy qhalf in
+  lb_inslab_q x0 x1 xlo xhi && lb_inslab_q y0 y1 ylo yhi
+  && qle (qmax q0 (qmax (lb_tlo_q x0 x1 xlo xhi) (lb_tlo_q y0 y1 ylo yhi)))
+         (qmin q1 (qmin (lb_thi_q x0 x1 xlo xhi) (lb_thi_q y0 y1 ylo yhi)))
+
+(* exact half-open touch: strict upper slab guard + strict-upper midpoint
+   witness on both axes (mirrors b64_liang_barsky_touches_halfopen). *)
+let touch_exact_halfopen_q x0 y0 x1 y1 cx cy =
+  let xlo = Q.sub cx qhalf and xhi = Q.add cx qhalf in
+  let ylo = Q.sub cy qhalf and yhi = Q.add cy qhalf in
+  let tmin = qmax q0 (qmax (lb_tlo_q x0 x1 xlo xhi) (lb_tlo_q y0 y1 ylo yhi)) in
+  let tmax = qmin q1 (qmin (lb_thi_q x0 x1 xlo xhi) (lb_thi_q y0 y1 ylo yhi)) in
+  let tmid = Q.div (Q.add tmin tmax) (Q.of_int 2) in
+  let xmid = Q.add (Q.mul (Q.sub q1 tmid) x0) (Q.mul tmid x1) in
+  let ymid = Q.add (Q.mul (Q.sub q1 tmid) y0) (Q.mul tmid y1) in
+  lb_inslab_halfopen_q x0 x1 xlo xhi && lb_inslab_halfopen_q y0 y1 ylo yhi
+  && qle tmin tmax && qlt xmid xhi && qlt ymid yhi
+
+let q_touch_of_bpoints touch p0 p1 (c : bPoint) =
+  touch (qf p0.bx) (qf p0.by_) (qf p1.bx) (qf p1.by_) (qf c.bx) (qf c.by_)
+
+(* exact passes-through = exact touch on the original AND on the unit-grid
+   snap; the snap uses the extracted `b64_snap`. *)
+let passes_through_exact_q touch p0 p1 c =
+  let s0 = b64_snap p0 and s1 = b64_snap p1 in
+  q_touch_of_bpoints touch p0 p1 c && q_touch_of_bpoints touch s0 s1 c
+
+let run_passes_through_exact () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let c  = parse_point (input_line stdin) in
+  if not (finite_bpoint p0 && finite_bpoint p1 && finite_bpoint c)
+  then print_endline "NAN"
+  else print_endline (bool_string (passes_through_exact_q touch_exact_q p0 p1 c))
+
+let run_passes_through_halfopen_exact () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let c  = parse_point (input_line stdin) in
+  if not (finite_bpoint p0 && finite_bpoint p1 && finite_bpoint c)
+  then print_endline "NAN"
+  else print_endline (bool_string (passes_through_exact_q touch_exact_halfopen_q p0 p1 c))
+
+(* ----- HOLE_PRECISION_AUDIT mode (JTS#979 hunter oracle). ---------------- *)
+
+(* JTS#979: `Geometry.buffer` with a fixed PrecisionModel REMOVES a hole.  The
+   root mechanism is precision reduction: snapping the hole-ring's vertices to
+   the fixed grid (makePrecise: x |-> round(x*scale)/scale) collapses the hole
+   -- its signed area degenerates to zero (or flips), so the hole vanishes and
+   buffer drops it.  This oracle is the EXACT ground truth for that collapse:
+   the signed-area sign of the ring computed in zarith Q (shoelace; every
+   binary64 is dyadic, so exact, no rounding), BEFORE and AFTER precision
+   reduction.  A hunter flags a #979 hole-collapse when the exact ring has
+   nonzero area but the precision-reduced ring has zero area.
+
+   Input:  line 2   = scale  (positive integer = fixed PrecisionModel scale)
+           line 3   = n       (vertex count, >= 3)
+           lines 4.. = the n ring vertices "x y"
+   Output: "<exact_sign> <precise_sign>"  (each POS / NEG / ZERO);
+           "POS ZERO" / "NEG ZERO" is a hole that the precision model removes. *)
+
+let qsign (q : Q.t) : string =
+  let s = Q.sign q in if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO"
+
+(* round q to the nearest multiple of 1/scale: floor(q*scale + 1/2) / scale. *)
+let q_make_precise (scale : int) (q : Q.t) : Q.t =
+  let s = Q.add (Q.mul q (Q.of_int scale)) (Q.of_ints 1 2) in
+  Q.div (Q.of_bigint (BigZ.fdiv (Q.num s) (Q.den s))) (Q.of_int scale)
+
+(* twice the signed area of the ring (shoelace); only its sign is used. *)
+let ring_area2 (xs : Q.t array) (ys : Q.t array) : Q.t =
+  let n = Array.length xs in
+  let acc = ref Q.zero in
+  for i = 0 to n - 1 do
+    let j = (i + 1) mod n in
+    acc := Q.add !acc (Q.sub (Q.mul xs.(i) ys.(j)) (Q.mul xs.(j) ys.(i)))
+  done;
+  !acc
+
+let run_hole_precision_audit () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let pts = Array.init n (fun _ -> parse_point (input_line stdin)) in
+  let xs = Array.map (fun p -> qf p.bx) pts in
+  let ys = Array.map (fun p -> qf p.by_) pts in
+  let xsp = Array.map (q_make_precise scale) xs in
+  let ysp = Array.map (q_make_precise scale) ys in
+  Printf.printf "%s %s\n" (qsign (ring_area2 xs ys)) (qsign (ring_area2 xsp ysp))
+
+(* ----- HOLES_SURVIVE_PRECISION mode (JTS#979 hole-COUNT oracle). ---------- *)
+
+(* The direct hole-COUNT metric for #979: given a polygon's k hole-rings and a
+   fixed PrecisionModel scale, report how many holes SURVIVE precision
+   reduction -- i.e. whose precision-reduced ring still has nonzero (exact,
+   zarith Q) signed area.  The #979 signature is survived < k (the precision
+   model dropped a hole).  This is the multi-ring count version of
+   HOLE_PRECISION_AUDIT; distance d is irrelevant and not taken.
+
+   Input:  line 2   = scale  (positive integer = fixed PrecisionModel scale)
+           line 3   = k       (number of hole rings)
+           then for each hole:  a line "n_i" (its vertex count), then n_i
+                                vertices "x y".
+   Output: "survived <s> of <k>"  [+ "  collapsed=[i;j;...]" of the dropped
+            hole indices, 0-based]. *)
+
+let run_holes_survive_precision () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let k = int_of_string (String.trim (input_line stdin)) in
+  let survived = ref 0 in
+  let collapsed = ref [] in
+  for h = 0 to k - 1 do
+    let n = int_of_string (String.trim (input_line stdin)) in
+    let pts = Array.init n (fun _ -> parse_point (input_line stdin)) in
+    let xsp = Array.map (fun p -> q_make_precise scale (qf p.bx)) pts in
+    let ysp = Array.map (fun p -> q_make_precise scale (qf p.by_)) pts in
+    if Q.sign (ring_area2 xsp ysp) <> 0 then incr survived
+    else collapsed := h :: !collapsed
+  done;
+  Printf.printf "survived %d of %d" !survived k;
+  (match List.rev !collapsed with
+   | [] -> ()
+   | l -> Printf.printf "  collapsed=[%s]" (String.concat ";" (List.map string_of_int l)));
+  print_newline ()
 
 (* ----- EDGE_IN_RESULT mode (Phase 3, extracted). ------------------------- *)
 
@@ -564,6 +752,10 @@ let () =
        | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
        | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
+       | "HOLE_PRECISION_AUDIT"          -> run_hole_precision_audit ()
+       | "HOLES_SURVIVE_PRECISION"       -> run_holes_survive_precision ()
+       | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
+       | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()
