@@ -1007,9 +1007,34 @@ let run_arc_area () =
     | ArcDegenerate -> print_endline "DEGENERATE"
     | ArcInv (r2, cos_full, major) ->
         let r2f = Q.to_float r2 in
-        let t0 = acos (Q.to_float cos_full) in
+        (* Robust central angle: half-angle via exact sin^2(θ/2)=(1−cos)/2 in Q,
+           same acos-near-1 fix as run_arc_length. *)
+        let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+        let t0 = 2.0 *. asin s in
         let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
-        Printf.printf "%h\n" (r2f /. 2.0 *. (theta -. sin theta))
+        (* Segment area = (r²/2)(θ − sin θ).  For small θ (near-flat minor arcs)
+           θ − sin θ ≈ θ³/6 is catastrophic cancellation in float, so sum the
+           Taylor series Σ_{k≥1} (−1)^{k+1} θ^{2k+1}/(2k+1)! instead (term
+           recurrence  t_{k+1} = −t_k·θ²/((2k+2)(2k+3)) ).  θ ≥ 1 (all major
+           arcs, and minor arcs where the subtraction is well-conditioned) takes
+           the direct path. *)
+        let g =
+          if theta >= 1.0 then theta -. sin theta
+          else begin
+            let t2 = theta *. theta in
+            let term = ref (theta *. t2 /. 6.0) in   (* k=1: θ³/3! *)
+            let sum  = ref !term in
+            let k = ref 1 in
+            while abs_float !term > abs_float !sum *. 1e-17 && !k < 30 do
+              let kk = float_of_int !k in
+              term := -. !term *. t2 /. ((2.0 *. kk +. 2.0) *. (2.0 *. kk +. 3.0));
+              sum  := !sum +. !term;
+              incr k
+            done;
+            !sum
+          end
+        in
+        Printf.printf "%h\n" (r2f /. 2.0 *. g)
 
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
