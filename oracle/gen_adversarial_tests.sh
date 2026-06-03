@@ -50,3 +50,69 @@ echo
 echo "## Note (orientation overflow, non-cancelling): P=(0,0),(2^k,0),(0,2^k) gives a single"
 echo "## positive product -> +inf, whose SIGN is still correct (naive=POS=EXACT); the filter"
 echo "## conservatively PUNTS (UNCERTAIN).  Not adversarial -- documented for completeness."
+echo
+
+# --- D: hot-pixel passes-through (rounded FILTER/HALFOPEN vs EXACT ground truth) -----------
+ptf() { printf 'PASSES_THROUGH_FILTER\n%s\n%s\n%s\n'         "$1" "$2" "$3" | "$BIN"; }
+ptx() { printf 'PASSES_THROUGH_EXACT\n%s\n%s\n%s\n'          "$1" "$2" "$3" | "$BIN"; }
+pth() { printf 'PASSES_THROUGH_HALFOPEN\n%s\n%s\n%s\n'       "$1" "$2" "$3" | "$BIN"; }
+phx() { printf 'PASSES_THROUGH_HALFOPEN_EXACT\n%s\n%s\n%s\n' "$1" "$2" "$3" | "$BIN"; }
+oa=0; hoa=0; cdrop=0; hdrop=0; brk=0; exbrk=0; nseen=0
+rep_oa=""; rep_hoa=""; rep_hdrop=""; rep_cdrop=""
+ptcheck() {  # $1=P0 $2=P1 $3=C ; silent: counts, captures one representative per class,
+             # and emits IMMEDIATELY only on a proven-invariant violation ('!!' = bug).
+  f=$(ptf "$1" "$2" "$3"); e=$(ptx "$1" "$2" "$3")
+  h=$(pth "$1" "$2" "$3"); hx=$(phx "$1" "$2" "$3")
+  nseen=$((nseen+1)); row="P0=($1) P1=($2) C=($3) FILTER=$f EXACT=$e HALFOPEN=$h HALFOPEN_EXACT=$hx"
+  # PROVEN invariants -- a violation is a RocqRefRunner bug.
+  [ "$h" = TRUE ]  && [ "$f" = FALSE ] && { brk=$((brk+1));   echo "  !! BRACKET_VIOLATION (HALFOPEN>FILTER, b64_..._halfopen_compute_implies_closed): $row"; }
+  [ "$hx" = TRUE ] && [ "$e" = FALSE ] && { exbrk=$((exbrk+1)); echo "  !! EXACT_BRACKET_VIOLATION (HALFOPEN_EXACT>EXACT): $row"; }
+  # Empirical rounded-vs-exact divergences -- the hardening signal (not bugs).
+  [ "$f" = TRUE ]  && [ "$e"  = FALSE ] && { oa=$((oa+1));    [ -z "$rep_oa" ]    && rep_oa="$row"; }
+  [ "$h" = TRUE ]  && [ "$hx" = FALSE ] && { hoa=$((hoa+1));  [ -z "$rep_hoa" ]   && rep_hoa="$row"; }
+  [ "$e" = TRUE ]  && [ "$f"  = FALSE ] && { cdrop=$((cdrop+1)); [ -z "$rep_cdrop" ] && rep_cdrop="$row"; }
+  [ "$hx" = TRUE ] && [ "$h"  = FALSE ] && { hdrop=$((hdrop+1)); [ -z "$rep_hdrop" ] && rep_hdrop="$row"; }
+}
+echo "## D: hot-pixel passes-through near-tangency  (rounded FILTER/HALFOPEN vs EXACT)."
+echo "## EXACT = exact-rational ground truth (oracle PASSES_THROUGH_EXACT / _HALFOPEN_EXACT)."
+echo "##"
+echo "## PROVEN invariants (Qed) -- any '!!' line below would be a RocqRefRunner bug:"
+echo "##   HALFOPEN      => FILTER       (b64_passes_through_hot_pixel_halfopen_compute_implies_closed)"
+echo "##   HALFOPEN_EXACT => EXACT       (b64_liang_barsky_touches_halfopen_implies_closed)"
+echo "##"
+echo "## Empirical rounded-vs-exact divergences (the hardening signal, NOT bugs):"
+echo "##   FILTER_OVERACCEPT  : closed filter TRUE, exact FALSE -- rounded b64_div closes a"
+echo "##       sub-ulp tangency gap inward.  Conservative/SAFE for a noder; machine-checked"
+echo "##       unsound vs the sharp pixel (PassesThrough_b64_compute_unsound.v)."
+echo "##   HALFOPEN_DROP      : half-open filter FALSE, exact half-open TRUE -- the rounded"
+echo "##       strict-midpoint check rounds a near-OPEN-edge witness onto the excluded"
+echo "##       boundary and MISSES a real pass.  The half-open compute filter is NOT complete"
+echo "##       (the closed filter only over-accepts; the half-open one can also under-accept)."
+echo "##       NODER-RELEVANT: HALFOPEN mode can drop crossings grazing the open top/right edge."
+echo
+echo "# Machine-checked over-acceptance witnesses (Qed counterexamples), shown explicitly:"
+W0="0x1p+0 -0x1.0000000000002p+1";  W1="0x1.ffffffffffffp-2 -0x1.4000000000002p+1";  WC="0x0p+0 -0x1p+1"
+N0="-0x1p+0 -0x1.0000000000002p+1"; N1="-0x1.ffffffffffffp-2 -0x1.4000000000002p+1"
+echo "  closed,   bottom-right: FILTER=$(ptf "$W0" "$W1" "$WC") EXACT=$(ptx "$W0" "$W1" "$WC")  (FILTER_OVERACCEPT)"
+echo "  halfopen, bottom-left:  HALFOPEN=$(pth "$N0" "$N1" "$WC") HALFOPEN_EXACT=$(phx "$N0" "$N1" "$WC")  (HALFOPEN_OVERACCEPT)"
+echo
+# Validation sweep: half-integer + sub-ulp near-edge grid around C=(0,0).
+G="-1 -0.5 0 0.5 1 0x1.fffffffffffffp-2 0x1.0000000000001p-1"
+for x0 in $G; do for y0 in $G; do for x1 in $G; do for y1 in $G; do
+  ptcheck "$x0 $y0" "$x1 $y1" "0 0"
+done; done; done; done
+echo "# Validation sweep over $nseen cases (C=(0,0)):"
+echo "#   PROVEN invariants: BRACKET violations=$brk  EXACT_BRACKET violations=$exbrk   (both MUST be 0)"
+echo "#   closed completeness: FILTER drops a real pass=$cdrop   (closed filter is a complete over-approximation)"
+echo "#   divergences: FILTER_OVERACCEPT=$oa  HALFOPEN_OVERACCEPT=$hoa  HALFOPEN_DROP=$hdrop"
+[ -n "$rep_oa" ]    && echo "#   e.g. FILTER_OVERACCEPT: $rep_oa"
+[ -n "$rep_hdrop" ] && echo "#   e.g. HALFOPEN_DROP:     $rep_hdrop"
+
+# Self-validation: the two PROVEN (Qed) invariants must never be violated.
+# A nonzero exit here means the RocqRefRunner contradicts a machine-checked
+# theorem -- a real oracle regression.  (Empirical divergences above do not
+# fail.)  Lets this generator double as a CI validation gate.
+if [ "$brk" -ne 0 ] || [ "$exbrk" -ne 0 ]; then
+  echo "::error::RocqRefRunner violated a proven passes-through invariant (BRACKET=$brk EXACT_BRACKET=$exbrk)." >&2
+  exit 1
+fi

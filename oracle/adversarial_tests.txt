@@ -42,3 +42,31 @@
 ## Note (orientation overflow, non-cancelling): P=(0,0),(2^k,0),(0,2^k) gives a single
 ## positive product -> +inf, whose SIGN is still correct (naive=POS=EXACT); the filter
 ## conservatively PUNTS (UNCERTAIN).  Not adversarial -- documented for completeness.
+
+## D: hot-pixel passes-through near-tangency  (rounded FILTER/HALFOPEN vs EXACT).
+## EXACT = exact-rational ground truth (oracle PASSES_THROUGH_EXACT / _HALFOPEN_EXACT).
+##
+## PROVEN invariants (Qed) -- any '!!' line below would be a RocqRefRunner bug:
+##   HALFOPEN      => FILTER       (b64_passes_through_hot_pixel_halfopen_compute_implies_closed)
+##   HALFOPEN_EXACT => EXACT       (b64_liang_barsky_touches_halfopen_implies_closed)
+##
+## Empirical rounded-vs-exact divergences (the hardening signal, NOT bugs):
+##   FILTER_OVERACCEPT  : closed filter TRUE, exact FALSE -- rounded b64_div closes a
+##       sub-ulp tangency gap inward.  Conservative/SAFE for a noder; machine-checked
+##       unsound vs the sharp pixel (PassesThrough_b64_compute_unsound.v).
+##   HALFOPEN_DROP      : half-open filter FALSE, exact half-open TRUE -- the rounded
+##       strict-midpoint check rounds a near-OPEN-edge witness onto the excluded
+##       boundary and MISSES a real pass.  The half-open compute filter is NOT complete
+##       (the closed filter only over-accepts; the half-open one can also under-accept).
+##       NODER-RELEVANT: HALFOPEN mode can drop crossings grazing the open top/right edge.
+
+# Machine-checked over-acceptance witnesses (Qed counterexamples), shown explicitly:
+  closed,   bottom-right: FILTER=TRUE EXACT=FALSE  (FILTER_OVERACCEPT)
+  halfopen, bottom-left:  HALFOPEN=TRUE HALFOPEN_EXACT=FALSE  (HALFOPEN_OVERACCEPT)
+
+# Validation sweep over 2401 cases (C=(0,0)):
+#   PROVEN invariants: BRACKET violations=0  EXACT_BRACKET violations=0   (both MUST be 0)
+#   closed completeness: FILTER drops a real pass=0   (closed filter is a complete over-approximation)
+#   divergences: FILTER_OVERACCEPT=16  HALFOPEN_OVERACCEPT=0  HALFOPEN_DROP=224
+#   e.g. FILTER_OVERACCEPT: P0=(-1 -1) P1=(-0.5 0x1.0000000000001p-1) C=(0 0) FILTER=TRUE EXACT=FALSE HALFOPEN=FALSE HALFOPEN_EXACT=FALSE
+#   e.g. HALFOPEN_DROP:     P0=(-1 0.5) P1=(1 0x1.fffffffffffffp-2) C=(0 0) FILTER=TRUE EXACT=TRUE HALFOPEN=FALSE HALFOPEN_EXACT=TRUE
