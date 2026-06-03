@@ -194,6 +194,21 @@
                       radii match (order of Theta from cos Theta0 + major
                       flag); declines, rather than rounds, otherwise.
 
+     ARC_AREA_INVARIANTS_EXACT -- EXACT-rational invariants of an arc's
+                      circular-SEGMENT area (issue #64, M-AREA-CP).
+        line 2..4:    arc_start, arc_mid, arc_end.
+        output:       "<r2> <cos> <sin2> <0|1>" -- r2, cos Theta0, sin^2 Theta0
+                      (= 1 - cos^2), major-arc flag, all exact rationals;
+                      "DEGENERATE" / "NAN".  Pure zarith Q.
+
+     ARC_AREA -- the float circular-segment area A_seg = (r2/2)(Theta - sin
+                      Theta) (issue #64), the value the JTS/NTS curve area
+                      computes; one rounding (acos + sin) past the exact
+                      invariants above.  Interface-boundary float (sanctioned,
+                      docs/oracle-handrolled-allowlist.txt).
+        line 2..4:    arc_start, arc_mid, arc_end.
+        output:       single "%h" double; "DEGENERATE" / "NAN".
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -902,42 +917,54 @@ let run_arc_passes_through_pixel () =
        (b64_arc_passes_through_hot_pixel
           arc_start arc_mid arc_end center scale))
 
-(* ----- ARC_AREA mode (for M-AREA-CP hardening) -------------------------- *)
+(* ----- ARC_AREA / ARC_AREA_INVARIANTS_EXACT (issue #64, M-AREA-CP). ------ *)
 
-(* Port of the JTS CurvedArea signed ring area (Green's + arc contrib).
-   Uses float; for production vectors the Java BigDecimal ref is authoritative
-   (exact over the dyadic rationals represented by the double inputs).
-   This mode allows generating cases from the proofs side too. *)
+(* Circular-SEGMENT area of one arc (A=start, B=mid, C=end): the signed region
+   between chord AC and the arc through B -- the per-arc correction a curve-
+   polygon area (M-AREA-CP) adds to the straight-edge shoelace.
+
+     A_seg = (r^2 / 2) * (Theta - sin Theta),   Theta = swept central angle.
+
+   Refactored to mirror ARC_LENGTH (replacing the earlier hand-rolled shoelace
+   stub that bypassed the ratchet): A_seg is transcendental (Theta), so the
+   honest oracle splits into an EXACT-rational invariants mode and an
+   interface-boundary float, both built on the shared exact arc_invariants_q
+   (r2, cos Theta0, major flag).  cos Theta = cos Theta0 on either arc; sin Theta
+   = +sqrt(1 - cos^2) on the minor arc, -sqrt(1 - cos^2) on the major.
+
+   ARC_AREA_INVARIANTS_EXACT: lines 2..4 = A, B, C; output the exact rationals
+     "<r2> <cos> <sin2> <0|1>" (sin2 = 1 - cos^2 = sin^2 Theta0), "DEGENERATE",
+     or "NAN".  Pure zarith Q -- ratchet-clean.
+   ARC_AREA: same input; output the float A_seg ("%h") -- one rounding past the
+     exact invariants (acos + sin), the value the JTS/NTS curve area computes;
+     the sanctioned interface-boundary float. *)
+
+let run_arc_area_invariants_exact () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (r2, cos_full, major) ->
+        let sin2 = Q.sub q1 (Q.mul cos_full cos_full) in
+        Printf.printf "%s %s %s %d\n"
+          (Q.to_string r2) (Q.to_string cos_full) (Q.to_string sin2) major
 
 let run_arc_area () =
-  (* Read a sequence of points for a single ring (until EOF or blank? for simplicity read all as one ring) *)
-  let pts = ref [] in
-  (try
-     while true do
-       let line = input_line stdin in
-       if String.trim line = "" then () else
-       let parts = String.split_on_char ' ' (String.trim line) in
-       match parts with
-       | [x; y] -> pts := (float_of_string x, float_of_string y) :: !pts
-       | _ -> ()
-     done
-   with End_of_file -> ());
-  let pts = List.rev !pts in
-  if List.length pts < 3 then (print_endline "0.0"; flush stdout; ())
-  else
-    let rec accum pts sum =
-      match pts with
-      | [] | [_] -> sum
-      | (xs,ys)::((xe,ye)::_ as rest) ->
-          let chord = xs *. ye -. xe *. ys in
-          accum rest (sum +. chord)
-      | _ -> sum
-    in
-    (* For simplicity, only straight for now; arc support would require center etc.
-       In practice, use Java side for full vectors. Emit the shoelace /2 as float. *)
-    let s = accum pts 0.0 in
-    Printf.printf "%h\n" (s /. 2.0);
-    flush stdout
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (r2, cos_full, major) ->
+        let r2f = Q.to_float r2 in
+        let t0 = acos (Q.to_float cos_full) in
+        let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+        Printf.printf "%h\n" (r2f /. 2.0 *. (theta -. sin theta))
 
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
@@ -981,6 +1008,7 @@ let () =
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()
        | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
+       | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;

@@ -142,8 +142,16 @@ ladder (cf. `ArcChordApprox.v`'s polynomial layer):
   `TRANSCENDENTAL` rather than rounding when radii differ. Ratchet-clean.
 - **`ARC_LENGTH`** — the literal float length, an *interface-boundary* mode
   (the value JTS/NTS compute via `Math.sqrt`/`Math.acos`); one rounding past the
-  exact invariants. Hand-rolled float, the single sanctioned ratchet exception
+  exact invariants. Hand-rolled float, a sanctioned ratchet exception
   (`docs/oracle-handrolled-allowlist.txt`, interface-boundary category).
+
+The **arc circular-segment area** (M-AREA-CP) follows the same split:
+`A_seg = (r²/2)(Θ − sin Θ)`.
+- **`ARC_AREA_INVARIANTS_EXACT`** — exact rationals `r²`, `cos θ₀`, `sin²θ₀`,
+  major flag (pure `Q`, ratchet-clean).
+- **`ARC_AREA`** — the float segment area, interface-boundary (one `acos`+`sin`
+  past the exact invariants). These replace main's earlier hand-rolled shoelace
+  stub, which had bypassed the (then BSD-awk-broken) ratchet.
 **Option-A note (issue #64):** `atan2` work is **4-axiom** — Stdlib's `atan`
 pulls `Classical_Prop.classic` (cos/sin/sqrt stay 3-axiom). This is the cost of
 the JTS-faithful atan2 representation; downstream arc-length/sweep proofs

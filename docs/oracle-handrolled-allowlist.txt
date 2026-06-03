@@ -77,3 +77,14 @@
 # rounds only ONCE past certified algebra (theories/ArcLength.chord_subtended_sq,
 # theories/AngleBetween.cos_angle_between).
 run_arc_length
+
+# --- ARC_AREA (M-AREA-CP, issue #64) ----------------------------------------
+# Mode ARC_AREA emits the float circular-SEGMENT area of one arc,
+# A_seg = (r^2/2)(Theta - sin Theta) -- transcendental (Theta), no
+# Coq-extractable form; the float is the JTS/NTS curve-area interface value.
+# Refactored to mirror ARC_LENGTH: it applies acos + sin to the EXACT rational
+# invariants of arc_invariants_q (the certifiable ARC_AREA_INVARIANTS_EXACT
+# mode: r2, cos Theta0, sin^2 Theta0, major-arc flag), so it rounds only ONCE
+# past certified algebra.  (Supersedes main 53d61c7's hand-rolled shoelace stub,
+# which had bypassed the then-broken ratchet.)
+run_arc_area
