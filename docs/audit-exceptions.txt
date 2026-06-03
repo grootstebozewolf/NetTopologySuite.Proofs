@@ -99,6 +99,42 @@ theories-flocq/PassesThrough_b64_compute_refine.v
 # `B2R`), so pulls `Classical_Prop.classic`.  No Admitteds; Qed-closed.
 theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
 
+# Category C: machine-checked half-open INCOMPLETENESS counterexample (rounded
+# half-open filter drops a real pass).  Same lineage -- references the
+# half-open R-spec `b64_passes_through_hot_pixel_halfopen` (Liang-Barsky
+# `Rle_bool`/`Rlt_bool` + Flocq `B2R`/`round`), so pulls `Classical_Prop.classic`.
+# No Admitteds; Qed-closed.
+theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
+
+# Category C: machine-checked ASYMMETRY counterexample (rounded passes-through
+# filter is not invariant under segment reversal -- the order-dependent-noding
+# root behind JTS#752 / JTS#1133).  Both halves are vm_compute, but the file
+# imports HotPixel_b64 / PassesThrough_b64_compute, whose binary64 layer pulls
+# `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
+theories-flocq/PassesThrough_b64_compute_asymmetric.v
+
+# Category C (R-side, distinct lineage): issue #64 Option-A atan2 foundation.
+# Unlike every other entry here (which pull `classic` through Flocq float ops),
+# this is a pure-Stdlib theories/ file: `classic` enters via Stdlib's `Ratan`
+# development (the `atan` function itself -- verified: `atan_0` pulls classic
+# while `cos_0`/`sqrt_1` do not).  Any atan2-based angle/arc-length proof
+# inherits it; this is the intrinsic axiom cost of the JTS-faithful atan2
+# representation chosen for #64 (the implicit sin/cos representation would have
+# stayed at 3 axioms).  No Admitteds; cos_atan2 / sin_atan2 Qed-closed.
+theories/Atan2.v
+
+# Category C (R-side, same atan lineage as Atan2.v): issue #64 Option-A
+# foundation 2.  angle_between = atan2 (cross) (dot); imports Atan2 / `atan`,
+# so inherits Classical_Prop.classic.  Headlines cos/sin_angle_between and
+# atan2_range Qed-closed; no Admitteds.
+theories/AngleBetween.v
+
+# Category C (R-side): issue #64 Option-A foundation 3, exact arc length.
+# chord_subtended_sq is 3-axiom, but chord_le_arc_length uses Stdlib `sin_lt_x`
+# (whose proof pulls Classical_Prop.classic), so the file is 4-axiom.  No
+# Admitteds; both headlines Qed-closed.
+theories/ArcLength.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.

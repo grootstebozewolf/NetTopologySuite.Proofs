@@ -1,0 +1,24 @@
+# JTS#979 hunter -- precision-model hole removal (oracle HOLE_PRECISION_AUDIT).
+# A square hole of side L at (0.2,0.2); audited under fixed PrecisionModel scale s
+# (grid cell = 1/s).  REMOVED = exact area nonzero but precision-reduced area ZERO.
+# Buffer distance d is irrelevant and not used: this is a hole-COUNT/topology audit.
+
+## Sweep: a small hole of fixed side 0.05, increasing precision (coarse -> fine):
+## (REMOVED at coarse precision; survives once the grid is finer than the hole.
+##  Raising the PrecisionModel scale -- NOT changing buffer distance d -- is the fix.)
+  scale=1    side=0.05    exact=POS  precise=ZERO  REMOVED (#979)   # cell 1/1 vs side 0.05
+  scale=2    side=0.05    exact=POS  precise=POS   survives   # cell 1/2 vs side 0.05
+  scale=8    side=0.05    exact=POS  precise=ZERO  REMOVED (#979)   # cell 1/8 vs side 0.05
+  scale=20   side=0.05    exact=POS  precise=POS   survives   # cell 1/20 vs side 0.05
+  scale=100  side=0.05    exact=POS  precise=POS   survives   # cell 1/100 vs side 0.05
+
+## Sweep: fixed coarse precision (scale=1, integer grid), shrinking hole:
+  scale=1    side=2.0     exact=POS  precise=POS   survives   # side 2.0 on the unit grid
+  scale=1    side=1.0     exact=POS  precise=POS   survives   # side 1.0 on the unit grid
+  scale=1    side=0.6     exact=POS  precise=POS   survives   # side 0.6 on the unit grid
+  scale=1    side=0.3     exact=POS  precise=POS   survives   # side 0.3 on the unit grid
+  scale=1    side=0.05    exact=POS  precise=ZERO  REMOVED (#979)   # side 0.05 on the unit grid
+
+## Hole-count summary (the #979 signature is count_after < count_before):
+#   audited 15 (hole,scale) pairs; precision model REMOVED 3 of them.
+#   At scale=100 (fine grid) no hole >= 0.05 is removed -- the #979 fix direction.

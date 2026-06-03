@@ -83,6 +83,8 @@ diffed against (JTS #1106).
 | `HotPixelConvex_b64.v : b64_both_endpoints_in_pixel_whole_segment` | Same, lifted to b64-bridged points — the rounding-free endpoint route `[exact]` | 4 |
 | `PassesThrough_b64_compute_unsound.v : b64_passes_through_compute_unsound` | **Honest negative:** the *rounded* compute filter is NOT sound vs the exact spec — a witness with `compute = true`, `spec = false` (sub-ulp over-accept) `[exact]` | 4 |
 | `PassesThroughHalfopen_b64_compute_unsound.v : b64_passes_through_halfopen_compute_unsound` | Same honest negative for the **half-open** mode (`PASSES_THROUGH_HALFOPEN`): rounded half-open filter unsound vs its exact spec `[exact]` | 4 |
+| `PassesThroughHalfopen_b64_compute_incomplete.v : b64_passes_through_halfopen_compute_incomplete` | **Honest negative (noder-unsafe direction):** the rounded half-open filter is NOT complete — `spec = true`, `compute = false` (drops a real pass grazing the open edge) `[exact]` | 4 |
+| `PassesThrough_b64_compute_asymmetric.v : b64_passes_through_compute_asymmetric` (+`_halfopen_`) | **Honest negative (order-dependent noding):** the rounded passes-through filter is NOT symmetric under segment reversal — `compute P0 P1 C = true` but `compute P1 P0 C = false` (closed + half-open). The order-dependence root behind JTS#752 / JTS#1133; pure `vm_compute` `[full-b64]` | 4 |
 
 `[oracle]` `PASSES_THROUGH_FILTER`/`PASSES_THROUGH_HALFOPEN`. The closed-filter
 rows pin the **closed** filter, sound *and* complete vs the closed hot-pixel
@@ -93,9 +95,20 @@ the extracted oracle runs the bit-exact computational mirror
 `compute ⇒ spec` rounding bridge is **machine-checked false** (the last row;
 `docs/oracle-soundness-finding.md`); the provable, useful directions are grid
 exactness (C1) and completeness `spec ⇒ compute` (C2), both strongly evidenced
-and open.
+and open. The rounded filter is also **not symmetric** under segment reversal
+(`PassesThrough_b64_compute_asymmetric.v`, both modes) — the order-dependent
+noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the
+exact R-spec, not the rounded compute filter.
 **Open:** `hobby_lemma_4_3_no_proper` (registered deferred). Cite as
 "conditional headline", not "Hobby's theorem proved".
+
+`[oracle]` `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (PRC-SN,
+JTS#1195): exact-`Q` curve-snap grid-friendliness — snap the three arc control
+points to a 1/scale grid (`q_make_precise`), then `PRESERVE` the arc iff the
+snapped circumcentre lands on the grid, else `DENSIFY` (`DEGEN` if the snapped
+controls go collinear). Exact `Q` catches the double-rounding the JTS binary64
+centre computation hides on large / sub-grid coordinates. Reuses the
+snap-rounding machinery; pure rational, no transcendental and no new axiom.
 
 ## Phase 3 — Planar overlay (OverlayNG)
 
@@ -119,8 +132,38 @@ and open.
 | `ArcChordApprox.v : sagitta_le_arc_radius` | Chord-vs-arc deviation bounded by the radius `[exact]` | 3 |
 | `ArcIntersectIVT.v : chord_crosses_arc_circle_implies_circle_intersection` | Sign change of in-circle along a chord ⇒ real crossing (IVT) `[exact]` | 3 |
 | `ArcOverlay.v : arc_overlay_correct_chord_approx` | **Conditional headline:** result point within `max_sagitta` of an arc, under 2 bridge hypotheses `[cond]` | 3 |
+| `Atan2.v : cos_atan2` (+`sin_atan2`) | **Option-A foundation (issue #64):** the Stdlib-`Ratan`-built `atan2 y x` is the polar angle of `(x,y)` — `cos = x/r`, `sin = y/r` for `(x,y)≠0` `[exact]` | 4 |
+| `AngleBetween.v : cos_angle_between` (+`sin_angle_between`) | **Option-A central angle/sweep (issue #64):** the signed angle `atan2(cross,dot)` between two vectors has `cos = dot/(\|u\|\|v\|)`, `sin = cross/(\|u\|\|v\|)` (Lagrange identity); sign encodes orientation. Range (-π,π] via `atan2_range` `[exact]` | 4 |
+| `ArcLength.v : chord_le_arc_length` (+`chord_subtended_sq`) | **Option-A exact arc length (issue #64):** `arc_length = r·θ`; the chord never exceeds the arc (`2r·sin(θ/2) ≤ rθ`), and `chord² = 2r²(1−cosθ)` (half-angle bridge to dot products) `[exact]` | 4 |
 
-`[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL`.
+`[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL` +
+the three issue-#64 arc-length modes below.
+**Arc length is transcendental** (`s = √r²·Θ`, `Θ` an angle) so it has *no
+Coq-extractable form*. The honest oracle therefore splits along the exactness
+ladder (cf. `ArcChordApprox.v`'s polynomial layer):
+- **`ARC_LENGTH_INVARIANTS_EXACT`** — the *exact-rational* invariants `r²`,
+  `cos θ₀ = dot/r²`, major-arc flag (pure zarith `Q`; mirrors
+  `ArcLength.chord_subtended_sq` / `AngleBetween.cos_angle_between`). Exact about
+  the geometry *around* the length, not the length value. Ratchet-clean.
+- **`ARC_SHORTER`** — *exact decision* of which of two arcs is shorter, decidable
+  rationally when radii match (order of `Θ` from `cos θ₀` + flag); reports
+  `TRANSCENDENTAL` rather than rounding when radii differ. Ratchet-clean.
+- **`ARC_LENGTH`** — the literal float length, an *interface-boundary* mode
+  (the value JTS/NTS compute via `Math.sqrt`/`Math.acos`); one rounding past the
+  exact invariants. Hand-rolled float, a sanctioned ratchet exception
+  (`docs/oracle-handrolled-allowlist.txt`, interface-boundary category).
+
+The **arc circular-segment area** (M-AREA-CP) follows the same split:
+`A_seg = (r²/2)(Θ − sin Θ)`.
+- **`ARC_AREA_INVARIANTS_EXACT`** — exact rationals `r²`, `cos θ₀`, `sin²θ₀`,
+  major flag (pure `Q`, ratchet-clean).
+- **`ARC_AREA`** — the float segment area, interface-boundary (one `acos`+`sin`
+  past the exact invariants). These replace main's earlier hand-rolled shoelace
+  stub, which had bypassed the (then BSD-awk-broken) ratchet.
+**Option-A note (issue #64):** `atan2` work is **4-axiom** — Stdlib's `atan`
+pulls `Classical_Prop.classic` (cos/sin/sqrt stay 3-axiom). This is the cost of
+the JTS-faithful atan2 representation; downstream arc-length/sweep proofs
+inherit it.
 **Caveat:** bridge hypotheses are *boundary* closeness — this backs "chord
 approximation correct to tolerance", **not** "fixes CIRCULARSTRING
 self-intersection".
