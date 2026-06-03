@@ -113,6 +113,14 @@ theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
 # `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
 theories-flocq/PassesThrough_b64_compute_asymmetric.v
 
+# Category C (GREEN reduction, same lineage): issue #66 C1 grid-exactness
+# REDUCTION layer (docs/snap-rounding-rgr-pivot.md).  On the unit grid the
+# snap-consistency conjunct of passes-through is vacuous, reducing compute=spec
+# to a single Liang-Barsky touch.  Imports HotPixel_b64 / SnapRounding_b64 /
+# PassesThrough_b64_compute, whose binary64 layer pulls `Classical_Prop.classic`
+# transitively.  No Admitteds; Qed-closed.
+theories-flocq/PassesThrough_b64_grid_exact.v
+
 # Category C (R-side, distinct lineage): issue #64 Option-A atan2 foundation.
 # Unlike every other entry here (which pull `classic` through Flocq float ops),
 # this is a pure-Stdlib theories/ file: `classic` enters via Stdlib's `Ratan`
