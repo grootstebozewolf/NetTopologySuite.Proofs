@@ -189,6 +189,60 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 3: the slab-guard layer (division-free).
+
+   The degenerate (axis-parallel, c1 = c0) guard of the Liang-Barsky touch uses
+   only equality / <= comparisons -- NO division -- so the rounded compute guard
+   equals the exact-spec guard whenever they read the same B2R values.  This is
+   the first of the two non-division layers of the single-touch equivalence.
+   ---------------------------------------------------------------------------- *)
+
+(* Boolean form of the b64_le <-> Rle bridge (both directions already in
+   HotPixel_b64: b64_le_R_of_true / b64_le_complete). *)
+Lemma b64_le_eq_Rle_bool :
+  forall a b : binary64,
+    Binary.is_finite prec emax a = true ->
+    Binary.is_finite prec emax b = true ->
+    b64_le a b = Rle_bool (Binary.B2R prec emax a) (Binary.B2R prec emax b).
+Proof.
+  intros a b Fa Fb. destruct (b64_le a b) eqn:E.
+  - symmetry. apply Rle_bool_true. apply b64_le_R_of_true; assumption.
+  - symmetry. apply Rle_bool_false.
+    destruct (Rle_lt_dec (Binary.B2R prec emax a) (Binary.B2R prec emax b))
+      as [Hle | Hlt].
+    + apply b64_le_complete in Hle; [ congruence | assumption | assumption ].
+    + exact Hlt.
+Qed.
+
+(* Slab-guard bridge: the compute degenerate-slab guard on binary64 operands
+   equals the exact-spec guard on their B2R values.  Pure comparison bridging;
+   no exactness of the slab bounds is needed here (both sides read the SAME
+   B2R values). *)
+Lemma slab_guard_bridge :
+  forall c0 c1 lo hi : binary64,
+    Binary.is_finite prec emax c0 = true ->
+    Binary.is_finite prec emax c1 = true ->
+    Binary.is_finite prec emax lo = true ->
+    Binary.is_finite prec emax hi = true ->
+    b64_lb_inslab_closed c0 c1 lo hi
+      = lb_inslab (Binary.B2R prec emax c0) (Binary.B2R prec emax c1)
+                  (Binary.B2R prec emax lo) (Binary.B2R prec emax hi).
+Proof.
+  intros c0 c1 lo hi F0 F1 Flo Fhi.
+  unfold b64_lb_inslab_closed, lb_inslab.
+  destruct (Req_dec_T (Binary.B2R prec emax c1) (Binary.B2R prec emax c0))
+    as [Heq | Hneq].
+  - replace (b64_eqb c1 c0) with true.
+    + rewrite (b64_le_eq_Rle_bool lo c0), (b64_le_eq_Rle_bool c0 hi); try assumption.
+      reflexivity.
+    + symmetry. apply (b64_eqb_true_iff_B2R c1 c0 F1 F0). exact Heq.
+  - replace (b64_eqb c1 c0) with false.
+    + reflexivity.
+    + symmetry. destruct (b64_eqb c1 c0) eqn:E; [ | reflexivity ].
+      apply (b64_eqb_true_iff_B2R c1 c0 F1 F0) in E. congruence.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard, multi-session core -- NOT an axiom).
 
      Open goal (single-touch grid exactness), strongly evidenced (0/5e6):
