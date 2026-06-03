@@ -18,4 +18,6 @@ Continued RGR + hardening for precision snap on curves (post basic reducer + hun
 - JTS: CurveSnapRefRunner (BD ref snap+circum decision + loadVectors + hunt) + CurveSnapAdversarialTest + integration in CurvedPrecisionReducerTest.
 - Stub + load from rocqref/curve_snap_vectors.txt (format: scale x0 y0 ... PRESERVE|DENSIFY); when full oracle CURVE_SNAP_DECISION vectors land, assert isSound().
 - Goal: stable snap for curves in release, zero counterexamples in hunter, no drift vs exact. (See JTS#1195 PRC-SN TAG + review comment on epic.)
-- Current: basic 20-iter hunter + ref runner + 5-vector stub + load test; mismatches logged for review / vector gen.
+- Current: vectors refreshed + isSound asserted from oracle-bin-linux artifact run 26887314315/art 7385761173 (full CURVE_SNAP_DECISION exact Q + ARC_* using AngleBetween.v); 0 counterexamples; JTS CurvedPrecisionReducer + CurveSnap* + CurveArea* tests + meter header updated.
+- Artifact: https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/runs/26887314315/artifacts/7385761173
+- See also JTS CurveAwarenessSpecTest (PRC-SN red kept), CurvedPrecisionReducerTest.testSnapRefRunnerIntegration.
