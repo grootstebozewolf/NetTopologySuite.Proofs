@@ -759,6 +759,63 @@ let run_arc_area () =
     Printf.printf "%h\n" (s /. 2.0);
     flush stdout
 
+(* ----- CURVE_SNAP_DECISION mode (PRC-SN / #66 for JTS curve epic M-DIM etc). *)
+(* Exact grid-friendly test for a CircularString arc after control-point snap.
+   Input:
+     CURVE_SNAP_DECISION
+     <scale>   (positive int for FIXED PM scale; e.g. 1)
+     x0 y0
+     x1 y1
+     x2 y2
+   Output: PRESERVE | DENSIFY | DEGEN | NAN
+   Uses q_make_precise (exact round(x*scale)/scale via Q) on controls,
+   then exact Q circumcentre; checks if centre coords are invariant under
+   make_precise (on grid). Matches JTS CurvedPrecisionReducer.isGridFriendly
+   logic but with exact arith for soundness (no double error in centre for
+   large |coord| or sub-ulp cases). r-multiple check omitted for simplicity
+   (or can be added via r2 * scale^2 perfect square test).
+   See JTS CurveSnapRefRunner (BD ref + hunter) and curve_snap_vectors.txt. *)
+
+let run_curve_snap_decision () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let p2 = parse_point (input_line stdin) in
+  let xs = [| qf p0.bx; qf p1.bx; qf p2.bx |] in
+  let ys = [| qf p0.by_; qf p1.by_; qf p2.by_ |] in
+  (* snap controls exactly *)
+  let xsp = Array.map (q_make_precise scale) xs in
+  let ysp = Array.map (q_make_precise scale) ys in
+  (* check distinct after snap *)
+  if (Q.equal xsp.(0) xsp.(1) && Q.equal ysp.(0) ysp.(1)) ||
+     (Q.equal xsp.(1) xsp.(2) && Q.equal ysp.(1) ysp.(2)) ||
+     (Q.equal xsp.(0) xsp.(2) && Q.equal ysp.(0) ysp.(2)) then
+    (print_endline "DEGEN"; flush stdout; ())
+  else
+    let ax = xsp.(0) and ay = ysp.(0) in
+    let bx = xsp.(1) and by = ysp.(1) in
+    let cx = xsp.(2) and cy = ysp.(2) in
+    let d = Q.mul (Q.of_int 2)
+      (Q.add (Q.mul ax (Q.sub by cy))
+         (Q.add (Q.mul bx (Q.sub cy ay)) (Q.mul cx (Q.sub ay by)))) in
+    if Q.sign d = 0 then (print_endline "DEGEN"; flush stdout; ()) else
+    let a2 = Q.add (Q.mul ax ax) (Q.mul ay ay) in
+    let b2 = Q.add (Q.mul bx bx) (Q.mul by by) in
+    let c2 = Q.add (Q.mul cx cx) (Q.mul cy cy) in
+    let ux = Q.div
+      (Q.add (Q.mul a2 (Q.sub by cy))
+         (Q.add (Q.mul b2 (Q.sub cy ay)) (Q.mul c2 (Q.sub ay by)))) d in
+    let uy = Q.div
+      (Q.add (Q.mul a2 (Q.sub cx bx))
+         (Q.add (Q.mul b2 (Q.sub ax cx)) (Q.mul c2 (Q.sub bx ax)))) d in
+    (* is centre invariant under make_precise? *)
+    let uxs = q_make_precise scale ux in
+    let uys = q_make_precise scale uy in
+    if Q.equal ux uxs && Q.equal uy uys then
+      (print_endline "PRESERVE"; flush stdout)
+    else
+      (print_endline "DENSIFY"; flush stdout)
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -799,20 +856,7 @@ let () =
        | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | "ARC_AREA"                 -> run_arc_area ()
-       (* PRC-SN / #66 continuation: snap decision for curve arcs (grid-friendly centre/r
-          after control snap). See JTS CurveSnapRefRunner + curve_snap_vectors.txt.
-          When implemented (reusing b64_snap + exact Q circum from Arc* theories or handrolled
-          like passes_through_exact_q), input:
-            CURVE_SNAP_DECISION
-            <scale>
-            x0 y0
-            x1 y1
-            x2 y2
-          Output: PRESERVE | DENSIFY | DEGEN | NAN
-          Use exact snap (b64_snap or scale-round Q) + exact circum to decide vs JTS double.
-          Add run_curve_snap_decision () and wire here.
-       *)
-       | "CURVE_SNAP_DECISION"      -> print_endline "PRESERVE" (* stub; replace with impl + rebuild *)
+       | "CURVE_SNAP_DECISION"      -> run_curve_snap_decision ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
