@@ -529,6 +529,52 @@ let run_passes_through_halfopen_exact () =
   then print_endline "NAN"
   else print_endline (bool_string (passes_through_exact_q touch_exact_halfopen_q p0 p1 c))
 
+(* ----- HOLE_PRECISION_AUDIT mode (JTS#979 hunter oracle). ---------------- *)
+
+(* JTS#979: `Geometry.buffer` with a fixed PrecisionModel REMOVES a hole.  The
+   root mechanism is precision reduction: snapping the hole-ring's vertices to
+   the fixed grid (makePrecise: x |-> round(x*scale)/scale) collapses the hole
+   -- its signed area degenerates to zero (or flips), so the hole vanishes and
+   buffer drops it.  This oracle is the EXACT ground truth for that collapse:
+   the signed-area sign of the ring computed in zarith Q (shoelace; every
+   binary64 is dyadic, so exact, no rounding), BEFORE and AFTER precision
+   reduction.  A hunter flags a #979 hole-collapse when the exact ring has
+   nonzero area but the precision-reduced ring has zero area.
+
+   Input:  line 2   = scale  (positive integer = fixed PrecisionModel scale)
+           line 3   = n       (vertex count, >= 3)
+           lines 4.. = the n ring vertices "x y"
+   Output: "<exact_sign> <precise_sign>"  (each POS / NEG / ZERO);
+           "POS ZERO" / "NEG ZERO" is a hole that the precision model removes. *)
+
+let qsign (q : Q.t) : string =
+  let s = Q.sign q in if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO"
+
+(* round q to the nearest multiple of 1/scale: floor(q*scale + 1/2) / scale. *)
+let q_make_precise (scale : int) (q : Q.t) : Q.t =
+  let s = Q.add (Q.mul q (Q.of_int scale)) (Q.of_ints 1 2) in
+  Q.div (Q.of_bigint (BigZ.fdiv (Q.num s) (Q.den s))) (Q.of_int scale)
+
+(* twice the signed area of the ring (shoelace); only its sign is used. *)
+let ring_area2 (xs : Q.t array) (ys : Q.t array) : Q.t =
+  let n = Array.length xs in
+  let acc = ref Q.zero in
+  for i = 0 to n - 1 do
+    let j = (i + 1) mod n in
+    acc := Q.add !acc (Q.sub (Q.mul xs.(i) ys.(j)) (Q.mul xs.(j) ys.(i)))
+  done;
+  !acc
+
+let run_hole_precision_audit () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let pts = Array.init n (fun _ -> parse_point (input_line stdin)) in
+  let xs = Array.map (fun p -> qf p.bx) pts in
+  let ys = Array.map (fun p -> qf p.by_) pts in
+  let xsp = Array.map (q_make_precise scale) xs in
+  let ysp = Array.map (q_make_precise scale) ys in
+  Printf.printf "%s %s\n" (qsign (ring_area2 xs ys)) (qsign (ring_area2 xsp ysp))
+
 (* ----- EDGE_IN_RESULT mode (Phase 3, extracted). ------------------------- *)
 
 (* Direct extract of `edge_in_result` from `theories/OverlayGraph.v:375`.
@@ -671,6 +717,7 @@ let () =
        | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
        | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
+       | "HOLE_PRECISION_AUDIT"          -> run_hole_precision_audit ()
        | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
        | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
