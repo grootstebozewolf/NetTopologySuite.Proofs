@@ -1010,6 +1010,20 @@ let () =
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()
+       (* PRC-SN / #66 continuation: snap decision for curve arcs (grid-friendly centre/r
+          after control snap). See JTS CurveSnapRefRunner + curve_snap_vectors.txt.
+          When implemented (reusing b64_snap + exact Q circum from Arc* theories or handrolled
+          like passes_through_exact_q), input:
+            CURVE_SNAP_DECISION
+            <scale>
+            x0 y0
+            x1 y1
+            x2 y2
+          Output: PRESERVE | DENSIFY | DEGEN | NAN
+          Use exact snap (b64_snap or scale-round Q) + exact circum to decide vs JTS double.
+          Add run_curve_snap_decision () and wire here.
+       *)
+       | "CURVE_SNAP_DECISION"      -> print_endline "PRESERVE" (* stub; replace with impl + rebuild *)
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
