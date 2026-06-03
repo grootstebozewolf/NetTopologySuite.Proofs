@@ -686,7 +686,16 @@ let run_arc_length () =
     | ArcDegenerate -> print_endline "DEGENERATE"
     | ArcInv (r2, cos_full, major) ->
         let r = sqrt (Q.to_float r2) in
-        let t0 = acos (Q.to_float cos_full) in
+        (* Central half-angle via the EXACT sin^2(θ/2) = (1 − cos)/2 in Q, then
+           asin -- robust for near-flat arcs.  The old acos(to_float cos_full)
+           lost all precision once cos≈1 (large-r / tiny-θ): to_float rounds the
+           tiny 1−cos away and acos near 1 amplifies it, so r·θ dipped BELOW the
+           chord -- violating the proven chord_le_arc_length.  Forming (1−cos)/2
+           in exact Q first (no float cancellation) keeps it sound, and
+           asin(s) ≥ s gives arc = 2r·asin(s) ≥ 2r·s = chord.  Mirrors
+           theories/ArcLength.chord_subtended_sq. *)
+        let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+        let t0 = 2.0 *. asin s in
         let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
         Printf.printf "%h\n" (r *. theta)
 
@@ -998,9 +1007,34 @@ let run_arc_area () =
     | ArcDegenerate -> print_endline "DEGENERATE"
     | ArcInv (r2, cos_full, major) ->
         let r2f = Q.to_float r2 in
-        let t0 = acos (Q.to_float cos_full) in
+        (* Robust central angle: half-angle via exact sin^2(θ/2)=(1−cos)/2 in Q,
+           same acos-near-1 fix as run_arc_length. *)
+        let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+        let t0 = 2.0 *. asin s in
         let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
-        Printf.printf "%h\n" (r2f /. 2.0 *. (theta -. sin theta))
+        (* Segment area = (r²/2)(θ − sin θ).  For small θ (near-flat minor arcs)
+           θ − sin θ ≈ θ³/6 is catastrophic cancellation in float, so sum the
+           Taylor series Σ_{k≥1} (−1)^{k+1} θ^{2k+1}/(2k+1)! instead (term
+           recurrence  t_{k+1} = −t_k·θ²/((2k+2)(2k+3)) ).  θ ≥ 1 (all major
+           arcs, and minor arcs where the subtraction is well-conditioned) takes
+           the direct path. *)
+        let g =
+          if theta >= 1.0 then theta -. sin theta
+          else begin
+            let t2 = theta *. theta in
+            let term = ref (theta *. t2 /. 6.0) in   (* k=1: θ³/3! *)
+            let sum  = ref !term in
+            let k = ref 1 in
+            while abs_float !term > abs_float !sum *. 1e-17 && !k < 30 do
+              let kk = float_of_int !k in
+              term := -. !term *. t2 /. ((2.0 *. kk +. 2.0) *. (2.0 *. kk +. 3.0));
+              sum  := !sum +. !term;
+              incr k
+            done;
+            !sum
+          end
+        in
+        Printf.printf "%h\n" (r2f /. 2.0 *. g)
 
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------

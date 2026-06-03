@@ -10,15 +10,22 @@
 # hand-written in driver.ml -- code that merely *claims* to mirror an R-side
 # Coq predicate with no machine-checked link -- undermines that guarantee.
 #
-# This is a RATCHET, not a ban: the hand-rolled kernels that exist today are
-# frozen in docs/oracle-handrolled-allowlist.txt and tracked for migration
-# (docs/oracle-handroll-migration.md).  The set may only SHRINK:
+# This is a RATCHET, not a ban: hand-rolled kernels are frozen in
+# docs/oracle-handrolled-allowlist.txt, which defines two categories --
+# TRANSITIONAL (tracked for migration, may only SHRINK) and INTERFACE-BOUNDARY
+# (a sanctioned, permanent exception: a mode whose output is a TRANSCENDENTAL
+# primitive the Java/JTS or C#/NTS implementation computes for differential
+# testing, with no Coq-extractable form -- e.g. ARC_LENGTH's r*theta).  The
+# script enforces "detected == allowlisted"; the category discipline (no new
+# TRANSITIONAL kernels; new INTERFACE-BOUNDARY kernels only with a documented
+# Java/C# justification) is a review rule recorded in the allowlist file.
 #
-#   - A NEW function in driver.ml that does float arithmetic and is not on
-#     the allowlist  -> FAILURE.  No new hand-rolled numeric code.
+#   - A function in driver.ml that does float arithmetic and is not on the
+#     allowlist  -> FAILURE.  Hand-rolled numeric code must be allowlisted
+#     (transitional debt, or a justified interface-boundary entry).
 #   - An allowlist entry that no longer does float arithmetic in driver.ml
 #     (migrated to an extracted call, or removed)  -> FAILURE, asking you to
-#     prune the allowlist.  The count can only go down.
+#     prune the allowlist.
 #
 # "Does float arithmetic" = the function body (comments stripped) contains a
 # binary64 operator (+. -. *. /.) or a float math / Float.* call.  Pure I/O
@@ -67,20 +74,21 @@ perl -0777 -e '
 
 # 2. Emit each top-level function whose (comment-free) body does float
 #    arithmetic.  A function spans from its `let` at column 0 to the next.
-awk '
-  /^let / {
-    if (fn != "" && hit) print fn
-    hit = 0
-    l = $0; sub(/^let +(rec +)?/, "", l)
-    match(l, /[a-zA-Z_][a-zA-Z0-9_'\'']*/)
-    fn = substr(l, RSTART, RLENGTH)
+#    Done in PERL, not awk, for cross-platform regex parity: the macOS CI
+#    runner's BSD/one-true-awk diverges from gawk/mawk on regex char classes
+#    ("/" inside [...]) and word boundaries (\< \>), and even mis-parses
+#    function names -- perl behaves identically everywhere (and is already
+#    used in step 1).  "Does float arithmetic" = a binary64 operator
+#    (+. -. *. /.), a float math call as a whole word, or a Float.* call.
+perl -ne '
+  if (/^let\s+(?:rec\s+)?([A-Za-z_][A-Za-z0-9_]*)/) {
+    print "$cur\n" if $cur && $hit;
+    $cur = $1; $hit = 0;
   }
-  {
-    if ($0 ~ /[+*/-]\./ \
-        || $0 ~ /(\<cos\>|\<sin\>|\<tan\>|\<sqrt\>|\<atan2?\>|\<exp\>|\<log\>|Float\.(min|max|abs|is_finite|is_nan))/)
-      hit = 1
-  }
-  END { if (fn != "" && hit) print fn }
+  $hit = 1 if m{[-+*/]\.};
+  $hit = 1 if m{\b(?:acos|asin|atan2|atan|cos|sin|tan|sqrt|exp|log)\b};
+  $hit = 1 if m{Float\.(?:min|max|abs|is_finite|is_nan)};
+  END { print "$cur\n" if $cur && $hit; }
 ' "$CODE" | sort -u > "$DETECTED"
 
 # 3. Allowlist: one function name per line; `#` comments and blanks ignored.
