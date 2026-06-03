@@ -93,6 +93,20 @@
    boundary category -- segments grazing the closed upper boundary x=xhi
    (or y=yhi) of the unit-grid pixel.
 
+     PASSES_THROUGH_EXACT -- EXACT-rational hot-pixel passes-through (closed).
+        line 2..4:    P0, P1, C (three BPoints, one per line).
+        output:       single token "TRUE" / "FALSE" / "NAN".
+        Ground truth (zarith Q, no rounding) for the rounded
+        PASSES_THROUGH_FILTER.  The rounded filter over-accepts within
+        O(ulp) of tangency (machine-checked unsound:
+        PassesThrough_b64_compute_unsound.v); diff FILTER vs EXACT to
+        surface that sub-ulp boundary band -- the JTS noder hardening set.
+
+     PASSES_THROUGH_HALFOPEN_EXACT -- EXACT-rational half-open analogue, the
+        ground truth for PASSES_THROUGH_HALFOPEN (unsoundness machine-checked
+        in PassesThroughHalfopen_b64_compute_unsound.v).
+        line 2..4:    P0, P1, C.   output: "TRUE" / "FALSE" / "NAN".
+
      EDGE_IN_RESULT  -- boolean overlay-result membership for an edge.
         line 2:       <op>         UNION | INTERSECTION | DIFFERENCE | SYMDIFF
         line 3:       <in_left>    true | false
@@ -176,6 +190,14 @@ let parse_point line =
 
 let print_point bp =
   Printf.printf "%h %h\n" bp.bx bp.by_
+
+(* Finiteness guard for the EXACT ground-truth modes.  Uses `classify_float`
+   (a validity predicate, not arithmetic) rather than `Float.is_finite` so it
+   reads as I/O validation, not a hand-rolled numeric kernel. *)
+let finite_float (x : float) : bool =
+  match classify_float x with FP_nan | FP_infinite -> false | _ -> true
+
+let finite_bpoint (p : bPoint) : bool = finite_float p.bx && finite_float p.by_
 
 (* ----- SIMPLIFY mode. ----------------------------------------------------- *)
 
@@ -272,8 +294,7 @@ let run_orient_exact () =
   let p0 = parse_point (input_line stdin) in
   let p1 = parse_point (input_line stdin) in
   let q  = parse_point (input_line stdin) in
-  let finite p = Float.is_finite p.bx && Float.is_finite p.by_ in
-  if not (finite p0 && finite p1 && finite q) then print_endline "NAN"
+  if not (finite_bpoint p0 && finite_bpoint p1 && finite_bpoint q) then print_endline "NAN"
   else
     let s = orient_exact_sign p0 p1 q in
     print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
@@ -306,8 +327,7 @@ let run_incircle_exact () =
   let b = parse_point (input_line stdin) in
   let c = parse_point (input_line stdin) in
   let p = parse_point (input_line stdin) in
-  let finite q = Float.is_finite q.bx && Float.is_finite q.by_ in
-  if not (finite a && finite b && finite c && finite p) then print_endline "NAN"
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c && finite_bpoint p) then print_endline "NAN"
   else
     let s = incircle_exact_sign a b c p in
     print_endline (if s > 0 then "POS" else if s < 0 then "NEG" else "ZERO")
@@ -421,6 +441,93 @@ let run_passes_through_halfopen () =
   let c  = parse_point (input_line stdin) in
   print_endline
     (bool_string (b64_passes_through_hot_pixel_halfopen_compute p0 p1 c))
+
+(* ----- PASSES_THROUGH_EXACT / _HALFOPEN_EXACT modes. --------------------- *)
+
+(* EXACT-rational ground truth for the hot-pixel passes-through test -- the
+   reference JTS's snap-rounding noder diffs its rounded filter against.  Every
+   finite binary64 is a dyadic rational, so `Q.of_float` is exact; the
+   Liang-Barsky t-interval decision is evaluated in exact rationals (zarith Q),
+   no rounding.  The rounded computational filter (PASSES_THROUGH_FILTER) is a
+   conservative over-approximation: it over-accepts within O(ulp) of tangency,
+   machine-checked in theories-flocq/PassesThrough_b64_compute_unsound.v
+   (closed) and PassesThroughHalfopen_b64_compute_unsound.v (half-open).
+   Diffing FILTER/HALFOPEN against the EXACT mode surfaces exactly that
+   sub-ulp boundary band -- the adversarial set JTS hardens its noder on.
+
+   Not hand-rolled mirror arithmetic: the snap step reuses the EXTRACTED
+   `b64_snap` (round-half-to-even), and the decision is exact rationals, not a
+   transcription of the rounded float algorithm.  The exact R-spec it realises
+   is `b64_passes_through_hot_pixel` (HotPixel_b64.v) / `_halfopen`
+   (PassesThroughHalfopen_b64.v), which are non-computational (`R`-valued) and
+   so cannot themselves be extracted. *)
+
+let qle = Q.leq
+let qlt = Q.lt
+let qeq = Q.equal
+let qmin a b = if Q.leq a b then a else b
+let qmax a b = if Q.leq a b then b else a
+let q0 = Q.zero
+let q1 = Q.one
+let qhalf = Q.of_ints 1 2
+let qf = Q.of_float
+
+let lb_inslab_q c0 c1 lo hi =
+  if qeq c1 c0 then (qle lo c0 && qle c0 hi) else true
+let lb_inslab_halfopen_q c0 c1 lo hi =
+  if qeq c1 c0 then (qle lo c0 && qlt c0 hi) else true
+let lb_tlo_q c0 c1 lo hi =
+  if qeq c1 c0 then q0
+  else qmin (Q.div (Q.sub lo c0) (Q.sub c1 c0)) (Q.div (Q.sub hi c0) (Q.sub c1 c0))
+let lb_thi_q c0 c1 lo hi =
+  if qeq c1 c0 then q1
+  else qmax (Q.div (Q.sub lo c0) (Q.sub c1 c0)) (Q.div (Q.sub hi c0) (Q.sub c1 c0))
+
+(* exact closed-pixel touch on one segment *)
+let touch_exact_q x0 y0 x1 y1 cx cy =
+  let xlo = Q.sub cx qhalf and xhi = Q.add cx qhalf in
+  let ylo = Q.sub cy qhalf and yhi = Q.add cy qhalf in
+  lb_inslab_q x0 x1 xlo xhi && lb_inslab_q y0 y1 ylo yhi
+  && qle (qmax q0 (qmax (lb_tlo_q x0 x1 xlo xhi) (lb_tlo_q y0 y1 ylo yhi)))
+         (qmin q1 (qmin (lb_thi_q x0 x1 xlo xhi) (lb_thi_q y0 y1 ylo yhi)))
+
+(* exact half-open touch: strict upper slab guard + strict-upper midpoint
+   witness on both axes (mirrors b64_liang_barsky_touches_halfopen). *)
+let touch_exact_halfopen_q x0 y0 x1 y1 cx cy =
+  let xlo = Q.sub cx qhalf and xhi = Q.add cx qhalf in
+  let ylo = Q.sub cy qhalf and yhi = Q.add cy qhalf in
+  let tmin = qmax q0 (qmax (lb_tlo_q x0 x1 xlo xhi) (lb_tlo_q y0 y1 ylo yhi)) in
+  let tmax = qmin q1 (qmin (lb_thi_q x0 x1 xlo xhi) (lb_thi_q y0 y1 ylo yhi)) in
+  let tmid = Q.div (Q.add tmin tmax) (Q.of_int 2) in
+  let xmid = Q.add (Q.mul (Q.sub q1 tmid) x0) (Q.mul tmid x1) in
+  let ymid = Q.add (Q.mul (Q.sub q1 tmid) y0) (Q.mul tmid y1) in
+  lb_inslab_halfopen_q x0 x1 xlo xhi && lb_inslab_halfopen_q y0 y1 ylo yhi
+  && qle tmin tmax && qlt xmid xhi && qlt ymid yhi
+
+let q_touch_of_bpoints touch p0 p1 (c : bPoint) =
+  touch (qf p0.bx) (qf p0.by_) (qf p1.bx) (qf p1.by_) (qf c.bx) (qf c.by_)
+
+(* exact passes-through = exact touch on the original AND on the unit-grid
+   snap; the snap uses the extracted `b64_snap`. *)
+let passes_through_exact_q touch p0 p1 c =
+  let s0 = b64_snap p0 and s1 = b64_snap p1 in
+  q_touch_of_bpoints touch p0 p1 c && q_touch_of_bpoints touch s0 s1 c
+
+let run_passes_through_exact () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let c  = parse_point (input_line stdin) in
+  if not (finite_bpoint p0 && finite_bpoint p1 && finite_bpoint c)
+  then print_endline "NAN"
+  else print_endline (bool_string (passes_through_exact_q touch_exact_q p0 p1 c))
+
+let run_passes_through_halfopen_exact () =
+  let p0 = parse_point (input_line stdin) in
+  let p1 = parse_point (input_line stdin) in
+  let c  = parse_point (input_line stdin) in
+  if not (finite_bpoint p0 && finite_bpoint p1 && finite_bpoint c)
+  then print_endline "NAN"
+  else print_endline (bool_string (passes_through_exact_q touch_exact_halfopen_q p0 p1 c))
 
 (* ----- EDGE_IN_RESULT mode (Phase 3, extracted). ------------------------- *)
 
@@ -564,6 +671,8 @@ let () =
        | "INTERSECT_POINT_XY"       -> run_intersect_point_xy ()
        | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
+       | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
+       | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()
