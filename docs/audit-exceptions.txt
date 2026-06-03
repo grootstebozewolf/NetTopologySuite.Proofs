@@ -99,6 +99,20 @@ theories-flocq/PassesThrough_b64_compute_refine.v
 # `B2R`), so pulls `Classical_Prop.classic`.  No Admitteds; Qed-closed.
 theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
 
+# Category C: machine-checked half-open INCOMPLETENESS counterexample (rounded
+# half-open filter drops a real pass).  Same lineage -- references the
+# half-open R-spec `b64_passes_through_hot_pixel_halfopen` (Liang-Barsky
+# `Rle_bool`/`Rlt_bool` + Flocq `B2R`/`round`), so pulls `Classical_Prop.classic`.
+# No Admitteds; Qed-closed.
+theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
+
+# Category C: machine-checked ASYMMETRY counterexample (rounded passes-through
+# filter is not invariant under segment reversal -- the order-dependent-noding
+# root behind JTS#752 / JTS#1133).  Both halves are vm_compute, but the file
+# imports HotPixel_b64 / PassesThrough_b64_compute, whose binary64 layer pulls
+# `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
+theories-flocq/PassesThrough_b64_compute_asymmetric.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
