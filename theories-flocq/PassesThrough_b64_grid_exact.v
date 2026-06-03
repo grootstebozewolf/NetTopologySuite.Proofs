@@ -35,12 +35,18 @@
    ============================================================================ *)
 
 From Stdlib Require Import Bool.
+From Stdlib Require Import Reals.
+From Stdlib Require Import ZArith.
+From Stdlib Require Import Lra.
 From Flocq Require Import IEEE754.Binary.
+From Flocq Require Import IEEE754.BinarySingleNaN.
+From Flocq Require Import Core.
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
 From NTS.Proofs.Flocq Require Import HotPixel_b64.
 From NTS.Proofs.Flocq Require Import SnapRounding_b64.
 From NTS.Proofs.Flocq Require Import PassesThrough_b64_compute.
+From NTS.Proofs.Flocq Require Import Orient_b64_exact.
 
 (* "On the grid" = a fixed point of the unit-grid snap.  This is exactly the
    regime a snap-rounding noder runs in: by `b64_snap_on_grid` below, every
@@ -103,6 +109,83 @@ Proof.
   rewrite (b64_passes_through_collapses_on_grid P0 P1 C H0 H1).
   rewrite (b64_passes_through_compute_collapses_on_grid P0 P1 C H0 H1).
   tauto.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 2: the integer grid IS the fixed-point grid.
+
+   The reduction above is stated over `b64_on_grid` (fixed point of b64_snap).
+   The dyadic-exactness machinery (Orient_b64_exact.coord_int_safe: finite,
+   integer-valued, |.| <= 2^25) lives over the integer regime.  This slice
+   connects them: an integer-grid coordinate is a snap fixed point, so the
+   reduction's hypothesis is DISCHARGED for genuine integer-grid inputs (the
+   noder's snapped coordinates), and the exactness layer can proceed in the
+   integer regime.
+   ---------------------------------------------------------------------------- *)
+
+Lemma coord_int_safe_snap_id :
+  forall x : binary64, coord_int_safe x -> b64_snap_coord x = x.
+Proof.
+  intros x Hsafe.
+  destruct Hsafe as [Hfin [n [Hn _]]].
+  destruct (Binary.Bnearbyint_correct prec emax prec_lt_emax_b64
+              nearbyint_nan_b64 mode_NE x) as [_ [Hfin2 Hsgn]].
+  assert (Hf : Binary.is_finite prec emax (b64_snap_coord x) = true).
+  { unfold b64_snap_coord. rewrite Hfin2. exact Hfin. }
+  apply Binary.B2R_Bsign_inj.
+  - exact Hf.
+  - exact Hfin.
+  - rewrite b64_snap_coord_B2R. unfold snap_round_coord.
+    rewrite Rmult_1_r, Rdiv_1_r, round_FIX0_IZR, Hn.
+    f_equal. apply (Zrnd_IZR (round_mode mode_NE)).
+  - unfold b64_snap_coord. rewrite Hsgn.
+    + reflexivity.
+    + apply is_finite_not_nan. exact Hf.
+Qed.
+
+(* Point-level integer grid. *)
+Definition bpoint_int_safe (P : BPoint) : Prop :=
+  coord_int_safe (bx P) /\ coord_int_safe (by_ P).
+
+Lemma bpoint_int_safe_on_grid :
+  forall P : BPoint, bpoint_int_safe P -> b64_on_grid P.
+Proof.
+  intros P [Hx Hy]. unfold b64_on_grid, b64_snap.
+  destruct P as [xp yp]; simpl in *.
+  f_equal; apply coord_int_safe_snap_id; assumption.
+Qed.
+
+(* The reduction, specialised to genuine integer-grid inputs: full-predicate
+   grid-exactness reduces to the single Liang-Barsky touch.  This is the form
+   the exactness layer will consume. *)
+Corollary b64_passes_through_grid_exact_iff_touch_int :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 ->
+    ( b64_passes_through_hot_pixel_compute P0 P1 C
+        = b64_passes_through_hot_pixel P0 P1 C
+      <->
+      b64_liang_barsky_touches_compute P0 P1 C
+        = b64_liang_barsky_touches P0 P1 C ).
+Proof.
+  intros P0 P1 C H0 H1.
+  apply b64_passes_through_grid_exact_iff_touch;
+    apply bpoint_int_safe_on_grid; assumption.
+Qed.
+
+(* Comparison bridge (foundation for the slab-guard layer): on finite operands
+   the computational equality test reflects exact-real equality. *)
+Lemma b64_eqb_true_iff_B2R :
+  forall x y : binary64,
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    (b64_eqb x y = true <-> Binary.B2R prec emax x = Binary.B2R prec emax y).
+Proof.
+  intros x y Fx Fy. unfold b64_eqb, b64_compare.
+  rewrite Binary.Bcompare_correct by assumption.
+  destruct (Rcompare (Binary.B2R prec emax x) (Binary.B2R prec emax y)) eqn:E.
+  - apply Rcompare_Eq_inv in E. split; [intros _; exact E | reflexivity].
+  - apply Rcompare_Lt_inv in E. split; [discriminate | intros He; lra].
+  - apply Rcompare_Gt_inv in E. split; [discriminate | intros He; lra].
 Qed.
 
 (* ----------------------------------------------------------------------------
