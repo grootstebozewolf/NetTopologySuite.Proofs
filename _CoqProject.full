@@ -328,6 +328,11 @@ theories-flocq/PassesThrough_b64_compute_refine.v
 # PassesThrough_b64_compute_unsound.v for the PASSES_THROUGH_HALFOPEN mode;
 # witness = the closed-mode witness with x negated (bottom-left tangency).
 theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
+# Machine-checked counterexample (half-open mode, dual direction): the rounded
+# half-open compute filter is NOT COMPLETE -- it DROPS a real pass (the
+# noder-unsafe direction).  Witness grazes the open top edge; the rounded
+# midpoint rounds onto the excluded boundary and rejects.
+theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
 # Computational (extractable) binary64 in-circle determinant.  Oracle compute
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.

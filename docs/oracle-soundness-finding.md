@@ -199,3 +199,22 @@ guarantee; the half-open mode's strict-edge rounding makes it unsafe near the
 open boundary. The two proven bracket invariants still hold unconditionally
 (`HALFOPEN ⇒ FILTER`, `HALFOPEN_EXACT ⇒ EXACT`), so the closed filter always
 fires whenever the half-open one does.
+
+**Now machine-checked (Qed).** This adversarial finding is promoted to a Rocq
+theorem in `theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v`:
+
+```coq
+Theorem b64_passes_through_halfopen_compute_incomplete :
+  exists P0 P1 C : BPoint,
+    b64_passes_through_hot_pixel_halfopen          P0 P1 C = true /\
+    b64_passes_through_hot_pixel_halfopen_compute  P0 P1 C = false.
+```
+
+with the exact witness above: `P0 = (-1, 1/2)`, `P1 = (1, 1/2 − 2⁻⁵⁴)`,
+`C = (0,0)`. `compute = false` is `vm_compute`; `spec = true` is discharged from
+the geometric `t = 1/2` midpoint witness via the corpus completeness lemma
+`b64_liang_barsky_touches_halfopen_complete` (no t-bound arithmetic). 4 standard
+axioms, no `Admitted`. This is the formal companion to the closed-filter
+over-acceptance theorem (`PassesThrough_b64_compute_unsound.v`): together they
+pin both unsound directions — the closed filter only over-accepts, the half-open
+filter can also *under*-accept.
