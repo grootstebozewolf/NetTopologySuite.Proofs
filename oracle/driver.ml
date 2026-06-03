@@ -161,6 +161,19 @@
                       half-open convention (bottom + left CLOSED, top +
                       right OPEN).  SUFFICIENT only.
 
+     ARC_LENGTH_EXACT -- EXACT arc-length invariants for a circular arc
+                         through 3 control points (issue #64, Option-A).
+        line 2..4:    arc_start, arc_mid, arc_end (three BPoints).
+        output:       "<r2> <cos> <0|1>" -- squared circumradius r2 and
+                      cos Theta0 = (vA.vC)/r2 as exact rationals "num/den",
+                      and a major-arc flag.  "DEGENERATE" if collinear.
+                      The arc length is s = sqrt r2 * Theta with
+                      Theta = (if major then 2*pi - acos cos else acos cos),
+                      the single transcendental step done consumer-side.
+                      Coq mirror: theories/ArcLength.v (chord_subtended_sq)
+                      + theories/AngleBetween.v (cos_angle_between).  All
+                      exact zarith Q -- NOT a hand-rolled float kernel.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -529,6 +542,72 @@ let run_passes_through_halfopen_exact () =
   then print_endline "NAN"
   else print_endline (bool_string (passes_through_exact_q touch_exact_halfopen_q p0 p1 c))
 
+(* ----- ARC_LENGTH_EXACT mode (issue #64, Option-A arc length). ---------- *)
+
+(* EXACT arc-length invariants for a circular arc through 3 control points
+   A=start, B=mid, C=end.  Arc length s = r * Theta is transcendental (Theta an
+   angle, r a square root), hence NOT Coq-extractable (Flocq has no Batan2) and
+   -- per the oracle credibility ratchet -- must not be hand-rolled in float.
+   This mode instead emits the EXACT RATIONAL invariants from which the length
+   follows by a single consumer-side acos/sqrt, mirroring the certified Coq
+   relations:
+     - r2    = squared circumradius
+     - cos   = cos Theta0 = (vA . vC) / r2, with vA = A-O, vC = C-O and
+               |vA| = |vC| = r  (theories/AngleBetween.cos_angle_between)
+     - major = 1 iff the arc through B is the MAJOR arc (Theta = 2*pi - Theta0),
+               decided exactly by whether B and the centre O lie on the SAME
+               side of chord AC (orientation signs).
+   Consumer reconstructs:  r = sqrt r2;  Theta = if major then 2*pi - acos cos
+   else acos cos;  length = r * Theta.  The half-angle identity
+   chord^2 = 2*r2*(1 - cos) is theories/ArcLength.chord_subtended_sq.  All
+   arithmetic here is exact zarith Q (every binary64 is dyadic) -- no float, no
+   hand-rolled numeric kernel.
+
+   Input:  lines 2..4 = arc_start, arc_mid, arc_end (three BPoints "x y").
+   Output: "<r2> <cos> <0|1>" (r2, cos as exact rationals "num/den");
+           "DEGENERATE" if the three control points are collinear (no circle);
+           "NAN" if any coordinate is non-finite. *)
+let run_arc_length_exact () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else begin
+    let ax = qf a.bx and ay = qf a.by_ in
+    let bx = qf b.bx and by_ = qf b.by_ in
+    let cx = qf c.bx and cy = qf c.by_ in
+    (* d = 2 (ax(by-cy) + bx(cy-ay) + cx(ay-by)); zero iff the points are collinear *)
+    let d = Q.mul (Q.of_int 2)
+      (Q.add (Q.add (Q.mul ax (Q.sub by_ cy)) (Q.mul bx (Q.sub cy ay)))
+             (Q.mul cx (Q.sub ay by_))) in
+    if qeq d q0 then print_endline "DEGENERATE"
+    else begin
+      let na = Q.add (Q.mul ax ax) (Q.mul ay ay) in
+      let nb = Q.add (Q.mul bx bx) (Q.mul by_ by_) in
+      let nc = Q.add (Q.mul cx cx) (Q.mul cy cy) in
+      let ox = Q.div
+        (Q.add (Q.add (Q.mul na (Q.sub by_ cy)) (Q.mul nb (Q.sub cy ay)))
+               (Q.mul nc (Q.sub ay by_))) d in
+      let oy = Q.div
+        (Q.add (Q.add (Q.mul na (Q.sub cx bx)) (Q.mul nb (Q.sub ax cx)))
+               (Q.mul nc (Q.sub bx ax))) d in
+      let vax = Q.sub ax ox and vay = Q.sub ay oy in
+      let vcx = Q.sub cx ox and vcy = Q.sub cy oy in
+      let r2 = Q.add (Q.mul vax vax) (Q.mul vay vay) in
+      let dot_ac = Q.add (Q.mul vax vcx) (Q.mul vay vcy) in
+      let cos_full = Q.div dot_ac r2 in
+      (* orientation of (A, C, X) = (cx-ax)(Xy-ay) - (cy-ay)(Xx-ax) *)
+      let orient_acx xx xy =
+        Q.sub (Q.mul (Q.sub cx ax) (Q.sub xy ay))
+              (Q.mul (Q.sub cy ay) (Q.sub xx ax)) in
+      let sb = Q.sign (orient_acx bx by_) in
+      let so = Q.sign (orient_acx ox oy) in
+      let major = if so <> 0 && sb = so then 1 else 0 in
+      Printf.printf "%s %s %d\n" (Q.to_string r2) (Q.to_string cos_full) major
+    end
+  end
+
 (* ----- HOLE_PRECISION_AUDIT mode (JTS#979 hunter oracle). ---------------- *)
 
 (* JTS#979: `Geometry.buffer` with a fixed PrecisionModel REMOVES a hole.  The
@@ -756,6 +835,7 @@ let () =
        | "HOLES_SURVIVE_PRECISION"       -> run_holes_survive_precision ()
        | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
        | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
+       | "ARC_LENGTH_EXACT"              -> run_arc_length_exact ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()

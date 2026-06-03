@@ -128,7 +128,13 @@ exact R-spec, not the rounded compute filter.
 | `AngleBetween.v : cos_angle_between` (+`sin_angle_between`) | **Option-A central angle/sweep (issue #64):** the signed angle `atan2(cross,dot)` between two vectors has `cos = dot/(\|u\|\|v\|)`, `sin = cross/(\|u\|\|v\|)` (Lagrange identity); sign encodes orientation. Range (-π,π] via `atan2_range` `[exact]` | 4 |
 | `ArcLength.v : chord_le_arc_length` (+`chord_subtended_sq`) | **Option-A exact arc length (issue #64):** `arc_length = r·θ`; the chord never exceeds the arc (`2r·sin(θ/2) ≤ rθ`), and `chord² = 2r²(1−cosθ)` (half-angle bridge to dot products) `[exact]` | 4 |
 
-`[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL`.
+`[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL`/`ARC_LENGTH_EXACT`.
+**`ARC_LENGTH_EXACT` (issue #64):** emits the exact-rational arc-length
+invariants (`r²`, `cos θ₀ = dot/r²`, major-arc flag) from 3 control points; the
+length `s = √r²·Θ` needs one consumer-side `acos`/`sqrt` (transcendental ⇒ not
+Coq-extractable, so the certified part is the rational invariants, mirroring
+`ArcLength.chord_subtended_sq`). Pure zarith `Q` — **ratchet-clean** (0
+hand-rolled kernels), unlike a float arc length which would be uncertified libm.
 **Option-A note (issue #64):** `atan2` work is **4-axiom** — Stdlib's `atan`
 pulls `Classical_Prop.classic` (cos/sin/sqrt stay 3-axiom). This is the cost of
 the JTS-faithful atan2 representation; downstream arc-length/sweep proofs
