@@ -357,6 +357,12 @@ theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
 # order-dependent-noding root behind JTS#752 / JTS#1133.  Witness coordinates
 # are exact powers of two; both halves decided by vm_compute.
 theories-flocq/PassesThrough_b64_compute_asymmetric.v
+# C1 grid-exactness REDUCTION (issue #66 RGR pivot, docs/snap-rounding-rgr-pivot.md):
+# on the unit grid the snap-consistency conjunct is vacuous, so full-predicate
+# grid-exactness (compute = spec) reduces to the single Liang-Barsky touch.
+# Qed-closed reduction; the rounded-vs-exact touch core is the open multi-session
+# step (stated in-file as a comment, NOT an axiom).
+theories-flocq/PassesThrough_b64_grid_exact.v
 # Computational (extractable) binary64 in-circle determinant.  Oracle compute
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.
