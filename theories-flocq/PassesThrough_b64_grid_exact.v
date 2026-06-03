@@ -38,11 +38,14 @@ From Stdlib Require Import Bool.
 From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lra.
+From Stdlib Require Import Lia.
 From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import IEEE754.BinarySingleNaN.
 From Flocq Require Import Core.
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
+From NTS.Proofs.Flocq Require Import B64_bridge.
+From NTS.Proofs.Flocq Require Import B64_lib.
 From NTS.Proofs.Flocq Require Import HotPixel_b64.
 From NTS.Proofs.Flocq Require Import SnapRounding_b64.
 From NTS.Proofs.Flocq Require Import PassesThrough_b64_compute.
@@ -240,6 +243,91 @@ Proof.
     + reflexivity.
     + symmetry. destruct (b64_eqb c1 c0) eqn:E; [ | reflexivity ].
       apply (b64_eqb_true_iff_B2R c1 c0 F1 F0) in E. congruence.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 4: the coordinate-exactness layer.
+
+   On the integer grid every binary64 operation feeding the t-bounds EXCEPT the
+   division is exact.  The slab bounds (cx +/- 1/2) are already covered by
+   HotPixel_b64.b64_minus_half_int_exact / b64_plus_half_int_exact, and the
+   t-bound DENOMINATOR (c1 - c0, integer - integer) by Orient_b64_exact.
+   b64_minus_int_exact.  The missing piece is the t-bound NUMERATOR
+   (lo - c0): a half-integer slab bound minus an integer endpoint, whose
+   magnitude (~2^27) exceeds the existing 27-bit format helper.  This slice adds
+   the general half-integer subtraction exactness (any two half-integer-valued
+   operands whose mantissa difference is < 2^prec), which covers the numerators
+   and subsumes the integer / b64_half special cases.
+   ---------------------------------------------------------------------------- *)
+
+(* generic_format of any half-integer m/2 with |m| < 2^prec (the 27-bit helper
+   in HotPixel_b64 widened to the full mantissa range). *)
+Lemma generic_format_half_prec :
+  forall m : Z,
+    (Z.abs m < 2 ^ prec)%Z ->
+    generic_format radix2 b64_fexp (F2R (Float radix2 m (-1))).
+Proof.
+  intros m Hm.
+  destruct (Z.eq_dec m 0) as [-> | Hnz].
+  - replace (F2R (Float radix2 0 (-1))) with 0%R
+      by (unfold F2R; simpl; lra).
+    apply generic_format_0.
+  - apply generic_format_F2R. intros _.
+    unfold cexp, b64_fexp, SpecFloat.fexp.
+    apply Z.max_lub.
+    + rewrite (mag_F2R radix2 m (-1) Hnz).
+      assert (Hmag_m : (mag radix2 (IZR m) <= prec)%Z).
+      { apply mag_le_bpow.
+        - apply IZR_neq. exact Hnz.
+        - rewrite <- abs_IZR.
+          rewrite <- (IZR_Zpower radix2 prec) by (unfold prec; lia).
+          apply IZR_lt. exact Hm. }
+      lia.
+    + unfold SpecFloat.emin, emax, prec. lia.
+Qed.
+
+(* General half-integer subtraction exactness: if B2R x and B2R y are both
+   half-integers (IZR _ / 2) and their mantissa difference fits in prec bits,
+   b64_minus is exact.  Covers the t-bound numerator (half-integer slab bound
+   minus integer endpoint) and the denominator/integer cases. *)
+Lemma b64_minus_half_exact :
+  forall (x y : binary64) (a b : Z),
+    Binary.is_finite prec emax x = true ->
+    Binary.is_finite prec emax y = true ->
+    Binary.B2R prec emax x = (IZR a / 2)%R ->
+    Binary.B2R prec emax y = (IZR b / 2)%R ->
+    (Z.abs (a - b) < 2 ^ prec)%Z ->
+    Binary.B2R prec emax (b64_minus x y)
+      = (Binary.B2R prec emax x - Binary.B2R prec emax y)%R
+    /\ Binary.is_finite prec emax (b64_minus x y) = true.
+Proof.
+  intros x y a b Fx Fy HxR HyR Hbnd.
+  assert (Hr_F2R : (Binary.B2R prec emax x - Binary.B2R prec emax y)%R
+                   = F2R (Float radix2 (a - b)%Z (-1))).
+  { rewrite HxR, HyR. unfold F2R, Fnum, Fexp.
+    replace (bpow radix2 (-1)) with (/ 2)%R by (simpl; lra).
+    rewrite minus_IZR. lra. }
+  assert (Hr_fmt : generic_format radix2 b64_fexp
+                     (Binary.B2R prec emax x - Binary.B2R prec emax y)%R).
+  { rewrite Hr_F2R. apply generic_format_half_prec. exact Hbnd. }
+  assert (Hbnd_R : (Rabs (IZR (a - b)) < bpow radix2 prec)%R).
+  { rewrite <- abs_IZR.
+    rewrite <- (IZR_Zpower radix2 prec) by (unfold prec; lia).
+    apply IZR_lt. exact Hbnd. }
+  assert (Hsafe : b64_safe Rminus x y).
+  { unfold b64_safe. split; [exact Fx | split; [exact Fy |]].
+    rewrite (b64_round_generic _ Hr_fmt), Hr_F2R.
+    unfold F2R, Fnum, Fexp.
+    replace (bpow radix2 (-1)) with (/ 2)%R by (simpl; lra).
+    rewrite Rabs_mult, (Rabs_right (/ 2)%R) by lra.
+    apply (Rlt_le_trans _ (bpow radix2 prec * / 2)%R).
+    - apply Rmult_lt_compat_r; [lra | exact Hbnd_R].
+    - apply (Rle_trans _ (bpow radix2 prec)%R).
+      + pose proof (bpow_gt_0 radix2 prec). lra.
+      + apply bpow_le. unfold prec, emax. lia. }
+  pose proof (b64_minus_correct _ _ Hsafe) as [HB2R Hfin].
+  split; [| exact Hfin].
+  rewrite HB2R, (b64_round_generic _ Hr_fmt). reflexivity.
 Qed.
 
 (* ----------------------------------------------------------------------------
