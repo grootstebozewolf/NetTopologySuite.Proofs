@@ -138,3 +138,26 @@ has committed to Option B. **Which does #64 actually want?**
 Recommendation: confirm Option-B completion and beeline (A) `b64_inCircle`
 sign-exactness as the first Qed terminal, holding (D) until the scope is
 explicitly chosen.
+
+## 8. Update (Option-A chosen): atan2 foundation landed
+
+The issue owner selected **Option-A** with the **atan2-from-Stdlib-`Ratan`**
+angle foundation. First terminal delivered: `theories/Atan2.v` —
+`atan2 : R→R→R` (JTS `Math.atan2(y,x)` convention, range (-π, π]) with the two
+load-bearing characterisation theorems `cos_atan2` / `sin_atan2`
+(`cos(atan2 y x) = x/r`, `sin = y/r` for `(x,y)≠0`), plus `atan2_on_circle`.
+All Qed, no Admitted.
+
+**Empirically confirmed axiom cost (corrects an earlier estimate).** Building
+atan2 needs **no new opam dependency** (pure Stdlib), but it is **4-axiom, not
+3**: Stdlib's `atan` pulls `Classical_Prop.classic` (verified directly —
+`atan_0` surfaces `classic`, while `cos_0` / `sqrt_1` do not). So every
+atan2-based primitive (sweep, arc length `r·θ`) inherits `classic`. The
+declined implicit-(sin,cos) representation would have stayed 3-axiom — this is
+the concrete trade-off of the JTS-faithful choice. `theories/Atan2.v` is
+registered in `docs/audit-exceptions.txt` (R-side `classic` lineage, distinct
+from the Flocq-float files) and `docs/verified-claims.md` (Phase 4).
+
+**Next terminals (Option-A):** central angle / sweep on three control points
+(short-vs-long via the proven mid-point side test), then arc length `s = r·θ`
+with `θ` the central angle from `atan2`.
