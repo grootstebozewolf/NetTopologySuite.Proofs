@@ -161,7 +161,7 @@
                       half-open convention (bottom + left CLOSED, top +
                       right OPEN).  SUFFICIENT only.
 
-     ARC_LENGTH_EXACT -- EXACT arc-length invariants for a circular arc
+     ARC_LENGTH_INVARIANTS_EXACT -- EXACT arc-length invariants for a circular arc
                          through 3 control points (issue #64, Option-A).
         line 2..4:    arc_start, arc_mid, arc_end (three BPoints).
         output:       "<r2> <cos> <0|1>" -- squared circumradius r2 and
@@ -178,12 +178,21 @@
                    the value the JTS/NTS curve implementation computes.
         line 2..4:    arc_start, arc_mid, arc_end (three BPoints).
         output:       single "%h" double = sqrt r2 * Theta (Theta from the
-                      ARC_LENGTH_EXACT invariants via one acos); "DEGENERATE"
+                      ARC_LENGTH_INVARIANTS_EXACT invariants via one acos); "DEGENERATE"
                       if collinear; "NAN" if non-finite.
         INTERFACE-BOUNDARY mode: arc length is transcendental, so it has no
                       Coq-extractable form; the hand-rolled sqrt/acos is the
                       sanctioned exception (docs/oracle-handrolled-allowlist.txt).
-                      For the certifiable invariants use ARC_LENGTH_EXACT.
+                      For the certifiable invariants use ARC_LENGTH_INVARIANTS_EXACT.
+
+     ARC_SHORTER -- EXACT decision of which of two arcs is shorter (issue #64).
+        line 2..7:    arc1 (start,mid,end), arc2 (start,mid,end).
+        output:       verdict for arc1 vs arc2 -- SHORTER | EQUAL | LONGER
+                      (exact, equal radii) | TRANSCENDENTAL (radii differ, no
+                      exact rational verdict) | DEGENERATE | NAN.
+                      Exact zarith Q: comparing arc lengths is rational when
+                      radii match (order of Theta from cos Theta0 + major
+                      flag); declines, rather than rounds, otherwise.
 
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
@@ -553,7 +562,7 @@ let run_passes_through_halfopen_exact () =
   then print_endline "NAN"
   else print_endline (bool_string (passes_through_exact_q touch_exact_halfopen_q p0 p1 c))
 
-(* ----- ARC_LENGTH_EXACT mode (issue #64, Option-A arc length). ---------- *)
+(* ----- ARC_LENGTH_INVARIANTS_EXACT mode (issue #64, Option-A arc length). ---------- *)
 
 (* EXACT arc-length invariants for a circular arc through 3 control points
    A=start, B=mid, C=end.  Arc length s = r * Theta is transcendental (Theta an
@@ -584,7 +593,7 @@ type arc_inv = ArcDegenerate | ArcInv of Q.t * Q.t * int
    squared circumradius r2, cos Theta0 = (vA.vC)/r2 (vA = A-O, vC = C-O), and a
    major-arc flag (1 iff B and the centre O are on the SAME side of chord AC).
    Pure Q -- no float, no hand-rolled numeric kernel.  Shared by
-   ARC_LENGTH_EXACT (prints the rationals) and ARC_LENGTH (one float step). *)
+   ARC_LENGTH_INVARIANTS_EXACT (prints the rationals) and ARC_LENGTH (one float step). *)
 let arc_invariants_q (a : bPoint) (b : bPoint) (c : bPoint) : arc_inv =
   let ax = qf a.bx and ay = qf a.by_ in
   let bx = qf b.bx and by_ = qf b.by_ in
@@ -619,7 +628,7 @@ let arc_invariants_q (a : bPoint) (b : bPoint) (c : bPoint) : arc_inv =
     ArcInv (r2, cos_full, major)
   end
 
-let run_arc_length_exact () =
+let run_arc_length_invariants_exact () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
   let c = parse_point (input_line stdin) in
@@ -638,7 +647,7 @@ let run_arc_length_exact () =
    exception in docs/oracle-handrolled-allowlist.txt (interface-boundary
    category).  It applies r = sqrt r2 and Theta0 = acos cos to the EXACT
    rational invariants (arc_invariants_q), so it rounds only ONCE past the
-   certified algebra; the certifiable form is ARC_LENGTH_EXACT. *)
+   certified algebra; the certifiable form is ARC_LENGTH_INVARIANTS_EXACT. *)
 let run_arc_length () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -652,6 +661,53 @@ let run_arc_length () =
         let t0 = acos (Q.to_float cos_full) in
         let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
         Printf.printf "%h\n" (r *. theta)
+
+(* ----- ARC_SHORTER mode (issue #64) -- EXACT arc-length comparison. ------ *)
+
+(* Which of two arcs is shorter?  Arc length r*Theta is transcendental, but
+   COMPARING two arc lengths is EXACTLY decidable when the radii are equal:
+   shorter <=> smaller Theta, and Theta's order is a rational decision on
+   (cos Theta0, major-arc flag) from arc_invariants_q -- a minor arc (Theta<=pi)
+   is shorter than any major arc (Theta>=pi), and within one class the order is
+   a sign-compare of cos Theta0 (acos is monotone decreasing: minor Theta grows
+   as cos falls; major Theta = 2pi - acos grows as cos rises).  The two classes
+   meet only at Theta=pi (cos=-1), the single equality bridge.
+
+   When the radii differ, r1*Theta1 vs r2*Theta2 is genuinely transcendental
+   (no exact rational verdict), so the mode honestly reports TRANSCENDENTAL --
+   exactly the point of an honest EXACT oracle: it decides the comparison where
+   the polynomial layer suffices and declines (rather than rounds) where it does
+   not.  All arithmetic is exact zarith Q -- no float, no hand-rolled kernel.
+
+   Input:  lines 2..7 = arc1 (start, mid, end), arc2 (start, mid, end).
+   Output: verdict for arc1 vs arc2 -- SHORTER | EQUAL | LONGER |
+           TRANSCENDENTAL (radii differ) | DEGENERATE (collinear) | NAN. *)
+let run_arc_shorter () =
+  let a1 = parse_point (input_line stdin) in
+  let b1 = parse_point (input_line stdin) in
+  let c1 = parse_point (input_line stdin) in
+  let a2 = parse_point (input_line stdin) in
+  let b2 = parse_point (input_line stdin) in
+  let c2 = parse_point (input_line stdin) in
+  if not (List.for_all finite_bpoint [a1; b1; c1; a2; b2; c2])
+  then print_endline "NAN"
+  else match arc_invariants_q a1 b1 c1, arc_invariants_q a2 b2 c2 with
+    | ArcDegenerate, _ | _, ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (r2a, ca, ma), ArcInv (r2b, cb, mb) ->
+        if not (qeq r2a r2b) then print_endline "TRANSCENDENTAL"
+        else begin
+          let qm1 = Q.of_int (-1) in
+          (* Theta-order key: <0 iff arc1 is shorter (equal radius). *)
+          let cmp =
+            if ma = mb then
+              (if ma = 0 then Q.compare cb ca   (* minor: Theta ~ -cos *)
+               else Q.compare ca cb)            (* major: Theta ~ +cos *)
+            else if qeq ca qm1 && qeq cb qm1 then 0  (* both Theta=pi *)
+            else compare ma mb                  (* minor (0) shorter than major (1) *)
+          in
+          print_endline
+            (if cmp < 0 then "SHORTER" else if cmp > 0 then "LONGER" else "EQUAL")
+        end
 
 (* ----- HOLE_PRECISION_AUDIT mode (JTS#979 hunter oracle). ---------------- *)
 
@@ -880,8 +936,9 @@ let () =
        | "HOLES_SURVIVE_PRECISION"       -> run_holes_survive_precision ()
        | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
        | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
-       | "ARC_LENGTH_EXACT"              -> run_arc_length_exact ()
+       | "ARC_LENGTH_INVARIANTS_EXACT"              -> run_arc_length_invariants_exact ()
        | "ARC_LENGTH"                    -> run_arc_length ()
+       | "ARC_SHORTER"                   -> run_arc_shorter ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()

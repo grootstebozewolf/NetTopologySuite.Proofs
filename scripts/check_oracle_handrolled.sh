@@ -83,9 +83,14 @@ awk '
     fn = substr(l, RSTART, RLENGTH)
   }
   {
-    if ($0 ~ /[+*/-]\./ \
-        || $0 ~ /(\<cos\>|\<sin\>|\<tan\>|\<sqrt\>|\<atan2?\>|\<exp\>|\<log\>|Float\.(min|max|abs|is_finite|is_nan))/)
-      hit = 1
+    # Float binary64 operators (+. -. *. /.) via POSIX index() -- avoids a
+    # "/" inside a regex char class, which BSD/one-true-awk (the macOS CI
+    # runner) rejects as a "nonterminated character class".
+    if (index($0,"+.") || index($0,"-.") || index($0,"*.") || index($0,"/.")) hit = 1
+    # Float math calls as whole words.  Portable word boundaries via explicit
+    # non-identifier neighbours, not the GNU \< \> boundaries (BSD awk lacks them).
+    if ($0 ~ /(^|[^A-Za-z0-9_])(acos|asin|atan2|atan|cos|sin|tan|sqrt|exp|log)([^A-Za-z0-9_]|$)/) hit = 1
+    if ($0 ~ /Float\.(min|max|abs|is_finite|is_nan)/) hit = 1
   }
   END { if (fn != "" && hit) print fn }
 ' "$CODE" | sort -u > "$DETECTED"

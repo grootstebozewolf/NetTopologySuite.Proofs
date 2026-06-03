@@ -73,7 +73,7 @@
 # Arc length is transcendental, so it has NO Coq-extractable form (Flocq has
 # no Batan2/Bacos); the float IS the differential-test interface.  The kernel
 # applies sqrt/acos to the EXACT rational invariants of arc_invariants_q (the
-# certifiable ARC_LENGTH_EXACT mode: r2, cos Theta0, major-arc flag), so it
+# certifiable ARC_LENGTH_INVARIANTS_EXACT mode: r2, cos Theta0, major-arc flag), so it
 # rounds only ONCE past certified algebra (theories/ArcLength.chord_subtended_sq,
 # theories/AngleBetween.cos_angle_between).
 run_arc_length
