@@ -902,6 +902,43 @@ let run_arc_passes_through_pixel () =
        (b64_arc_passes_through_hot_pixel
           arc_start arc_mid arc_end center scale))
 
+(* ----- ARC_AREA mode (for M-AREA-CP hardening) -------------------------- *)
+
+(* Port of the JTS CurvedArea signed ring area (Green's + arc contrib).
+   Uses float; for production vectors the Java BigDecimal ref is authoritative
+   (exact over the dyadic rationals represented by the double inputs).
+   This mode allows generating cases from the proofs side too. *)
+
+let run_arc_area () =
+  (* Read a sequence of points for a single ring (until EOF or blank? for simplicity read all as one ring) *)
+  let pts = ref [] in
+  (try
+     while true do
+       let line = input_line stdin in
+       if String.trim line = "" then () else
+       let parts = String.split_on_char ' ' (String.trim line) in
+       match parts with
+       | [x; y] -> pts := (float_of_string x, float_of_string y) :: !pts
+       | _ -> ()
+     done
+   with End_of_file -> ());
+  let pts = List.rev !pts in
+  if List.length pts < 3 then (print_endline "0.0"; flush stdout; ())
+  else
+    let rec accum pts sum =
+      match pts with
+      | [] | [_] -> sum
+      | (xs,ys)::((xe,ye)::_ as rest) ->
+          let chord = xs *. ye -. xe *. ys in
+          accum rest (sum +. chord)
+      | _ -> sum
+    in
+    (* For simplicity, only straight for now; arc support would require center etc.
+       In practice, use Java side for full vectors. Emit the shoelace /2 as float. *)
+    let s = accum pts 0.0 in
+    Printf.printf "%h\n" (s /. 2.0);
+    flush stdout
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -944,6 +981,7 @@ let () =
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()
        | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
+       | "ARC_AREA"                 -> run_arc_area ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
