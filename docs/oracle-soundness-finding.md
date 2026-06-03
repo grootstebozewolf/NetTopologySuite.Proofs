@@ -169,3 +169,33 @@ the composite comparison inward — the ulp-band the 217,728-case probe (and 18M
 random) never broke, but which monotonicity cannot rule out. Closing it needs
 that deep argument (or a measure-~2⁻¹⁰⁴ counterexample search). **No `Admitted`
 was left in the corpus**; C2 remains an open, strongly-evidenced obligation.
+
+## Half-open compute filter is NOT complete (2026-06-03, adversarial-test finding)
+
+The closed rounded filter is a **complete over-approximation**: it only ever
+*over*-accepts (C2 completeness, `spec ⇒ compute`, 0 violations in 18M). The
+**half-open** rounded filter (`b64_..._halfopen_compute`) is different — it can
+**under**-accept (DROP a real pass). The adversarial sweep in
+`oracle/gen_adversarial_tests.sh` (§D) found 224/2401 grid cases where the
+exact half-open spec is TRUE but the rounded half-open compute is FALSE, e.g.
+
+```
+P0 = (-1, 0.5)   P1 = (1, 0x1.fffffffffffffp-2 = 0.5−ulp)   C = (0, 0)
+HALFOPEN_EXACT = TRUE     (exact-rational spec; corroborated by PASSES_THROUGH_HALFOPEN_EXACT)
+HALFOPEN        = FALSE   (rounded compute / oracle)
+```
+
+Cause: the half-open predicate's *strict* upper-edge midpoint checks
+(`Rlt_bool xmid xhi`, `ymid yhi`) are evaluated with rounding; for a segment
+grazing the **open** top/right edge the rounded midpoint rounds **up onto the
+excluded boundary**, so the strict `<` fails and the filter rejects a pass the
+exact geometry accepts. (The closed filter uses `<=`, so the analogous rounding
+only ever *includes* more — hence over-, never under-acceptance.)
+
+**Noder relevance.** Dropping a crossing is the *unsafe* direction for a
+snap-rounding noder. A noder should therefore use the **closed** filter
+(`PASSES_THROUGH_FILTER`, conservative/complete) for the "never miss a pass"
+guarantee; the half-open mode's strict-edge rounding makes it unsafe near the
+open boundary. The two proven bracket invariants still hold unconditionally
+(`HALFOPEN ⇒ FILTER`, `HALFOPEN_EXACT ⇒ EXACT`), so the closed filter always
+fires whenever the half-open one does.
