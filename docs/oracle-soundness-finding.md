@@ -254,3 +254,21 @@ primitive is the **exact R-spec** (`b64_passes_through_hot_pixel`), which is
 symmetric and sound by construction; the rounded compute filter is now
 machine-checked to be simultaneously unsound (over-accepts), incomplete
 (half-open under-accepts), and order-dependent.
+
+**Green companion (Qed).** That the exact R-spec actually *has* the symmetry
+the rounded filter loses is itself machine-checked in
+`theories-flocq/PassesThrough_b64_spec_symmetric.v`:
+
+```coq
+Theorem b64_passes_through_hot_pixel_symmetric : forall P0 P1 C : BPoint,
+  b64_passes_through_hot_pixel P0 P1 C = b64_passes_through_hot_pixel P1 P0 C.
+```
+
+Reversal is the reparametrisation `t ↦ 1−t`: with `c1 ≠ c0`,
+`(lo−c1)/(c0−c1) = 1 − (lo−c0)/(c1−c0)`, so the per-axis bounds swap as
+`lb_tlo c1 c0 = 1 − lb_thi c0 c1` and `lb_thi c1 c0 = 1 − lb_tlo c0 c1`, the
+`max 0 … ≤ min 1 …` clip test is invariant, and the slab guard is visibly
+symmetric. No rounding enters the R-spec, so the symmetry is exact. Same
+statement shape as the `_compute` asymmetry counterexample, opposite (correct)
+verdict — the RGR pair pins precisely what a robust noder must use: the exact
+spec, not the rounded filter.
