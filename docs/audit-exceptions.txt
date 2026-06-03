@@ -113,6 +113,16 @@ theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
 # `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
 theories-flocq/PassesThrough_b64_compute_asymmetric.v
 
+# Category C (R-side, distinct lineage): issue #64 Option-A atan2 foundation.
+# Unlike every other entry here (which pull `classic` through Flocq float ops),
+# this is a pure-Stdlib theories/ file: `classic` enters via Stdlib's `Ratan`
+# development (the `atan` function itself -- verified: `atan_0` pulls classic
+# while `cos_0`/`sqrt_1` do not).  Any atan2-based angle/arc-length proof
+# inherits it; this is the intrinsic axiom cost of the JTS-faithful atan2
+# representation chosen for #64 (the implicit sin/cos representation would have
+# stayed at 3 axioms).  No Admitteds; cos_atan2 / sin_atan2 Qed-closed.
+theories/Atan2.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.

@@ -25,6 +25,12 @@ theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
+# Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
+# on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
+# cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
+# Stdlib (no new deps) but pulls Classical_Prop.classic via Stdlib `atan`
+# (cos/sin/sqrt stay clean) -- see docs/audit-exceptions.txt.  No Admitted.
+theories/Atan2.v
 # Phase 3 milestone 1: foundational definitions for the overlay correctness
 # theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
 # point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +

@@ -124,8 +124,13 @@ exact R-spec, not the rounded compute filter.
 | `ArcChordApprox.v : sagitta_le_arc_radius` | Chord-vs-arc deviation bounded by the radius `[exact]` | 3 |
 | `ArcIntersectIVT.v : chord_crosses_arc_circle_implies_circle_intersection` | Sign change of in-circle along a chord ⇒ real crossing (IVT) `[exact]` | 3 |
 | `ArcOverlay.v : arc_overlay_correct_chord_approx` | **Conditional headline:** result point within `max_sagitta` of an arc, under 2 bridge hypotheses `[cond]` | 3 |
+| `Atan2.v : cos_atan2` (+`sin_atan2`) | **Option-A foundation (issue #64):** the Stdlib-`Ratan`-built `atan2 y x` is the polar angle of `(x,y)` — `cos = x/r`, `sin = y/r` for `(x,y)≠0` `[exact]` | 4 |
 
 `[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL`.
+**Option-A note (issue #64):** `atan2` work is **4-axiom** — Stdlib's `atan`
+pulls `Classical_Prop.classic` (cos/sin/sqrt stay 3-axiom). This is the cost of
+the JTS-faithful atan2 representation; downstream arc-length/sweep proofs
+inherit it.
 **Caveat:** bridge hypotheses are *boundary* closeness — this backs "chord
 approximation correct to tolerance", **not** "fixes CIRCULARSTRING
 self-intersection".
