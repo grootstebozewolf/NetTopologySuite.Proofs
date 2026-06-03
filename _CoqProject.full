@@ -31,6 +31,13 @@ theories/Azimuth.v
 # Stdlib (no new deps) but pulls Classical_Prop.classic via Stdlib `atan`
 # (cos/sin/sqrt stay clean) -- see docs/audit-exceptions.txt.  No Admitted.
 theories/Atan2.v
+# Issue #64 / Option-A foundation 2: signed angle between two planar vectors,
+# angle_between u v = atan2 (cross u v) (dot u v) -- the robust atan2-based
+# central-angle/sweep primitive (sign = orientation).  Headlines
+# cos_angle_between / sin_angle_between = dot|cross / (|u||v|) via the Lagrange
+# identity; plus atan2_range (-PI, PI].  Pulls classic via atan (see
+# audit-exceptions).  No Admitted.
+theories/AngleBetween.v
 # Phase 3 milestone 1: foundational definitions for the overlay correctness
 # theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
 # point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +
