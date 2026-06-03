@@ -1098,6 +1098,20 @@ let run_curve_snap_invariants_exact () =
           (Q.to_string ox) (Q.to_string oy) (Q.to_string r2)
           (if centre_on_grid scale ox oy then 1 else 0)
 
+(* ----- SNAP_SCALED mode (extracted, exactness-backed). ------------------- *)
+
+(* Direct extract of `b64_snap_coord_scaled` from SnapRoundingScale_b64.v:
+   snap to the grid of spacing 1/scale via round(x*scale)/scale.  Proven
+   (`b64_snap_coord_scaled_B2R`) to compute the R-side `snap_round_coord`
+   EXACTLY when scale is a power of two -- the C1 power-of-two generalisation
+   of the unit-grid `b64_snap_coord`.  Input: the scale (binary64), then a
+   point P; output the snapped point. *)
+let run_snap_scaled () =
+  let scale = float_of_string (String.trim (input_line stdin)) in
+  let p     = parse_point (input_line stdin) in
+  print_point { bx  = b64_snap_coord_scaled p.bx  scale;
+                by_ = b64_snap_coord_scaled p.by_ scale }
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -1144,6 +1158,7 @@ let () =
        | "ARC_AREA"                 -> run_arc_area ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
+       | "SNAP_SCALED"                  -> run_snap_scaled ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()

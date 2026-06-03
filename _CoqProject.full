@@ -318,6 +318,16 @@ theories-flocq/HotPixel_b64.v
 # through a hot pixel still does so after snapping), on both the R-side spec
 # and binary64.  Builds on HotPixel_b64's passes-through relation and snap.
 theories-flocq/SnapRounding_b64.v
+# C1 division-rounding core: division-by-power-of-two is exact, the
+# load-bearing fact for generalising snap rounding from the unit grid
+# (SnapRounding_b64, scale = 1) to a power-of-two grid spacing 1/scale.
+# Depends only on the exactness substrate (Orient_b64_exact, B64_bridge).
+theories-flocq/DivRoundPow2_b64.v
+# C1 scaled snap bridge: the power-of-two binary64 coordinate snap
+# (b64_snap_coord_scaled) and its exact bridge to the R-side snap_round_coord.
+# Composes DivRoundPow2's mult/div pow2 exactness around the unit-grid integer
+# rounding.  Depends on HotPixel_b64 + DivRoundPow2_b64.
+theories-flocq/SnapRoundingScale_b64.v
 # Phase 2 milestone 4 (Slice 13): topological correctness of snap-rounding.
 # Shared-hot-pixel preservation (the provable local kernel of the audit doc's
 # share_point => shared-vertex conjunct) on the R-side and binary64, plus a

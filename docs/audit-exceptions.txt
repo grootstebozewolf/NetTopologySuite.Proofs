@@ -36,6 +36,24 @@ theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
+# Category C: C1 division-rounding core (division-by-power-of-two is exact).
+# `b64_div_pow2_exact` and its helpers state results about `b64_div` (Flocq's
+# `Bdiv`), `Binary.B2R` and `Binary.is_finite`, whose definition closure
+# carries `Classical_Prop.classic` -- the SAME b64-arithmetic lineage that
+# exempts Orient_b64_exact.v / B64_bridge.v above (those reference
+# Bplus/Bminus/Bmult).  No Admitteds in this file; the three lemmas
+# (div_bpow_eq_mult_bpow_neg, generic_format_IZR_mult_bpow_neg,
+# b64_div_pow2_exact) are Qed-closed.  Removable once the parametric-
+# architecture refactor reaches the binary64 arithmetic primitives.
+theories-flocq/DivRoundPow2_b64.v
+
+# Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
+# result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
+# `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
+# same snap-layer / b64-arithmetic lineage that exempts SnapRounding_b64.v
+# and HotPixel_b64.v above.  No Admitteds; the bridge is Qed-closed.
+theories-flocq/SnapRoundingScale_b64.v
+
 # Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
 # Every theorem here references `snap_round` / `b64_snap` /
 # `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements

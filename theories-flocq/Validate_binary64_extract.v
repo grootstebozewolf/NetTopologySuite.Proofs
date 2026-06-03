@@ -48,6 +48,7 @@ From NTS.Proofs.Flocq Require Import B64_Pff_bridge.        (* b64_TwoSum *)
 From NTS.Proofs.Flocq Require Import B64_FastExpansionSum.  (* b64_grow_expansion_aux *)
 From NTS.Proofs.Flocq Require Import ArcCircle_b64_compute.  (* b64_chord_crosses_arc_circle *)
 From NTS.Proofs.Flocq Require Import ArcPixel_b64_compute.   (* b64_arc_passes_through_hot_pixel *)
+From NTS.Proofs.Flocq Require Import SnapRoundingScale_b64.  (* b64_snap_coord_scaled (C1 power-of-two grid) *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -161,4 +162,5 @@ Extraction "oracle/extracted.ml"
   b64_chord_crosses_arc_circle
   b64_arc_passes_through_hot_pixel
   b64_TwoSum
-  b64_grow_expansion_aux.
+  b64_grow_expansion_aux
+  b64_snap_coord_scaled.
