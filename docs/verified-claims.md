@@ -102,6 +102,14 @@ exact R-spec, not the rounded compute filter.
 **Open:** `hobby_lemma_4_3_no_proper` (registered deferred). Cite as
 "conditional headline", not "Hobby's theorem proved".
 
+`[oracle]` `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (PRC-SN,
+JTS#1195): exact-`Q` curve-snap grid-friendliness — snap the three arc control
+points to a 1/scale grid (`q_make_precise`), then `PRESERVE` the arc iff the
+snapped circumcentre lands on the grid, else `DENSIFY` (`DEGEN` if the snapped
+controls go collinear). Exact `Q` catches the double-rounding the JTS binary64
+centre computation hides on large / sub-grid coordinates. Reuses the
+snap-rounding machinery; pure rational, no transcendental and no new axiom.
+
 ## Phase 3 — Planar overlay (OverlayNG)
 
 | `file : theorem` | Meaning | Ax |

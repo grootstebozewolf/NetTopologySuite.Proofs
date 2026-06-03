@@ -209,6 +209,19 @@
         line 2..4:    arc_start, arc_mid, arc_end.
         output:       single "%h" double; "DEGENERATE" / "NAN".
 
+     CURVE_SNAP_DECISION -- EXACT curve-snap grid-friendly decision (PRC-SN,
+                      JTS#1195, proofs#66).  Snap the 3 arc controls to a
+                      1/scale grid (exact Q) and decide keep-vs-densify.
+        line 2:       <scale>   (integer grid factor)
+        line 3..5:    arc_start, arc_mid, arc_end.
+        output:       PRESERVE (snapped circumcentre lands on the grid) |
+                      DENSIFY (it does not) | DEGEN (snapped controls collinear)
+                      | NAN.  Pure zarith Q -- ratchet-clean.
+
+     CURVE_SNAP_INVARIANTS_EXACT -- same input; output the exact snapped
+                      circumcentre + radius "<ox> <oy> <r2> <0|1>" (last =
+                      centre-on-grid flag), or DEGEN / NAN.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -750,6 +763,29 @@ let q_make_precise (scale : int) (q : Q.t) : Q.t =
   let s = Q.add (Q.mul q (Q.of_int scale)) (Q.of_ints 1 2) in
   Q.div (Q.of_bigint (BigZ.fdiv (Q.num s) (Q.den s))) (Q.of_int scale)
 
+(* Exact circumcentre (ox, oy) and squared radius r2 of three points given as
+   exact rationals; None when the three are collinear (d = 0).  Same algebra as
+   arc_invariants_q's centre step, on raw Q tuples, for the CURVE_SNAP_* modes. *)
+let circumcentre_q (ax, ay) (bx, by) (cx, cy) =
+  let d = Q.mul (Q.of_int 2)
+    (Q.add (Q.add (Q.mul ax (Q.sub by cy)) (Q.mul bx (Q.sub cy ay)))
+           (Q.mul cx (Q.sub ay by))) in
+  if qeq d q0 then None
+  else begin
+    let na = Q.add (Q.mul ax ax) (Q.mul ay ay) in
+    let nb = Q.add (Q.mul bx bx) (Q.mul by by) in
+    let nc = Q.add (Q.mul cx cx) (Q.mul cy cy) in
+    let ox = Q.div
+      (Q.add (Q.add (Q.mul na (Q.sub by cy)) (Q.mul nb (Q.sub cy ay)))
+             (Q.mul nc (Q.sub ay by))) d in
+    let oy = Q.div
+      (Q.add (Q.add (Q.mul na (Q.sub cx bx)) (Q.mul nb (Q.sub ax cx)))
+             (Q.mul nc (Q.sub bx ax))) d in
+    let r2 = Q.add (Q.mul (Q.sub ax ox) (Q.sub ax ox))
+                   (Q.mul (Q.sub ay oy) (Q.sub ay oy)) in
+    Some (ox, oy, r2)
+  end
+
 (* twice the signed area of the ring (shoelace); only its sign is used. *)
 let ring_area2 (xs : Q.t array) (ys : Q.t array) : Q.t =
   let n = Array.length xs in
@@ -966,6 +1002,64 @@ let run_arc_area () =
         let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
         Printf.printf "%h\n" (r2f /. 2.0 *. (theta -. sin theta))
 
+(* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
+   proofs#66). ---------------------------------------------------------------
+
+   Reduce the precision of a circular arc by snapping its 3 control points to a
+   1/scale grid (exact Q via q_make_precise), then decide whether the snapped
+   arc can be kept (PRESERVE) or must be DENSIFYd to a polyline.  JTS's
+   isGridFriendly keeps the arc iff the circumcentre of the SNAPPED controls is
+   itself on the grid; doing it in exact Q catches the double-rounding loss that
+   JTS's binary64 centre computation hides on large / sub-grid coordinates.
+   No transcendentals and no float -- a single EXACT mode, ratchet-clean (no
+   interface-boundary float needed, unlike ARC_LENGTH/ARC_AREA).  (Replaces the
+   main 9235847 stub that always emitted PRESERVE.)
+
+   Input (both modes):  line 2 = <scale> (int), lines 3..5 = A, B, C.
+   CURVE_SNAP_DECISION         -> PRESERVE | DENSIFY | DEGEN | NAN.
+   CURVE_SNAP_INVARIANTS_EXACT -> "<ox> <oy> <r2> <centre_on_grid 0|1>" (exact
+     rationals of the snapped circumcentre + flag), or DEGEN / NAN.  r2 is
+     emitted so a consumer can apply its own grid-radius test (r is a grid
+     multiple iff r2*scale^2 is a perfect square) without that test gating the
+     verdict here -- parity with the JTS reference, which keys on the centre. *)
+
+let snap_controls scale a b c =
+  let snap p = (q_make_precise scale (qf p.bx), q_make_precise scale (qf p.by_)) in
+  (snap a, snap b, snap c)
+
+let centre_on_grid scale ox oy =
+  qeq (q_make_precise scale ox) ox && qeq (q_make_precise scale oy) oy
+
+let run_curve_snap_decision () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else
+    let (sa, sb, sc) = snap_controls scale a b c in
+    match circumcentre_q sa sb sc with
+    | None -> print_endline "DEGEN"
+    | Some (ox, oy, _r2) ->
+        print_endline (if centre_on_grid scale ox oy then "PRESERVE" else "DENSIFY")
+
+let run_curve_snap_invariants_exact () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else
+    let (sa, sb, sc) = snap_controls scale a b c in
+    match circumcentre_q sa sb sc with
+    | None -> print_endline "DEGEN"
+    | Some (ox, oy, r2) ->
+        Printf.printf "%s %s %s %d\n"
+          (Q.to_string ox) (Q.to_string oy) (Q.to_string r2)
+          (if centre_on_grid scale ox oy then 1 else 0)
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -1010,20 +1104,8 @@ let () =
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()
-       (* PRC-SN / #66 continuation: snap decision for curve arcs (grid-friendly centre/r
-          after control snap). See JTS CurveSnapRefRunner + curve_snap_vectors.txt.
-          When implemented (reusing b64_snap + exact Q circum from Arc* theories or handrolled
-          like passes_through_exact_q), input:
-            CURVE_SNAP_DECISION
-            <scale>
-            x0 y0
-            x1 y1
-            x2 y2
-          Output: PRESERVE | DENSIFY | DEGEN | NAN
-          Use exact snap (b64_snap or scale-round Q) + exact circum to decide vs JTS double.
-          Add run_curve_snap_decision () and wire here.
-       *)
-       | "CURVE_SNAP_DECISION"      -> print_endline "PRESERVE" (* stub; replace with impl + rebuild *)
+       | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
+       | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
