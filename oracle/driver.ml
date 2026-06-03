@@ -575,6 +575,41 @@ let run_hole_precision_audit () =
   let ysp = Array.map (q_make_precise scale) ys in
   Printf.printf "%s %s\n" (qsign (ring_area2 xs ys)) (qsign (ring_area2 xsp ysp))
 
+(* ----- HOLES_SURVIVE_PRECISION mode (JTS#979 hole-COUNT oracle). ---------- *)
+
+(* The direct hole-COUNT metric for #979: given a polygon's k hole-rings and a
+   fixed PrecisionModel scale, report how many holes SURVIVE precision
+   reduction -- i.e. whose precision-reduced ring still has nonzero (exact,
+   zarith Q) signed area.  The #979 signature is survived < k (the precision
+   model dropped a hole).  This is the multi-ring count version of
+   HOLE_PRECISION_AUDIT; distance d is irrelevant and not taken.
+
+   Input:  line 2   = scale  (positive integer = fixed PrecisionModel scale)
+           line 3   = k       (number of hole rings)
+           then for each hole:  a line "n_i" (its vertex count), then n_i
+                                vertices "x y".
+   Output: "survived <s> of <k>"  [+ "  collapsed=[i;j;...]" of the dropped
+            hole indices, 0-based]. *)
+
+let run_holes_survive_precision () =
+  let scale = int_of_string (String.trim (input_line stdin)) in
+  let k = int_of_string (String.trim (input_line stdin)) in
+  let survived = ref 0 in
+  let collapsed = ref [] in
+  for h = 0 to k - 1 do
+    let n = int_of_string (String.trim (input_line stdin)) in
+    let pts = Array.init n (fun _ -> parse_point (input_line stdin)) in
+    let xsp = Array.map (fun p -> q_make_precise scale (qf p.bx)) pts in
+    let ysp = Array.map (fun p -> q_make_precise scale (qf p.by_)) pts in
+    if Q.sign (ring_area2 xsp ysp) <> 0 then incr survived
+    else collapsed := h :: !collapsed
+  done;
+  Printf.printf "survived %d of %d" !survived k;
+  (match List.rev !collapsed with
+   | [] -> ()
+   | l -> Printf.printf "  collapsed=[%s]" (String.concat ";" (List.map string_of_int l)));
+  print_newline ()
+
 (* ----- EDGE_IN_RESULT mode (Phase 3, extracted). ------------------------- *)
 
 (* Direct extract of `edge_in_result` from `theories/OverlayGraph.v:375`.
@@ -718,6 +753,7 @@ let () =
        | "PASSES_THROUGH_FILTER"    -> run_passes_through_filter ()
        | "PASSES_THROUGH_HALFOPEN"  -> run_passes_through_halfopen ()
        | "HOLE_PRECISION_AUDIT"          -> run_hole_precision_audit ()
+       | "HOLES_SURVIVE_PRECISION"       -> run_holes_survive_precision ()
        | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
        | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
