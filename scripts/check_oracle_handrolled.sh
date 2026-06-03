@@ -10,15 +10,22 @@
 # hand-written in driver.ml -- code that merely *claims* to mirror an R-side
 # Coq predicate with no machine-checked link -- undermines that guarantee.
 #
-# This is a RATCHET, not a ban: the hand-rolled kernels that exist today are
-# frozen in docs/oracle-handrolled-allowlist.txt and tracked for migration
-# (docs/oracle-handroll-migration.md).  The set may only SHRINK:
+# This is a RATCHET, not a ban: hand-rolled kernels are frozen in
+# docs/oracle-handrolled-allowlist.txt, which defines two categories --
+# TRANSITIONAL (tracked for migration, may only SHRINK) and INTERFACE-BOUNDARY
+# (a sanctioned, permanent exception: a mode whose output is a TRANSCENDENTAL
+# primitive the Java/JTS or C#/NTS implementation computes for differential
+# testing, with no Coq-extractable form -- e.g. ARC_LENGTH's r*theta).  The
+# script enforces "detected == allowlisted"; the category discipline (no new
+# TRANSITIONAL kernels; new INTERFACE-BOUNDARY kernels only with a documented
+# Java/C# justification) is a review rule recorded in the allowlist file.
 #
-#   - A NEW function in driver.ml that does float arithmetic and is not on
-#     the allowlist  -> FAILURE.  No new hand-rolled numeric code.
+#   - A function in driver.ml that does float arithmetic and is not on the
+#     allowlist  -> FAILURE.  Hand-rolled numeric code must be allowlisted
+#     (transitional debt, or a justified interface-boundary entry).
 #   - An allowlist entry that no longer does float arithmetic in driver.ml
 #     (migrated to an extracted call, or removed)  -> FAILURE, asking you to
-#     prune the allowlist.  The count can only go down.
+#     prune the allowlist.
 #
 # "Does float arithmetic" = the function body (comments stripped) contains a
 # binary64 operator (+. -. *. /.) or a float math / Float.* call.  Pure I/O

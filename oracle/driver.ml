@@ -174,6 +174,17 @@
                       + theories/AngleBetween.v (cos_angle_between).  All
                       exact zarith Q -- NOT a hand-rolled float kernel.
 
+     ARC_LENGTH -- the literal float arc length s = r * Theta (issue #64),
+                   the value the JTS/NTS curve implementation computes.
+        line 2..4:    arc_start, arc_mid, arc_end (three BPoints).
+        output:       single "%h" double = sqrt r2 * Theta (Theta from the
+                      ARC_LENGTH_EXACT invariants via one acos); "DEGENERATE"
+                      if collinear; "NAN" if non-finite.
+        INTERFACE-BOUNDARY mode: arc length is transcendental, so it has no
+                      Coq-extractable form; the hand-rolled sqrt/acos is the
+                      sanctioned exception (docs/oracle-handrolled-allowlist.txt).
+                      For the certifiable invariants use ARC_LENGTH_EXACT.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -567,46 +578,80 @@ let run_passes_through_halfopen_exact () =
    Output: "<r2> <cos> <0|1>" (r2, cos as exact rationals "num/den");
            "DEGENERATE" if the three control points are collinear (no circle);
            "NAN" if any coordinate is non-finite. *)
+type arc_inv = ArcDegenerate | ArcInv of Q.t * Q.t * int
+
+(* Exact (zarith Q) circular-arc invariants from 3 control points A, B, C:
+   squared circumradius r2, cos Theta0 = (vA.vC)/r2 (vA = A-O, vC = C-O), and a
+   major-arc flag (1 iff B and the centre O are on the SAME side of chord AC).
+   Pure Q -- no float, no hand-rolled numeric kernel.  Shared by
+   ARC_LENGTH_EXACT (prints the rationals) and ARC_LENGTH (one float step). *)
+let arc_invariants_q (a : bPoint) (b : bPoint) (c : bPoint) : arc_inv =
+  let ax = qf a.bx and ay = qf a.by_ in
+  let bx = qf b.bx and by_ = qf b.by_ in
+  let cx = qf c.bx and cy = qf c.by_ in
+  (* d = 2 (ax(by-cy) + bx(cy-ay) + cx(ay-by)); zero iff the points are collinear *)
+  let d = Q.mul (Q.of_int 2)
+    (Q.add (Q.add (Q.mul ax (Q.sub by_ cy)) (Q.mul bx (Q.sub cy ay)))
+           (Q.mul cx (Q.sub ay by_))) in
+  if qeq d q0 then ArcDegenerate
+  else begin
+    let na = Q.add (Q.mul ax ax) (Q.mul ay ay) in
+    let nb = Q.add (Q.mul bx bx) (Q.mul by_ by_) in
+    let nc = Q.add (Q.mul cx cx) (Q.mul cy cy) in
+    let ox = Q.div
+      (Q.add (Q.add (Q.mul na (Q.sub by_ cy)) (Q.mul nb (Q.sub cy ay)))
+             (Q.mul nc (Q.sub ay by_))) d in
+    let oy = Q.div
+      (Q.add (Q.add (Q.mul na (Q.sub cx bx)) (Q.mul nb (Q.sub ax cx)))
+             (Q.mul nc (Q.sub bx ax))) d in
+    let vax = Q.sub ax ox and vay = Q.sub ay oy in
+    let vcx = Q.sub cx ox and vcy = Q.sub cy oy in
+    let r2 = Q.add (Q.mul vax vax) (Q.mul vay vay) in
+    let dot_ac = Q.add (Q.mul vax vcx) (Q.mul vay vcy) in
+    let cos_full = Q.div dot_ac r2 in
+    (* orientation of (A, C, X) = (cx-ax)(Xy-ay) - (cy-ay)(Xx-ax) *)
+    let orient_acx xx xy =
+      Q.sub (Q.mul (Q.sub cx ax) (Q.sub xy ay))
+            (Q.mul (Q.sub cy ay) (Q.sub xx ax)) in
+    let sb = Q.sign (orient_acx bx by_) in
+    let so = Q.sign (orient_acx ox oy) in
+    let major = if so <> 0 && sb = so then 1 else 0 in
+    ArcInv (r2, cos_full, major)
+  end
+
 let run_arc_length_exact () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
   let c = parse_point (input_line stdin) in
   if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
   then print_endline "NAN"
-  else begin
-    let ax = qf a.bx and ay = qf a.by_ in
-    let bx = qf b.bx and by_ = qf b.by_ in
-    let cx = qf c.bx and cy = qf c.by_ in
-    (* d = 2 (ax(by-cy) + bx(cy-ay) + cx(ay-by)); zero iff the points are collinear *)
-    let d = Q.mul (Q.of_int 2)
-      (Q.add (Q.add (Q.mul ax (Q.sub by_ cy)) (Q.mul bx (Q.sub cy ay)))
-             (Q.mul cx (Q.sub ay by_))) in
-    if qeq d q0 then print_endline "DEGENERATE"
-    else begin
-      let na = Q.add (Q.mul ax ax) (Q.mul ay ay) in
-      let nb = Q.add (Q.mul bx bx) (Q.mul by_ by_) in
-      let nc = Q.add (Q.mul cx cx) (Q.mul cy cy) in
-      let ox = Q.div
-        (Q.add (Q.add (Q.mul na (Q.sub by_ cy)) (Q.mul nb (Q.sub cy ay)))
-               (Q.mul nc (Q.sub ay by_))) d in
-      let oy = Q.div
-        (Q.add (Q.add (Q.mul na (Q.sub cx bx)) (Q.mul nb (Q.sub ax cx)))
-               (Q.mul nc (Q.sub bx ax))) d in
-      let vax = Q.sub ax ox and vay = Q.sub ay oy in
-      let vcx = Q.sub cx ox and vcy = Q.sub cy oy in
-      let r2 = Q.add (Q.mul vax vax) (Q.mul vay vay) in
-      let dot_ac = Q.add (Q.mul vax vcx) (Q.mul vay vcy) in
-      let cos_full = Q.div dot_ac r2 in
-      (* orientation of (A, C, X) = (cx-ax)(Xy-ay) - (cy-ay)(Xx-ax) *)
-      let orient_acx xx xy =
-        Q.sub (Q.mul (Q.sub cx ax) (Q.sub xy ay))
-              (Q.mul (Q.sub cy ay) (Q.sub xx ax)) in
-      let sb = Q.sign (orient_acx bx by_) in
-      let so = Q.sign (orient_acx ox oy) in
-      let major = if so <> 0 && sb = so then 1 else 0 in
-      Printf.printf "%s %s %d\n" (Q.to_string r2) (Q.to_string cos_full) major
-    end
-  end
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (r2, cos_full, major) ->
+        Printf.printf "%s %s %d\n" (Q.to_string r2) (Q.to_string cos_full) major
+
+(* ARC_LENGTH: the literal float arc length s = r * Theta -- the value the
+   JTS/NTS curve implementation itself computes (Math.sqrt + Math.acos).  This
+   is an INTERFACE-BOUNDARY mode: arc length is transcendental, so it has NO
+   Coq-extractable form, and the differential test needs the same primitive
+   double the port emits.  The hand-rolled float step here is the sanctioned
+   exception in docs/oracle-handrolled-allowlist.txt (interface-boundary
+   category).  It applies r = sqrt r2 and Theta0 = acos cos to the EXACT
+   rational invariants (arc_invariants_q), so it rounds only ONCE past the
+   certified algebra; the certifiable form is ARC_LENGTH_EXACT. *)
+let run_arc_length () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (r2, cos_full, major) ->
+        let r = sqrt (Q.to_float r2) in
+        let t0 = acos (Q.to_float cos_full) in
+        let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+        Printf.printf "%h\n" (r *. theta)
 
 (* ----- HOLE_PRECISION_AUDIT mode (JTS#979 hunter oracle). ---------------- *)
 
@@ -836,6 +881,7 @@ let () =
        | "PASSES_THROUGH_EXACT"          -> run_passes_through_exact ()
        | "PASSES_THROUGH_HALFOPEN_EXACT" -> run_passes_through_halfopen_exact ()
        | "ARC_LENGTH_EXACT"              -> run_arc_length_exact ()
+       | "ARC_LENGTH"                    -> run_arc_length ()
        | "EDGE_IN_RESULT"           -> run_edge_in_result ()
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()
