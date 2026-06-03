@@ -686,7 +686,16 @@ let run_arc_length () =
     | ArcDegenerate -> print_endline "DEGENERATE"
     | ArcInv (r2, cos_full, major) ->
         let r = sqrt (Q.to_float r2) in
-        let t0 = acos (Q.to_float cos_full) in
+        (* Central half-angle via the EXACT sin^2(θ/2) = (1 − cos)/2 in Q, then
+           asin -- robust for near-flat arcs.  The old acos(to_float cos_full)
+           lost all precision once cos≈1 (large-r / tiny-θ): to_float rounds the
+           tiny 1−cos away and acos near 1 amplifies it, so r·θ dipped BELOW the
+           chord -- violating the proven chord_le_arc_length.  Forming (1−cos)/2
+           in exact Q first (no float cancellation) keeps it sound, and
+           asin(s) ≥ s gives arc = 2r·asin(s) ≥ 2r·s = chord.  Mirrors
+           theories/ArcLength.chord_subtended_sq. *)
+        let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+        let t0 = 2.0 *. asin s in
         let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
         Printf.printf "%h\n" (r *. theta)
 
