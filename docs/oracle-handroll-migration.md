@@ -63,7 +63,10 @@ boundary-stressed cases (`oracle/test_pt.ml`); full corpus builds green.
 [`docs/oracle-soundness-finding.md`](oracle-soundness-finding.md):**
 the naive `compute ⇒ spec` bridge is **false** — the rounded `b64_div`
 over-accepts within O(ulp) of tangency (oracle-confirmed counterexample;
-4916/8M adversarial). The provable, useful obligations are instead
+4916/8M adversarial; now **Qed-machine-checked** as
+`b64_passes_through_compute_unsound` in
+`theories-flocq/PassesThrough_b64_compute_unsound.v`). The provable, useful
+obligations are instead
 **(C1)** grid exactness (`compute = spec` on integer/half-integer coords;
 5M cases, 0 divergence) and **(C2)** completeness (`spec ⇒ compute`; 18M
 cases, 0 violations) — the latter gives oracle completeness vs geometry

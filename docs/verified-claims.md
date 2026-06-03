@@ -80,14 +80,19 @@ diffed against (JTS #1106).
 | `HotPixel_b64.v : b64_passes_through_complete` | **Closed filter complete:** a real (half-open) pass ⇒ the bool fires `[exact]` | 4 |
 | `HotPixel.v : in_hot_pixel_convex` | Half-open hot pixel is convex: both endpoints in ⇒ whole segment in `[exact]` | 3 |
 | `HotPixelConvex_b64.v : b64_both_endpoints_in_pixel_whole_segment` | Same, lifted to b64-bridged points — the rounding-free endpoint route `[exact]` | 4 |
+| `PassesThrough_b64_compute_unsound.v : b64_passes_through_compute_unsound` | **Honest negative:** the *rounded* compute filter is NOT sound vs the exact spec — a witness with `compute = true`, `spec = false` (sub-ulp over-accept) `[exact]` | 4 |
+| `PassesThroughHalfopen_b64_compute_unsound.v : b64_passes_through_halfopen_compute_unsound` | Same honest negative for the **half-open** mode (`PASSES_THROUGH_HALFOPEN`): rounded half-open filter unsound vs its exact spec `[exact]` | 4 |
 
-`[oracle]` `PASSES_THROUGH_FILTER`/`PASSES_THROUGH_HALFOPEN`. The two rows
-above pin the **closed** filter, sound *and* complete vs the closed hot-pixel
+`[oracle]` `PASSES_THROUGH_FILTER`/`PASSES_THROUGH_HALFOPEN`. The closed-filter
+rows pin the **closed** filter, sound *and* complete vs the closed hot-pixel
 R-spec at unit grid (the half-open predicate is strictly stronger:
 `b64_..._halfopen_implies_closed`). These characterise the R-spec predicate;
 the extracted oracle runs the bit-exact computational mirror
-(`PassesThrough_b64_compute.v`, validated bit-for-bit), with the
-`compute ⇒ spec` rounding bridge the one open obligation.
+(`PassesThrough_b64_compute.v`, validated bit-for-bit). The naive
+`compute ⇒ spec` rounding bridge is **machine-checked false** (the last row;
+`docs/oracle-soundness-finding.md`); the provable, useful directions are grid
+exactness (C1) and completeness `spec ⇒ compute` (C2), both strongly evidenced
+and open.
 **Open:** `hobby_lemma_4_3_no_proper` (registered deferred). Cite as
 "conditional headline", not "Hobby's theorem proved".
 

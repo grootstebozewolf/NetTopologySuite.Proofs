@@ -76,6 +76,29 @@ theories-flocq/HobbyTheorem_b64.v
 # Qed-closed.
 theories-flocq/PassesThroughHalfopen_b64.v
 
+# Category C: machine-checked soundness counterexample for the rounded compute
+# filter.  The theorem statement references `b64_liang_barsky_touches` /
+# `b64_passes_through_hot_pixel` (the R-spec, defined in HotPixel_b64.v),
+# pulling `Classical_Prop.classic` through the same Liang-Barsky
+# `Rle_bool`/`Req_dec_T` + Flocq `B2R` lineage that exempts HotPixel_b64.v.
+# Not removable without a parametric refactor of the spec layer.  No
+# Admitteds; the counterexample theorem is Qed-closed.
+theories-flocq/PassesThrough_b64_compute_unsound.v
+
+# Category C: compute-level half-open => closed refinement.  Pure boolean
+# structural lemmas, but their statements reference the compute predicates
+# (`b64_liang_barsky_touches_compute` etc.), whose definition closure threads
+# `b64_div` / `Binary.Bdiv` and so pulls `Classical_Prop.classic` -- the same
+# Flocq-float lineage that exempts the other b64 files.  No Admitteds; the
+# refinement theorem is Qed-closed.
+theories-flocq/PassesThrough_b64_compute_refine.v
+
+# Category C: machine-checked half-open soundness counterexample.  Same
+# lineage as PassesThrough_b64_compute_unsound.v -- references the half-open
+# R-spec `b64_liang_barsky_touches_halfopen` (Liang-Barsky `Rle_bool` + Flocq
+# `B2R`), so pulls `Classical_Prop.classic`.  No Admitteds; Qed-closed.
+theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.
