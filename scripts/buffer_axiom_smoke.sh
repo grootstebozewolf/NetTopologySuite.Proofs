@@ -55,6 +55,7 @@ ROWS=(
   "BufferEndcap|square_cap_corner_dist_sq|3"
   "BufferAssembly|assemble_closed_closed|3"
   "BufferCorrectness|buffer_correct_conditional|3"
+  "RingExtract|face_walk_core|0"
 )
 
 # Axiom-name lines have a module-qualified name then a colon, e.g.

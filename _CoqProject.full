@@ -134,6 +134,13 @@ theories/OverlayGraph.v
 # + extractor, composing the overlay graph spine.  Plus buffer_contains_input
 # and buffer_spec_monotone.  Pure-R, three-axiom footprint.  No Admitted.
 theories/BufferCorrectness.v
+# extract_rings_valid R1+R2 (docs/extract-rings-proof-structure.md): the
+# combinatorial core of ring assembly, grounded in BufferAssembly's closed
+# chains.  ring_of_chain (face walk -> ring); face_walk_closed /
+# face_walk_min_points / ring_edges_of_closed_chain / face_walk_core
+# (closure + min-points + edge fidelity).  Axiom-free (pure combinatorics).
+# No Admitted.  ring_simple / hole_inside_outer (analytic shell) not here.
+theories/RingExtract.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,

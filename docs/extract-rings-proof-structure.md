@@ -163,8 +163,22 @@ without waiting on the fully-general DCEL + JCT.
 
 | # | Slice | Ends in | Risk |
 |---|---|---|---|
-| R1 | Half-edge / dart layer + cyclic `next` via `turn_sign`; `face_of` orbit definition. | defs + `face_orbit_finite` (Qed) | low |
-| R2 | `face_walk_closed`, `face_walk_min_points` (combinatorial, by orbit induction). | Qed | low-med |
+| R1 | Half-edge / dart layer + cyclic `next` via `turn_sign`; `face_of` orbit definition. | **✅ refined + LANDED** `theories/RingExtract.v` | low |
+| R2 | `face_walk_closed`, `face_walk_min_points` (combinatorial, by orbit induction). | **✅ LANDED (Qed, axiom-free)** | low-med |
+
+> **R1+R2 landed (`theories/RingExtract.v`, axiom-free).** Refinement: a
+> *face walk is a closed chain of edges*, and `BufferAssembly` already
+> produces such chains as concrete finite lists — so we take the face walk
+> as a `closed_chain` (finite by construction, sidestepping the
+> `face_orbit_finite` crux of §9) and extract its ring directly.
+> `ring_of_chain` maps a chain to a `Ring`; `face_walk_closed` gives
+> `ring_closed`; `face_walk_min_points` gives `ring_has_minimum_points` for
+> ≥3 segments; `ring_edges_of_closed_chain` proves the ring's edges are
+> **exactly** the chain (the faithful assembly↔ring bridge); `face_walk_core`
+> bundles the three. This is the §6 buffer beachhead's combinatorial core.
+> **Still open in R1:** ordering an *unordered* overlay edge set into chains
+> (the dart/`next`/`turn_sign` assembly) — needed for the general (non-buffer)
+> case. **Still the analytic shell (§4):** `ring_simple`, `hole_inside_outer`.
 | R3 | `bounded_face_in_bounded_component` — discrete reachability ↔ `PointInRingTangents.in_bounded_component`. | Qed | **med** (the heuristic's invariant) |
 | R4 | Euler / face-count `V-E+F` relation; #bounded faces = heuristic component count (oracle bridge). | Qed + differential test | med |
 | R5 | Re-define `extract` (or `extract_buffer`) to emit face-walk rings + nesting tree. | defs | low |
