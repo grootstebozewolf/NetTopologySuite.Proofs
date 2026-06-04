@@ -411,8 +411,11 @@ defers the thesis-scale geometry.
    `atan2_pos_scale`. **Miter-join apex** ✅ **LANDED (Qed),
    `theories/BufferMiter.v`** — `miter_apex` (Cramer's-rule intersection
    of the two offset lines) with `miter_apex_on_both_offsets` proving it
-   sits at perpendicular distance `d` from *both* edge lines (JTS#180).
-   Still open in S3: the miter-limit cap wiring
+   sits at perpendicular distance `d` from *both* edge lines (JTS#180);
+   `miter_length_sq` + `miter_within_limit_iff` give the exact,
+   division-free / sqrt-free **miter-limit decision** (apex within cap
+   `L·d` ⟺ scaled offset numerator within `L²·det²`). Still open in S3:
+   the soundness of the cap value `L` vs the half-angle
    (`Azimuth.miter_ratio_le_iff`), the bevel chord, and the
    chord-approxed round-join *edge list*.
 4. **S4 — endcaps.** Flat/square (linear) then round.

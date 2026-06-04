@@ -28,9 +28,13 @@
    Flocq, no `Classical_Prop.classic`).  No `Admitted` / `Axiom` /
    `Parameter`.
 
-   The miter-LIMIT cap that decides miter-vs-bevel (the actual JTS#180
-   fix) is `Azimuth.miter_ratio_le_iff`; wiring the apex's distance to
-   that cap is the next slice and is noted in the design doc.
+   Also proven: `miter_length_sq` (the exact squared miter length, cleared
+   of the determinant denominator) and `miter_within_limit_iff` (the
+   division-free, square-root-free miter-limit decision: the apex is within
+   cap L*d iff the determinant-scaled offset numerator is within
+   L^2*det^2 -- the test JTS's BufferParameters miter limit makes).  The
+   remaining link is the soundness of the cap value L against the corner
+   half-angle (`Azimuth.miter_ratio_le_iff`), noted in the design doc.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -88,6 +92,60 @@ Proof.
   unfold miter_det in Hdet.
   unfold signed_perp_dist, miter_apex, miter_det, vcross. simpl.
   field_simplify_eq; try ring; try (split; assumption).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §2.5  Miter length and the miter-limit cap (JTS#180 decision).             *)
+(* -------------------------------------------------------------------------- *)
+
+(* Exact squared miter length, cleared of the determinant denominator:
+   |V->apex|^2 * det^2 = d^2 * ((|u| w - |w| u) cross-free squared norm).
+   Carrying det^2 on the left keeps this a pure polynomial identity in the
+   opaque atoms vmag u, vmag w (no sqrt expansion needed). *)
+Theorem miter_length_sq : forall V u w d,
+  miter_det u w <> 0 ->
+  dist_sq V (miter_apex V u w d) * (miter_det u w) ^ 2
+  = d ^ 2 * ((vmag u * vx w - vmag w * vx u) ^ 2
+             + (vmag u * vy w - vmag w * vy u) ^ 2).
+Proof.
+  intros V u w d Hdet.
+  unfold dist_sq, miter_apex. simpl.
+  field_simplify_eq; [ ring | exact Hdet ].
+Qed.
+
+(* The miter-limit decision, exactly.  For a positive buffer distance, the
+   miter apex is within the cap L*d of the corner iff the determinant-scaled
+   squared offset numerator is within L^2 * det^2.  This is the
+   division-free, square-root-free form of "miter ratio <= L" that
+   JTS's BufferParameters miter-limit test decides.  (Soundness of the cap
+   value L vs the half-angle is the remaining link to
+   Azimuth.miter_ratio_le_iff.) *)
+Theorem miter_within_limit_iff : forall V u w d L,
+  miter_det u w <> 0 ->
+  0 < d ->
+  dist_sq V (miter_apex V u w d) <= (L * d) ^ 2
+  <-> (vmag u * vx w - vmag w * vx u) ^ 2 + (vmag u * vy w - vmag w * vy u) ^ 2
+      <= L ^ 2 * (miter_det u w) ^ 2.
+Proof.
+  intros V u w d L Hdet Hd.
+  pose proof (miter_length_sq V u w d Hdet) as Hlen.
+  assert (Hd2 : 0 < d ^ 2) by nra.
+  assert (Hdet2 : 0 < (miter_det u w) ^ 2).
+  { assert (miter_det u w <> 0) by exact Hdet. nra. }
+  set (N := (vmag u * vx w - vmag w * vx u) ^ 2
+            + (vmag u * vy w - vmag w * vy u) ^ 2) in *.
+  split.
+  - intro Hle.
+    (* dist_sq <= L^2 d^2  scaled by det^2:  d^2 * N <= L^2 d^2 det^2 *)
+    apply Rmult_le_compat_r with (r := (miter_det u w) ^ 2) in Hle;
+      [ | nra ].
+    rewrite Hlen in Hle.
+    (* d^2 * N <= (L*d)^2 * det^2 = L^2 det^2 * d^2 ; cancel d^2 > 0 *)
+    apply Rmult_le_reg_l with (r := d ^ 2); [ exact Hd2 | nra ].
+  - intro Hle.
+    (* N <= L^2 det^2  scaled by d^2:  d^2 N <= L^2 d^2 det^2 = (L d)^2 det^2 *)
+    apply Rmult_le_reg_r with (r := (miter_det u w) ^ 2); [ exact Hdet2 | ].
+    rewrite Hlen. nra.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
