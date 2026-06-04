@@ -375,10 +375,18 @@ already covered by `docs/audit-exceptions.txt`).
 
 4. `hobby_lemma_4_3_no_proper` — noding preservation
    (`docs/admitted-deferred-proofs.txt`).
-5. `extract_rings_valid` — DCEL ring assembly
-   (`docs/admitted-deferred-proofs.txt`).
+5. `extract_rings_valid` — DCEL ring assembly. **Largely dispatched for
+   buffers:** `theories/ExtractBufferRings.v` discharges `H_valid` for the
+   hole-free regime with NO JCT residual (`valid_polygon_of_noded_chain`,
+   composing `RingExtract.face_walk_core` + `RingSimple.ring_simple_of_subset`);
+   `theories/RingExtract.v` + `theories/BoundedComponent.v` + `theories/RingSimple.v`
+   carry R1–R3. Only `hole_inside_outer` (with holes) remains = the H1/JCT gap.
 6. JCT (H1) and the semantic `H_bridge` — carried as named hypotheses in
-   the overlay headline; reappear identically here.
+   the overlay headline; reappear identically here. `H_bridge` is now
+   **decomposed** (`theories/BufferBridge.v`) into soundness (⊆ d-nbhd) +
+   completeness (⊇ d-nbhd); `buffer_correct_hole_free_split` reduces the
+   hole-free headline to exactly those two geometric directions (with
+   `H_valid` discharged). The `buffer_spec` d-dilation algebra is proven there.
 
 **Registry implication.** No *new* `Admitted` is required to land the
 conditional headline: like overlay, every gap is either a registered

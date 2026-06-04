@@ -163,6 +163,13 @@ theories/RingSimple.v
 # only H_bridge remains).  valid_polygon_with_holes carries the H1/JCT hole
 # clause as a hypothesis.  Pure-R.  No Admitted.
 theories/ExtractBufferRings.v
+# Buffer headline semantic bridge (docs/buffer-noder-pipeline.md): the
+# buffer_spec d-dilation algebra (empty/append/monotone) and the
+# decomposition of H_bridge into soundness + completeness.
+# buffer_correct_hole_free_split reduces the hole-free buffer headline to
+# exactly those two geometric directions (H_valid already discharged).
+# Pure-R.  No Admitted.
+theories/BufferBridge.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
