@@ -393,6 +393,16 @@ already covered by `docs/audit-exceptions.txt`).
    completeness (⊇ d-nbhd); `buffer_correct_hole_free_split` reduces the
    hole-free headline to exactly those two geometric directions (with
    `H_valid` discharged). The `buffer_spec` d-dilation algebra is proven there.
+   The **soundness** direction is further pinned at the boundary-distance
+   level in `theories/BufferBridgeSound.v` (Qed, three-axiom): the offset
+   walls and bevel/round-join chords stay within `d` of the corner
+   (`offset_point_within_d`, `bevel_chord_within_d` via `ball_convex`), while
+   the miter apex escapes the corner's `d`-ball
+   (`miter_apex_overshoots_vertex`, `dist_sq V apex = 2 d²` for the unit
+   right angle, via the closed `miter_length_sq`) — the precise reason
+   soundness needs a non-miter join or the miter limit. The residual is the
+   short-edge / edge-segment-neighbourhood refinement (still in
+   `buffer_extract_sound`).
 
 **Registry implication.** No *new* `Admitted` is required to land the
 conditional headline: like overlay, every gap is either a registered

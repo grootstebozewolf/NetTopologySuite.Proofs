@@ -170,6 +170,12 @@ theories/ExtractBufferRings.v
 # exactly those two geometric directions (H_valid already discharged).
 # Pure-R.  No Admitted.
 theories/BufferBridge.v
+# The SOUNDNESS half of H_bridge at the boundary-distance level: offset/bevel
+# join boundary stays within d of the corner (ball_convex + bevel_point_dist),
+# while the miter apex escapes the corner's d-ball (miter_apex_overshoots_vertex
+# via the closed miter_length_sq) -- the precise reason soundness needs a
+# non-miter join / the miter limit.  Pure-R, three-axiom.  No Admitted.
+theories/BufferBridgeSound.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
