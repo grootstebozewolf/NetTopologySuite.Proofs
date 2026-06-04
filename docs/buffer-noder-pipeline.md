@@ -115,7 +115,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 |---|---|---|---|
 | 1 decompose | input → segment list | ✅ | `OverlayGraph.extract_segments`, `polygon_to_pairs`; curve side `CurveGeometry.{CurveSegment,CurveRing,curve_segment_start/end}` |
 | 2a offset @ d | parallel curve at distance `d` | 🔴 | *none* — `Direction.vperp`/`perpendicular`, `Disk.in_disk` are the raw material only |
-| 2b joins | round/miter/bevel at corners | 🟡/🔴 | decisions: `Azimuth.{turn_sign,sin_half_turn,miter_ratio_le_iff}`; round-join geometry: `CurveGeometry.CircularArc`, `ArcLength.{arc_length,chord_subtended}`, `AngleBetween.angle_between` — but **no join constructor** |
+| 2b joins | round/miter/bevel at corners | 🟡 | round-join central-angle relation ✅ `BufferJoin.corner_arc_sweep_eq_turn(_unit)` (Roadmap target 6); decisions: `Azimuth.{turn_sign,sin_half_turn,miter_ratio_le_iff}`; still no miter/bevel apex constructor or round-join edge list |
 | 2c endcaps | round/flat/square at line ends | 🔴 | *none* (round cap would reuse `CircularArc`) |
 | 3 noding | full noding of raw curve | ✅ | `HobbyTheorem_b64.snap_round_segments`, `fully_intersected`, `hobby_theorem_4_1_conditional` (✅, conditional on ⛓️ `hobby_lemma_4_3_no_proper`) |
 | 4a graph | build topology graph | ✅ | `OverlayGraph.{build_graph,build_labeled_graph,TopologyGraph,valid_topology_graph}`, `valid_topology_graph_build_labeled_graph` |
@@ -393,11 +393,14 @@ defers the thesis-scale geometry.
    `offset_seg` + parallelism (`offset_seg_dir`/`offset_seg_parallel`),
    distance-`|d|` (`offset_point_dist`), and perpendicular-distance-to-line
    (`offset_perp_dist_to_line`). Pure-ℝ, three-axiom footprint, no Admitted.
-3. **S3 — joins.** `corner_join` dispatched on `Azimuth.turn_sign`;
-   bevel + miter (cap via `miter_ratio_le_iff`) first (linear, no arcs),
-   round join as chord-approxed arc (reuse `CircularArc`,
-   `chord_subtended`) second. This is where Roadmap target 6 (corner arc
-   central angle = exterior angle) gets proved.
+3. **S3 — joins.** Round-join corner-arc relation ✅ **LANDED (Qed),
+   `theories/BufferJoin.v`** — `corner_arc_sweep_eq_turn` proves the
+   arc's central angle (sweep between the offset normals) equals the
+   exterior/turn angle between the edges, closing **Roadmap target 6**;
+   `corner_arc_sweep_eq_turn_unit` reads it off the unit normals via
+   `atan2_pos_scale`. Still open in S3: the bevel/miter apex geometry
+   and the miter-limit cap (`Azimuth.miter_ratio_le_iff`), and the
+   chord-approxed round-join *edge list*.
 4. **S4 — endcaps.** Flat/square (linear) then round.
 5. **S5 — `offset_curve` assembly + `offset_curve_sound`.** Compose S2–S4
    into the named hypothesis; may split into a registered deferred entry

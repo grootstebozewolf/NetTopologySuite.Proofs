@@ -54,6 +54,14 @@ theories/Atan2.v
 # identity; plus atan2_range (-PI, PI].  Pulls classic via atan (see
 # audit-exceptions).  No Admitted.
 theories/AngleBetween.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# round-join corner-arc relation (Roadmap target 6).  The sweep between the
+# two offset normals equals the turn between the edges
+# (corner_arc_sweep_eq_turn), since vperp preserves cross+dot; plus
+# atan2 positive-scaling invariance to read it off the unit normals
+# (corner_arc_sweep_eq_turn_unit).  Pulls classic via atan2 (see
+# audit-exceptions).  No Admitted.
+theories/BufferJoin.v
 # Issue #64 / Option-A foundation 3 (ask #1): exact arc length s = r*theta with
 # the chord/arc soundness relations.  Headlines chord_le_arc_length (chord <=
 # arc, arc analogue of chord_le_detour) and chord_subtended_sq (half-angle
