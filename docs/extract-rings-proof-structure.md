@@ -222,7 +222,22 @@ without waiting on the fully-general DCEL + JCT.
 > so for hole-free buffers the headline reduces to **just the semantic
 > `H_bridge`**. The with-holes path (`valid_polygon_with_holes`) carries the
 > `hole_inside_outer` clause as the single H1/JCT hypothesis (R3's residual).
-| R7 | (stretch) general `extract_rings_valid`; or register the residual analytic shell as a *smaller* deferred entry. | Qed or re-scoped registry | high |
+| R7 | (stretch) general `extract_rings_valid`; or register the residual analytic shell as a *smaller* deferred entry. | **✅ analytic shell COMPLETED (Qed)** `theories/ExtractRingsShell.v` | high |
+
+> **R7 analytic shell landed (`theories/ExtractRingsShell.v`).** The
+> with-holes case no longer carries the whole per-hole conjunction as an
+> opaque hypothesis. `hole_noded_chain_conditions` discharges a hole's
+> `ring_closed` + `ring_simple` + `ring_has_minimum_points` from its being a
+> noded closed chain (the same combinatorial + `ring_simple_of_subset` route
+> as the outer ring), so `valid_polygon_noded_shell` reduces `valid_polygon`
+> (outer + holes) to EXACTLY ONE analytic clause: the per-hole
+> `hole_inside_outer` nesting. `H_valid_of_chain_extractor_holes` /
+> `buffer_correct_with_holes` lift this to `BufferCorrectness.H_valid` and the
+> end-to-end headline for the with-holes regime, modulo only that single
+> JCT/nesting seam (R3's residual = H1 of `overlay_ng_correct_conditional`).
+> The combinatorial core + `ring_simple` of the analytic shell are now Qed for
+> outer rings AND holes alike; the only thing left of `extract_rings_valid`'s
+> geometry is the point-set nesting bridge.
 
 Each slice is independently `Qed`-able or ends in a documented, **smaller**
 registered sub-deferred entry — never a silent stub. The combinatorial

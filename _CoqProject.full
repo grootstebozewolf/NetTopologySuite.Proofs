@@ -163,6 +163,12 @@ theories/RingSimple.v
 # only H_bridge remains).  valid_polygon_with_holes carries the H1/JCT hole
 # clause as a hypothesis.  Pure-R.  No Admitted.
 theories/ExtractBufferRings.v
+# Completed analytic shell of extract_rings_valid (extract-rings-proof-structure
+# R7): discharge the holes' combinatorial+simplicity conditions from their being
+# noded chains too, shrinking the with-holes residual to the SINGLE named
+# hole_inside_outer (JCT) clause.  valid_polygon_noded_shell /
+# H_valid_of_chain_extractor_holes / buffer_correct_with_holes.  Pure-R, 3-axiom.
+theories/ExtractRingsShell.v
 # Buffer headline semantic bridge (docs/buffer-noder-pipeline.md): the
 # buffer_spec d-dilation algebra (empty/append/monotone) and the
 # decomposition of H_bridge into soundness + completeness.
