@@ -41,6 +41,12 @@ theories/ClothoidResidual.v
 # |d| from the source line (offset_point_dist / offset_perp_dist_to_line).
 # Pure Stdlib; three-axiom footprint.  No Admitted.
 theories/BufferOffset.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# miter-join apex geometry (JTS#180).  miter_apex is the Cramer's-rule
+# intersection of the two offset lines; miter_apex_perp_dist_u/_w /
+# miter_apex_on_both_offsets prove it sits at perpendicular distance d from
+# both edge lines.  Pure Stdlib; three-axiom footprint.  No Admitted.
+theories/BufferMiter.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure

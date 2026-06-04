@@ -33,11 +33,12 @@
 >
 > **Seams landed (Qed) so far.** S2 offset-segment soundness
 > (`theories/BufferOffset.v`), S3 round-join corner-arc relation /
-> Roadmap target 6 (`theories/BufferJoin.v`), and S1 the end-to-end
-> conditional headline (`theories/BufferCorrectness.v`) — all `Qed`-closed
-> and kernel-verified under Rocq 9.1.1. Remaining seams (offset assembly
-> with joins/caps, depth labelling, and the inherited DCEL / Hobby / JCT
-> gaps) are tracked in §5–§6.
+> Roadmap target 6 (`theories/BufferJoin.v`), S3 miter-join apex geometry
+> (`theories/BufferMiter.v`, JTS#180), and S1 the end-to-end conditional
+> headline (`theories/BufferCorrectness.v`) — all `Qed`-closed and
+> kernel-verified under Rocq 9.1.1. Remaining seams (miter-limit cap
+> wiring, offset assembly with joins/caps, depth labelling, and the
+> inherited DCEL / Hobby / JCT gaps) are tracked in §5–§6.
 
 ---
 
@@ -407,8 +408,12 @@ defers the thesis-scale geometry.
    arc's central angle (sweep between the offset normals) equals the
    exterior/turn angle between the edges, closing **Roadmap target 6**;
    `corner_arc_sweep_eq_turn_unit` reads it off the unit normals via
-   `atan2_pos_scale`. Still open in S3: the bevel/miter apex geometry
-   and the miter-limit cap (`Azimuth.miter_ratio_le_iff`), and the
+   `atan2_pos_scale`. **Miter-join apex** ✅ **LANDED (Qed),
+   `theories/BufferMiter.v`** — `miter_apex` (Cramer's-rule intersection
+   of the two offset lines) with `miter_apex_on_both_offsets` proving it
+   sits at perpendicular distance `d` from *both* edge lines (JTS#180).
+   Still open in S3: the miter-limit cap wiring
+   (`Azimuth.miter_ratio_le_iff`), the bevel chord, and the
    chord-approxed round-join *edge list*.
 4. **S4 — endcaps.** Flat/square (linear) then round.
 5. **S5 — `offset_curve` assembly + `offset_curve_sound`.** Compose S2–S4

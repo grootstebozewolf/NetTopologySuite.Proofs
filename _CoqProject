@@ -27,3 +27,4 @@ theories/HotPixel.v
 theories/Azimuth.v
 theories/ClothoidResidual.v
 theories/BufferOffset.v
+theories/BufferMiter.v
