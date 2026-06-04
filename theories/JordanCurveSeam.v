@@ -204,7 +204,15 @@ Definition geometric_interior_cont (p : Point) (r : Ring) : Prop :=
    stated as a Prop hypothesis -- the honest replacement for the vacuous
    `geometric_interior_stdlib`-based seam.  This is the thesis-scale fact;
    it is NOT proved here (and NOT axiomatised: it is a named Prop, exactly
-   as `JCT_two_components` is described in docs/point-in-ring-jct-path.md). *)
+   as `JCT_two_components` is described in docs/point-in-ring-jct-path.md).
+
+   CANONICAL Phase 3 H1 TARGET.  This (continuity-carrying, separation-
+   bearing) Prop is the canonical hypothesis the OverlayNG / buffer headline
+   H1 is now stated against -- via `geometric_interior_cont`, discharged by
+   `jct_cont_interior_is_geometric` below.  Do NOT re-introduce an H1 over
+   `geometric_interior_stdlib`: that predicate is identically false (§2) and
+   makes the headline vacuous.  See theories-flocq/OverlayCorrectness.v and
+   docs/jct-vacuity-finding.md. *)
 Definition JCT_two_components_cont (r : Ring) : Prop :=
   ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
   exists interior_pred exterior_pred : Point -> Prop,
