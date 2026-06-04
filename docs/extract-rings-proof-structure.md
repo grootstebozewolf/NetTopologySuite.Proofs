@@ -209,7 +209,19 @@ without waiting on the fully-general DCEL + JCT.
 > **not admitted** (no new registry debt).
 | R4 | Euler / face-count `V-E+F` relation; #bounded faces = heuristic component count (oracle bridge). | Qed + differential test | med |
 | R5 | Re-define `extract` (or `extract_buffer`) to emit face-walk rings + nesting tree. | defs | low |
-| R6 | `extract_buffer_rings_valid` = R2 ⊕ R3 ⊕ (named `ring_simple`/nesting-bridge). Discharge `BufferCorrectness.H_valid`. | Qed (conditional) | med |
+| R6 | `extract_buffer_rings_valid` = R2 ⊕ `ring_simple`; discharge `BufferCorrectness.H_valid`. | **✅ LANDED (Qed), hole-free unconditional** `theories/ExtractBufferRings.v` | med |
+
+> **R6 landed (`theories/ExtractBufferRings.v`).** For the **hole-free**
+> regime, `valid_polygon` is just its three outer-ring conditions, all now
+> Qed: `valid_polygon_of_noded_chain` proves a hole-free polygon whose outer
+> ring is a closed chain (≥3 segs) from a noded set is `valid_polygon`,
+> **with NO Jordan-curve residual** (composes R2 `face_walk_core` + RingSimple
+> `ring_simple_of_subset`). `H_valid_of_chain_extractor` lifts this to
+> `BufferCorrectness`'s `H_valid` for any extractor meeting `chain_extractor_spec`,
+> and `buffer_correct_hole_free` plugs it into `buffer_correct_conditional` —
+> so for hole-free buffers the headline reduces to **just the semantic
+> `H_bridge`**. The with-holes path (`valid_polygon_with_holes`) carries the
+> `hole_inside_outer` clause as the single H1/JCT hypothesis (R3's residual).
 | R7 | (stretch) general `extract_rings_valid`; or register the residual analytic shell as a *smaller* deferred entry. | Qed or re-scoped registry | high |
 
 Each slice is independently `Qed`-able or ends in a documented, **smaller**

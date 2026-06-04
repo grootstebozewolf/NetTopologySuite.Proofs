@@ -155,6 +155,14 @@ theories/BoundedComponent.v
 # offset is NOT simple (verified counterexample, why noding is required).
 # Pure-R.  No Admitted.
 theories/RingSimple.v
+# extract_rings_valid R6 (docs/extract-rings-proof-structure.md): compose
+# R2 (RingExtract) + ring_simple (RingSimple) into valid_polygon and
+# discharge BufferCorrectness.buffer_correct_conditional's H_valid.
+# valid_polygon_of_noded_chain (hole-free, no JCT); chain_extractor_spec +
+# H_valid_of_chain_extractor; buffer_correct_hole_free (H_valid discharged,
+# only H_bridge remains).  valid_polygon_with_holes carries the H1/JCT hole
+# clause as a hypothesis.  Pure-R.  No Admitted.
+theories/ExtractBufferRings.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
