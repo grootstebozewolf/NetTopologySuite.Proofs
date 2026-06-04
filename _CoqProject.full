@@ -469,6 +469,13 @@ theories-flocq/Orient_b64_expansion.v
 #   - b64_orient_sign_stage_d_tiny_regime_decisive: in tiny regime,
 #     never returns Uncertain (Qed-closed).
 theories-flocq/Orient_b64_stage_d.v
+# Issue #66 grounded headline: the Shewchuk adaptive decoder
+# (b64_orient_sign_stage_d) AGREES with the full-plane exact
+# integer-determinant model (Orient_b64_exact_full.b64_orient2d_exact),
+# and in the tiny regime is decisive (no expansion fallback).  Pure
+# composition of already-Qed-closed results; replaces the ungrounded
+# "Shewchuk_vs_Z2" Hypothesis draft.  Qed-closed, three-axiom footprint.
+theories-flocq/Shewchuk_vs_Z2.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
