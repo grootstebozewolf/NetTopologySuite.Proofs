@@ -344,10 +344,18 @@ Qed.
    from the disjunctive lemma to the genuinely-hard sub-lemma.
    `hobby_theorem_4_1_conditional`'s premise shape is unchanged. *)
 
-(* Sub-lemma (a): the thesis-shaped piece.  If the originals don't
-   intersect properly, neither do the snapped versions.  Hobby (1999)
-   §4's piecewise-linear ordering argument.  Estimated 4-6 weeks
-   (matches the prior `hobby_lemma_4_3` scope estimate). *)
+(* Sub-lemma (a): FALSE AS STATED.  Carried here as Admitted with a
+   COUNTEREXAMPLE-registry entry (docs/admitted-counterexamples.txt), not
+   a deferred proof.  The bare two-segment statement drops the
+   noded-arrangement context Hobby (1999) Theorem 4.1 relies on: two
+   parallel non-touching segments can snap-collapse onto a single grid
+   line and become a collinear overlap (a manufactured proper
+   intersection).  Qed-closed refutation:
+   theories-flocq/HobbyCounterexample_b64.v
+   (hobby_lemma_4_3_no_proper_is_false); writeup in
+   docs/hobby-lemma-4-3-no-proper-refutation.md.  A faithful unconditional
+   Hobby 4.1 must restate this preservation lemma over noded
+   arrangements; that restatement is future work. *)
 Lemma hobby_lemma_4_3_no_proper :
   forall (P0 P1 Q0 Q1 : Point),
     ~ segments_intersect_properly P0 P1 Q0 Q1 ->

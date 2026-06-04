@@ -84,6 +84,21 @@ theories-flocq/TopologicalCorrectness_b64.v
 # `round` / `round_mode` -- identical lineage to the other snap files.
 theories-flocq/HobbyTheorem_b64.v
 
+# Category C: refutation of hobby_lemma_4_3_no_proper.  An explicit
+# parallel-collapse witness whose snap-rounded images intersect properly
+# though the originals do not (Qed-closed counterexample; counterexample
+# registry).  References `snap_round` (via snap_round_coord), pulling
+# `Classical_Prop.classic` through Flocq's `round` / `round_mode` --
+# identical lineage to HobbyTheorem_b64.v above.  No Admitteds.
+theories-flocq/HobbyCounterexample_b64.v
+
+# Category C: the weaker-but-true noding-preservation claim (separated pairs)
+# and its buffer bridgehead.  References `snap_round` / `snap_round_coord`
+# (via the tolerance bound and snap_round_segments), pulling
+# `Classical_Prop.classic` through Flocq's `round` / `round_mode` -- identical
+# lineage to HobbyTheorem_b64.v.  No Admitteds; all Qed-closed.
+theories-flocq/NodingSeparation_b64.v
+
 # Category C: Phase 2 follow-up -- b64_passes_through_hot_pixel_halfopen.
 # Strict half-open filter (tight characterisation of in_hot_pixel's `<= , <`
 # slab convention) used as the b64 mirror of the oracle's PASSES_THROUGH_HALFOPEN

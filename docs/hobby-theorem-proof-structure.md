@@ -160,10 +160,17 @@ disjunctive structure of `segments_intersect_only_at_endpoints`:
     \/ P1 = Q1`), the snapped versions share that snapped endpoint.
     Trivial: `snap_round` is a deterministic function.
 
-  - **`hobby_lemma_4_3_no_proper`** -- Admitted, deferred-proof
-    registry.  If the originals don't intersect properly, neither do
-    the snapped versions.  This is the genuine thesis-shaped piece
-    (4-6 weeks); proof structure below.
+  - **`hobby_lemma_4_3_no_proper`** -- Admitted, now in the
+    **counterexample** registry (was deferred-proof).  It is **FALSE as
+    stated**: the bare two-segment form drops the noded-arrangement
+    context.  Qed-closed refutation in
+    `theories-flocq/HobbyCounterexample_b64.v`; writeup in
+    `docs/hobby-lemma-4-3-no-proper-refutation.md`.  Witness: two
+    parallel segments at y = 0.7 and y = 1.3 snap onto the same grid
+    line y = 1, becoming a collinear overlap (a proper intersection that
+    did not exist before).  The §4 "proof sketch" below is the argument
+    that WOULD apply over a noded arrangement; it does not save the
+    arbitrary-pair statement.
 
   - **`hobby_lemma_4_3`** -- Qed-closed via case split on the
     `segments_intersect_only_at_endpoints (P0, P1) (Q0, Q1)`

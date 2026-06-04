@@ -70,3 +70,27 @@ theories-flocq/B64_FastExpansionSum.v:round_eq_under_strict_dominance | docs/sta
 # the historical statement; the loose-precondition variant is not
 # provable for the same reasons as the general case above.
 theories-flocq/B64_FastExpansionSum.v:b64_grow_expansion_nonoverlap_dominated | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §3,§9,§13
+
+# ============================================================================
+# Phase 2 Hobby Theorem 4.1: the no-proper-intersection preservation lemma
+# is too strong for arbitrary (non-noded) segment pairs.
+# ============================================================================
+
+# `hobby_lemma_4_3_no_proper` -- previously a deferred-proof entry
+# (thesis-shaped, 4-6 weeks).  FALSE as stated: it claims snap-rounding
+# preserves "no proper intersection" for ANY two segments, dropping the
+# noded-arrangement context that Hobby (1999) Theorem 4.1 actually
+# requires.  Refutation (Qed-closed) in
+# theories-flocq/HobbyCounterexample_b64.v:
+#   - hobby_lemma_4_3_no_proper_counterexample -- exhibits the witness;
+#   - hobby_lemma_4_3_no_proper_is_false       -- the lemma => False.
+# Witness: parallel horizontal segments at y = 0.7 and y = 1.3 (no shared
+# point => no proper intersection) snap to the SAME grid line y = 1,
+# becoming collinear and overlapping -- a proper intersection at (5,1),
+# t = s = 1/2.  Snap evaluations proved via Flocq round_FIX_IZR +
+# Znearest_imp.
+# Achievable: a preservation lemma RESTRICTED to pairs from a
+# fully_intersected arrangement (where the collinear-collapse witness is
+# excluded by prior noding).  See
+# docs/hobby-lemma-4-3-no-proper-refutation.md §3,§4.
+theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-lemma-4-3-no-proper-refutation.md | §2,§4

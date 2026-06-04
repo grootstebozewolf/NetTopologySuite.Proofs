@@ -163,6 +163,12 @@ theories/RingSimple.v
 # only H_bridge remains).  valid_polygon_with_holes carries the H1/JCT hole
 # clause as a hypothesis.  Pure-R.  No Admitted.
 theories/ExtractBufferRings.v
+# Completed analytic shell of extract_rings_valid (extract-rings-proof-structure
+# R7): discharge the holes' combinatorial+simplicity conditions from their being
+# noded chains too, shrinking the with-holes residual to the SINGLE named
+# hole_inside_outer (JCT) clause.  valid_polygon_noded_shell /
+# H_valid_of_chain_extractor_holes / buffer_correct_with_holes.  Pure-R, 3-axiom.
+theories/ExtractRingsShell.v
 # Buffer headline semantic bridge (docs/buffer-noder-pipeline.md): the
 # buffer_spec d-dilation algebra (empty/append/monotone) and the
 # decomposition of H_bridge into soundness + completeness.
@@ -170,6 +176,25 @@ theories/ExtractBufferRings.v
 # exactly those two geometric directions (H_valid already discharged).
 # Pure-R.  No Admitted.
 theories/BufferBridge.v
+# The SOUNDNESS half of H_bridge at the boundary-distance level: offset/bevel
+# join boundary stays within d of the corner (ball_convex + bevel_point_dist),
+# while the miter apex escapes the corner's d-ball (miter_apex_overshoots_vertex
+# via the closed miter_length_sq) -- the precise reason soundness needs a
+# non-miter join / the miter limit.  Pure-R, three-axiom.  No Admitted.
+theories/BufferBridgeSound.v
+# Completeness mirror: the chord-approximated join UNDERSHOOTS the corner d-ball
+# (chord_midpoint_dist_sq_90 = d^2/2 < d^2), dual to the miter overshoot --
+# the chord leaves an uncovered sliver of the d-neighbourhood.  Pure-R, 3-axiom.
+theories/BufferBridgeComplete.v
+# Round-join arc on the corner d-circle (round_arc_dist_sq_on_circle = d^2):
+# closes both H_bridge directions at the corner, and the buffer_corner_trichotomy
+# capstone (chord d^2/2 < arc d^2 < miter 2 d^2).  Pure-R, three-axiom.
+theories/BufferBridgeRound.v
+# Stage 4b depth labelling (EdgeLabel reused as interior-side flags; keep-
+# boundary rule = SymDiff) + factorisation of the full H_bridge through the
+# depth region (extract_realizes_depth /\ depth_region_is_buffer), with the
+# empty base case closed.  Pure-R, three-axiom.  No Admitted.
+theories/BufferDepth.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
@@ -179,6 +204,11 @@ theories/BufferBridge.v
 # docs/audit-phase4-chord-overfitting.md §7).  Six Qed-closed
 # structural lemmas; no Admitteds; no Classical_Prop.classic.
 theories/CurveGeometry.v
+# Structural faithfulness of the curve->Phase3 linearisation bridge: a valid
+# (closed) CIRCULARSTRING/COMPOUNDCURVE ring chord-approximates to a ring_closed
+# Phase-3 ring (chord_approx_ring_closed), lifting to to_geometry outer/hole
+# rings.  Pure-R, three-axiom.  No Admitted.
+theories/CurveLinearise.v
 
 # Phase 4 Session 3: arc orientation predicate.  Two R-side tools:
 # cross_R_pt (Stdlib lift of cross_R_BP) and inCircle_R (the 4-point
@@ -436,6 +466,19 @@ theories-flocq/TopologicalCorrectness_b64.v
 # entries.  Mirrors the docs/shewchuk-theorem-13-proof-structure.md treatment
 # for Shewchuk Theorem 13.  See docs/hobby-theorem-proof-structure.md.
 theories-flocq/HobbyTheorem_b64.v
+# Machine-checked REFUTATION of hobby_lemma_4_3_no_proper: an explicit
+# parallel-collapse witness whose snap-rounded images intersect properly
+# though the originals do not.  Shows the bare two-segment lemma is false
+# (the noded-arrangement hypothesis is essential).  Counterexample-registry
+# entry; see docs/hobby-lemma-4-3-no-proper-refutation.md.
+theories-flocq/HobbyCounterexample_b64.v
+# The weaker-but-TRUE noding-preservation claim that survives the
+# counterexample: snap-rounding preserves no-proper-intersection for
+# SEPARATED pairs (axis gap > 1 vs the < 1/2 snap tolerance), lifted to
+# fully_intersected_snap_of_nodable.  Bridgeheaded through the closed buffer
+# offset pipeline (BufferOffset.vmag_sq_unit_perp -> offset_seg_x_left_of ->
+# buffer_offset_nodable discharging the buffer headline's noding step).
+theories-flocq/NodingSeparation_b64.v
 theories-flocq/PassesThroughHalfopen_b64.v
 # Computational (extractable) binary64 Liang-Barsky passes-through predicates.
 # The oracle compute path for PASSES_THROUGH_* -- the R-spec versions in
