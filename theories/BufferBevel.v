@@ -2,6 +2,7 @@
    NetTopologySuite.Proofs.BufferBevel
    ----------------------------------------------------------------------------
    Buffer/noder pipeline, Stage 2b seam: BEVEL-JOIN CHORD.
+   (Seam map: docs/buffer-noder-pipeline.md §2.2 "2b joins" / §6 slice S3.)
 
    Completes the join trio of the buffer front-end (round join =
    theories/BufferJoin.v, miter join = theories/BufferMiter.v) with the

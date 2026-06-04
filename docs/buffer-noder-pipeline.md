@@ -444,7 +444,10 @@ defers the thesis-scale geometry.
    (`OverlayBridge.v §6`).
 7. **Inherited** — `hobby_lemma_4_3_no_proper`, `extract_rings_valid`,
    JCT close on their own tracks and discharge the shared hypotheses for
-   both overlay and buffer at once.
+   both overlay and buffer at once. A concrete, hole-topology-based route
+   for `extract_rings_valid` (with a buffer-specialised beachhead that
+   discharges `H_valid` here) is planned in
+   [`docs/extract-rings-proof-structure.md`](extract-rings-proof-structure.md).
 
 **Out of first landing:** negative `d` (erosion / inward offset);
 curve-aware buffer producing `CurvePolygon` arc output (Option A region

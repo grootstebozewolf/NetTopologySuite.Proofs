@@ -2,6 +2,7 @@
    NetTopologySuite.Proofs.BufferEndcap
    ----------------------------------------------------------------------------
    Buffer/noder pipeline, Stage 2c seam: LINE ENDCAPS.
+   (Seam map: docs/buffer-noder-pipeline.md §2.2 "2c endcaps" / §6 slice S4.)
 
    At a LineString endpoint E with final edge direction u, the offset curve
    reaches the two boundary points one buffer distance d to either side:
