@@ -357,6 +357,10 @@ theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
 # order-dependent-noding root behind JTS#752 / JTS#1133.  Witness coordinates
 # are exact powers of two; both halves decided by vm_compute.
 theories-flocq/PassesThrough_b64_compute_asymmetric.v
+# GREEN companion: the EXACT R-spec passes-through filter IS symmetric under
+# segment reversal -- the order-safe noder primitive (vs the rounded compute
+# filter, which is not).  Refs #66.
+theories-flocq/PassesThrough_b64_spec_symmetric.v
 # C1 grid-exactness REDUCTION (issue #66 RGR pivot, docs/snap-rounding-rgr-pivot.md):
 # on the unit grid the snap-consistency conjunct is vacuous, so full-predicate
 # grid-exactness (compute = spec) reduces to the single Liang-Barsky touch.

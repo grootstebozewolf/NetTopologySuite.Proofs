@@ -112,6 +112,12 @@ theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
 # `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
 theories-flocq/PassesThrough_b64_compute_asymmetric.v
 
+# Category C: GREEN companion -- the EXACT R-spec passes-through filter IS
+# symmetric under segment reversal (b64_passes_through_hot_pixel_symmetric).
+# Pure R-arithmetic over the Liang-Barsky bounds; imports HotPixel_b64, whose
+# R-spec layer pulls `Classical_Prop.classic` transitively.  No Admitteds.
+theories-flocq/PassesThrough_b64_spec_symmetric.v
+
 # Category C (GREEN reduction, same lineage): issue #66 C1 grid-exactness
 # REDUCTION layer (docs/snap-rounding-rgr-pivot.md).  On the unit grid the
 # snap-consistency conjunct of passes-through is vacuous, reducing compute=spec
