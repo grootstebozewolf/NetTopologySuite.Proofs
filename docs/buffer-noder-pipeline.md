@@ -436,9 +436,16 @@ defers the thesis-scale geometry.
    (diameter `2|d|`, perpendicular to edge), round (endpoints + apex on the
    radius-`d` circle about the line end), and square (corners extended `|d|`
    along the edge, `√2·|d|` from the end) cap geometry. 3-axiom, no Admitted.
-5. **S5 — `offset_curve` assembly + `offset_curve_sound`.** Compose S2–S4
-   into the named hypothesis; may split into a registered deferred entry
-   if the full d-level-set equality proves thesis-scale.
+5. **S5 — `offset_curve` assembly.** ✅ **Structural part LANDED (Qed),
+   `theories/BufferAssembly.v`** — `assemble_open` / `assemble_closed`
+   interleave offset walls with bevel joins, and the assembled boundary is
+   proven a **closed chain by construction** (`assemble_open_chain`,
+   `close_chain_closed`, `assemble_closed_closed`); `wall_parallel` ties each
+   wall to its source edge. Round/miter joins replace the single `obevel`
+   with a multi-segment insertion (the chain structure generalises). Still
+   open: the *geometric* `offset_curve_sound` (boundary = the `d`-level set
+   of the input) — the analytic half, carried by `H_bridge` in the headline
+   and likely a registered deferred entry.
 6. **S6 — depth labelling** (`buffer_correct_labels`), reusing the merge
    family; address edge-orientation canonicalisation
    (`OverlayBridge.v §6`).

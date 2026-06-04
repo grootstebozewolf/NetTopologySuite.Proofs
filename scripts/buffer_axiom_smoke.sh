@@ -53,6 +53,7 @@ ROWS=(
   "BufferMiterAngle|miter_cap_iff_sin_half|3"
   "BufferBevel|bevel_length_sq_sin_half|3"
   "BufferEndcap|square_cap_corner_dist_sq|3"
+  "BufferAssembly|assemble_closed_closed|3"
   "BufferCorrectness|buffer_correct_conditional|3"
 )
 

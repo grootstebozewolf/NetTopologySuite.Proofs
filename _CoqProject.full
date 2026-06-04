@@ -66,6 +66,12 @@ theories/BufferBevel.v
 # square_cap_extension/square_cap_corner_dist_sq -- the defining geometry
 # of CAP_FLAT / CAP_ROUND / CAP_SQUARE.  Three-axiom.  No Admitted.
 theories/BufferEndcap.v
+# Buffer/noder pipeline, Stage 2 seam (docs/buffer-noder-pipeline.md S5):
+# edge-list assembly.  Interleaves offset walls with bevel joins
+# (assemble_open / assemble_closed) and proves the assembled boundary is a
+# closed chain by construction (assemble_open_chain, assemble_closed_closed)
+# plus wall_parallel.  Three-axiom.  No Admitted.
+theories/BufferAssembly.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
