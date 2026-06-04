@@ -121,6 +121,38 @@ already have been split / merged at noding time.
   `hobby_lemma_4_3` from the corrected form. That restatement is flagged
   here, not undertaken in this session.
 
+## 4a. The weaker-but-true replacement (landed)
+
+The honest replacement is Qed-closed in
+`theories-flocq/NodingSeparation_b64.v`:
+
+* **Snap tolerance bound** `snap_round_coord_tolerance`:
+  `Rabs (snap_round_coord x 1 - x) <= /2` — the standalone bound
+  §7 of `docs/hobby-theorem-proof-structure.md` flagged as needed.
+* **Separation core** `separated_snap_no_proper`: if two segments are
+  *separated* (their projections onto some axis differ by more than one
+  grid unit — strictly more than the `< 1/2` snap displacement on each
+  side), snap-rounding cannot make them cross properly. The
+  collinear-collapse witness above is excluded precisely because its
+  y-levels (0.7, 1.3) are only 0.6 < 1 apart.
+* **Arrangement lift** `fully_intersected_snap_of_nodable`: if every
+  distinct pair in `segs` either shares an endpoint
+  (`hobby_lemma_4_3_shared_endpoint`) or is separated, then
+  `fully_intersected (snap_round_segments segs)` — the true, usable form
+  of the noding step that `overlay_ng_correct_conditional` /
+  `buffer_correct_conditional` consume.
+* **Buffer bridgehead** `offset_seg_x_left_of` / `buffer_offset_nodable`:
+  using the recently-closed `BufferOffset.vmag_sq_unit_perp`, each offset
+  endpoint is within `|d|` of its source, so source edges separated by
+  more than `1 + 2|d|` yield offset segments separated by more than `1`;
+  the buffer's `offset_curve` then nodes to a fully-intersected
+  arrangement under this checkable precondition.
+
+This does not reinstate the universal lemma; it lands the strongest
+preservation statement that the counterexample leaves standing, and
+connects it to the buffer pipeline as a beachhead (the analogue of
+`ExtractBufferRings` discharging `H_valid` for the hole-free regime).
+
 ## 5. Bibliography
 
 * J. D. Hobby, "Practical segment intersection with finite precision

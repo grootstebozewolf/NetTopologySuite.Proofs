@@ -442,6 +442,13 @@ theories-flocq/HobbyTheorem_b64.v
 # (the noded-arrangement hypothesis is essential).  Counterexample-registry
 # entry; see docs/hobby-lemma-4-3-no-proper-refutation.md.
 theories-flocq/HobbyCounterexample_b64.v
+# The weaker-but-TRUE noding-preservation claim that survives the
+# counterexample: snap-rounding preserves no-proper-intersection for
+# SEPARATED pairs (axis gap > 1 vs the < 1/2 snap tolerance), lifted to
+# fully_intersected_snap_of_nodable.  Bridgeheaded through the closed buffer
+# offset pipeline (BufferOffset.vmag_sq_unit_perp -> offset_seg_x_left_of ->
+# buffer_offset_nodable discharging the buffer headline's noding step).
+theories-flocq/NodingSeparation_b64.v
 theories-flocq/PassesThroughHalfopen_b64.v
 # Computational (extractable) binary64 Liang-Barsky passes-through predicates.
 # The oracle compute path for PASSES_THROUGH_* -- the R-spec versions in
