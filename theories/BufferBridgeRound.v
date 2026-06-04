@@ -1,6 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.BufferBridgeRound
    ----------------------------------------------------------------------------
+   Seam map: docs/buffer-noder-pipeline.md §6 (the H_bridge residual; the exact
+   round-arc case that closes both directions / the corner trichotomy).
    The "Goldilocks" closing of H_bridge at a corner: the round (exact-arc)
    join sits EXACTLY on the corner's d-circle, so the idealised round buffer
    neither undershoots (chord) nor overshoots (miter) the d-neighbourhood --

@@ -1,6 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.BufferBridgeComplete
    ----------------------------------------------------------------------------
+   Seam map: docs/buffer-noder-pipeline.md §6 (the H_bridge residual;
+   completeness side).
    The COMPLETENESS half of H_bridge, at the buffer-boundary distance level --
    the symmetric mirror of BufferBridgeSound.v.
 

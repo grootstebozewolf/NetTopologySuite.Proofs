@@ -1,6 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.BufferBridgeSound
    ----------------------------------------------------------------------------
+   Seam map: docs/buffer-noder-pipeline.md §6 (the H_bridge residual; soundness
+   side) and §2.5 (Stage 5).
    The SOUNDNESS half of H_bridge, at the buffer-boundary distance level.
 
    `BufferBridge.v` decomposed the buffer headline's `H_bridge` into

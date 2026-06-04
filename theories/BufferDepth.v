@@ -1,6 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.BufferDepth
    ----------------------------------------------------------------------------
+   Seam map: docs/buffer-noder-pipeline.md §2.4 (Stage 4b depth labelling) and
+   §6 (the H_bridge factorisation through the depth region).
    Stage 4b (depth labelling) + a factorisation of the full buffer H_bridge.
 
    The buffer pipeline reuses the OverlayNG graph spine but labels edges by
