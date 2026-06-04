@@ -26,3 +26,4 @@ theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
 theories/ClothoidResidual.v
+theories/BufferOffset.v

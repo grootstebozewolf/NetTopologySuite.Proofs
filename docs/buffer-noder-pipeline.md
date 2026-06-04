@@ -160,12 +160,22 @@ material*:
   relations": *the arc of a convex corner has central angle = exterior
   angle*).
 
-**Absent, must be defined and proven:**
+**Landed (Qed) — `theories/BufferOffset.v`:**
 
-- `offset_segment : Point -> Point -> R -> (Point * Point)` — the
-  segment translated by `d · vperp(unit dir)`; **soundness target:**
-  every point of `offset_segment p q d` is at distance exactly `d` from
-  segment `pq` on the chosen side.
+- `offset_seg : Point -> Point -> R -> (Point * Point)` — both endpoints
+  translated by `d · unit_perp(seg_vec A B)`. Soundness proven, pure-ℝ,
+  three-axiom footprint:
+  - `offset_seg_dir` / `offset_seg_parallel` — the offset edge has the
+    *same* direction vector as its source, hence is parallel (the
+    property whose failure makes kinked flat-endcap / short-segment
+    linework, JTS#739/#180).
+  - `offset_point_dist` — each offset endpoint is at Euclidean distance
+    `|d|` from its source endpoint.
+  - `offset_perp_dist_to_line` — the offset endpoint's signed
+    perpendicular distance to the *source line* is exactly `d`. This is
+    the defining "offset at distance d" property.
+
+**Still absent, must be defined and proven:**
 - `corner_join : ... -> list (Point * Point)` — miter / bevel / round
   join edges between two consecutive offset segments, dispatched on
   `turn_sign` and `miter_ratio_le_iff`. **Soundness target:** the join
@@ -379,9 +389,10 @@ defers the thesis-scale geometry.
    *Mirrors OverlayCorrectness S15.* Qed-closable immediately (structural
    composition), like `overlay_ng_correct_conditional`. **Lands the
    end-to-end headline.**
-2. **S2 — offset segment soundness.** `offset_segment` + the "every point
-   is at distance `d`" lemma using `Direction.vperp` and `Distance.dist`.
-   Likely Qed in a session.
+2. **S2 — offset segment soundness. ✅ LANDED (Qed), `theories/BufferOffset.v`.**
+   `offset_seg` + parallelism (`offset_seg_dir`/`offset_seg_parallel`),
+   distance-`|d|` (`offset_point_dist`), and perpendicular-distance-to-line
+   (`offset_perp_dist_to_line`). Pure-ℝ, three-axiom footprint, no Admitted.
 3. **S3 — joins.** `corner_join` dispatched on `Azimuth.turn_sign`;
    bevel + miter (cap via `miter_ratio_le_iff`) first (linear, no arcs),
    round join as chord-approxed arc (reuse `CircularArc`,

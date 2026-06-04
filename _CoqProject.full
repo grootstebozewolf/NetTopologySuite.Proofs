@@ -35,6 +35,12 @@ theories/Azimuth.v
 # Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
 # three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
 theories/ClothoidResidual.v
+# Buffer/noder pipeline, Stage 2a seam (docs/buffer-noder-pipeline.md S2):
+# offset-segment soundness -- the offset of an edge is parallel to it
+# (offset_seg_dir / offset_seg_parallel) and sits at perpendicular distance
+# |d| from the source line (offset_point_dist / offset_perp_dist_to_line).
+# Pure Stdlib; three-axiom footprint.  No Admitted.
+theories/BufferOffset.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
