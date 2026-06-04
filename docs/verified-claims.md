@@ -131,6 +131,7 @@ snap-rounding machinery; pure rational, no transcendental and no new axiom.
 | `JordanCurveSeam.v : geometric_interior_stdlib_vacuous` | **JCT seam refutation:** the corpus's `geometric_interior_stdlib` is identically false (discontinuous "jump" paths collapse `connected_in_complement`), so the JCT-conditional headline is only vacuously satisfiable `[exact]` | 3 |
 | `JordanCurveSeam.v : jct_hypotheses_force_empty_interior` | The conditional headline's `geometric_interior_stdlib ↔ interior_pred` hypothesis forces `interior_pred` empty too `[exact]` | 3 |
 | `JordanCurveSeam.v : far_points_connected_cont` | The corrected continuous relation is non-degenerate: a straight-line path joins two off-box points in the complement — discontinuity, not geometry, caused the collapse `[exact]` | 3 |
+| `JordanCurveSeam.v : jct_cont_interior_is_geometric` | **Sufficiency:** under `JCT_two_components_cont` (now with the separation clause), every interior point is a `geometric_interior_cont` point — so re-pointing H1 onto `geometric_interior_cont` is a genuine, satisfiable obligation, not the vacuous one. Does *not* prove the JCT `[exact]` | 3 |
 
 `[oracle]` `EDGE_IN_RESULT`.
 **Open:** `extract_rings_valid` (DCEL, registered deferred) + polygonal JCT
@@ -138,8 +139,11 @@ snap-rounding machinery; pure rational, no transcendental and no new axiom.
 formulation is now **refuted as vacuous**
 (`JordanCurveSeam.v : geometric_interior_stdlib_vacuous`); the genuine
 theorem is restated over continuous paths as `JCT_two_components_cont`
-(stated, not proved). See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md).
-Cite as "conditional headline + oracle".
+(stated, not proved), and the overlay/buffer headline H1 has been
+**re-pointed** off `geometric_interior_stdlib` onto `geometric_interior_cont`
+(`OverlayCorrectness.v`, `docs/buffer-noder-pipeline.md`) so it is no longer
+vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
+[`docs/h1-vacuity/`](h1-vacuity/). Cite as "conditional headline + oracle".
 
 ## Phase 4 — Native curves (linearization, chord-approx arcs)
 
