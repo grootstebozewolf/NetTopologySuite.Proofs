@@ -28,3 +28,4 @@ theories/Azimuth.v
 theories/ClothoidResidual.v
 theories/BufferOffset.v
 theories/BufferMiter.v
+theories/BufferMiterAngle.v

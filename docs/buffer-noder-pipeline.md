@@ -33,12 +33,14 @@
 >
 > **Seams landed (Qed) so far.** S2 offset-segment soundness
 > (`theories/BufferOffset.v`), S3 round-join corner-arc relation /
-> Roadmap target 6 (`theories/BufferJoin.v`), S3 miter-join apex geometry
-> (`theories/BufferMiter.v`, JTS#180), and S1 the end-to-end conditional
-> headline (`theories/BufferCorrectness.v`) — all `Qed`-closed and
-> kernel-verified under Rocq 9.1.1. Remaining seams (miter-limit cap
-> wiring, offset assembly with joins/caps, depth labelling, and the
-> inherited DCEL / Hobby / JCT gaps) are tracked in §5–§6.
+> Roadmap target 6 (`theories/BufferJoin.v`), S3 miter-join geometry —
+> apex, limit cap, law-of-cosines, and the half-angle soundness link to
+> `Azimuth` (`theories/BufferMiter.v` + `theories/BufferMiterAngle.v`,
+> JTS#180), and S1 the end-to-end conditional headline
+> (`theories/BufferCorrectness.v`) — all `Qed`-closed and kernel-verified
+> under Rocq 9.1.1. Remaining seams (bevel/round-join edge lists, offset
+> assembly, depth labelling, and the inherited DCEL / Hobby / JCT gaps)
+> are tracked in §5–§6.
 
 ---
 
@@ -414,10 +416,15 @@ defers the thesis-scale geometry.
    sits at perpendicular distance `d` from *both* edge lines (JTS#180);
    `miter_length_sq` + `miter_within_limit_iff` give the exact,
    division-free / sqrt-free **miter-limit decision** (apex within cap
-   `L·d` ⟺ scaled offset numerator within `L²·det²`). Still open in S3:
-   the soundness of the cap value `L` vs the half-angle
-   (`Azimuth.miter_ratio_le_iff`), the bevel chord, and the
-   chord-approxed round-join *edge list*.
+   `L·d` ⟺ scaled offset numerator within `L²·det²`), and `miter_length_sq_cos`
+   the law-of-cosines form. **Miter-cap ↔ half-angle soundness** ✅
+   **LANDED (Qed), `theories/BufferMiterAngle.v`** —
+   `miter_numerator_sin_half` ties the offset numerator to
+   `Azimuth.sin_half_turn(u, vneg w)`, and `miter_cap_iff_sin_half` proves
+   the algebraic cap and the half-angle cap (`Azimuth.miter_ratio_le_iff`)
+   decide the *same* predicate (3-axiom, `sin_half_turn` is sqrt-only).
+   Still open in S3: the bevel chord and the chord-approxed round-join
+   *edge list*.
 4. **S4 — endcaps.** Flat/square (linear) then round.
 5. **S5 — `offset_curve` assembly + `offset_curve_sound`.** Compose S2–S4
    into the named hypothesis; may split into a registered deferred entry
