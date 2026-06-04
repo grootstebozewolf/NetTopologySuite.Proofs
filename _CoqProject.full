@@ -151,6 +151,17 @@ theories/JordanCurveSeam.v
 # point_in_ring_correct_jct_cont.  Pure-R; no Admitted/Axiom/Parameter.
 theories/JCT.v
 
+# Why ring_simple is NOT sufficient for JCT_two_components_cont
+# (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
+# (two triangles meeting only at the origin) is ring_simple, ring_closed and
+# has >= 4 vertices -- it passes EVERY structural premise -- yet its
+# complement has THREE components, so two-components fails.  Proves
+# bowtie_ring_simple, bowtie_origin_degree_four, the parity misclassification
+# (both lobes "inside"), and bowtie_refutes_two_components_modulo_separation:
+# the conclusion is contradictory given the (thesis-scale, taken-as-hypothesis)
+# pairwise component-separation facts.  Pure-R; no Admitted/Axiom/Parameter.
+theories/JCT_Counterexample.v
+
 # Buffer/noder pipeline, end-to-end seam S1 (docs/buffer-noder-pipeline.md):
 # the conditional headline buffer_correct_conditional -- Minkowski-dilation
 # spec buffer_spec, concrete offset_curve (via BufferOffset), abstract noder
