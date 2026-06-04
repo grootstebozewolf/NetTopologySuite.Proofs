@@ -141,6 +141,14 @@ theories/BufferCorrectness.v
 # (closure + min-points + edge fidelity).  Axiom-free (pure combinatorics).
 # No Admitted.  ring_simple / hole_inside_outer (analytic shell) not here.
 theories/RingExtract.v
+# extract_rings_valid R3 (docs/extract-rings-proof-structure.md): the
+# bounded-component structure underlying the hole-count heuristic.
+# connected_in_complement is an equivalence relation (_refl/_sym/_trans);
+# in_bounded_component is a component invariant (in_bounded_component_iff);
+# not_in_bounded_component_intro refutes boundedness from unbounded
+# reachability.  JCT-free.  The geometric "face-interior -> bounded" rung
+# (= H1/JCT) is carried as a downstream hypothesis, not admitted here.
+theories/BoundedComponent.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,

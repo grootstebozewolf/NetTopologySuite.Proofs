@@ -179,7 +179,24 @@ without waiting on the fully-general DCEL + JCT.
 > **Still open in R1:** ordering an *unordered* overlay edge set into chains
 > (the dart/`next`/`turn_sign` assembly) — needed for the general (non-buffer)
 > case. **Still the analytic shell (§4):** `ring_simple`, `hole_inside_outer`.
-| R3 | `bounded_face_in_bounded_component` — discrete reachability ↔ `PointInRingTangents.in_bounded_component`. | Qed | **med** (the heuristic's invariant) |
+| R3 | `bounded_face_in_bounded_component` — discrete reachability ↔ `PointInRingTangents.in_bounded_component`. | **🟡 structure LANDED (Qed); geometric rung = named residual** `theories/BoundedComponent.v` | **med** (the heuristic's invariant) |
+
+> **R3 split landed (`theories/BoundedComponent.v`, JCT-free).** The
+> *component structure* the heuristic counts is now rigorous:
+> `connected_in_complement` is an equivalence relation on the complement
+> (`_refl`/`_sym`/`_trans`, via explicit reparametrisations — the path
+> relation carries no continuity obligation, so this needs no analysis);
+> `in_bounded_component` is a **component invariant** (`in_bounded_component_iff`
+> — boundedness is constant on a connectivity class); and
+> `not_in_bounded_component_intro` refutes boundedness from unbounded
+> reachability (the tool for the OUTER face). So "bounded component" is a
+> well-defined notion = what `buffer_hole_count.py` flood-fills.
+> **The geometric rung stays the named residual:** that a point strictly
+> inside an assembled face lies in a *bounded* class (the ring separates the
+> plane into bounded inside / unbounded outside) is the Jordan-curve content
+> — identical to `overlay_ng_correct_conditional`'s H1 / `point_in_ring` ↔
+> `geometric_interior_stdlib`. It is carried as a downstream hypothesis (R6),
+> **not admitted** (no new registry debt).
 | R4 | Euler / face-count `V-E+F` relation; #bounded faces = heuristic component count (oracle bridge). | Qed + differential test | med |
 | R5 | Re-define `extract` (or `extract_buffer`) to emit face-walk rings + nesting tree. | defs | low |
 | R6 | `extract_buffer_rings_valid` = R2 ⊕ R3 ⊕ (named `ring_simple`/nesting-bridge). Discharge `BufferCorrectness.H_valid`. | Qed (conditional) | med |
