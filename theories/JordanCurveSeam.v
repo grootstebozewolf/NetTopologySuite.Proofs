@@ -50,6 +50,15 @@
    the ring image.  That is the load-bearing half of the polygonal JCT and
    is NOT discharged here.
 
+   Seam references:
+     - docs/jct-vacuity-finding.md      -- this finding, in full.
+     - docs/jct-scout-2026-05-29.md     -- the RED tractability grade.
+     - docs/point-in-ring-jct-path.md   -- the seven-step path + the
+       proposed `JCT_two_components` whose continuous form is here.
+     - docs/buffer-noder-pipeline.md §2 -- the shared JCT seam (`spec/JCT`
+       row): the OverlayNG / buffer H1 hypothesis is itself stated over
+       `geometric_interior_stdlib`, hence likewise vacuous as written.
+
    Pure-R; no atan / Flocq / `Classical_Prop.classic`.  No `Admitted`,
    no `Axiom`, no `Parameter`.  Axiom footprint: the standard
    classical-reals pair already used across the corpus.
