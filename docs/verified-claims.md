@@ -132,6 +132,12 @@ snap-rounding machinery; pure rational, no transcendental and no new axiom.
 | `JordanCurveSeam.v : jct_hypotheses_force_empty_interior` | The conditional headline's `geometric_interior_stdlib ↔ interior_pred` hypothesis forces `interior_pred` empty too `[exact]` | 3 |
 | `JordanCurveSeam.v : far_points_connected_cont` | The corrected continuous relation is non-degenerate: a straight-line path joins two off-box points in the complement — discontinuity, not geometry, caused the collapse `[exact]` | 3 |
 | `JordanCurveSeam.v : jct_cont_interior_is_geometric` | **Sufficiency:** under `JCT_two_components_cont` (now with the separation clause), every interior point is a `geometric_interior_cont` point — so re-pointing H1 onto `geometric_interior_cont` is a genuine, satisfiable obligation, not the vacuous one. Does *not* prove the JCT `[exact]` | 3 |
+| `JCT.v : continuity_glue` | Two functions continuous on ℝ that agree at a point glue into a continuous function — the analysis lemma behind continuous-path concatenation `[exact]` | 3 |
+| `JCT.v : connected_in_complement_cont_trans` | `connected_in_complement_cont` is transitive (midpoint concatenation, glued continuous); with `_refl`/`_sym` it is an equivalence relation on the complement `[exact]` | 3 |
+| `JCT.v : in_bounded_component_cont_invariant` | Boundedness is a component invariant for the continuous relation — constant on a connectivity class `[exact]` | 3 |
+| `JCT.v : no_path_from_interior_to_exterior` | **Sketch's "thesis-scale" core is free:** with interior = bounded component, an interior point reaches no non-interior point through the complement — the Qed counterpart of `JCT_two_components_cont`'s separation clause, by component invariance, no JCT `[exact]` | 3 |
+| `JCT.v : far_point_not_interior` | Honest continuous analogue of the vacuity witness: a point far past the bounding box is NOT interior (a real straight-line ray escapes any radius) — without claiming the interior empty `[exact]` | 3 |
+| `JCT.v : point_in_ring_correct_jct_cont` | **Non-vacuous continuous headline:** `point_in_ring ↔ geometric_interior_cont` under the single named seam Prop `parity_characterises_interior_cont` (the genuine remaining JCT content) `[cond]` | 3 |
 
 `[oracle]` `EDGE_IN_RESULT`.
 **Open:** `extract_rings_valid` (DCEL, registered deferred) + polygonal JCT
