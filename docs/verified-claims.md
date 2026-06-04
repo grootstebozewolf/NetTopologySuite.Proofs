@@ -128,10 +128,18 @@ snap-rounding machinery; pure rational, no transcendental and no new axiom.
 | `Overlay.v : boolean_op` (+comm. lemmas) | Set semantics of union/intersection/difference/symdiff `[exact]` | 3 |
 | `OverlayBridge.v : correct_labels_all_ops` | Edge labelling correct for every boolean op `[int-b64]` | 4 |
 | `OverlayCorrectness.v : overlay_ng_correct_conditional` | **Conditional headline:** extracted overlay = boolean op, under 3 named hypotheses `[cond]` | 4 |
+| `JordanCurveSeam.v : geometric_interior_stdlib_vacuous` | **JCT seam refutation:** the corpus's `geometric_interior_stdlib` is identically false (discontinuous "jump" paths collapse `connected_in_complement`), so the JCT-conditional headline is only vacuously satisfiable `[exact]` | 3 |
+| `JordanCurveSeam.v : jct_hypotheses_force_empty_interior` | The conditional headline's `geometric_interior_stdlib ↔ interior_pred` hypothesis forces `interior_pred` empty too `[exact]` | 3 |
+| `JordanCurveSeam.v : far_points_connected_cont` | The corrected continuous relation is non-degenerate: a straight-line path joins two off-box points in the complement — discontinuity, not geometry, caused the collapse `[exact]` | 3 |
 
 `[oracle]` `EDGE_IN_RESULT`.
 **Open:** `extract_rings_valid` (DCEL, registered deferred) + polygonal JCT
-(thesis-scale, no stub). Cite as "conditional headline + oracle".
+(thesis-scale, no stub). The JCT seam's prior `geometric_interior_stdlib`
+formulation is now **refuted as vacuous**
+(`JordanCurveSeam.v : geometric_interior_stdlib_vacuous`); the genuine
+theorem is restated over continuous paths as `JCT_two_components_cont`
+(stated, not proved). See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md).
+Cite as "conditional headline + oracle".
 
 ## Phase 4 — Native curves (linearization, chord-approx arcs)
 

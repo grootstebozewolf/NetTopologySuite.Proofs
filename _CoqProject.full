@@ -128,6 +128,17 @@ theories/PointInRingTangents.v
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
 
+# The Jordan-curve seam for point_in_ring_correct, examined head-on
+# (docs/jct-vacuity-finding.md).  Proves the corpus's
+# geometric_interior_stdlib is identically false because
+# connected_in_complement uses discontinuous paths
+# (geometric_interior_stdlib_vacuous), so the JCT-conditional headline is
+# only vacuously satisfiable.  Supplies the corrected continuity-carrying
+# definitions + the genuine JCT_two_components_cont Prop (thesis-scale,
+# stated not proved), and shows the corrected relation is non-degenerate
+# (far_points_connected_cont).  Pure-R; no Admitted/Axiom/Parameter.
+theories/JordanCurveSeam.v
+
 # Buffer/noder pipeline, end-to-end seam S1 (docs/buffer-noder-pipeline.md):
 # the conditional headline buffer_correct_conditional -- Minkowski-dilation
 # spec buffer_spec, concrete offset_curve (via BufferOffset), abstract noder
