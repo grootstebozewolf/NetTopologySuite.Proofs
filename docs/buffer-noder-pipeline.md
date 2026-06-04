@@ -402,7 +402,18 @@ already covered by `docs/audit-exceptions.txt`).
    right angle, via the closed `miter_length_sq`) — the precise reason
    soundness needs a non-miter join or the miter limit. The residual is the
    short-edge / edge-segment-neighbourhood refinement (still in
-   `buffer_extract_sound`).
+   `buffer_extract_sound`). The **completeness** direction is pinned
+   symmetrically in `theories/BufferBridgeComplete.v` (Qed, three-axiom): the
+   chord-approximated join UNDERSHOOTS the corner's `d`-ball
+   (`chord_midpoint_undershoots_vertex` for any genuine corner;
+   `chord_midpoint_dist_sq_90 = d^2/2` concretely, via the closed
+   `bevel_length_sq_dot`), so the chord-buffer corner falls short of the
+   `d`-neighbourhood, leaving an uncovered sliver between the chord and the
+   true arc. Together the corner of the `d`-neighbourhood (distance exactly
+   `d`) lies strictly beyond the chord (`d/sqrt 2`) and strictly inside the
+   miter apex (`sqrt 2 * d`) -- only the exact arc meets the `d`-circle, which
+   is exactly why `H_bridge` holds exactly only for the idealised round
+   buffer.
 
 **Registry implication.** No *new* `Admitted` is required to land the
 conditional headline: like overlay, every gap is either a registered

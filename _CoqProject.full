@@ -176,6 +176,10 @@ theories/BufferBridge.v
 # via the closed miter_length_sq) -- the precise reason soundness needs a
 # non-miter join / the miter limit.  Pure-R, three-axiom.  No Admitted.
 theories/BufferBridgeSound.v
+# Completeness mirror: the chord-approximated join UNDERSHOOTS the corner d-ball
+# (chord_midpoint_dist_sq_90 = d^2/2 < d^2), dual to the miter overshoot --
+# the chord leaves an uncovered sliver of the d-neighbourhood.  Pure-R, 3-axiom.
+theories/BufferBridgeComplete.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
