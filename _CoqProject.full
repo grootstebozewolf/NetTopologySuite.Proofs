@@ -184,6 +184,11 @@ theories/BufferBridgeComplete.v
 # closes both H_bridge directions at the corner, and the buffer_corner_trichotomy
 # capstone (chord d^2/2 < arc d^2 < miter 2 d^2).  Pure-R, three-axiom.
 theories/BufferBridgeRound.v
+# Stage 4b depth labelling (EdgeLabel reused as interior-side flags; keep-
+# boundary rule = SymDiff) + factorisation of the full H_bridge through the
+# depth region (extract_realizes_depth /\ depth_region_is_buffer), with the
+# empty base case closed.  Pure-R, three-axiom.  No Admitted.
+theories/BufferDepth.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,

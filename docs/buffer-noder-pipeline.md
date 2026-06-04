@@ -138,7 +138,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 | 2c endcaps | round/flat/square at line ends | 🟡 | ✅ `BufferEndcap.*` — flat (`flat_cap_length_sq`/`_perp_edge`), round (`round_cap_endpoints_on_circle`/`_apex_on_circle`), square (`square_cap_extension`/`square_cap_corner_dist_sq`) defining geometry (JTS#739/#1028); still no emitted cap *edge list* |
 | 3 noding | full noding of raw curve | ✅ | `HobbyTheorem_b64.snap_round_segments`, `fully_intersected`, `hobby_theorem_4_1_conditional` (✅, conditional on ⛓️ `hobby_lemma_4_3_no_proper`) |
 | 4a graph | build topology graph | ✅ | `OverlayGraph.{build_graph,build_labeled_graph,TopologyGraph,valid_topology_graph}`, `valid_topology_graph_build_labeled_graph` |
-| 4b labelling | **depth** label (in/out of d-region) | 🔴 | reshape of `OverlayGraph.{EdgeLabel,edge_in_result,merge_labeled_edges}` + `OverlayBridge.correct_labels` — buffer needs a depth/winding label, not `in_left/in_right` |
+| 4b labelling | **depth** label (in/out of d-region) | 🟡 | `theories/BufferDepth.v` reuses `EdgeLabel` as interior-side flags; the keep-the-boundary rule IS the SymDiff rule (`buffer_edge_in_result = edge_in_result SymDiff`); `kept_edges` + validity Qed. The depth-region/d-neighbourhood *correctness* is the remaining analytic seam |
 | 5 ring assembly | faces → valid polygons | ⛓️ | `OverlayGraph.extract`; correctness is `OverlayBridge.extract_rings_valid` (Admitted, registered deferred) |
 | spec/JCT | point-in-result ⟺ interior | ⛓️ | `Overlay.{point_set,point_in_polygon,point_in_ring,valid_polygon}`; JCT seam `PointInRingTangents.geometric_interior_stdlib` (H1 named hypothesis) |
 
@@ -419,6 +419,22 @@ already covered by `docs/audit-exceptions.txt`).
    round buffer's corner boundary is the radius-`d` arc itself -- closing both
    directions there. The `buffer_corner_trichotomy` capstone records the full
    picture in one statement: chord `d^2/2` < round arc `d^2` < miter `2 d^2`.
+
+   **Depth labelling + H_bridge factorisation** (`theories/BufferDepth.v`,
+   Qed, three-axiom). Stage 4b lands by reusing `EdgeLabel` as interior-side
+   flags: "keep an edge iff exactly one side is interior" is literally the
+   SymDiff rule (`buffer_edge_in_result = edge_in_result SymDiff`), `kept_edges`
+   is the result boundary and inherits graph validity. The buffer interior is
+   the crossing-number interior of the kept edges (`depth_region`, via
+   Overlay's `ray_parity_odd`). The monolithic H_bridge then FACTORS into two
+   concrete named seams — `extract_realizes_depth` (the extractor's point-set
+   is the depth region; the DCEL/ring-assembly content) and
+   `depth_region_is_buffer` (the depth region equals the d-neighbourhood; the
+   offset + depth-correctness + JCT analytic content pinned at the corner
+   level above) — composed by `buffer_H_bridge_factor` and threaded end-to-end
+   by `buffer_correct_via_depth`. The empty-geometry base case is discharged
+   unconditionally (`depth_region_is_buffer_empty`). The full equality is not
+   manufactured: the two seams are the precise remaining residual.
 
 **Registry implication.** No *new* `Admitted` is required to land the
 conditional headline: like overlay, every gap is either a registered
