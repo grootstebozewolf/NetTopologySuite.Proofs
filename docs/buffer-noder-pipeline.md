@@ -30,6 +30,14 @@
 > counterpart of the heuristic hole-topology oracle
 > [`oracle/buffer_hole_count.py`](../oracle/buffer_hole_count.py)
 > (JTS#979 family).
+>
+> **Seams landed (Qed) so far.** S2 offset-segment soundness
+> (`theories/BufferOffset.v`), S3 round-join corner-arc relation /
+> Roadmap target 6 (`theories/BufferJoin.v`), and S1 the end-to-end
+> conditional headline (`theories/BufferCorrectness.v`) — all `Qed`-closed
+> and kernel-verified under Rocq 9.1.1. Remaining seams (offset assembly
+> with joins/caps, depth labelling, and the inherited DCEL / Hobby / JCT
+> gaps) are tracked in §5–§6.
 
 ---
 
@@ -382,13 +390,14 @@ Each slice is a session-sized unit ending in `Qed.` (or a registered,
 documented `Admitted`). Ordering puts reusable/cheap wins first and
 defers the thesis-scale geometry.
 
-1. **S1 — spec + glue.** Define `buffer_spec`, `extract_buffer`
-   (reuse/rename `extract`), `noded_buffer_graph` (thin: `build_labeled`
-   over `snap_round_segments (offset_curve g d)`), and state
-   `buffer_correct_conditional` with all gaps as named hypotheses.
-   *Mirrors OverlayCorrectness S15.* Qed-closable immediately (structural
-   composition), like `overlay_ng_correct_conditional`. **Lands the
-   end-to-end headline.**
+1. **S1 — spec + glue. ✅ LANDED (Qed), `theories/BufferCorrectness.v`.**
+   `buffer_spec` (Minkowski dilation), concrete `offset_curve` (via
+   `BufferOffset.offset_seg`), and `buffer_correct_conditional` composing
+   the overlay graph spine with an abstract noder + extractor and the
+   geometric gaps as named hypotheses (`H_valid`, `H_bridge`) — mirrors
+   `overlay_ng_correct_conditional`. Plus `buffer_contains_input` and
+   `buffer_spec_monotone`. Pure-ℝ, three-axiom footprint, no Admitted.
+   **The end-to-end headline is landed.**
 2. **S2 — offset segment soundness. ✅ LANDED (Qed), `theories/BufferOffset.v`.**
    `offset_seg` + parallelism (`offset_seg_dir`/`offset_seg_parallel`),
    distance-`|d|` (`offset_point_dist`), and perpendicular-distance-to-line

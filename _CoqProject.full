@@ -97,6 +97,13 @@ theories/PointInRingTangents.v
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
 
+# Buffer/noder pipeline, end-to-end seam S1 (docs/buffer-noder-pipeline.md):
+# the conditional headline buffer_correct_conditional -- Minkowski-dilation
+# spec buffer_spec, concrete offset_curve (via BufferOffset), abstract noder
+# + extractor, composing the overlay graph spine.  Plus buffer_contains_input
+# and buffer_spec_monotone.  Pure-R, three-axiom footprint.  No Admitted.
+theories/BufferCorrectness.v
+
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
 # CurveGeometry) + validity predicates + chord approximation bridge
