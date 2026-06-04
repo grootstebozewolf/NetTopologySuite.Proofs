@@ -54,6 +54,12 @@ theories/BufferMiter.v
 # (Azimuth.miter_ratio_le_iff) decide the same thing.  Three-axiom (Azimuth's
 # sin_half_turn is sqrt-only).  No Admitted.
 theories/BufferMiterAngle.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# bevel-join chord.  bevel_length_sq_dot (law-of-cosines) and
+# bevel_length_sq_sin_half show the bevel segment = 2 d sin(theta/2), the
+# chord of the round-join arc (radius d, central angle = the turn).
+# Three-axiom (sin_half_turn is sqrt-only).  No Admitted.
+theories/BufferBevel.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure

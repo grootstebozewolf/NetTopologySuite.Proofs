@@ -126,7 +126,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 |---|---|---|---|
 | 1 decompose | input → segment list | ✅ | `OverlayGraph.extract_segments`, `polygon_to_pairs`; curve side `CurveGeometry.{CurveSegment,CurveRing,curve_segment_start/end}` |
 | 2a offset @ d | parallel curve at distance `d` | 🔴 | *none* — `Direction.vperp`/`perpendicular`, `Disk.in_disk` are the raw material only |
-| 2b joins | round/miter/bevel at corners | 🟡 | round-join central-angle relation ✅ `BufferJoin.corner_arc_sweep_eq_turn(_unit)` (Roadmap target 6); decisions: `Azimuth.{turn_sign,sin_half_turn,miter_ratio_le_iff}`; still no miter/bevel apex constructor or round-join edge list |
+| 2b joins | round/miter/bevel at corners | 🟡 | round-join central angle ✅ `BufferJoin.corner_arc_sweep_eq_turn(_unit)` (Roadmap target 6); miter apex + limit cap + half-angle ✅ `BufferMiter.*` / `BufferMiterAngle.miter_cap_iff_sin_half` (JTS#180); bevel chord ✅ `BufferBevel.bevel_length_sq_sin_half`; still no emitted join *edge lists* |
 | 2c endcaps | round/flat/square at line ends | 🔴 | *none* (round cap would reuse `CircularArc`) |
 | 3 noding | full noding of raw curve | ✅ | `HobbyTheorem_b64.snap_round_segments`, `fully_intersected`, `hobby_theorem_4_1_conditional` (✅, conditional on ⛓️ `hobby_lemma_4_3_no_proper`) |
 | 4a graph | build topology graph | ✅ | `OverlayGraph.{build_graph,build_labeled_graph,TopologyGraph,valid_topology_graph}`, `valid_topology_graph_build_labeled_graph` |
@@ -423,8 +423,13 @@ defers the thesis-scale geometry.
    `Azimuth.sin_half_turn(u, vneg w)`, and `miter_cap_iff_sin_half` proves
    the algebraic cap and the half-angle cap (`Azimuth.miter_ratio_le_iff`)
    decide the *same* predicate (3-axiom, `sin_half_turn` is sqrt-only).
-   Still open in S3: the bevel chord and the chord-approxed round-join
-   *edge list*.
+   **Bevel-join chord** ✅ **LANDED (Qed), `theories/BufferBevel.v`** —
+   `bevel_length_sq_dot` (law-of-cosines) and `bevel_length_sq_sin_half`
+   show the bevel segment is `2·d·sin(θ/2)`, exactly the chord of the
+   round-join arc (radius `d`, central angle = the turn). So round join
+   (arc) and bevel join (chord) subtend the same angle at radius `d`.
+   Still open in S3: the chord-approxed round-join / bevel *edge lists*
+   (turning these lengths into emitted segment lists).
 4. **S4 — endcaps.** Flat/square (linear) then round.
 5. **S5 — `offset_curve` assembly + `offset_curve_sound`.** Compose S2–S4
    into the named hypothesis; may split into a registered deferred entry
