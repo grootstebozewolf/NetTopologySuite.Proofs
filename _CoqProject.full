@@ -25,6 +25,16 @@ theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
+# Clothoid chord-length residual monotonicity, Qed-closed conditional theorem
+# (Stdlib lane).  Realises the "next concrete Azimuth.v target" named in
+# Azimuth.v's cross-corpus bridge block: |kappa*L| <= pi connected to
+# f'(L) > 0.  The derivative identities enter as Section hypotheses (H_deriv,
+# H_fprime_pos), witnessed Qed in the proprietary companion
+# clothoid-halley-coq/coq/Clothoid_L.v; only the statement crosses the licence
+# boundary and is BSD-3-Clause from birth.  Listed here too so the per-theorem
+# Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
+# three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
+theories/ClothoidResidual.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
