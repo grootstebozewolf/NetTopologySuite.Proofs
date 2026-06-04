@@ -10,15 +10,15 @@
    simply connects the two offset-segment endpoints at the corner with a
    straight segment.
 
-   At a corner vertex V between edges of direction u and w, those two
+   At a corner vertex V between edges of direction ein and eout, those two
    endpoints are V offset by d along each edge's unit normal:
-       P_u = V + d * unit_perp u,   P_w = V + d * unit_perp w.
+       P_u = V + d * unit_perp ein,   P_w = V + d * unit_perp eout.
    The bevel segment is (P_u, P_w).  This file proves its length is the
    chord subtended by the corner turn at radius d:
 
-     - `bevel_length_sq_dot`: |P_u - P_w|^2 = 2 d^2 (1 - <u,w>/(|u||w|))
+     - `bevel_length_sq_dot`: |P_u - P_w|^2 = 2 d^2 (1 - <ein,eout>/(|ein||eout|))
        (law-of-cosines form, three-axiom).
-     - `bevel_length_sq_sin_half`: |P_u - P_w|^2 = (2 d * sin_half_turn u w)^2,
+     - `bevel_length_sq_sin_half`: |P_u - P_w|^2 = (2 d * sin_half_turn ein eout)^2,
        i.e. the bevel chord = 2 d sin(theta/2) where theta is the turn --
        exactly the chord of the round-join arc (radius d, central angle the
        turn, cf. BufferJoin.corner_arc_sweep_eq_turn and
@@ -43,12 +43,12 @@ Open Scope R_scope.
 (* §1  Bevel endpoints and segment.                                           *)
 (* -------------------------------------------------------------------------- *)
 
-(* The offset of the corner vertex V along edge direction u's unit normal. *)
-Definition bevel_point (V : Point) (u : Vec) (d : R) : Point :=
-  pt_translate V (d * vx (unit_perp u)) (d * vy (unit_perp u)).
+(* The offset of the corner vertex V along edge direction ein's unit normal. *)
+Definition bevel_point (V : Point) (ein : Vec) (d : R) : Point :=
+  pt_translate V (d * vx (unit_perp ein)) (d * vy (unit_perp ein)).
 
-Definition bevel_seg (V : Point) (u w : Vec) (d : R) : Point * Point :=
-  (bevel_point V u d, bevel_point V w d).
+Definition bevel_seg (V : Point) (ein eout : Vec) (d : R) : Point * Point :=
+  (bevel_point V ein d, bevel_point V eout d).
 
 (* -------------------------------------------------------------------------- *)
 (* §2  Helper identities.                                                     *)
@@ -63,24 +63,24 @@ Proof.
 Qed.
 
 (* The dot product of two unit normals equals the cosine factor
-   <u,w>/(|u||w|): vperp preserves the dot product and the normalisation
-   contributes the 1/(|u||w|). *)
-Lemma vdot_unit_perp : forall u w,
-  u <> vzero -> w <> vzero ->
-  vdot (unit_perp u) (unit_perp w)
-  = vdot u w / (BufferOffset.vmag u * BufferOffset.vmag w).
+   <ein,eout>/(|ein||eout|): vperp preserves the dot product and the normalisation
+   contributes the 1/(|ein||eout|). *)
+Lemma vdot_unit_perp : forall ein eout,
+  ein <> vzero -> eout <> vzero ->
+  vdot (unit_perp ein) (unit_perp eout)
+  = vdot ein eout / (BufferOffset.vmag ein * BufferOffset.vmag eout).
 Proof.
-  intros u w Hu Hw.
-  assert (HU : BufferOffset.vmag u <> 0)
+  intros ein eout Hin Hout.
+  assert (HU : BufferOffset.vmag ein <> 0)
     by (unfold BufferOffset.vmag; apply Rgt_not_eq; apply sqrt_lt_R0;
-        apply vmag_sq_pos; exact Hu).
-  assert (HW : BufferOffset.vmag w <> 0)
+        apply vmag_sq_pos; exact Hin).
+  assert (HW : BufferOffset.vmag eout <> 0)
     by (unfold BufferOffset.vmag; apply Rgt_not_eq; apply sqrt_lt_R0;
-        apply vmag_sq_pos; exact Hw).
+        apply vmag_sq_pos; exact Hout).
   unfold unit_perp.
   rewrite vdot_scale_l, vdot_scale_r.
-  (* vdot (vperp u) (vperp w) = vdot u w *)
-  replace (vdot (vperp u) (vperp w)) with (vdot u w)
+  (* vdot (vperp ein) (vperp eout) = vdot ein eout *)
+  replace (vdot (vperp ein) (vperp eout)) with (vdot ein eout)
     by (unfold vdot, vperp; cbn; ring).
   field. split; assumption.
 Qed.
@@ -90,46 +90,46 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 (* Law-of-cosines form. *)
-Theorem bevel_length_sq_dot : forall V u w d,
-  u <> vzero -> w <> vzero ->
-  dist_sq (bevel_point V u d) (bevel_point V w d)
-  = 2 * d ^ 2 * (1 - vdot u w / (BufferOffset.vmag u * BufferOffset.vmag w)).
+Theorem bevel_length_sq_dot : forall V ein eout d,
+  ein <> vzero -> eout <> vzero ->
+  dist_sq (bevel_point V ein d) (bevel_point V eout d)
+  = 2 * d ^ 2 * (1 - vdot ein eout / (BufferOffset.vmag ein * BufferOffset.vmag eout)).
 Proof.
-  intros V u w d Hu Hw.
+  intros V ein eout d Hin Hout.
   unfold bevel_point.
   rewrite dist_sq_translate2.
   (* = d^2 * (vmag_sq nu + vmag_sq nw - 2 <nu,nw>) *)
   assert (Hraw :
-    (d * vx (unit_perp u) - d * vx (unit_perp w)) *
-    (d * vx (unit_perp u) - d * vx (unit_perp w)) +
-    (d * vy (unit_perp u) - d * vy (unit_perp w)) *
-    (d * vy (unit_perp u) - d * vy (unit_perp w))
-    = d ^ 2 * (vmag_sq (unit_perp u) + vmag_sq (unit_perp w)
-               - 2 * vdot (unit_perp u) (unit_perp w))).
+    (d * vx (unit_perp ein) - d * vx (unit_perp eout)) *
+    (d * vx (unit_perp ein) - d * vx (unit_perp eout)) +
+    (d * vy (unit_perp ein) - d * vy (unit_perp eout)) *
+    (d * vy (unit_perp ein) - d * vy (unit_perp eout))
+    = d ^ 2 * (vmag_sq (unit_perp ein) + vmag_sq (unit_perp eout)
+               - 2 * vdot (unit_perp ein) (unit_perp eout))).
   { unfold vmag_sq, vdot. ring. }
   rewrite Hraw.
-  rewrite (vmag_sq_unit_perp u Hu), (vmag_sq_unit_perp w Hw).
-  rewrite (vdot_unit_perp u w Hu Hw).
+  rewrite (vmag_sq_unit_perp ein Hin), (vmag_sq_unit_perp eout Hout).
+  rewrite (vdot_unit_perp ein eout Hin Hout).
   ring.
 Qed.
 
 (* Half-angle (chord-subtended) form: the bevel chord is 2 d sin(theta/2),
-   theta the turn between u and w.  This is the chord of the round-join arc. *)
-Theorem bevel_length_sq_sin_half : forall V u w d,
-  u <> vzero -> w <> vzero ->
-  dist_sq (bevel_point V u d) (bevel_point V w d)
-  = (2 * d * sin_half_turn u w) ^ 2.
+   theta the turn between ein and eout.  This is the chord of the round-join arc. *)
+Theorem bevel_length_sq_sin_half : forall V ein eout d,
+  ein <> vzero -> eout <> vzero ->
+  dist_sq (bevel_point V ein d) (bevel_point V eout d)
+  = (2 * d * sin_half_turn ein eout) ^ 2.
 Proof.
-  intros V u w d Hu Hw.
-  rewrite (bevel_length_sq_dot V u w d Hu Hw).
-  replace ((2 * d * sin_half_turn u w) ^ 2)
-    with (4 * d ^ 2 * (sin_half_turn u w) ^ 2) by ring.
-  rewrite (sin_half_turn_sq u w Hu Hw).
+  intros V ein eout d Hin Hout.
+  rewrite (bevel_length_sq_dot V ein eout d Hin Hout).
+  replace ((2 * d * sin_half_turn ein eout) ^ 2)
+    with (4 * d ^ 2 * (sin_half_turn ein eout) ^ 2) by ring.
+  rewrite (sin_half_turn_sq ein eout Hin Hout).
   (* unify Azimuth.vmag with BufferOffset.vmag (both sqrt of vmag_sq) *)
   unfold Azimuth.vmag, BufferOffset.vmag.
-  assert (HU : sqrt (vmag_sq u) <> 0)
-    by (apply Rgt_not_eq; apply sqrt_lt_R0; apply vmag_sq_pos; exact Hu).
-  assert (HW : sqrt (vmag_sq w) <> 0)
-    by (apply Rgt_not_eq; apply sqrt_lt_R0; apply vmag_sq_pos; exact Hw).
+  assert (HU : sqrt (vmag_sq ein) <> 0)
+    by (apply Rgt_not_eq; apply sqrt_lt_R0; apply vmag_sq_pos; exact Hin).
+  assert (HW : sqrt (vmag_sq eout) <> 0)
+    by (apply Rgt_not_eq; apply sqrt_lt_R0; apply vmag_sq_pos; exact Hout).
   field. split; assumption.
 Qed.

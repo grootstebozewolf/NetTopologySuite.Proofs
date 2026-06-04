@@ -4,10 +4,10 @@
    Buffer/noder pipeline, Stage 2c seam: LINE ENDCAPS.
    (Seam map: docs/buffer-noder-pipeline.md §2.2 "2c endcaps" / §6 slice S4.)
 
-   At a LineString endpoint E with final edge direction u, the offset curve
+   At a LineString endpoint E with final edge direction ein, the offset curve
    reaches the two boundary points one buffer distance d to either side:
-       cap_endpoint E u d   = E + d * unit_perp u   (left)
-       cap_endpoint E u (-d) = E - d * unit_perp u  (right).
+       cap_endpoint E ein d   = E + d * unit_perp ein   (left)
+       cap_endpoint E ein (-d) = E - d * unit_perp ein  (right).
    The endcap closes the gap between them.  JTS offers three styles
    (BufferParameters.CAP_FLAT / CAP_ROUND / CAP_SQUARE); this file proves the
    defining geometry of each (JTS#739, #1028 -- flat-endcap artifacts).
@@ -18,11 +18,11 @@
 
      ROUND (`round_cap_endpoints_on_circle`, `round_cap_apex_on_circle`):
        the cap is the semicircle of radius d about E; its two endpoints and
-       its apex E + d*unit_dir u all lie on the circle of radius |d|.
+       its apex E + d*unit_dir ein all lie on the circle of radius |d|.
 
      SQUARE (`square_cap_extension`, `square_cap_corner_dist_sq`): the cap
        extends the offset lines by d along the edge to two outer corners
-       sq_corner = cap_endpoint + d*unit_dir u; each corner is distance |d|
+       sq_corner = cap_endpoint + d*unit_dir ein; each corner is distance |d|
        beyond its boundary point and distance sqrt(2)|d| from E.
 
    All pure-R, three-axiom (sqrt only; no atan / Flocq / classic).  No
@@ -42,7 +42,7 @@ Open Scope R_scope.
 (* §1  Unit edge direction (companion of BufferOffset.unit_perp).             *)
 (* -------------------------------------------------------------------------- *)
 
-Definition unit_dir (u : Vec) : Vec := vscale (/ vmag u) u.
+Definition unit_dir (ein : Vec) : Vec := vscale (/ vmag ein) ein.
 
 (* The unit edge direction has unit length. *)
 Lemma vmag_sq_unit_dir : forall v, v <> vzero -> vmag_sq (unit_dir v) = 1.
@@ -62,11 +62,11 @@ Proof.
 Qed.
 
 (* The unit normal and the unit edge direction are perpendicular. *)
-Lemma vdot_unit_perp_unit_dir : forall u, vdot (unit_perp u) (unit_dir u) = 0.
+Lemma vdot_unit_perp_unit_dir : forall ein, vdot (unit_perp ein) (unit_dir ein) = 0.
 Proof.
-  intros u. unfold unit_perp, unit_dir.
+  intros ein. unfold unit_perp, unit_dir.
   rewrite vdot_scale_l, vdot_scale_r.
-  replace (vdot (vperp u) u) with 0 by (unfold vdot, vperp; cbn; ring).
+  replace (vdot (vperp ein) ein) with 0 by (unfold vdot, vperp; cbn; ring).
   ring.
 Qed.
 
@@ -76,17 +76,17 @@ Qed.
 
 (* A boundary point: E offset by d along the edge's unit normal.  d and -d
    give the two sides. *)
-Definition cap_endpoint (E : Point) (u : Vec) (d : R) : Point :=
-  pt_translate E (d * vx (unit_perp u)) (d * vy (unit_perp u)).
+Definition cap_endpoint (E : Point) (ein : Vec) (d : R) : Point :=
+  pt_translate E (d * vx (unit_perp ein)) (d * vy (unit_perp ein)).
 
 (* A square-cap outer corner: the boundary point pushed d further along the
    edge direction. *)
-Definition sq_corner (E : Point) (u : Vec) (d : R) : Point :=
-  pt_translate (cap_endpoint E u d) (d * vx (unit_dir u)) (d * vy (unit_dir u)).
+Definition sq_corner (E : Point) (ein : Vec) (d : R) : Point :=
+  pt_translate (cap_endpoint E ein d) (d * vx (unit_dir ein)) (d * vy (unit_dir ein)).
 
 (* The round-cap apex: E pushed d along the edge direction (farthest point). *)
-Definition round_apex (E : Point) (u : Vec) (d : R) : Point :=
-  pt_translate E (d * vx (unit_dir u)) (d * vy (unit_dir u)).
+Definition round_apex (E : Point) (ein : Vec) (d : R) : Point :=
+  pt_translate E (d * vx (unit_dir ein)) (d * vy (unit_dir ein)).
 
 (* -------------------------------------------------------------------------- *)
 (* §3  Distance helper.                                                       *)
@@ -111,27 +111,27 @@ Qed.
 
 (* The flat cap connects the two boundary points; its squared length is the
    squared diameter (2d)^2. *)
-Theorem flat_cap_length_sq : forall E u d,
-  u <> vzero ->
-  dist_sq (cap_endpoint E u d) (cap_endpoint E u (- d)) = 4 * d ^ 2.
+Theorem flat_cap_length_sq : forall E ein d,
+  ein <> vzero ->
+  dist_sq (cap_endpoint E ein d) (cap_endpoint E ein (- d)) = 4 * d ^ 2.
 Proof.
-  intros E u d Hu.
+  intros E ein d Hin.
   unfold cap_endpoint, pt_translate, dist_sq. cbn [px py].
   replace
-    ((px E + d * vx (unit_perp u) - (px E + - d * vx (unit_perp u))) *
-     (px E + d * vx (unit_perp u) - (px E + - d * vx (unit_perp u))) +
-     (py E + d * vy (unit_perp u) - (py E + - d * vy (unit_perp u))) *
-     (py E + d * vy (unit_perp u) - (py E + - d * vy (unit_perp u))))
-    with (4 * d ^ 2 * vmag_sq (unit_perp u))
+    ((px E + d * vx (unit_perp ein) - (px E + - d * vx (unit_perp ein))) *
+     (px E + d * vx (unit_perp ein) - (px E + - d * vx (unit_perp ein))) +
+     (py E + d * vy (unit_perp ein) - (py E + - d * vy (unit_perp ein))) *
+     (py E + d * vy (unit_perp ein) - (py E + - d * vy (unit_perp ein))))
+    with (4 * d ^ 2 * vmag_sq (unit_perp ein))
     by (unfold vmag_sq, vdot; ring).
-  rewrite (vmag_sq_unit_perp u Hu). ring.
+  rewrite (vmag_sq_unit_perp ein Hin). ring.
 Qed.
 
 (* The flat cap is perpendicular to the edge direction. *)
-Theorem flat_cap_perp_edge : forall E u d,
-  vdot (seg_vec (cap_endpoint E u (- d)) (cap_endpoint E u d)) u = 0.
+Theorem flat_cap_perp_edge : forall E ein d,
+  vdot (seg_vec (cap_endpoint E ein (- d)) (cap_endpoint E ein d)) ein = 0.
 Proof.
-  intros E u d.
+  intros E ein d.
   unfold seg_vec, cap_endpoint, pt_translate, unit_perp, vscale, vperp, vdot.
   cbn. ring.
 Qed.
@@ -140,27 +140,27 @@ Qed.
 (* §5  Round cap: endpoints and apex lie on the circle of radius |d|.         *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem round_cap_endpoints_on_circle : forall E u d,
-  u <> vzero ->
-  dist E (cap_endpoint E u d) = Rabs d /\
-  dist E (cap_endpoint E u (- d)) = Rabs d.
+Theorem round_cap_endpoints_on_circle : forall E ein d,
+  ein <> vzero ->
+  dist E (cap_endpoint E ein d) = Rabs d /\
+  dist E (cap_endpoint E ein (- d)) = Rabs d.
 Proof.
-  intros E u d Hu.
-  pose proof (vmag_sq_unit_perp u Hu) as Hn.
+  intros E ein d Hin.
+  pose proof (vmag_sq_unit_perp ein Hin) as Hn.
   split.
   - unfold cap_endpoint. apply dist_scaled_unit; exact Hn.
   - unfold cap_endpoint.
-    rewrite (dist_scaled_unit E (unit_perp u) (- d) Hn).
+    rewrite (dist_scaled_unit E (unit_perp ein) (- d) Hn).
     apply Rabs_Ropp.
 Qed.
 
-Theorem round_cap_apex_on_circle : forall E u d,
-  u <> vzero ->
-  dist E (round_apex E u d) = Rabs d.
+Theorem round_cap_apex_on_circle : forall E ein d,
+  ein <> vzero ->
+  dist E (round_apex E ein d) = Rabs d.
 Proof.
-  intros E u d Hu.
+  intros E ein d Hin.
   unfold round_apex. apply dist_scaled_unit.
-  apply vmag_sq_unit_dir; exact Hu.
+  apply vmag_sq_unit_dir; exact Hin.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -169,38 +169,38 @@ Qed.
 
 (* Each square-cap corner is distance |d| beyond its boundary point (the
    extension along the edge). *)
-Theorem square_cap_extension : forall E u d,
-  u <> vzero ->
-  dist (cap_endpoint E u d) (sq_corner E u d) = Rabs d.
+Theorem square_cap_extension : forall E ein d,
+  ein <> vzero ->
+  dist (cap_endpoint E ein d) (sq_corner E ein d) = Rabs d.
 Proof.
-  intros E u d Hu.
+  intros E ein d Hin.
   unfold sq_corner. apply dist_scaled_unit.
-  apply vmag_sq_unit_dir; exact Hu.
+  apply vmag_sq_unit_dir; exact Hin.
 Qed.
 
 (* Each square-cap corner is distance sqrt(2)|d| from the endpoint E:
    dist_sq E corner = 2 d^2 (normal leg + tangential leg, both d, at right
    angles). *)
-Theorem square_cap_corner_dist_sq : forall E u d,
-  u <> vzero ->
-  dist_sq E (sq_corner E u d) = 2 * d ^ 2.
+Theorem square_cap_corner_dist_sq : forall E ein d,
+  ein <> vzero ->
+  dist_sq E (sq_corner E ein d) = 2 * d ^ 2.
 Proof.
-  intros E u d Hu.
+  intros E ein d Hin.
   unfold sq_corner, cap_endpoint, pt_translate, dist_sq. cbn [px py].
   replace
     ((px E -
-      (px E + d * vx (unit_perp u) + d * vx (unit_dir u))) *
+      (px E + d * vx (unit_perp ein) + d * vx (unit_dir ein))) *
      (px E -
-      (px E + d * vx (unit_perp u) + d * vx (unit_dir u))) +
+      (px E + d * vx (unit_perp ein) + d * vx (unit_dir ein))) +
      (py E -
-      (py E + d * vy (unit_perp u) + d * vy (unit_dir u))) *
+      (py E + d * vy (unit_perp ein) + d * vy (unit_dir ein))) *
      (py E -
-      (py E + d * vy (unit_perp u) + d * vy (unit_dir u))))
-    with (d ^ 2 * (vmag_sq (unit_perp u)
-                   + 2 * vdot (unit_perp u) (unit_dir u)
-                   + vmag_sq (unit_dir u)))
+      (py E + d * vy (unit_perp ein) + d * vy (unit_dir ein))))
+    with (d ^ 2 * (vmag_sq (unit_perp ein)
+                   + 2 * vdot (unit_perp ein) (unit_dir ein)
+                   + vmag_sq (unit_dir ein)))
     by (unfold vmag_sq, vdot; ring).
-  rewrite (vmag_sq_unit_perp u Hu), (vmag_sq_unit_dir u Hu),
+  rewrite (vmag_sq_unit_perp ein Hin), (vmag_sq_unit_dir ein Hin),
           vdot_unit_perp_unit_dir.
   ring.
 Qed.

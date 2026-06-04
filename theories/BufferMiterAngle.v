@@ -7,18 +7,18 @@
    trigonometric half-angle form of theories/Azimuth.v (see
    docs/buffer-noder-pipeline.md §2.2 / slice S3; JTS#180).
 
-   The miter apex of two edges of direction u, w (BufferMiter.miter_apex)
+   The miter apex of two edges of direction ein, eout (BufferMiter.miter_apex)
    sits at |V->apex| = d / sin(half-angle of the corner), where the corner
-   half-angle is measured between u and the REVERSED outgoing edge `vneg w`
+   half-angle is measured between ein and the REVERSED outgoing edge `vneg eout`
    (the actual angle at the vertex between the two segments).  Concretely:
 
      - `miter_numerator_sin_half`: the offset numerator N times
-       (sin_half_turn u (vneg w))^2 equals det^2.  Hence
-       |V->apex|^2 / d^2 = N / det^2 = 1 / sin_half_turn(u, vneg w)^2.
+       (sin_half_turn ein (vneg eout))^2 equals det^2.  Hence
+       |V->apex|^2 / d^2 = N / det^2 = 1 / sin_half_turn(ein, vneg eout)^2.
 
      - `miter_cap_iff_sin_half`: the END-TO-END soundness -- for a positive
        buffer distance and positive limit, the apex lies within the cap
-       L*d iff `1 <= L * sin_half_turn u (vneg w)`, which is exactly the
+       L*d iff `1 <= L * sin_half_turn ein (vneg eout)`, which is exactly the
        operational BufferParameters miter test
        `Azimuth.miter_ratio_le_iff`.
 
@@ -53,9 +53,9 @@ Proof. intros v. reflexivity. Qed.
 Lemma vmag_vneg : forall v, Azimuth.vmag (vneg v) = Azimuth.vmag v.
 Proof. intros v. unfold Azimuth.vmag. rewrite vmag_sq_neg. reflexivity. Qed.
 
-Lemma vneg_nonzero : forall w, w <> vzero -> vneg w <> vzero.
+Lemma vneg_nonzero : forall eout, eout <> vzero -> vneg eout <> vzero.
 Proof.
-  intros [wx wy] Hw H. apply Hw.
+  intros [wx wy] Hout H. apply Hout.
   unfold vneg, vzero in H. injection H as H1 H2.
   apply Vec_eq; simpl; lra.
 Qed.
@@ -68,34 +68,34 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §2  The key identity: N * sin_half_turn(u, vneg w)^2 = det^2.              *)
+(* §2  The key identity: N * sin_half_turn(ein, vneg eout)^2 = det^2.              *)
 (* -------------------------------------------------------------------------- *)
 
-Lemma miter_numerator_sin_half : forall u w,
-  u <> vzero -> w <> vzero ->
-  ((BufferOffset.vmag u * vx w - BufferOffset.vmag w * vx u) ^ 2
-   + (BufferOffset.vmag u * vy w - BufferOffset.vmag w * vy u) ^ 2)
-  * (sin_half_turn u (vneg w)) ^ 2
-  = (miter_det u w) ^ 2.
+Lemma miter_numerator_sin_half : forall ein eout,
+  ein <> vzero -> eout <> vzero ->
+  ((BufferOffset.vmag ein * vx eout - BufferOffset.vmag eout * vx ein) ^ 2
+   + (BufferOffset.vmag ein * vy eout - BufferOffset.vmag eout * vy ein) ^ 2)
+  * (sin_half_turn ein (vneg eout)) ^ 2
+  = (miter_det ein eout) ^ 2.
 Proof.
-  intros u w Hu Hw.
-  pose proof (vneg_nonzero w Hw) as Hnw.
-  rewrite (sin_half_turn_sq u (vneg w) Hu Hnw).
+  intros ein eout Hin Hout.
+  pose proof (vneg_nonzero eout Hout) as Hnw.
+  rewrite (sin_half_turn_sq ein (vneg eout) Hin Hnw).
   rewrite vdot_neg_r, vmag_vneg.
   rewrite miter_numerator_cos, miter_det_sq_lagrange.
   (* unfold both vmag's to the common sqrt(vmag_sq _) so they are one atom *)
   unfold Azimuth.vmag, BufferOffset.vmag.
-  assert (Hu2 : sqrt (vmag_sq u) * sqrt (vmag_sq u) = vmag_sq u)
+  assert (Hu2 : sqrt (vmag_sq ein) * sqrt (vmag_sq ein) = vmag_sq ein)
     by (apply sqrt_sqrt; apply vmag_sq_nonneg).
-  assert (Hw2 : sqrt (vmag_sq w) * sqrt (vmag_sq w) = vmag_sq w)
+  assert (Hw2 : sqrt (vmag_sq eout) * sqrt (vmag_sq eout) = vmag_sq eout)
     by (apply sqrt_sqrt; apply vmag_sq_nonneg).
-  assert (HUp : 0 < sqrt (vmag_sq u))
-    by (apply sqrt_lt_R0; apply vmag_sq_pos; exact Hu).
-  assert (HWp : 0 < sqrt (vmag_sq w))
-    by (apply sqrt_lt_R0; apply vmag_sq_pos; exact Hw).
-  set (U := sqrt (vmag_sq u)) in *.
-  set (W := sqrt (vmag_sq w)) in *.
-  (* eliminate vmag_sq u/w in favour of U*U, W*W *)
+  assert (HUp : 0 < sqrt (vmag_sq ein))
+    by (apply sqrt_lt_R0; apply vmag_sq_pos; exact Hin).
+  assert (HWp : 0 < sqrt (vmag_sq eout))
+    by (apply sqrt_lt_R0; apply vmag_sq_pos; exact Hout).
+  set (U := sqrt (vmag_sq ein)) in *.
+  set (W := sqrt (vmag_sq eout)) in *.
+  (* eliminate vmag_sq ein/eout in favour of U*U, W*W *)
   rewrite <- Hu2, <- Hw2.
   assert (HU0 : U <> 0) by (apply Rgt_not_eq; exact HUp).
   assert (HW0 : W <> 0) by (apply Rgt_not_eq; exact HWp).
@@ -106,21 +106,21 @@ Qed.
 (* §3  End-to-end: the algebraic cap and the half-angle cap agree.            *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem miter_cap_iff_sin_half : forall V u w d L,
-  u <> vzero -> w <> vzero -> miter_det u w <> 0 ->
+Theorem miter_cap_iff_sin_half : forall V ein eout d L,
+  ein <> vzero -> eout <> vzero -> miter_det ein eout <> 0 ->
   0 < d -> 0 < L ->
-  dist_sq V (miter_apex V u w d) <= (L * d) ^ 2
-  <-> 1 <= L * sin_half_turn u (vneg w).
+  dist_sq V (miter_apex V ein eout d) <= (L * d) ^ 2
+  <-> 1 <= L * sin_half_turn ein (vneg eout).
 Proof.
-  intros V u w d L Hu Hw Hdet Hd HL.
-  rewrite (miter_within_limit_iff V u w d L Hdet Hd).
-  pose proof (miter_numerator_sin_half u w Hu Hw) as HK.
-  set (N := (BufferOffset.vmag u * vx w - BufferOffset.vmag w * vx u) ^ 2
-            + (BufferOffset.vmag u * vy w - BufferOffset.vmag w * vy u) ^ 2) in *.
-  set (s := sin_half_turn u (vneg w)) in *.
+  intros V ein eout d L Hin Hout Hdet Hd HL.
+  rewrite (miter_within_limit_iff V ein eout d L Hdet Hd).
+  pose proof (miter_numerator_sin_half ein eout Hin Hout) as HK.
+  set (N := (BufferOffset.vmag ein * vx eout - BufferOffset.vmag eout * vx ein) ^ 2
+            + (BufferOffset.vmag ein * vy eout - BufferOffset.vmag eout * vy ein) ^ 2) in *.
+  set (s := sin_half_turn ein (vneg eout)) in *.
   assert (Hsnn : 0 <= s) by apply sin_half_turn_nonneg.
-  assert (Hdet2 : 0 < (miter_det u w) ^ 2).
-  { assert (miter_det u w <> 0) by exact Hdet. nra. }
+  assert (Hdet2 : 0 < (miter_det ein eout) ^ 2).
+  { assert (miter_det ein eout <> 0) by exact Hdet. nra. }
   assert (HNnn : 0 <= N)
     by (unfold N; apply Rplus_le_le_0_compat; apply pow2_ge_0).
   (* From HK: N * s^2 = det^2 > 0, with N >= 0, s >= 0 -> N > 0 and s > 0. *)
