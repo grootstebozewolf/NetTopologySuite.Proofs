@@ -117,19 +117,35 @@ stand-in for the topological interior — it is a predicate that happens to be
 *identically false*, so instantiating H1 with it silently converted a faithful
 conditional headline into a vacuous one.
 
-## Remedy options (not applied here — flagged for decision)
+## Resolution (applied)
 
-1. **Add the missing continuity requirement** to `connected_in_complement`
-   (e.g. `continuity path` from `Stdlib.Reals.Ranalysis`, or an explicit
-   `continuous_pt` quantifier). This is the minimal correct fix and restores a
-   genuine "bounded connected component" notion; `geometric_interior_stdlib`
-   then becomes inhabited for real rings and H1 becomes satisfiable. (It re-opens
-   the actual JCT gap, which is the honest state of affairs.)
-2. **Revert H1 to the opaque `geometric_interior` Section Variable** (the
-   pre-S15 form), so the headline is conditional on an abstract — not provably
-   false — interior predicate.
-3. Keep `geometric_interior_stdlib` but **re-audit every theorem that consumes
-   the H1 shape** and mark it vacuous in `docs/verified-claims.md` until (1) lands.
+The fix combines option 1 (continuity) at the definition level with a
+re-pointing of the consuming headlines:
+
+1. **Continuity-carrying definitions** landed in `theories/JordanCurveSeam.v`
+   (PR #81): `connected_in_complement_cont` / `in_bounded_component_cont` /
+   `geometric_interior_cont` require the connecting `path` to be continuous
+   (`path_continuous`, via Stdlib `Ranalysis.continuity`).
+   `far_points_connected_cont` shows the corrected relation is non-degenerate.
+2. **The deferred JCT hypothesis was strengthened.** `JCT_two_components_cont`
+   now carries a **separation clause** ("no continuous complement path links an
+   interior point to an exterior one") — the trapped-interior half of the JCT.
+   `jct_cont_interior_is_geometric` proves that *under* this hypothesis every
+   interior point is a `geometric_interior_cont` point, i.e. the hypothesis is
+   strong enough to discharge the seam. (This does **not** prove the JCT;
+   `JCT_two_components_cont` remains an unproved `Prop`.)
+3. **The OverlayNG/buffer headline H1 was re-pointed** off the (vacuous)
+   `geometric_interior_stdlib` onto `geometric_interior_cont`, at all 6 sites in
+   `theories-flocq/OverlayCorrectness.v` (the `overlay_ng_correct_conditional`
+   headline + its forward/backward corollaries) and at the buffer target in
+   `docs/buffer-noder-pipeline.md`. H1 is now a genuine, satisfiable —
+   still-undischarged — JCT obligation rather than a contradiction. The
+   headline's axiom footprint is unchanged (README allowlist + the snap layer's
+   `Classical_Prop.classic`).
+
+Verified under Rocq 9.1.1 + Flocq 4.2.2: `theories/JordanCurveSeam.v` and
+`theories-flocq/OverlayCorrectness.vo` both build clean; the new
+`jct_cont_interior_is_geometric` is axiom-clean (no `classic`).
 
 ## Reproduce
 

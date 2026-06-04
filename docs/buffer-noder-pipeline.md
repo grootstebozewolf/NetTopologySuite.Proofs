@@ -140,7 +140,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 | 4a graph | build topology graph | ✅ | `OverlayGraph.{build_graph,build_labeled_graph,TopologyGraph,valid_topology_graph}`, `valid_topology_graph_build_labeled_graph` |
 | 4b labelling | **depth** label (in/out of d-region) | 🟡 | `theories/BufferDepth.v` reuses `EdgeLabel` as interior-side flags; the keep-the-boundary rule IS the SymDiff rule (`buffer_edge_in_result = edge_in_result SymDiff`); `kept_edges` + validity Qed. The depth-region/d-neighbourhood *correctness* is the remaining analytic seam |
 | 5 ring assembly | faces → valid polygons | ⛓️ | `OverlayGraph.extract`; correctness is `OverlayBridge.extract_rings_valid` (Admitted, registered deferred) |
-| spec/JCT | point-in-result ⟺ interior | ⛓️ | `Overlay.{point_set,point_in_polygon,point_in_ring,valid_polygon}`; JCT seam `PointInRingTangents.geometric_interior_stdlib` (H1 named hypothesis) |
+| spec/JCT | point-in-result ⟺ interior | ⛓️ | `Overlay.{point_set,point_in_polygon,point_in_ring,valid_polygon}`; JCT seam `JordanCurveSeam.geometric_interior_cont` (H1 named hypothesis — re-pointed off the vacuous `geometric_interior_stdlib`, see `docs/jct-vacuity-finding.md` + §4 note below) |
 
 ### 2.1 Stage 1 — decompose (✅ reusable)
 
@@ -287,7 +287,7 @@ Theorem overlay_ng_correct_conditional :
     valid_geometry A -> valid_geometry B ->
     fully_intersected (noded_segments A B) ->
     (* H1 JCT *) (forall q r, ring_closed r -> ring_simple r ->
-                    point_in_ring q r <-> geometric_interior_stdlib q r) ->
+                    point_in_ring q r <-> geometric_interior_cont q r) ->
     (* H2 DCEL *) (forall op' g, valid_topology_graph g ->
                     valid_geometry (extract op' g)) ->
     (* H_bridge *) (forall g, valid_topology_graph g -> correct_labels op g A B ->
@@ -341,7 +341,7 @@ Theorem buffer_correct_conditional :
     buffer_correct_labels (noded_buffer_graph g d) g d ->
     (* H1 JCT: point_in_ring captures topological interior (shared with overlay). *)
     (forall q r, ring_closed r -> ring_simple r ->
-       point_in_ring q r <-> geometric_interior_stdlib q r) ->
+       point_in_ring q r <-> geometric_interior_cont q r) ->
     (* H2 DCEL: extract assembles valid polygons (shared ⛓️ extract_rings_valid). *)
     (forall g', valid_topology_graph g' -> valid_geometry (extract_buffer g')) ->
     (* H_bridge: on a valid, correctly depth-labelled graph, the extracted
@@ -360,6 +360,21 @@ Assumptions` would show the README three-axiom set plus the Flocq
 `Classical_Prop.classic` transitive pull inherited from
 `snap_round_segments` (same Category-C footprint as `OverlayBridge.v`,
 already covered by `docs/audit-exceptions.txt`).
+
+> **§4 note — H1 re-pointed off the vacuous predicate.** The shared JCT
+> hypothesis H1 is stated over `JordanCurveSeam.geometric_interior_cont`,
+> **not** `PointInRingTangents.geometric_interior_stdlib`. The latter is
+> *identically false* (`JordanCurveSeam.geometric_interior_stdlib_vacuous`):
+> its `connected_in_complement` quantifies over discontinuous paths, so
+> H1 stated over it would be contradictory and the whole headline
+> **vacuous / uninstantiable** (see `docs/jct-vacuity-finding.md`,
+> `docs/h1-vacuity/`). `geometric_interior_cont` requires continuous
+> complement paths and is genuinely inhabited under the deferred
+> `JCT_two_components_cont` hypothesis
+> (`JordanCurveSeam.jct_cont_interior_is_geometric`), so H1 is now an
+> honest, satisfiable — still-undischarged — JCT obligation. The same
+> re-pointing was applied to the overlay headline
+> (`theories-flocq/OverlayCorrectness.v`).
 
 ---
 

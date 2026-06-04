@@ -217,6 +217,16 @@ Definition JCT_two_components_cont (r : Ring) : Prop :=
        connected_in_complement_cont r a b) /\
     (forall a b, exterior_pred a -> exterior_pred b ->
        connected_in_complement_cont r a b) /\
+    (* Separation (the trapped-interior half of the JCT): no continuous
+       complement path links an interior point to an exterior one.  Without
+       this clause the partition does not force an interior point into a
+       *bounded* component -- one could continuously escape to the unbounded
+       exterior -- so `geometric_interior_cont` would not be inhabited.  See
+       `jct_cont_interior_is_geometric` (§5) for why this is exactly the
+       clause that makes the corrected H1 hypothesis dischargeable rather
+       than vacuous. *)
+    (forall a b, interior_pred a -> exterior_pred b ->
+       ~ connected_in_complement_cont r a b) /\
     (* The interior is bounded; the exterior is unbounded. *)
     (exists M, M > 0 /\ forall q, interior_pred q ->
        px q * px q + py q * py q <= M * M) /\
@@ -255,4 +265,60 @@ Proof.
     pose proof (convex_ge_min x0 x1 t Ht) as Hge.
     pose proof (Rmin_glb_lt x0 x1 (edges_maxX (ring_edges r)) H0 H1) as Hlt.
     lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §5  Sufficiency: the corrected hypothesis inhabits the interior predicate. *)
+(*                                                                            *)
+(* `geometric_interior_stdlib` was *identically false* (§2), so re-pointing a *)
+(* conditional headline's H1 onto it makes the headline vacuous /             *)
+(* uninstantiable.  Here we show the corrected `JCT_two_components_cont`      *)
+(* (now carrying the §3 separation clause) is strong enough to put every one  *)
+(* of its interior points into `geometric_interior_cont`.  Consequence:       *)
+(* re-pointing H1 onto `geometric_interior_cont` yields a GENUINE, satisfiable *)
+(* obligation -- the honest JCT gap -- rather than a contradiction.           *)
+(*                                                                            *)
+(* This does NOT prove the JCT.  `JCT_two_components_cont` remains an unproved *)
+(* `Prop` hypothesis (thesis-scale).  What is proved is the implication       *)
+(* "JCT_two_components_cont  =>  interior points are geometric-interior",      *)
+(* i.e. that the deferred hypothesis is the right (sufficient) target.        *)
+(* The separation clause is load-bearing: drop it and this proof fails at the *)
+(* `Hsep` step -- exactly mirroring the discontinuity defect it repairs.      *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem jct_cont_interior_is_geometric :
+  forall (r : Ring),
+    ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
+    JCT_two_components_cont r ->
+    exists interior_pred exterior_pred : Point -> Prop,
+      (* the JCT partition (re-exposed for the caller) ... *)
+      (forall q, ~ ring_image r q ->
+         (interior_pred q \/ exterior_pred q) /\
+         ~ (interior_pred q /\ exterior_pred q)) /\
+      (* ... and the new payload: every interior point is geometric-interior. *)
+      (forall p, interior_pred p -> geometric_interior_cont p r).
+Proof.
+  intros r Hs Hc Hm HJCT.
+  destruct (HJCT Hs Hc Hm)
+    as [ip [ep [Hpart [Hicon [_Hecon [Hsep [Hbnd _Hunb]]]]]]].
+  exists ip, ep. split; [exact Hpart |].
+  intros p Hip. unfold geometric_interior_cont.
+  (* p is off the ring: the trivial loop path from p to itself witnesses it. *)
+  assert (Hpoff : ring_complement r p).
+  { destruct (Hicon p p Hip Hip) as [path [_ [Hp0 [_ Hin]]]].
+    rewrite <- Hp0. apply Hin. lra. }
+  split; [exact Hpoff |].
+  (* in_bounded_component_cont: the interior bound M works because separation
+     keeps every point reachable from p inside the (bounded) interior. *)
+  destruct Hbnd as [M [HMpos HMbnd]].
+  exists M. split; [exact HMpos |].
+  intros q Hreach.
+  (* q is off-ring: it is the t=1 endpoint of a complement path. *)
+  assert (Hqoff : ring_complement r q).
+  { destruct Hreach as [path [_ [_ [Hp1 Hin]]]].
+    rewrite <- Hp1. apply Hin. lra. }
+  (* q is interior: it cannot be exterior, by separation from p. *)
+  destruct (Hpart q Hqoff) as [[Hqi | Hqe] _].
+  - apply HMbnd. exact Hqi.
+  - exfalso. apply (Hsep p q Hip Hqe). exact Hreach.
 Qed.
