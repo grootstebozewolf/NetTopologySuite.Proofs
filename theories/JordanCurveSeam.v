@@ -241,6 +241,19 @@ Definition JCT_two_components_cont (r : Ring) : Prop :=
     (forall M, exists q, exterior_pred q /\
        px q * px q + py q * py q > M * M).
 
+(* SCOPE CAVEAT (see theories/JCT_Counterexample.v +
+   docs/jct-bowtie-counterexample.md).  The three structural premises above
+   are NOT sufficient as written: `ring_simple` forbids only PROPER
+   (interior-interior) crossings, so a self-touching ring -- e.g. the figure-8
+   bowtie, two triangles meeting only at a shared vertex -- is `ring_simple`,
+   `ring_closed` and has >= 4 vertices yet has THREE complement components.
+   Hence `forall r, JCT_two_components_cont r` is false as stated.  The fix is
+   `JCT_two_components_cont_simple` (ibid.), which adds the OGC vertex-
+   distinctness premise `ring_vertices_distinct r := NoDup (removelast r)`
+   (curve injectivity / every vertex degree 2) -- the half `ring_simple`
+   omits.  Any downstream H1 that needs the two-component conclusion should be
+   stated against the strengthened premise set. *)
+
 (* -------------------------------------------------------------------------- *)
 (* §4  The continuous relation is genuinely non-degenerate.                   *)
 (*                                                                            *)
