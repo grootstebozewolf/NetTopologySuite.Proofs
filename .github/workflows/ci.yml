@@ -1,5 +1,8 @@
 name: build proofs
 
+# For CI / Quality Gatekeeper (formerly CI Cara): see docs/HELP.md + docs/READING-GUIDE.md (Quality Gatekeeper card)
+# for the full path. The registries and scripts/check_* are the core.
+
 on:
   push:
     branches: [main]
@@ -78,6 +81,23 @@ jobs:
         # silent drift of either source from the other.  See
         # scripts/check_readme_axioms.sh for the exact check.
         run: bash scripts/check_readme_axioms.sh
+
+      - name: verified-claims.md references exist (guardrail 5)
+        # Keeps docs/verified-claims.md honest: every `Module.v : theorem`
+        # it cites must resolve to a real definition in theories/ or
+        # theories-flocq/.  A rename/removal that orphans a claim fails
+        # here instead of silently rotting.  Grep-only (no build needed).
+        run: bash scripts/validate-claims.sh
+
+      - name: Oracle hand-roll ratchet (guardrail 6)
+        # The RocqRefRunner is credible only if every mode is bit-exact
+        # against a Coq-EXTRACTED reference.  This ratchet freezes the
+        # existing hand-rolled float kernels in oracle/driver.ml
+        # (docs/oracle-handrolled-allowlist.txt) so the set can only
+        # shrink: a new hand-rolled mode, or a stale allowlist entry left
+        # after a migration, fails here.  Backlog for shrinking it:
+        # docs/oracle-handroll-migration.md.  perl/awk-only (no build).
+        run: bash scripts/check_oracle_handrolled.sh
 
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus

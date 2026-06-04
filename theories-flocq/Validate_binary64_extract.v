@@ -41,6 +41,13 @@ From NTS.Proofs.Flocq Require Import Orientation_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64_exact.
 From NTS.Proofs       Require Import OverlayGraph.   (* edge_in_result *)
+From NTS.Proofs.Flocq Require Import HotPixel_b64.    (* b64_snap_coord, b64_one/two/half *)
+From NTS.Proofs.Flocq Require Import PassesThrough_b64_compute.
+From NTS.Proofs.Flocq Require Import InCircle_b64_compute.   (* b64_inCircle *)
+From NTS.Proofs.Flocq Require Import B64_Pff_bridge.        (* b64_TwoSum *)
+From NTS.Proofs.Flocq Require Import B64_FastExpansionSum.  (* b64_grow_expansion_aux *)
+From NTS.Proofs.Flocq Require Import ArcCircle_b64_compute.  (* b64_chord_crosses_arc_circle *)
+From NTS.Proofs.Flocq Require Import ArcPixel_b64_compute.   (* b64_arc_passes_through_hot_pixel *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -99,6 +106,36 @@ Extract Constant Orientation_b64.b64_three   => "3.0".
 Extract Constant Orientation_b64.b64_sixteen => "16.0".
 Extract Constant Orientation_b64.b64_eps     => "ldexp 1.0 (-52)".
 
+(* Constants used by the computational Liang-Barsky predicates.  Their Coq    *)
+(* bodies go through `binary_normalize`, which under extraction reaches the    *)
+(* B754_finite constructor stub above; override with the exact binary64        *)
+(* literals (same pattern as b64_three / b64_sixteen / b64_eps).               *)
+Extract Constant HotPixel_b64.b64_one  => "1.0".
+Extract Constant HotPixel_b64.b64_two  => "2.0".
+Extract Constant HotPixel_b64.b64_half => "0.5".
+
+(* min/max: select an operand.  Map to OCaml's Float.min / Float.max so the    *)
+(* extracted t-interval clamp is bit-identical to the previous hand-rolled     *)
+(* driver (which used Float.min / Float.max).  On the finite t-bounds reached  *)
+(* here these agree with the Coq `if b64_le .. then .. else ..` bodies.        *)
+Extract Constant PassesThrough_b64_compute.b64_min => "Float.min".
+Extract Constant PassesThrough_b64_compute.b64_max => "Float.max".
+
+(* b64_snap_coord = Bnearbyint mode_NE (round half to even).  Its Coq body     *)
+(* constructs binary_floats (B754_finite stub); override with the native       *)
+(* round-half-to-even (OCaml 4.14 Float.round is half-AWAY-from-zero, so we     *)
+(* implement ties-to-even via floor + parity, exactly as the old driver did).  *)
+Extract Constant HotPixel_b64.b64_snap_coord =>
+  "(fun x ->
+      if x <> x then x
+      else if x = infinity || x = neg_infinity then x
+      else
+        let f = Float.floor x in
+        let d = x -. f in
+        if d < 0.5 then f
+        else if d > 0.5 then f +. 1.0
+        else if Float.rem f 2.0 = 0.0 then f else f +. 1.0)".
+
 Extraction Language OCaml.
 
 (* Write the extracted code to `oracle/extracted.ml` (relative to the    *)
@@ -117,4 +154,11 @@ Extraction "oracle/extracted.ml"
   b64_intersect_point
   b64_intersect_point_x
   b64_intersect_point_y
-  edge_in_result.
+  edge_in_result
+  b64_passes_through_hot_pixel_compute
+  b64_passes_through_hot_pixel_halfopen_compute
+  b64_inCircle
+  b64_chord_crosses_arc_circle
+  b64_arc_passes_through_hot_pixel
+  b64_TwoSum
+  b64_grow_expansion_aux.

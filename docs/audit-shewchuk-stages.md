@@ -1,5 +1,7 @@
 # Library audit: Shewchuk Stages B/C/D in Flocq 4.2.2
 
+**New here (Scholar Sam / Tech-Lead Tess / Joost the BDFL)?** Start with [`docs/HELP.md`](HELP.md) and [`docs/READING-GUIDE.md`](READING-GUIDE.md). This is deep proof-structure / soundness-strategy material.
+
 **Question.** To close the full Shewchuk adaptive `orient2d` (Stages B/C/D —
 expansion arithmetic that refines `OrientRUncertain` from Stage A into a
 definite `Pos`/`Neg`/`Zero`), what's already in our pinned Flocq, what

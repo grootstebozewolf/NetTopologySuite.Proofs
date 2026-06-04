@@ -1,0 +1,23 @@
+# Hot-pixel passes-through hardening vectors (oracle PASSES_THROUGH_{FILTER,EXACT}).
+# Provenance: theories-flocq/PassesThrough_b64_compute_unsound.v and
+#             PassesThroughHalfopen_b64_compute_unsound.v (GitHub #66).
+# x0 y0 x1 y1 cx cy  FILTER=<v> EXACT=<v>   (rounded filter vs exact ground truth)
+#
+# --- agreement: clean passes and misses (FILTER == EXACT) ---
+0.0 0.0 2.0 0.0 1.0 0.0  FILTER=TRUE EXACT=TRUE        # segment through pixel centre -- pass
+0.0 0.0 0.0 10.0 5.0 5.0  FILTER=FALSE EXACT=FALSE        # far miss
+0.0 -0.5 0.0 0.5 0.0 0.0  FILTER=TRUE EXACT=TRUE        # vertical segment through centre
+# --- ADVERSARIAL: rounded filter OVER-ACCEPTS (FILTER=TRUE, EXACT=FALSE) ---
+# Machine-checked counterexample (b64_passes_through_compute_unsound): the
+# segment misses the closed pixel by a sub-ulp margin; exact tlo_x =
+# 2^49/(2^49+1) > thi_y = (2^49-1)/2^49, so the exact clipped t-interval is
+# empty, but the rounded b64_div closes the gap inward.
+0x1p+0 -0x1.0000000000002p+1 0x1.ffffffffffffp-2 -0x1.4000000000002p+1 0x0p+0 -0x1p+1  FILTER=TRUE EXACT=FALSE        # sub-ulp tangency, bottom-right corner
+#
+# --- half-open mode: same over-acceptance (HALFOPEN=TRUE, HALFOPEN_EXACT=FALSE) ---
+# Counterexample (b64_passes_through_halfopen_compute_unsound): the closed
+# witness reflected (x negated) to a bottom-LEFT tangency so the half-open
+# strict midpoint checks pass while the exact geometry still misses.
+-0x1p+0 -0x1.0000000000002p+1 -0x1.ffffffffffffp-2 -0x1.4000000000002p+1 0x0p+0 -0x1p+1  HALFOPEN=TRUE HALFOPEN_EXACT=FALSE        # sub-ulp tangency, bottom-left corner
+# Half-open agreement sanity:
+0.0 0.0 2.0 0.0 1.0 0.0  HALFOPEN=TRUE HALFOPEN_EXACT=TRUE        # segment through centre -- pass

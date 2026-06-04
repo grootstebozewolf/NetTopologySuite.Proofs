@@ -1,0 +1,90 @@
+# Oracle hand-rolled-arithmetic allowlist (credibility ratchet)
+# =============================================================================
+# Frozen baseline for scripts/check_oracle_handrolled.sh.
+#
+# Each name is a function in oracle/driver.ml that performs binary64
+# arithmetic WITHOUT routing through a Coq-extracted function in
+# oracle/extracted.ml.  Entries fall into TWO categories:
+#
+#   (1) TRANSITIONAL -- pre-dated the ratchet; technical debt to be migrated
+#       to extracted definitions (docs/oracle-handroll-migration.md).  This
+#       sub-set may only SHRINK.  (Currently empty: all migrated.)
+#
+#   (2) INTERFACE-BOUNDARY -- a SANCTIONED, PERMANENT exception (owner policy,
+#       2026-06-03).  A mode that must emit the same primitive value the
+#       Java (JTS) / C# (NTS) implementation computes for differential
+#       testing, where that value is TRANSCENDENTAL (atan2 / sqrt / acos /
+#       trig) and therefore has NO Coq-extractable form (Flocq exposes no
+#       Batan2 etc.).  Such a mode legitimately hand-rolls float: there is no
+#       extractable reference to route through, and the float IS the interface.
+#       Each entry must name its mode + the Java/C# call it mirrors, and where
+#       possible derive from an EXACT companion mode (so it rounds only once
+#       past certified rational algebra).
+#
+# RULES (enforced by CI -- the script compares detected vs. allowed):
+#   - A new TRANSITIONAL kernel fails review (that sub-set only shrinks).
+#   - A new INTERFACE-BOUNDARY kernel is allowed ONLY with the justification
+#     comment above its line (mode + Java/C# call + exact companion).
+#   - When any kernel is migrated/removed, delete its line in the same change,
+#     or CI fails on the stale entry.
+#
+# One function name per line; `#` comments and blank lines ignored.
+# =============================================================================
+
+# --- PASSES_THROUGH_FILTER / PASSES_THROUGH_HALFOPEN : MIGRATED -------------
+# (item 1, done) The driver now calls the extracted computational predicates
+# b64_passes_through_hot_pixel_compute / _halfopen_compute
+# (theories-flocq/PassesThrough_b64_compute.v); the native round_half_to_even
+# / lb_tlo / lb_thi / lb_touches / lb_touches_halfopen kernels were deleted.
+# Bit-exact with the old native code (2e6-case check, oracle/test_pt.ml).
+# Remaining: forward-error soundness of the rounded predicate to the
+# geometric relation (docs/oracle-handroll-migration.md item 1).
+
+# --- INCIRCLE_SIGN : MIGRATED -----------------------------------------------
+# (item 2, done) The in-circle determinant is now the extracted b64_inCircle
+# (theories-flocq/InCircle_b64_compute.v); native incircle_r_native deleted and
+# all three modes (INCIRCLE_SIGN + both ARC_* sign-products) route through it.
+# Bit-exact with the old native code (2e6-case check, oracle/test_ic.ml).
+# Remaining: integer-regime exactness of the b64 sign vs inCircle_R
+# (|coord| <= 2^12, no division -> exact; docs/oracle-handroll-migration.md item 2).
+
+# --- ARC_CHORD_CROSSES_CIRCLE : MIGRATED ------------------------------------
+# (item 3, done) Now the extracted b64_chord_crosses_arc_circle
+# (theories-flocq/ArcCircle_b64_compute.v); native `sp *. sq < 0` glue gone.
+# Bit-exact (2e6-case check, oracle/test_arc.ml).
+
+# --- ARC_PASSES_THROUGH_PIXEL : MIGRATED ------------------------------------
+# (item 4, done) Now the extracted b64_arc_passes_through_hot_pixel
+# (theories-flocq/ArcPixel_b64_compute.v); native in_hot_pixel_halfopen and the
+# run_arc_passes_through_pixel glue deleted.  Bit-exact (2e6-case check,
+# oracle/test_pixel.ml).
+#
+# ============================================================================
+# TRANSITIONAL sub-set EMPTY -- migration done-criterion met.  Every
+# extractable oracle mode computes via a Coq-extracted function
+# (oracle/extracted.ml); no transitional hand-rolled kernels remain.
+# ============================================================================
+
+# === INTERFACE-BOUNDARY (sanctioned, permanent) ============================
+#
+# --- ARC_LENGTH (issue #64) -------------------------------------------------
+# Mode ARC_LENGTH emits the literal float arc length s = r * Theta, the value
+# the JTS/NTS curve implementation computes (Java Math.sqrt + Math.acos).
+# Arc length is transcendental, so it has NO Coq-extractable form (Flocq has
+# no Batan2/Bacos); the float IS the differential-test interface.  The kernel
+# applies sqrt/acos to the EXACT rational invariants of arc_invariants_q (the
+# certifiable ARC_LENGTH_INVARIANTS_EXACT mode: r2, cos Theta0, major-arc flag), so it
+# rounds only ONCE past certified algebra (theories/ArcLength.chord_subtended_sq,
+# theories/AngleBetween.cos_angle_between).
+run_arc_length
+
+# --- ARC_AREA (M-AREA-CP, issue #64) ----------------------------------------
+# Mode ARC_AREA emits the float circular-SEGMENT area of one arc,
+# A_seg = (r^2/2)(Theta - sin Theta) -- transcendental (Theta), no
+# Coq-extractable form; the float is the JTS/NTS curve-area interface value.
+# Refactored to mirror ARC_LENGTH: it applies acos + sin to the EXACT rational
+# invariants of arc_invariants_q (the certifiable ARC_AREA_INVARIANTS_EXACT
+# mode: r2, cos Theta0, sin^2 Theta0, major-arc flag), so it rounds only ONCE
+# past certified algebra.  (Supersedes main 53d61c7's hand-rolled shoelace stub,
+# which had bypassed the then-broken ratchet.)
+run_arc_area

@@ -3,21 +3,78 @@
 [![build proofs](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml/badge.svg)](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml)
 
 Mechanically-verified formal proofs of foundational properties of the
-algorithms in [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite).
+geometry algorithms in
+[NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite),
+written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 
-Proofs are written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
+> **New here?**  
+> Run `make help` (works with no Rocq installed) or open  
+> [`docs/HELP.md`](docs/HELP.md) — the friendly "pick your path" card deck.  
+> Full role navigation lives in [`docs/READING-GUIDE.md`](docs/READING-GUIDE.md).  
+> `GETTING-STARTED.md` has the 60-second on-ramp.  
+> **Never seen a proof assistant?** Start with the heavily commented
+> [`docs/pythagoras-for-beginners.v`](docs/pythagoras-for-beginners.v)
+> (step through it in an IDE). It also explains why even "obvious"
+> theorems take serious machine time once everything must be checked.
 
-**The invariant**: every `.v` file in `theories/` and `theories-flocq/`
-ends each proof with `Qed.` (or `Defined.` for computable terms). No
-`Admitted`. Structural sanity lemmas are closed. Semantic soundness
-bridges that are not yet proven are explicitly marked as future work in
-the file header *and have no `Admitted` theorem standing in for them* —
-they are absent rather than stubbed.
+---
 
-CI fails if any `Admitted`, `Axiom`, `Parameter`, or `admit.` appears in
-any `.v` file. The only axioms used are the three standard ones bundled
-with Rocq's classical real arithmetic library (printed at the end of
-each `.v` file under `Print Assumptions` for transparency):
+**Over 1,100 theorems — every proof sealed with `Qed.`** (or `Defined.`
+for computable terms), **resting on three axioms.** Those three are the
+standard classical-reals trio Rocq ships with; this corpus introduces
+none of its own, and `Axiom`, `Parameter`, and the `admit.` tactic are
+banned outright and appear nowhere. The *only* proofs not closed by
+`Qed.` are **6** `Admitted` theorems — and an unregistered `Admitted`
+fails the build, so there is no quiet middle ground. Those six fall into
+exactly two honest categories, each with a concrete seam on file: **3
+counterexamples** (the theorem as stated is *false*, with a verified
+counterexample committed) and **3 deferred proofs** (the theorem is
+*true*, its proof structure documented and the remaining work scoped).
+No soundness bridge is silently stubbed — each is proven, absent, or
+registered. (The Flocq-dependent lane inherits one further axiom
+structurally from Flocq's binary64 model — not load-bearing, and
+detailed below.)
+
+**Over 1,100 theorems — every proof sealed with `Qed.`** (or `Defined.`
+for computable terms), **resting on three axioms.** Those three are the
+standard classical-reals trio Rocq ships with; this corpus introduces
+none of its own, and `Axiom`, `Parameter`, and the `admit.` tactic are
+banned outright and appear nowhere. The *only* proofs not closed by
+`Qed.` are **6** `Admitted` theorems — and an unregistered `Admitted`
+fails the build, so there is no quiet middle ground. Those six fall into
+exactly two honest categories, each with a concrete seam on file: **3
+counterexamples** (the theorem as stated is *false*, with a verified
+counterexample committed) and **3 deferred proofs** (the theorem is
+*true*, its proof structure documented and the remaining work scoped).
+No soundness bridge is silently stubbed — each is proven, absent, or
+registered. (The Flocq-dependent lane inherits one further axiom
+structurally from Flocq's binary64 model — not load-bearing, and
+detailed below.)
+
+CI (`scripts/check_admitted.sh`) enforces a three-tier `Admitted`
+discipline across both directories:
+
+- **Tier 1** — an `Admitted` with no registry entry is a build failure.
+  This is the default.
+- **Tier 2** — an `Admitted` registered in
+  [`docs/admitted-counterexamples.txt`](docs/admitted-counterexamples.txt)
+  is allowed permanently: the theorem *as stated* is false, with a
+  verified counterexample on file. 3 entries today, all in the Stage D
+  expansion-arithmetic work (`b64_grow_expansion_nonoverlap` and two
+  companions).
+- **Tier 3** — an `Admitted` registered in
+  [`docs/admitted-deferred-proofs.txt`](docs/admitted-deferred-proofs.txt)
+  is allowed temporarily: the theorem is *true*, its proof structure is
+  documented, and the remaining work is multi-session. 3 entries today —
+  Shewchuk Theorem 13's general headline
+  (`fast_expansion_sum_nonoverlap_shewchuk`), Hobby Lemma 4.3's
+  no-proper-intersection half (`hobby_lemma_4_3_no_proper`), and Phase
+  3's ring-assembly lemma (`extract_rings_valid`). An entry comes off
+  the registry only when the proof lands.
+
+The only axioms used are the three standard ones bundled with Rocq's
+classical real arithmetic library (printed at the end of each `theories/`
+`.v` file under `Print Assumptions` for transparency):
 
 ```
 ClassicalDedekindReals.sig_not_dec
@@ -25,30 +82,63 @@ ClassicalDedekindReals.sig_forall_dec
 FunctionalExtensionality.functional_extensionality_dep
 ```
 
-These are the standard classical real-number axioms; no library-specific
-or load-bearing axiom is introduced anywhere.
+A per-theorem axiom audit (`scripts/audit_axioms.sh`, run in CI against a
+sequential container build) checks every `Print Assumptions` block
+against [`docs/axiom-allowlist.txt`](docs/axiom-allowlist.txt), and
+[`scripts/check_readme_axioms.sh`](scripts/check_readme_axioms.sh)
+guarantees the list above never drifts from that allowlist. The whole of
+`theories/` is clean against this three-axiom set. `theories-flocq/`
+*additionally* inherits a fourth axiom, `Classical_Prop.classic`,
+transitively from Flocq's binary-arithmetic operations (`Binary.Bplus` /
+`Bminus` / `Bmult` carry it in their definition closure) — a structural
+consequence of using Flocq as the binary64 model, not a load-bearing
+axiom this corpus introduces. The affected files are enumerated with
+per-file rationale in
+[`docs/audit-exceptions.txt`](docs/audit-exceptions.txt), and the policy
+trade-offs are analysed in
+[`docs/category-c-policy.md`](docs/category-c-policy.md). No
+corpus-specific or load-bearing axiom is introduced anywhere.
 
 The repository has two source directories:
 
 - **`theories/`** — Stdlib-only modules. Builds on the host runner
   (macOS-latest with Homebrew Rocq); this is the CI canonical target.
-- **`theories-flocq/`** — modules that additionally depend on Flocq.
-  Builds inside the container only (host CI runner has no Flocq). The
-  no-`Admitted` invariant above applies HERE TOO — the directory split
-  is purely about which CI runner builds the file, not about which
-  proof standard it meets.
+- **`theories-flocq/`** — modules that additionally depend on Flocq,
+  plus the Stdlib-only Phase 3/4 modules built alongside them. Builds
+  inside the container only (host CI runner has no Flocq). The
+  registry-tracked `Admitted` discipline above applies HERE TOO — the
+  directory split is about which CI runner builds the file (host vs
+  container), not about which proof standard it meets.
+
+The host `_CoqProject` builds the 25 foundational `theories/` modules;
+the container `_CoqProject.full` builds the entire corpus (all 62
+modules — 36 in `theories/`, 26 in `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,
 orientation, segment, bbox, triangle, convex, lex-order, plus their
 companions) is Qed-closed.  The curve-linearisation stack
 (`Linearise` → `Simplify` → `Tin` → `Validate` → `Validate_decidable`)
-is Qed-closed in the abstract.  The binary64 instance
-(`Validate_binary64.v` + RocqRefRunner) is shipping to
-[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve);
-its R-bridge soundness theorem is the next open item.  The Phase 0–7
-chokepoint sequence (robust orientation, line intersection, snap
-rounding, planar overlay) is the next major direction and is currently
-at 0% on the C# side.
+is Qed-closed in the abstract, and its binary64 instance
+(`Validate_binary64.v` + RocqRefRunner) ships to
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
+The Phase 0–7 chokepoint sequence has advanced well into its early
+phases: **Phase 0** (robust orientation) ships the Shewchuk Stage A
+filter with integer-regime soundness **plus an exact full-`binary64`
+orientation predicate proven sound over the entire double-coordinate
+plane** (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three
+axioms, no `Classical_Prop.classic`), with Stage D adaptive-filter
+arithmetic still under way; **Phase 1** (robust segment intersection) is shipped
+end-to-end (predicate + intersection-point forward-error bound + C#
+port); **Phase 2** (snap rounding) has hot-pixel foundations, the
+snap-rounding correctness invariant, a topological-correctness theorem
+at the level the infrastructure supports, and Hobby Theorem 4.1 stated
+as a Qed-closed conditional; **Phase 3** (planar overlay) reaches a
+Qed-closed conditional headline (`overlay_ng_correct_conditional`); and
+**Phase 4** (native curves) reaches its own Qed-closed conditional
+headline via the Option-B chord-approximation route
+(`arc_overlay_correct_chord_approx`). The remaining gaps in Phases 2–4
+are carried as explicit named hypotheses or registered deferred proofs,
+not silent stubs.
 
 ## Why this exists
 
@@ -65,484 +155,35 @@ convex-hull invariants, the buffer-curve angle relations.
 
 ## Core primitives
 
-Foundational geometry modules.  These are the algebraic and structural
-facts that downstream work cites; they sit on top of Stdlib only and
-build on the host CI runner without Flocq.
+Foundational geometry modules (Stdlib-only). These are the algebraic and
+structural facts that the rest of the corpus cites.
 
-### `theories/Distance.v` — Euclidean distance
+**For most actors the detailed per-lemma lists below are not the best entry point.**
+See the **Reading Guide** (`docs/READING-GUIDE.md`) or your role card in `HELP.md`
+for the phase completion, audit, and proof-structure documents that are written
+for your needs (GIS Gus, BIM Bea, Scholar Sam, Newbie Nate, etc.).
 
-- `sqr_nonneg`, `sqr_eq_zero` — companion identities used throughout.
-- `dist_sq_nonneg` — squared distance is non-negative.
-- `dist_sq_sym` — squared distance is symmetric.
-- `dist_sq_zero_iff_eq` — two points are at squared distance zero exactly
-  when their coordinates are equal.
-- `sq_monotone_nonneg` — on the non-negative reals, squaring is monotone.
-- **`dist_le_iff_dist_sq_le`** — for any non-negative threshold *t*,
-  `dist(p, q) ≤ t` iff `dist_sq(p, q) ≤ t²`. The formal justification
-  for the optimisation tracked in
-  [locationtech/jts#1111](https://github.com/locationtech/jts/pull/1111) and
-  the gap noted for `LineStringSnapper` in the JTS 1.21 alignment audit on
-  [NetTopologySuite#828](https://github.com/NetTopologySuite/NetTopologySuite/issues/828).
-- `dist_nonneg`, `dist_refl`, `dist_sym` — distance (with `sqrt`) is
-  non-negative, reflexive, symmetric.
-- `dist_eq_zero_iff` — `dist(p, q) = 0` iff `p = q` coordinate-wise.
+Key modules at a high level:
+- `Distance.v`, `Orientation.v`, `Segment.v`, `Intersect.v` (soundness),
+  `Vec.v`, `Bbox.v`, `Triangle.v`, `Convex.v`, `LexOrder.v` (and companions).
 
-### `theories/Orientation.v` — orientation predicate
-
-- `cross_antisymmetric` — swapping the second and third arguments of the
-  cross product flips the sign. (Justifies "directed orientation" being
-  a coherent concept.)
-- `cross_swap_first_two` — swapping the first two arguments also flips
-  the sign. Together with `cross_antisymmetric`, generates the full S₃
-  sign action on the three arguments.
-- `cross_collinear_sym` — collinearity is preserved under argument swap.
-- `cross_at_P0_is_collinear` / `cross_at_P1_is_collinear` — degenerate
-  triangles have zero signed area.
-- `cross_translation_invariant` — translating all three points by the
-  same vector preserves orientation. (Justifies coordinate-frame
-  normalisation never changing topological results.)
-
-### `theories/Segment.v` — finite line segments
-
-The bridge from a parametric segment definition to the orientation
-predicate. Every segment-intersection test in NTS (`LineIntersector`,
-`RobustLineIntersector`, the overlay machinery) rests on this
-correspondence.
-
-- `Segment` — record type `{ sp0 : Point; sp1 : Point }`.
-- `on_line P0 P1 Q` — Q lies on the infinite line through P0 and P1
-  (defined as `cross P0 P1 Q = 0`).
-- `between P0 P1 Q` — Q lies on the closed segment, defined parametrically
-  as `∃ t ∈ [0, 1] · Q = (1-t)·P0 + t·P1`.
-- `between_P0` / `between_P1` — endpoints lie on their own segment.
-- `between_symmetric` — `between P0 P1 Q ↔ between P1 P0 Q` (reversing the
-  segment direction preserves membership).
-- **`between_implies_on_line`** — if Q is on the segment, then Q is
-  collinear with the endpoints. This is the bridge that lets every
-  cross-product-based intersection test treat "between" as a sufficient
-  witness of collinearity without recomputing the line equation.
-- `off_line_not_between` — contrapositive: a point with non-zero cross
-  product against the segment line cannot lie on the segment. The form
-  used by intersection-rejection fast paths.
-- `on_line_symmetric` — the on-line relation does not depend on which
-  endpoint of the segment is listed first.
-- `between_in_coord_range` — a point on a segment has each coordinate
-  within the closed range spanned by the corresponding coordinates of
-  the endpoints. The algebraic basis for envelope/bbox rejection.
-
-### `theories/Intersect.v` — segment intersection (soundness direction)
-
-The forward direction of the cross-product based segment intersection
-test used by `RobustLineIntersector` and the overlay machinery. If two
-segments share any common point, then neither segment's line strictly
-separates the other segment's endpoints.
-
-- `convex_combination_zero_opposite_signs` — auxiliary: for *t* ∈ [0, 1],
-  if `(1-t)·a + t·b = 0` then `a · b ≤ 0`.
-- `cross_affine_in_third` — bilinearity of the cross product in its
-  third argument; used throughout the rest of the file.
-- **`segments_share_point_implies_opposite_sides`** — if `between A B X`
-  and `between C D X`, then `cross(A,B,C) · cross(A,B,D) ≤ 0` **and**
-  `cross(C,D,A) · cross(C,D,B) ≤ 0`.
-- `same_side_rejection_is_sound` — corollary in the form NTS's
-  intersection-rejection fast paths use. If either cross-product
-  product is strictly positive, no shared point exists.
-
-This is the soundness direction: every intersection-rejection decision
-based on the cross-product sign test is justified, because a rejected
-pair cannot have a common point. The converse (sign conditions imply a
-shared point exists) is the next roadmap item.
-
-### `theories/Vec.v` — 2D vector algebra
-
-NTS uses 2D vectors implicitly throughout — direction vectors for
-segments, normals for buffer offsets, basis transformations in affine
-maps. This module spells out the algebraic laws so downstream theorems
-can cite them rather than rebuild the ring reasoning.
-
-- `Vec` record + zero / addition / negation / subtraction / scalar
-  multiplication / dot product / squared magnitude.
-- `Vec_eq` — extensionality principle: equal components ⇒ equal vectors.
-- `vadd_comm`, `vadd_assoc`, `vadd_zero_l`, `vadd_zero_r`,
-  `vadd_neg_r` — the abelian-group laws of vector addition.
-- `vscale_distrib_add`, `vscale_assoc` — scalar multiplication laws.
-- `vdot_comm`, `vdot_distrib_l` — dot product is symmetric and
-  bilinear.
-- **`vmag_sq_nonneg`** — squared magnitude is non-negative. The
-  algebraic kernel of every "buffer thickness is non-negative" style
-  reasoning downstream.
-
-### `theories/Bbox.v` — axis-aligned bounding boxes
-
-Every `LineIntersector` in NTS short-circuits on bounding-box
-disjointness before doing any cross-product arithmetic. This module
-verifies that short-circuit is sound.
-
-- `Bbox` record + `in_bbox` predicate + `bbox_of_seg` construction +
-  `bbox_disjoint` predicate.
-- `bbox_of_seg_contains_sp0`, `bbox_of_seg_contains_sp1` — a segment's
-  bounding box contains both endpoints.
-- `bbox_of_seg_contains_between` — generalisation: the bbox contains
-  every point on the segment.
-- `bbox_disjoint_sym` — disjointness is symmetric.
-- `shared_point_implies_not_disjoint` — if a point lies in both
-  bounding boxes, they cannot be disjoint.
-- **`disjoint_bboxes_imply_no_shared_point`** — if two segments have
-  disjoint bounding boxes, they share no point.  The formal
-  justification for envelope-based rejection in `LineIntersector` and
-  friends.
-- `bbox_of_seg_xlo_le_xhi`, `bbox_of_seg_ylo_le_yhi` — well-formedness
-  of segment-derived bounding boxes.
-- `bbox_contains_lo_corner` — every well-formed bbox contains its
-  bottom-left corner.
-- `bbox_of_seg_symmetric` — segment-bbox doesn't depend on endpoint order.
-
-### `theories/Triangle.v` — triangles
-
-Triangles in the plane: signed-area function via the cross product,
-degeneracy, the permutation action on vertices, translation and
-scaling invariance.
-
-- `Triangle` record + `area2` (signed twice-area) + `is_degenerate`.
-- `area2_zero_iff_collinear` — the degenerate triangle is the
-  collinear-vertices one.
-- `area2_swap_AB`, `area2_swap_BC` — vertex swap flips signed area.
-- `area2_cyclic_ABC_BCA`, `area2_cyclic_ABC_CAB` — cyclic permutations
-  preserve signed area.
-- `area2_AA_degenerate`, `area2_AB_at_A_degenerate`,
-  `area2_AB_at_B_degenerate` — coincident-vertex cases all degenerate.
-- `area2_translation_invariant` — translation preserves area.
-- `area2_scale` — scaling vertices by *c* scales signed area by *c²*.
-
-### `theories/Convex.v` — convex combinations and convex sets
-
-The foundational closure properties of convex sets, with worked
-examples (half-planes, the whole plane, intersections of convex sets).
-Underpins later results about convex hulls and polygon containment.
-
-- `convex_combination` — two-point convex combination with parameter t.
-- `convex_combination_at_0`, `convex_combination_at_1`,
-  `convex_combination_self`, `convex_combination_symmetric` —
-  basic identities.
-- `between_iff_convex_combo` — bridges `Segment.v`'s `between` with
-  the convex-combination formulation.
-- `is_convex` — predicate: set closed under convex combinations.
-- `whole_plane_is_convex` — the trivial case.
-- **`intersection_is_convex`** — convexity is preserved under
-  intersection. (The seed for "intersection of *n* half-planes is
-  convex", and hence for convex-polygon membership.)
-- `half_plane_is_convex`, `half_plane_ge_is_convex` — both signs of
-  the closed half-plane defined by a linear inequality are convex.
-
-### `theories/LexOrder.v` — lexicographic order on points
-
-The standard lex order used by NTS's `Coordinate.CompareTo`: smaller x
-wins, ties broken by smaller y. Standard order-theoretic properties.
-
-- `lt_lex`, `le_lex` — strict and non-strict variants.
-- `lt_lex_irrefl`, `lt_lex_asym`, `lt_lex_trans` — strict-order laws.
-- `le_lex_refl`, `le_lex_antisym`, `le_lex_trans` — partial-order laws
-  (antisymmetry up to coordinate equality).
-- **`le_lex_total`** — totality: for any two points, one is ≤ the
-  other. (Uses classical decidability on the reals.)
-
+The individual theorems and proofs are in the `.v` files and are cited from the
+phase documents. The long bullet lists that used to live here have been
+condensed to keep the README scannable.
 ## In-flight work
 
-Modules atop the core primitives in active development.  Two threads
-currently live here:
+**Modules atop the core primitives in active development.**
 
-- The **curve-linearisation stack** (`Linearise` → `Simplify` → `Tin` →
-  `Validate` → `Validate_decidable` → `Validate_binary64`), tracking the
-  SFA-CA curves prototype on the upstream
-  [`enhancement/curved-circularstring-tin`](https://github.com/NetTopologySuite/NetTopologySuite)
-  branch.
-- The **Phase 0 chokepoint** (`Orientation_b64`), the first slice of
-  the multi-year roadmap toward `RobustLineIntersector` / overlay-
-  topology verification.
+The detailed per-module catalogue that used to live here has been slimmed (see the actor Reading Guide for the right phase docs). High-level threads:
 
-Both feed binary64 implementations consumed by
-[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
+- The **curve-linearisation stack** (Linearise → Simplify → Tin → Validate + binary64 instance in theories-flocq), tracking the SFA-CA curves prototype.
+- The **Phase 0–7 chokepoint** (robust orientation via Shewchuk, intersection, snap-rounding/Hobby, OverlayNG, native curves via chord-approx Option B). Stage D expansion arithmetic is current Phase 0 frontier.
+- Companion modules (Real, Lattice, LineEq, etc.) ship alongside.
 
-### `theories/Linearise.v` — tolerance contract for curve linearisation
+These feed the oracle consumed by [NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
 
-The mathematical companion of the SFA-CA `ILinearizable` interface
-prototyped on the NTS `enhancement/curved-circularstring-tin` branch.
-Three regimes — convergent scalar quantities, convergent topological
-predicates, and tolerance-sensitive predicates — captured as formal
-theorems. The framework justifies the staged plan in JTS discussion
-[#1193](https://github.com/locationtech/jts/discussions/1193) (ship
-linearisation now, native curve algorithms later).
+See [`docs/HELP.md`](docs/HELP.md) and [`docs/READING-GUIDE.md`](docs/READING-GUIDE.md) for the documents that matter to your role (e.g. GIS Gus / BIM Bea → phase completion + audit files; Scholar Sam / Tech-Lead Tess → retros + proof-structure + seam maps; Newbie Nate → one completion doc + development-environment).
 
-- `Shape`, `within_eps`, `hausdorff_le`, `gap_ge` — the tolerance
-  contract: shapes as point predicates with Hausdorff-bounded
-  approximation and gap-based separation.
-- `dist_triangle` — Euclidean triangle inequality on ℝ², proved from
-  `Vec.cauchy_schwarz_sq` + `sq_monotone_nonneg`.
-- **`chord_le_detour`** + **`polyline_chord_lower_bound`** — regime 1:
-  for any list of intermediate points, the chord is a lower bound on
-  any polyline visiting them in order. Refining a polyline never
-  decreases its length.
-- **`disjoint_under_linearise`** (+ strict variant) — regime 2: if two
-  shapes have gap ≥ δ and each is within ε of an approximation, the
-  approximations are gap ≥ δ−2ε apart. Disjointness predicates are
-  ε-stable.
-- **`regime3_counterexample`** + **`EqualsExact_not_stable`** —
-  regime 3: distinct shapes can share a common ε-approximation; exact
-  equality is *not* preserved by ε-approximation.  The limit of what
-  Phase-3 linearisation can preserve.
-
-### `theories/Simplify.v` — greedy polyline simplification
-
-Inductive specification of Douglas-Peucker-style simplification, in two
-flavours (chord-deficit and perpendicular-distance). Both are sound
-under the tolerance contract from `Linearise.v`.
-
-- `simp_step` / `simp_star` — inductive specs of a single greedy drop
-  and its reflexive-transitive closure (chord-deficit form).
-- `simp_step_perp` / `simp_star_perp` — the same for the squared-
-  cross-product perpendicular-distance test, matching what
-  Zygmunt-Róg (Measurement 260, 2026) use in production DEM
-  generalisation.
-- **`simp_step_length_monotone`** + **`simp_star_length_monotone`** —
-  simplification never increases polyline length. Proof uses
-  `chord_le_detour`; the tolerance hypothesis is *not* consumed —
-  length-monotonicity holds for any drop.
-- `simp_step_preserves_head` / `simp_step_preserves_last` (and star
-  variants) — endpoints are pinned across both single-step and
-  iterated simplification.
-- `simp_drop_here_length_deficit` — exact identity: the length
-  reduction equals the chord-deficit at the dropped point.
-
-### `theories/Tin.v` — TIN boundary adjacency
-
-Formalises the merging condition in Zygmunt-Róg (Measurement 260,
-2026): adjacent TINs built from a shared boundary polyline must agree
-on boundary vertices for seamless merging.  Proved via `Linearise.v`
-and `Simplify.v` endpoint-preservation theorems.
-
-- `TaggedTin` record + `same_source_boundary` predicate.
-- **`same_source_share_endpoints`** (chord, perp, and mixed-mode
-  variants) — two TINs simplified from the same source boundary
-  always agree on head and last vertex, regardless of which
-  derivation each side chose. Sufficient for adjacency-merging
-  algorithms to detect shared boundary edges.
-- `same_source_boundary_length_bounded` — neither simplification
-  inflates the source boundary length.
-
-### `theories/Validate.v` — constructive simplifier + soundness
-
-The executable counterpart of `Simplify.v`'s inductive specifications.
-Left-to-right greedy realisations of both flavours, with soundness
-theorems proving each output is in the corresponding `simp_star`
-relation. Ready for OCaml extraction.
-
-- `greedy_simplify` / `greedy_simplify_perp` — `Fixpoint`s using
-  Stdlib's `Rle_dec` for the tolerance comparison.
-- **`greedy_simplify_correct`** / **`greedy_simplify_perp_correct`** —
-  soundness: the output is `simp_star`-related to the input.
-- Six inheritance corollaries (length monotone, head/last preserved,
-  perp variants) — one-line proofs that compose the soundness theorem
-  with the spec-level lemmas from `Simplify.v`.
-
-### `theories/Validate_decidable.v` — carrier-generic simplifier
-
-The perpendicular form lifted into a typeclass `OrderedReal` of
-"ordered ring coercible to ℝ with decidable ≤". Same soundness
-theorem, proved once for the abstract carrier and inheriting to every
-instance. An R instance ships with the file; the Flocq binary64
-instance is the in-flight slice in `theories-flocq/`.
-
-- `Class OrderedReal` — 8 fields (`t0`, `t2`, `tplus`, `tsub`,
-  `tmult`, `to_real`, `tle_dec`) + 5 homomorphism laws.
-- `Instance OrderedReal_R` — the R instance.
-- `greedy_simplify_perp_T` (`Fixpoint`, parameterised over T) +
-  **`greedy_simplify_perp_T_correct`** — abstract soundness
-  theorem; depends on only one classical-reals axiom
-  (`sig_forall_dec`), strictly fewer than the corollaries that
-  compose with `dist_triangle`.
-
-### `theories-flocq/Validate_binary64.v` — Flocq instance + RocqRefRunner
-
-A Flocq-based `binary64` instance of the perpendicular-distance
-simplifier, paired with a native-float OCaml extraction (`oracle/`)
-that compiles to the **RocqRefRunner** binary used as a differential
-testing reference by the C# implementation in
-[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
-Lives in a separate directory only because the host CI doesn't have
-Flocq; the corpus-wide no-`Admitted` invariant applies here too.
-
-- `BPoint` record + `binary64` arithmetic helpers (`b64_plus`,
-  `b64_minus`, `b64_mult`, `b64_le` — NaN-safe via `Bcompare`) and
-  geometric helpers (`b64_cross`, `b64_dist_sq`).
-- `greedy_simplify_perp_b64_aux` / `greedy_simplify_perp_b64` — the
-  greedy perpendicular-distance simplifier as a Coq `Fixpoint`.
-- 14 Qed-closed structural lemmas: `_nil`, `_singleton`,
-  `_two_points`, `_never_none`, `_some_eq`, `_aux_head`,
-  `_preserves_head`, `_aux_nonempty`, `_nonempty`, `_aux_length_le`,
-  `_length_le`, `_aux_in_kept`, `_in_head`.
-- Companion file `Validate_binary64_extract.v` adds the native-float
-  extraction directives (binding `Binary.binary_float` to OCaml `float`
-  and overriding `Bplus`/`Bminus`/`Bmult`/`Bcompare` with the native
-  operators). Produces `oracle/extracted.ml`, which links with
-  `oracle/driver.ml` to build the RocqRefRunner standalone binary.
-
-The R-bridge soundness theorem (`greedy_simplify_binary64_sound` —
-threading the no-overflow preconditions through the `Fixpoint`) is
-not yet proven and is not stubbed with `Admitted`; the `PROOF STATUS`
-block at the top of the file says so explicitly.  The per-op lifts
-that this theorem composes are now available in
-[`B64_bridge.v`](theories-flocq/B64_bridge.v) (`b64_plus_correct`,
-`b64_minus_correct`, `b64_mult_correct`).
-
-### `theories-flocq/B64_bridge.v` — binary64 ↔ ℝ correctness lifts
-
-Thin wrappers around Flocq's `Bplus_correct` / `Bminus_correct` /
-`Bmult_correct` for the `b64_plus` / `b64_minus` / `b64_mult` helpers
-from `Validate_binary64.v`.  Each theorem takes a bundled
-`b64_safe op x y` precondition (operand finiteness + no-overflow on
-the rounded result, parameterised by the R-side op) and concludes
-that the binary64 operation's `B2R` is exactly the rounded
-`B2R x ⊕ B2R y` and the result is finite.  Same 4-axiom set as the
-rest of the corpus.
-
-The lifts are deliberately small.  The interesting work moves to the
-caller:
-
-- For the simplifier R-bridge, threading the precondition through
-  the recursive structure of `greedy_simplify_perp_b64`.
-- For Stage A's arithmetic identities (antisymmetry, cyclic
-  permutation, translation invariance), composing two or three lifts
-  per identity under a shared precondition.
-- For Stages B / C of orient2d, threading the precondition through
-  the expansion-arithmetic primitives (`grow-expansion`,
-  `fast-expansion-sum`, `expansion-product`) — see
-  [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md).
-
-### `theories-flocq/Orient_b64_sound.v` — soundness bridge for the Stage A filter
-
-First soundness statement for `b64_orient_sign_filtered`.  Proves
-*decoder consistency*: the five-valued sign returned by the filter
-agrees with the sign of the rounded binary64 `b64_orient2d` value
-(under `b64_orient2d_safe`).  Defines `cross_R_BP` (the exact R-valued
-cross product on `BPoint` inputs) as the target of the cross_R-
-soundness theorem.  The cross_R headline for the integer regime ships
-in `Orient_b64_exact.v`; the general bounded regime is documented in
-[`docs/soundness-strategy.md`](docs/soundness-strategy.md) as an open
-Path 1 (Shewchuk-style forward-error analysis).
-
-### `theories-flocq/Orient_b64_exact.v` — cross_R soundness, integer regime
-
-Closes the Stage A filter's cross_R-valued soundness for integer-
-valued coordinates with `|coord| <= 2^25`.  In that regime every
-intermediate value in `b64_orient2d` stays within binary64's 53-bit
-integer-exactness window, so `B2R (b64_orient2d P0 P1 Q) = cross_R_BP
-P0 P1 Q` *on the nose* -- no error bound, no inequality.  Composing
-with decoder consistency gives the headline (Qed-closed):
-
-```coq
-Theorem b64_orient_sign_filtered_sound_small_int :
-  forall P0 P1 Q,
-    orient2d_inputs_int_safe P0 P1 Q ->
-    match b64_orient_sign_filtered P0 P1 Q with
-    | OrientRPos       => 0 < cross_R_BP P0 P1 Q
-    | OrientRNeg       => cross_R_BP P0 P1 Q < 0
-    | OrientRZero      => cross_R_BP P0 P1 Q = 0
-    | OrientRNan       => True
-    | OrientRUncertain => True
-    end.
-```
-
-This is Path 2 from
-[`docs/soundness-strategy.md`](docs/soundness-strategy.md): a
-restricted regime in exchange for an end-to-end headline today.  The
-general bounded-magnitude regime remains open (Path 1) and would
-require the Shewchuk Stage A forward-error analysis; see the strategy
-doc for the trade-off rationale.
-
-### `theories-flocq/Orient_b64_R.v` — R-side identities for `b64_orient2d`
-
-First downstream consumer of `B64_bridge`.  Bundles the seven
-no-overflow obligations of one `b64_orient2d` call into a single
-predicate `b64_orient2d_safe P0 P1 Q : Prop` (four `b64_safe Rminus`
-on the coordinate differences, two `b64_safe Rmult` on the product
-terms, one `b64_safe Rminus` on the outer subtraction).
-
-The headline theorem proved Qed-closed today:
-
-```coq
-Theorem b64_orient2d_antisymmetric_R :
-  forall P0 P1 Q,
-    b64_orient2d_safe P0 P1 Q ->
-    b64_orient2d_safe P0 Q  P1 ->
-    B2R (b64_orient2d P0 P1 Q) = - B2R (b64_orient2d P0 Q P1).
-```
-
-Cyclic permutation and translation invariance follow the same pattern
-and are the immediate follow-ups.  A magnitude-bounded variant of the
-precondition (one `|coord| < 2^N` per input + a helper lemma that
-derives the seven `b64_safe` obligations from it) is the slice after,
-producing a more ergonomic interface for downstream callers.
-
-### `theories-flocq/Orientation_b64.v` — Phase 0 chokepoint
-
-The first chokepoint module.  Ships the binary64 orientation
-predicate end-to-end through extraction and into the
-[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve)
-`Robust.Orientation` namespace, in two layers.
-
-**Naive layer** (the cross-product evaluated directly in binary64):
-
-- `b64_orient2d P0 P1 Q` — signed twice-area of the triangle
-  `(P0, P1, Q)`, reusing the `b64_minus` / `b64_mult` / `bx` / `by_`
-  helpers from `Validate_binary64.v`.
-- `Inductive orient_sign := OrientPos | OrientNeg | OrientZero | OrientNan` —
-  four-valued result that admits NaN explicitly rather than
-  collapsing it.  Downstream callers MUST handle `OrientNan`.
-- `b64_orient_sign` — routes through `b64_compare` against `+0`.
-
-**Shewchuk Stage A filter** (forward-error filter on top of the naive
-layer):
-
-- `b64_three`, `b64_sixteen`, `b64_eps` — Flocq-constructed binary64
-  constants via `binary_normalize`; `b64_eps = 2^-52` is the spacing
-  at 1.0 in IEEE 754 binary64.
-- `b64_errbound_A_coeff = (3 + 16·eps) * eps` — Shewchuk's Stage A
-  forward-error coefficient, computed in binary64 via the same
-  `Bplus` / `Bmult` primitives.  Approximately 6.66·10⁻¹⁶.
-- `b64_abs` — absolute value with a concrete NaN handler.
-- `b64_orient2d_detsum P0 P1 Q` — `|t1| + |t2|`, the operand-magnitude
-  budget for the filter bound.
-- `b64_orient2d_errbound P0 P1 Q = errbound_A_coeff * detsum` — the
-  per-triangle threshold.
-- `Inductive orient_sign_robust := OrientRPos | OrientRNeg | OrientRZero | OrientRNan | OrientRUncertain` —
-  five-valued result, extending `orient_sign` with the Uncertain case
-  the filter returns when `|det|` is within the error bound of zero.
-- `b64_orient_sign_filtered` — the Stage A decoder.  If
-  `|det| > errbound`, the naive sign is reliable; otherwise the
-  filter returns `OrientRUncertain` rather than risk a sign flip.
-
-Qed-closed structural lemmas across both layers: `orient_sign_eq_dec`,
-`b64_orient_sign_total`, `orient_sign_distinct`,
-`b64_orient_sign_non_nan_iff_compare_some`,
-`orient_sign_robust_eq_dec`, `b64_orient_sign_filtered_total`,
-`orient_sign_robust_distinct`.  Same 4-axiom set as
-`Validate_binary64.v`.
-
-What is NOT YET claimed here:
-
-- The arithmetic identities that hold over ℝ (antisymmetry, cyclic
-  permutation, translation invariance) need Flocq's `Bminus_correct`
-  / `Bmult_correct` no-overflow preconditions — same proof slice
-  deferred for the simplifier R-bridge.
-- Shewchuk's **Stages B / C / D** — the expansion-arithmetic
-  refinement that resolves `OrientRUncertain` into a definite
-  Pos/Neg/Zero — are deferred to a later slice.  Callers facing
-  `OrientRUncertain` today fall back to a higher-precision predicate
-  or treat the triangle as collinear with a documented caveat.
-
-`Orientation_b64.v` is plumbed into `Validate_binary64_extract.v`, so
-the RocqRefRunner dispatches on a stdin mode line (`SIMPLIFY` /
-`ORIENT` / `ORIENT_FILTERED`) into the appropriate extracted function.
 
 ## Roadmap
 
@@ -558,11 +199,11 @@ publishable.
 | Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner |
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stages B/C/D expansion refinement (in particular Stage D's renormalization) + general bounded-magnitude cross_R soundness deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes |
-| 1 | `Intersect_b64.v` — predicate-level robust segment intersection | **predicate complete** — five-valued `IntersectSign` filter built on top of Phase 0's `b64_orient_sign_filtered`; structural lemmas Qed-closed (decidability, totality, 10-way distinctness, NaN propagation); integer-regime cross_R soundness for both `IntersectNone` (no shared point) and `IntersectPoint` (exists shared interior point) via the R-side `strict_completeness` theorem in `theories/Intersect.v`; `IntersectCollinear` sub-case disambiguation + intersection-point coordinate computation deferred — see [`docs/phase1-completion.md`](docs/phase1-completion.md) | **predicate-complete** — `Robust.Intersect.RobustLineIntersector` (`SignFiltered` returning 5-valued `IntersectSign`) bit-exact against RocqRefRunner `INTERSECT_FILTERED` mode, 187 / 187 differential cases including integer-regime adversarial family |
-| 2 | `SnapRoundingNoder_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **foundations in progress** — hot-pixel layer (`HotPixel.v` + `HotPixel_b64.v`) shipped through the segment-touches-pixel filter: `b64_in_hot_pixel_sound` exact-pixel bridge, form (a) parametric existential `b64_segment_touches_hot_pixel_spec`, and a decidable bool filter `b64_segment_touches_hot_pixel_partial` that **soundly** decides all eight edge-crossing patterns + both endpoint cases (44 theorems Qed-closed, 0 Admitted); filter **completeness** (the classification argument) + the snap-rounding algorithm + topological correctness theorem (the major thesis-shaped piece, 6-10 weeks) remain — see [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md) (scope) and [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md) (slice-by-slice progress) | predicate-foundations |
-| 3 | `OverlayNG_b64.v` — DCEL / hypermap subdivision with face labelling | reading-unblocked (Dufourd 2008 ×2 + Brun-Dufourd-Magaud 2012 in hand) | 0% |
-| 4 | Native circular-arc primitives (`Linearise.v` regime 3 closure) | research, far future | 0% |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stage D expansion arithmetic now under construction (`B64_Expansion*`, `B64_FastExpansionSum*`, `Orient_b64_expansion.v`, `Orient_b64_stage_d.v` — sum-correctness Qed-closed, the general non-overlap headline a registered deferred proof; specialised integer-safe headlines Qed-closed); **exact full-`binary64` orientation soundness now Qed-closed over the entire double-coordinate plane** (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three axioms, no `Classical_Prop.classic`), while the *fast* adaptive filter's general bounded-magnitude soundness (Stages B–D) stays deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md), [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes; `ORIENT_EXACT` provides the exact full-plane ground truth for the JTS #1106 differential test |
+| 1 | `Intersect_b64.v` + `Intersect_b64_exact.v` — robust segment intersection, predicate + coordinate | **shipped end-to-end** — five-valued `IntersectSign` filter on top of Phase 0's `b64_orient_sign_filtered`; structural lemmas Qed-closed (decidability, totality, 10-way distinctness, NaN propagation); integer-regime cross_R soundness for both `IntersectNone` and `IntersectPoint` via the R-side `strict_completeness` theorem in `theories/Intersect.v`; intersection-point projections (`b64_intersect_point_{x,y}`) with a Qed-closed forward-error bound in `K·eps` / condition-number form + soundness typeclass; `IntersectCollinear` sub-case disambiguation is the only remaining gap — see [`docs/phase1-completion.md`](docs/phase1-completion.md), [`docs/phase1-c2-tight-retro.md`](docs/phase1-c2-tight-retro.md) | **complete** — `Robust.Intersect.RobustLineIntersector` (`SignFiltered`, `IntersectPoint*`) bit-exact against RocqRefRunner `INTERSECT_FILTERED` / `INTERSECT_POINT_*` modes, 187 / 187 differential cases including integer-regime adversarial family |
+| 2 | `SnapRounding_b64.v` / `HobbyTheorem_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **milestones 1–4 landed** — hot-pixel layer (`HotPixel.v` + `HotPixel_b64.v`) through the segment-touches-pixel filter, the Liang–Barsky parameter-interval filter, the passes-through relation (+ tight half-open variant), the snap-rounding correctness invariant (`SnapRounding_b64.v`), and the topological-correctness theorem at the supported level (`TopologicalCorrectness_b64.v`); Hobby Theorem 4.1 stated as a Qed-closed conditional with Lemma 4.2 closed and Lemma 4.3's no-proper half a registered deferred proof — see [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md), [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md), [`docs/hobby-theorem-proof-structure.md`](docs/hobby-theorem-proof-structure.md) | oracle modes `PASSES_THROUGH_FILTER` / `PASSES_THROUGH_HALFOPEN` extracted |
+| 3 | `OverlayNG` — topology graph + boolean overlay with labelling | **conditional headline Qed-closed** — `valid_geometry` + `boolean_op` (`Overlay.v`), the planar `TopologyGraph` + `build_graph` + labelling + `correct_labels_all_ops` (`OverlayGraph.v`), the snap-rounding noding bridge (`OverlayBridge.v`), and `overlay_ng_correct_conditional` (`OverlayCorrectness.v`) under three named hypotheses (JCT, DCEL ring-assembly = `extract_rings_valid` deferred proof, semantic bridge); JCT seam work in `PointInRing*` — see [`docs/audit-phase3-overlay.md`](docs/audit-phase3-overlay.md), [`docs/audit-phase3-milestone5.md`](docs/audit-phase3-milestone5.md) | oracle mode `EDGE_IN_RESULT` extracted |
+| 4 | Native circular-arc primitives (chord-approximation / Option B) | **conditional headline Qed-closed** — `CurveGeometry` types + `to_geometry` bridge, `inCircle_R` / `arc_orient` (`ArcOrient.v`), arc-chord / arc-arc intersection (`ArcIntersect.v`) with the IVT gap closed (`ArcIntersectIVT.v`), `arc_in_hot_pixel` (`ArcHotPixel.v`), sagitta machinery (`ArcChordApprox.v`), and `arc_overlay_correct_chord_approx` (`ArcOverlay.v`) under named hypotheses; native (non-chord) circular arithmetic remains far future — see [`docs/audit-phase4-curves.md`](docs/audit-phase4-curves.md), [`docs/audit-phase4-chord-overfitting.md`](docs/audit-phase4-chord-overfitting.md) | hand-rolled oracle modes `INCIRCLE_SIGN` / `ARC_CHORD_CROSSES_CIRCLE` / `ARC_PASSES_THROUGH_PIXEL` |
 | 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ | 0% |
 | 6 | Continuous integration of corpus against NTS test suite | pending Phase 5 | 0% |
 | 7 | Soundness audit of curve-aware overlay operations | pending Phase 4 | 0% |
@@ -621,187 +262,6 @@ the simplifier R-bridge, Stage A's arithmetic identities for
 
 ### Progress log
 
-- **2026-05-13**: seed commit with `Distance.v` and `Orientation.v`. CI green.
-- **2026-05-14**: added `Segment.v` and the `between_implies_on_line`
-  bridge.
-- **2026-05-14**: added `Intersect.v`, proving the forward (soundness)
-  direction of the cross-product segment intersection test — every
-  rejection by the sign-product check is justified.
-- **2026-05-14**: doubled the catalogue: extended `Distance.v` /
-  `Orientation.v` / `Segment.v`, added `Vec.v` (2D vector algebra) and
-  `Bbox.v` (axis-aligned bounding boxes + envelope-rejection
-  soundness). Total: **45 Qed-closed theorems** across 6 modules.
-- **2026-05-14**: crossed the first order of magnitude. Extended all
-  six existing modules with another 26 results — including Lagrange's
-  identity and the squared Cauchy-Schwarz inequality in `Vec.v` — and
-  added three new modules: `Triangle.v` (signed-area arithmetic and
-  vertex-permutation laws), `Convex.v` (convex sets, half-planes,
-  intersection preservation), `LexOrder.v` (lex order on points with
-  the full partial-order + totality story). Total: **102 kernel-
-  checked theorems** across 9 modules.
-- **2026-05-14**: reached Euclid's number. Added nine more modules —
-  `Real.v` (44 basic real-number identities), `Lattice.v` (19 `Rmin`/`Rmax`
-  laws), `LineEq.v` (20 line-equation identities), `Direction.v`
-  (32 parallel/perpendicular vector laws), `Reflection.v` (34
-  reflection-across-axes identities), `Disk.v` (14 closed-disk
-  containment laws), `Parallel.v` (18 segment-direction laws),
-  `Centroid.v` (24 centroid identities), `Polynomial.v` (22
-  linear/quadratic identities) — and roughly doubled each of the
-  existing nine. Total: **465 Qed-closed theorems** across 18
-  modules. (Euclid's *Elements* contains 465 propositions; the count
-  now matches.  The content is orthogonal — Euclid's propositions are
-  geometric constructions; these are algebraic and order-theoretic
-  invariants of the same plane.)
-- **2026-05-14**: pivoted to the NTS curves prototype. Added `Linearise.v`
-  (14 theorems): the tolerance contract — `within_eps`, `hausdorff_le`,
-  `gap_ge` — plus the regime-1/2/3 stratification. Headline results:
-  `chord_le_detour`, `polyline_chord_lower_bound`,
-  `disjoint_under_linearise`, `regime3_counterexample`. The
-  triangle-inequality proof `dist_triangle` follows from
-  `Vec.cauchy_schwarz_sq`.
-- **2026-05-14**: added `Simplify.v` (18 theorems): the inductive specs
-  `simp_step` (chord-deficit form) and `simp_step_perp` (squared-cross-
-  product perpendicular form, matching Zygmunt-Róg Measurement 260,
-  2026), with their reflexive-transitive closures. Length monotonicity
-  proved unconditionally; endpoint preservation across both single-step
-  and iterated simplification.
-- **2026-05-14**: added `Tin.v` (4 theorems): the TIN boundary-endpoint
-  sharing theorem `same_source_share_endpoints`. Adjacent TINs
-  simplified from the same source boundary always agree on head and
-  last vertex regardless of which derivation each side chose. The
-  formal companion of Zygmunt-Róg's adjacent-TIN merging result.
-- **2026-05-14**: added `Validate.v` (12 theorems): the constructive
-  `Fixpoint` realisations `greedy_simplify` and `greedy_simplify_perp`
-  with their soundness theorems (output is in the corresponding
-  `simp_star` relation), plus six inheritance corollaries.
-- **2026-05-14**: added `Validate_decidable.v` (7 theorems): the
-  perpendicular form parameterised over a typeclass `OrderedReal`.
-  Soundness proved once for the abstract carrier; an R instance
-  ships immediately, a Flocq binary64 instance is the next slice.
-  Total: **520 Qed-closed theorems** across 23 modules in
-  `theories/`.
-- **2026-05-15**: container infrastructure (`Dockerfile`,
-  `.dockerignore`, `_CoqProject.full`) wired up for Rocq 9.1.1 +
-  `coq-flocq.4.2.2`. A `theories-flocq/` directory now hosts the
-  Flocq-bearing work and is excluded from the host CI's no-`Admitted`
-  grep so the main corpus invariant stays clean while the soundness
-  bridges are filled in. Companion mathematical paper
-  [`docs/mathematics/curves.tex`](docs/mathematics/curves.tex) in the
-  upstream
-  [`NetTopologySuite`](https://github.com/NetTopologySuite/NetTopologySuite)
-  branch `enhancement/curved-circularstring-tin` collects the formal
-  identities the proofs rest on.
-- **2026-05-15**: closed the `Validate_binary64.v` simplifier slice end-
-  to-end. The two original soundness `Admitted` theorems are replaced
-  by 14 Qed-closed structural lemmas (head preservation, length
-  monotonicity, NaN safety, etc.) — the corpus-wide no-`Admitted`
-  invariant now applies uniformly across `theories/` and
-  `theories-flocq/`, and the CI grep is anchored so prose mentions
-  in module headers no longer false-trip. A companion file
-  `Validate_binary64_extract.v` adds native-float OCaml extraction
-  directives; `oracle/driver.ml` + `oracle/Makefile` build the
-  RocqRefRunner standalone binary. The C# consumer
-  `Robust.Simplify.GreedyPerpSimplifier` in
-  [NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve)
-  is bit-exact against RocqRefRunner on 262 / 262 tests (14 unit
-  mirroring the Coq lemmas + 248 differential cases across random
-  and adversarial families). The R-bridge soundness theorem stays
-  deferred (not stubbed with `Admitted`).
-- **2026-05-15**: Phase 0 chokepoint first slice.  Added
-  `theories-flocq/Orientation_b64.v` (naive binary64 orientation
-  predicate + four-valued sign decoder with NaN explicitly admitted)
-  with Qed-closed decidability / totality / distinctness / non-NaN-
-  iff-compare-Some lemmas.  `Validate_binary64_extract.v` now extracts
-  both the simplifier and the orientation functions into a single
-  `oracle/extracted.ml`, and `oracle/driver.ml` dispatches on a stdin
-  mode line (`SIMPLIFY` / `ORIENT`).  C# consumer
-  `Robust.Orientation.RobustOrientation` (with `OrientSign` enum)
-  is bit-exact against RocqRefRunner on the full test suite — 385 /
-  385 GreedyPerp + RobustOrientation tests pass on Apple Silicon.
-  The arithmetic identities and the Shewchuk-adaptive filter are
-  explicitly the next slice, not stubbed.
-- **2026-05-15**: Phase 0 chokepoint — Stage A filter complete.
-  Added `b64_three` / `b64_sixteen` / `b64_eps` (Flocq-constructed via
-  `binary_normalize`), `b64_errbound_A_coeff = (3 + 16·eps)·eps`,
-  `b64_abs`, `b64_orient2d_detsum`, `b64_orient2d_errbound`, the
-  five-valued `Inductive orient_sign_robust` (with `OrientRUncertain`),
-  and `b64_orient_sign_filtered` — Shewchuk's Stage A filter that
-  refuses to commit to a sign when `|det|` is within the forward-error
-  bound of zero.  Qed-closed lemmas: `orient_sign_robust_eq_dec`,
-  `b64_orient_sign_filtered_total`, `orient_sign_robust_distinct`.
-  Stages B/C/D expansion-arithmetic refinement is the next slice.
-  `oracle/driver.ml` gains an `ORIENT_FILTERED` mode; the C# port
-  exposes `RobustOrientation.SignFiltered` with the 5-valued
-  `OrientSignRobust` enum.  Result: 396 / 396 GreedyPerp +
-  RobustOrientation tests bit-exact against the RocqRefRunner — naive
-  + filtered modes both green.
-- **2026-05-15**: critical-path module landed.
-  Added `theories-flocq/B64_bridge.v` with `b64_plus_correct`,
-  `b64_minus_correct`, `b64_mult_correct` — thin wrappers around
-  Flocq's `Bplus_correct` / `Bminus_correct` / `Bmult_correct` lifted
-  to the binary64 helpers `b64_plus` / `b64_minus` / `b64_mult` from
-  `Validate_binary64.v`.  Premises bundled into one parameterised
-  predicate `b64_safe (op : R -> R -> R) (x y : binary64) : Prop`.
-  Same 4-axiom set as the rest of the corpus; no `Admitted`, no new
-  dependencies beyond Flocq.  This unblocks the simplifier R-bridge,
-  Stage A's arithmetic identities for `b64_orient2d`, and Shewchuk
-  Stages B / C of orient2d — three downstream theorems waiting on the
-  same lift mechanism, see `docs/audit-shewchuk-stages.md`.
-- **2026-05-15**: first downstream consumer of `B64_bridge`.  Added
-  `theories-flocq/Orient_b64_R.v` with `b64_orient2d_safe` (the
-  seven-conjunct no-overflow precondition for one orient2d call) and
-  `b64_orient2d_antisymmetric_R`: under the precondition,
-  `B2R (b64_orient2d P0 P1 Q) = - B2R (b64_orient2d P0 Q P1)`.
-  Proof is mechanical: lift the two outer `b64_minus` calls via
-  `b64_minus_correct`, then `round_NE_opp` + `Ropp_minus_distr` close
-  it.  Validates the composition pattern.  Same 4-axiom set, Qed-
-  closed.
-- **2026-05-15**: vertex coincidence on binary64.  Added zero-arithmetic
-  helpers to `B64_bridge.v` (`b64_round_0`, `b64_minus_self_R`,
-  `b64_mult_zero_{l,r}_R`, `b64_minus_zeros_R`, plus finiteness
-  companions) and proved `b64_orient2d_at_P0_R` in `Orient_b64_R.v`:
-  `B2R (b64_orient2d P0 P1 P0) = 0` under two `b64_safe Rminus`
-  premises (one for each non-self subtraction; the self subtractions
-  discharge trivially via `b64_round 0 = 0`).  Holds genuinely in
-  binary64 -- not a rounded approximation -- because every degenerate
-  case has an exact-zero factor.
-  Cyclic permutation was analysed and deferred: lifting via
-  `b64_*_correct` produces nested `b64_round` terms that aren't
-  syntactically equal under cyclic permutation, and the accumulated
-  rounding error doesn't structurally cancel between the two calls.
-  The identity holds for the exact ℝ-valued `cross` predicate but
-  not for its binary64 evaluation in general; provable only under
-  much stronger preconditions (Sterbenz exactness throughout) or as
-  an error-bounded version.
-- **2026-05-15**: magnitude-bounded interface (Flavour B from the
-  Phase 0 audit).  Added to `B64_bridge.v`: `bpow_succ_radix2`,
-  `valid_exp_b64_fexp` (instance bridging `SpecFloat.fexp` to
-  `FLT_exp_valid`), `b64_safe_coord_bound := bpow radix2 500`,
-  `b64_coord_safe`, `generic_format_bpow_b64`,
-  `b64_round_abs_le_bpow`, `b64_safe_minus_of_bounded`,
-  `b64_minus_bounded_R`, `b64_mult_bounded_R`,
-  `b64_safe_minus_of_products_bounded`.  Composed in
-  `Orient_b64_R.v` as `b64_orient2d_inputs_safe P0 P1 Q :=
-  /\ b64_coord_safe (bx P0) ... (by_ Q)` (six conjuncts) plus
-  `Theorem b64_orient2d_inputs_safe_imp_safe` deriving the
-  seven-conjunct `b64_orient2d_safe` from coord-magnitude bounds.
-  This is the ergonomic interface the audit identified: callers
-  state one `b64_coord_safe` per coordinate (a clean condition
-  expressible in human terms as `|coord| <= 2^500`) instead of
-  seven sub-op no-overflow bounds.  Same 4-axiom set, Qed-closed.
-  Cost of getting there: several Coq typeclass-resolution snags
-  documented in the commit message; the proof structure ended up
-  needing explicit `apply round_le radix2 ...` calls and a hand-
-  rolled `Valid_exp (SpecFloat.fexp prec emax)` instance because
-  the standard FLT instance doesn't unify through definitional
-  equality.
-- **2026-05-15**: soundness bridge -- decoder consistency.
-  Added `theories-flocq/Orient_b64_sound.v` with `cross_R_BP`
-  (the exact R-valued cross product on `BPoint` via `B2R` on each
-  coordinate -- the mathematical standard the binary64 evaluation
-  is eventually compared against), `b64_orient2d_finite_of_safe`
-  (chains finiteness through the orient2d composition under
-  `b64_orient2d_safe`), and `b64_orient_sign_filtered_consistent_with_b64`:
 
       forall P0 P1 Q,
         b64_orient2d_safe P0 P1 Q ->
@@ -831,10 +291,6 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   `b64_mult` / outer `b64_minus` chain.  Once that lemma lands,
   cross_R soundness follows mechanically by composition with the
   decoder-consistency theorem from this slice.
-- **2026-05-15**: forward-error building blocks (slice 2a of the
-  soundness bridge).  Added to `B64_bridge.v`: `b64_plus_abs_error`,
-  `b64_minus_abs_error`, `b64_mult_abs_error`, each giving the
-  per-operation absolute error bound
 
       Rabs (B2R (b64_op x y) - exact_op (B2R x) (B2R y))
         <= ulp radix2 (SpecFloat.fexp prec emax) (exact_op ...).
@@ -844,15 +300,6 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   the Shewchuk Stage A chain composition would eventually thread
   through the four `b64_minus` / two `b64_mult` / outer `b64_minus`
   structure of `b64_orient2d`.  Same 4-axiom set, Qed-closed.
-- **2026-05-15**: pivot rationale documented; integer-exactness path
-  chosen over forward-error scaffolding.  Slice 2a is correct but
-  doesn't move the substantive ball -- the remaining slices (relative
-  error + chain composition + sound composition) are ~3 more sessions
-  before a payoff.  Demoted from critical path to "useful primitive,
-  reusable for whoever picks up Path 1 later".  Pivot rationale in
-  [`docs/soundness-strategy.md`](docs/soundness-strategy.md).
-- **2026-05-15**: cross_R-valued soundness shipped, integer regime
-  (Path 2).  Added `theories-flocq/Orient_b64_exact.v` with
 
       Theorem b64_orient_sign_filtered_sound_small_int :
         forall P0 P1 Q,
@@ -873,129 +320,26 @@ the simplifier R-bridge, Stage A's arithmetic identities for
   no inequality.  Composes mechanically with the decoder-consistency
   theorem from `Orient_b64_sound.v`.  Same 4-axiom set, Qed-closed.
   The general bounded-magnitude regime remains an open Path 1.
-- **2026-05-15**: vertex coincidence identities completed -- `at_P1`
-  (Q = P1) and `at_P0_eq_P1` (degenerate base) added to
-  `Orient_b64_R.v`.  Both reuse the zero-arithmetic helpers in
-  `B64_bridge.v`.  Three classic vertex-degeneracy cases now covered.
-- **2026-05-15**: cyclic permutation in the integer regime
-  (`b64_orient2d_cyclic_int_R`, `_cyclic2_int_R` in
-  `Orient_b64_exact.v`).  The two non-trivial cyclic permutations of
-  three vertices now produce equal `B2R (b64_orient2d ...)` under
-  `orient2d_inputs_int_safe`.  Proof is mechanical: exactness lifts
-  each side to its `cross_R_BP` value, and `ring` closes the polynomial
-  identity.  This is the identity deferred in `Orient_b64_R.v` for the
-  general regime (where rounding errors don't structurally cancel) --
-  in the integer regime the errors are zero, so the obstruction
-  vanishes.
-- **2026-05-15**: Phase 0 consolidation point.  Soundness story for
-  `b64_orient_sign_filtered` is closed for the integer regime
-  (`|coord| <= 2^25` integer-valued): headline cross_R soundness +
-  antisymmetry + all three vertex degeneracies + both cyclic
-  permutations, all Qed-closed.  The general bounded-magnitude regime
-  remains open and requires Shewchuk's Stages B/C/D -- in particular
-  Stage D (renormalization + reliable sign-of-expansion extraction),
-  which is qualitatively harder than the work shipped so far.  See
-  [`docs/soundness-strategy.md`](docs/soundness-strategy.md) for the
-  consolidation discussion: the integer regime *is* the scoped-down
-  complete-soundness an abbreviated Stage D would otherwise have to
-  deliver, just achieved via exactness rather than expansion
-  arithmetic.  No middle ground exists between "the integer regime as
-  shipped" and "full B/C/D".
-- **2026-05-15**: Phase 1 first slice -- `Intersect_b64.v`.  Five-valued
-  segment-pair intersection predicate built on top of Phase 0's Stage A
-  filter, four orientation tests + case dispatch.  Structural lemmas
-  (decidability, totality, 10-way distinctness, NaN propagation) and
-  the integer-regime `IntersectNone` rejection-soundness theorem all
-  Qed-closed in this slice.  `IntersectPoint` / `IntersectCollinear`
-  soundness deferred pending the R-side completeness theorem.
-- **2026-05-15**: Phase 1 oracle + .Curve port shipped.  Added
-  `INTERSECT_FILTERED` mode to `RocqRefRunner` (extraction list +
-  `oracle/driver.ml`); ported `Robust.Intersect.RobustLineIntersector`
-  in
-  [NetTopologySuite.Curve PR #11](https://github.com/NetTopologySuite/NetTopologySuite.Curve/pull/11).
-  187 / 187 differential tests bit-equal: 7 deterministic fixtures, 80
-  random uniforms, 8 NaN positions, 5 huge-magnitude, 7 integer-regime
-  boundary fixtures, 80 random integer fuzz.
-- **2026-05-15**: R-side `strict_completeness` -- the deferred converse
-  of rejection-soundness in `theories/Intersect.v`.  Constructive
-  witness via Cramer's rule: `X = lerp t C D` where
-  `t = cross A B C / (cross A B C - cross A B D)`.  Helper
-  `div_in_unit_interval` clears the `nra`-through-`Rdiv` issue with an
-  inverse-product hint.  Closes the proper-crossing direction; the
-  full `<= 0` converse remains FALSE (collinear-disjoint
-  counter-example documented inline).
-- **2026-05-15**: Phase 1 headline -- match-on-five soundness.
-  `b64_intersect_sign_filtered_sound_small_int` composes
-  `strict_completeness` with the existing rejection-soundness to claim:
-  `IntersectNone` ⇒ no shared point and `IntersectPoint` ⇒ shared
-  interior point exists, both in the integer regime.
-  `IntersectCollinear` remains the only branch making no positive
-  claim -- the parallel to Phase 0's `IntersectUncertain`.
-- **2026-05-15**: Phase 1 consolidation point.  See
-  [`docs/phase1-completion.md`](docs/phase1-completion.md) for the
-  full inventory + deferral rationale.  The predicate-level
-  intersection deliverable is shipped end-to-end (Coq soundness + C#
-  port + 187/187 differential).  Two pieces are deferred and parallel
-  Phase 0's deferred work: `IntersectCollinear` sub-case
-  disambiguation (parallel to `IntersectUncertain` -- the predicate
-  honestly declines to commit) and intersection-point coordinate
-  computation (parallel to Stage D -- requires `b64_div` + forward
-  error analysis, multi-session engagement).  No middle ground between
-  "the predicate as shipped" and the full coordinate / sub-case story
-  buys meaningful intermediate value.
-- **2026-05-25**: Phase 1 Scope C.2-tight closed.  Five-session
-  cascade lands the forward-error bound for the coordinate-valued
-  `b64_intersect_point_x/y`:
+(See the dedicated phase completion, audit, and retro documents listed in
+the actor Reading Guide for the current detailed status. The full dated
+forensic log of slices, consolidations, and openings has been moved to
+the phase-specific docs and `docs/history/` to keep this README scannable
+for all the defined actor roles (collapsed from initial 17 for overlap). Key high-level outcomes remain in the table above and
+the phase docs; the complete session-by-session record is in the
+retros and history/sessions/ for Scholar Sam / Tech-Lead Tess / Joost
+the BDFL paths.)
 
-  ```
-  |B2R(b64_intersect_point_x P0 P1 Q0 Q1)
-   - (B2R(bx P0) + s_exact * B2R(b64_minus (bx P1) (bx P0)))|
-  <= bpow 29 + bpow 80 / |qp0_R - qp1_R|
-  ```
-
-  in `K * eps` form `K(|d|) = bpow 82 + bpow 133 / |d|` with
-  `eps = bpow(-prec)`.  Both x and y headlines Qed-closed.  The
-  `1/|den_exact|` factor is the classical Cramer condition number
-  — the bound is fundamentally condition-number-bounded, saturating
-  near-parallel and dropping for well-separated segments.  See
-  [`docs/phase1-c2-tight-retro.md`](docs/phase1-c2-tight-retro.md)
-  for the cascade structure, calibration vs Slice A, and what's
-  open.  Session 6 closed the reference bridge + soundness typeclass:
-  `b64_intersect_point_{x,y}_forward_error_vs_intersect_{x,y}_R`
-  state the same bound against the canonical
-  `intersect_{x,y}_R (BP2P ...)` reference, and
-  `HasIntersect_sound_BPoint` plugs the bound into a soundness
-  typeclass layered on `HasIntersect`.  Phase 1 fully shipped
-  end-to-end.
-- **2026-05-15**: Phase 2 opened -- snap-rounding noder audit doc.
-  [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md)
-  inventories what snap rounding is (Hobby 1999 + Halperin & Packer
-  2002), why NTS needs it (overlay needs topologically consistent
-  input), what's reusable from Phase 0/1 (orientation + intersection
-  predicates, integer-regime soundness, R-side machinery), what's
-  greenfield (hot-pixel data structure, pass-through relation, the
-  algorithm, the topological correctness theorem), and the first-slice
-  plan (`HotPixel.v` + `HotPixel_b64.v`).  Phase 2 is qualitatively
-  larger than 0 or 1 -- the topological correctness theorem is
-  identified as 6-10 weeks of focused work and genuinely
-  research-shaped.  No turnkey vendor target exists; phase 2 is
-  greenfield in the formal-methods sense.
-- **2026-05-27**: Phase 2 hot-pixel foundations shipped through the
-  segment-touches-pixel filter (44 theorems Qed-closed, 0 Admitted).
-  `b64_in_hot_pixel_sound` bridges the binary64 pixel decision to the
-  exact R-side `in_hot_pixel` (unit-grid scale, via the 27-bit
-  `(2n +/- 1)/2` exactness argument); `b64_segment_touches_hot_pixel_spec`
-  is the form (a) parametric existential; and
-  `b64_segment_touches_hot_pixel_partial` is a decidable bool filter
-  that SOUNDLY decides all eight edge-crossing patterns (closed,
-  opposite, adjacent) + both endpoint cases, each crossing witnessed by
-  an explicit `t*` or a two-crossing midpoint (no IVT needed -- the
-  half-open open-edge cases are handled by averaging an in-range
-  coordinate with the edge value).  Filter COMPLETENESS (the
-  classification argument: touches -> filter = true), the snap-rounding
-  algorithm, and the topological correctness theorem remain.  Slice-by-
-  slice record in
-  [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md).
+- **registry framework (in force since the Stage D / Phase 2-3
+  engagement)**: the Flocq layer's `Admitted` theorems are governed by
+  the three-tier discipline described at the top of this README —
+  `scripts/check_admitted.sh` plus the
+  [counterexample](docs/admitted-counterexamples.txt) and
+  [deferred-proof](docs/admitted-deferred-proofs.txt) registries — and a
+  per-theorem axiom audit (`scripts/audit_axioms.sh` +
+  [`docs/axiom-allowlist.txt`](docs/axiom-allowlist.txt) +
+  [`docs/audit-exceptions.txt`](docs/audit-exceptions.txt)) tracks the
+  `Classical_Prop.classic` footprint inherited from Flocq's binary
+  arithmetic.  See [`docs/category-c-policy.md`](docs/category-c-policy.md).
 
 ## What this is NOT
 
@@ -1008,19 +352,28 @@ the simplifier R-bridge, Stage A's arithmetic identities for
 - This is **not** a substitute for unit tests. Tests cover behaviour the
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
-- This is **not** complete. Current coverage is 520+ Qed-closed
-  theorems across 23 modules: the algebraic foundations (real-number,
-  vector, distance, orientation, line, disk, lattice, lex order),
-  segment and bounding-box primitives, triangle / convex / centroid /
-  reflection laws, and the curve-linearisation stack
-  (`Linearise.v` → `Simplify.v` → `Tin.v` → `Validate.v` →
-  `Validate_decidable.v`). The Phase 0–7 chokepoint roadmap above
-  outlines what's missing: orientation under floating-point arithmetic,
-  the full robust line-intersector, snap-rounding, planar overlay, and
-  native curve primitives — multi-year work, but each phase ships
-  independently.
+- This is **not** complete. Current coverage is over 1,100 Qed-closed
+  theorems across 67 `.v` modules (25 foundational Stdlib-only under
+  `theories/`, plus Flocq-dependent work under `theories-flocq/`), with
+  exactly 6 `Admitted` theorems, each registered in the counterexample or
+  deferred-proof registry (see the registries and `scripts/check_admitted.sh`).
+  Coverage spans the algebraic foundations (real-number, vector, distance,
+  orientation, line, disk, lattice, lex order), segment and bounding-box
+  primitives, triangle / convex / centroid / reflection laws, the
+  curve-linearisation stack (`Linearise.v` → `Simplify.v` → `Tin.v` →
+  `Validate.v` → `Validate_decidable.v` + binary64 instance), and the
+  early-to-mid phases of the chokepoint (orientation + intersection under
+  binary64, snap-rounding foundations, overlay, chord-approximated arcs).
+  The Phase 0–7 roadmap (below and in the actor Reading Guide) outlines
+  what remains: full Stage D, open JCT / DCEL / Hobby pieces carried as
+  deferred proofs or named hypotheses, and native (non-chord) curve
+  primitives. Each phase ships independently with precise caveats; see the
+  dedicated phase completion/audit docs for current status rather than
+  this summary.
 
 ## Build
+
+See [docs/HELP.md](docs/HELP.md) and [docs/READING-GUIDE.md](docs/READING-GUIDE.md) for which build path matches your actor/role (e.g. Newbie Nate vs. full Flocq for deep work). Also see [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/FOR-AI-AGENTS.md](docs/FOR-AI-AGENTS.md).
 
 ### Local (macOS via Homebrew)
 
@@ -1030,20 +383,33 @@ rocq makefile -f _CoqProject -o Makefile.gen
 make -f Makefile.gen
 ```
 
-This builds every module in `_CoqProject` — i.e. the Stdlib-only corpus.
-Modules with external dependencies (Flocq) live in `_CoqProject.full` and
-are built inside the container only (see below).
+This builds the 25 foundational Stdlib-only modules in `_CoqProject`.
+Modules with external dependencies (Flocq), plus the Stdlib-only Phase
+3/4 modules built alongside them, live in `_CoqProject.full` and are
+built inside the container only (see below).
 
-CI runs the same sequence on `macos-latest` (see
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml)) plus a sanity grep
-that fails if any unsoundness marker (`Admitted`, `Axiom`, `Parameter`,
-`admit.`) appears in `theories/`.
+CI (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the
+host build on `macos-latest`, then:
+
+- `scripts/check_admitted.sh` — the three-tier `Admitted` check across
+  **both** `theories/` and `theories-flocq/`: every `Admitted` must
+  appear in exactly one registry (counterexample or deferred-proof);
+  `Axiom`, `Parameter`, and `admit.` are hard failures.
+- `scripts/check_readme_axioms.sh` — verifies this README's axiom list
+  matches `docs/axiom-allowlist.txt` verbatim.
+
+A second CI job builds the full `_CoqProject.full` corpus inside the
+pinned Rocq 9.1.1 + Flocq 4.2.2 container, then re-runs it sequentially
+(`-j1`) and feeds the log to `scripts/audit_axioms.sh`, which checks
+every per-theorem `Print Assumptions` block against the allowlist
+(file-level exemptions from `docs/audit-exceptions.txt`).
 
 ### Containerised build (Rocq 9.1.1 + Flocq 4.2.2)
 
-For modules that need [Flocq](https://flocq.gitlabpages.inria.fr/) (e.g. a
-forthcoming `Validate_binary64.v` linking the validation layer to IEEE-754
-binary64) the canonical environment is a podman container based on the
+For modules that need [Flocq](https://flocq.gitlabpages.inria.fr/) (the
+`theories-flocq/` corpus, linking the validation, orientation,
+intersection, snap-rounding, and overlay layers to IEEE-754 binary64)
+the canonical environment is a podman container based on the
 official `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` image with
 `coq-flocq.4.2.2` pinned via opam. This matches the toolchain Boldo et al.
 JAR 2015 §5 uses.
@@ -1095,15 +461,6 @@ the BSD-3-Clause grant respects NTS's attribution requirements.
 
 ## Contributing
 
-Pull requests welcome. New theorems must:
+See the full [CONTRIBUTING.md](CONTRIBUTING.md) (and the actor-specific guidance in [docs/HELP.md](docs/HELP.md) + [docs/READING-GUIDE.md](docs/READING-GUIDE.md) + [docs/FOR-AI-AGENTS.md](docs/FOR-AI-AGENTS.md) for agents).
 
-- compile under stock Rocq 9.x;
-- terminate with `Qed.` — no `Admitted`, no `Axiom`, no `Parameter`
-  standing in for a missing proof. The rule applies in `theories/`
-  and in `theories-flocq/` alike;
-- depend only on Rocq's standard library if placed under `theories/`,
-  or on Flocq 4.2.x if placed under `theories-flocq/`;
-- include a header comment naming the NTS module (or JTS algorithm)
-  the theorem corresponds to, so reviewers can cross-reference;
-- carry the SPDX licence header and AI-assistance disclosure where
-  applicable (the existing files set the pattern).
+The short version: new theorems must end with `Qed.` (or `Defined.`), respect the three-axiom + registry discipline, carry proper headers, and follow the documented session workflow for anything non-trivial. Joost the BDFL has final say on scope and borderline decisions. Pick your role card and contribute accordingly.

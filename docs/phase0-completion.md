@@ -177,13 +177,23 @@ NaN / Uncertain inputs.  That deliverable shipped end-to-end:
   three call shapes; bit-equal against RocqRefRunner across the
   differential corpus.
 
-What's open — general bounded-magnitude soundness via Stages B/C/D —
-is parallel to Phase 1's open Stage D in the same way Phase 1's
-deferrals parallel Phase 0's: substantial separate engagements, not
-chokepoint work.  Mirroring
-[`docs/soundness-strategy.md`](soundness-strategy.md)'s consolidation
-discussion: the integer regime *is* the scoped-down complete-soundness
-an abbreviated Stages B/C/D would otherwise have to deliver.
+**Update — full-`binary64` soundness achieved (exact route).** An *exact*
+orientation predicate over arbitrary doubles is now Qed-closed:
+`Orient_b64_exact_full.v`'s `b64_orient2d_exact_sound` proves the sign of the
+exact `ℤ`-determinant (every double is a dyadic `m·2ᵉ`; common-exponent
+integer determinant) agrees with the true orientation for **all finite
+`binary64`** — no `|coord| ≤ 2²⁵` restriction, and at three axioms (no
+`Classical_Prop.classic`, since it uses only the `B2R` decode + exact `ℤ`
+arithmetic). So full-double soundness no longer depends on Stages B/C/D.
+
+What remains open is narrower: the *fast* Shewchuk-adaptive filter
+`b64_orient_sign_filtered` is still proven only on integer coords (Stage A),
+and its general bounded-magnitude soundness via Stages B/C/D is now an
+*optimization* (a verified fast filter matching JTS's adaptive predicate),
+not the only path to a sound full-plane predicate — parallel to Phase 1's
+open Stage D: a substantial separate engagement, not chokepoint work.  The
+exact predicate is meanwhile the ground-truth spec to diff JTS/NTS
+double-double `Orientation.index` against (JTS #1106).
 
 ## Future paths
 

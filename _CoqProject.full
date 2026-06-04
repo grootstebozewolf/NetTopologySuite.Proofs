@@ -35,6 +35,25 @@ theories/Azimuth.v
 # Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
 # three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
 theories/ClothoidResidual.v
+# Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
+# on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
+# cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
+# Stdlib (no new deps) but pulls Classical_Prop.classic via Stdlib `atan`
+# (cos/sin/sqrt stay clean) -- see docs/audit-exceptions.txt.  No Admitted.
+theories/Atan2.v
+# Issue #64 / Option-A foundation 2: signed angle between two planar vectors,
+# angle_between u v = atan2 (cross u v) (dot u v) -- the robust atan2-based
+# central-angle/sweep primitive (sign = orientation).  Headlines
+# cos_angle_between / sin_angle_between = dot|cross / (|u||v|) via the Lagrange
+# identity; plus atan2_range (-PI, PI].  Pulls classic via atan (see
+# audit-exceptions).  No Admitted.
+theories/AngleBetween.v
+# Issue #64 / Option-A foundation 3 (ask #1): exact arc length s = r*theta with
+# the chord/arc soundness relations.  Headlines chord_le_arc_length (chord <=
+# arc, arc analogue of chord_le_detour) and chord_subtended_sq (half-angle
+# bridge chord^2 = 2 r^2 (1 - cos theta)).  Pulls classic via Stdlib sin_lt_x
+# (see audit-exceptions).  No Admitted.
+theories/ArcLength.v
 # Phase 3 milestone 1: foundational definitions for the overlay correctness
 # theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
 # point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +
@@ -195,6 +214,7 @@ theories-flocq/Orient_b64_sound.v
 #   | _           => True end.
 # Bit-exact -- no rounding error -- for |coord| <= 2^25 integer inputs.
 theories-flocq/Orient_b64_exact.v
+theories-flocq/Orient_b64_exact_full.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
 # on top of Stage A filter.  Five-valued result (None / Point / Collinear /
 # Nan / Uncertain).  Ships the predicate, structural lemmas (decidability,
@@ -274,6 +294,7 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v
 # cascade_step_preserves_invariant is deferred to Session 2.  See
 # docs/shewchuk-theorem-13-proof-structure.md §6.1-§6.5.
 theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
+theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v
 # Slice A piece 6: orient2d via fast-expansion-sum.  Composes
 # b64_Dekker + fast_expansion_sum into b64_orient2d_expansion.
 # Sum-correctness Qed-closed under an explicit
@@ -318,6 +339,57 @@ theories-flocq/TopologicalCorrectness_b64.v
 # for Shewchuk Theorem 13.  See docs/hobby-theorem-proof-structure.md.
 theories-flocq/HobbyTheorem_b64.v
 theories-flocq/PassesThroughHalfopen_b64.v
+# Computational (extractable) binary64 Liang-Barsky passes-through predicates.
+# The oracle compute path for PASSES_THROUGH_* -- the R-spec versions in
+# HotPixel_b64 / PassesThroughHalfopen_b64 are non-computational (B2R), so the
+# driver previously hand-rolled these.  See docs/oracle-handroll-migration.md.
+theories-flocq/PassesThrough_b64_compute.v
+# Machine-checked counterexample: the rounded compute filter is NOT sound vs
+# the exact-real spec (compute=true, spec=false on an oracle-confirmed sub-ulp
+# tangency witness).  Promotes docs/oracle-soundness-finding.md to a Qed.
+theories-flocq/PassesThrough_b64_compute_unsound.v
+# Compute-level refinement: the half-open compute filter is strictly tighter
+# than the closed one (the COMPUTE analog of the proven spec-level
+# b64_liang_barsky_touches_halfopen_implies_closed).  Pure boolean structure.
+theories-flocq/PassesThrough_b64_compute_refine.v
+# Machine-checked counterexample (half-open mode): the rounded half-open
+# compute filter is NOT sound vs the exact half-open spec.  Companion to
+# PassesThrough_b64_compute_unsound.v for the PASSES_THROUGH_HALFOPEN mode;
+# witness = the closed-mode witness with x negated (bottom-left tangency).
+theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
+# Machine-checked counterexample (half-open mode, dual direction): the rounded
+# half-open compute filter is NOT COMPLETE -- it DROPS a real pass (the
+# noder-unsafe direction).  Witness grazes the open top edge; the rounded
+# midpoint rounds onto the excluded boundary and rejects.
+theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
+# Machine-checked counterexample (both modes): the rounded passes-through
+# compute filter is NOT SYMMETRIC under segment reversal P0<->P1 -- the
+# order-dependent-noding root behind JTS#752 / JTS#1133.  Witness coordinates
+# are exact powers of two; both halves decided by vm_compute.
+theories-flocq/PassesThrough_b64_compute_asymmetric.v
+# GREEN companion: the EXACT R-spec passes-through filter IS symmetric under
+# segment reversal -- the order-safe noder primitive (vs the rounded compute
+# filter, which is not).  Refs #66.
+theories-flocq/PassesThrough_b64_spec_symmetric.v
+# C1 grid-exactness REDUCTION (issue #66 RGR pivot, docs/snap-rounding-rgr-pivot.md):
+# on the unit grid the snap-consistency conjunct is vacuous, so full-predicate
+# grid-exactness (compute = spec) reduces to the single Liang-Barsky touch.
+# Qed-closed reduction; the rounded-vs-exact touch core is the open multi-session
+# step (stated in-file as a comment, NOT an axiom).
+theories-flocq/PassesThrough_b64_grid_exact.v
+# Computational (extractable) binary64 in-circle determinant.  Oracle compute
+# path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
+# R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.
+theories-flocq/InCircle_b64_compute.v
+# Computational (extractable) binary64 arc-circle sign-product.  Oracle compute
+# path for ARC_CHORD_CROSSES_CIRCLE.  See docs/oracle-handroll-migration.md item 3.
+theories-flocq/ArcCircle_b64_compute.v
+# Computational (extractable) binary64 arc / hot-pixel predicate.  Oracle
+# compute path for ARC_PASSES_THROUGH_PIXEL.  See docs/oracle-handroll-migration.md item 4.
+theories-flocq/ArcPixel_b64_compute.v
+# Dovetail: in_hot_pixel_convex (clean lane) lifted to b64-bridged points --
+# the rounding-free endpoint route (cf docs/oracle-soundness-finding.md).
+theories-flocq/HotPixelConvex_b64.v
 # Native-float OCaml extraction.  Writes `oracle/extracted.ml`, consumed by
 # the oracle binary in `oracle/` for differential testing against the C#
 # port in NetTopologySuite.Curve.  NOT trusted -- proofs stay on abstract

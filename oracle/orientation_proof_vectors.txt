@@ -1,0 +1,18 @@
+# Rocq-certified orientation proof vectors (oracle ORIENT_EXACT).
+# Provenance: theories-flocq/Orient_b64_exact_full.v : b64_orient2d_exact_sound.
+# x0 y0 x1 y1 x2 y2 EXPECTED   (EXPECTED in {POS,NEG,ZERO})
+#
+# --- basic ---
+0 0 1 0 0 1 POS        # unit CCW
+0 0 0 1 1 0 NEG        # unit CW
+0 0 1 1 2 2 ZERO        # collinear y=x
+# --- adversarial near-collinear at 2^27 (exact integers; naive double det rounds to 0) ---
+0 0 134217729 134217730 134217728 134217729 POS        # P=(0,0),(2^27+1,2^27+2),(2^27,2^27+1); exact=+1, naive double=ZERO
+# --- OVERFLOW band edge ~2^512: DD products -> inf -> NaN -> signum 0 (wrong ZERO) ---
+0 0 0x1p+512 0 0 0x1p+512 POS        # CCW; DD returns ZERO (overflow) -- WRONG
+0 0 0 0x1p+512 0x1p+512 0 NEG        # CW; DD returns ZERO (overflow) -- WRONG
+# --- UNDERFLOW band edge ~2^-540: DD products flush to 0 (wrong ZERO) ---
+0 0 0x1p-540 0 0 0x1p-540 POS        # CCW; DD returns ZERO (underflow) -- WRONG
+0 0 0 0x1p-540 0x1p-540 0 NEG        # CW; DD returns ZERO (underflow) -- WRONG
+# --- huge dynamic range, non-degenerate ---
+0x1p-300 0x1p-300 0x1p+300 0 0 0x1p+300 POS        # CCW across ~600 binades

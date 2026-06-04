@@ -147,6 +147,31 @@ Proof.
   intros P C scale [[HxL HxR] [HyL HyR]]; split; apply Rabs_le; lra.
 Qed.
 
+(* Convexity of the hot pixel.  The pixel is an axis-aligned half-open box,  *)
+(* hence convex: any convex combination of two in-pixel points is in-pixel.  *)
+(* Equivalently, if both endpoints of a segment lie in the pixel then the    *)
+(* whole segment does.  The half-open upper bound is preserved because       *)
+(* (1-t)*a + t*b < hi whenever a < hi, b < hi and 0 <= t <= 1.               *)
+Lemma in_hot_pixel_convex :
+  forall (P0 P1 C : Point) (scale t : R),
+    0 <= t <= 1 ->
+    in_hot_pixel P0 C scale ->
+    in_hot_pixel P1 C scale ->
+    in_hot_pixel (segment_point P0 P1 t) C scale.
+Proof.
+  intros P0 P1 C scale t [Ht0 Ht1] H0 H1.
+  unfold in_hot_pixel, segment_point in *.
+  destruct P0 as [x0 y0], P1 as [x1 y1]. simpl in *.
+  destruct H0 as [[Hx0L Hx0R] [Hy0L Hy0R]].
+  destruct H1 as [[Hx1L Hx1R] [Hy1L Hy1R]].
+  (* Case split on t = 1 so the strict upper bound has a clear witness:      *)
+  (* for t < 1 it comes from 1 - t > 0; for t = 1 it is x1 < hi directly.    *)
+  destruct (Req_dec t 1) as [Heq | Hne].
+  - subst t. repeat split; nra.
+  - assert (Hlt : t < 1) by lra.
+    repeat split; nra.
+Qed.
+
 (* Endpoint-inside is a special case of segment-touches (taking t = 0).      *)
 Lemma segment_touches_hot_pixel_l :
   forall (P0 P1 C : Point) (scale : R),
@@ -284,13 +309,49 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Soundness of the BB-overlap pre-filter: touches => BB-overlap.             *)
+(*                                                                            *)
+(* The exact complement of `bb_overlap_not_sufficient_for_touches`.  Together *)
+(* they pin BB-overlap down as a SOUND but INCOMPLETE filter: it never        *)
+(* produces a false negative (if the segment really touches the pixel the     *)
+(* bounding boxes must overlap, so a noder may safely reject on BB-disjoint), *)
+(* yet it can produce false positives (the counterexample).                   *)
+(*                                                                            *)
+(* Proof: the touching point is the convex combination (1-t)*P0 + t*P1, which *)
+(* lies between Rmin and Rmax of the endpoint coordinates on each axis; it    *)
+(* also lies in the pixel's [C - r, C + r) range -- so the two ranges meet.   *)
+(* No positivity of `scale` is needed; the radius is treated opaquely.        *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem segment_touches_implies_bb_overlap :
+  forall P0 P1 C scale,
+    segment_touches_hot_pixel P0 P1 C scale ->
+    Rmin (px P0) (px P1) <= px C + hot_pixel_radius scale /\
+    px C - hot_pixel_radius scale <= Rmax (px P0) (px P1) /\
+    Rmin (py P0) (py P1) <= py C + hot_pixel_radius scale /\
+    py C - hot_pixel_radius scale <= Rmax (py P0) (py P1).
+Proof.
+  intros P0 P1 C scale [t [[Ht0 Ht1] Hin]].
+  unfold in_hot_pixel, segment_point in Hin.
+  destruct P0 as [x0 y0], P1 as [x1 y1]. simpl in Hin.
+  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  pose proof (Rmin_l x0 x1). pose proof (Rmin_r x0 x1).
+  pose proof (Rmax_l x0 x1). pose proof (Rmax_r x0 x1).
+  pose proof (Rmin_l y0 y1). pose proof (Rmin_r y0 y1).
+  pose proof (Rmax_l y0 y1). pose proof (Rmax_r y0 y1).
+  simpl. repeat split; nra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
+Print Assumptions in_hot_pixel_convex.
 Print Assumptions bb_overlap_witness_segment_does_not_touch.
 Print Assumptions bb_overlap_witness_x_overlap.
 Print Assumptions bb_overlap_witness_y_overlap.
 Print Assumptions bb_overlap_not_sufficient_for_touches.
+Print Assumptions segment_touches_implies_bb_overlap.
 
 (* -------------------------------------------------------------------------- *)
 (* Deferred: full snap-rounding rewriter.                                     *)

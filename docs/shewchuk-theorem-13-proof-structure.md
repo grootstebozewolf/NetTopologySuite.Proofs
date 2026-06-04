@@ -17,6 +17,41 @@ Theorem fast_expansion_sum_nonoverlap_shewchuk :
 **Status**: Admitted with deferred-proof registration in
 `docs/admitted-deferred-proofs.txt`.
 
+> ## ⚠️ FINDING (verified) — the Route-2 `cascade_pathA_chain` reduction is too strong; go back to square 1
+>
+> Do **not** try to prove `cascade_pathA_chain_from_nonoverlap` (discharging
+> the Route-2 conditional headline's hypothesis from `nonoverlap` inputs).
+> **It is false**, so it can never be discharged. The headline itself is
+> still true — the *reduction* is unsound.
+>
+> - The conditional headline's hypothesis requires
+>   `cascade_invariant_handover (initial_cascade_state x prov) ((x2,_)::_)`
+>   for the two magnitude-smallest inputs `x` (= initial carry) and `x2`:
+>   they must be same-sign, or `x = 0`, or the carry must be `< ½ ulp` of
+>   (pred/succ of) `x2` — i.e. ~53 bits smaller.
+> - `nonoverlap_shewchuk` constrains only **same-source** consecutive
+>   elements. After the magnitude merge-sort the two globally-smallest can
+>   be **cross-source, similar magnitude, opposite sign** — no half-ulp
+>   separation — so every handover disjunct fails.
+> - **Verified core**: `cascade_handover_fails_mixed_sign` in
+>   `theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v` (Qed) proves the
+>   handover is unsatisfiable for `0 < B2R x`, `B2R x2 < 0`,
+>   `½ ulp(succ (B2R x2)) ≤ B2R x`.
+> - **Concrete witness**: `e = [1.0]`, `f = [-1.0]`. Premises hold (singletons
+>   are trivially `nonoverlap_shewchuk`); `fast_expansion_sum` sums to 0 →
+>   compresses to `[]` → headline `nonoverlap_shewchuk [] = True`. Yet
+>   `cascade_pathA_chain` is **False** (apply the lemma with `B2R x = 1`,
+>   `B2R x2 = -1`, `½ ulp(succ(-1)) ≈ 2⁻⁵³ ≤ 1`).
+>
+> **Redirect for the next session.** The fix is to generalise the per-step
+> invariant from pathA-only to **pathA ∨ pathB**, where pathB is the
+> mixed-provenance cancellation case: an opposite-sign similar-magnitude pair
+> makes `b64_TwoSum` produce a zero / sub-normal high part that `compress`
+> deletes, and the cascade continues. The entire Route-2 framework
+> (`cascade_run_output_nonoverlap`, the conditional headline, the magnitude
+> lemmas) is sound and Qed — only the invariant `cascade_pathA_chain` must be
+> widened, then re-discharged. Don't grind the pathA chain.
+
 This document captures the proof structure with enough detail that a
 follow-up session can land the proof without re-deriving the design.
 Estimated 200-400 lines of Coq, 2-3 days of focused work.
@@ -127,14 +162,63 @@ Lemma cascade_qnew_dominates :
 Note: no `nonoverlap_shewchuk` precondition.  Only `sorted_asc` and
 safety.
 
-**Why this should still be provable**: under `sorted_asc`, each step
-has `|q_{i-1}| <= |x_i|`.  The same-sign case is covered by the
-already-Qed-closed `b64_TwoSum_step_dominates_pos / _neg`.  The
+> ## ⚠️ `cascade_qnew_dominates` AS STATED IS FALSE (rigorous, exact-integer witness)
+>
+> Carry magnitude is **not** monotone: opposite-sign cancellation shrinks it.
+> `sorted_asc` is by **absolute value** (`Rabs (B2R x) <= Rabs (B2R y)`), so a
+> larger-magnitude opposite-sign element legitimately follows a smaller one.
+>
+> **Witness** (both exact binary64, integer-regime — no rounding at all):
+> `q = 3`, `xs = [-4]`.  `sorted_asc (3 :: [-4])` holds (`|3| <= |-4|`).
+> `b64_grow_expansion_aux 3 [-4]` computes `b64_TwoSum (-4) 3 = (-1, 0)`
+> exactly (`-1` is representable, error `0`), so `qfinal = -1`.  The claimed
+> conclusion `Rabs (B2R q) <= Rabs (B2R qfinal)` is `3 <= 1` — **false**.
+>
+> So the "weaker bound suffices / coarser magnitude-preservation" hope below
+> does not hold either: `|round(x+q)| >= ||x|-|q||` is true but useless here,
+> because `||x|-|q|| = |-4|-|3| = 1 < 3 = |q|`.  The carry genuinely shrinks.
+>
+> **Oracle-validated** (runs the *extracted* `b64_grow_expansion_aux`, seconds,
+> no Coq literal construction):
+> ```
+> $ printf 'GROW_EXPANSION\n3\n-4\n' | oracle_bin   ->  QFINAL -0x1p+0   (= -1)
+> $ printf 'TWOSUM\n-4\n3\n'         | oracle_bin   ->  SUM -0x1p+0 ERR 0x0p+0
+> $ printf 'GROW_EXPANSION\n3\n4\n'  | oracle_bin   ->  QFINAL 0x1.cp+2   (= 7, same-sign grows)
+> ```
+> `|QFINAL| = 1 < 3 = |q|`.  Modes `TWOSUM` / `GROW_EXPANSION` added to the
+> RocqRefRunner specifically to make cascade-magnitude counterexamples
+> checkable by computation.
+>
+> **Consequence.** §2.1 → §2.2 → §3 as written is broken: there is no carry
+> magnitude-monotonicity lemma to anchor the half-ulp chain.  What is actually
+> invariant is the **output's** `nonoverlap_shewchuk` (on the *compressed*
+> carry::output, which tolerates cancellation zeros), maintained by Shewchuk's
+> **per-provenance run argument** (§4) — not by any single-quantity carry
+> bound.  Third falsified naive invariant this lineage (after the pathA chain,
+> see `B64_Shewchuk_Thm13_pathA_defect.v`).  Square 1 for the magnitude side is
+> the per-provenance run structure, stated over the tagged input — not a carry
+> monotonicity lemma.
+>
+> **Lean on the already-proven exactness, not magnitude.** Shewchuk's real
+> guarantee for `grow_expansion` (Thm 10) is *exactness + ordering*, not
+> magnitude monotonicity — and exactness is ALREADY `Qed` in the corpus:
+> `b64_grow_expansion_aux_correct` (`expansion_R hs + B2R qfinal =
+> expansion_R es + B2R q`) and `fast_expansion_sum_correct`
+> (`expansion_R (fast_expansion_sum e f) = expansion_R e + expansion_R f`).
+> So the only open content of Theorem 13 is the **nonoverlapping/ordering**
+> preservation; the next session should compose it from the proven exactness
+> + the per-provenance ordering, and must NOT re-introduce a carry-magnitude
+> lemma (false, per the box above). NB: the cancellation that falsifies
+> magnitude monotonicity is exactly what the tail/error words exist to
+> capture — it is correct expansion behaviour, not a bug.
+
+**Why this should still be provable** (NOTE: superseded by the box above —
+the carry-monotonicity framing is false; retained for context): under
+`sorted_asc`, each step has `|q_{i-1}| <= |x_i|`.  The same-sign case is
+covered by the already-Qed-closed `b64_TwoSum_step_dominates_pos / _neg`.  The
 mixed-sign case is NOT covered by the strict Path A absorption (which
-needs `|q| < ulp(pred x)/2`), but a weaker bound suffices: under
-`|q_{i-1}| <= |x_i|`, the rounded sum `round(x_i + q_{i-1})` has
-magnitude `>= ||x_i| - |q_{i-1}||` modulo rounding error.  This isn't
-absorption; it's a coarser magnitude-preservation argument.
+needs `|q| < ulp(pred x)/2`), and — per the box above — is NOT rescued by a
+coarser carry bound either; the carry can shrink below its initial magnitude.
 
 **Why Shewchuk Theorem 13 still works**: Shewchuk's actual proof
 tracks per-element provenance (which `x_i` came from `e` vs from `f`)
@@ -243,7 +327,7 @@ correctness lemmas), Route 2 is the committed design.
 > **Status note (Session 2 outcome — Route 2 collapsed).**
 >
 > **→ Full collapse artifact:
-> [`docs/slice-a-piece-5b-session-2-collapse.md`](slice-a-piece-5b-session-2-collapse.md).**
+> [`docs/history/sessions/slice-a-piece-5b-session-2-collapse.md`](history/sessions/slice-a-piece-5b-session-2-collapse.md).**
 >
 > Summary: every candidate clause (c) over the Session-1-framework
 > state `(q : binary64, hs : list binary64)` either requires the
@@ -258,7 +342,7 @@ correctness lemmas), Route 2 is the committed design.
 > **Status note (Route 1 design session — red phase, third-design recommended).**
 >
 > **→ Full design artifact:
-> [`docs/slice-a-piece-5b-route1-design-session.md`](slice-a-piece-5b-route1-design-session.md).**
+> [`docs/history/sessions/slice-a-piece-5b-route1-design-session.md`](history/sessions/slice-a-piece-5b-route1-design-session.md).**
 >
 > Summary: `cs_prov` is necessary but not sufficient.  The four-way
 > case-split must be on **sign** of `B2R` values (not provenance, which
@@ -272,7 +356,7 @@ correctness lemmas), Route 2 is the committed design.
 > **Status note (Route 1 Session 2 — collapse confirmed against live Coq).**
 >
 > **→ Full collapse artifact:
-> [`docs/slice-a-piece-5b-route1-session-2-collapse.md`](slice-a-piece-5b-route1-session-2-collapse.md).**
+> [`docs/history/sessions/slice-a-piece-5b-route1-session-2-collapse.md`](history/sessions/slice-a-piece-5b-route1-session-2-collapse.md).**
 >
 > Summary: with the host toolchain available, Route 1 Session 2 ran
 > the green-phase attempt in Coq.  The refined clause (c) (five-arm
@@ -306,7 +390,7 @@ correctness lemmas), Route 2 is the committed design.
 >     **Option B with a `cs_run_max` conjunct** is the right path.
 >
 > **→ Successor prompt:
-> [`docs/slice-a-piece-5b-route1-session-4-prompt.md`](slice-a-piece-5b-route1-session-4-prompt.md).**
+> [`docs/history/sessions/slice-a-piece-5b-route1-session-4-prompt.md`](history/sessions/slice-a-piece-5b-route1-session-4-prompt.md).**
 > Three deliverables: clause (d) + `cs_run_max`, two intermediate
 > lemmas (within-run and cross-prov), and `cascade_h_chain` by case
 > split on provenance continuity.  Estimated 220-300 lines.

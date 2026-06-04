@@ -158,9 +158,60 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Pixel-enumeration primitive (filter form).                                 *)
+(*                                                                            *)
+(* The pixel list consumed by `b64_segment_covered` has no upstream producer *)
+(* -- it is an opaque `forall pixels` in the only consumer                    *)
+(* (`b64_snap_round_preserves_pixel_cover`).  So the useful primitive is the  *)
+(* CHEAP form: filter a GIVEN candidate index by the bit-exact membership    *)
+(* test.  No raster walk, no fuel, no termination obligation.                 *)
+(*                                                                            *)
+(* Spec direction is COMPLETENESS, not soundness: snap-rounding              *)
+(* over-approximations make soundness ("every listed pixel is touched") an    *)
+(* efficiency property, not a correctness one -- and `b64_segment_covered`    *)
+(* uses `List.Exists`, so spurious survivors never break it.  The correctness *)
+(* direction here is "no truly-touched candidate is dropped".                 *)
+(* -------------------------------------------------------------------------- *)
+
+Definition b64_pixels_on_segment_filter
+  (P0 P1 : BPoint) (candidates : list BPoint) : list BPoint :=
+  List.filter (fun C => b64_passes_through_hot_pixel P0 P1 C) candidates.
+
+(* Completeness: filtering keeps every candidate the segment truly passes     *)
+(* through.                                                                   *)
+Lemma b64_pixels_on_segment_filter_complete :
+  forall (P0 P1 : BPoint) (candidates : list BPoint) (C : BPoint),
+    b64_passes_through_hot_pixel P0 P1 C = true ->
+    List.In C candidates ->
+    List.In C (b64_pixels_on_segment_filter P0 P1 candidates).
+Proof.
+  intros P0 P1 candidates C Hpass Hin.
+  unfold b64_pixels_on_segment_filter.
+  apply List.filter_In. split; assumption.
+Qed.
+
+(* The filtered list COVERS the segment: if any candidate is truly passed     *)
+(* through, the segment is covered by the filtered pixel set.  This discharges *)
+(* the `b64_segment_covered` hypothesis from a candidate index.               *)
+Lemma b64_pixels_on_segment_filter_covers :
+  forall (P0 P1 : BPoint) (candidates : list BPoint) (C : BPoint),
+    List.In C candidates ->
+    b64_passes_through_hot_pixel P0 P1 C = true ->
+    b64_segment_covered (b64_pixels_on_segment_filter P0 P1 candidates) (P0, P1).
+Proof.
+  intros P0 P1 candidates C Hin Hpass.
+  unfold b64_segment_covered. cbn [fst snd].
+  apply List.Exists_exists. exists C. split.
+  - apply b64_pixels_on_segment_filter_complete; assumption.
+  - exact Hpass.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions snap_round_preserves_shared_hot_pixel.
 Print Assumptions b64_snap_round_preserves_shared_hot_pixel.
 Print Assumptions b64_snap_round_preserves_pixel_cover.
+Print Assumptions b64_pixels_on_segment_filter_complete.
+Print Assumptions b64_pixels_on_segment_filter_covers.
