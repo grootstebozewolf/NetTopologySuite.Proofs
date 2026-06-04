@@ -54,19 +54,25 @@ From NTS.Proofs        Require Import Distance.
 From NTS.Proofs        Require Import Overlay.
 From NTS.Proofs        Require Import OverlayGraph.
 From NTS.Proofs        Require Import PointInRingTangents.
+From NTS.Proofs        Require Import JordanCurveSeam.
 From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64.
 From NTS.Proofs.Flocq  Require Import OverlayBridge.
 
 (* -------------------------------------------------------------------------- *)
 (* §1  The conditional headline.                                              *)
 (*                                                                            *)
-(* H1 instantiated post-S15 with the concrete `geometric_interior_stdlib`     *)
-(* from `theories/PointInRingTangents.v` -- pure Stdlib R definition of the   *)
-(* topological interior (ring_complement + in_bounded_component).  The opaque *)
-(* Section Variable `geometric_interior : Point -> Ring -> Prop` has been     *)
-(* eliminated; the JCT gap remains in the H1 biconditional's content (not    *)
-(* in the definition itself).  See docs/audit-phase3-milestone5.md "Update:   *)
-(* geometric_interior instantiated".                                          *)
+(* H1 re-pointed (PR #81 follow-up) onto `geometric_interior_cont` from       *)
+(* `theories/JordanCurveSeam.v` -- the continuity-carrying topological        *)
+(* interior.  The previous concrete instantiation `geometric_interior_stdlib` *)
+(* is *identically false* (`JordanCurveSeam.geometric_interior_stdlib_vacuous`)*)
+(* because its `connected_in_complement` quantifies over discontinuous paths; *)
+(* re-pointing H1 onto it therefore made this headline VACUOUS (its H1        *)
+(* hypothesis is contradictory -- see docs/h1-vacuity/ and                    *)
+(* docs/jct-vacuity-finding.md).  `geometric_interior_cont` requires          *)
+(* continuous complement paths, and `JordanCurveSeam.jct_cont_interior_is_    *)
+(* geometric` shows it is genuinely inhabited under `JCT_two_components_cont`, *)
+(* so H1 is now an honest, satisfiable (and still-undischarged) JCT gap rather *)
+(* than a contradiction.  See docs/audit-phase3-milestone5.md.                *)
 (* -------------------------------------------------------------------------- *)
 
   (* ------------------------------------------------------------------------ *)
@@ -94,7 +100,7 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
          deferred-proof entry since the JCT toolkit is absent). *)
       (forall (q : Point) (r : Ring),
          ring_closed r -> ring_simple r ->
-         point_in_ring q r <-> geometric_interior_stdlib q r) ->
+         point_in_ring q r <-> geometric_interior_cont q r) ->
       (* H2 (DCEL gap): for any valid topology graph, extract assembles
          a valid geometry.  Stand-in for the future `extract_rings_valid`
          theorem (audit doc §4.3 / §5.2). *)
@@ -112,7 +118,7 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
          valid_geometry (extract op g) ->
          (forall (q : Point) (r : Ring),
             ring_closed r -> ring_simple r ->
-            point_in_ring q r <-> geometric_interior_stdlib q r) ->
+            point_in_ring q r <-> geometric_interior_cont q r) ->
          (point_set (extract op g) p <-> boolean_op op A B p)) ->
       point_set (extract op (noded_labeled_graph A B)) p <->
       boolean_op op A B p.
@@ -140,7 +146,7 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
       fully_intersected (noded_segments A B) ->
       (forall (q : Point) (r : Ring),
          ring_closed r -> ring_simple r ->
-         point_in_ring q r <-> geometric_interior_stdlib q r) ->
+         point_in_ring q r <-> geometric_interior_cont q r) ->
       (forall (op' : BooleanOp) (g : TopologyGraph),
          valid_topology_graph g ->
          valid_geometry (extract op' g)) ->
@@ -150,7 +156,7 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
          valid_geometry (extract op g) ->
          (forall (q : Point) (r : Ring),
             ring_closed r -> ring_simple r ->
-            point_in_ring q r <-> geometric_interior_stdlib q r) ->
+            point_in_ring q r <-> geometric_interior_cont q r) ->
          (point_set (extract op g) p <-> boolean_op op A B p)) ->
       point_set (extract op (noded_labeled_graph A B)) p ->
       boolean_op op A B p.
@@ -168,7 +174,7 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
       fully_intersected (noded_segments A B) ->
       (forall (q : Point) (r : Ring),
          ring_closed r -> ring_simple r ->
-         point_in_ring q r <-> geometric_interior_stdlib q r) ->
+         point_in_ring q r <-> geometric_interior_cont q r) ->
       (forall (op' : BooleanOp) (g : TopologyGraph),
          valid_topology_graph g ->
          valid_geometry (extract op' g)) ->
@@ -178,7 +184,7 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
          valid_geometry (extract op g) ->
          (forall (q : Point) (r : Ring),
             ring_closed r -> ring_simple r ->
-            point_in_ring q r <-> geometric_interior_stdlib q r) ->
+            point_in_ring q r <-> geometric_interior_cont q r) ->
          (point_set (extract op g) p <-> boolean_op op A B p)) ->
       boolean_op op A B p ->
       point_set (extract op (noded_labeled_graph A B)) p.

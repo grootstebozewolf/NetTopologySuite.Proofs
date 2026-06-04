@@ -53,13 +53,15 @@
        `point_in_ring_correct_jct` (which is Qed-closed only over the vacuous
        `geometric_interior_stdlib`).
 
-   NOTE (a real gap in the corpus `JCT_two_components_cont` Prop).  Its clauses
-   assert connectivity WITHIN each component but not that connectivity
-   *implies* same-component; so the documented "Step 3" path-separation is not
-   in fact derivable from it as written.  The component-invariance route of
-   §2-§3 is the gap-free way to get separation, at the cost of taking
-   "interior = bounded component" as the definition (which `geometric_interior_cont`
-   already does).
+   NOTE (relation to the corpus `JCT_two_components_cont` Prop).  As of #82 that
+   Prop carries an explicit inter-component SEPARATION clause -- interior and
+   exterior points are never complement-connected -- and
+   `JordanCurveSeam.jct_cont_interior_is_geometric` uses it to place every
+   interior point into `geometric_interior_cont`.  §3's
+   `no_path_from_interior_to_exterior` is the gap-free Qed COUNTERPART for the
+   `geometric_interior_cont` definition itself: there separation is not assumed
+   but PROVED, because boundedness is baked into the interior predicate and the
+   rest is component invariance (§2).  The two agree; neither proves the JCT.
 
    Pure-R; no atan / Flocq.  No `Admitted` / `Axiom` / `Parameter`.  The
    axiom footprint is the corpus-standard classical-reals pair plus

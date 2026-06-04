@@ -99,17 +99,27 @@ geometric_interior_cont p r` from it — the non-vacuous, continuous replacement
 for `PointInRingTangents.point_in_ring_correct_jct`, which is `Qed`-closed only
 over the identically-false `geometric_interior_stdlib`.
 
-## A real gap in the corpus `JCT_two_components_cont` Prop
+## Relation to the corpus `JCT_two_components_cont` Prop (post-#82)
 
-While building §3 we noticed that the documented "Step 3" path-separation
-(`docs/point-in-ring-jct-path.md`) is **not** in fact derivable from
-`JordanCurveSeam.JCT_two_components_cont` as written: its clauses assert
-connectivity *within* each component but never that connectivity *implies*
-same-component. The component-invariance route of §2–§3 is the gap-free way to
-obtain separation — at the cost of taking "interior = bounded component" as the
-definition, which `geometric_interior_cont` already does. A future
-strengthening of `JCT_two_components_cont` should add a "components are the
-connectivity classes" clause if the Step-3 derivation is wanted from it.
+An earlier draft of this file flagged a gap: the documented "Step 3"
+path-separation (`docs/point-in-ring-jct-path.md`) was not derivable from
+`JordanCurveSeam.JCT_two_components_cont` as then written, because its clauses
+asserted connectivity *within* each component but never that connectivity
+*implies* same-component. **PR #82 closed that gap**: `JCT_two_components_cont`
+now carries an explicit inter-component **separation clause** (interior and
+exterior points are never complement-connected), and
+`JordanCurveSeam.jct_cont_interior_is_geometric` uses it to place every interior
+point into `geometric_interior_cont`.
+
+§3's `no_path_from_interior_to_exterior` is the gap-free **Qed counterpart** of
+that clause for the `geometric_interior_cont` definition itself: there
+separation is not *assumed* (as a hypothesis clause) but *proved*, because
+boundedness is baked into the interior predicate and the rest is component
+invariance (§2). The two are complementary — `jct_cont_interior_is_geometric`
+shows `JCT_two_components_cont` (with its separation hypothesis) ⟹ interior
+points are bounded-component; §3 shows that for bounded-component points,
+separation is free. Neither proves the JCT.
+
 
 ## Verification
 
