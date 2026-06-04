@@ -105,8 +105,13 @@ and open. The rounded filter is also **not symmetric** under segment reversal
 (`PassesThrough_b64_compute_asymmetric.v`, both modes) — the order-dependent
 noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the
 exact R-spec, not the rounded compute filter.
-**Open:** `hobby_lemma_4_3_no_proper` (registered deferred). Cite as
-"conditional headline", not "Hobby's theorem proved".
+**Refuted:** `hobby_lemma_4_3_no_proper` is **machine-checked false** as
+stated (`HobbyCounterexample_b64.v`; `docs/hobby-lemma-4-3-no-proper-refutation.md`)
+— snap-rounding collapses two parallel segments onto one grid line,
+manufacturing a collinear-overlap proper intersection. Moved from the
+deferred-proof registry to the counterexample registry. Cite as
+"conditional headline"; the per-pair preservation premise is provable
+only over noded arrangements, not for arbitrary segment pairs.
 
 `[oracle]` `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (PRC-SN,
 JTS#1195): exact-`Q` curve-snap grid-friendliness — snap the three arc control

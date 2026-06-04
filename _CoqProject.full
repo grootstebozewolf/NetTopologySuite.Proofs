@@ -436,6 +436,12 @@ theories-flocq/TopologicalCorrectness_b64.v
 # entries.  Mirrors the docs/shewchuk-theorem-13-proof-structure.md treatment
 # for Shewchuk Theorem 13.  See docs/hobby-theorem-proof-structure.md.
 theories-flocq/HobbyTheorem_b64.v
+# Machine-checked REFUTATION of hobby_lemma_4_3_no_proper: an explicit
+# parallel-collapse witness whose snap-rounded images intersect properly
+# though the originals do not.  Shows the bare two-segment lemma is false
+# (the noded-arrangement hypothesis is essential).  Counterexample-registry
+# entry; see docs/hobby-lemma-4-3-no-proper-refutation.md.
+theories-flocq/HobbyCounterexample_b64.v
 theories-flocq/PassesThroughHalfopen_b64.v
 # Computational (extractable) binary64 Liang-Barsky passes-through predicates.
 # The oracle compute path for PASSES_THROUGH_* -- the R-spec versions in
