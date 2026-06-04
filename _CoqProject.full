@@ -9,6 +9,7 @@ theories/Intersect.v
 theories/Vec.v
 theories/Bbox.v
 theories/Triangle.v
+theories/RingArea979.v
 theories/Convex.v
 theories/LexOrder.v
 theories/LineEq.v
