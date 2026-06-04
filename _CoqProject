@@ -42,3 +42,4 @@ theories/BufferAssembly.v
 # overshoot obstruction.  Pure-R, three-axiom.  See _CoqProject.full comment.
 theories/BufferBridgeSound.v
 theories/BufferBridgeComplete.v
+theories/BufferBridgeRound.v

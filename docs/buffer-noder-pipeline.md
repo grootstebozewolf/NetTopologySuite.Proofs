@@ -413,7 +413,12 @@ already covered by `docs/audit-exceptions.txt`).
    `d`) lies strictly beyond the chord (`d/sqrt 2`) and strictly inside the
    miter apex (`sqrt 2 * d`) -- only the exact arc meets the `d`-circle, which
    is exactly why `H_bridge` holds exactly only for the idealised round
-   buffer.
+   buffer. That last fact is itself pinned in `theories/BufferBridgeRound.v`
+   (Qed, three-axiom): every round-join arc point is `V + d*u` for a unit `u`,
+   at squared distance exactly `d^2` (`round_arc_dist_sq_on_circle`), so the
+   round buffer's corner boundary is the radius-`d` arc itself -- closing both
+   directions there. The `buffer_corner_trichotomy` capstone records the full
+   picture in one statement: chord `d^2/2` < round arc `d^2` < miter `2 d^2`.
 
 **Registry implication.** No *new* `Admitted` is required to land the
 conditional headline: like overlay, every gap is either a registered

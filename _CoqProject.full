@@ -180,6 +180,10 @@ theories/BufferBridgeSound.v
 # (chord_midpoint_dist_sq_90 = d^2/2 < d^2), dual to the miter overshoot --
 # the chord leaves an uncovered sliver of the d-neighbourhood.  Pure-R, 3-axiom.
 theories/BufferBridgeComplete.v
+# Round-join arc on the corner d-circle (round_arc_dist_sq_on_circle = d^2):
+# closes both H_bridge directions at the corner, and the buffer_corner_trichotomy
+# capstone (chord d^2/2 < arc d^2 < miter 2 d^2).  Pure-R, three-axiom.
+theories/BufferBridgeRound.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
