@@ -204,6 +204,11 @@ theories/BufferDepth.v
 # docs/audit-phase4-chord-overfitting.md §7).  Six Qed-closed
 # structural lemmas; no Admitteds; no Classical_Prop.classic.
 theories/CurveGeometry.v
+# Structural faithfulness of the curve->Phase3 linearisation bridge: a valid
+# (closed) CIRCULARSTRING/COMPOUNDCURVE ring chord-approximates to a ring_closed
+# Phase-3 ring (chord_approx_ring_closed), lifting to to_geometry outer/hole
+# rings.  Pure-R, three-axiom.  No Admitted.
+theories/CurveLinearise.v
 
 # Phase 4 Session 3: arc orientation predicate.  Two R-side tools:
 # cross_R_pt (Stdlib lift of cross_R_BP) and inCircle_R (the 4-point
