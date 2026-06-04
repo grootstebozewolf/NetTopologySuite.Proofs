@@ -57,6 +57,7 @@ ROWS=(
   "BufferCorrectness|buffer_correct_conditional|3"
   "RingExtract|face_walk_core|0"
   "BoundedComponent|in_bounded_component_iff|2"
+  "RingSimple|ring_simple_of_subset|1"
 )
 
 # Axiom-name lines have a module-qualified name then a colon, e.g.

@@ -149,6 +149,12 @@ theories/RingExtract.v
 # reachability.  JCT-free.  The geometric "face-interior -> bounded" rung
 # (= H1/JCT) is carried as a downstream hypothesis, not admitted here.
 theories/BoundedComponent.v
+# extract_rings_valid: the ring_simple condition.  ring_simple_of_subset --
+# a ring drawn from a pairwise-non-crossing (noded) arrangement is simple
+# (the post-noding guarantee); not_ring_simple_bowtie -- the raw self-crossing
+# offset is NOT simple (verified counterexample, why noding is required).
+# Pure-R.  No Admitted.
+theories/RingSimple.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,

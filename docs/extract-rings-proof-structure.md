@@ -96,14 +96,24 @@ Split the obligation along the table in §1.
   and `ring_has_minimum_points` hold *by construction* of a face walk, and
   hole nesting can be stated **combinatorially** as a parity/winding
   relation on faces rather than as point-set containment.
-- **Analytic shell (kept deferred / named):** `ring_simple` as a
-  no-proper-crossing fact in ℝ², and the upgrade of combinatorial nesting
-  to the point-set `hole_inside_outer`. These remain JCT-adjacent.
+- **Analytic shell (kept deferred / named):** the upgrade of combinatorial
+  nesting to the point-set `hole_inside_outer`. Remains JCT-adjacent.
 
 The win: discharge the core unconditionally, and shrink the residual to a
-*single* analytic hypothesis (`ring_simple` + the combinatorial→point-set
-nesting bridge) that is strictly smaller than today's whole-of-`valid_polygon`
-gap — and that the heuristic validates empirically.
+*single* analytic hypothesis (the combinatorial→point-set nesting bridge)
+that is strictly smaller than today's whole-of-`valid_polygon` gap — and
+that the heuristic validates empirically.
+
+> **`ring_simple` resolved (`theories/RingSimple.v`).** Contrary to the
+> first cut above, `ring_simple` is **not** the hard analytic residual — it
+> is **delivered by the noder**: `ring_simple_of_subset` proves a ring whose
+> edges are drawn from a pairwise-non-properly-crossing (i.e. NODED)
+> arrangement is `ring_simple` (instantiate with the snap-rounding noder's
+> `fully_intersected` output). The *raw* offset is genuinely not simple
+> (`not_ring_simple_bowtie`, a verified self-crossing counterexample — the
+> hole-forming sealing mouth), which is precisely why the pipeline nodes
+> before extracting. So the only remaining analytic residual is
+> `hole_inside_outer`'s point-set half (= the H1/JCT gap of R3).
 
 ## §5 Proposed structure — half-edge faces + bounded-component invariant
 
@@ -227,10 +237,11 @@ orientation / intersection lanes were de-risked.
   bridge resists (it is a small Jordan-flavoured argument), fall back to
   carrying it as the *named residual hypothesis* of R6 — still a strict
   shrink of today's gap, and the heuristic certifies it case-by-case.
-- **`ring_simple` stays analytic.** Do not over-promise: simplicity of the
-  emitted rings in ℝ² is not closed by the combinatorial layer. For the
-  buffer beachhead it is bounded by the offset/limit results; for general
-  overlay it remains JCT-adjacent and is the honest residual.
+- **`ring_simple` — RESOLVED (was thought analytic).** It is delivered by
+  the noder, not by ℝ²-geometry: `RingSimple.ring_simple_of_subset` derives
+  it from the noded arrangement's pairwise-non-crossing property
+  (`fully_intersected`), and `not_ring_simple_bowtie` shows the raw offset
+  is not simple (hence noding is required). No longer a residual.
 - **Scope discipline.** Anything not `Qed` at the end of a slice is added
   to `docs/admitted-deferred-proofs.txt` as a *narrower* entry than
   `extract_rings_valid`, with its own section here.
