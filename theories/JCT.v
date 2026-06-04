@@ -387,6 +387,12 @@ Qed.
 (*         for the far-field).                                                 *)
 (* -------------------------------------------------------------------------- *)
 
+(* `point_in_ring p r` (Overlay.v) is exactly `ray_parity_odd p (ring_edges r)`
+   -- the horizontal-ray crossing-parity test.  It is the SAME ray-parity
+   primitive the buffer depth-labelling uses to decide enclosure
+   (`BufferDepth.v`, `ray_parity_odd p (edges_of (kept_edges G))`); so this seam
+   is precisely "ray-casting decides interior", shared across point-in-ring and
+   depth labelling. *)
 Definition parity_characterises_interior_cont (p : Point) (r : Ring) : Prop :=
   ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
   no_horizontal_edge_at p r ->
