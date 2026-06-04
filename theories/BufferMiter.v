@@ -149,6 +149,54 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §2.6  Law-of-cosines form (trig-free half-angle soundness).                *)
+(*                                                                            *)
+(* Rewriting the determinant and the offset numerator in terms of dot/cross  *)
+(* products exposes the classical miter law:                                 *)
+(*    |V->apex|^2 / d^2 = 2|u||w| / (|u||w| + <u,w>)                          *)
+(* (i.e. sec^2 of the half-turn).  Both pieces below are pure-R, three-axiom; *)
+(* the explicit trig (cos theta = <u,w>/(|u||w|)) is the Azimuth link, done   *)
+(* separately so this file stays classic-free.                               *)
+(* -------------------------------------------------------------------------- *)
+
+(* |v|^2 = vmag_sq v (vmag squared is the squared magnitude).  Unconditional. *)
+Lemma vmag_sq_eq : forall v, vmag v * vmag v = vmag_sq v.
+Proof. intros v. unfold vmag. apply sqrt_sqrt. apply vmag_sq_nonneg. Qed.
+
+(* The determinant is the cross product, so by Lagrange its square is
+   |u|^2|w|^2 - <u,w>^2.  Pure ring identity. *)
+Lemma miter_det_sq_lagrange : forall u w,
+  (miter_det u w) ^ 2 = vmag_sq u * vmag_sq w - (vdot u w) ^ 2.
+Proof.
+  intros u w. unfold miter_det, vmag_sq, vdot. ring.
+Qed.
+
+(* The offset numerator in dot-product (law-of-cosines) form:
+   N = 2|u|^2|w|^2 - 2|u||w|<u,w>. *)
+Lemma miter_numerator_cos : forall u w,
+  (vmag u * vx w - vmag w * vx u) ^ 2 + (vmag u * vy w - vmag w * vy u) ^ 2
+  = 2 * vmag_sq u * vmag_sq w - 2 * (vmag u * vmag w) * vdot u w.
+Proof.
+  intros u w.
+  pose proof (vmag_sq_eq u) as HU. pose proof (vmag_sq_eq w) as HW.
+  unfold vmag_sq, vdot in *. nra.
+Qed.
+
+(* Combining: the law-of-cosines miter-length identity, fully in dot/cross
+   products (cleared of denominators).  This is the geometric soundness of
+   the miter ratio -- it is exactly |V->apex|^2 expressed via the corner's
+   |u|, |w| and <u,w>. *)
+Theorem miter_length_sq_cos : forall V u w d,
+  miter_det u w <> 0 ->
+  dist_sq V (miter_apex V u w d) * (vmag_sq u * vmag_sq w - (vdot u w) ^ 2)
+  = d ^ 2 * (2 * vmag_sq u * vmag_sq w - 2 * (vmag u * vmag w) * vdot u w).
+Proof.
+  intros V u w d Hdet.
+  rewrite <- miter_det_sq_lagrange, <- miter_numerator_cos.
+  apply miter_length_sq. exact Hdet.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §3  The apex lies on both offset lines simultaneously (restatement).       *)
 (* -------------------------------------------------------------------------- *)
 
