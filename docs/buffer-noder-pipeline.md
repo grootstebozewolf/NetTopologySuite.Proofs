@@ -22,6 +22,12 @@
 > front-end that emits a segment list, then reuse the proven spine,"
 > not "verify a second OverlayNG."
 >
+> The end-to-end headline is
+> `theories/BufferCorrectness.v:buffer_correct_conditional` (mirroring
+> `overlay_ng_correct_conditional`); see §3–§4. `H_valid` is discharged for
+> hole-free buffers in `theories/ExtractBufferRings.v`, and `H_bridge` is
+> decomposed into soundness/completeness in `theories/BufferBridge.v`.
+>
 > Drives issues
 > [#65](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/issues/65)
 > (buffer/offset curves) and

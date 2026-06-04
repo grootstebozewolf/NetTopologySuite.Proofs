@@ -26,6 +26,12 @@ theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
 theories/ClothoidResidual.v
+# --- Buffer/noder pipeline (Stage 2 geometry; pure-R, host lane) ----------
+# Offset walls (S2a), joins (S2b: round/miter/bevel), endcaps (S2c), and the
+# edge-list assembly.  See docs/buffer-noder-pipeline.md.  Overlay-dependent
+# buffer modules (BufferCorrectness, RingExtract, RingSimple, BoundedComponent,
+# ExtractBufferRings, BufferBridge) and BufferJoin (4-axiom, atan) are in
+# _CoqProject.full only.
 theories/BufferOffset.v
 theories/BufferMiter.v
 theories/BufferMiterAngle.v
