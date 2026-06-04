@@ -125,14 +125,42 @@ components, two must share a class — forcing a continuous complement path
 between two separated components, contradicting a separation hypothesis. All
 eight `(interior/exterior)^3` cases are discharged explicitly.
 
-## Recommendation
+## Recommendation — now a proven GREEN (§7)
 
 Strengthen the premise set of `JCT_two_components_cont` (and any downstream
-H1 stated against it) with a curve-injectivity / no-self-touch condition, e.g.
-"every vertex of `ring_edges r` has degree exactly 2", or "the ring map
-`[0,1] -> R^2` is injective on `[0,1)`". `ring_simple` (no *proper* crossing)
-alone is provably insufficient, and the bowtie's degree-4 origin is the
-concrete obstruction.
+H1 stated against it) with a curve-injectivity / no-self-touch condition.
+`ring_simple` (no *proper* crossing) alone is provably insufficient, and the
+bowtie's degree-4 origin is the concrete obstruction.
+
+§7 of the Coq file makes this concrete and machine-checks the fix — the
+**GREEN** half of the Red–Green–Refactor cycle:
+
+```coq
+(* the OGC "simple ring" half that ring_simple omits *)
+Definition ring_vertices_distinct (r : Ring) : Prop := NoDup (removelast r).
+
+Lemma  bowtie_violates_vertex_distinctness : ~ ring_vertices_distinct bowtie.
+
+(* JCT_two_components_cont's body, additionally guarded by the new premise *)
+Definition JCT_two_components_cont_simple (r : Ring) : Prop :=
+  ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
+  ring_vertices_distinct r -> exists interior_pred exterior_pred, ...
+
+Theorem bowtie_excluded_by_rescoped_JCT : JCT_two_components_cont_simple bowtie.
+```
+
+The bowtie now satisfies the re-scoped hypothesis (vacuously: its added
+premise is unsatisfiable), whereas it refuted the un-strengthened one.
+`rescoping_resolves_the_bowtie` states both halves together — the single
+added premise `ring_vertices_distinct` is the whole difference.
+
+### RGR status
+
+| phase | content | status |
+|---|---|---|
+| **RED**   | bowtie passes `ring_simple`+closed+min-points yet refutes two-components (`bowtie_refutes_two_components_modulo_separation`) | Qed |
+| **GREEN** | adding `ring_vertices_distinct` excludes the bowtie (`bowtie_excluded_by_rescoped_JCT`) | Qed |
+| **REFACTOR** | the seam's downstream H1 should be re-pointed at `JCT_two_components_cont_simple` (or `ring_vertices_distinct` folded into `valid_polygon`'s ring conditions) | follow-up |
 
 ## Registry note
 

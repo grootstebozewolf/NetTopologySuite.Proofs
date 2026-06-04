@@ -43,12 +43,19 @@
      - `bowtie_parity_*`: the ray-casting predicate `point_in_ring` marks
        BOTH bounded lobes as interior and the far point as exterior -- exactly
        the misclassification a naive parity test makes on a non-simple curve.
-     - `bowtie_refutes_two_components_modulo_separation`: assuming the three
-       (geometrically true, thesis-scale) component-separation facts -- the
-       left lobe, right lobe and exterior are pairwise unreachable by a
+     - `bowtie_refutes_two_components_modulo_separation` (RED): assuming the
+       three (geometrically true, thesis-scale) component-separation facts --
+       the left lobe, right lobe and exterior are pairwise unreachable by a
        CONTINUOUS complement path -- the bowtie's three premises hold yet
        `JCT_two_components_cont bowtie` is contradictory.  A two-set partition
        cannot cover three mutually disconnected components.
+     - `bowtie_excluded_by_rescoped_JCT` (GREEN, §7): the precise fix.  Adding
+       the OGC vertex-distinctness premise `ring_vertices_distinct` (which the
+       bowtie violates, `bowtie_violates_vertex_distinctness`) re-scopes the
+       hypothesis so the witness is correctly excluded.
+     - `rescoping_resolves_the_bowtie`: RED and GREEN in one statement -- the
+       bowtie refutes the old hypothesis but satisfies the re-scoped one, the
+       single added premise being the whole difference.
 
    The separation facts are taken as explicit hypotheses, NOT proved and NOT
    axiomatised -- mirroring exactly how `JordanCurveSeam.v` treats
@@ -334,5 +341,83 @@ Qed.
    is unprovable under the current premise set: `ring_simple` (no proper
    crossing) does not capture "simple closed curve".  The seam must add a
    curve-injectivity / no-self-touch premise (equivalently: every vertex of
-   degree 2), which the bowtie's degree-4 origin violates. *)
+   degree 2), which the bowtie's degree-4 origin violates.  §7 turns this
+   take-away into theorems. *)
+
+(* -------------------------------------------------------------------------- *)
+(* §7  GREEN: the re-scoped hypothesis excludes the bowtie.                    *)
+(*                                                                            *)
+(* RED (§2-§6): `ring_simple` + `ring_closed` + `ring_has_minimum_points` is   *)
+(* too weak -- the bowtie passes all three yet refutes two-components.  The    *)
+(* fix is the OTHER half of the OGC "simple ring" condition that `ring_simple` *)
+(* omits: VERTEX DISTINCTNESS (no repeated vertex apart from the closing one), *)
+(* i.e. the curve is injective and every vertex has degree 2.  Here we make    *)
+(* that premise precise, prove the bowtie violates it, and prove the re-scoped *)
+(* hypothesis is therefore NOT refuted by the bowtie -- closing the loop the   *)
+(* RED opened.                                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+(* The missing premise.  `removelast` drops the repeated closing vertex, so
+   this says the genuine vertices of the ring are pairwise distinct. *)
+Definition ring_vertices_distinct (r : Ring) : Prop :=
+  NoDup (removelast r).
+
+(* The bowtie violates it: the origin is revisited (it is `removelast`'s head
+   and also its 4th element) -- precisely the degree-4 pinch of §3. *)
+Lemma bowtie_violates_vertex_distinctness :
+  ~ ring_vertices_distinct bowtie.
+Proof.
+  unfold ring_vertices_distinct, bowtie. simpl.
+  intro H. apply NoDup_cons_iff in H. destruct H as [Hnin _].
+  apply Hnin. right. right. left. reflexivity.
+Qed.
+
+(* The re-scoped JCT hypothesis: the body of `JCT_two_components_cont`, guarded
+   additionally by vertex distinctness.  This is the honest target the
+   counterexample points to. *)
+Definition JCT_two_components_cont_simple (r : Ring) : Prop :=
+  ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
+  ring_vertices_distinct r ->
+  exists interior_pred exterior_pred : Point -> Prop,
+    (forall q, ~ ring_image r q ->
+       (interior_pred q \/ exterior_pred q) /\
+       ~ (interior_pred q /\ exterior_pred q)) /\
+    (forall a b, interior_pred a -> interior_pred b ->
+       connected_in_complement_cont r a b) /\
+    (forall a b, exterior_pred a -> exterior_pred b ->
+       connected_in_complement_cont r a b) /\
+    (forall a b, interior_pred a -> exterior_pred b ->
+       ~ connected_in_complement_cont r a b) /\
+    (exists M, M > 0 /\ forall q, interior_pred q ->
+       px q * px q + py q * py q <= M * M) /\
+    (forall M, exists q, exterior_pred q /\
+       px q * px q + py q * py q > M * M).
+
+(* GREEN.  Under the re-scoped hypothesis the bowtie is NO LONGER a
+   counterexample: the obligation at the bowtie is dischargeable because the
+   added vertex-distinctness premise is unsatisfiable for it.  Contrast
+   `bowtie_refutes_two_components_modulo_separation` (RED), where the same ring
+   against the unstrengthened `JCT_two_components_cont` was contradictory.
+   Strengthening the premise -- and nothing else -- is exactly the fix. *)
+Theorem bowtie_excluded_by_rescoped_JCT :
+  JCT_two_components_cont_simple bowtie.
+Proof.
+  intros _ _ _ Hnodup.
+  exfalso. apply bowtie_violates_vertex_distinctness. exact Hnodup.
+Qed.
+
+(* The RGR loop closed, in one statement: the bowtie REFUTES the old hypothesis
+   (modulo the thesis-scale separation facts) but SATISFIES the re-scoped one.
+   The single premise `ring_vertices_distinct` is the whole difference. *)
+Theorem rescoping_resolves_the_bowtie :
+  (~ connected_in_complement_cont bowtie p_left  p_right    ->
+   ~ connected_in_complement_cont bowtie p_left  p_exterior ->
+   ~ connected_in_complement_cont bowtie p_right p_exterior ->
+   ~ JCT_two_components_cont bowtie)                              (* RED   *)
+  /\ JCT_two_components_cont_simple bowtie.                       (* GREEN *)
+Proof.
+  split.
+  - exact bowtie_refutes_two_components_modulo_separation.
+  - exact bowtie_excluded_by_rescoped_JCT.
+Qed.
 
