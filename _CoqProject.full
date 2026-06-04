@@ -35,6 +35,43 @@ theories/Azimuth.v
 # Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
 # three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
 theories/ClothoidResidual.v
+# Buffer/noder pipeline, Stage 2a seam (docs/buffer-noder-pipeline.md S2):
+# offset-segment soundness -- the offset of an edge is parallel to it
+# (offset_seg_dir / offset_seg_parallel) and sits at perpendicular distance
+# |d| from the source line (offset_point_dist / offset_perp_dist_to_line).
+# Pure Stdlib; three-axiom footprint.  No Admitted.
+theories/BufferOffset.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# miter-join apex geometry (JTS#180).  miter_apex is the Cramer's-rule
+# intersection of the two offset lines; miter_apex_perp_dist_u/_w /
+# miter_apex_on_both_offsets prove it sits at perpendicular distance d from
+# both edge lines.  Pure Stdlib; three-axiom footprint.  No Admitted.
+theories/BufferMiter.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# miter-cap <-> half-angle soundness.  miter_numerator_sin_half ties the
+# offset numerator to Azimuth.sin_half_turn(u, vneg w); miter_cap_iff_sin_half
+# proves the algebraic cap (BufferMiter) and the half-angle cap
+# (Azimuth.miter_ratio_le_iff) decide the same thing.  Three-axiom (Azimuth's
+# sin_half_turn is sqrt-only).  No Admitted.
+theories/BufferMiterAngle.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# bevel-join chord.  bevel_length_sq_dot (law-of-cosines) and
+# bevel_length_sq_sin_half show the bevel segment = 2 d sin(theta/2), the
+# chord of the round-join arc (radius d, central angle = the turn).
+# Three-axiom (sin_half_turn is sqrt-only).  No Admitted.
+theories/BufferBevel.v
+# Buffer/noder pipeline, Stage 2c seam (docs/buffer-noder-pipeline.md):
+# line endcaps (JTS#739/#1028).  flat_cap_length_sq/_perp_edge,
+# round_cap_endpoints_on_circle/round_cap_apex_on_circle,
+# square_cap_extension/square_cap_corner_dist_sq -- the defining geometry
+# of CAP_FLAT / CAP_ROUND / CAP_SQUARE.  Three-axiom.  No Admitted.
+theories/BufferEndcap.v
+# Buffer/noder pipeline, Stage 2 seam (docs/buffer-noder-pipeline.md S5):
+# edge-list assembly.  Interleaves offset walls with bevel joins
+# (assemble_open / assemble_closed) and proves the assembled boundary is a
+# closed chain by construction (assemble_open_chain, assemble_closed_closed)
+# plus wall_parallel.  Three-axiom.  No Admitted.
+theories/BufferAssembly.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
@@ -48,6 +85,14 @@ theories/Atan2.v
 # identity; plus atan2_range (-PI, PI].  Pulls classic via atan (see
 # audit-exceptions).  No Admitted.
 theories/AngleBetween.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# round-join corner-arc relation (Roadmap target 6).  The sweep between the
+# two offset normals equals the turn between the edges
+# (corner_arc_sweep_eq_turn), since vperp preserves cross+dot; plus
+# atan2 positive-scaling invariance to read it off the unit normals
+# (corner_arc_sweep_eq_turn_unit).  Pulls classic via atan2 (see
+# audit-exceptions).  No Admitted.
+theories/BufferJoin.v
 # Issue #64 / Option-A foundation 3 (ask #1): exact arc length s = r*theta with
 # the chord/arc soundness relations.  Headlines chord_le_arc_length (chord <=
 # arc, arc analogue of chord_le_detour) and chord_subtended_sq (half-angle
@@ -82,6 +127,49 @@ theories/PointInRingTangents.v
 # representation (separate validity predicate) matches Milestone 1.
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
+
+# Buffer/noder pipeline, end-to-end seam S1 (docs/buffer-noder-pipeline.md):
+# the conditional headline buffer_correct_conditional -- Minkowski-dilation
+# spec buffer_spec, concrete offset_curve (via BufferOffset), abstract noder
+# + extractor, composing the overlay graph spine.  Plus buffer_contains_input
+# and buffer_spec_monotone.  Pure-R, three-axiom footprint.  No Admitted.
+theories/BufferCorrectness.v
+# extract_rings_valid R1+R2 (docs/extract-rings-proof-structure.md): the
+# combinatorial core of ring assembly, grounded in BufferAssembly's closed
+# chains.  ring_of_chain (face walk -> ring); face_walk_closed /
+# face_walk_min_points / ring_edges_of_closed_chain / face_walk_core
+# (closure + min-points + edge fidelity).  Axiom-free (pure combinatorics).
+# No Admitted.  ring_simple / hole_inside_outer (analytic shell) not here.
+theories/RingExtract.v
+# extract_rings_valid R3 (docs/extract-rings-proof-structure.md): the
+# bounded-component structure underlying the hole-count heuristic.
+# connected_in_complement is an equivalence relation (_refl/_sym/_trans);
+# in_bounded_component is a component invariant (in_bounded_component_iff);
+# not_in_bounded_component_intro refutes boundedness from unbounded
+# reachability.  JCT-free.  The geometric "face-interior -> bounded" rung
+# (= H1/JCT) is carried as a downstream hypothesis, not admitted here.
+theories/BoundedComponent.v
+# extract_rings_valid: the ring_simple condition.  ring_simple_of_subset --
+# a ring drawn from a pairwise-non-crossing (noded) arrangement is simple
+# (the post-noding guarantee); not_ring_simple_bowtie -- the raw self-crossing
+# offset is NOT simple (verified counterexample, why noding is required).
+# Pure-R.  No Admitted.
+theories/RingSimple.v
+# extract_rings_valid R6 (docs/extract-rings-proof-structure.md): compose
+# R2 (RingExtract) + ring_simple (RingSimple) into valid_polygon and
+# discharge BufferCorrectness.buffer_correct_conditional's H_valid.
+# valid_polygon_of_noded_chain (hole-free, no JCT); chain_extractor_spec +
+# H_valid_of_chain_extractor; buffer_correct_hole_free (H_valid discharged,
+# only H_bridge remains).  valid_polygon_with_holes carries the H1/JCT hole
+# clause as a hypothesis.  Pure-R.  No Admitted.
+theories/ExtractBufferRings.v
+# Buffer headline semantic bridge (docs/buffer-noder-pipeline.md): the
+# buffer_spec d-dilation algebra (empty/append/monotone) and the
+# decomposition of H_bridge into soundness + completeness.
+# buffer_correct_hole_free_split reduces the hole-free buffer headline to
+# exactly those two geometric directions (H_valid already discharged).
+# Pure-R.  No Admitted.
+theories/BufferBridge.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,

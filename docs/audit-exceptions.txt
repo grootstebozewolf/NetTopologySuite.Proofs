@@ -160,6 +160,13 @@ theories/Atan2.v
 # atan2_range Qed-closed; no Admitteds.
 theories/AngleBetween.v
 
+# Category C (R-side, same atan lineage as AngleBetween.v): buffer/noder
+# pipeline seam S3 (docs/buffer-noder-pipeline.md), round-join corner-arc
+# relation.  corner_arc_sweep_eq_turn / _unit and atan2_pos_scale are built
+# on angle_between = atan2(...), so inherit Classical_Prop.classic.  All
+# headlines Qed-closed; no Admitteds.
+theories/BufferJoin.v
+
 # Category C (R-side): issue #64 Option-A foundation 3, exact arc length.
 # chord_subtended_sq is 3-axiom, but chord_le_arc_length uses Stdlib `sin_lt_x`
 # (whose proof pulls Classical_Prop.classic), so the file is 4-axiom.  No
