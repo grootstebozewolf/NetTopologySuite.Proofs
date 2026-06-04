@@ -13,14 +13,13 @@
 #     immediately above the file line explaining what makes the file
 #     Category C / transitional and the planned resolution).
 #
-# Current state (2026-05-16): 11 files in `theories-flocq/` pull
-# `Classical_Prop.classic` per theorem because their theorem statements
-# substantively reference `Binary.Bplus` / `Bminus` / `Bmult`, which
-# carry `classic` in their definition closure.  This contamination is a
-# pre-existing condition the corpus inherited; the parametric-architecture
-# refactor (started in commit b010037 on `Validate_binary64.v`) is
-# clearing files one by one.  Removal from this list is the per-file
-# completion criterion.
+# Current state: 24 files in `theories-flocq/` are listed below (initial ~11
+# for binary ops Bplus/Bminus/Bmult pulling `Classical_Prop.classic` via Flocq,
+# plus additional Category C for snap-rounding, overlay, expansion-arithmetic,
+# and Stage D as documented per-file).  This contamination is a pre-existing
+# condition the corpus inherited from Flocq's binary model; the parametric
+# refactor clears files one by one where possible.  Removal from this list is
+# the per-file completion criterion for the binary-op lineage.
 
 # Transitional: clean of `classic` once parametric-architecture refactor
 # applied per the policy designed in `docs/category-c-policy.md`
@@ -118,6 +117,36 @@ theories-flocq/PassesThrough_b64_compute_asymmetric.v
 # Pure R-arithmetic over the Liang-Barsky bounds; imports HotPixel_b64, whose
 # R-spec layer pulls `Classical_Prop.classic` transitively.  No Admitteds.
 theories-flocq/PassesThrough_b64_spec_symmetric.v
+
+# Category C (GREEN reduction, same lineage): issue #66 C1 grid-exactness
+# REDUCTION layer (docs/snap-rounding-rgr-pivot.md).  On the unit grid the
+# snap-consistency conjunct of passes-through is vacuous, reducing compute=spec
+# to a single Liang-Barsky touch.  Imports HotPixel_b64 / SnapRounding_b64 /
+# PassesThrough_b64_compute, whose binary64 layer pulls `Classical_Prop.classic`
+# transitively.  No Admitteds; Qed-closed.
+theories-flocq/PassesThrough_b64_grid_exact.v
+
+# Category C (R-side, distinct lineage): issue #64 Option-A atan2 foundation.
+# Unlike every other entry here (which pull `classic` through Flocq float ops),
+# this is a pure-Stdlib theories/ file: `classic` enters via Stdlib's `Ratan`
+# development (the `atan` function itself -- verified: `atan_0` pulls classic
+# while `cos_0`/`sqrt_1` do not).  Any atan2-based angle/arc-length proof
+# inherits it; this is the intrinsic axiom cost of the JTS-faithful atan2
+# representation chosen for #64 (the implicit sin/cos representation would have
+# stayed at 3 axioms).  No Admitteds; cos_atan2 / sin_atan2 Qed-closed.
+theories/Atan2.v
+
+# Category C (R-side, same atan lineage as Atan2.v): issue #64 Option-A
+# foundation 2.  angle_between = atan2 (cross) (dot); imports Atan2 / `atan`,
+# so inherits Classical_Prop.classic.  Headlines cos/sin_angle_between and
+# atan2_range Qed-closed; no Admitteds.
+theories/AngleBetween.v
+
+# Category C (R-side): issue #64 Option-A foundation 3, exact arc length.
+# chord_subtended_sq is 3-axiom, but chord_le_arc_length uses Stdlib `sin_lt_x`
+# (whose proof pulls Classical_Prop.classic), so the file is 4-axiom.  No
+# Admitteds; both headlines Qed-closed.
+theories/ArcLength.v
 
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block

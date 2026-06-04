@@ -2,7 +2,8 @@
 # =============================================================================
 # scripts/validate-claims.sh
 # -----------------------------------------------------------------------------
-# Keeps docs/verified-claims.md honest.  The markdown is a *citable index*,
+# Keeps docs/verified-claims.md honest (see docs/HELP.md etc. for actors).
+# The markdown is a *citable index*,
 # not the source of truth -- the .v files are.  This script cross-checks that
 # every theorem the doc cites actually exists in the corpus, so a rename or
 # removal that orphans a claim fails CI instead of silently rotting.

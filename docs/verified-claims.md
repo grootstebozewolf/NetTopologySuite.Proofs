@@ -86,6 +86,11 @@ diffed against (JTS #1106).
 | `PassesThroughHalfopen_b64_compute_incomplete.v : b64_passes_through_halfopen_compute_incomplete` | **Honest negative (noder-unsafe direction):** the rounded half-open filter is NOT complete — `spec = true`, `compute = false` (drops a real pass grazing the open edge) `[exact]` | 4 |
 | `PassesThrough_b64_compute_asymmetric.v : b64_passes_through_compute_asymmetric` (+`_halfopen_`) | **Honest negative (order-dependent noding):** the rounded passes-through filter is NOT symmetric under segment reversal — `compute P0 P1 C = true` but `compute P1 P0 C = false` (closed + half-open). The order-dependence root behind JTS#752 / JTS#1133; pure `vm_compute` `[full-b64]` | 4 |
 | `PassesThrough_b64_spec_symmetric.v : b64_passes_through_hot_pixel_symmetric` | **Green companion:** the *exact* R-spec passes-through filter IS symmetric under segment reversal (`spec P0 P1 C = spec P1 P0 C`) — the order-safe noder primitive the rounded filter fails to be `[exact]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_passes_through_grid_exact_iff_touch` | **C1 grid-exactness reduction (#66 pivot):** on the unit grid a point is a fixed point of `b64_snap`, so the snap-consistency conjunct is vacuous — full-predicate grid-exactness (`compute = spec`) reduces to the single Liang-Barsky touch. Isolates the open rounded-vs-exact touch core; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : coord_int_safe_snap_id` | **C1 slice 2:** an integer-valued, bounded, finite coordinate (`coord_int_safe`) is a `b64_snap` fixed point — the integer grid IS the fixed-point grid, so the reduction's hypothesis is discharged for genuine integer-grid (post-snap noder) inputs; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : slab_guard_bridge` | **C1 slice 3:** the rounded compute degenerate-slab guard on binary64 operands equals the exact-spec guard on their `B2R` values (`b64_le_eq_Rle_bool` + `b64_eqb_true_iff_B2R`); the division-free layer of the single-touch core; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_minus_half_exact` | **C1 slice 4 (coordinate-exactness):** general half-integer subtraction is exact — for half-integer-valued operands with mantissa difference `< 2^prec`, `b64_minus` equals the exact real difference (`generic_format_half_prec` + `b64_minus_correct`). Covers the t-bound numerators (half-integer slab bound − integer endpoint) that exceed the existing 27-bit helper; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_max_B2R` (+`b64_min_B2R`) | **C1 slice 5 (max/min composition):** the operand-selecting `b64_max`/`b64_min` bridge to `Rmax`/`Rmin` on `B2R` values for finite operands — reduces the clipped-interval t-bound test to a comparison of the real values of the rounded t-bounds, isolating the division rounding to the per-bound level; Qed-closed `[full-b64]` | 4 |
 
 `[oracle]` `PASSES_THROUGH_FILTER`/`PASSES_THROUGH_HALFOPEN`. The closed-filter
 rows pin the **closed** filter, sound *and* complete vs the closed hot-pixel
@@ -102,6 +107,14 @@ noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the
 exact R-spec, not the rounded compute filter.
 **Open:** `hobby_lemma_4_3_no_proper` (registered deferred). Cite as
 "conditional headline", not "Hobby's theorem proved".
+
+`[oracle]` `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (PRC-SN,
+JTS#1195): exact-`Q` curve-snap grid-friendliness — snap the three arc control
+points to a 1/scale grid (`q_make_precise`), then `PRESERVE` the arc iff the
+snapped circumcentre lands on the grid, else `DENSIFY` (`DEGEN` if the snapped
+controls go collinear). Exact `Q` catches the double-rounding the JTS binary64
+centre computation hides on large / sub-grid coordinates. Reuses the
+snap-rounding machinery; pure rational, no transcendental and no new axiom.
 
 ## Phase 3 — Planar overlay (OverlayNG)
 
@@ -125,8 +138,38 @@ exact R-spec, not the rounded compute filter.
 | `ArcChordApprox.v : sagitta_le_arc_radius` | Chord-vs-arc deviation bounded by the radius `[exact]` | 3 |
 | `ArcIntersectIVT.v : chord_crosses_arc_circle_implies_circle_intersection` | Sign change of in-circle along a chord ⇒ real crossing (IVT) `[exact]` | 3 |
 | `ArcOverlay.v : arc_overlay_correct_chord_approx` | **Conditional headline:** result point within `max_sagitta` of an arc, under 2 bridge hypotheses `[cond]` | 3 |
+| `Atan2.v : cos_atan2` (+`sin_atan2`) | **Option-A foundation (issue #64):** the Stdlib-`Ratan`-built `atan2 y x` is the polar angle of `(x,y)` — `cos = x/r`, `sin = y/r` for `(x,y)≠0` `[exact]` | 4 |
+| `AngleBetween.v : cos_angle_between` (+`sin_angle_between`) | **Option-A central angle/sweep (issue #64):** the signed angle `atan2(cross,dot)` between two vectors has `cos = dot/(\|u\|\|v\|)`, `sin = cross/(\|u\|\|v\|)` (Lagrange identity); sign encodes orientation. Range (-π,π] via `atan2_range` `[exact]` | 4 |
+| `ArcLength.v : chord_le_arc_length` (+`chord_subtended_sq`) | **Option-A exact arc length (issue #64):** `arc_length = r·θ`; the chord never exceeds the arc (`2r·sin(θ/2) ≤ rθ`), and `chord² = 2r²(1−cosθ)` (half-angle bridge to dot products) `[exact]` | 4 |
 
-`[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL`.
+`[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL` +
+the three issue-#64 arc-length modes below.
+**Arc length is transcendental** (`s = √r²·Θ`, `Θ` an angle) so it has *no
+Coq-extractable form*. The honest oracle therefore splits along the exactness
+ladder (cf. `ArcChordApprox.v`'s polynomial layer):
+- **`ARC_LENGTH_INVARIANTS_EXACT`** — the *exact-rational* invariants `r²`,
+  `cos θ₀ = dot/r²`, major-arc flag (pure zarith `Q`; mirrors
+  `ArcLength.chord_subtended_sq` / `AngleBetween.cos_angle_between`). Exact about
+  the geometry *around* the length, not the length value. Ratchet-clean.
+- **`ARC_SHORTER`** — *exact decision* of which of two arcs is shorter, decidable
+  rationally when radii match (order of `Θ` from `cos θ₀` + flag); reports
+  `TRANSCENDENTAL` rather than rounding when radii differ. Ratchet-clean.
+- **`ARC_LENGTH`** — the literal float length, an *interface-boundary* mode
+  (the value JTS/NTS compute via `Math.sqrt`/`Math.acos`); one rounding past the
+  exact invariants. Hand-rolled float, a sanctioned ratchet exception
+  (`docs/oracle-handrolled-allowlist.txt`, interface-boundary category).
+
+The **arc circular-segment area** (M-AREA-CP) follows the same split:
+`A_seg = (r²/2)(Θ − sin Θ)`.
+- **`ARC_AREA_INVARIANTS_EXACT`** — exact rationals `r²`, `cos θ₀`, `sin²θ₀`,
+  major flag (pure `Q`, ratchet-clean).
+- **`ARC_AREA`** — the float segment area, interface-boundary (one `acos`+`sin`
+  past the exact invariants). These replace main's earlier hand-rolled shoelace
+  stub, which had bypassed the (then BSD-awk-broken) ratchet.
+**Option-A note (issue #64):** `atan2` work is **4-axiom** — Stdlib's `atan`
+pulls `Classical_Prop.classic` (cos/sin/sqrt stay 3-axiom). This is the cost of
+the JTS-faithful atan2 representation; downstream arc-length/sweep proofs
+inherit it.
 **Caveat:** bridge hypotheses are *boundary* closeness — this backs "chord
 approximation correct to tolerance", **not** "fixes CIRCULARSTRING
 self-intersection".

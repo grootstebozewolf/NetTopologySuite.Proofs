@@ -1,5 +1,7 @@
 # Development environment
 
+**New here?** See your role card in [`docs/HELP.md`](HELP.md) or the full [`docs/READING-GUIDE.md`](READING-GUIDE.md). Newbie Nate (and CI / Quality Gatekeeper) paths explicitly need this document.
+
 The canonical build path is the **container** described in the
 [Dockerfile](../Dockerfile): Rocq 9.1.1 + Flocq 4.2.2 baked into an
 image based on `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda`.  CI uses

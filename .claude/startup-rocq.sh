@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Startup for AI coding agents (Claude/Grok/etc.) working on NetTopologySuite.Proofs.
+# See docs/HELP.md (Joost / Tech-Lead Tess / Scrum-Master Sara paths) and
+# docs/development-environment.md for context. This assumes the nts-flocq opam switch.
 eval "$(opam env --switch=nts-flocq)"
 ROCQ_VERSION=$(rocq --version 2>/dev/null | head -1 || echo "NOT FOUND")
 FLOCQ_VERSION=$(ocamlfind list 2>/dev/null | grep -i flocq | awk '{print $2}' || echo "NOT FOUND")

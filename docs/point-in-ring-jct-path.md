@@ -6,13 +6,13 @@ logical path from a Jordan Curve Theorem statement to
 
 **Companion documents:**
 
-  - `docs/point-in-ring-correct-seam-map.md` — original seven-seam
-    inventory.
-  - `docs/point-in-ring-seam-attempts.md` — green outcomes per seam.
   - `docs/point-in-ring-seams-3-5-7-red.md` — red workflow for the
-    remaining seams.
+    remaining seams (serves as the seam-map exemplar).
+  - `docs/point-in-ring-seam-attempts.md` — green outcomes per seam.
   - `docs/point-in-ring-tangent-attempts.md` — green tangent outcomes
     (Stdlib-only `geometric_interior_stdlib` lands).
+
+(Note: the original `point-in-ring-correct-seam-map.md` reference was stale; the seam inventory and JCT path work is now embodied in the red + jct-path + attempts files above.)
 
 ---
 
