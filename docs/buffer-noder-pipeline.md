@@ -36,11 +36,13 @@
 > Roadmap target 6 (`theories/BufferJoin.v`), S3 miter-join geometry —
 > apex, limit cap, law-of-cosines, and the half-angle soundness link to
 > `Azimuth` (`theories/BufferMiter.v` + `theories/BufferMiterAngle.v`,
-> JTS#180), and S1 the end-to-end conditional headline
+> JTS#180), S3 bevel-join chord (`theories/BufferBevel.v`), S4 line
+> endcaps — flat/round/square (`theories/BufferEndcap.v`, JTS#739/#1028),
+> and S1 the end-to-end conditional headline
 > (`theories/BufferCorrectness.v`) — all `Qed`-closed and kernel-verified
-> under Rocq 9.1.1. Remaining seams (bevel/round-join edge lists, offset
-> assembly, depth labelling, and the inherited DCEL / Hobby / JCT gaps)
-> are tracked in §5–§6.
+> under Rocq 9.1.1. Remaining seams (join/cap *edge-list* assembly, depth
+> labelling, and the inherited DCEL / Hobby / JCT gaps) are tracked in
+> §5–§6.
 
 ---
 
@@ -127,7 +129,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 | 1 decompose | input → segment list | ✅ | `OverlayGraph.extract_segments`, `polygon_to_pairs`; curve side `CurveGeometry.{CurveSegment,CurveRing,curve_segment_start/end}` |
 | 2a offset @ d | parallel curve at distance `d` | 🔴 | *none* — `Direction.vperp`/`perpendicular`, `Disk.in_disk` are the raw material only |
 | 2b joins | round/miter/bevel at corners | 🟡 | round-join central angle ✅ `BufferJoin.corner_arc_sweep_eq_turn(_unit)` (Roadmap target 6); miter apex + limit cap + half-angle ✅ `BufferMiter.*` / `BufferMiterAngle.miter_cap_iff_sin_half` (JTS#180); bevel chord ✅ `BufferBevel.bevel_length_sq_sin_half`; still no emitted join *edge lists* |
-| 2c endcaps | round/flat/square at line ends | 🔴 | *none* (round cap would reuse `CircularArc`) |
+| 2c endcaps | round/flat/square at line ends | 🟡 | ✅ `BufferEndcap.*` — flat (`flat_cap_length_sq`/`_perp_edge`), round (`round_cap_endpoints_on_circle`/`_apex_on_circle`), square (`square_cap_extension`/`square_cap_corner_dist_sq`) defining geometry (JTS#739/#1028); still no emitted cap *edge list* |
 | 3 noding | full noding of raw curve | ✅ | `HobbyTheorem_b64.snap_round_segments`, `fully_intersected`, `hobby_theorem_4_1_conditional` (✅, conditional on ⛓️ `hobby_lemma_4_3_no_proper`) |
 | 4a graph | build topology graph | ✅ | `OverlayGraph.{build_graph,build_labeled_graph,TopologyGraph,valid_topology_graph}`, `valid_topology_graph_build_labeled_graph` |
 | 4b labelling | **depth** label (in/out of d-region) | 🔴 | reshape of `OverlayGraph.{EdgeLabel,edge_in_result,merge_labeled_edges}` + `OverlayBridge.correct_labels` — buffer needs a depth/winding label, not `in_left/in_right` |
@@ -430,7 +432,10 @@ defers the thesis-scale geometry.
    (arc) and bevel join (chord) subtend the same angle at radius `d`.
    Still open in S3: the chord-approxed round-join / bevel *edge lists*
    (turning these lengths into emitted segment lists).
-4. **S4 — endcaps.** Flat/square (linear) then round.
+4. **S4 — endcaps. ✅ LANDED (Qed), `theories/BufferEndcap.v`.** Flat
+   (diameter `2|d|`, perpendicular to edge), round (endpoints + apex on the
+   radius-`d` circle about the line end), and square (corners extended `|d|`
+   along the edge, `√2·|d|` from the end) cap geometry. 3-axiom, no Admitted.
 5. **S5 — `offset_curve` assembly + `offset_curve_sound`.** Compose S2–S4
    into the named hypothesis; may split into a registered deferred entry
    if the full d-level-set equality proves thesis-scale.

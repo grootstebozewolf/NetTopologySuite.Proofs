@@ -60,6 +60,12 @@ theories/BufferMiterAngle.v
 # chord of the round-join arc (radius d, central angle = the turn).
 # Three-axiom (sin_half_turn is sqrt-only).  No Admitted.
 theories/BufferBevel.v
+# Buffer/noder pipeline, Stage 2c seam (docs/buffer-noder-pipeline.md):
+# line endcaps (JTS#739/#1028).  flat_cap_length_sq/_perp_edge,
+# round_cap_endpoints_on_circle/round_cap_apex_on_circle,
+# square_cap_extension/square_cap_corner_dist_sq -- the defining geometry
+# of CAP_FLAT / CAP_ROUND / CAP_SQUARE.  Three-axiom.  No Admitted.
+theories/BufferEndcap.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure

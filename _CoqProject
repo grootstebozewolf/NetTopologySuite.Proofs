@@ -30,3 +30,4 @@ theories/BufferOffset.v
 theories/BufferMiter.v
 theories/BufferMiterAngle.v
 theories/BufferBevel.v
+theories/BufferEndcap.v
