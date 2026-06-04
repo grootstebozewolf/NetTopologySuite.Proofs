@@ -45,7 +45,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import Vec Direction Distance BufferOffset AngleBetween Atan2.
+From NTS.Proofs Require Import Vec Direction Distance BufferOffset AngleBetween Atan2 ArcLength.
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -147,4 +147,22 @@ Proof.
     apply vmag_sq_pos; exact Hne. }
   rewrite angle_between_v_scale_l by exact Hpos.
   apply corner_arc_sweep_eq_turn.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  Buffer-perimeter link: the round-join arc length.                      *)
+(*                                                                            *)
+(* A round join at distance d traces a circular arc of radius d whose        *)
+(* central angle is the corner sweep.  Composing §3 with the verified arc-   *)
+(* length primitive (ArcLength.arc_length r theta = r*theta) gives the        *)
+(* corner's contribution to the buffer perimeter: d times the turn angle.    *)
+(* Relevant to the curve-length work in issues #64/#65 (M-LEN family).       *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem round_join_arc_length_eq_turn : forall (d : R) (ein eout : Vec),
+  arc_length d (angle_between_v (vperp ein) (vperp eout))
+  = d * angle_between_v ein eout.
+Proof.
+  intros d ein eout. unfold arc_length.
+  rewrite corner_arc_sweep_eq_turn. reflexivity.
 Qed.
