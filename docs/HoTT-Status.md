@@ -11,7 +11,7 @@ See root `README.md` (Current state + Axiom policy), `docs/hott-rgr-risk-cost-pi
 | Chunk / Area              | Status                          | Key Artefact(s)                              | Next (bounded) |
 |---------------------------|---------------------------------|----------------------------------------------|----------------|
 | Voronoi pilot             | GREEN skeleton (first small equiv) | `theories-hott/VoronoiEquivalence.v` (Point, voronoi_cell Prop, NTSVoronoiDiagram, voronoi_equiv Admitted, transport sketch via univalence, compiles) | Fill admits (port minimal Triangle/Orient + incircle from archive); strengthen with orient_equiv once Shewchuk base lands; add b64 instance later. |
-| Shewchuk base (orient/expansion) | GREEN skeleton ("first recommended small step") | `theories-hott/ShewchukBaseEquiv.v` (Point + cross, Dir CCW/CW/COLLINEAR, formal/exact_orient, shewchuk_orient via Expansion, nts_orient, orient_equiv Admitted, one univalence justified for root-predicate transport, antisym transport example, loud notes) | **Fill real proofs**: turn the Admitted into Qed using B64_Expansion_Shewchuk.v + sign_of..._correct_shewchuk + Orient_b64_exact/sound + Orientation.v invariants (one transport lemma). Then cite from Voronoi/Hobby/TIN. |
+| Shewchuk base (orient/expansion) | GREEN skeleton landed (PR #90) — in progress toward fill | `theories-hott/ShewchukBaseEquiv.v` (Point + cross, Dir CCW/CW/COLLINEAR, formal/exact_orient, shewchuk_orient via Expansion, nts_orient, orient_equiv Admitted, one univalence justified for root-predicate transport, antisym transport example, loud notes; review comment added) | **Fill real proofs**: turn the Admitted into Qed using B64_Expansion_Shewchuk.v + sign_of..._correct_shewchuk + Orient_b64_exact/sound + Orientation.v invariants (one transport lemma). Then cite from Voronoi/Hobby/TIN. |
 | Hobby (4.1/4.3 biarc/residual) | RED (no HoTT model yet)        | Archived `theories-flocq/HobbyTheorem_b64.v`, `HobbyCounterexample_b64.v`, `docs/hobby-lemma-4-3-no-proper-refutation.md` etc. | After Shewchuk orient base is solid: re-express or transport the b64 Hobby lemmas as NTS_Hobby ≃ formal via orient_equiv. |
 | TIN / CurveLinearise      | RED (some classical Qed, no equiv) | Archived `theories/Tin.v`, `theories/CurveLinearise.v` (linearise faithfulness Qed for CIRCULARSTRING/COMPOUNDCURVE) | After Hobby + Shewchuk: model NTS TIN + prove linearise equiv; use transported orient facts. Defer native curves. |
 | Curve (Arc* / phase4)     | RED (conditionals + linearise) | Archived `theories/ArcOrient.v`, `ArcIntersect.v`, `Arc*` phase4 conditionals | After TIN linearise: revisit; decide whether native HIT curves are needed for the C# link given SegmentString forces linearise in NTS. |
@@ -29,10 +29,10 @@ See root `README.md` (Current state + Axiom policy), `docs/hott-rgr-risk-cost-pi
 - Bounded scope per slice: 1-3 deliverables (e.g. "skeleton + doc + status update"). "Next" is always explicit so the loop can continue without analysis paralysis.
 - When a fill (turning Admitted -> Qed) lands, it counts as its own RGR close and updates the table row.
 
-**Current overall state (post this RGR).** Voronoi pilot + Shewchuk base skeleton are the only live HoTT sources under `theories-hott/`. The "prove the link" mandate is now concretely started for the root predicate (Shewchuk/orient) that the rest of geometry trusts. The risk/cost-optimal path (small equivalences first) is being followed.
+**Current overall state (post PR #90 merge).** Voronoi pilot + Shewchuk base skeleton (PR #90) are the live HoTT sources under `theories-hott/`. The Shewchuk orient base is now the foundation stone for "prove the link" — everything else (Hobby, TIN, curves, strengthened Voronoi) can transport from it. Risk/cost-optimal path (small equivalences first) continues.
 
-Update this table + add a one-paragraph outcome note to the relevant hott-rgr-*.md on every close of a branch/PR.
+Update this table + add a one-paragraph outcome note to the relevant hott-rgr-*.md on every close of a branch/PR. (Table updated post-merge per PR #90 Notulist actionable.)
 
 See also: `docs/axiom-policy.md`, `docs/FOR-AI-AGENTS.md` (HoTT-era hard invariants + session workflow), `docs/READING-GUIDE.md` / `HELP.md` (personas updated for equivalence work).
 
-Last updated: this RGR (feature/hott-rgr-shewchuk-fill).
+Last updated: post PR #90 merge to hott (review addressed + table refresh).
