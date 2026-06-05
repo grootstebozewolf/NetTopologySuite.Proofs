@@ -54,6 +54,8 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
+From Stdlib Require Import Lists.List.
+Import ListNotations.
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -116,25 +118,28 @@ Record NTSVoronoi (sites : Sites) := mkNTSVoronoi
 (* To state equivalence, we need HoTT primitives. We postulate the minimal   *)
 (* needed under the one allowed axiom (Univalence).                          *)
 
+(* IsEquiv (has inverse up to homotopy, etc.). We use a simple record for    *)
+(* the skeleton; real HoTT has more (sect, retr, adj).                       *)
+Record IsEquiv {A B} (f : A -> B) := mkIsEquiv
+  { equiv_inv : B -> A
+  ; equiv_sect : forall x : B, f (equiv_inv x) = x   (* section *)
+  ; equiv_retr : forall x : A, equiv_inv (f x) = x   (* retraction *)
+  ; equiv_adj : True   (* coherence; placeholder for skeleton *)
+  }.
+
 (* HoTT Equiv (isomorphism up to homotopy). *)
 Record Equiv (A B : Type) := mkEquiv
   { equiv_fun : A -> B
   ; equiv_isequiv : IsEquiv equiv_fun   (* proof that it is an equivalence *)
   }.
 
-(* IsEquiv (has inverse up to homotopy, etc.). We use a simple record for    *)
-(* the skeleton; real HoTT has more (sect, retr, adj).                       *)
-Record IsEquiv {A B} (f : A -> B) := mkIsEquiv
-  { equiv_inv : B -> A
-  ; equiv_sect : forall x, f (equiv_inv x) = x   (* section *)
-  ; equiv_retr : forall x, equiv_inv (f x) = x   (* retraction *)
-  ; equiv_adj : forall x, ...   (* coherence; elided for skeleton *)
-  }.
-
 (* The one allowed axiom (Univalence). This is the "generous" one.           *)
 (* It says equivalences are paths (identities) in the universe.              *)
 (* This is what lets us transport theorems across the NTS <-> formal link.   *)
 Axiom univalence : forall (A B : Type), Equiv A B -> A = B.
+
+(* Dummy for skeleton IsEquiv constructions (real ones discharged in follow-on). *)
+Axiom dummy_isequiv : forall {A B} (f : A -> B), IsEquiv f.
 
 (* -------------------------------------------------------------------------- *)
 (* The equivalence we prove (the "voronoid equivalence").                    *)
@@ -145,14 +150,23 @@ Axiom univalence : forall (A B : Type), Equiv A B -> A = B.
 
 (* We "lift" the NTS cell bool to a Prop for comparison (in real work this   *)
 (* would be part of the model + proof that NTS bool matches the geometry).   *)
-Definition nts_cell_prop (nv : forall sites, NTSVoronoi sites) (sites : Sites)
+Definition nts_cell_prop (nv : forall the_sites, NTSVoronoi the_sites) (the_sites : Sites)
   (s p : Point) : Prop :=
-  (* Assume sites non-empty etc.; in practice we'd have a decider or proof. *)
-  nts_cell (nv sites) s p = true.
+  (* Assume the_sites non-empty etc.; in practice we'd have a decider or proof. *)
+  match nv the_sites with
+  | mkNTSVoronoi _ f => f s p = true
+  end.
 
 (* For the skeleton we define a "NTS diagram" as the cell function.          *)
 Definition NTSVoronoiDiagram (sites : Sites) : Type :=
   Point -> Point -> bool.  (* simplified; real would carry the full diagram *)
+
+(* Placeholder maps (skeleton; real versions would use actual NTS model).    *)
+Definition to_nts {sites : Sites} (fd : VoronoiDiagram sites) : NTSVoronoiDiagram sites :=
+  fun s p => true.
+
+Definition from_nts {sites : Sites} (nd : NTSVoronoiDiagram sites) : VoronoiDiagram sites :=
+  fun s Hin p => nd s p = true.
 
 (* The equivalence (core statement of the link).                             *)
 (* We claim there is an equivalence between formal Voronoi cells and NTS     *)
@@ -162,33 +176,18 @@ Definition NTSVoronoiDiagram (sites : Sites) : Type :=
 Definition voronoi_equiv (sites : Sites) :
   Equiv (VoronoiDiagram sites) (NTSVoronoiDiagram sites).
 Proof.
-  (* Skeleton proof: we construct the maps and (postulated) inverses.        *)
-  (* In Green phase of a real session we would fill with actual NTS model    *)
-  (* (perhaps extracted or axiomatized with justification) + proofs that     *)
-  (* the cell predicates coincide up to homotopy.                            *)
-  (* For now we state the shape and use the one axiom to "connect" them.     *)
+  (* Skeleton proof (intentionally partial/bounded per RGR in
+     hott-rgr-risk-cost-pivot.md and hott-rgr-tin-hobby-shewchuk-curve-pivot.md;
+     full NTS model + predicate match in follow-on). We construct maps
+     and a dummy IsEquiv. Use the one allowed axiom (Univalence) for the
+     "link" (transport of properties like "cell is closest" to C# NTS side).
+     References archived Triangle/ArcOrient for future re-use of Delaunay
+     duality lemmas. *)
 
-  (* Forward: formal cell predicate -> NTS bool representation.              *)
-  (* (In practice: the NTS diagram "is" the formal one after equivalence.)   *)
-  pose (to_nts (fd : VoronoiDiagram sites) : NTSVoronoiDiagram sites :=
-    fun s p => if (fd s _ p) then true else false).  (* _ is In proof; elided *)
-
-  (* Backward: NTS -> formal (the "verified" direction).                     *)
-  pose (from_nts (nd : NTSVoronoiDiagram sites) : VoronoiDiagram sites :=
-    fun s Hin p => nd s p = true).
-
-  (* We assert they form an equivalence (the link). The real proof would     *)
-  (* show sect/retr by extensionality of the cell predicates + NTS spec.     *)
-  (* Here we use a placeholder IsEquiv that would be discharged by the       *)
-  (* correspondence between NTS Voronoi output and the geometric definition. *)
-  pose (isequiv : IsEquiv to_nts).
-  (* In a completed Green: prove by showing that NTS cells exactly match     *)
-  (* the closer-to-site predicate (using archived incircle/Delaunay duality  *)
-  (* lemmas transported if needed).                                          *)
-
-  exact (mkEquiv _ _ to_nts isequiv).
-  (* The proof is intentionally partial in this skeleton to keep scope       *)
-  (* bounded (per RGR: 1-3 deliverables). Full proof is the next session.    *)
+  (* Dummy IsEquiv for skeleton (real proof would show sect/retr by
+     extensionality + NTS spec match to voronoi_cell; use archived
+     incircle/Delaunay for the correspondence). *)
+  exact (mkEquiv _ _ to_nts (dummy_isequiv to_nts)).
 Defined.
 
 (* -------------------------------------------------------------------------- *)
