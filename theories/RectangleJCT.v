@@ -289,9 +289,98 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §6  Slice 2b: reduce the interior equivalence to ONE separation lemma.       *)
+(*                                                                            *)
+(* The lone remaining analytic rung is that a complement-connected point stays *)
+(* inside the closed box -- i.e. the rectangle curve SEPARATES the plane.  We  *)
+(* name it `rect_confines` and carry it as a hypothesis (NOT Admitted -- same  *)
+(* epistemic status as `parity_characterises_interior_cont` itself), then      *)
+(* discharge everything else (the bounded-component bound and the full         *)
+(* interior <-> ray-parity equivalence) unconditionally.                       *)
+(*                                                                            *)
+(* Proof sketch for the future (unconditional `rect_confines`): a continuous   *)
+(* path off all four edges lands, at every t, in (open box) U (strict          *)
+(* exterior) -- two disjoint OPEN sets partitioning the connected [0,1].  As   *)
+(* it starts in the open box it stays there (a sup/clopen argument:            *)
+(* t* = sup{t : path[0,t] in open box}; continuity + avoiding the boundary     *)
+(* forces t* = 1).  This needs Stdlib epsilon-delta continuity plumbing and is *)
+(* the next slice.                                                             *)
+(* -------------------------------------------------------------------------- *)
+
+(* The rectangle Jordan-separation residual: every point reachable from p by a
+   continuous complement path stays in the closed box. *)
+Definition rect_confines (x0 y0 x1 y1 : R) (p : Point) : Prop :=
+  forall q : Point,
+    connected_in_complement_cont (rect_ring x0 y0 x1 y1) p q ->
+    x0 <= px q <= x1 /\ y0 <= py q <= y1.
+
+(* On an interval, a square is bounded by the larger endpoint square. *)
+Lemma sq_le_max_endpoints : forall a u v,
+  u <= a <= v -> a * a <= Rmax (u * u) (v * v).
+Proof.
+  intros a u v [Hl Hr].
+  destruct (Rle_dec 0 a) as [Hpos | Hneg].
+  - apply Rle_trans with (v * v); [ nra | apply Rmax_r ].
+  - apply Rle_trans with (u * u); [ nra | apply Rmax_l ].
+Qed.
+
+(* Confinement to the closed box gives a finite radius bound, i.e. membership
+   in a bounded complement component. *)
+Lemma rect_interior_bounded_of_confines : forall x0 y0 x1 y1 p,
+  rect_confines x0 y0 x1 y1 p ->
+  in_bounded_component_cont (rect_ring x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 p Hconf.
+  set (S := Rmax (x0 * x0) (x1 * x1) + Rmax (y0 * y0) (y1 * y1) + 1).
+  assert (Hx2 : 0 <= Rmax (x0 * x0) (x1 * x1))
+    by (apply Rle_trans with (x0 * x0); [ nra | apply Rmax_l ]).
+  assert (Hy2 : 0 <= Rmax (y0 * y0) (y1 * y1))
+    by (apply Rle_trans with (y0 * y0); [ nra | apply Rmax_l ]).
+  assert (HSpos : 0 < S) by (unfold S; lra).
+  exists (sqrt S); split.
+  - apply sqrt_lt_R0; exact HSpos.
+  - intros q Hq.
+    destruct (Hconf q Hq) as [Hxq Hyq].
+    assert (HMM : sqrt S * sqrt S = S) by (apply sqrt_sqrt; lra).
+    rewrite HMM.
+    pose proof (sq_le_max_endpoints (px q) x0 x1 Hxq) as Hpx2.
+    pose proof (sq_le_max_endpoints (py q) y0 y1 Hyq) as Hpy2.
+    unfold S; lra.
+Qed.
+
+(* Hence, for a strict-interior point, confinement yields the full geometric
+   interior. *)
+Theorem rect_open_box_geometric_interior_of_confines : forall x0 y0 x1 y1 p,
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  rect_confines x0 y0 x1 y1 p ->
+  geometric_interior_cont p (rect_ring x0 y0 x1 y1).
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy Hconf; split.
+  - apply rect_open_box_complement; assumption.
+  - apply rect_interior_bounded_of_confines; assumption.
+Qed.
+
+(* The rectangle instance of `parity_characterises_interior_cont`, for a
+   strict-interior point, modulo only `rect_confines` (the separation). *)
+Theorem rect_parity_characterises_interior_open : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  rect_confines x0 y0 x1 y1 p ->
+  (point_in_ring p (rect_ring x0 y0 x1 y1)
+     <-> geometric_interior_cont p (rect_ring x0 y0 x1 y1)).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hx Hy Hconf; split; intros _.
+  - apply rect_open_box_geometric_interior_of_confines; assumption.
+  - apply point_in_ring_rect_iff; [ exact Hx01 | exact Hy01 | ].
+    split; [ exact Hy | split; lra ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions point_in_ring_rect_iff.
 Print Assumptions rect_open_box_complement.
 Print Assumptions rect_open_box_characterisation.
+Print Assumptions rect_interior_bounded_of_confines.
+Print Assumptions rect_parity_characterises_interior_open.
