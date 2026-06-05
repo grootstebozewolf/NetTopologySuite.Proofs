@@ -244,6 +244,26 @@ registered sub-deferred entry — never a silent stub. The combinatorial
 core (R1–R2, R5) carries no analytic content and should close cleanly;
 R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 
+> **General-assembler progress (the "still open in R1" ordering piece).**
+> The general overlay case — ordering an *unordered* edge set into chains —
+> is now being built as its own sub-slices, since R1/R2 only ever consumed a
+> pre-ordered `closed_chain`:
+> - **R5 motivation (`theories/ExtractFlattenCounterexample.v`,
+>   `docs/extract-flatten-counterexample.md`).** The naive `OverlayGraph.extract`
+>   flatten is refuted: a closed triangle boundary given out of walk order
+>   flattens to a non-closed ring (`extract_unordered_not_valid`), while the
+>   walk-ordered trace through `ring_of_chain` is valid
+>   (`ring_of_chain_traces_valid_shape`). So ordering is unavoidable.
+> - **R5 slice 1 — dart foundation (`theories/Dart.v`,
+>   `docs/dart-halfedge-foundation.md`), LANDED Qed.** The half-edge layer the
+>   ordering runs on: `twin` (involutive/injective/fixed-point-free on proper
+>   edges), `darts_of` (both orientations, closed under `twin`), the `outgoing`
+>   fan + `vdeg`. Pure dart algebra; no geometry, no ordering yet.
+> - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
+>   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
+>   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
+>   then face-orbit ⇒ `closed_chain` feeding `ring_of_chain`.
+
 ## §8 Oracle bridge (differential testing)
 
 Extract the executable face/ring assembler (Coq → OCaml, RocqRefRunner

@@ -84,7 +84,12 @@ Qed.
 (* §2  The dart set of an edge list (both orientations).                       *)
 (* -------------------------------------------------------------------------- *)
 
-(* Every undirected edge contributes both of its darts. *)
+(* Every undirected edge contributes both of its darts.  In the pipeline `E` is
+   the surviving (kept) edge set of the noded labelled graph -- e.g.
+   `map fst (OverlayGraph.tg_edges G)` after the result filter, or
+   `BufferDepth.edges_of (kept_edges G)` for the buffer depth rule -- so
+   `darts_of` is the half-edge view of exactly the edges ring assembly must
+   trace into faces. *)
 Definition darts_of (E : list Edge) : list Dart := E ++ map twin E.
 
 Lemma darts_of_length : forall E, length (darts_of E) = (2 * length E)%nat.
