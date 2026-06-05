@@ -306,6 +306,18 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   face step from any dart RETURNS to it (a finite closed walk). Reading the
 >   closed orbit off as a `closed_chain` / ring feeding `ring_of_chain` is the
 >   remaining assembly.
+> - **R5 slice 3a — face orbit -> closed chain -> ring
+>   (`theories/FaceChain.v`, `docs/face-chain.md`), LANDED Qed.** The missing
+>   link between slice-2f `face_orbit_finite` and `RingExtract.face_walk_core`:
+>   `face_chain D d n = map (dbase,dtip) (dart_walk ...)`; `face_chain_ok`
+>   (consecutive segments connect via `next_base`); `face_chain_closed_chain`
+>   (the orbit return loops the chain shut -> `BufferAssembly.closed_chain`);
+>   `face_closed_chain_exists` (every dart spawns a closed chain, via
+>   `face_orbit_finite`); and `face_ring_valid_shape` (a >=3-dart face yields a
+>   `ring_closed` + `ring_has_minimum_points` ring whose edges are exactly the
+>   face segments). The combinatorial core of `valid_polygon`'s outer ring, now
+>   for a GENERAL arrangement -- the DCEL assembly discharged end to end.
+>   Remaining: hole nesting + the analytic `hole_inside_outer` residual (§4).
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);

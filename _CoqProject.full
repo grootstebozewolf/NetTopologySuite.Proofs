@@ -161,6 +161,19 @@ theories/OrbitCycle.v
 # Admitted; axioms = the allowlisted classical-reals pair.
 theories/DartFace.v
 
+# extract_rings_valid R5 / general assembler, slice 3a: reading a face orbit off
+# as a CLOSED CHAIN and thence a valid-shape ring (docs/face-chain.md).  The
+# missing link between slice-2f face_orbit_finite and RingExtract.face_walk_core:
+# dart_walk / face_chain (the face darts' segments); face_chain_ok (consecutive
+# segments connect via next_base); face_chain_closed_chain (the orbit return
+# loops the chain shut -> BufferAssembly.closed_chain); face_closed_chain_exists
+# (every dart spawns a closed chain, via face_orbit_finite); and
+# face_ring_valid_shape (a >=3-dart face yields a ring_closed +
+# ring_has_minimum_points ring whose edges are exactly the face segments).  The
+# combinatorial core of valid_polygon's outer ring for a GENERAL arrangement.
+# No Admitted; axioms = the allowlisted classical-reals pair.
+theories/FaceChain.v
+
 # extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
 # on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
 # primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE
