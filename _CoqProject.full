@@ -151,6 +151,15 @@ theories/JordanCurveSeam.v
 # point_in_ring_correct_jct_cont.  Pure-R; no Admitted/Axiom/Parameter.
 theories/JCT.v
 
+# Special-case JCT, slice 1 (docs/extract-rings-proof-structure.md §11): the
+# ray-parity COMPUTATION for an axis-aligned rectangle.  Proves
+# point_in_ring p (rect_ring x0 y0 x1 y1) <-> (y0<py<y1 /\ x0<=px<x1) by finite
+# evaluation of the inductive ray_parity_odd over the four edges (horizontal
+# edges are ray-parallel and never cross; vertical edges give the parity).
+# The combinatorial/computational half of parity_characterises_interior_cont
+# for rectangles; JCT-free.  Pure-R, three-axiom.  No Admitted.
+theories/RectangleJCT.v
+
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
 # (two triangles meeting only at the origin) is ring_simple, ring_closed and
