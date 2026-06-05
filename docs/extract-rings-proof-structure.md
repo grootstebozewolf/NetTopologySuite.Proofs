@@ -365,6 +365,14 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   is the registered JCT/H1 residual (`point_in_ring_correct_jct` the conditional
 >   bridge; slice 3f takes `hole_inside_outer` as its sole hypothesis). See the
 >   multi-beachhead route in `docs/hole-inside-outer-plan.md`.
+> - **R5 analytic seam Stage B — rectangle `hole_inside_outer` (UNCONDITIONAL)
+>   (`theories/HoleInsideOuterRect.v`, `docs/hole-inside-outer-rect.md`),
+>   LANDED Qed.** Generalises the fixed-4x4 witness to ALL rectangles, with no
+>   JCT hypothesis: `RectangleJCT.point_in_ring_rect_iff` characterises
+>   `point_in_ring` for a rectangle as box-membership, and `hole_inside_outer` is
+>   defined via `point_in_ring`, so `hole_inside_outer_rect` needs only a hole
+>   vertex in the box. First non-toy discharge of the analytic seam; convex (C),
+>   triangle (D), and the general JCT (E) remain.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
