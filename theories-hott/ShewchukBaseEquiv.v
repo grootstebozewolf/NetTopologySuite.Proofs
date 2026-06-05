@@ -88,6 +88,15 @@ Definition cross (p0 p1 q : Point) : R :=
   (px p1 - px p0) * (py q - py p0)
   - (px q - px p0) * (py p1 - py p0).
 
+(* Re-expressed from archive/theories/Orientation.v (delivered as fill RGR   *)
+(* infrastructure per the outcome note; used in degenerate proof + ready for *)
+(* antisym etc.).                                                            *)
+Lemma cross_antisymmetric : forall p0 p1 q,
+  cross p0 p1 q = - cross p0 q p1.
+Proof.
+  intros. unfold cross. ring.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Formal geometric orientation (exact).                                     *)
 (* Dir encodes the trichotomy that the sign of cross gives.                  *)
