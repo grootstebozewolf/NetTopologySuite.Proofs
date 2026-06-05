@@ -285,6 +285,17 @@ theories/BufferDepthHorizontalEdgeCounterexample.v
 # full guard set. Pure-R; no Admitted/Axiom/Parameter.
 theories/BufferDepthVertexGrazeCounterexample.v
 
+# REFACTOR: the guarded depth-region predicate + depth/interior bridge
+# (docs/buffer-depth-guarded.md).  Folds the #91/#93/#95 guards into
+# kept_boundary_wellformed and re-points the depth seams onto it (additive; the
+# existing BufferDepth theorems are untouched).  depth_region_is_geometric_
+# interior_guarded is the depth analogue of point_in_ring_correct_jct_cont:
+# for a well-formed kept boundary, depth_region = geometric_interior_cont under
+# the named JCT seam parity_characterises_interior_cont_strict (not discharged).
+# buffer_H_bridge_factor_guarded re-points the H_bridge onto the guarded seam.
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthGuarded.v
+
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
 # CurveGeometry) + validity predicates + chord approximation bridge
