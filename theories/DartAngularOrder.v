@@ -229,6 +229,14 @@ Qed.
 (* §4  Totality on non-parallel pairs.                                         *)
 (* -------------------------------------------------------------------------- *)
 
+(* GENERAL POSITION.  The `~ parallel` hypothesis here (and the endpoint
+   non-parallelism in `dir_lt_trans`) is exactly the general-position guarantee
+   the noded JCT seam supplies: after noding/dedup, no two darts based at a
+   vertex share a direction, so the fan's directions are pairwise non-parallel
+   and `dir_lt` is a genuine strict total order on it.  Parallel co-directional
+   darts are angle-equal (`vcross = 0`), and the order does not separate them --
+   which is why totality is stated modulo `~ parallel` rather than on all
+   pairs. *)
 Lemma dir_lt_total :
   forall p q, ~ parallel p q -> dir_lt p q \/ dir_lt q p.
 Proof.
