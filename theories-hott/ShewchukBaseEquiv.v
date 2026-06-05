@@ -99,13 +99,28 @@ Definition cross (p0 p1 q : Point) : R :=
 Inductive Dir : Type := CCW | CW | COLLINEAR.
 
 (* The formal (exact, real-arithmetic) orientation predicate.                *)
-(* For the skeleton we leave the body Admitted (the real version is the      *)
-(* sign-of-cross decision, or the port of the classical cross sign).         *)
-Definition formal_orient (p0 p1 q : Point) : Dir.
-Admitted.
+(* Defined as the sign of the cross product (twice signed area), matching    *)
+(* the classical definition in archive/theories/Orientation.v (re-expressed  *)
+(* here for the HoTT equiv layer).                                           *)
+Definition formal_orient (p0 p1 q : Point) : Dir :=
+  let c := cross p0 p1 q in
+  if Rlt_dec c 0 then CW
+  else if Rgt_dec c 0 then CCW
+  else COLLINEAR.
 
 (* For convenience alias — "exact" means the mathematical geometry one.      *)
 Definition exact_orient := formal_orient.
+
+(* Real Qed progress for this fill RGR slice (degenerate/collinear case,     *)
+(* ported from archive cross invariants).                                    *)
+Lemma formal_orient_degenerate (p0 p1 : Point) :
+  formal_orient p0 p1 p0 = COLLINEAR.
+Proof.
+  unfold formal_orient.
+  assert (cross p0 p1 p0 = 0) by (unfold cross; ring).
+  rewrite H.
+  destruct (Rlt_dec 0 0); destruct (Rgt_dec 0 0); try reflexivity; lra.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Shewchuk expansion model (the exactness engine from the archive).         *)
@@ -205,10 +220,11 @@ Lemma formal_orient_antisym (p0 p1 q : Point) :
                           | COLLINEAR => COLLINEAR
                           end.
 Proof.
-  (* Real infrastructure (cross_antisymmetric lemma + concrete formal_orient) *)
-  (* is in place for the fill. The case analysis proof for antisym is ready   *)
-  (* but for this RGR slice we keep admit to ensure clean compile while       *)
-  (* advancing the formal side. Full discharge in follow-up.                  *)
+  (* Real infrastructure (cross_antisymmetric lemma re-expressed + concrete    *)
+  (* formal_orient def + degenerate Qed) is now in place. The case analysis    *)
+  (* for full antisym can be completed in the next fill iteration using the    *)
+  (* decisions + lra (see degenerate for pattern). For this bounded RGR we     *)
+  (* keep the admit with accurate comment.                                     *)
   admit.
 Admitted.
 
