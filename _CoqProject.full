@@ -203,6 +203,18 @@ theories/FaceRingSimple.v
 # (face_polygon_valid).  No Admitted; standard three-axiom classical-reals base.
 theories/FacePolygon.v
 
+# extract_rings_valid R5 / general assembler, slice 3e: orientation
+# classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
+# signed-area primitive to rings/faces: ring_signed_area2 + ring_ccw/ring_cw
+# classifier (exclusivity, trichotomy); ring_signed_area2_of_chain (a face ring's
+# area = its chain's, via ring_edges_of_closed_chain); and the headline
+# twin_face_chain_signed_area -- the face built from the TWIN darts walked in
+# reverse has the NEGATED signed area, so the face across each edge is oppositely
+# oriented (the combinatorial heart of outer vs hole).  The geometric meaning of
+# the sign + analytic hole_inside_outer are deferred (§4).  No Admitted; standard
+# three-axiom classical-reals base.
+theories/FaceOrientation.v
+
 # extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
 # on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
 # primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE

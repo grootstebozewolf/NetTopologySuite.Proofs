@@ -343,6 +343,15 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   segment), so the face across an edge is the orientation-reversed traversal --
 >   the combinatorial seed of outer vs hole. The outer/hole classification and
 >   the analytic `hole_inside_outer` containment are deferred (§4).
+> - **R5 slice 3e — face orientation classification (`theories/FaceOrientation.v`,
+>   `docs/face-orientation.md`), LANDED Qed.** Lifts slice-3d's signed-area
+>   primitive to rings/faces: `ring_signed_area2` + `ring_ccw`/`ring_cw`
+>   classifier (exclusive, trichotomy); `ring_signed_area2_of_chain` (a face
+>   ring's area = its chain's); and the headline `twin_face_chain_signed_area` --
+>   the face built from the TWIN darts walked in reverse has the NEGATED signed
+>   area, so the face across each edge is oppositely oriented (the combinatorial
+>   heart of outer vs hole). Deferred: the geometric meaning of the sign
+>   (positive <-> encloses) and the analytic `hole_inside_outer` (§4).
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
