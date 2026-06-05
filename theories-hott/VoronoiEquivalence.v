@@ -54,8 +54,7 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
-From Stdlib Require Import Lists.List.
-Import ListNotations.
+From Stdlib Require Import List.
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -122,9 +121,9 @@ Record NTSVoronoi (sites : Sites) := mkNTSVoronoi
 (* the skeleton; real HoTT has more (sect, retr, adj).                       *)
 Record IsEquiv {A B} (f : A -> B) := mkIsEquiv
   { equiv_inv : B -> A
-  ; equiv_sect : forall x : B, f (equiv_inv x) = x   (* section *)
-  ; equiv_retr : forall x : A, equiv_inv (f x) = x   (* retraction *)
-  ; equiv_adj : True   (* coherence; placeholder for skeleton *)
+  ; equiv_sect : forall x, f (equiv_inv x) = x   (* section *)
+  ; equiv_retr : forall x, equiv_inv (f x) = x   (* retraction *)
+  ; equiv_adj : forall (x : A), True   (* coherence placeholder; real HoTT uses homotopy *)
   }.
 
 (* HoTT Equiv (isomorphism up to homotopy). *)
@@ -138,9 +137,6 @@ Record Equiv (A B : Type) := mkEquiv
 (* This is what lets us transport theorems across the NTS <-> formal link.   *)
 Axiom univalence : forall (A B : Type), Equiv A B -> A = B.
 
-(* Dummy for skeleton IsEquiv constructions (real ones discharged in follow-on). *)
-Axiom dummy_isequiv : forall {A B} (f : A -> B), IsEquiv f.
-
 (* -------------------------------------------------------------------------- *)
 (* The equivalence we prove (the "voronoid equivalence").                    *)
 (* For a fixed set of sites, the formal diagram is equivalent to the NTS one.*)
@@ -150,45 +146,26 @@ Axiom dummy_isequiv : forall {A B} (f : A -> B), IsEquiv f.
 
 (* We "lift" the NTS cell bool to a Prop for comparison (in real work this   *)
 (* would be part of the model + proof that NTS bool matches the geometry).   *)
-Definition nts_cell_prop (nv : forall the_sites, NTSVoronoi the_sites) (the_sites : Sites)
+Definition nts_cell_prop (nv : forall sites, NTSVoronoi sites) (sites : Sites)
   (s p : Point) : Prop :=
-  (* Assume the_sites non-empty etc.; in practice we'd have a decider or proof. *)
-  match nv the_sites with
-  | mkNTSVoronoi _ f => f s p = true
-  end.
+  (* Assume sites non-empty etc.; in practice we'd have a decider or proof. *)
+  nts_cell sites (nv sites) s p = true.
 
 (* For the skeleton we define a "NTS diagram" as the cell function.          *)
 Definition NTSVoronoiDiagram (sites : Sites) : Type :=
   Point -> Point -> bool.  (* simplified; real would carry the full diagram *)
-
-(* Placeholder maps (skeleton; real versions would use actual NTS model).    *)
-Definition to_nts {sites : Sites} (fd : VoronoiDiagram sites) : NTSVoronoiDiagram sites :=
-  fun s p => true.
-
-Definition from_nts {sites : Sites} (nd : NTSVoronoiDiagram sites) : VoronoiDiagram sites :=
-  fun s Hin p => nd s p = true.
 
 (* The equivalence (core statement of the link).                             *)
 (* We claim there is an equivalence between formal Voronoi cells and NTS     *)
 (* cells for the same sites. In a full development this would be witnessed   *)
 (* by the actual NTS code (or a verified model of it) being extensionally    *)
 (* equal (or homotopic) to the formal predicate after transport.             *)
+(* For the skeleton we Admitted the witness (loud per policy); the shape     *)
+(* and the transport usage of univalence are what matter for this bounded    *)
+(* deliverable. The real proof fills in maps + IsEquiv using geometry.       *)
 Definition voronoi_equiv (sites : Sites) :
   Equiv (VoronoiDiagram sites) (NTSVoronoiDiagram sites).
-Proof.
-  (* Skeleton proof (intentionally partial/bounded per RGR in
-     hott-rgr-risk-cost-pivot.md and hott-rgr-tin-hobby-shewchuk-curve-pivot.md;
-     full NTS model + predicate match in follow-on). We construct maps
-     and a dummy IsEquiv. Use the one allowed axiom (Univalence) for the
-     "link" (transport of properties like "cell is closest" to C# NTS side).
-     References archived Triangle/ArcOrient for future re-use of Delaunay
-     duality lemmas. *)
-
-  (* Dummy IsEquiv for skeleton (real proof would show sect/retr by
-     extensionality + NTS spec match to voronoi_cell; use archived
-     incircle/Delaunay for the correspondence). *)
-  exact (mkEquiv _ _ to_nts (dummy_isequiv to_nts)).
-Defined.
+Admitted.
 
 (* -------------------------------------------------------------------------- *)
 (* Transport example (the payoff of the HoTT link).                          *)

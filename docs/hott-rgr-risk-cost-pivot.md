@@ -107,3 +107,5 @@ The file lives in `theories-hott/` (new, outside archive) and is the concrete st
 **Stopping conditions met.** Doc + first .v delivered. No tangents pursued (e.g. no full implementation of cells/edges, no build system yet, no attempt at classical re-proofs). Explicit "next session" call-out for filling the proof.
 
 This is the Green implementation of the RGR pivot's #2 decision. The "voronoid equivalence" is now stated in HoTT terms with the linkage mechanism (univalence transport) in place.
+
+**Follow-on (this loop).** See `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md` (the next chunk RGR) and `docs/HoTT-Status.md` (living table). Shewchuk base was selected as the highest-leverage next small equiv (root predicate for Voronoi/Delaunay + Hobby + TIN + curves). The skeleton landed on `feature/hott-rgr-shewchuk-fill`; fill of the real proofs is the explicit next bounded step.
