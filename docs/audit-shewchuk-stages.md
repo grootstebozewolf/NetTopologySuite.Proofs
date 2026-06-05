@@ -381,3 +381,46 @@ Phase 3 surfaces a need for Uncertain-case resolution, B/C is
 cheap to execute.
 
 ---
+
+## 9. 2026-06-05: underflow limit of the float stages (witness + recovery)
+
+A grounded follow-up to the #66 "Shewchuk vs exact model" thread landed three
+Qed-closed `theories-flocq/` files (verified under Rocq 9.1.1 + Flocq 4.2.2):
+
+- **`Shewchuk_vs_Z2.v`** — `shewchuk_stage_d_agrees_with_exact_intdet`: in the
+  integer + expansion-safe regime, when the Stage D decoder
+  `b64_orient_sign_stage_d` commits to a sign it agrees with the full-plane
+  exact integer-determinant model `Orient_b64_exact_full.b64_orient2d_exact`;
+  `shewchuk_vs_z2_tiny_headline` adds tiny-regime decisiveness.  (Pure
+  composition of `b64_orient_sign_stage_d_sound` + `b64_orient2d_exact_sound`.)
+
+- **`Orient_b64_underflow_unsound.v`** — `stage_a_filter_unsound_under_underflow`:
+  on the concrete points `P0=(0,0)`, `P1=(2^-200,0)`, `Q=(2^-200,2^-900)` the
+  float product `2^-1100` underflows to `+0`, so the Stage A filter
+  `b64_orient_sign_filtered` returns `OrientRZero` while `b64_orient2d_exact`
+  returns `+1` and `cross_R_BP > 0`.
+
+- **`Orient_b64_underflow_recovery.v`** — the important negative result.  The
+  *full* Stage D decoder ALSO returns `OrientRZero`
+  (`stage_d_does_not_recover_under_underflow`): the determinant underflows to
+  exactly 0, the filter commits via its `Some Eq => OrientRZero` branch, and
+  Stage D only falls back on `Uncertain`/`Nan`, so it never reaches the
+  expansion.  The expansion would not help anyway — its safety precondition
+  entails Dekker's no-underflow condition `2^(emin+2*prec-1) = 2^-969 <= |x*y|`,
+  which `2^-1100` violates, collapsing the error-free transform.  What recovers
+  is the integer-mantissa decoder `b64_orient_sign_intexact`, proven sound over
+  the entire finite plane (`b64_orient_sign_intexact_sound`, no underflow
+  precondition) and returning `OrientRPos` on the witness.
+
+**Bearing on the B/C/D queue (§§4, 7-8).**  The reuse/vendor table and the
+Stage D feasibility findings are unchanged for the *near-collinear* case
+Shewchuk's adaptive predicate targets.  This finding only sharpens the spec
+boundary: the binary64 EFT expansion (Stages B/C/D) is sound under its
+`expansion_safe` precondition but is NOT a remedy for catastrophic underflow;
+a fully sound last-resort fallback must route through integer/rational exact
+arithmetic (`b64_orient2d_exact`, the JTS #1106 ground truth), not the
+expansion.  Each file's `Classical_Prop.classic` lineage (and Stage D's
+deferred `fast_expansion_sum_nonoverlap_shewchuk` reference, inherited only by
+`Shewchuk_vs_Z2.v`) is registered in `docs/audit-exceptions.txt`.
+
+---

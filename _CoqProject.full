@@ -494,6 +494,36 @@ theories-flocq/Orient_b64_expansion.v
 #   - b64_orient_sign_stage_d_tiny_regime_decisive: in tiny regime,
 #     never returns Uncertain (Qed-closed).
 theories-flocq/Orient_b64_stage_d.v
+# Issue #66 grounded headline: the Shewchuk adaptive decoder
+# (b64_orient_sign_stage_d) AGREES with the full-plane exact
+# integer-determinant model (Orient_b64_exact_full.b64_orient2d_exact),
+# and in the tiny regime is decisive (no expansion fallback).  Pure
+# composition of already-Qed-closed results; replaces the ungrounded
+# "Shewchuk_vs_Z2" Hypothesis draft.  Qed-closed, three-axiom footprint.
+theories-flocq/Shewchuk_vs_Z2.v
+# Issue #66 unsoundness witness: concrete finite binary64 points
+# (P1x=2^-200, Qy=2^-900) where the float product underflows to +0, so the
+# Stage A filter b64_orient_sign_filtered reports OrientRZero ("collinear")
+# while the exact integer-determinant model b64_orient2d_exact returns +1 and
+# the true cross product is > 0.  Qed-closed positive theorem (vm_compute);
+# motivates the safety preconditions on the filter-soundness theorems.
+theories-flocq/Orient_b64_underflow_unsound.v
+# Issue #66 underflow recovery: on the same witness, the float Stage D
+# decoder b64_orient_sign_stage_d ALSO returns OrientRZero (does not
+# recover -- it trusts the filter's confident Zero and never reaches the
+# expansion fallback, whose safety precondition is violated anyway).  What
+# recovers is the integer-mantissa decoder b64_orient_sign_intexact, proven
+# sound over the whole finite plane (b64_orient_sign_intexact_sound) and
+# returning OrientRPos on the witness.  Qed-closed.
+theories-flocq/Orient_b64_underflow_recovery.v
+# Issue #66 corrected Stage D: b64_orient_sign_stage_d_safe routes every
+# non-committal filter verdict (Zero/Uncertain/Nan) through the
+# integer-mantissa exact decoder b64_orient_sign_intexact.  Proven (a) sound
+# whenever the filter is not confidently Pos/Neg with no regime precondition
+# (covers underflow), (b) sound under int-safety ALONE (drops the shipped
+# Stage D's expansion-safety hypothesis), (c) total (never Nan/Uncertain),
+# (d) OrientRPos on the underflow witness where the shipped Stage D fails.
+theories-flocq/Orient_b64_stage_d_safe.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
