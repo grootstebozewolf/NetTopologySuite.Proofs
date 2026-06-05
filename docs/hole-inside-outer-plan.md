@@ -46,7 +46,7 @@ unconditionally.
 
 | stage | scope | effort | status |
 |---|---|---|---|
-| A — conditional headline | full `extract_rings_valid`, modulo named JCT hyp | ~1 slice | **ready** — inputs all Qed (`face_polygon_holes_valid`, `point_in_ring_correct_jct_cont`) |
+| A — conditional headline | full `extract_rings_valid`, modulo named JCT hyp | ~1 slice | **LANDED** (`ExtractFacePolygonJCT.face_polygon_valid_via_jct`) |
 | B — rectangle (unconditional) | `hole_inside_outer`, rectangular outer | ~1 slice | **LANDED** (`HoleInsideOuterRect.hole_inside_outer_rect`) — unconditional for all axis-aligned rectangles |
 | C — convex (unconditional) | `hole_inside_outer`, convex outer | medium | separation engine **Qed** (`convex_separation`); JCT assembly TODO |
 | D — triangle (unconditional) | `hole_inside_outer`, triangular outer | medium | separation **Qed** (`Right/GeneralTriangleSeparation`); assembly TODO |

@@ -219,6 +219,14 @@ theories/FaceRingSimple.v
 # No Admitted; standard three-axiom classical-reals base.
 theories/FacePolygonHoles.v
 
+# extract_rings_valid R5 analytic seam, Stage A (conditional headline): a face
+# polygon with holes is valid_polygon modulo a NAMED JCT hypothesis, in geometric
+# terms (docs/hole-inside-outer-plan.md Stage A).  hole_jct_witness;
+# hole_inside_outer_of_witness; face_polygon_valid_via_jct.  Matches
+# overlay_ng_correct_conditional / point_in_ring_correct_jct.  No Admitted;
+# standard three-axiom classical-reals base.
+theories/ExtractFacePolygonJCT.v
+
 # extract_rings_valid R5 / general assembler, slice 3c: a hole-free face yields a
 # valid_polygon (docs/face-polygon.md) -- the FIRST full Overlay.valid_polygon
 # produced by the DCEL machinery.  valid_polygon's hole conjunct is vacuous when
