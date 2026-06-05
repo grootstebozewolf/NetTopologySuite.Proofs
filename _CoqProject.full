@@ -150,6 +150,17 @@ theories/Dart.v
 # face step next o twin is slice 2f.  No Admitted; AXIOM-FREE.
 theories/OrbitCycle.v
 
+# extract_rings_valid R5 / general assembler, slice 2f: the face step next o twin
+# and FACE ORBIT FINITENESS (docs/dart-face.md) -- the §9 crux, discharged.
+# fstep D d = next (outgoing (dtip d) D) (twin d); under arrangement_ok (D
+# twin-closed + every vertex fan fan_ok): fstep_in (orbit closure), fstep_inj
+# (injective -- equal images share a vertex, reducing to slice-2d next_injective
+# + twin_inj), and face_orbit_finite = orbit_returns (slice 2e) instantiated at
+# f := fstep D, so iterating fstep from any dart returns to it.  Reading the
+# closed orbit off as a closed_chain / ring is the deferred assembly.  No
+# Admitted; axioms = the allowlisted classical-reals pair.
+theories/DartFace.v
+
 # extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
 # on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
 # primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE
