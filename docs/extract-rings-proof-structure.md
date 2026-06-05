@@ -259,6 +259,14 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   ordering runs on: `twin` (involutive/injective/fixed-point-free on proper
 >   edges), `darts_of` (both orientations, closed under `twin`), the `outgoing`
 >   fan + `vdeg`. Pure dart algebra; no geometry, no ordering yet.
+> - **R5 slice 2a — angular comparator (`theories/DartAngularOrder.v`,
+>   `docs/dart-angular-order.md`), LANDED Qed.** Orders the `outgoing v` fan
+>   BY ANGLE without a materialised `atan2`: a half-plane + cross-product
+>   (`Azimuth.turn_sign`) comparator `dir_lt`, proven a **strict total order**
+>   on directions in general position (`dir_lt_irrefl/_asym/_trans/_total`, via
+>   the pure-`ring` certificate `vcross_chain_cert` + `nra`), lifted to darts as
+>   `dart_lt_*`. `dir_lt_total`/`dir_lt_trans` carry the general-position
+>   (non-parallel) hypothesis the noded JCT seam supplies.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);

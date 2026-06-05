@@ -140,6 +140,18 @@ theories/OverlayGraph.v
 # Axioms: the allowlisted classical-reals pair via point_eq_dec.  No Admitted.
 theories/Dart.v
 
+# extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
+# on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
+# primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE
+# without a materialised atan2 -- a half-plane + Azimuth.turn_sign (cross)
+# comparator -- and proves it a STRICT TOTAL ORDER on directions in general
+# position: dir_lt_irrefl / _asym / _trans (via the ring certificate
+# vcross_chain_cert + nra) / _total, lifted to darts as dart_lt_*.  The cyclic
+# `next` built on this order, and the face_of orbit + its finiteness (the §9
+# crux), are deferred later slices.  No Admitted; axioms = the allowlisted
+# classical-reals pair via first_half_dec's real-order decision.
+theories/DartAngularOrder.v
+
 # The Jordan-curve seam for point_in_ring_correct, examined head-on
 # (docs/jct-vacuity-finding.md).  Proves the corpus's
 # geometric_interior_stdlib is identically false because
