@@ -334,6 +334,15 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   (`face_polygon_valid`). The combinatorial core of `extract_rings_valid` for
 >   the hole-free case, end to end. Faces WITH holes need hole nesting + the
 >   analytic `hole_inside_outer` (§4).
+> - **R5 slice 3d — ring orientation primitive (`theories/RingOrientation.v`,
+>   `docs/ring-orientation.md`), LANDED Qed.** The signed-area (shoelace)
+>   orientation invariant for hole nesting: `signed_area2`; `signed_area2_app` /
+>   `_rev` (order-invariant) / `_map_swap` (negated by endpoint swap) /
+>   `_reverse_traversal` (walking a chain backwards negates the signed area --
+>   the orientation flip); and `seg_twin_swap` (a dart's `twin` swaps its
+>   segment), so the face across an edge is the orientation-reversed traversal --
+>   the combinatorial seed of outer vs hole. The outer/hole classification and
+>   the analytic `hole_inside_outer` containment are deferred (§4).
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
