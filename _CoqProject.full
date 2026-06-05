@@ -491,6 +491,14 @@ theories-flocq/Orient_b64_underflow_unsound.v
 # sound over the whole finite plane (b64_orient_sign_intexact_sound) and
 # returning OrientRPos on the witness.  Qed-closed.
 theories-flocq/Orient_b64_underflow_recovery.v
+# Issue #66 corrected Stage D: b64_orient_sign_stage_d_safe routes every
+# non-committal filter verdict (Zero/Uncertain/Nan) through the
+# integer-mantissa exact decoder b64_orient_sign_intexact.  Proven (a) sound
+# whenever the filter is not confidently Pos/Neg with no regime precondition
+# (covers underflow), (b) sound under int-safety ALONE (drops the shipped
+# Stage D's expansion-safety hypothesis), (c) total (never Nan/Uncertain),
+# (d) OrientRPos on the underflow witness where the shipped Stage D fails.
+theories-flocq/Orient_b64_stage_d_safe.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
