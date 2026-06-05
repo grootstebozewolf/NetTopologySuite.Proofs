@@ -483,6 +483,14 @@ theories-flocq/Shewchuk_vs_Z2.v
 # the true cross product is > 0.  Qed-closed positive theorem (vm_compute);
 # motivates the safety preconditions on the filter-soundness theorems.
 theories-flocq/Orient_b64_underflow_unsound.v
+# Issue #66 underflow recovery: on the same witness, the float Stage D
+# decoder b64_orient_sign_stage_d ALSO returns OrientRZero (does not
+# recover -- it trusts the filter's confident Zero and never reaches the
+# expansion fallback, whose safety precondition is violated anyway).  What
+# recovers is the integer-mantissa decoder b64_orient_sign_intexact, proven
+# sound over the whole finite plane (b64_orient_sign_intexact_sound) and
+# returning OrientRPos on the witness.  Qed-closed.
+theories-flocq/Orient_b64_underflow_recovery.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
