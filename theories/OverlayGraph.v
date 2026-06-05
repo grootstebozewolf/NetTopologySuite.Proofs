@@ -648,6 +648,15 @@ Qed.
 (* obligation `extract_rings_valid` (audit-phase3-milestone5.md §4.3 +       *)
 (* §5.2; estimated 3-8 sessions; requires DCEL adoption in a Session 1.5      *)
 (* of M4-revision).                                                           *)
+(*                                                                            *)
+(* The insufficiency is now a Qed-closed refutation, not just this warning:   *)
+(* `theories/ExtractFlattenCounterexample.v` exhibits a closed triangle       *)
+(* boundary whose surviving edges, flattened by this function out of walk     *)
+(* order, give a NON-closed ring (`extract_unordered_not_valid`), and shows   *)
+(* the fix is to TRACE -- `RingExtract.ring_of_chain` on the walk-ordered     *)
+(* edges is `ring_closed` + `ring_has_minimum_points`                         *)
+(* (`ring_of_chain_traces_valid_shape`).  That tracing step is built up from  *)
+(* the half-edge layer in `theories/Dart.v` (extract_rings_valid R5).         *)
 (* -------------------------------------------------------------------------- *)
 
 Definition extract (op : BooleanOp) (g : TopologyGraph) : Geometry :=
