@@ -140,6 +140,16 @@ theories/OverlayGraph.v
 # Axioms: the allowlisted classical-reals pair via point_eq_dec.  No Admitted.
 theories/Dart.v
 
+# extract_rings_valid R5 / general assembler, slice 3d: the signed-area
+# ORIENTATION primitive for hole nesting (docs/ring-orientation.md).  Pure
+# shoelace algebra: signed_area2 segs; signed_area2_app / _rev (order-invariant)
+# / _map_swap (negated by endpoint swap) / _reverse_traversal (walking a chain
+# backwards negates the signed area -- the orientation flip); and seg_twin_swap
+# (a dart's twin swaps its segment), linking to the DCEL twin so the face across
+# an edge is the orientation-reversed traversal -- the seed of outer vs hole.
+# deferred (§4).  No Admitted; standard three-axiom classical-reals base.
+theories/RingOrientation.v
+
 # extract_rings_valid R5 / general assembler, slice 2e: the FINITENESS / return
 # crux for face orbits (docs/orbit-cycle.md).  Pure-combinatorial heart of
 # face_orbit_finite, free of geometry: an injective self-map of a finite set,
