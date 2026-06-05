@@ -296,6 +296,16 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   finite), `iter_inj_on`, `iter_pigeon`, and `orbit_returns` (some `n >= 1`
 >   with `iter n d = d`). Slice 2d gives these hypotheses for `next`;
 >   instantiating `f := next o twin` (the dart face step) is slice 2f.
+> - **R5 slice 2f — face step + FACE ORBIT FINITENESS
+>   (`theories/DartFace.v`, `docs/dart-face.md`), LANDED Qed.** The §9 crux,
+>   discharged. `fstep D d = next (outgoing (dtip d) D) (twin d)`; under
+>   `arrangement_ok` (`D` twin-closed + every vertex fan `fan_ok`): `fstep_in`
+>   (orbit closure), `fstep_inj` (injective -- equal images share a vertex,
+>   reducing to slice-2d `next_injective` + `twin_inj`), and `face_orbit_finite`
+>   = slice-2e `orbit_returns` instantiated at `f := fstep D`, so iterating the
+>   face step from any dart RETURNS to it (a finite closed walk). Reading the
+>   closed orbit off as a `closed_chain` / ring feeding `ring_of_chain` is the
+>   remaining assembly.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
