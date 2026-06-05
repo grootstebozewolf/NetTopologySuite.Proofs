@@ -83,6 +83,16 @@ Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
 (* §1  The diamond and two on-axis test points.                               *)
+(*                                                                            *)
+(*                         (0,1)                                              *)
+(*                          /\                                                *)
+(*                         /  \                                               *)
+(*                        / A  \         A = (0,1/2): ray --> crosses edge    *)
+(*              (-1,0) *--+--+---* (1,0)   (0,1)->(1,0) once  => parity ODD    *)
+(*                        \ B====+=====>  B = (0,0):   ray --> GRAZES (1,0),   *)
+(*                         \  /            an endpoint of BOTH incident edges  *)
+(*                          \/             => strict straddle counts neither   *)
+(*                        (0,-1)           => parity EVEN (wrongly "outside")  *)
 (* -------------------------------------------------------------------------- *)
 
 Definition diamond : Ring :=
