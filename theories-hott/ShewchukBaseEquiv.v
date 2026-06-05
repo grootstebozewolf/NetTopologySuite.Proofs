@@ -229,13 +229,17 @@ Lemma formal_orient_antisym (p0 p1 q : Point) :
                           | COLLINEAR => COLLINEAR
                           end.
 Proof.
-  (* Real infrastructure (cross_antisymmetric lemma re-expressed + concrete    *)
-  (* formal_orient def + degenerate Qed) is now in place. The case analysis    *)
-  (* for full antisym can be completed in the next fill iteration using the    *)
-  (* decisions + lra (see degenerate for pattern). For this bounded RGR we     *)
-  (* keep the admit with accurate comment.                                     *)
-  admit.
-Admitted.
+  (* Using the locally re-expressed cross_antisymmetric + concrete formal_orient *)
+  (* definition. Case analysis on the sign decisions for d = cross p0 q p1 and *)
+  (* -d directly gives the Dir swap. This is the small "transport example"     *)
+  (* (formal antisym property proved) recommended in the PR #92 review.        *)
+  unfold formal_orient.
+  rewrite cross_antisymmetric.
+  set (d := cross p0 q p1).
+  destruct (Rlt_dec d 0); destruct (Rgt_dec d 0);
+  destruct (Rlt_dec (-d) 0); destruct (Rgt_dec (-d) 0);
+  try (exfalso; lra); reflexivity.
+Qed.
 
 (* The transported property on the NTS side.                                 *)
 Lemma nts_orient_antisym (p0 p1 q : Point) :
