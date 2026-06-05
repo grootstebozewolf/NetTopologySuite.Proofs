@@ -38,7 +38,7 @@ The archived classical proofs remain the engineering precedent and the source of
 
 - The historical proof corpus is fully archived (see `archive/`).
 - The welcoming on-ramp (`pythagoras-for-beginners.v`) and the persona/role system (`HELP.md`, `READING-GUIDE.md`, `FOR-AI-AGENTS.md`) have been kept and will be evolved for HoTT + C# work.
-- First HoTT sources + RGR planning have landed in `theories-hott/` and `docs/`. See `theories-hott/VoronoiEquivalence.v` (pilot) + `theories-hott/ShewchukBaseEquiv.v` (first small step per chunk RGR: Shewchuk preds base) + `docs/hott-rgr-risk-cost-pivot.md` (strategy) and `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md` (next big chunk: TIN/linearise, Hobby, Shewchuk, Curve — chunked small equivs Shewchuk-first, re-use archive via transport). `_CoqProject.hott` for builds.
+- First HoTT sources + RGR planning have landed in `theories-hott/` and `docs/`. See `theories-hott/VoronoiEquivalence.v` (pilot) + `theories-hott/ShewchukBaseEquiv.v` (first small step per chunk RGR: Shewchuk preds base) + `docs/hott-rgr-risk-cost-pivot.md` (strategy) and `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md` (next big chunk: TIN/linearise, Hobby, Shewchuk, Curve — chunked small equivs Shewchuk-first, re-use archive via transport). Track progress in `HoTT-Status.md`. `_CoqProject.hott` for builds.
 - A full HoTT-oriented build story will evolve with more modules. All prior classical CI/build/oracle live in `archive/`.
 
 ## Axiom policy (HoTT era)

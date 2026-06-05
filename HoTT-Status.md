@@ -22,4 +22,4 @@ Lightweight visibility table for the HoTT exploratory track (see `docs/hott-rgr-
 - Update this table at the end of each RGR Green/Refactor phase.
 - Classical corpus remains fully archived and available for reference/transport under `archive/`.
 
-Last updated: $(date +%Y-%m-%d) (post PR #89 review polish)
+Last updated: 2026-06-05 (post PR #89 review polish)
