@@ -106,6 +106,13 @@ theories/ArcLength.v
 # five structural lemmas.  Self-contained: imports Reals, Lra, List, and
 # the corpus's Distance.  No Admitted; no Classical_Prop.classic.
 theories/Overlay.v
+
+# extract_rings_valid R5: a CONCRETE unconditional witness that hole_inside_outer
+# is reachable (docs/hole-inside-outer.md).  A 4x4 square outer with a smaller
+# square hole sharing the centre; proved by walking the ray_parity_odd
+# constructors + lra.  Regression anchor; the GENERAL discharge is the registered
+# JCT/H1 residual.  No Admitted; standard three-axiom classical-reals base.
+theories/HoleInsideOuterExample.v
 # Green-phase point_in_ring_correct seam attempts (PointInRingCorrect.v).
 # Probes the seven seams from docs/point-in-ring-correct-seam-map.md
 # with simplest-possible implementations.  Seams 1, 2 (partial), 4, 6

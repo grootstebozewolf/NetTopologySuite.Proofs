@@ -358,6 +358,13 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   `face_polygon_holes_valid` -- every `valid_polygon` condition except
 >   `hole_inside_outer` holds by construction of the face walks; the residual is
 >   now exactly that one analytic predicate (§4) plus the `extract` rewire.
+> - **R5 `hole_inside_outer` — grounded status + concrete witness
+>   (`theories/HoleInsideOuterExample.v`, `docs/hole-inside-outer.md`),
+>   LANDED Qed.** A concrete unconditional witness (square hole inside square
+>   outer, via the `ray_parity_odd` constructors + `lra`); the GENERAL discharge
+>   is the registered JCT/H1 residual (`point_in_ring_correct_jct` the conditional
+>   bridge; slice 3f takes `hole_inside_outer` as its sole hypothesis). See the
+>   multi-beachhead route in `docs/hole-inside-outer-plan.md`.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
