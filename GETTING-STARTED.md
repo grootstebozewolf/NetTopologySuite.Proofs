@@ -1,61 +1,68 @@
-# Getting Started
+# Getting Started (HoTT pivot)
 
-Welcome to **NetTopologySuite.Proofs**.
+Welcome to **NetTopologySuite.HoTT**.
 
-This repository contains mechanically verified Rocq proofs of foundational properties used by NetTopologySuite (the .NET port of JTS Topology Suite).
+This repository is the home for formal Coq/Rocq work (now pivoting to Homotopy Type Theory) that links the mathematical model of NetTopologySuite's core geometry and topology algorithms to the C# implementation.
 
-**The single most important rule:**
+**The prior classical proof corpus ("Froq" / NetTopologySuite.Proofs) has been archived.** See [`archive/README.md`](archive/README.md). The welcoming surface, the personas, and the single beginner proof example have been kept.
 
-> Every theorem ends with `Qed.` (or `Defined.`).  
-> No `Axiom`, no `Parameter`, no bare `admit.` in the `.v` files.  
-> The only exceptions are six explicitly registered `Admitted` entries with documented justification.
+**The single most important ongoing rule (adapted):**
+
+> New work ends with `Qed.` (or `Defined.`).  
+> No bare `admit`, `Axiom`, or `Parameter` in the formal sources without explicit registry/justification.  
+> The HoTT era will evolve the exact discipline, but the spirit of "nothing quietly stubbed" remains.
 
 ## First 60 seconds
 
-1. Run this in the repo root:
-
-   ```sh
-   make help
-   ```
-
-   (It works even if you have no Rocq installed.)
-
-2. Open the friendly role cards:
+1. Pick your persona:
 
    ```sh
    cat docs/HELP.md
    ```
 
-   Find the card that matches you (or the closest one). Each card gives you a concrete "OPEN" action and a realistic time estimate.
+2. Read the current HoTT-era axiom policy (one axiom allowed — we're being generous):
 
-3. For the complete map of every role and their recommended reading paths, see:
+   ```sh
+   cat docs/axiom-policy.md
+   ```
 
-   [`docs/READING-GUIDE.md`](docs/READING-GUIDE.md)
+3. For the complete map of roles and recommended paths (now oriented around HoTT + C# linkage):
 
-## Common on-ramps
+   ```sh
+   cat docs/READING-GUIDE.md
+   ```
 
-- **I have literally never used a proof assistant before** — Open [`docs/pythagoras-for-beginners.v`](docs/pythagoras-for-beginners.v) in CoqIDE or VS Code + VSCoq/Coq extension and step through it. It is deliberately self-contained and heavily commented.
-- **I just want the headline** — Read the first three paragraphs of `README.md`.
-- **I use NTS / JTS and want to know what is proved** — Follow the GIS Gus or NTS-Upstream Norm / Consumer Connie card in `docs/HELP.md`.
-- **I care about circular arcs / CIRCULARSTRING** — Follow the BIM Bea card.
-- **I want to build the proofs locally** — See `docs/development-environment.md` (container is canonical; host fallback documented).
-- **I want to contribute (or run an AI coding session)** — Read `CONTRIBUTING.md` + [`docs/FOR-AI-AGENTS.md`](docs/FOR-AI-AGENTS.md) + the relevant sections of the Reading Guide for session workflow and invariants.
-- **I maintain or review this corpus** — Start with the four registry files in `docs/` (`admitted-*.txt`, `axiom-allowlist.txt`, `audit-exceptions.txt`).
+4. If you have literally never used a proof assistant:
 
-## Quick build notes
+   Open [`docs/pythagoras-for-beginners.v`](docs/pythagoras-for-beginners.v) in CoqIDE or VS Code + VSCoq and step through it. It is deliberately self-contained.
 
-- The easy foundational layer (`theories/`) builds with stock Rocq 9.1.1 (no Flocq needed) via `make host`.
-- The full corpus (including binary64 proofs under Flocq) is normally built inside the pinned container described in the `Dockerfile`.
-- All CI guardrails (`check_admitted.sh`, axiom audit, etc.) are runnable locally once you have a build.
+## Common on-ramps (HoTT era)
 
-## Where the real work lives
+- **I have literally never used a proof assistant before** — [`docs/pythagoras-for-beginners.v`](docs/pythagoras-for-beginners.v) (step through it; heavily commented "hello world" that proves Pythagoras and explains the cost of certainty).
+- **I just want the headline** — Read the top of [`README.md`](README.md) (the pivot notice and HoTT motivation).
+- **I use NTS / JTS and want to know the story** — GIS Gus or NTS-Upstream Norm card in `docs/HELP.md`.
+- **I care about rigorous linkage to C#** — Consumer Connie + the new equivalence / transport focus (see HoTT roadmap in README).
+- **I want to contribute (or run an AI coding session)** — [`CONTRIBUTING.md`](CONTRIBUTING.md) + [`docs/FOR-AI-AGENTS.md`](docs/FOR-AI-AGENTS.md) (the session workflow and invariants are still relevant; outputs are now HoTT modules + C# correspondence artefacts).
+- **I want the deep history** — `archive/` (old phases, audits, 100+ session retros, the full classical corpus).
 
-Most development happens via long, structured sessions whose outputs (prompts, outcomes, retros) are recorded in `docs/`. The Reading Guide and the "Help — pick your path" cards exist precisely so you can find the relevant historical context quickly instead of drowning in the archive.
+## Build / environment notes (transitional)
+
+The old `make help`, host build, containerised Flocq build, and all guardrail scripts live in `archive/`.
+
+- The `pythagoras-for-beginners.v` example only needs a working Rocq installation (any recent version is fine; it uses only `Stdlib.Reals` and `Lra`).
+- A fresh HoTT-oriented setup (coq-hott or equivalent + custom layers) and `make` targets will be added once the first modules are created.
+- For exploring the archived classical work, see `archive/README.md` (it describes the old container + `_CoqProject.full` path).
+
+## Where the real work will live
+
+Development will continue via structured sessions (Red / Green / Refactor, explicit stopping conditions, two-route designs when the approach is uncertain). Outcomes will be recorded under `docs/` or a future `docs/hott-history/`.
+
+The personas (preserved from the previous era) tell you exactly which documents matter to your role.
 
 Pick your card in `docs/HELP.md` and go.
 
-The project is deliberately rigorous. The onboarding surface is now deliberately welcoming. Both can be true at the same time.
+The project remains deliberately rigorous. The onboarding surface remains deliberately welcoming. Both can be true at the same time — now with paths and univalence in the picture.
 
 ---
 
-Next step: `cat docs/HELP.md` (or just `make help` again).
+Next step: `cat docs/HELP.md`.

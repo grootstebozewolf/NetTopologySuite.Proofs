@@ -1,5 +1,7 @@
 # Reading guide — who reads what
 
+**Note (HoTT pivot):** The detailed classical phase, audit, and proof-structure documents referenced below have been moved to `archive/docs/`. The personas and role-based navigation are deliberately preserved. New HoTT work (synthetic topology, univalent links to C# NetTopologySuite, etc.) will extend or replace paths over time. The archived material remains the essential reference for what has already been proved classically and for proof-engineering patterns.
+
 The corpus's docs cover several actors with different reading needs.
 This index maps each actor to their starting point and recommended
 path through the docs.
@@ -13,28 +15,23 @@ Names are mnemonic — they alliterate with the role so they stick.
 **Role.** Uses NetTopologySuite for spatial computation; curious about
 which geometric primitives have formal proofs.
 
-**Start at.** `README.md`, then in order:
+**Start at.** Top-level `README.md` (HoTT pivot + vision), then (for historical classical results) in order under `archive/docs/`:
 
-  1. `phase0-completion.md` — orient2d (Shewchuk Stage A robust
+  1. `archive/docs/phase0-completion.md` — orient2d (Shewchuk Stage A robust
      orientation).
-  2. `phase1-completion.md` — segment-pair intersection (filtered +
+  2. `archive/docs/phase1-completion.md` — segment-pair intersection (filtered +
      exact + forward-error).
-  3. `phase2-hotpixel-progress.md` — hot-pixel snap-rounding (the
+  3. `archive/docs/phase2-hotpixel-progress.md` — hot-pixel snap-rounding (the
      Phase 2 milestone progression).
-  4. `audit-phase3-overlay.md` § headers — polygon overlay correctness
+  4. `archive/docs/audit-phase3-overlay.md` § headers — polygon overlay correctness
      (Union/Intersection/Difference/SymDiff).
-  5. `audit-phase4-curves.md` § headers — arc/curve overlay status
+  5. `archive/docs/audit-phase4-curves.md` § headers — arc/curve overlay status
      (SQL/MM CIRCULARSTRING; conditional headline lands, JCT gap
      precisely characterised).
 
-**Skip.** Anything under `docs/history/sessions/` (forensic), the
-Shewchuk Theorem 13 deep-dives (research-grade), and the Hobby-lemma
-docs (cell-snap-rounding internals).
+**Skip (for now).** The deepest `archive/docs/history/sessions/` forensic traces unless you are doing comparative work or mining for lemmas to re-express in HoTT. The Shewchuk Theorem 13 deep-dives and Hobby-lemma docs remain research-grade references.
 
-**Take away.** The corpus has Qed-closed soundness for orient2d,
-intersection, snap-rounding's preservation invariant, and conditional
-headlines for polygon overlay and curve overlay. Gaps are precisely
-named, not handwaved.
+**Take away.** The (archived) corpus has Qed-closed soundness for orient2d, intersection, snap-rounding's preservation invariant, and conditional headlines for polygon overlay and curve overlay. Gaps are precisely named, not handwaved. The HoTT pivot aims to re-ground the key topological claims synthetically and add first-class C# linkage via equivalences.
 
 ---
 
@@ -43,31 +40,29 @@ named, not handwaved.
 **Role.** Models as-built geometry; cares about CIRCULARSTRING /
 COMPOUNDCURVE / arc primitives.
 
-**Start at.** `audit-phase4-curves.md`, then:
+**Start at.** `archive/docs/audit-phase4-curves.md`, then (historical classical):
 
-  1. `audit-phase4-chord-overfitting.md` — the chord-approximation
+  1. `archive/docs/audit-phase4-chord-overfitting.md` — the chord-approximation
      thesis direction (Option B).
-  2. `point-in-ring-jct-path.md` — JCT path to `point_in_ring_correct`
+  2. `archive/docs/point-in-ring-jct-path.md` — JCT path to `point_in_ring_correct`
      (relevant for ring-membership in valid polygons with arcs).
-  3. `theories/ArcOrient.v`, `theories/ArcIntersect.v`,
-     `theories/ArcHotPixel.v` file headers — the R-side arc
+  3. Archived `archive/theories/ArcOrient.v`, `archive/theories/ArcIntersect.v`,
+     `archive/theories/ArcHotPixel.v` file headers — the R-side arc
      predicates.
-  4. `theories-flocq/ArcOrient_b64.v`,
-     `theories-flocq/ArcIntersect_b64.v`,
-     `theories-flocq/ArcHotPixel_b64.v` file headers — the binary64
+  4. Archived `archive/theories-flocq/ArcOrient_b64.v` etc. — the binary64
      mirrors.
 
-**Skip.** Phase 0/1/2 unless you care about the underlying primitives.
+**Skip.** Phase 0/1/2 unless you care about the underlying primitives (all archived).
 
-**Take away.** Arc-overlay correctness lands conditionally
-(`arc_overlay_correct_chord_approx`); the b64 layer is verified up to
+**Take away.** Arc-overlay correctness landed conditionally in the classical corpus
+(`arc_overlay_correct_chord_approx`); the b64 layer was verified up to
 three registered Admitteds with documented discharge plans.
 
-**Trust chain.** The Phase 4 oracle modes (INCIRCLE_SIGN,
-ARC_CHORD_CROSSES_CIRCLE, ARC_PASSES_THROUGH_PIXEL) extract directly
-from the Coq layer — they are no longer hand-rolled OCaml. When a
-mode says TRUE/FALSE, the Coq theorem behind it is identifiable from
-the protocol docstring in `oracle/driver.ml`.
+**Trust chain (classical).** The Phase 4 oracle modes (INCIRCLE_SIGN,
+ARC_CHORD_CROSSES_CIRCLE, ARC_PASSES_THROUGH_PIXEL) were extracted directly
+from the Coq layer (see archived `archive/oracle/driver.ml`). HoTT work will
+revisit curve primitives with synthetic circle (S¹ HIT) and stronger linkage
+to C# CIRCULARSTRING handling.
 
 ---
 
@@ -77,41 +72,44 @@ the protocol docstring in `oracle/driver.ml`.
 registry, owns the build pipeline details, and reviews PRs for
 correctness and adherence to corpus discipline.
 
-**Start at.** The four CI-enforced registries:
+**Start at.** The new lightweight HoTT policy + archived classical material:
 
-  1. `axiom-allowlist.txt` — the three permitted axioms.
-  2. `audit-exceptions.txt` — Category C per-file Classical_Prop pull
+- [`../docs/axiom-policy.md`](../docs/axiom-policy.md) and root `README.md` § "Axiom policy (HoTT era)" — one axiom, generous, for new work.
+- The archived four CI-enforced registries (under `archive/docs/`) when touching classical material:
+  1. `archive/docs/axiom-allowlist.txt` — the three permitted axioms (classical era).
+  2. `archive/docs/audit-exceptions.txt` — Category C per-file Classical_Prop pull
      exemptions.
-  3. `admitted-deferred-proofs.txt` — registered Admitteds with
-     discharge plans.
-  4. `admitted-counterexamples.txt` — registered Admitteds with
+  3. `archive/docs/admitted-deferred-proofs.txt` — registered Admitteds with
+     discharge plans (classical).
+  4. `archive/docs/admitted-counterexamples.txt` — registered Admitteds with
      verified-false statements.
 
-**Also.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) +
-`build-oracle.yml`, the `Dockerfile`, `docs/development-environment.md`.
+**Also (archived).** `archive/.github/workflows/ci.yml` +
+`archive/.github/workflows/build-oracle.yml`, the `archive/Dockerfile`,
+`archive/docs/development-environment.md`.
 
-**On every PR.** Run `scripts/check_admitted.sh`,
-`scripts/audit_axioms.sh`, `scripts/check_readme_axioms.sh` — they're
-the per-PR sanity net.
+**On classical-era PRs (if any).** The old `archive/scripts/check_admitted.sh` etc. were
+the per-PR sanity net. (The HoTT era will define its own.)
 
-**Reject.** Bare `Admitted.` without registry entry, hand-rolled OCaml
-when an extracted version exists, or wrappers with no new content.
+**Reject (spirit).** Bare `admit` without justification, undocumented extra axioms (beyond the one generous allowance), hand-rolled OCaml when an extracted version exists, or wrappers with no new content. The HoTT era uses the lightweight "one axiom, let's be generous" policy from the root README; review focuses on the justification for that axiom + the actual C# equivalence/transport value rather than recreating the full classical audit theatre.
 
-**Skip.** Per-session forensic traces unless investigating a specific
+**Skip.** Per-session forensic traces in `archive/docs/history/sessions/` unless investigating a specific
 Admitted's lineage.
 
 **Take away.** The corpus's epistemic invariants are machine-checkable;
 the gatekeeper's job is to keep the registries and pipeline in sync
 with the `.v` files and review PRs against them. (CI Cara and Risk-Officer Rico responsibilities now live under this combined Quality Gatekeeper role.)
 
-**When a new Admitted lands.** Add an entry to
-`admitted-deferred-proofs.txt` (provable) or
+**When a new Admitted lands (classical material only).** Add an entry to
+`archive/docs/admitted-deferred-proofs.txt` (provable, classical) or
 `admitted-counterexamples.txt` (counterexample-blocked) with the
 format:
 `file:theorem_name | proof_structure_doc | section_references`.
 The entry should include a discharge plan + consumer chain (which
-downstream theorems use it). `scripts/check_admitted.sh` validates
-the registration on every CI run.
+downstream theorems use it). `archive/scripts/check_admitted.sh` validates
+the registration on every (archived) CI run.
+
+For new HoTT work the "one axiom, let's be generous" policy (root README) replaces the old heavy registry/audit theatre. The gatekeeper reviews the justification in the file header and the C# linkage value.
 
 ---
 
@@ -121,29 +119,29 @@ the registration on every CI run.
 the corpus's methodology (including independent formal-methods audits
 and trust-chain verification).
 
-**Start at.** `slice-a-retro.md` and `slice-a-piece-5b-retro.md` —
+**Start at.** `archive/docs/slice-a-retro.md` and `archive/docs/slice-a-piece-5b-retro.md` —
 engagement-level syntheses.
 
 **Then in any order:**
 
-  1. `audit-phase2-snap-rounding.md`, `audit-phase3-overlay.md`,
-     `audit-phase3-milestone5.md`, `audit-phase4-curves.md`,
-     `audit-shewchuk-stages.md` — per-phase proof-structure audits.
-  2. `hobby-theorem-proof-structure.md`,
-     `shewchuk-theorem-13-proof-structure.md` — proof structures for
+  1. `archive/docs/audit-phase2-snap-rounding.md`, `archive/docs/audit-phase3-overlay.md`,
+     `archive/docs/audit-phase3-milestone5.md`, `archive/docs/audit-phase4-curves.md`,
+     `archive/docs/audit-shewchuk-stages.md` — per-phase proof-structure audits.
+  2. `archive/docs/hobby-theorem-proof-structure.md`,
+     `archive/docs/shewchuk-theorem-13-proof-structure.md` — proof structures for
      the named load-bearing theorems.
-  3. `point-in-ring-seams-3-5-7-red.md` (or `point-in-ring-jct-path.md`),
-     `point-in-ring-jct-path.md`,
-     `point-in-ring-seam-attempts.md`,
-     `point-in-ring-tangent-attempts.md` — the JCT / seven-seam analysis
+  3. `archive/docs/point-in-ring-seams-3-5-7-red.md` (or `archive/docs/point-in-ring-jct-path.md`),
+     `archive/docs/point-in-ring-jct-path.md`,
+     `archive/docs/point-in-ring-seam-attempts.md`,
+     `archive/docs/point-in-ring-tangent-attempts.md` — the JCT / seven-seam analysis
      of `point_in_ring_correct` (Phase 5 work).
-  4. `soundness-strategy.md`, `stage-d-feasibility.md`,
-     `stage-d-retro.md`, `stage-d-chain-composition-approach.md` —
+  4. `archive/docs/soundness-strategy.md`, `archive/docs/stage-d-feasibility.md`,
+     `archive/docs/stage-d-retro.md`, `archive/docs/stage-d-chain-composition-approach.md` —
      soundness-strategy retrospectives.
-  5. `docs/history/sessions/*` — per-session forensic record (only
+  5. `archive/docs/history/sessions/*` — per-session forensic record (only
      when you need to verify the chronology or read precise stuck
      goals).
-  6. The four registries + run `scripts/audit_axioms.sh /tmp/full-build.log`
+  6. The four (archived) registries + run `archive/scripts/audit_axioms.sh /tmp/full-build.log`
      (for trust-chain / axiom footprint audits).
 
 **Take away.** Two patterns to watch: the **conditional headline**
@@ -169,27 +167,18 @@ shipping discipline; cite as such.
 **Role.** Decides what ships next, tracks phase completion, budgets
 sessions, plans cadence, and retrospects on how the work actually went.
 
-**Start at.** Top-level retros + `phase0-completion.md`,
-`phase1-completion.md`, `phase2-hotpixel-progress.md` — what's done.
+**Start at.** Top-level (new) `README.md` (HoTT pivot + roadmap vision).
 
-**Then for "what's next" and cadence:**
+**Then for historical "what was done" and to mine patterns:**
 
-  1. `ecosystem-search-2026-05-29.md` — JCT / Real.structure / atan2
-     ecosystem audit; verdicts with cost estimates.
-  2. `point-in-ring-seams-3-5-7-red.md` — most recent gap inventory
-     for `point_in_ring_correct` with cost-per-seam.
-  3. `admitted-deferred-proofs.txt` — every registered Admitted has
-     a discharge plan + consumer chain; this is the next-work
-     backlog.
-  4. `docs/history/sessions/README.md` — index of per-session
-     prompts + outcomes (chronological).
+  - Archived top-level retros + `archive/docs/phase0-completion.md` etc. under `archive/docs/`.
+  - `archive/docs/ecosystem-search-2026-05-29.md`, `archive/docs/point-in-ring-seams-3-5-7-red.md`.
+  - Archived `archive/docs/admitted-deferred-proofs.txt` as the classical backlog.
+  - `archive/docs/history/sessions/README.md` — index of per-session prompts + outcomes.
 
-**Skip.** (Nothing major — this combined role owns the meta layer.)
+**Skip (for scoping new HoTT work).** Deep dives into classical-only seams unless you are porting a specific lemma.
 
-**Take away.** The conditional-headline pattern means "what's the
-next thesis-scale gap to discharge or the next library to import" is
-the right next-work granularity. Don't budget for ad-hoc work; budget
-for one registry entry at a time.
+**Take away.** The conditional-headline pattern and session discipline (1-3 deliverables, explicit stopping conditions, ~10% documented collapses) remain valuable. For the HoTT pivot the "backlog" becomes: which classical results do we re-prove synthetically, and which C# linkage equivalences do we establish first.
 
 **Session sizing rule of thumb.** A session typically lands 1-3
 Qed-closed deliverables; ~10% collapse outright (documented as
@@ -204,8 +193,7 @@ the estimated session count by 1.5x for unknown unknowns.
     tangents in order of likelihood.
   - **Green phase**: deliverables in order, stop at first genuine
     tangent.
-  - **Refactor phase**: gauntlet (`check_admitted`, `audit_axioms`,
-    `check_readme_axioms`).
+  - **Refactor phase**: clean up + review against the current policy (archived classical gauntlet in `archive/scripts/` when touching old material; for new HoTT work, the one-axiom justification + linkage claims per root README).
   - **Stopping conditions**: explicit full-success and tangent-stop
     criteria.
 Use this template when proposing new sessions. The discipline of
@@ -219,30 +207,23 @@ stating stopping conditions up front prevents scope creep mid-session.
 
 **Role.** First contribution to the corpus; or casual reader who picked up the repo from a link and wants the elevator pitch; or absolute beginner with zero prior exposure to proof assistants (Rocq/Coq).
 
-**Start at.** `README.md` (first three paragraphs for the headline: "every proof ends with `Qed`, no `Admitted`, only three classical axioms allowed") or `README.md` § "The invariant" for contributors.
+**Start at.** Top-level `README.md` (the HoTT pivot headline and vision for linking formal Coq to C# NTS) or the "Getting Started" section.
 
-(If you have literally never seen a proof assistant before: open [`docs/pythagoras-for-beginners.v`](pythagoras-for-beginners.v) in an IDE (CoqIDE / VSCode + VSCoq) and step through it. It is deliberately self-contained, starts from `Record Point`, defines `dist_sq`, proves the 3-4-5 case first with `ring` then explicitly with asserts/rewrites for pedagogy, and pre-bunks "why spend so much compute on obvious geometry?": even Pythagoras is non-trivial once every algebraic step must be justified from the axioms; the load-bearing chokepoints like orientation/intersection/snap-rounding are what justify the engineering investment.)
+(If you have literally never seen a proof assistant before: open [`docs/pythagoras-for-beginners.v`](pythagoras-for-beginners.v) in an IDE (CoqIDE / VSCode + VSCoq) and step through it. It is deliberately self-contained, starts from `Record Point`, defines `dist_sq`, proves the 3-4-5 case first with `ring` then explicitly with asserts/rewrites for pedagogy, and pre-bunks "why spend so much compute on obvious geometry?". It has been lightly refreshed for the pivot; the classical "load-bearing chokepoints" discussion now also points forward to HoTT synthetic + equivalence work.)
 
-**Then (for contributors / deeper dive):**
+**Then (for contributors / deeper dive into history or first HoTT steps):**
 
-  1. `development-environment.md` — get the toolchain running.
-  2. Any one Phase completion doc that touches your area of interest.
-  3. The corresponding `audit-*.md` for that phase.
-  4. A short Qed-closed file (e.g. `theories/ArcIntersect.v`, ~200
-     lines) — read end-to-end as a sample.
+  1. (Historical) `archive/docs/development-environment.md` — how the classical toolchain was set up.
+  2. Archived phase completion / audit docs under `archive/docs/` for context on what was already proved.
+  3. (Future) the first HoTT modules + any "equivalence to C#" sketches once they exist.
 
-**For your first PR.**
-  - Pick the smallest Admitted in `admitted-deferred-proofs.txt`
-    whose discharge plan you understand.
-  - Or pick a `WHAT IS QED-CLOSED / WHAT REMAINS OPEN` item from
-    one of the audits.
+**For your first PR (HoTT era).**
+  - Small re-proofs of classical facts in HoTT style, or tiny equivalence/transport examples.
+  - Or documentation / persona updates that help the next Newbie.
 
-**Skip.** The Slice A piece 5b cascade-invariant work — it's deep and
-non-onboarding-friendly.
+**Skip (initially).** The deepest `archive/docs/history/sessions/` cascades unless you are specifically mining them.
 
-**Take away.** The bar is high but the discipline is documented.
-Read one full PR (e.g. the recent Phase 4 Session A) to see the
-shape.
+**Take away.** The bar is high but the discipline (and the welcoming pythagoras on-ramp) is documented. The shape of a good contribution is now "a clear HoTT statement + Qed + explicit link (even if partial) toward the C# side."
 
 **Where to ask questions.** Open a GitHub Issue on this repo for
 substantive questions; for "is this PR ready?" drop a comment on
@@ -258,24 +239,25 @@ days for full review.
 **Role.** Designs new engagements, sequences sessions, decides
 scope.
 
-**Start at.** The retros (Scrum-Master Sara's path) + the
-proof-structure docs (Scholar Sam's path).
+**Start at.** The archived retros (Scrum-Master Sara's path) under `archive/docs/` + the proof-structure docs (Scholar Sam's path) + top-level `README.md` HoTT roadmap.
 
-**Then:**
+**Then (for design patterns that still apply):**
 
-  1. The `stage-d-*.md` cluster — design-route documentation for
+  1. The archived `archive/docs/stage-d-*.md` cluster — design-route documentation for
      Stage D (a complex multi-route engagement).
-  2. `docs/history/sessions/slice-a-piece-5b-route1-design-session.md`
+  2. `archive/docs/history/sessions/slice-a-piece-5b-route1-design-session.md`
      — what a design-session artifact looks like.
-  3. `point-in-ring-seams-3-5-7-red.md` (or `point-in-ring-jct-path.md`) — exemplar seam-map / JCT path work
+  3. `archive/docs/point-in-ring-seams-3-5-7-red.md` (or `archive/docs/point-in-ring-jct-path.md`) — exemplar seam-map / JCT path work
      workflow for breaking down a thesis-scale problem.
-  4. `audit-phase3-milestone5.md` § 6 (Conditional strategy) — how
+  4. Archived `archive/docs/audit-phase3-milestone5.md` § 6 (Conditional strategy) — how
      the conditional-headline decision was made.
+  5. Live `docs/hott-rgr-risk-cost-pivot.md` — new-era example of an RGR pivot on risk/cost
+     (applied to choosing the linkage strategy for proving NTS ↔ HoTT proofs).
 
 **Take away.** Design sessions produce mermaid diagrams + named-
 hypothesis decompositions; implementation sessions discharge or
 defer them. Two-route design (when uncertain) is documented as a
-methodology.
+methodology. These patterns transfer directly to scoping HoTT modules and C# equivalence work.
 
 **Methodology patterns to lean on.**
   - **Two-route design**: when the load-bearing approach is
@@ -285,11 +267,11 @@ methodology.
   - **Seam map**: when a target theorem decomposes into N
     sub-problems, write each as a "seam" with what-exists / what's-
     missing / cost-per-seam. See
-    `point-in-ring-seams-3-5-7-red.md` (or `point-in-ring-jct-path.md`) as the exemplar.
+    `archive/docs/point-in-ring-seams-3-5-7-red.md` (or `archive/docs/point-in-ring-jct-path.md`) as the exemplar.
   - **Red/green workflow**: red = state simplest target + predicted
     tangents; green = attempt each, stop at first genuine tangent.
-    The recent `point-in-ring-seams-3-5-7-red.md` +
-    `point-in-ring-tangent-attempts.md` pair shows the cadence.
+    The recent `archive/docs/point-in-ring-seams-3-5-7-red.md` +
+    `archive/docs/point-in-ring-tangent-attempts.md` pair shows the cadence.
 
 ---
 
@@ -298,34 +280,31 @@ methodology.
 **Role.** Downstream consumer (e.g. `.Curve` C# differential-test
 runner, oracle binary user).
 
-**Start at.** `README.md` + `oracle/driver.ml` head docstring (the
-protocol reference).
+**Start at.** Top-level `README.md` (HoTT vision for C# linkage) + the archived `archive/oracle/driver.ml` head docstring (the classical protocol reference).
 
-**Then:**
+**Then (classical oracles — now archived):**
 
-  1. The `oracle/driver.ml` file header — full protocol for all
+  1. `archive/oracle/driver.ml` file header — full protocol for all
      modes (SIMPLIFY, ORIENT, INTERSECT, PASSES_THROUGH,
      EDGE_IN_RESULT, INCIRCLE_SIGN, ARC_CHORD_CROSSES_CIRCLE,
      ARC_PASSES_THROUGH_PIXEL).
-  2. `.github/workflows/build-oracle.yml` — how `oracle_bin` is
+  2. Archived `.github/workflows/build-oracle.yml` — how `oracle_bin` was
      built and published.
-  3. The Phase 4 audit + recent `Arc*_b64.v` headers for the trust
+  3. Archived Phase 4 audit + `Arc*_b64.v` headers for the trust
      chain of the Phase 4 modes.
 
-**Skip.** Internal Coq proof structures — you trust the Qed.
+**Skip.** Internal Coq proof structures — you trust the Qed (or the future HoTT equivalence).
 
-**Take away.** Each oracle mode either extracts directly from a
-Coq-verified function or is hand-rolled with an explicit Coq pin
-comment. Phase 4 modes recently swapped from hand-rolled to
-extracted (commit `bd6d01f` on `claude/oracle-arc-extracted`).
+**Take away (classical).** Each oracle mode either extracted directly from a
+Coq-verified function or was hand-rolled with an explicit Coq pin
+comment.
 
-**Differential test pattern.** The intended consumer workflow:
+**Differential test pattern (historical reference).** The intended consumer workflow:
 keep one long-running `oracle_bin` instance; the C# differential
 runner sends a mode line + inputs over stdin; the binary replies
 on stdout in hex-float format ("%h") so consumers can round-trip
-bits exactly. Persistent-mode dispatch is the design (every mode
-except SIMPLIFY loops back). See Phase 0 `.Curve` C# port for the
-reference implementation.
+bits exactly. In the HoTT era the emphasis shifts from "bit-exact oracle" to
+"provable equivalence / transport between the Coq model and the NTS C# types".
 
 ---
 
@@ -334,13 +313,11 @@ reference implementation.
 **Role.** Writes NetTopologySuite code upstream; needs to know which
 algorithms have proofs and what those proofs imply for behaviour.
 
-**Start at.** `README.md` § "The invariant" + the four phase-
-completion docs (`phase0-completion.md`, `phase1-completion.md`,
-`phase2-hotpixel-progress.md`, audit-phase3-overlay.md).
+**Start at.** Top-level `README.md` (HoTT pivot + C# linkage vision) + archived phase docs under `archive/docs/`.
 
-**Then:**
+**Then (classical correspondence — now historical reference):**
 
-  1. Map each NTS algorithm to its corpus counterpart:
+  1. Map each NTS algorithm to its (archived) corpus counterpart (see `archive/docs/`):
      - `RobustLineIntersector` → `b64_intersect_*` (Phase 0/1).
      - `RobustDeterminant` → `b64_orient2d` + Stage A filter (Phase 0).
      - `HotPixel` snap-rounding → `b64_in_hot_pixel` + snap-round
@@ -353,14 +330,10 @@ completion docs (`phase0-completion.md`, `phase1-completion.md`,
      algorithm you're touching.
 
 **Skip.** Coq proof internals. Read the file header's `WHAT THIS
-FILE LANDS` block as the spec.
+FILE LANDS` block as the spec (all now in `archive/`).
 
-**Take away.** Proofs apply to the corpus's binary64 mirrors of NTS
-algorithms. Bit-exact agreement holds on int-safe inputs (e.g.
-|coord| <= 2^25 for orient2d, |coord| <= 2^11 for inCircle_R); on
-mixed inputs, the filtered predicates give a sound 4-way
-classification (POS / NEG / ZERO / UNCERTAIN) and callers must
-fall back when UNCERTAIN.
+**Take away (classical).** Proofs applied to the corpus's binary64 mirrors of NTS
+algorithms. Bit-exact agreement held on documented int-safe inputs. The HoTT pivot's goal is stronger: not only "the oracle matched", but "here is the equivalence proof (or transport) between the C# implementation and the formal model."
 
 ---
 
@@ -368,7 +341,7 @@ fall back when UNCERTAIN.
 
 **Role.** The benevolent dictator for life and ultimate authority on the project. "Joost mag het weten" is the Dutch proverb ("only Joost knows" / "Joost may know it all"). He is assumed to have (or be able to quickly form) the complete picture of the corpus, its history, its gaps, and its long-term direction.
 
-**Start at.** The full `README.md` (including all status and the embedded catalogue), the complete `READING-GUIDE.md`, every major retro and proof-structure document, the entire `docs/history/` tree (especially `sessions/`), the strategy and seam-map documents, and the CI/oracle credibility material. You are the one actor whose path legitimately exercises the archive.
+**Start at.** The full (new) top-level `README.md` (HoTT pivot vision + roadmap), the complete `READING-GUIDE.md`, every major archived retro and proof-structure document under `archive/docs/`, the entire `archive/docs/history/` tree (especially `sessions/`), the strategy and seam-map documents, and the archived CI/oracle material. You are the one actor whose path legitimately exercises the full archive (classical + the pivot decision). You also own the direction of the HoTT + C# linkage work.
 
 **Special power.** Final say on:
 - Whether a marginal file stays at top level or moves to history/.
@@ -386,18 +359,18 @@ In pruning work, Joost is the explicit exception to the actor filter and the per
 
 | Mnemonic | Role | First doc | Reading time |
 |---|---|---|---|
-| Newbie Nate (incl. Plain Reader Pete / Rocq Rookie Ray) | Casual reader / first contrib / zero-knowledge Coq on-ramp via pythagoras | `README.md` (3 ¶) + `pythagoras-for-beginners.v` + dev-env | 1-5 min + example |
-| GIS Gus             | GIS user                    | `README.md` → `phase[0-2]-*.md`        | 30 min |
-| BIM Bea             | BIM user                    | `audit-phase4-curves.md`               | 1 h |
-| Quality Gatekeeper (Max/Ruby) | Corpus maintainer + PR reviewer + CI/Risk | `axiom-allowlist.txt` + registries + `ci.yml` | 20 min |
-| Scholar Sam (incl. Auditor) | Formal-methods researcher + independent audit | `slice-a-retro.md` + registries + audit script | half day |
-| Project Meta (Pat/Sara) | Roadmap / scope + session cadence | `phase*-completion.md` + top-level retros + `history/sessions/` | 1-2 h |
-| Tech-Lead Tess      | Engagement design           | retros + proof-structure docs / seam maps | half day |
-| Consumer Connie / NTS-Upstream Norm | Oracle binary user or NTS upstream contributor | `oracle/driver.ml` header + phase completions | 15-60 min |
-| Joost the BDFL      | Benevolent dictator for life (Joost mag het weten) | Full README + READING-GUIDE + entire history/ tree | as needed |
+| Newbie Nate (incl. Plain Reader Pete / Rocq Rookie Ray) | Casual reader / first contrib / zero-knowledge Coq on-ramp via pythagoras | `README.md` (pivot) + `pythagoras-for-beginners.v` | 1-5 min + example |
+| GIS Gus             | GIS user                    | `README.md` → archived `archive/docs/phase[0-2]-*.md` | 30 min |
+| BIM Bea             | BIM user                    | archived `archive/docs/audit-phase4-curves.md` | 1 h |
+| Quality Gatekeeper (Max/Ruby) | HoTT build + one-axiom justification reviewer + C# linkage claims | `docs/axiom-policy.md` + root README "Axiom policy" + archived registries (when classical) | 20 min |
+| Scholar Sam (incl. Auditor) | Formal-methods researcher + HoTT methodology + one-axiom + C# linkage audit | `docs/axiom-policy.md` + archived retros/registries | half day |
+| Project Meta (Pat/Sara) | Roadmap / scope + session cadence | archived phases + retros + `archive/docs/history/sessions/` | 1-2 h |
+| Tech-Lead Tess      | Engagement design           | archived retros + proof-structure / seam maps | half day |
+| Consumer Connie / NTS-Upstream Norm | Oracle binary user or NTS upstream contributor | archived `archive/oracle/driver.ml` + (future HoTT C# linkage) | 15-60 min |
+| Joost the BDFL      | Benevolent dictator for life (Joost mag het weten) | Full README + READING-GUIDE + entire `archive/` history tree | as needed |
 
 (Note: several roles were collapsed for overlap after the initial 17-card list (Pete into Nate/Ray; CI Cara and Risk-Officer Rico into Quality Gatekeeper; Connie/Norm grouped) — see the cards above for the current grouping.)
 
 ---
 
-**New here?** Start with the friendly card deck in [`HELP.md`](HELP.md). It distills the most common roles into 60-second actions.
+**New here?** Start with the friendly card deck in [`HELP.md`](HELP.md). It distills the most common roles into 60-second actions. Also read [`docs/axiom-policy.md`](axiom-policy.md) (the "one axiom, let's be generous" rule). The classical deep docs are in `archive/docs/`. The HoTT work (and updated cards) are just starting.

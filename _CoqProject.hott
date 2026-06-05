@@ -1,0 +1,9 @@
+# HoTT-era project file for theories-hott/
+# Requires coq-hott (or compatible).
+# Usage example:
+#   rocq makefile -f _CoqProject.hott -o Makefile.hott
+#   make -f Makefile.hott
+
+-R theories-hott NTS.HoTT
+
+theories-hott/VoronoiEquivalence.v

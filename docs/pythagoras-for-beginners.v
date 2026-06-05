@@ -5,8 +5,9 @@
   the Rocq Prover (formerly Coq) or any interactive theorem prover.
 
   HOW TO USE THIS FILE:
-  1. Install Rocq (see docs/development-environment.md for the pinned version
-     used by this project, or use the project's Dockerfile).
+  1. Install Rocq (any recent version is sufficient for this self-contained
+     example; the archived `docs/development-environment.md` under `archive/`
+     describes the old pinned Rocq+Flocq container for the classical corpus).
   2. Open this file in:
      - CoqIDE (the official IDE)
      - VS Code + "Coq" or "VSCoq" extension (recommended for most users)
@@ -26,22 +27,26 @@
   - You must define *everything* precisely and justify every single step from
     the axioms of the real numbers.
   - The machine checks every rewrite, every arithmetic fact.
-  - This pre-bunks a common critique of projects like NetTopologySuite.Proofs:
+  - This pre-bunks a common critique of formal geometry projects:
     "Why are you spending so much compute time and effort on formal proofs?
      Can't you just trust the math?"
   - Answer: even the "simple" Pythagorean theorem requires non-trivial
     infrastructure when you have to be 100% certain for *all* real numbers
     and have the proof checked by a computer.
 
-  After you finish this file, look at the real theories/Distance.v in this
-  project. You will see that `dist_sq_pythagorean` is proved in *one line*
-  using the powerful `ring` tactic — because all the foundational work
-  (defining points, distance, the ring structure of reals, etc.) has already
-  been done.
+  After you finish this file, you will be ready to look at the (now archived)
+  classical `theories/Distance.v` under `archive/` — you will see that a
+  `dist_sq_pythagorean` lemma there is proved in *one line* using the
+  powerful `ring` tactic, because all the foundational work (defining points,
+  distance, the ring structure of reals, etc.) has already been done in the
+  surrounding modules.
 
-  The project's 1,100+ theorems are the same idea, but applied to the
-  much harder problems of robust geometric predicates that must work
-  correctly for floating-point inputs without sign flips on edge cases.
+  The same idea — once you have paid the foundational cost — applies to the
+  much harder problems of robust geometric predicates, topological
+  invariants (Jordan curve, overlay correctness, etc.), and now, under the
+  current pivot, to expressing those invariants in Homotopy Type Theory so
+  that we can link them rigorously to the C# NetTopologySuite implementation
+  via equivalences and path transport.
 *)
 
 From Stdlib Require Import Reals.
@@ -58,8 +63,8 @@ Record Point : Type := mkPoint { px : R; py : R }.
 
 (* -------------------------------------------------------------------------- *)
 (* Step 2: Define squared Euclidean distance.                                 *)
-(* We use squared distance in this project (see the big comment in            *)
-(* theories/Distance.v) because it avoids the square root and is easier       *)
+(* We use squared distance in this project (see the big comment in the        *)
+(* archived theories/Distance.v) because it avoids the square root and is easier *)
 (* to reason about algebraically.                                             *)
 (* -------------------------------------------------------------------------- *)
 
@@ -77,7 +82,7 @@ Definition dist_sq (p q : Point) : R :=
 (* The theorem says: dist²((0,0), (a,b)) = a² + b².                           *)
 (*                                                                        *)
 (* This is exactly the lemma `dist_sq_pythagorean` that appears in the        *)
-(* real theories/Distance.v of this project.                                  *)
+(* the real (archived) theories/Distance.v .                                  *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma dist_sq_pythagorean : forall a b : R,
@@ -198,17 +203,19 @@ Qed.
 (* Next steps for a true beginner:                                            *)
 (* - Work through the Software Foundations (Logical Foundations) book.        *)
 (*   It is free and excellent: https://softwarefoundations.cis.upenn.edu/     *)
-(* - Then look at the real theories/Distance.v and theories/Vec.v in this     *)
-(*   project. You will recognize the same 'unfold', 'simpl', 'ring', 'lra'    *)
-(*   pattern, just applied to many more lemmas.                               *)
+(* - Then look at the archived classical theories/Distance.v and theories/Vec.v
+   under archive/ (or the future HoTT equivalents once they land). You will
+   recognize the same 'unfold', 'simpl', 'ring', 'lra' pattern, just applied
+   to many more lemmas — and now being re-expressed with paths and equivalences. *)
 (* - Read the actor cards in docs/HELP.md to see where you fit.               *)
 (*                                                                        *)
-(* The rest of this corpus is the same style of work, but for the hard parts  *)
-(* of computational geometry instead of high-school Pythagoras.               *)
+(* The (archived) corpus and the new HoTT work are the same style of work,    *)
+(* but for the hard parts of computational geometry (and linking it to C#)    *)
+(* instead of high-school Pythagoras.                                         *)
 (* -------------------------------------------------------------------------- *)
 
-(* For completeness, here is the exact lemma as it appears in the project's
-   theories/Distance.v (the one-line version that real developers write). *)
+(* For completeness, here is the exact lemma as it appears in the archived
+   project's theories/Distance.v (the one-line version that real developers write). *)
 
 Lemma project_style_dist_sq_pythagorean : forall a b : R,
   dist_sq (mkPoint 0 0) (mkPoint a b) = a * a + b * b.

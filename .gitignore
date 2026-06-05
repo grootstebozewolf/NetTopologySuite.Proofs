@@ -21,6 +21,7 @@
 # macOS
 .DS_Store
 
-# Prebuilt oracle binary (from CI artifacts for local harden/vector gen; reproducible via Dockerfile+make)
-oracle/oracle_bin
-oracle/extracted.ml
+# Prebuilt oracle binary (classical era — now under archive/)
+archive/oracle/oracle_bin
+archive/oracle/extracted.ml
+# (new HoTT-era artefacts may add their own ignore patterns later)
