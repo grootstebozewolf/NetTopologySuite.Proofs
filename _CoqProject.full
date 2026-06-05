@@ -166,6 +166,13 @@ theories/RectangleJCT.v
 # hence stays inside.  Discharges RectangleJCT.rect_confines and gives the full
 # unconditional rect_parity_characterises_interior.  Three-axiom.  No Admitted.
 theories/RectangleSeparation.v
+# Special-case JCT, slice 3a: the IVT separation engine, abstracted from the
+# rectangle.  separation_via_field -- a continuous scalar field that is >0
+# inside, =0 on the edge skeleton, <0 outside, with bounded positive region --
+# forces in_bounded_component_cont.  The reusable foundation for future ring
+# families (convex polygons via min-inward-signed-distance).  Re-derives the
+# rectangle (rect_in_bounded_component) through the engine.  Three-axiom.  No Admitted.
+theories/SeparationField.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
