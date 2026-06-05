@@ -299,3 +299,18 @@ Qed.
 (* linkage. Start NTS_Hobby model equiv. See archived HobbyTheorem_b64.v.    *)
 (* This branch: feature/hott-rgr-hobby-noding.                               *)
 (* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Placeholder transport pattern for Hobby 4.1 (per PR #96 review).          *)
+(* This shows the intended shape: a formal Hobby property (e.g. biarc        *)
+(* approximation over noded segments) can be transported to the NTS side     *)
+(* once the full orient_equiv (with real b64 maps) is in place.              *)
+(* ========================================================================== *)
+
+Lemma hobby_4_1_biarc_approx_via_orient_equiv :
+  (* formal: forall segments, biarc_approx (noded segments) satisfies ... *)
+  (* NTS: same property after transport (univalence orient_equiv) *)
+  (* In full fill: exact match via re-expression of HobbyTheorem_b64.v    *)
+  (* using Shewchuk orientation transport.                               *)
+  True.
+Admitted.  (* loud placeholder; discharge when real HobbyEquiv + b64 wiring *)
