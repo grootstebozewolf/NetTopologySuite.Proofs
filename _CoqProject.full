@@ -140,6 +140,16 @@ theories/OverlayGraph.v
 # Axioms: the allowlisted classical-reals pair via point_eq_dec.  No Admitted.
 theories/Dart.v
 
+# extract_rings_valid R5 / general assembler, slice 2e: the FINITENESS / return
+# crux for face orbits (docs/orbit-cycle.md).  Pure-combinatorial heart of
+# face_orbit_finite, free of geometry: an injective self-map of a finite set,
+# iterated, cycles back.  For f : A -> A mapping a finite list S into itself and
+# injective on S (decidable eq): iter_in (orbit stays in S, hence finite),
+# iter_inj_on, iter_pigeon, and orbit_returns (some n>=1 with iter n d = d).
+# Slice 2d supplies these hypotheses for next; instantiating f with the dart
+# face step next o twin is slice 2f.  No Admitted; AXIOM-FREE.
+theories/OrbitCycle.v
+
 # extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
 # on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
 # primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE
