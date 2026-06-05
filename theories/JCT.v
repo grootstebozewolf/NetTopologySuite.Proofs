@@ -421,6 +421,15 @@ Definition parity_characterises_interior_cont (p : Point) (r : Ring) : Prop :=
    via a 1-D IVT on a scalar box field, so the rectangle is a fully Qed-closed
    instance of this seam -- no residual hypothesis. *)
 
+(* SECOND CONCRETE INSTANCE (theories/RightTriangleJCT.v +
+   RightTriangleSeparation.v).  The same recipe -- ray-parity computation +
+   a min-of-inward-signed-distances field + the IVT separation engine
+   (SeparationField.separation_via_field) -- discharges the seam for the
+   axis-aligned RIGHT TRIANGLE, the first family with a SLOPED edge (the
+   hypotenuse, handled affinely via `s_hyp`).  `right_triangle_parity_
+   characterises_interior` is again fully Qed-closed for strict-interior points,
+   showing the technique is not tied to axis-aligned edges. *)
+
 (* The re-scoped seam, carrying BOTH generic-position guards: it adds
    `ray_avoids_vertices p r` (PointInRingCorrect.v) to the four premises of
    `parity_characterises_interior_cont`.  Together `no_horizontal_edge_at`
