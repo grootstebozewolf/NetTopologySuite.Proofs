@@ -416,8 +416,10 @@ Definition parity_characterises_interior_cont (p : Point) (r : Ring) : Prop :=
    proves the ray-parity equivalence directly by finite evaluation over the four
    edges, and -- because a strict-interior height satisfies y0<py<y1, coinciding
    with no vertex (all vertices sit at y0 or y1) -- the grazing caveat above does
-   NOT bite there.  The interior case is then reduced to a single topological
-   separation lemma `rect_confines` (everything else Qed). *)
+   NOT bite there.  The separation is then proved UNCONDITIONALLY for strict-
+   interior points (`RectangleSeparation.v : rect_parity_characterises_interior`)
+   via a 1-D IVT on a scalar box field, so the rectangle is a fully Qed-closed
+   instance of this seam -- no residual hypothesis. *)
 
 (* The re-scoped seam, carrying BOTH generic-position guards: it adds
    `ray_avoids_vertices p r` (PointInRingCorrect.v) to the four premises of
