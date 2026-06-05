@@ -275,6 +275,16 @@ theories/BufferDepthEnclosureCounterexample.v
 # Pure-R; no Admitted/Axiom/Parameter.
 theories/BufferDepthHorizontalEdgeCounterexample.v
 
+# Completes depth_region's guard set: the vertex-graze case
+# (docs/buffer-depth-vertex-graze-counterexample.md).  Reusing the #85 diamond
+# as the (closed, horizontal-edge-free) kept boundary of G_diamond, A=(0,1/2)
+# and B=(0,0) are complement-connected yet get opposite depth_region verdicts
+# (depth_region_vertex_not_invariant, RED) because B's ray grazes vertex (1,0).
+# A ray_avoids_vertices guard on the kept boundary excludes it
+# (Gdiamond_excluded_by_ray_avoids_guard, GREEN).  With #91/#93 this pins the
+# full guard set. Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthVertexGrazeCounterexample.v
+
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
 # CurveGeometry) + validity predicates + chord approximation bridge
