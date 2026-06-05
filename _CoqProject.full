@@ -264,6 +264,12 @@ theories/RectangleSeparation.v
 # families (convex polygons via min-inward-signed-distance).  Re-derives the
 # rectangle (rect_in_bounded_component) through the engine.  Three-axiom.  No Admitted.
 theories/SeparationField.v
+# Convex specialisation of the IVT separation engine: conv_min = Rmin over a
+# list of half-plane inward slacks.  conv_min_pos_iff, continuity_pt_conv_min_path,
+# and the convex_separation wrapper.  The reusable layer that box_min and tri_min
+# instantiate; convex polygons supply edge half-planes + zero-set/bound facts.
+# Three-axiom.  No Admitted.
+theories/ConvexField.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
