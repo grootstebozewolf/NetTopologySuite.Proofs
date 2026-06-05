@@ -67,6 +67,17 @@ Local Open Scope R_scope.
 (* FINDING 1: the float Stage D decoder does NOT recover.                     *)
 (* ========================================================================== *)
 
+(* Why the expansion fallback would not help even if it were reached.          *)
+(* `b64_orient2d_expansion_sign_correct` is conditioned on                     *)
+(* `b64_orient2d_expansion_safe`, which (via `b64_Dekker_safe`) requires        *)
+(* Dekker's no-underflow precondition                                          *)
+(*     B2R x * B2R y = 0   \/   bpow radix2 (emin + 2*prec - 1) <= |B2R x*B2R y|*)
+(* on each TwoProduct.  Here B2R x * B2R y = 2^-200 * 2^-900 = 2^-1100, which   *)
+(* is nonzero yet far below the threshold 2^(emin+2*prec-1) = 2^(-1074+105) =   *)
+(* 2^-969 -- indeed below half the smallest subnormal (2^-1075).  So the        *)
+(* precondition is violated and Dekker rounds both the product and its error    *)
+(* term to 0: the error-free transform collapses, and the expansion carries no  *)
+(* soundness guarantee in this regime.                                          *)
 Theorem stage_d_does_not_recover_under_underflow :
   (* Stage D (Stages A through D as wired) reports "collinear" ...           *)
   b64_orient_sign_stage_d uP0 uP1 uQ = OrientRZero
