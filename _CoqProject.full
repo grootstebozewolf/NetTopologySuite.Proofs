@@ -255,6 +255,17 @@ theories/BufferBridgeRound.v
 # empty base case closed.  Pure-R, three-axiom.  No Admitted.
 theories/BufferDepth.v
 
+# Why depth_region (BufferDepth.v) needs a CLOSED-BOUNDARY guard
+# (docs/buffer-depth-enclosure-counterexample.md).  depth_region runs
+# ray_parity_odd over the kept edges with no constraint that they form a closed
+# boundary.  The open "spur" (a single kept edge) makes depth_region non-
+# component-invariant: p1=(-1,1) and p2=(-1,3) are complement-connected yet get
+# opposite verdicts (spur_depth_not_component_invariant, RED).  Its kept
+# boundary is the degenerate open ring spur_ring = [(0,0);(0,2)], which is not
+# ring_closed; a closure-guarded depth predicate excludes it
+# (spur_excluded_by_closure_guard, GREEN).  Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthEnclosureCounterexample.v
+
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
 # CurveGeometry) + validity predicates + chord approximation bridge
