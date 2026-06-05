@@ -67,6 +67,7 @@ From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import Core.
 
 From NTS.Proofs.Flocq Require Import Validate_binary64.
+From NTS.Proofs.Flocq Require Import Orientation_b64.
 From NTS.Proofs.Flocq Require Import Orient_b64_sound.
 From NTS.Proofs.Flocq Require Import Orient_b64_exact.
 From NTS.Proofs.Flocq Require Import Orient_b64_exact_full.
