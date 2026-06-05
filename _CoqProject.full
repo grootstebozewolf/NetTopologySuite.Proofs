@@ -200,6 +200,18 @@ theories/BufferCorrectness.v
 # (closure + min-points + edge fidelity).  Axiom-free (pure combinatorics).
 # No Admitted.  ring_simple / hole_inside_outer (analytic shell) not here.
 theories/RingExtract.v
+
+# extract_rings_valid R5 (docs/extract-rings-proof-structure.md §7 +
+# docs/extract-flatten-counterexample.md): the naive OverlayGraph.extract
+# flatten is NOT a valid ring assembler (RED) and the trace that fixes it
+# (GREEN).  extract_unordered_not_valid / extract_single_not_valid -- a closed
+# triangle boundary given out of walk order (resp. a single edge) flattens to a
+# non-closed (resp. 2-vertex) ring, so extract emits ~valid_polygon, refuting
+# the deferred extract_rings_valid conclusion for the stub.  ring_of_chain_
+# traces_valid_shape -- the SAME triangle, walk-ordered and traced by
+# RingExtract.ring_of_chain, is ring_closed /\ ring_has_minimum_points.  The
+# assembly analogue of RingSimple.not_ring_simple_bowtie.  No Admitted.
+theories/ExtractFlattenCounterexample.v
 # extract_rings_valid R3 (docs/extract-rings-proof-structure.md): the
 # bounded-component structure underlying the hole-count heuristic.
 # connected_in_complement is an equivalence relation (_refl/_sym/_trans);
