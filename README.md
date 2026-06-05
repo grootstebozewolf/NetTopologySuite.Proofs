@@ -38,7 +38,7 @@ The archived classical proofs remain the engineering precedent and the source of
 
 - The historical proof corpus is fully archived (see `archive/`).
 - The welcoming on-ramp (`pythagoras-for-beginners.v`) and the persona/role system (`HELP.md`, `READING-GUIDE.md`, `FOR-AI-AGENTS.md`) have been kept and will be evolved for HoTT + C# work.
-- First HoTT sources have landed in `theories-hott/` (per the RGR risk/cost pivot in `docs/hott-rgr-risk-cost-pivot.md`). See `theories-hott/VoronoiEquivalence.v` (first small equivalence proving the NTS Voronoi link via HoTT Equiv + the one allowed axiom Univalence for transport; skeleton with explicit "next session" placeholders per bounded RGR) and `_CoqProject.hott`.
+- First HoTT sources + RGR planning have landed in `theories-hott/` and `docs/`. See `theories-hott/VoronoiEquivalence.v` (pilot small equivalence for NTS Voronoi link) + `docs/hott-rgr-risk-cost-pivot.md` (strategy) and `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md` (next big chunk: TIN/linearise, Hobby, Shewchuk, Curve — chunked small equivs in recommended order, re-use archive via transport). `_CoqProject.hott` for builds.
 - A full HoTT-oriented build story will evolve with more modules. All prior classical CI/build/oracle live in `archive/`.
 
 ## Axiom policy (HoTT era)
