@@ -352,6 +352,12 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   area, so the face across each edge is oppositely oriented (the combinatorial
 >   heart of outer vs hole). Deferred: the geometric meaning of the sign
 >   (positive <-> encloses) and the analytic `hole_inside_outer` (§4).
+> - **R5 slice 3f — valid_polygon with holes, modulo one analytic seam
+>   (`theories/FacePolygonHoles.v`, `docs/face-polygon-holes.md`), LANDED Qed.**
+>   `polygon_valid_of_rings`, `face_outer_polygon_valid`, and
+>   `face_polygon_holes_valid` -- every `valid_polygon` condition except
+>   `hole_inside_outer` holds by construction of the face walks; the residual is
+>   now exactly that one analytic predicate (§4) plus the `extract` rewire.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
