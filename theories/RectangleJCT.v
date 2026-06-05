@@ -44,7 +44,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra Lia List.
-From NTS.Proofs Require Import Distance Overlay.
+From NTS.Proofs Require Import Distance Overlay PointInRingTangents JordanCurveSeam.
 Import ListNotations.
 
 Local Open Scope R_scope.
@@ -233,7 +233,65 @@ Lemma rect_ring_min_points : forall x0 y0 x1 y1,
 Proof. intros; unfold ring_has_minimum_points, rect_ring; cbn [length]; lia. Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §5  Slice 2a (analytic, JCT-free): open-box points are off the edge          *)
+(*     skeleton, reducing the interior equivalence to the bounded-component     *)
+(*     separation alone.                                                        *)
+(* -------------------------------------------------------------------------- *)
+
+(* A strict-interior point lies in `ring_complement` (is not on any of the four
+   edges): each edge pins one coordinate to a boundary value (py=y0, px=x1,
+   py=y1, px=x0), contradicting the strict box inequalities.  No Jordan content
+   -- pure interval arithmetic over the four lerp parametrisations. *)
+Theorem rect_open_box_complement : forall x0 y0 x1 y1 p,
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  ring_complement (rect_ring x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy.
+  intros [e [t [Hin [Ht [Hpx Hpy]]]]].
+  rewrite ring_edges_rect in Hin.
+  cbn [In] in Hin.
+  destruct Hin as [He | [He | [He | [He | []]]]];
+    subst e; cbn [px py fst snd] in Hpx, Hpy; nra.
+Qed.
+
+(* Consequently, for a strict-interior point the `ring_complement` half of
+   `geometric_interior_cont` is automatic, so "geometric interior" collapses to
+   exactly "in a bounded complement component" -- the single remaining analytic
+   rung (the rectangle separation / IVT argument), isolated. *)
+Theorem rect_open_box_interior_iff_bounded : forall x0 y0 x1 y1 p,
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  (geometric_interior_cont p (rect_ring x0 y0 x1 y1)
+     <-> in_bounded_component_cont (rect_ring x0 y0 x1 y1) p).
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy.
+  unfold geometric_interior_cont; split.
+  - intros [_ Hb]; exact Hb.
+  - intros Hb; split; [ apply rect_open_box_complement; assumption | exact Hb ].
+Qed.
+
+(* The combined slice-1+2a picture for a strict-interior point: the ray-parity
+   test fires AND the point is off the skeleton AND "interior = bounded
+   component".  Everything except the bounded-component separation is now Qed. *)
+Theorem rect_open_box_characterisation : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  point_in_ring p (rect_ring x0 y0 x1 y1) /\
+  ring_complement (rect_ring x0 y0 x1 y1) p /\
+  (geometric_interior_cont p (rect_ring x0 y0 x1 y1)
+     <-> in_bounded_component_cont (rect_ring x0 y0 x1 y1) p).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hx Hy.
+  split; [| split].
+  - apply point_in_ring_rect_iff; [ exact Hx01 | exact Hy01 | ].
+    split; [ exact Hy | split; lra ].
+  - apply rect_open_box_complement; assumption.
+  - apply rect_open_box_interior_iff_bounded; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions point_in_ring_rect_iff.
+Print Assumptions rect_open_box_complement.
+Print Assumptions rect_open_box_characterisation.
