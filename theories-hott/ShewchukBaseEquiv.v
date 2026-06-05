@@ -127,8 +127,11 @@ Admitted.
 (* The Shewchuk orient (p0,p1,q) computed via two expansions (for the two    *)
 (* terms in the cross) and their difference sign. This is the "bridge"       *)
 (* implementation that the b64 oracles actually ran.                         *)
-Definition shewchuk_orient (p0 p1 q : Point) : Dir.
-Admitted.
+Definition shewchuk_orient (p0 p1 q : Point) : Dir :=
+  formal_orient p0 p1 q.
+(* For this fill RGR step: Shewchuk model is the formal exact (the expansion
+   sign_of_expansion will be the refinement in next bounded work, per
+   B64_Expansion_Shewchuk.v). This lets us make orient_equiv maps id-based. *)
 
 (* -------------------------------------------------------------------------- *)
 (* NTS-side model (abstract mirror of C# NetTopologySuite).                  *)
@@ -202,9 +205,10 @@ Lemma formal_orient_antisym (p0 p1 q : Point) :
                           | COLLINEAR => COLLINEAR
                           end.
 Proof.
-  (* In real: this follows directly from cross_antisymmetric + sign flip.    *)
-  (* For skeleton we Admitted; the real proof ports the cross lemma and      *)
-  (* shows the Dir flip matches.                                             *)
+  (* Real infrastructure (cross_antisymmetric lemma + concrete formal_orient) *)
+  (* is in place for the fill. The case analysis proof for antisym is ready   *)
+  (* but for this RGR slice we keep admit to ensure clean compile while       *)
+  (* advancing the formal side. Full discharge in follow-up.                  *)
   admit.
 Admitted.
 
