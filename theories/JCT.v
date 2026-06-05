@@ -411,6 +411,14 @@ Definition parity_characterises_interior_cont (p : Point) (r : Ring) : Prop :=
    the rightward ray), giving `parity_characterises_interior_cont_strict`
    (ibid.).  Any eventual discharge of this seam should carry that guard. *)
 
+(* CONCRETE INSTANCE (theories/RectangleJCT.v).  This seam is discharged for
+   AXIS-ALIGNED RECTANGLES as far as analysis allows: `point_in_ring_rect_iff`
+   proves the ray-parity equivalence directly by finite evaluation over the four
+   edges, and -- because a strict-interior height satisfies y0<py<y1, coinciding
+   with no vertex (all vertices sit at y0 or y1) -- the grazing caveat above does
+   NOT bite there.  The interior case is then reduced to a single topological
+   separation lemma `rect_confines` (everything else Qed). *)
+
 (* The re-scoped seam, carrying BOTH generic-position guards: it adds
    `ray_avoids_vertices p r` (PointInRingCorrect.v) to the four premises of
    `parity_characterises_interior_cont`.  Together `no_horizontal_edge_at`
