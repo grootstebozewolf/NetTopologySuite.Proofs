@@ -476,6 +476,13 @@ theories-flocq/Orient_b64_stage_d.v
 # composition of already-Qed-closed results; replaces the ungrounded
 # "Shewchuk_vs_Z2" Hypothesis draft.  Qed-closed, three-axiom footprint.
 theories-flocq/Shewchuk_vs_Z2.v
+# Issue #66 unsoundness witness: concrete finite binary64 points
+# (P1x=2^-200, Qy=2^-900) where the float product underflows to +0, so the
+# Stage A filter b64_orient_sign_filtered reports OrientRZero ("collinear")
+# while the exact integer-determinant model b64_orient2d_exact returns +1 and
+# the true cross product is > 0.  Qed-closed positive theorem (vm_compute);
+# motivates the safety preconditions on the filter-soundness theorems.
+theories-flocq/Orient_b64_underflow_unsound.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime

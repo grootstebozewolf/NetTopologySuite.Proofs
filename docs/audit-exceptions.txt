@@ -285,6 +285,17 @@ theories-flocq/Orient_b64_stage_d.v
 # "Shewchuk_vs_Z2" Hypothesis draft from the #66 discussion.
 theories-flocq/Shewchuk_vs_Z2.v
 
+# Category C: Issue #66 unsoundness witness.  Concrete finite binary64
+# points where the float product underflows to +0, so the Stage A filter
+# b64_orient_sign_filtered reports OrientRZero while the exact
+# integer-determinant model returns +1 and the true cross product is > 0
+# (stage_a_filter_unsound_under_underflow, Qed-closed via vm_compute).
+# Pulls Classical_Prop.classic transitively via the cross_R_BP / B2R real
+# lineage (same as the other binary64-arithmetic files).  No Admitteds,
+# and -- unlike the Stage D files -- no fast_expansion_sum_nonoverlap_shewchuk
+# reference (it touches only the filter and the exact model).
+theories-flocq/Orient_b64_underflow_unsound.v
+
 # Category C: Phase 3 Milestone 4 (Flocq layer) -- noding-to-graph bridge.
 # Defines noded_segments and proves snap_noding_bridge +
 # valid_topology_graph_noded_labeled_graph by lifting the R-side
