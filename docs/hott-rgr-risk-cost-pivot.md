@@ -80,6 +80,8 @@ This pivot keeps the spirit of the original project (rigorous, no silent stubs, 
 
 Next concrete step (Green deliverable of this session): the first small equivalence example can be proposed as a follow-on session (Red: pick Orient or Distance; Green: model + equiv + transport; Refactor: update this doc + personas if needed).
 
+**Follow-on RGR (this session on feature/hott-rgr-pivot)**: `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md` — applies the same methodology to the *next big chunk* (TIN/linearisation, Hobby snap-rounding, Shewchuk expansions, Curve/arc primitives). Decision: chunk into small equivs in order Shewchuk (preds base) → Hobby (noding) → TIN/linearise (practical NTS bridge), defer native. Re-use archive via transport + one-axiom for linkage. This is the explicit realization of "small high-value equivalences" for these interconnected areas.
+
 References to prior RGR style: see `archive/docs/snap-rounding-rgr-pivot.md`, `archive/docs/soundness-strategy.md`, `archive/docs/issue-64-arc-primitives-triage.md`, and the session workflow in `docs/FOR-AI-AGENTS.md`.
 
 ## Session outcome: "Prove voronoid equivalence" (this RGR cycle)
