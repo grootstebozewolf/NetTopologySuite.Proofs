@@ -90,6 +90,14 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* The convex separation wrapper.                                              *)
+(*                                                                            *)
+(* Intended use for a general CONVEX POLYGON: take `hps` to be the polygon's    *)
+(* edge half-planes (each oriented inward), and discharge the three remaining   *)
+(* obligations from the polygon's geometry -- the zero set of `conv_min` lies   *)
+(* on the edge skeleton (so it is nonzero off it), the point is strictly inside *)
+(* (`conv_min_pos_iff`), and the interior is bounded by its bounding box.       *)
+(* The rectangle (4 half-planes) and right triangle (2 legs + hypotenuse) are   *)
+(* the instances already discharged in RectangleSeparation / RightTriangleSeparation.*)
 (* -------------------------------------------------------------------------- *)
 
 Theorem convex_separation :
