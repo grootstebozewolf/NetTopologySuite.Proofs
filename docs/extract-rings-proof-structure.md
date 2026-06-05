@@ -318,6 +318,13 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   face segments). The combinatorial core of `valid_polygon`'s outer ring, now
 >   for a GENERAL arrangement -- the DCEL assembly discharged end to end.
 >   Remaining: hole nesting + the analytic `hole_inside_outer` residual (§4).
+> - **R5 slice 3b — face ring is `ring_simple` (`theories/FaceRingSimple.v`,
+>   `docs/face-ring-simple.md`), LANDED Qed.** A face segment `(dbase d, dtip d)`
+>   IS the dart `d` (`Dart = Edge`), so `face_chain_subset`: every face edge is in
+>   `D`; with `pairwise_no_proper_cross D` (noding), `ring_simple_of_subset` gives
+>   `face_ring_simple`. `face_ring_combinatorial_valid` bundles `ring_closed` +
+>   `ring_has_minimum_points` + `ring_simple` for a >=3-dart face -- THREE of the
+>   four `valid_polygon` conditions, by construction.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
