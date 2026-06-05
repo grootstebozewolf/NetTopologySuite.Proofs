@@ -122,3 +122,19 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 (Adapt for actual author.)
 
 This completes the requested "Continue the loop, create a unique branch name for RGR, RGR, then run /check-work pause".
+
+## Post-merge / PR #90 review addressed (on hott)
+
+**PR #90** merged to `hott` (merge commit ffa45cd using the review's recommended message).
+
+**Review actions completed (before/after merge):**
+1. Added one-line comment in `theories-hott/ShewchukBaseEquiv.v` (immediately after `orient_equiv . Admitted.`) explicitly linking the fill step to the specific archived B64 lemmas + cross-refs to the chunk RGR doc and HoTT-Status "Next: fill real proofs". (Addressed Domain Expert + Notulist actionable #1 + Lead Developer polish suggestion.)
+2. Updated `docs/HoTT-Status.md` table (Shewchuk row Status → "GREEN skeleton landed (PR #90) — in progress toward fill"; refreshed overall state paragraph and "Last updated"). (Addressed Notulist actionable #2.)
+
+Additional hygiene: the small review-fix commit (588f985) was included in the merge.
+
+The Shewchuk base skeleton is now officially part of the `hott` track. Per the review invitation: ready for the next bounded step — filling the real proofs (new unique feature branch from hott, RGR the fill, /check-work) or moving to Hobby noding chunk.
+
+**Next loop iteration target (per table + review):** Fill Shewchuk real proofs (turn the three Admitted into Qed using the archive Qed pieces + one univalence transport lemma as proof-of-concept).
+
+LGTM × 4 from the full team review. HoTT pivot remains disciplined.
