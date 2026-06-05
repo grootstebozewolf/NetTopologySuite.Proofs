@@ -88,6 +88,13 @@ Definition cross (p0 p1 q : Point) : R :=
   (px p1 - px p0) * (py q - py p0)
   - (px q - px p0) * (py p1 - py p0).
 
+(* Re-expressed from archive/theories/Orientation.v for the formal side. *)
+Lemma cross_antisymmetric : forall p0 p1 q,
+  cross p0 p1 q = - cross p0 q p1.
+Proof.
+  intros. unfold cross. ring.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Formal geometric orientation (exact).                                     *)
 (* Dir encodes the trichotomy that the sign of cross gives.                  *)
@@ -99,13 +106,30 @@ Definition cross (p0 p1 q : Point) : R :=
 Inductive Dir : Type := CCW | CW | COLLINEAR.
 
 (* The formal (exact, real-arithmetic) orientation predicate.                *)
-(* For the skeleton we leave the body Admitted (the real version is the      *)
-(* sign-of-cross decision, or the port of the classical cross sign).         *)
-Definition formal_orient (p0 p1 q : Point) : Dir.
-Admitted.
+(* Defined as the sign of the cross product (twice signed area), matching    *)
+(* the classical definition in archive/theories/Orientation.v.               *)
+(* This is the "exact" side that the b64/Shewchuk and NTS implementations    *)
+(* must match.                                                               *)
+Definition formal_orient (p0 p1 q : Point) : Dir :=
+  let c := cross p0 p1 q in
+  if Rlt_dec c 0 then CW
+  else if Rgt_dec c 0 then CCW
+  else COLLINEAR.
 
 (* For convenience alias — "exact" means the mathematical geometry one.      *)
 Definition exact_orient := formal_orient.
+
+(* Small real Qed property using the new definition (degenerate case).        *)
+(* More substantial properties (antisym, translation invariance, etc.) will    *)
+(* be discharged in the fill using cross_* lemmas + decision cases.          *)
+Lemma formal_orient_degenerate (p0 p1 : Point) :
+  formal_orient p0 p1 p0 = COLLINEAR.
+Proof.
+  unfold formal_orient.
+  assert (cross p0 p1 p0 = 0) by (unfold cross; ring).
+  rewrite H.
+  destruct (Rlt_dec 0 0); destruct (Rgt_dec 0 0); try reflexivity; lra.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Shewchuk expansion model (the exactness engine from the archive).         *)
@@ -202,9 +226,10 @@ Lemma formal_orient_antisym (p0 p1 q : Point) :
                           | COLLINEAR => COLLINEAR
                           end.
 Proof.
-  (* In real: this follows directly from cross_antisymmetric + sign flip.    *)
-  (* For skeleton we Admitted; the real proof ports the cross lemma and      *)
-  (* shows the Dir flip matches.                                             *)
+  (* The cross_antisymmetric lemma (re-expressed from archive) is now        *)
+  (* available. The real fill will case on the Rlt/Rgt decisions for c and   *)
+  (* -c to show the Dir swap. For this bounded step we keep the admit but    *)
+  (* the infrastructure (definition + cross lemma) is in place.              *)
   admit.
 Admitted.
 
