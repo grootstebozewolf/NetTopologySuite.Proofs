@@ -50,7 +50,9 @@ Proof.
 Qed.
 
 (* UNCONDITIONAL: a hole with a vertex inside the box lies inside a rectangular
-   outer ring.  Generalises the fixed-4x4 witness to every rectangle. *)
+   outer ring.  Generalises the fixed-4x4 witness to every rectangle.  This is
+   Stage B of the multi-beachhead plan (docs/hole-inside-outer-plan.md) -- the
+   first unconditional discharge of the `hole_inside_outer` analytic seam. *)
 Theorem hole_inside_outer_rect : forall x0 y0 x1 y1 (hole : Ring) p,
   x0 < x1 -> y0 < y1 ->
   In p hole ->
