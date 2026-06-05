@@ -152,6 +152,17 @@ theories/Dart.v
 # classical-reals pair via first_half_dec's real-order decision.
 theories/DartAngularOrder.v
 
+# extract_rings_valid R5 / general assembler, slice 2b: the cyclic `next`
+# (rotational successor) on the outgoing dart fan (docs/dart-next.md).  Reflects
+# the slice-2a order into bool (dir_ltb/dart_ltb + *_spec bridges), defines
+# list_min and `next` (minimal strictly-greater dart, wrapping to the global min
+# at the fan maximum), and proves next WELL-DEFINED on the fan: next_in (orbit
+# closure), next_base (stays at the vertex), next_advances (advances in angle
+# while a greater dart exists).  Minimal-successor correctness, injectivity /
+# cyclic-permutation, and the face_of orbit FINITENESS (§9 crux) are deferred
+# (slice 2c).  No Admitted; axioms = the allowlisted classical-reals pair.
+theories/DartNext.v
+
 # The Jordan-curve seam for point_in_ring_correct, examined head-on
 # (docs/jct-vacuity-finding.md).  Proves the corpus's
 # geometric_interior_stdlib is identically false because

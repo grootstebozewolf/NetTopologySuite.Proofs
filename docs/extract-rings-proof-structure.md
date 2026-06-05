@@ -267,6 +267,13 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   the pure-`ring` certificate `vcross_chain_cert` + `nra`), lifted to darts as
 >   `dart_lt_*`. `dir_lt_total`/`dir_lt_trans` carry the general-position
 >   (non-parallel) hypothesis the noded JCT seam supplies.
+> - **R5 slice 2b — cyclic `next` (`theories/DartNext.v`,
+>   `docs/dart-next.md`), LANDED Qed.** Reflects the slice-2a order into `bool`
+>   (`dir_ltb`/`dart_ltb` + `*_spec` bridges), defines `list_min` and `next`
+>   (minimal strictly-greater dart, wrapping to the global min at the fan
+>   maximum), and proves it WELL-DEFINED: `next_in` (orbit closure), `next_base`
+>   (stays at the vertex), `next_advances` (advances in angle). Minimal-successor
+>   correctness, injectivity/permutation, and the `face_of` orbit are deferred.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
