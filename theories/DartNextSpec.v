@@ -241,6 +241,13 @@ Qed.
 (* §5  `next` is the rotational successor.                                     *)
 (* -------------------------------------------------------------------------- *)
 
+(* These pin down `DartNext.next` (the rotational successor on a `list Dart`)
+   when that list is an outgoing fan `Dart.outgoing v D` satisfying `fan_ok`:
+   the minimal strictly-greater dart around the vertex `v`, wrapping to the
+   global minimum at the fan maximum.  Together with slice 2b's `next_in` /
+   `next_base`, they are the angular semantics the `face_of` walk (`next o twin`)
+   and its finiteness -- the next slice's target -- will iterate. *)
+
 (* Non-wrap case: when a strictly-greater dart exists, `next F d` is one of them
    and is `<=` every strictly-greater dart -- i.e. THE minimal successor. *)
 Lemma next_min_successor :
