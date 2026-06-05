@@ -288,6 +288,14 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   endo on a finite set via `NoDup_length_incl`), hence a CYCLIC PERMUTATION --
 >   what makes the `face_of` walk a genuine cycle. The `face_of` orbit of
 >   `next o twin` + its FINITENESS (§9 crux) is deferred.
+> - **R5 slice 2e — orbit cycle / `face_orbit_finite` core
+>   (`theories/OrbitCycle.v`, `docs/orbit-cycle.md`), LANDED Qed, AXIOM-FREE.**
+>   The pure-combinatorial heart of `face_orbit_finite`, free of geometry: an
+>   INJECTIVE self-map of a FINITE set, iterated, cycles back. For `f` mapping a
+>   finite list `S` into itself and injective on `S`: `iter_in` (orbit ⊆ `S`,
+>   finite), `iter_inj_on`, `iter_pigeon`, and `orbit_returns` (some `n >= 1`
+>   with `iter n d = d`). Slice 2d gives these hypotheses for `next`;
+>   instantiating `f := next o twin` (the dart face step) is slice 2f.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
