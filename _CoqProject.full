@@ -162,6 +162,19 @@ theories/JCT.v
 # pairwise component-separation facts.  Pure-R; no Admitted/Axiom/Parameter.
 theories/JCT_Counterexample.v
 
+# Why no_horizontal_edge_at is NOT enough for ray-parity to characterise the
+# interior (docs/jct-vertex-grazing-counterexample.md).  A convex diamond and
+# its centre B = (0,0): the rightward ray grazes vertex (1,0), so the strict
+# y-straddle counts neither incident edge and parity is EVEN -- yet B is
+# interior.  no_horizontal_edge_at holds at B (the diamond has no horizontal
+# edge), so it fails to exclude the graze.  diamond_refutes_parity_seam shows
+# the JCT.v seam parity_characterises_interior_cont cannot hold at both B and a
+# correctly-classified A in the same component (geometric_interior_cont is a
+# component invariant; point_in_ring is not).  GREEN: ray_avoids_vertices is the
+# missing generic-position guard (parity_characterises_interior_cont_strict).
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/JCT_VertexGrazingCounterexample.v
+
 # Buffer/noder pipeline, end-to-end seam S1 (docs/buffer-noder-pipeline.md):
 # the conditional headline buffer_correct_conditional -- Minkowski-dilation
 # spec buffer_spec, concrete offset_curve (via BufferOffset), abstract noder
