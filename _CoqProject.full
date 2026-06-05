@@ -159,6 +159,13 @@ theories/JCT.v
 # The combinatorial/computational half of parity_characterises_interior_cont
 # for rectangles; JCT-free.  Pure-R, three-axiom.  No Admitted.
 theories/RectangleJCT.v
+# Special-case JCT, slice 2d (docs/extract-rings-proof-structure.md §11): the
+# rectangle separation, UNCONDITIONALLY.  Encodes box membership as a single
+# continuous field box_min (>0 inside, =0 on the edge skeleton, <0 outside) and
+# uses Stdlib IVT -- a complement path never hits 0, so it cannot change sign,
+# hence stays inside.  Discharges RectangleJCT.rect_confines and gives the full
+# unconditional rect_parity_characterises_interior.  Three-axiom.  No Admitted.
+theories/RectangleSeparation.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"

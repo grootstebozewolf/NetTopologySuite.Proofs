@@ -337,3 +337,16 @@ discharged. Remaining headline value in this lane is **JCT-gated** (the same
 3–5-month topology piece tracked for #65), with R1-open / R4 as the only
 incremental, JCT-free combinatorial work left — valuable for the general case
 but not reaching a headline on their own.
+
+### §11.1 update (2026-06-05): rectangle special case fully discharged
+
+`theories/RectangleSeparation.v` closes the rectangle case **unconditionally**:
+`rect_confines` (the box-separation residual of §2b) is now proved for
+strict-interior points, so `rect_parity_characterises_interior` gives
+`point_in_ring p ↔ geometric_interior_cont p` for axis-aligned rectangle
+interiors with **no residual hypothesis**. Method: a single continuous scalar
+field `box_min` (>0 inside, =0 on the edge skeleton, <0 outside) reduces the 2-D
+separation to Stdlib's 1-D intermediate value theorem (a complement path avoids
+the boundary, so `box_min` along it never vanishes and cannot change sign).
+Three-axiom footprint. The *general* polygonal JCT seam remains the open
+frontier for arbitrary rings; the rectangle is now a complete worked instance.
