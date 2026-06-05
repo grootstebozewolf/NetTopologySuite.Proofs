@@ -173,6 +173,17 @@ theories/DartNext.v
 # axioms = the allowlisted classical-reals pair.
 theories/DartNextSpec.v
 
+# extract_rings_valid R5 / general assembler, slice 2d: INJECTIVITY (and
+# surjectivity / cyclic-permutation) of `next` on the outgoing fan
+# (docs/dart-next-injective.md).  In a cyclic angular order each dart has a
+# unique predecessor (the maximal dart below it, or the global max on wrap), so
+# next_no_collision / next_injective: next is injective on a fan_ok fan; and
+# next_surjective: on a NoDup fan it is onto (injective endo on a finite set),
+# hence a cyclic permutation.  This is what makes the face_of walk a genuine
+# CYCLE.  The face_of orbit of next o twin + its FINITENESS (§9 crux) is deferred.
+# No Admitted; axioms = the allowlisted classical-reals pair.
+theories/DartNextInjective.v
+
 # The Jordan-curve seam for point_in_ring_correct, examined head-on
 # (docs/jct-vacuity-finding.md).  Proves the corpus's
 # geometric_interior_stdlib is identically false because

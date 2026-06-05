@@ -281,6 +281,13 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   and pins `next` down: `next_min_successor` (the minimal strictly-greater
 >   dart) and `next_wrap_least` (global min on wrap). Injectivity/permutation and
 >   the `face_of` orbit are deferred.
+> - **R5 slice 2d — `next` injectivity (`theories/DartNextInjective.v`,
+>   `docs/dart-next-injective.md`), LANDED Qed.** In a cyclic angular order each
+>   dart has a unique predecessor, so `next_injective`: `next` is injective on a
+>   `fan_ok` fan; and `next_surjective`: on a `NoDup` fan it is onto (injective
+>   endo on a finite set via `NoDup_length_incl`), hence a CYCLIC PERMUTATION --
+>   what makes the `face_of` walk a genuine cycle. The `face_of` orbit of
+>   `next o twin` + its FINITENESS (§9 crux) is deferred.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
