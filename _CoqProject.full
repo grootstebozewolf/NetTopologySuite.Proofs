@@ -163,6 +163,16 @@ theories/DartAngularOrder.v
 # (slice 2c).  No Admitted; axioms = the allowlisted classical-reals pair.
 theories/DartNext.v
 
+# extract_rings_valid R5 / general assembler, slice 2c: the rotational-successor
+# CORRECTNESS spec of `next` (docs/dart-next-spec.md).  Under fan_ok (proper +
+# general-position fan), proves list_min is a genuine lower bound (fold_min_lb /
+# list_min_lb -- the fold-minimum is correct under a strict total order) and
+# pins `next` down: next_min_successor (the minimal strictly-greater dart) and
+# next_wrap_least (global min on wrap).  Injectivity / cyclic-permutation and the
+# face_of orbit FINITENESS (§9 crux) are deferred (slice 2d).  No Admitted;
+# axioms = the allowlisted classical-reals pair.
+theories/DartNextSpec.v
+
 # The Jordan-curve seam for point_in_ring_correct, examined head-on
 # (docs/jct-vacuity-finding.md).  Proves the corpus's
 # geometric_interior_stdlib is identically false because
