@@ -345,6 +345,24 @@ theories/ConvexField.v
 # parametrisation into nra/field.  gtri_interior_is_geometric: interior points
 # are geometric interior points (via separation_via_field).  Three-axiom.  No Admitted.
 theories/GeneralTriangleSeparation.v
+# Special-case JCT: foundation + minimal hypothesis for the arbitrary-triangle
+# ray-parity, plus the RED non-vacuity check on the separation engine.
+# edge_cross_sign (edge_crosses_ray <-> signed-area sign); gtri_parity_spec (the
+# minimal parity hypothesis) + gtri_in_ring_imp_geometric (conditional headline);
+# engine_produces_inhabited_interior (geometric_interior_cont is INHABITED, vs the
+# refuted geometric_interior_stdlib).  Three-axiom.  No Admitted.
+theories/GeneralTriangleParity.v
+# Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
+# 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
+# ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
+# turns both ways via Orientation.cross).  Three-axiom.  No Admitted.
+theories/HatMonotile.v
+# Showcase: the "Spectre" strictly-chiral aperiodic monotile's defining
+# ingredient -- a CURVED edge -- formalized.  curved_edge_central_symmetry: any
+# midpoint-odd profile makes the edge invariant under 180-degree rotation about
+# the chord midpoint (the reflection-free mating property).  Concrete sine_edge.
+# Three-axiom (cos/sin clean).  No Admitted.
+theories/SpectreCurvedEdge.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
