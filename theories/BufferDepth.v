@@ -95,6 +95,16 @@ Definition edges_of (E : list (Point * Point * EdgeLabel)) : list Edge :=
 Definition depth_region (G : TopologyGraph) (p : Point) : Prop :=
   ray_parity_odd p (edges_of (kept_edges G)).
 
+(* SCOPE CAVEAT (see theories/BufferDepthEnclosureCounterexample.v +
+   docs/buffer-depth-enclosure-counterexample.md).  `depth_region` runs ray
+   parity over `kept_edges` with NO guard that they form a CLOSED boundary.
+   Crossing parity is a sound enclosure test only for a closed boundary: for an
+   open kept-edge set (e.g. a single "spur" edge) `depth_region` is not even
+   constant on a complement component (`spur_depth_not_component_invariant`).
+   A `depth_region`/`depth_region_is_buffer` used for correctness should carry a
+   closed-boundary premise -- the general form being "even kept-degree at every
+   vertex" (the boundary decomposes into closed cycles). *)
+
 (* The empty graph has no boundary, hence encloses nothing. *)
 Lemma depth_region_empty : forall p, ~ depth_region empty_graph p.
 Proof.
