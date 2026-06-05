@@ -157,3 +157,21 @@ LGTM × 4 from the full team review. HoTT pivot remains disciplined.
 **Stopping conditions met for slice.** Concrete formal side + one Qed + model alias + accurate records delivered. No tangents (no full equiv construction, no b64 re-expression yet, no Hobby/TIN). Explicit next: construct IsEquiv for orient_equiv + one transport Qed using the archive Qed pieces.
 
 This is the Green of the fill RGR. The loop can continue with the next bounded fill or Hobby chunk.
+
+## Orient-equiv RGR slice outcome (on feature/hott-rgr-shewchuk-orient-equiv, post PR #92)
+
+**RED (for this slice).** At the start of the slice, `nts_orient`, `orient_equiv`, and `nts_orient_antisym` were still `Admitted` (loud, with plans). The model was only partial (formal side advanced in previous fill, but no equiv or univalence demonstration yet).
+
+**GREEN (delivered).**
+- `nts_orient` defined as alias to formal (model stage where "NTS mirror" coincides with verified exact; comment explains the b64 justification path).
+- `orient_equiv` implemented as concrete id-based `Equiv` with proper `IsEquiv` (inv = id, sect/retr = eq_refl, adj = I placeholder).
+- New lemma `orient_types_equal_via_univalence` demonstrating the one allowed axiom (`univalence orient_equiv` produces the path between the two function types; with `change`/`apply` for universe).
+- `nts_orient_antisym` now `Qed` (reduces to the formal_antisym via aliases; comments explain it as the "real" transport example in current model stage, with future non-trivial transport via the univalence path).
+- Accurate comments updated throughout.
+- Compiles cleanly. One axiom respected; loud Admitted only for `sign_of_expansion`.
+
+**Refactor / cross-refs.** Notes and comments updated for current reality. This is the "construct IsEquiv + one transport Qed" step called out in HoTT-Status and prior fill outcome. (Outcome appended here per workflow.)
+
+**Stopping conditions met for slice.** Id-equiv + univalence demo + one Qed transport example (antisym) delivered. No tangents (no b64 wiring for non-trivial maps yet; that is next bounded). Explicit next: wire real IsEquiv/maps from the B64_Expansion_Shewchuk + Orient_b64_* lemmas + update other modules (Voronoi etc.).
+
+This advances the Shewchuk base link. The loop continues with the next iteration (real b64-backed IsEquiv or Hobby chunk).
