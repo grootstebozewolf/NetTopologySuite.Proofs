@@ -176,7 +176,7 @@ This is the Green of the fill RGR. The loop can continue with the next bounded f
 
 This advances the Shewchuk base link. The loop continues with the next iteration (real b64-backed IsEquiv or Hobby chunk).
 
-## Hobby noding RGR start (on feature/hott-rgr-hobby-noding, post orient-equiv slice)
+## Hobby noding RGR start (on feature/hott-rgr-hobby-noding / PR #96, post orient-equiv slice)
 
 **RED.** Hobby had b64 proofs but no HoTT model or NTS equiv yet. After Shewchuk base (now solid with id equiv + transport demos), we can start re-expressing the b64 lemmas via orient_equiv transport.
 
