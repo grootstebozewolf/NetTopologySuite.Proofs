@@ -373,6 +373,12 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   defined via `point_in_ring`, so `hole_inside_outer_rect` needs only a hole
 >   vertex in the box. First non-toy discharge of the analytic seam; convex (C),
 >   triangle (D), and the general JCT (E) remain.
+> - **R5 analytic seam Stage A — conditional `valid_polygon` headline via the JCT
+>   bridge (`theories/ExtractFacePolygonJCT.v`, `docs/extract-face-polygon-jct.md`),
+>   LANDED Qed.** `hole_jct_witness`, `hole_inside_outer_of_witness`, and
+>   `face_polygon_valid_via_jct` -- a face polygon with holes is `valid_polygon`
+>   modulo only the named JCT predicate `parity_characterises_interior_cont_strict`
+>   (matching `overlay_ng_correct_conditional` / `point_in_ring_correct_jct`).
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
