@@ -94,7 +94,14 @@ Definition twin_face_chain (D : list Dart) (d : Dart) (n : nat) : list (Point * 
   rev (map seg_of (map twin (dart_walk D d n))).
 
 (* It carries the NEGATED signed area -- the adjacent face is oppositely
-   oriented.  This is the orientation opposition that underlies outer vs hole. *)
+   oriented.  This is the orientation opposition that underlies outer vs hole:
+   walking `next o twin` traces one face; the SAME edges traced from the twin
+   darts (the face on the other side of each edge) run the opposite way, so the
+   two faces sharing an edge have opposite sign.  Fixing one global sign
+   convention (say, bounded faces positive) then reads the outer boundary and its
+   holes as opposite orientations -- the combinatorial half of the outer/hole
+   classification that slice 3f assembles into a `valid_polygon` (the remaining
+   half being the analytic `hole_inside_outer`, §4). *)
 Theorem twin_face_chain_signed_area : forall D d n,
   signed_area2 (twin_face_chain D d n) = - signed_area2 (face_chain D d n).
 Proof.
