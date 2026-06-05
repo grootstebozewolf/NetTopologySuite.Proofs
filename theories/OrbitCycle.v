@@ -145,7 +145,13 @@ Section OrbitCycle.
     destruct Hdup as [i [j [[Hij _] Heq]]]. exists i, j. split; [ exact Hij | exact Heq ].
   Qed.
 
-  (* THE crux: the orbit returns -- some positive iterate is the identity at d. *)
+  (* THE crux: the orbit returns -- some positive iterate is the identity at d.
+
+     Intended instantiation (slice 2f, theories/DartFace.v): take `A := Dart`,
+     `f := fun d => next (outgoing (dtip d) D) (twin d)` (the face step), and
+     `S := D`.  `Hclos` then comes from `next_in` + twin-closure of `D`, and
+     `Hinj` from slice 2d's `next_injective` + `twin_inj`; `orbit_returns`
+     becomes `face_orbit_finite` directly. *)
   Theorem orbit_returns :
     forall d, In d S -> exists n, (1 <= n)%nat /\ iter n d = d.
   Proof.
