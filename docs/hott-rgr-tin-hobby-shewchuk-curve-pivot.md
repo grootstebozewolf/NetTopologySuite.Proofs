@@ -185,3 +185,15 @@ This advances the Shewchuk base link. The loop continues with the next iteration
 **Next.** On this branch or follow-on: start HobbyEquiv.v skeleton or add to existing, using the transport from Shewchuk.
 
 This continues the chunk RGR order: Shewchuk -> Hobby.
+
+## Hobby fill RGR start (on feature/hott-rgr-hobby-fill, post #96 merge)
+
+**RED.** Previous start was just notes/plan. Need actual skeleton file for Hobby equiv.
+
+**GREEN.** Created `theories-hott/HobbyBaseEquiv.v` (minimal self-contained skeleton with hobby props, equiv Admitted, placeholder transport lemma for 4.1 using orient_equiv, one univalence justified, loud admits, refs to b64 archive and Shewchuk). Updated HoTT-Status and pivot doc.
+
+**Refactor.** Notes point to b64 for next. Bounded: skeleton + visibility only.
+
+**Next.** On follow-on or this: replace Admitted with real maps from Hobby b64 re-expr + one Qed transport.
+
+This is the GREEN start of actual Hobby equivalence work.

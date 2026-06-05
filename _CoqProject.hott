@@ -8,3 +8,4 @@
 
 theories-hott/VoronoiEquivalence.v
 theories-hott/ShewchukBaseEquiv.v
+theories-hott/HobbyBaseEquiv.v

@@ -12,7 +12,7 @@ See root `README.md` (Current state + Axiom policy), `docs/hott-rgr-risk-cost-pi
 |---------------------------|---------------------------------|----------------------------------------------|----------------|
 | Voronoi pilot             | GREEN skeleton (first small equiv) | `theories-hott/VoronoiEquivalence.v` (Point, voronoi_cell Prop, NTSVoronoiDiagram, voronoi_equiv Admitted, transport sketch via univalence, compiles) | Fill admits (port minimal Triangle/Orient + incircle from archive); strengthen with orient_equiv once Shewchuk base lands; add b64 instance later. |
 | Shewchuk base (orient/expansion) | GREEN (landed via PR #90/#92/#94 slices): formal_orient def + Qed properties + id orient_equiv + univalence transport demo | `theories-hott/ShewchukBaseEquiv.v` (full formal side + model aliases + id equiv + demos Qed; b64 wiring next) | **Next**: wire real IsEquiv from B64_Expansion_Shewchuk + Orient_b64_* lemmas. |
-| Hobby (4.1/4.3 biarc/residual) | GREEN skeleton started (PR #96) | `theories-hott/ShewchukBaseEquiv.v` (Hobby noding start note + hobby_4_1_biarc_approx_via_orient_equiv placeholder); archived `HobbyTheorem_b64.v`. | Re-express b64 Hobby lemmas (4.1/4.3) via orient_equiv transport; build NTS_Hobby equiv. |
+| Hobby (4.1/4.3 biarc/residual) | GREEN skeleton started (PR #96 + this fill branch) | `theories-hott/HobbyBaseEquiv.v` (skeleton with formal/nts hobby props, hobby_equiv Admitted, hobby_4_1 placeholder transport via orient_equiv); `ShewchukBaseEquiv.v` (Hobby note); archived b64. | Flesh hobby_equiv with real b64 maps; one transport Qed. |
 | TIN / CurveLinearise      | RED (some classical Qed, no equiv) | Archived `theories/Tin.v`, `theories/CurveLinearise.v` (linearise faithfulness Qed for CIRCULARSTRING/COMPOUNDCURVE) | After Hobby + Shewchuk: model NTS TIN + prove linearise equiv; use transported orient facts. Defer native curves. |
 | Curve (Arc* / phase4)     | RED (conditionals + linearise) | Archived `theories/ArcOrient.v`, `ArcIntersect.v`, `Arc*` phase4 conditionals | After TIN linearise: revisit; decide whether native HIT curves are needed for the C# link given SegmentString forces linearise in NTS. |
 | Incircle / Delaunay (cross-cut) | RED (depends on orient)     | Archived `theories/ArcOrient.v`, `theories-flocq/InCircle_b64_compute.v`, Tin mentions | After Shewchuk base: add as the dual predicate; strengthen Voronoi. |
@@ -35,4 +35,4 @@ Update this table + add a one-paragraph outcome note to the relevant hott-rgr-*.
 
 See also: `docs/axiom-policy.md`, `docs/FOR-AI-AGENTS.md` (HoTT-era hard invariants + session workflow), `docs/READING-GUIDE.md` / `HELP.md` (personas updated for equivalence work).
 
-Last updated: orient-equiv RGR slice close on feature/hott-rgr-shewchuk-orient-equiv (id equiv + univalence demo + nts_antisym Qed + table refresh per process).
+Last updated: Hobby fill start on feature/hott-rgr-hobby-fill (new HobbyBaseEquiv.v skeleton + table + pivot doc).
