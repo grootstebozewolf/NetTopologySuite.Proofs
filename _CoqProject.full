@@ -128,6 +128,18 @@ theories/PointInRingTangents.v
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
 
+# extract_rings_valid R5 / general assembler, slice 1: the half-edge (dart)
+# foundation (docs/extract-rings-proof-structure.md §5 step 1 +
+# docs/dart-halfedge-foundation.md).  The combinatorial core (RingExtract)
+# sidestepped the half-edge layer by taking a face walk as a pre-ordered
+# closed_chain; the still-open general-overlay piece is ordering an UNORDERED
+# edge set into chains.  This lays the dart layer it runs on: twin (involutive,
+# injective, fixed-point-free on proper edges), darts_of (both orientations,
+# closed under twin), the outgoing fan + vertex degree.  Pure dart algebra; the
+# angular `next`/`face_of` orbit + its finiteness are deferred later slices.
+# Axioms: the allowlisted classical-reals pair via point_eq_dec.  No Admitted.
+theories/Dart.v
+
 # The Jordan-curve seam for point_in_ring_correct, examined head-on
 # (docs/jct-vacuity-finding.md).  Proves the corpus's
 # geometric_interior_stdlib is identically false because
