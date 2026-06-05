@@ -183,6 +183,10 @@ Axiom univalence : forall (A B : Type), Equiv A B -> A = B.
 Definition orient_equiv :
   Equiv (Point -> Point -> Point -> Dir) (Point -> Point -> Point -> Dir).
 Admitted.
+(* Next step: fill the Admitted (maps + IsEquiv witness + one transport) using
+   archived B64_Expansion_Shewchuk.v (sign_of_expansion_correct_shewchuk etc.),
+   Orient_b64_exact.v / sound, and Orientation.v lemmas. See the chunk RGR doc
+   and HoTT-Status.md "Next: fill real proofs". *)
 
 (* -------------------------------------------------------------------------- *)
 (* Transport example (the payoff of the HoTT link).                          *)
