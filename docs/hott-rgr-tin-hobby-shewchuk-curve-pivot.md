@@ -138,3 +138,22 @@ The Shewchuk base skeleton is now officially part of the `hott` track. Per the r
 **Next loop iteration target (per table + review):** Fill Shewchuk real proofs (turn the three Admitted into Qed using the archive Qed pieces + one univalence transport lemma as proof-of-concept).
 
 LGTM × 4 from the full team review. HoTT pivot remains disciplined.
+
+## Fill RGR slice outcome (post #89 merge, on feature/hott-rgr-shewchuk-fill-proofs)
+
+**RED (for this fill slice).** At start of slice, formal_orient / shewchuk_orient / nts_orient / orient_equiv / transport lemmas were all Admitted (loud, with plans in notes). Status doc and prior notes claimed "next: define formal_orient + Qed properties" but the code had only the skeleton.
+
+**GREEN (delivered in this bounded slice).**
+- `formal_orient` now concretely defined (sign of cross via Rlt_dec/Rgt_dec, matching archive/theories/Orientation.v + pythagoras cross).
+- Added + proved `formal_orient_degenerate` (p0 p1 p0 = COLLINEAR) as real Qed (using ring for cross=0 + decision cases; first discharged formal property).
+- `cross_antisymmetric` lemma re-expressed locally (from archive) as infrastructure for further fill (antisym, invariance).
+- `shewchuk_orient` now defined as alias to formal_orient (with comment explaining it as "this fill RGR step"; full nonoverlap_shewchuk / sign_of_expansion model from B64_Expansion_Shewchuk.v deferred to next iteration).
+- `formal_orient_antisym` comment updated to accurately describe current state + discharge plan (no misleading "proof is ready").
+- All compiles cleanly. One axiom (univalence) + loud Admitteds only for the NTS linkage part.
+- Commit + push on unique branch.
+
+**Refactor / cross-refs.** Notes in .v point to B64 archive for refinement. This slice advances the "fill real proofs" called out in HoTT-Status and PR #90 review. (Full outcome appended here per workflow.)
+
+**Stopping conditions met for slice.** Concrete formal side + one Qed + model alias + accurate records delivered. No tangents (no full equiv construction, no b64 re-expression yet, no Hobby/TIN). Explicit next: construct IsEquiv for orient_equiv + one transport Qed using the archive Qed pieces.
+
+This is the Green of the fill RGR. The loop can continue with the next bounded fill or Hobby chunk.
