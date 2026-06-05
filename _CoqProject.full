@@ -270,6 +270,12 @@ theories/SeparationField.v
 # instantiate; convex polygons supply edge half-planes + zero-set/bound facts.
 # Three-axiom.  No Admitted.
 theories/ConvexField.v
+# Special-case JCT: separation half for an ARBITRARY (CCW) triangle, parametric
+# over its three vertices.  Field gtri = Rmin of the three inward signed areas;
+# the area-sum + barycentric ring identities turn the bound and the edge
+# parametrisation into nra/field.  gtri_interior_is_geometric: interior points
+# are geometric interior points (via separation_via_field).  Three-axiom.  No Admitted.
+theories/GeneralTriangleSeparation.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
