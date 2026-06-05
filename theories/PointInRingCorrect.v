@@ -461,6 +461,18 @@ End ConditionalPointInRingCorrect.
 Definition no_horizontal_edge_at (p : Point) (r : Ring) : Prop :=
   Forall (fun e : Edge => py (fst e) <> py (snd e)) (ring_edges r).
 
+(* Generic-position guard for the rightward ray: no ring VERTEX lies on the
+   closed rightward ray from p (same height, at or to the right of p).  Together
+   with `no_horizontal_edge_at` this is exactly what the crossing-number test
+   needs -- the former stops the ray from running ALONG a horizontal edge, the
+   latter from GRAZING a vertex.  Both are necessary: see
+   theories/JCT_HorizontalEdgeCounterexample.v (horizontal-edge necessity) and
+   theories/JCT_VertexGrazingCounterexample.v (vertex-graze sufficiency gap).
+   Used to strengthen the parity seam `parity_characterises_interior_cont_strict`
+   (JCT.v). *)
+Definition ray_avoids_vertices (p : Point) (r : Ring) : Prop :=
+  forall v : Point, In v r -> ~ (py v = py p /\ px p <= px v).
+
 (* Equivalence of the bool fold with the Prop ray-parity under
    no-horizontal-edge.  Mutual-induction matching the mutual definition
    of ray_parity_odd/_even, with the fold accumulator's parity tracked

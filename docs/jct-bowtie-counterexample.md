@@ -160,7 +160,7 @@ added premise `ring_vertices_distinct` is the whole difference.
 |---|---|---|
 | **RED**   | bowtie passes `ring_simple`+closed+min-points yet refutes two-components (`bowtie_refutes_two_components_modulo_separation`) | Qed |
 | **GREEN** | adding `ring_vertices_distinct` excludes the bowtie (`bowtie_excluded_by_rescoped_JCT`) | Qed |
-| **REFACTOR** | the seam's downstream H1 should be re-pointed at `JCT_two_components_cont_simple` (or `ring_vertices_distinct` folded into `valid_polygon`'s ring conditions) | follow-up |
+| **REFACTOR** | done: `ring_vertices_distinct` lives in `Overlay.v`, `JCT_two_components_cont_simple` in `JordanCurveSeam.v`, and the headline `jct_cont_interior_is_geometric` is re-pointed onto it | Qed |
 
 ## Registry note
 

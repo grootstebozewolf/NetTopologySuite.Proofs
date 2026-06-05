@@ -357,10 +357,10 @@ Qed.
 (* RED opened.                                                                 *)
 (* -------------------------------------------------------------------------- *)
 
-(* The missing premise.  `removelast` drops the repeated closing vertex, so
-   this says the genuine vertices of the ring are pairwise distinct. *)
-Definition ring_vertices_distinct (r : Ring) : Prop :=
-  NoDup (removelast r).
+(* The missing premise `ring_vertices_distinct r := NoDup (removelast r)` -- the
+   genuine vertices (closing vertex dropped) are pairwise distinct -- now lives
+   upstream in Overlay.v (it is a ring-validity condition, used by the
+   re-scoped seam in JordanCurveSeam.v). *)
 
 (* The bowtie violates it: the origin is revisited (it is `removelast`'s head
    and also its 4th element) -- precisely the degree-4 pinch of §3. *)
@@ -372,26 +372,10 @@ Proof.
   apply Hnin. right. right. left. reflexivity.
 Qed.
 
-(* The re-scoped JCT hypothesis: the body of `JCT_two_components_cont`, guarded
-   additionally by vertex distinctness.  This is the honest target the
-   counterexample points to. *)
-Definition JCT_two_components_cont_simple (r : Ring) : Prop :=
-  ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
-  ring_vertices_distinct r ->
-  exists interior_pred exterior_pred : Point -> Prop,
-    (forall q, ~ ring_image r q ->
-       (interior_pred q \/ exterior_pred q) /\
-       ~ (interior_pred q /\ exterior_pred q)) /\
-    (forall a b, interior_pred a -> interior_pred b ->
-       connected_in_complement_cont r a b) /\
-    (forall a b, exterior_pred a -> exterior_pred b ->
-       connected_in_complement_cont r a b) /\
-    (forall a b, interior_pred a -> exterior_pred b ->
-       ~ connected_in_complement_cont r a b) /\
-    (exists M, M > 0 /\ forall q, interior_pred q ->
-       px q * px q + py q * py q <= M * M) /\
-    (forall M, exists q, exterior_pred q /\
-       px q * px q + py q * py q > M * M).
+(* The re-scoped JCT hypothesis `JCT_two_components_cont_simple` (the body of
+   `JCT_two_components_cont` additionally guarded by `ring_vertices_distinct`)
+   now lives upstream in JordanCurveSeam.v, where the headline
+   `jct_cont_interior_is_geometric` is stated against it. *)
 
 (* GREEN.  Under the re-scoped hypothesis the bowtie is NO LONGER a
    counterexample: the obligation at the bowtie is dischargeable because the
