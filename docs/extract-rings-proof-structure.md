@@ -325,6 +325,15 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   `face_ring_simple`. `face_ring_combinatorial_valid` bundles `ring_closed` +
 >   `ring_has_minimum_points` + `ring_simple` for a >=3-dart face -- THREE of the
 >   four `valid_polygon` conditions, by construction.
+> - **R5 slice 3c — hole-free face -> `valid_polygon` (`theories/FacePolygon.v`,
+>   `docs/face-polygon.md`), LANDED Qed.** The FIRST full `Overlay.valid_polygon`
+>   from the DCEL machinery. `valid_polygon`'s hole conjunct is vacuous when
+>   `hole_rings = []`, so the analytic `hole_inside_outer` residual does not
+>   arise; with slice-3b's three outer-ring conditions, `face_polygon D d n =
+>   mkPolygon (ring_of_chain (face_chain D d n)) []` satisfies `valid_polygon`
+>   (`face_polygon_valid`). The combinatorial core of `extract_rings_valid` for
+>   the hole-free case, end to end. Faces WITH holes need hole nesting + the
+>   analytic `hole_inside_outer` (§4).
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);

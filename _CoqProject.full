@@ -184,6 +184,15 @@ theories/FaceChain.v
 # Admitted; standard three-axiom classical-reals base.
 theories/FaceRingSimple.v
 
+# extract_rings_valid R5 / general assembler, slice 3c: a hole-free face yields a
+# valid_polygon (docs/face-polygon.md) -- the FIRST full Overlay.valid_polygon
+# produced by the DCEL machinery.  valid_polygon's hole conjunct is vacuous when
+# hole_rings = [], so the analytic hole_inside_outer residual does not arise;
+# with slice-3b's three outer-ring conditions, face_polygon D d n =
+# mkPolygon (ring_of_chain (face_chain D d n)) [] satisfies valid_polygon
+# (face_polygon_valid).  No Admitted; standard three-axiom classical-reals base.
+theories/FacePolygon.v
+
 # extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
 # on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
 # primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE
