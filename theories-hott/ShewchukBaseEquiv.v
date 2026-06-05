@@ -291,3 +291,26 @@ Qed.
 (* - This is the "Shewchuk first" step recommended by the chunk RGR and the  *)
 (*   PR #89 review. Bounded scope per slice.                                 *)
 (* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Hobby noding RGR start (per chunk decision after Shewchuk base solid).    *)
+(* Re-express b64 Hobby lemmas (4.1/4.3 biarc approximation, residual        *)
+(* monotonicity) using transport via orient_equiv (univalence) for the NTS   *)
+(* linkage. Start NTS_Hobby model equiv. See archived HobbyTheorem_b64.v.    *)
+(* This branch: feature/hott-rgr-hobby-noding.                               *)
+(* ========================================================================== *)
+
+(* -------------------------------------------------------------------------- *)
+(* Placeholder transport pattern for Hobby 4.1 (per PR #96 review).          *)
+(* This shows the intended shape: a formal Hobby property (e.g. biarc        *)
+(* approximation over noded segments) can be transported to the NTS side     *)
+(* once the full orient_equiv (with real b64 maps) is in place.              *)
+(* ========================================================================== *)
+
+Lemma hobby_4_1_biarc_approx_via_orient_equiv :
+  (* formal: forall segments, biarc_approx (noded segments) satisfies ... *)
+  (* NTS: same property after transport (univalence orient_equiv) *)
+  (* In full fill: exact match via re-expression of HobbyTheorem_b64.v    *)
+  (* using Shewchuk orientation transport.                               *)
+  True.
+Admitted.  (* loud placeholder; discharge when real HobbyEquiv + b64 wiring *)
