@@ -274,6 +274,13 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   maximum), and proves it WELL-DEFINED: `next_in` (orbit closure), `next_base`
 >   (stays at the vertex), `next_advances` (advances in angle). Minimal-successor
 >   correctness, injectivity/permutation, and the `face_of` orbit are deferred.
+> - **R5 slice 2c — `next` correctness (`theories/DartNextSpec.v`,
+>   `docs/dart-next-spec.md`), LANDED Qed.** Under `fan_ok` (proper +
+>   general-position fan), proves `list_min` a genuine lower bound (`fold_min_lb`
+>   / `list_min_lb` -- the fold-minimum is correct under a strict total order)
+>   and pins `next` down: `next_min_successor` (the minimal strictly-greater
+>   dart) and `next_wrap_least` (global min on wrap). Injectivity/permutation and
+>   the `face_of` orbit are deferred.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
