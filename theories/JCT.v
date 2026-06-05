@@ -411,21 +411,40 @@ Definition parity_characterises_interior_cont (p : Point) (r : Ring) : Prop :=
    the rightward ray), giving `parity_characterises_interior_cont_strict`
    (ibid.).  Any eventual discharge of this seam should carry that guard. *)
 
+(* The re-scoped seam, carrying BOTH generic-position guards: it adds
+   `ray_avoids_vertices p r` (PointInRingCorrect.v) to the four premises of
+   `parity_characterises_interior_cont`.  Together `no_horizontal_edge_at`
+   (necessary: JCT_HorizontalEdgeCounterexample.v) and `ray_avoids_vertices`
+   (additionally required: JCT_VertexGrazingCounterexample.v) form the minimal
+   generic-position guard set under which ray-parity can characterise the
+   continuous interior.  The headline below is stated against THIS strengthened
+   seam; the un-strengthened `parity_characterises_interior_cont` is kept only
+   as the (counterexample-refuted) naive form.  Still a thesis-scale `Prop`:
+   not proved, not axiomatised. *)
+Definition parity_characterises_interior_cont_strict (p : Point) (r : Ring) : Prop :=
+  ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
+  no_horizontal_edge_at p r ->
+  ray_avoids_vertices p r ->
+  (geometric_interior_cont p r <-> point_in_ring p r).
+
 (* The non-vacuous continuous replacement for `point_in_ring_correct_jct`.
    Unlike that headline -- Qed-closed only over the identically-false
    `geometric_interior_stdlib` -- this one concludes over
    `geometric_interior_cont`, which §4 shows is genuinely inhabitable, under a
    single named seam Prop.  Trivial composition; the value is that the seam is
-   now stated over a non-degenerate interior predicate. *)
+   now stated over a non-degenerate interior predicate AND carries the
+   generic-position guards (`no_horizontal_edge_at`, `ray_avoids_vertices`) that
+   the degenerate-case counterexamples show are necessary. *)
 Theorem point_in_ring_correct_jct_cont :
   forall (p : Point) (r : Ring),
     ring_simple r ->
     ring_closed r ->
     ring_has_minimum_points r ->
     no_horizontal_edge_at p r ->
-    parity_characterises_interior_cont p r ->
+    ray_avoids_vertices p r ->
+    parity_characterises_interior_cont_strict p r ->
     point_in_ring p r <-> geometric_interior_cont p r.
 Proof.
-  intros p r Hs Hc Hm Hnh Hjct.
-  split; intro H; apply (Hjct Hs Hc Hm Hnh); exact H.
+  intros p r Hs Hc Hm Hnh Hrav Hjct.
+  split; intro H; apply (Hjct Hs Hc Hm Hnh Hrav); exact H.
 Qed.

@@ -127,7 +127,7 @@ passes the bad point; only the new one rejects it.
 |---|---|---|
 | **RED**   | diamond centre B passes all four guards yet ray-parity mis-classifies it (`diamond_refutes_parity_seam`) | Qed |
 | **GREEN** | adding `ray_avoids_vertices` excludes B (`diamond_excluded_by_strict_parity_seam`) | Qed |
-| **REFACTOR** | re-point `JCT.v`'s `parity_characterises_interior_cont` / `point_in_ring_correct_jct_cont` at the generic-position-strengthened guard | follow-up |
+| **REFACTOR** | done: `ray_avoids_vertices` lives in `PointInRingCorrect.v`, `parity_characterises_interior_cont_strict` in `JCT.v`, and the headline `point_in_ring_correct_jct_cont` is re-pointed onto it | Qed |
 
 ## Registry note
 

@@ -262,6 +262,18 @@ Definition hole_inside_outer (outer hole : Ring) : Prop :=
 Definition ring_has_minimum_points (r : Ring) : Prop :=
   (4 <= length r)%nat.
 
+(* Condition 2b (vertex distinctness).  A simple ring is also INJECTIVE: no
+   vertex is revisited apart from the repeated closing vertex.  `removelast`
+   drops that closing vertex, so this says the genuine vertices are pairwise
+   distinct.  `ring_simple` (which forbids only PROPER, interior-interior
+   crossings) does NOT imply this: a self-touching figure-8 -- two triangles
+   meeting only at a shared vertex -- is `ring_simple` yet revisits that vertex
+   (theories/JCT_Counterexample.v).  The polygonal JCT therefore needs vertex
+   distinctness as a separate premise; see `JCT_two_components_cont_simple`
+   (JordanCurveSeam.v). *)
+Definition ring_vertices_distinct (r : Ring) : Prop :=
+  NoDup (removelast r).
+
 (* A polygon is valid iff: the outer ring is closed, simple, and has
    the minimum vertex count; and each hole ring satisfies the same
    three conditions and lies inside the outer ring. *)

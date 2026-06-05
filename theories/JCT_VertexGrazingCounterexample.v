@@ -264,12 +264,9 @@ Qed.
 (* §6  GREEN: the generic-position guard excludes the witness.                 *)
 (* -------------------------------------------------------------------------- *)
 
-(* The missing premise: no ring vertex lies ON the closed rightward ray from p
-   (same height, at or to the right).  This is the generic-position condition
-   the crossing-number algorithm needs; `no_horizontal_edge_at` is the weaker,
-   insufficient cousin. *)
-Definition ray_avoids_vertices (p : Point) (r : Ring) : Prop :=
-  forall v : Point, In v r -> ~ (py v = py p /\ px p <= px v).
+(* The missing premise `ray_avoids_vertices p r` (no ring vertex lies on the
+   closed rightward ray from p) now lives upstream in PointInRingCorrect.v,
+   next to `no_horizontal_edge_at`; the re-scoped seam in JCT.v carries it. *)
 
 (* B violates it: vertex (1,0) sits on B's rightward ray (same height 0, to the
    right).  This is exactly the graze that broke the parity count. *)
@@ -297,12 +294,10 @@ Proof.
   split; [ apply diamond_no_horizontal | apply diamond_B_ray_hits_vertex ].
 Qed.
 
-(* The re-scoped seam: same body, additionally guarded by `ray_avoids_vertices`. *)
-Definition parity_characterises_interior_cont_strict (p : Point) (r : Ring) : Prop :=
-  ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
-  no_horizontal_edge_at p r ->
-  ray_avoids_vertices p r ->
-  (geometric_interior_cont p r <-> point_in_ring p r).
+(* The re-scoped seam `parity_characterises_interior_cont_strict` (the parity
+   seam additionally guarded by `ray_avoids_vertices`) now lives upstream in
+   JCT.v, where the headline `point_in_ring_correct_jct_cont` is stated against
+   it. *)
 
 (* GREEN.  Under the re-scoped seam the witness B is excluded: the obligation is
    dischargeable because the added generic-position premise is unsatisfiable for

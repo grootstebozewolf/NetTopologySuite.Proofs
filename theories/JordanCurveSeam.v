@@ -252,7 +252,33 @@ Definition JCT_two_components_cont (r : Ring) : Prop :=
    distinctness premise `ring_vertices_distinct r := NoDup (removelast r)`
    (curve injectivity / every vertex degree 2) -- the half `ring_simple`
    omits.  Any downstream H1 that needs the two-component conclusion should be
-   stated against the strengthened premise set. *)
+   stated against the strengthened premise set -- which is now
+   `JCT_two_components_cont_simple` below, and is what
+   `jct_cont_interior_is_geometric` (§5) is stated against. *)
+
+(* The re-scoped, dischargeable hypothesis: `JCT_two_components_cont`'s body
+   additionally guarded by `ring_vertices_distinct` (Overlay.v).  This is the
+   canonical Phase 3 H1 target -- the bowtie (and any self-touching ring) is
+   excluded by the added premise, so unlike the un-strengthened version it is
+   not refuted by `JCT_Counterexample.v`.  Still a thesis-scale `Prop`: not
+   proved, not axiomatised. *)
+Definition JCT_two_components_cont_simple (r : Ring) : Prop :=
+  ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
+  ring_vertices_distinct r ->
+  exists interior_pred exterior_pred : Point -> Prop,
+    (forall q, ~ ring_image r q ->
+       (interior_pred q \/ exterior_pred q) /\
+       ~ (interior_pred q /\ exterior_pred q)) /\
+    (forall a b, interior_pred a -> interior_pred b ->
+       connected_in_complement_cont r a b) /\
+    (forall a b, exterior_pred a -> exterior_pred b ->
+       connected_in_complement_cont r a b) /\
+    (forall a b, interior_pred a -> exterior_pred b ->
+       ~ connected_in_complement_cont r a b) /\
+    (exists M, M > 0 /\ forall q, interior_pred q ->
+       px q * px q + py q * py q <= M * M) /\
+    (forall M, exists q, exterior_pred q /\
+       px q * px q + py q * py q > M * M).
 
 (* -------------------------------------------------------------------------- *)
 (* §4  The continuous relation is genuinely non-degenerate.                   *)
@@ -310,7 +336,8 @@ Qed.
 Theorem jct_cont_interior_is_geometric :
   forall (r : Ring),
     ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
-    JCT_two_components_cont r ->
+    ring_vertices_distinct r ->
+    JCT_two_components_cont_simple r ->
     exists interior_pred exterior_pred : Point -> Prop,
       (* the JCT partition (re-exposed for the caller) ... *)
       (forall q, ~ ring_image r q ->
@@ -319,8 +346,8 @@ Theorem jct_cont_interior_is_geometric :
       (* ... and the new payload: every interior point is geometric-interior. *)
       (forall p, interior_pred p -> geometric_interior_cont p r).
 Proof.
-  intros r Hs Hc Hm HJCT.
-  destruct (HJCT Hs Hc Hm)
+  intros r Hs Hc Hm Hvd HJCT.
+  destruct (HJCT Hs Hc Hm Hvd)
     as [ip [ep [Hpart [Hicon [_Hecon [Hsep [Hbnd _Hunb]]]]]]].
   exists ip, ep. split; [exact Hpart |].
   intros p Hip. unfold geometric_interior_cont.
