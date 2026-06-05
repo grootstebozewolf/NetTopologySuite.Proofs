@@ -113,6 +113,16 @@ theories/Overlay.v
 # constructors + lra.  Regression anchor; the GENERAL discharge is the registered
 # JCT/H1 residual.  No Admitted; standard three-axiom classical-reals base.
 theories/HoleInsideOuterExample.v
+
+# extract_rings_valid R5 analytic seam, Stage B (rectangle beachhead,
+# UNCONDITIONAL): hole_inside_outer for ANY rectangular outer ring
+# (docs/hole-inside-outer-plan.md Stage B).  RectangleJCT.point_in_ring_rect_iff
+# characterises point_in_ring for a rectangle as box-membership (Qed parity), and
+# hole_inside_outer is defined via point_in_ring, so a hole vertex in the box
+# gives hole_inside_outer with NO JCT hypothesis.  point_in_ring_rect /
+# hole_inside_outer_rect / _strict; generalises the fixed-4x4 witness to all
+# rectangles.  No Admitted; standard three-axiom classical-reals base.
+theories/HoleInsideOuterRect.v
 # Green-phase point_in_ring_correct seam attempts (PointInRingCorrect.v).
 # Probes the seven seams from docs/point-in-ring-correct-seam-map.md
 # with simplest-possible implementations.  Seams 1, 2 (partial), 4, 6
