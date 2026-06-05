@@ -190,6 +190,13 @@ theories/RectangleJCT.v
 # rectangle ray-parity reduction lemmas + axis-aligned edge characterisations;
 # only e_hyp_cross_iff and hyp_x_bounds are new.  Three-axiom.  No Admitted.
 theories/RightTriangleJCT.v
+# Special-case JCT: the right-triangle separation, unconditionally, via the
+# SeparationField engine.  Field tri_min = Rmin(Rmin(px-x0)(py-y0)) s_hyp with
+# s_hyp the AFFINE inward distance to the hypotenuse.  Gives
+# right_triangle_parity_characterises_interior (point_in_ring <-> geometric
+# interior for triangle interiors), the second fully-closed JCT family.
+# Three-axiom.  No Admitted.
+theories/RightTriangleSeparation.v
 # Special-case JCT, slice 2d (docs/extract-rings-proof-structure.md §11): the
 # rectangle separation, UNCONDITIONALLY.  Encodes box membership as a single
 # continuous field box_min (>0 inside, =0 on the edge skeleton, <0 outside) and
