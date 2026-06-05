@@ -400,6 +400,17 @@ Definition parity_characterises_interior_cont (p : Point) (r : Ring) : Prop :=
   no_horizontal_edge_at p r ->
   (geometric_interior_cont p r <-> point_in_ring p r).
 
+(* SCOPE CAVEAT (see theories/JCT_VertexGrazingCounterexample.v +
+   docs/jct-vertex-grazing-counterexample.md).  The four guards above are NOT
+   sufficient: `no_horizontal_edge_at` does not stop the rightward ray from
+   GRAZING a vertex.  For the convex diamond, the centre B = (0,0) passes all
+   four guards yet ray-parity counts neither edge meeting the grazed vertex
+   (1,0) -- so `point_in_ring` disagrees with the (component-invariant)
+   `geometric_interior_cont` there (`diamond_refutes_parity_seam`).  The fix is
+   the generic-position guard `ray_avoids_vertices p r` (no ring vertex lies on
+   the rightward ray), giving `parity_characterises_interior_cont_strict`
+   (ibid.).  Any eventual discharge of this seam should carry that guard. *)
+
 (* The non-vacuous continuous replacement for `point_in_ring_correct_jct`.
    Unlike that headline -- Qed-closed only over the identically-false
    `geometric_interior_stdlib` -- this one concludes over
