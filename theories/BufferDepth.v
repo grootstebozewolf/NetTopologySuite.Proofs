@@ -109,7 +109,11 @@ Definition depth_region (G : TopologyGraph) (p : Point) : Prop :=
    Counterexample.v) -- so `depth_region` also needs the generic-position guards
    of the parity seam, `no_horizontal_edge_at` and `ray_avoids_vertices`
    (PointInRingCorrect.v), on the kept boundary, exactly as `point_in_ring`
-   does (JCT.v). *)
+   does (JCT.v).  The complete guard set is folded into
+   `kept_boundary_wellformed` and the seams re-pointed onto it in
+   theories/BufferDepthGuarded.v (the REFACTOR), whose
+   `depth_region_is_geometric_interior_guarded` is the depth-labelling analogue
+   of `JCT.point_in_ring_correct_jct_cont`. *)
 
 (* The empty graph has no boundary, hence encloses nothing. *)
 Lemma depth_region_empty : forall p, ~ depth_region empty_graph p.
