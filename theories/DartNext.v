@@ -135,7 +135,16 @@ Qed.
 
 (* `next F d`: the minimal dart in `F` strictly greater than `d` in angle; or,
    when `d` is the fan maximum (no strictly-greater dart), the global minimum of
-   `F` -- the wrap-around that closes the cycle. *)
+   `F` -- the wrap-around that closes the cycle.
+
+   `F` is meant to be the outgoing fan `Dart.outgoing v D` (all darts based at a
+   vertex `v`; see `Dart.in_outgoing` / `Dart.outgoing_base`), so `next` is the
+   rotational successor AROUND that vertex.  The face walk of the next slice will
+   iterate `next (outgoing (dbase ·) D) o twin`: `twin` crosses an edge to the
+   opposite vertex, then `next` turns to the rotationally adjacent outgoing dart,
+   and the orbit of that composite is a face boundary (`face_of`).  `next_in` /
+   `next_base` below are exactly what keeps that orbit inside the arrangement and
+   based at honest vertices. *)
 Definition next (F : list Dart) (d : Dart) : Dart :=
   match list_min (filter (fun e => dart_ltb d e) F) with
   | Some e => e
