@@ -175,3 +175,13 @@ This is the Green of the fill RGR. The loop can continue with the next bounded f
 **Stopping conditions met for slice.** Id-equiv + univalence demo + one Qed transport example (antisym) delivered. No tangents (no b64 wiring for non-trivial maps yet; that is next bounded). Explicit next: wire real IsEquiv/maps from the B64_Expansion_Shewchuk + Orient_b64_* lemmas + update other modules (Voronoi etc.).
 
 This advances the Shewchuk base link. The loop continues with the next iteration (real b64-backed IsEquiv or Hobby chunk).
+
+## Hobby noding RGR start (on feature/hott-rgr-hobby-noding, post orient-equiv slice)
+
+**RED.** Hobby had b64 proofs but no HoTT model or NTS equiv yet. After Shewchuk base (now solid with id equiv + transport demos), we can start re-expressing the b64 lemmas via orient_equiv transport.
+
+**GREEN (started).** Added initial note in ShewchukBaseEquiv.v for the Hobby start. Updated HoTT-Status to GREEN skeleton for Hobby. Decision to do Hobby after Shewchuk confirmed.
+
+**Next.** On this branch or follow-on: start HobbyEquiv.v skeleton or add to existing, using the transport from Shewchuk.
+
+This continues the chunk RGR order: Shewchuk -> Hobby.
