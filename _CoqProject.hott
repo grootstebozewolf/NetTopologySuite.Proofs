@@ -7,3 +7,4 @@
 -R theories-hott NTS.HoTT
 
 theories-hott/VoronoiEquivalence.v
+theories-hott/ShewchukBaseEquiv.v

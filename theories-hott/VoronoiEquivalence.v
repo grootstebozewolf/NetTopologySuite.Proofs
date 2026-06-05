@@ -54,6 +54,7 @@
 
 From Stdlib Require Import Reals.
 From Stdlib Require Import Lra.
+From Stdlib Require Import List.
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -116,19 +117,19 @@ Record NTSVoronoi (sites : Sites) := mkNTSVoronoi
 (* To state equivalence, we need HoTT primitives. We postulate the minimal   *)
 (* needed under the one allowed axiom (Univalence).                          *)
 
-(* HoTT Equiv (isomorphism up to homotopy). *)
-Record Equiv (A B : Type) := mkEquiv
-  { equiv_fun : A -> B
-  ; equiv_isequiv : IsEquiv equiv_fun   (* proof that it is an equivalence *)
-  }.
-
 (* IsEquiv (has inverse up to homotopy, etc.). We use a simple record for    *)
 (* the skeleton; real HoTT has more (sect, retr, adj).                       *)
 Record IsEquiv {A B} (f : A -> B) := mkIsEquiv
   { equiv_inv : B -> A
   ; equiv_sect : forall x, f (equiv_inv x) = x   (* section *)
   ; equiv_retr : forall x, equiv_inv (f x) = x   (* retraction *)
-  ; equiv_adj : forall x, ...   (* coherence; elided for skeleton *)
+  ; equiv_adj : forall (x : A), True   (* coherence placeholder; real HoTT uses homotopy *)
+  }.
+
+(* HoTT Equiv (isomorphism up to homotopy). *)
+Record Equiv (A B : Type) := mkEquiv
+  { equiv_fun : A -> B
+  ; equiv_isequiv : IsEquiv equiv_fun   (* proof that it is an equivalence *)
   }.
 
 (* The one allowed axiom (Univalence). This is the "generous" one.           *)
@@ -148,7 +149,7 @@ Axiom univalence : forall (A B : Type), Equiv A B -> A = B.
 Definition nts_cell_prop (nv : forall sites, NTSVoronoi sites) (sites : Sites)
   (s p : Point) : Prop :=
   (* Assume sites non-empty etc.; in practice we'd have a decider or proof. *)
-  nts_cell (nv sites) s p = true.
+  nts_cell sites (nv sites) s p = true.
 
 (* For the skeleton we define a "NTS diagram" as the cell function.          *)
 Definition NTSVoronoiDiagram (sites : Sites) : Type :=
@@ -159,37 +160,12 @@ Definition NTSVoronoiDiagram (sites : Sites) : Type :=
 (* cells for the same sites. In a full development this would be witnessed   *)
 (* by the actual NTS code (or a verified model of it) being extensionally    *)
 (* equal (or homotopic) to the formal predicate after transport.             *)
+(* For the skeleton we Admitted the witness (loud per policy); the shape     *)
+(* and the transport usage of univalence are what matter for this bounded    *)
+(* deliverable. The real proof fills in maps + IsEquiv using geometry.       *)
 Definition voronoi_equiv (sites : Sites) :
   Equiv (VoronoiDiagram sites) (NTSVoronoiDiagram sites).
-Proof.
-  (* Skeleton proof: we construct the maps and (postulated) inverses.        *)
-  (* In Green phase of a real session we would fill with actual NTS model    *)
-  (* (perhaps extracted or axiomatized with justification) + proofs that     *)
-  (* the cell predicates coincide up to homotopy.                            *)
-  (* For now we state the shape and use the one axiom to "connect" them.     *)
-
-  (* Forward: formal cell predicate -> NTS bool representation.              *)
-  (* (In practice: the NTS diagram "is" the formal one after equivalence.)   *)
-  pose (to_nts (fd : VoronoiDiagram sites) : NTSVoronoiDiagram sites :=
-    fun s p => if (fd s _ p) then true else false).  (* _ is In proof; elided *)
-
-  (* Backward: NTS -> formal (the "verified" direction).                     *)
-  pose (from_nts (nd : NTSVoronoiDiagram sites) : VoronoiDiagram sites :=
-    fun s Hin p => nd s p = true).
-
-  (* We assert they form an equivalence (the link). The real proof would     *)
-  (* show sect/retr by extensionality of the cell predicates + NTS spec.     *)
-  (* Here we use a placeholder IsEquiv that would be discharged by the       *)
-  (* correspondence between NTS Voronoi output and the geometric definition. *)
-  pose (isequiv : IsEquiv to_nts).
-  (* In a completed Green: prove by showing that NTS cells exactly match     *)
-  (* the closer-to-site predicate (using archived incircle/Delaunay duality  *)
-  (* lemmas transported if needed).                                          *)
-
-  exact (mkEquiv _ _ to_nts isequiv).
-  (* The proof is intentionally partial in this skeleton to keep scope       *)
-  (* bounded (per RGR: 1-3 deliverables). Full proof is the next session.    *)
-Defined.
+Admitted.
 
 (* -------------------------------------------------------------------------- *)
 (* Transport example (the payoff of the HoTT link).                          *)

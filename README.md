@@ -38,7 +38,7 @@ The archived classical proofs remain the engineering precedent and the source of
 
 - The historical proof corpus is fully archived (see `archive/`).
 - The welcoming on-ramp (`pythagoras-for-beginners.v`) and the persona/role system (`HELP.md`, `READING-GUIDE.md`, `FOR-AI-AGENTS.md`) have been kept and will be evolved for HoTT + C# work.
-- First HoTT sources have landed in `theories-hott/` (per the RGR risk/cost pivot in `docs/hott-rgr-risk-cost-pivot.md`). See `theories-hott/VoronoiEquivalence.v` (first small equivalence proving the NTS Voronoi link via HoTT Equiv + the one allowed axiom Univalence for transport; skeleton with explicit "next session" placeholders per bounded RGR) and `_CoqProject.hott`.
+- First HoTT sources have landed in `theories-hott/` (per the RGR risk/cost pivot in `docs/hott-rgr-risk-cost-pivot.md` and the follow-on chunk RGR in `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md`). See `theories-hott/VoronoiEquivalence.v` (first small equivalence proving the NTS Voronoi link via HoTT Equiv + the one allowed axiom Univalence for transport; skeleton with explicit "next session" placeholders per bounded RGR), `theories-hott/ShewchukBaseEquiv.v` (Shewchuk/orient base — the root predicate everything else trusts; GREEN skeleton with orient_equiv, one justified univalence for C# transport, loud Admitted for the maps; "first real Shewchuk" per PR #89 review and the chunk decision), `_CoqProject.hott`, and `docs/HoTT-Status.md` (living table of chunks + next steps).
 - A full HoTT-oriented build story will evolve with more modules. All prior classical CI/build/oracle live in `archive/`.
 
 ## Axiom policy (HoTT era)
@@ -96,7 +96,7 @@ The invariants change:
 - New theorems will be stated in HoTT style (using the HoTT library or a custom homotopy layer on top of Rocq).
 - We still value `Qed.` (or `Defined.`) discipline; bare `admit` is still not allowed without explicit justification. See the "Axiom policy (HoTT era)" section above — one (well-justified) axiom is the new generous default.
 - The persona cards still apply — Newbie Nate starts with Pythagoras; Scholar Sam will audit the HoTT methodology and the equivalence claims to C#; Consumer Connie and NTS-Upstream Norm care about the *linkage* artefacts.
-- Session workflow (Red/Green/Refactor, explicit stopping conditions, two-route designs) from the archived `FOR-AI-AGENTS.md` and `history/` still serves us; the output artefacts will now be HoTT modules + equivalence proofs rather than classical phase completions. Recent example: `docs/hott-rgr-risk-cost-pivot.md` (RGR analysis of linkage strategy risk/cost).
+- Session workflow (Red/Green/Refactor, explicit stopping conditions, two-route designs) from the archived `FOR-AI-AGENTS.md` and `history/` still serves us; the output artefacts will now be HoTT modules + equivalence proofs rather than classical phase completions. Recent examples: `docs/hott-rgr-risk-cost-pivot.md` (RGR analysis of linkage strategy risk/cost) and `docs/hott-rgr-tin-hobby-shewchuk-curve-pivot.md` (RGR for the TIN/Hobby/Shewchuk/Curve chunk, selecting Shewchuk base first + HoTT-Status.md).
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/axiom-policy.md`](docs/axiom-policy.md), and the persona documents for details. Joost the BDFL has final authority on what constitutes useful progress in the HoTT direction.
 
