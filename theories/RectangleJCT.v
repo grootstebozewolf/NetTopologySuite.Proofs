@@ -376,6 +376,96 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §7  Slice 2c (geometry of the separation, JCT-free): the edge skeleton IS    *)
+(*     the box boundary, hence a complement point is strict-interior or         *)
+(*     strict-exterior.  This strips all geometry from `rect_confines`, leaving *)
+(*     only a pure interval-connectedness fact (the sup/clopen argument).       *)
+(* -------------------------------------------------------------------------- *)
+
+(* A fraction a/d with 0 <= a <= d and 0 < d lands in [0,1]. *)
+Lemma div_in_01 : forall a d, 0 <= a -> a <= d -> 0 < d -> 0 <= a / d <= 1.
+Proof.
+  intros a d Ha Had Hd; split.
+  - apply Rmult_le_pos; [ exact Ha | left; apply Rinv_0_lt_compat; exact Hd ].
+  - apply Rmult_le_reg_r with d; [ exact Hd | ].
+    replace (a / d * d) with a by (field; lra). lra.
+Qed.
+
+(* The four edges paved as a boundary predicate. *)
+Definition on_box_boundary (x0 y0 x1 y1 : R) (p : Point) : Prop :=
+  ((py p = y0 \/ py p = y1) /\ x0 <= px p <= x1) \/
+  ((px p = x0 \/ px p = x1) /\ y0 <= py p <= y1).
+
+(* Converse of slice 2a: a box-boundary point lies on the edge skeleton. *)
+Theorem box_boundary_in_ring_image : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  on_box_boundary x0 y0 x1 y1 p ->
+  ring_image (rect_ring x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hb.
+  unfold ring_image; rewrite ring_edges_rect.
+  destruct Hb as [[[Hpy | Hpy] Hpx] | [[Hpx | Hpx] Hpy]].
+  - (* bottom edge e1 = ((x0,y0),(x1,y0)), py = y0 *)
+    exists (mkPoint x0 y0, mkPoint x1 y0), ((px p - x0) / (x1 - x0)).
+    pose proof (div_in_01 (px p - x0) (x1 - x0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; field; lra
+                  | cbn [px py fst snd]; rewrite Hpy; field; lra ].
+  - (* top edge e3 = ((x1,y1),(x0,y1)), py = y1 *)
+    exists (mkPoint x1 y1, mkPoint x0 y1), ((x1 - px p) / (x1 - x0)).
+    pose proof (div_in_01 (x1 - px p) (x1 - x0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; field; lra
+                  | cbn [px py fst snd]; rewrite Hpy; field; lra ].
+  - (* left edge e4 = ((x0,y1),(x0,y0)), px = x0 *)
+    exists (mkPoint x0 y1, mkPoint x0 y0), ((y1 - py p) / (y1 - y0)).
+    pose proof (div_in_01 (y1 - py p) (y1 - y0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; rewrite Hpx; field; lra
+                  | cbn [px py fst snd]; field; lra ].
+  - (* right edge e2 = ((x1,y0),(x1,y1)), px = x1 *)
+    exists (mkPoint x1 y0, mkPoint x1 y1), ((py p - y0) / (y1 - y0)).
+    pose proof (div_in_01 (py p - y0) (y1 - y0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; rewrite Hpx; field; lra
+                  | cbn [px py fst snd]; field; lra ].
+Qed.
+
+(* Complement dichotomy: off the skeleton means strictly inside or strictly
+   outside the box -- the two OPEN regions whose connectedness gives the
+   separation.  No analytic content. *)
+Theorem rect_complement_dichotomy : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  ring_complement (rect_ring x0 y0 x1 y1) p ->
+  (x0 < px p < x1 /\ y0 < py p < y1)
+  \/ (px p < x0 \/ px p > x1 \/ py p < y0 \/ py p > y1).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hcomp.
+  destruct (Rlt_le_dec (px p) x0) as [Hxa | Hxa];
+    [ right; left; exact Hxa | ].
+  destruct (Rlt_le_dec x1 (px p)) as [Hxb | Hxb];
+    [ right; right; left; exact Hxb | ].
+  destruct (Rlt_le_dec (py p) y0) as [Hya | Hya];
+    [ right; right; right; left; exact Hya | ].
+  destruct (Rlt_le_dec y1 (py p)) as [Hyb | Hyb];
+    [ right; right; right; right; exact Hyb | ].
+  (* now x0 <= px p <= x1 and y0 <= py p <= y1 (closed box) *)
+  destruct (Rle_lt_or_eq_dec _ _ Hxa) as [Hx0lt | Hx0eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        right; split; [ left; symmetry; exact Hx0eq | lra ] ].
+  destruct (Rle_lt_or_eq_dec _ _ Hxb) as [Hx1lt | Hx1eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        right; split; [ right; exact Hx1eq | lra ] ].
+  destruct (Rle_lt_or_eq_dec _ _ Hya) as [Hy0lt | Hy0eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        left; split; [ left; symmetry; exact Hy0eq | lra ] ].
+  destruct (Rle_lt_or_eq_dec _ _ Hyb) as [Hy1lt | Hy1eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        left; split; [ right; exact Hy1eq | lra ] ].
+  left; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -384,3 +474,5 @@ Print Assumptions rect_open_box_complement.
 Print Assumptions rect_open_box_characterisation.
 Print Assumptions rect_interior_bounded_of_confines.
 Print Assumptions rect_parity_characterises_interior_open.
+Print Assumptions box_boundary_in_ring_image.
+Print Assumptions rect_complement_dichotomy.
