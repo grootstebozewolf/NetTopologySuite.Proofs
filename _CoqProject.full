@@ -128,6 +128,18 @@ theories/PointInRingTangents.v
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
 
+# extract_rings_valid R5 / general assembler, slice 1: the half-edge (dart)
+# foundation (docs/extract-rings-proof-structure.md §5 step 1 +
+# docs/dart-halfedge-foundation.md).  The combinatorial core (RingExtract)
+# sidestepped the half-edge layer by taking a face walk as a pre-ordered
+# closed_chain; the still-open general-overlay piece is ordering an UNORDERED
+# edge set into chains.  This lays the dart layer it runs on: twin (involutive,
+# injective, fixed-point-free on proper edges), darts_of (both orientations,
+# closed under twin), the outgoing fan + vertex degree.  Pure dart algebra; the
+# angular `next`/`face_of` orbit + its finiteness are deferred later slices.
+# Axioms: the allowlisted classical-reals pair via point_eq_dec.  No Admitted.
+theories/Dart.v
+
 # The Jordan-curve seam for point_in_ring_correct, examined head-on
 # (docs/jct-vacuity-finding.md).  Proves the corpus's
 # geometric_interior_stdlib is identically false because
@@ -150,6 +162,15 @@ theories/JordanCurveSeam.v
 # parity_characterises_interior_cont, wired into the non-vacuous headline
 # point_in_ring_correct_jct_cont.  Pure-R; no Admitted/Axiom/Parameter.
 theories/JCT.v
+
+# Special-case JCT, slice 1 (docs/extract-rings-proof-structure.md §11): the
+# ray-parity COMPUTATION for an axis-aligned rectangle.  Proves
+# point_in_ring p (rect_ring x0 y0 x1 y1) <-> (y0<py<y1 /\ x0<=px<x1) by finite
+# evaluation of the inductive ray_parity_odd over the four edges (horizontal
+# edges are ray-parallel and never cross; vertical edges give the parity).
+# The combinatorial/computational half of parity_characterises_interior_cont
+# for rectangles; JCT-free.  Pure-R, three-axiom.  No Admitted.
+theories/RectangleJCT.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
@@ -296,6 +317,17 @@ theories/BufferDepthHorizontalEdgeCounterexample.v
 # (Gdiamond_excluded_by_ray_avoids_guard, GREEN).  With #91/#93 this pins the
 # full guard set. Pure-R; no Admitted/Axiom/Parameter.
 theories/BufferDepthVertexGrazeCounterexample.v
+
+# REFACTOR: the guarded depth-region predicate + depth/interior bridge
+# (docs/buffer-depth-guarded.md).  Folds the #91/#93/#95 guards into
+# kept_boundary_wellformed and re-points the depth seams onto it (additive; the
+# existing BufferDepth theorems are untouched).  depth_region_is_geometric_
+# interior_guarded is the depth analogue of point_in_ring_correct_jct_cont:
+# for a well-formed kept boundary, depth_region = geometric_interior_cont under
+# the named JCT seam parity_characterises_interior_cont_strict (not discharged).
+# buffer_H_bridge_factor_guarded re-points the H_bridge onto the guarded seam.
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthGuarded.v
 
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,

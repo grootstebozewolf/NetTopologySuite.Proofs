@@ -244,6 +244,26 @@ registered sub-deferred entry — never a silent stub. The combinatorial
 core (R1–R2, R5) carries no analytic content and should close cleanly;
 R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 
+> **General-assembler progress (the "still open in R1" ordering piece).**
+> The general overlay case — ordering an *unordered* edge set into chains —
+> is now being built as its own sub-slices, since R1/R2 only ever consumed a
+> pre-ordered `closed_chain`:
+> - **R5 motivation (`theories/ExtractFlattenCounterexample.v`,
+>   `docs/extract-flatten-counterexample.md`).** The naive `OverlayGraph.extract`
+>   flatten is refuted: a closed triangle boundary given out of walk order
+>   flattens to a non-closed ring (`extract_unordered_not_valid`), while the
+>   walk-ordered trace through `ring_of_chain` is valid
+>   (`ring_of_chain_traces_valid_shape`). So ordering is unavoidable.
+> - **R5 slice 1 — dart foundation (`theories/Dart.v`,
+>   `docs/dart-halfedge-foundation.md`), LANDED Qed.** The half-edge layer the
+>   ordering runs on: `twin` (involutive/injective/fixed-point-free on proper
+>   edges), `darts_of` (both orientations, closed under `twin`), the `outgoing`
+>   fan + `vdeg`. Pure dart algebra; no geometry, no ordering yet.
+> - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
+>   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
+>   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
+>   then face-orbit ⇒ `closed_chain` feeding `ring_of_chain`.
+
 ## §8 Oracle bridge (differential testing)
 
 Extract the executable face/ring assembler (Coq → OCaml, RocqRefRunner
@@ -289,3 +309,51 @@ orientation / intersection lanes were de-risked.
 - Consumer: `theories/BufferCorrectness.v:buffer_correct_conditional`
   (the `H_valid` hypothesis this would discharge for the buffer pipeline);
   buffer geometry `theories/Buffer{Offset,Join,Miter,Bevel,Endcap}.v`.
+
+## §11 2026-06-05: status — combinatorial core complete; frontier = the JCT residual
+
+A re-audit of this lane (R1–R7 all landed on `main`) shows the slice plan is,
+for practical purposes, **mined out down to a single analytic obstruction**.
+What is Qed-closed and what remains:
+
+**Qed-closed (combinatorial + noder-delivered `ring_simple`), JCT-free:**
+- R1+R2 face-walk core — `theories/RingExtract.v` (`ring_of_chain`,
+  `face_walk_closed`, `face_walk_min_points`, `ring_edges_of_closed_chain`,
+  `face_walk_core`).
+- R3 *component structure* — `theories/BoundedComponent.v`
+  (`connected_in_complement` equivalence; `in_bounded_component` invariant;
+  `not_in_bounded_component_intro`).
+- `ring_simple` — RESOLVED via the noder (`RingSimple.ring_simple_of_subset`
+  + `not_ring_simple_bowtie`); not an analytic residual.
+- R6 hole-free `valid_polygon` + `H_valid` + end-to-end
+  `buffer_correct_hole_free` / `buffer_correct_hole_free_split` —
+  `theories/ExtractBufferRings.v`, `theories/BufferBridge.v`. **No JCT.**
+- R7 analytic shell — `theories/ExtractRingsShell.v`
+  (`hole_noded_chain_conditions`, `valid_polygon_noded_shell`,
+  `H_valid_of_chain_extractor_holes`, `buffer_correct_with_holes`): the
+  with-holes case is reduced to EXACTLY ONE analytic clause.
+
+**The single remaining residual (thesis-scale, JCT-gated):** the point-set
+`hole_inside_outer` nesting bridge = R3's geometric rung = "a point strictly
+inside a bounded face orbit lies in `in_bounded_component` of its boundary
+ring". This is **the same theorem** as:
+- `overlay_ng_correct_conditional`'s H1 (`OverlayCorrectness.v`);
+- `parity_characterises_interior_cont` (`theories/JCT.v:398`);
+- the `point_in_ring` ↔ `geometric_interior_cont` equivalence.
+
+**Strategic consequence.** All of the corpus's remaining *general* headlines —
+general `extract_rings_valid`, with-holes buffer, OverlayNG correctness —
+**converge on this one polygonal-Jordan-Curve fact.** The hole-free buffer
+headline is already unconditional. The combinatorial assembly that is still
+JCT-free but unlanded is narrow:
+- **R1-open:** ordering an *unordered* overlay edge set into closed chains
+  (the dart / `next`-via-`turn_sign` machinery; `face_orbit_finite` is the §9
+  crux). Needed only for the *general* (non-buffer) case.
+- **R4:** the Euler `V − E + F = 1 + C` face-count relation (oracle bridge).
+
+**Cost/risk update.** The recorded "5–7 session DCEL" estimate is largely
+*spent*: the combinatorial core landed and the hole-free buffer consumer is
+discharged. Remaining headline value in this lane is **JCT-gated** (the same
+3–5-month topology piece tracked for #65), with R1-open / R4 as the only
+incremental, JCT-free combinatorial work left — valuable for the general case
+but not reaching a headline on their own.
