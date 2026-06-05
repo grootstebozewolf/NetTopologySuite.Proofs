@@ -103,7 +103,13 @@ Definition depth_region (G : TopologyGraph) (p : Point) : Prop :=
    constant on a complement component (`spur_depth_not_component_invariant`).
    A `depth_region`/`depth_region_is_buffer` used for correctness should carry a
    closed-boundary premise -- the general form being "even kept-degree at every
-   vertex" (the boundary decomposes into closed cycles). *)
+   vertex" (the boundary decomposes into closed cycles).  Closure is necessary
+   but NOT sufficient: even a closed kept boundary is misclassified when a kept
+   edge is horizontal at the ray height (theories/BufferDepthHorizontalEdge-
+   Counterexample.v) -- so `depth_region` also needs the generic-position guards
+   of the parity seam, `no_horizontal_edge_at` and `ray_avoids_vertices`
+   (PointInRingCorrect.v), on the kept boundary, exactly as `point_in_ring`
+   does (JCT.v). *)
 
 (* The empty graph has no boundary, hence encloses nothing. *)
 Lemma depth_region_empty : forall p, ~ depth_region empty_graph p.

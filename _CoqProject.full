@@ -266,6 +266,15 @@ theories/BufferDepth.v
 # (spur_excluded_by_closure_guard, GREEN).  Pure-R; no Admitted/Axiom/Parameter.
 theories/BufferDepthEnclosureCounterexample.v
 
+# depth_region's closed-boundary guard (#91) is necessary but not sufficient
+# (docs/buffer-depth-horizontal-edge-counterexample.md).  Reusing the #86 notch
+# as the (closed) kept boundary of a graph G_notch, depth_region G_notch pext is
+# true (the ray runs along the horizontal kept edge) yet pext is exterior
+# (depth_region_horizontal_refutes, RED).  A no_horizontal_edge_at guard on the
+# kept boundary excludes it (Gnotch_excluded_by_no_horizontal_guard, GREEN).
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthHorizontalEdgeCounterexample.v
+
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
 # CurveGeometry) + validity predicates + chord approximation bridge
