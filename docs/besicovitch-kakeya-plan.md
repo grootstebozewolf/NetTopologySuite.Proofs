@@ -67,8 +67,9 @@ For each `n`:
 - **Phase A — Polygonal Perron tree.** Implement `perron_stage` and prove
   structural invariants + direction coverage. **Landed** in
   `theories/PerronStage.v` (see below).
-- **Phase B — DCEL integration.** Represent each stage as an `OverlayGraph` and
-  extract face polygons.
+- **Phase B — DCEL integration.** Represent each stage as a face-walk in the
+  overlay DCEL and lift it to OGC validity. **Landed** in
+  `theories/KakeyaOverlay.v` (see below).
 - **Phase C — Regression anchors.** Freeze `perron_stage 5` (or similar) as a
   `Qed`-closed example with tests for near-collinearity, tiny angles, and
   overlapping triangles.
@@ -129,5 +130,30 @@ segments pointing in many directions": we prove the apex-ray cross product
 directions are pairwise non-parallel. No statement is made about *every*
 direction in `[0, π)` or about measure — those require the limit and Lebesgue
 theory of Phase D.
+
+Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.
+
+## Phase B — what landed (`theories/KakeyaOverlay.v`)
+
+Phase B connects the Phase-A triangles to the corpus's overlay-DCEL and OGC
+validity machinery — **unconditionally**, with no analytic-shell hypothesis.
+
+| Result | Statement |
+|---|---|
+| `perron_tri_closed_chain` | a triangle's edge list is a `closed_chain` (a DCEL face walk) |
+| `perron_tri_chain_roundtrip` | `ring_of_chain (ring_edges (perron_tri n k)) = perron_tri n k` |
+| `perron_tri_face_walk_core` | closure + min-vertex + edge-fidelity via `RingExtract.face_walk_core` |
+| `sip_shared_no_cross` | two non-collinear segments sharing a vertex never intersect properly |
+| `perron_tri_ring_simple` | **every triangle is `ring_simple`** (no proper edge crossings) — discharged outright |
+| `perron_tri_valid_polygon` | each triangle, packaged hole-free, is an OGC `valid_polygon` |
+| `perron_geometry_valid` | the whole stage, as a multi-polygon `Geometry`, is `valid_geometry` |
+
+The key novelty over the general buffer pipeline is that `ring_simple` — there
+the post-noding "analytic shell" supplied as a hypothesis — is here **proved
+unconditionally**, because the Perron triangles are concrete and non-degenerate:
+their three edges pairwise share a vertex and, being non-collinear, cannot cross
+at an interior point. Consequently a Perron-tree stage is a bona-fide
+`valid_geometry`, a legitimate operand for `Overlay.boolean_op` and the
+OverlayNG pipeline.
 
 Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.
