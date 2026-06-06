@@ -390,6 +390,15 @@ theories/HatMonotile.v
 # the chord midpoint (the reflection-free mating property).  Concrete sine_edge.
 # Three-axiom (cos/sin clean).  No Admitted.
 theories/SpectreCurvedEdge.v
+# Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
+# R-geometry (exact equilateral metrics) while making the horizontal-ray
+# crossing predicate (`edge_crosses_ray` / ray parity) for any horizontal dart
+# (constant-y) identical to the obvious "same row, never straddles" test in Q.
+# The x-intercept inequalities factor the positive scale uniformly (y's
+# unscaled), so lra discharges on concrete hex examples transport from the
+# rational model.  Supports Spectre/hat regression anchors and dart-based hex
+# constructions.  Three-axiom.  No Admitted.
+theories/HexXScaleBridge.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
