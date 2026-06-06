@@ -762,6 +762,16 @@ let run_arc_shorter () =
    reduction.  A hunter flags a #979 hole-collapse when the exact ring has
    nonzero area but the precision-reduced ring has zero area.
 
+   PROOF-BACKED.  `ring_area2` is the shoelace signed area `signed_area2` and
+   `q_make_precise` is the grid snap `snap_pt`, both formalised in
+   `theories/RingArea979.v`.  The collapse this oracle reports is certified
+   there: `signed_area2_snap_quantized` shows the snapped twice-area is an
+   integer multiple of `1/scale^2`, and `hole_below_grid_resolution_collapses`
+   shows any ring whose snapped twice-area is below one grid cell is EXACTLY
+   zero -- so a "ZERO" precise verdict is a sound witness of hole removal, not
+   a rounding artefact.  (The proof is rounding-mode agnostic; this oracle
+   instantiates the round-half-up `rnd`.)
+
    Input:  line 2   = scale  (positive integer = fixed PrecisionModel scale)
            line 3   = n       (vertex count, >= 3)
            lines 4.. = the n ring vertices "x y"

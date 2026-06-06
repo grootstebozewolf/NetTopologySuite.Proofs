@@ -364,6 +364,71 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Headline bridge at power-of-two scale (HotPixel_b64 deferred item 1).       *)
+(*                                                                            *)
+(* Generalises `HotPixel_b64.b64_in_hot_pixel_sound` off the unit grid: for   *)
+(* a power-of-two grid `scale = 2^k` (0 <= k <= 26) and integer-regime point  *)
+(* coordinates (`coord_int_safe`, |n| <= 2^25), the boolean decision           *)
+(* `b64_in_hot_pixel P C scale = true` implies the EXACT R-side membership     *)
+(* `in_hot_pixel (BP2P P) (BP2P C) (B2R scale)`.                               *)
+(*                                                                            *)
+(* The unit-scale theorem is the `k = 0` instance.  The proof is structurally  *)
+(* identical -- take the rounded-pixel membership from                         *)
+(* `b64_in_hot_pixel_sound_rounded`, then discharge the four rounded bounds to *)
+(* their exact integer-plus/minus-radius forms -- but the exact bounds now     *)
+(* come from the power-of-two boundary lemmas above (`b64_minus/plus_radius_   *)
+(* int_exact`) and the radius is `2^-(k+1)` rather than the fixed `1/2`.  This *)
+(* makes the extracted `IN_HOT_PIXEL` oracle mode soundness-backed across all  *)
+(* power-of-two grids, not just the unit grid.                                 *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem b64_in_hot_pixel_sound_pow2 :
+  forall (P C : BPoint) (scale : binary64) (k : Z),
+    coord_int_safe (bx P)  ->
+    coord_int_safe (by_ P) ->
+    coord_int_safe (bx C)  ->
+    coord_int_safe (by_ C) ->
+    Binary.is_finite prec emax scale = true ->
+    Binary.B2R prec emax scale = bpow radix2 k ->
+    (0 <= k <= 26)%Z ->
+    b64_hot_pixel_eval_safe P C scale ->
+    b64_in_hot_pixel P C scale = true ->
+    in_hot_pixel (BP2P P) (BP2P C) (Binary.B2R prec emax scale).
+Proof.
+  intros P C scale k HiPx HiPy HiCx HiCy Fscale HscaleR Hk Hsafe Hb.
+  pose proof (b64_in_hot_pixel_sound_rounded _ _ _ Hsafe Hb) as Hrounded.
+  unfold b64_in_rounded_hot_pixel in Hrounded.
+  set (r := b64_hot_pixel_radius scale) in *.
+  destruct HiCx as (FxC & ncx & HcxR & Hcxb).
+  destruct HiCy as (FyC & ncy & HcyR & Hcyb).
+  destruct HiPx as (FxP & npx & HpxR & Hpxb).
+  destruct HiPy as (FyP & npy & HpyR & Hpyb).
+  destruct Hrounded as [[Hxlo Hxhi] [Hylo Hyhi]].
+  (* Exact bounds via the power-of-two boundary lemmas. *)
+  destruct (b64_minus_radius_int_exact (bx C) scale ncx k
+              FxC HcxR Fscale HscaleR Hcxb Hk) as [Hmx _].
+  destruct (b64_plus_radius_int_exact (bx C) scale ncx k
+              FxC HcxR Fscale HscaleR Hcxb Hk) as [Hpx _].
+  destruct (b64_minus_radius_int_exact (by_ C) scale ncy k
+              FyC HcyR Fscale HscaleR Hcyb Hk) as [Hmy _].
+  destruct (b64_plus_radius_int_exact (by_ C) scale ncy k
+              FyC HcyR Fscale HscaleR Hcyb Hk) as [Hpy _].
+  fold r in Hmx, Hpx, Hmy, Hpy.
+  rewrite Hmx in Hxlo. rewrite Hpx in Hxhi.
+  rewrite Hmy in Hylo. rewrite Hpy in Hyhi.
+  (* hot_pixel_radius (2^k) = 2^-(k+1). *)
+  unfold in_hot_pixel, BP2P, px, py. simpl.
+  rewrite HscaleR.
+  assert (Hrad : hot_pixel_radius (bpow radix2 k) = bpow radix2 (- (k + 1))).
+  { unfold hot_pixel_radius.
+    assert (Hbpow1 : bpow radix2 (k + 1) = 2 * bpow radix2 k).
+    { rewrite bpow_plus, bpow_1. simpl. ring. }
+    rewrite bpow_opp, Hbpow1. reflexivity. }
+  rewrite Hrad, HcxR, HcyR.
+  split; [split | split]; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -372,3 +437,4 @@ Print Assumptions snap_round_preserves_passes_through_scale.
 Print Assumptions b64_hot_pixel_radius_pow2_exact.
 Print Assumptions b64_minus_radius_int_exact.
 Print Assumptions b64_plus_radius_int_exact.
+Print Assumptions b64_in_hot_pixel_sound_pow2.
