@@ -40,6 +40,8 @@ From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance.
 
 Local Open Scope R_scope.
+(* Part of the special-case JCT programme (issue #65): rectangle -> right
+   triangle -> arbitrary triangle, plus the hat & Spectre monotile showcases. *)
 
 (* Minimal planar point arithmetic. *)
 Definition padd  (p q : Point) : Point := mkPoint (px p + px q) (py p + py q).

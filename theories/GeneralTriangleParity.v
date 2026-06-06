@@ -36,6 +36,8 @@ From NTS.Proofs Require Import Distance Overlay PointInRingTangents JordanCurveS
 Import ListNotations.
 
 Local Open Scope R_scope.
+(* Part of the special-case JCT programme (issue #65): rectangle -> right
+   triangle -> arbitrary triangle, plus the hat & Spectre monotile showcases. *)
 
 (* Clearing the linear-interpolation division: a < N/d  <->  0 < N - a*d. *)
 Lemma lt_div_iff : forall a N d, 0 < d -> (a < N / d <-> 0 < N - a * d).

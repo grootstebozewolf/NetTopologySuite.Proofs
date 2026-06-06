@@ -38,6 +38,8 @@ From NTS.Proofs Require Import Distance Overlay Orientation.
 Import ListNotations.
 
 Local Open Scope R_scope.
+(* Part of the special-case JCT programme (issue #65): rectangle -> right
+   triangle -> arbitrary triangle, plus the hat & Spectre monotile showcases. *)
 
 (* Triangular-lattice point -> plane (the standard hat/hatviz shear). *)
 Definition hexPt (x y : R) : Point := mkPoint (x + y / 2) (y * (sqrt 3 / 2)).
