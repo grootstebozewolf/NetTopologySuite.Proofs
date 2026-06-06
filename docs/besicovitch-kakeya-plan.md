@@ -1,0 +1,133 @@
+# Besicovitch–Kakeya Set Plan (Non-Dumb Version)
+
+**Status:** Phase A landed (`theories/PerronStage.v`). Phases B–D are design only.
+**Goal:** Add a finite, polygonal, DCEL-compatible Kakeya construction that fits
+the existing corpus architecture without overclaiming measure-theoretic results
+we do not yet have.
+
+## 1. Philosophy
+
+We do not attempt to prove the full Kakeya conjecture or that the set has
+Lebesgue measure zero. We do build a concrete, finite-stage Perron tree that is:
+
+- Polygonal and representable as `list Ring`
+- Compatible with `OverlayGraph`, DCEL extraction, and ray-parity machinery
+- A strong future regression anchor once Lebesgue measure theory is added
+
+## 2. What the Corpus Can Already Do
+
+- Finite unions of polygons (`Ring`, `OverlayGraph`, `FacePolygon`)
+- Arbitrarily thin triangles with slanted/near-collinear edges
+- Separation fields (`SeparationField.v`, `ConvexField.v`, `GeneralTriangleSeparation.v`)
+- Guards (`ring_closed`, `ray_avoids_vertices`, `no_horizontal_edge_at`)
+- Regression anchors (Spectre, Hat, Diamond, rectangles)
+
+All of these are exactly the tools needed for a finite-stage Perron tree.
+
+## 3. What the Corpus Cannot Do Yet
+
+- Lebesgue outer measure / area tending to zero
+- Countable intersections with measure-theoretic semantics
+- Hausdorff dimension or Vitali-type covering arguments
+
+Therefore we stay strictly finite and polygonal at every stage.
+
+## 4. The Object to Formalise Now
+
+**Finite-stage Perron tree**
+
+```coq
+perron_stage (n : nat) : list Ring
+```
+
+Each stage is a finite collection of triangles (each a `Ring`). The union
+represents a polygonal approximation of the Kakeya construction at depth `n`.
+
+Then define (future):
+
+```coq
+kakeya_stage (n : nat) : Point -> Prop := ⋃ (map ring_to_pointset (perron_stage n))
+```
+
+a finite union of polygonal point sets — fully compatible with the existing
+machinery.
+
+## 5. What We Can Prove at Each Finite Stage
+
+For each `n`:
+
+- Contains line segments in `2^n` distinct directions
+- Bounded and closed
+- DCEL-representable (can run `OverlayGraph`, `RingExtract`, `FaceChain`)
+- Satisfies all existing guards (`no_horizontal_edge_at`, `ray_avoids_vertices`)
+- Ray-parity and orientation tests remain well-defined
+
+## 6. Long-Term Plan (4 Phases)
+
+- **Phase A — Polygonal Perron tree.** Implement `perron_stage` and prove
+  structural invariants + direction coverage. **Landed** in
+  `theories/PerronStage.v` (see below).
+- **Phase B — DCEL integration.** Represent each stage as an `OverlayGraph` and
+  extract face polygons.
+- **Phase C — Regression anchors.** Freeze `perron_stage 5` (or similar) as a
+  `Qed`-closed example with tests for near-collinearity, tiny angles, and
+  overlapping triangles.
+- **Phase D — Future measure theory.** Once Lebesgue measure is in the corpus,
+  prove area → 0 and finally define the infinite intersection with measure zero.
+
+## 7. Proposed Module Layout
+
+The corpus keeps `theories/` flat, so the Phase-A module landed as
+`theories/PerronStage.v` (registered in `_CoqProject.full`, the Overlay-dependent
+lane). Future phases:
+
+- `PerronStage.v` — finite polygonal stages **(landed)**
+- direction-coverage proofs — folded into `PerronStage.v` for now
+- DCEL integration — future (`OverlayGraph` of a stage)
+- a fixed regression anchor, e.g. stage 5 — future
+- measure-theory stubs — future
+
+All files stay `Qed`-closed within the three-axiom footprint.
+
+## 8. Why This Plan Is Not Dumb
+
+- It respects the current architectural limits (no measure theory yet).
+- It produces immediately useful, finite, DCEL-compatible objects.
+- It aligns with the existing regression-anchor philosophy (Spectre, Hat, Diamond).
+- It sets up the exact scaffolding needed for the future measure-theoretic
+  Kakeya proof.
+
+## Phase A — what landed (`theories/PerronStage.v`)
+
+The Phase-A object is the **elementary figure** of the Perron-tree construction:
+the apex-fan over a unit base. With apex `(1/2, 1)` over the base
+`[0,1] × {0}`, stage `n` subdivides the base into `2^n` equal pieces and forms
+sub-triangle `k` as `(apex, B_k, B_{k+1})` with `B_k = (k / 2^n, 0)`, each
+packaged as a closed `Ring` `[apex; B_k; B_{k+1}; apex]`.
+
+This is the figure the Perron-tree area reduction *starts from*; the
+area-reducing translations (the actual "tree") and the area → 0 analysis are
+Phase D and are **not** claimed here.
+
+Proved at every finite stage `n`:
+
+| Result | Statement |
+|---|---|
+| `perron_stage_length` | the stage has exactly `2^n` triangles |
+| `perron_stage_rings_valid` | every triangle is `ring_closed` and `ring_has_minimum_points` (so the DCEL / ray-parity machinery applies) |
+| `perron_tri_edges_count` | each triangle has 3 edges |
+| `perron_tri_area` | signed area of sub-triangle `k` is `1 / 2^n` |
+| `perron_tri_nondegenerate` | every sub-triangle is non-degenerate |
+| `perron_stage_directions_distinct` | **direction coverage** — distinct sub-triangles carry non-parallel apex-rays, so the `2^n` triangles realise `2^n` pairwise-distinct directions |
+| `base_pt_inj` | the base points (hence the rays) are genuinely distinct |
+| `perron_stage_in_unit_square` | the whole stage lies in the closed unit square (bounded) |
+| `perron_dir_translation_invariant` | Phase-D hook: the directions are invariant under the sliding translations the area reduction uses |
+
+Direction coverage is the honest, finite, polygonal analogue of "contains
+segments pointing in many directions": we prove the apex-ray cross product
+`cross apex B_k B_j = (j − k) / 2^n` is non-zero for distinct indices, i.e. the
+directions are pairwise non-parallel. No statement is made about *every*
+direction in `[0, π)` or about measure — those require the limit and Lebesgue
+theory of Phase D.
+
+Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.
