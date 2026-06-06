@@ -47,6 +47,16 @@ theories-flocq/Orient_b64_sound.v
 # architecture refactor reaches the binary64 arithmetic primitives.
 theories-flocq/DivRoundPow2_b64.v
 
+# Category C: Stage D Dekker integer-exactness bridge.  Both lemmas
+# (b64_Dekker_exact_of_format, b64_Dekker_int_exact) are stated over
+# `b64_Dekker` / `b64_mult` (Flocq's `Bmult` + Pff's Dekker TwoProduct) and
+# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
+# b64-arithmetic / Pff lineage that exempts B64_Pff_bridge.v (where
+# `b64_Dekker_correct` lives) and Orient_b64_exact.v above.  No Admitteds in
+# this file; both lemmas are Qed-closed.  Removable once the parametric-
+# architecture refactor reaches the binary64 arithmetic primitives.
+theories-flocq/Orient_b64_dekker_int.v
+
 # Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
 # result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
 # `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
