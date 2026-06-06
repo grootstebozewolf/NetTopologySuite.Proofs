@@ -39,7 +39,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals List Lra Lia.
-From NTS.Proofs Require Import Distance Overlay.
+From NTS.Proofs Require Import Distance Overlay HexXScaleBridge.
 
 Import ListNotations.
 Open Scope R_scope.
@@ -125,4 +125,25 @@ Proof.
   exists spec_pt. split.
   - unfold hole_spectre, spec_pt. cbn [In]. left. reflexivity.
   - exact spectre_point_in_ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  Lift to the true equilateral R-geometry via the x-scale bridge.         *)
+(*                                                                            *)
+(* The rational embedding above is a vertical scaling of the equilateral hex   *)
+(* metric.  `HexXScaleBridge.xscale (sqrt 3 / 2)` rescales the x-axis to        *)
+(* recover the true equilateral coordinates (the canonical √3/2 row spacing),  *)
+(* and `ray_parity_odd_xscale` shows the horizontal-ray crossing parity is      *)
+(* preserved under that positive scaling -- so the interior witness transports  *)
+(* verbatim to the metric geometry.                                            *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem spectre_point_in_ring_R :
+  point_in_ring (xscale (sqrt 3 / 2) spec_pt)
+                (map (xscale (sqrt 3 / 2)) spectre_ring).
+Proof.
+  unfold point_in_ring.
+  rewrite ring_edges_map_xscale.
+  apply (ray_parity_odd_xscale (sqrt 3 / 2) spec_pt (ring_edges spectre_ring)
+                               sqrt3_2_pos spectre_point_in_ring).
 Qed.
