@@ -145,38 +145,23 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_she
 # Registry entry retained only as historical context; no longer
 # Admitted.  Remove on next registry compaction.
 
-# `hobby_lemma_4_3_no_proper` -- the genuine thesis-shaped piece of
-# Hobby's Lemma 4.3.  Snap-rounding preserves "no proper intersection"
-# for any pair of properly-disjoint segments.  Proof sketch:
-# docs/hobby-theorem-proof-structure.md §4.
+# `hobby_lemma_4_3_no_proper` -- MOVED to the counterexample registry
+# (docs/admitted-counterexamples.txt).  This was carried here as a
+# thesis-shaped (4-6 week) deferred proof.  It is in fact FALSE as
+# stated: the bare two-segment statement drops the noded-arrangement
+# context that Hobby Theorem 4.1 actually relies on.
 #
-# Architectural refinement (May 2026): the original `hobby_lemma_4_3`
-# Admitted entry has been refactored into two sub-lemmas:
-#   - `hobby_lemma_4_3_shared_endpoint` -- Qed-closed, trivial
-#       (snap_round determinism preserves literal endpoint equality).
-#   - `hobby_lemma_4_3_no_proper` -- THIS ENTRY -- the load-bearing piece.
-# The original `hobby_lemma_4_3` is now Qed-closed by composing the
-# two sub-lemmas via case split on `segments_intersect_only_at_endpoints`'s
-# disjunctive hypothesis.  `hobby_theorem_4_1_conditional`'s premise is
-# unchanged; the deferred-proof obligation is now the narrower
-# `no_proper` half.
+# Refutation (Qed-closed): theories-flocq/HobbyCounterexample_b64.v.
+# Witness -- two parallel horizontal segments at y = 0.7 and y = 1.3
+# (no shared point, so no proper intersection) snap-round to the SAME
+# grid line y = 1, becoming collinear and overlapping -- a proper
+# intersection manufactured by snapping.  See
+# docs/hobby-lemma-4-3-no-proper-refutation.md.
 #
-# Approach: use Lemma 4.2 to obtain a (xi, eta) coordinate rotation;
-# express D_T(s1) and D_T(s2) as piecewise-linear functions F_1, F_2 in
-# (xi, eta); use the tolerance-square bound
-# |F_j(xi) - beta_j - gamma_j * xi| < 1/2, combined with the original
-# strict ordering, to close the no-proper-intersection ordering at
-# snap-rounded endpoints.  Key subtlety: R^- uses the half-open
-# convention OPPOSITE to R (Hobby p.210-211).
-#
-# Tools: piecewise-linear function representation, linear change of
-# coordinates, Rle composition.  Estimated scope: 4-6 weeks.
-# Thesis-shaped.
-#
-# Consumer: hobby_lemma_4_3 (now Qed-closed via composition), thence
-# hobby_theorem_4_1_conditional; discharging this lemma closes Hobby
-# Theorem 4.1 unconditionally.
-theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-theorem-proof-structure.md | §4,§7
+# The entry now lives in the counterexample registry; do not re-add it
+# here.  Closing Hobby Theorem 4.1 unconditionally requires restating
+# the preservation lemma over noded arrangements (a separate task),
+# not proving this two-segment form.
 
 # ============================================================================
 # Phase 3 Milestone 5 deferred entries.

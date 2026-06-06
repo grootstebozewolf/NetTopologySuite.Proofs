@@ -47,6 +47,16 @@ theories-flocq/Orient_b64_sound.v
 # architecture refactor reaches the binary64 arithmetic primitives.
 theories-flocq/DivRoundPow2_b64.v
 
+# Category C: Stage D Dekker integer-exactness bridge.  Both lemmas
+# (b64_Dekker_exact_of_format, b64_Dekker_int_exact) are stated over
+# `b64_Dekker` / `b64_mult` (Flocq's `Bmult` + Pff's Dekker TwoProduct) and
+# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
+# b64-arithmetic / Pff lineage that exempts B64_Pff_bridge.v (where
+# `b64_Dekker_correct` lives) and Orient_b64_exact.v above.  No Admitteds in
+# this file; both lemmas are Qed-closed.  Removable once the parametric-
+# architecture refactor reaches the binary64 arithmetic primitives.
+theories-flocq/Orient_b64_dekker_int.v
+
 # Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
 # result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
 # `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
@@ -83,6 +93,21 @@ theories-flocq/TopologicalCorrectness_b64.v
 # `snap_round_segments`, pulling `Classical_Prop.classic` through Flocq's
 # `round` / `round_mode` -- identical lineage to the other snap files.
 theories-flocq/HobbyTheorem_b64.v
+
+# Category C: refutation of hobby_lemma_4_3_no_proper.  An explicit
+# parallel-collapse witness whose snap-rounded images intersect properly
+# though the originals do not (Qed-closed counterexample; counterexample
+# registry).  References `snap_round` (via snap_round_coord), pulling
+# `Classical_Prop.classic` through Flocq's `round` / `round_mode` --
+# identical lineage to HobbyTheorem_b64.v above.  No Admitteds.
+theories-flocq/HobbyCounterexample_b64.v
+
+# Category C: the weaker-but-true noding-preservation claim (separated pairs)
+# and its buffer bridgehead.  References `snap_round` / `snap_round_coord`
+# (via the tolerance bound and snap_round_segments), pulling
+# `Classical_Prop.classic` through Flocq's `round` / `round_mode` -- identical
+# lineage to HobbyTheorem_b64.v.  No Admitteds; all Qed-closed.
+theories-flocq/NodingSeparation_b64.v
 
 # Category C: Phase 2 follow-up -- b64_passes_through_hot_pixel_halfopen.
 # Strict half-open filter (tight characterisation of in_hot_pixel's `<= , <`
@@ -159,6 +184,13 @@ theories/Atan2.v
 # so inherits Classical_Prop.classic.  Headlines cos/sin_angle_between and
 # atan2_range Qed-closed; no Admitteds.
 theories/AngleBetween.v
+
+# Category C (R-side, same atan lineage as AngleBetween.v): buffer/noder
+# pipeline seam S3 (docs/buffer-noder-pipeline.md), round-join corner-arc
+# relation.  corner_arc_sweep_eq_turn / _unit and atan2_pos_scale are built
+# on angle_between = atan2(...), so inherit Classical_Prop.classic.  All
+# headlines Qed-closed; no Admitteds.
+theories/BufferJoin.v
 
 # Category C (R-side): issue #64 Option-A foundation 3, exact arc length.
 # chord_subtended_sq is 3-axiom, but chord_le_arc_length uses Stdlib `sin_lt_x`
@@ -250,6 +282,50 @@ theories-flocq/Orient_b64_expansion.v
 # (deferred-proof, removable when Piece 5b closes).  The tiny-regime
 # decisive theorem is Qed-closed without the deferred reference.
 theories-flocq/Orient_b64_stage_d.v
+
+# Category C: Issue #66 grounded headline.  Composes Stage D's
+# b64_orient_sign_stage_d_sound with the full-plane exact
+# integer-determinant model (Orient_b64_exact_full.b64_orient2d_exact_sound)
+# to prove the Shewchuk decoder AGREES with the exact model
+# (shewchuk_stage_d_agrees_with_exact_intdet) and is decisive in the tiny
+# regime (shewchuk_vs_z2_tiny_headline).  No Admitteds in this file; it
+# inherits exactly the Stage D lineage: Classical_Prop.classic transitively
+# via the B2R chain + the fast_expansion_sum_nonoverlap_shewchuk reference
+# (deferred-proof, removable when Piece 5b closes).  Replaces the ungrounded
+# "Shewchuk_vs_Z2" Hypothesis draft from the #66 discussion.
+theories-flocq/Shewchuk_vs_Z2.v
+
+# Category C: Issue #66 unsoundness witness.  Concrete finite binary64
+# points where the float product underflows to +0, so the Stage A filter
+# b64_orient_sign_filtered reports OrientRZero while the exact
+# integer-determinant model returns +1 and the true cross product is > 0
+# (stage_a_filter_unsound_under_underflow, Qed-closed via vm_compute).
+# Pulls Classical_Prop.classic transitively via the cross_R_BP / B2R real
+# lineage (same as the other binary64-arithmetic files).  No Admitteds,
+# and -- unlike the Stage D files -- no fast_expansion_sum_nonoverlap_shewchuk
+# reference (it touches only the filter and the exact model).
+theories-flocq/Orient_b64_underflow_unsound.v
+
+# Category C: Issue #66 underflow recovery.  Proves the float Stage D
+# decoder does NOT recover on the underflow witness (returns OrientRZero),
+# defines the integer-mantissa decoder b64_orient_sign_intexact and proves
+# it sound over the whole finite plane + correct (OrientRPos) on the
+# witness.  Pulls Classical_Prop.classic transitively via the cross_R_BP /
+# B2R real lineage (same as the other binary64 files).  No Admitteds, and no
+# fast_expansion_sum_nonoverlap_shewchuk reference (Stage D's value is only
+# vm_computed; its deferred-proof soundness theorem is not used).
+theories-flocq/Orient_b64_underflow_recovery.v
+
+# Category C: Issue #66 corrected Stage D (b64_orient_sign_stage_d_safe).
+# Routes every non-committal filter verdict through the integer-mantissa
+# exact decoder; sound whenever the filter is indefinite (no precondition),
+# sound under int-safety alone (drops expansion-safety), total, and correct
+# on the underflow witness.  Pulls Classical_Prop.classic transitively via
+# the cross_R_BP / B2R real lineage (same as the other binary64 files).  No
+# Admitteds, and no fast_expansion_sum_nonoverlap_shewchuk reference (the
+# corrected decoder abandons the expansion path -- the exact fallback is the
+# integer-mantissa model, not the EFT expansion).
+theories-flocq/Orient_b64_stage_d_safe.v
 
 # Category C: Phase 3 Milestone 4 (Flocq layer) -- noding-to-graph bridge.
 # Defines noded_segments and proves snap_noding_bridge +

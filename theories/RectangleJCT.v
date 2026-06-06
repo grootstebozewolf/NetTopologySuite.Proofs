@@ -1,0 +1,478 @@
+(* ============================================================================
+   NetTopologySuite.Proofs.RectangleJCT
+   ----------------------------------------------------------------------------
+   Special-case JCT, slice 1: the ray-parity COMPUTATION for an axis-aligned
+   rectangle.  Part of the programme to discharge `parity_characterises_
+   interior_cont` (theories/JCT.v) for tractable ring families instead of the
+   full thesis-scale polygonal Jordan Curve Theorem.
+
+   This file closes the *combinatorial / computational half* of the rectangle
+   case, with NO Jordan-curve content:
+
+     point_in_ring p (rect_ring x0 y0 x1 y1)
+        <->  (y0 < py p < y1  /\  x0 <= px p < x1)         (for x0<x1, y0<y1)
+
+   i.e. the horizontal-ray crossing-parity test `Overlay.point_in_ring`
+   evaluates EXACTLY to membership in the (half-open) box.  The proof is a
+   finite evaluation of the inductive `ray_parity_odd` over the rectangle's
+   four edges:
+     - the two horizontal edges (bottom y0, top y1) are PARALLEL to the ray
+       and never cross it (their endpoints share a y-coordinate, so the strict
+       y-straddle is impossible);
+     - the two vertical edges (x1, x0) cross iff the ray height is strictly
+       inside (y0,y1) and the edge is strictly to the right of p.
+   Parity of {right-edge crosses} XOR {left-edge crosses} is exactly the box.
+
+   The left boundary `px p = x0` is included by the standard half-open
+   ray-cast convention (it lies on the left edge, hence in `ring_image`); once
+   composed with `ring_complement` it agrees with the OPEN box.
+
+   Scope note.  A strictly axis-aligned rectangle has horizontal edges, so it
+   sits just outside the conservative `no_horizontal_edge_at` generic-position
+   guard of `parity_characterises_interior_cont` -- but those edges are
+   ray-parallel and benign, so the parity is correct regardless, and we state
+   the characterisation directly.  The ANALYTIC half (`geometric_interior_cont`
+   <-> open box, via `in_bounded_component_cont` + a rectangle separation /
+   IVT argument) is the next slice and is NOT addressed here.
+
+   Pure-R, three-axiom.  No `Admitted` / `Axiom` / `Parameter`.
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted, human-reviewed.
+     Assisted-by: Claude (claude-opus-4-8)
+   ========================================================================== *)
+
+From Stdlib Require Import Reals Lra Lia List.
+From NTS.Proofs Require Import Distance Overlay PointInRingTangents JordanCurveSeam.
+Import ListNotations.
+
+Local Open Scope R_scope.
+
+(* -------------------------------------------------------------------------- *)
+(* §1  Generic ray-parity reduction lemmas (reusable; finite-list evaluation).*)
+(* -------------------------------------------------------------------------- *)
+
+Lemma ray_parity_odd_nil_false : forall p, ~ ray_parity_odd p [].
+Proof. intros p H; inversion H. Qed.
+
+Lemma rpo_skip_iff : forall p e es,
+  ~ edge_crosses_ray p e ->
+  (ray_parity_odd p (e :: es) <-> ray_parity_odd p es).
+Proof.
+  intros p e es Hnc; split.
+  - intros H; inversion H; subst; [ contradiction | assumption ].
+  - intros H; apply rpo_skip; assumption.
+Qed.
+
+Lemma rpe_skip_iff : forall p e es,
+  ~ edge_crosses_ray p e ->
+  (ray_parity_even p (e :: es) <-> ray_parity_even p es).
+Proof.
+  intros p e es Hnc; split.
+  - intros H; inversion H; subst; [ contradiction | assumption ].
+  - intros H; apply rpe_skip; assumption.
+Qed.
+
+Lemma rpo_cross_iff : forall p e es,
+  edge_crosses_ray p e ->
+  (ray_parity_odd p (e :: es) <-> ray_parity_even p es).
+Proof.
+  intros p e es Hc; split.
+  - intros H; inversion H; subst; [ assumption | contradiction ].
+  - intros H; apply rpo_cross; assumption.
+Qed.
+
+Lemma rpe_cross_iff : forall p e es,
+  edge_crosses_ray p e ->
+  (ray_parity_even p (e :: es) <-> ray_parity_odd p es).
+Proof.
+  intros p e es Hc; split.
+  - intros H; inversion H; subst; [ assumption | contradiction ].
+  - intros H; apply rpe_cross; assumption.
+Qed.
+
+Lemma ray_parity_odd_single : forall p e,
+  ray_parity_odd p [e] <-> edge_crosses_ray p e.
+Proof.
+  intros p e; split.
+  - intros H; inversion H; subst.
+    + assumption.
+    + exfalso; eapply ray_parity_odd_nil_false; eauto.
+  - intros Hc; apply rpo_cross; [ assumption | constructor ].
+Qed.
+
+Lemma ray_parity_even_single : forall p e,
+  ray_parity_even p [e] <-> ~ edge_crosses_ray p e.
+Proof.
+  intros p e; split.
+  - intros H; inversion H; subst.
+    + exfalso; eapply ray_parity_odd_nil_false; eauto.
+    + assumption.
+  - intros Hnc; apply rpe_skip; [ assumption | constructor ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §2  The axis-aligned rectangle ring and its four edges.                    *)
+(* -------------------------------------------------------------------------- *)
+
+(* Counter-clockwise from the bottom-left corner:
+   (x0,y0) -> (x1,y0) -> (x1,y1) -> (x0,y1) -> close. *)
+Definition rect_ring (x0 y0 x1 y1 : R) : Ring :=
+  [ mkPoint x0 y0 ; mkPoint x1 y0 ; mkPoint x1 y1 ; mkPoint x0 y1 ; mkPoint x0 y0 ].
+
+Lemma ring_edges_rect : forall x0 y0 x1 y1,
+  ring_edges (rect_ring x0 y0 x1 y1) =
+    [ (mkPoint x0 y0, mkPoint x1 y0)     (* e1 bottom, horizontal *)
+    ; (mkPoint x1 y0, mkPoint x1 y1)     (* e2 right,  vertical   *)
+    ; (mkPoint x1 y1, mkPoint x0 y1)     (* e3 top,    horizontal *)
+    ; (mkPoint x0 y1, mkPoint x0 y0) ].  (* e4 left,   vertical   *)
+Proof. reflexivity. Qed.
+
+(* §2.1  Per-edge crossing characterisations. *)
+
+Lemma e_bottom_no_cross : forall (x0 y0 x1 y1 : R) (p : Point),
+  ~ edge_crosses_ray p (mkPoint x0 y0, mkPoint x1 y0).
+Proof.
+  intros x0 y0 x1 y1 p H.
+  unfold edge_crosses_ray in H; cbn [px py fst snd] in H.
+  destruct H as [[Hy _] | [Hy _]]; lra.
+Qed.
+
+Lemma e_top_no_cross : forall (x0 y0 x1 y1 : R) (p : Point),
+  ~ edge_crosses_ray p (mkPoint x1 y1, mkPoint x0 y1).
+Proof.
+  intros x0 y0 x1 y1 p H.
+  unfold edge_crosses_ray in H; cbn [px py fst snd] in H.
+  destruct H as [[Hy _] | [Hy _]]; lra.
+Qed.
+
+Lemma e_right_cross_iff : forall (x0 y0 x1 y1 : R) (p : Point),
+  y0 < y1 ->
+  (edge_crosses_ray p (mkPoint x1 y0, mkPoint x1 y1)
+     <-> (y0 < py p < y1 /\ px p < x1)).
+Proof.
+  intros x0 y0 x1 y1 p Hy01.
+  assert (Hb : x1 + (x1 - x1) * (py p - y0) / (y1 - y0) = x1) by (unfold Rdiv; ring).
+  unfold edge_crosses_ray; cbn [px py fst snd]; split.
+  - intros [[Hy Hx] | [Hy _]].
+    + rewrite Hb in Hx. split; [ exact Hy | exact Hx ].
+    + lra.
+  - intros [Hy Hx]. left. split; [ exact Hy | rewrite Hb; exact Hx ].
+Qed.
+
+Lemma e_left_cross_iff : forall (x0 y0 x1 y1 : R) (p : Point),
+  y0 < y1 ->
+  (edge_crosses_ray p (mkPoint x0 y1, mkPoint x0 y0)
+     <-> (y0 < py p < y1 /\ px p < x0)).
+Proof.
+  intros x0 y0 x1 y1 p Hy01.
+  assert (Hb : x0 + (x0 - x0) * (py p - y0) / (y1 - y0) = x0) by (unfold Rdiv; ring).
+  unfold edge_crosses_ray; cbn [px py fst snd]; split.
+  - intros [[Hy _] | [Hy Hx]].
+    + lra.
+    + rewrite Hb in Hx. split; [ exact Hy | exact Hx ].
+  - intros [Hy Hx]. right. split; [ exact Hy | rewrite Hb; exact Hx ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §3  Main: ray-parity in-ring test = membership in the (half-open) box.     *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem point_in_ring_rect_iff : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  (point_in_ring p (rect_ring x0 y0 x1 y1)
+     <-> (y0 < py p < y1 /\ x0 <= px p < x1)).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01.
+  unfold point_in_ring. rewrite ring_edges_rect.
+  pose proof (e_bottom_no_cross x0 y0 x1 y1 p) as Hb.
+  pose proof (e_top_no_cross    x0 y0 x1 y1 p) as Ht.
+  pose proof (e_right_cross_iff x0 y0 x1 y1 p Hy01) as HR.
+  pose proof (e_left_cross_iff  x0 y0 x1 y1 p Hy01) as HL.
+  (* drop the bottom (horizontal, never crosses) *)
+  rewrite (rpo_skip_iff _ _ _ Hb).
+  (* split on whether the right edge crosses *)
+  destruct (Rlt_dec (px p) x1) as [HxR | HxR];
+  destruct (Rlt_le_dec (py p) y1) as [Hyt | Hyt];
+  destruct (Rlt_le_dec y0 (py p)) as [Hyb | Hyb].
+  all: try (
+    (* cases where the RIGHT edge crosses: y0<py<y1 /\ px<x1 *)
+    assert (HcR : edge_crosses_ray p (mkPoint x1 y0, mkPoint x1 y1))
+      by (apply HR; split; [ split; lra | lra ]);
+    rewrite (rpo_cross_iff _ _ _ HcR);
+    rewrite (rpe_skip_iff _ _ _ Ht);
+    rewrite ray_parity_even_single;
+    (* now goal: ~ left-cross <-> box *)
+    rewrite HL; split; intros; try (split; lra); lra).
+  all: try (
+    (* cases where the RIGHT edge does NOT cross *)
+    assert (HncR : ~ edge_crosses_ray p (mkPoint x1 y0, mkPoint x1 y1))
+      by (rewrite HR; intros [[? ?] ?]; lra);
+    rewrite (rpo_skip_iff _ _ _ HncR);
+    rewrite (rpo_skip_iff _ _ _ Ht);
+    rewrite ray_parity_odd_single;
+    rewrite HL; split; intros; try (split; lra); lra).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  The rectangle is a closed ring with enough vertices (premises of the   *)
+(*     headline that ARE satisfied; cheap structural facts).                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma rect_ring_closed : forall x0 y0 x1 y1,
+  ring_closed (rect_ring x0 y0 x1 y1).
+Proof.
+  intros x0 y0 x1 y1.
+  exists (mkPoint x0 y0), [ mkPoint x1 y0 ; mkPoint x1 y1 ; mkPoint x0 y1 ].
+  reflexivity.
+Qed.
+
+Lemma rect_ring_min_points : forall x0 y0 x1 y1,
+  ring_has_minimum_points (rect_ring x0 y0 x1 y1).
+Proof. intros; unfold ring_has_minimum_points, rect_ring; cbn [length]; lia. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §5  Slice 2a (analytic, JCT-free): open-box points are off the edge          *)
+(*     skeleton, reducing the interior equivalence to the bounded-component     *)
+(*     separation alone.                                                        *)
+(* -------------------------------------------------------------------------- *)
+
+(* A strict-interior point lies in `ring_complement` (is not on any of the four
+   edges): each edge pins one coordinate to a boundary value (py=y0, px=x1,
+   py=y1, px=x0), contradicting the strict box inequalities.  No Jordan content
+   -- pure interval arithmetic over the four lerp parametrisations. *)
+Theorem rect_open_box_complement : forall x0 y0 x1 y1 p,
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  ring_complement (rect_ring x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy.
+  intros [e [t [Hin [Ht [Hpx Hpy]]]]].
+  rewrite ring_edges_rect in Hin.
+  cbn [In] in Hin.
+  destruct Hin as [He | [He | [He | [He | []]]]];
+    subst e; cbn [px py fst snd] in Hpx, Hpy; nra.
+Qed.
+
+(* Consequently, for a strict-interior point the `ring_complement` half of
+   `geometric_interior_cont` is automatic, so "geometric interior" collapses to
+   exactly "in a bounded complement component" -- the single remaining analytic
+   rung (the rectangle separation / IVT argument), isolated. *)
+Theorem rect_open_box_interior_iff_bounded : forall x0 y0 x1 y1 p,
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  (geometric_interior_cont p (rect_ring x0 y0 x1 y1)
+     <-> in_bounded_component_cont (rect_ring x0 y0 x1 y1) p).
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy.
+  unfold geometric_interior_cont; split.
+  - intros [_ Hb]; exact Hb.
+  - intros Hb; split; [ apply rect_open_box_complement; assumption | exact Hb ].
+Qed.
+
+(* The combined slice-1+2a picture for a strict-interior point: the ray-parity
+   test fires AND the point is off the skeleton AND "interior = bounded
+   component".  Everything except the bounded-component separation is now Qed. *)
+Theorem rect_open_box_characterisation : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  point_in_ring p (rect_ring x0 y0 x1 y1) /\
+  ring_complement (rect_ring x0 y0 x1 y1) p /\
+  (geometric_interior_cont p (rect_ring x0 y0 x1 y1)
+     <-> in_bounded_component_cont (rect_ring x0 y0 x1 y1) p).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hx Hy.
+  split; [| split].
+  - apply point_in_ring_rect_iff; [ exact Hx01 | exact Hy01 | ].
+    split; [ exact Hy | split; lra ].
+  - apply rect_open_box_complement; assumption.
+  - apply rect_open_box_interior_iff_bounded; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  Slice 2b: reduce the interior equivalence to ONE separation lemma.       *)
+(*                                                                            *)
+(* The lone remaining analytic rung is that a complement-connected point stays *)
+(* inside the closed box -- i.e. the rectangle curve SEPARATES the plane.  We  *)
+(* name it `rect_confines` and carry it as a hypothesis (NOT Admitted -- same  *)
+(* epistemic status as `parity_characterises_interior_cont` itself), then      *)
+(* discharge everything else (the bounded-component bound and the full         *)
+(* interior <-> ray-parity equivalence) unconditionally.                       *)
+(*                                                                            *)
+(* Proof sketch for the future (unconditional `rect_confines`): a continuous   *)
+(* path off all four edges lands, at every t, in (open box) U (strict          *)
+(* exterior) -- two disjoint OPEN sets partitioning the connected [0,1].  As   *)
+(* it starts in the open box it stays there (a sup/clopen argument:            *)
+(* t* = sup{t : path[0,t] in open box}; continuity + avoiding the boundary     *)
+(* forces t* = 1).  This needs Stdlib epsilon-delta continuity plumbing and is *)
+(* the next slice.                                                             *)
+(* -------------------------------------------------------------------------- *)
+
+(* The rectangle Jordan-separation residual: every point reachable from p by a
+   continuous complement path stays in the closed box. *)
+Definition rect_confines (x0 y0 x1 y1 : R) (p : Point) : Prop :=
+  forall q : Point,
+    connected_in_complement_cont (rect_ring x0 y0 x1 y1) p q ->
+    x0 <= px q <= x1 /\ y0 <= py q <= y1.
+
+(* On an interval, a square is bounded by the larger endpoint square. *)
+Lemma sq_le_max_endpoints : forall a u v,
+  u <= a <= v -> a * a <= Rmax (u * u) (v * v).
+Proof.
+  intros a u v [Hl Hr].
+  destruct (Rle_dec 0 a) as [Hpos | Hneg].
+  - apply Rle_trans with (v * v); [ nra | apply Rmax_r ].
+  - apply Rle_trans with (u * u); [ nra | apply Rmax_l ].
+Qed.
+
+(* Confinement to the closed box gives a finite radius bound, i.e. membership
+   in a bounded complement component. *)
+Lemma rect_interior_bounded_of_confines : forall x0 y0 x1 y1 p,
+  rect_confines x0 y0 x1 y1 p ->
+  in_bounded_component_cont (rect_ring x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 p Hconf.
+  set (S := Rmax (x0 * x0) (x1 * x1) + Rmax (y0 * y0) (y1 * y1) + 1).
+  assert (Hx2 : 0 <= Rmax (x0 * x0) (x1 * x1))
+    by (apply Rle_trans with (x0 * x0); [ nra | apply Rmax_l ]).
+  assert (Hy2 : 0 <= Rmax (y0 * y0) (y1 * y1))
+    by (apply Rle_trans with (y0 * y0); [ nra | apply Rmax_l ]).
+  assert (HSpos : 0 < S) by (unfold S; lra).
+  exists (sqrt S); split.
+  - apply sqrt_lt_R0; exact HSpos.
+  - intros q Hq.
+    destruct (Hconf q Hq) as [Hxq Hyq].
+    assert (HMM : sqrt S * sqrt S = S) by (apply sqrt_sqrt; lra).
+    rewrite HMM.
+    pose proof (sq_le_max_endpoints (px q) x0 x1 Hxq) as Hpx2.
+    pose proof (sq_le_max_endpoints (py q) y0 y1 Hyq) as Hpy2.
+    unfold S; lra.
+Qed.
+
+(* Hence, for a strict-interior point, confinement yields the full geometric
+   interior. *)
+Theorem rect_open_box_geometric_interior_of_confines : forall x0 y0 x1 y1 p,
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  rect_confines x0 y0 x1 y1 p ->
+  geometric_interior_cont p (rect_ring x0 y0 x1 y1).
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy Hconf; split.
+  - apply rect_open_box_complement; assumption.
+  - apply rect_interior_bounded_of_confines; assumption.
+Qed.
+
+(* The rectangle instance of `parity_characterises_interior_cont`, for a
+   strict-interior point, modulo only `rect_confines` (the separation). *)
+Theorem rect_parity_characterises_interior_open : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  x0 < px p < x1 -> y0 < py p < y1 ->
+  rect_confines x0 y0 x1 y1 p ->
+  (point_in_ring p (rect_ring x0 y0 x1 y1)
+     <-> geometric_interior_cont p (rect_ring x0 y0 x1 y1)).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hx Hy Hconf; split; intros _.
+  - apply rect_open_box_geometric_interior_of_confines; assumption.
+  - apply point_in_ring_rect_iff; [ exact Hx01 | exact Hy01 | ].
+    split; [ exact Hy | split; lra ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Slice 2c (geometry of the separation, JCT-free): the edge skeleton IS    *)
+(*     the box boundary, hence a complement point is strict-interior or         *)
+(*     strict-exterior.  This strips all geometry from `rect_confines`, leaving *)
+(*     only a pure interval-connectedness fact (the sup/clopen argument).       *)
+(* -------------------------------------------------------------------------- *)
+
+(* A fraction a/d with 0 <= a <= d and 0 < d lands in [0,1]. *)
+Lemma div_in_01 : forall a d, 0 <= a -> a <= d -> 0 < d -> 0 <= a / d <= 1.
+Proof.
+  intros a d Ha Had Hd; split.
+  - apply Rmult_le_pos; [ exact Ha | left; apply Rinv_0_lt_compat; exact Hd ].
+  - apply Rmult_le_reg_r with d; [ exact Hd | ].
+    replace (a / d * d) with a by (field; lra). lra.
+Qed.
+
+(* The four edges paved as a boundary predicate. *)
+Definition on_box_boundary (x0 y0 x1 y1 : R) (p : Point) : Prop :=
+  ((py p = y0 \/ py p = y1) /\ x0 <= px p <= x1) \/
+  ((px p = x0 \/ px p = x1) /\ y0 <= py p <= y1).
+
+(* Converse of slice 2a: a box-boundary point lies on the edge skeleton. *)
+Theorem box_boundary_in_ring_image : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  on_box_boundary x0 y0 x1 y1 p ->
+  ring_image (rect_ring x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hb.
+  unfold ring_image; rewrite ring_edges_rect.
+  destruct Hb as [[[Hpy | Hpy] Hpx] | [[Hpx | Hpx] Hpy]].
+  - (* bottom edge e1 = ((x0,y0),(x1,y0)), py = y0 *)
+    exists (mkPoint x0 y0, mkPoint x1 y0), ((px p - x0) / (x1 - x0)).
+    pose proof (div_in_01 (px p - x0) (x1 - x0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; field; lra
+                  | cbn [px py fst snd]; rewrite Hpy; field; lra ].
+  - (* top edge e3 = ((x1,y1),(x0,y1)), py = y1 *)
+    exists (mkPoint x1 y1, mkPoint x0 y1), ((x1 - px p) / (x1 - x0)).
+    pose proof (div_in_01 (x1 - px p) (x1 - x0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; field; lra
+                  | cbn [px py fst snd]; rewrite Hpy; field; lra ].
+  - (* left edge e4 = ((x0,y1),(x0,y0)), px = x0 *)
+    exists (mkPoint x0 y1, mkPoint x0 y0), ((y1 - py p) / (y1 - y0)).
+    pose proof (div_in_01 (y1 - py p) (y1 - y0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; rewrite Hpx; field; lra
+                  | cbn [px py fst snd]; field; lra ].
+  - (* right edge e2 = ((x1,y0),(x1,y1)), px = x1 *)
+    exists (mkPoint x1 y0, mkPoint x1 y1), ((py p - y0) / (y1 - y0)).
+    pose proof (div_in_01 (py p - y0) (y1 - y0) ltac:(lra) ltac:(lra) ltac:(lra)) as Ht.
+    repeat split; [ cbn [In]; auto | lra | lra
+                  | cbn [px py fst snd]; rewrite Hpx; field; lra
+                  | cbn [px py fst snd]; field; lra ].
+Qed.
+
+(* Complement dichotomy: off the skeleton means strictly inside or strictly
+   outside the box -- the two OPEN regions whose connectedness gives the
+   separation.  No analytic content. *)
+Theorem rect_complement_dichotomy : forall x0 y0 x1 y1 p,
+  x0 < x1 -> y0 < y1 ->
+  ring_complement (rect_ring x0 y0 x1 y1) p ->
+  (x0 < px p < x1 /\ y0 < py p < y1)
+  \/ (px p < x0 \/ px p > x1 \/ py p < y0 \/ py p > y1).
+Proof.
+  intros x0 y0 x1 y1 p Hx01 Hy01 Hcomp.
+  destruct (Rlt_le_dec (px p) x0) as [Hxa | Hxa];
+    [ right; left; exact Hxa | ].
+  destruct (Rlt_le_dec x1 (px p)) as [Hxb | Hxb];
+    [ right; right; left; exact Hxb | ].
+  destruct (Rlt_le_dec (py p) y0) as [Hya | Hya];
+    [ right; right; right; left; exact Hya | ].
+  destruct (Rlt_le_dec y1 (py p)) as [Hyb | Hyb];
+    [ right; right; right; right; exact Hyb | ].
+  (* now x0 <= px p <= x1 and y0 <= py p <= y1 (closed box) *)
+  destruct (Rle_lt_or_eq_dec _ _ Hxa) as [Hx0lt | Hx0eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        right; split; [ left; symmetry; exact Hx0eq | lra ] ].
+  destruct (Rle_lt_or_eq_dec _ _ Hxb) as [Hx1lt | Hx1eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        right; split; [ right; exact Hx1eq | lra ] ].
+  destruct (Rle_lt_or_eq_dec _ _ Hya) as [Hy0lt | Hy0eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        left; split; [ left; symmetry; exact Hy0eq | lra ] ].
+  destruct (Rle_lt_or_eq_dec _ _ Hyb) as [Hy1lt | Hy1eq];
+    [ | exfalso; apply Hcomp; apply box_boundary_in_ring_image; auto;
+        left; split; [ right; exact Hy1eq | lra ] ].
+  left; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Audit footprint.                                                           *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions point_in_ring_rect_iff.
+Print Assumptions rect_open_box_complement.
+Print Assumptions rect_open_box_characterisation.
+Print Assumptions rect_interior_bounded_of_confines.
+Print Assumptions rect_parity_characterises_interior_open.
+Print Assumptions box_boundary_in_ring_image.
+Print Assumptions rect_complement_dichotomy.

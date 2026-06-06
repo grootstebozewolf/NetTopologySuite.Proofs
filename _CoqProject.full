@@ -36,6 +36,43 @@ theories/Azimuth.v
 # Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
 # three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
 theories/ClothoidResidual.v
+# Buffer/noder pipeline, Stage 2a seam (docs/buffer-noder-pipeline.md S2):
+# offset-segment soundness -- the offset of an edge is parallel to it
+# (offset_seg_dir / offset_seg_parallel) and sits at perpendicular distance
+# |d| from the source line (offset_point_dist / offset_perp_dist_to_line).
+# Pure Stdlib; three-axiom footprint.  No Admitted.
+theories/BufferOffset.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# miter-join apex geometry (JTS#180).  miter_apex is the Cramer's-rule
+# intersection of the two offset lines; miter_apex_perp_dist_u/_w /
+# miter_apex_on_both_offsets prove it sits at perpendicular distance d from
+# both edge lines.  Pure Stdlib; three-axiom footprint.  No Admitted.
+theories/BufferMiter.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# miter-cap <-> half-angle soundness.  miter_numerator_sin_half ties the
+# offset numerator to Azimuth.sin_half_turn(u, vneg w); miter_cap_iff_sin_half
+# proves the algebraic cap (BufferMiter) and the half-angle cap
+# (Azimuth.miter_ratio_le_iff) decide the same thing.  Three-axiom (Azimuth's
+# sin_half_turn is sqrt-only).  No Admitted.
+theories/BufferMiterAngle.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# bevel-join chord.  bevel_length_sq_dot (law-of-cosines) and
+# bevel_length_sq_sin_half show the bevel segment = 2 d sin(theta/2), the
+# chord of the round-join arc (radius d, central angle = the turn).
+# Three-axiom (sin_half_turn is sqrt-only).  No Admitted.
+theories/BufferBevel.v
+# Buffer/noder pipeline, Stage 2c seam (docs/buffer-noder-pipeline.md):
+# line endcaps (JTS#739/#1028).  flat_cap_length_sq/_perp_edge,
+# round_cap_endpoints_on_circle/round_cap_apex_on_circle,
+# square_cap_extension/square_cap_corner_dist_sq -- the defining geometry
+# of CAP_FLAT / CAP_ROUND / CAP_SQUARE.  Three-axiom.  No Admitted.
+theories/BufferEndcap.v
+# Buffer/noder pipeline, Stage 2 seam (docs/buffer-noder-pipeline.md S5):
+# edge-list assembly.  Interleaves offset walls with bevel joins
+# (assemble_open / assemble_closed) and proves the assembled boundary is a
+# closed chain by construction (assemble_open_chain, assemble_closed_closed)
+# plus wall_parallel.  Three-axiom.  No Admitted.
+theories/BufferAssembly.v
 # Issue #64 / Option-A arc primitives, foundation 1: two-argument atan2 built
 # on Stdlib Ratan (JTS Math.atan2 convention, range (-PI, PI]).  Headlines
 # cos_atan2 / sin_atan2 characterise it as the polar angle of (x, y).  Pure
@@ -49,6 +86,14 @@ theories/Atan2.v
 # identity; plus atan2_range (-PI, PI].  Pulls classic via atan (see
 # audit-exceptions).  No Admitted.
 theories/AngleBetween.v
+# Buffer/noder pipeline, Stage 2b seam (docs/buffer-noder-pipeline.md S3):
+# round-join corner-arc relation (Roadmap target 6).  The sweep between the
+# two offset normals equals the turn between the edges
+# (corner_arc_sweep_eq_turn), since vperp preserves cross+dot; plus
+# atan2 positive-scaling invariance to read it off the unit normals
+# (corner_arc_sweep_eq_turn_unit).  Pulls classic via atan2 (see
+# audit-exceptions).  No Admitted.
+theories/BufferJoin.v
 # Issue #64 / Option-A foundation 3 (ask #1): exact arc length s = r*theta with
 # the chord/arc soundness relations.  Headlines chord_le_arc_length (chord <=
 # arc, arc analogue of chord_le_detour) and chord_subtended_sq (half-angle
@@ -62,6 +107,55 @@ theories/ArcLength.v
 # five structural lemmas.  Self-contained: imports Reals, Lra, List, and
 # the corpus's Distance.  No Admitted; no Classical_Prop.classic.
 theories/Overlay.v
+
+# extract_rings_valid R5: a CONCRETE unconditional witness that hole_inside_outer
+# is reachable (docs/hole-inside-outer.md).  A 4x4 square outer with a smaller
+# square hole sharing the centre; proved by walking the ray_parity_odd
+# constructors + lra.  Regression anchor; the GENERAL discharge is the registered
+# JCT/H1 residual.  No Admitted; standard three-axiom classical-reals base.
+theories/HoleInsideOuterExample.v
+
+# extract_rings_valid R5 analytic seam, Stage C opened (convex beachhead,
+# concrete non-axis-aligned instance) (docs/hole-inside-outer-convex.md).  The
+# general convex point_in_ring is substantial geometric work (NOT attempted);
+# this lands the first convex instance beyond rectangles -- a diamond (rotated
+# square) with SLANTED edges (real x-intercept arithmetic):
+# diamond_interior_point_in_ring and hole_inside_outer_diamond.  Regression anchor.
+# No Admitted; standard three-axiom classical-reals base.
+theories/HoleInsideOuterConvexExample.v
+
+# Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
+# R-geometry (exact equilateral metrics) while making the horizontal-ray
+# crossing predicate (`edge_crosses_ray` / ray parity) identical to the
+# rational model.  xscale / xscale_edge; the forward bridge xscale_cross_bridge;
+# the reverse edge_crosses_ray_xscale_rev (via xscale_inv); the mutual-induction
+# parity transport ray_parity_xscale_both / ray_parity_odd_xscale; and the
+# ring_edges/map commutation ring_edges_map_xscale.  Supports lifting Q-grid
+# regression anchors (Spectre/hat) to the true metric.  Three-axiom.  No Admitted.
+theories/HexXScaleBridge.v
+
+# A point-in-ring regression anchor on the SPECTRE aperiodic monotile -- a
+# complex NON-CONVEX 14-gon -- stress-testing Overlay.ray_parity_odd
+# (docs/spectre-example.md).  NOT part of the extract_rings_valid pipeline.
+# Rational hex embedding (height = hex y, a vertical scaling of the equilateral
+# sqrt 3 metric with identical horizontal-ray parity), so lra closes each
+# edge_crosses_ray exactly: spectre_ring_closed, spectre_min_points,
+# spectre_point_in_ring (verified interior point, ray crosses exactly one of 13
+# edges -> odd), hole_inside_outer_spectre.  Plus spectre_point_in_ring_R --
+# the same interior witness transported to the true equilateral metric via the
+# x-scale bridge.  ring_simple NOT claimed (a separate ~70-pair effort).  No
+# Admitted; standard three-axiom classical-reals base.
+theories/SpectreExample.v
+
+# extract_rings_valid R5 analytic seam, Stage B (rectangle beachhead,
+# UNCONDITIONAL): hole_inside_outer for ANY rectangular outer ring
+# (docs/hole-inside-outer-plan.md Stage B).  RectangleJCT.point_in_ring_rect_iff
+# characterises point_in_ring for a rectangle as box-membership (Qed parity), and
+# hole_inside_outer is defined via point_in_ring, so a hole vertex in the box
+# gives hole_inside_outer with NO JCT hypothesis.  point_in_ring_rect /
+# hole_inside_outer_rect / _strict; generalises the fixed-4x4 witness to all
+# rectangles.  No Admitted; standard three-axiom classical-reals base.
+theories/HoleInsideOuterRect.v
 # Green-phase point_in_ring_correct seam attempts (PointInRingCorrect.v).
 # Probes the seven seams from docs/point-in-ring-correct-seam-map.md
 # with simplest-possible implementations.  Seams 1, 2 (partial), 4, 6
@@ -84,6 +178,436 @@ theories/PointInRingTangents.v
 # No Flocq dependency; no Classical_Prop.classic pull.
 theories/OverlayGraph.v
 
+# extract_rings_valid R5 / general assembler, slice 1: the half-edge (dart)
+# foundation (docs/extract-rings-proof-structure.md §5 step 1 +
+# docs/dart-halfedge-foundation.md).  The combinatorial core (RingExtract)
+# sidestepped the half-edge layer by taking a face walk as a pre-ordered
+# closed_chain; the still-open general-overlay piece is ordering an UNORDERED
+# edge set into chains.  This lays the dart layer it runs on: twin (involutive,
+# injective, fixed-point-free on proper edges), darts_of (both orientations,
+# closed under twin), the outgoing fan + vertex degree.  Pure dart algebra; the
+# angular `next`/`face_of` orbit + its finiteness are deferred later slices.
+# Axioms: the allowlisted classical-reals pair via point_eq_dec.  No Admitted.
+theories/Dart.v
+
+# extract_rings_valid R5 / general assembler, slice 3d: the signed-area
+# ORIENTATION primitive for hole nesting (docs/ring-orientation.md).  Pure
+# shoelace algebra: signed_area2 segs; signed_area2_app / _rev (order-invariant)
+# / _map_swap (negated by endpoint swap) / _reverse_traversal (walking a chain
+# backwards negates the signed area -- the orientation flip); and seg_twin_swap
+# (a dart's twin swaps its segment), linking to the DCEL twin so the face across
+# an edge is the orientation-reversed traversal -- the seed of outer vs hole.
+# deferred (§4).  No Admitted; standard three-axiom classical-reals base.
+theories/RingOrientation.v
+
+# extract_rings_valid R5 / general assembler, slice 2e: the FINITENESS / return
+# crux for face orbits (docs/orbit-cycle.md).  Pure-combinatorial heart of
+# face_orbit_finite, free of geometry: an injective self-map of a finite set,
+# iterated, cycles back.  For f : A -> A mapping a finite list S into itself and
+# injective on S (decidable eq): iter_in (orbit stays in S, hence finite),
+# iter_inj_on, iter_pigeon, and orbit_returns (some n>=1 with iter n d = d).
+# Slice 2d supplies these hypotheses for next; instantiating f with the dart
+# face step next o twin is slice 2f.  No Admitted; AXIOM-FREE.
+theories/OrbitCycle.v
+
+# extract_rings_valid R5 / general assembler, slice 2f: the face step next o twin
+# and FACE ORBIT FINITENESS (docs/dart-face.md) -- the §9 crux, discharged.
+# fstep D d = next (outgoing (dtip d) D) (twin d); under arrangement_ok (D
+# twin-closed + every vertex fan fan_ok): fstep_in (orbit closure), fstep_inj
+# (injective -- equal images share a vertex, reducing to slice-2d next_injective
+# + twin_inj), and face_orbit_finite = orbit_returns (slice 2e) instantiated at
+# f := fstep D, so iterating fstep from any dart returns to it.  Reading the
+# closed orbit off as a closed_chain / ring is the deferred assembly.  No
+# Admitted; axioms = the allowlisted classical-reals pair.
+theories/DartFace.v
+
+# extract_rings_valid R5 / general assembler, slice 3a: reading a face orbit off
+# as a CLOSED CHAIN and thence a valid-shape ring (docs/face-chain.md).  The
+# missing link between slice-2f face_orbit_finite and RingExtract.face_walk_core:
+# dart_walk / face_chain (the face darts' segments); face_chain_ok (consecutive
+# segments connect via next_base); face_chain_closed_chain (the orbit return
+# loops the chain shut -> BufferAssembly.closed_chain); face_closed_chain_exists
+# (every dart spawns a closed chain, via face_orbit_finite); and
+# face_ring_valid_shape (a >=3-dart face yields a ring_closed +
+# ring_has_minimum_points ring whose edges are exactly the face segments).  The
+# combinatorial core of valid_polygon's outer ring for a GENERAL arrangement.
+# No Admitted; axioms = the allowlisted classical-reals pair.
+theories/FaceChain.v
+
+# extract_rings_valid R5 / general assembler, slice 3b: a noded arrangement's
+# face ring is ring_simple (docs/face-ring-simple.md), completing THREE of the
+# four valid_polygon conditions.  seg_of d = (dbase d, dtip d) = d (Dart = Edge),
+# so face segments ARE arrangement darts; face_chain_subset shows every face edge
+# is in D, and ring_simple_of_subset gives ring_simple when D is
+# pairwise_no_proper_cross (noded).  face_ring_combinatorial_valid bundles
+# ring_closed + ring_has_minimum_points + ring_simple for a >=3-dart face.  No
+# Admitted; standard three-axiom classical-reals base.
+theories/FaceRingSimple.v
+
+# extract_rings_valid R5 / general assembler, slice 3f: assembling a
+# valid_polygon WITH holes, modulo the single analytic seam
+# (docs/face-polygon-holes.md).  polygon_valid_of_rings;
+# face_outer_polygon_valid; face_polygon_holes_valid -- every valid_polygon
+# condition except hole_inside_outer holds by construction of the face walks.
+# No Admitted; standard three-axiom classical-reals base.
+theories/FacePolygonHoles.v
+
+# extract_rings_valid R5 analytic seam, Stage A (conditional headline): a face
+# polygon with holes is valid_polygon modulo a NAMED JCT hypothesis, in geometric
+# terms (docs/hole-inside-outer-plan.md Stage A).  hole_jct_witness;
+# hole_inside_outer_of_witness; face_polygon_valid_via_jct.  Matches
+# overlay_ng_correct_conditional / point_in_ring_correct_jct.  No Admitted;
+# standard three-axiom classical-reals base.
+theories/ExtractFacePolygonJCT.v
+
+# extract_rings_valid R5 / general assembler, slice 3c: a hole-free face yields a
+# valid_polygon (docs/face-polygon.md) -- the FIRST full Overlay.valid_polygon
+# produced by the DCEL machinery.  valid_polygon's hole conjunct is vacuous when
+# hole_rings = [], so the analytic hole_inside_outer residual does not arise;
+# with slice-3b's three outer-ring conditions, face_polygon D d n =
+# mkPolygon (ring_of_chain (face_chain D d n)) [] satisfies valid_polygon
+# (face_polygon_valid).  No Admitted; standard three-axiom classical-reals base.
+theories/FacePolygon.v
+
+# extract_rings_valid R5 / general assembler, slice 3e: orientation
+# classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
+# signed-area primitive to rings/faces: ring_signed_area2 + ring_ccw/ring_cw
+# classifier (exclusivity, trichotomy); ring_signed_area2_of_chain (a face ring's
+# area = its chain's, via ring_edges_of_closed_chain); and the headline
+# twin_face_chain_signed_area -- the face built from the TWIN darts walked in
+# reverse has the NEGATED signed area, so the face across each edge is oppositely
+# oriented (the combinatorial heart of outer vs hole).  The geometric meaning of
+# the sign + analytic hole_inside_outer are deferred (§4).  No Admitted; standard
+# three-axiom classical-reals base.
+theories/FaceOrientation.v
+
+# extract_rings_valid R5 / general assembler, slice 2a: the angular comparator
+# on darts (docs/extract-rings-proof-structure.md §5 step 1, the cyclic-order
+# primitive; docs/dart-angular-order.md).  Orders the outgoing fan BY ANGLE
+# without a materialised atan2 -- a half-plane + Azimuth.turn_sign (cross)
+# comparator -- and proves it a STRICT TOTAL ORDER on directions in general
+# position: dir_lt_irrefl / _asym / _trans (via the ring certificate
+# vcross_chain_cert + nra) / _total, lifted to darts as dart_lt_*.  The cyclic
+# `next` built on this order, and the face_of orbit + its finiteness (the §9
+# crux), are deferred later slices.  No Admitted; axioms = the allowlisted
+# classical-reals pair via first_half_dec's real-order decision.
+theories/DartAngularOrder.v
+
+# extract_rings_valid R5 / general assembler, slice 2b: the cyclic `next`
+# (rotational successor) on the outgoing dart fan (docs/dart-next.md).  Reflects
+# the slice-2a order into bool (dir_ltb/dart_ltb + *_spec bridges), defines
+# list_min and `next` (minimal strictly-greater dart, wrapping to the global min
+# at the fan maximum), and proves next WELL-DEFINED on the fan: next_in (orbit
+# closure), next_base (stays at the vertex), next_advances (advances in angle
+# while a greater dart exists).  Minimal-successor correctness, injectivity /
+# cyclic-permutation, and the face_of orbit FINITENESS (§9 crux) are deferred
+# (slice 2c).  No Admitted; axioms = the allowlisted classical-reals pair.
+theories/DartNext.v
+
+# extract_rings_valid R5 / general assembler, slice 2c: the rotational-successor
+# CORRECTNESS spec of `next` (docs/dart-next-spec.md).  Under fan_ok (proper +
+# general-position fan), proves list_min is a genuine lower bound (fold_min_lb /
+# list_min_lb -- the fold-minimum is correct under a strict total order) and
+# pins `next` down: next_min_successor (the minimal strictly-greater dart) and
+# next_wrap_least (global min on wrap).  Injectivity / cyclic-permutation and the
+# face_of orbit FINITENESS (§9 crux) are deferred (slice 2d).  No Admitted;
+# axioms = the allowlisted classical-reals pair.
+theories/DartNextSpec.v
+
+# extract_rings_valid R5 / general assembler, slice 2d: INJECTIVITY (and
+# surjectivity / cyclic-permutation) of `next` on the outgoing fan
+# (docs/dart-next-injective.md).  In a cyclic angular order each dart has a
+# unique predecessor (the maximal dart below it, or the global max on wrap), so
+# next_no_collision / next_injective: next is injective on a fan_ok fan; and
+# next_surjective: on a NoDup fan it is onto (injective endo on a finite set),
+# hence a cyclic permutation.  This is what makes the face_of walk a genuine
+# CYCLE.  The face_of orbit of next o twin + its FINITENESS (§9 crux) is deferred.
+# No Admitted; axioms = the allowlisted classical-reals pair.
+theories/DartNextInjective.v
+
+# The Jordan-curve seam for point_in_ring_correct, examined head-on
+# (docs/jct-vacuity-finding.md).  Proves the corpus's
+# geometric_interior_stdlib is identically false because
+# connected_in_complement uses discontinuous paths
+# (geometric_interior_stdlib_vacuous), so the JCT-conditional headline is
+# only vacuously satisfiable.  Supplies the corrected continuity-carrying
+# definitions + the genuine JCT_two_components_cont Prop (thesis-scale,
+# stated not proved), and shows the corrected relation is non-degenerate
+# (far_points_connected_cont).  Pure-R; no Admitted/Axiom/Parameter.
+theories/JordanCurveSeam.v
+
+# The continuous-component spine of the polygonal Jordan-curve seam, built on
+# JordanCurveSeam's continuity-carrying definitions.  Proves
+# connected_in_complement_cont is an equivalence relation (continuity_glue for
+# the concatenation join), in_bounded_component_cont is a component invariant,
+# and -- as a corollary, NOT thesis-scale -- no_path_from_interior_to_exterior
+# (interior trapped relative to exterior).  far_point_not_interior is the
+# honest continuous analogue of the vacuity witness.  The genuine remaining
+# seam (ray-parity characterises the continuous interior) is the named Prop
+# parity_characterises_interior_cont, wired into the non-vacuous headline
+# point_in_ring_correct_jct_cont.  Pure-R; no Admitted/Axiom/Parameter.
+theories/JCT.v
+
+# Special-case JCT, slice 1 (docs/extract-rings-proof-structure.md §11): the
+# ray-parity COMPUTATION for an axis-aligned rectangle.  Proves
+# point_in_ring p (rect_ring x0 y0 x1 y1) <-> (y0<py<y1 /\ x0<=px<x1) by finite
+# evaluation of the inductive ray_parity_odd over the four edges (horizontal
+# edges are ray-parallel and never cross; vertical edges give the parity).
+# The combinatorial/computational half of parity_characterises_interior_cont
+# for rectangles; JCT-free.  Pure-R, three-axiom.  No Admitted.
+theories/RectangleJCT.v
+# Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
+# Generalises RectangleJCT's ray-parity computation to a ring with a sloped
+# edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the
+# half-open triangle interior (y0<py<y1 /\ x0<=px<hyp_x py).  Reuses the
+# rectangle ray-parity reduction lemmas + axis-aligned edge characterisations;
+# only e_hyp_cross_iff and hyp_x_bounds are new.  Three-axiom.  No Admitted.
+theories/RightTriangleJCT.v
+# Special-case JCT: the right-triangle separation, unconditionally, via the
+# SeparationField engine.  Field tri_min = Rmin(Rmin(px-x0)(py-y0)) s_hyp with
+# s_hyp the AFFINE inward distance to the hypotenuse.  Gives
+# right_triangle_parity_characterises_interior (point_in_ring <-> geometric
+# interior for triangle interiors), the second fully-closed JCT family.
+# Three-axiom.  No Admitted.
+theories/RightTriangleSeparation.v
+# Special-case JCT, slice 2d (docs/extract-rings-proof-structure.md §11): the
+# rectangle separation, UNCONDITIONALLY.  Encodes box membership as a single
+# continuous field box_min (>0 inside, =0 on the edge skeleton, <0 outside) and
+# uses Stdlib IVT -- a complement path never hits 0, so it cannot change sign,
+# hence stays inside.  Discharges RectangleJCT.rect_confines and gives the full
+# unconditional rect_parity_characterises_interior.  Three-axiom.  No Admitted.
+theories/RectangleSeparation.v
+# Special-case JCT, slice 3a: the IVT separation engine, abstracted from the
+# rectangle.  separation_via_field -- a continuous scalar field that is >0
+# inside, =0 on the edge skeleton, <0 outside, with bounded positive region --
+# forces in_bounded_component_cont.  The reusable foundation for future ring
+# families (convex polygons via min-inward-signed-distance).  Re-derives the
+# rectangle (rect_in_bounded_component) through the engine.  Three-axiom.  No Admitted.
+theories/SeparationField.v
+# Convex specialisation of the IVT separation engine: conv_min = Rmin over a
+# list of half-plane inward slacks.  conv_min_pos_iff, continuity_pt_conv_min_path,
+# and the convex_separation wrapper.  The reusable layer that box_min and tri_min
+# instantiate; convex polygons supply edge half-planes + zero-set/bound facts.
+# Three-axiom.  No Admitted.
+theories/ConvexField.v
+# Special-case JCT: separation half for an ARBITRARY (CCW) triangle, parametric
+# over its three vertices.  Field gtri = Rmin of the three inward signed areas;
+# the area-sum + barycentric ring identities turn the bound and the edge
+# parametrisation into nra/field.  gtri_interior_is_geometric: interior points
+# are geometric interior points (via separation_via_field).  Three-axiom.  No Admitted.
+theories/GeneralTriangleSeparation.v
+# Special-case JCT: foundation + minimal hypothesis for the arbitrary-triangle
+# ray-parity, plus the RED non-vacuity check on the separation engine.
+# edge_cross_sign (edge_crosses_ray <-> signed-area sign); gtri_parity_spec (the
+# minimal parity hypothesis) + gtri_in_ring_imp_geometric (conditional headline);
+# engine_produces_inhabited_interior (geometric_interior_cont is INHABITED, vs the
+# refuted geometric_interior_stdlib).  Three-axiom.  No Admitted.
+theories/GeneralTriangleParity.v
+# Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
+# 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
+# ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
+# turns both ways via Orientation.cross).  Three-axiom.  No Admitted.
+theories/HatMonotile.v
+# Showcase: the "Spectre" strictly-chiral aperiodic monotile's defining
+# ingredient -- a CURVED edge -- formalized.  curved_edge_central_symmetry: any
+# midpoint-odd profile makes the edge invariant under 180-degree rotation about
+# the chord midpoint (the reflection-free mating property).  Concrete sine_edge.
+# Three-axiom (cos/sin clean).  No Admitted.
+theories/SpectreCurvedEdge.v
+# Besicovitch-Kakeya, Phase A (docs/besicovitch-kakeya-plan.md): finite,
+# polygonal Perron-tree stages.  perron_stage n : list Ring is the apex-fan over
+# a unit base subdivided into 2^n equal pieces (2^n triangles, each a closed
+# Ring).  Proves: exactly 2^n triangles; every triangle ring_closed + >=4
+# vertices (DCEL/ray-parity ready); non-degenerate (signed area 1/2^n);
+# DIRECTION COVERAGE -- the 2^n triangles carry 2^n pairwise NON-PARALLEL
+# directions (perron_stage_directions_distinct); contained in the unit square;
+# directions invariant under the future sliding moves.  No measure theory
+# claimed (deferred to Phase D).  Three-axiom.  No Admitted.
+theories/PerronStage.v
+# Besicovitch-Kakeya, Phase B (docs/besicovitch-kakeya-plan.md): DCEL / overlay
+# integration of the Perron-tree stages.  Each stage triangle is a DCEL
+# face-walk -- its edge list is a closed_chain that ring_of_chain round-trips
+# (perron_tri_closed_chain / _chain_roundtrip / _face_walk_core) -- and is
+# UNCONDITIONALLY ring_simple (perron_tri_ring_simple, via sip_shared_no_cross:
+# two non-collinear segments from a shared vertex never cross properly).  Hence
+# every triangle is a valid_polygon and the whole stage is a valid_geometry
+# (perron_geometry_valid), a legitimate Overlay.boolean_op operand.  Three-axiom.
+# No Admitted.
+theories/KakeyaOverlay.v
+# Besicovitch-Kakeya, Phase C (docs/besicovitch-kakeya-plan.md): a FROZEN
+# regression anchor over perron_stage 5 (32 triangles).  kakeya_anchor_count
+# (= 32); kakeya_anchor_valid_geometry; kakeya_anchor_all_ring_simple; thin
+# slivers of uniform area 1/32 that stay strictly positive (kakeya_anchor_area /
+# _area_pos -- near-collinearity); perron_consecutive_share_cevian (edge-to-edge
+# overlap); perron_area_decreasing (area 1/2^n shrinks with depth -- the finite
+# shadow of the Phase-D area -> 0, not attempted here).  Three-axiom.  No Admitted.
+theories/KakeyaExample.v
+# Besicovitch-Kakeya, the Perron area-REDUCTION step, finite (no measure):
+# sliding the sub-triangles preserves direction coverage
+# (perron_slid_directions_distinct -- translation leaves the apex-cevian
+# direction fixed) and each slid piece keeps its area 1/2^n (perron_slid_area),
+# so total area drops only via OVERLAP -- and sliding creates it
+# (slid_pieces_overlap: (1/4,1/4) is interior to two slid depth-1 pieces).  The
+# union-area arithmetic itself is Phase D (measure).  Three-axiom.  No Admitted.
+theories/KakeyaSlide.v
+
+# Why ring_simple is NOT sufficient for JCT_two_components_cont
+# (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
+# (two triangles meeting only at the origin) is ring_simple, ring_closed and
+# has >= 4 vertices -- it passes EVERY structural premise -- yet its
+# complement has THREE components, so two-components fails.  Proves
+# bowtie_ring_simple, bowtie_origin_degree_four, the parity misclassification
+# (both lobes "inside"), and bowtie_refutes_two_components_modulo_separation:
+# the conclusion is contradictory given the (thesis-scale, taken-as-hypothesis)
+# pairwise component-separation facts.  Pure-R; no Admitted/Axiom/Parameter.
+theories/JCT_Counterexample.v
+
+# Why no_horizontal_edge_at is NOT enough for ray-parity to characterise the
+# interior (docs/jct-vertex-grazing-counterexample.md).  A convex diamond and
+# its centre B = (0,0): the rightward ray grazes vertex (1,0), so the strict
+# y-straddle counts neither incident edge and parity is EVEN -- yet B is
+# interior.  no_horizontal_edge_at holds at B (the diamond has no horizontal
+# edge), so it fails to exclude the graze.  diamond_refutes_parity_seam shows
+# the JCT.v seam parity_characterises_interior_cont cannot hold at both B and a
+# correctly-classified A in the same component (geometric_interior_cont is a
+# component invariant; point_in_ring is not).  GREEN: ray_avoids_vertices is the
+# missing generic-position guard (parity_characterises_interior_cont_strict).
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/JCT_VertexGrazingCounterexample.v
+
+# Why the JCT parity seam NEEDS no_horizontal_edge_at
+# (docs/jct-horizontal-edge-counterexample.md).  A valid simple L-shaped
+# "notch" hexagon with a horizontal edge at y=1, and the exterior point
+# pext=(-1,1): ray-parity counts only the far right edge (the genuine left
+# crossing happens degenerately along the horizontal edge) so point_in_ring
+# pext = true, yet pext escapes to infinity leftward (notch_pext_not_interior).
+# RED notch_refutes_parity_without_guard: point_in_ring disagrees with
+# geometric_interior_cont. GREEN: no_horizontal_edge_at pext notch is false, so
+# the existing seam parity_characterises_interior_cont already excludes it --
+# the guard is necessary. Pure-R; no Admitted/Axiom/Parameter.
+theories/JCT_HorizontalEdgeCounterexample.v
+
+# Buffer/noder pipeline, end-to-end seam S1 (docs/buffer-noder-pipeline.md):
+# the conditional headline buffer_correct_conditional -- Minkowski-dilation
+# spec buffer_spec, concrete offset_curve (via BufferOffset), abstract noder
+# + extractor, composing the overlay graph spine.  Plus buffer_contains_input
+# and buffer_spec_monotone.  Pure-R, three-axiom footprint.  No Admitted.
+theories/BufferCorrectness.v
+# extract_rings_valid R1+R2 (docs/extract-rings-proof-structure.md): the
+# combinatorial core of ring assembly, grounded in BufferAssembly's closed
+# chains.  ring_of_chain (face walk -> ring); face_walk_closed /
+# face_walk_min_points / ring_edges_of_closed_chain / face_walk_core
+# (closure + min-points + edge fidelity).  Axiom-free (pure combinatorics).
+# No Admitted.  ring_simple / hole_inside_outer (analytic shell) not here.
+theories/RingExtract.v
+
+# extract_rings_valid R5 (docs/extract-rings-proof-structure.md §7 +
+# docs/extract-flatten-counterexample.md): the naive OverlayGraph.extract
+# flatten is NOT a valid ring assembler (RED) and the trace that fixes it
+# (GREEN).  extract_unordered_not_valid / extract_single_not_valid -- a closed
+# triangle boundary given out of walk order (resp. a single edge) flattens to a
+# non-closed (resp. 2-vertex) ring, so extract emits ~valid_polygon, refuting
+# the deferred extract_rings_valid conclusion for the stub.  ring_of_chain_
+# traces_valid_shape -- the SAME triangle, walk-ordered and traced by
+# RingExtract.ring_of_chain, is ring_closed /\ ring_has_minimum_points.  The
+# assembly analogue of RingSimple.not_ring_simple_bowtie.  No Admitted.
+theories/ExtractFlattenCounterexample.v
+# extract_rings_valid R3 (docs/extract-rings-proof-structure.md): the
+# bounded-component structure underlying the hole-count heuristic.
+# connected_in_complement is an equivalence relation (_refl/_sym/_trans);
+# in_bounded_component is a component invariant (in_bounded_component_iff);
+# not_in_bounded_component_intro refutes boundedness from unbounded
+# reachability.  JCT-free.  The geometric "face-interior -> bounded" rung
+# (= H1/JCT) is carried as a downstream hypothesis, not admitted here.
+theories/BoundedComponent.v
+# extract_rings_valid: the ring_simple condition.  ring_simple_of_subset --
+# a ring drawn from a pairwise-non-crossing (noded) arrangement is simple
+# (the post-noding guarantee); not_ring_simple_bowtie -- the raw self-crossing
+# offset is NOT simple (verified counterexample, why noding is required).
+# Pure-R.  No Admitted.
+theories/RingSimple.v
+# extract_rings_valid R6 (docs/extract-rings-proof-structure.md): compose
+# R2 (RingExtract) + ring_simple (RingSimple) into valid_polygon and
+# discharge BufferCorrectness.buffer_correct_conditional's H_valid.
+# valid_polygon_of_noded_chain (hole-free, no JCT); chain_extractor_spec +
+# H_valid_of_chain_extractor; buffer_correct_hole_free (H_valid discharged,
+# only H_bridge remains).  valid_polygon_with_holes carries the H1/JCT hole
+# clause as a hypothesis.  Pure-R.  No Admitted.
+theories/ExtractBufferRings.v
+# Completed analytic shell of extract_rings_valid (extract-rings-proof-structure
+# R7): discharge the holes' combinatorial+simplicity conditions from their being
+# noded chains too, shrinking the with-holes residual to the SINGLE named
+# hole_inside_outer (JCT) clause.  valid_polygon_noded_shell /
+# H_valid_of_chain_extractor_holes / buffer_correct_with_holes.  Pure-R, 3-axiom.
+theories/ExtractRingsShell.v
+# Buffer headline semantic bridge (docs/buffer-noder-pipeline.md): the
+# buffer_spec d-dilation algebra (empty/append/monotone) and the
+# decomposition of H_bridge into soundness + completeness.
+# buffer_correct_hole_free_split reduces the hole-free buffer headline to
+# exactly those two geometric directions (H_valid already discharged).
+# Pure-R.  No Admitted.
+theories/BufferBridge.v
+# The SOUNDNESS half of H_bridge at the boundary-distance level: offset/bevel
+# join boundary stays within d of the corner (ball_convex + bevel_point_dist),
+# while the miter apex escapes the corner's d-ball (miter_apex_overshoots_vertex
+# via the closed miter_length_sq) -- the precise reason soundness needs a
+# non-miter join / the miter limit.  Pure-R, three-axiom.  No Admitted.
+theories/BufferBridgeSound.v
+# Completeness mirror: the chord-approximated join UNDERSHOOTS the corner d-ball
+# (chord_midpoint_dist_sq_90 = d^2/2 < d^2), dual to the miter overshoot --
+# the chord leaves an uncovered sliver of the d-neighbourhood.  Pure-R, 3-axiom.
+theories/BufferBridgeComplete.v
+# Round-join arc on the corner d-circle (round_arc_dist_sq_on_circle = d^2):
+# closes both H_bridge directions at the corner, and the buffer_corner_trichotomy
+# capstone (chord d^2/2 < arc d^2 < miter 2 d^2).  Pure-R, three-axiom.
+theories/BufferBridgeRound.v
+# Stage 4b depth labelling (EdgeLabel reused as interior-side flags; keep-
+# boundary rule = SymDiff) + factorisation of the full H_bridge through the
+# depth region (extract_realizes_depth /\ depth_region_is_buffer), with the
+# empty base case closed.  Pure-R, three-axiom.  No Admitted.
+theories/BufferDepth.v
+
+# Why depth_region (BufferDepth.v) needs a CLOSED-BOUNDARY guard
+# (docs/buffer-depth-enclosure-counterexample.md).  depth_region runs
+# ray_parity_odd over the kept edges with no constraint that they form a closed
+# boundary.  The open "spur" (a single kept edge) makes depth_region non-
+# component-invariant: p1=(-1,1) and p2=(-1,3) are complement-connected yet get
+# opposite verdicts (spur_depth_not_component_invariant, RED).  Its kept
+# boundary is the degenerate open ring spur_ring = [(0,0);(0,2)], which is not
+# ring_closed; a closure-guarded depth predicate excludes it
+# (spur_excluded_by_closure_guard, GREEN).  Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthEnclosureCounterexample.v
+
+# depth_region's closed-boundary guard (#91) is necessary but not sufficient
+# (docs/buffer-depth-horizontal-edge-counterexample.md).  Reusing the #86 notch
+# as the (closed) kept boundary of a graph G_notch, depth_region G_notch pext is
+# true (the ray runs along the horizontal kept edge) yet pext is exterior
+# (depth_region_horizontal_refutes, RED).  A no_horizontal_edge_at guard on the
+# kept boundary excludes it (Gnotch_excluded_by_no_horizontal_guard, GREEN).
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthHorizontalEdgeCounterexample.v
+
+# Completes depth_region's guard set: the vertex-graze case
+# (docs/buffer-depth-vertex-graze-counterexample.md).  Reusing the #85 diamond
+# as the (closed, horizontal-edge-free) kept boundary of G_diamond, A=(0,1/2)
+# and B=(0,0) are complement-connected yet get opposite depth_region verdicts
+# (depth_region_vertex_not_invariant, RED) because B's ray grazes vertex (1,0).
+# A ray_avoids_vertices guard on the kept boundary excludes it
+# (Gdiamond_excluded_by_ray_avoids_guard, GREEN).  With #91/#93 this pins the
+# full guard set. Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthVertexGrazeCounterexample.v
+
+# REFACTOR: the guarded depth-region predicate + depth/interior bridge
+# (docs/buffer-depth-guarded.md).  Folds the #91/#93/#95 guards into
+# kept_boundary_wellformed and re-points the depth seams onto it (additive; the
+# existing BufferDepth theorems are untouched).  depth_region_is_geometric_
+# interior_guarded is the depth analogue of point_in_ring_correct_jct_cont:
+# for a well-formed kept boundary, depth_region = geometric_interior_cont under
+# the named JCT seam parity_characterises_interior_cont_strict (not discharged).
+# buffer_H_bridge_factor_guarded re-points the H_bridge onto the guarded seam.
+# Pure-R; no Admitted/Axiom/Parameter.
+theories/BufferDepthGuarded.v
+
 # Phase 4 Session 2: SQL/MM CIRCULARSTRING / COMPOUNDCURVE foundational
 # types (CircularArc, CurveSegment, CurveRing, CurvePolygon,
 # CurveGeometry) + validity predicates + chord approximation bridge
@@ -92,6 +616,11 @@ theories/OverlayGraph.v
 # docs/audit-phase4-chord-overfitting.md §7).  Six Qed-closed
 # structural lemmas; no Admitteds; no Classical_Prop.classic.
 theories/CurveGeometry.v
+# Structural faithfulness of the curve->Phase3 linearisation bridge: a valid
+# (closed) CIRCULARSTRING/COMPOUNDCURVE ring chord-approximates to a ring_closed
+# Phase-3 ring (chord_approx_ring_closed), lifting to to_geometry outer/hole
+# rings.  Pure-R, three-axiom.  No Admitted.
+theories/CurveLinearise.v
 
 # Phase 4 Session 3: arc orientation predicate.  Two R-side tools:
 # cross_R_pt (Stdlib lift of cross_R_BP) and inCircle_R (the 4-point
@@ -245,6 +774,13 @@ theories-flocq/Validate_binary64_bridge.v
 # b64_Fast2Sum_correct as the first Stage D primitive landed via the
 # bridge -- validates the scout's "subsequent lifts ~30 lines" estimate.
 theories-flocq/B64_Pff_bridge.v
+# Stage D bridge: Dekker's TwoProduct is EXACT (zero low part) on the
+# integer-coordinate regime.  b64_Dekker_exact_of_format (representable
+# product => high = product, low = 0) + b64_Dekker_int_exact (the integer
+# instantiation, |a*b| <= 2^prec).  This is the missing brick that lets the
+# proven, UNCONDITIONAL fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs
+# apply to real Dekker output -- no dependence on the deferred general headline.
+theories-flocq/Orient_b64_dekker_int.v
 # Stage D expansion arithmetic foundations.  Ships the data structure
 # (b64_expansion = list binary64), non-overlap predicate, sum/sign
 # definitions, and the structural lemmas.  HEADLINE
@@ -318,6 +854,36 @@ theories-flocq/Orient_b64_expansion.v
 #   - b64_orient_sign_stage_d_tiny_regime_decisive: in tiny regime,
 #     never returns Uncertain (Qed-closed).
 theories-flocq/Orient_b64_stage_d.v
+# Issue #66 grounded headline: the Shewchuk adaptive decoder
+# (b64_orient_sign_stage_d) AGREES with the full-plane exact
+# integer-determinant model (Orient_b64_exact_full.b64_orient2d_exact),
+# and in the tiny regime is decisive (no expansion fallback).  Pure
+# composition of already-Qed-closed results; replaces the ungrounded
+# "Shewchuk_vs_Z2" Hypothesis draft.  Qed-closed, three-axiom footprint.
+theories-flocq/Shewchuk_vs_Z2.v
+# Issue #66 unsoundness witness: concrete finite binary64 points
+# (P1x=2^-200, Qy=2^-900) where the float product underflows to +0, so the
+# Stage A filter b64_orient_sign_filtered reports OrientRZero ("collinear")
+# while the exact integer-determinant model b64_orient2d_exact returns +1 and
+# the true cross product is > 0.  Qed-closed positive theorem (vm_compute);
+# motivates the safety preconditions on the filter-soundness theorems.
+theories-flocq/Orient_b64_underflow_unsound.v
+# Issue #66 underflow recovery: on the same witness, the float Stage D
+# decoder b64_orient_sign_stage_d ALSO returns OrientRZero (does not
+# recover -- it trusts the filter's confident Zero and never reaches the
+# expansion fallback, whose safety precondition is violated anyway).  What
+# recovers is the integer-mantissa decoder b64_orient_sign_intexact, proven
+# sound over the whole finite plane (b64_orient_sign_intexact_sound) and
+# returning OrientRPos on the witness.  Qed-closed.
+theories-flocq/Orient_b64_underflow_recovery.v
+# Issue #66 corrected Stage D: b64_orient_sign_stage_d_safe routes every
+# non-committal filter verdict (Zero/Uncertain/Nan) through the
+# integer-mantissa exact decoder b64_orient_sign_intexact.  Proven (a) sound
+# whenever the filter is not confidently Pos/Neg with no regime precondition
+# (covers underflow), (b) sound under int-safety ALONE (drops the shipped
+# Stage D's expansion-safety hypothesis), (c) total (never Nan/Uncertain),
+# (d) OrientRPos on the underflow witness where the shipped Stage D fails.
+theories-flocq/Orient_b64_stage_d_safe.v
 # Phase 2 foundations: binary64 mirror of theories/HotPixel.v.  Provides
 # the boolean decision `b64_in_hot_pixel` + a safety predicate + forward
 # soundness against a rounded-pixel R-side semantics.  Integer-regime
@@ -349,6 +915,19 @@ theories-flocq/TopologicalCorrectness_b64.v
 # entries.  Mirrors the docs/shewchuk-theorem-13-proof-structure.md treatment
 # for Shewchuk Theorem 13.  See docs/hobby-theorem-proof-structure.md.
 theories-flocq/HobbyTheorem_b64.v
+# Machine-checked REFUTATION of hobby_lemma_4_3_no_proper: an explicit
+# parallel-collapse witness whose snap-rounded images intersect properly
+# though the originals do not.  Shows the bare two-segment lemma is false
+# (the noded-arrangement hypothesis is essential).  Counterexample-registry
+# entry; see docs/hobby-lemma-4-3-no-proper-refutation.md.
+theories-flocq/HobbyCounterexample_b64.v
+# The weaker-but-TRUE noding-preservation claim that survives the
+# counterexample: snap-rounding preserves no-proper-intersection for
+# SEPARATED pairs (axis gap > 1 vs the < 1/2 snap tolerance), lifted to
+# fully_intersected_snap_of_nodable.  Bridgeheaded through the closed buffer
+# offset pipeline (BufferOffset.vmag_sq_unit_perp -> offset_seg_x_left_of ->
+# buffer_offset_nodable discharging the buffer headline's noding step).
+theories-flocq/NodingSeparation_b64.v
 theories-flocq/PassesThroughHalfopen_b64.v
 # Computational (extractable) binary64 Liang-Barsky passes-through predicates.
 # The oracle compute path for PASSES_THROUGH_* -- the R-spec versions in
