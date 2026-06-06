@@ -72,7 +72,7 @@ For each `n`:
   `theories/KakeyaOverlay.v` (see below).
 - **Phase C — Regression anchors.** Freeze `perron_stage 5` (or similar) as a
   `Qed`-closed example with tests for near-collinearity, tiny angles, and
-  overlapping triangles.
+  overlapping triangles. **Landed** in `theories/KakeyaExample.v` (see below).
 - **Phase D — Future measure theory.** Once Lebesgue measure is in the corpus,
   prove area → 0 and finally define the infinite intersection with measure zero.
 
@@ -155,5 +155,22 @@ their three edges pairwise share a vertex and, being non-collinear, cannot cross
 at an interior point. Consequently a Perron-tree stage is a bona-fide
 `valid_geometry`, a legitimate operand for `Overlay.boolean_op` and the
 OverlayNG pipeline.
+
+Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.
+
+## Phase C — what landed (`theories/KakeyaExample.v`)
+
+A frozen regression anchor over the depth-5 stage (`perron_stage 5`, 32
+triangles), exercising the machinery on the hard configurations the plan calls
+out: thin near-collinear slivers, tiny apex angles, and overlapping triangles.
+
+| Result | Statement |
+|---|---|
+| `kakeya_anchor_count` | the depth-5 stage is exactly 32 triangles |
+| `kakeya_anchor_valid_geometry` | it is an OGC `valid_geometry` (Phase-B `perron_geometry_valid` at 5) |
+| `kakeya_anchor_all_ring_simple` | every triangle is `ring_simple` |
+| `kakeya_anchor_area` / `_area_pos` | every sub-triangle is a thin sliver of signed area exactly `1/32`, yet strictly positive (non-degenerate) — the near-collinear / tiny-angle stress |
+| `perron_consecutive_share_cevian` | consecutive triangles share the apex cevian (opposite orientation) — the edge-to-edge overlap |
+| `perron_area_decreasing` | the sliver area `1/2^n` strictly decreases with depth — the finite, polygonal shadow of the Phase-D `area → 0`, which itself needs Lebesgue measure and is **not** attempted here |
 
 Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.

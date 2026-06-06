@@ -433,6 +433,14 @@ theories/PerronStage.v
 # (perron_geometry_valid), a legitimate Overlay.boolean_op operand.  Three-axiom.
 # No Admitted.
 theories/KakeyaOverlay.v
+# Besicovitch-Kakeya, Phase C (docs/besicovitch-kakeya-plan.md): a FROZEN
+# regression anchor over perron_stage 5 (32 triangles).  kakeya_anchor_count
+# (= 32); kakeya_anchor_valid_geometry; kakeya_anchor_all_ring_simple; thin
+# slivers of uniform area 1/32 that stay strictly positive (kakeya_anchor_area /
+# _area_pos -- near-collinearity); perron_consecutive_share_cevian (edge-to-edge
+# overlap); perron_area_decreasing (area 1/2^n shrinks with depth -- the finite
+# shadow of the Phase-D area -> 0, not attempted here).  Three-axiom.  No Admitted.
+theories/KakeyaExample.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
