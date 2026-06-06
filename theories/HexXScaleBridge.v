@@ -116,3 +116,16 @@ Print Assumptions horizontal_dart_no_cross.
 Print Assumptions q_horizontal_dart_no_cross.
 Print Assumptions xscale_cross_bridge.
 Print Assumptions ray_parity_odd_xscale.
+
+Definition sqrt3_2 : R := sqrt 3 / 2.
+
+Lemma sqrt3_2_pos : 0 < sqrt3_2.
+Proof.
+  unfold sqrt3_2.
+  apply Rmult_lt_0_compat.
+  - apply sqrt_lt_R0.
+    apply (Rlt_trans _ 1 _); [ apply Rlt_0_1 | apply (Rplus_lt_compat_l 1 0 1 Rlt_0_1) ].
+  - apply Rlt_0_1.
+Qed.
+
+Print Assumptions ray_parity_odd_xscale.
