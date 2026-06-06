@@ -39,7 +39,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals List Lra Lia.
-From NTS.Proofs Require Import Distance Overlay.
+From NTS.Proofs Require Import Distance Overlay HexXScaleBridge.
 
 Import ListNotations.
 Open Scope R_scope.
@@ -125,4 +125,17 @@ Proof.
   exists spec_pt. split.
   - unfold hole_spectre, spec_pt. cbn [In]. left. reflexivity.
   - exact spectre_point_in_ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  Lift to true equilateral R-geometry via the x-scale bridge.             *)
+(*     (2-line follow-up after the HexXScaleBridge.)                         *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem spectre_point_in_ring_R :
+  point_in_ring (xscale (sqrt 3 / 2) spec_pt)
+                (ring_edges (map (xscale (sqrt 3 / 2)) spectre_ring)).
+Proof.
+  apply (ray_parity_odd_xscale (sqrt 3 / 2) spec_pt (ring_edges spectre_ring)
+                               sqrt3_2_pos spectre_point_in_ring).
 Qed.
