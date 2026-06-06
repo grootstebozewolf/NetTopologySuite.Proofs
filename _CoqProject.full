@@ -401,6 +401,16 @@ theories/HatMonotile.v
 # the chord midpoint (the reflection-free mating property).  Concrete sine_edge.
 # Three-axiom (cos/sin clean).  No Admitted.
 theories/SpectreCurvedEdge.v
+# Besicovitch-Kakeya, Phase A (docs/besicovitch-kakeya-plan.md): finite,
+# polygonal Perron-tree stages.  perron_stage n : list Ring is the apex-fan over
+# a unit base subdivided into 2^n equal pieces (2^n triangles, each a closed
+# Ring).  Proves: exactly 2^n triangles; every triangle ring_closed + >=4
+# vertices (DCEL/ray-parity ready); non-degenerate (signed area 1/2^n);
+# DIRECTION COVERAGE -- the 2^n triangles carry 2^n pairwise NON-PARALLEL
+# directions (perron_stage_directions_distinct); contained in the unit square;
+# directions invariant under the future sliding moves.  No measure theory
+# claimed (deferred to Phase D).  Three-axiom.  No Admitted.
+theories/PerronStage.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
