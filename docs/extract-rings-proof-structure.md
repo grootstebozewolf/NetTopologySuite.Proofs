@@ -379,6 +379,12 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   `face_polygon_valid_via_jct` -- a face polygon with holes is `valid_polygon`
 >   modulo only the named JCT predicate `parity_characterises_interior_cont_strict`
 >   (matching `overlay_ng_correct_conditional` / `point_in_ring_correct_jct`).
+> - **R5 analytic seam Stage C (opened) — convex instance
+>   (`theories/HoleInsideOuterConvexExample.v`, `docs/hole-inside-outer-convex.md`),
+>   LANDED Qed.** First convex instance beyond rectangles: a diamond (rotated
+>   square) with SLANTED edges; `diamond_interior_point_in_ring` and
+>   `hole_inside_outer_diamond`. Regression anchor; the GENERAL convex parity
+>   characterisation (convex-chain monotonicity) remains substantial work.
 > - **Next slices (deferred, higher risk):** the cyclic `next` = rotational
 >   successor in `outgoing v` via `Azimuth.turn_sign`; the `face_of` orbit of
 >   `next ∘ twin` and its **finiteness** (the `face_orbit_finite` crux of §9);
