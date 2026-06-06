@@ -842,6 +842,13 @@ theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v
 # composes with the already-Qed-closed
 # sign_of_expansion_correct_shewchuk.
 theories-flocq/Orient_b64_expansion.v
+# Stage D: orient2d expansion nonoverlap on the integer regime, WITHOUT the
+# deferred general headline.  b64_Dekker_finite (Dekker outputs are finite under
+# the Dekker safety chain) composed with the merged b64_Dekker_int_exact and the
+# proven fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs gives
+# b64_orient2d_expansion_int_nonoverlap: integer coordinate differences with the
+# two cross-products fitting in 53 bits => the expansion is nonoverlap_shewchuk.
+theories-flocq/Orient_b64_int_safe.v
 # Slice A piece 7: Stage D headline.  Composes Piece 6's
 # b64_orient2d_expansion_sign_correct with the existing Stage A
 # filter to produce:
