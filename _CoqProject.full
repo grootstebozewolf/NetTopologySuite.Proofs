@@ -423,6 +423,16 @@ theories/SpectreCurvedEdge.v
 # directions invariant under the future sliding moves.  No measure theory
 # claimed (deferred to Phase D).  Three-axiom.  No Admitted.
 theories/PerronStage.v
+# Besicovitch-Kakeya, Phase B (docs/besicovitch-kakeya-plan.md): DCEL / overlay
+# integration of the Perron-tree stages.  Each stage triangle is a DCEL
+# face-walk -- its edge list is a closed_chain that ring_of_chain round-trips
+# (perron_tri_closed_chain / _chain_roundtrip / _face_walk_core) -- and is
+# UNCONDITIONALLY ring_simple (perron_tri_ring_simple, via sip_shared_no_cross:
+# two non-collinear segments from a shared vertex never cross properly).  Hence
+# every triangle is a valid_polygon and the whole stage is a valid_geometry
+# (perron_geometry_valid), a legitimate Overlay.boolean_op operand.  Three-axiom.
+# No Admitted.
+theories/KakeyaOverlay.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"
