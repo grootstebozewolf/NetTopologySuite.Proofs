@@ -83,6 +83,36 @@ Qed.
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
+Definition xscale_edge (s : R) (e : Edge) : Edge :=
+  (xscale s (fst e), xscale s (snd e)).
+
+Lemma edge_crosses_ray_xscale : forall s p a b,
+  0 < s ->
+  edge_crosses_ray p (a, b) ->
+  edge_crosses_ray (xscale s p) (xscale_edge s (a, b)).
+Proof.
+  intros s p a b Hs H.
+  apply (xscale_cross_bridge s _ _ _ _ _ _ Hs (a, b) _ _ H).
+Qed.
+
+Lemma ray_parity_odd_xscale : forall s p es,
+  0 < s ->
+  ray_parity_odd p es ->
+  ray_parity_odd (xscale s p) (map (xscale_edge s) es).
+Proof.
+  intros s p es Hs H.
+  induction H.
+  - apply rpo_cross.
+    + apply edge_crosses_ray_xscale; assumption.
+    + assumption.
+  - apply rpo_skip.
+    + intro Contra.
+      apply edge_crosses_ray_xscale in Contra; [ | assumption ].
+      tauto.
+    + assumption.
+Qed.
+
 Print Assumptions horizontal_dart_no_cross.
 Print Assumptions q_horizontal_dart_no_cross.
 Print Assumptions xscale_cross_bridge.
+Print Assumptions ray_parity_odd_xscale.
