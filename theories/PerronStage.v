@@ -70,7 +70,8 @@ Definition stage_count (n : nat) : nat := (2 ^ n)%nat.
 Definition perron_tri (n k : nat) : Ring :=
   tri_ring apex (base_pt (stage_count n) k) (base_pt (stage_count n) (S k)).
 
-(* Stage n: the finite collection of all 2^n sub-triangles, as `list Ring`. *)
+(* Stage n: the finite collection of all 2^n sub-triangles, as `list Ring`.
+   Phase A of the Besicovitch–Kakeya plan — see docs/besicovitch-kakeya-plan.md. *)
 Definition perron_stage (n : nat) : list Ring :=
   map (perron_tri n) (seq 0 (stage_count n)).
 
