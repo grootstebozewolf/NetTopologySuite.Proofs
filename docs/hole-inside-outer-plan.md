@@ -48,7 +48,7 @@ unconditionally.
 |---|---|---|---|
 | A — conditional headline | full `extract_rings_valid`, modulo named JCT hyp | ~1 slice | **LANDED** (`ExtractFacePolygonJCT.face_polygon_valid_via_jct`) |
 | B — rectangle (unconditional) | `hole_inside_outer`, rectangular outer | ~1 slice | **LANDED** (`HoleInsideOuterRect.hole_inside_outer_rect`) — unconditional for all axis-aligned rectangles |
-| C — convex (unconditional) | `hole_inside_outer`, convex outer | medium | separation engine **Qed** (`convex_separation`); JCT assembly TODO |
+| C — convex (unconditional) | `hole_inside_outer`, convex outer | medium | **opened** — concrete diamond instance landed (`HoleInsideOuterConvexExample`); separation **Qed**; GENERAL parity characterisation (convex-chain monotonicity) still TODO |
 | D — triangle (unconditional) | `hole_inside_outer`, triangular outer | medium | separation **Qed** (`Right/GeneralTriangleSeparation`); assembly TODO |
 | E — general simple-polygon JCT | unconditional, any simple ring | research | **open residual** — registered H1/JCT gap; topological scaffolding only |
 | F — shape recognition + `extract` rewire | apply B/C/D per face; redefine `extract` | structural | not started |

@@ -114,6 +114,15 @@ theories/Overlay.v
 # JCT/H1 residual.  No Admitted; standard three-axiom classical-reals base.
 theories/HoleInsideOuterExample.v
 
+# extract_rings_valid R5 analytic seam, Stage C opened (convex beachhead,
+# concrete non-axis-aligned instance) (docs/hole-inside-outer-convex.md).  The
+# general convex point_in_ring is substantial geometric work (NOT attempted);
+# this lands the first convex instance beyond rectangles -- a diamond (rotated
+# square) with SLANTED edges (real x-intercept arithmetic):
+# diamond_interior_point_in_ring and hole_inside_outer_diamond.  Regression anchor.
+# No Admitted; standard three-axiom classical-reals base.
+theories/HoleInsideOuterConvexExample.v
+
 # extract_rings_valid R5 analytic seam, Stage B (rectangle beachhead,
 # UNCONDITIONAL): hole_inside_outer for ANY rectangular outer ring
 # (docs/hole-inside-outer-plan.md Stage B).  RectangleJCT.point_in_ring_rect_iff
