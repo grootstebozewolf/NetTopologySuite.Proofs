@@ -773,6 +773,13 @@ theories-flocq/Validate_binary64_bridge.v
 # b64_Fast2Sum_correct as the first Stage D primitive landed via the
 # bridge -- validates the scout's "subsequent lifts ~30 lines" estimate.
 theories-flocq/B64_Pff_bridge.v
+# Stage D bridge: Dekker's TwoProduct is EXACT (zero low part) on the
+# integer-coordinate regime.  b64_Dekker_exact_of_format (representable
+# product => high = product, low = 0) + b64_Dekker_int_exact (the integer
+# instantiation, |a*b| <= 2^prec).  This is the missing brick that lets the
+# proven, UNCONDITIONAL fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs
+# apply to real Dekker output -- no dependence on the deferred general headline.
+theories-flocq/Orient_b64_dekker_int.v
 # Stage D expansion arithmetic foundations.  Ships the data structure
 # (b64_expansion = list binary64), non-overlap predicate, sum/sign
 # definitions, and the structural lemmas.  HEADLINE
