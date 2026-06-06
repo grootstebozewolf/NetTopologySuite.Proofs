@@ -16,6 +16,12 @@ written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 > [`docs/pythagoras-for-beginners.v`](docs/pythagoras-for-beginners.v)
 > (step through it in an IDE). It also explains why even "obvious"
 > theorems take serious machine time once everything must be checked.
+>
+> A second beginner-friendly example is
+> [`docs/sqrt3-irrational-for-beginners.v`](docs/sqrt3-irrational-for-beginners.v),
+> which proves the classic fact that `sqrt 3` is irrational by infinite
+> descent (with a detailed honesty note about what the proof does *not*
+> say regarding tilings or the Spectre monotile).
 
 ---
 

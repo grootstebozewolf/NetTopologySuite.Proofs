@@ -223,6 +223,8 @@ stating stopping conditions up front prevents scope creep mid-session.
 
 (If you have literally never seen a proof assistant before: open [`docs/pythagoras-for-beginners.v`](pythagoras-for-beginners.v) in an IDE (CoqIDE / VSCode + VSCoq) and step through it. It is deliberately self-contained, starts from `Record Point`, defines `dist_sq`, proves the 3-4-5 case first with `ring` then explicitly with asserts/rewrites for pedagogy, and pre-bunks "why spend so much compute on obvious geometry?": even Pythagoras is non-trivial once every algebraic step must be justified from the axioms; the load-bearing chokepoints like orientation/intersection/snap-rounding are what justify the engineering investment.)
 
+A second gentle on-ramp is [`docs/sqrt3-irrational-for-beginners.v`](sqrt3-irrational-for-beginners.v).  It proves the classical fact that `sqrt 3` is irrational by Fermat-style infinite descent over the integers, then lifts the result to the reals.  The file contains an unusually explicit "honesty note" explaining that this number-theoretic fact is *not* used by the geometric work in the corpus (the hex embeddings keep `sqrt 3` explicitly and discharge the necessary arithmetic with `lra`/`nra`/`field`).  It is included purely as a teaching example of descent and of moving between `Z` and `R`.
+
 **Then (for contributors / deeper dive):**
 
   1. `development-environment.md` — get the toolchain running.
@@ -386,7 +388,7 @@ In pruning work, Joost is the explicit exception to the actor filter and the per
 
 | Mnemonic | Role | First doc | Reading time |
 |---|---|---|---|
-| Newbie Nate (incl. Plain Reader Pete / Rocq Rookie Ray) | Casual reader / first contrib / zero-knowledge Coq on-ramp via pythagoras | `README.md` (3 ¶) + `pythagoras-for-beginners.v` + dev-env | 1-5 min + example |
+| Newbie Nate (incl. Plain Reader Pete / Rocq Rookie Ray) | Casual reader / first contrib / zero-knowledge Coq on-ramp via pythagoras + sqrt3 example | `README.md` (3 ¶) + `pythagoras-for-beginners.v` + `sqrt3-irrational-for-beginners.v` + dev-env | 1-10 min + examples |
 | GIS Gus             | GIS user                    | `README.md` → `phase[0-2]-*.md`        | 30 min |
 | BIM Bea             | BIM user                    | `audit-phase4-curves.md`               | 1 h |
 | Quality Gatekeeper (Max/Ruby) | Corpus maintainer + PR reviewer + CI/Risk | `axiom-allowlist.txt` + registries + `ci.yml` | 20 min |
