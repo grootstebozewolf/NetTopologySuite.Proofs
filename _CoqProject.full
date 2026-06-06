@@ -123,6 +123,17 @@ theories/HoleInsideOuterExample.v
 # No Admitted; standard three-axiom classical-reals base.
 theories/HoleInsideOuterConvexExample.v
 
+# A point-in-ring regression anchor on the SPECTRE aperiodic monotile -- a
+# complex NON-CONVEX 14-gon -- stress-testing Overlay.ray_parity_odd
+# (docs/spectre-example.md).  NOT part of the extract_rings_valid pipeline.
+# Rational hex embedding (height = hex y, a vertical scaling of the equilateral
+# sqrt 3 metric with identical horizontal-ray parity), so lra closes each
+# edge_crosses_ray exactly: spectre_ring_closed, spectre_min_points,
+# spectre_point_in_ring (verified interior point, ray crosses exactly one of 13
+# edges -> odd), hole_inside_outer_spectre.  ring_simple NOT claimed (a separate
+# ~70-pair effort).  No Admitted; standard three-axiom classical-reals base.
+theories/SpectreExample.v
+
 # extract_rings_valid R5 analytic seam, Stage B (rectangle beachhead,
 # UNCONDITIONAL): hole_inside_outer for ANY rectangular outer ring
 # (docs/hole-inside-outer-plan.md Stage B).  RectangleJCT.point_in_ring_rect_iff
