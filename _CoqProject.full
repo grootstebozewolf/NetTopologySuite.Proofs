@@ -441,6 +441,14 @@ theories/KakeyaOverlay.v
 # overlap); perron_area_decreasing (area 1/2^n shrinks with depth -- the finite
 # shadow of the Phase-D area -> 0, not attempted here).  Three-axiom.  No Admitted.
 theories/KakeyaExample.v
+# Besicovitch-Kakeya, the Perron area-REDUCTION step, finite (no measure):
+# sliding the sub-triangles preserves direction coverage
+# (perron_slid_directions_distinct -- translation leaves the apex-cevian
+# direction fixed) and each slid piece keeps its area 1/2^n (perron_slid_area),
+# so total area drops only via OVERLAP -- and sliding creates it
+# (slid_pieces_overlap: (1/4,1/4) is interior to two slid depth-1 pieces).  The
+# union-area arithmetic itself is Phase D (measure).  Three-axiom.  No Admitted.
+theories/KakeyaSlide.v
 
 # Why ring_simple is NOT sufficient for JCT_two_components_cont
 # (docs/jct-bowtie-counterexample.md).  The self-touching figure-8 "bowtie"

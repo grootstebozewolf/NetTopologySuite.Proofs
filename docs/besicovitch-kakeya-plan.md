@@ -174,3 +174,24 @@ out: thin near-collinear slivers, tiny apex angles, and overlapping triangles.
 | `perron_area_decreasing` | the sliver area `1/2^n` strictly decreases with depth — the finite, polygonal shadow of the Phase-D `area → 0`, which itself needs Lebesgue measure and is **not** attempted here |
 
 Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.
+
+## The Perron area-reduction step, finite (`theories/KakeyaSlide.v`)
+
+Beyond the elementary fan (Phase A), the actual Perron construction *slides* the
+sub-triangles along the base so they overlap — shrinking total area while
+keeping a unit segment in every direction. The measure-theoretic `area → 0` is
+Phase D, but the two finite facts that drive it are provable now:
+
+| Result | Statement |
+|---|---|
+| `seg_dir_translate` / `vcross_seg_dir` | a cevian direction is translation-invariant, and the 2D cross of two apex-rays is the orientation `cross` |
+| `perron_slid_directions_distinct` | direction coverage is invariant under **arbitrary per-piece sliding** — distinct slid triangles stay non-parallel, so no direction is lost |
+| `perron_slid_area` | each slid piece keeps its signed area `1/2^n` (translation-invariant) |
+| `slid_pieces_overlap` | sliding the depth-1 right piece left by `1/2` makes `(1/4,1/4)` interior to **both** pieces — genuine overlap, so the union area is strictly below the sum of the piece areas |
+
+Together: sliding preserves every direction and every piece's area, so total
+area can drop only through overlap — and `slid_pieces_overlap` shows the slide
+creates it. The union-area *arithmetic* (inclusion–exclusion / Lebesgue) is
+exactly Phase D and is not attempted here.
+
+Pure-ℝ, three-axiom footprint, no `Admitted` / `Axiom` / `Parameter`.
