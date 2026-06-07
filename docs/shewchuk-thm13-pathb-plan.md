@@ -354,3 +354,94 @@ is the genuinely thesis-scale branch.
 plus the three definitions in §2 (no preservation proofs yet) — these compile
 independently and let O3–O7 be attempted incrementally without committing to the
 invariant shape before §4.A is settled.
+
+---
+
+## 7. §4.A settled by hand-trace (findings)
+
+Done as the recommended first step. Three traces of `fast_expansion_sum`,
+reasoning on the `B2R` values (the cascade folds `b64_TwoSum` over the
+magnitude-ascending merge; pathB's `snd = 0` and exact residue come from the
+merged `b64_TwoSum_sterbenz_exact`). `(carry, output)` recorded per step.
+
+**Trace A** — `e = [1, 2^60]`, `f = [-1]`; sorted `[1, -1, 2^60]`.
+| step | x | TwoSum(x,carry) | carry' | output' | path |
+|---|---|---|---|---|---|
+| init | — | — | `1` | `[]` | — |
+| 1 | `-1` | `(0, 0)` (Sterbenz) | `0` | `[0]` | **B** |
+| 2 | `2^60` | `(2^60, 0)` (`q=0`) | `2^60` | `[0,0]` | A |
+pathB at step 1 fires with **empty** output-so-far → clause (a) trivial.
+
+**Trace B** — `e = [1, 2^60]`, `f = [-2^60]`; sorted `[1, 2^60, -2^60]`.
+| step | x | TwoSum(x,carry) | carry' | output' | path |
+|---|---|---|---|---|---|
+| init | — | — | `1` | `[]` | — |
+| 1 | `2^60` | `(2^60, 1)` | `2^60` | `[1]` | A (same-sign) |
+| 2 | `-2^60` | `(0, 0)` (Sterbenz) | `0` | `[1,0]` | **B** |
+pathB at step 2 fires with **nonzero** output `[1]`, but residue `= 0` →
+compresses away; final chain `compress([0,0,1]) = [1]`, nonoverlap. ✓
+
+**Trace C** — `e = [1, 2^60]`, `f = [-(2^60 − 2^8)]`; sorted
+`[1, 2^60, -(2^60−2^8)]`. (Numerically verified above in the session.)
+| step | x | TwoSum(x,carry) | carry' | output' | path |
+|---|---|---|---|---|---|
+| init | — | — | `1` | `[]` | — |
+| 1 | `2^60` | `(2^60, 1)` | `2^60` | `[1]` | A (same-sign) |
+| 2 | `-(2^60−2^8)` | `(2^8, 0)` (Sterbenz) | `2^8` | `[1,0]` | **B** |
+pathB at step 2 fires with **nonzero** output `[1]` and **nonzero** residue
+`2^8`. New chain `compress([2^8, 0, 1]) = [2^8, 1]`. Since `2^8 = ulp(2^60)`
+dominates `1`, `nonoverlap_strict([2^8, 1])` holds. ✓ **This is the case
+resolution 1 alone would not cover** — and it works.
+
+### The granularity argument (why clause (a) survives, generally)
+
+Let `C = cs_carry` (magnitude in `[2^k, 2^{k+1})`, so `ulp(C) = 2^{k-52}`), and
+let pathB process `x` (opposite sign, Sterbenz range `|C|/2 ≤ |x| ≤ 2|C|`).
+The residue `m = x + C` is exact (Sterbenz). Two facts:
+
+1. **Residue is 0 or ≥ ½·ulp(C).** In Sterbenz range `x`'s exponent is `k−1`,
+   `k`, or `k+1`, so `ulp(x) ∈ {½ulp(C), ulp(C), 2·ulp(C)}`. Both `x` and `C`
+   are integer multiples of `min(ulp(x),ulp(C)) = ½ulp(C)`, hence so is `m`.
+   Therefore `m = 0` or `|m| ≥ ½ulp(C)`.
+
+2. **Every prior output low part is ≤ ½·ulp(C).** Each `cs_output` element is a
+   `b64_TwoSum` error term, `|err| ≤ ½·ulp(its high part)`, and every prior high
+   part has magnitude `≤ |C|` (the carry grows monotonically in the absorbing
+   steps), so `|err| ≤ ½ulp(C)`.
+
+Consequently the new chain head `m` is either compressed away (`m = 0`, Traces A
+& B) or satisfies `|m| ≥ ½ulp(C) ≥ |h|` for every prior low part `h` (Trace C),
+so it dominates the output. **Clause (a) is preserved without a strengthened
+dominance invariant — resolution 1, extended by the granularity bound.**
+
+### The one boundary caveat (must be handled in the Coq proof)
+
+`nonoverlap_strict` requires the chain head to *strictly* succeed the next
+element (non-overlap), not merely `≥`. The granularity bounds give
+`|m| ≥ ½ulp(C)` and `|h_k| ≤ ½ulp(C)`, which **coincide** at the extreme
+`|m| = |h_k| = ½ulp(C)`. That needs simultaneously:
+- `x` exactly at the sub-`C` half-ulp grid point (so `|m| = ½ulp(C)`), and
+- the most recent absorption rounding to an exact midpoint (so `|h_k| =
+  ½ulp(C)`, only via round-to-**even**).
+
+Round-to-even forces the midpoint result's last bit to 0, i.e. `|h_k| =
+½ulp(C)` makes the high part even at that bit — which is incompatible with `m`
+landing on the odd half-ulp point. The claim (to be proven, not yet checked in
+Coq) is that **round-to-even rules out the coincidence**, giving the strict
+inequality `|m| > |h_k|` whenever `m ≠ 0`. If that fails, the fallback is to
+strengthen the invariant with `(forall h in cs_output, |B2R h| < ½·b64_ulp
+(B2R cs_carry))` (strict), preserved by both paths.
+
+### Net effect on the plan
+
+- §4.A resolves to **resolution 1 + a granularity lemma**, *not* the
+  thesis-scale strengthened-dominance branch — provided the round-to-even
+  boundary claim holds. This lowers the O1 risk substantially.
+- **New obligation O1′** (feeds O1): `b64_TwoSum` residue is `0` or
+  `≥ ½·ulp(high)` for Sterbenz-range opposite-sign operands (granularity), plus
+  `output low parts ≤ ½·ulp(carry)` (a new, easy invariant clause to add in
+  step 3 of §6).
+- **Revised first Coq step:** prove the granularity lemma O1′ in isolation (it
+  is pure Flocq ulp arithmetic, no cascade machinery) — it is the true
+  load-bearing fact and de-risks O1 before any invariant surgery.
+
