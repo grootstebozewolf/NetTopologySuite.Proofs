@@ -850,6 +850,13 @@ theories-flocq/Orient_b64_expansion.v
 # b64_orient2d_expansion_int_nonoverlap: integer coordinate differences with the
 # two cross-products fitting in 53 bits => the expansion is nonoverlap_shewchuk.
 theories-flocq/Orient_b64_int_safe.v
+# Stage D: the orient2d integer-regime guarantee restated directly on integer
+# point COORDINATES (orient2d_inputs_int_safe) -- the four difference hypotheses
+# and the cross-product budget of Orient_b64_int_safe become automatic
+# (b64_minus_int_exact gives |diff| <= 2^26, so |product| <= 2^52, sum <= 2^prec).
+# b64_orient2d_expansion_int_{nonoverlap,sign_correct}_coords.  Still no
+# dependence on the deferred general fast_expansion_sum_nonoverlap_shewchuk.
+theories-flocq/Orient_b64_int_safe_coords.v
 # Slice A piece 7: Stage D headline.  Composes Piece 6's
 # b64_orient2d_expansion_sign_correct with the existing Stage A
 # filter to produce:
