@@ -47,6 +47,16 @@ theories-flocq/Orient_b64_sound.v
 # binary64 primitives.
 theories-flocq/B64_TwoSum_sterbenz.v
 
+# Category C: Shewchuk Theorem 13 obligation O1' (residue granularity).
+# residue_ge_half_ulp and its helpers are stated over `generic_format` / `cexp`
+# / `mag` / `bpow` and `Binary.B2R`; the binary64 instantiation pulls
+# `Classical_Prop.classic` transitively through Flocq's real-number / mag
+# machinery -- the SAME b64-arithmetic lineage that exempts B64_TwoSum_sterbenz.v
+# and B64_Pff_bridge.v above.  No Admitteds; all lemmas Qed-closed; no dependence
+# on the deferred fast_expansion_sum_nonoverlap_shewchuk.  Removable once the
+# parametric refactor reaches the binary64 primitives.
+theories-flocq/B64_residue_granularity.v
+
 # Category C: Shewchuk Theorem 13 obligation O1 core (nonoverlap head lemmas).
 # nonoverlap_shewchuk_cons_zero / nonoverlap_shewchuk_head_replace /
 # compress_cons_zero are pure list lemmas over `compress` / `nonoverlap_strict`

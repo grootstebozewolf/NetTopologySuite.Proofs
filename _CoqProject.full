@@ -781,6 +781,13 @@ theories-flocq/B64_Pff_bridge.v
 # instance -- zero error term.  This is the arithmetic core of the documented
 # pathA-OR-pathB invariant widening; the invariant re-proof itself is not here.
 theories-flocq/B64_TwoSum_sterbenz.v
+# Shewchuk Theorem 13, obligation O1' (docs/shewchuk-thm13-pathb-plan.md §7):
+# the residue-granularity lemma.  residue_ge_half_ulp: for opposite-sign
+# Sterbenz-position operands, the exact sum is 0 or >= 1/2 ulp(vC) -- the bound
+# that lets a nonzero pathB cancellation residue dominate the sub-ulp output, so
+# clause (a) survives without a strengthened dominance invariant.  Standalone
+# Flocq ulp arithmetic; no cascade machinery, no deferred-headline dependence.
+theories-flocq/B64_residue_granularity.v
 # Stage D bridge: Dekker's TwoProduct is EXACT (zero low part) on the
 # integer-coordinate regime.  b64_Dekker_exact_of_format (representable
 # product => high = product, low = 0) + b64_Dekker_int_exact (the integer
