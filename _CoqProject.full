@@ -827,6 +827,14 @@ theories-flocq/B64_FastExpansionSum.v
 # Foundation for Slice A pieces 3-7 (fast-expansion-sum definition,
 # sum-correctness, nonoverlap preservation, orient2d_exact composition).
 theories-flocq/B64_Expansion_Shewchuk.v
+# Shewchuk Theorem 13, obligation O1 core (docs/shewchuk-thm13-pathb-plan.md):
+# the pure compress/nonoverlap_strict list lemmas a pathB step's clause-(a)
+# preservation composes from -- nonoverlap_shewchuk_cons_zero (an appended zero
+# low part is invisible) and nonoverlap_shewchuk_head_replace (the head may be
+# swapped for the cancellation residue when it dominates the first surviving
+# component, as residue_ge_half_ulp guarantees).  Pure list reasoning; no
+# cascade state, no deferred-headline dependence.
+theories-flocq/B64_nonoverlap_head.v
 # Slice A piece 3: Shewchuk's fast-expansion-sum at binary64.
 # Definition only (the algorithm: insertion sort by magnitude
 # ascending + TwoSum cascade, reusing b64_grow_expansion_aux from
