@@ -36,6 +36,17 @@ theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
+# Category C: Shewchuk Theorem 13 pathB exact-cancellation brick.
+# b64_TwoSum_exact_of_format_sum / b64_TwoSum_sterbenz_exact / b64_round_0 are
+# stated over `b64_TwoSum` / `b64_plus` / `b64_minus` (Flocq Bplus/Bminus) and
+# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
+# b64-arithmetic / Pff lineage that exempts B64_Pff_bridge.v above (where
+# b64_TwoSum lives).  No Admitteds; both lemmas + helper are Qed-closed, and the
+# file does NOT use the deferred fast_expansion_sum_nonoverlap_shewchuk (it is a
+# building block toward it).  Removable once the parametric refactor reaches the
+# binary64 primitives.
+theories-flocq/B64_TwoSum_sterbenz.v
+
 # Category C: C1 division-rounding core (division-by-power-of-two is exact).
 # `b64_div_pow2_exact` and its helpers state results about `b64_div` (Flocq's
 # `Bdiv`), `Binary.B2R` and `Binary.is_finite`, whose definition closure
