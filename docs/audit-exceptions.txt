@@ -71,6 +71,17 @@ theories-flocq/Orient_b64_dekker_int.v
 # the parametric-architecture refactor reaches the binary64 primitives.
 theories-flocq/Orient_b64_int_safe.v
 
+# Category C: Stage D orient2d integer-COORDINATE guarantee.  The wrapper
+# theorems (b64_orient2d_expansion_int_nonoverlap_coords /
+# b64_orient2d_expansion_int_sign_correct_coords) and helpers are stated over
+# `b64_minus` / the expansion / `cross_R_BP`, whose closure carries
+# `Classical_Prop.classic` -- the SAME b64-arithmetic / Pff lineage that exempts
+# Orient_b64_int_safe.v, Orient_b64_dekker_int.v and Orient_b64_expansion.v
+# above.  As with Orient_b64_int_safe.v, these do NOT depend on the deferred
+# general fast_expansion_sum_nonoverlap_shewchuk.  No Admitteds; all theorems
+# Qed-closed.  Removable once the parametric refactor reaches the b64 primitives.
+theories-flocq/Orient_b64_int_safe_coords.v
+
 # Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
 # result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
 # `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
