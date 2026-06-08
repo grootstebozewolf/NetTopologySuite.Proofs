@@ -879,6 +879,13 @@ theories-flocq/Orient_b64_int_safe.v
 # b64_orient2d_expansion_int_{nonoverlap,sign_correct}_coords.  Still no
 # dependence on the deferred general fast_expansion_sum_nonoverlap_shewchuk.
 theories-flocq/Orient_b64_int_safe_coords.v
+# Stage D orient2d on the Besicovitch-Kakeya gnarlies: a concrete integer
+# (exactly-collinear) Perron-style sliver run through the integer-safe expansion
+# predicate.  b64Z (integer -> binary64), kakeya_inputs_int_safe, kakeya_cross_zero
+# (exact orientation = collinear), kakeya_orient2d_sign_zero (the expansion
+# predicate returns ExpZero, conditional on b64_orient2d_expansion_safe).  No
+# dependence on the deferred fast_expansion_sum_nonoverlap_shewchuk.
+theories-flocq/KakeyaOrient2d_b64.v
 # Slice A piece 7: Stage D headline.  Composes Piece 6's
 # b64_orient2d_expansion_sign_correct with the existing Stage A
 # filter to produce:
