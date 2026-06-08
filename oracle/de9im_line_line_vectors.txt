@@ -1,0 +1,58 @@
+# Romanschek et al. (IJGI 2021) line–line DE-9IM oracle vectors — issue #67 S3 seed.
+# Paper: https://doi.org/10.3390/ijgi10110715
+# Reference data: https://github.com/dd-bim/topology-relations (data/Geometries.txt)
+# Coq pins: theories/RelateLineLine.v (`ll_matrix_paper_test*`, predicate lemmas).
+#
+# Format (one test per stanza):
+#   TEST <n>
+#   WKT_A <geometry>
+#   WKT_B <geometry>
+#   MATRIX <9-char DE-9IM row-major II IB IE / BI BB BE / EI EB EE>
+#   COQ <definition name in RelateLineLine.v>
+#   NOTES <predicate footprint under DE9IM.v / comparison to S2 witness>
+#
+# Future oracle mode: RELATE_MATRIX (not implemented — driver.ml has no relate
+# extraction yet). Until then, differential tests compare NTS/JTS Relate().ToString()
+# against MATRIX below; Coq certifies predicate algebra on the pinned matrices.
+
+TEST 6
+WKT_A LINESTRING(682 623, 496 1104)
+WKT_B LINESTRING(1 1, 513 1057)
+MATRIX FF1FF0102
+COQ ll_matrix_paper_test6
+NOTES intersects (intersects_3 via IE=1); NOT crosses_ll (II=F). NTS+Topoloco agree. Differs from ll_matrix_point_ii (II=0 witness for segments_proper_cross).
+
+TEST 7
+WKT_A LINESTRING(1 1, 513 1057)
+WKT_B LINESTRING(1 1, 513 1057)
+MATRIX 1FFF0FFF2
+COQ ll_matrix_paper_test7
+NOTES intersects + overlaps_ll; II=1 BB=0 matches ll_matrix_overlap_ii core (EE=2 vs witness EE=0). Collinear equal-line regime.
+
+TEST 8
+WKT_A LINESTRING(1 1, 513 1057)
+WKT_B LINESTRING(353 727, 161 331)
+MATRIX 101FF0FF2
+COQ ll_matrix_paper_test8
+NOTES intersects (II=1); partial collinear overlap — no S2 witness matrix yet.
+
+TEST 9
+WKT_A LINESTRING(673 1387, 1 1)
+WKT_B LINESTRING(1 1, 513 1057)
+MATRIX 101F00FF2
+COQ ll_matrix_paper_test9
+NOTES intersects + overlaps_ll; endpoint touch at (1,1). S2 only supplies existential intersects via ll_matrix_point_ii.
+
+TEST 10
+WKT_A LINESTRING(241 496, 297 604)
+WKT_B LINESTRING(1 1, 513 1057)
+MATRIX FF10F0102
+COQ ll_matrix_paper_test10
+NOTES intersects (IE/EI); NOT disjoint (BI=0). Geometrically separated but full matrix has nonempty BI — honest gap vs ll_matrix_disjoint.
+
+TEST 13
+WKT_A LINESTRING(190 389, 200 413)
+WKT_B LINESTRING(1 1, 513 1057)
+MATRIX 0F1FF0102
+COQ ll_matrix_paper_test13
+NOTES intersects + crosses_ll (II=0); II cell matches ll_matrix_point_ii. Paper cross variant with filled exterior cells.

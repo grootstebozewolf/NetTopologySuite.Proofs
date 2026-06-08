@@ -9,7 +9,9 @@
 
    Delivers regime soundness (proper crossing, rejection, share, collinear
    interior overlap) via canonical witness matrices — not a full RelateNG
-   matrix-fill algorithm.
+   matrix-fill algorithm.  Romanschek et al. (IJGI 2021) Table 5/6 line–line
+   matrices are pinned as `ll_matrix_paper_test*` with predicate lemmas (S3
+   oracle seed; see `oracle/de9im_line_line_vectors.txt`).
 
    Honest scoping: closed segments; boundary vs interior classification for
    endpoint touches is witness-level only (existential `im_intersects`).
@@ -66,6 +68,7 @@ Definition segments_interior_collinear_overlap (A B C D : Point) : Prop :=
 Definition ll_cell_empty : DimValue := None.
 Definition ll_dim0 : DimValue := Some (0%nat).
 Definition ll_dim1 : DimValue := Some (1%nat).
+Definition ll_dim2 : DimValue := Some (2%nat).
 
 Definition ll_matrix_disjoint : IntersectionMatrix :=
   {| im_ii := ll_cell_empty; im_ib := ll_cell_empty; im_ie := ll_cell_empty;
@@ -129,6 +132,156 @@ Lemma ll_matrix_disjoint_predicate :
   predicate_holds RDisjoint ll_matrix_disjoint.
 Proof.
   unfold predicate_holds. exact ll_matrix_disjoint_witness.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Romanschek et al. (IJGI 2021) line–line oracle matrices (Table 5/6).       *)
+(* Source: https://github.com/dd-bim/topology-relations data/Geometries.txt    *)
+(* NTS 2.3.0 agrees on the 9-char strings at extent r_max ≤ 1056.             *)
+(* Predicate lemmas only — no WKT→matrix computation yet.                      *)
+(* -------------------------------------------------------------------------- *)
+
+(* Test 6: proper cross — LINESTRING(682 623,496 1104) × (1 1,513 1057). *)
+Definition ll_matrix_paper_test6 : IntersectionMatrix :=
+  {| im_ii := ll_cell_empty; im_ib := ll_cell_empty; im_ie := ll_dim1;
+     im_bi := ll_cell_empty; im_bb := ll_cell_empty; im_be := ll_dim0;
+     im_ei := ll_dim1; im_eb := ll_dim0; im_ee := ll_dim2 |}.
+
+(* Test 7: equal lines — LINESTRING(1 1,513 1057) × same. *)
+Definition ll_matrix_paper_test7 : IntersectionMatrix :=
+  {| im_ii := ll_dim1; im_ib := ll_cell_empty; im_ie := ll_cell_empty;
+     im_bi := ll_cell_empty; im_bb := ll_dim0; im_be := ll_cell_empty;
+     im_ei := ll_cell_empty; im_eb := ll_cell_empty; im_ee := ll_dim2 |}.
+
+(* Test 8: partial collinear overlap — (1 1,513 1057) × (353 727,161 331). *)
+Definition ll_matrix_paper_test8 : IntersectionMatrix :=
+  {| im_ii := ll_dim1; im_ib := ll_dim0; im_ie := ll_dim1;
+     im_bi := ll_cell_empty; im_bb := ll_cell_empty; im_be := ll_dim0;
+     im_ei := ll_cell_empty; im_eb := ll_cell_empty; im_ee := ll_dim2 |}.
+
+(* Test 9: endpoint touch — LINESTRING(673 1387,1 1) × (1 1,513 1057). *)
+Definition ll_matrix_paper_test9 : IntersectionMatrix :=
+  {| im_ii := ll_dim1; im_ib := ll_dim0; im_ie := ll_dim1;
+     im_bi := ll_cell_empty; im_bb := ll_dim0; im_be := ll_dim0;
+     im_ei := ll_cell_empty; im_eb := ll_cell_empty; im_ee := ll_dim2 |}.
+
+(* Test 10: separated segments — (241 496,297 604) × (1 1,513 1057). *)
+Definition ll_matrix_paper_test10 : IntersectionMatrix :=
+  {| im_ii := ll_cell_empty; im_ib := ll_cell_empty; im_ie := ll_dim1;
+     im_bi := ll_dim0; im_bb := ll_cell_empty; im_be := ll_dim0;
+     im_ei := ll_dim1; im_eb := ll_dim0; im_ee := ll_dim2 |}.
+
+(* Test 13: cross variant — LINESTRING(190 389,200 413) × (1 1,513 1057). *)
+Definition ll_matrix_paper_test13 : IntersectionMatrix :=
+  {| im_ii := ll_dim0; im_ib := ll_cell_empty; im_ie := ll_dim1;
+     im_bi := ll_cell_empty; im_bb := ll_cell_empty; im_be := ll_dim0;
+     im_ei := ll_dim1; im_eb := ll_dim0; im_ee := ll_dim2 |}.
+
+Lemma paper_test6_intersects :
+  im_intersects ll_matrix_paper_test6.
+Proof.
+  unfold im_intersects. right; right; left.
+  unfold matrix_matches, pat_intersects_3. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test6_not_crosses :
+  ~ im_crosses ll_matrix_paper_test6.
+Proof.
+  unfold im_crosses, ll_matrix_paper_test6.
+  unfold matrix_matches, pat_crosses_pl_pa_la,
+    pat_crosses_lp_ap_al, pat_crosses_ll.
+  simpl. tauto.
+Qed.
+
+Lemma paper_test7_intersects :
+  im_intersects ll_matrix_paper_test7.
+Proof.
+  unfold im_intersects. left.
+  unfold matrix_matches, pat_intersects_0. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test7_overlaps :
+  im_overlaps ll_matrix_paper_test7.
+Proof.
+  unfold im_overlaps. right.
+  unfold matrix_matches, pat_overlaps_ll. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test8_intersects :
+  im_intersects ll_matrix_paper_test8.
+Proof.
+  unfold im_intersects. left.
+  unfold matrix_matches, pat_intersects_0. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test9_intersects :
+  im_intersects ll_matrix_paper_test9.
+Proof.
+  unfold im_intersects. left.
+  unfold matrix_matches, pat_intersects_0. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test9_overlaps :
+  im_overlaps ll_matrix_paper_test9.
+Proof.
+  unfold im_overlaps. right.
+  unfold matrix_matches, pat_overlaps_ll. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test10_intersects :
+  im_intersects ll_matrix_paper_test10.
+Proof.
+  unfold im_intersects. right; right; left.
+  unfold matrix_matches, pat_intersects_3. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test10_not_disjoint :
+  ~ im_disjoint ll_matrix_paper_test10.
+Proof.
+  unfold im_disjoint, ll_matrix_paper_test10.
+  unfold pat_disjoint, matrix_matches. simpl. tauto.
+Qed.
+
+Lemma paper_test13_intersects :
+  im_intersects ll_matrix_paper_test13.
+Proof.
+  unfold im_intersects. left.
+  unfold matrix_matches, pat_intersects_0. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test13_crosses :
+  im_crosses ll_matrix_paper_test13.
+Proof.
+  unfold im_crosses. right; right.
+  unfold matrix_matches, pat_crosses_ll. simpl.
+  repeat split; auto.
+Qed.
+
+Lemma paper_test7_agrees_overlap_witness_core :
+  im_ii ll_matrix_paper_test7 = im_ii ll_matrix_overlap_ii /\
+  im_bb ll_matrix_paper_test7 = im_bb ll_matrix_overlap_ii.
+Proof.
+  split; reflexivity.
+Qed.
+
+Lemma paper_test13_agrees_point_witness_ii :
+  im_ii ll_matrix_paper_test13 = im_ii ll_matrix_point_ii.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma paper_test6_ii_differs_point_witness :
+  im_ii ll_matrix_paper_test6 <> im_ii ll_matrix_point_ii.
+Proof.
+  intro Heq. discriminate Heq.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
