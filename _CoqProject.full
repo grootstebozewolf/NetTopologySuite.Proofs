@@ -1028,6 +1028,15 @@ theories-flocq/PassesThrough_b64_grid_exact.v
 # path for INCIRCLE_SIGN (and the ARC_* incircle sign-products); inCircle_R is
 # R-side, not extractable.  See docs/oracle-handroll-migration.md item 2.
 theories-flocq/InCircle_b64_compute.v
+# Issue #64 ask #4b: b64_inCircle sign-exactness (full-double Z.sgn predicate +
+# integer-regime bit-exactness).  Closes the deferred oracle sign bridge.
+theories-flocq/InCircle_b64_exact.v
+# Phase 4 Scope A: first-stage bit-exactness for arc-line (circle-chord)
+# intersection coordinates (the prefix of the Cramer chain before division).
+# Ships R-side refs, b64 projections, safety predicate, and the four
+# first-stage exactness lemmas (sP, sQ, dx, dy).  Round-chain identity
+# (Scope B) and forward-error bound (Scope C) are deferred.
+theories-flocq/ArcLineIntersect_b64_exact.v
 # Computational (extractable) binary64 arc-circle sign-product.  Oracle compute
 # path for ARC_CHORD_CROSSES_CIRCLE.  See docs/oracle-handroll-migration.md item 3.
 theories-flocq/ArcCircle_b64_compute.v
