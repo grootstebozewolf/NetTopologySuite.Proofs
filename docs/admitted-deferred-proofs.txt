@@ -201,3 +201,10 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_she
 # Consumer: overlay_ng_correct_conditional (S15) and the Phase 3
 # headline correctness theorem.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/audit-phase3-milestone5.md | §4.3,§7
+
+# Shewchuk Theorem 13, P2 pathA∨pathB scaffolding — O4 combined step.
+# Case-split: pathA branch = existing cascade_step_preserves_invariant_pathA
+# (Route2 L1360) after handover_AB ⇒ handover bridge; pathB branch = O1
+# (clause a) ∧ O2 (handover_AB) ∧ O3 (run-bound, Qed in pathAB.v).
+# O5/O6 already Qed, calling this lemma.  Discharge when O1+O2 land.
+theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_step_preserves_invariant_AB | docs/history/sessions/shewchuk-thm13-p2-pathAB-scaffold-outcome.md | O4
