@@ -46,3 +46,5 @@ theories/BufferBridgeComplete.v
 theories/BufferBridgeRound.v
 # Issue #67 S1: DE-9IM matrix algebra (Stdlib only; host-lane smoke).
 theories/DE9IM.v
+# Issue #67 S2: line-line DE-9IM soundness (host lane; pulls Intersect.v).
+theories/RelateLineLine.v

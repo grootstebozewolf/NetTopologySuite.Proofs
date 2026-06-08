@@ -219,7 +219,18 @@ generally non-dyadic); round-chain identity (Scope B) and forward-error bound
 | `DE9IM.v : im_covers_transpose_coveredBy` (+`predicate_covers_transpose_coveredBy`) | `covers` on `m` ⇔ `coveredBy` on transpose (`pattern_transpose` on all four JTS covers patterns) `[exact]` | 0 |
 | `DE9IM.v : disjoint_intersects3_example_holds` | **Honest gap:** a matrix can be both `disjoint` and `intersects₃` (abstract IM algebra ≠ complete geometry IM) `[exact]` | 0 |
 
-No geometry carrier yet; RelateNG algorithm and prepared-cache slices are follow-up (#67 S2+).
+Full RelateNG matrix-fill and prepared-cache slices remain follow-up (#67 S3+).
+
+## Issue #67 — line-line DE-9IM soundness (`RelateLineLine.v`, session 2)
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateLineLine.v : line_line_proper_cross_sound` | **Proper crossing:** strict opposite-sign crosses ⇒ witness matrix satisfies `Crosses` and `Intersects` `[exact]` | 3 |
+| `RelateLineLine.v : line_line_rejection_disjoint_sound` | **Rejection:** same-side sign test ⇒ `Disjoint` witness and no shared point (soundness of NTS rejection) `[exact]` | 3 |
+| `RelateLineLine.v : line_line_share_intersects_sound` | **Share-point:** any `between` witness ⇒ `Intersects` witness matrix `[exact]` | 3 |
+| `RelateLineLine.v : line_line_collinear_overlap_sound` | **Collinear overlap:** both endpoints of CD on AB ⇒ `Overlaps` (LL) witness `[exact]` | 3 |
+
+Witness matrices are soundness targets, not a computed RelateNG IM. Endpoint-only touches inherit existential `Intersects` only.
 
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 
