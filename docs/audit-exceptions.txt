@@ -114,6 +114,16 @@ theories-flocq/Orient_b64_int_safe.v
 # Qed-closed.  Removable once the parametric refactor reaches the b64 primitives.
 theories-flocq/Orient_b64_int_safe_coords.v
 
+# Category C: Stage D orient2d on the Besicovitch-Kakeya gnarlies (concrete demo).
+# b64Z / kakeya_inputs_int_safe / kakeya_cross_zero / kakeya_orient2d_sign_zero
+# are stated over `binary_normalize` / `cross_R_BP` / the expansion predicate and
+# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
+# b64-arithmetic lineage that exempts Orient_b64_int_safe_coords.v and
+# Orient_b64_exact.v above.  No Admitteds; all three Qed-closed; no dependence on
+# the deferred fast_expansion_sum_nonoverlap_shewchuk.  Removable once the
+# parametric refactor reaches the binary64 primitives.
+theories-flocq/KakeyaOrient2d_b64.v
+
 # Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
 # result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
 # `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
