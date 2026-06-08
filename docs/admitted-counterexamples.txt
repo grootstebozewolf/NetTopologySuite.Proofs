@@ -95,23 +95,37 @@ theories-flocq/B64_FastExpansionSum.v:b64_grow_expansion_nonoverlap_dominated | 
 # docs/hobby-lemma-4-3-no-proper-refutation.md §3,§4.
 theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-lemma-4-3-no-proper-refutation.md | §2,§4
 
-# ============================================================================
-# Slice A Piece 5b: Shewchuk Theorem 13 headline (strict_succ_b64 too strong).
+# Shewchuk Theorem 13 headline: the strong-nonoverlap postcondition is too
+# strong for fast-expansion-sum (reclassified deferred -> counterexample
+# 2026-06-08).
 # ============================================================================
 
-# `fast_expansion_sum_nonoverlap_shewchuk` -- FALSE as stated.  The corpus's
-# `nonoverlap_shewchuk` forces half-ulp separation (`strict_succ_b64`), which is
-# stronger than Shewchuk's bit-disjoint nonoverlapping.  Machine-checked witness
-# (B64_Shewchuk_Thm13_counterexample.v): valid inputs e=[2^60;1], f=[-(2^60-256)]
-# sum to 257 whose expansion [256;1] fails `nonoverlap_shewchuk` (1 > ulp(256)/2).
-# Previously Tier-3 deferred; reclassified 2026-06 after PR #142.
-# Achievable: weaken `strict_succ_b64`/`nonoverlap_strict` to bit-disjoint
-# nonoverlapping and re-aim the pathA∨pathB program (see counterexample doc §Recommendation).
-theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-thm13-headline-counterexample.md | witness,consequence,recommendation
+# `fast_expansion_sum_nonoverlap_shewchuk` -- previously a deferred-proof
+# entry (thesis-scale).  FALSE as stated: it claims `fast_expansion_sum` of
+# `nonoverlap_shewchuk` inputs is `nonoverlap_shewchuk`, but the corpus's
+# `strict_succ_b64 a b := |B2R b| <= ulp(B2R a)/2` (half-ulp) is strictly
+# stronger than Shewchuk's bit-disjoint "(strongly) nonoverlapping" -- correct
+# for a single TwoSum's (high,low), but multi-term fast-expansion-sum emits
+# bit-disjoint components that are not half-ulp-close.  Machine-checked core in
+# theories-flocq/B64_Shewchuk_Thm13_counterexample.v:
+#   - nonoverlap_shewchuk_256_1_false -- nonoverlap_shewchuk [256;1] is False
+#     (1 > ulp(256)/2 = 2^-45);
+#   - e_nonoverlap / f_nonoverlap     -- e=[2^60;1], f=[-(2^60-256)] are valid;
+#   - inputs_sum_eq                   -- expansion_R e + expansion_R f
+#                                        = expansion_R [256;1] = 257.
+# So a sum of valid inputs has the bit-disjoint representation [256;1] the
+# strong predicate rejects.  The fast_expansion_sum -> [256;1] emission is
+# hand-traced in docs/shewchuk-thm13-headline-counterexample.md and exercised
+# on concrete binary64 in B64_pathB_trace_4A.v (sort_by_abs/compress use
+# Rcompare, not vm_compute-able).
+# Achievable: weaken `strict_succ_b64`/`nonoverlap_strict` to Shewchuk's true
+# bit-disjoint predicate and re-aim O1-O8 (the #135-#137 pathB bricks carry
+# over; the half-ulp dominance arguments must be re-derived).
+theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-thm13-headline-counterexample.md | §root-cause,§witness,§consequence
 
 # `cascade_pathAB_chain_from_nonoverlap` -- indischargable from nonoverlap inputs.
 # Discharging this would supply the hypothesis of the Qed conditional O8 theorem,
 # closing the false headline.  Same counterexample lineage: pathB_output_head_bound
 # (O1) is not derivable from the invariant when committed low parts and cancellation
 # residues are bit-disjoint but not half-ulp-close ([256;1] witness).
-theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_pathAB_chain_from_nonoverlap | docs/shewchuk-thm13-headline-counterexample.md | consequence,recommendation
+theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_pathAB_chain_from_nonoverlap | docs/shewchuk-thm13-headline-counterexample.md | §consequence,§recommendation

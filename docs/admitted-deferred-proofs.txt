@@ -56,13 +56,82 @@
 # Slice A Piece 5b: Shewchuk Theorem 13 formalisation.
 # ============================================================================
 
-# `fast_expansion_sum_nonoverlap_shewchuk` -- MOVED to the counterexample
-# registry (docs/admitted-counterexamples.txt).  Previously carried here as
-# thesis-scale deferred work.  PR #142 (B64_Shewchuk_Thm13_counterexample.v)
-# machine-checks that the statement is FALSE as written: `strict_succ_b64`/
-# `nonoverlap_shewchuk` is too strong for multi-term `fast_expansion_sum`
-# output (witness 257 = 256 + 1).  See docs/shewchuk-thm13-headline-counterexample.md.
-# Do not re-add here.
+# `fast_expansion_sum_nonoverlap_shewchuk` -- general unconditional
+# headline for Shewchuk Theorem 13 (1997, ~1 page of dense magnitude
+# analysis).  THESIS-SCALE.  Re-classified 2026-05-29 after 17 sessions
+# of cumulative work established the structural floor; previous estimate
+# of "3-4 sessions" did not survive contact with the Route 1 collapse
+# artifacts.  Reclassification rationale below.
+#
+# WHAT IS QED-CLOSED in
+# `theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v`:
+#   - `fast_expansion_sum_nonoverlap_shewchuk_general_conditional`:
+#     under `cascade_pathA_chain` on the initial state, the headline
+#     follows.  This is the load-bearing composition step; the
+#     "Work is composition, not new mathematics" path lands here.
+#   - `fast_expansion_sum_nonoverlap_shewchuk_two_singletons`:
+#     UNCONDITIONAL length-2 headline.
+#   - `fast_expansion_sum_nonoverlap_shewchuk_int_safe_singletons`:
+#     UNCONDITIONAL length-2 int-safe headline.
+#   - `fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs`:
+#     UNCONDITIONAL (2,2) int-safe headline.  Covers all practical
+#     orient2d-shaped Stage D inputs under `coord_int_safe`.
+#
+# Plus the supporting machinery (200+ lemmas): cascade_invariant,
+# cascade_run, cascade_h_chain under Path A (pos + neg),
+# run_bound_step_preserves, b64_plus_int_exact + integer cascade,
+# compress structural lemmas, sort-by-abs Forall preservation, etc.
+#
+# WHAT REMAINS OPEN -- the general unconditional headline only:
+#   Deriving `cascade_pathA_chain (initial_cascade_state x prov) rest`
+#   from the actual preconditions of the theorem, namely
+#     `fast_expansion_sum_safe e f /\
+#      nonoverlap_shewchuk e /\
+#      nonoverlap_shewchuk f`
+#   for arbitrary expansions `e f` (i.e. closing
+#   `_general_conditional` by discharging its `cascade_pathA_chain`
+#   hypothesis from these three assumptions rather than positing it).
+#   This is precisely Shewchuk Theorem 13's deep magnitude bookkeeping:
+#   per-element provenance tracking + cross-prov mixed-sign
+#   similar-magnitude case analysis + round-to-even boundary handling.
+#   Session 3 quantified the gap as "roughly 2^53 too loose" between
+#   the cascade invariant's natural bound and the h-chain link
+#   required for arbitrary inputs.
+#
+# Session history (collapse artifacts in `docs/`):
+#   - Route 3 (descending strict_succ chain on input): ruled out
+#     2026-05-24 by `e=[4.0], f=[3.0]` counterexample.
+#   - Route 2 Session 2: clause (c) collapse on Form A state.
+#   - Route 1 design session: third design recommended.
+#   - Route 1 Sessions 2-12: cascade_state augmentation (Form B with
+#     cs_prov + per-source max), refined clauses, h-chain split as
+#     a separate cascade-step lemma; established the 2^53 gap
+#     structurally and Qed-closed the conditional headline.
+#   - Route 1 Sessions 13-16: integer-safe specialised headlines
+#     (the three UNCONDITIONAL Qed-closures listed above).
+#   - Route 1 Session 17 (`route1_attempt`, Aborted at length 3+):
+#     concrete demonstration of the deferred-proof obstacle inside
+#     the corpus.
+#
+# PRACTICAL IMPACT.  For NetTopologySuite consumers, `_int_safe_two_pairs`
+# covers all orient2d Stage D inputs under coord_int_safe (the integer
+# geometry contract).  The general unconditional headline is a
+# theoretical completion (thesis-scale), not a practical blocker for
+# Phase 3 or downstream geometry correctness.
+#
+# Estimate: thesis-scale (multiple months of focused magnitude
+# bookkeeping, comparable in shape to `hobby_lemma_4_3_no_proper`).
+# Not attempted in further single-session work without a published
+# magnitude-bookkeeping framework (Shewchuk §4-style provenance
+# tracking) to lean on.
+# RECLASSIFIED 2026-06-08: `fast_expansion_sum_nonoverlap_shewchuk` moved to
+# docs/admitted-counterexamples.txt.  It is FALSE as stated -- the corpus's
+# half-ulp `strict_succ_b64` is stronger than Shewchuk's bit-disjoint
+# nonoverlapping; machine-checked counterexample in
+# theories-flocq/B64_Shewchuk_Thm13_counterexample.v (see
+# docs/shewchuk-thm13-headline-counterexample.md).  The rationale above is
+# retained for history but is SUPERSEDED (it had claimed the headline
+# true/deferred).  No deferred-proof entry remains here for it.
 
 # ============================================================================
 # Phase 2 Hobby Theorem 4.1 supporting lemmas.

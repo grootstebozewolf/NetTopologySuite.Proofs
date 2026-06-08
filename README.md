@@ -68,17 +68,22 @@ discipline across both directories:
   verified counterexample on file. 6 entries today: three in the Stage D
   expansion-arithmetic work (`b64_grow_expansion_nonoverlap` and two
   companions), Hobby Lemma 4.3's no-proper-intersection half
-  (`hobby_lemma_4_3_no_proper`), plus Shewchuk Theorem 13's general
+  (`hobby_lemma_4_3_no_proper`) — false for arbitrary, non-noded segment
+  pairs (`HobbyCounterexample_b64.v`), Shewchuk Theorem 13's general
   headline (`fast_expansion_sum_nonoverlap_shewchuk`) and O7 completeness
   (`cascade_pathAB_chain_from_nonoverlap`) — both **false as stated**
-  ([`B64_Shewchuk_Thm13_counterexample.v`](theories-flocq/B64_Shewchuk_Thm13_counterexample.v),
-  see [`docs/shewchuk-thm13-headline-counterexample.md`](docs/shewchuk-thm13-headline-counterexample.md)).
+  because half-ulp `strict_succ_b64` is stronger than Shewchuk's bit-disjoint
+  nonoverlapping ([`B64_Shewchuk_Thm13_counterexample.v`](theories-flocq/B64_Shewchuk_Thm13_counterexample.v),
+  [`docs/shewchuk-thm13-headline-counterexample.md`](docs/shewchuk-thm13-headline-counterexample.md)).
 - **Tier 3** — an `Admitted` registered in
   [`docs/admitted-deferred-proofs.txt`](docs/admitted-deferred-proofs.txt)
   is allowed temporarily: the theorem is *true*, its proof structure is
   documented, and the remaining work is multi-session. 1 entry today —
-  Phase 3's ring-assembly lemma (`extract_rings_valid`). An entry comes
-  off the registry only when the proof lands.
+  Phase 3's ring-assembly lemma (`extract_rings_valid`). An entry comes off
+  the registry only when the proof lands. (Hobby Lemma 4.3's
+  no-proper-intersection half, Shewchuk Theorem 13's headline, and O7
+  completeness were previously here; each is now a Tier-2 counterexample —
+  machine-checked **false** as stated.)
 
 The only axioms used are the three standard ones bundled with Rocq's
 classical real arithmetic library (printed at the end of each `theories/`
