@@ -124,7 +124,14 @@
 # Not attempted in further single-session work without a published
 # magnitude-bookkeeping framework (Shewchuk §4-style provenance
 # tracking) to lean on.
-theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-theorem-13-proof-structure.md | §1,§2.1,§4,§6,§6.1,§6.2,§6.3,§6.4,§6.5
+# RECLASSIFIED 2026-06-08: `fast_expansion_sum_nonoverlap_shewchuk` moved to
+# docs/admitted-counterexamples.txt.  It is FALSE as stated -- the corpus's
+# half-ulp `strict_succ_b64` is stronger than Shewchuk's bit-disjoint
+# nonoverlapping; machine-checked counterexample in
+# theories-flocq/B64_Shewchuk_Thm13_counterexample.v (see
+# docs/shewchuk-thm13-headline-counterexample.md).  The rationale above is
+# retained for history but is SUPERSEDED (it had claimed the headline
+# true/deferred).  No deferred-proof entry remains here for it.
 
 # ============================================================================
 # Phase 2 Hobby Theorem 4.1 supporting lemmas.
@@ -201,3 +208,7 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_she
 # Consumer: overlay_ng_correct_conditional (S15) and the Phase 3
 # headline correctness theorem.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/audit-phase3-milestone5.md | §4.3,§7
+
+# `cascade_pathAB_chain_from_nonoverlap` -- MOVED to counterexample registry.
+# Indischargable: would close the false headline via conditional O8.  See
+# docs/shewchuk-thm13-headline-counterexample.md §Consequence.  Do not re-add.

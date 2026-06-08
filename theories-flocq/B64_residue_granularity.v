@@ -32,8 +32,10 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals ZArith Lia Lra.
-From Flocq Require Import IEEE754.Binary Core.
-From NTS.Proofs.Flocq Require Import Validate_binary64 B64_lib.
+From Flocq Require Import IEEE754.Binary Core Ulp.
+From NTS.Proofs.Flocq Require Import Validate_binary64 B64_lib B64_Expansion
+                                     B64_FastExpansionSum B64_TwoSum_sterbenz
+                                     B64_Pff_bridge.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -133,8 +135,91 @@ Proof.
   rewrite Hcomb. apply nonzero_mult_bpow_ge. rewrite <- Hcomb. exact Hsum0.
 Qed.
 
+(* ulp(v) = bpow(cexp v) for nonzero b64-format v. *)
+Lemma b64_ulp_eq_bpow_cexp :
+  forall v : R, b64_format v -> v <> 0 ->
+  ulp radix2 (SpecFloat.fexp prec emax) v = bpow radix2 (cexp radix2 b64_fexp v).
+Proof. intros v Hf Hv. exact (ulp_neq_0 radix2 b64_fexp v Hv). Qed.
+
+(* `strict_succ_b64` as a half-ulp bpow bound on the predecessor exponent. *)
+Lemma strict_succ_b64_half_ulp_bpow :
+  forall (a b : binary64),
+    Binary.B2R prec emax a <> 0 ->
+    strict_succ_b64 a b ->
+    Rabs (Binary.B2R prec emax b)
+      <= bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax a) - 1).
+Proof.
+  intros a b Ha0 Hss.
+  unfold strict_succ_b64 in Hss.
+  pose proof (b64_format_B2R a) as Hfa.
+  pose proof (b64_ulp_eq_bpow_cexp _ Hfa Ha0) as Hulp.
+  rewrite Hulp in Hss.
+  assert (Hhalf : bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax a)) / 2
+                = bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax a) - 1)).
+  { rewrite bpow_pred2 by lia. lra. }
+  rewrite Hhalf in Hss. exact Hss.
+Qed.
+
+(* Magnitude lower bound lifts to a cexp lower bound (binary64: cexp = max(mag-prec, emin)). *)
+Lemma b64_cexp_ge_from_mag_lb :
+  forall (v : R) (k : Z),
+    b64_format v ->
+    (k + prec <= mag radix2 v)%Z ->
+    (k <= cexp radix2 b64_fexp v)%Z.
+Proof.
+  intros v k Hf Hmag.
+  unfold cexp, b64_fexp, SpecFloat.fexp.
+  pose proof (Z.le_max_l (mag radix2 v - prec) (SpecFloat.emin prec emax)) as Hmax.
+  apply Z.le_trans with (mag radix2 v - prec)%Z; [lia | exact Hmax].
+Qed.
+
+(* Resolution-1-extended emission surgery (plan §4.A): lifting `strict_succ` from
+   the old carry `q` to the cancellation residue requires an explicit bound on the
+   surviving output head against the NEW carry's half-ulp grid.  Double residue
+   alone does not suffice (Trace C: `strict_succ_b64 2^8 1` is false). *)
+Lemma pathB_cancel_strict_succ_head :
+  forall (q x h : binary64),
+    b64_TwoSum_safe x q ->
+    b64_format (Binary.B2R prec emax x + Binary.B2R prec emax q) ->
+    Binary.B2R prec emax x + Binary.B2R prec emax q <> 0 ->
+    Binary.B2R prec emax q <> 0 ->
+    Rabs (Binary.B2R prec emax q) / 2 <= Rabs (Binary.B2R prec emax x) ->
+    strict_succ_b64 q h ->
+    Rabs (Binary.B2R prec emax h) <=
+      bpow radix2 (cexp radix2 b64_fexp
+        (Binary.B2R prec emax (fst (b64_TwoSum x q))) - 1) ->
+    strict_succ_b64 (fst (b64_TwoSum x q)) h.
+Proof.
+  intros q x h Hsafe Hfmt Hsum0 Hq0 Hster Hqh Hhead.
+  unfold strict_succ_b64.
+  destruct (b64_TwoSum x q) as [carry' err] eqn:Hts.
+  pose proof (Binary.generic_format_B2R prec emax q) as Hfq.
+  pose proof (b64_TwoSum_exact_of_format_sum x q Hsafe Hfmt) as [HcarryR Herr].
+  assert (HcarryB : Binary.B2R prec emax carry'
+                    = Binary.B2R prec emax x + Binary.B2R prec emax q).
+  { transitivity (Binary.B2R prec emax (b64_plus x q)).
+    - rewrite <- b64_TwoSum_fst, Hts. reflexivity.
+    - exact HcarryR. }
+  assert (Hcarry0 : Binary.B2R prec emax carry' <> 0).
+  { rewrite HcarryB. exact Hsum0. }
+  pose proof (b64_format_B2R carry') as Hfc.
+  pose proof (b64_ulp_eq_bpow_cexp _ Hfc Hcarry0) as Hulp.
+  assert (Hhalf : bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax carry')) / 2
+                = bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax carry') - 1)).
+  { rewrite bpow_pred2 by lia. lra. }
+  assert (Hbind : ulp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax carry') / 2
+                = bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax carry') - 1)).
+  { transitivity (bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax carry')) / 2).
+    - f_equal. unfold b64_ulp in Hulp. exact Hulp.
+    - exact Hhalf. }
+  apply Rle_trans with (bpow radix2 (cexp radix2 b64_fexp (Binary.B2R prec emax carry') - 1)).
+  - exact Hhead.
+  - rewrite <- Hbind. apply Rle_refl.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions residue_ge_half_ulp.
+Print Assumptions pathB_cancel_strict_succ_head.

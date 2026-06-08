@@ -28,12 +28,13 @@
    smallest-to-largest.  Each step's accumulator is bounded relative
    to the next input, which is what Shewchuk Theorem 13 relies on.
 
-   PIECE 3 SCOPE (this file)
-   --------------------------
-   Definition only -- no nonoverlap proof here (that's piece 5).  But
-   the SUM-PRESERVATION through the sort step is included as small
-   structural helpers, since piece 4 (sum-correctness of the full
-   algorithm) will compose them with the cascade's sum invariant.
+   PIECE 3–5 SCOPE (this file)
+   ---------------------------
+   Algorithm definition (piece 3), sum-correctness (piece 4), and the
+   general nonoverlap headline (piece 5).  The headline is a Tier-2
+   counterexample (false as stated — half-ulp `strict_succ_b64` too strong;
+   witness in B64_Shewchuk_Thm13_counterexample.v).  Conditional closure
+   via pathAB chain is Qed in B64_Shewchuk_Thm13_pathAB.v.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -258,9 +259,8 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 (* PIECE 5b: nonoverlap_shewchuk preservation.                                *)
 (*                                                                            *)
-(* Shewchuk Theorem 13 (1997, ~1 page of dense magnitude analysis).  Stated  *)
-(* here with `Admitted` and registered in                                     *)
-(* `docs/admitted-deferred-proofs.txt` as a deferred-proof obligation.       *)
+(* Shewchuk Theorem 13 headline — FALSE as stated (`strict_succ_b64` too       *)
+(* strong).  `Admitted` + Tier-2 counterexample registry (PR #142).           *)
 (*                                                                            *)
 (* The proof structure is documented in                                       *)
 (* `docs/shewchuk-theorem-13-proof-structure.md` with enough detail that      *)
@@ -487,14 +487,17 @@ Theorem fast_expansion_sum_nonoverlap_shewchuk :
     nonoverlap_shewchuk f ->
     nonoverlap_shewchuk (fast_expansion_sum e f).
 Proof.
-  (* DEFERRED: see docs/shewchuk-theorem-13-proof-structure.md.
-     Registered in docs/admitted-deferred-proofs.txt.
-     Building blocks for §2.1 are formalised above
-     (b64_plus_geq_pos, b64_plus_leq_neg, b64_TwoSum_step_dominates_pos,
-     ..._neg, ..._same_sign, ..._q_zero, ..._strict_pos, ..._strict_neg).
-     Remaining work: bridge from the boundary equality (|q| = ulp(e)/2)
-     to the strict precondition + cascade induction + §2.2 half-ulp
-     chain. *)
+  (* FALSE AS STATED -- Tier-2 counterexample (reclassified 2026-06-08).
+     The corpus's half-ulp `strict_succ_b64` is strictly stronger than
+     Shewchuk's bit-disjoint "(strongly) nonoverlapping": fast_expansion_sum
+     of `nonoverlap_shewchuk` inputs can emit bit-disjoint components (e.g.
+     256 and 1) that are NOT within a half-ulp.  Machine-checked witness:
+     theories-flocq/B64_Shewchuk_Thm13_counterexample.v (e=[2^60;1],
+     f=[-(2^60-256)] valid; their sum's representation [256;1] fails
+     nonoverlap_shewchuk).  Registered in docs/admitted-counterexamples.txt;
+     analysis in docs/shewchuk-thm13-headline-counterexample.md.
+     To recover a TRUE headline, weaken nonoverlap_strict to the bit-disjoint
+     predicate and re-aim the pathA-OR-pathB obligations. *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)

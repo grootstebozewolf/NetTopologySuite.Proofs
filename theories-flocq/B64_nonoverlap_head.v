@@ -57,6 +57,46 @@ Proof.
   rewrite (compress_cons_zero a z L Hz). reflexivity.
 Qed.
 
+(* `compress` drops a zero element appended after the head cell. *)
+Lemma compress_app_zero :
+  forall (L : list binary64) (err : binary64),
+    Binary.B2R prec emax err = 0 ->
+    compress (L ++ [err]) = compress L.
+Proof.
+  induction L as [| x L' IH]; intros err Hz.
+  - cbn [app compress]. rewrite (Rcompare_Eq _ _ Hz). reflexivity.
+  - cbn [app compress].
+    destruct (Rcompare (Binary.B2R prec emax x) 0) eqn:Hx.
+    + exact (IH err Hz).
+    + f_equal. exact (IH err Hz).
+    + f_equal. exact (IH err Hz).
+Qed.
+
+Lemma compress_head_app_zero :
+  forall (a err : binary64) (hs : list binary64),
+    Binary.B2R prec emax err = 0 ->
+    compress (a :: rev hs ++ [err]) = compress (a :: rev hs).
+Proof.
+  intros a err hs Hz.
+  cbn [compress].
+  destruct (Rcompare (Binary.B2R prec emax a) 0) eqn:Ha.
+  - exact (compress_app_zero (rev hs) err Hz).
+  - rewrite (compress_app_zero (rev hs) err Hz). reflexivity.
+  - rewrite (compress_app_zero (rev hs) err Hz). reflexivity.
+Qed.
+
+(* Appending a zero low part after `rev hs` is invisible on a `q :: _` chain. *)
+Lemma nonoverlap_shewchuk_tail_app_zero :
+  forall (q err : binary64) (hs : list binary64),
+    Binary.B2R prec emax err = 0 ->
+    nonoverlap_shewchuk (q :: rev hs) ->
+    nonoverlap_shewchuk (q :: (rev hs ++ [err])).
+Proof.
+  intros q err hs Hz Hout.
+  unfold nonoverlap_shewchuk in *.
+  rewrite (compress_head_app_zero q err hs Hz). exact Hout.
+Qed.
+
 (* The head of a nonoverlap_shewchuk chain may be replaced by any `a'` that is
    zero (compressed away) or dominates the first surviving component. *)
 Lemma nonoverlap_shewchuk_head_replace :
@@ -104,9 +144,62 @@ Proof.
       * exact Htail.
 Qed.
 
+(* The first surviving compressed component is nonzero. *)
+Lemma compress_head_nonzero :
+  forall (L : list binary64) (h : binary64) (ts : list binary64),
+    compress L = h :: ts ->
+    Binary.B2R prec emax h <> 0.
+Proof.
+  induction L as [|a L' IH]; intros h ts Hc.
+  - discriminate.
+  - cbn [compress] in Hc.
+    destruct (Rcompare (Binary.B2R prec emax a) 0) eqn:Ha.
+    + eapply IH. exact Hc.
+    + pose proof (f_equal (map (Binary.B2R prec emax)) Hc) as Hmap.
+      cbn [map] in Hmap.
+      injection Hmap as HB2R _.
+      intro Hz. rewrite <- HB2R in Hz.
+      assert (Heq : Rcompare (Binary.B2R prec emax a) 0 = Eq).
+      { rewrite Hz. apply Rcompare_Eq. reflexivity. }
+      rewrite Heq in Ha. discriminate.
+    + pose proof (f_equal (map (Binary.B2R prec emax)) Hc) as Hmap.
+      cbn [map] in Hmap.
+      injection Hmap as HB2R _.
+      intro Hz. rewrite <- HB2R in Hz.
+      assert (Heq : Rcompare (Binary.B2R prec emax a) 0 = Eq).
+      { rewrite Hz. apply Rcompare_Eq. reflexivity. }
+      rewrite Heq in Ha. discriminate.
+Qed.
+
+(* Extract the half-ulp bound on the first surviving output component from
+   clause (a) `nonoverlap_shewchuk (q :: rev hs)`. *)
+Lemma nonoverlap_output_first_strict_succ :
+  forall (q : binary64) (hs : list binary64) (h : binary64) (ts : list binary64),
+    nonoverlap_shewchuk (q :: rev hs) ->
+    compress (rev hs) = h :: ts ->
+    Binary.B2R prec emax q <> 0 ->
+    Binary.B2R prec emax h <> 0 ->
+    strict_succ_b64 q h.
+Proof.
+  intros q hs h ts Hout Hch Hq0 Hh0.
+  unfold nonoverlap_shewchuk in Hout.
+  assert (Hcmp : compress (q :: rev hs) = q :: h :: ts).
+  { cbn [compress].
+    destruct (Rcompare (Binary.B2R prec emax q) 0) eqn:Hq.
+    - apply Rcompare_Eq_inv in Hq. contradiction.
+    - rewrite Hch. reflexivity.
+    - rewrite Hch. reflexivity. }
+  rewrite Hcmp in Hout.
+  destruct (Rcompare (Binary.B2R prec emax h) 0) eqn:Hh.
+  - apply Rcompare_Eq_inv in Hh. contradiction.
+  - cbn [nonoverlap_strict] in Hout. destruct Hout as [Hss _]. exact Hss.
+  - cbn [nonoverlap_strict] in Hout. destruct Hout as [Hss _]. exact Hss.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions nonoverlap_shewchuk_cons_zero.
 Print Assumptions nonoverlap_shewchuk_head_replace.
+Print Assumptions nonoverlap_output_first_strict_succ.
