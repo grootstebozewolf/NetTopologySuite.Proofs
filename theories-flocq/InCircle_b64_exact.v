@@ -12,7 +12,7 @@
 
             inCircle_R_BP = (2^E)^4 * IZR(IntDet)
 
-        with E the minimum exponent over the sixteen input coordinates.
+        with E the minimum exponent over the eight input coordinates.
 
      2. Integer-regime value exactness (`b64_inCircle_exact_for_small_int`):
         when every coordinate is integer-valued with `|n| <= 2^11`, every
@@ -28,6 +28,11 @@
    Closes issue #64 ask #4b and unblocks the ARC_* oracle sign bridges.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted, human-reviewed.
+     Assisted-by: Claude
    ========================================================================== *)
 
 From Stdlib Require Import Reals ZArith Lia Lra.
@@ -111,7 +116,7 @@ Lemma Zfold_min8_le8 : forall e1 e2 e3 e4 e5 e6 e7 e8 : Z,
   (Zfold_min8 e1 e2 e3 e4 e5 e6 e7 e8 <= e8)%Z.
 Proof. intros. unfold Zfold_min8. lia. Qed.
 
-Definition b64_min_exp16 (A B C P : BPoint) : Z :=
+Definition b64_min_exp8 (A B C P : BPoint) : Z :=
   Zfold_min8
     (b64_exp (bx A)) (b64_exp (by_ A))
     (b64_exp (bx B)) (b64_exp (by_ B))
@@ -119,7 +124,7 @@ Definition b64_min_exp16 (A B C P : BPoint) : Z :=
     (b64_exp (bx P)) (b64_exp (by_ P)).
 
 Definition b64_inCircle_intdet (A B C P : BPoint) : Z :=
-  let E := b64_min_exp16 A B C P in
+  let E := b64_min_exp8 A B C P in
   let ax := (shifted_mant (bx A) E - shifted_mant (bx P) E)%Z in
   let ay := (shifted_mant (by_ A) E - shifted_mant (by_ P) E)%Z in
   let bx' := (shifted_mant (bx B) E - shifted_mant (bx P) E)%Z in
@@ -294,30 +299,30 @@ Lemma inCircle_R_BP_factor :
   forall A B C P,
     all_finite16 A B C P ->
     inCircle_R_BP A B C P
-    = (bpow radix2 (b64_min_exp16 A B C P)
-       * bpow radix2 (b64_min_exp16 A B C P)
-       * bpow radix2 (b64_min_exp16 A B C P)
-       * bpow radix2 (b64_min_exp16 A B C P))
+    = (bpow radix2 (b64_min_exp8 A B C P)
+       * bpow radix2 (b64_min_exp8 A B C P)
+       * bpow radix2 (b64_min_exp8 A B C P)
+       * bpow radix2 (b64_min_exp8 A B C P))
       * IZR (b64_inCircle_intdet A B C P).
 Proof.
   intros A B C P [HxA [HyA [HxB [HyB [HxC [HyC [HxP HyP]]]]]]].
-  set (E := b64_min_exp16 A B C P).
+  set (E := b64_min_exp8 A B C P).
   assert (LeAx : (E <= b64_exp (bx A))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le1).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le1).
   assert (LeAy : (E <= b64_exp (by_ A))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le2).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le2).
   assert (LeBx : (E <= b64_exp (bx B))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le3).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le3).
   assert (LeBy : (E <= b64_exp (by_ B))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le4).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le4).
   assert (LeCx : (E <= b64_exp (bx C))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le5).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le5).
   assert (LeCy : (E <= b64_exp (by_ C))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le6).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le6).
   assert (LePx : (E <= b64_exp (bx P))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le7).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le7).
   assert (LePy : (E <= b64_exp (by_ P))%Z)
-    by (unfold E, b64_min_exp16; apply Zfold_min8_le8).
+    by (unfold E, b64_min_exp8; apply Zfold_min8_le8).
   unfold inCircle_R_BP, b64_inCircle_intdet. fold E.
   set (b := bpow radix2 E).
   replace (Binary.B2R prec emax (bx A) - Binary.B2R prec emax (bx P))
@@ -408,10 +413,10 @@ Theorem b64_inCircle_exact_sound :
 Proof.
   intros A B C P Hfin.
   pose proof (inCircle_R_BP_factor A B C P Hfin) as Hfac.
-  set (k := bpow radix2 (b64_min_exp16 A B C P)
-            * bpow radix2 (b64_min_exp16 A B C P)
-            * bpow radix2 (b64_min_exp16 A B C P)
-            * bpow radix2 (b64_min_exp16 A B C P)) in *.
+  set (k := bpow radix2 (b64_min_exp8 A B C P)
+            * bpow radix2 (b64_min_exp8 A B C P)
+            * bpow radix2 (b64_min_exp8 A B C P)
+            * bpow radix2 (b64_min_exp8 A B C P)) in *.
   assert (Hk : 0 < k) by (unfold k; apply bpow_quartic_pos).
   unfold b64_inCircle_exact.
   set (d := b64_inCircle_intdet A B C P) in *.
@@ -1004,11 +1009,11 @@ Proof.
 Qed.
 
 Lemma perron_inCircle_Zdet_P :
-  (-2048 * ((-1) * 1 - 1 * 1))%Z = 4096%Z.
+  (- 2048 * ((-1) * 1 - 1 * 1))%Z = 4096%Z.
 Proof. lia. Qed.
 
 Lemma perron_inCircle_Zdet_Q :
-  (-2048 * ((-2048) * (2046 * 2046) - (-2046) * (2048 * 2048)))%Z
+  (- 2048 * ((-2048) * (2046 * 2046) - (-2046) * (2048 * 2048)))%Z
     = (-17163091968)%Z.
 Proof. lia. Qed.
 
@@ -1019,7 +1024,8 @@ Proof.
   set (z := (1023 * (0 * 1 - 0 * 1)
                - 2048 * ((-1) * 1 - 1 * 1)
                + (1023 * 1023 + 2048 * 2048) * ((-1) * 0 - 1 * 0))%Z).
-  assert (Hz : z = 4096%Z) by lia.
+  assert (Hz : z = 4096%Z).
+  { pose proof perron_inCircle_Zdet_P. simpl. lia. }
   destruct perron_b64Z_witnesses as [HSx [HSy [HMx [HMy [HEx [HEy [HPx HPy]]]]]]].
   unfold inCircle_R_BP.
   rewrite HSx, HSy, HMx, HMy, HEx, HEy, HPx, HPy.
@@ -1044,7 +1050,8 @@ Proof.
   set (z := ((-1024) * (0 * (2046 * 2046) - 0 * (2048 * 2048))
                - 2048 * ((-2048) * (2046 * 2046) - (-2046) * (2048 * 2048))
                + ((-1024) * (-1024) + 2048 * 2048) * ((-2048) * 0 - (-2046) * 0))%Z).
-  assert (Hz : z = (-17163091968)%Z) by lia.
+  assert (Hz : z = (-17163091968)%Z).
+  { pose proof perron_inCircle_Zdet_Q. simpl. lia. }
   destruct perron_b64Z_witnesses as [HSx [HSy [HMx [HMy [HEx [HEy _]]]]]].
   destruct perron_b64Z_witnesses_Q as [HQx HQy].
   unfold inCircle_R_BP.

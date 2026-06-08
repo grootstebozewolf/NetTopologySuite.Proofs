@@ -29,6 +29,11 @@
    predicate in `theories/ArcIntersect.v` with coordinate machinery.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted, human-reviewed.
+     Assisted-by: Claude
    ========================================================================== *)
 
 From Stdlib Require Import Reals ZArith Lia Lra.
@@ -138,12 +143,6 @@ Proof.
   apply (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe).
 Qed.
 
-Lemma arc_chord_diff_bound_2p12 :
-  forall (a b : Z),
-    (Z.abs a <= 2 ^ 11)%Z -> (Z.abs b <= 2 ^ 11)%Z ->
-    (Z.abs (a - b) <= 2 ^ 12)%Z.
-Proof. intros. replace (2 ^ 12)%Z with (2 ^ 11 + 2 ^ 11)%Z by lia. lia. Qed.
-
 Lemma b64_arc_line_dx_R :
   forall S M E P Q : BPoint,
     arc_line_intersect_inputs_int_safe S M E P Q ->
@@ -159,7 +158,7 @@ Proof.
   destruct HxP as (FxP & nxP & HxPR & HxPb).
   destruct HxQ as (FxQ & nxQ & HxQR & HxQb).
   set (dx := (nxQ - nxP)%Z).
-  pose proof (arc_chord_diff_bound_2p12 nxQ nxP HxQb HxPb) as Bdx.
+  pose proof (arc_diff_bound_2p12 nxQ nxP HxQb HxPb) as Bdx.
   destruct (b64_minus_int_exact (bx Q) (bx P) nxQ nxP FxQ FxP HxQR HxPR
                 (le_2p12_le_2pprec dx Bdx)) as [Hdx Fdx].
   rewrite HxQR, HxPR, <- minus_IZR. split; [exact Hdx | exact Fdx].
@@ -180,7 +179,7 @@ Proof.
   destruct HyP as (FyP & nyP & HyPR & HyPb).
   destruct HyQ as (FyQ & nyQ & HyQR & HyQb).
   set (dy := (nyQ - nyP)%Z).
-  pose proof (arc_chord_diff_bound_2p12 nyQ nyP HyQb HyPb) as Bdy.
+  pose proof (arc_diff_bound_2p12 nyQ nyP HyQb HyPb) as Bdy.
   destruct (b64_minus_int_exact (by_ Q) (by_ P) nyQ nyP FyQ FyP HyQR HyPR
                 (le_2p12_le_2pprec dy Bdy)) as [Hdy Fdy].
   rewrite HyQR, HyPR, <- minus_IZR. split; [exact Hdy | exact Fdy].
