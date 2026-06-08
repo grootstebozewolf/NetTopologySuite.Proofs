@@ -17,6 +17,7 @@
 | S7 | `arc_overlay_correct_chord_approx` (headline) | `ArcOverlay.v` | Qed |
 | +IVT | `chord_crosses_arc_circle_implies_circle_intersection` | `ArcIntersectIVT.v` | Qed — closes S4 gap |
 | +oracle | `INCIRCLE_SIGN` / `ARC_CHORD_CROSSES_CIRCLE` / `ARC_PASSES_THROUGH_PIXEL` | extraction | extracted |
+| +PR #146 | `b64_inCircle` soundness + arc-line Scope A | `InCircle_b64_exact.v`, `ArcLineIntersect_b64_exact.v` | Qed — closes issue #64 ask #4b |
 
 Zero `Admitted` across all seven theory files at the end.
 
@@ -60,6 +61,8 @@ Phase 3's, with `arc_close_to_curves` swapped for the conclusion.
 
 ## Open items
 
+- **Arc-line Scope B/C** — PR #146 landed Scope A (`sP`/`sQ`/`dx`/`dy`);
+  headline coord identity and forward-error bound still queued.
 - **Stale comment** — `ArcHotPixel.v:28` still calls
   `arc_chord_intersect_sound` "(Admitted, IVT-blocked)"; the IVT closure
   made that obsolete. ~2-line fix.

@@ -1,8 +1,8 @@
 # Issue #64 — Arc primitives for JTS curve awareness: research & gap triage
 
-> **Status:** research/reading pass only (no Coq written). Maps issue #64's
-> five asks against the existing corpus, separates *proven* from *gap*, and
-> proposes a risk/cost-ordered plan. Branch: `claude/issue-64-research`.
+> **Status:** living triage map for issue #64. Ask **#4b** closed by PR #146
+> (`InCircle_b64_exact.v`); ask **#5a** has Scope A first-stage exactness in
+> `ArcLineIntersect_b64_exact.v`. Remaining gaps unchanged unless noted below.
 >
 > Every file:line citation below was verified by direct grep against the tree
 > at the time of writing (corpus HEAD = `main` after PR #72).
@@ -48,9 +48,9 @@ far declined. Ask #2 (atan2-based sweep) inherits this blocker.
 | **#3b Chord-arc crossing (existence)** | **PROVEN (Qed)** | `ArcIntersectIVT.v:174` (`chord_crosses_arc_circle_implies_circle_intersection`) | IVT: opposite `inCircle_R` signs at chord ends ⇒ ∃ point on chord with `inCircle_R = 0` (on the circumcircle). |
 | **#3c Chord-arc *soundness*** | **GAP (absent, quarantined)** | `phase4-retro.md:34`; named `arc_chord_intersect_sound` | Promoting "circle crossing" → "arc-span crossing" (minor vs major arc) is **not written** — quarantined behind a predicate, *not* an `Admitted`. The arc `theories/` files are Admitted-free. |
 | **#4a in-circle predicate + algebra** | **PROVEN (Qed)** | `ArcOrient.v:89,205` + 8 invariance lemmas (swap/cyclic/translation/scaling/rotation) | `inCircle_R` defining-point zeros and similarity invariants all closed. |
-| **#4b `b64_inCircle` soundness** | **GAP (deferred)** | `InCircle_b64_compute.v:33`; `oracle-handroll-migration.md` items 2-3 | Extractable b64 mirror exists; the rounded-value → R-sign exactness theorem is unwritten (no `Admitted`, just absent). |
+| **#4b `b64_inCircle` soundness** | **PROVEN (Qed)** | `InCircle_b64_exact.v` — `b64_inCircle_exact_sound`, `b64_inCircle_exact_for_small_int`, `b64_inCircle_B2R_sign_sound_small_int`; Perron witness `perron_inCircle_sign_sound` | Full-plane sign exactness via degree-4 factorization; integer-regime value + sign exactness at `\|coord\| ≤ 2¹¹` (tighter than orient2d's `2²⁵`); closes the INCIRCLE_SIGN oracle bridge. PR #146. |
 | **#4c Arc validity (V-CP)** | **PARTIAL** | `ArcHotPixel.v:95` (`arc_passes_through_hot_pixel`), `:124` (`arc_touches_hot_pixel`) | Endpoint disjuncts + 6 disjunct-intro lemmas Qed; edge-crossing soundness rides on #3c. |
-| **#5a Arc-line intersection** | **PREDICATE PROVEN; coords ABSENT** | `ArcIntersect.v:90,129` | Existence predicate + sufficient sign-filter proven; no coordinate-extraction theorem. |
+| **#5a Arc-line intersection** | **SCOPE A PROVEN; full coords QUEUED** | `ArcIntersect.v:90,129`; `ArcLineIntersect_b64_exact.v` — `b64_arc_line_sP_R` / `sQ_R` / `dx_R` / `dy_R` | R-side existence predicate Qed; Flocq Scope A: first-stage Cramer prefix (`sP`, `sQ`, `dx`, `dy`) bit-exact before division. Headline coord identity + forward-error bound deferred (Scope B/C). PR #146. |
 | **#5b Arc-arc intersection** | **PREDICATE PROVEN; coords ABSENT** | `ArcIntersect.v:104` | Existence predicate Qed; exact coordinates are a quartic (research-grade), absent. |
 | **#5c Arc overlay correctness** | **CONDITIONAL (Qed)** | `ArcOverlay.v` headline `arc_overlay_correct_chord_approx`; bridges `ArcOverlay.v:123,147-152` | Headline Qed under two "every chord point is close to an arc" bridge hypotheses (`H_A_bridge`/`H_B_bridge`), flagged "PRACTICALLY DEMANDING". |
 
@@ -74,6 +74,10 @@ far declined. Ask #2 (atan2-based sweep) inherits this blocker.
 
 **Flocq layer (`theories-flocq/`, +`Classical_Prop.classic`):**
 - `InCircle_b64_compute.v:33` — `b64_inCircle` (extractable determinant).
+- `InCircle_b64_exact.v` — sign + integer-regime value exactness for
+  `b64_inCircle`; Perron stage-10 witness at the `2¹¹` arc boundary.
+- `ArcLineIntersect_b64_exact.v` — arc-line Scope A (first-stage exactness
+  for `sP`/`sQ`/`dx`/`dy`).
 - `ArcCircle_b64_compute.v` — `b64_chord_crosses_arc_circle` (extractable
   sufficient filter; SUFFICIENT-only, soundness deferred).
 - `ArcPixel_b64_compute.v` — `b64_in_hot_pixel_halfopen`,
@@ -94,10 +98,9 @@ extraction validated bit-exact in `oracle/test_arc.ml`.
    predicate (not an Admitted). Blocked on the minor/major-arc disambiguation,
    which itself wants the Option-S `arc_span_contains` extended past π — circular
    with the atan2 gap.
-3. **One rounding-soundness gap (ask #4b):** `b64_inCircle` sign-exactness vs
-   `inCircle_R` (integer/bounded regime). This is the *same shape* as the
-   orientation `b64_orient2d_exact` work already done — a known, tractable
-   pattern, just unwritten.
+3. ~~**One rounding-soundness gap (ask #4b)**~~ **CLOSED (PR #146).**
+   `b64_inCircle` sign- and value-exactness vs `inCircle_R_BP` now Qed-closed
+   in `InCircle_b64_exact.v` (full-plane sign + `2¹¹` integer regime).
 4. **Coordinate extraction (ask #5):** predicates exist; explicit intersection
    coordinates do not. Arc-line is a quadratic (tractable); arc-arc is a quartic
    (research-grade). Option B does not need either.
@@ -161,3 +164,23 @@ from the Flocq-float files) and `docs/verified-claims.md` (Phase 4).
 **Next terminals (Option-A):** central angle / sweep on three control points
 (short-vs-long via the proven mid-point side test), then arc length `s = r·θ`
 with `θ` the central angle from `atan2`.
+
+## 9. Update (PR #146): `b64_inCircle` exactness + arc-line Scope A
+
+PR #146 (`claude/perron-incircle-b64-exact`) lands the first Flocq soundness
+layer for arc in-circle tests and the arc-line coordinate story's honest first
+slice:
+
+- **`InCircle_b64_exact.v`** — mirrors the orient2d two-track pattern:
+  full-double sign exactness (`b64_inCircle_exact_sound`, degree-4 homogeneous
+  factorization `inCircle_R_BP = (2^E)^4 · IZR(IntDet)`), integer-regime value
+  bit-exactness (`b64_inCircle_exact_for_small_int` at `|coord| ≤ 2¹¹`), and a
+  Perron stage-10 thin-sliver witness with opposite-sign chord endpoints.
+- **`ArcLineIntersect_b64_exact.v`** — Scope A only: R-side Cramer references,
+  total b64 projections, safety predicate `arc_line_intersect_inputs_int_safe`,
+  and first-stage exactness for `sP`/`sQ`/`dx`/`dy`. Does **not** claim
+  `B2R (b64_arc_line_intersect_point_x …) = arc_line_intersect_x_R …` on the
+  nose (intersection parameter is generally non-dyadic).
+
+Registered in `_CoqProject.full`, `docs/verified-claims.md`, and this triage.
+Closes issue #64 ask #4b; advances ask #5a to Scope A.

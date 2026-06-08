@@ -60,14 +60,18 @@ COMPOUNDCURVE / arc primitives.
 **Skip.** Phase 0/1/2 unless you care about the underlying primitives.
 
 **Take away.** Arc-overlay correctness lands conditionally
-(`arc_overlay_correct_chord_approx`); the b64 layer is verified up to
-three registered Admitteds with documented discharge plans.
+(`arc_overlay_correct_chord_approx`); the b64 in-circle layer now has
+Qed-closed sign + integer-regime value exactness (`InCircle_b64_exact.v`,
+PR #146). Arc-line coordinates are Scope A only (`ArcLineIntersect_b64_exact.v`
+— `sP`/`sQ`/`dx`/`dy` before division).
 
 **Trust chain.** The Phase 4 oracle modes (INCIRCLE_SIGN,
 ARC_CHORD_CROSSES_CIRCLE, ARC_PASSES_THROUGH_PIXEL) extract directly
-from the Coq layer — they are no longer hand-rolled OCaml. When a
-mode says TRUE/FALSE, the Coq theorem behind it is identifiable from
-the protocol docstring in `oracle/driver.ml`.
+from the Coq layer — they are no longer hand-rolled OCaml. INCIRCLE_SIGN
+is backed by `b64_inCircle_B2R_sign_sound_small_int` at `|coord| <= 2^11`
+(degree-4 chain; tighter than orient2d's `2^25`). When a mode says
+TRUE/FALSE, the Coq theorem behind it is identifiable from the protocol
+docstring in `oracle/driver.ml` and `docs/verified-claims.md`.
 
 ---
 
@@ -349,8 +353,9 @@ completion docs (`phase0-completion.md`, `phase1-completion.md`,
        preservation (Phase 2).
      - `OverlayNG` boolean ops → `overlay_ng_correct_conditional`
        (Phase 3, conditional).
-     - CIRCULARSTRING arc operations → Phase 4 `Arc*_b64.v`
-       (conditional).
+     - CIRCULARSTRING arc operations → Phase 4 `Arc*_b64.v` +
+       `InCircle_b64_exact.v` / `ArcLineIntersect_b64_exact.v`
+       (in-circle exact at `|coord| <= 2^11`; arc-line Scope A).
   2. Read the soundness theorem statement (not its proof) for the
      algorithm you're touching.
 

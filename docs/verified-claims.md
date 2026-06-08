@@ -11,9 +11,11 @@ binary64 layer). Each row: `file : theorem`, plain meaning, axiom footprint,
 regime. These are *soundness* statements, not a verified re-implementation.
 
 **Regimes.** `[exact]` exact reals · `[int-b64]` integer-coordinate binary64
-(`|coord| ≤ 2²⁵`) · `[full-b64]` *all* finite binary64 (exact, no magnitude
-limit) · `[cond]` holds under named hypotheses · `[oracle]` extracted,
-differential-testable against the C# port.
+(`|coord| ≤ 2²⁵`) · `[int-b64-arc]` integer-coordinate binary64 for the
+degree-4 `b64_inCircle` chain (`|coord| ≤ 2¹¹`, tighter than orient2d) ·
+`[full-b64]` *all* finite binary64 (exact, no magnitude limit) · `[cond]`
+holds under named hypotheses · `[oracle]` extracted, differential-testable
+against the C# port.
 
 **Axioms.** `theories/` uses 3 classical-reals axioms (`sig_not_dec`,
 `sig_forall_dec`, `functional_extensionality_dep`); `theories-flocq/` adds
@@ -164,6 +166,11 @@ vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 | `Atan2.v : cos_atan2` (+`sin_atan2`) | **Option-A foundation (issue #64):** the Stdlib-`Ratan`-built `atan2 y x` is the polar angle of `(x,y)` — `cos = x/r`, `sin = y/r` for `(x,y)≠0` `[exact]` | 4 |
 | `AngleBetween.v : cos_angle_between` (+`sin_angle_between`) | **Option-A central angle/sweep (issue #64):** the signed angle `atan2(cross,dot)` between two vectors has `cos = dot/(\|u\|\|v\|)`, `sin = cross/(\|u\|\|v\|)` (Lagrange identity); sign encodes orientation. Range (-π,π] via `atan2_range` `[exact]` | 4 |
 | `ArcLength.v : chord_le_arc_length` (+`chord_subtended_sq`) | **Option-A exact arc length (issue #64):** `arc_length = r·θ`; the chord never exceeds the arc (`2r·sin(θ/2) ≤ rθ`), and `chord² = 2r²(1−cosθ)` (half-angle bridge to dot products) `[exact]` | 4 |
+| `InCircle_b64_exact.v : b64_inCircle_exact_sound` | **Full-plane sign exactness (issue #64 ask #4b):** the common-exponent integer-determinant predicate's sign agrees with `inCircle_R_BP` for all finite binary64 inputs `[full-b64]` | 4 |
+| `InCircle_b64_exact.v : b64_inCircle_exact_for_small_int` | **Integer-regime value exactness:** `B2R (b64_inCircle …) = inCircle_R_BP` on the nose when every coordinate is integer-valued with `\|n\| ≤ 2¹¹` `[int-b64-arc]` | 4 |
+| `InCircle_b64_exact.v : b64_inCircle_B2R_sign_sound_small_int` | Sign of the rounded `b64_inCircle` value agrees with `inCircle_R_BP` in the same `2¹¹` integer regime `[int-b64-arc]` | 4 |
+| `InCircle_b64_exact.v : perron_inCircle_sign_sound` | Perron stage-10 thin-sliver witness at the `2¹¹` boundary: opposite-sign chord endpoints with bit-exact `b64_inCircle` values `[int-b64-arc]` | 4 |
+| `ArcLineIntersect_b64_exact.v : b64_arc_line_{sP_R,sQ_R,dx_R,dy_R}` | **Arc-line Scope A (issue #64 ask #5a):** first-stage Cramer prefix before division — outer `sP`/`sQ` inCircle evaluations and chord `dx`/`dy` differences are bit-exact integer-valued binary64 `[int-b64-arc]` | 4 |
 
 `[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL` +
 the three issue-#64 arc-length modes below.
@@ -196,6 +203,12 @@ inherit it.
 **Caveat:** bridge hypotheses are *boundary* closeness — this backs "chord
 approximation correct to tolerance", **not** "fixes CIRCULARSTRING
 self-intersection".
+**Arc-line honest scoping (PR #146):** Scope A proves only the prefix before
+the dividing step (`sP`, `sQ`, `dx`, `dy`). The headline
+`B2R (b64_arc_line_intersect_point_x …) = arc_line_intersect_x_R …` does
+*not* hold on the nose in the integer regime (intersection parameter is
+generally non-dyadic); round-chain identity (Scope B) and forward-error bound
+(Scope C) remain queued.
 
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 
