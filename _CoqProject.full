@@ -4,6 +4,11 @@ theories/Real.v
 theories/Lattice.v
 theories/Distance.v
 theories/Orientation.v
+# Integer-coordinate determinant range bound (Romanschek et al. 2021, §3.2):
+# grounds the robust DE-9IM / relate approach (#67).  Proves the 32-bit
+# coordinate regime fits a 64-bit determinant on the nose, and pins down the
+# paper's tight cmax = floor(sqrt(2^63-1)) with range witnesses.
+theories/RelateIntDetBound.v
 theories/Segment.v
 theories/Intersect.v
 theories/Vec.v
