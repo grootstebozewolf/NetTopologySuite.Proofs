@@ -835,6 +835,11 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # component, as residue_ge_half_ulp guarantees).  Pure list reasoning; no
 # cascade state, no deferred-headline dependence.
 theories-flocq/B64_nonoverlap_head.v
+# Shewchuk Theorem 13 headline COUNTEREXAMPLE: nonoverlap_shewchuk [256;1] is
+# false (strict_succ_b64 too strong), while 256+1=257 is the exact sum of valid
+# nonoverlap inputs e=[2^60;1], f=[-(2^60-256)] -- so fast_expansion_sum's
+# strong-nonoverlap postcondition is false as stated.  No deferred-headline dep.
+theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 # Slice A piece 3: Shewchuk's fast-expansion-sum at binary64.
 # Definition only (the algorithm: insertion sort by magnitude
 # ascending + TwoSum cascade, reusing b64_grow_expansion_aux from

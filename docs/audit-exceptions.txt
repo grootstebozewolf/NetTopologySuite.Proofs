@@ -68,6 +68,15 @@ theories-flocq/B64_residue_granularity.v
 # reaches the binary64 primitives.
 theories-flocq/B64_nonoverlap_head.v
 
+# Category C: Shewchuk Theorem 13 headline counterexample.
+# nonoverlap_shewchuk_256_1_false / e_nonoverlap / f_nonoverlap / inputs_sum_eq
+# are stated over `nonoverlap_shewchuk` / `strict_succ_b64` / `ulp` / `Binary.B2R`;
+# the binary64 instantiation pulls `Classical_Prop.classic` through Flocq's
+# real/ulp machinery -- same lineage as B64_nonoverlap_head.v above.  No
+# Admitteds; all Qed-closed; no dependence on the deferred headline (it REFUTES
+# the headline's strong-nonoverlap postcondition).
+theories-flocq/B64_Shewchuk_Thm13_counterexample.v
+
 # Category C: C1 division-rounding core (division-by-power-of-two is exact).
 # `b64_div_pow2_exact` and its helpers state results about `b64_div` (Flocq's
 # `Bdiv`), `Binary.B2R` and `Binary.is_finite`, whose definition closure
