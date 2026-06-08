@@ -148,6 +148,23 @@ theories-flocq/Orient_b64_int_safe_coords.v
 # parametric refactor reaches the binary64 primitives.
 theories-flocq/KakeyaOrient2d_b64.v
 
+# Category C: Issue #64 ask #4b — b64_inCircle sign + integer-regime exactness.
+# b64_inCircle_exact_sound / b64_inCircle_exact_for_small_int and the Perron
+# witness chain are stated over `b64_inCircle` / `b64_minus` / `b64_mult` /
+# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
+# b64-arithmetic lineage that exempts Orient_b64_exact.v and
+# KakeyaOrient2d_b64.v above.  No Admitteds; all theorems Qed-closed.
+# Removable once the parametric refactor reaches the binary64 primitives.
+theories-flocq/InCircle_b64_exact.v
+
+# Category C: Issue #64 ask #5a Scope A — arc-line first-stage exactness.
+# b64_arc_line_sP_R / sQ_R / dx_R / dy_R compose `b64_inCircle` and
+# `b64_minus` over `Binary.B2R`, inheriting `Classical_Prop.classic` from
+# the same b64-arithmetic lineage as InCircle_b64_exact.v above.  No
+# Admitteds; Scope A only (prefix before division).  Removable once the
+# parametric refactor reaches the binary64 primitives.
+theories-flocq/ArcLineIntersect_b64_exact.v
+
 # Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
 # result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
 # `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
