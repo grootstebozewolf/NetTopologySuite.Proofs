@@ -44,3 +44,5 @@ theories/BufferAssembly.v
 theories/BufferBridgeSound.v
 theories/BufferBridgeComplete.v
 theories/BufferBridgeRound.v
+# Issue #67 S1: DE-9IM matrix algebra (Stdlib only; host-lane smoke).
+theories/DE9IM.v

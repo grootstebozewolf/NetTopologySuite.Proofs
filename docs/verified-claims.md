@@ -197,6 +197,17 @@ inherit it.
 approximation correct to tolerance", **not** "fixes CIRCULARSTRING
 self-intersection".
 
+## Issue #67 — DE-9IM matrix algebra (`DE9IM.v`, session 1)
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `DE9IM.v : im_disjoint_not_intersects_partial` | **Partial headline:** JTS `disjoint` forces `intersects₀/₁/₄` false (not full `intersects` — `intersects₃` can still match; see gap witnesses) `[exact]` | 0 |
+| `DE9IM.v : im_contains_transpose_within` (+`predicate_contains_transpose_within`) | `contains` on `m` ⇔ `within` on `matrix_transpose m` (JTS converse) `[exact]` | 0 |
+| `DE9IM.v : im_covers_transpose_coveredBy` (+`predicate_covers_transpose_coveredBy`) | `covers` on `m` ⇔ `coveredBy` on transpose (`pattern_transpose` on all four JTS covers patterns) `[exact]` | 0 |
+| `DE9IM.v : disjoint_intersects3_example_holds` | **Honest gap:** a matrix can be both `disjoint` and `intersects₃` (abstract IM algebra ≠ complete geometry IM) `[exact]` | 0 |
+
+No geometry carrier yet; RelateNG algorithm and prepared-cache slices are follow-up (#67 S2+).
+
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 
 | `file : theorem` | Meaning | Ax |

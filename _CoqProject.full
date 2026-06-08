@@ -100,6 +100,12 @@ theories/BufferJoin.v
 # bridge chord^2 = 2 r^2 (1 - cos theta)).  Pulls classic via Stdlib sin_lt_x
 # (see audit-exceptions).  No Admitted.
 theories/ArcLength.v
+# Issue #67 session 1 (S1): DE-9IM intersection-matrix algebra — foundation
+# only (no geometry carrier, no RelateNG).  DimValue / IMPattern /
+# IntersectionMatrix, JTS-aligned named predicates, pattern_transpose +
+# matrix_matches_transpose, partial disjoint-vs-intersects lemmas with
+# honest gap witnesses.  Stdlib List + Lia only; zero axioms.  No Admitted.
+theories/DE9IM.v
 # Phase 3 milestone 1: foundational definitions for the overlay correctness
 # theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
 # point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +
