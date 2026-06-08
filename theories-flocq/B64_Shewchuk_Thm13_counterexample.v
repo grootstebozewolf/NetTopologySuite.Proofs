@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    Shewchuk Theorem 13 headline — counterexample to the corpus statement.
 
-   The deferred headline `fast_expansion_sum_nonoverlap_shewchuk`
+   The headline `fast_expansion_sum_nonoverlap_shewchuk` (Tier-2 counterexample)
    (B64_FastExpansionSum_Shewchuk.v:483) claims that, for `nonoverlap_shewchuk`
    inputs `e`, `f`, the output `fast_expansion_sum e f` is again
    `nonoverlap_shewchuk`.  But the corpus's `nonoverlap_shewchuk` is built on

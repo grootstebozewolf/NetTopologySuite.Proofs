@@ -5,9 +5,11 @@
 
    ATTEMPT CONTEXT (docs/shewchuk-theorem-13-proof-structure.md,
    theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v).  The general headline
-   `fast_expansion_sum_nonoverlap_shewchuk` is Admitted/deferred.  The Route-2
-   framework reduces it to a per-step invariant `cascade_pathA_chain`, but that
-   reduction was *verified false* (`cascade_handover_fails_mixed_sign`, Qed):
+   `fast_expansion_sum_nonoverlap_shewchuk` is a Tier-2 counterexample (false
+   as stated; B64_Shewchuk_Thm13_counterexample.v).  Conditional closure via
+   pathAB chain is Qed in B64_Shewchuk_Thm13_pathAB.v.  The Route-2
+   framework reduces the headline to a per-step invariant `cascade_pathA_chain`,
+   but that reduction was *verified false* (`cascade_handover_fails_mixed_sign`, Qed):
    when the two magnitude-smallest cascade inputs are cross-source,
    opposite-sign, similar-magnitude, every disjunct of
    `cascade_invariant_handover` (pathA only) fails.
@@ -197,7 +199,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* O7 beachhead — pathA half-ulp band vs Sterbenz window (no pathC gap).      *)
+(* O7-bootstrap beachhead — pathA half-ulp band vs Sterbenz window (no pathC). *)
 (*                                                                            *)
 (* pathA handover disjuncts 4/5 encode half-ulp separation of carry vs next.  *)
 (* When that fails for an opposite-sign sorted pair, Sterbenz (or exact-sum    *)
@@ -249,6 +251,8 @@ Lemma not_half_ulp_separated_implies_sterbenz :
     not_half_ulp_separated_carry_next qR xR ->
     sterbenz_range_pos_neg qR xR.
 Proof.
+  (* Magnitude bounds alone yield the Sterbenz window; Hnsep is retained for
+     pathC_carry_next_gap_false callers but is not used in this direction. *)
   intros q x qR xR Hq_pos Hx_neg [Hle Hge] _.
   unfold sterbenz_range_pos_neg.
   split; [exact Hq_pos | split; [exact Hx_neg |]].

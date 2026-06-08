@@ -85,9 +85,11 @@ theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 theories-flocq/B64_pathB_trace_4A.v
 
 # Category C: Shewchuk Theorem 13 pathA∨pathB cascade scaffolding.
-# B64_Shewchuk_Thm13_pathAB.v: O1–O6 + bootstrap Qed; two registered Admitteds
-# (headline via conditional + O7 completeness) are Tier-2 counterexamples per
-# PR #142; conditional O8 machinery remains sound.
+# B64_Shewchuk_Thm13_pathAB.v: O1–O6 + bootstrap Qed; one registered Admitted
+# (O7-completeness cascade_pathAB_chain_from_nonoverlap) is a Tier-2
+# counterexample per PR #142; conditional O8 machinery remains sound.  The
+# headline Admitted lives in B64_FastExpansionSum_Shewchuk.v (separate registry
+# entry).
 theories-flocq/B64_Shewchuk_Thm13_pathAB.v
 
 # Category C: C1 division-rounding core (division-by-power-of-two is exact).

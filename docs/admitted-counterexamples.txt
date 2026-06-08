@@ -121,11 +121,15 @@ theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-lemma-4
 # Achievable: weaken `strict_succ_b64`/`nonoverlap_strict` to Shewchuk's true
 # bit-disjoint predicate and re-aim O1-O8 (the #135-#137 pathB bricks carry
 # over; the half-ulp dominance arguments must be re-derived).
-theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-thm13-headline-counterexample.md | §root-cause,§witness,§consequence
+theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-thm13-headline-counterexample.md | §Root cause,§Witness,§Consequence
 
 # `cascade_pathAB_chain_from_nonoverlap` -- indischargable from nonoverlap inputs.
 # Discharging this would supply the hypothesis of the Qed conditional O8 theorem,
-# closing the false headline.  Same counterexample lineage: pathB_output_head_bound
-# (O1) is not derivable from the invariant when committed low parts and cancellation
-# residues are bit-disjoint but not half-ulp-close ([256;1] witness).
-theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_pathAB_chain_from_nonoverlap | docs/shewchuk-thm13-headline-counterexample.md | §consequence,§recommendation
+# closing the false headline.  Indirect refutation spine Qed:
+#   cascade_pathAB_chain_from_nonoverlap_entails_headline (pathAB.v) shows
+#   O7-completeness + O8 would close the false headline; composed with the
+#   [256;1] witness output (hand-traced).  Same counterexample lineage:
+#   pathB_output_head_bound (O1) is not derivable from the invariant when
+#   committed low parts and cancellation residues are bit-disjoint but not
+#   half-ulp-close.
+theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_pathAB_chain_from_nonoverlap | docs/shewchuk-thm13-headline-counterexample.md | §Consequence,§Recommendation

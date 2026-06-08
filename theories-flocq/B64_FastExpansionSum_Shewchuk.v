@@ -28,12 +28,13 @@
    smallest-to-largest.  Each step's accumulator is bounded relative
    to the next input, which is what Shewchuk Theorem 13 relies on.
 
-   PIECE 3 SCOPE (this file)
-   --------------------------
-   Definition only -- no nonoverlap proof here (that's piece 5).  But
-   the SUM-PRESERVATION through the sort step is included as small
-   structural helpers, since piece 4 (sum-correctness of the full
-   algorithm) will compose them with the cascade's sum invariant.
+   PIECE 3–5 SCOPE (this file)
+   ---------------------------
+   Algorithm definition (piece 3), sum-correctness (piece 4), and the
+   general nonoverlap headline (piece 5).  The headline is a Tier-2
+   counterexample (false as stated — half-ulp `strict_succ_b64` too strong;
+   witness in B64_Shewchuk_Thm13_counterexample.v).  Conditional closure
+   via pathAB chain is Qed in B64_Shewchuk_Thm13_pathAB.v.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)

@@ -1,11 +1,11 @@
 # Shewchuk Theorem 13 headline — counterexample to the corpus statement
 
-**Finding.** The deferred headline `fast_expansion_sum_nonoverlap_shewchuk`
-(`theories-flocq/B64_FastExpansionSum_Shewchuk.v:483`, Tier-3 deferred) is
-**false as stated**. It should be reclassified Tier-2 (counterexample), alongside
-its already-refuted building block `b64_grow_expansion_nonoverlap`.
+**Finding.** The headline `fast_expansion_sum_nonoverlap_shewchuk`
+(`theories-flocq/B64_FastExpansionSum_Shewchuk.v:483`) is **false as stated**
+and is registered **Tier-2 (counterexample)** alongside its already-refuted
+building block `b64_grow_expansion_nonoverlap`.
 
-## Why
+## Root cause
 
 The corpus's output predicate is built on
 
@@ -22,7 +22,7 @@ TwoSum/Dekker produce"), but it is **strictly stronger** than Shewchuk's
 A multi-term `fast_expansion_sum` emits bit-disjoint components that are *not*
 within a half-ulp.
 
-## The witness (machine-checked: `B64_Shewchuk_Thm13_counterexample.v`)
+## Witness (machine-checked: `B64_Shewchuk_Thm13_counterexample.v`)
 
 Value `257 = 256 + 1`:
 
@@ -36,7 +36,7 @@ Value `257 = 256 + 1`:
 So a sum of two *valid* inputs has the bit-disjoint 2-component representation
 `[256; 1]`, which the strong predicate rejects.
 
-## The structural link (hand-traced; not reduced in Coq)
+## Structural link (hand-traced; not reduced in Coq)
 
 `fast_expansion_sum e f` processes the magnitude-sorted merge
 `[1, -(2^60−256), 2^60]`:
@@ -55,7 +55,7 @@ bit-disjoint components.) This last step is not reduced in Coq because
 mechanics are exercised on concrete `binary64` in `B64_pathB_trace_4A.v`
 (e.g. `traceC_carry_after_B2R` computes the residue `256`).
 
-## Consequence for the pathA ∨ pathB program
+## Consequence
 
 `pathB_output_head_bound` (the dominance precondition O1 needs) is the same fact
 in disguise: it asks the prior output head `h` to satisfy `|h| ≤ ½ulp(carry')`
@@ -67,8 +67,9 @@ cannot close the headline as stated.
 
 ## Recommendation
 
-Either (a) **reclassify** the headline Tier-2 with this counterexample on file
-(the honest state — the theorem as written is false); or (b) **weaken**
+The headline is **reclassified Tier-2** with this counterexample on file
+(the honest state — the theorem as written is false).  To recover a true
+statement, **weaken**
 `strict_succ_b64`/`nonoverlap_strict` to Shewchuk's actual bit-disjoint
 nonoverlapping predicate and re-aim O1–O8 at the *true* headline. Option (b) is
 the larger, correct fix; the pathB bricks (#135–#137) carry over, but the

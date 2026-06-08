@@ -4,7 +4,8 @@
    Shewchuk Theorem 13, pathA ∨ pathB cascade scaffolding (P2).
 
    DEFS: widened handover, pathB trigger, pathAB chain (plan §2).
-   O1–O6 + bootstrap Qed; O8 conditional Qed; O7/headline indischargable (PR #142).
+   O1–O6 + O7-bootstrap Qed; O8 conditional Qed; O7-completeness + headline
+   indischargable (Tier-2 counterexamples, PR #142).
 
    See docs/history/sessions/shewchuk-thm13-4A-verify-outcome.md (§4.A decision)
    and origin/claude/shewchuk-thm13-obligations (O2–O7 prompts).
@@ -510,8 +511,8 @@ Print Assumptions cascade_run_preserves_invariant_under_pathAB.
 Print Assumptions cascade_run_output_nonoverlap_AB.
 
 (* -------------------------------------------------------------------------- *)
-(* O7 — bootstrap: initial handover_AB + first-step pathB for mixed-sign pair. *)
-(* O8 — conditional headline (mirror Route2 L2196 with pathAB chain).         *)
+(* O7-bootstrap: initial handover_AB + first-step pathB for mixed-sign pair. *)
+(* O8-conditional: headline via pathAB chain (mirror Route2 L2196).           *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma cascade_invariant_AB_empty :
@@ -598,7 +599,7 @@ Proof.
   split; [exact I | exact I].
 Qed.
 
-(* O7 completeness — indischargable (Tier-2 counterexample, PR #142).
+(* O7-completeness — indischargable (Tier-2 counterexample, PR #142).
    Discharging this would close the false headline via conditional O8 below.
    See docs/shewchuk-thm13-headline-counterexample.md. *)
 Lemma cascade_pathAB_chain_from_nonoverlap :
@@ -642,6 +643,45 @@ Proof.
     + exact Hchain.
 Qed.
 
+(* Discharging O7-completeness would unconditionally prove the false headline
+   for every safe nonoverlap input pair (via the Qed O8 conditional above). *)
+Lemma cascade_pathAB_chain_from_nonoverlap_entails_headline :
+  (forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    match tagged_input e f with
+    | nil => True
+    | (x, prov) :: rest =>
+        cascade_invariant_handover_AB (initial_cascade_state x prov) rest /\
+        cascade_pathAB_chain (initial_cascade_state x prov) rest
+    end) ->
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+Proof.
+  intros Hcompleteness e f Hsafe He Hf.
+  destruct (tagged_input e f) as [|p rest] eqn:Htagged.
+  - unfold fast_expansion_sum, nonoverlap_shewchuk.
+    pose proof (untag_tagged_input e f) as Huntag.
+    rewrite Htagged in Huntag. cbn [untag map] in Huntag.
+    rewrite <- Huntag.
+    cbn [compress nonoverlap_strict]. exact I.
+  - destruct p as [x prov].
+    apply (fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional e f Hsafe).
+    exact (Hcompleteness e f Hsafe He Hf).
+Qed.
+
+(* Indirect refutation spine (Qed): O7-completeness + O8 would unconditionally
+   prove the false headline.  Composed with the PR #142 witness output [256;1]
+   (hand-traced in docs/shewchuk-thm13-headline-counterexample.md; cascade
+   residue vm_compute'd in B64_pathB_trace_4A.v traceC) this yields
+   cascade_pathAB_chain_from_nonoverlap -> False; the final output-list link
+   awaits reducing sort_by_abs on e_in/f_in (Rcompare blocks vm_compute). *)
+
 Print Assumptions cascade_invariant_AB_empty.
 Print Assumptions cascade_pathAB_chain_two_singletons_mixed_sign.
+Print Assumptions cascade_pathAB_chain_from_nonoverlap_entails_headline.
 Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional.
