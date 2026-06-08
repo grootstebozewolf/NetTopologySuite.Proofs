@@ -43,7 +43,7 @@ is genuine multi-session Rocq work; there is no extraction-only shortcut.
 | Mode(s) | Hand-rolled kernels in `driver.ml` | Coq side today |
 |---|---|---|
 | ~~`PASSES_THROUGH_FILTER`, `PASSES_THROUGH_HALFOPEN`~~ **MIGRATED** | — (extracted `b64_passes_through_hot_pixel_compute` / `_halfopen_compute`) | computational `PassesThrough_b64_compute.v`; R-spec carries exact soundness |
-| ~~`INCIRCLE_SIGN`~~ **MIGRATED** | — (extracted `b64_inCircle`, also feeds the ARC_* sign-products) | computational `InCircle_b64_compute.v`; integer-regime exactness deferred |
+| ~~`INCIRCLE_SIGN`~~ **MIGRATED** | — (extracted `b64_inCircle`, also feeds the ARC_* sign-products) | computational `InCircle_b64_compute.v`; soundness `InCircle_b64_exact.v` (PR #146) |
 | ~~`ARC_CHORD_CROSSES_CIRCLE`~~ **MIGRATED** | — (extracted `b64_chord_crosses_arc_circle`) | computational `ArcCircle_b64_compute.v` (sign-product over `b64_inCircle`) |
 | ~~`ARC_PASSES_THROUGH_PIXEL`~~ **MIGRATED** | — (extracted `b64_arc_passes_through_hot_pixel`) | computational `ArcPixel_b64_compute.v` |
 
@@ -99,11 +99,13 @@ no-overflow guard; reuse the existing degenerate-axis split (`lb_inslab` /
 extracted and called by INCIRCLE_SIGN *and* both ARC_* sign-products, so the
 shared `incircle_r_native` kernel is deleted. Bit-exact with the old native
 code over 2,000,000 random + integer-regime cases (`oracle/test_ic.ml`); full
-corpus builds green. **Remaining (deferred):** integer-regime exactness of the
-b64 sign vs `inCircle_R` — clean here because the determinant has *no
-division*, so for `|coord| <= 2^12` every op is exact (`4k+2 <= 53`) and the
-binary64 sign equals `inCircle_R`'s sign (an exactness theorem in the
-`Orient_b64_exact._sound_small_int` style, not a forward-error bound).
+corpus builds green. **Soundness (PR #146):** `InCircle_b64_exact.v` proves
+full-plane sign exactness (`b64_inCircle_exact_sound`) and integer-regime
+value + sign exactness at `|coord| <= 2^11` (`b64_inCircle_exact_for_small_int`,
+`b64_inCircle_B2R_sign_sound_small_int`) — tighter than orient2d's `2^25`
+because the degree-4 determinant chain peaks at `2^52 < 2^53`. Perron
+stage-10 witness at the boundary. No division in the determinant, so this is
+exactness on the nose, not a forward-error bound.
 
 Original analysis follows.
 
@@ -125,9 +127,11 @@ This unblocks items 3 and 4.
 `b64_chord_crosses_arc_circle S M E P Q := b64_lt (b64_mult (b64_inCircle S M E P)
 (b64_inCircle S M E Q)) b64_zero`, extracted and called by the driver; the
 native `sp *. sq < 0` glue is gone. Bit-exact over 2,000,000 cases
-(`oracle/test_arc.ml`); full corpus green. **Remaining (deferred):** rides on
-the item-2 `b64_inCircle` sign bridge; the predicate stays a *sufficient*
-filter (TRUE ⇒ crossing, via the `ArcIntersectIVT` witness; FALSE inconclusive).
+(`oracle/test_arc.ml`); full corpus green. **Soundness bridge (PR #146):** the
+item-2 `b64_inCircle` sign exactness is now Qed-closed, so the sign-product
+predicate inherits integer-regime soundness for `sP`/`sQ`. The predicate stays
+a *sufficient* filter (TRUE ⇒ crossing, via the `ArcIntersectIVT` witness;
+FALSE inconclusive).
 
 Original analysis follows.
 

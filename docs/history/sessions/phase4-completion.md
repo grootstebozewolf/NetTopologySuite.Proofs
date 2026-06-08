@@ -66,6 +66,12 @@ bridge hypothesis — structurally Phase 3's overlay case split with
 **Oracle** — RocqRefRunner modes `INCIRCLE_SIGN` /
 `ARC_CHORD_CROSSES_CIRCLE` / `ARC_PASSES_THROUGH_PIXEL` extracted.
 
+**Flocq soundness (PR #146)** — `InCircle_b64_exact.v` closes the
+`b64_inCircle` sign bridge (full-plane sign exactness + integer-regime value
+exactness at `|coord| <= 2^11`, Perron witness). `ArcLineIntersect_b64_exact.v`
+ships arc-line Scope A (first-stage `sP`/`sQ`/`dx`/`dy` before division).
+See [`pr146-incircle-arc-line-scope-a-outcome.md`](pr146-incircle-arc-line-scope-a-outcome.md).
+
 ## Open
 
 No `Admitted` anywhere in Phase 4. The open work is named hypotheses and
@@ -98,12 +104,14 @@ is a separate, clearly-scoped program.
 
 ## Next
 
-1. Fix the stale `ArcHotPixel.v:28` comment (it still calls
+1. Arc-line Scope B/C — round-chain identity and forward-error bound for
+   `b64_arc_line_intersect_point_{x,y}` (queued after PR #146 Scope A).
+2. Fix the stale `ArcHotPixel.v:28` comment (it still calls
    `arc_chord_intersect_sound` "Admitted, IVT-blocked"; the IVT closure
    made that obsolete). ~2 lines.
-2. `Flatten()` dovetail — consumer-driven.
-3. Region-level semantics — Option A entry point.
-4. Arc snap-rounding — Phase 5, if a consumer asks for exact arcs (the
+3. `Flatten()` dovetail — consumer-driven.
+4. Region-level semantics — Option A entry point.
+5. Arc snap-rounding — Phase 5, if a consumer asks for exact arcs (the
    [`audit-phase4-curves.md`](audit-phase4-curves.md) §5 tripwire, ~2031).
 
 ## Audit
