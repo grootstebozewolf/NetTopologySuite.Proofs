@@ -4,7 +4,7 @@
    Shewchuk Theorem 13, pathA ∨ pathB cascade scaffolding (P2).
 
    DEFS: widened handover, pathB trigger, pathAB chain (plan §2).
-   O1–O6: O1/O2/O3/O5/O6 Qed; O4 deferred (needs O1∧O2 wired in pathB branch).
+   O1–O6: all Qed; O7 beachhead + bootstrap; O8 conditional headline.
 
    See docs/history/sessions/shewchuk-thm13-4A-verify-outcome.md (§4.A decision)
    and origin/claude/shewchuk-thm13-obligations (O2–O7 prompts).
@@ -16,7 +16,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals ZArith Lra Lia List.
-From Flocq Require Import IEEE754.Binary IEEE754.BinarySingleNaN Core.
+From Flocq Require Import IEEE754.Binary IEEE754.BinarySingleNaN Core Sterbenz.
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib
                                      B64_Expansion B64_Expansion_Shewchuk
                                      B64_Pff_bridge B64_FastExpansionSum
@@ -64,20 +64,10 @@ Definition cascade_invariant_handover_AB
         \/ b64_format (xR + qR) )
   end.
 
-(* PathA step hypotheses extracted from cascade_pathA_chain (Route2 L1519–1545). *)
-Definition cascade_step_pathA_conditions
+(* Within-source + normal-range conjuncts shared by pathA and pathB steps
+   (Route2 L1530–1545 / run_bound_step_preserves). *)
+Definition cascade_step_run_bound_inputs
   (state : cascade_state) (x : binary64) (prov : provenance) : Prop :=
-  Binary.B2R prec emax x <> 0 /\
-  Binary.B2R prec emax (cs_carry state) <> 0 /\
-  ((0 < Binary.B2R prec emax x /\
-    strict_succ_pathA_R (Binary.B2R prec emax x)
-                        (Binary.B2R prec emax (cs_carry state)))
-   \/
-   (Binary.B2R prec emax x < 0 /\
-    Rabs (Binary.B2R prec emax (cs_carry state)) <
-      ulp radix2 (SpecFloat.fexp prec emax)
-        (succ radix2 (SpecFloat.fexp prec emax)
-          (Binary.B2R prec emax x)) / 2)) /\
   (match prov with
    | from_e =>
        Rabs (Binary.B2R prec emax (cs_e_max state)) <=
@@ -95,6 +85,44 @@ Definition cascade_step_pathA_conditions
   bpow radix2 (b64_emin + prec - 1) <=
     Rabs (Binary.B2R prec emax (b64_plus x (cs_carry state))).
 
+(* PathA dominance disjunct (strict_succ / neg half-ulp), without run-bound. *)
+Definition cascade_step_pathA_dominance
+  (state : cascade_state) (x : binary64) : Prop :=
+  Binary.B2R prec emax x <> 0 /\
+  Binary.B2R prec emax (cs_carry state) <> 0 /\
+  ((0 < Binary.B2R prec emax x /\
+    strict_succ_pathA_R (Binary.B2R prec emax x)
+                        (Binary.B2R prec emax (cs_carry state)))
+   \/
+   (Binary.B2R prec emax x < 0 /\
+    Rabs (Binary.B2R prec emax (cs_carry state)) <
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (succ radix2 (SpecFloat.fexp prec emax)
+          (Binary.B2R prec emax x)) / 2)).
+
+(* PathA step hypotheses extracted from cascade_pathA_chain (Route2 L1519–1545). *)
+Definition cascade_step_pathA_conditions
+  (state : cascade_state) (x : binary64) (prov : provenance) : Prop :=
+  cascade_step_pathA_dominance state x /\
+  cascade_step_run_bound_inputs state x prov.
+
+(* Resolution-1-extended emission bound (plan §4.A). *)
+Definition pathB_output_head_bound
+  (state : cascade_state) (x : binary64) : Prop :=
+  forall (h : binary64) (ts : list binary64),
+    compress (rev (cs_output state)) = h :: ts ->
+    Rabs (Binary.B2R prec emax h) <=
+      ulp radix2 (SpecFloat.fexp prec emax)
+        (Binary.B2R prec emax (fst (b64_TwoSum x (cs_carry state)))) / 2.
+
+(* Extra pathB hypotheses for O1 (§4.A resolution-1-extended). *)
+Definition cascade_step_pathB_side_conditions
+  (state : cascade_state) (x : binary64) : Prop :=
+  pathB_output_head_bound state x /\
+  Binary.B2R prec emax (cs_carry state) <> 0 /\
+  Rabs (Binary.B2R prec emax (cs_carry state)) / 2
+    <= Rabs (Binary.B2R prec emax x).
+
 (* Full invariant with widened handover (clause (a) + AB-handover + run-bound). *)
 Definition cascade_invariant_AB
   (state : cascade_state)
@@ -110,8 +138,11 @@ Fixpoint cascade_pathAB_chain
   match xs with
   | nil => True
   | (x, prov) :: rest =>
-      ( cascade_step_pathA_conditions state x prov
+      cascade_step_run_bound_inputs state x prov /\
+      ( cascade_step_pathA_dominance state x
         \/ cascade_step_pathB state x ) /\
+      ( cascade_step_pathB state x ->
+          cascade_step_pathB_side_conditions state x ) /\
       cascade_invariant_handover_AB (cascade_step_state state x prov) rest /\
       cascade_pathAB_chain (cascade_step_state state x prov) rest
   end.
@@ -204,18 +235,6 @@ Proof.
       rewrite (Rcompare_Eq (Binary.B2R prec emax err) 0 Herr) in Hc.
       rewrite Hnil in Hc. discriminate.
 Qed.
-
-(* Resolution-1-extended emission bound: the surviving output head is dominated
-   by the NEW carry's half-ulp (plan §4.A / docs/history/sessions/
-   shewchuk-thm13-4A-verify-outcome.md).  Required for the unit-grid Trace C
-   subcase where |carry'| = bpow(e+1) on q's half-ulp grid. *)
-Definition pathB_output_head_bound
-  (state : cascade_state) (x : binary64) : Prop :=
-  forall (h : binary64) (ts : list binary64),
-    compress (rev (cs_output state)) = h :: ts ->
-    Rabs (Binary.B2R prec emax h) <=
-      ulp radix2 (SpecFloat.fexp prec emax)
-        (Binary.B2R prec emax (fst (b64_TwoSum x (cs_carry state)))) / 2.
 
 Lemma cascade_step_pathB_preserves_output :
   forall (state : cascade_state) (x : binary64) (prov : provenance),
@@ -373,23 +392,68 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* O4 — combined single-step preservation (deferred: needs O1 ∧ O2).          *)
-(* COPY tactic: destruct pathA ∨ pathB; pathA →                              *)
-(*   cascade_step_preserves_invariant_pathA (Route2 L1360);                    *)
-(* pathB → split cascade_invariant_AB; O1 (a), O2 (handover_AB), O3 (d).    *)
+(* O4 — combined single-step preservation.                                    *)
+(* pathA → cascade_step_clause_a_pathA; pathB → O1 (a) + O3 (d);            *)
+(* handover_AB on rest is supplied by the chain driver.                         *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma cascade_step_preserves_invariant_AB :
   forall (state : cascade_state) (processed : list binary64)
          (x : binary64) (prov : provenance) (rest : list tagged_b64),
     cascade_invariant_AB state processed ((x, prov) :: rest) ->
-    ( cascade_step_pathA_conditions state x prov
+    cascade_step_run_bound_inputs state x prov ->
+    ( cascade_step_pathA_dominance state x
       \/ cascade_step_pathB state x ) ->
+    ( cascade_step_pathB state x ->
+        cascade_step_pathB_side_conditions state x ) ->
     cascade_invariant_handover_AB (cascade_step_state state x prov) rest ->
     cascade_invariant_AB (cascade_step_state state x prov)
                         (processed ++ [x]) rest.
 Proof.
-Admitted.
+  intros state processed x prov rest Hinv Hrb Hstep HpathBside Hho_new.
+  unfold cascade_invariant_AB in Hinv.
+  destruct Hinv as [Hout [Hho_cur Hd]].
+  destruct Hho_cur as [Hsafe Hdisj_handover].
+  destruct Hrb as [Hwithin [Hxn Hpn]].
+  destruct Hstep as [Hdom | HpathB].
+  unfold cascade_invariant_AB.
+  - (* pathA step. *)
+    split.
+    + unfold cascade_invariant_output.
+      rewrite cs_carry_cascade_step_state, cs_output_cascade_step_state.
+      assert (Hinv' : cascade_invariant state processed ((x, prov) :: rest)).
+      { unfold cascade_invariant. split; [|split].
+        - exact Hout.
+        - unfold cascade_invariant_handover. cbn.
+          split; [exact Hsafe|].
+          destruct Hdom as [_ [_ Hcases]].
+          destruct Hcases as [[Hx Hpw] | [Hx Hpw]].
+          + right. right. right. left. split; assumption.
+          + right. right. right. right. split; assumption.
+        - exact Hd. }
+      destruct Hdom as [Hxnz [Hcq Hcases]].
+      exact (cascade_step_clause_a_pathA state processed x prov rest Hinv'
+               Hxnz Hcq Hcases).
+    + split.
+      * exact Hho_new.
+      * destruct Hdom as [_ [Hcq _]].
+        destruct Hsafe as [Hsafe_plus _].
+        exact (run_bound_step_preserves state x prov Hd Hsafe_plus Hxn Hpn Hwithin).
+  - (* pathB step. *)
+    destruct (HpathBside HpathB) as [Hhead [Hq0 Hster]].
+    split.
+    + unfold cascade_invariant_output.
+      rewrite cs_output_cascade_step_state.
+      exact (cascade_step_pathB_preserves_output state x prov Hout HpathB
+               Hhead Hq0 Hster).
+    + split.
+      * exact Hho_new.
+      * destruct HpathB as [Hts Hfmt].
+        destruct Hts as [Hsa _].
+        assert (HpB : cascade_step_pathB state x) by (split; assumption).
+        exact (cascade_step_pathB_preserves_run_bound state x prov Hd HpB Hsa
+                 Hxn Hpn Hwithin).
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* O5 — run lift under pathAB (COPY Route2 L1552; call O4 not pathA step).   *)
@@ -407,7 +471,7 @@ Proof.
   - cbn [cascade_run untag map]. rewrite app_nil_r. exact Hinv.
   - destruct tx as [x prov].
     cbn [cascade_pathAB_chain] in Hchain.
-    destruct Hchain as [Hstep [Hho_new Hchain']].
+    destruct Hchain as [Hrb [Hstep [HpathBside [Hho_new Hchain']]]].
     cbn [cascade_run].
     rewrite untag_cons_pair.
     change (processed ++ x :: untag xs) with (processed ++ [x] ++ untag xs).
@@ -438,7 +502,147 @@ Proof.
   exact Ha.
 Qed.
 
+Print Assumptions cascade_step_preserves_invariant_AB.
 Print Assumptions cascade_step_pathB_preserves_output.
 Print Assumptions cascade_step_pathB_preserves_handover.
 Print Assumptions cascade_step_pathB_preserves_run_bound.
+Print Assumptions cascade_run_preserves_invariant_under_pathAB.
 Print Assumptions cascade_run_output_nonoverlap_AB.
+
+(* -------------------------------------------------------------------------- *)
+(* O7 — bootstrap: initial handover_AB + first-step pathB for mixed-sign pair. *)
+(* O8 — conditional headline (mirror Route2 L2196 with pathAB chain).         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cascade_invariant_AB_empty :
+  forall (q : binary64) (p : provenance) (remaining : list tagged_b64),
+    cascade_invariant_handover_AB (initial_cascade_state q p) remaining ->
+    cascade_invariant_AB (initial_cascade_state q p) nil remaining.
+Proof.
+  intros q p remaining Hho.
+  unfold cascade_invariant_AB, initial_cascade_state.
+  destruct p; cbn [cs_carry cs_output cs_e_max cs_f_max rev];
+    (split; [|split]).
+  - unfold cascade_invariant_output. cbn.
+    unfold nonoverlap_shewchuk. cbn [compress].
+    destruct (Rcompare (Binary.B2R prec emax q) 0);
+      cbn [nonoverlap_strict]; exact I.
+  - exact Hho.
+  - unfold cascade_invariant_run_bound. cbn.
+    replace (Binary.B2R prec emax b64_zero) with 0 by exact B2R_b64_zero.
+    rewrite Rabs_R0. pose proof (Rabs_pos (Binary.B2R prec emax q)) as Hpos. lra.
+  - unfold cascade_invariant_output. cbn.
+    unfold nonoverlap_shewchuk. cbn [compress].
+    destruct (Rcompare (Binary.B2R prec emax q) 0);
+      cbn [nonoverlap_strict]; exact I.
+  - exact Hho.
+  - unfold cascade_invariant_run_bound. cbn.
+    replace (Binary.B2R prec emax b64_zero) with 0 by exact B2R_b64_zero.
+    rewrite Rabs_R0. pose proof (Rabs_pos (Binary.B2R prec emax q)) as Hpos. lra.
+Qed.
+
+(* The e=[1], f=[-1] bootstrap: first step is pathB (Sterbenz), not pathA. *)
+Lemma cascade_pathAB_chain_two_singletons_mixed_sign :
+  forall (x x2 : binary64) (prov p2 : provenance),
+    0 < Binary.B2R prec emax x ->
+    Binary.B2R prec emax x2 < 0 ->
+    Rabs (Binary.B2R prec emax x) <= Rabs (Binary.B2R prec emax x2)
+      <= 2 * Rabs (Binary.B2R prec emax x) ->
+    not_half_ulp_separated_carry_next
+      (Binary.B2R prec emax x) (Binary.B2R prec emax x2) ->
+    b64_TwoSum_safe x2 x ->
+    cascade_step_run_bound_inputs (initial_cascade_state x prov) x2 p2 ->
+    cascade_pathAB_chain (initial_cascade_state x prov) [(x2, p2)].
+Proof.
+  intros x x2 prov p2 Hx_pos Hx2_neg Hmag Hnsep Hsafe Hrb.
+  pose proof (not_half_ulp_separated_implies_sterbenz x x2
+                Hx_pos Hx2_neg Hmag Hnsep) as Hster.
+  destruct Hster as [_ [_ [Hlo Hhi]]].
+  pose proof (b64_format_sterbenz_pos_neg x x2 Hx_pos Hx2_neg (conj Hlo Hhi))
+    as Hfmt.
+  assert (HpathB : cascade_step_pathB (initial_cascade_state x prov) x2).
+  { destruct prov.
+    - cbn [initial_cascade_state cs_carry]. unfold cascade_step_pathB.
+      split; [exact Hsafe | rewrite Rplus_comm; exact Hfmt].
+    - cbn [initial_cascade_state cs_carry]. unfold cascade_step_pathB.
+      split; [exact Hsafe | rewrite Rplus_comm; exact Hfmt]. }
+  assert (Hside :
+    cascade_step_pathB_side_conditions (initial_cascade_state x prov) x2).
+  { destruct prov.
+    - cbn [initial_cascade_state cs_carry cs_output].
+      unfold cascade_step_pathB_side_conditions, pathB_output_head_bound.
+      repeat split.
+      + intros h ts Hc. cbn [rev compress] in Hc. discriminate Hc.
+      + cbn. intro Heq. apply Rlt_not_eq in Hx_pos. lra.
+      + destruct Hmag as [Hle _]. cbn.
+        assert (Hxabs : Rabs (Binary.B2R prec emax x) = Binary.B2R prec emax x)
+          by (apply Rabs_pos_eq; lra).
+        assert (Hx2abs : Rabs (Binary.B2R prec emax x2) = - Binary.B2R prec emax x2)
+          by (apply Rabs_left; lra).
+        rewrite Hxabs, Hx2abs. lra.
+    - cbn [initial_cascade_state cs_carry cs_output].
+      unfold cascade_step_pathB_side_conditions, pathB_output_head_bound.
+      repeat split.
+      + intros h ts Hc. cbn [rev compress] in Hc. discriminate Hc.
+      + cbn. intro Heq. apply Rlt_not_eq in Hx_pos. lra.
+      + destruct Hmag as [Hle _]. cbn.
+        assert (Hxabs : Rabs (Binary.B2R prec emax x) = Binary.B2R prec emax x)
+          by (apply Rabs_pos_eq; lra).
+        assert (Hx2abs : Rabs (Binary.B2R prec emax x2) = - Binary.B2R prec emax x2)
+          by (apply Rabs_left; lra).
+        rewrite Hxabs, Hx2abs. lra. }
+  unfold cascade_pathAB_chain.
+  split; [exact Hrb |].
+  split; [right; exact HpathB |].
+  split; [intros _; exact Hside |].
+  split; [exact I | exact I].
+Qed.
+
+(* General completeness: derive cascade_pathAB_chain from nonoverlap inputs.
+   Thesis-scale per-step case analysis; registered deferred until landed. *)
+Lemma cascade_pathAB_chain_from_nonoverlap :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    match tagged_input e f with
+    | nil => True
+    | (x, prov) :: rest =>
+        cascade_invariant_handover_AB (initial_cascade_state x prov) rest /\
+        cascade_pathAB_chain (initial_cascade_state x prov) rest
+    end.
+Proof.
+  (* O7 remainder: per-step provenance + magnitude bookkeeping (thesis-scale).
+     Bootstrap lemmas above + pathC_carry_next_gap_false_similar_magnitude
+     discharge the mixed-sign similar-magnitude first step; full induction
+     on tagged_input is the deferred-proof obstacle for the general headline. *)
+Admitted.
+
+Theorem fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional :
+  forall (e f : list binary64),
+    fast_expansion_sum_safe e f ->
+    (match tagged_input e f with
+     | nil => True
+     | (x, prov) :: rest =>
+         cascade_invariant_handover_AB (initial_cascade_state x prov) rest /\
+         cascade_pathAB_chain (initial_cascade_state x prov) rest
+     end) ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+Proof.
+  intros e f Hsafe Hcond.
+  destruct (tagged_input e f) as [|p rest] eqn:Htagged.
+  - unfold fast_expansion_sum.
+    pose proof (untag_tagged_input e f) as Huntag.
+    rewrite Htagged in Huntag. cbn [untag map] in Huntag.
+    rewrite <- Huntag.
+    unfold nonoverlap_shewchuk. cbn [compress nonoverlap_strict]. exact I.
+  - destruct p as [x prov]. destruct Hcond as [Hho Hchain].
+    rewrite (fast_expansion_sum_via_cascade_run e f x prov rest Htagged).
+    apply cascade_run_output_nonoverlap_AB.
+    + apply cascade_invariant_AB_empty. exact Hho.
+    + exact Hchain.
+Qed.
+
+Print Assumptions cascade_invariant_AB_empty.
+Print Assumptions cascade_pathAB_chain_two_singletons_mixed_sign.
+Print Assumptions fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional.

@@ -154,9 +154,159 @@ Proof.
   apply (b64_TwoSum_exact_of_format_sum x y Hsafe Hfmt).
 Qed.
 
+(* Mirror of b64_TwoSum_sterbenz_exact for x < 0 < q (carry/next orientation). *)
+Lemma b64_format_sterbenz_pos_neg :
+  forall x y : binary64,
+    0 < Binary.B2R prec emax x ->
+    Binary.B2R prec emax y < 0 ->
+    (- Binary.B2R prec emax y) / 2 <= Binary.B2R prec emax x
+      <= 2 * (- Binary.B2R prec emax y) ->
+    b64_format (Binary.B2R prec emax x + Binary.B2R prec emax y).
+Proof.
+  intros x y Hpos Hneg Hrange.
+  replace (Binary.B2R prec emax x + Binary.B2R prec emax y)
+    with (Binary.B2R prec emax x - (- Binary.B2R prec emax y)) by ring.
+  apply (@sterbenz radix2 b64_fexp b64_fexp_valid b64_fexp_monotone).
+  - apply Binary.generic_format_B2R.
+  - apply generic_format_opp. apply Binary.generic_format_B2R.
+  - exact Hrange.
+Qed.
+
+Lemma b64_TwoSum_sterbenz_exact_neg :
+  forall x y : binary64,
+    b64_TwoSum_safe x y ->
+    0 < Binary.B2R prec emax y ->
+    Binary.B2R prec emax x < 0 ->
+    (- Binary.B2R prec emax x) / 2 <= Binary.B2R prec emax y
+      <= 2 * (- Binary.B2R prec emax x) ->
+    let '(a, b) := b64_TwoSum x y in
+    Binary.B2R prec emax a
+      = Binary.B2R prec emax x + Binary.B2R prec emax y
+    /\ Binary.B2R prec emax b = 0.
+Proof.
+  intros x y Hsafe Hpos Hneg Hrange.
+  assert (Hfmt : b64_format
+                   (Binary.B2R prec emax x + Binary.B2R prec emax y)).
+  { replace (Binary.B2R prec emax x + Binary.B2R prec emax y)
+      with (Binary.B2R prec emax y - (- Binary.B2R prec emax x)) by ring.
+    apply (@sterbenz radix2 b64_fexp b64_fexp_valid b64_fexp_monotone).
+    - apply Binary.generic_format_B2R.
+    - apply generic_format_opp. apply Binary.generic_format_B2R.
+    - exact Hrange. }
+  apply (b64_TwoSum_exact_of_format_sum x y Hsafe Hfmt).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* O7 beachhead — pathA half-ulp band vs Sterbenz window (no pathC gap).      *)
+(*                                                                            *)
+(* pathA handover disjuncts 4/5 encode half-ulp separation of carry vs next.  *)
+(* When that fails for an opposite-sign sorted pair, Sterbenz (or exact-sum    *)
+(* representability, i.e. pathB) covers the step — there is no third pathC.   *)
+(* -------------------------------------------------------------------------- *)
+
+(* Carry q, next input x — pathA half-ulp band (Route2 L349–357 disjuncts 4/5). *)
+Definition half_ulp_separated_carry_next (qR xR : R) : Prop :=
+  (0 < xR /\ Rabs qR <
+     ulp radix2 (SpecFloat.fexp prec emax)
+       (pred radix2 (SpecFloat.fexp prec emax) xR) / 2)
+  \/ (xR < 0 /\ Rabs qR <
+        ulp radix2 (SpecFloat.fexp prec emax)
+          (succ radix2 (SpecFloat.fexp prec emax) xR) / 2).
+
+Definition not_half_ulp_separated_carry_next (qR xR : R) : Prop :=
+  ~ half_ulp_separated_carry_next qR xR.
+
+(* Sterbenz window for opposite-sign (q>0, x<0) and (q<0, x>0). *)
+Definition sterbenz_range_pos_neg (qR xR : R) : Prop :=
+  0 < qR /\ xR < 0 /\
+  (- xR) / 2 <= qR <= 2 * (- xR).
+
+Definition sterbenz_range_neg_pos (qR xR : R) : Prop :=
+  qR < 0 /\ 0 < xR /\
+  (- qR) / 2 <= xR <= 2 * (- qR).
+
+Definition sterbenz_range_opposite (qR xR : R) : Prop :=
+  sterbenz_range_pos_neg qR xR \/ sterbenz_range_neg_pos qR xR.
+
+(* pathC would be: opposite sign, not pathA-separated, not Sterbenz — ruled out
+   for magnitude-sorted b64 pairs: pathB (exact sum) always fires instead. *)
+Definition pathC_carry_next_gap (q x : binary64) : Prop :=
+  let qR := Binary.B2R prec emax q in
+  let xR := Binary.B2R prec emax x in
+  qR * xR < 0 /\
+  not_half_ulp_separated_carry_next qR xR /\
+  ~ sterbenz_range_opposite qR xR /\
+  ~ b64_format (qR + xR).
+
+(* Similar-magnitude opposite-sign case (the cross-source defect regime): sorted
+   ascending with |q| <= |x| <= 2|q| is exactly the Sterbenz window. *)
+Lemma not_half_ulp_separated_implies_sterbenz :
+  forall (q x : binary64),
+    let qR := Binary.B2R prec emax q in
+    let xR := Binary.B2R prec emax x in
+    0 < qR -> xR < 0 ->
+    Rabs qR <= Rabs xR <= 2 * Rabs qR ->
+    not_half_ulp_separated_carry_next qR xR ->
+    sterbenz_range_pos_neg qR xR.
+Proof.
+  intros q x qR xR Hq_pos Hx_neg [Hle Hge] _.
+  unfold sterbenz_range_pos_neg.
+  split; [exact Hq_pos | split; [exact Hx_neg |]].
+  assert (Hqx : Rabs xR = - xR) by (apply Rabs_left; lra).
+  assert (Hqq : Rabs qR = qR) by (apply Rabs_pos_eq; lra).
+  rewrite Hqq, Hqx in Hle, Hge.
+  lra.
+Qed.
+
+Lemma not_half_ulp_separated_implies_sterbenz_neg_carry :
+  forall (q x : binary64),
+    let qR := Binary.B2R prec emax q in
+    let xR := Binary.B2R prec emax x in
+    qR < 0 -> 0 < xR ->
+    Rabs qR <= Rabs xR <= 2 * Rabs qR ->
+    not_half_ulp_separated_carry_next qR xR ->
+    sterbenz_range_neg_pos qR xR.
+Proof.
+  intros q x qR xR Hq_neg Hx_pos [Hle Hge] _.
+  unfold sterbenz_range_neg_pos.
+  split; [exact Hq_neg | split; [exact Hx_pos |]].
+  assert (Hqx : Rabs xR = xR) by (apply Rabs_pos_eq; lra).
+  assert (Hqq : Rabs qR = - qR).
+  { replace (- qR) with (Rabs (- qR)) by (apply Rabs_pos_eq; lra).
+    rewrite <- (Rabs_Ropp qR). reflexivity. }
+  rewrite Hqq, Hqx in Hle, Hge.
+  lra.
+Qed.
+
+(* pathC would require ~Sterbenz /\ ~format; for similar-magnitude opposite-sign
+   pairs, Sterbenz always fires (ruling out pathC in the bootstrap regime). *)
+Lemma pathC_carry_next_gap_false_similar_magnitude :
+  forall (q x : binary64),
+    let qR := Binary.B2R prec emax q in
+    let xR := Binary.B2R prec emax x in
+    ( (0 < qR /\ xR < 0 /\ Rabs qR <= Rabs xR <= 2 * Rabs qR) \/
+      (qR < 0 /\ 0 < xR /\ Rabs qR <= Rabs xR <= 2 * Rabs qR) ) ->
+    ~ pathC_carry_next_gap q x.
+Proof.
+  intros q x qR xR Hsim HpathC.
+  unfold pathC_carry_next_gap in HpathC.
+  destruct HpathC as [Hopp [Hnsep [Hnster _]]].
+  destruct Hsim as [[Hq [Hx Hmag]] | [Hq [Hx Hmag]]].
+  - pose proof (not_half_ulp_separated_implies_sterbenz q x Hq Hx Hmag Hnsep)
+      as Hster.
+    apply Hnster. left. exact Hster.
+  - pose proof (not_half_ulp_separated_implies_sterbenz_neg_carry q x Hq Hx Hmag Hnsep)
+      as Hster.
+    apply Hnster. right. exact Hster.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Assumption audit.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions b64_TwoSum_exact_of_format_sum.
 Print Assumptions b64_TwoSum_sterbenz_exact.
+Print Assumptions b64_format_sterbenz_pos_neg.
+Print Assumptions b64_TwoSum_sterbenz_exact_neg.
+Print Assumptions not_half_ulp_separated_implies_sterbenz.
+Print Assumptions pathC_carry_next_gap_false_similar_magnitude.

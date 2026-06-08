@@ -842,8 +842,7 @@ theories-flocq/B64_nonoverlap_head.v
 # resolution-1-extended (granularity + head_replace), not resolution-2.
 theories-flocq/B64_pathB_trace_4A.v
 # Shewchuk Theorem 13, P2 pathA∨pathB scaffolding (plan §2, obligations O3–O6):
-# cascade_step_pathB / handover_AB / pathAB_chain defs; O1/O2/O3/O5/O6 Qed;
-# O4 combined step Admitted (wire O1∧O2 in pathB branch); pathB_output_head_bound.
+# pathAB cascade: O1–O6 + bootstrap Qed; O7 completeness Admitted; O8 conditional.
 theories-flocq/B64_Shewchuk_Thm13_pathAB.v
 # Slice A piece 3: Shewchuk's fast-expansion-sum at binary64.
 # Definition only (the algorithm: insertion sort by magnitude
