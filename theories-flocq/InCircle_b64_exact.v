@@ -141,7 +141,7 @@ Definition b64_inCircle_intdet (A B C P : BPoint) : Z :=
 Definition b64_inCircle_exact (A B C P : BPoint) : Z :=
   Z.sgn (b64_inCircle_intdet A B C P).
 
-Definition all_finite16 (A B C P : BPoint) : Prop :=
+Definition all_finite8 (A B C P : BPoint) : Prop :=
   Binary.is_finite prec emax (bx A)  = true /\
   Binary.is_finite prec emax (by_ A)  = true /\
   Binary.is_finite prec emax (bx B)  = true /\
@@ -297,7 +297,7 @@ Qed.
 
 Lemma inCircle_R_BP_factor :
   forall A B C P,
-    all_finite16 A B C P ->
+    all_finite8 A B C P ->
     inCircle_R_BP A B C P
     = (bpow radix2 (b64_min_exp8 A B C P)
        * bpow radix2 (b64_min_exp8 A B C P)
@@ -406,7 +406,7 @@ Qed.
 
 Theorem b64_inCircle_exact_sound :
   forall A B C P,
-    all_finite16 A B C P ->
+    all_finite8 A B C P ->
     (0 < inCircle_R_BP A B C P   <-> b64_inCircle_exact A B C P = 1%Z) /\
     (inCircle_R_BP A B C P < 0   <-> b64_inCircle_exact A B C P = (-1)%Z) /\
     (inCircle_R_BP A B C P = 0   <-> b64_inCircle_exact A B C P = 0%Z).
