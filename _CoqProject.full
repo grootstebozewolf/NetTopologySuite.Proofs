@@ -835,14 +835,19 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # component, as residue_ge_half_ulp guarantees).  Pure list reasoning; no
 # cascade state, no deferred-headline dependence.
 theories-flocq/B64_nonoverlap_head.v
+# Shewchuk Theorem 13 headline COUNTEREXAMPLE: nonoverlap_shewchuk [256;1] is
+# false (strict_succ_b64 too strong), while 256+1=257 is the exact sum of valid
+# nonoverlap inputs e=[2^60;1], f=[-(2^60-256)] -- so fast_expansion_sum's
+# strong-nonoverlap postcondition is false as stated.  No deferred-headline dep.
+theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 # Shewchuk Theorem 13, §4.A verification (gating O1 integration):
 # vm_compute cascade traces refuting pathB_fires_only_when_output_compressed_empty.
 # Three cross-sign concrete witnesses (Traces A/B/C) on Route-2 cascade_state;
 # pathB_fires_with_nonempty_output is the load-bearing refutation.  Documents
 # resolution-1-extended (granularity + head_replace), not resolution-2.
 theories-flocq/B64_pathB_trace_4A.v
-# Shewchuk Theorem 13, P2 pathA∨pathB scaffolding (plan §2, obligations O3–O6):
-# pathAB cascade: O1–O6 + bootstrap Qed; O7 completeness Admitted; O8 conditional.
+# Shewchuk Theorem 13, pathA∨pathB cascade (O1–O6 + bootstrap Qed); O7/O8
+# conditional machinery; headline + O7 completeness indischargable (PR #142).
 theories-flocq/B64_Shewchuk_Thm13_pathAB.v
 # Slice A piece 3: Shewchuk's fast-expansion-sum at binary64.
 # Definition only (the algorithm: insertion sort by magnitude

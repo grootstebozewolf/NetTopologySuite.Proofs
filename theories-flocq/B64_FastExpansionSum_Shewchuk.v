@@ -258,9 +258,8 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 (* PIECE 5b: nonoverlap_shewchuk preservation.                                *)
 (*                                                                            *)
-(* Shewchuk Theorem 13 (1997, ~1 page of dense magnitude analysis).  Stated  *)
-(* here with `Admitted` and registered in                                     *)
-(* `docs/admitted-deferred-proofs.txt` as a deferred-proof obligation.       *)
+(* Shewchuk Theorem 13 headline — FALSE as stated (`strict_succ_b64` too       *)
+(* strong).  `Admitted` + Tier-2 counterexample registry (PR #142).           *)
 (*                                                                            *)
 (* The proof structure is documented in                                       *)
 (* `docs/shewchuk-theorem-13-proof-structure.md` with enough detail that      *)
@@ -487,14 +486,8 @@ Theorem fast_expansion_sum_nonoverlap_shewchuk :
     nonoverlap_shewchuk f ->
     nonoverlap_shewchuk (fast_expansion_sum e f).
 Proof.
-  (* DEFERRED: see docs/shewchuk-theorem-13-proof-structure.md.
-     Registered in docs/admitted-deferred-proofs.txt.
-     Building blocks for §2.1 are formalised above
-     (b64_plus_geq_pos, b64_plus_leq_neg, b64_TwoSum_step_dominates_pos,
-     ..._neg, ..._same_sign, ..._q_zero, ..._strict_pos, ..._strict_neg).
-     Remaining work: bridge from the boundary equality (|q| = ulp(e)/2)
-     to the strict precondition + cascade induction + §2.2 half-ulp
-     chain. *)
+  (* Counterexample: docs/shewchuk-thm13-headline-counterexample.md;
+     machine-checked witness in B64_Shewchuk_Thm13_counterexample.v. *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)

@@ -4,7 +4,7 @@
    Shewchuk Theorem 13, pathA ∨ pathB cascade scaffolding (P2).
 
    DEFS: widened handover, pathB trigger, pathAB chain (plan §2).
-   O1–O6: all Qed; O7 beachhead + bootstrap; O8 conditional headline.
+   O1–O6 + bootstrap Qed; O8 conditional Qed; O7/headline indischargable (PR #142).
 
    See docs/history/sessions/shewchuk-thm13-4A-verify-outcome.md (§4.A decision)
    and origin/claude/shewchuk-thm13-obligations (O2–O7 prompts).
@@ -598,8 +598,9 @@ Proof.
   split; [exact I | exact I].
 Qed.
 
-(* General completeness: derive cascade_pathAB_chain from nonoverlap inputs.
-   Thesis-scale per-step case analysis; registered deferred until landed. *)
+(* O7 completeness — indischargable (Tier-2 counterexample, PR #142).
+   Discharging this would close the false headline via conditional O8 below.
+   See docs/shewchuk-thm13-headline-counterexample.md. *)
 Lemma cascade_pathAB_chain_from_nonoverlap :
   forall (e f : list binary64),
     fast_expansion_sum_safe e f ->
@@ -612,10 +613,8 @@ Lemma cascade_pathAB_chain_from_nonoverlap :
         cascade_pathAB_chain (initial_cascade_state x prov) rest
     end.
 Proof.
-  (* O7 remainder: per-step provenance + magnitude bookkeeping (thesis-scale).
-     Bootstrap lemmas above + pathC_carry_next_gap_false_similar_magnitude
-     discharge the mixed-sign similar-magnitude first step; full induction
-     on tagged_input is the deferred-proof obstacle for the general headline. *)
+  (* Counterexample registry: strict_succ_b64/nonoverlap_shewchuk too strong;
+     valid inputs can yield [256;1]-style output (B64_Shewchuk_Thm13_counterexample.v). *)
 Admitted.
 
 Theorem fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional :
