@@ -41,7 +41,8 @@ Key Qed witnesses:
 
 ## Deliverables landed
 
-- `theories-flocq/B64_pathB_trace_4A.v` — 11 vm_compute lemmas + refutation.
+- `theories-flocq/B64_pathB_trace_4A.v` — 10 Qed-closed lemmas (9 `vm_compute` + 1
+  structural refutation `pathB_fires_with_nonempty_output`).
 - `_CoqProject.full` registration + `docs/audit-exceptions.txt` Category C entry.
 - This prompt/outcome pair.
 
