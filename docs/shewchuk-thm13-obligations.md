@@ -111,20 +111,42 @@ flowchart TD
 Critical path: **§4.A → DEFS → O1 → O4 → O5 → O6 → O8**, with **O7** a parallel
 hard track feeding O8. O2/O3 join at O4.
 
-## Risk / cost table
+## Priority tiers — cost, risk, and concrete session-output goal
 
-| Item | Cost (focused) | Risk | Why |
+Tiers are priority/sequencing bands (P1 gates everything; P4 closes). The
+**session-output goal** is the concrete artifact a single session should land —
+the exact `Definition`/`Lemma` name, the tactic shape, and the beachhead lemma
+or counterexample that decides success.
+
+### P1 — gating (do first, no Coq)
+
+| Item | Cost | Risk | Concrete session-output goal |
 |---|---|---|---|
-| §4.A re-derivation | 0.5–1 day | **High** | gates everything; may flip the invariant shape. Pure pen-and-paper + small Coq traces. |
-| DEFS | ~0.5 day | Low | mechanical; mirror existing `cascade_pathA_chain`. Watch let-shape ergonomics. |
-| **O1** integration | 1–2 days | **High** | depends on §4.A outcome; discharges `head_replace` dominance + uses `b64_TwoSum_sterbenz_exact` inside `cascade_step_state`. |
-| **O2** handover_AB | 1–2 days | **High** | the post-cancellation carry vs next ascending input; needs sorted-order reasoning. |
-| O3 run_bound | 0.5 day | Low | triangle bound `|x+C| ≤ |x|+|C|`; mirror existing pathA run-bound (Route2 L791). |
-| O4 combined step | 0.5 day | Low | case split; pathA branch = existing Qed lemma. |
-| O5 run lift | 0.25 day | Low | copy of `cascade_run_preserves_invariant_under_pathA` (L1552), call O4. |
-| O6 output | 0.25 day | Low | copy of `cascade_run_output_nonoverlap` (L1584). |
-| **O7** completeness | 2–4 days | **Very high** | the case "opposite-sign, not half-ulp-separated ⇒ Sterbenz range ⇒ pathB" with NO gap; this is the heart of Theorem 13. |
-| O8 rewire | 0.25 day | Low | swap `cascade_pathA_chain` → `cascade_pathAB_chain` in the conditional headline; compose O6+O7. |
+| §4.A re-derivation | 0.5–1 d | **High** | A written proof-sketch settling **one decision**: does the pathB trigger fire only when `compress (rev cs_output) = nil`? **Beachhead lemma to state (target, prove later):** `pathB_fires_only_when_output_compressed_empty`. **Evidence:** 2–3 `vm_compute` cascade traces on concrete cross-sign `nonoverlap` inputs (e.g. `e=[2^60;1]`, `f=[-2^60]`) recording `(cs_carry, compress (rev cs_output))` per step. **Output = a decision:** resolution-1 (empty-output ⇒ `head_replace` discharged by its `B2R a'=0`/empty disjunct) **or** resolution-2 (need a new `cs_carry`-dominates-output invariant clause). Everything below assumes the answer. |
+
+### P2 — scaffolding (low-risk, mechanical)
+
+| Item | Cost | Risk | Concrete session-output goal |
+|---|---|---|---|
+| DEFS | ~0.5 d | Low | **Definitions only, compile-clean (no proofs):** `cascade_step_pathB`, `cascade_invariant_handover_AB`, `cascade_pathAB_chain` (plus the dominance clause iff §4.A → resolution-2). Tactic: mirror `cascade_pathA_chain` (Route2 L1514); watch `let`-shape ergonomics. |
+| O3 | 0.5 d | Low | **Lemma `cascade_step_pathB_preserves_run_bound` (Qed).** Tactics: `b64_TwoSum_exact_of_format_sum` ⇒ `carry' = x+C`, then `|x+C| ≤ \|x\|+\|C\|` + `lra`; case-split `prov`. Mirror Route2 L791. |
+| O4 | 0.5 d | Low | **Lemma `cascade_step_preserves_invariant_AB` (Qed).** Tactic: `destruct` the pathA∨pathB disjunction; pathA branch `apply cascade_step_preserves_invariant_pathA` (L1332); pathB branch `split` → O1 ∧ O2 ∧ O3. |
+| O5 | 0.25 d | Low | **Lemma `cascade_run_preserves_invariant_under_pathAB` (Qed).** Tactic: copy L1552 verbatim, call O4, `induction xs`. |
+| O6 | 0.25 d | Low | **Lemma `cascade_run_output_nonoverlap_AB` (Qed).** Tactic: copy L1584, `apply` O5, read off clause (a). |
+
+### P3 — cascade surgery (high-risk)
+
+| Item | Cost | Risk | Concrete session-output goal |
+|---|---|---|---|
+| **O1** integration | 1–2 d | **High** | **Lemma `cascade_step_pathB_preserves_output` (Qed).** Lemmas to wire: `b64_TwoSum_exact_of_format_sum` (#135, gives `snd=0`, `carry'=x+C`), `nonoverlap_shewchuk_cons_zero` (#137, drop the appended `0`), `nonoverlap_shewchuk_head_replace` (#137), `residue_ge_half_ulp` (#136, the dominance witness). Tactic: rewrite output via `cons_zero`, `apply head_replace`, discharge its disjunct per §4.A (empty-output ⇒ left disjunct `B2R carry'=0` or trivial). |
+| **O2** handover_AB | 1–2 d | **High** | **Lemma `cascade_step_pathB_preserves_handover` (Qed).** Beachhead: show the post-cancellation `(carry', x')` pair (next ascending input `\|x'\| ≥ \|x\|`) lands in a pathA half-ulp **absorption** disjunct (small `carry'` dominated by larger `x'`). Lemmas: `b64_plus_abs_bound` (L539), the sorted-order hyp in the chain, run-bound. Re-establish `b64_TwoSum_safe (x',carry')`. |
+
+### P4 — completeness + close (very high, then trivial)
+
+| Item | Cost | Risk | Concrete session-output goal |
+|---|---|---|---|
+| **O7** completeness | 2–4 d | **Very high** | **Lemma `cascade_pathAB_chain_from_nonoverlap` (Qed)** — discharges the chain from `fast_expansion_sum_safe ∧ nonoverlap e ∧ nonoverlap f`. **Beachhead to prove FIRST:** `not_half_ulp_separated_implies_sterbenz` (opposite sign + neither half-ulp-dominates ⇒ `\|q\|/2 ≤ \|x\| ≤ 2\|q\|`). **Counterexample to rule out:** exhibit (or prove impossible) an opposite-sign pair in *neither* the pathA half-ulp band *nor* Sterbenz range — if one exists, a pathC is needed. Tactic: sign case-split + per-source nonoverlap (same-source ≥ ~2⁵³ apart ⇒ never Sterbenz, so pathB is cross-source only). |
+| O8 | 0.25 d | Low | **Close the headline: `fast_expansion_sum_nonoverlap_shewchuk` (Qed), removing the Admitted at `B64_FastExpansionSum_Shewchuk.v:483`.** Tactic: in `..._general_conditional` (L2196) swap `cascade_pathA_chain`→`cascade_pathAB_chain` and `cascade_run_output_nonoverlap`→O6; discharge the chain with O7. |
 
 Trivially-missing brick (any time): `b64_TwoSum_sterbenz_exact_neg` (mirror of
 #135 for `x<0<q`, ~10 lines).
@@ -304,13 +326,12 @@ no deferred-headline dep.
 
 ---
 
-## Recommended order
+## Recommended order (by tier)
 
-1. **§4.A re-derivation** (gating; no Coq).
-2. DEFS + **O1** integration (resolve dominance per §4.A).
-3. O3 → O2 → O4 → O5 → O6 (the lower-risk preservation chain).
-4. **O7** (parallelisable with 3; the long pole).
-5. O8 (closes the headline).
+1. **P1** — §4.A re-derivation (gating; no Coq).
+2. **P2** — DEFS, then O3 → O4 → O5 → O6 (the low-risk scaffolding chain).
+3. **P3** — O1 integration, then O2 (resolve dominance per §4.A).
+4. **P4** — O7 (the long pole; parallelisable with P2/P3), then O8 to close.
 
 Stop-and-document discipline: if §4.A re-derivation shows the strengthened
 dominance invariant is required (not resolution 1), re-scope O1/O2/O4 upward and
