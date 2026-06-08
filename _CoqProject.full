@@ -835,6 +835,12 @@ theories-flocq/B64_Expansion_Shewchuk.v
 # component, as residue_ge_half_ulp guarantees).  Pure list reasoning; no
 # cascade state, no deferred-headline dependence.
 theories-flocq/B64_nonoverlap_head.v
+# Shewchuk Theorem 13, §4.A verification (gating O1 integration):
+# vm_compute cascade traces refuting pathB_fires_only_when_output_compressed_empty.
+# Three cross-sign concrete witnesses (Traces A/B/C) on Route-2 cascade_state;
+# pathB_fires_with_nonempty_output is the load-bearing refutation.  Documents
+# resolution-1-extended (granularity + head_replace), not resolution-2.
+theories-flocq/B64_pathB_trace_4A.v
 # Slice A piece 3: Shewchuk's fast-expansion-sum at binary64.
 # Definition only (the algorithm: insertion sort by magnitude
 # ascending + TwoSum cascade, reusing b64_grow_expansion_aux from
