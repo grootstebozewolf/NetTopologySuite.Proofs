@@ -47,6 +47,11 @@
        once the values are ordered or separated beyond the half-ulp band.  This
        discharges Slice 10's rounding hypothesis in favour of the PURE-REALS
        `clip_separated` (no rounding in the statement).
+     - Slice 12: determinant-gap kernel, Qed -- two distinct rationals differ by
+       >= 1/(|da| |db|) (`rational_gap`), and each grid t-bound is exactly such a
+       ratio (`grid_quotient_ratio`).  This is the LOWER-bound (gap) half of
+       `clip_separated`; the remaining half is a ulp UPPER bound + the Rmax/Rmin
+       clip decomposition (see the OBLIGATION note).
 
    What remains is exactly `clip_separated`: that the exact clip bounds
    tmin_e, tmax_e are ulp-separated (when the interval is empty) -- the
@@ -1183,6 +1188,78 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 12: the rational-gap kernel -- the integer-determinant half of
+   `clip_separated`.
+
+   Two DISTINCT rationals with integer numerator/denominator differ by at least
+   1 / (|d_a| |d_b|): their difference is `(na db - nb da) / (da db)`, an integer
+   over `da db`, and a nonzero integer has absolute value >= 1.  On the grid
+   every Liang-Barsky t-bound is exactly such a ratio (numerator a doubled
+   half-integer, denominator 2 (c1 - c0)), so this is the lower bound on the
+   `tmin_e - tmax_e` gap that the `clip_separated` discharge needs -- the
+   "when the determinant is nonzero it is >= 1" fact, made precise and
+   reusable.  Pairing it with a ulp UPPER bound (the other half) closes
+   `clip_separated` in the bounded coordinate regime (see the OBLIGATION note).
+   No grid hypotheses here: it is pure integer/rational arithmetic.
+   ---------------------------------------------------------------------------- *)
+
+(* A nonzero integer has |.| >= 1, as a real. *)
+Lemma IZR_abs_ge_1 :
+  forall n : Z, (n <> 0)%Z -> (1 <= Rabs (IZR n))%R.
+Proof.
+  intros n Hn. rewrite <- abs_IZR.
+  replace 1%R with (IZR 1) by reflexivity.
+  apply IZR_le. lia.
+Qed.
+
+Lemma rational_gap :
+  forall (na da nb db : Z),
+    (da <> 0)%Z -> (db <> 0)%Z ->
+    (na * db <> nb * da)%Z ->
+    (1 / (Rabs (IZR da) * Rabs (IZR db))
+       <= Rabs (IZR na / IZR da - IZR nb / IZR db))%R.
+Proof.
+  intros na da nb db Hda Hdb Hne.
+  assert (Hda_r : IZR da <> 0%R) by (apply IZR_neq; exact Hda).
+  assert (Hdb_r : IZR db <> 0%R) by (apply IZR_neq; exact Hdb).
+  assert (Hden_pos : (0 < Rabs (IZR da) * Rabs (IZR db))%R)
+    by (apply Rmult_lt_0_compat; apply Rabs_pos_lt; assumption).
+  (* combine into a single fraction over (da*db) *)
+  assert (Heq : (IZR na / IZR da - IZR nb / IZR db)%R
+                = (IZR (na * db - nb * da) / (IZR da * IZR db))%R)
+    by (rewrite minus_IZR, !mult_IZR; field; split; assumption).
+  rewrite Heq. unfold Rdiv.
+  rewrite Rabs_mult, Rabs_inv, Rabs_mult.
+  (* both sides are (_) * / (|da|*|db|); compare numerators 1 <= |num| *)
+  apply Rmult_le_compat_r.
+  - apply Rlt_le, Rinv_0_lt_compat. exact Hden_pos.
+  - apply IZR_abs_ge_1. lia.
+Qed.
+
+(* A single grid Liang-Barsky quotient `(edge - c0)/(c1 - c0)`, with edge a
+   half-integer `IZR m / 2` and c0, c1 integers, IS the integer ratio
+   `IZR (m - 2 n0) / IZR (2 (n1 - n0))`.  This is the shape `rational_gap`
+   consumes: two such quotients (the binding pair behind `tmin_e > tmax_e`)
+   differ by at least `1 / (|2(x1-x0)| * |2(y1-y0)|)` when distinct. *)
+Lemma grid_quotient_ratio :
+  forall (c0 c1 e : binary64) (m n0 n1 : Z),
+    Binary.B2R prec emax e = (IZR m / 2)%R ->
+    Binary.B2R prec emax c0 = IZR n0 ->
+    Binary.B2R prec emax c1 = IZR n1 ->
+    (n1 <> n0)%Z ->
+    ((Binary.B2R prec emax e - Binary.B2R prec emax c0)
+       / (Binary.B2R prec emax c1 - Binary.B2R prec emax c0))%R
+      = (IZR (m - 2 * n0) / IZR (2 * (n1 - n0)))%R.
+Proof.
+  intros c0 c1 e m n0 n1 HeR H0R H1R Hne.
+  rewrite HeR, H0R, H1R.
+  rewrite minus_IZR, !mult_IZR, minus_IZR.
+  assert (Hd : (IZR n1 - IZR n0)%R <> 0%R).
+  { apply Rminus_eq_contra. intro He. apply Hne. apply eq_IZR. exact He. }
+  field. exact Hd.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
    With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
@@ -1205,23 +1282,27 @@ Qed.
        tmin_e > tmax_e  =>  round tmin_e > round tmax_e, i.e. rounding must not
        collapse a strictly-empty clip interval to a non-empty one.
 
-   Gap analysis (why it is true, and in which regime it is provable).  On the
-   grid every t-bound is a rational p/d with d = c1 - c0 an integer run and 2p an
-   integer (Slice 6's grid_numerator_facts).  The tight comparison underlying
-   tmin_e vs tmax_e is some `tlo_a <= thi_b`; cross-multiplying through the
-   (integer) denominators turns it into the sign of an integer determinant
-   D = (2 p_a)(2 d_b) - (2 p_b)(2 d_a), exactly representable in binary64 on the
-   grid (cf. Orient_b64_exact.v b64_minus_int_exact / b64_mult_int_exact).  When
-   D <> 0, |tlo_a - thi_b| >= 1 / (4 |d_a d_b|).  Round-to-nearest can only
-   collapse the verdict if both bounds land in one ulp-cell, i.e. their gap is
-   <= ulp <= 2^-52 for bounds in [0,1].  So the verdict is preserved whenever
-       1 / (4 |d_a d_b|) > 2^-52      i.e.   |d_a d_b| < 2^50,
-   which holds for coordinates |n| <= 2^23 (then |d| <= 2^24, |d_a d_b| <= 2^48).
-   NOTE (finding from this slice): at the full coord_int_safe width |n| <= 2^25
-   the bound is *borderline* (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so an
-   unconditional close at full width is NOT a pure forward-error argument -- it
-   needs the exact integer-determinant decision (no rounding in the comparison),
-   or a tightened coordinate regime.  The recommended next step is therefore an
-   UNCONDITIONAL `b64_..._sound_on_grid` for |n| <= 2^23 via the determinant,
-   then (optionally) push the width with the exact-determinant comparison.
+   Gap analysis -- WHAT IS NOW PROVEN vs. what remains.  On the grid every
+   t-bound is the integer ratio `IZR (m - 2 n0) / IZR (2 (n1 - n0))`
+   (`grid_quotient_ratio`, Slice 12), and any two DISTINCT such ratios differ by
+   >= 1 / (|d_a| |d_b|) (`rational_gap`, Slice 12) -- so the binding
+   `tmin_e - tmax_e` gap, when nonzero, is >= 1 / (|2(x1-x0)| |2(y1-y0)|).  This
+   is the GAP (lower-bound) half of `clip_separated`, Qed.
+
+   Two pieces remain to assemble `clip_separated` unconditionally:
+     (a) ulp UPPER bound: at the tight boundary tmin_e, tmax_e in [0,1], so
+         /2 ulp(round tmin_e) + /2 ulp(round tmax_e) <= 2^-52; and
+     (b) Rmax/Rmin clip decomposition: reduce `tmin_e - tmax_e` to a SINGLE
+         binding pair (max of {0,tlo_x,tlo_y} minus min of {1,thi_x,thi_y}) so
+         the Slice-12 gap applies, with the constant cases (0, 1) handled by the
+         coarser >= 1/|d| sign gap.
+   Combining: gap >= 1/(4 |d_a d_b|) > 2^-52  iff  |d_a d_b| < 2^50, which holds
+   for |n| <= 2^23 (then |d| <= 2^24, |d_a d_b| <= 2^48).
+
+   FINDING (recorded): at the full coord_int_safe width |n| <= 2^25 the bound is
+   *borderline* (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width
+   unconditional close is NOT a pure forward-error argument -- it needs the exact
+   integer-determinant decision (no rounding in the comparison) or a tightened
+   coordinate regime.  Recommended next step: assemble (a)+(b) with Slice 12 into
+   an UNCONDITIONAL `b64_..._sound_on_grid` for |n| <= 2^23.
    ---------------------------------------------------------------------------- *)

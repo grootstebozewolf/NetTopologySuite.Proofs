@@ -257,6 +257,13 @@ so the rounded `≤` reflects the exact `≤` once the values are ordered or
 separated beyond the half-ulp band. This **removes the rounding from slice 10's
 hypothesis**, replacing it with the pure-reals `clip_separated` — on-grid
 soundness now hinges only on the exact clip bounds being ulp-separated, which is
-exactly the integer-determinant gap (no `Rle_bool`-of-rounds left). Remaining
-step unchanged: discharge `clip_separated` via the determinant (unconditional for
-`|n| ≤ 2²³`).
+exactly the integer-determinant gap (no `Rle_bool`-of-rounds left).
+
+**Continued (slice 12 — determinant-gap kernel).** `rational_gap` (`Qed`): two
+distinct rationals `na/da`, `nb/db` differ by `≥ 1/(|da||db|)` (the difference is
+a nonzero integer over `da·db`); `grid_quotient_ratio` exposes each grid t-bound
+as `IZR(m−2n₀)/IZR(2(n₁−n₀))`, so the binding `tmin_e − tmax_e` gap is
+`≥ 1/(|2(x₁−x₀)|·|2(y₁−y₀)|)`. This is the **gap (lower-bound) half** of
+`clip_separated`, proven. Remaining to assemble: the ulp upper bound (bounds in
+`[0,1]` at the tight boundary ⇒ `≤ 2⁻⁵²`) and the `Rmax`/`Rmin` clip
+decomposition; combining gives unconditional on-grid soundness for `|n| ≤ 2²³`.
