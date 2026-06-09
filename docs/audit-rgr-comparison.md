@@ -238,3 +238,16 @@ at the foot of the file. Verified each step: full corpus build clean,
 `check_admitted` (still 7, none new), `check_readme_axioms`, and the per-theorem
 axiom audit all pass; the completeness headline closes at the allowlisted
 4-axiom footprint.
+
+**Continued (slice 10 — conditional headline).** `b64_passes_through_grid_exact_cond`
+(`Qed`) certifies the *full* on-grid `compute = spec` equivalence modulo a single
+named real hypothesis — the corpus's `hobby_theorem_4_1_conditional` pattern, no
+`Admitted`/`Axiom` (the gap is a plain `Prop` hypothesis). Its `=true` half is
+free (slice 9 completeness); only the `=false` (soundness) half is open. The
+file's obligation note now carries the integer-determinant gap analysis with a
+concrete finding: the gap argument closes **unconditionally for `|n| ≤ 2²³`**
+(then `|d_a·d_b| ≤ 2⁴⁸`, gap `> ulp`), but is **borderline at the full
+`coord_int_safe` width `2²⁵`** (gap can fall to `~2⁻⁵⁴ < ulp`), so a full-width
+unconditional close needs the exact integer-determinant comparison, not a
+forward-error bound. Recommended next step: an unconditional
+`b64_…_sound_on_grid` for `|n| ≤ 2²³`.

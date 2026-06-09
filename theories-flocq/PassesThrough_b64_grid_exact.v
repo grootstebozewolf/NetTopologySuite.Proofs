@@ -37,14 +37,21 @@
      - Slice 9: ON-GRID COMPLETENESS, Qed -- one of C1's two directions is
        CLOSED.  `spec = true => compute = true` on the grid (the rounded filter
        never DROPS a pass; the noder-safe direction), free from monotonicity.
+     - Slice 10: CONDITIONAL grid-exactness, Qed -- the full on-grid
+       `compute = spec` equivalence certified modulo ONE named real hypothesis
+       (the rounded clip comparison reflects the exact one).  Same honest shape
+       as hobby_theorem_4_1_conditional; the gap is a Prop hypothesis, not an
+       axiom.
 
-   What remains is the OTHER direction, on-grid SOUNDNESS (compute => spec),
-   isolated by Slices 3-8 to ONE real comparison
+   What remains is that single hypothesis -- equivalently the on-grid SOUNDNESS
+   direction (compute => spec), isolated to ONE real comparison
        b64_round tmin_e <= b64_round tmax_e   ==>   tmin_e <= tmax_e
-   on the exact spec clip bounds.  That core is the genuinely hard, multi-session
-   step (see the OBLIGATION note at the bottom); it is NOT discharged here and NO
-   `Admitted` is introduced -- the file is Qed-clean and the open core is stated
-   as a comment, not an axiom.
+   on the exact spec clip bounds.  Its `=true` half is free (Slice 9); only the
+   `=false` (soundness) half is open.  That core is the genuinely hard step (see
+   the OBLIGATION note at the bottom for the integer-determinant gap argument and
+   the coordinate regime where it provably holds); it is NOT discharged here and
+   NO `Admitted` is introduced -- the file is Qed-clean and the open core is
+   stated as a comment, not an axiom.
 
    Corpus invariant preserved: no Admitted / Axiom / Parameter.
    ============================================================================ *)
@@ -988,33 +995,132 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 10: the conditional grid-exactness headline.
+
+   Slices 3-9 reduce the whole on-grid `compute = spec` question to ONE real-
+   number fact: that rounding both exact clip bounds preserves their <= verdict.
+   We name that fact and Qed-certify the entire reduction modulo it -- the same
+   honest "conditional headline" shape as hobby_theorem_4_1_conditional and
+   overlay_ng_correct_conditional.  No Admitted / Axiom / Parameter: the gap is a
+   plain Prop hypothesis of the theorem.
+
+   The hypothesis's `<=`-true direction is FREE (monotonicity; that is exactly
+   Slice 9's on-grid completeness), so the only genuinely open content is the
+   reverse -- the soundness direction.  See the OBLIGATION note for the gap
+   analysis and the coordinate-regime in which it provably holds.
+   ---------------------------------------------------------------------------- *)
+
+(* The exact spec clip bounds, named so the remaining obligation is crisp. *)
+Definition tmin_exact (P0 P1 C : BPoint) : R :=
+  Rmax 0 (Rmax (lb_tlo (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                       (Binary.B2R prec emax (bx C) - / 2) (Binary.B2R prec emax (bx C) + / 2))
+               (lb_tlo (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                       (Binary.B2R prec emax (by_ C) - / 2) (Binary.B2R prec emax (by_ C) + / 2))).
+
+Definition tmax_exact (P0 P1 C : BPoint) : R :=
+  Rmin 1 (Rmin (lb_thi (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                       (Binary.B2R prec emax (bx C) - / 2) (Binary.B2R prec emax (bx C) + / 2))
+               (lb_thi (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                       (Binary.B2R prec emax (by_ C) - / 2) (Binary.B2R prec emax (by_ C) + / 2))).
+
+(* Single-touch grid exactness, conditional on the rounded clip comparison
+   reflecting the exact one (the only remaining gap). *)
+Theorem b64_liang_barsky_grid_exact_cond :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+       = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) ->
+    b64_liang_barsky_touches_compute P0 P1 C = b64_liang_barsky_touches P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hreflect.
+  destruct HP0 as (Hx0 & Hy0). destruct HP1 as (Hx1 & Hy1). destruct HC as (Hcx & Hcy).
+  unfold b64_liang_barsky_touches_compute, b64_liang_barsky_touches. cbv zeta.
+  rewrite (slab_closed_grid_eq (bx P0) (bx P1) (bx C) Hx0 Hx1 Hcx).
+  rewrite (slab_closed_grid_eq (by_ P0) (by_ P1) (by_ C) Hy0 Hy1 Hcy).
+  rewrite b64_le_eq_Rle_bool.
+  2: { apply is_finite_b64_max;
+         [ exact is_finite_b64_zero
+         | apply is_finite_b64_max; apply b64_lb_tlo_finite_grid; assumption ]. }
+  2: { apply is_finite_b64_min;
+         [ exact is_finite_b64_one
+         | apply is_finite_b64_min; apply b64_lb_thi_finite_grid; assumption ]. }
+  rewrite (b64_tmin_eq_round_exact_grid (bx P0) (bx P1) (bx C) (by_ P0) (by_ P1) (by_ C)
+             Hx0 Hx1 Hcx Hy0 Hy1 Hcy).
+  rewrite (b64_tmax_eq_round_exact_grid (bx P0) (bx P1) (bx C) (by_ P0) (by_ P1) (by_ C)
+             Hx0 Hx1 Hcx Hy0 Hy1 Hcy).
+  unfold tmin_exact, tmax_exact in Hreflect.
+  rewrite Hreflect. reflexivity.
+Qed.
+
+(* Full passes-through predicate, conditional grid exactness (via the Slice-1
+   collapse: grid points are snap fixed points). *)
+Corollary b64_passes_through_grid_exact_cond :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+       = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = b64_passes_through_hot_pixel P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hreflect.
+  rewrite (b64_passes_through_compute_collapses_on_grid P0 P1 C
+             (bpoint_int_safe_on_grid P0 HP0) (bpoint_int_safe_on_grid P1 HP1)).
+  rewrite (b64_passes_through_collapses_on_grid P0 P1 C
+             (bpoint_int_safe_on_grid P0 HP0) (bpoint_int_safe_on_grid P1 HP1)).
+  apply b64_liang_barsky_grid_exact_cond; assumption.
+Qed.
+
+(* The soundness direction the user asked for, as a direct corollary: on the
+   grid, compute = true => spec = true, conditional on the same reflection. *)
+Corollary b64_passes_through_sound_on_grid_cond :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+       = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = true ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hreflect Hc.
+  rewrite <- (b64_passes_through_grid_exact_cond P0 P1 C HP0 HP1 HC Hreflect).
+  exact Hc.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
-   ONE direction of C1 is now CLOSED: on-grid completeness (spec => compute,
-   "never drop a pass") -- Slice 9, Qed, the noder-safe direction.  What remains
-   is the OTHER direction, on-grid SOUNDNESS (compute => spec):
+   With Slice 10, the ENTIRE on-grid `compute = spec` equivalence (single-touch
+   and full predicate) is Qed-certified modulo ONE named real hypothesis:
 
-     forall P0 P1 C, <P0,P1,C on the integer grid> ->
-       b64_liang_barsky_touches_compute P0 P1 C = true ->
-       b64_liang_barsky_touches P0 P1 C = true.
+       Hreflect :  Rle_bool (round tmin_e) (round tmax_e)
+                     = Rle_bool tmin_e tmax_e
 
-   After Slices 3-8 this reduces, with the slab guards bit-identical, to the
-   SINGLE real comparison:
+   where tmin_e = tmin_exact, tmax_e = tmax_exact are the exact spec clip bounds.
+   This is the only gap left in C1; everything structural is discharged.
 
-       b64_round tmin_e <= b64_round tmax_e   ==>   tmin_e <= tmax_e
+   What is already free vs. what is open:
+     - `=true` (completeness, spec=>compute): FREE by monotonicity of round
+       (tmin_e <= tmax_e  =>  round tmin_e <= round tmax_e).  This is Slice 9,
+       and it is the reason the `<=`-true half of Hreflect always holds.
+     - `=false` (soundness, compute=>spec): the OPEN half.  It needs
+       tmin_e > tmax_e  =>  round tmin_e > round tmax_e, i.e. rounding must not
+       collapse a strictly-empty clip interval to a non-empty one.
 
-   where tmin_e = Rmax 0 (Rmax tlo_x tlo_y), tmax_e = Rmin 1 (Rmin thi_x thi_y)
-   are the EXACT spec clip bounds (Slice 8 gives compute tmin/tmax =
-   b64_round tmin_e / b64_round tmax_e exactly).  The forward (completeness)
-   direction of this implication is free by monotonicity (Slice 9 uses exactly
-   that); the reverse is the hard one: round-to-nearest gives no outward
-   guarantee, so a rounded `<=` need not reflect an exact `<=`.
-
-   Why it is nonetheless TRUE on the grid (strategy for the core): tmin_e and
-   tmax_e are rationals with denominator the integer run(s) `c1 - c0`; cross-
-   multiplying turns `tmin_e <= tmax_e` into the SIGN of an integer determinant,
-   exactly representable in binary64 on the grid (cf. Orient_b64_exact.v's
-   b64_minus_int_exact / b64_mult_int_exact).  When that determinant is nonzero
-   it has magnitude >= 1, a gap the per-quotient rounding (now the only residual,
-   by Slice 8) cannot bridge; when it is zero the rounding preserves equality.
+   Gap analysis (why it is true, and in which regime it is provable).  On the
+   grid every t-bound is a rational p/d with d = c1 - c0 an integer run and 2p an
+   integer (Slice 6's grid_numerator_facts).  The tight comparison underlying
+   tmin_e vs tmax_e is some `tlo_a <= thi_b`; cross-multiplying through the
+   (integer) denominators turns it into the sign of an integer determinant
+   D = (2 p_a)(2 d_b) - (2 p_b)(2 d_a), exactly representable in binary64 on the
+   grid (cf. Orient_b64_exact.v b64_minus_int_exact / b64_mult_int_exact).  When
+   D <> 0, |tlo_a - thi_b| >= 1 / (4 |d_a d_b|).  Round-to-nearest can only
+   collapse the verdict if both bounds land in one ulp-cell, i.e. their gap is
+   <= ulp <= 2^-52 for bounds in [0,1].  So the verdict is preserved whenever
+       1 / (4 |d_a d_b|) > 2^-52      i.e.   |d_a d_b| < 2^50,
+   which holds for coordinates |n| <= 2^23 (then |d| <= 2^24, |d_a d_b| <= 2^48).
+   NOTE (finding from this slice): at the full coord_int_safe width |n| <= 2^25
+   the bound is *borderline* (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so an
+   unconditional close at full width is NOT a pure forward-error argument -- it
+   needs the exact integer-determinant decision (no rounding in the comparison),
+   or a tightened coordinate regime.  The recommended next step is therefore an
+   UNCONDITIONAL `b64_..._sound_on_grid` for |n| <= 2^23 via the determinant,
+   then (optionally) push the width with the exact-determinant comparison.
    ---------------------------------------------------------------------------- *)
