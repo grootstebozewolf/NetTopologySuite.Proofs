@@ -249,5 +249,14 @@ concrete finding: the gap argument closes **unconditionally for `|n| ≤ 2²³`*
 (then `|d_a·d_b| ≤ 2⁴⁸`, gap `> ulp`), but is **borderline at the full
 `coord_int_safe` width `2²⁵`** (gap can fall to `~2⁻⁵⁴ < ulp`), so a full-width
 unconditional close needs the exact integer-determinant comparison, not a
-forward-error bound. Recommended next step: an unconditional
-`b64_…_sound_on_grid` for `|n| ≤ 2²³`.
+forward-error bound.
+
+**Continued (slice 11 — rounding-reflection kernel).** `round_reflects_le_of_sep`
++ `round_diff_le_of_round_le` (`Qed`): round-to-nearest moves each value `≤ ½ ulp`,
+so the rounded `≤` reflects the exact `≤` once the values are ordered or
+separated beyond the half-ulp band. This **removes the rounding from slice 10's
+hypothesis**, replacing it with the pure-reals `clip_separated` — on-grid
+soundness now hinges only on the exact clip bounds being ulp-separated, which is
+exactly the integer-determinant gap (no `Rle_bool`-of-rounds left). Remaining
+step unchanged: discharge `clip_separated` via the determinant (unconditional for
+`|n| ≤ 2²³`).

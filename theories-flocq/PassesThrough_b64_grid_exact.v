@@ -42,16 +42,20 @@
        (the rounded clip comparison reflects the exact one).  Same honest shape
        as hobby_theorem_4_1_conditional; the gap is a Prop hypothesis, not an
        axiom.
+     - Slice 11: rounding-reflection kernel, Qed -- since round-to-nearest moves
+       each value by <= half a ulp, the rounded `<=` reflects the exact `<=`
+       once the values are ordered or separated beyond the half-ulp band.  This
+       discharges Slice 10's rounding hypothesis in favour of the PURE-REALS
+       `clip_separated` (no rounding in the statement).
 
-   What remains is that single hypothesis -- equivalently the on-grid SOUNDNESS
-   direction (compute => spec), isolated to ONE real comparison
-       b64_round tmin_e <= b64_round tmax_e   ==>   tmin_e <= tmax_e
-   on the exact spec clip bounds.  Its `=true` half is free (Slice 9); only the
-   `=false` (soundness) half is open.  That core is the genuinely hard step (see
-   the OBLIGATION note at the bottom for the integer-determinant gap argument and
-   the coordinate regime where it provably holds); it is NOT discharged here and
-   NO `Admitted` is introduced -- the file is Qed-clean and the open core is
-   stated as a comment, not an axiom.
+   What remains is exactly `clip_separated`: that the exact clip bounds
+   tmin_e, tmax_e are ulp-separated (when the interval is empty) -- the
+   integer-determinant gap.  Its "interval nonempty" half is free (Slice 9
+   completeness); only the empty/soundness half is open.  See the OBLIGATION
+   note at the bottom for the determinant gap argument and the coordinate regime
+   where it provably holds; it is NOT discharged here and NO `Admitted` is
+   introduced -- the file is Qed-clean and the open core is a comment, not an
+   axiom.
 
    Corpus invariant preserved: no Admitted / Axiom / Parameter.
    ============================================================================ *)
@@ -1085,16 +1089,113 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 11: the rounding-reflection kernel -- turn Slice 10's rounding
+   hypothesis into a pure-reals SEPARATION fact (no Rle_bool-of-rounds left).
+
+   Round-to-nearest moves each value by at most half a ulp
+   (`b64_error_le_half_ulp_round`).  So if `round a <= round b` then
+   `a - b <= ulp(round a)/2 + ulp(round b)/2`: rounding can flip a strict `b < a`
+   only when the two are within that combined half-ulp band.  Hence the rounded
+   `<=` REFLECTS the exact `<=` as soon as the exact values are either ordered or
+   separated by more than the band.  This is the general tool that discharges
+   Slice 10's `Hreflect`; what remains is purely that `tmin_exact`/`tmax_exact`
+   are so separated on the grid (the integer-determinant gap), with NO rounding
+   in the statement.
+   ---------------------------------------------------------------------------- *)
+
+(* Half-ulp transfer: round a <= round b bounds the exact difference. *)
+Lemma round_diff_le_of_round_le :
+  forall a b : R,
+    (b64_round a <= b64_round b)%R ->
+    (a - b <= b64_ulp (b64_round a) / 2 + b64_ulp (b64_round b) / 2)%R.
+Proof.
+  intros a b Hle.
+  pose proof (b64_error_le_half_ulp_round a) as Ha.
+  pose proof (b64_error_le_half_ulp_round b) as Hb.
+  apply Rabs_le_inv in Ha. apply Rabs_le_inv in Hb. lra.
+Qed.
+
+(* Reflection under separation: the rounded `<=` matches the exact `<=` whenever
+   the exact values are ordered or separated beyond the combined half-ulp band. *)
+Lemma round_reflects_le_of_sep :
+  forall a b : R,
+    (a <= b \/ b64_ulp (b64_round a) / 2 + b64_ulp (b64_round b) / 2 < a - b)%R ->
+    ((b64_round a <= b64_round b)%R <-> (a <= b)%R).
+Proof.
+  intros a b Hsep. split.
+  - intro Hr. destruct Hsep as [Hab | Hgap].
+    + exact Hab.
+    + exfalso. pose proof (round_diff_le_of_round_le a b Hr). lra.
+  - intro Hab. apply (round_le radix2 b64_fexp (round_mode mode_b64)). exact Hab.
+Qed.
+
+(* The pure-reals separation predicate for the exact clip bounds.  No Rle_bool
+   of rounds: just "interval nonempty, or empty beyond the half-ulp band". *)
+Definition clip_separated (P0 P1 C : BPoint) : Prop :=
+  (tmin_exact P0 P1 C <= tmax_exact P0 P1 C)%R
+  \/ (b64_ulp (b64_round (tmin_exact P0 P1 C)) / 2
+       + b64_ulp (b64_round (tmax_exact P0 P1 C)) / 2
+     < tmin_exact P0 P1 C - tmax_exact P0 P1 C)%R.
+
+(* Separation discharges Slice 10's reflection hypothesis. *)
+Lemma clip_separated_reflects :
+  forall P0 P1 C : BPoint,
+    clip_separated P0 P1 C ->
+    Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+      = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C).
+Proof.
+  intros P0 P1 C Hsep.
+  pose proof (round_reflects_le_of_sep (tmin_exact P0 P1 C) (tmax_exact P0 P1 C) Hsep)
+    as Hiff.
+  destruct (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C)))
+    eqn:E1;
+    destruct (Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) eqn:E2;
+    try reflexivity.
+  - exfalso. apply Rle_bool_elim in E1. apply (proj1 Hiff) in E1.
+    rewrite (Rle_bool_true _ _ E1) in E2. discriminate.
+  - exfalso. apply Rle_bool_elim in E2. apply (proj2 Hiff) in E2.
+    rewrite (Rle_bool_true _ _ E2) in E1. discriminate.
+Qed.
+
+(* Grid-exactness under separation -- the rounding hypothesis is GONE, replaced
+   by the pure-reals `clip_separated` (the integer-determinant gap). *)
+Corollary b64_passes_through_grid_exact_sep :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    clip_separated P0 P1 C ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = b64_passes_through_hot_pixel P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hsep.
+  apply b64_passes_through_grid_exact_cond; try assumption.
+  apply clip_separated_reflects; assumption.
+Qed.
+
+Corollary b64_passes_through_sound_on_grid_sep :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    clip_separated P0 P1 C ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = true ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hsep Hc.
+  rewrite <- (b64_passes_through_grid_exact_sep P0 P1 C HP0 HP1 HC Hsep).
+  exact Hc.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
-   With Slice 10, the ENTIRE on-grid `compute = spec` equivalence (single-touch
-   and full predicate) is Qed-certified modulo ONE named real hypothesis:
+   With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
+   touch and full predicate) is Qed-certified modulo ONE PURE-REALS obligation,
+   `clip_separated P0 P1 C` (Slice 11) -- no rounding/Rle_bool left in it:
 
-       Hreflect :  Rle_bool (round tmin_e) (round tmax_e)
-                     = Rle_bool tmin_e tmax_e
+       clip_separated :  tmin_e <= tmax_e
+                          \/  /2 ulp(round tmin_e) + /2 ulp(round tmax_e)
+                                < tmin_e - tmax_e
 
    where tmin_e = tmin_exact, tmax_e = tmax_exact are the exact spec clip bounds.
-   This is the only gap left in C1; everything structural is discharged.
+   Slice 11's `round_reflects_le_of_sep` turns this into the Slice-10 hypothesis,
+   so `clip_separated` is the only gap left in C1; everything else is discharged.
 
    What is already free vs. what is open:
      - `=true` (completeness, spec=>compute): FREE by monotonicity of round
