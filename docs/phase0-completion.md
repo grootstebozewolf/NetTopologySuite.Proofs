@@ -195,6 +195,14 @@ open Stage D: a substantial separate engagement, not chokepoint work.  The
 exact predicate is meanwhile the ground-truth spec to diff JTS/NTS
 double-double `Orientation.index` against (JTS #1106).
 
+**Descendant (Phase 4, PR #146).** This exact-`ℤ`-determinant route was reused
+verbatim for the in-circle predicate: `theories-flocq/InCircle_b64_exact.v`'s
+`b64_inCircle_exact_sound` proves full-plane sign exactness for the degree-4
+in-circle determinant, also at three axioms (no `classic`). It backs the JTS
+curve-awareness epic (#64 ask #4b) and the Delaunay/Voronoi work (#68); see
+[`../TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md) and
+[`verified-claims.md`](verified-claims.md).
+
 ## Future paths
 
 In rough order of payoff vs. cost:
