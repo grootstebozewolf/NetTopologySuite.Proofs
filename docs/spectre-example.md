@@ -40,6 +40,23 @@ headline `b64_passes_through_grid_exact_cond` on the edge (`compute = spec` unde
 the one named clip-comparison reflection). Like this file, a regression anchor —
 not part of the `extract_rings_valid` pipeline.
 
+## Companion: chord-vs-arc clip divergence (the *curved* Spectre)
+
+The canonical Spectre is the aperiodic tile drawn with **curved (arc) edges**;
+the two files above use the polygonal `Tile(1,1)` skeleton (straight chords).
+[`theories/SpectreChordArcWitness.v`](../theories/SpectreChordArcWitness.v)
+(Qed-closed, 3-axiom) addresses the gap that raises: **is there a hot pixel a
+Spectre edge's straight chord clips but the actual arc misses?** Yes. A shallow
+downward arc `(-1,1)–(0,½)–(1,1)` (circle centre `(0,7/4)`, radius `5/4`, sagitta
+`½`) with a pixel at the chord midpoint `(0,1)` (scale 2, box `[-¼,¼)×[¾,5/4)`):
+the **chord** clips it (midpoint `(0,1)`, parameter `t=½`), but the **arc** misses
+it — `~arc_touches_hot_pixel` *and* `~arc_passes_through_hot_pixel`, because the
+whole box is strictly inside the circle (`inCircle_R = 25/16 − x² − (y−7/4)² ≥ ½ >
+0` there). This is the concrete hot-pixel form of chord-overfitting (a *false
+positive* of linearisation against passes-through), complementing the abstract
+`Linearise.regime3_counterexample` and the sagitta bound in `ArcChordApprox.v`
+(`docs/audit-phase4-chord-overfitting.md`).
+
 ## Coordinates — an honest note
 
 The Spectre lives on a hex grid; the metric-exact **equilateral** embedding maps

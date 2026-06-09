@@ -193,6 +193,7 @@ vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 | `Linearise.v : chord_le_detour` | A chord ≤ the polyline detour it replaces `[exact]` | 3 |
 | `Linearise.v : disjoint_under_linearise` | ε-linearization preserves disjointness within tolerance `[exact]` | 3 |
 | `Linearise.v : regime3_counterexample` | Honest negative: a predicate linearization cannot preserve `[exact]` | 3 |
+| `SpectreChordArcWitness.v : spectre_chord_clips_arc_misses` (+ `_passes_misses`) | **Chord-vs-arc clip divergence (Qed):** the concrete hot-pixel form of chord-overfitting on a curved SPECTRE edge. A shallow arc `(-1,1)–(0,½)–(1,1)` (circle centre `(0,7/4)`, r=5/4, sagitta ½) and a pixel at the chord midpoint `(0,1)` (scale 2, box `[-¼,¼)×[¾,5/4)`): the straight CHORD `segment_touches_hot_pixel` (midpoint `t=½`), but the ARC does NOT — `~arc_touches_hot_pixel` and `~arc_passes_through_hot_pixel`, since the box is strictly inside the circle (`inCircle_R = 25/16 − x² − (y−7/4)² ≥ ½ > 0`). A false positive of chord approximation against passes-through; companion to `theories/SpectreExample.v` `[exact]` | 3 |
 | `ArcChordApprox.v : sagitta_le_arc_radius` | Chord-vs-arc deviation bounded by the radius `[exact]` | 3 |
 | `ArcIntersectIVT.v : chord_crosses_arc_circle_implies_circle_intersection` | Sign change of in-circle along a chord ⇒ real crossing (IVT) `[exact]` | 3 |
 | `ArcOverlay.v : arc_overlay_correct_chord_approx` | **Conditional headline:** result point within `max_sagitta` of an arc, under 2 bridge hypotheses `[cond]` | 3 |

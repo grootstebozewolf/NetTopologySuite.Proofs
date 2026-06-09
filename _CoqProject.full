@@ -1085,3 +1085,8 @@ theories-flocq/OverlayCorrectness.v
 # Witness test: the on-grid passes-through (C1) machinery exercised on a
 # 2x-scaled SPECTRE monotile edge (companion to theories/SpectreExample.v).
 theories-flocq/SpectrePassesThroughWitness.v
+
+# CHORD-vs-ARC clip divergence on a (curved) SPECTRE edge: a hot pixel the
+# straight chord clips but the arc misses (companion to theories/SpectreExample.v
+# and the chord-overfitting theme, docs/audit-phase4-chord-overfitting.md).
+theories/SpectreChordArcWitness.v
