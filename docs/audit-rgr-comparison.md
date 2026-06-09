@@ -264,6 +264,14 @@ distinct rationals `na/da`, `nb/db` differ by `≥ 1/(|da||db|)` (the difference
 a nonzero integer over `da·db`); `grid_quotient_ratio` exposes each grid t-bound
 as `IZR(m−2n₀)/IZR(2(n₁−n₀))`, so the binding `tmin_e − tmax_e` gap is
 `≥ 1/(|2(x₁−x₀)|·|2(y₁−y₀)|)`. This is the **gap (lower-bound) half** of
-`clip_separated`, proven. Remaining to assemble: the ulp upper bound (bounds in
-`[0,1]` at the tight boundary ⇒ `≤ 2⁻⁵²`) and the `Rmax`/`Rmin` clip
-decomposition; combining gives unconditional on-grid soundness for `|n| ≤ 2²³`.
+`clip_separated`, proven.
+
+**Continued (slice 13 — ulp upper bound).** `b64_ulp_round_le_bpow` (`Qed`):
+`round x` stays in the binade of `x`, so `|x| ≤ 2ᵉ ⇒ ulp(round x) ≤ 2^(e+1−prec)`
+(via `b64_round_abs_le_bpow` + Flocq `ulp_le`/`ulp_bpow`); the `[0,1]` instance
+`b64_ulp_round_le_unit` gives `ulp(round x) ≤ 2⁻⁵²`. This is the **upper-bound
+half** of `clip_separated`. Both halves are now in hand; the closing slice is the
+tie-together — `Rmax`/`Rmin` selection (each picks one argument, an integer ratio)
++ axis-degeneracy folded into the `0/1` constant cases — combining the slice-12
+gap with the slice-13 ulp bound into unconditional on-grid soundness for
+`|n| ≤ 2²³`.

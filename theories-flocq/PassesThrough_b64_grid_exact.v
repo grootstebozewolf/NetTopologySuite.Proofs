@@ -49,9 +49,14 @@
        `clip_separated` (no rounding in the statement).
      - Slice 12: determinant-gap kernel, Qed -- two distinct rationals differ by
        >= 1/(|da| |db|) (`rational_gap`), and each grid t-bound is exactly such a
-       ratio (`grid_quotient_ratio`).  This is the LOWER-bound (gap) half of
-       `clip_separated`; the remaining half is a ulp UPPER bound + the Rmax/Rmin
-       clip decomposition (see the OBLIGATION note).
+       ratio (`grid_quotient_ratio`).  The LOWER-bound (gap) half of
+       `clip_separated`.
+     - Slice 13: ulp UPPER bound, Qed -- `|x| <= 2^e => ulp(round x) <=
+       2^(e+1-prec)` (`b64_ulp_round_le_bpow`), so bounds in [0,1] give
+       ulp(round x) <= 2^-52 (`b64_ulp_round_le_unit`).  The UPPER-bound half of
+       `clip_separated`.  Both halves are now in hand; the remaining step is the
+       tie-together (Rmax/Rmin selection + axis-degeneracy cases) -- see the
+       OBLIGATION note.
 
    What remains is exactly `clip_separated`: that the exact clip bounds
    tmin_e, tmax_e are ulp-separated (when the interval is empty) -- the
@@ -1260,6 +1265,46 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 13: the ulp UPPER bound -- the other half of `clip_separated`.
+
+   `round x` never exceeds the binade of x, so its ulp is bounded by the binade:
+   `|x| <= 2^e  =>  ulp(round x) <= 2^(e+1-prec)`.  Pairing this with Slice 12's
+   gap lower bound gives `clip_separated` in the bounded coordinate regime: at
+   the tight boundary the clip forces both bounds into [0,1] (ulp <= 2^-52),
+   while the determinant keeps the gap >= 2^-(2K+2); for |n| <= 2^23 the gap
+   wins.  Reusable; tied to Flocq's `ulp_le` (monotonicity) + `ulp_bpow`.
+   ---------------------------------------------------------------------------- *)
+
+Lemma b64_ulp_round_le_bpow :
+  forall (x : R) (e : Z),
+    (3 - emax <= e + 1)%Z ->
+    (Rabs x <= bpow radix2 e)%R ->
+    (b64_ulp (b64_round x) <= bpow radix2 (e + 1 - prec))%R.
+Proof.
+  intros x e He Hx.
+  pose proof (b64_round_abs_le_bpow x e He Hx) as Hrx.
+  apply (Rle_trans _ (b64_ulp (bpow radix2 e))).
+  - apply (ulp_le radix2 b64_fexp).
+    rewrite (Rabs_pos_eq (bpow radix2 e)) by (apply Rlt_le, bpow_gt_0).
+    exact Hrx.
+  - rewrite (ulp_bpow radix2 b64_fexp e).
+    apply Req_le. f_equal.
+    unfold b64_fexp, SpecFloat.fexp.
+    apply Z.max_l. unfold SpecFloat.emin, emax, prec in *. lia.
+Qed.
+
+(* The [0,1] instance the clip boundary needs: ulp(round x) <= 2^(1-prec). *)
+Lemma b64_ulp_round_le_unit :
+  forall x : R, (Rabs x <= 1)%R ->
+    (b64_ulp (b64_round x) <= bpow radix2 (1 - prec))%R.
+Proof.
+  intros x Hx.
+  apply (b64_ulp_round_le_bpow x 0).
+  - unfold emax. lia.
+  - replace (bpow radix2 0) with 1%R by (simpl; lra). exact Hx.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
    With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
@@ -1290,14 +1335,21 @@ Qed.
    is the GAP (lower-bound) half of `clip_separated`, Qed.
 
    Two pieces remain to assemble `clip_separated` unconditionally:
-     (a) ulp UPPER bound: at the tight boundary tmin_e, tmax_e in [0,1], so
-         /2 ulp(round tmin_e) + /2 ulp(round tmax_e) <= 2^-52; and
-     (b) Rmax/Rmin clip decomposition: reduce `tmin_e - tmax_e` to a SINGLE
-         binding pair (max of {0,tlo_x,tlo_y} minus min of {1,thi_x,thi_y}) so
-         the Slice-12 gap applies, with the constant cases (0, 1) handled by the
-         coarser >= 1/|d| sign gap.
-   Combining: gap >= 1/(4 |d_a d_b|) > 2^-52  iff  |d_a d_b| < 2^50, which holds
-   for |n| <= 2^23 (then |d| <= 2^24, |d_a d_b| <= 2^48).
+     (a) ulp UPPER bound: DONE (Slice 13).  At the tight boundary tmin_e, tmax_e
+         in [0,1], so by `b64_ulp_round_le_unit`,
+         /2 ulp(round tmin_e) + /2 ulp(round tmax_e) <= 2^-52.
+     (b) Rmax/Rmin clip decomposition (the remaining tie-together): reduce
+         `tmin_e - tmax_e` to a SINGLE binding pair (max of {0,tlo_x,tlo_y} minus
+         min of {1,thi_x,thi_y}) -- each `Rmax`/`Rmin` SELECTS one argument
+         (`Rmax x y = x \/ = y`), so the binding pair is two of
+         {0,1,tlo_x,tlo_y,thi_x,thi_y}, each an integer ratio
+         (`grid_quotient_ratio`); apply the Slice-12 gap, with the constant cases
+         (0, 1) handled by the coarser >= 1/|d| sign gap, and the axis-degenerate
+         branches (tlo=0, thi=1) folded into the constants.
+   Combining (a)+(b): gap >= 1/(4 |d_a d_b|) > 2^-52  iff  |d_a d_b| < 2^50,
+   which holds for |n| <= 2^23 (then |d| <= 2^24, |d_a d_b| <= 2^48).  Both the
+   gap (Slice 12) and the ulp bound (Slice 13) are now Qed; (b) is the closing
+   slice.
 
    FINDING (recorded): at the full coord_int_safe width |n| <= 2^25 the bound is
    *borderline* (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width
