@@ -1495,6 +1495,37 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 16: the value-0 edge case of gap-beats-band.
+
+   Slice 15 handles two NONZERO grid ratios.  The one remaining binding shape is
+   when one clip bound is exactly 0 (e.g. tmin_e = Rmax 0 (...) = 0 with the
+   other bound strictly on the far side).  Then the gap is just |v| and the band
+   is `1/2 ulp(round 0) + 1/2 ulp(round v)`; with `ulp(round 0) = ulp(0) =
+   bpow emin` (a subnormal floor, ~2^-1074) and the relative bound on the nonzero
+   side, the band is far below |v| for any |v| >= 2^-24.  No ratio structure is
+   needed -- only `|v| >= 2^-24`.  Together with Slice 15 this makes the
+   gap-beats-band family TOTAL over the binding pairs.
+   ---------------------------------------------------------------------------- *)
+Lemma zero_vs_ratio_gap_exceeds_ulp_band :
+  forall v : R,
+    (bpow radix2 (-24) <= Rabs v)%R ->
+    (b64_ulp (b64_round 0) / 2 + b64_ulp (b64_round v) / 2 < Rabs (0 - v))%R.
+Proof.
+  intros v Hv.
+  assert (Hr0 : b64_round 0 = 0%R) by (apply (round_0 radix2 b64_fexp (round_mode mode_b64))).
+  rewrite Hr0, b64_ulp_FLT_0.
+  pose proof (b64_ulp_round_le_rel v Hv) as Hrv.
+  assert (Hb2 : (bpow radix2 (2 - prec) < 1)%R).
+  { replace 1%R with (bpow radix2 0) by reflexivity. apply bpow_lt. unfold prec; lia. }
+  assert (Hemin : (bpow radix2 b64_emin <= Rabs v)%R).
+  { apply (Rle_trans _ (bpow radix2 (-24))); [ apply bpow_le; unfold emax, prec; lia | exact Hv ]. }
+  assert (Hv0 : (0 < Rabs v)%R).
+  { apply (Rlt_le_trans _ (bpow radix2 (-24))); [ apply bpow_gt_0 | exact Hv ]. }
+  rewrite Rabs_minus_sym, Rminus_0_r.
+  nra.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
    With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
