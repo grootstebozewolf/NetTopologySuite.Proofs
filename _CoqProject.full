@@ -1081,3 +1081,7 @@ theories-flocq/OverlayBridge.v
 # Mirrors hobby_theorem_4_1_conditional's Phase 2 pattern.
 theories-flocq/OverlayCorrectness.v
 
+
+# Witness test: the on-grid passes-through (C1) machinery exercised on a
+# 2x-scaled SPECTRE monotile edge (companion to theories/SpectreExample.v).
+theories-flocq/SpectrePassesThroughWitness.v

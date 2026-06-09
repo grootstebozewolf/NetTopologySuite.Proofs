@@ -23,6 +23,23 @@ monotile is not a pipeline face).
 edges properly cross) is ~70 edge-pair checks — a separate, larger effort,
 deliberately omitted rather than hand-waved.
 
+## Companion: passes-through witness on the integer grid
+
+[`theories-flocq/SpectrePassesThroughWitness.v`](../theories-flocq/SpectrePassesThroughWitness.v)
+(Qed-closed) exercises the binary64 **on-grid passes-through** machinery
+([`PassesThrough_b64_grid_exact.v`](../theories-flocq/PassesThrough_b64_grid_exact.v),
+C1 grid-exactness) on the **same shape**. The rational embedding's vertices
+become integers under a uniform **×2 scale** (`(x+y/2, y) → (2x+y, 2y)`), so a
+Spectre edge lands on the `coord_int_safe` integer grid. The file: (1) builds the
+2×-scaled crossing edge `(12,0)–(15,2)` as binary64 `BPoint`s via the reusable
+integer builder `b64Z` and discharges `bpoint_int_safe` (the C1 regime genuinely
+holds on a Spectre edge); (2) `vm_compute`s the extracted compute filter to
+concrete verdicts — **TRUE** at the through-pixel `(13,1)`, **FALSE** at the
+missed-pixel `(14,0)`; and (3) instantiates the conditional grid-exactness
+headline `b64_passes_through_grid_exact_cond` on the edge (`compute = spec` under
+the one named clip-comparison reflection). Like this file, a regression anchor —
+not part of the `extract_rings_valid` pipeline.
+
 ## Coordinates — an honest note
 
 The Spectre lives on a hex grid; the metric-exact **equilateral** embedding maps
