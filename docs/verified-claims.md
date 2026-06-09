@@ -115,6 +115,9 @@ regime), the exact `cmax` bracketing, and the `±cmax²` tightness witnesses.
 | `PassesThrough_b64_grid_exact.v : b64_max_B2R` (+`b64_min_B2R`) | **C1 slice 5 (max/min composition):** the operand-selecting `b64_max`/`b64_min` bridge to `Rmax`/`Rmin` on `B2R` values for finite operands — reduces the clipped-interval t-bound test to a comparison of the real values of the rounded t-bounds, isolating the division rounding to the per-bound level; Qed-closed `[full-b64]` | 4 |
 | `PassesThrough_b64_grid_exact.v : b64_div_round_half_over_int` | **C1 slice 6 (division-safety brick):** a half-integer numerator over a nonzero integer denominator divides bit-correctly to the rounded exact quotient — discharges `b64_div_correct`'s no-overflow precondition on the grid from `\|num/den\| ≤ \|num\| ≤ 2²⁸ < 2^emax` (`\|den\| ≥ 1`). The last division-safety obligation, closed; Qed-closed `[full-b64]` | 4 |
 | `PassesThrough_b64_grid_exact.v : b64_lb_tlo_eq_rounded_quotients_grid` (+`_thi_`) | **C1 slice 6 (division bridge):** on the integer grid each per-axis compute t-bound equals the exact-spec t-bound with each quotient *individually rounded* (`Rmin`/`Rmax` of `round((lo−c0)/(c1−c0))`, `round((hi−c0)/(c1−c0))`). Localises the entire residual to the per-quotient `round`; nothing but round-to-nearest's lack of an outward guarantee now separates compute from spec on the grid; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_lb_tlo_eq_round_exact_grid` (+`_thi_`) | **C1 slice 7 (round-of-exact):** rounding is monotone, so `Rmin (round a)(round b) = round (Rmin a b)` (dually Rmax) — each compute t-bound collapses to a *single* `b64_round` of the exact-spec t-bound. Unconditional (degenerate axis: `0 = round 0`, `1 = round 1`); Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_tmin_eq_round_exact_grid` (+`b64_tmax_…`) | **C1 slice 8 (clip composition):** pushing `round` through the outer `Rmax 0`/`Rmin 1` clip and the per-axis `Rmax`/`Rmin`, the whole compute clipped bound = `b64_round` of the exact-spec clipped bound. The compute/spec gap is now the single comparison `round tmin_e ≤ round tmax_e` vs `tmin_e ≤ tmax_e`; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_passes_through_complete_on_grid` (+ single-touch `b64_liang_barsky_touches_complete_on_grid`) | **C1 slice 9 — ON-GRID COMPLETENESS (Qed, closes one C1 direction):** on the integer grid, `spec = true ⇒ compute = true` — the rounded passes-through filter **never drops a pass** (the noder-SAFE direction). Free from monotonicity: `tmin_e ≤ tmax_e` ⇒ `round tmin_e ≤ round tmax_e` (slabs bit-identical, Slice 3). The on-grid *soundness* direction (`compute ⇒ spec`) remains the open core (cross-multiply → integer-determinant gap); Qed-closed `[full-b64]` | 4 |
 
 `[oracle]` `PASSES_THROUGH_FILTER`/`PASSES_THROUGH_HALFOPEN`. The closed-filter
 rows pin the **closed** filter, sound *and* complete vs the closed hot-pixel
@@ -124,8 +127,11 @@ the extracted oracle runs the bit-exact computational mirror
 (`PassesThrough_b64_compute.v`, validated bit-for-bit). The naive
 `compute ⇒ spec` rounding bridge is **machine-checked false** (the last row;
 `docs/oracle-soundness-finding.md`); the provable, useful directions are grid
-exactness (C1) and completeness `spec ⇒ compute` (C2), both strongly evidenced
-and open. The rounded filter is also **not symmetric** under segment reversal
+exactness (C1) and completeness `spec ⇒ compute` (C2). **On the integer grid,
+completeness is now Qed-closed** (`b64_passes_through_complete_on_grid`, slice 9
+— the rounded filter never drops a pass on the grid, the noder-safe direction).
+The matching on-grid *soundness* (`compute ⇒ spec`, the remaining C1 direction)
+and the general-binary64 C2 stay strongly-evidenced open. The rounded filter is also **not symmetric** under segment reversal
 (`PassesThrough_b64_compute_asymmetric.v`, both modes) — the order-dependent
 noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the
 exact R-spec, not the rounded compute filter.

@@ -217,9 +217,24 @@ division bridge**, `Qed`-closed at the allowlisted 4-axiom footprint (no new
 This is the RED→GREEN→refactor pattern this corpus uses: the RED (the rounded
 filter is unsound / incomplete / order-asymmetric off-grid) was already `Qed`;
 Slice 6 advances the GREEN (on-grid agreement) by **localising the entire
-remaining gap to the per-quotient `round`** — round-to-nearest's lack of an
-outward guarantee is now the *only* thing separating compute from spec on the
-grid. The residual core (cross-multiply through the exact integer denominators →
-sign-of-integer-determinant) is documented at the foot of the file as the next
-multi-session step. Verified: full corpus build clean, `check_admitted` (still
-7, none new), `check_readme_axioms`, and the per-theorem axiom audit all pass.
+remaining gap to the per-quotient `round`**.
+
+**Continued (2026-06-09, slices 7–9).** Driving the cycle further closed one of
+C1's two directions outright:
+
+- Slices 7–8 (`b64_lb_tlo_eq_round_exact_grid`, `b64_tmin_eq_round_exact_grid`,
+  + `_thi`/`_tmax`): rounding is monotone, so it commutes past `Rmin`/`Rmax` and
+  the outer clip — every compute t-bound, and the whole clipped `tmin`/`tmax`,
+  collapses to a *single* `b64_round` of the exact spec value.
+- **Slice 9 (`b64_passes_through_complete_on_grid`, `Qed`):** **on-grid
+  completeness** — `spec ⇒ compute` on the integer grid, i.e. the rounded filter
+  **never drops a pass** (the noder-safe direction). Free from monotonicity once
+  Slice 8 expresses the compute bounds as `round` of the exact ones.
+
+That leaves only the on-grid **soundness** direction (`compute ⇒ spec`) open,
+now isolated to the single real comparison `round tmin_e ≤ round tmax_e ⟹
+tmin_e ≤ tmax_e` (the cross-multiply → integer-determinant-gap argument), tracked
+at the foot of the file. Verified each step: full corpus build clean,
+`check_admitted` (still 7, none new), `check_readme_axioms`, and the per-theorem
+axiom audit all pass; the completeness headline closes at the allowlisted
+4-axiom footprint.
