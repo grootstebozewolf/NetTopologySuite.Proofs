@@ -277,6 +277,14 @@ theories-flocq/PassesThrough_b64_spec_symmetric.v
 # transitively.  No Admitteds; Qed-closed.
 theories-flocq/PassesThrough_b64_grid_exact.v
 
+# Category C (GREEN witness, same lineage): a witness test of the C1 grid
+# machinery on a 2x-scaled SPECTRE monotile edge (companion to
+# theories/SpectreExample.v).  Discharges bpoint_int_safe on a real Spectre edge
+# and exhibits the extracted compute filter's vm_compute verdicts; imports the
+# PassesThrough_b64_* layer, whose binary64 ops pull `Classical_Prop.classic`
+# transitively.  No Admitteds; Qed-closed.
+theories-flocq/SpectrePassesThroughWitness.v
+
 # Category C (R-side, distinct lineage): issue #64 Option-A atan2 foundation.
 # Unlike every other entry here (which pull `classic` through Flocq float ops),
 # this is a pure-Stdlib theories/ file: `classic` enters via Stdlib's `Ratan`

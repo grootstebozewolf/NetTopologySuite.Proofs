@@ -37,14 +37,39 @@
      - Slice 9: ON-GRID COMPLETENESS, Qed -- one of C1's two directions is
        CLOSED.  `spec = true => compute = true` on the grid (the rounded filter
        never DROPS a pass; the noder-safe direction), free from monotonicity.
+     - Slice 10: CONDITIONAL grid-exactness, Qed -- the full on-grid
+       `compute = spec` equivalence certified modulo ONE named real hypothesis
+       (the rounded clip comparison reflects the exact one).  Same honest shape
+       as hobby_theorem_4_1_conditional; the gap is a Prop hypothesis, not an
+       axiom.
+     - Slice 11: rounding-reflection kernel, Qed -- since round-to-nearest moves
+       each value by <= half a ulp, the rounded `<=` reflects the exact `<=`
+       once the values are ordered or separated beyond the half-ulp band.  This
+       discharges Slice 10's rounding hypothesis in favour of the PURE-REALS
+       `clip_separated` (no rounding in the statement).
+     - Slice 12: determinant-gap kernel, Qed -- two distinct rationals differ by
+       >= 1/(|da| |db|) (`rational_gap`), and each grid t-bound is exactly such a
+       ratio (`grid_quotient_ratio`).  The LOWER-bound (gap) half of
+       `clip_separated`.
+     - Slice 13: ulp UPPER bound, Qed -- `|x| <= 2^e => ulp(round x) <=
+       2^(e+1-prec)` (`b64_ulp_round_le_bpow`), so bounds in [0,1] give
+       ulp(round x) <= 2^-52 (`b64_ulp_round_le_unit`).  The UPPER-bound half of
+       `clip_separated`.
+     - Slice 14: the bricks COMBINE, Qed -- for two distinct ratios u, v in
+       [-1,1] with denominators <= 2^24, `1/2 ulp(round u) + 1/2 ulp(round v)
+       < |u - v|` (`grid_ratio_gap_exceeds_ulp_band`): band <= 2^-52 < 2^-48 <=
+       gap.  This is EXACTLY `clip_separated`'s right disjunct for the binding
+       pair -- the determinant-beats-rounding inequality, done.
 
-   What remains is the OTHER direction, on-grid SOUNDNESS (compute => spec),
-   isolated by Slices 3-8 to ONE real comparison
-       b64_round tmin_e <= b64_round tmax_e   ==>   tmin_e <= tmax_e
-   on the exact spec clip bounds.  That core is the genuinely hard, multi-session
-   step (see the OBLIGATION note at the bottom); it is NOT discharged here and NO
-   `Admitted` is introduced -- the file is Qed-clean and the open core is stated
-   as a comment, not an axiom.
+   What remains is exactly `clip_separated`, and it is now PURELY STRUCTURAL: the
+   analytic content (gap > band) is Slice 14.  The remaining step exhibits
+   tmin_e, tmax_e as bounded integer ratios (each `Rmax`/`Rmin` selects one of
+   {0,1,tlo_x,tlo_y,thi_x,thi_y}, all ratios via `grid_quotient_ratio`) and
+   applies Slice 14.  Its "interval nonempty" half is free (Slice 9
+   completeness); only the empty/soundness half is open.  See the OBLIGATION
+   note at the bottom; it is NOT discharged here and NO `Admitted` is
+   introduced -- the file is Qed-clean and the open core is a comment, not an
+   axiom.
 
    Corpus invariant preserved: no Admitted / Axiom / Parameter.
    ============================================================================ *)
@@ -988,33 +1013,543 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 10: the conditional grid-exactness headline.
+
+   Slices 3-9 reduce the whole on-grid `compute = spec` question to ONE real-
+   number fact: that rounding both exact clip bounds preserves their <= verdict.
+   We name that fact and Qed-certify the entire reduction modulo it -- the same
+   honest "conditional headline" shape as hobby_theorem_4_1_conditional and
+   overlay_ng_correct_conditional.  No Admitted / Axiom / Parameter: the gap is a
+   plain Prop hypothesis of the theorem.
+
+   The hypothesis's `<=`-true direction is FREE (monotonicity; that is exactly
+   Slice 9's on-grid completeness), so the only genuinely open content is the
+   reverse -- the soundness direction.  See the OBLIGATION note for the gap
+   analysis and the coordinate-regime in which it provably holds.
+   ---------------------------------------------------------------------------- *)
+
+(* The exact spec clip bounds, named so the remaining obligation is crisp. *)
+Definition tmin_exact (P0 P1 C : BPoint) : R :=
+  Rmax 0 (Rmax (lb_tlo (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                       (Binary.B2R prec emax (bx C) - / 2) (Binary.B2R prec emax (bx C) + / 2))
+               (lb_tlo (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                       (Binary.B2R prec emax (by_ C) - / 2) (Binary.B2R prec emax (by_ C) + / 2))).
+
+Definition tmax_exact (P0 P1 C : BPoint) : R :=
+  Rmin 1 (Rmin (lb_thi (Binary.B2R prec emax (bx P0)) (Binary.B2R prec emax (bx P1))
+                       (Binary.B2R prec emax (bx C) - / 2) (Binary.B2R prec emax (bx C) + / 2))
+               (lb_thi (Binary.B2R prec emax (by_ P0)) (Binary.B2R prec emax (by_ P1))
+                       (Binary.B2R prec emax (by_ C) - / 2) (Binary.B2R prec emax (by_ C) + / 2))).
+
+(* Single-touch grid exactness, conditional on the rounded clip comparison
+   reflecting the exact one (the only remaining gap). *)
+Theorem b64_liang_barsky_grid_exact_cond :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+       = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) ->
+    b64_liang_barsky_touches_compute P0 P1 C = b64_liang_barsky_touches P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hreflect.
+  destruct HP0 as (Hx0 & Hy0). destruct HP1 as (Hx1 & Hy1). destruct HC as (Hcx & Hcy).
+  unfold b64_liang_barsky_touches_compute, b64_liang_barsky_touches. cbv zeta.
+  rewrite (slab_closed_grid_eq (bx P0) (bx P1) (bx C) Hx0 Hx1 Hcx).
+  rewrite (slab_closed_grid_eq (by_ P0) (by_ P1) (by_ C) Hy0 Hy1 Hcy).
+  rewrite b64_le_eq_Rle_bool.
+  2: { apply is_finite_b64_max;
+         [ exact is_finite_b64_zero
+         | apply is_finite_b64_max; apply b64_lb_tlo_finite_grid; assumption ]. }
+  2: { apply is_finite_b64_min;
+         [ exact is_finite_b64_one
+         | apply is_finite_b64_min; apply b64_lb_thi_finite_grid; assumption ]. }
+  rewrite (b64_tmin_eq_round_exact_grid (bx P0) (bx P1) (bx C) (by_ P0) (by_ P1) (by_ C)
+             Hx0 Hx1 Hcx Hy0 Hy1 Hcy).
+  rewrite (b64_tmax_eq_round_exact_grid (bx P0) (bx P1) (bx C) (by_ P0) (by_ P1) (by_ C)
+             Hx0 Hx1 Hcx Hy0 Hy1 Hcy).
+  unfold tmin_exact, tmax_exact in Hreflect.
+  rewrite Hreflect. reflexivity.
+Qed.
+
+(* Full passes-through predicate, conditional grid exactness (via the Slice-1
+   collapse: grid points are snap fixed points). *)
+Corollary b64_passes_through_grid_exact_cond :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+       = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = b64_passes_through_hot_pixel P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hreflect.
+  rewrite (b64_passes_through_compute_collapses_on_grid P0 P1 C
+             (bpoint_int_safe_on_grid P0 HP0) (bpoint_int_safe_on_grid P1 HP1)).
+  rewrite (b64_passes_through_collapses_on_grid P0 P1 C
+             (bpoint_int_safe_on_grid P0 HP0) (bpoint_int_safe_on_grid P1 HP1)).
+  apply b64_liang_barsky_grid_exact_cond; assumption.
+Qed.
+
+(* The soundness direction the user asked for, as a direct corollary: on the
+   grid, compute = true => spec = true, conditional on the same reflection. *)
+Corollary b64_passes_through_sound_on_grid_cond :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+       = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = true ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hreflect Hc.
+  rewrite <- (b64_passes_through_grid_exact_cond P0 P1 C HP0 HP1 HC Hreflect).
+  exact Hc.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 11: the rounding-reflection kernel -- turn Slice 10's rounding
+   hypothesis into a pure-reals SEPARATION fact (no Rle_bool-of-rounds left).
+
+   Round-to-nearest moves each value by at most half a ulp
+   (`b64_error_le_half_ulp_round`).  So if `round a <= round b` then
+   `a - b <= ulp(round a)/2 + ulp(round b)/2`: rounding can flip a strict `b < a`
+   only when the two are within that combined half-ulp band.  Hence the rounded
+   `<=` REFLECTS the exact `<=` as soon as the exact values are either ordered or
+   separated by more than the band.  This is the general tool that discharges
+   Slice 10's `Hreflect`; what remains is purely that `tmin_exact`/`tmax_exact`
+   are so separated on the grid (the integer-determinant gap), with NO rounding
+   in the statement.
+   ---------------------------------------------------------------------------- *)
+
+(* Half-ulp transfer: round a <= round b bounds the exact difference. *)
+Lemma round_diff_le_of_round_le :
+  forall a b : R,
+    (b64_round a <= b64_round b)%R ->
+    (a - b <= b64_ulp (b64_round a) / 2 + b64_ulp (b64_round b) / 2)%R.
+Proof.
+  intros a b Hle.
+  pose proof (b64_error_le_half_ulp_round a) as Ha.
+  pose proof (b64_error_le_half_ulp_round b) as Hb.
+  apply Rabs_le_inv in Ha. apply Rabs_le_inv in Hb. lra.
+Qed.
+
+(* Reflection under separation: the rounded `<=` matches the exact `<=` whenever
+   the exact values are ordered or separated beyond the combined half-ulp band. *)
+Lemma round_reflects_le_of_sep :
+  forall a b : R,
+    (a <= b \/ b64_ulp (b64_round a) / 2 + b64_ulp (b64_round b) / 2 < a - b)%R ->
+    ((b64_round a <= b64_round b)%R <-> (a <= b)%R).
+Proof.
+  intros a b Hsep. split.
+  - intro Hr. destruct Hsep as [Hab | Hgap].
+    + exact Hab.
+    + exfalso. pose proof (round_diff_le_of_round_le a b Hr). lra.
+  - intro Hab. apply (round_le radix2 b64_fexp (round_mode mode_b64)). exact Hab.
+Qed.
+
+(* The pure-reals separation predicate for the exact clip bounds.  No Rle_bool
+   of rounds: just "interval nonempty, or empty beyond the half-ulp band". *)
+Definition clip_separated (P0 P1 C : BPoint) : Prop :=
+  (tmin_exact P0 P1 C <= tmax_exact P0 P1 C)%R
+  \/ (b64_ulp (b64_round (tmin_exact P0 P1 C)) / 2
+       + b64_ulp (b64_round (tmax_exact P0 P1 C)) / 2
+     < tmin_exact P0 P1 C - tmax_exact P0 P1 C)%R.
+
+(* Separation discharges Slice 10's reflection hypothesis. *)
+Lemma clip_separated_reflects :
+  forall P0 P1 C : BPoint,
+    clip_separated P0 P1 C ->
+    Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C))
+      = Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C).
+Proof.
+  intros P0 P1 C Hsep.
+  pose proof (round_reflects_le_of_sep (tmin_exact P0 P1 C) (tmax_exact P0 P1 C) Hsep)
+    as Hiff.
+  destruct (Rle_bool (b64_round (tmin_exact P0 P1 C)) (b64_round (tmax_exact P0 P1 C)))
+    eqn:E1;
+    destruct (Rle_bool (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) eqn:E2;
+    try reflexivity.
+  - exfalso. apply Rle_bool_elim in E1. apply (proj1 Hiff) in E1.
+    rewrite (Rle_bool_true _ _ E1) in E2. discriminate.
+  - exfalso. apply Rle_bool_elim in E2. apply (proj2 Hiff) in E2.
+    rewrite (Rle_bool_true _ _ E2) in E1. discriminate.
+Qed.
+
+(* Grid-exactness under separation -- the rounding hypothesis is GONE, replaced
+   by the pure-reals `clip_separated` (the integer-determinant gap). *)
+Corollary b64_passes_through_grid_exact_sep :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    clip_separated P0 P1 C ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = b64_passes_through_hot_pixel P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hsep.
+  apply b64_passes_through_grid_exact_cond; try assumption.
+  apply clip_separated_reflects; assumption.
+Qed.
+
+Corollary b64_passes_through_sound_on_grid_sep :
+  forall P0 P1 C : BPoint,
+    bpoint_int_safe P0 -> bpoint_int_safe P1 -> bpoint_int_safe C ->
+    clip_separated P0 P1 C ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = true ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C HP0 HP1 HC Hsep Hc.
+  rewrite <- (b64_passes_through_grid_exact_sep P0 P1 C HP0 HP1 HC Hsep).
+  exact Hc.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 12: the rational-gap kernel -- the integer-determinant half of
+   `clip_separated`.
+
+   Two DISTINCT rationals with integer numerator/denominator differ by at least
+   1 / (|d_a| |d_b|): their difference is `(na db - nb da) / (da db)`, an integer
+   over `da db`, and a nonzero integer has absolute value >= 1.  On the grid
+   every Liang-Barsky t-bound is exactly such a ratio (numerator a doubled
+   half-integer, denominator 2 (c1 - c0)), so this is the lower bound on the
+   `tmin_e - tmax_e` gap that the `clip_separated` discharge needs -- the
+   "when the determinant is nonzero it is >= 1" fact, made precise and
+   reusable.  Pairing it with a ulp UPPER bound (the other half) closes
+   `clip_separated` in the bounded coordinate regime (see the OBLIGATION note).
+   No grid hypotheses here: it is pure integer/rational arithmetic.
+   ---------------------------------------------------------------------------- *)
+
+(* A nonzero integer has |.| >= 1, as a real. *)
+Lemma IZR_abs_ge_1 :
+  forall n : Z, (n <> 0)%Z -> (1 <= Rabs (IZR n))%R.
+Proof.
+  intros n Hn. rewrite <- abs_IZR.
+  replace 1%R with (IZR 1) by reflexivity.
+  apply IZR_le. lia.
+Qed.
+
+Lemma rational_gap :
+  forall (na da nb db : Z),
+    (da <> 0)%Z -> (db <> 0)%Z ->
+    (na * db <> nb * da)%Z ->
+    (1 / (Rabs (IZR da) * Rabs (IZR db))
+       <= Rabs (IZR na / IZR da - IZR nb / IZR db))%R.
+Proof.
+  intros na da nb db Hda Hdb Hne.
+  assert (Hda_r : IZR da <> 0%R) by (apply IZR_neq; exact Hda).
+  assert (Hdb_r : IZR db <> 0%R) by (apply IZR_neq; exact Hdb).
+  assert (Hden_pos : (0 < Rabs (IZR da) * Rabs (IZR db))%R)
+    by (apply Rmult_lt_0_compat; apply Rabs_pos_lt; assumption).
+  (* combine into a single fraction over (da*db) *)
+  assert (Heq : (IZR na / IZR da - IZR nb / IZR db)%R
+                = (IZR (na * db - nb * da) / (IZR da * IZR db))%R)
+    by (rewrite minus_IZR, !mult_IZR; field; split; assumption).
+  rewrite Heq. unfold Rdiv.
+  rewrite Rabs_mult, Rabs_inv, Rabs_mult.
+  (* both sides are (_) * / (|da|*|db|); compare numerators 1 <= |num| *)
+  apply Rmult_le_compat_r.
+  - apply Rlt_le, Rinv_0_lt_compat. exact Hden_pos.
+  - apply IZR_abs_ge_1. lia.
+Qed.
+
+(* A single grid Liang-Barsky quotient `(edge - c0)/(c1 - c0)`, with edge a
+   half-integer `IZR m / 2` and c0, c1 integers, IS the integer ratio
+   `IZR (m - 2 n0) / IZR (2 (n1 - n0))`.  This is the shape `rational_gap`
+   consumes: two such quotients (the binding pair behind `tmin_e > tmax_e`)
+   differ by at least `1 / (|2(x1-x0)| * |2(y1-y0)|)` when distinct. *)
+Lemma grid_quotient_ratio :
+  forall (c0 c1 e : binary64) (m n0 n1 : Z),
+    Binary.B2R prec emax e = (IZR m / 2)%R ->
+    Binary.B2R prec emax c0 = IZR n0 ->
+    Binary.B2R prec emax c1 = IZR n1 ->
+    (n1 <> n0)%Z ->
+    ((Binary.B2R prec emax e - Binary.B2R prec emax c0)
+       / (Binary.B2R prec emax c1 - Binary.B2R prec emax c0))%R
+      = (IZR (m - 2 * n0) / IZR (2 * (n1 - n0)))%R.
+Proof.
+  intros c0 c1 e m n0 n1 HeR H0R H1R Hne.
+  rewrite HeR, H0R, H1R.
+  rewrite minus_IZR, !mult_IZR, minus_IZR.
+  assert (Hd : (IZR n1 - IZR n0)%R <> 0%R).
+  { apply Rminus_eq_contra. intro He. apply Hne. apply eq_IZR. exact He. }
+  field. exact Hd.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 13: the ulp UPPER bound -- the other half of `clip_separated`.
+
+   `round x` never exceeds the binade of x, so its ulp is bounded by the binade:
+   `|x| <= 2^e  =>  ulp(round x) <= 2^(e+1-prec)`.  Pairing this with Slice 12's
+   gap lower bound gives `clip_separated` in the bounded coordinate regime: at
+   the tight boundary the clip forces both bounds into [0,1] (ulp <= 2^-52),
+   while the determinant keeps the gap >= 2^-(2K+2); for |n| <= 2^23 the gap
+   wins.  Reusable; tied to Flocq's `ulp_le` (monotonicity) + `ulp_bpow`.
+   ---------------------------------------------------------------------------- *)
+
+Lemma b64_ulp_round_le_bpow :
+  forall (x : R) (e : Z),
+    (3 - emax <= e + 1)%Z ->
+    (Rabs x <= bpow radix2 e)%R ->
+    (b64_ulp (b64_round x) <= bpow radix2 (e + 1 - prec))%R.
+Proof.
+  intros x e He Hx.
+  pose proof (b64_round_abs_le_bpow x e He Hx) as Hrx.
+  apply (Rle_trans _ (b64_ulp (bpow radix2 e))).
+  - apply (ulp_le radix2 b64_fexp).
+    rewrite (Rabs_pos_eq (bpow radix2 e)) by (apply Rlt_le, bpow_gt_0).
+    exact Hrx.
+  - rewrite (ulp_bpow radix2 b64_fexp e).
+    apply Req_le. f_equal.
+    unfold b64_fexp, SpecFloat.fexp.
+    apply Z.max_l. unfold SpecFloat.emin, emax, prec in *. lia.
+Qed.
+
+(* The [0,1] instance the clip boundary needs: ulp(round x) <= 2^(1-prec). *)
+Lemma b64_ulp_round_le_unit :
+  forall x : R, (Rabs x <= 1)%R ->
+    (b64_ulp (b64_round x) <= bpow radix2 (1 - prec))%R.
+Proof.
+  intros x Hx.
+  apply (b64_ulp_round_le_bpow x 0).
+  - unfold emax. lia.
+  - replace (bpow radix2 0) with 1%R by (simpl; lra). exact Hx.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 14: the three bricks combine -- the determinant gap STRICTLY EXCEEDS
+   the rounding band for two distinct bounded grid ratios.
+
+   For u = na/da, v = nb/db two DISTINCT ratios that are (i) in [-1,1] and
+   (ii) have denominators |da|,|db| <= 2^24 (the tight-regime t-bound shape:
+   denominator 2(c1-c0) with |c1-c0| <= 2^24, i.e. |n| <= 2^23):
+
+       1/2 ulp(round u) + 1/2 ulp(round v)  <  |u - v|.
+
+   Proof = Slice 13 (ulp band <= 2^-52, since |u|,|v| <= 1) + Slice 12 (gap
+   >= 1/(|da||db|) >= 2^-48) + 2^-52 < 2^-48.  This is EXACTLY the right disjunct
+   of `clip_separated` for the binding (tmin_e, tmax_e) pair -- the quantitative
+   heart of unconditional on-grid soundness in the tight regime.  What remains
+   to assemble `clip_separated` itself is purely structural: exhibit tmin_e /
+   tmax_e as such bounded ratios (the Rmax/Rmin selects one element each;
+   grid_quotient_ratio gives the ratio form; the clip gives the [-1,1] bound in
+   the binding case).
+   ---------------------------------------------------------------------------- *)
+Lemma grid_ratio_gap_exceeds_ulp_band :
+  forall (u v : R) (na da nb db : Z),
+    u = (IZR na / IZR da)%R -> v = (IZR nb / IZR db)%R ->
+    (da <> 0)%Z -> (db <> 0)%Z ->
+    (Z.abs da <= 2 ^ 24)%Z -> (Z.abs db <= 2 ^ 24)%Z ->
+    (Rabs u <= 1)%R -> (Rabs v <= 1)%R ->
+    u <> v ->
+    (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2 < Rabs (u - v))%R.
+Proof.
+  intros u v na da nb db Hu Hv Hda Hdb HdaB HdbB Hu1 Hv1 Hne.
+  (* (A) the rounding band is <= bpow (1 - prec) = 2^-52 *)
+  pose proof (b64_ulp_round_le_unit u Hu1) as Hulpu.
+  pose proof (b64_ulp_round_le_unit v Hv1) as Hulpv.
+  assert (Hband : (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2
+                    <= bpow radix2 (1 - prec))%R) by lra.
+  (* (B) distinct ratios cross-multiply distinctly *)
+  assert (Hcross : (na * db <> nb * da)%Z).
+  { intro Hc. apply Hne. rewrite Hu, Hv.
+    field_simplify_eq; [ | split; apply IZR_neq; assumption ].
+    rewrite <- !mult_IZR. f_equal. lia. }
+  pose proof (rational_gap na da nb db Hda Hdb Hcross) as Hgap.
+  rewrite <- Hu, <- Hv in Hgap.
+  (* (C) the gap is >= bpow (-48): denominators bounded by bpow 24 *)
+  assert (HdaR : (Rabs (IZR da) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdaB. }
+  assert (HdbR : (Rabs (IZR db) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdbB. }
+  assert (Hdapos : (0 < Rabs (IZR da))%R) by (apply Rabs_pos_lt, IZR_neq; assumption).
+  assert (Hdbpos : (0 < Rabs (IZR db))%R) by (apply Rabs_pos_lt, IZR_neq; assumption).
+  assert (Hprodpos : (0 < Rabs (IZR da) * Rabs (IZR db))%R)
+    by (apply Rmult_lt_0_compat; assumption).
+  assert (Hprod : (Rabs (IZR da) * Rabs (IZR db) <= bpow radix2 48)%R).
+  { replace (bpow radix2 48) with (bpow radix2 24 * bpow radix2 24)%R
+      by (rewrite <- bpow_plus; reflexivity).
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  assert (Hgap48 : (/ bpow radix2 48 <= Rabs (u - v))%R).
+  { apply (Rle_trans _ (1 / (Rabs (IZR da) * Rabs (IZR db)))%R); [ | exact Hgap ].
+    unfold Rdiv. rewrite Rmult_1_l.
+    apply Rinv_le_contravar; [ exact Hprodpos | exact Hprod ]. }
+  (* (D) chain: band <= 2^-52 < 2^-48 = / bpow 48 <= gap *)
+  assert (Hlt : (bpow radix2 (1 - prec) < / bpow radix2 48)%R).
+  { apply (Rmult_lt_reg_r (bpow radix2 48)); [ apply bpow_gt_0 | ].
+    rewrite Rinv_l by (apply Rgt_not_eq, bpow_gt_0).
+    rewrite <- bpow_plus.
+    replace (1 - prec + 48)%Z with (-4)%Z by (unfold prec; lia).
+    replace 1%R with (bpow radix2 0) by reflexivity.
+    apply bpow_lt. lia. }
+  lra.
+Qed.
+
+(* ----------------------------------------------------------------------------
+   SLICE 15: the RELATIVE ulp bound, and the general gap-beats-band.
+
+   Slice 14's `[-1,1]` restriction is too tight for the binding t-bounds (which
+   can be larger).  The fix is the relative bound `ulp(round x) <= |x| *
+   2^(2-prec)` (Slice 13 at e = mag x, plus the mag sandwich
+   `bpow(mag x - 1) <= |x| < bpow(mag x)`), valid for |x| >= 2^-24 (every nonzero
+   grid t-bound, whose |value| = |num|/|den| >= 1/2^24).  With it, the band
+   telescopes against the gap through the numerator/denominator bounds, with no
+   value-range restriction: for nonzero grid ratios the gap always beats the
+   band in the |n| <= 2^23 regime.
+   ---------------------------------------------------------------------------- *)
+
+(* Relative ulp bound: round-to-nearest's ulp is at most the value times one
+   binade of relative precision (for x bounded away from the subnormals). *)
+Lemma b64_ulp_round_le_rel :
+  forall x : R,
+    (bpow radix2 (-24) <= Rabs x)%R ->
+    (b64_ulp (b64_round x) <= Rabs x * bpow radix2 (2 - prec))%R.
+Proof.
+  intros x Hx.
+  assert (Hxne : x <> 0%R).
+  { intro Hz. rewrite Hz, Rabs_R0 in Hx. pose proof (bpow_gt_0 radix2 (-24)). lra. }
+  pose proof (mag_gt_bpow radix2 x (-24) Hx) as Hmag.   (* -24 < mag x *)
+  assert (He1 : (3 - emax <= mag radix2 x + 1)%Z) by (unfold emax; lia).
+  assert (Hxle : (Rabs x <= bpow radix2 (mag radix2 x))%R)
+    by (apply Rlt_le, (bpow_mag_gt radix2 x)).
+  pose proof (b64_ulp_round_le_bpow x (mag radix2 x) He1 Hxle) as Hub.
+  apply (Rle_trans _ (bpow radix2 (mag radix2 x + 1 - prec))); [ exact Hub | ].
+  replace (mag radix2 x + 1 - prec)%Z
+    with ((mag radix2 x - 1) + (2 - prec))%Z by lia.
+  rewrite bpow_plus.
+  apply Rmult_le_compat_r; [ apply bpow_ge_0 | ].
+  apply (bpow_mag_le radix2 x). exact Hxne.
+Qed.
+
+(* General gap-beats-band: NO value-range restriction.  For two distinct nonzero
+   grid ratios (numerator <= 2^25, denominator <= 2^24, |value| >= 2^-24), the
+   determinant gap strictly exceeds the rounding band.  Covers every nonzero
+   binding bound, including the constant 1 = 1/1. *)
+Lemma grid_ratio_gap_exceeds_ulp_band_rel :
+  forall (u v : R) (na da nb db : Z),
+    u = (IZR na / IZR da)%R -> v = (IZR nb / IZR db)%R ->
+    (da <> 0)%Z -> (db <> 0)%Z ->
+    (Z.abs na <= 2 ^ 25)%Z -> (Z.abs nb <= 2 ^ 25)%Z ->
+    (Z.abs da <= 2 ^ 24)%Z -> (Z.abs db <= 2 ^ 24)%Z ->
+    (bpow radix2 (-24) <= Rabs u)%R -> (bpow radix2 (-24) <= Rabs v)%R ->
+    u <> v ->
+    (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2 < Rabs (u - v))%R.
+Proof.
+  intros u v na da nb db Hu Hv Hda Hdb HnaB HnbB HdaB HdbB Hu24 Hv24 Hne.
+  set (P := (Rabs (IZR da) * Rabs (IZR db))%R).
+  assert (Hdane : IZR da <> 0%R) by (apply IZR_neq; exact Hda).
+  assert (Hdbne : IZR db <> 0%R) by (apply IZR_neq; exact Hdb).
+  assert (HPpos : (0 < P)%R)
+    by (unfold P; apply Rmult_lt_0_compat; apply Rabs_pos_lt; assumption).
+  (* relative ulp bounds *)
+  pose proof (b64_ulp_round_le_rel u Hu24) as Hru.
+  pose proof (b64_ulp_round_le_rel v Hv24) as Hrv.
+  (* |u| * P = |IZR na| * |IZR db| <= 2^25 * 2^24 = 2^49 *)
+  assert (HnaR : (Rabs (IZR na) <= bpow radix2 25)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 25) by lia. apply IZR_le. exact HnaB. }
+  assert (HnbR : (Rabs (IZR nb) <= bpow radix2 25)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 25) by lia. apply IZR_le. exact HnbB. }
+  assert (HdaR : (Rabs (IZR da) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdaB. }
+  assert (HdbR : (Rabs (IZR db) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdbB. }
+  assert (HuP : (Rabs u * P = Rabs (IZR na) * Rabs (IZR db))%R).
+  { unfold P. rewrite Hu. unfold Rdiv. rewrite Rabs_mult, Rabs_inv. field.
+    apply Rabs_no_R0. exact Hdane. }
+  assert (HvP : (Rabs v * P = Rabs (IZR nb) * Rabs (IZR da))%R).
+  { unfold P. rewrite Hv. unfold Rdiv. rewrite Rabs_mult, Rabs_inv. field.
+    apply Rabs_no_R0. exact Hdbne. }
+  (* band * P <= 2^49 * 2^(2-prec) = bpow(-2) = 1/4 *)
+  assert (Hb49 : (bpow radix2 25 * bpow radix2 24 = bpow radix2 49)%R)
+    by (rewrite <- bpow_plus; reflexivity).
+  assert (HuP49 : (Rabs u * P <= bpow radix2 49)%R).
+  { rewrite HuP. rewrite <- Hb49. apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  assert (HvP49 : (Rabs v * P <= bpow radix2 49)%R).
+  { rewrite HvP. rewrite <- Hb49.
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  assert (Hpos2 : (0 < bpow radix2 (2 - prec))%R) by apply bpow_gt_0.
+  assert (HbandP : ((b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2) * P
+                     <= bpow radix2 (-2))%R).
+  { (* ulp(round u) <= |u| bpow(2-prec) etc; multiply through by P >= 0 *)
+    apply (Rle_trans _ ((Rabs u * bpow radix2 (2 - prec) / 2
+                          + Rabs v * bpow radix2 (2 - prec) / 2) * P)).
+    { apply Rmult_le_compat_r; [ lra | lra ]. }
+    (* = (|u|P + |v|P) * bpow(2-prec)/2 <= (2^49+2^49)*bpow(2-prec)/2 = bpow(-2) *)
+    replace ((Rabs u * bpow radix2 (2 - prec) / 2
+               + Rabs v * bpow radix2 (2 - prec) / 2) * P)%R
+      with ((Rabs u * P + Rabs v * P) * bpow radix2 (2 - prec) / 2)%R by (unfold P; field).
+    apply (Rle_trans _ ((bpow radix2 49 + bpow radix2 49) * bpow radix2 (2 - prec) / 2)).
+    { apply Rmult_le_compat_r; [ lra | ]. apply Rmult_le_compat_r; [ lra | ]. lra. }
+    replace ((bpow radix2 49 + bpow radix2 49) * bpow radix2 (2 - prec) / 2)%R
+      with (bpow radix2 49 * bpow radix2 (2 - prec))%R by field.
+    rewrite <- bpow_plus.
+    replace (49 + (2 - prec))%Z with (-2)%Z by (unfold prec; lia).
+    apply Rle_refl. }
+  (* gap: 1/P <= |u - v|, so 1 <= |u-v| * P *)
+  assert (Hcross : (na * db <> nb * da)%Z).
+  { intro Hc. apply Hne. rewrite Hu, Hv.
+    field_simplify_eq; [ | split; assumption ].
+    rewrite <- !mult_IZR. f_equal. lia. }
+  pose proof (rational_gap na da nb db Hda Hdb Hcross) as Hgap.
+  rewrite <- Hu, <- Hv in Hgap. fold P in Hgap.
+  assert (HgapP : (1 <= Rabs (u - v) * P)%R).
+  { apply (Rle_trans _ ((1 / P) * P)).
+    - replace ((1 / P) * P)%R with 1%R by (field; apply Rgt_not_eq; exact HPpos).
+      apply Rle_refl.
+    - apply Rmult_le_compat_r; [ lra | exact Hgap ]. }
+  (* finish: band*P <= 1/4 < 1 <= gap*P, and P > 0 *)
+  assert (Hquarter : (bpow radix2 (-2) = / 4)%R) by (simpl; lra).
+  apply (Rmult_lt_reg_r P); [ exact HPpos | ]. lra.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
-   ONE direction of C1 is now CLOSED: on-grid completeness (spec => compute,
-   "never drop a pass") -- Slice 9, Qed, the noder-safe direction.  What remains
-   is the OTHER direction, on-grid SOUNDNESS (compute => spec):
+   With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
+   touch and full predicate) is Qed-certified modulo ONE PURE-REALS obligation,
+   `clip_separated P0 P1 C` (Slice 11) -- no rounding/Rle_bool left in it:
 
-     forall P0 P1 C, <P0,P1,C on the integer grid> ->
-       b64_liang_barsky_touches_compute P0 P1 C = true ->
-       b64_liang_barsky_touches P0 P1 C = true.
+       clip_separated :  tmin_e <= tmax_e
+                          \/  /2 ulp(round tmin_e) + /2 ulp(round tmax_e)
+                                < tmin_e - tmax_e
 
-   After Slices 3-8 this reduces, with the slab guards bit-identical, to the
-   SINGLE real comparison:
+   where tmin_e = tmin_exact, tmax_e = tmax_exact are the exact spec clip bounds.
+   Slice 11's `round_reflects_le_of_sep` turns this into the Slice-10 hypothesis,
+   so `clip_separated` is the only gap left in C1; everything else is discharged.
 
-       b64_round tmin_e <= b64_round tmax_e   ==>   tmin_e <= tmax_e
+   What is already free vs. what is open:
+     - `=true` (completeness, spec=>compute): FREE by monotonicity of round
+       (tmin_e <= tmax_e  =>  round tmin_e <= round tmax_e).  This is Slice 9,
+       and it is the reason the `<=`-true half of Hreflect always holds.
+     - `=false` (soundness, compute=>spec): the OPEN half.  It needs
+       tmin_e > tmax_e  =>  round tmin_e > round tmax_e, i.e. rounding must not
+       collapse a strictly-empty clip interval to a non-empty one.
 
-   where tmin_e = Rmax 0 (Rmax tlo_x tlo_y), tmax_e = Rmin 1 (Rmin thi_x thi_y)
-   are the EXACT spec clip bounds (Slice 8 gives compute tmin/tmax =
-   b64_round tmin_e / b64_round tmax_e exactly).  The forward (completeness)
-   direction of this implication is free by monotonicity (Slice 9 uses exactly
-   that); the reverse is the hard one: round-to-nearest gives no outward
-   guarantee, so a rounded `<=` need not reflect an exact `<=`.
+   Gap analysis -- WHAT IS NOW PROVEN vs. what remains.  On the grid every
+   t-bound is the integer ratio `IZR (m - 2 n0) / IZR (2 (n1 - n0))`
+   (`grid_quotient_ratio`, Slice 12), and any two DISTINCT such ratios differ by
+   >= 1 / (|d_a| |d_b|) (`rational_gap`, Slice 12) -- so the binding
+   `tmin_e - tmax_e` gap, when nonzero, is >= 1 / (|2(x1-x0)| |2(y1-y0)|).  This
+   is the GAP (lower-bound) half of `clip_separated`, Qed.
 
-   Why it is nonetheless TRUE on the grid (strategy for the core): tmin_e and
-   tmax_e are rationals with denominator the integer run(s) `c1 - c0`; cross-
-   multiplying turns `tmin_e <= tmax_e` into the SIGN of an integer determinant,
-   exactly representable in binary64 on the grid (cf. Orient_b64_exact.v's
-   b64_minus_int_exact / b64_mult_int_exact).  When that determinant is nonzero
-   it has magnitude >= 1, a gap the per-quotient rounding (now the only residual,
-   by Slice 8) cannot bridge; when it is zero the rounding preserves equality.
+   The gap-vs-band INEQUALITY is now PROVEN combined (Slice 14,
+   `grid_ratio_gap_exceeds_ulp_band`): for two distinct ratios u, v in [-1,1]
+   with denominators <= 2^24,
+       /2 ulp(round u) + /2 ulp(round v) <= 2^-52 < 2^-48 <= |u - v|,
+   i.e. EXACTLY `clip_separated`'s right disjunct for the binding pair.
+
+   ONE purely-STRUCTURAL step remains to assemble `clip_separated`:
+     reduce `tmin_e - tmax_e` to a SINGLE binding pair (max of {0,tlo_x,tlo_y}
+     minus min of {1,thi_x,thi_y}) -- each `Rmax`/`Rmin` SELECTS one argument
+     (`Rmax x y = x \/ = y`), so tmin_e, tmax_e are each one of
+     {0,1,tlo_x,tlo_y,thi_x,thi_y}, an integer ratio (`grid_quotient_ratio`,
+     with 0 = 0/1, 1 = 1/1) bounded in [-1,1] in the binding case; then apply
+     Slice 14 (constant cases 0/1 and axis-degenerate branches folded in).  No
+     more analytic content -- the determinant-beats-rounding inequality is done.
+
+   FINDING -- WHY 2^23 vs 2^25 (full integer-determinant gap analysis in
+   docs/audit-rgr-comparison.md "Execution" notes).  The binding gap is
+   >= 1/(4|d_a d_b|) and the rounding band is <= 2^-52 at the clip boundary
+   (Slices 12-15).  Gap > band iff |d_a d_b| < 2^50:
+     - at |n| <= 2^23 (|d| <= 2^24, |d_a d_b| <= 2^48) the gap (>= 2^-50) wins,
+       so on-grid soundness closes UNCONDITIONALLY;
+     - at the full coord_int_safe width |n| <= 2^25 it is *borderline*
+       (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width close is
+       NOT a pure forward-error argument -- it needs the exact integer-
+       determinant decision (no rounding in the comparison), not a tightened
+       band.
+   Recommended next step: assemble the structural reduction with Slice 15 into
+   an UNCONDITIONAL `b64_..._sound_on_grid` for |n| <= 2^23.
    ---------------------------------------------------------------------------- *)

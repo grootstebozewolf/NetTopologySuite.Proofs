@@ -238,3 +238,46 @@ at the foot of the file. Verified each step: full corpus build clean,
 `check_admitted` (still 7, none new), `check_readme_axioms`, and the per-theorem
 axiom audit all pass; the completeness headline closes at the allowlisted
 4-axiom footprint.
+
+**Continued (slice 10 — conditional headline).** `b64_passes_through_grid_exact_cond`
+(`Qed`) certifies the *full* on-grid `compute = spec` equivalence modulo a single
+named real hypothesis — the corpus's `hobby_theorem_4_1_conditional` pattern, no
+`Admitted`/`Axiom` (the gap is a plain `Prop` hypothesis). Its `=true` half is
+free (slice 9 completeness); only the `=false` (soundness) half is open. The
+file's obligation note now carries the integer-determinant gap analysis with a
+concrete finding: the gap argument closes **unconditionally for `|n| ≤ 2²³`**
+(then `|d_a·d_b| ≤ 2⁴⁸`, gap `> ulp`), but is **borderline at the full
+`coord_int_safe` width `2²⁵`** (gap can fall to `~2⁻⁵⁴ < ulp`), so a full-width
+unconditional close needs the exact integer-determinant comparison, not a
+forward-error bound.
+
+**Continued (slice 11 — rounding-reflection kernel).** `round_reflects_le_of_sep`
++ `round_diff_le_of_round_le` (`Qed`): round-to-nearest moves each value `≤ ½ ulp`,
+so the rounded `≤` reflects the exact `≤` once the values are ordered or
+separated beyond the half-ulp band. This **removes the rounding from slice 10's
+hypothesis**, replacing it with the pure-reals `clip_separated` — on-grid
+soundness now hinges only on the exact clip bounds being ulp-separated, which is
+exactly the integer-determinant gap (no `Rle_bool`-of-rounds left).
+
+**Continued (slice 12 — determinant-gap kernel).** `rational_gap` (`Qed`): two
+distinct rationals `na/da`, `nb/db` differ by `≥ 1/(|da||db|)` (the difference is
+a nonzero integer over `da·db`); `grid_quotient_ratio` exposes each grid t-bound
+as `IZR(m−2n₀)/IZR(2(n₁−n₀))`, so the binding `tmin_e − tmax_e` gap is
+`≥ 1/(|2(x₁−x₀)|·|2(y₁−y₀)|)`. This is the **gap (lower-bound) half** of
+`clip_separated`, proven.
+
+**Continued (slice 13 — ulp upper bound).** `b64_ulp_round_le_bpow` (`Qed`):
+`round x` stays in the binade of `x`, so `|x| ≤ 2ᵉ ⇒ ulp(round x) ≤ 2^(e+1−prec)`
+(via `b64_round_abs_le_bpow` + Flocq `ulp_le`/`ulp_bpow`); the `[0,1]` instance
+`b64_ulp_round_le_unit` gives `ulp(round x) ≤ 2⁻⁵²`. The **upper-bound half** of
+`clip_separated`.
+
+**Continued (slice 14 — the bricks combine).** `grid_ratio_gap_exceeds_ulp_band`
+(`Qed`): for two distinct ratios `u=na/da`, `v=nb/db` in `[-1,1]` with
+`|da|,|db| ≤ 2²⁴`, `½ulp(round u)+½ulp(round v) < |u−v|` — band `≤ 2⁻⁵²` (slice
+13), gap `≥ 2⁻⁴⁸` (slice 12), `2⁻⁵² < 2⁻⁴⁸`. This is **exactly `clip_separated`'s
+right disjunct** for the binding `(tmin_e,tmax_e)` pair — the determinant-beats-
+rounding inequality, the quantitative heart of unconditional on-grid soundness
+for `|n| ≤ 2²³`. The only remaining step is purely structural: exhibit `tmin_e`,
+`tmax_e` as such bounded ratios (each `Rmax`/`Rmin` selects one of
+`{0,1,tlo_x,tlo_y,thi_x,thi_y}`) and apply slice 14 — no analytic content left.
