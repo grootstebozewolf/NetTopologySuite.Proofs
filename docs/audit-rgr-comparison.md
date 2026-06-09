@@ -269,9 +269,15 @@ as `IZR(m−2n₀)/IZR(2(n₁−n₀))`, so the binding `tmin_e − tmax_e` gap 
 **Continued (slice 13 — ulp upper bound).** `b64_ulp_round_le_bpow` (`Qed`):
 `round x` stays in the binade of `x`, so `|x| ≤ 2ᵉ ⇒ ulp(round x) ≤ 2^(e+1−prec)`
 (via `b64_round_abs_le_bpow` + Flocq `ulp_le`/`ulp_bpow`); the `[0,1]` instance
-`b64_ulp_round_le_unit` gives `ulp(round x) ≤ 2⁻⁵²`. This is the **upper-bound
-half** of `clip_separated`. Both halves are now in hand; the closing slice is the
-tie-together — `Rmax`/`Rmin` selection (each picks one argument, an integer ratio)
-+ axis-degeneracy folded into the `0/1` constant cases — combining the slice-12
-gap with the slice-13 ulp bound into unconditional on-grid soundness for
-`|n| ≤ 2²³`.
+`b64_ulp_round_le_unit` gives `ulp(round x) ≤ 2⁻⁵²`. The **upper-bound half** of
+`clip_separated`.
+
+**Continued (slice 14 — the bricks combine).** `grid_ratio_gap_exceeds_ulp_band`
+(`Qed`): for two distinct ratios `u=na/da`, `v=nb/db` in `[-1,1]` with
+`|da|,|db| ≤ 2²⁴`, `½ulp(round u)+½ulp(round v) < |u−v|` — band `≤ 2⁻⁵²` (slice
+13), gap `≥ 2⁻⁴⁸` (slice 12), `2⁻⁵² < 2⁻⁴⁸`. This is **exactly `clip_separated`'s
+right disjunct** for the binding `(tmin_e,tmax_e)` pair — the determinant-beats-
+rounding inequality, the quantitative heart of unconditional on-grid soundness
+for `|n| ≤ 2²³`. The only remaining step is purely structural: exhibit `tmin_e`,
+`tmax_e` as such bounded ratios (each `Rmax`/`Rmin` selects one of
+`{0,1,tlo_x,tlo_y,thi_x,thi_y}`) and apply slice 14 — no analytic content left.

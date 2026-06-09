@@ -54,16 +54,20 @@
      - Slice 13: ulp UPPER bound, Qed -- `|x| <= 2^e => ulp(round x) <=
        2^(e+1-prec)` (`b64_ulp_round_le_bpow`), so bounds in [0,1] give
        ulp(round x) <= 2^-52 (`b64_ulp_round_le_unit`).  The UPPER-bound half of
-       `clip_separated`.  Both halves are now in hand; the remaining step is the
-       tie-together (Rmax/Rmin selection + axis-degeneracy cases) -- see the
-       OBLIGATION note.
+       `clip_separated`.
+     - Slice 14: the bricks COMBINE, Qed -- for two distinct ratios u, v in
+       [-1,1] with denominators <= 2^24, `1/2 ulp(round u) + 1/2 ulp(round v)
+       < |u - v|` (`grid_ratio_gap_exceeds_ulp_band`): band <= 2^-52 < 2^-48 <=
+       gap.  This is EXACTLY `clip_separated`'s right disjunct for the binding
+       pair -- the determinant-beats-rounding inequality, done.
 
-   What remains is exactly `clip_separated`: that the exact clip bounds
-   tmin_e, tmax_e are ulp-separated (when the interval is empty) -- the
-   integer-determinant gap.  Its "interval nonempty" half is free (Slice 9
+   What remains is exactly `clip_separated`, and it is now PURELY STRUCTURAL: the
+   analytic content (gap > band) is Slice 14.  The remaining step exhibits
+   tmin_e, tmax_e as bounded integer ratios (each `Rmax`/`Rmin` selects one of
+   {0,1,tlo_x,tlo_y,thi_x,thi_y}, all ratios via `grid_quotient_ratio`) and
+   applies Slice 14.  Its "interval nonempty" half is free (Slice 9
    completeness); only the empty/soundness half is open.  See the OBLIGATION
-   note at the bottom for the determinant gap argument and the coordinate regime
-   where it provably holds; it is NOT discharged here and NO `Admitted` is
+   note at the bottom; it is NOT discharged here and NO `Admitted` is
    introduced -- the file is Qed-clean and the open core is a comment, not an
    axiom.
 
@@ -1305,6 +1309,75 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 14: the three bricks combine -- the determinant gap STRICTLY EXCEEDS
+   the rounding band for two distinct bounded grid ratios.
+
+   For u = na/da, v = nb/db two DISTINCT ratios that are (i) in [-1,1] and
+   (ii) have denominators |da|,|db| <= 2^24 (the tight-regime t-bound shape:
+   denominator 2(c1-c0) with |c1-c0| <= 2^24, i.e. |n| <= 2^23):
+
+       1/2 ulp(round u) + 1/2 ulp(round v)  <  |u - v|.
+
+   Proof = Slice 13 (ulp band <= 2^-52, since |u|,|v| <= 1) + Slice 12 (gap
+   >= 1/(|da||db|) >= 2^-48) + 2^-52 < 2^-48.  This is EXACTLY the right disjunct
+   of `clip_separated` for the binding (tmin_e, tmax_e) pair -- the quantitative
+   heart of unconditional on-grid soundness in the tight regime.  What remains
+   to assemble `clip_separated` itself is purely structural: exhibit tmin_e /
+   tmax_e as such bounded ratios (the Rmax/Rmin selects one element each;
+   grid_quotient_ratio gives the ratio form; the clip gives the [-1,1] bound in
+   the binding case).
+   ---------------------------------------------------------------------------- *)
+Lemma grid_ratio_gap_exceeds_ulp_band :
+  forall (u v : R) (na da nb db : Z),
+    u = (IZR na / IZR da)%R -> v = (IZR nb / IZR db)%R ->
+    (da <> 0)%Z -> (db <> 0)%Z ->
+    (Z.abs da <= 2 ^ 24)%Z -> (Z.abs db <= 2 ^ 24)%Z ->
+    (Rabs u <= 1)%R -> (Rabs v <= 1)%R ->
+    u <> v ->
+    (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2 < Rabs (u - v))%R.
+Proof.
+  intros u v na da nb db Hu Hv Hda Hdb HdaB HdbB Hu1 Hv1 Hne.
+  (* (A) the rounding band is <= bpow (1 - prec) = 2^-52 *)
+  pose proof (b64_ulp_round_le_unit u Hu1) as Hulpu.
+  pose proof (b64_ulp_round_le_unit v Hv1) as Hulpv.
+  assert (Hband : (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2
+                    <= bpow radix2 (1 - prec))%R) by lra.
+  (* (B) distinct ratios cross-multiply distinctly *)
+  assert (Hcross : (na * db <> nb * da)%Z).
+  { intro Hc. apply Hne. rewrite Hu, Hv.
+    field_simplify_eq; [ | split; apply IZR_neq; assumption ].
+    rewrite <- !mult_IZR. f_equal. lia. }
+  pose proof (rational_gap na da nb db Hda Hdb Hcross) as Hgap.
+  rewrite <- Hu, <- Hv in Hgap.
+  (* (C) the gap is >= bpow (-48): denominators bounded by bpow 24 *)
+  assert (HdaR : (Rabs (IZR da) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdaB. }
+  assert (HdbR : (Rabs (IZR db) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdbB. }
+  assert (Hdapos : (0 < Rabs (IZR da))%R) by (apply Rabs_pos_lt, IZR_neq; assumption).
+  assert (Hdbpos : (0 < Rabs (IZR db))%R) by (apply Rabs_pos_lt, IZR_neq; assumption).
+  assert (Hprodpos : (0 < Rabs (IZR da) * Rabs (IZR db))%R)
+    by (apply Rmult_lt_0_compat; assumption).
+  assert (Hprod : (Rabs (IZR da) * Rabs (IZR db) <= bpow radix2 48)%R).
+  { replace (bpow radix2 48) with (bpow radix2 24 * bpow radix2 24)%R
+      by (rewrite <- bpow_plus; reflexivity).
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  assert (Hgap48 : (/ bpow radix2 48 <= Rabs (u - v))%R).
+  { apply (Rle_trans _ (1 / (Rabs (IZR da) * Rabs (IZR db)))%R); [ | exact Hgap ].
+    unfold Rdiv. rewrite Rmult_1_l.
+    apply Rinv_le_contravar; [ exact Hprodpos | exact Hprod ]. }
+  (* (D) chain: band <= 2^-52 < 2^-48 = / bpow 48 <= gap *)
+  assert (Hlt : (bpow radix2 (1 - prec) < / bpow radix2 48)%R).
+  { apply (Rmult_lt_reg_r (bpow radix2 48)); [ apply bpow_gt_0 | ].
+    rewrite Rinv_l by (apply Rgt_not_eq, bpow_gt_0).
+    rewrite <- bpow_plus.
+    replace (1 - prec + 48)%Z with (-4)%Z by (unfold prec; lia).
+    replace 1%R with (bpow radix2 0) by reflexivity.
+    apply bpow_lt. lia. }
+  lra.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
    With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
@@ -1334,22 +1407,20 @@ Qed.
    `tmin_e - tmax_e` gap, when nonzero, is >= 1 / (|2(x1-x0)| |2(y1-y0)|).  This
    is the GAP (lower-bound) half of `clip_separated`, Qed.
 
-   Two pieces remain to assemble `clip_separated` unconditionally:
-     (a) ulp UPPER bound: DONE (Slice 13).  At the tight boundary tmin_e, tmax_e
-         in [0,1], so by `b64_ulp_round_le_unit`,
-         /2 ulp(round tmin_e) + /2 ulp(round tmax_e) <= 2^-52.
-     (b) Rmax/Rmin clip decomposition (the remaining tie-together): reduce
-         `tmin_e - tmax_e` to a SINGLE binding pair (max of {0,tlo_x,tlo_y} minus
-         min of {1,thi_x,thi_y}) -- each `Rmax`/`Rmin` SELECTS one argument
-         (`Rmax x y = x \/ = y`), so the binding pair is two of
-         {0,1,tlo_x,tlo_y,thi_x,thi_y}, each an integer ratio
-         (`grid_quotient_ratio`); apply the Slice-12 gap, with the constant cases
-         (0, 1) handled by the coarser >= 1/|d| sign gap, and the axis-degenerate
-         branches (tlo=0, thi=1) folded into the constants.
-   Combining (a)+(b): gap >= 1/(4 |d_a d_b|) > 2^-52  iff  |d_a d_b| < 2^50,
-   which holds for |n| <= 2^23 (then |d| <= 2^24, |d_a d_b| <= 2^48).  Both the
-   gap (Slice 12) and the ulp bound (Slice 13) are now Qed; (b) is the closing
-   slice.
+   The gap-vs-band INEQUALITY is now PROVEN combined (Slice 14,
+   `grid_ratio_gap_exceeds_ulp_band`): for two distinct ratios u, v in [-1,1]
+   with denominators <= 2^24,
+       /2 ulp(round u) + /2 ulp(round v) <= 2^-52 < 2^-48 <= |u - v|,
+   i.e. EXACTLY `clip_separated`'s right disjunct for the binding pair.
+
+   ONE purely-STRUCTURAL step remains to assemble `clip_separated`:
+     reduce `tmin_e - tmax_e` to a SINGLE binding pair (max of {0,tlo_x,tlo_y}
+     minus min of {1,thi_x,thi_y}) -- each `Rmax`/`Rmin` SELECTS one argument
+     (`Rmax x y = x \/ = y`), so tmin_e, tmax_e are each one of
+     {0,1,tlo_x,tlo_y,thi_x,thi_y}, an integer ratio (`grid_quotient_ratio`,
+     with 0 = 0/1, 1 = 1/1) bounded in [-1,1] in the binding case; then apply
+     Slice 14 (constant cases 0/1 and axis-degenerate branches folded in).  No
+     more analytic content -- the determinant-beats-rounding inequality is done.
 
    FINDING (recorded): at the full coord_int_safe width |n| <= 2^25 the bound is
    *borderline* (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width
