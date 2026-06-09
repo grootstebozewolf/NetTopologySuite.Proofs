@@ -16,6 +16,28 @@ Phase 4's session-level planning needs.
 
 ---
 
+> **Status note (2026-06-09).** §5/§7's "**DECISION CONFIRMED: Option B**
+> (chord approximation); Option A (exact arc) deferred to a potential Phase 5"
+> has been overtaken: the issue-#64 work pursued **Option A exact-arc
+> primitives** in parallel, and several §3 NEW-PROOF items now exist
+> Qed-closed:
+>
+> - arc orientation + in-circle: `theories/ArcOrient.v`,
+>   `theories-flocq/InCircle_b64_exact.v` (full-plane `b64_inCircle` sign at
+>   3 axioms);
+> - arc-line intersection Scope A: `theories-flocq/ArcLineIntersect_b64_exact.v`;
+> - arc hot-pixel: `theories/ArcHotPixel.v`;
+> - the `r·θ` / atan2 / sweep foundations: `theories/ArcLength.v`,
+>   `theories/Atan2.v`, `theories/AngleBetween.v`.
+>
+> The chord-approximation (Option B) line also stands (`ArcChordApprox.v`,
+> `CurveLinearise.v`); the two coexist. The genuine remaining research gap is
+> the arc Hobby / arc snap-rounding analog (§3 NEW PROOF, still open). Current
+> status: `docs/verified-claims.md` Phase 4 and
+> `docs/issue-64-arc-primitives-triage.md`.
+
+---
+
 ## §1 — The chord overfitting statement (precise)
 
 Every corpus theorem from Phase 0 through Phase 3 that references
