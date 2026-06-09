@@ -1526,6 +1526,68 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 17: the `gridbound` abstraction -- the structural glue.
+
+   A real is `gridbound` iff it is 0 or a bounded nonzero grid ratio
+   (numerator <= 2^25, denominator <= 2^24, magnitude >= 2^-24).  This is closed
+   under Rmax / Rmin (each selects one argument), so every exact clip bound
+   tmin_e = Rmax 0 (Rmax tlo_x tlo_y) and tmax_e = Rmin 1 (Rmin thi_x thi_y) is
+   gridbound once the per-axis t-bounds are.  And on gridbound inputs the
+   gap-beats-band family is TOTAL (Slices 15 + 16) -- `gap_beats_band_of_gridbound`
+   is exactly `clip_separated`'s right disjunct for any binding pair.
+   ---------------------------------------------------------------------------- *)
+Definition gridbound (x : R) : Prop :=
+  x = 0%R \/
+  (exists na da : Z,
+     x = (IZR na / IZR da)%R /\ (da <> 0)%Z /\
+     (Z.abs na <= 2 ^ 25)%Z /\ (Z.abs da <= 2 ^ 24)%Z /\
+     (bpow radix2 (-24) <= Rabs x)%R).
+
+Lemma gridbound_0 : gridbound 0.
+Proof. left. reflexivity. Qed.
+
+Lemma gridbound_1 : gridbound 1.
+Proof.
+  right. exists 1%Z, 1%Z.
+  repeat split; try (simpl; lra); try lia.
+  rewrite Rabs_R1. apply Rlt_le. replace 1%R with (bpow radix2 0) by reflexivity.
+  apply bpow_lt. lia.
+Qed.
+
+Lemma gridbound_Rmax : forall a b, gridbound a -> gridbound b -> gridbound (Rmax a b).
+Proof.
+  intros a b Ha Hb. destruct (Rle_dec a b) as [H | H].
+  - rewrite (Rmax_right a b H). exact Hb.
+  - rewrite (Rmax_left a b ltac:(lra)). exact Ha.
+Qed.
+
+Lemma gridbound_Rmin : forall a b, gridbound a -> gridbound b -> gridbound (Rmin a b).
+Proof.
+  intros a b Ha Hb. destruct (Rle_dec a b) as [H | H].
+  - rewrite (Rmin_left a b H). exact Ha.
+  - rewrite (Rmin_right a b ltac:(lra)). exact Hb.
+Qed.
+
+(* gap beats band for any two distinct gridbound values -- the right disjunct of
+   `clip_separated`.  Composes Slice 16 (one value 0) and Slice 15 (both nonzero). *)
+Lemma gap_beats_band_of_gridbound :
+  forall u v : R,
+    gridbound u -> gridbound v -> u <> v ->
+    (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2 < Rabs (u - v))%R.
+Proof.
+  intros u v Hu Hv Hne.
+  destruct Hu as [Hu0 | (na & da & Hu & Hda & HnaB & HdaB & Hu24)];
+  destruct Hv as [Hv0 | (nb & db & Hv & Hdb & HnbB & HdbB & Hv24)].
+  - exfalso. apply Hne. rewrite Hu0, Hv0. reflexivity.
+  - rewrite Hu0. apply zero_vs_ratio_gap_exceeds_ulp_band. exact Hv24.
+  - rewrite Hv0.
+    pose proof (zero_vs_ratio_gap_exceeds_ulp_band u Hu24) as H.
+    rewrite (Rabs_minus_sym u 0). lra.
+  - apply (grid_ratio_gap_exceeds_ulp_band_rel u v na da nb db);
+      assumption.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
    With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
