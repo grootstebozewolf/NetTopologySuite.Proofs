@@ -16,6 +16,26 @@ of the latter two.
 
 ---
 
+> **Status note (2026-06-09).** Two headline updates since §§7-9 (which run
+> through 2026-06-05):
+>
+> - **Shewchuk Theorem 13 nonoverlap is FALSE as stated.**
+>   `fast_expansion_sum_nonoverlap_shewchuk` (referenced in §2.4/§4 and long
+>   carried as a deferred proof) was reclassified 2026-06-08 to the
+>   **counterexample** registry: the corpus's half-ulp `strict_succ_b64` is
+>   stronger than Shewchuk's bit-disjoint nonoverlapping. Machine-checked
+>   witness: `theories-flocq/B64_Shewchuk_Thm13_counterexample.v`; see
+>   `docs/shewchuk-thm13-headline-counterexample.md`.
+> - **Full-plane `orient2d` soundness does NOT depend on Stages B/C/D.** It is
+>   achieved via the *exact integer-determinant* route
+>   (`Orient_b64_exact_full.b64_orient2d_exact`, all finite binary64, 3 axioms),
+>   with the integer-mantissa decoder as the underflow-safe last resort (§9).
+>   The B/C/D expansion remains a sound EFT under its `expansion_safe`
+>   precondition but is now an *optimization* (a verified fast filter), not the
+>   path to a sound full-plane predicate. See `docs/verified-claims.md` Phase 0.
+
+---
+
 ## 1. What's in pinned Flocq (`coq-flocq.4.2.2`)
 
 ### 1.1 Foundational error theorems — `Flocq.Prop.Plus_error` and `Flocq.Prop.Mult_error`

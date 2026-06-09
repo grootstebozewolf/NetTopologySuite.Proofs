@@ -15,6 +15,29 @@ about topological correctness of a whole-arrangement transformation.
 
 ---
 
+> **Status note (2026-06-09).** This is the 2026-05-15 *scoping* audit
+> (reuse/vendor/build sizing); Phase 2 has since largely **landed**, so read
+> the estimates below as planning history, not current state:
+>
+> - **Shipped (Qed-closed):** `HotPixel.v` / `HotPixel_b64.v`,
+>   `SnapRounding_b64.v` (snap preserves passes-through; bit-level
+>   idempotence), the `PassesThrough_*` family — including the C1
+>   grid-exactness reduction and the honest machine-checked *negatives* (the
+>   rounded filter is unsound / incomplete / order-asymmetric, the
+>   JTS#752/#1133 root) — and `hobby_theorem_4_1_conditional`. See
+>   `docs/verified-claims.md` Phase 2.
+> - **§2.4's *unconditional* `snap_rounding_topologically_consistent` is NOT
+>   what landed.** The Hobby endpoint-preservation lemma it leans on
+>   (`hobby_lemma_4_3_no_proper`) was machine-checked **FALSE as stated** —
+>   snapping can *manufacture* a proper intersection (two parallel segments
+>   collapse onto one grid line). It now sits in the **counterexample**
+>   registry, and the topological-consistency result lands only in
+>   *conditional* form. `hobby_lemma_4_2` is Qed-closed. See
+>   `docs/hobby-lemma-4-3-no-proper-refutation.md` and
+>   `docs/admitted-counterexamples.txt`.
+
+---
+
 ## 0. What snap rounding is, and why NTS needs it
 
 **Input.** A finite set `S = {s_1, ..., s_n}` of line segments in the

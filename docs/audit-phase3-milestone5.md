@@ -24,6 +24,31 @@ subdivision).  The conditional strategy in §6 is the escape valve.
 
 ---
 
+> **Status note (2026-06-09) — two reconciliations with the live corpus.**
+> This audit predates later registry and JCT-seam developments; the
+> Qed-closed conditional headline (§6) is unaffected, but two passages
+> below are stale:
+>
+> 1. **Deferred-proof registry count (§3 lines ~277-283, §7 S9).** The
+>    snapshot here lists the deferred registry as Shewchuk
+>    `fast_expansion_sum_nonoverlap_shewchuk` + `hobby_lemma_4_3_no_proper`
+>    ("2 → 3 entries"). Both have since moved to the **counterexample**
+>    registry (false-as-stated), and the deferred registry was compacted
+>    (2026-06-09) to its **single live entry, `extract_rings_valid`**. See
+>    `docs/admitted-deferred-proofs.txt` and
+>    `docs/history/deferred-proofs-registry-archive.md`.
+> 2. **`geometric_interior_stdlib` (§"Update: geometric_interior
+>    instantiated post-S15").** That section reports H1 re-pointed onto
+>    `geometric_interior_stdlib`. That predicate was *subsequently*
+>    machine-checked **vacuous** (`JordanCurveSeam.v :
+>    geometric_interior_stdlib_vacuous`); H1 has since been re-pointed onto
+>    the continuous `geometric_interior_cont`. See `docs/verified-claims.md`
+>    (Phase 3) and `docs/jct-vacuity-finding.md`. The §-Update passage below
+>    is retained for history but SUPERSEDED.
+
+---
+
+
 ## 1. The headline theorem
 
 The exact Coq statement targeted by Sessions 2–10:

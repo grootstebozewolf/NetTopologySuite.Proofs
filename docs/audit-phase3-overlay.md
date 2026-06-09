@@ -16,6 +16,28 @@ the inputs. That equality is the Phase 3 headline.
 
 ---
 
+> **Status note (2026-06-09).** This is the Milestone-2-era planning audit;
+> it is substantially superseded in detail by
+> `docs/audit-phase3-milestone5.md` and the landed conditional headline.
+> Stale passages:
+>
+> - **Registry counts (§2).** "Deferred-proof registry (3 entries)"
+>   (Shewchuk + `hobby_lemma_4_2` + `hobby_lemma_4_3`) and "Counterexample
+>   registry (3 entries)" are both out of date. `hobby_lemma_4_2` is now
+>   Qed-closed; the Shewchuk nonoverlap headline and `hobby_lemma_4_3_no_proper`
+>   moved to the **counterexample** registry. The live state is **1 deferred**
+>   (`extract_rings_valid`) and **6 counterexample** — see
+>   `docs/admitted-deferred-proofs.txt` and `docs/admitted-counterexamples.txt`.
+> - **Option A/B is settled (§4).** Milestone 5 landed Option A *exact-iff in
+>   conditional form* (`overlay_ng_correct_conditional`, Qed-closed) with
+>   Option B as a 2-line corollary — not the Option-B default recommended
+>   here. The §3.1/§4 `point_in_ring` correctness discussion is overtaken by
+>   the JCT-seam vacuity finding: `geometric_interior_stdlib` was refuted as
+>   vacuous and H1 re-pointed onto `geometric_interior_cont`. See
+>   `docs/verified-claims.md` Phase 3 and `docs/jct-vacuity-finding.md`.
+
+---
+
 ## 0. What OverlayNG does, and the three-stage pipeline
 
 **Input.** Two valid geometries `A` and `B` (each a `Geometry` =
@@ -354,10 +376,13 @@ trail:
     operation counts.  Foundation for Phase 0 Stage A filter
     bounds.
 
-  - **Ozaki, Ogita, Rump, Oishi (2012)** -- "Tight and Efficient
-    Enclosure of Matrix Multiplication by Using Optimized BLAS."
-    *Numerical Linear Algebra with Applications*.  The gamma_2
-    filter formulation reused in Phase 0 Stage A.
+  - **Ozaki, Ogita, Rump, Oishi (2011)** -- "Tight and efficient
+    enclosure of matrix multiplication by using optimized BLAS."
+    *Numerical Linear Algebra with Applications* 18:237-248.
+    doi:10.1002/nla.724.  Error-free-transformation / verified-enclosure
+    background.  (NB: the Phase 0 Stage A orient2d filter bound itself
+    derives from Shewchuk (1997) and the Fortune-Van Wyk (1996) static
+    error analysis above, *not* from this paper.)
 
   - **OGC 06-103r4** -- "OpenGIS Implementation Standard for
     Geographic information -- Simple feature access -- Part 1:

@@ -4,9 +4,28 @@
 **Date**: May 2026
 **Goal**: Understand why native curve support has been stalled for ~5 years and decide how (or whether) the formal corpus should engage with it.
 
+> **Status note (2026-06-09).** §4/§6 record the May-2026 stance — chord-first
+> Option B, "do *not* prematurely abstract the predicate signatures,
+> re-evaluate at the start of Phase 4." Phase 4 has since arrived and the
+> issue-owner chose **Option A (exact arc primitives)**, so that recommendation
+> is overtaken (the chord/Option-B line also still stands; the two coexist):
+>
+> - **Landed (Qed-closed):** `theories/Atan2.v`, `theories/AngleBetween.v`,
+>   `theories/ArcLength.v` (`r·θ`), and the binary64 in-circle layer
+>   `theories-flocq/InCircle_b64_exact.v` — full-plane `b64_inCircle` sign
+>   exactness at **3 axioms** (same exact-ℤ-determinant route as
+>   `b64_orient2d_exact`; see `docs/phase0-completion.md`) — plus arc-line
+>   Scope A (`theories-flocq/ArcLineIntersect_b64_exact.v`). The R-side arc
+>   predicates `ArcOrient.v` / `ArcIntersect.v` / `ArcHotPixel.v` /
+>   `ArcChordApprox.v` / `ArcOverlay.v` are Qed.
+> - So §6's "what this defers — concrete `Orient_arc_*` / `HasArcIntersect`
+>   modules" is partly discharged. Per-issue status:
+>   `docs/verified-claims.md` Phase 4, `docs/issue-64-arc-primitives-triage.md`,
+>   and `../TRIAGE_NTS_JTS_ISSUES.md`.
+
 ## 1. Executive Summary
 
-OGC SFA-CA admits curves at the type level, and NTS *does* have `Curve`, `CircularString`, and `CompoundCurve` as first-class subclasses of `Geometry`. The stall is one level down: curves exist at the type level but cannot survive contact with the algorithm layer because every major operation consumes and emits `Coordinate[]` via `SegmentString` / `NodedSegmentString`. Linearisation is not a preprocessing choice — it is architecturally enforced. The existing extension (`NetTopologySuite.Curve`) wraps every overlay call in a `Flatten()` that converts curves to chords *before* any computation runs. The robust-predicates layer (`Orientation.Index`, `RobustLineIntersector`) is the only place curves could plug in without rewriting the data plane.
+SQL/MM Spatial (ISO/IEC 13249-3) defines the curve types (`CircularString`, `CompoundCurve`, `CurvePolygon`) atop OGC Simple Feature Access's abstract `Curve`/`Surface` hierarchy — these are **not** OGC SFA types (see the §6 attribution note in `docs/audit-phase3-overlay.md`) — and NTS *does* have `Curve`, `CircularString`, and `CompoundCurve` as first-class subclasses of `Geometry`. The stall is one level down: curves exist at the type level but cannot survive contact with the algorithm layer because every major operation consumes and emits `Coordinate[]` via `SegmentString` / `NodedSegmentString`. Linearisation is not a preprocessing choice — it is architecturally enforced. The existing extension (`NetTopologySuite.Curve`) wraps every overlay call in a `Flatten()` that converts curves to chords *before* any computation runs. The robust-predicates layer (`Orientation.Index`, `RobustLineIntersector`) is the only place curves could plug in without rewriting the data plane.
 
 ## 2. Code & History Archaeology
 
