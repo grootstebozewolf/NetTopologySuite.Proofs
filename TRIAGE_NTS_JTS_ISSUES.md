@@ -38,6 +38,52 @@ tracker: **#69**.
 | **#68** | Delaunay triangulation / Voronoi correctness | `Non-urgent` | `Triangle.v`, `Tin.v`, `GeneralTriangle{Parity,Separation}.v`, `RightTriangle*` exist; no empty-circle Delaunay / Voronoi proofs yet. **Core primitive now available:** `inCircle_R` / `b64_inCircle` proven via #146. | Correctly labeled — primitive unblocked, not yet started |
 | **#69** | Umbrella / epic tracker | `Expectant` | Tracking issue only. | Keep open as the epic tracker |
 
+## JTS #1195 TAG → proof-area mapping
+
+The driving EPIC (locationtech/jts#1195) is structured as ~40 self-contained
+**TAGs** across 7 phases ("one TAG per PR"). This maps the proof-relevant TAGs
+onto the batch issues and the corpus artifacts that back them. Status:
+**✅ proven** (Qed and/or extracted oracle) · **🟡 partial** (foundation/predicate
+proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
+**—** not proof-relevant (rendering / structural plumbing).
+
+| JTS TAG | What it is | Proof issue | Corpus artifact / oracle | Status |
+|---|---|---|---|---|
+| **F-CP / F-MC / F-MS** | Structural `CurvePolygon` / `MultiCurve` / `MultiSurface` (preserve ring/member curves) | #69, #64 | `theories/CurveGeometry.v` (SQL/MM types, `CurveRing`, validity, chord bridge) | 🟡 structural model exists |
+| **B-CP / B-MS** | Boundary of curve composites | #69 | — | ⬜ |
+| **M-LEN-CS / M-LEN-CC** | Arc / compound-curve length (`r·θ`) | #64 | `ArcLength.v`, `Atan2.v`, `AngleBetween.v`; oracle `ARC_LENGTH_INVARIANTS_EXACT` / `ARC_SHORTER` | ✅ exact invariants; float length is interface-boundary |
+| **M-AREA-CP** | `CurvePolygon` area (Green's theorem + circular-segment correction) | #64 | oracle `ARC_AREA_INVARIANTS_EXACT` | ✅ exact rational invariants; float area interface-boundary |
+| **M-DIM** | Dimension of curve geometries | #69 | — | ⬜ structural |
+| **V-CP / V-CS** | Arc-aware validity (arc self-intersection, orientation via sector area, holes-in-shell) | #64 | `ArcOrient.v`, `ArcHotPixel.v`, `theories-flocq/InCircle_b64_exact.v` | 🟡 in-circle sign ✅ (full-plane, 3-ax); arc-span/self-intersect soundness open (`arc_chord_intersect_sound`) |
+| **D-PT** | Analytical point-to-arc distance | #64 | `Distance.v` (foundation) + arc primitives | 🟡 |
+| **D-AA** | Arc-arc distance | #64 | `ArcIntersect.v` (predicate) | 🟡 |
+| **C-\*** | Centroid of curve geometries | #69 | `Centroid.v` (linear) | ⬜ curve case planned |
+| **H-\*** | Hulls over curve inputs | #69 | `Convex.v` (linear) | ⬜ curve case planned |
+| **S-\*** | Simplification of curves | #69 | `Simplify.v`, `Linearise.v` (linear) | ⬜ curve case planned |
+| **AT-\*** | Affine transforms (non-similarity → detect-and-densify, §7 risk) | #69 | — | ⬜ |
+| **LRF-\*** | Linear referencing on curves | #69 | — | ⬜ |
+| **DSF** | Densifier (curve → chords internally) | #64, #65 | `ArcChordApprox.v` (sagitta bound), `CurveLinearise.v` (`chord_approx_ring_closed`) | ✅ chord-approx faithfulness (closure); sagitta/`ring_simple` open |
+| **BUF-1 / BUF-N** | Single-/multi-arc buffer → `CurvePolygon` | #65 | 18× `Buffer*.v` (linear), `ExtractBufferRings.v` | 🟡 linear proven; arc-output blocked on #64 coords |
+| **OFF** | Offset curve (arc-preserving) | #65 | `BufferOffset.v` | 🟡 linear; arc planned |
+| **VBF** | Variable-distance buffer | #65 | — | ⬜ |
+| **N-AL** | Arc-line noding / intersection | #64 | `theories-flocq/ArcLineIntersect_b64_exact.v` (Scope A), `ArcIntersect.v`, `ArcIntersectIVT.v` | 🟡 Scope A (pre-division) ✅; coordinate identity (Scope B/C) queued |
+| **N-AA** | Arc-arc noding / intersection | #64 | `ArcIntersect.v` (`arc_arc_intersects` predicate) | 🟡 existence predicate ✅; quartic coordinates open |
+| **N-SS** | `SegmentString` / `Noder` for curves | #66 | `SnapRounding_b64.v`, `HotPixel*`; oracle `CURVE_SNAP_DECISION` | 🟡 linear noding ✅; curve-snap decision oracle ✅ |
+| **PRC-SN** | `PrecisionModel.makePrecise` on curves | #66 | oracle `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (exact-`Q`) | ✅ curve-snap grid-friendliness |
+| **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
+| **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `theories/DE9IM.v`, `RelateLineLine.v`, `RelateIntDetBound.v` | 🟡 line-line DE-9IM ✅; arc-aware planned |
+| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly | ⬜ (linear `extract_rings_valid` is the live deferred entry) |
+| **TRI-DT** | Delaunay on (densified) curved boundaries | #68 | `theories-flocq/InCircle_b64_exact.v` (primitive), `Triangle.v`, `Tin.v` | 🟡 in-circle primitive ✅; Delaunay proper planned |
+| **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
+| **TB-\* / F-RD** | TestBuilder rendering / `ShapeWriter` hooks | — | — | — not proof-relevant |
+
+**Reading the table against the EPIC's Definition of Done (§10).** JTS#1195's
+DoD requires curve-preserving output "**where mathematically sound**" — which is
+exactly what the ✅ rows certify and the 🟡 rows bound. The §7 "arc intersection
+performance" risk concerns the N-AA/N-AL primitives whose *exactness* is already
+proven here (`InCircle_b64_exact` / `ArcLineIntersect_b64_exact`): the corpus
+supplies the soundness oracle while JTS settles the performance design.
+
 ## Referenced upstream issues
 
 Status of the JTS/NTS issues the batch cites as drivers. Re-check before
