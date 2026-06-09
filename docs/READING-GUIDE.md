@@ -13,21 +13,24 @@ Names are mnemonic — they alliterate with the role so they stick.
 **Role.** Uses NetTopologySuite for spatial computation; curious about
 which geometric primitives have formal proofs.
 
-**Start at.** `README.md`, then in order:
+**Start at.** [`README.md`](../README.md), then in order:
 
-  1. `phase0-completion.md` — orient2d (Shewchuk Stage A robust
+  1. [`phase0-completion.md`](phase0-completion.md) — orient2d (Shewchuk Stage A robust
      orientation).
-  2. `phase1-completion.md` — segment-pair intersection (filtered +
+  2. [`phase1-completion.md`](phase1-completion.md) — segment-pair intersection (filtered +
      exact + forward-error).
-  3. `phase2-hotpixel-progress.md` — hot-pixel snap-rounding (the
+  3. [`phase2-hotpixel-progress.md`](phase2-hotpixel-progress.md) — hot-pixel snap-rounding (the
      Phase 2 milestone progression).
-  4. `audit-phase3-overlay.md` § headers — polygon overlay correctness
+  4. [`audit-phase3-overlay.md`](audit-phase3-overlay.md) § headers — polygon overlay correctness
      (Union/Intersection/Difference/SymDiff).
-  5. `audit-phase4-curves.md` § headers — arc/curve overlay status
+  5. [`audit-phase4-curves.md`](audit-phase4-curves.md) § headers — arc/curve overlay status
      (SQL/MM CIRCULARSTRING; conditional headline lands, JCT gap
      precisely characterised).
 
-**Skip.** Anything under `docs/history/sessions/` (forensic), the
+For the citable index of every Qed-closed theorem (with axiom footprint
+and regime), see [`verified-claims.md`](verified-claims.md).
+
+**Skip.** Anything under [`docs/history/sessions/`](history/sessions/) (forensic), the
 Shewchuk Theorem 13 deep-dives (research-grade), and the Hobby-lemma
 docs (cell-snap-rounding internals).
 
@@ -43,26 +46,33 @@ named, not handwaved.
 **Role.** Models as-built geometry; cares about CIRCULARSTRING /
 COMPOUNDCURVE / arc primitives.
 
-**Start at.** `audit-phase4-curves.md`, then:
+**Start at.** [`audit-phase4-curves.md`](audit-phase4-curves.md), then:
 
-  1. `audit-phase4-chord-overfitting.md` — the chord-approximation
+  1. [`audit-phase4-chord-overfitting.md`](audit-phase4-chord-overfitting.md) — the chord-approximation
      thesis direction (Option B).
-  2. `point-in-ring-jct-path.md` — JCT path to `point_in_ring_correct`
+  2. [`point-in-ring-jct-path.md`](point-in-ring-jct-path.md) — JCT path to `point_in_ring_correct`
      (relevant for ring-membership in valid polygons with arcs).
-  3. `theories/ArcOrient.v`, `theories/ArcIntersect.v`,
-     `theories/ArcHotPixel.v` file headers — the R-side arc
+  3. [`theories/ArcOrient.v`](../theories/ArcOrient.v), [`theories/ArcIntersect.v`](../theories/ArcIntersect.v),
+     [`theories/ArcHotPixel.v`](../theories/ArcHotPixel.v) file headers — the R-side arc
      predicates.
   4. `theories-flocq/ArcOrient_b64.v`,
      `theories-flocq/ArcIntersect_b64.v`,
      `theories-flocq/ArcHotPixel_b64.v` file headers — the binary64
-     mirrors.
+     mirrors. (NB: the live b64 arc files are
+     [`theories-flocq/ArcCircle_b64_compute.v`](../theories-flocq/ArcCircle_b64_compute.v) and
+     [`theories-flocq/ArcPixel_b64_compute.v`](../theories-flocq/ArcPixel_b64_compute.v); the three names
+     above are stale.)
+
+The curve-awareness proof needs and their status across issues #64–#69
+are triaged in [`../TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md) (umbrella) and the
+per-area [`issue-64-arc-primitives-triage.md`](issue-64-arc-primitives-triage.md).
 
 **Skip.** Phase 0/1/2 unless you care about the underlying primitives.
 
 **Take away.** Arc-overlay correctness lands conditionally
 (`arc_overlay_correct_chord_approx`); the b64 in-circle layer now has
-Qed-closed sign + integer-regime value exactness (`InCircle_b64_exact.v`,
-PR #146). Arc-line coordinates are Scope A only (`ArcLineIntersect_b64_exact.v`
+Qed-closed sign + integer-regime value exactness ([`theories-flocq/InCircle_b64_exact.v`](../theories-flocq/InCircle_b64_exact.v),
+PR #146). Arc-line coordinates are Scope A only ([`theories-flocq/ArcLineIntersect_b64_exact.v`](../theories-flocq/ArcLineIntersect_b64_exact.v)
 — `sP`/`sQ`/`dx`/`dy` before division).
 
 **Trust chain.** The Phase 4 oracle modes (INCIRCLE_SIGN,
@@ -71,7 +81,7 @@ from the Coq layer — they are no longer hand-rolled OCaml. INCIRCLE_SIGN
 is backed by `b64_inCircle_B2R_sign_sound_small_int` at `|coord| <= 2^11`
 (degree-4 chain; tighter than orient2d's `2^25`). When a mode says
 TRUE/FALSE, the Coq theorem behind it is identifiable from the protocol
-docstring in `oracle/driver.ml` and `docs/verified-claims.md`.
+docstring in [`oracle/driver.ml`](../oracle/driver.ml) and [`verified-claims.md`](verified-claims.md).
 
 ---
 
@@ -83,19 +93,21 @@ correctness and adherence to corpus discipline.
 
 **Start at.** The four CI-enforced registries:
 
-  1. `axiom-allowlist.txt` — the three permitted axioms.
-  2. `audit-exceptions.txt` — Category C per-file Classical_Prop pull
+  1. [`axiom-allowlist.txt`](axiom-allowlist.txt) — the three permitted axioms.
+  2. [`audit-exceptions.txt`](audit-exceptions.txt) — Category C per-file Classical_Prop pull
      exemptions.
-  3. `admitted-deferred-proofs.txt` — registered Admitteds with
+  3. [`admitted-deferred-proofs.txt`](admitted-deferred-proofs.txt) — registered Admitteds with
      discharge plans.
-  4. `admitted-counterexamples.txt` — registered Admitteds with
+  4. [`admitted-counterexamples.txt`](admitted-counterexamples.txt) — registered Admitteds with
      verified-false statements.
 
 **Also.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) +
-`build-oracle.yml`, the `Dockerfile`, `docs/development-environment.md`.
+[`build-oracle.yml`](../.github/workflows/build-oracle.yml), the [`Dockerfile`](../Dockerfile), [`docs/development-environment.md`](development-environment.md).
+The living theorem index is [`verified-claims.md`](verified-claims.md), checked by
+[`scripts/validate-claims.sh`](../scripts/validate-claims.sh) on every CI run.
 
-**On every PR.** Run `scripts/check_admitted.sh`,
-`scripts/audit_axioms.sh`, `scripts/check_readme_axioms.sh` — they're
+**On every PR.** Run [`scripts/check_admitted.sh`](../scripts/check_admitted.sh),
+[`scripts/audit_axioms.sh`](../scripts/audit_axioms.sh), [`scripts/check_readme_axioms.sh`](../scripts/check_readme_axioms.sh) — they're
 the per-PR sanity net.
 
 **Reject.** Bare `Admitted.` without registry entry, hand-rolled OCaml
@@ -109,12 +121,12 @@ the gatekeeper's job is to keep the registries and pipeline in sync
 with the `.v` files and review PRs against them. (CI Cara and Risk-Officer Rico responsibilities now live under this combined Quality Gatekeeper role.)
 
 **When a new Admitted lands.** Add an entry to
-`admitted-deferred-proofs.txt` (provable) or
-`admitted-counterexamples.txt` (counterexample-blocked) with the
+[`admitted-deferred-proofs.txt`](admitted-deferred-proofs.txt) (provable) or
+[`admitted-counterexamples.txt`](admitted-counterexamples.txt) (counterexample-blocked) with the
 format:
 `file:theorem_name | proof_structure_doc | section_references`.
 The entry should include a discharge plan + consumer chain (which
-downstream theorems use it). `scripts/check_admitted.sh` validates
+downstream theorems use it). [`scripts/check_admitted.sh`](../scripts/check_admitted.sh) validates
 the registration on every CI run.
 
 ---
@@ -125,26 +137,25 @@ the registration on every CI run.
 the corpus's methodology (including independent formal-methods audits
 and trust-chain verification).
 
-**Start at.** `slice-a-retro.md` and `slice-a-piece-5b-retro.md` —
+**Start at.** [`slice-a-retro.md`](slice-a-retro.md) and [`slice-a-piece-5b-retro.md`](slice-a-piece-5b-retro.md) —
 engagement-level syntheses.
 
 **Then in any order:**
 
-  1. `audit-phase2-snap-rounding.md`, `audit-phase3-overlay.md`,
-     `audit-phase3-milestone5.md`, `audit-phase4-curves.md`,
-     `audit-shewchuk-stages.md` — per-phase proof-structure audits.
-  2. `hobby-theorem-proof-structure.md`,
-     `shewchuk-theorem-13-proof-structure.md` — proof structures for
+  1. [`audit-phase2-snap-rounding.md`](audit-phase2-snap-rounding.md), [`audit-phase3-overlay.md`](audit-phase3-overlay.md),
+     [`audit-phase3-milestone5.md`](audit-phase3-milestone5.md), [`audit-phase4-curves.md`](audit-phase4-curves.md),
+     [`audit-shewchuk-stages.md`](audit-shewchuk-stages.md) — per-phase proof-structure audits.
+  2. [`hobby-theorem-proof-structure.md`](hobby-theorem-proof-structure.md),
+     [`shewchuk-theorem-13-proof-structure.md`](shewchuk-theorem-13-proof-structure.md) — proof structures for
      the named load-bearing theorems.
-  3. `point-in-ring-seams-3-5-7-red.md` (or `point-in-ring-jct-path.md`),
-     `point-in-ring-jct-path.md`,
-     `point-in-ring-seam-attempts.md`,
-     `point-in-ring-tangent-attempts.md` — the JCT / seven-seam analysis
+  3. [`point-in-ring-seams-3-5-7-red.md`](point-in-ring-seams-3-5-7-red.md) (or [`point-in-ring-jct-path.md`](point-in-ring-jct-path.md)),
+     [`point-in-ring-seam-attempts.md`](point-in-ring-seam-attempts.md),
+     [`point-in-ring-tangent-attempts.md`](point-in-ring-tangent-attempts.md) — the JCT / seven-seam analysis
      of `point_in_ring_correct` (Phase 5 work).
-  4. `soundness-strategy.md`, `stage-d-feasibility.md`,
-     `stage-d-retro.md`, `stage-d-chain-composition-approach.md` —
+  4. [`soundness-strategy.md`](soundness-strategy.md), [`stage-d-feasibility.md`](stage-d-feasibility.md),
+     [`stage-d-retro.md`](stage-d-retro.md), [`stage-d-chain-composition-approach.md`](stage-d-chain-composition-approach.md) —
      soundness-strategy retrospectives.
-  5. `docs/history/sessions/*` — per-session forensic record (only
+  5. [`docs/history/sessions/`](history/sessions/) — per-session forensic record (only
      when you need to verify the chronology or read precise stuck
      goals).
   6. The four registries + run `scripts/audit_axioms.sh /tmp/full-build.log`
@@ -173,20 +184,24 @@ shipping discipline; cite as such.
 **Role.** Decides what ships next, tracks phase completion, budgets
 sessions, plans cadence, and retrospects on how the work actually went.
 
-**Start at.** Top-level retros + `phase0-completion.md`,
-`phase1-completion.md`, `phase2-hotpixel-progress.md` — what's done.
+**Start at.** Top-level retros + [`phase0-completion.md`](phase0-completion.md),
+[`phase1-completion.md`](phase1-completion.md), [`phase2-hotpixel-progress.md`](phase2-hotpixel-progress.md) — what's done.
 
 **Then for "what's next" and cadence:**
 
-  1. `ecosystem-search-2026-05-29.md` — JCT / Real.structure / atan2
+  1. [`ecosystem-search-2026-05-29.md`](ecosystem-search-2026-05-29.md) — JCT / Real.structure / atan2
      ecosystem audit; verdicts with cost estimates.
-  2. `point-in-ring-seams-3-5-7-red.md` — most recent gap inventory
+  2. [`point-in-ring-seams-3-5-7-red.md`](point-in-ring-seams-3-5-7-red.md) — most recent gap inventory
      for `point_in_ring_correct` with cost-per-seam.
-  3. `admitted-deferred-proofs.txt` — every registered Admitted has
+  3. [`admitted-deferred-proofs.txt`](admitted-deferred-proofs.txt) — every registered Admitted has
      a discharge plan + consumer chain; this is the next-work
      backlog.
-  4. `docs/history/sessions/README.md` — index of per-session
+  4. [`docs/history/sessions/README.md`](history/sessions/README.md) — index of per-session
      prompts + outcomes (chronological).
+  5. [`../TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md) — the curve-awareness proof
+     batch (#64–#69) triage + order of attack; per-area detail in
+     [`issue-64-arc-primitives-triage.md`](issue-64-arc-primitives-triage.md) and
+     [`issue-67-relateng-triage.md`](issue-67-relateng-triage.md).
 
 **Skip.** (Nothing major — this combined role owns the meta layer.)
 
@@ -223,7 +238,7 @@ stating stopping conditions up front prevents scope creep mid-session.
 
 **Role.** First contribution to the corpus; or casual reader who picked up the repo from a link and wants the elevator pitch; or absolute beginner with zero prior exposure to proof assistants (Rocq/Coq).
 
-**Start at.** `README.md` (first three paragraphs for the headline: "every proof ends with `Qed`, no `Admitted`, only three classical axioms allowed") or `README.md` § "The invariant" for contributors.
+**Start at.** [`README.md`](../README.md) (first three paragraphs for the headline: "every proof ends with `Qed`, no `Admitted`, only three classical axioms allowed") or [`README.md`](../README.md) § "The invariant" for contributors.
 
 (If you have literally never seen a proof assistant before: open [`docs/pythagoras-for-beginners.v`](pythagoras-for-beginners.v) in an IDE (CoqIDE / VSCode + VSCoq) and step through it. It is deliberately self-contained, starts from `Record Point`, defines `dist_sq`, proves the 3-4-5 case first with `ring` then explicitly with asserts/rewrites for pedagogy, and pre-bunks "why spend so much compute on obvious geometry?": even Pythagoras is non-trivial once every algebraic step must be justified from the axioms; the load-bearing chokepoints like orientation/intersection/snap-rounding are what justify the engineering investment.)
 
@@ -231,14 +246,14 @@ A second gentle on-ramp is [`docs/sqrt3-irrational-for-beginners.v`](sqrt3-irrat
 
 **Then (for contributors / deeper dive):**
 
-  1. `development-environment.md` — get the toolchain running.
+  1. [`development-environment.md`](development-environment.md) — get the toolchain running.
   2. Any one Phase completion doc that touches your area of interest.
   3. The corresponding `audit-*.md` for that phase.
-  4. A short Qed-closed file (e.g. `theories/ArcIntersect.v`, ~200
+  4. A short Qed-closed file (e.g. [`theories/ArcIntersect.v`](../theories/ArcIntersect.v), ~200
      lines) — read end-to-end as a sample.
 
 **For your first PR.**
-  - Pick the smallest Admitted in `admitted-deferred-proofs.txt`
+  - Pick the smallest Admitted in [`admitted-deferred-proofs.txt`](admitted-deferred-proofs.txt)
     whose discharge plan you understand.
   - Or pick a `WHAT IS QED-CLOSED / WHAT REMAINS OPEN` item from
     one of the audits.
@@ -270,12 +285,14 @@ proof-structure docs (Scholar Sam's path).
 **Then:**
 
   1. The `stage-d-*.md` cluster — design-route documentation for
-     Stage D (a complex multi-route engagement).
-  2. `docs/history/sessions/slice-a-piece-5b-route1-design-session.md`
+     Stage D (a complex multi-route engagement):
+     [`stage-d-feasibility.md`](stage-d-feasibility.md), [`stage-d-retro.md`](stage-d-retro.md),
+     [`stage-d-chain-composition-approach.md`](stage-d-chain-composition-approach.md).
+  2. [`docs/history/sessions/slice-a-piece-5b-route1-design-session.md`](history/sessions/slice-a-piece-5b-route1-design-session.md)
      — what a design-session artifact looks like.
-  3. `point-in-ring-seams-3-5-7-red.md` (or `point-in-ring-jct-path.md`) — exemplar seam-map / JCT path work
+  3. [`point-in-ring-seams-3-5-7-red.md`](point-in-ring-seams-3-5-7-red.md) (or [`point-in-ring-jct-path.md`](point-in-ring-jct-path.md)) — exemplar seam-map / JCT path work
      workflow for breaking down a thesis-scale problem.
-  4. `audit-phase3-milestone5.md` § 6 (Conditional strategy) — how
+  4. [`audit-phase3-milestone5.md`](audit-phase3-milestone5.md) § 6 (Conditional strategy) — how
      the conditional-headline decision was made.
 
 **Take away.** Design sessions produce mermaid diagrams + named-
@@ -291,11 +308,11 @@ methodology.
   - **Seam map**: when a target theorem decomposes into N
     sub-problems, write each as a "seam" with what-exists / what's-
     missing / cost-per-seam. See
-    `point-in-ring-seams-3-5-7-red.md` (or `point-in-ring-jct-path.md`) as the exemplar.
+    [`point-in-ring-seams-3-5-7-red.md`](point-in-ring-seams-3-5-7-red.md) (or [`point-in-ring-jct-path.md`](point-in-ring-jct-path.md)) as the exemplar.
   - **Red/green workflow**: red = state simplest target + predicted
     tangents; green = attempt each, stop at first genuine tangent.
-    The recent `point-in-ring-seams-3-5-7-red.md` +
-    `point-in-ring-tangent-attempts.md` pair shows the cadence.
+    The recent [`point-in-ring-seams-3-5-7-red.md`](point-in-ring-seams-3-5-7-red.md) +
+    [`point-in-ring-tangent-attempts.md`](point-in-ring-tangent-attempts.md) pair shows the cadence.
 
 ---
 
@@ -304,19 +321,20 @@ methodology.
 **Role.** Downstream consumer (e.g. `.Curve` C# differential-test
 runner, oracle binary user).
 
-**Start at.** `README.md` + `oracle/driver.ml` head docstring (the
+**Start at.** [`README.md`](../README.md) + [`oracle/driver.ml`](../oracle/driver.ml) head docstring (the
 protocol reference).
 
 **Then:**
 
-  1. The `oracle/driver.ml` file header — full protocol for all
+  1. The [`oracle/driver.ml`](../oracle/driver.ml) file header — full protocol for all
      modes (SIMPLIFY, ORIENT, INTERSECT, PASSES_THROUGH,
      EDGE_IN_RESULT, INCIRCLE_SIGN, ARC_CHORD_CROSSES_CIRCLE,
      ARC_PASSES_THROUGH_PIXEL).
-  2. `.github/workflows/build-oracle.yml` — how `oracle_bin` is
+  2. [`.github/workflows/build-oracle.yml`](../.github/workflows/build-oracle.yml) — how `oracle_bin` is
      built and published.
   3. The Phase 4 audit + recent `Arc*_b64.v` headers for the trust
-     chain of the Phase 4 modes.
+     chain of the Phase 4 modes; each mode's backing theorem is in
+     [`verified-claims.md`](verified-claims.md).
 
 **Skip.** Internal Coq proof structures — you trust the Qed.
 
@@ -340,13 +358,14 @@ reference implementation.
 **Role.** Writes NetTopologySuite code upstream; needs to know which
 algorithms have proofs and what those proofs imply for behaviour.
 
-**Start at.** `README.md` § "The invariant" + the four phase-
-completion docs (`phase0-completion.md`, `phase1-completion.md`,
-`phase2-hotpixel-progress.md`, audit-phase3-overlay.md).
+**Start at.** [`README.md`](../README.md) § "The invariant" + the four phase-
+completion docs ([`phase0-completion.md`](phase0-completion.md), [`phase1-completion.md`](phase1-completion.md),
+[`phase2-hotpixel-progress.md`](phase2-hotpixel-progress.md), [`audit-phase3-overlay.md`](audit-phase3-overlay.md)).
 
 **Then:**
 
-  1. Map each NTS algorithm to its corpus counterpart:
+  1. Map each NTS algorithm to its corpus counterpart (theorem
+     statements indexed in [`verified-claims.md`](verified-claims.md)):
      - `RobustLineIntersector` → `b64_intersect_*` (Phase 0/1).
      - `RobustDeterminant` → `b64_orient2d` + Stage A filter (Phase 0).
      - `HotPixel` snap-rounding → `b64_in_hot_pixel` + snap-round
@@ -354,8 +373,11 @@ completion docs (`phase0-completion.md`, `phase1-completion.md`,
      - `OverlayNG` boolean ops → `overlay_ng_correct_conditional`
        (Phase 3, conditional).
      - CIRCULARSTRING arc operations → Phase 4 `Arc*_b64.v` +
-       `InCircle_b64_exact.v` / `ArcLineIntersect_b64_exact.v`
+       [`InCircle_b64_exact.v`](../theories-flocq/InCircle_b64_exact.v) / [`ArcLineIntersect_b64_exact.v`](../theories-flocq/ArcLineIntersect_b64_exact.v)
        (in-circle exact at `|coord| <= 2^11`; arc-line Scope A).
+     - RelateNG / DE-9IM predicates → [`theories/DE9IM.v`](../theories/DE9IM.v),
+       [`theories/RelateLineLine.v`](../theories/RelateLineLine.v), [`theories/RelateIntDetBound.v`](../theories/RelateIntDetBound.v)
+       (#67; see [`issue-67-relateng-triage.md`](issue-67-relateng-triage.md)).
   2. Read the soundness theorem statement (not its proof) for the
      algorithm you're touching.
 
@@ -375,7 +397,7 @@ fall back when UNCERTAIN.
 
 **Role.** The benevolent dictator for life and ultimate authority on the project. "Joost mag het weten" is the Dutch proverb ("only Joost knows" / "Joost may know it all"). He is assumed to have (or be able to quickly form) the complete picture of the corpus, its history, its gaps, and its long-term direction.
 
-**Start at.** The full `README.md` (including all status and the embedded catalogue), the complete `READING-GUIDE.md`, every major retro and proof-structure document, the entire `docs/history/` tree (especially `sessions/`), the strategy and seam-map documents, and the CI/oracle credibility material. You are the one actor whose path legitimately exercises the archive.
+**Start at.** The full [`README.md`](../README.md) (including all status and the embedded catalogue), the complete [`READING-GUIDE.md`](READING-GUIDE.md), every major retro and proof-structure document, the entire [`docs/history/`](history/) tree (especially [`sessions/`](history/sessions/)), the strategy and seam-map documents, and the CI/oracle credibility material. You are the one actor whose path legitimately exercises the archive.
 
 **Special power.** Final say on:
 - Whether a marginal file stays at top level or moves to history/.
@@ -393,14 +415,14 @@ In pruning work, Joost is the explicit exception to the actor filter and the per
 
 | Mnemonic | Role | First doc | Reading time |
 |---|---|---|---|
-| Newbie Nate (incl. Plain Reader Pete / Rocq Rookie Ray) | Casual reader / first contrib / zero-knowledge Coq on-ramp via pythagoras + sqrt3 example | `README.md` (3 ¶) + `pythagoras-for-beginners.v` + `sqrt3-irrational-for-beginners.v` + dev-env | 1-10 min + examples |
-| GIS Gus             | GIS user                    | `README.md` → `phase[0-2]-*.md`        | 30 min |
-| BIM Bea             | BIM user                    | `audit-phase4-curves.md`               | 1 h |
-| Quality Gatekeeper (Max/Ruby) | Corpus maintainer + PR reviewer + CI/Risk | `axiom-allowlist.txt` + registries + `ci.yml` | 20 min |
-| Scholar Sam (incl. Auditor) | Formal-methods researcher + independent audit | `slice-a-retro.md` + registries + audit script | half day |
-| Project Meta (Pat/Sara) | Roadmap / scope + session cadence | `phase*-completion.md` + top-level retros + `history/sessions/` | 1-2 h |
+| Newbie Nate (incl. Plain Reader Pete / Rocq Rookie Ray) | Casual reader / first contrib / zero-knowledge Coq on-ramp via pythagoras + sqrt3 example | [`README.md`](../README.md) (3 ¶) + [`pythagoras-for-beginners.v`](pythagoras-for-beginners.v) + [`sqrt3-irrational-for-beginners.v`](sqrt3-irrational-for-beginners.v) + dev-env | 1-10 min + examples |
+| GIS Gus             | GIS user                    | [`README.md`](../README.md) → `phase[0-2]-*.md`        | 30 min |
+| BIM Bea             | BIM user                    | [`audit-phase4-curves.md`](audit-phase4-curves.md)               | 1 h |
+| Quality Gatekeeper (Max/Ruby) | Corpus maintainer + PR reviewer + CI/Risk | [`axiom-allowlist.txt`](axiom-allowlist.txt) + registries + [`ci.yml`](../.github/workflows/ci.yml) | 20 min |
+| Scholar Sam (incl. Auditor) | Formal-methods researcher + independent audit | [`slice-a-retro.md`](slice-a-retro.md) + registries + audit script | half day |
+| Project Meta (Pat/Sara) | Roadmap / scope + session cadence | [`phase*-completion.md`](phase0-completion.md) + top-level retros + [`history/sessions/`](history/sessions/) | 1-2 h |
 | Tech-Lead Tess      | Engagement design           | retros + proof-structure docs / seam maps | half day |
-| Consumer Connie / NTS-Upstream Norm | Oracle binary user or NTS upstream contributor | `oracle/driver.ml` header + phase completions | 15-60 min |
+| Consumer Connie / NTS-Upstream Norm | Oracle binary user or NTS upstream contributor | [`oracle/driver.ml`](../oracle/driver.ml) header + phase completions | 15-60 min |
 | Joost the BDFL      | Benevolent dictator for life (Joost mag het weten) | Full README + READING-GUIDE + entire history/ tree | as needed |
 
 (Note: several roles were collapsed for overlap after the initial 17-card list (Pete into Nate/Ray; CI Cara and Risk-Officer Rico into Quality Gatekeeper; Connie/Norm grouped) — see the cards above for the current grouping.)
