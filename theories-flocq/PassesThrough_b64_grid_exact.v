@@ -65,7 +65,10 @@
    cap, the value-0 edge (16) completes the gap-beats-band family, the
    `gridbound` algebra (17) packages it, and exhibiting the exact clip bounds as
    `gridbound` (18) discharges `clip_separated` outright on the tight integer
-   grid `|n| <= 2^22`.  RESULT: `b64_passes_through_grid_exact` --
+   grid `|n| <= 2^22`.  (Why 2^22: it is the half-quotient `gridbound` limit --
+   the t-bound numerators `2*ncc +/- 1 - 2*n0` then fit in 2^24 <= 2^25 and the
+   runs `2*(n1 - n0)` in 2^24, the bounds `gridbound`/Slice-15 require.)
+   RESULT: `b64_passes_through_grid_exact` --
    `compute = spec` UNCONDITIONALLY on the tight grid, Qed, no named hypotheses
    (soundness `b64_passes_through_sound_on_grid` + Slice 9 completeness).  The
    only remaining items are the WIDTH extension to the full `coord_int_safe`
