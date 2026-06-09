@@ -102,6 +102,9 @@ jobs:
               test -f oracle/extracted.mli
               make -C oracle/
               test -x oracle/oracle_bin
+              # Functional smoke: the RELATE_MATRIX mode (issue #67) must
+              # reproduce every pinned Romanschek line-line DE-9IM matrix.
+              sh oracle/relate_smoke.sh oracle/oracle_bin
             '
           docker cp oracle-build:/workspace/oracle/oracle_bin ./oracle_bin
           docker rm oracle-build

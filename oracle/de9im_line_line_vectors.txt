@@ -11,9 +11,15 @@
 #   COQ <definition name in RelateLineLine.v>
 #   NOTES <predicate footprint under DE9IM.v / comparison to S2 witness>
 #
-# Future oracle mode: RELATE_MATRIX (not implemented — driver.ml has no relate
-# extraction yet). Until then, differential tests compare NTS/JTS Relate().ToString()
-# against MATRIX below; Coq certifies predicate algebra on the pinned matrices.
+# Oracle mode: RELATE_MATRIX (driver.ml) emits the EXACT line-line DE-9IM matrix
+# for two closed segments (4 endpoint lines, "x y"), as the 9-char row-major
+# string II IB IE BI BB BE EI EB EE — the same spelling NTS/JTS
+# Relate().ToString() produces. It reproduces every MATRIX below exactly
+# (decided in exact rationals, no float). Companion RELATE_MATCHES tests a
+# concrete matrix against a DE-9IM pattern (JTS IntersectionMatrix.matches),
+# mirroring DE9IM.v char_matches. Differential tests compare NTS/JTS
+# Relate().ToString() against both the oracle and the MATRIX below; Coq
+# certifies the predicate algebra on the pinned matrices.
 
 TEST 6
 WKT_A LINESTRING(682 623, 496 1104)

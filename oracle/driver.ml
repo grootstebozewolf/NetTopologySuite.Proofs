@@ -226,6 +226,45 @@
                       circumcentre + radius "<ox> <oy> <r2> <0|1>" (last =
                       centre-on-grid flag), or DEGEN / NAN.
 
+     RELATE_MATRIX   -- EXACT line-line DE-9IM intersection matrix (issue #67).
+        line 2:       <ax0> <ay0>   -- A endpoint 0
+        line 3:       <ax1> <ay1>   -- A endpoint 1
+        line 4:       <bx0> <by0>   -- B endpoint 0
+        line 5:       <bx1> <by1>   -- B endpoint 1
+        output:       the 9-char DE-9IM string, row-major
+                      II IB IE BI BB BE EI EB EE, each cell 'F' (empty) or a
+                      dimension digit 0/1/2 -- the same spelling NTS/JTS
+                      `Geometry.Relate(other).ToString()` emits.  "NAN" if any
+                      coordinate is non-finite; "DEGENERATE" if either segment
+                      has coincident endpoints (the boundary model below assumes
+                      a proper 1-D line).
+                      EXACT ground truth for the two-closed-segment (2-point
+                      LineString) relate: every binary64 is dyadic, so the whole
+                      matrix is decided in exact rationals (zarith Q) -- no
+                      float, no rounding, ratchet-clean.  Boundary model: the
+                      interior is the open segment, the boundary is the two
+                      endpoints (JTS Mod-2 rule for a simple line), the exterior
+                      is the rest of the plane (EE always 2).
+                      Coq pins: theories/RelateLineLine.v (Romanschek IJGI 2021
+                      line-line matrices `ll_matrix_paper_test*`, predicate
+                      lemmas) + theories/DE9IM.v (matrix algebra).  Validation
+                      corpus: oracle/de9im_line_line_vectors.txt (the six
+                      Romanschek WKT pairs).  Honest scope: two closed segments
+                      only -- multi-vertex polylines, areas, and the prepared
+                      cache are out of scope (see RelateLineLine.v).
+
+     RELATE_MATCHES  -- DE-9IM pattern match (JTS IntersectionMatrix.matches).
+        line 2:       <matrix>    9-char concrete matrix (F / 0 / 1 / 2)
+        line 3:       <pattern>   9-char DE-9IM pattern, chars from {* F T 0 1 2}
+        output:       single token "TRUE" or "FALSE".
+                      Mirrors DE9IM.v `char_matches` / `matrix_matches`:
+                      '*' = PWild (any), 'F' = PFalse (empty only), 'T' = PTrue
+                      (nonempty, any dimension), '0'/'1'/'2' = PDim n (exact
+                      dimension).  Pure char algebra -- no arithmetic.  Lets the
+                      differential harness check a named predicate's pattern
+                      table (e.g. crosses_ll "0********") against the matrix from
+                      RELATE_MATRIX, the way JTS RelatePredicate does.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -1122,6 +1161,138 @@ let run_snap_scaled () =
   print_point { bx  = b64_snap_coord_scaled p.bx  scale;
                 by_ = b64_snap_coord_scaled p.by_ scale }
 
+(* ----- RELATE_MATRIX / RELATE_MATCHES modes (issue #67, line-line DE-9IM). -
+
+   EXACT line-line DE-9IM intersection matrix for two CLOSED, non-degenerate
+   segments A = a0a1 and B = b0b1 (2-point LineStrings).  Every binary64 is
+   dyadic, so the whole 3x3 matrix is decided in exact rationals (zarith Q) --
+   no float, no rounding, ratchet-clean (the same approach as the
+   HOLE_PRECISION_AUDIT / CURVE_SNAP modes).  Pins: theories/RelateLineLine.v
+   (Romanschek line-line matrices + predicate lemmas) and theories/DE9IM.v
+   (matrix algebra); validated against oracle/de9im_line_line_vectors.txt.
+
+   Boundary model (JTS Mod-2 for a simple line): interior = the OPEN segment,
+   boundary = the two endpoints, exterior = the rest of the plane (so EE = 2).
+   Each cell is the dimension of Interior/Boundary/Exterior_i(A) intersect
+   Interior/Boundary/Exterior_j(B): None ('F') / Some 0 / Some 1 / Some 2. *)
+
+type qpt = { qpx : Q.t; qpy : Q.t }
+
+let qpt_of_b (p : bPoint) : qpt = { qpx = qf p.bx; qpy = qf p.by_ }
+let qpt_eq (p : qpt) (q : qpt) : bool = qeq p.qpx q.qpx && qeq p.qpy q.qpy
+
+(* twice the signed area of triangle (o,a,b); zero iff o,a,b are collinear *)
+let qcross (o : qpt) (a : qpt) (b : qpt) : Q.t =
+  Q.sub (Q.mul (Q.sub a.qpx o.qpx) (Q.sub b.qpy o.qpy))
+        (Q.mul (Q.sub a.qpy o.qpy) (Q.sub b.qpx o.qpx))
+
+(* P on the CLOSED segment XY: collinear with XY and inside its bounding box. *)
+let on_closed_seg (p : qpt) (x : qpt) (y : qpt) : bool =
+  qeq (qcross x y p) q0
+  && qle (qmin x.qpx y.qpx) p.qpx && qle p.qpx (qmax x.qpx y.qpx)
+  && qle (qmin x.qpy y.qpy) p.qpy && qle p.qpy (qmax x.qpy y.qpy)
+
+(* P in the OPEN segment (interior): on the closed segment, not an endpoint. *)
+let on_open_seg (p : qpt) (x : qpt) (y : qpt) : bool =
+  on_closed_seg p x y && not (qpt_eq p x) && not (qpt_eq p y)
+
+let de9im_cell_char (c : int option) : char =
+  match c with
+  | None   -> 'F'
+  | Some 0 -> '0'
+  | Some 1 -> '1'
+  | Some 2 -> '2'
+  | Some _ -> '?'   (* unreachable: line-line cells are dimension <= 2 *)
+
+let run_relate_matrix () =
+  let a0b = parse_point (input_line stdin) in
+  let a1b = parse_point (input_line stdin) in
+  let b0b = parse_point (input_line stdin) in
+  let b1b = parse_point (input_line stdin) in
+  if not (List.for_all finite_bpoint [a0b; a1b; b0b; b1b])
+  then print_endline "NAN"
+  else
+    let a0 = qpt_of_b a0b and a1 = qpt_of_b a1b in
+    let b0 = qpt_of_b b0b and b1 = qpt_of_b b1b in
+    if qpt_eq a0 a1 || qpt_eq b0 b1 then print_endline "DEGENERATE"
+    else begin
+      let int_a p = on_open_seg p a0 a1 in
+      let int_b p = on_open_seg p b0 b1 in
+      let on_a  p = on_closed_seg p a0 a1 in
+      let on_b  p = on_closed_seg p b0 b1 in
+      (* B's endpoints both on A's supporting line (A is non-degenerate, so this
+         pins all four points to one line -- the collinear regime). *)
+      let collinear = qeq (qcross a0 a1 b0) q0 && qeq (qcross a0 a1 b1) q0 in
+      (* II = dim(interior A intersect interior B).  Collinear with a
+         positive-length common sub-segment -> 1-D; a proper crossing strictly
+         interior to both -> 0-D; otherwise empty.  (A collinear single-point
+         touch is always at an endpoint of A, hence never interior, so the
+         collinear branch only yields 1 or F.) *)
+      let ii =
+        if collinear then begin
+          let use_x = not (qeq a0.qpx a1.qpx) in
+          let co p = if use_x then p.qpx else p.qpy in
+          let amin = qmin (co a0) (co a1) and amax = qmax (co a0) (co a1) in
+          let bmin = qmin (co b0) (co b1) and bmax = qmax (co b0) (co b1) in
+          let lo = qmax amin bmin and hi = qmin amax bmax in
+          if qlt lo hi then Some 1 else None
+        end else begin
+          let dax = Q.sub a1.qpx a0.qpx and day = Q.sub a1.qpy a0.qpy in
+          let dbx = Q.sub b1.qpx b0.qpx and dby = Q.sub b1.qpy b0.qpy in
+          let denom = Q.sub (Q.mul dax dby) (Q.mul day dbx) in
+          if qeq denom q0 then None        (* parallel, not collinear: no point *)
+          else begin
+            let ex = Q.sub b0.qpx a0.qpx and ey = Q.sub b0.qpy a0.qpy in
+            let t = Q.div (Q.sub (Q.mul ex dby) (Q.mul ey dbx)) denom in
+            let s = Q.div (Q.sub (Q.mul ex day) (Q.mul ey dax)) denom in
+            if qlt q0 t && qlt t q1 && qlt q0 s && qlt s q1 then Some 0 else None
+          end
+        end in
+      let ib = if int_a b0 || int_a b1 then Some 0 else None in
+      let ie = if on_b a0 && on_b a1 then None else Some 1 in
+      let bi = if int_b a0 || int_b a1 then Some 0 else None in
+      let bb =
+        if qpt_eq a0 b0 || qpt_eq a0 b1 || qpt_eq a1 b0 || qpt_eq a1 b1
+        then Some 0 else None in
+      let be = if not (on_b a0) || not (on_b a1) then Some 0 else None in
+      let ei = if on_a b0 && on_a b1 then None else Some 1 in
+      let eb = if not (on_a b0) || not (on_a b1) then Some 0 else None in
+      let ee = Some 2 in
+      let cells = [ii; ib; ie; bi; bb; be; ei; eb; ee] in
+      let buf = Bytes.create 9 in
+      List.iteri (fun i c -> Bytes.set buf i (de9im_cell_char c)) cells;
+      print_endline (Bytes.to_string buf)
+    end
+
+(* RELATE_MATCHES: does a concrete 9-char DE-9IM matrix satisfy a 9-char
+   pattern?  Mirrors DE9IM.v char_matches: '*' any, 'F' empty only, 'T'
+   nonempty (any dimension), '0'/'1'/'2' exact dimension. *)
+
+let read_de9im_token () : string =
+  let s = String.uppercase_ascii (String.trim (input_line stdin)) in
+  let b = Buffer.create 9 in
+  String.iter (fun c -> if c <> ' ' && c <> '\t' then Buffer.add_char b c) s;
+  Buffer.contents b
+
+let de9im_char_matches (pat : char) (cell : char) : bool =
+  match pat with
+  | '*' -> true
+  | 'F' -> cell = 'F'
+  | 'T' -> cell <> 'F'
+  | '0' | '1' | '2' -> pat = cell
+  | other -> failwith (Printf.sprintf "oracle: bad DE-9IM pattern char: %c" other)
+
+let run_relate_matches () =
+  let m = read_de9im_token () in
+  let p = read_de9im_token () in
+  if String.length m <> 9 || String.length p <> 9 then
+    failwith "oracle: RELATE_MATCHES expects a 9-char matrix then a 9-char pattern";
+  let ok = ref true in
+  for i = 0 to 8 do
+    if not (de9im_char_matches p.[i] m.[i]) then ok := false
+  done;
+  print_endline (bool_string !ok)
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -1169,6 +1340,8 @@ let () =
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
+       | "RELATE_MATRIX"                -> run_relate_matrix ()
+       | "RELATE_MATCHES"               -> run_relate_matches ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
