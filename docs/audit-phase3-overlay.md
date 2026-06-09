@@ -376,10 +376,13 @@ trail:
     operation counts.  Foundation for Phase 0 Stage A filter
     bounds.
 
-  - **Ozaki, Ogita, Rump, Oishi (2012)** -- "Tight and Efficient
-    Enclosure of Matrix Multiplication by Using Optimized BLAS."
-    *Numerical Linear Algebra with Applications*.  The gamma_2
-    filter formulation reused in Phase 0 Stage A.
+  - **Ozaki, Ogita, Rump, Oishi (2011)** -- "Tight and efficient
+    enclosure of matrix multiplication by using optimized BLAS."
+    *Numerical Linear Algebra with Applications* 18:237-248.
+    doi:10.1002/nla.724.  Error-free-transformation / verified-enclosure
+    background.  (NB: the Phase 0 Stage A orient2d filter bound itself
+    derives from Shewchuk (1997) and the Fortune-Van Wyk (1996) static
+    error analysis above, *not* from this paper.)
 
   - **OGC 06-103r4** -- "OpenGIS Implementation Standard for
     Geographic information -- Simple feature access -- Part 1:
