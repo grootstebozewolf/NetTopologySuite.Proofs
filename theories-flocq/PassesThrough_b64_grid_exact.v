@@ -18,14 +18,22 @@
    (HotPixel_b64.b64_passes_through_sound).  Strongly evidenced: 0 divergence in
    5,000,000 on-grid cases (docs/oracle-soundness-finding.md).
 
-   THIS FILE lands the REDUCTION layer, Qed-closed: on the grid the
-   snap-consistency second conjunct of `passes_through` is vacuous (a grid point
-   is a fixed point of `b64_snap`), so the full predicate collapses to a single
-   Liang-Barsky touch -- for BOTH the rounded compute filter and the exact spec.
-   C1 therefore reduces to the single-touch equivalence
-       b64_liang_barsky_touches_compute = b64_liang_barsky_touches  (on grid),
-   which isolates the remaining obligation to ONE touch: that the
-   round-to-nearest errors in the divide-and-clip t-bounds never flip the
+   THIS FILE lands the REDUCTION + EXACTNESS layers, Qed-closed:
+
+     - Slice 1: on the grid the snap-consistency second conjunct of
+       `passes_through` is vacuous (a grid point is a fixed point of `b64_snap`),
+       so the full predicate collapses to a single Liang-Barsky touch -- for
+       BOTH the rounded compute filter and the exact spec.  C1 therefore reduces
+       to the single-touch equivalence
+           b64_liang_barsky_touches_compute = b64_liang_barsky_touches (on grid).
+     - Slices 3-5: the slab guard, the t-bound operands, and the max/min/clip
+       composition all bridge bit-exactly between compute and spec on the grid.
+     - Slice 6: the only place `b64_div` (which ROUNDS) enters is discharged of
+       its safety precondition and rewritten so each compute t-bound equals the
+       spec t-bound with each quotient INDIVIDUALLY ROUNDED.
+
+   After these slices the remaining obligation is isolated to ONE residual: that
+   the round-to-nearest errors in the per-quotient `round` never flip the
    composite `max(..) <= min(..)` comparison on the grid.  That core is the
    genuinely hard, multi-session step (see the OBLIGATION note at the bottom);
    it is NOT discharged here and NO `Admitted` is introduced -- the file is
@@ -388,18 +396,253 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 6: the division bridge -- the LAST exactness layer before the core.
+
+   The t-bounds are the only place `b64_div` (which ROUNDS) enters.  This slice
+   discharges the division's `b64_div_correct` preconditions on the grid and
+   rewrites each per-axis compute t-bound as the spec t-bound with each exact
+   quotient INDIVIDUALLY ROUNDED:
+
+       b64_lb_tlo c0 c1 (cc-1/2) (cc+1/2)
+         = Rmin (round ((lo - c0)/(c1 - c0))) (round ((hi - c0)/(c1 - c0)))   (Qed)
+
+   (and the Rmax analogue for b64_lb_thi).  Combined with Slices 4-5 (operand
+   exactness + max/min bridge), the rounded compute filter now differs from the
+   exact spec ONLY by the `round` wrapped around each individual quotient: the
+   division is the single, fully-localised residual.  No division-safety obligation
+   remains open -- it is discharged here (|num/den| <= |num| <= 2^27 on the grid).
+   ---------------------------------------------------------------------------- *)
+
+(* One quotient.  A half-integer numerator over a NONZERO INTEGER denominator
+   divides bit-correctly to the rounded exact quotient.  The `b64_div_correct`
+   safety bound is discharged from the grid magnitudes: |num/den| <= |num|
+   (since |den| >= 1) <= 2^27 < 2^emax. *)
+Lemma b64_div_round_half_over_int :
+  forall (num den : binary64) (a d : Z),
+    Binary.is_finite prec emax num = true ->
+    Binary.is_finite prec emax den = true ->
+    Binary.B2R prec emax num = (IZR a / 2)%R ->
+    Binary.B2R prec emax den = IZR d ->
+    (d <> 0)%Z ->
+    (Z.abs a < 2 ^ 28)%Z ->
+    Binary.B2R prec emax (b64_div num den)
+      = b64_round (Binary.B2R prec emax num / Binary.B2R prec emax den)
+    /\ Binary.is_finite prec emax (b64_div num den) = true.
+Proof.
+  intros num den a d Fnum Fden HnumR HdenR Hd Ha.
+  assert (Hden_ne : Binary.B2R prec emax den <> 0%R).
+  { rewrite HdenR. apply IZR_neq. exact Hd. }
+  (* |den| = IZR |d| >= 1 *)
+  assert (Hden_ge1 : (1 <= Rabs (Binary.B2R prec emax den))%R).
+  { rewrite HdenR, <- abs_IZR.
+    replace 1%R with (IZR 1) by (simpl; reflexivity).
+    apply IZR_le. lia. }
+  (* |num| = IZR |a| / 2 <= bpow 27 *)
+  assert (Hnum_le : (Rabs (Binary.B2R prec emax num) <= bpow radix2 28)%R).
+  { rewrite HnumR. unfold Rdiv. rewrite Rabs_mult, (Rabs_right (/ 2)%R) by lra.
+    rewrite <- abs_IZR.
+    assert (Ha28 : (IZR (Z.abs a) < bpow radix2 28)%R).
+    { rewrite <- (IZR_Zpower radix2 28) by lia. apply IZR_lt. exact Ha. }
+    pose proof (bpow_gt_0 radix2 28). lra. }
+  assert (Hbnd : (Rabs (b64_round (Binary.B2R prec emax num
+                                    / Binary.B2R prec emax den))
+                   < bpow radix2 emax)%R).
+  { apply (Rle_lt_trans _ (bpow radix2 28)).
+    - apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+      (* Rabs (num/den) = Rabs num / Rabs den <= Rabs num <= bpow 27 *)
+      unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+      apply (Rle_trans _ (Rabs (Binary.B2R prec emax num))); [ | exact Hnum_le ].
+      rewrite <- (Rmult_1_r (Rabs (Binary.B2R prec emax num))) at 2.
+      apply Rmult_le_compat_l; [ apply Rabs_pos | ].
+      rewrite <- Rinv_1.
+      apply Rinv_le_contravar; [ lra | exact Hden_ge1 ].
+    - apply bpow_lt. unfold emax; lia. }
+  exact (b64_div_correct num den Fnum Fden Hden_ne Hbnd).
+Qed.
+
+(* Operand facts for one (edge, endpoint) pair on the integer grid: the
+   numerator `edge - c0` is a half-integer with mantissa < 2^27, computed
+   bit-exactly. *)
+Lemma grid_numerator_facts :
+  forall (edge c0 : binary64) (m n0 : Z),
+    Binary.is_finite prec emax edge = true ->
+    Binary.is_finite prec emax c0 = true ->
+    Binary.B2R prec emax edge = (IZR m / 2)%R ->
+    Binary.B2R prec emax c0 = IZR n0 ->
+    (Z.abs m < 2 ^ 27)%Z ->
+    (Z.abs n0 <= 2 ^ 25)%Z ->
+    Binary.B2R prec emax (b64_minus edge c0)
+      = (IZR (m - 2 * n0)%Z / 2)%R
+    /\ Binary.is_finite prec emax (b64_minus edge c0) = true
+    /\ (Z.abs (m - 2 * n0) < 2 ^ 28)%Z
+    /\ Binary.B2R prec emax (b64_minus edge c0)
+         = (Binary.B2R prec emax edge - Binary.B2R prec emax c0)%R.
+Proof.
+  intros edge c0 m n0 Fe F0 HeR H0R Hm Hn0.
+  assert (H0half : Binary.B2R prec emax c0 = (IZR (2 * n0)%Z / 2)%R).
+  { rewrite H0R, mult_IZR. lra. }
+  pose proof (b64_minus_half_exact edge c0 m (2 * n0)%Z Fe F0 HeR H0half
+                ltac:(unfold prec; lia)) as [HsubR Hsubfin].
+  repeat split.
+  - rewrite HsubR, HeR, H0half. rewrite minus_IZR, mult_IZR. lra.
+  - exact Hsubfin.
+  - lia.
+  - exact HsubR.
+Qed.
+
+(* tlo (lower) per-axis bridge: the compute lower t-bound on the grid is the
+   Rmin of the two rounded exact quotients the spec uses. *)
+Theorem b64_lb_tlo_eq_rounded_quotients_grid :
+  forall c0 c1 cc : binary64,
+    coord_int_safe c0 -> coord_int_safe c1 -> coord_int_safe cc ->
+    Binary.B2R prec emax c1 <> Binary.B2R prec emax c0 ->
+    Binary.B2R prec emax
+        (b64_lb_tlo c0 c1 (b64_minus cc b64_half) (b64_plus cc b64_half))
+      = Rmin
+          (b64_round ((Binary.B2R prec emax (b64_minus cc b64_half)
+                        - Binary.B2R prec emax c0)
+                      / (Binary.B2R prec emax c1 - Binary.B2R prec emax c0)))
+          (b64_round ((Binary.B2R prec emax (b64_plus cc b64_half)
+                        - Binary.B2R prec emax c0)
+                      / (Binary.B2R prec emax c1 - Binary.B2R prec emax c0))).
+Proof.
+  intros c0 c1 cc Hc0 Hc1 Hcc Hne.
+  pose proof Hc0 as (Fc0 & n0 & H0R & H0b).
+  pose proof Hc1 as (Fc1 & n1 & H1R & H1b).
+  pose proof Hcc as (Fcc & ncc & HccR & Hccb).
+  (* the two pixel edges and their exact half-integer images *)
+  pose proof (b64_minus_half_int_exact cc Hcc) as [HloR Flo].
+  pose proof (b64_plus_half_int_exact cc Hcc) as [HhiR Fhi].
+  assert (HloHalf : Binary.B2R prec emax (b64_minus cc b64_half)
+                    = (IZR (2 * ncc - 1)%Z / 2)%R).
+  { rewrite HloR, HccR. rewrite minus_IZR, mult_IZR. lra. }
+  assert (HhiHalf : Binary.B2R prec emax (b64_plus cc b64_half)
+                    = (IZR (2 * ncc + 1)%Z / 2)%R).
+  { rewrite HhiR, HccR. rewrite plus_IZR, mult_IZR. lra. }
+  (* non-degenerate: b64_eqb c1 c0 = false *)
+  assert (Heqb : b64_eqb c1 c0 = false).
+  { destruct (b64_eqb c1 c0) eqn:E; [ | reflexivity ].
+    apply (b64_eqb_true_iff_B2R c1 c0 Fc1 Fc0) in E. contradiction. }
+  (* numerator facts *)
+  pose proof (grid_numerator_facts (b64_minus cc b64_half) c0 (2*ncc-1) n0
+                Flo Fc0 HloHalf H0R ltac:(lia) ltac:(lia))
+    as (HnumLoR & HnumLoFin & HnumLoB & HnumLoDiff).
+  pose proof (grid_numerator_facts (b64_plus cc b64_half) c0 (2*ncc+1) n0
+                Fhi Fc0 HhiHalf H0R ltac:(lia) ltac:(lia))
+    as (HnumHiR & HnumHiFin & HnumHiB & HnumHiDiff).
+  (* denominator facts: c1 - c0 = IZR (n1 - n0) (and the difference form), nonzero *)
+  assert (H1half : Binary.B2R prec emax c1 = (IZR (2 * n1)%Z / 2)%R)
+    by (rewrite H1R, mult_IZR; lra).
+  assert (H0half : Binary.B2R prec emax c0 = (IZR (2 * n0)%Z / 2)%R)
+    by (rewrite H0R, mult_IZR; lra).
+  pose proof (b64_minus_half_exact c1 c0 (2*n1) (2*n0) Fc1 Fc0 H1half H0half
+                ltac:(unfold prec; lia)) as [HdenDiff HdenFin].
+  assert (HdenRv : Binary.B2R prec emax (b64_minus c1 c0) = IZR (n1 - n0)%Z)
+    by (rewrite HdenDiff, H1R, H0R, minus_IZR; lra).
+  assert (Hdne : (n1 - n0 <> 0)%Z).
+  { intro Hz. apply Hne. rewrite H1R, H0R. apply f_equal. lia. }
+  (* divide each numerator by the denominator, bit-correctly *)
+  pose proof (b64_div_round_half_over_int (b64_minus (b64_minus cc b64_half) c0)
+                (b64_minus c1 c0) (2*ncc-1 - 2*n0) (n1 - n0)
+                HnumLoFin HdenFin HnumLoR HdenRv Hdne ltac:(lia))
+    as [HdivLoR HdivLoFin].
+  pose proof (b64_div_round_half_over_int (b64_minus (b64_plus cc b64_half) c0)
+                (b64_minus c1 c0) (2*ncc+1 - 2*n0) (n1 - n0)
+                HnumHiFin HdenFin HnumHiR HdenRv Hdne ltac:(lia))
+    as [HdivHiR HdivHiFin].
+  (* assemble: b64_lb_tlo in the non-degenerate branch is b64_min of the divs *)
+  unfold b64_lb_tlo. rewrite Heqb.
+  rewrite (b64_min_B2R _ _ HdivLoFin HdivHiFin).
+  rewrite HdivLoR, HdivHiR.
+  rewrite HnumLoDiff, HnumHiDiff, HdenDiff.
+  reflexivity.
+Qed.
+
+(* thi (upper) per-axis bridge: the compute upper t-bound on the grid is the
+   Rmax of the two rounded exact quotients.  Same proof shape as tlo, with
+   b64_max / Rmax. *)
+Theorem b64_lb_thi_eq_rounded_quotients_grid :
+  forall c0 c1 cc : binary64,
+    coord_int_safe c0 -> coord_int_safe c1 -> coord_int_safe cc ->
+    Binary.B2R prec emax c1 <> Binary.B2R prec emax c0 ->
+    Binary.B2R prec emax
+        (b64_lb_thi c0 c1 (b64_minus cc b64_half) (b64_plus cc b64_half))
+      = Rmax
+          (b64_round ((Binary.B2R prec emax (b64_minus cc b64_half)
+                        - Binary.B2R prec emax c0)
+                      / (Binary.B2R prec emax c1 - Binary.B2R prec emax c0)))
+          (b64_round ((Binary.B2R prec emax (b64_plus cc b64_half)
+                        - Binary.B2R prec emax c0)
+                      / (Binary.B2R prec emax c1 - Binary.B2R prec emax c0))).
+Proof.
+  intros c0 c1 cc Hc0 Hc1 Hcc Hne.
+  pose proof Hc0 as (Fc0 & n0 & H0R & H0b).
+  pose proof Hc1 as (Fc1 & n1 & H1R & H1b).
+  pose proof Hcc as (Fcc & ncc & HccR & Hccb).
+  pose proof (b64_minus_half_int_exact cc Hcc) as [HloR Flo].
+  pose proof (b64_plus_half_int_exact cc Hcc) as [HhiR Fhi].
+  assert (HloHalf : Binary.B2R prec emax (b64_minus cc b64_half)
+                    = (IZR (2 * ncc - 1)%Z / 2)%R)
+    by (rewrite HloR, HccR, minus_IZR, mult_IZR; lra).
+  assert (HhiHalf : Binary.B2R prec emax (b64_plus cc b64_half)
+                    = (IZR (2 * ncc + 1)%Z / 2)%R)
+    by (rewrite HhiR, HccR, plus_IZR, mult_IZR; lra).
+  assert (Heqb : b64_eqb c1 c0 = false).
+  { destruct (b64_eqb c1 c0) eqn:E; [ | reflexivity ].
+    apply (b64_eqb_true_iff_B2R c1 c0 Fc1 Fc0) in E. contradiction. }
+  pose proof (grid_numerator_facts (b64_minus cc b64_half) c0 (2*ncc-1) n0
+                Flo Fc0 HloHalf H0R ltac:(lia) ltac:(lia))
+    as (HnumLoR & HnumLoFin & HnumLoB & HnumLoDiff).
+  pose proof (grid_numerator_facts (b64_plus cc b64_half) c0 (2*ncc+1) n0
+                Fhi Fc0 HhiHalf H0R ltac:(lia) ltac:(lia))
+    as (HnumHiR & HnumHiFin & HnumHiB & HnumHiDiff).
+  assert (H1half : Binary.B2R prec emax c1 = (IZR (2 * n1)%Z / 2)%R)
+    by (rewrite H1R, mult_IZR; lra).
+  assert (H0half : Binary.B2R prec emax c0 = (IZR (2 * n0)%Z / 2)%R)
+    by (rewrite H0R, mult_IZR; lra).
+  pose proof (b64_minus_half_exact c1 c0 (2*n1) (2*n0) Fc1 Fc0 H1half H0half
+                ltac:(unfold prec; lia)) as [HdenDiff HdenFin].
+  assert (HdenRv : Binary.B2R prec emax (b64_minus c1 c0) = IZR (n1 - n0)%Z)
+    by (rewrite HdenDiff, H1R, H0R, minus_IZR; lra).
+  assert (Hdne : (n1 - n0 <> 0)%Z).
+  { intro Hz. apply Hne. rewrite H1R, H0R. apply f_equal. lia. }
+  pose proof (b64_div_round_half_over_int (b64_minus (b64_minus cc b64_half) c0)
+                (b64_minus c1 c0) (2*ncc-1 - 2*n0) (n1 - n0)
+                HnumLoFin HdenFin HnumLoR HdenRv Hdne ltac:(lia))
+    as [HdivLoR HdivLoFin].
+  pose proof (b64_div_round_half_over_int (b64_minus (b64_plus cc b64_half) c0)
+                (b64_minus c1 c0) (2*ncc+1 - 2*n0) (n1 - n0)
+                HnumHiFin HdenFin HnumHiR HdenRv Hdne ltac:(lia))
+    as [HdivHiR HdivHiFin].
+  unfold b64_lb_thi. rewrite Heqb.
+  rewrite (b64_max_B2R _ _ HdivLoFin HdivHiFin).
+  rewrite HdivLoR, HdivHiR.
+  rewrite HnumLoDiff, HnumHiDiff, HdenDiff.
+  reflexivity.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard, multi-session core -- NOT an axiom).
+
+   After Slices 1-6 the rounded compute filter and the exact spec differ, ON THE
+   GRID, by EXACTLY one thing: a `b64_round` wrapped around each individual
+   exact quotient `(lo - c0)/(c1 - c0)` (Slice 6).  Everything else is now
+   machine-checked equal: the snap-consistency conjunct (Slice 1), the slab
+   guard (Slice 3), the operands (Slice 4), and the max/min/clip composition
+   (Slice 5).
 
      Open goal (single-touch grid exactness), strongly evidenced (0/5e6):
        forall P0 P1 C, <P0,P1,C on the integer grid> ->
          b64_liang_barsky_touches_compute P0 P1 C
            = b64_liang_barsky_touches P0 P1 C.
 
-   Why it is hard: on the grid the slab guards and the t-bound NUMERATORS /
-   DENOMINATORS (b64_minus of half-integers) are exact, but the t-bounds
-   themselves are `b64_div`, which ROUNDS.  Round-to-nearest gives no outward
-   guarantee, so the rounded `Rmax 0 (...) <= Rmin 1 (...)` comparison is not
-   definitionally the exact one.
+   reduces (via Slices 3-6) to: the composite clip comparison
+       Rle_bool (Rmax 0 (Rmax (round tlo_x) (round tlo_y)))
+                (Rmin 1 (Rmin (round thi_x) (round thi_y)))
+   equals the same comparison WITHOUT the `round`s.
+
+   Why it is still hard: round-to-nearest gives no outward guarantee, so the
+   rounded comparison is not definitionally the exact one.
 
    Strategy for the core (next session): rewrite the exact comparison
    `lb_tlo <= lb_thi` etc. by CROSS-MULTIPLYING through the (exact integer)
@@ -407,7 +650,8 @@ Qed.
    integer determinant -- a decision that does not divide and is exactly
    representable in binary64 on the grid (cf. Orient_b64_exact.v's dyadic
    exactness, b64_minus_int_exact / b64_mult_int_exact).  Then show the rounded
-   `b64_div`-based comparison has the same outcome because the integer
-   determinant is nonzero-with-gap >= 1 except in the exactly-equal case the
-   rounding also preserves.
+   `b64_div`-based comparison (now isolated by Slice 6 to the per-quotient
+   `round`) has the same outcome because the integer determinant is
+   nonzero-with-gap >= 1 except in the exactly-equal case the rounding also
+   preserves.
    ---------------------------------------------------------------------------- *)

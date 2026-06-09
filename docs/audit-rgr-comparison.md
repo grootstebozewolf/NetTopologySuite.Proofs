@@ -193,3 +193,33 @@ risk is existence.**
 The corpus invariant — no `Admitted`, no `Axiom`, no `Parameter` beyond the
 recorded allowlists — holds throughout and is preserved by this sequencing:
 it adds no obligations, it only orders the ones already on the books.
+
+---
+
+## 5. Execution — RGR slice landed on the #1 target (2026-06-09)
+
+Acting on §3's ranking, the next RGR slice was driven on the top target, **C1
+grid-exactness** (`theories-flocq/PassesThrough_b64_grid_exact.v`). The file
+already carried Slices 1–5 (the on-grid reduction to a single touch, the
+integer-grid↔fixed-point bridge, the slab-guard bridge, operand exactness, and
+the max/min composition — all `Qed`). This session added **Slice 6, the
+division bridge**, `Qed`-closed at the allowlisted 4-axiom footprint (no new
+`Admitted`/`Axiom`):
+
+- `b64_div_round_half_over_int` — a half-integer numerator over a nonzero
+  integer denominator divides bit-correctly to the rounded exact quotient;
+  discharges the last `b64_div_correct` no-overflow obligation on the grid
+  (`|num/den| ≤ |num| ≤ 2²⁸ < 2^emax`).
+- `b64_lb_tlo_eq_rounded_quotients_grid` (+ `_thi_`) — each per-axis compute
+  t-bound equals the exact-spec t-bound with each quotient *individually
+  rounded*.
+
+This is the RED→GREEN→refactor pattern this corpus uses: the RED (the rounded
+filter is unsound / incomplete / order-asymmetric off-grid) was already `Qed`;
+Slice 6 advances the GREEN (on-grid agreement) by **localising the entire
+remaining gap to the per-quotient `round`** — round-to-nearest's lack of an
+outward guarantee is now the *only* thing separating compute from spec on the
+grid. The residual core (cross-multiply through the exact integer denominators →
+sign-of-integer-determinant) is documented at the foot of the file as the next
+multi-session step. Verified: full corpus build clean, `check_admitted` (still
+7, none new), `check_readme_axioms`, and the per-theorem axiom audit all pass.
