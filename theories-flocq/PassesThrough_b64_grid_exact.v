@@ -1378,6 +1378,123 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
+   SLICE 15: the RELATIVE ulp bound, and the general gap-beats-band.
+
+   Slice 14's `[-1,1]` restriction is too tight for the binding t-bounds (which
+   can be larger).  The fix is the relative bound `ulp(round x) <= |x| *
+   2^(2-prec)` (Slice 13 at e = mag x, plus the mag sandwich
+   `bpow(mag x - 1) <= |x| < bpow(mag x)`), valid for |x| >= 2^-24 (every nonzero
+   grid t-bound, whose |value| = |num|/|den| >= 1/2^24).  With it, the band
+   telescopes against the gap through the numerator/denominator bounds, with no
+   value-range restriction: for nonzero grid ratios the gap always beats the
+   band in the |n| <= 2^23 regime.
+   ---------------------------------------------------------------------------- *)
+
+(* Relative ulp bound: round-to-nearest's ulp is at most the value times one
+   binade of relative precision (for x bounded away from the subnormals). *)
+Lemma b64_ulp_round_le_rel :
+  forall x : R,
+    (bpow radix2 (-24) <= Rabs x)%R ->
+    (b64_ulp (b64_round x) <= Rabs x * bpow radix2 (2 - prec))%R.
+Proof.
+  intros x Hx.
+  assert (Hxne : x <> 0%R).
+  { intro Hz. rewrite Hz, Rabs_R0 in Hx. pose proof (bpow_gt_0 radix2 (-24)). lra. }
+  pose proof (mag_gt_bpow radix2 x (-24) Hx) as Hmag.   (* -24 < mag x *)
+  assert (He1 : (3 - emax <= mag radix2 x + 1)%Z) by (unfold emax; lia).
+  assert (Hxle : (Rabs x <= bpow radix2 (mag radix2 x))%R)
+    by (apply Rlt_le, (bpow_mag_gt radix2 x)).
+  pose proof (b64_ulp_round_le_bpow x (mag radix2 x) He1 Hxle) as Hub.
+  apply (Rle_trans _ (bpow radix2 (mag radix2 x + 1 - prec))); [ exact Hub | ].
+  replace (mag radix2 x + 1 - prec)%Z
+    with ((mag radix2 x - 1) + (2 - prec))%Z by lia.
+  rewrite bpow_plus.
+  apply Rmult_le_compat_r; [ apply bpow_ge_0 | ].
+  apply (bpow_mag_le radix2 x). exact Hxne.
+Qed.
+
+(* General gap-beats-band: NO value-range restriction.  For two distinct nonzero
+   grid ratios (numerator <= 2^25, denominator <= 2^24, |value| >= 2^-24), the
+   determinant gap strictly exceeds the rounding band.  Covers every nonzero
+   binding bound, including the constant 1 = 1/1. *)
+Lemma grid_ratio_gap_exceeds_ulp_band_rel :
+  forall (u v : R) (na da nb db : Z),
+    u = (IZR na / IZR da)%R -> v = (IZR nb / IZR db)%R ->
+    (da <> 0)%Z -> (db <> 0)%Z ->
+    (Z.abs na <= 2 ^ 25)%Z -> (Z.abs nb <= 2 ^ 25)%Z ->
+    (Z.abs da <= 2 ^ 24)%Z -> (Z.abs db <= 2 ^ 24)%Z ->
+    (bpow radix2 (-24) <= Rabs u)%R -> (bpow radix2 (-24) <= Rabs v)%R ->
+    u <> v ->
+    (b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2 < Rabs (u - v))%R.
+Proof.
+  intros u v na da nb db Hu Hv Hda Hdb HnaB HnbB HdaB HdbB Hu24 Hv24 Hne.
+  set (P := (Rabs (IZR da) * Rabs (IZR db))%R).
+  assert (Hdane : IZR da <> 0%R) by (apply IZR_neq; exact Hda).
+  assert (Hdbne : IZR db <> 0%R) by (apply IZR_neq; exact Hdb).
+  assert (HPpos : (0 < P)%R)
+    by (unfold P; apply Rmult_lt_0_compat; apply Rabs_pos_lt; assumption).
+  (* relative ulp bounds *)
+  pose proof (b64_ulp_round_le_rel u Hu24) as Hru.
+  pose proof (b64_ulp_round_le_rel v Hv24) as Hrv.
+  (* |u| * P = |IZR na| * |IZR db| <= 2^25 * 2^24 = 2^49 *)
+  assert (HnaR : (Rabs (IZR na) <= bpow radix2 25)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 25) by lia. apply IZR_le. exact HnaB. }
+  assert (HnbR : (Rabs (IZR nb) <= bpow radix2 25)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 25) by lia. apply IZR_le. exact HnbB. }
+  assert (HdaR : (Rabs (IZR da) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdaB. }
+  assert (HdbR : (Rabs (IZR db) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdbB. }
+  assert (HuP : (Rabs u * P = Rabs (IZR na) * Rabs (IZR db))%R).
+  { unfold P. rewrite Hu. unfold Rdiv. rewrite Rabs_mult, Rabs_inv. field.
+    apply Rabs_no_R0. exact Hdane. }
+  assert (HvP : (Rabs v * P = Rabs (IZR nb) * Rabs (IZR da))%R).
+  { unfold P. rewrite Hv. unfold Rdiv. rewrite Rabs_mult, Rabs_inv. field.
+    apply Rabs_no_R0. exact Hdbne. }
+  (* band * P <= 2^49 * 2^(2-prec) = bpow(-2) = 1/4 *)
+  assert (Hb49 : (bpow radix2 25 * bpow radix2 24 = bpow radix2 49)%R)
+    by (rewrite <- bpow_plus; reflexivity).
+  assert (HuP49 : (Rabs u * P <= bpow radix2 49)%R).
+  { rewrite HuP. rewrite <- Hb49. apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  assert (HvP49 : (Rabs v * P <= bpow radix2 49)%R).
+  { rewrite HvP. rewrite <- Hb49.
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  assert (Hpos2 : (0 < bpow radix2 (2 - prec))%R) by apply bpow_gt_0.
+  assert (HbandP : ((b64_ulp (b64_round u) / 2 + b64_ulp (b64_round v) / 2) * P
+                     <= bpow radix2 (-2))%R).
+  { (* ulp(round u) <= |u| bpow(2-prec) etc; multiply through by P >= 0 *)
+    apply (Rle_trans _ ((Rabs u * bpow radix2 (2 - prec) / 2
+                          + Rabs v * bpow radix2 (2 - prec) / 2) * P)).
+    { apply Rmult_le_compat_r; [ lra | lra ]. }
+    (* = (|u|P + |v|P) * bpow(2-prec)/2 <= (2^49+2^49)*bpow(2-prec)/2 = bpow(-2) *)
+    replace ((Rabs u * bpow radix2 (2 - prec) / 2
+               + Rabs v * bpow radix2 (2 - prec) / 2) * P)%R
+      with ((Rabs u * P + Rabs v * P) * bpow radix2 (2 - prec) / 2)%R by (unfold P; field).
+    apply (Rle_trans _ ((bpow radix2 49 + bpow radix2 49) * bpow radix2 (2 - prec) / 2)).
+    { apply Rmult_le_compat_r; [ lra | ]. apply Rmult_le_compat_r; [ lra | ]. lra. }
+    replace ((bpow radix2 49 + bpow radix2 49) * bpow radix2 (2 - prec) / 2)%R
+      with (bpow radix2 49 * bpow radix2 (2 - prec))%R by field.
+    rewrite <- bpow_plus.
+    replace (49 + (2 - prec))%Z with (-2)%Z by (unfold prec; lia).
+    apply Rle_refl. }
+  (* gap: 1/P <= |u - v|, so 1 <= |u-v| * P *)
+  assert (Hcross : (na * db <> nb * da)%Z).
+  { intro Hc. apply Hne. rewrite Hu, Hv.
+    field_simplify_eq; [ | split; assumption ].
+    rewrite <- !mult_IZR. f_equal. lia. }
+  pose proof (rational_gap na da nb db Hda Hdb Hcross) as Hgap.
+  rewrite <- Hu, <- Hv in Hgap. fold P in Hgap.
+  assert (HgapP : (1 <= Rabs (u - v) * P)%R).
+  { apply (Rle_trans _ ((1 / P) * P)).
+    - replace ((1 / P) * P)%R with 1%R by (field; apply Rgt_not_eq; exact HPpos).
+      apply Rle_refl.
+    - apply Rmult_le_compat_r; [ lra | exact Hgap ]. }
+  (* finish: band*P <= 1/4 < 1 <= gap*P, and P > 0 *)
+  assert (Hquarter : (bpow radix2 (-2) = / 4)%R) by (simpl; lra).
+  apply (Rmult_lt_reg_r P); [ exact HPpos | ]. lra.
+Qed.
+
+(* ----------------------------------------------------------------------------
    REMAINING OBLIGATION (the hard core -- NOT an axiom).
 
    With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
