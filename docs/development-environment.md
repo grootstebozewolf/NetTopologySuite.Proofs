@@ -156,6 +156,48 @@ All four should report success.  The sequential build is required for
 `audit_axioms.sh` because it parses interleaved `Print Assumptions`
 blocks from the build output; a parallel build interleaves them.
 
+### Step 7 — build and test the oracle binary (RocqRefRunner)
+
+The corpus build in Step 5 also extracts `oracle/extracted.ml` +
+`oracle/extracted.mli` from
+`theories-flocq/Validate_binary64_extract.v` (both gitignored, always
+regenerated).  The standalone `oracle_bin` — the RocqRefRunner the
+`NetTopologySuite.Curve` differential harness drives — is then linked
+from those plus `oracle/driver.ml`:
+
+```sh
+# extracted.ml/.mli are produced by the Step 5 build; confirm they exist.
+test -f oracle/extracted.ml && test -f oracle/extracted.mli
+
+# The only OCaml dep beyond the stdlib + zarith: ocamlfind (the linker
+# front-end oracle/Makefile uses).  zarith is already in the switch as a
+# rocq-core dependency; ocamlfind comes from opam.ocaml.org (reachable).
+opam install --confirm-level=unsafe-yes ocamlfind
+eval $(opam env --switch=nts-flocq)
+
+make -C oracle           # links extracted.cmx + driver.cmx -> oracle/oracle_bin
+test -x oracle/oracle_bin
+```
+
+Then run the oracle's two local checks (both also run in CI by
+`.github/workflows/build-oracle.yml`):
+
+```sh
+# 1. Credibility ratchet: every extractable mode must compute via a
+#    Coq-EXTRACTED function, not hand-mirrored float arithmetic.  Frozen
+#    baseline in docs/oracle-handrolled-allowlist.txt.
+bash scripts/check_oracle_handrolled.sh
+
+# 2. RELATE_MATRIX smoke (issue #67): the line-line DE-9IM mode must
+#    reproduce every pinned Romanschek matrix in
+#    oracle/de9im_line_line_vectors.txt byte-for-byte.
+sh oracle/relate_smoke.sh
+```
+
+`check_oracle_handrolled.sh` needs only `bash` + `perl`; the smoke test
+needs a built `oracle/oracle_bin` (pass an explicit path as `$1` if it
+lives elsewhere).  Both report success on a clean tree.
+
 ## What this fallback does NOT change
 
   - **CI is unaffected.**  GitHub Actions runs the container path on
