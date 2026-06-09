@@ -126,6 +126,8 @@ regime), the exact `cmax` bracketing, and the `±cmax²` tightness witnesses.
 | `PassesThrough_b64_grid_exact.v : b64_ulp_round_le_rel` (+ `grid_ratio_gap_exceeds_ulp_band_rel`) | **C1 slice 15 — relative ulp + general gap-beats-band (Qed):** `\|x\| ≥ 2⁻²⁴ ⇒ ulp(round x) ≤ \|x\|·2^(2−prec)` (slice 13 at `e = mag x` + Flocq `mag` sandwich) — the RELATIVE bound that removes slice 14's `[-1,1]` restriction. With it, for two distinct **nonzero** grid ratios (numerator `≤ 2²⁵`, denominator `≤ 2²⁴`, `\|value\| ≥ 2⁻²⁴`) the band telescopes against the gap with no value-range cap: `band·\|da\|\|db\| ≤ 2⁻² < 1 ≤ gap·\|da\|\|db\|`. Covers every nonzero binding bound (incl. the constant `1 = 1/1`) — the complete analytic content of unconditional on-grid soundness for `\|n\| ≤ 2²³`; Qed-closed `[full-b64]` | 4 |
 | `PassesThrough_b64_grid_exact.v : zero_vs_ratio_gap_exceeds_ulp_band` | **C1 slice 16 — value-0 edge of gap-beats-band (Qed):** the one binding shape slice 15 omits — a clip bound exactly `0`. With `ulp(round 0) = ulp 0 = bpow emin` (subnormal floor `~2⁻¹⁰⁷⁴`) and the relative bound on the nonzero side, `½ulp(round 0)+½ulp(round v) < \|0−v\|` for any `\|v\| ≥ 2⁻²⁴` (no ratio structure needed). Together with slice 15 the gap-beats-band family is now **total** over the binding pairs; Qed-closed `[full-b64]` | 4 |
 | `PassesThrough_b64_grid_exact.v : gap_beats_band_of_gridbound` (+ `gridbound`, `gridbound_0/1`, `gridbound_Rmax/Rmin`) | **C1 slice 17 — `gridbound` structural glue (Qed):** a real is `gridbound` iff `0` or a bounded nonzero grid ratio (num `≤ 2²⁵`, denom `≤ 2²⁴`, `\|·\| ≥ 2⁻²⁴`). Closed under `Rmax`/`Rmin` (each selects one argument), so each exact clip bound `tmin_e = Rmax 0 (Rmax tlo_x tlo_y)`, `tmax_e = Rmin 1 (Rmin thi_x thi_y)` is `gridbound` once the per-axis t-bounds are. On `gridbound` inputs the gap-beats-band family is total: `gap_beats_band_of_gridbound` (composing slices 15+16) is **exactly `clip_separated`'s right disjunct** for any distinct binding pair. The last piece before the unconditional close is then just `tlo`/`thi` ∈ `gridbound`; Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : gridbound_tlo`/`gridbound_thi` (+ `gridbound_half_quotient`, `coord_int_tight`) | **C1 slice 18a — t-bounds are gridbound:** on the tight integer grid (`coord_int_tight`, `\|n\| ≤ 2²²`) each exact per-axis t-bound `lb_tlo`/`lb_thi` is `gridbound` (degenerate axis → `0`/`1`; else `Rmin`/`Rmax` of two half-edge quotients `IZR m/2 − …`, each gridbound). Qed-closed `[full-b64]` | 4 |
+| `PassesThrough_b64_grid_exact.v : b64_passes_through_grid_exact` (+ `b64_passes_through_sound_on_grid`, `clip_separated_tight`) | **C1 slice 18 — UNCONDITIONAL on-grid grid-exactness (Qed, closes C1 in the tight regime):** for integer-grid points with `\|n\| ≤ 2²²`, `b64_passes_through_hot_pixel_compute = b64_passes_through_hot_pixel` — **no named hypotheses**. `clip_separated` is discharged outright (`tmin_e`/`tmax_e` gridbound ⇒ gap beats band, slice 17), so the slice-10 conditional becomes unconditional; soundness (`compute ⇒ spec`) and completeness (slice 9) both hold. The rounded filter is machine-checked unsound *off* the grid (`PassesThrough_b64_compute_unsound.v`) yet **exact in the grid-aligned regime a snap-rounding noder actually runs in**; Qed-closed `[full-b64]` | 4 |
 | `SpectrePassesThroughWitness.v : spectre_edge_passes_thru` / `_misses` / `_grid_exact_cond` | **C1 witness test on the SPECTRE monotile (Qed):** a 2×-scaled Spectre edge `(12,0)–(15,2)` (companion to `theories/SpectreExample.v`) is shown on the integer grid (`bpoint_int_safe`, via the reusable `b64Z`), the extracted compute filter's `vm_compute` verdicts are exhibited (TRUE at through-pixel `(13,1)`, FALSE at missed-pixel `(14,0)`), and the slice-10 conditional grid-exactness headline is instantiated on it — `compute = spec` modulo the one named reflection. Regression anchor `[full-b64]` | 4 |
 
 `[oracle]` `PASSES_THROUGH_FILTER`/`PASSES_THROUGH_HALFOPEN`. The closed-filter
@@ -139,14 +141,17 @@ the extracted oracle runs the bit-exact computational mirror
 exactness (C1) and completeness `spec ⇒ compute` (C2). **On the integer grid,
 completeness is now Qed-closed** (`b64_passes_through_complete_on_grid`, slice 9
 — the rounded filter never drops a pass on the grid, the noder-safe direction).
-The matching on-grid *soundness* (`compute ⇒ spec`, the remaining C1 direction)
-is reduced to the pure-reals `clip_separated` (slice 11), whose **entire
-analytic content is now Qed** (slices 12–15: determinant gap `≥ 1/(4|d_a d_b|)`
-beats the rounding band `≤ 2⁻⁵²`). This closes **unconditionally for `|n| ≤ 2²³`**
-(`|d_a d_b| ≤ 2⁴⁸`, gap `≥ 2⁻⁵⁰ > 2⁻⁵²`); the full `coord_int_safe` width `2²⁵`
-is borderline (gap can fall to `~2⁻⁵⁴ < ulp`) and needs the exact
-integer-determinant comparison, not a forward-error bound — see
-`docs/audit-rgr-comparison.md`. The general-binary64 C2 stays strongly-evidenced
+The matching on-grid *soundness* (`compute ⇒ spec`) is now **Qed-closed
+UNCONDITIONALLY for `|n| ≤ 2²²`** (`b64_passes_through_sound_on_grid`,
+slice 18) — together with completeness this gives the full equality
+`compute = spec` on the tight grid (`b64_passes_through_grid_exact`), with **no
+named hypotheses**. The route: reduce to the pure-reals `clip_separated`
+(slice 11), discharge it from the determinant gap `≥ 1/(4|d_a d_b|)` beating the
+rounding band `≤ 2⁻⁵²` (slices 12–17), then show the exact clip bounds are
+`gridbound` (slice 18). The full `coord_int_safe` width `2²⁵` is borderline (gap
+can fall to `~2⁻⁵⁴ < ulp`) and needs the exact integer-determinant comparison,
+not a forward-error bound — see `docs/audit-rgr-comparison.md`. The
+general-binary64 C2 stays strongly-evidenced
 open. The rounded filter is also **not symmetric** under segment reversal
 (`PassesThrough_b64_compute_asymmetric.v`, both modes) — the order-dependent
 noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the

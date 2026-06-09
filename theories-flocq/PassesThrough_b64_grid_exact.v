@@ -61,15 +61,17 @@
        gap.  This is EXACTLY `clip_separated`'s right disjunct for the binding
        pair -- the determinant-beats-rounding inequality, done.
 
-   What remains is exactly `clip_separated`, and it is now PURELY STRUCTURAL: the
-   analytic content (gap > band) is Slice 14.  The remaining step exhibits
-   tmin_e, tmax_e as bounded integer ratios (each `Rmax`/`Rmin` selects one of
-   {0,1,tlo_x,tlo_y,thi_x,thi_y}, all ratios via `grid_quotient_ratio`) and
-   applies Slice 14.  Its "interval nonempty" half is free (Slice 9
-   completeness); only the empty/soundness half is open.  See the OBLIGATION
-   note at the bottom; it is NOT discharged here and NO `Admitted` is
-   introduced -- the file is Qed-clean and the open core is a comment, not an
-   axiom.
+   Slices 15-18 then CLOSE it: the relative ulp bound (15) removes the [-1,1]
+   cap, the value-0 edge (16) completes the gap-beats-band family, the
+   `gridbound` algebra (17) packages it, and exhibiting the exact clip bounds as
+   `gridbound` (18) discharges `clip_separated` outright on the tight integer
+   grid `|n| <= 2^22`.  RESULT: `b64_passes_through_grid_exact` --
+   `compute = spec` UNCONDITIONALLY on the tight grid, Qed, no named hypotheses
+   (soundness `b64_passes_through_sound_on_grid` + Slice 9 completeness).  The
+   only remaining items are the WIDTH extension to the full `coord_int_safe`
+   regime `|n| <= 2^25` (needs the exact integer-determinant comparison, not a
+   forward-error bound) and the general-binary64 C2 -- see the OBLIGATION note.
+   No `Admitted` anywhere; the file is Qed-clean.
 
    Corpus invariant preserved: no Admitted / Axiom / Parameter.
    ============================================================================ *)
@@ -1588,61 +1590,226 @@ Proof.
 Qed.
 
 (* ----------------------------------------------------------------------------
-   REMAINING OBLIGATION (the hard core -- NOT an axiom).
+   SLICE 18: the t-bounds are `gridbound` -- the last structural fact, and the
+   unconditional on-grid soundness close (tight regime |n| <= 2^22).
+   ---------------------------------------------------------------------------- *)
 
-   With Slices 10-11, the ENTIRE on-grid `compute = spec` equivalence (single-
-   touch and full predicate) is Qed-certified modulo ONE PURE-REALS obligation,
-   `clip_separated P0 P1 C` (Slice 11) -- no rounding/Rle_bool left in it:
+(* bpow(-24) = / bpow 24 (the `-24` numeral does not match `bpow_opp`'s `Z.opp`). *)
+Lemma bpow_neg24_eq : bpow radix2 (-24) = (/ bpow radix2 24)%R.
+Proof.
+  apply (Rmult_eq_reg_r (bpow radix2 24)); [ | apply Rgt_not_eq, bpow_gt_0 ].
+  rewrite <- bpow_plus. rewrite Rinv_l by (apply Rgt_not_eq, bpow_gt_0).
+  replace (-24 + 24)%Z with 0%Z by lia. reflexivity.
+Qed.
 
-       clip_separated :  tmin_e <= tmax_e
-                          \/  /2 ulp(round tmin_e) + /2 ulp(round tmax_e)
-                                < tmin_e - tmax_e
+(* A nonzero ratio with denominator bounded by 2^24 has magnitude >= 2^-24. *)
+Lemma ratio_abs_ge_bpow_neg24 :
+  forall (na da : Z), (na <> 0)%Z -> (da <> 0)%Z -> (Z.abs da <= 2 ^ 24)%Z ->
+    (bpow radix2 (-24) <= Rabs (IZR na / IZR da))%R.
+Proof.
+  intros na da Hna Hda HdaB.
+  assert (Hdane : IZR da <> 0%R) by (apply IZR_neq; exact Hda).
+  rewrite bpow_neg24_eq. unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+  assert (Hna1 : (1 <= Rabs (IZR na))%R).
+  { rewrite <- abs_IZR. replace 1%R with (IZR 1) by reflexivity. apply IZR_le. lia. }
+  assert (HdaR : (Rabs (IZR da) <= bpow radix2 24)%R).
+  { rewrite <- abs_IZR, <- (IZR_Zpower radix2 24) by lia. apply IZR_le. exact HdaB. }
+  assert (Hdapos : (0 < Rabs (IZR da))%R) by (apply Rabs_pos_lt; exact Hdane).
+  apply (Rle_trans _ (1 * / Rabs (IZR da))%R).
+  - rewrite Rmult_1_l. apply Rinv_le_contravar; [ exact Hdapos | exact HdaR ].
+  - apply Rmult_le_compat_r; [ apply Rlt_le, Rinv_0_lt_compat; exact Hdapos | exact Hna1 ].
+Qed.
 
-   where tmin_e = tmin_exact, tmax_e = tmax_exact are the exact spec clip bounds.
-   Slice 11's `round_reflects_le_of_sep` turns this into the Slice-10 hypothesis,
-   so `clip_separated` is the only gap left in C1; everything else is discharged.
+(* A grid Liang-Barsky quotient with a half-integer numerator IZR m / 2 (the
+   pixel half-edge cc +/- 1/2 minus an integer endpoint) over an integer run is
+   `gridbound`, in the tight regime. *)
+Lemma gridbound_half_quotient :
+  forall (m n0 n1 : Z),
+    (n1 <> n0)%Z ->
+    (Z.abs m <= 2 ^ 24)%Z -> (Z.abs n0 <= 2 ^ 22)%Z -> (Z.abs n1 <= 2 ^ 22)%Z ->
+    gridbound ((IZR m / 2 - IZR n0) / (IZR n1 - IZR n0)).
+Proof.
+  intros m n0 n1 Hne Hm Hn0 Hn1.
+  assert (Hd : (IZR n1 - IZR n0)%R <> 0%R).
+  { intro H. apply Hne. apply eq_IZR. lra. }
+  assert (Hq : ((IZR m / 2 - IZR n0) / (IZR n1 - IZR n0))%R
+                = (IZR (m - 2 * n0)%Z / IZR (2 * (n1 - n0))%Z)%R).
+  { rewrite minus_IZR, !mult_IZR, minus_IZR. field. exact Hd. }
+  rewrite Hq.
+  destruct (Z.eq_dec (m - 2 * n0) 0) as [Hna0 | Hna0].
+  - left. rewrite Hna0. change (IZR 0) with 0%R. unfold Rdiv. apply Rmult_0_l.
+  - right. exists (m - 2 * n0)%Z, (2 * (n1 - n0))%Z.
+    split; [ reflexivity | ].
+    split; [ lia | ].
+    split; [ lia | ].
+    split; [ lia | ].
+    apply ratio_abs_ge_bpow_neg24; [ exact Hna0 | lia | lia ].
+Qed.
 
-   What is already free vs. what is open:
-     - `=true` (completeness, spec=>compute): FREE by monotonicity of round
-       (tmin_e <= tmax_e  =>  round tmin_e <= round tmax_e).  This is Slice 9,
-       and it is the reason the `<=`-true half of Hreflect always holds.
-     - `=false` (soundness, compute=>spec): the OPEN half.  It needs
-       tmin_e > tmax_e  =>  round tmin_e > round tmax_e, i.e. rounding must not
-       collapse a strictly-empty clip interval to a non-empty one.
+(* The tight integer-grid regime |n| <= 2^22 -- where the t-bound numerators
+   (<= 2^24) and runs (denominator <= 2^24) fit the gridbound bounds.  It
+   implies the |n| <= 2^25 `coord_int_safe` regime the rest of C1 runs in. *)
+Definition coord_int_tight (x : binary64) : Prop :=
+  Binary.is_finite prec emax x = true /\
+  exists n : Z, Binary.B2R prec emax x = IZR n /\ (Z.abs n <= 2 ^ 22)%Z.
 
-   Gap analysis -- WHAT IS NOW PROVEN vs. what remains.  On the grid every
-   t-bound is the integer ratio `IZR (m - 2 n0) / IZR (2 (n1 - n0))`
-   (`grid_quotient_ratio`, Slice 12), and any two DISTINCT such ratios differ by
-   >= 1 / (|d_a| |d_b|) (`rational_gap`, Slice 12) -- so the binding
-   `tmin_e - tmax_e` gap, when nonzero, is >= 1 / (|2(x1-x0)| |2(y1-y0)|).  This
-   is the GAP (lower-bound) half of `clip_separated`, Qed.
+Lemma coord_int_tight_safe : forall x, coord_int_tight x -> coord_int_safe x.
+Proof. intros x (F & n & HR & Hb). split; [ exact F | exists n; split; [ exact HR | lia ] ]. Qed.
 
-   The gap-vs-band INEQUALITY is now PROVEN combined (Slice 14,
-   `grid_ratio_gap_exceeds_ulp_band`): for two distinct ratios u, v in [-1,1]
-   with denominators <= 2^24,
-       /2 ulp(round u) + /2 ulp(round v) <= 2^-52 < 2^-48 <= |u - v|,
-   i.e. EXACTLY `clip_separated`'s right disjunct for the binding pair.
+Definition bpoint_int_tight (P : BPoint) : Prop :=
+  coord_int_tight (bx P) /\ coord_int_tight (by_ P).
 
-   ONE purely-STRUCTURAL step remains to assemble `clip_separated`:
-     reduce `tmin_e - tmax_e` to a SINGLE binding pair (max of {0,tlo_x,tlo_y}
-     minus min of {1,thi_x,thi_y}) -- each `Rmax`/`Rmin` SELECTS one argument
-     (`Rmax x y = x \/ = y`), so tmin_e, tmax_e are each one of
-     {0,1,tlo_x,tlo_y,thi_x,thi_y}, an integer ratio (`grid_quotient_ratio`,
-     with 0 = 0/1, 1 = 1/1) bounded in [-1,1] in the binding case; then apply
-     Slice 14 (constant cases 0/1 and axis-degenerate branches folded in).  No
-     more analytic content -- the determinant-beats-rounding inequality is done.
+Lemma bpoint_int_tight_safe : forall P, bpoint_int_tight P -> bpoint_int_safe P.
+Proof. intros P (Hx & Hy). split; apply coord_int_tight_safe; assumption. Qed.
 
-   FINDING -- WHY 2^23 vs 2^25 (full integer-determinant gap analysis in
-   docs/audit-rgr-comparison.md "Execution" notes).  The binding gap is
-   >= 1/(4|d_a d_b|) and the rounding band is <= 2^-52 at the clip boundary
-   (Slices 12-15).  Gap > band iff |d_a d_b| < 2^50:
-     - at |n| <= 2^23 (|d| <= 2^24, |d_a d_b| <= 2^48) the gap (>= 2^-50) wins,
-       so on-grid soundness closes UNCONDITIONALLY;
-     - at the full coord_int_safe width |n| <= 2^25 it is *borderline*
-       (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width close is
-       NOT a pure forward-error argument -- it needs the exact integer-
-       determinant decision (no rounding in the comparison), not a tightened
-       band.
-   Recommended next step: assemble the structural reduction with Slice 15 into
-   an UNCONDITIONAL `b64_..._sound_on_grid` for |n| <= 2^23.
+(* Each exact per-axis t-bound is gridbound on the tight grid.  Degenerate axis:
+   lb_tlo = 0 (gridbound_0).  Non-degenerate: Rmin of the two half-edge
+   quotients, each gridbound (gridbound_half_quotient). *)
+Lemma gridbound_tlo :
+  forall c0 c1 cc : binary64,
+    coord_int_tight c0 -> coord_int_tight c1 -> coord_int_tight cc ->
+    gridbound (lb_tlo (Binary.B2R prec emax c0) (Binary.B2R prec emax c1)
+                      (Binary.B2R prec emax cc - / 2) (Binary.B2R prec emax cc + / 2)).
+Proof.
+  intros c0 c1 cc (Fc0 & n0 & H0R & H0b) (Fc1 & n1 & H1R & H1b) (Fcc & ncc & HccR & Hccb).
+  unfold lb_tlo.
+  destruct (Req_dec_T (Binary.B2R prec emax c1) (Binary.B2R prec emax c0)) as [Heq | Hne].
+  - apply gridbound_0.
+  - assert (Hn : (n1 <> n0)%Z) by (intro Hz; apply Hne; rewrite H1R, H0R, Hz; reflexivity).
+    rewrite H0R, H1R, HccR.
+    apply gridbound_Rmin.
+    + replace (IZR ncc - / 2 - IZR n0)%R with (IZR (2 * ncc - 1)%Z / 2 - IZR n0)%R
+        by (rewrite minus_IZR, mult_IZR; lra).
+      apply gridbound_half_quotient; [ exact Hn | lia | lia | lia ].
+    + replace (IZR ncc + / 2 - IZR n0)%R with (IZR (2 * ncc + 1)%Z / 2 - IZR n0)%R
+        by (rewrite plus_IZR, mult_IZR; lra).
+      apply gridbound_half_quotient; [ exact Hn | lia | lia | lia ].
+Qed.
+
+Lemma gridbound_thi :
+  forall c0 c1 cc : binary64,
+    coord_int_tight c0 -> coord_int_tight c1 -> coord_int_tight cc ->
+    gridbound (lb_thi (Binary.B2R prec emax c0) (Binary.B2R prec emax c1)
+                      (Binary.B2R prec emax cc - / 2) (Binary.B2R prec emax cc + / 2)).
+Proof.
+  intros c0 c1 cc (Fc0 & n0 & H0R & H0b) (Fc1 & n1 & H1R & H1b) (Fcc & ncc & HccR & Hccb).
+  unfold lb_thi.
+  destruct (Req_dec_T (Binary.B2R prec emax c1) (Binary.B2R prec emax c0)) as [Heq | Hne].
+  - apply gridbound_1.
+  - assert (Hn : (n1 <> n0)%Z) by (intro Hz; apply Hne; rewrite H1R, H0R, Hz; reflexivity).
+    rewrite H0R, H1R, HccR.
+    apply gridbound_Rmax.
+    + replace (IZR ncc - / 2 - IZR n0)%R with (IZR (2 * ncc - 1)%Z / 2 - IZR n0)%R
+        by (rewrite minus_IZR, mult_IZR; lra).
+      apply gridbound_half_quotient; [ exact Hn | lia | lia | lia ].
+    + replace (IZR ncc + / 2 - IZR n0)%R with (IZR (2 * ncc + 1)%Z / 2 - IZR n0)%R
+        by (rewrite plus_IZR, mult_IZR; lra).
+      apply gridbound_half_quotient; [ exact Hn | lia | lia | lia ].
+Qed.
+
+(* The exact clip bounds are gridbound (gridbound closed under Rmax/Rmin, with
+   the constants 0/1 and the per-axis t-bounds gridbound). *)
+Lemma gridbound_tmin_exact :
+  forall P0 P1 C : BPoint,
+    bpoint_int_tight P0 -> bpoint_int_tight P1 -> bpoint_int_tight C ->
+    gridbound (tmin_exact P0 P1 C).
+Proof.
+  intros P0 P1 C (Hx0 & Hy0) (Hx1 & Hy1) (Hcx & Hcy).
+  unfold tmin_exact.
+  apply gridbound_Rmax; [ apply gridbound_0 | ].
+  apply gridbound_Rmax; apply gridbound_tlo; assumption.
+Qed.
+
+Lemma gridbound_tmax_exact :
+  forall P0 P1 C : BPoint,
+    bpoint_int_tight P0 -> bpoint_int_tight P1 -> bpoint_int_tight C ->
+    gridbound (tmax_exact P0 P1 C).
+Proof.
+  intros P0 P1 C (Hx0 & Hy0) (Hx1 & Hy1) (Hcx & Hcy).
+  unfold tmax_exact.
+  apply gridbound_Rmin; [ apply gridbound_1 | ].
+  apply gridbound_Rmin; apply gridbound_thi; assumption.
+Qed.
+
+(* `clip_separated` holds UNCONDITIONALLY on the tight grid: either the exact
+   clip interval is nonempty, or (both bounds gridbound) the gap beats the band
+   by Slice 17. *)
+Lemma clip_separated_tight :
+  forall P0 P1 C : BPoint,
+    bpoint_int_tight P0 -> bpoint_int_tight P1 -> bpoint_int_tight C ->
+    clip_separated P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC. unfold clip_separated.
+  destruct (Rle_dec (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)) as [Hle | Hgt].
+  - left. exact Hle.
+  - right.
+    pose proof (gap_beats_band_of_gridbound (tmin_exact P0 P1 C) (tmax_exact P0 P1 C)
+                  (gridbound_tmin_exact P0 P1 C HP0 HP1 HC)
+                  (gridbound_tmax_exact P0 P1 C HP0 HP1 HC) ltac:(lra)) as H.
+    rewrite Rabs_right in H by lra. exact H.
+Qed.
+
+(* ============================================================================
+   C1 ON-GRID SOUNDNESS, UNCONDITIONAL on the tight integer grid (|n| <= 2^22).
+   The compute filter only ever OVER-accepts off the grid (the machine-checked
+   RED, PassesThrough_b64_compute_unsound.v); here, in the regime a snap-rounding
+   noder actually runs (integer/grid-aligned coordinates), it is SOUND -- and,
+   with Slice 9's completeness, the rounded compute filter EQUALS the exact
+   R-spec.  No hypotheses beyond the tight integer grid; no Admitted.
+   ============================================================================ *)
+Theorem b64_passes_through_sound_on_grid :
+  forall P0 P1 C : BPoint,
+    bpoint_int_tight P0 -> bpoint_int_tight P1 -> bpoint_int_tight C ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = true ->
+    b64_passes_through_hot_pixel P0 P1 C = true.
+Proof.
+  intros P0 P1 C HP0 HP1 HC.
+  apply (b64_passes_through_sound_on_grid_sep P0 P1 C
+           (bpoint_int_tight_safe P0 HP0) (bpoint_int_tight_safe P1 HP1)
+           (bpoint_int_tight_safe C HC) (clip_separated_tight P0 P1 C HP0 HP1 HC)).
+Qed.
+
+(* Full C1 grid-exactness, UNCONDITIONAL on the tight grid: the rounded compute
+   filter EQUALS the exact R-spec (soundness here + Slice 9 completeness). *)
+Theorem b64_passes_through_grid_exact :
+  forall P0 P1 C : BPoint,
+    bpoint_int_tight P0 -> bpoint_int_tight P1 -> bpoint_int_tight C ->
+    b64_passes_through_hot_pixel_compute P0 P1 C = b64_passes_through_hot_pixel P0 P1 C.
+Proof.
+  intros P0 P1 C HP0 HP1 HC.
+  apply (b64_passes_through_grid_exact_sep P0 P1 C
+           (bpoint_int_tight_safe P0 HP0) (bpoint_int_tight_safe P1 HP1)
+           (bpoint_int_tight_safe C HC) (clip_separated_tight P0 P1 C HP0 HP1 HC)).
+Qed.
+
+(* ----------------------------------------------------------------------------
+   CLOSED.  C1 (on-grid grid-exactness) is now UNCONDITIONAL on |n| <= 2^22:
+   completeness (Slice 9) + soundness (Slices 10-18) = `compute = spec` on the
+   grid, Qed, no named hypotheses.  The remaining open items are the WIDTH
+   extension to the full coord_int_safe regime |n| <= 2^25 (needs the exact
+   integer-determinant comparison, not a forward-error bound -- see
+   docs/audit-rgr-comparison.md) and the general-binary64 C2.
+   ---------------------------------------------------------------------------- *)
+
+(* ----------------------------------------------------------------------------
+   REMAINING OBLIGATIONS (after C1's unconditional close on |n| <= 2^22).
+
+   C1 -- on-grid `compute = spec` -- is now CLOSED on the tight integer grid
+   (`b64_passes_through_grid_exact`, Qed, no named hypotheses).  Two items
+   remain, both honestly out of scope of this file:
+
+   1. WIDTH EXTENSION to the full coord_int_safe regime |n| <= 2^25.
+      The binding gap is >= 1/(4|d_a d_b|) and the rounding band is <= 2^-52 at
+      the clip boundary (Slices 12-17).  Gap > band iff |d_a d_b| < 2^50:
+        - at |n| <= 2^22 (used here; |d_a d_b| <= 2^48) the gap wins -- CLOSED;
+        - at the full width |n| <= 2^25 it is *borderline* (|d_a d_b| can reach
+          ~2^52, gap ~2^-54 < ulp), so a full-width close is NOT a pure
+          forward-error argument -- it needs the EXACT integer-determinant
+          comparison (no rounding in the decision), not a tightened band.
+      See docs/audit-rgr-comparison.md "Execution" notes for the analysis.
+
+   2. The general-binary64 completeness C2 (`spec => compute` off the grid),
+      strongly evidenced but blocked -- see docs/oracle-soundness-finding.md.
+
+   No `Admitted` / `Axiom` / `Parameter` anywhere in this file.
    ---------------------------------------------------------------------------- *)
