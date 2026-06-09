@@ -252,6 +252,21 @@ Full RelateNG matrix-fill and prepared-cache slices remain follow-up (#67 S3+).
 
 Witness matrices are soundness targets, not a computed RelateNG IM. Endpoint-only touches inherit existential `Intersects` only.
 
+## Issue #67 — Romanschek line–line oracle matrices (`RelateLineLine.v`, S3 seed)
+
+Pinned 9-char DE-9IM strings from Romanschek et al. (IJGI 2021) Table 5/6 /
+[topology-relations](https://github.com/dd-bim/topology-relations) agree with NTS 2.3.0 at
+extent `r_max ≤ 1056`. Vectors: `oracle/de9im_line_line_vectors.txt`. Predicate
+lemmas only — no WKT→matrix computation yet.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateLineLine.v : paper_test7_overlaps` | Test 7 (`1FFF0FFF2`) satisfies `Overlaps` (LL) `[exact]` | 3 |
+| `RelateLineLine.v : paper_test6_not_crosses` | Test 6 (`FF1FF0102`) does **not** satisfy `Crosses` under `pat_crosses_ll` (II=F) `[exact]` | 3 |
+| `RelateLineLine.v : paper_test13_crosses` | Test 13 (`0F1FF0102`) satisfies `Crosses` (LL); II=0 matches `ll_matrix_point_ii` `[exact]` | 3 |
+| `RelateLineLine.v : paper_test10_not_disjoint` | Test 10 (`FF10F0102`) is **not** `Disjoint` (BI=0) though segments are separated `[exact]` | 3 |
+| `RelateLineLine.v : paper_test7_agrees_overlap_witness_core` | Test 7 shares II/BB cells with `ll_matrix_overlap_ii` `[exact]` | 3 |
+
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 
 | `file : theorem` | Meaning | Ax |
