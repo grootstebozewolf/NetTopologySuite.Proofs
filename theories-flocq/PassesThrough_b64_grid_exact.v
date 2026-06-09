@@ -1539,10 +1539,17 @@ Qed.
      Slice 14 (constant cases 0/1 and axis-degenerate branches folded in).  No
      more analytic content -- the determinant-beats-rounding inequality is done.
 
-   FINDING (recorded): at the full coord_int_safe width |n| <= 2^25 the bound is
-   *borderline* (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width
-   unconditional close is NOT a pure forward-error argument -- it needs the exact
-   integer-determinant decision (no rounding in the comparison) or a tightened
-   coordinate regime.  Recommended next step: assemble (a)+(b) with Slice 12 into
+   FINDING -- WHY 2^23 vs 2^25 (full integer-determinant gap analysis in
+   docs/audit-rgr-comparison.md "Execution" notes).  The binding gap is
+   >= 1/(4|d_a d_b|) and the rounding band is <= 2^-52 at the clip boundary
+   (Slices 12-15).  Gap > band iff |d_a d_b| < 2^50:
+     - at |n| <= 2^23 (|d| <= 2^24, |d_a d_b| <= 2^48) the gap (>= 2^-50) wins,
+       so on-grid soundness closes UNCONDITIONALLY;
+     - at the full coord_int_safe width |n| <= 2^25 it is *borderline*
+       (|d_a d_b| can reach ~2^52, gap ~2^-54 < ulp), so a full-width close is
+       NOT a pure forward-error argument -- it needs the exact integer-
+       determinant decision (no rounding in the comparison), not a tightened
+       band.
+   Recommended next step: assemble the structural reduction with Slice 15 into
    an UNCONDITIONAL `b64_..._sound_on_grid` for |n| <= 2^23.
    ---------------------------------------------------------------------------- *)

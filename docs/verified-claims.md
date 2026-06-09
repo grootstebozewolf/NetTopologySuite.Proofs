@@ -138,7 +138,14 @@ exactness (C1) and completeness `spec ⇒ compute` (C2). **On the integer grid,
 completeness is now Qed-closed** (`b64_passes_through_complete_on_grid`, slice 9
 — the rounded filter never drops a pass on the grid, the noder-safe direction).
 The matching on-grid *soundness* (`compute ⇒ spec`, the remaining C1 direction)
-and the general-binary64 C2 stay strongly-evidenced open. The rounded filter is also **not symmetric** under segment reversal
+is reduced to the pure-reals `clip_separated` (slice 11), whose **entire
+analytic content is now Qed** (slices 12–15: determinant gap `≥ 1/(4|d_a d_b|)`
+beats the rounding band `≤ 2⁻⁵²`). This closes **unconditionally for `|n| ≤ 2²³`**
+(`|d_a d_b| ≤ 2⁴⁸`, gap `≥ 2⁻⁵⁰ > 2⁻⁵²`); the full `coord_int_safe` width `2²⁵`
+is borderline (gap can fall to `~2⁻⁵⁴ < ulp`) and needs the exact
+integer-determinant comparison, not a forward-error bound — see
+`docs/audit-rgr-comparison.md`. The general-binary64 C2 stays strongly-evidenced
+open. The rounded filter is also **not symmetric** under segment reversal
 (`PassesThrough_b64_compute_asymmetric.v`, both modes) — the order-dependent
 noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the
 exact R-spec, not the rounded compute filter.
