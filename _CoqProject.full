@@ -738,6 +738,21 @@ theories/JCTTopPassage.v
 # level, plus level freshness of the destination height.  Three-axiom.
 # No Admitted.
 theories/JCTPassageKit.v
+# ESCAPE DESCENT, rung 5c-3: THE UNDER-TIP CROSSING.  At a LOCAL-MINIMUM
+# corner (every incident edge reaches weakly upward) the horizontal band
+# just below v is skeleton-free across the whole corner
+# [px v - 2*delta, px v + 2*delta]: the side-switch move connecting the
+# west-side passage destinations to the east-side corridors (y-flip: over
+# a local-maximum tip).  Incident edges live entirely at-or-above the
+# level (no slope bounds needed); non-incident edges get explicit margins
+# as in the corner drop: a level-crossing edge crosses at abscissa X with
+# |X - px v| = m > 0 (tautness via taut_vertex_endpoint), and for
+# 8*delta < m + thin band the probe stays m/2 short of it
+# (hprobe_avoid_level_crossing, the horizontal twin of
+# drop_avoid_level_crossing); two-stage corner_fold gives uniform delta0
+# then eps0(delta).  under_tip_crossing: any two band points connect,
+# off-ring.  Three-axiom.  No Admitted.
+theories/JCTTipCrossing.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
