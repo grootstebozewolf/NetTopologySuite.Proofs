@@ -435,6 +435,163 @@ theories/GeneralTriangleParityRED.v
 # discharging hole_inside_outer for a triangular outer ring with NO JCT.
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleHoleNesting.v
+# Coverage layer on top of GeneralTriangleHoleNesting: the band hypothesis of
+# gtri_band_in_ring DISCHARGED from interior positivity alone under the
+# rightward-ray guard.  gtri_ray_coverage (0 < gtri /\ ray_avoids_vertices ->
+# some directed band holds; grazed-vertex trichotomy cases forced strictly west
+# by the guard, off-scale cases killed by the barycentric height identity),
+# gtri_interior_in_ring, and the headlines general_triangle_parity_
+# characterises_interior (third fully-closed strict-interior instance of the H1
+# parity seam, after rectangle + right triangle) and
+# hole_inside_outer_triangle_guarded (+_generic: distinct heights discharge the
+# guard).  Orientation DERIVED from interior positivity, not assumed.
+# Three-axiom.  No Admitted.
+theories/GeneralTriangleJCT.v
+# RED for the H1 seam AS STATED: parity_characterises_interior_cont_strict is
+# FALSE at ON-EDGE points -- the generic-position guards do not exclude the
+# ring skeleton, where the ray test is half-open (the GeneralTriangleParityRED
+# phenomenon, one level up).  Witness: triangle (0,0),(4,1),(1,3) (no
+# horizontal edge) and the midpoint (1/2,3/2) of edge C--A: point_in_ring TRUE
+# (B--C crossed once), geometric_interior_cont FALSE (on the skeleton), all
+# five premises Qed.  Adds the corrected seam parity_characterises_interior_
+# cont_offring (+ ring_complement premise) and re-wires the conditional
+# headline against it.  Three-axiom.  No Admitted.
+theories/JCT_OnEdgeCounterexample.v
+# The corrected H1 seam discharged TOTALLY for the rectangle -- the first
+# family where parity_characterises_interior_cont_offring itself is Qed (all
+# off-ring points, not just strict interior).  New machinery: the generic
+# straight-ray escape lemmas escape_beyond_{x,y}_{low,high} (a point strictly
+# beyond a one-sided skeleton bound is in no bounded complement component;
+# reusable for the triangle/convex exterior halves), rect_image_bounds,
+# rect_exterior_not_in_ring (box_min < 0 -> even parity), assembled by
+# box_min trichotomy into rect_point_in_ring_iff_geometric and the headline
+# rect_parity_seam_offring.  Three-axiom.  No Admitted.
+theories/RectangleOffringSeam.v
+# The triangle's EXTERIOR half of the corrected off-ring seam + the half-plane
+# escape engine.  escape_beyond_halfplane (generic: skeleton inside a*x+b*y<=c,
+# p strictly beyond -> no bounded component; Cauchy-Schwarz square-root-free
+# radius defeat), gtri_image_slacks_nonneg (skeleton in all three closed inner
+# half-planes), gtri_exterior_escapes (gtri<0 -> escape), the TOTAL
+# geometric->parity direction gtri_geometric_imp_in_ring, and the triangle's
+# total off-ring seam gtri_parity_seam_offring_of_exterior_parity conditional
+# on the ONE residual: exterior even parity (gtri<0 -> ~point_in_ring).
+# Three-axiom.  No Admitted.
+theories/GeneralTriangleExterior.v
+# The residual closed: EXTERIOR points of a triangle have EVEN ray parity
+# (gtri_exterior_even_parity, under the ray_avoids_vertices guard -- necessary:
+# an exterior ray can graze a vertex and miscount).  rpo3_cases inverts odd
+# parity into the four odd crossing-subsets; the triple dies on heights, each
+# singleton by trichotomy on the OPPOSITE vertex's height (grazed-vertex-west
+# factorisations + the slack-sum and barycentric height identities, nra).
+# Headline gtri_parity_seam_offring: the corrected off-ring H1 seam TOTAL for
+# every CCW triangle -- the SECOND total family, first with sloped edges.
+# Three-axiom.  No Admitted.
+theories/GeneralTriangleOffringSeam.v
+# The generic CONVEX assembly layer for the off-ring seam + the right triangle
+# as the THIRD total family (free: rtri_ring is definitionally a gtri_ring
+# instance).  ring_edges_endpoints_in; image_slack_nonneg (vertices inside a
+# half-plane put the whole skeleton inside -- the n-gon induction, with the
+# GLOBAL vertices_in_halfplane convexity, not local turns: the pentagram
+# refutes the local form); conv_min_neg_inv; convex_exterior_escapes; and
+# convex_parity_seam_offring_of -- the total seam for ANY half-plane-presented
+# ring from four named family obligations (zero-set on skeleton, bounded
+# positive region, guarded interior-odd + exterior-even parity).
+# Three-axiom.  No Admitted.
+theories/ConvexOffringSeam.v
+# H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
+# half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
+# ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path
+# (a decidable locally-stable predicate is constant along a path -- pure
+# completeness-of-R, the decidability replaces hidden classical choice);
+# invariant_traps / odd_parity_trapped_of_invariant (ANY ring: an odd-parity
+# point agreeing with a decidable, complement-locally-constant, far-false
+# invariant is in a bounded component).  The remaining kernel is constructing
+# that invariant for a general simple ring (the HALF-OPEN parity -- the
+# strict parity is NOT locally constant: a far-west point's count jumps at a
+# pass-through-vertex height).  Non-vacuity: the rectangle instantiates the
+# reduction via the box-field sign (rect_trapped_via_invariant).
+# Three-axiom.  No Admitted.
+theories/JCTParityTransport.v
+# H1 PROPER, part 2: the HALF-OPEN ray parity (edge counts when vy <= h < wy)
+# -- the locally-constant invariant the transport engine was built for.
+# Decidability + exclusivity; guard agreement with the strict parity under
+# ray_avoids_vertices alone (the conventions differ only at bottom-endpoint
+# heights, where the crossing IS the vertex); far-field evenness in all FOUR
+# directions -- right/up/down by no-crossing, WEST by the cyclic walk
+# argument (far west, an edge crosses iff its endpoints' below-flags differ;
+# around a CLOSED walk the flag returns home, so flips are even -- the place
+# closedness genuinely enters).  Capstone odd_parity_trapped_of_ho_kernel:
+# the trapped half of H1 for ANY closed ring now follows from the single
+# named kernel ho_parity_locally_constant (local constancy along complement
+# paths -- the y-monotone vertex-pairing content).  Three-axiom.  No Admitted.
+theories/JCTHalfOpenParity.v
+# H1 PROPER, part 3: GENERIC-HEIGHT local constancy of the half-open parity,
+# Qed -- and the kernel shrinks to vertex-level points.  At a complement
+# point off all vertex heights, every per-edge crossing condition is a
+# conjunction of STRICT affine signs (the ray atom PA/PD is nonzero because
+# zero-in-band puts the point ON the edge); affine_sign_stable gives explicit
+# balls, ho_parity_ball Rmin's them over the edge list, path continuity
+# lifts to the parameter (path_coord_close).  ho_kernel_of_level_stable:
+# the full kernel ho_parity_locally_constant follows from ho_level_stable
+# (constancy at VERTEX-LEVEL complement points only -- the pure vertex-
+# pairing content).  Capstone odd_parity_trapped_of_level_stable: H1's
+# trapped half now needs ONLY ho_level_stable.  Three-axiom.  No Admitted.
+theories/JCTGenericStability.v
+# H1 PROPER, part 4: UPPER half-ball constancy of the half-open parity at
+# EVERY complement point, Qed (the bottom-inclusive band makes parity equal
+# its limit from above: per edge only four upper-regimes -- dead-above,
+# unreached, live-ascending-with-bottom, live-descending-with-bottom; the
+# live ray atoms PA/PD are nonzero with the t=0 witness allowed, so no
+# genericity and no pairing).  ho_upper_stable; the kernel shrinks to
+# ho_level_jump (parity just BELOW a vertex level equals parity AT it --
+# the east level-vertices' band-handover count, isolated on one side of one
+# line); ho_level_stable_of_jump; capstone odd_parity_trapped_of_level_jump:
+# H1's trapped half from the single downward-jump statement.
+# Three-axiom.  No Admitted.
+theories/JCTLevelJump.v
+# H1 PROPER, part 5: THE TRAPPED HALF OF THE POLYGONAL JCT, Qed and
+# UNCONDITIONAL.  The east-level flag F(v) := (py v = level /\ px q < px v)
+# satisfies, per edge, (cross-below <-> cross-at) <-> (F fst <-> F snd) --
+# nine cases, with horizontal level edges having both endpoints on one side
+# of a complement point -- so the downward jump telescopes around the closed
+# walk (ho_jump_walk / ho_jump_closed) exactly like the far-west lemma.
+# ho_level_jump_holds proves the part-4 kernel; odd_parity_trapped: a
+# ray-guarded odd-parity point is in a bounded complement component of ANY
+# closed ring (ring_simple NOT needed).  The load-bearing half of H1.
+# Three-axiom.  No Admitted.
+theories/JCTTrappedHalf.v
+# H1 PROPER, assembly: the kernel chain named (ho_parity_locally_constant_
+# holds for every closed ring); the seam's hard direction unconditional
+# (point_in_ring_imp_geometric_cont: odd guarded off-ring points of any
+# closed ring are geometric-interior); the ESCAPE residual isolated
+# (even_parity_escapes -- the only place simplicity is needed: doubly-wound
+# rings have even trapped points); parity_seam_offring_of_escape /
+# point_in_ring_correct_of_escape derive the FULL corrected seam from it
+# (the parity side decided by point_in_ring_dec, no classical step).
+# Sanity: the rectangle discharges the residual at a concrete point.
+# Three-axiom.  No Admitted.
+theories/JCTSeamAssembly.v
+# H1 PROPER, part 6: the escape half decomposed.  ho_count (decidable
+# nat-valued crossing count) + parity bridge; BASE CASE Qed
+# (escape_east_of_zero_count: zero crossings + the ray guard make the open
+# eastward ray literally skeleton-free -- strict straddles east would be
+# counted, vertices/horizontal level edges east are banished by the guard
+# -- so the straight ray escapes); STRONG INDUCTION Qed (escape_of_descent,
+# riding in_bounded_component_cont_invariant).  THE FINAL RESIDUAL:
+# escape_descent -- one detour, one fewer crossing; simplicity lives here
+# and only here.  parity_seam_offring_of_descent: the FULL corrected H1
+# seam from the descent step alone.  Three-axiom.  No Admitted.
+theories/JCTEscapeDescent.v
+# H1 PROPER, part 7: THE SEPARATION CLAUSE OF THE JCT, unconditional --
+# parity_constant_on_components (guarded endpoints of a complement path have
+# equal strict parity: transport + half-open kernel + guard agreement) and
+# odd_even_separated (inside and outside never meet through the complement
+# of ANY closed ring; no simplicity).  This is the separation clause PR #82
+# added to the JCT_two_components_cont hypothesis, now a THEOREM.  Plus the
+# escape residual discharged on every total family (rect/gtri/rtri
+# even_parity_escapes, each by the family field trichotomy).
+# Three-axiom.  No Admitted.
+theories/JCTSeparation.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

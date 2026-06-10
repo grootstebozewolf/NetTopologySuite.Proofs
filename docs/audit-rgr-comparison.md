@@ -358,3 +358,35 @@ With both co-#1 targets (C1, arc-line Scope B/C) now closed, the
 risk/cost-ordered queue advances to **§3 item 2: `extract_rings_valid`
 (Phase 3 H2)** — the highest-value *structural* target and the single live
 deferred-proof registry entry.
+
+---
+
+## Postscript (2026-06-10, evening): H1 re-graded
+
+The H1 row above ("polygonal JCT, **high** risk — no stub, no reachable
+library; multi-month from scratch; very high cost, blocked on ecosystem")
+is superseded. In one sustained push
+(`docs/jct-on-edge-counterexample.md`, Follow-ups 1–9, and
+`theories/JCT{ParityTransport,HalfOpenParity,GenericStability,LevelJump,
+TrappedHalf,SeamAssembly}.v):
+
+- the seam was **corrected** (the strict form is refutable at on-edge
+  points; the off-ring form is the honest target);
+- the corrected seam was discharged **totally** for three families
+  (rectangle, arbitrary CCW triangle, right triangle) with a generic
+  convex assembly awaiting n-gon parity obligations;
+- the **trapped half** of the polygonal JCT — its load-bearing direction —
+  is now **Qed, unconditionally, for every closed ring**
+  (`JCTTrappedHalf.odd_parity_trapped`), via a decidable-invariant
+  transport engine, the half-open parity, and a telescoping east-level-flag
+  argument that replaced the feared vertex-pairing case explosion;
+- the full seam is reduced to **one named per-point residual**,
+  `even_parity_escapes` (`JCTSeamAssembly.v`) — the escape construction
+  for even-parity points of SIMPLE rings, the only place simplicity is
+  needed.
+
+New grade: **medium** — one residual, in-corpus, with a concrete proof
+obligation (boundary-following or staircase escape for simple polygons);
+no external library required after all. The "blocked on ecosystem" verdict
+is retired: the ecosystem gap was routed around entirely within the
+corpus's three-axiom budget.

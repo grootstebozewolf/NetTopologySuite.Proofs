@@ -534,3 +534,28 @@ of `hole_inside_outer` for a triangular outer ring, with no JCT hypothesis. So
 the special-case ladder now reads rectangle → right triangle → **arbitrary
 triangle (done)** → general convex (the `convex_separation` engine awaits a
 convex-n-gon consumer; the half-plane↔edge skeleton bridge is the next frontier).
+
+### §11.4 update (2026-06-10): the band hypothesis discharged — guarded coverage + H1-seam iff
+
+`theories/GeneralTriangleJCT.v` removes §11.3's explicit band hypothesis:
+`gtri_ray_coverage` proves that `0 < gtri p` **plus the `ray_avoids_vertices`
+guard** already places `py p` in one of the three directed bands, so
+`gtri_interior_in_ring` needs interior positivity and genericity only.
+Coverage is a 27-branch trichotomy over `py p` vs the three vertex heights:
+the strict branches land in a band or die on the barycentric height identity
+`gsB·(ay−py) + gsC·(by_−py) + gsA·(cy−py) = 0` (a `ring` consequence of
+`g_sum`/`g_baryy`); in the equality (grazing) branches the guard forces the
+grazed vertex strictly **west**, which factors the two adjacent slacks as
+(height difference)·(vertex x − px) and orients the remaining heights — every
+guard-consistent equality branch is one a band already covers, the rest are
+`nra` contradictions. The guard is necessary at exactly the middle-vertex
+height (cf. `JCT_VertexGrazingCounterexample.v`). No orientation hypothesis:
+`0 < gtri p` forces `0 < gdbl` via `g_sum`.
+
+Headlines: `general_triangle_parity_characterises_interior` (`point_in_ring ↔
+geometric_interior_cont` for guarded strict-interior points — the **third fully
+Qed-closed family** after the rectangle and right triangle on the H1 parity
+seam) and `hole_inside_outer_triangle_guarded` (+ `_generic`: three height
+disequalities discharge the guard) — hole nesting with no band bookkeeping,
+closing the "assembly TODO" of Stage D (triangle) in
+`docs/hole-inside-outer-plan.md`. Three-axiom; no `Admitted`.

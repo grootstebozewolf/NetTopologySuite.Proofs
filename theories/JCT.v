@@ -53,6 +53,16 @@
        `point_in_ring_correct_jct` (which is Qed-closed only over the vacuous
        `geometric_interior_stdlib`).
 
+   STATUS UPDATE (2026-06-10, the H1 campaign).  The seam as stated below is
+   REFUTED at on-edge points (JCT_OnEdgeCounterexample.v) and corrected to
+   `parity_characterises_interior_cont_offring`; its trapped direction and the
+   inter-component separation are now Qed UNCONDITIONALLY for every closed
+   ring (JCTTrappedHalf.odd_parity_trapped, JCTSeparation.odd_even_separated);
+   the sole remaining obligation is the escape descent step
+   `JCTEscapeDescent.escape_descent` (one detour around the first blocking
+   edge), from which JCTEscapeDescent.parity_seam_offring_of_descent derives
+   the full corrected seam.
+
    NOTE (relation to the corpus `JCT_two_components_cont` Prop).  As of #82 that
    Prop carries an explicit inter-component SEPARATION clause -- interior and
    exterior points are never complement-connected -- and
