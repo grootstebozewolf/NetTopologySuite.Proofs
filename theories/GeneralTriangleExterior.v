@@ -58,6 +58,14 @@ Local Open Scope R_scope.
 Lemma sqr_nonneg : forall z : R, 0 <= z * z.
 Proof. intro z; pose proof (Rle_0_sqr z) as H; unfold Rsqr in H; exact H. Qed.
 
+(* The 2-D Cauchy-Schwarz inequality, square-root-free: the defect is the
+   square (a*y - b*x)^2.  Named for reuse by future escape engines. *)
+Lemma cauchy_schwarz_2d : forall a b x y : R,
+  (a * x + b * y) * (a * x + b * y) <= (a * a + b * b) * (x * x + y * y).
+Proof.
+  intros a b x y. pose proof (sqr_nonneg (a * y - b * x)). nra.
+Qed.
+
 (* ---------------------------------------------------------------------------
    §1  The half-plane escape engine.
    --------------------------------------------------------------------------- *)
@@ -100,11 +108,8 @@ Proof.
       nra. }
   specialize (Hb _ Hconn). cbn [px py] in Hb.
   set (X := u + T * a) in *. set (Y := v + T * b) in *.
-  (* Cauchy-Schwarz, square-root-free: the defect is the square (aY - bX)^2. *)
-  assert (Hsq : 0 <= (a * Y - b * X) * (a * Y - b * X))
-    by (pose proof (Rle_0_sqr (a * Y - b * X)) as Hs'; unfold Rsqr in Hs'; exact Hs').
   assert (HCS : (a * X + b * Y) * (a * X + b * Y) <= s * (X * X + Y * Y))
-    by (unfold s; nra).
+    by (unfold s; apply cauchy_schwarz_2d).
   assert (Hval : a * X + b * Y = v0 + T * s) by (unfold X, Y, v0, s; ring).
   assert (Hsm : 0 < s * M) by nra.
   assert (H1 : 0 < (s + 1) * (M + 1)) by nra.
