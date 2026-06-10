@@ -795,6 +795,18 @@ theories/JCTRingCycle.v
 # abutting clearance) and apex_abscissa_bound (y-flip of the drop bound).
 # Three-axiom.  No Admitted.
 theories/JCTHugStep.v
+# ESCAPE DESCENT, rung 5c-7: THE MIRRORED HUG STEPS.  The hug state
+# transports through the reflections: the west midpoint corridor of a
+# y-mirrored edge IS the y-mirror of the west midpoint corridor
+# (corridor_ymir, mid_ymir), and the x-mirror swaps west corridors into
+# EAST corridors (corridor_xmir), turning hugs_west of the mirror into
+# hugs_east of the original.  With the ring-side hypotheses transported
+# (tautness, proper-ring via injective-map NoDup, no-horizontal), the
+# three remaining pass-through composites follow from rung 5c-6's
+# hug_step_pass_down_west by transport: hug_step_pass_up_west (ymir),
+# hug_step_pass_down_east (xmir), hug_step_pass_up_east (both).
+# Three-axiom.  No Admitted.
+theories/JCTHugMirror.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
