@@ -709,10 +709,11 @@ Proof.
     unfold det. exact Bfin.
 Qed.
 
-Theorem b64_inCircle_exact_for_small_int :
+Theorem b64_inCircle_exact_and_finite_for_small_int :
   forall A B C P,
     inCircle_inputs_int_safe A B C P ->
-    Binary.B2R prec emax (b64_inCircle A B C P) = inCircle_R_BP A B C P.
+    Binary.B2R prec emax (b64_inCircle A B C P) = inCircle_R_BP A B C P
+    /\ Binary.is_finite prec emax (b64_inCircle A B C P) = true.
 Proof.
   intros A B C P Hsafe.
   destruct Hsafe as (HxA & HyA & HxB & HyB & HxC & HyC & HxP & HyP).
@@ -839,7 +840,8 @@ Proof.
               (le_2p52_le_2pprec
                  (axz * (byz * ncz - cyz * nbz) - ayz * (bxz * ncz - cxz * nbz)
                   + naz * (bxz * cyz - cxz * byz))%Z
-                 Bfind)) as [HoutR _].
+                 Bfind)) as [HoutR Hfin].
+  split; [ | unfold b64_inCircle; cbn iota; exact Hfin ].
   unfold b64_inCircle.
   cbn iota.
   rewrite HoutR.
@@ -860,6 +862,30 @@ Proof.
   rewrite (IZR_na_cross_pack naz bxz byz cxz cyz) at 1.
   rewrite (inCircle_det_IZR_pack axz ayz bxz byz cxz cyz naz nbz ncz) at 1.
   reflexivity.
+Qed.
+
+(* Value-exactness projection (the historical name; unchanged type so all
+   existing callers are untouched). *)
+Lemma b64_inCircle_exact_for_small_int :
+  forall A B C P,
+    inCircle_inputs_int_safe A B C P ->
+    Binary.B2R prec emax (b64_inCircle A B C P) = inCircle_R_BP A B C P.
+Proof.
+  intros A B C P H.
+  exact (proj1 (b64_inCircle_exact_and_finite_for_small_int A B C P H)).
+Qed.
+
+(* Finiteness projection -- the prerequisite for the arc-line Scope B/C
+   round-chain (b64_minus / b64_div / b64_mult / b64_plus need finite operands).
+   The finiteness was always established inside the exactness proof; this exposes
+   it. *)
+Lemma b64_inCircle_finite_for_small_int :
+  forall A B C P,
+    inCircle_inputs_int_safe A B C P ->
+    Binary.is_finite prec emax (b64_inCircle A B C P) = true.
+Proof.
+  intros A B C P H.
+  exact (proj2 (b64_inCircle_exact_and_finite_for_small_int A B C P H)).
 Qed.
 
 Theorem b64_inCircle_B2R_sign_sound_small_int :
