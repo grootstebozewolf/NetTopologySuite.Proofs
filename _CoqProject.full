@@ -868,6 +868,18 @@ theories/JCTPinchedStep.v
 # from the bridge.  The full corner-move inventory (4 pass-throughs +
 # 4 open + 4 pinched) is now Qed.  Three-axiom.  No Admitted.
 theories/JCTPinchedMirror.v
+# ESCAPE DESCENT, rung 5c-13: THE PER-CORNER TOTAL STEP.  The combined
+# state hugs := hugs_west \/ hugs_east advances through ANY degree-2
+# corner (hug_step_corner): corner type by the height signs (pass-through
+# down/up, local min/max); pass-throughs keep the hug side; extrema flip
+# it, deciding open vs pinched by ONE Rle_dec on the carrier comparison
+# with the bridge supplying the partner condition.
+# corner_slopes_distinct strictifies the pinched branch: under tautness
+# two distinct edges through one corner are never collinear (they would
+# meet at a parameter-interior point, interior_param).  The traversal's
+# engine -- the cycle recursion just iterates it along cyclic_next.
+# Three-axiom.  No Admitted.
+theories/JCTCornerDispatch.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
