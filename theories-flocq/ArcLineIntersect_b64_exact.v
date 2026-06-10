@@ -634,6 +634,371 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Scope C layer-2 (issue #64 ask #5a) -- the t * d multiply forward error.    *)
+(*                                                                            *)
+(* Layer 2 multiplies the (rounded) parameter t by the bit-exact chord        *)
+(* difference d = bx Q - bx P (resp. by_):                                    *)
+(*    B2R(b64_mult t d) = b64_round (B2R t * B2R d).                           *)
+(* The forward error vs the exact-real product ratio * B2R d decomposes:       *)
+(*    b64_round(t_R*d_R) - ratio*d_R                                           *)
+(*  = [b64_round(t_R*d_R) - t_R*d_R]   (round, half-ulp at magnitude <= 2^64)  *)
+(*  + d_R * (t_R - ratio)              (carry of the layer-1 t-error)          *)
+(* Round term:  ulp(.)/2 <= bpow(64-prec+1)/2 = bpow 12 / 2 = bpow 11.         *)
+(* Carry term:  |d_R| * |t_R - ratio| <= 2^12 * (1/2) = bpow 11.               *)
+(* Combined:    bpow 11 + bpow 11 = bpow 12.                                   *)
+(* No 1/|den| term appears -- layer 1 is absolutely <= 1/2 because the         *)
+(* denominator is bit-exact (Scope B.1), unlike the line-line cascade.         *)
+(* -------------------------------------------------------------------------- *)
+
+(* ----- x coordinate ----- *)
+
+Lemma b64_arc_line_dx_abs_le_bpow_12 :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax (b64_minus (bx Q) (bx P))) <= bpow radix2 12)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_dx_R _ _ _ _ _ Hsafe) as [HdxR _].
+  destruct (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as
+    (_ & _ & _ & _ & _ & _ & HxP & _).
+  destruct (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe) as
+    (_ & _ & _ & _ & _ & _ & HxQ & _).
+  destruct HxP as (_ & nxP & HxPR & HxPb).
+  destruct HxQ as (_ & nxQ & HxQR & HxQb).
+  rewrite HdxR, HxPR, HxQR, <- minus_IZR, <- abs_IZR, <- (IZR_Zpower radix2 12) by lia.
+  apply IZR_le. change (Zpower radix2 12) with (2 ^ 12)%Z. lia.
+Qed.
+
+Lemma b64_arc_line_mult_x_safe :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    b64_safe Rmult
+      (b64_div (b64_inCircle S M E P)
+               (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+      (b64_minus (bx Q) (bx P)).
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_t_round _ _ _ _ _ Hsafe) as [_ Ft].
+  destruct (b64_arc_line_dx_R _ _ _ _ _ Hsafe) as [_ Fdx].
+  pose proof (b64_arc_line_t_abs_le_bpow_52 _ _ _ _ _ Hsafe) as Ht52.
+  pose proof (b64_arc_line_dx_abs_le_bpow_12 _ _ _ _ _ Hsafe) as Hdx12.
+  split; [ exact Ft | split; [ exact Fdx | ] ].
+  apply (Rle_lt_trans _ (bpow radix2 64)); [ | apply bpow_lt; unfold emax; lia ].
+  apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+  rewrite Rabs_mult.
+  replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+    by (rewrite <- bpow_plus; reflexivity).
+  apply Rmult_le_compat; try apply Rabs_pos; assumption.
+Qed.
+
+Lemma b64_arc_line_mult_x_abs_le_bpow_64 :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_mult (b64_div (b64_inCircle S M E P)
+                                 (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                        (b64_minus (bx Q) (bx P))))
+     <= bpow radix2 64)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_mult_correct _ _ (b64_arc_line_mult_x_safe _ _ _ _ _ Hsafe)) as [HmR _].
+  rewrite HmR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+  rewrite Rabs_mult.
+  replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+    by (rewrite <- bpow_plus; reflexivity).
+  apply Rmult_le_compat; try apply Rabs_pos.
+  - apply (b64_arc_line_t_abs_le_bpow_52 _ _ _ _ _ Hsafe).
+  - apply (b64_arc_line_dx_abs_le_bpow_12 _ _ _ _ _ Hsafe).
+Qed.
+
+Lemma b64_arc_line_mult_x_round_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_mult (b64_div (b64_inCircle S M E P)
+                                 (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                        (b64_minus (bx Q) (bx P)))
+           - Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))
+     <= bpow radix2 11)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_mult_correct _ _ (b64_arc_line_mult_x_safe _ _ _ _ _ Hsafe)) as [HmR _].
+  rewrite HmR.
+  pose proof (b64_error_le_half_ulp_round
+                (Binary.B2R prec emax
+                   (b64_div (b64_inCircle S M E P)
+                            (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                 * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))) as Herr.
+  eapply Rle_trans; [ exact Herr | ].
+  pose proof (b64_arc_line_mult_x_abs_le_bpow_64 _ _ _ _ _ Hsafe) as Bm.
+  rewrite HmR in Bm.
+  pose proof (b64_ulp_le_at_magnitude_uniform _ 64 ltac:(lia) Bm) as Hulp.
+  apply Rle_trans with (bpow radix2 (64 - prec + 1) / 2).
+  - unfold Rdiv. apply Rmult_le_compat_r; [ lra | exact Hulp ].
+  - replace (64 - prec + 1)%Z with 12%Z by (unfold prec; lia).
+    assert (H12 : bpow radix2 12 = bpow radix2 11 + bpow radix2 11)
+      by (exact (bpow_double 11)).
+    lra.
+Qed.
+
+Lemma b64_arc_line_mult_x_carry_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_div (b64_inCircle S M E P)
+                       (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+            * Binary.B2R prec emax (b64_minus (bx Q) (bx P))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))
+     <= bpow radix2 11)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  replace (Binary.B2R prec emax
+             (b64_div (b64_inCircle S M E P)
+                      (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+           * Binary.B2R prec emax (b64_minus (bx Q) (bx P))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))
+    with (Binary.B2R prec emax (b64_minus (bx Q) (bx P))
+          * (Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             - inCircle_R_BP S M E P
+               / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))) by ring.
+  rewrite Rabs_mult.
+  pose proof (b64_arc_line_dx_abs_le_bpow_12 _ _ _ _ _ Hsafe) as Bdx.
+  pose proof (b64_arc_line_t_forward_error _ _ _ _ _ Hsafe) as Bt.
+  apply Rle_trans with (bpow radix2 12 * / 2).
+  - apply Rmult_le_compat; [ apply Rabs_pos | apply Rabs_pos | exact Bdx | exact Bt ].
+  - assert (H12 : bpow radix2 12 = bpow radix2 11 + bpow radix2 11)
+      by (exact (bpow_double 11)).
+    lra.
+Qed.
+
+Theorem b64_arc_line_mult_x_forward_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_mult (b64_div (b64_inCircle S M E P)
+                                 (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                        (b64_minus (bx Q) (bx P)))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))
+     <= bpow radix2 12)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (b64_arc_line_mult_x_round_error _ _ _ _ _ Hsafe) as Hround.
+  pose proof (b64_arc_line_mult_x_carry_error _ _ _ _ _ Hsafe) as Hcarry.
+  replace (Binary.B2R prec emax
+             (b64_mult (b64_div (b64_inCircle S M E P)
+                                (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                       (b64_minus (bx Q) (bx P)))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))
+    with ((Binary.B2R prec emax
+             (b64_mult (b64_div (b64_inCircle S M E P)
+                                (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                       (b64_minus (bx Q) (bx P)))
+           - Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))
+          + (Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             * Binary.B2R prec emax (b64_minus (bx Q) (bx P))
+             - inCircle_R_BP S M E P
+               / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+               * Binary.B2R prec emax (b64_minus (bx Q) (bx P)))) by ring.
+  eapply Rle_trans; [ apply Rabs_triang | ].
+  assert (H12 : bpow radix2 12 = bpow radix2 11 + bpow radix2 11)
+    by (exact (bpow_double 11)).
+  rewrite H12.
+  apply Rplus_le_compat; [ exact Hround | exact Hcarry ].
+Qed.
+
+(* ----- y coordinate (mirror) ----- *)
+
+Lemma b64_arc_line_dy_abs_le_bpow_12 :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))) <= bpow radix2 12)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_dy_R _ _ _ _ _ Hsafe) as [HdyR _].
+  destruct (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as
+    (_ & _ & _ & _ & _ & _ & _ & HyP).
+  destruct (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe) as
+    (_ & _ & _ & _ & _ & _ & _ & HyQ).
+  destruct HyP as (_ & nyP & HyPR & HyPb).
+  destruct HyQ as (_ & nyQ & HyQR & HyQb).
+  rewrite HdyR, HyPR, HyQR, <- minus_IZR, <- abs_IZR, <- (IZR_Zpower radix2 12) by lia.
+  apply IZR_le. change (Zpower radix2 12) with (2 ^ 12)%Z. lia.
+Qed.
+
+Lemma b64_arc_line_mult_y_safe :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    b64_safe Rmult
+      (b64_div (b64_inCircle S M E P)
+               (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+      (b64_minus (by_ Q) (by_ P)).
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_t_round _ _ _ _ _ Hsafe) as [_ Ft].
+  destruct (b64_arc_line_dy_R _ _ _ _ _ Hsafe) as [_ Fdy].
+  pose proof (b64_arc_line_t_abs_le_bpow_52 _ _ _ _ _ Hsafe) as Ht52.
+  pose proof (b64_arc_line_dy_abs_le_bpow_12 _ _ _ _ _ Hsafe) as Hdy12.
+  split; [ exact Ft | split; [ exact Fdy | ] ].
+  apply (Rle_lt_trans _ (bpow radix2 64)); [ | apply bpow_lt; unfold emax; lia ].
+  apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+  rewrite Rabs_mult.
+  replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+    by (rewrite <- bpow_plus; reflexivity).
+  apply Rmult_le_compat; try apply Rabs_pos; assumption.
+Qed.
+
+Lemma b64_arc_line_mult_y_abs_le_bpow_64 :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_mult (b64_div (b64_inCircle S M E P)
+                                 (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                        (b64_minus (by_ Q) (by_ P))))
+     <= bpow radix2 64)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_mult_correct _ _ (b64_arc_line_mult_y_safe _ _ _ _ _ Hsafe)) as [HmR _].
+  rewrite HmR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+  rewrite Rabs_mult.
+  replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+    by (rewrite <- bpow_plus; reflexivity).
+  apply Rmult_le_compat; try apply Rabs_pos.
+  - apply (b64_arc_line_t_abs_le_bpow_52 _ _ _ _ _ Hsafe).
+  - apply (b64_arc_line_dy_abs_le_bpow_12 _ _ _ _ _ Hsafe).
+Qed.
+
+Lemma b64_arc_line_mult_y_round_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_mult (b64_div (b64_inCircle S M E P)
+                                 (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                        (b64_minus (by_ Q) (by_ P)))
+           - Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))
+     <= bpow radix2 11)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_mult_correct _ _ (b64_arc_line_mult_y_safe _ _ _ _ _ Hsafe)) as [HmR _].
+  rewrite HmR.
+  pose proof (b64_error_le_half_ulp_round
+                (Binary.B2R prec emax
+                   (b64_div (b64_inCircle S M E P)
+                            (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                 * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))) as Herr.
+  eapply Rle_trans; [ exact Herr | ].
+  pose proof (b64_arc_line_mult_y_abs_le_bpow_64 _ _ _ _ _ Hsafe) as Bm.
+  rewrite HmR in Bm.
+  pose proof (b64_ulp_le_at_magnitude_uniform _ 64 ltac:(lia) Bm) as Hulp.
+  apply Rle_trans with (bpow radix2 (64 - prec + 1) / 2).
+  - unfold Rdiv. apply Rmult_le_compat_r; [ lra | exact Hulp ].
+  - replace (64 - prec + 1)%Z with 12%Z by (unfold prec; lia).
+    assert (H12 : bpow radix2 12 = bpow radix2 11 + bpow radix2 11)
+      by (exact (bpow_double 11)).
+    lra.
+Qed.
+
+Lemma b64_arc_line_mult_y_carry_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_div (b64_inCircle S M E P)
+                       (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+            * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))
+     <= bpow radix2 11)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  replace (Binary.B2R prec emax
+             (b64_div (b64_inCircle S M E P)
+                      (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+           * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))
+    with (Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))
+          * (Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             - inCircle_R_BP S M E P
+               / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))) by ring.
+  rewrite Rabs_mult.
+  pose proof (b64_arc_line_dy_abs_le_bpow_12 _ _ _ _ _ Hsafe) as Bdy.
+  pose proof (b64_arc_line_t_forward_error _ _ _ _ _ Hsafe) as Bt.
+  apply Rle_trans with (bpow radix2 12 * / 2).
+  - apply Rmult_le_compat; [ apply Rabs_pos | apply Rabs_pos | exact Bdy | exact Bt ].
+  - assert (H12 : bpow radix2 12 = bpow radix2 11 + bpow radix2 11)
+      by (exact (bpow_double 11)).
+    lra.
+Qed.
+
+Theorem b64_arc_line_mult_y_forward_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_mult (b64_div (b64_inCircle S M E P)
+                                 (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                        (b64_minus (by_ Q) (by_ P)))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))
+     <= bpow radix2 12)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (b64_arc_line_mult_y_round_error _ _ _ _ _ Hsafe) as Hround.
+  pose proof (b64_arc_line_mult_y_carry_error _ _ _ _ _ Hsafe) as Hcarry.
+  replace (Binary.B2R prec emax
+             (b64_mult (b64_div (b64_inCircle S M E P)
+                                (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                       (b64_minus (by_ Q) (by_ P)))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))
+    with ((Binary.B2R prec emax
+             (b64_mult (b64_div (b64_inCircle S M E P)
+                                (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                       (b64_minus (by_ Q) (by_ P)))
+           - Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))
+          + (Binary.B2R prec emax
+               (b64_div (b64_inCircle S M E P)
+                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+             * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))
+             - inCircle_R_BP S M E P
+               / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)
+               * Binary.B2R prec emax (b64_minus (by_ Q) (by_ P)))) by ring.
+  eapply Rle_trans; [ apply Rabs_triang | ].
+  assert (H12 : bpow radix2 12 = bpow radix2 11 + bpow radix2 11)
+    by (exact (bpow_double 11)).
+  rewrite H12.
+  apply Rplus_le_compat; [ exact Hround | exact Hcarry ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Perron worst-case witness (from InCircle_b64_exact).                       *)
 (* -------------------------------------------------------------------------- *)
 
@@ -668,3 +1033,5 @@ Print Assumptions b64_arc_line_dy_R.
 Print Assumptions b64_arc_line_intersect_point_x_round_chain.
 Print Assumptions b64_arc_line_intersect_point_y_round_chain.
 Print Assumptions b64_arc_line_t_forward_error.
+Print Assumptions b64_arc_line_mult_x_forward_error.
+Print Assumptions b64_arc_line_mult_y_forward_error.
