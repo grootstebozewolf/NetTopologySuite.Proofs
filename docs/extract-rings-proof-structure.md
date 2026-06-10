@@ -559,3 +559,16 @@ seam) and `hole_inside_outer_triangle_guarded` (+ `_generic`: three height
 disequalities discharge the guard) — hole nesting with no band bookkeeping,
 closing the "assembly TODO" of Stage D (triangle) in
 `docs/hole-inside-outer-plan.md`. Three-axiom; no `Admitted`.
+
+### §11.5 update (2026-06-10): first with-holes valid_polygon (unconditional)
+
+`theories/TriangleValidPolygon.v` composes §11.3's `hole_inside_outer_triangle`
+into a concrete **`Overlay.valid_polygon` with a hole**, discharged with NO
+Jordan hypothesis: `triangle_with_hole_valid` (outer triangle `(0,0),(6,0),(0,6)`,
+hole `(1,1),(3,1),(1,3)`). All four OGC conditions hold for outer and hole; the
+analytic `hole_inside_outer` clause — the residual that gated the with-holes
+case of `extract_rings_valid` — is now unconditional for triangular outers. The
+reusable ingredient `gtri_ring_simple` (a non-degenerate triangle ring is simple,
+the `gtri_ring` analogue of `KakeyaOverlay.perron_tri_ring_simple`) supplies the
+`ring_simple` conjunct for both rings. This is the first concrete `valid_polygon`
+*with a hole* in the corpus whose analytic clause carries no named seam.

@@ -657,6 +657,14 @@ theories/KakeyaSlide.v
 # the conclusion is contradictory given the (thesis-scale, taken-as-hypothesis)
 # pairwise component-separation facts.  Pure-R; no Admitted/Axiom/Parameter.
 theories/JCT_Counterexample.v
+# A concrete valid_polygon WITH A HOLE, unconditional (no JCT): gtri_ring_simple
+# (a non-degenerate triangle ring is simple -- every edge pair shares a vertex,
+# the gtri_ring analogue of KakeyaOverlay.perron_tri_ring_simple) + the
+# triangle-in-triangle triangle_with_hole_valid, whose hole_inside_outer clause
+# is discharged by GeneralTriangleHoleNesting.hole_inside_outer_triangle.  The
+# first with-holes valid_polygon whose analytic clause needs no Jordan hypothesis.
+# Three-axiom.  No Admitted.
+theories/TriangleValidPolygon.v
 
 # Why no_horizontal_edge_at is NOT enough for ray-parity to characterise the
 # interior (docs/jct-vertex-grazing-counterexample.md).  A convex diamond and
