@@ -603,6 +603,17 @@ theories/JCTSeparation.v
 # distinct abscissae (a shared point is interior to both strict straddles,
 # hence a proper intersection).  Three-axiom.  No Admitted.
 theories/JCTEastApproach.v
+# ESCAPE DESCENT, rung 2: the corridor toolkit.  The carrier line edge_x_at
+# is AFFINE in height, so the corridor (edge_x_at y - delta, y) is itself a
+# STRAIGHT segment (corridor_connected via straight_path_continuous), and
+# every clearance is an affine endpoint evaluation: corridor_avoid_carrier
+# (any positive offset), _west (endpoints west by more than delta), _east,
+# _below/_above (outside the height window) -- explicit margins, no
+# compactness, no square roots.  level_gap/guard_of_fresh_level: an explicit
+# vertex-level-free parking height above any y0 gives the ray guard for
+# free.  Worked instance: a corridor inside the unit square with every
+# clearance discharged by the helpers.  Three-axiom.  No Admitted.
+theories/JCTCorridor.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

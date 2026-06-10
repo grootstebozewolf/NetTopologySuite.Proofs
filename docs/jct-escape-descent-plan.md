@@ -18,8 +18,8 @@ trapped points).
 | # | content | status |
 |---|---|---|
 | 1 | **East approach** (`JCTEastApproach.v`): the crossing abscissa `cross_x`, the first wall `min_cross_x`, the skeleton-free run-up, the east walk preserving complement/guard/count, and `crossings_distinct` (simplicity's first theorem: distinct crossing edges cross at distinct abscissae) | **Qed** |
-| 2 | **The corner corridor**: from just-west-of-the-wall, follow the first edge's west side to its nearer endpoint and round it, with explicit per-edge clearance margins (finite `Rmin`, in the `affine_sign_stable` style); needs `ring_simple` + vertex-distinctness for clearance at the corner | open |
-| 3 | **The boundary walk**: iterate rung 2 along the polygon (recursion bounded by the edge count), maintaining the complement/guard invariants until the count drops | open |
+| 2 | **The corridor toolkit** (`JCTCorridor.v`): the corridor along a carrier edge is a straight segment (`edge_x_at` affine), connected through the complement under per-edge clearances that are pure affine endpoint evaluations (`corridor_avoid_{carrier,west,east,below,above}`); `level_gap` parks endpoints at vertex-level-free heights for a free ray guard; unit-square worked instance | **Qed** |
+| 3 | **The boundary walk**: compose rung-2 corridors edge-by-edge around the polygon (recursion bounded by the edge count) with window clipping for partially-overlapping edges and corner rounding at shared vertices (touch-freedom from `ring_simple` via `crossings_distinct`-style arguments), until a count-free point is reached | open |
 | 4 | **Assembly**: `escape_descent_holds : ring_simple r -> ring_closed r -> ... -> escape_descent r`, composed through `parity_seam_offring_of_descent` — H1 closed | open |
 
 ## Rung 1 deliverables (this commit)
