@@ -709,6 +709,20 @@ theories/JCTCornerClear.v
 # rungs 2-5a now applies verbatim to the mirrored rings and pulls back
 # along connected_xmir_rev / connected_ymir_rev.  Three-axiom.  No Admitted.
 theories/JCTMirrorKit.v
+# ESCAPE DESCENT, rung 5c-1: THE TOP PASSAGE and the TERMINAL COUNT.  First
+# consumer of the mirror kit: corner_passage pulled back through the y-flip
+# gives corner_passage_top -- from the wall's west corridor at any
+# span-interior height, over the wall's TOP vertex, to an off-ring,
+# ray-guarded point strictly ABOVE the top level: the move that backs the
+# walk out of a sealed wedge.  Mirrored hypothesis corner_opens_east_top in
+# original coordinates (incident edges reaching weakly BELOW u stay weakly
+# east of the carrier); the guard pulls back exactly (rung 5b's y-flip
+# exactness).  edge_x_at_ymir/_xmir relate the carrier across the flips.
+# Terminal payoff: xsup (east-most vertex abscissa, explicit Rmax fold);
+# at or east of it no edge crosses the ray (crossing abscissa is a convex
+# combination of endpoint abscissae), so ho_count_zero_east: count ZERO --
+# what escape_east_of_zero_count consumes.  Three-axiom.  No Admitted.
+theories/JCTTopPassage.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
