@@ -204,3 +204,34 @@ general simple rings.
 
 Non-vacuity: `rect_trapped_via_invariant` re-derives the rectangle's
 trapping through the generic engine with `Q := 0 < box_min`.
+
+## Follow-up 6 (same date): H1 proper, part 2 — the half-open parity lands
+
+`theories/JCTHalfOpenParity.v` constructs the invariant the transport engine
+was built for. The **half-open** crossing convention (edge counts at level
+`h` when `vy ≤ h < wy` — bottom endpoint included) gives a parity that is
+decidable and exclusive (§1), **agrees with the strict `point_in_ring`
+parity under `ray_avoids_vertices` alone** (§2 — the conventions differ
+only at bottom-endpoint heights, where the half-open crossing point *is*
+that vertex: east is excluded by the guard, west never counted), and is
+**even in all four far-field directions** (§3). The far-west case is the
+substantive one: far west of every vertex, an edge crosses iff its
+endpoints' below-flags differ (`ho_cross_far_west_iff`), and around a
+CLOSED walk the flag returns home, so the number of flips is even
+(`ho_walk_parity`) — the first place the ring's closedness genuinely enters
+the JCT development.
+
+Capstone (`odd_parity_trapped_of_ho_kernel`): for any closed ring, a
+guarded odd-parity point is in a bounded complement component **provided
+only** `ho_parity_locally_constant r` — local constancy of the half-open
+parity along complement paths. The trapped half of H1 is now: prove that
+one kernel (the y-monotone vertex-pairing argument). The dual half
+(exterior ⇒ escape construction for general simple rings) remains the
+other open piece.
+
+One toolchain note: Rocq 9's `tauto` silently escalates to *classical*
+mode; the walk induction's mixed cases initially picked up
+`Classical_Prop.classic` through goals of the shape `¬¬C ↔ C`. Deciding
+the atom with `Rle_dec` first keeps the proof constructive and the
+footprint at the allowlisted three axioms — worth remembering for any
+`tauto` over undecided propositional atoms in the `theories/` lane.

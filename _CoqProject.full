@@ -512,6 +512,19 @@ theories/ConvexOffringSeam.v
 # reduction via the box-field sign (rect_trapped_via_invariant).
 # Three-axiom.  No Admitted.
 theories/JCTParityTransport.v
+# H1 PROPER, part 2: the HALF-OPEN ray parity (edge counts when vy <= h < wy)
+# -- the locally-constant invariant the transport engine was built for.
+# Decidability + exclusivity; guard agreement with the strict parity under
+# ray_avoids_vertices alone (the conventions differ only at bottom-endpoint
+# heights, where the crossing IS the vertex); far-field evenness in all FOUR
+# directions -- right/up/down by no-crossing, WEST by the cyclic walk
+# argument (far west, an edge crosses iff its endpoints' below-flags differ;
+# around a CLOSED walk the flag returns home, so flips are even -- the place
+# closedness genuinely enters).  Capstone odd_parity_trapped_of_ho_kernel:
+# the trapped half of H1 for ANY closed ring now follows from the single
+# named kernel ho_parity_locally_constant (local constancy along complement
+# paths -- the y-monotone vertex-pairing content).  Three-axiom.  No Admitted.
+theories/JCTHalfOpenParity.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
