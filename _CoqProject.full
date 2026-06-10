@@ -844,6 +844,19 @@ theories/JCTMinOpenMirror.v
 # global simplification; clear_fold gives the uniform radius
 # (corner_disk_clear).  Three-axiom.  No Admitted.
 theories/JCTCornerDisk.v
+# ESCAPE DESCENT, rung 5c-11: THE PINCHED TURNAROUND
+# (hug_step_min_pinched_we).  At a local minimum whose departing edge
+# climbs strictly WEST of the arriving edge, the west-side walker is
+# inside the closing wedge: jog . descend west-of-e to the fixed band
+# height py c + eps0 (rung 4b-2 on a FIXED window -- f's clip margins
+# strictly positive since the carriers only meet at c) . jog ACROSS the
+# wedge interior (incident edges pointwise via on_carrier_x; all others
+# via the corner disk) . ascend east-of-f to mid f.  The wedge width is
+# affine with root at c (width = (KE - KF)(y - py c), KE > KF from the
+# strict pinch), so eps0 is fixed BEFORE delta and the jog has room for
+# delta < (KE - KF) eps0 / 3: no quantifier circularity.  The hug side
+# flips (hugs_west e -> hugs_east f).  Three-axiom.  No Admitted.
+theories/JCTPinchedStep.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
