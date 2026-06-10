@@ -537,6 +537,18 @@ theories/JCTHalfOpenParity.v
 # pairing content).  Capstone odd_parity_trapped_of_level_stable: H1's
 # trapped half now needs ONLY ho_level_stable.  Three-axiom.  No Admitted.
 theories/JCTGenericStability.v
+# H1 PROPER, part 4: UPPER half-ball constancy of the half-open parity at
+# EVERY complement point, Qed (the bottom-inclusive band makes parity equal
+# its limit from above: per edge only four upper-regimes -- dead-above,
+# unreached, live-ascending-with-bottom, live-descending-with-bottom; the
+# live ray atoms PA/PD are nonzero with the t=0 witness allowed, so no
+# genericity and no pairing).  ho_upper_stable; the kernel shrinks to
+# ho_level_jump (parity just BELOW a vertex level equals parity AT it --
+# the east level-vertices' band-handover count, isolated on one side of one
+# line); ho_level_stable_of_jump; capstone odd_parity_trapped_of_level_jump:
+# H1's trapped half from the single downward-jump statement.
+# Three-axiom.  No Admitted.
+theories/JCTLevelJump.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

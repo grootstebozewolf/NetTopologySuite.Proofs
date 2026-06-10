@@ -256,3 +256,28 @@ the exchange preserves the count is the y-monotone vertex-pairing argument,
 now isolated with nothing else attached. Capstone
 (`odd_parity_trapped_of_level_stable`): H1's trapped half, for any closed
 ring and guarded odd-parity point, from `ho_level_stable` alone.
+
+## Follow-up 8 (same date): H1 proper, part 4 — upper constancy Qed; the kernel is now the downward jump
+
+`theories/JCTLevelJump.v` exploits the asymmetry of the half-open
+convention: the band `vy ≤ h < wy` is bottom-inclusive, so each edge's band
+membership is stable UPWARD at every height, and the parity at any point
+equals its limit from above. Per edge there are only four upper-regimes —
+dead-above, unreached, live-ascending (bottom included), live-descending —
+and the live ray atoms `PA`/`PD` are nonzero because the on-edge witness now
+admits `t = 0`. Hence `ho_upper_stable`: constancy on an upper half-ball at
+EVERY complement point, with no genericity hypothesis and no vertex pairing.
+
+The kernel of H1's trapped half therefore shrinks once more
+(`ho_level_stable_of_jump`), to the single statement
+
+  `ho_level_jump r` — at a vertex-level complement point, the half-open
+  parity just BELOW the level equals the parity AT it.
+
+Crossing a level downward, each east level-vertex hands its half-open band
+between its two incident edges (pass-through: one-for-one; extremum: two at
+once; horizontal runs: between the run's boundary edges, with the complement
+keeping the point off the run's x-span). Proving that handover preserves
+the count mod 2 — one side of one line — is all that remains of the trapped
+half (`odd_parity_trapped_of_level_jump`); the exterior escape construction
+remains the dual open half.
