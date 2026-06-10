@@ -571,6 +571,17 @@ theories/JCTTrappedHalf.v
 # Sanity: the rectangle discharges the residual at a concrete point.
 # Three-axiom.  No Admitted.
 theories/JCTSeamAssembly.v
+# H1 PROPER, part 6: the escape half decomposed.  ho_count (decidable
+# nat-valued crossing count) + parity bridge; BASE CASE Qed
+# (escape_east_of_zero_count: zero crossings + the ray guard make the open
+# eastward ray literally skeleton-free -- strict straddles east would be
+# counted, vertices/horizontal level edges east are banished by the guard
+# -- so the straight ray escapes); STRONG INDUCTION Qed (escape_of_descent,
+# riding in_bounded_component_cont_invariant).  THE FINAL RESIDUAL:
+# escape_descent -- one detour, one fewer crossing; simplicity lives here
+# and only here.  parity_seam_offring_of_descent: the FULL corrected H1
+# seam from the descent step alone.  Three-axiom.  No Admitted.
+theories/JCTEscapeDescent.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

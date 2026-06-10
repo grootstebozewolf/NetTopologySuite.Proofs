@@ -334,3 +334,30 @@ classical step enters). The residual is the only place `ring_simple` is
 genuinely needed — a doubly-wound ring has even-parity trapped points —
 and the rectangle discharges it at a concrete point as a sanity instance.
 H1 = the escape construction for simple rings; everything else is Qed.
+
+## Follow-up 11 (same date): the escape half decomposed — base case Qed, residual is one descent step
+
+`theories/JCTEscapeDescent.v` attacks the final residual the same way the
+trapped half fell: peel off everything provable and leave an irreducible
+core. The half-open crossings are counted (`ho_count`, decidable,
+parity-bridged to the inductives). Two pieces are Qed:
+
+- **Base case** (`escape_east_of_zero_count`): with zero crossings and the
+  `ray_avoids_vertices` guard, the open eastward ray is literally
+  skeleton-free — a strict straddle east of `p` would be a counted
+  crossing; any other edge point at `p`'s height is a vertex or lies on a
+  horizontal level edge, and the guard banishes both east of `p` (a
+  horizontal level edge split across `p`'s x would contain `p`). The
+  straight eastward ray escapes every radius.
+- **Strong induction** (`escape_of_descent`): each descent step hands the
+  hypothetical boundedness to a smaller-count point via the Qed component
+  invariance, and count zero escapes.
+
+The final residual is `escape_descent`: from an even-parity guarded
+complement point with at least one crossing, reach — through the
+complement — a guarded point with strictly fewer crossings. One detour
+around the first blocking edge; `ring_simple` lives here and only here.
+`parity_seam_offring_of_descent` derives the FULL corrected H1 seam from
+the descent step alone. The ladder of residuals over this session:
+"polygonal JCT, multi-month, blocked on ecosystem" → trapped half Qed →
+escape → one descent step.
