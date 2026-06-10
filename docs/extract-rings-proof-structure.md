@@ -496,3 +496,23 @@ separation to Stdlib's 1-D intermediate value theorem (a complement path avoids
 the boundary, so `box_min` along it never vanishes and cannot change sign).
 Three-axiom footprint. The *general* polygonal JCT seam remains the open
 frontier for arbitrary rings; the rectangle is now a complete worked instance.
+
+### §11.2 update (2026-06-10): arbitrary-triangle parity — RED on the queued spec
+
+Continuing the special-case ladder toward `hole_inside_outer` (rectangle →
+right triangle → arbitrary triangle), the arbitrary-triangle **separation** half
+is done (`GeneralTriangleSeparation.gtri_interior_is_geometric`), and the parity
+half was *reduced* to the named hypothesis `GeneralTriangleParity.gtri_parity_spec`
+(`point_in_ring p ↔ 0 < gtri p`). `theories/GeneralTriangleParityRED.v` shows
+that spec is **FALSE as stated** (`gtri_parity_spec_false`): the witness `(0,2)`
+on the left edge of triangle `(0,0),(4,0),(0,4)` has `point_in_ring` true (the
+ray test is **half-open** — left edge included, just like
+`RectangleJCT.point_in_ring_rect_iff`'s `x0 ≤ px`) while `gtri = 0`. So `↔ strict
+interior` is the wrong RHS. Corrected next GREEN: the half-open characterisation,
+or the single TRUE downstream-useful direction
+`0 < gtri p ∧ ray_avoids_vertices p (gtri_ring …) ⇒ point_in_ring p`
+(the `ray_avoids_vertices` guard is itself necessary — a strict-interior point at
+a vertex's height makes the ray graze it, cf.
+`theories/JCT_VertexGrazingCounterexample.v`), composing to the triangle
+hole-nesting headline `hole_inside_outer_triangle` (the analogue of
+`HoleInsideOuterRect.hole_inside_outer_rect`).
