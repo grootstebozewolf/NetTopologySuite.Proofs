@@ -281,3 +281,38 @@ keeping the point off the run's x-span). Proving that handover preserves
 the count mod 2 — one side of one line — is all that remains of the trapped
 half (`odd_parity_trapped_of_level_jump`); the exterior escape construction
 remains the dual open half.
+
+## Follow-up 9 (same date): THE TRAPPED HALF OF THE POLYGONAL JCT IS QED
+
+`theories/JCTTrappedHalf.v` proves the part-4 kernel and closes the chain:
+
+  `odd_parity_trapped : ring_closed r → ray_avoids_vertices p r →
+   point_in_ring p r → in_bounded_component_cont r p`
+
+— unconditional, for EVERY closed ring (`ring_simple` is not needed), at
+the standard three axioms.
+
+The decisive observation: define the **east-level flag**
+`F(v) := (py v = level ∧ px q < px v)`. For a complement point `q` at a
+vertex level and `q'` just below it, every edge satisfies
+
+  `(cross q' ↔ cross q) ↔ (F(u) ↔ F(w))`
+
+— stable edges have both flags false; a bottom-at-level edge counts at the
+level iff its level endpoint is east (its ray form degenerates to
+`(yb−ya)(xa−x)`); a top-at-level edge counts below iff its level endpoint
+is east; and a horizontal level edge counts on neither side while its two
+flags agree, because a horizontal level edge with endpoints on opposite
+sides of `q` would contain `q`. So each edge's jump contribution is exactly
+the flag flip `F(u) ⊕ F(w)`, and around a CLOSED walk the flag returns to
+its start: the total flip telescopes to zero (`ho_jump_walk`), in precisely
+the shape of the far-west walk lemma.
+
+Composed through parts 1–4 (transport engine, half-open construction with
+guard agreement and four-directional far-field evenness, generic-height
+stability, upper half-ball constancy), the load-bearing half of H1 — graded
+"multi-month, blocked on ecosystem" in `docs/audit-rgr-comparison.md` — is
+now a Qed theorem of the corpus. The remaining open half of H1 is the dual
+ESCAPE construction: an even-parity off-ring point of a SIMPLE closed ring
+can reach infinity through the complement (this direction genuinely needs
+simplicity; a doubly-wound ring has even-parity points that are trapped).
