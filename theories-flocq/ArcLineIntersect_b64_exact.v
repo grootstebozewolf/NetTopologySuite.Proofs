@@ -485,6 +485,155 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Scope C (issue #64 ask #5a) -- forward-error bound, layer 1 (division).     *)
+(*                                                                            *)
+(* The round-chain identity (Scope B.2) pins each binary64 step to the IEEE   *)
+(* rounding of its exact-real operands.  Scope C bounds how far the computed   *)
+(* coordinate drifts from the exact real intersection value                    *)
+(*   arc_line_intersect_x_R = bx P + (sP/(sP-sQ)) * (bx Q - bx P).             *)
+(*                                                                            *)
+(* Layer 1 is the division parameter t = round(sP_R / (sP_R - sQ_R)).  Because *)
+(* the denominator is computed BIT-EXACTLY (Scope B.1 `b64_arc_line_den_exact`)*)
+(* the only error here is the single division rounding.  With |sP_R| <= 2^52   *)
+(* and |den_R| >= 1, the quotient has |.| <= 2^52, so its ulp <= bpow 0 = 1    *)
+(* and the half-ulp division error is <= 1/2 -- the tightest possible single-  *)
+(* op bound.  (Contrast the line-line denominator in Intersect_b64_exact.v,    *)
+(* which itself rounds and so contributes its own carryover error.)           *)
+(* -------------------------------------------------------------------------- *)
+
+(* Self-contained copy of the uniform ulp bound.  The original lives in        *)
+(* Intersect_b64_exact.v, which this file does not import.                     *)
+Lemma b64_ulp_le_at_magnitude_uniform :
+  forall (x : R) (n : Z),
+    (0 <= n)%Z ->
+    Rabs x <= bpow radix2 n ->
+    b64_ulp x <= bpow radix2 (n - prec + 1).
+Proof.
+  intros x n Hn Hle.
+  destruct (Rlt_le_dec (Rabs x) (bpow radix2 (b64_emin + prec))) as [Hsmall|Hbig].
+  - assert (Hulp_small : b64_ulp x = bpow radix2 b64_emin)
+      by (apply (@ulp_FLT_small radix2 b64_emin prec _ x Hsmall)).
+    rewrite Hulp_small.
+    apply bpow_le. unfold b64_emin, emax, prec; lia.
+  - pose proof (ulp_FLT_le radix2 b64_emin prec x) as Hulp.
+    assert (Hpre : bpow radix2 (b64_emin + prec - 1) <= Rabs x).
+    { apply Rle_trans with (bpow radix2 (b64_emin + prec)); [|exact Hbig].
+      apply bpow_le; lia. }
+    specialize (Hulp Hpre).
+    apply Rle_trans with (Rabs x * bpow radix2 (1 - prec)); [exact Hulp|].
+    replace (bpow radix2 (n - prec + 1))
+      with (bpow radix2 n * bpow radix2 (1 - prec)).
+    + apply Rmult_le_compat_r; [apply bpow_ge_0|exact Hle].
+    + rewrite <- bpow_plus. apply f_equal. lia.
+Qed.
+
+(* The exact division parameter ratio sP_R / (sP_R - sQ_R) has |.| <= 2^52:    *)
+(* numerator is an integer of magnitude <= 2^52, denominator a nonzero integer *)
+(* (so |.| >= 1).                                                              *)
+Lemma arc_line_ratio_abs_le_52 :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (inCircle_R_BP S M E P
+           / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)) <= bpow radix2 52)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as HsafeP.
+  pose proof (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe) as HsafeQ.
+  destruct Hsafe as (_ & _ & HneR).
+  unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+  pose proof (inCircle_R_BP_abs_le_52 _ _ _ _ HsafeP) as HsP52.
+  assert (Hden1 : (1 <= Rabs (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))%R).
+  { destruct (inCircle_int_witness _ _ _ _ HsafeP) as (nP & HnP & _).
+    destruct (inCircle_int_witness _ _ _ _ HsafeQ) as (nQ & HnQ & _).
+    rewrite HnP, HnQ, <- minus_IZR, <- abs_IZR.
+    replace 1%R with (IZR 1) by reflexivity. apply IZR_le.
+    assert (Hne : (nP <> nQ)%Z).
+    { intro Hz. apply HneR. rewrite HnP, HnQ, Hz. reflexivity. }
+    lia. }
+  apply (Rle_trans _ (Rabs (inCircle_R_BP S M E P) * 1)).
+  - apply Rmult_le_compat_l; [ apply Rabs_pos | ].
+    rewrite <- Rinv_1. apply Rinv_le_contravar; [ lra | exact Hden1 ].
+  - rewrite Rmult_1_r. exact HsP52.
+Qed.
+
+(* The computed division parameter t = b64_div sP den equals the binary64      *)
+(* rounding of the EXACT-real ratio, and is finite.                            *)
+Lemma b64_arc_line_t_round :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    Binary.B2R prec emax
+      (b64_div (b64_inCircle S M E P)
+               (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+    = b64_round (inCircle_R_BP S M E P
+                 / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))
+    /\ Binary.is_finite prec emax
+         (b64_div (b64_inCircle S M E P)
+                  (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))) = true.
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as HP.
+  pose proof (b64_arc_line_sP_R _ _ _ _ _ Hsafe) as HsPR.
+  destruct (b64_arc_line_den_exact _ _ _ _ _ Hsafe) as [HdenR Fden].
+  pose proof (b64_arc_line_den_nonzero _ _ _ _ _ Hsafe) as Hden0.
+  pose proof (b64_inCircle_finite_for_small_int _ _ _ _ HP) as FsP.
+  assert (Htdiv_bnd : (Rabs (b64_round (Binary.B2R prec emax (b64_inCircle S M E P)
+                              / Binary.B2R prec emax (b64_minus (b64_inCircle S M E P)
+                                                                (b64_inCircle S M E Q))))
+                       < bpow radix2 emax)%R).
+  { rewrite HsPR, HdenR.
+    apply (Rle_lt_trans _ (bpow radix2 52)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    apply (arc_line_ratio_abs_le_52 _ _ _ _ _ Hsafe). }
+  destruct (b64_div_correct (b64_inCircle S M E P)
+              (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))
+              FsP Fden Hden0 Htdiv_bnd) as [HtR Ft].
+  split; [ rewrite HtR, HsPR, HdenR; reflexivity | exact Ft ].
+Qed.
+
+(* The computed division parameter has |B2R t| <= 2^52 (output-form bound).    *)
+Lemma b64_arc_line_t_abs_le_bpow_52 :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_div (b64_inCircle S M E P)
+                       (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))))
+     <= bpow radix2 52)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_t_round _ _ _ _ _ Hsafe) as [HtR _].
+  rewrite HtR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+  apply (arc_line_ratio_abs_le_52 _ _ _ _ _ Hsafe).
+Qed.
+
+(* Layer-1 forward error: the computed division parameter deviates from the    *)
+(* exact-real ratio by at most 1/2 -- a single division half-ulp, with no      *)
+(* denominator carryover (the denominator is bit-exact, Scope B.1).            *)
+Theorem b64_arc_line_t_forward_error :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax
+              (b64_div (b64_inCircle S M E P)
+                       (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+           - inCircle_R_BP S M E P
+             / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))
+     <= / 2)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_t_round _ _ _ _ _ Hsafe) as [HtR _].
+  rewrite HtR.
+  pose proof (b64_error_le_half_ulp_round
+                (inCircle_R_BP S M E P
+                 / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))) as Herr.
+  eapply Rle_trans; [ exact Herr | ].
+  pose proof (b64_arc_line_t_abs_le_bpow_52 _ _ _ _ _ Hsafe) as Bt.
+  rewrite HtR in Bt.
+  pose proof (b64_ulp_le_at_magnitude_uniform _ 52 ltac:(lia) Bt) as Hulp_le.
+  apply Rle_trans with (bpow radix2 0 / 2); [ | simpl; lra ].
+  unfold Rdiv. apply Rmult_le_compat_r; [ lra | ].
+  eapply Rle_trans; [ exact Hulp_le | ]. apply bpow_le. unfold prec; lia.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Perron worst-case witness (from InCircle_b64_exact).                       *)
 (* -------------------------------------------------------------------------- *)
 
@@ -518,3 +667,4 @@ Print Assumptions b64_arc_line_dx_R.
 Print Assumptions b64_arc_line_dy_R.
 Print Assumptions b64_arc_line_intersect_point_x_round_chain.
 Print Assumptions b64_arc_line_intersect_point_y_round_chain.
+Print Assumptions b64_arc_line_t_forward_error.
