@@ -447,6 +447,16 @@ theories/GeneralTriangleHoleNesting.v
 # guard).  Orientation DERIVED from interior positivity, not assumed.
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleJCT.v
+# RED for the H1 seam AS STATED: parity_characterises_interior_cont_strict is
+# FALSE at ON-EDGE points -- the generic-position guards do not exclude the
+# ring skeleton, where the ray test is half-open (the GeneralTriangleParityRED
+# phenomenon, one level up).  Witness: triangle (0,0),(4,1),(1,3) (no
+# horizontal edge) and the midpoint (1/2,3/2) of edge C--A: point_in_ring TRUE
+# (B--C crossed once), geometric_interior_cont FALSE (on the skeleton), all
+# five premises Qed.  Adds the corrected seam parity_characterises_interior_
+# cont_offring (+ ring_complement premise) and re-wires the conditional
+# headline against it.  Three-axiom.  No Admitted.
+theories/JCT_OnEdgeCounterexample.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
