@@ -186,6 +186,58 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Scope B.1: the denominator round-chain piece.                              *)
+(*                                                                            *)
+(* den = b64_minus sP sQ, where sP = b64_inCircle S M E P, sQ = ... Q.  Both  *)
+(* are exact integers (Scope A) of magnitude <= 2^52 (inCircle_int_witness),  *)
+(* so their difference (magnitude <= 2^53 = 2^prec) is computed bit-exactly   *)
+(* by b64_minus, and is nonzero exactly when the two inCircle values differ   *)
+(* (the safety predicate's third clause).  Uses b64_inCircle_finite_for_small *)
+(* _int -- the finiteness prerequisite the whole Scope B/C chain rests on.     *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma b64_arc_line_den_exact :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    Binary.B2R prec emax
+      (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))
+      = inCircle_R_BP S M E P - inCircle_R_BP S M E Q
+    /\ Binary.is_finite prec emax
+         (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)) = true.
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as HsafeP.
+  pose proof (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe) as HsafeQ.
+  destruct (inCircle_int_witness _ _ _ _ HsafeP) as (nP & HnPR & HnPb).
+  destruct (inCircle_int_witness _ _ _ _ HsafeQ) as (nQ & HnQR & HnQb).
+  pose proof (b64_inCircle_finite_for_small_int _ _ _ _ HsafeP) as FP.
+  pose proof (b64_inCircle_finite_for_small_int _ _ _ _ HsafeQ) as FQ.
+  pose proof (b64_inCircle_exact_for_small_int _ _ _ _ HsafeP) as HsP.
+  pose proof (b64_inCircle_exact_for_small_int _ _ _ _ HsafeQ) as HsQ.
+  assert (HsPZ : Binary.B2R prec emax (b64_inCircle S M E P) = IZR nP)
+    by (rewrite HsP; exact HnPR).
+  assert (HsQZ : Binary.B2R prec emax (b64_inCircle S M E Q) = IZR nQ)
+    by (rewrite HsQ; exact HnQR).
+  assert (Hbnd : (Z.abs (nP - nQ) <= 2 ^ prec)%Z) by (unfold prec; lia).
+  destruct (b64_minus_int_exact (b64_inCircle S M E P) (b64_inCircle S M E Q)
+              nP nQ FP FQ HsPZ HsQZ Hbnd) as [Hd Fd].
+  split; [ | exact Fd ].
+  rewrite Hd, minus_IZR, <- HnPR, <- HnQR. reflexivity.
+Qed.
+
+Lemma b64_arc_line_den_nonzero :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    Binary.B2R prec emax
+      (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)) <> 0.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_den_exact S M E P Q Hsafe) as [Hd _].
+  destruct Hsafe as (_ & _ & Hne).
+  rewrite Hd. intro Hz. apply Hne. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Perron worst-case witness (from InCircle_b64_exact).                       *)
 (* -------------------------------------------------------------------------- *)
 
