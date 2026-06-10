@@ -903,6 +903,18 @@ theories/JCTHugCycle.v
 # lengths); ho_count_single + ho_count_one_in (crossings = entries equal
 # to the in-edge => count exactly 1).  Three-axiom.  No Admitted.
 theories/JCTEdgeCount.v
+# ESCAPE DESCENT, rung 5c-16a: THE PAYOFF KIT.  Count kernels at the
+# eastmost corner's band points: the OUT-edge counting symmetry
+# (out_edge_prefix_unique / out_edge_count_le1 / ho_count_one_out);
+# ho_count_zero_of_no_cross; noncross_far (a non-incident edge never
+# crosses a band point's ray near the EASTMOST vertex: the crossing
+# abscissa is a convex combination of endpoint abscissae, at most the
+# eastmost abscissa, and the corner disk excludes the near range);
+# incident kernels (spans missing the height never cross; carriers at or
+# west never cross; strictly straddling carriers strictly east always
+# do); wall_corridor_clear_corner_east_top (the last clearance mirror).
+# Three-axiom.  No Admitted.
+theories/JCTPayoffKit.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
