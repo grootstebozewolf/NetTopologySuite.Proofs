@@ -780,6 +780,21 @@ theories/JCTCornerBox.v
 # xsup-free terminal count ho_count_zero_east_ub (weakly east of every
 # vertex, the crossing count is zero).  Three-axiom.  No Admitted.
 theories/JCTRingCycle.v
+# ESCAPE DESCENT, rung 5c-6: THE HUG STATE and the first CORNER COMPOSITE.
+# hugs_west r e q: the anchor q is off-ring and connected to e's west
+# corridor at the SPAN MIDPOINT mid e (the delta-free canonical height
+# killing the parameter-threading circularity), with freedom at all
+# smaller offsets (what corridor_offset_jog consumes).  Steps never move
+# q -- they extend its connectivity.  hug_step_pass_down_west: at a
+# degree-2 downward pass-through corner, jog . corner_passage_fresh .
+# corner-box transfer (abscissae pinned by drop/apex_abscissa_bound) .
+# top-abutting ride to mid f.  The corner conditions are DISCHARGED, not
+# assumed: corner_opens_east(_top) hold by incident_two (the only
+# incidents are e -- own carrier -- and f -- far endpoint below, vacuous).
+# Also: wall_corridor_clear_corner_top (y-flip of rung 5a's corner-
+# abutting clearance) and apex_abscissa_bound (y-flip of the drop bound).
+# Three-axiom.  No Admitted.
+theories/JCTHugStep.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
