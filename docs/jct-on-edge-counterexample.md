@@ -87,3 +87,23 @@ change. Likewise the conditional headline `point_in_ring_correct_jct_cont`
 remains *true* as a conditional — but its hypothesis is now known to be
 unsatisfiable at on-edge points, which is why the `_offring` re-wiring is the
 honest target going forward.
+
+## Follow-up (same date): the corrected seam is satisfiable — rectangle discharged totally
+
+`theories/RectangleOffringSeam.v` proves
+`rect_parity_seam_offring : parity_characterises_interior_cont_offring p
+(rect_ring x0 y0 x1 y1)` for **every** rectangle and **every** point — the
+first family for which the (corrected) seam Prop itself is a theorem rather
+than only its strict-interior projection. The new ingredient is the
+exterior half: the generic straight-ray escape lemmas
+`escape_beyond_{x,y}_{low,high}` (a point strictly beyond a one-sided bound
+on the skeleton is in no bounded complement component), instantiated through
+`rect_image_bounds`. Assembly is the `box_min` trichotomy: positive — the
+existing strict-interior biconditional; zero — excluded by the off-ring
+premise; negative — both sides of the biconditional are false
+(`rect_exterior_not_in_ring` and the escape engine).
+
+So the repair this counterexample forced is not merely consistent — it is
+**achievable**: the off-ring seam now has a non-trivial, fully-Qed instance,
+and the escape engine is the reusable piece the triangle and convex families
+need for their own exterior halves.
