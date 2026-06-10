@@ -625,6 +625,17 @@ theories/JCTCorridor.v
 # rung 4 = per-polygon touch-freedom (ring_simple), corner sectors, and the
 # bounded boundary recursion.  Three-axiom.  No Admitted.
 theories/JCTWalkKit.v
+# ESCAPE DESCENT, rung 4: the assembled WALK STEP.  The crossing abscissa IS
+# the carrier line's abscissa at p's height (cross_x_is_edge_x_at), so the
+# east run-up endpoint and the corridor top coincide
+# (corridor_top_is_wall_point); crossing edges are non-horizontal under the
+# guard (crossing_edge_nonhorizontal); exists_parked_height parks the lower
+# end in a vertex-level-free gap (free ray guard).  walk_step: east run-up +
+# wall corridor glued by connectivity transitivity, conditional only on the
+# corridor clearances; walk_step_guarded delivers a connected, off-ring,
+# guarded destination.  Rung 5 = clearances from ring_simple touch-freedom,
+# corner choice, recursion.  Three-axiom.  No Admitted.
+theories/JCTWalkStep.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
