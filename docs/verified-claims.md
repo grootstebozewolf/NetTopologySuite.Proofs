@@ -223,6 +223,7 @@ vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_{sP_R,sQ_R,dx_R,dy_R}` | **Arc-line Scope A (issue #64 ask #5a):** first-stage Cramer prefix before division — outer `sP`/`sQ` inCircle evaluations and chord `dx`/`dy` differences are bit-exact integer-valued binary64 `[int-b64-arc]` | 4 |
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_den_exact` (+ `_den_nonzero`) | **Arc-line Scope B.1 (issue #64 ask #5a):** the division denominator `den = sP − sQ` is computed **bit-exactly** (`= inCircle_R_BP S M E P − inCircle_R_BP S M E Q`, finite) — both inCircle values are integers `≤ 2⁵²` so the difference `≤ 2⁵³ = 2^prec` is exact — and is nonzero exactly under the safety predicate. The denominator round-chain gate; uses the new `b64_inCircle_finite_for_small_int`. Division/mult/add round-chain (Scope B.2) now landed (see next row); forward-error (Scope C) remains queued `[int-b64-arc]` | 4 |
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_intersect_point_{x,y}_round_chain` | **Arc-line Scope B.2 (issue #64 ask #5a):** the *full* coordinate round-chain identity — `B2R (b64_arc_line_intersect_point_x …) = round(B2R(bx P) + round(round(sP/(sP−sQ)) · (B2R(bx Q) − B2R(bx P))))` (and symmetric for `y`). Each binary64 step is pinned to its IEEE-754 rounding of the exact-real operands: the integer-exact prefix (`sP`, `den`, `dx`/`dy` from Scope A/B.1) feeds a `div → mult → plus` chain, each discharged via `b64_{div,mult,plus}_correct` with magnitude gates (`\|sP\| ≤ 2⁵²`, `\|den\| ≥ 1`, `\|dx\| ≤ 2¹²`, `t·dx ≤ 2⁶⁴`, sum `≤ 2⁶⁵ < 2^emax`). This is the exact statement of *what the float intersection computes* — the launch point for the Scope C forward-error bound `[int-b64-arc]` | 4 |
+| `ArcLineIntersect_b64_exact.v : b64_arc_line_t_forward_error` (+ `_t_round`, `_t_abs_le_bpow_52`, `arc_line_ratio_abs_le_52`) | **Arc-line Scope C layer-1 (issue #64 ask #5a):** the computed division parameter `t = b64_div sP den` deviates from the *exact-real* ratio `sP_R/(sP_R−sQ_R)` by at most **½** — a single division half-ulp. Because the denominator is **bit-exact** (Scope B.1), there is *no* denominator-carryover error (unlike the line-line layer 1, which rounds its own denominator). Derivation: `\|sP_R\| ≤ 2⁵²`, `\|den_R\| ≥ 1` ⇒ `\|ratio\| ≤ 2⁵²` ⇒ `ulp(round ratio) ≤ bpow 0 = 1` ⇒ half-ulp `≤ ½`. First layer of the Scope C forward-error cascade against `arc_line_intersect_x_R`; layers 2–4 (mult, plus, headline) queued `[int-b64-arc]` | 4 |
 
 `[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL` +
 the three issue-#64 arc-length modes below.
@@ -262,7 +263,11 @@ the dividing step (`sP`, `sQ`, `dx`, `dy`). The headline
 generally non-dyadic). **Scope B is now closed:** B.1 pins the denominator as
 bit-exact, and B.2 (`b64_arc_line_intersect_point_{x,y}_round_chain`) pins the
 *entire* `div → mult → plus` coordinate computation to its IEEE-754 round-chain
-of the exact-real operands. Forward-error bound (Scope C) remains queued.
+of the exact-real operands. **Scope C is now open:** layer 1
+(`b64_arc_line_t_forward_error`) bounds the division parameter's drift from the
+exact-real ratio by ½ — and crucially shows the bit-exact denominator
+contributes *zero* carryover error. Layers 2–4 (mult, plus, coordinate
+headline against `arc_line_intersect_x_R`) remain queued.
 
 ## Issue #67 — DE-9IM matrix algebra (`DE9IM.v`, session 1)
 
