@@ -1,0 +1,46 @@
+# The escape-descent campaign — closing H1's last residual
+
+**Branch:** `claude/jct-escape-descent`. **Target:**
+`JCTEscapeDescent.escape_descent` — from an even-parity guarded complement
+point with at least one crossing, reach (through the complement) a guarded
+point with strictly fewer crossings. With it,
+`parity_seam_offring_of_descent` closes the full corrected H1 seam; the
+trapped half and the separation clause are already Qed (PR #165).
+
+Why a path-following construction is unavoidable: a spiral polygon's centre
+has even parity yet all four axis rays blocked — no straight-line escape
+exists, so the detour must follow the boundary of the first blocking edge.
+`ring_simple` enters here and only here (a doubly-wound ring has even-parity
+trapped points).
+
+## Rungs
+
+| # | content | status |
+|---|---|---|
+| 1 | **East approach** (`JCTEastApproach.v`): the crossing abscissa `cross_x`, the first wall `min_cross_x`, the skeleton-free run-up, the east walk preserving complement/guard/count, and `crossings_distinct` (simplicity's first theorem: distinct crossing edges cross at distinct abscissae) | **Qed** |
+| 2 | **The corner corridor**: from just-west-of-the-wall, follow the first edge's west side to its nearer endpoint and round it, with explicit per-edge clearance margins (finite `Rmin`, in the `affine_sign_stable` style); needs `ring_simple` + vertex-distinctness for clearance at the corner | open |
+| 3 | **The boundary walk**: iterate rung 2 along the polygon (recursion bounded by the edge count), maintaining the complement/guard invariants until the count drops | open |
+| 4 | **Assembly**: `escape_descent_holds : ring_simple r -> ring_closed r -> ... -> escape_descent r`, composed through `parity_seam_offring_of_descent` — H1 closed | open |
+
+## Rung 1 deliverables (this commit)
+
+- `cross_x p e` — the height-`py p` crossing abscissa; under the ray guard
+  every half-open crossing is a **strict** straddle
+  (`ho_cross_strict_of_guard`), so the abscissa is the edge's unique
+  height point (`cross_pt_on_edge` / `height_pt_unique`) and lies strictly
+  east of `p` (`cross_x_east`).
+- `min_cross_x` — the first wall, with existence (`min_cross_x_some_of_cross`),
+  achievement (`min_cross_x_achieved`) and the lower bound
+  (`min_cross_x_lb`).
+- `east_segment_free` — the half-open run-up `[px p, X1)` at `p`'s height is
+  skeleton-free: non-crossing edges by the part-6 ray lemma, crossing edges
+  because their unique height point sits at or beyond the wall.
+- `east_approach` — THE RUNG THEOREM: every point of the run-up is
+  complement-connected to `p`, off-ring, guarded, and carries the **same**
+  `ho_count` (`cross_iff_shift_east` + `ho_count_ext`): all descent
+  invariants survive the approach.
+- `crossings_distinct` — **the first genuine use of `ring_simple` in the H1
+  campaign**: two distinct crossing edges cross the ray at distinct
+  abscissae, because a shared crossing point is interior to both (strict
+  straddles) and would be a proper intersection. This is what makes "the
+  first wall" a single well-defined edge for rung 2 to walk around.

@@ -592,6 +592,17 @@ theories/JCTEscapeDescent.v
 # even_parity_escapes, each by the family field trichotomy).
 # Three-axiom.  No Admitted.
 theories/JCTSeparation.v
+# ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
+# approach.  cross_x (crossing abscissa; guard makes every half-open
+# crossing a STRICT straddle, so it is the edge's unique height point,
+# strictly east); min_cross_x (the first wall: existence, achievement,
+# lower bound); east_segment_free (the run-up [px p, X1) is skeleton-free);
+# east_approach (every run-up point is complement-connected, off-ring,
+# guarded, with the SAME ho_count); crossings_distinct -- the first genuine
+# use of ring_simple in the H1 campaign: distinct crossing edges cross at
+# distinct abscissae (a shared point is interior to both strict straddles,
+# hence a proper intersection).  Three-axiom.  No Admitted.
+theories/JCTEastApproach.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
