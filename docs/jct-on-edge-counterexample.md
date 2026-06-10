@@ -148,3 +148,26 @@ violated strictly. Composing with the conditional assembly of Follow-up 2:
 **every CCW triangle and every point**. The total-family ladder now reads
 **rectangle ✓, triangle ✓**; the convex n-gon is next (the half-plane escape
 engine and the band machinery are both already shape-generic).
+
+## Follow-up 4 (same date): the generic convex layer + the right triangle for free
+
+`theories/ConvexOffringSeam.v` lifts the per-family scaffolding to the generic
+half-plane presentation of `ConvexField.v`. Proved once, for any ring:
+vertices inside a half-plane put the whole skeleton inside it
+(`image_slack_nonneg` — the n-gon induction; note the hypothesis is the
+**global** `vertices_in_halfplane` form, since the pentagram refutes the
+local all-CCW-turns form), a negative `conv_min` names a violated half-plane,
+and such a point escapes (`convex_exterior_escapes`). The assembly
+`convex_parity_seam_offring_of` then reduces the total off-ring seam for ANY
+half-plane-presented ring to four named family obligations: zero-set on the
+skeleton, bounded positive region, and the two guarded parity facts
+(interior odd / exterior even). All remaining topology is discharged in the
+layer. Separately, `rtri_parity_seam_offring` lands the **third total
+family** for free: the right-triangle ring is definitionally a `gtri_ring`
+instance.
+
+Remaining for the convex n-gon rung proper: the two parity obligations for a
+vertex-list n-gon (the y-monotone-chain band argument) and its zero-set/bound
+facts — the named targets of the next rung. The ladder: rectangle ✓,
+triangle ✓, right triangle ✓, convex n-gon (parity obligations open),
+general simple polygon (H1 proper, open).

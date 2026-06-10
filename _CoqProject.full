@@ -487,6 +487,17 @@ theories/GeneralTriangleExterior.v
 # every CCW triangle -- the SECOND total family, first with sloped edges.
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleOffringSeam.v
+# The generic CONVEX assembly layer for the off-ring seam + the right triangle
+# as the THIRD total family (free: rtri_ring is definitionally a gtri_ring
+# instance).  ring_edges_endpoints_in; image_slack_nonneg (vertices inside a
+# half-plane put the whole skeleton inside -- the n-gon induction, with the
+# GLOBAL vertices_in_halfplane convexity, not local turns: the pentagram
+# refutes the local form); conv_min_neg_inv; convex_exterior_escapes; and
+# convex_parity_seam_offring_of -- the total seam for ANY half-plane-presented
+# ring from four named family obligations (zero-set on skeleton, bounded
+# positive region, guarded interior-odd + exterior-even parity).
+# Three-axiom.  No Admitted.
+theories/ConvexOffringSeam.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
