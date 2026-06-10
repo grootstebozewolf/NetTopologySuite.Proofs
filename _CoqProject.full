@@ -767,6 +767,19 @@ theories/JCTTipCrossing.v
 # incident direction at the corner (vacuous under the traversal's global
 # no-horizontal-edges simplification).  Three-axiom.  No Admitted.
 theories/JCTCornerBox.v
+# ESCAPE DESCENT, rung 5c-5: THE RING-CYCLE STRUCTURE.  Pure list
+# combinatorics the traversal consumes.  ring_core_nodup (closed ring with
+# pairwise-distinct core vertices); ring_edges_in_split (edge membership IS
+# list splitting -- axiom-free); in_edge_unique / out_edge_unique (each
+# vertex has at most one incoming and one outgoing edge, by count_occ on
+# the unique core occurrence, with the seam vertex's own analysis);
+# incident_two (every incident edge is THE in-edge or THE out-edge -- the
+# degree-2 lemma discharging the corner conditions against the two cycle
+# neighbours); cyclic_next / cyclic_prev (cycle successor and predecessor,
+# closedness wrapping the seam).  Also vertex_xmax_achieved and the
+# xsup-free terminal count ho_count_zero_east_ub (weakly east of every
+# vertex, the crossing count is zero).  Three-axiom.  No Admitted.
+theories/JCTRingCycle.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
