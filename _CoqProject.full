@@ -560,6 +560,17 @@ theories/JCTLevelJump.v
 # closed ring (ring_simple NOT needed).  The load-bearing half of H1.
 # Three-axiom.  No Admitted.
 theories/JCTTrappedHalf.v
+# H1 PROPER, assembly: the kernel chain named (ho_parity_locally_constant_
+# holds for every closed ring); the seam's hard direction unconditional
+# (point_in_ring_imp_geometric_cont: odd guarded off-ring points of any
+# closed ring are geometric-interior); the ESCAPE residual isolated
+# (even_parity_escapes -- the only place simplicity is needed: doubly-wound
+# rings have even trapped points); parity_seam_offring_of_escape /
+# point_in_ring_correct_of_escape derive the FULL corrected seam from it
+# (the parity side decided by point_in_ring_dec, no classical step).
+# Sanity: the rectangle discharges the residual at a concrete point.
+# Three-axiom.  No Admitted.
+theories/JCTSeamAssembly.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

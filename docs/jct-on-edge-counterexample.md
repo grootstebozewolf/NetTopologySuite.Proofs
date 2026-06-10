@@ -316,3 +316,21 @@ now a Qed theorem of the corpus. The remaining open half of H1 is the dual
 ESCAPE construction: an even-parity off-ring point of a SIMPLE closed ring
 can reach infinity through the complement (this direction genuinely needs
 simplicity; a doubly-wound ring has even-parity points that are trapped).
+
+## Follow-up 10 (same date): the assembly — H1 is one residual away
+
+`theories/JCTSeamAssembly.v` composes the campaign: the kernel chain is
+named (`ho_parity_locally_constant_holds` — the half-open parity is locally
+constant along complement paths of ANY closed ring), the seam's hard
+direction is unconditional (`point_in_ring_imp_geometric_cont`), and the
+full corrected seam `parity_characterises_interior_cont_offring p r`
+follows from the single per-point residual
+
+  `even_parity_escapes r p := ¬point_in_ring p r → ¬in_bounded_component_cont r p`
+
+(`parity_seam_offring_of_escape` / `point_in_ring_correct_of_escape`; the
+parity side of the biconditional is decided by `point_in_ring_dec`, so no
+classical step enters). The residual is the only place `ring_simple` is
+genuinely needed — a doubly-wound ring has even-parity trapped points —
+and the rectangle discharges it at a concrete point as a sanity instance.
+H1 = the escape construction for simple rings; everything else is Qed.
