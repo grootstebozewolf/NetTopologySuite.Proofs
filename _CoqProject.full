@@ -660,6 +660,21 @@ theories/JCTTautClearance.v
 # compactness, no square roots).  clear_fold: generic Rmin fold over the
 # edge list.  Three-axiom.  No Admitted.
 theories/JCTWallClear.v
+# ESCAPE DESCENT, rung 4b-3: THE CORNER SECTOR (corner_sector_guarded).  The
+# wall theorem clears corridors only span-interior; to descend past the wall
+# edge's bottom vertex v the walk drops VERTICALLY just west of v, from
+# py v + eps to py v - eps, with eps shrunk after delta (edges incident to v
+# stay within slope*eps of v, short of the delta/2 offset).  Tautness enters
+# once more: an edge through v has v as a shared endpoint
+# (taut_vertex_endpoint), so obstacles split into edges AT v (slope bound)
+# and edges MISSING v (explicit positive margins at v's level, level_gap
+# style); two-stage Rmin fold corner_fold gives uniform delta0 then
+# eps0(delta).  Honest residual hypothesis: no horizontal edge extends WEST
+# from v (it would block every drop; deferred to the rung-5 recursion).
+# Also: corridor_offset_jog (corridors of two offsets connect at a shared
+# height) and depth_gap (parking BELOW a level with a free ray guard).
+# Three-axiom.  No Admitted.
+theories/JCTCornerSector.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
