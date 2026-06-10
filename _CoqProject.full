@@ -525,6 +525,18 @@ theories/JCTParityTransport.v
 # named kernel ho_parity_locally_constant (local constancy along complement
 # paths -- the y-monotone vertex-pairing content).  Three-axiom.  No Admitted.
 theories/JCTHalfOpenParity.v
+# H1 PROPER, part 3: GENERIC-HEIGHT local constancy of the half-open parity,
+# Qed -- and the kernel shrinks to vertex-level points.  At a complement
+# point off all vertex heights, every per-edge crossing condition is a
+# conjunction of STRICT affine signs (the ray atom PA/PD is nonzero because
+# zero-in-band puts the point ON the edge); affine_sign_stable gives explicit
+# balls, ho_parity_ball Rmin's them over the edge list, path continuity
+# lifts to the parameter (path_coord_close).  ho_kernel_of_level_stable:
+# the full kernel ho_parity_locally_constant follows from ho_level_stable
+# (constancy at VERTEX-LEVEL complement points only -- the pure vertex-
+# pairing content).  Capstone odd_parity_trapped_of_level_stable: H1's
+# trapped half now needs ONLY ho_level_stable.  Three-axiom.  No Admitted.
+theories/JCTGenericStability.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

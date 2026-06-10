@@ -235,3 +235,24 @@ mode; the walk induction's mixed cases initially picked up
 the atom with `Rle_dec` first keeps the proof constructive and the
 footprint at the allowlisted three axioms — worth remembering for any
 `tauto` over undecided propositional atoms in the `theories/` lane.
+
+## Follow-up 7 (same date): H1 proper, part 3 — generic-height constancy Qed; kernel shrinks to vertex levels
+
+`theories/JCTGenericStability.v` proves the half-open parity locally
+constant at every complement point whose height avoids all vertex heights:
+each edge's crossing condition there is a conjunction of **strict affine
+signs** — the band atoms by genericity, the division-free ray atom
+(`PA = (yb−ya)(xa−x) + (xb−xa)(h−ya)`) because its vanishing in-band puts
+the point on the edge — and strict affine signs are stable on explicit
+balls (`affine_sign_stable`), assembled by a finite `Rmin` over the edge
+list (`ho_parity_ball`) and lifted through path continuity
+(`path_coord_close`).
+
+Consequently (`ho_kernel_of_level_stable`) the full kernel
+`ho_parity_locally_constant` reduces to `ho_level_stable`: local constancy
+at **vertex-level** complement points only — at such a point the edges
+incident to each level vertex exchange their half-open bands, and proving
+the exchange preserves the count is the y-monotone vertex-pairing argument,
+now isolated with nothing else attached. Capstone
+(`odd_parity_trapped_of_level_stable`): H1's trapped half, for any closed
+ring and guarded odd-parity point, from `ho_level_stable` alone.
