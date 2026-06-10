@@ -693,6 +693,22 @@ theories/JCTCornerSector.v
 # guarded point strictly below the corner level.  Subsumes 4b-3's
 # horizontal residual (opens_east_horizontal).  Three-axiom.  No Admitted.
 theories/JCTCornerClear.v
+# ESCAPE DESCENT, rung 5b: THE MIRROR KIT.  The boundary-hugging walk needs
+# corridor moves in all four orientations (west/east of a wall, under
+# bottoms / over tops); instead of hand-writing three mirrored kits, this
+# transports the complement geometry through the coordinate reflections
+# xmir (east<->west) and ymir (over<->under): ring_edges/ring_image/
+# ring_complement/ring_taut/ring_closed/connected_in_complement_cont
+# (continuity_opp) / in_bounded_component_cont (norm reflection-invariant),
+# each both ways via involutions.  The horizontal ray makes ymir EXACT for
+# the crossing data: guard, edge_crosses_ray_ho, ho_count, parity all
+# transport (under the guard every half-open crossing is a strict straddle,
+# and strictness is y-symmetric).  xmir reverses the ray, so it carries
+# freedom/connectivity only (east-side corridors = west corridors of the
+# mirror); counts are recomputed at endpoints.  Every west/under theorem of
+# rungs 2-5a now applies verbatim to the mirrored rings and pulls back
+# along connected_xmir_rev / connected_ymir_rev.  Three-axiom.  No Admitted.
+theories/JCTMirrorKit.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
