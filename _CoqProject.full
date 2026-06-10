@@ -857,6 +857,17 @@ theories/JCTCornerDisk.v
 # delta < (KE - KF) eps0 / 3: no quantifier circularity.  The hug side
 # flips (hugs_west e -> hugs_east f).  Three-axiom.  No Admitted.
 theories/JCTPinchedStep.v
+# ESCAPE DESCENT, rung 5c-12: THE MIRRORED PINCHED TURNAROUNDS and the
+# CARRIER-SIDE BRIDGE.  hug_step_min_pinched_ew (xmir),
+# hug_step_max_pinched_we (ymir), hug_step_max_pinched_ew (both flips);
+# hugs_east_ymir factored out.  carrier_side_equiv: at an extremum corner
+# the two carrier-side conditions are EQUIVALENT (one slope comparison
+# (KE - KF) through the shared corner, stated for minima and maxima at
+# once via the same-side product), so the per-corner total step decides
+# open vs pinched with a single Rle_dec and derives the partner condition
+# from the bridge.  The full corner-move inventory (4 pass-throughs +
+# 4 open + 4 pinched) is now Qed.  Three-axiom.  No Admitted.
+theories/JCTPinchedMirror.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
