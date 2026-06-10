@@ -171,3 +171,36 @@ vertex-list n-gon (the y-monotone-chain band argument) and its zero-set/bound
 facts — the named targets of the next rung. The ladder: rectangle ✓,
 triangle ✓, right triangle ✓, convex n-gon (parity obligations open),
 general simple polygon (H1 proper, open).
+
+## Follow-up 5 (same date): H1 proper, part 1 — the transport engine and the kernel isolated
+
+`theories/JCTParityTransport.v` starts on the general simple polygon itself.
+Three pieces, all Qed:
+
+1. **Decidability** — `point_in_ring_dec` (via `ray_parity_dec`/`_excl`):
+   the strict crossing-number parity is a total, decidable classifier.
+2. **The transport engine** — `invariant_transport_along_path`: a decidable
+   predicate that is locally stable along a path is constant along it; pure
+   least-upper-bound argument over ℝ. Decidability of the predicate is what
+   replaces the classical-choice step hidden in the textbook clopen proof,
+   so the 3-axiom budget is preserved.
+3. **The reduction** — `odd_parity_trapped_of_invariant`: for ANY ring, an
+   odd-parity point agreeing with a decidable, complement-locally-constant,
+   far-false invariant is in a bounded complement component. H1's hard
+   "trapped" half is now exactly: *construct that invariant for a general
+   simple ring*.
+
+The analysis surfaced one more honesty fact, recorded in the file header:
+the candidate invariant CANNOT be the strict parity of `point_in_ring`
+itself — strict parity is not locally constant on the complement (a
+far-west point's strict count jumps by one when its height crosses a
+pass-through vertex, where both incident edges stop counting while exactly
+one alternation remains elsewhere). The classical locally-constant invariant
+is the **half-open** parity (count `vy ≤ h < wy`), which agrees with the
+strict parity under the ray guards. Constructing it and proving its local
+constancy — the vertex-pairing argument — is the isolated remaining kernel,
+together with the dual escape-construction half (exterior ⇒ escape) for
+general simple rings.
+
+Non-vacuity: `rect_trapped_via_invariant` re-derives the rectangle's
+trapping through the generic engine with `Q := 0 < box_min`.
