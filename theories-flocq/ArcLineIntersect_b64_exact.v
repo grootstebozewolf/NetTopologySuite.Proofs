@@ -42,7 +42,7 @@ From Flocq Require Import IEEE754.Binary Core.
 
 From NTS.Proofs.Flocq Require Import Validate_binary64 InCircle_b64_compute
                                       InCircle_b64_exact Orient_b64_exact
-                                      Intersect_b64.
+                                      Intersect_b64 B64_bridge B64_lib.
 
 Local Open Scope R_scope.
 
@@ -238,6 +238,253 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Scope B.2: the round-chain identity for the intersection coordinate.       *)
+(*                                                                            *)
+(* On the integer grid every prefix is exact (Scope A/B.1); the only roundings *)
+(* are the division t = sP/den and the two arithmetic ops t*dx, P + (t*dx).   *)
+(* So B2R of the coordinate is the explicit nested-round expression below --   *)
+(* the exact rounding-error contract callers compose against.  Mirrors          *)
+(* `Intersect_b64_exact.v`'s `b64_intersect_point_x_round_chain`.  Magnitudes   *)
+(* are tiny here (|coord|<=2^11 => inCircle <= 2^52, t <= 2^52, t*dx <= 2^64),  *)
+(* so every no-overflow side condition is discharged by `bpow _ < bpow emax`.  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma bpow_double : forall e : Z, (bpow radix2 (e + 1) = bpow radix2 e + bpow radix2 e)%R.
+Proof.
+  intro e. rewrite bpow_plus.
+  replace (bpow radix2 1) with 2%R by reflexivity. lra.
+Qed.
+
+Lemma inCircle_R_BP_abs_le_52 :
+  forall A B C P : BPoint,
+    inCircle_inputs_int_safe A B C P ->
+    (Rabs (inCircle_R_BP A B C P) <= bpow radix2 52)%R.
+Proof.
+  intros A B C P H. destruct (inCircle_int_witness _ _ _ _ H) as (n & Hn & Hb).
+  rewrite Hn, <- abs_IZR, <- (IZR_Zpower radix2 52) by lia. apply IZR_le. exact Hb.
+Qed.
+
+Theorem b64_arc_line_intersect_point_x_round_chain :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    Binary.B2R prec emax (b64_arc_line_intersect_point_x S M E P Q)
+    = b64_round
+        (Binary.B2R prec emax (bx P)
+         + b64_round
+             (b64_round (inCircle_R_BP S M E P
+                        / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))
+              * (Binary.B2R prec emax (bx Q) - Binary.B2R prec emax (bx P)))).
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as HP.
+  pose proof (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe) as HQ.
+  pose proof (b64_arc_line_sP_R _ _ _ _ _ Hsafe) as HsPR.
+  destruct (b64_arc_line_dx_R _ _ _ _ _ Hsafe) as [HdxR Fdx].
+  destruct (b64_arc_line_den_exact _ _ _ _ _ Hsafe) as [HdenR Fden].
+  pose proof (b64_arc_line_den_nonzero _ _ _ _ _ Hsafe) as Hden0.
+  pose proof (b64_inCircle_finite_for_small_int _ _ _ _ HP) as FsP.
+  (* coordinate finiteness/bounds for bx P, bx Q *)
+  destruct HP as (_ & _ & _ & _ & _ & _ & HxP & _).
+  destruct HQ as (_ & _ & _ & _ & _ & _ & HxQ & _).
+  destruct HxP as (FxP & nxP & HxPR & HxPb).
+  destruct HxQ as (FxQ & nxQ & HxQR & HxQb).
+  (* magnitude facts *)
+  assert (HsP52 : (Rabs (Binary.B2R prec emax (b64_inCircle S M E P)) <= bpow radix2 52)%R).
+  { rewrite HsPR. apply inCircle_R_BP_abs_le_52.
+    exact (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe). }
+  assert (Hden1 : (1 <= Rabs (Binary.B2R prec emax (b64_minus (b64_inCircle S M E P)
+                                                              (b64_inCircle S M E Q))))%R).
+  { rewrite HdenR.
+    destruct (inCircle_int_witness _ _ _ _
+                (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe)) as (nP & HnP & _).
+    destruct (inCircle_int_witness _ _ _ _
+                (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe)) as (nQ & HnQ & _).
+    rewrite HnP, HnQ, <- minus_IZR, <- abs_IZR.
+    replace 1%R with (IZR 1) by reflexivity. apply IZR_le.
+    assert (Hne : (nP <> nQ)%Z).
+    { intro Hz. apply Hden0. rewrite HdenR, HnP, HnQ, Hz. lra. }
+    lia. }
+  assert (Hdx12 : (Rabs (Binary.B2R prec emax (b64_minus (bx Q) (bx P))) <= bpow radix2 12)%R).
+  { rewrite HdxR, HxPR, HxQR, <- minus_IZR, <- abs_IZR, <- (IZR_Zpower radix2 12) by lia.
+    apply IZR_le. change (Zpower radix2 12) with (2 ^ 12)%Z. lia. }
+  (* t = b64_div sP den : B2R t = round(sP_R / den_R) *)
+  assert (Htdiv_bnd : (Rabs (b64_round (Binary.B2R prec emax (b64_inCircle S M E P)
+                              / Binary.B2R prec emax (b64_minus (b64_inCircle S M E P)
+                                                                (b64_inCircle S M E Q))))
+                       < bpow radix2 emax)%R).
+  { apply (Rle_lt_trans _ (bpow radix2 52)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax (b64_inCircle S M E P)) * 1)).
+    - apply Rmult_le_compat_l; [ apply Rabs_pos | ].
+      rewrite <- Rinv_1. apply Rinv_le_contravar; [ lra | exact Hden1 ].
+    - rewrite Rmult_1_r. exact HsP52. }
+  destruct (b64_div_correct (b64_inCircle S M E P)
+              (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))
+              FsP Fden Hden0 Htdiv_bnd) as [HtR Ft].
+  (* t magnitude <= bpow 52 *)
+  assert (Ht52 : (Rabs (Binary.B2R prec emax
+                     (b64_div (b64_inCircle S M E P)
+                       (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))))
+                  <= bpow radix2 52)%R).
+  { rewrite HtR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax (b64_inCircle S M E P)) * 1)).
+    - apply Rmult_le_compat_l; [ apply Rabs_pos | ].
+      rewrite <- Rinv_1. apply Rinv_le_contravar; [ lra | exact Hden1 ].
+    - rewrite Rmult_1_r. exact HsP52. }
+  (* mult t dx safe *)
+  set (t := b64_div (b64_inCircle S M E P)
+              (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))) in *.
+  set (dx := b64_minus (bx Q) (bx P)) in *.
+  assert (Hmult_safe : b64_safe Rmult t dx).
+  { split; [ exact Ft | split; [ exact Fdx | ] ].
+    apply (Rle_lt_trans _ (bpow radix2 64)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    rewrite Rabs_mult.
+    replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+      by (rewrite <- bpow_plus; reflexivity).
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  destruct (b64_mult_correct t dx Hmult_safe) as [HmR Fm].
+  (* mult magnitude <= bpow 64 *)
+  assert (Hm64 : (Rabs (Binary.B2R prec emax (b64_mult t dx)) <= bpow radix2 64)%R).
+  { rewrite HmR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    rewrite Rabs_mult.
+    replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+      by (rewrite <- bpow_plus; reflexivity).
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  (* plus (bx P) (mult) safe *)
+  assert (Hplus_safe : b64_safe Rplus (bx P) (b64_mult t dx)).
+  { split; [ exact FxP | split; [ exact Fm | ] ].
+    apply (Rle_lt_trans _ (bpow radix2 65)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax (bx P)) + Rabs (Binary.B2R prec emax (b64_mult t dx)))).
+    - apply Rabs_triang.
+    - apply (Rle_trans _ (bpow radix2 11 + bpow radix2 64)).
+      + apply Rplus_le_compat; [ | exact Hm64 ].
+        rewrite HxPR, <- abs_IZR, <- (IZR_Zpower radix2 11) by lia. apply IZR_le.
+        change (Zpower radix2 11) with (2 ^ 11)%Z. lia.
+      + replace (bpow radix2 65) with (bpow radix2 64 + bpow radix2 64)%R
+          by (rewrite <- bpow_double; reflexivity).
+        apply Rplus_le_compat; apply bpow_le; lia. }
+  destruct (b64_plus_correct (bx P) (b64_mult t dx) Hplus_safe) as [HpR _].
+  (* assemble *)
+  unfold b64_arc_line_intersect_point_x. fold t dx.
+  rewrite HpR, HmR, HtR, HsPR, HdenR, HdxR.
+  reflexivity.
+Qed.
+
+Theorem b64_arc_line_intersect_point_y_round_chain :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    Binary.B2R prec emax (b64_arc_line_intersect_point_y S M E P Q)
+    = b64_round
+        (Binary.B2R prec emax (by_ P)
+         + b64_round
+             (b64_round (inCircle_R_BP S M E P
+                        / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q))
+              * (Binary.B2R prec emax (by_ Q) - Binary.B2R prec emax (by_ P)))).
+Proof.
+  intros S M E P Q Hsafe.
+  pose proof (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe) as HP.
+  pose proof (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe) as HQ.
+  pose proof (b64_arc_line_sP_R _ _ _ _ _ Hsafe) as HsPR.
+  destruct (b64_arc_line_dy_R _ _ _ _ _ Hsafe) as [HdyR Fdy].
+  destruct (b64_arc_line_den_exact _ _ _ _ _ Hsafe) as [HdenR Fden].
+  pose proof (b64_arc_line_den_nonzero _ _ _ _ _ Hsafe) as Hden0.
+  pose proof (b64_inCircle_finite_for_small_int _ _ _ _ HP) as FsP.
+  (* coordinate finiteness/bounds for by_ P, by_ Q *)
+  destruct HP as (_ & _ & _ & _ & _ & _ & _ & HyP).
+  destruct HQ as (_ & _ & _ & _ & _ & _ & _ & HyQ).
+  destruct HyP as (FyP & nyP & HyPR & HyPb).
+  destruct HyQ as (FyQ & nyQ & HyQR & HyQb).
+  (* magnitude facts *)
+  assert (HsP52 : (Rabs (Binary.B2R prec emax (b64_inCircle S M E P)) <= bpow radix2 52)%R).
+  { rewrite HsPR. apply inCircle_R_BP_abs_le_52.
+    exact (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe). }
+  assert (Hden1 : (1 <= Rabs (Binary.B2R prec emax (b64_minus (b64_inCircle S M E P)
+                                                              (b64_inCircle S M E Q))))%R).
+  { rewrite HdenR.
+    destruct (inCircle_int_witness _ _ _ _
+                (arc_line_intersect_inputs_int_safe_SMP _ _ _ _ _ Hsafe)) as (nP & HnP & _).
+    destruct (inCircle_int_witness _ _ _ _
+                (arc_line_intersect_inputs_int_safe_SMQ _ _ _ _ _ Hsafe)) as (nQ & HnQ & _).
+    rewrite HnP, HnQ, <- minus_IZR, <- abs_IZR.
+    replace 1%R with (IZR 1) by reflexivity. apply IZR_le.
+    assert (Hne : (nP <> nQ)%Z).
+    { intro Hz. apply Hden0. rewrite HdenR, HnP, HnQ, Hz. lra. }
+    lia. }
+  assert (Hdy12 : (Rabs (Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))) <= bpow radix2 12)%R).
+  { rewrite HdyR, HyPR, HyQR, <- minus_IZR, <- abs_IZR, <- (IZR_Zpower radix2 12) by lia.
+    apply IZR_le. change (Zpower radix2 12) with (2 ^ 12)%Z. lia. }
+  (* t = b64_div sP den : B2R t = round(sP_R / den_R) *)
+  assert (Htdiv_bnd : (Rabs (b64_round (Binary.B2R prec emax (b64_inCircle S M E P)
+                              / Binary.B2R prec emax (b64_minus (b64_inCircle S M E P)
+                                                                (b64_inCircle S M E Q))))
+                       < bpow radix2 emax)%R).
+  { apply (Rle_lt_trans _ (bpow radix2 52)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax (b64_inCircle S M E P)) * 1)).
+    - apply Rmult_le_compat_l; [ apply Rabs_pos | ].
+      rewrite <- Rinv_1. apply Rinv_le_contravar; [ lra | exact Hden1 ].
+    - rewrite Rmult_1_r. exact HsP52. }
+  destruct (b64_div_correct (b64_inCircle S M E P)
+              (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))
+              FsP Fden Hden0 Htdiv_bnd) as [HtR Ft].
+  (* t magnitude <= bpow 52 *)
+  assert (Ht52 : (Rabs (Binary.B2R prec emax
+                     (b64_div (b64_inCircle S M E P)
+                       (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))))
+                  <= bpow radix2 52)%R).
+  { rewrite HtR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax (b64_inCircle S M E P)) * 1)).
+    - apply Rmult_le_compat_l; [ apply Rabs_pos | ].
+      rewrite <- Rinv_1. apply Rinv_le_contravar; [ lra | exact Hden1 ].
+    - rewrite Rmult_1_r. exact HsP52. }
+  (* mult t dy safe *)
+  set (t := b64_div (b64_inCircle S M E P)
+              (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))) in *.
+  set (dy := b64_minus (by_ Q) (by_ P)) in *.
+  assert (Hmult_safe : b64_safe Rmult t dy).
+  { split; [ exact Ft | split; [ exact Fdy | ] ].
+    apply (Rle_lt_trans _ (bpow radix2 64)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    rewrite Rabs_mult.
+    replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+      by (rewrite <- bpow_plus; reflexivity).
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  destruct (b64_mult_correct t dy Hmult_safe) as [HmR Fm].
+  (* mult magnitude <= bpow 64 *)
+  assert (Hm64 : (Rabs (Binary.B2R prec emax (b64_mult t dy)) <= bpow radix2 64)%R).
+  { rewrite HmR. apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    rewrite Rabs_mult.
+    replace (bpow radix2 64) with (bpow radix2 52 * bpow radix2 12)%R
+      by (rewrite <- bpow_plus; reflexivity).
+    apply Rmult_le_compat; try apply Rabs_pos; assumption. }
+  (* plus (by_ P) (mult) safe *)
+  assert (Hplus_safe : b64_safe Rplus (by_ P) (b64_mult t dy)).
+  { split; [ exact FyP | split; [ exact Fm | ] ].
+    apply (Rle_lt_trans _ (bpow radix2 65)); [ | apply bpow_lt; unfold emax; lia ].
+    apply b64_round_abs_le_bpow; [ unfold emax; lia | ].
+    apply (Rle_trans _ (Rabs (Binary.B2R prec emax (by_ P)) + Rabs (Binary.B2R prec emax (b64_mult t dy)))).
+    - apply Rabs_triang.
+    - apply (Rle_trans _ (bpow radix2 11 + bpow radix2 64)).
+      + apply Rplus_le_compat; [ | exact Hm64 ].
+        rewrite HyPR, <- abs_IZR, <- (IZR_Zpower radix2 11) by lia. apply IZR_le.
+        change (Zpower radix2 11) with (2 ^ 11)%Z. lia.
+      + replace (bpow radix2 65) with (bpow radix2 64 + bpow radix2 64)%R
+          by (rewrite <- bpow_double; reflexivity).
+        apply Rplus_le_compat; apply bpow_le; lia. }
+  destruct (b64_plus_correct (by_ P) (b64_mult t dy) Hplus_safe) as [HpR _].
+  (* assemble *)
+  unfold b64_arc_line_intersect_point_y. fold t dy.
+  rewrite HpR, HmR, HtR, HsPR, HdenR, HdyR.
+  reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Perron worst-case witness (from InCircle_b64_exact).                       *)
 (* -------------------------------------------------------------------------- *)
 
@@ -269,3 +516,5 @@ Print Assumptions b64_arc_line_sP_R.
 Print Assumptions b64_arc_line_sQ_R.
 Print Assumptions b64_arc_line_dx_R.
 Print Assumptions b64_arc_line_dy_R.
+Print Assumptions b64_arc_line_intersect_point_x_round_chain.
+Print Assumptions b64_arc_line_intersect_point_y_round_chain.

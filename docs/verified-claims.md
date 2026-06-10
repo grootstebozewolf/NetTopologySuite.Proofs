@@ -221,7 +221,8 @@ vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 | `InCircle_b64_exact.v : b64_inCircle_B2R_sign_sound_small_int` | Sign of the rounded `b64_inCircle` value agrees with `inCircle_R_BP` in the same `2¹¹` integer regime `[int-b64-arc]` | 4 |
 | `InCircle_b64_exact.v : perron_inCircle_sign_sound` | Perron stage-10 thin-sliver witness at the `2¹¹` boundary: opposite-sign chord endpoints with bit-exact `b64_inCircle` values `[int-b64-arc]` | 4 |
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_{sP_R,sQ_R,dx_R,dy_R}` | **Arc-line Scope A (issue #64 ask #5a):** first-stage Cramer prefix before division — outer `sP`/`sQ` inCircle evaluations and chord `dx`/`dy` differences are bit-exact integer-valued binary64 `[int-b64-arc]` | 4 |
-| `ArcLineIntersect_b64_exact.v : b64_arc_line_den_exact` (+ `_den_nonzero`) | **Arc-line Scope B.1 (issue #64 ask #5a):** the division denominator `den = sP − sQ` is computed **bit-exactly** (`= inCircle_R_BP S M E P − inCircle_R_BP S M E Q`, finite) — both inCircle values are integers `≤ 2⁵²` so the difference `≤ 2⁵³ = 2^prec` is exact — and is nonzero exactly under the safety predicate. The denominator round-chain gate; uses the new `b64_inCircle_finite_for_small_int`. Division/mult/add round-chain (Scope B.2) + forward-error (Scope C) remain queued `[int-b64-arc]` | 4 |
+| `ArcLineIntersect_b64_exact.v : b64_arc_line_den_exact` (+ `_den_nonzero`) | **Arc-line Scope B.1 (issue #64 ask #5a):** the division denominator `den = sP − sQ` is computed **bit-exactly** (`= inCircle_R_BP S M E P − inCircle_R_BP S M E Q`, finite) — both inCircle values are integers `≤ 2⁵²` so the difference `≤ 2⁵³ = 2^prec` is exact — and is nonzero exactly under the safety predicate. The denominator round-chain gate; uses the new `b64_inCircle_finite_for_small_int`. Division/mult/add round-chain (Scope B.2) now landed (see next row); forward-error (Scope C) remains queued `[int-b64-arc]` | 4 |
+| `ArcLineIntersect_b64_exact.v : b64_arc_line_intersect_point_{x,y}_round_chain` | **Arc-line Scope B.2 (issue #64 ask #5a):** the *full* coordinate round-chain identity — `B2R (b64_arc_line_intersect_point_x …) = round(B2R(bx P) + round(round(sP/(sP−sQ)) · (B2R(bx Q) − B2R(bx P))))` (and symmetric for `y`). Each binary64 step is pinned to its IEEE-754 rounding of the exact-real operands: the integer-exact prefix (`sP`, `den`, `dx`/`dy` from Scope A/B.1) feeds a `div → mult → plus` chain, each discharged via `b64_{div,mult,plus}_correct` with magnitude gates (`\|sP\| ≤ 2⁵²`, `\|den\| ≥ 1`, `\|dx\| ≤ 2¹²`, `t·dx ≤ 2⁶⁴`, sum `≤ 2⁶⁵ < 2^emax`). This is the exact statement of *what the float intersection computes* — the launch point for the Scope C forward-error bound `[int-b64-arc]` | 4 |
 
 `[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL` +
 the three issue-#64 arc-length modes below.
@@ -258,8 +259,10 @@ self-intersection".
 the dividing step (`sP`, `sQ`, `dx`, `dy`). The headline
 `B2R (b64_arc_line_intersect_point_x …) = arc_line_intersect_x_R …` does
 *not* hold on the nose in the integer regime (intersection parameter is
-generally non-dyadic); round-chain identity (Scope B) and forward-error bound
-(Scope C) remain queued.
+generally non-dyadic). **Scope B is now closed:** B.1 pins the denominator as
+bit-exact, and B.2 (`b64_arc_line_intersect_point_{x,y}_round_chain`) pins the
+*entire* `div → mult → plus` coordinate computation to its IEEE-754 round-chain
+of the exact-real operands. Forward-error bound (Scope C) remains queued.
 
 ## Issue #67 — DE-9IM matrix algebra (`DE9IM.v`, session 1)
 
