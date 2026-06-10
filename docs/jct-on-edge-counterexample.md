@@ -128,3 +128,23 @@ ray parity (`gtri p < 0 → ¬ point_in_ring p`). That residual — a guarded
 case analysis over the per-edge crossing bands with mixed slack signs — is
 the named target of the next rung; closing it makes the triangle the second
 total family after the rectangle.
+
+## Follow-up 3 (same date): the residual closed — triangle is the second total family
+
+`theories/GeneralTriangleOffringSeam.v` closes the exterior-parity residual:
+`gtri_exterior_even_parity` proves exterior points of a CCW triangle have
+even ray parity under the `ray_avoids_vertices` guard (necessary — for the
+triangle `(0,0),(2,2),(0,4)` the exterior point `(-1,2)` crosses edge `C–A`
+once and then grazes vertex `B`, so the unguarded count is odd). The proof
+inverts odd parity into the four odd crossing-subsets (`rpo3_cases`); the
+triple dies on the pairwise-incompatible directed straddles, and each
+singleton dies by a trichotomy on the opposite vertex's height: at that
+height the guard puts the grazed vertex strictly west, factoring both
+adjacent slacks; elsewhere the skipped edges pin one slack's sign, the
+slack-sum identity pins another, and the barycentric height identity is
+violated strictly. Composing with the conditional assembly of Follow-up 2:
+
+`gtri_parity_seam_offring` — the corrected off-ring H1 seam holds for
+**every CCW triangle and every point**. The total-family ladder now reads
+**rectangle ✓, triangle ✓**; the convex n-gon is next (the half-plane escape
+engine and the band machinery are both already shape-generic).

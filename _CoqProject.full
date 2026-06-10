@@ -477,6 +477,16 @@ theories/RectangleOffringSeam.v
 # on the ONE residual: exterior even parity (gtri<0 -> ~point_in_ring).
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleExterior.v
+# The residual closed: EXTERIOR points of a triangle have EVEN ray parity
+# (gtri_exterior_even_parity, under the ray_avoids_vertices guard -- necessary:
+# an exterior ray can graze a vertex and miscount).  rpo3_cases inverts odd
+# parity into the four odd crossing-subsets; the triple dies on heights, each
+# singleton by trichotomy on the OPPOSITE vertex's height (grazed-vertex-west
+# factorisations + the slack-sum and barycentric height identities, nra).
+# Headline gtri_parity_seam_offring: the corrected off-ring H1 seam TOTAL for
+# every CCW triangle -- the SECOND total family, first with sloped edges.
+# Three-axiom.  No Admitted.
+theories/GeneralTriangleOffringSeam.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
