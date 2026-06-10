@@ -435,6 +435,18 @@ theories/GeneralTriangleParityRED.v
 # discharging hole_inside_outer for a triangular outer ring with NO JCT.
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleHoleNesting.v
+# Coverage layer on top of GeneralTriangleHoleNesting: the band hypothesis of
+# gtri_band_in_ring DISCHARGED from interior positivity alone under the
+# rightward-ray guard.  gtri_ray_coverage (0 < gtri /\ ray_avoids_vertices ->
+# some directed band holds; grazed-vertex trichotomy cases forced strictly west
+# by the guard, off-scale cases killed by the barycentric height identity),
+# gtri_interior_in_ring, and the headlines general_triangle_parity_
+# characterises_interior (third fully-closed strict-interior instance of the H1
+# parity seam, after rectangle + right triangle) and
+# hole_inside_outer_triangle_guarded (+_generic: distinct heights discharge the
+# guard).  Orientation DERIVED from interior positivity, not assumed.
+# Three-axiom.  No Admitted.
+theories/GeneralTriangleJCT.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
