@@ -426,6 +426,15 @@ theories/GeneralTriangleParity.v
 # the half-open characterisation / the guarded strict-interior direction.
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleParityRED.v
+# GREEN for the arbitrary-triangle parity: gtri_band_in_ring -- for an
+# interior-side point (0 < gtri, all three inward slacks positive), each edge
+# crosses the rightward ray iff py is in that edge's DIRECTED height band
+# (edge_cross_sign collapses the other slack-disjunct), and the bands are
+# disjoint, so a point in one band crosses exactly one edge -> odd -> point_in_ring.
+# hole_inside_outer_triangle: the triangle analogue of hole_inside_outer_rect,
+# discharging hole_inside_outer for a triangular outer ring with NO JCT.
+# Three-axiom.  No Admitted.
+theories/GeneralTriangleHoleNesting.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

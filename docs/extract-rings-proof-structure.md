@@ -516,3 +516,21 @@ a vertex's height makes the ray graze it, cf.
 `theories/JCT_VertexGrazingCounterexample.v`), composing to the triangle
 hole-nesting headline `hole_inside_outer_triangle` (the analogue of
 `HoleInsideOuterRect.hole_inside_outer_rect`).
+
+### §11.3 update (2026-06-10): arbitrary-triangle hole nesting — GREEN
+
+`theories/GeneralTriangleHoleNesting.v` lands the corrected GREEN. The true,
+useful parity direction `gtri_band_in_ring` proves: for an interior-side point
+(`0 < gtri p`) whose height lies in one of the three **directed edge bands**
+(`ay<py<by_ ∨ by_<py<cy ∨ cy<py<ay`), `point_in_ring p (gtri_ring …)` holds.
+Mechanism: with all three inward slacks positive, `edge_cross_sign` collapses
+each edge's ray-crossing to exactly its directed band (the opposite slack-sign
+disjunct is dead), and the bands are pairwise disjoint, so a point in one band
+crosses *exactly one* edge → odd parity. The directed band is the triangle
+counterpart of the rectangle's explicit `y0 < py < y1`. Composing with
+`In p hole` gives `hole_inside_outer_triangle`, the arbitrary-triangle analogue
+of `HoleInsideOuterRect.hole_inside_outer_rect` — an **unconditional** discharge
+of `hole_inside_outer` for a triangular outer ring, with no JCT hypothesis. So
+the special-case ladder now reads rectangle → right triangle → **arbitrary
+triangle (done)** → general convex (the `convex_separation` engine awaits a
+convex-n-gon consumer; the half-plane↔edge skeleton bridge is the next frontier).
