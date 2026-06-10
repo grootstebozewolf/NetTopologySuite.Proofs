@@ -675,6 +675,24 @@ theories/JCTWallClear.v
 # height) and depth_gap (parking BELOW a level with a free ray guard).
 # Three-axiom.  No Admitted.
 theories/JCTCornerSector.v
+# ESCAPE DESCENT, rung 5a: the CORNER-ABUTTING WALL CLEARANCE
+# (wall_corridor_clear_corner), dissolving the quantifier deadlock between
+# the wall theorem (window before delta) and the corner drop (eps after
+# delta).  Under corner_opens_east -- every edge incident at the wall's
+# bottom vertex v reaching weakly above v's level stays weakly EAST of the
+# wall's carrier -- the corridor is free on ALL of (py v, yhi] with ONE
+# uniform delta0: incident edges clear at any offset
+# (corridor_avoid_east_weak), descending incidents sit below the open
+# window, and non-incident edges NEVER touch the carrier on [py v, yhi]
+# (touch at the corner level = touch at v itself -> taut_vertex_endpoint;
+# touch above = span-interior -> taut_no_line_touch -> pointwise-equal ->
+# incident; both contradictions), so the rung 4b-2 clip tree runs with
+# eps-free margins.  This hypothesis is exactly where INSIDE walkers stick
+# (the wedge companion ascends west), as odd_parity_trapped demands.
+# corner_passage composes ride + drop: corridor at yhi to an off-ring,
+# guarded point strictly below the corner level.  Subsumes 4b-3's
+# horizontal residual (opens_east_horizontal).  Three-axiom.  No Admitted.
+theories/JCTCornerClear.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
