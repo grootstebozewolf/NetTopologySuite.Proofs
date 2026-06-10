@@ -723,6 +723,21 @@ theories/JCTMirrorKit.v
 # combination of endpoint abscissae), so ho_count_zero_east: count ZERO --
 # what escape_east_of_zero_count consumes.  Three-axiom.  No Admitted.
 theories/JCTTopPassage.v
+# ESCAPE DESCENT, rung 5c-2: THE FOUR-ORIENTATION PASSAGE KIT.  The corner
+# moves in all four orientations, with uniform interfaces.  The x-flip
+# reverses the eastward ray and cannot transport the ray guard -- but the
+# passage destinations are parked at LEVEL-FRESH heights (depth_gap), and a
+# level-fresh point is guarded in every direction (ray_guard_of_fresh).
+# corner_passage_fresh re-assembles rung 5a's composition with the parking
+# margin folded into eps0 explicitly, exposing freshness; the mirrors then
+# give corner_passage_top_fresh (west/over, ymir), corner_passage_east
+# (east/under, xmir; condition corner_opens_west) and
+# corner_passage_east_top (east/over, xmir o ymir; corner_opens_west_top).
+# Each: one complement path from the side-corridor at any span-interior
+# height, around the corner, to an off-ring point strictly past the corner
+# level, plus level freshness of the destination height.  Three-axiom.
+# No Admitted.
+theories/JCTPassageKit.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
