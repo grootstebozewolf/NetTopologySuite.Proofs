@@ -753,6 +753,20 @@ theories/JCTPassageKit.v
 # then eps0(delta).  under_tip_crossing: any two band points connect,
 # off-ring.  Three-axiom.  No Admitted.
 theories/JCTTipCrossing.v
+# ESCAPE DESCENT, rung 5c-4: THE CORNER BOXES.  Rung 4b-3's per-edge
+# dispatch corner_edge_clear quantifies over the WHOLE abscissa interval,
+# so its fold yields a skeleton-free RECTANGLE beside the corner:
+# [px v - 2*delta, px v - delta/2] x [py v - eps, py v + eps]
+# (corner_box_clear), and the mirror kit turns it into all four boxes
+# (east of bottom, west of top, east of top).  Inside a free rectangle any
+# two points connect by one vertical and one horizontal segment
+# (box_connected_of_clear, generic).  The boxes absorb at once all the
+# glue the traversal's corner composites need: drops, rejoin jogs onto the
+# next edge's corridor, transfers between passage destinations and tip
+# crossings.  Hypotheses are rung 4b-3's tautness + the horizontal-
+# incident direction at the corner (vacuous under the traversal's global
+# no-horizontal-edges simplification).  Three-axiom.  No Admitted.
+theories/JCTCornerBox.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
