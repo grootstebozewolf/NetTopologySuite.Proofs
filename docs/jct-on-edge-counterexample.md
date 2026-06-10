@@ -107,3 +107,24 @@ So the repair this counterexample forced is not merely consistent — it is
 **achievable**: the off-ring seam now has a non-trivial, fully-Qed instance,
 and the escape engine is the reusable piece the triangle and convex families
 need for their own exterior halves.
+
+## Follow-up 2 (same date): the triangle's exterior half + the half-plane escape engine
+
+`theories/GeneralTriangleExterior.v` extends the programme to the first
+sloped-edge family. The axis-aligned escapes do not suffice there (a
+triangle's exterior point can sit strictly inside the vertex bounding box —
+e.g. `(3,3)` for the triangle `(0,0),(4,0),(0,4)`), so the engine is
+generalised to **half-planes**: `escape_beyond_halfplane` shows a point
+strictly beyond a half-plane containing the skeleton is in no bounded
+complement component, with the radius defeat done square-root-free via the
+Cauchy–Schwarz polynomial identity. Since `gtri p < 0` names a violated edge
+half-plane and the skeleton lies inside all three
+(`gtri_image_slacks_nonneg`), exteriors escape (`gtri_exterior_escapes`),
+giving the **total geometric ⇒ parity direction**
+(`gtri_geometric_imp_in_ring`) and the triangle's total off-ring seam
+**conditional on exactly one residual**
+(`gtri_parity_seam_offring_of_exterior_parity`): exterior points have even
+ray parity (`gtri p < 0 → ¬ point_in_ring p`). That residual — a guarded
+case analysis over the per-edge crossing bands with mixed slack signs — is
+the named target of the next rung; closing it makes the triangle the second
+total family after the rectangle.
