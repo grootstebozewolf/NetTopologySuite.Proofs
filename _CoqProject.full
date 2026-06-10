@@ -893,6 +893,16 @@ theories/JCTCornerDispatch.v
 # of the first wall, anchored at the walker itself.  Three-axiom.
 # No Admitted.
 theories/JCTHugCycle.v
+# ESCAPE DESCENT, rung 5c-15: EDGE-ENTRY COUNTING.  ho_count folds over
+# the edge LIST, so the payoff's "exactly one crossing" needs the crossing
+# pair to occur exactly once as an entry.  ring_edges_split_pos (an
+# edge-list occurrence locates a vertex split with the tail tracked);
+# in_edge_prefix_unique (positional strengthening of 5c-5: any two splits
+# at an in-edge share the prefix-with-source); in_edge_count_le1 (a double
+# entry would equate a prefix with a strictly longer one -- killed by
+# lengths); ho_count_single + ho_count_one_in (crossings = entries equal
+# to the in-edge => count exactly 1).  Three-axiom.  No Admitted.
+theories/JCTEdgeCount.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
