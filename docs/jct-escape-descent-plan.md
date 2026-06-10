@@ -19,8 +19,9 @@ trapped points).
 |---|---|---|
 | 1 | **East approach** (`JCTEastApproach.v`): the crossing abscissa `cross_x`, the first wall `min_cross_x`, the skeleton-free run-up, the east walk preserving complement/guard/count, and `crossings_distinct` (simplicity's first theorem: distinct crossing edges cross at distinct abscissae) | **Qed** |
 | 2 | **The corridor toolkit** (`JCTCorridor.v`): the corridor along a carrier edge is a straight segment (`edge_x_at` affine), connected through the complement under per-edge clearances that are pure affine endpoint evaluations (`corridor_avoid_{carrier,west,east,below,above}`); `level_gap` parks endpoints at vertex-level-free heights for a free ray guard; unit-square worked instance | **Qed** |
-| 3 | **The boundary walk**: compose rung-2 corridors edge-by-edge around the polygon (recursion bounded by the edge count) with window clipping for partially-overlapping edges and corner rounding at shared vertices (touch-freedom from `ring_simple` via `crossings_distinct`-style arguments), until a count-free point is reached | open |
-| 4 | **Assembly**: `escape_descent_holds : ring_simple r -> ring_closed r -> ... -> escape_descent r`, composed through `parity_seam_offring_of_descent` — H1 closed | open |
+| 3 | **The walk kit** (`JCTWalkKit.v`): the mixed clearance via the three-point affine law (`corridor_avoid_clipped_west`/`_east`, clip points by affine inversion `clip_params_asc`/`_desc`), plus the jog connectors `horizontal_connected`/`vertical_connected` gluing corridor pieces. Generic geometry complete | **Qed** |
+| 4 | **The boundary walk**: per-polygon composition — touch-freedom for each clearance from `ring_simple` (`crossings_distinct` style), corner sectors at shared vertices, and the bounded recursion around the boundary until a count-free point is reached | open |
+| 5 | **Assembly**: `escape_descent_holds : ring_simple r -> ring_closed r -> ... -> escape_descent r`, composed through `parity_seam_offring_of_descent` — H1 closed | open |
 
 ## Rung 1 deliverables (this commit)
 
