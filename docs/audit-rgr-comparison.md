@@ -97,13 +97,13 @@ ranking).
   `arc_overlay_correct_chord_approx`. Option A (exact arc, issue #64): atan2 /
   angle-between / `r·θ` arc length, and the binary64 in-circle layer
   `b64_inCircle_exact_sound` (**full-plane sign, 3 axioms**) + arc-line Scope A.
+  **Arc-line Scope B and C are now also GREEN** (closed 2026-06-10, §6): the
+  bit-exact denominator (B.1), the full round-chain identity (B.2), and the
+  **absolute `bpow 13` forward-error bound** of the intersection coordinate vs
+  the exact real value (C, `b64_arc_line_point_{x,y}_forward_error`).
 - **RED.** `Linearise.regime3_counterexample` — a predicate linearization
   cannot preserve (honest negative).
 - **OPEN.**
-  - **Arc-line Scope B/C** — round-chain identity + forward-error bound for
-    the arc-line intersection coordinate (the parameter is generally
-    non-dyadic, so Scope A's on-the-nose identity stops at the prefix).
-    Bounded; mirrors the Phase 1 Scope C work.
   - **Arc Hobby / arc snap-rounding analog** — **research gap, no published
     analog of Hobby's theorem for arcs.** Same epistemic shape as the (now
     refuted) `hobby_lemma_4_3_no_proper`: thesis-scale, possibly multi-month,
@@ -120,7 +120,7 @@ doc). Risk = tractability / chance the effort yields something shippable.
 | # | target | area | value | risk (tractability) | cost |
 |---|---|---|---|---|---|
 | **C1** | grid exactness `compute ≡ spec` on-grid | Phase 2 | **high** — recovers in-regime **soundness** of the noder filter (the headline the RED denies off-grid) | **low–medium** — same integer/dyadic exactness style as `Orient_b64_exact` (Path 2) & snap idempotence; 0/5M divergence | medium, bounded |
-| **B/C-arc** | arc-line Scope B/C (round-chain + fwd-error) | Phase 4 | medium–high — gives arc-line callers a usable forward-error contract | **low–medium** — direct mirror of Phase 1 Scope C; primitive already half-built (Scope A Qed) | medium, bounded |
+| ~~**B/C-arc**~~ | ~~arc-line Scope B/C (round-chain + fwd-error)~~ — **LANDED 2026-06-10 (§6)** | Phase 4 | medium–high — arc-line callers now have an absolute `bpow 13` forward-error contract | — | **done** |
 | **H2** | `extract_rings_valid` (DCEL ring validity) | Phase 3 | **high** — discharges 1 of the 3 named hypotheses of the live conditional overlay headline; pure structure, no JCT | medium — DCEL refactor + per-condition proofs; no external dependency | high (5–7 sessions) |
 | **SD** | re-scoped fast-expansion-sum nonoverlap | Phase 0 | **low** — optimization only; full-plane soundness already shipped via exact int-det | high — re-aim O1–O8 against a weakened predicate; the half-ulp dominance args must be re-derived | high |
 | **H1** | polygonal JCT (`parity_characterises_interior_cont`) | Phase 3 | high — the headline-completing piece | **high** — no stub, no reachable library; multi-month from scratch | very high, blocked on ecosystem |
@@ -131,7 +131,7 @@ doc). Risk = tractability / chance the effort yields something shippable.
 ## 3. Decision (sequencing, not correctness)
 
 1. **Invest next in the bounded in-regime closures: C1 (Phase 2) and arc-line
-   Scope B/C (Phase 4).** Both are the same low-risk move the corpus has
+   Scope B/C (Phase 4).** *(Both now LANDED — see §5 and §6.)* Both are the same low-risk move the corpus has
    shipped repeatedly — exactness/forward-error in a regime — and both
    *deliver a soundness/contract headline* their callers can actually use. C1
    has the edge because it converts a documented unsoundness (the JTS#752/#1133
@@ -293,3 +293,68 @@ discharged `clip_separated` outright. **Result: `b64_passes_through_grid_exact`
 + slice-9 completeness). C1 is closed in the regime a snap-rounding noder runs
 in; the only open items are the width extension to `2²⁵` (needs the exact
 integer-determinant comparison) and the general-binary64 C2.
+
+---
+
+## 6. Execution — RGR slices landed on the #1 co-target: arc-line Scope B/C (2026-06-10)
+
+§3's ranking named **two** co-#1 bounded in-regime closures: C1 (closed in §5)
+and **arc-line Scope B/C** (`theories-flocq/ArcLineIntersect_b64_exact.v`). This
+section logs the latter, now closed end-to-end. Starting point was Scope A
+(`b64_arc_line_{sP_R,sQ_R,dx_R,dy_R}`, `Qed`): the Cramer prefix before the
+dividing step is bit-exact. Scope A's *on-the-nose* coordinate identity does
+**not** extend past the division (the intersection parameter is generally
+non-dyadic), so the honest ladder is round-chain identity (B) then forward-error
+bound (C). All slices below are `Qed` at the allowlisted 4-axiom footprint
+(`Classical_Prop.classic` via the b64-arithmetic lineage, already exempted in
+`docs/audit-exceptions.txt`); no new `Admitted`/`Axiom`/`Parameter`.
+
+- **Scope B.1 — bit-exact denominator (#158).** `b64_arc_line_den_exact`
+  (+ `_den_nonzero`): the divisor `den = sP − sQ` is computed *bit-exactly*
+  (`= inCircle_R_BP P − inCircle_R_BP Q`, finite) — both inCircle values are
+  integers `≤ 2⁵²`, so their difference `≤ 2⁵³ = 2^prec` rounds to itself — and
+  is nonzero under the safety predicate. Exposed the prerequisite
+  `b64_inCircle_finite_for_small_int` (a projection of the refactored
+  `b64_inCircle_exact_and_finite_for_small_int`).
+
+- **Scope B.2 — full round-chain identity (#159).**
+  `b64_arc_line_intersect_point_{x,y}_round_chain`: the *entire* coordinate
+  computation equals its IEEE-754 round-chain of the exact-real operands,
+  `B2R(point_x) = round(B2R(bx P) + round(round(sP/(sP−sQ)) · (B2R(bx Q) −
+  B2R(bx P))))` (and `y`). Each `div → mult → plus` step discharged via
+  `b64_{div,mult,plus}_correct` with magnitude gates
+  (`|sP| ≤ 2⁵²`, `|den| ≥ 1`, `|d| ≤ 2¹²`, `t·d ≤ 2⁶⁴`, sum `≤ 2⁶⁵ < 2^emax`).
+  The exact statement of *what the float intersection computes*.
+
+- **Scope C layer 1 — division forward error (#160).**
+  `b64_arc_line_t_forward_error`: the parameter `t` drifts from the exact-real
+  ratio `sP_R/(sP_R−sQ_R)` by `≤ ½` (one division half-ulp). The bit-exact
+  denominator (B.1) means **no denominator-carryover** — the structural payoff
+  that keeps the whole cascade absolute, unlike the line-line layer 1 whose
+  denominator rounds.
+
+- **Scope C layer 2 — multiply forward error (#161).**
+  `b64_arc_line_mult_{x,y}_forward_error`: the `t·d` product deviates from
+  `ratio·d_R` by a clean `bpow 12` (multiply half-ulp `bpow 11` + layer-1 carry
+  `bpow 11`). **No `1/|den|` term** — the line-line analog instead carries a
+  `bpow 80/|den|` condition-number tail.
+
+- **Scope C capstone — layers 3–4 / headline.**
+  `b64_arc_line_point_{x,y}_forward_error`: the float intersection coordinate is
+  within **`bpow 13`** of the exact real value,
+  `|B2R(b64_arc_line_intersect_point_{x,y} …) − arc_line_intersect_{x,y}_R …| ≤
+  bpow 13`. Layer 3 (final `bx P + ·` add) contributes a half-ulp at magnitude
+  `≤ 2⁶⁵` (`≤ bpow 12`); plus the layer-2 carry (`≤ bpow 12`); total `bpow 13`.
+
+This is the same RED→GREEN→refactor / "exactness-or-forward-error-in-a-regime"
+move §3 identified as the corpus's repeatable low-risk play. The arc-line
+result lands on the headline §2 predicted — an **absolute** forward-error
+contract with **no `1/|den|` condition-number blow-up**, because every layer
+inherits the bit-exact denominator. Each slice verified: file compiles clean,
+`check_admitted` (still 7, none new), `check_readme_axioms`, `validate-claims`,
+and the per-theorem axiom audit all pass.
+
+With both co-#1 targets (C1, arc-line Scope B/C) now closed, the
+risk/cost-ordered queue advances to **§3 item 2: `extract_rings_valid`
+(Phase 3 H2)** — the highest-value *structural* target and the single live
+deferred-proof registry entry.
