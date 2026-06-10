@@ -281,3 +281,15 @@ rounding inequality, the quantitative heart of unconditional on-grid soundness
 for `|n| ≤ 2²³`. The only remaining step is purely structural: exhibit `tmin_e`,
 `tmax_e` as such bounded ratios (each `Rmax`/`Rmin` selects one of
 `{0,1,tlo_x,tlo_y,thi_x,thi_y}`) and apply slice 14 — no analytic content left.
+
+**Closed (slices 15–18 — C1 unconditional on the tight grid).** Slice 15
+(relative ulp bound) removed the `[-1,1]` cap; slice 16 added the value-0 edge;
+slice 17 (`gridbound` algebra) packaged "gap beats band" as
+`gap_beats_band_of_gridbound`; slice 18 showed each exact clip bound is
+`gridbound` (`gridbound_tlo`/`thi` via `gridbound_half_quotient`) and hence
+discharged `clip_separated` outright. **Result: `b64_passes_through_grid_exact`
+(`Qed`) — `compute = spec` UNCONDITIONALLY for integer-grid points with
+`|n| ≤ 2²²`, no named hypotheses** (soundness `b64_passes_through_sound_on_grid`
++ slice-9 completeness). C1 is closed in the regime a snap-rounding noder runs
+in; the only open items are the width extension to `2²⁵` (needs the exact
+integer-determinant comparison) and the general-binary64 C2.
