@@ -440,6 +440,13 @@ theories/GeneralTriangleHoleNesting.v
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
 # turns both ways via Orientation.cross).  Three-axiom.  No Admitted.
 theories/HatMonotile.v
+# Using the hat einstein: the ray-parity point-in-polygon test on the actual
+# (NON-CONVEX) monotile.  hat_point_in_ring -- a witness in the top bump has
+# crossing-number 1 (only the right bump edge (4,2)->(3,3) is crossed; the other
+# 12 edges sit at/below height sqrt 3 or to the left) -- and hat_hole_inside_outer.
+# The combinatorial (crossing-number) interior, valid for non-convex rings; NOT
+# the JCT topological-interior equivalence.  Three-axiom.  No Admitted.
+theories/HatMonotileInterior.v
 # Showcase: the "Spectre" strictly-chiral aperiodic monotile's defining
 # ingredient -- a CURVED edge -- formalized.  curved_edge_central_symmetry: any
 # midpoint-odd profile makes the edge invariant under 180-degree rotation about
