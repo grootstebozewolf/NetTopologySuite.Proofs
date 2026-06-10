@@ -582,6 +582,16 @@ theories/JCTSeamAssembly.v
 # and only here.  parity_seam_offring_of_descent: the FULL corrected H1
 # seam from the descent step alone.  Three-axiom.  No Admitted.
 theories/JCTEscapeDescent.v
+# H1 PROPER, part 7: THE SEPARATION CLAUSE OF THE JCT, unconditional --
+# parity_constant_on_components (guarded endpoints of a complement path have
+# equal strict parity: transport + half-open kernel + guard agreement) and
+# odd_even_separated (inside and outside never meet through the complement
+# of ANY closed ring; no simplicity).  This is the separation clause PR #82
+# added to the JCT_two_components_cont hypothesis, now a THEOREM.  Plus the
+# escape residual discharged on every total family (rect/gtri/rtri
+# even_parity_escapes, each by the family field trichotomy).
+# Three-axiom.  No Admitted.
+theories/JCTSeparation.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary

@@ -361,3 +361,25 @@ around the first blocking edge; `ring_simple` lives here and only here.
 the descent step alone. The ladder of residuals over this session:
 "polygonal JCT, multi-month, blocked on ecosystem" → trapped half Qed →
 escape → one descent step.
+
+## Follow-up 12 (same date): the separation clause of the JCT is a theorem
+
+`theories/JCTSeparation.v` lands the classical statement the machinery was
+quietly assembling toward: **parity is constant on complement components**
+(`parity_constant_on_components` — the transport engine run on the
+half-open kernel, with guard agreement at the endpoints), hence
+
+  `odd_even_separated` — an inside point and an outside point are NEVER
+  connected within the complement of ANY closed ring.
+
+This is the separation clause that PR #82 added to the corpus's
+`JCT_two_components_cont` *hypothesis* — "the two components are genuinely
+distinct" — now an unconditional *theorem*, with no simplicity assumption.
+
+Second deliverable: the final residual `even_parity_escapes` is proved on
+every total family (rectangle, arbitrary CCW triangle, right triangle),
+each by its field trichotomy. So of the full Jordan Curve Theorem for a
+simple closed ring — (i) inside is trapped, (ii) inside and outside are
+separated, (iii) outside escapes — the corpus now holds (i) and (ii)
+unconditionally for all closed rings, and (iii) on every concrete family,
+with the general case reduced to the single `escape_descent` detour.
