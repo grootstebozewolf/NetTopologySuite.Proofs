@@ -821,6 +821,16 @@ theories/JCTHugMirror.v
 # corridor_connected_east (rung 2), foot_abscissa_bound (two-sided pin).
 # Three-axiom.  No Admitted.
 theories/JCTMinOpenStep.v
+# ESCAPE DESCENT, rung 5c-9: THE MIRRORED OPEN-SIDE TURNAROUNDS.  Rung
+# 5c-8's open-side local-minimum composite transported through the
+# reflections: hug_step_min_open_ew (xmir: east in, west out, departing
+# edge weakly WEST), hug_step_max_open_we (ymir: local MAX, west in, east
+# out), hug_step_max_open_ew (both flips).  The x-flip swaps hug sides AND
+# carrier conditions; the y-flip turns minima into maxima keeping both.
+# Completes the OPEN-side corner inventory: four pass-throughs + four
+# open extremum turnarounds.  Only the pinched-side turnaround remains
+# before the cycle recursion.  Three-axiom.  No Admitted.
+theories/JCTMinOpenMirror.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
