@@ -1,10 +1,13 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** research/reading pass only (no Coq written). Maps issue #67's
-> asks against the existing corpus, separates *proven* from *gap*, and
-> proposes a risk/cost-ordered plan. Branch: `claude/issue-67-relateng-triage`.
+> **Status:** living triage — S0–**S12** **complete in the working tree**
+> (2026-06-11); **S13+** (full RelateNG noding, prepared cache) remains open.
+> Refresh when a new session closes.
 >
-> Corpus HEAD at time of writing: `main` after PR #146 (`InCircle_b64_exact`).
+> Corpus at time of writing: `main` through S3; S4–S10 add `RelateAreaPoint.v`,
+> `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`,
+> `RelateMatrixRect.v`, `RelateMatrixLineLine.v`, `RelateMatrixAreaLine.v`,
+> `RelateArcChord.v`, `RelateMatrixArcChord.v` (pending commit).
 
 ## 1. What #67 asks for
 
@@ -57,22 +60,22 @@ segment intersection machinery but need a **new DE-9IM layer**.
   the parity ↔ interior seam (`parity_characterises_interior_cont_strict`) is
   the genuine JCT content. Predicate proofs that reduce to "point in polygon"
   inherit this seam honestly (conditional headlines or guarded special cases).
-- No `RelateNG`, `IntersectionMatrix`, or `DE-9IM` types exist anywhere in
-  `theories/` or `theories-flocq/` (grep 2026-06-08: zero hits).
+- `DE9IM.v` / `IntersectionMatrix` landed in S1; **RelateNG matrix-fill**
+  and prepared-cache paths are still absent from `theories/`.
 
 ## 3. Per-ask status
 
 | Ask | Status | Anchor (file:line) | Notes |
 |-----|--------|-------------------|-------|
-| **#1 DE-9IM matrix type + entries** | **ABSENT** | — | No 3×3 dimension matrix (`{0,1,2,F,T}`) or `IntersectionMatrix` record. |
-| **#2 Standard predicate definitions** | **ABSENT** | — | No `Contains` / `Disjoint` / `Touches` as formal Props tied to DE-9IM. |
+| **#1 DE-9IM matrix type + entries** | **LANDED (S1)** | `DE9IM.v` | `IntersectionMatrix`, `matrix_matches`, JTS/OGC pattern tables. |
+| **#2 Standard predicate definitions** | **LANDED (S1)** | `DE9IM.v` | `im_disjoint`, `im_intersects`, `im_contains`, `im_touches`, … + `predicate_holds`. |
 | **#3a Segment intersection (line-line)** | **PROVEN (Qed)** | `Intersect.v:900` (`segment_intersection_decision`), `:243` (`strict_completeness`) | Feeds `Intersects`/`Crosses`/`Touches` for line-line; collinear case closed (`collinear_share_iff_1d_overlap`). |
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
-| **#3c Boundary / endpoint semantics** | **PARTIAL** | `Overlay.v:149` (`edge_crosses_ray` — strict, excludes endpoint on ray) | Generic-position guards documented (`no_horizontal_edge_at`, `ray_avoids_vertices`); no line-end / MOD2 boundary-node formalisation. |
+| **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
 | **#4 RelateNG algorithm** | **ABSENT** | — | No noding + matrix-fill pipeline; JTS uses point-local topology + union semantics for collections. |
 | **#5 Prepared-mode correctness** | **ABSENT** | — | NTS#819 is perf-only; proof obligation is `evaluate(B) = relate(A,B)` regardless of cache. |
-| **#6 Oracle / extraction** | **ABSENT** | `oracle/driver.ml` | No `RELATE_*` modes; orientation/intersect/oracle pattern exists as template. |
-| **#7 Curve-aware predicates (V-CP, R-*)** | **DEFERRED** | `docs/issue-64-arc-primitives-triage.md` | Curve polygons need chord-approx or Option-A semantics before relate on arcs. |
+| **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
+| **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`); arc-span soundness + chord-length bridge remain open. |
 
 ## 4. Inventory of reusable assets
 
@@ -95,82 +98,79 @@ segment intersection machinery but need a **new DE-9IM layer**.
 
 **Oracle (`oracle/`):**
 
-- `driver.ml` — protocol for ORIENT / INTERSECT / INCIRCLE / …; no relate
-  modes yet.
+- `driver.ml` — ORIENT / INTERSECT / INCIRCLE / … plus S11 `RELATE_MATRIX` /
+  `RELATE_PREDICATE` (pinned-catalog lookup; not geometry compute).
 
-## 5. The genuine gaps, by nature
+## 5. The genuine gaps, by nature (post S4b)
 
-1. **Foundational absence (#1–#2):** No DE-9IM formalisation at all. Every
-   predicate proof must start with matrix types + pattern matching (JTS
-   `IntersectionMatrixPattern` analogue).
+1. **Closed through S10b (#1–#2, partial #3/#7):** `DE9IM.v` pattern algebra;
+   line-line soundness (`RelateLineLine.v`); Romanschek oracle pins (S3);
+   guarded rectangle Contains + boundary Touches (`RelateAreaPoint.v`);
+   MOD2 / endpoint-contact soundness + JTS#1175 class (`RelateBoundary.v`);
+   guarded rectangle vs segment (`RelateAreaLine.v`);
+   guarded rectangle pairs (`RelateAreaArea.v`);
+   computed fill for rect×rect (`RelateMatrixRect.v`), line×line
+   (`RelateMatrixLineLine.v`), area×line (`RelateMatrixAreaLine.v`), and
+   arc×line chord path (`RelateArcChord.v`, `RelateMatrixArcChord.v`),
+   Option-A analytic arc (`RelateArcAnalytic.v`, `RelateMatrixArcAnalytic.v`),
+   and clothoid chord seed (`RelateClothoid.v`, `RelateMatrixClothoid.v`).
+   Oracle fill vocabulary + seeds through seven fill APIs (through S12;
+   `oracle/relate_matrix_fill_vocabulary.txt`, `oracle/de9im_*_vectors.txt`).
+   Full RelateNG noding remains absent; S11 `RELATE_MATRIX` / `RELATE_PREDICATE`
+   modes serve pinned-catalog differential tests only.
 
-2. **Algorithm gap (#4):** RelateNG is a full arrangement classifier (point,
-   line, area, collection, zero-length lines, union semantics). Much larger than
-   a single primitive — comparable to Phase 3 overlay in scope.
+2. **Algorithm gap (#4) — still open:** RelateNG is a full arrangement
+   classifier (point, line, area, collection, zero-length lines, union
+   semantics). Comparable to Phase 3 overlay in scope.
 
-3. **Inherited JCT seam (#3b):** Area-point predicates (Contains, Within,
-   Covers) that reduce to `point_in_ring` inherit the parity ↔ interior
-   obligation unless proved for guarded special cases (axis-aligned rectangle,
-   right triangle — see `RectangleJCT.v`, `RightTriangleJCT.v`).
+3. **Inherited JCT seam (#3b) — narrowed, not closed:** Strict-interior
+   rectangle Contains is guarded via `RectangleJCT.v`. General polygons and
+   half-open boundary regimes (Contains vs Touches) still need explicit
+   guards or JCT-linked proofs.
 
-4. **Boundary policy gap (#3c):** MOD2 boundary-node rule, line-end inclusion
-   on disjoint components (JTS#1175 regression class), and endpoint-vs-
-   interior classification are not formalised.
+4. **Boundary policy (#3c) — partial:** Endpoint vs interior predicates and
+   MOD2 classification are formalised at the soundness-witness layer. Full
+   line-end enumeration on multi-component collections and matrix-fill
+   fidelity remain open.
 
 5. **Prepared cache (#5):** Correctness of memoisation is a **refinement**
-   theorem (optimisation preserves semantics) — tractable once base `relate`
-   is specified, but base must exist first.
+   theorem — tractable once base `relate` is specified.
 
-6. **Curve extension (#7):** Deferred until curve polygon carriers and
-   boundary semantics are fixed (issue #64 / Option B chord approx).
+6. **Curve extension (#7):** S12 lands chord rect curve-polygon × point carrier
+   (S4 guard delegation); `to_geometry` point-in-ring bridge is S12b. General
+   curve surfaces and arc outer rings remain open.
 
 ## 6. Risk/cost-ordered options for the next (Coq) terminal
 
-Ordered cheapest/highest-confidence first (clearlane discipline):
+S0–S10 closed items **(A)–(D)**, JTS#1175 **(C)**, area-line **(G)**,
+area-area **(H)**, rect×rect fill **(J)**, line×line fill **(K)**,
+area×line fill **(L)**, and arc-chord relate **(M)**. Next frontier:
 
-- **(A) `DE9IM.v` — matrix type + pattern algebra** — *low risk, foundation.*
-  Define `DimEntry`, `IntersectionMatrix`, `matrix_matches_pattern`, and
-  encode the nine standard predicates as pattern tables (mirroring JTS
-  `RelatePredicate`). No geometry algorithm yet — pure data + logic. Enables
-  oracle protocol design and documentation cross-walk.
-
-- **(B) Line-line predicate slice** — *low-medium.* Formalise `LineString`
-  (two endpoints) and prove `Intersects`/`Crosses`/`Touches`/`Disjoint` align
-  with DE-9IM rows using existing `Intersect.v` theorems. No JCT dependency.
-
-- **(C) JTS#1175 boundary-endpoint witness** — *low-medium, high value.*
-  Machine-check a counterexample or regression class for "disjoint line
-  components whose boundary endpoints must appear in the matrix" — pins the
-  bug class JTS#1200 fixed. Good oracle adversarial vector.
-
-- **(D) Area-point Contains (guarded rectangle)** — *medium.* Special-case
-  `Contains(poly, point)` via `RectangleJCT.v` unconditional parity ↔ interior,
-  linked to DE-9IM pattern `T*F**F***`. Extends guarded playbook from buffer
-  depth (`BufferDepthGuarded.v`).
-
-- **(E) Full RelateNG pipeline** — *high / multi-session.* Noding + matrix
-  fill + collections + prepared cache — Phase-3-scale engagement. **Pivot away**
-  until (A)+(B) land.
+- **(E) Full RelateNG noding pipeline** — *high / multi-session.*
+  Collections, zero-length lines, union semantics — Phase-3-scale engagement.
 
 - **(F) Prepared A-L cache correctness** — *medium after (E).* Show cached
   `evaluate` = uncached `relate` for area-line pairs (NTS#819 proof companion).
 
-## 7. Open scope question for the issue owner
+- **(I) Oracle `RELATE_MATRIX` driver** — **done (S11).** `oracle/relate_matrix.ml`
+  + `RELATE_MATRIX` / `RELATE_PREDICATE` in `oracle/driver.ml`.
 
-#67 spans both **foundational predicate semantics** (DE-9IM + standard names)
-and **production RelateNG implementation fidelity** (prepared cache, collection
-union semantics, boundary rules). The corpus should confirm:
+## 7. Scope note for the issue owner
 
-- *Predicate-semantics first* → start with **(A)** then **(B)**; tractable,
-  no new axioms, builds oracle vocabulary.
-- *Regression-hardening first* → start with **(C)** (JTS#1175 class) alongside
-  **(A)**.
-- *Full RelateNG parity* → explicit multi-milestone program like Phase 3 audit;
-  not a single PR.
+#67 spans **predicate semantics** (seeded through S12 curve-polygon × point +
+seven fill APIs) and **RelateNG implementation fidelity** (full noding still
+open; S11 oracle modes landed). The recommended path forward:
 
-**Recommendation:** confirm predicate-semantics first; beeline **(A) `DE9IM.v`**
-as the first Qed terminal, then **(B) line-line** as the first geometry-linked
-slice. Hold prepared-cache proofs (**F**) until base `relate` is specified.
+- **S10b (done):** Option-A analytic arc (`RelateArcAnalytic.v`,
+  `RelateMatrixArcAnalytic.v`); clothoid chord seed (`RelateClothoid.v`,
+  `RelateMatrixClothoid.v`); oracle seeds
+  `de9im_arc_analytic_vectors.txt`, `de9im_clothoid_vectors.txt`. Open:
+  law-of-cosines chord-length bridge at `arc_sweep_angle`.
+- **S11 (done):** `RELATE_MATRIX` / `RELATE_PREDICATE` oracle modes.
+- **S12 (done):** curve-polygon × point carrier + fill (`RelateCurveAreaPoint.v`,
+  `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
+  Open: `to_geometry` point-in-ring bridge (S12b).
+- **S13+:** full noding, prepared cache (**F**).
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -178,9 +178,16 @@ slice. Hold prepared-cache proofs (**F**) until base `relate` is specified.
 |---------|-------------|------------|
 | S1 | `theories/DE9IM.v` — matrix type, pattern match, standard predicate Props | — |
 | S2 | `theories/RelateLineLine.v` — line-line DE-9IM via `Intersect.v` | S1 |
-| S3 | JTS#1175 regression witness + doc | S2 |
-| S4 | Guarded `Contains` for axis-aligned rectangle | S1 + `RectangleJCT.v` |
-| S5+ | Area-line / area-area / RelateNG pipeline / prepared cache | S1–S4 |
-
-Oracle: add `RELATE_MATRIX` / `RELATE_PREDICATE` modes after S2, following
-`oracle/driver.ml` extraction pattern.
+| S3 | Romanschek line-line oracle matrices (`RelateLineLine.v` tests 6–13) | S2 |
+| S4 | Guarded `Contains` for axis-aligned rectangle (`RelateAreaPoint.v`) | S1 + `RectangleJCT.v` |
+| S4b | Boundary / MOD2 policy — endpoint contact + JTS#1175 class (`RelateBoundary.v`; area-point boundary Touches in `RelateAreaPoint.v`) | S2 + S4 |
+| S5 | Area-line soundness — guarded rectangle vs segment (`RelateAreaLine.v`) | S2 + S4 |
+| S6 | Area-area soundness — guarded rectangle pairs (`RelateAreaArea.v`) | S4 |
+| S7 | Rect×rect matrix fill — `rect_pair_fill` + classifier soundness (`RelateMatrixRect.v`) | S6 |
+| S8 | Line-line matrix fill (`RelateMatrixLineLine.v`) | S2 |
+| S9 | Area-line matrix fill (`RelateMatrixAreaLine.v`) + fill vocabulary seed | S5 |
+| S10 | Arc×line chord-path relate + fill (`RelateArcChord.v`, `RelateMatrixArcChord.v`) | S2 + arc stack |
+| S10b | Option-A analytic arc + clothoid (`RelateClothoid.v`) | S10 + `Atan2` |
+| S11 | Oracle `RELATE_MATRIX` + `RELATE_PREDICATE` (`relate_matrix.ml`) | S2–S10b |
+| S12 | Curve-polygon × point + fill (`RelateCurveAreaPoint.v`) | S4 + `CurveGeometry` |
+| S13+ | Full noding / prepared cache | S9–S12 |

@@ -1,0 +1,25 @@
+# Curve-polygon×point DE-9IM oracle vectors — issue #67 S12 seed.
+# Coq pins: theories/RelateCurveAreaPoint.v (witness matrices + bridge lemmas).
+# S12 fill: theories/RelateMatrixCurveAreaPoint.v — curve_point_fill CPR_* equals COQ below.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt (seven fill APIs through S12).
+#
+# Carrier: axis-aligned rectangle as four CSChord segments (`rect_curve_polygon`);
+# Option B `to_geometry` target is S4 `rect_polygon`; point-in-ring bridge S12b.
+#
+# Format mirrors oracle/de9im_area_area_vectors.txt (one regime per stanza).
+
+REGIME STRICT_INTERIOR
+RECT 0 0 4 4
+POINT 2 2
+N 8
+COQ cap_matrix_rect_contains_point
+FILL curve_point_fill CPR_StrictInterior
+NOTES point_strictly_in_open_rect; Contains via S4 guard delegation (to_geometry bridge S12b).
+
+REGIME LEFT_BOUNDARY_TOUCH
+RECT 0 0 4 4
+POINT 0 2
+N 8
+COQ cap_matrix_rect_touches_boundary
+FILL curve_point_fill CPR_LeftBoundaryTouch
+NOTES point_on_rect_left_boundary; Touches not Contains.

@@ -1,7 +1,10 @@
-# Romanschek et al. (IJGI 2021) line–line DE-9IM oracle vectors — issue #67 S3 seed.
+# Romanschek et al. (IJGI 2021) line–line DE-9IM oracle vectors — issue #67 S3 seed (+ S8 fill API).
 # Paper: https://doi.org/10.3390/ijgi10110715
 # Reference data: https://github.com/dd-bim/topology-relations (data/Geometries.txt)
 # Coq pins: theories/RelateLineLine.v (`ll_matrix_paper_test*`, predicate lemmas).
+# S8 fill: theories/RelateMatrixLineLine.v — line_pair_fill LPR_* maps to S2 witnesses:
+#   LPR_Disjoint => ll_matrix_disjoint; LPR_ProperCross/LPR_Share => ll_matrix_point_ii;
+#   LPR_CollinearOverlap => ll_matrix_overlap_ii.  Paper tests remain oracle-only.
 #
 # Format (one test per stanza):
 #   TEST <n>
@@ -11,9 +14,15 @@
 #   COQ <definition name in RelateLineLine.v>
 #   NOTES <predicate footprint under DE9IM.v / comparison to S2 witness>
 #
-# Future oracle mode: RELATE_MATRIX (not implemented — driver.ml has no relate
-# extraction yet). Until then, differential tests compare NTS/JTS Relate().ToString()
-# against MATRIX below; Coq certifies predicate algebra on the pinned matrices.
+# Oracle mode: RELATE_MATRIX / RELATE_PREDICATE in oracle/driver.ml (S11).
+# Differential tests compare NTS/JTS Relate().ToString() against MATRIX below;
+# Coq certifies predicate algebra on the pinned matrices.
+#
+# S4b (theories/RelateBoundary.v): MOD2 endpoint policy + JTS#1175 class —
+# test 10 is the pinned "geometrically separated but not DE-9IM disjoint" matrix
+# (`jts1175_separated_not_disjoint_matrix`). Endpoint-only touch uses
+# `ll_matrix_touches_endpoint` (Touches, `pat_touches_0`, IB=0); Romanschek test 9 remains the
+# collinear endpoint-overlap oracle (`101F00FF2`).
 
 TEST 6
 WKT_A LINESTRING(682 623, 496 1104)
