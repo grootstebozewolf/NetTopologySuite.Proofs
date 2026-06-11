@@ -42,9 +42,10 @@
        assignment the extractor IS slice 3g's hole-free
        `extract_faces`.
 
-   Hole-ring label fidelity (the `extract_faces_label_fidelity`
-   analogue for hole rings) is a follow-up of the same shape as the
-   outer-ring version.
+     - `extract_faces_holes_label_fidelity` (+ the outer/hole
+       edges-subset lemmas): every edge of every emitted ring -- outer
+       or hole -- is (an orientation of) an op-kept labelled edge; the
+       with-holes extractor invents no geometry.
 
    Pure assembly; no `Admitted` / `Axiom` / `Parameter`.  Axioms: the
    standard three-axiom classical-reals base, introduces none of its
@@ -145,6 +146,88 @@ Section HolesEmission.
       exact (Hinside d Hd h Hh).
   Qed.
 
+  (* ------------------------------------------------------------------ *)
+  (* §2  Label fidelity: the with-holes extractor invents no geometry,   *)
+  (*     holes included (the slice-3g fidelity story, completed).        *)
+  (* ------------------------------------------------------------------ *)
+
+  Theorem extract_faces_holes_outer_edges_subset :
+    forall op g,
+      (forall v, fan_ok (outgoing v (result_darts op g))) ->
+      forall poly, In poly (extract_faces_holes op g) ->
+        forall e, In e (ring_edges (outer_ring poly)) ->
+          In e (result_darts op g).
+  Proof.
+    intros op g Hfan poly Hin e He.
+    assert (Hok : arrangement_ok (result_darts op g))
+      by (apply result_darts_arrangement_ok; exact Hfan).
+    unfold extract_faces_holes in Hin. apply in_map_iff in Hin.
+    destruct Hin as [d [Hpoly Hd]]. subst poly.
+    unfold face_polygon_holes_at in He. cbn [outer_ring] in He.
+    destruct (face_period_spec (result_darts op g) Hok d Hd) as [Hge1 Hret].
+    rewrite (ring_edges_of_closed_chain _
+               (face_chain_closed_chain (result_darts op g) Hok d Hd
+                  (face_period (result_darts op g) d) Hge1 Hret)) in He.
+    exact (face_chain_subset (result_darts op g) (proj1 Hok)
+             (face_period (result_darts op g) d) d Hd e He).
+  Qed.
+
+  Theorem extract_faces_holes_hole_edges_subset :
+    forall op g,
+      (forall v, fan_ok (outgoing v (result_darts op g))) ->
+      (forall d, In d (result_darts op g) ->
+         forall h, In h (hassign d) -> In h (result_darts op g)) ->
+      forall poly, In poly (extract_faces_holes op g) ->
+        forall hr, In hr (hole_rings poly) ->
+          forall e, In e (ring_edges hr) ->
+            In e (result_darts op g).
+  Proof.
+    intros op g Hfan Hwf poly Hin hr Hhr e He.
+    assert (Hok : arrangement_ok (result_darts op g))
+      by (apply result_darts_arrangement_ok; exact Hfan).
+    unfold extract_faces_holes in Hin. apply in_map_iff in Hin.
+    destruct Hin as [d [Hpoly Hd]]. subst poly.
+    unfold face_polygon_holes_at in Hhr. cbn [hole_rings] in Hhr.
+    apply in_map_iff in Hhr. destruct Hhr as [spec [Hsr Hspec]]. subst hr.
+    unfold hole_specs in Hspec. apply in_map_iff in Hspec.
+    destruct Hspec as [h [Hsh Hh]]. subst spec.
+    assert (HhD : In h (result_darts op g)) by (exact (Hwf d Hd h Hh)).
+    unfold hole_ring_of in He. cbn [fst snd] in He.
+    destruct (face_period_spec (result_darts op g) Hok h HhD) as [Hge1 Hret].
+    rewrite (ring_edges_of_closed_chain _
+               (face_chain_closed_chain (result_darts op g) Hok h HhD
+                  (face_period (result_darts op g) h) Hge1 Hret)) in He.
+    exact (face_chain_subset (result_darts op g) (proj1 Hok)
+             (face_period (result_darts op g) h) h HhD e He).
+  Qed.
+
+  (* The combined semantic bridge: every edge of every emitted ring --       *)
+  (* outer or hole -- is (an orientation of) an op-kept labelled edge.       *)
+  Corollary extract_faces_holes_label_fidelity :
+    forall op g,
+      (forall v, fan_ok (outgoing v (result_darts op g))) ->
+      (forall d, In d (result_darts op g) ->
+         forall h, In h (hassign d) -> In h (result_darts op g)) ->
+      forall poly, In poly (extract_faces_holes op g) ->
+        forall e,
+          (In e (ring_edges (outer_ring poly)) \/
+           exists hr, In hr (hole_rings poly) /\ In e (ring_edges hr)) ->
+          exists l, (In (e, l) (tg_edges g) \/ In (twin e, l) (tg_edges g)) /\
+                    edge_in_result op l = true.
+  Proof.
+    intros op g Hfan Hwf poly Hp e He.
+    assert (Hd : In e (result_darts op g)).
+    { destruct He as [He | [hr [Hhr He]]].
+      - exact (extract_faces_holes_outer_edges_subset op g Hfan poly Hp e He).
+      - exact (extract_faces_holes_hole_edges_subset op g Hfan Hwf poly Hp
+                 hr Hhr e He). }
+    apply in_result_darts_iff in Hd.
+    destruct Hd as [Hd | Hd]; apply in_result_edges_iff in Hd;
+      destruct Hd as [l [Hin Hlab]]; exists l.
+    - split; [ left; exact Hin | exact Hlab ].
+    - split; [ right; exact Hin | exact Hlab ].
+  Qed.
+
 End HolesEmission.
 
 (* ========================================================================== *)
@@ -154,3 +237,4 @@ End HolesEmission.
 
 Print Assumptions extract_faces_holes_valid.
 Print Assumptions extract_faces_holes_nil.
+Print Assumptions extract_faces_holes_label_fidelity.

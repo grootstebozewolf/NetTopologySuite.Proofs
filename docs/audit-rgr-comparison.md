@@ -786,3 +786,13 @@ extractor. Remaining on P4: the `fully_intersected` hypothesis
 discharge for `OverlayBridge`'s concrete noded output (Flocq-bound, a
 container session) and the R4 Euler relation; the analytic seam itself
 is P5-adjacent (H1's machinery).
+
+**Rung 16 (2026-06-11): slice 3h's fidelity completion.** Extends
+`ExtractFacesHoles.v` with the label-fidelity story for the with-holes
+extractor: `extract_faces_holes_{outer,hole}_edges_subset` (every edge
+of every emitted ring — outer or hole — is a surviving dart) and the
+combined `extract_faces_holes_label_fidelity` (each such edge is an
+orientation of an op-kept labelled edge): the with-holes extractor
+invents no geometry, completing the slice-3g semantic bridge for holes.
+All `Qed`, allowlisted axioms; the hole-edges lemma needs only `fan_ok`
+plus the oracle's well-formedness clause.
