@@ -104,20 +104,24 @@ segment intersection machinery but need a **new DE-9IM layer**.
 ## 5. The genuine gaps, by nature (post S4b)
 
 1. **Closed through S10b (#1–#2, partial #3/#7):** `DE9IM.v` pattern algebra;
-   line-line soundness (`RelateLineLine.v`); Romanschek oracle pins (S3);
-   guarded rectangle Contains + boundary Touches (`RelateAreaPoint.v`);
-   MOD2 / endpoint-contact soundness + JTS#1175 class (`RelateBoundary.v`);
-   guarded rectangle vs segment (`RelateAreaLine.v`);
-   guarded rectangle pairs (`RelateAreaArea.v`);
-   computed fill for rect×rect (`RelateMatrixRect.v`), line×line
+   line-line witnesses + geometry (`RelateLineLine.v`); Romanschek oracle pins
+   (S3); rectangle membership + Contains/Touches witnesses (`RelateAreaPoint.v`);
+   MOD2 / endpoint-contact geometry + JTS#1175 class (`RelateBoundary.v`);
+   rectangle vs segment witnesses (`RelateAreaLine.v`);
+   rectangle-pair witnesses (`RelateAreaArea.v`);
+   regime→witness selection for rect×rect (`RelateMatrixRect.v`), line×line
    (`RelateMatrixLineLine.v`), area×line (`RelateMatrixAreaLine.v`), and
    arc×line chord path (`RelateArcChord.v`, `RelateMatrixArcChord.v`),
    Option-A analytic arc (`RelateArcAnalytic.v`, `RelateMatrixArcAnalytic.v`),
    and clothoid chord seed (`RelateClothoid.v`, `RelateMatrixClothoid.v`).
-   Oracle fill vocabulary + seeds through seven fill APIs (through S12;
-   `oracle/relate_matrix_fill_vocabulary.txt`, `oracle/de9im_*_vectors.txt`).
-   Full RelateNG noding remains absent; S11 `RELATE_MATRIX` / `RELATE_PREDICATE`
-   modes serve pinned-catalog differential tests only.
+   These prove the selected witness matrices satisfy their predicates and the
+   genuine per-regime geometry (shared point / its absence / mutual exclusion);
+   they do NOT derive a matrix from geometry — the regime→true-DE-9IM bridge is
+   the deferred RelateNG noding step.  Oracle fill vocabulary + seeds through
+   seven selection APIs (through S12; `oracle/relate_matrix_fill_vocabulary.txt`,
+   `oracle/de9im_*_vectors.txt`).  Full RelateNG noding remains absent; S11
+   `RELATE_MATRIX` / `RELATE_PREDICATE` modes serve pinned-catalog differential
+   tests only.
 
 2. **Algorithm gap (#4) — still open:** RelateNG is a full arrangement
    classifier (point, line, area, collection, zero-length lines, union
@@ -181,9 +185,9 @@ open; S11 oracle modes landed). The recommended path forward:
 | S3 | Romanschek line-line oracle matrices (`RelateLineLine.v` tests 6–13) | S2 |
 | S4 | Guarded `Contains` for axis-aligned rectangle (`RelateAreaPoint.v`) | S1 + `RectangleJCT.v` |
 | S4b | Boundary / MOD2 policy — endpoint contact + JTS#1175 class (`RelateBoundary.v`; area-point boundary Touches in `RelateAreaPoint.v`) | S2 + S4 |
-| S5 | Area-line soundness — guarded rectangle vs segment (`RelateAreaLine.v`) | S2 + S4 |
-| S6 | Area-area soundness — guarded rectangle pairs (`RelateAreaArea.v`) | S4 |
-| S7 | Rect×rect matrix fill — `rect_pair_fill` + classifier soundness (`RelateMatrixRect.v`) | S6 |
+| S5 | Area-line witnesses + pierce geometry — guarded rectangle vs segment (`RelateAreaLine.v`) | S2 + S4 |
+| S6 | Area-area witnesses — guarded rectangle pairs (`RelateAreaArea.v`) | S4 |
+| S7 | Rect×rect regime→witness selection — `rect_pair_fill` + regime mutual exclusion (`RelateMatrixRect.v`) | S6 |
 | S8 | Line-line matrix fill (`RelateMatrixLineLine.v`) | S2 |
 | S9 | Area-line matrix fill (`RelateMatrixAreaLine.v`) + fill vocabulary seed | S5 |
 | S10 | Arc×line chord-path relate + fill (`RelateArcChord.v`, `RelateMatrixArcChord.v`) | S2 + arc stack |

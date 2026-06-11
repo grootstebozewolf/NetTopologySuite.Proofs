@@ -1,21 +1,24 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 8 (S8): line×line matrix fill — guarded segment pairs.
+   Issue #67 session 8 (S8): line×line regime→witness selection.
 
-   Second computed DE-9IM matrix-fill API in the Relate arc: a regime-indexed
-   function `line_pair_fill` whose outputs equal the S2 witness matrices from
-   `RelateLineLine.v`.  Classification remains Prop-level on segment geometry;
-   WKT→matrix computation and Romanschek paper matrices are oracle pins (S3),
-   not fill targets yet.
+   A regime-indexed function `line_pair_fill` that SELECTS (does not compute
+   from geometry) one of the S2 witness matrices from `RelateLineLine.v` per
+   `LinePairRegime`.  This is a witness-selection API, not a DE-9IM matrix
+   computation: deciding a regime from coordinates and proving the selected
+   witness is the configuration's true DE-9IM is the deferred RelateNG-noding
+   step (S13+).  Romanschek paper matrices are oracle pins (S3), not targets.
 
    Delivers:
 
-     - `LinePairRegime` + `line_pair_fill`
-     - `classify_line_pair` linking regimes to S2 geometry guards
+     - `LinePairRegime` + `line_pair_fill` (regime → witness matrix)
+     - `classify_line_pair` recording which S2 geometry guard names each regime
      - Fill = witness equalities
-     - Compute-path soundness (rewrite to S2 predicate lemmas)
-     - Mutual-exclusion lemmas for rejection vs share / proper cross / overlap
+     - `*_fill_witness`: the selected witness satisfies the regime's predicate
+       (constant facts; the regime hypothesis is NOT consumed)
+     - Mutual-exclusion lemmas (genuine geometry) for rejection vs share /
+       proper cross / overlap
 
    Honest scoping: closed segments; endpoint-only Touches witness lives in
    `RelateBoundary.v` (S4b).  Area-line fill is S9 (`RelateMatrixAreaLine.v`).
@@ -110,8 +113,7 @@ Lemma rejection_not_share :
     ~ segments_share A B C D.
 Proof.
   intros A B C D Hrej Hshare.
-  destruct (line_line_rejection_disjoint_sound A B C D Hrej) as [_ Hnoshare].
-  exact (Hnoshare Hshare).
+  exact (line_line_rejected_not_share A B C D Hrej Hshare).
 Qed.
 
 Lemma share_not_rejected :
@@ -135,95 +137,45 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Compute-path soundness.                                                    *)
+(* Witness facts: the selected witness satisfies the regime's predicate.      *)
+(*                                                                            *)
+(* These are constant facts about `line_pair_fill` (a regime → matrix map);   *)
+(* they take no geometry hypothesis and make no geometry→matrix claim.  That  *)
+(* a given segment pair actually falls in a regime, and that the selected     *)
+(* witness is then its true DE-9IM, is the deferred RelateNG-noding step.     *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem line_fill_disjoint_sound :
-  forall A B C D : Point,
-    segments_rejected A B C D ->
-    im_disjoint (line_pair_fill LPR_Disjoint).
+Theorem line_fill_disjoint_witness :
+  im_disjoint (line_pair_fill LPR_Disjoint).
 Proof.
-  intros A B C D Hrej.
-  rewrite line_pair_fill_disjoint_eq.
-  destruct (line_line_rejection_disjoint_sound A B C D Hrej) as [Hdisj _].
-  exact Hdisj.
+  rewrite line_pair_fill_disjoint_eq. exact ll_matrix_disjoint_witness.
 Qed.
 
-Theorem line_fill_proper_cross_sound :
-  forall A B C D : Point,
-    segments_proper_cross A B C D ->
-    im_crosses (line_pair_fill LPR_ProperCross) /\
-    im_intersects (line_pair_fill LPR_ProperCross).
+Theorem line_fill_proper_cross_witness :
+  im_crosses (line_pair_fill LPR_ProperCross) /\
+  im_intersects (line_pair_fill LPR_ProperCross).
 Proof.
-  intros A B C D Hcross.
   rewrite line_pair_fill_proper_cross_eq.
-  exact (line_line_proper_cross_sound A B C D Hcross).
+  split; [exact ll_matrix_point_ii_crosses_ll | exact ll_matrix_point_ii_intersects].
 Qed.
 
-Theorem line_fill_share_sound :
-  forall A B C D : Point,
-    segments_share A B C D ->
-    im_intersects (line_pair_fill LPR_Share).
+Theorem line_fill_share_witness :
+  im_intersects (line_pair_fill LPR_Share).
 Proof.
-  intros A B C D Hshare.
-  rewrite line_pair_fill_share_eq.
-  exact (line_line_share_intersects_sound A B C D Hshare).
+  rewrite line_pair_fill_share_eq. exact ll_matrix_point_ii_intersects.
 Qed.
 
-Theorem line_fill_collinear_overlap_sound :
-  forall A B C D : Point,
-    segments_collinear A B C D ->
-    segments_interior_collinear_overlap A B C D ->
-    im_overlaps (line_pair_fill LPR_CollinearOverlap).
+Theorem line_fill_collinear_overlap_witness :
+  im_overlaps (line_pair_fill LPR_CollinearOverlap).
 Proof.
-  intros A B C D Hcol Hov.
-  rewrite line_pair_fill_collinear_overlap_eq.
-  exact (line_line_collinear_overlap_sound A B C D Hcol Hov).
-Qed.
-
-Theorem classify_disjoint_fill_sound :
-  forall A B C D : Point,
-    classify_line_pair A B C D LPR_Disjoint ->
-    im_disjoint (line_pair_fill LPR_Disjoint).
-Proof.
-  intros A B C D H. unfold classify_line_pair in H.
-  exact (line_fill_disjoint_sound A B C D H).
-Qed.
-
-Theorem classify_proper_cross_fill_sound :
-  forall A B C D : Point,
-    classify_line_pair A B C D LPR_ProperCross ->
-    im_crosses (line_pair_fill LPR_ProperCross) /\
-    im_intersects (line_pair_fill LPR_ProperCross).
-Proof.
-  intros A B C D H. unfold classify_line_pair in H.
-  exact (line_fill_proper_cross_sound A B C D H).
-Qed.
-
-Theorem classify_share_fill_sound :
-  forall A B C D : Point,
-    classify_line_pair A B C D LPR_Share ->
-    im_intersects (line_pair_fill LPR_Share).
-Proof.
-  intros A B C D H. unfold classify_line_pair in H.
-  exact (line_fill_share_sound A B C D H).
-Qed.
-
-Theorem classify_collinear_overlap_fill_sound :
-  forall A B C D : Point,
-    classify_line_pair A B C D LPR_CollinearOverlap ->
-    im_overlaps (line_pair_fill LPR_CollinearOverlap).
-Proof.
-  intros A B C D H. unfold classify_line_pair in H.
-  destruct H as [Hcol Hov].
-  exact (line_fill_collinear_overlap_sound A B C D Hcol Hov).
+  rewrite line_pair_fill_collinear_overlap_eq. exact ll_matrix_overlap_ii_overlaps.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions line_fill_disjoint_sound.
-Print Assumptions line_fill_proper_cross_sound.
-Print Assumptions line_fill_share_sound.
-Print Assumptions line_fill_collinear_overlap_sound.
+Print Assumptions line_fill_disjoint_witness.
+Print Assumptions line_fill_proper_cross_witness.
+Print Assumptions line_fill_share_witness.
+Print Assumptions line_fill_collinear_overlap_witness.

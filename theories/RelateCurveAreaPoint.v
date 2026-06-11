@@ -1,18 +1,21 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateCurveAreaPoint
    ----------------------------------------------------------------------------
-   Issue #67 session 12 (S12): curve-polygon × point DE-9IM soundness.
+   Issue #67 session 12 (S12): curve-polygon × point — validity + S4 witnesses.
 
    First curve-polygon relate slice.  An axis-aligned rectangle built as a
    COMPOUNDCURVE of four chord segments (`rect_curve_polygon`) carries the
-   Option B `to_geometry` linearisation path.  DE-9IM Contains / Touches
-   soundness reuses S4 witness matrices under the same strict-interior and
-   left-boundary guards as `RelateAreaPoint.v`.
+   Option B `to_geometry` linearisation path.  The curve-specific content is
+   the structural-validity spine (the chord rectangle is a valid curve polygon
+   with a closed linearised ring).  The Contains / Touches witnesses are S4's,
+   reused as constant facts.
 
    Honest scoping: chord-only rect curve polygon, no holes, no arcs in the
-   outer ring.  Full `to_geometry` ↔ `rect_polygon` point-in-ring bridge
-   (zero-length edge parity on flat_map rings) is deferred to S12b.
-   Full RelateNG noding and prepared cache remain S13+.
+   outer ring.  This file does NOT bridge the curve geometry's point set to
+   `rect_polygon`, so it makes no curve→matrix soundness claim: the
+   `to_geometry` ↔ `rect_polygon` point-in-ring bridge (zero-length edge
+   parity on flat_map rings) is deferred to S12b.  Full RelateNG noding and
+   prepared cache remain S13+.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
    ========================================================================== *)
@@ -52,6 +55,21 @@ Definition cap_matrix_rect_contains_point : IntersectionMatrix :=
 
 Definition cap_matrix_rect_touches_boundary : IntersectionMatrix :=
   ap_matrix_rect_touches_boundary.
+
+(* Constant witness facts: the reused S4 matrices satisfy their predicates.
+   (No geometry hypothesis; no curve→matrix bridge — see the section comment
+   below.) *)
+Lemma cap_matrix_rect_contains_point_witness :
+  im_contains cap_matrix_rect_contains_point.
+Proof.
+  unfold cap_matrix_rect_contains_point. exact ap_matrix_rect_contains_point_witness.
+Qed.
+
+Lemma cap_matrix_rect_touches_boundary_witness :
+  im_touches cap_matrix_rect_touches_boundary.
+Proof.
+  unfold cap_matrix_rect_touches_boundary. exact ap_matrix_rect_touches_boundary_witness.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Structural validity + linearised ring closed (CurveLinearise spine).       *)
@@ -116,69 +134,21 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Curve-polygon × point DE-9IM soundness (S4 guard delegation).              *)
+(* Curve-polygon × point: what is and is not established here.                 *)
+(*                                                                            *)
+(* This file's genuine, curve-specific content is the structural-validity      *)
+(* spine above (`valid_rect_curve_*`, `rect_curve_linearised_ring_closed`):    *)
+(* the chord-built rectangle is a valid curve polygon whose linearised ring    *)
+(* is closed.  The DE-9IM point membership and the Contains/Touches witnesses  *)
+(* are exactly S4's (`RelateAreaPoint.v`: `strict_interior_in_rect_polygon`,   *)
+(* `left_boundary_in_polygon_not_strict`, and the `cap_matrix_*_witness`       *)
+(* facts above).  The missing bridge — that the *curve* geometry's point set   *)
+(* (`to_geometry` linearisation) coincides with `rect_polygon`, and hence that *)
+(* a witness matrix is the curve-polygon×point true DE-9IM — is deferred to    *)
+(* S12b/S13+ and is NOT claimed here.                                          *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem curve_rect_contains_point_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    x0 < x1 -> y0 < y1 ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    im_contains cap_matrix_rect_contains_point.
-Proof.
-  intros. unfold cap_matrix_rect_contains_point.
-  exact (rect_contains_point_sound x0 y0 x1 y1 p H H0 H1).
-Qed.
-
-Theorem curve_rect_contains_point_predicate_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    x0 < x1 -> y0 < y1 ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    predicate_holds RContains cap_matrix_rect_contains_point.
-Proof.
-  intros. unfold cap_matrix_rect_contains_point.
-  exact (rect_contains_point_predicate_sound x0 y0 x1 y1 p H H0 H1).
-Qed.
-
-Theorem curve_rect_strict_interior_rect_membership :
-  forall x0 y0 x1 y1 (n : nat) p,
-    x0 < x1 -> y0 < y1 ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    point_in_rect_polygon x0 y0 x1 y1 p /\
-    predicate_holds RContains cap_matrix_rect_contains_point.
-Proof.
-  intros x0 y0 x1 y1 n p Hx01 Hy01 Hstrict.
-  split.
-  - exact (strict_interior_in_rect_polygon x0 y0 x1 y1 p Hx01 Hy01 Hstrict).
-  - exact (curve_rect_contains_point_predicate_sound x0 y0 x1 y1 n p Hx01 Hy01 Hstrict).
-Qed.
-
-Theorem curve_rect_left_boundary_touches_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    x0 < x1 -> y0 < y1 ->
-    point_on_rect_left_boundary x0 y0 x1 y1 p ->
-    im_touches cap_matrix_rect_touches_boundary.
-Proof.
-  intros. unfold cap_matrix_rect_touches_boundary.
-  exact (rect_left_boundary_touches_sound x0 y0 x1 y1 p H H0 H1).
-Qed.
-
-Theorem curve_rect_left_boundary_rect_membership :
-  forall x0 y0 x1 y1 (n : nat) p,
-    x0 < x1 -> y0 < y1 ->
-    point_on_rect_left_boundary x0 y0 x1 y1 p ->
-    point_in_rect_polygon x0 y0 x1 y1 p /\
-    ~ point_strictly_in_open_rect x0 y0 x1 y1 p /\
-    im_touches cap_matrix_rect_touches_boundary.
-Proof.
-  intros x0 y0 x1 y1 n p Hx01 Hy01 Hbnd.
-  split.
-  - exact (left_boundary_in_rect_polygon x0 y0 x1 y1 p Hx01 Hy01 Hbnd).
-  - split.
-    + exact (left_boundary_not_strict_interior x0 y0 x1 y1 p Hbnd).
-    + unfold cap_matrix_rect_touches_boundary.
-      exact (rect_left_boundary_touches_sound x0 y0 x1 y1 p Hx01 Hy01 Hbnd).
-Qed.
-
-Print Assumptions curve_rect_contains_point_sound.
-Print Assumptions curve_rect_strict_interior_rect_membership.
-Print Assumptions curve_rect_left_boundary_touches_sound.
+Print Assumptions valid_rect_curve_geometry.
+Print Assumptions rect_curve_linearised_ring_closed.
+Print Assumptions cap_matrix_rect_contains_point_witness.
+Print Assumptions cap_matrix_rect_touches_boundary_witness.

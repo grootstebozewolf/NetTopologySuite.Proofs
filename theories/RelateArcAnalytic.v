@@ -1,7 +1,7 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateArcAnalytic
    ----------------------------------------------------------------------------
-   Issue #67 session 10b (S10b): arc×line DE-9IM — Option-A analytic path (4-ax).
+   Issue #67 session 10b (S10b): arc×line — Option-A analytic chord geometry.
 
    Links `CircularArc` central sweep to `AngleBetween.angle_between` and
    `ArcLength.chord_le_arc_length`, then reuses S10 chord-path DE-9IM witnesses
@@ -10,18 +10,23 @@
    Delivers:
 
      - `arc_sweep_angle` from center-to-start / center-to-end vectors
-     - Analytic-guarded proper-cross soundness (delegates to `RelateArcChord`)
+     - Analytic-guarded chord geometry: proper cross ⇒ shared point
+       (`arc_analytic_proper_cross_share`, delegates to `RelateArcChord`)
 
    Chord–arc length bridge (`chord_subtended` at `arc_sweep_angle`) is deferred:
    the law-of-cosines step needs a `pose`/`set` transparency seam on vector
    names; reuse `ArcLength.chord_le_arc_length` once that lemma is closed.
 
    Honest scoping: minor-arc disambiguation via mid-point is not promoted to a
-   full arc-span soundness theorem; `arc_chord_intersect_sound` gap remains.
-   Matrix fill via `RelateMatrixArcAnalytic.v`.  Clothoid slice is
+   full arc-span membership theorem; the arc-span↔witness bridge remains a gap.
+   Regime→witness selection via `RelateMatrixArcAnalytic.v`.  Clothoid slice is
    `RelateClothoid.v`.
 
-   Inherits `Classical_Prop.classic` via `Atan2` / `AngleBetween` (4-axiom lane).
+   Assumption footprint: `arc_sweep_principal_range` is built on
+   `AngleBetween.angle_between_range`, so it inherits `Classical_Prop.classic`
+   via the `Atan2` / `AngleBetween` lane (4-axiom).  The chord-geometry / witness
+   theorems are 3-axiom.  This file is exempted in docs/audit-exceptions.txt
+   (same lineage as `theories/AngleBetween.v`).
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -124,17 +129,20 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Analytic-guarded DE-9IM soundness (S10 delegate).                          *)
+(* Analytic-guarded chord geometry (S10 delegate).                            *)
+(*                                                                            *)
+(* Genuine consequence of an analytic-guarded proper cross: the arc chord and  *)
+(* the line share a point.  The witness matrices live in `RelateArcChord.v`    *)
+(* (constant `ac_matrix_*` lemmas) and are not bridged to the geometry here.   *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem arc_analytic_proper_cross_sound :
+Theorem arc_analytic_proper_cross_share :
   forall (a : CircularArc) (P Q : Point),
     arc_analytic_proper_cross a P Q ->
-    im_crosses ac_matrix_point_ii /\
-    im_intersects ac_matrix_point_ii.
+    arc_chord_share a P Q.
 Proof.
   intros a P Q [ _ Hcross].
-  exact (arc_chord_proper_cross_sound a P Q Hcross).
+  exact (arc_chord_proper_cross_share a P Q Hcross).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -142,4 +150,4 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions arc_sweep_principal_range.
-Print Assumptions arc_analytic_proper_cross_sound.
+Print Assumptions arc_analytic_proper_cross_share.

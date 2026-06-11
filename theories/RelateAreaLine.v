@@ -1,24 +1,25 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateAreaLine
    ----------------------------------------------------------------------------
-   Issue #67 session 5 (S5): area-line DE-9IM soundness — guarded rectangle.
+   Issue #67 session 5 (S5): area-line DE-9IM witness matrices — rectangle.
 
-   Bridges a closed segment and an axis-aligned rectangle polygon (no holes) to
-   DE-9IM predicates from `DE9IM.v`, using `Intersect.v` segment crossing and
-   `RectangleJCT` / `RelateAreaPoint` rectangle membership.
+   For a closed segment and an axis-aligned rectangle polygon (no holes),
+   defines one hand-specified DE-9IM witness matrix per regime and proves each
+   satisfies the named predicate from `DE9IM.v`:
 
-   Delivers canonical witness matrices and regime soundness for:
-
-     - segment strictly inside the open rectangle interior ⇒ `Intersects`
+     - segment strictly inside the open rectangle interior → `Intersects`
      - horizontal pierce through the rectangle (proper cross of a vertical
-       edge) ⇒ `Crosses` (`pat_crosses_lp_ap_al`, II=1 BE=0) + `Intersects`
-     - segment entirely above the rectangle ⇒ `Disjoint`
+       edge) → `Crosses` (`pat_crosses_lp_ap_al`, II=1 BE=0) + `Intersects`
+     - segment entirely above the rectangle → `Disjoint`
      - horizontal segment with one endpoint on the open left boundary and the
-       other strictly outside ⇒ `Touches` (`pat_touches_1`, BB=0)
+       other strictly outside → `Touches` (`pat_touches_1`, BB=0)
 
-   Honest scoping: single rectangle polygon, no holes; witness matrices are
-   soundness targets.  Computed fill via `RelateMatrixAreaLine.v` (S9) reuses
-   these witnesses.  Full RelateNG pipeline and prepared cache are S10+.
+   The witnesses are constant facts; the regime predicates name the intended
+   geometry but are not consumed.  One genuine geometric consequence is proved
+   (`segment_pierces_rect_share`: a pierce shares a point with the crossed
+   edge, via `Intersect.v`).  Honest scoping: single rectangle polygon, no
+   holes.  Regime→witness selection via `RelateMatrixAreaLine.v` (S9); proving
+   a witness is a configuration's true DE-9IM is the deferred RelateNG step.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -77,7 +78,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Canonical witness matrices (soundness targets).                          *)
+(* Hand-specified witness matrices (regime targets, not derived from geometry).*)
 (* -------------------------------------------------------------------------- *)
 
 Definition al_cell_empty : DimValue := None.
@@ -144,36 +145,15 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Geometry → DE-9IM soundness.                                               *)
+(* Genuine geometry lemma: a pierce produces a shared point with an edge.     *)
+(*                                                                            *)
+(* The constant `al_matrix_*` lemmas above prove each hand-specified witness   *)
+(* satisfies its predicate (Intersects / Crosses / Disjoint / Touches).  The   *)
+(* lemma below is the genuine geometric consequence of the pierce regime: the  *)
+(* segment shares a point with the crossed vertical edge.  The two layers are  *)
+(* not bridged — which witness a configuration's true DE-9IM equals is the     *)
+(* deferred RelateNG step.                                                     *)
 (* -------------------------------------------------------------------------- *)
-
-Theorem segment_interior_intersects_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_strictly_inside_open_rect x0 y0 x1 y1 A B ->
-    im_intersects al_matrix_segment_interior.
-Proof.
-  intros. exact al_matrix_segment_interior_intersects.
-Qed.
-
-Theorem segment_interior_predicate_intersects :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_strictly_inside_open_rect x0 y0 x1 y1 A B ->
-    predicate_holds RIntersects al_matrix_segment_interior.
-Proof.
-  intros. unfold predicate_holds. exact al_matrix_segment_interior_intersects.
-Qed.
-
-Theorem segment_pierces_rect_crosses_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_pierces_rect_horiz x0 y0 x1 y1 A B ->
-    im_crosses al_matrix_segment_crosses /\
-    im_intersects al_matrix_segment_crosses.
-Proof.
-  intros. split; [exact al_matrix_segment_crosses_witness | exact al_matrix_segment_crosses_intersects].
-Qed.
 
 Theorem segment_pierces_rect_share :
   forall (x0 y0 x1 y1 : R) (A B : Point),
@@ -183,28 +163,11 @@ Proof.
   intros x0 y0 x1 y1 A B H. exact (segment_pierces_share x0 y0 x1 y1 A B H).
 Qed.
 
-Theorem segment_above_rect_disjoint_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    segment_above_rect x0 y0 x1 y1 A B ->
-    im_disjoint al_matrix_disjoint.
-Proof.
-  intros. exact al_matrix_disjoint_witness.
-Qed.
-
-Theorem segment_left_boundary_touch_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_left_boundary_endpoint_outside x0 y0 x1 y1 A B ->
-    im_touches al_matrix_boundary_touch.
-Proof.
-  intros. exact al_matrix_boundary_touch_witness.
-Qed.
-
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions segment_interior_intersects_sound.
-Print Assumptions segment_pierces_rect_crosses_sound.
-Print Assumptions segment_above_rect_disjoint_sound.
-Print Assumptions segment_left_boundary_touch_sound.
+Print Assumptions segment_pierces_rect_share.
+Print Assumptions al_matrix_segment_interior_intersects.
+Print Assumptions al_matrix_segment_crosses_witness.
+Print Assumptions al_matrix_boundary_touch_witness.

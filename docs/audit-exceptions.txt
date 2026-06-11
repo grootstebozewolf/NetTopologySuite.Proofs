@@ -314,6 +314,14 @@ theories/BufferJoin.v
 # Admitteds; both headlines Qed-closed.
 theories/ArcLength.v
 
+# Category C (R-side): issue #67 Option-A analytic arc slice (S10b).
+# arc_sweep_principal_range is built on AngleBetween.angle_between_range, so it
+# inherits Classical_Prop.classic via the Atan2 / AngleBetween lane above (same
+# lineage as theories/AngleBetween.v).  The chord-geometry / witness theorems in
+# the file are 3-axiom; only the sweep-range lemma crosses the lane.  No
+# Admitteds; all headlines Qed-closed.  Removal tracks AngleBetween's cleanup.
+theories/RelateArcAnalytic.v
+
 # Category C: one explicitly-documented theorem whose statement cannot be
 # parametrised without losing content.  See the `(* CATEGORY C *)` block
 # in the file itself; resolution pending policy decision.

@@ -1,24 +1,25 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateAreaArea
    ----------------------------------------------------------------------------
-   Issue #67 session 6 (S6): area-area DE-9IM soundness — guarded rectangles.
+   Issue #67 session 6 (S6): area-area DE-9IM witness matrices — rectangles.
 
-   Bridges two axis-aligned rectangle polygons (no holes) to DE-9IM predicates
-   from `DE9IM.v`, reusing the rectangle carriers from `RelateAreaPoint.v`.
+   Defines, for two axis-aligned rectangle polygons (no holes), one
+   hand-specified DE-9IM witness matrix per regime, and proves each satisfies
+   the named predicate from `DE9IM.v`:
 
-   Delivers canonical witness matrices and regime soundness for:
-
-     - horizontally separated rectangles ⇒ `Disjoint`
-     - proper partial overlap (2-d interior intersection) ⇒ `Overlaps`
+     - horizontally separated rectangles → `Disjoint` witness
+     - proper partial overlap (2-d interior intersection) → `Overlaps` witness
        (`pat_overlaps_pp_aa`, II=2 BB=1 EE=2) + `Intersects`
-     - strict containment (inner rectangle in outer open box) ⇒ `Contains`
-       + `Intersects`
-     - vertical edge touch (shared boundary segment, disjoint interiors) ⇒
-       `Touches` (`pat_touches_1`, BB=1)
+     - strict containment (inner rectangle in outer open box) → `Contains`
+       witness + `Intersects`
+     - vertical edge touch (shared boundary segment) → `Touches` witness
+       (`pat_touches_1`, BB=1)
 
-   Honest scoping: single-ring rectangles, no holes; witness matrices are
-   soundness targets.  Computed fill via `RelateMatrixRect.v` (S7) reuses
-   these witnesses.  Full RelateNG pipeline and prepared cache are S8+.
+   These are constant witness facts; the regime predicates name the intended
+   geometry but are NOT consumed (this file does not derive a matrix from the
+   geometry).  Honest scoping: single-ring rectangles, no holes.  The
+   regime→witness selection is `RelateMatrixRect.v` (S7); proving a witness is
+   a configuration's true DE-9IM is the deferred RelateNG step (S13+).
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -57,7 +58,7 @@ Definition rects_touch_vertical_edge (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : Pro
   ay0 < by1 /\ by0 < ay1.
 
 (* -------------------------------------------------------------------------- *)
-(* Canonical witness matrices (soundness targets).                          *)
+(* Hand-specified witness matrices (regime targets, not derived from geometry).*)
 (* -------------------------------------------------------------------------- *)
 
 Definition aa_cell_empty : DimValue := None.
@@ -130,48 +131,18 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Geometry → DE-9IM soundness.                                               *)
+(* The witness facts above (`aa_matrix_*_witness` / `_intersects`) are the     *)
+(* honest content: each constant matrix satisfies its DE-9IM predicate.  No    *)
+(* `geometry → matrix` theorem is stated, because none is proved — the regime  *)
+(* predicates (`rects_separated_horiz`, `rects_partial_overlap`, …) only name  *)
+(* which witness `RelateMatrixRect.v` selects.                                 *)
 (* -------------------------------------------------------------------------- *)
-
-Theorem rects_separated_horiz_disjoint_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_separated_horiz ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_disjoint aa_matrix_disjoint.
-Proof.
-  intros. exact aa_matrix_disjoint_witness.
-Qed.
-
-Theorem rects_partial_overlap_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_partial_overlap ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_overlaps aa_matrix_partial_overlap /\
-    im_intersects aa_matrix_partial_overlap.
-Proof.
-  intros. split; [exact aa_matrix_partial_overlap_witness | exact aa_matrix_partial_overlap_intersects].
-Qed.
-
-Theorem rect_contains_rect_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rect_a_strictly_contains_rect_b ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_contains aa_matrix_contains /\
-    im_intersects aa_matrix_contains.
-Proof.
-  intros. split; [exact aa_matrix_contains_witness | exact aa_matrix_contains_intersects].
-Qed.
-
-Theorem rects_touch_vertical_edge_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_touches aa_matrix_touch_vertical.
-Proof.
-  intros. exact aa_matrix_touch_vertical_witness.
-Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions rects_separated_horiz_disjoint_sound.
-Print Assumptions rects_partial_overlap_sound.
-Print Assumptions rect_contains_rect_sound.
-Print Assumptions rects_touch_vertical_edge_sound.
+Print Assumptions aa_matrix_disjoint_witness.
+Print Assumptions aa_matrix_partial_overlap_witness.
+Print Assumptions aa_matrix_contains_witness.
+Print Assumptions aa_matrix_touch_vertical_witness.

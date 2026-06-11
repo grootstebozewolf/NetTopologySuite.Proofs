@@ -1,10 +1,11 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixArcAnalytic
    ----------------------------------------------------------------------------
-   Issue #67 session 10b (S10b): arc×line matrix fill — Option-A analytic (4-ax).
+   Issue #67 session 10b (S10b): arc×line regime→witness — Option-A analytic.
 
-   Fifth computed fill API: `arc_analytic_fill` for the analytic proper-cross
-   regime, reusing S10 witness matrices under `arc_analytic_minor_guard`.
+   `arc_analytic_fill` SELECTS (does not compute from geometry) the S10 point
+   witness for the analytic proper-cross regime.  The witness fact is constant;
+   the regime hypothesis is not consumed, and no geometry→matrix claim is made.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
    ========================================================================== *)
@@ -32,25 +33,14 @@ Definition classify_arc_analytic (a : CircularArc) (P Q : Point)
   | AAR_AnalyticCross => arc_analytic_proper_cross a P Q
   end.
 
-Theorem arc_analytic_fill_cross_sound :
-  forall (a : CircularArc) (P Q : Point),
-    arc_analytic_proper_cross a P Q ->
-    im_crosses (arc_analytic_fill AAR_AnalyticCross) /\
-    im_intersects (arc_analytic_fill AAR_AnalyticCross).
+(* Constant witness fact: the selected witness satisfies the regime's
+   predicate.  No geometry hypothesis, no geometry→matrix claim. *)
+Theorem arc_analytic_fill_cross_witness :
+  im_crosses (arc_analytic_fill AAR_AnalyticCross) /\
+  im_intersects (arc_analytic_fill AAR_AnalyticCross).
 Proof.
-  intros a P Q H.
   rewrite arc_analytic_fill_cross_eq.
-  exact (arc_analytic_proper_cross_sound a P Q H).
+  split; [exact ac_matrix_point_ii_crosses | exact ac_matrix_point_ii_intersects].
 Qed.
 
-Theorem classify_analytic_cross_fill_sound :
-  forall (a : CircularArc) (P Q : Point),
-    classify_arc_analytic a P Q AAR_AnalyticCross ->
-    im_crosses (arc_analytic_fill AAR_AnalyticCross) /\
-    im_intersects (arc_analytic_fill AAR_AnalyticCross).
-Proof.
-  intros a P Q H. unfold classify_arc_analytic in H.
-  exact (arc_analytic_fill_cross_sound a P Q H).
-Qed.
-
-Print Assumptions arc_analytic_fill_cross_sound.
+Print Assumptions arc_analytic_fill_cross_witness.

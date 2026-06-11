@@ -1,10 +1,12 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixCurveAreaPoint
    ----------------------------------------------------------------------------
-   Issue #67 session 12 (S12): curve-polygon × point matrix fill.
+   Issue #67 session 12 (S12): curve-polygon × point regime→witness selection.
 
-   Seventh computed fill API: `curve_point_fill` reusing S12 / S4 witness
-   matrices for the chord rect curve polygon carrier.
+   `curve_point_fill` SELECTS (does not compute from geometry) the S12 / S4
+   witness matrices for the chord rect curve polygon carrier per
+   `CurvePointRegime`.  The `*_fill_witness` facts are constant; the regime
+   hypothesis is not consumed, and no geometry→matrix claim is made.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
    ========================================================================== *)
@@ -42,48 +44,22 @@ Definition classify_curve_point (x0 y0 x1 y1 : R) (p : Point) (n : nat)
       point_on_rect_left_boundary x0 y0 x1 y1 p
   end.
 
-Theorem curve_point_fill_contains_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    x0 < x1 -> y0 < y1 ->
-    im_contains (curve_point_fill CPR_StrictInterior) /\
-    predicate_holds RContains (curve_point_fill CPR_StrictInterior).
+(* Constant witness facts: the selected witness satisfies the regime's
+   predicate.  No geometry hypothesis; no geometry→matrix claim. *)
+Theorem curve_point_fill_contains_witness :
+  im_contains (curve_point_fill CPR_StrictInterior) /\
+  predicate_holds RContains (curve_point_fill CPR_StrictInterior).
 Proof.
-  intros x0 y0 x1 y1 n p Hstrict Hx01 Hy01.
   rewrite curve_point_fill_contains_eq.
   split.
-  - exact (curve_rect_contains_point_sound x0 y0 x1 y1 n p Hx01 Hy01 Hstrict).
-  - exact (curve_rect_contains_point_predicate_sound x0 y0 x1 y1 n p Hx01 Hy01 Hstrict).
+  - exact cap_matrix_rect_contains_point_witness.
+  - unfold predicate_holds. exact cap_matrix_rect_contains_point_witness.
 Qed.
 
-Theorem curve_point_fill_touch_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    point_on_rect_left_boundary x0 y0 x1 y1 p ->
-    x0 < x1 -> y0 < y1 ->
-    im_touches (curve_point_fill CPR_LeftBoundaryTouch).
+Theorem curve_point_fill_touch_witness :
+  im_touches (curve_point_fill CPR_LeftBoundaryTouch).
 Proof.
-  intros x0 y0 x1 y1 n p Hbnd Hx01 Hy01.
-  rewrite curve_point_fill_touch_eq.
-  exact (curve_rect_left_boundary_touches_sound x0 y0 x1 y1 n p Hx01 Hy01 Hbnd).
-Qed.
-
-Theorem classify_curve_point_contains_fill_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    classify_curve_point x0 y0 x1 y1 p n CPR_StrictInterior ->
-    im_contains (curve_point_fill CPR_StrictInterior) /\
-    predicate_holds RContains (curve_point_fill CPR_StrictInterior).
-Proof.
-  intros x0 y0 x1 y1 n p [Hx01 [Hy01 Hstrict]].
-  exact (curve_point_fill_contains_sound x0 y0 x1 y1 n p Hstrict Hx01 Hy01).
-Qed.
-
-Theorem classify_curve_point_touch_fill_sound :
-  forall x0 y0 x1 y1 (n : nat) p,
-    classify_curve_point x0 y0 x1 y1 p n CPR_LeftBoundaryTouch ->
-    im_touches (curve_point_fill CPR_LeftBoundaryTouch).
-Proof.
-  intros x0 y0 x1 y1 n p [Hx01 [Hy01 Hbnd]].
-  exact (curve_point_fill_touch_sound x0 y0 x1 y1 n p Hbnd Hx01 Hy01).
+  rewrite curve_point_fill_touch_eq. exact cap_matrix_rect_touches_boundary_witness.
 Qed.
 
 Theorem strict_interior_not_left_boundary_touch :
@@ -95,4 +71,6 @@ Proof.
   destruct Hopen as [Hxp _]. lra.
 Qed.
 
-Print Assumptions curve_point_fill_contains_sound.
+Print Assumptions curve_point_fill_contains_witness.
+Print Assumptions curve_point_fill_touch_witness.
+Print Assumptions strict_interior_not_left_boundary_touch.

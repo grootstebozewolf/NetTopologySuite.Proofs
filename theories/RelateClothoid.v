@@ -1,21 +1,24 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateClothoid
    ----------------------------------------------------------------------------
-   Issue #67 session 10b (S10b): clothoid×line DE-9IM soundness — chord seed.
+   Issue #67 session 10b (S10b): clothoid×line — chord geometry + witnesses.
 
    Minimal clothoid relate carrier: a G¹ Hermite clothoid transition is
-   approximated by its chord (`cc_start`–`cc_end`) for DE-9IM witness soundness,
-   mirroring S10's Option-B chord path.  Solver well-posedness on the monotone
-   branch re-exports `ClothoidResidual.clothoid_residual_unique_root`.
+   approximated by its chord (`cc_start`–`cc_end`), mirroring S10's Option-B
+   chord path.  Solver well-posedness on the monotone branch re-exports
+   `ClothoidResidual.clothoid_residual_unique_root`.
 
-   Delivers:
+   Delivers (no geometry→matrix bridge — see the section comment):
 
      - `ClothoidChord` + chord-as-segment regime predicates
-     - Canonical witness matrices (S2 `ll_matrix_*` reuse)
+     - Hand-specified witness matrices (S2 `ll_matrix_*` reuse) with their
+       constant predicate lemmas
+     - Genuine chord geometry: proper cross ⇒ shared point; rejection ⇒ no
+       shared point
      - `clothoid_L_unique_on_branch` — conditional Halley/L uniqueness link
 
    Honest scoping: no `ClothoidSegment` geometry type or Flocq intersection
-   yet; full clothoid-clothoid relate is S11+.  Matrix fill via
+   yet; full clothoid-clothoid relate is S11+.  Regime→witness selection via
    `RelateMatrixClothoid.v`.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
@@ -68,40 +71,30 @@ Proof.
   unfold cl_matrix_point_ii. exact ll_matrix_point_ii_intersects.
 Qed.
 
+Lemma cl_matrix_point_ii_crosses :
+  im_crosses cl_matrix_point_ii.
+Proof.
+  unfold cl_matrix_point_ii. exact ll_matrix_point_ii_crosses_ll.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
-(* Chord-path DE-9IM soundness (S2 delegate).                                 *)
+(* Genuine chord geometry (S2 delegate).                                      *)
+(*                                                                            *)
+(* The constant `cl_matrix_*` lemmas above prove the reused witnesses satisfy  *)
+(* their predicates.  The lemma here proves the genuine geometric consequence  *)
+(* of a chord proper cross (a shared point); rejection's absence-of-share is   *)
+(* `clothoid_chord_rejected_not_share` below.  Neither is bridged to a witness *)
+(* matrix — that link is the deferred RelateNG step.                          *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem clothoid_chord_proper_cross_sound :
+Theorem clothoid_chord_proper_cross_share :
   forall (c : ClothoidChord) (P Q : Point),
     clothoid_chord_proper_cross c P Q ->
-    im_crosses cl_matrix_point_ii /\
-    im_intersects cl_matrix_point_ii.
+    clothoid_chord_share c P Q.
 Proof.
   intros c P Q H.
-  unfold clothoid_chord_proper_cross, cl_matrix_point_ii in *.
-  exact (line_line_proper_cross_sound (cc_start c) (cc_end c) P Q H).
-Qed.
-
-Theorem clothoid_chord_rejected_disjoint_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    clothoid_chord_rejected c P Q ->
-    im_disjoint cl_matrix_disjoint.
-Proof.
-  intros c P Q Hrej.
-  unfold clothoid_chord_rejected, cl_matrix_disjoint in *.
-  destruct (line_line_rejection_disjoint_sound (cc_start c) (cc_end c) P Q Hrej) as [Hdisj _].
-  exact Hdisj.
-Qed.
-
-Theorem clothoid_chord_share_intersects_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    clothoid_chord_share c P Q ->
-    im_intersects cl_matrix_point_ii.
-Proof.
-  intros c P Q Hshare.
-  unfold clothoid_chord_share, cl_matrix_point_ii in *.
-  exact (line_line_share_intersects_sound (cc_start c) (cc_end c) P Q Hshare).
+  unfold clothoid_chord_proper_cross, clothoid_chord_share in *.
+  eapply line_line_proper_cross_geom; exact H.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -134,13 +127,13 @@ Lemma clothoid_chord_rejected_not_share :
 Proof.
   intros c P Q Hrej Hshare.
   unfold clothoid_chord_rejected, clothoid_chord_share in *.
-  destruct (line_line_rejection_disjoint_sound (cc_start c) (cc_end c) P Q Hrej) as [_ Hnoshare].
-  exact (Hnoshare Hshare).
+  exact (line_line_rejected_not_share (cc_start c) (cc_end c) P Q Hrej Hshare).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions clothoid_chord_proper_cross_sound.
+Print Assumptions clothoid_chord_proper_cross_share.
+Print Assumptions clothoid_chord_rejected_not_share.
 Print Assumptions clothoid_L_unique_on_branch.

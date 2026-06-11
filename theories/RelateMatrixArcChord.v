@@ -1,21 +1,25 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixArcChord
    ----------------------------------------------------------------------------
-   Issue #67 session 10 (S10): arc×line matrix fill — chord path (3-ax).
+   Issue #67 session 10 (S10): arc×line regime→witness selection — chord path.
 
-   Fourth computed DE-9IM matrix-fill API in the Relate arc (first curve-aware
-   fill): regime-indexed `arc_chord_fill` whose outputs equal the S10 witness
-   matrices from `RelateArcChord.v`.
+   Regime-indexed `arc_chord_fill` that SELECTS (does not compute from
+   geometry) one of the S10 witness matrices from `RelateArcChord.v` per
+   `ArcChordRegime`.
 
    Delivers:
 
-     - `ArcChordRegime` + `arc_chord_fill`
-     - `classify_arc_chord` linking regimes to S10 geometry guards
+     - `ArcChordRegime` + `arc_chord_fill` (regime → witness matrix)
+     - `classify_arc_chord` recording which S10 geometry guard names each regime
      - Fill = witness equalities
-     - Compute-path soundness (rewrite to S10 predicate lemmas)
-     - Mutual-exclusion lemmas for chord rejection vs proper cross / share
+     - `*_fill_witness`: the selected witness satisfies the regime's predicate
+       (constant facts; the regime hypothesis is NOT consumed)
+     - Mutual-exclusion lemmas (genuine geometry) for chord rejection vs proper
+       cross / share
 
    Honest scoping: chord path only; Option-A analytic regimes are S10b+.
+   Proving a witness is a configuration's true DE-9IM is the deferred RelateNG
+   step.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -105,92 +109,45 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Compute-path soundness.                                                    *)
+(* Witness facts: the selected witness satisfies the regime's predicate.      *)
+(*                                                                            *)
+(* Constant facts about `arc_chord_fill`; no geometry hypothesis, no          *)
+(* geometry→matrix claim.  (`ACR_ChordShare` and `ACR_CircleCross` select the *)
+(* same point witness as `ACR_ChordProperCross`; only `Intersects` is claimed *)
+(* for them, not `Crosses`.)                                                  *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem arc_fill_chord_disjoint_sound :
-  forall (a : CircularArc) (P Q : Point),
-    arc_chord_rejected a P Q ->
-    im_disjoint (arc_chord_fill ACR_ChordDisjoint).
+Theorem arc_fill_chord_disjoint_witness :
+  im_disjoint (arc_chord_fill ACR_ChordDisjoint).
 Proof.
-  intros a P Q Hrej.
-  rewrite arc_chord_fill_disjoint_eq.
-  exact (arc_chord_rejected_disjoint_sound a P Q Hrej).
+  rewrite arc_chord_fill_disjoint_eq. exact ac_matrix_disjoint_witness.
 Qed.
 
-Theorem arc_fill_chord_proper_cross_sound :
-  forall (a : CircularArc) (P Q : Point),
-    arc_chord_proper_cross a P Q ->
-    im_crosses (arc_chord_fill ACR_ChordProperCross) /\
-    im_intersects (arc_chord_fill ACR_ChordProperCross).
+Theorem arc_fill_chord_proper_cross_witness :
+  im_crosses (arc_chord_fill ACR_ChordProperCross) /\
+  im_intersects (arc_chord_fill ACR_ChordProperCross).
 Proof.
-  intros a P Q Hcross.
   rewrite arc_chord_fill_proper_cross_eq.
-  exact (arc_chord_proper_cross_sound a P Q Hcross).
+  split; [exact ac_matrix_point_ii_crosses | exact ac_matrix_point_ii_intersects].
 Qed.
 
-Theorem arc_fill_chord_share_sound :
-  forall (a : CircularArc) (P Q : Point),
-    arc_chord_share a P Q ->
-    im_intersects (arc_chord_fill ACR_ChordShare).
+Theorem arc_fill_chord_share_witness :
+  im_intersects (arc_chord_fill ACR_ChordShare).
 Proof.
-  intros a P Q Hshare.
-  rewrite arc_chord_fill_share_eq.
-  exact (arc_chord_share_intersects_sound a P Q Hshare).
+  rewrite arc_chord_fill_share_eq. exact ac_matrix_point_ii_intersects.
 Qed.
 
-Theorem arc_fill_circle_cross_sound :
-  forall (a : CircularArc) (P Q : Point),
-    chord_crosses_arc_circle a P Q ->
-    im_intersects (arc_chord_fill ACR_CircleCross).
+Theorem arc_fill_circle_cross_witness :
+  im_intersects (arc_chord_fill ACR_CircleCross).
 Proof.
-  intros a P Q Hcross.
-  rewrite arc_chord_fill_circle_cross_eq.
-  exact (arc_circle_chord_cross_intersects_sound a P Q Hcross).
-Qed.
-
-Theorem classify_chord_disjoint_fill_sound :
-  forall (a : CircularArc) (P Q : Point),
-    classify_arc_chord a P Q ACR_ChordDisjoint ->
-    im_disjoint (arc_chord_fill ACR_ChordDisjoint).
-Proof.
-  intros a P Q H. unfold classify_arc_chord in H.
-  exact (arc_fill_chord_disjoint_sound a P Q H).
-Qed.
-
-Theorem classify_chord_proper_cross_fill_sound :
-  forall (a : CircularArc) (P Q : Point),
-    classify_arc_chord a P Q ACR_ChordProperCross ->
-    im_crosses (arc_chord_fill ACR_ChordProperCross) /\
-    im_intersects (arc_chord_fill ACR_ChordProperCross).
-Proof.
-  intros a P Q H. unfold classify_arc_chord in H.
-  exact (arc_fill_chord_proper_cross_sound a P Q H).
-Qed.
-
-Theorem classify_chord_share_fill_sound :
-  forall (a : CircularArc) (P Q : Point),
-    classify_arc_chord a P Q ACR_ChordShare ->
-    im_intersects (arc_chord_fill ACR_ChordShare).
-Proof.
-  intros a P Q H. unfold classify_arc_chord in H.
-  exact (arc_fill_chord_share_sound a P Q H).
-Qed.
-
-Theorem classify_circle_cross_fill_sound :
-  forall (a : CircularArc) (P Q : Point),
-    classify_arc_chord a P Q ACR_CircleCross ->
-    im_intersects (arc_chord_fill ACR_CircleCross).
-Proof.
-  intros a P Q H. unfold classify_arc_chord in H.
-  exact (arc_fill_circle_cross_sound a P Q H).
+  rewrite arc_chord_fill_circle_cross_eq. exact ac_matrix_point_ii_intersects.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions arc_fill_chord_disjoint_sound.
-Print Assumptions arc_fill_chord_proper_cross_sound.
-Print Assumptions arc_fill_chord_share_sound.
-Print Assumptions arc_fill_circle_cross_sound.
+Print Assumptions arc_fill_chord_disjoint_witness.
+Print Assumptions arc_fill_chord_proper_cross_witness.
+Print Assumptions arc_fill_chord_share_witness.
+Print Assumptions arc_fill_circle_cross_witness.

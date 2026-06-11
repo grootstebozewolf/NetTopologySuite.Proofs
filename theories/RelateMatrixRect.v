@@ -1,24 +1,26 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixRect
    ----------------------------------------------------------------------------
-   Issue #67 session 7 (S7): rect×rect matrix fill — guarded rectangle pairs.
+   Issue #67 session 7 (S7): rect×rect regime→witness selection.
 
-   First computed DE-9IM matrix-fill API in the Relate arc: a regime-indexed
-   function `rect_pair_fill` whose outputs equal the S6 witness matrices from
-   `RelateAreaArea.v`.  Classification remains Prop-level on rectangle bounds
-   (half-open interior per `RectangleJCT.v`); bounds→regime decidability is
-   S8+ follow-up.
+   A regime-indexed function `rect_pair_fill` that SELECTS (does not compute
+   from geometry) one of the S6 witness matrices from `RelateAreaArea.v` per
+   `RectPairRegime`.  Deciding a regime from rectangle bounds, and proving the
+   selected witness is the configuration's true DE-9IM, is the deferred
+   RelateNG step; this file does neither.
 
    Delivers:
 
-     - `RectPairRegime` + `rect_pair_fill`
-     - `classify_rect_pair` linking regimes to S6 geometry guards
+     - `RectPairRegime` + `rect_pair_fill` (regime → witness matrix)
+     - `classify_rect_pair` recording which S6 geometry guard names each regime
      - Fill = witness equalities
-     - Compute-path soundness (rewrite to S6 predicate lemmas)
-     - Mutual-exclusion lemmas for strict-disjoint vs overlap / touch / contains
+     - `*_fill_witness`: the selected witness satisfies the regime's predicate
+       (constant facts; the regime hypothesis is NOT consumed)
+     - Mutual-exclusion lemmas (genuine geometry, via `lra` on the bounds) for
+       strict-disjoint vs overlap / touch / contains
 
    Honest scoping: axis-aligned rectangles, no holes; not full RelateNG noding.
-   Area-line fill, oracle `RELATE_MATRIX`, arc/clothoid carriers are S8+.
+   Area-line selection, oracle `RELATE_MATRIX`, arc/clothoid carriers are S8+.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -191,94 +193,47 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Compute-path soundness.                                                    *)
+(* Witness facts: the selected witness satisfies the regime's predicate.      *)
+(*                                                                            *)
+(* Constant facts about `rect_pair_fill` (a regime → matrix map); they take no *)
+(* geometry hypothesis and make no geometry→matrix claim.  That a rectangle    *)
+(* pair actually falls in a regime, and that the selected witness is then its  *)
+(* true DE-9IM, is the deferred RelateNG step.                                 *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem rect_fill_disjoint_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_separated_horiz ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_disjoint (rect_pair_fill RPR_Disjoint).
+Theorem rect_fill_disjoint_witness :
+  im_disjoint (rect_pair_fill RPR_Disjoint).
 Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Hsep.
-  rewrite rect_pair_fill_disjoint_eq.
-  exact (rects_separated_horiz_disjoint_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Hsep).
+  rewrite rect_pair_fill_disjoint_eq. exact aa_matrix_disjoint_witness.
 Qed.
 
-Theorem rect_fill_overlap_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_partial_overlap ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_overlaps (rect_pair_fill RPR_Overlap) /\
-    im_intersects (rect_pair_fill RPR_Overlap).
+Theorem rect_fill_overlap_witness :
+  im_overlaps (rect_pair_fill RPR_Overlap) /\
+  im_intersects (rect_pair_fill RPR_Overlap).
 Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Hov.
   rewrite rect_pair_fill_overlap_eq.
-  exact (rects_partial_overlap_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Hov).
+  split; [exact aa_matrix_partial_overlap_witness | exact aa_matrix_partial_overlap_intersects].
 Qed.
 
-Theorem rect_fill_contains_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rect_a_strictly_contains_rect_b ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_contains (rect_pair_fill RPR_Contains) /\
-    im_intersects (rect_pair_fill RPR_Contains).
+Theorem rect_fill_contains_witness :
+  im_contains (rect_pair_fill RPR_Contains) /\
+  im_intersects (rect_pair_fill RPR_Contains).
 Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Hcont.
   rewrite rect_pair_fill_contains_eq.
-  exact (rect_contains_rect_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Hcont).
+  split; [exact aa_matrix_contains_witness | exact aa_matrix_contains_intersects].
 Qed.
 
-Theorem rect_fill_touch_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    im_touches (rect_pair_fill RPR_TouchVert).
+Theorem rect_fill_touch_witness :
+  im_touches (rect_pair_fill RPR_TouchVert).
 Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch.
-  rewrite rect_pair_fill_touch_eq.
-  exact (rects_touch_vertical_edge_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch).
-Qed.
-
-Theorem classify_disjoint_fill_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    classify_rect_pair ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_Disjoint ->
-    im_disjoint (rect_pair_fill RPR_Disjoint).
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H. unfold classify_rect_pair in H.
-  exact (rect_fill_disjoint_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H).
-Qed.
-
-Theorem classify_overlap_fill_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    classify_rect_pair ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_Overlap ->
-    im_overlaps (rect_pair_fill RPR_Overlap) /\
-    im_intersects (rect_pair_fill RPR_Overlap).
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H. unfold classify_rect_pair in H.
-  exact (rect_fill_overlap_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H).
-Qed.
-
-Theorem classify_contains_fill_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    classify_rect_pair ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_Contains ->
-    im_contains (rect_pair_fill RPR_Contains) /\
-    im_intersects (rect_pair_fill RPR_Contains).
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H. unfold classify_rect_pair in H.
-  exact (rect_fill_contains_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H).
-Qed.
-
-Theorem classify_touch_fill_sound :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    classify_rect_pair ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_TouchVert ->
-    im_touches (rect_pair_fill RPR_TouchVert).
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H. unfold classify_rect_pair in H.
-  exact (rect_fill_touch_sound ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 H).
+  rewrite rect_pair_fill_touch_eq. exact aa_matrix_touch_vertical_witness.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions rect_fill_disjoint_sound.
-Print Assumptions rect_fill_overlap_sound.
-Print Assumptions rect_fill_contains_sound.
-Print Assumptions rect_fill_touch_sound.
+Print Assumptions rect_fill_disjoint_witness.
+Print Assumptions rect_fill_overlap_witness.
+Print Assumptions rect_fill_contains_witness.
+Print Assumptions rect_fill_touch_witness.

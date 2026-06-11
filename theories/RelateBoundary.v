@@ -1,25 +1,27 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateBoundary
    ----------------------------------------------------------------------------
-   Issue #67 session 4b (S4b): boundary / MOD2 policy for DE-9IM soundness.
+   Issue #67 session 4b (S4b): boundary / MOD2 policy — witnesses + geometry.
 
    Formalises the JTS `BoundaryNodeRule` classification spine (default MOD2)
-   and links endpoint-vs-interior contact regimes on closed segments to
-   `Touches` / `Intersects` witness matrices from `DE9IM.v`.
+   and records the `Touches` / `Intersects` witness matrices from `DE9IM.v`
+   for endpoint-vs-interior contact regimes on closed segments.
 
    Delivers:
 
      - `BoundaryNodeRule` + MOD2 parity classification (degree 1 ⇒ boundary)
      - Endpoint vs interior share predicates on segment pairs
-     - Canonical `Touches` witness for endpoint-only contact (L-touch)
-     - Soundness: endpoint-only contact ⇒ `im_touches`; endpoint contact ⇒
-       `im_intersects` (existential witness level, as in S2)
+     - Hand-specified `Touches` witness for endpoint-only contact (L-touch),
+       with the constant `ll_matrix_touches_endpoint_*` predicate lemmas
+     - Genuine geometry lemma: endpoint contact ⇒ the segments share a point
+       (`endpoint_contact_share`)
      - JTS#1175 regression class pinned via `ll_matrix_paper_test10`
        (geometrically separated segments need not be DE-9IM `disjoint`)
 
-   Honest scoping: closed segments; witness matrices are soundness targets,
-   not a RelateNG matrix-fill implementation.  Multi-component line collections,
-   area-line, and prepared cache are S5+.
+   Honest scoping: closed segments; the witness matrices are hand-specified
+   targets, not derived from geometry and not a RelateNG matrix-fill
+   implementation.  Multi-component line collections, area-line, and prepared
+   cache are S5+.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -124,24 +126,14 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Geometry → DE-9IM boundary soundness.                                    *)
+(* Genuine geometry lemma: endpoint contact ⇒ the segments share a point.    *)
+(*                                                                            *)
+(* The matrix-level facts for the endpoint-only Touches witness and the       *)
+(* shared-point Intersects witness are the constant `ll_matrix_touches_*` and *)
+(* `ll_matrix_point_ii_*` lemmas (here / in `RelateLineLine.v`).  They are    *)
+(* not bridged to the geometry here: which witness a configuration's true     *)
+(* DE-9IM equals is the deferred RelateNG-noding step.                        *)
 (* -------------------------------------------------------------------------- *)
-
-Theorem endpoint_only_contact_touches_sound :
-  forall A B C D : Point,
-    segments_endpoint_only_contact A B C D ->
-    im_touches ll_matrix_touches_endpoint.
-Proof.
-  intros. exact ll_matrix_touches_endpoint_witness.
-Qed.
-
-Theorem endpoint_only_contact_predicate_touches :
-  forall A B C D : Point,
-    segments_endpoint_only_contact A B C D ->
-    predicate_holds RTouches ll_matrix_touches_endpoint.
-Proof.
-  intros. exact ll_matrix_touches_endpoint_predicate.
-Qed.
 
 Theorem endpoint_contact_share :
   forall A B C D : Point,
@@ -150,26 +142,6 @@ Theorem endpoint_contact_share :
 Proof.
   intros A B C D [X [HAB [HCD _]]].
   exists X. split; assumption.
-Qed.
-
-Theorem endpoint_contact_intersects_sound :
-  forall A B C D : Point,
-    segments_endpoint_contact A B C D ->
-    im_intersects ll_matrix_point_ii.
-Proof.
-  intros A B C D Hcontact.
-  apply (line_line_share_intersects_sound A B C D).
-  exact (endpoint_contact_share A B C D Hcontact).
-Qed.
-
-Theorem endpoint_contact_predicate_intersects :
-  forall A B C D : Point,
-    segments_endpoint_contact A B C D ->
-    predicate_holds RIntersects ll_matrix_point_ii.
-Proof.
-  intros A B C D Hcontact.
-  apply (line_line_decision_intersects_sound A B C D).
-  exact (endpoint_contact_share A B C D Hcontact).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -206,6 +178,6 @@ Qed.
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions endpoint_only_contact_touches_sound.
-Print Assumptions endpoint_contact_intersects_sound.
+Print Assumptions ll_matrix_touches_endpoint_witness.
+Print Assumptions endpoint_contact_share.
 Print Assumptions jts1175_boundary_cells_preclude_disjoint.

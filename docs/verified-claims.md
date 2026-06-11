@@ -386,18 +386,34 @@ bit-exact denominator (B.1) → exact round-chain identity (B.2) → absolute
 Full RelateNG noding, arc/clothoid carriers, and prepared-cache slices remain
 follow-up (#67 S10+).
 
-## Issue #67 — line-line DE-9IM soundness (`RelateLineLine.v`, session 2)
+## Issue #67 — line-line DE-9IM: witnesses + geometry (`RelateLineLine.v`, session 2)
+
+**Honesty note (whole #67 RelateNG arc).** Each slice has two *independent*
+layers and does **not** bridge them: (a) constant `*_witness` lemmas — a
+hand-specified DE-9IM matrix satisfies a named predicate; (b) `*_geom` /
+`*_share` / `*_not_share` / membership / mutual-exclusion lemmas — the genuine
+geometric consequence of a regime. Proving a witness matrix **is** a
+configuration's true DE-9IM (so that geometry ⇒ matrix) is the deferred
+RelateNG-noding step (S13+) and is *not* claimed by any theorem here. The `Ax`
+column is the build's per-file `Print Assumptions` audit: every issue-67
+`Relate*` file is **closed under the global context (axiom-free)** for the
+audited theorems — so the earlier `3` (classical-reals lane) annotations were
+pessimistic and are corrected to `0` — **except `RelateArcAnalytic.v`**, whose
+`arc_sweep_principal_range` genuinely inherits `Classical_Prop.classic` via the
+`Atan2` / `AngleBetween` lane (4-axiom; exempted in `docs/audit-exceptions.txt`
+alongside its dependencies, and marked `4` below).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateLineLine.v : line_line_proper_cross_sound` | **Proper crossing:** strict opposite-sign crosses ⇒ witness matrix satisfies `Crosses` and `Intersects` `[exact]` | 3 |
-| `RelateLineLine.v : line_line_rejection_disjoint_sound` | **Rejection:** same-side sign test ⇒ `Disjoint` witness and no shared point (soundness of NTS rejection) `[exact]` | 3 |
-| `RelateLineLine.v : line_line_share_intersects_sound` | **Share-point:** any `between` witness ⇒ `Intersects` witness matrix `[exact]` | 3 |
-| `RelateLineLine.v : line_line_collinear_overlap_sound` | **Collinear overlap:** both endpoints of CD on AB ⇒ `Overlaps` (LL) witness `[exact]` | 3 |
+| `RelateLineLine.v : line_line_proper_cross_geom` | **Geometry:** strict opposite-sign crosses ⇒ the segments share a point (`strict_completeness`) `[exact]` | 0 |
+| `RelateLineLine.v : line_line_rejected_not_share` | **Geometry:** same-side sign rejection ⇒ no shared point (soundness of NTS rejection) `[exact]` | 0 |
+| `RelateLineLine.v : line_line_collinear_overlap_share` | **Geometry:** both endpoints of CD on AB ⇒ shared point `[exact]` | 0 |
+| `RelateLineLine.v : ll_matrix_point_ii_crosses_ll` / `_intersects` | **Witness:** the point matrix satisfies `Crosses` (LL) / `Intersects` `[exact]` | 0 |
+| `RelateLineLine.v : ll_matrix_disjoint_witness` | **Witness:** the empty matrix satisfies `Disjoint` `[exact]` | 0 |
+| `RelateLineLine.v : ll_matrix_overlap_ii_overlaps` | **Witness:** the overlap matrix satisfies `Overlaps` (LL) `[exact]` | 0 |
 
-Witness matrices are soundness targets; computed fill reuses them via
-`RelateMatrixLineLine.v` (S8). Endpoint-only touches inherit existential
-`Intersects` only.
+The regime→witness assignment is realised by `line_pair_fill` in
+`RelateMatrixLineLine.v` (S8).
 
 ## Issue #67 — Romanschek line–line oracle matrices (`RelateLineLine.v`, S3 seed)
 
@@ -408,179 +424,178 @@ lemmas only — no WKT→matrix computation yet.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateLineLine.v : paper_test7_overlaps` | Test 7 (`1FFF0FFF2`) satisfies `Overlaps` (LL) `[exact]` | 3 |
-| `RelateLineLine.v : paper_test6_not_crosses` | Test 6 (`FF1FF0102`) does **not** satisfy `Crosses` under `pat_crosses_ll` (II=F) `[exact]` | 3 |
-| `RelateLineLine.v : paper_test13_crosses` | Test 13 (`0F1FF0102`) satisfies `Crosses` (LL); II=0 matches `ll_matrix_point_ii` `[exact]` | 3 |
-| `RelateLineLine.v : paper_test10_not_disjoint` | Test 10 (`FF10F0102`) is **not** `Disjoint` (BI=0) though segments are separated `[exact]` | 3 |
-| `RelateLineLine.v : paper_test7_agrees_overlap_witness_core` | Test 7 shares II/BB cells with `ll_matrix_overlap_ii` `[exact]` | 3 |
+| `RelateLineLine.v : paper_test7_overlaps` | Test 7 (`1FFF0FFF2`) satisfies `Overlaps` (LL) `[exact]` | 0 |
+| `RelateLineLine.v : paper_test6_not_crosses` | Test 6 (`FF1FF0102`) does **not** satisfy `Crosses` under `pat_crosses_ll` (II=F) `[exact]` | 0 |
+| `RelateLineLine.v : paper_test13_crosses` | Test 13 (`0F1FF0102`) satisfies `Crosses` (LL); II=0 matches `ll_matrix_point_ii` `[exact]` | 0 |
+| `RelateLineLine.v : paper_test10_not_disjoint` | Test 10 (`FF10F0102`) is **not** `Disjoint` (BI=0) though segments are separated `[exact]` | 0 |
+| `RelateLineLine.v : paper_test7_agrees_overlap_witness_core` | Test 7 shares II/BB cells with `ll_matrix_overlap_ii` `[exact]` | 0 |
 
-## Issue #67 — area-point DE-9IM soundness (`RelateAreaPoint.v`, S4)
+## Issue #67 — area-point: membership + witnesses (`RelateAreaPoint.v`, S4)
 
-Guarded rectangle **Contains** for strict-interior points (open box, no holes).
-Witness matrix is a soundness target, not a computed RelateNG IM.
+Guarded rectangle (open box, no holes). Geometry layer = point membership;
+witness layer = hand-specified Contains/Touches matrices (not derived from
+geometry).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateAreaPoint.v : rect_contains_point_sound` | **Strict interior:** `x0 < px < x1` and `y0 < py < y1` ⇒ witness matrix satisfies `Contains` `[exact]` | 3 |
-| `RelateAreaPoint.v : rect_strict_interior_contains_linked` | Same regime: strict interior ⇔ `point_in_rect_polygon` and `predicate_holds RContains` on the witness `[exact]` | 3 |
-| `RelateAreaPoint.v : strict_interior_in_rect_geometry` | Strict interior point lies in `point_set` of the single-rectangle geometry `[exact]` | 3 |
-| `RelateAreaPoint.v : rect_left_boundary_touches_sound` | **S4b boundary:** point on the open left edge (`px = x0`, strict `y`) ⇒ `Touches` witness (`pat_touches_3`, EB=0) `[exact]` | 3 |
-| `RelateAreaPoint.v : left_boundary_in_polygon_not_strict` | Half-open ray cast: left-boundary point is `point_in_rect_polygon` but outside the strict-interior Contains guard `[exact]` | 3 |
+| `RelateAreaPoint.v : strict_interior_in_rect_polygon` | **Geometry:** `x0 < px < x1` and `y0 < py < y1` ⇒ point ∈ rectangle polygon `[exact]` | 0 |
+| `RelateAreaPoint.v : strict_interior_in_rect_geometry` | **Geometry:** strict-interior point lies in `point_set` of the single-rectangle geometry `[exact]` | 0 |
+| `RelateAreaPoint.v : ap_matrix_rect_contains_point_witness` | **Witness:** the hand-specified matrix satisfies `Contains` `[exact]` | 0 |
+| `RelateAreaPoint.v : left_boundary_in_polygon_not_strict` | **Geometry:** a left-edge point is in the polygon but outside the strict interior (`px = x0`) `[exact]` | 0 |
+| `RelateAreaPoint.v : ap_matrix_rect_touches_boundary_witness` | **Witness:** the S4b boundary matrix (`pat_touches_3`, EB=0) satisfies `Touches` `[exact]` | 0 |
 
 ## Issue #67 — boundary / MOD2 policy (`RelateBoundary.v`, S4b)
 
-Line-line endpoint classification and JTS#1175 regression class. Witness matrices
-are soundness targets (not computed RelateNG output).
+Line-line endpoint classification and JTS#1175 regression class.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateBoundary.v : mod2_endpoint_is_boundary` | MOD2 rule: incidence count `1` is a boundary node (line endpoint) `[exact]` | 3 |
-| `RelateBoundary.v : endpoint_only_contact_touches_sound` | Endpoint-only segment contact (no interior share, no collinear overlap) ⇒ `Touches` witness (`pat_touches_0`, IB=0) `[exact]` | 3 |
-| `RelateBoundary.v : endpoint_contact_intersects_sound` | Shared endpoint contact ⇒ `Intersects` (existential witness, as in S2) `[exact]` | 3 |
-| `RelateBoundary.v : jts1175_boundary_cells_preclude_disjoint` | Romanschek test 10 / JTS#1175 class: `intersects` yet not `disjoint` (BI=0 boundary visibility) `[exact]` | 3 |
+| `RelateBoundary.v : mod2_endpoint_is_boundary` | MOD2 rule: incidence count `1` is a boundary node (line endpoint) `[exact]` | 0 |
+| `RelateBoundary.v : endpoint_contact_share` | **Geometry:** shared-endpoint contact ⇒ the segments share a point `[exact]` | 0 |
+| `RelateBoundary.v : ll_matrix_touches_endpoint_witness` | **Witness:** the endpoint-only matrix (`pat_touches_0`, IB=0) satisfies `Touches` `[exact]` | 0 |
+| `RelateBoundary.v : jts1175_boundary_cells_preclude_disjoint` | Romanschek test 10 / JTS#1175 class: `intersects` yet not `disjoint` (BI=0 boundary visibility) `[exact]` | 0 |
 
-## Issue #67 — area-line DE-9IM soundness (`RelateAreaLine.v`, S5)
+## Issue #67 — area-line: witnesses + geometry (`RelateAreaLine.v`, S5)
 
-Guarded axis-aligned rectangle vs closed segment. Witness matrices are soundness
-targets; computed fill reuses them via `RelateMatrixAreaLine.v` (S9).
-
-| `file : theorem` | Meaning | Ax |
-|---|---|---|
-| `RelateAreaLine.v : segment_interior_intersects_sound` | Both endpoints strictly inside the open rectangle ⇒ `Intersects` witness (II=1) `[exact]` | 3 |
-| `RelateAreaLine.v : segment_pierces_rect_crosses_sound` | Horizontal pierce (proper cross of left edge, endpoints outside) ⇒ `Crosses` (`pat_crosses_lp_ap_al`, II=1 BE=0) + `Intersects` `[exact]` | 3 |
-| `RelateAreaLine.v : segment_pierces_rect_share` | Pierce regime ⇒ shared point with the crossed vertical edge (`strict_completeness`) `[exact]` | 3 |
-| `RelateAreaLine.v : segment_above_rect_disjoint_sound` | Segment entirely above the rectangle ⇒ `Disjoint` witness `[exact]` | 3 |
-| `RelateAreaLine.v : segment_left_boundary_touch_sound` | Horizontal segment: left-boundary endpoint + other endpoint strictly outside ⇒ `Touches` (`pat_touches_1`, BB=0) `[exact]` | 3 |
-
-## Issue #67 — area-area DE-9IM soundness (`RelateAreaArea.v`, S6)
-
-Guarded axis-aligned rectangle pairs (no holes). Witness matrices are soundness
-targets; computed fill reuses them via `RelateMatrixRect.v` (S7).
+Guarded axis-aligned rectangle vs closed segment. Regime→witness selection via
+`RelateMatrixAreaLine.v` (S9).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateAreaArea.v : rects_separated_horiz_disjoint_sound` | Horizontally separated rectangles (`ax1 <= bx0`) ⇒ `Disjoint` witness `[exact]` | 3 |
-| `RelateAreaArea.v : rects_partial_overlap_sound` | Proper 2-d partial overlap ⇒ `Overlaps` (`pat_overlaps_pp_aa`, II=2 BB=1 EE=2) + `Intersects` `[exact]` | 3 |
-| `RelateAreaArea.v : rect_contains_rect_sound` | Inner rectangle strictly inside outer ⇒ `Contains` + `Intersects` `[exact]` | 3 |
-| `RelateAreaArea.v : rects_touch_vertical_edge_sound` | Vertical edge touch (shared boundary segment, disjoint interiors) ⇒ `Touches` (`pat_touches_1`, BB=1) `[exact]` | 3 |
+| `RelateAreaLine.v : al_matrix_segment_interior_intersects` | **Witness:** the interior matrix (II=1) satisfies `Intersects` `[exact]` | 0 |
+| `RelateAreaLine.v : al_matrix_segment_crosses_witness` | **Witness:** the pierce matrix (`pat_crosses_lp_ap_al`, II=1 BE=0) satisfies `Crosses` `[exact]` | 0 |
+| `RelateAreaLine.v : segment_pierces_rect_share` | **Geometry:** a horizontal pierce shares a point with the crossed vertical edge (`strict_completeness`) `[exact]` | 0 |
+| `RelateAreaLine.v : al_matrix_disjoint_witness` | **Witness:** the empty matrix satisfies `Disjoint` (segment-above regime) `[exact]` | 0 |
+| `RelateAreaLine.v : al_matrix_boundary_touch_witness` | **Witness:** the boundary matrix (`pat_touches_1`, BB=0) satisfies `Touches` `[exact]` | 0 |
 
-## Issue #67 — rect×rect matrix fill (`RelateMatrixRect.v`, S7)
+## Issue #67 — area-area DE-9IM witnesses (`RelateAreaArea.v`, S6)
 
-First computed DE-9IM matrix-fill API in the Relate arc: regime-indexed
-`rect_pair_fill` whose outputs equal the S6 witness matrices. Classification
-(`classify_rect_pair`) mirrors S6 geometry guards; bounds→regime decidability
-remains S13+ follow-up (seven guarded fill APIs through S12).
-
-| `file : theorem` | Meaning | Ax |
-|---|---|---|
-| `RelateMatrixRect.v : rect_fill_disjoint_sound` | `rects_separated_horiz` ⇒ `im_disjoint (rect_pair_fill RPR_Disjoint)` (rewrites to S6) `[exact]` | 3 |
-| `RelateMatrixRect.v : rect_fill_overlap_sound` | `rects_partial_overlap` ⇒ `Overlaps` + `Intersects` on `rect_pair_fill RPR_Overlap` `[exact]` | 3 |
-| `RelateMatrixRect.v : rect_fill_contains_sound` | Strict containment ⇒ `Contains` + `Intersects` on `rect_pair_fill RPR_Contains` `[exact]` | 3 |
-| `RelateMatrixRect.v : rect_fill_touch_sound` | Vertical edge touch ⇒ `Touches` on `rect_pair_fill RPR_TouchVert` `[exact]` | 3 |
-| `RelateMatrixRect.v : overlap_not_strictly_separated` | Partial overlap excludes strict horizontal separation (`ax1 < bx0`) `[exact]` | 3 |
-| `RelateMatrixRect.v : touch_not_overlap` | Vertical edge touch excludes partial overlap `[exact]` | 3 |
-
-## Issue #67 — line×line matrix fill (`RelateMatrixLineLine.v`, S8)
-
-Second computed DE-9IM matrix-fill API: regime-indexed `line_pair_fill` whose
-outputs equal the S2 witness matrices. Romanschek paper matrices (S3) remain
-oracle pins, not fill targets.
+Guarded axis-aligned rectangle pairs (no holes). Hand-specified witnesses, one
+per regime; regime→witness selection via `RelateMatrixRect.v` (S7). The regime
+predicates (`rects_separated_horiz`, …) name the intended geometry but are not
+consumed.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateMatrixLineLine.v : line_fill_disjoint_sound` | `segments_rejected` ⇒ `im_disjoint (line_pair_fill LPR_Disjoint)` (rewrites to S2) `[exact]` | 3 |
-| `RelateMatrixLineLine.v : line_fill_proper_cross_sound` | Proper crossing ⇒ `Crosses` + `Intersects` on `line_pair_fill LPR_ProperCross` `[exact]` | 3 |
-| `RelateMatrixLineLine.v : line_fill_share_sound` | Shared point ⇒ `Intersects` on `line_pair_fill LPR_Share` `[exact]` | 3 |
-| `RelateMatrixLineLine.v : line_fill_collinear_overlap_sound` | Collinear interior overlap ⇒ `Overlaps` on `line_pair_fill LPR_CollinearOverlap` `[exact]` | 3 |
-| `RelateMatrixLineLine.v : rejection_not_share` | Same-side rejection excludes segment share `[exact]` | 3 |
-| `RelateMatrixLineLine.v : collinear_overlap_not_proper_cross` | Collinear overlap excludes proper crossing `[exact]` | 3 |
+| `RelateAreaArea.v : aa_matrix_disjoint_witness` | **Witness:** the empty matrix satisfies `Disjoint` (separated-rects regime) `[exact]` | 0 |
+| `RelateAreaArea.v : aa_matrix_partial_overlap_witness` (+`_intersects`) | **Witness:** the overlap matrix (`pat_overlaps_pp_aa`, II=2 BB=1 EE=2) satisfies `Overlaps` + `Intersects` `[exact]` | 0 |
+| `RelateAreaArea.v : aa_matrix_contains_witness` (+`_intersects`) | **Witness:** the contains matrix satisfies `Contains` + `Intersects` `[exact]` | 0 |
+| `RelateAreaArea.v : aa_matrix_touch_vertical_witness` | **Witness:** the touch matrix (`pat_touches_1`, BB=1) satisfies `Touches` `[exact]` | 0 |
 
-## Issue #67 — area×line matrix fill (`RelateMatrixAreaLine.v`, S9)
+## Issue #67 — rect×rect regime→witness (`RelateMatrixRect.v`, S7)
 
-Third computed DE-9IM matrix-fill API: regime-indexed `area_line_fill` whose
-outputs equal the S5 witness matrices. Oracle vocabulary for all three fill
-APIs is seeded in `oracle/relate_matrix_fill_vocabulary.txt`; `RELATE_MATRIX`
-and `RELATE_PREDICATE` driver modes landed in S11 (`oracle/relate_matrix.ml`).
+Regime-indexed `rect_pair_fill` **selects** (does not compute from geometry) the
+S6 witness matrices. `classify_rect_pair` records which S6 guard names each
+regime; the `*_fill_witness` facts are constant (regime hypothesis not consumed).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateMatrixAreaLine.v : area_line_fill_interior_sound` | Strict interior segment ⇒ `Intersects` on `area_line_fill ALR_Interior` (rewrites to S5) `[exact]` | 3 |
-| `RelateMatrixAreaLine.v : area_line_fill_pierce_sound` | Horizontal pierce ⇒ `Crosses` + `Intersects` on `area_line_fill ALR_Pierce` `[exact]` | 3 |
-| `RelateMatrixAreaLine.v : area_line_fill_disjoint_sound` | Segment above rectangle ⇒ `Disjoint` on `area_line_fill ALR_Disjoint` `[exact]` | 3 |
-| `RelateMatrixAreaLine.v : area_line_fill_boundary_touch_sound` | Left-boundary endpoint touch ⇒ `Touches` on `area_line_fill ALR_BoundaryTouch` `[exact]` | 3 |
-| `RelateMatrixAreaLine.v : interior_not_disjoint` | Strict interior excludes segment-above-rect disjoint guard `[exact]` | 3 |
-| `RelateMatrixAreaLine.v : pierce_not_touch` | Horizontal pierce excludes left-boundary touch (given `x0 < x1`) `[exact]` | 3 |
+| `RelateMatrixRect.v : rect_fill_disjoint_witness` | **Witness:** `im_disjoint (rect_pair_fill RPR_Disjoint)` `[exact]` | 0 |
+| `RelateMatrixRect.v : rect_fill_overlap_witness` | **Witness:** `Overlaps` + `Intersects` on `rect_pair_fill RPR_Overlap` `[exact]` | 0 |
+| `RelateMatrixRect.v : rect_fill_contains_witness` | **Witness:** `Contains` + `Intersects` on `rect_pair_fill RPR_Contains` `[exact]` | 0 |
+| `RelateMatrixRect.v : rect_fill_touch_witness` | **Witness:** `Touches` on `rect_pair_fill RPR_TouchVert` `[exact]` | 0 |
+| `RelateMatrixRect.v : overlap_not_strictly_separated` | **Geometry:** partial overlap excludes strict horizontal separation (`ax1 < bx0`) `[exact]` | 0 |
+| `RelateMatrixRect.v : touch_not_overlap` | **Geometry:** vertical edge touch excludes partial overlap `[exact]` | 0 |
 
-## Issue #67 — arc×line relate (`RelateArcChord.v`, S10 chord path)
+## Issue #67 — line×line regime→witness (`RelateMatrixLineLine.v`, S8)
 
-First curve-aware relate slice (Option B chord path, 3-axiom base). Arc chord
-(`arc_start`–`arc_end`) delegates line-line regimes to S2; `chord_crosses_arc_circle`
-links to `ArcIntersectIVT`. Full arc-span soundness (`arc_chord_intersect_sound`)
-remains quarantined; Option-A analytic regimes landed in S10b (chord-length
-bridge at `arc_sweep_angle` still open).
+Regime-indexed `line_pair_fill` selects the S2 witness matrices. Romanschek
+paper matrices (S3) remain oracle pins, not selection targets.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateArcChord.v : arc_chord_proper_cross_sound` | Arc chord properly crosses segment ⇒ `Crosses` + `Intersects` on `ac_matrix_point_ii` (S2 delegate) `[exact]` | 3 |
-| `RelateArcChord.v : arc_chord_rejected_disjoint_sound` | Same-side rejection on arc chord vs segment ⇒ `Disjoint` `[exact]` | 3 |
-| `RelateArcChord.v : arc_chord_share_intersects_sound` | Arc chord shares point with segment ⇒ `Intersects` `[exact]` | 3 |
-| `RelateArcChord.v : arc_circle_chord_cross_on_circle` | `chord_crosses_arc_circle` ⇒ ∃ on-circle hit on chord `PQ` (IVT) `[exact]` | 3 |
-| `RelateArcChord.v : arc_chord_proper_cross_not_rejected` | Proper cross excludes same-side rejection on arc chord `[exact]` | 3 |
+| `RelateMatrixLineLine.v : line_fill_disjoint_witness` | **Witness:** `im_disjoint (line_pair_fill LPR_Disjoint)` `[exact]` | 0 |
+| `RelateMatrixLineLine.v : line_fill_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `line_pair_fill LPR_ProperCross` `[exact]` | 0 |
+| `RelateMatrixLineLine.v : line_fill_share_witness` | **Witness:** `Intersects` on `line_pair_fill LPR_Share` `[exact]` | 0 |
+| `RelateMatrixLineLine.v : line_fill_collinear_overlap_witness` | **Witness:** `Overlaps` on `line_pair_fill LPR_CollinearOverlap` `[exact]` | 0 |
+| `RelateMatrixLineLine.v : rejection_not_share` | **Geometry:** same-side rejection excludes segment share `[exact]` | 0 |
+| `RelateMatrixLineLine.v : collinear_overlap_not_proper_cross` | **Geometry:** collinear overlap excludes proper crossing `[exact]` | 0 |
 
-## Issue #67 — arc×line matrix fill (`RelateMatrixArcChord.v`, S10)
+## Issue #67 — area×line regime→witness (`RelateMatrixAreaLine.v`, S9)
 
-Fourth computed fill API (first curve-aware): `arc_chord_fill` reuses S10
-witness matrices.
-
-| `file : theorem` | Meaning | Ax |
-|---|---|---|
-| `RelateMatrixArcChord.v : arc_fill_chord_proper_cross_sound` | `arc_chord_proper_cross` ⇒ `Crosses` + `Intersects` on `arc_chord_fill ACR_ChordProperCross` `[exact]` | 3 |
-| `RelateMatrixArcChord.v : arc_fill_chord_disjoint_sound` | `arc_chord_rejected` ⇒ `Disjoint` on `arc_chord_fill ACR_ChordDisjoint` `[exact]` | 3 |
-| `RelateMatrixArcChord.v : arc_fill_circle_cross_sound` | `chord_crosses_arc_circle` ⇒ `Intersects` on `arc_chord_fill ACR_CircleCross` `[exact]` | 3 |
-| `RelateMatrixArcChord.v : chord_rejected_not_share` | Chord rejection excludes chord share `[exact]` | 3 |
-
-## Issue #67 — arc×line relate analytic (`RelateArcAnalytic.v`, S10b Option-A)
-
-Option-A sweep via `AngleBetween.angle_between` (4-axiom lane). Analytic
-proper-cross soundness delegates to S10 chord path; law-of-cosines chord-length
-bridge at `arc_sweep_angle` is deferred (vector `pose`/`set` seam).
+Regime-indexed `area_line_fill` selects the S5 witness matrices. Oracle
+vocabulary for all fill APIs is seeded in
+`oracle/relate_matrix_fill_vocabulary.txt`; `RELATE_MATRIX` and
+`RELATE_PREDICATE` driver modes landed in S11 (`oracle/relate_matrix.ml`).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateArcAnalytic.v : arc_sweep_principal_range` | `valid_arc` ⇒ principal sweep `arc_sweep_angle` ∈ (-π, π] `[exact]` | 4 |
-| `RelateArcAnalytic.v : arc_analytic_proper_cross_sound` | `arc_analytic_proper_cross` ⇒ `Crosses` + `Intersects` on `ac_matrix_point_ii` (S10 delegate) `[exact]` | 4 |
+| `RelateMatrixAreaLine.v : area_line_fill_interior_witness` | **Witness:** `Intersects` on `area_line_fill ALR_Interior` `[exact]` | 0 |
+| `RelateMatrixAreaLine.v : area_line_fill_pierce_witness` | **Witness:** `Crosses` + `Intersects` on `area_line_fill ALR_Pierce` `[exact]` | 0 |
+| `RelateMatrixAreaLine.v : area_line_fill_disjoint_witness` | **Witness:** `Disjoint` on `area_line_fill ALR_Disjoint` `[exact]` | 0 |
+| `RelateMatrixAreaLine.v : area_line_fill_boundary_touch_witness` | **Witness:** `Touches` on `area_line_fill ALR_BoundaryTouch` `[exact]` | 0 |
+| `RelateMatrixAreaLine.v : interior_not_disjoint` | **Geometry:** strict interior excludes the segment-above-rect disjoint guard `[exact]` | 0 |
+| `RelateMatrixAreaLine.v : pierce_not_touch` | **Geometry:** horizontal pierce excludes left-boundary touch (given `x0 < x1`) `[exact]` | 0 |
 
-## Issue #67 — arc×line matrix fill analytic (`RelateMatrixArcAnalytic.v`, S10b)
+## Issue #67 — arc×line: chord geometry + witnesses (`RelateArcChord.v`, S10)
 
-Fifth computed fill API: `arc_analytic_fill` under `arc_analytic_minor_guard`.
+First curve-aware relate slice (Option B chord path). Arc chord
+(`arc_start`–`arc_end`) reuses S2 line-line geometry; `chord_crosses_arc_circle`
+links to `ArcIntersectIVT`. Full arc-span membership remains a gap; Option-A
+analytic regimes landed in S10b.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateMatrixArcAnalytic.v : arc_analytic_fill_cross_sound` | `arc_analytic_proper_cross` ⇒ `Crosses` + `Intersects` on `arc_analytic_fill AAR_AnalyticCross` `[exact]` | 4 |
-| `RelateMatrixArcAnalytic.v : classify_analytic_cross_fill_sound` | Classifier regime ⇒ fill soundness on analytic cross `[exact]` | 4 |
+| `RelateArcChord.v : arc_chord_proper_cross_share` | **Geometry:** arc chord properly crosses segment ⇒ shared point (S2 delegate) `[exact]` | 0 |
+| `RelateArcChord.v : arc_chord_rejected_not_share` | **Geometry:** same-side rejection on arc chord vs segment ⇒ no shared point `[exact]` | 0 |
+| `RelateArcChord.v : arc_circle_chord_cross_on_circle` | **Geometry:** `chord_crosses_arc_circle` ⇒ ∃ on-circle hit on chord `PQ` (IVT) `[exact]` | 0 |
+| `RelateArcChord.v : arc_chord_proper_cross_not_rejected` | **Geometry:** proper cross excludes same-side rejection on arc chord `[exact]` | 0 |
+| `RelateArcChord.v : ac_matrix_point_ii_crosses` / `_intersects` / `ac_matrix_disjoint_witness` | **Witness:** the reused S2 matrices satisfy `Crosses`/`Intersects`/`Disjoint` `[exact]` | 0 |
 
-## Issue #67 — clothoid×line relate (`RelateClothoid.v`, S10b chord seed)
+## Issue #67 — arc×line regime→witness (`RelateMatrixArcChord.v`, S10)
 
-Minimal `ClothoidChord` carrier; DE-9IM witnesses reuse S2 line-line matrices.
+Regime-indexed `arc_chord_fill` selects the S10 witness matrices.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateMatrixArcChord.v : arc_fill_chord_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `arc_chord_fill ACR_ChordProperCross` `[exact]` | 0 |
+| `RelateMatrixArcChord.v : arc_fill_chord_disjoint_witness` | **Witness:** `Disjoint` on `arc_chord_fill ACR_ChordDisjoint` `[exact]` | 0 |
+| `RelateMatrixArcChord.v : arc_fill_circle_cross_witness` | **Witness:** `Intersects` on `arc_chord_fill ACR_CircleCross` `[exact]` | 0 |
+| `RelateMatrixArcChord.v : chord_rejected_not_share` | **Geometry:** chord rejection excludes chord share `[exact]` | 0 |
+
+## Issue #67 — arc×line analytic: geometry + witnesses (`RelateArcAnalytic.v`, S10b)
+
+Option-A sweep via `AngleBetween.angle_between`. This is the one issue-67
+`Relate*` file in the 4-axiom lane: `arc_sweep_principal_range` is built on
+`AngleBetween.angle_between_range`, so it inherits `Classical_Prop.classic` (and
+the 3 allowlist axioms). The file is exempted in `docs/audit-exceptions.txt`
+alongside `Atan2.v` / `AngleBetween.v` / `ArcLength.v`.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateArcAnalytic.v : arc_sweep_principal_range` | **Geometry:** `valid_arc` ⇒ principal sweep `arc_sweep_angle` ∈ (-π, π] (inherits `Classical_Prop.classic` via `AngleBetween`) `[exact]` | 4 |
+| `RelateArcAnalytic.v : arc_analytic_proper_cross_share` | **Geometry:** analytic-guarded proper cross ⇒ shared point (S10 delegate) `[exact]` | 4 |
+
+## Issue #67 — arc×line analytic regime→witness (`RelateMatrixArcAnalytic.v`, S10b)
+
+`arc_analytic_fill` selects the S10 point witness for the analytic-cross regime.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateMatrixArcAnalytic.v : arc_analytic_fill_cross_witness` | **Witness:** `Crosses` + `Intersects` on `arc_analytic_fill AAR_AnalyticCross` `[exact]` | 0 |
+
+## Issue #67 — clothoid×line: chord geometry + witnesses (`RelateClothoid.v`, S10b)
+
+Minimal `ClothoidChord` carrier; witnesses reuse S2 line-line matrices.
 `clothoid_L_unique_on_branch` re-exports monotone-branch uniqueness from
 `ClothoidResidual`.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateClothoid.v : clothoid_chord_proper_cross_sound` | Clothoid chord properly crosses segment ⇒ `Crosses` + `Intersects` on `cl_matrix_point_ii` `[exact]` | 3 |
-| `RelateClothoid.v : clothoid_chord_rejected_disjoint_sound` | Same-side rejection on clothoid chord vs segment ⇒ `Disjoint` `[exact]` | 3 |
-| `RelateClothoid.v : clothoid_chord_share_intersects_sound` | Clothoid chord shares point with segment ⇒ `Intersects` `[exact]` | 3 |
-| `RelateClothoid.v : clothoid_L_unique_on_branch` | Conditional Halley/L uniqueness on monotone clothoid branch `[exact]` | 3 |
+| `RelateClothoid.v : clothoid_chord_proper_cross_share` | **Geometry:** clothoid chord properly crosses segment ⇒ shared point `[exact]` | 0 |
+| `RelateClothoid.v : clothoid_chord_rejected_not_share` | **Geometry:** same-side rejection on clothoid chord ⇒ no shared point `[exact]` | 0 |
+| `RelateClothoid.v : cl_matrix_point_ii_crosses` / `_intersects` / `cl_matrix_disjoint_witness` | **Witness:** the reused S2 matrices satisfy `Crosses`/`Intersects`/`Disjoint` `[exact]` | 0 |
+| `RelateClothoid.v : clothoid_L_unique_on_branch` | Conditional Halley/L uniqueness on monotone clothoid branch `[exact]` | 0 |
 
-## Issue #67 — clothoid×line matrix fill (`RelateMatrixClothoid.v`, S10b)
+## Issue #67 — clothoid×line regime→witness (`RelateMatrixClothoid.v`, S10b)
 
-Sixth computed fill API: `clothoid_fill` reusing S10b witness matrices.
+`clothoid_fill` selects the S10b witness matrices.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateMatrixClothoid.v : clothoid_fill_proper_cross_sound` | `clothoid_chord_proper_cross` ⇒ `Crosses` + `Intersects` on `clothoid_fill CLR_ChordProperCross` `[exact]` | 3 |
-| `RelateMatrixClothoid.v : clothoid_fill_disjoint_sound` | `clothoid_chord_rejected` ⇒ `Disjoint` on `clothoid_fill CLR_ChordDisjoint` `[exact]` | 3 |
-| `RelateMatrixClothoid.v : clothoid_fill_share_sound` | `clothoid_chord_share` ⇒ `Intersects` on `clothoid_fill CLR_ChordShare` `[exact]` | 3 |
+| `RelateMatrixClothoid.v : clothoid_fill_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `clothoid_fill CLR_ChordProperCross` `[exact]` | 0 |
+| `RelateMatrixClothoid.v : clothoid_fill_disjoint_witness` | **Witness:** `Disjoint` on `clothoid_fill CLR_ChordDisjoint` `[exact]` | 0 |
+| `RelateMatrixClothoid.v : clothoid_fill_share_witness` | **Witness:** `Intersects` on `clothoid_fill CLR_ChordShare` `[exact]` | 0 |
 
 ## Issue #67 — oracle `RELATE_MATRIX` driver (S11)
 
@@ -596,30 +611,31 @@ computation — full RelateNG noding remains S13+.
 | `oracle/relate_matrix_fill_vocabulary.txt` | Seven fill APIs → witness matrix mapping |
 | `oracle/de9im_*_vectors.txt` | Per-regime COQ + MATRIX pins for NTS/JTS diff |
 
-## Issue #67 — curve-polygon×point relate (`RelateCurveAreaPoint.v`, S12)
+## Issue #67 — curve-polygon×point: validity + witnesses (`RelateCurveAreaPoint.v`, S12)
 
-First curve-polygon relate slice: axis-aligned rectangle as four-chord
-`COMPOUNDCURVE` with `valid_curve_polygon` + `chord_approx_ring_closed`.
-Contains / Touches soundness reuses S4 guards and witness matrices; full
-`to_geometry` ↔ `rect_polygon` point-in-ring bridge is deferred (S12b).
-
-| `file : theorem` | Meaning | Ax |
-|---|---|---|
-| `RelateCurveAreaPoint.v : valid_rect_curve_polygon` | Chord rect COMPOUNDCURVE satisfies `valid_curve_polygon` `[exact]` | 3 |
-| `RelateCurveAreaPoint.v : rect_curve_linearised_ring_closed` | `chord_approx_ring` of rect curve outer is `ring_closed` `[exact]` | 3 |
-| `RelateCurveAreaPoint.v : curve_rect_contains_point_sound` | Strict interior ⇒ `Contains` on `cap_matrix_rect_contains_point` (S4 delegate) `[exact]` | 3 |
-| `RelateCurveAreaPoint.v : curve_rect_strict_interior_rect_membership` | Strict interior ⇒ `point_in_rect_polygon` + `RContains` `[exact]` | 3 |
-| `RelateCurveAreaPoint.v : curve_rect_left_boundary_touches_sound` | Left-boundary point ⇒ `Touches` on `cap_matrix_rect_touches_boundary` `[exact]` | 3 |
-
-## Issue #67 — curve-polygon×point matrix fill (`RelateMatrixCurveAreaPoint.v`, S12)
-
-Seventh computed fill API: `curve_point_fill` reusing S12 witness matrices.
+First curve-polygon relate slice: axis-aligned rectangle as a four-chord
+`COMPOUNDCURVE`. The curve-specific content is the structural-validity spine;
+the Contains/Touches witnesses are S4's, reused as constant facts. This file
+does **not** bridge the curve geometry's point set to `rect_polygon`, so it
+makes no curve→matrix claim; the `to_geometry` ↔ `rect_polygon` bridge is
+deferred (S12b).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateMatrixCurveAreaPoint.v : curve_point_fill_contains_sound` | Strict interior ⇒ `Contains` on `curve_point_fill CPR_StrictInterior` `[exact]` | 3 |
-| `RelateMatrixCurveAreaPoint.v : curve_point_fill_touch_sound` | Left-boundary ⇒ `Touches` on `curve_point_fill CPR_LeftBoundaryTouch` `[exact]` | 3 |
-| `RelateMatrixCurveAreaPoint.v : strict_interior_not_left_boundary_touch` | Strict interior excludes left-boundary touch `[exact]` | 3 |
+| `RelateCurveAreaPoint.v : valid_rect_curve_polygon` | **Geometry:** chord rect COMPOUNDCURVE satisfies `valid_curve_polygon` `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : rect_curve_linearised_ring_closed` | **Geometry:** `chord_approx_ring` of the rect curve outer is `ring_closed` `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : cap_matrix_rect_contains_point_witness` | **Witness:** the reused S4 matrix satisfies `Contains` `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : cap_matrix_rect_touches_boundary_witness` | **Witness:** the reused S4 matrix satisfies `Touches` `[exact]` | 0 |
+
+## Issue #67 — curve-polygon×point regime→witness (`RelateMatrixCurveAreaPoint.v`, S12)
+
+`curve_point_fill` selects the S12 / S4 witness matrices.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateMatrixCurveAreaPoint.v : curve_point_fill_contains_witness` | **Witness:** `Contains` on `curve_point_fill CPR_StrictInterior` `[exact]` | 0 |
+| `RelateMatrixCurveAreaPoint.v : curve_point_fill_touch_witness` | **Witness:** `Touches` on `curve_point_fill CPR_LeftBoundaryTouch` `[exact]` | 0 |
+| `RelateMatrixCurveAreaPoint.v : strict_interior_not_left_boundary_touch` | **Geometry:** strict interior excludes left-boundary touch `[exact]` | 0 |
 
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 

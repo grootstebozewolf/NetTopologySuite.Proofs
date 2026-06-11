@@ -18,7 +18,7 @@ ARC (0 0) (1 1) (2 0)
 SEG (0 2) (2 -2)
 COQ ac_matrix_point_ii
 FILL arc_chord_fill ACR_ChordProperCross
-NOTES arc_chord_proper_cross; delegates to line_line_proper_cross_sound.
+NOTES arc_chord_proper_cross; geometry via line_line_proper_cross_geom (shared point). Matrix is the hand-specified ac_matrix_point_ii witness, not derived from the geometry.
 
 REGIME CHORD_DISJ
 ARC (0 0) (1 1) (2 0)

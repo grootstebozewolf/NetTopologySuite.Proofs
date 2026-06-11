@@ -1,20 +1,24 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateAreaPoint
    ----------------------------------------------------------------------------
-   Issue #67 session 4 (S4): area-point DE-9IM soundness — guarded rectangle
-   Contains.
+   Issue #67 session 4 (S4): area-point — rectangle membership + Contains
+   witness.
 
-   Bridges an axis-aligned rectangle polygon (no holes) and a query point to
-   the DE-9IM `Contains` predicate from `DE9IM.v`, using the unconditional
-   ray-parity characterisation `RectangleJCT.point_in_ring_rect_iff`.
+   Relates an axis-aligned rectangle polygon (no holes) and a query point,
+   in two honest, independent layers:
+     - Geometry: a strict-interior point lies in the rectangle (membership),
+       via the unconditional ray-parity characterisation
+       `RectangleJCT.point_in_ring_rect_iff`; a left-boundary point lies in
+       the polygon but not in the strict interior.
+     - Witness: the hand-specified Contains / Touches matrices satisfy the
+       `im_contains` / `im_touches` predicates from `DE9IM.v`.
+   It does NOT derive a DE-9IM matrix from the geometry (no `point` → matrix
+   bridge); that is the deferred RelateNG matrix-fill step.
 
-   Delivers a canonical witness matrix and regime soundness for strict-
-   interior points (open box).  This is the first area geometry slice; it
-   does not compute a full RelateNG matrix fill.
-
-   Honest scoping: single rectangle polygon, no holes.  S4 gives strict-
-   interior Contains; S4b (same file) adds boundary Touches.  Area-line,
-   area-area, RelateNG pipeline, and prepared cache are S5+ follow-up.
+   Honest scoping: single rectangle polygon, no holes.  S4 covers strict-
+   interior membership + the Contains witness; S4b (same file) the left-
+   boundary membership + the Touches witness.  Area-line, area-area, RelateNG
+   pipeline, and prepared cache are S5+ follow-up.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -51,7 +55,7 @@ Definition point_in_rect_geometry (x0 y0 x1 y1 : R) (p : Point) : Prop :=
   point_set (rect_geometry x0 y0 x1 y1) p.
 
 (* -------------------------------------------------------------------------- *)
-(* Canonical witness matrix (soundness target, not a computed RelateNG IM).   *)
+(* Hand-specified witness matrix (regime target, not derived from geometry).  *)
 (* -------------------------------------------------------------------------- *)
 
 Definition ap_cell_empty : DimValue := None.
@@ -137,49 +141,16 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Area-point DE-9IM soundness (rectangle Contains point, strict interior).   *)
+(* Area-point Contains: the two honest layers, kept separate.                 *)
+(*                                                                            *)
+(* Geometry layer (above): a strict-interior point lies in the rectangle      *)
+(* polygon / geometry (`strict_interior_in_rect_polygon`,                      *)
+(* `strict_interior_in_rect_geometry`).  Witness layer (above): the           *)
+(* hand-specified Contains matrix satisfies `im_contains`                      *)
+(* (`ap_matrix_rect_contains_point_witness`).  These are deliberately NOT      *)
+(* bridged: proving the strict-interior configuration's true DE-9IM equals     *)
+(* the Contains witness is the deferred RelateNG step (S13+).                  *)
 (* -------------------------------------------------------------------------- *)
-
-Theorem rect_contains_point_sound :
-  forall x0 y0 x1 y1 p,
-    x0 < x1 -> y0 < y1 ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    im_contains ap_matrix_rect_contains_point.
-Proof.
-  intros. exact ap_matrix_rect_contains_point_witness.
-Qed.
-
-Theorem rect_contains_point_predicate_sound :
-  forall x0 y0 x1 y1 p,
-    x0 < x1 -> y0 < y1 ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    predicate_holds RContains ap_matrix_rect_contains_point.
-Proof.
-  intros. exact ap_matrix_rect_contains_point_predicate.
-Qed.
-
-Theorem rect_point_in_polygon_contains_sound :
-  forall x0 y0 x1 y1 p,
-    x0 < x1 -> y0 < y1 ->
-    point_in_rect_polygon x0 y0 x1 y1 p ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    predicate_holds RContains ap_matrix_rect_contains_point.
-Proof.
-  intros. exact ap_matrix_rect_contains_point_predicate.
-Qed.
-
-Theorem rect_strict_interior_contains_linked :
-  forall x0 y0 x1 y1 p,
-    x0 < x1 -> y0 < y1 ->
-    point_strictly_in_open_rect x0 y0 x1 y1 p ->
-    point_in_rect_polygon x0 y0 x1 y1 p /\
-    predicate_holds RContains ap_matrix_rect_contains_point.
-Proof.
-  intros x0 y0 x1 y1 p Hx01 Hy01 Hstrict.
-  split.
-  - exact (strict_interior_in_rect_polygon x0 y0 x1 y1 p Hx01 Hy01 Hstrict).
-  - exact (rect_contains_point_predicate_sound x0 y0 x1 y1 p Hx01 Hy01 Hstrict).
-Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* S4b — area-point boundary (Touches, not Contains).                         *)
@@ -223,15 +194,6 @@ Proof.
   lra.
 Qed.
 
-Theorem rect_left_boundary_touches_sound :
-  forall x0 y0 x1 y1 p,
-    x0 < x1 -> y0 < y1 ->
-    point_on_rect_left_boundary x0 y0 x1 y1 p ->
-    im_touches ap_matrix_rect_touches_boundary.
-Proof.
-  intros. exact ap_matrix_rect_touches_boundary_witness.
-Qed.
-
 Lemma left_boundary_in_polygon_not_strict :
   forall x0 y0 x1 y1 p,
     x0 < x1 -> y0 < y1 ->
@@ -249,6 +211,7 @@ Qed.
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions rect_contains_point_sound.
-Print Assumptions rect_strict_interior_contains_linked.
-Print Assumptions rect_left_boundary_touches_sound.
+Print Assumptions strict_interior_in_rect_polygon.
+Print Assumptions ap_matrix_rect_contains_point_witness.
+Print Assumptions left_boundary_in_polygon_not_strict.
+Print Assumptions ap_matrix_rect_touches_boundary_witness.

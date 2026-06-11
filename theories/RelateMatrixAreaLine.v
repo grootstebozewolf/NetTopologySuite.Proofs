@@ -1,24 +1,26 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixAreaLine
    ----------------------------------------------------------------------------
-   Issue #67 session 9 (S9): area×line matrix fill — guarded rectangle + segment.
+   Issue #67 session 9 (S9): area×line regime→witness — rectangle + segment.
 
-   Third computed DE-9IM matrix-fill API in the Relate arc: a regime-indexed
-   function `area_line_fill` whose outputs equal the S5 witness matrices from
-   `RelateAreaLine.v`.  Classification remains Prop-level on rectangle bounds
-   and segment geometry; bounds→regime decidability is S10+ follow-up.
+   Regime-indexed `area_line_fill` that SELECTS (does not compute from
+   geometry) one of the S5 witness matrices from `RelateAreaLine.v` per
+   `AreaLineRegime`.
 
    Delivers:
 
-     - `AreaLineRegime` + `area_line_fill`
-     - `classify_area_line` linking regimes to S5 geometry guards
+     - `AreaLineRegime` + `area_line_fill` (regime → witness matrix)
+     - `classify_area_line` recording which S5 geometry guard names each regime
      - Fill = witness equalities
-     - Compute-path soundness (rewrite to S5 predicate lemmas)
-     - Mutual-exclusion lemmas for disjoint vs interior / pierce / touch
+     - `*_fill_witness`: the selected witness satisfies the regime's predicate
+       (constant facts; the regime hypothesis is NOT consumed)
+     - Mutual-exclusion lemmas (genuine geometry, via coordinate projections +
+       `lra`) for disjoint vs interior / pierce / touch
 
    Honest scoping: axis-aligned rectangle, no holes; oracle `RELATE_MATRIX`
    driver mode is vocabulary-seeded only (`oracle/relate_matrix_fill_vocabulary.txt`).
-   Arc/clothoid carriers and full RelateNG noding are S10+.
+   Arc/clothoid carriers and full RelateNG noding are S10+.  Proving a witness
+   is a configuration's true DE-9IM is the deferred RelateNG step.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -259,98 +261,45 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Compute-path soundness.                                                    *)
+(* Witness facts: the selected witness satisfies the regime's predicate.      *)
+(*                                                                            *)
+(* Constant facts about `area_line_fill`; no geometry hypothesis, no          *)
+(* geometry→matrix claim.  The genuine geometry lives in the mutual-exclusion  *)
+(* / projection lemmas above and in `RelateAreaLine.segment_pierces_rect_      *)
+(* share`.                                                                     *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem area_line_fill_interior_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_strictly_inside_open_rect x0 y0 x1 y1 A B ->
-    im_intersects (area_line_fill ALR_Interior).
+Theorem area_line_fill_interior_witness :
+  im_intersects (area_line_fill ALR_Interior).
 Proof.
-  intros x0 y0 x1 y1 A B Hx01 Hy01 Hinside.
-  rewrite area_line_fill_interior_eq.
-  exact (segment_interior_intersects_sound x0 y0 x1 y1 A B Hx01 Hy01 Hinside).
+  rewrite area_line_fill_interior_eq. exact al_matrix_segment_interior_intersects.
 Qed.
 
-Theorem area_line_fill_pierce_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_pierces_rect_horiz x0 y0 x1 y1 A B ->
-    im_crosses (area_line_fill ALR_Pierce) /\
-    im_intersects (area_line_fill ALR_Pierce).
+Theorem area_line_fill_pierce_witness :
+  im_crosses (area_line_fill ALR_Pierce) /\
+  im_intersects (area_line_fill ALR_Pierce).
 Proof.
-  intros x0 y0 x1 y1 A B Hx01 Hy01 Hpierce.
   rewrite area_line_fill_pierce_eq.
-  exact (segment_pierces_rect_crosses_sound x0 y0 x1 y1 A B Hx01 Hy01 Hpierce).
+  split; [exact al_matrix_segment_crosses_witness | exact al_matrix_segment_crosses_intersects].
 Qed.
 
-Theorem area_line_fill_disjoint_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    segment_above_rect x0 y0 x1 y1 A B ->
-    im_disjoint (area_line_fill ALR_Disjoint).
+Theorem area_line_fill_disjoint_witness :
+  im_disjoint (area_line_fill ALR_Disjoint).
 Proof.
-  intros x0 y0 x1 y1 A B Habove.
-  rewrite area_line_fill_disjoint_eq.
-  exact (segment_above_rect_disjoint_sound x0 y0 x1 y1 A B Habove).
+  rewrite area_line_fill_disjoint_eq. exact al_matrix_disjoint_witness.
 Qed.
 
-Theorem area_line_fill_boundary_touch_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    segment_left_boundary_endpoint_outside x0 y0 x1 y1 A B ->
-    im_touches (area_line_fill ALR_BoundaryTouch).
+Theorem area_line_fill_boundary_touch_witness :
+  im_touches (area_line_fill ALR_BoundaryTouch).
 Proof.
-  intros x0 y0 x1 y1 A B Hx01 Hy01 Htouch.
-  rewrite area_line_fill_boundary_touch_eq.
-  exact (segment_left_boundary_touch_sound x0 y0 x1 y1 A B Hx01 Hy01 Htouch).
-Qed.
-
-Theorem classify_interior_fill_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    classify_area_line x0 y0 x1 y1 A B ALR_Interior ->
-    im_intersects (area_line_fill ALR_Interior).
-Proof.
-  intros x0 y0 x1 y1 A B Hx01 Hy01 H. unfold classify_area_line in H.
-  exact (area_line_fill_interior_sound x0 y0 x1 y1 A B Hx01 Hy01 H).
-Qed.
-
-Theorem classify_pierce_fill_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    classify_area_line x0 y0 x1 y1 A B ALR_Pierce ->
-    im_crosses (area_line_fill ALR_Pierce) /\
-    im_intersects (area_line_fill ALR_Pierce).
-Proof.
-  intros x0 y0 x1 y1 A B Hx01 Hy01 H. unfold classify_area_line in H.
-  exact (area_line_fill_pierce_sound x0 y0 x1 y1 A B Hx01 Hy01 H).
-Qed.
-
-Theorem classify_disjoint_fill_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    classify_area_line x0 y0 x1 y1 A B ALR_Disjoint ->
-    im_disjoint (area_line_fill ALR_Disjoint).
-Proof.
-  intros x0 y0 x1 y1 A B H. unfold classify_area_line in H.
-  exact (area_line_fill_disjoint_sound x0 y0 x1 y1 A B H).
-Qed.
-
-Theorem classify_boundary_touch_fill_sound :
-  forall (x0 y0 x1 y1 : R) (A B : Point),
-    x0 < x1 -> y0 < y1 ->
-    classify_area_line x0 y0 x1 y1 A B ALR_BoundaryTouch ->
-    im_touches (area_line_fill ALR_BoundaryTouch).
-Proof.
-  intros x0 y0 x1 y1 A B Hx01 Hy01 H. unfold classify_area_line in H.
-  exact (area_line_fill_boundary_touch_sound x0 y0 x1 y1 A B Hx01 Hy01 H).
+  rewrite area_line_fill_boundary_touch_eq. exact al_matrix_boundary_touch_witness.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions area_line_fill_interior_sound.
-Print Assumptions area_line_fill_pierce_sound.
-Print Assumptions area_line_fill_disjoint_sound.
-Print Assumptions area_line_fill_boundary_touch_sound.
+Print Assumptions area_line_fill_interior_witness.
+Print Assumptions area_line_fill_pierce_witness.
+Print Assumptions area_line_fill_disjoint_witness.
+Print Assumptions area_line_fill_boundary_touch_witness.

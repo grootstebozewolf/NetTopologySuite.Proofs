@@ -1,5 +1,5 @@
 # Arc×line DE-9IM oracle vectors — issue #67 S10b seed (Option-A analytic 4-ax).
-# Coq pins: theories/RelateArcAnalytic.v (sweep + analytic cross soundness).
+# Coq pins: theories/RelateArcAnalytic.v (sweep range + analytic chord share).
 # S10b fill: theories/RelateMatrixArcAnalytic.v — arc_analytic_fill AAR_AnalyticCross.
 # Vocabulary: oracle/relate_matrix_fill_vocabulary.txt (seven fill APIs through S12).
 #
@@ -12,4 +12,4 @@ ARC (0 0) (1 1) (2 0)
 SEG (0 2) (2 -2)
 COQ ac_matrix_point_ii
 FILL arc_analytic_fill AAR_AnalyticCross
-NOTES arc_analytic_proper_cross; delegates to arc_chord_proper_cross_sound.
+NOTES arc_analytic_proper_cross; geometry via arc_chord_proper_cross_share (shared point). Matrix is the hand-specified ac_matrix_point_ii witness, not derived from the geometry.

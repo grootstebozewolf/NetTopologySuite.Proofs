@@ -1,9 +1,12 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateMatrixClothoid
    ----------------------------------------------------------------------------
-   Issue #67 session 10b (S10b): clothoid×line matrix fill — chord seed.
+   Issue #67 session 10b (S10b): clothoid×line regime→witness — chord seed.
 
-   Sixth computed fill API: `clothoid_fill` reusing S10b witness matrices.
+   `clothoid_fill` SELECTS (does not compute from geometry) one of the S10b
+   witness matrices per `ClothoidRegime`.  The `*_fill_witness` facts are
+   constant; the regime hypothesis is not consumed, and no geometry→matrix
+   claim is made.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
    ========================================================================== *)
@@ -44,63 +47,28 @@ Definition classify_clothoid (c : ClothoidChord) (P Q : Point)
   | CLR_ChordShare       => clothoid_chord_share c P Q
   end.
 
-Theorem clothoid_fill_disjoint_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    clothoid_chord_rejected c P Q ->
-    im_disjoint (clothoid_fill CLR_ChordDisjoint).
+(* Constant witness facts: the selected witness satisfies the regime's
+   predicate.  No geometry hypothesis; no geometry→matrix claim. *)
+Theorem clothoid_fill_disjoint_witness :
+  im_disjoint (clothoid_fill CLR_ChordDisjoint).
 Proof.
-  intros c P Q H.
-  rewrite clothoid_fill_disjoint_eq.
-  exact (clothoid_chord_rejected_disjoint_sound c P Q H).
+  rewrite clothoid_fill_disjoint_eq. exact cl_matrix_disjoint_witness.
 Qed.
 
-Theorem clothoid_fill_proper_cross_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    clothoid_chord_proper_cross c P Q ->
-    im_crosses (clothoid_fill CLR_ChordProperCross) /\
-    im_intersects (clothoid_fill CLR_ChordProperCross).
+Theorem clothoid_fill_proper_cross_witness :
+  im_crosses (clothoid_fill CLR_ChordProperCross) /\
+  im_intersects (clothoid_fill CLR_ChordProperCross).
 Proof.
-  intros c P Q H.
   rewrite clothoid_fill_proper_cross_eq.
-  exact (clothoid_chord_proper_cross_sound c P Q H).
+  split; [exact cl_matrix_point_ii_crosses | exact cl_matrix_point_ii_intersects].
 Qed.
 
-Theorem clothoid_fill_share_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    clothoid_chord_share c P Q ->
-    im_intersects (clothoid_fill CLR_ChordShare).
+Theorem clothoid_fill_share_witness :
+  im_intersects (clothoid_fill CLR_ChordShare).
 Proof.
-  intros c P Q H.
-  rewrite clothoid_fill_share_eq.
-  exact (clothoid_chord_share_intersects_sound c P Q H).
+  rewrite clothoid_fill_share_eq. exact cl_matrix_point_ii_intersects.
 Qed.
 
-Theorem classify_clothoid_disjoint_fill_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    classify_clothoid c P Q CLR_ChordDisjoint ->
-    im_disjoint (clothoid_fill CLR_ChordDisjoint).
-Proof.
-  intros c P Q H. unfold classify_clothoid in H.
-  exact (clothoid_fill_disjoint_sound c P Q H).
-Qed.
-
-Theorem classify_clothoid_proper_cross_fill_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    classify_clothoid c P Q CLR_ChordProperCross ->
-    im_crosses (clothoid_fill CLR_ChordProperCross) /\
-    im_intersects (clothoid_fill CLR_ChordProperCross).
-Proof.
-  intros c P Q H. unfold classify_clothoid in H.
-  exact (clothoid_fill_proper_cross_sound c P Q H).
-Qed.
-
-Theorem classify_clothoid_share_fill_sound :
-  forall (c : ClothoidChord) (P Q : Point),
-    classify_clothoid c P Q CLR_ChordShare ->
-    im_intersects (clothoid_fill CLR_ChordShare).
-Proof.
-  intros c P Q H. unfold classify_clothoid in H.
-  exact (clothoid_fill_share_sound c P Q H).
-Qed.
-
-Print Assumptions clothoid_fill_proper_cross_sound.
+Print Assumptions clothoid_fill_disjoint_witness.
+Print Assumptions clothoid_fill_proper_cross_witness.
+Print Assumptions clothoid_fill_share_witness.
