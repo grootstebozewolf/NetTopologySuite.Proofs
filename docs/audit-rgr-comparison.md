@@ -513,7 +513,7 @@ parallel — orthogonal decomposition + unit length forces `n̂₁·n̂₂ = ±1
 **validity** `round_join_arc_valid` (the control-point cross factors
 exactly as `d²(2−h)/h · cross(n̂₁,n̂₂)`, `h = |n̂₁+n̂₂|`, so the join is a
 valid `CircularArc` whenever the corner actually turns and is not the
-U-turn boundary — which is rung 3's S-curve and needs two arcs);
+U-turn boundary — which is rung 3's S-curve; *[corrected by rung 7: ONE semicircle suffices]*);
 **geometry** `round_join_arc_center_radius` (circumcircle is exactly
 `(P, |d|)`, via rung 2's circumcenter uniqueness — its second consumer);
 **splicing** `round_join_connects` (endpoints coincide with the adjacent
@@ -539,7 +539,7 @@ G1 seams), closed (closing join or G1 closing seam). Coherence
 plain map, so the assembly conservatively extends rung 4's smooth
 capstone. The offset lane's structural story is now complete for
 arbitrary non-U-turn compound rings; remaining on #65: the U-turn
-(S-curve) double-arc join, curved endcaps for open inputs, and
+(S-curve) join *[closed by rung 7 with a single semicircle]*, curved endcaps for open inputs *[also rung 7]*, and
 `CurvePolygon`-level topology (hole/shell relations) under offset.
 
 **Rung 7 (2026-06-11): the semicircle — U-turn join + round endcap in
@@ -560,3 +560,82 @@ semicircles are admissible for antipodal endpoints); `cap_tangent :=
 vperp` is the canonical choice with unit/perp dischargers. Remaining on
 #65: threading the U-turn semicircle through the assembly walk, and
 `CurvePolygon`-level topology (hole/shell relations) under offset.
+
+**Rung 8 (2026-06-11): TOTAL assembly — no join exclusions.**
+`theories/CurveOffsetAssemblyTotal.v`, all `Qed`, three-axiom. Threads
+rung 7's semicircle through rung 6's walk: `join_connector` is the
+three-way join policy (G1 → nothing, U-turn → semicircle with a
+supplied sweep side, otherwise → round join), with a second spec'd
+boolean oracle `uturndec` and the sweep supplier `tsel` (unit ⊥ the
+join normal; `tsel_vperp_spec` discharges the canonical `vperp`
+instance). Headline `curve_ring_offset_total_valid`: ANY valid compound
+ring with non-degenerate chords, offset within the per-arc safety bound
+and `d ≠ 0`, assembles into a `valid_curve_ring` — rung 6's no-U-turn
+and the round join's turning hypotheses are both gone; every join
+configuration is handled. The structural offset story for #65 is now
+TOTAL at the ring level. Remaining on the lane: `CurvePolygon`-level
+topology (hole/shell relations under offset) and, beyond structure, the
+point-set semantics (the assembled ring bounds the Minkowski offset
+region — the buffer-correctness bridge of `buffer-noder-pipeline.md`
+§3).
+
+---
+
+## 8. Forward-pointer inventory + refreshed ranking (2026-06-11, post-rung-8)
+
+§2's table (2026-06-09) is now stale on five rows (C1 landed §5, arc-line
+landed §6, H1 re-graded in the Postscript, and the entire #65 curve-offset
+ladder landed §7). This section re-derives the ranking from a fresh sweep
+of the corpus's LIVE forward pointers — the `FORWARD POINTER` blocks,
+"What remains" sections, "still open" row tails, and the registries — so
+the next-investment decision again rests on current facts.
+
+### 8.1 Inventory (pointer source → open target)
+
+| # | Pointer (source of record) | Open target |
+|---|---|---|
+| P1 | `CurveOffsetAssemblyTotal.v` FORWARD POINTER; `buffer-noder-pipeline.md` §2.2 | **`CurvePolygon`-level offset topology** — hole/shell relations under offset (the SQL/MM polygon layer above the now-complete ring layer) |
+| P2 | same pointer; `buffer-noder-pipeline.md` §3 | **Point-set Minkowski semantics** — the assembled offset ring bounds `{p \| dist(p,g) ≤ d}` (the buffer-correctness bridge) |
+| P3 | `buffer-noder-pipeline.md` rows 2b/2c tails | **Linear-side join/cap edge-list emission** — note the curve walk already emits chords (`CSChord` case), so this may reduce to instantiating the total assembly on all-chord rings |
+| P4 | `docs/admitted-deferred-proofs.txt` (the ONLY live entry); `extract-faces.md` "What remains" | **H2 `extract_rings_valid`** — with-holes emission (nesting tree), discharging the `fully_intersected` hypotheses for `OverlayBridge`'s noded output, R4 Euler relation |
+| P5 | `JCTSeamAssembly.v` residual; `JCTWalkKit.v`/`JCTCornerClear.v` rung markers | **H1 residual `even_parity_escapes`** — the escape construction for even-parity points of simple rings (descent rungs 4/5b in flight: touch-freedom, wall choice) |
+| P6 | `verified-claims.md` Phase-2 caveats; §5 above | **C1 width extension to `2²⁵`** — needs the exact integer-determinant comparison (forward-error bound provably insufficient at full width) |
+| P7 | issue #64 verdict 2026-06-10 | **Arc-arc intersection & sweep/point-on-arc rounding contracts** — the remaining `Immediate` justification on #64 |
+| P8 | `issue-67-relateng-triage.md` "still open" | **#67 RelateNG S4+** — full arrangement classifier (point/line/area/collection), "comparable to Phase 3 overlay in scope"; plus the narrowed general-polygon Contains JCT seam |
+| P9 | issue #68 / #69 table | **#68 Delaunay empty-circle theory** — unblocked by `b64_inCircle_exact_sound`, no theory yet |
+| P10 | (implicit; `oracle/` has no curve-offset modes) | **Curve-offset oracle extraction** — the rung 1–8 machinery is rational arithmetic plus two sqrt sites; extraction + golden vectors would give JTS/NTS's curve RGR its differential oracle (the original #64/#65 ask) |
+| P11–13 | pivot doc / counterexample registry (unchanged) | **Parked:** C2 rounded-filter completeness; SD re-scoped expansion-sum (optimization only); arc-Hobby analog (no published true statement) |
+
+### 8.2 Refreshed risk/cost ranking
+
+Same lens as §2: value · risk (tractability) · cost. The corpus's
+repeatable low-risk move remains "bounded structural slice with a usable
+headline" — which is what made the curve ladder land 8 rungs in two days.
+
+| rank | target | value | risk | cost |
+|---|---|---|---|---|
+| **1** | **P1 `CurvePolygon` offset topology** | high — completes the SQL/MM emission story the ladder built toward | **low** — pure structure over a complete ring layer; same induction style that went 8/8 | 1–2 sessions |
+| **2** | **P10 curve-offset oracle extraction** | high — differential vectors for the JTS/NTS curve epic, the lane's original consumer ask | low–medium — ratchet rules around the two sqrt sites (join midpoint, `arc_radius`); precedent: `ARC_LENGTH` interface-boundary modes | 1 session |
+| **3** | **P3 linear edge-list emission** | medium — closes two stale 🟡 rows | **low** — likely a coherence corollary of the total assembly on all-chord rings | ≤1 session |
+| **4** | **P4 H2 `extract_rings_valid`** | **high** — the only live deferred-proof entry; gates the overlay headline | medium — DCEL bookkeeping, active lane with momentum (#167/#168) | 2–4 sessions remaining |
+| **5** | **P5 H1 `even_parity_escapes`** | high — completes polygonal JCT | medium — execution risk only (descent rungs in flight) | 2–4 sessions |
+| **6** | P7 arc-arc / sweep contracts (#64) | medium — rounds out the arc primitive set | medium — arc-arc denominators lack the bit-exactness that made arc-line absolute | 2–3 sessions |
+| **7** | P2 Minkowski bridge | high — the buffer point-set headline | medium–high — needs H1-adjacent analytic machinery; sequence AFTER P5 | multi-session |
+| **8** | P6 C1 width `2²⁵` | low–medium — regime widening only | medium — exact int-det comparison | 1–2 sessions |
+| **9** | P8 #67 S4+ classifier | high — biggest consumer gap | high — Phase-3-scale | many sessions |
+| **10** | P9 #68 empty-circle | medium | medium — greenfield on a ready oracle | 2–3 sessions |
+| — | P11–13 | — | parked (unchanged verdicts) | — |
+
+### 8.3 Decision
+
+1. **Finish the curve lane's emission story first (P1 → P10 → P3)** —
+   three bounded slices that convert the eight-rung structural ladder
+   into the consumable artefact (#65's actual deliverable: SQL/MM
+   `CurvePolygon` output + a differential oracle), at the corpus's
+   lowest observed risk.
+2. **Then return to the two structural residuals (P4, P5)** in either
+   order — both are execution-risk-only, both gate the flagship
+   conditional overlay headline, and P5 additionally unlocks P2.
+3. **Sequence P2 (Minkowski) after P5**; take P7/P6/P9 opportunistically;
+   P8 only as a planned engagement; P11–13 stay parked.
+

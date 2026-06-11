@@ -33,8 +33,8 @@
        (`norm_start s2 = - norm_end s1`) the semicircle splices the two
        offset segments -- closing the exclusion that
        `CurveOffsetAssembly.curve_ring_offset_round_valid` carries as
-       its no-U-turn hypothesis (single-join level; threading it
-       through the assembly walk is a follow-up).
+       its no-U-turn hypothesis (single-join level; threaded through
+       the assembly walk in `CurveOffsetAssemblyTotal.v`, rung 8).
      - `semicircle_cap_connects`: at the end of a segment the SAME arc
        connects the `+d` offset boundary to the `-d` offset boundary --
        the round endcap of a two-sided buffer over an open compound

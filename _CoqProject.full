@@ -1398,6 +1398,19 @@ theories/CurveOffsetAssembly.v
 # No Admitteds.
 theories/CurveSemicircle.v
 
+# Issue #65 curve-aware buffer, rung 8: TOTAL assembly -- the offset
+# ring with NO join exclusions.  join_connector is the three-way join
+# policy (G1: nothing; U-turn: rung 7's semicircle with a supplied
+# sweep side tsel; otherwise: the round join), with uturndec a second
+# spec'd boolean oracle and tsel spec'd unit-perpendicular (canonical
+# instance vperp, tsel_vperp_spec).  Headline
+# curve_ring_offset_total_valid: ANY valid compound ring with
+# nondegenerate chords, offset within the per-arc safety bound, d <> 0
+# assembles -- offset segments + connectors incl. the closing join --
+# into a valid_curve_ring; no U-turn or turning hypotheses remain.
+# Coherence offset_walk_total_smooth_eq_map as before.  No Admitteds.
+theories/CurveOffsetAssemblyTotal.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.

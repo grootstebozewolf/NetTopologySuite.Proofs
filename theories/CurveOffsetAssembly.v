@@ -27,8 +27,9 @@
      - `curve_ring_offset_round_valid` (HEADLINE): for a valid compound
        ring with non-degenerate chords, offset within the per-arc
        safety bound (`-r < d`), with `d <> 0` and NO U-TURN joins
-       (anti-parallel normals -- the S-curve boundary needs two arcs,
-       out of scope), the assembled output is again a
+       (anti-parallel normals -- handled by ONE semicircle in rung 7,
+       threaded through the walk in rung 8), the assembled output is
+       again a
        `valid_curve_ring`: every arc valid (offset arcs by rung 3's
        safety argument, join arcs by `round_join_arc_valid`), adjacent
        (offset-to-join splices by `round_join_connects`, G1 joins by
@@ -45,9 +46,12 @@
 
    FORWARD POINTER: the no-U-turn hypothesis below is closed at the
    single-join level by `CurveSemicircle.semicircle_uturn_connects`
-   (rung 7); threading that semicircle through this walk -- replacing
-   `ring_no_uturn_joins` with a supplied per-join sweep side -- is the
-   remaining assembly work, tracked in `audit-rgr-comparison.md` §7.
+   (rung 7), and threaded through the walk -- replacing
+   `ring_no_uturn_joins` with a supplied per-join sweep side -- in
+   `CurveOffsetAssemblyTotal.v` (rung 8), whose
+   `curve_ring_offset_total_valid` supersedes this file's headline
+   with NO join exclusions.  This file remains the round-join-only
+   reference assembly.
 
    Pure-R; THREE-AXIOM THROUGHOUT (classical-reals trio).  No
    `Admitted`/`Axiom`/`Parameter`.
