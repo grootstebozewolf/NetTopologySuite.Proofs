@@ -40,10 +40,22 @@
         curve analogue of the corner gap in the linear pipeline, and a
         quality class behind JTS#1147 / OffsetCurve artifacts.
 
-   Adjacency/closedness preservation for an ALL-G1-consistent ring is
-   deliberately deferred to the assembly rung (it is the per-join lemma
-   2 lifted by list induction, pending the join-edge emission design
-   for the non-G1 case that lemma 3 forces).
+     4. THE LIFT TO WHOLE RINGS (rung 4, same file).  A uniform offset
+        NORMAL FIELD across both segment kinds (`segment_norm_end` /
+        `segment_norm_start`: chords carry `unit_perp` of their
+        direction, arcs the outward unit radial) factors both offset
+        formulas through one shape, `P + d*n^` -- so ONE join lemma
+        (`segment_join_offset_continuous`) covers chord-chord,
+        chord-arc, and arc-arc joins.  List induction then lifts it:
+        for a ring whose consecutive joins (and closing join) all have
+        consistent normals, the offset ring preserves adjacency
+        (`curve_ring_offset_adjacent`) and closedness
+        (`curve_ring_offset_closed`); with §2's arc validity this gives
+        the capstone `curve_ring_offset_valid` -- a smooth, safely
+        offset compound ring is again a VALID compound ring, the
+        structural prerequisite for `CurvePolygon` boundary emission.
+        Join-EDGE emission for the non-G1 case (which lemma 3 forces)
+        remains the next rung.
 
    Pure-R; THREE-AXIOM THROUGHOUT (classical-reals trio).  No
    `Admitted`/`Axiom`/`Parameter`.
@@ -55,7 +67,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance CurveGeometry ArcChordApprox.
+From NTS.Proofs Require Import Distance Vec CurveGeometry ArcChordApprox.
 From NTS.Proofs Require Import ArcOffsetThreePoint BufferOffset.
 
 Import ListNotations.
@@ -232,6 +244,207 @@ Proof.
     lra.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* §5  The uniform offset normal field (rung 4).                              *)
+(*                                                                            *)
+(* Both offset formulas factor through one shape: the offset of a segment    *)
+(* endpoint P is P translated by d * (unit normal at P).  For chords the     *)
+(* normal is constant (`unit_perp` of the direction, the BufferOffset        *)
+(* normal); for arcs it is the outward unit radial (P - C)/r.                *)
+(* -------------------------------------------------------------------------- *)
+
+(* The per-segment hypothesis §2's Forall ranges over, named.                *)
+Definition segment_arc_valid (s : CurveSegment) : Prop :=
+  match s with
+  | CSChord _ _ => True
+  | CSArc a => valid_arc a
+  end.
+
+Definition segment_norm_end (s : CurveSegment) : Vec :=
+  match s with
+  | CSChord p q => unit_perp (seg_vec p q)
+  | CSArc a => mkVec ((px (arc_end a) - px (arc_center a)) / arc_radius a)
+                     ((py (arc_end a) - py (arc_center a)) / arc_radius a)
+  end.
+
+Definition segment_norm_start (s : CurveSegment) : Vec :=
+  match s with
+  | CSChord p q => unit_perp (seg_vec p q)
+  | CSArc a => mkVec ((px (arc_start a) - px (arc_center a)) / arc_radius a)
+                     ((py (arc_start a) - py (arc_center a)) / arc_radius a)
+  end.
+
+Lemma curve_segment_offset_end : forall s d,
+  segment_arc_valid s ->
+  curve_segment_end (curve_segment_offset s d) =
+  pt_translate (curve_segment_end s)
+               (d * vx (segment_norm_end s)) (d * vy (segment_norm_end s)).
+Proof.
+  intros [p q | a] d Hs.
+  - (* chord: both sides are the same translation, definitionally *)
+    simpl. unfold offset_point, offset_normal. reflexivity.
+  - (* arc: the homothety IS the radial translation (r <> 0) *)
+    pose proof (arc_radius_pos a Hs) as Hr.
+    cbn [curve_segment_offset curve_segment_end segment_norm_end].
+    unfold arc_offset_arc. cbn [arc_end].
+    unfold radial_offset, homothety, pt_translate. cbn [vx vy].
+    apply point_eq; cbn [px py]; field; lra.
+Qed.
+
+Lemma curve_segment_offset_start : forall s d,
+  segment_arc_valid s ->
+  curve_segment_start (curve_segment_offset s d) =
+  pt_translate (curve_segment_start s)
+               (d * vx (segment_norm_start s)) (d * vy (segment_norm_start s)).
+Proof.
+  intros [p q | a] d Hs.
+  - simpl. unfold offset_point, offset_normal. reflexivity.
+  - pose proof (arc_radius_pos a Hs) as Hr.
+    cbn [curve_segment_offset curve_segment_start segment_norm_start].
+    unfold arc_offset_arc. cbn [arc_start].
+    unfold radial_offset, homothety, pt_translate. cbn [vx vy].
+    apply point_eq; cbn [px py]; field; lra.
+Qed.
+
+(* ONE join lemma for all four segment-kind combinations: a shared join     *)
+(* point with consistent normals stays shared under offset.                  *)
+Theorem segment_join_offset_continuous : forall s1 s2 d,
+  segment_arc_valid s1 -> segment_arc_valid s2 ->
+  curve_segment_end s1 = curve_segment_start s2 ->
+  segment_norm_end s1 = segment_norm_start s2 ->
+  curve_segment_end (curve_segment_offset s1 d) =
+  curve_segment_start (curve_segment_offset s2 d).
+Proof.
+  intros s1 s2 d H1 H2 HP HN.
+  rewrite (curve_segment_offset_end s1 d H1).
+  rewrite (curve_segment_offset_start s2 d H2).
+  rewrite HP, HN. reflexivity.
+Qed.
+
+(* Coherence with §3's arc-arc condition: for arcs sharing their join       *)
+(* point, `join_normals_consistent` IS normal-field equality.                *)
+Lemma join_normals_consistent_norm_iff : forall a1 a2,
+  arc_end a1 = arc_start a2 ->
+  (join_normals_consistent a1 a2 <->
+   segment_norm_end (CSArc a1) = segment_norm_start (CSArc a2)).
+Proof.
+  intros a1 a2 HP.
+  unfold join_normals_consistent.
+  cbn [segment_norm_end segment_norm_start].
+  rewrite <- HP.
+  split.
+  - intros [Hx Hy]. apply Vec_eq; cbn [vx vy]; assumption.
+  - intros H. inversion H. split; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  All-G1 rings: adjacency and closedness survive the offset.            *)
+(* -------------------------------------------------------------------------- *)
+
+(* Every consecutive join has consistent normals (same recursion shape as    *)
+(* CurveGeometry.curve_ring_adjacent).                                        *)
+Fixpoint ring_joins_normals_consistent (r : CurveRing) : Prop :=
+  match r with
+  | [] => True
+  | s1 :: rest =>
+      match rest with
+      | [] => True
+      | s2 :: _ =>
+          segment_norm_end s1 = segment_norm_start s2 /\
+          ring_joins_normals_consistent rest
+      end
+  end.
+
+(* ... and so does the closing join (last segment back to the first).        *)
+Definition ring_closing_join_normals_consistent (r : CurveRing) : Prop :=
+  match r with
+  | [] => True
+  | s :: _ => segment_norm_end (last r s) = segment_norm_start s
+  end.
+
+(* List helpers. *)
+Lemma last_map {A B : Type} (f : A -> B) :
+  forall (l : list A) (a : A), last (map f l) (f a) = f (last l a).
+Proof.
+  induction l as [| x l' IH]; intros a.
+  - reflexivity.
+  - destruct l' as [| y l''].
+    + reflexivity.
+    + exact (IH a).
+Qed.
+
+Lemma last_in {A : Type} : forall (l : list A) (a : A),
+  l <> [] -> In (last l a) l.
+Proof.
+  induction l as [| x l' IH]; intros a Hne.
+  - contradiction.
+  - destruct l' as [| y l''].
+    + left. reflexivity.
+    + right. apply IH. discriminate.
+Qed.
+
+Theorem curve_ring_offset_adjacent : forall r d,
+  curve_ring_arcs_valid r ->
+  curve_ring_adjacent r ->
+  ring_joins_normals_consistent r ->
+  curve_ring_adjacent (curve_ring_offset r d).
+Proof.
+  intros r d. induction r as [| s1 rest IH]; intros Hv Hadj HG1.
+  - exact I.
+  - destruct rest as [| s2 rest'].
+    + exact I.
+    + destruct Hadj as [Hj Hadj'].
+      destruct HG1 as [Hn HG1'].
+      split.
+      * apply segment_join_offset_continuous; try assumption.
+        -- exact (Forall_inv Hv).
+        -- exact (Forall_inv (Forall_inv_tail Hv)).
+      * exact (IH (Forall_inv_tail Hv) Hadj' HG1').
+Qed.
+
+Theorem curve_ring_offset_closed : forall r d,
+  curve_ring_arcs_valid r ->
+  curve_ring_closed r ->
+  ring_closing_join_normals_consistent r ->
+  curve_ring_closed (curve_ring_offset r d).
+Proof.
+  intros [| s rest] d Hv Hcl HG1.
+  - exact Hcl.
+  - pose proof (last_map (fun x => curve_segment_offset x d) (s :: rest) s)
+      as Hlast.
+    cbn [map] in Hlast.
+    unfold curve_ring_offset. cbn [map curve_ring_closed].
+    rewrite Hlast.
+    apply segment_join_offset_continuous.
+    + apply (proj1 (Forall_forall _ _) Hv).
+      apply last_in. discriminate.
+    + exact (Forall_inv Hv).
+    + exact Hcl.
+    + exact HG1.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Capstone: a smooth, safely-offset compound ring stays VALID.          *)
+(*                                                                            *)
+(* arcs valid (§2) + adjacency (§6) + closedness (§6): the structural        *)
+(* prerequisite for emitting the offset ring as a CurvePolygon boundary in   *)
+(* SQL/MM form.  The non-G1 case needs join edges (§4's tear witness).       *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem curve_ring_offset_valid : forall r d,
+  valid_curve_ring r ->
+  ring_joins_normals_consistent r ->
+  ring_closing_join_normals_consistent r ->
+  ring_offset_safe r d ->
+  valid_curve_ring (curve_ring_offset r d).
+Proof.
+  intros r d [Hv [Hadj Hcl]] HG1 HG1c Hsafe.
+  split; [ | split ].
+  - apply curve_ring_offset_arcs_valid; assumption.
+  - apply curve_ring_offset_adjacent; assumption.
+  - apply curve_ring_offset_closed; assumption.
+Qed.
+
 (* ========================================================================== *)
 (* Axiom audit.  ALL headlines below are 3-axiom (classical-reals trio:      *)
 (* sig_not_dec, sig_forall_dec, functional_extensionality_dep).              *)
@@ -240,3 +453,7 @@ Qed.
 Print Assumptions curve_ring_offset_arcs_valid.
 Print Assumptions arc_join_offset_continuous.
 Print Assumptions tangent_continuity_insufficient_for_offset.
+Print Assumptions segment_join_offset_continuous.
+Print Assumptions curve_ring_offset_adjacent.
+Print Assumptions curve_ring_offset_closed.
+Print Assumptions curve_ring_offset_valid.

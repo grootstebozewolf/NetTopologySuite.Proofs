@@ -164,3 +164,11 @@ negative `tangent_continuity_insufficient_for_offset` (S-curve/inflection
 witness — the offset tears despite tangent-line continuity, the arc-side
 JTS#1147 class). Three-axiom. Next: join/cap edge emission for non-G1
 joins, all-G1 closedness lifting, `CurvePolygon` topology.
+
+Rung 4 (same day): the ring-level lift — `CurveRingOffset.v` §§5–7. A
+uniform normal field makes one join lemma cover all segment-kind
+combinations (`segment_join_offset_continuous`), and list induction
+yields the capstone `curve_ring_offset_valid`: a smooth (all-consistent-
+normals) compound ring offset within the per-arc safety bound is again
+a `valid_curve_ring`. Three-axiom. Next: non-G1 join edges, curved
+endcaps, `CurvePolygon` topology.

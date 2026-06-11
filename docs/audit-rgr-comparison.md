@@ -484,3 +484,21 @@ JTS#1147 / OffsetCurve artifact class, and the reason stage-2b join
 edges remain on the ladder). Remaining: join/cap edge emission for the
 non-G1 case, adjacency/closedness lifting for all-G1 rings, and
 `CurvePolygon` topology preservation.
+
+**Rung 4 (2026-06-11): the lift to whole rings — smooth rings stay valid.**
+Same file (`CurveRingOffset.v` §§5–7), all `Qed`, three-axiom. A uniform
+offset normal field across both segment kinds (`segment_norm_{end,start}`:
+chords carry `unit_perp`, arcs the outward unit radial) factors both
+offset formulas through `P + d·n̂`, so one join lemma
+(`segment_join_offset_continuous`) covers chord-chord, chord-arc, and
+arc-arc joins (coherent with rung 3's arc-arc condition via
+`join_normals_consistent_norm_iff`). List induction lifts it:
+`curve_ring_offset_adjacent` and `curve_ring_offset_closed` preserve
+adjacency/closedness for rings whose consecutive + closing joins all
+have consistent normals, and the capstone `curve_ring_offset_valid`
+closes the ring-level structural story — a smooth compound ring offset
+within the per-arc safety bound is again a `valid_curve_ring`, ready for
+SQL/MM `CurvePolygon` boundary emission. Remaining on the #65 ladder:
+join-edge emission for the non-G1 case (forced by rung 3's tear
+witness), endcaps on curved inputs, and `CurvePolygon`-level topology
+(hole/shell relations) under offset.
