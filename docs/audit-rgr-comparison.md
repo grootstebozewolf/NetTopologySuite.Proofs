@@ -123,7 +123,7 @@ doc). Risk = tractability / chance the effort yields something shippable.
 | ~~**B/C-arc**~~ | ~~arc-line Scope B/C (round-chain + fwd-error)~~ — **LANDED 2026-06-10 (§6)** | Phase 4 | medium–high — arc-line callers now have an absolute `bpow 13` forward-error contract | — | **done** |
 | **H2** | `extract_rings_valid` (DCEL ring validity) | Phase 3 | **high** — discharges 1 of the 3 named hypotheses of the live conditional overlay headline; pure structure, no JCT | medium — DCEL refactor + per-condition proofs; no external dependency | high (5–7 sessions) |
 | **SD** | re-scoped fast-expansion-sum nonoverlap | Phase 0 | **low** — optimization only; full-plane soundness already shipped via exact int-det | high — re-aim O1–O8 against a weakened predicate; the half-ulp dominance args must be re-derived | high |
-| **H1** | polygonal JCT (`parity_characterises_interior_cont`) | Phase 3 | high — the headline-completing piece | **high** — no stub, no reachable library; multi-month from scratch | very high, blocked on ecosystem |
+| **H1** | polygonal JCT (`parity_characterises_interior_cont`) | Phase 3 | high — the headline-completing piece | ~~**high** — no stub, no reachable library; multi-month from scratch~~ **re-graded medium 2026-06-10 (see Postscript)** — trapped half Qed unconditionally; one named residual (`even_parity_escapes`) | ~~very high, blocked on ecosystem~~ **bounded, in-corpus** |
 | **arc-H** | arc Hobby / arc snap-rounding analog | Phase 4 | high (if it exists) — would open exact-arc noding | **very high** — no published analog; may have no true statement | unbounded |
 
 ---
@@ -149,9 +149,14 @@ doc). Risk = tractability / chance the effort yields something shippable.
    Hobby analog, and the Shewchuk re-scope (SD).** These are this comparison's
    analogue of the pivot doc's C2 — demote them to *useful, honestly-recorded
    open obligations*, not critical path:
-   - **H1** is blocked on an external JCT formalization the network policy
+   - **H1** ~~is blocked on an external JCT formalization the network policy
      can't reach; it stays a named hypothesis of the conditional headline (no
-     stub, no Admitted), to be re-opened **if** a library lands (~1 week then).
+     stub, no Admitted), to be re-opened **if** a library lands (~1 week then).~~
+     **Superseded 2026-06-10 — see the Postscript:** the trapped half is now
+     Qed unconditionally for every closed ring (`JCTTrappedHalf.odd_parity_trapped`)
+     and the seam is reduced to the single residual `even_parity_escapes`;
+     H1's risk shifted from *existence* to *execution*, which by this doc's
+     own criterion promotes it off the stop-chasing list.
    - **arc-H** has no published true statement — same risk profile as the
      refuted `hobby_lemma_4_3_no_proper`. Defer until a downstream consumer
      forces exact-arc noding (the Phase 4 tripwire, ~2031).
@@ -390,3 +395,130 @@ obligation (boundary-following or staircase escape for simple polygons);
 no external library required after all. The "blocked on ecosystem" verdict
 is retired: the ecosystem gap was routed around entirely within the
 corpus's three-axiom budget.
+
+---
+
+## 7. Execution — first #65 curve-buffer brick on top of the closed #64 contract: arc offset (2026-06-11)
+
+§6 closed arc-line Scope B/C, and the issue-#65 verdict flipped from
+"blocked on #64" to "unblocked — the open work shifts to the curve-buffer
+proofs themselves: arc offset (parallel curve at distance d), join
+soundness on curved inputs, topology preservation for `CurvePolygon`
+output". This section logs the first of those bricks:
+**`theories/ArcOffset.v`** — the Stage 2a-CURVE seam of the buffer/noder
+pipeline (`buffer-noder-pipeline.md` §2.2), the curved analogue of
+`BufferOffset.v`. All headlines `Qed` at the **three-axiom** footprint
+(including the derivative bridges — `Rtrigo_reg`'s
+`derivable_pt_lim_{sin,cos}` turn out classic-free, unlike `atan` /
+`sin_lt_x`); no new `Admitted`/`Axiom`/`Parameter`.
+
+- **AT DISTANCE d, globally (`arc_offset_dist_exact`).** The concentric
+  radius-`r+d` curve is *exactly* at distance `|d|` from the source
+  circle: every circle point is `≥ |d|` away (reverse triangle
+  inequality through the center, via `Linearise.dist_triangle`) and the
+  radial correspondent attains it (`arc_offset_radial_dist`). Valid for
+  `0 ≤ r`, `−r ≤ d` — i.e. up to and including the singularity. This is
+  the defining parallel-curve property, the curved
+  `offset_point_dist`/`offset_perp_dist_to_line`.
+
+- **PARALLEL / no kink (`arc_offset_no_kink`).** The offset tangent is a
+  *positive* scalar multiple (`(r+d)/r`) of the source tangent before
+  the singularity — offsetting cannot rotate or reverse the direction of
+  travel (curved `offset_seg_dir`, the JTS#739/#180 kink class). The
+  tangents are genuine `derivable_pt_lim` derivatives of the
+  parametrisation (`circle_point_{x,y}_deriv`), not decreed.
+
+- **Singularity, quantitatively (`arc_offset_tangent_dot` = `r(r+d)`).**
+  Positive before `d = −r`, zero at it, negative past it
+  (`arc_offset_tangent_reverses_past_singularity`) — the cusp +
+  direction-reversal behind inverted negative arc buffers.
+
+- **Honest negative (`inner_offset_past_center_not_at_distance`).**
+  Concrete `Qed` witness (`r = 1`, `d = −3`): past the singularity the
+  parallel-curve property itself *fails* (the "offset" point is at
+  distance `1 < |d| = 3` from the circle). Emitting
+  `circle_point C (r+d)` there is unsound, not merely inverted — the
+  guard a curve-aware buffer must enforce.
+
+- **Length bridge (`arc_offset_length`).** Over the same sweep,
+  `arc_length (r+d) θ = arc_length r θ + d·θ` (M-LEN seam to
+  `ArcLength.arc_length`).
+
+Still open on the #65 curve lane (in pipeline order): emitted curve-aware
+offset *edge lists* + join/cap edges on curved inputs, the
+SQL/MM-three-point bridge (`CurveGeometry.arc_center`/`arc_radius` to the
+center/angle form used here), and `CurvePolygon` topology preservation.
+The next bounded slice of the same shape is the three-point bridge (pure
+algebra, no new analysis); the assembly-level targets ride on the same
+Option-B machinery as the linear pipeline.
+
+**Rung 2 (2026-06-11, same day): the three-point bridge landed.**
+`theories/ArcOffsetThreePoint.v`, all `Qed`, three-axiom. The radial
+offset as a homothety about the center (pure rational arithmetic, no
+trig) carries the parallel-curve property into coordinate form
+(`radial_offset_dist_exact`); the **circumcenter-uniqueness** lemma that
+`CurveGeometry.v`'s §2 comment had deferred is closed
+(`equidistant_point_is_arc_center` — perpendicular-bisector system +
+Cramer against the explicit `arc_center` formula, the predicted fiddly
+square that in fact fell to `field_simplify_eq` + `nra`); and the
+closure headline `arc_offset_preserves_arc` proves the radial offset of
+a valid three-point `CircularArc` is again a valid three-point
+`CircularArc` with the **same `arc_center` and `arc_radius = r + d`** —
+"buffer/offset preserving arcs" (#65 BUF-*/OFF) at the representation
+level, extractable as-is. Remaining on the lane: emitted offset edge
+lists, joins/caps on curved inputs, `CurvePolygon` topology preservation.
+
+**Rung 3 (2026-06-11): segment-wise COMPOUNDCURVE offset.**
+`theories/CurveRingOffset.v`, all `Qed`, three-axiom. `curve_ring_offset`
+maps a `CurveRing` segment-wise (chords via `BufferOffset.offset_point`,
+arcs via rung 2's `arc_offset_arc`); per-arc validity and segment count
+survive under the per-arc safety bound `−r < d`
+(`curve_ring_offset_arcs_valid`). The join story is now split honestly:
+**G1 joins with consistent unit normals offset continuously**
+(`arc_join_offset_continuous` — smooth compound curves need no join
+edges), while **tangent-line continuity alone provably does not
+suffice** (`tangent_continuity_insufficient_for_offset` — a concrete
+S-curve/inflection witness with anti-parallel normals where the `d = 1`
+offset tears the shared point to `(2,0)` vs `(0,0)`; the arc-side
+JTS#1147 / OffsetCurve artifact class, and the reason stage-2b join
+edges remain on the ladder). Remaining: join/cap edge emission for the
+non-G1 case, adjacency/closedness lifting for all-G1 rings, and
+`CurvePolygon` topology preservation.
+
+**Rung 4 (2026-06-11): the lift to whole rings — smooth rings stay valid.**
+Same file (`CurveRingOffset.v` §§5–7), all `Qed`, three-axiom. A uniform
+offset normal field across both segment kinds (`segment_norm_{end,start}`:
+chords carry `unit_perp`, arcs the outward unit radial) factors both
+offset formulas through `P + d·n̂`, so one join lemma
+(`segment_join_offset_continuous`) covers chord-chord, chord-arc, and
+arc-arc joins (coherent with rung 3's arc-arc condition via
+`join_normals_consistent_norm_iff`). List induction lifts it:
+`curve_ring_offset_adjacent` and `curve_ring_offset_closed` preserve
+adjacency/closedness for rings whose consecutive + closing joins all
+have consistent normals, and the capstone `curve_ring_offset_valid`
+closes the ring-level structural story — a smooth compound ring offset
+within the per-arc safety bound is again a `valid_curve_ring`, ready for
+SQL/MM `CurvePolygon` boundary emission. Remaining on the #65 ladder:
+join-edge emission for the non-G1 case (forced by rung 3's tear
+witness), endcaps on curved inputs, and `CurvePolygon`-level topology
+(hole/shell relations) under offset.
+
+**Rung 5 (2026-06-11): the round join arc — the join edge, emitted AS an
+arc.** `theories/CurveRoundJoin.v`, all `Qed`, three-axiom. The join
+edge that rung 3's tear witness forces at non-G1 joins, in SQL/MM
+three-point form: `round_join_arc P d n1 n2` (start `P + d·n̂₁`, angular
+midpoint, end `P + d·n̂₂`). Proven: the **turning lemma**
+`unit_cross_nonzero` (distinct non-antipodal unit vectors are not
+parallel — orthogonal decomposition + unit length forces `n̂₁·n̂₂ = ±1`);
+**validity** `round_join_arc_valid` (the control-point cross factors
+exactly as `d²(2−h)/h · cross(n̂₁,n̂₂)`, `h = |n̂₁+n̂₂|`, so the join is a
+valid `CircularArc` whenever the corner actually turns and is not the
+U-turn boundary — which is rung 3's S-curve and needs two arcs);
+**geometry** `round_join_arc_center_radius` (circumcircle is exactly
+`(P, |d|)`, via rung 2's circumcenter uniqueness — its second consumer);
+**splicing** `round_join_connects` (endpoints coincide with the adjacent
+offset segments' endpoints via rung 4's uniform normal field) plus
+unit-ness of the ring's own normal fields. Remaining on the #65 ladder:
+the assembly rung (insert join arcs into `curve_ring_offset` output and
+re-prove ring validity for non-G1 rings), curved endcaps, and
+`CurvePolygon` topology.

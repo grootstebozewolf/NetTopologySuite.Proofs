@@ -125,3 +125,57 @@ The clothoid-halley-coq corpus released **v1.0.3** (`ffbbf6d`) with a retitle to
 ### 6.3 Linearisation-bridge structural faithfulness (CIRCULARSTRING / COMPOUNDCURVE)
 
 `theories/CurveGeometry.v` models a SQL/MM **COMPOUNDCURVE** as `CurveRing := list CurveSegment` (`CSChord` | `CSArc`), with the all-arc case being a **CIRCULARSTRING**, and `to_geometry` / `chord_approx_ring` linearise it (Option B) to a Phase-3 `Geometry`. `theories/CurveLinearise.v` closes the **combinatorial faithfulness** of that bridge: a valid (adjacent + closed) curve ring — circular *or* compound, handled uniformly — linearises to a `ring_closed` Phase-3 ring (`chord_approx_ring_closed`, axiom-free), and hence every outer ring and hole of `to_geometry cg n` is closed for a valid `cg` (`to_geometry_outer_ring_closed`, `to_geometry_hole_ring_closed`). This is the `ring_closed` conjunct of `valid_polygon` for the linearised curve geometry — the curve analogue of `RingExtract.face_walk_closed`, and the structural prerequisite for feeding linearised circularstrings/compoundcurves into the `extract_rings_valid` / overlay machinery. Three-axiom; no Admitted. The remaining curve-side residuals (sagitta/`ring_simple` of the approximation, `hole_inside_outer`) are the same analytic seams tracked elsewhere, not new debt.
+
+## 7. Curve-buffer lane opened (2026-06-11)
+
+The §4 stance ("re-evaluate once a consumer is asking for arc-aware
+work") has its first concrete consumer-driven landing beyond the
+predicate layer: with issue #64's arc-line Scope B/C closed
+(`b64_arc_line_point_{x,y}_forward_error`, absolute `bpow 13`), issue
+#65's curve-aware buffer lane is unblocked, and its first proof brick is
+in: **`theories/ArcOffset.v`** (Stage 2a-curve seam of
+[`buffer-noder-pipeline.md`](buffer-noder-pipeline.md) §2.2). The offset
+of a circular arc at signed distance `d` is the concentric radius-`r+d`
+arc: exactly-at-distance-`|d|` from the whole source circle (up to the
+`d = −r` singularity), tangent a positive multiple of the source tangent
+(no kink/reversal), direction reversal past the singularity
+(`tangent dot = r(r+d)`), a `Qed` witness that the parallel-curve
+property *fails* for `d < −r`, and the `arc_length` offset bridge.
+Three-axiom throughout. This stays inside the Option-A/Option-B division
+of labour: exact-arc geometry on the R side, chord machinery untouched.
+See [`audit-rgr-comparison.md`](audit-rgr-comparison.md) §7 for the
+execution log and the remaining #65 ladder (three-point bridge → emitted
+edge lists → `CurvePolygon` topology).
+
+Rung 2 (same day): the three-point bridge is closed —
+`theories/ArcOffsetThreePoint.v` proves `arc_offset_preserves_arc` (the
+radial offset of a valid SQL/MM `CircularArc` is again a valid
+`CircularArc`, same `arc_center`, `arc_radius = r + d`; pure rational
+arithmetic, extractable) and discharges the circumcenter-uniqueness
+lemma `CurveGeometry.v` §2 had deferred
+(`equidistant_point_is_arc_center`). Three-axiom. The ladder advances to
+emitted edge lists → `CurvePolygon` topology.
+
+Rung 3 (same day): segment-wise COMPOUNDCURVE offset —
+`theories/CurveRingOffset.v`. Per-arc validity and segment count survive
+(`curve_ring_offset_arcs_valid`); G1 joins with consistent unit normals
+offset continuously (`arc_join_offset_continuous`); and the honest
+negative `tangent_continuity_insufficient_for_offset` (S-curve/inflection
+witness — the offset tears despite tangent-line continuity, the arc-side
+JTS#1147 class). Three-axiom. Next: join/cap edge emission for non-G1
+joins, all-G1 closedness lifting, `CurvePolygon` topology.
+
+Rung 4 (same day): the ring-level lift — `CurveRingOffset.v` §§5–7. A
+uniform normal field makes one join lemma cover all segment-kind
+combinations (`segment_join_offset_continuous`), and list induction
+yields the capstone `curve_ring_offset_valid`: a smooth (all-consistent-
+normals) compound ring offset within the per-arc safety bound is again
+a `valid_curve_ring`. Three-axiom. Next: non-G1 join edges, curved
+endcaps, `CurvePolygon` topology.
+
+Rung 5 (same day): the round join arc — `CurveRoundJoin.v`. The non-G1
+join edge emitted as a valid SQL/MM `CircularArc` with circumcircle
+exactly `(P, |d|)` (second consumer of the circumcenter-uniqueness
+lemma), splicing onto the adjacent offset segments via the uniform
+normal field. Three-axiom. Next: the assembly rung (splice join arcs
+into offset rings), curved endcaps, `CurvePolygon` topology.

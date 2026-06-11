@@ -1270,6 +1270,60 @@ theories/ArcOverlay.v
 # sig_forall_dec, functional_extensionality_dep -- README-allowlisted).
 theories/ArcIntersectIVT.v
 
+# Issue #65 curve-aware buffer, first proof brick (Stage 2a-curve seam,
+# unblocked by #64's arc-line Scope B/C closure).  The offset of a
+# circular arc at signed distance d is the CONCENTRIC arc of radius
+# r + d: at-distance-d soundness (radial correspondents |d| apart +
+# reverse-triangle lower bound over the WHOLE circle, attained -- the
+# defining parallel-curve property, valid up to the singularity
+# d = -r), tangent parallelism with positive-multiple no-kink form
+# (curved analogue of BufferOffset.offset_seg_dir; derivative bridges
+# via Rtrigo_reg's derivable_pt_lim_{sin,cos}), tangent-dot = r(r+d)
+# giving direction REVERSAL past the singularity, a concrete Qed
+# witness that the parallel-curve property FAILS for d < -r
+# (inverted-negative-buffer artifact class), and the arc_length
+# offset bridge (M-LEN).  No Admitteds.
+theories/ArcOffset.v
+
+# Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.
+# radial_offset (homothety about the center, pure rational arithmetic,
+# no trig) carries ArcOffset's parallel-curve property into coordinate
+# form (radial_offset_dist_exact); circumcenter UNIQUENESS
+# (equidistant_point_is_arc_center -- the converse of
+# ArcChordApprox.arc_center_equidistant that CurveGeometry.v's comment
+# deferred); and the closure headline arc_offset_preserves_arc: the
+# radial offset of a valid three-point CircularArc is again a valid
+# three-point CircularArc with the SAME arc_center and arc_radius = r+d
+# ("buffer/offset preserving arcs" at the representation level), plus
+# per-control-point at-distance-|d| facts.  No Admitteds.
+theories/ArcOffsetThreePoint.v
+
+# Issue #65 curve-aware buffer, rung 3: segment-wise offset of a
+# COMPOUNDCURVE ring (chords via BufferOffset.offset_point, arcs via
+# arc_offset_arc).  Arc validity survives under the per-arc safety
+# bound (curve_ring_offset_arcs_valid); G1 joins with CONSISTENT
+# normals offset continuously (arc_join_offset_continuous, the
+# no-join-edge-needed case); and the honest negative
+# tangent_continuity_insufficient_for_offset -- a concrete S-curve
+# (inflection) witness where tangent-line continuity holds but the
+# offset TEARS (anti-parallel normals), the arc-side reason stage-2b
+# join edges remain necessary (JTS#1147 / OffsetCurve artifact class).
+# No Admitteds.
+theories/CurveRingOffset.v
+
+# Issue #65 curve-aware buffer, rung 5: the ROUND JOIN ARC in SQL/MM
+# three-point form -- the join edge CurveRingOffset's tear witness
+# forces at non-G1 joins, emitted AS AN ARC.  unit_cross_nonzero (the
+# turning lemma: distinct non-antipodal unit vectors are not parallel);
+# round_join_arc_valid (control-point cross factors as
+# d^2 (2-h)/h cross(n1,n2), h=|n1+n2| -- a valid CircularArc);
+# round_join_arc_center_radius (circumcircle is EXACTLY (P,|d|), via
+# rung 2's circumcenter uniqueness); round_join_connects (endpoints
+# coincide with the adjacent offset segments' endpoints, via rung 4's
+# uniform normal field); plus unit-ness of the ring's own normal
+# fields.  No Admitteds.
+theories/CurveRoundJoin.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
