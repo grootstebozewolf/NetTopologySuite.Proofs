@@ -769,3 +769,20 @@ now produces a valid compound ring ready for linearisation and the
 proven noding spine. Remaining on the lane: P10 brick 2 (oracle modes,
 Flocq-bound) and P2 (Minkowski point-set semantics); the structural
 queue otherwise moves to P4/P5 (H2/H1 residuals).
+**Rung 15 (2026-06-11): P4 first slice — with-holes emission (H2 lane,
+slice 3h).** `theories/ExtractFacesHoles.v`, all `Qed` — and at TWO
+axioms (`sig_not_dec` is not even pulled). The first "What remains" item
+of `extract-faces.md` closes at the emission level:
+`extract_faces_holes` emits face polygons WITH holes, the hole-to-shell
+nesting supplied as an abstract oracle (the curve lane's
+spec-conditional-oracle discipline applied to the DCEL lane). Headline
+`extract_faces_holes_valid` composes slice 3g's structural noder
+hypotheses with slice 3f's `face_polygon_holes_valid`; the oracle's
+nesting clause — per-hole `hole_inside_outer` — is the lane's SINGLE
+analytic residual, exactly as the proof-structure doc's §4 prescribes,
+now carried by an emitting extractor rather than only an assembly
+lemma. Coherence: the empty assignment recovers the hole-free
+extractor. Remaining on P4: the `fully_intersected` hypothesis
+discharge for `OverlayBridge`'s concrete noded output (Flocq-bound, a
+container session) and the R4 Euler relation; the analytic seam itself
+is P5-adjacent (H1's machinery).

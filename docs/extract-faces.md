@@ -110,10 +110,14 @@ no geometry, connecting the face walks back to the labelling layer
 
 ## What remains
 
-- **With-holes emission**: grouping oppositely-oriented nested faces into
-  `hole_rings` (the slice 3d/3e orientation seed + the nesting tree), gated
-  on the analytic `hole_inside_outer` residual (§4 of the proof-structure
-  doc) — the same single JCT seam as `overlay_ng_correct_conditional` H1.
+- **With-holes emission**: ✅ landed as slice 3h
+  (`theories/ExtractFacesHoles.v`, `extract_faces_holes_valid`): the
+  extractor emits with-holes polygons with the nesting supplied as a
+  spec'd oracle; validity is conditional only on the per-hole
+  `hole_inside_outer` clause — the same single JCT seam as
+  `overlay_ng_correct_conditional` H1, now carried by an emitting
+  extractor.  Computing the assignment (3e orientation classifier +
+  nesting tree) and discharging the seam remain the analytic follow-ups.
 - **Discharging the three hypotheses from `fully_intersected`** for the
   concrete noded output of `OverlayBridge` (connecting `noded_segments` to
   `fan_ok`/`no_short_faces`), which would re-point the deferred

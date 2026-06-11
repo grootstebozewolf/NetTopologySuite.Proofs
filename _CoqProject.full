@@ -300,6 +300,18 @@ theories/FacePolygon.v
 # extract_faces_label_fidelity (emitted rings trace only op-kept edges).
 # No Admitted; standard three-axiom classical-reals base.
 theories/ExtractFaces.v
+# extract_rings_valid R5 slice 3h: WITH-HOLES emission.  The extractor
+# that emits face polygons WITH holes, the hole-to-shell nesting
+# supplied as an abstract oracle (hassign) so that every theorem is
+# conditional only on its spec: (i) assigned darts are result darts,
+# (ii) each assigned face ring is hole_inside_outer its shell's --
+# clause (ii) being the lane's SINGLE analytic residual (the same
+# JCT-adjacent seam as H1), per the proof-structure doc's section-4
+# discipline.  Headline extract_faces_holes_valid composes slice 3g's
+# structural hypotheses with slice 3f's face_polygon_holes_valid;
+# coherence extract_faces_holes_nil recovers the hole-free extractor.
+# No Admitteds.
+theories/ExtractFacesHoles.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
