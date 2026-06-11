@@ -146,3 +146,12 @@ of labour: exact-arc geometry on the R side, chord machinery untouched.
 See [`audit-rgr-comparison.md`](audit-rgr-comparison.md) §7 for the
 execution log and the remaining #65 ladder (three-point bridge → emitted
 edge lists → `CurvePolygon` topology).
+
+Rung 2 (same day): the three-point bridge is closed —
+`theories/ArcOffsetThreePoint.v` proves `arc_offset_preserves_arc` (the
+radial offset of a valid SQL/MM `CircularArc` is again a valid
+`CircularArc`, same `arc_center`, `arc_radius = r + d`; pure rational
+arithmetic, extractable) and discharges the circumcenter-uniqueness
+lemma `CurveGeometry.v` §2 had deferred
+(`equidistant_point_is_arc_center`). Three-axiom. The ladder advances to
+emitted edge lists → `CurvePolygon` topology.

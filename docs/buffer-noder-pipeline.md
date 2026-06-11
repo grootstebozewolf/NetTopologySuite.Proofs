@@ -133,7 +133,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 | Stage | What it needs | Corpus status | Key identifiers |
 |---|---|---|---|
 | 1 decompose | input → segment list | ✅ | `OverlayGraph.extract_segments`, `polygon_to_pairs`; curve side `CurveGeometry.{CurveSegment,CurveRing,curve_segment_start/end}` |
-| 2a offset @ d | parallel curve at distance `d` | 🟡 | segment soundness ✅ `BufferOffset.{offset_seg_dir,offset_point_dist,offset_perp_dist_to_line}`; arc soundness ✅ `ArcOffset.{arc_offset_dist_exact,arc_offset_no_kink,arc_offset_tangent_dot}` (concentric `r+d`, parallel-curve property exact up to the `d = -r` singularity, with a Qed failure witness past it); still no emitted offset *edge lists* |
+| 2a offset @ d | parallel curve at distance `d` | 🟡 | segment soundness ✅ `BufferOffset.{offset_seg_dir,offset_point_dist,offset_perp_dist_to_line}`; arc soundness ✅ `ArcOffset.{arc_offset_dist_exact,arc_offset_no_kink,arc_offset_tangent_dot}` (concentric `r+d`, parallel-curve property exact up to the `d = -r` singularity, with a Qed failure witness past it); SQL/MM three-point closure ✅ `ArcOffsetThreePoint.arc_offset_preserves_arc` (offset of a valid `CircularArc` is a valid `CircularArc`, same center, radius `r+d`); still no emitted offset *edge lists* |
 | 2b joins | round/miter/bevel at corners | 🟡 | round-join central angle ✅ `BufferJoin.corner_arc_sweep_eq_turn(_unit)` (Roadmap target 6); miter apex + limit cap + half-angle ✅ `BufferMiter.*` / `BufferMiterAngle.miter_cap_iff_sin_half` (JTS#180); bevel chord ✅ `BufferBevel.bevel_length_sq_sin_half`; still no emitted join *edge lists* |
 | 2c endcaps | round/flat/square at line ends | 🟡 | ✅ `BufferEndcap.*` — flat (`flat_cap_length_sq`/`_perp_edge`), round (`round_cap_endpoints_on_circle`/`_apex_on_circle`), square (`square_cap_extension`/`square_cap_corner_dist_sq`) defining geometry (JTS#739/#1028); still no emitted cap *edge list* |
 | 3 noding | full noding of raw curve | ✅ | `HobbyTheorem_b64.snap_round_segments`, `fully_intersected`, `hobby_theorem_4_1_conditional` (✅, conditional on ⛓️ `hobby_lemma_4_3_no_proper`) |
@@ -216,8 +216,14 @@ the curved `offset_seg_dir`), the direction of travel reverses past the
 singularity (`arc_offset_tangent_dot` `= r(r+d)`), and for `d < -r` the
 parallel-curve property itself provably fails
 (`inner_offset_past_center_not_at_distance`, the inverted-negative-
-buffer artifact class).  Emitting curve-aware offset *edge lists* and
-the `CurvePolygon` assembly still ride on Option B — see §6.
+buffer artifact class).  The second brick, `theories/ArcOffsetThreePoint.v`,
+closes the SQL/MM representation level: `arc_offset_preserves_arc` —
+radially offsetting the three control points of a valid
+`CurveGeometry.CircularArc` (pure rational arithmetic, extractable)
+yields a *valid* three-point arc with the *same* `arc_center` and
+`arc_radius = r + d`, via the new circumcenter-uniqueness lemma
+`equidistant_point_is_arc_center`.  Emitting curve-aware offset *edge
+lists* and the `CurvePolygon` assembly still ride on Option B — see §6.
 
 ### 2.3 Stage 3 — noding (✅ reusable, conditional on a registered gap)
 

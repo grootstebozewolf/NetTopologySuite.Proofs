@@ -451,3 +451,19 @@ center/angle form used here), and `CurvePolygon` topology preservation.
 The next bounded slice of the same shape is the three-point bridge (pure
 algebra, no new analysis); the assembly-level targets ride on the same
 Option-B machinery as the linear pipeline.
+
+**Rung 2 (2026-06-11, same day): the three-point bridge landed.**
+`theories/ArcOffsetThreePoint.v`, all `Qed`, three-axiom. The radial
+offset as a homothety about the center (pure rational arithmetic, no
+trig) carries the parallel-curve property into coordinate form
+(`radial_offset_dist_exact`); the **circumcenter-uniqueness** lemma that
+`CurveGeometry.v`'s §2 comment had deferred is closed
+(`equidistant_point_is_arc_center` — perpendicular-bisector system +
+Cramer against the explicit `arc_center` formula, the predicted fiddly
+square that in fact fell to `field_simplify_eq` + `nra`); and the
+closure headline `arc_offset_preserves_arc` proves the radial offset of
+a valid three-point `CircularArc` is again a valid three-point
+`CircularArc` with the **same `arc_center` and `arc_radius = r + d`** —
+"buffer/offset preserving arcs" (#65 BUF-*/OFF) at the representation
+level, extractable as-is. Remaining on the lane: emitted offset edge
+lists, joins/caps on curved inputs, `CurvePolygon` topology preservation.

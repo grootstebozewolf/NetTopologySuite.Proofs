@@ -922,6 +922,19 @@ theories/ArcIntersectIVT.v
 # offset bridge (M-LEN).  No Admitteds.
 theories/ArcOffset.v
 
+# Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.
+# radial_offset (homothety about the center, pure rational arithmetic,
+# no trig) carries ArcOffset's parallel-curve property into coordinate
+# form (radial_offset_dist_exact); circumcenter UNIQUENESS
+# (equidistant_point_is_arc_center -- the converse of
+# ArcChordApprox.arc_center_equidistant that CurveGeometry.v's comment
+# deferred); and the closure headline arc_offset_preserves_arc: the
+# radial offset of a valid three-point CircularArc is again a valid
+# three-point CircularArc with the SAME arc_center and arc_radius = r+d
+# ("buffer/offset preserving arcs" at the representation level), plus
+# per-control-point at-distance-|d| facts.  No Admitteds.
+theories/ArcOffsetThreePoint.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
