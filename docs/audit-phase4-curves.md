@@ -218,3 +218,11 @@ tests on the rational raw normals (`g1_decision_correct`,
 `uturn_decision_correct`), and the safety bound to `d ≥ 0 ∨ d² < r²`.
 Three-axiom. Brick 2 (the OCaml CURVE_JOIN_CLASSIFY / CURVE_OFFSET_ARC
 driver modes) deferred to a Flocq-buildable session.
+Rung 11 (same day): P3 — `CurveOffsetEmit.v`. The assembled offset
+ring linearises to a closed Phase-3 ring (`offset_emit_ring_closed`,
+rung 8 ∘ `chord_approx_ring_closed`): the front-end's emitted edge
+list closes, which is what the noding stage consumes. All-chord
+specialisation discharges the linear round-join emission gap; chord
+offsets are definitionally `BufferOffset.offset_seg`. Three-axiom.
+Honest remainder: miter/bevel join emission, open-chain caps, P10
+brick 2.
