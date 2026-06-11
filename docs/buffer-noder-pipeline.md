@@ -133,7 +133,7 @@ Legend: ✅ Qed-closed and reusable · 🟡 present but partial / conditional
 | Stage | What it needs | Corpus status | Key identifiers |
 |---|---|---|---|
 | 1 decompose | input → segment list | ✅ | `OverlayGraph.extract_segments`, `polygon_to_pairs`; curve side `CurveGeometry.{CurveSegment,CurveRing,curve_segment_start/end}` |
-| 2a offset @ d | parallel curve at distance `d` | 🔴 | *none* — `Direction.vperp`/`perpendicular`, `Disk.in_disk` are the raw material only |
+| 2a offset @ d | parallel curve at distance `d` | 🟡 | segment soundness ✅ `BufferOffset.{offset_seg_dir,offset_point_dist,offset_perp_dist_to_line}`; arc soundness ✅ `ArcOffset.{arc_offset_dist_exact,arc_offset_no_kink,arc_offset_tangent_dot}` (concentric `r+d`, parallel-curve property exact up to the `d = -r` singularity, with a Qed failure witness past it); still no emitted offset *edge lists* |
 | 2b joins | round/miter/bevel at corners | 🟡 | round-join central angle ✅ `BufferJoin.corner_arc_sweep_eq_turn(_unit)` (Roadmap target 6); miter apex + limit cap + half-angle ✅ `BufferMiter.*` / `BufferMiterAngle.miter_cap_iff_sin_half` (JTS#180); bevel chord ✅ `BufferBevel.bevel_length_sq_sin_half`; still no emitted join *edge lists* |
 | 2c endcaps | round/flat/square at line ends | 🟡 | ✅ `BufferEndcap.*` — flat (`flat_cap_length_sq`/`_perp_edge`), round (`round_cap_endpoints_on_circle`/`_apex_on_circle`), square (`square_cap_extension`/`square_cap_corner_dist_sq`) defining geometry (JTS#739/#1028); still no emitted cap *edge list* |
 | 3 noding | full noding of raw curve | ✅ | `HobbyTheorem_b64.snap_round_segments`, `fully_intersected`, `hobby_theorem_4_1_conditional` (✅, conditional on ⛓️ `hobby_lemma_4_3_no_proper`) |
@@ -205,8 +205,19 @@ material*:
   raw closed buffer curve = offset segments ∪ joins ∪ caps.
 
 For **curve-aware** buffer (issue #65 BUF-* producing `CurvePolygon`
-output) the offset of an arc is another arc (concentric, radius `r ± d`);
-that is strictly further out and rides on Option B — see §6.
+output) the offset of an arc is another arc (concentric, radius `r ± d`).
+The first proof brick for this landed in `theories/ArcOffset.v`
+(unblocked by #64's arc-line Scope B/C closure): the concentric
+radius-`r+d` curve is *exactly* at distance `|d|` from the source circle
+(`arc_offset_dist_exact`, reverse-triangle lower bound + radial
+attainment, valid up to the singularity `d = -r`), its tangent is a
+positive scalar multiple of the source tangent (`arc_offset_no_kink`,
+the curved `offset_seg_dir`), the direction of travel reverses past the
+singularity (`arc_offset_tangent_dot` `= r(r+d)`), and for `d < -r` the
+parallel-curve property itself provably fails
+(`inner_offset_past_center_not_at_distance`, the inverted-negative-
+buffer artifact class).  Emitting curve-aware offset *edge lists* and
+the `CurvePolygon` assembly still ride on Option B — see §6.
 
 ### 2.3 Stage 3 — noding (✅ reusable, conditional on a registered gap)
 

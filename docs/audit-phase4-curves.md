@@ -125,3 +125,24 @@ The clothoid-halley-coq corpus released **v1.0.3** (`ffbbf6d`) with a retitle to
 ### 6.3 Linearisation-bridge structural faithfulness (CIRCULARSTRING / COMPOUNDCURVE)
 
 `theories/CurveGeometry.v` models a SQL/MM **COMPOUNDCURVE** as `CurveRing := list CurveSegment` (`CSChord` | `CSArc`), with the all-arc case being a **CIRCULARSTRING**, and `to_geometry` / `chord_approx_ring` linearise it (Option B) to a Phase-3 `Geometry`. `theories/CurveLinearise.v` closes the **combinatorial faithfulness** of that bridge: a valid (adjacent + closed) curve ring — circular *or* compound, handled uniformly — linearises to a `ring_closed` Phase-3 ring (`chord_approx_ring_closed`, axiom-free), and hence every outer ring and hole of `to_geometry cg n` is closed for a valid `cg` (`to_geometry_outer_ring_closed`, `to_geometry_hole_ring_closed`). This is the `ring_closed` conjunct of `valid_polygon` for the linearised curve geometry — the curve analogue of `RingExtract.face_walk_closed`, and the structural prerequisite for feeding linearised circularstrings/compoundcurves into the `extract_rings_valid` / overlay machinery. Three-axiom; no Admitted. The remaining curve-side residuals (sagitta/`ring_simple` of the approximation, `hole_inside_outer`) are the same analytic seams tracked elsewhere, not new debt.
+
+## 7. Curve-buffer lane opened (2026-06-11)
+
+The §4 stance ("re-evaluate once a consumer is asking for arc-aware
+work") has its first concrete consumer-driven landing beyond the
+predicate layer: with issue #64's arc-line Scope B/C closed
+(`b64_arc_line_point_{x,y}_forward_error`, absolute `bpow 13`), issue
+#65's curve-aware buffer lane is unblocked, and its first proof brick is
+in: **`theories/ArcOffset.v`** (Stage 2a-curve seam of
+[`buffer-noder-pipeline.md`](buffer-noder-pipeline.md) §2.2). The offset
+of a circular arc at signed distance `d` is the concentric radius-`r+d`
+arc: exactly-at-distance-`|d|` from the whole source circle (up to the
+`d = −r` singularity), tangent a positive multiple of the source tangent
+(no kink/reversal), direction reversal past the singularity
+(`tangent dot = r(r+d)`), a `Qed` witness that the parallel-curve
+property *fails* for `d < −r`, and the `arc_length` offset bridge.
+Three-axiom throughout. This stays inside the Option-A/Option-B division
+of labour: exact-arc geometry on the R side, chord machinery untouched.
+See [`audit-rgr-comparison.md`](audit-rgr-comparison.md) §7 for the
+execution log and the remaining #65 ladder (three-point bridge → emitted
+edge lists → `CurvePolygon` topology).

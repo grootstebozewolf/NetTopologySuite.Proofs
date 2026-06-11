@@ -907,6 +907,21 @@ theories/ArcOverlay.v
 # sig_forall_dec, functional_extensionality_dep -- README-allowlisted).
 theories/ArcIntersectIVT.v
 
+# Issue #65 curve-aware buffer, first proof brick (Stage 2a-curve seam,
+# unblocked by #64's arc-line Scope B/C closure).  The offset of a
+# circular arc at signed distance d is the CONCENTRIC arc of radius
+# r + d: at-distance-d soundness (radial correspondents |d| apart +
+# reverse-triangle lower bound over the WHOLE circle, attained -- the
+# defining parallel-curve property, valid up to the singularity
+# d = -r), tangent parallelism with positive-multiple no-kink form
+# (curved analogue of BufferOffset.offset_seg_dir; derivative bridges
+# via Rtrigo_reg's derivable_pt_lim_{sin,cos}), tangent-dot = r(r+d)
+# giving direction REVERSAL past the singularity, a concrete Qed
+# witness that the parallel-curve property FAILS for d < -r
+# (inverted-negative-buffer artifact class), and the arc_length
+# offset bridge (M-LEN).  No Admitteds.
+theories/ArcOffset.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
