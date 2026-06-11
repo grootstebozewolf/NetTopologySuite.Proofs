@@ -734,3 +734,19 @@ miter (this rung), every JTS join style is emitted by a walk whose
 output is a valid compound ring. Remaining on the lane: the open-chain
 two-sided cap walk, P10 brick 2 (oracle modes, Flocq-bound), and the
 P2 Minkowski semantics.
+**Rung 14a (2026-06-11): the reversal layer.** `theories/CurveReverse.v`,
+all `Qed`, three-axiom. Groundwork for the open-chain two-sided cap walk
+(14b) and independently the SQL/MM ring-orientation flip:
+`curve_ring_reverse` (reverse the list AND each segment) preserves
+compound-ring validity (`valid_curve_ring_reverse`), with circumcircle
+invariance under arc reversal proved via circumcenter uniqueness (its
+FOURTH consumer). The design-load-bearing finding is the ORIENTATION
+WART, now formal: chord `unit_perp` normals flip under reversal while
+arc radial normals are traversal-agnostic, so offset∘reverse =
+reverse∘offset at `−d` for chords but `+d` for arcs
+(`offset_rev_chord` / `offset_rev_arc`). "Side is encoded by traversal
+orientation" is therefore TRUE for chords and FALSE for raw three-point
+arcs — the formal reason JTS's OffsetCurveBuilder tracks an explicit
+side flag, and the spec the 14b cap walk must thread (per-kind signs on
+the return boundary). Remaining: 14b itself (the two-sided walk + caps
+→ closed ring), then P10 brick 2 and P2.

@@ -1476,6 +1476,17 @@ theories/CurveBevelJoin.v
 # generic hd/last/app chain-gluing bricks.  The 2b join EMISSION story
 # (round / bevel / miter) is now complete.  No Admitteds.
 theories/CurveMiterJoin.v
+# Issue #65 curve-aware buffer, rung 14a: the REVERSAL layer for the
+# open-chain cap walk (14b) and the SQL/MM ring-orientation flip.
+# rev_arc / rev_segment / curve_ring_reverse; circumcircle invariance
+# under reversal (rev_arc_center via circumcenter uniqueness, its 4th
+# consumer; rev_arc_radius, rev_arc_valid); the ORIENTATION WART made
+# formal: arc radial normals are traversal-agnostic but chord
+# unit_perp normals FLIP, so offset/reverse commute at OPPOSITE signs
+# per kind (offset_rev_chord at -d, offset_rev_arc at +d) -- why JTS
+# tracks an explicit side flag.  Headline valid_curve_ring_reverse:
+# ring reversal preserves compound-ring validity.  No Admitteds.
+theories/CurveReverse.v
 
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for

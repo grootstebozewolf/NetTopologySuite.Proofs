@@ -240,3 +240,9 @@ distance-d soundness attached via `miter_connector_apex_sound`), bevel
 fallback at arc joins; lean hypothesis set; all-chord preservation;
 linearised output closes. The 2b join-emission story (round / bevel /
 miter) is complete. Three-axiom.
+Rung 14a (same day): the reversal layer — `CurveReverse.v`. Ring
+reversal preserves validity (circumcircle invariance via uniqueness,
+4th consumer); the orientation wart formalised: chord normals flip
+under reversal, arc radial normals don't, so offset/reverse commute at
+opposite signs per kind — the spec the 14b two-sided cap walk threads.
+Three-axiom.
