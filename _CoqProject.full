@@ -929,6 +929,19 @@ theories/JCTPayoffKit.v
 # Counts via rung 5c-16a's kernels; guards via level freshness.
 # Three-axiom.  No Admitted.
 theories/JCTPayoffRides.v
+# ESCAPE DESCENT, rung 5c-17: THE CLOSING RUNG.  escape_descent_holds:
+# ring_taut + ring_core_nodup + no_horizontal_edges => escape_descent r.
+# The walker enters the hug at its first wall (hug_entry), propagates
+# around the ring (hugs_everywhere), and the eastmost dispatch
+# (eastmost_payoff: pass-throughs ride, minima passage/probe by the
+# pinch Rle_dec, maxima via the y-flip payoff_ymir) harvests a connected
+# guarded point with count 0 or 1.  Count 0 is the descent's q; count 1
+# is odd and parity transport (parity_constant_on_components) makes the
+# even walker in-ring -- absurd.  parity_seam_offring_taut then closes
+# H1 outright through parity_seam_offring_of_descent: the corrected
+# polygonal Jordan seam holds for taut, proper, horizontal-free rings --
+# every premise a theorem, no stub, exactly the three allowed axioms.
+theories/JCTEscapeDescentHolds.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
