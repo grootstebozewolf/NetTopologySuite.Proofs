@@ -156,6 +156,53 @@ All four should report success.  The sequential build is required for
 `audit_axioms.sh` because it parses interleaved `Print Assumptions`
 blocks from the build output; a parallel build interleaves them.
 
+## Remote agent containers (Claude Code on the web and similar)
+
+Session-verified on an Ubuntu 24.04.4 LTS remote execution container
+(2026-06-11, the `extract_faces` slice-3g session).  Two extra failure
+modes appear before the fallback above even starts, plus one shortcut
+worth knowing:
+
+1. **The Docker CLI is present but there is no daemon.**  `docker pull`
+   fails with `dial unix /var/run/docker.sock: connect: no such file or
+   directory`.  Do not chase the daemon -- go straight to the
+   host-install fallback.
+
+2. **Pre-existing PPA source lists break `apt-get update` outright.**
+   The base image ships third-party PPAs (`deadsnakes`, `ondrej/php`)
+   that the network policy 403s, and apt treats the dead repos as fatal
+   (exit 100) *before* Step 1's `apt-get install opam` can run, even
+   though `archive.ubuntu.com` itself is reachable.  Remove the stale
+   lists first:
+
+   ```sh
+   rm -f /etc/apt/sources.list.d/*deadsnakes* /etc/apt/sources.list.d/*ondrej*
+   apt-get update
+   ```
+
+   Then Steps 1-3 proceed as written.  Running as root, remember
+   `--disable-sandboxing` on `opam init` (Step 2's note).  The
+   unpinned `opam switch create nts-flocq ocaml-system` resolves to
+   `ocaml-system.4.14.1` on 24.04, matching the doc's pin.
+
+3. **Skip Flocq (Step 4) for `theories/`-only work.**  The host
+   (Stdlib-only) layer has no Flocq imports, and a `Makefile.gen`
+   generated from `_CoqProject.full` will happily build a single
+   target plus its dependency chain:
+
+   ```sh
+   rocq makefile -f _CoqProject.full -o Makefile.gen
+   make -f Makefile.gen -j"$(nproc)" theories/<YourFile>.vo
+   ```
+
+   For a new file whose imports stay inside `theories/`, this never
+   touches `theories-flocq/`, so Steps 1-3 alone (a few minutes of
+   wall time, the long pole being the `rocq-core`/`rocq-stdlib`
+   build) give a working verify loop.  A per-theorem axiom check
+   without the full sequential build log is a scratch file of
+   `Print Assumptions` lines compiled with
+   `rocq c -Q theories NTS.Proofs /tmp/check_axioms.v`.
+
 ## What this fallback does NOT change
 
   - **CI is unaffected.**  GitHub Actions runs the container path on
@@ -183,7 +230,9 @@ Hosts known to be blocked:
   - `deb.debian.org`, `security.debian.org` (403, `host_not_allowed`)
   - `coq.inria.fr` (403 / `curl exit 60`)
   - `ppa.launchpadcontent.net` (variable, typically 403 on
-    non-allowlisted PPAs)
+    non-allowlisted PPAs; if the image ships stale PPA source lists
+    this 403 makes `apt-get update` itself fail -- see the
+    remote-agent-container section above)
 
 The fallback above uses only the reachable hosts and pinned source
 versions.
