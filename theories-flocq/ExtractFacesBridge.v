@@ -18,7 +18,10 @@
    (independent of `fully_intersected`).  This file machine-checks that finding
    and pins its precise shape; the GREEN re-point is therefore BLOCKED on a
    reformulation of H1 (a twin-aware simplicity predicate + a no-twin-in-face
-   combinatorial lemma), documented in the outcome doc.
+   combinatorial lemma).  The CORRECTED FOUR-STEP DISCHARGE PLAN (twin-aware
+   simplicity -> no-twin-in-face DCEL lemma -> no-collinear-overlap geometry ->
+   H2/H3) is in docs/extract-faces-bridge.md, section "The corrected discharge
+   plan".
 
    The root cause, in one line:
 
