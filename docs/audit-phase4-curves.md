@@ -210,3 +210,11 @@ validity preserved at every level (`curve_{polygon,geometry}_offset_valid`),
 hole/polygon counts preserved. Complete w.r.t. the validity layer;
 hole-inside-outer remains the analytic P2 seam. Three-axiom. Next per
 §8.3: P10 oracle extraction, P3 linear coherence.
+
+Rung 10 (same day): P10 brick 1 — `CurveJoinClassify.v`. The g1dec /
+uturndec oracle specs of rungs 6/8/9 are dischargeable by exact
+rational arithmetic: unit-normal equality reduces to cross/dot sign
+tests on the rational raw normals (`g1_decision_correct`,
+`uturn_decision_correct`), and the safety bound to `d ≥ 0 ∨ d² < r²`.
+Three-axiom. Brick 2 (the OCaml CURVE_JOIN_CLASSIFY / CURVE_OFFSET_ARC
+driver modes) deferred to a Flocq-buildable session.

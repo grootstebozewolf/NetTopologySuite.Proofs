@@ -1424,6 +1424,19 @@ theories/CurveOffsetAssemblyTotal.v
 # hole/polygon count preservation.  No Admitteds.
 theories/CurvePolygonOffset.v
 
+# Issue #65 curve-aware buffer, rung 10 (forward pointer P10 brick 1):
+# certified rational decision procedures for the assembly oracles.
+# Unit-normal EQUALITY is a rational condition on the un-normalised
+# vectors (unit_eq_iff_cross_dot: u^=v^ <-> cross=0 /\ 0<dot; opp
+# variant for anti-parallel), the ring's normal fields normalise from
+# RATIONAL raw normals (vperp of the direction / P - arc_center), and
+# the headlines g1_decision_correct / uturn_decision_correct show the
+# rung-6/8/9 g1dec and uturndec specs are realizable by one exact-Q
+# cross and dot each.  offset_safe_iff_sq decides the safety bound
+# from the rational r^2.  The OCaml CURVE_JOIN_CLASSIFY mode (brick 2)
+# is deferred to a CI-buildable session.  No Admitteds.
+theories/CurveJoinClassify.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.

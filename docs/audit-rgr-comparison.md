@@ -656,3 +656,26 @@ the analytic layer), so this lift is COMPLETE w.r.t. the validity
 layer; the analytic hole/shell question under offset belongs to P2.
 §8.3's queue advances: next is **P10 (curve-offset oracle extraction)**
 then **P3 (linear edge-list coherence)**.
+
+**Rung 10 (2026-06-11): P10 brick 1 — the assembly oracles are
+realizable.** `theories/CurveJoinClassify.v`, all `Qed`, three-axiom.
+Rungs 6/8/9 are conditional on the specs of two abstract boolean
+oracles because real-vector equality is not computable; this rung shows
+the specs are dischargeable by EXACT RATIONAL ARITHMETIC. Key fact
+(`unit_eq_iff_cross_dot`): although the normal fields carry an
+irrational `/r`, unit-normal equality is `cross(u,v) = 0 ∧ 0 < dot(u,v)`
+on the UN-normalised raw normals — and the raw normals are rational in
+the control points (`vperp` of the direction; `P − arc_center`, the
+rational circumcenter formula). Headlines `g1_decision_correct` /
+`uturn_decision_correct`: each oracle is one exact-`Q` cross + dot, for
+every segment-kind combination. With `offset_safe_iff_sq` (`−r < d ⟺
+d ≥ 0 ∨ d² < r²`, from the rational `r²`) plus the rational validity /
+non-degeneracy / adjacency tests, the ENTIRE hypothesis bundle of
+`curve_ring_offset_total_valid` is decidable in exact rational
+arithmetic over rational control points. Brick 2 — the OCaml
+`CURVE_JOIN_CLASSIFY` driver mode wrapping these (ratchet-clean, pure
+zarith) and the interface-boundary `CURVE_OFFSET_ARC` float mode — is
+deferred to a session with a Flocq-buildable oracle (the binary links
+against the extracted modules; CI's container builds it, this
+environment cannot). P3 (linear edge-list coherence) remains next after
+brick 2.
