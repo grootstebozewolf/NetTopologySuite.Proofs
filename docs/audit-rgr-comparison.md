@@ -698,3 +698,20 @@ and the open-chain cap assembly stay open; P10 brick 2 (oracle modes)
 still needs a Flocq-buildable session. The bounded-slice queue of §8.3
 is now P1 ✅ / P10-brick-1 ✅ (PR #173) / P3 ✅ — next are the
 structural residuals P4 (H2) and P5 (H1's `even_parity_escapes`).
+
+**Rung 12 (2026-06-11): the bevel assembly.** `theories/CurveBevelJoin.v`,
+all `Qed`, three-axiom. The join-edge flavour rung 11 left open, emitted
+as CHORDS: `bevel_join` is the chord across the tear, its splice facts
+are definitional, it handles every non-G1 join uniformly (U-turns
+included — the flat chord across an anti-parallel tear), and it
+contributes nothing to arc validity. Headline
+`curve_ring_offset_bevel_valid` therefore carries the LEANEST
+hypothesis set of the three assemblies: ring validity + per-arc safety
++ the G1-decision spec — no chord non-degeneracy, no `d ≠ 0`, no U-turn
+oracle, no sweep supplier. With `bevel_join_nondeg` (quality, under the
+usual extra hypotheses), all-chord preservation (the pure LINEAR bevel
+emitter — no linearisation step at all), `bevel_emit_ring_closed`
+(stage-3 handoff) and the smooth-case coherence. The 2b row's one
+remaining join flavour is MITER (two chords through
+`BufferMiter.miter_apex`; corner geometry proven, wiring it into the
+walk is the natural next 2b slice).
