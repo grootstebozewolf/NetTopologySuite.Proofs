@@ -769,3 +769,43 @@ now produces a valid compound ring ready for linearisation and the
 proven noding spine. Remaining on the lane: P10 brick 2 (oracle modes,
 Flocq-bound) and P2 (Minkowski point-set semantics); the structural
 queue otherwise moves to P4/P5 (H2/H1 residuals).
+**Rung 15 (2026-06-11): P4 first slice — with-holes emission (H2 lane,
+slice 3h).** `theories/ExtractFacesHoles.v`, all `Qed` — and at TWO
+axioms (`sig_not_dec` is not even pulled). The first "What remains" item
+of `extract-faces.md` closes at the emission level:
+`extract_faces_holes` emits face polygons WITH holes, the hole-to-shell
+nesting supplied as an abstract oracle (the curve lane's
+spec-conditional-oracle discipline applied to the DCEL lane). Headline
+`extract_faces_holes_valid` composes slice 3g's structural noder
+hypotheses with slice 3f's `face_polygon_holes_valid`; the oracle's
+nesting clause — per-hole `hole_inside_outer` — is the lane's SINGLE
+analytic residual, exactly as the proof-structure doc's §4 prescribes,
+now carried by an emitting extractor rather than only an assembly
+lemma. Coherence: the empty assignment recovers the hole-free
+extractor. Remaining on P4: the `fully_intersected` hypothesis
+discharge for `OverlayBridge`'s concrete noded output (Flocq-bound, a
+container session) and the R4 Euler relation; the analytic seam itself
+is P5-adjacent (H1's machinery).
+
+**Rung 16 (2026-06-11): slice 3h's fidelity completion.** Extends
+`ExtractFacesHoles.v` with the label-fidelity story for the with-holes
+extractor: `extract_faces_holes_{outer,hole}_edges_subset` (every edge
+of every emitted ring — outer or hole — is a surviving dart) and the
+combined `extract_faces_holes_label_fidelity` (each such edge is an
+orientation of an op-kept labelled edge): the with-holes extractor
+invents no geometry, completing the slice-3g semantic bridge for holes.
+All `Qed`, allowlisted axioms; the hole-edges lemma needs only `fan_ok`
+plus the oracle's well-formedness clause.
+
+**Next-rung prompt (2026-06-11):**
+[`docs/extract-rings-r5-slice-3i-prompt.md`](extract-rings-r5-slice-3i-prompt.md)
+— the bridge discharge (`fully_intersected` → the three structural
+hypotheses of the face extractor, re-pointing the deferred
+`extract_rings_valid` onto `extract_faces_holes`). Written Red-first:
+the grep analysis predicts two honest negatives (bigons and collinear
+fan collisions both satisfy `fully_intersected`'s endpoint-sharing
+disjunct while breaking `no_short_faces` / `fan_ok`), so the session is
+expected to produce counterexample witnesses plus the corrected
+strengthened bridge. Requires the Flocq container (the deferred
+statement and `noded_segments` live in `theories-flocq/`); a host-side
+route for the `pairwise_no_proper_cross` half is specified.
