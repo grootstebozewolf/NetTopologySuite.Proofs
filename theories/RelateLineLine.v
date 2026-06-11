@@ -8,10 +8,10 @@
    decision in `Intersect.v`.
 
    Delivers regime soundness (proper crossing, rejection, share, collinear
-   interior overlap) via canonical witness matrices — not a full RelateNG
-   matrix-fill algorithm.  Romanschek et al. (IJGI 2021) Table 5/6 line–line
-   matrices are pinned as `ll_matrix_paper_test*` with predicate lemmas (S3
-   oracle seed; see `oracle/de9im_line_line_vectors.txt`).
+   interior overlap) via canonical witness matrices.  Computed fill via
+   `RelateMatrixLineLine.v` (S8) reuses these witnesses.  Romanschek et al.
+   (IJGI 2021) Table 5/6 line–line matrices are pinned as `ll_matrix_paper_test*`
+   with predicate lemmas (S3 oracle seed; see `oracle/de9im_line_line_vectors.txt`).
 
    Honest scoping: closed segments; boundary vs interior classification for
    endpoint touches is witness-level only (existential `im_intersects`).

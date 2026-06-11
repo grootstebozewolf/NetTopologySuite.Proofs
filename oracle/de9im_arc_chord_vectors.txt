@@ -1,0 +1,42 @@
+# Arc-chord×line DE-9IM oracle vectors — issue #67 S10 seed (chord path 3-ax).
+# Coq pins: theories/RelateArcChord.v (witness matrices + predicate lemmas).
+# S10 fill: theories/RelateMatrixArcChord.v — arc_chord_fill ACR_* equals COQ below.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt (seven fill APIs through S12).
+#
+# Format mirrors oracle/de9im_area_line_vectors.txt (one regime per stanza).
+# Arc model: CircularArc via three control points (start, mid, end); Option B
+# chord path treats arc_start–arc_end as the chord segment for line-line regimes.
+#
+# S10 regimes:
+#   CHORD_CROSS  — arc chord properly crosses segment ⇒ ac_matrix_point_ii (Crosses+Intersects)
+#   CHORD_SHARE  — arc chord shares point with segment ⇒ ac_matrix_point_ii (Intersects)
+#   CHORD_DISJ   — same-side rejection on arc chord vs segment ⇒ ac_matrix_disjoint
+#   CIRCLE_CROSS — external chord PQ crosses arc circumcircle (IVT) ⇒ ac_matrix_point_ii
+
+REGIME CHORD_CROSS
+ARC (0 0) (1 1) (2 0)
+SEG (0 2) (2 -2)
+COQ ac_matrix_point_ii
+FILL arc_chord_fill ACR_ChordProperCross
+NOTES arc_chord_proper_cross; delegates to line_line_proper_cross_sound.
+
+REGIME CHORD_DISJ
+ARC (0 0) (1 1) (2 0)
+SEG (0 3) (2 4)
+COQ ac_matrix_disjoint
+FILL arc_chord_fill ACR_ChordDisjoint
+NOTES arc_chord_rejected; same-side rejection on arc chord vs segment.
+
+REGIME CIRCLE_CROSS
+ARC (0 0) (1 1) (2 0)
+SEG (-1 0.5) (3 0.5)
+COQ ac_matrix_point_ii
+FILL arc_chord_fill ACR_CircleCross
+NOTES chord_crosses_arc_circle; IVT gives on-circle hit on PQ (span soundness gap).
+
+REGIME CHORD_SHARE
+ARC (0 0) (1 1) (2 0)
+SEG (1 1) (3 3)
+COQ ac_matrix_point_ii
+FILL arc_chord_fill ACR_ChordShare
+NOTES arc_chord_share at arc_mid / shared interior point.

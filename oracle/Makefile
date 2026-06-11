@@ -27,11 +27,14 @@ extracted.cmi: extracted.mli
 extracted.cmx: extracted.ml extracted.cmi
 	$(OCAMLOPT) -c extracted.ml
 
-driver.cmx: driver.ml extracted.cmi
-	$(OCAMLOPT) -package zarith -c $<
+relate_matrix.cmx: relate_matrix.ml
+	$(OCAMLOPT) -c $<
 
-$(TARGET): extracted.cmx driver.cmx
-	$(OCAMLOPT) -package str,zarith -linkpkg extracted.cmx driver.cmx -o $@
+driver.cmx: driver.ml extracted.cmi relate_matrix.cmx
+	$(OCAMLOPT) -package zarith -c driver.ml
+
+$(TARGET): extracted.cmx driver.cmx relate_matrix.cmx
+	$(OCAMLOPT) -package str,zarith -linkpkg extracted.cmx relate_matrix.cmx driver.cmx -o $@
 
 clean:
 	rm -f *.cmi *.cmo *.cmx *.o $(TARGET)

@@ -1,0 +1,15 @@
+# Arc×line DE-9IM oracle vectors — issue #67 S10b seed (Option-A analytic 4-ax).
+# Coq pins: theories/RelateArcAnalytic.v (sweep + analytic cross soundness).
+# S10b fill: theories/RelateMatrixArcAnalytic.v — arc_analytic_fill AAR_AnalyticCross.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt (seven fill APIs through S12).
+#
+# Format mirrors oracle/de9im_arc_chord_vectors.txt.
+# Arc model: CircularArc via three control points; analytic guard adds
+# arc_analytic_minor_guard (valid_arc + 0 < sweep <= PI).
+
+REGIME ANALYTIC_CROSS
+ARC (0 0) (1 1) (2 0)
+SEG (0 2) (2 -2)
+COQ ac_matrix_point_ii
+FILL arc_analytic_fill AAR_AnalyticCross
+NOTES arc_analytic_proper_cross; delegates to arc_chord_proper_cross_sound.

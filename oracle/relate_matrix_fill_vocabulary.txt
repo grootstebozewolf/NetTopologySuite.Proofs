@@ -1,0 +1,56 @@
+# RELATE_MATRIX fill vocabulary — issue #67 S9 seed, S11 driver.
+# Coq modules: RelateMatrixRect.v (S7), RelateMatrixLineLine.v (S8),
+#              RelateMatrixAreaLine.v (S9), RelateMatrixArcChord.v (S10),
+#              RelateMatrixArcAnalytic.v / RelateMatrixClothoid.v (S10b),
+#              RelateMatrixCurveAreaPoint.v (S12).
+#
+# Oracle: RELATE_MATRIX / RELATE_PREDICATE in oracle/driver.ml (S11).
+# Keys below are accepted as FILL aliases; per-regime COQ witness matrices
+# live in de9im_*_vectors.txt for NTS/JTS differential compare.
+# Seven fill APIs through S12 (curve-polygon × point).
+#
+# Format:
+#   FILL_API <coq_module> <fill_function> <regime_ctor> => <witness_matrix>
+#
+# Rect×rect (theories/RelateMatrixRect.v):
+FILL_API RelateMatrixRect rect_pair_fill RPR_Disjoint    => aa_matrix_disjoint
+FILL_API RelateMatrixRect rect_pair_fill RPR_Overlap     => aa_matrix_partial_overlap
+FILL_API RelateMatrixRect rect_pair_fill RPR_Contains    => aa_matrix_contains
+FILL_API RelateMatrixRect rect_pair_fill RPR_TouchVert   => aa_matrix_touch_vertical
+# Oracle: oracle/de9im_area_area_vectors.txt
+#
+# Line×line (theories/RelateMatrixLineLine.v):
+FILL_API RelateMatrixLineLine line_pair_fill LPR_Disjoint         => ll_matrix_disjoint
+FILL_API RelateMatrixLineLine line_pair_fill LPR_ProperCross      => ll_matrix_point_ii
+FILL_API RelateMatrixLineLine line_pair_fill LPR_Share            => ll_matrix_point_ii
+FILL_API RelateMatrixLineLine line_pair_fill LPR_CollinearOverlap => ll_matrix_overlap_ii
+# Oracle: oracle/de9im_line_line_vectors.txt (Romanschek tests remain oracle-only)
+#
+# Area×line (theories/RelateMatrixAreaLine.v):
+FILL_API RelateMatrixAreaLine area_line_fill ALR_Interior      => al_matrix_segment_interior
+FILL_API RelateMatrixAreaLine area_line_fill ALR_Pierce        => al_matrix_segment_crosses
+FILL_API RelateMatrixAreaLine area_line_fill ALR_Disjoint      => al_matrix_disjoint
+FILL_API RelateMatrixAreaLine area_line_fill ALR_BoundaryTouch => al_matrix_boundary_touch
+# Oracle: oracle/de9im_area_line_vectors.txt
+#
+# Arc×line chord path (theories/RelateMatrixArcChord.v):
+FILL_API RelateMatrixArcChord arc_chord_fill ACR_ChordDisjoint    => ac_matrix_disjoint
+FILL_API RelateMatrixArcChord arc_chord_fill ACR_ChordProperCross => ac_matrix_point_ii
+FILL_API RelateMatrixArcChord arc_chord_fill ACR_ChordShare       => ac_matrix_point_ii
+FILL_API RelateMatrixArcChord arc_chord_fill ACR_CircleCross      => ac_matrix_point_ii
+# Oracle: oracle/de9im_arc_chord_vectors.txt
+#
+# Arc×line Option-A analytic (theories/RelateMatrixArcAnalytic.v):
+FILL_API RelateMatrixArcAnalytic arc_analytic_fill AAR_AnalyticCross => ac_matrix_point_ii
+# Oracle: oracle/de9im_arc_analytic_vectors.txt
+#
+# Clothoid×line chord seed (theories/RelateMatrixClothoid.v):
+FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordDisjoint    => cl_matrix_disjoint
+FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordProperCross => cl_matrix_point_ii
+FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordShare       => cl_matrix_point_ii
+# Oracle: oracle/de9im_clothoid_vectors.txt
+#
+# Curve-polygon×point (theories/RelateMatrixCurveAreaPoint.v):
+FILL_API RelateMatrixCurveAreaPoint curve_point_fill CPR_StrictInterior    => cap_matrix_rect_contains_point
+FILL_API RelateMatrixCurveAreaPoint curve_point_fill CPR_LeftBoundaryTouch => cap_matrix_rect_touches_boundary
+# Oracle: oracle/de9im_curve_area_point_vectors.txt

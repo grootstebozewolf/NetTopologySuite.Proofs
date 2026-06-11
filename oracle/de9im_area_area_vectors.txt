@@ -1,0 +1,40 @@
+# Area-area DE-9IM oracle vectors — issue #67 S6 seed (+ S7 fill API).
+# Coq pins: theories/RelateAreaArea.v (witness matrices + predicate lemmas).
+# S7 fill: theories/RelateMatrixRect.v — rect_pair_fill RPR_* equals COQ below.
+#
+# Format mirrors oracle/de9im_area_line_vectors.txt (one regime per stanza).
+# Oracle mode: RELATE_MATRIX / RELATE_PREDICATE in oracle/driver.ml (S11).
+#
+# S6 regimes (axis-aligned rectangles, no holes):
+#   DISJOINT  — horizontal separation ⇒ `aa_matrix_disjoint`
+#   OVERLAP   — partial 2-d overlap ⇒ `aa_matrix_partial_overlap` (overlaps_pp_aa)
+#   CONTAINS  — inner strictly inside outer ⇒ `aa_matrix_contains`
+#   TOUCH     — vertical edge adjacency ⇒ `aa_matrix_touch_vertical` (touches_1, BB=1)
+
+REGIME DISJOINT
+RECT_A 0 0 1 1
+RECT_B 2 0 3 1
+COQ aa_matrix_disjoint
+FILL rect_pair_fill RPR_Disjoint
+NOTES rects_separated_horiz (ax1 <= bx0).
+
+REGIME OVERLAP
+RECT_A 0 0 2 2
+RECT_B 1 1 3 3
+COQ aa_matrix_partial_overlap
+FILL rect_pair_fill RPR_Overlap
+NOTES rects_partial_overlap; overlaps_pp_aa II=2 BB=1 EE=2.
+
+REGIME CONTAINS
+RECT_A 0 0 4 4
+RECT_B 1 1 3 3
+COQ aa_matrix_contains
+FILL rect_pair_fill RPR_Contains
+NOTES rect_a_strictly_contains_rect_b.
+
+REGIME TOUCH
+RECT_A 0 0 1 1
+RECT_B 1 0 2 1
+COQ aa_matrix_touch_vertical
+FILL rect_pair_fill RPR_TouchVert
+NOTES rects_touch_vertical_edge (ax1 = bx0, overlapping y-range).

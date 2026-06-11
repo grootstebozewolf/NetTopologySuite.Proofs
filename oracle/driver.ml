@@ -226,6 +226,25 @@
                       circumcentre + radius "<ox> <oy> <r2> <0|1>" (last =
                       centre-on-grid flag), or DEGEN / NAN.
 
+     RELATE_MATRIX -- pinned DE-9IM matrix lookup (issue #67 S11).
+        line 2:       <key>  -- COQ witness name, FILL alias, or raw 9-char
+                      matrix (II IB IE / BI BB BE / EI EB EE row-major).
+        output:       single 9-char matrix string (F/0/1/2 cells).
+        Coq mirror:   witness matrices in RelateLineLine.v, RelateAreaArea.v,
+                      RelateAreaLine.v, RelateBoundary.v, RelateArcChord.v,
+                      RelateClothoid.v, RelateCurveAreaPoint.v; predicate
+                      algebra in DE9IM.v.
+                      HAND-ROLLED catalog in oracle/relate_matrix.ml (not
+                      geometry computation — full RelateNG noding is S13+).
+
+     RELATE_PREDICATE -- DE-9IM predicate test on a pinned matrix (S11).
+        line 2:       <matrix_key>  (same key vocabulary as RELATE_MATRIX)
+        line 3:       <predicate>   Disjoint | Intersects | Contains | Within |
+                      Covers | CoveredBy | Equals | Touches | Crosses | Overlaps
+                      (R-prefix aliases accepted, e.g. RIntersects).
+        output:       single token "TRUE" or "FALSE".
+        Coq mirror:   `predicate_holds` / `im_*` in theories/DE9IM.v.
+
    Numeric tokens go through OCaml `float_of_string`, so any IEEE 754
    binary64 spelling works -- decimal ("0.5"), hex ("0x1p-1"),
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
@@ -1122,6 +1141,18 @@ let run_snap_scaled () =
   print_point { bx  = b64_snap_coord_scaled p.bx  scale;
                 by_ = b64_snap_coord_scaled p.by_ scale }
 
+(* ----- RELATE_MATRIX / RELATE_PREDICATE (issue #67 S11). ----------------- *)
+
+let run_relate_matrix () =
+  let key = String.trim (input_line stdin) in
+  print_endline (Relate_matrix.resolve_matrix_input key)
+
+let run_relate_predicate () =
+  let matrix_key = String.trim (input_line stdin) in
+  let predicate  = String.trim (input_line stdin) in
+  let holds = Relate_matrix.check_predicate matrix_key predicate in
+  print_endline (if holds then "TRUE" else "FALSE")
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -1169,6 +1200,8 @@ let () =
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
+       | "RELATE_MATRIX"                -> run_relate_matrix ()
+       | "RELATE_PREDICATE"             -> run_relate_predicate ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()

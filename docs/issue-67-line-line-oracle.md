@@ -1,7 +1,7 @@
 # Issue #67 — Romanschek line–line DE-9IM oracle (S3 seed)
 
-> **Status:** predicate pins landed in `RelateLineLine.v`; vector file for future
-> `RELATE_MATRIX` oracle mode. Branch: `claude/issue-67-relate-line-line`.
+> **Status:** predicate pins in `RelateLineLine.v`; `RELATE_MATRIX` oracle mode
+> landed S11 (`oracle/relate_matrix.ml`). Branch: `issue-67-s4-s5-relateng`.
 
 ## Source
 
@@ -19,7 +19,7 @@ At test extent `r_max ≤ 1056`, their matrices match **NTS 2.3.0**
 |----------|------|
 | `theories/RelateLineLine.v` | `ll_matrix_paper_test6` … `test13` + predicate lemmas |
 | `oracle/de9im_line_line_vectors.txt` | WKT pairs, 9-char matrix, Coq name, notes |
-| `oracle/gen_de9im_line_line_vectors.sh` | Cat helper (static until `RELATE_MATRIX` exists) |
+| `oracle/gen_de9im_line_line_vectors.sh` | Cat helper for static vector file |
 | `docs/verified-claims.md` | Citable predicate lemmas |
 
 ## Test map (Table 5 line–line)
@@ -42,7 +42,7 @@ maps to the minimal witness `0FFFFFFFF`, not to the computed `FF1FF0102`.
 
 1. **JTS#1175** boundary-endpoint witness (triage milestone S3) — add alongside
    Romanschek tests in `oracle/de9im_line_line_vectors.txt`.
-2. **`RELATE_MATRIX` oracle mode** in `oracle/driver.ml` — NTS/JTS string compare
-   against pinned matrices; follow `INCIRCLE_SIGN` extraction pattern.
+2. **`RELATE_MATRIX` oracle mode** — **done (S11).** `oracle/relate_matrix.ml` +
+   `RELATE_MATRIX` / `RELATE_PREDICATE` in `oracle/driver.ml`.
 3. Optional: WKT→segment geometry in Coq for test 6/13 showing both satisfy
    `segments_proper_cross` (float carrier, separate from matrix fill).
