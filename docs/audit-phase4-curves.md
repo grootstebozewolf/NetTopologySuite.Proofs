@@ -186,7 +186,7 @@ Rung 6 (same day): assembly capstone — `CurveOffsetAssembly.v`.
 `curve_ring_offset_round_valid` proves the assembled ring is again a
 `valid_curve_ring` for arbitrary non-U-turn compound rings;
 `offset_walk_smooth_eq_map` shows it conservatively extends the smooth
-case. Three-axiom. Remaining: U-turn double-arc joins, curved endcaps,
+case. Three-axiom. Remaining: U-turn joins *[closed by rung 7, one semicircle]*, curved endcaps,
 `CurvePolygon` topology.
 
 Rung 7 (same day): the semicircle arc — `CurveSemicircle.v`. One

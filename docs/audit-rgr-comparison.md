@@ -513,7 +513,7 @@ parallel — orthogonal decomposition + unit length forces `n̂₁·n̂₂ = ±1
 **validity** `round_join_arc_valid` (the control-point cross factors
 exactly as `d²(2−h)/h · cross(n̂₁,n̂₂)`, `h = |n̂₁+n̂₂|`, so the join is a
 valid `CircularArc` whenever the corner actually turns and is not the
-U-turn boundary — which is rung 3's S-curve and needs two arcs);
+U-turn boundary — which is rung 3's S-curve; *[corrected by rung 7: ONE semicircle suffices]*);
 **geometry** `round_join_arc_center_radius` (circumcircle is exactly
 `(P, |d|)`, via rung 2's circumcenter uniqueness — its second consumer);
 **splicing** `round_join_connects` (endpoints coincide with the adjacent
@@ -539,7 +539,7 @@ G1 seams), closed (closing join or G1 closing seam). Coherence
 plain map, so the assembly conservatively extends rung 4's smooth
 capstone. The offset lane's structural story is now complete for
 arbitrary non-U-turn compound rings; remaining on #65: the U-turn
-(S-curve) double-arc join, curved endcaps for open inputs, and
+(S-curve) join *[closed by rung 7 with a single semicircle]*, curved endcaps for open inputs *[also rung 7]*, and
 `CurvePolygon`-level topology (hole/shell relations) under offset.
 
 **Rung 7 (2026-06-11): the semicircle — U-turn join + round endcap in

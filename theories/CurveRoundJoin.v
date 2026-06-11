@@ -27,8 +27,9 @@
 
      - `round_join_arc_valid`: under `n1 <> n2` (the join actually
        turns), `n1 + n2 <> 0` (not the U-turn boundary; that
-       configuration is the §4 tear witness's S-curve and needs TWO
-       join arcs), unit normals, and `d <> 0`, the three control
+       configuration is the tear witness's S-curve, handled by ONE
+       semicircle in `CurveSemicircle.v`), unit normals, and `d <> 0`,
+       the three control
        points are non-collinear: the emitted join is a VALID SQL/MM
        arc.  The control-point cross factors exactly as
        `d^2 * (2-h)/h * cross(n1,n2)` with `h = |n1+n2|` (so validity
