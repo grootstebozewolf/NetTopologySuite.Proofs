@@ -734,3 +734,38 @@ miter (this rung), every JTS join style is emitted by a walk whose
 output is a valid compound ring. Remaining on the lane: the open-chain
 two-sided cap walk, P10 brick 2 (oracle modes, Flocq-bound), and the
 P2 Minkowski semantics.
+**Rung 14a (2026-06-11): the reversal layer.** `theories/CurveReverse.v`,
+all `Qed`, three-axiom. Groundwork for the open-chain two-sided cap walk
+(14b) and independently the SQL/MM ring-orientation flip:
+`curve_ring_reverse` (reverse the list AND each segment) preserves
+compound-ring validity (`valid_curve_ring_reverse`), with circumcircle
+invariance under arc reversal proved via circumcenter uniqueness (its
+FOURTH consumer). The design-load-bearing finding is the ORIENTATION
+WART, now formal: chord `unit_perp` normals flip under reversal while
+arc radial normals are traversal-agnostic, so offset∘reverse =
+reverse∘offset at `−d` for chords but `+d` for arcs
+(`offset_rev_chord` / `offset_rev_arc`). "Side is encoded by traversal
+orientation" is therefore TRUE for chords and FALSE for raw three-point
+arcs — the formal reason JTS's OffsetCurveBuilder tracks an explicit
+side flag, and the spec the 14b cap walk must thread (per-kind signs on
+the return boundary). Remaining: 14b itself (the two-sided walk + caps
+→ closed ring), then P10 brick 2 and P2.
+
+**Rung 14b (2026-06-11): the open-chain two-sided cap walk — the
+offset lane's last structural emission gap closes.**
+`theories/CurveCapWalk.v`, all `Qed`, three-axiom. The buffer boundary
+of an open compound line: `chain_walk d` (the open walk: offsets +
+chord connectors, no closing join) ++ the rung-7 far semicircle cap ++
+`curve_ring_reverse (chain_walk (−d) c)` ++ the mirror start cap. The
+14a orientation wart dictated the design: the right boundary is the
+REVERSAL of the forward `−d` walk — not the offset of the reversed
+chain — so 14a's reversal lemmas supply all its structure and no
+per-kind sign threading is needed. Headline
+`curve_chain_buffer_valid`: a nonempty adjacent chain with valid arcs,
+non-degenerate chords, two-sided safety and `d ≠ 0` assembles into a
+CLOSED valid compound ring. EVERY stage-2 emission of the buffer
+front-end — closed rings (rungs 6–13) and open chains (this rung) —
+now produces a valid compound ring ready for linearisation and the
+proven noding spine. Remaining on the lane: P10 brick 2 (oracle modes,
+Flocq-bound) and P2 (Minkowski point-set semantics); the structural
+queue otherwise moves to P4/P5 (H2/H1 residuals).

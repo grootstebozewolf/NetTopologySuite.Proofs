@@ -240,3 +240,15 @@ distance-d soundness attached via `miter_connector_apex_sound`), bevel
 fallback at arc joins; lean hypothesis set; all-chord preservation;
 linearised output closes. The 2b join-emission story (round / bevel /
 miter) is complete. Three-axiom.
+Rung 14a (same day): the reversal layer — `CurveReverse.v`. Ring
+reversal preserves validity (circumcircle invariance via uniqueness,
+4th consumer); the orientation wart formalised: chord normals flip
+under reversal, arc radial normals don't, so offset/reverse commute at
+opposite signs per kind — the spec the 14b two-sided cap walk threads.
+Three-axiom.
+
+Rung 14b (same day): the open-chain cap walk — `CurveCapWalk.v`. Left
++d walk, rung-7 far cap, reversal of the forward −d walk (the
+wart-dictated design), mirror start cap: `curve_chain_buffer_valid`
+yields a closed valid compound ring. The offset lane's structural
+emission story is COMPLETE for both rings and open chains. Three-axiom.
