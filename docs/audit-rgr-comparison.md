@@ -467,3 +467,20 @@ a valid three-point `CircularArc` is again a valid three-point
 "buffer/offset preserving arcs" (#65 BUF-*/OFF) at the representation
 level, extractable as-is. Remaining on the lane: emitted offset edge
 lists, joins/caps on curved inputs, `CurvePolygon` topology preservation.
+
+**Rung 3 (2026-06-11): segment-wise COMPOUNDCURVE offset.**
+`theories/CurveRingOffset.v`, all `Qed`, three-axiom. `curve_ring_offset`
+maps a `CurveRing` segment-wise (chords via `BufferOffset.offset_point`,
+arcs via rung 2's `arc_offset_arc`); per-arc validity and segment count
+survive under the per-arc safety bound `−r < d`
+(`curve_ring_offset_arcs_valid`). The join story is now split honestly:
+**G1 joins with consistent unit normals offset continuously**
+(`arc_join_offset_continuous` — smooth compound curves need no join
+edges), while **tangent-line continuity alone provably does not
+suffice** (`tangent_continuity_insufficient_for_offset` — a concrete
+S-curve/inflection witness with anti-parallel normals where the `d = 1`
+offset tears the shared point to `(2,0)` vs `(0,0)`; the arc-side
+JTS#1147 / OffsetCurve artifact class, and the reason stage-2b join
+edges remain on the ladder). Remaining: join/cap edge emission for the
+non-G1 case, adjacency/closedness lifting for all-G1 rings, and
+`CurvePolygon` topology preservation.

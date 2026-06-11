@@ -155,3 +155,12 @@ arithmetic, extractable) and discharges the circumcenter-uniqueness
 lemma `CurveGeometry.v` §2 had deferred
 (`equidistant_point_is_arc_center`). Three-axiom. The ladder advances to
 emitted edge lists → `CurvePolygon` topology.
+
+Rung 3 (same day): segment-wise COMPOUNDCURVE offset —
+`theories/CurveRingOffset.v`. Per-arc validity and segment count survive
+(`curve_ring_offset_arcs_valid`); G1 joins with consistent unit normals
+offset continuously (`arc_join_offset_continuous`); and the honest
+negative `tangent_continuity_insufficient_for_offset` (S-curve/inflection
+witness — the offset tears despite tangent-line continuity, the arc-side
+JTS#1147 class). Three-axiom. Next: join/cap edge emission for non-G1
+joins, all-G1 closedness lifting, `CurvePolygon` topology.

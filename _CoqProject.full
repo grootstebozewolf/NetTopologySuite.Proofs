@@ -935,6 +935,19 @@ theories/ArcOffset.v
 # per-control-point at-distance-|d| facts.  No Admitteds.
 theories/ArcOffsetThreePoint.v
 
+# Issue #65 curve-aware buffer, rung 3: segment-wise offset of a
+# COMPOUNDCURVE ring (chords via BufferOffset.offset_point, arcs via
+# arc_offset_arc).  Arc validity survives under the per-arc safety
+# bound (curve_ring_offset_arcs_valid); G1 joins with CONSISTENT
+# normals offset continuously (arc_join_offset_continuous, the
+# no-join-edge-needed case); and the honest negative
+# tangent_continuity_insufficient_for_offset -- a concrete S-curve
+# (inflection) witness where tangent-line continuity holds but the
+# offset TEARS (anti-parallel normals), the arc-side reason stage-2b
+# join edges remain necessary (JTS#1147 / OffsetCurve artifact class).
+# No Admitteds.
+theories/CurveRingOffset.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
