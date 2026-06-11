@@ -1488,6 +1488,20 @@ theories/CurveMiterJoin.v
 # ring reversal preserves compound-ring validity.  No Admitteds.
 theories/CurveReverse.v
 
+# Issue #65 curve-aware buffer, rung 14b: the OPEN-CHAIN two-sided cap
+# walk -- the last structural emission gap.  chain_walk (open: offsets
+# + chord connectors, no closing join); rung-7 semicircle caps at both
+# ends (cap_far via semicircle_cap_connects, cap_start the mirror);
+# the right boundary is curve_ring_reverse (chain_walk (-d) c), so the
+# 14a reversal lemmas supply all its structure and no per-kind sign
+# threading is needed (the orientation-wart-dictated design).
+# Headline curve_chain_buffer_valid: a nonempty adjacent chain with
+# valid arcs, nondegenerate chords, two-sided safety and d <> 0
+# assembles into a CLOSED valid compound ring -- the buffer boundary
+# of an open compound line.  Every stage-2 emission (rings AND chains)
+# now produces a valid compound ring.  No Admitteds.
+theories/CurveCapWalk.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
