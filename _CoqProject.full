@@ -1370,6 +1370,22 @@ theories/CurveRingOffset.v
 # fields.  No Admitteds.
 theories/CurveRoundJoin.v
 
+# Issue #65 curve-aware buffer, rung 6 (assembly capstone): splice the
+# round-join arcs into the segment-wise offset ring.  offset_walk /
+# curve_ring_offset_round walk the ring emitting each segment's offset
+# plus, at every join a supplied G1 decision flags non-smooth, the
+# CurveRoundJoin arc (incl. the closing join); the decision is an
+# abstract boolean oracle with a correctness spec (real equality is
+# not computable; extraction supplies the comparison).  Headline
+# curve_ring_offset_round_valid: for a valid ring with nondegenerate
+# chords, offset within the per-arc safety bound, d <> 0, and no
+# U-turn (anti-parallel-normal) joins, the assembled output is again
+# a valid_curve_ring -- extending rung 4's smooth-ring capstone to
+# arbitrary non-U-turn compound rings.  Coherence:
+# offset_walk_smooth_eq_map (on all-G1 rings the walk equals rung 3's
+# plain map).  No Admitteds.
+theories/CurveOffsetAssembly.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.

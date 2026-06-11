@@ -522,3 +522,22 @@ unit-ness of the ring's own normal fields. Remaining on the #65 ladder:
 the assembly rung (insert join arcs into `curve_ring_offset` output and
 re-prove ring validity for non-G1 rings), curved endcaps, and
 `CurvePolygon` topology.
+
+**Rung 6 (2026-06-11): assembly capstone — non-G1 rings offset to valid
+rings.** `theories/CurveOffsetAssembly.v`, all `Qed`, three-axiom.
+`offset_walk` / `curve_ring_offset_round` splice the `CurveRoundJoin`
+arc at every join a supplied G1 decision flags non-smooth (including
+the closing join); the decision is an abstract boolean oracle with a
+correctness spec — real equality is not computable, extraction supplies
+the comparison, and every theorem is conditional only on the spec.
+Headline `curve_ring_offset_round_valid`: a valid compound ring with
+non-degenerate chords, offset within the per-arc safety bound, `d ≠ 0`,
+and no U-turn (anti-parallel-normal) joins assembles into a
+`valid_curve_ring` — arcs valid (rungs 3+5), adjacent (splice facts +
+G1 seams), closed (closing join or G1 closing seam). Coherence
+`offset_walk_smooth_eq_map`: on all-G1 rings the walk equals rung 3's
+plain map, so the assembly conservatively extends rung 4's smooth
+capstone. The offset lane's structural story is now complete for
+arbitrary non-U-turn compound rings; remaining on #65: the U-turn
+(S-curve) double-arc join, curved endcaps for open inputs, and
+`CurvePolygon`-level topology (hole/shell relations) under offset.

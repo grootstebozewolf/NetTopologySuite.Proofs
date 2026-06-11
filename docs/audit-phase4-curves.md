@@ -179,3 +179,12 @@ exactly `(P, |d|)` (second consumer of the circumcenter-uniqueness
 lemma), splicing onto the adjacent offset segments via the uniform
 normal field. Three-axiom. Next: the assembly rung (splice join arcs
 into offset rings), curved endcaps, `CurvePolygon` topology.
+
+Rung 6 (same day): assembly capstone — `CurveOffsetAssembly.v`.
+`curve_ring_offset_round` splices round-join arcs at non-G1 joins
+(abstract G1 decision oracle, spec-conditional only) and
+`curve_ring_offset_round_valid` proves the assembled ring is again a
+`valid_curve_ring` for arbitrary non-U-turn compound rings;
+`offset_walk_smooth_eq_map` shows it conservatively extends the smooth
+case. Three-axiom. Remaining: U-turn double-arc joins, curved endcaps,
+`CurvePolygon` topology.
