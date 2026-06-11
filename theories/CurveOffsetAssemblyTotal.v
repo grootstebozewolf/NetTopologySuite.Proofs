@@ -41,6 +41,14 @@
        ring the walk still inserts nothing and equals rung 3's plain
        `curve_ring_offset`.
 
+   FORWARD POINTER: with this file the JOIN story is complete -- no
+   U-turn or turning exclusions remain (the once-conjectured
+   "double-arc" U-turn treatment was refuted by rung 7: one semicircle
+   suffices, and it is threaded through the walk here).  What remains
+   on the #65 lane is qualitatively different work: `CurvePolygon`-level
+   topology (hole/shell relations under offset) and the point-set
+   Minkowski semantics bridge of `buffer-noder-pipeline.md` §3.
+
    Pure-R; THREE-AXIOM THROUGHOUT (classical-reals trio).  No
    `Admitted`/`Axiom`/`Parameter`.
 
