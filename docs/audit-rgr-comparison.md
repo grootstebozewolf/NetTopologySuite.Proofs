@@ -679,3 +679,22 @@ deferred to a session with a Flocq-buildable oracle (the binary links
 against the extracted modules; CI's container builds it, this
 environment cannot). P3 (linear edge-list coherence) remains next after
 brick 2.
+**Rung 11 (2026-06-11): P3 landed — the stage-2 → stage-3 handoff.**
+`theories/CurveOffsetEmit.v`, all `Qed`, three-axiom. The pipeline doc's
+front-end contract is "emit a closed raw buffer curve and feed the
+proven noder with zero change"; this rung closes the seam between the
+curve emitter (rungs 3–10) and the spine's Phase-3 carrier:
+`offset_emit_ring_closed` composes rung 8's `curve_ring_offset_total_valid`
+with `CurveLinearise.chord_approx_ring_closed` — the assembled offset
+ring's chord linearisation is a `ring_closed` Phase-3 ring.
+`linear_offset_emit_ring_closed` specialises to all-chord input (the
+LINEAR pipeline: per-arc safety is vacuous), discharging the round-join
+flavour of the linear emitted-edge-list gap; the chord case of the
+curve emitter is definitionally `BufferOffset.offset_seg`
+(`curve_segment_offset_chord_is_offset_seg`), so the curve lane
+conservatively extends the linear stage-2a seam. HONEST REMAINDER:
+miter/bevel join EDGE emission (geometry proven, no walk emits them)
+and the open-chain cap assembly stay open; P10 brick 2 (oracle modes)
+still needs a Flocq-buildable session. The bounded-slice queue of §8.3
+is now P1 ✅ / P10-brick-1 ✅ (PR #173) / P3 ✅ — next are the
+structural residuals P4 (H2) and P5 (H1's `even_parity_escapes`).

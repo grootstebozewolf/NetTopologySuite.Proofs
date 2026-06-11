@@ -1436,6 +1436,19 @@ theories/CurvePolygonOffset.v
 # from the rational r^2.  The OCaml CURVE_JOIN_CLASSIFY mode (brick 2)
 # is deferred to a CI-buildable session.  No Admitteds.
 theories/CurveJoinClassify.v
+# Issue #65 curve-aware buffer, rung 11 (forward pointer P3): the
+# stage-2 -> stage-3 handoff.  The curve front-end's chord case IS
+# BufferOffset.offset_seg (definitional coherence with the linear
+# stage-2a seam); the segment-wise map preserves all-chord rings; and
+# the headline offset_emit_ring_closed composes rung 8's validity with
+# CurveLinearise.chord_approx_ring_closed: the assembled offset ring's
+# chord linearisation is a ring_closed Phase-3 ring -- the emitted
+# edge list CLOSES, the structural contract stage 3 (noding) needs.
+# linear_offset_emit_ring_closed specialises to all-chord input,
+# discharging the round-join flavour of the linear emitted-edge-list
+# gap (miter/bevel join emission and open-chain caps remain honestly
+# open).  No Admitteds.
+theories/CurveOffsetEmit.v
 
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
