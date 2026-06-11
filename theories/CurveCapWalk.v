@@ -51,15 +51,16 @@ From Stdlib Require Import Reals Lra List Bool.
 From NTS.Proofs Require Import Distance Vec Direction CurveGeometry Overlay.
 From NTS.Proofs Require Import ArcChordApprox ArcOffsetThreePoint CurveRingOffset.
 From NTS.Proofs Require Import CurveOffsetAssembly CurveSemicircle CurveReverse.
-From NTS.Proofs Require Import CurveLinearise BufferOffset.
+From NTS.Proofs Require Import CurveLinearise CurveMiterJoin BufferOffset.
 
 Import ListNotations.
 
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* §1  Small list bricks (local names; consolidation with the rung-13         *)
-(*     branch's general app-glue is deferred to the merge).                   *)
+(* §1  Small list bricks.  The general app-glue (last_app_nonnil,            *)
+(*     curve_ring_adjacent_{cons,app}) is imported from CurveMiterJoin;       *)
+(*     only the two bricks unique to this file remain local.                  *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma app_nonnil_r {A : Type} : forall (l m : list A),
@@ -76,47 +77,8 @@ Proof.
   intros [| a l'] m dflt Hl; [ contradiction | reflexivity ].
 Qed.
 
-Lemma last_app_ne {A : Type} : forall (l C : list A) (dflt : A),
-  C <> [] -> last (l ++ C) dflt = last C dflt.
-Proof.
-  induction l as [| a l' IH]; intros C dflt Hne.
-  - reflexivity.
-  - cbn [app].
-    destruct (l' ++ C) as [| x M] eqn:E.
-    + apply app_eq_nil in E as [_ Ec]. contradiction.
-    + change (last (x :: M) dflt = last C dflt).
-      rewrite <- E. apply IH. exact Hne.
-Qed.
 
-Lemma adjacent_cons_chain : forall (x : CurveSegment) (C : CurveRing) s0,
-  C <> [] ->
-  curve_segment_end x = curve_segment_start (hd s0 C) ->
-  curve_ring_adjacent C ->
-  curve_ring_adjacent (x :: C).
-Proof.
-  intros x [| c C'] s0 Hne Hseam HC.
-  - contradiction.
-  - split; [ exact Hseam | exact HC ].
-Qed.
 
-Lemma adjacent_app_chain : forall (l C : CurveRing) (s0 : CurveSegment),
-  l <> [] -> C <> [] ->
-  curve_ring_adjacent l -> curve_ring_adjacent C ->
-  curve_segment_end (last l s0) = curve_segment_start (hd s0 C) ->
-  curve_ring_adjacent (l ++ C).
-Proof.
-  induction l as [| a l' IH]; intros C s0 Hl HC Hadj HCadj Hseam.
-  - contradiction.
-  - destruct l' as [| b l''].
-    + cbn [app].
-      apply (adjacent_cons_chain a C s0 HC Hseam HCadj).
-    + destruct Hadj as [Hab Hadj'].
-      cbn [app]. split.
-      * exact Hab.
-      * apply (IH C s0);
-          [ discriminate | exact HC | exact Hadj' | exact HCadj
-          | exact Hseam ].
-Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §2  The open chain walk (offsets + chord connectors, no closing join).     *)
@@ -396,12 +358,12 @@ Section CapWalk.
         unfold M. apply chain_walk_arcs_valid; assumption. }
       { constructor; [ exact HCSv | constructor ]. }
     - (* adjacency: glue the four blocks *)
-      apply (adjacent_app_chain W _ CS HWne HXne HWadj).
+      apply (curve_ring_adjacent_app W _ CS HWne HXne HWadj).
       + (* adjacent ([CF] ++ RV ++ [CS]) *)
         change ([CF] ++ RV ++ [CS]) with (CF :: (RV ++ [CS])).
-        apply (adjacent_cons_chain CF _ CS HYne).
+        apply (curve_ring_adjacent_cons CF _ CS HYne).
         * rewrite (hd_app_nonnil RV [CS] CS HRVne). exact S2.
-        * apply (adjacent_app_chain RV [CS] CS HRVne
+        * apply (curve_ring_adjacent_app RV [CS] CS HRVne
                    ltac:(discriminate) HRVadj I).
           cbn [hd]. exact S3.
       + (* seam W -> CF *)
@@ -417,9 +379,9 @@ Section CapWalk.
                   :: tW ++ CF :: RV ++ [CS])
           with ((curve_segment_offset s0 d :: tW)
                   ++ (CF :: RV ++ [CS])).
-        rewrite (last_app_ne _ _ _ HXne).
+        rewrite (last_app_nonnil _ _ _ HXne).
         rewrite (last_cons_nonnil CF _ _ HYne).
-        rewrite (last_app_ne RV [CS] _ ltac:(discriminate)).
+        rewrite (last_app_nonnil RV [CS] _ ltac:(discriminate)).
         reflexivity. }
       rewrite Hlast.
       exact (proj2 (cap_start_connects s0 Hv0)).
