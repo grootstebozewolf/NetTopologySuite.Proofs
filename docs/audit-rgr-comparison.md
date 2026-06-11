@@ -796,3 +796,16 @@ orientation of an op-kept labelled edge): the with-holes extractor
 invents no geometry, completing the slice-3g semantic bridge for holes.
 All `Qed`, allowlisted axioms; the hole-edges lemma needs only `fan_ok`
 plus the oracle's well-formedness clause.
+
+**Next-rung prompt (2026-06-11):**
+[`docs/extract-rings-r5-slice-3i-prompt.md`](extract-rings-r5-slice-3i-prompt.md)
+— the bridge discharge (`fully_intersected` → the three structural
+hypotheses of the face extractor, re-pointing the deferred
+`extract_rings_valid` onto `extract_faces_holes`). Written Red-first:
+the grep analysis predicts two honest negatives (bigons and collinear
+fan collisions both satisfy `fully_intersected`'s endpoint-sharing
+disjunct while breaking `no_short_faces` / `fan_ok`), so the session is
+expected to produce counterexample witnesses plus the corrected
+strengthened bridge. Requires the Flocq container (the deferred
+statement and `noded_segments` live in `theories-flocq/`); a host-side
+route for the `pairwise_no_proper_cross` half is specified.
