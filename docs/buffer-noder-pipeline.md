@@ -46,9 +46,13 @@
 > endcaps — flat/round/square (`theories/BufferEndcap.v`, JTS#739/#1028),
 > and S1 the end-to-end conditional headline
 > (`theories/BufferCorrectness.v`) — all `Qed`-closed and kernel-verified
-> under Rocq 9.1.1. Remaining seams (join/cap *edge-list* assembly, depth
-> labelling, and the inherited DCEL / Hobby / JCT gaps) are tracked in
-> §5–§6.
+> under Rocq 9.1.1. The CURVE-side stage-2 story landed 2026-06-11 as a
+> fourteen-rung ladder (`ArcOffset` → … → `CurveCapWalk`; see rows
+> 2a–2c and `audit-rgr-comparison.md` §7–§8): offsets, all three join
+> flavours, caps, and the open-chain walk each emit proven-valid
+> compound rings, with the stage-3 handoff closed (`CurveOffsetEmit`).
+> Remaining seams (depth labelling and the inherited DCEL / Hobby /
+> JCT gaps) are tracked in §5–§6.
 
 ---
 
