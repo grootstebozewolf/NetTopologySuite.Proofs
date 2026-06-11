@@ -592,6 +592,356 @@ theories/JCTEscapeDescent.v
 # even_parity_escapes, each by the family field trichotomy).
 # Three-axiom.  No Admitted.
 theories/JCTSeparation.v
+# ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
+# approach.  cross_x (crossing abscissa; guard makes every half-open
+# crossing a STRICT straddle, so it is the edge's unique height point,
+# strictly east); min_cross_x (the first wall: existence, achievement,
+# lower bound); east_segment_free (the run-up [px p, X1) is skeleton-free);
+# east_approach (every run-up point is complement-connected, off-ring,
+# guarded, with the SAME ho_count); crossings_distinct -- the first genuine
+# use of ring_simple in the H1 campaign: distinct crossing edges cross at
+# distinct abscissae (a shared point is interior to both strict straddles,
+# hence a proper intersection).  Three-axiom.  No Admitted.
+theories/JCTEastApproach.v
+# ESCAPE DESCENT, rung 2: the corridor toolkit.  The carrier line edge_x_at
+# is AFFINE in height, so the corridor (edge_x_at y - delta, y) is itself a
+# STRAIGHT segment (corridor_connected via straight_path_continuous), and
+# every clearance is an affine endpoint evaluation: corridor_avoid_carrier
+# (any positive offset), _west (endpoints west by more than delta), _east,
+# _below/_above (outside the height window) -- explicit margins, no
+# compactness, no square roots.  level_gap/guard_of_fresh_level: an explicit
+# vertex-level-free parking height above any y0 gives the ray guard for
+# free.  Worked instance: a corridor inside the unit square with every
+# clearance discharged by the helpers.  Three-axiom.  No Admitted.
+theories/JCTCorridor.v
+# ESCAPE DESCENT, rung 3: the walk kit.  The MIXED clearance via the
+# three-point affine law (s1-s0)*F s = (s1-s)*F s0 + (s-s0)*F s1 (a ring
+# fact): an edge whose window-overlap parameters are clipped into [s0,s1]
+# and whose clearance F beats delta at both clip points clears the whole
+# overlap (corridor_avoid_clipped_west/_east); clip_params_asc/_desc compute
+# the clip points by affine inversion (Rmax/Rmin clamps).  Jog connectors
+# horizontal_connected / vertical_connected glue consecutive corridor
+# pieces along skeleton-free axis segments.  Generic geometry complete;
+# rung 4 = per-polygon touch-freedom (ring_simple), corner sectors, and the
+# bounded boundary recursion.  Three-axiom.  No Admitted.
+theories/JCTWalkKit.v
+# ESCAPE DESCENT, rung 4: the assembled WALK STEP.  The crossing abscissa IS
+# the carrier line's abscissa at p's height (cross_x_is_edge_x_at), so the
+# east run-up endpoint and the corridor top coincide
+# (corridor_top_is_wall_point); crossing edges are non-horizontal under the
+# guard (crossing_edge_nonhorizontal); exists_parked_height parks the lower
+# end in a vertex-level-free gap (free ray guard).  walk_step: east run-up +
+# wall corridor glued by connectivity transitivity, conditional only on the
+# corridor clearances; walk_step_guarded delivers a connected, off-ring,
+# guarded destination.  Rung 5 = clearances from ring_simple touch-freedom,
+# corner choice, recursion.  Three-axiom.  No Admitted.
+theories/JCTWalkStep.v
+# ESCAPE DESCENT, rung 4b-1: the TAUT bridge.  ring_taut (edges meet only at
+# shared endpoints; the pointwise-equal-edges escape hatch absorbs the
+# undecidable carrier case semantically); ring_taut_implies_simple (taut
+# strengthens the corpus predicate, which deliberately admits T-touches);
+# taut_no_line_touch (inside a span-interior window the carrier's LINE and
+# SEGMENT coincide, so any edge meeting the line there IS the carrier
+# pointwise -- the sign-orienting consumer for every clearance);
+# affine_root (constructive IVT for affine functions, explicit -B/A root
+# with sign-split bound proofs); clip_ordered_asc/_desc (clip points
+# ordered, in [0,1], heights inside the window).  Three-axiom.  No Admitted.
+theories/JCTTautClearance.v
+# ESCAPE DESCENT, rung 4b-2: THE WALL THEOREM (wall_corridor_clear).  For a
+# taut ring and a wall edge spanning a span-interior window, the corridor at
+# offset delta is skeleton-free for ALL delta in (0, delta0) -- the uniform
+# delta0 the walk step (rung 4) consumes.  touch_clearance: any touch
+# witness forces edge = carrier pointwise via taut_no_line_touch, so
+# corridor_avoid_carrier clears it -- the unifying trick absorbing every
+# zero/sign-change branch.  per_edge_clear: the case tree (ascending /
+# horizontal / descending obstacle x below / above / west / east / touch),
+# clipped clearances G0/G1 at the window clip points, sign-change roots via
+# affine_root; every clearance is an affine endpoint evaluation (no
+# compactness, no square roots).  clear_fold: generic Rmin fold over the
+# edge list.  Three-axiom.  No Admitted.
+theories/JCTWallClear.v
+# ESCAPE DESCENT, rung 4b-3: THE CORNER SECTOR (corner_sector_guarded).  The
+# wall theorem clears corridors only span-interior; to descend past the wall
+# edge's bottom vertex v the walk drops VERTICALLY just west of v, from
+# py v + eps to py v - eps, with eps shrunk after delta (edges incident to v
+# stay within slope*eps of v, short of the delta/2 offset).  Tautness enters
+# once more: an edge through v has v as a shared endpoint
+# (taut_vertex_endpoint), so obstacles split into edges AT v (slope bound)
+# and edges MISSING v (explicit positive margins at v's level, level_gap
+# style); two-stage Rmin fold corner_fold gives uniform delta0 then
+# eps0(delta).  Honest residual hypothesis: no horizontal edge extends WEST
+# from v (it would block every drop; deferred to the rung-5 recursion).
+# Also: corridor_offset_jog (corridors of two offsets connect at a shared
+# height) and depth_gap (parking BELOW a level with a free ray guard).
+# Three-axiom.  No Admitted.
+theories/JCTCornerSector.v
+# ESCAPE DESCENT, rung 5a: the CORNER-ABUTTING WALL CLEARANCE
+# (wall_corridor_clear_corner), dissolving the quantifier deadlock between
+# the wall theorem (window before delta) and the corner drop (eps after
+# delta).  Under corner_opens_east -- every edge incident at the wall's
+# bottom vertex v reaching weakly above v's level stays weakly EAST of the
+# wall's carrier -- the corridor is free on ALL of (py v, yhi] with ONE
+# uniform delta0: incident edges clear at any offset
+# (corridor_avoid_east_weak), descending incidents sit below the open
+# window, and non-incident edges NEVER touch the carrier on [py v, yhi]
+# (touch at the corner level = touch at v itself -> taut_vertex_endpoint;
+# touch above = span-interior -> taut_no_line_touch -> pointwise-equal ->
+# incident; both contradictions), so the rung 4b-2 clip tree runs with
+# eps-free margins.  This hypothesis is exactly where INSIDE walkers stick
+# (the wedge companion ascends west), as odd_parity_trapped demands.
+# corner_passage composes ride + drop: corridor at yhi to an off-ring,
+# guarded point strictly below the corner level.  Subsumes 4b-3's
+# horizontal residual (opens_east_horizontal).  Three-axiom.  No Admitted.
+theories/JCTCornerClear.v
+# ESCAPE DESCENT, rung 5b: THE MIRROR KIT.  The boundary-hugging walk needs
+# corridor moves in all four orientations (west/east of a wall, under
+# bottoms / over tops); instead of hand-writing three mirrored kits, this
+# transports the complement geometry through the coordinate reflections
+# xmir (east<->west) and ymir (over<->under): ring_edges/ring_image/
+# ring_complement/ring_taut/ring_closed/connected_in_complement_cont
+# (continuity_opp) / in_bounded_component_cont (norm reflection-invariant),
+# each both ways via involutions.  The horizontal ray makes ymir EXACT for
+# the crossing data: guard, edge_crosses_ray_ho, ho_count, parity all
+# transport (under the guard every half-open crossing is a strict straddle,
+# and strictness is y-symmetric).  xmir reverses the ray, so it carries
+# freedom/connectivity only (east-side corridors = west corridors of the
+# mirror); counts are recomputed at endpoints.  Every west/under theorem of
+# rungs 2-5a now applies verbatim to the mirrored rings and pulls back
+# along connected_xmir_rev / connected_ymir_rev.  Three-axiom.  No Admitted.
+theories/JCTMirrorKit.v
+# ESCAPE DESCENT, rung 5c-1: THE TOP PASSAGE and the TERMINAL COUNT.  First
+# consumer of the mirror kit: corner_passage pulled back through the y-flip
+# gives corner_passage_top -- from the wall's west corridor at any
+# span-interior height, over the wall's TOP vertex, to an off-ring,
+# ray-guarded point strictly ABOVE the top level: the move that backs the
+# walk out of a sealed wedge.  Mirrored hypothesis corner_opens_east_top in
+# original coordinates (incident edges reaching weakly BELOW u stay weakly
+# east of the carrier); the guard pulls back exactly (rung 5b's y-flip
+# exactness).  edge_x_at_ymir/_xmir relate the carrier across the flips.
+# Terminal payoff: xsup (east-most vertex abscissa, explicit Rmax fold);
+# at or east of it no edge crosses the ray (crossing abscissa is a convex
+# combination of endpoint abscissae), so ho_count_zero_east: count ZERO --
+# what escape_east_of_zero_count consumes.  Three-axiom.  No Admitted.
+theories/JCTTopPassage.v
+# ESCAPE DESCENT, rung 5c-2: THE FOUR-ORIENTATION PASSAGE KIT.  The corner
+# moves in all four orientations, with uniform interfaces.  The x-flip
+# reverses the eastward ray and cannot transport the ray guard -- but the
+# passage destinations are parked at LEVEL-FRESH heights (depth_gap), and a
+# level-fresh point is guarded in every direction (ray_guard_of_fresh).
+# corner_passage_fresh re-assembles rung 5a's composition with the parking
+# margin folded into eps0 explicitly, exposing freshness; the mirrors then
+# give corner_passage_top_fresh (west/over, ymir), corner_passage_east
+# (east/under, xmir; condition corner_opens_west) and
+# corner_passage_east_top (east/over, xmir o ymir; corner_opens_west_top).
+# Each: one complement path from the side-corridor at any span-interior
+# height, around the corner, to an off-ring point strictly past the corner
+# level, plus level freshness of the destination height.  Three-axiom.
+# No Admitted.
+theories/JCTPassageKit.v
+# ESCAPE DESCENT, rung 5c-3: THE UNDER-TIP CROSSING.  At a LOCAL-MINIMUM
+# corner (every incident edge reaches weakly upward) the horizontal band
+# just below v is skeleton-free across the whole corner
+# [px v - 2*delta, px v + 2*delta]: the side-switch move connecting the
+# west-side passage destinations to the east-side corridors (y-flip: over
+# a local-maximum tip).  Incident edges live entirely at-or-above the
+# level (no slope bounds needed); non-incident edges get explicit margins
+# as in the corner drop: a level-crossing edge crosses at abscissa X with
+# |X - px v| = m > 0 (tautness via taut_vertex_endpoint), and for
+# 8*delta < m + thin band the probe stays m/2 short of it
+# (hprobe_avoid_level_crossing, the horizontal twin of
+# drop_avoid_level_crossing); two-stage corner_fold gives uniform delta0
+# then eps0(delta).  under_tip_crossing: any two band points connect,
+# off-ring.  Three-axiom.  No Admitted.
+theories/JCTTipCrossing.v
+# ESCAPE DESCENT, rung 5c-4: THE CORNER BOXES.  Rung 4b-3's per-edge
+# dispatch corner_edge_clear quantifies over the WHOLE abscissa interval,
+# so its fold yields a skeleton-free RECTANGLE beside the corner:
+# [px v - 2*delta, px v - delta/2] x [py v - eps, py v + eps]
+# (corner_box_clear), and the mirror kit turns it into all four boxes
+# (east of bottom, west of top, east of top).  Inside a free rectangle any
+# two points connect by one vertical and one horizontal segment
+# (box_connected_of_clear, generic).  The boxes absorb at once all the
+# glue the traversal's corner composites need: drops, rejoin jogs onto the
+# next edge's corridor, transfers between passage destinations and tip
+# crossings.  Hypotheses are rung 4b-3's tautness + the horizontal-
+# incident direction at the corner (vacuous under the traversal's global
+# no-horizontal-edges simplification).  Three-axiom.  No Admitted.
+theories/JCTCornerBox.v
+# ESCAPE DESCENT, rung 5c-5: THE RING-CYCLE STRUCTURE.  Pure list
+# combinatorics the traversal consumes.  ring_core_nodup (closed ring with
+# pairwise-distinct core vertices); ring_edges_in_split (edge membership IS
+# list splitting -- axiom-free); in_edge_unique / out_edge_unique (each
+# vertex has at most one incoming and one outgoing edge, by count_occ on
+# the unique core occurrence, with the seam vertex's own analysis);
+# incident_two (every incident edge is THE in-edge or THE out-edge -- the
+# degree-2 lemma discharging the corner conditions against the two cycle
+# neighbours); cyclic_next / cyclic_prev (cycle successor and predecessor,
+# closedness wrapping the seam).  Also vertex_xmax_achieved and the
+# xsup-free terminal count ho_count_zero_east_ub (weakly east of every
+# vertex, the crossing count is zero).  Three-axiom.  No Admitted.
+theories/JCTRingCycle.v
+# ESCAPE DESCENT, rung 5c-6: THE HUG STATE and the first CORNER COMPOSITE.
+# hugs_west r e q: the anchor q is off-ring and connected to e's west
+# corridor at the SPAN MIDPOINT mid e (the delta-free canonical height
+# killing the parameter-threading circularity), with freedom at all
+# smaller offsets (what corridor_offset_jog consumes).  Steps never move
+# q -- they extend its connectivity.  hug_step_pass_down_west: at a
+# degree-2 downward pass-through corner, jog . corner_passage_fresh .
+# corner-box transfer (abscissae pinned by drop/apex_abscissa_bound) .
+# top-abutting ride to mid f.  The corner conditions are DISCHARGED, not
+# assumed: corner_opens_east(_top) hold by incident_two (the only
+# incidents are e -- own carrier -- and f -- far endpoint below, vacuous).
+# Also: wall_corridor_clear_corner_top (y-flip of rung 5a's corner-
+# abutting clearance) and apex_abscissa_bound (y-flip of the drop bound).
+# Three-axiom.  No Admitted.
+theories/JCTHugStep.v
+# ESCAPE DESCENT, rung 5c-7: THE MIRRORED HUG STEPS.  The hug state
+# transports through the reflections: the west midpoint corridor of a
+# y-mirrored edge IS the y-mirror of the west midpoint corridor
+# (corridor_ymir, mid_ymir), and the x-mirror swaps west corridors into
+# EAST corridors (corridor_xmir), turning hugs_west of the mirror into
+# hugs_east of the original.  With the ring-side hypotheses transported
+# (tautness, proper-ring via injective-map NoDup, no-horizontal), the
+# three remaining pass-through composites follow from rung 5c-6's
+# hug_step_pass_down_west by transport: hug_step_pass_up_west (ymir),
+# hug_step_pass_down_east (xmir), hug_step_pass_up_east (both).
+# Three-axiom.  No Admitted.
+theories/JCTHugMirror.v
+# ESCAPE DESCENT, rung 5c-8: THE OPEN-SIDE LOCAL-MINIMUM COMPOSITE.  At a
+# local minimum c the boundary turns around; the walker on the OPEN side
+# (west of arriving e, departing f weakly east of e's carrier) rounds the
+# tip: jog . corner_passage_fresh (down e's west side) .
+# under_tip_crossing (beneath the tip) . east corner box . east
+# corner-abutting rise to mid f -- the hug side flips (hugs_west e ->
+# hugs_east f), as right-of-travel demands.  Open-side conditions are two
+# carrier-line comparisons the traversal decides by Rle_dec.  Degree-2
+# housekeeping incident_pair_min (two in- or out-edges at c would
+# coincide, excluded by e <> f); east-side gap-fillers by x-flip pullback:
+# wall_corridor_clear_east (4b-2), wall_corridor_clear_corner_east (5a),
+# corridor_connected_east (rung 2), foot_abscissa_bound (two-sided pin).
+# Three-axiom.  No Admitted.
+theories/JCTMinOpenStep.v
+# ESCAPE DESCENT, rung 5c-9: THE MIRRORED OPEN-SIDE TURNAROUNDS.  Rung
+# 5c-8's open-side local-minimum composite transported through the
+# reflections: hug_step_min_open_ew (xmir: east in, west out, departing
+# edge weakly WEST), hug_step_max_open_we (ymir: local MAX, west in, east
+# out), hug_step_max_open_ew (both flips).  The x-flip swaps hug sides AND
+# carrier conditions; the y-flip turns minima into maxima keeping both.
+# Completes the OPEN-side corner inventory: four pass-throughs + four
+# open extremum turnarounds.  Only the pinched-side turnaround remains
+# before the cycle recursion.  Three-axiom.  No Admitted.
+theories/JCTMinOpenMirror.v
+# ESCAPE DESCENT, rung 5c-10: THE CORNER DISK.  Every edge NOT incident at
+# a vertex v misses a fixed square neighbourhood of v -- the pinched
+# turnaround's last missing clearance (away from the corner the wedge
+# interior may contain nested spiral arms, so the cross-wedge jog must
+# happen inside the taut margins around v, where the incident edges clear
+# POINTWISE and everything else clears by this disk).  Per edge: height
+# margins when the span misses v's level; the taut abscissa margin
+# |X - px v| = m > 0 via taut_vertex_endpoint plus
+# hprobe_avoid_level_crossing (rung 5c-3's rectangle probe, reused with
+# delta = eps = radius) when it crosses.  No horizontal cases under the
+# global simplification; clear_fold gives the uniform radius
+# (corner_disk_clear).  Three-axiom.  No Admitted.
+theories/JCTCornerDisk.v
+# ESCAPE DESCENT, rung 5c-11: THE PINCHED TURNAROUND
+# (hug_step_min_pinched_we).  At a local minimum whose departing edge
+# climbs strictly WEST of the arriving edge, the west-side walker is
+# inside the closing wedge: jog . descend west-of-e to the fixed band
+# height py c + eps0 (rung 4b-2 on a FIXED window -- f's clip margins
+# strictly positive since the carriers only meet at c) . jog ACROSS the
+# wedge interior (incident edges pointwise via on_carrier_x; all others
+# via the corner disk) . ascend east-of-f to mid f.  The wedge width is
+# affine with root at c (width = (KE - KF)(y - py c), KE > KF from the
+# strict pinch), so eps0 is fixed BEFORE delta and the jog has room for
+# delta < (KE - KF) eps0 / 3: no quantifier circularity.  The hug side
+# flips (hugs_west e -> hugs_east f).  Three-axiom.  No Admitted.
+theories/JCTPinchedStep.v
+# ESCAPE DESCENT, rung 5c-12: THE MIRRORED PINCHED TURNAROUNDS and the
+# CARRIER-SIDE BRIDGE.  hug_step_min_pinched_ew (xmir),
+# hug_step_max_pinched_we (ymir), hug_step_max_pinched_ew (both flips);
+# hugs_east_ymir factored out.  carrier_side_equiv: at an extremum corner
+# the two carrier-side conditions are EQUIVALENT (one slope comparison
+# (KE - KF) through the shared corner, stated for minima and maxima at
+# once via the same-side product), so the per-corner total step decides
+# open vs pinched with a single Rle_dec and derives the partner condition
+# from the bridge.  The full corner-move inventory (4 pass-throughs +
+# 4 open + 4 pinched) is now Qed.  Three-axiom.  No Admitted.
+theories/JCTPinchedMirror.v
+# ESCAPE DESCENT, rung 5c-13: THE PER-CORNER TOTAL STEP.  The combined
+# state hugs := hugs_west \/ hugs_east advances through ANY degree-2
+# corner (hug_step_corner): corner type by the height signs (pass-through
+# down/up, local min/max); pass-throughs keep the hug side; extrema flip
+# it, deciding open vs pinched by ONE Rle_dec on the carrier comparison
+# with the bridge supplying the partner condition.
+# corner_slopes_distinct strictifies the pinched branch: under tautness
+# two distinct edges through one corner are never collinear (they would
+# meet at a parameter-interior point, interior_param).  The traversal's
+# engine -- the cycle recursion just iterates it along cyclic_next.
+# Three-axiom.  No Admitted.
+theories/JCTCornerDispatch.v
+# ESCAPE DESCENT, rung 5c-14: THE CYCLE WALK and THE ENTRY.
+# hugs_everywhere: once the walker hugs ANY edge it hugs EVERY edge --
+# hugs_chain iterates the per-corner total step along the ring's chain
+# (plain list induction; degenerate cases killed by no-horizontality) and
+# the seam wraps by one more corner step from the closing edge (last, p)
+# to the opening edge (p, head).  No orbit combinatorics: the ring IS the
+# iteration order.  hug_entry: the east approach (rung 1) carries the
+# guarded walker to just west of its first wall = the wall's west
+# corridor point at the walker's own height (corridor_top_is_wall_point),
+# and the span-interior corridor (4b-2) rides to the midpoint: hugs_west
+# of the first wall, anchored at the walker itself.  Three-axiom.
+# No Admitted.
+theories/JCTHugCycle.v
+# ESCAPE DESCENT, rung 5c-15: EDGE-ENTRY COUNTING.  ho_count folds over
+# the edge LIST, so the payoff's "exactly one crossing" needs the crossing
+# pair to occur exactly once as an entry.  ring_edges_split_pos (an
+# edge-list occurrence locates a vertex split with the tail tracked);
+# in_edge_prefix_unique (positional strengthening of 5c-5: any two splits
+# at an in-edge share the prefix-with-source); in_edge_count_le1 (a double
+# entry would equate a prefix with a strictly longer one -- killed by
+# lengths); ho_count_single + ho_count_one_in (crossings = entries equal
+# to the in-edge => count exactly 1).  Three-axiom.  No Admitted.
+theories/JCTEdgeCount.v
+# ESCAPE DESCENT, rung 5c-16a: THE PAYOFF KIT.  Count kernels at the
+# eastmost corner's band points: the OUT-edge counting symmetry
+# (out_edge_prefix_unique / out_edge_count_le1 / ho_count_one_out);
+# ho_count_zero_of_no_cross; noncross_far (a non-incident edge never
+# crosses a band point's ray near the EASTMOST vertex: the crossing
+# abscissa is a convex combination of endpoint abscissae, at most the
+# eastmost abscissa, and the corner disk excludes the near range);
+# incident kernels (spans missing the height never cross; carriers at or
+# west never cross; strictly straddling carriers strictly east always
+# do); wall_corridor_clear_corner_east_top (the last clearance mirror).
+# Three-axiom.  No Admitted.
+theories/JCTPayoffKit.v
+# ESCAPE DESCENT, rung 5c-16b: THE PAYOFF RIDES.  At the eastmost vertex
+# each hug configuration yields a connected, off-ring, ray-guarded point
+# with crossing count 0 or 1 (the uniform `payoff` conclusion):
+# payoff_east_ride (east hug of an ascending incident: corner-abutting
+# east ride to the band, strictly east of every vertex: count 0);
+# payoff_west_ride_pt (west hug at a pass-through: exactly the ridden
+# edge crosses: count 1, via ho_count_one_in/_out); payoff_passage_min
+# (west hug at an open minimum: corner_passage_fresh lands BELOW, where
+# no incident spans and non-incidents are disk-excluded: count 0);
+# payoff_wedge_min (west hug inside a pinched minimum: fixed-window
+# descent to the wedge band, the east-wall edge alone crosses: count 1).
+# Counts via rung 5c-16a's kernels; guards via level freshness.
+# Three-axiom.  No Admitted.
+theories/JCTPayoffRides.v
+# ESCAPE DESCENT, rung 5c-17: THE CLOSING RUNG.  escape_descent_holds:
+# ring_taut + ring_core_nodup + no_horizontal_edges => escape_descent r.
+# The walker enters the hug at its first wall (hug_entry), propagates
+# around the ring (hugs_everywhere), and the eastmost dispatch
+# (eastmost_payoff: pass-throughs ride, minima passage/probe by the
+# pinch Rle_dec, maxima via the y-flip payoff_ymir) harvests a connected
+# guarded point with count 0 or 1.  Count 0 is the descent's q; count 1
+# is odd and parity transport (parity_constant_on_components) makes the
+# even walker in-ring -- absurd.  parity_seam_offring_taut then closes
+# H1 outright through parity_seam_offring_of_descent: the corrected
+# polygonal Jordan seam holds for taut, proper, horizontal-free rings --
+# every premise a theorem, no stub, exactly the three allowed axioms.
+theories/JCTEscapeDescentHolds.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
