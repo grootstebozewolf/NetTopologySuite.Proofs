@@ -1,0 +1,41 @@
+# Area-line DE-9IM oracle vectors — issue #67 S5 seed (+ S9 fill API).
+# Coq pins: theories/RelateAreaLine.v (witness matrices + predicate lemmas).
+# S9 fill: theories/RelateMatrixAreaLine.v — area_line_fill ALR_* equals COQ below.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt (all three fill APIs).
+#
+# Format mirrors oracle/de9im_line_line_vectors.txt (one regime per stanza).
+# Oracle mode: RELATE_MATRIX / RELATE_PREDICATE in oracle/driver.ml (S11).
+#
+# S5 regimes (axis-aligned rectangle, no holes):
+#   INTERIOR   — both endpoints strictly inside ⇒ `al_matrix_segment_interior` (II=1)
+#   PIERCE     — horizontal pierce ⇒ `al_matrix_segment_crosses` (Crosses LP/AP/AL, II=1 BE=0)
+#   DISJOINT   — segment above box ⇒ `al_matrix_disjoint`
+#   BND_TOUCH  — left-boundary endpoint from outside ⇒ `al_matrix_boundary_touch` (Touches, pat_touches_1, BB=0)
+
+REGIME INTERIOR
+RECT 0 0 1 1
+SEG (-0.25 0.25) (0.75 0.75)
+COQ al_matrix_segment_interior
+FILL area_line_fill ALR_Interior
+NOTES intersects via II=1; segment_strictly_inside_open_rect guard.
+
+REGIME PIERCE
+RECT 0 0 1 1
+SEG (-1 0.5) (2 0.5)
+COQ al_matrix_segment_crosses
+FILL area_line_fill ALR_Pierce
+NOTES crosses_lp_ap_al + intersects; segment_pierces_rect_horiz + strict_completeness share link.
+
+REGIME DISJOINT
+RECT 0 0 1 1
+SEG (0.25 2) (0.75 3)
+COQ al_matrix_disjoint
+FILL area_line_fill ALR_Disjoint
+NOTES segment_above_rect; reuses ll_matrix_disjoint footprint.
+
+REGIME BND_TOUCH
+RECT 0 0 1 1
+SEG (-1 0.5) (0 0.5)
+COQ al_matrix_boundary_touch
+FILL area_line_fill ALR_BoundaryTouch
+NOTES touches via pat_touches_1 BB=0; left-boundary endpoint outside.

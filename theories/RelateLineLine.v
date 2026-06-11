@@ -1,17 +1,23 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 2: line-line DE-9IM soundness slice.
+   Issue #67 session 2: line-line DE-9IM witness matrices + geometry lemmas.
 
    Bridges two closed segments (line-string endpoints A–B and C–D) to the
    DE-9IM predicates from `DE9IM.v`, using the Phase-1 segment intersection
    decision in `Intersect.v`.
 
-   Delivers regime soundness (proper crossing, rejection, share, collinear
-   interior overlap) via canonical witness matrices — not a full RelateNG
-   matrix-fill algorithm.  Romanschek et al. (IJGI 2021) Table 5/6 line–line
-   matrices are pinned as `ll_matrix_paper_test*` with predicate lemmas (S3
-   oracle seed; see `oracle/de9im_line_line_vectors.txt`).
+   Two honest, independent layers (this file does NOT derive a DE-9IM matrix
+   from geometry — see the section comment below):
+     - `*_witness` / `ll_matrix_*` lemmas: each hand-specified witness matrix
+       satisfies the named DE-9IM predicate (constant facts, no geometry).
+     - `*_geom` / `*_share` / `*_not_share` lemmas: the genuine geometric
+       consequence of each regime (a shared point, or its absence), proved
+       from the segment-intersection decision in `Intersect.v`.
+   The regime→witness assignment is realised by `line_pair_fill` in
+   `RelateMatrixLineLine.v` (S8).  Romanschek et al.
+   (IJGI 2021) Table 5/6 line–line matrices are pinned as `ll_matrix_paper_test*`
+   with predicate lemmas (S3 oracle seed; see `oracle/de9im_line_line_vectors.txt`).
 
    Honest scoping: closed segments; boundary vs interior classification for
    endpoint touches is witness-level only (existential `im_intersects`).
@@ -62,7 +68,7 @@ Definition segments_interior_collinear_overlap (A B C D : Point) : Prop :=
   between A B C /\ between A B D.
 
 (* -------------------------------------------------------------------------- *)
-(* Canonical witness matrices (soundness targets, not computed IMs).          *)
+(* Hand-specified witness matrices (regime targets, not derived from geometry).*)
 (* -------------------------------------------------------------------------- *)
 
 Definition ll_cell_empty : DimValue := None.
@@ -285,18 +291,15 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Geometry → DE-9IM soundness (three regimes of segment_intersection_decision). *)
+(* Genuine geometry lemmas (hypothesis-consuming).                            *)
+(*                                                                            *)
+(* These prove the real geometric consequence of each segment-intersection    *)
+(* regime: a shared point exists, or provably does not.  They do NOT assert    *)
+(* that any witness matrix above is the regime's DE-9IM — that link is the     *)
+(* deferred RelateNG-noding step (S13+).  The witness matrices satisfy their   *)
+(* named predicates as the constant `ll_matrix_*` lemmas above; these two      *)
+(* layers are kept separate on purpose.                                        *)
 (* -------------------------------------------------------------------------- *)
-
-Theorem line_line_proper_cross_sound :
-  forall A B C D : Point,
-    segments_proper_cross A B C D ->
-    im_crosses ll_matrix_point_ii /\
-    im_intersects ll_matrix_point_ii.
-Proof.
-  intros A B C D [Hab Hcd].
-  split; [exact ll_matrix_point_ii_crosses_ll | exact ll_matrix_point_ii_intersects].
-Qed.
 
 Theorem line_line_proper_cross_geom :
   forall A B C D : Point,
@@ -307,41 +310,13 @@ Proof.
   eapply strict_completeness; eauto.
 Qed.
 
-Theorem line_line_rejection_disjoint_sound :
+Theorem line_line_rejected_not_share :
   forall A B C D : Point,
     segments_rejected A B C D ->
-    im_disjoint ll_matrix_disjoint /\
     ~ segments_share A B C D.
 Proof.
-  intros A B C D Hrej.
-  split; [exact ll_matrix_disjoint_witness |].
-  intro Hshare. eapply same_side_rejection_is_sound; eauto.
-Qed.
-
-Theorem line_line_share_intersects_sound :
-  forall A B C D : Point,
-    segments_share A B C D ->
-    im_intersects ll_matrix_point_ii.
-Proof.
-  intros _ _ _ _ _. exact ll_matrix_point_ii_intersects.
-Qed.
-
-Theorem line_line_share_intersects_exists :
-  forall A B C D : Point,
-    segments_share A B C D ->
-    exists m : IntersectionMatrix, im_intersects m.
-Proof.
-  intros A B C D _.
-  exists ll_matrix_point_ii. exact ll_matrix_point_ii_intersects.
-Qed.
-
-Theorem line_line_collinear_overlap_sound :
-  forall A B C D : Point,
-    segments_collinear A B C D ->
-    segments_interior_collinear_overlap A B C D ->
-    im_overlaps ll_matrix_overlap_ii.
-Proof.
-  intros _ _ _ _ _ _. exact ll_matrix_overlap_ii_overlaps.
+  intros A B C D Hrej Hshare.
+  eapply same_side_rejection_is_sound; eauto.
 Qed.
 
 Theorem line_line_collinear_overlap_share :
@@ -356,28 +331,19 @@ Proof.
   unfold segments_1d_overlap. right; right; left. exact HC.
 Qed.
 
-Theorem line_line_decision_intersects_sound :
+Theorem line_line_share_intersects_exists :
   forall A B C D : Point,
     segments_share A B C D ->
-    predicate_holds RIntersects ll_matrix_point_ii.
+    exists m : IntersectionMatrix, im_intersects m.
 Proof.
-  intros _ _ _ _ _.
-  exact ll_matrix_point_ii_predicate_intersects.
-Qed.
-
-Theorem line_line_decision_disjoint_sound :
-  forall A B C D : Point,
-    segments_rejected A B C D ->
-    predicate_holds RDisjoint ll_matrix_disjoint.
-Proof.
-  intros _ _ _ _ _.
-  exact ll_matrix_disjoint_predicate.
+  intros A B C D _.
+  exists ll_matrix_point_ii. exact ll_matrix_point_ii_intersects.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
-Print Assumptions line_line_proper_cross_sound.
-Print Assumptions line_line_rejection_disjoint_sound.
-Print Assumptions line_line_share_intersects_sound.
+Print Assumptions line_line_proper_cross_geom.
+Print Assumptions line_line_rejected_not_share.
+Print Assumptions ll_matrix_point_ii_intersects.

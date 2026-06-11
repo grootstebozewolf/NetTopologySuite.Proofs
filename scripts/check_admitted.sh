@@ -42,9 +42,12 @@ done
 cd "$REPO_ROOT" || exit 2
 
 # Parser: strip comments + blanks, take the first '|' field, trim whitespace.
+# perl (not awk) for cross-platform regex parity -- the macOS CI runner's BSD
+# awk diverges from gawk/mawk on `[[:space:]]` char classes (see
+# scripts/check_oracle_handrolled.sh).
 parse_registry() {
   sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$1" \
-    | awk -F'|' '{ gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1); if ($1) print $1 }'
+    | perl -F'\|' -lane 'my $k = $F[0]; $k =~ s/^\s+|\s+$//g; print $k if length $k'
 }
 
 COUNTEREXAMPLE_KEYS=$(parse_registry "$COUNTEREXAMPLE_REGISTRY")
@@ -67,13 +70,12 @@ while IFS= read -r line; do
   [ -z "$line" ] && continue
   file=$(echo "$line" | cut -d: -f1)
   lineno=$(echo "$line" | cut -d: -f2)
-  thm=$(awk -v L="$lineno" '
-    /^(Theorem|Lemma)[[:space:]]+/ {
-      name = $2
-      gsub(/[^a-zA-Z0-9_'\''].*/, "", name)
-    }
-    NR == L { print name; exit }
-  ' "$file")
+  # perl (not awk): BSD awk on the macOS CI runner mis-parses the
+  # `[^a-zA-Z0-9_']` char class (the embedded `'`) and `[[:space:]]`.
+  thm=$(perl -ne 'BEGIN { $L = shift @ARGV }
+    if (/^(?:Theorem|Lemma)\s+(\S+)/) { ($name = $1) =~ s/[^a-zA-Z0-9_'\''].*//; }
+    if ($. == $L) { print "$name\n" if defined $name; exit; }
+  ' "$lineno" "$file")
   if [ -z "$thm" ]; then
     echo "::error::$file:$lineno -- Admitted without enclosing Theorem/Lemma." >&2
     violations=$((violations + 1))

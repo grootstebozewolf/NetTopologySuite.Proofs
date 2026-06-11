@@ -17,7 +17,7 @@
 #
 # Run: bash oracle/gen_adversarial_tests.sh > oracle/adversarial_tests.txt
 BIN=./oracle/oracle_bin
-sgn(){ awk '{print $1}'; }
+sgn(){ perl -lane 'print $F[0]'; }
 o()  { printf 'ORIENT\n%s\n%s\n%s\n' "$1" "$2" "$3" | "$BIN" | sgn; }
 of() { printf 'ORIENT_FILTERED\n%s\n%s\n%s\n' "$1" "$2" "$3" | "$BIN" | sgn; }
 ox() { printf 'ORIENT_EXACT\n%s\n%s\n%s\n' "$1" "$2" "$3" | "$BIN"; }

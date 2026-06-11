@@ -40,11 +40,11 @@ sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$ALLOWLIST" \
 # README, extract the fenced code block that follows the marker sentence.
 # Marker: the line containing 'The only axioms used are'.  We scan
 # forward to the next ``` fence, capture lines until the next ``` fence.
-awk '
-  /The only axioms used are/             { found_marker=1; next }
-  found_marker && /^```/ && !in_block    { in_block=1; next }
-  found_marker && /^```/ &&  in_block    { exit }
-  found_marker && in_block                { print }
+perl -ne '
+  if (/The only axioms used are/)       { $m = 1; next; }
+  if ($m && /^```/ && !$b)              { $b = 1; next; }
+  if ($m && /^```/ &&  $b)              { exit; }
+  print if $m && $b;
 ' "$README" \
   | sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' \
   | sort > "$TMPDIR_CHECK/readme.normalised"

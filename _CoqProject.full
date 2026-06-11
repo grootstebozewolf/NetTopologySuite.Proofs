@@ -116,6 +116,9 @@ theories/DE9IM.v
 # collinear-overlap soundness linked to `predicate_holds`.  Three-axiom
 # classical-reals base (inherits `Intersect.v`).  No Admitted.
 theories/RelateLineLine.v
+# Issue #67 session 4b (S4b): boundary / MOD2 policy — endpoint contact regimes,
+# Touches witness, JTS#1175 regression matrix (test 10).  Inherits S2.
+theories/RelateBoundary.v
 # Phase 3 milestone 1: foundational definitions for the overlay correctness
 # theorem.  Shape C representation (structural Ring/Polygon/Geometry with a
 # point_set : Geometry -> Point -> Prop bridge), the four BooleanOp tags +
@@ -385,6 +388,49 @@ theories/JCT.v
 # The combinatorial/computational half of parity_characterises_interior_cont
 # for rectangles; JCT-free.  Pure-R, three-axiom.  No Admitted.
 theories/RectangleJCT.v
+# Issue #67 session 4 (S4): area-point DE-9IM soundness — guarded rectangle
+# Contains via `RectangleJCT.point_in_ring_rect_iff`.  Witness matrix +
+# strict-interior regime linked to `predicate_holds RContains`.  Three-axiom
+# classical-reals base (inherits `Overlay.v` / `RectangleJCT.v`).  No Admitted.
+theories/RelateAreaPoint.v
+# Issue #67 session 5 (S5): area-line DE-9IM soundness — guarded rectangle
+# segment regimes (interior / pierce / disjoint / boundary touch).  Witness
+# matrices + `Intersect.v` crossing linked to `predicate_holds`.  Inherits
+# `RelateLineLine.v` / `RelateAreaPoint.v`.  Three-axiom base.  No Admitted.
+theories/RelateAreaLine.v
+# Issue #67 session 6 (S6): area-area DE-9IM soundness — guarded rectangle pairs
+# (disjoint / overlap / contains / boundary touch).  Witness matrices linked to
+# `predicate_holds`.  Inherits `RelateAreaPoint.v` / `RelateLineLine.v`.  No Admitted.
+theories/RelateAreaArea.v
+# Issue #67 session 7 (S7): rect×rect matrix fill — `RectPairRegime`,
+# `rect_pair_fill`, classifier + compute-path soundness linked to S6 witnesses.
+# Inherits `RelateAreaArea.v`.  Three-axiom base.  No Admitted.
+theories/RelateMatrixRect.v
+# Issue #67 session 8 (S8): line×line matrix fill — `LinePairRegime`,
+# `line_pair_fill`, classifier + compute-path soundness linked to S2 witnesses.
+# Inherits `RelateLineLine.v`.  Three-axiom base.  No Admitted.
+theories/RelateMatrixLineLine.v
+# Issue #67 session 9 (S9): area×line matrix fill — `AreaLineRegime`,
+# `area_line_fill`, classifier + compute-path soundness linked to S5 witnesses.
+# Inherits `RelateAreaLine.v`.  Three-axiom base.  No Admitted.
+theories/RelateMatrixAreaLine.v
+# Issue #67 session 10 (S10): arc×line relate + fill — chord path (3-ax).
+# `RelateArcChord.v` witness soundness; `RelateMatrixArcChord.v` fill API.
+# Inherits ArcIntersectIVT + RelateLineLine.  Three-axiom base.  No Admitted.
+theories/RelateArcChord.v
+theories/RelateMatrixArcChord.v
+# Issue #67 session 10b (S10b): Option-A analytic arc + clothoid relate/fill.
+# `RelateArcAnalytic.v`, `RelateMatrixArcAnalytic.v`, `RelateClothoid.v`,
+# `RelateMatrixClothoid.v`.  Inherits Atan2/AngleBetween/ArcLength + S10.  No Admitted.
+theories/RelateArcAnalytic.v
+theories/RelateMatrixArcAnalytic.v
+theories/RelateClothoid.v
+theories/RelateMatrixClothoid.v
+# Issue #67 session 12 (S12): curve-polygon × point relate + fill — chord rect
+# COMPOUNDCURVE carrier; S4 guard delegation (full `to_geometry` point-in-ring
+# bridge deferred S12b).  Seventh fill API `curve_point_fill`.  No Admitted.
+theories/RelateCurveAreaPoint.v
+theories/RelateMatrixCurveAreaPoint.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the

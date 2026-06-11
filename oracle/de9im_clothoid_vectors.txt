@@ -1,0 +1,27 @@
+# Clothoid×line DE-9IM oracle vectors — issue #67 S10b seed (chord path 3-ax).
+# Coq pins: theories/RelateClothoid.v (ClothoidChord + S2 delegate).
+# S10b fill: theories/RelateMatrixClothoid.v — clothoid_fill CLR_*.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt.
+#
+# Clothoid model: ClothoidChord = chord between cc_start and cc_end (G¹ seed).
+
+REGIME CHORD_CROSS
+CLOTHOID (0 0) (2 0)
+SEG (0 2) (2 -2)
+COQ cl_matrix_point_ii
+FILL clothoid_fill CLR_ChordProperCross
+NOTES clothoid_chord_proper_cross; geometry via clothoid_chord_proper_cross_share (shared point). Matrix is the hand-specified cl_matrix_point_ii witness, not derived from the geometry.
+
+REGIME CHORD_DISJ
+CLOTHOID (0 0) (2 0)
+SEG (0 3) (2 4)
+COQ cl_matrix_disjoint
+FILL clothoid_fill CLR_ChordDisjoint
+NOTES clothoid_chord_rejected; same-side rejection on clothoid chord vs segment.
+
+REGIME CHORD_SHARE
+CLOTHOID (0 0) (2 0)
+SEG (1 0) (3 0)
+COQ cl_matrix_point_ii
+FILL clothoid_fill CLR_ChordShare
+NOTES clothoid_chord_share; chord endpoint on segment interior.

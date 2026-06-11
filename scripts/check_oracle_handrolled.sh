@@ -92,7 +92,7 @@ perl -ne '
 ' "$CODE" | sort -u > "$DETECTED"
 
 # 3. Allowlist: one function name per line; `#` comments and blanks ignored.
-grep -vE '^[[:space:]]*(#|$)' "$ALLOWLIST" | awk '{print $1}' | sort -u > "$ALLOWED"
+grep -vE '^[[:space:]]*(#|$)' "$ALLOWLIST" | perl -lane 'print $F[0] if @F' | sort -u > "$ALLOWED"
 
 NEW="$(comm -23 "$DETECTED" "$ALLOWED")"
 STALE="$(comm -13 "$DETECTED" "$ALLOWED")"
