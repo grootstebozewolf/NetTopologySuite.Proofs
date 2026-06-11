@@ -172,3 +172,10 @@ yields the capstone `curve_ring_offset_valid`: a smooth (all-consistent-
 normals) compound ring offset within the per-arc safety bound is again
 a `valid_curve_ring`. Three-axiom. Next: non-G1 join edges, curved
 endcaps, `CurvePolygon` topology.
+
+Rung 5 (same day): the round join arc — `CurveRoundJoin.v`. The non-G1
+join edge emitted as a valid SQL/MM `CircularArc` with circumcircle
+exactly `(P, |d|)` (second consumer of the circumcenter-uniqueness
+lemma), splicing onto the adjacent offset segments via the uniform
+normal field. Three-axiom. Next: the assembly rung (splice join arcs
+into offset rings), curved endcaps, `CurvePolygon` topology.

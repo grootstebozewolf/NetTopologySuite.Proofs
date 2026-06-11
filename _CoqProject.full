@@ -948,6 +948,19 @@ theories/ArcOffsetThreePoint.v
 # No Admitteds.
 theories/CurveRingOffset.v
 
+# Issue #65 curve-aware buffer, rung 5: the ROUND JOIN ARC in SQL/MM
+# three-point form -- the join edge CurveRingOffset's tear witness
+# forces at non-G1 joins, emitted AS AN ARC.  unit_cross_nonzero (the
+# turning lemma: distinct non-antipodal unit vectors are not parallel);
+# round_join_arc_valid (control-point cross factors as
+# d^2 (2-h)/h cross(n1,n2), h=|n1+n2| -- a valid CircularArc);
+# round_join_arc_center_radius (circumcircle is EXACTLY (P,|d|), via
+# rung 2's circumcenter uniqueness); round_join_connects (endpoints
+# coincide with the adjacent offset segments' endpoints, via rung 4's
+# uniform normal field); plus unit-ness of the ring's own normal
+# fields.  No Admitteds.
+theories/CurveRoundJoin.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.

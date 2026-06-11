@@ -502,3 +502,23 @@ SQL/MM `CurvePolygon` boundary emission. Remaining on the #65 ladder:
 join-edge emission for the non-G1 case (forced by rung 3's tear
 witness), endcaps on curved inputs, and `CurvePolygon`-level topology
 (hole/shell relations) under offset.
+
+**Rung 5 (2026-06-11): the round join arc — the join edge, emitted AS an
+arc.** `theories/CurveRoundJoin.v`, all `Qed`, three-axiom. The join
+edge that rung 3's tear witness forces at non-G1 joins, in SQL/MM
+three-point form: `round_join_arc P d n1 n2` (start `P + d·n̂₁`, angular
+midpoint, end `P + d·n̂₂`). Proven: the **turning lemma**
+`unit_cross_nonzero` (distinct non-antipodal unit vectors are not
+parallel — orthogonal decomposition + unit length forces `n̂₁·n̂₂ = ±1`);
+**validity** `round_join_arc_valid` (the control-point cross factors
+exactly as `d²(2−h)/h · cross(n̂₁,n̂₂)`, `h = |n̂₁+n̂₂|`, so the join is a
+valid `CircularArc` whenever the corner actually turns and is not the
+U-turn boundary — which is rung 3's S-curve and needs two arcs);
+**geometry** `round_join_arc_center_radius` (circumcircle is exactly
+`(P, |d|)`, via rung 2's circumcenter uniqueness — its second consumer);
+**splicing** `round_join_connects` (endpoints coincide with the adjacent
+offset segments' endpoints via rung 4's uniform normal field) plus
+unit-ness of the ring's own normal fields. Remaining on the #65 ladder:
+the assembly rung (insert join arcs into `curve_ring_offset` output and
+re-prove ring validity for non-G1 rings), curved endcaps, and
+`CurvePolygon` topology.
