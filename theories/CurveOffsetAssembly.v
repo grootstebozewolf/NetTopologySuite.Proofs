@@ -43,6 +43,12 @@
        `curve_ring_offset` -- the assembly conservatively extends the
        smooth case.
 
+   FORWARD POINTER: the no-U-turn hypothesis below is closed at the
+   single-join level by `CurveSemicircle.semicircle_uturn_connects`
+   (rung 7); threading that semicircle through this walk -- replacing
+   `ring_no_uturn_joins` with a supplied per-join sweep side -- is the
+   remaining assembly work, tracked in `audit-rgr-comparison.md` §7.
+
    Pure-R; THREE-AXIOM THROUGHOUT (classical-reals trio).  No
    `Admitted`/`Axiom`/`Parameter`.
 
