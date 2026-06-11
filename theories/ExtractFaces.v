@@ -224,7 +224,10 @@ Definition face_polygon_at (D : list Dart) (d : Dart) : Polygon :=
 
 (* THE REWIRE: filter the labelled edges by `edge_in_result op` (as
    `OverlayGraph.extract` does), then emit one face polygon per surviving dart
-   -- tracing face walks instead of the refuted flatten. *)
+   -- tracing face walks instead of the flatten that
+   `ExtractFlattenCounterexample.extract_unordered_not_valid` refutes (that
+   counterexample remains the RED witness against `OverlayGraph.extract`,
+   which this definition supersedes as the `valid_polygon` source). *)
 Definition extract_faces (op : BooleanOp) (g : TopologyGraph) : Geometry :=
   map (face_polygon_at (result_darts op g)) (result_darts op g).
 
