@@ -522,3 +522,41 @@ unit-ness of the ring's own normal fields. Remaining on the #65 ladder:
 the assembly rung (insert join arcs into `curve_ring_offset` output and
 re-prove ring validity for non-G1 rings), curved endcaps, and
 `CurvePolygon` topology.
+
+**Rung 6 (2026-06-11): assembly capstone — non-G1 rings offset to valid
+rings.** `theories/CurveOffsetAssembly.v`, all `Qed`, three-axiom.
+`offset_walk` / `curve_ring_offset_round` splice the `CurveRoundJoin`
+arc at every join a supplied G1 decision flags non-smooth (including
+the closing join); the decision is an abstract boolean oracle with a
+correctness spec — real equality is not computable, extraction supplies
+the comparison, and every theorem is conditional only on the spec.
+Headline `curve_ring_offset_round_valid`: a valid compound ring with
+non-degenerate chords, offset within the per-arc safety bound, `d ≠ 0`,
+and no U-turn (anti-parallel-normal) joins assembles into a
+`valid_curve_ring` — arcs valid (rungs 3+5), adjacent (splice facts +
+G1 seams), closed (closing join or G1 closing seam). Coherence
+`offset_walk_smooth_eq_map`: on all-G1 rings the walk equals rung 3's
+plain map, so the assembly conservatively extends rung 4's smooth
+capstone. The offset lane's structural story is now complete for
+arbitrary non-U-turn compound rings; remaining on #65: the U-turn
+(S-curve) double-arc join, curved endcaps for open inputs, and
+`CurvePolygon`-level topology (hole/shell relations) under offset.
+
+**Rung 7 (2026-06-11): the semicircle — U-turn join + round endcap in
+one construction.** `theories/CurveSemicircle.v`, all `Qed`,
+three-axiom. `semicircle_arc P d n t` (`P+d·n̂ → P+d·t̂ → P−d·n̂`) is a
+valid SQL/MM arc for unit perpendicular `n̂`, `t̂` and `d ≠ 0` — the
+control-point cross factors as `−2d²·cross(t̂,n̂)` and `cross² = 1` by
+`Vec.lagrange_identity` — with circumcircle exactly `(P,|d|)` (third
+consumer of the circumcenter-uniqueness lemma). It closes BOTH remaining
+join/cap gaps: `semicircle_uturn_connects` splices anti-parallel-normal
+joins (the case the round join's angular-midpoint normalisation cannot
+represent, carried as the assembly's no-U-turn hypothesis — now closed
+at the single-join level), and `semicircle_cap_connects` is the round
+ENDCAP for open compound lines, connecting the `+d` offset boundary to
+the `−d` boundary around the line end (the curve analogue of
+`BufferEndcap.v`). The supplied `t̂` picks the sweep side (both
+semicircles are admissible for antipodal endpoints); `cap_tangent :=
+vperp` is the canonical choice with unit/perp dischargers. Remaining on
+#65: threading the U-turn semicircle through the assembly walk, and
+`CurvePolygon`-level topology (hole/shell relations) under offset.
