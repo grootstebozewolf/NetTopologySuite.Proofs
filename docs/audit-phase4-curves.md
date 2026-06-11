@@ -203,3 +203,10 @@ spec'd oracles + a sweep-side supplier; headline
 compound ring (nondegenerate chords, safety bound, d ≠ 0) offsets to a
 valid_curve_ring. Three-axiom. The #65 structural ladder is complete at
 ring level; next is CurvePolygon topology and the point-set bridge.
+
+Rung 9 (same day): the SQL/MM hierarchy lift — `CurvePolygonOffset.v`.
+Polygon- and geometry-level offset via the total ring assembly;
+validity preserved at every level (`curve_{polygon,geometry}_offset_valid`),
+hole/polygon counts preserved. Complete w.r.t. the validity layer;
+hole-inside-outer remains the analytic P2 seam. Three-axiom. Next per
+§8.3: P10 oracle extraction, P3 linear coherence.

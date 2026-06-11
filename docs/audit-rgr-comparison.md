@@ -639,3 +639,20 @@ headline" — which is what made the curve ladder land 8 rungs in two days.
 3. **Sequence P2 (Minkowski) after P5**; take P7/P6/P9 opportunistically;
    P8 only as a planned engagement; P11–13 stay parked.
 
+
+**Rung 9 (2026-06-11): P1 landed — the SQL/MM hierarchy lift.**
+`theories/CurvePolygonOffset.v`, all `Qed`, three-axiom.
+`curve_polygon_offset` / `curve_geometry_offset` apply the rung-8 total
+ring assembly to the outer ring and every hole (one signed `d` for all
+rings — the side each offset lands on is encoded by ring orientation
+through the normal field, the JTS OffsetCurveBuilder convention).
+Headlines `curve_{polygon,geometry}_offset_valid`: validity is
+preserved at every level of the SQL/MM hierarchy under the bundled
+per-ring side conditions (`polygon_offsetable`) and `d ≠ 0`; hole and
+polygon counts are preserved (the JTS#979 hole-count oracle family's
+structural facts). Honest scope: `valid_curve_polygon` deliberately
+carries no hole-inside-outer constraint (CurveGeometry §4 punts it to
+the analytic layer), so this lift is COMPLETE w.r.t. the validity
+layer; the analytic hole/shell question under offset belongs to P2.
+§8.3's queue advances: next is **P10 (curve-offset oracle extraction)**
+then **P3 (linear edge-list coherence)**.
