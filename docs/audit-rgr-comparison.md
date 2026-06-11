@@ -560,3 +560,21 @@ semicircles are admissible for antipodal endpoints); `cap_tangent :=
 vperp` is the canonical choice with unit/perp dischargers. Remaining on
 #65: threading the U-turn semicircle through the assembly walk, and
 `CurvePolygon`-level topology (hole/shell relations) under offset.
+
+**Rung 8 (2026-06-11): TOTAL assembly — no join exclusions.**
+`theories/CurveOffsetAssemblyTotal.v`, all `Qed`, three-axiom. Threads
+rung 7's semicircle through rung 6's walk: `join_connector` is the
+three-way join policy (G1 → nothing, U-turn → semicircle with a
+supplied sweep side, otherwise → round join), with a second spec'd
+boolean oracle `uturndec` and the sweep supplier `tsel` (unit ⊥ the
+join normal; `tsel_vperp_spec` discharges the canonical `vperp`
+instance). Headline `curve_ring_offset_total_valid`: ANY valid compound
+ring with non-degenerate chords, offset within the per-arc safety bound
+and `d ≠ 0`, assembles into a `valid_curve_ring` — rung 6's no-U-turn
+and the round join's turning hypotheses are both gone; every join
+configuration is handled. The structural offset story for #65 is now
+TOTAL at the ring level. Remaining on the lane: `CurvePolygon`-level
+topology (hole/shell relations under offset) and, beyond structure, the
+point-set semantics (the assembled ring bounds the Minkowski offset
+region — the buffer-correctness bridge of `buffer-noder-pipeline.md`
+§3).

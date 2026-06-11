@@ -195,3 +195,11 @@ provides the round endcap for open compound lines, both as valid SQL/MM
 arcs with circumcircle exactly `(P,|d|)`. Three-axiom. Remaining:
 threading U-turn joins through the assembly walk, `CurvePolygon`
 topology.
+
+Rung 8 (same day): total assembly — `CurveOffsetAssemblyTotal.v`.
+Three-way join policy (G1 / U-turn semicircle / round join) under two
+spec'd oracles + a sweep-side supplier; headline
+`curve_ring_offset_total_valid` removes ALL join exclusions: any valid
+compound ring (nondegenerate chords, safety bound, d ≠ 0) offsets to a
+valid_curve_ring. Three-axiom. The #65 structural ladder is complete at
+ring level; next is CurvePolygon topology and the point-set bridge.
