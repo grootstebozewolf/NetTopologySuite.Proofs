@@ -715,3 +715,22 @@ emitter — no linearisation step at all), `bevel_emit_ring_closed`
 remaining join flavour is MITER (two chords through
 `BufferMiter.miter_apex`; corner geometry proven, wiring it into the
 walk is the natural next 2b slice).
+
+**Rung 13 (2026-06-11): the miter assembly — the 2b row's join emission
+is COMPLETE.** `theories/CurveMiterJoin.v`, all `Qed`, three-axiom. At
+chord-chord joins the connector is TWO chords through
+`BufferMiter.miter_apex` (the JTS#180 Cramer's-rule intersection of the
+two offset lines; `miter_connector_apex_sound` attaches its defining
+perpendicular-distance-`d` property to the emitted edges, and the
+miter-limit cap of `BufferMiterAngle` speaks about this same apex);
+joins involving arcs fall back to rung 12's bevel, mirroring JTS's
+line-corners-only mitering. All connectors are chords with definitional
+splices, so `curve_ring_offset_miter_valid` keeps the lean hypothesis
+set (ring validity + per-arc safety + the G1 spec). Generic
+hd/last/app chain-gluing bricks (`last_app_nonnil`,
+`curve_ring_adjacent_{cons,app}`) now support list-valued connectors
+for any future flavour. With round (rungs 5–8), bevel (rung 12) and
+miter (this rung), every JTS join style is emitted by a walk whose
+output is a valid compound ring. Remaining on the lane: the open-chain
+two-sided cap walk, P10 brick 2 (oracle modes, Flocq-bound), and the
+P2 Minkowski semantics.

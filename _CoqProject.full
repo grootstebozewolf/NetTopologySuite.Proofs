@@ -1463,6 +1463,20 @@ theories/CurveOffsetEmit.v
 # remains the one open join flavour.  No Admitteds.
 theories/CurveBevelJoin.v
 
+# Issue #65 curve-aware buffer, rung 13: the MITER assembly -- the last
+# open join flavour of the 2b row, emitted as two chords through
+# BufferMiter.miter_apex (the JTS#180 Cramer's-rule offset-line
+# intersection), with rung 12's bevel as the fallback at joins
+# involving arcs (JTS miters only line corners).  Connectors are
+# chords with definitional splices, so curve_ring_offset_miter_valid
+# keeps the bevel assembly's lean hypothesis set; the geometric tie-in
+# miter_connector_apex_sound attaches the perpendicular-distance-d
+# property to the emitted apex.  Plus all-chord preservation (the pure
+# linear miter emitter), the stage-3 handoff, smooth coherence, and
+# generic hd/last/app chain-gluing bricks.  The 2b join EMISSION story
+# (round / bevel / miter) is now complete.  No Admitteds.
+theories/CurveMiterJoin.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.

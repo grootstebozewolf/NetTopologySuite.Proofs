@@ -233,3 +233,10 @@ included), so `curve_ring_offset_bevel_valid` needs only ring validity
 + safety + the G1 spec. All-chord in → all-chord out (the pure linear
 bevel emitter); linearised output closes. Three-axiom. Remaining 2b
 flavour: miter via `BufferMiter.miter_apex`.
+
+Rung 13 (same day): the miter assembly — `CurveMiterJoin.v`. Two chords
+through `BufferMiter.miter_apex` at chord-chord joins (perpendicular-
+distance-d soundness attached via `miter_connector_apex_sound`), bevel
+fallback at arc joins; lean hypothesis set; all-chord preservation;
+linearised output closes. The 2b join-emission story (round / bevel /
+miter) is complete. Three-axiom.
