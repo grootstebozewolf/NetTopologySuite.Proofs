@@ -1411,6 +1411,32 @@ theories/CurveSemicircle.v
 # Coherence offset_walk_total_smooth_eq_map as before.  No Admitteds.
 theories/CurveOffsetAssemblyTotal.v
 
+# Issue #65 curve-aware buffer, rung 9 (forward pointer P1): the SQL/MM
+# hierarchy lift.  curve_polygon_offset / curve_geometry_offset apply
+# the rung-8 total ring assembly to the outer ring and every hole (one
+# signed d for all rings; the side is encoded by ring orientation
+# through the normal field, the JTS OffsetCurveBuilder convention).
+# Headlines curve_{polygon,geometry}_offset_valid: validity preserved
+# at every hierarchy level under the bundled per-ring side conditions
+# (polygon_offsetable) and d <> 0 -- complete w.r.t. the corpus's
+# validity layer (hole-inside-outer is deliberately punted to the
+# analytic layer per CurveGeometry §4, tracked as P2).  Plus
+# hole/polygon count preservation.  No Admitteds.
+theories/CurvePolygonOffset.v
+
+# Issue #65 curve-aware buffer, rung 10 (forward pointer P10 brick 1):
+# certified rational decision procedures for the assembly oracles.
+# Unit-normal EQUALITY is a rational condition on the un-normalised
+# vectors (unit_eq_iff_cross_dot: u^=v^ <-> cross=0 /\ 0<dot; opp
+# variant for anti-parallel), the ring's normal fields normalise from
+# RATIONAL raw normals (vperp of the direction / P - arc_center), and
+# the headlines g1_decision_correct / uturn_decision_correct show the
+# rung-6/8/9 g1dec and uturndec specs are realizable by one exact-Q
+# cross and dot each.  offset_safe_iff_sq decides the safety bound
+# from the rational r^2.  The OCaml CURVE_JOIN_CLASSIFY mode (brick 2)
+# is deferred to a CI-buildable session.  No Admitteds.
+theories/CurveJoinClassify.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
