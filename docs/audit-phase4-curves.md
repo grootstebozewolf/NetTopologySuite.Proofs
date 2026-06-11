@@ -226,3 +226,17 @@ specialisation discharges the linear round-join emission gap; chord
 offsets are definitionally `BufferOffset.offset_seg`. Three-axiom.
 Honest remainder: miter/bevel join emission, open-chain caps, P10
 brick 2.
+
+Rung 12 (same day): the bevel assembly — `CurveBevelJoin.v`. Bevel
+joins are chords across the tear (splice definitional, U-turns
+included), so `curve_ring_offset_bevel_valid` needs only ring validity
++ safety + the G1 spec. All-chord in → all-chord out (the pure linear
+bevel emitter); linearised output closes. Three-axiom. Remaining 2b
+flavour: miter via `BufferMiter.miter_apex`.
+
+Rung 13 (same day): the miter assembly — `CurveMiterJoin.v`. Two chords
+through `BufferMiter.miter_apex` at chord-chord joins (perpendicular-
+distance-d soundness attached via `miter_connector_apex_sound`), bevel
+fallback at arc joins; lean hypothesis set; all-chord preservation;
+linearised output closes. The 2b join-emission story (round / bevel /
+miter) is complete. Three-axiom.

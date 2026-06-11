@@ -1450,6 +1450,33 @@ theories/CurveJoinClassify.v
 # open).  No Admitteds.
 theories/CurveOffsetEmit.v
 
+# Issue #65 curve-aware buffer, rung 12: the BEVEL assembly -- the
+# join-edge flavour rung 11 left open, emitted as CHORDS.  bevel_join
+# is the chord across the tear (splice facts definitional); it handles
+# every non-G1 join uniformly, U-turns included, and contributes
+# nothing to arc validity -- so curve_ring_offset_bevel_valid carries
+# the LEANEST hypothesis set of the three assemblies (ring validity +
+# per-arc safety + the G1-decision spec only).  Plus
+# bevel_join_nondeg (quality), all-chord preservation (the pure linear
+# bevel emitter), the stage-3 handoff bevel_emit_ring_closed, and the
+# smooth-case coherence.  MITER emission (via BufferMiter.miter_apex)
+# remains the one open join flavour.  No Admitteds.
+theories/CurveBevelJoin.v
+
+# Issue #65 curve-aware buffer, rung 13: the MITER assembly -- the last
+# open join flavour of the 2b row, emitted as two chords through
+# BufferMiter.miter_apex (the JTS#180 Cramer's-rule offset-line
+# intersection), with rung 12's bevel as the fallback at joins
+# involving arcs (JTS miters only line corners).  Connectors are
+# chords with definitional splices, so curve_ring_offset_miter_valid
+# keeps the bevel assembly's lean hypothesis set; the geometric tie-in
+# miter_connector_apex_sound attaches the perpendicular-distance-d
+# property to the emitted apex.  Plus all-chord preservation (the pure
+# linear miter emitter), the stage-3 handoff, smooth coherence, and
+# generic hd/last/app chain-gluing bricks.  The 2b join EMISSION story
+# (round / bevel / miter) is now complete.  No Admitteds.
+theories/CurveMiterJoin.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
