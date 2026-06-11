@@ -334,6 +334,22 @@ R3–R4 are where the heuristic earns its keep; R6 is the headline beachhead.
 >   (`face_polygon_valid`). The combinatorial core of `extract_rings_valid` for
 >   the hole-free case, end to end. Faces WITH holes need hole nesting + the
 >   analytic `hole_inside_outer` (§4).
+> - **R5 slice 3g — the EXTRACT REWIRE (`theories/ExtractFaces.v`,
+>   `docs/extract-faces.md`), LANDED Qed.** The §5-step-4 "extract re-defined",
+>   wiring the face machinery to the pipeline: `result_edges`/`result_darts`
+>   (`OverlayGraph.extract`'s `edge_in_result` filter, dart view);
+>   `orbit_returns_bounded` (the pigeonhole bound `n <= length D` that
+>   `OrbitCycle.orbit_returns` proves but does not export); `face_period`
+>   (COMPUTABLE first-return search, pinned down by `face_period_spec`);
+>   `extract_faces` (one hole-free face polygon per surviving dart -- face
+>   walks instead of the refuted flatten); the headline `extract_faces_valid`
+>   -- the OBLIGATION SHAPE of the deferred `extract_rings_valid` (`forall
+>   poly, In poly (extract_faces ..) -> valid_polygon poly`), hole-free, NO
+>   JCT residual, under the noder's three structural hypotheses (`fan_ok`
+>   fans, `pairwise_no_proper_cross`, `no_short_faces`); and
+>   `extract_faces_label_fidelity` (emitted rings trace ONLY op-kept edges).
+>   Remaining: with-holes emission (nesting tree + the §4 analytic residual)
+>   and discharging the three hypotheses from `fully_intersected`.
 > - **R5 slice 3d — ring orientation primitive (`theories/RingOrientation.v`,
 >   `docs/ring-orientation.md`), LANDED Qed.** The signed-area (shoelace)
 >   orientation invariant for hole nesting: `signed_area2`; `signed_area2_app` /
@@ -572,3 +588,24 @@ reusable ingredient `gtri_ring_simple` (a non-degenerate triangle ring is simple
 the `gtri_ring` analogue of `KakeyaOverlay.perron_tri_ring_simple`) supplies the
 `ring_simple` conjunct for both rings. This is the first concrete `valid_polygon`
 *with a hole* in the corpus whose analytic clause carries no named seam.
+
+### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
+
+`theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
+"`extract` re-defined"): the DCEL face machinery is now **wired to the
+pipeline**. `extract_faces op g` filters `tg_edges g` by `edge_in_result op`
+(exactly `OverlayGraph.extract`'s filter) and emits one hole-free face polygon
+per surviving dart by walking `fstep` orbits — face walks instead of the
+refuted flatten. The period of each orbit is **computed** (`face_period`, a
+bounded first-return search justified by `orbit_returns_bounded` — the
+pigeonhole bound `OrbitCycle` proves internally but does not export). The
+headline `extract_faces_valid` has the obligation shape of the registered
+deferred `extract_rings_valid` itself — `forall poly, In poly (extract_faces
+op g) -> valid_polygon poly` — hole-free, **no JCT residual**, under the
+noder's three structural hypotheses (per-vertex `fan_ok`,
+`pairwise_no_proper_cross`, `no_short_faces`); and
+`extract_faces_label_fidelity` proves the emitted rings trace ONLY op-kept
+edges. Remaining in this lane: with-holes emission (nesting tree + the §4
+analytic residual), discharging the three hypotheses from
+`fully_intersected`'s concrete output, and R4. See
+[`docs/extract-faces.md`](extract-faces.md).

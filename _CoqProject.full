@@ -285,6 +285,19 @@ theories/ExtractFacePolygonJCT.v
 # (face_polygon_valid).  No Admitted; standard three-axiom classical-reals base.
 theories/FacePolygon.v
 
+# extract_rings_valid R5 / general assembler, slice 3g: the EXTRACT REWIRE
+# (docs/extract-faces.md).  result_edges/result_darts (OverlayGraph.extract's
+# edge_in_result filter, dart view); orbit_returns_bounded (the pigeonhole
+# bound OrbitCycle proves but does not export); face_period (computable first
+# return time of fstep, justified by face_period_spec); extract_faces (one
+# hole-free face polygon per surviving dart -- tracing face walks instead of
+# the refuted flatten); extract_faces_valid (the obligation shape of the
+# deferred extract_rings_valid, hole-free, no JCT residual, under the noder's
+# fan_ok + pairwise_no_proper_cross + no_short_faces); and
+# extract_faces_label_fidelity (emitted rings trace only op-kept edges).
+# No Admitted; standard three-axiom classical-reals base.
+theories/ExtractFaces.v
+
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
 # signed-area primitive to rings/faces: ring_signed_area2 + ring_ccw/ring_cw
