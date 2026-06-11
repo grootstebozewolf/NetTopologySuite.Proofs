@@ -188,3 +188,10 @@ Rung 6 (same day): assembly capstone — `CurveOffsetAssembly.v`.
 `offset_walk_smooth_eq_map` shows it conservatively extends the smooth
 case. Three-axiom. Remaining: U-turn double-arc joins, curved endcaps,
 `CurvePolygon` topology.
+
+Rung 7 (same day): the semicircle arc — `CurveSemicircle.v`. One
+construction closes the U-turn join exclusion (single-join level) AND
+provides the round endcap for open compound lines, both as valid SQL/MM
+arcs with circumcircle exactly `(P,|d|)`. Three-axiom. Remaining:
+threading U-turn joins through the assembly walk, `CurvePolygon`
+topology.

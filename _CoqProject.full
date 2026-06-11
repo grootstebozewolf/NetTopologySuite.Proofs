@@ -1386,6 +1386,18 @@ theories/CurveRoundJoin.v
 # plain map).  No Admitteds.
 theories/CurveOffsetAssembly.v
 
+# Issue #65 curve-aware buffer, rung 7: the SEMICIRCLE arc -- one SQL/MM
+# construction closing both remaining join/cap gaps: the U-TURN join the
+# assembly excluded (anti-parallel normals, semicircle_uturn_connects)
+# and the ROUND ENDCAP for open compound lines (+d boundary around the
+# end to the -d boundary, semicircle_cap_connects).  Validity via
+# Vec.lagrange_identity (cross(t,n)^2 = 1 for unit perpendicular t, n;
+# control-point cross = -2 d^2 cross(t,n)); circumcircle EXACTLY (P,|d|)
+# via the circumcenter-uniqueness lemma (third consumer); canonical
+# sweep direction cap_tangent := vperp with unit/perp dischargers.
+# No Admitteds.
+theories/CurveSemicircle.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
