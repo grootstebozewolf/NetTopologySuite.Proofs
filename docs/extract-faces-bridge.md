@@ -139,6 +139,13 @@ discharge: its H1 is provably unsatisfiable for any non-degenerate output (§RED
 It is recorded so the follow-up slice composes its bridge in front of *this*
 statement rather than the flatten's.
 
+`extract_rings_valid_faces_holes_named` is the same relocation for slice 3h's
+**with-holes** extractor (`ExtractFacesHoles.extract_faces_holes_valid`, which
+landed on `main` in parallel). It carries the identical H1
+(`pairwise_no_proper_cross (result_darts op g)`), so the with-holes re-point is
+blocked on **exactly the same twin-pair obstruction** — the corrected discharge
+plan below covers both extractors at once.
+
 ## The corrected discharge plan (for the follow-up slice)
 
 Closing the bridge needs H1 **reformulated**, then re-derived — combinatorics

@@ -59,6 +59,11 @@
                                                     witness breaking pairwise on
                                                     the EDGE set (the collinear
                                                     route; refutes R3).
+     - `extract_rings_valid_faces{,_holes}_named`  : the obligation relocated onto
+                                                    the correct extractor (hole-free
+                                                    slice 3g and with-holes slice 3h)
+                                                    -- both share the unsatisfiable
+                                                    H1, so both are blocked.
 
    Pure-R + list combinatorics; the only axioms are the allowlisted
    classical-reals pair inherited through the dart machinery.
@@ -71,7 +76,8 @@
 
 From Stdlib Require Import List Reals Lra.
 From NTS.Proofs Require Import Distance Overlay Dart RingSimple
-                               OverlayGraph DartNextSpec ExtractFaces.
+                               OverlayGraph DartNextSpec RingExtract FaceChain
+                               FacePolygonHoles ExtractFaces ExtractFacesHoles.
 From NTS.Proofs.Flocq Require Import HobbyTheorem_b64 OverlayBridge.
 
 Import ListNotations.
@@ -267,6 +273,37 @@ Proof.
   exact (extract_faces_valid op (noded_labeled_graph A B) Hfan Hpw Hmin poly Hin).
 Qed.
 
+(* The with-holes extractor (slice 3h) shares the SAME H1 hypothesis
+   `pairwise_no_proper_cross (result_darts op g)`, so the relocation -- and its
+   block -- carry over verbatim.  `extract_rings_valid_faces_holes_named`
+   restates `ExtractFaces Holes.extract_faces_holes_valid` at the noded labelled
+   graph (the with-holes obligation, over the correct extractor); its H1 is the
+   same predicate §2 proves unsatisfiable for non-degenerate output, so the
+   with-holes re-point is blocked on exactly the same twin-pair obstruction. *)
+Theorem extract_rings_valid_faces_holes_named :
+  forall (hassign : Dart -> list Dart) (op : BooleanOp) (A B : Geometry),
+    (forall v, fan_ok (outgoing v (result_darts op (noded_labeled_graph A B)))) ->
+    pairwise_no_proper_cross (result_darts op (noded_labeled_graph A B)) ->
+    no_short_faces (result_darts op (noded_labeled_graph A B)) ->
+    (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
+       forall h, In h (hassign d) ->
+         In h (result_darts op (noded_labeled_graph A B))) ->
+    (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
+       forall h, In h (hassign d) ->
+       hole_inside_outer
+         (ring_of_chain (face_chain (result_darts op (noded_labeled_graph A B)) d
+                           (face_period (result_darts op (noded_labeled_graph A B)) d)))
+         (hole_ring_of (result_darts op (noded_labeled_graph A B))
+            (h, face_period (result_darts op (noded_labeled_graph A B)) h))) ->
+    forall poly,
+      In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
+      valid_polygon poly.
+Proof.
+  intros hassign op A B Hfan Hpw Hshort Hwf Hinside poly Hin.
+  exact (extract_faces_holes_valid hassign op (noded_labeled_graph A B)
+           Hfan Hpw Hshort Hwf Hinside poly Hin).
+Qed.
+
 (* Audit footprint. *)
 Print Assumptions seg_properly_crosses_reversal.
 Print Assumptions darts_of_nondeg_not_pairwise.
@@ -274,3 +311,4 @@ Print Assumptions result_darts_nondeg_not_pairwise.
 Print Assumptions fully_intersected_darts_of_not_pairwise.
 Print Assumptions fully_intersected_not_pairwise_collinear.
 Print Assumptions extract_rings_valid_faces_named.
+Print Assumptions extract_rings_valid_faces_holes_named.
