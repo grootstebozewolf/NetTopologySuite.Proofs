@@ -27,6 +27,8 @@
 theories-flocq/Orient_b64_exact.v
 theories-flocq/ClothoidDegenerate_b64.v
 theories-flocq/ClothoidScopeA_b64.v
+theories-flocq/ClothoidResidual_b64_exact.v
+theories-flocq/ClothoidHalley_b64.v
 theories-flocq/Intersect_b64.v
 theories-flocq/B64_bridge.v
 theories-flocq/Intersect_b64_exact.v

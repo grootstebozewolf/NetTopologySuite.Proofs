@@ -604,6 +604,36 @@ Minimal `ClothoidChord` carrier; witnesses reuse S2 line-line matrices.
 | `RelateClothoid.v : cl_matrix_point_ii_crosses` / `_intersects` / `cl_matrix_disjoint_witness` | **Witness:** the reused S2 matrices satisfy `Crosses`/`Intersects`/`Disjoint` `[exact]` | 0 |
 | `RelateClothoid.v : clothoid_L_unique_on_branch` | Conditional Halley/L uniqueness on monotone clothoid branch `[exact]` | 0 |
 
+## Issue #67 — clothoid Flocq + Halley (`ClothoidDegenerate_b64.v`, `ClothoidResidual_b64_exact.v`, `ClothoidHalley_b64.v`, `ClothoidHalley.v`)
+
+Route **(A)** b64 mirror of the κ₀ = κ₁ = 0 degenerate residual; route **(C)**
+Scope A.0–A.3 polynomial assembly (`d2`, `r2`, `f`, `f′`) matching
+`clothoid-halley-coq` `Solver.cs` / `Clothoid_L.v` shape. Problem order in
+oracle/docs: `(k0, k1, L)`; assembly uses `d2`, `L`, `P`, `Q`, `Rm`, `T`
+only. Chord coords: `|n| ≤ 2¹¹` (`arc_coord_int_safe`); scalar moments:
+`|n| ≤ 2¹²` (`clothoid_scalar_int_safe`).
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `ClothoidDegenerate_b64.v : b64_degenerate_residual_exact` | Degenerate residual `L⊗L ⊖ d⊗d` bit-exact under `coord_int_safe` `[int-b64]` | 4 |
+| `ClothoidDegenerate_b64.v : b64_degenerate_root_exact` | Residual zero iff `B2R L = B2R d` (positive integer regime), composing R-side uniqueness `[int-b64]` | 4 |
+| `ClothoidDegenerate_b64.v : b64_degenerate_sign_trichotomy` | Sign of degenerate residual decides exact `L` vs `d` comparison `[int-b64]` | 4 |
+| `ClothoidResidual_b64_exact.v : b64_clothoid_d2_exact` | Chord squared length `d2` bit-exact from integer arc coordinates `[int-b64-arc]` | 4 |
+| `ClothoidResidual_b64_exact.v : b64_clothoid_r2_exact` | Moment sum `P²+Q²` bit-exact for integer scalars `[int-b64]` | 4 |
+| `ClothoidResidual_b64_exact.v : b64_clothoid_residual_exact` | Residual `L²(P²+Q²)−d2` bit-exact under scalar + chord safety `[int-b64]` / `[int-b64-arc]` | 4 |
+| `ClothoidResidual_b64_exact.v : b64_clothoid_residual_prime_exact` | Derivative assembly `2L(P²+Q²)+2L²(Q·Rm−P·T)` bit-exact `[int-b64]` | 4 |
+| `ClothoidResidual_b64_exact.v : b64_clothoid_residual_unit_moments` | Unit moments `P=1`, `Q=0` ⇒ residual reduces to `L⊗L⊗1 ⊖ d2` `[int-b64]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_residual_second_prime_exact` | Second derivative `f''` assembly bit-exact under eight-scalar `clothoid_scalar_int_safe` `[int-b64]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_halley_denom_round` | Halley denom `2f′²−f·f''` matches composed `b64_minus`/`b64_mult` round-chain under `b64_safe` premises `[round-chain]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_halley_step_round` | Halley step `2f·f′/(2f′²−f·f'')` matches composed `b64_div` round-chain under `b64_safe` premises `[round-chain]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_halley_l_update_converged` | Converged guard: `l_update` is a no-op when `converged_bool` is true `[structural]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_halley_filtered_corpus_le_four` | **Conditional headline (b64 fuel model):** filtered corpus ≤4 iterations, discharged as `H_filtered_corpus_le_four` `[cond]` | 4 |
+| `ClothoidHalley_b64.v : b64_degenerate_halley_fixed_at_root` | Degenerate moments: b64 Halley `l_update` is a no-op at chord root `L = d` when converged guard fires (route A + comparison bridge; explicit positive threshold premise) `[int-b64]` | 4 |
+| `ClothoidHalley.v : clothoid_halley_filtered_corpus_le_four` | **Conditional headline:** filtered ProRail corpus Halley solve uses ≤4 iterations, discharged as `H_filtered_corpus_le_four` (witness: `golden_vectors.json`) `[cond]` | 0 |
+| `ClothoidHalley.v : degenerate_halley_fixed_at_root` | Degenerate moments: Halley update is a no-op at the chord root `L = d` (composes route A) `[exact]` | 0 |
+
+**Open:** full `HasClothoidIntersect` evaluator (transcendental Fresnel).
+
 ## Issue #67 — clothoid×line regime→witness (`RelateMatrixClothoid.v`, S10b)
 
 `clothoid_fill` selects the S10b witness matrices.

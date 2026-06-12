@@ -48,6 +48,10 @@ theories/ClothoidResidual.v
 # conditional interface non-vacuous.  Route (A) of
 # docs/clothoid-open-questions-triage.md.
 theories/ClothoidDegenerate.v
+# Route (C') conditional Halley <=4-iteration interface + fuel-bounded skeleton.
+# Companion: clothoid-halley-coq Solver.cs; corpus witness golden_vectors.json.
+# See docs/clothoid-open-questions-triage.md section 11.
+theories/ClothoidHalley.v
 # Buffer/noder pipeline, Stage 2a seam (docs/buffer-noder-pipeline.md S2):
 # offset-segment soundness -- the offset of an edge is parallel to it
 # (offset_seg_dir / offset_seg_parallel) and sits at perpendicular distance
@@ -1574,6 +1578,13 @@ theories-flocq/ClothoidDegenerate_b64.v
 # sign test decides the integer assembly's sign.  The transcendental P/Q
 # stage is never claimed.
 theories-flocq/ClothoidScopeA_b64.v
+# Route (C) Scope A: clothoid Halley residual assembly (f, f') bit-exact prefix.
+# Companion: clothoid-halley-coq Clothoid_L.v / Solver.cs.  See
+# docs/clothoid-open-questions-triage.md section 11.
+theories-flocq/ClothoidResidual_b64_exact.v
+# Route (C) Scope A.4+: f'' bit-exact assembly + Halley step round-chain.
+# See docs/clothoid-open-questions-triage.md section 13.
+theories-flocq/ClothoidHalley_b64.v
 theories-flocq/Orient_b64_exact_full.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
 # on top of Stage A filter.  Five-valued result (None / Point / Collinear /
