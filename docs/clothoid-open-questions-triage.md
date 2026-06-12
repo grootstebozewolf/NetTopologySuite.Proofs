@@ -76,7 +76,7 @@ the cross-corpus bridge status in `audit-phase4-curves.md` §6.1–6.2.
 |---|---|---|---|
 | **Q1 Fresnel integrals (R-side)** | **CONDITIONAL (Qed); integrals ABSENT by design** | `ClothoidResidual.v:99-128` | P/Q are never materialised; f, f′, κ are Section Variables and the analytic facts are named hypotheses, externally witnessed Qed in `clothoid-halley-coq/coq/Clothoid_L.v`. Three-axiom footprint preserved (audit footer). |
 | **Q1′ Fresnel evaluator (b64)** | **ABSENT (aspirational)** | `Intersect_b64_exact.v:2038-2080` | `HasClothoidIntersect` typeclass is a commented sketch; no closed form exists (transcendental Fresnel residual, `:2046`); Halley-on-L intended; Coquelicot→native-Reals porting estimated 3–5 days for the identities (`:2073`) — *before* any b64 lift. |
-| **Q2 Integer-parameter exact regime** | **PARTIAL — degenerate sub-regime LANDED (Qed)** | `ClothoidDegenerate.v`; precedent `Orient_b64_exact.v:966` | The `b64_orient_sign_filtered_sound_small_int` analogy (integer coords, \|c\| ≤ 2²⁵ ⇒ bit-exact) holds only for **polynomial** predicates. The clothoid residual is transcendental — no integer regime makes `cos`/`sin` integrals dyadic. The degenerate straight-chord regime (κ₀ = κ₁ = 0 ⇒ P = 1, Q = 0, f(L) = L² − d², unique positive root L = d **exactly**) landed as route (A) — see §8. Still open: the b64 mirror of the degenerate regime and a Scope-A polynomial-prefix slice (residual assembly given P/Q values), mirroring `ArcLineIntersect_b64_exact.v`'s first-stage pattern. |
+| **Q2 Integer-parameter exact regime** | **PARTIAL — degenerate + Scope-A + Halley bound + b64 prefix LANDED (Qed/cond)** | `ClothoidDegenerate.v`; `ClothoidDegenerate_b64.v`; `ClothoidResidual_b64_exact.v`; `ClothoidHalley.v`; `ClothoidHalley_b64.v`; precedent `ArcLineIntersect_b64_exact.v` | Polynomial predicates only: the transcendental Fresnel evaluator stays absent. Routes **(A)**, **(C)**, **(C′)**, Scope A.4–A.7 landed (§8–§14). Still open: full intersect evaluator, routes **(B)**/**(D)**. |
 | **Q3 Performance vs. linearisation** | **NOT A THEOREM; fidelity layer LANDED** | `Linearise.v:225,361,385`; `CurveLinearise.v:109,126,139` | Operational fidelity is proven: `disjoint_under_linearise` (`Linearise.v:225`) with honest negatives `regime3_counterexample` (`:361`) and `EqualsExact_not_stable` (`:385`); structural closure `chord_approx_ring_closed` / `to_geometry_{outer,hole}_ring_closed` (`CurveLinearise.v:109,126,139`). Runtime throughput is NTS benchmarking territory, out of corpus scope; the *provable* face is chord-count-vs-sagitta bounds and the bounded-iteration (≤4) termination model. |
 
 ## 4. Inventory of existing clothoid assets
@@ -215,10 +215,9 @@ none of the predicted tangents bit):
 unchanged; `audit_axioms` over the augmented output-synced log: allowlist
 clean, no `classic`; `check_readme_axioms`: in sync).
 
-**Remaining gaps after this session** (unchanged elsewhere in this doc):
-the b64 degenerate-regime mirror (`_small_int` pattern) and the Scope-A
-residual-assembly prefix — both still route-(C)-adjacent, queued; routes
-(B) and (D) untouched.
+**Remaining gaps after this session** (see §9–§10 for closures): the b64
+degenerate mirror and Scope-A assembly were queued here; both later landed.
+Routes (B) and (D) untouched.
 
 ## 9. Route (A) b64 slice — integer-regime mirror (2026-06-12): LANDED
 
@@ -256,4 +255,137 @@ green (7 registered Admitted unchanged; axiom audit clean on the
 augmented log; README/allowlist in sync).
 
 **Remaining after this slice:** Q2's Scope-A residual-assembly prefix
-(route (C)) is the only queued Q2 item; routes (B) and (D) unchanged.
+(route (C)) — see §10.
+
+## 10. Route (C) Scope-A slice — residual assembly (2026-06-12): LANDED
+
+Third RGR iteration; closes the second of §8's queued follow-ups.
+
+**Red.** Targets A.0–A.3 from the `Solver.cs` / `Clothoid_L.v` polynomial
+prefix: `d2` (chord squared length), `r2 = P²+Q²`, residual
+`f = L²·r2 − d2`, and derivative `f′ = 2L·r2 + 2L²(Q·Rm − P·T)`.
+Safety windows: arc chord coords `|n| ≤ 2¹¹`; scalar moments `|n| ≤ 2¹²`
+with derived bounds through `2⁵¹` on the prime sum. Predicted tangents:
+`IZR`/`B2R` rewrite direction on nested sums; `intros`/`destruct` pattern
+syntax; associativity mismatch between `2·nL·nL·…` and `2·(nL·nL)·…` in
+the prime witness.
+
+**Green — LANDED** (`theories-flocq/ClothoidResidual_b64_exact.v`, Admitted-free):
+
+- `b64_clothoid_d2_exact`, `b64_clothoid_r2_exact`,
+  `b64_clothoid_residual_exact`, `b64_clothoid_residual_prime_exact` —
+  each pins `B2R` of the `b64_*` assembly to the named R-side witness on
+  the nose, plus finiteness, inside the integer windows above.
+- `b64_clothoid_residual_unit_moments` — degenerate moments `P=1`, `Q=0`
+  fold `r2` to `b64Z 1` (via `B2R_Bsign_inj`), yielding the `L⊗L⊗1 ⊖ d2`
+  pipeline shape.
+
+**Refactor.** Registered in `_CoqProject.full`; listed in
+`docs/audit-exceptions.txt` (Flocq `classic` lineage); claims in
+`docs/verified-claims.md`; gauntlet green (`check_admitted` unchanged).
+
+**Remaining after this slice:** routes **(B)** and **(D)** unchanged; optional
+b64 `f''` + Halley-step mirror of Scope A.
+
+## 11. Route (C') conditional Halley bound (2026-06-12): LANDED
+
+Fourth RGR iteration off the §6 ladder.
+
+**Red.** Target: the bounded-iteration termination *model* from
+`docs/audit-phase4-curves.md` §6.1 — not a cubic-convergence proof, but the
+`ClothoidResidual.v` idiom applied to the empirical ≤4-iteration headline
+(table 3 / `golden_vectors.json`). Secondary target: degenerate no-op at the
+chord root composing route (A).
+
+**Green — LANDED** (`theories/ClothoidHalley.v`, Admitted-free, three axioms):
+
+- `clothoid_f` / `clothoid_fp` / `clothoid_fpp` + `clothoid_halley_l_update`
+  matching `Clothoid.Halley/Solver.cs` polynomial assembly and safety guards.
+- `clothoid_halley_fuel` — fuel-bounded iteration skeleton (structural
+  termination by `nat` descent).
+- `ClothoidHalleyCorpusBound` Section — `clothoid_halley_filtered_corpus_le_four`
+  and `clothoid_halley_filtered_corpus_le_max` with discharged
+  `H_filtered_corpus_le_four` / `H_iterations_le_max` (oracle witness).
+- `degenerate_halley_fixed_at_root` — at κ₀=κ₁=0, `L = d` is fixed under one
+  Halley update when `f = 0`.
+
+**Refactor.** Registered in `_CoqProject` and `_CoqProject.full`; claims in
+`docs/verified-claims.md`; host gauntlet green.
+
+**Remaining:** b64 `f''` assembly + per-iterate Halley step (Scope A.4+); routes
+**(B)** / **(D)** unchanged.
+
+## 12. Route (C) Scope A.4+ slice — f'' + Halley step (2026-06-12): LANDED
+
+Fifth RGR iteration; closes the b64 follow-up queued in §10/§11.
+
+**Red.** Targets A.4–A.5 from `Solver.cs`: second derivative
+`f'' = 2(P²+Q²) + 8L(Q·Rm−P·T) + 2L²(Rm²+T²−P·S2c−Q·S2s)` bit-exact under
+`clothoid_scalar_int_safe` (|n| ≤ 2¹², derived bound ≤ 2⁵²); Halley denom /
+step as `b64_div` round-chain with explicit `b64_safe` overflow premises (honest
+that division is not integer-exact). Predicted tangents: `f''` inner
+parentheses vs `minus_IZR` associativity; `8·nL` bound window (2¹⁵ not 2¹³).
+
+**Green — LANDED** (`theories-flocq/ClothoidHalley_b64.v`, Admitted-free):
+
+- `b64_clothoid_residual_second_prime_exact` — `f''` assembly pins `B2R` to the
+  R-side witness on the nose inside the eight-scalar integer window.
+- `b64_clothoid_halley_denom_round`, `b64_clothoid_halley_step_round` —
+  per-iterate Halley polynomial step matches the composed round-chain under
+  named overflow / non-zero-denominator premises.
+
+**Refactor.** Registered in `_CoqProject.full`; listed in
+`docs/audit-exceptions.txt` (Flocq `classic` lineage); claims in
+`docs/verified-claims.md`; full-corpus compile green.
+
+**Remaining:** full `HasClothoidIntersect` evaluator (transcendental Fresnel);
+routes **(B)** / **(D)** unchanged.
+
+## 13. Route (C) Scope A.6 slice — l_update / fuel (2026-06-12): LANDED
+
+Sixth RGR iteration; closes the b64 iteration skeleton queued in §12.
+
+**Red.** Target: mirror `ClothoidHalley.v` safety guards on binary64 —
+`converged_bool`, `denom_guard_bool`, `l_new` (0.5L floor), `l_fallback`
+(1.5L), `l_update`, and fuel-bounded `Fixpoint` — plus conditional ≤4-iteration
+interface wired to `b64_clothoid_halley_fuel_iters`. Predicted tangents: `let`
+binding in `l_update_converged`; `b64_lt_complete` finiteness plumbing.
+
+**Green — LANDED** (`theories-flocq/ClothoidHalley_b64.v`, Admitted-free):
+
+- `b64_clothoid_halley_l_update` / `b64_clothoid_halley_fuel` — Solver.cs guard
+  chain on binary64 (moments as `binary64 -> b64_clothoid_moments` oracle).
+- `b64_clothoid_halley_l_update_converged`, `b64_clothoid_halley_fuel_zero` /
+  `b64_clothoid_halley_fuel_succ` — structural lemmas.
+- `b64_clothoid_converged_bool_true_of_R` — bool guard from strict R comparison.
+- `ClothoidHalleyB64CorpusBound` — conditional ≤4 headline (corpus witness).
+
+**Refactor.** Claims in `docs/verified-claims.md`; full-corpus compile green.
+
+**Remaining:** full `HasClothoidIntersect`; routes **(B)** / **(D)** unchanged.
+
+## 14. Route (C) Scope A.7 slice — degenerate compose (2026-06-12): LANDED
+
+Seventh RGR iteration; closes the b64 degenerate no-op queued in §12–§13.
+
+**Red.** Target: mirror `ClothoidHalley.v : degenerate_halley_fixed_at_root` on
+binary64 — at κ₀=κ₁=0 (`b64_degenerate_moments`), `b64_clothoid_halley_l_update`
+is a no-op at the chord root `L = d` when the converged guard fires. Compose
+route (A) (`ClothoidDegenerate_b64.v`) through the Scope A.6 `l_update`
+skeleton via a comparison bridge (not syntactic equality of the full residual
+term: `L⊗L⊗1` vs `L⊗L`). Predicted tangents: `b * b * 1` window plumbing;
+finiteness separate from `B2R` identity; explicit strictly-positive rounded
+threshold premise (honest round-chain idiom).
+
+**Green — LANDED** (`theories-flocq/ClothoidHalley_b64.v`, Admitted-free):
+
+- `b64_degenerate_residual_at_chord_B2R` — clothoid residual `B2R` equals
+  `b64_degenerate_residual` under `coord_int_safe`.
+- `b64_degenerate_halley_fixed_at_root` — `l_update (d⊗d) tol … d = d` when
+  residual `B2R = 0` and rounded `tol * scale(d²) > 0`.
+- Supporting lemmas: `b64_degenerate_residual_at_chord_finite`,
+  `b64_clothoid_converged_bool_true_of_zero_residual`, `b64_abs_B2R_zero`.
+
+**Refactor.** Claims in `docs/verified-claims.md`; full-corpus compile green.
+
+**Remaining:** full `HasClothoidIntersect`; routes **(B)** / **(D)** unchanged.
