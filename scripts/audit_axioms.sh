@@ -2,8 +2,8 @@
 # =============================================================================
 # scripts/audit_axioms.sh
 # -----------------------------------------------------------------------------
-# Per-theorem axiom audit.  Reads the build log of a *sequential* (-j1)
-# build, identifies every `Print Assumptions` output block, and verifies
+# Per-theorem axiom audit.  Reads a build log with *per-file contiguous*
+# output, identifies every `Print Assumptions` output block, and verifies
 # that the axioms named in each block are a subset of
 # `docs/axiom-allowlist.txt`.  Files listed in `docs/audit-exceptions.txt`
 # are exempted (their contamination is the known, transitional state
@@ -12,10 +12,19 @@
 # Usage:
 #   scripts/audit_axioms.sh <build.log>
 #
-# The build log must come from `make -f Makefile.full -j1` so that
-# `ROCQ compile <file>` lines and their subsequent `Axioms:` /
-# `Closed under the global context` blocks are not interleaved with
-# concurrent compiles.  See guardrail-4 rationale in commit history.
+# The build log must keep each `ROCQ compile <file>` line contiguous
+# with that file's subsequent `Axioms:` / `Closed under the global
+# context` blocks (no interleaving from concurrent compiles).  Either
+# of these produces such a log:
+#
+#   make -f Makefile.gen -j"$(nproc)" --output-sync=target   # fast (GNU make >= 4.0)
+#   make -f Makefile.gen -j1                                 # sequential fallback
+#
+# `--output-sync=target` buffers each target's whole recipe output and
+# emits it atomically, so parallel builds are safe to audit.  The
+# attribution only depends on per-file contiguity, not on global build
+# order.  See guardrail-4 rationale in commit history (the May 2026
+# axiom-leak investigation showed plain -j2 logs interleave).
 #
 # Exit codes:
 #   0  -- no violations.

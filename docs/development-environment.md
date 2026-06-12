@@ -127,11 +127,13 @@ resolves through this path.
 cd /path/to/NetTopologySuite.Proofs
 eval $(opam env --switch=nts-flocq)
 rocq makefile -f _CoqProject.full -o Makefile.gen
-make -f Makefile.gen -j4
+make -f Makefile.gen -j"$(nproc)" --output-sync=target 2>&1 | tee /tmp/build.log
 ```
 
 A successful build ends with `theories-flocq/*.vo` files and the
-usual `Print Assumptions` output.
+usual `Print Assumptions` output.  The `--output-sync=target` + `tee`
+combination makes this from-clean build log directly reusable as the
+axiom-audit input in Step 6, so the corpus is only built once.
 
 ### Step 6 — run the CI gauntlet
 
@@ -139,9 +141,11 @@ usual `Print Assumptions` output.
 # 1. Three-tier Admitted check.
 bash scripts/check_admitted.sh
 
-# 2. Per-theorem axiom audit on a SEQUENTIAL build log.
-make -f Makefile.gen clean
-make -f Makefile.gen -j1 > /tmp/build.log 2>&1
+# 2. Per-theorem axiom audit -- reuses Step 5's from-clean build log.
+#    Only if you have rebuilt incrementally since Step 5 (the audit
+#    needs every file's Print Assumptions blocks), regenerate it:
+#      make -f Makefile.gen clean
+#      make -f Makefile.gen -j"$(nproc)" --output-sync=target > /tmp/build.log 2>&1
 bash scripts/audit_axioms.sh /tmp/build.log
 
 # 3. README <-> allowlist consistency.
@@ -152,9 +156,12 @@ grep -nE "Axiom|Parameter|admit\." theories/ theories-flocq/ \
   --include="*.v" | grep -v ":\(\*"
 ```
 
-All four should report success.  The sequential build is required for
-`audit_axioms.sh` because it parses interleaved `Print Assumptions`
-blocks from the build output; a parallel build interleaves them.
+All four should report success.  `audit_axioms.sh` needs each
+`ROCQ compile <file>` line contiguous with that file's
+`Print Assumptions` blocks; GNU make's `--output-sync=target`
+(make >= 4.0) guarantees this for parallel builds by emitting each
+target's output atomically.  On a make without `--output-sync`
+(e.g. Apple's bundled make 3.81), fall back to a `-j1` build.
 
 ## Remote agent containers (Claude Code on the web and similar)
 
@@ -199,7 +206,7 @@ worth knowing:
    touches `theories-flocq/`, so Steps 1-3 alone (a few minutes of
    wall time, the long pole being the `rocq-core`/`rocq-stdlib`
    build) give a working verify loop.  A per-theorem axiom check
-   without the full sequential build log is a scratch file of
+   without a full audit-grade build log is a scratch file of
    `Print Assumptions` lines compiled with
    `rocq c -Q theories NTS.Proofs /tmp/check_axioms.v`.
 

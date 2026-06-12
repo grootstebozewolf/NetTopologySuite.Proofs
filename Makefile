@@ -167,7 +167,7 @@ host:
 	fi
 	@echo "Building the host (Stdlib-only) layer with _CoqProject ..."
 	rocq makefile -f _CoqProject -o Makefile.gen
-	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || echo 4)"
+	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
 full:
 	@if [ -z "$(ROCQ)" ]; then \
@@ -178,7 +178,7 @@ full:
 	fi
 	@echo "Building the full corpus (_CoqProject.full — requires Flocq) ..."
 	rocq makefile -f _CoqProject.full -o Makefile.gen
-	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || echo 2)"
+	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
 check:
 	@echo "Running corpus guardrails (check_admitted + check_readme_axioms) ..."
