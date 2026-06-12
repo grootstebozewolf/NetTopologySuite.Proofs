@@ -41,6 +41,13 @@ theories/Azimuth.v
 # Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
 # three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
 theories/ClothoidResidual.v
+# Degenerate straight-chord regime (k0 = k1 = 0): the residual collapses to
+# L^2 - d^2 with exact unique positive root L = d, and all three Section
+# hypotheses of ClothoidResidual.v are discharged concretely (MVT witness
+# exhibited at the midpoint -- no Classical_Prop.classic), proving the
+# conditional interface non-vacuous.  Route (A) of
+# docs/clothoid-open-questions-triage.md.
+theories/ClothoidDegenerate.v
 # Buffer/noder pipeline, Stage 2a seam (docs/buffer-noder-pipeline.md S2):
 # offset-segment soundness -- the offset of an edge is parallel to it
 # (offset_seg_dir / offset_seg_parallel) and sits at perpendicular distance
@@ -1555,6 +1562,12 @@ theories-flocq/Orient_b64_sound.v
 #   | _           => True end.
 # Bit-exact -- no rounding error -- for |coord| <= 2^25 integer inputs.
 theories-flocq/Orient_b64_exact.v
+# binary64 mirror of the degenerate straight-chord clothoid regime: the
+# residual L^2 - d^2 is bit-exact under coord_int_safe (squares <= 2^50,
+# difference <= 2^51 < 2^53), so the b64 sign/root test decides the exact
+# comparison; composes with theories/ClothoidDegenerate.v's unique-root
+# theorem.  Route (A) b64 slice of docs/clothoid-open-questions-triage.md.
+theories-flocq/ClothoidDegenerate_b64.v
 theories-flocq/Orient_b64_exact_full.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
 # on top of Stage A filter.  Five-valued result (None / Point / Collinear /
