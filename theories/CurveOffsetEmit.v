@@ -35,13 +35,12 @@
        round-join offset emitter, with join arcs linearised, emits a
        closed edge ring.  This discharges the round-join flavour of
        the linear "emitted join/cap edge list" gap
-       (`buffer-noder-pipeline.md` rows 2b/2c).  HONEST REMAINDER:
-       miter and bevel JOIN EDGE emission (the linear-only join
-       flavours -- their corner geometry is proven in `BufferMiter.v`
-       / `BufferBevel.v`, but no walk emits them) and the OPEN-CHAIN
-       cap assembly (caps exist per-end via
-       `CurveSemicircle.semicircle_cap_connects`; the two-sided
-       open-line walk does not) remain open.
+       (`buffer-noder-pipeline.md` rows 2b/2c).  The remainders this
+       header once carried have since landed: bevel and miter join
+       emission in `CurveBevelJoin.v` / `CurveMiterJoin.v` (rungs
+       12-13, each with its own `*_emit_ring_closed` handoff), and
+       the open-chain two-sided cap walk in `CurveCapWalk.v`
+       (rung 14b).
 
    Pure-R; THREE-AXIOM THROUGHOUT (classical-reals trio).  No
    `Admitted`/`Axiom`/`Parameter`.
