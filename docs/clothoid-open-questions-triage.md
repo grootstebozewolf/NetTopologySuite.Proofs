@@ -4,8 +4,9 @@
 > over from the clothoid lane (the `clothoid-halley-coq` bridge of
 > [`audit-phase4-curves.md`](audit-phase4-curves.md) §6.1–6.2 and the S10b
 > chord seed of [`issue-67-relateng-triage.md`](issue-67-relateng-triage.md)).
-> Q1 and Q3 are scope decisions, not proof gaps; Q2 has one cheap Qed
-> terminal. Refresh when a session closes any route below.
+> Q1 and Q3 are scope decisions, not proof gaps; Q2's cheap Qed terminal —
+> route (A) — **landed 2026-06-12** as `theories/ClothoidDegenerate.v`
+> (see §6/§8). Refresh when a session closes any route below.
 >
 > Every file:line citation below was verified by direct grep against the tree
 > at the time of writing (corpus HEAD = `main` at `80a3230`).
@@ -75,7 +76,7 @@ the cross-corpus bridge status in `audit-phase4-curves.md` §6.1–6.2.
 |---|---|---|---|
 | **Q1 Fresnel integrals (R-side)** | **CONDITIONAL (Qed); integrals ABSENT by design** | `ClothoidResidual.v:99-128` | P/Q are never materialised; f, f′, κ are Section Variables and the analytic facts are named hypotheses, externally witnessed Qed in `clothoid-halley-coq/coq/Clothoid_L.v`. Three-axiom footprint preserved (audit footer). |
 | **Q1′ Fresnel evaluator (b64)** | **ABSENT (aspirational)** | `Intersect_b64_exact.v:2038-2080` | `HasClothoidIntersect` typeclass is a commented sketch; no closed form exists (transcendental Fresnel residual, `:2046`); Halley-on-L intended; Coquelicot→native-Reals porting estimated 3–5 days for the identities (`:2073`) — *before* any b64 lift. |
-| **Q2 Integer-parameter exact regime** | **ABSENT; one exact sub-regime TRACTABLE** | precedent `Orient_b64_exact.v:966` | The `b64_orient_sign_filtered_sound_small_int` analogy (integer coords, \|c\| ≤ 2²⁵ ⇒ bit-exact) holds only for **polynomial** predicates. The clothoid residual is transcendental — no integer regime makes `cos`/`sin` integrals dyadic. Honest carve-outs: the degenerate straight-chord regime (κ₀ = κ₁ = 0 ⇒ P = 1, Q = 0, f(L) = L² − d², unique positive root L = d **exactly**) and a Scope-A polynomial-prefix slice (residual assembly given P/Q values), mirroring `ArcLineIntersect_b64_exact.v`'s first-stage pattern. |
+| **Q2 Integer-parameter exact regime** | **PARTIAL — degenerate sub-regime LANDED (Qed)** | `ClothoidDegenerate.v`; precedent `Orient_b64_exact.v:966` | The `b64_orient_sign_filtered_sound_small_int` analogy (integer coords, \|c\| ≤ 2²⁵ ⇒ bit-exact) holds only for **polynomial** predicates. The clothoid residual is transcendental — no integer regime makes `cos`/`sin` integrals dyadic. The degenerate straight-chord regime (κ₀ = κ₁ = 0 ⇒ P = 1, Q = 0, f(L) = L² − d², unique positive root L = d **exactly**) landed as route (A) — see §8. Still open: the b64 mirror of the degenerate regime and a Scope-A polynomial-prefix slice (residual assembly given P/Q values), mirroring `ArcLineIntersect_b64_exact.v`'s first-stage pattern. |
 | **Q3 Performance vs. linearisation** | **NOT A THEOREM; fidelity layer LANDED** | `Linearise.v:225,361,385`; `CurveLinearise.v:109,126,139` | Operational fidelity is proven: `disjoint_under_linearise` (`Linearise.v:225`) with honest negatives `regime3_counterexample` (`:361`) and `EqualsExact_not_stable` (`:385`); structural closure `chord_approx_ring_closed` / `to_geometry_{outer,hole}_ring_closed` (`CurveLinearise.v:109,126,139`). Runtime throughput is NTS benchmarking territory, out of corpus scope; the *provable* face is chord-count-vs-sagitta bounds and the bounded-iteration (≤4) termination model. |
 
 ## 4. Inventory of existing clothoid assets
@@ -138,10 +139,10 @@ under CC BY 4.0 (derived from ProRail Spoorgeometrie).
 ## 6. Risk/cost-ordered options for the next (Coq) terminal
 
 - **(A) Degenerate-chord exact regime (Q2)** — *low risk, high value.*
-  κ₀ = κ₁ = 0 ⇒ f(L) = L² − d² with unique positive root L = d, exactly
-  representable for dyadic d; an integer-coordinate version mirrors the
-  `_small_int` headline pattern (`Orient_b64_exact.v:966`). A Qed terminal
-  in one session, no Fresnel, no new axioms.
+  ~~κ₀ = κ₁ = 0 ⇒ f(L) = L² − d² with unique positive root L = d~~
+  **LANDED 2026-06-12** (`theories/ClothoidDegenerate.v`, Qed, three axioms;
+  see §8). The b64 integer-coordinate mirror (the `_small_int` pattern,
+  `Orient_b64_exact.v:966`) remains queued as the follow-up slice.
 - **(B) Sagitta-density bound (Q3)** — *medium.* "n chords achieve ε" over
   the `ArcChordApprox.v` foundations: the provable face of the performance
   trade-off. Queue behind a concrete NTS.Curve consumer.
@@ -163,9 +164,9 @@ under CC BY 4.0 (derived from ProRail Spoorgeometrie).
 Hold Q1 at the conditional idiom + the now-public external witness + the
 differential oracle — that combination is already stronger than most
 "verified" claims in the field, and route (D) buys little until a consumer
-asks for it. Land **(A)** as the only near-term Qed terminal. Close Q3 as a
-documented non-goal (this section is that record), with **(B)** queued
-behind a consumer.
+asks for it. Route **(A)** — the only near-term Qed terminal — is landed
+(§8). Close Q3 as a documented non-goal (this section is that record), with
+**(B)** queued behind a consumer.
 
 **What would NOT change under any route:** `ClothoidResidual.v` stays
 Qed/three-axiom (routes only *discharge* its hypotheses, never weaken them);
@@ -174,3 +175,47 @@ fourth-axiom or copyleft-adoption decision is recorded, never silent);
 Option-B chord-first; no new `Admitted` (any deferral would have to enter
 `admitted-deferred-proofs.txt`, and none is proposed); the oracle remains
 differential, never the source of truth.
+
+## 8. Route (A) session — degenerate-chord exact regime (2026-06-12): LANDED
+
+Red/Green/Refactor record for the first route taken off the §6 ladder.
+
+**Red.** Target 1: the degenerate residual `f_deg(L) = L·L − d·d`
+(κ₀ = κ₁ = 0 ⇒ P = 1, Q = 0) with all three `ClothoidResidual.v` Section
+hypotheses discharged concretely. Target 2: the exact-root headline plus
+end-to-end instantiation of the conditional theorems (non-vacuity of the
+interface). Predicted tangents, in order: `derivable_pt_lim` fct-notation
+unification; square-injectivity shape (fallback `nra`); `PI > 0` plumbing.
+Stopping conditions: full success = both targets Qed at three axioms;
+tangent-stop = direct (non-interface) proofs only, recorded PARTIAL. The
+b64 mirror explicitly out of scope.
+
+**Green — LANDED** (`theories/ClothoidDegenerate.v`, first-shot compile;
+none of the predicted tangents bit):
+
+- `degenerate_root_exact`, `degenerate_strictly_increasing`,
+  `degenerate_unique_positive_root` — the exact answer, directly: `L = d`
+  is the unique positive root, on the nose, no approximation.
+- `degenerate_H_deriv`, `degenerate_H_fprime_pos`, `degenerate_H_mvt`,
+  `degenerate_branch_trivial` — the three Section hypotheses of
+  `ClothoidResidual.v` discharged concretely at κ = 0. The MVT premise is
+  discharged **constructively** (witness `c = (a+b)/2`), avoiding
+  `MVT_cor2` and hence `Classical_Prop.classic` — the file stays on the
+  three-axiom allowlist.
+- `degenerate_strictly_increasing_via_interface`,
+  `degenerate_unique_root_via_interface`,
+  `degenerate_root_is_chord_length` — the Section-closed conditional
+  theorems instantiated end-to-end: the conditional interface of
+  `ClothoidResidual.v` is **inhabited**, so its hypotheses are not
+  mutually unsatisfiable (the corpus's standard non-vacuity check, cf.
+  `GeneralTriangleParityRED.v`).
+
+**Refactor.** Registered in `_CoqProject` (host lane — Stdlib-only) and
+`_CoqProject.full`; full gauntlet green (`check_admitted`: 7 registered,
+unchanged; `audit_axioms` over the augmented output-synced log: allowlist
+clean, no `classic`; `check_readme_axioms`: in sync).
+
+**Remaining gaps after this session** (unchanged elsewhere in this doc):
+the b64 degenerate-regime mirror (`_small_int` pattern) and the Scope-A
+residual-assembly prefix — both still route-(C)-adjacent, queued; routes
+(B) and (D) untouched.
