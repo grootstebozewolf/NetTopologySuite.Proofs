@@ -22,10 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Flocq via opam.  4.2.0 is the most recent Flocq release at the time
 # of writing; if it does not yet support Rocq 9.1.1, pin to whatever opam's
-# resolver selects.
+# resolver selects.  ocamlfind is baked in for oracle/Makefile (the
+# RocqRefRunner link step), so workflows never re-install it at run time.
 USER rocq
 RUN opam update -y \
-    && opam install --confirm-level=unsafe-yes coq-flocq.4.2.2
+    && opam install --confirm-level=unsafe-yes coq-flocq.4.2.2 ocamlfind
 
 WORKDIR /workspace
 
