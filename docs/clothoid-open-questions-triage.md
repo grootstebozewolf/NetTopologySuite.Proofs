@@ -257,3 +257,48 @@ augmented log; README/allowlist in sync).
 
 **Remaining after this slice:** Q2's Scope-A residual-assembly prefix
 (route (C)) is the only queued Q2 item; routes (B) and (D) unchanged.
+
+## 10. Route (C) — Scope-A residual-assembly prefix (2026-06-12): LANDED
+
+Third RGR iteration; closes the last queued Q2 item. With this, every
+tractable rung of the §6 ladder short of consumer-gated (B) and
+strategic (D) is done.
+
+**Red.** Target 1: generic skeleton — the five-operation binary64
+assembly `L⊗L ⊗ (p⊗p ⊕ q⊗q) ⊖ (d⊗d) ⊗ s2` over integer-valued inputs is
+bit-exact under per-intermediate window hypotheses. Target 2: concrete
+window instantiation (|nL|, |nd| ≤ 2¹², |np|, |nq| ≤ 2¹³, ns2 = 2²⁶;
+largest intermediate 2⁵¹ + 2⁵⁰ < 2⁵³). Target 3: sign trichotomy.
+Target 4 (stretch): consistency with the route-(A) degenerate slice.
+Predicted tangents: degree-4 `nia` obligations; `b64_plus` exactness
+lemma possibly missing; fixed-point scaling algebra.
+
+**Green — LANDED** (`theories-flocq/ClothoidScopeA_b64.v`; one tangent
+bit — the degree-4 window obligation needed staged intermediate bounds
+(`Z.mul_le_mono_nonneg` + `nia` per factor) instead of a one-shot `nia`;
+`b64_plus_int_exact` already existed in `Orient_b64_exact.v`):
+
+- `b64_residual_assembly_int_exact` — the generic skeleton, all five
+  operations chained through the `_int_exact` lemmas.
+- `b64_residual_assembly_exact_window` — the concrete fixed-point
+  window: oracle-supplied P/Q approximants scaled by 2¹³, coordinates
+  to 2¹², scale square 2²⁶.
+- `b64_residual_assembly_sign_decides` — the binary64 sign test decides
+  the integer assembly's sign exactly: a solver's only remaining error
+  budget is the transcendental approximation |P̂ − P|, |Q̂ − Q|, which
+  lives entirely in the oracle-supplied inputs, never in the arithmetic.
+- `residual_assembly_degenerate_consistent` — at np = 2ˢ, nq = 0 the
+  assembly is 2²ˢ times `degenerate_residual` (route (A)) — same sign,
+  same roots; this lemma is allowlist-only (no `classic`).
+
+The transcendental P/Q stage is **never claimed** — stated in the file
+header and here, per this doc's Q2 analysis.
+
+**Refactor.** Registered in `_CoqProject.full` and
+`docs/audit-exceptions.txt` (Flocq `classic` lineage; the consistency
+lemma itself is clean). Gauntlet green (7 registered Admitted unchanged;
+axiom audit clean on the augmented log; README/allowlist in sync).
+
+**Ladder state after this session:** (A) merged (#182); (C) landed
+(this section); (B) queued behind an NTS.Curve consumer; (D) pivot-away
+unless a consumer demands end-to-end machine-checked Halley.
