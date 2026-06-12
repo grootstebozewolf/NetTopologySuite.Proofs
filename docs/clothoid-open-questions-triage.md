@@ -481,3 +481,44 @@ axioms, first-compile green):
 **Ladder state after this session:** (A), (C), (C′), Scope A.0–A.7, and
 (B) landed; (D) remains pivot-away (its §5.1 scope decisions — fourth
 axiom or copyleft adoption — are recorded BDFL calls, not slices).
+
+## 17. Route (B) follow-up — equal-angle budget discharge (2026-06-12): LANDED
+
+Tenth RGR iteration; closes the trigonometric half of
+`ArcChordApprox.v` §6c's deferral ("the n-chord trigonometric version
+needs sin/cos manipulation") and gives §16's headline its consumable
+angle-budget form.
+
+**Red.** Target: convert the angle budget an equal-angle subdivision
+routine produces (each sub-arc subtends ≤ θ/n) into §16's chord budget
+and compose with `n_chords_achieve_eps`. Chain: law of cosines against
+the record's `dist_sq`; `cos_angle_between` with both norms pinned to
+`sqrt arc_radius_sq`; half-angle identity; `sin² x ≤ x²`. Predicted
+tangents: Stdlib PI lower-bound lemma name; `field`/`nra` side
+conditions; rewriting `arc_radius a = r` through the final budget.
+
+**Green — LANDED** (`theories/ArcChordSubdivision.v`, Admitted-free,
+Category-C 4-axiom lane; two tangent bits — Stdlib here has no
+`PI_RGT_3_14`, `Ratan.PI2_1` substitutes; and the count hypothesis
+needed an `arc_radius` rewrite before `exact`):
+
+- `arc_central_angle` — the signed central angle of an arc record,
+  via `AngleBetween.angle_between` on the center-anchored vectors.
+- `chord_sq_law_of_cosines` — |start−end|² = |u|² + |v|² − 2⟨u,v⟩,
+  pure ring (allowlist-only).
+- `chord_half_length_sq_central` — l² = R·(1 − cos φ)/2 under
+  `valid_arc` and positive radius.
+- `sin_sq_le_sq`, `one_minus_cos_half_angle` — the scalar trig facts
+  (case split at 1 with `SIN_bound`; `cos_2a` + `sin2_cos2`).
+- `chord_half_length_sq_le_angle_budget` — l² ≤ (r·φ/2)².
+- `equal_angle_chords_achieve_eps` — headline: φ ≤ θ/n and
+  n²·(r·ε) ≥ (r·θ/2)² give sagitta ≤ ε.
+
+**Refactor.** Registered in `_CoqProject.full` and
+`docs/audit-exceptions.txt` (Category-C atan/sin lineage); claims in
+`docs/verified-claims.md`; closure pointer added to
+`ArcChordApprox.v` §6c; gauntlet green.
+
+**Remaining:** the list-of-arcs subdivision *construction* (the
+combinatorial half of §6c) stays deferred — the per-sub-arc contract
+is the proven interface; route **(D)** unchanged (BDFL-gated).

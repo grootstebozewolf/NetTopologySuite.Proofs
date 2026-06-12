@@ -318,6 +318,15 @@ theories/BufferJoin.v
 # Admitteds; both headlines Qed-closed.
 theories/ArcLength.v
 
+# Category C (R-side, same atan/sin lineage as ArcLength.v / AngleBetween.v):
+# route (B) follow-up, equal-angle budget discharge.  arc_central_angle is
+# built on angle_between = atan2(...), and sin_sq_le_sq uses Stdlib `sin_lt_x`
+# via ArcLength.sin_le_x, so the angle/headline theorems inherit
+# Classical_Prop.classic (4-axiom).  chord_sq_law_of_cosines and
+# one_minus_cos_half_angle stay on the 3-axiom allowlist.  No Admitteds;
+# all headlines Qed-closed.
+theories/ArcChordSubdivision.v
+
 # Category C (R-side): issue #67 Option-A analytic arc slice (S10b).
 # arc_sweep_principal_range is built on AngleBetween.angle_between_range, so it
 # inherits Classical_Prop.classic via the Atan2 / AngleBetween lane above (same
