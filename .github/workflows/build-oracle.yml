@@ -6,10 +6,25 @@ name: Build and publish oracle_bin
 # is attached to the release as a downloadable asset, giving .Curve's CI
 # a stable URL to consume.
 #
-# Toolchain pin: reuses the project's Dockerfile (rocq 9.1.1 + ocaml
-# 4.14.2-flambda + coq-flocq.4.2.2 + ocamlfind), shared with the
-# `build proofs / rocq-flocq` job in ci.yml via the GHA Docker layer
-# cache, so the slow `opam install coq-flocq.4.2.2` step is not repeated.
+# Toolchain pin: reuses the project's Dockerfile `toolchain` stage
+# (rocq 9.1.1 + ocaml 4.14.2-flambda + coq-flocq.4.2.2 + ocamlfind),
+# pulled from GHCR under its Dockerfile-hash tag (published by ci.yml on
+# main pushes) with a buildx + GHA-layer-cache fallback on a miss, so
+# the slow `opam install coq-flocq.4.2.2` step is not repeated.
+#
+# SPEED (June 2026): PULL REQUESTS reuse the incremental corpus cache
+# that ci.yml maintains (.vo artefacts + sha256 manifest;
+# scripts/ci_invalidate_stale_vo.py makes make's mtime logic sound
+# against it by content).  This job is a STRICTLY READ-ONLY cache
+# consumer: it never saves the cache and never writes the manifest,
+# because it does not run the axiom audit or refresh the .palog/
+# chunks -- a cache saved here could pair a fresh manifest with stale
+# Print Assumptions chunks and silently weaken ci.yml's guardrail 4.
+# Main pushes and release events skip the restore entirely: the
+# PUBLISHED oracle_bin always comes from a full from-clean build.
+# `Validate_binary64_extract.v` (a leaf: nothing imports it) is touched
+# after the invalidation pass so the extraction always re-runs and
+# oracle/extracted.ml is always regenerated fresh.
 
 on:
   push:
@@ -52,50 +67,115 @@ jobs:
   build-oracle:
     name: Build oracle_bin in pinned rocq 9.1.1 + flocq 4.2.2 container
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      TOOLCHAIN_IMAGE: ghcr.io/${{ github.repository_owner }}/nts-proofs-toolchain
     steps:
       - uses: actions/checkout@v6
 
+      - name: Compute toolchain tag (content-addressed by Dockerfile)
+        id: toolchain
+        run: echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image from GHCR
+        # Publishing is ci.yml's job (it runs on EVERY main push); this
+        # workflow only consumes the tag, with a local build fallback.
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-oracle:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Build container image (rocq 9.1.1 + flocq 4.2.2)
-        # Reuses the existing Dockerfile + GHA Docker layer cache, so the
-        # `opam install coq-flocq.4.2.2` step is shared with ci.yml's
-        # `rocq-flocq` job.  On a warm cache this step is ~30s; cold it
-        # is ~5 min (coq-flocq compile).
+      - name: Build toolchain image (GHCR miss)
+        # Only when the Dockerfile changed (or the tag was never
+        # published).  The GHA layer cache is shared with ci.yml's
+        # `rocq-flocq` job, so the slow `opam install coq-flocq.4.2.2`
+        # step (~5 min cold) is not repeated.
+        if: steps.pull.outputs.hit != 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
+          target: toolchain
           load: true
           tags: nts-proofs-oracle:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Restore compiled-corpus cache (PRs only)
+        # READ-ONLY reuse of the cache ci.yml maintains.  Main pushes
+        # and releases skip this: the published oracle_bin is always
+        # built from clean (artifact provenance).  See the header
+        # comment for why this job must never SAVE the cache.
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            theories/*.vo*
+            theories/*.glob
+            theories/.*.aux
+            theories-flocq/*.vo*
+            theories-flocq/*.glob
+            theories-flocq/.*.aux
+            .palog
+            .vo-manifest
+          key: vo-cache-${{ hashFiles('Dockerfile') }}-${{ github.run_id }}
+          restore-keys: |
+            vo-cache-${{ hashFiles('Dockerfile') }}-
+
+      - name: Invalidate stale artefacts (content-addressed)
+        # Same script as ci.yml: ages unchanged .v files / touches
+        # changed ones by sha256 so make rebuilds exactly the changed
+        # files plus dependents.  No-op on a cold cache.
+        run: python3 scripts/ci_invalidate_stale_vo.py
+
+      - name: Force extraction freshness
+        # Validate_binary64_extract.v is a leaf (nothing imports it);
+        # touching it AFTER the invalidation pass guarantees the
+        # extraction target always re-runs, so oracle/extracted.ml and
+        # .mli are regenerated from the (cached or rebuilt) dependency
+        # chain on every run.  extracted.ml is gitignored -- it never
+        # exists before the build.
+        run: touch theories-flocq/Validate_binary64_extract.v
+
       - name: Build corpus, extract, link oracle_bin
-        # Inside the pinned container:
-        #   1. opam install ocamlfind (idempotent; needed for oracle/Makefile).
-        #   2. Clean host-leaked build artefacts (mirrors Dockerfile CMD).
-        #   3. rocq makefile -f _CoqProject.full -o Makefile.gen.
-        #   4. make -f Makefile.gen -- builds the full flocq-dependent
-        #      corpus, including Validate_binary64_extract.v's extraction
-        #      target, which writes oracle/extracted.ml + oracle/extracted.mli.
-        #   5. make -C oracle/ -- links extracted.cmx + driver.cmx against
-        #      -package str (the only OCaml dep beyond the stdlib; confirmed
-        #      from oracle/Makefile line 34).
-        # The container's /workspace was populated by the Dockerfile's
-        # `COPY --chown=rocq:rocq . /workspace` at image-build time, so it
-        # reflects this checkout.  After the build, `docker cp` extracts
-        # the resulting binary to the host runner for the upload step.
+        # Inside the pinned container, on the MOUNTED live checkout
+        # (cached .vo files are visible to make; oracle_bin lands
+        # directly in the runner workspace -- no docker cp dance):
+        #   1. Clean host-leaked makefile artefacts (NOT .vo -- those
+        #      are the incremental cache).
+        #   2. rocq makefile -f _CoqProject.full -o Makefile.gen.
+        #   3. make -- rebuilds changed files + dependents + the touched
+        #      extraction leaf, which writes oracle/extracted.ml + .mli.
+        #   4. make -C oracle/ -- links extracted.cmx + driver.cmx
+        #      against -package str (ocamlfind is baked into the
+        #      toolchain image).
+        # chmod lets the image's `rocq` user (uid 1000) write into
+        # runner-owned dirs; the chown hands the artefacts back.
         run: |
-          docker run --name oracle-build nts-proofs-oracle:ci \
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            nts-proofs-oracle:ci \
             bash -lc '
               set -euxo pipefail
-              opam install --confirm-level=unsafe-yes ocamlfind
-              eval $(opam env)
               rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d \
-                    .nra.cache theories/*.vo* theories/*.glob theories/.*.aux \
-                    theories-flocq/*.vo* theories-flocq/*.glob \
-                    theories-flocq/.*.aux
+                    .nra.cache
               rocq makefile -f _CoqProject.full -o Makefile.gen
               make -f Makefile.gen -j"$(nproc)"
               test -f oracle/extracted.ml
@@ -103,24 +183,23 @@ jobs:
               make -C oracle/
               test -x oracle/oracle_bin
             '
-          docker cp oracle-build:/workspace/oracle/oracle_bin ./oracle_bin
-          docker rm oracle-build
+          sudo chown -R "$(id -u):$(id -g)" .
 
       - name: Sanity check artifact
         run: |
-          test -x ./oracle_bin
-          file ./oracle_bin
-          ls -la ./oracle_bin
+          test -x oracle/oracle_bin
+          file oracle/oracle_bin
+          ls -la oracle/oracle_bin
 
       - name: Upload oracle_bin artifact (90-day retention)
         uses: actions/upload-artifact@v4
         with:
           name: oracle-bin-linux
-          path: oracle_bin
+          path: oracle/oracle_bin
           retention-days: 90
 
       - name: Attach oracle_bin to release (release events only)
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: oracle_bin
+          files: oracle/oracle_bin
