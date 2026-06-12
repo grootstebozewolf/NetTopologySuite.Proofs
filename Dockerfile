@@ -1,8 +1,18 @@
 # Container for building NetTopologySuite.Proofs under Rocq 9.1.1 + Flocq.
 # Reproducible toolchain so the corpus is not pinned to a specific developer
 # laptop's opam state.
+#
+# Two stages:
+#   - `toolchain`: base image + apt tooling + Flocq.  Contains NO corpus
+#     sources, so its content is fully determined by this Dockerfile.  CI
+#     builds it with `--target toolchain`, publishes it to GHCR under a tag
+#     derived from this file's hash, and mounts the live checkout over
+#     /workspace at run time.
+#   - `full` (default): toolchain + a baked copy of the repo + the
+#     clean-and-build CMD.  This is the local-developer and oracle-workflow
+#     path; `docker build` with no --target produces it, same as before.
 
-FROM rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda
+FROM rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda AS toolchain
 
 # System tooling we want for ergonomic edits inside the container.
 USER root
@@ -18,6 +28,8 @@ RUN opam update -y \
     && opam install --confirm-level=unsafe-yes coq-flocq.4.2.2
 
 WORKDIR /workspace
+
+FROM toolchain AS full
 COPY --chown=rocq:rocq . /workspace
 
 # Default action: clean host-leaked build artefacts, regenerate the makefile

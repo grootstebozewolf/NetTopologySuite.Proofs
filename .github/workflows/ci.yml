@@ -108,64 +108,136 @@ jobs:
     # (`theories-flocq/`).  The host-runner `rocq` job above only builds
     # `theories/` -- it grep-scans `theories-flocq/` for the corpus
     # invariant but does not compile those files.  This job closes that
-    # gap by running the project's pinned Dockerfile end-to-end, which
-    # uses `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` + opam-installed
-    # `coq-flocq.4.2.2` to build the full `_CoqProject.full` corpus.
+    # gap using the project's pinned toolchain (Rocq 9.1.1 + opam
+    # `coq-flocq.4.2.2`, see Dockerfile) to build `_CoqProject.full`.
     #
-    # A single clean parallel build (with `--output-sync=target`) serves
-    # both purposes at once: compile validation AND the per-file log the
-    # axiom audit needs.  If any `.v` file fails to compile, the build
-    # step exits non-zero and the job fails.
+    # SPEED ARCHITECTURE (June 2026):
+    #
+    #   - The toolchain image (Dockerfile `--target toolchain`, no
+    #     sources baked in) is published to GHCR under a tag derived
+    #     from the Dockerfile's hash; runs pull it (~seconds) instead of
+    #     reassembling layers from the buildx cache.  A miss (new
+    #     Dockerfile) falls back to building it, and main pushes publish
+    #     the new tag.
+    #   - PULL REQUESTS build INCREMENTALLY: .vo artefacts, per-file
+    #     Print Assumptions chunks (.palog/), and a content manifest are
+    #     cached; scripts/ci_invalidate_stale_vo.py ages unchanged .v
+    #     files and touches changed/new ones (sha256-based -- immune to
+    #     rebase-backdated commit times), so make rebuilds exactly the
+    #     changed files plus their dependents.
+    #   - MAIN PUSHES always build from clean (the restore step is
+    #     skipped): every merge re-validates the whole corpus end to end
+    #     and re-seeds the cache.
+    #
+    # GUARDRAIL-4 SOUNDNESS UNDER INCREMENTALITY: the audit no longer
+    # reads the raw build log (an incremental log only covers rebuilt
+    # files).  Instead, the output-synced log -- each target's `ROCQ
+    # compile <file>` line plus its `Print Assumptions` blocks emitted
+    # atomically -- is split into per-file chunks cached alongside the
+    # .vo they were compiled with (same provenance).  The audit runs on
+    # the assembled chunks of EVERY project file, and a missing chunk
+    # FAILS the build (scripts/ci_assemble_palog.sh), so coverage can
+    # never silently shrink.  History: the May 2026 axiom-leak
+    # investigation showed plain parallel logs interleave; output-sync
+    # removes that at the root (the old -j1 rebuild is gone).
     name: Build theories-flocq in pinned container
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      TOOLCHAIN_IMAGE: ghcr.io/${{ github.repository_owner }}/nts-proofs-toolchain
     steps:
       - uses: actions/checkout@v6
 
+      - name: Compute toolchain tag (content-addressed by Dockerfile)
+        id: toolchain
+        run: echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image from GHCR
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-flocq:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Build container image with Flocq corpus
-        # `--load` so the resulting image is available to the local
-        # docker daemon for the next step's `docker run`.  Cache the
-        # build via the GitHub Actions runner cache so the slow
-        # `opam install coq-flocq.4.2.2` step (~5 min) is reused on
-        # subsequent runs.
+      - name: Build toolchain image (GHCR miss)
+        # Only when the Dockerfile changed (or the tag was never
+        # published).  The buildx GHA layer cache still shortcuts the
+        # slow `opam install coq-flocq.4.2.2` step (~5 min cold).
+        if: steps.pull.outputs.hit != 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
+          target: toolchain
           load: true
           tags: nts-proofs-flocq:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Compile theories-flocq + per-theorem axiom audit (guardrails 1 + 4)
-        # ONE clean parallel build of the full corpus, run with GNU
-        # make's `--output-sync=target` so each target's entire recipe
-        # output -- the `ROCQ compile <file>` line plus that file's
-        # `Print Assumptions` blocks -- is emitted atomically.  This is
-        # the property `scripts/audit_axioms.sh` actually needs:
-        # per-FILE contiguity, not global sequential order.
-        #
-        # History: plain parallel attribution proved unreliable during
-        # the May 2026 axiom-leak investigation (interleaved -j2
-        # output), so CI used to build the corpus TWICE -- once via the
-        # Dockerfile CMD for compile validation and once from clean at
-        # -j1 for the audit log.  `--output-sync=target` removes the
-        # interleaving at the root, so a single -j$(nproc) build now
-        # serves both guardrails.
-        #
-        # The audit script enforces docs/axiom-allowlist.txt against
-        # every per-theorem PA block, with file-level exemptions from
-        # docs/audit-exceptions.txt.  Failure mode: any non-exempt file
-        # has a PA block containing an axiom outside the allowlist.
+      - name: Publish toolchain image (main only)
+        # Content-addressed tag: republishing only happens when the
+        # Dockerfile actually changed.  PRs that change the Dockerfile
+        # build locally; the tag is published on merge.
+        if: steps.pull.outputs.hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker run --rm \
+          docker tag nts-proofs-flocq:ci "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"
+          docker push "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"
+
+      - name: Restore compiled-corpus cache (PRs only)
+        # Main pushes skip this on purpose: every merge rebuilds the
+        # corpus from clean and re-seeds the cache (integrity anchor).
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            theories/*.vo*
+            theories/*.glob
+            theories/.*.aux
+            theories-flocq/*.vo*
+            theories-flocq/*.glob
+            theories-flocq/.*.aux
+            .palog
+            .vo-manifest
+          key: vo-cache-${{ hashFiles('Dockerfile') }}-${{ github.run_id }}
+          restore-keys: |
+            vo-cache-${{ hashFiles('Dockerfile') }}-
+
+      - name: Invalidate stale artefacts (content-addressed)
+        # Ages unchanged .v files / touches changed ones so make's
+        # mtime logic agrees with actual content; wipes everything if
+        # the _CoqProject.full flag lines changed; prunes artefacts and
+        # chunks of files that left the project.  No-op on a cold cache.
+        run: python3 scripts/ci_invalidate_stale_vo.py
+
+      - name: Compile corpus (mounted workspace, output-synced)
+        # The live checkout is mounted over the image's /workspace, so
+        # cached .vo files are visible to make and new artefacts land on
+        # the runner for the cache-save step.  chmod lets the image's
+        # `rocq` user (uid 1000) write into runner-owned dirs; the chown
+        # afterwards hands the artefacts back to the runner user.
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
             nts-proofs-flocq:ci \
             bash -lc '
               rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d \
-                    .nra.cache theories/*.vo* theories/*.glob theories/.*.aux \
-                    theories-flocq/*.vo* theories-flocq/*.glob \
-                    theories-flocq/.*.aux
+                    .nra.cache
               rocq makefile -f _CoqProject.full -o Makefile.gen
               make -f Makefile.gen -j"$(nproc)" --output-sync=target
             ' > /tmp/build_sync.log 2>&1 || {
@@ -173,4 +245,36 @@ jobs:
               tail -50 /tmp/build_sync.log
               exit 1
             }
-          bash scripts/audit_axioms.sh /tmp/build_sync.log
+          sudo chown -R "$(id -u):$(id -g)" .
+
+      - name: Update per-file Print Assumptions chunks
+        run: bash scripts/ci_update_palog.sh /tmp/build_sync.log
+
+      - name: Per-theorem axiom audit on full-corpus chunk assembly (guardrails 1 + 4)
+        # scripts/ci_assemble_palog.sh fails hard if ANY project file
+        # lacks a chunk -- audit coverage cannot silently shrink.  The
+        # audit enforces docs/axiom-allowlist.txt against every
+        # per-theorem PA block, with file-level exemptions from
+        # docs/audit-exceptions.txt.
+        run: |
+          bash scripts/ci_assemble_palog.sh > /tmp/audit_input.log
+          bash scripts/audit_axioms.sh /tmp/audit_input.log
+
+      - name: Refresh corpus manifest
+        # Only reached when build + audit passed: the manifest never
+        # blesses artefacts that failed the gauntlet.
+        run: python3 scripts/ci_write_vo_manifest.py
+
+      - name: Save compiled-corpus cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            theories/*.vo*
+            theories/*.glob
+            theories/.*.aux
+            theories-flocq/*.vo*
+            theories-flocq/*.glob
+            theories-flocq/.*.aux
+            .palog
+            .vo-manifest
+          key: vo-cache-${{ hashFiles('Dockerfile') }}-${{ github.run_id }}
