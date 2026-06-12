@@ -127,11 +127,13 @@ resolves through this path.
 cd /path/to/NetTopologySuite.Proofs
 eval $(opam env --switch=nts-flocq)
 rocq makefile -f _CoqProject.full -o Makefile.gen
-make -f Makefile.gen -j4
+make -f Makefile.gen -j"$(nproc)" --output-sync=target 2>&1 | tee /tmp/build.log
 ```
 
 A successful build ends with `theories-flocq/*.vo` files and the
-usual `Print Assumptions` output.
+usual `Print Assumptions` output.  The `--output-sync=target` + `tee`
+combination makes this from-clean build log directly reusable as the
+axiom-audit input in Step 6, so the corpus is only built once.
 
 ### Step 6 — run the CI gauntlet
 
@@ -139,9 +141,11 @@ usual `Print Assumptions` output.
 # 1. Three-tier Admitted check.
 bash scripts/check_admitted.sh
 
-# 2. Per-theorem axiom audit on an output-synced build log.
-make -f Makefile.gen clean
-make -f Makefile.gen -j"$(nproc)" --output-sync=target > /tmp/build.log 2>&1
+# 2. Per-theorem axiom audit -- reuses Step 5's from-clean build log.
+#    Only if you have rebuilt incrementally since Step 5 (the audit
+#    needs every file's Print Assumptions blocks), regenerate it:
+#      make -f Makefile.gen clean
+#      make -f Makefile.gen -j"$(nproc)" --output-sync=target > /tmp/build.log 2>&1
 bash scripts/audit_axioms.sh /tmp/build.log
 
 # 3. README <-> allowlist consistency.
