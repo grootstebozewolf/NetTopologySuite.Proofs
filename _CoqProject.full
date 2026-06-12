@@ -1572,12 +1572,18 @@ theories-flocq/Orient_b64_exact.v
 # comparison; composes with theories/ClothoidDegenerate.v's unique-root
 # theorem.  Route (A) b64 slice of docs/clothoid-open-questions-triage.md.
 theories-flocq/ClothoidDegenerate_b64.v
+# Scope-A residual-assembly exactness (route (C) of the clothoid triage):
+# the polynomial assembly L^2(p^2+q^2) - d^2*s2 over oracle-supplied
+# fixed-point P/Q approximants is bit-exact in the integer window; the b64
+# sign test decides the integer assembly's sign.  The transcendental P/Q
+# stage is never claimed.
+theories-flocq/ClothoidScopeA_b64.v
 # Route (C) Scope A: clothoid Halley residual assembly (f, f') bit-exact prefix.
 # Companion: clothoid-halley-coq Clothoid_L.v / Solver.cs.  See
-# docs/clothoid-open-questions-triage.md section 10.
+# docs/clothoid-open-questions-triage.md section 11.
 theories-flocq/ClothoidResidual_b64_exact.v
 # Route (C) Scope A.4+: f'' bit-exact assembly + Halley step round-chain.
-# See docs/clothoid-open-questions-triage.md section 12.
+# See docs/clothoid-open-questions-triage.md section 13.
 theories-flocq/ClothoidHalley_b64.v
 theories-flocq/Orient_b64_exact_full.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
