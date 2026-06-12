@@ -65,7 +65,8 @@ COMPOUNDCURVE / arc primitives.
 
 The curve-awareness proof needs and their status across issues #64–#69
 are triaged in [`../TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md) (umbrella) and the
-per-area [`issue-64-arc-primitives-triage.md`](issue-64-arc-primitives-triage.md).
+per-area [`issue-64-arc-primitives-triage.md`](issue-64-arc-primitives-triage.md); the clothoid
+lane's open questions in [`clothoid-open-questions-triage.md`](clothoid-open-questions-triage.md).
 
 **Skip.** Phase 0/1/2 unless you care about the underlying primitives.
 
@@ -200,8 +201,9 @@ sessions, plans cadence, and retrospects on how the work actually went.
      prompts + outcomes (chronological).
   5. [`../TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md) — the curve-awareness proof
      batch (#64–#69) triage + order of attack; per-area detail in
-     [`issue-64-arc-primitives-triage.md`](issue-64-arc-primitives-triage.md) and
-     [`issue-67-relateng-triage.md`](issue-67-relateng-triage.md).
+     [`issue-64-arc-primitives-triage.md`](issue-64-arc-primitives-triage.md),
+     [`issue-67-relateng-triage.md`](issue-67-relateng-triage.md), and
+     [`clothoid-open-questions-triage.md`](clothoid-open-questions-triage.md).
 
 **Skip.** (Nothing major — this combined role owns the meta layer.)
 

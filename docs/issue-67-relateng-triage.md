@@ -169,7 +169,9 @@ open; S11 oracle modes landed). The recommended path forward:
   `RelateMatrixArcAnalytic.v`); clothoid chord seed (`RelateClothoid.v`,
   `RelateMatrixClothoid.v`); oracle seeds
   `de9im_arc_analytic_vectors.txt`, `de9im_clothoid_vectors.txt`. Open:
-  law-of-cosines chord-length bridge at `arc_sweep_angle`.
+  law-of-cosines chord-length bridge at `arc_sweep_angle`; the clothoid
+  lane's remaining open questions are triaged in
+  [`clothoid-open-questions-triage.md`](clothoid-open-questions-triage.md).
 - **S11 (done):** `RELATE_MATRIX` / `RELATE_PREDICATE` oracle modes.
 - **S12 (done):** curve-polygon × point carrier + fill (`RelateCurveAreaPoint.v`,
   `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
