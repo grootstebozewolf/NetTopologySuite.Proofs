@@ -77,7 +77,7 @@ the cross-corpus bridge status in `audit-phase4-curves.md` §6.1–6.2.
 | **Q1 Fresnel integrals (R-side)** | **CONDITIONAL (Qed); integrals ABSENT by design** | `ClothoidResidual.v:99-128` | P/Q are never materialised; f, f′, κ are Section Variables and the analytic facts are named hypotheses, externally witnessed Qed in `clothoid-halley-coq/coq/Clothoid_L.v`. Three-axiom footprint preserved (audit footer). |
 | **Q1′ Fresnel evaluator (b64)** | **ABSENT (aspirational)** | `Intersect_b64_exact.v:2038-2080` | `HasClothoidIntersect` typeclass is a commented sketch; no closed form exists (transcendental Fresnel residual, `:2046`); Halley-on-L intended; Coquelicot→native-Reals porting estimated 3–5 days for the identities (`:2073`) — *before* any b64 lift. |
 | **Q2 Integer-parameter exact regime** | **PARTIAL — degenerate + Scope-A + Halley bound + b64 prefix LANDED (Qed/cond)** | `ClothoidDegenerate.v`; `ClothoidDegenerate_b64.v`; `ClothoidScopeA_b64.v`; `ClothoidResidual_b64_exact.v`; `ClothoidHalley.v`; `ClothoidHalley_b64.v`; precedent `ArcLineIntersect_b64_exact.v` | Polynomial predicates only: the transcendental Fresnel evaluator stays absent. Routes **(A)**, **(C)**, **(C′)**, Scope A.4–A.7 landed (§8–§15). Still open: full intersect evaluator, routes **(B)**/**(D)**. |
-| **Q3 Performance vs. linearisation** | **NOT A THEOREM; fidelity layer LANDED** | `Linearise.v:225,361,385`; `CurveLinearise.v:109,126,139` | Operational fidelity is proven: `disjoint_under_linearise` (`Linearise.v:225`) with honest negatives `regime3_counterexample` (`:361`) and `EqualsExact_not_stable` (`:385`); structural closure `chord_approx_ring_closed` / `to_geometry_{outer,hole}_ring_closed` (`CurveLinearise.v:109,126,139`). Runtime throughput is NTS benchmarking territory, out of corpus scope; the *provable* face is chord-count-vs-sagitta bounds and the bounded-iteration (≤4) termination model. |
+| **Q3 Performance vs. linearisation** | **NOT A THEOREM; fidelity layer + density bound LANDED** | `Linearise.v:225,361,385`; `CurveLinearise.v:109,126,139`; `ArcChordDensity.v` | Operational fidelity is proven: `disjoint_under_linearise` (`Linearise.v:225`) with honest negatives `regime3_counterexample` (`:361`) and `EqualsExact_not_stable` (`:385`); structural closure `chord_approx_ring_closed` / `to_geometry_{outer,hole}_ring_closed` (`CurveLinearise.v:109,126,139`). Runtime throughput is NTS benchmarking territory, out of corpus scope; the *provable* face — the chord-count-vs-sagitta law (`ArcChordDensity.v`, §16) and the bounded-iteration (≤4) termination model (`ClothoidHalley.v`, §12) — is landed. |
 
 ## 4. Inventory of existing clothoid assets
 
@@ -143,9 +143,12 @@ under CC BY 4.0 (derived from ProRail Spoorgeometrie).
   **LANDED 2026-06-12** (`theories/ClothoidDegenerate.v`, Qed, three axioms;
   see §8). The b64 integer-coordinate mirror (the `_small_int` pattern,
   `Orient_b64_exact.v:966`) remains queued as the follow-up slice.
-- **(B) Sagitta-density bound (Q3)** — *medium.* "n chords achieve ε" over
+- **(B) Sagitta-density bound (Q3)** — *medium.* ~~"n chords achieve ε" over
   the `ArcChordApprox.v` foundations: the provable face of the performance
-  trade-off. Queue behind a concrete NTS.Curve consumer.
+  trade-off~~ **LANDED 2026-06-12** (`theories/ArcChordDensity.v`, Qed,
+  three axioms; see §16). The consumer gate was read as satisfied by the
+  in-flight curve work (locationtech/jts#1195 `jts-curved` epic;
+  NetTopologySuite.Curve).
 - **(C) Scope-A residual-assembly exactness (Q2)** — *medium.* Bit-exact
   polynomial prefix of f given oracle-supplied P/Q values, modelled on
   `ArcLineIntersect_b64_exact.v`; honest that the transcendental stage is
@@ -154,10 +157,13 @@ under CC BY 4.0 (derived from ProRail Spoorgeometrie).
   licence gate is gone (EUPL-1.2 repro, integration-note grant); what
   remains are the §5.1 scope decisions (Stdlib `RiemannInt` + a `classic`
   fourth-axiom call, a Coquelicot dependency, or recorded adoption of the
-  EUPL witness scripts). **Pivot away** unless a downstream consumer
-  demands end-to-end machine-checked Halley; the bounded-iteration
-  termination lemma can be written conditionally (the `ClothoidResidual.v`
-  idiom) without it.
+  EUPL witness scripts). **Decided 2026-06-12:** ADR-0001 (Accepted,
+  `docs/adr/ADR-0001-fresnel-internalisation-stack.md`) records the path
+  — Coquelicot lane, fresh BSD-3 scripts, allowlist unchanged — so (D)
+  is now **consumer-gated only**: it executes when a downstream consumer
+  demands end-to-end machine-checked Halley, with no policy stall; the
+  bounded-iteration termination lemma stays available conditionally (the
+  `ClothoidResidual.v` idiom) without it.
 
 ## 7. Recommendation
 
@@ -166,7 +172,7 @@ differential oracle — that combination is already stronger than most
 "verified" claims in the field, and route (D) buys little until a consumer
 asks for it. Route **(A)** — the only near-term Qed terminal — is landed
 (§8). Close Q3 as a documented non-goal (this section is that record), with
-**(B)** queued behind a consumer.
+**(B)** now also landed (§16).
 
 **What would NOT change under any route:** `ClothoidResidual.v` stays
 Qed/three-axiom (routes only *discharge* its hypotheses, never weaken them);
@@ -438,4 +444,85 @@ threshold premise (honest round-chain idiom).
 
 **Refactor.** Claims in `docs/verified-claims.md`; full-corpus compile green.
 
-**Remaining:** full `HasClothoidIntersect`; routes **(B)** / **(D)** unchanged.
+**Remaining:** full `HasClothoidIntersect`; route **(B)** — see §16; route
+**(D)** unchanged.
+
+## 16. Route (B) — sagitta-density bound (2026-06-12): LANDED
+
+Ninth RGR iteration; takes the last queued §6 rung. The consumer gate
+("queue behind a concrete NTS.Curve consumer") was read as satisfied by
+the in-flight curve work (locationtech/jts#1195 `jts-curved` epic;
+NetTopologySuite.Curve), on user direction.
+
+**Red.** Target: the quantitative "n chords achieve ε" law over the
+`ArcChordApprox.v` foundations — conjugate identity, division-free
+linear bound, quadratic decay, count-form headline. Predicted tangents:
+`field` side conditions on the `n²·r` denominators; discharging the
+`Rmax 0` in `sagitta_sq_inner`; whether the trigonometric subdivision
+construction is needed (it is not — the statements are per-sub-chord
+with the refinement budget as hypothesis; `ArcChordApprox.v` §6c's
+deferral stands).
+
+**Green — LANDED** (`theories/ArcChordDensity.v`, Admitted-free, three
+axioms, first-compile green):
+
+- `sagitta_conjugate_identity` — s·(r + √(r²−l²)) = l² under
+  `valid_arc`, via the Pythagorean layer (`Rmax` discharged by
+  `arc_radius_sq_ge_chord_half_length_sq`).
+- `sagitta_mul_radius_le` — s·r ≤ l², division-free (no positivity of
+  r needed).
+- `sagitta_le_of_chord_sq_budget` — l² ≤ r·ε ⇒ s ≤ ε.
+- `sagitta_le_quadratic_decay` — squared half-chord budget l2/n² gives
+  s ≤ l2/(n²·r): doubling n quarters the tolerance.
+- `n_chords_achieve_eps` — the headline count form: n²·(r·ε) ≥ L²
+  (i.e. n ≥ L/√(r·ε)) brings every sub-chord's sagitta within ε.
+
+**Refactor.** Registered in `_CoqProject.full`; claims in
+`docs/verified-claims.md`; gauntlet green (`check_admitted` and
+`check_readme_axioms` unchanged).
+
+**Ladder state after this session:** (A), (C), (C′), Scope A.0–A.7, and
+(B) landed; (D) is consumer-gated per ADR-0001 (its §5.1 scope
+decisions — stack, licence, axiom bookkeeping — are now recorded and
+Accepted).
+
+## 17. Route (B) follow-up — equal-angle budget discharge (2026-06-12): LANDED
+
+Tenth RGR iteration; closes the trigonometric half of
+`ArcChordApprox.v` §6c's deferral ("the n-chord trigonometric version
+needs sin/cos manipulation") and gives §16's headline its consumable
+angle-budget form.
+
+**Red.** Target: convert the angle budget an equal-angle subdivision
+routine produces (each sub-arc subtends ≤ θ/n) into §16's chord budget
+and compose with `n_chords_achieve_eps`. Chain: law of cosines against
+the record's `dist_sq`; `cos_angle_between` with both norms pinned to
+`sqrt arc_radius_sq`; half-angle identity; `sin² x ≤ x²`. Predicted
+tangents: Stdlib PI lower-bound lemma name; `field`/`nra` side
+conditions; rewriting `arc_radius a = r` through the final budget.
+
+**Green — LANDED** (`theories/ArcChordSubdivision.v`, Admitted-free,
+Category-C 4-axiom lane; two tangent bits — Stdlib here has no
+`PI_RGT_3_14`, `Ratan.PI2_1` substitutes; and the count hypothesis
+needed an `arc_radius` rewrite before `exact`):
+
+- `arc_central_angle` — the signed central angle of an arc record,
+  via `AngleBetween.angle_between` on the center-anchored vectors.
+- `chord_sq_law_of_cosines` — |start−end|² = |u|² + |v|² − 2⟨u,v⟩,
+  pure ring (allowlist-only).
+- `chord_half_length_sq_central` — l² = R·(1 − cos φ)/2 under
+  `valid_arc` and positive radius.
+- `sin_sq_le_sq`, `one_minus_cos_half_angle` — the scalar trig facts
+  (case split at 1 with `SIN_bound`; `cos_2a` + `sin2_cos2`).
+- `chord_half_length_sq_le_angle_budget` — l² ≤ (r·φ/2)².
+- `equal_angle_chords_achieve_eps` — headline: φ ≤ θ/n and
+  n²·(r·ε) ≥ (r·θ/2)² give sagitta ≤ ε.
+
+**Refactor.** Registered in `_CoqProject.full` and
+`docs/audit-exceptions.txt` (Category-C atan/sin lineage); claims in
+`docs/verified-claims.md`; closure pointer added to
+`ArcChordApprox.v` §6c; gauntlet green.
+
+**Remaining:** the list-of-arcs subdivision *construction* (the
+combinatorial half of §6c) stays deferred — the per-sub-arc contract
+is the proven interface; route **(D)** consumer-gated per ADR-0001.

@@ -1312,6 +1312,25 @@ theories/ArcHotPixel.v
 # bisector geometry + S4's IVT-blocked soundness).  No Admitteds.
 theories/ArcChordApprox.v
 
+# Route (B) of docs/clothoid-open-questions-triage.md: the sagitta-density
+# bound -- "n chords achieve eps".  Conjugate identity
+# s*(r + sqrt(r^2-l^2)) = l^2 over ArcChordApprox.v's Pythagorean layer,
+# the division-free bound s*r <= l^2, and the quadratic chord-count law
+# n^2*(r*eps) >= L^2 => per-chord sagitta <= eps.  Per-sub-chord interface
+# (the trigonometric subdivision construction stays deferred, see
+# ArcChordApprox.v section 6c).  No Admitteds.
+theories/ArcChordDensity.v
+
+# Route (B) follow-up: equal-angle budget discharge.  Converts the angle
+# budget an equal-angle subdivision routine produces (each sub-arc
+# subtends <= theta/n) into ArcChordDensity.v's chord budget, via the law
+# of cosines against the record's dist_sq, cos_angle_between, the
+# half-angle identity, and sin^2 x <= x^2.  Headline
+# equal_angle_chords_achieve_eps.  Category-C atan/sin lineage (4-axiom,
+# see docs/audit-exceptions.txt).  Closes the trigonometric half of
+# ArcChordApprox.v section 6c's deferral.  No Admitteds.
+theories/ArcChordSubdivision.v
+
 # Phase 4 Session 7: arc overlay correctness conditional headline.
 # The Option B headline -- same epistemic position as Phase 3's
 # overlay_ng_correct_conditional.  Defines arcs_of: CurveGeometry ->

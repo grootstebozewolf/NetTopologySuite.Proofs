@@ -348,6 +348,11 @@ Qed.
 (* the sagitta-scaled by sub-arc decomposition.  Currently chord_approx_arc  *)
 (* is the degenerate 3-point stub (arc_start, arc_mid, arc_end); the         *)
 (* n-chord trigonometric version needs sin/cos manipulation.                  *)
+(*                                                                            *)
+(* [2026-06-12] The trigonometric per-sub-arc half of this deferral is        *)
+(* closed: ArcChordDensity.v (chord-budget law) + ArcChordSubdivision.v       *)
+(* (angle-budget discharge, equal_angle_chords_achieve_eps).  The             *)
+(* list-of-arcs subdivision construction itself remains deferred.             *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
