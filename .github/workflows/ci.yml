@@ -44,7 +44,11 @@ jobs:
         run: coq_makefile -f _CoqProject -o Makefile
 
       - name: Build proofs
-        run: make
+        # Parallel across the runner's cores.  Apple's bundled GNU make
+        # 3.81 supports -j (it predates --output-sync, but nothing here
+        # parses this job's build log, so interleaving is harmless --
+        # the axiom audit runs on the container job's synced log).
+        run: make -j"$(sysctl -n hw.ncpu)"
 
       - name: Verify no .v file is missing a Qed (two-tier Admitted check)
         # Scans BOTH theories/ and theories-flocq/.  The directory split
@@ -108,9 +112,10 @@ jobs:
     # uses `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` + opam-installed
     # `coq-flocq.4.2.2` to build the full `_CoqProject.full` corpus.
     #
-    # The Dockerfile's CMD does a clean-and-build using
-    # `_CoqProject.full`; if any `.v` file fails to compile, the
-    # container exits non-zero and this step fails.
+    # A single clean parallel build (with `--output-sync=target`) serves
+    # both purposes at once: compile validation AND the per-file log the
+    # axiom audit needs.  If any `.v` file fails to compile, the build
+    # step exits non-zero and the job fails.
     name: Build theories-flocq in pinned container
     runs-on: ubuntu-latest
     steps:
@@ -133,25 +138,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Compile theories-flocq inside container
-        # Runs the Dockerfile's CMD: cleans host-leaked Makefile
-        # artefacts, regenerates the Rocq makefile from
-        # `_CoqProject.full`, then `make`s the entire corpus including
-        # all Flocq-dependent modules.  Failure here = a `.v` file in
-        # theories-flocq/ does not compile.
-        run: docker run --rm nts-proofs-flocq:ci
-
-      - name: Sequential build + per-theorem axiom audit (guardrails 1 + 4)
-        # Re-builds the full corpus inside the same container with -j1
-        # (sequential) so that `ROCQ compile <file>` lines and their
-        # subsequent `Print Assumptions` output blocks are not
-        # interleaved by parallel make.  Parallel attribution proved
-        # unreliable during the May 2026 axiom-leak investigation; the
-        # -j1 build is the load-bearing prerequisite for accurate
-        # per-file violation reporting in `scripts/audit_axioms.sh`.
+      - name: Compile theories-flocq + per-theorem axiom audit (guardrails 1 + 4)
+        # ONE clean parallel build of the full corpus, run with GNU
+        # make's `--output-sync=target` so each target's entire recipe
+        # output -- the `ROCQ compile <file>` line plus that file's
+        # `Print Assumptions` blocks -- is emitted atomically.  This is
+        # the property `scripts/audit_axioms.sh` actually needs:
+        # per-FILE contiguity, not global sequential order.
         #
-        # The script enforces docs/axiom-allowlist.txt against every
-        # per-theorem PA block, with file-level exemptions from
+        # History: plain parallel attribution proved unreliable during
+        # the May 2026 axiom-leak investigation (interleaved -j2
+        # output), so CI used to build the corpus TWICE -- once via the
+        # Dockerfile CMD for compile validation and once from clean at
+        # -j1 for the audit log.  `--output-sync=target` removes the
+        # interleaving at the root, so a single -j$(nproc) build now
+        # serves both guardrails.
+        #
+        # The audit script enforces docs/axiom-allowlist.txt against
+        # every per-theorem PA block, with file-level exemptions from
         # docs/audit-exceptions.txt.  Failure mode: any non-exempt file
         # has a PA block containing an axiom outside the allowlist.
         run: |
@@ -163,10 +167,10 @@ jobs:
                     theories-flocq/*.vo* theories-flocq/*.glob \
                     theories-flocq/.*.aux
               rocq makefile -f _CoqProject.full -o Makefile.gen
-              make -f Makefile.gen -j1
-            ' > /tmp/build_seq.log 2>&1 || {
-              echo "::error::Sequential build failed; see /tmp/build_seq.log"
-              tail -50 /tmp/build_seq.log
+              make -f Makefile.gen -j"$(nproc)" --output-sync=target
+            ' > /tmp/build_sync.log 2>&1 || {
+              echo "::error::Corpus build failed; see /tmp/build_sync.log"
+              tail -50 /tmp/build_sync.log
               exit 1
             }
-          bash scripts/audit_axioms.sh /tmp/build_seq.log
+          bash scripts/audit_axioms.sh /tmp/build_sync.log

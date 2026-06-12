@@ -79,8 +79,8 @@ ClassicalDedekindReals.sig_forall_dec
 FunctionalExtensionality.functional_extensionality_dep
 ```
 
-A per-theorem axiom audit (`scripts/audit_axioms.sh`, run in CI against a
-sequential container build) checks every `Print Assumptions` block
+A per-theorem axiom audit (`scripts/audit_axioms.sh`, run in CI against an
+output-synced container build log) checks every `Print Assumptions` block
 against [`docs/axiom-allowlist.txt`](docs/axiom-allowlist.txt), and
 [`scripts/check_readme_axioms.sh`](scripts/check_readme_axioms.sh)
 guarantees the list above never drifts from that allowlist. The whole of
@@ -398,8 +398,9 @@ host build on `macos-latest`, then:
   matches `docs/axiom-allowlist.txt` verbatim.
 
 A second CI job builds the full `_CoqProject.full` corpus inside the
-pinned Rocq 9.1.1 + Flocq 4.2.2 container, then re-runs it sequentially
-(`-j1`) and feeds the log to `scripts/audit_axioms.sh`, which checks
+pinned Rocq 9.1.1 + Flocq 4.2.2 container — once, in parallel with
+`make --output-sync=target` so each file's output stays contiguous —
+and feeds the log to `scripts/audit_axioms.sh`, which checks
 every per-theorem `Print Assumptions` block against the allowlist
 (file-level exemptions from `docs/audit-exceptions.txt`).
 

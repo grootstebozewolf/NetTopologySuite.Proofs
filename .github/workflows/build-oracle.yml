@@ -97,7 +97,7 @@ jobs:
                     theories-flocq/*.vo* theories-flocq/*.glob \
                     theories-flocq/.*.aux
               rocq makefile -f _CoqProject.full -o Makefile.gen
-              make -f Makefile.gen -j2
+              make -f Makefile.gen -j"$(nproc)"
               test -f oracle/extracted.ml
               test -f oracle/extracted.mli
               make -C oracle/

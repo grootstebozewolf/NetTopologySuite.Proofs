@@ -13,7 +13,7 @@ This document extracts the session workflow, invariants, and practical guidance 
 - `Admitted` theorems must be registered in exactly one of:
   - `docs/admitted-counterexamples.txt` (theorem-as-stated is false; permanent; verified counterexample on file).
   - `docs/admitted-deferred-proofs.txt` (theorem is true; proof structure documented; temporary; comes off when proved).
-- Run the gauntlet on changes: `scripts/check_admitted.sh`, `scripts/audit_axioms.sh` (needs sequential build log), `scripts/check_readme_axioms.sh`, `scripts/validate-claims.sh`.
+- Run the gauntlet on changes: `scripts/check_admitted.sh`, `scripts/audit_axioms.sh` (needs an output-synced or -j1 build log; see the script header), `scripts/check_readme_axioms.sh`, `scripts/validate-claims.sh`.
 - `Print Assumptions` must pass the allowlist (with documented exceptions in `audit-exceptions.txt`).
 
 Unregistered `Admitted` = build failure. No quiet stubs.

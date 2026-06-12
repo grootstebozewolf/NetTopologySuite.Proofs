@@ -26,4 +26,4 @@ COPY --chown=rocq:rocq . /workspace
 # essential -- copying the host workspace pulls in Makefile.gen.conf with
 # macOS-Homebrew paths baked in, which `rocq makefile` re-uses on regeneration
 # and which then fail inside the container's Linux filesystem.
-CMD ["bash", "-lc", "rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d .nra.cache theories/*.vo* theories/*.glob theories/.*.aux && rocq makefile -f _CoqProject.full -o Makefile.gen && make -f Makefile.gen -j2"]
+CMD ["bash", "-lc", "rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d .nra.cache theories/*.vo* theories/*.glob theories/.*.aux theories-flocq/*.vo* theories-flocq/*.glob theories-flocq/.*.aux && rocq makefile -f _CoqProject.full -o Makefile.gen && make -f Makefile.gen -j\"$(nproc)\""]
