@@ -188,3 +188,48 @@ Per the prompt's COLLAPSE clause, the witnesses are committed as Qed'd negatives
 (the bridge's true shape is now machine-checked) and the wall is documented
 precisely. D2/D3 (the strengthened bridge and the genuine re-point) are deferred
 to the follow-up slice with the corrected hypothesis shape pinned above.
+
+---
+
+## Steps (1)+(2) — LANDED (2026-06-12, `theories/FaceTwinAware.v`)
+
+Eleventh RGR iteration. The twin-aware predicate and the re-proved
+simplicity chain are in, with one **correction to step (2)'s wording
+above**, found while building the slice:
+
+**The antenna correction.** "A face ring of an `arrangement_ok` set with
+period ≥ 3 contains no dart together with its twin" is NOT provable as
+stated. `next` wraps to the fan minimum (`DartNext.v:148`), so at a
+degree-1 tip `fstep D x = twin x`: a polygon with a dangling edge (an
+*antenna*) has a face walk of period ≥ 3 that contains a twin pair while
+passing `fan_ok` (singleton fans are vacuously ok) and `no_short_faces`.
+`spur_breaks_face_twin_free` records the easy half (a spur step breaks
+twin-freeness immediately); the converse programme — deriving
+`face_twin_free` from an explicit no-spur / no-dangling-edge condition by
+the innermost-return induction — is its own follow-up rung. Until it
+lands, `face_twin_free` is a named per-face hypothesis: satisfiable,
+unlike the H1 it replaces.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `pairwise_no_proper_cross_twin_aware` — step (1)'s predicate.
+- `sip_swap_left` / `sip_swap_right` — proper crossing is stable under
+  flipping either segment (the `s ↦ 1−s` reparametrisation).
+- `darts_of_twin_aware` — the predicate is SATISFIABLE on `darts_of`:
+  undirected pairwise non-crossing lifts through the twin closure. This
+  is the exact interface step (3)'s geometry discharges.
+- `face_twin_free`, `ring_simple_of_subset_twin_aware`,
+  `face_ring_simple_twin_aware`, `face_ring_combinatorial_valid_twin_aware`
+  — the simplicity chain re-proved without `ring_simple_of_subset D`'s
+  full-`D` appeal (step (2), corrected shape).
+- `face_polygon_valid_twin_aware`, `face_polygon_holes_valid_twin_aware`,
+  `extract_faces_valid_twin_aware`, `extract_faces_holes_valid_twin_aware`
+  — both extractors' headlines restated over the satisfiable H1; these
+  supersede `extract_rings_valid_faces_named` / `_holes_named` as the
+  bridge targets.
+
+**Remaining:** step (3) — the no-collinear-overlap strengthening of
+`fully_intersected` ⟹ undirected `pairwise_no_proper_cross` on the
+survivor set (feeding `darts_of_twin_aware`); step (4) — H2/H3 from the
+same condition; and the `face_twin_free`-from-no-spurs rung. The registry
+entry `extract_rings_valid` stays Admitted.

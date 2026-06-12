@@ -323,6 +323,13 @@ theories/ExtractFaces.v
 # coherence extract_faces_holes_nil recovers the hole-free extractor.
 # No Admitteds.
 theories/ExtractFacesHoles.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan steps (1)+(2)
+# (docs/extract-faces-bridge.md): twin-aware simplicity predicate
+# (satisfiable on darts_of, unlike the refuted H1), face_twin_free, the
+# re-proved face-ring simplicity chain without the full-D appeal, and the
+# twin-aware extractor headlines for both extractors.  Records the
+# antenna correction to the plan doc's step-2 wording.  No Admitteds.
+theories/FaceTwinAware.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's

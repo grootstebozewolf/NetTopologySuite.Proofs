@@ -103,6 +103,18 @@
 # no-collinear-overlap strengthening of `fully_intersected` -- is in
 # docs/extract-faces-bridge.md.  The entry STAYS Admitted (naive-extract shape
 # retained as the RED record); only the discharge plan / doc pointer changes.
+# DISCHARGE-PLAN UPDATE (2026-06-12, twin-aware slice): corrected-plan steps
+# (1)+(2) landed in theories/FaceTwinAware.v -- the twin-aware predicate is
+# satisfiable on darts_of (darts_of_twin_aware) and the simplicity chain is
+# re-proved through extract_faces_valid_twin_aware / the with-holes mirror.
+# The plan doc's step-2 wording is corrected there: period >= 3 + fan_ok do
+# NOT imply face twin-freeness (antenna configuration; fstep wraps to the
+# fan minimum at degree-1 tips), so face_twin_free is carried as a named
+# per-face hypothesis pending the no-spur innermost-return rung.  Remaining:
+# step (3) geometry (no-collinear-overlap strengthening of fully_intersected
+# => undirected pairwise non-crossing => darts_of_twin_aware's premise),
+# step (4) H2/H3, and the face_twin_free derivation.  The entry STAYS
+# Admitted per registry rules.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================
