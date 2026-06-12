@@ -89,7 +89,21 @@
 #
 # Consumer: overlay_ng_correct_conditional (S15) and the Phase 3
 # headline correctness theorem.
-theories-flocq/OverlayBridge.v:extract_rings_valid | docs/audit-phase3-milestone5.md | §4.3,§7
+#
+# DISCHARGE-PLAN UPDATE (2026-06-11, slice 3i -- the bridge discharge, RED):
+# the face-extractor route (theories/ExtractFaces.v, slice 3g) supersedes the
+# DCEL-from-scratch estimate above and discharges the obligation SHAPE for
+# `extract_faces` under three structural hypotheses.  Slice 3i then tried to
+# discharge those hypotheses from `fully_intersected` and found H1
+# (`pairwise_no_proper_cross (result_darts ...)`) UNSATISFIABLE for any
+# non-degenerate edge: a segment properly crosses its own reversal, and
+# `darts_of` always supplies the twin (machine-checked in
+# theories-flocq/ExtractFacesBridge.v).  The corrected discharge plan --
+# twin-aware simplicity + a no-twin-in-face combinatorial lemma + a
+# no-collinear-overlap strengthening of `fully_intersected` -- is in
+# docs/extract-faces-bridge.md.  The entry STAYS Admitted (naive-extract shape
+# retained as the RED record); only the discharge plan / doc pointer changes.
+theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================
 # ARCHIVED ENTRIES (closed / moved / superseded -- NOT live)

@@ -1870,6 +1870,16 @@ theories-flocq/Validate_binary64_extract.v
 # pulled from HobbyTheorem_b64's snap_round_segments closure.
 theories-flocq/OverlayBridge.v
 
+# extract_rings_valid R5, slice 3i: the bridge discharge (RED).  Machine-checks
+# that ExtractFaces.extract_faces_valid's H1 (pairwise_no_proper_cross of the
+# dart set) is UNSATISFIABLE for non-degenerate edges -- a segment properly
+# crosses its own reversal, and darts_of always adds the twin -- so the
+# deferred extract_rings_valid cannot be re-pointed onto extract_faces by
+# discharging H1 from fully_intersected.  All Qed; no Admitted.  Listed in
+# audit-exceptions.txt for the transitive Classical_Prop.classic (dart_eq_dec
+# + HobbyTheorem_b64 closure).
+theories-flocq/ExtractFacesBridge.v
+
 # Phase 3 Milestone 5 Session 15: overlay_ng_correct_conditional --
 # the headline correctness theorem stated as a Qed-closed conditional
 # theorem under three named hypotheses (JCT, DCEL, semantic bridge).

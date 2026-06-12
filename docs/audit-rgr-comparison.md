@@ -734,6 +734,7 @@ miter (this rung), every JTS join style is emitted by a walk whose
 output is a valid compound ring. Remaining on the lane: the open-chain
 two-sided cap walk, P10 brick 2 (oracle modes, Flocq-bound), and the
 P2 Minkowski semantics.
+
 **Rung 14a (2026-06-11): the reversal layer.** `theories/CurveReverse.v`,
 all `Qed`, three-axiom. Groundwork for the open-chain two-sided cap walk
 (14b) and independently the SQL/MM ring-orientation flip:
@@ -809,3 +810,27 @@ expected to produce counterexample witnesses plus the corrected
 strengthened bridge. Requires the Flocq container (the deferred
 statement and `noded_segments` live in `theories-flocq/`); a host-side
 route for the `pairwise_no_proper_cross` half is specified.
+
+**Slice 3i (2026-06-11): P4 H2 `extract_rings_valid` bridge discharge —
+RED.** `theories-flocq/ExtractFacesBridge.v`, all `Qed`, allowlisted
+axioms only. The attempt to discharge `ExtractFaces.extract_faces_valid`'s
+three structural hypotheses from the noder's `fully_intersected` (the §8.1
+P4 pointer's "discharging the `fully_intersected` hypotheses") collapses
+on **H1** — and productively: the obstruction is now machine-checked. A
+non-degenerate segment **properly crosses its own reversal**
+(`seg_properly_crosses_reversal`, witness `s = 1 − t`), and
+`result_darts = darts_of … = E ++ map twin E` always carries the twin, so
+`pairwise_no_proper_cross (result_darts op g)` is **unsatisfiable** for any
+non-degenerate surviving edge (`result_darts_nondeg_not_pairwise`;
+`pairwise_darts_of_forces_degenerate` gives the converse — pairwise forces
+every edge to be a point). The block is *structural*: no strengthening of
+`fully_intersected` repairs it. Independently, `fully_intersected →
+pairwise_no_proper_cross` already fails on the undirected edge set, because
+the shared-endpoint disjunct admits collinear overlaps that properly cross
+(`fully_intersected_not_pairwise_collinear`) — refuting this session's R3
+premise. The corrected four-step discharge plan (twin-aware simplicity →
+no-twin-in-face DCEL lemma → no-collinear-overlap geometry → H2/H3) is in
+[`extract-faces-bridge.md`](extract-faces-bridge.md); the registry's
+`extract_rings_valid` discharge pointer now targets it. P4 H2 stays open
+with its true dependency structure pinned; R4 (Euler) and the analytic
+`hole_inside_outer` seam are untouched (separate squares).

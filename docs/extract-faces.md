@@ -119,8 +119,20 @@ no geometry, connecting the face walks back to the labelling layer
   extractor.  Computing the assignment (3e orientation classifier +
   nesting tree) and discharging the seam remain the analytic follow-ups.
 - **Discharging the three hypotheses from `fully_intersected`** for the
-  concrete noded output of `OverlayBridge` (connecting `noded_segments` to
-  `fan_ok`/`no_short_faces`), which would re-point the deferred
-  `extract_rings_valid` itself onto `extract_faces`.
+  concrete noded output of `OverlayBridge` — **RED, slice 3i**
+  ([`docs/extract-faces-bridge.md`](extract-faces-bridge.md),
+  [`theories-flocq/ExtractFacesBridge.v`](../theories-flocq/ExtractFacesBridge.v)).
+  The discharge is **blocked on H1** (`pairwise_no_proper_cross (result_darts …)`):
+  a non-degenerate segment **properly crosses its own reversal**
+  (`seg_properly_crosses_reversal`), and `result_darts = darts_of … = E ++ map
+  twin E` always supplies the twin, so H1 is **unsatisfiable** for any
+  non-degenerate edge (`result_darts_nondeg_not_pairwise`) — a *structural*
+  obstruction no strengthening of `fully_intersected` can repair. Even on the
+  undirected survivor set, `fully_intersected → pairwise_no_proper_cross` fails
+  on a collinear overlap sharing an endpoint
+  (`fully_intersected_not_pairwise_collinear`). The corrected discharge plan
+  (twin-aware simplicity + a no-twin-in-face combinatorial lemma + a
+  no-collinear-overlap strengthening) is pinned in the slice-3i outcome doc; the
+  GREEN re-point is deferred to a follow-up slice.
 - **R4 Euler relation** `V − E + F = 1 + C` (the oracle bridge to
   `buffer_hole_count.py`'s bounded-component count).

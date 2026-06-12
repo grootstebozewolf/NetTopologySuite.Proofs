@@ -460,6 +460,18 @@ theories-flocq/Orient_b64_stage_d_safe.v
 # arithmetic closure).  No Admitteds added by this file.
 theories-flocq/OverlayBridge.v
 
+# Category C: extract_rings_valid R5 slice 3i -- the bridge discharge (RED).
+# Machine-checks that ExtractFaces.extract_faces_valid's H1
+# (pairwise_no_proper_cross of the result dart set) is UNSATISFIABLE for any
+# non-degenerate surviving edge: a segment properly crosses its own reversal
+# (seg_properly_crosses_reversal), and darts_of always supplies the twin, so
+# the deferred extract_rings_valid cannot be re-pointed onto extract_faces by
+# discharging H1 from fully_intersected.  Imports OverlayBridge + ExtractFaces
+# + HobbyTheorem_b64, which transitively pull Classical_Prop.classic via
+# snap_round_segments / dart_eq_dec (same Flocq lineage as OverlayBridge
+# above).  All lemmas Qed; no Admitteds added by this file.
+theories-flocq/ExtractFacesBridge.v
+
 # Category C: Phase 3 Milestone 5 Session 15 -- the conditional headline.
 # Defines and proves overlay_ng_correct_conditional (Qed-closed) plus
 # its forward/backward corollaries.  Imports OverlayBridge for
