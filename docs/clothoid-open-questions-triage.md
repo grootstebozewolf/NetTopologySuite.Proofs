@@ -157,10 +157,13 @@ under CC BY 4.0 (derived from ProRail Spoorgeometrie).
   licence gate is gone (EUPL-1.2 repro, integration-note grant); what
   remains are the §5.1 scope decisions (Stdlib `RiemannInt` + a `classic`
   fourth-axiom call, a Coquelicot dependency, or recorded adoption of the
-  EUPL witness scripts). **Pivot away** unless a downstream consumer
-  demands end-to-end machine-checked Halley; the bounded-iteration
-  termination lemma can be written conditionally (the `ClothoidResidual.v`
-  idiom) without it.
+  EUPL witness scripts). **Decided 2026-06-12:** ADR-0001 (Accepted,
+  `docs/adr/ADR-0001-fresnel-internalisation-stack.md`) records the path
+  — Coquelicot lane, fresh BSD-3 scripts, allowlist unchanged — so (D)
+  is now **consumer-gated only**: it executes when a downstream consumer
+  demands end-to-end machine-checked Halley, with no policy stall; the
+  bounded-iteration termination lemma stays available conditionally (the
+  `ClothoidResidual.v` idiom) without it.
 
 ## 7. Recommendation
 
@@ -479,8 +482,9 @@ axioms, first-compile green):
 `check_readme_axioms` unchanged).
 
 **Ladder state after this session:** (A), (C), (C′), Scope A.0–A.7, and
-(B) landed; (D) remains pivot-away (its §5.1 scope decisions — fourth
-axiom or copyleft adoption — are recorded BDFL calls, not slices).
+(B) landed; (D) is consumer-gated per ADR-0001 (its §5.1 scope
+decisions — stack, licence, axiom bookkeeping — are now recorded and
+Accepted).
 
 ## 17. Route (B) follow-up — equal-angle budget discharge (2026-06-12): LANDED
 
@@ -521,4 +525,4 @@ needed an `arc_radius` rewrite before `exact`):
 
 **Remaining:** the list-of-arcs subdivision *construction* (the
 combinatorial half of §6c) stays deferred — the per-sub-arc contract
-is the proven interface; route **(D)** unchanged (BDFL-gated).
+is the proven interface; route **(D)** consumer-gated per ADR-0001.

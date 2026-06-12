@@ -3,7 +3,7 @@
 | Field         | Value                                                        |
 |---------------|--------------------------------------------------------------|
 | **Order**     | ADR-0001 (first ADR of this corpus; establishes the format)  |
-| **Status**    | **Proposed** — awaiting BDFL approval                        |
+| **Status**    | **Accepted** — approved by Joost (BDFL), 2026-06-12          |
 | **Deciders**  | Joost (BDFL)                                                 |
 | **Date**      | 2026-06-12                                                   |
 | **Superseded by** | — (none). If a later ADR changes this decision, set this field to its number and flip Status to *Superseded*. |
@@ -45,8 +45,8 @@ contains an integration note offering the proofs to this corpus.
 Route (D) is currently marked *pivot-away* because it is gated on three
 scope decisions (triage §5.1) that belong to the BDFL, not to a working
 session: which analysis stack to use, what the axiom bookkeeping is, and
-whether any EUPL text may enter the BSD-3 tree. This ADR asks for those
-decisions, so that route (D) reclassifies from *BDFL-gated* to
+whether any EUPL text may enter the BSD-3 tree. This ADR asked for those
+decisions; with acceptance, route (D) reclassifies from *BDFL-gated* to
 *consumer-gated*: still not scheduled until a downstream consumer
 demands end-to-end machine-checked Halley, but executable without a
 policy stall when one does.
