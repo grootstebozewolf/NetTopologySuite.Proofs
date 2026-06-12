@@ -37,19 +37,24 @@ the cross-corpus bridge status in `audit-phase4-curves.md` §6.1–6.2.
   `clothoid_residual_unique_root` (`:184`), plus the branch-interior lemma
   `branch_monotone_inward` (`:135`). Same idiom as
   `hobby_theorem_4_1_conditional` and `overlay_ng_correct_conditional`.
-- **The external witness is now public.** The companion corpus
+- **The external witness is now public — and relicensed.** The companion
+  corpus
   [`grootstebozewolf/clothoid-halley-coq`](https://github.com/grootstebozewolf/clothoid-halley-coq)
-  has a public repro (Coq `Clothoid.v` / `Clothoid_L.v` derivative
-  identities, Qed under Coquelicot, Coq 8.13.1/8.20.1; C# / Java / TypeScript
-  Halley solvers bit-identical on the 9,058-record ProRail dataset, data
-  CC BY 4.0). Anyone can now compile the witness proofs — the citation seam
-  of §6.1 is publicly auditable. Its LICENSE remains **source-available, not
-  open source**: reading, academic citation, and unmodified reproduction are
-  permitted; derivative or commercial use requires a written licence from
-  Merkator Group, with an explicit EU DSM AI-training reservation. The
-  CROSS-CORPUS BSD-3-CLAUSE BRIDGE clause (§6.2) keeps statements cited from
-  this corpus BSD-3; **proof scripts still do not cross** without
-  relicensing.
+  has a public repro (Coq `Clothoid.v` / `Clothoid_L.v` / `ClothoidPolish.v`
+  derivative identities, Qed under Coquelicot; C# / Java / TypeScript Halley
+  solvers bit-identical on the 9,058-record ProRail dataset; public release
+  v1.0.2). Its LICENSE is the **standard, unmodified EUPL-1.2** (verified
+  against the raw file, 2026-06-12), with the two ProRail data files under
+  CC BY 4.0, copyright Merkator Group 2026 — and its README states the
+  proofs are *"provided for integration into formal geometry corpora such
+  as NetTopologySuite.Proofs (itself BSD-3-Clause licensed and governed
+  exclusively by its own licence)"*. This **supersedes** the
+  proprietary-licence description in `audit-phase4-curves.md` §6.1
+  (`LicenseRef-Merkator-Proprietary-NoAITraining`), which documented the
+  pre-publication state of 2026-05-16. The relicensing that
+  `ClothoidResidual.v:65` anticipated ("relicensing collapses these
+  hypotheses into real lemmas") has happened: the witness is now an
+  open-source artifact anyone can compile and audit.
 - **Option B chord-first is architectural, not a perf heuristic.** Every
   algorithm beneath the NTS geometry API consumes `Coordinate[]` via
   `SegmentString`, so curves linearise on entry
@@ -92,28 +97,31 @@ the cross-corpus bridge status in `audit-phase4-curves.md` §6.1–6.2.
 only (typeclass sketch + porting-cost notes).
 
 **Oracle:** `oracle/de9im_clothoid_vectors.txt` (3 chord-regime vectors);
-the 9,058-record `golden_vectors.json` lives on the far side of the licence
-boundary, now publicly visible in the companion repo.
+the 9,058-record `data/golden_vectors.json` is public in the companion repo
+under CC BY 4.0 (derived from ProRail Spoorgeometrie).
 
 **Docs:** `audit-phase4-curves.md` §6.1–6.3; `issue-67-relateng-triage.md`
 §7 S10b; `verified-claims.md` clothoid rows.
 
 ## 5. The genuine gaps, by nature
 
-1. **Q1 is a licence/stack seam, not a maths gap.** The mathematics is Qed —
-   in the wrong stack (Coquelicot) under the wrong licence (proprietary,
-   source-available). Internalising it costs, honestly: (i) defining P/Q
-   with Stdlib `RiemannInt` and proving differentiation under the integral —
-   Stdlib has no parametric-integral differentiation lemma, so this is the
-   genuinely hard analytic content, well beyond the "3–5 days mechanical"
-   estimate (which assumed Coquelicot's `auto_derive`); (ii) Stdlib's
+1. **Q1 is a stack seam, not a maths gap — and no longer a licence seam.**
+   The mathematics is Qed, in a different stack (Coquelicot). With the
+   public repro relicensed EUPL-1.2 and its README explicitly providing the
+   proofs for integration into this corpus, the former licence gate is
+   gone; what remains is purely technical: (i) defining P/Q with Stdlib
+   `RiemannInt` and proving differentiation under the integral — Stdlib has
+   no parametric-integral differentiation lemma, so this is the genuinely
+   hard analytic content, well beyond the "3–5 days mechanical" estimate
+   (which assumed Coquelicot's `auto_derive`); (ii) Stdlib's
    `RiemannInt`/MVT machinery pulls `Classical_Prop.classic` — a
-   fourth-axiom decision (cf. `category-c-policy.md`); (iii) the alternative
-   — taking Coquelicot as a dependency — is an ecosystem shift the corpus
-   has repeatedly declined. And under the companion LICENSE, any in-corpus
-   re-proof must be **clean-room from the theorem statements** (which the
-   bridge clause keeps BSD-3) or wait on relicensing/written permission;
-   the public repro makes the witness auditable but moves no licence line.
+   fourth-axiom decision (cf. `category-c-policy.md`); (iii) the
+   alternative — taking Coquelicot as a dependency (the witness's native
+   stack) — is an ecosystem shift the corpus has so far declined, and
+   verbatim adoption of EUPL-1.2 proof scripts into the BSD-3 tree is a
+   call for Joost the BDFL (EUPL is copyleft; the README's integration
+   note reads as the copyright holder's grant, but the corpus should
+   record that decision explicitly when route (D) is taken).
 2. **Q2's full version is a category error, honestly named.** Transcendence
    kills any bit-exact full-pipeline integer regime. What exists is one
    exactly-solvable degenerate regime (straight chord) and a Scope-A
@@ -141,13 +149,14 @@ boundary, now publicly visible in the companion repo.
   polynomial prefix of f given oracle-supplied P/Q values, modelled on
   `ArcLineIntersect_b64_exact.v`; honest that the transcendental stage is
   never claimed.
-- **(D) Full Fresnel internalisation (Q1)** — *high / strategic.* Requires
-  the §5.1 scope decisions (Stdlib `RiemannInt` + a `classic` fourth-axiom
-  call, or a Coquelicot dependency) **and** the licence decision (clean-room
-  re-derivation from statements, or relicensing). **Pivot away** unless a
-  downstream consumer demands end-to-end machine-checked Halley; the
-  bounded-iteration termination lemma can be written conditionally
-  (the `ClothoidResidual.v` idiom) without it.
+- **(D) Full Fresnel internalisation (Q1)** — *high / strategic.* The
+  licence gate is gone (EUPL-1.2 repro, integration-note grant); what
+  remains are the §5.1 scope decisions (Stdlib `RiemannInt` + a `classic`
+  fourth-axiom call, a Coquelicot dependency, or recorded adoption of the
+  EUPL witness scripts). **Pivot away** unless a downstream consumer
+  demands end-to-end machine-checked Halley; the bounded-iteration
+  termination lemma can be written conditionally (the `ClothoidResidual.v`
+  idiom) without it.
 
 ## 7. Recommendation
 
@@ -160,7 +169,8 @@ behind a consumer.
 
 **What would NOT change under any route:** `ClothoidResidual.v` stays
 Qed/three-axiom (routes only *discharge* its hypotheses, never weaken them);
-the licence boundary (statements cross, proofs do not); Option-B
-chord-first; no new `Admitted` (any deferral would have to enter
+this corpus stays BSD-3-Clause with its three-axiom allowlist (any
+fourth-axiom or copyleft-adoption decision is recorded, never silent);
+Option-B chord-first; no new `Admitted` (any deferral would have to enter
 `admitted-deferred-proofs.txt`, and none is proposed); the oracle remains
 differential, never the source of truth.
