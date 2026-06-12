@@ -219,3 +219,41 @@ clean, no `classic`; `check_readme_axioms`: in sync).
 the b64 degenerate-regime mirror (`_small_int` pattern) and the Scope-A
 residual-assembly prefix — both still route-(C)-adjacent, queued; routes
 (B) and (D) untouched.
+
+## 9. Route (A) b64 slice — integer-regime mirror (2026-06-12): LANDED
+
+Second RGR iteration off the §6 ladder; closes the first of §8's two
+queued follow-ups.
+
+**Red.** Target 1: `b64_degenerate_residual d L := L⊗L ⊖ d⊗d` bit-exact
+under `coord_int_safe` (squares ≤ 2⁵⁰, difference ≤ 2⁵¹ < 2⁵³ — every
+step inside binary64's integer-exactness window). Target 2: root
+exactness composed with the R-side uniqueness theorem. Target 3
+(stretch): full sign trichotomy. Predicted tangents: nonlinear Z bounds
+(`nia` fallback); `IZR`/`B2R` rewrite plumbing; cross-lane import
+friction.
+
+**Green — LANDED** (`theories-flocq/ClothoidDegenerate_b64.v`,
+first-shot compile; all three targets including the stretch):
+
+- `b64_degenerate_residual_exact` — `B2R (b64_degenerate_residual d L)
+  = degenerate_residual (B2R d) (B2R L)` **on the nose** in the integer
+  regime, plus finiteness. Reuses `b64_mult_int_exact` /
+  `b64_minus_int_exact` (`Orient_b64_exact.v`) with two small window
+  lemmas (`square_int_window`, `square_diff_int_window`).
+- `b64_degenerate_root_exact` — for positive integer-regime inputs the
+  binary64 residual is zero **iff** `B2R L = B2R d`, composing the
+  exactness identity with `degenerate_unique_positive_root` /
+  `degenerate_root_exact` from the R-side file.
+- `b64_degenerate_sign_trichotomy` — the residual's sign decides the
+  exact comparison of L against d (the `_small_int` idiom: full
+  exactness inside the window, no claim outside it).
+
+**Refactor.** Registered in `_CoqProject.full`; added to
+`docs/audit-exceptions.txt` under the standard Flocq `Bmult`/`Bminus`
+`classic` lineage (same rationale as `Orient_b64_exact.v`); gauntlet
+green (7 registered Admitted unchanged; axiom audit clean on the
+augmented log; README/allowlist in sync).
+
+**Remaining after this slice:** Q2's Scope-A residual-assembly prefix
+(route (C)) is the only queued Q2 item; routes (B) and (D) unchanged.
