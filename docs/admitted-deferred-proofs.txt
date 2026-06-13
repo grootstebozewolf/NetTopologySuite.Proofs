@@ -124,6 +124,13 @@
 # section) show fan_ok/no_short_faces/no-spur do NOT suffice; a
 # 2-edge-connected / no-cut-edge condition is the likely named hypothesis.
 # The entry STAYS Admitted per registry rules.
+# DISCHARGE-PLAN UPDATE (2026-06-13, step (4a) -- H2): fan_ok landed in
+# theories/VertexGeneralPosition.v (fan_ok_of_vertex_gp from a vertex-level
+# general-position condition; well_noded_darts packages H1+H2).  Refines the
+# plan: noded_general_position does NOT give fan_ok (straight-through vertex
+# witness), so a vertex condition is genuinely additional.  Remaining: H3
+# (no_short_faces) and face_twin_free -- one combinatorial rung, gated on a
+# 2-edge-connected / no-cut-edge input.  The entry STAYS Admitted.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================

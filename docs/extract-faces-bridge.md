@@ -283,3 +283,38 @@ With step (3) in, the bridge's geometric core is complete: a
 general-position noded arrangement supplies the satisfiable twin-aware H1.
 The registry entry `extract_rings_valid` stays Admitted — the open rungs
 are H2/H3 and the `face_twin_free` structural derivation.
+
+---
+
+## Step (4a) — LANDED (2026-06-13, `theories/VertexGeneralPosition.v`)
+
+Thirteenth RGR iteration; H2 (`fan_ok`).
+
+**FINDING — refines the plan doc's step-4 wording.** `noded_general_position`
+(step 3) does NOT imply `fan_ok`. Its shared-endpoint clause only bites on
+pairs that *properly cross*; two anti-parallel collinear edges meeting at a
+vertex (a straight-through degree-2 vertex, `(0,0)-(1,0)` and
+`(0,0)-(-1,0)`) meet only at that point, do not properly cross, yet have
+parallel directions — satisfying `noded_general_position` while breaking
+`fan_ok`. `straight_through_noded_gp` + `straight_through_not_fan_ok` are
+the machine-checked witness pair. H2 therefore needs a genuinely additional,
+UNCONDITIONAL vertex condition.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `seg_dir_cross_eq_vcross_ddir` — the bridge `seg_dir_cross d e =
+  vcross (ddir d) (ddir e)`, so step (3)'s cross-product vocabulary IS
+  `fan_ok`'s `parallel`/`ddir` vocabulary.
+- `vertex_general_position` — distinct survivors sharing an endpoint have
+  non-parallel directions, unconditionally ("no two collinear edges meet at
+  a vertex").
+- `fan_ok_of_vertex_gp` — H2: from `vertex_general_position` + properness,
+  `fan_ok (outgoing v D)` at every vertex.
+- `well_noded_darts`, `well_noded_twin_aware`, `well_noded_fan_ok` — the
+  combined precondition over an undirected survivor set (step-3 edge
+  condition + step-4 vertex condition + properness) packaging both H1 and H2.
+
+**What remains.** H3 (`no_short_faces`) and the `face_twin_free` structural
+derivation — the same combinatorial rung (a bigon IS a twin-pair spur), still
+gated on the no-cut-edge / 2-edge-connected input identified in the step-3
+section.

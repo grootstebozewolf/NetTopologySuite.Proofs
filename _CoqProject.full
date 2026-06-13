@@ -338,6 +338,13 @@ theories/FaceTwinAware.v
 # Records that slice 3i's collinear pair fails the strengthened predicate.
 # No Admitteds.
 theories/NodedGeneralPosition.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan step (4a):
+# H2 (fan_ok) from a vertex-level general-position condition.  seg_dir_cross
+# = vcross o ddir bridges step (3)'s vocabulary to fan_ok's parallel/ddir;
+# vertex_general_position (unconditional non-parallel on shared endpoints)
+# gives fan_ok.  Records that noded_general_position alone does NOT
+# (straight-through vertex witness).  No Admitteds.
+theories/VertexGeneralPosition.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
