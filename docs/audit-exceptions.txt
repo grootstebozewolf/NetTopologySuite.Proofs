@@ -152,6 +152,15 @@ theories-flocq/Orient_b64_int_safe_coords.v
 # parametric refactor reaches the binary64 primitives.
 theories-flocq/KakeyaOrient2d_b64.v
 
+# Category C: the Perron/Kakeya binary64 coordinate-safety stress test.
+# perron_b64_inputs_int_safe / perron_tri_b64_orient_exact / _cross_positive /
+# perron_b64_apex_unsafe_at_25 are stated over `b64_orient2d` / `cross_R_BP` /
+# `b64Z` / `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the
+# SAME b64-arithmetic lineage as KakeyaOrient2d_b64.v / Orient_b64_exact.v
+# above.  No Admitteds; all theorems Qed-closed.  Removable once the parametric
+# refactor reaches the binary64 primitives.
+theories-flocq/KakeyaPerron_b64.v
+
 # Category C: Issue #64 ask #4b — b64_inCircle sign + integer-regime exactness.
 # b64_inCircle_exact_sound / b64_inCircle_exact_for_small_int and the Perron
 # witness chain are stated over `b64_inCircle` / `b64_minus` / `b64_mult` /
