@@ -171,6 +171,7 @@
 #       Target proof: theories/EdgeFaceBridge.v (in progress).
 #       Rungs 1-2: dart incidence + same_face period walk (Qed).
 #       Rung 2b: walk dart adjacency, twin-both-on-period-walk (Qed).
+#       Rung 2c: dart_walk_endpoints_reachable (walk-level vertex reachability).
 #       Rung 4: edge_2_connected_twins_sep / H_bridge_well_noded packaged
 #       in BridgePackaging (Qed modulo same_face_twin_is_cut; needs no_spurs).
 #       Open: Rung 3 same_face_twin_is_cut (rotation-system core).
