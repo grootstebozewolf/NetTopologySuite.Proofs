@@ -229,6 +229,28 @@ remain, both captured by `interior_hits_one_chain`:
 unique min-y and max-y vertices into an increasing chain followed by a decreasing chain
 (`bimonotone_split`) — the structural bridge from the half-plane presentation to vertex ordering;
 and (b) a strictly-interior point hits exactly one chain.
+
+### Y-monotone split campaign (`theories/YMonotoneSplit.v`)
+
+Residual (a) is now discharged for the y-unimodal class — the honest, checkable structural form
+of "convexity yields the split." The campaign builds the vertex-ordering infrastructure the corpus
+conspicuously lacked, on one foundational seam lemma:
+
+- `ring_edges_split_at` (axiom-free): the edge list of `pre ++ peak :: suf` is
+  `ring_edges (pre ++ [peak]) ++ ring_edges (peak :: suf)`. Splitting the vertex list at a vertex
+  splits the edge list at the seam.
+- `chain_increasing_ring_edges` / `chain_decreasing_ring_edges`: a strictly y-monotone vertex run
+  (`strict_inc_y` / `strict_dec_y`) yields a `chain_increasing` / `chain_decreasing` edge chain.
+- `y_unimodal_bimonotone_split` (rung 1): a `y_unimodal` ring (vertex y's rise strictly to a single
+  peak then fall strictly) admits a `bimonotone_split`. `y_unimodal_point_in_ring` composes with the
+  previous campaign's rung 2 for the XOR parity characterisation.
+- `ym_diamond_bimonotone_split`: re-derives `ConvexChainSplit.v`'s hand-built diamond split verbatim
+  from `ym_diamond_unimodal`, confirming the machinery subsumes the concrete witness.
+
+What remains of residual (a): a derivation of `y_unimodal` from the `conv_min`/`vertices_in_halfplane`
+presentation (convexity ⟹ a min-y vertex exists and the traversal from it is unimodal). What remains
+of residual (b): a strictly-interior point's ray hits exactly the right-side chain. Both are now the
+narrowed open lemmas.
 (a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation)
 splits at its unique min-y and max-y vertices into an increasing chain followed by
 a decreasing chain whose concatenation is `ring_edges` — the structural bridge

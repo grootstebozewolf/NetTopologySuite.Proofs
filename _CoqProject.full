@@ -172,6 +172,11 @@ theories/MonotoneChainParity.v
 # residuals; concrete diamond witness exercises the full pipeline.
 theories/ConvexChainSplit.v
 
+# Y-monotone (unimodal) polygon split: a ring whose vertex y-coordinates rise
+# to a single peak then fall admits a bimonotone_split.  Discharges the
+# structural half of interior_hits_one_chain; reproduces the diamond split.
+theories/YMonotoneSplit.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the
