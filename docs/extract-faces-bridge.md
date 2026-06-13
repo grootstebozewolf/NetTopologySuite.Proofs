@@ -367,3 +367,43 @@ clauses (hole well-formedness + `hole_inside_outer` nesting) passing through.
 Both extractors now reduce to the **identical** single residual: per-face
 `face_twin_free`. The bridge state is uniform — *well-noded + no-spurs ⟹ valid
 faces, modulo `face_twin_free`* — for hole-free and with-holes emission alike.
+
+---
+
+## face_twin_free rung 1 — global orbit reduction (2026-06-13, `theories/FaceOrbitSep.v`)
+
+Sixteenth RGR iteration. Reduces the capstones' per-face `face_twin_free`
+hypothesis to a single global orbit condition, and pins the exact residual.
+
+**The obstruction, pinned.** Working the structure shows `no_spurs` (step 4b)
+is *precisely* "no degree-1 vertex / no leaf": `fstep d = twin d` iff
+`outgoing (dtip d) D = {twin d}` (next on a singleton fan returns its
+argument), i.e. the head vertex is a leaf. So `no_spurs` already kills the
+antenna. The residual is the **dumbbell bridge edge** — a cut edge with no
+leaf, traversed both ways by one face walk — equivalently, *a dart shares a
+face-orbit with its twin*.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `iter_period_mult` — a multiple of a period is the identity (`iter_comp`
+  induction).
+- `dart_walk_iter_iff` — walk membership = bounded iteration.
+- `same_face D a b := ∃k, iter (fstep D) k a = b` — reflexive, transitive,
+  and **symmetric on `D` under `arrangement_ok`** via `face_orbit_finite`
+  (the cyclic-return: from `iter k a = b` and period `n`, `iter (k·n−k) b = a`;
+  no injectivity needed).
+- `walk_at_period_iff_same_face` — the period walk enumerates the orbit
+  (reverse direction reduces any `iter k d` to `iter (k mod period) d`).
+- `twins_in_different_faces D := ∀x∈D, ¬ same_face D x (twin x)` and
+  `face_twin_free_of_sep` — the per-face hypothesis for ALL faces follows from
+  this single global condition.
+- `extract_faces_valid_sep` / `extract_faces_holes_valid_sep` — both capstones
+  restated over `well_noded_darts + no_spurs + twins_in_different_faces`; the
+  per-face quantifier is gone.
+
+**Remaining (the deeper rung).** `twins_in_different_faces` ⟺ no cut edge
+(2-edge-connected, for the connected case). Deriving it requires defining
+cut-edge / 2-edge-connectivity for the dart arrangement and proving "no cut
+edge ⟹ no dart shares its face-orbit with its twin" — a genuine graph-theory
+construction. `extract_rings_valid` stays Admitted until that lands; the
+residual is now a single, named, well-understood global condition.

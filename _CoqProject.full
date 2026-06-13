@@ -356,6 +356,12 @@ theories/NoShortFaces.v
 # extractor.  Both extractors now reduce to the identical residual
 # face_twin_free.  No Admitteds.
 theories/ExtractHolesWellNoded.v
+# extract_rings_valid R5 bridge follow-up, face_twin_free rung 1: reduce the
+# per-face face_twin_free hypothesis to a single global orbit condition
+# (twins_in_different_faces).  same_face equivalence + period-walk enumeration
+# + the _sep capstones.  The 2-edge-connected => twins_in_different_faces
+# derivation is the deferred deeper rung.  No Admitteds.
+theories/FaceOrbitSep.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's

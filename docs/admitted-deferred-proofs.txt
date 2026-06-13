@@ -138,6 +138,15 @@
 # face_twin_free open -- the single precise residual.  That last rung needs a
 # 2-edge-connected / no-cut-edge input (antenna + dumbbell obstructions).
 # The entry STAYS Admitted until face_twin_free lands.
+# DISCHARGE-PLAN UPDATE (2026-06-13, face_twin_free rung 1): theories/FaceOrbitSep.v
+# reduces the capstones' per-face face_twin_free to ONE global condition
+# twins_in_different_faces (no dart shares a face-orbit with its twin), via the
+# same_face equivalence + period-walk enumeration.  extract_faces_valid_sep /
+# _holes_valid_sep are the capstones over well_noded_darts + no_spurs +
+# twins_in_different_faces.  Pinned: no_spurs = no-leaf; the residual is the
+# dumbbell cut edge; twins_in_different_faces <=> no cut edge (2-edge-connected).
+# Remaining deeper rung: derive twins_in_different_faces from a 2-edge-connected /
+# no-cut-edge condition.  The entry STAYS Admitted.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================
