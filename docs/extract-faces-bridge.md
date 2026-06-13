@@ -525,7 +525,29 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
 - `adj_dart_carrier`, `adj_E_minus_dart_carrier` — adjacency steps unpack to
   dart endpoints.
 
-**Remaining (Rung 3b core):** `same_face_twin_disconnect` — prove
-`~ reachable (E_minus E e) (dbase d) (dtip d)` from `same_face` + `no_spurs`.
-Then export `same_face_twin_is_cut`, instantiate `BridgePackaging`, and drop
-H_bridge from `OverlayBridge.extract_rings_valid`.
+**Green — LANDED (Rung 3b-ii, singleton-fan base cases):**
+
+Partial disconnectivity when the carrier vertex has a singleton outgoing fan
+(`outgoing (dbase d) D = [d]` or `outgoing (dtip d) D = [twin d]`):
+
+- `dart_eq_of_endpoints`, `outgoing_eq_singleton_in` — singleton fan forces
+  dart equality from `in_outgoing`.
+- `adj_dbase_dtip_witness_carrier`, `adj_E_minus_dbase_dtip_iff_twin_in_E` —
+  carrier adjacency in `E_minus` iff the twin dart is still present.
+- `not_adj_E_minus_from_dbase_*`, `not_adj_E_minus_to_dtip_*` — no first step
+  away from a singleton-fan vertex in `E_minus`.
+- `reachable_E_minus_from_dbase_singleton`, `reachable_E_minus_to_dtip_singleton`
+  — reachability collapses to the start vertex (via `reachable_ind` on a anchored
+  predicate; `singleton_fan` kept before `remember`).
+- `same_face_twin_disconnect_singleton_out` / `_twin` and
+  `same_face_twin_disconnect_e_eq_d_singleton` / `_e_eq_twin_singleton` —
+  packaged `~ reachable (E_minus …) (dbase d) (dtip d)` for the two singleton
+  orientations.
+
+`SameFaceTwinCutCore.same_face_twin_disconnect` remains the open Variable
+(full `same_face` + `no_spurs`, not just singleton fans).
+
+**Remaining (Rung 3b-iii core):** close `same_face_twin_disconnect` — combine
+3b-i prefix loop at `dtip` with the general case (or further case split). Then
+export `same_face_twin_is_cut`, instantiate `BridgePackaging`, and drop H_bridge
+from `OverlayBridge.extract_rings_valid`.

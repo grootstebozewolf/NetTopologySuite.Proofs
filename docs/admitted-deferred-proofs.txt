@@ -182,7 +182,9 @@
 #       Rung 3b-i: reachable_inv, face_period_no_early_return, first_twin_at
 #       layer, same_face_twin_first_step_index, same_face_twin_prefix_loop_E_minus
 #       (all Qed).
-#       Open: Rung 3b same_face_twin_disconnect (rotation-system core).
+#       Rung 3b-ii: singleton-fan base cases — not_adj/reachable collapse +
+#       same_face_twin_disconnect_singleton_{out,twin} and e_eq wrappers (Qed).
+#       Open: Rung 3b-iii same_face_twin_disconnect (full rotation-system core).
 #       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
 
 # ============================================================================
