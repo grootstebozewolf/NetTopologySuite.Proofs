@@ -167,16 +167,17 @@ theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_to_outgoing_tip | docs/ext
 # These are explicit mathematical facts carried as named hypotheses in
 # conditional Qed theorems.  They are NOT registry Admitted entries.
 #
-#   - H_bridge combinatorial core (CLOSED modulo two Admitted reach lemmas)
+#   - H_bridge combinatorial core (CLOSED modulo reach axioms)
 #       Former named hypothesis:
 #         forall E, edge_2_connected E -> twins_in_different_faces (darts_of E)
 #       Now discharged by EdgeFaceBridge.H_bridge_well_noded in
 #       OverlayBridge.extract_rings_valid / _holes / valid_geometry_extract.
 #       Packaging: same_face_twin_disconnect -> same_face_twin_is_cut ->
 #       edge_2_connected_twins_sep -> H_bridge_well_noded (no Section Variables).
-#       Residual axioms (registry LIVE): not_reachable_E_minus_dtip_dbase,
-#       not_reachable_E_minus_dbase_dtip — general-fan endpoint avoidance in
-#       E_minus after carrier removal; singleton base cases + adj characterisations
+#       Residual axioms (registry LIVE, four entries above): the core pair
+#       not_reachable_E_minus_{dtip,dbase}_* (on Print Assumptions for capstones)
+#       plus the outgoing-tip mutual pair (not_reachable_E_minus_*_to_outgoing_tip)
+#       for the not_adj barrier layer. Singleton base cases + adj characterisations
 #       are Qed; proof target uses same_face + prefix-loop layer (Rung 3b-i).
 #       Contrast: OverlayCorrectness.overlay_ng_correct_conditional still carries
 #       a *geometric* H_bridge (JCT-gated); this slice closed only the
@@ -210,10 +211,12 @@ theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_to_outgoing_tip | docs/ext
 #       -> CLOSED (Qed).  No longer Admitted.  Two README-allowlisted
 #          classical-reals axioms only.
 #   - `extract_rings_valid`
-#       -> CLOSED conditional Qed (named H_bridge); genuine
-#          edge_2_connected -> twins_in_different_faces remains explicit
-#          hypothesis. [2026-06-13]  See theories-flocq/OverlayBridge.v §8,
-#          EdgeConnectivity.v §5, docs/extract-faces-bridge.md.
+#       -> CLOSED conditional Qed (no registry Admitted). Combinatorial
+#          edge_2_connected -> twins_in_different_faces discharged via
+#          H_bridge_well_noded; residual reach axioms in EdgeFaceBridge.v
+#          (four registry LIVE; two on capstone Print Assumptions path).
+#          [2026-06-13, Rung 3b-iii]  See theories-flocq/OverlayBridge.v §8,
+#          EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
 #
 # Do NOT re-add the moved entries here; they live in the counterexample
 # registry by design.

@@ -20,8 +20,10 @@ deferred to a follow-up slice with the corrected hypothesis shape pinned below.
 
 ## Grep-first state
 
-- `OverlayBridge.extract_rings_valid` (line ~486) is the **only** live entry of
-  `docs/admitted-deferred-proofs.txt`. It quantifies over
+- `docs/admitted-deferred-proofs.txt` has **four** LIVE entries (all in
+  `theories/EdgeFaceBridge.v`): the two core reach lemmas on the capstone path
+  plus two outgoing-tip mutual lemmas. `OverlayBridge.extract_rings_valid` is a
+  **conditional Qed** (no registry Admitted); it quantifies over
   `OverlayGraph.extract` — the naive flatten refuted by
   `ExtractFlattenCounterexample.extract_unordered_not_valid` — so the re-point
   must restate the obligation over the *face* extractor.
@@ -443,27 +445,25 @@ proof: `theories/EdgeFaceBridge.v` (in progress).
 
 ## CLOSED — extract_rings_valid as a conditional Qed (2026-06-13, `theories-flocq/OverlayBridge.v` §8)
 
-Eighteenth RGR iteration. `extract_rings_valid` -- the corpus's last live
-deferred-proof Admitted -- is now a **conditional Qed**, off the registry.
-Restated over the corrected `extract_faces` extractor (and a with-holes
-companion `extract_rings_valid_holes`), it takes `well_noded_darts` +
-`no_spurs` + `edge_2_connected (result_edges …)` plus ONE named hypothesis
+> **Superseded by §19 (Rung 3b-iii, 2026-06-13).** The named combinatorial
+> `H_bridge` hypothesis described below was removed; `extract_rings_valid` now
+> calls `H_bridge_well_noded`. Residual proof obligations live in
+> `EdgeFaceBridge.v` (four registry Admitted reach lemmas; two on the capstone
+> `Print Assumptions` path). Read §19 for the current state.
+
+Eighteenth RGR iteration (historical). `extract_rings_valid` — the corpus's
+last live deferred-proof Admitted at that time — became a **conditional Qed**,
+off the registry. Restated over the corrected `extract_faces` extractor (and a
+with-holes companion `extract_rings_valid_holes`), it then took
+`well_noded_darts` + `no_spurs` + `edge_2_connected (result_edges …)` plus ONE
+named hypothesis
 
     H_bridge : ∀ E, edge_2_connected E → twins_in_different_faces (darts_of E)
 
-and discharges via `FaceOrbitSep.extract_faces_valid_sep`. This surfaces the
-real 2-edge-connected precondition honestly and matches the corpus's
-conditional-headline idiom exactly (`overlay_ng_correct_conditional`'s
-H_bridge). The Admitted is gone; the deferred-proof registry now has zero live
-entries.
-
-What it does NOT do: prove the rotation-system characterisation H_bridge
-itself (an edge is a bridge iff its two darts bound the same face). That is the
-sole remaining mathematical fact of the whole bridge, carried transparently as
-a named hypothesis (see `EdgeConnectivity.v` §5). Axiom footprint: the
-allowlist trio + `Classical_Prop.classic` (the existing OverlayBridge/Hobby
-lane, `docs/audit-exceptions.txt`), unchanged from when the Admitted lived
-there.
+and discharged via `FaceOrbitSep.extract_faces_valid_sep`. That interim shape
+surfaced the 2-edge-connected precondition honestly. **§19 removes the named
+hypothesis** and discharges combinatorial H_bridge via `H_bridge_well_noded`,
+modulo reach axioms in `EdgeFaceBridge.v`.
 
 ---
 
@@ -471,10 +471,13 @@ there.
 
 Nineteenth RGR iteration off §18. The combinatorial **H_bridge** packaging is
 landed: `OverlayBridge.extract_rings_valid` discharges `twins_in_different_faces`
-via `H_bridge_well_noded` (no named `H_bridge` hypothesis). Two Admitted reach
-lemmas remain (registry LIVE); geometric H_bridge in `OverlayCorrectness` is
-unchanged. This slice lays the dart↔edge and same_face↔dart_walk linkage the
-rotation-system core consumes.
+via `H_bridge_well_noded` (no named `H_bridge` hypothesis). **Four** Admitted
+reach lemmas remain in `EdgeFaceBridge.v` (registry LIVE); **`Print Assumptions`
+on the capstone lists only the two core pair** (`not_reachable_E_minus_{dtip,dbase}_*`);
+the outgoing-tip mutual pair supports the `not_adj_*` barrier layer and is not on
+the `extract_rings_valid` axiom footprint. Geometric H_bridge in
+`OverlayCorrectness` is unchanged. This slice lays the dart↔edge and
+same_face↔dart_walk linkage the rotation-system core consumes.
 
 **Green — LANDED (partial):**
 
@@ -560,14 +563,25 @@ Partial disconnectivity when the carrier vertex has a singleton outgoing fan
 - `same_face_twin_disconnect`, `same_face_twin_is_cut`, `edge_2_connected_twins_sep`,
   `H_bridge_well_noded` — exported theorems (no Section Variables).
 
-**Open — Rung 3b-iii reach core (Admitted, registry LIVE):**
+**Open — Rung 3b-iii reach layer (Admitted, registry LIVE):**
+
+*Capstone path (on `Print Assumptions` for `H_bridge_well_noded` /
+`extract_rings_valid`):*
 
 - `not_reachable_E_minus_dtip_dbase` — after removing dart `d` (carrier present,
   twin absent), `dtip d` does not reach `dbase d` in `E_minus E d`.
 - `not_reachable_E_minus_dbase_dtip` — mirror with `twin d` removed.
-- Proof target: `reachable_ind` anchored predicate on face-prefix walks, consuming
-  `same_face_twin_prefix_loop_E_minus` (Rung 3b-i) + singleton collapse (3b-ii).
-  Singleton-fan and one-step `not_adj_*` lemmas are already Qed.
+
+*Mutual induction layer (feeds `not_adj_*` → penult cases; not on capstone path):*
+
+- `not_reachable_E_minus_dtip_to_outgoing_tip` — no route from `dtip d` to the
+  tip of an off-carrier outgoing dart at `dbase d`.
+- `not_reachable_E_minus_dbase_to_outgoing_tip` — mirror at `dtip d`.
+
+Proof target: `reachable_ind` anchored predicate on face-prefix walks, consuming
+`same_face_twin_prefix_loop_E_minus` (Rung 3b-i) + singleton collapse (3b-ii).
+The `not_adj_E_minus_*_to_outgoing_*_tip` barrier lemmas are Qed modulo the
+mutual pair above.
 
 **CLOSED — H_bridge combinatorial packaging (2026-06-13, modulo reach axioms):**
 `OverlayBridge.extract_rings_valid` now discharges `twins_in_different_faces` via
