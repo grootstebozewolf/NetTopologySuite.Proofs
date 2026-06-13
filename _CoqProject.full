@@ -162,6 +162,11 @@ theories/HexagonNesting.v
 # headline; concrete convex families discharge it.  No Admitteds.
 theories/ConvexNesting.v
 
+# Convex-chain monotonicity campaign, rung 1: a y-monotone edge chain is crossed
+# by the rightward ray at most once (disjoint open y-intervals; no x-arithmetic).
+# The reusable n-independent core toward discharging convex_interior_parity.
+theories/MonotoneChainParity.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the

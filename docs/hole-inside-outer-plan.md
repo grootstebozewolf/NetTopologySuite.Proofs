@@ -177,3 +177,39 @@ interior-parity obligation `ConvexOffringSeam.convex_parity_seam_offring_of`
 leaves open. Concrete convex families (rectangle, triangle; and the explicit
 diamond/hexagon point witnesses) discharge it directly; the general n-gon
 monotonicity remains the one open lemma.
+
+## Convex monotonicity campaign (2026-06-13, `theories/MonotoneChainParity.v`)
+
+Discharging `convex_interior_parity` for a general convex n-gon is a multi-rung
+campaign, not a single slice. The route is the textbook one — a convex CCW ring's
+boundary splits into a y-increasing and a y-decreasing monotone chain, and a
+rightward ray from a strictly-interior point crosses each chain at most once and
+the two together exactly once — but the corpus had no monotone-chain
+infrastructure at all, so it is being built rung by rung.
+
+**Rung 1 (landed): the n-independent crossing core.** `inc_chain_le_one_cross`
+and `dec_chain_le_one_cross` prove that a y-monotone connected edge chain is
+crossed by the rightward ray **at most once**. The argument is purely the
+y-intervals: an up-edge `(a,b)` (with `py a < py b`) can only be crossed through
+the `py a < py p < py b` disjunct of `edge_crosses_ray`; along a strictly
+increasing connected chain those open intervals are consecutive-and-disjoint
+(`chain_increasing_above`: every later edge's bottom is at or above the head's
+top), so two crossed edges would force `py p` into two disjoint intervals — a
+one-line `lra` contradiction. No x-intercept arithmetic, no per-vertex case
+blow-up; pure list induction over `list Edge`. The decreasing mirror is identical
+under `dn_straddle_hi_lo`. Three-axiom, `[exact]`.
+
+**Rung 2 (outlined, not landed): convex ring ⇒ two monotone chains.** A convex
+CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation) splits at its
+unique min-y and max-y vertices into an increasing chain followed by a decreasing
+chain whose concatenation is `ring_edges`. This is the structural bridge from the
+half-plane presentation to the two `chain_increasing`/`chain_decreasing` objects
+rung 1 consumes.
+
+**Rung 3 (outlined, not landed): interior ⇒ exactly one crossing ⇒
+`point_in_ring`.** A strictly-interior point (`0 < conv_min hps`) has `py p`
+strictly between the ring's min-y and max-y, so the full horizontal line crosses
+each chain exactly once; the rightward ray keeps only the right-side crossing ⇒
+exactly one edge of `ring_edges` is crossed ⇒ odd parity ⇒ `point_in_ring` ⇒
+`convex_interior_parity` discharged ⇒ general convex `hole_inside_outer`
+unconditional (instantiating `hole_inside_outer_convex_guarded`).
