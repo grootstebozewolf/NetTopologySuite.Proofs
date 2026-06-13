@@ -563,6 +563,10 @@ theories/GeneralTriangleParityRED.v
 # discharging hole_inside_outer for a triangular outer ring with NO JCT.
 # Three-axiom.  No Admitted.
 theories/GeneralTriangleHoleNesting.v
+# Make hole_inside_outer usable with the conditional extract_rings_valid:
+# rect-outer polygon-with-holes is valid_polygon (reuses Stage-B rect witness
+# via polygon_valid_of_rings); proves the missing rect_ring_simple.  No Admitteds.
+theories/JCTNesting.v
 # Coverage layer on top of GeneralTriangleHoleNesting: the band hypothesis of
 # gtri_band_in_ring DISCHARGED from interior positivity alone under the
 # rightward-ray guard.  gtri_ray_coverage (0 < gtri /\ ray_avoids_vertices ->

@@ -130,3 +130,21 @@ hypothesis. Structural; depends on the real pipeline types.
 headline conditionally and (ii) close the analytic seam unconditionally for the
 rectangle class. Then **C** (convex) widens the unconditional class. **E** is the
 research residual and should get its own deliberate effort, not a rushed slice.
+
+---
+
+## Stage B wired into valid_polygon assembly (2026-06-13, `theories/JCTNesting.v`)
+
+`valid_polygon_rect_outer`: a polygon with a rectangular outer ring and holes
+(each a well-formed ring with at least one vertex inside the box) is
+`valid_polygon` unconditionally, reusing the Stage-B witness
+`HoleInsideOuterRect.hole_inside_outer_rect` through
+`FacePolygonHoles.polygon_valid_of_rings`. This makes the `hole_inside_outer`
+nesting obligation carried by the conditional `extract_rings_valid` /
+`extract_rings_valid_holes` (theories-flocq/OverlayBridge.v) dischargeable for
+box outers with no JCT seam. Also proves the previously-missing
+`rect_ring_simple` (an axis-aligned rectangle is a simple ring).
+
+The general arbitrary-simple-ring parity theorem (Stage E,
+`parity_characterises_interior_cont` for `ring_simple`) remains the thesis-scale
+gap. See #188 and `EdgeConnectivity.v` §5 for the remaining named fact.
