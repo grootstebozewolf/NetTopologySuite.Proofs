@@ -567,6 +567,9 @@ theories/GeneralTriangleHoleNesting.v
 # rect-outer polygon-with-holes is valid_polygon (reuses Stage-B rect witness
 # via polygon_valid_of_rings); proves the missing rect_ring_simple.  No Admitteds.
 theories/JCTNesting.v
+# The hat einstein monotile as a nesting witness for the rectangle
+# hole-inside-outer machinery (hat nests in its bounding box; no ring_simple).
+theories/HatNesting.v
 # Coverage layer on top of GeneralTriangleHoleNesting: the band hypothesis of
 # gtri_band_in_ring DISCHARGED from interior positivity alone under the
 # rightward-ray guard.  gtri_ray_coverage (0 < gtri /\ ray_avoids_vertices ->
