@@ -153,6 +153,24 @@ theories/HoleInsideOuterExample.v
 # diamond_interior_point_in_ring and hole_inside_outer_diamond.  Regression anchor.
 # No Admitted; standard three-axiom classical-reals base.
 theories/HoleInsideOuterConvexExample.v
+# Stage C: a second concrete convex hole_inside_outer instance beyond the
+# diamond -- a convex hexagon (point_in_ring by ray-parity enumeration; the
+# valid_polygon-with-hole capstone).  General convex still pending monotonicity.
+theories/HexagonNesting.v
+# General convex hole_inside_outer, guarded by the one named convex-chain
+# monotonicity residual (convex_interior_parity).  The honest conditional
+# headline; concrete convex families discharge it.  No Admitteds.
+theories/ConvexNesting.v
+
+# Convex-chain monotonicity campaign, rung 1: a y-monotone edge chain is crossed
+# by the rightward ray at most once (disjoint open y-intervals; no x-arithmetic).
+# The reusable n-independent core toward discharging convex_interior_parity.
+theories/MonotoneChainParity.v
+
+# Convex-chain monotonicity campaign, rung 3: conditional closure of
+# convex_interior_parity over a bimonotone split; names the two structural
+# residuals; concrete diamond witness exercises the full pipeline.
+theories/ConvexChainSplit.v
 
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
@@ -1820,6 +1838,11 @@ theories-flocq/Orient_b64_int_safe_coords.v
 # predicate returns ExpZero, conditional on b64_orient2d_expansion_safe).  No
 # dependence on the deferred fast_expansion_sum_nonoverlap_shewchuk.
 theories-flocq/KakeyaOrient2d_b64.v
+# Perron / Besicovitch-Kakeya shape as a binary64 coordinate-safety stress
+# test: scaled stage-n vertices are coord_int_safe (orient2d bit-exact) up to
+# stage 24; the scaled apex first leaves the 2^25 window at stage 25 (the
+# soundness diameter).  No Admitteds.
+theories-flocq/KakeyaPerron_b64.v
 # Slice A piece 7: Stage D headline.  Composes Piece 6's
 # b64_orient2d_expansion_sign_correct with the existing Stage A
 # filter to produce:

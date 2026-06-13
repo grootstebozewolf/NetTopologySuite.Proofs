@@ -148,3 +148,94 @@ box outers with no JCT seam. Also proves the previously-missing
 The general arbitrary-simple-ring parity theorem (Stage E,
 `parity_characterises_interior_cont` for `ring_simple`) remains the thesis-scale
 gap. See #188 and `EdgeConnectivity.v` §5 for the remaining named fact.
+
+---
+
+## Stage C — second convex instance: hexagon (2026-06-13, `theories/HexagonNesting.v`)
+
+A concrete convex HEXAGON now joins the diamond as a Stage-C witness:
+`hex_point_in_ring` (`point_in_ring (2,1)` of a convex integer-coordinate
+6-gon, by ray-parity edge enumeration — one slanted edge crossed, odd),
+`hex_ring_simple`, `hole_inside_outer_hexagon`, and the capstone
+`valid_polygon_hexagon_with_hole` (via `FacePolygonHoles.polygon_valid_of_rings`).
+Unconditional, no named hypothesis. The general convex-n-gon parity still
+awaits the convex-chain monotonicity lemma (a rightward ray from an interior
+point crosses exactly one of n arbitrary slanted edges); the conditional
+general-convex assembly (`ConvexOffringSeam.convex_parity_seam_offring_of`)
+remains the route once that lemma lands.
+
+---
+
+## General convex, guarded (2026-06-13, `theories/ConvexNesting.v`)
+
+`hole_inside_outer_convex_guarded` packages the general convex case: a hole
+with a vertex strictly inside a convex outer (`0 < conv_min hps`, general
+position) nests inside, conditional on the single named residual
+`convex_interior_parity` — the convex-chain monotonicity (a rightward ray from
+a strictly-interior point crosses an odd number of edges), which is exactly the
+interior-parity obligation `ConvexOffringSeam.convex_parity_seam_offring_of`
+leaves open. Concrete convex families (rectangle, triangle; and the explicit
+diamond/hexagon point witnesses) discharge it directly; the general n-gon
+monotonicity remains the one open lemma.
+
+## Convex monotonicity campaign (2026-06-13, `theories/MonotoneChainParity.v`)
+
+Discharging `convex_interior_parity` for a general convex n-gon is a multi-rung
+campaign, not a single slice. The route is the textbook one — a convex CCW ring's
+boundary splits into a y-increasing and a y-decreasing monotone chain, and a
+rightward ray from a strictly-interior point crosses each chain at most once and
+the two together exactly once — but the corpus had no monotone-chain
+infrastructure at all, so it is being built rung by rung.
+
+**Rung 1 (landed): the n-independent crossing core.** `inc_chain_le_one_cross`
+and `dec_chain_le_one_cross` prove that a y-monotone connected edge chain is
+crossed by the rightward ray **at most once**. The argument is purely the
+y-intervals: an up-edge `(a,b)` (with `py a < py b`) can only be crossed through
+the `py a < py p < py b` disjunct of `edge_crosses_ray`; along a strictly
+increasing connected chain those open intervals are consecutive-and-disjoint
+(`chain_increasing_above`: every later edge's bottom is at or above the head's
+top), so two crossed edges would force `py p` into two disjoint intervals — a
+one-line `lra` contradiction. No x-intercept arithmetic, no per-vertex case
+blow-up; pure list induction over `list Edge`. The decreasing mirror is identical
+under `dn_straddle_hi_lo`. Three-axiom, `[exact]`.
+
+**Rung 2 (landed): the bimonotone-split assembly.** Rather than wait on the
+structural derivation from convexity, rung 2 lands the full *assembly* over an
+abstract split. First a reusable lever the corpus lacked: `edge_crosses_ray` is
+decidable (`edge_crosses_ray_dec`), so crossings can be COUNTED (`cross_count`),
+and `ray_parity_count` bridges the mutually-inductive `ray_parity_odd/even` (the
+engine behind every `point_in_ring`) to `Nat.odd (cross_count …)` — ordinary
+arithmetic, additive over `++` (`cross_count_app`). Then `bimonotone_split_parity`:
+if `ring_edges r = inc ++ dec` with `inc` increasing and `dec` decreasing, then
+`point_in_ring p r` iff **exactly one** of `chain_crossed p inc`,
+`chain_crossed p dec` holds. Each chain contributes ≤ 1 to the count
+(`inc_cross_count_le_one`/`dec_cross_count_le_one`, from rung 1), so the ring is
+crossed 0/1/2 times and the parity is odd exactly when one chain is hit. This
+reduces general convex `point_in_ring` to two clean residuals carried into rung 3.
+
+**Rung 3 (landed): conditional closure of `convex_interior_parity`.** `ConvexChainSplit.v`
+assembles the campaign: `convex_interior_parity_from_split` proves that given `bimonotone_split`
++ `interior_hits_one_chain`, `convex_interior_parity` follows in one line from
+`bimonotone_split_parity`; `hole_inside_outer_convex_via_split` composes with
+`hole_inside_outer_convex_guarded` to give `hole_inside_outer`. A concrete CCW diamond witness
+(`diamond_bimonotone`, `diamond_inc_crossed`, `diamond_dec_not_crossed`,
+`diamond_point_in_ring_via_split`) exercises the full pipeline end-to-end with no Admitted.
+The remaining open lemma (sole residual of the campaign) is isolated exactly in
+`interior_hits_one_chain`:
+
+**Sole open residual — connecting `conv_min > 0` to vertex ordering.** Two structural facts
+remain, both captured by `interior_hits_one_chain`:
+(a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation) splits at its
+unique min-y and max-y vertices into an increasing chain followed by a decreasing chain
+(`bimonotone_split`) — the structural bridge from the half-plane presentation to vertex ordering;
+and (b) a strictly-interior point hits exactly one chain.
+(a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation)
+splits at its unique min-y and max-y vertices into an increasing chain followed by
+a decreasing chain whose concatenation is `ring_edges` — the structural bridge
+from the half-plane presentation to the two `chain_increasing`/`chain_decreasing`
+objects `bimonotone_split` consumes; and
+(b) a strictly-interior point (`0 < conv_min hps`) has `py p` strictly between the
+ring's min-y and max-y, so the rightward ray hits exactly one of the two chains
+(the XOR of `bimonotone_split_parity` is true) ⇒ `point_in_ring` ⇒
+`convex_interior_parity` discharged ⇒ general convex `hole_inside_outer`
+unconditional (instantiating `hole_inside_outer_convex_guarded`).
