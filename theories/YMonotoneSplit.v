@@ -28,7 +28,7 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import Reals List Lra.
+From Stdlib Require Import Reals List Lra Lia.
 From NTS.Proofs Require Import Distance Overlay MonotoneChainParity.
 
 Import ListNotations.
@@ -200,6 +200,142 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §6  Discrete IVT for y-monotone chains.                                    *)
+(*   For a strictly-increasing (resp. decreasing) vertex sequence, when py q  *)
+(*   lies strictly between the first and last vertex heights and no vertex    *)
+(*   sits at height py q, some edge in ring_edges straddles the ray.          *)
+(*   This is the y-structural half of `interior_hits_one_chain`: the x-       *)
+(*   geometry (x-intercept comparison) is the sole remaining residual.        *)
+(* -------------------------------------------------------------------------- *)
+
+(* `last (l ++ [x]) d = x` — the snoc element is always returned. *)
+Lemma last_snoc : forall A (l : list A) (x d : A),
+  last (l ++ [x]) d = x.
+Proof.
+  induction l as [| a l' IH]; intros x d.
+  - reflexivity.
+  - destruct l' as [| p l''].
+    + reflexivity.
+    + cbn [app]. cbn [last]. apply IH.
+Qed.
+
+(* Increasing chain: if py q is strictly between the first and last vertex
+   heights and no vertex sits at py q, then some edge straddles upward. *)
+Lemma strict_inc_straddle_exists : forall vs q,
+  (2 <= length vs)%nat ->
+  strict_inc_y vs ->
+  Forall (fun v => py v <> py q) vs ->
+  py (hd (mkPoint 0 0) vs) < py q ->
+  py q < py (last vs (mkPoint 0 0)) ->
+  exists e, In e (ring_edges vs) /\
+            py (fst e) < py q /\ py q < py (snd e).
+Proof.
+  induction vs as [| a vs' IH]; intros q Hlen Hsi Hnovert Hlo Hhi.
+  - cbn in Hlen. lia.
+  - destruct vs' as [| b vs''].
+    + cbn in Hlen. lia.
+    + rewrite ring_edges_cons2.
+      cbn [strict_inc_y] in Hsi. destruct Hsi as [Hab Hrest].
+      pose proof (Forall_inv_tail Hnovert) as Hnovert'.
+      pose proof (Forall_inv Hnovert') as Hnb.
+      cbn [hd] in Hlo.
+      destruct (Rle_or_lt (py b) (py q)) as [Hbq | Hqb].
+      * assert (Hbq' : py b < py q) by lra.
+        destruct vs'' as [| c vs'''].
+        -- cbn [last] in Hhi. lra.
+        -- assert (Hlen2 : (2 <= length (b :: c :: vs'''))%nat) by (cbn; lia).
+           assert (Hhi' : py q < py (last (b :: c :: vs''') (mkPoint 0 0))).
+           { cbn [last] in Hhi. exact Hhi. }
+           destruct (IH q Hlen2 Hrest Hnovert' Hbq' Hhi') as [e [Hin He]].
+           exists e. split. right. exact Hin. exact He.
+      * exists (a, b). split.
+        -- left. reflexivity.
+        -- cbn [fst snd]. exact (conj Hlo Hqb).
+Qed.
+
+(* Decreasing chain: symmetric — some edge straddles downward. *)
+Lemma strict_dec_straddle_exists : forall vs q,
+  (2 <= length vs)%nat ->
+  strict_dec_y vs ->
+  Forall (fun v => py v <> py q) vs ->
+  py q < py (hd (mkPoint 0 0) vs) ->
+  py (last vs (mkPoint 0 0)) < py q ->
+  exists e, In e (ring_edges vs) /\
+            py (snd e) < py q /\ py q < py (fst e).
+Proof.
+  induction vs as [| a vs' IH]; intros q Hlen Hsd Hnovert Hhi Hlo.
+  - cbn in Hlen. lia.
+  - destruct vs' as [| b vs''].
+    + cbn in Hlen. lia.
+    + rewrite ring_edges_cons2.
+      cbn [strict_dec_y] in Hsd. destruct Hsd as [Hab Hrest].
+      pose proof (Forall_inv_tail Hnovert) as Hnovert'.
+      pose proof (Forall_inv Hnovert') as Hnb.
+      cbn [hd] in Hhi.
+      destruct (Rle_or_lt (py q) (py b)) as [Hqb | Hbq].
+      * assert (Hqb' : py q < py b) by lra.
+        destruct vs'' as [| c vs'''].
+        -- cbn [last] in Hlo. lra.
+        -- assert (Hlen2 : (2 <= length (b :: c :: vs'''))%nat) by (cbn; lia).
+           assert (Hlo' : py (last (b :: c :: vs''') (mkPoint 0 0)) < py q).
+           { cbn [last] in Hlo. exact Hlo. }
+           destruct (IH q Hlen2 Hrest Hnovert' Hqb' Hlo') as [e [Hin He]].
+           exists e. split. right. exact Hin. exact He.
+      * exists (a, b). split.
+        -- left. reflexivity.
+        -- cbn [fst snd]. exact (conj Hbq Hhi).
+Qed.
+
+(* For a y-unimodal ring, when py q is strictly between the ring's bottom and
+   peak heights (with no vertex at that height), both the increasing and the
+   decreasing chain have a straddling edge.  The x-intercept comparison — which
+   chain is actually CROSSED — is the remaining x-geometry residual. *)
+Lemma y_unimodal_both_chains_straddle :
+  forall r pre peak suf q,
+  y_unimodal r pre peak suf ->
+  pre <> [] ->
+  suf <> [] ->
+  Forall (fun v => py v <> py q) r ->
+  py (hd (mkPoint 0 0) pre) < py q ->
+  py q < py peak ->
+  py (last (peak :: suf) (mkPoint 0 0)) < py q ->
+  (exists e, In e (ring_edges (pre ++ [peak])) /\
+             py (fst e) < py q /\ py q < py (snd e)) /\
+  (exists e, In e (ring_edges (peak :: suf)) /\
+             py (snd e) < py q /\ py q < py (fst e)).
+Proof.
+  intros r pre peak suf q (Hr & Hinc & Hdec) Hpre Hsuf Hforall Hlo Hqpk Hlodec.
+  assert (Hnovert_inc : Forall (fun v => py v <> py q) (pre ++ [peak])).
+  { apply Forall_forall. intros v Hv.
+    rewrite Forall_forall in Hforall. apply Hforall. rewrite Hr.
+    apply in_app_iff. apply in_app_iff in Hv as [Hv | Hv].
+    - left. exact Hv.
+    - right. cbn [In] in Hv. destruct Hv as [<- | []]. left. reflexivity. }
+  assert (Hnovert_dec : Forall (fun v => py v <> py q) (peak :: suf)).
+  { apply Forall_forall. intros v Hv.
+    rewrite Forall_forall in Hforall. apply Hforall. rewrite Hr.
+    apply in_app_iff. cbn [In] in Hv. destruct Hv as [<- | Hv].
+    - right. left. reflexivity.
+    - right. right. exact Hv. }
+  assert (Hlen_inc : (2 <= length (pre ++ [peak]))%nat).
+  { rewrite length_app. destruct pre as [| p pre']. contradiction Hpre. reflexivity.
+    cbn. lia. }
+  assert (Hlen_dec : (2 <= length (peak :: suf))%nat).
+  { cbn. destruct suf as [| s suf']. contradiction Hsuf. reflexivity. cbn. lia. }
+  assert (Hhd_inc : py (hd (mkPoint 0 0) (pre ++ [peak])) < py q).
+  { destruct pre as [| p pre'].
+    - contradiction Hpre. reflexivity.
+    - cbn [hd app]. exact Hlo. }
+  assert (Hlast_inc : py q < py (last (pre ++ [peak]) (mkPoint 0 0))).
+  { rewrite last_snoc. exact Hqpk. }
+  split.
+  - exact (strict_inc_straddle_exists (pre ++ [peak]) q
+             Hlen_inc Hinc Hnovert_inc Hhd_inc Hlast_inc).
+  - exact (strict_dec_straddle_exists (peak :: suf) q
+             Hlen_dec Hdec Hnovert_dec Hqpk Hlodec).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -207,3 +343,6 @@ Print Assumptions ring_edges_split_at.
 Print Assumptions y_unimodal_bimonotone_split.
 Print Assumptions y_unimodal_point_in_ring.
 Print Assumptions ym_diamond_bimonotone_split.
+Print Assumptions strict_inc_straddle_exists.
+Print Assumptions strict_dec_straddle_exists.
+Print Assumptions y_unimodal_both_chains_straddle.

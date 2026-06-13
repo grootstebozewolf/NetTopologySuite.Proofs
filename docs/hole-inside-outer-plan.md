@@ -247,10 +247,23 @@ conspicuously lacked, on one foundational seam lemma:
 - `ym_diamond_bimonotone_split`: re-derives `ConvexChainSplit.v`'s hand-built diamond split verbatim
   from `ym_diamond_unimodal`, confirming the machinery subsumes the concrete witness.
 
-What remains of residual (a): a derivation of `y_unimodal` from the `conv_min`/`vertices_in_halfplane`
-presentation (convexity ⟹ a min-y vertex exists and the traversal from it is unimodal). What remains
-of residual (b): a strictly-interior point's ray hits exactly the right-side chain. Both are now the
-narrowed open lemmas.
+**Rung 2 (§6 of `YMonotoneSplit.v`, landed):** Discrete IVT for y-monotone chains.
+- `strict_inc_straddle_exists` / `strict_dec_straddle_exists`: for a strictly-monotone vertex
+  sequence with py q strictly between the first and last vertex heights and no vertex at py q,
+  there exists a straddling edge in `ring_edges vs`. Proved by list induction with a `Rle_or_lt`
+  case split. Helper `last_snoc` is axiom-free.
+- `y_unimodal_both_chains_straddle`: both chains have a straddling edge when py q is in range.
+- Combined with `inc_chain_le_one_cross`, EXACTLY ONE straddling edge per chain.
+
+**Remaining residuals (precisely named):**
+- Residual (a-i): connect `conv_min`/`vertices_in_halfplane` to `y_unimodal` — show a convex CCW
+  ring traversed from its min-y vertex is y-unimodal.
+- Residual (b-x): x-geometry for the increasing chain — the straddling edge's x-intercept exceeds
+  px q for a strictly-interior point. Requires connecting `hp_slack > 0` for the edge's half-plane
+  to `px q < px_intercept_of_edge`.
+- Residual (b-x'): x-geometry for the decreasing chain — the straddling edge's x-intercept is less
+  than px q (dec chain is on the "left" side for a CCW convex ring).
+
 (a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation)
 splits at its unique min-y and max-y vertices into an increasing chain followed by
 a decreasing chain whose concatenation is `ring_edges` — the structural bridge
