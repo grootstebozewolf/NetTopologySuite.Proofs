@@ -570,6 +570,10 @@ theories/JCTNesting.v
 # The hat einstein monotile as a nesting witness for the rectangle
 # hole-inside-outer machinery (hat nests in its bounding box; no ring_simple).
 theories/HatNesting.v
+# The hat einstein monotile is a valid_polygon: closes ring_simple hat_ring
+# (the deferred ~78-pair case-bash; linear crossing system + nra) and assembles
+# valid_polygon_hat and a box-with-hat-hole via valid_polygon_rect_outer.
+theories/HatValidPolygon.v
 # Coverage layer on top of GeneralTriangleHoleNesting: the band hypothesis of
 # gtri_band_in_ring DISCHARGED from interior positivity alone under the
 # rightward-ray guard.  gtri_ray_coverage (0 < gtri /\ ray_avoids_vertices ->
