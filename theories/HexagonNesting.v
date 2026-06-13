@@ -146,6 +146,13 @@ Proof.
     exact hole_inside_outer_hexagon.
 Qed.
 
+(* Named constant for downstream reuse (e.g. `In h (hole_rings hexagon_with_hole_example)`). *)
+Definition hexagon_with_hole_example : Polygon := mkPolygon hex_ring [hole_hex].
+
+Theorem hexagon_with_hole_example_valid :
+  valid_polygon hexagon_with_hole_example.
+Proof. exact valid_polygon_hexagon_with_hole. Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)

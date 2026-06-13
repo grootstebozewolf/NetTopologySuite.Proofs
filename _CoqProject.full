@@ -157,6 +157,10 @@ theories/HoleInsideOuterConvexExample.v
 # diamond -- a convex hexagon (point_in_ring by ray-parity enumeration; the
 # valid_polygon-with-hole capstone).  General convex still pending monotonicity.
 theories/HexagonNesting.v
+# General convex hole_inside_outer, guarded by the one named convex-chain
+# monotonicity residual (convex_interior_parity).  The honest conditional
+# headline; concrete convex families discharge it.  No Admitteds.
+theories/ConvexNesting.v
 
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray

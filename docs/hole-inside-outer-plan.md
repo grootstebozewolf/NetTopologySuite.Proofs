@@ -163,3 +163,17 @@ awaits the convex-chain monotonicity lemma (a rightward ray from an interior
 point crosses exactly one of n arbitrary slanted edges); the conditional
 general-convex assembly (`ConvexOffringSeam.convex_parity_seam_offring_of`)
 remains the route once that lemma lands.
+
+---
+
+## General convex, guarded (2026-06-13, `theories/ConvexNesting.v`)
+
+`hole_inside_outer_convex_guarded` packages the general convex case: a hole
+with a vertex strictly inside a convex outer (`0 < conv_min hps`, general
+position) nests inside, conditional on the single named residual
+`convex_interior_parity` — the convex-chain monotonicity (a rightward ray from
+a strictly-interior point crosses an odd number of edges), which is exactly the
+interior-parity obligation `ConvexOffringSeam.convex_parity_seam_offring_of`
+leaves open. Concrete convex families (rectangle, triangle; and the explicit
+diamond/hexagon point witnesses) discharge it directly; the general n-gon
+monotonicity remains the one open lemma.
