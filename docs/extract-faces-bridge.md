@@ -439,3 +439,29 @@ multi-session core and is **not** proved here. It is documented in
 `EdgeConnectivity.v` §5 as the remaining deep rung. `extract_rings_valid`
 stays Admitted; `extract_faces_valid_sep` / `_holes_valid_sep` (FaceOrbitSep.v)
 wait to consume it.
+
+---
+
+## CLOSED — extract_rings_valid as a conditional Qed (2026-06-13, `theories-flocq/OverlayBridge.v` §8)
+
+Eighteenth RGR iteration. `extract_rings_valid` -- the corpus's last live
+deferred-proof Admitted -- is now a **conditional Qed**, off the registry.
+Restated over the corrected `extract_faces` extractor (and a with-holes
+companion `extract_rings_valid_holes`), it takes `well_noded_darts` +
+`no_spurs` + `edge_2_connected (result_edges …)` plus ONE named hypothesis
+
+    H_bridge : ∀ E, edge_2_connected E → twins_in_different_faces (darts_of E)
+
+and discharges via `FaceOrbitSep.extract_faces_valid_sep`. This surfaces the
+real 2-edge-connected precondition honestly and matches the corpus's
+conditional-headline idiom exactly (`overlay_ng_correct_conditional`'s
+H_bridge). The Admitted is gone; the deferred-proof registry now has zero live
+entries.
+
+What it does NOT do: prove the rotation-system characterisation H_bridge
+itself (an edge is a bridge iff its two darts bound the same face). That is the
+sole remaining mathematical fact of the whole bridge, carried transparently as
+a named hypothesis (see `EdgeConnectivity.v` §5). Axiom footprint: the
+allowlist trio + `Classical_Prop.classic` (the existing OverlayBridge/Hobby
+lane, `docs/audit-exceptions.txt`), unchanged from when the Admitted lived
+there.

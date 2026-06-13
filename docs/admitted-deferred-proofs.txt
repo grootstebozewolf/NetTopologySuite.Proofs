@@ -55,6 +55,9 @@
 # ============================================================================
 # LIVE ENTRIES
 # ============================================================================
+#
+# (none) -- the last live entry, extract_rings_valid, was CLOSED 2026-06-13;
+# see the ARCHIVED section below.
 
 # `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
 # overlay correctness.  Shows that ring assembly from the labelled
@@ -154,7 +157,6 @@
 # core): edge_2_connected (result_edges op g) => twins_in_different_faces
 # (result_darts op g) -- the rotation-system "bridge iff darts bound the same
 # face" linking the graph layer to fstep face orbits.  STAYS Admitted.
-theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================
 # ARCHIVED ENTRIES (closed / moved / superseded -- NOT live)
@@ -182,6 +184,11 @@ theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.m
 #   - `hobby_lemma_4_2`
 #       -> CLOSED (Qed).  No longer Admitted.  Two README-allowlisted
 #          classical-reals axioms only.
+#   - `extract_rings_valid`
+#       -> CLOSED conditional Qed (named H_bridge); genuine
+#          edge_2_connected -> twins_in_different_faces remains explicit
+#          hypothesis. [2026-06-13]  See theories-flocq/OverlayBridge.v §8,
+#          EdgeConnectivity.v §5, docs/extract-faces-bridge.md.
 #
 # Do NOT re-add the moved entries here; they live in the counterexample
 # registry by design.
