@@ -37,3 +37,5 @@ The hat gives a non-convex simple-ring `valid_polygon` witness; the scaled
 Perron gives an area-concentration + coordinate-brink witness. Both stay inside
 the same 2²⁵ integer window — the practical C#/NTS binary64 coordinate-safety
 bound for the corpus's orient2d filter.
+
+See `HatValidPolygon.v` for the complementary non-convex ring witness; both share the identical 2²⁵ coordinate diameter.
