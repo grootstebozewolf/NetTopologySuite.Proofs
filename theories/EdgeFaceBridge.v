@@ -254,23 +254,162 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §3  The bridge lemma (rotation-system core) — OPEN.                         *)
-(*                                                                            *)
-(* Target (Rung 3):                                                            *)
-(*                                                                            *)
-(*   same_face_twin_is_cut :                                                   *)
-(*     forall E d, fan_ok on darts_of E -> no_spurs (darts_of E) ->            *)
-(*     In d (darts_of E) -> dbase d <> dtip d ->                               *)
-(*     same_face (darts_of E) d (twin d) ->                                    *)
-(*     exists e, In e E /\ is_cut_edge E e /\ (e = d \/ e = twin d).          *)
-(*                                                                            *)
-(* `no_spurs` is necessary: on a bigon (two opposite darts, `fstep d = twin d` *)
-(* at both tips) `fan_ok` holds but neither edge is a cut edge.                *)
-(*                                                                            *)
-(* Packaging (Rung 4): contrapositive assembly once §3 is available.           *)
+(* §3  Toward same_face_twin_is_cut (Rung 3).                                   *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma all_proper_darts_of_fan :
+  forall D, (forall v : Point, fan_ok (outgoing v D)) -> all_proper_darts D.
+Proof.
+  intros D Hfan d Hd. apply dart_proper_of_fan with (D := D); assumption.
+Qed.
+
+Lemma face_period_ge3_of_fan_nospur :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    (3 <= face_period (darts_of E) d)%nat.
+Proof.
+  intros E d Hfan Hns Hd.
+  set (D := darts_of E).
+  assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
+  assert (Hshort : no_short_faces D).
+  { apply no_short_faces_of_proper_nospur; [ exact Hok | | exact Hns ].
+    apply all_proper_darts_of_fan. exact Hfan. }
+  unfold no_short_faces in Hshort. exact (Hshort d Hd).
+Qed.
+
+Lemma same_face_twin_step_index :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    exists k, (k < face_period (darts_of E) d)%nat /\
+      iter (fstep (darts_of E)) k d = twin d.
+Proof.
+  intros E d Hfan Hd Hsf.
+  set (D := darts_of E).
+  assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
+  assert (Htwin : In (twin d) (dart_walk D d (face_period D d))).
+  { subst D; apply same_face_twin_in_period_walk; assumption. }
+  apply dart_walk_iter_iff in Htwin.
+  destruct Htwin as [k [Hk Hit]]. exists k. split; [ exact Hk | exact Hit ].
+Qed.
+
+Lemma same_face_twin_step_not_one :
+  forall E d k,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    iter (fstep (darts_of E)) k d = twin d ->
+    (2 <= k)%nat.
+Proof.
+  intros E d k Hfan Hns Hd Hit.
+  assert (Hne : dbase d <> dtip d).
+  { apply dart_endpoints_ne_of_proper.
+    apply dart_proper_of_fan with (D := darts_of E) (d := d); [ exact Hd | exact Hfan ]. }
+  destruct k as [| k']; cbn [iter] in Hit.
+  - exfalso. apply (twin_neq_self d Hne). symmetry. exact Hit.
+  - destruct k' as [| k'']; [ | lia ].
+    exfalso. apply (Hns d Hd). exact Hit.
+Qed.
+
+Lemma is_cut_edge_of_disconnect :
+  forall (E : list Edge) (e : Edge) (u v : Point),
+    In e E -> fst e = u -> snd e = v -> u <> v ->
+    reachable E u v ->
+    ~ reachable (E_minus E e) u v ->
+    is_cut_edge E e.
+Proof.
+  intros E e u v He Hfu Hsv Huv Hreach Hdis.
+  unfold is_cut_edge. repeat split.
+  - exact He.
+  - rewrite Hfu, Hsv. exact Huv.
+  - rewrite Hfu, Hsv. exact Hreach.
+  - rewrite Hfu, Hsv. exact Hdis.
+Qed.
+
+Lemma dart_endpoints_adj_E_minus :
+  forall E d e,
+    In d (darts_of E) -> dbase d <> dtip d ->
+    In e E -> e <> d -> e <> twin d ->
+    adj (E_minus E e) (dbase d) (dtip d).
+Proof.
+  intros E d e Hd Hne He Hned Hntwin.
+  destruct (dart_carrier_edge E d Hd) as [ec [Hec Hcase]].
+  unfold adj. exists ec. split.
+  - apply in_E_minus. split; [ exact Hec | ].
+    intro Heq. destruct Hcase as [-> | Htwin].
+    + apply Hned. symmetry. exact Heq.
+    + apply Hntwin. rewrite <- Heq. exact Htwin.
+  - destruct Hcase as [-> | Htwin].
+    + left. split; reflexivity.
+    + right. rewrite Htwin. split; [ apply dbase_twin | apply dtip_twin ].
+Qed.
+
+Lemma is_cut_edge_of_dart_disconnect :
+  forall E d e,
+    In d (darts_of E) -> dbase d <> dtip d ->
+    In e E -> (e = d \/ e = twin d) ->
+    ~ reachable (E_minus E e) (dbase d) (dtip d) ->
+    is_cut_edge E e.
+Proof.
+  intros E d e Hd Hne He Hcase Hdis.
+  assert (Hreach : reachable E (dbase d) (dtip d))
+    by (apply dart_endpoints_reachable; assumption).
+  assert (Hprop : fst e <> snd e).
+  { apply dart_carrier_proper with (E := E) (d := d) (e := e); assumption. }
+  destruct Hcase as [-> | Htwin].
+  - apply is_cut_edge_of_disconnect with (u := dbase d) (v := dtip d);
+      [ exact He | reflexivity | reflexivity | exact Hne | exact Hreach | exact Hdis ].
+  - subst e.
+    apply is_cut_edge_of_disconnect with (u := dtip d) (v := dbase d).
+    + exact He.
+    + apply dbase_twin.
+    + apply dtip_twin.
+    + exact Hprop.
+    + apply reach_sym. exact Hreach.
+    + intro Hr. apply Hdis. apply reach_sym in Hr. exact Hr.
+Qed.
+
+(* Open core (Rung 3b): the rotation-system disconnectivity fact.              *)
+Section SameFaceTwinCutCore.
+  Variable same_face_twin_disconnect :
+    forall (E : list Edge) (d : Dart) (e : Edge),
+      (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+      no_spurs (darts_of E) ->
+      In d (darts_of E) ->
+      dbase d <> dtip d ->
+      same_face (darts_of E) d (twin d) ->
+      In e E -> (e = d \/ e = twin d) ->
+      ~ reachable (E_minus E e) (dbase d) (dtip d).
+
+  Theorem same_face_twin_is_cut :
+    forall (E : list Edge) (d : Dart),
+      (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+      no_spurs (darts_of E) ->
+      In d (darts_of E) ->
+      dbase d <> dtip d ->
+      same_face (darts_of E) d (twin d) ->
+      exists e : Edge,
+        In e E /\ is_cut_edge E e /\ (e = d \/ e = twin d).
+  Proof.
+    intros E d Hfan Hns Hd Hne Hsf.
+    destruct (dart_carrier_edge E d Hd) as [e [He Hcase]].
+    exists e. split; [ exact He | split ].
+    - apply is_cut_edge_of_dart_disconnect with (d := d); [ exact Hd | exact Hne | exact He | exact Hcase | ].
+      apply same_face_twin_disconnect with (E := E) (d := d) (e := e); assumption.
+    - exact Hcase.
+  Qed.
+End SameFaceTwinCutCore.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  Contrapositive packaging (modulo §3).                                   *)
 (* -------------------------------------------------------------------------- *)
 
 Section BridgePackaging.
+  (* Abstract §3 conclusion; instantiate from `SameFaceTwinCutCore` once
+     `same_face_twin_disconnect` is proved. *)
   Variable same_face_twin_is_cut :
     forall (E : list Edge) (d : Dart),
       (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
@@ -323,5 +462,8 @@ Print Assumptions same_face_twin_both_on_period_walk.
 Print Assumptions dart_on_walk_endpoints_adj.
 Print Assumptions dart_walk_endpoints_reachable_iter.
 Print Assumptions dart_walk_endpoints_reachable.
+Print Assumptions face_period_ge3_of_fan_nospur.
+Print Assumptions same_face_twin_step_index.
+Print Assumptions is_cut_edge_of_dart_disconnect.
 Print Assumptions dart_endpoints_reachable.
 Print Assumptions dart_endpoints_ne_of_proper.

@@ -489,7 +489,18 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
   `BridgePackaging`) — contrapositive assembly from `same_face_twin_is_cut`
   (with `no_spurs`); closes H_bridge once Rung 3 lands.
 
-**Remaining (Rung 3):** `same_face_twin_is_cut` under `fan_ok` + `no_spurs` —
-the classical bridge fact (an edge is a bridge iff its two darts bound the
-same face). Then instantiate `BridgePackaging` and drop H_bridge from
-`OverlayBridge.extract_rings_valid`.
+**Green — LANDED (Rung 3a, partial):**
+
+- `face_period_ge3_of_fan_nospur`, `same_face_twin_step_index`,
+  `same_face_twin_step_not_one` — period ≥ 3; twin appears at step ≥ 2 on the
+  period walk.
+- `is_cut_edge_of_dart_disconnect`, `dart_endpoints_adj_E_minus` — packaging
+  `is_cut_edge` from endpoint disconnectivity; non-carrier walk darts stay
+  adjacent in `E_minus`.
+- `SameFaceTwinCutCore.same_face_twin_is_cut` — Qed modulo one open fact
+  `same_face_twin_disconnect` (Rung 3b).
+
+**Remaining (Rung 3b):** `same_face_twin_disconnect` — prove
+`~ reachable (E_minus E e) (dbase d) (dtip d)` from `same_face` + `no_spurs`.
+Then export `same_face_twin_is_cut`, instantiate `BridgePackaging`, and drop
+H_bridge from `OverlayBridge.extract_rings_valid`.

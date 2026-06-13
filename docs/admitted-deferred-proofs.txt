@@ -172,9 +172,11 @@
 #       Rungs 1-2: dart incidence + same_face period walk (Qed).
 #       Rung 2b: walk dart adjacency, twin-both-on-period-walk (Qed).
 #       Rung 2c: dart_walk_endpoints_reachable (walk-level vertex reachability).
+#       Rung 3a: period>=3, twin step index, is_cut_edge packaging,
+#       SameFaceTwinCutCore (Qed modulo same_face_twin_disconnect).
 #       Rung 4: edge_2_connected_twins_sep / H_bridge_well_noded packaged
 #       in BridgePackaging (Qed modulo same_face_twin_is_cut; needs no_spurs).
-#       Open: Rung 3 same_face_twin_is_cut (rotation-system core).
+#       Open: Rung 3b same_face_twin_disconnect (rotation-system core).
 #       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
 
 # ============================================================================
