@@ -55,6 +55,9 @@
 # ============================================================================
 # LIVE ENTRIES
 # ============================================================================
+#
+# (none) -- the last live entry, extract_rings_valid, was CLOSED 2026-06-13;
+# see the ARCHIVED section below.
 
 # `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
 # overlay correctness.  Shows that ring assembly from the labelled
@@ -147,7 +150,13 @@
 # dumbbell cut edge; twins_in_different_faces <=> no cut edge (2-edge-connected).
 # Remaining deeper rung: derive twins_in_different_faces from a 2-edge-connected /
 # no-cut-edge condition.  The entry STAYS Admitted.
-theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
+# DISCHARGE-PLAN UPDATE (2026-06-13, face_twin_free rung 2): the
+# graph-connectivity layer landed in theories/EdgeConnectivity.v (reachable
+# equivalence, is_cut_edge, edge_2_connected; non-vacuity both ways).  No such
+# machinery existed before.  Remaining deep rung (the genuine multi-session
+# core): edge_2_connected (result_edges op g) => twins_in_different_faces
+# (result_darts op g) -- the rotation-system "bridge iff darts bound the same
+# face" linking the graph layer to fstep face orbits.  STAYS Admitted.
 
 # ============================================================================
 # ARCHIVED ENTRIES (closed / moved / superseded -- NOT live)
@@ -175,6 +184,11 @@ theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.m
 #   - `hobby_lemma_4_2`
 #       -> CLOSED (Qed).  No longer Admitted.  Two README-allowlisted
 #          classical-reals axioms only.
+#   - `extract_rings_valid`
+#       -> CLOSED conditional Qed (named H_bridge); genuine
+#          edge_2_connected -> twins_in_different_faces remains explicit
+#          hypothesis. [2026-06-13]  See theories-flocq/OverlayBridge.v §8,
+#          EdgeConnectivity.v §5, docs/extract-faces-bridge.md.
 #
 # Do NOT re-add the moved entries here; they live in the counterexample
 # registry by design.

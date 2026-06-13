@@ -407,3 +407,61 @@ cut-edge / 2-edge-connectivity for the dart arrangement and proving "no cut
 edge ⟹ no dart shares its face-orbit with its twin" — a genuine graph-theory
 construction. `extract_rings_valid` stays Admitted until that lands; the
 residual is now a single, named, well-understood global condition.
+
+---
+
+## face_twin_free rung 2 — graph-connectivity layer (2026-06-13, `theories/EdgeConnectivity.v`)
+
+Seventeenth RGR iteration. The residual `twins_in_different_faces` ⟺ no cut
+edge is genuine topological graph theory, and the corpus had **no**
+vertex-connectivity / path / cut-edge / Euler machinery to lean on (confirmed
+by survey). This rung introduces the minimal self-contained layer the headline
+needs, fully Qed and 3-axiom:
+
+- `adj` / `reachable` — undirected adjacency and its reflexive-transitive
+  closure; `reach_refl/_trans/_sym` make reachability an **equivalence**
+  (symmetry by reversing the walk — `reach_incl`, `reachable_nil` round it out).
+- `E_minus`, `is_cut_edge` (removing the edge disconnects its endpoints),
+  `edge_2_connected` (no edge is a cut edge).
+- **Non-vacuity both ways:** `single_edge_is_cut` (a lone proper edge is a cut
+  edge, so `edge_2_connected` genuinely fails there) and `triangle_2_connected`
+  (the canonical 2-edge-connected graph), both machine-checked.
+
+**Honest scope.** This is the graph *vocabulary*, not the closing theorem. The
+orbit-linking headline
+
+    edge_2_connected (result_edges op g)
+      -> twins_in_different_faces (result_darts op g)
+
+— the classical "an edge is a bridge iff its two darts bound the same face",
+relating the `fstep` rotation-system faces to graph bridges — is the genuine
+multi-session core and is **not** proved here. It is documented in
+`EdgeConnectivity.v` §5 as the remaining deep rung. `extract_rings_valid`
+stays Admitted; `extract_faces_valid_sep` / `_holes_valid_sep` (FaceOrbitSep.v)
+wait to consume it.
+
+---
+
+## CLOSED — extract_rings_valid as a conditional Qed (2026-06-13, `theories-flocq/OverlayBridge.v` §8)
+
+Eighteenth RGR iteration. `extract_rings_valid` -- the corpus's last live
+deferred-proof Admitted -- is now a **conditional Qed**, off the registry.
+Restated over the corrected `extract_faces` extractor (and a with-holes
+companion `extract_rings_valid_holes`), it takes `well_noded_darts` +
+`no_spurs` + `edge_2_connected (result_edges …)` plus ONE named hypothesis
+
+    H_bridge : ∀ E, edge_2_connected E → twins_in_different_faces (darts_of E)
+
+and discharges via `FaceOrbitSep.extract_faces_valid_sep`. This surfaces the
+real 2-edge-connected precondition honestly and matches the corpus's
+conditional-headline idiom exactly (`overlay_ng_correct_conditional`'s
+H_bridge). The Admitted is gone; the deferred-proof registry now has zero live
+entries.
+
+What it does NOT do: prove the rotation-system characterisation H_bridge
+itself (an edge is a bridge iff its two darts bound the same face). That is the
+sole remaining mathematical fact of the whole bridge, carried transparently as
+a named hypothesis (see `EdgeConnectivity.v` §5). Axiom footprint: the
+allowlist trio + `Classical_Prop.classic` (the existing OverlayBridge/Hobby
+lane, `docs/audit-exceptions.txt`), unchanged from when the Admitted lived
+there.

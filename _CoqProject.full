@@ -362,6 +362,13 @@ theories/ExtractHolesWellNoded.v
 # + the _sep capstones.  The 2-edge-connected => twins_in_different_faces
 # derivation is the deferred deeper rung.  No Admitteds.
 theories/FaceOrbitSep.v
+# extract_rings_valid R5 bridge follow-up, face_twin_free rung 2: the
+# graph-connectivity layer (vertex reachability equivalence, cut edge,
+# edge_2_connected) the no-cut-edge headline needs.  Non-vacuity both ways
+# (lone edge is a cut edge; triangle is 2-edge-connected).  The orbit-linking
+# theorem edge_2_connected => twins_in_different_faces is the deferred deep
+# rung.  No Admitteds.
+theories/EdgeConnectivity.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's

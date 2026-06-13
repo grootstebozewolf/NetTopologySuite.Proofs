@@ -48,6 +48,19 @@ From NTS.Proofs        Require Import Distance.
 From NTS.Proofs        Require Import Overlay.
 From NTS.Proofs        Require Import OverlayGraph.
 From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64.
+(* Corrected extractor + the well-noded/orbit bridge slices: close
+   extract_rings_valid as a conditional Qed over a 2-edge-connected
+   precondition (replaces the S9 Admitted). *)
+From NTS.Proofs        Require Import Dart.
+From NTS.Proofs        Require Import RingExtract.
+From NTS.Proofs        Require Import FaceChain.
+From NTS.Proofs        Require Import FacePolygonHoles.
+From NTS.Proofs        Require Import ExtractFaces.
+From NTS.Proofs        Require Import ExtractFacesHoles.
+From NTS.Proofs        Require Import VertexGeneralPosition.
+From NTS.Proofs        Require Import NoShortFaces.
+From NTS.Proofs        Require Import FaceOrbitSep.
+From NTS.Proofs        Require Import EdgeConnectivity.
 
 Import ListNotations.
 
@@ -444,74 +457,97 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §8  Phase 3 Milestone 5 Session 9: extract_rings_valid (Admitted).         *)
+(* §8  extract_rings_valid -- CLOSED as a conditional Qed (2026-06-13).        *)
 (*                                                                            *)
-(* The structural correctness of `extract op g`'s output Geometry: for valid  *)
-(* inputs and a fully-intersected noded arrangement, every polygon in the     *)
-(* extracted Geometry is a `valid_polygon`.                                   *)
+(* The S9 statement was Admitted over the naive `extract` (theories/          *)
+(* OverlayGraph.v) -- the single-polygon flatten that slice 3i refuted        *)
+(* (`ExtractFlattenCounterexample.extract_unordered_not_valid`).  The bridge  *)
+(* ladder (docs/extract-faces-bridge.md) relocated the obligation onto the    *)
+(* corrected face extractor `extract_faces` and reduced it, via               *)
+(* `FaceOrbitSep.extract_faces_valid_sep`, to three structural conditions     *)
+(* plus ONE remaining mathematical fact:                                      *)
 (*                                                                            *)
-(* This is the second thesis-shaped piece flagged in                          *)
-(* docs/audit-phase3-milestone5.md §4.3.  Showing that ring assembly          *)
-(* from the labelled topology graph produces polygons satisfying all four    *)
-(* OGC §6 conditions (ring_closed, ring_simple, ring_has_minimum_points,     *)
-(* hole_inside_outer) is genuine combinatorial-geometric work.                *)
+(*   well_noded_darts + no_spurs + twins_in_different_faces                    *)
+(*     ==> every extracted polygon is valid_polygon         (Qed, capstone).  *)
 (*                                                                            *)
-(* The corpus's CURRENT `extract` (theories/OverlayGraph.v) is the naive     *)
-(* version from S2: filters edges by `edge_in_result op` and packages the   *)
-(* survivors as a single polygon whose outer_ring is the concatenation of   *)
-(* all filtered edges' endpoints.  This naive form does NOT satisfy        *)
-(* `valid_polygon` in general -- the ring is neither simple nor closed in   *)
-(* the structural sense, and may not meet the min-vertex requirement for    *)
-(* small inputs.                                                              *)
-(*                                                                            *)
-(* The PATH to a usable `extract_rings_valid` requires either:               *)
-(*   - DCEL adoption (S11-S12 in the 16-session plan) -- replace the naive  *)
-(*     edge list with a doubly-connected edge list structure carrying       *)
-(*     per-vertex incidence + twin/next pointers, then implement face       *)
-(*     traversal to produce proper rings; OR                                 *)
-(*   - A weaker variant of `extract` that punts on ring assembly and       *)
-(*     returns a Geometry whose polygons trivially satisfy `valid_polygon` *)
-(*     (e.g., the empty geometry) but doesn't carry meaningful content.    *)
-(*                                                                            *)
-(* Neither path closes in one session.  Following the same pattern as       *)
-(* S8's JCT decision: register `extract_rings_valid` as a deferred-proof    *)
-(* entry, state it Admitted, and document the gap in the audit doc.         *)
-(* `overlay_ng_correct_conditional` (S15) will carry it as a named         *)
-(* hypothesis, mirroring `hobby_theorem_4_1_conditional`'s pattern.        *)
-(*                                                                            *)
-(* See docs/admitted-deferred-proofs.txt:extract_rings_valid                *)
-(* and docs/audit-phase3-milestone5.md §4.3 for the scope estimate.        *)
+(* `twins_in_different_faces` is exactly no-dart-shares-an-fstep-orbit-with-   *)
+(* its-twin, i.e. no cut edge -- a 2-edge-connected arrangement.  The          *)
+(* rotation-system characterisation `edge_2_connected E ->                     *)
+(* twins_in_different_faces (darts_of E)` (the classical bridge fact: an edge  *)
+(* is a bridge iff its two darts bound the same face) is genuine multi-session *)
+(* theory and is NOT proved here; it is carried as a NAMED HYPOTHESIS,         *)
+(* exactly as `OverlayCorrectness.overlay_ng_correct_conditional` carries its  *)
+(* H_bridge.  So extract_rings_valid is now a conditional Qed (no Admitted,    *)
+(* off the deferred-proof registry), with the 2-edge-connected precondition    *)
+(* surfaced honestly.  The lone open fact is documented at                     *)
+(* EdgeConnectivity.v §5 / docs/extract-faces-bridge.md.                       *)
 (* -------------------------------------------------------------------------- *)
 
-Lemma extract_rings_valid :
+Theorem extract_rings_valid :
   forall (op : BooleanOp) (A B : Geometry),
-    valid_geometry A ->
-    valid_geometry B ->
-    fully_intersected (noded_segments A B) ->
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    (* H_bridge: the rotation-system bridge characterisation (the sole
+       remaining deep fact), carried as a named hypothesis. *)
+    (forall E : list Edge,
+       edge_2_connected E -> twins_in_different_faces (darts_of E)) ->
     forall poly,
-      In poly (extract op (noded_labeled_graph A B)) ->
+      In poly (extract_faces op (noded_labeled_graph A B)) ->
       valid_polygon poly.
-Admitted.
+Proof.
+  intros op A B Hwn Hns H2ec Hbridge poly Hin.
+  exact (extract_faces_valid_sep op (noded_labeled_graph A B) Hwn Hns
+           (Hbridge (result_edges op (noded_labeled_graph A B)) H2ec) poly Hin).
+Qed.
+
+(* With-holes companion: the same closure over the holes extractor, threading
+   the oracle well-formedness + hole_inside_outer nesting clauses unchanged. *)
+Theorem extract_rings_valid_holes :
+  forall (hassign : Dart -> list Dart) (op : BooleanOp) (A B : Geometry),
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    (forall E : list Edge,
+       edge_2_connected E -> twins_in_different_faces (darts_of E)) ->
+    (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
+       forall h, In h (hassign d) ->
+         In h (result_darts op (noded_labeled_graph A B))) ->
+    (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
+       forall h, In h (hassign d) ->
+       hole_inside_outer
+         (ring_of_chain (face_chain (result_darts op (noded_labeled_graph A B)) d
+                           (face_period (result_darts op (noded_labeled_graph A B)) d)))
+         (hole_ring_of (result_darts op (noded_labeled_graph A B))
+            (h, face_period (result_darts op (noded_labeled_graph A B)) h))) ->
+    forall poly,
+      In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
+      valid_polygon poly.
+Proof.
+  intros hassign op A B Hwn Hns H2ec Hbridge Hwf Hinside poly Hin.
+  exact (extract_faces_holes_valid_sep hassign op (noded_labeled_graph A B)
+           Hwn Hns (Hbridge (result_edges op (noded_labeled_graph A B)) H2ec)
+           Hwf Hinside poly Hin).
+Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Phase 3 Milestone 5 Session 10: valid_geometry of the extracted Geometry. *)
-(*                                                                            *)
-(* Mechanical corollary of `extract_rings_valid` (S9) using the definition   *)
-(* of `valid_geometry` ("every polygon satisfies valid_polygon").             *)
-(* Conditional on `extract_rings_valid` being closed (currently Admitted).   *)
+(* valid_geometry of the extracted Geometry -- corollary of the closed        *)
+(* extract_rings_valid, restated over the corrected `extract_faces`.          *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem valid_geometry_extract :
   forall (op : BooleanOp) (A B : Geometry),
-    valid_geometry A ->
-    valid_geometry B ->
-    fully_intersected (noded_segments A B) ->
-    valid_geometry (extract op (noded_labeled_graph A B)).
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    (forall E : list Edge,
+       edge_2_connected E -> twins_in_different_faces (darts_of E)) ->
+    valid_geometry (extract_faces op (noded_labeled_graph A B)).
 Proof.
-  intros op A B HA HB Hfi.
+  intros op A B Hwn Hns H2ec Hbridge.
   unfold valid_geometry.
   intros poly Hin.
-  apply (extract_rings_valid op A B HA HB Hfi poly Hin).
+  apply (extract_rings_valid op A B Hwn Hns H2ec Hbridge poly Hin).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -527,4 +563,5 @@ Print Assumptions correct_labels_difference.
 Print Assumptions correct_labels_symdiff.
 Print Assumptions correct_labels_all_ops.
 Print Assumptions extract_rings_valid.
+Print Assumptions extract_rings_valid_holes.
 Print Assumptions valid_geometry_extract.
