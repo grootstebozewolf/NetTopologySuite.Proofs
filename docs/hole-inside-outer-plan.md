@@ -199,17 +199,29 @@ one-line `lra` contradiction. No x-intercept arithmetic, no per-vertex case
 blow-up; pure list induction over `list Edge`. The decreasing mirror is identical
 under `dn_straddle_hi_lo`. Three-axiom, `[exact]`.
 
-**Rung 2 (outlined, not landed): convex ring ⇒ two monotone chains.** A convex
-CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation) splits at its
-unique min-y and max-y vertices into an increasing chain followed by a decreasing
-chain whose concatenation is `ring_edges`. This is the structural bridge from the
-half-plane presentation to the two `chain_increasing`/`chain_decreasing` objects
-rung 1 consumes.
+**Rung 2 (landed): the bimonotone-split assembly.** Rather than wait on the
+structural derivation from convexity, rung 2 lands the full *assembly* over an
+abstract split. First a reusable lever the corpus lacked: `edge_crosses_ray` is
+decidable (`edge_crosses_ray_dec`), so crossings can be COUNTED (`cross_count`),
+and `ray_parity_count` bridges the mutually-inductive `ray_parity_odd/even` (the
+engine behind every `point_in_ring`) to `Nat.odd (cross_count …)` — ordinary
+arithmetic, additive over `++` (`cross_count_app`). Then `bimonotone_split_parity`:
+if `ring_edges r = inc ++ dec` with `inc` increasing and `dec` decreasing, then
+`point_in_ring p r` iff **exactly one** of `chain_crossed p inc`,
+`chain_crossed p dec` holds. Each chain contributes ≤ 1 to the count
+(`inc_cross_count_le_one`/`dec_cross_count_le_one`, from rung 1), so the ring is
+crossed 0/1/2 times and the parity is odd exactly when one chain is hit. This
+reduces general convex `point_in_ring` to two clean residuals carried into rung 3.
 
-**Rung 3 (outlined, not landed): interior ⇒ exactly one crossing ⇒
-`point_in_ring`.** A strictly-interior point (`0 < conv_min hps`) has `py p`
-strictly between the ring's min-y and max-y, so the full horizontal line crosses
-each chain exactly once; the rightward ray keeps only the right-side crossing ⇒
-exactly one edge of `ring_edges` is crossed ⇒ odd parity ⇒ `point_in_ring` ⇒
+**Rung 3 (outlined, not landed): convexity ⇒ split, and interior ⇒ exactly one
+chain hit.** Two residuals remain, both isolated by rung 2:
+(a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation)
+splits at its unique min-y and max-y vertices into an increasing chain followed by
+a decreasing chain whose concatenation is `ring_edges` — the structural bridge
+from the half-plane presentation to the two `chain_increasing`/`chain_decreasing`
+objects `bimonotone_split` consumes; and
+(b) a strictly-interior point (`0 < conv_min hps`) has `py p` strictly between the
+ring's min-y and max-y, so the rightward ray hits exactly one of the two chains
+(the XOR of `bimonotone_split_parity` is true) ⇒ `point_in_ring` ⇒
 `convex_interior_parity` discharged ⇒ general convex `hole_inside_outer`
 unconditional (instantiating `hole_inside_outer_convex_guarded`).
