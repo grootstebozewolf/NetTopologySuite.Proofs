@@ -204,6 +204,55 @@ Proof.
   apply dart_endpoints_adj with (d := x); [ exact HxD | exact Hne ].
 Qed.
 
+(* Walk-level reachability: `iter (fstep D) n d` is the last dart of a length-(S n)
+   walk (`dart_walk_last`), so its tip is reachable from `dbase d` in `E`. *)
+Lemma dart_walk_endpoints_reachable_iter :
+  forall (E : list Edge) (D : list Dart) (d : Dart) (n : nat),
+    D = darts_of E ->
+    (forall v : Point, fan_ok (outgoing v D)) ->
+    (forall x, In x D -> In (twin x) D) ->
+    In d D ->
+    reachable E (dbase d) (dtip (iter (fstep D) n d)).
+Proof.
+  intros E D d n HD Hfan Htw Hd.
+  revert d Hd.
+  induction n as [| n IHn]; intros d Hd.
+  - cbn [iter].
+    assert (HdE : In d (darts_of E)) by (rewrite <- HD; exact Hd).
+    apply dart_endpoints_reachable with (d := d); [ exact HdE | ].
+    apply dart_endpoints_ne_of_proper, dart_proper_of_fan with (D := D); assumption.
+  - cbn [iter].
+    assert (HdE : In d (darts_of E)) by (rewrite <- HD; exact Hd).
+    assert (HfanE : forall v, fan_ok (outgoing v (darts_of E))).
+    { intro v. rewrite <- HD. apply Hfan. }
+    apply reach_trans with (dtip d).
+    + apply reach_one, dart_on_walk_endpoints_adj with (d := d) (n := S n)
+        (x := d); [ exact HfanE | exact HdE | left; reflexivity ].
+    + rewrite <- (dbase_fstep D d Htw Hd).
+      assert (Heq : fstep D (iter (fstep D) n d) = iter (fstep D) n (fstep D d))
+        by (symmetry; apply iter_succ_inside).
+      rewrite Heq. apply IHn. apply fstep_in; assumption.
+Qed.
+
+Lemma dart_walk_endpoints_reachable :
+  forall E d n,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d (darts_of E) ->
+    (1 <= n)%nat ->
+    reachable E (dbase d)
+      (dtip (last (dart_walk (darts_of E) d n) d)).
+Proof.
+  intros E d n Hfan Hd Hle.
+  set (D := darts_of E).
+  assert (Htw : forall x, In x D -> In (twin x) D)
+    by (apply darts_of_closed_under_twin).
+  destruct n as [| n']; [ lia | ].
+  assert (Hlast : last (dart_walk D d (S n')) d = iter (fstep D) n' d).
+  { apply dart_walk_last. }
+  rewrite Hlast.
+  apply (dart_walk_endpoints_reachable_iter E D d n'); [ reflexivity | exact Hfan | exact Htw | exact Hd ].
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §3  The bridge lemma (rotation-system core) — OPEN.                         *)
 (*                                                                            *)
@@ -272,5 +321,7 @@ Print Assumptions dart_carrier_edge.
 Print Assumptions same_face_twin_in_period_walk.
 Print Assumptions same_face_twin_both_on_period_walk.
 Print Assumptions dart_on_walk_endpoints_adj.
+Print Assumptions dart_walk_endpoints_reachable_iter.
+Print Assumptions dart_walk_endpoints_reachable.
 Print Assumptions dart_endpoints_reachable.
 Print Assumptions dart_endpoints_ne_of_proper.

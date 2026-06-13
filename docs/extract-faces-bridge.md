@@ -480,8 +480,9 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
 - `same_face_twin_in_period_walk` — `same_face D d (twin d)` places `twin d`
   on the period face walk (via `walk_at_period_iff_same_face`).
 - `dart_endpoints_ne_of_proper`, `dart_proper_of_fan` — fan/properness hygiene.
-- `same_face_twin_both_on_period_walk`, `dart_on_walk_endpoints_adj` — both
-  orientations on the period walk; every walk dart is graph-adjacent in `E`.
+- `same_face_twin_both_on_period_walk`, `dart_on_walk_endpoints_adj`,
+  `dart_walk_endpoints_reachable` — both orientations on the period walk;
+  every walk dart is graph-adjacent in `E`; walk-level vertex reachability.
 - `same_face_of_one_spur_step` — spur algebra (`fstep d = twin d`); excluded
   by `no_spurs` (bigon counterexample shows `no_spurs` is necessary).
 - `edge_2_connected_twins_sep`, `H_bridge_well_noded` (Section
