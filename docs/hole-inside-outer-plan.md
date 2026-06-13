@@ -213,8 +213,22 @@ if `ring_edges r = inc ++ dec` with `inc` increasing and `dec` decreasing, then
 crossed 0/1/2 times and the parity is odd exactly when one chain is hit. This
 reduces general convex `point_in_ring` to two clean residuals carried into rung 3.
 
-**Rung 3 (outlined, not landed): convexity ⇒ split, and interior ⇒ exactly one
-chain hit.** Two residuals remain, both isolated by rung 2:
+**Rung 3 (landed): conditional closure of `convex_interior_parity`.** `ConvexChainSplit.v`
+assembles the campaign: `convex_interior_parity_from_split` proves that given `bimonotone_split`
++ `interior_hits_one_chain`, `convex_interior_parity` follows in one line from
+`bimonotone_split_parity`; `hole_inside_outer_convex_via_split` composes with
+`hole_inside_outer_convex_guarded` to give `hole_inside_outer`. A concrete CCW diamond witness
+(`diamond_bimonotone`, `diamond_inc_crossed`, `diamond_dec_not_crossed`,
+`diamond_point_in_ring_via_split`) exercises the full pipeline end-to-end with no Admitted.
+The remaining open lemma (sole residual of the campaign) is isolated exactly in
+`interior_hits_one_chain`:
+
+**Sole open residual — connecting `conv_min > 0` to vertex ordering.** Two structural facts
+remain, both captured by `interior_hits_one_chain`:
+(a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation) splits at its
+unique min-y and max-y vertices into an increasing chain followed by a decreasing chain
+(`bimonotone_split`) — the structural bridge from the half-plane presentation to vertex ordering;
+and (b) a strictly-interior point hits exactly one chain.
 (a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation)
 splits at its unique min-y and max-y vertices into an increasing chain followed by
 a decreasing chain whose concatenation is `ring_edges` — the structural bridge

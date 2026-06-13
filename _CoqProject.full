@@ -167,6 +167,11 @@ theories/ConvexNesting.v
 # The reusable n-independent core toward discharging convex_interior_parity.
 theories/MonotoneChainParity.v
 
+# Convex-chain monotonicity campaign, rung 3: conditional closure of
+# convex_interior_parity over a bimonotone split; names the two structural
+# residuals; concrete diamond witness exercises the full pipeline.
+theories/ConvexChainSplit.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the
