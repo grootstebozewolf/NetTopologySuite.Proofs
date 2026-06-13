@@ -131,6 +131,13 @@
 # witness), so a vertex condition is genuinely additional.  Remaining: H3
 # (no_short_faces) and face_twin_free -- one combinatorial rung, gated on a
 # 2-edge-connected / no-cut-edge input.  The entry STAYS Admitted.
+# DISCHARGE-PLAN UPDATE (2026-06-13, step (4b) + capstone): H3 landed in
+# theories/NoShortFaces.v (no_short_faces_of_proper_nospur: period 1 => degenerate,
+# period 2 => spur).  Capstone extract_faces_valid_well_noded discharges
+# H1+H2+H3 from well_noded_darts + no_spurs, leaving ONLY per-face
+# face_twin_free open -- the single precise residual.  That last rung needs a
+# 2-edge-connected / no-cut-edge input (antenna + dumbbell obstructions).
+# The entry STAYS Admitted until face_twin_free lands.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================

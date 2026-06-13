@@ -345,6 +345,12 @@ theories/NodedGeneralPosition.v
 # gives fan_ok.  Records that noded_general_position alone does NOT
 # (straight-through vertex witness).  No Admitteds.
 theories/VertexGeneralPosition.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan step (4b):
+# H3 (no_short_faces) from properness + no-spurs (period 1 needs a
+# degenerate dart; period 2 is a twin-pair spur), plus the capstone
+# extract_faces_valid_well_noded discharging H1+H2+H3 and leaving only the
+# per-face face_twin_free open.  No Admitteds.
+theories/NoShortFaces.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's

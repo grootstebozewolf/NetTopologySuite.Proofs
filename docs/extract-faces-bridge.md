@@ -318,3 +318,40 @@ UNCONDITIONAL vertex condition.
 derivation — the same combinatorial rung (a bigon IS a twin-pair spur), still
 gated on the no-cut-edge / 2-edge-connected input identified in the step-3
 section.
+
+---
+
+## Step (4b) — LANDED (2026-06-13, `theories/NoShortFaces.v`)
+
+Fourteenth RGR iteration; H3 (`no_short_faces`) and the integrating capstone.
+
+`face_period` is the FIRST return time, so `period >= 3` follows from
+`face_period_spec` (the period IS a genuine return) by refuting the two short
+candidates:
+
+- **period 1** (self-loop): `fstep D d` is based at `dtip d` (`dbase_fstep`:
+  `next` stays in the head-vertex fan), so `fstep D d = d` forces
+  `dbase d = dtip d`, a degenerate dart — excluded by `all_proper_darts`.
+- **period 2** (bigon): `fstep D (fstep D d) = d` forces `fstep D d = twin d`
+  (`period2_imp_spur`: the middle dart runs `dtip d -> dbase d`), a SPUR —
+  excluded by `no_spurs`.
+
+So `no_short_faces` reduces **exactly** to properness + no-spurs
+(`no_short_faces_of_proper_nospur`). This is strictly weaker than
+`face_twin_free`: a bigon is a period-2 face = a spur, but `face_twin_free`
+additionally excludes twin pairs reachable across a BRIDGE edge with no spur
+(the dumbbell). H3 lands here from a clean named condition; `face_twin_free`
+still awaits the 2-edge-connected input.
+
+**Capstone — `extract_faces_valid_well_noded`.** From `well_noded_darts`
+(steps 3 + 4a) and `no_spurs` (step 4b), all three structural hypotheses of
+`FaceTwinAware.extract_faces_valid_twin_aware` are discharged
+(`arrangement_ok` is automatic via `arrangement_ok_of_fan_ok`), leaving ONLY
+the per-face `face_twin_free` hypothesis open. That is now the single, precise
+residual of the `extract_rings_valid` bridge.
+
+**Ladder state.** Corrected-plan steps (1), (2), (3), (4a), (4b) all landed.
+The bridge is: *well-noded + no-spurs ⟹ valid faces, modulo `face_twin_free`*.
+The one remaining rung is `face_twin_free` from a 2-edge-connected /
+no-cut-edge structural input (antenna + dumbbell obstructions, step-3/4a doc).
+`extract_rings_valid` stays Admitted until that lands.
