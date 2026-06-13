@@ -435,10 +435,9 @@ orbit-linking headline
 
 — the classical "an edge is a bridge iff its two darts bound the same face",
 relating the `fstep` rotation-system faces to graph bridges — is the genuine
-multi-session core and is **not** proved here. It is documented in
-`EdgeConnectivity.v` §5 as the remaining deep rung. `extract_rings_valid`
-stays Admitted; `extract_faces_valid_sep` / `_holes_valid_sep` (FaceOrbitSep.v)
-wait to consume it.
+multi-session core. It is carried as the named hypothesis **H_bridge** of
+`OverlayBridge.extract_rings_valid` (conditional Qed; registry clear). Target
+proof: `theories/EdgeFaceBridge.v` (in progress).
 
 ---
 
@@ -465,3 +464,26 @@ a named hypothesis (see `EdgeConnectivity.v` §5). Axiom footprint: the
 allowlist trio + `Classical_Prop.classic` (the existing OverlayBridge/Hobby
 lane, `docs/audit-exceptions.txt`), unchanged from when the Admitted lived
 there.
+
+---
+
+## §19 H_bridge scaffold — rungs 1–4 (in progress, `theories/EdgeFaceBridge.v`)
+
+Nineteenth RGR iteration off §18. The open named hypothesis **H_bridge** is
+unchanged in `OverlayBridge.extract_rings_valid`; this slice lays the
+dart↔edge and same_face↔dart_walk linkage the rotation-system core will consume.
+
+**Green — LANDED (partial):**
+
+- `dart_carrier_edge`, `dart_endpoints_adj` / `dart_endpoints_reachable` —
+  dart incidence on `darts_of E` and vertex adjacency/reachability.
+- `same_face_twin_in_period_walk` — `same_face D d (twin d)` places `twin d`
+  on the period face walk (via `walk_at_period_iff_same_face`).
+- `dart_endpoints_ne_of_proper`, `dart_proper_of_fan` — fan/properness hygiene.
+- `edge_2_connected_twins_sep`, `H_bridge_well_noded` (Section
+  `BridgePackaging`) — contrapositive assembly from `same_face_twin_is_cut`;
+  closes H_bridge once Rung 3 lands.
+
+**Remaining (Rung 3):** `same_face_twin_is_cut` — the classical bridge fact
+(an edge is a bridge iff its two darts bound the same face). Then instantiate
+`BridgePackaging` and drop H_bridge from `OverlayBridge.extract_rings_valid`.

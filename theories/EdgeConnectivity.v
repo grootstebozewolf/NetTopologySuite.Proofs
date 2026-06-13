@@ -20,12 +20,9 @@
    machine-checked: a lone edge IS a cut edge; a triangle is 2-edge-connected.
 
    This is the graph VOCABULARY.  The orbit-linking theorem itself
-   (`edge_2_connected (result_edges op g) -> twins_in_different_faces
-   (result_darts op g)`) is the genuine multi-session core -- it relates the
-   `fstep` rotation-system faces to graph bridges (the classical "an edge is a
-   bridge iff its two darts bound the same face") -- and is NOT proved here;
-   it is documented as the remaining deep rung.  `extract_rings_valid` stays
-   Admitted meanwhile.
+   (`edge_2_connected E -> twins_in_different_faces (darts_of E)`) is the
+   open named hypothesis H_bridge of `OverlayBridge.extract_rings_valid`
+   (conditional Qed); target proof in `EdgeFaceBridge.v`.
 
    Pure Point + list combinatorics; no `Admitted` / `Axiom` / `Parameter`;
    allowlist axioms only.
@@ -246,12 +243,10 @@ End Triangle.
 (*                                                                            *)
 (* i.e. the classical rotation-system bridge characterisation (an edge is a    *)
 (* bridge iff its two darts bound the same face).  It relates the graph layer   *)
-(* above to the                                                                 *)
-(* `fstep` face orbits of DartFace/FaceOrbitSep, and is the genuine            *)
-(* multi-session core of this sub-ladder (no existing Euler/connectivity       *)
-(* bridge to lean on).  It is NOT proved here; `extract_rings_valid` stays     *)
-(* Admitted until it lands, with `extract_faces_valid_sep` /                   *)
-(* `extract_faces_holes_valid_sep` (FaceOrbitSep.v) waiting to consume it.     *)
+(* above to the `fstep` face orbits of DartFace/FaceOrbitSep.  The forward     *)
+(* implication is the open named hypothesis H_bridge of                          *)
+(* OverlayBridge.extract_rings_valid (conditional Qed since 2026-06-13); target  *)
+(* proof lives in theories/EdgeFaceBridge.v (in progress).                     *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)

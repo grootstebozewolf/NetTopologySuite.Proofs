@@ -159,6 +159,23 @@
 # face" linking the graph layer to fstep face orbits.  STAYS Admitted.
 
 # ============================================================================
+# OPEN NAMED HYPOTHESES (not Admitted -- conditional headlines)
+# ============================================================================
+#
+# These are explicit mathematical facts carried as named hypotheses in
+# conditional Qed theorems.  They are NOT registry Admitted entries.
+#
+#   - H_bridge (extract_rings_valid combinatorial core)
+#       forall E, edge_2_connected E -> twins_in_different_faces (darts_of E)
+#       Carried by: OverlayBridge.extract_rings_valid (conditional Qed).
+#       Target proof: theories/EdgeFaceBridge.v (in progress).
+#       Rungs 1-2: dart incidence + same_face period walk (Qed).
+#       Rung 4: edge_2_connected_twins_sep / H_bridge_well_noded packaged
+#       in BridgePackaging (Qed modulo same_face_twin_is_cut).
+#       Open: Rung 3 same_face_twin_is_cut (rotation-system core).
+#       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
+
+# ============================================================================
 # ARCHIVED ENTRIES (closed / moved / superseded -- NOT live)
 # ============================================================================
 #
