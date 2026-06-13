@@ -61,6 +61,7 @@ From NTS.Proofs        Require Import VertexGeneralPosition.
 From NTS.Proofs        Require Import NoShortFaces.
 From NTS.Proofs        Require Import FaceOrbitSep.
 From NTS.Proofs        Require Import EdgeConnectivity.
+From NTS.Proofs        Require Import EdgeFaceBridge.
 
 Import ListNotations.
 
@@ -473,14 +474,13 @@ Qed.
 (* `twins_in_different_faces` is exactly no-dart-shares-an-fstep-orbit-with-   *)
 (* its-twin, i.e. no cut edge -- a 2-edge-connected arrangement.  The          *)
 (* rotation-system characterisation `edge_2_connected E ->                     *)
-(* twins_in_different_faces (darts_of E)` (the classical bridge fact: an edge  *)
-(* is a bridge iff its two darts bound the same face) is genuine multi-session *)
-(* theory and is NOT proved here; it is carried as a NAMED HYPOTHESIS,         *)
-(* exactly as `OverlayCorrectness.overlay_ng_correct_conditional` carries its  *)
-(* H_bridge.  So extract_rings_valid is now a conditional Qed (no Admitted,    *)
-(* off the deferred-proof registry), with the 2-edge-connected precondition    *)
-(* surfaced honestly.  The lone open fact is documented at                     *)
-(* EdgeConnectivity.v §5 / docs/extract-faces-bridge.md.                       *)
+(* twins_in_different_faces (darts_of E)` is discharged by                     *)
+(* EdgeFaceBridge.H_bridge_well_noded (combinatorial bridge; modulo the two    *)
+(* core Admitted reach lemmas on Print Assumptions — four total in            *)
+(* EdgeFaceBridge.v, registry LIVE).  Contrast:                                 *)
+(* OverlayCorrectness.overlay_ng_correct_conditional still carries a           *)
+(* *geometric* H_bridge (JCT-gated).  See EdgeConnectivity.v §5 /              *)
+(* docs/extract-faces-bridge.md §19.                                           *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem extract_rings_valid :
@@ -488,17 +488,14 @@ Theorem extract_rings_valid :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
-    (* H_bridge: the rotation-system bridge characterisation (the sole
-       remaining deep fact), carried as a named hypothesis. *)
-    (forall E : list Edge,
-       edge_2_connected E -> twins_in_different_faces (darts_of E)) ->
     forall poly,
       In poly (extract_faces op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros op A B Hwn Hns H2ec Hbridge poly Hin.
+  intros op A B Hwn Hns H2ec poly Hin.
   exact (extract_faces_valid_sep op (noded_labeled_graph A B) Hwn Hns
-           (Hbridge (result_edges op (noded_labeled_graph A B)) H2ec) poly Hin).
+           (H_bridge_well_noded (result_edges op (noded_labeled_graph A B))
+              Hwn Hns H2ec) poly Hin).
 Qed.
 
 (* With-holes companion: the same closure over the holes extractor, threading
@@ -508,8 +505,6 @@ Theorem extract_rings_valid_holes :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
-    (forall E : list Edge,
-       edge_2_connected E -> twins_in_different_faces (darts_of E)) ->
     (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
        forall h, In h (hassign d) ->
          In h (result_darts op (noded_labeled_graph A B))) ->
@@ -524,9 +519,10 @@ Theorem extract_rings_valid_holes :
       In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros hassign op A B Hwn Hns H2ec Hbridge Hwf Hinside poly Hin.
+  intros hassign op A B Hwn Hns H2ec Hwf Hinside poly Hin.
   exact (extract_faces_holes_valid_sep hassign op (noded_labeled_graph A B)
-           Hwn Hns (Hbridge (result_edges op (noded_labeled_graph A B)) H2ec)
+           Hwn Hns (H_bridge_well_noded (result_edges op (noded_labeled_graph A B))
+              Hwn Hns H2ec)
            Hwf Hinside poly Hin).
 Qed.
 
@@ -540,14 +536,12 @@ Theorem valid_geometry_extract :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
-    (forall E : list Edge,
-       edge_2_connected E -> twins_in_different_faces (darts_of E)) ->
     valid_geometry (extract_faces op (noded_labeled_graph A B)).
 Proof.
-  intros op A B Hwn Hns H2ec Hbridge.
+  intros op A B Hwn Hns H2ec.
   unfold valid_geometry.
   intros poly Hin.
-  apply (extract_rings_valid op A B Hwn Hns H2ec Hbridge poly Hin).
+  apply (extract_rings_valid op A B Hwn Hns H2ec poly Hin).
 Qed.
 
 (* -------------------------------------------------------------------------- *)

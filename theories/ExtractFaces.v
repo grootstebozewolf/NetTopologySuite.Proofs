@@ -193,6 +193,78 @@ Proof.
         split; [ right; exact Hin | exact Hr ].
 Qed.
 
+(* Scan `m..n` for the least return time (matches `first_return` on `seq 1 n`). *)
+Fixpoint min_return_scan (D : list Dart) (d : Dart) (rem m : nat) {struct rem} : nat :=
+  match rem with
+  | O => O
+  | S rem' =>
+      if dart_eq_dec (iter (fstep D) m d) d
+      then m
+      else min_return_scan D d rem' (S m)
+  end.
+
+Definition min_return (D : list Dart) (d : Dart) (m n : nat) : nat :=
+  if Nat.leb m n then min_return_scan D d (S (n - m)) m else O.
+
+Lemma min_return_scan_le :
+  forall D d rem m k,
+    (m <= k < m + rem)%nat ->
+    iter (fstep D) k d = d ->
+    (min_return_scan D d rem m <= k)%nat.
+Proof.
+  intros D d rem m k Hrange Hret.
+  revert D m Hrange Hret.
+  induction rem as [| rem' IHrem']; intros D m [Hm Hk] Hret.
+  - lia.
+  - cbn [min_return_scan].
+    destruct (dart_eq_dec (iter (fstep D) m d) d) as [Em | Em].
+    + subst. exact Hm.
+    + assert (Hm' : (S m <= k < S m + rem')%nat).
+      { split.
+        - destruct (Nat.eq_dec m k) as [-> | Hneq]; [ exfalso; apply Em; exact Hret | lia ].
+        - lia. }
+      apply (IHrem' D (S m) Hm' Hret).
+Qed.
+
+Lemma min_return_le :
+  forall D d m n k,
+    (m <= k <= n)%nat ->
+    iter (fstep D) k d = d ->
+    (min_return D d m n <= k)%nat.
+Proof.
+  intros D d m n k Hrange Hret.
+  unfold min_return.
+  destruct (Nat.leb m n) eqn:Hleb; [| lia].
+  apply Nat.leb_le in Hleb.
+  apply (min_return_scan_le D d (S (n - m)) m k).
+  - destruct Hrange. lia.
+  - exact Hret.
+Qed.
+
+Lemma first_return_min_return_scan :
+  forall D d m n,
+    first_return D d (seq m n) = min_return_scan D d n m.
+Proof.
+  intros D d m n.
+  revert D m. induction n as [| n' IHn']; intros D m.
+  - reflexivity.
+  - cbn [first_return seq min_return_scan].
+    destruct (dart_eq_dec (iter (fstep D) m d) d) as [E | E].
+    + reflexivity.
+    + rewrite IHn'. reflexivity.
+Qed.
+
+Lemma first_return_min_return :
+  forall D d n, (1 <= n)%nat -> first_return D d (seq 1 n) = min_return D d 1 n.
+Proof.
+  intros D d n Hn.
+  unfold min_return.
+  assert (Hleb : Nat.leb 1 n = true) by (apply Nat.leb_le; exact Hn).
+  rewrite Hleb.
+  rewrite first_return_min_return_scan.
+  destruct n as [| n']; [ lia | destruct n' as [| n'']; reflexivity ].
+Qed.
+
 (* On a well-formed arrangement the period is a genuine positive return time:
    `face_orbit_finite`'s return happens within `length D` steps (§2), so the
    bounded search cannot miss. *)
@@ -211,6 +283,39 @@ Proof.
     split; [ apply in_seq; lia | exact Hret ]. }
   destruct Hfind as [Hin Hr]. split; [ | exact Hr ].
   apply in_seq in Hin. lia.
+Qed.
+
+Lemma face_period_bounded :
+  forall D d,
+    arrangement_ok D ->
+    In d D ->
+    (face_period D d <= length D)%nat.
+Proof.
+  intros D d Hok Hd.
+  destruct (orbit_returns_bounded Dart dart_eq_dec (fstep D) D
+              (fun x Hx => fstep_in D x (proj1 Hok) Hx)
+              (fstep_inj D Hok) d Hd) as [n [Hn1 [Hn2 Hret]]].
+  assert (Hfind : In (face_period D d) (seq 1 (length D)) /\
+                  iter (fstep D) (face_period D d) d = d).
+  { apply first_return_finds. exists n.
+    split; [ apply in_seq; lia | exact Hret ]. }
+  destruct Hfind as [Hin _]. apply in_seq in Hin. lia.
+Qed.
+
+Lemma face_period_no_early_return :
+  forall D d j,
+    arrangement_ok D ->
+    In d D ->
+    (1 <= j < face_period D d)%nat ->
+    iter (fstep D) j d <> d.
+Proof.
+  intros D d j Hok Hd [H1 Hj] contra.
+  assert (Hfpl := face_period_bounded D d Hok Hd).
+  assert (Hjn : (1 <= j <= length D)%nat) by lia.
+  assert (Hlen : (1 <= length D)%nat) by lia.
+  assert (Hle := min_return_le D d 1 (length D) j Hjn contra).
+  rewrite <- first_return_min_return in Hle by exact Hlen.
+  unfold face_period in Hj, Hle. lia.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

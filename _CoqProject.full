@@ -387,6 +387,10 @@ theories/FaceOrbitSep.v
 # theorem edge_2_connected => twins_in_different_faces is the deferred deep
 # rung.  No Admitteds.
 theories/EdgeConnectivity.v
+# extract_rings_valid R5, H_bridge rung: dart↔edge incidence + same_face↔dart_walk
+# linkage toward edge_2_connected => twins_in_different_faces (§3 open).
+# No Admitteds.
+theories/EdgeFaceBridge.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
