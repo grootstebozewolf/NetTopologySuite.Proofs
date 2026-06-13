@@ -176,6 +176,9 @@
 #       SameFaceTwinCutCore (Qed modulo same_face_twin_disconnect).
 #       Rung 4: edge_2_connected_twins_sep / H_bridge_well_noded packaged
 #       in BridgePackaging (Qed modulo same_face_twin_is_cut; needs no_spurs).
+#       Rung 3b prep: dart_carrier_endpoints, reachable_E_minus_implies_not_cut,
+#       same_face_twin_breaks_face_twin_free, same_face_twin_reachable_k,
+#       dart_on_walk_endpoints_adj_E_minus (all Qed).
 #       Open: Rung 3b same_face_twin_disconnect (rotation-system core).
 #       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
 

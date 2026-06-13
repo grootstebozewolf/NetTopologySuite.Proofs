@@ -500,7 +500,19 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
 - `SameFaceTwinCutCore.same_face_twin_is_cut` — Qed modulo one open fact
   `same_face_twin_disconnect` (Rung 3b).
 
-**Remaining (Rung 3b):** `same_face_twin_disconnect` — prove
+**Green — LANDED (Rung 3b prep):**
+
+- `dart_carrier_endpoints` — carrier edge endpoints align with `dbase`/`dtip`.
+- `reachable_E_minus_implies_not_cut` — easy direction (bypass in `E_minus`
+  refutes `is_cut_edge`).
+- `same_face_twin_breaks_face_twin_free` — `same_face d (twin d)` forces both
+  orientations on the period walk (dumbbell obstruction).
+- `same_face_twin_reachable_k` — twin at step `k >= 2` gives `dbase`–`dtip`
+  reachability in the full graph along the first `k` walk darts.
+- `dart_on_walk_endpoints_adj_E_minus` — non-carrier walk darts stay adjacent
+  in `E_minus`.
+
+**Remaining (Rung 3b core):** `same_face_twin_disconnect` — prove
 `~ reachable (E_minus E e) (dbase d) (dtip d)` from `same_face` + `no_spurs`.
 Then export `same_face_twin_is_cut`, instantiate `BridgePackaging`, and drop
 H_bridge from `OverlayBridge.extract_rings_valid`.

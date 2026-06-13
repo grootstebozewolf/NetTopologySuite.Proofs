@@ -32,7 +32,7 @@ From NTS.Proofs Require Import Distance Overlay OverlayGraph Vec Azimuth
                                Dart DartNextSpec DartAngularOrder OrbitCycle
                                DartFace FaceChain FaceRingSimple FaceOrbitSep
                                ExtractFaces EdgeConnectivity
-                               VertexGeneralPosition NoShortFaces.
+                               VertexGeneralPosition NoShortFaces FaceTwinAware.
 
 Import ListNotations.
 
@@ -78,6 +78,20 @@ Proof.
   - cbn. exact Hne.
   - destruct (twin_edge_endpoints_swap d) as [Hfst Hsnd].
     rewrite Hfst, Hsnd. intro Heq. apply Hne. symmetry. exact Heq.
+Qed.
+
+Lemma dart_carrier_endpoints :
+  forall E d e,
+    In d (darts_of E) -> dbase d <> dtip d ->
+    In e E -> (e = d \/ e = twin d) ->
+    (fst e = dbase d /\ snd e = dtip d) \/
+    (fst e = dtip d /\ snd e = dbase d).
+Proof.
+  intros E d e Hd Hne He Hcase.
+  destruct Hcase as [-> | Htwin].
+  - left. split; reflexivity.
+  - right. destruct (twin_edge_endpoints_swap d) as [Hfst Hsnd].
+    subst e. split; [ exact Hfst | exact Hsnd ].
 Qed.
 
 (* Endpoints of a proper dart are adjacent in the edge graph. *)
@@ -372,6 +386,100 @@ Proof.
     + intro Hr. apply Hdis. apply reach_sym in Hr. exact Hr.
 Qed.
 
+(* Easy direction: a bypass in `E_minus` refutes `is_cut_edge`. *)
+Lemma reachable_E_minus_implies_not_cut :
+  forall (E : list Edge) (e : Edge) (u v : Point),
+    In e E -> fst e = u -> snd e = v -> u <> v ->
+    reachable (E_minus E e) u v ->
+    ~ is_cut_edge E e.
+Proof.
+  intros E e u v He Hfu Hsv Huv Hreach.
+  intro Hcut. unfold is_cut_edge in Hcut.
+  destruct Hcut as [_ [_ [_ Hdis]]].
+  rewrite Hfu, Hsv in Hdis. exact (Hdis Hreach).
+Qed.
+
+(* `same_face` with `twin` places both orientations on the period walk, so the
+   per-face twin-freeness hypothesis fails (the dumbbell obstruction). *)
+Lemma same_face_twin_breaks_face_twin_free :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    ~ face_twin_free (darts_of E) d (face_period (darts_of E) d).
+Proof.
+  intros E d Hfan Hd Hsf Htf.
+  assert (Hdwalk : In d (dart_walk (darts_of E) d (face_period (darts_of E) d))).
+  { apply same_face_refl_on_period_walk; assumption. }
+  assert (Htwinwalk : In (twin d) (dart_walk (darts_of E) d (face_period (darts_of E) d))).
+  { apply same_face_twin_in_period_walk; assumption. }
+  apply (Htf d Hdwalk). exact Htwinwalk.
+Qed.
+
+(* Twin occurs at step `k >= 2`; the first `k` face-walk darts join `dbase d`
+   to `dtip d` in the full edge graph. *)
+Lemma same_face_twin_reachable_k :
+  forall E d k,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d (darts_of E) ->
+    (2 <= k)%nat ->
+    iter (fstep (darts_of E)) k d = twin d ->
+    reachable E (dbase d) (dtip d).
+Proof.
+  intros E d k Hfan Hd Hk Hit.
+  set (D := darts_of E).
+  assert (Htw : forall z, In z D -> In (twin z) D)
+    by (subst D; apply darts_of_closed_under_twin).
+  assert (Hreach : reachable E (dbase d)
+      (dtip (last (dart_walk D d k) d))).
+  { subst D. apply (dart_walk_endpoints_reachable E d k); [ exact Hfan | exact Hd | lia ]. }
+  assert (Hlast : last (dart_walk D d k) d = iter (fstep D) (pred k) d).
+  { destruct k as [| k']; [ lia | destruct k' as [| k'']; [ lia | ]].
+    apply dart_walk_last. }
+  rewrite Hlast in Hreach.
+  assert (Htip : dtip (iter (fstep D) (pred k) d) = dtip d).
+  { destruct k as [| k']; [ lia | cbn [iter] ].
+    assert (Hin : In (iter (fstep D) k' d) D).
+    { apply (face_walk_in D Htw d k' Hd). }
+    pose proof (dbase_fstep D (iter (fstep D) k' d) Htw Hin) as Hbs.
+    assert (Heq : fstep D (iter (fstep D) k' d) = iter (fstep D) (S k') d)
+      by (cbn [iter]; reflexivity).
+    assert (Hit' : iter (fstep D) (S k') d = twin d) by (subst D; exact Hit).
+    rewrite Heq in Hbs. rewrite Hit', dbase_twin in Hbs. symmetry. exact Hbs. }
+  rewrite Htip in Hreach. exact Hreach.
+Qed.
+
+(* On the period walk, every dart except the carrier orientations stays
+   adjacent after removing the carrier edge. *)
+Lemma dart_on_walk_endpoints_adj_E_minus :
+  forall E d0 e n x,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d0 (darts_of E) ->
+    In e E -> (e = d0 \/ e = twin d0) ->
+    In x (dart_walk (darts_of E) d0 n) ->
+    x <> d0 -> x <> twin d0 ->
+    adj (E_minus E e) (dbase x) (dtip x).
+Proof.
+  intros E d0 e n x Hfan Hd0 He Hcase Hx Hxd Hxtwin.
+  assert (HxD : In x (darts_of E)).
+  { set (D := darts_of E) in *.
+    assert (Htw : forall z, In z D -> In (twin z) D)
+      by (subst D; apply darts_of_closed_under_twin).
+    apply (dart_walk_subset D Htw n d0 Hd0 x Hx). }
+  assert (Hne : dbase x <> dtip x).
+  { apply dart_endpoints_ne_of_proper.
+    apply dart_proper_of_fan with (D := darts_of E); assumption. }
+  assert (Hnex : e <> x).
+  { intro H. destruct Hcase as [-> | Ht].
+    - apply Hxd. symmetry. exact H.
+    - apply Hxtwin. transitivity e; [ symmetry; exact H | exact Ht ]. }
+  assert (Hnetx : e <> twin x).
+  { intro H. destruct Hcase as [-> | Ht].
+    - apply Hxtwin. symmetry. apply twin_inj. rewrite twin_involutive. exact H.
+    - apply Hxd. apply twin_inj. rewrite <- Ht, H. reflexivity. }
+  apply dart_endpoints_adj_E_minus with (d := x); assumption.
+Qed.
+
 (* Open core (Rung 3b): the rotation-system disconnectivity fact.              *)
 Section SameFaceTwinCutCore.
   Variable same_face_twin_disconnect :
@@ -457,6 +565,7 @@ End BridgePackaging.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions dart_carrier_edge.
+Print Assumptions dart_carrier_endpoints.
 Print Assumptions same_face_twin_in_period_walk.
 Print Assumptions same_face_twin_both_on_period_walk.
 Print Assumptions dart_on_walk_endpoints_adj.
@@ -465,5 +574,9 @@ Print Assumptions dart_walk_endpoints_reachable.
 Print Assumptions face_period_ge3_of_fan_nospur.
 Print Assumptions same_face_twin_step_index.
 Print Assumptions is_cut_edge_of_dart_disconnect.
+Print Assumptions reachable_E_minus_implies_not_cut.
+Print Assumptions same_face_twin_breaks_face_twin_free.
+Print Assumptions same_face_twin_reachable_k.
+Print Assumptions dart_on_walk_endpoints_adj_E_minus.
 Print Assumptions dart_endpoints_reachable.
 Print Assumptions dart_endpoints_ne_of_proper.
