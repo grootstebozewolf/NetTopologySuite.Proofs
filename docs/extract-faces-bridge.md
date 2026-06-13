@@ -188,3 +188,222 @@ Per the prompt's COLLAPSE clause, the witnesses are committed as Qed'd negatives
 (the bridge's true shape is now machine-checked) and the wall is documented
 precisely. D2/D3 (the strengthened bridge and the genuine re-point) are deferred
 to the follow-up slice with the corrected hypothesis shape pinned above.
+
+---
+
+## Steps (1)+(2) — LANDED (2026-06-12, `theories/FaceTwinAware.v`)
+
+Eleventh RGR iteration. The twin-aware predicate and the re-proved
+simplicity chain are in, with one **correction to step (2)'s wording
+above**, found while building the slice:
+
+**The antenna correction.** "A face ring of an `arrangement_ok` set with
+period ≥ 3 contains no dart together with its twin" is NOT provable as
+stated. `next` wraps to the fan minimum (`DartNext.v:148`), so at a
+degree-1 tip `fstep D x = twin x`: a polygon with a dangling edge (an
+*antenna*) has a face walk of period ≥ 3 that contains a twin pair while
+passing `fan_ok` (singleton fans are vacuously ok) and `no_short_faces`.
+`spur_breaks_face_twin_free` records the easy half (a spur step breaks
+twin-freeness immediately); the converse programme — deriving
+`face_twin_free` from an explicit no-spur / no-dangling-edge condition by
+the innermost-return induction — is its own follow-up rung. Until it
+lands, `face_twin_free` is a named per-face hypothesis: satisfiable,
+unlike the H1 it replaces.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `pairwise_no_proper_cross_twin_aware` — step (1)'s predicate.
+- `sip_swap_left` / `sip_swap_right` — proper crossing is stable under
+  flipping either segment (the `s ↦ 1−s` reparametrisation).
+- `darts_of_twin_aware` — the predicate is SATISFIABLE on `darts_of`:
+  undirected pairwise non-crossing lifts through the twin closure. This
+  is the exact interface step (3)'s geometry discharges.
+- `face_twin_free`, `ring_simple_of_subset_twin_aware`,
+  `face_ring_simple_twin_aware`, `face_ring_combinatorial_valid_twin_aware`
+  — the simplicity chain re-proved without `ring_simple_of_subset D`'s
+  full-`D` appeal (step (2), corrected shape).
+- `face_polygon_valid_twin_aware`, `face_polygon_holes_valid_twin_aware`,
+  `extract_faces_valid_twin_aware`, `extract_faces_holes_valid_twin_aware`
+  — both extractors' headlines restated over the satisfiable H1; these
+  supersede `extract_rings_valid_faces_named` / `_holes_named` as the
+  bridge targets.
+
+**Remaining:** step (3) — the no-collinear-overlap strengthening of
+`fully_intersected` ⟹ undirected `pairwise_no_proper_cross` on the
+survivor set (feeding `darts_of_twin_aware`); step (4) — H2/H3 from the
+same condition; and the `face_twin_free`-from-no-spurs rung. The registry
+entry `extract_rings_valid` stays Admitted.
+
+---
+
+## Step (3) — LANDED (2026-06-13, `theories/NodedGeneralPosition.v`)
+
+Twelfth RGR iteration; the genuine geometric step of the corrected plan.
+
+**The general-position predicate.** `noded_general_position S` strengthens
+`fully_intersected`: distinct survivors either do not properly cross, or
+share an endpoint *with non-parallel directions* (`seg_dir_cross s1 s2 <>
+0`). The shared-endpoint disjunct that slice 3i exposed — admitting
+collinear overlaps — is repaired by the cross-product clause, and
+`collinear_pair_not_gp` confirms the slice-3i witness `(0,0)-(2,0)` /
+`(0,0)-(1,0)` is genuinely excluded.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `noncollinear_share_no_proper` — the four-case geometric core: a shared
+  endpoint plus non-parallel directions excludes proper crossing.
+  Substituting the shared point into the crossing equations gives `a*u =
+  c*v` with `a > 0` (one of `t`, `1-t`); crossing with `v` leaves `a*(u x
+  v) = 0`, absurd. `scaled_dirs_cross_zero` is the shared scalar core.
+- `noded_general_position`, `noded_gp_pairwise` — the predicate and its
+  delivery of the UNDIRECTED `pairwise_no_proper_cross`.
+- `noded_gp_twin_aware` — the composition with rung 1: general position ⟹
+  the twin-aware H1 of `extract_faces_valid_twin_aware` (FaceTwinAware.v),
+  via `darts_of_twin_aware`.
+
+**What remains.** Two rungs:
+
+1. **Step (4): H2/H3 from the same condition.** `fan_ok` (no parallel
+   darts at a vertex) and `no_short_faces` (no bigons) should follow from
+   `noded_general_position` plus arrangement structure; not yet formalised.
+2. **`face_twin_free` from a no-spur / general-position condition.** Beyond
+   the antenna obstruction recorded with rung 1, there is a SECOND
+   obstruction worth pinning before attempting this rung: a **bridge edge**
+   (the dumbbell — two cycles joined by a single edge) places a dart and
+   its twin in the *same* face walk WITHOUT any degree-1 spur, because the
+   face boundary traverses the bridge in both directions. So
+   `face_twin_free` does not follow from spur-freedom alone either; the
+   provable hypothesis is likely "2-edge-connected block" / no-cut-edge,
+   which a real overlay arrangement of closed input rings satisfies but the
+   abstract dart set does not. This rung needs that structural input named
+   explicitly, exactly as the antenna case forced `face_twin_free` to be a
+   named per-face hypothesis rather than a derived one.
+
+With step (3) in, the bridge's geometric core is complete: a
+general-position noded arrangement supplies the satisfiable twin-aware H1.
+The registry entry `extract_rings_valid` stays Admitted — the open rungs
+are H2/H3 and the `face_twin_free` structural derivation.
+
+---
+
+## Step (4a) — LANDED (2026-06-13, `theories/VertexGeneralPosition.v`)
+
+Thirteenth RGR iteration; H2 (`fan_ok`).
+
+**FINDING — refines the plan doc's step-4 wording.** `noded_general_position`
+(step 3) does NOT imply `fan_ok`. Its shared-endpoint clause only bites on
+pairs that *properly cross*; two anti-parallel collinear edges meeting at a
+vertex (a straight-through degree-2 vertex, `(0,0)-(1,0)` and
+`(0,0)-(-1,0)`) meet only at that point, do not properly cross, yet have
+parallel directions — satisfying `noded_general_position` while breaking
+`fan_ok`. `straight_through_noded_gp` + `straight_through_not_fan_ok` are
+the machine-checked witness pair. H2 therefore needs a genuinely additional,
+UNCONDITIONAL vertex condition.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `seg_dir_cross_eq_vcross_ddir` — the bridge `seg_dir_cross d e =
+  vcross (ddir d) (ddir e)`, so step (3)'s cross-product vocabulary IS
+  `fan_ok`'s `parallel`/`ddir` vocabulary.
+- `vertex_general_position` — distinct survivors sharing an endpoint have
+  non-parallel directions, unconditionally ("no two collinear edges meet at
+  a vertex").
+- `fan_ok_of_vertex_gp` — H2: from `vertex_general_position` + properness,
+  `fan_ok (outgoing v D)` at every vertex.
+- `well_noded_darts`, `well_noded_twin_aware`, `well_noded_fan_ok` — the
+  combined precondition over an undirected survivor set (step-3 edge
+  condition + step-4 vertex condition + properness) packaging both H1 and H2.
+
+**What remains.** H3 (`no_short_faces`) and the `face_twin_free` structural
+derivation — the same combinatorial rung (a bigon IS a twin-pair spur), still
+gated on the no-cut-edge / 2-edge-connected input identified in the step-3
+section.
+
+---
+
+## Step (4b) — LANDED (2026-06-13, `theories/NoShortFaces.v`)
+
+Fourteenth RGR iteration; H3 (`no_short_faces`) and the integrating capstone.
+
+`face_period` is the FIRST return time, so `period >= 3` follows from
+`face_period_spec` (the period IS a genuine return) by refuting the two short
+candidates:
+
+- **period 1** (self-loop): `fstep D d` is based at `dtip d` (`dbase_fstep`:
+  `next` stays in the head-vertex fan), so `fstep D d = d` forces
+  `dbase d = dtip d`, a degenerate dart — excluded by `all_proper_darts`.
+- **period 2** (bigon): `fstep D (fstep D d) = d` forces `fstep D d = twin d`
+  (`period2_imp_spur`: the middle dart runs `dtip d -> dbase d`), a SPUR —
+  excluded by `no_spurs`.
+
+So `no_short_faces` reduces **exactly** to properness + no-spurs
+(`no_short_faces_of_proper_nospur`). This is strictly weaker than
+`face_twin_free`: a bigon is a period-2 face = a spur, but `face_twin_free`
+additionally excludes twin pairs reachable across a BRIDGE edge with no spur
+(the dumbbell). H3 lands here from a clean named condition; `face_twin_free`
+still awaits the 2-edge-connected input.
+
+**Capstone — `extract_faces_valid_well_noded`.** From `well_noded_darts`
+(steps 3 + 4a) and `no_spurs` (step 4b), all three structural hypotheses of
+`FaceTwinAware.extract_faces_valid_twin_aware` are discharged
+(`arrangement_ok` is automatic via `arrangement_ok_of_fan_ok`), leaving ONLY
+the per-face `face_twin_free` hypothesis open. That is now the single, precise
+residual of the `extract_rings_valid` bridge.
+
+**Ladder state.** Corrected-plan steps (1), (2), (3), (4a), (4b) all landed.
+The bridge is: *well-noded + no-spurs ⟹ valid faces, modulo `face_twin_free`*.
+The one remaining rung is `face_twin_free` from a 2-edge-connected /
+no-cut-edge structural input (antenna + dumbbell obstructions, step-3/4a doc).
+`extract_rings_valid` stays Admitted until that lands.
+
+---
+
+## With-holes capstone — LANDED (2026-06-13, `theories/ExtractHolesWellNoded.v`)
+
+Fifteenth RGR iteration; mirror of the step-(4b) capstone for the with-holes
+extractor. `extract_faces_holes_valid_well_noded` discharges H1/H2/H3 from
+`well_noded_darts` + `no_spurs` exactly as the hole-free case, with the oracle
+clauses (hole well-formedness + `hole_inside_outer` nesting) passing through.
+Both extractors now reduce to the **identical** single residual: per-face
+`face_twin_free`. The bridge state is uniform — *well-noded + no-spurs ⟹ valid
+faces, modulo `face_twin_free`* — for hole-free and with-holes emission alike.
+
+---
+
+## face_twin_free rung 1 — global orbit reduction (2026-06-13, `theories/FaceOrbitSep.v`)
+
+Sixteenth RGR iteration. Reduces the capstones' per-face `face_twin_free`
+hypothesis to a single global orbit condition, and pins the exact residual.
+
+**The obstruction, pinned.** Working the structure shows `no_spurs` (step 4b)
+is *precisely* "no degree-1 vertex / no leaf": `fstep d = twin d` iff
+`outgoing (dtip d) D = {twin d}` (next on a singleton fan returns its
+argument), i.e. the head vertex is a leaf. So `no_spurs` already kills the
+antenna. The residual is the **dumbbell bridge edge** — a cut edge with no
+leaf, traversed both ways by one face walk — equivalently, *a dart shares a
+face-orbit with its twin*.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `iter_period_mult` — a multiple of a period is the identity (`iter_comp`
+  induction).
+- `dart_walk_iter_iff` — walk membership = bounded iteration.
+- `same_face D a b := ∃k, iter (fstep D) k a = b` — reflexive, transitive,
+  and **symmetric on `D` under `arrangement_ok`** via `face_orbit_finite`
+  (the cyclic-return: from `iter k a = b` and period `n`, `iter (k·n−k) b = a`;
+  no injectivity needed).
+- `walk_at_period_iff_same_face` — the period walk enumerates the orbit
+  (reverse direction reduces any `iter k d` to `iter (k mod period) d`).
+- `twins_in_different_faces D := ∀x∈D, ¬ same_face D x (twin x)` and
+  `face_twin_free_of_sep` — the per-face hypothesis for ALL faces follows from
+  this single global condition.
+- `extract_faces_valid_sep` / `extract_faces_holes_valid_sep` — both capstones
+  restated over `well_noded_darts + no_spurs + twins_in_different_faces`; the
+  per-face quantifier is gone.
+
+**Remaining (the deeper rung).** `twins_in_different_faces` ⟺ no cut edge
+(2-edge-connected, for the connected case). Deriving it requires defining
+cut-edge / 2-edge-connectivity for the dart arrangement and proving "no cut
+edge ⟹ no dart shares its face-orbit with its twin" — a genuine graph-theory
+construction. `extract_rings_valid` stays Admitted until that lands; the
+residual is now a single, named, well-understood global condition.

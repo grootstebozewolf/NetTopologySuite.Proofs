@@ -103,6 +103,50 @@
 # no-collinear-overlap strengthening of `fully_intersected` -- is in
 # docs/extract-faces-bridge.md.  The entry STAYS Admitted (naive-extract shape
 # retained as the RED record); only the discharge plan / doc pointer changes.
+# DISCHARGE-PLAN UPDATE (2026-06-12, twin-aware slice): corrected-plan steps
+# (1)+(2) landed in theories/FaceTwinAware.v -- the twin-aware predicate is
+# satisfiable on darts_of (darts_of_twin_aware) and the simplicity chain is
+# re-proved through extract_faces_valid_twin_aware / the with-holes mirror.
+# The plan doc's step-2 wording is corrected there: period >= 3 + fan_ok do
+# NOT imply face twin-freeness (antenna configuration; fstep wraps to the
+# fan minimum at degree-1 tips), so face_twin_free is carried as a named
+# per-face hypothesis pending the no-spur innermost-return rung.  Remaining:
+# step (3) geometry (no-collinear-overlap strengthening of fully_intersected
+# => undirected pairwise non-crossing => darts_of_twin_aware's premise),
+# step (4) H2/H3, and the face_twin_free derivation.  The entry STAYS
+# Admitted per registry rules.
+# DISCHARGE-PLAN UPDATE (2026-06-13, step (3) -- geometry): the
+# no-collinear-overlap strengthening landed in theories/NodedGeneralPosition.v
+# (noded_general_position => undirected pairwise_no_proper_cross =>
+# noded_gp_twin_aware, the twin-aware H1).  Remaining: step (4) H2/H3 from
+# the same predicate, and face_twin_free from a structural input -- the
+# antenna AND bridge-edge obstructions (docs/extract-faces-bridge.md step-3
+# section) show fan_ok/no_short_faces/no-spur do NOT suffice; a
+# 2-edge-connected / no-cut-edge condition is the likely named hypothesis.
+# The entry STAYS Admitted per registry rules.
+# DISCHARGE-PLAN UPDATE (2026-06-13, step (4a) -- H2): fan_ok landed in
+# theories/VertexGeneralPosition.v (fan_ok_of_vertex_gp from a vertex-level
+# general-position condition; well_noded_darts packages H1+H2).  Refines the
+# plan: noded_general_position does NOT give fan_ok (straight-through vertex
+# witness), so a vertex condition is genuinely additional.  Remaining: H3
+# (no_short_faces) and face_twin_free -- one combinatorial rung, gated on a
+# 2-edge-connected / no-cut-edge input.  The entry STAYS Admitted.
+# DISCHARGE-PLAN UPDATE (2026-06-13, step (4b) + capstone): H3 landed in
+# theories/NoShortFaces.v (no_short_faces_of_proper_nospur: period 1 => degenerate,
+# period 2 => spur).  Capstone extract_faces_valid_well_noded discharges
+# H1+H2+H3 from well_noded_darts + no_spurs, leaving ONLY per-face
+# face_twin_free open -- the single precise residual.  That last rung needs a
+# 2-edge-connected / no-cut-edge input (antenna + dumbbell obstructions).
+# The entry STAYS Admitted until face_twin_free lands.
+# DISCHARGE-PLAN UPDATE (2026-06-13, face_twin_free rung 1): theories/FaceOrbitSep.v
+# reduces the capstones' per-face face_twin_free to ONE global condition
+# twins_in_different_faces (no dart shares a face-orbit with its twin), via the
+# same_face equivalence + period-walk enumeration.  extract_faces_valid_sep /
+# _holes_valid_sep are the capstones over well_noded_darts + no_spurs +
+# twins_in_different_faces.  Pinned: no_spurs = no-leaf; the residual is the
+# dumbbell cut edge; twins_in_different_faces <=> no cut edge (2-edge-connected).
+# Remaining deeper rung: derive twins_in_different_faces from a 2-edge-connected /
+# no-cut-edge condition.  The entry STAYS Admitted.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================

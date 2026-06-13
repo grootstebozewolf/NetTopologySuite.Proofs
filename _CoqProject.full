@@ -323,6 +323,45 @@ theories/ExtractFaces.v
 # coherence extract_faces_holes_nil recovers the hole-free extractor.
 # No Admitteds.
 theories/ExtractFacesHoles.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan steps (1)+(2)
+# (docs/extract-faces-bridge.md): twin-aware simplicity predicate
+# (satisfiable on darts_of, unlike the refuted H1), face_twin_free, the
+# re-proved face-ring simplicity chain without the full-D appeal, and the
+# twin-aware extractor headlines for both extractors.  Records the
+# antenna correction to the plan doc's step-2 wording.  No Admitteds.
+theories/FaceTwinAware.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan step (3):
+# the genuine geometric step.  noded_general_position (no-collinear-overlap
+# strengthening of fully_intersected) => undirected pairwise_no_proper_cross
+# => FaceTwinAware.darts_of_twin_aware's premise.  The four-case
+# shared-endpoint lemma (non-parallel directions exclude proper crossing).
+# Records that slice 3i's collinear pair fails the strengthened predicate.
+# No Admitteds.
+theories/NodedGeneralPosition.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan step (4a):
+# H2 (fan_ok) from a vertex-level general-position condition.  seg_dir_cross
+# = vcross o ddir bridges step (3)'s vocabulary to fan_ok's parallel/ddir;
+# vertex_general_position (unconditional non-parallel on shared endpoints)
+# gives fan_ok.  Records that noded_general_position alone does NOT
+# (straight-through vertex witness).  No Admitteds.
+theories/VertexGeneralPosition.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan step (4b):
+# H3 (no_short_faces) from properness + no-spurs (period 1 needs a
+# degenerate dart; period 2 is a twin-pair spur), plus the capstone
+# extract_faces_valid_well_noded discharging H1+H2+H3 and leaving only the
+# per-face face_twin_free open.  No Admitteds.
+theories/NoShortFaces.v
+# extract_rings_valid R5 bridge follow-up: the with-holes capstone, mirror
+# of NoShortFaces.extract_faces_valid_well_noded for the with-holes
+# extractor.  Both extractors now reduce to the identical residual
+# face_twin_free.  No Admitteds.
+theories/ExtractHolesWellNoded.v
+# extract_rings_valid R5 bridge follow-up, face_twin_free rung 1: reduce the
+# per-face face_twin_free hypothesis to a single global orbit condition
+# (twins_in_different_faces).  same_face equivalence + period-walk enumeration
+# + the _sep capstones.  The 2-edge-connected => twins_in_different_faces
+# derivation is the deferred deeper rung.  No Admitteds.
+theories/FaceOrbitSep.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's
