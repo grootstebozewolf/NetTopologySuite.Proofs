@@ -55,9 +55,11 @@
 # ============================================================================
 # LIVE ENTRIES
 # ============================================================================
-#
-# (none) -- the last live entry, extract_rings_valid, was CLOSED 2026-06-13;
-# see the ARCHIVED section below.
+
+theories/EdgeFaceBridge.v:not_reachable_E_minus_dtip_dbase | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19, EdgeConnectivity.v §5
+theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_dtip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19, EdgeConnectivity.v §5
+theories/EdgeFaceBridge.v:not_reachable_E_minus_dtip_to_outgoing_tip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19 (penult + not_adj layer)
+theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_to_outgoing_tip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19 (penult + not_adj layer)
 
 # `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
 # overlay correctness.  Shows that ring assembly from the labelled
@@ -165,26 +167,20 @@
 # These are explicit mathematical facts carried as named hypotheses in
 # conditional Qed theorems.  They are NOT registry Admitted entries.
 #
-#   - H_bridge (extract_rings_valid combinatorial core)
-#       forall E, edge_2_connected E -> twins_in_different_faces (darts_of E)
-#       Carried by: OverlayBridge.extract_rings_valid (conditional Qed).
-#       Target proof: theories/EdgeFaceBridge.v (in progress).
-#       Rungs 1-2: dart incidence + same_face period walk (Qed).
-#       Rung 2b: walk dart adjacency, twin-both-on-period-walk (Qed).
-#       Rung 2c: dart_walk_endpoints_reachable (walk-level vertex reachability).
-#       Rung 3a: period>=3, twin step index, is_cut_edge packaging,
-#       SameFaceTwinCutCore (Qed modulo same_face_twin_disconnect).
-#       Rung 4: edge_2_connected_twins_sep / H_bridge_well_noded packaged
-#       in BridgePackaging (Qed modulo same_face_twin_is_cut; needs no_spurs).
-#       Rung 3b prep: dart_carrier_endpoints, reachable_E_minus_implies_not_cut,
-#       same_face_twin_breaks_face_twin_free, same_face_twin_reachable_k,
-#       dart_on_walk_endpoints_adj_E_minus (all Qed).
-#       Rung 3b-i: reachable_inv, face_period_no_early_return, first_twin_at
-#       layer, same_face_twin_first_step_index, same_face_twin_prefix_loop_E_minus
-#       (all Qed).
-#       Rung 3b-ii: singleton-fan base cases — not_adj/reachable collapse +
-#       same_face_twin_disconnect_singleton_{out,twin} and e_eq wrappers (Qed).
-#       Open: Rung 3b-iii same_face_twin_disconnect (full rotation-system core).
+#   - H_bridge combinatorial core (CLOSED modulo two Admitted reach lemmas)
+#       Former named hypothesis:
+#         forall E, edge_2_connected E -> twins_in_different_faces (darts_of E)
+#       Now discharged by EdgeFaceBridge.H_bridge_well_noded in
+#       OverlayBridge.extract_rings_valid / _holes / valid_geometry_extract.
+#       Packaging: same_face_twin_disconnect -> same_face_twin_is_cut ->
+#       edge_2_connected_twins_sep -> H_bridge_well_noded (no Section Variables).
+#       Residual axioms (registry LIVE): not_reachable_E_minus_dtip_dbase,
+#       not_reachable_E_minus_dbase_dtip — general-fan endpoint avoidance in
+#       E_minus after carrier removal; singleton base cases + adj characterisations
+#       are Qed; proof target uses same_face + prefix-loop layer (Rung 3b-i).
+#       Contrast: OverlayCorrectness.overlay_ng_correct_conditional still carries
+#       a *geometric* H_bridge (JCT-gated); this slice closed only the
+#       *combinatorial* rotation-system bridge.
 #       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
 
 # ============================================================================

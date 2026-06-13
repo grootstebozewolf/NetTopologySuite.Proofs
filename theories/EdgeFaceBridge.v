@@ -19,7 +19,8 @@
      - ExtractFaces.v       (face_period)
      - VertexGeneralPosition.v (well_noded_darts -> fan_ok)
 
-   No Admitted / Axiom / Parameter; allowlist axioms only.
+   Residual Admitted (registry LIVE): not_reachable_E_minus_{dtip_dbase,dbase_dtip}
+   and not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip (mutual reach layer).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -28,11 +29,13 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List Lia.
+From Stdlib Require Import Program.Equality.
 From NTS.Proofs Require Import Distance Overlay OverlayGraph Vec Azimuth
                                Dart DartNextSpec DartAngularOrder OrbitCycle
-                               DartFace FaceChain FaceRingSimple FaceOrbitSep
-                               ExtractFaces EdgeConnectivity
-                               VertexGeneralPosition NoShortFaces FaceTwinAware.
+                               DartFace FaceChain RingSimple FaceRingSimple
+                               FaceOrbitSep ExtractFaces EdgeConnectivity
+                               NodedGeneralPosition VertexGeneralPosition
+                               NoShortFaces FaceTwinAware.
 
 Import ListNotations.
 
@@ -1024,85 +1027,686 @@ Proof.
   subst e. apply same_face_twin_disconnect_singleton_twin; assumption.
 Qed.
 
-(* Open core (Rung 3b): the rotation-system disconnectivity fact.              *)
-Section SameFaceTwinCutCore.
-  Variable same_face_twin_disconnect :
-    forall (E : list Edge) (d : Dart) (e : Edge),
-      (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-      no_spurs (darts_of E) ->
-      In d (darts_of E) ->
-      dbase d <> dtip d ->
-      same_face (darts_of E) d (twin d) ->
-      In e E -> (e = d \/ e = twin d) ->
-      ~ reachable (E_minus E e) (dbase d) (dtip d).
-
-  Theorem same_face_twin_is_cut :
-    forall (E : list Edge) (d : Dart),
-      (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-      no_spurs (darts_of E) ->
-      In d (darts_of E) ->
-      dbase d <> dtip d ->
-      same_face (darts_of E) d (twin d) ->
-      exists e : Edge,
-        In e E /\ is_cut_edge E e /\ (e = d \/ e = twin d).
-  Proof.
-    intros E d Hfan Hns Hd Hne Hsf.
-    destruct (dart_carrier_edge E d Hd) as [e [He Hcase]].
-    exists e. split; [ exact He | split ].
-    - apply is_cut_edge_of_dart_disconnect with (d := d); [ exact Hd | exact Hne | exact He | exact Hcase | ].
-      apply same_face_twin_disconnect with (E := E) (d := d) (e := e); assumption.
-    - exact Hcase.
-  Qed.
-End SameFaceTwinCutCore.
-
 (* -------------------------------------------------------------------------- *)
-(* §4  Contrapositive packaging (modulo §3).                                   *)
+(* §3b-iii  Rotation-system disconnectivity core (Rung 3b close-out).          *)
 (* -------------------------------------------------------------------------- *)
 
-Section BridgePackaging.
-  (* Abstract §3 conclusion; instantiate from `SameFaceTwinCutCore` once
-     `same_face_twin_disconnect` is proved. *)
-  Variable same_face_twin_is_cut :
-    forall (E : list Edge) (d : Dart),
-      (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-      no_spurs (darts_of E) ->
-      In d (darts_of E) ->
-      dbase d <> dtip d ->
-      same_face (darts_of E) d (twin d) ->
-      exists e : Edge,
-        In e E /\ is_cut_edge E e /\ (e = d \/ e = twin d).
+(* A non-degenerate segment properly crosses its own reversal (midpoint witness). *)
+Lemma seg_properly_crosses_reversal :
+  forall p q : Point, p <> q ->
+    segments_intersect_properly p q q p.
+Proof.
+  intros p q _.
+  unfold segments_intersect_properly.
+  exists (1/2), (1/2).
+  repeat split; try lra.
+Qed.
 
-  Theorem edge_2_connected_twins_sep :
-    forall (E : list Edge),
-      (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-      no_spurs (darts_of E) ->
-      edge_2_connected E ->
-      twins_in_different_faces (darts_of E).
-  Proof.
-    intros E Hfan Hns H2. unfold twins_in_different_faces.
-    intros d Hd Hsf.
-    assert (Hne : dbase d <> dtip d).
-    { apply dart_endpoints_ne_of_proper.
-      apply dart_proper_of_fan with (D := darts_of E); assumption. }
-    destruct (same_face_twin_is_cut E d Hfan Hns Hd Hne Hsf) as
-      [e [He [Hcut Hcase]]].
-    apply (H2 e He). exact Hcut.
-  Qed.
+(* Both orientations present in `E` refute undirected pairwise general position. *)
+Lemma twin_orientations_properly_cross_in_E :
+  forall (E : list Edge) (d : Dart),
+    In d E -> In (twin d) E -> dbase d <> dtip d ->
+    ~ pairwise_no_proper_cross E.
+Proof.
+  intros E d Hd Htwin Hne Hpw.
+  assert (Hne' : d <> twin d).
+  { intro Heq. apply (twin_neq_self d Hne). symmetry. exact Heq. }
+  apply (Hpw d (twin d) Hd Htwin Hne').
+  destruct d as [p q]. cbn [fst snd twin] in *.
+  apply seg_properly_crosses_reversal. exact Hne.
+Qed.
 
-  Theorem H_bridge_well_noded :
-    forall (E : list Edge),
-      well_noded_darts E ->
-      no_spurs (darts_of E) ->
-      edge_2_connected E ->
-      twins_in_different_faces (darts_of E).
-  Proof.
-    intros E Hwn Hns H2.
-    apply (edge_2_connected_twins_sep E).
-    - intro v. apply well_noded_fan_ok. exact Hwn.
-    - exact Hns.
-    - exact H2.
-  Qed.
-End BridgePackaging.
+(* Well-noded survivor lists carry each undirected carrier at most once. *)
+Lemma same_face_twin_carrier_exclusive_d :
+  forall (E : list Edge) (d : Dart),
+    well_noded_darts E ->
+    In d E ->
+    ~ In (twin d) E.
+Proof.
+  intros E d (Hgp & Hprop & _) Hd Htwin.
+  assert (Hne : dbase d <> dtip d).
+  { apply dart_endpoints_ne_of_proper. exact (Hprop d (in_darts_of_orig E d Hd)). }
+  assert (Hne' : d <> twin d).
+  { intro Heq. apply (twin_neq_self d Hne). symmetry. exact Heq. }
+  pose proof (noded_gp_pairwise E Hgp) as Hpair.
+  apply (Hpair d (twin d) Hd Htwin Hne').
+  destruct d as [p q]. cbn [fst snd twin] in *.
+  apply seg_properly_crosses_reversal. exact Hne.
+Qed.
+
+Lemma same_face_twin_carrier_exclusive_twin :
+  forall (E : list Edge) (d : Dart),
+    well_noded_darts E ->
+    In (twin d) E ->
+    ~ In d E.
+Proof.
+  intros E d Hwn Htwin Hd.
+  assert (Hnt := same_face_twin_carrier_exclusive_d E (twin d) Hwn Htwin).
+  rewrite twin_involutive in Hnt.
+  apply Hnt. exact Hd.
+Qed.
+
+Lemma adj_E_minus_dtip_dbase_iff_d_in_E :
+  forall E d,
+    In d (darts_of E) ->
+    In (twin d) E ->
+    dbase d <> dtip d ->
+    adj (E_minus E (twin d)) (dbase d) (dtip d) <->
+    In d E.
+Proof.
+  intros E d Hd HinTwin Hne. split.
+  - intros [ec [Hec Hor]].
+    apply in_E_minus in Hec. destruct Hec as [HinE Hned].
+    destruct (adj_dbase_dtip_witness_carrier E d ec Hd Hne HinE Hor) as [-> | Htwin].
+    + exact HinE.
+    + exfalso. apply Hned. exact Htwin.
+  - intros Hin.
+    unfold adj. exists d. split.
+    + apply in_E_minus. split.
+      * exact Hin.
+      * intro H. exfalso. apply (twin_neq_self d Hne). symmetry. exact H.
+    + left. split; reflexivity.
+Qed.
+
+Lemma not_adj_E_minus_dtip_dbase_when_twin_carrier :
+  forall E d,
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    In (twin d) E ->
+    ~ In d E ->
+    ~ adj (E_minus E (twin d)) (dtip d) (dbase d).
+Proof.
+  intros E d Hd Hne HinTwin Hnd Hadj.
+  apply adj_sym in Hadj.
+  destruct (adj_E_minus_dtip_dbase_iff_d_in_E E d Hd HinTwin Hne) as [Hadj_to_In _].
+  apply Hadj_to_In in Hadj. exact (Hnd Hadj).
+Qed.
+
+Lemma not_adj_E_minus_dbase_dtip_when_d_carrier :
+  forall E d,
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    In d E ->
+    ~ In (twin d) E ->
+    ~ adj (E_minus E d) (dbase d) (dtip d).
+Proof.
+  intros E d Hd Hne Hin Hntwin Hadj.
+  destruct (adj_E_minus_dbase_dtip_iff_twin_in_E E d Hd Hin Hne) as [Hadj_to_In _].
+  apply Hadj_to_In in Hadj. exact (Hntwin Hadj).
+Qed.
+
+Lemma not_adj_E_minus_dtip_dbase_when_d_carrier :
+  forall E d,
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    In d E ->
+    ~ In (twin d) E ->
+    ~ adj (E_minus E d) (dtip d) (dbase d).
+Proof.
+  intros E d Hd Hne Hin Hntwin Hadj.
+  apply adj_sym in Hadj.
+  apply (not_adj_E_minus_dbase_dtip_when_d_carrier E d Hd Hne Hin Hntwin Hadj).
+Qed.
+
+Lemma not_adj_E_minus_dbase_dtip_when_twin_carrier :
+  forall E d,
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    In (twin d) E ->
+    ~ In d E ->
+    ~ adj (E_minus E (twin d)) (dbase d) (dtip d).
+Proof.
+  intros E d Hd Hne HinTwin Hnd Hadj.
+  destruct (adj_E_minus_dtip_dbase_iff_d_in_E E d Hd HinTwin Hne) as [Hadj_to_In _].
+  apply Hadj_to_In in Hadj. exact (Hnd Hadj).
+Qed.
+
+Lemma not_adj_E_minus_dtip_dbase_at :
+  forall E d u,
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    In d E ->
+    ~ In (twin d) E ->
+    u = dbase d ->
+    ~ adj (E_minus E d) (dtip d) u.
+Proof.
+  intros E d u Hd Hne Hin Hntwin Hu Hadj.
+  subst u.
+  apply (not_adj_E_minus_dtip_dbase_when_d_carrier E d Hd Hne Hin Hntwin).
+  exact Hadj.
+Qed.
+
+Lemma not_adj_E_minus_dbase_dtip_at :
+  forall E d u,
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    In (twin d) E ->
+    ~ In d E ->
+    u = dtip d ->
+    ~ adj (E_minus E (twin d)) (dbase d) u.
+Proof.
+  intros E d u Hd Hne HinTwin Hnd Hu Hadj.
+  subst u.
+  apply (not_adj_E_minus_dbase_dtip_when_twin_carrier E d Hd Hne HinTwin Hnd).
+  exact Hadj.
+Qed.
+
+Definition dart_endpoints_ne (d : Dart) : Prop :=
+  dbase d <> dtip d.
+
+Lemma dart_endpoints_neE :
+  forall d, dart_endpoints_ne d -> dbase d <> dtip d.
+Proof. intros d H. exact H. Qed.
+
+(* A nontrivial `E_minus` step into `dbase d` is witnessed by an outgoing dart at
+   `dbase d` other than the removed carrier `d`. *)
+Lemma adj_E_minus_penult_to_dbase :
+  forall E d u,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d (darts_of E) ->
+    In d E ->
+    ~ In (twin d) E ->
+    u <> dbase d ->
+    adj (E_minus E d) u (dbase d) ->
+    exists ec,
+      In ec (outgoing (dbase d) (darts_of E)) /\
+      ec <> d /\
+      u = dtip ec.
+Proof.
+  intros E d u Hfan Hd Hin Hntwin Huneq Hadj.
+  destruct Hadj as [ec [Hec Hor]].
+  apply in_E_minus in Hec. destruct Hec as [HinE Hned].
+  assert (HecD : In ec (darts_of E)) by (apply in_darts_of_orig; exact HinE).
+  destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+  - set (ec' := twin ec).
+    assert (HtwD : In ec' (darts_of E)) by (apply in_darts_of_twin; exact HinE).
+    assert (Hned' : ec' <> d).
+    { intro Heq'. apply Hntwin.
+      assert (Ht : ec = twin d).
+      { apply twin_inj. rewrite twin_involutive. rewrite <- Heq'. reflexivity. }
+      rewrite Ht in HinE. exact HinE. }
+    exists ec'. repeat split.
+    + apply in_outgoing. split; [ exact HtwD | ].
+      unfold ec'. rewrite dbase_twin. cbn [dtip] in Hsu. exact Hsu.
+    + exact Hned'.
+    + unfold ec'. cbn [dbase dtip]. rewrite dtip_twin. cbn [dbase]. symmetry. exact Hfu.
+  - exists ec. repeat split.
+    + apply in_outgoing. split; [ exact HecD | cbn [dbase]; exact Hfu ].
+    + intro Heq. apply Hned. exact Heq.
+    + cbn [dtip]. symmetry. exact Hsu.
+Qed.
+
+(* Mirror: a nontrivial step into `dtip d` uses an outgoing dart at `dtip d`
+   other than the removed carrier `twin d`. *)
+Lemma adj_E_minus_penult_to_dtip :
+  forall E d u,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In d (darts_of E) ->
+    In (twin d) E ->
+    ~ In d E ->
+    u <> dtip d ->
+    adj (E_minus E (twin d)) u (dtip d) ->
+    exists ec,
+      In ec (outgoing (dtip d) (darts_of E)) /\
+      ec <> twin d /\
+      u = dtip ec.
+Proof.
+  intros E d u Hfan Hd HinTwin Hnd Huneq Hadj.
+  destruct Hadj as [ec [Hec Hor]].
+  apply in_E_minus in Hec. destruct Hec as [HinE Hned].
+  assert (HecD : In ec (darts_of E)) by (apply in_darts_of_orig; exact HinE).
+  destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+  - set (ec' := twin ec).
+    assert (HtwD : In ec' (darts_of E)) by (apply in_darts_of_twin; exact HinE).
+    assert (Hned' : ec' <> twin d).
+    { intro Heq'. apply Hnd.
+      assert (Ht : ec = d) by (apply twin_inj; unfold ec' in Heq'; exact Heq').
+      rewrite Ht in HinE. exact HinE. }
+    exists ec'. repeat split.
+    + apply in_outgoing. split; [ exact HtwD | ].
+      unfold ec'. rewrite dbase_twin. cbn [dtip] in Hsu. exact Hsu.
+    + exact Hned'.
+    + unfold ec'. cbn [dbase dtip]. rewrite dtip_twin. cbn [dbase]. symmetry. exact Hfu.
+  - exists ec. repeat split.
+    + apply in_outgoing. split; [ exact HecD | cbn [dbase]; exact Hfu ].
+    + intro Heq. apply Hned. exact Heq.
+    + cbn [dtip]. symmetry. exact Hsu.
+Qed.
+
+Lemma neq_eq_False {T : Type} (x y : T) : x <> y -> x = y -> False.
+Proof. intros Hneq Heq. apply Hneq. exact Heq. Qed.
+
+Lemma outgoing_dbase_tip_ne_dtip :
+  forall E d ec,
+    In d (darts_of E) ->
+    dart_endpoints_ne d ->
+    In ec (outgoing (dbase d) (darts_of E)) ->
+    ec <> d ->
+    dtip ec <> dtip d.
+Proof.
+  intros E d ec Hd Hde Hout Hecd Htip.
+  assert (Hbase : dbase ec = dbase d)
+    by (apply outgoing_base with (D := darts_of E); exact Hout).
+  apply Hecd. apply dart_eq_of_endpoints; [ exact Hbase | exact Htip ].
+Qed.
+
+Lemma outgoing_dtip_tip_ne_dbase :
+  forall E d ec,
+    In d (darts_of E) ->
+    dart_endpoints_ne d ->
+    In ec (outgoing (dtip d) (darts_of E)) ->
+    ec <> twin d ->
+    dtip ec <> dbase d.
+Proof.
+  intros E d ec Hd Hde Hout Hecd Htip.
+  assert (Hbase : dbase ec = dtip d)
+    by (apply outgoing_base with (D := darts_of E); exact Hout).
+  apply Hecd. apply dart_eq_of_endpoints; [ exact Hbase | exact Htip ].
+Qed.
+
+Lemma adj_E_minus_loop_endpoints_ne :
+  forall (E : list Edge) (e ec : Edge),
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    In ec (E_minus E e) ->
+    fst ec = snd ec ->
+    False.
+Proof.
+  intros E e ec Hfan HinE Heq.
+  apply in_E_minus in HinE. destruct HinE as [HinEc _].
+  assert (HecD : In ec (darts_of E)) by (apply in_darts_of_orig; exact HinEc).
+  destruct ec as [a b]. cbn [fst snd] in Heq |- *.
+  assert (Hprop : dbase (a, b) <> dtip (a, b)).
+  { apply dart_endpoints_ne_of_proper.
+    apply dart_proper_of_fan with (D := darts_of E); assumption. }
+  cbn in Hprop. rewrite Heq in Hprop. apply Hprop. reflexivity.
+Qed.
+
+(* Reach core (mutual with outgoing-tip lemmas below — registry LIVE). *)
+Lemma not_reachable_E_minus_dtip_dbase :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    ~ reachable (E_minus E d) (dtip d) (dbase d).
+Proof.
+  Admitted.
+
+Lemma not_reachable_E_minus_dbase_dtip :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    ~ reachable (E_minus E (twin d)) (dbase d) (dtip d).
+Proof.
+  Admitted.
+
+Lemma reachable_E_minus_from_dtip_ne_dbase :
+  forall E d w,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    reachable (E_minus E d) (dtip d) w -> w <> dbase d.
+Proof.
+  intros E d w Hfan Hns Hd Hsf Hde Hin Hntwin Hreach Heq.
+  subst w.
+  apply (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin).
+  exact Hreach.
+Qed.
+
+Lemma reachable_E_minus_from_dbase_ne_dtip :
+  forall E d w,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    reachable (E_minus E (twin d)) (dbase d) w -> w <> dtip d.
+Proof.
+  intros E d w Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach Heq.
+  subst w.
+  apply (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd).
+  exact Hreach.
+Qed.
+
+(* Off-carrier outgoing tips at `dbase d` are not adjacent to `dtip d` in `E_minus`. *)
+Lemma not_adj_E_minus_dtip_to_outgoing_dbase_tip :
+  forall E d ec,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    In ec (outgoing (dbase d) (darts_of E)) ->
+    ec <> d ->
+    ~ adj (E_minus E d) (dtip d) (dtip ec).
+Proof.
+  intros E d ec Hfan Hns Hd Hsf Hde Hin Hntwin Hout Hecd Hadj.
+  pose proof (dart_endpoints_neE d Hde) as Hend.
+  set (D := darts_of E).
+  assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
+  assert (Htw : forall z, In z D -> In (twin z) D) by (subst D; apply darts_of_closed_under_twin).
+  assert (HecD : In ec (darts_of E)) by (apply (proj1 (in_outgoing _ _ _) Hout)).
+  assert (Hbase : dbase ec = dbase d)
+    by (apply outgoing_base with (D := darts_of E); exact Hout).
+  assert (Hdbec : dbase ec <> dtip ec).
+  { apply dart_endpoints_ne_of_proper.
+    apply dart_proper_of_fan with (D := darts_of E); [ exact HecD | exact Hfan ]. }
+  assert (Htip_ne : dtip ec <> dbase d).
+  { intro H. apply Hdbec. rewrite H. exact Hbase. }
+  destruct Hadj as [e [He Hor]].
+  apply in_E_minus in He. destruct He as [HinE Hned].
+  assert (Hed : In e (darts_of E)) by (apply in_darts_of_orig; exact HinE).
+  destruct (dart_eq_dec e ec) as [-> | Hne].
+  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    + assert (Hdeq : dbase ec = dtip d) by (cbn [dbase dtip fst]; exact Hfu).
+      apply (Hend (eq_trans (eq_sym Hbase) Hdeq)).
+    + apply Hdbec. cbn [dbase dtip fst] in Hfu. exact Hfu.
+  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    + assert (Hbe : dbase e = dtip d) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+      assert (Hte : dtip e = dtip ec) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
+      assert (Hadj1 : adj (E_minus E d) (dtip d) (dtip ec)).
+      { unfold adj. exists e. split.
+        - exact (proj2 (in_E_minus E d e) (conj HinE Hned)).
+        - left. split; [ exact Hbe | exact Hte ]. }
+      destruct (point_eq_dec (dtip ec) (dbase d)) as [Htip_dbase | Htip_not_dbase].
+      * assert (Hspur : dbase ec = dtip ec) by (rewrite Hbase; exact (eq_sym Htip_dbase)).
+        apply Hdbec. exact Hspur.
+      * assert (Hreach : reachable (E_minus E d) (dtip d) (dbase d)).
+        { apply reach_trans with (dtip ec).
+          - apply reach_one. exact Hadj1.
+          - apply reach_one. unfold adj.
+            destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
+            + exists ec. split.
+              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
+              * right. split; [ exact Hbase | reflexivity ].
+            + exists (twin ec). split.
+              * destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
+                -- exfalso. apply Htip_not_dbase.
+                   assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
+                   rewrite Hec_tw, dtip_twin. reflexivity.
+                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
+              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
+        exact (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin Hreach).
+    + assert (Hbe : dbase e = dtip ec) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+      assert (Hte : dtip e = dtip d) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
+      assert (Hadj1 : adj (E_minus E d) (dtip d) (dtip ec)).
+      { unfold adj. exists e. split.
+        - exact (proj2 (in_E_minus E d e) (conj HinE Hned)).
+        - right. split; [ exact Hbe | exact Hte ]. }
+      destruct (point_eq_dec (dtip ec) (dbase d)) as [Htip_dbase | Htip_not_dbase].
+      * assert (Hspur : dbase ec = dtip ec) by (rewrite Hbase; exact (eq_sym Htip_dbase)).
+        apply Hdbec. exact Hspur.
+      * assert (Hreach : reachable (E_minus E d) (dtip d) (dbase d)).
+        { apply reach_trans with (dtip ec).
+          - apply reach_one. exact Hadj1.
+          - apply reach_one. unfold adj.
+            destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
+            + exists ec. split.
+              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
+              * right. split; [ exact Hbase | reflexivity ].
+            + exists (twin ec). split.
+              * destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
+                -- exfalso. apply Htip_not_dbase.
+                   assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
+                   rewrite Hec_tw, dtip_twin. reflexivity.
+                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
+              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
+        exact (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin Hreach).
+Qed.
+
+Lemma not_adj_E_minus_dbase_to_outgoing_dtip_tip :
+  forall E d ec,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    In ec (outgoing (dtip d) (darts_of E)) ->
+    ec <> twin d ->
+    ~ adj (E_minus E (twin d)) (dbase d) (dtip ec).
+Proof.
+  intros E d ec Hfan Hns Hd Hsf Hde HinTwin Hnd Hout Hecd Hadj.
+  pose proof (dart_endpoints_neE d Hde) as Hend.
+  set (D := darts_of E).
+  assert (Htw : forall z, In z D -> In (twin z) D) by (subst D; apply darts_of_closed_under_twin).
+  assert (HecD : In ec (darts_of E)) by (apply (proj1 (in_outgoing _ _ _) Hout)).
+  assert (Hbase : dbase ec = dtip d)
+    by (apply outgoing_base with (D := darts_of E); exact Hout).
+  assert (Hdbec : dbase ec <> dtip ec).
+  { apply dart_endpoints_ne_of_proper.
+    apply dart_proper_of_fan with (D := darts_of E); [ exact HecD | exact Hfan ]. }
+  assert (Htip_ne : dtip ec <> dtip d).
+  { intro Htip_eq. apply Hdbec. rewrite Htip_eq. exact Hbase. }
+  destruct Hadj as [e [He Hor]].
+  apply in_E_minus in He. destruct He as [HinE Hned].
+  assert (Hed : In e (darts_of E)) by (apply in_darts_of_orig; exact HinE).
+  destruct (dart_eq_dec e ec) as [-> | Hne].
+  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    + assert (Hdeq : dbase ec = dbase d) by (cbn [dbase dtip fst]; exact Hfu).
+      apply Hend. exact (eq_sym (eq_trans (eq_sym Hbase) Hdeq)).
+    + apply Hdbec. cbn [dbase dtip fst] in Hfu. exact Hfu.
+  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    + assert (Hbe : dbase e = dbase d) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+      assert (Hte : dtip e = dtip ec) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
+      assert (Hadj1 : adj (E_minus E (twin d)) (dbase d) (dtip ec)).
+      { unfold adj. exists e. split.
+        - exact (proj2 (in_E_minus E (twin d) e) (conj HinE Hned)).
+        - left. split; [ exact Hbe | exact Hte ]. }
+      destruct (point_eq_dec (dtip ec) (dtip d)) as [Htip_eq | _].
+      * assert (Hspur : dbase ec = dtip ec).
+        { rewrite Hbase. exact (eq_sym Htip_eq). }
+        apply Hdbec. exact Hspur.
+      * assert (Hreach : reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+        { apply reach_trans with (dtip ec).
+          - apply reach_one. exact Hadj1.
+          - apply reach_one. unfold adj.
+            destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
+            + exists ec. split.
+              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
+              * right. split; [ exact Hbase | reflexivity ].
+            + exists (twin ec). split.
+              * destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
+                -- exfalso.
+                   assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
+                   assert (Hbd : dbase d = dtip d).
+                   { rewrite Hec_d in Hbase. exact Hbase. }
+                   apply Hend. exact Hbd.
+                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
+              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
+        exact (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach).
+    + assert (Hbe : dbase e = dtip ec) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+      assert (Hte : dtip e = dbase d) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
+      assert (Hadj1 : adj (E_minus E (twin d)) (dbase d) (dtip ec)).
+      { unfold adj. exists e. split.
+        - exact (proj2 (in_E_minus E (twin d) e) (conj HinE Hned)).
+        - right. split; [ exact Hbe | exact Hte ]. }
+      destruct (point_eq_dec (dtip ec) (dtip d)) as [Htip_eq | _].
+      * assert (Hspur : dbase ec = dtip ec).
+        { rewrite Hbase. exact (eq_sym Htip_eq). }
+        apply Hdbec. exact Hspur.
+      * assert (Hreach : reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+        { apply reach_trans with (dtip ec).
+          - apply reach_one. exact Hadj1.
+          - apply reach_one. unfold adj.
+            destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
+            + exists ec. split.
+              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
+              * right. split; [ exact Hbase | reflexivity ].
+            + exists (twin ec). split.
+              * destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
+                -- exfalso.
+                   assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
+                   assert (Hbd : dbase d = dtip d).
+                   { rewrite Hec_d in Hbase. exact Hbase. }
+                   apply Hend. exact Hbd.
+                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
+              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
+        exact (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach).
+Qed.
+
+(* No route from `dtip d` to the tip of an off-carrier outgoing dart at `dbase d`. *)
+Lemma not_reachable_E_minus_dtip_to_outgoing_tip :
+  forall E d ec,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    In ec (outgoing (dbase d) (darts_of E)) ->
+    ec <> d ->
+    ~ reachable (E_minus E d) (dtip d) (dtip ec).
+Proof. Admitted.
+
+Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
+  forall E d ec,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    In ec (outgoing (dtip d) (darts_of E)) ->
+    ec <> twin d ->
+    ~ reachable (E_minus E (twin d)) (dbase d) (dtip ec).
+Proof. Admitted.
+
+Lemma reachable_from_dtip_avoids_dbase :
+  forall E d wpt,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    In d E ->
+    ~ In (twin d) E ->
+    dbase d <> dtip d ->
+    reachable (E_minus E d) (dtip d) wpt ->
+    wpt <> dbase d.
+Proof.
+  intros E d wpt Hfan Hns Hd Hsf Hin Hntwin Hne Hreach Heq.
+  subst wpt.
+  apply (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hne Hin Hntwin).
+  exact Hreach.
+Qed.
+
+(* Vertices reachable from `dbase d` in `E_minus E (twin d)` never land on `dtip d`. *)
+Lemma reachable_from_dbase_avoids_dtip :
+  forall E d wpt,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    In (twin d) E ->
+    ~ In d E ->
+    dbase d <> dtip d ->
+    reachable (E_minus E (twin d)) (dbase d) wpt ->
+    wpt <> dtip d.
+Proof.
+  intros E d wpt Hfan Hns Hd Hsf HinTwin Hnd Hne Hreach Heq.
+  subst wpt.
+  apply (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hne HinTwin Hnd).
+  exact Hreach.
+Qed.
+
+Lemma same_face_twin_disconnect :
+  forall (E : list Edge) (d : Dart) (e : Edge),
+    well_noded_darts E ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    same_face (darts_of E) d (twin d) ->
+    In e E -> (e = d \/ e = twin d) ->
+    ~ reachable (E_minus E e) (dbase d) (dtip d).
+Proof.
+  intros E d e Hwn Hns Hd Hne Hsf He Hcase.
+  assert (Hfan : forall v : Point, fan_ok (outgoing v (darts_of E))).
+  { intro v. apply well_noded_fan_ok. exact Hwn. }
+  assert (Hdn : dart_endpoints_ne d) by (unfold dart_endpoints_ne; exact Hne).
+  destruct Hcase as [-> | ->].
+  - assert (Hin : In d E) by exact He.
+    assert (Hntwin : ~ In (twin d) E).
+    { intro Ht. apply (same_face_twin_carrier_exclusive_d E d Hwn Hin Ht). }
+    intro Hreach.
+    apply (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hdn Hin Hntwin
+      (reach_sym (E_minus E d) (dbase d) (dtip d) Hreach)).
+  - assert (HinTwin : In (twin d) E) by exact He.
+    assert (Hnd : ~ In d E).
+    { intro Hd'. apply (same_face_twin_carrier_exclusive_twin E d Hwn HinTwin Hd'). }
+    intro Hreach.
+    apply (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hdn HinTwin Hnd).
+    exact Hreach.
+Qed.
+
+Theorem same_face_twin_is_cut :
+  forall (E : list Edge) (d : Dart),
+    well_noded_darts E ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    dbase d <> dtip d ->
+    same_face (darts_of E) d (twin d) ->
+    exists e : Edge,
+      In e E /\ is_cut_edge E e /\ (e = d \/ e = twin d).
+Proof.
+  intros E d Hwn Hns Hd Hne Hsf.
+  destruct (dart_carrier_edge E d Hd) as [e [He Hcase]].
+  exists e. split; [ exact He | split ].
+  - apply is_cut_edge_of_dart_disconnect with (d := d); [ exact Hd | exact Hne | exact He | exact Hcase | ].
+    apply same_face_twin_disconnect with (E := E) (d := d) (e := e); assumption.
+  - exact Hcase.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  Contrapositive packaging.                                               *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem edge_2_connected_twins_sep :
+  forall (E : list Edge),
+    well_noded_darts E ->
+    no_spurs (darts_of E) ->
+    edge_2_connected E ->
+    twins_in_different_faces (darts_of E).
+Proof.
+  intros E Hwn Hns H2. unfold twins_in_different_faces.
+  intros d Hd Hsf.
+  assert (Hne : dbase d <> dtip d).
+  { apply dart_endpoints_ne_of_proper.
+    destruct Hwn as (_ & Hprop & _).
+    exact (Hprop d Hd). }
+  destruct (same_face_twin_is_cut E d Hwn Hns Hd Hne Hsf) as
+    [e [He [Hcut Hcase]]].
+  apply (H2 e He). exact Hcut.
+Qed.
+
+Theorem H_bridge_well_noded :
+  forall (E : list Edge),
+    well_noded_darts E ->
+    no_spurs (darts_of E) ->
+    edge_2_connected E ->
+    twins_in_different_faces (darts_of E).
+Proof.
+  intros E Hwn Hns H2.
+  apply (edge_2_connected_twins_sep E Hwn Hns H2).
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                                *)
@@ -1124,3 +1728,7 @@ Print Assumptions same_face_twin_reachable_k.
 Print Assumptions dart_on_walk_endpoints_adj_E_minus.
 Print Assumptions dart_endpoints_reachable.
 Print Assumptions dart_endpoints_ne_of_proper.
+Print Assumptions same_face_twin_disconnect.
+Print Assumptions same_face_twin_is_cut.
+Print Assumptions edge_2_connected_twins_sep.
+Print Assumptions H_bridge_well_noded.

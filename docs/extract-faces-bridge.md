@@ -467,11 +467,14 @@ there.
 
 ---
 
-## §19 H_bridge scaffold — rungs 1–4 (in progress, `theories/EdgeFaceBridge.v`)
+## §19 H_bridge scaffold — rungs 1–4 (`theories/EdgeFaceBridge.v`)
 
-Nineteenth RGR iteration off §18. The open named hypothesis **H_bridge** is
-unchanged in `OverlayBridge.extract_rings_valid`; this slice lays the
-dart↔edge and same_face↔dart_walk linkage the rotation-system core will consume.
+Nineteenth RGR iteration off §18. The combinatorial **H_bridge** packaging is
+landed: `OverlayBridge.extract_rings_valid` discharges `twins_in_different_faces`
+via `H_bridge_well_noded` (no named `H_bridge` hypothesis). Two Admitted reach
+lemmas remain (registry LIVE); geometric H_bridge in `OverlayCorrectness` is
+unchanged. This slice lays the dart↔edge and same_face↔dart_walk linkage the
+rotation-system core consumes.
 
 **Green — LANDED (partial):**
 
@@ -485,9 +488,9 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
   every walk dart is graph-adjacent in `E`; walk-level vertex reachability.
 - `same_face_of_one_spur_step` — spur algebra (`fstep d = twin d`); excluded
   by `no_spurs` (bigon counterexample shows `no_spurs` is necessary).
-- `edge_2_connected_twins_sep`, `H_bridge_well_noded` (Section
-  `BridgePackaging`) — contrapositive assembly from `same_face_twin_is_cut`
-  (with `no_spurs`); closes H_bridge once Rung 3 lands.
+- `edge_2_connected_twins_sep`, `H_bridge_well_noded` — contrapositive assembly
+  from `same_face_twin_is_cut` (with `no_spurs`); exported top-level theorems
+  (no Section Variables); closes H_bridge packaging modulo reach axioms.
 
 **Green — LANDED (Rung 3a, partial):**
 
@@ -497,8 +500,8 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
 - `is_cut_edge_of_dart_disconnect`, `dart_endpoints_adj_E_minus` — packaging
   `is_cut_edge` from endpoint disconnectivity; non-carrier walk darts stay
   adjacent in `E_minus`.
-- `SameFaceTwinCutCore.same_face_twin_is_cut` — Qed modulo one open fact
-  `same_face_twin_disconnect` (Rung 3b).
+- `same_face_twin_is_cut` — Qed modulo `same_face_twin_disconnect` (Rung 3b;
+  packaging landed, reach core Admitted).
 
 **Green — LANDED (Rung 3b prep):**
 
@@ -544,10 +547,33 @@ Partial disconnectivity when the carrier vertex has a singleton outgoing fan
   packaged `~ reachable (E_minus …) (dbase d) (dtip d)` for the two singleton
   orientations.
 
-`SameFaceTwinCutCore.same_face_twin_disconnect` remains the open Variable
-(full `same_face` + `no_spurs`, not just singleton fans).
+**Green — LANDED (Rung 3b-iii, rotation-system disconnect packaging):**
 
-**Remaining (Rung 3b-iii core):** close `same_face_twin_disconnect` — combine
-3b-i prefix loop at `dtip` with the general case (or further case split). Then
-export `same_face_twin_is_cut`, instantiate `BridgePackaging`, and drop H_bridge
-from `OverlayBridge.extract_rings_valid`.
+- `seg_properly_crosses_reversal`, `twin_orientations_properly_cross_in_E` —
+  reversal crossing + both-orientations-in-`E` refutes `pairwise_no_proper_cross`.
+- `same_face_twin_carrier_exclusive_{d,twin}` — well-noded survivor lists carry
+  each undirected carrier at most once (`noded_general_position`).
+- `adj_E_minus_dtip_dbase_iff_d_in_E`, `not_adj_E_minus_*_when_{d,twin}_carrier` —
+  carrier adjacency characterisations after edge removal.
+- `reachable_from_{dtip,dbase}_avoids_{dbase,dtip}` — wrappers over the reach core
+  (Qed modulo the two Admitted lemmas below).
+- `same_face_twin_disconnect`, `same_face_twin_is_cut`, `edge_2_connected_twins_sep`,
+  `H_bridge_well_noded` — exported theorems (no Section Variables).
+
+**Open — Rung 3b-iii reach core (Admitted, registry LIVE):**
+
+- `not_reachable_E_minus_dtip_dbase` — after removing dart `d` (carrier present,
+  twin absent), `dtip d` does not reach `dbase d` in `E_minus E d`.
+- `not_reachable_E_minus_dbase_dtip` — mirror with `twin d` removed.
+- Proof target: `reachable_ind` anchored predicate on face-prefix walks, consuming
+  `same_face_twin_prefix_loop_E_minus` (Rung 3b-i) + singleton collapse (3b-ii).
+  Singleton-fan and one-step `not_adj_*` lemmas are already Qed.
+
+**CLOSED — H_bridge combinatorial packaging (2026-06-13, modulo reach axioms):**
+`OverlayBridge.extract_rings_valid` now discharges `twins_in_different_faces` via
+`H_bridge_well_noded` (semantic `edge_2_connected → twins_in_different_faces`);
+the former named hypothesis `H_bridge : ∀E, …` is removed from theorem statements.
+`Print Assumptions` on the capstone theorems lists only the two reach lemmas above
+(plus standard classical axioms). Contrast: `OverlayCorrectness.overlay_ng_correct_conditional`
+still carries a *geometric* H_bridge (JCT-gated); this slice closed the
+*combinatorial* rotation-system bridge packaging only.
