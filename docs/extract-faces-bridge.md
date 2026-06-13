@@ -563,25 +563,33 @@ Partial disconnectivity when the carrier vertex has a singleton outgoing fan
 - `same_face_twin_disconnect`, `same_face_twin_is_cut`, `edge_2_connected_twins_sep`,
   `H_bridge_well_noded` — exported theorems (no Section Variables).
 
-**Open — Rung 3b-iii reach layer (Admitted, registry LIVE):**
+**PARTIAL — Rung 3b-iv (2026-06-13, risk/cost pivot; registry LIVE unchanged):**
 
-*Capstone path (on `Print Assumptions` for `H_bridge_well_noded` /
-`extract_rings_valid`):*
+RGR stop: bounded counterexample search found **no** Qed witness; full closure
+deferred — not Path B. Proof architecture validated on paper; compile blocked by
+a **file-order cycle** (`core` → `outgoing-tip` → `not_adj` → `core`), not by
+missing math.
 
-- `not_reachable_E_minus_dtip_dbase` — after removing dart `d` (carrier present,
-  twin absent), `dtip d` does not reach `dbase d` in `E_minus E d`.
-- `not_reachable_E_minus_dbase_dtip` — mirror with `twin d` removed.
+*Pinned scripts (next session: single `Lemma … with …` mutual block **after**
+`adj_E_minus_penult_*`, **before** `not_adj_*`):*
 
-*Mutual induction layer (feeds `not_adj_*` → penult cases; not on capstone path):*
+1. **Outgoing-tip pair** (low cost; uses only `not_adj_*` + `outgoing_*_tip_ne_*`):
+   - `pose proof (outgoing_dbase_tip_ne_dtip …) as Htip_ne`; `induction Hr`;
+     `reach_refl` → `congruence` with `Htip_ne`; `reach_step` with `v = dtip ec`
+     → `not_adj_E_minus_dtip_to_outgoing_dbase_tip`; else `IHreachable` / `eauto`.
+2. **Core pair** (penult last step + outgoing-tip on prefix):
+   - `Havoid : forall z, reachable … (dtip d) z -> z <> dbase d` via `induction Hz`;
+     `reach_step` with `z = dbase d` → nested `induction Htail` + `adj_E_minus_penult_to_dbase`
+     + `not_reachable_E_minus_dtip_to_outgoing_tip` on prefix `reach_trans`.
 
-- `not_reachable_E_minus_dtip_to_outgoing_tip` — no route from `dtip d` to the
-  tip of an off-carrier outgoing dart at `dbase d`.
-- `not_reachable_E_minus_dbase_to_outgoing_tip` — mirror at `dtip d`.
+*Still Admitted (four registry lines):*
 
-Proof target: `reachable_ind` anchored predicate on face-prefix walks, consuming
-`same_face_twin_prefix_loop_E_minus` (Rung 3b-i) + singleton collapse (3b-ii).
-The `not_adj_E_minus_*_to_outgoing_*_tip` barrier lemmas are Qed modulo the
-mutual pair above.
+- `not_reachable_E_minus_{dtip,dbase}_*` — capstone (`Print Assumptions`).
+- `not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip` — penult layer.
+
+Proof target unchanged: `reachable_ind` / anchored `Havoid` predicates (3b-ii
+template), consuming `same_face_twin_prefix_loop_E_minus` when loop guard needed.
+`not_adj_E_minus_*_to_outgoing_*_tip` remain Qed modulo the four lemmas above.
 
 **CLOSED — H_bridge combinatorial packaging (2026-06-13, modulo reach axioms):**
 `OverlayBridge.extract_rings_valid` now discharges `twins_in_different_faces` via

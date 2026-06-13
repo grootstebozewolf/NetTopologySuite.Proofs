@@ -1321,7 +1321,8 @@ Proof.
   cbn in Hprop. rewrite Heq in Hprop. apply Hprop. reflexivity.
 Qed.
 
-(* Reach core (mutual with outgoing-tip lemmas below — registry LIVE). *)
+(* Reach core (registry LIVE). Outgoing-tip pair: same registry; 3b-iv PARTIAL
+   (proof scripts pinned §19; file-order cycle core↔not_adj↔outgoing-tip). *)
 Lemma not_reachable_E_minus_dtip_dbase :
   forall E d,
     (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
@@ -1575,7 +1576,10 @@ Lemma not_reachable_E_minus_dtip_to_outgoing_tip :
     In ec (outgoing (dbase d) (darts_of E)) ->
     ec <> d ->
     ~ reachable (E_minus E d) (dtip d) (dtip ec).
-Proof. Admitted.
+Proof.
+  (* Rung 3b-iv PARTIAL: script pinned in docs/extract-faces-bridge.md §19.
+     Havoid + not_adj one-step; blocked on file-order cycle with core. *)
+  Admitted.
 
 Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
   forall E d ec,
@@ -1589,7 +1593,8 @@ Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
     In ec (outgoing (dtip d) (darts_of E)) ->
     ec <> twin d ->
     ~ reachable (E_minus E (twin d)) (dbase d) (dtip ec).
-Proof. Admitted.
+Proof.
+  Admitted.
 
 Lemma reachable_from_dtip_avoids_dbase :
   forall E d wpt,
