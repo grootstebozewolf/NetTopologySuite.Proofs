@@ -574,6 +574,9 @@ theories/HatNesting.v
 # (the deferred ~78-pair case-bash; linear crossing system + nra) and assembles
 # valid_polygon_hat and a box-with-hat-hole via valid_polygon_rect_outer.
 theories/HatValidPolygon.v
+# A finite two-hat patch as a valid, internally non-crossing geometry
+# (translation invariance of ring_simple + x-separation). No substitution rules.
+theories/HatPatch.v
 # Coverage layer on top of GeneralTriangleHoleNesting: the band hypothesis of
 # gtri_band_in_ring DISCHARGED from interior positivity alone under the
 # rightward-ray guard.  gtri_ray_coverage (0 < gtri /\ ray_avoids_vertices ->
