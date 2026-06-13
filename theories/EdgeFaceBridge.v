@@ -108,6 +108,34 @@ Proof.
     right. split; [ apply dbase_twin | apply dtip_twin ].
 Qed.
 
+(* Every graph adjacency step is witnessed by a dart of `darts_of E`. *)
+Lemma adj_dart_carrier :
+  forall E u v,
+    adj E u v ->
+    exists x, In x (darts_of E) /\
+      ((dbase x = u /\ dtip x = v) \/ (dbase x = v /\ dtip x = u)).
+Proof.
+  intros E u v [e [He Hor]].
+  destruct Hor as [[Hfu Hsv] | [Hfu Hsv]].
+  - exists e. split; [ apply in_darts_of_orig; exact He | left; split; assumption ].
+  - exists (twin e). split; [ apply in_darts_of_twin; exact He | ].
+    left. rewrite dbase_twin, dtip_twin. split; assumption.
+Qed.
+
+Lemma adj_E_minus_dart_carrier :
+  forall E e0 u v,
+    adj (E_minus E e0) u v ->
+    exists x, In x (darts_of E) /\
+      ((dbase x = u /\ dtip x = v) \/ (dbase x = v /\ dtip x = u)).
+Proof.
+  intros E e0 u v [e [He Hor]].
+  apply in_E_minus in He. destruct He as [Hin Hne].
+  destruct Hor as [[Hfu Hsv] | [Hfu Hsv]].
+  - exists e. split; [ apply in_darts_of_orig; exact Hin | left; split; assumption ].
+  - exists (twin e). split; [ apply in_darts_of_twin; exact Hin | ].
+    left. rewrite dbase_twin, dtip_twin. split; assumption.
+Qed.
+
 Lemma dart_endpoints_reachable :
   forall E d, In d (darts_of E) -> dbase d <> dtip d ->
     reachable E (dbase d) (dtip d).
@@ -328,6 +356,158 @@ Proof.
     exfalso. apply (Hns d Hd). exact Hit.
 Qed.
 
+(* First index on a candidate list where `fstep^k d` reaches `twin d`. *)
+Fixpoint first_twin_at (D : list Dart) (d : Dart) (l : list nat) : nat :=
+  match l with
+  | [] => O
+  | k :: rest =>
+      if dart_eq_dec (iter (fstep D) k d) (twin d)
+      then k
+      else first_twin_at D d rest
+  end.
+
+Lemma first_twin_at_finds :
+  forall D d l,
+    (exists k, In k l /\ iter (fstep D) k d = twin d) ->
+    In (first_twin_at D d l) l /\
+    iter (fstep D) (first_twin_at D d l) d = twin d.
+Proof.
+  intros D d l. induction l as [| k0 rest IH]; intros [k [Hk Hret]].
+  - destruct Hk.
+  - cbn [first_twin_at].
+    destruct (dart_eq_dec (iter (fstep D) k0 d) (twin d)) as [E | E].
+    + split; [ left; reflexivity | exact E ].
+    + destruct Hk as [-> | Hk].
+      * contradiction.
+      * destruct (IH (ex_intro _ k (conj Hk Hret))) as [Hin Hr].
+        split; [ right; exact Hin | exact Hr ].
+Qed.
+
+Fixpoint first_twin_scan (D : list Dart) (d : Dart) (rem m : nat) {struct rem} : nat :=
+  match rem with
+  | O => O
+  | S rem' =>
+      if dart_eq_dec (iter (fstep D) m d) (twin d)
+      then m
+      else first_twin_scan D d rem' (S m)
+  end.
+
+Lemma first_twin_at_seq_shift :
+  forall D d m n, first_twin_at D d (seq m n) = first_twin_scan D d n m.
+Proof.
+  intros D d m n. revert D m.
+  induction n as [| n' IHn']; intros D m.
+  - reflexivity.
+  - cbn [seq first_twin_at first_twin_scan].
+    destruct (dart_eq_dec (iter (fstep D) m d) (twin d)) as [Em | Em].
+    + reflexivity.
+    + rewrite (IHn' D (S m)). reflexivity.
+Qed.
+
+Lemma first_twin_scan_le :
+  forall D d rem m k,
+    (m <= k < m + rem)%nat ->
+    iter (fstep D) k d = twin d ->
+    (first_twin_scan D d rem m <= k)%nat.
+Proof.
+  intros D d rem m k Hrange Hret.
+  revert D m Hrange Hret.
+  induction rem as [| rem' IHrem']; intros D m [Hm Hk] Hret.
+  - lia.
+  - cbn [first_twin_scan].
+    destruct (dart_eq_dec (iter (fstep D) m d) (twin d)) as [Em | Em].
+    + subst. exact Hm.
+    + assert (Hm' : (S m <= k < S m + rem')%nat).
+      { split.
+        - destruct (Nat.eq_dec m k) as [-> | Hneq]; [ exfalso; apply Em; exact Hret | lia ].
+        - lia. }
+      apply (IHrem' D (S m) Hm' Hret).
+Qed.
+
+Lemma first_twin_at_le_seq :
+  forall D d n j,
+    In j (seq 1 n) ->
+    iter (fstep D) j d = twin d ->
+    (first_twin_at D d (seq 1 n) <= j)%nat.
+Proof.
+  intros D d n j Hin Hret.
+  apply in_seq in Hin. destruct Hin as [Hj1 Hjn].
+  rewrite (first_twin_at_seq_shift D d 1 n).
+  apply (first_twin_scan_le D d n 1 j); [ lia | exact Hret ].
+Qed.
+
+Lemma first_twin_at_no_earlier_seq :
+  forall D d n k,
+    In k (seq 1 n) ->
+    (k < first_twin_at D d (seq 1 n))%nat ->
+    iter (fstep D) k d <> twin d.
+Proof.
+  intros D d n k Hin Hlt contra.
+  assert (Hle := first_twin_at_le_seq D d n k Hin contra).
+  rewrite first_twin_at_seq_shift in Hlt, Hle. lia.
+Qed.
+
+Lemma iter_lt_face_period_not_self :
+  forall D d j,
+    arrangement_ok D ->
+    In d D ->
+    (1 <= j < face_period D d)%nat ->
+    iter (fstep D) j d <> d.
+Proof.
+  intros D d j Hok Hd Hj.
+  apply (face_period_no_early_return D d j Hok Hd Hj).
+Qed.
+
+Lemma first_twin_at_lt_of_witness :
+  forall D d n j,
+    (j < face_period D d)%nat ->
+    In j (seq 1 n) ->
+    iter (fstep D) j d = twin d ->
+    (first_twin_at D d (seq 1 n) < face_period D d)%nat.
+Proof.
+  intros D d n j Hjfp Hin Hret.
+  apply (Nat.le_lt_trans (first_twin_at D d (seq 1 n)) j (face_period D d));
+    [ apply first_twin_at_le_seq; assumption | exact Hjfp ].
+Qed.
+
+Lemma same_face_twin_first_step_index :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    exists k, (2 <= k < face_period (darts_of E) d)%nat /\
+      iter (fstep (darts_of E)) k d = twin d /\
+      (forall j, (1 <= j < k)%nat -> iter (fstep (darts_of E)) j d <> twin d).
+Proof.
+  intros E d Hfan Hns Hd Hsf.
+  set (D := darts_of E).
+  assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
+  destruct (same_face_twin_step_index E d Hfan Hd Hsf) as [k0 [Hk0 Hit0]].
+  assert (H2 : (2 <= k0)%nat) by (apply (same_face_twin_step_not_one E d k0); assumption).
+  destruct (face_period_spec D Hok d Hd) as [Hp _].
+  assert (Hin0 : In k0 (seq 1 (face_period D d))).
+  { subst D. apply in_seq. lia. }
+  set (k := first_twin_at D d (seq 1 (face_period D d))).
+  destruct (first_twin_at_finds D d (seq 1 (face_period D d))
+              (ex_intro _ k0 (conj Hin0 Hit0))) as [Hin Htwin].
+  exists k. repeat split.
+  - assert (H2k : (2 <= k)%nat) by (apply (same_face_twin_step_not_one E d k Hfan Hns Hd Htwin)).
+    exact H2k.
+  - assert (Hk0D : (k0 < face_period D d)%nat) by (subst D; exact Hk0).
+    assert (Hkfp := first_twin_at_lt_of_witness D d (face_period D d) k0 Hk0D Hin0 Hit0).
+    unfold k. exact Hkfp.
+  - exact Htwin.
+  - intros j Hj contra.
+    unfold k in Hj.
+    destruct Hj as [Hj1 Hj2].
+    assert (Hk0D : (k0 < face_period D d)%nat) by (subst D; exact Hk0).
+    assert (Hkfp := first_twin_at_lt_of_witness D d (face_period D d) k0 Hk0D Hin0 Hit0).
+    assert (Hin' : In j (seq 1 (face_period D d))).
+    { apply in_seq. split; [ exact Hj1 | ]. unfold k. lia. }
+    apply (first_twin_at_no_earlier_seq D d (face_period D d) j Hin' Hj2 contra).
+Qed.
+
 Lemma is_cut_edge_of_disconnect :
   forall (E : list Edge) (e : Edge) (u v : Point),
     In e E -> fst e = u -> snd e = v -> u <> v ->
@@ -478,6 +658,77 @@ Proof.
     - apply Hxtwin. symmetry. apply twin_inj. rewrite twin_involutive. exact H.
     - apply Hxd. apply twin_inj. rewrite <- Ht, H. reflexivity. }
   apply dart_endpoints_adj_E_minus with (d := x); assumption.
+Qed.
+
+(* After removing a carrier dart, the face-prefix walk from `dtip d0` loops at
+   `dtip d0` once the twin step is reached (Rung 3b path layer). *)
+Lemma same_face_twin_prefix_loop_E_minus :
+  forall E d0 e,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d0 (darts_of E) ->
+    same_face (darts_of E) d0 (twin d0) ->
+    In e E -> (e = d0 \/ e = twin d0) ->
+    reachable (E_minus E e) (dtip d0) (dtip d0).
+Proof.
+  intros E d0 e Hfan Hns Hd0 Hsf He Hcase.
+  set (D := darts_of E).
+  assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
+  assert (Htw : forall z, In z D -> In (twin z) D) by (subst D; apply darts_of_closed_under_twin).
+  destruct (same_face_twin_first_step_index E d0 Hfan Hns Hd0 Hsf) as
+    [k [Hk2 [Htwin Hbefore]]].
+  assert (Hloop : forall m, (1 <= m < k)%nat ->
+      reachable (E_minus E e) (dtip d0) (dtip (iter (fstep D) m d0))).
+  { intros m Hm.
+    induction m as [| m IHm]; [ lia | destruct m as [| m'] ].
+    - cbn [iter]. apply reach_one.
+      assert (Hb := dbase_fstep D d0 Htw Hd0).
+      rewrite <- Hb.
+      assert (Hx : In (fstep D d0) (dart_walk D d0 2)).
+      { apply dart_walk_iter_iff. exists 1%nat. split; [ lia | reflexivity ]. }
+      apply (dart_on_walk_endpoints_adj_E_minus E d0 e 2%nat (fstep D d0)
+          Hfan Hd0 He Hcase Hx).
+      { apply (fstep_neq_self_of_proper D d0 Htw Hd0).
+        apply dart_proper_of_fan with (D := D); assumption. }
+      { intro H. apply (Hbefore 1%nat); [ destruct Hm; lia | exact H ]. }
+    - assert (Hm' : (1 <= S m' < k)%nat) by lia.
+      assert (Hx : In (iter (fstep D) (S m') d0) (dart_walk D d0 (S (S m')))).
+      { apply dart_walk_iter_iff. exists (S m'). split; [ lia | reflexivity ]. }
+      apply reach_trans with (dtip (iter (fstep D) (S m') d0)).
+      { exact (IHm Hm'). }
+      { apply reach_one.
+        assert (Hin : In (iter (fstep D) (S m') d0) D).
+        { apply (face_walk_in D Htw d0 (S m') Hd0). }
+        assert (Hb := dbase_fstep D (iter (fstep D) (S m') d0) Htw Hin).
+        assert (Hx' : In (fstep D (iter (fstep D) (S m') d0))
+                    (dart_walk D d0 (S (S (S m'))))).
+        { apply dart_walk_iter_iff. exists (S (S m')). split; [ lia | cbn [iter]; reflexivity ]. }
+        rewrite <- Hb.
+        apply (dart_on_walk_endpoints_adj_E_minus E d0 e (S (S (S m')))
+          (fstep D (iter (fstep D) (S m') d0)) Hfan Hd0 He Hcase Hx').
+        { intro H.
+          exfalso.
+          apply (iter_lt_face_period_not_self D d0 (S (S m')) Hok Hd0).
+          { destruct Hm as [Hm1 Hm2]. split; [ lia | ].
+            apply (Nat.lt_trans _ k _); [ exact Hm2 | destruct Hk2; subst D; lia ]. }
+          cbn [iter]. exact H. }
+        { intro H. apply (Hbefore (S (S m'))).
+          destruct Hm as [Hm1 Hm2]. split; lia.
+          cbn [iter]; exact H. } } }
+  assert (Hend : dtip (iter (fstep D) (pred k) d0) = dtip d0).
+  { destruct k as [| k']; [ lia | cbn [pred] ].
+    assert (Hin : In (iter (fstep D) k' d0) D).
+    { apply (face_walk_in D Htw d0 k' Hd0). }
+    pose proof (dbase_fstep D (iter (fstep D) k' d0) Htw Hin) as Hbs.
+    assert (Heq : fstep D (iter (fstep D) k' d0) = iter (fstep D) (S k') d0)
+      by (cbn [iter]; reflexivity).
+    assert (Htwin' : iter (fstep D) (S k') d0 = twin d0) by (subst D; exact Htwin).
+    rewrite Heq in Hbs. rewrite Htwin', dbase_twin in Hbs. symmetry. exact Hbs. }
+  assert (Hpred : (1 <= pred k < k)%nat).
+  { destruct k as [| k']; [ lia | destruct k' as [| k'']; [ lia | lia ] ]. }
+  apply reach_trans with (dtip (iter (fstep D) (pred k) d0)).
+  - apply (Hloop (pred k) Hpred).
+  - rewrite Hend. apply reach_refl.
 Qed.
 
 (* Open core (Rung 3b): the rotation-system disconnectivity fact.              *)

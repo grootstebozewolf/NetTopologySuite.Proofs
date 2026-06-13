@@ -115,6 +115,14 @@ Proof.
   - subst E0. destruct Hadj as [e [He _]]. destruct He.
 Qed.
 
+(* One-step inversion: a nontrivial reachability factorises through an adj step. *)
+Lemma reachable_inv :
+  forall E u w, reachable E u w ->
+    u = w \/ exists v, adj E u v /\ reachable E v w.
+Proof.
+  intros E u w H. inversion H; subst; eauto.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §3  Edge removal, cut edges, and 2-edge-connectivity.                       *)
 (* -------------------------------------------------------------------------- *)
@@ -134,6 +142,14 @@ Qed.
 
 Lemma E_minus_incl : forall E e, incl (E_minus E e) E.
 Proof. intros E e x Hx. apply in_E_minus in Hx. exact (proj1 Hx). Qed.
+
+(* Reachability survives enlarging the edge set. *)
+Lemma reachable_E_minus_to_E :
+  forall E e u v, reachable (E_minus E e) u v -> reachable E u v.
+Proof.
+  intros E e u v H.
+  apply (reach_incl (E_minus E e) E); [ apply E_minus_incl | exact H ].
+Qed.
 
 (* `e` is a cut edge (bridge): proper, present, its endpoints are reachable,
    but removing it disconnects them. *)

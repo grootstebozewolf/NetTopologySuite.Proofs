@@ -512,6 +512,19 @@ dart↔edge and same_face↔dart_walk linkage the rotation-system core will cons
 - `dart_on_walk_endpoints_adj_E_minus` — non-carrier walk darts stay adjacent
   in `E_minus`.
 
+**Green — LANDED (Rung 3b-i, path layer):**
+
+- `reachable_inv`, `reachable_E_minus_to_E` (`EdgeConnectivity.v`) — one-step
+  inversion and monotonicity under edge enlargement.
+- `face_period_bounded`, `face_period_no_early_return` (`ExtractFaces.v`) —
+  period is the least positive face return time (via `min_return_scan`).
+- `first_twin_at` / `first_twin_scan`, `same_face_twin_first_step_index` —
+  minimal twin step on `1..face_period` with `k >= 2`.
+- `same_face_twin_prefix_loop_E_minus` — after removing the carrier dart,
+  `dtip d0` is reachable from itself along the face-prefix walk in `E_minus`.
+- `adj_dart_carrier`, `adj_E_minus_dart_carrier` — adjacency steps unpack to
+  dart endpoints.
+
 **Remaining (Rung 3b core):** `same_face_twin_disconnect` — prove
 `~ reachable (E_minus E e) (dbase d) (dtip d)` from `same_face` + `no_spurs`.
 Then export `same_face_twin_is_cut`, instantiate `BridgePackaging`, and drop

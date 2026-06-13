@@ -179,6 +179,9 @@
 #       Rung 3b prep: dart_carrier_endpoints, reachable_E_minus_implies_not_cut,
 #       same_face_twin_breaks_face_twin_free, same_face_twin_reachable_k,
 #       dart_on_walk_endpoints_adj_E_minus (all Qed).
+#       Rung 3b-i: reachable_inv, face_period_no_early_return, first_twin_at
+#       layer, same_face_twin_first_step_index, same_face_twin_prefix_loop_E_minus
+#       (all Qed).
 #       Open: Rung 3b same_face_twin_disconnect (rotation-system core).
 #       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
 
