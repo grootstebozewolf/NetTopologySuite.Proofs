@@ -148,3 +148,18 @@ box outers with no JCT seam. Also proves the previously-missing
 The general arbitrary-simple-ring parity theorem (Stage E,
 `parity_characterises_interior_cont` for `ring_simple`) remains the thesis-scale
 gap. See #188 and `EdgeConnectivity.v` §5 for the remaining named fact.
+
+---
+
+## Stage C — second convex instance: hexagon (2026-06-13, `theories/HexagonNesting.v`)
+
+A concrete convex HEXAGON now joins the diamond as a Stage-C witness:
+`hex_point_in_ring` (`point_in_ring (2,1)` of a convex integer-coordinate
+6-gon, by ray-parity edge enumeration — one slanted edge crossed, odd),
+`hex_ring_simple`, `hole_inside_outer_hexagon`, and the capstone
+`valid_polygon_hexagon_with_hole` (via `FacePolygonHoles.polygon_valid_of_rings`).
+Unconditional, no named hypothesis. The general convex-n-gon parity still
+awaits the convex-chain monotonicity lemma (a rightward ray from an interior
+point crosses exactly one of n arbitrary slanted edges); the conditional
+general-convex assembly (`ConvexOffringSeam.convex_parity_seam_offring_of`)
+remains the route once that lemma lands.

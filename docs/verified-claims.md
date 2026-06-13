@@ -722,3 +722,5 @@ deferred (S12b).
 | `Distance.v : dist_le_iff_dist_sq_le` | Distance compare ⇔ squared-distance compare (justifies sqrt-free fast path) `[exact]` | 3 |
 
 Unconditional exact-reals — the most directly citable rows.
+| `HexagonNesting.v : hex_point_in_ring` (+ `hex_ring_simple`) | **Convex hexagon parity (Stage C, unconditional):** `point_in_ring (2,1) hex_ring` for a concrete convex 6-gon by ray-parity edge enumeration (one slanted edge crossed -> odd); the hexagon is also `ring_simple` `[exact]` | 3 |
+| `HexagonNesting.v : valid_polygon_hexagon_with_hole` (+ `hole_inside_outer_hexagon`) | **Convex 6-gon with a hole is `valid_polygon`:** second concrete convex `hole_inside_outer` instance beyond the diamond, assembled via `polygon_valid_of_rings`; general convex still pending the convex-chain monotonicity lemma `[exact]` | 3 |

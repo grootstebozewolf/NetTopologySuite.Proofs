@@ -153,6 +153,10 @@ theories/HoleInsideOuterExample.v
 # diamond_interior_point_in_ring and hole_inside_outer_diamond.  Regression anchor.
 # No Admitted; standard three-axiom classical-reals base.
 theories/HoleInsideOuterConvexExample.v
+# Stage C: a second concrete convex hole_inside_outer instance beyond the
+# diamond -- a convex hexagon (point_in_ring by ray-parity enumeration; the
+# valid_polygon-with-hole capstone).  General convex still pending monotonicity.
+theories/HexagonNesting.v
 
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
