@@ -330,6 +330,14 @@ theories/ExtractFacesHoles.v
 # twin-aware extractor headlines for both extractors.  Records the
 # antenna correction to the plan doc's step-2 wording.  No Admitteds.
 theories/FaceTwinAware.v
+# extract_rings_valid R5 bridge follow-up, corrected-plan step (3):
+# the genuine geometric step.  noded_general_position (no-collinear-overlap
+# strengthening of fully_intersected) => undirected pairwise_no_proper_cross
+# => FaceTwinAware.darts_of_twin_aware's premise.  The four-case
+# shared-endpoint lemma (non-parallel directions exclude proper crossing).
+# Records that slice 3i's collinear pair fails the strengthened predicate.
+# No Admitteds.
+theories/NodedGeneralPosition.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's

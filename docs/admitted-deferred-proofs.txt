@@ -115,6 +115,15 @@
 # => undirected pairwise non-crossing => darts_of_twin_aware's premise),
 # step (4) H2/H3, and the face_twin_free derivation.  The entry STAYS
 # Admitted per registry rules.
+# DISCHARGE-PLAN UPDATE (2026-06-13, step (3) -- geometry): the
+# no-collinear-overlap strengthening landed in theories/NodedGeneralPosition.v
+# (noded_general_position => undirected pairwise_no_proper_cross =>
+# noded_gp_twin_aware, the twin-aware H1).  Remaining: step (4) H2/H3 from
+# the same predicate, and face_twin_free from a structural input -- the
+# antenna AND bridge-edge obstructions (docs/extract-faces-bridge.md step-3
+# section) show fan_ok/no_short_faces/no-spur do NOT suffice; a
+# 2-edge-connected / no-cut-edge condition is the likely named hypothesis.
+# The entry STAYS Admitted per registry rules.
 theories-flocq/OverlayBridge.v:extract_rings_valid | docs/extract-faces-bridge.md | RED; corrected plan §"corrected discharge plan"
 
 # ============================================================================

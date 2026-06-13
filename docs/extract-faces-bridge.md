@@ -233,3 +233,53 @@ unlike the H1 it replaces.
 survivor set (feeding `darts_of_twin_aware`); step (4) — H2/H3 from the
 same condition; and the `face_twin_free`-from-no-spurs rung. The registry
 entry `extract_rings_valid` stays Admitted.
+
+---
+
+## Step (3) — LANDED (2026-06-13, `theories/NodedGeneralPosition.v`)
+
+Twelfth RGR iteration; the genuine geometric step of the corrected plan.
+
+**The general-position predicate.** `noded_general_position S` strengthens
+`fully_intersected`: distinct survivors either do not properly cross, or
+share an endpoint *with non-parallel directions* (`seg_dir_cross s1 s2 <>
+0`). The shared-endpoint disjunct that slice 3i exposed — admitting
+collinear overlaps — is repaired by the cross-product clause, and
+`collinear_pair_not_gp` confirms the slice-3i witness `(0,0)-(2,0)` /
+`(0,0)-(1,0)` is genuinely excluded.
+
+**Landed (all Qed, 3-axiom allowlist):**
+
+- `noncollinear_share_no_proper` — the four-case geometric core: a shared
+  endpoint plus non-parallel directions excludes proper crossing.
+  Substituting the shared point into the crossing equations gives `a*u =
+  c*v` with `a > 0` (one of `t`, `1-t`); crossing with `v` leaves `a*(u x
+  v) = 0`, absurd. `scaled_dirs_cross_zero` is the shared scalar core.
+- `noded_general_position`, `noded_gp_pairwise` — the predicate and its
+  delivery of the UNDIRECTED `pairwise_no_proper_cross`.
+- `noded_gp_twin_aware` — the composition with rung 1: general position ⟹
+  the twin-aware H1 of `extract_faces_valid_twin_aware` (FaceTwinAware.v),
+  via `darts_of_twin_aware`.
+
+**What remains.** Two rungs:
+
+1. **Step (4): H2/H3 from the same condition.** `fan_ok` (no parallel
+   darts at a vertex) and `no_short_faces` (no bigons) should follow from
+   `noded_general_position` plus arrangement structure; not yet formalised.
+2. **`face_twin_free` from a no-spur / general-position condition.** Beyond
+   the antenna obstruction recorded with rung 1, there is a SECOND
+   obstruction worth pinning before attempting this rung: a **bridge edge**
+   (the dumbbell — two cycles joined by a single edge) places a dart and
+   its twin in the *same* face walk WITHOUT any degree-1 spur, because the
+   face boundary traverses the bridge in both directions. So
+   `face_twin_free` does not follow from spur-freedom alone either; the
+   provable hypothesis is likely "2-edge-connected block" / no-cut-edge,
+   which a real overlay arrangement of closed input rings satisfies but the
+   abstract dart set does not. This rung needs that structural input named
+   explicitly, exactly as the antenna case forced `face_twin_free` to be a
+   named per-face hypothesis rather than a derived one.
+
+With step (3) in, the bridge's geometric core is complete: a
+general-position noded arrangement supplies the satisfiable twin-aware H1.
+The registry entry `extract_rings_valid` stays Admitted — the open rungs
+are H2/H3 and the `face_twin_free` structural derivation.
