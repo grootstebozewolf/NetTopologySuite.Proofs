@@ -351,6 +351,11 @@ theories/VertexGeneralPosition.v
 # extract_faces_valid_well_noded discharging H1+H2+H3 and leaving only the
 # per-face face_twin_free open.  No Admitteds.
 theories/NoShortFaces.v
+# extract_rings_valid R5 bridge follow-up: the with-holes capstone, mirror
+# of NoShortFaces.extract_faces_valid_well_noded for the with-holes
+# extractor.  Both extractors now reduce to the identical residual
+# face_twin_free.  No Admitteds.
+theories/ExtractHolesWellNoded.v
 
 # extract_rings_valid R5 / general assembler, slice 3e: orientation
 # classification of face rings (docs/face-orientation.md).  Lifts slice-3d's

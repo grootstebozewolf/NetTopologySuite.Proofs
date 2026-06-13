@@ -355,3 +355,15 @@ The bridge is: *well-noded + no-spurs ⟹ valid faces, modulo `face_twin_free`*.
 The one remaining rung is `face_twin_free` from a 2-edge-connected /
 no-cut-edge structural input (antenna + dumbbell obstructions, step-3/4a doc).
 `extract_rings_valid` stays Admitted until that lands.
+
+---
+
+## With-holes capstone — LANDED (2026-06-13, `theories/ExtractHolesWellNoded.v`)
+
+Fifteenth RGR iteration; mirror of the step-(4b) capstone for the with-holes
+extractor. `extract_faces_holes_valid_well_noded` discharges H1/H2/H3 from
+`well_noded_darts` + `no_spurs` exactly as the hole-free case, with the oracle
+clauses (hole well-formedness + `hole_inside_outer` nesting) passing through.
+Both extractors now reduce to the **identical** single residual: per-face
+`face_twin_free`. The bridge state is uniform — *well-noded + no-spurs ⟹ valid
+faces, modulo `face_twin_free`* — for hole-free and with-holes emission alike.
