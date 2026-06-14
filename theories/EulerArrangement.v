@@ -24,7 +24,7 @@
        (-1) here, and `num_vertices` invariance, that forces `num_components`
        to rise by one -- i.e. the endpoints of `d` land in different
        components, which is exactly `~ reachable (E_minus E d) ...`, closing
-       `EdgeFaceBridge.H_bridge_core` from `euler_characteristic` as a named
+       `EdgeFaceBridge.H_bridge_premise` from `euler_characteristic` as a named
        hypothesis (no axiom, no Admitted).
 
    Pure Point + list combinatorics; no `Admitted` / `Axiom` / `Parameter`;

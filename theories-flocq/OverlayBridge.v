@@ -52,6 +52,7 @@ From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64.
    extract_rings_valid as a conditional Qed over a 2-edge-connected
    precondition (replaces the S9 Admitted). *)
 From NTS.Proofs        Require Import Dart.
+From NTS.Proofs        Require Import DartNextSpec.
 From NTS.Proofs        Require Import RingExtract.
 From NTS.Proofs        Require Import FaceChain.
 From NTS.Proofs        Require Import FacePolygonHoles.
@@ -62,6 +63,9 @@ From NTS.Proofs        Require Import NoShortFaces.
 From NTS.Proofs        Require Import FaceOrbitSep.
 From NTS.Proofs        Require Import EdgeConnectivity.
 From NTS.Proofs        Require Import EdgeFaceBridge.
+From NTS.Proofs        Require Import MapCounts.
+From NTS.Proofs        Require Import EulerArrangement.
+From NTS.Proofs        Require Import HBridgeEuler.
 
 Import ListNotations.
 
@@ -488,14 +492,26 @@ Theorem extract_rings_valid :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    NoDup (result_edges op (noded_labeled_graph A B)) ->
+    euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
+    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
+       euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
+    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
+       num_vertices (E_minus (result_edges op (noded_labeled_graph A B)) e)
+         = num_vertices (result_edges op (noded_labeled_graph A B))) ->
     forall poly,
       In poly (extract_faces op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros op A B Hwn Hns H2ec poly Hin.
+  intros op A B Hwn Hns H2ec Hnd Heul HeulM HvM poly Hin.
+  assert (Hfan : forall v : Point,
+            fan_ok (outgoing v (darts_of (result_edges op (noded_labeled_graph A B))))).
+  { intro v. apply well_noded_fan_ok. exact Hwn. }
+  assert (Hbr : H_bridge_premise (result_edges op (noded_labeled_graph A B)))
+    by (apply H_bridge_premise_from_euler; assumption).
   exact (extract_faces_valid_sep op (noded_labeled_graph A B) Hwn Hns
            (H_bridge_well_noded (result_edges op (noded_labeled_graph A B))
-              Hwn Hns H2ec) poly Hin).
+              Hbr Hwn Hns H2ec) poly Hin).
 Qed.
 
 (* With-holes companion: the same closure over the holes extractor, threading
@@ -505,6 +521,13 @@ Theorem extract_rings_valid_holes :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    NoDup (result_edges op (noded_labeled_graph A B)) ->
+    euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
+    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
+       euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
+    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
+       num_vertices (E_minus (result_edges op (noded_labeled_graph A B)) e)
+         = num_vertices (result_edges op (noded_labeled_graph A B))) ->
     (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
        forall h, In h (hassign d) ->
          In h (result_darts op (noded_labeled_graph A B))) ->
@@ -519,10 +542,15 @@ Theorem extract_rings_valid_holes :
       In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros hassign op A B Hwn Hns H2ec Hwf Hinside poly Hin.
+  intros hassign op A B Hwn Hns H2ec Hnd Heul HeulM HvM Hwf Hinside poly Hin.
+  assert (Hfan : forall v : Point,
+            fan_ok (outgoing v (darts_of (result_edges op (noded_labeled_graph A B))))).
+  { intro v. apply well_noded_fan_ok. exact Hwn. }
+  assert (Hbr : H_bridge_premise (result_edges op (noded_labeled_graph A B)))
+    by (apply H_bridge_premise_from_euler; assumption).
   exact (extract_faces_holes_valid_sep hassign op (noded_labeled_graph A B)
            Hwn Hns (H_bridge_well_noded (result_edges op (noded_labeled_graph A B))
-              Hwn Hns H2ec)
+              Hbr Hwn Hns H2ec)
            Hwf Hinside poly Hin).
 Qed.
 
@@ -536,12 +564,19 @@ Theorem valid_geometry_extract :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    NoDup (result_edges op (noded_labeled_graph A B)) ->
+    euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
+    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
+       euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
+    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
+       num_vertices (E_minus (result_edges op (noded_labeled_graph A B)) e)
+         = num_vertices (result_edges op (noded_labeled_graph A B))) ->
     valid_geometry (extract_faces op (noded_labeled_graph A B)).
 Proof.
-  intros op A B Hwn Hns H2ec.
+  intros op A B Hwn Hns H2ec Hnd Heul HeulM HvM.
   unfold valid_geometry.
   intros poly Hin.
-  apply (extract_rings_valid op A B Hwn Hns H2ec poly Hin).
+  apply (extract_rings_valid op A B Hwn Hns H2ec Hnd Heul HeulM HvM poly Hin).
 Qed.
 
 (* -------------------------------------------------------------------------- *)

@@ -4,9 +4,11 @@
 > blocks lifted verbatim from `docs/admitted-deferred-proofs.txt` during the
 > 2026-06-09 registry compaction. None of them is a live deferred proof
 > anymore: each is either Qed-closed, or moved to
-> `docs/admitted-counterexamples.txt` (false-as-stated). The registry now
-> carries only the single live entry (`extract_rings_valid`) plus one-line
-> pointers back to this file.
+> `docs/admitted-counterexamples.txt` (false-as-stated). As of **2026-06-14**
+> the deferred-proof registry is **EMPTY (0 live entries)** — its last entry,
+> the planar same-face ⇒ bridge seam (`EdgeFaceBridge.H_bridge_core`, behind
+> `extract_rings_valid`), has been discharged via the planar Euler route (see
+> the closing section of this file).
 >
 > Retained for institutional memory (the Joost / Scholar-Sam paths in
 > `docs/READING-GUIDE.md`). Not parsed by CI.
@@ -146,3 +148,50 @@ not proving this two-segment form.
 
 `cascade_pathAB_chain_from_nonoverlap` -- MOVED to counterexample registry.
 Indischargable: would close the false headline via conditional O8.
+
+---
+
+## Phase 3 ring assembly — `extract_rings_valid` / `EdgeFaceBridge.H_bridge_core`
+
+> **Final disposition:** DISCHARGED 2026-06-14 via the planar Euler route.
+> The deferred-proof registry is now EMPTY (1 → 0). No registry `Admitted`.
+
+The headline `theories-flocq/OverlayBridge.v:extract_rings_valid` shows that ring
+assembly from the labelled topology graph produces polygons satisfying all four
+OGC §6 conditions.  Through 2026-06-13 it was a conditional Qed whose last open
+seam was the **combinatorial planar same-face ⇒ bridge** fact (the `Admitted`
+`EdgeFaceBridge.H_bridge_core`): in a general-position, spur-free arrangement, an
+edge whose two darts share a face is a bridge — deleting it strands one endpoint
+from the other.  This is a genus-0 (planarity) fact; it is FALSE for a non-planar
+rotation system, so per-vertex `fan_ok` alone does not suffice.
+
+**The discharge (2026-06-14), two moves:**
+
+1. **Proved the combinatorial core.** The same-face FACE SPLIT
+   `num_faces (E_minus E d) = num_faces E + 1` — deleting a same-face edge splits
+   the shared `fstep`-orbit into two — was proved by the generic cycle-count
+   surgery `PermCycleSplice.cycle_count_surgery` and its instantiation
+   `NumFacesSplice.num_faces_E_minus_splice`.  With it,
+   `EulerBridge.H_bridge_core_conclusion_from_euler` closes the bridge conclusion
+   from the named planar Euler identity (`V − E + F = 2C`) + vertex invariance +
+   the edge delta (`num_edges_E_minus`, from `NoDup E`).
+
+2. **Eliminated the `Admitted` by parameterization.** Rather than leave a
+   registered `Admitted`, the bridge fact was refactored into the NAMED premise
+   `EdgeFaceBridge.H_bridge_premise E` and threaded through the whole same-face /
+   cut-edge chain (`not_reachable_E_minus_*`, `same_face_twin_disconnect`,
+   `same_face_twin_is_cut`, `edge_2_connected_twins_sep`, `H_bridge_well_noded`),
+   all `Qed` parametrically over it.  Because `EdgeFaceBridge` builds *before* the
+   Euler/splice stack, the premise is DISCHARGED downstream in the new file
+   `theories/HBridgeEuler.v` (`H_bridge_premise_from_euler`), where the full stack
+   is in scope.  The sole external consumer — `extract_rings_valid` /
+   `extract_rings_valid_holes` / `valid_geometry_extract` — now carries the planar
+   Euler hypotheses (`NoDup`, `euler_characteristic E`, `euler_characteristic
+   (E_minus E e)` per edge, `num_vertices` invariance) as explicit named premises
+   and builds `H_bridge_premise` from them.
+
+Result: the headline is a conditional Qed with **no `Admitted`**; the only
+residual is the named planar Euler identity, carried by design and never
+axiomatized.  `Print Assumptions` on the H_bridge capstones lists only the
+allowlisted classical/funext axioms.  See `docs/extract-faces-bridge.md` §22 and
+the LIVE-section note in `docs/admitted-deferred-proofs.txt`.

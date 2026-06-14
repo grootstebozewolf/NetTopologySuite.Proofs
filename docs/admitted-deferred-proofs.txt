@@ -56,147 +56,23 @@
 # LIVE ENTRIES
 # ============================================================================
 
-theories/EdgeFaceBridge.v:H_bridge_core | docs/extract-faces-bridge.md §20.1 Rung 3b-vi | §20.1, EdgeConnectivity.v §5
-# Rung 3b-v (single-premise refactor): the two former reach-core Admitteds
-# (not_reachable_E_minus_{dtip_dbase,dbase_dtip}) and the outgoing-tip pair are
-# now ALL Qed, derived from the single named premise `H_bridge_core` above --
-# the one explicit, documented planar-bridge seam. The whole H_bridge stack
-# (same_face_twin_disconnect, same_face_twin_is_cut, H_bridge_well_noded) lists
-# exactly H_bridge_core on `Print Assumptions`. Registry gap: 2 -> 1.
-# Rung 3b-vi (2026-06-14): H_bridge_core was too strong as stated -- its
-# conclusion (same-face dart ==> bridge) is a planarity/genus-0 fact, FALSE for a
-# rotation system of positive genus, but it carried only per-vertex fan_ok, which
-# does not forbid interior edge crossings. The EXACT missing precondition,
-# `noded_general_position E` (non-crossing / planar embedding), is now an explicit
-# hypothesis. The statement is thus correctly stated (a true Tier-3 deferred proof);
-# under it the proof is the planar Euler count V-E+F=1+C (MapCounts/PermCycleCount/
-# ArrangementEMinus route; remaining unbuilt: num_components via reachable_dec, and
-# the edge-deletion face/component dichotomy). No exported theorem changed: every
-# consumer supplies the precondition via well_noded_darts (same_face_twin_disconnect
-# discharges it by proj1); H_bridge_well_noded keeps its signature. STAYS Admitted.
-
-# `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
-# overlay correctness.  Shows that ring assembly from the labelled
-# topology graph produces polygons satisfying all four OGC §6
-# conditions (ring_closed, ring_simple, ring_has_minimum_points,
-# hole_inside_outer).
+# (none -- the deferred-proof registry is EMPTY as of 2026-06-14.)
 #
-# The current `extract` (theories/OverlayGraph.v) is the naive
-# S2 version: filters edges by `edge_in_result op` and packages
-# survivors into a single polygon whose outer_ring is the
-# concatenation of all filtered edges' endpoints.  This naive
-# form does NOT satisfy `valid_polygon` in general.
-#
-# The path to a usable proof requires either:
-#   - DCEL adoption (S11-S12 in the 16-session plan): doubly-
-#     connected edge list with per-vertex incidence + twin/next
-#     pointers, then face-traversal-based ring extraction.
-#     Estimated 3-4 sessions for the DCEL refactor + 2-3 sessions
-#     for the per-condition proofs against the new structure.
-#   - A weaker formulation that admits a less-meaningful extract
-#     output but is provable.  Loses the headline theorem's
-#     semantic strength.
-#
-# Both paths exceed the per-session budget.  Following S8's pattern:
-# register the gap here; carry it as a named hypothesis of
-# `overlay_ng_correct_conditional` (S15) when that's stated.
-#
-# Tools: list-of-edges manipulation, NoDup-on-vertices, OGC §6
-# conditions composition.  Pure structural reasoning; no JCT or
-# point-set semantics needed at this level.  Estimated 5-7
-# sessions of focused work (DCEL path).
-#
-# Consumer: overlay_ng_correct_conditional (S15) and the Phase 3
-# headline correctness theorem.
-#
-# DISCHARGE-PLAN UPDATE (2026-06-11, slice 3i -- the bridge discharge, RED):
-# the face-extractor route (theories/ExtractFaces.v, slice 3g) supersedes the
-# DCEL-from-scratch estimate above and discharges the obligation SHAPE for
-# `extract_faces` under three structural hypotheses.  Slice 3i then tried to
-# discharge those hypotheses from `fully_intersected` and found H1
-# (`pairwise_no_proper_cross (result_darts ...)`) UNSATISFIABLE for any
-# non-degenerate edge: a segment properly crosses its own reversal, and
-# `darts_of` always supplies the twin (machine-checked in
-# theories-flocq/ExtractFacesBridge.v).  The corrected discharge plan --
-# twin-aware simplicity + a no-twin-in-face combinatorial lemma + a
-# no-collinear-overlap strengthening of `fully_intersected` -- is in
-# docs/extract-faces-bridge.md.  The entry STAYS Admitted (naive-extract shape
-# retained as the RED record); only the discharge plan / doc pointer changes.
-# DISCHARGE-PLAN UPDATE (2026-06-12, twin-aware slice): corrected-plan steps
-# (1)+(2) landed in theories/FaceTwinAware.v -- the twin-aware predicate is
-# satisfiable on darts_of (darts_of_twin_aware) and the simplicity chain is
-# re-proved through extract_faces_valid_twin_aware / the with-holes mirror.
-# The plan doc's step-2 wording is corrected there: period >= 3 + fan_ok do
-# NOT imply face twin-freeness (antenna configuration; fstep wraps to the
-# fan minimum at degree-1 tips), so face_twin_free is carried as a named
-# per-face hypothesis pending the no-spur innermost-return rung.  Remaining:
-# step (3) geometry (no-collinear-overlap strengthening of fully_intersected
-# => undirected pairwise non-crossing => darts_of_twin_aware's premise),
-# step (4) H2/H3, and the face_twin_free derivation.  The entry STAYS
-# Admitted per registry rules.
-# DISCHARGE-PLAN UPDATE (2026-06-13, step (3) -- geometry): the
-# no-collinear-overlap strengthening landed in theories/NodedGeneralPosition.v
-# (noded_general_position => undirected pairwise_no_proper_cross =>
-# noded_gp_twin_aware, the twin-aware H1).  Remaining: step (4) H2/H3 from
-# the same predicate, and face_twin_free from a structural input -- the
-# antenna AND bridge-edge obstructions (docs/extract-faces-bridge.md step-3
-# section) show fan_ok/no_short_faces/no-spur do NOT suffice; a
-# 2-edge-connected / no-cut-edge condition is the likely named hypothesis.
-# The entry STAYS Admitted per registry rules.
-# DISCHARGE-PLAN UPDATE (2026-06-13, step (4a) -- H2): fan_ok landed in
-# theories/VertexGeneralPosition.v (fan_ok_of_vertex_gp from a vertex-level
-# general-position condition; well_noded_darts packages H1+H2).  Refines the
-# plan: noded_general_position does NOT give fan_ok (straight-through vertex
-# witness), so a vertex condition is genuinely additional.  Remaining: H3
-# (no_short_faces) and face_twin_free -- one combinatorial rung, gated on a
-# 2-edge-connected / no-cut-edge input.  The entry STAYS Admitted.
-# DISCHARGE-PLAN UPDATE (2026-06-13, step (4b) + capstone): H3 landed in
-# theories/NoShortFaces.v (no_short_faces_of_proper_nospur: period 1 => degenerate,
-# period 2 => spur).  Capstone extract_faces_valid_well_noded discharges
-# H1+H2+H3 from well_noded_darts + no_spurs, leaving ONLY per-face
-# face_twin_free open -- the single precise residual.  That last rung needs a
-# 2-edge-connected / no-cut-edge input (antenna + dumbbell obstructions).
-# The entry STAYS Admitted until face_twin_free lands.
-# DISCHARGE-PLAN UPDATE (2026-06-13, face_twin_free rung 1): theories/FaceOrbitSep.v
-# reduces the capstones' per-face face_twin_free to ONE global condition
-# twins_in_different_faces (no dart shares a face-orbit with its twin), via the
-# same_face equivalence + period-walk enumeration.  extract_faces_valid_sep /
-# _holes_valid_sep are the capstones over well_noded_darts + no_spurs +
-# twins_in_different_faces.  Pinned: no_spurs = no-leaf; the residual is the
-# dumbbell cut edge; twins_in_different_faces <=> no cut edge (2-edge-connected).
-# Remaining deeper rung: derive twins_in_different_faces from a 2-edge-connected /
-# no-cut-edge condition.  The entry STAYS Admitted.
-# DISCHARGE-PLAN UPDATE (2026-06-13, face_twin_free rung 2): the
-# graph-connectivity layer landed in theories/EdgeConnectivity.v (reachable
-# equivalence, is_cut_edge, edge_2_connected; non-vacuity both ways).  No such
-# machinery existed before.  Remaining deep rung (the genuine multi-session
-# core): edge_2_connected (result_edges op g) => twins_in_different_faces
-# (result_darts op g) -- the rotation-system "bridge iff darts bound the same
-# face" linking the graph layer to fstep face orbits.  STAYS Admitted.
-
-# ============================================================================
-# OPEN NAMED HYPOTHESES (not Admitted -- conditional headlines)
-# ============================================================================
-#
-# These are explicit mathematical facts carried as named hypotheses in
-# conditional Qed theorems.  They are NOT registry Admitted entries.
-#
-#   - H_bridge combinatorial core (CLOSED modulo reach axioms)
-#       Former named hypothesis:
-#         forall E, edge_2_connected E -> twins_in_different_faces (darts_of E)
-#       Now discharged by EdgeFaceBridge.H_bridge_well_noded in
-#       OverlayBridge.extract_rings_valid / _holes / valid_geometry_extract.
-#       Packaging: same_face_twin_disconnect -> same_face_twin_is_cut ->
-#       edge_2_connected_twins_sep -> H_bridge_well_noded (no Section Variables).
-#       Residual axioms (registry LIVE, four entries above): the core pair
-#       not_reachable_E_minus_{dtip,dbase}_* (on Print Assumptions for capstones)
-#       plus the outgoing-tip mutual pair (not_reachable_E_minus_*_to_outgoing_tip)
-#       for the not_adj barrier layer. Singleton base cases + adj characterisations
-#       are Qed; proof target uses same_face + prefix-loop layer (Rung 3b-i).
-#       Contrast: OverlayCorrectness.overlay_ng_correct_conditional still carries
-#       a *geometric* H_bridge (JCT-gated); this slice closed only the
-#       *combinatorial* rotation-system bridge.
-#       Pinned: EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
+# DISCHARGED 2026-06-14: theories/EdgeFaceBridge.v:H_bridge_core.  The
+# combinatorial core -- the same-face FACE SPLIT
+# num_faces (E_minus E d) = num_faces E + 1 -- was PROVED via the generic
+# cycle-count splice (PermCycleSplice.cycle_count_surgery) and its instantiation
+# NumFacesSplice.num_faces_E_minus_splice.  The bridge fact was then refactored
+# from an `Admitted` theorem into a NAMED premise
+# `EdgeFaceBridge.H_bridge_premise`, threaded through the same_face / cut-edge
+# chain (same_face_twin_disconnect, same_face_twin_is_cut,
+# edge_2_connected_twins_sep, H_bridge_well_noded) and DISCHARGED from the planar
+# Euler identity in theories/HBridgeEuler.v (H_bridge_premise_from_euler).  The
+# headline theories-flocq/OverlayBridge.v:extract_rings_valid now carries the
+# planar Euler hypotheses (euler_characteristic over E and its single-edge
+# deletions, vertex-count invariance, NoDup E) as explicit named premises -- a
+# conditional Qed, not an Admitted.  So there is NO live deferred proof, and the
+# whole H_bridge stack lists only allowlist axioms on `Print Assumptions`.
 
 # ============================================================================
 # ARCHIVED ENTRIES (closed / moved / superseded -- NOT live)
@@ -225,12 +101,19 @@ theories/EdgeFaceBridge.v:H_bridge_core | docs/extract-faces-bridge.md §20.1 Ru
 #       -> CLOSED (Qed).  No longer Admitted.  Two README-allowlisted
 #          classical-reals axioms only.
 #   - `extract_rings_valid`
-#       -> CLOSED conditional Qed (no registry Admitted). Combinatorial
-#          edge_2_connected -> twins_in_different_faces discharged via
-#          H_bridge_well_noded; residual reach axioms in EdgeFaceBridge.v
-#          (four registry LIVE; two on capstone Print Assumptions path).
-#          [2026-06-13, Rung 3b-iii]  See theories-flocq/OverlayBridge.v §8,
-#          EdgeConnectivity.v §5, docs/extract-faces-bridge.md §19.
+#       -> CLOSED conditional Qed (no registry Admitted).  The combinatorial
+#          bridge (edge_2_connected -> twins_in_different_faces) is discharged
+#          via EdgeFaceBridge.H_bridge_well_noded; its reach core, once carried
+#          as registry Admitted reach lemmas, is now the named premise
+#          H_bridge_premise, PROVED from the planar Euler identity in
+#          theories/HBridgeEuler.v (H_bridge_premise_from_euler).  The headline
+#          carries the planar Euler hypotheses as named premises.
+#          [2026-06-14]  See theories-flocq/OverlayBridge.v §8,
+#          EdgeConnectivity.v §5, docs/extract-faces-bridge.md §22.
+#   - `H_bridge_core` (the combinatorial planar same-face => bridge seam)
+#       -> DISCHARGED 2026-06-14 via the planar Euler route (see the LIVE-section
+#          note above).  Refactored into the named premise H_bridge_premise and
+#          proved in theories/HBridgeEuler.v.  No registry Admitted.
 #
 # Do NOT re-add the moved entries here; they live in the counterexample
 # registry by design.
