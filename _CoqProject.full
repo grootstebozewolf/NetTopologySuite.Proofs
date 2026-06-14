@@ -780,6 +780,10 @@ theories/ArrangementEMinus.v
 # nonempty general-position arrangement. (num_components deferred: needs
 # decidability of reachable.)
 theories/MapCounts.v
+# H_bridge Euler route (Rung 3b-vii): generic decidable-relation class counter
+# (count_classes) -- the order-independent counting core shared by num_faces
+# (orbit relation) and the pending num_components (reachability relation).
+theories/ClassCount.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
