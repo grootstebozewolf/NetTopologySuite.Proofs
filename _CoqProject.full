@@ -172,6 +172,13 @@ theories/MonotoneChainParity.v
 # residuals; concrete diamond witness exercises the full pipeline.
 theories/ConvexChainSplit.v
 
+# Convex-chain monotonicity campaign, rung 3.5: a GENERAL construction of the
+# bimonotone split from a purely combinatorial y-unimodality hypothesis on the
+# vertex list (convexity not used).  Replaces the per-family hand-built split:
+# the split obligation becomes an arithmetic cbn/lra check.  Re-derives the
+# diamond split in one line; scales to a convex hexagon (n = 6).
+theories/MonotoneChainConstruction.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the

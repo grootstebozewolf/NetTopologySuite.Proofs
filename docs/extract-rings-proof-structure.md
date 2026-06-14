@@ -616,6 +616,44 @@ three-axiom, no `Admitted`. A **general** convex *n*-gon remains open only on th
 "split-from-convexity" derivation (`ConvexChainSplit.interior_hits_one_chain` /
 `bimonotone_split` from `vertices_in_halfplane`) — isolated, not yet built.
 
+### §11.5c update (2026-06-14): rung 3.5 — the bimonotone split, now general
+
+`theories/MonotoneChainConstruction.v` removes the per-family hand-construction
+of `bimonotone_split`. Until now every split was built by hand: the diamond
+exhibits explicit `diamond_inc` / `diamond_dec` edge lists and proves
+`bimonotone_split diamond_ring diamond_inc diamond_dec` by `reflexivity` over the
+edge concatenation plus four `lra` height checks. The new file proves the split
+**generically** from a purely combinatorial hypothesis on the *vertex list*:
+
+```
+Theorem bimonotone_split_unimodal :
+  forall (up down : list Point) (apex : Point),
+    y_strict_incr (up ++ [apex]) ->        (* heights rise strictly to the apex *)
+    y_strict_decr (apex :: down) ->        (* then fall strictly back down      *)
+    bimonotone_split (up ++ apex :: down)
+                     (ring_edges (up ++ [apex]))
+                     (ring_edges (apex :: down)).
+```
+
+The proof has three combinatorial pieces, all `Qed`: `ring_edges_app_shared`
+(the skeleton of `l1 ++ m :: l2` is the skeleton of the closed prefix `l1 ++ [m]`
+followed by the skeleton of the suffix `m :: l2`, joined at the shared vertex
+`m`); and `chain_increasing_of_y_strict_incr` /
+`chain_decreasing_of_y_strict_decr` (a strictly monotone vertex run yields a
+monotone chain — connectivity `snd e = fst e2` is automatic because consecutive
+`ring_edges` share their middle vertex). **Convexity is not used**: this isolates
+exactly the combinatorial content of the split. The geometric implication
+(convex `vertices_in_halfplane` ⟹ the vertex order is y-unimodal) and the dual
+`interior_hits_one_chain` remain the open residual for a fully general *n*-gon.
+
+The split obligation is thereby reduced to an **arithmetic** per-family check:
+`diamond_bimonotone_via_unimodal` re-derives the diamond split in one
+`apply` + two `cbn`/`lra` calls, and `hexagon_bimonotone` exhibits the split of a
+genuinely convex CCW **hexagon** `(0,-3),(3,-1),(4,2),(1,3),(-2,1),(-3,-2)` with
+no extra machinery — only the height comparisons change. Three-axiom, no
+`Admitted`. This is the reusable substrate that makes the split of any future
+convex family a one-liner; the remaining frontier is `interior_hits_one_chain`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
