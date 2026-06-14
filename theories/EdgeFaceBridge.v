@@ -19,8 +19,7 @@
      - ExtractFaces.v       (face_period)
      - VertexGeneralPosition.v (well_noded_darts -> fan_ok)
 
-   Residual Admitted (registry LIVE): not_reachable_E_minus_{dtip_dbase,dbase_dtip}
-   and not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip (mutual reach layer).
+   Rung 3b-iv reach layer (mutual block): core + outgoing-tip + not_adj barrier — Qed.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -1321,70 +1320,8 @@ Proof.
   cbn in Hprop. rewrite Heq in Hprop. apply Hprop. reflexivity.
 Qed.
 
-(* Reach core (registry LIVE). Outgoing-tip pair: same registry; 3b-iv PARTIAL
-   (proof scripts pinned §19; file-order cycle core↔not_adj↔outgoing-tip). *)
-Lemma not_reachable_E_minus_dtip_dbase :
-  forall E d,
-    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-    no_spurs (darts_of E) ->
-    In d (darts_of E) ->
-    same_face (darts_of E) d (twin d) ->
-    dart_endpoints_ne d ->
-    In d E ->
-    ~ In (twin d) E ->
-    ~ reachable (E_minus E d) (dtip d) (dbase d).
-Proof.
-  Admitted.
-
-Lemma not_reachable_E_minus_dbase_dtip :
-  forall E d,
-    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-    no_spurs (darts_of E) ->
-    In d (darts_of E) ->
-    same_face (darts_of E) d (twin d) ->
-    dart_endpoints_ne d ->
-    In (twin d) E ->
-    ~ In d E ->
-    ~ reachable (E_minus E (twin d)) (dbase d) (dtip d).
-Proof.
-  Admitted.
-
-Lemma reachable_E_minus_from_dtip_ne_dbase :
-  forall E d w,
-    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-    no_spurs (darts_of E) ->
-    In d (darts_of E) ->
-    same_face (darts_of E) d (twin d) ->
-    dart_endpoints_ne d ->
-    In d E ->
-    ~ In (twin d) E ->
-    reachable (E_minus E d) (dtip d) w -> w <> dbase d.
-Proof.
-  intros E d w Hfan Hns Hd Hsf Hde Hin Hntwin Hreach Heq.
-  subst w.
-  apply (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin).
-  exact Hreach.
-Qed.
-
-Lemma reachable_E_minus_from_dbase_ne_dtip :
-  forall E d w,
-    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-    no_spurs (darts_of E) ->
-    In d (darts_of E) ->
-    same_face (darts_of E) d (twin d) ->
-    dart_endpoints_ne d ->
-    In (twin d) E ->
-    ~ In d E ->
-    reachable (E_minus E (twin d)) (dbase d) w -> w <> dtip d.
-Proof.
-  intros E d w Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach Heq.
-  subst w.
-  apply (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd).
-  exact Hreach.
-Qed.
-
-(* Off-carrier outgoing tips at `dbase d` are not adjacent to `dtip d` in `E_minus`. *)
-Lemma not_adj_E_minus_dtip_to_outgoing_dbase_tip :
+(* Reach layer — mutual blocks (Rung 3b-iv): d-in-E and twin-in-E halves. *)
+Lemma not_reachable_E_minus_dtip_to_outgoing_tip :
   forall E d ec,
     (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
     no_spurs (darts_of E) ->
@@ -1395,9 +1332,60 @@ Lemma not_adj_E_minus_dtip_to_outgoing_dbase_tip :
     ~ In (twin d) E ->
     In ec (outgoing (dbase d) (darts_of E)) ->
     ec <> d ->
-    ~ adj (E_minus E d) (dtip d) (dtip ec).
+    ~ reachable (E_minus E d) (dtip d) (dtip ec)
+with not_adj_E_minus_dtip_to_outgoing_dbase_tip :
+  forall E d ec,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    In ec (outgoing (dbase d) (darts_of E)) ->
+    ec <> d ->
+    ~ adj (E_minus E d) (dtip d) (dtip ec)
+with not_reachable_E_minus_penult_tail_to_dbase :
+  forall E d v_mid,
+    (forall v0 : Point, fan_ok (outgoing v0 (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    v_mid <> dbase d ->
+    adj (E_minus E d) (dtip d) v_mid ->
+    reachable (E_minus E d) v_mid (dbase d) -> False
+with not_reachable_E_minus_dtip_dbase :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In d E ->
+    ~ In (twin d) E ->
+    ~ reachable (E_minus E d) (dtip d) (dbase d).
 Proof.
-  intros E d ec Hfan Hns Hd Hsf Hde Hin Hntwin Hout Hecd Hadj.
+  intros E d ec Hfan Hns Hd Hsf Hde Hin Hntwin Hout Hecd.
+  intro Hreach.
+  apply reachable_inv in Hreach.
+  destruct Hreach as [Heq | [v [Hadj Htail]]].
+  - exfalso. apply Hecd.
+    apply dart_eq_of_endpoints.
+    + apply outgoing_base with (D := darts_of E); exact Hout.
+    + apply eq_sym. exact Heq.
+  - destruct (point_eq_dec v (dtip ec)) as [Hv | Hvneq].
+    + subst v.
+      exfalso.
+      eapply not_adj_E_minus_dtip_to_outgoing_dbase_tip; eauto.
+    + revert Hadj.
+      induction Htail as [| u v' w Hadj' Htail' IH']; intros Hadj.
+      * apply Hvneq. reflexivity.
+      * exact (IH' Htail').
+Proof.
+  intros Hadj.
   pose proof (dart_endpoints_neE d Hde) as Hend.
   set (D := darts_of E).
   assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
@@ -1414,64 +1402,119 @@ Proof.
   apply in_E_minus in He. destruct He as [HinE Hned].
   assert (Hed : In e (darts_of E)) by (apply in_darts_of_orig; exact HinE).
   destruct (dart_eq_dec e ec) as [-> | Hne].
-  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
-    + assert (Hdeq : dbase ec = dtip d) by (cbn [dbase dtip fst]; exact Hfu).
-      apply (Hend (eq_trans (eq_sym Hbase) Hdeq)).
-    + apply Hdbec. cbn [dbase dtip fst] in Hfu. exact Hfu.
-  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
-    + assert (Hbe : dbase e = dtip d) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+  { destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    { assert (Hdeq : dbase ec = dtip d) by (cbn [dbase dtip fst]; exact Hfu).
+      apply (Hend (eq_trans (eq_sym Hbase) Hdeq)). }
+    { apply Hdbec. cbn [dbase dtip fst] in Hfu. exact Hfu. } }
+  { destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    { assert (Hbe : dbase e = dtip d) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
       assert (Hte : dtip e = dtip ec) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
       assert (Hadj1 : adj (E_minus E d) (dtip d) (dtip ec)).
       { unfold adj. exists e. split.
-        - exact (proj2 (in_E_minus E d e) (conj HinE Hned)).
-        - left. split; [ exact Hbe | exact Hte ]. }
+        { exact (proj2 (in_E_minus E d e) (conj HinE Hned)). }
+        { left. split; [ exact Hbe | exact Hte ]. } }
       destruct (point_eq_dec (dtip ec) (dbase d)) as [Htip_dbase | Htip_not_dbase].
-      * assert (Hspur : dbase ec = dtip ec) by (rewrite Hbase; exact (eq_sym Htip_dbase)).
-        apply Hdbec. exact Hspur.
-      * assert (Hreach : reachable (E_minus E d) (dtip d) (dbase d)).
-        { apply reach_trans with (dtip ec).
-          - apply reach_one. exact Hadj1.
-          - apply reach_one. unfold adj.
+      { assert (Hspur : dbase ec = dtip ec) by (rewrite Hbase; exact (eq_sym Htip_dbase)).
+        apply Hdbec. exact Hspur. }
+      { assert (Hreach : reachable (E_minus E d) (dtip d) (dbase d)).
+        { assert (Hr1 := reach_one (E_minus E d) (dtip d) (dtip ec) Hadj1).
+          assert (Hr2 : reachable (E_minus E d) (dtip ec) (dbase d)).
+          { apply reach_one. unfold adj.
             destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
-            + exists ec. split.
-              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
-              * right. split; [ exact Hbase | reflexivity ].
-            + exists (twin ec). split.
-              * destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
-                -- exfalso. apply Htip_not_dbase.
-                   assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
-                   rewrite Hec_tw, dtip_twin. reflexivity.
-                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
-              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
-        exact (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin Hreach).
-    + assert (Hbe : dbase e = dtip ec) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+            { exists ec. split.
+              { apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ]. }
+              { right. split; [ exact Hbase | reflexivity ]. } }
+            { exists (twin ec). split.
+              { destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
+                { exfalso. apply Htip_not_dbase.
+                  assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
+                  rewrite Hec_tw, dtip_twin. reflexivity. }
+                { apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ]. } }
+              { left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. } } }
+          exact (reach_trans (E_minus E d) (dtip d) (dtip ec) (dbase d) Hr1 Hr2). }
+        exact (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin Hreach). } }
+    { assert (Hbe : dbase e = dtip ec) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
       assert (Hte : dtip e = dtip d) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
       assert (Hadj1 : adj (E_minus E d) (dtip d) (dtip ec)).
       { unfold adj. exists e. split.
-        - exact (proj2 (in_E_minus E d e) (conj HinE Hned)).
-        - right. split; [ exact Hbe | exact Hte ]. }
+        { exact (proj2 (in_E_minus E d e) (conj HinE Hned)). }
+        { right. split; [ exact Hbe | exact Hte ]. } }
       destruct (point_eq_dec (dtip ec) (dbase d)) as [Htip_dbase | Htip_not_dbase].
-      * assert (Hspur : dbase ec = dtip ec) by (rewrite Hbase; exact (eq_sym Htip_dbase)).
-        apply Hdbec. exact Hspur.
-      * assert (Hreach : reachable (E_minus E d) (dtip d) (dbase d)).
-        { apply reach_trans with (dtip ec).
-          - apply reach_one. exact Hadj1.
-          - apply reach_one. unfold adj.
+      { assert (Hspur : dbase ec = dtip ec) by (rewrite Hbase; exact (eq_sym Htip_dbase)).
+        apply Hdbec. exact Hspur. }
+      { assert (Hreach : reachable (E_minus E d) (dtip d) (dbase d)).
+        { assert (Hr1 := reach_one (E_minus E d) (dtip d) (dtip ec) Hadj1).
+          assert (Hr2 : reachable (E_minus E d) (dtip ec) (dbase d)).
+          { apply reach_one. unfold adj.
             destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
-            + exists ec. split.
-              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
-              * right. split; [ exact Hbase | reflexivity ].
-            + exists (twin ec). split.
-              * destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
-                -- exfalso. apply Htip_not_dbase.
-                   assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
-                   rewrite Hec_tw, dtip_twin. reflexivity.
-                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
-              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
-        exact (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin Hreach).
+            { exists ec. split.
+              { apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ]. }
+              { right. split; [ exact Hbase | reflexivity ]. } }
+            { exists (twin ec). split.
+              { destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
+                { exfalso. apply Htip_not_dbase.
+                  assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
+                  rewrite Hec_tw, dtip_twin. reflexivity. }
+                { apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ]. } }
+              { left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. } } }
+          exact (reach_trans (E_minus E d) (dtip d) (dtip ec) (dbase d) Hr1 Hr2). }
+        exact (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin Hreach). } } }
+Proof.
+  clear ec Hout Hecd Hadj Hend D Hok Htw HecD Hbase Hdbec Htip_ne.
+  intros v_mid Hv_mid_ne Hadj_from Htail.
+  assert (Hclosed : forall (mid : Point) (Hne : mid <> dbase d)
+      (Hadj_dtip : adj (E_minus E d) (dtip d) mid)
+      (Hp : reachable (E_minus E d) mid (dbase d)), False).
+  { clear v_mid Hv_mid_ne Hadj_from Htail.
+    intros mid Hne Hadj_dtip Hp.
+    induction Hp as [| u v w Hadj Hr IH]; eauto.
+    - apply Hne. reflexivity.
+    - destruct (point_eq_dec v (dbase d)) as [Hvdb | Hvnd]; eauto.
+      + subst v. exfalso.
+        assert (Hune : u <> dbase d) by (intro Heq; subst u; exact Hne).
+        destruct (adj_E_minus_penult_to_dbase E d u Hfan Hd Hin Hntwin Hune Hadj) as [ec [Hout [Hecd Hu]]].
+        assert (Hpref : reachable (E_minus E d) (dtip d) (dtip ec)).
+        { apply reach_trans with u.
+          - apply reach_trans with mid.
+            + apply reach_one. exact Hadj_dtip.
+            + inversion Hp; subst; eauto.
+          - rewrite <- Hu. apply reach_refl. }
+        apply (not_reachable_E_minus_dtip_to_outgoing_tip E d ec Hfan Hns Hd Hsf Hde Hin Hntwin
+          Hout Hecd Hpref). }
+  exact (Hclosed v_mid Hv_mid_ne Hadj_from Htail).
+Proof.
+  clear v_mid Hv_mid_ne Hadj_from Htail.
+  intro Hr.
+  set (Hpred := fun s t : Point => s = dtip d -> t <> dbase d).
+  assert (Hbase : forall u0, Hpred u0 u0).
+  { intros s Hanchor. subst s.
+    intro Heq. apply Hde. symmetry. exact Heq. }
+  assert (Hstep : forall u0 v0 w0,
+      adj (E_minus E d) u0 v0 -> reachable (E_minus E d) v0 w0 -> Hpred v0 w0 -> Hpred u0 w0).
+  { intros u0 v0 w0 Hadj Htail IH. intro Hu0. subst u0.
+    destruct (point_eq_dec v0 (dbase d)) as [Hvdb | Hvneq0].
+    { exfalso.
+      assert (Huneq : dtip d <> dbase d).
+      { intro Heq. apply Hde. symmetry. exact Heq. }
+      assert (Hadj_dbase : adj (E_minus E d) (dtip d) (dbase d)).
+      { exact (eq_ind v0 (fun p => adj (E_minus E d) (dtip d) p) Hadj (dbase d) Hvdb). }
+      destruct (adj_E_minus_penult_to_dbase E d (dtip d) Hfan Hd Hin Hntwin Huneq Hadj_dbase) as [ec [Hout [Hecd Hu0]]].
+      assert (Hpref : reachable (E_minus E d) (dtip d) (dtip ec))
+        by (rewrite <- Hu0; apply reach_refl).
+      apply (not_reachable_E_minus_dtip_to_outgoing_tip E d ec Hfan Hns Hd Hsf Hde Hin Hntwin
+        Hout Hecd Hpref). }
+    { destruct (point_eq_dec w0 (dbase d)) as [Hwdb | Hwnd].
+      { exfalso.
+        assert (Htail_dbase : reachable (E_minus E d) v0 (dbase d)).
+        { eapply reach_trans; [ exact Htail | rewrite Hwdb; apply reach_refl ]. }
+        apply (not_reachable_E_minus_penult_tail_to_dbase E d v0 Hfan Hns Hd Hsf Hde Hin Hntwin
+          Hvneq0 Hadj Htail_dbase). }
+      { exact Hwnd. } } }
+  pose proof (@reachable_ind (E_minus E d) Hpred Hbase Hstep (dtip d) (dbase d) Hr) as Hmain.
+  exact ((Hmain eq_refl) eq_refl).
 Qed.
 
-Lemma not_adj_E_minus_dbase_to_outgoing_dtip_tip :
+Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
   forall E d ec,
     (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
     no_spurs (darts_of E) ->
@@ -1482,9 +1525,60 @@ Lemma not_adj_E_minus_dbase_to_outgoing_dtip_tip :
     ~ In d E ->
     In ec (outgoing (dtip d) (darts_of E)) ->
     ec <> twin d ->
-    ~ adj (E_minus E (twin d)) (dbase d) (dtip ec).
+    ~ reachable (E_minus E (twin d)) (dbase d) (dtip ec)
+with not_adj_E_minus_dbase_to_outgoing_dtip_tip :
+  forall E d ec,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    In ec (outgoing (dtip d) (darts_of E)) ->
+    ec <> twin d ->
+    ~ adj (E_minus E (twin d)) (dbase d) (dtip ec)
+with not_reachable_E_minus_penult_tail_to_dtip :
+  forall E d v_mid,
+    (forall v0 : Point, fan_ok (outgoing v0 (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    v_mid <> dtip d ->
+    adj (E_minus E (twin d)) (dbase d) v_mid ->
+    reachable (E_minus E (twin d)) v_mid (dtip d) -> False
+with not_reachable_E_minus_dbase_dtip :
+  forall E d,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    In (twin d) E ->
+    ~ In d E ->
+    ~ reachable (E_minus E (twin d)) (dbase d) (dtip d).
 Proof.
-  intros E d ec Hfan Hns Hd Hsf Hde HinTwin Hnd Hout Hecd Hadj.
+  intros E d ec Hfan Hns Hd Hsf Hde HinTwin Hnd Hout Hecd.
+  intro Hreach.
+  apply reachable_inv in Hreach.
+  destruct Hreach as [Heq | [v [Hadj Htail]]].
+  - exfalso. apply Hecd.
+    apply dart_eq_of_endpoints.
+    + apply outgoing_base with (D := darts_of E); exact Hout.
+    + apply eq_sym. exact Heq.
+  - destruct (point_eq_dec v (dtip ec)) as [Hv | Hvneq].
+    + subst v.
+      exfalso.
+      eapply not_adj_E_minus_dbase_to_outgoing_dtip_tip; eauto.
+    + revert Hadj.
+      induction Htail as [| u v' w Hadj' Htail' IH']; intros Hadj.
+      * apply Hvneq. reflexivity.
+      * exact (IH' Htail').
+Proof.
+  intros Hadj.
   pose proof (dart_endpoints_neE d Hde) as Hend.
   set (D := darts_of E).
   assert (Htw : forall z, In z D -> In (twin z) D) by (subst D; apply darts_of_closed_under_twin).
@@ -1500,101 +1594,123 @@ Proof.
   apply in_E_minus in He. destruct He as [HinE Hned].
   assert (Hed : In e (darts_of E)) by (apply in_darts_of_orig; exact HinE).
   destruct (dart_eq_dec e ec) as [-> | Hne].
-  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
-    + assert (Hdeq : dbase ec = dbase d) by (cbn [dbase dtip fst]; exact Hfu).
-      apply Hend. exact (eq_sym (eq_trans (eq_sym Hbase) Hdeq)).
-    + apply Hdbec. cbn [dbase dtip fst] in Hfu. exact Hfu.
-  - destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
-    + assert (Hbe : dbase e = dbase d) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+  { destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    { assert (Hdeq : dbase ec = dbase d) by (cbn [dbase dtip fst]; exact Hfu).
+      apply Hend. exact (eq_sym (eq_trans (eq_sym Hbase) Hdeq)). }
+    { apply Hdbec. cbn [dbase dtip fst] in Hfu. exact Hfu. } }
+  { destruct Hor as [[Hfu Hsu] | [Hfu Hsu]].
+    { assert (Hbe : dbase e = dbase d) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
       assert (Hte : dtip e = dtip ec) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
       assert (Hadj1 : adj (E_minus E (twin d)) (dbase d) (dtip ec)).
       { unfold adj. exists e. split.
-        - exact (proj2 (in_E_minus E (twin d) e) (conj HinE Hned)).
-        - left. split; [ exact Hbe | exact Hte ]. }
+        { exact (proj2 (in_E_minus E (twin d) e) (conj HinE Hned)). }
+        { left. split; [ exact Hbe | exact Hte ]. } }
       destruct (point_eq_dec (dtip ec) (dtip d)) as [Htip_eq | _].
-      * assert (Hspur : dbase ec = dtip ec).
+      { assert (Hspur : dbase ec = dtip ec).
         { rewrite Hbase. exact (eq_sym Htip_eq). }
-        apply Hdbec. exact Hspur.
-      * assert (Hreach : reachable (E_minus E (twin d)) (dbase d) (dtip d)).
-        { apply reach_trans with (dtip ec).
-          - apply reach_one. exact Hadj1.
-          - apply reach_one. unfold adj.
+        apply Hdbec. exact Hspur. }
+      { assert (Hreach : reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+        { assert (Hr1 := reach_one (E_minus E (twin d)) (dbase d) (dtip ec) Hadj1).
+          assert (Hr2 : reachable (E_minus E (twin d)) (dtip ec) (dtip d)).
+          { apply reach_one. unfold adj.
             destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
-            + exists ec. split.
-              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
-              * right. split; [ exact Hbase | reflexivity ].
-            + exists (twin ec). split.
-              * destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
-                -- exfalso.
-                   assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
-                   assert (Hbd : dbase d = dtip d).
-                   { rewrite Hec_d in Hbase. exact Hbase. }
-                   apply Hend. exact Hbd.
-                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
-              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
-        exact (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach).
-    + assert (Hbe : dbase e = dtip ec) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
+            { exists ec. split.
+              { apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ]. }
+              { right. split; [ exact Hbase | reflexivity ]. } }
+            { exists (twin ec). split.
+              { destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
+                { exfalso.
+                  assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
+                  assert (Hbd : dbase d = dtip d).
+                  { rewrite Hec_d in Hbase. exact Hbase. }
+                  apply Hend. exact Hbd. }
+                { apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ]. } }
+              { left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. } } }
+          exact (reach_trans (E_minus E (twin d)) (dbase d) (dtip ec) (dtip d) Hr1 Hr2). }
+        exact (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach). } }
+    { assert (Hbe : dbase e = dtip ec) by (cbn [dbase dtip fst] in Hfu; exact Hfu).
       assert (Hte : dtip e = dbase d) by (cbn [dbase dtip snd] in Hsu; exact Hsu).
       assert (Hadj1 : adj (E_minus E (twin d)) (dbase d) (dtip ec)).
       { unfold adj. exists e. split.
-        - exact (proj2 (in_E_minus E (twin d) e) (conj HinE Hned)).
-        - right. split; [ exact Hbe | exact Hte ]. }
+        { exact (proj2 (in_E_minus E (twin d) e) (conj HinE Hned)). }
+        { right. split; [ exact Hbe | exact Hte ]. } }
       destruct (point_eq_dec (dtip ec) (dtip d)) as [Htip_eq | _].
-      * assert (Hspur : dbase ec = dtip ec).
+      { assert (Hspur : dbase ec = dtip ec).
         { rewrite Hbase. exact (eq_sym Htip_eq). }
-        apply Hdbec. exact Hspur.
-      * assert (Hreach : reachable (E_minus E (twin d)) (dbase d) (dtip d)).
-        { apply reach_trans with (dtip ec).
-          - apply reach_one. exact Hadj1.
-          - apply reach_one. unfold adj.
+        apply Hdbec. exact Hspur. }
+      { assert (Hreach : reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+        { assert (Hr1 := reach_one (E_minus E (twin d)) (dbase d) (dtip ec) Hadj1).
+          assert (Hr2 : reachable (E_minus E (twin d)) (dtip ec) (dtip d)).
+          { apply reach_one. unfold adj.
             destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
-            + exists ec. split.
-              * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
-              * right. split; [ exact Hbase | reflexivity ].
-            + exists (twin ec). split.
-              * destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
-                -- exfalso.
-                   assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
-                   assert (Hbd : dbase d = dtip d).
-                   { rewrite Hec_d in Hbase. exact Hbase. }
-                   apply Hend. exact Hbd.
-                -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
-              * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
-        exact (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach).
+            { exists ec. split.
+              { apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ]. }
+              { right. split; [ exact Hbase | reflexivity ]. } }
+            { exists (twin ec). split.
+              { destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
+                { exfalso.
+                  assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
+                  assert (Hbd : dbase d = dtip d).
+                  { rewrite Hec_d in Hbase. exact Hbase. }
+                  apply Hend. exact Hbd. }
+                { apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ]. } }
+              { left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. } } }
+          exact (reach_trans (E_minus E (twin d)) (dbase d) (dtip ec) (dtip d) Hr1 Hr2). }
+        exact (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd Hreach). } } }
+Proof.
+  clear ec Hout Hecd Hadj Hend D Htw HecD Hbase Hdbec Htip_ne.
+  intros v_mid Hv_mid_ne Hadj_from Htail.
+  assert (Hclosed : forall (mid : Point) (Hne : mid <> dtip d)
+      (Hadj_dbase : adj (E_minus E (twin d)) (dbase d) mid)
+      (Hp : reachable (E_minus E (twin d)) mid (dtip d)), False).
+  { clear v_mid Hv_mid_ne Hadj_from Htail.
+    intros mid Hne Hadj_dbase Hp.
+    induction Hp as [| u v w Hadj Hr IH]; eauto.
+    - apply Hne. reflexivity.
+    - destruct (point_eq_dec v (dtip d)) as [Hvdt | Hvnd]; eauto.
+      + subst v. exfalso.
+        assert (Hune : u <> dtip d) by (intro Heq; subst u; exact Hne).
+        destruct (adj_E_minus_penult_to_dtip E d u Hfan Hd HinTwin Hnd Hune Hadj) as [ec [Hout [Hecd Hu]]].
+        assert (Hpref : reachable (E_minus E (twin d)) (dbase d) (dtip ec)).
+        { apply reach_trans with u.
+          - apply reach_trans with mid.
+            + apply reach_one. exact Hadj_dbase.
+            + inversion Hp; subst; eauto.
+          - rewrite <- Hu. apply reach_refl. }
+        apply (not_reachable_E_minus_dbase_to_outgoing_tip E d ec Hfan Hns Hd Hsf Hde HinTwin Hnd
+          Hout Hecd Hpref). }
+  exact (Hclosed v_mid Hv_mid_ne Hadj_from Htail).
+Proof.
+  clear v_mid Hv_mid_ne Hadj_from Htail.
+  intro Hr.
+  set (Hpred := fun s t : Point => s = dbase d -> t <> dtip d).
+  assert (Hbase : forall u0, Hpred u0 u0).
+  { intros s Hanchor. subst s.
+    intro Heq. apply Hde. exact Heq. }
+  assert (Hstep : forall u0 v0 w0,
+      adj (E_minus E (twin d)) u0 v0 -> reachable (E_minus E (twin d)) v0 w0 -> Hpred v0 w0 -> Hpred u0 w0).
+  { intros u0 v0 w0 Hadj Htail IH. intro Hu0. subst u0.
+    destruct (point_eq_dec v0 (dtip d)) as [Hvdt | Hvneq0].
+    { exfalso.
+      assert (Huneq : dbase d <> dtip d).
+      { intro Heq. apply Hde. exact Heq. }
+      assert (Hadj_dtip : adj (E_minus E (twin d)) (dbase d) (dtip d)).
+      { exact (eq_ind v0 (fun p => adj (E_minus E (twin d)) (dbase d) p) Hadj (dtip d) Hvdt). }
+      destruct (adj_E_minus_penult_to_dtip E d (dbase d) Hfan Hd HinTwin Hnd Huneq Hadj_dtip) as [ec [Hout [Hecd Hu0]]].
+      assert (Hpref : reachable (E_minus E (twin d)) (dbase d) (dtip ec))
+        by (rewrite <- Hu0; apply reach_refl).
+      apply (not_reachable_E_minus_dbase_to_outgoing_tip E d ec Hfan Hns Hd Hsf Hde HinTwin Hnd
+        Hout Hecd Hpref). }
+    { destruct (point_eq_dec w0 (dtip d)) as [Hwdt | Hwnd].
+      { exfalso.
+        assert (Htail_dtip : reachable (E_minus E (twin d)) v0 (dtip d)).
+        { eapply reach_trans; [ exact Htail | rewrite Hwdt; apply reach_refl ]. }
+        apply (not_reachable_E_minus_penult_tail_to_dtip E d v0 Hfan Hns Hd Hsf Hde HinTwin Hnd
+          Hvneq0 Hadj Htail_dtip). }
+      { exact Hwnd. } } }
+  pose proof (@reachable_ind (E_minus E (twin d)) Hpred Hbase Hstep (dbase d) (dtip d) Hr) as Hmain.
+  exact ((Hmain eq_refl) eq_refl).
 Qed.
-
-(* No route from `dtip d` to the tip of an off-carrier outgoing dart at `dbase d`. *)
-Lemma not_reachable_E_minus_dtip_to_outgoing_tip :
-  forall E d ec,
-    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-    no_spurs (darts_of E) ->
-    In d (darts_of E) ->
-    same_face (darts_of E) d (twin d) ->
-    dart_endpoints_ne d ->
-    In d E ->
-    ~ In (twin d) E ->
-    In ec (outgoing (dbase d) (darts_of E)) ->
-    ec <> d ->
-    ~ reachable (E_minus E d) (dtip d) (dtip ec).
-Proof.
-  (* Rung 3b-iv PARTIAL: script pinned in docs/extract-faces-bridge.md §19.
-     Havoid + not_adj one-step; blocked on file-order cycle with core. *)
-  Admitted.
-
-Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
-  forall E d ec,
-    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
-    no_spurs (darts_of E) ->
-    In d (darts_of E) ->
-    same_face (darts_of E) d (twin d) ->
-    dart_endpoints_ne d ->
-    In (twin d) E ->
-    ~ In d E ->
-    In ec (outgoing (dtip d) (darts_of E)) ->
-    ec <> twin d ->
-    ~ reachable (E_minus E (twin d)) (dbase d) (dtip ec).
-Proof.
-  Admitted.
 
 Lemma reachable_from_dtip_avoids_dbase :
   forall E d wpt,
