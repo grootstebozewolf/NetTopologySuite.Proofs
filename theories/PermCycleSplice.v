@@ -525,6 +525,237 @@ Section CycleSplice.
       congruence.
   Qed.
 
+  (* ---- Stage 4: cycle_count_surgery (the +1) ----------------------------- *)
+
+  (* The "in O" predicate (membership in d's f-orbit) and the arc1-class
+     sub-predicate, as boolean self-maps so they slot into count_classes_filter_split. *)
+  Definition inO (x : A) : bool := same_orbit_b eqdec f S d x.
+  Definition inA (x : A) : bool := same_orbit_b eqdec f' S' (it 1 d) x.
+
+  (* cycle_count is the ClassCount class count of the same-orbit relation. *)
+  Lemma cycle_count_as_count_classes : forall (g : A -> A) (T : list A),
+    cycle_count eqdec g T = count_classes (same_orbit_b eqdec g T) T.
+  Proof. intros g T. unfold cycle_count, orbit_reps, count_classes. reflexivity. Qed.
+
+  (* A complement (non-O) element of S' is Outside. *)
+  Lemma negb_inO_outside : forall x, In x S' -> negb (inO x) = true -> Outside x.
+  Proof.
+    intros x HxS' Hn. split; [ exact HxS' | ]. intro Hso.
+    destruct (proj1 (Hcarrier x) HxS') as [HxS _].
+    assert (Hb : same_orbit_b eqdec f S d x = true)
+      by (apply (same_orbit_b_complete eqdec f S Hclos Hinj d HdS x); exact Hso).
+    unfold inO in Hn. rewrite Hb in Hn. discriminate Hn.
+  Qed.
+
+  (* O-block on (f,S) is one class. *)
+  Lemma splice_O_block_fS_eq_1 :
+    count_classes (same_orbit_b eqdec f S) (filter inO S) = 1%nat.
+  Proof.
+    apply (count_classes_eq_1 (same_orbit_b eqdec f S) (same_orbit_b_refl eqdec f S)).
+    - intro Hnil.
+      assert (Hd : In d (filter inO S))
+        by (apply filter_In; split; [ exact HdS | unfold inO; apply same_orbit_b_refl ]).
+      rewrite Hnil in Hd. exact Hd.
+    - intros x y Hx Hy.
+      apply filter_In in Hx. destruct Hx as [HxS Hxo].
+      apply filter_In in Hy. destruct Hy as [HyS Hyo].
+      unfold inO in Hxo, Hyo.
+      assert (Hxd : same_orbit_b eqdec f S x d = true)
+        by (apply (same_orbit_b_sym_on eqdec f S Hclos Hinj d x HdS HxS Hxo)).
+      exact (same_orbit_b_trans_on eqdec f S Hclos Hinj x d y HxS HdS HyS Hxd Hyo).
+  Qed.
+
+  (* A ¬inA member of the O-block lies in arc2 (so all are f'-related to it (k+1) d). *)
+  Lemma negA_in_LO_is_arc2 : forall x,
+    In x (filter (fun z => negb (inA z)) (filter inO S')) ->
+    same_orbit_b eqdec f' S' (it (k + 1) d) x = true.
+  Proof.
+    intros x Hx.
+    apply filter_In in Hx. destruct Hx as [HxLO HxnA].
+    cbv beta in HxnA. unfold inA in HxnA.
+    apply filter_In in HxLO. destruct HxLO as [HxS' HxO].
+    destruct (arc_or_outside x HxS') as [Ha1 | [Ha2 | Hout]].
+    - exfalso. destruct Ha1 as [i [Hi Hxi]]. subst x.
+      assert (Hb : same_orbit_b eqdec f' S' (it 1 d) (it i d) = true)
+        by (apply splice_arc1_is_orbit; lia).
+      rewrite Hb in HxnA. discriminate HxnA.
+    - destruct Ha2 as [i [Hi Hxi]]. subst x. apply splice_arc2_is_orbit. lia.
+    - exfalso. destruct Hout as [_ Hnso]. apply Hnso.
+      unfold inO in HxO. exact (same_orbit_b_sound eqdec f S d x HxO).
+  Qed.
+
+  (* O-block on (f',S') is TWO classes (arc1 + arc2). *)
+  Lemma splice_O_block_f'_eq_2 :
+    count_classes (same_orbit_b eqdec f' S') (filter inO S') = 2%nat.
+  Proof.
+    assert (HLO_S' : forall z, In z (filter inO S') -> In z S')
+      by (intros z Hz; apply filter_In in Hz; tauto).
+    assert (H1S' : In (it 1 d) S') by (apply arc1_mem; lia).
+    assert (Htr_LO : forall x y z, In x (filter inO S') -> In y (filter inO S') ->
+              In z (filter inO S') ->
+              same_orbit_b eqdec f' S' x y = true -> same_orbit_b eqdec f' S' y z = true ->
+              same_orbit_b eqdec f' S' x z = true)
+      by (intros x y z Hx Hy Hz; apply (same_orbit_b_trans_on eqdec f' S' Hclos' Hinj'
+            x y z (HLO_S' x Hx) (HLO_S' y Hy) (HLO_S' z Hz))).
+    assert (Hcc_inA : forall x y, In x (filter inO S') -> In y (filter inO S') ->
+              same_orbit_b eqdec f' S' x y = true -> inA x = inA y).
+    { intros x y Hx Hy Hxy. unfold inA.
+      pose proof (HLO_S' x Hx) as HxS'. pose proof (HLO_S' y Hy) as HyS'.
+      destruct (same_orbit_b eqdec f' S' (it 1 d) x) eqn:E1x;
+        destruct (same_orbit_b eqdec f' S' (it 1 d) y) eqn:E1y; try reflexivity; exfalso.
+      - assert (same_orbit_b eqdec f' S' (it 1 d) y = true)
+          by (apply (same_orbit_b_trans_on eqdec f' S' Hclos' Hinj' (it 1 d) x y
+                       H1S' HxS' HyS' E1x Hxy)); congruence.
+      - assert (same_orbit_b eqdec f' S' y x = true)
+          by (apply (same_orbit_b_sym_on eqdec f' S' Hclos' Hinj' x y HxS' HyS' Hxy)).
+        assert (same_orbit_b eqdec f' S' (it 1 d) x = true)
+          by (apply (same_orbit_b_trans_on eqdec f' S' Hclos' Hinj' (it 1 d) y x
+                       H1S' HyS' HxS' E1y H)); congruence. }
+    rewrite (count_classes_filter_split (same_orbit_b eqdec f' S')
+               (same_orbit_b_refl eqdec f' S') inA (filter inO S') Hcc_inA Htr_LO).
+    (* inA-block = 1 *)
+    assert (HinO_1 : inO (it 1 d) = true)
+      by (unfold inO; apply (same_orbit_b_complete eqdec f S Hclos Hinj d HdS (it 1 d));
+          exists 1%nat; reflexivity).
+    assert (Hwit1 : In (it 1 d) (filter inA (filter inO S')))
+      by (apply filter_In; split;
+          [ apply filter_In; split; [ exact H1S' | exact HinO_1 ]
+          | unfold inA; apply same_orbit_b_refl ]).
+    assert (HblockA : count_classes (same_orbit_b eqdec f' S') (filter inA (filter inO S')) = 1%nat).
+    { apply (count_classes_eq_1 (same_orbit_b eqdec f' S') (same_orbit_b_refl eqdec f' S')).
+      - intro Hnil. rewrite Hnil in Hwit1. exact Hwit1.
+      - intros x y Hx Hy.
+        apply filter_In in Hx. destruct Hx as [HxLO HxA].
+        apply filter_In in Hy. destruct Hy as [HyLO HyA].
+        unfold inA in HxA, HyA.
+        pose proof (HLO_S' x HxLO) as HxS'. pose proof (HLO_S' y HyLO) as HyS'.
+        assert (Hx1 : same_orbit_b eqdec f' S' x (it 1 d) = true)
+          by (apply (same_orbit_b_sym_on eqdec f' S' Hclos' Hinj' (it 1 d) x H1S' HxS' HxA)).
+        exact (same_orbit_b_trans_on eqdec f' S' Hclos' Hinj' x (it 1 d) y HxS' H1S' HyS' Hx1 HyA). }
+    (* ¬inA-block = 1 *)
+    assert (Hk1S' : In (it (k + 1) d) S') by (apply arc2_mem; lia).
+    assert (HinO_k1 : inO (it (k + 1) d) = true)
+      by (unfold inO; apply (same_orbit_b_complete eqdec f S Hclos Hinj d HdS (it (k + 1) d));
+          exists (k + 1)%nat; reflexivity).
+    assert (Harc1_1 : InArc1 (it 1 d)) by (exists 1%nat; split; [ lia | reflexivity ]).
+    assert (Harc2_k1 : InArc2 (it (k + 1) d)) by (exists (k + 1)%nat; split; [ lia | reflexivity ]).
+    assert (HnA_k1 : negb (inA (it (k + 1) d)) = true)
+      by (unfold inA; rewrite (splice_arcs_distinct_b (it 1 d) (it (k + 1) d) Harc1_1 Harc2_k1);
+          reflexivity).
+    assert (HwitB : In (it (k + 1) d) (filter (fun z => negb (inA z)) (filter inO S')))
+      by (apply filter_In; split;
+          [ apply filter_In; split; [ exact Hk1S' | exact HinO_k1 ] | exact HnA_k1 ]).
+    assert (HblockNA : count_classes (same_orbit_b eqdec f' S')
+              (filter (fun z => negb (inA z)) (filter inO S')) = 1%nat).
+    { apply (count_classes_eq_1 (same_orbit_b eqdec f' S') (same_orbit_b_refl eqdec f' S')).
+      - intro Hnil. rewrite Hnil in HwitB. exact HwitB.
+      - intros x y Hx Hy.
+        pose proof (negA_in_LO_is_arc2 x Hx) as Hkx.
+        pose proof (negA_in_LO_is_arc2 y Hy) as Hky.
+        apply filter_In in Hx. destruct Hx as [HxLO _].
+        apply filter_In in Hy. destruct Hy as [HyLO _].
+        pose proof (HLO_S' x HxLO) as HxS'. pose proof (HLO_S' y HyLO) as HyS'.
+        assert (Hxk : same_orbit_b eqdec f' S' x (it (k + 1) d) = true)
+          by (apply (same_orbit_b_sym_on eqdec f' S' Hclos' Hinj' (it (k + 1) d) x Hk1S' HxS' Hkx)).
+        exact (same_orbit_b_trans_on eqdec f' S' Hclos' Hinj' x (it (k + 1) d) y
+                 HxS' Hk1S' HyS' Hxk Hky). }
+    rewrite HblockA, HblockNA. reflexivity.
+  Qed.
+
+  (* The complement counts agree: same members + relations agree there. *)
+  Lemma splice_complement_eq :
+    count_classes (same_orbit_b eqdec f' S') (filter (fun x => negb (inO x)) S')
+    = count_classes (same_orbit_b eqdec f S) (filter (fun x => negb (inO x)) S).
+  Proof.
+    assert (HinO_d : inO d = true) by (unfold inO; apply same_orbit_b_refl).
+    assert (HinO_td : inO td = true)
+      by (unfold inO; apply (same_orbit_b_complete eqdec f S Hclos Hinj d HdS td); exact inO_d_td).
+    assert (HmemS : forall z, In z (filter (fun x => negb (inO x)) S) -> In z S)
+      by (intros z Hz; apply filter_In in Hz; tauto).
+    assert (Hmem' : forall z, In z (filter (fun x => negb (inO x)) S') -> In z S)
+      by (intros z Hz; apply filter_In in Hz; destruct Hz as [HzS' _];
+          destruct (proj1 (Hcarrier z) HzS') as [HzS _]; exact HzS).
+    assert (Hiff : forall z, In z (filter (fun x => negb (inO x)) S')
+                          <-> In z (filter (fun x => negb (inO x)) S)).
+    { intro z. split.
+      - intro Hz. pose proof Hz as Hz0. apply filter_In in Hz. destruct Hz as [HzS' HznO].
+        apply filter_In. split; [ exact (Hmem' z Hz0) | exact HznO ].
+      - intro Hz. apply filter_In in Hz. destruct Hz as [HzS HznO].
+        apply filter_In. split; [ | exact HznO ].
+        apply (proj2 (Hcarrier z)). split; [ exact HzS | split ].
+        + intro He. subst z. cbv beta in HznO.
+          rewrite HinO_d in HznO. discriminate HznO.
+        + intro He. subst z. cbv beta in HznO.
+          rewrite HinO_td in HznO. discriminate HznO. }
+    (* (a) switch the relation on the S' list (members are Outside) *)
+    assert (Hswitch : count_classes (same_orbit_b eqdec f' S') (filter (fun x => negb (inO x)) S')
+                    = count_classes (same_orbit_b eqdec f S) (filter (fun x => negb (inO x)) S')).
+    { unfold count_classes. f_equal. apply class_reps_ext_on.
+      intros x y Hx Hy.
+      pose proof Hx as Hx0. pose proof Hy as Hy0.
+      apply filter_In in Hx. destruct Hx as [HxS' HxnO].
+      apply filter_In in Hy. destruct Hy as [HyS' HynO].
+      cbv beta in HxnO, HynO.
+      exact (outside_orbit_b_eq x y (negb_inO_outside x HxS' HxnO)
+               (negb_inO_outside y HyS' HynO)). }
+    rewrite Hswitch.
+    (* (b) same members, same relation: equal counts via mono both ways *)
+    apply Nat.le_antisymm.
+    - apply (class_reps_length_mono (same_orbit_b eqdec f S) (same_orbit_b_refl eqdec f S)
+               (filter (fun x => negb (inO x)) S') (filter (fun x => negb (inO x)) S)).
+      + intros x y Hx Hy.
+        apply (same_orbit_b_sym_on eqdec f S Hclos Hinj x y (HmemS x Hx) (HmemS y Hy)).
+      + intros x y z Hx Hy Hz.
+        apply (same_orbit_b_trans_on eqdec f S Hclos Hinj x y z
+                 (HmemS x Hx) (HmemS y Hy) (HmemS z Hz)).
+      + intros z Hz. exact (proj1 (Hiff z) Hz).
+    - apply (class_reps_length_mono (same_orbit_b eqdec f S) (same_orbit_b_refl eqdec f S)
+               (filter (fun x => negb (inO x)) S) (filter (fun x => negb (inO x)) S')).
+      + intros x y Hx Hy.
+        apply (same_orbit_b_sym_on eqdec f S Hclos Hinj x y (Hmem' x Hx) (Hmem' y Hy)).
+      + intros x y z Hx Hy Hz.
+        apply (same_orbit_b_trans_on eqdec f S Hclos Hinj x y z
+                 (Hmem' x Hx) (Hmem' y Hy) (Hmem' z Hz)).
+      + intros z Hz. exact (proj2 (Hiff z) Hz).
+  Qed.
+
+  (* THE +1: the surgery raises the orbit count by exactly one. *)
+  Lemma cycle_count_surgery :
+    cycle_count eqdec f' S' = (cycle_count eqdec f S + 1)%nat.
+  Proof.
+    assert (Hcc_fS : forall x y, In x S -> In y S ->
+              same_orbit_b eqdec f S x y = true -> inO x = inO y).
+    { intros x y Hx Hy Hxy. unfold inO.
+      destruct (same_orbit_b eqdec f S d x) eqn:Edx;
+        destruct (same_orbit_b eqdec f S d y) eqn:Edy; try reflexivity; exfalso.
+      - assert (same_orbit_b eqdec f S d y = true)
+          by (apply (same_orbit_b_trans_on eqdec f S Hclos Hinj d x y HdS Hx Hy Edx Hxy));
+          congruence.
+      - assert (same_orbit_b eqdec f S y x = true)
+          by (apply (same_orbit_b_sym_on eqdec f S Hclos Hinj x y Hx Hy Hxy)).
+        assert (same_orbit_b eqdec f S d x = true)
+          by (apply (same_orbit_b_trans_on eqdec f S Hclos Hinj d y x HdS Hy Hx Edy H));
+          congruence. }
+    assert (Htr_fS : forall x y z, In x S -> In y S -> In z S ->
+              same_orbit_b eqdec f S x y = true -> same_orbit_b eqdec f S y z = true ->
+              same_orbit_b eqdec f S x z = true)
+      by (intros x y z Hx Hy Hz; apply (same_orbit_b_trans_on eqdec f S Hclos Hinj x y z Hx Hy Hz)).
+    assert (Hcc_f'S' : forall x y, In x S' -> In y S' ->
+              same_orbit_b eqdec f' S' x y = true -> inO x = inO y)
+      by (intros x y Hx Hy Hxy; unfold inO; apply splice_inO_f'_class_constant; assumption).
+    assert (Htr_f'S' : forall x y z, In x S' -> In y S' -> In z S' ->
+              same_orbit_b eqdec f' S' x y = true -> same_orbit_b eqdec f' S' y z = true ->
+              same_orbit_b eqdec f' S' x z = true)
+      by (intros x y z Hx Hy Hz; apply (same_orbit_b_trans_on eqdec f' S' Hclos' Hinj' x y z Hx Hy Hz)).
+    rewrite (cycle_count_as_count_classes f' S'), (cycle_count_as_count_classes f S).
+    rewrite (count_classes_filter_split (same_orbit_b eqdec f' S')
+               (same_orbit_b_refl eqdec f' S') inO S' Hcc_f'S' Htr_f'S').
+    rewrite (count_classes_filter_split (same_orbit_b eqdec f S)
+               (same_orbit_b_refl eqdec f S) inO S Hcc_fS Htr_fS).
+    rewrite splice_O_block_f'_eq_2, splice_O_block_fS_eq_1, splice_complement_eq.
+    lia.
+  Qed.
+
 End CycleSplice.
 
 (* -------------------------------------------------------------------------- *)
@@ -538,5 +769,6 @@ Print Assumptions splice_arc1_is_orbit.
 Print Assumptions splice_arc2_is_orbit.
 Print Assumptions splice_on_orbit_index.
 Print Assumptions splice_inO_f'_class_constant.
+Print Assumptions cycle_count_surgery.
 Print Assumptions splice_arcs_distinct_b.
 Print Assumptions outside_orbit_b_eq.

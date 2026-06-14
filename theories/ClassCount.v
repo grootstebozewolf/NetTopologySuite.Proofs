@@ -371,6 +371,37 @@ Proof.
   - apply functional_extensionality. intro z. symmetry. apply Hb.
 Qed.
 
+(* `existsb` depends only on the pointwise behaviour of its predicate on the
+   list's elements (a congruence; funext-free). *)
+Lemma existsb_ext_in : forall {A : Type} (p q : A -> bool) (l : list A),
+  (forall z, In z l -> p z = q z) -> existsb p l = existsb q l.
+Proof.
+  intros A p q l. induction l as [| a l IH]; intros H; cbn [existsb]; [ reflexivity | ].
+  rewrite (H a (or_introl eq_refl)).
+  rewrite IH by (intros z Hz; apply H; right; exact Hz).
+  reflexivity.
+Qed.
+
+(* The ON-LIST extensionality of `class_reps`: agreement of the two relations on
+   pairs drawn from `l` suffices (the `existsb` guard only inspects reps, which
+   lie in `l`).  Unlike `class_reps_ext`, this is funext-FREE -- it routes through
+   `existsb_ext_in` rather than rewriting the whole predicate. *)
+Lemma class_reps_ext_on : forall {A : Type} (rb1 rb2 : A -> A -> bool) (l : list A),
+  (forall x y, In x l -> In y l -> rb1 x y = rb2 x y) ->
+  class_reps rb1 l = class_reps rb2 l.
+Proof.
+  intros A rb1 rb2 l. induction l as [| a l IH]; intros H; [ reflexivity | ].
+  cbn [class_reps].
+  assert (Hl : forall x y, In x l -> In y l -> rb1 x y = rb2 x y)
+    by (intros x y Hx Hy; apply H; right; assumption).
+  rewrite (IH Hl).
+  rewrite (existsb_ext_in (fun z => rb1 z a) (fun z => rb2 z a) (class_reps rb2 l)).
+  - reflexivity.
+  - intros z Hz. apply H.
+    + right. exact (class_reps_incl rb2 l z Hz).
+    + left. reflexivity.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.  Generic class-counting core; allowlist axioms only.           *)
 (* -------------------------------------------------------------------------- *)
@@ -378,3 +409,4 @@ Qed.
 Print Assumptions count_classes_filter_split.
 Print Assumptions count_classes_eq_1.
 Print Assumptions class_reps_ext.
+Print Assumptions class_reps_ext_on.
