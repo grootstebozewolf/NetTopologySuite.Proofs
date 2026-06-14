@@ -705,3 +705,28 @@ is exactly `~ reachable (E_minus E d) (dtip d) (dbase d)`.  Formalising the
 face-count delta (deleting a same-face edge merges/splits `fstep`-orbits) and that
 balance discharges `H_bridge_core` from `euler_characteristic` as a named
 hypothesis.  No axiom; registry stays at one deferred entry until it lands.
+
+### §20.2.1  The wiring (Rung 3b-xi, `theories/EulerBridge.v`)
+
+The full logical path from the Euler identity to the bridge conclusion is now a
+single `Qed` chain (no axiom, no `Admitted`):
+
+- `euler_bridge` (arithmetic, `lia`): `euler_characteristic E` +
+  `euler_characteristic (E_minus E d)` + vertex invariance + the edge delta
+  (`num_edges_E_minus`) + the same-face FACE delta (`num_faces` unchanged) force
+  `num_components (E_minus E d) = num_components E + 1`.
+- `reachable_E_minus_of_bypass` (semantic): if the endpoints of `d` stay connected
+  after deleting `d`, every `E`-reachability reroutes through that bypass, so the
+  two reachability relations coincide (`bypass_reachable_iff`).
+- `bridge_conclusion_of_euler`: a bypass would keep the relations equal, hence keep
+  `num_components` equal (component count is a function of the relation),
+  contradicting the `C+1` above -- so there is no bypass, i.e.
+  `~ reachable (E_minus E d) (fst d) (snd d)`, the `H_bridge_core` conclusion.
+
+The residual is now exactly TWO crisp named combinatorial facts (carried as
+hypotheses, never asserted): the same-face FACE delta
+`num_faces (E_minus E d) = num_faces E` (the `fstep`-orbit reroute, with the fan
+substrate in `ArrangementEMinus` §2), and that `num_components` depends only on the
+reachability relation.  Plus `euler_characteristic` itself, the named planar-Euler
+hypothesis.  `H_bridge_core` stays the single registered deferred proof until the
+face delta lands.

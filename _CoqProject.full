@@ -787,6 +787,11 @@ theories/MapCounts.v
 # identity V+F=E+1+C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
 # deletion instance num_edges_E_minus.  No Admitteds.
 theories/EulerArrangement.v
+# H_bridge Euler route (Rung 3b-xi): WIRING -- euler_bridge (Euler => C'=C+1) +
+# reachable_E_minus_of_bypass (bypass => reachability preserved) assemble into
+# bridge_conclusion_of_euler (the H_bridge_core conclusion modulo the named face
+# delta + count-from-relation facts).  No Admitteds.
+theories/EulerBridge.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
