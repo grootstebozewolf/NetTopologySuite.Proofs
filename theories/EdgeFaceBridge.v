@@ -19,10 +19,11 @@
      - ExtractFaces.v       (face_period)
      - VertexGeneralPosition.v (well_noded_darts -> fan_ok)
 
-   Residual Admitted (registry LIVE): not_reachable_E_minus_{dtip_dbase,dbase_dtip}
-   (the two reach-core lemmas).  The outgoing-tip pair
-   not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip is now Qed: each reduces
-   to its reach-core lemma by extending the walk one surviving-carrier edge.
+   Residual Admitted (registry LIVE): a SINGLE named premise `H_bridge_core`
+   (Rung 3b-v) -- the combinatorial planar-bridge seam.  Both reach-core lemmas
+   (not_reachable_E_minus_{dtip_dbase,dbase_dtip}), the outgoing-tip pair, and
+   the exported capstones are now all Qed on top of it; `Print Assumptions`
+   lists exactly `H_bridge_core` (plus standard classical/funext axioms).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -1323,8 +1324,39 @@ Proof.
   cbn in Hprop. rewrite Heq in Hprop. apply Hprop. reflexivity.
 Qed.
 
-(* Reach core (registry LIVE): the two `dtip↔dbase` non-reachability lemmas.
-   The outgoing-tip and not_adj layers below are now Qed on top of these two. *)
+(* ==========================================================================
+   THE SINGLE OPEN PREMISE (Rung 3b-v): the combinatorial planar-bridge core.
+
+   `H_bridge_core` is the one explicit, documented seam on which the entire
+   H_bridge stack rests.  It says: in a general-position, spur-free arrangement,
+   if a proper dart `d` lies on the same face as its twin, then the carrier edge
+   is a bridge -- removing it (in whichever orientation is present in `E`)
+   strands one endpoint from the other.  This is the classical planar theorem
+   "an edge whose two darts share a face is a bridge"; it is TRUE, and its proof
+   is the corpus's thesis-scale obligation (geometric/JCT and combinatorial/Euler
+   routes both reduce to it; see docs/extract-faces-bridge.md).
+
+   It is the ONLY remaining `Admitted` in the H_bridge development.  The two
+   reach-core lemmas below, every `not_adj`/outgoing-tip lemma, and the exported
+   `same_face_twin_disconnect` / `same_face_twin_is_cut` / `H_bridge_well_noded`
+   are all `Qed` on top of it -- so `Print Assumptions` on the capstones lists
+   exactly `H_bridge_core` (plus standard classical/funext axioms).  Mirrors the
+   corpus's named-JCT-seam pattern (e.g. parity_characterises_interior_cont). *)
+Theorem H_bridge_core :
+  forall (E : list Edge) (d : Dart),
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    (In d E -> ~ In (twin d) E ->
+       ~ reachable (E_minus E d) (dtip d) (dbase d))
+    /\ (In (twin d) E -> ~ In d E ->
+       ~ reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+Proof.
+  Admitted.
+
+(* The two reach-core lemmas are now Qed, derived from the single premise. *)
 Lemma not_reachable_E_minus_dtip_dbase :
   forall E d,
     (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
@@ -1336,7 +1368,9 @@ Lemma not_reachable_E_minus_dtip_dbase :
     ~ In (twin d) E ->
     ~ reachable (E_minus E d) (dtip d) (dbase d).
 Proof.
-  Admitted.
+  intros E d Hfan Hns Hd Hsf Hde Hin Hntwin.
+  exact (proj1 (H_bridge_core E d Hfan Hns Hd Hsf Hde) Hin Hntwin).
+Qed.
 
 Lemma not_reachable_E_minus_dbase_dtip :
   forall E d,
@@ -1349,7 +1383,9 @@ Lemma not_reachable_E_minus_dbase_dtip :
     ~ In d E ->
     ~ reachable (E_minus E (twin d)) (dbase d) (dtip d).
 Proof.
-  Admitted.
+  intros E d Hfan Hns Hd Hsf Hde HinTwin Hnd.
+  exact (proj2 (H_bridge_core E d Hfan Hns Hd Hsf Hde) HinTwin Hnd).
+Qed.
 
 Lemma reachable_E_minus_from_dtip_ne_dbase :
   forall E d w,

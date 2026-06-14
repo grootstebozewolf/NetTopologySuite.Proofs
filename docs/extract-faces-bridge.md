@@ -606,3 +606,33 @@ the former named hypothesis `H_bridge : ∀E, …` is removed from theorem state
 (plus standard classical axioms). Contrast: `OverlayCorrectness.overlay_ng_correct_conditional`
 still carries a *geometric* H_bridge (JCT-gated); this slice closed the
 *combinatorial* rotation-system bridge packaging only.
+
+## §20  Rung 3b-v — single-premise refactor (`H_bridge_core`)
+
+After the 3b-iv routes (geometric/JCT and combinatorial/Euler) both reduced to
+the same thesis-scale planar-bridge content, Rung 3b-v singularises the gap.
+
+The two reach-core lemmas are no longer separate `Admitted`s.  A single named
+premise is introduced:
+
+```
+Theorem H_bridge_core :
+  forall (E : list Edge) (d : Dart),
+    (forall v, fan_ok (outgoing v (darts_of E))) -> no_spurs (darts_of E) ->
+    In d (darts_of E) -> same_face (darts_of E) d (twin d) -> dart_endpoints_ne d ->
+    (In d E -> ~ In (twin d) E -> ~ reachable (E_minus E d) (dtip d) (dbase d))
+    /\ (In (twin d) E -> ~ In d E -> ~ reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+```
+
+`H_bridge_core` is the ONLY `Admitted` in the H_bridge development.  Both
+`not_reachable_E_minus_{dtip_dbase,dbase_dtip}`, the outgoing-tip pair, the
+`not_adj_*` barrier, and the exported `same_face_twin_disconnect` /
+`same_face_twin_is_cut` / `H_bridge_well_noded` are all `Qed` on top of it.
+`Print Assumptions H_bridge_well_noded` lists exactly `H_bridge_core` plus the
+standard classical/funext axioms.
+
+This mirrors the corpus's named-JCT-seam pattern: the hard topology lives in one
+explicit, documented contract rather than two dangling holes.  Both closure
+routes can now proceed in parallel against this single interface, and the
+deferred-proof registry shrinks from two entries to one
+(`docs/admitted-deferred-proofs.txt`).  No new axioms; no closure claimed.
