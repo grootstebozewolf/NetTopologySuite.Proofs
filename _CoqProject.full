@@ -756,6 +756,11 @@ theories/JCTEscapeDescent.v
 # even_parity_escapes, each by the family field trichotomy).
 # Three-axiom.  No Admitted.
 theories/JCTSeparation.v
+# H_bridge geometric route (Rung 3b-iv), Phase B brick: discrete parity
+# transport across a ring-clear straight segment, reduced to
+# parity_constant_on_components.  Reusable primitive for the bridge's
+# crossing-number argument.
+theories/SegmentParityTransport.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
