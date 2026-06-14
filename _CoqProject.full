@@ -777,6 +777,10 @@ theories/EdgeCrossParity.v
 # finite injective self-map -- same-orbit equivalence + decidability +
 # cycle_count. Combinatorial substrate for the face-count (Euler) accounting.
 theories/PermCycleCount.v
+# H_bridge Euler route (Rung 3b-xvii, stage 1 of the cycle-count splice): the
+# generic orbit-transversal substrate (orbit_reps_indep/_NoDup, orbit_rep_in,
+# orbit_reps_length_mono) for counting same_orbit classes.  No Admitteds.
+theories/PermCycleSplice.v
 # H_bridge Euler route (Rung 3b-iv), Phase C NL-1: E_minus arrangement
 # scaffolding -- removing an edge only removes darts (incl), fan_ok is
 # downward-closed, so arrangement_ok survives edge removal; plus the exact
