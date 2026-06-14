@@ -6,8 +6,10 @@
 > (`theories/`, `theories-flocq/`, `docs/verified-claims.md`), separating
 > *proven* from *gap*, and recording priority and ordering decisions.
 >
-> Generated from the 2026-06-03 issue batch; last reconciled **2026-06-09**
-> against corpus HEAD `5b16d25`. This file is the cross-cutting overview; the
+> Generated from the 2026-06-03 issue batch; last reconciled **2026-06-14**
+> against branch `claude/cycle-count-partition-yjgjmy` (PR #195 — the H_bridge
+> Euler route + `ClassCount` convergence — merged to `main`). This file is the
+> cross-cutting overview; the
 > per-area detail lives in the GitHub issues and the sibling docs
 > `docs/issue-64-arc-primitives-triage.md` and
 > `docs/issue-67-relateng-triage.md`.
@@ -72,7 +74,7 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **PRC-SN** | `PrecisionModel.makePrecise` on curves | #66 | oracle `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (exact-`Q`) | ✅ curve-snap grid-friendliness |
 | **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
 | **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `theories/DE9IM.v`, `RelateLineLine.v`, `RelateIntDetBound.v` | 🟡 line-line DE-9IM ✅; arc-aware planned |
-| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly | ⬜ (linear `extract_rings_valid` is the live deferred entry) |
+| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟡 linear `extract_rings_valid` is now conditional-Qed; its one named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is the single live deferred proof — combinatorial core (face split `num_faces_E_minus_splice`) now ✅ PROVEN, residual is the named planar Euler identity |
 | **TRI-DT** | Delaunay on (densified) curved boundaries | #68 | `theories-flocq/InCircle_b64_exact.v` (primitive), `Triangle.v`, `Tin.v` | 🟡 in-circle primitive ✅; Delaunay proper planned |
 | **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
 | **TB-\* / F-RD** | TestBuilder rendering / `ShapeWriter` hooks | — | — | — not proof-relevant |
@@ -117,7 +119,10 @@ spending further proof effort — several are stale.
 2. **Stale upstream refs.** JTS#1175 is fixed (jts#1200) and is struck through
    with the PR ref in #64, #66, #67. The buffer/overlay "summary of failures"
    refs (JTS#1102, #1000, etc.) should still be re-checked against current JTS
-   before more proof spend.
+   before more proof spend. *Internal doc-drift:* `README.md` / `CONTRIBUTING.md`
+   still name `extract_rings_valid` as the live deferred proof — it is now
+   `EdgeFaceBridge.H_bridge_core` (see finding 5); those should be fixed
+   separately.
 3. **Label vs. reality reconciled (2026-06-08).** #67 bumped `Urgent → Immediate`
    (was the under-built area); #65 trimmed `Immediate → Urgent` (linear buffer
    foundation mature, curve output blocked on #64).
@@ -126,6 +131,21 @@ spending further proof effort — several are stale.
    Scope A landed. #67 moved from blank to S0–S3 (`DE9IM.v`, `RelateLineLine.v`,
    `RelateIntDetBound.v` + oracle vectors). #68's `inCircle` primitive is now
    available. The first two items of the prior order of attack are done/started.
+5. **Progress since 2026-06-09 (2026-06-14) — the PLG / ring-assembly lineage.**
+   `extract_rings_valid` is now a conditional Qed; its gap was singularized behind
+   ONE named premise `EdgeFaceBridge.H_bridge_core` (the planar same-face ⇒ bridge
+   seam), now the single registered deferred proof. PR #195 (merged to `main`)
+   corrected `H_bridge_core`'s precondition to `noded_general_position E` and built
+   the planar-Euler discharge infrastructure (`ReachableDec`/`num_components`,
+   `EulerArrangement`/`euler_characteristic` carried as a NAMED `V−E+F = 2C`
+   hypothesis — not an axiom — and the `EulerBridge` wiring), alongside the
+   `ClassCount` convergence of the orbit/component counters. On branch
+   `claude/cycle-count-partition-yjgjmy`, the generic cycle-count SPLICE
+   (`PermCycleSplice.cycle_count_surgery`) and its instantiation
+   (`NumFacesSplice.num_faces_E_minus_splice`) now PROVE the combinatorial core of
+   `H_bridge_core` — the same-face FACE SPLIT `num_faces (E_minus E d) =
+   num_faces E + 1`. `H_bridge_core`'s only remaining gap is the named planar Euler
+   identity itself (carried by design, never axiomatized).
 
 ## Recommended order of attack (revised 2026-06-09)
 
