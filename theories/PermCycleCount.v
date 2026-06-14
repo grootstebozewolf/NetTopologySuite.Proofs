@@ -142,4 +142,50 @@ Section CycleCount.
   (* The number of distinct orbits met by S. *)
   Definition cycle_count : nat := length (orbit_reps S).
 
+  (* --- Well-definedness of the orbit count --------------------------------- *)
+
+  Lemma same_orbit_b_refl : forall x, same_orbit_b x x = true.
+  Proof.
+    intro x. apply existsb_exists. exists 0%nat. split.
+    - apply in_seq. lia.
+    - cbn. destruct (eqdec x x) as [_ | Hn]; [ reflexivity | exfalso; apply Hn; reflexivity ].
+  Qed.
+
+  (* Representatives are drawn from the list. *)
+  Lemma orbit_reps_incl : forall l r, In r (orbit_reps l) -> In r l.
+  Proof.
+    induction l as [| a l IH]; intros r Hr; [ exact Hr | ].
+    cbn [orbit_reps] in Hr.
+    destruct (existsb (fun z => same_orbit_b z a) (orbit_reps l)).
+    - right. apply IH. exact Hr.
+    - destruct Hr as [Hr | Hr]; [ left; exact Hr | right; apply IH; exact Hr ].
+  Qed.
+
+  (* Every element of the list is covered by some representative's orbit. *)
+  Lemma orbit_reps_cover : forall l x, In x l ->
+    exists r, In r (orbit_reps l) /\ same_orbit_b r x = true.
+  Proof.
+    induction l as [| a l IH]; intros x Hx; [ destruct Hx | ].
+    cbn [orbit_reps].
+    destruct (existsb (fun z => same_orbit_b z a) (orbit_reps l)) eqn:He.
+    - destruct Hx as [Hxa | Hxl].
+      + subst x. apply existsb_exists in He. destruct He as [z [Hz Hzb]].
+        exists z. split; [ exact Hz | exact Hzb ].
+      + destruct (IH x Hxl) as [r [Hr Hrb]]. exists r. split; [ exact Hr | exact Hrb ].
+    - destruct Hx as [Hxa | Hxl].
+      + subst x. exists a. split; [ left; reflexivity | apply same_orbit_b_refl ].
+      + destruct (IH x Hxl) as [r [Hr Hrb]].
+        exists r. split; [ right; exact Hr | exact Hrb ].
+  Qed.
+
+  (* A nonempty carrier has at least one orbit. *)
+  Lemma cycle_count_pos : S <> [] -> (1 <= cycle_count)%nat.
+  Proof.
+    intro Hne. unfold cycle_count.
+    destruct S as [| s0 s'] eqn:HS; [ contradiction | ].
+    destruct (orbit_reps_cover (s0 :: s') s0 (or_introl eq_refl)) as [r [Hr _]].
+    destruct (orbit_reps (s0 :: s')) as [| ? ?];
+      [ destruct Hr | cbn [length]; lia ].
+  Qed.
+
 End CycleCount.

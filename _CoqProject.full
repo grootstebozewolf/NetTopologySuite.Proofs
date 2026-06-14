@@ -775,6 +775,11 @@ theories/PermCycleCount.v
 # dart-removal membership characterisation when the opposite orientation is
 # absent (the bridge setting ~ In (twin e) E).
 theories/ArrangementEMinus.v
+# H_bridge Euler route (Rung 3b-vi): num_faces -- the number of fstep-orbits
+# (faces) of darts_of E, via cycle_count; well-defined and positive for any
+# nonempty general-position arrangement. (num_components deferred: needs
+# decidability of reachable.)
+theories/MapCounts.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
