@@ -636,3 +636,116 @@ explicit, documented contract rather than two dangling holes.  Both closure
 routes can now proceed in parallel against this single interface, and the
 deferred-proof registry shrinks from two entries to one
 (`docs/admitted-deferred-proofs.txt`).  No new axioms; no closure claimed.
+
+## §20.1  Rung 3b-vi — the exact missing precondition (`noded_general_position`)
+
+`H_bridge_core` as introduced in §20 was **too strong as stated**: it carried
+only per-vertex `fan_ok`, `no_spurs`, `same_face`, and `dart_endpoints_ne`.  None
+of those forbid two edges crossing in their interiors.  But its conclusion —
+"a dart sharing a face with its twin ⟹ the carrier edge is a bridge" — is a
+**planarity (genus-0) fact**, FALSE for a rotation system with positive genus,
+where a same-face edge can be a non-separating handle rather than a bridge.
+`fan_ok` constrains only the angular order *at* each vertex; it does not pin the
+genus.  So the bare statement was not provable.
+
+The EXACT missing precondition is the **non-crossing / planar-embedding**
+condition, supplied by `noded_general_position E` (it delivers undirected
+`pairwise_no_proper_cross` via `NodedGeneralPosition.noded_gp_pairwise`).
+`H_bridge_core` now carries it as an explicit hypothesis.  Under it the statement
+is true and its proof is the combinatorial-map **Euler count** `V − E + F = 2*C`
+(`num_faces` counts `fstep`-orbits, i.e. the map face count -- `2*C`, NOT `1+C`;
+see §20.2): deleting a same-face edge SPLITS the shared face (`F' = F+1`) AND
+DISCONNECTS (`C' = C+1`); the two happen TOGETHER and are exactly consistent with
+the identity (`V−(E−1)+(F+1) = 2*C+2 = 2*(C+1)`), and `C' = C+1` is the bridge
+conclusion.  That count is the `MapCounts` (`num_faces`) / `ReachableDec`
+(`num_components`) / `EulerArrangement` route; the remaining piece is the
+same-face FACE SPLIT (`num_faces (E_minus E d) = num_faces E + 1`).  So
+`H_bridge_core` is CORRECTLY STATED (a true Tier-3 deferred proof) and stays
+Admitted pending that splice.
+
+**No exported theorem changed.**  Every consumer already carries the precondition
+inside `well_noded_darts E` (`= noded_general_position E /\ all_proper_darts … /\
+vertex_general_position …`); `same_face_twin_disconnect` discharges it via
+`proj1`.  The hypothesis was threaded through the internal reach-core
+(`not_reachable_E_minus_{dtip_dbase,dbase_dtip}`), the wrapper/`not_adj`/
+outgoing-tip barrier lemmas, and into `same_face_twin_disconnect`; the headline
+`H_bridge_well_noded` (`edge_2_connected E ⟹ twins_in_different_faces (darts_of E)`)
+keeps its exact signature, and `OverlayBridge.extract_rings_valid` is unaffected.
+`Print Assumptions edge_2_connected_twins_sep` still lists exactly `H_bridge_core`
+plus the standard classical/funext axioms.  No new axioms; no closure claimed —
+this rung pins the precondition that makes the seam provable.
+
+## §20.2  The Euler route, as a NAMED HYPOTHESIS (NOT an axiom)
+
+**Decision (2026-06-14): the planar Euler identity is NOT added as an axiom.**
+The corpus's credibility rests on its 3-axiom allowlist (the classical-reals trio
++ funext, plus the inherited Flocq axiom in the b64 lane); a domain theorem such
+as Euler -- especially one easy to mis-state over `darts_of E`, where a wrong
+statement would make the whole corpus inconsistent -- must be *proved*, carried as
+a *named hypothesis* ([cond]), or *registered* as a deferred proof, never asserted.
+`H_bridge_core` stays a Tier-3 deferred proof; the route to discharging it is the
+honest named-hypothesis one, using the existing counting machinery.
+
+The counting substrate now in place:
+
+- `MapCounts.num_faces` (F, the `fstep`-orbit count) -- positive, well defined.
+- `ReachableDec.num_components` (C, reachability classes of the vertices), built
+  on `ReachableDec.reachable_dec` (Rung 3b-vii).
+- `EulerArrangement.num_vertices` (V) and `num_edges` (E, Rung 3b-viii).
+- `EulerArrangement.euler_characteristic E := V + F = E + 2*C` -- the genus-0
+  combinatorial-map Euler relation as a `Prop` PREMISE, the named hypothesis
+  threaded into `H_bridge_core`, never an axiom.  (`2*C`, not `1+C`: `num_faces`
+  is the map face count -- each component carries its own outer-boundary orbit --
+  so two disjoint triangles give `V=6,E=6,F=4,C=2`, `6-6+4 = 4 = 2*2`, refuting
+  `1+C=3`.  An earlier draft used `1+C`; corrected in Rung 3b-xvi.)
+- First deletion instance: `num_edges_E_minus` (the edge count drops by one when a
+  once-occurring edge is removed) and `num_vertices_E_minus_le`.
+
+**Remaining rung (the splice).** With `euler_characteristic` (`V−E+F=2*C`) for `E`
+and for `E_minus E d`, the edge delta (−1), `num_vertices` invariance, and the
+same-face FACE SPLIT (`F' = F+1`), the identity forces a `num_components` increase
+(`C' = C+1`) -- i.e. the endpoints of `d` fall into different reachability classes,
+exactly `~ reachable (E_minus E d) (fst d) (snd d)`.  Proving the FACE SPLIT
+(`num_faces (E_minus E d) = num_faces E + 1`) -- the generic cycle-count splice
+over `fstep_E_minus_splice` -- discharges `H_bridge_core` from
+`euler_characteristic` as a named hypothesis.  No axiom; registry stays at one
+deferred entry until it lands.
+
+### §20.2.1  The wiring — `theories/EulerBridge.v` (Rungs 3b-xi/-xii)
+
+`H_bridge_core_conclusion_from_euler` proves the `H_bridge_core` conclusion
+(`~ reachable (E_minus E d) (fst d) (snd d)`) from `euler_characteristic`
+(`V−E+F=2*C`, the named premise) + vertex invariance + the proved edge delta + the
+same-face FACE SPLIT (`F'=F+1`).  See the file header for the chain (arithmetic
+`euler_component_increase`; semantic `reachable_E_minus_of_bypass`).
+
+The "count is a function of the relation" obligation is **discharged** here, not
+assumed: `ReachableDec.comp_reps_length_mono` (class-count monotone in the vertex
+set) gives `num_components_E_minus_le`.  So the SINGLE remaining residual is the
+same-face FACE SPLIT `num_faces (E_minus E d) = num_faces E + 1`.  `H_bridge_core`
+stays the one registered deferred proof until it lands.
+
+Toward that delta, `ArrangementEMinus` §3 LOCALISES the change:
+`outgoing_darts_of_E_minus_eq` shows fans away from `e`'s endpoints are LIST-equal
+after deletion, so `fstep_E_minus_eq_away` proves `fstep` is unchanged except at
+darts whose tip is an endpoint of `e`.
+
+The `next`-reroute at those endpoint fans is proved (`theories/DartNextRemove.v`,
+Rung 3b-xiv): `next_remove` characterises `next` on a fan with one dart removed --
+`next F' d = next F x0` when `next F d = x0`, else `next F d` -- with reusable
+`list_min` facts (`list_min_set_invariant`, `list_min_remove_non_min`).
+
+Composing it with `fstep_E_minus_eq_away` pins the surgery pointwise
+(`theories/FaceStepRemove.v`, Rung 3b-xv): `fstep_E_minus_splice` shows, in the
+well-noded bridge setting (`In d E`, `~ In (twin d) E`, `d` proper),
+`fstep (darts_of (E_minus E d)) x` equals `fstep (twin d)` when `x` is the
+face-predecessor of `d`, `fstep d` when `x` is the face-predecessor of `twin d`,
+and `fstep x` otherwise -- the exact "remove the edge, cross-connect the two
+endpoints" surgery.
+
+What remains is the orbit-count SPLICE itself: a `PermCycleCount`-style cycle-count
+argument showing this surgery SPLITS the single `fstep`-orbit containing `d` and
+`twin d` (period `≥ 3` by `no_spurs`) into exactly TWO orbits, so the residual face
+delta `num_faces (E_minus E d) = num_faces E + 1` follows.  (No cycle-count-change
+machinery exists in `PermCycleCount` yet; it must be built.  Combined with the
+`V−E+F=2*C` Euler premise, this `F+1` gives `C+1` -- the disconnect.) Still open.

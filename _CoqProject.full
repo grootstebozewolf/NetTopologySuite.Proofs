@@ -387,6 +387,10 @@ theories/FaceOrbitSep.v
 # theorem edge_2_connected => twins_in_different_faces is the deferred deep
 # rung.  No Admitteds.
 theories/EdgeConnectivity.v
+# extract_rings_valid R5, H_bridge Euler route (Rung 3b-vii): decidability of
+# undirected vertex reachability over a finite edge list -- the piece MapCounts.v
+# flagged as missing for num_components.  No Admitteds.
+theories/ReachableDec.v
 # extract_rings_valid R5, H_bridge rung: dart↔edge incidence + same_face↔dart_walk
 # linkage toward edge_2_connected => twins_in_different_faces (§3 open).
 # No Admitteds.
@@ -436,6 +440,10 @@ theories/DartNext.v
 # face_of orbit FINITENESS (§9 crux) are deferred (slice 2d).  No Admitted;
 # axioms = the allowlisted classical-reals pair.
 theories/DartNextSpec.v
+# extract_rings_valid R5 / H_bridge Euler route (Rung 3b-xiv): the `next`-reroute
+# next_remove -- how `next` changes when one dart leaves a fan (the first
+# sub-step of the num_faces orbit-count splice).  No Admitteds.
+theories/DartNextRemove.v
 
 # extract_rings_valid R5 / general assembler, slice 2d: INJECTIVITY (and
 # surjectivity / cyclic-permutation) of `next` on the outgoing fan
@@ -769,20 +777,34 @@ theories/EdgeCrossParity.v
 # finite injective self-map -- same-orbit equivalence + decidability +
 # cycle_count. Combinatorial substrate for the face-count (Euler) accounting.
 theories/PermCycleCount.v
+# H_bridge Euler route (Rung 3b-xvii, stage 1 of the cycle-count splice): the
+# generic orbit-transversal substrate (orbit_reps_indep/_NoDup, orbit_rep_in,
+# orbit_reps_length_mono) for counting same_orbit classes.  No Admitteds.
+theories/PermCycleSplice.v
 # H_bridge Euler route (Rung 3b-iv), Phase C NL-1: E_minus arrangement
 # scaffolding -- removing an edge only removes darts (incl), fan_ok is
 # downward-closed, so arrangement_ok survives edge removal; plus the exact
 # dart-removal membership characterisation when the opposite orientation is
 # absent (the bridge setting ~ In (twin e) E).
 theories/ArrangementEMinus.v
+# H_bridge Euler route (Rung 3b-xv): the pointwise SURGERY description of fstep
+# under edge deletion (fstep_E_minus_splice) -- composes fstep_E_minus_eq_away +
+# next_remove.  The input to the num_faces cycle-count splice.  No Admitteds.
+theories/FaceStepRemove.v
 # H_bridge Euler route (Rung 3b-vi): num_faces -- the number of fstep-orbits
 # (faces) of darts_of E, via cycle_count; well-defined and positive for any
-# nonempty general-position arrangement. (num_components deferred: needs
-# decidability of reachable.)
+# nonempty general-position arrangement. (num_components lands in ReachableDec.)
 theories/MapCounts.v
-# H_bridge Euler route (Rung 3b-vii): generic decidable-relation class counter
-# (count_classes) -- the order-independent counting core shared by num_faces
-# (orbit relation) and the pending num_components (reachability relation).
+# H_bridge Euler route (Rung 3b-viii): num_vertices / num_edges + the Euler
+# identity V+F=E+2*C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
+# deletion instance num_edges_E_minus.  No Admitteds.
+theories/EulerArrangement.v
+# H_bridge Euler route (Rung 3b-xi/-xii/-xvi): WIRING -- euler_component_increase
+# (Euler V-E+F=2C + same-face FACE SPLIT => C'=C+1) + reachable_E_minus_of_bypass
+# assemble into H_bridge_core_conclusion_from_euler.  No Admitteds.
+theories/EulerBridge.v
+# H_bridge Euler route (Rung 3b-vii, PR #194): generic decidable-relation class
+# counter (count_classes) -- order-independent counting core.
 theories/ClassCount.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
