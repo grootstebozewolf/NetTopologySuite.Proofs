@@ -36,7 +36,7 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import List Arith Lia.
+From Stdlib Require Import List Arith Lia ZArith.
 From NTS.Proofs Require Import Distance Overlay OverlayGraph Dart DartFace
                                EdgeConnectivity NodedGeneralPosition
                                MapCounts ReachableDec.
@@ -124,8 +124,60 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §5  Handshake: each undirected edge contributes exactly two darts.          *)
+(*     (`darts_of E = E ++ map twin E`, so |darts_of E| = 2 * |E|.)            *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma length_darts_of : forall E,
+  length (darts_of E) = (length E + length E)%nat.
+Proof.
+  intros E.
+  replace (darts_of E) with (E ++ map twin E) by reflexivity.
+  rewrite length_app, length_map. reflexivity.
+Qed.
+
+Lemma num_darts_double : forall E,
+  length (darts_of E) = (2 * num_edges E)%nat.
+Proof.
+  intros E. rewrite length_darts_of. unfold num_edges. lia.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  zeta2 (the signed Euler sum) and its arithmetic bridge to the identity. *)
+(*                                                                            *)
+(* NOTE: `V - E + F` MUST be taken over Z -- in nat it truncates whenever      *)
+(* E >= V (e.g. K4: V=4,E=6,F=4 gives (4-6)+4 = 4 in nat, not the true 2).     *)
+(* And `zeta2 = 2` holds ONLY in the connected case: in general `zeta2 = 1+C`. *)
+(* So `zeta2 E = 2` is NOT a free lemma -- it is exactly `euler_characteristic` *)
+(* with `num_components E = 1`, i.e. the named hypothesis (planar Euler), never *)
+(* asserted here.  What IS provable is the pure-arithmetic bridge below.        *)
+(* -------------------------------------------------------------------------- *)
+
+Definition zeta2 (E : list Edge) : Z :=
+  (Z.of_nat (num_vertices E) - Z.of_nat (num_edges E) + Z.of_nat (num_faces E))%Z.
+
+(* `euler_characteristic` (nat, V+F=E+1+C) is exactly `zeta2 = 1+C` (Z). *)
+Lemma zeta2_euler_iff : forall E,
+  euler_characteristic E <-> zeta2 E = (1 + Z.of_nat (num_components E))%Z.
+Proof.
+  intros E. unfold euler_characteristic, zeta2. split; intro H; lia.
+Qed.
+
+(* The connected (C=1) reading: `zeta2 = 2` is precisely the identity for a
+   connected arrangement.  Still the named hypothesis -- carried, not proved. *)
+Lemma zeta2_eq_2_iff_connected : forall E,
+  num_components E = 1%nat ->
+  (euler_characteristic E <-> zeta2 E = 2%Z).
+Proof.
+  intros E Hc. unfold euler_characteristic, zeta2. rewrite Hc.
+  split; intro H; lia.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.  Pure Point + list combinatorics; allowlist axioms only.       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions num_edges_E_minus.
 Print Assumptions num_vertices_E_minus_le.
+Print Assumptions num_darts_double.
+Print Assumptions zeta2_euler_iff.
