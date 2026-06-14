@@ -761,6 +761,10 @@ theories/JCTSeparation.v
 # parity_constant_on_components.  Reusable primitive for the bridge's
 # crossing-number argument.
 theories/SegmentParityTransport.v
+# H_bridge geometric route (Rung 3b-iv), Phase B step 3a: single-edge parity
+# flip -- agreeing off one edge and straddling it gives opposite point-in-ring
+# parity (the combinatorial core of the "opposite parity across edge d" step).
+theories/EdgeCrossParity.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
