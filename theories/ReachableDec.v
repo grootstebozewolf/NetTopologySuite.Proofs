@@ -24,7 +24,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import List Arith Lia FunctionalExtensionality.
-From NTS.Proofs Require Import Distance Overlay OverlayGraph EdgeConnectivity.
+From NTS.Proofs Require Import Distance Overlay OverlayGraph EdgeConnectivity
+                               ClassCount.
 
 Import ListNotations.
 
@@ -333,65 +334,49 @@ Proof. intros E x. apply reachable_b_true_iff. apply reach_refl. Qed.
 (*     This is the Euler quantity MapCounts.v deferred pending `reachable_dec`. *)
 (* -------------------------------------------------------------------------- *)
 
-(* One representative kept per reachability class (first occurrence). *)
-Fixpoint comp_reps (E : list Edge) (l : list Point) : list Point :=
-  match l with
-  | [] => []
-  | x :: l' =>
-      let rs := comp_reps E l' in
-      if existsb (fun z => reachable_b E z x) rs then rs else x :: rs
-  end.
+(* One representative kept per reachability class -- the generic
+   `ClassCount.class_reps` counter specialised to the reachability relation
+   `reachable_b E` (the shared counting core; cf. `PermCycleCount.orbit_reps`
+   for faces).  All the well-definedness facts below are thin instances of the
+   `ClassCount` lemmas. *)
+Definition comp_reps (E : list Edge) (l : list Point) : list Point :=
+  class_reps (reachable_b E) l.
 
 (* The number of distinct reachability classes among the vertices of `E`. *)
 Definition num_components (E : list Edge) : nat :=
   length (comp_reps E (nodup point_eq_dec (verts E))).
 
+(* Representatives are drawn from the list (ClassCount wrapper). *)
 Lemma comp_reps_incl : forall E l r, In r (comp_reps E l) -> In r l.
-Proof.
-  intros E l. induction l as [| a l IH]; intros r Hr; [ exact Hr | ].
-  cbn [comp_reps] in Hr.
-  destruct (existsb (fun z => reachable_b E z a) (comp_reps E l)).
-  - right. apply IH. exact Hr.
-  - destruct Hr as [Hr | Hr]; [ left; exact Hr | right; apply IH; exact Hr ].
-Qed.
+Proof. intros E. unfold comp_reps. exact (class_reps_incl (reachable_b E)). Qed.
 
 (* Every vertex is covered by some representative's reachability class. *)
 Lemma comp_reps_cover : forall E l x, In x l ->
   exists r, In r (comp_reps E l) /\ reachable_b E r x = true.
 Proof.
-  intros E l. induction l as [| a l IH]; intros x Hx; [ destruct Hx | ].
-  cbn [comp_reps].
-  destruct (existsb (fun z => reachable_b E z a) (comp_reps E l)) eqn:He.
-  - destruct Hx as [Hxa | Hxl].
-    + subst x. apply existsb_exists in He. destruct He as [z [Hz Hzb]].
-      exists z. split; [ exact Hz | exact Hzb ].
-    + destruct (IH x Hxl) as [r [Hr Hrb]]. exists r. split; [ exact Hr | exact Hrb ].
-  - destruct Hx as [Hxa | Hxl].
-    + subst x. exists a. split; [ left; reflexivity | apply reachable_b_refl ].
-    + destruct (IH x Hxl) as [r [Hr Hrb]].
-      exists r. split; [ right; exact Hr | exact Hrb ].
+  intros E. unfold comp_reps.
+  exact (class_reps_cover (reachable_b E) (reachable_b_refl E)).
 Qed.
 
 (* A graph with at least one vertex has at least one component. *)
 Lemma num_components_pos : forall E, verts E <> [] -> (1 <= num_components E)%nat.
 Proof.
-  intros E Hne. unfold num_components.
-  destruct (nodup point_eq_dec (verts E)) as [| v0 vs] eqn:Hnd.
-  - exfalso. destruct (verts E) as [| p ps] eqn:Hv.
-    + apply Hne. reflexivity.
-    + assert (Hin : In p (nodup point_eq_dec (p :: ps))) by
-        (apply nodup_In; left; reflexivity).
-      rewrite Hnd in Hin. destruct Hin.
-  - destruct (comp_reps_cover E (v0 :: vs) v0 (or_introl eq_refl)) as [r [Hr _]].
-    destruct (comp_reps E (v0 :: vs)) as [| r0 rs];
-      [ destruct Hr | cbn [length]; lia ].
+  intros E Hne. unfold num_components, comp_reps.
+  apply (count_classes_pos (reachable_b E) (reachable_b_refl E)).
+  intro Hnd. apply Hne.
+  destruct (verts E) as [| p ps] eqn:Hv; [ reflexivity | exfalso ].
+  assert (Hin : In p (nodup point_eq_dec (p :: ps)))
+    by (apply nodup_In; left; reflexivity).
+  rewrite Hnd in Hin. destruct Hin.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §8  num_components genuinely counts reachability CLASSES (well-definedness). *)
 (*     cover (§7) + independence here = the C-analogue of MapCounts' num_faces  *)
 (*     facts.  This is the connective tissue between "components increased" and  *)
-(*     "endpoints disconnected" the bridge dichotomy consumes.                   *)
+(*     "endpoints disconnected" the bridge dichotomy consumes.  Independence is  *)
+(*     `ClassCount.class_reps_indep`; reachability is GLOBALLY symmetric         *)
+(*     (`reachable_b_sym`), so the on-list symmetry hypothesis is immediate.     *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma reachable_b_sym : forall E u v, reachable_b E u v = reachable_b E v u.
@@ -407,12 +392,11 @@ Proof.
     congruence.
 Qed.
 
-Lemma existsb_false_forall : forall (f : Point -> bool) l,
-  existsb f l = false -> forall z, In z l -> f z = false.
+Lemma reachable_b_trans : forall E x y z,
+  reachable_b E x y = true -> reachable_b E y z = true -> reachable_b E x z = true.
 Proof.
-  intros f l H z Hz. destruct (f z) eqn:Hfz; [ | reflexivity ].
-  exfalso. assert (existsb f l = true) by (apply existsb_exists; exists z; auto).
-  congruence.
+  intros E x y z Hxy Hyz. apply reachable_b_true_iff.
+  apply reach_trans with y; apply reachable_b_true_iff; assumption.
 Qed.
 
 (* The kept representatives are pairwise unreachable: distinct reps are distinct
@@ -422,21 +406,12 @@ Lemma comp_reps_indep : forall E l r1 r2,
   In r1 (comp_reps E l) -> In r2 (comp_reps E l) ->
   reachable E r1 r2 -> r1 = r2.
 Proof.
-  intros E l. induction l as [| a l' IH]; intros r1 r2 H1 H2 Hr; [ destruct H1 | ].
-  cbn [comp_reps] in H1, H2.
-  destruct (existsb (fun z => reachable_b E z a) (comp_reps E l')) eqn:He.
-  - apply IH; assumption.
-  - assert (Hfall : forall z, In z (comp_reps E l') -> reachable_b E z a = false)
-      by (apply existsb_false_forall; exact He).
-    destruct H1 as [<- | H1]; destruct H2 as [<- | H2].
-    + reflexivity.
-    + exfalso.
-      assert (reachable_b E r2 a = true) by (apply reachable_b_true_iff, reach_sym, Hr).
-      rewrite (Hfall r2 H2) in H. discriminate.
-    + exfalso.
-      assert (reachable_b E r1 a = true) by (apply reachable_b_true_iff, Hr).
-      rewrite (Hfall r1 H1) in H. discriminate.
-    + apply IH; assumption.
+  intros E l r1 r2 H1 H2 Hr. unfold comp_reps in H1, H2.
+  assert (Hsym : forall x y, In x l -> In y l ->
+            reachable_b E x y = true -> reachable_b E y x = true).
+  { intros x y _ _ Hxy. rewrite reachable_b_sym. exact Hxy. }
+  apply (class_reps_indep (reachable_b E) l Hsym r1 r2 H1 H2).
+  apply reachable_b_true_iff. exact Hr.
 Qed.
 
 (* Reachability between vertices = sharing a representative: the semantic
@@ -463,104 +438,38 @@ Qed.
 (* §9  num_components depends only on the reachability relation, and is         *)
 (*     monotone in the vertex set.  These DISCHARGE the "count is a function    *)
 (*     of the relation" residual the Euler wiring carried as a hypothesis.      *)
+(*     Both are thin instances of the `ClassCount` core.                        *)
 (* -------------------------------------------------------------------------- *)
 
-(* comp_reps uses the relation only through its existsb guard, so equal
-   reachability (booleans) gives equal representative lists. *)
+(* comp_reps uses the relation only through `class_reps`, so extensionally-equal
+   reachability (booleans) gives equal representative lists (ClassCount wrapper). *)
 Lemma comp_reps_ext : forall E E' l,
   (forall u v, reachable_b E u v = reachable_b E' u v) ->
   comp_reps E l = comp_reps E' l.
 Proof.
-  intros E E' l Hb. induction l as [| a l IH]; [ reflexivity | ].
-  cbn [comp_reps]. rewrite IH.
-  replace (fun z => reachable_b E z a) with (fun z => reachable_b E' z a).
-  - reflexivity.
-  - apply functional_extensionality. intro z. symmetry. apply Hb.
+  intros E E' l Hb. unfold comp_reps.
+  apply class_reps_ext. intros x y. apply Hb.
 Qed.
 
 Lemma comp_reps_NoDup : forall E l, NoDup (comp_reps E l).
 Proof.
-  intros E l. induction l as [| a l IH]; [ constructor | ].
-  cbn [comp_reps].
-  destruct (existsb (fun z => reachable_b E z a) (comp_reps E l)) eqn:He.
-  - exact IH.
-  - constructor; [ | exact IH ].
-    intro Hin.
-    assert (existsb (fun z => reachable_b E z a) (comp_reps E l) = true)
-      by (apply existsb_exists; exists a; split; [ exact Hin | apply reachable_b_refl ]).
-    congruence.
-Qed.
-
-(* An injection between point lists bounds lengths (A NoDup). *)
-Lemma nodup_map_inj : forall (f : Point -> Point) (A : list Point),
-  NoDup A ->
-  (forall x y, In x A -> In y A -> f x = f y -> x = y) ->
-  NoDup (map f A).
-Proof.
-  intros f A. induction A as [| a A IH]; intros Hnd Hinj; [ constructor | ].
-  cbn [map]. apply NoDup_cons_iff in Hnd. destruct Hnd as [Hna HndA].
-  constructor.
-  - intro Hin. apply in_map_iff in Hin. destruct Hin as [x [Hfx Hx]]. apply Hna.
-    assert (a = x)
-      by (apply Hinj; [ left; reflexivity | right; exact Hx | symmetry; exact Hfx ]).
-    subst x. exact Hx.
-  - apply IH; [ exact HndA | ].
-    intros x y Hx Hy Hfxy. apply Hinj; [ right; exact Hx | right; exact Hy | exact Hfxy ].
-Qed.
-
-Lemma nodup_inj_length : forall (A B : list Point) (f : Point -> Point),
-  NoDup A ->
-  (forall x, In x A -> In (f x) B) ->
-  (forall x y, In x A -> In y A -> f x = f y -> x = y) ->
-  (length A <= length B)%nat.
-Proof.
-  intros A B f Hnd Hmap Hinj.
-  rewrite <- (length_map f A).
-  apply NoDup_incl_length.
-  - apply nodup_map_inj; assumption.
-  - intros y Hy. apply in_map_iff in Hy. destruct Hy as [x [<- Hx]]. apply Hmap; exact Hx.
-Qed.
-
-(* The representative of `r` chosen inside `comp_reps E l'` (used for the injection). *)
-Definition rep_in (E : list Edge) (l' : list Point) (r : Point) : Point :=
-  match find (fun z => reachable_b E z r) (comp_reps E l') with
-  | Some z => z
-  | None => r
-  end.
-
-Lemma rep_in_spec : forall E l' r,
-  In r l' ->
-  In (rep_in E l' r) (comp_reps E l') /\ reachable_b E (rep_in E l' r) r = true.
-Proof.
-  intros E l' r Hr. unfold rep_in.
-  destruct (comp_reps_cover E l' r Hr) as [z [Hz Hzr]].
-  destruct (find (fun w => reachable_b E w r) (comp_reps E l')) eqn:Hf.
-  - apply find_some in Hf. exact Hf.
-  - exfalso.
-    assert (reachable_b E z r = false)
-      by (exact (find_none (fun w => reachable_b E w r) (comp_reps E l') Hf z Hz)).
-    congruence.
+  intros E. unfold comp_reps.
+  exact (class_reps_NoDup (reachable_b E) (reachable_b_refl E)).
 Qed.
 
 (* Monotonicity of the class count in the vertex set (fixed relation): more
-   vertices, at least as many classes.  The injection sends each rep of `l` to
-   the rep of its class in `l'`; injectivity is `comp_reps_indep`. *)
+   vertices, at least as many classes.  Direct instance of
+   `ClassCount.class_reps_length_mono` with the (global) symmetry / transitivity
+   of `reachable_b`. *)
 Lemma comp_reps_length_mono : forall E l l',
   (forall x, In x l -> In x l') ->
   (length (comp_reps E l) <= length (comp_reps E l'))%nat.
 Proof.
-  intros E l l' Hincl.
-  apply (nodup_inj_length (comp_reps E l) (comp_reps E l') (rep_in E l')).
-  - apply comp_reps_NoDup.
-  - intros r Hr.
-    exact (proj1 (rep_in_spec E l' r (Hincl r (comp_reps_incl E l r Hr)))).
-  - intros r1 r2 Hr1 Hr2 Hfeq.
-    pose proof (rep_in_spec E l' r1 (Hincl r1 (comp_reps_incl E l r1 Hr1))) as [_ H1].
-    pose proof (rep_in_spec E l' r2 (Hincl r2 (comp_reps_incl E l r2 Hr2))) as [_ H2].
-    rewrite Hfeq in H1.
-    apply reachable_b_true_iff in H1. apply reachable_b_true_iff in H2.
-    apply (comp_reps_indep E l r1 r2 Hr1 Hr2).
-    apply reach_trans with (rep_in E l' r2); [ apply reach_sym; exact H1 | exact H2 ].
+  intros E l l' Hincl. unfold comp_reps.
+  apply (class_reps_length_mono (reachable_b E) (reachable_b_refl E) l l').
+  - intros x y _ _ Hxy. rewrite reachable_b_sym. exact Hxy.
+  - intros x y z _ _ _ Hxy Hyz. exact (reachable_b_trans E x y z Hxy Hyz).
+  - exact Hincl.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

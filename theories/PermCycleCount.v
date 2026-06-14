@@ -21,7 +21,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import List Arith Lia.
-From NTS.Proofs Require Import OrbitCycle.
+From NTS.Proofs Require Import OrbitCycle ClassCount.
 
 Import ListNotations.
 
@@ -130,14 +130,9 @@ Section CycleCount.
     - right. intro Hso. rewrite (same_orbit_b_complete x Hx y Hso) in Hb. discriminate.
   Qed.
 
-  (* One representative kept per orbit (first occurrence in the list). *)
-  Fixpoint orbit_reps (l : list A) : list A :=
-    match l with
-    | [] => []
-    | x :: l' =>
-        let rs := orbit_reps l' in
-        if existsb (fun z => same_orbit_b z x) rs then rs else x :: rs
-    end.
+  (* One representative kept per orbit -- the generic ClassCount.class_reps
+     counter specialised to the same-orbit relation (the shared counting core). *)
+  Definition orbit_reps (l : list A) : list A := class_reps same_orbit_b l.
 
   (* The number of distinct orbits met by S. *)
   Definition cycle_count : nat := length (orbit_reps S).
@@ -151,41 +146,38 @@ Section CycleCount.
     - cbn. destruct (eqdec x x) as [_ | Hn]; [ reflexivity | exfalso; apply Hn; reflexivity ].
   Qed.
 
-  (* Representatives are drawn from the list. *)
+  (* Representatives are drawn from the list (ClassCount wrapper). *)
   Lemma orbit_reps_incl : forall l r, In r (orbit_reps l) -> In r l.
-  Proof.
-    induction l as [| a l IH]; intros r Hr; [ exact Hr | ].
-    cbn [orbit_reps] in Hr.
-    destruct (existsb (fun z => same_orbit_b z a) (orbit_reps l)).
-    - right. apply IH. exact Hr.
-    - destruct Hr as [Hr | Hr]; [ left; exact Hr | right; apply IH; exact Hr ].
-  Qed.
+  Proof. unfold orbit_reps. exact (class_reps_incl same_orbit_b). Qed.
 
   (* Every element of the list is covered by some representative's orbit. *)
   Lemma orbit_reps_cover : forall l x, In x l ->
     exists r, In r (orbit_reps l) /\ same_orbit_b r x = true.
-  Proof.
-    induction l as [| a l IH]; intros x Hx; [ destruct Hx | ].
-    cbn [orbit_reps].
-    destruct (existsb (fun z => same_orbit_b z a) (orbit_reps l)) eqn:He.
-    - destruct Hx as [Hxa | Hxl].
-      + subst x. apply existsb_exists in He. destruct He as [z [Hz Hzb]].
-        exists z. split; [ exact Hz | exact Hzb ].
-      + destruct (IH x Hxl) as [r [Hr Hrb]]. exists r. split; [ exact Hr | exact Hrb ].
-    - destruct Hx as [Hxa | Hxl].
-      + subst x. exists a. split; [ left; reflexivity | apply same_orbit_b_refl ].
-      + destruct (IH x Hxl) as [r [Hr Hrb]].
-        exists r. split; [ right; exact Hr | exact Hrb ].
-  Qed.
+  Proof. unfold orbit_reps. exact (class_reps_cover same_orbit_b same_orbit_b_refl). Qed.
 
   (* A nonempty carrier has at least one orbit. *)
   Lemma cycle_count_pos : S <> [] -> (1 <= cycle_count)%nat.
   Proof.
-    intro Hne. unfold cycle_count.
-    destruct S as [| s0 s'] eqn:HS; [ contradiction | ].
-    destruct (orbit_reps_cover (s0 :: s') s0 (or_introl eq_refl)) as [r [Hr _]].
-    destruct (orbit_reps (s0 :: s')) as [| ? ?];
-      [ destruct Hr | cbn [length]; lia ].
+    intro Hne. unfold cycle_count, orbit_reps.
+    exact (count_classes_pos same_orbit_b same_orbit_b_refl S Hne).
+  Qed.
+
+  (* The same-orbit boolean relation is symmetric and transitive ON S -- the
+     hypotheses the generic ClassCount transversal lemmas need for the orbit
+     instantiation. *)
+  Lemma same_orbit_b_sym_on : forall x y, In x S -> In y S ->
+    same_orbit_b x y = true -> same_orbit_b y x = true.
+  Proof.
+    intros x y Hx Hy H. apply same_orbit_b_sound in H.
+    apply (same_orbit_b_complete y Hy x). apply (same_orbit_sym x Hx y H).
+  Qed.
+
+  Lemma same_orbit_b_trans_on : forall x y z, In x S -> In y S -> In z S ->
+    same_orbit_b x y = true -> same_orbit_b y z = true -> same_orbit_b x z = true.
+  Proof.
+    intros x y z Hx Hy Hz Hxy Hyz.
+    apply same_orbit_b_sound in Hxy. apply same_orbit_b_sound in Hyz.
+    apply (same_orbit_b_complete x Hx z). apply (same_orbit_trans x y z Hxy Hyz).
   Qed.
 
 End CycleCount.
