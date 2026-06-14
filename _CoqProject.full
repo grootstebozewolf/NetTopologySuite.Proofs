@@ -387,6 +387,10 @@ theories/FaceOrbitSep.v
 # theorem edge_2_connected => twins_in_different_faces is the deferred deep
 # rung.  No Admitteds.
 theories/EdgeConnectivity.v
+# extract_rings_valid R5, H_bridge Euler route (Rung 3b-vii): decidability of
+# undirected vertex reachability over a finite edge list -- the piece MapCounts.v
+# flagged as missing for num_components.  No Admitteds.
+theories/ReachableDec.v
 # extract_rings_valid R5, H_bridge rung: dart↔edge incidence + same_face↔dart_walk
 # linkage toward edge_2_connected => twins_in_different_faces (§3 open).
 # No Admitteds.

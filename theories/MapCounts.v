@@ -11,9 +11,11 @@
    is a well-defined positive natural for any nonempty arrangement.
 
    The companion count `num_components` (number of `reachable`-classes of the
-   vertex graph) is deferred: it needs decidability of `reachable`, which the
-   corpus does not yet provide.  Once `reachable_dec` lands, `num_components`
-   instantiates the same generic class-counting machinery.
+   vertex graph) now lives in `ReachableDec.v` (Rung 3b-vii): `reachable_dec`
+   decides undirected reachability over a finite edge list (bounded BFS closure
+   + NoDup-length saturation), `reachable_b` reflects it, and `num_components`
+   counts the reachability classes of `verts E` with `num_components_pos` for the
+   nonempty case -- the class-counting analogue of `num_faces` here.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
