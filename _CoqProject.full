@@ -796,14 +796,16 @@ theories/FaceStepRemove.v
 # nonempty general-position arrangement. (num_components lands in ReachableDec.)
 theories/MapCounts.v
 # H_bridge Euler route (Rung 3b-viii): num_vertices / num_edges + the Euler
-# identity V+F=E+1+C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
+# identity V+F=E+2*C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
 # deletion instance num_edges_E_minus.  No Admitteds.
 theories/EulerArrangement.v
-# H_bridge Euler route (Rung 3b-xi): WIRING -- euler_bridge (Euler => C'=C+1) +
-# reachable_E_minus_of_bypass (bypass => reachability preserved) assemble into
-# bridge_conclusion_of_euler (the H_bridge_core conclusion modulo the named face
-# delta + count-from-relation facts).  No Admitteds.
+# H_bridge Euler route (Rung 3b-xi/-xii/-xvi): WIRING -- euler_component_increase
+# (Euler V-E+F=2C + same-face FACE SPLIT => C'=C+1) + reachable_E_minus_of_bypass
+# assemble into H_bridge_core_conclusion_from_euler.  No Admitteds.
 theories/EulerBridge.v
+# H_bridge Euler route (Rung 3b-vii, PR #194): generic decidable-relation class
+# counter (count_classes) -- order-independent counting core.
+theories/ClassCount.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
