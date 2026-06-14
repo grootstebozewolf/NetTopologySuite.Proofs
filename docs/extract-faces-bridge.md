@@ -636,3 +636,40 @@ explicit, documented contract rather than two dangling holes.  Both closure
 routes can now proceed in parallel against this single interface, and the
 deferred-proof registry shrinks from two entries to one
 (`docs/admitted-deferred-proofs.txt`).  No new axioms; no closure claimed.
+
+## §20.1  Rung 3b-vi — the exact missing precondition (`noded_general_position`)
+
+`H_bridge_core` as introduced in §20 was **too strong as stated**: it carried
+only per-vertex `fan_ok`, `no_spurs`, `same_face`, and `dart_endpoints_ne`.  None
+of those forbid two edges crossing in their interiors.  But its conclusion —
+"a dart sharing a face with its twin ⟹ the carrier edge is a bridge" — is a
+**planarity (genus-0) fact**, FALSE for a rotation system with positive genus,
+where a same-face edge can be a non-separating handle rather than a bridge.
+`fan_ok` constrains only the angular order *at* each vertex; it does not pin the
+genus.  So the bare statement was not provable.
+
+The EXACT missing precondition is the **non-crossing / planar-embedding**
+condition, supplied by `noded_general_position E` (it delivers undirected
+`pairwise_no_proper_cross` via `NodedGeneralPosition.noded_gp_pairwise`).
+`H_bridge_core` now carries it as an explicit hypothesis.  Under it the statement
+is true and its proof is the planar **Euler count** `V − E + F = 1 + C`: deleting
+a same-face edge would SPLIT its face (`F+1`, leaving `V−(E−1)+(F+1)=1+C+2`,
+violating Euler) unless it instead DISCONNECTS (`C+1`) — which is precisely the
+bridge conclusion.  That count is the `MapCounts` (`num_faces`) /
+`PermCycleCount` / `ArrangementEMinus` route; its remaining unbuilt pieces are
+`num_components` (needs `reachable_dec`, deferred in `MapCounts.v`) and the
+edge-deletion face/component dichotomy.  So `H_bridge_core` is now CORRECTLY
+STATED (a true Tier-3 deferred proof, not an over-strong one) and stays Admitted
+pending that Euler bookkeeping.
+
+**No exported theorem changed.**  Every consumer already carries the precondition
+inside `well_noded_darts E` (`= noded_general_position E /\ all_proper_darts … /\
+vertex_general_position …`); `same_face_twin_disconnect` discharges it via
+`proj1`.  The hypothesis was threaded through the internal reach-core
+(`not_reachable_E_minus_{dtip_dbase,dbase_dtip}`), the wrapper/`not_adj`/
+outgoing-tip barrier lemmas, and into `same_face_twin_disconnect`; the headline
+`H_bridge_well_noded` (`edge_2_connected E ⟹ twins_in_different_faces (darts_of E)`)
+keeps its exact signature, and `OverlayBridge.extract_rings_valid` is unaffected.
+`Print Assumptions edge_2_connected_twins_sep` still lists exactly `H_bridge_core`
+plus the standard classical/funext axioms.  No new axioms; no closure claimed —
+this rung pins the precondition that makes the seam provable.
