@@ -717,6 +717,12 @@ same-face FACE delta.  See the file header for the chain (arithmetic
 The "count is a function of the relation" obligation is **discharged** here, not
 assumed: `ReachableDec.comp_reps_length_mono` (class-count monotone in the vertex
 set) gives `num_components_E_minus_le`.  So the SINGLE remaining residual is the
-same-face FACE delta `num_faces (E_minus E d) = num_faces E` (the `fstep`-orbit
-reroute; fan substrate in `ArrangementEMinus` §2).  `H_bridge_core` stays the one
-registered deferred proof until it lands.
+same-face FACE delta `num_faces (E_minus E d) = num_faces E`.  `H_bridge_core`
+stays the one registered deferred proof until it lands.
+
+Toward that delta, `ArrangementEMinus` §3 LOCALISES the change:
+`outgoing_darts_of_E_minus_eq` shows fans away from `e`'s endpoints are LIST-equal
+after deletion, so `fstep_E_minus_eq_away` proves `fstep` is unchanged except at
+darts whose tip is an endpoint of `e`.  What remains is purely the orbit-count
+SPLICE at those two endpoint fans (a cycle-count argument on permutations
+differing locally) -- the genuine combinatorial core, still open.

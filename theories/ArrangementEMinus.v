@@ -16,7 +16,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import List.
-From NTS.Proofs Require Import Distance Overlay Dart DartAngularOrder
+From NTS.Proofs Require Import Distance Overlay OverlayGraph Dart DartAngularOrder
                                DartNextSpec DartFace EdgeConnectivity.
 
 Import ListNotations.
@@ -151,8 +151,75 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* -------------------------------------------------------------------------- *)
+(* §3  Fans away from the endpoints are LIST-equal, so `fstep` agrees there.    *)
+(*                                                                            *)
+(* Membership equality (§2) is not enough for `next` (it folds over the fan    *)
+(* list); but the fans are in fact equal AS LISTS away from `dbase e`/`dtip e`, *)
+(* since `e` (based at `dbase e`) and `twin e` (based at `dtip e`) are never    *)
+(* based at any other vertex, so the base-vertex filter drops them in both.    *)
+(* This LOCALISES the face-orbit change to darts whose tip is an endpoint of    *)
+(* `e` -- the precise input to the (still open) `num_faces` orbit-splice.       *)
+(* -------------------------------------------------------------------------- *)
+
+(* Filtering by `p` after `q` is redundant when `p` entails `q`. *)
+Lemma filter_filter_redundant : forall (A : Type) (p q : A -> bool) (l : list A),
+  (forall x, p x = true -> q x = true) ->
+  filter p (filter q l) = filter p l.
+Proof.
+  intros A p q l Himp. induction l as [| a l IH]; [ reflexivity | ].
+  cbn [filter]. destruct (q a) eqn:Hq.
+  - cbn [filter]. destruct (p a) eqn:Hp.
+    + f_equal. exact IH.
+    + exact IH.
+  - destruct (p a) eqn:Hp.
+    + rewrite (Himp a Hp) in Hq. discriminate.
+    + exact IH.
+Qed.
+
+Lemma filter_map_commute : forall (A B : Type) (f : A -> B) (p : B -> bool) (l : list A),
+  filter p (map f l) = map f (filter (fun x => p (f x)) l).
+Proof.
+  intros A B f p l. induction l as [| a l IH]; [ reflexivity | ].
+  cbn [map filter]. destruct (p (f a)) eqn:Hp.
+  - cbn [map]. f_equal. exact IH.
+  - exact IH.
+Qed.
+
+(* The outgoing fan at any vertex other than `e`'s endpoints is unchanged. *)
+Lemma outgoing_darts_of_E_minus_eq : forall (E : list Edge) (e : Dart) (v : Point),
+  v <> dbase e -> v <> dtip e ->
+  outgoing v (darts_of (E_minus E e)) = outgoing v (darts_of E).
+Proof.
+  intros E e v Hvb Hvt. unfold outgoing, darts_of, E_minus.
+  rewrite !filter_app. f_equal.
+  - apply filter_filter_redundant. intros x Hx.
+    destruct (edge_eq_dec x e) as [-> | Hne]; [ | reflexivity ].
+    exfalso. apply Hvb.
+    destruct (point_eq_dec (dbase e) v) as [He | He];
+      [ symmetry; exact He | discriminate Hx ].
+  - rewrite !filter_map_commute. f_equal.
+    apply filter_filter_redundant. intros x Hx.
+    destruct (edge_eq_dec x e) as [-> | Hne]; [ | reflexivity ].
+    exfalso. apply Hvt.
+    destruct (point_eq_dec (dbase (twin e)) v) as [He | He]; [ | discriminate Hx ].
+    rewrite dbase_twin in He. symmetry. exact He.
+Qed.
+
+(* Hence `fstep` agrees with the full arrangement away from `e`'s endpoints. *)
+Lemma fstep_E_minus_eq_away : forall (E : list Edge) (e x : Dart),
+  dtip x <> dbase e -> dtip x <> dtip e ->
+  fstep (darts_of (E_minus E e)) x = fstep (darts_of E) x.
+Proof.
+  intros E e x H1 H2. unfold fstep.
+  rewrite (outgoing_darts_of_E_minus_eq E e (dtip x) H1 H2). reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                                *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions in_outgoing_darts_of_E_minus.
 Print Assumptions outgoing_E_minus_unchanged.
+Print Assumptions outgoing_darts_of_E_minus_eq.
+Print Assumptions fstep_E_minus_eq_away.
