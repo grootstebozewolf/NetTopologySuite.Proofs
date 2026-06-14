@@ -769,6 +769,12 @@ theories/EdgeCrossParity.v
 # finite injective self-map -- same-orbit equivalence + decidability +
 # cycle_count. Combinatorial substrate for the face-count (Euler) accounting.
 theories/PermCycleCount.v
+# H_bridge Euler route (Rung 3b-iv), Phase C NL-1: E_minus arrangement
+# scaffolding -- removing an edge only removes darts (incl), fan_ok is
+# downward-closed, so arrangement_ok survives edge removal; plus the exact
+# dart-removal membership characterisation when the opposite orientation is
+# absent (the bridge setting ~ In (twin e) E).
+theories/ArrangementEMinus.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
