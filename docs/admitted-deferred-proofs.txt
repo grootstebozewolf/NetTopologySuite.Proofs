@@ -58,8 +58,10 @@
 
 theories/EdgeFaceBridge.v:not_reachable_E_minus_dtip_dbase | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19, EdgeConnectivity.v §5
 theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_dtip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19, EdgeConnectivity.v §5
-theories/EdgeFaceBridge.v:not_reachable_E_minus_dtip_to_outgoing_tip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19 (penult + not_adj layer)
-theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_to_outgoing_tip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19 (penult + not_adj layer)
+# not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip -- CLOSED (Rung 3b-iv):
+# the off-carrier outgoing tips are now proved directly from the two reach-core
+# lemmas above (surviving-carrier one-step extension), so they are no longer
+# Admitted and have been removed from this registry.
 
 # `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
 # overlay correctness.  Shows that ring assembly from the labelled

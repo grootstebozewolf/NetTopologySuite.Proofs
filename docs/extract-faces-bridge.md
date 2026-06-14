@@ -563,33 +563,40 @@ Partial disconnectivity when the carrier vertex has a singleton outgoing fan
 - `same_face_twin_disconnect`, `same_face_twin_is_cut`, `edge_2_connected_twins_sep`,
   `H_bridge_well_noded` — exported theorems (no Section Variables).
 
-**PARTIAL — Rung 3b-iv (2026-06-13, risk/cost pivot; registry LIVE unchanged):**
+**Rung 3b-iv (outgoing-tip pair CLOSED, 2026-06-14):**
 
-RGR stop: bounded counterexample search found **no** Qed witness; full closure
-deferred — not Path B. Proof architecture validated on paper; compile blocked by
-a **file-order cycle** (`core` → `outgoing-tip` → `not_adj` → `core`), not by
-missing math.
+The earlier risk/cost pivot deferred this rung after an attempt to package the
+reach layer as a single `Lemma … with …` mutual block stalled: that approach
+cannot compile, because the `not_adj_*` barrier lemmas have no inductive
+principal argument yet must call the reach core, so Rocq's guard checker rejects
+the mutual fixpoint. The supposed "file-order cycle" `core → outgoing-tip →
+not_adj → core` is **not** a true cycle: the outgoing-tip lemmas do not need
+the `not_adj_*` layer at all.
 
-*Pinned scripts (next session: single `Lemma … with …` mutual block **after**
-`adj_E_minus_penult_*`, **before** `not_adj_*`):*
+**What landed.** The two outgoing-tip lemmas are now plain `Qed`, each reduced
+directly to its reach-core lemma:
 
-1. **Outgoing-tip pair** (low cost; uses only `not_adj_*` + `outgoing_*_tip_ne_*`):
-   - `pose proof (outgoing_dbase_tip_ne_dtip …) as Htip_ne`; `induction Hr`;
-     `reach_refl` → `congruence` with `Htip_ne`; `reach_step` with `v = dtip ec`
-     → `not_adj_E_minus_dtip_to_outgoing_dbase_tip`; else `IHreachable` / `eauto`.
-2. **Core pair** (penult last step + outgoing-tip on prefix):
-   - `Havoid : forall z, reachable … (dtip d) z -> z <> dbase d` via `induction Hz`;
-     `reach_step` with `z = dbase d` → nested `induction Htail` + `adj_E_minus_penult_to_dbase`
-     + `not_reachable_E_minus_dtip_to_outgoing_tip` on prefix `reach_trans`.
+- `not_reachable_E_minus_dtip_to_outgoing_tip` — an off-carrier outgoing dart
+  `ec` at `dbase d` (with `ec ≠ d`) keeps its carrier `{dbase d, dtip ec}` in
+  `E_minus E d`: the carrier is dropped only when `ec = d` (excluded) or
+  `ec = twin d` (then `dtip ec = dbase d`, handled directly). So any walk
+  `dtip d ↝ dtip ec` extends by one edge to `dtip d ↝ dbase d`, refuting
+  `not_reachable_E_minus_dtip_dbase`.
+- `not_reachable_E_minus_dbase_to_outgoing_tip` — the mirror, reducing to
+  `not_reachable_E_minus_dbase_dtip`.
 
-*Still Admitted (four registry lines):*
+`Print Assumptions` on each lists only its reach-core lemma plus the standard
+classical/funext axioms — no self-reference, no `not_adj_*`, no new axioms.
+This is exactly the surviving-carrier one-step argument already used inside the
+(Qed) `not_adj_E_minus_*_to_outgoing_*_tip` barrier lemmas.
 
-- `not_reachable_E_minus_{dtip,dbase}_*` — capstone (`Print Assumptions`).
-- `not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip` — penult layer.
+*Still Admitted (two registry lines):*
 
-Proof target unchanged: `reachable_ind` / anchored `Havoid` predicates (3b-ii
-template), consuming `same_face_twin_prefix_loop_E_minus` when loop guard needed.
-`not_adj_E_minus_*_to_outgoing_*_tip` remain Qed modulo the four lemmas above.
+- `not_reachable_E_minus_{dtip,dbase}_*` — the reach core, on capstone
+  `Print Assumptions`. These remain the genuine deferred work: showing a walk
+  from `dtip d` can never re-enter `dbase d` after `d` is removed needs the
+  rotation-system / face-loop argument (`same_face_twin_prefix_loop_E_minus`),
+  which the outgoing-tip reduction above does **not** discharge.
 
 **CLOSED — H_bridge combinatorial packaging (2026-06-13, modulo reach axioms):**
 `OverlayBridge.extract_rings_valid` now discharges `twins_in_different_faces` via
