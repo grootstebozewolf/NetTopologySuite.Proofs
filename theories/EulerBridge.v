@@ -8,9 +8,9 @@
    (`~ reachable (E_minus E d) (fst d) (snd d)`, the content of
    `EdgeFaceBridge.H_bridge_core`).  Two halves meet here:
 
-     - ARITHMETIC (`euler_component_increase`): the Euler identity for `E` and
-       `E_minus E d`, vertex invariance, the edge delta (`-1`, proved in
-       EulerArrangement), and the same-face FACE delta (`F` unchanged) force the
+     - ARITHMETIC (`euler_component_increase`): the Euler identity (V-E+F=2*C) for
+       `E` and `E_minus E d`, vertex invariance, the edge delta (`-1`, proved in
+       EulerArrangement), and the same-face FACE SPLIT (`F' = F + 1`) force the
        component count up by exactly one (`C' = C + 1`).  Pure `lia`.
 
      - SEMANTIC (`reachable_E_minus_of_bypass`): if the endpoints of `d` stay
@@ -23,12 +23,13 @@
    contradicting `C' = C + 1`.  So no bypass: the endpoints are disconnected.
 
    RESIDUAL (the single remaining named hypothesis, still a real combinatorial
-   obligation): the same-face FACE delta
-       num_faces (E_minus E d) = num_faces E
-   -- deleting a same-face edge leaves the `fstep`-orbit count unchanged (the
-   orbit reroutes around the removed edge; fan substrate in ArrangementEMinus §2).
+   obligation): the same-face FACE SPLIT
+       num_faces (E_minus E d) = num_faces E + 1
+   -- deleting a same-face edge SPLITS the shared `fstep`-orbit into two (the
+   surgery of FaceStepRemove.fstep_E_minus_splice; cf. the cycle-count splice).
    `num_vertices` invariance is structural (degree-2+ endpoints), `num_edges`
-   delta is proved, and `euler_characteristic` is the named planar-Euler premise.
+   delta is proved, and `euler_characteristic` (V-E+F=2*C) is the named
+   planar/combinatorial-map Euler premise.
 
    Pure Point + list combinatorics; no `Admitted` / `Axiom` / `Parameter`;
    allowlist axioms only.
@@ -55,7 +56,7 @@ Lemma euler_component_increase : forall (E : list Edge) (d : Edge),
   euler_characteristic (E_minus E d) ->
   num_vertices (E_minus E d) = num_vertices E ->
   num_edges (E_minus E d) + 1 = num_edges E ->
-  num_faces (E_minus E d) = num_faces E ->         (* residual: same-face FACE delta *)
+  num_faces (E_minus E d) = (num_faces E + 1)%nat ->  (* residual: same-face FACE SPLIT *)
   num_components (E_minus E d) = (num_components E + 1)%nat.
 Proof.
   intros E d HE HE' HV HEd HF.
@@ -134,7 +135,7 @@ Lemma H_bridge_core_conclusion_from_euler : forall (E : list Edge) (d : Edge),
   euler_characteristic (E_minus E d) ->
   num_vertices (E_minus E d) = num_vertices E ->
   num_edges (E_minus E d) + 1 = num_edges E ->
-  num_faces (E_minus E d) = num_faces E ->         (* residual: same-face FACE delta *)
+  num_faces (E_minus E d) = (num_faces E + 1)%nat ->  (* residual: same-face FACE SPLIT *)
   ~ reachable (E_minus E d) (fst d) (snd d).
 Proof.
   intros E d HE HE' HV HEd HF Hby.

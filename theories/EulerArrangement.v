@@ -61,13 +61,20 @@ Definition num_edges (E : list Edge) : nat := length E.
 (* -------------------------------------------------------------------------- *)
 (* §2  The Euler identity, as a NAMED HYPOTHESIS (not an axiom).               *)
 (*                                                                            *)
-(* `V + F = E + 1 + C`, the subtraction-free form of `V - E + F = 1 + C`, the *)
-(* genus-0 Euler relation for a plane graph.  Carried as a `Prop` premise,    *)
-(* to be discharged for the instances the bridge needs -- never asserted.     *)
+(* `V + F = E + 2*C`, the subtraction-free form of `V - E + F = 2*C`, the      *)
+(* genus-0 Euler relation for a combinatorial MAP (rotation system).  Note:    *)
+(* `num_faces` counts `fstep`-orbits, i.e. the combinatorial-map face count    *)
+(* (each component carries its own outer-boundary orbit), NOT the geometric    *)
+(* region count.  Hence `2*C`, not `1+C`: the two agree only when connected    *)
+(* (C=1), and the bridge argument's `E_minus` side is DISCONNECTED (C'=C+1).   *)
+(* Witnesses: single edge V=2,E=1,F=1,C=1 (2-1+1=2=2*1); single triangle       *)
+(* V=3,E=3,F=2,C=1; dumbbell V=6,E=7,F=3,C=1; TWO disjoint triangles           *)
+(* V=6,E=6,F=4,C=2 (6-6+4=4=2*2, refuting 1+C=3).  Carried as a `Prop` premise,*)
+(* to be discharged for the instances the bridge needs -- never asserted.      *)
 (* -------------------------------------------------------------------------- *)
 
 Definition euler_characteristic (E : list Edge) : Prop :=
-  num_vertices E + num_faces E = num_edges E + 1 + num_components E.
+  num_vertices E + num_faces E = num_edges E + 2 * num_components E.
 
 (* -------------------------------------------------------------------------- *)
 (* §3  Deletion instance: the edge count under `E_minus`.                      *)
@@ -147,7 +154,7 @@ Qed.
 (*                                                                            *)
 (* NOTE: `V - E + F` MUST be taken over Z -- in nat it truncates whenever      *)
 (* E >= V (e.g. K4: V=4,E=6,F=4 gives (4-6)+4 = 4 in nat, not the true 2).     *)
-(* And `zeta2 = 2` holds ONLY in the connected case: in general `zeta2 = 1+C`. *)
+(* And `zeta2 = 2` holds ONLY in the connected case: in general `zeta2 = 2*C`. *)
 (* So `zeta2 E = 2` is NOT a free lemma -- it is exactly `euler_characteristic` *)
 (* with `num_components E = 1`, i.e. the named hypothesis (planar Euler), never *)
 (* asserted here.  What IS provable is the pure-arithmetic bridge below.        *)
@@ -156,9 +163,9 @@ Qed.
 Definition zeta2 (E : list Edge) : Z :=
   (Z.of_nat (num_vertices E) - Z.of_nat (num_edges E) + Z.of_nat (num_faces E))%Z.
 
-(* `euler_characteristic` (nat, V+F=E+1+C) is exactly `zeta2 = 1+C` (Z). *)
+(* `euler_characteristic` (nat, V+F=E+2*C) is exactly `zeta2 = 2*C` (Z). *)
 Lemma zeta2_euler_iff : forall E,
-  euler_characteristic E <-> zeta2 E = (1 + Z.of_nat (num_components E))%Z.
+  euler_characteristic E <-> zeta2 E = (2 * Z.of_nat (num_components E))%Z.
 Proof.
   intros E. unfold euler_characteristic, zeta2. split; intro H; lia.
 Qed.
