@@ -723,6 +723,12 @@ stays the one registered deferred proof until it lands.
 Toward that delta, `ArrangementEMinus` §3 LOCALISES the change:
 `outgoing_darts_of_E_minus_eq` shows fans away from `e`'s endpoints are LIST-equal
 after deletion, so `fstep_E_minus_eq_away` proves `fstep` is unchanged except at
-darts whose tip is an endpoint of `e`.  What remains is purely the orbit-count
-SPLICE at those two endpoint fans (a cycle-count argument on permutations
-differing locally) -- the genuine combinatorial core, still open.
+darts whose tip is an endpoint of `e`.
+
+The `next`-reroute at those endpoint fans is now proved (`theories/DartNextRemove.v`,
+Rung 3b-xiv): `next_remove` characterises `next` on a fan with one dart removed --
+`next F' d = next F x0` when `next F d = x0`, else `next F d` -- with reusable
+`list_min` facts (`list_min_set_invariant`, `list_min_remove_non_min`). What
+remains is the orbit-count SPLICE itself: a `PermCycleCount`-style cycle-count
+argument over `next_remove` + `fstep_E_minus_eq_away` showing the total
+`fstep`-orbit count is unchanged when `e`'s two darts share a face. Still open.

@@ -440,6 +440,10 @@ theories/DartNext.v
 # face_of orbit FINITENESS (§9 crux) are deferred (slice 2d).  No Admitted;
 # axioms = the allowlisted classical-reals pair.
 theories/DartNextSpec.v
+# extract_rings_valid R5 / H_bridge Euler route (Rung 3b-xiv): the `next`-reroute
+# next_remove -- how `next` changes when one dart leaves a fan (the first
+# sub-step of the num_faces orbit-count splice).  No Admitteds.
+theories/DartNextRemove.v
 
 # extract_rings_valid R5 / general assembler, slice 2d: INJECTIVITY (and
 # surjectivity / cyclic-permutation) of `next` on the outgoing fan
