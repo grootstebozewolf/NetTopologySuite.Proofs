@@ -765,6 +765,10 @@ theories/SegmentParityTransport.v
 # flip -- agreeing off one edge and straddling it gives opposite point-in-ring
 # parity (the combinatorial core of the "opposite parity across edge d" step).
 theories/EdgeCrossParity.v
+# H_bridge Euler route (Rung 3b-iv), Phase C-1: cycle/orbit counting for a
+# finite injective self-map -- same-orbit equivalence + decidability +
+# cycle_count. Combinatorial substrate for the face-count (Euler) accounting.
+theories/PermCycleCount.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,
