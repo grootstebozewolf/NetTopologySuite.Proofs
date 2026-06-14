@@ -781,9 +781,12 @@ theories/PermCycleCount.v
 theories/ArrangementEMinus.v
 # H_bridge Euler route (Rung 3b-vi): num_faces -- the number of fstep-orbits
 # (faces) of darts_of E, via cycle_count; well-defined and positive for any
-# nonempty general-position arrangement. (num_components deferred: needs
-# decidability of reachable.)
+# nonempty general-position arrangement. (num_components lands in ReachableDec.)
 theories/MapCounts.v
+# H_bridge Euler route (Rung 3b-viii): num_vertices / num_edges + the Euler
+# identity V+F=E+1+C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
+# deletion instance num_edges_E_minus.  No Admitteds.
+theories/EulerArrangement.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,

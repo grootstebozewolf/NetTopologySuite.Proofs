@@ -673,3 +673,35 @@ keeps its exact signature, and `OverlayBridge.extract_rings_valid` is unaffected
 `Print Assumptions edge_2_connected_twins_sep` still lists exactly `H_bridge_core`
 plus the standard classical/funext axioms.  No new axioms; no closure claimed —
 this rung pins the precondition that makes the seam provable.
+
+## §20.2  The Euler route, as a NAMED HYPOTHESIS (NOT an axiom)
+
+**Decision (2026-06-14): the planar Euler identity is NOT added as an axiom.**
+The corpus's credibility rests on its 3-axiom allowlist (the classical-reals trio
++ funext, plus the inherited Flocq axiom in the b64 lane); a domain theorem such
+as Euler -- especially one easy to mis-state over `darts_of E`, where a wrong
+statement would make the whole corpus inconsistent -- must be *proved*, carried as
+a *named hypothesis* ([cond]), or *registered* as a deferred proof, never asserted.
+`H_bridge_core` stays a Tier-3 deferred proof; the route to discharging it is the
+honest named-hypothesis one, using the existing counting machinery.
+
+The counting substrate now in place:
+
+- `MapCounts.num_faces` (F, the `fstep`-orbit count) -- positive, well defined.
+- `ReachableDec.num_components` (C, reachability classes of the vertices), built
+  on `ReachableDec.reachable_dec` (Rung 3b-vii).
+- `EulerArrangement.num_vertices` (V) and `num_edges` (E, Rung 3b-viii).
+- `EulerArrangement.euler_characteristic E := V + F = E + 1 + C` -- the genus-0
+  Euler relation as a `Prop` PREMISE (under `noded_general_position`), the named
+  hypothesis that will be threaded into `H_bridge_core`, never an axiom.
+- First deletion instance: `num_edges_E_minus` (the edge count drops by one when a
+  once-occurring edge is removed) and `num_vertices_E_minus_le`.
+
+**Remaining rung (the dichotomy).** With `euler_characteristic` for `E` and for
+`E_minus E d`, the edge delta (−1), and `num_vertices` invariance, the only way the
+identity can balance after deleting a same-face edge is a `num_components` increase
+(`C+1`) -- i.e. the endpoints of `d` fall into different reachability classes, which
+is exactly `~ reachable (E_minus E d) (dtip d) (dbase d)`.  Formalising the
+face-count delta (deleting a same-face edge merges/splits `fstep`-orbits) and that
+balance discharges `H_bridge_core` from `euler_characteristic` as a named
+hypothesis.  No axiom; registry stays at one deferred entry until it lands.
