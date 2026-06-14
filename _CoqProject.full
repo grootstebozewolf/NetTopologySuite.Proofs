@@ -783,6 +783,10 @@ theories/PermCycleCount.v
 # dart-removal membership characterisation when the opposite orientation is
 # absent (the bridge setting ~ In (twin e) E).
 theories/ArrangementEMinus.v
+# H_bridge Euler route (Rung 3b-xv): the pointwise SURGERY description of fstep
+# under edge deletion (fstep_E_minus_splice) -- composes fstep_E_minus_eq_away +
+# next_remove.  The input to the num_faces cycle-count splice.  No Admitteds.
+theories/FaceStepRemove.v
 # H_bridge Euler route (Rung 3b-vi): num_faces -- the number of fstep-orbits
 # (faces) of darts_of E, via cycle_count; well-defined and positive for any
 # nonempty general-position arrangement. (num_components lands in ReachableDec.)

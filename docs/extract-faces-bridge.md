@@ -725,10 +725,20 @@ Toward that delta, `ArrangementEMinus` §3 LOCALISES the change:
 after deletion, so `fstep_E_minus_eq_away` proves `fstep` is unchanged except at
 darts whose tip is an endpoint of `e`.
 
-The `next`-reroute at those endpoint fans is now proved (`theories/DartNextRemove.v`,
+The `next`-reroute at those endpoint fans is proved (`theories/DartNextRemove.v`,
 Rung 3b-xiv): `next_remove` characterises `next` on a fan with one dart removed --
 `next F' d = next F x0` when `next F d = x0`, else `next F d` -- with reusable
-`list_min` facts (`list_min_set_invariant`, `list_min_remove_non_min`). What
-remains is the orbit-count SPLICE itself: a `PermCycleCount`-style cycle-count
-argument over `next_remove` + `fstep_E_minus_eq_away` showing the total
-`fstep`-orbit count is unchanged when `e`'s two darts share a face. Still open.
+`list_min` facts (`list_min_set_invariant`, `list_min_remove_non_min`).
+
+Composing it with `fstep_E_minus_eq_away` pins the surgery pointwise
+(`theories/FaceStepRemove.v`, Rung 3b-xv): `fstep_E_minus_splice` shows, in the
+well-noded bridge setting (`In d E`, `~ In (twin d) E`, `d` proper),
+`fstep (darts_of (E_minus E d)) x` equals `fstep (twin d)` when `x` is the
+face-predecessor of `d`, `fstep d` when `x` is the face-predecessor of `twin d`,
+and `fstep x` otherwise -- the exact "remove the edge, cross-connect the two
+endpoints" surgery.
+
+What remains is the orbit-count SPLICE itself: a `PermCycleCount`-style cycle-count
+argument showing this surgery preserves the total number of `fstep`-orbits when
+`d`'s two darts share a face (so the residual face delta `num_faces (E_minus E d)
+= num_faces E` follows). Still open.
