@@ -110,3 +110,49 @@ Proof.
       intro Hx. apply Hxte.
       rewrite <- (twin_involutive x), Hx. reflexivity.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §2  How the per-vertex fans change under edge removal (bridge setting).      *)
+(*                                                                            *)
+(* The substrate the `next` / `fstep` reroute (and the `num_faces` delta of    *)
+(* the Euler route) consumes: deleting `e` removes exactly `e` from the fan at  *)
+(* `dbase e` and `twin e` from the fan at `dtip e`, and leaves every OTHER       *)
+(* vertex fan untouched.                                                       *)
+(* -------------------------------------------------------------------------- *)
+
+(* Exact membership of a reduced fan. *)
+Lemma in_outgoing_darts_of_E_minus : forall (E : list Edge) (e : Dart) (v : Point) (x : Dart),
+  ~ In (twin e) E ->
+  (In x (outgoing v (darts_of (E_minus E e))) <->
+   (In x (outgoing v (darts_of E)) /\ x <> e /\ x <> twin e)).
+Proof.
+  intros E e v x Hne.
+  rewrite !in_outgoing.
+  rewrite (in_darts_of_E_minus_iff E e x Hne).
+  tauto.
+Qed.
+
+(* Fans away from the two endpoints are unchanged: `e` is based at `dbase e`
+   and `twin e` at `dtip e`, so neither sits in any other vertex's fan. *)
+Lemma outgoing_E_minus_unchanged : forall (E : list Edge) (e : Dart) (v : Point),
+  ~ In (twin e) E ->
+  v <> dbase e -> v <> dtip e ->
+  forall x, In x (outgoing v (darts_of (E_minus E e))) <->
+            In x (outgoing v (darts_of E)).
+Proof.
+  intros E e v Hne Hvb Hvt x.
+  rewrite (in_outgoing_darts_of_E_minus E e v x Hne). split.
+  - intros [Hx _]. exact Hx.
+  - intro Hx. split; [ exact Hx | ].
+    apply in_outgoing in Hx. destruct Hx as [_ Hbx].
+    split.
+    + intro He. apply Hvb. rewrite <- Hbx, He. reflexivity.
+    + intro He. apply Hvt. rewrite <- Hbx, He, dbase_twin. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Axiom audit.                                                                *)
+(* -------------------------------------------------------------------------- *)
+
+Print Assumptions in_outgoing_darts_of_E_minus.
+Print Assumptions outgoing_E_minus_unchanged.
