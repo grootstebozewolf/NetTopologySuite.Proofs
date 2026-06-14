@@ -388,9 +388,83 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §8  num_components genuinely counts reachability CLASSES (well-definedness). *)
+(*     cover (§7) + independence here = the C-analogue of MapCounts' num_faces  *)
+(*     facts.  This is the connective tissue between "components increased" and  *)
+(*     "endpoints disconnected" the bridge dichotomy consumes.                   *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma reachable_b_sym : forall E u v, reachable_b E u v = reachable_b E v u.
+Proof.
+  intros E u v.
+  destruct (reachable_b E u v) eqn:H1; destruct (reachable_b E v u) eqn:H2;
+    try reflexivity.
+  - apply reachable_b_true_iff in H1.
+    assert (reachable_b E v u = true) by (apply reachable_b_true_iff, reach_sym, H1).
+    congruence.
+  - apply reachable_b_true_iff in H2.
+    assert (reachable_b E u v = true) by (apply reachable_b_true_iff, reach_sym, H2).
+    congruence.
+Qed.
+
+Lemma existsb_false_forall : forall (f : Point -> bool) l,
+  existsb f l = false -> forall z, In z l -> f z = false.
+Proof.
+  intros f l H z Hz. destruct (f z) eqn:Hfz; [ | reflexivity ].
+  exfalso. assert (existsb f l = true) by (apply existsb_exists; exists z; auto).
+  congruence.
+Qed.
+
+(* The kept representatives are pairwise unreachable: distinct reps are distinct
+   components, so `comp_reps` is one-per-class and `num_components` is the class
+   count. *)
+Lemma comp_reps_indep : forall E l r1 r2,
+  In r1 (comp_reps E l) -> In r2 (comp_reps E l) ->
+  reachable E r1 r2 -> r1 = r2.
+Proof.
+  intros E l. induction l as [| a l' IH]; intros r1 r2 H1 H2 Hr; [ destruct H1 | ].
+  cbn [comp_reps] in H1, H2.
+  destruct (existsb (fun z => reachable_b E z a) (comp_reps E l')) eqn:He.
+  - apply IH; assumption.
+  - assert (Hfall : forall z, In z (comp_reps E l') -> reachable_b E z a = false)
+      by (apply existsb_false_forall; exact He).
+    destruct H1 as [<- | H1]; destruct H2 as [<- | H2].
+    + reflexivity.
+    + exfalso.
+      assert (reachable_b E r2 a = true) by (apply reachable_b_true_iff, reach_sym, Hr).
+      rewrite (Hfall r2 H2) in H. discriminate.
+    + exfalso.
+      assert (reachable_b E r1 a = true) by (apply reachable_b_true_iff, Hr).
+      rewrite (Hfall r1 H1) in H. discriminate.
+    + apply IH; assumption.
+Qed.
+
+(* Reachability between vertices = sharing a representative: the semantic
+   meaning of the component partition (forward needs only `cover`, backward only
+   transitivity, so independence is not required here). *)
+Lemma reachable_iff_common_rep : forall E u v,
+  In u (verts E) -> In v (verts E) ->
+  (reachable E u v <->
+   exists r, In r (comp_reps E (nodup point_eq_dec (verts E)))
+             /\ reachable E r u /\ reachable E r v).
+Proof.
+  intros E u v Hu Hv. split.
+  - intro Huv.
+    assert (Hin : In u (nodup point_eq_dec (verts E))) by (apply nodup_In; exact Hu).
+    destruct (comp_reps_cover E (nodup point_eq_dec (verts E)) u Hin) as [r [Hr Hrb]].
+    apply reachable_b_true_iff in Hrb.
+    exists r. split; [ exact Hr | split; [ exact Hrb | ] ].
+    apply reach_trans with u; [ exact Hrb | exact Huv ].
+  - intros [r [_ [Hru Hrv]]].
+    apply reach_trans with r; [ apply reach_sym; exact Hru | exact Hrv ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.  Pure Point + list combinatorics; allowlist axioms only.       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions reachable_dec.
 Print Assumptions reachable_b_true_iff.
 Print Assumptions num_components_pos.
+Print Assumptions comp_reps_indep.
+Print Assumptions reachable_iff_common_rep.
