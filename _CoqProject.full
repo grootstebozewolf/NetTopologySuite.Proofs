@@ -795,6 +795,10 @@ theories/FaceStepRemove.v
 # (faces) of darts_of E, via cycle_count; well-defined and positive for any
 # nonempty general-position arrangement. (num_components lands in ReachableDec.)
 theories/MapCounts.v
+# H_bridge Euler route (Rung 3b, stage 5): instantiate the generic cycle-count
+# splice (PermCycleSplice.cycle_count_surgery) at the face permutation --
+# num_faces_E_minus_splice: deleting a same-face edge raises num_faces by one.
+theories/NumFacesSplice.v
 # H_bridge Euler route (Rung 3b-viii): num_vertices / num_edges + the Euler
 # identity V+F=E+2*C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
 # deletion instance num_edges_E_minus.  No Admitteds.
