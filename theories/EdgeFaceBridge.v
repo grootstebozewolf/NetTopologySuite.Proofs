@@ -19,8 +19,11 @@
      - ExtractFaces.v       (face_period)
      - VertexGeneralPosition.v (well_noded_darts -> fan_ok)
 
-   Residual Admitted (registry LIVE): not_reachable_E_minus_{dtip_dbase,dbase_dtip}
-   and not_reachable_E_minus_{dtip,dbase}_to_outgoing_tip (mutual reach layer).
+   Residual Admitted (registry LIVE): a SINGLE named premise `H_bridge_core`
+   (Rung 3b-v) -- the combinatorial planar-bridge seam.  Both reach-core lemmas
+   (not_reachable_E_minus_{dtip_dbase,dbase_dtip}), the outgoing-tip pair, and
+   the exported capstones are now all Qed on top of it; `Print Assumptions`
+   lists exactly `H_bridge_core` (plus standard classical/funext axioms).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -1321,7 +1324,39 @@ Proof.
   cbn in Hprop. rewrite Heq in Hprop. apply Hprop. reflexivity.
 Qed.
 
-(* Reach core (mutual with outgoing-tip lemmas below — registry LIVE). *)
+(* ==========================================================================
+   THE SINGLE OPEN PREMISE (Rung 3b-v): the combinatorial planar-bridge core.
+
+   `H_bridge_core` is the one explicit, documented seam on which the entire
+   H_bridge stack rests.  It says: in a general-position, spur-free arrangement,
+   if a proper dart `d` lies on the same face as its twin, then the carrier edge
+   is a bridge -- removing it (in whichever orientation is present in `E`)
+   strands one endpoint from the other.  This is the classical planar theorem
+   "an edge whose two darts share a face is a bridge"; it is TRUE, and its proof
+   is the corpus's thesis-scale obligation (geometric/JCT and combinatorial/Euler
+   routes both reduce to it; see docs/extract-faces-bridge.md).
+
+   It is the ONLY remaining `Admitted` in the H_bridge development.  The two
+   reach-core lemmas below, every `not_adj`/outgoing-tip lemma, and the exported
+   `same_face_twin_disconnect` / `same_face_twin_is_cut` / `H_bridge_well_noded`
+   are all `Qed` on top of it -- so `Print Assumptions` on the capstones lists
+   exactly `H_bridge_core` (plus standard classical/funext axioms).  Mirrors the
+   corpus's named-JCT-seam pattern (e.g. parity_characterises_interior_cont). *)
+Theorem H_bridge_core :
+  forall (E : list Edge) (d : Dart),
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d (darts_of E) ->
+    same_face (darts_of E) d (twin d) ->
+    dart_endpoints_ne d ->
+    (In d E -> ~ In (twin d) E ->
+       ~ reachable (E_minus E d) (dtip d) (dbase d))
+    /\ (In (twin d) E -> ~ In d E ->
+       ~ reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+Proof.
+  Admitted.
+
+(* The two reach-core lemmas are now Qed, derived from the single premise. *)
 Lemma not_reachable_E_minus_dtip_dbase :
   forall E d,
     (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
@@ -1333,7 +1368,9 @@ Lemma not_reachable_E_minus_dtip_dbase :
     ~ In (twin d) E ->
     ~ reachable (E_minus E d) (dtip d) (dbase d).
 Proof.
-  Admitted.
+  intros E d Hfan Hns Hd Hsf Hde Hin Hntwin.
+  exact (proj1 (H_bridge_core E d Hfan Hns Hd Hsf Hde) Hin Hntwin).
+Qed.
 
 Lemma not_reachable_E_minus_dbase_dtip :
   forall E d,
@@ -1346,7 +1383,9 @@ Lemma not_reachable_E_minus_dbase_dtip :
     ~ In d E ->
     ~ reachable (E_minus E (twin d)) (dbase d) (dtip d).
 Proof.
-  Admitted.
+  intros E d Hfan Hns Hd Hsf Hde HinTwin Hnd.
+  exact (proj2 (H_bridge_core E d Hfan Hns Hd Hsf Hde) HinTwin Hnd).
+Qed.
 
 Lemma reachable_E_minus_from_dtip_ne_dbase :
   forall E d w,
@@ -1575,7 +1614,35 @@ Lemma not_reachable_E_minus_dtip_to_outgoing_tip :
     In ec (outgoing (dbase d) (darts_of E)) ->
     ec <> d ->
     ~ reachable (E_minus E d) (dtip d) (dtip ec).
-Proof. Admitted.
+Proof.
+  (* An off-carrier outgoing dart `ec` at `dbase d` keeps its carrier
+     {dbase d, dtip ec} in `E_minus E d` (it is removed only if `ec = d`,
+     excluded, or `ec = twin d`, in which case `dtip ec = dbase d`).  So any
+     walk `dtip d ↝ dtip ec` extends by one edge to `dtip d ↝ dbase d`, which
+     `not_reachable_E_minus_dtip_dbase` forbids. *)
+  intros E d ec Hfan Hns Hd Hsf Hde Hin Hntwin Hout Hecd Hreach.
+  assert (HecD : In ec (darts_of E)) by (apply (proj1 (in_outgoing _ _ _) Hout)).
+  assert (Hbase : dbase ec = dbase d)
+    by (apply outgoing_base with (D := darts_of E); exact Hout).
+  destruct (point_eq_dec (dtip ec) (dbase d)) as [Htip_dbase | Htip_not_dbase].
+  - apply (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin).
+    rewrite <- Htip_dbase. exact Hreach.
+  - assert (Hadj2 : adj (E_minus E d) (dtip ec) (dbase d)).
+    { unfold adj.
+      destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
+      + exists ec. split.
+        * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
+        * right. split; [ exact Hbase | reflexivity ].
+      + exists (twin ec). split.
+        * destruct (dart_eq_dec (twin ec) d) as [Htwin_eq | Htwin_ne].
+          -- exfalso. apply Htip_not_dbase.
+             assert (Hec_tw : ec = twin d) by (apply twin_inj; rewrite twin_involutive; exact Htwin_eq).
+             rewrite Hec_tw, dtip_twin. reflexivity.
+          -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
+        * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
+    apply (not_reachable_E_minus_dtip_dbase E d Hfan Hns Hd Hsf Hde Hin Hntwin).
+    apply reach_trans with (dtip ec); [ exact Hreach | apply reach_one; exact Hadj2 ].
+Qed.
 
 Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
   forall E d ec,
@@ -1589,7 +1656,36 @@ Lemma not_reachable_E_minus_dbase_to_outgoing_tip :
     In ec (outgoing (dtip d) (darts_of E)) ->
     ec <> twin d ->
     ~ reachable (E_minus E (twin d)) (dbase d) (dtip ec).
-Proof. Admitted.
+Proof.
+  (* Mirror of `not_reachable_E_minus_dtip_to_outgoing_tip`: an off-carrier
+     outgoing dart `ec` at `dtip d` keeps its carrier {dtip d, dtip ec} in
+     `E_minus E (twin d)`, so a walk `dbase d ↝ dtip ec` extends by one edge to
+     `dbase d ↝ dtip d`, forbidden by `not_reachable_E_minus_dbase_dtip`. *)
+  intros E d ec Hfan Hns Hd Hsf Hde HinTwin Hnd Hout Hecd Hreach.
+  pose proof (dart_endpoints_neE d Hde) as Hend.
+  assert (HecD : In ec (darts_of E)) by (apply (proj1 (in_outgoing _ _ _) Hout)).
+  assert (Hbase : dbase ec = dtip d)
+    by (apply outgoing_base with (D := darts_of E); exact Hout).
+  destruct (point_eq_dec (dtip ec) (dtip d)) as [Htip_dtip | Htip_not_dtip].
+  - apply (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd).
+    rewrite <- Htip_dtip. exact Hreach.
+  - assert (Hadj2 : adj (E_minus E (twin d)) (dtip ec) (dtip d)).
+    { unfold adj.
+      destruct (dart_in_darts_of_cases E ec HecD) as [HecE | HecTwinE].
+      + exists ec. split.
+        * apply in_E_minus. split; [ exact HecE | intro Heq; apply Hecd; exact Heq ].
+        * right. split; [ exact Hbase | reflexivity ].
+      + exists (twin ec). split.
+        * destruct (dart_eq_dec (twin ec) (twin d)) as [Htwin_eq | Htwin_ne].
+          -- exfalso.
+             assert (Hec_d : ec = d) by (apply twin_inj; exact Htwin_eq).
+             assert (Hbd : dbase d = dtip d) by (rewrite Hec_d in Hbase; exact Hbase).
+             apply Hend. exact Hbd.
+          -- apply in_E_minus. split; [ exact HecTwinE | exact Htwin_ne ].
+        * left. split; [ rewrite dbase_twin; reflexivity | rewrite dtip_twin; exact Hbase ]. }
+    apply (not_reachable_E_minus_dbase_dtip E d Hfan Hns Hd Hsf Hde HinTwin Hnd).
+    apply reach_trans with (dtip ec); [ exact Hreach | apply reach_one; exact Hadj2 ].
+Qed.
 
 Lemma reachable_from_dtip_avoids_dbase :
   forall E d wpt,

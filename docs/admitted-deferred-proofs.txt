@@ -56,10 +56,13 @@
 # LIVE ENTRIES
 # ============================================================================
 
-theories/EdgeFaceBridge.v:not_reachable_E_minus_dtip_dbase | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19, EdgeConnectivity.v §5
-theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_dtip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19, EdgeConnectivity.v §5
-theories/EdgeFaceBridge.v:not_reachable_E_minus_dtip_to_outgoing_tip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19 (penult + not_adj layer)
-theories/EdgeFaceBridge.v:not_reachable_E_minus_dbase_to_outgoing_tip | docs/extract-faces-bridge.md §19 Rung 3b-iii | §19 (penult + not_adj layer)
+theories/EdgeFaceBridge.v:H_bridge_core | docs/extract-faces-bridge.md §20 Rung 3b-v | §20, EdgeConnectivity.v §5
+# Rung 3b-v (single-premise refactor): the two former reach-core Admitteds
+# (not_reachable_E_minus_{dtip_dbase,dbase_dtip}) and the outgoing-tip pair are
+# now ALL Qed, derived from the single named premise `H_bridge_core` above --
+# the one explicit, documented planar-bridge seam. The whole H_bridge stack
+# (same_face_twin_disconnect, same_face_twin_is_cut, H_bridge_well_noded) lists
+# exactly H_bridge_core on `Print Assumptions`. Registry gap: 2 -> 1.
 
 # `extract_rings_valid` -- the second thesis-shaped piece of Phase 3
 # overlay correctness.  Shows that ring assembly from the labelled

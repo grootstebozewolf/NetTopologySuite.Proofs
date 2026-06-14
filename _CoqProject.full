@@ -756,6 +756,30 @@ theories/JCTEscapeDescent.v
 # even_parity_escapes, each by the family field trichotomy).
 # Three-axiom.  No Admitted.
 theories/JCTSeparation.v
+# H_bridge geometric route (Rung 3b-iv), Phase B brick: discrete parity
+# transport across a ring-clear straight segment, reduced to
+# parity_constant_on_components.  Reusable primitive for the bridge's
+# crossing-number argument.
+theories/SegmentParityTransport.v
+# H_bridge geometric route (Rung 3b-iv), Phase B step 3a: single-edge parity
+# flip -- agreeing off one edge and straddling it gives opposite point-in-ring
+# parity (the combinatorial core of the "opposite parity across edge d" step).
+theories/EdgeCrossParity.v
+# H_bridge Euler route (Rung 3b-iv), Phase C-1: cycle/orbit counting for a
+# finite injective self-map -- same-orbit equivalence + decidability +
+# cycle_count. Combinatorial substrate for the face-count (Euler) accounting.
+theories/PermCycleCount.v
+# H_bridge Euler route (Rung 3b-iv), Phase C NL-1: E_minus arrangement
+# scaffolding -- removing an edge only removes darts (incl), fan_ok is
+# downward-closed, so arrangement_ok survives edge removal; plus the exact
+# dart-removal membership characterisation when the opposite orientation is
+# absent (the bridge setting ~ In (twin e) E).
+theories/ArrangementEMinus.v
+# H_bridge Euler route (Rung 3b-vi): num_faces -- the number of fstep-orbits
+# (faces) of darts_of E, via cycle_count; well-defined and positive for any
+# nonempty general-position arrangement. (num_components deferred: needs
+# decidability of reachable.)
+theories/MapCounts.v
 # ESCAPE DESCENT, rung 1 (docs/jct-escape-descent-plan.md): the east
 # approach.  cross_x (crossing abscissa; guard makes every half-open
 # crossing a STRICT straddle, so it is the edge's unique height point,

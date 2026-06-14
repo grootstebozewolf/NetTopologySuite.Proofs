@@ -563,25 +563,40 @@ Partial disconnectivity when the carrier vertex has a singleton outgoing fan
 - `same_face_twin_disconnect`, `same_face_twin_is_cut`, `edge_2_connected_twins_sep`,
   `H_bridge_well_noded` — exported theorems (no Section Variables).
 
-**Open — Rung 3b-iii reach layer (Admitted, registry LIVE):**
+**Rung 3b-iv (outgoing-tip pair CLOSED, 2026-06-14):**
 
-*Capstone path (on `Print Assumptions` for `H_bridge_well_noded` /
-`extract_rings_valid`):*
+The earlier risk/cost pivot deferred this rung after an attempt to package the
+reach layer as a single `Lemma … with …` mutual block stalled: that approach
+cannot compile, because the `not_adj_*` barrier lemmas have no inductive
+principal argument yet must call the reach core, so Rocq's guard checker rejects
+the mutual fixpoint. The supposed "file-order cycle" `core → outgoing-tip →
+not_adj → core` is **not** a true cycle: the outgoing-tip lemmas do not need
+the `not_adj_*` layer at all.
 
-- `not_reachable_E_minus_dtip_dbase` — after removing dart `d` (carrier present,
-  twin absent), `dtip d` does not reach `dbase d` in `E_minus E d`.
-- `not_reachable_E_minus_dbase_dtip` — mirror with `twin d` removed.
+**What landed.** The two outgoing-tip lemmas are now plain `Qed`, each reduced
+directly to its reach-core lemma:
 
-*Mutual induction layer (feeds `not_adj_*` → penult cases; not on capstone path):*
+- `not_reachable_E_minus_dtip_to_outgoing_tip` — an off-carrier outgoing dart
+  `ec` at `dbase d` (with `ec ≠ d`) keeps its carrier `{dbase d, dtip ec}` in
+  `E_minus E d`: the carrier is dropped only when `ec = d` (excluded) or
+  `ec = twin d` (then `dtip ec = dbase d`, handled directly). So any walk
+  `dtip d ↝ dtip ec` extends by one edge to `dtip d ↝ dbase d`, refuting
+  `not_reachable_E_minus_dtip_dbase`.
+- `not_reachable_E_minus_dbase_to_outgoing_tip` — the mirror, reducing to
+  `not_reachable_E_minus_dbase_dtip`.
 
-- `not_reachable_E_minus_dtip_to_outgoing_tip` — no route from `dtip d` to the
-  tip of an off-carrier outgoing dart at `dbase d`.
-- `not_reachable_E_minus_dbase_to_outgoing_tip` — mirror at `dtip d`.
+`Print Assumptions` on each lists only its reach-core lemma plus the standard
+classical/funext axioms — no self-reference, no `not_adj_*`, no new axioms.
+This is exactly the surviving-carrier one-step argument already used inside the
+(Qed) `not_adj_E_minus_*_to_outgoing_*_tip` barrier lemmas.
 
-Proof target: `reachable_ind` anchored predicate on face-prefix walks, consuming
-`same_face_twin_prefix_loop_E_minus` (Rung 3b-i) + singleton collapse (3b-ii).
-The `not_adj_E_minus_*_to_outgoing_*_tip` barrier lemmas are Qed modulo the
-mutual pair above.
+*Still Admitted (two registry lines):*
+
+- `not_reachable_E_minus_{dtip,dbase}_*` — the reach core, on capstone
+  `Print Assumptions`. These remain the genuine deferred work: showing a walk
+  from `dtip d` can never re-enter `dbase d` after `d` is removed needs the
+  rotation-system / face-loop argument (`same_face_twin_prefix_loop_E_minus`),
+  which the outgoing-tip reduction above does **not** discharge.
 
 **CLOSED — H_bridge combinatorial packaging (2026-06-13, modulo reach axioms):**
 `OverlayBridge.extract_rings_valid` now discharges `twins_in_different_faces` via
@@ -591,3 +606,33 @@ the former named hypothesis `H_bridge : ∀E, …` is removed from theorem state
 (plus standard classical axioms). Contrast: `OverlayCorrectness.overlay_ng_correct_conditional`
 still carries a *geometric* H_bridge (JCT-gated); this slice closed the
 *combinatorial* rotation-system bridge packaging only.
+
+## §20  Rung 3b-v — single-premise refactor (`H_bridge_core`)
+
+After the 3b-iv routes (geometric/JCT and combinatorial/Euler) both reduced to
+the same thesis-scale planar-bridge content, Rung 3b-v singularises the gap.
+
+The two reach-core lemmas are no longer separate `Admitted`s.  A single named
+premise is introduced:
+
+```
+Theorem H_bridge_core :
+  forall (E : list Edge) (d : Dart),
+    (forall v, fan_ok (outgoing v (darts_of E))) -> no_spurs (darts_of E) ->
+    In d (darts_of E) -> same_face (darts_of E) d (twin d) -> dart_endpoints_ne d ->
+    (In d E -> ~ In (twin d) E -> ~ reachable (E_minus E d) (dtip d) (dbase d))
+    /\ (In (twin d) E -> ~ In d E -> ~ reachable (E_minus E (twin d)) (dbase d) (dtip d)).
+```
+
+`H_bridge_core` is the ONLY `Admitted` in the H_bridge development.  Both
+`not_reachable_E_minus_{dtip_dbase,dbase_dtip}`, the outgoing-tip pair, the
+`not_adj_*` barrier, and the exported `same_face_twin_disconnect` /
+`same_face_twin_is_cut` / `H_bridge_well_noded` are all `Qed` on top of it.
+`Print Assumptions H_bridge_well_noded` lists exactly `H_bridge_core` plus the
+standard classical/funext axioms.
+
+This mirrors the corpus's named-JCT-seam pattern: the hard topology lives in one
+explicit, documented contract rather than two dangling holes.  Both closure
+routes can now proceed in parallel against this single interface, and the
+deferred-proof registry shrinks from two entries to one
+(`docs/admitted-deferred-proofs.txt`).  No new axioms; no closure claimed.
