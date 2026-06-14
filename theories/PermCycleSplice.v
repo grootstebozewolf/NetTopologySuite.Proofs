@@ -317,6 +317,214 @@ Section CycleSplice.
     lia.
   Qed.
 
+  (* ---- Stage 3b: the not-same-orbit / class-constancy invariant ---------- *)
+
+  (* The three regions of S' under the surgery. `Outside` is membership-based
+     (in S', not on d's f-orbit) -- the form that feeds the f'=f closure step;
+     `arc_or_outside` reconciles it with the index view. *)
+  Definition InArc1 (z : A) : Prop := exists i, (1 <= i <= k - 1)%nat /\ z = it i d.
+  Definition InArc2 (z : A) : Prop := exists i, (k + 1 <= i <= per - 1)%nat /\ z = it i d.
+  Definition Outside (z : A) : Prop := In z S' /\ ~ same_orbit f d z.
+
+  Lemma inO_d_td : same_orbit f d td.
+  Proof. exists k. exact Hk_td. Qed.
+
+  Lemma arc_or_outside : forall z, In z S' -> InArc1 z \/ InArc2 z \/ Outside z.
+  Proof.
+    intros z Hz.
+    destruct (same_orbit_dec eqdec f S Hclos Hinj d HdS z) as [Hso | Hnso].
+    - destruct (splice_on_orbit_index z Hz Hso) as [i [[Hr1 | Hr2] Hzi]].
+      + left. exists i. split; [ exact Hr1 | exact Hzi ].
+      + right; left. exists i. split; [ exact Hr2 | exact Hzi ].
+    - right; right. split; [ exact Hz | exact Hnso ].
+  Qed.
+
+  (* On Outside points the surgered map is the original: neither redirect guard
+     fires, else `x` would be a one-step predecessor of `d`/`td`, hence on d's
+     orbit (`same_orbit_sym`/`_trans`), contradicting Outside. *)
+  Lemma f'_eq_f_outside : forall z, Outside z -> f' z = f z.
+  Proof.
+    intros z [HzS' Hznoso].
+    destruct (proj1 (Hcarrier z) HzS') as [HzS _].
+    rewrite (Hf'spec z HzS').
+    destruct (eqdec (f z) d) as [Hfd | _].
+    - exfalso. apply Hznoso.
+      apply (same_orbit_sym eqdec f S Hclos Hinj z HzS d).
+      exists 1%nat. cbn [OrbitCycle.iter]. exact Hfd.
+    - destruct (eqdec (f z) td) as [Hftd | _].
+      + exfalso. apply Hznoso.
+        apply (same_orbit_trans f d td z inO_d_td).
+        apply (same_orbit_sym eqdec f S Hclos Hinj z HzS td).
+        exists 1%nat. cbn [OrbitCycle.iter]. exact Hftd.
+      + reflexivity.
+  Qed.
+
+  (* Each region is f'-closed (the wraps stay in-arc; Outside stays Outside). *)
+  Lemma f'_closes_arc1 : forall z, InArc1 z -> InArc1 (f' z).
+  Proof.
+    intros z [i [Hi Hz]]. subst z.
+    destruct (Nat.eq_dec i (k - 1)) as [Hwrap | Hint].
+    - subst i. rewrite f'_arc1_wrap. exists 1%nat. split; [ lia | reflexivity ].
+    - rewrite (f'_arc1_interior i ltac:(lia)).
+      exists (i + 1)%nat. split; [ lia | reflexivity ].
+  Qed.
+
+  Lemma f'_closes_arc2 : forall z, InArc2 z -> InArc2 (f' z).
+  Proof.
+    intros z [i [Hi Hz]]. subst z.
+    destruct (Nat.eq_dec i (per - 1)) as [Hwrap | Hint].
+    - subst i. rewrite f'_arc2_wrap. exists (k + 1)%nat. split; [ lia | reflexivity ].
+    - rewrite (f'_arc2_interior i ltac:(lia)).
+      exists (i + 1)%nat. split; [ lia | reflexivity ].
+  Qed.
+
+  Lemma f'_closes_outside : forall z, Outside z -> Outside (f' z).
+  Proof.
+    intros z Hz. destruct Hz as [HzS' Hznoso].
+    destruct (proj1 (Hcarrier z) HzS') as [HzS _].
+    split.
+    - apply Hclos'. exact HzS'.
+    - rewrite (f'_eq_f_outside z (conj HzS' Hznoso)). intro Hso.
+      apply Hznoso.
+      apply (same_orbit_trans f d (f z) z Hso).
+      apply (same_orbit_sym eqdec f S Hclos Hinj z HzS (f z)).
+      exists 1%nat. cbn [OrbitCycle.iter]. reflexivity.
+  Qed.
+
+  (* f'-orbits preserve region membership (induction on the step count). *)
+  Lemma f'_orbit_preserves_arc1 : forall n z, InArc1 z -> InArc1 (it' n z).
+  Proof.
+    intros n. induction n as [| n IH]; intros z Hz.
+    - exact Hz.
+    - cbn [OrbitCycle.iter]. apply f'_closes_arc1. apply IH. exact Hz.
+  Qed.
+
+  Lemma f'_orbit_preserves_arc2 : forall n z, InArc2 z -> InArc2 (it' n z).
+  Proof.
+    intros n. induction n as [| n IH]; intros z Hz.
+    - exact Hz.
+    - cbn [OrbitCycle.iter]. apply f'_closes_arc2. apply IH. exact Hz.
+  Qed.
+
+  Lemma f'_orbit_preserves_outside : forall n z, Outside z -> Outside (it' n z).
+  Proof.
+    intros n. induction n as [| n IH]; intros z Hz.
+    - exact Hz.
+    - cbn [OrbitCycle.iter]. apply f'_closes_outside. apply IH. exact Hz.
+  Qed.
+
+  (* CLASS-CONSTANCY of "in O" along f'-orbits (Prop core). *)
+  Lemma splice_inO_f'_class_constant_prop : forall x y,
+    In x S' -> In y S' -> same_orbit f' x y ->
+    (same_orbit f d x <-> same_orbit f d y).
+  Proof.
+    intros x y HxS' HyS' Hxy.
+    assert (Hfwd : forall a b, In a S' -> same_orbit f' a b ->
+                     same_orbit f d a -> same_orbit f d b).
+    { intros a b HaS' [n Hn] Hda. subst b.
+      destruct (arc_or_outside a HaS') as [Ha | [Ha | Ha]].
+      - destruct (f'_orbit_preserves_arc1 n a Ha) as [j [_ Hj']].
+        exists j. symmetry. exact Hj'.
+      - destruct (f'_orbit_preserves_arc2 n a Ha) as [j [_ Hj']].
+        exists j. symmetry. exact Hj'.
+      - exfalso. destruct Ha as [_ Hna]. exact (Hna Hda). }
+    split.
+    - intro Hdx. exact (Hfwd x y HxS' Hxy Hdx).
+    - intro Hdy.
+      assert (Hyx : same_orbit f' y x)
+        by (exact (same_orbit_sym eqdec f' S' Hclos' Hinj' x HxS' y Hxy)).
+      exact (Hfwd y x HyS' Hyx Hdy).
+  Qed.
+
+  (* Boolean corollary -- the exact shape stage 4's count_classes_filter_split
+     consumes on the (f',S') side. *)
+  Lemma splice_inO_f'_class_constant : forall x y,
+    In x S' -> In y S' ->
+    same_orbit_b eqdec f' S' x y = true ->
+    same_orbit_b eqdec f S d x = same_orbit_b eqdec f S d y.
+  Proof.
+    intros x y HxS' HyS' Hb. apply same_orbit_b_sound in Hb.
+    destruct (proj1 (Hcarrier x) HxS') as [HxS _].
+    destruct (proj1 (Hcarrier y) HyS') as [HyS _].
+    destruct (splice_inO_f'_class_constant_prop x y HxS' HyS' Hb) as [Hfwd Hbwd].
+    destruct (same_orbit_b eqdec f S d x) eqn:Ex;
+      destruct (same_orbit_b eqdec f S d y) eqn:Ey; try reflexivity; exfalso.
+    - assert (same_orbit f d x) by (apply (same_orbit_b_sound eqdec f S d x); exact Ex).
+      assert (same_orbit f d y) by (apply Hfwd; assumption).
+      assert (same_orbit_b eqdec f S d y = true)
+        by (apply (same_orbit_b_complete eqdec f S Hclos Hinj d HdS y); assumption).
+      congruence.
+    - assert (same_orbit f d y) by (apply (same_orbit_b_sound eqdec f S d y); exact Ey).
+      assert (same_orbit f d x) by (apply Hbwd; assumption).
+      assert (same_orbit_b eqdec f S d x = true)
+        by (apply (same_orbit_b_complete eqdec f S Hclos Hinj d HdS x); assumption).
+      congruence.
+  Qed.
+
+  (* arc1 and arc2 are DISTINCT f'-orbits. *)
+  Lemma splice_arcs_distinct : forall a b, InArc1 a -> InArc2 b -> ~ same_orbit f' a b.
+  Proof.
+    intros a b Ha Hb [n Hn].
+    assert (Hb1 : InArc1 b)
+      by (rewrite <- Hn; apply f'_orbit_preserves_arc1; exact Ha).
+    destruct Hb1 as [i1 [Hi1 Hbi1]]. destruct Hb as [i2 [Hi2 Hbi2]].
+    assert (it i1 d = it i2 d) by (rewrite <- Hbi1, <- Hbi2; reflexivity).
+    assert (i1 = i2) by (apply splice_period_orbit_distinct; [ lia | lia | assumption ]).
+    lia.
+  Qed.
+
+  Lemma splice_arcs_distinct_b : forall a b,
+    InArc1 a -> InArc2 b -> same_orbit_b eqdec f' S' a b = false.
+  Proof.
+    intros a b Ha Hb.
+    destruct (same_orbit_b eqdec f' S' a b) eqn:E; [ exfalso | reflexivity ].
+    apply same_orbit_b_sound in E. exact (splice_arcs_distinct a b Ha Hb E).
+  Qed.
+
+  (* OUTSIDE BRIDGE: f' and f agree along an Outside orbit, so the two
+     same_orbit_b's (different carriers!) agree there -- stage 4's complement. *)
+  Lemma iter_f'_eq_iter_f_outside : forall n z, Outside z -> it' n z = it n z.
+  Proof.
+    intros n. induction n as [| n IH]; intros z Hz.
+    - reflexivity.
+    - cbn [OrbitCycle.iter]. rewrite (IH z Hz).
+      apply f'_eq_f_outside. rewrite <- (IH z Hz).
+      apply f'_orbit_preserves_outside. exact Hz.
+  Qed.
+
+  Lemma outside_orbit_iff : forall x y,
+    Outside x -> Outside y -> (same_orbit f' x y <-> same_orbit f x y).
+  Proof.
+    intros x y Hx Hy. split.
+    - intros [n Hn]. exists n. rewrite <- (iter_f'_eq_iter_f_outside n x Hx). exact Hn.
+    - intros [n Hn]. exists n. rewrite (iter_f'_eq_iter_f_outside n x Hx). exact Hn.
+  Qed.
+
+  Lemma outside_orbit_b_eq : forall x y,
+    Outside x -> Outside y ->
+    same_orbit_b eqdec f' S' x y = same_orbit_b eqdec f S x y.
+  Proof.
+    intros x y Hx Hy.
+    pose proof Hx as HxC. destruct HxC as [HxS' _].
+    pose proof Hy as HyC. destruct HyC as [HyS' _].
+    destruct (proj1 (Hcarrier x) HxS') as [HxS _].
+    destruct (proj1 (Hcarrier y) HyS') as [HyS _].
+    destruct (same_orbit_b eqdec f' S' x y) eqn:E';
+      destruct (same_orbit_b eqdec f S x y) eqn:E; try reflexivity; exfalso.
+    - apply same_orbit_b_sound in E'.
+      assert (same_orbit f x y)
+        by (apply (proj1 (outside_orbit_iff x y Hx Hy)); exact E').
+      assert (same_orbit_b eqdec f S x y = true)
+        by (apply (same_orbit_b_complete eqdec f S Hclos Hinj x HxS y); assumption).
+      congruence.
+    - apply same_orbit_b_sound in E.
+      assert (same_orbit f' x y)
+        by (apply (proj2 (outside_orbit_iff x y Hx Hy)); exact E).
+      assert (same_orbit_b eqdec f' S' x y = true)
+        by (apply (same_orbit_b_complete eqdec f' S' Hclos' Hinj' x HxS' y); assumption).
+      congruence.
+  Qed.
+
 End CycleSplice.
 
 (* -------------------------------------------------------------------------- *)
@@ -329,3 +537,6 @@ Print Assumptions orbit_reps_length_mono.
 Print Assumptions splice_arc1_is_orbit.
 Print Assumptions splice_arc2_is_orbit.
 Print Assumptions splice_on_orbit_index.
+Print Assumptions splice_inO_f'_class_constant.
+Print Assumptions splice_arcs_distinct_b.
+Print Assumptions outside_orbit_b_eq.
