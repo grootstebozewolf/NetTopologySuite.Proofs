@@ -589,6 +589,33 @@ the `gtri_ring` analogue of `KakeyaOverlay.perron_tri_ring_simple`) supplies the
 `ring_simple` conjunct for both rings. This is the first concrete `valid_polygon`
 *with a hole* in the corpus whose analytic clause carries no named seam.
 
+### §11.5b update (2026-06-14): the diamond — fourth total family, first convex assembly user
+
+The H1 parity seam has since been carried to the corrected **off-ring** form
+`parity_characterises_interior_cont_offring` (interior *and* exterior, off the
+skeleton), made **total** (unconditional) for the rectangle
+(`RectangleOffringSeam.v`), the general triangle (`GeneralTriangleOffringSeam.v`),
+and the right triangle (`ConvexOffringSeam.v`); the generic convex assembly
+`ConvexOffringSeam.convex_parity_seam_offring_of` reduces it for any
+half-plane-presented ring to four presentation facts + two guarded-parity facts.
+
+`theories/DiamondOffringSeam.v` lands the **fourth total family** —
+`diamond_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
+p diamond_ring` — the **first convex four-gon** and the **first instantiation of
+`convex_parity_seam_offring_of`**. The diamond `(0,-2),(2,0),(0,2),(-2,0)`
+(the region `|x|+|y| <= 2`) is presented by its four edge half-planes
+`diamond_hps`; the presentation obligations (zero-set of `conv_min` on the
+skeleton, vertices in all half-planes, non-degeneracy, bounded positive region)
+are mechanical, and the two guarded-parity obligations go through the already-Qed
+monotone-chain split (`MonotoneChainParity.bimonotone_split_parity` over
+`ConvexChainSplit.diamond_bimonotone`) + `GeneralTriangleParity.edge_cross_sign`:
+a strict-interior point's rightward ray crosses the right (increasing) chain
+exactly once, an exterior point's ray crosses the two chains both-or-neither.
+`diamond_point_in_ring_iff_geometric` is the off-ring biconditional corollary;
+three-axiom, no `Admitted`. A **general** convex *n*-gon remains open only on the
+"split-from-convexity" derivation (`ConvexChainSplit.interior_hits_one_chain` /
+`bimonotone_split` from `vertices_in_halfplane`) — isolated, not yet built.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4

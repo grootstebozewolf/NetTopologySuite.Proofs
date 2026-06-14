@@ -670,6 +670,14 @@ theories/GeneralTriangleOffringSeam.v
 # positive region, guarded interior-odd + exterior-even parity).
 # Three-axiom.  No Admitted.
 theories/ConvexOffringSeam.v
+# The DIAMOND as the FOURTH total family of the off-ring JCT seam (first convex
+# 4-gon; first instantiation of convex_parity_seam_offring_of): diamond_ring
+# presented by its four edge half-planes diamond_hps; the six assembly
+# obligations discharged, with the interior-odd / exterior-even parity via the
+# Qed monotone-chain split (bimonotone_split_parity) + edge_cross_sign.
+# diamond_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
+# p diamond_ring.  Three-axiom.  No Admitted.
+theories/DiamondOffringSeam.v
 # H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
 # half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
 # ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path
