@@ -162,6 +162,8 @@ Qed.
 (* `e` -- the precise input to the (still open) `num_faces` orbit-splice.       *)
 (* -------------------------------------------------------------------------- *)
 
+(* §3.1  Reusable list-filter helpers (general infrastructure, not one-off). *)
+
 (* Filtering by `p` after `q` is redundant when `p` entails `q`. *)
 Lemma filter_filter_redundant : forall (A : Type) (p q : A -> bool) (l : list A),
   (forall x, p x = true -> q x = true) ->
@@ -206,7 +208,8 @@ Proof.
     rewrite dbase_twin in He. symmetry. exact He.
 Qed.
 
-(* Hence `fstep` agrees with the full arrangement away from `e`'s endpoints. *)
+(* Hence `fstep` agrees with the full arrangement away from `e`'s endpoints.
+   Immediate from `outgoing_darts_of_E_minus_eq` + the definition of `fstep`. *)
 Lemma fstep_E_minus_eq_away : forall (E : list Edge) (e x : Dart),
   dtip x <> dbase e -> dtip x <> dtip e ->
   fstep (darts_of (E_minus E e)) x = fstep (darts_of E) x.
@@ -214,6 +217,15 @@ Proof.
   intros E e x H1 H2. unfold fstep.
   rewrite (outgoing_darts_of_E_minus_eq E e (dtip x) H1 H2). reflexivity.
 Qed.
+
+(* NEXT (the remaining num_faces delta = the genuine combinatorial core):
+   the orbit-count SPLICE at the two endpoint fans.  `fstep` differs from the
+   full arrangement only at the two darts whose `next`-step landed on the deleted
+   dart in the fan at `dbase e` (loses `e`) / at `dtip e` (loses `twin e`); each
+   such `next` reroutes to skip the deleted dart (a `DartNext`-level lemma over
+   `list_min` under `fan_ok`).  Proving that this local edit preserves the total
+   number of `fstep`-orbits when `e`'s two darts share a face is the cycle-count
+   argument (cf. PermCycleCount); it is substantial and still open. *)
 
 (* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                                *)
