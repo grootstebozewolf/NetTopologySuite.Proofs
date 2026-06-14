@@ -6,7 +6,7 @@
    Assembles the Euler-route pieces into a single Qed chain from the named planar
    Euler identity to the bridge's reachability conclusion
    (`~ reachable (E_minus E d) (fst d) (snd d)`, the content of
-   `EdgeFaceBridge.H_bridge_core`).  Two halves meet here:
+   `EdgeFaceBridge.H_bridge_premise`).  Two halves meet here:
 
      - ARITHMETIC (`euler_component_increase`): the Euler identity (V-E+F=2*C) for
        `E` and `E_minus E d`, vertex invariance, the edge delta (`-1`, proved in

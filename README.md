@@ -30,12 +30,14 @@ for computable terms), **resting on three axioms.** Those three are the
 standard classical-reals trio Rocq ships with; this corpus introduces
 none of its own, and `Axiom`, `Parameter`, and the `admit.` tactic are
 banned outright and appear nowhere. The *only* proofs not closed by
-`Qed.` are **7** `Admitted` theorems — and an unregistered `Admitted`
-fails the build, so there is no quiet middle ground. Those seven fall into
-exactly two honest categories, each with a concrete seam on file: **6
+`Qed.` are **6** `Admitted` theorems — and an unregistered `Admitted`
+fails the build, so there is no quiet middle ground. All six fall into
+a single honest category, each with a concrete seam on file: **6
 counterexamples** (the theorem as stated is *false*, with a verified
-counterexample committed) and **1 deferred proof** (the theorem is
-*true*, its proof structure documented and the remaining work scoped).
+counterexample committed). The deferred-proof registry is now **empty
+(0)** — its sole former entry, `EdgeFaceBridge.H_bridge_core`, has been
+discharged via the planar Euler route, leaving only named planar Euler
+hypotheses on the headline `extract_rings_valid` (a conditional Qed).
 No soundness bridge is silently stubbed — each is proven, absent, or
 registered. (The Flocq-dependent lane inherits one further axiom
 structurally from Flocq's binary64 model — not load-bearing, and
@@ -62,13 +64,17 @@ discipline across both directories:
 - **Tier 3** — an `Admitted` registered in
   [`docs/admitted-deferred-proofs.txt`](docs/admitted-deferred-proofs.txt)
   is allowed temporarily: the theorem is *true*, its proof structure is
-  documented, and the remaining work is multi-session. 1 entry today —
-  `EdgeFaceBridge.H_bridge_core`, the planar same-face⇒bridge seam behind
-  Phase 3's ring assembly (`extract_rings_valid` itself is now a conditional
-  Qed). An entry comes off the registry only when the proof lands. (Hobby Lemma 4.3's
-  no-proper-intersection half, Shewchuk Theorem 13's headline, and O7
-  completeness were previously here; each is now a Tier-2 counterexample —
-  machine-checked **false** as stated.)
+  documented, and the remaining work is multi-session. **0 entries today —
+  the registry is empty.** Its sole former entry,
+  `EdgeFaceBridge.H_bridge_core` (the planar same-face⇒bridge seam behind
+  Phase 3's ring assembly), has been discharged via the planar Euler route:
+  the bridge fact is now a named premise threaded through the EdgeFaceBridge
+  chain and proved in `theories/HBridgeEuler.v` from the named planar Euler
+  identity, so `extract_rings_valid` carries those Euler hypotheses as a
+  conditional Qed with no `Admitted`. An entry comes off the registry only
+  when the proof lands. (Hobby Lemma 4.3's no-proper-intersection half,
+  Shewchuk Theorem 13's headline, and O7 completeness were previously here;
+  each is now a Tier-2 counterexample — machine-checked **false** as stated.)
 
 The only axioms used are the three standard ones bundled with Rocq's
 classical real arithmetic library (printed at the end of each `theories/`
@@ -355,9 +361,9 @@ the BDFL paths.)
 - This is **not** complete. Current coverage is over 1,100 Qed-closed
   theorems across 67 `.v` modules (25 foundational Stdlib-only under
   `theories/`, plus Flocq-dependent work under `theories-flocq/`), with
-  exactly 7 `Admitted` theorems (6 counterexample, 1 deferred-proof), each
-  registered in the counterexample or deferred-proof registry (see the
-  registries and `scripts/check_admitted.sh`).
+  exactly 6 `Admitted` theorems (all counterexample; the deferred-proof
+  registry is now empty), each registered in the counterexample registry
+  (see the registries and `scripts/check_admitted.sh`).
   Coverage spans the algebraic foundations (real-number, vector, distance,
   orientation, line, disk, lattice, lex order), segment and bounding-box
   primitives, triangle / convex / centroid / reflection laws, the

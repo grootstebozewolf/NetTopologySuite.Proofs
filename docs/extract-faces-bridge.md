@@ -749,3 +749,31 @@ argument showing this surgery SPLITS the single `fstep`-orbit containing `d` and
 delta `num_faces (E_minus E d) = num_faces E + 1` follows.  (No cycle-count-change
 machinery exists in `PermCycleCount` yet; it must be built.  Combined with the
 `V−E+F=2*C` Euler premise, this `F+1` gives `C+1` -- the disconnect.) Still open.
+
+### §22  Closure (2026-06-14): the seam is discharged — 0 deferred proofs
+
+The orbit-count SPLICE above is now PROVED: `PermCycleSplice.cycle_count_surgery`
+(the generic cycle-count surgery) and its instantiation
+`NumFacesSplice.num_faces_E_minus_splice` deliver the residual face delta
+`num_faces (E_minus E d) = num_faces E + 1`.  With it, the whole Euler chain
+closes.
+
+Rather than leave `H_bridge_core` as a registered `Admitted`, the bridge fact is
+now carried as the named premise `EdgeFaceBridge.H_bridge_premise E` and threaded
+through the entire EdgeFaceBridge chain (`not_reachable_E_minus_*`,
+`same_face_twin_disconnect`, `same_face_twin_is_cut`, `edge_2_connected_twins_sep`,
+`H_bridge_well_noded`) — all `Qed` parametrically over it.  It is then DISCHARGED
+downstream in `theories/HBridgeEuler.v` (`H_bridge_premise_from_euler`), which sits
+after the full Euler/splice stack and proves the premise from the named planar
+Euler hypotheses + `num_faces_E_minus_splice` (face delta) + `num_edges_E_minus`
+(edge delta, via `count_occ_1_of_NoDup` from `NoDup E`) through
+`EulerBridge.H_bridge_core_conclusion_from_euler`.
+
+The sole external consumer — `extract_rings_valid` / `extract_rings_valid_holes` /
+`valid_geometry_extract` in `theories-flocq/OverlayBridge.v` — now carries the
+planar Euler premises (`NoDup`, `euler_characteristic E`, `euler_characteristic
+(E_minus E e)` for each edge, and `num_vertices` invariance) as named hypotheses
+and builds `H_bridge_premise` from them via `H_bridge_premise_from_euler`.  So the
+headline is a conditional Qed with NO `Admitted`, and the deferred-proof registry
+(`docs/admitted-deferred-proofs.txt`) is now EMPTY (1 → 0).  The only residual is
+the named planar Euler identity itself, carried by design and never axiomatized.

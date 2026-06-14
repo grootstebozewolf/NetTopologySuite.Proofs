@@ -807,6 +807,10 @@ theories/EulerArrangement.v
 # (Euler V-E+F=2C + same-face FACE SPLIT => C'=C+1) + reachable_E_minus_of_bypass
 # assemble into H_bridge_core_conclusion_from_euler.  No Admitteds.
 theories/EulerBridge.v
+# H_bridge Euler route (Rung 3b, stage 6): discharge the named bridge premise
+# EdgeFaceBridge.H_bridge_premise from the planar Euler identity (via
+# H_bridge_core_conclusion_from_euler + num_faces_E_minus_splice).  No Admitteds.
+theories/HBridgeEuler.v
 # H_bridge Euler route (Rung 3b-vii, PR #194): generic decidable-relation class
 # counter (count_classes) -- order-independent counting core.
 theories/ClassCount.v
