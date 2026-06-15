@@ -841,6 +841,30 @@ guard — is the genuine convex content (it needs the canonical-start rotation p
 single descending run" argument). It is isolated here, to be closed by a follow-up rung.
 Three-axiom, no `Admitted`.
 
+### §11.5i update (2026-06-15): the crossing bound — inside iff one crossing
+
+`theories/ConvexRayCrossing.v` lands the crossing bound the `bimonotone_split` buys, and
+the capstone that ties the whole convex ladder together. All `Qed`, three-axiom.
+
+- **At most one crossing per chain, at most two for the ring.** `inc_cross_count_le_one` /
+  `dec_cross_count_le_one` (count form of the monotone-chain single-crossing facts) give
+  `convex_ray_crosses_le_two`: any ring presented as a `bimonotone_split` is crossed at
+  most twice by a rightward ray.
+- **The crisp convex Jordan characterization.** `convex_in_ring_iff_one_crossing`: for such
+  a ring, `point_in_ring p r ↔ cross_count p (ring_edges r) = 1` (ray parity is odd and the
+  count is `≤ 2`, so it is pinned to exactly one). This is the convexity-strengthened
+  companion to the bare parity seam — in general `point_in_ring` fixes only the parity;
+  convexity fixes the exact count. Validated on the diamond and hexagon.
+- **The capstone — the whole ladder in one statement.**
+  `convex_canonical_start_in_ring_iff_one_crossing` composes the §11.5k reduction
+  (`ConvexYUnimodal.convex_canonical_start_bimonotone`, which produces the
+  `bimonotone_split` from half-plane convexity + bottom-first presentation + distinct
+  consecutive heights) with the bound: a general convex ring presented from its bottom
+  vertex is `point_in_ring` iff its rightward ray crosses exactly once — **conditional only
+  on the named global residual `convex_no_interior_ymin`** (§11.5k). So §11.5h (y-modulator)
+  → §11.5k (no-interior-y-min reduction) → §11.5i (crossing bound) now chain end-to-end,
+  with the single genuinely-open geometric fact carried as a hypothesis, never `Admitted`.
+
 ### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
 
 `theories/HotPixelConvexRing.v` bridges the convex crossing-number campaign to Phase 2:

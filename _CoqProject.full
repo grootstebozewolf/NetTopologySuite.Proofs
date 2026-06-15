@@ -192,6 +192,15 @@ theories/MonotoneChainCoverage.v
 # its wiring to bimonotone_split; max/min-height vertex infra; diamond + hexagon
 # witnesses.  Isolates the remaining "convex => y-unimodal" geometric residual.
 theories/ConvexYUnimodal.v
+# The y-modulator (crossing bound): from a bimonotone_split, each monotone chain
+# is crossed at most once, so a convex / y-unimodal ring is crossed at most twice
+# (convex_ray_crosses_le_two) and inside iff crossed exactly once
+# (convex_in_ring_iff_one_crossing).  The capstone
+# convex_canonical_start_in_ring_iff_one_crossing composes the §11.5k
+# no-interior-y-min reduction with the bound: the general convex ring's exact
+# one-crossing characterization, conditional on the named residual
+# convex_no_interior_ymin.  Three-axiom.  No Admitted.
+theories/ConvexRayCrossing.v
 # The hot pixel as a convex ring: presents the half-open axis-aligned square
 # (HotPixel.in_hot_pixel) as a Ring and connects it to the crossing-number
 # point_in_ring.  The two horizontal edges never cross a rightward ray, so the

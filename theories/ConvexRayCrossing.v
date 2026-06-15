@@ -20,12 +20,18 @@
      §3  `convex_in_ring_iff_one_crossing` — HEADLINE: for a convex ring, a point
          is `point_in_ring` iff `cross_count = 1` (odd + `<= 2` pins it to one).
      §4  Validation on the diamond and hexagon (both already `bimonotone_split`).
+     §5  CAPSTONE — composing the §11.5k no-interior-y-min reduction
+         (`ConvexYUnimodal.convex_canonical_start_bimonotone`) with §3: a general
+         convex ring presented from its bottom vertex satisfies the exact
+         one-crossing characterization, conditional only on the named global
+         residual `convex_no_interior_ymin`.  The whole convex ladder in one
+         statement.
 
    This is the convexity-strengthened companion to the bare parity seam: in
    general a `point_in_ring` only fixes the crossing parity; here convexity fixes
    the exact count.  The remaining geometric residual (convexity ⟹ the vertex
    order is y-unimodal, hence a `bimonotone_split` exists) is unchanged and lives
-   in `ConvexYUnimodal.v`.
+   in `ConvexYUnimodal.v` as the named predicate `convex_no_interior_ymin`.
 
    Pure-R + three-axiom.  No `Admitted` / `Axiom` / `Parameter`.
 
@@ -37,7 +43,9 @@
 
 From Stdlib Require Import Reals List Lra Lia.
 From NTS.Proofs Require Import Distance Overlay MonotoneChainParity
-                               MonotoneChainConstruction ConvexChainSplit.
+                               MonotoneChainConstruction ConvexChainSplit
+                               MonotoneChainCoverage ConvexOffringSeam
+                               ConvexYUnimodal.
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -167,6 +175,32 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §5  CAPSTONE: the general convex ring's exact one-crossing characterization.*)
+(* -------------------------------------------------------------------------- *)
+
+(* Composing the §11.5k no-interior-y-min reduction (which produces the
+   `bimonotone_split` from half-plane convexity + bottom-first presentation +
+   distinct consecutive heights, conditional on the named global residual
+   `convex_no_interior_ymin`) with the §3 crossing bound: a general convex ring,
+   presented from its bottom vertex, is `point_in_ring` iff its rightward ray
+   crosses exactly once.  This is the whole convex ladder (§11.5h y-modulator →
+   §11.5k reduction → §11.5i crossing bound) in a single statement, with the one
+   genuinely-open geometric fact carried as the named hypothesis. *)
+Theorem convex_canonical_start_in_ring_iff_one_crossing : forall (r : Ring) (p : Point),
+  r <> [] ->
+  convex_no_interior_ymin r ->
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  starts_at_min r ->
+  chain_y_distinct r ->
+  (point_in_ring p r <-> cross_count p (ring_edges r) = 1%nat).
+Proof.
+  intros r p Hne Hres Hconv Hmin Hcd.
+  destruct (convex_canonical_start_bimonotone r Hne Hres Hconv Hmin Hcd)
+    as [inc [dec Hbs]].
+  exact (convex_in_ring_iff_one_crossing p r inc dec Hbs).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -174,3 +208,4 @@ Print Assumptions convex_ray_crosses_le_two.
 Print Assumptions convex_in_ring_iff_one_crossing.
 Print Assumptions diamond_in_ring_iff_one_crossing.
 Print Assumptions hexagon_in_ring_iff_one_crossing.
+Print Assumptions convex_canonical_start_in_ring_iff_one_crossing.
