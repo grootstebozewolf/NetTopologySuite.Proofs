@@ -870,36 +870,42 @@ CCW `Ring` (`pixel_ring`). All `Qed`:
   vertices and parity diverges. Validated on the unit pixel (scale = 1, origin centre).
   Three-axiom, no `Admitted`.
 
-### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
+### §11.5k update (2026-06-15): the y-modulator close — the no-interior-y-min reduction
 
-`theories/HotPixelConvexRing.v` carries the convex crossing characterisation to the
-**hot pixel** itself, bridging the Phase-2 snap-rounding stack (`HotPixel.in_hot_pixel`)
-to the JCT / convex-chain campaign, all `Qed`:
+`theories/ConvexYUnimodal.v` §5–§7 closes the *list-combinatorial half* of the
+§11.5h residual (`convex_left_turns` ⟹ `y_unimodal_decomposition`) and shrinks the
+gap to one sharply-stated geometric predicate. All `Qed`, three-axiom.
 
-- **The pixel as a CCW `Ring`** (`pixel_ring`, `pixel_ring_edges`): the half-open square
-  `[cx−r, cx+r) × [cy−r, cy+r)` (`r = hot_pixel_radius scale`) presented counter-clockwise
-  from the bottom-left, with edge list `[bottom; right; top; left]`.
-- **Only the vertical edges count**: the pixel's top/bottom edges are *horizontal*, so it is
-  NOT a strict `bimonotone_split` (`edge_up`/`edge_dn` are strict). But `edge_crosses_ray`
-  needs a strict y-straddle, so a horizontal edge is never crossed (`pixel_bottom_no_cross`
-  / `pixel_top_no_cross`), and each vertical edge crosses iff the ray height straddles the
-  pixel and the origin is left of that edge's x (`pixel_right_crosses_iff` /
-  `pixel_left_crosses_iff`, the vertical-edge x-intercept collapsing to the shared x).
-- **At most twice, inside iff once** (`pixel_ray_crosses_le_two`,
-  `pixel_in_ring_iff_one_crossing`): the `convex_in_ring_iff_one_crossing` pattern, reproved
-  DIRECTLY for the flat-edged square via `cross_count_cons_*` + `ray_parity_count` rather than
-  through a split.
-- **HEADLINE** (`pixel_point_in_ring_iff_box`): `point_in_ring p (pixel_ring C s)` iff a
-  **half-open-x / open-y box** — x in `[cx−r, cx+r)`, y in `(cy−r, cy+r)`.
-
-The bridge to `in_hot_pixel` is total above the bottom edge
-(`pixel_point_in_ring_implies_in_hot_pixel`, `in_hot_pixel_off_bottom_implies_point_in_ring`),
-and `pixel_grazing_bottom_edge` exhibits the gap: a concrete point on the *included* bottom
-edge (`py = cy−r`) that is `in_hot_pixel` yet **not** `point_in_ring` — the hot-pixel
-incarnation of the documented vertex-grazing caveat (`JCT_VertexGrazingCounterexample`),
-where the rightward ray grazes the bottom vertices and parity diverges. Validated on the unit
-pixel (`unit_pixel_centre_in_ring` / `unit_pixel_centre_one_crossing`). Three-axiom, no
-`Admitted`.
+- **The combinatorial heart.** `no_interior_ymin_unimodal`: a ring whose consecutive
+  heights are distinct (`chain_y_distinct` — no horizontal edge; the only legal tie is
+  the non-consecutive closing duplicate `head = last`, the diamond's `(2,0)`/`(-2,0)`
+  on opposite chains) and which has **no strict interior y-local-minimum**
+  (`no_interior_strict_ymin` — no consecutive triple `a,b,c` with `b` strictly below
+  both neighbours) **is** `y_unimodal_decomposition`. The proof is a clean list
+  induction: at each step the profile either keeps ascending (extend the rising prefix
+  by the IH) or turns down — and `descending_of_no_interior_min` shows that once it
+  turns down it strictly descends to the end (a re-ascent would manufacture a forbidden
+  interior minimum), so there is exactly one apex. This is the reusable substrate any
+  closing rung needs, independent of whichever global argument (rotation invariance or
+  the horizontal-interval lemma) is eventually chosen.
+- **The conditional close + the isolated residual.** `convex_canonical_start_y_unimodal`
+  proves a general convex ring (`Forall (vertices_in_halfplane …)`, the half-plane form)
+  presented from its bottom (min-y) vertex with distinct consecutive heights is
+  y-unimodal — **conditional on** the single named predicate `convex_no_interior_ymin`:
+  that GLOBAL half-plane convexity, read from the min, forbids every interior strict
+  y-local-minimum. This is the genuine remaining geometric content (the same global-vs-
+  local distinction that rules out the pentagram, §11.5h): it composes the local
+  convex-vertex fact over the whole boundary and needs either the canonical-start
+  rotation invariance or the horizontal-line-meets-convex-region-in-an-interval
+  argument. It is carried as a hypothesis, **never `Admitted`**. `convex_canonical_start_bimonotone`
+  chains it to a bimonotone split through the modulator wiring.
+- **Validation through the new rung.** `diamond_y_unimodal_via_rung` /
+  `hexagon_y_unimodal_via_rung` reach `y_unimodal_decomposition` via
+  `no_interior_ymin_unimodal` (discharging `chain_y_distinct` + `no_interior_strict_ymin`
+  by `cbn`/`lra`), exercising the combinatorial rung end-to-end rather than the §4 hand
+  split. So the §11.5h residual is now exactly **`convex_no_interior_ymin`** — strictly
+  smaller than before: the combinatorial reduction is Qed, only the global-convexity
+  ⟹ no-interior-min step remains.
 
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
