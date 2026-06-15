@@ -962,6 +962,36 @@ avoidance) is **unavailable** for exterior points (the `ray_avoids_vertices` gua
 blocks the rightward ray), so it is a genuine multi-session lemma; it is carried as the
 named predicate, never `Admitted`.
 
+### §11.5m update (2026-06-15): the convex slice fact — the geometric keystone, proved
+
+`theories/ConvexSlice.v` proves the geometric keystone both convex residuals reduce to —
+the convex **"horizontal slice = inter-chain interval"** fact — as a fully general theorem.
+All `Qed`, three-axiom. The earlier assessment feared a cross-product supporting-line
+monotonicity induction (the corpus has no such lemmas); the proof here sidesteps it entirely:
+
+- **`straddle_point_ring_image`** — the point `m` on a straddling edge at height `py p` is a
+  `ring_image` point (parameter `t = (py p − py(fst e))/(py(snd e) − py(fst e)) ∈ [0,1]`),
+  with `py m = py p` and the edge's own slack `0` there.
+- **`convex_slice_all_halfplanes` (KEYSTONE)** — for a point `p` inward of a straddling **up**
+  edge `e_i` (`0 < hp_slack(e_i) p`) and a straddling **down** edge `e_d`
+  (`0 ≤ hp_slack(e_d) p`), `p` satisfies **every** half-plane whose vertices the ring
+  satisfies. Proof: `ConvexOffringSeam.image_slack_nonneg` puts the on-edge image points
+  `m_i, m_d` in every half-plane; `hp_slack (a,b,c)` is affine in x with slope `−a`
+  (`hp_slack_sub_x`), and for `edge_inward_hp e` that coefficient is the edge's y-direction
+  (`edge_inward_hp_xcoef`); so `m_i`/`m_d` bound `px p` on the left/right, and each
+  half-plane closes by `nra` split on the sign of its x-coefficient. No cross-monotonicity,
+  no induction.
+- **`conv_min_nonneg_of_slice` / `exterior_slice_contra`** — package it as `0 ≤ conv_min`,
+  and as the inc-crossed/dec-not exterior contradiction **given the straddling edges**:
+  exterior-even is now a theorem once the straddling edges are in hand.
+- **Validation** — `diamond_slice_validation` runs the keystone on the diamond's interior
+  point `(0, 1/2)` and its two straddling chain edges, concluding all four half-planes hold.
+
+**What remains** is the strictly smaller, separate residual: straddle **extraction** —
+locating the straddling `e_i, e_d` for an arbitrary query point — which for exterior points
+needs vertex-height avoidance unavailable from `ray_avoids_vertices` alone. So the convex
+residuals are now "slice fact (DONE) + straddle extraction (open)".
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4

@@ -731,6 +731,13 @@ theories/ConvexOffringSeam.v
 # diamond_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
 # p diamond_ring.  Three-axiom.  No Admitted.
 theories/DiamondOffringSeam.v
+# ConvexSlice: the convex SLICE FACT -- a point inward of both straddling chain
+# edges at its height lies in EVERY edge half-plane (conv_min >= 0).  Proved
+# generally via image_slack_nonneg (on-edge image point in every half-plane) +
+# hp_slack affine-in-x, no cross-monotonicity.  The geometric keystone behind the
+# convex residuals; exterior-even is a theorem given the straddling edges
+# (exterior_slice_contra).  Validated on the diamond.  Three-axiom.  No Admitted.
+theories/ConvexSlice.v
 # HexagonOffringSeam: the convex HEXAGON as the FIFTH total off-ring JCT family
 # and the FIRST convex polygon with more than four edges (n = 6).  Presents
 # hexagon_ring by its six edge inward half-planes (hexagon_edge_hps); interior-
