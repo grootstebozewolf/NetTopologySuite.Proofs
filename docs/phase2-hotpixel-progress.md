@@ -247,39 +247,38 @@ its invariant; with `b64_snap` exact and `b64_passes_through_{sound,
 complete}` in hand, that proof should be mechanical composition rather
 than new design work.
 
-### Slice 13 — the hot pixel as a convex ring (ray-parity bridge)
+### Slice 13 — the hot pixel as a convex ring (`theories/HotPixelConvexRing.v`)
 
-`theories/HotPixelConvexRing.v` connects the pure-R hot pixel to the
-crossing-number predicate `Overlay.point_in_ring`, bridging this Phase-2
-stack to the JCT / convex-chain campaign
-(`docs/extract-rings-proof-structure.md` §11.5j). The half-open square
-`in_hot_pixel` becomes a CCW `Ring` (`pixel_ring`), edge list
-`[bottom; right; top; left]`. The top/bottom edges are HORIZONTAL, so a
-rightward ray never crosses them (`edge_crosses_ray` needs a strict
-y-straddle) — only the two vertical edges count:
+A bridge from the Phase-2 hot pixel to the JCT / convex-chain crossing-number
+campaign. The half-open axis-aligned pixel is a convex 4-gon, presented as a
+CCW `Ring` (`pixel_ring C scale`), and connected to the crossing-number
+predicate `Overlay.point_in_ring`:
 
-- `pixel_right_crosses_iff` / `pixel_left_crosses_iff` — each vertical
-  edge crosses iff the ray height straddles the pixel and the origin is
-  left of that edge's x (the x-intercept collapses to the shared x).
-- `pixel_ray_crosses_le_two` / `pixel_in_ring_iff_one_crossing` — the
-  `ConvexRayCrossing.convex_in_ring_iff_one_crossing` pattern, reproved
-  DIRECTLY for the flat-edged square (it is not a strict
-  `bimonotone_split`) via `cross_count_cons_*` + `ray_parity_count`.
-- `pixel_point_in_ring_iff_box` — HEADLINE: `point_in_ring` iff a
-  **half-open-x / open-y box** (x∈`[cx−r,cx+r)`, y∈`(cy−r,cy+r)`).
-
-The bridge to `in_hot_pixel` is total above the bottom edge
-(`pixel_point_in_ring_implies_in_hot_pixel`,
-`in_hot_pixel_off_bottom_implies_point_in_ring`), and
-`pixel_grazing_bottom_edge` exhibits the gap on the included bottom edge:
-a concrete point that is `in_hot_pixel` yet not `point_in_ring` — the
-hot-pixel incarnation of the vertex-grazing caveat
-(`JCT_VertexGrazingCounterexample`). Validated on the unit pixel
-(`unit_pixel_centre_in_ring` / `unit_pixel_centre_one_crossing`).
-Pure-R, three-axiom, no `Admitted`.
+- **Horizontal edges never cross.** The square's top/bottom edges are
+  horizontal, so it is not a strict `bimonotone_split` — but
+  `Overlay.edge_crosses_ray` requires a strict y-straddle, so a horizontal edge
+  is never crossed (`pixel_bottom_no_cross` / `pixel_top_no_cross`). Only the
+  two vertical edges count.
+- **Crossed ≤ twice / inside iff once.** `pixel_ray_crosses_le_two` and
+  `pixel_in_ring_iff_one_crossing` reprove the convex campaign's
+  `convex_in_ring_iff_one_crossing` directly for the flat-edged square (via
+  `cross_count_cons_*` + `ray_parity_count`). Hence the headline
+  `pixel_point_in_ring_iff_box`: `point_in_ring p (pixel_ring C s)` iff a
+  **half-open-x / open-y** box.
+- **Bridge to `in_hot_pixel`, with the grazing edge.**
+  `pixel_point_in_ring_implies_in_hot_pixel` (total inclusion — the ray-parity
+  interior sits inside the half-open pixel),
+  `in_hot_pixel_off_bottom_implies_point_in_ring` (converse above the bottom
+  edge), and `pixel_grazing_bottom_edge` — a point on the *included* bottom
+  edge that is `in_hot_pixel` yet not `point_in_ring`. This makes the corpus's
+  vertex-grazing subtlety (`JCT_VertexGrazingCounterexample`) concrete on the
+  hot pixel: the half-open pixel's closed bottom is exactly where the rightward
+  ray grazes the bottom vertices. Validated on the unit pixel. (8 theorems +
+  2 corollaries in `theories/HotPixelConvexRing.v`; pure-R, three-axiom.)
 
 ## Cumulative
 
 59 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
 Phase 2 foundations, zero `Admitted`, only the four standard
-classical-reals axioms throughout.
+classical-reals axioms throughout — plus the `HotPixelConvexRing.v` convex-ring
+bridge (Slice 13, pure-R / three-axiom).

@@ -192,11 +192,15 @@ theories/MonotoneChainCoverage.v
 # its wiring to bimonotone_split; max/min-height vertex infra; diamond + hexagon
 # witnesses.  Isolates the remaining "convex => y-unimodal" geometric residual.
 theories/ConvexYUnimodal.v
-# The y-modulator (crossing bound): a convex / y-unimodal ring (a bimonotone_split)
-# is crossed at most twice by any rightward ray, hence inside iff crossed exactly
-# once (convex_in_ring_iff_one_crossing) -- the crisp discrete Jordan characterisation
-# for the convex case.  Validated on diamond + hexagon.
-theories/ConvexRayCrossing.v
+# The hot pixel as a convex ring: presents the half-open axis-aligned square
+# (HotPixel.in_hot_pixel) as a Ring and connects it to the crossing-number
+# point_in_ring.  The two horizontal edges never cross a rightward ray, so the
+# pixel is crossed at most twice (pixel_ray_crosses_le_two) and inside iff
+# crossed exactly once (pixel_point_in_ring_iff_box) -- a half-open-x / open-y
+# box.  Bridge: point_in_ring is a subset of the half-open pixel (total), the
+# converse holds off the bottom edge, and a grazing witness on the included
+# bottom edge is in_hot_pixel yet not point_in_ring.  Three-axiom.  No Admitted.
+theories/HotPixelConvexRing.v
 
 # Snap-rounding meets ray-parity: the hot pixel (HotPixel.in_hot_pixel) presented
 # as a CCW Ring (pixel_ring) and connected to Overlay.point_in_ring.  The square's

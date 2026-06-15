@@ -1,42 +1,37 @@
 (* ============================================================================
    NetTopologySuite.Proofs.HotPixelConvexRing
    ----------------------------------------------------------------------------
-   Snap-rounding meets ray-parity: the HOT PIXEL as a convex ring.
+   The hot pixel as a convex ring: bridging Phase-2 snap-rounding to the
+   JCT / convex-chain crossing-number campaign.
 
-   The hot pixel of `HotPixel.in_hot_pixel` is the half-open axis-aligned square
-   `[cx-r, cx+r) x [cy-r, cy+r)` with `r = hot_pixel_radius scale`.  This file
-   presents that square as a CCW `Ring` (`pixel_ring`) and connects it to the
-   crossing-number predicate `Overlay.point_in_ring`, bridging the Phase-2
-   snap-rounding stack to the JCT / convex-chain campaign
-   (`docs/extract-rings-proof-structure.md` 11.5j).
+   A "hot pixel" (Phase 2, `theories/HotPixel.v`) is the half-open axis-aligned
+   square  [cx - r, cx + r) x [cy - r, cy + r)  with r = hot_pixel_radius scale
+   = / (2 * scale).  A hot pixel is therefore a convex 4-gon, and this file
+   presents it as a `Ring` and connects the half-open membership predicate
+   `in_hot_pixel` to the crossing-number predicate `point_in_ring` (the
+   rightward-ray parity test).
 
-   The pixel is a convex 4-gon with HORIZONTAL top/bottom edges, so it is NOT a
+   The axis-aligned square has HORIZONTAL top/bottom edges, so it is NOT a
    strict `bimonotone_split` (the chain predicates `edge_up`/`edge_dn` are
-   strict).  But `edge_crosses_ray` needs a strict y-straddle, so a horizontal
-   edge is never crossed by a rightward ray -- only the two VERTICAL edges count.
-   That makes the crossing count directly tractable, so the convex
-   characterisation (`ConvexRayCrossing.convex_in_ring_iff_one_crossing`) is
-   reproved here DIRECTLY for the flat-edged square, via `cross_count_cons_*`
-   plus `ray_parity_count`, rather than through a `bimonotone_split`.
+   strict).  But a horizontal edge never crosses a rightward ray (the crossing
+   predicate demands a strict y-straddle), so only the two VERTICAL edges can
+   cross.  This gives, by the same count argument as the convex campaign's
+   `convex_ray_crosses_le_two` / `convex_in_ring_iff_one_crossing` (reproved
+   here directly against the flat-edged square):
 
-     1  `pixel_ring`, `pixel_ring_edges` -- the CCW 4-gon and its
-        `[bottom; right; top; left]` edge list.
-     2  `pixel_bottom_no_cross` / `pixel_top_no_cross` -- horizontal edges never
-        cross the ray; `pixel_right_crosses_iff` / `pixel_left_crosses_iff` --
-        each vertical edge crosses iff the ray height straddles the pixel and the
-        origin is left of that edge's x.
-     3  `pixel_ray_crosses_le_two` -- the ring is crossed at most twice;
-        `pixel_in_ring_iff_one_crossing` -- inside iff crossed exactly once.
-     4  `pixel_point_in_ring_iff_box` -- HEADLINE: `point_in_ring` iff a
-        half-open-x / open-y box.
-     5  Bridge to `in_hot_pixel`, with the grazing edge:
-        `pixel_point_in_ring_implies_in_hot_pixel` (total inclusion),
-        `in_hot_pixel_off_bottom_implies_point_in_ring` (the converse off the
-        bottom edge), and `pixel_grazing_bottom_edge` (a concrete point on the
-        included bottom edge that is `in_hot_pixel` yet not `point_in_ring` --
-        the hot-pixel incarnation of `JCT_VertexGrazingCounterexample`).
-     6  Validation on the unit pixel (`unit_pixel_centre_in_ring`,
-        `unit_pixel_centre_one_crossing`).
+     §1  `pixel_ring`            — the CCW square ring (BL, BR, TR, TL).
+     §2  per-edge crossing facts — horizontals never cross; each vertical
+         crosses iff the ray height straddles the pixel and the ray origin is
+         left of that edge's x.
+     §3  `pixel_ray_crosses_le_two` — the ring is crossed at most twice.
+     §4  `pixel_in_ring_iff_one_crossing` / `pixel_point_in_ring_iff_box` —
+         inside iff crossed exactly once iff a HALF-OPEN-x / OPEN-y box.
+     §5  the bridge to `in_hot_pixel`: `point_in_ring` is a subset of the
+         half-open pixel (total), the converse holds OFF the bottom edge, and
+         a concrete grazing witness on the included bottom edge is `in_hot_pixel`
+         yet not `point_in_ring` — the hot-pixel incarnation of the corpus's
+         vertex-grazing caveat (`JCT_VertexGrazingCounterexample`).
+     §6  validation on the unit pixel (scale = 1, centre at the origin).
 
    Pure-R + three-axiom.  No `Admitted` / `Axiom` / `Parameter`.
 
@@ -46,284 +41,288 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import Reals List Lra Lia Setoid.
+From Stdlib Require Import Reals List Lra Lia.
 From NTS.Proofs Require Import Distance Overlay MonotoneChainParity HotPixel.
 
 Import ListNotations.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* 1  The hot pixel as a CCW ring.                                             *)
+(* §1  The hot pixel as a CCW square ring.                                     *)
 (* -------------------------------------------------------------------------- *)
 
-(* The four corners of the half-open square `[cx-r, cx+r) x [cy-r, cy+r)`,
-   r = hot_pixel_radius s, taken counter-clockwise from the bottom-left. *)
-Definition pixel_bl (C : Point) (s : R) : Point :=
-  mkPoint (px C - hot_pixel_radius s) (py C - hot_pixel_radius s).
-Definition pixel_br (C : Point) (s : R) : Point :=
-  mkPoint (px C + hot_pixel_radius s) (py C - hot_pixel_radius s).
-Definition pixel_tr (C : Point) (s : R) : Point :=
-  mkPoint (px C + hot_pixel_radius s) (py C + hot_pixel_radius s).
-Definition pixel_tl (C : Point) (s : R) : Point :=
-  mkPoint (px C - hot_pixel_radius s) (py C + hot_pixel_radius s).
+(* CCW square: BL (cx-r, cy-r) -> BR (cx+r, cy-r) -> TR (cx+r, cy+r)
+   -> TL (cx-r, cy+r) -> BL.  Same closed-ring convention as `diamond_ring`. *)
+Definition pixel_ring (C : Point) (scale : R) : Ring :=
+  [ mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale) ;
+    mkPoint (px C + hot_pixel_radius scale) (py C - hot_pixel_radius scale) ;
+    mkPoint (px C + hot_pixel_radius scale) (py C + hot_pixel_radius scale) ;
+    mkPoint (px C - hot_pixel_radius scale) (py C + hot_pixel_radius scale) ;
+    mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale) ].
 
-(* CCW ring: bottom-left -> bottom-right -> top-right -> top-left -> close. *)
-Definition pixel_ring (C : Point) (s : R) : Ring :=
-  [ pixel_bl C s ; pixel_br C s ; pixel_tr C s ; pixel_tl C s ; pixel_bl C s ].
-
-(* Its edge list, [bottom; right; top; left]. *)
-Lemma pixel_ring_edges : forall C s,
-  ring_edges (pixel_ring C s) =
-    [ (pixel_bl C s, pixel_br C s)    (* bottom (horizontal) *)
-    ; (pixel_br C s, pixel_tr C s)    (* right  (vertical, up)   *)
-    ; (pixel_tr C s, pixel_tl C s)    (* top    (horizontal) *)
-    ; (pixel_tl C s, pixel_bl C s) ]. (* left   (vertical, down) *)
-Proof. reflexivity. Qed.
+(* The four edges, in CCW order: bottom, right, top, left. *)
+Lemma pixel_ring_edges : forall C scale,
+  ring_edges (pixel_ring C scale) =
+    [ (mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale),
+       mkPoint (px C + hot_pixel_radius scale) (py C - hot_pixel_radius scale)) ;
+      (mkPoint (px C + hot_pixel_radius scale) (py C - hot_pixel_radius scale),
+       mkPoint (px C + hot_pixel_radius scale) (py C + hot_pixel_radius scale)) ;
+      (mkPoint (px C + hot_pixel_radius scale) (py C + hot_pixel_radius scale),
+       mkPoint (px C - hot_pixel_radius scale) (py C + hot_pixel_radius scale)) ;
+      (mkPoint (px C - hot_pixel_radius scale) (py C + hot_pixel_radius scale),
+       mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale)) ].
+Proof. intros C scale. reflexivity. Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* 2  Per-edge crossing analysis.                                              *)
+(* §2  Per-edge crossing facts.                                                *)
 (* -------------------------------------------------------------------------- *)
 
-(* A vertical edge has px a = px b, so the linear-interpolation intercept
-   collapses to that shared x (the `(px b - px a) * _ / _` term vanishes). *)
-Lemma intercept_collapse : forall a t d : R, a + (a - a) * t / d = a.
-Proof. intros a t d. unfold Rdiv. ring. Qed.
+(* `0 / x = 0` -- isolates the vertical-edge x-intercept simplification so we
+   do not depend on the exact stdlib lemma name. *)
+Lemma Rdiv_zero_num : forall x : R, 0 / x = 0.
+Proof. intro x. unfold Rdiv. apply Rmult_0_l. Qed.
 
-(* A vertical edge `(mkPoint xv ya, mkPoint xv yb)` is crossed by the rightward
-   ray from p iff the ray height strictly straddles the edge's y-span and p lies
-   strictly left of the edge's x. *)
-Lemma vertical_edge_crosses : forall (p : Point) (xv ya yb : R),
-  edge_crosses_ray p (mkPoint xv ya, mkPoint xv yb) <->
-  ((ya < py p < yb \/ yb < py p < ya) /\ px p < xv).
+(* The bottom edge is horizontal, so the ray never crosses it: no strict
+   y-straddle is possible.  No positivity of `scale` needed. *)
+Lemma pixel_bottom_no_cross : forall C scale P,
+  ~ edge_crosses_ray P
+      (mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale),
+       mkPoint (px C + hot_pixel_radius scale) (py C - hot_pixel_radius scale)).
 Proof.
-  intros p xv ya yb.
-  unfold edge_crosses_ray. simpl.
-  rewrite !intercept_collapse.
-  tauto.
+  intros C scale P. unfold edge_crosses_ray. cbn [fst snd px py].
+  intros [[H _] | [H _]]; lra.
 Qed.
 
-(* A horizontal edge `(mkPoint xa yh, mkPoint xb yh)` is never crossed: the
-   strict y-straddle `py a < py p < py b` is unsatisfiable when py a = py b. *)
-Lemma horizontal_edge_no_cross : forall (p : Point) (xa xb yh : R),
-  ~ edge_crosses_ray p (mkPoint xa yh, mkPoint xb yh).
+(* The top edge is horizontal: same argument. *)
+Lemma pixel_top_no_cross : forall C scale P,
+  ~ edge_crosses_ray P
+      (mkPoint (px C + hot_pixel_radius scale) (py C + hot_pixel_radius scale),
+       mkPoint (px C - hot_pixel_radius scale) (py C + hot_pixel_radius scale)).
 Proof.
-  intros p xa xb yh H. unfold edge_crosses_ray in H. simpl in H.
-  destruct H as [[[? ?] _] | [[? ?] _]]; lra.
+  intros C scale P. unfold edge_crosses_ray. cbn [fst snd px py].
+  intros [[H _] | [H _]]; lra.
 Qed.
 
-(* The bottom edge (horizontal, y = cy - r) is never crossed. *)
-Lemma pixel_bottom_no_cross : forall C s p,
-  ~ edge_crosses_ray p (pixel_bl C s, pixel_br C s).
+(* The right edge (a vertical up-edge at x = cx + r) crosses iff the ray height
+   strictly straddles the pixel and the ray origin is left of cx + r. *)
+Lemma pixel_right_crosses_iff : forall C scale P, 0 < scale ->
+  (edge_crosses_ray P
+     (mkPoint (px C + hot_pixel_radius scale) (py C - hot_pixel_radius scale),
+      mkPoint (px C + hot_pixel_radius scale) (py C + hot_pixel_radius scale))
+   <-> (py C - hot_pixel_radius scale < py P < py C + hot_pixel_radius scale
+        /\ px P < px C + hot_pixel_radius scale)).
 Proof.
-  intros C s p. unfold pixel_bl, pixel_br.
-  apply (horizontal_edge_no_cross p
-           (px C - hot_pixel_radius s) (px C + hot_pixel_radius s)
-           (py C - hot_pixel_radius s)).
+  intros C scale P Hs.
+  pose proof (hot_pixel_radius_pos scale Hs) as Hr.
+  set (r := hot_pixel_radius scale) in *.
+  unfold edge_crosses_ray. cbn [fst snd px py]. split.
+  - intros [[Hy Hx] | [Hy _]].
+    + split; [ exact Hy | ].
+      replace (px C + r - (px C + r)) with 0 in Hx by lra.
+      rewrite Rmult_0_l, Rdiv_zero_num, Rplus_0_r in Hx. exact Hx.
+    + lra.
+  - intros [Hy Hx]. left. split; [ exact Hy | ].
+    replace (px C + r - (px C + r)) with 0 by lra.
+    rewrite Rmult_0_l, Rdiv_zero_num, Rplus_0_r. exact Hx.
 Qed.
 
-(* The top edge (horizontal, y = cy + r) is never crossed. *)
-Lemma pixel_top_no_cross : forall C s p,
-  ~ edge_crosses_ray p (pixel_tr C s, pixel_tl C s).
+(* The left edge (a vertical down-edge at x = cx - r) crosses iff the ray height
+   strictly straddles the pixel and the ray origin is left of cx - r. *)
+Lemma pixel_left_crosses_iff : forall C scale P, 0 < scale ->
+  (edge_crosses_ray P
+     (mkPoint (px C - hot_pixel_radius scale) (py C + hot_pixel_radius scale),
+      mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale))
+   <-> (py C - hot_pixel_radius scale < py P < py C + hot_pixel_radius scale
+        /\ px P < px C - hot_pixel_radius scale)).
 Proof.
-  intros C s p. unfold pixel_tr, pixel_tl.
-  apply (horizontal_edge_no_cross p
-           (px C + hot_pixel_radius s) (px C - hot_pixel_radius s)
-           (py C + hot_pixel_radius s)).
-Qed.
-
-(* The right edge crosses iff the ray height straddles the pixel and p is left
-   of cx + r. *)
-Lemma pixel_right_crosses_iff : forall C s p, 0 < s ->
-  edge_crosses_ray p (pixel_br C s, pixel_tr C s) <->
-  (py C - hot_pixel_radius s < py p < py C + hot_pixel_radius s) /\
-  px p < px C + hot_pixel_radius s.
-Proof.
-  intros C s p Hs.
-  pose proof (hot_pixel_radius_pos s Hs) as Hr.
-  unfold pixel_br, pixel_tr.
-  rewrite vertical_edge_crosses.
-  split.
-  - intros [Hdisj Hx]. split; [ | exact Hx ].
-    destruct Hdisj as [H | H]; [ exact H | lra ].
-  - intros [Hy Hx]. split; [ left; exact Hy | exact Hx ].
-Qed.
-
-(* The left edge crosses iff the ray height straddles the pixel and p is left
-   of cx - r. *)
-Lemma pixel_left_crosses_iff : forall C s p, 0 < s ->
-  edge_crosses_ray p (pixel_tl C s, pixel_bl C s) <->
-  (py C - hot_pixel_radius s < py p < py C + hot_pixel_radius s) /\
-  px p < px C - hot_pixel_radius s.
-Proof.
-  intros C s p Hs.
-  pose proof (hot_pixel_radius_pos s Hs) as Hr.
-  unfold pixel_tl, pixel_bl.
-  rewrite vertical_edge_crosses.
-  split.
-  - intros [Hdisj Hx]. split; [ | exact Hx ].
-    destruct Hdisj as [H | H]; [ lra | exact H ].
-  - intros [Hy Hx]. split; [ right; exact Hy | exact Hx ].
+  intros C scale P Hs.
+  pose proof (hot_pixel_radius_pos scale Hs) as Hr.
+  set (r := hot_pixel_radius scale) in *.
+  unfold edge_crosses_ray. cbn [fst snd px py]. split.
+  - intros [[Hy _] | [Hy Hx]].
+    + lra.
+    + split; [ lra | ].
+      replace (px C - r - (px C - r)) with 0 in Hx by lra.
+      rewrite Rmult_0_l, Rdiv_zero_num, Rplus_0_r in Hx. exact Hx.
+  - intros [Hy Hx]. right. split; [ lra | ].
+    replace (px C - r - (px C - r)) with 0 by lra.
+    rewrite Rmult_0_l, Rdiv_zero_num, Rplus_0_r. exact Hx.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* 3  At most two crossings; inside iff exactly one.                           *)
+(* §3  The crossing bound: a hot pixel is crossed at most twice.               *)
 (* -------------------------------------------------------------------------- *)
 
-(* Only the two vertical edges can be crossed, so the count is at most two. *)
-Lemma pixel_ray_crosses_le_two : forall C s p,
-  (cross_count p (ring_edges (pixel_ring C s)) <= 2)%nat.
+Lemma cross_count_nil : forall P, cross_count P [] = 0%nat.
+Proof. intro P. reflexivity. Qed.
+
+Lemma cross_count_single : forall P e, (cross_count P [e] <= 1)%nat.
 Proof.
-  intros C s p. rewrite pixel_ring_edges.
-  rewrite (cross_count_cons_nocross p _ _ (pixel_bottom_no_cross C s p)).
-  destruct (edge_crosses_ray_dec p (pixel_br C s, pixel_tr C s)) as [Hrt|Hrt];
-    [ rewrite (cross_count_cons_cross p _ _ Hrt)
-    | rewrite (cross_count_cons_nocross p _ _ Hrt) ];
-    rewrite (cross_count_cons_nocross p _ _ (pixel_top_no_cross C s p));
-    (destruct (edge_crosses_ray_dec p (pixel_tl C s, pixel_bl C s)) as [Hlb|Hlb];
-      [ rewrite (cross_count_cons_cross p _ _ Hlb)
-      | rewrite (cross_count_cons_nocross p _ _ Hlb) ]);
-    unfold cross_count; simpl; lia.
+  intros P e. unfold cross_count. cbn [filter].
+  destruct (crosses_b P e); cbn [length]; lia.
 Qed.
 
-(* The convex characterisation, reproved directly for the flat-edged square:
-   odd parity (`point_in_ring`) plus the `<= 2` bound pins the count to one. *)
-Lemma pixel_in_ring_iff_one_crossing : forall C s p,
-  point_in_ring p (pixel_ring C s) <->
-  cross_count p (ring_edges (pixel_ring C s)) = 1%nat.
+Theorem pixel_ray_crosses_le_two : forall C scale P,
+  (cross_count P (ring_edges (pixel_ring C scale)) <= 2)%nat.
 Proof.
-  intros C s p.
-  pose proof (pixel_ray_crosses_le_two C s p) as Hle.
+  intros C scale P. rewrite pixel_ring_edges.
+  rewrite (cross_count_cons_nocross P _ _ (pixel_bottom_no_cross C scale P)).
+  set (eR := (mkPoint (px C + hot_pixel_radius scale) (py C - hot_pixel_radius scale),
+              mkPoint (px C + hot_pixel_radius scale) (py C + hot_pixel_radius scale))).
+  set (eL := (mkPoint (px C - hot_pixel_radius scale) (py C + hot_pixel_radius scale),
+              mkPoint (px C - hot_pixel_radius scale) (py C - hot_pixel_radius scale))).
+  destruct (edge_crosses_ray_dec P eR) as [HR | HR];
+    [ rewrite (cross_count_cons_cross P _ _ HR)
+    | rewrite (cross_count_cons_nocross P _ _ HR) ];
+    rewrite (cross_count_cons_nocross P _ _ (pixel_top_no_cross C scale P));
+    (destruct (edge_crosses_ray_dec P eL) as [HL | HL];
+       [ rewrite (cross_count_cons_cross P _ _ HL)
+       | rewrite (cross_count_cons_nocross P _ _ HL) ];
+       rewrite cross_count_nil; lia).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  Crossing count = 1 iff a half-open-x / open-y box; inside iff one cross.*)
+(* -------------------------------------------------------------------------- *)
+
+Theorem pixel_cross_count_one_iff : forall C scale P, 0 < scale ->
+  (cross_count P (ring_edges (pixel_ring C scale)) = 1%nat
+   <-> (px C - hot_pixel_radius scale <= px P < px C + hot_pixel_radius scale
+        /\ py C - hot_pixel_radius scale < py P < py C + hot_pixel_radius scale)).
+Proof.
+  intros C scale P Hs.
+  pose proof (hot_pixel_radius_pos scale Hs) as Hr.
+  pose proof (pixel_right_crosses_iff C scale P Hs) as HRiff.
+  pose proof (pixel_left_crosses_iff  C scale P Hs) as HLiff.
+  set (r := hot_pixel_radius scale) in *.
+  rewrite pixel_ring_edges.
+  rewrite (cross_count_cons_nocross P _ _ (pixel_bottom_no_cross C scale P)).
+  destruct (edge_crosses_ray_dec P
+              (mkPoint (px C + r) (py C - r), mkPoint (px C + r) (py C + r)))
+    as [HR | HR].
+  - rewrite (cross_count_cons_cross P _ _ HR).
+    rewrite (cross_count_cons_nocross P _ _ (pixel_top_no_cross C scale P)).
+    apply HRiff in HR. destruct HR as [HRy HRx].
+    destruct (edge_crosses_ray_dec P
+                (mkPoint (px C - r) (py C + r), mkPoint (px C - r) (py C - r)))
+      as [HL | HL].
+    + (* both verticals cross: count = 2, and px < cx - r refutes the box *)
+      rewrite (cross_count_cons_cross P _ _ HL), cross_count_nil.
+      apply HLiff in HL. destruct HL as [_ HLx].
+      split; [ intro Hcontra; lia | intros [[Hxl _] _]; lra ].
+    + (* only the right vertical crosses: count = 1, box holds *)
+      rewrite (cross_count_cons_nocross P _ _ HL), cross_count_nil.
+      assert (HnLx : ~ (px P < px C - r))
+        by (intro Hlt; apply HL, HLiff; split; [ exact HRy | exact Hlt ]).
+      split; [ intros _; split; [ split; lra | exact HRy ] | intros _; reflexivity ].
+  - rewrite (cross_count_cons_nocross P _ _ HR).
+    rewrite (cross_count_cons_nocross P _ _ (pixel_top_no_cross C scale P)).
+    destruct (edge_crosses_ray_dec P
+                (mkPoint (px C - r) (py C + r), mkPoint (px C - r) (py C - r)))
+      as [HL | HL].
+    + (* left crosses but right does not: impossible (cx - r < cx + r) *)
+      exfalso. apply HR, HRiff. apply HLiff in HL. destruct HL as [HLy HLx].
+      split; [ exact HLy | lra ].
+    + (* neither vertical crosses: count = 0, box fails *)
+      rewrite (cross_count_cons_nocross P _ _ HL), cross_count_nil.
+      split.
+      * intro Hcontra; lia.
+      * intros [[Hxl Hxr] [Hyl Hyr]]. exfalso.
+        apply HR, HRiff. split; [ split; lra | lra ].
+Qed.
+
+Theorem pixel_in_ring_iff_one_crossing : forall C scale P, 0 < scale ->
+  (point_in_ring P (pixel_ring C scale)
+   <-> cross_count P (ring_edges (pixel_ring C scale)) = 1%nat).
+Proof.
+  intros C scale P Hs.
+  pose proof (pixel_ray_crosses_le_two C scale P) as Hle.
   unfold point_in_ring.
-  destruct (ray_parity_count p (ring_edges (pixel_ring C s))) as [Hodd _].
+  destruct (ray_parity_count P (ring_edges (pixel_ring C scale))) as [Hodd _].
   split.
   - intro Hpir. apply Hodd in Hpir.
-    destruct (cross_count p (ring_edges (pixel_ring C s))) as [| [| [| n]]];
+    destruct (cross_count P (ring_edges (pixel_ring C scale))) as [| [| [| n]]];
       cbn in Hpir; solve [ discriminate | reflexivity | lia ].
   - intro Hcc. apply Hodd. rewrite Hcc. reflexivity.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* 4  HEADLINE: point_in_ring iff a half-open-x / open-y box.                  *)
-(* -------------------------------------------------------------------------- *)
-
-(* `point_in_ring p (pixel_ring C s)` holds exactly on the half-open-x /
-   open-y box: x in `[cx-r, cx+r)`, y in `(cy-r, cy+r)`.  The open bottom (y
-   strict) is where the rightward ray grazes the bottom vertices and parity
-   diverges from the closed half-open pixel (see `pixel_grazing_bottom_edge`). *)
-Lemma pixel_point_in_ring_iff_box : forall C s p, 0 < s ->
-  point_in_ring p (pixel_ring C s) <->
-  (px C - hot_pixel_radius s <= px p < px C + hot_pixel_radius s) /\
-  (py C - hot_pixel_radius s < py p < py C + hot_pixel_radius s).
+(* HEADLINE: a point is inside the pixel ring iff it lies in the half-open-x,
+   open-y box.  Note the y-interval is OPEN on both ends (the ray test grazes
+   both horizontal edges' heights), whereas `in_hot_pixel` is closed-bottom. *)
+Theorem pixel_point_in_ring_iff_box : forall C scale P, 0 < scale ->
+  (point_in_ring P (pixel_ring C scale)
+   <-> (px C - hot_pixel_radius scale <= px P < px C + hot_pixel_radius scale
+        /\ py C - hot_pixel_radius scale < py P < py C + hot_pixel_radius scale)).
 Proof.
-  intros C s p Hs.
-  pose proof (hot_pixel_radius_pos s Hs) as Hr.
-  pose proof (pixel_right_crosses_iff C s p Hs) as HR.
-  pose proof (pixel_left_crosses_iff C s p Hs) as HL.
-  rewrite pixel_in_ring_iff_one_crossing, pixel_ring_edges.
-  rewrite (cross_count_cons_nocross p _ _ (pixel_bottom_no_cross C s p)).
-  destruct (edge_crosses_ray_dec p (pixel_br C s, pixel_tr C s)) as [Hrt|Hrt].
-  - rewrite (cross_count_cons_cross p _ _ Hrt).
-    rewrite (cross_count_cons_nocross p _ _ (pixel_top_no_cross C s p)).
-    destruct (edge_crosses_ray_dec p (pixel_tl C s, pixel_bl C s)) as [Hlb|Hlb].
-    + (* both vertical edges cross: count 2, and p is left of cx - r *)
-      rewrite (cross_count_cons_cross p _ _ Hlb).
-      destruct (proj1 HR Hrt) as [Hstr Hxr].
-      destruct (proj1 HL Hlb) as [_ Hxl].
-      split.
-      * intro Hc; discriminate.
-      * intros [[Hxlo _] _]; exfalso; lra.
-    + (* only the right edge crosses: count 1, p in the half-open box *)
-      rewrite (cross_count_cons_nocross p _ _ Hlb).
-      destruct (proj1 HR Hrt) as [Hstr Hxr].
-      assert (Hxlo : px C - hot_pixel_radius s <= px p).
-      { destruct (Rle_or_lt (px C - hot_pixel_radius s) (px p)) as [Hle|Hlt];
-          [ exact Hle
-          | exfalso; apply Hlb; apply (proj2 HL); split; [ exact Hstr | exact Hlt ] ]. }
-      split.
-      * intros _. split; [ split; [ exact Hxlo | exact Hxr ] | exact Hstr ].
-      * intros _. reflexivity.
-  - rewrite (cross_count_cons_nocross p _ _ Hrt).
-    rewrite (cross_count_cons_nocross p _ _ (pixel_top_no_cross C s p)).
-    destruct (edge_crosses_ray_dec p (pixel_tl C s, pixel_bl C s)) as [Hlb|Hlb].
-    + (* left crosses but right doesn't: impossible (cx-r < cx+r) *)
-      rewrite (cross_count_cons_cross p _ _ Hlb).
-      destruct (proj1 HL Hlb) as [Hstr Hxl].
-      exfalso. apply Hrt. apply (proj2 HR). split; [ exact Hstr | lra ].
-    + (* neither crosses: count 0, p outside the box *)
-      rewrite (cross_count_cons_nocross p _ _ Hlb).
-      split.
-      * intro Hc; discriminate.
-      * intros [[_ Hxhi] Hstr]. exfalso. apply Hrt. apply (proj2 HR).
-        split; [ exact Hstr | exact Hxhi ].
+  intros C scale P Hs.
+  rewrite (pixel_in_ring_iff_one_crossing C scale P Hs).
+  exact (pixel_cross_count_one_iff C scale P Hs).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* 5  Bridge to `in_hot_pixel`, with the grazing edge.                         *)
+(* §5  The bridge to `in_hot_pixel`.                                           *)
 (* -------------------------------------------------------------------------- *)
 
-(* Total inclusion: the ray-parity interior sits inside the half-open pixel.
-   The open-y interior (cy - r < py p) implies the half-open lower bound. *)
-Lemma pixel_point_in_ring_implies_in_hot_pixel : forall C s p, 0 < s ->
-  point_in_ring p (pixel_ring C s) -> in_hot_pixel p C s.
+(* Total inclusion: the ray-parity interior is a subset of the half-open pixel
+   (the box's open-bottom `cy - r < py` implies the pixel's closed-bottom). *)
+Theorem pixel_point_in_ring_implies_in_hot_pixel : forall C scale P, 0 < scale ->
+  point_in_ring P (pixel_ring C scale) -> in_hot_pixel P C scale.
 Proof.
-  intros C s p Hs Hpir.
-  apply (proj1 (pixel_point_in_ring_iff_box C s p Hs)) in Hpir.
-  destruct Hpir as [[Hxlo Hxhi] [Hylo Hyhi]].
-  unfold in_hot_pixel. repeat split; lra.
+  intros C scale P Hs Hpir.
+  apply (pixel_point_in_ring_iff_box C scale P Hs) in Hpir.
+  destruct Hpir as [[Hxl Hxr] [Hyl Hyr]].
+  unfold in_hot_pixel. split; split; lra.
 Qed.
 
-(* The converse, OFF the bottom edge: an `in_hot_pixel` point strictly above the
-   bottom (cy - r < py p) is `point_in_ring`. *)
-Lemma in_hot_pixel_off_bottom_implies_point_in_ring : forall C s p, 0 < s ->
-  in_hot_pixel p C s ->
-  py C - hot_pixel_radius s < py p ->
-  point_in_ring p (pixel_ring C s).
+(* Converse OFF the included bottom edge: above the bottom edge the two
+   predicates coincide. *)
+Theorem in_hot_pixel_off_bottom_implies_point_in_ring : forall C scale P, 0 < scale ->
+  py C - hot_pixel_radius scale < py P ->
+  in_hot_pixel P C scale -> point_in_ring P (pixel_ring C scale).
 Proof.
-  intros C s p Hs Hin Hoff.
-  apply (proj2 (pixel_point_in_ring_iff_box C s p Hs)).
-  destruct Hin as [[Hxlo Hxhi] [Hylo Hyhi]].
+  intros C scale P Hs Hbot Hin.
+  apply (pixel_point_in_ring_iff_box C scale P Hs).
+  unfold in_hot_pixel in Hin. destruct Hin as [[Hxl Hxr] [Hyl Hyr]].
   split; split; lra.
 Qed.
 
-(* The grazing point: the midpoint of the included bottom edge (py = cy - r). *)
-Definition pixel_grazing_point (C : Point) (s : R) : Point :=
-  mkPoint (px C) (py C - hot_pixel_radius s).
-
-(* The hot-pixel incarnation of the documented vertex-grazing caveat
-   (`JCT_VertexGrazingCounterexample`): a concrete point on the half-open
-   pixel's INCLUDED bottom edge that is `in_hot_pixel` yet NOT `point_in_ring`.
-   The rightward ray at height cy - r grazes the two bottom vertices, so the
-   strict y-straddle counts neither, and the parity reads "outside". *)
-Lemma pixel_grazing_bottom_edge : forall C s, 0 < s ->
-  in_hot_pixel (pixel_grazing_point C s) C s /\
-  ~ point_in_ring (pixel_grazing_point C s) (pixel_ring C s).
+(* The genuine divergence: a point on the INCLUDED bottom edge is `in_hot_pixel`
+   yet its rightward ray grazes the bottom vertices, so it is NOT
+   `point_in_ring`.  The hot-pixel incarnation of the corpus's vertex-grazing
+   caveat (`JCT_VertexGrazingCounterexample`). *)
+Theorem pixel_grazing_bottom_edge :
+  in_hot_pixel (mkPoint 0 (- (1/2))) (mkPoint 0 0) 1
+  /\ ~ point_in_ring (mkPoint 0 (- (1/2))) (pixel_ring (mkPoint 0 0) 1).
 Proof.
-  intros C s Hs.
-  pose proof (hot_pixel_radius_pos s Hs) as Hr.
-  unfold pixel_grazing_point.
+  assert (Hr : hot_pixel_radius 1 = 1/2)
+    by (unfold hot_pixel_radius; lra).
   split.
-  - unfold in_hot_pixel. cbn [px py]. repeat split; lra.
+  - unfold in_hot_pixel. rewrite Hr. cbn [px py]. split; split; lra.
   - intro Hpir.
-    apply (proj1 (pixel_point_in_ring_iff_box C s _ Hs)) in Hpir.
-    destruct Hpir as [_ [Hylo _]]. cbn [px py] in Hylo. lra.
+    apply (pixel_point_in_ring_iff_box (mkPoint 0 0) 1 (mkPoint 0 (- (1/2)))) in Hpir;
+      [ | lra ].
+    rewrite Hr in Hpir. cbn [px py] in Hpir.
+    destruct Hpir as [_ [Hyl _]]. lra.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* 6  Validation on the unit pixel (scale = 1, centre at the origin).          *)
+(* §6  Validation: the unit pixel (scale = 1, centred at the origin).          *)
 (* -------------------------------------------------------------------------- *)
 
-Lemma unit_pixel_centre_in_ring :
+(* The strict-interior centre is inside the unit pixel ring. *)
+Corollary unit_pixel_centre_in_ring :
   point_in_ring (mkPoint 0 0) (pixel_ring (mkPoint 0 0) 1).
 Proof.
-  pose proof (hot_pixel_radius_pos 1 Rlt_0_1) as Hr.
-  apply (proj2 (pixel_point_in_ring_iff_box (mkPoint 0 0) 1 (mkPoint 0 0) Rlt_0_1)).
-  cbn [px py]. split; split; lra.
+  apply (pixel_point_in_ring_iff_box (mkPoint 0 0) 1 (mkPoint 0 0)); [ lra | ].
+  assert (Hr : hot_pixel_radius 1 = 1/2) by (unfold hot_pixel_radius; lra).
+  rewrite Hr. cbn [px py]. split; split; lra.
 Qed.
 
-Lemma unit_pixel_centre_one_crossing :
+(* And it is crossed exactly once. *)
+Corollary unit_pixel_centre_one_crossing :
   cross_count (mkPoint 0 0) (ring_edges (pixel_ring (mkPoint 0 0) 1)) = 1%nat.
 Proof.
-  apply (proj1 (pixel_in_ring_iff_one_crossing (mkPoint 0 0) 1 (mkPoint 0 0))).
+  apply (pixel_in_ring_iff_one_crossing (mkPoint 0 0) 1 (mkPoint 0 0)); [ lra | ].
   exact unit_pixel_centre_in_ring.
 Qed.
 
@@ -332,7 +331,6 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions pixel_ray_crosses_le_two.
-Print Assumptions pixel_in_ring_iff_one_crossing.
 Print Assumptions pixel_point_in_ring_iff_box.
 Print Assumptions pixel_point_in_ring_implies_in_hot_pixel.
 Print Assumptions in_hot_pixel_off_bottom_implies_point_in_ring.

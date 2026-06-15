@@ -841,29 +841,34 @@ guard — is the genuine convex content (it needs the canonical-start rotation p
 single descending run" argument). It is isolated here, to be closed by a follow-up rung.
 Three-axiom, no `Admitted`.
 
-### §11.5i update (2026-06-15): the y-modulator (crossing bound) — inside iff one crossing
+### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
 
-`theories/ConvexRayCrossing.v` proves the crossing bound a bimonotone split buys —
-the crisp discrete Jordan characterisation for the convex case, all `Qed`:
+`theories/HotPixelConvexRing.v` bridges the convex crossing-number campaign to Phase 2:
+the **hot pixel** (`HotPixel.in_hot_pixel`, the half-open axis-aligned square
+`[cx−r, cx+r) × [cy−r, cy+r)`, `r = / (2·scale)`) is a convex 4-gon, presented here as a
+CCW `Ring` (`pixel_ring`). All `Qed`:
 
-- **Each monotone chain is crossed at most once** (count form): `inc_cross_count_le_one`
-  / `dec_cross_count_le_one`. From `inc_chain_le_one_cross` / `dec_chain_le_one_cross`
-  (two crossing edges of a monotone chain are equal) plus the chain's strict y-ordering
-  (`chain_increasing_above` / `chain_decreasing_below`), a head crossing forces zero tail
-  crossings, by induction on the chain.
-- **The whole ring is crossed at most twice** (`convex_ray_crosses_le_two`): for a
-  `bimonotone_split r inc dec`, `cross_count p (ring_edges r) = cross_count p inc +
-  cross_count p dec <= 1 + 1` (via `cross_count_app`).
-- **HEADLINE** (`convex_in_ring_iff_one_crossing`): combine the `<= 2` bound with ray
-  parity (`ray_parity_count`: `point_in_ring p r` ⟺ `Nat.odd (cross_count p (ring_edges r))
-  = true`) — odd and `<= 2` pins the count to exactly `1`. So for a convex / y-unimodal
-  ring, `point_in_ring p r ↔ cross_count p (ring_edges r) = 1`. Where the bare parity seam
-  fixes only the crossing *parity*, convexity fixes the exact *count*.
-
-Validated on the diamond and hexagon (both already carry a `bimonotone_split`). This takes
-the split as hypothesis — supplied generally by the y-modulator (`ConvexYUnimodal.v`) once
-its residual (convexity ⟹ y-unimodal vertex order) is closed, and concretely by every
-family today. Three-axiom, no `Admitted`.
+- **Horizontal edges never cross.** The square's top/bottom edges are horizontal, so it is
+  NOT a strict `bimonotone_split` (`edge_up`/`edge_dn` are strict) — but the crossing
+  predicate `edge_crosses_ray` demands a strict y-straddle, so a horizontal edge is never
+  crossed (`pixel_bottom_no_cross` / `pixel_top_no_cross`). Only the two vertical edges
+  count (`pixel_right_crosses_iff` / `pixel_left_crosses_iff`: each crosses iff the ray
+  height straddles the pixel and the origin is left of that edge's x).
+- **The crossing bound + headline.** Hence the ring is crossed at most twice
+  (`pixel_ray_crosses_le_two`) and, with ray parity (`ray_parity_count`), a point is inside
+  iff crossed exactly once (`pixel_in_ring_iff_one_crossing`) — the
+  `convex_in_ring_iff_one_crossing` pattern reproved directly for the flat-edged square.
+  So `point_in_ring p (pixel_ring C s) ↔` a **half-open-x / open-y** box
+  (`pixel_point_in_ring_iff_box`).
+- **The bridge — and the grazing edge.** The ray-parity interior is a **subset** of the
+  half-open pixel (`pixel_point_in_ring_implies_in_hot_pixel`, total); the converse holds
+  **off the bottom edge** (`in_hot_pixel_off_bottom_implies_point_in_ring`); and a concrete
+  point on the *included* bottom edge `py = cy−r` is `in_hot_pixel` yet **not**
+  `point_in_ring` (`pixel_grazing_bottom_edge`). This is the hot-pixel incarnation of the
+  corpus's documented vertex-grazing caveat (`JCT_VertexGrazingCounterexample`): the
+  half-open pixel's closed bottom is exactly where the rightward ray grazes the bottom
+  vertices and parity diverges. Validated on the unit pixel (scale = 1, origin centre).
+  Three-axiom, no `Admitted`.
 
 ### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
 
