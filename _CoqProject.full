@@ -179,6 +179,15 @@ theories/ConvexChainSplit.v
 # diamond split in one line; scales to a convex hexagon (n = 6).
 theories/MonotoneChainConstruction.v
 
+# Convex-chain monotonicity campaign, rung 4: the edge-halfplane algebraic
+# bridge for interior_hits_one_chain.  Key identity: hp_slack(edge_inward_hp e)q
+# equals the signed cross-product used by edge_cross_sign, yielding
+# edge_crosses_ray ↔ straddles ∧ hp_slack>0 (inc) / <0 (dec).  Combined with
+# height-band chain coverage (chain_increasing_straddles_y), closes
+# interior_hits_one_chain for any y-unimodal convex ring whose edge inward
+# half-planes are supplied.  Validated on diamond and hexagon.
+theories/MonotoneChainCoverage.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the

@@ -654,6 +654,48 @@ no extra machinery — only the height comparisons change. Three-axiom, no
 `Admitted`. This is the reusable substrate that makes the split of any future
 convex family a one-liner; the remaining frontier is `interior_hits_one_chain`.
 
+### §11.5d update (2026-06-15): rung 4 — the edge-halfplane algebraic bridge, `interior_hits_one_chain` closed
+
+`theories/MonotoneChainCoverage.v` closes the `interior_hits_one_chain` residual for
+any convex polygon family whose CCW inward half-planes are supplied in `hps`.
+
+The **key algebraic identity** (`hp_slack_edge_inward_cross_product`, `ring` proof):
+
+```
+hp_slack (edge_inward_hp (mkPoint vx vy, mkPoint wx wy)) q
+  = (wx - vx) * (py q - vy) - (wy - vy) * (px q - vx)
+```
+
+This is exactly the signed cross-product that `GeneralTriangleParity.edge_cross_sign`
+uses to characterise `edge_crosses_ray`, yielding two algebraic bridge lemmas:
+
+- `edge_up_crosses_iff_hp`: for an inc edge (vy < wy),
+  `edge_crosses_ray q e ↔ (vy < py q < wy) ∧ (hp_slack (edge_inward_hp e) q > 0)`.
+- `edge_dn_crosses_iff_hp`: for a dec edge (wy < vy),
+  `edge_crosses_ray q e ↔ (wy < py q < vy) ∧ (hp_slack (edge_inward_hp e) q < 0)`.
+
+A strictly-interior point has `hp_slack > 0` for ALL half-planes in `hps`
+(`conv_min_pos_iff`), so:
+
+- inc chain edges that straddle the ray height ARE crossed;
+- dec chain edges that straddle are NOT crossed (hp_slack > 0 contradicts < 0).
+
+The height-band coverage lemma `chain_increasing_straddles_y` (induction over
+the monotone vertex list) guarantees that some inc chain edge straddles the query
+height whenever `py bottom < py q < py apex`. Vertex-height avoidance (`py v ≠ py q`
+for all vertices `v`) is derived from `ray_avoids_vertices` via the x-bound:
+`hp_slack > 0` at height `wy` forces `px q < wx`, while `ray_avoids_vertices`
+forbids `px q ≤ px v` at matching heights — a contradiction.
+
+The **headline theorem** (`interior_hits_one_chain_of_edge_hps`) assembles these
+pieces to deliver `chain_crossed q inc ∧ ¬ chain_crossed q dec` for any y-unimodal
+ring under the edge-hp and ray-avoidance guards. Concrete validations:
+`diamond_interior_chain_hit` and `hexagon_interior_chain_hit` discharge all
+premises by `cbn`/`lra`. Three-axiom, no `Admitted`.
+
+The convexity ⟹ y-unimodal vertex-order implication remains the only open residual
+for a fully general convex *n*-gon.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
