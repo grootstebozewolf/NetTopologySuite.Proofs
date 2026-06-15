@@ -804,6 +804,43 @@ configuration no convex polygon can present; this exercises the convexity-INDEPE
 ray-parity layer, **not** the JCT topological-interior equivalence (out of reach of the
 convex separation engine for a non-convex ring). Three-axiom, no `Admitted`.
 
+### §11.5h update (2026-06-15): the y-modulator (first step) — convexity is the all-left-turns form
+
+`theories/ConvexYUnimodal.v` opens the campaign's last general-convex frontier: the
+geometric implication "convexity ⟹ the vertex order is y-unimodal", which is what a
+*general* convex *n*-gon needs to feed rung 3.5 (`bimonotone_split_unimodal`) and
+hence rung 4 (`interior_hits_one_chain_of_edge_hps`) without a hand-built split.
+
+The first stones, all `Qed`:
+
+- **The convexity ⟺ orientation bridge.** `hp_slack (edge_inward_hp (a,b)) c = cross a b c`
+  exactly (`hp_slack_edge_inward_is_cross`, from the rung-4 cross-product identity).
+  Hence `vertices_in_halfplane` — every vertex in every edge's inward half-plane — is
+  literally "every vertex is left-of-or-on every directed edge", i.e. all boundary turns
+  are CCW (`convex_left_turns`: `0 <= cross a b c` for every edge `(a,b)` and vertex `c`).
+  The hypothesis is GLOBAL (all vertices vs. all edges), which correctly rules out the
+  pentagram — a star has all *local* left-turns yet a vertex outside a non-adjacent
+  edge's half-plane, and is not y-unimodal. Using local turn-signs alone would be unsound.
+- **The structural target + wiring.** `y_unimodal_decomposition r` names the goal
+  (`r = up ++ apex :: down` with `y_strict_incr (up ++ [apex])` and
+  `y_strict_decr (apex :: down)`); `y_unimodal_bimonotone` discharges `bimonotone_split`
+  from it via rung 3.5.
+- **Extremum infra.** `exists_max_y_vertex` / `exists_min_y_vertex` (a nonempty ring has
+  maximal-/minimal-height vertices) — the apex/bottom locators a closing rung needs.
+- **Validation.** `diamond_y_unimodal` / `hexagon_y_unimodal` show both families are
+  y-unimodal directly (their CCW order already starts at the bottom vertex), recovering
+  their bimonotone splits through the modulator. Note the diamond is y-unimodal despite
+  the `(2,0)`/`(-2,0)` height tie — the tie lands on OPPOSITE chains, so each chain is
+  individually strict; the eventual residual's general-position guard is therefore "no two
+  adjacent-on-a-chain vertices share y", not full y-injectivity.
+
+The remaining residual — the implication *`convex_left_turns`-form (global) ⟹
+`y_unimodal_decomposition`* for a general convex ring under the right general-position
+guard — is the genuine convex content (it needs the canonical-start rotation plus the
+"a convex region meets each horizontal line in an interval ⟹ a single ascending and a
+single descending run" argument). It is isolated here, to be closed by a follow-up rung.
+Three-axiom, no `Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
