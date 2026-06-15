@@ -696,6 +696,45 @@ premises by `cbn`/`lra`. Three-axiom, no `Admitted`.
 The convexity ⟹ y-unimodal vertex-order implication remains the only open residual
 for a fully general convex *n*-gon.
 
+### §11.5e update (2026-06-15): rung 5 — the convex hexagon, the fifth total family (n > 4)
+
+`theories/HexagonOffringSeam.v` lands the CCW hexagon
+`(0,-3),(3,-1),(4,2),(1,3),(-2,1),(-3,-2)` as the **fifth total off-ring JCT
+family** and the **first convex polygon with more than four edges**. It is the
+first family to consume rung 4, and it shows the rung-1…5 stack scales past four
+edges with only an arithmetic per-family check.
+
+The hexagon is presented by its six edge inward half-planes
+(`MonotoneChainCoverage.hexagon_edge_hps`) and discharges the six obligations of
+`ConvexOffringSeam.convex_parity_seam_offring_of`:
+
+- **Presentation (1-4).** Zero-set on skeleton (six `Exists` cases, each giving
+  the on-edge parameter `t` from the vanishing slack), vertices-in-half-planes,
+  non-degeneracy, and a bounded positive region: the six slacks pin the point
+  into the box `[-3,4] × [-3,3]` (linear combinations, `lra`), inside radius 5.
+- **Interior-odd (5).** Now a near one-liner: from `0 < conv_min` the six slacks
+  give the y-span `-3 < py q < 3` by `lra`, then rung 4's
+  `hexagon_interior_chain_hit` yields "crosses the increasing chain once, misses
+  the decreasing one", and `bimonotone_split_parity` turns that XOR into
+  `point_in_ring`.
+- **Exterior-even (6).** A six-edge per-band case analysis. From the bimonotone
+  split a point with odd parity crosses exactly one chain; for each crossed chain
+  edge its y-band fixes the unique straddling opposite-chain edge, and either all
+  six slacks are forced nonnegative (so `0 ≤ conv_min`, contradicting
+  `conv_min < 0`) or the two opposite straddling slacks are geometrically
+  incompatible (`lra`). The four span-interior vertex heights (`y = -2, -1, 1, 2`)
+  are excluded using `ray_avoids_vertices`, exactly as the diamond used the guard
+  at `y = 0`.
+
+Per-edge crossing is captured by six `gK_cross_iff` lemmas (`edge_cross_sign` +
+`lra`), each in clean `(y-band, slack-sign)` form. Three-axiom, no `Admitted`.
+The remaining open residual for a fully general convex *n*-gon is unchanged: the
+convexity ⟹ y-unimodal vertex-order implication, plus a general (rather than
+per-family) exterior-even — the latter needs the convex "between the two boundary
+edges ⟹ inside" fact, which for a concrete polygon is a finite `lra`/`nra`
+consequence of the explicit half-plane coefficients (as exercised here) but is
+the genuine convex content in the general case.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
