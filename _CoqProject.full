@@ -739,6 +739,15 @@ theories/DiamondOffringSeam.v
 # hexagon_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
 # p hexagon_ring.  Three-axiom.  No Admitted.
 theories/HexagonOffringSeam.v
+# ConvexExteriorEven: the GENERAL exterior-even, factoring the parity bridge out
+# of every family.  Isolates the geometric heart as the named predicate
+# convex_exterior_balanced (exterior point's ray crosses the two chains
+# both-or-neither); convex_exterior_even_of_balanced turns it into ~point_in_ring
+# for any bimonotone_split ring, and convex_offring_seam_of_balanced composes it
+# into a general convex off-ring seam.  Validated on diamond + hexagon.  The
+# genuinely-hard discharge of the predicate for arbitrary convex rings (the
+# convex slice fact) stays the named residual.  Three-axiom.  No Admitted.
+theories/ConvexExteriorEven.v
 # H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
 # half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
 # ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path

@@ -931,6 +931,37 @@ gap to one sharply-stated geometric predicate. All `Qed`, three-axiom.
   smaller than before: the combinatorial reduction is Qed, only the global-convexity
   ⟹ no-interior-min step remains.
 
+### §11.5l update (2026-06-15): the general exterior-even — factoring the parity bridge
+
+`theories/ConvexExteriorEven.v` generalises the off-ring seam's **exterior-even**
+obligation (`conv_min < 0 ⟹ ~ point_in_ring`), so far supplied per family (the hexagon's
+six-edge per-band analysis), into one reusable theorem. All `Qed`, three-axiom.
+
+- **The named geometric residual.** `convex_exterior_balanced r hps inc dec`: an exterior
+  point's rightward ray crosses the two monotone chains **both-or-neither**
+  (`chain_crossed p inc ↔ chain_crossed p dec`). This is the geometric heart of
+  exterior-even, stripped of the parity bookkeeping.
+- **The reduction (the win).** `convex_exterior_even_of_balanced`: for ANY `bimonotone_split`
+  ring, the balance predicate yields `~ point_in_ring` — because `bimonotone_split_parity`
+  makes `point_in_ring` the XOR of the two chain crossings, and balance negates the XOR
+  (using `chain_crossed`'s decidability via the crossing count). The converse
+  `balanced_of_exterior_even` shows the predicate is *exactly* the per-family obligation
+  viewed through the bridge, so the factoring loses nothing.
+- **The capstone.** `convex_offring_seam_of_balanced` feeds the general exterior-even into
+  `ConvexOffringSeam.convex_parity_seam_offring_of`: a half-plane-presented `bimonotone_split`
+  ring with the balance predicate (+ the general interior-odd obligation + presentation
+  facts) gets the **total** off-ring parity seam `parity_characterises_interior_cont_offring`.
+- **Validation.** `diamond_exterior_balanced` / `hexagon_exterior_balanced` discharge the
+  predicate from the families' existing exterior-even lemmas; the round-trips
+  `*_exterior_even_via_balanced` recover the families through the general theorem.
+
+The genuinely-hard discharge of `convex_exterior_balanced` for an ARBITRARY convex ring (the
+convex "horizontal slice = inter-chain interval" fact) stays the open content — and note the
+straddle-extraction lever the interior proof gets from `conv_min > 0` (vertex-height
+avoidance) is **unavailable** for exterior points (the `ray_avoids_vertices` guard only
+blocks the rightward ray), so it is a genuine multi-session lemma; it is carried as the
+named predicate, never `Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
