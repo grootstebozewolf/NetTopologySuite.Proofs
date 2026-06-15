@@ -187,6 +187,11 @@ theories/MonotoneChainConstruction.v
 # interior_hits_one_chain for any y-unimodal convex ring whose edge inward
 # half-planes are supplied.  Validated on diamond and hexagon.
 theories/MonotoneChainCoverage.v
+# The y-modulator (first step): half-plane convexity is the all-CCW-left-turns
+# orientation form (convex_left_turns); the y-unimodal decomposition predicate and
+# its wiring to bimonotone_split; max/min-height vertex infra; diamond + hexagon
+# witnesses.  Isolates the remaining "convex => y-unimodal" geometric residual.
+theories/ConvexYUnimodal.v
 
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
