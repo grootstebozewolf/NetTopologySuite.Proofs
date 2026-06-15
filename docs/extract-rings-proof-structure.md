@@ -865,6 +865,37 @@ the split as hypothesis — supplied generally by the y-modulator (`ConvexYUnimo
 its residual (convexity ⟹ y-unimodal vertex order) is closed, and concretely by every
 family today. Three-axiom, no `Admitted`.
 
+### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
+
+`theories/HotPixelConvexRing.v` carries the convex crossing characterisation to the
+**hot pixel** itself, bridging the Phase-2 snap-rounding stack (`HotPixel.in_hot_pixel`)
+to the JCT / convex-chain campaign, all `Qed`:
+
+- **The pixel as a CCW `Ring`** (`pixel_ring`, `pixel_ring_edges`): the half-open square
+  `[cx−r, cx+r) × [cy−r, cy+r)` (`r = hot_pixel_radius scale`) presented counter-clockwise
+  from the bottom-left, with edge list `[bottom; right; top; left]`.
+- **Only the vertical edges count**: the pixel's top/bottom edges are *horizontal*, so it is
+  NOT a strict `bimonotone_split` (`edge_up`/`edge_dn` are strict). But `edge_crosses_ray`
+  needs a strict y-straddle, so a horizontal edge is never crossed (`pixel_bottom_no_cross`
+  / `pixel_top_no_cross`), and each vertical edge crosses iff the ray height straddles the
+  pixel and the origin is left of that edge's x (`pixel_right_crosses_iff` /
+  `pixel_left_crosses_iff`, the vertical-edge x-intercept collapsing to the shared x).
+- **At most twice, inside iff once** (`pixel_ray_crosses_le_two`,
+  `pixel_in_ring_iff_one_crossing`): the `convex_in_ring_iff_one_crossing` pattern, reproved
+  DIRECTLY for the flat-edged square via `cross_count_cons_*` + `ray_parity_count` rather than
+  through a split.
+- **HEADLINE** (`pixel_point_in_ring_iff_box`): `point_in_ring p (pixel_ring C s)` iff a
+  **half-open-x / open-y box** — x in `[cx−r, cx+r)`, y in `(cy−r, cy+r)`.
+
+The bridge to `in_hot_pixel` is total above the bottom edge
+(`pixel_point_in_ring_implies_in_hot_pixel`, `in_hot_pixel_off_bottom_implies_point_in_ring`),
+and `pixel_grazing_bottom_edge` exhibits the gap: a concrete point on the *included* bottom
+edge (`py = cy−r`) that is `in_hot_pixel` yet **not** `point_in_ring` — the hot-pixel
+incarnation of the documented vertex-grazing caveat (`JCT_VertexGrazingCounterexample`),
+where the rightward ray grazes the bottom vertices and parity diverges. Validated on the unit
+pixel (`unit_pixel_centre_in_ring` / `unit_pixel_centre_one_crossing`). Three-axiom, no
+`Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
