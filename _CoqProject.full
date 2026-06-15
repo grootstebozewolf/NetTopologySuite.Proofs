@@ -210,6 +210,11 @@ theories/HexXScaleBridge.v
 # x-scale bridge.  ring_simple NOT claimed (a separate ~70-pair effort).  No
 # Admitted; standard three-axiom classical-reals base.
 theories/SpectreExample.v
+# The Spectre as the second fully-mechanized concave family: closes the deferred
+# ring_simple (~70-pair rational bash) + valid_polygon, certifies non-convexity,
+# and adds the concave-pocket EXTERIOR ray-parity witness (even crossing-number)
+# -- the in/out classification, parity with the hat.  Three-axiom.
+theories/SpectreConcaveFamily.v
 
 # extract_rings_valid R5 analytic seam, Stage B (rectangle beachhead,
 # UNCONDITIONAL): hole_inside_outer for ANY rectangular outer ring

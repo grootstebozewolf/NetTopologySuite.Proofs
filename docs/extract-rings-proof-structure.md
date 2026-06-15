@@ -771,6 +771,39 @@ topological-interior equivalence (the hat is out of reach of the convex separati
 engine; that equivalence remains the polygonal-JCT residual). Three-axiom, no
 `Admitted`.
 
+### §11.5g update (2026-06-15): the Spectre — the second concave family
+
+`theories/SpectreConcaveFamily.v` brings the **Spectre** aperiodic monotile to
+parity with the hat as the corpus's **second fully-mechanized concave family** (the
+hat is the first; §11.5f). The Spectre already existed as `SpectreExample.spectre_ring`
+— a non-convex 14-gon under the **rational** hex embedding `hpt x y = (x + y/2, y)`
+(a vertical scale of the equilateral metric, parity-preserving) — with `ring_closed`,
+`min_points`, and an interior ray-parity witness `spectre_point_in_ring` at `(5, 1/2)`
+(odd), but deliberately deferred `ring_simple` and supplied no exterior witness.
+
+This file closes both:
+
+- **`spectre_ring_simple`** — the deferred ~70 edge-pair non-self-intersection bash.
+  Same flat `destruct`/`first[…|nra]` shape as `HatValidPolygon.hat_ring_simple`, but
+  all coordinates are rational, so plain `nra` discharges every off-diagonal pair with
+  no `sqrt 3` facts. Feeds **`valid_polygon_spectre`** via
+  `FacePolygonHoles.polygon_valid_of_rings`.
+- **`spectre_non_convex`** — concavity certificate via `Orientation.cross`: a reflex
+  turn (`cross<0`) at the spike apex `(3,1)` and a convex turn (`cross>0`) at `(2,0)`.
+- **`spectre_pocket_not_in_ring`** — the concave-pocket exterior witness. The point
+  `(7/2, 1/2)` sits in the bottom reflex notch (the spike `(2,0)→(3.5,1)→(4,0)`, inside
+  the convex hull but outside the tile). At height `1/2 ∈ (0,1)` the rightward ray meets
+  exactly the down-edge `(3.5,1)→(4,0)` and the up-edge `(6,0)→(7.5,1)`; crossing-number
+  **2** = even ⇒ `~ point_in_ring`. The parity walk uses the `rpe_*`/`rpo_*` constructors
+  and a local `ray_parity_even_not_odd`, with each per-edge fact closed by `lra`.
+  **`spectre_parity_classification`** bundles it with the interior witness into the
+  Spectre's first in/out pair.
+
+As with the hat's `hat_pocket_not_in_ring`, a hull-interior exterior point is a
+configuration no convex polygon can present; this exercises the convexity-INDEPENDENT
+ray-parity layer, **not** the JCT topological-interior equivalence (out of reach of the
+convex separation engine for a non-convex ring). Three-axiom, no `Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
