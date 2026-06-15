@@ -247,8 +247,38 @@ its invariant; with `b64_snap` exact and `b64_passes_through_{sound,
 complete}` in hand, that proof should be mechanical composition rather
 than new design work.
 
+### Slice 13 — the hot pixel as a convex ring (`theories/HotPixelConvexRing.v`)
+
+A bridge from the Phase-2 hot pixel to the JCT / convex-chain crossing-number
+campaign. The half-open axis-aligned pixel is a convex 4-gon, presented as a
+CCW `Ring` (`pixel_ring C scale`), and connected to the crossing-number
+predicate `Overlay.point_in_ring`:
+
+- **Horizontal edges never cross.** The square's top/bottom edges are
+  horizontal, so it is not a strict `bimonotone_split` — but
+  `Overlay.edge_crosses_ray` requires a strict y-straddle, so a horizontal edge
+  is never crossed (`pixel_bottom_no_cross` / `pixel_top_no_cross`). Only the
+  two vertical edges count.
+- **Crossed ≤ twice / inside iff once.** `pixel_ray_crosses_le_two` and
+  `pixel_in_ring_iff_one_crossing` reprove the convex campaign's
+  `convex_in_ring_iff_one_crossing` directly for the flat-edged square (via
+  `cross_count_cons_*` + `ray_parity_count`). Hence the headline
+  `pixel_point_in_ring_iff_box`: `point_in_ring p (pixel_ring C s)` iff a
+  **half-open-x / open-y** box.
+- **Bridge to `in_hot_pixel`, with the grazing edge.**
+  `pixel_point_in_ring_implies_in_hot_pixel` (total inclusion — the ray-parity
+  interior sits inside the half-open pixel),
+  `in_hot_pixel_off_bottom_implies_point_in_ring` (converse above the bottom
+  edge), and `pixel_grazing_bottom_edge` — a point on the *included* bottom
+  edge that is `in_hot_pixel` yet not `point_in_ring`. This makes the corpus's
+  vertex-grazing subtlety (`JCT_VertexGrazingCounterexample`) concrete on the
+  hot pixel: the half-open pixel's closed bottom is exactly where the rightward
+  ray grazes the bottom vertices. Validated on the unit pixel. (8 theorems +
+  2 corollaries in `theories/HotPixelConvexRing.v`; pure-R, three-axiom.)
+
 ## Cumulative
 
 59 theorems Qed-closed across `HotPixel.v` + `HotPixel_b64.v` for the
 Phase 2 foundations, zero `Admitted`, only the four standard
-classical-reals axioms throughout.
+classical-reals axioms throughout — plus the `HotPixelConvexRing.v` convex-ring
+bridge (Slice 13, pure-R / three-axiom).

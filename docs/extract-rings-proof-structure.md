@@ -841,6 +841,35 @@ guard — is the genuine convex content (it needs the canonical-start rotation p
 single descending run" argument). It is isolated here, to be closed by a follow-up rung.
 Three-axiom, no `Admitted`.
 
+### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
+
+`theories/HotPixelConvexRing.v` bridges the convex crossing-number campaign to Phase 2:
+the **hot pixel** (`HotPixel.in_hot_pixel`, the half-open axis-aligned square
+`[cx−r, cx+r) × [cy−r, cy+r)`, `r = / (2·scale)`) is a convex 4-gon, presented here as a
+CCW `Ring` (`pixel_ring`). All `Qed`:
+
+- **Horizontal edges never cross.** The square's top/bottom edges are horizontal, so it is
+  NOT a strict `bimonotone_split` (`edge_up`/`edge_dn` are strict) — but the crossing
+  predicate `edge_crosses_ray` demands a strict y-straddle, so a horizontal edge is never
+  crossed (`pixel_bottom_no_cross` / `pixel_top_no_cross`). Only the two vertical edges
+  count (`pixel_right_crosses_iff` / `pixel_left_crosses_iff`: each crosses iff the ray
+  height straddles the pixel and the origin is left of that edge's x).
+- **The crossing bound + headline.** Hence the ring is crossed at most twice
+  (`pixel_ray_crosses_le_two`) and, with ray parity (`ray_parity_count`), a point is inside
+  iff crossed exactly once (`pixel_in_ring_iff_one_crossing`) — the
+  `convex_in_ring_iff_one_crossing` pattern reproved directly for the flat-edged square.
+  So `point_in_ring p (pixel_ring C s) ↔` a **half-open-x / open-y** box
+  (`pixel_point_in_ring_iff_box`).
+- **The bridge — and the grazing edge.** The ray-parity interior is a **subset** of the
+  half-open pixel (`pixel_point_in_ring_implies_in_hot_pixel`, total); the converse holds
+  **off the bottom edge** (`in_hot_pixel_off_bottom_implies_point_in_ring`); and a concrete
+  point on the *included* bottom edge `py = cy−r` is `in_hot_pixel` yet **not**
+  `point_in_ring` (`pixel_grazing_bottom_edge`). This is the hot-pixel incarnation of the
+  corpus's documented vertex-grazing caveat (`JCT_VertexGrazingCounterexample`): the
+  half-open pixel's closed bottom is exactly where the rightward ray grazes the bottom
+  vertices and parity diverges. Validated on the unit pixel (scale = 1, origin centre).
+  Three-axiom, no `Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
