@@ -735,6 +735,42 @@ edges ⟹ inside" fact, which for a concrete polygon is a finite `lra`/`nra`
 consequence of the explicit half-plane coefficients (as exercised here) but is
 the genuine convex content in the general case.
 
+### §11.5f update (2026-06-15): the einstein's concave pocket — the first concave point-in-polygon classification
+
+Every off-ring family so far (rectangle, the two triangles, diamond, hexagon) is
+**convex** and rides the half-plane `conv_min` separation engine. The "hat"
+aperiodic einstein monotile (`HatMonotile.hat_ring`, a 13-gon with exact `sqrt 3`
+hex-lattice coordinates) is the corpus's only **concave** shape; it is already
+mechanized as closed (`hat_ring_closed`), simple (`HatValidPolygon.hat_ring_simple`,
+the ~78-pair `nra` bash), of minimum points, genuinely non-convex
+(`hat_non_convex`: a reflex turn `cross<0` at `(3,1)` and a convex turn at `(2,0)`),
+and as an interior ray-parity witness (`HatMonotileInterior.hat_point_in_ring`: the
+top-bump point `(17/4, 5√3/4)` has crossing-number 1 = odd = inside).
+
+`theories/HatMonotileExterior.v` adds the dual — and the distinctly concave —
+witness. The hat's bottom boundary has a **reflex notch**: the hex edges
+`(2,0)→(3,1)→(4,0)` map to the plane spike `(2,0)→(3.5,√3/2)→(4,0)` whose apex
+`(3,1)` is reflex. The test point `(7/2, √3/4)` sits inside that spike triangle —
+**inside the convex hull, but in the notch, hence exterior to the tile**. At height
+`√3/4 ∈ (0, √3/2)` the rightward ray meets exactly two edges to its right (the
+down-edge `(3,1)→(4,0)` and the up-edge `(6,0)→(7,1)`); crossing-number **2** = even
+⇒ `hat_pocket_not_in_ring : ~ point_in_ring (7/2, √3/4) hat_ring`. No convex polygon
+can present a hull-interior exterior point, so this is the first genuinely concave
+point-in-polygon classification in the corpus. `hat_parity_classification` bundles
+it with `hat_point_in_ring` into the einstein's first in/out pair.
+
+Mechanics mirror the interior witness: the parity walk uses the mutually-inductive
+`ray_parity_even`/`ray_parity_odd` constructors (`rpe_*`/`rpo_*`), toggling at the two
+crossed edges and ending **even**, then `ray_parity_even_not_odd` (a local
+structural-induction lemma, as in `JCT_Counterexample.v`) excludes membership.
+Each per-edge crossing fact is `edge_cross_sign` + `nra`; choosing `py = √3/4` (a
+rational multiple of `√3`) keeps every height/slack comparison homogeneous in `√3`,
+so `nra` closes from `0 < √3` alone — no numeric `√3` bound needed. This is the
+convexity-INDEPENDENT ray-parity (crossing-number) membership, **not** the JCT
+topological-interior equivalence (the hat is out of reach of the convex separation
+engine; that equivalence remains the polygonal-JCT residual). Three-axiom, no
+`Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
