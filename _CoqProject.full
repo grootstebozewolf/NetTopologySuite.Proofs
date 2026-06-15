@@ -198,6 +198,15 @@ theories/ConvexYUnimodal.v
 # for the convex case.  Validated on diamond + hexagon.
 theories/ConvexRayCrossing.v
 
+# Snap-rounding meets ray-parity: the hot pixel (HotPixel.in_hot_pixel) presented
+# as a CCW Ring (pixel_ring) and connected to Overlay.point_in_ring.  The square's
+# horizontal top/bottom edges are never crossed by a rightward ray, so only the two
+# vertical edges count -- the convex_in_ring_iff_one_crossing pattern, reproved
+# directly for the flat-edged square.  Headline pixel_point_in_ring_iff_box (a
+# half-open-x / open-y box) bridges to in_hot_pixel, with the grazing bottom edge
+# as the hot-pixel incarnation of JCT_VertexGrazingCounterexample.
+theories/HotPixelConvexRing.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the
