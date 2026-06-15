@@ -1208,6 +1208,10 @@ theories/HatMonotile.v
 # The combinatorial (crossing-number) interior, valid for non-convex rings; NOT
 # the JCT topological-interior equivalence.  Three-axiom.  No Admitted.
 theories/HatMonotileInterior.v
+# The dual, concave-pocket EXTERIOR witness: the ray-parity test excludes a point
+# in one of the hat's reflex notches (inside the hull, outside the tile) -- the
+# corpus's first genuinely concave point-in-polygon classification.  Three-axiom.
+theories/HatMonotileExterior.v
 # Showcase: the "Spectre" strictly-chiral aperiodic monotile's defining
 # ingredient -- a CURVED edge -- formalized.  curved_edge_central_symmetry: any
 # midpoint-odd profile makes the edge invariant under 180-degree rotation about
