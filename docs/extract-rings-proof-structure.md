@@ -992,6 +992,39 @@ locating the straddling `e_i, e_d` for an arbitrary query point — which for ex
 needs vertex-height avoidance unavailable from `ray_avoids_vertices` alone. So the convex
 residuals are now "slice fact (DONE) + straddle extraction (open)".
 
+### §11.5n update (2026-06-15): the exterior companion — exterior-even, general, via the slice fact
+
+`theories/ConvexExteriorEven.v` §6 lands the **exterior companion** to
+`MonotoneChainCoverage.interior_hits_one_chain_of_edge_hps`: a general exterior-even for any
+y-unimodal convex ring, now that the slice fact is proved. All `Qed`, three-axiom.
+
+- **`convex_exterior_balanced_of_unimodal`** — for an exterior point (`conv_min < 0`) of a
+  y-unimodal convex ring (`up ++ apex :: down`, the `interior_hits` hypothesis shape) in full
+  vertex-avoidance general position, the two chains are crossed **both-or-neither**
+  (`chain_crossed q inc ↔ chain_crossed q dec`). The proof needs **no band case-split** — the
+  crossing itself supplies band membership. The two iff directions are asymmetric:
+  - *inc crossed ⟹ dec crossed:* the crossed up-edge `e_i` gives `slack(e_i) q > 0`; the
+    straddling down-edge `e_d` (extracted by `chain_decreasing_straddles_y`), if `dec`
+    uncrossed, has `slack(e_d) q ≥ 0`; `ConvexSlice.convex_slice_all_halfplanes` then forces
+    `0 ≤ conv_min`, contradicting `conv_min < 0`.
+  - *dec crossed ⟹ inc crossed:* a **positional** contradiction (`slice_x_contra`, also via
+    the slice helpers): a point not inward of the straddling up-edge cannot be strictly left
+    of the straddling down-edge (left chain is left of right chain) — the on-edge image point
+    of `e_d` lies in `e_i`'s half-plane, pinning `px q` on both sides. This direction needs
+    the edge half-planes to be in `hps` (`Forall (In (edge_inward_hp _) hps) inc`).
+- **`convex_exterior_even_of_unimodal`** — composes the balance with
+  `bimonotone_split_parity` to conclude `~ point_in_ring q outer`. With
+  `interior_hits_one_chain_of_edge_hps` (interior-odd) this makes **both** off-ring
+  obligations general for y-unimodal convex rings, under full general position.
+- Height-bound helpers `y_strict_{incr,decr}_{le_last,hd_le,le_hd,last_le}` turn the crossing
+  straddle into the chain band. (`MonotoneChainCoverage.dpt` is now exported, not `Local`, so
+  the straddle lemmas' `hd`/`last` defaults are shared.)
+
+The only remaining convex residual is `convex_no_interior_ymin` (convex ⟹ y-unimodal, i.e.
+the split exists). The full-vertex-avoidance guard here is the honest general-position
+requirement (what `chain_*_straddles_y` and the interior proof need); it is stronger than the
+seam's `ray_avoids_vertices`, which only blocks the rightward ray.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4

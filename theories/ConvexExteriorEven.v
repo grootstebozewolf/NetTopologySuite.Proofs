@@ -44,6 +44,7 @@ From NTS.Proofs Require Import Distance Overlay MonotoneChainParity
                                MonotoneChainCoverage
                                ConvexField PointInRingTangents PointInRingCorrect
                                JCT_OnEdgeCounterexample ConvexOffringSeam
+                               ConvexSlice
                                DiamondOffringSeam HexagonOffringSeam.
 
 Import ListNotations.
@@ -186,9 +187,228 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §6  The EXTERIOR COMPANION: balance discharged generally via the slice fact.*)
+(* -------------------------------------------------------------------------- *)
+
+(* Height bounds on monotone vertex lists. *)
+Lemma y_strict_incr_le_last : forall (l : list Point) (v : Point),
+  y_strict_incr l -> In v l -> py v <= py (last l dpt).
+Proof.
+  induction l as [| a l' IH]; intros v Hinc Hin; [ inversion Hin | ].
+  destruct l' as [| b l''].
+  - destruct Hin as [<- | []]. cbn [last]. lra.
+  - destruct Hinc as [Hab Hinc']. destruct Hin as [<- | Hin].
+    + pose proof (IH b Hinc' (or_introl eq_refl)) as Hb. cbn [last] in *. lra.
+    + cbn [last]. apply IH; assumption.
+Qed.
+
+Lemma y_strict_incr_hd_le : forall (l : list Point) (v : Point),
+  y_strict_incr l -> In v l -> py (hd dpt l) <= py v.
+Proof.
+  intros l v Hinc Hin. destruct l as [| a l']; [ inversion Hin | ]. cbn [hd].
+  revert a v Hinc Hin. induction l' as [| b l'' IH]; intros a v Hinc Hin.
+  - destruct Hin as [<- | []]. lra.
+  - destruct Hin as [<- | Hin]; [ lra | ].
+    destruct Hinc as [Hab Hinc']. pose proof (IH b v Hinc' Hin) as Hbv. lra.
+Qed.
+
+Lemma y_strict_decr_le_hd : forall (l : list Point) (v : Point),
+  y_strict_decr l -> In v l -> py v <= py (hd dpt l).
+Proof.
+  intros l v Hdec Hin. destruct l as [| a l']; [ inversion Hin | ]. cbn [hd].
+  revert a v Hdec Hin. induction l' as [| b l'' IH]; intros a v Hdec Hin.
+  - destruct Hin as [<- | []]. lra.
+  - destruct Hin as [<- | Hin]; [ lra | ].
+    destruct Hdec as [Hba Hdec']. pose proof (IH b v Hdec' Hin) as Hbv. lra.
+Qed.
+
+Lemma y_strict_decr_last_le : forall (l : list Point) (v : Point),
+  y_strict_decr l -> In v l -> py (last l dpt) <= py v.
+Proof.
+  induction l as [| a l' IH]; intros v Hdec Hin; [ inversion Hin | ].
+  destruct l' as [| b l''].
+  - destruct Hin as [<- | []]. cbn [last]. lra.
+  - destruct Hdec as [Hba Hdec']. destruct Hin as [<- | Hin].
+    + pose proof (IH b Hdec' (or_introl eq_refl)) as Hb. cbn [last] in *. lra.
+    + cbn [last]. apply IH; assumption.
+Qed.
+
+(* Positional contradiction (the dec-crossed/inc-not impossibility): a point not
+   inward of the straddling UP edge (slack <= 0) cannot be strictly left of the
+   straddling DOWN edge (slack < 0) — the left chain is left of the right chain.
+   Proof via the on-edge image point of e_d in e_i's half-plane (slice helpers). *)
+Lemma slice_x_contra :
+  forall (r : Ring) (hps : list (R * R * R)) (q : Point) (e_i e_d : Edge),
+    Forall (vertices_in_halfplane r) hps ->
+    In (edge_inward_hp e_i) hps ->
+    In e_d (ring_edges r) ->
+    py (fst e_i) < py (snd e_i) ->
+    py (snd e_d) < py (fst e_d) ->
+    straddles q e_d ->
+    hp_slack (edge_inward_hp e_i) q <= 0 ->
+    hp_slack (edge_inward_hp e_d) q < 0 ->
+    False.
+Proof.
+  intros r hps q e_i e_d Hverts HiHps HdIn Hup Hdn Hstrd Hsi Hsd.
+  destruct (straddle_point_ring_image r e_d q HdIn Hstrd) as [m [Hm_img [Hm_y Hm_0]]].
+  rewrite Forall_forall in Hverts.
+  pose proof (image_slack_nonneg r (edge_inward_hp e_i) m (Hverts _ HiHps) Hm_img) as Hmi.
+  pose proof (hp_slack_sub_x (edge_inward_hp e_i) q m (eq_sym Hm_y)) as Hsub_i.
+  pose proof (hp_slack_sub_x (edge_inward_hp e_d) q m (eq_sym Hm_y)) as Hsub_d.
+  rewrite (edge_inward_hp_xcoef e_i) in Hsub_i.
+  rewrite (edge_inward_hp_xcoef e_d) in Hsub_d.
+  rewrite Hm_0 in Hsub_d.
+  nra.
+Qed.
+
+(* The exterior companion to `interior_hits_one_chain_of_edge_hps`: for an
+   exterior point of a y-unimodal convex ring in full general position, the two
+   chains are crossed BOTH-or-NEITHER. *)
+Theorem convex_exterior_balanced_of_unimodal :
+  forall (up down : list Point) (apex bottom : Point)
+         (hps : list (R * R * R)) (q : Point) (outer : Ring),
+    let inc := ring_edges (up ++ [apex]) in
+    let dec := ring_edges (apex :: down) in
+    y_strict_incr (up ++ [apex]) ->
+    y_strict_decr (apex :: down) ->
+    (2 <= length (up ++ [apex]))%nat ->
+    (2 <= length (apex :: down))%nat ->
+    Forall (vertices_in_halfplane outer) hps ->
+    Forall (fun e => In (edge_inward_hp e) hps) inc ->
+    py (hd dpt (up ++ [apex])) = py bottom ->
+    py (last (apex :: down) dpt) = py bottom ->
+    last (up ++ [apex]) dpt = apex ->
+    outer = up ++ apex :: down ->
+    conv_min hps q < 0 ->
+    (forall v, In v outer -> py v <> py q) ->
+    (chain_crossed q inc <-> chain_crossed q dec).
+Proof.
+  intros up down apex bottom hps q outer inc dec
+         Hinc Hdec Hleni Hlend Hverts HincHps Hhd Hlastd Hlasti Houter Hext Hav.
+  assert (Hbs : bimonotone_split outer inc dec).
+  { rewrite Houter. apply bimonotone_split_unimodal; assumption. }
+  destruct Hbs as [Hsplit [Hci Hcd]].
+  assert (HinInc : forall e, In e inc -> In e (ring_edges outer))
+    by (intros e He; rewrite Hsplit; apply in_or_app; left; exact He).
+  assert (HinDec : forall e, In e dec -> In e (ring_edges outer))
+    by (intros e He; rewrite Hsplit; apply in_or_app; right; exact He).
+  assert (HavI : forall v, In v (up ++ [apex]) -> py v <> py q).
+  { intros v Hv. apply Hav. rewrite Houter, in_app_iff.
+    rewrite in_app_iff in Hv. destruct Hv as [Hvup | Hvap].
+    - left; exact Hvup.
+    - right. destruct Hvap as [<- | []]. left; reflexivity. }
+  assert (HavD : forall v, In v (apex :: down) -> py v <> py q).
+  { intros v Hv. apply Hav. rewrite Houter, in_app_iff. right.
+    destruct Hv as [<- | Hv]; [ left; reflexivity | right; exact Hv ]. }
+  pose proof (chain_increasing_all_up _ Hci) as Hallup.
+  pose proof (chain_decreasing_all_dn _ Hcd) as Halldn.
+  rewrite Forall_forall in Hallup, Halldn.
+  split.
+  - (* inc crossed -> dec crossed, via the slice fact + conv_min < 0 *)
+    intros [ei [HeiIn Hcr]].
+    pose proof (Hallup ei HeiIn) as HeiUp. unfold edge_up in HeiUp.
+    pose proof (crossed_straddles q ei Hcr) as Hstr_i.
+    pose proof (up_straddle_lo_hi q ei HeiUp Hstr_i) as [Hlo_i Hhi_i].
+    destruct (ring_edges_endpoints_in (up ++ [apex]) ei HeiIn) as [HfiIn HsiIn].
+    assert (Hqlt : py q < py apex).
+    { pose proof (y_strict_incr_le_last (up ++ [apex]) (snd ei) Hinc HsiIn) as Hb.
+      rewrite Hlasti in Hb. lra. }
+    assert (Hqgt : py bottom < py q).
+    { pose proof (y_strict_incr_hd_le (up ++ [apex]) (fst ei) Hinc HfiIn) as Hb.
+      rewrite Hhd in Hb. lra. }
+    destruct (chain_decreasing_straddles_y (apex :: down) q Hdec Hlend
+                ltac:(rewrite Hlastd; exact Hqgt) ltac:(cbn [hd]; exact Hqlt) HavD)
+      as [ed [HedIn Hstr_d]].
+    destruct (chain_crossed_dec q dec) as [Hdc | Hndc]; [ exact Hdc | exfalso ].
+    pose proof (Halldn ed HedIn) as HedDn. unfold edge_dn in HedDn.
+    assert (Hned : ~ edge_crosses_ray q ed) by (intro Hc; apply Hndc; exists ed; auto).
+    pose proof (dn_straddle_hi_lo q ed HedDn Hstr_d) as [Hd_hi Hd_lo].
+    destruct ed as [[ex ey] [fx fy]]; cbn [fst snd px py] in *.
+    destruct ei as [[axx ayy] [bxx byy]]; cbn [fst snd px py] in *.
+    assert (Hsi : 0 < hp_slack (edge_inward_hp (mkPoint axx ayy, mkPoint bxx byy)) q).
+    { destruct (edge_up_crosses_iff_hp axx ayy bxx byy q ltac:(lra)) as [Hfwd _].
+      exact (proj2 (Hfwd Hcr)). }
+    assert (Hsd : 0 <= hp_slack (edge_inward_hp (mkPoint ex ey, mkPoint fx fy)) q).
+    { destruct (edge_dn_crosses_iff_hp ex ey fx fy q ltac:(lra)) as [_ Hback].
+      destruct (Rle_or_lt 0 (hp_slack (edge_inward_hp (mkPoint ex ey, mkPoint fx fy)) q))
+        as [HH | HH]; [ exact HH | exfalso; apply Hned; apply Hback; split; [ lra | exact HH ] ]. }
+    pose proof (convex_slice_all_halfplanes outer hps q
+                  (mkPoint axx ayy, mkPoint bxx byy) (mkPoint ex ey, mkPoint fx fy)
+                  Hverts (HinInc _ HeiIn) (HinDec _ HedIn)
+                  ltac:(cbn [fst snd py]; lra) ltac:(cbn [fst snd py]; lra)
+                  Hstr_i Hstr_d Hsi Hsd) as Hall.
+    pose proof (conv_min_nonneg_local hps q Hall) as Hcm. lra.
+  - (* dec crossed -> inc crossed, via the positional contradiction slice_x_contra *)
+    intros [ed [HedIn Hcr]].
+    pose proof (Halldn ed HedIn) as HedDn. unfold edge_dn in HedDn.
+    pose proof (crossed_straddles q ed Hcr) as Hstr_d.
+    pose proof (dn_straddle_hi_lo q ed HedDn Hstr_d) as [Hd_hi Hd_lo].
+    destruct (ring_edges_endpoints_in (apex :: down) ed HedIn) as [HfdIn HsdIn].
+    assert (Hqlt : py q < py apex).
+    { pose proof (y_strict_decr_le_hd (apex :: down) (fst ed) Hdec HfdIn) as Hb.
+      cbn [hd] in Hb. lra. }
+    assert (Hqgt : py bottom < py q).
+    { pose proof (y_strict_decr_last_le (apex :: down) (snd ed) Hdec HsdIn) as Hb.
+      rewrite Hlastd in Hb. lra. }
+    destruct (chain_increasing_straddles_y (up ++ [apex]) q Hinc Hleni
+                ltac:(rewrite Hhd; exact Hqgt) ltac:(rewrite Hlasti; exact Hqlt) HavI)
+      as [ei [HeiIn Hstr_i]].
+    destruct (chain_crossed_dec q inc) as [Hic | Hnic]; [ exact Hic | exfalso ].
+    pose proof (Hallup ei HeiIn) as HeiUp. unfold edge_up in HeiUp.
+    assert (Hnei : ~ edge_crosses_ray q ei) by (intro Hc; apply Hnic; exists ei; auto).
+    pose proof (up_straddle_lo_hi q ei HeiUp Hstr_i) as [Hi_lo Hi_hi].
+    rewrite Forall_forall in HincHps. pose proof (HincHps ei HeiIn) as HeiHps.
+    destruct ei as [[axx ayy] [bxx byy]]; cbn [fst snd px py] in *.
+    destruct ed as [[ex ey] [fx fy]]; cbn [fst snd px py] in *.
+    assert (Hsi : hp_slack (edge_inward_hp (mkPoint axx ayy, mkPoint bxx byy)) q <= 0).
+    { destruct (edge_up_crosses_iff_hp axx ayy bxx byy q ltac:(lra)) as [_ Hback].
+      destruct (Rle_or_lt (hp_slack (edge_inward_hp (mkPoint axx ayy, mkPoint bxx byy)) q) 0)
+        as [HH | HH]; [ exact HH | exfalso; apply Hnei; apply Hback; split; [ lra | exact HH ] ]. }
+    assert (Hsd : hp_slack (edge_inward_hp (mkPoint ex ey, mkPoint fx fy)) q < 0).
+    { destruct (edge_dn_crosses_iff_hp ex ey fx fy q ltac:(lra)) as [Hfwd _].
+      exact (proj2 (Hfwd Hcr)). }
+    exact (slice_x_contra outer hps q (mkPoint axx ayy, mkPoint bxx byy)
+             (mkPoint ex ey, mkPoint fx fy) Hverts HeiHps (HinDec _ HedIn)
+             ltac:(cbn [fst snd py]; lra) ltac:(cbn [fst snd py]; lra) Hstr_d Hsi Hsd).
+Qed.
+
+(* Corollary: the general exterior-even for y-unimodal convex rings. *)
+Theorem convex_exterior_even_of_unimodal :
+  forall (up down : list Point) (apex bottom : Point)
+         (hps : list (R * R * R)) (q : Point) (outer : Ring),
+    y_strict_incr (up ++ [apex]) ->
+    y_strict_decr (apex :: down) ->
+    (2 <= length (up ++ [apex]))%nat ->
+    (2 <= length (apex :: down))%nat ->
+    Forall (vertices_in_halfplane outer) hps ->
+    Forall (fun e => In (edge_inward_hp e) hps) (ring_edges (up ++ [apex])) ->
+    py (hd dpt (up ++ [apex])) = py bottom ->
+    py (last (apex :: down) dpt) = py bottom ->
+    last (up ++ [apex]) dpt = apex ->
+    outer = up ++ apex :: down ->
+    conv_min hps q < 0 ->
+    (forall v, In v outer -> py v <> py q) ->
+    ~ point_in_ring q outer.
+Proof.
+  intros up down apex bottom hps q outer Hinc Hdec Hleni Hlend Hverts HincHps
+         Hhd Hlastd Hlasti Houter Hext Hav Hpir.
+  assert (Hbs : bimonotone_split outer (ring_edges (up ++ [apex])) (ring_edges (apex :: down))).
+  { rewrite Houter. apply bimonotone_split_unimodal; assumption. }
+  pose proof (convex_exterior_balanced_of_unimodal up down apex bottom hps q outer
+                Hinc Hdec Hleni Hlend Hverts HincHps Hhd Hlastd Hlasti Houter Hext Hav)
+    as Hbal.
+  apply (proj1 (bimonotone_split_parity outer _ _ q Hbs)) in Hpir.
+  destruct Hpir as [[Hi Hnd] | [Hni Hd]].
+  - exact (Hnd (proj1 Hbal Hi)).
+  - exact (Hni (proj2 Hbal Hd)).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
+Print Assumptions convex_exterior_balanced_of_unimodal.
+Print Assumptions convex_exterior_even_of_unimodal.
 Print Assumptions convex_exterior_even_of_balanced.
 Print Assumptions balanced_of_exterior_even.
 Print Assumptions convex_offring_seam_of_balanced.

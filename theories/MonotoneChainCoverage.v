@@ -45,8 +45,9 @@ From NTS.Proofs Require Import Distance Overlay ConvexField PointInRingCorrect
 Import ListNotations.
 Local Open Scope R_scope.
 
-(* Local default point (used as 'hd'/'last' default argument). *)
-Local Definition dpt : Point := mkPoint 0 0.
+(* Default point (used as 'hd'/'last' default argument).  Exported (not Local)
+   so downstream files reusing the straddle lemmas share the same constant. *)
+Definition dpt : Point := mkPoint 0 0.
 
 (* -------------------------------------------------------------------------- *)
 (* §1  Canonical CCW inward half-plane of an edge.                            *)
