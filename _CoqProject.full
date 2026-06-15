@@ -192,6 +192,11 @@ theories/MonotoneChainCoverage.v
 # its wiring to bimonotone_split; max/min-height vertex infra; diamond + hexagon
 # witnesses.  Isolates the remaining "convex => y-unimodal" geometric residual.
 theories/ConvexYUnimodal.v
+# The y-modulator (crossing bound): a convex / y-unimodal ring (a bimonotone_split)
+# is crossed at most twice by any rightward ray, hence inside iff crossed exactly
+# once (convex_in_ring_iff_one_crossing) -- the crisp discrete Jordan characterisation
+# for the convex case.  Validated on diamond + hexagon.
+theories/ConvexRayCrossing.v
 
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
