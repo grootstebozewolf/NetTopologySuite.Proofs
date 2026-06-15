@@ -589,6 +589,152 @@ the `gtri_ring` analogue of `KakeyaOverlay.perron_tri_ring_simple`) supplies the
 `ring_simple` conjunct for both rings. This is the first concrete `valid_polygon`
 *with a hole* in the corpus whose analytic clause carries no named seam.
 
+### §11.5b update (2026-06-14): the diamond — fourth total family, first convex assembly user
+
+The H1 parity seam has since been carried to the corrected **off-ring** form
+`parity_characterises_interior_cont_offring` (interior *and* exterior, off the
+skeleton), made **total** (unconditional) for the rectangle
+(`RectangleOffringSeam.v`), the general triangle (`GeneralTriangleOffringSeam.v`),
+and the right triangle (`ConvexOffringSeam.v`); the generic convex assembly
+`ConvexOffringSeam.convex_parity_seam_offring_of` reduces it for any
+half-plane-presented ring to four presentation facts + two guarded-parity facts.
+
+`theories/DiamondOffringSeam.v` lands the **fourth total family** —
+`diamond_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
+p diamond_ring` — the **first convex four-gon** and the **first instantiation of
+`convex_parity_seam_offring_of`**. The diamond `(0,-2),(2,0),(0,2),(-2,0)`
+(the region `|x|+|y| <= 2`) is presented by its four edge half-planes
+`diamond_hps`; the presentation obligations (zero-set of `conv_min` on the
+skeleton, vertices in all half-planes, non-degeneracy, bounded positive region)
+are mechanical, and the two guarded-parity obligations go through the already-Qed
+monotone-chain split (`MonotoneChainParity.bimonotone_split_parity` over
+`ConvexChainSplit.diamond_bimonotone`) + `GeneralTriangleParity.edge_cross_sign`:
+a strict-interior point's rightward ray crosses the right (increasing) chain
+exactly once, an exterior point's ray crosses the two chains both-or-neither.
+`diamond_point_in_ring_iff_geometric` is the off-ring biconditional corollary;
+three-axiom, no `Admitted`. A **general** convex *n*-gon remains open only on the
+"split-from-convexity" derivation (`ConvexChainSplit.interior_hits_one_chain` /
+`bimonotone_split` from `vertices_in_halfplane`) — isolated, not yet built.
+
+### §11.5c update (2026-06-14): rung 3.5 — the bimonotone split, now general
+
+`theories/MonotoneChainConstruction.v` removes the per-family hand-construction
+of `bimonotone_split`. Until now every split was built by hand: the diamond
+exhibits explicit `diamond_inc` / `diamond_dec` edge lists and proves
+`bimonotone_split diamond_ring diamond_inc diamond_dec` by `reflexivity` over the
+edge concatenation plus four `lra` height checks. The new file proves the split
+**generically** from a purely combinatorial hypothesis on the *vertex list*:
+
+```
+Theorem bimonotone_split_unimodal :
+  forall (up down : list Point) (apex : Point),
+    y_strict_incr (up ++ [apex]) ->        (* heights rise strictly to the apex *)
+    y_strict_decr (apex :: down) ->        (* then fall strictly back down      *)
+    bimonotone_split (up ++ apex :: down)
+                     (ring_edges (up ++ [apex]))
+                     (ring_edges (apex :: down)).
+```
+
+The proof has three combinatorial pieces, all `Qed`: `ring_edges_app_shared`
+(the skeleton of `l1 ++ m :: l2` is the skeleton of the closed prefix `l1 ++ [m]`
+followed by the skeleton of the suffix `m :: l2`, joined at the shared vertex
+`m`); and `chain_increasing_of_y_strict_incr` /
+`chain_decreasing_of_y_strict_decr` (a strictly monotone vertex run yields a
+monotone chain — connectivity `snd e = fst e2` is automatic because consecutive
+`ring_edges` share their middle vertex). **Convexity is not used**: this isolates
+exactly the combinatorial content of the split. The geometric implication
+(convex `vertices_in_halfplane` ⟹ the vertex order is y-unimodal) and the dual
+`interior_hits_one_chain` remain the open residual for a fully general *n*-gon.
+
+The split obligation is thereby reduced to an **arithmetic** per-family check:
+`diamond_bimonotone_via_unimodal` re-derives the diamond split in one
+`apply` + two `cbn`/`lra` calls, and `hexagon_bimonotone` exhibits the split of a
+genuinely convex CCW **hexagon** `(0,-3),(3,-1),(4,2),(1,3),(-2,1),(-3,-2)` with
+no extra machinery — only the height comparisons change. Three-axiom, no
+`Admitted`. This is the reusable substrate that makes the split of any future
+convex family a one-liner; the remaining frontier is `interior_hits_one_chain`.
+
+### §11.5d update (2026-06-15): rung 4 — the edge-halfplane algebraic bridge, `interior_hits_one_chain` closed
+
+`theories/MonotoneChainCoverage.v` closes the `interior_hits_one_chain` residual for
+any convex polygon family whose CCW inward half-planes are supplied in `hps`.
+
+The **key algebraic identity** (`hp_slack_edge_inward_cross_product`, `ring` proof):
+
+```
+hp_slack (edge_inward_hp (mkPoint vx vy, mkPoint wx wy)) q
+  = (wx - vx) * (py q - vy) - (wy - vy) * (px q - vx)
+```
+
+This is exactly the signed cross-product that `GeneralTriangleParity.edge_cross_sign`
+uses to characterise `edge_crosses_ray`, yielding two algebraic bridge lemmas:
+
+- `edge_up_crosses_iff_hp`: for an inc edge (vy < wy),
+  `edge_crosses_ray q e ↔ (vy < py q < wy) ∧ (hp_slack (edge_inward_hp e) q > 0)`.
+- `edge_dn_crosses_iff_hp`: for a dec edge (wy < vy),
+  `edge_crosses_ray q e ↔ (wy < py q < vy) ∧ (hp_slack (edge_inward_hp e) q < 0)`.
+
+A strictly-interior point has `hp_slack > 0` for ALL half-planes in `hps`
+(`conv_min_pos_iff`), so:
+
+- inc chain edges that straddle the ray height ARE crossed;
+- dec chain edges that straddle are NOT crossed (hp_slack > 0 contradicts < 0).
+
+The height-band coverage lemma `chain_increasing_straddles_y` (induction over
+the monotone vertex list) guarantees that some inc chain edge straddles the query
+height whenever `py bottom < py q < py apex`. Vertex-height avoidance (`py v ≠ py q`
+for all vertices `v`) is derived from `ray_avoids_vertices` via the x-bound:
+`hp_slack > 0` at height `wy` forces `px q < wx`, while `ray_avoids_vertices`
+forbids `px q ≤ px v` at matching heights — a contradiction.
+
+The **headline theorem** (`interior_hits_one_chain_of_edge_hps`) assembles these
+pieces to deliver `chain_crossed q inc ∧ ¬ chain_crossed q dec` for any y-unimodal
+ring under the edge-hp and ray-avoidance guards. Concrete validations:
+`diamond_interior_chain_hit` and `hexagon_interior_chain_hit` discharge all
+premises by `cbn`/`lra`. Three-axiom, no `Admitted`.
+
+The convexity ⟹ y-unimodal vertex-order implication remains the only open residual
+for a fully general convex *n*-gon.
+
+### §11.5e update (2026-06-15): rung 5 — the convex hexagon, the fifth total family (n > 4)
+
+`theories/HexagonOffringSeam.v` lands the CCW hexagon
+`(0,-3),(3,-1),(4,2),(1,3),(-2,1),(-3,-2)` as the **fifth total off-ring JCT
+family** and the **first convex polygon with more than four edges**. It is the
+first family to consume rung 4, and it shows the rung-1…5 stack scales past four
+edges with only an arithmetic per-family check.
+
+The hexagon is presented by its six edge inward half-planes
+(`MonotoneChainCoverage.hexagon_edge_hps`) and discharges the six obligations of
+`ConvexOffringSeam.convex_parity_seam_offring_of`:
+
+- **Presentation (1-4).** Zero-set on skeleton (six `Exists` cases, each giving
+  the on-edge parameter `t` from the vanishing slack), vertices-in-half-planes,
+  non-degeneracy, and a bounded positive region: the six slacks pin the point
+  into the box `[-3,4] × [-3,3]` (linear combinations, `lra`), inside radius 5.
+- **Interior-odd (5).** Now a near one-liner: from `0 < conv_min` the six slacks
+  give the y-span `-3 < py q < 3` by `lra`, then rung 4's
+  `hexagon_interior_chain_hit` yields "crosses the increasing chain once, misses
+  the decreasing one", and `bimonotone_split_parity` turns that XOR into
+  `point_in_ring`.
+- **Exterior-even (6).** A six-edge per-band case analysis. From the bimonotone
+  split a point with odd parity crosses exactly one chain; for each crossed chain
+  edge its y-band fixes the unique straddling opposite-chain edge, and either all
+  six slacks are forced nonnegative (so `0 ≤ conv_min`, contradicting
+  `conv_min < 0`) or the two opposite straddling slacks are geometrically
+  incompatible (`lra`). The four span-interior vertex heights (`y = -2, -1, 1, 2`)
+  are excluded using `ray_avoids_vertices`, exactly as the diamond used the guard
+  at `y = 0`.
+
+Per-edge crossing is captured by six `gK_cross_iff` lemmas (`edge_cross_sign` +
+`lra`), each in clean `(y-band, slack-sign)` form. Three-axiom, no `Admitted`.
+The remaining open residual for a fully general convex *n*-gon is unchanged: the
+convexity ⟹ y-unimodal vertex-order implication, plus a general (rather than
+per-family) exterior-even — the latter needs the convex "between the two boundary
+edges ⟹ inside" fact, which for a concrete polygon is a finite `lra`/`nra`
+consequence of the explicit half-plane coefficients (as exercised here) but is
+the genuine convex content in the general case.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4

@@ -172,6 +172,22 @@ theories/MonotoneChainParity.v
 # residuals; concrete diamond witness exercises the full pipeline.
 theories/ConvexChainSplit.v
 
+# Convex-chain monotonicity campaign, rung 3.5: a GENERAL construction of the
+# bimonotone split from a purely combinatorial y-unimodality hypothesis on the
+# vertex list (convexity not used).  Replaces the per-family hand-built split:
+# the split obligation becomes an arithmetic cbn/lra check.  Re-derives the
+# diamond split in one line; scales to a convex hexagon (n = 6).
+theories/MonotoneChainConstruction.v
+
+# Convex-chain monotonicity campaign, rung 4: the edge-halfplane algebraic
+# bridge for interior_hits_one_chain.  Key identity: hp_slack(edge_inward_hp e)q
+# equals the signed cross-product used by edge_cross_sign, yielding
+# edge_crosses_ray ↔ straddles ∧ hp_slack>0 (inc) / <0 (dec).  Combined with
+# height-band chain coverage (chain_increasing_straddles_y), closes
+# interior_hits_one_chain for any y-unimodal convex ring whose edge inward
+# half-planes are supplied.  Validated on diamond and hexagon.
+theories/MonotoneChainCoverage.v
+
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
 # R-geometry (exact equilateral metrics) while making the horizontal-ray
 # crossing predicate (`edge_crosses_ray` / ray parity) identical to the
@@ -670,6 +686,22 @@ theories/GeneralTriangleOffringSeam.v
 # positive region, guarded interior-odd + exterior-even parity).
 # Three-axiom.  No Admitted.
 theories/ConvexOffringSeam.v
+# The DIAMOND as the FOURTH total family of the off-ring JCT seam (first convex
+# 4-gon; first instantiation of convex_parity_seam_offring_of): diamond_ring
+# presented by its four edge half-planes diamond_hps; the six assembly
+# obligations discharged, with the interior-odd / exterior-even parity via the
+# Qed monotone-chain split (bimonotone_split_parity) + edge_cross_sign.
+# diamond_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
+# p diamond_ring.  Three-axiom.  No Admitted.
+theories/DiamondOffringSeam.v
+# HexagonOffringSeam: the convex HEXAGON as the FIFTH total off-ring JCT family
+# and the FIRST convex polygon with more than four edges (n = 6).  Presents
+# hexagon_ring by its six edge inward half-planes (hexagon_edge_hps); interior-
+# odd via RUNG 4 (hexagon_interior_chain_hit) + bimonotone_split_parity;
+# exterior-even via a six-edge per-band case analysis using the ray guards.
+# hexagon_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
+# p hexagon_ring.  Three-axiom.  No Admitted.
+theories/HexagonOffringSeam.v
 # H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
 # half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
 # ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path
