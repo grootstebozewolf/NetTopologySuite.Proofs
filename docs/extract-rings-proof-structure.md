@@ -841,6 +841,30 @@ guard — is the genuine convex content (it needs the canonical-start rotation p
 single descending run" argument). It is isolated here, to be closed by a follow-up rung.
 Three-axiom, no `Admitted`.
 
+### §11.5i update (2026-06-15): the y-modulator (crossing bound) — inside iff one crossing
+
+`theories/ConvexRayCrossing.v` proves the crossing bound a bimonotone split buys —
+the crisp discrete Jordan characterisation for the convex case, all `Qed`:
+
+- **Each monotone chain is crossed at most once** (count form): `inc_cross_count_le_one`
+  / `dec_cross_count_le_one`. From `inc_chain_le_one_cross` / `dec_chain_le_one_cross`
+  (two crossing edges of a monotone chain are equal) plus the chain's strict y-ordering
+  (`chain_increasing_above` / `chain_decreasing_below`), a head crossing forces zero tail
+  crossings, by induction on the chain.
+- **The whole ring is crossed at most twice** (`convex_ray_crosses_le_two`): for a
+  `bimonotone_split r inc dec`, `cross_count p (ring_edges r) = cross_count p inc +
+  cross_count p dec <= 1 + 1` (via `cross_count_app`).
+- **HEADLINE** (`convex_in_ring_iff_one_crossing`): combine the `<= 2` bound with ray
+  parity (`ray_parity_count`: `point_in_ring p r` ⟺ `Nat.odd (cross_count p (ring_edges r))
+  = true`) — odd and `<= 2` pins the count to exactly `1`. So for a convex / y-unimodal
+  ring, `point_in_ring p r ↔ cross_count p (ring_edges r) = 1`. Where the bare parity seam
+  fixes only the crossing *parity*, convexity fixes the exact *count*.
+
+Validated on the diamond and hexagon (both already carry a `bimonotone_split`). This takes
+the split as hypothesis — supplied generally by the y-modulator (`ConvexYUnimodal.v`) once
+its residual (convexity ⟹ y-unimodal vertex order) is closed, and concretely by every
+family today. Three-axiom, no `Admitted`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
