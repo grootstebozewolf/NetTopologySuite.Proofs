@@ -772,8 +772,15 @@ Euler hypotheses + `num_faces_E_minus_splice` (face delta) + `num_edges_E_minus`
 The sole external consumer — `extract_rings_valid` / `extract_rings_valid_holes` /
 `valid_geometry_extract` in `theories-flocq/OverlayBridge.v` — now carries the
 planar Euler premises (`NoDup`, `euler_characteristic E`, `euler_characteristic
-(E_minus E e)` for each edge, and `num_vertices` invariance) as named hypotheses
-and builds `H_bridge_premise` from them via `H_bridge_premise_from_euler`.  So the
-headline is a conditional Qed with NO `Admitted`, and the deferred-proof registry
+(E_minus E e)` for each edge) as named hypotheses and builds `H_bridge_premise`
+from them via `H_bridge_premise_from_euler`.  So the headline is a conditional Qed
+with NO `Admitted`, and the deferred-proof registry
 (`docs/admitted-deferred-proofs.txt`) is now EMPTY (1 → 0).  The only residual is
 the named planar Euler identity itself, carried by design and never axiomatized.
+
+**Update (2026-06-16, face_twin_free closure rung 1 / H7):** the `num_vertices`
+invariance premise is no longer carried — `theories/VertexDegree.v`
+(`num_vertices_E_minus_eq`) derives it from `no_spurs` + `well_noded_darts`
+(min-degree-2), and `H_bridge_premise_from_euler` now discharges it internally.
+The three `OverlayBridge` headlines dropped the corresponding hypothesis.  See
+`docs/face-twin-free-closure-plan.md`.

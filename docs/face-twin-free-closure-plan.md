@@ -62,7 +62,7 @@ carries (`OverlayBridge.v:490`). Writing `E := result_edges op (noded_labeled_gr
 | H4 | `NoDup E` | **carried** | open (cheap) |
 | H5 | `euler_characteristic E` | **carried** | **open (deep)** |
 | H6 | `∀ e ∈ E, euler_characteristic (E_minus E e)` | **carried** | **open (deep)** |
-| H7 | `∀ e ∈ E, num_vertices (E_minus E e) = num_vertices E` | **carried** | open (cheap) |
+| H7 | `∀ e ∈ E, num_vertices (E_minus E e) = num_vertices E` | **DERIVED** from `no_spurs` + `well_noded_darts` (`VertexDegree.num_vertices_E_minus_eq`) | **DONE (2026-06-16)** |
 
 `euler_characteristic` is `num_vertices E + num_faces E = num_edges E + 2 *
 num_components E` (`EulerArrangement.v:76`), the subtraction-free genus-0 Euler
@@ -72,9 +72,18 @@ identity must survive that.
 
 ## 3. Discharge plan, by hypothesis
 
-### H7 — vertex invariance under edge deletion *(recommended first rung)*
+### H7 — vertex invariance under edge deletion *(DONE — 2026-06-16)*
 
-Goal: `∀ e ∈ E, num_vertices (E_minus E e) = num_vertices E`.
+**Landed** in `theories/VertexDegree.v` (`num_vertices_E_minus_eq`) and wired
+into `H_bridge_premise_from_euler`; the hypothesis is dropped from
+`extract_rings_valid` / `extract_rings_valid_holes` / `valid_geometry_extract`.
+The proof: `no_spur_fan_has_other` (every vertex has an outgoing dart other than
+the edge's reversal — else the face step is a spur, via `next_in`), plus
+`at_most_one_carrier_at_vertex` (the two darts of a proper edge sit at its two
+distinct endpoints), give the reverse inclusion `verts E ⊆ verts (E_minus E e)`;
+equality follows by antisymmetry against the existing `num_vertices_E_minus_le`.
+
+Original goal: `∀ e ∈ E, num_vertices (E_minus E e) = num_vertices E`.
 
 `num_vertices_E_minus_le` (`EulerArrangement.v:124`) already gives `≤`. The
 reverse needs: deleting one edge `e = (u, v)` drops no vertex, i.e. both `u`
@@ -171,9 +180,9 @@ shrinking H4/H7 or landing H3.
 
 ## 4. Recommended ordering
 
-1. **H7** (vertex invariance from `no_spurs`) — removes a carried hypothesis,
-   reuses H2, pure combinatorics. Do this first.
-2. **H4** (`NoDup E` from noding dedup) — mechanical.
+1. ~~**H7** (vertex invariance from `no_spurs`)~~ — **DONE** (2026-06-16,
+   `theories/VertexDegree.v`).
+2. **H4** (`NoDup E` from noding dedup) — mechanical. *(next)*
 3. **H3** (`edge_2_connected` from closed-boundary overlay) — the substantive
    structural rung; reuses existing `EdgeFaceBridge` bypass machinery.
 4. **H5/H6** — keep carried (route A); revisit route (B) only as a separate
