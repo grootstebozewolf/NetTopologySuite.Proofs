@@ -142,7 +142,11 @@ segment intersection machinery but need a **new DE-9IM layer**.
 
 6. **Curve extension (#7):** S12 lands chord rect curve-polygon × point carrier
    (S4 guard delegation); the `to_geometry` point-in-ring bridge (S12b) is now
-   closed (`point_in_rect_curve_geometry_iff_polygon`). General curve surfaces
+   closed (`point_in_rect_curve_geometry_iff_polygon`). The crossing-number
+   transport foundation also landed: `RayParityDegenerate.v` proves a
+   zero-length `(v,v)` edge is parity-neutral, so Phase-3 `point_in_ring` facts
+   can move to `flat_map` chord rings (which carry `(v,v)` edges at joins) — the
+   remaining step to a genuine curve→matrix DE-9IM claim. General curve surfaces
    and arc outer rings remain open.
 
 ## 6. Risk/cost-ordered options for the next (Coq) terminal

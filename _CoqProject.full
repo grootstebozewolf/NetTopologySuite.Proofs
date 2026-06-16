@@ -256,6 +256,12 @@ theories/HoleInsideOuterRect.v
 # docs/point-in-ring-seam-attempts.md for per-seam outcomes.
 # No Admitted, no Axiom, no Parameter.
 theories/PointInRingCorrect.v
+# Issue #67 curve->matrix transport foundation: a zero-length edge (v,v) is
+# parity-neutral for the crossing-number point-in-ring test (it never
+# satisfies edge_crosses_ray's strict y-straddle).  Unblocks transporting
+# Phase-3 point_in_ring facts to flat_map chord rings (which carry (v,v) edges
+# at segment joins).  Pure inductive + lra; zero axioms.  No Admitteds.
+theories/RayParityDegenerate.v
 # Green-phase Seam 3 + Seam 5 tangent attempts.  Probes the four
 # tangents identified in docs/point-in-ring-seams-3-5-7-red.md per
 # seam with simplest-possible implementations.  Tangents that close

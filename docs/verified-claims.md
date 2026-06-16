@@ -716,6 +716,7 @@ so the S4 facts transport to the curve geometry's point set.
 | `RelateCurveAreaPoint.v : cap_matrix_rect_contains_point_witness` | **Witness:** the reused S4 matrix satisfies `Contains` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_touches_boundary_witness` | **Witness:** the reused S4 matrix satisfies `Touches` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : point_in_rect_curve_geometry_iff_polygon` | **Bridge (S12b):** the curve geometry's point set (`point_set ∘ to_geometry`) coincides with `point_in_polygon` of the single linearised rectangle ring — `to_geometry` is the singleton chord-approx map (no holes), `point_set` over a singleton is membership in its sole element. Lets the S4 Contains/Touches facts transport to curve-polygon×point unchanged. Pure structural computation (**0 axioms**) `[exact]` | 0 |
+| `RayParityDegenerate.v : ray_parity_zero_edge_irrelevant` (+ `edge_crosses_ray_degenerate`, `rpo_cons_iff`, `rpe_cons_iff`, `point_in_ring_dup_head`) | **Curve→matrix transport foundation (issue #67):** a zero-length edge `(v,v)` is parity-neutral for the crossing-number `point_in_ring` test — it never meets `edge_crosses_ray`'s strict y-straddle, so it always takes the `_skip` branch; inserting/removing one anywhere preserves both parities. Unblocks transporting Phase-3 `point_in_ring` facts to `flat_map` chord rings, which carry `(v,v)` edges at every segment join. Pure inductive + `lra` `[exact]` | 3 |
 
 ## Issue #67 — curve-polygon×point regime→witness (`RelateMatrixCurveAreaPoint.v`, S12)
 
