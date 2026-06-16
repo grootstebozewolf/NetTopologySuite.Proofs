@@ -52,6 +52,8 @@
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance Overlay CurveGeometry CurveLinearise
   RelateCurveAreaPoint RayParityDegenerate.
+From NTS.Proofs Require Import PointInRingCorrect JordanCurveSeam
+  GeneralTriangleSeparation GeneralTriangleJCT.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -210,7 +212,76 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §5  Audit footprint.                                                       *)
+(* §5  Contains: a guarded control-triangle interior point is in the lens.     *)
+(*                                                                            *)
+(* The control triangle of §3 is exactly `GeneralTriangleSeparation.gtri_ring` *)
+(* on the arc's three control points, so the general-triangle JCT layer        *)
+(* (`GeneralTriangleJCT`) applies verbatim.  `gtri_interior_in_ring` needs NO   *)
+(* orientation hypothesis — `0 < gtri p` itself forces CCW — and the rightward- *)
+(* ray genericity guard `ray_avoids_vertices` rules out the middle-vertex graze *)
+(* (JCT_VertexGrazingCounterexample).  Composing it with the §4 transport lands *)
+(* the first genuine Contains direction for an arc-bearing curve geometry.      *)
+(* -------------------------------------------------------------------------- *)
+
+(* The §3 control triangle IS `gtri_ring` on the arc control points. *)
+Lemma gtri_ring_arc_control :
+  forall a,
+    gtri_ring (px (arc_start a)) (py (arc_start a))
+              (px (arc_mid a))   (py (arc_mid a))
+              (px (arc_end a))   (py (arc_end a))
+    = [arc_start a; arc_mid a; arc_end a; arc_start a].
+Proof.
+  intros a. unfold gtri_ring.
+  destruct (arc_start a), (arc_mid a), (arc_end a). reflexivity.
+Qed.
+
+(* Contains: an interior-side (`0 < gtri`) point of the control triangle, under
+   the ray-genericity guard, lies in the arc-segment curve geometry. *)
+Theorem arc_seg_control_interior_in_curve_geometry :
+  forall a n p,
+    0 < gtri (px (arc_start a)) (py (arc_start a))
+             (px (arc_mid a))   (py (arc_mid a))
+             (px (arc_end a))   (py (arc_end a)) p ->
+    ray_avoids_vertices p
+      (gtri_ring (px (arc_start a)) (py (arc_start a))
+                 (px (arc_mid a))   (py (arc_mid a))
+                 (px (arc_end a))   (py (arc_end a))) ->
+    point_in_arc_seg_curve_geometry a n p.
+Proof.
+  intros a n p Hpos Hrav.
+  apply (proj2 (point_in_arc_seg_curve_geometry_iff_triangle a n p)).
+  rewrite <- (gtri_ring_arc_control a).
+  apply gtri_interior_in_ring; [ exact Hpos | exact Hrav ].
+Qed.
+
+(* The full parity ↔ continuous-interior characterisation transported to the
+   lens: for guarded control-triangle interior points, membership in the curve
+   geometry IS the continuous geometric interior of the control triangle — the
+   arc analogue of the rectangle/right-triangle H1 instances. *)
+Theorem point_in_arc_seg_curve_geometry_iff_control_interior :
+  forall a n p,
+    0 < gtri (px (arc_start a)) (py (arc_start a))
+             (px (arc_mid a))   (py (arc_mid a))
+             (px (arc_end a))   (py (arc_end a)) p ->
+    ray_avoids_vertices p
+      (gtri_ring (px (arc_start a)) (py (arc_start a))
+                 (px (arc_mid a))   (py (arc_mid a))
+                 (px (arc_end a))   (py (arc_end a))) ->
+    (point_in_arc_seg_curve_geometry a n p
+     <-> geometric_interior_cont p
+           (gtri_ring (px (arc_start a)) (py (arc_start a))
+                      (px (arc_mid a))   (py (arc_mid a))
+                      (px (arc_end a))   (py (arc_end a)))).
+Proof.
+  intros a n p Hpos Hrav.
+  rewrite (point_in_arc_seg_curve_geometry_iff_triangle a n p).
+  rewrite <- (gtri_ring_arc_control a).
+  exact (general_triangle_parity_characterises_interior
+           _ _ _ _ _ _ p Hpos Hrav).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions valid_arc_seg_curve_ring.
@@ -218,3 +289,5 @@ Print Assumptions arc_seg_linearised_ring_closed.
 Print Assumptions point_in_ring_arc_seg_iff.
 Print Assumptions point_in_arc_seg_curve_polygon_iff_triangle.
 Print Assumptions point_in_arc_seg_curve_geometry_iff_triangle.
+Print Assumptions arc_seg_control_interior_in_curve_geometry.
+Print Assumptions point_in_arc_seg_curve_geometry_iff_control_interior.
