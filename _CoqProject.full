@@ -569,6 +569,13 @@ theories/RelateArcAnalytic.v
 theories/RelateMatrixArcAnalytic.v
 theories/RelateClothoid.v
 theories/RelateMatrixClothoid.v
+# Issue #67 S10b follow-up: the law-of-cosines chord-length bridge at
+# arc_sweep_angle (the analytic gap RelateArcAnalytic/RelateClothoid defer).
+# Squared form: dist_sq(start,end) = 2*dist_sq(center,start)*(1-cos sweep),
+# via a provider-agnostic equal-norm law of cosines over cos_angle_between.
+# 4-axiom (cos.angle_between.atan2 -> classic); exempted in audit-exceptions.
+# No Admitteds.
+theories/ArcChordLength.v
 # Issue #67 session 12 (S12): curve-polygon × point relate + fill — chord rect
 # COMPOUNDCURVE carrier; S4 guard delegation (full `to_geometry` point-in-ring
 # bridge deferred S12b).  Seventh fill API `curve_point_fill`.  No Admitted.

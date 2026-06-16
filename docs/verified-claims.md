@@ -624,6 +624,7 @@ alongside `Atan2.v` / `AngleBetween.v` / `ArcLength.v`.
 |---|---|---|
 | `RelateArcAnalytic.v : arc_sweep_principal_range` | **Geometry:** `valid_arc` ⇒ principal sweep `arc_sweep_angle` ∈ (-π, π] (inherits `Classical_Prop.classic` via `AngleBetween`) `[exact]` | 4 |
 | `RelateArcAnalytic.v : arc_analytic_proper_cross_share` | **Geometry:** analytic-guarded proper cross ⇒ shared point (S10 delegate) `[exact]` | 4 |
+| `ArcChordLength.v : arc_chord_dist_sq_via_sweep` (+ `law_of_cosines_equal_norm`) | **Geometry (issue #67 S10b bridge):** the deferred law-of-cosines chord-length step, in squared form — `dist_sq(start,end) = 2·dist_sq(center,start)·(1 − cos(arc_sweep_angle))`, i.e. `chord² = 2r²(1 − cos θ)`. Provider-agnostic equal-norm law of cosines (`law_of_cosines_equal_norm`) over `cos_angle_between`, instantiated at the center-to-endpoint vectors (equal norm by `arc_center_equidistant`). Closes the `RelateArcAnalytic`/`RelateClothoid` "pose/set transparency seam" deferral; squared form avoids the sqrt/half-angle sign guard `[exact]` | 4 |
 
 ## Issue #67 — arc×line analytic regime→witness (`RelateMatrixArcAnalytic.v`, S10b)
 

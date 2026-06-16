@@ -75,7 +75,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#4 RelateNG algorithm** | **ABSENT** | — | No noding + matrix-fill pipeline; JTS uses point-local topology + union semantics for collections. |
 | **#5 Prepared-mode correctness** | **ABSENT** | — | NTS#819 is perf-only; proof obligation is `evaluate(B) = relate(A,B)` regardless of cache. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
-| **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`); arc-span soundness + chord-length bridge remain open. |
+| **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) still open. |
 
 ## 4. Inventory of reusable assets
 
@@ -168,9 +168,12 @@ open; S11 oracle modes landed). The recommended path forward:
 - **S10b (done):** Option-A analytic arc (`RelateArcAnalytic.v`,
   `RelateMatrixArcAnalytic.v`); clothoid chord seed (`RelateClothoid.v`,
   `RelateMatrixClothoid.v`); oracle seeds
-  `de9im_arc_analytic_vectors.txt`, `de9im_clothoid_vectors.txt`. Open:
-  law-of-cosines chord-length bridge at `arc_sweep_angle`; the clothoid
-  lane's remaining open questions are triaged in
+  `de9im_arc_analytic_vectors.txt`, `de9im_clothoid_vectors.txt`. The
+  **law-of-cosines chord-length bridge at `arc_sweep_angle` is now CLOSED**
+  (`ArcChordLength.v : arc_chord_dist_sq_via_sweep`, squared form
+  `dist_sq(start,end) = 2·dist_sq(center,start)·(1 − cos sweep)`, built on a
+  provider-agnostic `law_of_cosines_equal_norm` over `cos_angle_between`); the
+  clothoid lane's remaining open questions are triaged in
   [`clothoid-open-questions-triage.md`](clothoid-open-questions-triage.md).
 - **S11 (done):** `RELATE_MATRIX` / `RELATE_PREDICATE` oracle modes.
 - **S12 (done):** curve-polygon × point carrier + fill (`RelateCurveAreaPoint.v`,
