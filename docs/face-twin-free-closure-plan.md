@@ -149,17 +149,22 @@ Euler-routed headlines are kept unchanged.
 Goal: `euler_characteristic E` and `euler_characteristic (E_minus E e)` for
 every `e`.
 
-**Status:** confirmed irreducible and carried (route A). A **non-vacuity
-witness** landed in `theories/EulerWitness.v` — `w1_euler :
-euler_characteristic [(a,b)]` (the analogue of `single_edge_is_cut`), proving
-the premise is correct and satisfiable on a concrete arrangement (V=2,F=1,E=1,
-C=1) via the singleton-fan `fstep` reduction + `count_classes_eq_1`. The
+**Status:** confirmed irreducible and carried (route A), with **two non-vacuity
+witnesses** landed in `theories/EulerWitness.v`:
+- `w1_euler : euler_characteristic [(a,b)]` (analogue of `single_edge_is_cut`) —
+  the connected case, V=2,F=1,E=1,C=1.
+- `w2_euler : euler_characteristic [(a,b);(c,d)]` — two disjoint edges,
+  V=4,F=2,E=2,C=2, **validating the `2*C` coefficient (C=2), not `1+C`**.
+
+Both use singleton-fan `fstep` reductions (no coordinate arithmetic) and drive
+`num_faces`/`num_components` via `count_classes_eq_1` (W1) or bottom-up
+`class_reps_cons` + interleaved `cbn` on the orbit/reachability guards (W2) — the
+latter sidesteps `same_orbit_b` transitivity / `fstep` injectivity entirely. The
 `euler_characteristic` definition is **never proven in general** (16 sites, all
-hypotheses) — confirmed greenfield. Two further witnesses are **deferred**
-(documented in `EulerWitness.v` §3): W2 (two disjoint edges, would validate the
-`2*C` coefficient with C=2 — blocked on `same_orbit_b` transitivity =
-`fstep` injectivity case-work) and W3 (triangle, the canonical genus-0 face —
-degree-2 fans need concrete angular `lra`).
+hypotheses) — confirmed greenfield. Only **W3** (triangle, the canonical genus-0
+face) is deferred (`EulerWitness.v` §4): its degree-2 fans need concrete angular
+`lra` and a bespoke 3-cycle orbit chain. Route B (discharge the general identity
+from geometric planarity) remains a separate long-horizon project.
 
 This is a **genus-0** fact. As documented in `EdgeFaceBridge.v:1340`,
 per-vertex `fan_ok` constrains only the *local* angular order at each vertex;
@@ -199,9 +204,9 @@ shrinking H4/H7 or landing H3.
    is now proven both ways (converse is Euler-free), and `*_sep` headline
    variants carry the equivalent precondition directly.
 4. ~~**H5/H6**~~ — **RESOLVED** (2026-06-16): irreducible (genus-0), carried by
-   design (route A); non-vacuity witness `w1_euler` landed in
-   `theories/EulerWitness.v`. Route B (prove genus-0 from geometry) is a
-   separate greenfield planarity project.
+   design (route A); non-vacuity witnesses `w1_euler` (C=1) and `w2_euler`
+   (C=2, validating the `2*C` form) landed in `theories/EulerWitness.v`. Route B
+   (prove genus-0 from geometry) is a separate greenfield planarity project.
 
 ## Seam analysis: COMPLETE (2026-06-16)
 
@@ -216,7 +221,7 @@ witnessed):
 | H7 | vertex invariance | **discharged** from `no_spurs` (`VertexDegree`) |
 | H4 | `NoDup E` | **discharged** from the noding construction (`ExtractFaces`/`OverlayBridge`) |
 | H3 | `edge_2_connected` | **irreducible** (dumbbell); ⟺ `twins_in_different_faces` proven both ways; `*_sep` variants carry the equivalent directly |
-| H5/H6 | planar Euler identity | **irreducible** (genus-0); carried by design; witnessed by `w1_euler` |
+| H5/H6 | planar Euler identity | **irreducible** (genus-0); carried by design; witnessed by `w1_euler` (C=1) and `w2_euler` (C=2) |
 
 The two genuinely irreducible geometric inputs are **(a)** 2-edge-connectivity
 (`edge_2_connected` ⟺ `twins_in_different_faces`) and **(b)** the planar-Euler

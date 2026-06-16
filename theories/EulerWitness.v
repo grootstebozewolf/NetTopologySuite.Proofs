@@ -12,16 +12,17 @@
    `triangle_2_connected` for `is_cut_edge` / `edge_2_connected` -- confirming
    the premise is correct and satisfiable.
 
-   W1 (LANDED): single edge   V=2, F=1, E=1, C=1   (2+1 = 1+2*1).
-   W2 (deferred): two disjoint edges -- would validate the `2*C` form (C=2).
-   W3 (deferred): triangle    -- the canonical genus-0 face.
-   See the §3 comment block at the end for the W2/W3 deferral rationale.
+   W1 (LANDED): single edge        V=2, F=1, E=1, C=1   (2+1 = 1+2*1).
+   W2 (LANDED): two disjoint edges  V=4, F=2, E=2, C=2   (4+2 = 2+2*2) --
+       validates the `2*C` coefficient (C=2), not `1+C`.
+   W3 (deferred): triangle -- the canonical genus-0 face; see §4.
 
-   W1 has SINGLETON outgoing fans, so `fstep` is determined without any
+   W1/W2 have SINGLETON outgoing fans, so `fstep` is determined without any
    coordinate arithmetic (the only sub-`lra` fact is the dart-order
    self-irreflexivity `dart_ltb d d = false`).  `num_faces`/`num_components` are
-   driven through the high-level `ClassCount.count_classes_eq_1` (all darts /
-   vertices in a single class) rather than raw `class_reps` unfolding.
+   driven either through `ClassCount.count_classes_eq_1` (W1, single class) or
+   bottom-up via `class_reps_cons` (W2), rewriting each `existsb`/relation guard
+   by its proved value -- never by raw `class_reps`/`Rlt_dec` computation.
 
    Pure dart + list + class-count combinatorics; no `Admitted` / `Axiom` /
    `Parameter`; allowlist axioms only.
@@ -64,6 +65,16 @@ Lemma fstep_of_singleton_fan : forall E d,
 Proof.
   intros E d H. unfold fstep. rewrite H. apply next_self_singleton.
 Qed.
+
+(* One-step unfold of `class_reps` -- lets us drive a concrete count bottom-up
+   (rewriting each `existsb`/relation guard by its proved value) without the
+   transitivity/closure premises of `count_classes_filter_split`. *)
+Lemma class_reps_cons :
+  forall (A : Type) (rb : A -> A -> bool) (x : A) (l : list A),
+    class_reps rb (x :: l) =
+      (if existsb (fun z => rb z x) (class_reps rb l)
+       then class_reps rb l else x :: class_reps rb l).
+Proof. reflexivity. Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §2  W1: a single edge `[(a,b)]`.                                            *)
@@ -183,26 +194,226 @@ Section W1.
 End W1.
 
 (* -------------------------------------------------------------------------- *)
-(* §3  W2 (two disjoint edges) and W3 (triangle): DEFERRED.                    *)
+(* §3  W2: two disjoint edges `[(a,b);(c,d)]` -- validates the `2*C` form (C=2). *)
+(* -------------------------------------------------------------------------- *)
+
+Section W2.
+  Variables a b c d : Point.
+  Hypotheses (Hab : a <> b) (Hcd : c <> d)
+             (Hac : a <> c) (Had : a <> d) (Hbc : b <> c) (Hbd : b <> d).
+
+  Local Notation E2 := [(a, b); (c, d)] (only parsing).
+  Local Notation D2 := [(a, b); (c, d); (b, a); (d, c)] (only parsing).
+
+  Lemma w2_darts : darts_of E2 = [(a, b); (c, d); (b, a); (d, c)].
+  Proof. reflexivity. Qed.
+
+  Lemma w2_outgoing_b : outgoing b (darts_of E2) = [(b, a)].
+  Proof.
+    rewrite w2_darts. unfold outgoing. cbn [filter dbase fst snd].
+    destruct (point_eq_dec a b) as [H|_]; [ exfalso; apply Hab; exact H | ].
+    destruct (point_eq_dec c b) as [H|_]; [ exfalso; apply Hbc; symmetry; exact H | ].
+    destruct (point_eq_dec b b) as [_|H]; [ | exfalso; apply H; reflexivity ].
+    destruct (point_eq_dec d b) as [H|_]; [ exfalso; apply Hbd; symmetry; exact H | ].
+    reflexivity.
+  Qed.
+
+  Lemma w2_outgoing_a : outgoing a (darts_of E2) = [(a, b)].
+  Proof.
+    rewrite w2_darts. unfold outgoing. cbn [filter dbase fst snd].
+    destruct (point_eq_dec a a) as [_|H]; [ | exfalso; apply H; reflexivity ].
+    destruct (point_eq_dec c a) as [H|_]; [ exfalso; apply Hac; symmetry; exact H | ].
+    destruct (point_eq_dec b a) as [H|_]; [ exfalso; apply Hab; symmetry; exact H | ].
+    destruct (point_eq_dec d a) as [H|_]; [ exfalso; apply Had; symmetry; exact H | ].
+    reflexivity.
+  Qed.
+
+  Lemma w2_outgoing_d : outgoing d (darts_of E2) = [(d, c)].
+  Proof.
+    rewrite w2_darts. unfold outgoing. cbn [filter dbase fst snd].
+    destruct (point_eq_dec a d) as [H|_]; [ exfalso; apply Had; exact H | ].
+    destruct (point_eq_dec c d) as [H|_]; [ exfalso; apply Hcd; exact H | ].
+    destruct (point_eq_dec b d) as [H|_]; [ exfalso; apply Hbd; exact H | ].
+    destruct (point_eq_dec d d) as [_|H]; [ | exfalso; apply H; reflexivity ].
+    reflexivity.
+  Qed.
+
+  Lemma w2_outgoing_c : outgoing c (darts_of E2) = [(c, d)].
+  Proof.
+    rewrite w2_darts. unfold outgoing. cbn [filter dbase fst snd].
+    destruct (point_eq_dec a c) as [H|_]; [ exfalso; apply Hac; exact H | ].
+    destruct (point_eq_dec c c) as [_|H]; [ | exfalso; apply H; reflexivity ].
+    destruct (point_eq_dec b c) as [H|_]; [ exfalso; apply Hbc; exact H | ].
+    destruct (point_eq_dec d c) as [H|_]; [ exfalso; apply Hcd; symmetry; exact H | ].
+    reflexivity.
+  Qed.
+
+  Lemma w2_fstep_ab : fstep (darts_of E2) (a, b) = (b, a).
+  Proof. apply (fstep_of_singleton_fan E2 (a, b)). cbn [dtip twin fst snd]. exact w2_outgoing_b. Qed.
+  Lemma w2_fstep_ba : fstep (darts_of E2) (b, a) = (a, b).
+  Proof. apply (fstep_of_singleton_fan E2 (b, a)). cbn [dtip twin fst snd]. exact w2_outgoing_a. Qed.
+  Lemma w2_fstep_cd : fstep (darts_of E2) (c, d) = (d, c).
+  Proof. apply (fstep_of_singleton_fan E2 (c, d)). cbn [dtip twin fst snd]. exact w2_outgoing_d. Qed.
+  Lemma w2_fstep_dc : fstep (darts_of E2) (d, c) = (c, d).
+  Proof. apply (fstep_of_singleton_fan E2 (d, c)). cbn [dtip twin fst snd]. exact w2_outgoing_c. Qed.
+
+  Lemma w2_orbit_block1 : forall n x,
+    In x [(a, b); (b, a)] -> In (iter (fstep (darts_of E2)) n x) [(a, b); (b, a)].
+  Proof.
+    induction n as [| n IH]; intros x Hx; [ exact Hx | ].
+    cbn [iter]. specialize (IH x Hx).
+    cbn [In] in IH. destruct IH as [<- | [<- | []]].
+    - rewrite w2_fstep_ab. right; left; reflexivity.
+    - rewrite w2_fstep_ba. left; reflexivity.
+  Qed.
+
+  Lemma w2_orbit_block2 : forall n x,
+    In x [(c, d); (d, c)] -> In (iter (fstep (darts_of E2)) n x) [(c, d); (d, c)].
+  Proof.
+    induction n as [| n IH]; intros x Hx; [ exact Hx | ].
+    cbn [iter]. specialize (IH x Hx).
+    cbn [In] in IH. destruct IH as [<- | [<- | []]].
+    - rewrite w2_fstep_cd. right; left; reflexivity.
+    - rewrite w2_fstep_dc. left; reflexivity.
+  Qed.
+
+  Lemma w2_num_edges : num_edges E2 = 2.
+  Proof. reflexivity. Qed.
+
+  Lemma w2_verts_nodup : nodup point_eq_dec (verts E2) = [a; b; c; d].
+  Proof.
+    unfold verts. cbn [flat_map app fst snd]. cbn [nodup].
+    destruct (in_dec point_eq_dec a [b; c; d]) as [H|_].
+    { exfalso. cbn in H. destruct H as [H|[H|[H|[]]]]; congruence. }
+    destruct (in_dec point_eq_dec b [c; d]) as [H|_].
+    { exfalso. cbn in H. destruct H as [H|[H|[]]]; congruence. }
+    destruct (in_dec point_eq_dec c [d]) as [H|_].
+    { exfalso. cbn in H. destruct H as [H|[]]; congruence. }
+    reflexivity.
+  Qed.
+
+  Lemma w2_num_vertices : num_vertices E2 = 4.
+  Proof. unfold num_vertices. rewrite w2_verts_nodup. reflexivity. Qed.
+
+  (* Reachability blocks: the two edges are disconnected. *)
+  Lemma w2_block_inv : forall x y, reachable E2 x y -> (In x [a; b] <-> In y [a; b]).
+  Proof.
+    intros x y H. induction H as [u | u v w Hadj Hr IH]; [ reflexivity | ].
+    rewrite <- IH. clear IH Hr w.
+    destruct Hadj as [e [He Hor]]. cbn [In] in He.
+    destruct He as [<- | [<- | []]]; cbn [fst snd] in Hor.
+    - destruct Hor as [[<- <-] | [<- <-]]; cbn; tauto.
+    - destruct Hor as [[<- <-] | [<- <-]]; cbn;
+        (split; intro HH; destruct HH as [HH|[HH|[]]];
+         exfalso; congruence).
+  Qed.
+
+  Lemma w2_reach_ab : reachable E2 a b.
+  Proof. apply reach_one. exists (a, b). split; [ left; reflexivity | left; split; reflexivity ]. Qed.
+  Lemma w2_reach_cd : reachable E2 c d.
+  Proof. apply reach_one. exists (c, d). split; [ right; left; reflexivity | left; split; reflexivity ]. Qed.
+
+  (* num_components = 2, driven bottom-up via class_reps_cons. *)
+  Lemma w2_num_components : num_components E2 = 2.
+  Proof.
+    assert (Hdc : reachable_b E2 d c = true)
+      by (apply reachable_b_true_iff; apply reach_sym; exact w2_reach_cd).
+    assert (Hba : reachable_b E2 b a = true)
+      by (apply reachable_b_true_iff; apply reach_sym; exact w2_reach_ab).
+    assert (Hdb : reachable_b E2 d b = false).
+    { destruct (reachable_b E2 d b) eqn:Hr; [ exfalso | reflexivity ].
+      apply reachable_b_true_iff in Hr. apply w2_block_inv in Hr.
+      destruct Hr as [_ Hbwd].
+      assert (Hb : In b [a; b]) by (cbn; right; left; reflexivity).
+      specialize (Hbwd Hb). cbn in Hbwd. destruct Hbwd as [Hd|[Hd|[]]]; congruence. }
+    unfold num_components, comp_reps. rewrite w2_verts_nodup.
+    assert (C1 : class_reps (reachable_b E2) [d] = [d]) by reflexivity.
+    assert (C2 : class_reps (reachable_b E2) [c; d] = [d]).
+    { rewrite class_reps_cons, C1. cbn [existsb]. rewrite Hdc. reflexivity. }
+    assert (C3 : class_reps (reachable_b E2) [b; c; d] = [b; d]).
+    { rewrite class_reps_cons, C2. cbn [existsb]. rewrite Hdb. reflexivity. }
+    rewrite class_reps_cons, C3. cbn [existsb]. rewrite Hba. reflexivity.
+  Qed.
+
+  (* Orbit (face) relation values. *)
+  Lemma w2_same_orbit_true : forall x y,
+    fstep (darts_of E2) x = y ->
+    same_orbit_b dart_eq_dec (fstep (darts_of E2)) (darts_of E2) x y = true.
+  Proof.
+    intros x y Hxy. unfold same_orbit_b. apply existsb_exists.
+    exists 1%nat. split; [ apply in_seq; rewrite w2_darts; cbn; lia | ].
+    cbn [iter]. rewrite Hxy.
+    destruct (dart_eq_dec y y) as [_|Hn]; [ reflexivity | exfalso; apply Hn; reflexivity ].
+  Qed.
+
+  Lemma w2_same_orbit_false_12 : forall x y,
+    In x [(a, b); (b, a)] -> In y [(c, d); (d, c)] ->
+    same_orbit_b dart_eq_dec (fstep (darts_of E2)) (darts_of E2) x y = false.
+  Proof.
+    intros x y Hx Hy.
+    destruct (same_orbit_b dart_eq_dec (fstep (darts_of E2)) (darts_of E2) x y) eqn:Hc;
+      [ exfalso | reflexivity ].
+    unfold same_orbit_b in Hc. apply existsb_exists in Hc.
+    destruct Hc as [n [_ Hp]]. cbn beta in Hp.
+    destruct (dart_eq_dec (iter (fstep (darts_of E2)) n x) y) as [Heq | _]; [ | discriminate Hp ].
+    pose proof (w2_orbit_block1 n x Hx) as Ho. rewrite Heq in Ho.
+    cbn [In] in Hy, Ho. destruct Hy as [Hy|[Hy|[]]]; destruct Ho as [Ho|[Ho|[]]]; congruence.
+  Qed.
+
+  Lemma w2_same_orbit_false_21 : forall x y,
+    In x [(c, d); (d, c)] -> In y [(a, b); (b, a)] ->
+    same_orbit_b dart_eq_dec (fstep (darts_of E2)) (darts_of E2) x y = false.
+  Proof.
+    intros x y Hx Hy.
+    destruct (same_orbit_b dart_eq_dec (fstep (darts_of E2)) (darts_of E2) x y) eqn:Hc;
+      [ exfalso | reflexivity ].
+    unfold same_orbit_b in Hc. apply existsb_exists in Hc.
+    destruct Hc as [n [_ Hp]]. cbn beta in Hp.
+    destruct (dart_eq_dec (iter (fstep (darts_of E2)) n x) y) as [Heq | _]; [ | discriminate Hp ].
+    pose proof (w2_orbit_block2 n x Hx) as Ho. rewrite Heq in Ho.
+    cbn [In] in Hy, Ho. destruct Hy as [Hy|[Hy|[]]]; destruct Ho as [Ho|[Ho|[]]]; congruence.
+  Qed.
+
+  (* num_faces = 2, driven bottom-up via class_reps_cons. *)
+  Lemma w2_num_faces : num_faces E2 = 2.
+  Proof.
+    assert (Hdcba : same_orbit_b dart_eq_dec (fstep D2) D2 (d, c) (b, a) = false)
+      by (apply w2_same_orbit_false_21; cbn; tauto).
+    assert (Hbacd : same_orbit_b dart_eq_dec (fstep D2) D2 (b, a) (c, d) = false)
+      by (apply w2_same_orbit_false_12; cbn; tauto).
+    assert (Hdccd : same_orbit_b dart_eq_dec (fstep D2) D2 (d, c) (c, d) = true)
+      by (apply w2_same_orbit_true; apply w2_fstep_dc).
+    assert (Hbaab : same_orbit_b dart_eq_dec (fstep D2) D2 (b, a) (a, b) = true)
+      by (apply w2_same_orbit_true; apply w2_fstep_ba).
+    unfold num_faces, cycle_count, orbit_reps.
+    assert (HD : darts_of E2 = D2) by reflexivity. rewrite HD.
+    (* drive class_reps innermost-out: rewrite each orbit guard then cbn the
+       now-concrete inner list so the next existsb can reduce. *)
+    cbn [class_reps existsb orb].
+    rewrite Hdcba. cbn [existsb orb].
+    rewrite Hbacd, Hdccd. cbn [existsb orb].
+    rewrite Hbaab. reflexivity.
+  Qed.
+
+  Theorem w2_euler : euler_characteristic E2.
+  Proof.
+    unfold euler_characteristic.
+    rewrite w2_num_vertices, w2_num_edges, w2_num_faces, w2_num_components.
+    reflexivity.
+  Qed.
+
+End W2.
+
+(* -------------------------------------------------------------------------- *)
+(* §4  W3 (triangle): DEFERRED.                                                *)
 (*                                                                            *)
-(* W2 `[(a,b);(c,d)]` (V=4,E=2,F=2,C=2) would additionally validate the `2*C`  *)
-(* coefficient (C=2).  Its structural facts are clean and singleton-fan based  *)
-(* (the `fstep` swaps, the per-edge orbit/reachability blocks), and            *)
-(* `num_components=2` is reachable via `ClassCount.count_classes_filter_split`  *)
-(* (split [a;b;c;d] into the two edge blocks).  The blocker is `num_faces=2`:  *)
-(* driving `cycle_count` past the nested `class_reps` needs `same_orbit_b`      *)
-(* transitivity on the 4 darts, which routes through `same_orbit_b_complete`'s  *)
-(* `fstep` closure + injectivity hypotheses -- a disproportionate amount of     *)
-(* finite case-work for a non-vacuity witness.                                 *)
-(*                                                                            *)
-(* W3 `[(A,B);(B,C);(C,A)]` (V=3,E=3,F=2,C=1, the canonical genus-0 face) has   *)
-(* DEGREE-2 vertices, so each `fstep` value needs a concrete `lra`/`nra`        *)
-(* discharge on a `vcross`, and `num_faces=2` then needs the two 3-cycle face   *)
-(* orbits hand-chained through the six `fstep` equations.                      *)
-(*                                                                            *)
-(* W1 above already establishes that `euler_characteristic` is correct and     *)
-(* satisfiable on a concrete arrangement (the connected C=1 case).  W2/W3 are   *)
-(* left as documented follow-ups; see docs/face-twin-free-closure-plan.md.     *)
+(* The canonical genus-0 witness `[(A,B);(B,C);(C,A)]` (e.g. A=(0,0),B=(1,0),  *)
+(* C=(0,1)) has V=3,E=3,F=2,C=1.  Unlike W1/W2 its vertices have DEGREE 2, so  *)
+(* `next` must order two distinct darts by angle: each `fstep` value needs a   *)
+(* concrete `lra`/`nra` discharge on a `vcross`, and `num_faces=2` then needs  *)
+(* the two 3-cycle face orbits chained by hand through the six `fstep`         *)
+(* equations.  Feasible but disproportionate for a non-vacuity witness; W1     *)
+(* (C=1) and W2 (C=2) already validate the identity and the `2*C` coefficient. *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
@@ -210,3 +421,4 @@ End W1.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions w1_euler.
+Print Assumptions w2_euler.
