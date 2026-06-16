@@ -12,9 +12,12 @@
    per-dart reachability conjuncts each follow from
    `EulerBridge.H_bridge_core_conclusion_from_euler` once its FACE delta is
    supplied by the now-proved `NumFacesSplice.num_faces_E_minus_splice`; the edge
-   delta comes from `NoDup E` (simple edge list) via `num_edges_E_minus`, and the
-   vertex invariance + the two `euler_characteristic` instances stay named
-   hypotheses (the planar identity is carried, not axiomatized).
+   delta comes from `NoDup E` (simple edge list) via `num_edges_E_minus`.  The
+   vertex invariance `num_vertices (E_minus E e) = num_vertices E` is no longer a
+   carried hypothesis: it is DERIVED here from `no_spurs` + `well_noded_darts` via
+   `VertexDegree.num_vertices_E_minus_eq` (min-degree-2).  Only the two
+   `euler_characteristic` instances stay named hypotheses (the planar identity is
+   carried, not axiomatized).
 
    The headline `extract_rings_valid` (OverlayBridge.v) supplies this lemma's
    hypotheses, so the corpus has NO `Admitted` -- the residual is exactly the
@@ -33,6 +36,7 @@ From Stdlib Require Import List Arith Lia.
 From NTS.Proofs Require Import Distance Overlay OverlayGraph Dart DartNextSpec
                                DartAngularOrder DartFace FaceOrbitSep NoShortFaces
                                ExtractFaces EdgeConnectivity EdgeFaceBridge
+                               VertexGeneralPosition VertexDegree
                                MapCounts EulerArrangement EulerBridge NumFacesSplice.
 
 Import ListNotations.
@@ -42,13 +46,16 @@ Import ListNotations.
 Theorem H_bridge_premise_from_euler : forall (E : list Edge),
   (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
   no_spurs (darts_of E) ->
+  well_noded_darts E ->
   NoDup E ->
   euler_characteristic E ->
   (forall e, In e E -> euler_characteristic (E_minus E e)) ->
-  (forall e, In e E -> num_vertices (E_minus E e) = num_vertices E) ->
   H_bridge_premise E.
 Proof.
-  intros E Hfan Hns Hnodup HeulE HeulEm HvertEm.
+  intros E Hfan Hns Hwn Hnodup HeulE HeulEm.
+  (* H7 (vertex invariance) is now derived from no_spurs + well_noded, not carried. *)
+  assert (HvertEm : forall e, In e E -> num_vertices (E_minus E e) = num_vertices E)
+    by (intros e He; apply num_vertices_E_minus_eq; assumption).
   assert (Hao : arrangement_ok (darts_of E))
     by (split; [ apply darts_of_closed_under_twin | exact Hfan ]).
   intros d Hd Hsf Hde. split.

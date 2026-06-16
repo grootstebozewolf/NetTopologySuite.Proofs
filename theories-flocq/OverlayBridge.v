@@ -496,14 +496,11 @@ Theorem extract_rings_valid :
     euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
     (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
        euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
-    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
-       num_vertices (E_minus (result_edges op (noded_labeled_graph A B)) e)
-         = num_vertices (result_edges op (noded_labeled_graph A B))) ->
     forall poly,
       In poly (extract_faces op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros op A B Hwn Hns H2ec Hnd Heul HeulM HvM poly Hin.
+  intros op A B Hwn Hns H2ec Hnd Heul HeulM poly Hin.
   assert (Hfan : forall v : Point,
             fan_ok (outgoing v (darts_of (result_edges op (noded_labeled_graph A B))))).
   { intro v. apply well_noded_fan_ok. exact Hwn. }
@@ -525,9 +522,6 @@ Theorem extract_rings_valid_holes :
     euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
     (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
        euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
-    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
-       num_vertices (E_minus (result_edges op (noded_labeled_graph A B)) e)
-         = num_vertices (result_edges op (noded_labeled_graph A B))) ->
     (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
        forall h, In h (hassign d) ->
          In h (result_darts op (noded_labeled_graph A B))) ->
@@ -542,7 +536,7 @@ Theorem extract_rings_valid_holes :
       In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros hassign op A B Hwn Hns H2ec Hnd Heul HeulM HvM Hwf Hinside poly Hin.
+  intros hassign op A B Hwn Hns H2ec Hnd Heul HeulM Hwf Hinside poly Hin.
   assert (Hfan : forall v : Point,
             fan_ok (outgoing v (darts_of (result_edges op (noded_labeled_graph A B))))).
   { intro v. apply well_noded_fan_ok. exact Hwn. }
@@ -568,15 +562,12 @@ Theorem valid_geometry_extract :
     euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
     (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
        euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
-    (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
-       num_vertices (E_minus (result_edges op (noded_labeled_graph A B)) e)
-         = num_vertices (result_edges op (noded_labeled_graph A B))) ->
     valid_geometry (extract_faces op (noded_labeled_graph A B)).
 Proof.
-  intros op A B Hwn Hns H2ec Hnd Heul HeulM HvM.
+  intros op A B Hwn Hns H2ec Hnd Heul HeulM.
   unfold valid_geometry.
   intros poly Hin.
-  apply (extract_rings_valid op A B Hwn Hns H2ec Hnd Heul HeulM HvM poly Hin).
+  apply (extract_rings_valid op A B Hwn Hns H2ec Hnd Heul HeulM poly Hin).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
