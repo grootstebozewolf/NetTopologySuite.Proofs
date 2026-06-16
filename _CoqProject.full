@@ -593,6 +593,13 @@ theories/RelateMatrixCurveAreaPoint.v
 # matches rect_ring, then transports S4's strict_interior_point_in_ring through
 # the S12b point-set bridge.  No Admitteds.
 theories/RelateCurveAreaPointSound.v
+# Issue #67 curve->matrix: the FIRST arc-bearing outer ring (a SQL/MM circular
+# segment / "lens": one CSArc + closing CSChord).  point_in_ring_arc_seg_iff
+# strips the single (arc_end,arc_end) join edge (RayParityDegenerate) so the
+# linearised start-mid-end-end-start ring reduces to the control triangle, then
+# transports through the S12b-style point-set bridge.  The arc analogue of
+# point_in_ring_chord_rect_iff; n-independent, no arc-span soundness needed.
+theories/RelateCurveArcSegment.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the
