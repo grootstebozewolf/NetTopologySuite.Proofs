@@ -49,10 +49,10 @@ far declined. Ask #2 (atan2-based sweep) inherits this blocker.
 | **#2 Central angle / sweep (atan2)** | **ABSENT (blocked)** | `Azimuth.v:73`, `PointInRingCorrect.v:426-428` | No `atan2` in Stdlib Reals; 22 mentions, all comments documenting its deliberate absence. Arc-span instead decided by chord cross-product sign (Option S, `arc_span_contains`), correct only for arcs < π. |
 | **#3a Point-on-arc / orientation** | **PROVEN (Qed)** | `ArcOrient.v:89` (`inCircle_R`), `:170` (`arc_interior_side_mid`), `:183` (`arc_orient_mid`) | Structural predicates + mid-point side closed. 3 standard axioms. |
 | **#3b Chord-arc crossing (existence)** | **PROVEN (Qed)** | `ArcIntersectIVT.v:174` (`chord_crosses_arc_circle_implies_circle_intersection`) | IVT: opposite `inCircle_R` signs at chord ends ⇒ ∃ point on chord with `inCircle_R = 0` (on the circumcircle). |
-| **#3c Chord-arc *soundness*** | **GAP (absent, quarantined)** | `phase4-retro.md:34`; named `arc_chord_intersect_sound` | Promoting "circle crossing" → "arc-span crossing" (minor vs major arc) is **not written** — quarantined behind a predicate, *not* an `Admitted`. The arc `theories/` files are Admitted-free. |
+| **#3c Chord-arc *soundness*** | **PARTIAL (Qed)** | `ArcChordSound.v` — `chord_crosses_arc_circle_minor_side_sound`, `_start_anchored_sound`, `_end_anchored_sound`, `_span_sound` | Promoting "circle crossing" → "arc-span crossing" is **proven under a side hypothesis**: `arc_side_chord` is affine along the chord, so both endpoints strictly on `arc_mid`'s side keep the convex IVT crossing in-span (endpoint-anchored variants handle a control-point endpoint via the boundary disjunct; `_span_sound` is the conditional floor). Pure sign-algebra, 3-axiom, no atan2. **Still open (quarantined, not Admitted):** the *unconditional* sweep≤π promotion with no side/endpoint hypothesis — false in general (a crossing can hit the major arc). |
 | **#4a in-circle predicate + algebra** | **PROVEN (Qed)** | `ArcOrient.v:89,205` + 8 invariance lemmas (swap/cyclic/translation/scaling/rotation) | `inCircle_R` defining-point zeros and similarity invariants all closed. |
 | **#4b `b64_inCircle` soundness** | **PROVEN (Qed)** | `InCircle_b64_exact.v` — `b64_inCircle_exact_sound`, `b64_inCircle_exact_for_small_int`, `b64_inCircle_B2R_sign_sound_small_int`; Perron witness `perron_inCircle_sign_sound` | Full-plane sign exactness via degree-4 factorization; integer-regime value + sign exactness at `\|coord\| ≤ 2¹¹` (tighter than orient2d's `2²⁵`); closes the INCIRCLE_SIGN oracle bridge. PR #146. |
-| **#4c Arc validity (V-CP)** | **PARTIAL** | `ArcHotPixel.v:95` (`arc_passes_through_hot_pixel`), `:124` (`arc_touches_hot_pixel`) | Endpoint disjuncts + 6 disjunct-intro lemmas Qed; edge-crossing soundness rides on #3c. |
+| **#4c Arc validity (V-CP)** | **PARTIAL** | `ArcHotPixel.v:95` (`arc_passes_through_hot_pixel`), `:124` (`arc_touches_hot_pixel`); edge-crossing soundness now via `ArcChordSound.v` | Endpoint disjuncts + 6 disjunct-intro lemmas Qed; edge-crossing soundness available under the minor-side / endpoint-anchored hypotheses of #3c (`ArcChordSound.v`). |
 | **#5a Arc-line intersection** | **PROVEN (Qed) — Scope A/B/C** | `ArcIntersect.v:90,129`; `ArcLineIntersect_b64_exact.v` — `b64_arc_line_{sP_R,sQ_R,dx_R,dy_R}`, `_intersect_point_{x,y}_round_chain`, `_point_{x,y}_forward_error` (+ `_ulp`) | R-side existence predicate Qed; Flocq Scope A (prefix bit-exact) + Scope B (round-chain identity) + Scope C (forward-error: absolute `bpow 13` capstone **and** tighter data-dependent ulp bound). PRs #146, #160–#162, + ulp tightening. |
 | **#5b Arc-arc intersection** | **PREDICATE PROVEN; coords ABSENT** | `ArcIntersect.v:104` | Existence predicate Qed; exact coordinates are a quartic (research-grade), absent. |
 | **#5c Arc overlay correctness** | **CONDITIONAL (Qed)** | `ArcOverlay.v` headline `arc_overlay_correct_chord_approx`; bridges `ArcOverlay.v:123,147-152` | Headline Qed under two "every chord point is close to an arc" bridge hypotheses (`H_A_bridge`/`H_B_bridge`), flagged "PRACTICALLY DEMANDING". |
@@ -96,11 +96,14 @@ extraction validated bit-exact in `oracle/test_arc.ml`.
    are Option-A primitives; the corpus chose Option B and Stdlib lacks `atan2`.
    Building them is a *strategic reversal*, not an incremental proof — needs a
    scope decision + likely a Coquelicot/half-angle angle representation.
-2. **One analytic soundness gap (asks #3c, #4c):** `arc_chord_intersect_sound`
-   — promoting circle-crossing to *arc-span* crossing. Quarantined behind a
-   predicate (not an Admitted). Blocked on the minor/major-arc disambiguation,
-   which itself wants the Option-S `arc_span_contains` extended past π — circular
-   with the atan2 gap.
+2. **Analytic soundness gap (asks #3c, #4c): PARTIALLY CLOSED (`ArcChordSound.v`).**
+   Promoting circle-crossing to *arc-span* crossing is now proven **under a
+   side/endpoint hypothesis** (both chord endpoints strictly on `arc_mid`'s side,
+   or one endpoint a control point), by the affineness of `arc_side_chord` along
+   the chord — pure sign-algebra, 3-axiom, **no atan2** (the old "circular with
+   the atan2 gap" framing is bypassed, not solved). Still quarantined (not an
+   Admitted): the *unconditional* minor-guard / sweep≤π promotion, which is false
+   without a side hypothesis (a crossing can land on the major arc).
 3. ~~**One rounding-soundness gap (ask #4b)**~~ **CLOSED (PR #146).**
    `b64_inCircle` sign- and value-exactness vs `inCircle_R_BP` now Qed-closed
    in `InCircle_b64_exact.v` (full-plane sign + `2¹¹` integer regime).
@@ -214,5 +217,7 @@ closed coordinate story in `ArcLineIntersect_b64_exact.v`:
 
 So ask **#5a is closed**: existence predicate (R-side) + bit-exact prefix (A) +
 round-chain identity (B) + forward-error bounds (C, absolute and data-dependent),
-all `Qed` at the 4-axiom footprint. The genuinely-open arc gaps are now #3c/#4c
-(arc-chord soundness ≥ π) and #5b (arc-arc quartic coordinates).
+all `Qed` at the 4-axiom footprint. #3c/#4c arc-chord soundness is now PARTIALLY
+closed (`ArcChordSound.v`, side/endpoint-conditioned, 3-axiom); the
+genuinely-open arc gaps are the *unconditional* sweep≥π promotion (still
+quarantined) and #5b (arc-arc quartic coordinates).
