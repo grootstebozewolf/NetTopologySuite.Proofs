@@ -841,60 +841,189 @@ guard — is the genuine convex content (it needs the canonical-start rotation p
 single descending run" argument). It is isolated here, to be closed by a follow-up rung.
 Three-axiom, no `Admitted`.
 
-### §11.5i update (2026-06-15): the y-modulator (crossing bound) — inside iff one crossing
+### §11.5i update (2026-06-15): the crossing bound — inside iff one crossing
 
-`theories/ConvexRayCrossing.v` proves the crossing bound a bimonotone split buys —
-the crisp discrete Jordan characterisation for the convex case, all `Qed`:
+`theories/ConvexRayCrossing.v` lands the crossing bound the `bimonotone_split` buys, and
+the capstone that ties the whole convex ladder together. All `Qed`, three-axiom.
 
-- **Each monotone chain is crossed at most once** (count form): `inc_cross_count_le_one`
-  / `dec_cross_count_le_one`. From `inc_chain_le_one_cross` / `dec_chain_le_one_cross`
-  (two crossing edges of a monotone chain are equal) plus the chain's strict y-ordering
-  (`chain_increasing_above` / `chain_decreasing_below`), a head crossing forces zero tail
-  crossings, by induction on the chain.
-- **The whole ring is crossed at most twice** (`convex_ray_crosses_le_two`): for a
-  `bimonotone_split r inc dec`, `cross_count p (ring_edges r) = cross_count p inc +
-  cross_count p dec <= 1 + 1` (via `cross_count_app`).
-- **HEADLINE** (`convex_in_ring_iff_one_crossing`): combine the `<= 2` bound with ray
-  parity (`ray_parity_count`: `point_in_ring p r` ⟺ `Nat.odd (cross_count p (ring_edges r))
-  = true`) — odd and `<= 2` pins the count to exactly `1`. So for a convex / y-unimodal
-  ring, `point_in_ring p r ↔ cross_count p (ring_edges r) = 1`. Where the bare parity seam
-  fixes only the crossing *parity*, convexity fixes the exact *count*.
-
-Validated on the diamond and hexagon (both already carry a `bimonotone_split`). This takes
-the split as hypothesis — supplied generally by the y-modulator (`ConvexYUnimodal.v`) once
-its residual (convexity ⟹ y-unimodal vertex order) is closed, and concretely by every
-family today. Three-axiom, no `Admitted`.
+- **At most one crossing per chain, at most two for the ring.** `inc_cross_count_le_one` /
+  `dec_cross_count_le_one` (count form of the monotone-chain single-crossing facts) give
+  `convex_ray_crosses_le_two`: any ring presented as a `bimonotone_split` is crossed at
+  most twice by a rightward ray.
+- **The crisp convex Jordan characterization.** `convex_in_ring_iff_one_crossing`: for such
+  a ring, `point_in_ring p r ↔ cross_count p (ring_edges r) = 1` (ray parity is odd and the
+  count is `≤ 2`, so it is pinned to exactly one). This is the convexity-strengthened
+  companion to the bare parity seam — in general `point_in_ring` fixes only the parity;
+  convexity fixes the exact count. Validated on the diamond and hexagon.
+- **The capstone — the whole ladder in one statement.**
+  `convex_canonical_start_in_ring_iff_one_crossing` composes the §11.5k reduction
+  (`ConvexYUnimodal.convex_canonical_start_bimonotone`, which produces the
+  `bimonotone_split` from half-plane convexity + bottom-first presentation + distinct
+  consecutive heights) with the bound: a general convex ring presented from its bottom
+  vertex is `point_in_ring` iff its rightward ray crosses exactly once — **conditional only
+  on the named global residual `convex_no_interior_ymin`** (§11.5k). So §11.5h (y-modulator)
+  → §11.5k (no-interior-y-min reduction) → §11.5i (crossing bound) now chain end-to-end,
+  with the single genuinely-open geometric fact carried as a hypothesis, never `Admitted`.
 
 ### §11.5j update (2026-06-15): the hot pixel as a convex ring — snap-rounding meets ray-parity
 
-`theories/HotPixelConvexRing.v` carries the convex crossing characterisation to the
-**hot pixel** itself, bridging the Phase-2 snap-rounding stack (`HotPixel.in_hot_pixel`)
-to the JCT / convex-chain campaign, all `Qed`:
+`theories/HotPixelConvexRing.v` bridges the convex crossing-number campaign to Phase 2:
+the **hot pixel** (`HotPixel.in_hot_pixel`, the half-open axis-aligned square
+`[cx−r, cx+r) × [cy−r, cy+r)`, `r = / (2·scale)`) is a convex 4-gon, presented here as a
+CCW `Ring` (`pixel_ring`). All `Qed`:
 
-- **The pixel as a CCW `Ring`** (`pixel_ring`, `pixel_ring_edges`): the half-open square
-  `[cx−r, cx+r) × [cy−r, cy+r)` (`r = hot_pixel_radius scale`) presented counter-clockwise
-  from the bottom-left, with edge list `[bottom; right; top; left]`.
-- **Only the vertical edges count**: the pixel's top/bottom edges are *horizontal*, so it is
-  NOT a strict `bimonotone_split` (`edge_up`/`edge_dn` are strict). But `edge_crosses_ray`
-  needs a strict y-straddle, so a horizontal edge is never crossed (`pixel_bottom_no_cross`
-  / `pixel_top_no_cross`), and each vertical edge crosses iff the ray height straddles the
-  pixel and the origin is left of that edge's x (`pixel_right_crosses_iff` /
-  `pixel_left_crosses_iff`, the vertical-edge x-intercept collapsing to the shared x).
-- **At most twice, inside iff once** (`pixel_ray_crosses_le_two`,
-  `pixel_in_ring_iff_one_crossing`): the `convex_in_ring_iff_one_crossing` pattern, reproved
-  DIRECTLY for the flat-edged square via `cross_count_cons_*` + `ray_parity_count` rather than
-  through a split.
-- **HEADLINE** (`pixel_point_in_ring_iff_box`): `point_in_ring p (pixel_ring C s)` iff a
-  **half-open-x / open-y box** — x in `[cx−r, cx+r)`, y in `(cy−r, cy+r)`.
+- **Horizontal edges never cross.** The square's top/bottom edges are horizontal, so it is
+  NOT a strict `bimonotone_split` (`edge_up`/`edge_dn` are strict) — but the crossing
+  predicate `edge_crosses_ray` demands a strict y-straddle, so a horizontal edge is never
+  crossed (`pixel_bottom_no_cross` / `pixel_top_no_cross`). Only the two vertical edges
+  count (`pixel_right_crosses_iff` / `pixel_left_crosses_iff`: each crosses iff the ray
+  height straddles the pixel and the origin is left of that edge's x).
+- **The crossing bound + headline.** Hence the ring is crossed at most twice
+  (`pixel_ray_crosses_le_two`) and, with ray parity (`ray_parity_count`), a point is inside
+  iff crossed exactly once (`pixel_in_ring_iff_one_crossing`) — the
+  `convex_in_ring_iff_one_crossing` pattern reproved directly for the flat-edged square.
+  So `point_in_ring p (pixel_ring C s) ↔` a **half-open-x / open-y** box
+  (`pixel_point_in_ring_iff_box`).
+- **The bridge — and the grazing edge.** The ray-parity interior is a **subset** of the
+  half-open pixel (`pixel_point_in_ring_implies_in_hot_pixel`, total); the converse holds
+  **off the bottom edge** (`in_hot_pixel_off_bottom_implies_point_in_ring`); and a concrete
+  point on the *included* bottom edge `py = cy−r` is `in_hot_pixel` yet **not**
+  `point_in_ring` (`pixel_grazing_bottom_edge`). This is the hot-pixel incarnation of the
+  corpus's documented vertex-grazing caveat (`JCT_VertexGrazingCounterexample`): the
+  half-open pixel's closed bottom is exactly where the rightward ray grazes the bottom
+  vertices and parity diverges. Validated on the unit pixel (scale = 1, origin centre).
+  Three-axiom, no `Admitted`.
 
-The bridge to `in_hot_pixel` is total above the bottom edge
-(`pixel_point_in_ring_implies_in_hot_pixel`, `in_hot_pixel_off_bottom_implies_point_in_ring`),
-and `pixel_grazing_bottom_edge` exhibits the gap: a concrete point on the *included* bottom
-edge (`py = cy−r`) that is `in_hot_pixel` yet **not** `point_in_ring` — the hot-pixel
-incarnation of the documented vertex-grazing caveat (`JCT_VertexGrazingCounterexample`),
-where the rightward ray grazes the bottom vertices and parity diverges. Validated on the unit
-pixel (`unit_pixel_centre_in_ring` / `unit_pixel_centre_one_crossing`). Three-axiom, no
-`Admitted`.
+### §11.5k update (2026-06-15): the y-modulator close — the no-interior-y-min reduction
+
+`theories/ConvexYUnimodal.v` §5–§7 closes the *list-combinatorial half* of the
+§11.5h residual (`convex_left_turns` ⟹ `y_unimodal_decomposition`) and shrinks the
+gap to one sharply-stated geometric predicate. All `Qed`, three-axiom.
+
+- **The combinatorial heart.** `no_interior_ymin_unimodal`: a ring whose consecutive
+  heights are distinct (`chain_y_distinct` — no horizontal edge; the only legal tie is
+  the non-consecutive closing duplicate `head = last`, the diamond's `(2,0)`/`(-2,0)`
+  on opposite chains) and which has **no strict interior y-local-minimum**
+  (`no_interior_strict_ymin` — no consecutive triple `a,b,c` with `b` strictly below
+  both neighbours) **is** `y_unimodal_decomposition`. The proof is a clean list
+  induction: at each step the profile either keeps ascending (extend the rising prefix
+  by the IH) or turns down — and `descending_of_no_interior_min` shows that once it
+  turns down it strictly descends to the end (a re-ascent would manufacture a forbidden
+  interior minimum), so there is exactly one apex. This is the reusable substrate any
+  closing rung needs, independent of whichever global argument (rotation invariance or
+  the horizontal-interval lemma) is eventually chosen.
+- **The conditional close + the isolated residual.** `convex_canonical_start_y_unimodal`
+  proves a general convex ring (`Forall (vertices_in_halfplane …)`, the half-plane form)
+  presented from its bottom (min-y) vertex with distinct consecutive heights is
+  y-unimodal — **conditional on** the single named predicate `convex_no_interior_ymin`:
+  that GLOBAL half-plane convexity, read from the min, forbids every interior strict
+  y-local-minimum. This is the genuine remaining geometric content (the same global-vs-
+  local distinction that rules out the pentagram, §11.5h): it composes the local
+  convex-vertex fact over the whole boundary and needs either the canonical-start
+  rotation invariance or the horizontal-line-meets-convex-region-in-an-interval
+  argument. It is carried as a hypothesis, **never `Admitted`**. `convex_canonical_start_bimonotone`
+  chains it to a bimonotone split through the modulator wiring.
+- **Validation through the new rung.** `diamond_y_unimodal_via_rung` /
+  `hexagon_y_unimodal_via_rung` reach `y_unimodal_decomposition` via
+  `no_interior_ymin_unimodal` (discharging `chain_y_distinct` + `no_interior_strict_ymin`
+  by `cbn`/`lra`), exercising the combinatorial rung end-to-end rather than the §4 hand
+  split. So the §11.5h residual is now exactly **`convex_no_interior_ymin`** — strictly
+  smaller than before: the combinatorial reduction is Qed, only the global-convexity
+  ⟹ no-interior-min step remains.
+
+### §11.5l update (2026-06-15): the general exterior-even — factoring the parity bridge
+
+`theories/ConvexExteriorEven.v` generalises the off-ring seam's **exterior-even**
+obligation (`conv_min < 0 ⟹ ~ point_in_ring`), so far supplied per family (the hexagon's
+six-edge per-band analysis), into one reusable theorem. All `Qed`, three-axiom.
+
+- **The named geometric residual.** `convex_exterior_balanced r hps inc dec`: an exterior
+  point's rightward ray crosses the two monotone chains **both-or-neither**
+  (`chain_crossed p inc ↔ chain_crossed p dec`). This is the geometric heart of
+  exterior-even, stripped of the parity bookkeeping.
+- **The reduction (the win).** `convex_exterior_even_of_balanced`: for ANY `bimonotone_split`
+  ring, the balance predicate yields `~ point_in_ring` — because `bimonotone_split_parity`
+  makes `point_in_ring` the XOR of the two chain crossings, and balance negates the XOR
+  (using `chain_crossed`'s decidability via the crossing count). The converse
+  `balanced_of_exterior_even` shows the predicate is *exactly* the per-family obligation
+  viewed through the bridge, so the factoring loses nothing.
+- **The capstone.** `convex_offring_seam_of_balanced` feeds the general exterior-even into
+  `ConvexOffringSeam.convex_parity_seam_offring_of`: a half-plane-presented `bimonotone_split`
+  ring with the balance predicate (+ the general interior-odd obligation + presentation
+  facts) gets the **total** off-ring parity seam `parity_characterises_interior_cont_offring`.
+- **Validation.** `diamond_exterior_balanced` / `hexagon_exterior_balanced` discharge the
+  predicate from the families' existing exterior-even lemmas; the round-trips
+  `*_exterior_even_via_balanced` recover the families through the general theorem.
+
+The genuinely-hard discharge of `convex_exterior_balanced` for an ARBITRARY convex ring (the
+convex "horizontal slice = inter-chain interval" fact) stays the open content — and note the
+straddle-extraction lever the interior proof gets from `conv_min > 0` (vertex-height
+avoidance) is **unavailable** for exterior points (the `ray_avoids_vertices` guard only
+blocks the rightward ray), so it is a genuine multi-session lemma; it is carried as the
+named predicate, never `Admitted`.
+
+### §11.5m update (2026-06-15): the convex slice fact — the geometric keystone, proved
+
+`theories/ConvexSlice.v` proves the geometric keystone both convex residuals reduce to —
+the convex **"horizontal slice = inter-chain interval"** fact — as a fully general theorem.
+All `Qed`, three-axiom. The earlier assessment feared a cross-product supporting-line
+monotonicity induction (the corpus has no such lemmas); the proof here sidesteps it entirely:
+
+- **`straddle_point_ring_image`** — the point `m` on a straddling edge at height `py p` is a
+  `ring_image` point (parameter `t = (py p − py(fst e))/(py(snd e) − py(fst e)) ∈ [0,1]`),
+  with `py m = py p` and the edge's own slack `0` there.
+- **`convex_slice_all_halfplanes` (KEYSTONE)** — for a point `p` inward of a straddling **up**
+  edge `e_i` (`0 < hp_slack(e_i) p`) and a straddling **down** edge `e_d`
+  (`0 ≤ hp_slack(e_d) p`), `p` satisfies **every** half-plane whose vertices the ring
+  satisfies. Proof: `ConvexOffringSeam.image_slack_nonneg` puts the on-edge image points
+  `m_i, m_d` in every half-plane; `hp_slack (a,b,c)` is affine in x with slope `−a`
+  (`hp_slack_sub_x`), and for `edge_inward_hp e` that coefficient is the edge's y-direction
+  (`edge_inward_hp_xcoef`); so `m_i`/`m_d` bound `px p` on the left/right, and each
+  half-plane closes by `nra` split on the sign of its x-coefficient. No cross-monotonicity,
+  no induction.
+- **`conv_min_nonneg_of_slice` / `exterior_slice_contra`** — package it as `0 ≤ conv_min`,
+  and as the inc-crossed/dec-not exterior contradiction **given the straddling edges**:
+  exterior-even is now a theorem once the straddling edges are in hand.
+- **Validation** — `diamond_slice_validation` runs the keystone on the diamond's interior
+  point `(0, 1/2)` and its two straddling chain edges, concluding all four half-planes hold.
+
+**What remains** is the strictly smaller, separate residual: straddle **extraction** —
+locating the straddling `e_i, e_d` for an arbitrary query point — which for exterior points
+needs vertex-height avoidance unavailable from `ray_avoids_vertices` alone. So the convex
+residuals are now "slice fact (DONE) + straddle extraction (open)".
+
+### §11.5n update (2026-06-15): the exterior companion — exterior-even, general, via the slice fact
+
+`theories/ConvexExteriorEven.v` §6 lands the **exterior companion** to
+`MonotoneChainCoverage.interior_hits_one_chain_of_edge_hps`: a general exterior-even for any
+y-unimodal convex ring, now that the slice fact is proved. All `Qed`, three-axiom.
+
+- **`convex_exterior_balanced_of_unimodal`** — for an exterior point (`conv_min < 0`) of a
+  y-unimodal convex ring (`up ++ apex :: down`, the `interior_hits` hypothesis shape) in full
+  vertex-avoidance general position, the two chains are crossed **both-or-neither**
+  (`chain_crossed q inc ↔ chain_crossed q dec`). The proof needs **no band case-split** — the
+  crossing itself supplies band membership. The two iff directions are asymmetric:
+  - *inc crossed ⟹ dec crossed:* the crossed up-edge `e_i` gives `slack(e_i) q > 0`; the
+    straddling down-edge `e_d` (extracted by `chain_decreasing_straddles_y`), if `dec`
+    uncrossed, has `slack(e_d) q ≥ 0`; `ConvexSlice.convex_slice_all_halfplanes` then forces
+    `0 ≤ conv_min`, contradicting `conv_min < 0`.
+  - *dec crossed ⟹ inc crossed:* a **positional** contradiction (`slice_x_contra`, also via
+    the slice helpers): a point not inward of the straddling up-edge cannot be strictly left
+    of the straddling down-edge (left chain is left of right chain) — the on-edge image point
+    of `e_d` lies in `e_i`'s half-plane, pinning `px q` on both sides. This direction needs
+    the edge half-planes to be in `hps` (`Forall (In (edge_inward_hp _) hps) inc`).
+- **`convex_exterior_even_of_unimodal`** — composes the balance with
+  `bimonotone_split_parity` to conclude `~ point_in_ring q outer`. With
+  `interior_hits_one_chain_of_edge_hps` (interior-odd) this makes **both** off-ring
+  obligations general for y-unimodal convex rings, under full general position.
+- Height-bound helpers `y_strict_{incr,decr}_{le_last,hd_le,le_hd,last_le}` turn the crossing
+  straddle into the chain band. (`MonotoneChainCoverage.dpt` is now exported, not `Local`, so
+  the straddle lemmas' `hd`/`last` defaults are shared.)
+
+The only remaining convex residual is `convex_no_interior_ymin` (convex ⟹ y-unimodal, i.e.
+the split exists). The full-vertex-avoidance guard here is the honest general-position
+requirement (what `chain_*_straddles_y` and the interior proof need); it is stronger than the
+seam's `ray_avoids_vertices`, which only blocks the rightward ray.
 
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 

@@ -207,6 +207,201 @@ Theorem hexagon_bimonotone_via_y_unimodal :
 Proof. apply y_unimodal_bimonotone, hexagon_y_unimodal. Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §5  The no-interior-y-min reduction: the combinatorial heart of the close.  *)
+(* -------------------------------------------------------------------------- *)
+
+(* The genuine convex content of "convexity ⟹ y-unimodal" splits cleanly in
+   two.  The LIST-COMBINATORIAL half — proved here, in full — says: a ring whose
+   consecutive heights are distinct and which has NO strict interior y-local-
+   minimum is y-unimodal.  ("No interior dip": you cannot descend then re-ascend,
+   so the height profile is a single ascent to one apex followed by a single
+   descent.)  The GEOMETRIC half — that global half-plane convexity, read from
+   the bottom vertex, actually forbids every interior y-local-minimum — is the
+   single residual, isolated below as the named predicate
+   `convex_no_interior_ymin` (never `Admitted`). *)
+
+(* General-position guard: consecutive vertices have distinct heights (i.e. no
+   horizontal edge).  The only legal y-tie is the closing duplicate head = last,
+   which is non-consecutive (opposite chains; cf. the diamond's (2,0)/(-2,0)). *)
+Fixpoint chain_y_distinct (l : list Point) : Prop :=
+  match l with
+  | a :: ((b :: _) as l') => py a <> py b /\ chain_y_distinct l'
+  | _ => True
+  end.
+
+(* No strict interior y-local-minimum: no consecutive triple a,b,c has b strictly
+   below both neighbours.  A "W dip" anywhere is forbidden. *)
+Fixpoint no_interior_strict_ymin (l : list Point) : Prop :=
+  match l with
+  | a :: ((b :: c :: _) as l') => ~ (py b < py a /\ py b < py c)
+                                  /\ no_interior_strict_ymin l'
+  | _ => True
+  end.
+
+(* The head vertex attains the minimal height over the whole ring. *)
+Definition starts_at_min (r : Ring) : Prop :=
+  match r with
+  | [] => True
+  | a :: _ => forall w, In w r -> py a <= py w
+  end.
+
+(* Dropping the head preserves the no-interior-min property (the dropped triple
+   only constrained the old head). *)
+Lemma no_interior_strict_ymin_tail : forall a l,
+  no_interior_strict_ymin (a :: l) -> no_interior_strict_ymin l.
+Proof.
+  intros a l H. destruct l as [| b l']; [ exact I | ].
+  destruct l' as [| c l'']; [ exact I | exact (proj2 H) ].
+Qed.
+
+(* A small prepend lemma for the increasing chain. *)
+Lemma y_strict_incr_cons : forall a l,
+  match l with [] => True | b :: _ => py a < py b end ->
+  y_strict_incr l ->
+  y_strict_incr (a :: l).
+Proof. intros a l Hhd Hl. destruct l as [| b l']; cbn; [ exact I | split; assumption ]. Qed.
+
+(* Once a no-interior-min, chain-distinct list starts descending, it descends all
+   the way: a re-ascent would create a strict interior minimum. *)
+Lemma descending_of_no_interior_min : forall l a b,
+  chain_y_distinct (a :: b :: l) ->
+  no_interior_strict_ymin (a :: b :: l) ->
+  py b < py a ->
+  y_strict_decr (a :: b :: l).
+Proof.
+  induction l as [| c l' IH]; intros a b Hcd Hnim Hba.
+  - cbn. split; [ exact Hba | exact I ].
+  - cbn. split; [ exact Hba | ].
+    apply IH.
+    + exact (proj2 Hcd).
+    + exact (proj2 Hnim).
+    + (* py c < py b: ~(py b < py c) [from the triple] + py b <> py c [distinct] *)
+      destruct Hnim as [Htriple _].
+      assert (Hnlt : ~ (py b < py c)) by (intro H; apply Htriple; split; assumption).
+      assert (Hbc : py b <> py c) by exact (proj1 (proj2 Hcd)).
+      apply Rnot_lt_le in Hnlt.
+      destruct (Rle_lt_or_eq_dec (py c) (py b) Hnlt) as [Hlt | Heq].
+      * exact Hlt.
+      * exfalso. apply Hbc. symmetry. exact Heq.
+Qed.
+
+(* THE LOAD-BEARING RUNG: no interior strict y-minimum + chain-distinct heights
+   ⟹ y-unimodal.  Pure list induction: at each step the list either keeps
+   ascending (extend the rising prefix via the IH) or turns down (and then, by
+   `descending_of_no_interior_min`, descends to the end — apex is the head). *)
+Lemma no_interior_ymin_unimodal : forall l : Ring,
+  l <> [] ->
+  chain_y_distinct l ->
+  no_interior_strict_ymin l ->
+  y_unimodal_decomposition l.
+Proof.
+  induction l as [| a l' IH]; intros Hne Hcd Hnim.
+  - exfalso. apply Hne. reflexivity.
+  - destruct l' as [| b tl'].
+    + (* singleton [a]: up = [], apex = a, down = [] *)
+      exists [], [], a. cbn. repeat split.
+    + (* l = a :: b :: tl' *)
+      destruct (Rlt_le_dec (py a) (py b)) as [Hab | Hba].
+      * (* ascending: extend the IH's decomposition of the tail by a *)
+        assert (Hcd' : chain_y_distinct (b :: tl')) by exact (proj2 Hcd).
+        assert (Hnim' : no_interior_strict_ymin (b :: tl'))
+          by exact (no_interior_strict_ymin_tail a (b :: tl') Hnim).
+        destruct (IH ltac:(discriminate) Hcd' Hnim')
+          as [up' [down' [apex [Hr [Hi Hd]]]]].
+        exists (a :: up'), down', apex.
+        split.
+        { (* (a::up') ++ apex::down' = a :: (up' ++ apex::down') = a :: (b::tl') *)
+          cbn. rewrite <- Hr. reflexivity. }
+        split.
+        { (* y_strict_incr ((a::up') ++ [apex]) *)
+          apply y_strict_incr_cons; [ | exact Hi ].
+          destruct up' as [| u0 up''].
+          - (* up' = [] ⟹ apex = b *)
+            cbn in Hr |- *. injection Hr as Hapex _. rewrite <- Hapex. exact Hab.
+          - (* up' = u0 :: _ ⟹ u0 = b *)
+            cbn in Hr |- *. injection Hr as Hu0 _. rewrite <- Hu0. exact Hab. }
+        { exact Hd. }
+      * (* descending: apex = a, the whole tail strictly decreases *)
+        assert (Hlt : py b < py a).
+        { assert (Hab_ne : py a <> py b) by exact (proj1 Hcd). lra. }
+        exists [], (b :: tl'), a.
+        split; [ reflexivity | ].
+        split; [ cbn; exact I | ].
+        apply descending_of_no_interior_min; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  The conditional headline + the isolated geometric residual.             *)
+(* -------------------------------------------------------------------------- *)
+
+(* The single remaining geometric gap, as a NAMED predicate (not `Admitted`):
+   GLOBAL half-plane convexity (the pentagram-ruling form), read from the
+   bottom (min-y) vertex, has no strict interior y-local-minimum.  This is the
+   genuine convex content the close still needs — it composes the local
+   convex-vertex fact over the whole boundary, and genuinely needs either the
+   canonical-start rotation invariance or the horizontal-line-meets-convex-
+   region-in-an-interval argument (the same global-vs-local distinction that
+   rules out the star, per §11.5h). *)
+Definition convex_no_interior_ymin (r : Ring) : Prop :=
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  starts_at_min r ->
+  no_interior_strict_ymin r.
+
+(* The conditional close: under the named residual, a convex ring presented from
+   its bottom vertex (with distinct consecutive heights) is y-unimodal — and
+   hence has a bimonotone split via the modulator wiring.  The half-plane
+   convexity hypothesis is genuinely consumed (it feeds the residual). *)
+Theorem convex_canonical_start_y_unimodal : forall r : Ring,
+  r <> [] ->
+  convex_no_interior_ymin r ->
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  starts_at_min r ->
+  chain_y_distinct r ->
+  y_unimodal_decomposition r.
+Proof.
+  intros r Hne Hres Hconv Hmin Hcd.
+  apply no_interior_ymin_unimodal; [ exact Hne | exact Hcd | ].
+  apply Hres; assumption.
+Qed.
+
+Corollary convex_canonical_start_bimonotone : forall r : Ring,
+  r <> [] ->
+  convex_no_interior_ymin r ->
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  starts_at_min r ->
+  chain_y_distinct r ->
+  exists inc dec, bimonotone_split r inc dec.
+Proof.
+  intros r Hne Hres Hconv Hmin Hcd.
+  apply y_unimodal_bimonotone.
+  apply convex_canonical_start_y_unimodal; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Validation: the diamond and hexagon go through the NEW rung end-to-end. *)
+(* -------------------------------------------------------------------------- *)
+
+(* Both witnesses satisfy the general-position + no-interior-min hypotheses
+   directly (by `cbn`/`lra`), so they reach `y_unimodal_decomposition` through
+   `no_interior_ymin_unimodal` — exercising the combinatorial rung itself, not
+   just the hand-built split of §4. *)
+Theorem diamond_y_unimodal_via_rung : y_unimodal_decomposition diamond_ring.
+Proof.
+  apply no_interior_ymin_unimodal.
+  - discriminate.
+  - cbn. repeat split; lra.
+  - cbn. repeat split; intros [H1 H2]; lra.
+Qed.
+
+Theorem hexagon_y_unimodal_via_rung : y_unimodal_decomposition hexagon_ring.
+Proof.
+  apply no_interior_ymin_unimodal.
+  - discriminate.
+  - cbn. repeat split; lra.
+  - cbn. repeat split; intros [H1 H2]; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -215,3 +410,9 @@ Print Assumptions y_unimodal_bimonotone.
 Print Assumptions exists_max_y_vertex.
 Print Assumptions diamond_y_unimodal.
 Print Assumptions hexagon_y_unimodal.
+Print Assumptions descending_of_no_interior_min.
+Print Assumptions no_interior_ymin_unimodal.
+Print Assumptions convex_canonical_start_y_unimodal.
+Print Assumptions convex_canonical_start_bimonotone.
+Print Assumptions diamond_y_unimodal_via_rung.
+Print Assumptions hexagon_y_unimodal_via_rung.

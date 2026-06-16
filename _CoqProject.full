@@ -192,19 +192,23 @@ theories/MonotoneChainCoverage.v
 # its wiring to bimonotone_split; max/min-height vertex infra; diamond + hexagon
 # witnesses.  Isolates the remaining "convex => y-unimodal" geometric residual.
 theories/ConvexYUnimodal.v
-# The y-modulator (crossing bound): a convex / y-unimodal ring (a bimonotone_split)
-# is crossed at most twice by any rightward ray, hence inside iff crossed exactly
-# once (convex_in_ring_iff_one_crossing) -- the crisp discrete Jordan characterisation
-# for the convex case.  Validated on diamond + hexagon.
+# The y-modulator (crossing bound): from a bimonotone_split, each monotone chain
+# is crossed at most once, so a convex / y-unimodal ring is crossed at most twice
+# (convex_ray_crosses_le_two) and inside iff crossed exactly once
+# (convex_in_ring_iff_one_crossing).  The capstone
+# convex_canonical_start_in_ring_iff_one_crossing composes the §11.5k
+# no-interior-y-min reduction with the bound: the general convex ring's exact
+# one-crossing characterization, conditional on the named residual
+# convex_no_interior_ymin.  Three-axiom.  No Admitted.
 theories/ConvexRayCrossing.v
-
-# Snap-rounding meets ray-parity: the hot pixel (HotPixel.in_hot_pixel) presented
-# as a CCW Ring (pixel_ring) and connected to Overlay.point_in_ring.  The square's
-# horizontal top/bottom edges are never crossed by a rightward ray, so only the two
-# vertical edges count -- the convex_in_ring_iff_one_crossing pattern, reproved
-# directly for the flat-edged square.  Headline pixel_point_in_ring_iff_box (a
-# half-open-x / open-y box) bridges to in_hot_pixel, with the grazing bottom edge
-# as the hot-pixel incarnation of JCT_VertexGrazingCounterexample.
+# The hot pixel as a convex ring: presents the half-open axis-aligned square
+# (HotPixel.in_hot_pixel) as a Ring and connects it to the crossing-number
+# point_in_ring.  The two horizontal edges never cross a rightward ray, so the
+# pixel is crossed at most twice (pixel_ray_crosses_le_two) and inside iff
+# crossed exactly once (pixel_point_in_ring_iff_box) -- a half-open-x / open-y
+# box.  Bridge: point_in_ring is a subset of the half-open pixel (total), the
+# converse holds off the bottom edge, and a grazing witness on the included
+# bottom edge is in_hot_pixel yet not point_in_ring.  Three-axiom.  No Admitted.
 theories/HotPixelConvexRing.v
 
 # Bridge: sqrt(3)/2 scaling on the x-axis turns hex-lattice Q-preimages into
@@ -718,6 +722,13 @@ theories/ConvexOffringSeam.v
 # diamond_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
 # p diamond_ring.  Three-axiom.  No Admitted.
 theories/DiamondOffringSeam.v
+# ConvexSlice: the convex SLICE FACT -- a point inward of both straddling chain
+# edges at its height lies in EVERY edge half-plane (conv_min >= 0).  Proved
+# generally via image_slack_nonneg (on-edge image point in every half-plane) +
+# hp_slack affine-in-x, no cross-monotonicity.  The geometric keystone behind the
+# convex residuals; exterior-even is a theorem given the straddling edges
+# (exterior_slice_contra).  Validated on the diamond.  Three-axiom.  No Admitted.
+theories/ConvexSlice.v
 # HexagonOffringSeam: the convex HEXAGON as the FIFTH total off-ring JCT family
 # and the FIRST convex polygon with more than four edges (n = 6).  Presents
 # hexagon_ring by its six edge inward half-planes (hexagon_edge_hps); interior-
@@ -726,6 +737,15 @@ theories/DiamondOffringSeam.v
 # hexagon_parity_seam_offring : forall p, parity_characterises_interior_cont_offring
 # p hexagon_ring.  Three-axiom.  No Admitted.
 theories/HexagonOffringSeam.v
+# ConvexExteriorEven: the GENERAL exterior-even, factoring the parity bridge out
+# of every family.  Isolates the geometric heart as the named predicate
+# convex_exterior_balanced (exterior point's ray crosses the two chains
+# both-or-neither); convex_exterior_even_of_balanced turns it into ~point_in_ring
+# for any bimonotone_split ring, and convex_offring_seam_of_balanced composes it
+# into a general convex off-ring seam.  Validated on diamond + hexagon.  The
+# genuinely-hard discharge of the predicate for arbitrary convex rings (the
+# convex slice fact) stays the named residual.  Three-axiom.  No Admitted.
+theories/ConvexExteriorEven.v
 # H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
 # half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
 # ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path
