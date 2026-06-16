@@ -58,7 +58,7 @@ carries (`OverlayBridge.v:490`). Writing `E := result_edges op (noded_labeled_gr
 |---|-----------|------------------|--------|
 | H1 | `well_noded_darts E` | noding correctness | largely established |
 | H2 | `no_spurs (result_darts …)` | noding correctness | largely established |
-| H3 | `edge_2_connected E` | **carried** | **open** |
+| H3 | `edge_2_connected E` | **carried (irreducible)** — dumbbell shows it's not derivable; equivalence to `twins_in_different_faces` proven both ways (2026-06-16); `*_sep` headline variants carry the equivalent directly | **resolved** |
 | H4 | `NoDup E` | **DERIVED** from the noding construction (`OverlayBridge.NoDup_result_edges_noded` via `merge_NoDup_keys`) | **DONE (2026-06-16)** |
 | H5 | `euler_characteristic E` | **carried** | **open (deep)** |
 | H6 | `∀ e ∈ E, euler_characteristic (E_minus E e)` | **carried** | **open (deep)** |
@@ -118,34 +118,31 @@ carry distinctness through the `map fst`/`filter`, and
 The three headlines drop the carried `NoDup` premise and derive it internally;
 `H_bridge_premise_from_euler` keeps its own `NoDup E` parameter.
 
-### H3 — `edge_2_connected E`
+### H3 — `edge_2_connected E` *(IRREDUCIBLE; equivalence completed — 2026-06-16)*
 
-Goal: no edge of the noded arrangement is a cut edge.
+**Finding:** `edge_2_connected` is **not** dischargeable from geometry. A planar
+**dumbbell** (two cycles joined by a bridge) satisfies `valid_geometry` +
+`well_noded_darts` + `no_spurs` yet has a cut edge. So, like the planar-Euler
+instances (H5/H6), it is an irreducible topological precondition and stays
+carried.
 
-Mathematical content: in the overlay of **closed area boundaries** (valid
-`Geometry` rings), every edge bounds a 2-D face on each side, so every edge
-lies on a boundary cycle ⟹ no bridges within a component. `no_spurs` already
-removes the degree-1 antenna; H3 is exactly the complementary "no dumbbell
-bridge" condition.
+**What landed (the valuable contribution):** the rotation-system bridge
+characterisation now has **both** directions in `theories/EdgeFaceBridge.v` §4b:
+- FORWARD (pre-existing) `edge_2_connected_twins_sep` — `edge_2_connected ⟹
+  twins_in_different_faces`, the genus-0 side, modulo the planar
+  `H_bridge_premise`.
+- CONVERSE (new) `twins_in_different_faces_edge_2_connected` — `≡` the easy
+  different-faces ⟹ not-a-bridge side, **Euler-free** (`Print Assumptions`
+  shows only the standard allowlist). Built from `diff_face_bypass_E_minus`
+  (the rest of a dart's face walk is a bypass in `E_minus`) +
+  `reachable_E_minus_implies_not_cut`, reusing `dart_on_walk_endpoints_adj_E_minus`.
 
-Plan:
-1. Define / locate the structural fact "every edge of `E` lies on an
-   `fstep`-face cycle of length ≥ 3" — this is essentially already available
-   (`face_period ≥ 3` via `no_short_faces_of_proper_nospur`, and every dart is
-   on its period walk).
-2. Prove `on_two_face_cycles ⟹ ~ is_cut_edge`: an edge whose two darts lie on
-   *distinct* faces has a bypass after removal (each face boundary minus the
-   edge is a path between its endpoints). Note this is the **converse** side of
-   `same_face_twin_is_cut`; the machinery (`dart_on_walk_endpoints_adj_E_minus`,
-   `reachable_E_minus_implies_not_cut`) is already in `EdgeFaceBridge.v`.
-3. Assemble `edge_2_connected E` for the noded overlay of valid area
-   geometries, threading the "closed-boundary" hypothesis from the input
-   `Geometry` validity.
-
-Risk: medium. The honest precondition is that inputs are *area* geometries
-whose overlay has no dangling edges; degenerate point/line contacts must be
-handled (or excluded by the input contract). This is where to surface the
-precondition explicitly rather than over-claim.
+**And** reduced-hypothesis headline variants in `theories-flocq/OverlayBridge.v`
+§8b — `extract_rings_valid_sep`, `extract_rings_valid_holes_sep`,
+`valid_geometry_extract_sep` — carry `twins_in_different_faces (result_darts …)`
+directly, dropping `edge_2_connected` + both `euler_characteristic` instances +
+`NoDup` (the Euler stack only served the forward direction). The original
+Euler-routed headlines are kept unchanged.
 
 ### H5 / H6 — the planar Euler identity *(deepest; recommend keeping carried)*
 
@@ -185,8 +182,10 @@ shrinking H4/H7 or landing H3.
    `theories/VertexDegree.v`).
 2. ~~**H4** (`NoDup E` from noding dedup)~~ — **DONE** (2026-06-16,
    `ExtractFaces.v` + `OverlayBridge.NoDup_result_edges_noded`).
-3. **H3** (`edge_2_connected` from closed-boundary overlay) — the substantive
-   structural rung; reuses existing `EdgeFaceBridge` bypass machinery.
+3. ~~**H3** (`edge_2_connected`)~~ — **RESOLVED** (2026-06-16): irreducible
+   (dumbbell), but the `twins_in_different_faces ⟺ edge_2_connected` equivalence
+   is now proven both ways (converse is Euler-free), and `*_sep` headline
+   variants carry the equivalent precondition directly.
 4. **H5/H6** — keep carried (route A); revisit route (B) only as a separate
    planarity project.
 

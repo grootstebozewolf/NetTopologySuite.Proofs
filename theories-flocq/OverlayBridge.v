@@ -586,6 +586,67 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §8b  Reduced-hypothesis variants (face_twin_free closure, H3).              *)
+(*                                                                            *)
+(* These carry `twins_in_different_faces (result_darts ..)` DIRECTLY -- the    *)
+(* literal combinatorial condition `extract_faces_valid_sep` consumes -- so    *)
+(* they need NO `edge_2_connected`, NO `euler_characteristic`, and NO `NoDup`. *)
+(* (`edge_2_connected` is provably equivalent to `twins_in_different_faces`     *)
+(* via EdgeFaceBridge.{edge_2_connected_twins_sep, *)
+(*  twins_in_different_faces_edge_2_connected}; the Euler stack only served the *)
+(* forward direction.)  The original Euler-routed headlines above are kept.    *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem extract_rings_valid_sep :
+  forall (op : BooleanOp) (A B : Geometry),
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    twins_in_different_faces (result_darts op (noded_labeled_graph A B)) ->
+    forall poly,
+      In poly (extract_faces op (noded_labeled_graph A B)) ->
+      valid_polygon poly.
+Proof.
+  intros op A B Hwn Hns Hsep poly Hin.
+  exact (extract_faces_valid_sep op (noded_labeled_graph A B) Hwn Hns Hsep poly Hin).
+Qed.
+
+Theorem extract_rings_valid_holes_sep :
+  forall (hassign : Dart -> list Dart) (op : BooleanOp) (A B : Geometry),
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    twins_in_different_faces (result_darts op (noded_labeled_graph A B)) ->
+    (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
+       forall h, In h (hassign d) ->
+         In h (result_darts op (noded_labeled_graph A B))) ->
+    (forall d, In d (result_darts op (noded_labeled_graph A B)) ->
+       forall h, In h (hassign d) ->
+       hole_inside_outer
+         (ring_of_chain (face_chain (result_darts op (noded_labeled_graph A B)) d
+                           (face_period (result_darts op (noded_labeled_graph A B)) d)))
+         (hole_ring_of (result_darts op (noded_labeled_graph A B))
+            (h, face_period (result_darts op (noded_labeled_graph A B)) h))) ->
+    forall poly,
+      In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
+      valid_polygon poly.
+Proof.
+  intros hassign op A B Hwn Hns Hsep Hwf Hinside poly Hin.
+  exact (extract_faces_holes_valid_sep hassign op (noded_labeled_graph A B)
+           Hwn Hns Hsep Hwf Hinside poly Hin).
+Qed.
+
+Theorem valid_geometry_extract_sep :
+  forall (op : BooleanOp) (A B : Geometry),
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    twins_in_different_faces (result_darts op (noded_labeled_graph A B)) ->
+    valid_geometry (extract_faces op (noded_labeled_graph A B)).
+Proof.
+  intros op A B Hwn Hns Hsep.
+  unfold valid_geometry. intros poly Hin.
+  apply (extract_rings_valid_sep op A B Hwn Hns Hsep poly Hin).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §9  Audit footprint.                                                        *)
 (* -------------------------------------------------------------------------- *)
 
@@ -598,5 +659,7 @@ Print Assumptions correct_labels_difference.
 Print Assumptions correct_labels_symdiff.
 Print Assumptions correct_labels_all_ops.
 Print Assumptions extract_rings_valid.
+Print Assumptions extract_rings_valid_sep.
+Print Assumptions valid_geometry_extract_sep.
 Print Assumptions extract_rings_valid_holes.
 Print Assumptions valid_geometry_extract.
