@@ -894,6 +894,9 @@ theories/EulerBridge.v
 # H7): num_vertices (E_minus E e) = num_vertices E from no_spurs (min-degree-2).
 # Discharges the carried vertex-count hypothesis of the Euler bridge.  No Admitteds.
 theories/VertexDegree.v
+# Non-vacuity witnesses for the carried planar-Euler premise euler_characteristic
+# (single edge; two disjoint edges, validating the 2*C coefficient).  No Admitteds.
+theories/EulerWitness.v
 # H_bridge Euler route (Rung 3b, stage 6): discharge the named bridge premise
 # EdgeFaceBridge.H_bridge_premise from the planar Euler identity (via
 # H_bridge_core_conclusion_from_euler + num_faces_E_minus_splice).  No Admitteds.
