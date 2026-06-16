@@ -1025,6 +1025,47 @@ the split exists). The full-vertex-avoidance guard here is the honest general-po
 requirement (what `chain_*_straddles_y` and the interior proof need); it is stronger than the
 seam's `ray_avoids_vertices`, which only blocks the rightward ray.
 
+### §11.5o update (2026-06-16): the y-unimodal close — convex ⟹ y-unimodal, discharged
+
+`theories/ConvexYUnimodal.v` §8–§11 **closes the last convex residual**
+`convex_no_interior_ymin` under the honest strict-convexity general-position guard.
+All `Qed`, three-axiom (in fact only the two classical-reals axioms appear in every
+new `Print Assumptions`). The route sidesteps every supporting-line / cross-product
+monotonicity induction the corpus lacks:
+
+- **The geometric keystone — the valley lever.** `valley_min` is a one-line cross-product
+  fact closed by `ring`+`nra`: the polynomial identity
+  `(py c − py b)·cross a b w + (py a − py b)·cross b c w = (py w − py b)·cross a b c`,
+  combined with `b` strictly below both neighbours and `w` left-of-or-on both edges,
+  forces `py b ≤ py w` whenever the turn at `b` is STRICT (`0 < cross a b c`).
+  `convex_valley_is_global_min` reads it through `convex_left_turns`: **a strict-corner
+  vertex sitting below both its boundary neighbours in a half-plane-convex ring is the
+  ring's global y-minimum.** This is the genuine convex content, with no induction.
+- **Honesty caveat — the bare residual is FALSE.** `collinear_spike_not_convex_no_interior_ymin`
+  exhibits a degenerate (collinear, zero-area vertical) convex ring satisfying both
+  premises of `convex_no_interior_ymin` yet having an interior strict y-minimum — the
+  turn at its valley is `cross = 0`, exactly the case the lever cannot touch. So the
+  residual as originally stated (§6) is not provable; a strict-convexity guard is
+  *necessary*, not a convenience.
+- **The close.** `convex_strict_no_interior_ymin` discharges the residual's content under
+  that guard (`strict_ccw_turns` — every consecutive triple a strict left turn; plus
+  `unique_bottom` — the head is the unique minimum, the elementary fact the lever reduces
+  the geometry to): each candidate valley triple is refuted by the lever (`py b ≤ py head`)
+  against `unique_bottom` (`py head < py b`). `convex_strict_start_y_unimodal` then chains
+  it through the §5 combinatorial rung to **`y_unimodal_decomposition` unconditionally — no
+  named residual** — and `convex_strict_start_bimonotone` to a `bimonotone_split`.
+- **Validation.** `diamond_y_unimodal_via_strict` / `hexagon_y_unimodal_via_strict` run both
+  witnesses through the unconditional close end-to-end (`diamond_convex_inward` /
+  `hexagon_convex_inward` supply half-plane convexity in the `edge_inward_hp` form; the
+  guards close by `cbn`/`lra`).
+
+So the §11.5h → §11.5k → §11.5i convex ladder is now unconditional for strictly-convex
+rings: the sole geometric residual the campaign carried (`convex_no_interior_ymin`) is
+discharged, with the degenerate exceptions pinned by a committed counterexample. (The
+remaining open content is the *non-strict* degenerate boundary — collinear runs — which is
+genuinely false for the y-unimodal split, as §9 shows, and the dual exterior
+`straddle extraction` of §11.5m.)
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4

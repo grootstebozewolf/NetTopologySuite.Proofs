@@ -35,11 +35,17 @@
        `y_unimodal_decomposition` directly (their CCW order already starts at the
        bottom vertex), recovering their bimonotone splits through the modulator.
 
-   The remaining residual (the genuine convex content) is the IMPLICATION
-   `convex_left_turns`-form ⟹ `y_unimodal_decomposition` for a general convex
-   ring under the right general-position guard — isolated here, to be closed by a
-   follow-up rung.  This file introduces no `Admitted`: it proves the bridge and
-   the wiring, and validates the witnesses.
+   §8–§11 (added 2026-06-16) CLOSE the genuine convex content.  §8 proves the
+   geometric keystone — `convex_valley_is_global_min`: a vertex sitting strictly
+   below its two neighbours at a STRICT convex corner is the ring's global
+   y-minimum (via the one-line cross-product lever `valley_min`).  §9 records the
+   honesty caveat that the bare residual `convex_no_interior_ymin` (§6) is FALSE
+   in degenerate position (`collinear_spike_not_convex_no_interior_ymin` — a
+   collinear spike), which is exactly why a strict-convexity guard is needed.
+   §10 then discharges the residual under that guard: `convex_strict_start_y_unimodal`
+   proves a strictly-convex ring presented from its unique bottom vertex IS
+   y-unimodal — UNCONDITIONALLY, no named residual — and §11 validates the
+   diamond and hexagon end-to-end through it.
 
    Pure-R + three-axiom.  No `Admitted` / `Axiom` / `Parameter`.
 
@@ -402,6 +408,318 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §8  The valley lever: a strict-turn local-y-minimum vertex of a convex ring *)
+(*     is a GLOBAL minimum — the genuine geometric content, proved.            *)
+(* -------------------------------------------------------------------------- *)
+
+(* THE ALGEBRAIC KEYSTONE.  A pure cross-product identity (closed by `ring`):
+
+     (py c - py b) * cross a b w + (py a - py b) * cross b c w
+       = (py w - py b) * cross a b c.
+
+   When `b` is strictly below both `a` and `c` (so the two height coefficients
+   `py c - py b` and `py a - py b` are positive) and `w` is left-of-or-on both
+   directed edges `a→b` and `b→c` (`0 <= cross a b w`, `0 <= cross b c w`), the
+   left-hand side is `>= 0`.  A STRICT turn at `b` (`0 < cross a b c`) then forces
+   `py b <= py w`.  No supporting-line monotonicity, no induction — just the
+   orientation sign of three triangles, fed to `nra`. *)
+Lemma valley_min : forall a b c w : Point,
+  0 < cross a b c ->
+  0 <= cross a b w ->
+  0 <= cross b c w ->
+  py b < py a ->
+  py b < py c ->
+  py b <= py w.
+Proof.
+  intros a b c w Habc Habw Hbcw Hba Hbc.
+  assert (Hid : (py c - py b) * cross a b w + (py a - py b) * cross b c w
+                = (py w - py b) * cross a b c).
+  { destruct a as [ax ay], b as [bx by_], c as [cx cy], w as [wx wy].
+    unfold cross; cbn [px py]; ring. }
+  assert (H1 : 0 <= (py c - py b) * cross a b w) by (apply Rmult_le_pos; lra).
+  assert (H2 : 0 <= (py a - py b) * cross b c w) by (apply Rmult_le_pos; lra).
+  nra.
+Qed.
+
+(* The convex reading of the lever: in a (half-plane) convex ring, a vertex `b`
+   sitting strictly below its two boundary neighbours `a`, `c` — provided the
+   turn at `b` is a STRICT left turn (`b` is a genuine convex corner, not a
+   collinear/spike degeneracy) — is the GLOBAL minimum: it is `<=` every vertex.
+   `convex_left_turns` supplies `0 <= cross a b w` and `0 <= cross b c w` for
+   every vertex `w`; the rest is `valley_min`. *)
+Lemma convex_valley_is_global_min : forall (r : Ring) (a b c : Point),
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  In (a, b) (ring_edges r) ->
+  In (b, c) (ring_edges r) ->
+  0 < cross a b c ->
+  py b < py a ->
+  py b < py c ->
+  forall w, In w r -> py b <= py w.
+Proof.
+  intros r a b c Hconv Hab Hbc Hturn Hba Hbc' w Hw.
+  apply (valley_min a b c w Hturn).
+  - exact (convex_left_turns r a b w Hconv Hab Hw).
+  - exact (convex_left_turns r b c w Hconv Hbc Hw).
+  - exact Hba.
+  - exact Hbc'.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §9  The bare residual `convex_no_interior_ymin` is FALSE as stated.         *)
+(* -------------------------------------------------------------------------- *)
+
+(* HONESTY NOTE.  The residual predicate `convex_no_interior_ymin` (§6) is NOT
+   provable as literally stated: a DEGENERATE convex ring can have an interior
+   strict y-local-minimum.  Witness: a fully collinear (zero-area) vertical
+   "ring".  Every edge is vertical, so `edge_inward_hp` has x-coefficient ≠ 0 but
+   zero constant and y-coefficient, and the slack of every edge at every vertex
+   (all on the line `x = 0`) is exactly `0` — global half-plane convexity holds
+   vacuously.  Its head `(0,0)` is a (non-strict) global minimum, so
+   `starts_at_min` holds.  Yet the consecutive triple `(0,2),(0,1),(0,3)` is a
+   strict interior y-minimum.  This is precisely the case the §8 lever cannot
+   touch — the turn at the valley is `cross = 0` (collinear), not a STRICT left
+   turn — which is exactly why the closing rung needs a strict-convexity
+   general-position guard.  The bare predicate's premises hold while its
+   conclusion fails, so it is false. *)
+Definition collinear_spike_ring : Ring :=
+  [ mkPoint 0 0 ; mkPoint 0 2 ; mkPoint 0 1 ; mkPoint 0 3 ; mkPoint 0 0 ].
+
+Lemma collinear_spike_not_convex_no_interior_ymin :
+  ~ convex_no_interior_ymin collinear_spike_ring.
+Proof.
+  unfold convex_no_interior_ymin. intro H.
+  assert (Hno : no_interior_strict_ymin collinear_spike_ring).
+  { apply H.
+    - unfold collinear_spike_ring.
+      cbn [ring_edges map edge_inward_hp].
+      repeat (apply Forall_cons); try apply Forall_nil;
+        intros v Hv; cbn [In] in Hv;
+        repeat (destruct Hv as [<- | Hv]); try contradiction;
+        unfold hp_slack; cbn [px py fst snd]; lra.
+    - cbn [collinear_spike_ring starts_at_min]. intros w Hw.
+      cbn [In] in Hw.
+      repeat (destruct Hw as [<- | Hw]); try contradiction; cbn [py]; lra. }
+  cbn in Hno.
+  destruct Hno as [_ [Hbad _]].
+  apply Hbad. split; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §10  The corrected, UNCONDITIONAL close under the strict-convexity guard.   *)
+(* -------------------------------------------------------------------------- *)
+
+(* General position guard (the honest minimum, per §9): every consecutive triple
+   is a STRICT left turn (no three consecutive vertices collinear). *)
+Fixpoint strict_ccw_turns (l : list Point) : Prop :=
+  match l with
+  | a :: ((b :: c :: _) as l') => 0 < cross a b c /\ strict_ccw_turns l'
+  | _ => True
+  end.
+
+(* Every element of `l` strictly above height `h0`, EXCEPT possibly the last (the
+   closing duplicate of a ring is permitted to tie the bottom). *)
+Fixpoint all_above (h0 : R) (l : list Point) : Prop :=
+  match l with
+  | [] => True
+  | x :: rest => match rest with
+                 | [] => True
+                 | _ => h0 < py x /\ all_above h0 rest
+                 end
+  end.
+
+(* The bottom vertex (head) is strictly lower than every other vertex, save the
+   closing duplicate.  Equivalent to: the global minimum is attained uniquely, at
+   the head — the elementary fact the §8 lever reduces the geometry to. *)
+Definition unique_bottom (r : Ring) : Prop :=
+  match r with
+  | [] => True
+  | h :: t => all_above (py h) t
+  end.
+
+(* Consecutive list members are ring edges. *)
+Lemma ring_edges_adjacent : forall pre a b suf,
+  In (a, b) (ring_edges (pre ++ a :: b :: suf)).
+Proof.
+  induction pre as [| x pre IH]; intros a b suf.
+  - cbn. left. reflexivity.
+  - cbn [app].
+    destruct (pre ++ a :: b :: suf) as [| y l] eqn:E.
+    + destruct pre; cbn [app] in E; discriminate.
+    + change (In (a, b) ((x, y) :: ring_edges (y :: l))).
+      right. rewrite <- E. apply IH.
+Qed.
+
+(* A consecutive triple anywhere in a `strict_ccw_turns` list is a strict turn. *)
+Lemma strict_ccw_turns_app : forall pre a b c suf,
+  strict_ccw_turns (pre ++ a :: b :: c :: suf) -> 0 < cross a b c.
+Proof.
+  induction pre as [| p pre IH]; intros a b c suf H.
+  - cbn [app] in H. exact (proj1 H).
+  - cbn [app] in H.
+    apply (IH a b c suf).
+    remember (pre ++ a :: b :: c :: suf) as m eqn:E.
+    destruct m as [| x [| y l]].
+    + exact I.
+    + exact I.
+    + cbn [strict_ccw_turns] in H. exact (proj2 H).
+Qed.
+
+(* A non-last element of an `all_above h0` list is strictly above `h0`. *)
+Lemma all_above_not_last : forall (h0 : R) (mid : list Point) (x : Point) (rest : list Point),
+  all_above h0 (mid ++ x :: rest) ->
+  rest <> [] ->
+  h0 < py x.
+Proof.
+  induction mid as [| m mid IH]; intros x rest Hall Hrest.
+  - destruct rest as [| r0 rest']; [ contradiction | ].
+    cbn [app all_above] in Hall. exact (proj1 Hall).
+  - cbn [app] in Hall.
+    remember (mid ++ x :: rest) as m0 eqn:E.
+    destruct m0 as [| y l].
+    + exfalso. destruct mid; cbn [app] in E; discriminate.
+    + cbn [all_above] in Hall.
+      apply (IH x rest); [ rewrite <- E; exact (proj2 Hall) | exact Hrest ].
+Qed.
+
+(* `no_interior_strict_ymin` from a per-triple obligation (pure list induction). *)
+Lemma no_interior_strict_ymin_of_triples : forall l : list Point,
+  (forall pre a b c suf, l = pre ++ a :: b :: c :: suf -> ~ (py b < py a /\ py b < py c)) ->
+  no_interior_strict_ymin l.
+Proof.
+  induction l as [| a0 l IH]; intros Htri.
+  - exact I.
+  - destruct l as [| b0 l']; [ exact I | ].
+    destruct l' as [| c0 l'']; [ exact I | ].
+    change (~ (py b0 < py a0 /\ py b0 < py c0)
+            /\ no_interior_strict_ymin (b0 :: c0 :: l'')).
+    split.
+    + exact (Htri [] a0 b0 c0 l'' eq_refl).
+    + apply IH. intros pre a b c suf Heq.
+      apply (Htri (a0 :: pre) a b c suf).
+      cbn [app]. rewrite Heq. reflexivity.
+Qed.
+
+(* THE CLOSE (formerly the geometric residual).  A half-plane-convex ring in
+   strict general position (`strict_ccw_turns`) presented from a UNIQUE bottom
+   vertex (`unique_bottom`) has NO interior strict y-local-minimum.  Each candidate
+   valley triple is refuted: §8's lever makes the valley a global minimum
+   (`py b <= py h` for the head `h`), while `unique_bottom` forces `py h < py b`
+   (the valley is a non-last interior vertex) — contradiction.  No hypothesis is
+   left dangling; this discharges `convex_no_interior_ymin`'s content under the
+   honest general-position guard §9 shows is necessary. *)
+Theorem convex_strict_no_interior_ymin : forall r : Ring,
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  strict_ccw_turns r ->
+  unique_bottom r ->
+  no_interior_strict_ymin r.
+Proof.
+  intros r Hconv Hstrict Huniq.
+  apply no_interior_strict_ymin_of_triples.
+  intros pre a b c suf Hr [Hba Hbc].
+  assert (Hab_e : In (a, b) (ring_edges r)).
+  { rewrite Hr. apply (ring_edges_adjacent pre a b (c :: suf)). }
+  assert (Hbc_e : In (b, c) (ring_edges r)).
+  { assert (Heq : ring_edges r = ring_edges ((pre ++ [a]) ++ b :: c :: suf)).
+    { rewrite Hr. rewrite <- app_assoc. reflexivity. }
+    rewrite Heq. apply (ring_edges_adjacent (pre ++ [a]) b c suf). }
+  assert (Hturn : 0 < cross a b c).
+  { apply (strict_ccw_turns_app pre a b c suf). rewrite <- Hr. exact Hstrict. }
+  destruct r as [| h t].
+  { exfalso. destruct pre; cbn [app] in Hr; discriminate. }
+  cbn [unique_bottom] in Huniq.
+  assert (Hbh : py b <= py h).
+  { apply (convex_valley_is_global_min (h :: t) a b c); try assumption.
+    left; reflexivity. }
+  assert (Hhb : py h < py b).
+  { destruct pre as [| p pre'].
+    - cbn [app] in Hr. injection Hr as Hh Ht. subst t.
+      apply (all_above_not_last (py h) [] b (c :: suf)); [ exact Huniq | discriminate ].
+    - cbn [app] in Hr. injection Hr as Hh Ht. subst t.
+      apply (all_above_not_last (py h) (pre' ++ [a]) b (c :: suf)).
+      + rewrite <- (app_assoc pre' [a] (b :: c :: suf)). cbn [app]. exact Huniq.
+      + discriminate. }
+  lra.
+Qed.
+
+(* The unconditional headline: a strictly-convex ring presented from its unique
+   bottom vertex (distinct consecutive heights) IS y-unimodal — no named residual.
+   This is the §11.5k conditional headline with the residual discharged. *)
+Theorem convex_strict_start_y_unimodal : forall r : Ring,
+  r <> [] ->
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  strict_ccw_turns r ->
+  unique_bottom r ->
+  chain_y_distinct r ->
+  y_unimodal_decomposition r.
+Proof.
+  intros r Hne Hconv Hstrict Huniq Hcd.
+  apply no_interior_ymin_unimodal; [ exact Hne | exact Hcd | ].
+  apply convex_strict_no_interior_ymin; assumption.
+Qed.
+
+(* And the bimonotone split drops out through the modulator wiring — the whole
+   convex ladder, unconditional under strict general position. *)
+Corollary convex_strict_start_bimonotone : forall r : Ring,
+  r <> [] ->
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  strict_ccw_turns r ->
+  unique_bottom r ->
+  chain_y_distinct r ->
+  exists inc dec, bimonotone_split r inc dec.
+Proof.
+  intros r Hne Hconv Hstrict Huniq Hcd.
+  apply y_unimodal_bimonotone.
+  apply convex_strict_start_y_unimodal; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §11  Validation: the diamond and hexagon go through the UNCONDITIONAL close. *)
+(* -------------------------------------------------------------------------- *)
+
+(* Half-plane convexity in the `edge_inward_hp` form (the shape the close wants). *)
+Lemma diamond_convex_inward :
+  Forall (vertices_in_halfplane diamond_ring) (map edge_inward_hp (ring_edges diamond_ring)).
+Proof.
+  unfold diamond_ring.
+  cbn [ring_edges map edge_inward_hp].
+  repeat (apply Forall_cons); try apply Forall_nil;
+    intros v Hv; cbn [In] in Hv;
+    repeat (destruct Hv as [<- | Hv]); try contradiction;
+    unfold hp_slack; cbn [px py fst snd]; lra.
+Qed.
+
+Theorem diamond_y_unimodal_via_strict : y_unimodal_decomposition diamond_ring.
+Proof.
+  apply convex_strict_start_y_unimodal.
+  - discriminate.
+  - exact diamond_convex_inward.
+  - cbn [diamond_ring strict_ccw_turns]; repeat split; unfold cross; cbn [px py]; lra.
+  - cbn [diamond_ring unique_bottom all_above py]; repeat split; lra.
+  - cbn [diamond_ring chain_y_distinct py]; repeat split; lra.
+Qed.
+
+Lemma hexagon_convex_inward :
+  Forall (vertices_in_halfplane hexagon_ring) (map edge_inward_hp (ring_edges hexagon_ring)).
+Proof.
+  unfold hexagon_ring.
+  cbn [ring_edges map edge_inward_hp].
+  repeat (apply Forall_cons); try apply Forall_nil;
+    intros v Hv; cbn [In] in Hv;
+    repeat (destruct Hv as [<- | Hv]); try contradiction;
+    unfold hp_slack; cbn [px py fst snd]; lra.
+Qed.
+
+Theorem hexagon_y_unimodal_via_strict : y_unimodal_decomposition hexagon_ring.
+Proof.
+  apply convex_strict_start_y_unimodal.
+  - discriminate.
+  - exact hexagon_convex_inward.
+  - cbn [hexagon_ring strict_ccw_turns]; repeat split; unfold cross; cbn [px py]; lra.
+  - cbn [hexagon_ring unique_bottom all_above py]; repeat split; lra.
+  - cbn [hexagon_ring chain_y_distinct py]; repeat split; lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -416,3 +734,11 @@ Print Assumptions convex_canonical_start_y_unimodal.
 Print Assumptions convex_canonical_start_bimonotone.
 Print Assumptions diamond_y_unimodal_via_rung.
 Print Assumptions hexagon_y_unimodal_via_rung.
+Print Assumptions valley_min.
+Print Assumptions convex_valley_is_global_min.
+Print Assumptions collinear_spike_not_convex_no_interior_ymin.
+Print Assumptions convex_strict_no_interior_ymin.
+Print Assumptions convex_strict_start_y_unimodal.
+Print Assumptions convex_strict_start_bimonotone.
+Print Assumptions diamond_y_unimodal_via_strict.
+Print Assumptions hexagon_y_unimodal_via_strict.
