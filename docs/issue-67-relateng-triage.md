@@ -75,7 +75,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#4 RelateNG algorithm** | **ABSENT** | — | No noding + matrix-fill pipeline; JTS uses point-local topology + union semantics for collections. |
 | **#5 Prepared-mode correctness** | **ABSENT** | — | NTS#819 is perf-only; proof obligation is `evaluate(B) = relate(A,B)` regardless of cache. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
-| **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`); arc-span soundness + chord-length bridge remain open. |
+| **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
 
 ## 4. Inventory of reusable assets
 
@@ -141,8 +141,16 @@ segment intersection machinery but need a **new DE-9IM layer**.
    theorem — tractable once base `relate` is specified.
 
 6. **Curve extension (#7):** S12 lands chord rect curve-polygon × point carrier
-   (S4 guard delegation); `to_geometry` point-in-ring bridge is S12b. General
-   curve surfaces and arc outer rings remain open.
+   (S4 guard delegation); the `to_geometry` point-in-ring bridge (S12b) is now
+   closed (`point_in_rect_curve_geometry_iff_polygon`). The crossing-number
+   transport foundation also landed: `RayParityDegenerate.v` proves a
+   zero-length `(v,v)` edge is parity-neutral, so Phase-3 `point_in_ring` facts
+   move to `flat_map` chord rings (which carry `(v,v)` edges at joins). On that
+   foundation the **first genuine curve→matrix soundness** landed
+   (`RelateCurveAreaPointSound.v`): `point_in_ring_chord_rect_iff` (chord ring ≡
+   `rect_ring` on point-in-ring) + `strict_interior_in_rect_curve_{polygon,geometry}`
+   (the chord-rect curve geometry Contains its strict interior, transporting S4).
+   General curve surfaces, arc outer rings, and the matrix-fill side remain open.
 
 ## 6. Risk/cost-ordered options for the next (Coq) terminal
 
@@ -168,14 +176,21 @@ open; S11 oracle modes landed). The recommended path forward:
 - **S10b (done):** Option-A analytic arc (`RelateArcAnalytic.v`,
   `RelateMatrixArcAnalytic.v`); clothoid chord seed (`RelateClothoid.v`,
   `RelateMatrixClothoid.v`); oracle seeds
-  `de9im_arc_analytic_vectors.txt`, `de9im_clothoid_vectors.txt`. Open:
-  law-of-cosines chord-length bridge at `arc_sweep_angle`; the clothoid
-  lane's remaining open questions are triaged in
+  `de9im_arc_analytic_vectors.txt`, `de9im_clothoid_vectors.txt`. The
+  **law-of-cosines chord-length bridge at `arc_sweep_angle` is now CLOSED**
+  (`ArcChordLength.v : arc_chord_dist_sq_via_sweep`, squared form
+  `dist_sq(start,end) = 2·dist_sq(center,start)·(1 − cos sweep)`, built on a
+  provider-agnostic `law_of_cosines_equal_norm` over `cos_angle_between`); the
+  clothoid lane's remaining open questions are triaged in
   [`clothoid-open-questions-triage.md`](clothoid-open-questions-triage.md).
 - **S11 (done):** `RELATE_MATRIX` / `RELATE_PREDICATE` oracle modes.
+- **S12b (done):** the `to_geometry` ↔ linearised-rectangle point-set bridge
+  (`RelateCurveAreaPoint.v : point_in_rect_curve_geometry_iff_polygon`, 0 axioms);
+  the S4 Contains/Touches facts now transport to the curve geometry's point set.
 - **S12 (done):** curve-polygon × point carrier + fill (`RelateCurveAreaPoint.v`,
   `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
-  Open: `to_geometry` point-in-ring bridge (S12b).
+  S12b (the `to_geometry` point-in-ring bridge) now closed:
+  `point_in_rect_curve_geometry_iff_polygon`.
 - **S13+:** full noding, prepared cache (**F**).
 
 ## 8. Proposed milestone sketch (if accepted)

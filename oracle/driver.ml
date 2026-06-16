@@ -995,6 +995,32 @@ let run_arc_passes_through_pixel () =
        (b64_arc_passes_through_hot_pixel
           arc_start arc_mid arc_end center scale))
 
+(* ----- ARC_LINE_XY mode (Phase 4 Scope C, extracted). ------------------- *)
+
+(* Calls the verified total projections b64_arc_line_intersect_point_x / _y
+   from `theories-flocq/ArcLineIntersect_b64_exact.v` directly.  Reads the arc
+   (start, mid, end) defining the circumcircle, then the chord endpoints P, Q,
+   and emits the binary64 coordinates of the parameterised circle-chord
+   intersection point (Cramer's rule with inCircle determinants).  The same
+   `Bplus/Bminus/Bmult/Bdiv -> ( +. )/( -. )/( *. )/( /. )` extraction overrides
+   that back the other arc modes make these bit-equal with .NET `double`.
+
+   Backed by: the round-chain identity `b64_arc_line_intersect_point_{x,y}_
+   round_chain` and the forward-error headlines
+   `b64_arc_line_point_{x,y}_forward_error` (<= bpow 13) and the tighter
+   data-dependent `..._forward_error_ulp` (ulp-of-output form).  Differential
+   evidence vs a native-float reference: oracle/test_arc.ml. *)
+
+let run_arc_line_xy () =
+  let arc_start = parse_point (input_line stdin) in
+  let arc_mid   = parse_point (input_line stdin) in
+  let arc_end   = parse_point (input_line stdin) in
+  let chord_p   = parse_point (input_line stdin) in
+  let chord_q   = parse_point (input_line stdin) in
+  let x = b64_arc_line_intersect_point_x arc_start arc_mid arc_end chord_p chord_q in
+  let y = b64_arc_line_intersect_point_y arc_start arc_mid arc_end chord_p chord_q in
+  Printf.printf "XY %h %h\n" x y
+
 (* ----- ARC_AREA / ARC_AREA_INVARIANTS_EXACT (issue #64, M-AREA-CP). ------ *)
 
 (* Circular-SEGMENT area of one arc (A=start, B=mid, C=end): the signed region
@@ -1194,6 +1220,7 @@ let () =
        | "INCIRCLE_SIGN"            -> run_incircle_sign ()
        | "INCIRCLE_EXACT"           -> run_incircle_exact ()
        | "ARC_CHORD_CROSSES_CIRCLE" -> run_arc_chord_crosses_circle ()
+       | "ARC_LINE_XY"              -> run_arc_line_xy ()
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()

@@ -256,6 +256,12 @@ theories/HoleInsideOuterRect.v
 # docs/point-in-ring-seam-attempts.md for per-seam outcomes.
 # No Admitted, no Axiom, no Parameter.
 theories/PointInRingCorrect.v
+# Issue #67 curve->matrix transport foundation: a zero-length edge (v,v) is
+# parity-neutral for the crossing-number point-in-ring test (it never
+# satisfies edge_crosses_ray's strict y-straddle).  Unblocks transporting
+# Phase-3 point_in_ring facts to flat_map chord rings (which carry (v,v) edges
+# at segment joins).  Pure inductive + lra; zero axioms.  No Admitteds.
+theories/RayParityDegenerate.v
 # Green-phase Seam 3 + Seam 5 tangent attempts.  Probes the four
 # tangents identified in docs/point-in-ring-seams-3-5-7-red.md per
 # seam with simplest-possible implementations.  Tangents that close
@@ -569,11 +575,24 @@ theories/RelateArcAnalytic.v
 theories/RelateMatrixArcAnalytic.v
 theories/RelateClothoid.v
 theories/RelateMatrixClothoid.v
+# Issue #67 S10b follow-up: the law-of-cosines chord-length bridge at
+# arc_sweep_angle (the analytic gap RelateArcAnalytic/RelateClothoid defer).
+# Squared form: dist_sq(start,end) = 2*dist_sq(center,start)*(1-cos sweep),
+# via a provider-agnostic equal-norm law of cosines over cos_angle_between.
+# 4-axiom (cos.angle_between.atan2 -> classic); exempted in audit-exceptions.
+# No Admitteds.
+theories/ArcChordLength.v
 # Issue #67 session 12 (S12): curve-polygon × point relate + fill — chord rect
 # COMPOUNDCURVE carrier; S4 guard delegation (full `to_geometry` point-in-ring
 # bridge deferred S12b).  Seventh fill API `curve_point_fill`.  No Admitted.
 theories/RelateCurveAreaPoint.v
 theories/RelateMatrixCurveAreaPoint.v
+# Issue #67 curve->matrix soundness seed: the chord-rectangle curve geometry
+# Contains every strictly-interior point.  point_in_ring_chord_rect_iff strips
+# the three (v,v) join edges (RayParityDegenerate) so the linearised chord ring
+# matches rect_ring, then transports S4's strict_interior_point_in_ring through
+# the S12b point-set bridge.  No Admitteds.
+theories/RelateCurveAreaPointSound.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the
@@ -1591,6 +1610,17 @@ theories/ArcOverlay.v
 # lemmas/theorems; no Admitteds; pulls Ranalysis chain (sig_not_dec,
 # sig_forall_dec, functional_extensionality_dep -- README-allowlisted).
 theories/ArcIntersectIVT.v
+
+# Issue #64 #3c/#4c: arc-chord SOUNDNESS -- promotes the IVT circle-crossing
+# (ArcIntersectIVT) to an arc-SPAN crossing (arc_chord_intersects).  Pure
+# affine sign-algebra: arc_side_chord is affine along the chord, so both
+# endpoints strictly on arc_mid's side keeps the convex crossing in-span.
+# Terminals: a conditional floor (names the missing span hypothesis), the
+# strict both-sides advance, and the endpoint-anchored (control-point /
+# V-CP) cases via the boundary disjuncts.  No atan2/angle/PI -- three-axiom,
+# no audit-exceptions entry.  The unconditional sweep<=pi promotion stays
+# quarantined (false without a side hypothesis), NOT Admitted.  No Admitteds.
+theories/ArcChordSound.v
 
 # Issue #65 curve-aware buffer, first proof brick (Stage 2a-curve seam,
 # unblocked by #64's arc-line Scope B/C closure).  The offset of a

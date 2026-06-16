@@ -8,9 +8,13 @@
    Honest scoping note: the headline
        B2R (b64_arc_line_intersect_point_x ...) = arc_line_intersect_x_R ...
    does NOT hold on the nose in the integer regime, because the intersection
-   parameter along the chord is generally a non-dyadic rational.  Round-chain
-   identity (Scope B) and forward-error bound (Scope C) are queued as
-   follow-up slices.
+   parameter along the chord is generally a non-dyadic rational.  Instead the
+   file now ships the full cascade: the round-chain identity (Scope B) pins
+   each binary64 step to its IEEE rounding, and the forward-error bound
+   (Scope C) bounds the drift of the computed coordinate from the exact real
+   value -- both the regime-wide constant `bpow 13` headline
+   (`b64_arc_line_point_{x,y}_forward_error`) AND the tighter data-dependent
+   `..._ulp` headline (`..._forward_error_ulp`, error in ulp-of-output form).
 
    What this file ships:
 
@@ -1321,6 +1325,123 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Scope C tightened headline (issue #64 ask #5a) -- data-dependent bound.     *)
+(*                                                                            *)
+(* The capstone `b64_arc_line_point_{x,y}_forward_error` collapses every layer *)
+(* to the regime-wide worst case `bpow 13`, which is only attained when the    *)
+(* denominator is `±1` (so `|t|` reaches `2^52`).  The bound below keeps the    *)
+(* three error sources in their *actual-magnitude* form, so it is strictly      *)
+(* tighter for every input that is not the worst case (and equal to it there):  *)
+(*                                                                            *)
+(*   |B2R(coord) - coord_R|                                                    *)
+(*     <= ulp(B2R coord)/2          final-add round, at the TRUE output mag    *)
+(*      + ulp(B2R(t·d))/2           multiply round, at the TRUE product mag    *)
+(*      + |B2R d| · ½               layer-1 carry (t half-ulp ≤ ½, no 1/|den|) *)
+(*                                                                            *)
+(* It reuses only already-`Qed` pieces: the round-chain `_point_*_round`, the  *)
+(* `b64_mult_correct` product identity, the bit-exact chord diff `_dx/_dy_R`,  *)
+(* the layer-1 `_t_forward_error`, and the workhorse `b64_error_le_half_ulp_   *)
+(* round` (B64_lib).  No new magnitude facts, no new regime, 4-axiom footprint *)
+(* unchanged.                                                                  *)
+(* -------------------------------------------------------------------------- *)
+
+(* ----- x coordinate ----- *)
+
+Theorem b64_arc_line_point_x_forward_error_ulp :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax (b64_arc_line_intersect_point_x S M E P Q)
+           - arc_line_intersect_x_R S M E P Q)
+     <= b64_ulp (Binary.B2R prec emax (b64_arc_line_intersect_point_x S M E P Q)) / 2
+        + b64_ulp (Binary.B2R prec emax
+                     (b64_mult (b64_div (b64_inCircle S M E P)
+                                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                               (b64_minus (bx Q) (bx P)))) / 2
+        + Rabs (Binary.B2R prec emax (b64_minus (bx Q) (bx P))) * / 2)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_point_x_round _ _ _ _ _ Hsafe) as [HpR _].
+  destruct (b64_mult_correct _ _ (b64_arc_line_mult_x_safe _ _ _ _ _ Hsafe)) as [HmR _].
+  destruct (b64_arc_line_dx_R _ _ _ _ _ Hsafe) as [HdxR _].
+  pose proof (b64_arc_line_t_forward_error _ _ _ _ _ Hsafe) as Ht.
+  unfold arc_line_intersect_x_R, arc_line_intersect_param_s.
+  rewrite <- HdxR.
+  set (t := b64_div (b64_inCircle S M E P)
+                    (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))) in *.
+  set (dx := b64_minus (bx Q) (bx P)) in *.
+  set (m := b64_mult t dx) in *.
+  set (px := b64_arc_line_intersect_point_x S M E P Q) in *.
+  set (ratio := inCircle_R_BP S M E P
+                / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)) in *.
+  replace (Binary.B2R prec emax px
+           - (Binary.B2R prec emax (bx P) + ratio * Binary.B2R prec emax dx))
+    with ((Binary.B2R prec emax px
+           - (Binary.B2R prec emax (bx P) + Binary.B2R prec emax m))
+          + (Binary.B2R prec emax m - Binary.B2R prec emax t * Binary.B2R prec emax dx)
+          + (Binary.B2R prec emax t * Binary.B2R prec emax dx
+             - ratio * Binary.B2R prec emax dx)) by ring.
+  eapply Rle_trans; [ apply Rabs_triang | ].
+  apply Rplus_le_compat.
+  - eapply Rle_trans; [ apply Rabs_triang | ].
+    apply Rplus_le_compat.
+    + rewrite HpR. apply b64_error_le_half_ulp_round.
+    + rewrite HmR. apply b64_error_le_half_ulp_round.
+  - replace (Binary.B2R prec emax t * Binary.B2R prec emax dx
+             - ratio * Binary.B2R prec emax dx)
+      with (Binary.B2R prec emax dx * (Binary.B2R prec emax t - ratio)) by ring.
+    rewrite Rabs_mult.
+    apply Rmult_le_compat_l; [ apply Rabs_pos | exact Ht ].
+Qed.
+
+(* ----- y coordinate (mirror) ----- *)
+
+Theorem b64_arc_line_point_y_forward_error_ulp :
+  forall S M E P Q : BPoint,
+    arc_line_intersect_inputs_int_safe S M E P Q ->
+    (Rabs (Binary.B2R prec emax (b64_arc_line_intersect_point_y S M E P Q)
+           - arc_line_intersect_y_R S M E P Q)
+     <= b64_ulp (Binary.B2R prec emax (b64_arc_line_intersect_point_y S M E P Q)) / 2
+        + b64_ulp (Binary.B2R prec emax
+                     (b64_mult (b64_div (b64_inCircle S M E P)
+                                        (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q)))
+                               (b64_minus (by_ Q) (by_ P)))) / 2
+        + Rabs (Binary.B2R prec emax (b64_minus (by_ Q) (by_ P))) * / 2)%R.
+Proof.
+  intros S M E P Q Hsafe.
+  destruct (b64_arc_line_point_y_round _ _ _ _ _ Hsafe) as [HpR _].
+  destruct (b64_mult_correct _ _ (b64_arc_line_mult_y_safe _ _ _ _ _ Hsafe)) as [HmR _].
+  destruct (b64_arc_line_dy_R _ _ _ _ _ Hsafe) as [HdyR _].
+  pose proof (b64_arc_line_t_forward_error _ _ _ _ _ Hsafe) as Ht.
+  unfold arc_line_intersect_y_R, arc_line_intersect_param_s.
+  rewrite <- HdyR.
+  set (t := b64_div (b64_inCircle S M E P)
+                    (b64_minus (b64_inCircle S M E P) (b64_inCircle S M E Q))) in *.
+  set (dy := b64_minus (by_ Q) (by_ P)) in *.
+  set (m := b64_mult t dy) in *.
+  set (py := b64_arc_line_intersect_point_y S M E P Q) in *.
+  set (ratio := inCircle_R_BP S M E P
+                / (inCircle_R_BP S M E P - inCircle_R_BP S M E Q)) in *.
+  replace (Binary.B2R prec emax py
+           - (Binary.B2R prec emax (by_ P) + ratio * Binary.B2R prec emax dy))
+    with ((Binary.B2R prec emax py
+           - (Binary.B2R prec emax (by_ P) + Binary.B2R prec emax m))
+          + (Binary.B2R prec emax m - Binary.B2R prec emax t * Binary.B2R prec emax dy)
+          + (Binary.B2R prec emax t * Binary.B2R prec emax dy
+             - ratio * Binary.B2R prec emax dy)) by ring.
+  eapply Rle_trans; [ apply Rabs_triang | ].
+  apply Rplus_le_compat.
+  - eapply Rle_trans; [ apply Rabs_triang | ].
+    apply Rplus_le_compat.
+    + rewrite HpR. apply b64_error_le_half_ulp_round.
+    + rewrite HmR. apply b64_error_le_half_ulp_round.
+  - replace (Binary.B2R prec emax t * Binary.B2R prec emax dy
+             - ratio * Binary.B2R prec emax dy)
+      with (Binary.B2R prec emax dy * (Binary.B2R prec emax t - ratio)) by ring.
+    rewrite Rabs_mult.
+    apply Rmult_le_compat_l; [ apply Rabs_pos | exact Ht ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Perron worst-case witness (from InCircle_b64_exact).                       *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1359,3 +1480,5 @@ Print Assumptions b64_arc_line_mult_x_forward_error.
 Print Assumptions b64_arc_line_mult_y_forward_error.
 Print Assumptions b64_arc_line_point_x_forward_error.
 Print Assumptions b64_arc_line_point_y_forward_error.
+Print Assumptions b64_arc_line_point_x_forward_error_ulp.
+Print Assumptions b64_arc_line_point_y_forward_error_ulp.

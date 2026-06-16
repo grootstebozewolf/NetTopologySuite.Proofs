@@ -328,6 +328,7 @@ vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 | `ArcChordDensity.v : n_chords_achieve_eps` (+ `sagitta_conjugate_identity`, `sagitta_mul_radius_le`, `sagitta_le_quadratic_decay`) | **Sagitta-density law (triage route B):** s·(r + √(r²−l²)) = l² exactly, hence s·r ≤ l²; with half-chord budget L/n, any n with n²·(r·ε) ≥ L² (n ≥ L/√(r·ε)) brings every sub-chord's sagitta within ε — the chord-count-vs-tolerance trade-off as a theorem, per-sub-chord interface `[exact]` | 3 |
 | `ArcChordSubdivision.v : equal_angle_chords_achieve_eps` (+ `chord_half_length_sq_central`, `sin_sq_le_sq`) | **Equal-angle budget discharge (route B follow-up):** l² = R(1−cos φ)/2 exactly through `angle_between`; a sub-arc subtending φ ≤ θ/n has sagitta ≤ ε whenever n²·(r·ε) ≥ (r·θ/2)² — the angle-budget form an equal-angle lineariser consumes (atan/sin Category-C lane) `[exact]` | 4 |
 | `ArcIntersectIVT.v : chord_crosses_arc_circle_implies_circle_intersection` | Sign change of in-circle along a chord ⇒ real crossing (IVT) `[exact]` | 3 |
+| `ArcChordSound.v : chord_crosses_arc_circle_minor_side_sound` (+ `_start_anchored_sound`, `_end_anchored_sound`, `_span_sound`, `arc_side_chord_of_between`) | **Arc-chord soundness (issue #64 #3c/#4c):** promotes the IVT *circle*-crossing to an arc-*span* crossing (`arc_chord_intersects`). `arc_side_chord` is affine along the chord, so both chord endpoints strictly on `arc_mid`'s side (`0 < s_mid·s_P` ∧ `0 < s_mid·s_Q`) keep the convex IVT crossing in-span; the endpoint-anchored variants handle a control-point chord endpoint (V-CP) via the boundary disjunct; `_span_sound` is the honest conditional floor (names the missing span hypothesis, not an Admitted). Pure sign-algebra — no atan2/angle/PI, so **3-axiom** (no exemption). The unconditional sweep≤π promotion stays quarantined (false without a side hypothesis) `[exact]` | 3 |
 | `ArcOverlay.v : arc_overlay_correct_chord_approx` | **Conditional headline:** result point within `max_sagitta` of an arc, under 2 bridge hypotheses `[cond]` | 3 |
 | `Atan2.v : cos_atan2` (+`sin_atan2`) | **Option-A foundation (issue #64):** the Stdlib-`Ratan`-built `atan2 y x` is the polar angle of `(x,y)` — `cos = x/r`, `sin = y/r` for `(x,y)≠0` `[exact]` | 4 |
 | `AngleBetween.v : cos_angle_between` (+`sin_angle_between`) | **Option-A central angle/sweep (issue #64):** the signed angle `atan2(cross,dot)` between two vectors has `cos = dot/(\|u\|\|v\|)`, `sin = cross/(\|u\|\|v\|)` (Lagrange identity); sign encodes orientation. Range (-π,π] via `atan2_range` `[exact]` | 4 |
@@ -374,6 +375,7 @@ vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_t_forward_error` (+ `_t_round`, `_t_abs_le_bpow_52`, `arc_line_ratio_abs_le_52`) | **Arc-line Scope C layer-1 (issue #64 ask #5a):** the computed division parameter `t = b64_div sP den` deviates from the *exact-real* ratio `sP_R/(sP_R−sQ_R)` by at most **½** — a single division half-ulp. Because the denominator is **bit-exact** (Scope B.1), there is *no* denominator-carryover error (unlike the line-line layer 1, which rounds its own denominator). Derivation: `\|sP_R\| ≤ 2⁵²`, `\|den_R\| ≥ 1` ⇒ `\|ratio\| ≤ 2⁵²` ⇒ `ulp(round ratio) ≤ bpow 0 = 1` ⇒ half-ulp `≤ ½`. First layer of the Scope C forward-error cascade against `arc_line_intersect_x_R`; layers 2–4 (mult, plus, headline) queued `[int-b64-arc]` | 4 |
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_mult_{x_forward_error,y_forward_error}` (+ `_mult_*_round_error`, `_mult_*_carry_error`, `_mult_*_safe`, `_mult_*_abs_le_bpow_64`, `_d{x,y}_abs_le_bpow_12`) | **Arc-line Scope C layer-2 (issue #64 ask #5a):** the computed product `b64_mult t d` (`d = bx Q − bx P`, resp. `by_`) deviates from the exact-real `ratio · d_R` by at most **bpow 12** (and symmetric for `y`). Decomposition: multiply half-ulp (`ulp ≤ bpow(64−prec+1) = bpow 12`, so `≤ bpow 11`) + carry of the layer-1 t-error (`\|d_R\| · ½ ≤ 2¹²·½ = bpow 11`). **No `1/\|den\|` term** — because layer 1 is absolutely `≤ ½` (bit-exact denominator, Scope B.1), the arc-line bound is a clean constant, unlike the line-line layer whose denominator-rounding carries a `bpow 80/\|den\|` tail. Layers 3–4 (the `bx P + ·` add and the coordinate headline vs `arc_line_intersect_{x,y}_R`) now landed (see next row) `[int-b64-arc]` | 4 |
 | `ArcLineIntersect_b64_exact.v : b64_arc_line_point_{x_forward_error,y_forward_error}` (+ `_plus_*_safe`, `_point_*_round`, `_point_*_abs_le_bpow_65`, `_plus_*_round_error`, `_*P_abs_le_bpow_11`) | **Arc-line Scope C capstone — layers 3–4 (issue #64 ask #5a):** the headline forward-error bound. The float intersection coordinate is within **bpow 13** of the *exact real* value: `\|B2R(b64_arc_line_intersect_point_x …) − arc_line_intersect_x_R …\| ≤ bpow 13` (and symmetric for `y`). Layer 3 (final `bx P + ·` add): half-ulp at magnitude `≤ 2⁶⁵` ⇒ `ulp ≤ bpow(65−prec+1)=bpow 13` ⇒ `≤ bpow 12`; plus the layer-2 carry `≤ bpow 12`; total `bpow 13`. **Closes Scope C.** Crucially the bound is an *absolute constant with no `1/\|den\|` condition-number blow-up* — the entire cascade stays absolute because the denominator is bit-exact (Scope B.1). Contrast the line-line headline (`Intersect_b64_exact.v`), whose forward error carries a `bpow 80/\|den\|` tail. `[int-b64-arc]` | 4 |
+| `ArcLineIntersect_b64_exact.v : b64_arc_line_point_{x_forward_error_ulp,y_forward_error_ulp}` | **Arc-line Scope C tightened headline (issue #64 ask #5a):** the *data-dependent* forward-error bound — strictly tighter than the regime-wide `bpow 13` and equal to it only in the worst case (denominator `±1`, `\|t\|` at `2⁵²`). `\|B2R(b64_arc_line_intersect_point_x …) − arc_line_intersect_x_R …\| ≤ ulp(B2R(coord))/2 + ulp(B2R(t·d))/2 + \|B2R d\|·½` (and symmetric for `y`): each error source kept at its **true** magnitude — final-add round at the actual output ulp, multiply round at the actual product ulp, and the layer-1 carry `\|d\|·½` (the `t` half-ulp is absolutely `≤ ½`, **no `1/\|den\|`**). Pure recomposition of already-`Qed` pieces (`_point_*_round`, `b64_mult_correct`, `_dx/_dy_R`, `_t_forward_error`, `b64_error_le_half_ulp_round`); 4-axiom footprint unchanged `[int-b64-arc]` | 4 |
 
 `[oracle]` `INCIRCLE_SIGN`/`ARC_CHORD_CROSSES_CIRCLE`/`ARC_PASSES_THROUGH_PIXEL` +
 the three issue-#64 arc-length modes below.
@@ -426,7 +428,10 @@ exact real value, an **absolute** bound with *no `1/|den|` condition-number
 blow-up*, because the bit-exact denominator (Scope B.1) keeps every layer of the
 cascade absolute. So the honest arc-line story is: bit-exact prefix (A) →
 bit-exact denominator (B.1) → exact round-chain identity (B.2) → absolute
-`bpow 13` forward-error bound vs the exact real coordinate (C).
+`bpow 13` forward-error bound vs the exact real coordinate (C), plus the tighter
+**data-dependent** `..._forward_error_ulp` restatement (error in ulp-of-actual-
+output form: `ulp(coord)/2 + ulp(t·d)/2 + |d|·½`), strictly sharper than the
+regime-wide `bpow 13` for every non-worst-case input.
 
 ## Issue #67 — DE-9IM matrix algebra (`DE9IM.v`, session 1)
 
@@ -619,6 +624,7 @@ alongside `Atan2.v` / `AngleBetween.v` / `ArcLength.v`.
 |---|---|---|
 | `RelateArcAnalytic.v : arc_sweep_principal_range` | **Geometry:** `valid_arc` ⇒ principal sweep `arc_sweep_angle` ∈ (-π, π] (inherits `Classical_Prop.classic` via `AngleBetween`) `[exact]` | 4 |
 | `RelateArcAnalytic.v : arc_analytic_proper_cross_share` | **Geometry:** analytic-guarded proper cross ⇒ shared point (S10 delegate) `[exact]` | 4 |
+| `ArcChordLength.v : arc_chord_dist_sq_via_sweep` (+ `law_of_cosines_equal_norm`) | **Geometry (issue #67 S10b bridge):** the deferred law-of-cosines chord-length step, in squared form — `dist_sq(start,end) = 2·dist_sq(center,start)·(1 − cos(arc_sweep_angle))`, i.e. `chord² = 2r²(1 − cos θ)`. Provider-agnostic equal-norm law of cosines (`law_of_cosines_equal_norm`) over `cos_angle_between`, instantiated at the center-to-endpoint vectors (equal norm by `arc_center_equidistant`). Closes the `RelateArcAnalytic`/`RelateClothoid` "pose/set transparency seam" deferral; squared form avoids the sqrt/half-angle sign guard `[exact]` | 4 |
 
 ## Issue #67 — arc×line analytic regime→witness (`RelateMatrixArcAnalytic.v`, S10b)
 
@@ -699,10 +705,9 @@ computation — full RelateNG noding remains S13+.
 
 First curve-polygon relate slice: axis-aligned rectangle as a four-chord
 `COMPOUNDCURVE`. The curve-specific content is the structural-validity spine;
-the Contains/Touches witnesses are S4's, reused as constant facts. This file
-does **not** bridge the curve geometry's point set to `rect_polygon`, so it
-makes no curve→matrix claim; the `to_geometry` ↔ `rect_polygon` bridge is
-deferred (S12b).
+the Contains/Touches witnesses are S4's, reused as constant facts. **S12b
+(now closed):** the `to_geometry` ↔ linearised-rectangle point-set bridge,
+so the S4 facts transport to the curve geometry's point set.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -710,6 +715,9 @@ deferred (S12b).
 | `RelateCurveAreaPoint.v : rect_curve_linearised_ring_closed` | **Geometry:** `chord_approx_ring` of the rect curve outer is `ring_closed` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_contains_point_witness` | **Witness:** the reused S4 matrix satisfies `Contains` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_touches_boundary_witness` | **Witness:** the reused S4 matrix satisfies `Touches` `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : point_in_rect_curve_geometry_iff_polygon` | **Bridge (S12b):** the curve geometry's point set (`point_set ∘ to_geometry`) coincides with `point_in_polygon` of the single linearised rectangle ring — `to_geometry` is the singleton chord-approx map (no holes), `point_set` over a singleton is membership in its sole element. Lets the S4 Contains/Touches facts transport to curve-polygon×point unchanged. Pure structural computation (**0 axioms**) `[exact]` | 0 |
+| `RayParityDegenerate.v : ray_parity_zero_edge_irrelevant` (+ `edge_crosses_ray_degenerate`, `rpo_cons_iff`, `rpe_cons_iff`, `point_in_ring_dup_head`) | **Curve→matrix transport foundation (issue #67):** a zero-length edge `(v,v)` is parity-neutral for the crossing-number `point_in_ring` test — it never meets `edge_crosses_ray`'s strict y-straddle, so it always takes the `_skip` branch; inserting/removing one anywhere preserves both parities. Unblocks transporting Phase-3 `point_in_ring` facts to `flat_map` chord rings, which carry `(v,v)` edges at every segment join. Pure inductive + `lra` `[exact]` | 3 |
+| `RelateCurveAreaPointSound.v : point_in_rect_curve_geometry_characterisation` (+ `point_in_ring_chord_rect_iff`, `point_in_rect_curve_polygon_characterisation`, `not_in_box_not_in_rect_curve_geometry`, `strict_interior_in_rect_curve_geometry`, `left_boundary_in_rect_curve_polygon_not_strict`, `ring_edges_chord_rect`) | **Curve→matrix soundness (issue #67):** the **complete** membership characterisation for the chord-rectangle curve geometry — `point_in_rect_curve_geometry x0 y0 x1 y1 n p <-> (y0 < py p < y1 /\ x0 <= px p < x1)` — subsuming Contains (strict interior), Touches (boundary, not strict), and Disjoint (exterior, `not_in_box_*`). `point_in_ring_chord_rect_iff` strips the chord ring's three degenerate `(v,v)` join edges (`ray_parity_zero_edge_irrelevant`) so the linearised ring matches `rect_ring`, then `RectangleJCT.point_in_ring_rect_iff` transports through the S12b point-set bridge. n-independent (all-chord ring) `[exact]` | 3 |
 
 ## Issue #67 — curve-polygon×point regime→witness (`RelateMatrixCurveAreaPoint.v`, S12)
 

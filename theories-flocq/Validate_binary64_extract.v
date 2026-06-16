@@ -44,6 +44,7 @@ From NTS.Proofs       Require Import OverlayGraph.   (* edge_in_result *)
 From NTS.Proofs.Flocq Require Import HotPixel_b64.    (* b64_snap_coord, b64_one/two/half *)
 From NTS.Proofs.Flocq Require Import PassesThrough_b64_compute.
 From NTS.Proofs.Flocq Require Import InCircle_b64_compute.   (* b64_inCircle *)
+From NTS.Proofs.Flocq Require Import ArcLineIntersect_b64_exact. (* b64_arc_line_intersect_point_x/y *)
 From NTS.Proofs.Flocq Require Import B64_Pff_bridge.        (* b64_TwoSum *)
 From NTS.Proofs.Flocq Require Import B64_FastExpansionSum.  (* b64_grow_expansion_aux *)
 From NTS.Proofs.Flocq Require Import ArcCircle_b64_compute.  (* b64_chord_crosses_arc_circle *)
@@ -159,6 +160,8 @@ Extraction "oracle/extracted.ml"
   b64_passes_through_hot_pixel_compute
   b64_passes_through_hot_pixel_halfopen_compute
   b64_inCircle
+  b64_arc_line_intersect_point_x
+  b64_arc_line_intersect_point_y
   b64_chord_crosses_arc_circle
   b64_arc_passes_through_hot_pixel
   b64_TwoSum

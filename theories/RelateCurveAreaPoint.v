@@ -134,21 +134,50 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Curve-polygon × point: what is and is not established here.                 *)
+(* §S12b  The `to_geometry` ↔ rectangle-polygon point-in-ring bridge.          *)
 (*                                                                            *)
-(* This file's genuine, curve-specific content is the structural-validity      *)
-(* spine above (`valid_rect_curve_*`, `rect_curve_linearised_ring_closed`):    *)
-(* the chord-built rectangle is a valid curve polygon whose linearised ring    *)
-(* is closed.  The DE-9IM point membership and the Contains/Touches witnesses  *)
-(* are exactly S4's (`RelateAreaPoint.v`: `strict_interior_in_rect_polygon`,   *)
-(* `left_boundary_in_polygon_not_strict`, and the `cap_matrix_*_witness`       *)
-(* facts above).  The missing bridge — that the *curve* geometry's point set   *)
-(* (`to_geometry` linearisation) coincides with `rect_polygon`, and hence that *)
-(* a witness matrix is the curve-polygon×point true DE-9IM — is deferred to    *)
-(* S12b/S13+ and is NOT claimed here.                                          *)
+(* The bridge S12 deferred: the *curve* geometry's point set (the `to_geometry`*)
+(* linearisation, via `point_set`) coincides with membership in the single     *)
+(* linearised rectangle polygon.  It is pure structural computation, not JCT   *)
+(* content: `to_geometry` maps the chord-approximation over the one curve       *)
+(* polygon (no holes), so the geometry is the singleton                        *)
+(*   [mkPolygon (chord_approx_ring (rect_curve_ring x0 y0 x1 y1) n) []],        *)
+(* and `point_set` over a singleton is `point_in_polygon` on its sole element. *)
+(* With this bridge the S4 Contains/Touches facts transport to the curve       *)
+(* geometry's point set unchanged.                                             *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma point_in_rect_curve_geometry_iff_polygon :
+  forall x0 y0 x1 y1 n p,
+    point_in_rect_curve_geometry x0 y0 x1 y1 n p
+    <-> point_in_rect_curve_polygon x0 y0 x1 y1 n p.
+Proof.
+  intros x0 y0 x1 y1 n p.
+  unfold point_in_rect_curve_geometry, point_in_rect_curve_polygon, point_set,
+         to_geometry, rect_curve_geometry, rect_curve_polygon.
+  cbn [map curve_outer curve_holes].
+  split.
+  - intros [poly [Hin Hpip]]. cbn [In] in Hin.
+    destruct Hin as [Heq | Hfalse]; [ subst poly; exact Hpip | contradiction ].
+  - intros Hpip.
+    exists (mkPolygon (chord_approx_ring (rect_curve_ring x0 y0 x1 y1) n) []).
+    cbn [In]. split; [ left; reflexivity | exact Hpip ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Curve-polygon × point: status after S12b.                                   *)
+(*                                                                            *)
+(* Established here: the structural-validity spine (`valid_rect_curve_*`,       *)
+(* `rect_curve_linearised_ring_closed`) AND the S12b point-set bridge above     *)
+(* (`point_in_rect_curve_geometry_iff_polygon`): the curve geometry's point     *)
+(* set equals membership in the linearised rectangle polygon, so the S4 facts   *)
+(* (`RelateAreaPoint.v`) and the `cap_matrix_*_witness` matrices transport to   *)
+(* the curve-polygon×point setting unchanged.  Still S13+: arc (non-chord)      *)
+(* outer rings, holes, and full RelateNG noding / prepared cache.              *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions valid_rect_curve_geometry.
 Print Assumptions rect_curve_linearised_ring_closed.
+Print Assumptions point_in_rect_curve_geometry_iff_polygon.
 Print Assumptions cap_matrix_rect_contains_point_witness.
 Print Assumptions cap_matrix_rect_touches_boundary_witness.
