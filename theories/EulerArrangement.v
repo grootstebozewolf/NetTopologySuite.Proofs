@@ -67,10 +67,11 @@ Definition num_edges (E : list Edge) : nat := length E.
 (* (each component carries its own outer-boundary orbit), NOT the geometric    *)
 (* region count.  Hence `2*C`, not `1+C`: the two agree only when connected    *)
 (* (C=1), and the bridge argument's `E_minus` side is DISCONNECTED (C'=C+1).   *)
-(* Witnesses: single edge V=2,E=1,F=1,C=1 (2-1+1=2=2*1); single triangle       *)
-(* V=3,E=3,F=2,C=1; dumbbell V=6,E=7,F=3,C=1; TWO disjoint triangles           *)
-(* V=6,E=6,F=4,C=2 (6-6+4=4=2*2, refuting 1+C=3).  Carried as a `Prop` premise,*)
-(* to be discharged for the instances the bridge needs -- never asserted.      *)
+(* Witnesses: single edge V=2,E=1,F=1,C=1 (2-1+1=2=2*1) -- now a PROVEN         *)
+(* non-vacuity theorem `EulerWitness.w1_euler`; single triangle V=3,E=3,F=2,    *)
+(* C=1; dumbbell V=6,E=7,F=3,C=1; TWO disjoint edges/triangles with C=2         *)
+(* (refuting 1+C).  Carried as a `Prop` premise, to be discharged for the       *)
+(* instances the bridge needs -- never asserted (genus-0 is irreducible here).  *)
 (* -------------------------------------------------------------------------- *)
 
 Definition euler_characteristic (E : list Edge) : Prop :=
