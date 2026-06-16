@@ -21,8 +21,9 @@
    coordinate arithmetic (the only sub-`lra` fact is the dart-order
    self-irreflexivity `dart_ltb d d = false`).  `num_faces`/`num_components` are
    driven either through `ClassCount.count_classes_eq_1` (W1, single class) or
-   bottom-up via `class_reps_cons` (W2), rewriting each `existsb`/relation guard
-   by its proved value -- never by raw `class_reps`/`Rlt_dec` computation.
+   bottom-up via `class_reps_cons` / interleaved `cbn` (W2), rewriting each
+   `existsb`/relation guard by its proved value -- never by raw
+   `class_reps`/`Rlt_dec` computation.
 
    Pure dart + list + class-count combinatorics; no `Admitted` / `Axiom` /
    `Parameter`; allowlist axioms only.
