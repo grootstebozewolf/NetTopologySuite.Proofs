@@ -587,6 +587,12 @@ theories/ArcChordLength.v
 # bridge deferred S12b).  Seventh fill API `curve_point_fill`.  No Admitted.
 theories/RelateCurveAreaPoint.v
 theories/RelateMatrixCurveAreaPoint.v
+# Issue #67 curve->matrix soundness seed: the chord-rectangle curve geometry
+# Contains every strictly-interior point.  point_in_ring_chord_rect_iff strips
+# the three (v,v) join edges (RayParityDegenerate) so the linearised chord ring
+# matches rect_ring, then transports S4's strict_interior_point_in_ring through
+# the S12b point-set bridge.  No Admitteds.
+theories/RelateCurveAreaPointSound.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the

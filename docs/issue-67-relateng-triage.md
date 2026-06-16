@@ -145,9 +145,12 @@ segment intersection machinery but need a **new DE-9IM layer**.
    closed (`point_in_rect_curve_geometry_iff_polygon`). The crossing-number
    transport foundation also landed: `RayParityDegenerate.v` proves a
    zero-length `(v,v)` edge is parity-neutral, so Phase-3 `point_in_ring` facts
-   can move to `flat_map` chord rings (which carry `(v,v)` edges at joins) — the
-   remaining step to a genuine curve→matrix DE-9IM claim. General curve surfaces
-   and arc outer rings remain open.
+   move to `flat_map` chord rings (which carry `(v,v)` edges at joins). On that
+   foundation the **first genuine curve→matrix soundness** landed
+   (`RelateCurveAreaPointSound.v`): `point_in_ring_chord_rect_iff` (chord ring ≡
+   `rect_ring` on point-in-ring) + `strict_interior_in_rect_curve_{polygon,geometry}`
+   (the chord-rect curve geometry Contains its strict interior, transporting S4).
+   General curve surfaces, arc outer rings, and the matrix-fill side remain open.
 
 ## 6. Risk/cost-ordered options for the next (Coq) terminal
 
