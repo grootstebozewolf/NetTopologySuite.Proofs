@@ -1494,6 +1494,129 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §4b  The CONVERSE: twins_in_different_faces -> edge_2_connected.             *)
+(*                                                                            *)
+(* The easy ("different faces => not a bridge") direction of the rotation-     *)
+(* system bridge characterisation -- it needs NO planarity / Euler input       *)
+(* (unlike the forward `same_face => cut`, which is genus-0).  If a proper      *)
+(* dart `d0` does NOT share a face with its twin, then the REST of `d0`'s face  *)
+(* walk (period >= 3 by `no_spurs`) is a bypass from `dtip d0` to `dbase d0`    *)
+(* in `E_minus`: every walk dart differs from `d0` (no early return) and from   *)
+(* `twin d0` (different faces), so each survives edge removal                   *)
+(* (`dart_on_walk_endpoints_adj_E_minus`).                                      *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma diff_face_bypass_E_minus :
+  forall E d0 e,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d0 (darts_of E) ->
+    ~ same_face (darts_of E) d0 (twin d0) ->
+    In e E -> (e = d0 \/ e = twin d0) ->
+    reachable (E_minus E e) (dtip d0) (dbase d0).
+Proof.
+  intros E d0 e Hfan Hns Hd0 Hdiff He Hcase.
+  set (D := darts_of E).
+  assert (Hok : arrangement_ok D) by (apply arrangement_ok_of_fan; exact Hfan).
+  assert (Htw : forall z, In z D -> In (twin z) D) by (subst D; apply darts_of_closed_under_twin).
+  assert (Hge3 : (3 <= face_period D d0)%nat) by (apply face_period_ge3_of_fan_nospur; assumption).
+  destruct (face_period_spec D Hok d0 Hd0) as [_ Hpret].
+  remember (face_period D d0) as k eqn:Hkeq.
+  assert (Hloop : forall m, (1 <= m < k)%nat ->
+      reachable (E_minus E e) (dtip d0) (dtip (iter (fstep D) m d0))).
+  { intros m Hm.
+    induction m as [| m IHm]; [ lia | destruct m as [| m'] ].
+    - cbn [iter]. apply reach_one.
+      assert (Hb := dbase_fstep D d0 Htw Hd0).
+      rewrite <- Hb.
+      assert (Hx : In (fstep D d0) (dart_walk D d0 2)).
+      { apply dart_walk_iter_iff. exists 1%nat. split; [ lia | reflexivity ]. }
+      apply (dart_on_walk_endpoints_adj_E_minus E d0 e 2%nat (fstep D d0)
+          Hfan Hd0 He Hcase Hx).
+      { apply (fstep_neq_self_of_proper D d0 Htw Hd0).
+        apply dart_proper_of_fan with (D := D); assumption. }
+      { exact (Hns d0 Hd0). }
+    - assert (Hm' : (1 <= S m' < k)%nat) by lia.
+      assert (Hx : In (iter (fstep D) (S m') d0) (dart_walk D d0 (S (S m')))).
+      { apply dart_walk_iter_iff. exists (S m'). split; [ lia | reflexivity ]. }
+      apply reach_trans with (dtip (iter (fstep D) (S m') d0)).
+      { exact (IHm Hm'). }
+      { apply reach_one.
+        assert (Hin : In (iter (fstep D) (S m') d0) D).
+        { apply (face_walk_in D Htw d0 (S m') Hd0). }
+        assert (Hb := dbase_fstep D (iter (fstep D) (S m') d0) Htw Hin).
+        assert (Hx' : In (fstep D (iter (fstep D) (S m') d0))
+                    (dart_walk D d0 (S (S (S m'))))).
+        { apply dart_walk_iter_iff. exists (S (S m')). split; [ lia | cbn [iter]; reflexivity ]. }
+        rewrite <- Hb.
+        apply (dart_on_walk_endpoints_adj_E_minus E d0 e (S (S (S m')))
+          (fstep D (iter (fstep D) (S m') d0)) Hfan Hd0 He Hcase Hx').
+        { intro H. exfalso.
+          apply (iter_lt_face_period_not_self D d0 (S (S m')) Hok Hd0).
+          { lia. }
+          cbn [iter]. exact H. }
+        { intro H. apply Hdiff. exists (S (S m')). cbn [iter]. exact H. } } }
+  assert (Hend : dtip (iter (fstep D) (pred k) d0) = dbase d0).
+  { destruct k as [| k']; [ lia | cbn [pred] ].
+    assert (Hin : In (iter (fstep D) k' d0) D).
+    { apply (face_walk_in D Htw d0 k' Hd0). }
+    pose proof (dbase_fstep D (iter (fstep D) k' d0) Htw Hin) as Hbs.
+    assert (Heq : fstep D (iter (fstep D) k' d0) = iter (fstep D) (S k') d0)
+      by (cbn [iter]; reflexivity).
+    rewrite Heq in Hbs. rewrite Hpret in Hbs. symmetry. exact Hbs. }
+  assert (Hpred : (1 <= pred k < k)%nat) by lia.
+  apply reach_trans with (dtip (iter (fstep D) (pred k) d0)).
+  - apply (Hloop (pred k) Hpred).
+  - rewrite Hend. apply reach_refl.
+Qed.
+
+Lemma diff_face_not_cut :
+  forall E d0 e,
+    (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+    no_spurs (darts_of E) ->
+    In d0 (darts_of E) ->
+    dbase d0 <> dtip d0 ->
+    ~ same_face (darts_of E) d0 (twin d0) ->
+    In e E -> (e = d0 \/ e = twin d0) ->
+    ~ is_cut_edge E e.
+Proof.
+  intros E d0 e Hfan Hns Hd0 Hne Hdiff He Hcase.
+  assert (Hby : reachable (E_minus E e) (dtip d0) (dbase d0))
+    by (apply (diff_face_bypass_E_minus E d0 e); assumption).
+  destruct Hcase as [-> | ->].
+  - apply (reachable_E_minus_implies_not_cut E d0 (dbase d0) (dtip d0));
+      [ exact He | reflexivity | reflexivity | exact Hne | ].
+    apply reach_sym. exact Hby.
+  - apply (reachable_E_minus_implies_not_cut E (twin d0) (dtip d0) (dbase d0)).
+    + exact He.
+    + rewrite dbase_twin. reflexivity.
+    + rewrite dtip_twin. reflexivity.
+    + apply not_eq_sym. exact Hne.
+    + exact Hby.
+Qed.
+
+(* Converse of `edge_2_connected_twins_sep` -- and, unlike it, NEEDS NO
+   `H_bridge_premise`/Euler.  Together they give the full equivalence
+   `edge_2_connected E <-> twins_in_different_faces (darts_of E)` (under
+   well_noded + no_spurs, the forward direction modulo the planar premise). *)
+Theorem twins_in_different_faces_edge_2_connected :
+  forall E,
+    well_noded_darts E ->
+    no_spurs (darts_of E) ->
+    twins_in_different_faces (darts_of E) ->
+    edge_2_connected E.
+Proof.
+  intros E Hwn Hns Hsep e He.
+  assert (Hfan : forall v : Point, fan_ok (outgoing v (darts_of E)))
+    by (intro v; apply well_noded_fan_ok; exact Hwn).
+  assert (HeD : In e (darts_of E)) by (apply in_darts_of_orig; exact He).
+  assert (Hne : dbase e <> dtip e).
+  { apply dart_endpoints_ne_of_proper. destruct Hwn as (_ & Hap & _). exact (Hap e HeD). }
+  apply (diff_face_not_cut E e e Hfan Hns HeD Hne (Hsep e HeD) He).
+  left. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Axiom audit.                                                                *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1517,3 +1640,5 @@ Print Assumptions same_face_twin_disconnect.
 Print Assumptions same_face_twin_is_cut.
 Print Assumptions edge_2_connected_twins_sep.
 Print Assumptions H_bridge_well_noded.
+Print Assumptions diff_face_bypass_E_minus.
+Print Assumptions twins_in_different_faces_edge_2_connected.
