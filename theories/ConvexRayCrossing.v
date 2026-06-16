@@ -201,6 +201,31 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §6  CAPSTONE, UNCONDITIONAL: the residual is discharged (§11.5o).           *)
+(* -------------------------------------------------------------------------- *)
+
+(* `ConvexYUnimodal.convex_strict_start_bimonotone` discharges the former residual
+   `convex_no_interior_ymin` under the honest strict-convexity guard (strict CCW
+   turns + a unique bottom vertex).  Composing it with §3 gives the convex Jordan
+   characterization with NO named residual: a strictly-convex ring presented from
+   its unique bottom vertex (distinct consecutive heights) is `point_in_ring` iff
+   its rightward ray crosses exactly once.  This is the §11.5h → §11.5o → §11.5i
+   ladder, fully unconditional. *)
+Theorem convex_strict_in_ring_iff_one_crossing : forall (r : Ring) (p : Point),
+  r <> [] ->
+  Forall (vertices_in_halfplane r) (map edge_inward_hp (ring_edges r)) ->
+  strict_ccw_turns r ->
+  unique_bottom r ->
+  chain_y_distinct r ->
+  (point_in_ring p r <-> cross_count p (ring_edges r) = 1%nat).
+Proof.
+  intros r p Hne Hconv Hstrict Huniq Hcd.
+  destruct (convex_strict_start_bimonotone r Hne Hconv Hstrict Huniq Hcd)
+    as [inc [dec Hbs]].
+  exact (convex_in_ring_iff_one_crossing p r inc dec Hbs).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -209,3 +234,4 @@ Print Assumptions convex_in_ring_iff_one_crossing.
 Print Assumptions diamond_in_ring_iff_one_crossing.
 Print Assumptions hexagon_in_ring_iff_one_crossing.
 Print Assumptions convex_canonical_start_in_ring_iff_one_crossing.
+Print Assumptions convex_strict_in_ring_iff_one_crossing.
