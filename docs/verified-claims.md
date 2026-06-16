@@ -705,10 +705,9 @@ computation — full RelateNG noding remains S13+.
 
 First curve-polygon relate slice: axis-aligned rectangle as a four-chord
 `COMPOUNDCURVE`. The curve-specific content is the structural-validity spine;
-the Contains/Touches witnesses are S4's, reused as constant facts. This file
-does **not** bridge the curve geometry's point set to `rect_polygon`, so it
-makes no curve→matrix claim; the `to_geometry` ↔ `rect_polygon` bridge is
-deferred (S12b).
+the Contains/Touches witnesses are S4's, reused as constant facts. **S12b
+(now closed):** the `to_geometry` ↔ linearised-rectangle point-set bridge,
+so the S4 facts transport to the curve geometry's point set.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -716,6 +715,7 @@ deferred (S12b).
 | `RelateCurveAreaPoint.v : rect_curve_linearised_ring_closed` | **Geometry:** `chord_approx_ring` of the rect curve outer is `ring_closed` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_contains_point_witness` | **Witness:** the reused S4 matrix satisfies `Contains` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_touches_boundary_witness` | **Witness:** the reused S4 matrix satisfies `Touches` `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : point_in_rect_curve_geometry_iff_polygon` | **Bridge (S12b):** the curve geometry's point set (`point_set ∘ to_geometry`) coincides with `point_in_polygon` of the single linearised rectangle ring — `to_geometry` is the singleton chord-approx map (no holes), `point_set` over a singleton is membership in its sole element. Lets the S4 Contains/Touches facts transport to curve-polygon×point unchanged. Pure structural computation (**0 axioms**) `[exact]` | 0 |
 
 ## Issue #67 — curve-polygon×point regime→witness (`RelateMatrixCurveAreaPoint.v`, S12)
 
