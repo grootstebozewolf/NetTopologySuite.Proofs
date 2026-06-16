@@ -746,6 +746,13 @@ theories/HexagonOffringSeam.v
 # genuinely-hard discharge of the predicate for arbitrary convex rings (the
 # convex slice fact) stays the named residual.  Three-axiom.  No Admitted.
 theories/ConvexExteriorEven.v
+# ConvexJCT: the convex Jordan characterization, GEOMETRIC form -- ray-parity
+# point_in_ring agrees with the convex field conv_min for a y-unimodal convex
+# ring, by composing interior-odd (interior_hits_one_chain_of_edge_hps) with
+# exterior-even (convex_exterior_balanced_of_unimodal) through
+# bimonotone_split_parity.  No open residual; validated on diamond + hexagon.
+# Three-axiom.  No Admitted.
+theories/ConvexJCT.v
 # H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
 # half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
 # ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path

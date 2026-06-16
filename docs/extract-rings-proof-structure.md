@@ -1066,6 +1066,42 @@ remaining open content is the *non-strict* degenerate boundary — collinear run
 genuinely false for the y-unimodal split, as §9 shows, and the dual exterior
 `straddle extraction` of §11.5m.)
 
+### §11.5p update (2026-06-16): the convex JCT path, closed — discrete + geometric
+
+With the residual discharged (§11.5o), the convex Jordan characterizations go
+**unconditional**. Two capstones, all `Qed`, three-axiom (only the two classical-reals
+axioms in every `Print Assumptions`):
+
+- **Discrete (crossing-count).** `ConvexRayCrossing.convex_strict_in_ring_iff_one_crossing`:
+  for a strictly-convex ring (`strict_ccw_turns`) presented from its unique bottom vertex
+  (`unique_bottom`) with distinct consecutive heights (`chain_y_distinct`),
+  `point_in_ring p r <-> cross_count p (ring_edges r) = 1`. No named residual — it composes
+  `ConvexYUnimodal.convex_strict_start_bimonotone` (§11.5o) with the §3 crossing bound. The
+  former §5 capstone's `convex_no_interior_ymin` hypothesis is gone.
+- **Geometric (ray-parity = convex field).** New file `theories/ConvexJCT.v`.
+  `convex_unimodal_point_in_ring_iff_interior` proves `point_in_ring q outer <-> 0 < conv_min hps q`
+  for a y-unimodal convex ring and an off-skeleton query point, by gluing the two halves the
+  campaign already had — interior-odd (`MonotoneChainCoverage.interior_hits_one_chain_of_edge_hps`)
+  and exterior-even (`ConvexExteriorEven.convex_exterior_balanced_of_unimodal`) — through
+  `MonotoneChainParity.bimonotone_split_parity` (`point_in_ring` is the XOR of the two chain
+  crossings). `convex_unimodal_jct_canonical` specializes `hps := map edge_inward_hp (ring_edges outer)`
+  (the two `In (edge_inward_hp e) hps` obligations become automatic via the split), and
+  `diamond_point_in_ring_iff_interior` / `hexagon_point_in_ring_iff_interior` run both families
+  through it end-to-end.
+
+**No open mathematical residual remains on this path.** The honest hypotheses are exactly the
+general-position inputs the two halves demand: the y-unimodal decomposition, the interior
+y-range `py bottom < py q < py apex`, and **full vertex avoidance** `forall v, In v outer -> py v <> py q`.
+Full avoidance is strictly stronger than the seam's `ray_avoids_vertices` (a vertex at the
+query height but to its *left* is permitted by the ray guard yet must be excluded for the
+interior straddle); no bridge exists or is possible, so it is the correct guard. Two items are
+deliberately out of scope (and not mathematical gaps): (i) a single fully-existential
+strict-convex geometric headline would need only mechanical decomposition plumbing (deriving
+the interior y-range and `up`/`down` nonemptiness from raw `strict_ccw_turns`); (ii) lifting
+`conv_min` to the topological `geometric_interior_cont` form needs per-presentation facts
+(zero-set on skeleton, bounded positive region, `ring_simple`/`ring_closed`/`ring_has_minimum_points`)
+not derivable from convexity — supplied per-family in `DiamondOffringSeam`/`HexagonOffringSeam`.
+
 ### §11.6 update (2026-06-11): the extract rewire — `extract_faces` lands
 
 `theories/ExtractFaces.v` closes §11's "R1-open" item (the §5-step-4
