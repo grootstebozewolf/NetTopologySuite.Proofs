@@ -137,9 +137,60 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §3b  Touches/boundary: left-boundary points transport the same way.         *)
+(*                                                                            *)
+(* The crossing-number convention classifies the left boundary as inside the   *)
+(* ring (the rightward ray still crosses the opposite edge); S4 records this   *)
+(* as `left_boundary_in_rect_polygon`.  The same ring equivalence + S12b bridge *)
+(* carry it to the curve polygon/geometry, and the point is provably NOT in    *)
+(* the strict interior — the Touches-relevant pairing (cf. S4's                *)
+(* `left_boundary_in_polygon_not_strict`).                                     *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma left_boundary_in_rect_curve_polygon :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    point_on_rect_left_boundary x0 y0 x1 y1 p ->
+    point_in_rect_curve_polygon x0 y0 x1 y1 n p.
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy Hbnd.
+  unfold point_in_rect_curve_polygon, point_in_polygon. simpl.
+  split.
+  - apply (proj2 (point_in_ring_chord_rect_iff x0 y0 x1 y1 n p)).
+    apply (proj1 (rect_polygon_no_holes x0 y0 x1 y1 p)).
+    exact (left_boundary_in_rect_polygon x0 y0 x1 y1 p Hx Hy Hbnd).
+  - intros h Hin. destruct Hin.
+Qed.
+
+Lemma left_boundary_in_rect_curve_geometry :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    point_on_rect_left_boundary x0 y0 x1 y1 p ->
+    point_in_rect_curve_geometry x0 y0 x1 y1 n p.
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy Hbnd.
+  apply (proj2 (point_in_rect_curve_geometry_iff_polygon x0 y0 x1 y1 n p)).
+  exact (left_boundary_in_rect_curve_polygon x0 y0 x1 y1 n p Hx Hy Hbnd).
+Qed.
+
+Lemma left_boundary_in_rect_curve_polygon_not_strict :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    point_on_rect_left_boundary x0 y0 x1 y1 p ->
+    point_in_rect_curve_polygon x0 y0 x1 y1 n p
+    /\ ~ point_strictly_in_open_rect x0 y0 x1 y1 p.
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy Hbnd. split.
+  - exact (left_boundary_in_rect_curve_polygon x0 y0 x1 y1 n p Hx Hy Hbnd).
+  - exact (left_boundary_not_strict_interior x0 y0 x1 y1 p Hbnd).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §4  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions point_in_ring_chord_rect_iff.
 Print Assumptions strict_interior_in_rect_curve_polygon.
 Print Assumptions strict_interior_in_rect_curve_geometry.
+Print Assumptions left_boundary_in_rect_curve_geometry.
+Print Assumptions left_boundary_in_rect_curve_polygon_not_strict.
