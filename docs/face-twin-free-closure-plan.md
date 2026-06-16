@@ -59,7 +59,7 @@ carries (`OverlayBridge.v:490`). Writing `E := result_edges op (noded_labeled_gr
 | H1 | `well_noded_darts E` | noding correctness | largely established |
 | H2 | `no_spurs (result_darts …)` | noding correctness | largely established |
 | H3 | `edge_2_connected E` | **carried** | **open** |
-| H4 | `NoDup E` | **carried** | open (cheap) |
+| H4 | `NoDup E` | **DERIVED** from the noding construction (`OverlayBridge.NoDup_result_edges_noded` via `merge_NoDup_keys`) | **DONE (2026-06-16)** |
 | H5 | `euler_characteristic E` | **carried** | **open (deep)** |
 | H6 | `∀ e ∈ E, euler_characteristic (E_minus E e)` | **carried** | **open (deep)** |
 | H7 | `∀ e ∈ E, num_vertices (E_minus E e) = num_vertices E` | **DERIVED** from `no_spurs` + `well_noded_darts` (`VertexDegree.num_vertices_E_minus_eq`) | **DONE (2026-06-16)** |
@@ -106,16 +106,17 @@ Concrete steps (all `theories/`-only, pure list/Point combinatorics):
 This is the highest-value, lowest-risk rung: it strictly shrinks the carried
 hypothesis set and reuses an already-supplied premise.
 
-### H4 — `NoDup E`
+### H4 — `NoDup E` *(DONE — 2026-06-16)*
 
-Goal: the noded survivor edge list has no duplicate undirected edge. This
-should fall out of the noding step producing a de-duplicated survivor set
-(`result_edges`). Plan: locate where `result_edges` is built in the noding
-pipeline (`noded_labeled_graph` / `snap_noding`) and either (a) prove
-`NoDup (result_edges …)` from a `nodup`/dedup in the construction, or (b) if
-the construction does not dedup, insert a `nodup edge_eq_dec` normalisation
-and re-prove the downstream `count_occ … = 1` uses (only `count_occ_1_of_NoDup`
-in `HBridgeEuler.v` consumes it). Cheap, mechanical.
+**Landed** with zero blast radius (route (a) — proved from the construction,
+no definition changes). `result_edges op g = map fst (filter … (tg_edges g))`;
+`tg_edges (noded_labeled_graph A B) = merge_labeled_edges …`, whose keys
+(`edge_keys := map fst`) are `NoDup` by `OverlayGraph.merge_NoDup_keys`. New
+helpers `ExtractFaces.NoDup_map_fst_filter` + `NoDup_result_edges_of_keys`
+carry distinctness through the `map fst`/`filter`, and
+`OverlayBridge.NoDup_result_edges_noded` instantiates it for the noded graph.
+The three headlines drop the carried `NoDup` premise and derive it internally;
+`H_bridge_premise_from_euler` keeps its own `NoDup E` parameter.
 
 ### H3 — `edge_2_connected E`
 
@@ -182,15 +183,16 @@ shrinking H4/H7 or landing H3.
 
 1. ~~**H7** (vertex invariance from `no_spurs`)~~ — **DONE** (2026-06-16,
    `theories/VertexDegree.v`).
-2. **H4** (`NoDup E` from noding dedup) — mechanical. *(next)*
+2. ~~**H4** (`NoDup E` from noding dedup)~~ — **DONE** (2026-06-16,
+   `ExtractFaces.v` + `OverlayBridge.NoDup_result_edges_noded`).
 3. **H3** (`edge_2_connected` from closed-boundary overlay) — the substantive
    structural rung; reuses existing `EdgeFaceBridge` bypass machinery.
 4. **H5/H6** — keep carried (route A); revisit route (B) only as a separate
    planarity project.
 
-After steps 1–2, `extract_rings_valid` would carry only `well_noded_darts`,
-`no_spurs`, `edge_2_connected`, and the two planar Euler instances — the
-honest, irreducible geometric inputs.
+With steps 1–2 landed (2026-06-16), `extract_rings_valid` now carries only
+`well_noded_darts`, `no_spurs`, `edge_2_connected`, and the two planar Euler
+instances — the honest, irreducible geometric inputs.
 
 ## 5. Note: `face_twin_free` needs no direct further work
 

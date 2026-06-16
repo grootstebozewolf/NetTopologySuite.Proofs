@@ -74,6 +74,34 @@ Definition result_edges (op : BooleanOp) (g : TopologyGraph) : list Edge :=
 Definition result_darts (op : BooleanOp) (g : TopologyGraph) : list Dart :=
   darts_of (result_edges op g).
 
+(* H4 (face_twin_free closure): the survivor edge list inherits distinctness from
+   the underlying labelled-edge KEYS.  `result_edges` is `map fst` of a filtered
+   sublist of `tg_edges g`, so once those keys are duplicate-free the survivors
+   are too.  No-blast-radius: it observes the existing structure, changing no
+   definitions. *)
+Lemma NoDup_map_fst_filter :
+  forall (A B : Type) (f : A -> B) (p : A -> bool) (l : list A),
+    NoDup (map f l) -> NoDup (map f (filter p l)).
+Proof.
+  intros A B f p l. induction l as [| a l IH]; intro Hnd.
+  - simpl. constructor.
+  - cbn [map] in Hnd. inversion Hnd as [| x xs Hnotin Hnd' Heq]. subst.
+    cbn [filter]. destruct (p a) eqn:Hpa.
+    + cbn [map]. constructor.
+      * intro Hin. apply Hnotin.
+        rewrite in_map_iff in Hin. destruct Hin as [x [Hfx Hxin]].
+        apply filter_In in Hxin. destruct Hxin as [Hxl _].
+        rewrite in_map_iff. exists x. split; [ exact Hfx | exact Hxl ].
+      * apply IH. exact Hnd'.
+    + apply IH. exact Hnd'.
+Qed.
+
+Lemma NoDup_result_edges_of_keys :
+  forall op g, NoDup (map fst (tg_edges g)) -> NoDup (result_edges op g).
+Proof.
+  intros op g H. unfold result_edges. apply NoDup_map_fst_filter. exact H.
+Qed.
+
 (* Membership unfolding: an edge survives iff some kept label carries it. *)
 Lemma in_result_edges_iff :
   forall op g e,

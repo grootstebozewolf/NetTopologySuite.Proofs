@@ -487,12 +487,25 @@ Qed.
 (* docs/extract-faces-bridge.md §19.                                           *)
 (* -------------------------------------------------------------------------- *)
 
+(* H4 (face_twin_free closure rung 2): the survivor edge list of the noded graph
+   is duplicate-free.  `tg_edges (noded_labeled_graph A B)` is `merge_labeled_edges
+   ..`, whose KEYS (`edge_keys := map fst`) are NoDup by
+   `OverlayGraph.merge_NoDup_keys`; `result_edges` projects those keys through a
+   filter, so `NoDup_result_edges_of_keys` carries it over.  This discharges the
+   carried `NoDup` hypothesis of the headlines below. *)
+Lemma NoDup_result_edges_noded :
+  forall op A B, NoDup (result_edges op (noded_labeled_graph A B)).
+Proof.
+  intros op A B. apply NoDup_result_edges_of_keys.
+  unfold noded_labeled_graph, build_labeled_graph. cbn [tg_edges].
+  apply merge_NoDup_keys.
+Qed.
+
 Theorem extract_rings_valid :
   forall (op : BooleanOp) (A B : Geometry),
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
-    NoDup (result_edges op (noded_labeled_graph A B)) ->
     euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
     (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
        euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
@@ -500,7 +513,9 @@ Theorem extract_rings_valid :
       In poly (extract_faces op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros op A B Hwn Hns H2ec Hnd Heul HeulM poly Hin.
+  intros op A B Hwn Hns H2ec Heul HeulM poly Hin.
+  assert (Hnd : NoDup (result_edges op (noded_labeled_graph A B)))
+    by (apply NoDup_result_edges_noded).
   assert (Hfan : forall v : Point,
             fan_ok (outgoing v (darts_of (result_edges op (noded_labeled_graph A B))))).
   { intro v. apply well_noded_fan_ok. exact Hwn. }
@@ -518,7 +533,6 @@ Theorem extract_rings_valid_holes :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
-    NoDup (result_edges op (noded_labeled_graph A B)) ->
     euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
     (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
        euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
@@ -536,7 +550,9 @@ Theorem extract_rings_valid_holes :
       In poly (extract_faces_holes hassign op (noded_labeled_graph A B)) ->
       valid_polygon poly.
 Proof.
-  intros hassign op A B Hwn Hns H2ec Hnd Heul HeulM Hwf Hinside poly Hin.
+  intros hassign op A B Hwn Hns H2ec Heul HeulM Hwf Hinside poly Hin.
+  assert (Hnd : NoDup (result_edges op (noded_labeled_graph A B)))
+    by (apply NoDup_result_edges_noded).
   assert (Hfan : forall v : Point,
             fan_ok (outgoing v (darts_of (result_edges op (noded_labeled_graph A B))))).
   { intro v. apply well_noded_fan_ok. exact Hwn. }
@@ -558,16 +574,15 @@ Theorem valid_geometry_extract :
     well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
     no_spurs (result_darts op (noded_labeled_graph A B)) ->
     edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
-    NoDup (result_edges op (noded_labeled_graph A B)) ->
     euler_characteristic (result_edges op (noded_labeled_graph A B)) ->
     (forall e, In e (result_edges op (noded_labeled_graph A B)) ->
        euler_characteristic (E_minus (result_edges op (noded_labeled_graph A B)) e)) ->
     valid_geometry (extract_faces op (noded_labeled_graph A B)).
 Proof.
-  intros op A B Hwn Hns H2ec Hnd Heul HeulM.
+  intros op A B Hwn Hns H2ec Heul HeulM.
   unfold valid_geometry.
   intros poly Hin.
-  apply (extract_rings_valid op A B Hwn Hns H2ec Hnd Heul HeulM poly Hin).
+  apply (extract_rings_valid op A B Hwn Hns H2ec Heul HeulM poly Hin).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
