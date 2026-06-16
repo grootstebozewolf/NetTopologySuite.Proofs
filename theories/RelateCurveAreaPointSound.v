@@ -186,6 +186,64 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §3c  Complete membership characterisation (Contains ∧ Touches ∧ Disjoint).  *)
+(*                                                                            *)
+(* Composing the ring equivalence with `RectangleJCT.point_in_ring_rect_iff`   *)
+(* gives the EXACT membership condition for the chord-rect curve geometry — a  *)
+(* single iff that subsumes the strict-interior (Contains), boundary (Touches),*)
+(* and exterior (Disjoint) directions.                                         *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem point_in_ring_chord_rect_characterisation :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    (point_in_ring p (chord_approx_ring (rect_curve_ring x0 y0 x1 y1) n)
+     <-> (y0 < py p < y1 /\ x0 <= px p < x1)).
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy.
+  rewrite (point_in_ring_chord_rect_iff x0 y0 x1 y1 n p).
+  exact (point_in_ring_rect_iff x0 y0 x1 y1 p Hx Hy).
+Qed.
+
+Theorem point_in_rect_curve_polygon_characterisation :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    (point_in_rect_curve_polygon x0 y0 x1 y1 n p
+     <-> (y0 < py p < y1 /\ x0 <= px p < x1)).
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy.
+  unfold point_in_rect_curve_polygon, point_in_polygon. simpl.
+  rewrite (point_in_ring_chord_rect_characterisation x0 y0 x1 y1 n p Hx Hy).
+  split.
+  - intros [H _]. exact H.
+  - intro H. split; [ exact H | intros h Hin; destruct Hin ].
+Qed.
+
+Theorem point_in_rect_curve_geometry_characterisation :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    (point_in_rect_curve_geometry x0 y0 x1 y1 n p
+     <-> (y0 < py p < y1 /\ x0 <= px p < x1)).
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy.
+  rewrite (point_in_rect_curve_geometry_iff_polygon x0 y0 x1 y1 n p).
+  exact (point_in_rect_curve_polygon_characterisation x0 y0 x1 y1 n p Hx Hy).
+Qed.
+
+(* Disjoint direction: a point outside the (half-open) box is not in the curve
+   geometry — the contrapositive of the characterisation. *)
+Corollary not_in_box_not_in_rect_curve_geometry :
+  forall x0 y0 x1 y1 n p,
+    x0 < x1 -> y0 < y1 ->
+    ~ (y0 < py p < y1 /\ x0 <= px p < x1) ->
+    ~ point_in_rect_curve_geometry x0 y0 x1 y1 n p.
+Proof.
+  intros x0 y0 x1 y1 n p Hx Hy Hnotbox Hin.
+  apply Hnotbox.
+  exact (proj1 (point_in_rect_curve_geometry_characterisation x0 y0 x1 y1 n p Hx Hy) Hin).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §4  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
@@ -194,3 +252,5 @@ Print Assumptions strict_interior_in_rect_curve_polygon.
 Print Assumptions strict_interior_in_rect_curve_geometry.
 Print Assumptions left_boundary_in_rect_curve_geometry.
 Print Assumptions left_boundary_in_rect_curve_polygon_not_strict.
+Print Assumptions point_in_rect_curve_geometry_characterisation.
+Print Assumptions not_in_box_not_in_rect_curve_geometry.
