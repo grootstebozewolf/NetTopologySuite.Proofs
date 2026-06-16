@@ -1,8 +1,11 @@
 # Issue #64 — Arc primitives for JTS curve awareness: research & gap triage
 
 > **Status:** living triage map for issue #64. Ask **#4b** closed by PR #146
-> (`InCircle_b64_exact.v`); ask **#5a** has Scope A first-stage exactness in
-> `ArcLineIntersect_b64_exact.v`. Remaining gaps unchanged unless noted below.
+> (`InCircle_b64_exact.v`); ask **#5a** is **fully closed** —
+> `ArcLineIntersect_b64_exact.v` ships Scope A (prefix), Scope B (round-chain
+> identity), and Scope C (forward-error: the `bpow 13` capstone
+> `b64_arc_line_point_{x,y}_forward_error` **and** the tighter data-dependent
+> `..._forward_error_ulp`). Remaining gaps unchanged unless noted below.
 >
 > Every file:line citation below was verified by direct grep against the tree
 > at the time of writing (corpus HEAD = `main` after PR #72).
@@ -50,7 +53,7 @@ far declined. Ask #2 (atan2-based sweep) inherits this blocker.
 | **#4a in-circle predicate + algebra** | **PROVEN (Qed)** | `ArcOrient.v:89,205` + 8 invariance lemmas (swap/cyclic/translation/scaling/rotation) | `inCircle_R` defining-point zeros and similarity invariants all closed. |
 | **#4b `b64_inCircle` soundness** | **PROVEN (Qed)** | `InCircle_b64_exact.v` — `b64_inCircle_exact_sound`, `b64_inCircle_exact_for_small_int`, `b64_inCircle_B2R_sign_sound_small_int`; Perron witness `perron_inCircle_sign_sound` | Full-plane sign exactness via degree-4 factorization; integer-regime value + sign exactness at `\|coord\| ≤ 2¹¹` (tighter than orient2d's `2²⁵`); closes the INCIRCLE_SIGN oracle bridge. PR #146. |
 | **#4c Arc validity (V-CP)** | **PARTIAL** | `ArcHotPixel.v:95` (`arc_passes_through_hot_pixel`), `:124` (`arc_touches_hot_pixel`) | Endpoint disjuncts + 6 disjunct-intro lemmas Qed; edge-crossing soundness rides on #3c. |
-| **#5a Arc-line intersection** | **SCOPE A PROVEN; full coords QUEUED** | `ArcIntersect.v:90,129`; `ArcLineIntersect_b64_exact.v` — `b64_arc_line_sP_R` / `sQ_R` / `dx_R` / `dy_R` | R-side existence predicate Qed; Flocq Scope A: first-stage Cramer prefix (`sP`, `sQ`, `dx`, `dy`) bit-exact before division. Headline coord identity + forward-error bound deferred (Scope B/C). PR #146. |
+| **#5a Arc-line intersection** | **PROVEN (Qed) — Scope A/B/C** | `ArcIntersect.v:90,129`; `ArcLineIntersect_b64_exact.v` — `b64_arc_line_{sP_R,sQ_R,dx_R,dy_R}`, `_intersect_point_{x,y}_round_chain`, `_point_{x,y}_forward_error` (+ `_ulp`) | R-side existence predicate Qed; Flocq Scope A (prefix bit-exact) + Scope B (round-chain identity) + Scope C (forward-error: absolute `bpow 13` capstone **and** tighter data-dependent ulp bound). PRs #146, #160–#162, + ulp tightening. |
 | **#5b Arc-arc intersection** | **PREDICATE PROVEN; coords ABSENT** | `ArcIntersect.v:104` | Existence predicate Qed; exact coordinates are a quartic (research-grade), absent. |
 | **#5c Arc overlay correctness** | **CONDITIONAL (Qed)** | `ArcOverlay.v` headline `arc_overlay_correct_chord_approx`; bridges `ArcOverlay.v:123,147-152` | Headline Qed under two "every chord point is close to an arc" bridge hypotheses (`H_A_bridge`/`H_B_bridge`), flagged "PRACTICALLY DEMANDING". |
 
@@ -101,9 +104,12 @@ extraction validated bit-exact in `oracle/test_arc.ml`.
 3. ~~**One rounding-soundness gap (ask #4b)**~~ **CLOSED (PR #146).**
    `b64_inCircle` sign- and value-exactness vs `inCircle_R_BP` now Qed-closed
    in `InCircle_b64_exact.v` (full-plane sign + `2¹¹` integer regime).
-4. **Coordinate extraction (ask #5):** predicates exist; explicit intersection
-   coordinates do not. Arc-line is a quadratic (tractable); arc-arc is a quartic
-   (research-grade). Option B does not need either.
+4. **Coordinate extraction (ask #5):** arc-line (ask #5a) is **CLOSED** —
+   explicit intersection coordinates ship with the full Scope A/B/C cascade
+   (round-chain identity + `bpow 13` and data-dependent forward-error bounds) in
+   `ArcLineIntersect_b64_exact.v`, extracted via the `ARC_LINE_XY` oracle mode
+   (differential test in `oracle/test_arc.ml`). Arc-arc (ask #5b) coordinates
+   remain a quartic (research-grade), absent. Option B does not need either.
 
 ## 6. Risk/cost-ordered options for the next (Coq) terminal
 
@@ -115,9 +121,11 @@ lanes):
   value.* Direct analogue of the proven `b64_orient2d_exact_for_small_int`
   pattern; closes ask #4b and hardens the V-CP / INCIRCLE oracle. The single
   best Qed terminal here.
-- **(B) Arc-line intersection *coordinates* (quadratic)** — *medium.* The
-  circle∩chord root formula with a forward-error bound, mirroring
-  `Intersect_b64_exact`. Advances ask #5a beyond the existence predicate.
+- ~~**(B) Arc-line intersection *coordinates* (quadratic)**~~ **CLOSED.** The
+  circle∩chord coordinates with round-chain identity + forward-error bound
+  (mirroring `Intersect_b64_exact`) now ship as Scope A/B/C in
+  `ArcLineIntersect_b64_exact.v`, plus the tighter data-dependent
+  `..._forward_error_ulp`. Extracted as the `ARC_LINE_XY` oracle mode.
 - **(C) `arc_span_contains` correctness for arcs ≥ π** — *medium-high.* Would
   unblock the #3c soundness chain *without* atan2 if a sign/midpoint argument
   can replace angular ordering; risk is it genuinely needs angles.
@@ -184,3 +192,27 @@ slice:
 
 Registered in `_CoqProject.full`, `docs/verified-claims.md`, and this triage.
 Closes issue #64 ask #4b; advances ask #5a to Scope A.
+
+## 10. Update (PRs #160–#162 + ulp tightening): arc-line #5a fully closed
+
+The Scope A "honest first slice" of §9 has since been carried all the way to a
+closed coordinate story in `ArcLineIntersect_b64_exact.v`:
+
+- **Scope B (round-chain identity)** — `b64_arc_line_intersect_point_{x,y}_round_chain`:
+  `B2R(coord) = round(B2R(bx P) + round(round(sP/(sP−sQ)) · (B2R(bx Q) − B2R(bx P))))`,
+  pinning the whole `div → mult → plus` computation to its IEEE-754 roundings.
+  B.1 (`b64_arc_line_den_exact`) proves the denominator bit-exact (so the cascade
+  carries **no `1/|den|`** condition-number tail).
+- **Scope C (forward-error)** — the capstone
+  `b64_arc_line_point_{x,y}_forward_error` bounds the computed coordinate within
+  an absolute `bpow 13` of `arc_line_intersect_{x,y}_R`; the tighter
+  `b64_arc_line_point_{x,y}_forward_error_ulp` restates it data-dependently as
+  `ulp(coord)/2 + ulp(t·d)/2 + |d|·½`, strictly sharper off the worst case.
+- **Oracle** — `ARC_LINE_XY` mode in `oracle/driver.ml` extracts
+  `b64_arc_line_intersect_point_{x,y}`; `oracle/test_arc.ml` adds a bit-for-bit
+  differential vs a native-float Cramer reference.
+
+So ask **#5a is closed**: existence predicate (R-side) + bit-exact prefix (A) +
+round-chain identity (B) + forward-error bounds (C, absolute and data-dependent),
+all `Qed` at the 4-axiom footprint. The genuinely-open arc gaps are now #3c/#4c
+(arc-chord soundness ≥ π) and #5b (arc-arc quartic coordinates).
