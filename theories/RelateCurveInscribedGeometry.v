@@ -172,6 +172,38 @@ Proof.
     + exact (proj1 (to_geometry_point_set_eq_inscribed B n p HB) HpB).
 Qed.
 
+(* Within / Contains are subset predicates over the point-sets, so they transfer
+   the same way (A Within B = A's points all lie in B; A Contains B = B Within A). *)
+Definition geom_within (g1 g2 : Geometry) : Prop :=
+  forall p, point_set g1 p -> point_set g2 p.
+
+Definition geom_contains (g1 g2 : Geometry) : Prop := geom_within g2 g1.
+
+Theorem curve_within_iff_inscribed :
+  forall (A B : CurveGeometry) (n : nat),
+    Forall curve_polygon_adjacent A -> Forall curve_polygon_adjacent B ->
+    (geom_within (to_geometry A n) (to_geometry B n)
+     <-> geom_within (inscribed_geometry A n) (inscribed_geometry B n)).
+Proof.
+  intros A B n HA HB. unfold geom_within. split.
+  - intros H p HiA.
+    exact (proj1 (to_geometry_point_set_eq_inscribed B n p HB)
+             (H p (proj2 (to_geometry_point_set_eq_inscribed A n p HA) HiA))).
+  - intros H p HtA.
+    exact (proj2 (to_geometry_point_set_eq_inscribed B n p HB)
+             (H p (proj1 (to_geometry_point_set_eq_inscribed A n p HA) HtA))).
+Qed.
+
+Theorem curve_contains_iff_inscribed :
+  forall (A B : CurveGeometry) (n : nat),
+    Forall curve_polygon_adjacent A -> Forall curve_polygon_adjacent B ->
+    (geom_contains (to_geometry A n) (to_geometry B n)
+     <-> geom_contains (inscribed_geometry A n) (inscribed_geometry B n)).
+Proof.
+  intros A B n HA HB. unfold geom_contains.
+  exact (curve_within_iff_inscribed B A n HB HA).
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §5  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
@@ -181,3 +213,5 @@ Print Assumptions inscribed_geometry_outer_ring_closed.
 Print Assumptions inscribed_geometry_hole_ring_closed.
 Print Assumptions curve_intersects_iff_inscribed.
 Print Assumptions curve_disjoint_iff_inscribed.
+Print Assumptions curve_within_iff_inscribed.
+Print Assumptions curve_contains_iff_inscribed.
