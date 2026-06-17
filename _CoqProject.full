@@ -116,6 +116,10 @@ theories/BufferJoin.v
 # bridge chord^2 = 2 r^2 (1 - cos theta)).  Pulls classic via Stdlib sin_lt_x
 # (see audit-exceptions).  No Admitted.
 theories/ArcLength.v
+# Issue #64 / M-AREA-CP: circular-segment area (r^2/2)(theta - sin theta), proof
+# companion of the ARC_AREA oracle mode.  sector-triangle decomposition, nonneg,
+# half-disc PI*r^2/2, full disc PI*r^2.  4-axiom (sin_lt_x lineage, audit-exceptions).
+theories/ArcArea.v
 # Issue #64/#69 C-LIN: the circular-arc centroid offset 2r·sin(theta/2)/theta
 # (= chord/angle), the proof-side foundation for the oracle's missing ARC_CENTROID
 # mode and CircularString.getCentroid().  Semicircle -> 2r/PI, full turn -> 0,
