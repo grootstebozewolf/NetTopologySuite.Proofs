@@ -122,6 +122,11 @@ theories/ArcLength.v
 # 0 <= offset <= r (the last via ArcLength.chord_le_arc_length).  4-axiom (sin_lt_x
 # lineage, see audit-exceptions).  No Admitted.
 theories/ArcCentroid.v
+# Issue #64/#69 C-AREA: circular-SEGMENT centroid offset 4r·sin^3(theta/2)/
+# (3(theta-sin theta)), proof-side foundation for the oracle's ARC_AREA_CENTROID
+# mode.  Semicircle -> 4r/(3·PI), full turn -> 0, nonneg, and the segment-area
+# guard theta-sin theta > 0.  4-axiom (sin_lt_x lineage, see audit-exceptions).
+theories/ArcAreaCentroid.v
 # Issue #67 session 1 (S1): DE-9IM intersection-matrix algebra — foundation
 # only (no geometry carrier, no RelateNG).  DimValue / IMPattern /
 # IntersectionMatrix, JTS-aligned named predicates, pattern_transpose +
