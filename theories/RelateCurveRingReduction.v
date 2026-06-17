@@ -233,9 +233,76 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §6  Audit footprint.                                                       *)
+(* §6  With-holes transport: a full curve polygon (outer + holes).             *)
+(*                                                                            *)
+(* `to_geometry` maps `chord_approx_ring` over the outer ring AND every hole,  *)
+(* so a curve polygon's point-set membership is: in the inscribed outer ring    *)
+(* and outside every inscribed hole ring.  This lifts the no-holes transport    *)
+(* (§4) to the full SQL/MM CurvePolygon, the first curve->matrix membership      *)
+(* result that admits holes.                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition curve_polygon_adjacent (cp : CurvePolygon) : Prop :=
+  curve_ring_adjacent (curve_outer cp)
+  /\ Forall curve_ring_adjacent (curve_holes cp).
+
+(* The hole quantifier transports pointwise: outside every linearised hole iff
+   outside every inscribed hole. *)
+Lemma point_outside_holes_iff_inscribed :
+  forall (holes : list CurveRing) (n : nat) (p : Point),
+    Forall curve_ring_adjacent holes ->
+    ((forall h, In h (map (fun h0 => chord_approx_ring h0 n) holes)
+                -> ~ point_in_ring p h)
+     <-> (forall h0, In h0 holes -> ~ point_in_ring p (inscribed_ring h0 n))).
+Proof.
+  intros holes n p Hadj. rewrite Forall_forall in Hadj. split.
+  - intros H h0 Hin0 Hpir_ins.
+    apply (H (chord_approx_ring h0 n)
+             (in_map (fun h0 => chord_approx_ring h0 n) holes h0 Hin0)).
+    apply (proj2 (point_in_ring_chord_approx_eq_inscribed h0 n p (Hadj h0 Hin0))).
+    exact Hpir_ins.
+  - intros H h Hin Hpir_ch.
+    apply in_map_iff in Hin. destruct Hin as [h0 [Heq Hin0]]. subst h.
+    apply (H h0 Hin0).
+    apply (proj1 (point_in_ring_chord_approx_eq_inscribed h0 n p (Hadj h0 Hin0))).
+    exact Hpir_ch.
+Qed.
+
+Theorem point_in_curve_polygon_geometry_iff_inscribed :
+  forall (cp : CurvePolygon) (n : nat) (p : Point),
+    curve_polygon_adjacent cp ->
+    (point_set (to_geometry [cp] n) p
+     <-> point_in_ring p (inscribed_ring (curve_outer cp) n)
+         /\ (forall h0, In h0 (curve_holes cp)
+                        -> ~ point_in_ring p (inscribed_ring h0 n))).
+Proof.
+  intros cp n p [Houter Hholes].
+  unfold point_set, to_geometry. cbn [map].
+  split.
+  - intros [poly [Hin Hpip]]. cbn [In] in Hin.
+    destruct Hin as [Heq | Hf]; [ subst poly | contradiction ].
+    unfold point_in_polygon in Hpip. cbn [outer_ring hole_rings] in Hpip.
+    destruct Hpip as [Hout Hin_holes]. split.
+    + apply (proj1 (point_in_ring_chord_approx_eq_inscribed
+                      (curve_outer cp) n p Houter)). exact Hout.
+    + apply (proj1 (point_outside_holes_iff_inscribed
+                      (curve_holes cp) n p Hholes)). exact Hin_holes.
+  - intros [Hout Hin_holes].
+    exists (mkPolygon (chord_approx_ring (curve_outer cp) n)
+                      (map (fun h => chord_approx_ring h n) (curve_holes cp))).
+    cbn [In]. split; [ left; reflexivity | ].
+    unfold point_in_polygon. cbn [outer_ring hole_rings]. split.
+    + apply (proj2 (point_in_ring_chord_approx_eq_inscribed
+                      (curve_outer cp) n p Houter)). exact Hout.
+    + apply (proj2 (point_outside_holes_iff_inscribed
+                      (curve_holes cp) n p Hholes)). exact Hin_holes.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions point_in_ring_chord_approx_eq_inscribed.
 Print Assumptions point_in_simple_curve_geometry_iff_inscribed.
 Print Assumptions inscribed_ring_closed.
+Print Assumptions point_in_curve_polygon_geometry_iff_inscribed.
