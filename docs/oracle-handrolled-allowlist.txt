@@ -88,3 +88,14 @@ run_arc_length
 # past certified algebra.  (Supersedes main 53d61c7's hand-rolled shoelace stub,
 # which had bypassed the then-broken ratchet.)
 run_arc_area
+
+# --- ARC_CENTROID (C-LIN, issue #64/#69) ------------------------------------
+# Mode ARC_CENTROID emits the centroid POINT of one circular arc,
+# O + (2*sin(Theta/2)/Theta)(B - O) -- the offset 2*r*sin(Theta/2)/Theta is
+# transcendental (asin), no Coq-extractable form; the float is the JTS/NTS
+# CircularString.getCentroid() interface value (weighted per-arc by ARC_LENGTH).
+# Mirrors ARC_LENGTH: applies asin to the EXACT rational invariants of
+# arc_invariants_q + the exact circumcentre_q, rounding only ONCE past certified
+# algebra.  Spec proven in theories/ArcCentroid.v (offset = 2r*sin(Theta/2)/Theta;
+# semicircle -> 2r/PI; full turn -> 0; 0 <= offset <= r).
+run_arc_centroid
