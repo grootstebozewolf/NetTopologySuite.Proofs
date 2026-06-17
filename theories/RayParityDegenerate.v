@@ -116,9 +116,61 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §4b  An adjacent duplicate vertex ANYWHERE is irrelevant.                   *)
+(*                                                                            *)
+(* The join structure of every linearised curve ring: `chord_approx_ring`     *)
+(* concatenates each segment's `start :: … :: end`, and adjacency makes the    *)
+(* end of one segment equal the start of the next, so the flattened vertex     *)
+(* list carries an adjacent duplicate `… ; v ; v ; …` at every join.  Removing *)
+(* one copy turns the two ring edges `(z, v); (v, w)` into the single `(z, w)` *)
+(* with the degenerate `(v, v)` excised.  `ring_edges_dup` exhibits exactly    *)
+(* that excision; `point_in_ring_dup_at` is the parity corollary (generalising *)
+(* `point_in_ring_dup_head` from the leading position to any position).        *)
+(* -------------------------------------------------------------------------- *)
+
+(* Inserting a second copy of `a` after the first inserts exactly one `(a, a)`
+   edge into `ring_edges`, at the position the shared prefix `l ++ [a]` ends. *)
+Lemma ring_edges_dup :
+  forall (l : Ring) (a : Point) (r' : Ring),
+    exists es es',
+      ring_edges (l ++ a :: a :: r') = es ++ (a, a) :: es'
+      /\ ring_edges (l ++ a :: r')    = es ++ es'.
+Proof.
+  induction l as [| x l0 IH]; intros a r'.
+  - (* leading position *)
+    exists [], (ring_edges (a :: r')). split; reflexivity.
+  - (* l = x :: l0 *)
+    destruct l0 as [| y l0'].
+    + (* l = [x] : the shared prefix ends right at x *)
+      exists [ (x, a) ], (ring_edges (a :: r')). split; reflexivity.
+    + (* l = x :: y :: l0' : peel the shared head edge (x, y), recurse on y::l0' *)
+      destruct (IH a r') as [es0 [es0' [H1 H2]]].
+      exists ((x, y) :: es0), es0'.
+      assert (E1 : ring_edges ((x :: y :: l0') ++ a :: a :: r')
+                   = (x, y) :: ring_edges ((y :: l0') ++ a :: a :: r'))
+        by reflexivity.
+      assert (E2 : ring_edges ((x :: y :: l0') ++ a :: r')
+                   = (x, y) :: ring_edges ((y :: l0') ++ a :: r'))
+        by reflexivity.
+      rewrite E1, E2, H1, H2. split; reflexivity.
+Qed.
+
+Lemma point_in_ring_dup_at :
+  forall p (l : Ring) (a : Point) (r' : Ring),
+    point_in_ring p (l ++ a :: a :: r') <-> point_in_ring p (l ++ a :: r').
+Proof.
+  intros p l a r'. unfold point_in_ring.
+  destruct (ring_edges_dup l a r') as [es [es' [H1 H2]]].
+  rewrite H1, H2.
+  exact (proj1 (ray_parity_zero_edge_irrelevant p a es es')).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §5  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions edge_crosses_ray_degenerate.
 Print Assumptions ray_parity_zero_edge_irrelevant.
 Print Assumptions point_in_ring_dup_head.
+Print Assumptions ring_edges_dup.
+Print Assumptions point_in_ring_dup_at.
