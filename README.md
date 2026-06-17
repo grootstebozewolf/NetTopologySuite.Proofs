@@ -25,23 +25,13 @@ written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 
 ---
 
-**Over 1,100 theorems — every proof sealed with `Qed.`** (or `Defined.`
-for computable terms), **resting on three axioms.** Those three are the
-standard classical-reals trio Rocq ships with; this corpus introduces
-none of its own, and `Axiom`, `Parameter`, and the `admit.` tactic are
-banned outright and appear nowhere. The *only* proofs not closed by
-`Qed.` are **6** `Admitted` theorems — and an unregistered `Admitted`
-fails the build, so there is no quiet middle ground. All six fall into
-a single honest category, each with a concrete seam on file: **6
-counterexamples** (the theorem as stated is *false*, with a verified
-counterexample committed). The deferred-proof registry is now **empty
-(0)** — its sole former entry, `EdgeFaceBridge.H_bridge_core`, has been
-discharged via the planar Euler route, leaving only named planar Euler
-hypotheses on the headline `extract_rings_valid` (a conditional Qed).
-No soundness bridge is silently stubbed — each is proven, absent, or
-registered. (The Flocq-dependent lane inherits one further axiom
-structurally from Flocq's binary64 model — not load-bearing, and
-detailed below.)
+**Over 1,100 theorems, every proof sealed with `Qed.` on just three
+axioms** — the standard classical-reals trio Rocq ships with, none of
+this corpus's own; `Axiom`, `Parameter`, and `admit.` appear nowhere.
+The only `Admitted`s are **6 machine-checked counterexamples**
+(false-as-stated theorems, each with a committed witness) — disproofs,
+not gaps — and CI fails any unregistered one. (The Flocq lane
+structurally inherits one further axiom; details below.)
 
 CI (`scripts/check_admitted.sh`) enforces a three-tier `Admitted`
 discipline across both directories:
