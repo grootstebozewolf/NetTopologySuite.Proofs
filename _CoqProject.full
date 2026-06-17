@@ -606,6 +606,13 @@ theories/RelateCurveArcSegment.v
 # transports through the S12b-style point-set bridge.  Carries the reduction
 # technique from one-arc lens to the all-arc / multi-arc case.
 theories/RelateCurveVesica.v
+# Issue #67 curve->matrix: the GENERAL arc/compound-ring reduction.  inscribed_ring
+# drops each non-final segment's trailing (adjacency-duplicated) endpoint;
+# point_in_ring_chord_approx_eq_inscribed proves the linearised ring and the
+# inscribed control polygon agree on point-in-ring for ANY adjacent CurveRing
+# (chord-only, all-arc, or mixed), via a prefix-generalised induction with one
+# point_in_ring_dup_at per join.  Subsumes the rect/lens/vesica strips.
+theories/RelateCurveRingReduction.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the
