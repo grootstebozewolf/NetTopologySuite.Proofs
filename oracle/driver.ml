@@ -1097,22 +1097,52 @@ let run_arc_area () =
 
 (* ----- ARC_CENTROID (issue #64/#69 C-LIN): centre of mass of one circular ARC.
    ---------------------------------------------------------------------------
-   The 1-D arc (curve) centroid, emitted as a POINT.  It lies on the bisector at
-   centroid = O + (2*sin(theta/2)/theta) * (B - O), where O is the exact
-   circumcentre, B the arc midpoint control point (|B - O| = r), and theta the
-   (minor or major) sweep.  This is the per-arc position CircularString.
-   getCentroid() weights by ARC_LENGTH (M-LEN-CS).
+   The 1-D arc (curve) centroid, emitted as a POINT.  It lies on the arc's
+   ANGULAR BISECTOR at centroid = O + (2*r*sin(theta/2)/theta) * m, where O is the
+   exact circumcentre, m = arc_bisector_unit (toward the arc midpoint), and theta
+   the (minor or major) sweep.  NOTE: the offset is along m, NOT along the mid
+   control point B -- B is an arbitrary point on the arc, not necessarily the
+   angular midpoint, so O->B misplaces the centroid for non-canonical
+   CircularStrings (B is used only to disambiguate the semicircle bisector side).
+   This is the per-arc position CircularString.getCentroid() weights by ARC_LENGTH
+   (M-LEN-CS).
 
    INTERFACE-BOUNDARY float, exactly like ARC_LENGTH: the offset 2*r*sin(theta/2)
    /theta is transcendental (asin), so it hand-rolls float off the EXACT
    arc_invariants_q / circumcentre_q rational kernel, rounding only ONCE past the
    certified algebra.  s = sin(theta/2) = sqrt((1 - cos)/2) reuses ARC_LENGTH's
-   acos-near-1 fix; factor = 2*s/theta is well-conditioned as theta -> 0
-   (factor -> 1).  Spec proven in theories/ArcCentroid.v: offset = 2*r*sin(theta/2)
+   acos-near-1 fix.  Spec proven in theories/ArcCentroid.v: offset = 2*r*sin(theta/2)
    /theta, semicircle -> 2r/PI, full turn -> 0, 0 <= offset <= r.
 
    Input:  lines 2..4 = arc_start, arc_mid, arc_end ("x y").
    Output: "XY <cx> <cy>" (centroid coords, %h); "DEGENERATE" (collinear); "NAN". *)
+(* Unit angular BISECTOR of the arc A->B->C about centre (ox,oy), pointing toward
+   the arc's angular midpoint (its bulge / B side).  An arc's centroid and a
+   circular segment's centroid both lie along THIS direction -- NOT along O->B:
+   the SQL/MM mid control point B is an arbitrary point on the arc, not
+   necessarily the angular midpoint, so projecting the offset along (B-O)
+   misplaces the centroid for non-canonical CircularStrings.
+   m = sgn * (uA + uC)/|uA + uC|, uA = A-O, uC = C-O, sgn = -1 if major else +1
+   (uA + uC bisects the minor arc; the major arc's midpoint is the opposite ray).
+   Semicircle (uA + uC ~ 0): the bisector is perpendicular to chord AC, oriented
+   toward B (B disambiguates the side). *)
+let arc_bisector_unit (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (major : int) =
+  let uax = a.bx -. ox and uay = a.by_ -. oy in
+  let ucx = c.bx -. ox and ucy = c.by_ -. oy in
+  let sx = uax +. ucx and sy = uay +. ucy in
+  let n = sqrt (sx *. sx +. sy *. sy) in
+  let r = sqrt (uax *. uax +. uay *. uay) in
+  if n > 1e-9 *. r then
+    let g = if major = 1 then -1.0 else 1.0 in
+    (g *. sx /. n, g *. sy /. n)
+  else begin
+    (* semicircle: perpendicular to chord AC, oriented toward B *)
+    let px = -. (c.by_ -. a.by_) and py = c.bx -. a.bx in
+    let pn = sqrt (px *. px +. py *. py) in
+    let s = if px *. (b.bx -. ox) +. py *. (b.by_ -. oy) < 0.0 then -1.0 else 1.0 in
+    (s *. px /. pn, s *. py /. pn)
+  end
+
 let run_arc_centroid () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -1121,20 +1151,219 @@ let run_arc_centroid () =
   then print_endline "NAN"
   else match arc_invariants_q a b c with
     | ArcDegenerate -> print_endline "DEGENERATE"
-    | ArcInv (_r2, cos_full, major) ->
+    | ArcInv (r2, cos_full, major) ->
         (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
                  (qf c.bx, qf c.by_) with
          | None -> print_endline "DEGENERATE"
          | Some (ox, oy, _r2c) ->
+             let r = sqrt (Q.to_float r2) in
              let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
              let t0 = 2.0 *. asin s in
              let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
              let oxf = Q.to_float ox and oyf = Q.to_float oy in
-             let factor = 2.0 *. s /. theta in
-             let cx = oxf +. factor *. (b.bx -. oxf) in
-             let cy = oyf +. factor *. (b.by_ -. oyf) in
+             (* offset = 2 r sin(theta/2) / theta, along the angular bisector m *)
+             let offset = 2.0 *. r *. s /. theta in
+             let (mx, my) = arc_bisector_unit (oxf, oyf) a b c major in
+             let cx = oxf +. offset *. mx in
+             let cy = oyf +. offset *. my in
              Printf.printf "XY %h %h\n" cx cy)
 
+(* ----- ARC_AREA_CENTROID (issue #64/#69 C-AREA): centre of mass of one circular
+   SEGMENT (the 2-D region between an arc and its chord), as a POINT.
+   ---------------------------------------------------------------------------
+   centroid = O + (4*r*sin^3(theta/2)/(3*(theta - sin theta))) * m, with O the
+   exact circumcentre, m = arc_bisector_unit (the arc's ANGULAR bisector, toward
+   the midpoint -- NOT along the mid control point B), theta the (minor/major)
+   sweep.  Companion to ARC_AREA (same r2/cos/major kernel + the SAME theta - sin
+   theta Taylor series for small theta) and to ARC_CENTROID (same bisector m).
+
+   INTERFACE-BOUNDARY float, like ARC_AREA/ARC_CENTROID: the offset
+   4*r*sin^3(theta/2)/(3*(theta - sin theta)) is transcendental (asin/sin), no
+   Coq-extractable form; rounds only ONCE past the exact arc_invariants_q /
+   circumcentre_q rational kernel.  Spec proven in theories/ArcAreaCentroid.v
+   (offset = 4r*sin^3(theta/2)/(3(theta-sin theta)); semicircle -> 4r/(3*PI);
+   full turn -> 0).
+
+   Input:  lines 2..4 = arc_start, arc_mid, arc_end ("x y").
+   Output: "XY <cx> <cy>" (segment-centroid coords, %h); "DEGENERATE"; "NAN". *)
+let run_arc_area_centroid () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (r2, cos_full, major) ->
+        (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                 (qf c.bx, qf c.by_) with
+         | None -> print_endline "DEGENERATE"
+         | Some (ox, oy, _r2c) ->
+             let r = sqrt (Q.to_float r2) in
+             let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+             let t0 = 2.0 *. asin s in
+             let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+             (* g = theta - sin theta (twice the segment area / r^2); same Taylor
+                small-angle path as ARC_AREA to avoid catastrophic cancellation. *)
+             let g =
+               if theta >= 1.0 then theta -. sin theta
+               else begin
+                 let t2 = theta *. theta in
+                 let term = ref (theta *. t2 /. 6.0) in
+                 let sum  = ref !term in
+                 let k = ref 1 in
+                 while abs_float !term > abs_float !sum *. 1e-17 && !k < 30 do
+                   let kk = float_of_int !k in
+                   term := -. !term *. t2 /. ((2.0 *. kk +. 2.0) *. (2.0 *. kk +. 3.0));
+                   sum  := !sum +. !term;
+                   incr k
+                 done;
+                 !sum
+               end
+             in
+             let oxf = Q.to_float ox and oyf = Q.to_float oy in
+             (* offset = 4 r sin^3(theta/2) / (3 (theta - sin theta)), along the
+                angular bisector m (NOT along the mid control point B) *)
+             let offset = 4.0 /. 3.0 *. r *. (s *. s *. s) /. g in
+             let (mx, my) = arc_bisector_unit (oxf, oyf) a b c major in
+             let cx = oxf +. offset *. mx in
+             let cy = oyf +. offset *. my in
+             Printf.printf "XY %h %h\n" cx cy)
+
+(* ----- ARC_DISTANCE (issue #64/#69 D-PT): shortest distance from a point to one
+   circular ARC.
+   ---------------------------------------------------------------------------
+   The nearest point on the FULL circle to P is the radial foot O + r*(P-O)/|P-O|,
+   at distance ||P-O| - r|.  If that foot lies on the arc A->B->C the answer is
+   that radial distance; otherwise the nearest arc point is an endpoint, so the
+   answer is min(|P-A|, |P-C|).  We always take the min with the endpoint
+   distances (radial foot is the global circle-nearest, so when it is on the arc
+   it already dominates; gating it on arc membership is what makes off-arc feet
+   fall back to the endpoints).
+
+   The on-arc-sector membership is the only genuinely new geometry; the rest is
+   sqrt of an exact rational.  Membership uses atan2 (CCW angle interval from A
+   through B to C) -> INTERFACE-BOUNDARY float (atan2/sqrt, no Coq-extractable
+   form), off the exact circumcentre_q centre.
+
+   Input:  lines 2..5 = arc_start, arc_mid, arc_end, query point P ("x y").
+   Output: "<dist>" (%h); "DEGENERATE" (collinear arc); "NAN" (non-finite). *)
+let run_arc_distance () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  let p = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c && finite_bpoint p)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+               (qf c.bx, qf c.by_) with
+    | None -> print_endline "DEGENERATE"
+    | Some (ox, oy, r2) ->
+        let oxf = Q.to_float ox and oyf = Q.to_float oy in
+        let r = sqrt (Q.to_float r2) in
+        let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+        let dpA = hypot2 (p.bx -. a.bx) (p.by_ -. a.by_) in
+        let dpC = hypot2 (p.bx -. c.bx) (p.by_ -. c.by_) in
+        let cand = ref (if dpA <= dpC then dpA else dpC) in
+        let d = hypot2 (p.bx -. oxf) (p.by_ -. oyf) in
+        if d > 0.0 then begin
+          let twopi = 2.0 *. Float.pi in
+          let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
+          let ang qx qy = atan2 (qy -. oyf) (qx -. oxf) in
+          let angA = ang a.bx a.by_ in
+          let dAB = ccw angA (ang b.bx b.by_) in
+          let dAC = ccw angA (ang c.bx c.by_) in
+          let dAP = ccw angA (ang p.bx p.by_) in
+          let on_arc = if dAB <= dAC then dAP <= dAC else dAP >= dAC in
+          if on_arc then begin
+            let radial = abs_float (d -. r) in
+            if radial < !cand then cand := radial
+          end
+        end;
+        Printf.printf "%h\n" !cand
+
+(* Is the circle point (qx,qy) -- assumed ON the circumcircle of arc A->B->C
+   about centre (ox,oy) -- within the arc's angular span?  CCW angle-interval
+   test from A through B to C (the same membership ARC_DISTANCE uses inline);
+   inclusive at the endpoints.  atan2 (transcendental) -> interface-boundary. *)
+let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy) =
+  let twopi = 2.0 *. Float.pi in
+  let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
+  let ang px py = atan2 (py -. oy) (px -. ox) in
+  let angA = ang a.bx a.by_ in
+  let dAB = ccw angA (ang b.bx b.by_) in
+  let dAC = ccw angA (ang c.bx c.by_) in
+  let dAQ = ccw angA (ang qx qy) in
+  if dAB <= dAC then dAQ <= dAC else dAQ >= dAC
+
+(* ----- ARC_ARC_XY (issue #64 #5b / N-AA): arc-arc intersection coordinates.
+   ---------------------------------------------------------------------------
+   The intersection POINTS of two circular arcs, enumerated.  Two circumcircles
+   (centres O1,O2, squared radii r1^2,r2^2 -- all EXACT via circumcentre_q) meet
+   on the radical line: with d = |O1 O2|, a = (d^2 + r1^2 - r2^2)/(2 d) the signed
+   distance from O1 to the radical foot M = O1 + (a/d)(O2-O1), and h = sqrt(r1^2 -
+   a^2) the half-chord, the circle intersections are M +/- h * perp(O2-O1)/d.
+   Each is then kept only if it lies in BOTH arc spans (point_on_arc_sector).
+
+   INTERFACE-BOUNDARY float: the coordinates carry an irrational sqrt(discriminant)
+   (no Coq-extractable form, like ARC_LINE_XY), computed off the EXACT
+   circumcentre_q centres/radii so the only rounding is the final sqrt/atan2.
+   This is the oracle pin for N-AA; the unconditional coordinate SOUNDNESS proof
+   stays the deferred #5b frontier (theories/ArcArcSound.v has the shared-vertex
+   + conditional-floor slice).
+
+   Input:  lines 2..7 = arc1 (start,mid,end), arc2 (start,mid,end) ("x y").
+   Output: "<n>" then n*(" <x> <y>") on one line, n in {0,1,2} = arc-arc
+           intersection points (the +h point first); "DEGENERATE" (either arc
+           collinear); "COINCIDENT" (identical circumcircles); "NAN". *)
+let run_arc_arc_xy () =
+  let a1 = parse_point (input_line stdin) in
+  let b1 = parse_point (input_line stdin) in
+  let c1 = parse_point (input_line stdin) in
+  let a2 = parse_point (input_line stdin) in
+  let b2 = parse_point (input_line stdin) in
+  let c2 = parse_point (input_line stdin) in
+  if not (finite_bpoint a1 && finite_bpoint b1 && finite_bpoint c1 &&
+          finite_bpoint a2 && finite_bpoint b2 && finite_bpoint c2)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_)
+                 (qf c1.bx, qf c1.by_),
+             circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_)
+                 (qf c2.bx, qf c2.by_) with
+    | None, _ | _, None -> print_endline "DEGENERATE"
+    | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+        (* exact squared centre distance *)
+        let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                       (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+        if qeq dq q0 then
+          (if qeq r1sq r2sq then print_endline "COINCIDENT"
+           else print_endline "0")            (* concentric, distinct radii: no meet *)
+        else begin
+          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+          let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
+          let d2 = Q.to_float dq in
+          let d = sqrt d2 in
+          let a = (d2 +. r1f -. r2f) /. (2.0 *. d) in
+          let h2 = r1f -. a *. a in
+          if h2 < 0.0 then print_endline "0"   (* circles do not meet *)
+          else begin
+            let h = sqrt (if h2 < 0.0 then 0.0 else h2) in
+            let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+            let mx = o1xf +. a *. ux and my = o1yf +. a *. uy in
+            (* M +/- h * perp(u), perp(ux,uy) = (-uy, ux) *)
+            let p_plus  = (mx -. h *. uy, my +. h *. ux) in
+            let p_minus = (mx +. h *. uy, my -. h *. ux) in
+            let cands = if h = 0.0 then [p_plus] else [p_plus; p_minus] in
+            let keep (qx, qy) =
+              point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (qx, qy) &&
+              point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (qx, qy) in
+            let pts = List.filter keep cands in
+            Printf.printf "%d" (List.length pts);
+            List.iter (fun (x, y) -> Printf.printf " %h %h" x y) pts;
+            print_newline ()
+          end
+        end
 
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
@@ -1266,6 +1495,9 @@ let () =
        | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()
        | "ARC_CENTROID"             -> run_arc_centroid ()
+       | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
+       | "ARC_DISTANCE"             -> run_arc_distance ()
+       | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
