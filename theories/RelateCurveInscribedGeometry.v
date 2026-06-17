@@ -26,7 +26,7 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import Reals List.
+From Stdlib Require Import Reals List Setoid.
 From NTS.Proofs Require Import Distance Overlay CurveGeometry
   RelateCurveRingReduction.
 Import ListNotations.
@@ -204,6 +204,44 @@ Proof.
   exact (curve_within_iff_inscribed B A n HB HA).
 Qed.
 
+(* Equals is point-set equality (faithful to OGC Equals); it transfers too. *)
+Definition geom_equals (g1 g2 : Geometry) : Prop :=
+  forall p, point_set g1 p <-> point_set g2 p.
+
+Theorem curve_equals_iff_inscribed :
+  forall (A B : CurveGeometry) (n : nat),
+    Forall curve_polygon_adjacent A -> Forall curve_polygon_adjacent B ->
+    (geom_equals (to_geometry A n) (to_geometry B n)
+     <-> geom_equals (inscribed_geometry A n) (inscribed_geometry B n)).
+Proof.
+  intros A B n HA HB. unfold geom_equals. split; intros H p;
+    pose proof (to_geometry_point_set_eq_inscribed A n p HA) as IA;
+    pose proof (to_geometry_point_set_eq_inscribed B n p HB) as IB;
+    pose proof (H p) as Hp; tauto.
+Qed.
+
+(* Set-theoretic CORE of Overlaps: the geometries meet, but neither is within the
+   other.  Full OGC Overlaps additionally constrains the DIMENSION of the
+   intersection (equal-dimension inputs, same-dimension meet) — and Crosses is
+   likewise dimension-aware — which the point-set model does not express.  Only
+   the dimension-free core is stated here; it transfers via the Intersects /
+   Within transfers above.  Crosses / full Overlaps await a dimension predicate. *)
+Definition geom_overlaps_core (g1 g2 : Geometry) : Prop :=
+  geom_intersects g1 g2 /\ ~ geom_within g1 g2 /\ ~ geom_within g2 g1.
+
+Theorem curve_overlaps_core_iff_inscribed :
+  forall (A B : CurveGeometry) (n : nat),
+    Forall curve_polygon_adjacent A -> Forall curve_polygon_adjacent B ->
+    (geom_overlaps_core (to_geometry A n) (to_geometry B n)
+     <-> geom_overlaps_core (inscribed_geometry A n) (inscribed_geometry B n)).
+Proof.
+  intros A B n HA HB. unfold geom_overlaps_core.
+  rewrite (curve_intersects_iff_inscribed A B n HA HB).
+  rewrite (curve_within_iff_inscribed A B n HA HB).
+  rewrite (curve_within_iff_inscribed B A n HB HA).
+  reflexivity.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §5  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
@@ -215,3 +253,5 @@ Print Assumptions curve_intersects_iff_inscribed.
 Print Assumptions curve_disjoint_iff_inscribed.
 Print Assumptions curve_within_iff_inscribed.
 Print Assumptions curve_contains_iff_inscribed.
+Print Assumptions curve_equals_iff_inscribed.
+Print Assumptions curve_overlaps_core_iff_inscribed.
