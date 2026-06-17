@@ -1097,22 +1097,52 @@ let run_arc_area () =
 
 (* ----- ARC_CENTROID (issue #64/#69 C-LIN): centre of mass of one circular ARC.
    ---------------------------------------------------------------------------
-   The 1-D arc (curve) centroid, emitted as a POINT.  It lies on the bisector at
-   centroid = O + (2*sin(theta/2)/theta) * (B - O), where O is the exact
-   circumcentre, B the arc midpoint control point (|B - O| = r), and theta the
-   (minor or major) sweep.  This is the per-arc position CircularString.
-   getCentroid() weights by ARC_LENGTH (M-LEN-CS).
+   The 1-D arc (curve) centroid, emitted as a POINT.  It lies on the arc's
+   ANGULAR BISECTOR at centroid = O + (2*r*sin(theta/2)/theta) * m, where O is the
+   exact circumcentre, m = arc_bisector_unit (toward the arc midpoint), and theta
+   the (minor or major) sweep.  NOTE: the offset is along m, NOT along the mid
+   control point B -- B is an arbitrary point on the arc, not necessarily the
+   angular midpoint, so O->B misplaces the centroid for non-canonical
+   CircularStrings (B is used only to disambiguate the semicircle bisector side).
+   This is the per-arc position CircularString.getCentroid() weights by ARC_LENGTH
+   (M-LEN-CS).
 
    INTERFACE-BOUNDARY float, exactly like ARC_LENGTH: the offset 2*r*sin(theta/2)
    /theta is transcendental (asin), so it hand-rolls float off the EXACT
    arc_invariants_q / circumcentre_q rational kernel, rounding only ONCE past the
    certified algebra.  s = sin(theta/2) = sqrt((1 - cos)/2) reuses ARC_LENGTH's
-   acos-near-1 fix; factor = 2*s/theta is well-conditioned as theta -> 0
-   (factor -> 1).  Spec proven in theories/ArcCentroid.v: offset = 2*r*sin(theta/2)
+   acos-near-1 fix.  Spec proven in theories/ArcCentroid.v: offset = 2*r*sin(theta/2)
    /theta, semicircle -> 2r/PI, full turn -> 0, 0 <= offset <= r.
 
    Input:  lines 2..4 = arc_start, arc_mid, arc_end ("x y").
    Output: "XY <cx> <cy>" (centroid coords, %h); "DEGENERATE" (collinear); "NAN". *)
+(* Unit angular BISECTOR of the arc A->B->C about centre (ox,oy), pointing toward
+   the arc's angular midpoint (its bulge / B side).  An arc's centroid and a
+   circular segment's centroid both lie along THIS direction -- NOT along O->B:
+   the SQL/MM mid control point B is an arbitrary point on the arc, not
+   necessarily the angular midpoint, so projecting the offset along (B-O)
+   misplaces the centroid for non-canonical CircularStrings.
+   m = sgn * (uA + uC)/|uA + uC|, uA = A-O, uC = C-O, sgn = -1 if major else +1
+   (uA + uC bisects the minor arc; the major arc's midpoint is the opposite ray).
+   Semicircle (uA + uC ~ 0): the bisector is perpendicular to chord AC, oriented
+   toward B (B disambiguates the side). *)
+let arc_bisector_unit (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (major : int) =
+  let uax = a.bx -. ox and uay = a.by_ -. oy in
+  let ucx = c.bx -. ox and ucy = c.by_ -. oy in
+  let sx = uax +. ucx and sy = uay +. ucy in
+  let n = sqrt (sx *. sx +. sy *. sy) in
+  let r = sqrt (uax *. uax +. uay *. uay) in
+  if n > 1e-9 *. r then
+    let g = if major = 1 then -1.0 else 1.0 in
+    (g *. sx /. n, g *. sy /. n)
+  else begin
+    (* semicircle: perpendicular to chord AC, oriented toward B *)
+    let px = -. (c.by_ -. a.by_) and py = c.bx -. a.bx in
+    let pn = sqrt (px *. px +. py *. py) in
+    let s = if px *. (b.bx -. ox) +. py *. (b.by_ -. oy) < 0.0 then -1.0 else 1.0 in
+    (s *. px /. pn, s *. py /. pn)
+  end
+
 let run_arc_centroid () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -1121,27 +1151,31 @@ let run_arc_centroid () =
   then print_endline "NAN"
   else match arc_invariants_q a b c with
     | ArcDegenerate -> print_endline "DEGENERATE"
-    | ArcInv (_r2, cos_full, major) ->
+    | ArcInv (r2, cos_full, major) ->
         (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
                  (qf c.bx, qf c.by_) with
          | None -> print_endline "DEGENERATE"
          | Some (ox, oy, _r2c) ->
+             let r = sqrt (Q.to_float r2) in
              let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
              let t0 = 2.0 *. asin s in
              let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
              let oxf = Q.to_float ox and oyf = Q.to_float oy in
-             let factor = 2.0 *. s /. theta in
-             let cx = oxf +. factor *. (b.bx -. oxf) in
-             let cy = oyf +. factor *. (b.by_ -. oyf) in
+             (* offset = 2 r sin(theta/2) / theta, along the angular bisector m *)
+             let offset = 2.0 *. r *. s /. theta in
+             let (mx, my) = arc_bisector_unit (oxf, oyf) a b c major in
+             let cx = oxf +. offset *. mx in
+             let cy = oyf +. offset *. my in
              Printf.printf "XY %h %h\n" cx cy)
 
 (* ----- ARC_AREA_CENTROID (issue #64/#69 C-AREA): centre of mass of one circular
    SEGMENT (the 2-D region between an arc and its chord), as a POINT.
    ---------------------------------------------------------------------------
-   centroid = O + (4*sin^3(theta/2)/(3*(theta - sin theta))) * (B - O), with O the
-   exact circumcentre, B the arc midpoint (|B - O| = r), theta the (minor/major)
+   centroid = O + (4*r*sin^3(theta/2)/(3*(theta - sin theta))) * m, with O the
+   exact circumcentre, m = arc_bisector_unit (the arc's ANGULAR bisector, toward
+   the midpoint -- NOT along the mid control point B), theta the (minor/major)
    sweep.  Companion to ARC_AREA (same r2/cos/major kernel + the SAME theta - sin
-   theta Taylor series for small theta) and to ARC_CENTROID (same bisector form).
+   theta Taylor series for small theta) and to ARC_CENTROID (same bisector m).
 
    INTERFACE-BOUNDARY float, like ARC_AREA/ARC_CENTROID: the offset
    4*r*sin^3(theta/2)/(3*(theta - sin theta)) is transcendental (asin/sin), no
@@ -1160,11 +1194,12 @@ let run_arc_area_centroid () =
   then print_endline "NAN"
   else match arc_invariants_q a b c with
     | ArcDegenerate -> print_endline "DEGENERATE"
-    | ArcInv (_r2, cos_full, major) ->
+    | ArcInv (r2, cos_full, major) ->
         (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
                  (qf c.bx, qf c.by_) with
          | None -> print_endline "DEGENERATE"
          | Some (ox, oy, _r2c) ->
+             let r = sqrt (Q.to_float r2) in
              let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
              let t0 = 2.0 *. asin s in
              let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
@@ -1186,11 +1221,13 @@ let run_arc_area_centroid () =
                  !sum
                end
              in
-             (* factor = offset / r = (4/3) * s^3 / g ;  centroid = O + factor (B - O) *)
-             let factor = 4.0 /. 3.0 *. (s *. s *. s) /. g in
              let oxf = Q.to_float ox and oyf = Q.to_float oy in
-             let cx = oxf +. factor *. (b.bx -. oxf) in
-             let cy = oyf +. factor *. (b.by_ -. oyf) in
+             (* offset = 4 r sin^3(theta/2) / (3 (theta - sin theta)), along the
+                angular bisector m (NOT along the mid control point B) *)
+             let offset = 4.0 /. 3.0 *. r *. (s *. s *. s) /. g in
+             let (mx, my) = arc_bisector_unit (oxf, oyf) a b c major in
+             let cx = oxf +. offset *. mx in
+             let cy = oyf +. offset *. my in
              Printf.printf "XY %h %h\n" cx cy)
 
 (* ----- ARC_DISTANCE (issue #64/#69 D-PT): shortest distance from a point to one

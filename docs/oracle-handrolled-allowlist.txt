@@ -89,24 +89,34 @@ run_arc_length
 # which had bypassed the then-broken ratchet.)
 run_arc_area
 
+# --- arc_bisector_unit (shared helper for the centroid modes) ---------------
+# Unit angular bisector of arc A->B->C about the centre, toward the arc midpoint.
+# Float helper (+,-,*,/,sqrt only, no transcendental) shared by ARC_CENTROID and
+# ARC_AREA_CENTROID to place the centroid offset along the true angular bisector
+# m = sgn*(uA+uC)/|uA+uC| -- NOT along the mid control point B, which is an
+# arbitrary (non-midpoint) point on the arc for general CircularStrings.  Part of
+# the interface-boundary centroid-POINT computation (the float IS the interface);
+# off the EXACT circumcentre_q centre.
+arc_bisector_unit
+
 # --- ARC_CENTROID (C-LIN, issue #64/#69) ------------------------------------
 # Mode ARC_CENTROID emits the centroid POINT of one circular arc,
-# O + (2*sin(Theta/2)/Theta)(B - O) -- the offset 2*r*sin(Theta/2)/Theta is
-# transcendental (asin), no Coq-extractable form; the float is the JTS/NTS
-# CircularString.getCentroid() interface value (weighted per-arc by ARC_LENGTH).
-# Mirrors ARC_LENGTH: applies asin to the EXACT rational invariants of
-# arc_invariants_q + the exact circumcentre_q, rounding only ONCE past certified
-# algebra.  Spec proven in theories/ArcCentroid.v (offset = 2r*sin(Theta/2)/Theta;
-# semicircle -> 2r/PI; full turn -> 0; 0 <= offset <= r).
+# O + (2*r*sin(Theta/2)/Theta) * m  with m = arc_bisector_unit -- the offset
+# 2*r*sin(Theta/2)/Theta is transcendental (asin), no Coq-extractable form; the
+# float is the JTS/NTS CircularString.getCentroid() interface value (weighted
+# per-arc by ARC_LENGTH).  Applies asin to the EXACT arc_invariants_q invariants +
+# the exact circumcentre_q, rounding only ONCE past certified algebra.  Spec
+# proven in theories/ArcCentroid.v (offset = 2r*sin(Theta/2)/Theta; semicircle ->
+# 2r/PI; full turn -> 0; 0 <= offset <= r).
 run_arc_centroid
 
 # --- ARC_AREA_CENTROID (C-AREA, issue #64/#69) ------------------------------
 # Mode ARC_AREA_CENTROID emits the centroid POINT of one circular SEGMENT,
-# O + (4*sin^3(Theta/2)/(3*(Theta - sin Theta)))(B - O) -- transcendental
-# (asin/sin), no Coq-extractable form; the JTS/NTS curve area-centroid interface
-# value.  Mirrors ARC_AREA (same Theta - sin Theta Taylor) + ARC_CENTROID
-# (bisector form), off the EXACT arc_invariants_q / circumcentre_q kernel.  Spec
-# proven in theories/ArcAreaCentroid.v (semicircle -> 4r/(3*PI); full turn -> 0).
+# O + (4*r*sin^3(Theta/2)/(3*(Theta - sin Theta))) * m  with m = arc_bisector_unit
+# -- transcendental (asin/sin), no Coq-extractable form; the JTS/NTS curve
+# area-centroid interface value.  Mirrors ARC_AREA (same Theta - sin Theta Taylor),
+# off the EXACT arc_invariants_q / circumcentre_q kernel.  Spec proven in
+# theories/ArcAreaCentroid.v (semicircle -> 4r/(3*PI); full turn -> 0).
 run_arc_area_centroid
 
 # --- ARC_DISTANCE (D-PT, issue #64/#69) -------------------------------------
