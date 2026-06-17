@@ -127,9 +127,57 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §4  Audit footprint.                                                       *)
+(* §4  Relate payoff: set-level Intersects / Disjoint transfer to Phase-3.      *)
+(*                                                                            *)
+(* The OGC Intersects / Disjoint predicates are point-set defined, and a curve  *)
+(* geometry's point-set equals its inscribed image's (§2), so deciding either   *)
+(* predicate between curve geometries IS deciding it between the dup-free       *)
+(* Phase-3 inscribed geometries — where the existing point-in-ring machinery    *)
+(* applies.  (Defined locally over `point_set`; standard OGC set semantics.)    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition geom_intersects (g1 g2 : Geometry) : Prop :=
+  exists p, point_set g1 p /\ point_set g2 p.
+
+Definition geom_disjoint (g1 g2 : Geometry) : Prop :=
+  forall p, ~ (point_set g1 p /\ point_set g2 p).
+
+Theorem curve_intersects_iff_inscribed :
+  forall (A B : CurveGeometry) (n : nat),
+    Forall curve_polygon_adjacent A -> Forall curve_polygon_adjacent B ->
+    (geom_intersects (to_geometry A n) (to_geometry B n)
+     <-> geom_intersects (inscribed_geometry A n) (inscribed_geometry B n)).
+Proof.
+  intros A B n HA HB. unfold geom_intersects. split.
+  - intros [p [HpA HpB]]. exists p. split.
+    + exact (proj1 (to_geometry_point_set_eq_inscribed A n p HA) HpA).
+    + exact (proj1 (to_geometry_point_set_eq_inscribed B n p HB) HpB).
+  - intros [p [HpA HpB]]. exists p. split.
+    + exact (proj2 (to_geometry_point_set_eq_inscribed A n p HA) HpA).
+    + exact (proj2 (to_geometry_point_set_eq_inscribed B n p HB) HpB).
+Qed.
+
+Theorem curve_disjoint_iff_inscribed :
+  forall (A B : CurveGeometry) (n : nat),
+    Forall curve_polygon_adjacent A -> Forall curve_polygon_adjacent B ->
+    (geom_disjoint (to_geometry A n) (to_geometry B n)
+     <-> geom_disjoint (inscribed_geometry A n) (inscribed_geometry B n)).
+Proof.
+  intros A B n HA HB. unfold geom_disjoint. split.
+  - intros H p [HpA HpB]. apply (H p). split.
+    + exact (proj2 (to_geometry_point_set_eq_inscribed A n p HA) HpA).
+    + exact (proj2 (to_geometry_point_set_eq_inscribed B n p HB) HpB).
+  - intros H p [HpA HpB]. apply (H p). split.
+    + exact (proj1 (to_geometry_point_set_eq_inscribed A n p HA) HpA).
+    + exact (proj1 (to_geometry_point_set_eq_inscribed B n p HB) HpB).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §5  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions to_geometry_point_set_eq_inscribed.
 Print Assumptions inscribed_geometry_outer_ring_closed.
 Print Assumptions inscribed_geometry_hole_ring_closed.
+Print Assumptions curve_intersects_iff_inscribed.
+Print Assumptions curve_disjoint_iff_inscribed.
