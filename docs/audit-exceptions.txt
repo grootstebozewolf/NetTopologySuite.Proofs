@@ -334,6 +334,14 @@ theories/ArcLength.v
 # all headlines Qed-closed.  Removal tracks ArcLength's cleanup.
 theories/ArcCentroid.v
 
+# Category C (R-side, same sin_lt_x lineage as ArcLength.v / ArcCentroid.v):
+# issue #64/#69 C-AREA circular-segment centroid offset.  The semicircle /
+# full-turn facts are 3-axiom, but segment_area_factor_pos and the nonneg
+# headline use Stdlib `sin_lt_x` (-> Classical_Prop.classic) for theta - sin
+# theta > 0, so the file is 4-axiom.  No Admitteds; all headlines Qed-closed.
+# Removal tracks ArcLength's cleanup.
+theories/ArcAreaCentroid.v
+
 # Category C (R-side, same atan/sin lineage as ArcLength.v / AngleBetween.v):
 # route (B) follow-up, equal-angle budget discharge.  arc_central_angle is
 # built on angle_between = atan2(...), and sin_sq_le_sq uses Stdlib `sin_lt_x`
