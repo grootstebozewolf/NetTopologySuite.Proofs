@@ -613,6 +613,15 @@ theories/RelateCurveVesica.v
 # (chord-only, all-arc, or mixed), via a prefix-generalised induction with one
 # point_in_ring_dup_at per join.  Subsumes the rect/lens/vesica strips.
 theories/RelateCurveRingReduction.v
+# Issue #67 curve->matrix: the per-shape lens/vesica reductions re-derived as
+# instances of the general inscribed-polygon reduction (coherence cross-check;
+# inscribed_ring of each shape computed by reflexivity).
+theories/RelateCurveRingReductionInstances.v
+# Issue #67 curve->matrix: the curve geometry's dup-free Phase-3 image
+# (inscribed_geometry) and its point-set agreement with the chord_approx
+# linearisation -- the bridge for feeding curves into the Phase-3 overlay/relate
+# machinery (point-set semantics + closed inscribed rings).
+theories/RelateCurveInscribedGeometry.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the

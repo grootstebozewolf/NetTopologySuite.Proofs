@@ -4,10 +4,14 @@
    GREEN companion to PassesThrough_b64_compute_asymmetric.v.
 
    That file proves the ROUNDED `_compute` passes-through filter is NOT
-   symmetric under segment reversal P0<->P1 (the order-dependent-noding defect
-   behind JTS#752 / JTS#1133).  THIS file proves the EXACT R-spec filter IS
-   symmetric -- so the order-safe noder primitive is the spec, not the rounded
-   compute filter.  Same statement shape, opposite (and correct) verdict:
+   symmetric under segment reversal P0<->P1 (a caution about a Liang-Barsky
+   divide-from-c0 filter design; correction 2026-06-17: NOT a JTS defect and not
+   the root of JTS#752/#1133 -- JTS's HotPixel.intersectsScaled canonicalizes the
+   segment to +X first, so it is reversal-symmetric by construction; see
+   docs/oracle-soundness-finding.md "CORRECTION").  THIS file proves the EXACT
+   R-spec filter IS symmetric -- matching JTS's canonicalized behaviour and the
+   order-safe noder primitive, not the rounded compute filter.  Same statement
+   shape, opposite (and correct) verdict:
 
      b64_passes_through_hot_pixel P0 P1 C = b64_passes_through_hot_pixel P1 P0 C.
 

@@ -272,3 +272,35 @@ symmetric. No rounding enters the R-spec, so the symmetry is exact. Same
 statement shape as the `_compute` asymmetry counterexample, opposite (correct)
 verdict — the RGR pair pins precisely what a robust noder must use: the exact
 spec, not the rounded filter.
+
+## CORRECTION (2026-06-17): the asymmetry does NOT model JTS, and the JTS#752/#1133 attribution is RETRACTED
+
+The asymmetry theorem above is a **true negative about a Liang-Barsky division
+filter** — but that filter is **not what JTS uses**, so the lane does not map to
+a real JTS defect and the "root behind JTS#752 / JTS#1133" framing was wrong.
+
+**Finding.** JTS's `HotPixel.intersectsScaled` (`modules/core/.../noding/snapround/HotPixel.java`,
+~lines 189–199) **canonicalizes the segment to the positive-X direction before
+any orientation test** — it swaps the endpoints when `p0x > p1x` (and the
+degenerate vertical sub-case) so the per-edge intersection test always runs on a
+fixed endpoint order. JTS's passes-through-pixel decision is therefore
+**symmetric under endpoint reversal by construction**; the order-dependence the
+theorem exhibits cannot arise in JTS.
+
+**What is and isn't claimed now.**
+
+- `b64_passes_through_compute_asymmetric` **stays Qed and stays true**: the
+  *as-modelled* rounded Liang-Barsky `b64_div`-from-`c0` filter genuinely flips
+  under reversal. It remains a valid cautionary negative about that filter
+  design (and about any port that divides from a non-canonical endpoint).
+- It is **NOT** evidence of a JTS defect, and it is **NOT** the root of JTS#752
+  or JTS#1133. Those issues are not explained by this lane; their cause is
+  elsewhere (canonicalization removes this particular hazard). The
+  `PassesThrough_b64_spec_symmetric` green companion is unaffected — the exact
+  R-spec is symmetric, matching JTS's canonicalized behaviour.
+
+**Consequence for sequencing.** Do not recommend the asymmetry lane as a
+JTS-defect target. The genuinely useful #66 result remains C1 grid-exactness
+(unconditional on `|n| ≤ 2²²`, `PassesThrough_b64_grid_exact.v`); the
+unsound/incomplete negatives stand on their own as filter-design cautions, not
+JTS-behaviour claims.
