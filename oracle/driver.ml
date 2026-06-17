@@ -1135,6 +1135,115 @@ let run_arc_centroid () =
              let cy = oyf +. factor *. (b.by_ -. oyf) in
              Printf.printf "XY %h %h\n" cx cy)
 
+(* ----- ARC_AREA_CENTROID (issue #64/#69 C-AREA): centre of mass of one circular
+   SEGMENT (the 2-D region between an arc and its chord), as a POINT.
+   ---------------------------------------------------------------------------
+   centroid = O + (4*sin^3(theta/2)/(3*(theta - sin theta))) * (B - O), with O the
+   exact circumcentre, B the arc midpoint (|B - O| = r), theta the (minor/major)
+   sweep.  Companion to ARC_AREA (same r2/cos/major kernel + the SAME theta - sin
+   theta Taylor series for small theta) and to ARC_CENTROID (same bisector form).
+
+   INTERFACE-BOUNDARY float, like ARC_AREA/ARC_CENTROID: the offset
+   4*r*sin^3(theta/2)/(3*(theta - sin theta)) is transcendental (asin/sin), no
+   Coq-extractable form; rounds only ONCE past the exact arc_invariants_q /
+   circumcentre_q rational kernel.  Spec proven in theories/ArcAreaCentroid.v
+   (offset = 4r*sin^3(theta/2)/(3(theta-sin theta)); semicircle -> 4r/(3*PI);
+   full turn -> 0).
+
+   Input:  lines 2..4 = arc_start, arc_mid, arc_end ("x y").
+   Output: "XY <cx> <cy>" (segment-centroid coords, %h); "DEGENERATE"; "NAN". *)
+let run_arc_area_centroid () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (_r2, cos_full, major) ->
+        (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                 (qf c.bx, qf c.by_) with
+         | None -> print_endline "DEGENERATE"
+         | Some (ox, oy, _r2c) ->
+             let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+             let t0 = 2.0 *. asin s in
+             let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+             (* g = theta - sin theta (twice the segment area / r^2); same Taylor
+                small-angle path as ARC_AREA to avoid catastrophic cancellation. *)
+             let g =
+               if theta >= 1.0 then theta -. sin theta
+               else begin
+                 let t2 = theta *. theta in
+                 let term = ref (theta *. t2 /. 6.0) in
+                 let sum  = ref !term in
+                 let k = ref 1 in
+                 while abs_float !term > abs_float !sum *. 1e-17 && !k < 30 do
+                   let kk = float_of_int !k in
+                   term := -. !term *. t2 /. ((2.0 *. kk +. 2.0) *. (2.0 *. kk +. 3.0));
+                   sum  := !sum +. !term;
+                   incr k
+                 done;
+                 !sum
+               end
+             in
+             (* factor = offset / r = (4/3) * s^3 / g ;  centroid = O + factor (B - O) *)
+             let factor = 4.0 /. 3.0 *. (s *. s *. s) /. g in
+             let oxf = Q.to_float ox and oyf = Q.to_float oy in
+             let cx = oxf +. factor *. (b.bx -. oxf) in
+             let cy = oyf +. factor *. (b.by_ -. oyf) in
+             Printf.printf "XY %h %h\n" cx cy)
+
+(* ----- ARC_DISTANCE (issue #64/#69 D-PT): shortest distance from a point to one
+   circular ARC.
+   ---------------------------------------------------------------------------
+   The nearest point on the FULL circle to P is the radial foot O + r*(P-O)/|P-O|,
+   at distance ||P-O| - r|.  If that foot lies on the arc A->B->C the answer is
+   that radial distance; otherwise the nearest arc point is an endpoint, so the
+   answer is min(|P-A|, |P-C|).  We always take the min with the endpoint
+   distances (radial foot is the global circle-nearest, so when it is on the arc
+   it already dominates; gating it on arc membership is what makes off-arc feet
+   fall back to the endpoints).
+
+   The on-arc-sector membership is the only genuinely new geometry; the rest is
+   sqrt of an exact rational.  Membership uses atan2 (CCW angle interval from A
+   through B to C) -> INTERFACE-BOUNDARY float (atan2/sqrt, no Coq-extractable
+   form), off the exact circumcentre_q centre.
+
+   Input:  lines 2..5 = arc_start, arc_mid, arc_end, query point P ("x y").
+   Output: "<dist>" (%h); "DEGENERATE" (collinear arc); "NAN" (non-finite). *)
+let run_arc_distance () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  let p = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c && finite_bpoint p)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+               (qf c.bx, qf c.by_) with
+    | None -> print_endline "DEGENERATE"
+    | Some (ox, oy, r2) ->
+        let oxf = Q.to_float ox and oyf = Q.to_float oy in
+        let r = sqrt (Q.to_float r2) in
+        let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+        let dpA = hypot2 (p.bx -. a.bx) (p.by_ -. a.by_) in
+        let dpC = hypot2 (p.bx -. c.bx) (p.by_ -. c.by_) in
+        let cand = ref (if dpA <= dpC then dpA else dpC) in
+        let d = hypot2 (p.bx -. oxf) (p.by_ -. oyf) in
+        if d > 0.0 then begin
+          let twopi = 2.0 *. Float.pi in
+          let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
+          let ang qx qy = atan2 (qy -. oyf) (qx -. oxf) in
+          let angA = ang a.bx a.by_ in
+          let dAB = ccw angA (ang b.bx b.by_) in
+          let dAC = ccw angA (ang c.bx c.by_) in
+          let dAP = ccw angA (ang p.bx p.by_) in
+          let on_arc = if dAB <= dAC then dAP <= dAC else dAP >= dAC in
+          if on_arc then begin
+            let radial = abs_float (d -. r) in
+            if radial < !cand then cand := radial
+          end
+        end;
+        Printf.printf "%h\n" !cand
 
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
@@ -1266,6 +1375,8 @@ let () =
        | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()
        | "ARC_CENTROID"             -> run_arc_centroid ()
+       | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
+       | "ARC_DISTANCE"             -> run_arc_distance ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
