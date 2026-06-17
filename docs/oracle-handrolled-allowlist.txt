@@ -126,3 +126,19 @@ run_arc_area_centroid
 # -- transcendental (atan2/sqrt), no Coq-extractable form -- off the EXACT
 # circumcentre_q centre.  The JTS/NTS point-to-arc distance interface value.
 run_arc_distance
+
+# --- point_on_arc_sector (shared helper for arc-arc / distance sector tests) -
+# Is a circle point within an arc's angular span? CCW angle-interval test via
+# atan2 (transcendental) -- shared by ARC_ARC_XY (and matching ARC_DISTANCE's
+# inline sector test).  Interface-boundary helper off the exact circumcentre.
+point_on_arc_sector
+
+# --- ARC_ARC_XY (N-AA, issue #64 #5b) ---------------------------------------
+# Mode ARC_ARC_XY emits the intersection POINTS of two circular arcs.  Two
+# circumcircles meet on the radical line; the coordinates carry an irrational
+# sqrt(discriminant) (no Coq-extractable form, like ARC_LINE_XY), computed off
+# the EXACT circumcentre_q centres/radii so only the final sqrt/atan2 rounds.
+# Points kept iff in both arc spans (point_on_arc_sector).  The JTS/NTS arc-arc
+# intersection interface value (N-AA); the coordinate soundness proof is the
+# deferred #5b frontier (theories/ArcArcSound.v has the slice).
+run_arc_arc_xy

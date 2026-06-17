@@ -1282,6 +1282,89 @@ let run_arc_distance () =
         end;
         Printf.printf "%h\n" !cand
 
+(* Is the circle point (qx,qy) -- assumed ON the circumcircle of arc A->B->C
+   about centre (ox,oy) -- within the arc's angular span?  CCW angle-interval
+   test from A through B to C (the same membership ARC_DISTANCE uses inline);
+   inclusive at the endpoints.  atan2 (transcendental) -> interface-boundary. *)
+let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy) =
+  let twopi = 2.0 *. Float.pi in
+  let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
+  let ang px py = atan2 (py -. oy) (px -. ox) in
+  let angA = ang a.bx a.by_ in
+  let dAB = ccw angA (ang b.bx b.by_) in
+  let dAC = ccw angA (ang c.bx c.by_) in
+  let dAQ = ccw angA (ang qx qy) in
+  if dAB <= dAC then dAQ <= dAC else dAQ >= dAC
+
+(* ----- ARC_ARC_XY (issue #64 #5b / N-AA): arc-arc intersection coordinates.
+   ---------------------------------------------------------------------------
+   The intersection POINTS of two circular arcs, enumerated.  Two circumcircles
+   (centres O1,O2, squared radii r1^2,r2^2 -- all EXACT via circumcentre_q) meet
+   on the radical line: with d = |O1 O2|, a = (d^2 + r1^2 - r2^2)/(2 d) the signed
+   distance from O1 to the radical foot M = O1 + (a/d)(O2-O1), and h = sqrt(r1^2 -
+   a^2) the half-chord, the circle intersections are M +/- h * perp(O2-O1)/d.
+   Each is then kept only if it lies in BOTH arc spans (point_on_arc_sector).
+
+   INTERFACE-BOUNDARY float: the coordinates carry an irrational sqrt(discriminant)
+   (no Coq-extractable form, like ARC_LINE_XY), computed off the EXACT
+   circumcentre_q centres/radii so the only rounding is the final sqrt/atan2.
+   This is the oracle pin for N-AA; the unconditional coordinate SOUNDNESS proof
+   stays the deferred #5b frontier (theories/ArcArcSound.v has the shared-vertex
+   + conditional-floor slice).
+
+   Input:  lines 2..7 = arc1 (start,mid,end), arc2 (start,mid,end) ("x y").
+   Output: "<n>" then n*(" <x> <y>") on one line, n in {0,1,2} = arc-arc
+           intersection points (the +h point first); "DEGENERATE" (either arc
+           collinear); "COINCIDENT" (identical circumcircles); "NAN". *)
+let run_arc_arc_xy () =
+  let a1 = parse_point (input_line stdin) in
+  let b1 = parse_point (input_line stdin) in
+  let c1 = parse_point (input_line stdin) in
+  let a2 = parse_point (input_line stdin) in
+  let b2 = parse_point (input_line stdin) in
+  let c2 = parse_point (input_line stdin) in
+  if not (finite_bpoint a1 && finite_bpoint b1 && finite_bpoint c1 &&
+          finite_bpoint a2 && finite_bpoint b2 && finite_bpoint c2)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_)
+                 (qf c1.bx, qf c1.by_),
+             circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_)
+                 (qf c2.bx, qf c2.by_) with
+    | None, _ | _, None -> print_endline "DEGENERATE"
+    | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+        (* exact squared centre distance *)
+        let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                       (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+        if qeq dq q0 then
+          (if qeq r1sq r2sq then print_endline "COINCIDENT"
+           else print_endline "0")            (* concentric, distinct radii: no meet *)
+        else begin
+          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+          let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
+          let d2 = Q.to_float dq in
+          let d = sqrt d2 in
+          let a = (d2 +. r1f -. r2f) /. (2.0 *. d) in
+          let h2 = r1f -. a *. a in
+          if h2 < 0.0 then print_endline "0"   (* circles do not meet *)
+          else begin
+            let h = sqrt (if h2 < 0.0 then 0.0 else h2) in
+            let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+            let mx = o1xf +. a *. ux and my = o1yf +. a *. uy in
+            (* M +/- h * perp(u), perp(ux,uy) = (-uy, ux) *)
+            let p_plus  = (mx -. h *. uy, my +. h *. ux) in
+            let p_minus = (mx +. h *. uy, my -. h *. ux) in
+            let cands = if h = 0.0 then [p_plus] else [p_plus; p_minus] in
+            let keep (qx, qy) =
+              point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (qx, qy) &&
+              point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (qx, qy) in
+            let pts = List.filter keep cands in
+            Printf.printf "%d" (List.length pts);
+            List.iter (fun (x, y) -> Printf.printf " %h %h" x y) pts;
+            print_newline ()
+          end
+        end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -1414,6 +1497,7 @@ let () =
        | "ARC_CENTROID"             -> run_arc_centroid ()
        | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
        | "ARC_DISTANCE"             -> run_arc_distance ()
+       | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
