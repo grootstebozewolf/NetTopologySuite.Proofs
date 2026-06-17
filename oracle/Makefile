@@ -17,9 +17,15 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean
+.PHONY: all clean arc-arc-tests
 
 all: $(TARGET)
+
+# Adversarial ARC_ARC_XY suite (issue #64 #5b / N-AA): drives oracle_bin and
+# gates the Qed-proven invariants (I1 on-both-circles, I2 shared-vertex>=1,
+# I3 symmetry, I4 reversal-stable).  Nonzero exit on any violation.
+arc-arc-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_arc_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<

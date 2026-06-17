@@ -1673,6 +1673,14 @@ theories/ArcChordSound.v
 # coordinates (the radical-line / sqrt frontier).
 theories/ArcArcSound.v
 
+# Issue #64 ask #5b / N-AA Stage B: radical-line coordinate existence.
+# For properly-intersecting circles (|r1−r2| < d < r1+r2), the ARC_ARC_XY
+# radical-line formula constructs an explicit point on BOTH circumcircles.
+# Bridge: inCircle_R = 2D·(dist_sq O P − r²) (field); Headline:
+# P+ = M+h·perp(u) on both circles (ring+lra).  3-axiom.  Deferred:
+# arc_span_contains (atan2), arc_arc_intersects (full predicate), b64 layer.
+theories/ArcArcCircles.v
+
 # Issue #65 curve-aware buffer, first proof brick (Stage 2a-curve seam,
 # unblocked by #64's arc-line Scope B/C closure).  The offset of a
 # circular arc at signed distance d is the CONCENTRIC arc of radius

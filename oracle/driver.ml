@@ -1294,7 +1294,11 @@ let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy)
   let dAB = ccw angA (ang b.bx b.by_) in
   let dAC = ccw angA (ang c.bx c.by_) in
   let dAQ = ccw angA (ang qx qy) in
-  if dAB <= dAC then dAQ <= dAC else dAQ >= dAC
+  (* Inclusive at BOTH endpoints.  In the clockwise-swept branch (dAB > dAC)
+     the in-span set is {A} U [dAC, 2pi): the start A wraps to dAQ = 0, so a
+     bare `dAQ >= dAC` would drop A (orientation-dependent endpoint loss --
+     e.g. a tangency or shared vertex exactly at A).  Re-include dAQ = 0. *)
+  if dAB <= dAC then dAQ <= dAC else (dAQ >= dAC || dAQ = 0.0)
 
 (* ----- ARC_ARC_XY (issue #64 #5b / N-AA): arc-arc intersection coordinates.
    ---------------------------------------------------------------------------

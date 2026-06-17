@@ -1,0 +1,36 @@
+# Adversarial tests for ARC_ARC_XY (RocqRefRunner) vs EXACT-rational
+# ground truth (four-factor discriminant = two_circles_radical_point's
+# Hnum_pos).  '!!' lines are PROVEN-invariant violations (CI-failing).
+# I1 on-both-circles  I2 shared-vertex>=1  I3 symmetry  I4 reversal-stable
+
+## A. Curated battery (counts hand-verified).
+  [2pt: both arcs cover both meets (4,+-3)] -> '2 0x1p+2 0x1.8p+1 0x1p+2 -0x1.8p+1' expect=2   exact_circle_pts=2   ok
+  [1pt: upper/upper, only (4,3) in both spans] -> '1 0x1p+2 0x1.8p+1' expect=1   exact_circle_pts=2   ok
+  [0: circles meet 2, upper vs lower arcs disjoint spans] -> '0' expect=0   exact_circle_pts=2   ok
+  [ext-tangent at START vertex (5,0), arc2 CW  (regression: was 0)] -> '1 0x1.4p+2 0x0p+0' expect=1   exact_circle_pts=1   ok
+  [ext-tangent at START vertex (5,0), arc2 CCW (control)] -> '1 0x1.4p+2 0x0p+0' expect=1   exact_circle_pts=1   ok
+  [shared START vertex (5,0), both CW  (arc_arc_intersects_shared_vertex)] -> '1 0x1.4p+2 0x0p+0' expect=1   exact_circle_pts=1   ok
+  [internal tangent at (5,0): (0,0)r5 vs (2,0)r3] -> '1 0x1.4p+2 0x0p+0' expect=1   exact_circle_pts=1   ok
+  [disjoint d=20 > r1+r2=10] -> '0' expect=0   exact_circle_pts=0   ok
+  [concentric distinct radii (0,0)r5 vs (0,0)r3] -> '0' expect=0   exact_circle_pts=0   ok
+  [coincident circumcircles (identical arcs)] -> 'COINCIDENT' expect=COINCIDENT      ok
+  [DEGENERATE: arc1 collinear] -> 'DEGENERATE' expect=DEGENERATE      ok
+
+## B. Shared-vertex sweep (arc_arc_intersects_shared_vertex): every
+##    shared endpoint must yield count >= 1, for ALL arc orientations.
+  [end1=start2 hinge (-5,0)] -> '1 -0x1.4p+2 0x0p+0' expect=>=1   exact_circle_pts=1   ok
+  [start1=start2 hinge (5,0)] -> '1 0x1.4p+2 0x0p+0' expect=>=1   exact_circle_pts=1   ok
+  [start1=end2 hinge (5,0)] -> '1 0x1.4p+2 0x0p+0' expect=>=1   exact_circle_pts=1   ok
+  [end1=end2 hinge (-5,0)] -> '1 -0x1.4p+2 0x0p+0' expect=>=1   exact_circle_pts=1   ok
+  [lower arc1, end1=start2] -> '1 -0x1.4p+2 0x0p+0' expect=>=1   exact_circle_pts=1   ok
+
+## C. Near-tangency float stress (deferred float frontier -- NOT a bug):
+##    proven invariants I1/I3/I4 still gated; we only NOTE float-count vs
+##    exact-disc divergence as a hardening signal.
+  [near-ext-tangent d=r1+r2 off=-0x1p-30 (dx=9.999999999068677)] -> '1 0x1.3fffffff8p+2 0x1.1e3779b97f4a8p-14'   exact_circle_pts=2   ok
+  [near-ext-tangent d=r1+r2 off=-0x1p-45 (dx=9.999999999999972)] -> '1 0x1.3fffffffffffp+2 0x1.94c583ada5b53p-22'   exact_circle_pts=2   ok
+  [near-ext-tangent d=r1+r2 off=0 (dx=10.0)] -> '1 0x1.4p+2 0x0p+0'   exact_circle_pts=1   ok
+  [near-ext-tangent d=r1+r2 off=0x1p-45 (dx=10.000000000000028)] -> '0'   exact_circle_pts=0   ok
+  [near-ext-tangent d=r1+r2 off=0x1p-30 (dx=10.000000000931323)] -> '0'   exact_circle_pts=0   ok
+
+# All proven invariants (I1-I4) hold across the suite.
