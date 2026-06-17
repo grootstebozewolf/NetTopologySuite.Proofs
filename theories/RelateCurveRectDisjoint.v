@@ -1,9 +1,10 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateCurveRectDisjoint
    ----------------------------------------------------------------------------
-   Issue #67 (curve→matrix soundness): a concrete end-to-end relate decision —
-   the bounding-box-separation Disjoint fast-path for chord-rectangle curve
-   geometries.
+   Issue #67 (curve→matrix soundness): concrete end-to-end relate decisions —
+   the bounding-box (AABB) relate fast-paths for chord-rectangle curve
+   geometries: Disjoint when the boxes are separated, Intersects when they
+   overlap.
 
    The set-predicate transfers (`RelateCurveInscribedGeometry`) reduce curve
    relate to the Phase-3 inscribed image, and the chord-rectangle membership
@@ -64,4 +65,47 @@ Proof.
   intros. apply rect_curve_geometry_bbox_separated_disjoint; auto.
 Qed.
 
+(* --------------------------------------------------------------------------- *)
+(* The converse fast-path: OVERLAPPING boxes intersect.  A 1-D overlap witness  *)
+(* (the midpoint of the two intervals' intersection) lifts to a point strictly  *)
+(* inside both boxes.                                                           *)
+(* --------------------------------------------------------------------------- *)
+
+(* Two overlapping real intervals share an interior point. *)
+Lemma interval_overlap_witness_open :
+  forall a b c d : R,
+    a < b -> c < d -> a < d -> c < b ->
+    exists t, (a < t < b) /\ (c < t < d).
+Proof.
+  intros a b c d Hab Hcd Had Hcb.
+  exists ((Rmax a c + Rmin b d) / 2).
+  unfold Rmax, Rmin.
+  destruct (Rle_dec a c); destruct (Rle_dec b d); repeat split; lra.
+Qed.
+
+(* Two chord-rectangle curve geometries with OVERLAPPING bounding boxes share a
+   point — the converse of the separation fast-path.  Overlap is the negation of
+   separation: each interval's start precedes the other's end on both axes. *)
+Theorem rect_curve_geometry_bbox_overlap_intersects :
+  forall (x0 y0 x1 y1 x0' y0' x1' y1' : R) (n : nat),
+    x0 < x1 -> y0 < y1 -> x0' < x1' -> y0' < y1' ->
+    x0 < x1' -> x0' < x1 -> y0 < y1' -> y0' < y1 ->
+    geom_intersects (to_geometry (rect_curve_geometry x0 y0 x1 y1) n)
+                    (to_geometry (rect_curve_geometry x0' y0' x1' y1') n).
+Proof.
+  intros x0 y0 x1 y1 x0' y0' x1' y1' n Hx Hy Hx' Hy' Hox1 Hox2 Hoy1 Hoy2.
+  destruct (interval_overlap_witness_open x0 x1 x0' x1' Hx Hx' Hox1 Hox2)
+    as [wx [[Hwx_a Hwx_b] [Hwx_c Hwx_d]]].
+  destruct (interval_overlap_witness_open y0 y1 y0' y1' Hy Hy' Hoy1 Hoy2)
+    as [wy [[Hwy_a Hwy_b] [Hwy_c Hwy_d]]].
+  unfold geom_intersects. exists (mkPoint wx wy). split.
+  - apply (proj2 (point_in_rect_curve_geometry_characterisation
+                    x0 y0 x1 y1 n (mkPoint wx wy) Hx Hy)).
+    cbn [px py]. repeat split; lra.
+  - apply (proj2 (point_in_rect_curve_geometry_characterisation
+                    x0' y0' x1' y1' n (mkPoint wx wy) Hx' Hy')).
+    cbn [px py]. repeat split; lra.
+Qed.
+
 Print Assumptions rect_curve_geometry_bbox_separated_disjoint.
+Print Assumptions rect_curve_geometry_bbox_overlap_intersects.
