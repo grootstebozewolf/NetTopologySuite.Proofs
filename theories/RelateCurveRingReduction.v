@@ -176,8 +176,66 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §5  Audit footprint.                                                       *)
+(* §5  The inscribed control polygon is itself a closed Phase-3 ring.           *)
+(*                                                                            *)
+(* `chord_approx_ring` carries a duplicated vertex at every join; the inscribed *)
+(* control polygon is the DEDUPLICATED boundary.  For a closed adjacent curve   *)
+(* ring it is again a `ring_closed` Phase-3 ring — a cleaner first-class ring   *)
+(* than the linearisation, the form for plugging linearised curves into the     *)
+(* overlay / extract_rings machinery.  Same shape/closed argument as            *)
+(* `CurveLinearise.chord_approx_ring_shape` / `chord_approx_ring_closed`.       *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma inscribed_ring_shape :
+  forall (rest : list CurveSegment) (s : CurveSegment) (n : nat),
+    exists M, inscribed_ring (s :: rest) n
+              = curve_segment_start s
+                :: (M ++ [curve_segment_end (List.last (s :: rest) s)]).
+Proof.
+  induction rest as [| s2 rest IH]; intros s n.
+  - (* single segment: inscribed_ring [s] n = chord_approx_segment s n *)
+    destruct (chord_approx_segment_shape s n) as [Ms HMs].
+    exists Ms.
+    replace (inscribed_ring [s] n) with (chord_approx_segment s n) by reflexivity.
+    replace (curve_segment_end (List.last [s] s)) with (curve_segment_end s)
+      by reflexivity.
+    exact HMs.
+  - (* >= 2 segments: removelast(cas s) ++ inscribed (s2::rest) *)
+    destruct (chord_approx_segment_shape s n) as [Ms HMs].
+    destruct (IH s2 n) as [M' HM'].
+    assert (Hrl : removelast (chord_approx_segment s n) = curve_segment_start s :: Ms).
+    { rewrite HMs.
+      replace (curve_segment_start s :: (Ms ++ [curve_segment_end s]))
+        with ((curve_segment_start s :: Ms) ++ [curve_segment_end s]) by reflexivity.
+      rewrite removelast_last. reflexivity. }
+    exists (Ms ++ curve_segment_start s2 :: M').
+    change (inscribed_ring (s :: s2 :: rest) n)
+      with (removelast (chord_approx_segment s n) ++ inscribed_ring (s2 :: rest) n).
+    rewrite Hrl, HM'.
+    replace (curve_segment_end (List.last (s :: s2 :: rest) s))
+       with (curve_segment_end (List.last (s2 :: rest) s2)).
+    2:{ f_equal. rewrite (last_cons_nonnil s (s2 :: rest) s) by discriminate.
+        apply last_default_irrel. discriminate. }
+    rewrite <- app_comm_cons. f_equal.
+    rewrite <- !app_assoc. cbn [app]. reflexivity.
+Qed.
+
+Theorem inscribed_ring_closed :
+  forall (r : CurveRing) (n : nat),
+    curve_ring_closed r -> ring_closed (inscribed_ring r n).
+Proof.
+  intros [| s rest] n Hcl.
+  - simpl in Hcl. contradiction.
+  - unfold curve_ring_closed in Hcl.
+    destruct (inscribed_ring_shape rest s n) as [M HM].
+    unfold ring_closed. exists (curve_segment_start s), M.
+    rewrite HM, Hcl. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions point_in_ring_chord_approx_eq_inscribed.
 Print Assumptions point_in_simple_curve_geometry_iff_inscribed.
+Print Assumptions inscribed_ring_closed.
