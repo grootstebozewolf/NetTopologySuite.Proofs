@@ -116,6 +116,12 @@ theories/BufferJoin.v
 # bridge chord^2 = 2 r^2 (1 - cos theta)).  Pulls classic via Stdlib sin_lt_x
 # (see audit-exceptions).  No Admitted.
 theories/ArcLength.v
+# Issue #64/#69 C-LIN: the circular-arc centroid offset 2r·sin(theta/2)/theta
+# (= chord/angle), the proof-side foundation for the oracle's missing ARC_CENTROID
+# mode and CircularString.getCentroid().  Semicircle -> 2r/PI, full turn -> 0,
+# 0 <= offset <= r (the last via ArcLength.chord_le_arc_length).  4-axiom (sin_lt_x
+# lineage, see audit-exceptions).  No Admitted.
+theories/ArcCentroid.v
 # Issue #67 session 1 (S1): DE-9IM intersection-matrix algebra — foundation
 # only (no geometry carrier, no RelateNG).  DimValue / IMPattern /
 # IntersectionMatrix, JTS-aligned named predicates, pattern_transpose +
