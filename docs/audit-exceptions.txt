@@ -327,6 +327,13 @@ theories/BufferJoin.v
 # Admitteds; both headlines Qed-closed.
 theories/ArcLength.v
 
+# Category C (R-side, same sin_lt_x lineage as ArcLength.v): issue #64/#69 C-LIN
+# arc centroid offset.  The semicircle / full-turn / nonneg facts are 3-axiom,
+# but arc_centroid_offset_le_radius reuses ArcLength.chord_le_arc_length (Stdlib
+# `sin_lt_x` -> Classical_Prop.classic), so the file is 4-axiom.  No Admitteds;
+# all headlines Qed-closed.  Removal tracks ArcLength's cleanup.
+theories/ArcCentroid.v
+
 # Category C (R-side, same atan/sin lineage as ArcLength.v / AngleBetween.v):
 # route (B) follow-up, equal-angle budget discharge.  arc_central_angle is
 # built on angle_between = atan2(...), and sin_sq_le_sq uses Stdlib `sin_lt_x`
