@@ -327,6 +327,12 @@ theories/BufferJoin.v
 # Admitteds; both headlines Qed-closed.
 theories/ArcLength.v
 
+# Category C (R-side, same sin_lt_x lineage as ArcLength.v): issue #64 M-AREA-CP
+# circular-segment area.  The sector-triangle / half-disc / full-disc facts are
+# 3-axiom, but segment_area_nonneg uses ArcLength.sin_le_x (Stdlib sin_lt_x ->
+# Classical_Prop.classic), so the file is 4-axiom.  No Admitteds; all Qed.
+theories/ArcArea.v
+
 # Category C (R-side, same sin_lt_x lineage as ArcLength.v): issue #64/#69 C-LIN
 # arc centroid offset.  The semicircle / full-turn / nonneg facts are 3-axiom,
 # but arc_centroid_offset_le_radius reuses ArcLength.chord_le_arc_length (Stdlib
