@@ -243,7 +243,55 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §5  Audit footprint.                                                       *)
+(* §5  OGC predicate consistency algebra (general geometries).                 *)
+(*                                                                            *)
+(* The relationships a relate layer relies on, proved once for any `Geometry`  *)
+(* (so they hold for `to_geometry` and `inscribed_geometry` alike).            *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma geom_disjoint_iff_not_intersects :
+  forall g1 g2, geom_disjoint g1 g2 <-> ~ geom_intersects g1 g2.
+Proof.
+  intros g1 g2. unfold geom_disjoint, geom_intersects. split.
+  - intros H [p HP]. exact (H p HP).
+  - intros H p HP. apply H. exists p. exact HP.
+Qed.
+
+Lemma geom_intersects_sym :
+  forall g1 g2, geom_intersects g1 g2 <-> geom_intersects g2 g1.
+Proof.
+  intros g1 g2. unfold geom_intersects.
+  split; intros [p HP]; exists p; tauto.
+Qed.
+
+Lemma geom_disjoint_sym :
+  forall g1 g2, geom_disjoint g1 g2 <-> geom_disjoint g2 g1.
+Proof.
+  intros g1 g2. unfold geom_disjoint.
+  split; intros H p HP; apply (H p); tauto.
+Qed.
+
+Lemma geom_contains_iff_within :
+  forall g1 g2, geom_contains g1 g2 <-> geom_within g2 g1.
+Proof. reflexivity. Qed.
+
+Lemma geom_equals_refl : forall g, geom_equals g g.
+Proof. intros g p. tauto. Qed.
+
+Lemma geom_equals_sym : forall g1 g2, geom_equals g1 g2 -> geom_equals g2 g1.
+Proof. intros g1 g2 H p. pose proof (H p); tauto. Qed.
+
+Lemma geom_equals_trans :
+  forall g1 g2 g3, geom_equals g1 g2 -> geom_equals g2 g3 -> geom_equals g1 g3.
+Proof. intros g1 g2 g3 H12 H23 p. pose proof (H12 p); pose proof (H23 p); tauto. Qed.
+
+(* Equals refines Within both ways (antisymmetry of the subset order). *)
+Lemma geom_equals_within :
+  forall g1 g2, geom_equals g1 g2 -> geom_within g1 g2 /\ geom_within g2 g1.
+Proof. intros g1 g2 H. split; intros p Hp; apply (H p); exact Hp. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §6  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions to_geometry_point_set_eq_inscribed.
