@@ -15,12 +15,21 @@
    round-to-nearest error.  Near a pixel corner the two roundings straddle the
    `tmin <= tmax` overlap boundary, and the verdict FLIPS.
 
-   This is the order-dependent-noding root behind JTS#752 (TopologyException in
-   UnaryUnionNG under a floating PrecisionModel) and JTS#1133 (snapRoundingNoder
-   on polygons yields a MultiLineString): the same edge, processed with swapped
-   endpoints by different code paths, gets inconsistent "passes through vertex"
-   verdicts -> an inconsistent noding graph -> a TopologyException or a dropped/
-   unclosed ring.  Refs #66.
+   CORRECTION (2026-06-17): the JTS#752 / JTS#1133 attribution below is
+   RETRACTED.  JTS's HotPixel.intersectsScaled (HotPixel.java ~189-199)
+   canonicalizes the segment to the positive-X direction BEFORE any orientation
+   test, so JTS's actual passes-through test is symmetric under endpoint reversal
+   by construction -- this asymmetry models a Liang-Barsky `b64_div`-from-c0
+   filter that JTS does NOT use.  The theorem stays Qed and true as a negative
+   about THAT filter design, but it does NOT map to a real JTS defect and is not
+   the root of JTS#752/#1133.  See docs/oracle-soundness-finding.md "CORRECTION
+   (2026-06-17)".  Refs #66.
+
+   (Original framing, retained for context, now superseded by the correction:)
+   The same edge, processed with swapped endpoints by a divide-from-c0 filter,
+   gets inconsistent "passes through vertex" verdicts -> an inconsistent noding
+   graph.  This hazard is real for such a filter but is removed by JTS's
+   endpoint canonicalization.
 
      exists P0 P1 C,
        b64_passes_through_hot_pixel_compute P0 P1 C = true  /\   (* forward *)

@@ -23,9 +23,10 @@ about topological correctness of a whole-arrangement transformation.
 >   `SnapRounding_b64.v` (snap preserves passes-through; bit-level
 >   idempotence), the `PassesThrough_*` family — including the C1
 >   grid-exactness reduction and the honest machine-checked *negatives* (the
->   rounded filter is unsound / incomplete / order-asymmetric, the
->   JTS#752/#1133 root) — and `hobby_theorem_4_1_conditional`. See
->   `docs/verified-claims.md` Phase 2.
+>   rounded filter is unsound / incomplete / order-asymmetric — filter-design
+>   cautions; correction 2026-06-17: the asymmetry does NOT map to JTS#752/#1133,
+>   which JTS avoids by canonicalizing endpoints to +X) — and
+>   `hobby_theorem_4_1_conditional`. See `docs/verified-claims.md` Phase 2.
 > - **§2.4's *unconditional* `snap_rounding_topologically_consistent` is NOT
 >   what landed.** The Hobby endpoint-preservation lemma it leans on
 >   (`hobby_lemma_4_3_no_proper`) was machine-checked **FALSE as stated** —

@@ -57,7 +57,11 @@ ranking).
   bit-level snap idempotence, the exact R-spec passes-through (sound +
   complete + symmetric), and `hobby_theorem_4_1_conditional`.
 - **RED.** The *rounded compute filter* is unsound, incomplete, and
-  order-dependent (the JTS#752/#1133 root) — three Qed witnesses. And
+  order-dependent — three Qed witnesses (cautions about a Liang-Barsky
+  divide-from-c0 filter design). **Correction 2026-06-17:** the asymmetry does
+  NOT map to JTS#752/#1133 — JTS's `HotPixel.intersectsScaled` canonicalizes to
+  +X first, so JTS is reversal-symmetric by construction; attribution retracted
+  (see `snap-rounding-rgr-pivot.md` / `oracle-soundness-finding.md`). And
   `hobby_lemma_4_3_no_proper` is **FALSE as stated** (parallel segments
   collapse onto one grid line → manufactured proper intersection).
 - **OPEN.** **C1 grid exactness** (`compute ≡ spec` on integer/half-integer
@@ -134,9 +138,13 @@ doc). Risk = tractability / chance the effort yields something shippable.
    Scope B/C (Phase 4).** *(Both now LANDED — see §5 and §6.)* Both are the same low-risk move the corpus has
    shipped repeatedly — exactness/forward-error in a regime — and both
    *deliver a soundness/contract headline* their callers can actually use. C1
-   has the edge because it converts a documented unsoundness (the JTS#752/#1133
-   root) into a constructive in-regime guarantee; it is the recommendation
-   [`snap-rounding-rgr-pivot.md`](snap-rounding-rgr-pivot.md) already named.
+   has the edge because it converts a documented in-regime unsoundness of the
+   rounded filter into a constructive in-regime guarantee; it is the
+   recommendation [`snap-rounding-rgr-pivot.md`](snap-rounding-rgr-pivot.md)
+   already named. (Note — correction 2026-06-17: the rounded filter's
+   *asymmetry* does NOT map to JTS#752/#1133; JTS canonicalizes endpoints. C1's
+   value is unaffected — it is about the unsound/grid behaviour, not the
+   asymmetry attribution.)
 
 2. **Then take `extract_rings_valid` (Phase 3 H2)** as the highest-value
    *structural* target. It is the **only live deferred-proof entry**, it needs

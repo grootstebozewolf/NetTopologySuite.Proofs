@@ -107,7 +107,7 @@ regime), the exact `cmax` bracketing, and the `±cmax²` tightness witnesses.
 | `PassesThrough_b64_compute_unsound.v : b64_passes_through_compute_unsound` | **Honest negative:** the *rounded* compute filter is NOT sound vs the exact spec — a witness with `compute = true`, `spec = false` (sub-ulp over-accept) `[exact]` | 4 |
 | `PassesThroughHalfopen_b64_compute_unsound.v : b64_passes_through_halfopen_compute_unsound` | Same honest negative for the **half-open** mode (`PASSES_THROUGH_HALFOPEN`): rounded half-open filter unsound vs its exact spec `[exact]` | 4 |
 | `PassesThroughHalfopen_b64_compute_incomplete.v : b64_passes_through_halfopen_compute_incomplete` | **Honest negative (noder-unsafe direction):** the rounded half-open filter is NOT complete — `spec = true`, `compute = false` (drops a real pass grazing the open edge) `[exact]` | 4 |
-| `PassesThrough_b64_compute_asymmetric.v : b64_passes_through_compute_asymmetric` (+`_halfopen_`) | **Honest negative (order-dependent noding):** the rounded passes-through filter is NOT symmetric under segment reversal — `compute P0 P1 C = true` but `compute P1 P0 C = false` (closed + half-open). The order-dependence root behind JTS#752 / JTS#1133; pure `vm_compute` `[full-b64]` | 4 |
+| `PassesThrough_b64_compute_asymmetric.v : b64_passes_through_compute_asymmetric` (+`_halfopen_`) | **Honest negative (order-dependent noding):** the rounded passes-through filter is NOT symmetric under segment reversal — `compute P0 P1 C = true` but `compute P1 P0 C = false` (closed + half-open). Models a Liang-Barsky divide-from-c0 filter; **NOT** a JTS defect (correction 2026-06-17: JTS's `HotPixel.intersectsScaled` canonicalizes to +X first, so it is reversal-symmetric by construction — the JTS#752/#1133 attribution is retracted); pure `vm_compute` `[full-b64]` | 4 |
 | `PassesThrough_b64_spec_symmetric.v : b64_passes_through_hot_pixel_symmetric` | **Green companion:** the *exact* R-spec passes-through filter IS symmetric under segment reversal (`spec P0 P1 C = spec P1 P0 C`) — the order-safe noder primitive the rounded filter fails to be `[exact]` | 4 |
 | `PassesThrough_b64_grid_exact.v : b64_passes_through_grid_exact_iff_touch` | **C1 grid-exactness reduction (#66 pivot):** on the unit grid a point is a fixed point of `b64_snap`, so the snap-consistency conjunct is vacuous — full-predicate grid-exactness (`compute = spec`) reduces to the single Liang-Barsky touch. Isolates the open rounded-vs-exact touch core; Qed-closed `[full-b64]` | 4 |
 | `PassesThrough_b64_grid_exact.v : coord_int_safe_snap_id` | **C1 slice 2:** an integer-valued, bounded, finite coordinate (`coord_int_safe`) is a `b64_snap` fixed point — the integer grid IS the fixed-point grid, so the reduction's hypothesis is discharged for genuine integer-grid (post-snap noder) inputs; Qed-closed `[full-b64]` | 4 |
@@ -154,8 +154,11 @@ can fall to `~2⁻⁵⁴ < ulp`) and needs the exact integer-determinant compari
 not a forward-error bound — see `docs/audit-rgr-comparison.md`. The
 general-binary64 C2 stays strongly-evidenced
 open. The rounded filter is also **not symmetric** under segment reversal
-(`PassesThrough_b64_compute_asymmetric.v`, both modes) — the order-dependent
-noding root behind JTS#752 / JTS#1133; the symmetric, sound primitive is the
+(`PassesThrough_b64_compute_asymmetric.v`, both modes) — a caution about a
+Liang-Barsky divide-from-c0 filter, **not** a JTS defect (correction 2026-06-17:
+JTS's `HotPixel.intersectsScaled` canonicalizes to +X before testing, so it is
+reversal-symmetric by construction; the JTS#752/#1133 attribution is retracted —
+see `docs/oracle-soundness-finding.md`). The symmetric, sound primitive is the
 exact R-spec, not the rounded compute filter.
 **Refuted:** `hobby_lemma_4_3_no_proper` is **machine-checked false** as
 stated (`HobbyCounterexample_b64.v`; `docs/hobby-lemma-4-3-no-proper-refutation.md`)

@@ -22,10 +22,16 @@ Three independent defects, each a machine-checked existential witness:
 | order-dependent (asymmetric under reversal) | `PassesThrough_b64_compute_asymmetric.v : b64_passes_through_compute_asymmetric` (+ `_halfopen_`) | `compute P0 P1 C ≠ compute P1 P0 C` |
 
 Together they pin the rounded filter as simultaneously unsound, incomplete, and
-order-dependent — the order-dependence being the documented root behind
-JTS#752 / JTS#1133 (a floating snap-rounding noder visiting the same edge with
-swapped endpoints gets contradictory verdicts → inconsistent graph →
-`TopologyException` / dropped ring).
+order-dependent. **Correction (2026-06-17):** the order-dependence does *not*
+map to JTS#752 / JTS#1133 — JTS's `HotPixel.intersectsScaled` canonicalizes the
+segment to +X before any orientation test (HotPixel.java ~189–199), so JTS is
+reversal-symmetric by construction. The asymmetry theorem models a Liang-Barsky
+divide-from-c0 filter JTS does not use; it is a true caution about *that* filter
+design (and any port that divides from a non-canonical endpoint), not a JTS
+defect. The JTS#752/#1133 attribution is retracted (see
+[`oracle-soundness-finding.md`](oracle-soundness-finding.md) "CORRECTION"). The
+unsound/incomplete negatives are likewise filter-design cautions; the genuinely
+useful #66 result is **C1 grid-exactness**.
 
 **GREEN — the exact R-spec `b64_passes_through_hot_pixel` already has the
 properties a noder primitive needs (all `Qed` except where noted).**
