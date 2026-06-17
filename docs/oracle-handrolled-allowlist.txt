@@ -99,3 +99,20 @@ run_arc_area
 # algebra.  Spec proven in theories/ArcCentroid.v (offset = 2r*sin(Theta/2)/Theta;
 # semicircle -> 2r/PI; full turn -> 0; 0 <= offset <= r).
 run_arc_centroid
+
+# --- ARC_AREA_CENTROID (C-AREA, issue #64/#69) ------------------------------
+# Mode ARC_AREA_CENTROID emits the centroid POINT of one circular SEGMENT,
+# O + (4*sin^3(Theta/2)/(3*(Theta - sin Theta)))(B - O) -- transcendental
+# (asin/sin), no Coq-extractable form; the JTS/NTS curve area-centroid interface
+# value.  Mirrors ARC_AREA (same Theta - sin Theta Taylor) + ARC_CENTROID
+# (bisector form), off the EXACT arc_invariants_q / circumcentre_q kernel.  Spec
+# proven in theories/ArcAreaCentroid.v (semicircle -> 4r/(3*PI); full turn -> 0).
+run_arc_area_centroid
+
+# --- ARC_DISTANCE (D-PT, issue #64/#69) -------------------------------------
+# Mode ARC_DISTANCE emits the shortest distance from a point to one circular arc.
+# Radial foot distance ||P-O| - r| when the foot lies on the arc, else
+# min(|P-A|,|P-C|); the on-arc-sector membership uses atan2 (CCW angle interval)
+# -- transcendental (atan2/sqrt), no Coq-extractable form -- off the EXACT
+# circumcentre_q centre.  The JTS/NTS point-to-arc distance interface value.
+run_arc_distance
