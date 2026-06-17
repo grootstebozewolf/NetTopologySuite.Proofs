@@ -1095,6 +1095,47 @@ let run_arc_area () =
         in
         Printf.printf "%h\n" (r2f /. 2.0 *. g)
 
+(* ----- ARC_CENTROID (issue #64/#69 C-LIN): centre of mass of one circular ARC.
+   ---------------------------------------------------------------------------
+   The 1-D arc (curve) centroid, emitted as a POINT.  It lies on the bisector at
+   centroid = O + (2*sin(theta/2)/theta) * (B - O), where O is the exact
+   circumcentre, B the arc midpoint control point (|B - O| = r), and theta the
+   (minor or major) sweep.  This is the per-arc position CircularString.
+   getCentroid() weights by ARC_LENGTH (M-LEN-CS).
+
+   INTERFACE-BOUNDARY float, exactly like ARC_LENGTH: the offset 2*r*sin(theta/2)
+   /theta is transcendental (asin), so it hand-rolls float off the EXACT
+   arc_invariants_q / circumcentre_q rational kernel, rounding only ONCE past the
+   certified algebra.  s = sin(theta/2) = sqrt((1 - cos)/2) reuses ARC_LENGTH's
+   acos-near-1 fix; factor = 2*s/theta is well-conditioned as theta -> 0
+   (factor -> 1).  Spec proven in theories/ArcCentroid.v: offset = 2*r*sin(theta/2)
+   /theta, semicircle -> 2r/PI, full turn -> 0, 0 <= offset <= r.
+
+   Input:  lines 2..4 = arc_start, arc_mid, arc_end ("x y").
+   Output: "XY <cx> <cy>" (centroid coords, %h); "DEGENERATE" (collinear); "NAN". *)
+let run_arc_centroid () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c)
+  then print_endline "NAN"
+  else match arc_invariants_q a b c with
+    | ArcDegenerate -> print_endline "DEGENERATE"
+    | ArcInv (_r2, cos_full, major) ->
+        (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                 (qf c.bx, qf c.by_) with
+         | None -> print_endline "DEGENERATE"
+         | Some (ox, oy, _r2c) ->
+             let s = sqrt (Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2))) in
+             let t0 = 2.0 *. asin s in
+             let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+             let oxf = Q.to_float ox and oyf = Q.to_float oy in
+             let factor = 2.0 *. s /. theta in
+             let cx = oxf +. factor *. (b.bx -. oxf) in
+             let cy = oyf +. factor *. (b.by_ -. oyf) in
+             Printf.printf "XY %h %h\n" cx cy)
+
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -1224,6 +1265,7 @@ let () =
        | "ARC_PASSES_THROUGH_PIXEL" -> run_arc_passes_through_pixel ()
        | "ARC_AREA_INVARIANTS_EXACT"    -> run_arc_area_invariants_exact ()
        | "ARC_AREA"                 -> run_arc_area ()
+       | "ARC_CENTROID"             -> run_arc_centroid ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
