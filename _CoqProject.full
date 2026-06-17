@@ -622,6 +622,10 @@ theories/RelateCurveRingReductionInstances.v
 # linearisation -- the bridge for feeding curves into the Phase-3 overlay/relate
 # machinery (point-set semantics + closed inscribed rings).
 theories/RelateCurveInscribedGeometry.v
+# Issue #67 curve->matrix: concrete relate decision -- two chord-rectangle curve
+# geometries with non-overlapping bounding boxes are geom_disjoint (the JTS AABB
+# pre-filter, via the membership characterisation + the set-predicate layer).
+theories/RelateCurveRectDisjoint.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped
 # edge (the hypotenuse).  point_in_ring_right_triangle_iff: parity test = the
