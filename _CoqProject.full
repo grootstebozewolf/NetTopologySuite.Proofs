@@ -1676,6 +1676,11 @@ theories/ArcChordSound.v
 # (inverted-negative-buffer artifact class), and the arc_length
 # offset bridge (M-LEN).  No Admitteds.
 theories/ArcOffset.v
+# Issue #64 / D-PT: point-to-circle distance |dist O P - r| (proof companion of
+# the ARC_DISTANCE oracle mode).  Reverse-triangle lower bound (every circle point
+# >= |dist O P - r|) + radial-foot attainment.  3-axiom.  Deferred: the CircularArc
+# sector-clamping (foot in span vs nearest endpoint) and arc-arc distance.
+theories/ArcDistance.v
 
 # Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.
 # radial_offset (homothety about the center, pure rational arithmetic,
