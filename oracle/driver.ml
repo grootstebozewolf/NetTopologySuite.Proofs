@@ -2024,6 +2024,179 @@ let run_ring_orientation () =
     else Printf.printf "%s %h\n" (if !s2 > 0.0 then "CCW" else "CW") (!s2 /. 2.0)
   end
 
+(* ----- HOLES_DISJOINT (V-CP / CP_VALID, JTS #1195 §7): two curve rings disjoint?
+   ---------------------------------------------------------------------------
+   Two hole rings' regions are disjoint unless their BOUNDARIES meet or one is
+   NESTED in the other.  This composes the RING_SIMPLE cross-ring intersection
+   (arc-arc / arc-segment / chord-chord, the boundary-meeting test) with the
+   POINT_IN_CURVE_RING arc-aware ray cast (the nesting test).  INTERFACE-BOUNDARY
+   float (sqrt + atan2 sweep), like its components; allowlisted run_holes_disjoint.
+
+   Proof companion: theories/CurvePolygonDisjoint.v -- curve_rings_disjoint and
+   holes_not_disjoint_of_{meet,nested} certify a NOT_DISJOINT verdict.
+
+   Input:  line 2 = nA; nA segment lines (ring A); then nB; nB segment lines.
+   Output: "DISJOINT"; "NOT_DISJOINT CROSS <iA> <iB> <x> <y>" (boundary meet);
+           "NOT_DISJOINT A_IN_B" / "NOT_DISJOINT B_IN_A" (nesting); "NAN". *)
+let run_holes_disjoint () =
+  let parse_ring () =
+    let m = int_of_string (String.trim (input_line stdin)) in
+    Array.init m (fun _ ->
+      let toks =
+        List.filter (fun s -> s <> "")
+          (String.split_on_char ' '
+             (String.map (fun c -> if c = '\t' then ' ' else c)
+                (String.trim (input_line stdin)))) in
+      let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+      match toks with
+      | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+      | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+      | _ -> failwith "HOLES_DISJOINT: bad segment line") in
+  let ra = parse_ring () in
+  let rb = parse_ring () in
+  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = (Array.to_list ra |> List.concat_map seg_pts)
+              @ (Array.to_list rb |> List.concat_map seg_pts) in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
+  else begin
+    (* --- boundary intersection primitives (mirror RING_SIMPLE pair_pts) --- *)
+    let arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
+      match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+              (qf c.bx, qf c.by_) with
+      | None -> []
+      | Some (ox, oy, r2) ->
+          let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
+          let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
+          if qeq l2q q0 then []
+          else begin
+            let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
+                              (Q.mul (Q.sub oy (qf p.by_)) dyq) in
+            let s = Q.div projn l2q in
+            let fxq = Q.add (qf p.bx) (Q.mul s dxq)
+            and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
+            let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
+                            (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
+            let h2q = Q.sub r2 d2q in
+            if qlt h2q q0 then []
+            else begin
+              let oxf = Q.to_float ox and oyf = Q.to_float oy in
+              let lf = sqrt (Q.to_float l2q) in
+              let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
+              let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
+              let sf = Q.to_float s and h = sqrt (Q.to_float h2q) in
+              let hl = h /. lf in
+              let cands = if h = 0.0 then [(fxf, fyf, sf)]
+                          else [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
+                                (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
+              List.filter_map (fun (x, y, t) ->
+                if t >= 0.0 && t <= 1.0 && point_on_arc_sector (oxf, oyf) a b c (x, y)
+                then Some (x, y) else None) cands
+            end
+          end in
+    let arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
+      match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
+            circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
+      | None, _ | _, None -> []
+      | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+          let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                         (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+          let span1 (x, y) = point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (x, y) in
+          let span2 (x, y) = point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (x, y) in
+          if qeq dq q0 then
+            (if qeq r1sq r2sq then
+               (List.filter (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
+                |> List.map (fun v -> (v.bx, v.by_)))
+               @ (List.filter (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1]
+                  |> List.map (fun v -> (v.bx, v.by_)))
+             else [])
+          else begin
+            let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
+            let d2 = Q.to_float dq in
+            let d = sqrt d2 in
+            let a = (d2 +. r1f -. r2f) /. (2.0 *. d) in
+            let h2 = r1f -. a *. a in
+            if h2 < 0.0 then []
+            else begin
+              let h = sqrt h2 in
+              let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+              let mx = o1xf +. a *. ux and my = o1yf +. a *. uy in
+              let cands = if h = 0.0 then [(mx -. h *. uy, my +. h *. ux)]
+                          else [(mx -. h *. uy, my +. h *. ux);
+                                (mx +. h *. uy, my -. h *. ux)] in
+              List.filter (fun pt -> span1 pt && span2 pt) cands
+            end
+          end in
+    let chord_chord_pts (p1, q1) (p2, q2) =
+      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
+      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
+      let denom = d1x *. d2y -. d1y *. d2x in
+      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
+      if abs_float denom > 1e-12 *. scale *. scale then begin
+        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
+        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
+        if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+        then [(p1.bx +. t *. d1x, p1.by_ +. t *. d1y)] else []
+      end else begin
+        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
+          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
+          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
+        List.filter_map (fun x -> if on_seg p1 q1 x then Some (x.bx, x.by_) else None) [p2; q2]
+        @ List.filter_map (fun x -> if on_seg p2 q2 x then Some (x.bx, x.by_) else None) [p1; q1]
+      end in
+    let pair_pts s1 s2 =
+      match s1, s2 with
+      | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
+      | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
+      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2 in
+    (* --- arc-aware point-in-curve-ring (mirror POINT_IN_CURVE_RING) --- *)
+    let point_in (ring : _ array) (px, py) =
+      let edge_cross (a : bPoint) (b : bPoint) =
+        (a.by_ < py && py < b.by_ &&
+           px < a.bx +. (b.bx -. a.bx) *. (py -. a.by_) /. (b.by_ -. a.by_))
+        || (b.by_ < py && py < a.by_ &&
+              px < b.bx +. (a.bx -. b.bx) *. (py -. b.by_) /. (a.by_ -. b.by_)) in
+      let cnt = ref 0 in
+      Array.iter (fun s -> match s with
+        | `Chord (a, b) -> if edge_cross a b then incr cnt
+        | `Arc (a, b, c) ->
+            (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                     (qf c.bx, qf c.by_) with
+             | None -> (if edge_cross a b then incr cnt); (if edge_cross b c then incr cnt)
+             | Some (ox, oy, r2) ->
+                 let oxf = Q.to_float ox and oyf = Q.to_float oy in
+                 let r = sqrt (Q.to_float r2) in
+                 let disc = r *. r -. (py -. oyf) *. (py -. oyf) in
+                 if disc > 0.0 then begin
+                   let sq = sqrt disc in
+                   List.iter (fun x ->
+                     if x > px && point_on_arc_sector (oxf, oyf) a b c (x, py)
+                     then incr cnt) [ oxf +. sq; oxf -. sq ]
+                 end))
+        ring;
+      !cnt mod 2 = 1 in
+    let seg_start = function `Chord (a, _) -> a | `Arc (a, _, _) -> a in
+    (* (1) boundary meeting *)
+    let cross = ref None in
+    Array.iteri (fun ia sa ->
+      Array.iteri (fun ib sb ->
+        if !cross = None then
+          match pair_pts sa sb with
+          | (x, y) :: _ -> cross := Some (ia, ib, x, y)
+          | [] -> ()) rb) ra;
+    (match !cross with
+     | Some (ia, ib, x, y) -> Printf.printf "NOT_DISJOINT CROSS %d %d %h %h\n" ia ib x y
+     | None ->
+         (* (2) nesting: a vertex of one ring inside the other *)
+         let va = seg_start ra.(0) and vb = seg_start rb.(0) in
+         if point_in rb (va.bx, va.by_) then print_endline "NOT_DISJOINT A_IN_B"
+         else if point_in ra (vb.bx, vb.by_) then print_endline "NOT_DISJOINT B_IN_A"
+         else print_endline "DISJOINT")
+  end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -2164,6 +2337,7 @@ let () =
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()
        | "RING_ORIENTATION"         -> run_ring_orientation ()
+       | "HOLES_DISJOINT"           -> run_holes_disjoint ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()

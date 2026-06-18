@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests
 
 all: $(TARGET)
 
@@ -75,6 +75,12 @@ point-in-curve-ring-tests: $(TARGET)
 # I2 reversal flips, I3 agreement vs recompute, I4 true-vs-inscribed.  Nonzero exit.
 ring-orientation-tests: $(TARGET)
 	cd .. && python3 oracle/gen_ring_orientation_tests.py
+
+# V-CP holes-mutually-disjoint (JTS #1195 §7): HOLES_DISJOINT (boundary meet +
+# nesting) over two curve rings.  Gates I1 CROSS witness-soundness, I2 curated
+# DISJOINT/CROSS/nesting, I3 symmetry.  Nonzero exit on any violation.
+holes-disjoint-tests: $(TARGET)
+	cd .. && python3 oracle/gen_holes_disjoint_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<

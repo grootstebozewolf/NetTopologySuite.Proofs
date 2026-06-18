@@ -1,0 +1,14 @@
+# Adversarial tests for HOLES_DISJOINT (RocqRefRunner), V-CP / JTS #1195 §7.
+# Two hole rings disjoint unless boundaries meet or one is nested.
+# I1 CROSS witness-sound, I2 curated, I3 symmetry.  '!!' = violation.
+
+  [two separate squares] -> 'DISJOINT'   ok
+  [overlapping squares (boundaries cross)] -> 'NOT_DISJOINT CROSS 1 0 0x1p+2 0x1p+1'   ok
+  [small square nested in big] -> 'NOT_DISJOINT A_IN_B'   ok
+  [big square contains small (B_IN_A)] -> 'NOT_DISJOINT B_IN_A'   ok
+  [two far-apart arc lenses] -> 'DISJOINT'   ok
+  [arc lens overlapping a square] -> 'NOT_DISJOINT CROSS 0 1 0x1p+0 0x1.6a09e667f3bcdp+1'   ok
+  [arc lens nested in big square] -> 'NOT_DISJOINT A_IN_B'   ok
+  [two stacked squares sharing an edge line but apart] -> 'DISJOINT'   ok
+
+# All invariants (I1 witness-sound, I2 curated, I3 symmetry) hold.
