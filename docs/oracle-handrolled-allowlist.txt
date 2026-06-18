@@ -206,3 +206,17 @@ run_ring_simple
 # radius r+d; radial_offset_dist_exact: controls at distance |d|) and the EMPTY
 # boundary (r+d <= 0) witness ArcOffset.inner_offset_past_center_not_at_distance.
 run_arc_offset_xy
+
+# --- POINT_IN_CURVE_RING (V-CP / CP_VALID holes-inside-shell, JTS #1195 §7) ---
+# Mode POINT_IN_CURVE_RING decides whether a query point is inside the TRUE
+# curved region of a curve ring, by ARC-AWARE ray casting: the rightward ray
+# crosses each chord by the usual edge test and each ARC where the horizontal
+# line meets the arc's circle (x = ox +- sqrt(r^2 - (py-oy)^2)) inside the arc's
+# sweep.  Centres/radii are EXACT (circumcentre_q) but the arc-line crossing
+# needs sqrt and the sweep test needs atan2 (point_on_arc_sector) -- no
+# Coq-extractable form, the float IS the JTS/NTS point-in-curve-polygon
+# interface (same boundary as ARC_ARC_XY / point_on_arc_sector).  The sound
+# conservative floor (inscribed chord-polygon containment) is proven in
+# theories/CurvePolygonValid.v; the true-region (Jordan) soundness is the
+# deferred frontier, pinned by oracle/gen_point_in_curve_ring_tests.py.
+run_point_in_curve_ring

@@ -1,0 +1,28 @@
+# Adversarial tests for POINT_IN_CURVE_RING (RocqRefRunner), V-CP / JTS #1195 §7.
+# Arc-aware ray casting -> TRUE point-in-curved-region.  I1 vs independent
+# closed-form region (half-disk / disk), I2 vs independent ray cast, I3 holes.
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## I1 TRUE-REGION: oracle == closed-form membership (the soundness gate).
+  [upper-semicircle ring vs half-disk] 225 pts, 0 wrong   ok
+  [full circle (2 arcs) vs disk] 225 pts, 0 wrong   ok
+
+## I2 AGREEMENT: oracle == independent Python arc-aware ray cast.
+  [semicircle] 225 queries, 0 disagree   ok
+  [circle] 225 queries, 0 disagree   ok
+  [arc-shell] 225 queries, 0 disagree   ok
+  [square] 225 queries, 0 disagree   ok
+  [inner square] 225 queries, 0 disagree   ok
+
+## Curated bulge points (the bug repro: now correctly IN).
+  bulge (4.125, 1.321) -> IN   ok
+  bulge (1.521, 3.907) -> IN   ok
+  bulge (4.9, 0.5) -> IN   ok
+
+## I3 HOLES-INSIDE-SHELL (donut: arc-rounded shell + inner square hole).
+  hole vertex (3, 3) IN arc-shell -> IN   ok
+  hole vertex (7, 3) IN arc-shell -> IN   ok
+  hole vertex (7, 7) IN arc-shell -> IN   ok
+  hole vertex (3, 7) IN arc-shell -> IN   ok
+
+# All invariants (I1 true-region, I2 agreement, I3 holes-inside) hold.

@@ -1873,6 +1873,86 @@ let run_arc_offset_xy () =
           Printf.printf "%h %h %h %h %h %h\n" x1 y1 x2 y2 x3 y3
         end
 
+(* ----- POINT_IN_CURVE_RING (V-CP / CP_VALID holes-inside-shell, JTS #1195 §7).
+   ---------------------------------------------------------------------------
+   Decides whether a query point is inside the TRUE curved region of a curve
+   ring, by ARC-AWARE ray casting: the rightward horizontal ray from the query
+   crosses each chord by the usual edge test, and crosses each ARC where the
+   horizontal line y = py meets the arc's circle (x = ox +- sqrt(r^2 - (py-oy)^2))
+   at a point strictly right of the query AND inside the arc's sweep
+   (point_on_arc_sector).  Crossing parity => IN / OUT.  This counts the arc
+   bulge (unlike the inscribed chord polygon): a point between the chord and the
+   arc reads IN.
+
+   Centre/radius^2 are EXACT (circumcentre_q), but the arc-line intersection
+   needs sqrt and the sweep test needs atan2 -- INTERFACE-BOUNDARY float (the
+   value is the JTS/NTS point-in-curve-polygon interface), like ARC_ARC_XY /
+   point_on_arc_sector.  Boundary cases (ray through a vertex, tangent ray) are
+   excluded by the strict inequalities (generic-position convention, as in
+   Overlay.edge_crosses_ray).
+
+   Companion (sound conservative floor): theories/CurvePolygonValid.v proves the
+   INSCRIBED (chord-approx control-polygon) containment -- an under-approximation
+   (inscribed-IN => truly-IN); the TRUE-region soundness (Jordan / ray-cast) is
+   the deferred frontier, pinned here by the adversarial agreement test.
+
+   Input:  line 2 = n (segment count); lines 3.. = one segment each
+           ("C x1 y1 x2 y2" or "A sx sy mx my ex ey"); then a query point "x y".
+   Output: "IN" | "OUT"; "NAN" (non-finite coordinate). *)
+let run_point_in_curve_ring () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks =
+      List.filter (fun s -> s <> "")
+        (String.split_on_char ' '
+           (String.map (fun c -> if c = '\t' then ' ' else c)
+              (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "POINT_IN_CURVE_RING: bad segment line" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let query = parse_point (input_line stdin) in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = query :: (Array.to_list segs |> List.concat_map seg_pts) in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
+  else begin
+    let px = query.bx and py = query.by_ in
+    (* rightward horizontal ray crossing of a straight edge (a,b) *)
+    let edge_cross (a : bPoint) (b : bPoint) =
+      (a.by_ < py && py < b.by_ &&
+         px < a.bx +. (b.bx -. a.bx) *. (py -. a.by_) /. (b.by_ -. a.by_))
+      || (b.by_ < py && py < a.by_ &&
+            px < b.bx +. (a.bx -. b.bx) *. (py -. b.by_) /. (a.by_ -. b.by_)) in
+    let cnt = ref 0 in
+    Array.iter (fun s -> match s with
+      | `Chord (a, b) -> if edge_cross a b then incr cnt
+      | `Arc (a, b, c) ->
+          (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                   (qf c.bx, qf c.by_) with
+           | None ->
+               (* degenerate arc: its control polyline is two straight chords *)
+               (if edge_cross a b then incr cnt);
+               (if edge_cross b c then incr cnt)
+           | Some (ox, oy, r2) ->
+               let oxf = Q.to_float ox and oyf = Q.to_float oy in
+               let r = sqrt (Q.to_float r2) in
+               let dy = py -. oyf in
+               let disc = r *. r -. dy *. dy in
+               if disc > 0.0 then begin
+                 let sq = sqrt disc in
+                 List.iter (fun x ->
+                   if x > px && point_on_arc_sector (oxf, oyf) a b c (x, py)
+                   then incr cnt)
+                   [ oxf +. sq; oxf -. sq ]
+               end))
+      segs;
+    print_endline (if !cnt mod 2 = 1 then "IN" else "OUT")
+  end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -2011,6 +2091,7 @@ let () =
        | "ARC_SEGMENT_DISTANCE"     -> run_arc_segment_distance ()
        | "RING_SIMPLE"              -> run_ring_simple ()
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
+       | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
