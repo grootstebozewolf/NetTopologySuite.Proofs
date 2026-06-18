@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests
 
 all: $(TARGET)
 
@@ -44,6 +44,13 @@ arc-arc-distance-tests: $(TARGET)
 # I4 segment-reversal, I5 arc-reversal, I6 crossing=0).  Nonzero exit on violation.
 arc-segment-distance-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_segment_distance_tests.py
+
+# Adversarial RING_SIMPLE suite (V-CS/V-CP, JTS #1195 §7): gates the proven
+# witness-soundness (I1: every NOT_SIMPLE witness lies on both non-adjacent
+# segments, curve_ring_not_simple_of_witness), curated classes (I2), and
+# rotation invariance (I3).  Nonzero exit on any violation.
+ring-simple-tests: $(TARGET)
+	cd .. && python3 oracle/gen_ring_simple_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<
