@@ -194,3 +194,15 @@ run_arc_segment_distance
 # is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness),
 # completeness + reflex-arc spans deferred.
 run_ring_simple
+
+# --- ARC_OFFSET_XY (OFF / BUF-1 / BUF-NEG, JTS #1195 §7) ---------------------
+# Mode ARC_OFFSET_XY emits the offset (buffer boundary) of a circular arc at
+# signed distance d: the concentric arc of radius r+d, each control point mapped
+# radially to O + ((r+d)/r)(P-O).  The scale (r+d)/r carries r = sqrt(r2) (the
+# circumradius is irrational), so the emitted coordinates round once past the
+# EXACT circumcentre_q centre/radius^2 -- the float IS the JTS/NTS buffer-offset
+# interface value.  Backed by theories/ArcOffsetThreePoint.v
+# (arc_offset_preserves_arc: offset of a valid arc is a valid arc, same centre,
+# radius r+d; radial_offset_dist_exact: controls at distance |d|) and the EMPTY
+# boundary (r+d <= 0) witness ArcOffset.inner_offset_past_center_not_at_distance.
+run_arc_offset_xy
