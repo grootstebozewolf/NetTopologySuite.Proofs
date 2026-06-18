@@ -1873,6 +1873,67 @@ let run_arc_offset_xy () =
           Printf.printf "%h %h %h %h %h %h\n" x1 y1 x2 y2 x3 y3
         end
 
+(* ----- POINT_IN_CURVE_RING (V-CP / CP_VALID holes-inside-shell, JTS #1195 §7).
+   ---------------------------------------------------------------------------
+   Decides whether a query point is inside a curve ring, via the EXACT densified
+   CONTROL POLYGON: each segment is approximated by its control points (arc ->
+   [start;mid;end], chord -> [p;q]) -- this is CurveGeometry.chord_approx_ring --
+   and Overlay.point_in_ring (rightward-ray crossing-number parity) is decided in
+   EXACT rational arithmetic, replicating Overlay.ring_edges (consecutive vertex
+   pairs) and Overlay.edge_crosses_ray (strict y-straddle + x-intersection
+   strictly right) bit-for-bit.  No trig, no float (the chord_approx_arc control
+   points are the exact inputs) -- ratchet-clean, no allowlist entry.
+
+   Proof companion: theories/CurvePolygonValid.v -- point_in_curve_ring (this
+   predicate) and valid_curve_polygon_cp_hole_witness (each hole vertex inside
+   the densified outer is the holes-inside-shell witness).
+
+   Input:  line 2 = n (segment count); lines 3.. = one segment each
+           ("C x1 y1 x2 y2" or "A sx sy mx my ex ey"); then a query point "x y".
+   Output: "IN" | "OUT"; "NAN" (non-finite coordinate).  Note: this is
+           control-polygon containment (sound up to the arc bulge). *)
+let run_point_in_curve_ring () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks =
+      List.filter (fun s -> s <> "")
+        (String.split_on_char ' '
+           (String.map (fun c -> if c = '\t' then ' ' else c)
+              (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "POINT_IN_CURVE_RING: bad segment line" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let query = parse_point (input_line stdin) in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = query :: (Array.to_list segs |> List.concat_map seg_pts) in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
+  else begin
+    (* densify to the exact-Q control polygon (chord_approx_ring) *)
+    let qpt (b : bPoint) = (qf b.bx, qf b.by_) in
+    let dens = Array.to_list segs |> List.concat_map (fun s ->
+      List.map qpt (seg_pts s)) in
+    (* Overlay.ring_edges: consecutive vertex pairs (no auto-wrap; a closed ring
+       repeats its first vertex last, so the loop closes naturally) *)
+    let rec edges = function
+      | a :: (b :: _ as t) -> (a, b) :: edges t
+      | _ -> [] in
+    let (px, py) = qpt query in
+    (* Overlay.edge_crosses_ray, exact Q *)
+    let crosses ((ax, ay), (bx, by)) =
+      (qlt ay py && qlt py by &&
+       qlt px (Q.add ax (Q.div (Q.mul (Q.sub bx ax) (Q.sub py ay)) (Q.sub by ay))))
+      || (qlt by py && qlt py ay &&
+          qlt px (Q.add bx (Q.div (Q.mul (Q.sub ax bx) (Q.sub py by)) (Q.sub ay by)))) in
+    let cnt =
+      List.fold_left (fun acc e -> if crosses e then acc + 1 else acc) 0 (edges dens) in
+    print_endline (if cnt mod 2 = 1 then "IN" else "OUT")
+  end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -2011,6 +2072,7 @@ let () =
        | "ARC_SEGMENT_DISTANCE"     -> run_arc_segment_distance ()
        | "RING_SIMPLE"              -> run_ring_simple ()
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
+       | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()

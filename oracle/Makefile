@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests
 
 all: $(TARGET)
 
@@ -63,6 +63,12 @@ cp-ring-simple-tests: $(TARGET)
 # I4 EMPTY iff r+d<=0, I5 identity at d=0.  Nonzero exit on any violation.
 arc-offset-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_offset_tests.py
+
+# V-CP holes-inside-shell (JTS #1195 §7): POINT_IN_CURVE_RING vs exact ray-parity
+# (Overlay.point_in_ring) on the densified control polygon.  Gates I1 agreement
+# over a query grid, I2 holes-inside-shell composition.  Nonzero exit on violation.
+point-in-curve-ring-tests: $(TARGET)
+	cd .. && python3 oracle/gen_point_in_curve_ring_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<

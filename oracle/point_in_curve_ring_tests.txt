@@ -1,0 +1,26 @@
+# Adversarial tests for POINT_IN_CURVE_RING (RocqRefRunner), V-CP / JTS #1195 §7.
+# I1 AGREEMENT: oracle IN/OUT == exact ray-parity (Overlay.point_in_ring) on
+# the densified control polygon, over a query grid.  I2 holes-inside-shell.
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## A. Agreement over a query grid (curated rings).
+  [square] ok (64 queries agree)
+  [arc-rounded shell] ok (64 queries agree)
+  [concave-arc ring] ok (64 queries agree)
+  [inner square (hole shape)] ok (64 queries agree)
+
+## B. Curated interior/exterior points.
+  [square: clearly in/out] ok (7 queries agree)
+  [arc-shell: non-grazing in/out] ok (5 queries agree)
+
+## C. I2 holes-inside-shell composition (donut: shell SQUARE, hole INNER).
+  hole vertex (3, 3) IN shell -> IN   ok
+  hole vertex (7, 3) IN shell -> IN   ok
+  hole vertex (7, 7) IN shell -> IN   ok
+  hole vertex (3, 7) IN shell -> IN   ok
+  shell vertex (0, 0) OUT hole -> OUT   ok
+  shell vertex (10, 0) OUT hole -> OUT   ok
+  shell vertex (10, 10) OUT hole -> OUT   ok
+  shell vertex (0, 10) OUT hole -> OUT   ok
+
+# All invariants (I1 agreement, I2 holes-inside-shell) hold.

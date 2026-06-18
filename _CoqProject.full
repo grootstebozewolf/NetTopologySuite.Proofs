@@ -1697,6 +1697,16 @@ theories/CurveRingSimple.v
 # or any hole refutes simple_curve_polygon).  3-axiom.  Deferred to CP_VALID:
 # sector orientation, holes-inside-shell, holes-disjoint.
 theories/CurvePolygonSimple.v
+# Issue #64 / JTS #1195 §7 V-CP (CP_VALID): holes-inside-shell component, pinned
+# to the POINT_IN_CURVE_RING oracle.  Reduces curve-polygon containment to the
+# Phase-3 linear Overlay.point_in_ring / hole_inside_outer through the merged
+# densification bridge CurveGeometry.chord_approx_ring (exact rational control
+# polygon).  point_in_curve_ring; curve_polygon_holes_inside_shell;
+# valid_curve_polygon_cp (= simple_curve_polygon /\ holes-inside-shell);
+# valid_curve_polygon_cp_hole_witness (each hole has a vertex inside the
+# densified outer).  3-axiom, exact.  Deferred: chord-approx bulge / n-chord
+# refinement, orientation, holes-disjoint.
+theories/CurvePolygonValid.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
