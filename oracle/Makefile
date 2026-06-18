@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests
 
 all: $(TARGET)
 
@@ -81,6 +81,13 @@ ring-orientation-tests: $(TARGET)
 # DISJOINT/CROSS/nesting, I3 symmetry.  Nonzero exit on any violation.
 holes-disjoint-tests: $(TARGET)
 	cd .. && python3 oracle/gen_holes_disjoint_tests.py
+
+# R-PR CURVE_RELATE_MATRIX (JTS #1195 §7): COMPUTE the full TRUE-OGC 9-cell
+# DE-9IM of two curve geometries.  Gates I1 curated matrices, I2 transpose-under-
+# swap, I3 independent dense-sampling agreement, I4 OGC predicates.  Nonzero exit
+# on any violation.
+curve-relate-matrix-tests: $(TARGET)
+	cd .. && python3 oracle/gen_curve_relate_matrix_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<

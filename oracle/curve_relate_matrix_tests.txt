@@ -1,0 +1,45 @@
+# Adversarial tests for CURVE_RELATE_MATRIX (RocqRefRunner), R-PR / JTS #1195 §7.
+# Computes the full TRUE-OGC 9-cell DE-9IM of two curve geometries.
+# I1 curated, I2 transpose, I3 independent dense-sampling, I4 OGC predicates.
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## I1 CURATED + I2 TRANSPOSE + I4 OGC-PREDICATE
+  [disjoint disks] -> 'FF2FF1212'   ok
+  [A contains B (disk)] -> '212FF1FF2'   ok
+  [B within A (disk)] -> '2FF1FF212'   ok
+  [overlapping disks] -> '212101212'   ok
+  [externally tangent] -> 'FF2F01212'   ok
+  [equal disks] -> '2FFF1FFF2'   ok
+  [disjoint squares] -> 'FF2FF1212'   ok
+  [square contains disk] -> '212FF1FF2'   ok
+  [disk in annulus hole] -> 'FF2FF1212'   ok
+  [far-apart lenses] -> 'FF2FF1212'   ok
+
+## I3 INDEPENDENT DENSE-SAMPLING AGREEMENT (oracle == separate inference)
+  [disjoint disks] oracle == independent (FF2FF1212)   ok
+  [A contains B (disk)] oracle == independent (212FF1FF2)   ok
+  [B within A (disk)] oracle == independent (2FF1FF212)   ok
+  [overlapping disks] oracle == independent (212101212)   ok
+  [externally tangent] oracle == independent (FF2F01212)   ok
+  [equal disks] oracle == independent (2FFF1FFF2)   ok
+  [disjoint squares] oracle == independent (FF2FF1212)   ok
+  [square contains disk] oracle == independent (212FF1FF2)   ok
+  [disk in annulus hole] oracle == independent (FF2FF1212)   ok
+  [far-apart lenses] oracle == independent (FF2FF1212)   ok
+
+## I4 named-predicate sanity (independent OGC engine)
+  [disjoint disks] OGC DISJOINT=True   ok
+  [disjoint disks] OGC INTERSECTS=False   ok
+  [A contains B (disk)] OGC CONTAINS=True   ok
+  [B within A (disk)] OGC WITHIN=True   ok
+  [overlapping disks] OGC OVERLAPS=True   ok
+  [overlapping disks] OGC INTERSECTS=True   ok
+  [disjoint squares] OGC DISJOINT=True   ok
+  [disjoint squares] OGC INTERSECTS=False   ok
+  [square contains disk] OGC CONTAINS=True   ok
+  [disk in annulus hole] OGC DISJOINT=True   ok
+  [disk in annulus hole] OGC INTERSECTS=False   ok
+  [far-apart lenses] OGC DISJOINT=True   ok
+  [far-apart lenses] OGC INTERSECTS=False   ok
+
+# All invariants (I1 curated, I2 transpose, I3 agreement, I4 OGC predicates) hold.

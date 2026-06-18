@@ -245,3 +245,21 @@ run_ring_orientation
 # containment soundness is the deferred frontier, pinned by
 # oracle/gen_holes_disjoint_tests.py.
 run_holes_disjoint
+
+# --- CURVE_RELATE_MATRIX (R-PR, JTS #1195 §7) --------------------------------
+# Mode CURVE_RELATE_MATRIX COMPUTES the full 9-cell DE-9IM intersection matrix of
+# two curve geometries (TRUE OGC convention), generalizing HOLES_DISJOINT.  It is
+# a COMPOSITION of the already-allowlisted kernels (run_holes_disjoint's arc-arc /
+# arc-segment / chord-chord boundary-intersection primitives + the
+# POINT_IN_CURVE_RING arc-aware ray cast), plus an arc-by-angle boundary sampler
+# (atan2/sin/cos) and a bounding-box grid for the open cells.  All carry
+# sqrt + atan2 -> no Coq-extractable form, the float IS the interface (same
+# boundary as ARC_ARC_XY / point_on_arc_sector).  The reused primitives are inner
+# `let`s of run_curve_relate_matrix, so the detector attributes their arithmetic
+# to this enclosing function -- one allowlist entry suffices.  The point-set
+# DE-9IM spec + algebraic laws (well-formedness, exteriors-meet => EE nonempty,
+# transpose-under-swap, interior/boundary-meet "disjoint" characterization,
+# curated OGC witness matrices) are proven in theories/RelateCurveMatrix.v; the
+# computed cell-DIMENSION soundness (Jordan/overlay) is the deferred frontier,
+# pinned by oracle/gen_curve_relate_matrix_tests.py.
+run_curve_relate_matrix
