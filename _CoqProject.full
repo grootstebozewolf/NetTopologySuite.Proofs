@@ -1689,6 +1689,14 @@ theories/ArcArcCircles.v
 # self-intersection witness, span bridge as honest hypothesis).  3-axiom.
 # Deferred: unconditional span (atan2), completeness (oracle all-pairs), holes.
 theories/CurveRingSimple.v
+# Issue #64 / JTS #1195 §7 V-CP: ring-simplicity component of CurvePolygon
+# validity.  Lifts CurveRingSimple.curve_ring_simple over a polygon's shell +
+# hole rings (simple_curve_ring / simple_curve_polygon), with projections
+# (every ring of a simple polygon is curve_ring_simple -- the RING_SIMPLE
+# per-ring pin) and soundness (a non-adjacent crossing witness in the outer ring
+# or any hole refutes simple_curve_polygon).  3-axiom.  Deferred to CP_VALID:
+# sector orientation, holes-inside-shell, holes-disjoint.
+theories/CurvePolygonSimple.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition

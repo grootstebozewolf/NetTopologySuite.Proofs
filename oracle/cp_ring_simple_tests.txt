@@ -1,0 +1,16 @@
+# Adversarial tests for the V-CP ring-simplicity component (RING_SIMPLE per ring).
+# I1 composition (polygon simple IFF shell + every hole SIMPLE),
+# I2 witness-soundness per ring (curve_polygon_*_not_simple_of_witness),
+# I3 hole-reuse (a self-crossing hole is caught like a self-crossing shell).
+# '!!' lines are gated-invariant / expectation violations (CI-failing).
+
+## Curated CurvePolygons (verdict hand-verified).
+  [donut: square shell + square hole (both simple)] -> polygon=SIMPLE (shell=SIMPLE, hole0=SIMPLE)   ok
+  [no-hole simple square] -> polygon=SIMPLE (shell=SIMPLE)   ok
+  [two disjoint simple holes] -> polygon=SIMPLE (shell=SIMPLE, hole0=SIMPLE, hole1=SIMPLE)   ok
+  [shell is a bowtie (shell ring not simple)] -> polygon=NOT_SIMPLE (shell=NOT_SIMPLE, hole0=SIMPLE)   ok
+  [hole self-crosses (I3: hole bowtie)] -> polygon=NOT_SIMPLE (shell=SIMPLE, hole0=NOT_SIMPLE)   ok
+  [arc-rounded shell + square hole (simple)] -> polygon=SIMPLE (shell=SIMPLE, hole0=SIMPLE)   ok
+  [arc-rounded shell, hole self-crosses] -> polygon=NOT_SIMPLE (shell=SIMPLE, hole0=NOT_SIMPLE)   ok
+
+# All invariants (I1 composition, I2 witness-sound, I3 hole-reuse) hold.

@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests
 
 all: $(TARGET)
 
@@ -51,6 +51,12 @@ arc-segment-distance-tests: $(TARGET)
 # rotation invariance (I3).  Nonzero exit on any violation.
 ring-simple-tests: $(TARGET)
 	cd .. && python3 oracle/gen_ring_simple_tests.py
+
+# V-CP ring-simplicity component (JTS #1195 §7): composes RING_SIMPLE over a
+# CurvePolygon's shell + hole rings.  Gates I1 composition, I2 per-ring
+# witness-soundness, I3 hole-reuse.  Nonzero exit on any violation.
+cp-ring-simple-tests: $(TARGET)
+	cd .. && python3 oracle/gen_cp_ring_simple_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<
