@@ -232,3 +232,16 @@ run_point_in_curve_ring
 # theories/CurvePolygonOrientation.v; the topological "sign = inside orientation"
 # (Jordan) is deferred, pinned by oracle/gen_ring_orientation_tests.py.
 run_ring_orientation
+
+# --- HOLES_DISJOINT (V-CP / CP_VALID holes-mutually-disjoint, JTS #1195 §7) ---
+# Mode HOLES_DISJOINT decides whether two curve-polygon hole rings' regions are
+# disjoint: NOT_DISJOINT iff their boundaries meet (arc-arc / arc-segment /
+# chord-chord intersection, the RING_SIMPLE pair primitive) or one is nested in
+# the other (the POINT_IN_CURVE_RING arc-aware ray cast).  Both components carry
+# sqrt + atan2 (sweep / circle-line intersection) -> no Coq-extractable form, the
+# float IS the interface (same boundary as ARC_ARC_XY / point_on_arc_sector).
+# The structural soundness (a boundary meeting or nesting witness => not
+# disjoint) is proven in theories/CurvePolygonDisjoint.v; true-region
+# containment soundness is the deferred frontier, pinned by
+# oracle/gen_holes_disjoint_tests.py.
+run_holes_disjoint

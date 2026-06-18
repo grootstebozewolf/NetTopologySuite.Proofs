@@ -1716,6 +1716,15 @@ theories/CurvePolygonValid.v
 # 3-axiom.  Deferred to the oracle/test layer: the assembled true area, the
 # major-arc swept angle, and topological (Jordan) soundness.
 theories/CurvePolygonOrientation.v
+# Issue #64 / JTS #1195 §7 V-CP (CP_VALID): holes-mutually-disjoint component
+# (the final CP_VALID slice), proof companion of the HOLES_DISJOINT oracle.
+# curve_rings_meet / curve_ring_nested_in / curve_rings_disjoint /
+# curve_polygon_holes_disjoint; soundness holes_not_disjoint_of_{meet,nested}
+# (a boundary meeting or nesting witness between distinct holes refutes
+# disjointness).  Reuses CurveRingSimple.curve_segments_meet +
+# CurvePolygonValid.point_in_inscribed_ring.  3-axiom.  Deferred: true-region
+# containment soundness (Jordan), oracle/test layer.
+theories/CurvePolygonDisjoint.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
