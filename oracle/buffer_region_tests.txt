@@ -1,0 +1,31 @@
+# Adversarial tests for BUFFER_REGION (RocqRefRunner), BUF-1/BUF-NEG, JTS #1195 §7.
+# Assembles the offset boundary of a closed curve ring + its signed area.
+# I1 parallel-dist, I2 area vs Minkowski, I3 Steiner, I4 EMPTY, I5 d=0, I6 monotonic.
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## I1/I2/I3: parallel-distance, area vs Minkowski, Steiner (convex shells)
+  [disk r5 d=2.0] area=153.938 mink=153.720 |dpar|=0.0022   ok
+  [disk r5 inward d=-2.0] area=28.274 mink=28.280 |dpar|=0.00093   ok
+  [square 10 d=1.5] area=167.069 mink=168.473 |dpar|=0.00083   ok
+  [triangle d=1.0] area=65.423 mink=65.046 |dpar|=0.0012   ok
+  [stadium d=1.0] area=130.265 mink=130.659 |dpar|=0.0015   ok
+  [stadium inward d=-1.0] area=52.566 mink=52.166 |dpar|=0.0012   ok
+  [disk r4 big buf d=3.0] area=153.938 mink=153.800 |dpar|=0.0012   ok
+
+## I4 EMPTY: inner buffer past the inradius collapses
+  [disk r5 d=-5] -> EMPTY   ok
+  [disk r5 d=-7] -> EMPTY   ok
+
+## I5 d=0 IDENTITY: boundary reproduced, area = source area
+  [disk r5] segs=2 area=78.53981633974483 (src 78.540)   ok
+  [square 10] segs=4 area=100.0 (src 100.000)   ok
+
+## I6 MONOTONIC: |area| strictly increases with d
+  [disk r5] areas(d=0,.5,1,2)=['78.54', '95.03', '113.10', '153.94']   ok
+  [square 10] areas(d=0,.5,1,2)=['100.00', '120.79', '143.14', '192.57']   ok
+
+## scope guards: reflex / cornered-inward -> DEGENERATE (out of v1)
+  [reflex quad d=1] -> DEGENERATE   ok
+  [square inward d=-1] -> DEGENERATE   ok
+
+# All invariants (I1 parallel, I2 Minkowski, I3 Steiner, I4 EMPTY, I5 identity, I6 monotonic) hold.
