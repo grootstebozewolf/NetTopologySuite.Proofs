@@ -1448,6 +1448,109 @@ let run_arc_segment_xy () =
           end
         end
 
+(* ----- ARC_ARC_DISTANCE (D-AA, JTS #1195 §7): arc-to-arc shortest distance.
+   ---------------------------------------------------------------------------
+   The minimum distance between two circular arcs.  By the critical-pair
+   analysis the minimiser is one of: (a) the two interior radial feet on the
+   line O1 O2 when the circumcircles are DISJOINT (external d >= r1+r2, gap
+   d-r1-r2; internal d < |r1-r2|, gap |r1-r2|-d) AND both feet lie in their
+   sweeps; (b) 0, when the circumcircles intersect and a real intersection lies
+   in BOTH sweeps; or (c) an endpoint of one arc against the other arc (the
+   point-to-arc distance, reusing the ARC_DISTANCE radial-foot/endpoint shape).
+   We take the min over all that apply -- each candidate is a genuine
+   arc1-point/arc2-point pair, and the analysis guarantees the true minimiser
+   is among them.
+
+   Centres / radii² / squared centre distance are EXACT (circumcentre_q); only
+   the final sqrt / atan2 (sector membership) round -- INTERFACE-BOUNDARY float,
+   off the certified rational kernel.  Proof companion: theories/ArcArcDistance.v
+   (two_circles_dist_lower + circle_feet_dist => two_circles_dist_radial /
+   arc_arc_dist_external) certifies the disjoint circle-to-circle core; the
+   sweep clamp stays the deferred atan2 layer (as for ARC_DISTANCE).
+
+   Input:  lines 2..4 = arc1 (start,mid,end), lines 5..7 = arc2 (start,mid,end).
+   Output: "<dist>" (%h); "DEGENERATE" (either arc collinear); "NAN". *)
+let run_arc_arc_distance () =
+  let a1 = parse_point (input_line stdin) in
+  let b1 = parse_point (input_line stdin) in
+  let c1 = parse_point (input_line stdin) in
+  let a2 = parse_point (input_line stdin) in
+  let b2 = parse_point (input_line stdin) in
+  let c2 = parse_point (input_line stdin) in
+  if not (finite_bpoint a1 && finite_bpoint b1 && finite_bpoint c1 &&
+          finite_bpoint a2 && finite_bpoint b2 && finite_bpoint c2)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_)
+                 (qf c1.bx, qf c1.by_),
+             circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_)
+                 (qf c2.bx, qf c2.by_) with
+    | None, _ | _, None -> print_endline "DEGENERATE"
+    | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+        let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+        let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+        let r1 = sqrt (Q.to_float r1sq) and r2 = sqrt (Q.to_float r2sq) in
+        let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                       (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+        let d = sqrt (Q.to_float dq) in
+        let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+        (* point-to-arc distance: radial foot when the point's ray hits the
+           sweep, else the nearer chord endpoint (the ARC_DISTANCE kernel). *)
+        let point_arc_dist (oxf, oyf, r) (a : bPoint) (b : bPoint) (c : bPoint)
+                           (px, py) =
+          let dpA = hypot2 (px -. a.bx) (py -. a.by_) in
+          let dpC = hypot2 (px -. c.bx) (py -. c.by_) in
+          let best = ref (if dpA <= dpC then dpA else dpC) in
+          let dp = hypot2 (px -. oxf) (py -. oyf) in
+          if dp > 0.0 && point_on_arc_sector (oxf, oyf) a b c (px, py) then begin
+            let radial = abs_float (dp -. r) in
+            if radial < !best then best := radial
+          end;
+          !best in
+        let cand = ref infinity in
+        let upd v = if v < !cand then cand := v in
+        (* (c) the four endpoint-vs-other-arc distances *)
+        upd (point_arc_dist (o2xf, o2yf, r2) a2 b2 c2 (a1.bx, a1.by_));
+        upd (point_arc_dist (o2xf, o2yf, r2) a2 b2 c2 (c1.bx, c1.by_));
+        upd (point_arc_dist (o1xf, o1yf, r1) a1 b1 c1 (a2.bx, a2.by_));
+        upd (point_arc_dist (o1xf, o1yf, r1) a1 b1 c1 (c2.bx, c2.by_));
+        if d > 0.0 then begin
+          let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+          (* (a) interior radial feet when the circumcircles are DISJOINT *)
+          if d >= r1 +. r2 then begin
+            (* external: feet face each other along the line O1 O2 *)
+            let f1 = (o1xf +. r1 *. ux, o1yf +. r1 *. uy) in
+            let f2 = (o2xf -. r2 *. ux, o2yf -. r2 *. uy) in
+            if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1
+               && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+            then upd (d -. r1 -. r2)
+          end else if d < abs_float (r1 -. r2) then begin
+            (* internal (nested): both feet on the larger-radius side *)
+            let s = if r1 >= r2 then 1.0 else -1.0 in
+            let f1 = (o1xf +. s *. r1 *. ux, o1yf +. s *. r1 *. uy) in
+            let f2 = (o2xf +. s *. r2 *. ux, o2yf +. s *. r2 *. uy) in
+            if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1
+               && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+            then upd (abs_float (r1 -. r2) -. d)
+          end;
+          (* (b) 0 when the circumcircles intersect in both sweeps *)
+          if d <= r1 +. r2 && d >= abs_float (r1 -. r2) then begin
+            let aa = (Q.to_float dq +. Q.to_float r1sq -. Q.to_float r2sq)
+                     /. (2.0 *. d) in
+            let h2 = Q.to_float r1sq -. aa *. aa in
+            if h2 >= 0.0 then begin
+              let h = sqrt h2 in
+              let mx = o1xf +. aa *. ux and my = o1yf +. aa *. uy in
+              let both (qx, qy) =
+                point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (qx, qy)
+                && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (qx, qy) in
+              if both (mx -. h *. uy, my +. h *. ux)
+                 || both (mx +. h *. uy, my -. h *. ux)
+              then upd 0.0
+            end
+          end
+        end;
+        Printf.printf "%h\n" !cand
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -1582,6 +1685,7 @@ let () =
        | "ARC_DISTANCE"             -> run_arc_distance ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "ARC_SEGMENT_XY"           -> run_arc_segment_xy ()
+       | "ARC_ARC_DISTANCE"         -> run_arc_arc_distance ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
