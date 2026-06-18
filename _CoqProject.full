@@ -1716,6 +1716,15 @@ theories/ArcDistance.v
 # radial_foot.  3-axiom.  Deferred: on-arc-sector clamp (atan2), internal/
 # overlapping regimes, arc-segment distance, b64 layer.
 theories/ArcArcDistance.v
+# Issue #64 / JTS #1195 §7 D-SL: arc-to-segment (circle-to-line) distance, proof
+# companion of ARC_SEGMENT_DISTANCE.  The perpendicular foot is the nearest line
+# point (foot_is_nearest_line: dist_sq O (G+t u) = perp^2 + t^2); reverse-triangle
+# lower bound (circle_line_dist_lower) + radial-foot attainment over G
+# (circle_line_dist_radial = point_circle_dist_radial at P:=G), composed:
+# a line outside the circle (r <= perp) is exactly perp - r away
+# (arc_segment_dist_external).  Reuses the D-PT radial_foot.  3-axiom.  Deferred:
+# on-arc-sector + segment-t clamp (atan2), crossing (=0) regime, b64 layer.
+theories/ArcSegmentDistance.v
 
 # Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.
 # radial_offset (homothety about the center, pure rational arithmetic,

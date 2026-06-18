@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests
 
 all: $(TARGET)
 
@@ -38,6 +38,12 @@ arc-segment-tests: $(TARGET)
 # I5 intersection-zero).  Nonzero exit on any violation.
 arc-arc-distance-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_arc_distance_tests.py
+
+# Adversarial ARC_SEGMENT_DISTANCE suite (D-SL, JTS #1195 §7): gates the proven
+# invariants (I1 upper vs sampled pairs, I2 lower vs circle-line gap, I3 non-neg,
+# I4 segment-reversal, I5 arc-reversal, I6 crossing=0).  Nonzero exit on violation.
+arc-segment-distance-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_segment_distance_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<
