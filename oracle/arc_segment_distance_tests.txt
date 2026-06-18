@@ -1,0 +1,64 @@
+# Adversarial tests for ARC_SEGMENT_DISTANCE (RocqRefRunner), D-SL / JTS #1195 §7.
+# Sandwich: I1 oracle <= sampled (arc,segment) pairs; I2 oracle >= circle-line
+# gap max(0,perp-r) (circle_line_dist_lower).  '!!' = PROVEN-invariant violation.
+# I3 non-neg  I4 seg-reversal  I5 arc-reversal  I6 crossing=0
+
+## A. Curated battery (distances hand-verified).
+  [seg y=8 over [-5,5], foot (0,8) radial (0,5) in sweep] -> 3.0 expect=3   ok
+  [seg y=4 crosses arc at (+-3,4) (in sweep)] -> 0.0 expect=0   ok
+  [vertical seg x=20 (arc endpoint (5,0) nearest)] -> 15.0 expect=15   ok
+  [seg y=-3 below upper arc (endpoint to seg)] -> 3.0 expect=3   ok
+  [foot off-segment: seg y=8 over [10,20] (endpoint (10,8) to arc)] -> 7.806248474865697   ok
+  [degenerate arc (collinear)] -> 'DEGENERATE' expect=DEGENERATE   ok
+  [zero-length segment = point (0,8), dist |8-5|] -> 3.0 expect=3   ok
+  [seg endpoint exactly on arc (5,0)] -> 0.0 expect=0   ok
+
+## B. Sweep over segment placements / orientations (gating I1-I6).
+  [horiz seg y=-6 x in [-8,8]] -> 6.0   ok
+  [horiz seg y=-6 x in [-3,3]] -> 6.324555320336759   ok
+  [horiz seg y=-6 x in [0,8]] -> 6.0   ok
+  [horiz seg y=-6 x in [-8,0]] -> 6.0   ok
+  [horiz seg y=-6 x in [2,4]] -> 6.082762530298219   ok
+  [horiz seg y=-3 x in [-8,8]] -> 3.0   ok
+  [horiz seg y=-3 x in [-3,3]] -> 3.605551275463989   ok
+  [horiz seg y=-3 x in [0,8]] -> 3.0   ok
+  [horiz seg y=-3 x in [-8,0]] -> 3.0   ok
+  [horiz seg y=-3 x in [2,4]] -> 3.1622776601683795   ok
+  [horiz seg y=-1 x in [-8,8]] -> 1.0   ok
+  [horiz seg y=-1 x in [-3,3]] -> 2.23606797749979   ok
+  [horiz seg y=-1 x in [0,8]] -> 1.0   ok
+  [horiz seg y=-1 x in [-8,0]] -> 1.0   ok
+  [horiz seg y=-1 x in [2,4]] -> 1.4142135623730951   ok
+  [horiz seg y=0 x in [-8,8]] -> 0.0   ok
+  [horiz seg y=0 x in [-3,3]] -> 2.0   ok
+  [horiz seg y=0 x in [0,8]] -> 0.0   ok
+  [horiz seg y=0 x in [-8,0]] -> 0.0   ok
+  [horiz seg y=0 x in [2,4]] -> 1.0   ok
+  [horiz seg y=2 x in [-8,8]] -> 0.0   ok
+  [horiz seg y=2 x in [-3,3]] -> 1.3944487245360109   ok
+  [horiz seg y=2 x in [0,8]] -> 0.0   ok
+  [horiz seg y=2 x in [-8,0]] -> 0.0   ok
+  [horiz seg y=2 x in [2,4]] -> 0.5278640450004204   ok
+  [horiz seg y=5 x in [-8,8]] -> 0.0   ok
+  [horiz seg y=5 x in [-3,3]] -> 0.0   ok
+  [horiz seg y=5 x in [0,8]] -> 0.0   ok
+  [horiz seg y=5 x in [-8,0]] -> 0.0   ok
+  [horiz seg y=5 x in [2,4]] -> 0.38516480713450374   ok
+  [horiz seg y=6 x in [-8,8]] -> 1.0   ok
+  [horiz seg y=6 x in [-3,3]] -> 1.0   ok
+  [horiz seg y=6 x in [0,8]] -> 1.0   ok
+  [horiz seg y=6 x in [-8,0]] -> 1.0   ok
+  [horiz seg y=6 x in [2,4]] -> 1.324555320336759   ok
+  [horiz seg y=9 x in [-8,8]] -> 4.0   ok
+  [horiz seg y=9 x in [-3,3]] -> 4.0   ok
+  [horiz seg y=9 x in [0,8]] -> 4.0   ok
+  [horiz seg y=9 x in [-8,0]] -> 4.0   ok
+  [horiz seg y=9 x in [2,4]] -> 4.219544457292887   ok
+  [vert seg x=-8 y in [-6,6]] -> 3.0   ok
+  [vert seg x=-3 y in [-6,6]] -> 0.0   ok
+  [vert seg x=0 y in [-6,6]] -> 0.0   ok
+  [vert seg x=3 y in [-6,6]] -> 0.0   ok
+  [vert seg x=6 y in [-6,6]] -> 1.0   ok
+  [vert seg x=12 y in [-6,6]] -> 7.0   ok
+
+# All proven invariants (I1-I6) hold across the suite.

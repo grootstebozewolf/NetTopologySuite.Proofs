@@ -167,3 +167,17 @@ run_arc_segment_xy
 # disjoint circle-to-circle core is proven in theories/ArcArcDistance.v
 # (two_circles_dist_radial / arc_arc_dist_external), sweep clamp deferred.
 run_arc_arc_distance
+
+# --- ARC_SEGMENT_DISTANCE (D-SL, JTS #1195 §7) ------------------------------
+# Mode ARC_SEGMENT_DISTANCE emits the shortest distance between a circular arc
+# and a line SEGMENT.  Min over: the radial point of the arc over the
+# perpendicular foot G of O on the segment line (gap perp - r) when G is on the
+# segment, the line is outside the circle, and the radial point is in the sweep;
+# 0 when the line meets the circle and a crossing is on the segment and in the
+# sweep; and the endpoints (segment ends to arc via the ARC_DISTANCE kernel, arc
+# chord-ends to the segment).  Transcendental (sqrt + atan2 sector membership),
+# no Coq-extractable form, off the EXACT circumcentre_q centre + exact-Q foot so
+# only the final sqrt/atan2 round.  The JTS/NTS arc-segment distance interface
+# value; the line-outside-circle core is proven in theories/ArcSegmentDistance.v
+# (circle_line_dist_radial / arc_segment_dist_external), sweep/segment clamp deferred.
+run_arc_segment_distance

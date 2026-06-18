@@ -1551,6 +1551,109 @@ let run_arc_arc_distance () =
         end;
         Printf.printf "%h\n" !cand
 
+(* ----- ARC_SEGMENT_DISTANCE (D-SL, JTS #1195 §7): arc-to-segment distance.
+   ---------------------------------------------------------------------------
+   The minimum distance between a circular arc and a line SEGMENT -- the segment
+   analogue of ARC_ARC_DISTANCE (D-AA), completing the §7 distance pair.  By the
+   critical-pair analysis the minimiser is one of: (a) the radial point of the
+   arc over the perpendicular foot G of O on the segment's line, when G lies on
+   the segment, the line is outside the circle (perp >= r), and that radial
+   point lies in the arc sweep -- gap perp - r; (b) 0, when the line meets the
+   circle and a crossing lies on the segment AND in the sweep; or (c) an
+   endpoint -- the two segment endpoints to the arc (point_arc_dist, the
+   ARC_DISTANCE kernel) and the two arc chord-endpoints to the segment
+   (point_seg_dist).  We take the min over all that apply.
+
+   Centre / radius^2 / the foot are EXACT (circumcentre_q + exact-Q projection);
+   only the final sqrt / atan2 (sector membership) round -- INTERFACE-BOUNDARY
+   float.  Proof companion: theories/ArcSegmentDistance.v (foot_is_nearest_line
+   + circle_line_dist_lower => circle_line_dist_radial / arc_segment_dist_external)
+   certifies the line-outside-circle core; the sweep / segment-t clamp stays the
+   deferred atan2 layer (as for ARC_DISTANCE / ARC_ARC_DISTANCE).
+
+   Input:  lines 2..4 = arc (start,mid,end), lines 5..6 = segment P, Q ("x y").
+   Output: "<dist>" (%h); "DEGENERATE" (collinear arc); "NAN". *)
+let run_arc_segment_distance () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  let p = parse_point (input_line stdin) in
+  let q = parse_point (input_line stdin) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c &&
+          finite_bpoint p && finite_bpoint q)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                 (qf c.bx, qf c.by_) with
+    | None -> print_endline "DEGENERATE"
+    | Some (ox, oy, r2) ->
+        let oxf = Q.to_float ox and oyf = Q.to_float oy in
+        let r = sqrt (Q.to_float r2) in
+        let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+        (* point-to-arc distance (the ARC_DISTANCE kernel) *)
+        let point_arc_dist (px, py) =
+          let dpA = hypot2 (px -. a.bx) (py -. a.by_) in
+          let dpC = hypot2 (px -. c.bx) (py -. c.by_) in
+          let best = ref (if dpA <= dpC then dpA else dpC) in
+          let dp = hypot2 (px -. oxf) (py -. oyf) in
+          if dp > 0.0 && point_on_arc_sector (oxf, oyf) a b c (px, py) then begin
+            let radial = abs_float (dp -. r) in
+            if radial < !best then best := radial
+          end;
+          !best in
+        (* point-to-segment distance (project onto PQ, clamp t in [0,1]) *)
+        let point_seg_dist (xx, yy) =
+          let dx = q.bx -. p.bx and dy = q.by_ -. p.by_ in
+          let l2 = dx *. dx +. dy *. dy in
+          if l2 = 0.0 then hypot2 (xx -. p.bx) (yy -. p.by_)
+          else begin
+            let t = ((xx -. p.bx) *. dx +. (yy -. p.by_) *. dy) /. l2 in
+            let tc = if t < 0.0 then 0.0 else if t > 1.0 then 1.0 else t in
+            hypot2 (xx -. (p.bx +. tc *. dx)) (yy -. (p.by_ +. tc *. dy))
+          end in
+        let cand = ref infinity in
+        let upd v = if v < !cand then cand := v in
+        (* (c) endpoints: segment ends to arc, arc chord-ends to segment *)
+        upd (point_arc_dist (p.bx, p.by_));
+        upd (point_arc_dist (q.bx, q.by_));
+        upd (point_seg_dist (a.bx, a.by_));
+        upd (point_seg_dist (c.bx, c.by_));
+        (* exact perpendicular foot G = P + s(Q-P), s = (O-P).(Q-P)/|PQ|^2 *)
+        let dxq = Q.sub (qf q.bx) (qf p.bx)
+        and dyq = Q.sub (qf q.by_) (qf p.by_) in
+        let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
+        if not (qeq l2q q0) then begin
+          let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
+                            (Q.mul (Q.sub oy (qf p.by_)) dyq) in
+          let s   = Q.div projn l2q in
+          let fxq = Q.add (qf p.bx)  (Q.mul s dxq)
+          and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
+          let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
+                          (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
+          let sf   = Q.to_float s in
+          let perp = sqrt (Q.to_float d2q) in
+          let fxf  = Q.to_float fxq and fyf = Q.to_float fyq in
+          let lf   = sqrt (Q.to_float l2q) in
+          (* (a) foot on segment, line outside circle, radial point in sweep *)
+          if sf >= 0.0 && sf <= 1.0 && perp >= r then begin
+            let rx = oxf +. r *. (fxf -. oxf) /. perp
+            and ry = oyf +. r *. (fyf -. oyf) /. perp in
+            if point_on_arc_sector (oxf, oyf) a b c (rx, ry) then upd (perp -. r)
+          end;
+          (* (b) line meets circle: crossing on segment and in sweep => 0 *)
+          let h2 = Q.to_float r2 -. Q.to_float d2q in
+          if h2 >= 0.0 then begin
+            let h  = sqrt h2 in
+            let ux = (q.bx -. p.bx) /. lf and uy = (q.by_ -. p.by_) /. lf in
+            let hl = h /. lf in
+            let chk (qx, qy, t) =
+              t >= 0.0 && t <= 1.0 && point_on_arc_sector (oxf, oyf) a b c (qx, qy) in
+            if chk (fxf +. h *. ux, fyf +. h *. uy, sf +. hl)
+               || chk (fxf -. h *. ux, fyf -. h *. uy, sf -. hl)
+            then upd 0.0
+          end
+        end;
+        Printf.printf "%h\n" !cand
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -1686,6 +1789,7 @@ let () =
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "ARC_SEGMENT_XY"           -> run_arc_segment_xy ()
        | "ARC_ARC_DISTANCE"         -> run_arc_arc_distance ()
+       | "ARC_SEGMENT_DISTANCE"     -> run_arc_segment_distance ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
