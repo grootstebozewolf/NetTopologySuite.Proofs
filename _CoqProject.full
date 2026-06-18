@@ -1726,6 +1726,17 @@ theories/CurvePolygonOrientation.v
 # containment soundness (Jordan), oracle/test layer.
 theories/CurvePolygonDisjoint.v
 
+# Issue #64 / JTS #1195 §7 (R-PR / CURVE_RELATE_MATRIX): point-set DE-9IM
+# specification + provable algebraic laws backing the CURVE_RELATE_MATRIX oracle
+# (which COMPUTES the full 9-cell matrix from two curve geometries).  TRUE OGC
+# convention (disjoint areas -> "FF2FF1212").  Laws: well-formedness,
+# two_geometries_exterior_meet => EE nonempty, transpose-under-swap,
+# interior/boundary-meet "disjoint" characterization (local OGC pat_disjoint_ogc),
+# partial disjoint/intersects consistency, curated OGC witness matrices.  Reuses
+# DE9IM.v matrix algebra + RelateCurveRingReduction.v point-set bridge.  3-axiom.
+# Deferred: computed cell-DIMENSION = true point-set dimension (oracle/test layer).
+theories/RelateCurveMatrix.v
+
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
 # kills the cross term).  arc_line_circle_intersect: witness on circumcircle

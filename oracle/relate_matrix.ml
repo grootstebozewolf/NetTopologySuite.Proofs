@@ -181,6 +181,15 @@ let catalog =
     "cap_matrix_rect_touches_boundary", "FFFFFFF0F";
     "curve_point_fill CPR_StrictInterior", "0FFFFFFF0";
     "curve_point_fill CPR_LeftBoundaryTouch", "FFFFFFF0F";
+    (* CURVE_RELATE_MATRIX TRUE-OGC witnesses (RelateCurveMatrix.v, R-PR).
+       NOTE: TRUE OGC convention -- disjoint areas carry IE=EI=2/BE=EB=1/EE=2,
+       NOT the older non-OGC "FFFFFFFFF" aa_matrix_disjoint pin above.  Keep in
+       sync with the cm_matrix_* constants in theories/RelateCurveMatrix.v. *)
+    "cm_matrix_disjoint_disks", "FF2FF1212";
+    "cm_matrix_contains_disk", "212FF1FF2";
+    "cm_matrix_overlapping_disks", "212101212";
+    "cm_matrix_externally_tangent_disks", "FF2F01212";
+    "cm_matrix_equal_disks", "2FFF1FFF2";
   ]
 
 let strip_prefix prefix s =

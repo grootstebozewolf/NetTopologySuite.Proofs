@@ -53,4 +53,13 @@ FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordShare       => cl_matrix_po
 # Curve-polygon×point (theories/RelateMatrixCurveAreaPoint.v):
 FILL_API RelateMatrixCurveAreaPoint curve_point_fill CPR_StrictInterior    => cap_matrix_rect_contains_point
 FILL_API RelateMatrixCurveAreaPoint curve_point_fill CPR_LeftBoundaryTouch => cap_matrix_rect_touches_boundary
-# Oracle: oracle/de9im_curve_area_point_vectors.txt
+# Oracle: oracle/de9im_curve_area_point_vectors.txt#
+# Curve-geometry×curve-geometry full 9-cell DE-9IM (theories/RelateCurveMatrix.v,
+# R-PR / CURVE_RELATE_MATRIX).  TRUE OGC convention (disjoint areas carry the
+# full exterior row/column), distinct from the older non-OGC aa_matrix_disjoint.
+FILL_API RelateCurveMatrix cm_matrix_disjoint_disks            => FF2FF1212
+FILL_API RelateCurveMatrix cm_matrix_contains_disk             => 212FF1FF2
+FILL_API RelateCurveMatrix cm_matrix_overlapping_disks         => 212101212
+FILL_API RelateCurveMatrix cm_matrix_externally_tangent_disks  => FF2F01212
+FILL_API RelateCurveMatrix cm_matrix_equal_disks               => 2FFF1FFF2
+# Oracle: oracle/curve_relate_matrix_tests.txt
