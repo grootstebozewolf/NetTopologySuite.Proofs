@@ -1,26 +1,28 @@
 # Adversarial tests for POINT_IN_CURVE_RING (RocqRefRunner), V-CP / JTS #1195 §7.
-# I1 AGREEMENT: oracle IN/OUT == exact ray-parity (Overlay.point_in_ring) on
-# the densified control polygon, over a query grid.  I2 holes-inside-shell.
+# Arc-aware ray casting -> TRUE point-in-curved-region.  I1 vs independent
+# closed-form region (half-disk / disk), I2 vs independent ray cast, I3 holes.
 # '!!' lines are gated-invariant violations (CI-failing).
 
-## A. Agreement over a query grid (curated rings).
-  [square] ok (64 queries agree)
-  [arc-rounded shell] ok (64 queries agree)
-  [concave-arc ring] ok (64 queries agree)
-  [inner square (hole shape)] ok (64 queries agree)
+## I1 TRUE-REGION: oracle == closed-form membership (the soundness gate).
+  [upper-semicircle ring vs half-disk] 225 pts, 0 wrong   ok
+  [full circle (2 arcs) vs disk] 225 pts, 0 wrong   ok
 
-## B. Curated interior/exterior points.
-  [square: clearly in/out] ok (7 queries agree)
-  [arc-shell: non-grazing in/out] ok (5 queries agree)
+## I2 AGREEMENT: oracle == independent Python arc-aware ray cast.
+  [semicircle] 225 queries, 0 disagree   ok
+  [circle] 225 queries, 0 disagree   ok
+  [arc-shell] 225 queries, 0 disagree   ok
+  [square] 225 queries, 0 disagree   ok
+  [inner square] 225 queries, 0 disagree   ok
 
-## C. I2 holes-inside-shell composition (donut: shell SQUARE, hole INNER).
-  hole vertex (3, 3) IN shell -> IN   ok
-  hole vertex (7, 3) IN shell -> IN   ok
-  hole vertex (7, 7) IN shell -> IN   ok
-  hole vertex (3, 7) IN shell -> IN   ok
-  shell vertex (0, 0) OUT hole -> OUT   ok
-  shell vertex (10, 0) OUT hole -> OUT   ok
-  shell vertex (10, 10) OUT hole -> OUT   ok
-  shell vertex (0, 10) OUT hole -> OUT   ok
+## Curated bulge points (the bug repro: now correctly IN).
+  bulge (4.125, 1.321) -> IN   ok
+  bulge (1.521, 3.907) -> IN   ok
+  bulge (4.9, 0.5) -> IN   ok
 
-# All invariants (I1 agreement, I2 holes-inside-shell) hold.
+## I3 HOLES-INSIDE-SHELL (donut: arc-rounded shell + inner square hole).
+  hole vertex (3, 3) IN arc-shell -> IN   ok
+  hole vertex (7, 3) IN arc-shell -> IN   ok
+  hole vertex (7, 7) IN arc-shell -> IN   ok
+  hole vertex (3, 7) IN arc-shell -> IN   ok
+
+# All invariants (I1 true-region, I2 agreement, I3 holes-inside) hold.

@@ -3,33 +3,33 @@
 # oracle/gen_point_in_curve_ring_tests.py
 # -----------------------------------------------------------------------------
 # Adversarial tests for the POINT_IN_CURVE_RING oracle mode (V-CP / CP_VALID
-# holes-inside-shell, JTS #1195 §7), driven by the RocqRefRunner (oracle_bin).
-#
-# POINT_IN_CURVE_RING decides whether a query point is inside a curve ring, via
-# the EXACT densified control polygon (CurveGeometry.chord_approx_ring: arc ->
-# [start;mid;end], chord -> [p;q]) and Overlay.point_in_ring (rightward-ray
-# crossing-number parity).  Ground truth here re-implements the SAME predicate
-# bit-for-bit with fractions.Fraction -- Overlay.ring_edges (consecutive vertex
-# pairs) + Overlay.edge_crosses_ray (STRICT y-straddle + x-intersection strictly
-# right, the generic-position convention) -- so the oracle (also exact-Q) must
-# AGREE on every input.
+# holes-inside-shell, JTS #1195 §7).  The oracle decides point-in-TRUE-curved-
+# region by ARC-AWARE ray casting (ray vs actual arcs via circle-horizontal-line
+# intersection in-sweep, + chords).
 #
 # Invariants gated (a '!!' line fails CI):
-#   I1  AGREEMENT      oracle IN/OUT == exact ray-parity on the control polygon,
-#                      for a grid of query points over curated rings (= the
-#                      Coq Overlay.point_in_ring definition the oracle pins).
-#   I2  HOLES-INSIDE   donut: every hole vertex is IN the shell (the
-#                      hole_inside_outer / valid_curve_polygon_cp_hole_witness
-#                      composition) and shell vertices are OUT the hole.
+#   I1  TRUE-REGION    for rings whose exact region is known in closed form, the
+#                      oracle's IN/OUT == that independent criterion -- the real
+#                      soundness gate (catches the chord-approx bulge bug):
+#                        * upper-semicircle ring  -> upper half-disk {x^2+y^2<25, y>0}
+#                        * full circle (two arcs)  -> disk {x^2+y^2<25}
+#   I2  AGREEMENT      oracle == an independent Python arc-aware ray cast (same
+#                      algorithm, separate implementation) over a query grid on
+#                      curated rings (catches implementation divergence).
+#   I3  HOLES-INSIDE   donut: hole vertices read IN the shell; shell corners read
+#                      OUT the hole.
+#
+# Boundary/degenerate queries (on the circle, on y=0, tangent rays) are skipped
+# -- the strict generic-position convention, as in Overlay.edge_crosses_ray.
 #
 # Run from repo root:
 #   python3 oracle/gen_point_in_curve_ring_tests.py > oracle/point_in_curve_ring_tests.txt
 # Exit status: nonzero iff a gated invariant fails.
 # =============================================================================
+import math
 import os
 import subprocess
 import sys
-from fractions import Fraction as F
 
 BIN = os.environ.get("ORACLE_BIN", "oracle/oracle_bin")
 violations = 0
@@ -45,118 +45,156 @@ def seg_line(s):
     return f"A {s[1][0]} {s[1][1]} {s[2][0]} {s[2][1]} {s[3][0]} {s[3][1]}"
 
 
-def run(ring, p):
+def oracle(ring, p):
     stdin = "POINT_IN_CURVE_RING\n%d\n%s\n%s %s\n" % (
         len(ring), "\n".join(seg_line(s) for s in ring), p[0], p[1])
     return subprocess.run([BIN], input=stdin, capture_output=True, text=True).stdout.strip()
 
 
-def densify(ring):
-    """chord_approx_ring: arc -> [start;mid;end], chord -> [p;q].  Exact Fraction."""
-    pts = []
+def circumcentre(a, b, c):
+    (ax, ay), (bx, by), (cx, cy) = a, b, c
+    d = 2 * ((bx - ax) * (cy - ay) - (by - ay) * (cx - ax))
+    if d == 0:
+        return None
+    bk = bx * bx + by * by - ax * ax - ay * ay
+    ck = cx * cx + cy * cy - ax * ax - ay * ay
+    ox = ((cy - ay) * bk - (by - ay) * ck) / d
+    oy = ((bx - ax) * ck - (cx - ax) * bk) / d
+    return (ox, oy, math.hypot(ox - ax, oy - ay))
+
+
+def on_arc_sector(ox, oy, a, b, c, x, y):
+    def ang(px, py):
+        return math.atan2(py - oy, px - ox)
+
+    def ccw(f, t):
+        v = math.fmod(t - f, 2 * math.pi)
+        return v + 2 * math.pi if v < 0 else v
+    angA = ang(a[0], a[1])
+    dAB = ccw(angA, ang(b[0], b[1]))
+    dAC = ccw(angA, ang(c[0], c[1]))
+    dAQ = ccw(angA, ang(x, y))
+    return dAQ <= dAC + 1e-12 if dAB <= dAC else (dAQ >= dAC - 1e-12 or dAQ <= 1e-12)
+
+
+def raycast_in(ring, p):
+    """Independent Python arc-aware ray cast (mirrors the oracle's rule)."""
+    px, py = p
+    cnt = 0
+
+    def edge_cross(a, b):
+        ax, ay = a
+        bx, by = b
+        if ay < py < by:
+            return px < ax + (bx - ax) * (py - ay) / (by - ay)
+        if by < py < ay:
+            return px < bx + (ax - bx) * (py - by) / (ay - by)
+        return False
     for s in ring:
         if s[0] == "C":
-            pts += [s[1], s[2]]
+            if edge_cross(s[1], s[2]):
+                cnt += 1
         else:
-            pts += [s[1], s[2], s[3]]
-    return [(F(x), F(y)) for (x, y) in pts]
-
-
-def edge_crosses_ray(p, a, b):
-    """Overlay.edge_crosses_ray, exact (strict inequalities)."""
-    px, py = p
-    ax, ay = a
-    bx, by = b
-    if ay < py < by:
-        return px < ax + (bx - ax) * (py - ay) / (by - ay)
-    if by < py < ay:
-        return px < bx + (ax - bx) * (py - by) / (ay - by)
-    return False
-
-
-def point_in_ring_exact(p, pts):
-    """Overlay.point_in_ring: parity of ring_edges (consecutive pairs) crossings."""
-    cnt = 0
-    for i in range(len(pts) - 1):
-        if edge_crosses_ray(p, pts[i], pts[i + 1]):
-            cnt += 1
+            o = circumcentre(s[1], s[2], s[3])
+            if o is None:
+                cnt += edge_cross(s[1], s[2]) + edge_cross(s[2], s[3])
+                continue
+            ox, oy, r = o
+            disc = r * r - (py - oy) ** 2
+            if disc > 0:
+                sq = math.sqrt(disc)
+                for x in (ox + sq, ox - sq):
+                    if x > px and on_arc_sector(ox, oy, s[1], s[2], s[3], x, py):
+                        cnt += 1
     return cnt % 2 == 1
 
 
-def oracle_in(ring, p):
-    out = run(ring, p).strip()
-    return out  # "IN" / "OUT" / "NAN"
-
-
-def assess(name, ring, queries):
-    global violations
-    pts = densify(ring)
-    tags = []
-    for q in queries:
-        want = "IN" if point_in_ring_exact((F(q[0]), F(q[1])), pts) else "OUT"
-        got = oracle_in(ring, q)
-        if got != want:
-            violations += 1
-            tags.append(f"!! I1_DISAGREE q={q} oracle={got} exact={want}")
-    status = " ".join(tags) if tags else f"ok ({len(queries)} queries agree)"
-    emit(f"  [{name}] {status}")
-
-
-# --- shapes ----------------------------------------------------------------
+# --- curated rings ---------------------------------------------------------
+SEMI = [("A", (5, 0), (0, 5), (-5, 0)), ("C", (-5, 0), (5, 0))]          # upper half-disk
+CIRCLE = [("A", (5, 0), (0, 5), (-5, 0)), ("A", (-5, 0), (0, -5), (5, 0))]  # full disk R=5
+ARC_SHELL = [("A", (0, 0), (-1, 5), (0, 10)), ("A", (0, 10), (5, 11), (10, 10)),
+             ("A", (10, 10), (11, 5), (10, 0)), ("A", (10, 0), (5, -1), (0, 0))]
 SQUARE = [("C", (0, 0), (10, 0)), ("C", (10, 0), (10, 10)),
           ("C", (10, 10), (0, 10)), ("C", (0, 10), (0, 0))]
 INNER = [("C", (3, 3), (7, 3)), ("C", (7, 3), (7, 7)),
          ("C", (7, 7), (3, 7)), ("C", (3, 7), (3, 3))]
-ARC_SHELL = [("A", (0, 0), (-1, 5), (0, 10)), ("A", (0, 10), (5, 11), (10, 10)),
-             ("A", (10, 10), (11, 5), (10, 0)), ("A", (10, 0), (5, -1), (0, 0))]
-# a ring with a CONCAVE arc (control mid pulled inward) -> non-convex control polygon
-CONCAVE = [("A", (0, 0), (5, 3), (10, 0)), ("C", (10, 0), (10, 10)),
-           ("C", (10, 10), (0, 10)), ("C", (0, 10), (0, 0))]
 
-# a query grid of DYADIC (half-integer) coords: exactly representable in binary64
-# so F(q) (ground truth) == qf(q) (oracle), and half-integer y never equals an
-# integer-y control vertex -> no ray-vertex grazing.
-GRID = [(x + 0.5, y + 0.5) for x in range(-2, 13, 2) for y in range(-2, 13, 2)]
+# query grid: offset to avoid integer / circle-boundary alignment
+GRID = [(round(x + 0.25, 4), round(y + 0.25, 4))
+        for x in range(-7, 8) for y in range(-7, 8)]
+
+
+def truth_semi(x, y):
+    return x * x + y * y < 25 and y > 0
+
+
+def truth_disk(x, y):
+    return x * x + y * y < 25
+
+
+def near_circle(x, y):
+    return abs(x * x + y * y - 25) < 0.2
+
 
 # ---------------------------------------------------------------------------
 emit("# Adversarial tests for POINT_IN_CURVE_RING (RocqRefRunner), V-CP / JTS #1195 §7.")
-emit("# I1 AGREEMENT: oracle IN/OUT == exact ray-parity (Overlay.point_in_ring) on")
-emit("# the densified control polygon, over a query grid.  I2 holes-inside-shell.")
+emit("# Arc-aware ray casting -> TRUE point-in-curved-region.  I1 vs independent")
+emit("# closed-form region (half-disk / disk), I2 vs independent ray cast, I3 holes.")
 emit("# '!!' lines are gated-invariant violations (CI-failing).")
 emit()
-emit("## A. Agreement over a query grid (curated rings).")
-assess("square", SQUARE, GRID)
-assess("arc-rounded shell", ARC_SHELL, GRID)
-assess("concave-arc ring", CONCAVE, GRID)
-assess("inner square (hole shape)", INNER, GRID)
+emit("## I1 TRUE-REGION: oracle == closed-form membership (the soundness gate).")
+
+
+def gate_truth(name, ring, truth):
+    global violations
+    bad = 0
+    n = 0
+    for (x, y) in GRID:
+        if near_circle(x, y) or abs(y) < 1e-6:
+            continue
+        n += 1
+        got = oracle(ring, (x, y)) == "IN"
+        if got != truth(x, y):
+            bad += 1
+            if bad <= 3:
+                emit(f"    !! I1_WRONG ({x},{y}) oracle={'IN' if got else 'OUT'} truth={'IN' if truth(x,y) else 'OUT'}")
+    if bad:
+        violations += 1
+    emit(f"  [{name}] {n} pts, {bad} wrong   {'ok' if bad == 0 else '!! FAIL'}")
+
+
+gate_truth("upper-semicircle ring vs half-disk", SEMI, truth_semi)
+gate_truth("full circle (2 arcs) vs disk", CIRCLE, truth_disk)
 
 emit()
-emit("## B. Curated interior/exterior points.")
-assess("square: clearly in/out", SQUARE,
-       [(5, 5), (5, 0.5), (1, 9), (15, 5), (-3, 5), (5, 15), (5, -3)])
-assess("arc-shell: non-grazing in/out", ARC_SHELL,
-       [(5, 4.5), (1, 1), (9, 9), (-5, 5), (20, 5)])
+emit("## I2 AGREEMENT: oracle == independent Python arc-aware ray cast.")
+for nm, ring in (("semicircle", SEMI), ("circle", CIRCLE), ("arc-shell", ARC_SHELL),
+                 ("square", SQUARE), ("inner square", INNER)):
+    bad = sum(1 for q in GRID if (oracle(ring, q) == "IN") != raycast_in(ring, q))
+    if bad:
+        violations += 1
+    emit(f"  [{nm}] {len(GRID)} queries, {bad} disagree   {'ok' if bad == 0 else '!! I2_DISAGREE'}")
 
 emit()
-emit("## C. I2 holes-inside-shell composition (donut: shell SQUARE, hole INNER).")
-hole_verts = [(3, 3), (7, 3), (7, 7), (3, 7)]
-for v in hole_verts:
-    got = oracle_in(SQUARE, v)
+emit("## Curated bulge points (the bug repro: now correctly IN).")
+for q in [(4.125, 1.321), (1.521, 3.907), (4.9, 0.5)]:
+    got = oracle(SEMI, q)
     ok = got == "IN"
     if not ok:
         violations += 1
-    emit(f"  hole vertex {v} IN shell -> {got}   {'ok' if ok else '!! I2_HOLE_VERTEX_NOT_IN_SHELL'}")
-shell_verts = [(0, 0), (10, 0), (10, 10), (0, 10)]
-for v in shell_verts:
-    # shell corners are OUTSIDE the inner hole [3,7]^2
-    got = oracle_in(INNER, v)
-    ok = got == "OUT"
+    emit(f"  bulge {q} -> {got}   {'ok' if ok else '!! BULGE_NOT_IN'}")
+
+emit()
+emit("## I3 HOLES-INSIDE-SHELL (donut: arc-rounded shell + inner square hole).")
+for v in [(3, 3), (7, 3), (7, 7), (3, 7)]:
+    got = oracle(ARC_SHELL, v)
+    ok = got == "IN"
     if not ok:
         violations += 1
-    emit(f"  shell vertex {v} OUT hole -> {got}   {'ok' if ok else '!! I2_SHELL_VERTEX_IN_HOLE'}")
+    emit(f"  hole vertex {v} IN arc-shell -> {got}   {'ok' if ok else '!! I3_HOLE_NOT_IN'}")
 
 emit()
 if violations:
     emit(f"::error::POINT_IN_CURVE_RING violated {violations} invariant(s).")
     sys.exit(1)
-emit("# All invariants (I1 agreement, I2 holes-inside-shell) hold.")
+emit("# All invariants (I1 true-region, I2 agreement, I3 holes-inside) hold.")

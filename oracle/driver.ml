@@ -1875,23 +1875,30 @@ let run_arc_offset_xy () =
 
 (* ----- POINT_IN_CURVE_RING (V-CP / CP_VALID holes-inside-shell, JTS #1195 §7).
    ---------------------------------------------------------------------------
-   Decides whether a query point is inside a curve ring, via the EXACT densified
-   CONTROL POLYGON: each segment is approximated by its control points (arc ->
-   [start;mid;end], chord -> [p;q]) -- this is CurveGeometry.chord_approx_ring --
-   and Overlay.point_in_ring (rightward-ray crossing-number parity) is decided in
-   EXACT rational arithmetic, replicating Overlay.ring_edges (consecutive vertex
-   pairs) and Overlay.edge_crosses_ray (strict y-straddle + x-intersection
-   strictly right) bit-for-bit.  No trig, no float (the chord_approx_arc control
-   points are the exact inputs) -- ratchet-clean, no allowlist entry.
+   Decides whether a query point is inside the TRUE curved region of a curve
+   ring, by ARC-AWARE ray casting: the rightward horizontal ray from the query
+   crosses each chord by the usual edge test, and crosses each ARC where the
+   horizontal line y = py meets the arc's circle (x = ox +- sqrt(r^2 - (py-oy)^2))
+   at a point strictly right of the query AND inside the arc's sweep
+   (point_on_arc_sector).  Crossing parity => IN / OUT.  This counts the arc
+   bulge (unlike the inscribed chord polygon): a point between the chord and the
+   arc reads IN.
 
-   Proof companion: theories/CurvePolygonValid.v -- point_in_curve_ring (this
-   predicate) and valid_curve_polygon_cp_hole_witness (each hole vertex inside
-   the densified outer is the holes-inside-shell witness).
+   Centre/radius^2 are EXACT (circumcentre_q), but the arc-line intersection
+   needs sqrt and the sweep test needs atan2 -- INTERFACE-BOUNDARY float (the
+   value is the JTS/NTS point-in-curve-polygon interface), like ARC_ARC_XY /
+   point_on_arc_sector.  Boundary cases (ray through a vertex, tangent ray) are
+   excluded by the strict inequalities (generic-position convention, as in
+   Overlay.edge_crosses_ray).
+
+   Companion (sound conservative floor): theories/CurvePolygonValid.v proves the
+   INSCRIBED (chord-approx control-polygon) containment -- an under-approximation
+   (inscribed-IN => truly-IN); the TRUE-region soundness (Jordan / ray-cast) is
+   the deferred frontier, pinned here by the adversarial agreement test.
 
    Input:  line 2 = n (segment count); lines 3.. = one segment each
            ("C x1 y1 x2 y2" or "A sx sy mx my ex ey"); then a query point "x y".
-   Output: "IN" | "OUT"; "NAN" (non-finite coordinate).  Note: this is
-           control-polygon containment (sound up to the arc bulge). *)
+   Output: "IN" | "OUT"; "NAN" (non-finite coordinate). *)
 let run_point_in_curve_ring () =
   let n = int_of_string (String.trim (input_line stdin)) in
   let parse_seg () =
@@ -1913,25 +1920,37 @@ let run_point_in_curve_ring () =
   let all_pts = query :: (Array.to_list segs |> List.concat_map seg_pts) in
   if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
   else begin
-    (* densify to the exact-Q control polygon (chord_approx_ring) *)
-    let qpt (b : bPoint) = (qf b.bx, qf b.by_) in
-    let dens = Array.to_list segs |> List.concat_map (fun s ->
-      List.map qpt (seg_pts s)) in
-    (* Overlay.ring_edges: consecutive vertex pairs (no auto-wrap; a closed ring
-       repeats its first vertex last, so the loop closes naturally) *)
-    let rec edges = function
-      | a :: (b :: _ as t) -> (a, b) :: edges t
-      | _ -> [] in
-    let (px, py) = qpt query in
-    (* Overlay.edge_crosses_ray, exact Q *)
-    let crosses ((ax, ay), (bx, by)) =
-      (qlt ay py && qlt py by &&
-       qlt px (Q.add ax (Q.div (Q.mul (Q.sub bx ax) (Q.sub py ay)) (Q.sub by ay))))
-      || (qlt by py && qlt py ay &&
-          qlt px (Q.add bx (Q.div (Q.mul (Q.sub ax bx) (Q.sub py by)) (Q.sub ay by)))) in
-    let cnt =
-      List.fold_left (fun acc e -> if crosses e then acc + 1 else acc) 0 (edges dens) in
-    print_endline (if cnt mod 2 = 1 then "IN" else "OUT")
+    let px = query.bx and py = query.by_ in
+    (* rightward horizontal ray crossing of a straight edge (a,b) *)
+    let edge_cross (a : bPoint) (b : bPoint) =
+      (a.by_ < py && py < b.by_ &&
+         px < a.bx +. (b.bx -. a.bx) *. (py -. a.by_) /. (b.by_ -. a.by_))
+      || (b.by_ < py && py < a.by_ &&
+            px < b.bx +. (a.bx -. b.bx) *. (py -. b.by_) /. (a.by_ -. b.by_)) in
+    let cnt = ref 0 in
+    Array.iter (fun s -> match s with
+      | `Chord (a, b) -> if edge_cross a b then incr cnt
+      | `Arc (a, b, c) ->
+          (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                   (qf c.bx, qf c.by_) with
+           | None ->
+               (* degenerate arc: its control polyline is two straight chords *)
+               (if edge_cross a b then incr cnt);
+               (if edge_cross b c then incr cnt)
+           | Some (ox, oy, r2) ->
+               let oxf = Q.to_float ox and oyf = Q.to_float oy in
+               let r = sqrt (Q.to_float r2) in
+               let dy = py -. oyf in
+               let disc = r *. r -. dy *. dy in
+               if disc > 0.0 then begin
+                 let sq = sqrt disc in
+                 List.iter (fun x ->
+                   if x > px && point_on_arc_sector (oxf, oyf) a b c (x, py)
+                   then incr cnt)
+                   [ oxf +. sq; oxf -. sq ]
+               end))
+      segs;
+    print_endline (if !cnt mod 2 = 1 then "IN" else "OUT")
   end
 
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
