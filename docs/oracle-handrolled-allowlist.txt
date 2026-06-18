@@ -220,3 +220,15 @@ run_arc_offset_xy
 # theories/CurvePolygonValid.v; the true-region (Jordan) soundness is the
 # deferred frontier, pinned by oracle/gen_point_in_curve_ring_tests.py.
 run_point_in_curve_ring
+
+# --- RING_ORIENTATION (V-CP / CP_VALID sector orientation, JTS #1195 §7) ------
+# Mode RING_ORIENTATION emits the TRUE signed area of a curve ring (chord
+# shoelace + each arc's signed circular-segment area sb*r^2*(theta - sin theta))
+# -> CCW/CW.  Centres/radii^2 are EXACT (arc_invariants_q) and the sweep sign sb
+# is exact-Q, but the swept angle theta needs acos/sin -> transcendental, no
+# Coq-extractable form, the float IS the JTS/NTS curve-polygon-area/orientation
+# interface (same boundary as ARC_AREA).  The orientation ALGEBRA (segment-area
+# reversal, classifier, shell/hole convention) is proven in
+# theories/CurvePolygonOrientation.v; the topological "sign = inside orientation"
+# (Jordan) is deferred, pinned by oracle/gen_ring_orientation_tests.py.
+run_ring_orientation

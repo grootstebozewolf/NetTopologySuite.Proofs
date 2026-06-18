@@ -1,0 +1,17 @@
+# Adversarial tests for RING_ORIENTATION (RocqRefRunner), V-CP / JTS #1195 §7.
+# TRUE signed area (chord shoelace + arc sector areas) -> CCW/CW.  I1 known
+# orientation, I2 reversal flips, I3 agreement vs independent recompute,
+# I4 true-vs-inscribed.  '!!' lines are gated-invariant violations.
+
+## I1/I2/I3 curated rings.
+  [square CCW] -> CCW (S2=200)   ok
+  [square CW (reversed)] -> CW (S2=-200)   ok
+  [upper-semicircle region (arc+chord) CCW] -> CCW (S2=78.54)   ok
+  [full circle (2 arcs) CCW] -> CCW (S2=157.1)   ok
+  [arc-dominated down-bulge ring CW (region below x-axis)] -> CW (S2=-59.64)   ok
+
+## I4 TRUE-vs-INSCRIBED (arc-awareness matters):
+  [semicircle] inscribed_S2=0  true_S2=78.54  oracle=CCW   (inscribed≈0/undecidable, true decides)
+  [down-bulge] inscribed_S2=0  true_S2=-59.64  oracle=CW   (inscribed≈0/undecidable, true decides)
+
+# All invariants (I1 known, I2 reversal, I3 agreement, I4 true-vs-inscribed) hold.
