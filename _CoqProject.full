@@ -1680,6 +1680,15 @@ theories/ArcArcSound.v
 # P+ = M+h·perp(u) on both circles (ring+lra).  3-axiom.  Deferred:
 # arc_span_contains (atan2), arc_arc_intersects (full predicate), b64 layer.
 theories/ArcArcCircles.v
+# Issue #64 / JTS #1195 §7 V-CS/V-CP: SIMPLE curve rings, proof companion of the
+# RING_SIMPLE oracle mode.  Adds the simplicity layer on valid_curve_ring:
+# on_curve_segment / curve_segments_meet membership; curve_ring_simple (no two
+# NON-adjacent positions' segments meet); curve_ring_not_simple_of_witness
+# (a crossing witness => ~simple, the oracle's NOT_SIMPLE soundness);
+# arc_arc_circle_meet_of_span (ties the merged arc_arc_circles_intersect into a
+# self-intersection witness, span bridge as honest hypothesis).  3-axiom.
+# Deferred: unconditional span (atan2), completeness (oracle all-pairs), holes.
+theories/CurveRingSimple.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition

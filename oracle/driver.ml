@@ -1654,6 +1654,184 @@ let run_arc_segment_distance () =
         end;
         Printf.printf "%h\n" !cand
 
+(* ----- RING_SIMPLE (V-CS / V-CP, JTS #1195 §7): curve-ring self-intersection.
+   ---------------------------------------------------------------------------
+   Decides whether a closed CurveRing (a list of chord / circular-arc segments)
+   is SIMPLE: no two NON-adjacent segments share a point, and consecutive
+   segments meet only at their connecting vertex (the curve_ring_adjacent
+   configuration).  Composes the intersection primitives behind ARC_ARC_XY
+   (arc-arc), ARC_SEGMENT_XY (arc-chord), and a chord-chord segment test, over
+   every segment pair, excluding the permitted shared vertices of adjacent
+   pairs.  Centres/radii are EXACT (circumcentre_q); the sweep membership uses
+   the atan2 point_on_arc_sector test (INTERFACE-BOUNDARY float).
+
+   Proof companion: theories/CurveRingSimple.v -- curve_ring_simple spec and
+   curve_ring_not_simple_of_witness (a detected non-adjacent crossing witnesses
+   ~ curve_ring_simple, certifying every NOT_SIMPLE verdict).  The completeness
+   direction (SIMPLE => genuinely no crossing) is this all-pairs computation,
+   not a theorem; reflex-arc (sweep >= pi) span membership stays the deferred
+   atan2 layer, as in ArcArcSound.
+
+   Input:  line 2 = n (segment count); lines 3.. = one segment each, either
+           "C x1 y1 x2 y2" (chord) or "A x1 y1 x2 y2 x3 y3" (arc start/mid/end).
+   Output: "SIMPLE"; "NOT_SIMPLE <i> <j> <x> <y>" (non-adjacent segments i,j
+           share point (x,y)); "DEGENERATE" (an arc's controls are collinear);
+           "NAN" (non-finite coordinate). *)
+let run_ring_simple () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks =
+      List.filter (fun s -> s <> "")
+        (String.split_on_char ' '
+           (String.map (fun c -> if c = '\t' then ' ' else c)
+              (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "RING_SIMPLE: bad segment line" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c] in
+  let seg_start = function `Chord (a, _) -> a | `Arc (a, _, _) -> a in
+  let seg_end   = function `Chord (_, b) -> b | `Arc (_, _, c) -> c in
+  let all_pts = Array.to_list segs |> List.concat_map seg_pts in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
+  else if List.exists (fun s -> match s with
+            | `Arc (a, b, c) ->
+                circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                  (qf c.bx, qf c.by_) = None
+            | `Chord _ -> false) (Array.to_list segs)
+  then print_endline "DEGENERATE"
+  else begin
+    let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+    let same (x, y) (v : bPoint) =
+      hypot2 (x -. v.bx) (y -. v.by_) <= 1e-9 *. (1.0 +. hypot2 v.bx v.by_) in
+    (* circle (arc circumcircle) intersect segment, points in sweep AND on [0,1] *)
+    let arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
+      match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+              (qf c.bx, qf c.by_) with
+      | None -> []
+      | Some (ox, oy, r2) ->
+          let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
+          let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
+          if qeq l2q q0 then []
+          else begin
+            let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
+                              (Q.mul (Q.sub oy (qf p.by_)) dyq) in
+            let s = Q.div projn l2q in
+            let fxq = Q.add (qf p.bx) (Q.mul s dxq)
+            and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
+            let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
+                            (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
+            let h2q = Q.sub r2 d2q in
+            if qlt h2q q0 then []
+            else begin
+              let oxf = Q.to_float ox and oyf = Q.to_float oy in
+              let lf = sqrt (Q.to_float l2q) in
+              let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
+              let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
+              let sf = Q.to_float s and h = sqrt (Q.to_float h2q) in
+              let hl = h /. lf in
+              let cands = if h = 0.0 then [(fxf, fyf, sf)]
+                          else [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
+                                (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
+              List.filter_map (fun (x, y, t) ->
+                if t >= 0.0 && t <= 1.0 && point_on_arc_sector (oxf, oyf) a b c (x, y)
+                then Some (x, y) else None) cands
+            end
+          end in
+    (* two arcs' circumcircles intersect, points in BOTH sweeps *)
+    let arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
+      match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
+            circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
+      | None, _ | _, None -> []
+      | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+          let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                         (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+          let span1 (x, y) = point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (x, y) in
+          let span2 (x, y) = point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (x, y) in
+          if qeq dq q0 then begin
+            (* coincident circles (concentric + equal radius): arcs on the SAME
+               circle -- they overlap iff a control point of one is in the
+               other's sweep.  (Equal-radius concentric only; else no meet.) *)
+            if qeq r1sq r2sq then
+              (List.filter (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
+               |> List.map (fun v -> (v.bx, v.by_)))
+              @ (List.filter (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1]
+                 |> List.map (fun v -> (v.bx, v.by_)))
+            else []
+          end else begin
+            let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
+            let d2 = Q.to_float dq in
+            let d = sqrt d2 in
+            let a = (d2 +. r1f -. r2f) /. (2.0 *. d) in
+            let h2 = r1f -. a *. a in
+            if h2 < 0.0 then []
+            else begin
+              let h = sqrt h2 in
+              let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+              let mx = o1xf +. a *. ux and my = o1yf +. a *. uy in
+              let cands = if h = 0.0 then [(mx -. h *. uy, my +. h *. ux)]
+                          else [(mx -. h *. uy, my +. h *. ux);
+                                (mx +. h *. uy, my -. h *. ux)] in
+              List.filter (fun pt -> span1 pt && span2 pt) cands
+            end
+          end in
+    (* chord-chord segment intersection (proper crossing or collinear overlap) *)
+    let chord_chord_pts (p1, q1) (p2, q2) =
+      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
+      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
+      let denom = d1x *. d2y -. d1y *. d2x in
+      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
+      if abs_float denom > 1e-12 *. scale *. scale then begin
+        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
+        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
+        if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+        then [(p1.bx +. t *. d1x, p1.by_ +. t *. d1y)] else []
+      end else begin
+        (* parallel: collinear-overlap via endpoint containment *)
+        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
+          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
+          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
+        List.filter_map (fun x -> if on_seg p1 q1 x then Some (x.bx, x.by_) else None) [p2; q2]
+        @ List.filter_map (fun x -> if on_seg p2 q2 x then Some (x.bx, x.by_) else None) [p1; q1]
+      end in
+    let pair_pts s1 s2 =
+      match s1, s2 with
+      | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
+      | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
+      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2 in
+    (* permitted shared vertices for an adjacent pair (i, j) *)
+    let permitted i j =
+      let v = ref [] in
+      if j = i + 1 then v := seg_end segs.(i) :: !v;
+      if i = 0 && j = n - 1 then v := seg_start segs.(0) :: !v;
+      !v in
+    let is_adjacent i j = (j = i + 1) || (i = 0 && j = n - 1) in
+    let witness = ref None in
+    for i = 0 to n - 1 do
+      for j = i + 1 to n - 1 do
+        if !witness = None then begin
+          let pts = pair_pts segs.(i) segs.(j) in
+          let allowed = if is_adjacent i j then permitted i j else [] in
+          let bad = List.filter (fun pt -> not (List.exists (same pt) allowed)) pts in
+          (match bad with
+           | (x, y) :: _ -> witness := Some (i, j, x, y)
+           | [] -> ())
+        end
+      done
+    done;
+    (match !witness with
+     | Some (i, j, x, y) -> Printf.printf "NOT_SIMPLE %d %d %h %h\n" i j x y
+     | None -> print_endline "SIMPLE")
+  end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -1790,6 +1968,7 @@ let () =
        | "ARC_SEGMENT_XY"           -> run_arc_segment_xy ()
        | "ARC_ARC_DISTANCE"         -> run_arc_arc_distance ()
        | "ARC_SEGMENT_DISTANCE"     -> run_arc_segment_distance ()
+       | "RING_SIMPLE"              -> run_ring_simple ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()

@@ -1,0 +1,23 @@
+# Adversarial tests for RING_SIMPLE (RocqRefRunner), V-CS/V-CP / JTS #1195 §7.
+# I1 WITNESS-SOUND (curve_ring_not_simple_of_witness): a NOT_SIMPLE witness
+# lies on both reported non-adjacent segments.  I2 curated class.  I3 rotation.
+# '!!' lines are PROVEN-invariant / expectation violations (CI-failing).
+
+## Curated rings (verdict hand-verified).
+  [square (4 chords)] -> 'SIMPLE'   ok
+  [bowtie (diag x anti-diag)] -> 'NOT_SIMPLE 0 2 0x1.4p+2 0x1.4p+2'   ok
+  [lens (2 arcs, shared ends)] -> 'SIMPLE'   ok
+  [triangle (3 chords, all adjacent)] -> 'SIMPLE'   ok
+  [pentagon] -> 'SIMPLE'   ok
+  [arc over non-adjacent chord (shallow, crosses)] -> 'NOT_SIMPLE 0 2 0x1.28d037548c24ap+0 0x1.8p+0'   ok
+  [arc-arc non-adjacent crossing] -> 'NOT_SIMPLE 0 2 0x1.4bf41766d5f46p+3 0x1p+0'   ok
+  [tall arc, chord outside its x-range (simple)] -> 'SIMPLE'   ok
+  [degenerate arc (collinear)] -> 'DEGENERATE'   ok
+
+## Rotation sweep (I3): each ring rotated through all offsets keeps its class.
+  [square] base=SIMPLE rotation-stable=True
+  [bowtie] base=NOT_SIMPLE rotation-stable=True
+  [pentagon] base=SIMPLE rotation-stable=True
+  [arc-chord-cross] base=NOT_SIMPLE rotation-stable=True
+
+# All invariants (I1 witness-sound, I2 curated, I3 rotation) hold.

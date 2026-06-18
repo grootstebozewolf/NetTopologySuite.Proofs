@@ -181,3 +181,16 @@ run_arc_arc_distance
 # value; the line-outside-circle core is proven in theories/ArcSegmentDistance.v
 # (circle_line_dist_radial / arc_segment_dist_external), sweep/segment clamp deferred.
 run_arc_segment_distance
+
+# --- RING_SIMPLE (V-CS / V-CP, JTS #1195 §7) --------------------------------
+# Mode RING_SIMPLE decides whether a closed curve ring (chords / arcs) is simple
+# (no two non-adjacent segments meet; consecutive segments meet only at their
+# connecting vertex).  Composes the arc-arc / arc-segment / chord-chord
+# intersection primitives over every segment pair: centres/radii are EXACT
+# (circumcentre_q) but the in-sweep membership uses the atan2 point_on_arc_sector
+# test (transcendental, no Coq-extractable form), so the float IS the interface
+# (same boundary as ARC_ARC_XY / point_on_arc_sector).  The JTS/NTS
+# isSimple/isValid interface value (V-CS/V-CP); the NOT_SIMPLE-witness soundness
+# is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness),
+# completeness + reflex-arc spans deferred.
+run_ring_simple
