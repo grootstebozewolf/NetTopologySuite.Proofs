@@ -1681,6 +1681,14 @@ theories/ArcArcSound.v
 # arc_span_contains (atan2), arc_arc_intersects (full predicate), b64 layer.
 theories/ArcArcCircles.v
 
+# Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
+# core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
+# kills the cross term).  arc_line_circle_intersect: witness on circumcircle
+# (inCircle_R=0, via ArcArcCircles.inCircle_R_zero_of_equidistant) and on the
+# line.  3-axiom.  Deferred: arc-sweep + segment t in [0,1] clamp (atan2/float
+# oracle layer), b64 layer.
+theories/ArcSegmentCircles.v
+
 # Issue #65 curve-aware buffer, first proof brick (Stage 2a-curve seam,
 # unblocked by #64's arc-line Scope B/C closure).  The offset of a
 # circular arc at signed distance d is the CONCENTRIC arc of radius

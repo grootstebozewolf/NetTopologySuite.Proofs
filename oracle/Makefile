@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests
 
 all: $(TARGET)
 
@@ -26,6 +26,12 @@ all: $(TARGET)
 # I3 symmetry, I4 reversal-stable).  Nonzero exit on any violation.
 arc-arc-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_arc_tests.py
+
+# Adversarial ARC_SEGMENT_XY suite (issue #224 W1 / N-AL): gates the proven
+# invariants (I1 on-circle, I2 on-segment t in [0,1], I3 seg-reversal,
+# I4 arc-reversal).  Nonzero exit on any violation.
+arc-segment-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_segment_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<
