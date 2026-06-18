@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests
 
 all: $(TARGET)
 
@@ -57,6 +57,12 @@ ring-simple-tests: $(TARGET)
 # witness-soundness, I3 hole-reuse.  Nonzero exit on any violation.
 cp-ring-simple-tests: $(TARGET)
 	cd .. && python3 oracle/gen_cp_ring_simple_tests.py
+
+# Adversarial ARC_OFFSET_XY suite (OFF/BUF-1/BUF-NEG, JTS #1195 §7): gates
+# I1 radial-dist |d|, I2 distance |r+d| from centre, I3 radial ray (homothety),
+# I4 EMPTY iff r+d<=0, I5 identity at d=0.  Nonzero exit on any violation.
+arc-offset-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_offset_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<

@@ -1,0 +1,50 @@
+# Adversarial tests for ARC_OFFSET_XY (RocqRefRunner), OFF/BUF / JTS #1195 §7.
+# I1 radial-dist |d|  I2 distance |r+d| from centre  I3 radial ray (homothety)
+# I4 EMPTY iff r+d<=0  I5 identity at d=0.  Backing: ArcOffsetThreePoint
+# arc_offset_preserves_arc / radial_offset_dist_exact + the EMPTY witness.
+# '!!' lines are gated-invariant / expectation violations (CI-failing).
+
+## A. Curated (offset radii hand-verified).
+  [R=5 arc, d=+2 (radius 7)] -> '0x1.cp+2 0x0p+0 0x0p+0 0x1.cp+2 -0x1.cp+2 0x0p+0'   ok
+  [R=5 arc, d=-2 (radius 3)] -> '0x1.8p+1 0x0p+0 0x0p+0 0x1.8p+1 -0x1.8p+1 0x0p+0'   ok
+  [R=5 arc, d=0 (identity)] -> '0x1.4p+2 0x0p+0 0x0p+0 0x1.4p+2 -0x1.4p+2 0x0p+0'   ok
+  [R=5 arc, d=-5 (r+d=0, EMPTY)] -> 'EMPTY'   ok
+  [R=5 arc, d=-6 (r+d<0, EMPTY)] -> 'EMPTY'   ok
+  [R=5 arc, large outward d=+50] -> '0x1.b8p+5 0x0p+0 0x0p+0 0x1.b8p+5 -0x1.b8p+5 0x0p+0'   ok
+  [degenerate arc (collinear)] -> 'DEGENERATE'   ok
+
+## B. Sweep over arcs and offsets (gating I1-I5).
+  [unit @origin d=-0.9 (r=1)] -> '0x1.9999999999998p-4 0x0p+0 0x0p+0 0x1.9999999999998p-4 -0x1.9999999999998p-4 0x0p+0'   ok
+  [unit @origin d=-0.5 (r=1)] -> '0x1p-1 0x0p+0 0x0p+0 0x1p-1 -0x1p-1 0x0p+0'   ok
+  [unit @origin d=-0.01 (r=1)] -> '0x1.fae147ae147aep-1 0x0p+0 0x0p+0 0x1.fae147ae147aep-1 -0x1.fae147ae147aep-1 0x0p+0'   ok
+  [unit @origin d=0 (r=1)] -> '0x1p+0 0x0p+0 0x0p+0 0x1p+0 -0x1p+0 0x0p+0'   ok
+  [unit @origin d=0.5 (r=1)] -> '0x1.8p+0 0x0p+0 0x0p+0 0x1.8p+0 -0x1.8p+0 0x0p+0'   ok
+  [unit @origin d=3 (r=1)] -> '0x1p+2 0x0p+0 0x0p+0 0x1p+2 -0x1p+2 0x0p+0'   ok
+  [unit @origin d=-1 (r=1)] -> 'EMPTY'   ok
+  [unit @origin d=-1.5 (r=1)] -> 'EMPTY'   ok
+  [R=5 lower d=-4.5 (r=5)] -> '-0x1p-1 0x0p+0 0x0p+0 -0x1p-1 0x1p-1 0x0p+0'   ok
+  [R=5 lower d=-2.5 (r=5)] -> '-0x1.4p+1 0x0p+0 0x0p+0 -0x1.4p+1 0x1.4p+1 0x0p+0'   ok
+  [R=5 lower d=-0.05 (r=5)] -> '-0x1.3cccccccccccdp+2 0x0p+0 0x0p+0 -0x1.3cccccccccccdp+2 0x1.3cccccccccccdp+2 0x0p+0'   ok
+  [R=5 lower d=0 (r=5)] -> '-0x1.4p+2 0x0p+0 0x0p+0 -0x1.4p+2 0x1.4p+2 0x0p+0'   ok
+  [R=5 lower d=2.5 (r=5)] -> '-0x1.ep+2 0x0p+0 0x0p+0 -0x1.ep+2 0x1.ep+2 0x0p+0'   ok
+  [R=5 lower d=15 (r=5)] -> '-0x1.4p+4 0x0p+0 0x0p+0 -0x1.4p+4 0x1.4p+4 0x0p+0'   ok
+  [R=5 lower d=-5 (r=5)] -> 'EMPTY'   ok
+  [R=5 lower d=-7.5 (r=5)] -> 'EMPTY'   ok
+  [off-centre R=2 @ (3,4) d=-1.8 (r=2)] -> '0x1.999999999999ap+1 0x1p+2 0x1.8p+1 0x1.0cccccccccccdp+2 0x1.6666666666666p+1 0x1p+2'   ok
+  [off-centre R=2 @ (3,4) d=-1 (r=2)] -> '0x1p+2 0x1p+2 0x1.8p+1 0x1.4p+2 0x1p+1 0x1p+2'   ok
+  [off-centre R=2 @ (3,4) d=-0.02 (r=2)] -> '0x1.3eb851eb851ecp+2 0x1p+2 0x1.8p+1 0x1.7eb851eb851ecp+2 0x1.051eb851eb852p+0 0x1p+2'   ok
+  [off-centre R=2 @ (3,4) d=0 (r=2)] -> '0x1.4p+2 0x1p+2 0x1.8p+1 0x1.8p+2 0x1p+0 0x1p+2'   ok
+  [off-centre R=2 @ (3,4) d=1 (r=2)] -> '0x1.8p+2 0x1p+2 0x1.8p+1 0x1.cp+2 0x0p+0 0x1p+2'   ok
+  [off-centre R=2 @ (3,4) d=6 (r=2)] -> '0x1.6p+3 0x1p+2 0x1.8p+1 0x1.8p+3 -0x1.4p+2 0x1p+2'   ok
+  [off-centre R=2 @ (3,4) d=-2 (r=2)] -> 'EMPTY'   ok
+  [off-centre R=2 @ (3,4) d=-3 (r=2)] -> 'EMPTY'   ok
+  [small quarter d=-1.8 (r=2)] -> '0x1.9999999999995p-3 0x1.567b685610953p-52 0x1.21a1851ff630bp-3 0x1.21a1851ff630bp-3 0x1.567b685610953p-52 0x1.9999999999995p-3'   ok
+  [small quarter d=-1 (r=2)] -> '0x1p+0 0x1.7c891e988433fp-53 0x1.6a09e667f3bcep-1 0x1.6a09e667f3bcep-1 0x1.7c891e988433fp-53 0x1p+0'   ok
+  [small quarter d=-0.02 (r=2)] -> '0x1.fae147ae147aep+0 0x1.e715e9b8fb28p-59 0x1.666b14bdf3dc3p+0 0x1.666b14bdf3dc3p+0 0x1.e715e9b8fb28p-59 0x1.fae147ae147aep+0'   ok
+  [small quarter d=0 (r=2)] -> '0x1p+1 0x0p+0 0x1.6a09e667f3bcdp+0 0x1.6a09e667f3bcdp+0 0x0p+0 0x1p+1'   ok
+  [small quarter d=1 (r=2)] -> '0x1.8000000000001p+1 -0x1.7c891e988434p-53 0x1.0f876ccdf6cdbp+1 0x1.0f876ccdf6cdbp+1 -0x1.7c891e988434p-53 0x1.8000000000001p+1'   ok
+  [small quarter d=6 (r=2)] -> '0x1p+3 -0x1.1d66d6f26327p-50 0x1.6a09e667f3bcdp+2 0x1.6a09e667f3bcdp+2 -0x1.1d66d6f26327p-50 0x1p+3'   ok
+  [small quarter d=-2 (r=2)] -> 'EMPTY'   ok
+  [small quarter d=-3 (r=2)] -> 'EMPTY'   ok
+
+# All invariants (I1 radial-dist, I2 same-circle, I3 radial-ray, I4 EMPTY, I5 identity) hold.

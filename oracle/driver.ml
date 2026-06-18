@@ -1832,6 +1832,47 @@ let run_ring_simple () =
      | None -> print_endline "SIMPLE")
   end
 
+(* ----- ARC_OFFSET_XY (OFF / BUF-1 / BUF-NEG, JTS #1195 §7): arc buffer offset.
+   ---------------------------------------------------------------------------
+   Emits the OFFSET of a circular arc at signed distance d -- the buffer-boundary
+   primitive.  The offset is the CONCENTRIC arc of radius r+d (r = circumradius):
+   each control point P maps radially to O + ((r+d)/r)(P - O), at distance |d|
+   from P (the parallel curve).  For r + d <= 0 (i.e. |d| >= r, an inward offset
+   past the centre) the offset is EMPTY -- the parallel-curve property fails.
+
+   Centre O / radius^2 are EXACT (circumcentre_q); only the radius sqrt and the
+   emitted coordinates round (INTERFACE-BOUNDARY float, off the exact centre).
+   Proof backing (all merged, 3-axiom): ArcOffsetThreePoint.arc_offset_preserves_arc
+   (the offset of a valid arc is a valid arc, same centre, radius r+d) +
+   radial_offset_dist_exact (controls at distance |d|) + the EMPTY-boundary
+   witness ArcOffset.inner_offset_past_center_not_at_distance (parallel-curve
+   property fails for d < -r).
+
+   Input:  lines 2..4 = arc_start, arc_mid, arc_end; line 5 = d (signed float).
+   Output: "<x1> <y1> <x2> <y2> <x3> <y3>" (offset start,mid,end, %h);
+           "EMPTY" (r + d <= 0); "DEGENERATE" (collinear controls); "NAN". *)
+let run_arc_offset_xy () =
+  let a = parse_point (input_line stdin) in
+  let b = parse_point (input_line stdin) in
+  let c = parse_point (input_line stdin) in
+  let d = float_of_string (String.trim (input_line stdin)) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c && finite_float d)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                 (qf c.bx, qf c.by_) with
+    | None -> print_endline "DEGENERATE"
+    | Some (ox, oy, r2) ->
+        let oxf = Q.to_float ox and oyf = Q.to_float oy in
+        let r = sqrt (Q.to_float r2) in
+        if r +. d <= 0.0 then print_endline "EMPTY"
+        else begin
+          let k = (r +. d) /. r in
+          let off (p : bPoint) =
+            (oxf +. k *. (p.bx -. oxf), oyf +. k *. (p.by_ -. oyf)) in
+          let (x1, y1) = off a and (x2, y2) = off b and (x3, y3) = off c in
+          Printf.printf "%h %h %h %h %h %h\n" x1 y1 x2 y2 x3 y3
+        end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -1969,6 +2010,7 @@ let () =
        | "ARC_ARC_DISTANCE"         -> run_arc_arc_distance ()
        | "ARC_SEGMENT_DISTANCE"     -> run_arc_segment_distance ()
        | "RING_SIMPLE"              -> run_ring_simple ()
+       | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()
