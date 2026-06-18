@@ -142,3 +142,16 @@ point_on_arc_sector
 # intersection interface value (N-AA); the coordinate soundness proof is the
 # deferred #5b frontier (theories/ArcArcSound.v has the slice).
 run_arc_arc_xy
+
+# --- ARC_SEGMENT_XY (N-AL, issue #224 W1) -----------------------------------
+# Mode ARC_SEGMENT_XY emits the intersection POINTS of a circular arc with a
+# line SEGMENT (the segment analogue of ARC_ARC_XY; replaces the single-point
+# ARC_LINE_XY).  The coordinates carry an irrational sqrt(r^2 - d^2) (no
+# Coq-extractable form, like ARC_LINE_XY / ARC_ARC_XY); the count decision
+# r^2 - d^2 >/=/< 0 and the perpendicular foot are computed in EXACT Q off the
+# circumcentre_q centre/radius, so only the final sqrt and emitted coordinates
+# round.  Points kept iff in the arc span (point_on_arc_sector) AND on the
+# segment (0 <= t <= 1).  The JTS/NTS CircularArcs.intersectSegment interface
+# value (N-AL); coordinate existence proven in theories/ArcSegmentCircles.v
+# (line_circle_radical_point / arc_line_circle_intersect).
+run_arc_segment_xy
