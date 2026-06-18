@@ -1,0 +1,62 @@
+# Adversarial tests for ARC_SEGMENT_XY (RocqRefRunner) vs EXACT-rational
+# ground truth.  '!!' lines are PROVEN-invariant violations (CI-failing).
+# I1 on-circle  I2 on-segment(t in [0,1])  I3 seg-reversal  I4 arc-reversal
+
+## A. Curated battery (issue #224 examples + counts hand-verified).
+  [issue#224: upper arc, line y=4 over [-5,5] (was -inf -nan)] -> '2 0x1.8p+1 0x1p+2 -0x1.8p+1 0x1p+2' expect=2   exact_line_pts=2   ok
+  [half segment x in [0,5], y=4] -> '1 0x1.8p+1 0x1p+2' expect=1   exact_line_pts=2   ok
+  [tangent y=5 at top (0,5)] -> '1 0x0p+0 0x1.4p+2' expect=1   exact_line_pts=1   ok
+  [line misses circle (y=6)] -> '0' expect=0   exact_line_pts=0   ok
+  [2 circle crossings but lower half, not on upper arc (y=-4)] -> '0' expect=0   exact_line_pts=2   ok
+  [segment too short [-1,1] to reach crossings (y=4)] -> '0' expect=0   exact_line_pts=2   ok
+  [crossing exactly at segment START endpoint (3,4)] -> '1 0x1.8p+1 0x1p+2' expect=1   exact_line_pts=2   ok
+  [crossing exactly at segment END endpoint (3,4)] -> '1 0x1.8p+1 0x1p+2' expect=1   exact_line_pts=2   ok
+  [vertical chord x=3 over [0,5] meets upper arc at (3,4)] -> '1 0x1.8p+1 0x1p+2' expect=1   exact_line_pts=2   ok
+  [degenerate arc (collinear controls)] -> 'DEGENERATE' expect=DEGENERATE      ok
+  [zero-length segment] -> 'DEGENERATE' expect=DEGENERATE      ok
+
+## B. Sweep over chord heights and segment windows (gating I1-I4).
+  [y=-4.5 seg x in [-5,5]] -> '0'   exact_line_pts=2   ok
+  [y=-4.5 seg x in [-3,3]] -> '0'   exact_line_pts=2   ok
+  [y=-4.5 seg x in [0,5]] -> '0'   exact_line_pts=2   ok
+  [y=-4.5 seg x in [-5,0]] -> '0'   exact_line_pts=2   ok
+  [y=-4.5 seg x in [2,4]] -> '0'   exact_line_pts=2   ok
+  [y=-3 seg x in [-5,5]] -> '0'   exact_line_pts=2   ok
+  [y=-3 seg x in [-3,3]] -> '0'   exact_line_pts=2   ok
+  [y=-3 seg x in [0,5]] -> '0'   exact_line_pts=2   ok
+  [y=-3 seg x in [-5,0]] -> '0'   exact_line_pts=2   ok
+  [y=-3 seg x in [2,4]] -> '0'   exact_line_pts=2   ok
+  [y=-1 seg x in [-5,5]] -> '0'   exact_line_pts=2   ok
+  [y=-1 seg x in [-3,3]] -> '0'   exact_line_pts=2   ok
+  [y=-1 seg x in [0,5]] -> '0'   exact_line_pts=2   ok
+  [y=-1 seg x in [-5,0]] -> '0'   exact_line_pts=2   ok
+  [y=-1 seg x in [2,4]] -> '0'   exact_line_pts=2   ok
+  [y=0 seg x in [-5,5]] -> '2 0x1.4p+2 0x0p+0 -0x1.4p+2 0x0p+0'   exact_line_pts=2   ok
+  [y=0 seg x in [-3,3]] -> '0'   exact_line_pts=2   ok
+  [y=0 seg x in [0,5]] -> '1 0x1.4p+2 0x0p+0'   exact_line_pts=2   ok
+  [y=0 seg x in [-5,0]] -> '1 -0x1.4p+2 0x0p+0'   exact_line_pts=2   ok
+  [y=0 seg x in [2,4]] -> '0'   exact_line_pts=2   ok
+  [y=1 seg x in [-5,5]] -> '2 0x1.3988e1409212ep+2 0x1p+0 -0x1.3988e1409212ep+2 0x1p+0'   exact_line_pts=2   ok
+  [y=1 seg x in [-3,3]] -> '0'   exact_line_pts=2   ok
+  [y=1 seg x in [0,5]] -> '1 0x1.3988e1409212ep+2 0x1p+0'   exact_line_pts=2   ok
+  [y=1 seg x in [-5,0]] -> '1 -0x1.3988e1409212ep+2 0x1p+0'   exact_line_pts=2   ok
+  [y=1 seg x in [2,4]] -> '0'   exact_line_pts=2   ok
+  [y=3 seg x in [-5,5]] -> '2 0x1p+2 0x1.8p+1 -0x1p+2 0x1.8p+1'   exact_line_pts=2   ok
+  [y=3 seg x in [-3,3]] -> '0'   exact_line_pts=2   ok
+  [y=3 seg x in [0,5]] -> '1 0x1p+2 0x1.8p+1'   exact_line_pts=2   ok
+  [y=3 seg x in [-5,0]] -> '1 -0x1p+2 0x1.8p+1'   exact_line_pts=2   ok
+  [y=3 seg x in [2,4]] -> '1 0x1p+2 0x1.8p+1'   exact_line_pts=2   ok
+  [y=4.5 seg x in [-5,5]] -> '2 0x1.16f8334644df9p+1 0x1.2p+2 -0x1.16f8334644df9p+1 0x1.2p+2'   exact_line_pts=2   ok
+  [y=4.5 seg x in [-3,3]] -> '2 0x1.16f8334644df9p+1 0x1.2p+2 -0x1.16f8334644df9p+1 0x1.2p+2'   exact_line_pts=2   ok
+  [y=4.5 seg x in [0,5]] -> '1 0x1.16f8334644df9p+1 0x1.2p+2'   exact_line_pts=2   ok
+  [y=4.5 seg x in [-5,0]] -> '1 -0x1.16f8334644df9p+1 0x1.2p+2'   exact_line_pts=2   ok
+  [y=4.5 seg x in [2,4]] -> '1 0x1.16f8334644df9p+1 0x1.2p+2'   exact_line_pts=2   ok
+
+## C. Near-tangency float stress (deferred float frontier -- NOT a bug):
+##    I1/I2/I3/I4 still gated; float-count vs exact-disc only NOTEd.
+  [near-tangent top y=5-0x1p-20 (k=4.999999046325684)] -> '2 0x1.94c58269d47e8p-9 0x1.3ffffcp+2 -0x1.94c58269d47e8p-9 0x1.3ffffcp+2'   exact_line_pts=2   ok
+  [near-tangent top y=5-0x1p-30 (k=4.999999999068677)] -> '2 0x1.94c583ad54c0ep-14 0x1.3fffffffp+2 -0x1.94c583ad54c0ep-14 0x1.3fffffffp+2'   exact_line_pts=2   ok
+  [near-tangent top y=5-0x1p-45 (k=4.999999999999972)] -> '2 0x1.1e3779b97f4a1p-21 0x1.3ffffffffffep+2 -0x1.1e3779b97f4a1p-21 0x1.3ffffffffffep+2'   exact_line_pts=2   ok
+  [near-tangent top y=5-0 (k=5.0)] -> '1 0x0p+0 0x1.4p+2'   exact_line_pts=1   ok
+
+# All proven invariants (I1-I4) hold across the suite.

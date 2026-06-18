@@ -997,6 +997,11 @@ let run_arc_passes_through_pixel () =
 
 (* ----- ARC_LINE_XY mode (Phase 4 Scope C, extracted). ------------------- *)
 
+(* NOTE: this is a SINGLE-point projection (Cramer's rule, one root); it is not
+   an enumerator and emits -inf/-nan on a two-crossing line (issue #224).  For
+   arc-line/segment intersection enumeration (0/1/2 points, sweep- and
+   segment-clamped) use ARC_SEGMENT_XY below. *)
+
 (* Calls the verified total projections b64_arc_line_intersect_point_x / _y
    from `theories-flocq/ArcLineIntersect_b64_exact.v` directly.  Reads the arc
    (start, mid, end) defining the circumcircle, then the chord endpoints P, Q,
@@ -1369,6 +1374,80 @@ let run_arc_arc_xy () =
           end
         end
 
+(* ----- ARC_SEGMENT_XY (issue #224 W1 / N-AL): arc-SEGMENT intersection coords.
+   ---------------------------------------------------------------------------
+   Intersection POINTS of a circular arc with a line SEGMENT, enumerated -- the
+   segment analogue of ARC_ARC_XY, and the usable replacement for the
+   single-point ARC_LINE_XY (which returns -inf/-nan on a 2-crossing line).
+
+   The arc's circumcircle (centre O, squared radius r^2 -- EXACT via
+   circumcentre_q) meets the segment's supporting line where, with u the unit
+   direction P->Q, F = P + s(Q-P) the perpendicular foot (s = (O-P).(Q-P)/|PQ|^2),
+   d = |O F| and h = sqrt(r^2 - d^2): the circle intersections are F +- h u, at
+   line parameters t = s +- h/|PQ|.  Each is kept iff it lies in the arc's sweep
+   (point_on_arc_sector) AND on the segment (0 <= t <= 1).  The count decision
+   r^2 - d^2 >/=/< 0 and the foot are EXACT Q (no float-tangency sign flip);
+   only the final sqrt and the emitted coordinates round.
+
+   Backed by theories/ArcSegmentCircles.v: line_circle_radical_point (F +- h u
+   lie on the circle) and arc_line_circle_intersect (the witness has
+   inCircle_R = 0 and lies on the line).
+
+   Input:  lines 2..4 = arc (start,mid,end), lines 5..6 = segment P, Q ("x y").
+   Output: "<n>" then n*(" <x> <y>"), n in {0,1,2} (the t = s+h/|PQ| point
+           first); "DEGENERATE" (arc collinear OR zero-length segment); "NAN". *)
+let run_arc_segment_xy () =
+  let a1 = parse_point (input_line stdin) in
+  let b1 = parse_point (input_line stdin) in
+  let c1 = parse_point (input_line stdin) in
+  let p  = parse_point (input_line stdin) in
+  let q  = parse_point (input_line stdin) in
+  if not (finite_bpoint a1 && finite_bpoint b1 && finite_bpoint c1 &&
+          finite_bpoint p && finite_bpoint q)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_)
+                 (qf c1.bx, qf c1.by_) with
+    | None -> print_endline "DEGENERATE"
+    | Some (ox, oy, r2) ->
+        (* exact segment vector and squared length *)
+        let dxq = Q.sub (qf q.bx) (qf p.bx)
+        and dyq = Q.sub (qf q.by_) (qf p.by_) in
+        let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
+        if qeq l2q q0 then print_endline "DEGENERATE"  (* zero-length segment *)
+        else begin
+          (* exact perpendicular foot F = P + s(Q-P), s = (O-P).(Q-P)/|PQ|^2 *)
+          let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
+                            (Q.mul (Q.sub oy (qf p.by_)) dyq) in
+          let s   = Q.div projn l2q in
+          let fxq = Q.add (qf p.bx)  (Q.mul s dxq)
+          and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
+          (* exact squared perpendicular distance and discriminant *)
+          let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
+                          (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
+          let h2q = Q.sub r2 d2q in
+          if qlt h2q q0 then print_endline "0"        (* line misses the circle *)
+          else begin
+            let oxf = Q.to_float ox and oyf = Q.to_float oy in
+            let lf  = sqrt (Q.to_float l2q) in
+            let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
+            let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
+            let sf  = Q.to_float s in
+            let hf  = sqrt (Q.to_float h2q) in
+            let hl  = hf /. lf in
+            (* F +- h u, at line parameters t = s +- h/|PQ| *)
+            let p_plus  = (fxf +. hf *. uxf, fyf +. hf *. uyf, sf +. hl) in
+            let p_minus = (fxf -. hf *. uxf, fyf -. hf *. uyf, sf -. hl) in
+            let cands = if hf = 0.0 then [p_plus] else [p_plus; p_minus] in
+            let keep (qx, qy, t) =
+              t >= 0.0 && t <= 1.0 &&
+              point_on_arc_sector (oxf, oyf) a1 b1 c1 (qx, qy) in
+            let pts = List.filter keep cands in
+            Printf.printf "%d" (List.length pts);
+            List.iter (fun (x, y, _) -> Printf.printf " %h %h" x y) pts;
+            print_newline ()
+          end
+        end
+
 (* ----- ARC_ARC_DISTANCE (D-AA, JTS #1195 §7): arc-to-arc shortest distance.
    ---------------------------------------------------------------------------
    The minimum distance between two circular arcs.  By the critical-pair
@@ -1605,6 +1684,7 @@ let () =
        | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
        | "ARC_DISTANCE"             -> run_arc_distance ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
+       | "ARC_SEGMENT_XY"           -> run_arc_segment_xy ()
        | "ARC_ARC_DISTANCE"         -> run_arc_arc_distance ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
