@@ -1953,6 +1953,77 @@ let run_point_in_curve_ring () =
     print_endline (if !cnt mod 2 = 1 then "IN" else "OUT")
   end
 
+(* ----- RING_ORIENTATION (V-CP / CP_VALID sector orientation, JTS #1195 §7).
+   ---------------------------------------------------------------------------
+   The TRUE signed area of a curve ring -> CCW / CW orientation.  By Green's
+   theorem the twice-signed area is the chord shoelace over segment connection
+   points PLUS each arc's signed circular-segment contribution:
+     S = Sum_segments cross(start,end) + Sum_arcs sb * r^2 * (theta - sin theta)
+   where cross(p,q) = px*qy - py*qx, theta is the arc's swept angle (the ARC_AREA
+   acos kernel on the EXACT arc_invariants_q), r^2 is exact (circumcentre via
+   arc_invariants_q), and sb = orientation sign of the control points (a,b,c)
+   = sign((b-a) x (c-a)) -- the SWEEP direction (CCW arc adds +area), computed in
+   exact Q.  This counts the arc bulge (unlike the inscribed chord polygon, whose
+   winding sign can be wrong when an arc dominates).
+
+   INTERFACE-BOUNDARY float (sqrt/acos/sin off the exact circumcentre), like
+   ARC_AREA; allowlisted run_ring_orientation.  Proof companion:
+   theories/CurvePolygonOrientation.v (the true signed area + orientation algebra
+   reusing ArcArea.segment_area + RingOrientation.cross_pt); the topological
+   "sign = inside orientation" (Jordan) is deferred, pinned by the test.
+
+   Input:  line 2 = n (segment count); lines 3.. = one segment each
+           ("C x1 y1 x2 y2" or "A sx sy mx my ex ey").
+   Output: "CCW <signed_area>" (S>0) | "CW <signed_area>" (S<0) | "DEGENERATE"
+           (|S| ~ 0) | "NAN".  <signed_area> = S/2 (%h). *)
+let run_ring_orientation () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks =
+      List.filter (fun s -> s <> "")
+        (String.split_on_char ' '
+           (String.map (fun c -> if c = '\t' then ' ' else c)
+              (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "RING_ORIENTATION: bad segment line" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = Array.to_list segs |> List.concat_map seg_pts in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
+  else begin
+    let cross (p : bPoint) (q : bPoint) = p.bx *. q.by_ -. p.by_ *. q.bx in
+    let s2 = ref 0.0 in
+    Array.iter (fun seg -> match seg with
+      | `Chord (p, q) -> s2 := !s2 +. cross p q
+      | `Arc (a, b, c) ->
+          s2 := !s2 +. cross a c;
+          (match arc_invariants_q a b c with
+           | ArcDegenerate -> ()  (* collinear arc = its chord a->c, zero bulge *)
+           | ArcInv (r2, cos_full, major) ->
+               let r2f = Q.to_float r2 in
+               let sv = Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2)) in
+               let s = sqrt (if sv < 0.0 then 0.0 else sv) in
+               let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
+               let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+               (* sb = sign of (b-a) x (c-a): the sweep direction, exact Q *)
+               let ax = qf a.bx and ay = qf a.by_ in
+               let bx = qf b.bx and by_ = qf b.by_ in
+               let cx = qf c.bx and cy = qf c.by_ in
+               let orient = Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
+                                  (Q.mul (Q.sub by_ ay) (Q.sub cx ax)) in
+               let sb = float_of_int (Q.sign orient) in
+               s2 := !s2 +. sb *. r2f *. (theta -. sin theta)))
+      segs;
+    let tol = 1e-9 *. (1.0 +. abs_float !s2) in
+    if abs_float !s2 <= tol then print_endline "DEGENERATE"
+    else Printf.printf "%s %h\n" (if !s2 > 0.0 then "CCW" else "CW") (!s2 /. 2.0)
+  end
+
 (* ----- CURVE_SNAP_DECISION / CURVE_SNAP_INVARIANTS_EXACT (PRC-SN, JTS#1195,
    proofs#66). ---------------------------------------------------------------
 
@@ -2092,6 +2163,7 @@ let () =
        | "RING_SIMPLE"              -> run_ring_simple ()
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()
+       | "RING_ORIENTATION"         -> run_ring_orientation ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()
        | "CURVE_SNAP_INVARIANTS_EXACT"  -> run_curve_snap_invariants_exact ()
        | "SNAP_SCALED"                  -> run_snap_scaled ()

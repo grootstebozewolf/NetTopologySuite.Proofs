@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests
 
 all: $(TARGET)
 
@@ -69,6 +69,12 @@ arc-offset-tests: $(TARGET)
 # over a query grid, I2 holes-inside-shell composition.  Nonzero exit on violation.
 point-in-curve-ring-tests: $(TARGET)
 	cd .. && python3 oracle/gen_point_in_curve_ring_tests.py
+
+# V-CP sector orientation (JTS #1195 §7): RING_ORIENTATION true signed area
+# (chord shoelace + arc sector areas) -> CCW/CW.  Gates I1 known-orientation,
+# I2 reversal flips, I3 agreement vs recompute, I4 true-vs-inscribed.  Nonzero exit.
+ring-orientation-tests: $(TARGET)
+	cd .. && python3 oracle/gen_ring_orientation_tests.py
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<

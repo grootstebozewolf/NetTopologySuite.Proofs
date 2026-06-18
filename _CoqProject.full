@@ -1707,6 +1707,15 @@ theories/CurvePolygonSimple.v
 # densified outer).  3-axiom, exact.  Deferred: chord-approx bulge / n-chord
 # refinement, orientation, holes-disjoint.
 theories/CurvePolygonValid.v
+# Issue #64 / JTS #1195 §7 V-CP (CP_VALID): sector-orientation component, proof
+# companion of the RING_ORIENTATION oracle.  Certifies the orientation ALGEBRA
+# of the true curve-ring signed area (chord shoelace RingOrientation.cross_pt +
+# per-arc ArcArea.segment_area): segment_area_neg (arc bulge reverses with the
+# sweep), the area_ccw/area_cw classifier (exclusivity, trichotomy, reversal
+# area_ccw_neg), and curve_polygon_orientation_ok (outer CCW / holes CW).
+# 3-axiom.  Deferred to the oracle/test layer: the assembled true area, the
+# major-arc swept angle, and topological (Jordan) soundness.
+theories/CurvePolygonOrientation.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
