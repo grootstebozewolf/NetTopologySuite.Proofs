@@ -1700,6 +1700,14 @@ theories/ArcOffset.v
 # >= |dist O P - r|) + radial-foot attainment.  3-axiom.  Deferred: the CircularArc
 # sector-clamping (foot in span vs nearest endpoint) and arc-arc distance.
 theories/ArcDistance.v
+# Issue #64 / JTS #1195 §7 D-AA: arc-to-arc (circle-to-circle) distance, proof
+# companion of ARC_ARC_DISTANCE.  Reverse-triangle lower bound through both
+# centres (two_circles_dist_lower) + radial-feet attainment (circle_feet_dist),
+# composed: externally separated circles are exactly d - r1 - r2 apart
+# (two_circles_dist_radial; arc-level arc_arc_dist_external).  Reuses the D-PT
+# radial_foot.  3-axiom.  Deferred: on-arc-sector clamp (atan2), internal/
+# overlapping regimes, arc-segment distance, b64 layer.
+theories/ArcArcDistance.v
 
 # Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.
 # radial_offset (homothety about the center, pure rational arithmetic,

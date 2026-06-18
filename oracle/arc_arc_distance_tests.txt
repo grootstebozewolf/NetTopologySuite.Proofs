@@ -1,0 +1,36 @@
+# Adversarial tests for ARC_ARC_DISTANCE (RocqRefRunner), D-AA / JTS #1195 §7.
+# Sandwich: I1 oracle <= sampled on-arc pairs; I2 oracle >= circle gap
+# (two_circles_dist_lower).  '!!' lines are PROVEN-invariant violations.
+# I3 non-neg  I4 symmetry  I5 reversal-stable  I6 shared-vertex=0
+
+## A. Curated battery (distances hand-verified).
+  [external, arcs facing (feet in sweeps)] -> 10.0 expect=10   ok
+  [external, arcs facing away (endpoint min)] -> 20.0 expect=20   ok
+  [intersecting arcs cross at (4,3)] -> 0.0 expect=0   ok
+  [shared start vertex (5,0)] -> 0.0 expect=0   ok
+  [nested circles (gap |5-2|-1 = 2), upper arcs] -> 2.0 expect=2   ok
+  [external tangent (d = r1+r2 = 10) at (5,0)] -> 0.0 expect=0   ok
+  [degenerate arc1 (collinear)] -> 'DEGENERATE' expect=DEGENERATE   ok
+
+## B. Sweep: arc2 centre walked across separations / orientations (gating I1-I6).
+  [UA vs centre(8,0) variant] -> 0.0   ok
+  [UA vs centre(8,0) variant] -> 2.0   ok
+  [UA vs centre(8,0) variant] -> 0.0   ok
+  [UA vs centre(10,0) variant] -> 0.0   ok
+  [UA vs centre(10,0) variant] -> 0.0   ok
+  [UA vs centre(10,0) variant] -> 0.0   ok
+  [UA vs centre(12,0) variant] -> 2.0   ok
+  [UA vs centre(12,0) variant] -> 2.0   ok
+  [UA vs centre(12,0) variant] -> 2.0   ok
+  [UA vs centre(16,0) variant] -> 6.0   ok
+  [UA vs centre(16,0) variant] -> 6.0   ok
+  [UA vs centre(16,0) variant] -> 6.0   ok
+  [UA vs centre(20,0) variant] -> 10.0   ok
+  [UA vs centre(20,0) variant] -> 10.0   ok
+  [UA vs centre(20,0) variant] -> 10.0   ok
+  [UA vs centre(30,0) variant] -> 20.0   ok
+  [UA vs centre(30,0) variant] -> 20.0   ok
+  [UA vs centre(30,0) variant] -> 20.0   ok
+  [LA vs upper arc2 centre(12,0)] -> 2.0   ok
+
+# All proven invariants (I1-I6) hold across the suite.

@@ -142,3 +142,15 @@ point_on_arc_sector
 # intersection interface value (N-AA); the coordinate soundness proof is the
 # deferred #5b frontier (theories/ArcArcSound.v has the slice).
 run_arc_arc_xy
+
+# --- ARC_ARC_DISTANCE (D-AA, JTS #1195 §7) ----------------------------------
+# Mode ARC_ARC_DISTANCE emits the shortest distance between two circular arcs.
+# Min over: interior radial feet on the line O1 O2 when the circumcircles are
+# disjoint (gap d-r1-r2 external / |r1-r2|-d internal); 0 when they intersect in
+# both sweeps; and the four endpoint-vs-other-arc point-to-arc distances (the
+# ARC_DISTANCE kernel).  Transcendental (sqrt + atan2 sector membership), no
+# Coq-extractable form, off the EXACT circumcentre_q centres/radii so only the
+# final sqrt/atan2 round.  The JTS/NTS arc-arc distance interface value; the
+# disjoint circle-to-circle core is proven in theories/ArcArcDistance.v
+# (two_circles_dist_radial / arc_arc_dist_external), sweep clamp deferred.
+run_arc_arc_distance
