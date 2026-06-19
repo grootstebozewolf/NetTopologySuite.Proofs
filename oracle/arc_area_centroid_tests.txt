@@ -1,0 +1,43 @@
+# Adversarial tests for ARC_AREA_CENTROID (RocqRefRunner), C-AREA / issue #64/#69.
+# I1 dist(O,C)==offset  I2 on angular bisector  I3 semicircle  I4 full-turn
+# I5 nonneg  I6 degenerate.  Backing: ArcAreaCentroid.v
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## A. Curated special cases.
+  [semicircle r=1 upper] -> 'XY 0x0p+0 0x1.b2995e7b7b603p-2'   ok
+  [semicircle r=5] -> 'XY 0x0p+0 0x1.0f9fdb0d2d1c2p+1'   ok
+  [degenerate collinear] -> 'DEGENERATE'   ok
+
+## B. Random + adversarial sweeps (I1-I5).
+  [rand0 r=2.82 th=4.62] -> 'XY 0x1.47f20dbecb6e7p+1 -0x1.34a9231b76296p+3'   ok
+  [rand1 r=0.961 th=0.197] -> 'XY 0x1.530d1459066e9p+1 0x1.06b6907ba73dfp+3'   ok
+  [rand2 r=0.363 th=4.08] -> 'XY -0x1.6c963d92c60acp+2 0x1.8c54d3932fc9fp-4'   ok
+  [rand3 r=5.93 th=0.0507] -> 'XY 0x1.99e604f8fb04ap+1 -0x1.61ddb2543644bp+3'   ok
+  [rand4 r=3.47 th=6.01] -> 'XY 0x1.875d62c39c678p+2 0x1.fb0cefc34ddb9p+1'   ok
+  [rand5 r=1.06 th=3.79] -> 'XY -0x1.8da29b115e2fbp+1 -0x1.fb33d4e412d3ep+2'   ok
+  [rand6 r=5.41 th=2.38] -> 'XY 0x1.fb2cacc7b5cbep+2 0x1.e05ec8ff43eadp+2'   ok
+  [rand7 r=6.22 th=3.63] -> 'XY 0x1.108170946c096p+1 0x1.02e8fb6d39474p+3'   ok
+  [rand8 r=2.36 th=0.51] -> 'XY 0x1.7d4d164f80a9ep+1 -0x1.c3bd20da40594p+2'   ok
+  [rand9 r=2.85 th=2.3] -> 'XY -0x1.245fd0677d5c1p+2 -0x1.3599e890a4f1cp+3'   ok
+  [rand10 r=2.74 th=4.07] -> 'XY -0x1.50d8817da40c6p+1 -0x1.518006462e3d1p+2'   ok
+  [rand11 r=7.32 th=2.39] -> 'XY -0x1.348ff19c81c1cp-1 -0x1.741fa47be3a3ep+1'   ok
+  [rand12 r=5.61 th=5.29] -> 'XY 0x1.3ca315bb39e1p+3 0x1.70d5efedbf5ep+1'   ok
+  [rand13 r=0.418 th=1.69] -> 'XY 0x1.4cebece0eb48p+2 -0x1.542904df3fb93p+2'   ok
+  [rand14 r=8.78 th=4.12] -> 'XY -0x1.b389ffe4e27b7p+2 0x1.e569ff2de2debp+2'   ok
+  [rand15 r=4.64 th=1.55] -> 'XY -0x1.420a771378598p+2 0x1.58ab545d4aa35p+3'   ok
+  [rand16 r=5.89 th=2.51] -> 'XY 0x1.062e9b3b6b60ep+2 -0x1.5ca2277ef407dp+1'   ok
+  [rand17 r=5.14 th=0.305] -> 'XY -0x1.c921114c37b78p+0 0x1.aaacb49ddfefcp+3'   ok
+  [rand18 r=7.94 th=0.408] -> 'XY -0x1.eaa9d66fc3421p+3 0x1.305300660885fp+2'   ok
+  [rand19 r=5.34 th=5.4] -> 'XY -0x1.38606ca56d0eap+1 0x1.3f30e3c9c1463p+3'   ok
+  [rand20 r=6.85 th=1.68] -> 'XY -0x1.8ca21c964913p+3 -0x1.a74ed4156f81p-2'   ok
+  [rand21 r=4.4 th=5.98] -> 'XY 0x1.69388fb939b14p+1 -0x1.f14c392ba8ed5p+2'   ok
+  [rand22 r=5.06 th=5.73] -> 'XY 0x1.e0236271597a7p+2 -0x1.2fef264bb0403p+2'   ok
+  [rand23 r=6.43 th=0.967] -> 'XY 0x1.4439d6dbdb46cp+2 -0x1.31358ace1f57ep+3'   ok
+  [rand24 r=7.81 th=0.0136] -> 'XY -0x1.3400c11835b32p+1 -0x1.7d3e9474e4ccp-1'   ok
+  [rand25 r=9.3 th=5.22] -> 'XY -0x1.cb73923098c9ap+1 -0x1.2b5a830541e6cp+3'   ok
+  [rand26 r=8.79 th=0.546] -> 'XY 0x1.2ed215e800711p+2 -0x1.2b732b6b063f4p+3'   ok
+  [rand27 r=7.63 th=0.814] -> 'XY 0x1.9ecbbcd7e85dbp+1 -0x1.dec2266d79354p+3'   ok
+  [rand28 r=2.72 th=2.66] -> 'XY 0x1.a05abe021e20ap-1 0x1.c279ece4d9dd8p+0'   ok
+  [rand29 r=7.33 th=1.96] -> 'XY -0x1.2464e3c18ecb9p+3 0x1.407015b228efap+2'   ok
+
+# All invariants (I1 bounds, I2 bisector, I3/4 specials, I5 nonneg, I6 degen) hold.

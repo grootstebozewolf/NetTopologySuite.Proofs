@@ -1,0 +1,135 @@
+# Adversarial tests for ARC_DISTANCE (RocqRefRunner), D-PT / issue #64/#69.
+# I1 radial if in sweep  I2 endpoint fallback  I3 degen  I4 center  I5 nonneg
+# Backing: ArcPointDistance.v + ArcDistance.v (radial) + ArcIntersect (sweep via inCircle/span)
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## A. Curated special cases (center, foot in/out, degen, huge).
+  [semicircle center] -> '0x1p+0'   ok
+  [semicircle radial foot] -> '0x1p+0'   ok
+  [semicircle outside foot] -> '0x1p+0'   ok
+  [collinear degen] -> 'DEGENERATE'   ok
+  [huge coords] -> '0x1.4p+3'   ok
+
+## B. Random + adversarial (center, outside-sweep, major, NaN, huge-int).
+  [rand0] -> '0x1.9867f446e797ep+3'   ok
+  [center0] -> '0x1.45d740bd4aef5p+5'   ok
+  [outside0] -> '0x1.0ba3e91093744p+9'   ok
+  [rand1] -> '0x1.668fb794a4c8p+5'   ok
+  [center1] -> '0x1.0dd38b90d729cp+5'   ok
+  [outside1] -> '0x1.d57d283cd8fa6p+8'   ok
+  [rand2] -> '0x1.c792f6a716feap+4'   ok
+  [center2] -> '0x1.f8d808d13bb2bp+4'   ok
+  [outside2] -> '0x1.9eaba0f87791bp+8'   ok
+  [rand3] -> '0x1.49403b1412c72p+4'   ok
+  [center3] -> '0x1.cac2b669aae5bp+5'   ok
+  [outside3] -> '0x1.791c7677089c2p+9'   ok
+  [rand4] -> '0x1.083b0f671d718p+2'   ok
+  [center4] -> '0x1.a5b2a2bdbc5a5p+5'   ok
+  [outside4] -> '0x1.5a602ba5f0072p+9'   ok
+  [rand5] -> '0x1.d914013965299p+6'   ok
+  [center5] -> '0x1.0aad27a41a2ccp+6'   ok
+  [outside5] -> '0x1.b6164fbddcefep+9'   ok
+  [rand6] -> '0x1.456cfbe274712p+4'   ok
+  [center6] -> '0x1.481550ee747fdp+6'   ok
+  [outside6] -> '0x1.0d7b6fbcfa344p+10'   ok
+  [rand7] -> '0x1.0bd6c13c0645ap+7'   ok
+  [center7] -> '0x1.ca91a73d6564ap+5'   ok
+  [outside7] -> '0x1.8f5b3fcc55a4p+9'   ok
+  [rand8] -> '0x1.6aca21085a5d7p+6'   ok
+  [center8] -> '0x1.a9a2abb86f8d4p+5'   ok
+  [outside8] -> '0x1.5d9c23285d07bp+9'   ok
+  [rand9] -> '0x1.a32aacda6cbap+5'   ok
+  [center9] -> '0x1.831729c691506p+5'   ok
+  [outside9] -> '0x1.3df321301ed66p+9'   ok
+  [rand10] -> '0x1.84e5d1c4bcabdp+4'   ok
+  [center10] -> '0x1.9a4c7a12e6dc4p+4'   ok
+  [outside10] -> '0x1.67dde6a8c1d8bp+8'   ok
+  [rand11] -> '0x1.f188797d2ff2bp+2'   ok
+  [center11] -> '0x1.1c6a846c7a97dp+3'   ok
+  [outside11] -> '0x1.0247fc9608223p+7'   ok
+  [rand12] -> '0x1.c58d1492b5974p+3'   ok
+  [center12] -> '0x1.a42e993336cf4p+4'   ok
+  [outside12] -> '0x1.59216d343b4afp+8'   ok
+  [rand13] -> '0x1.74ed78943652cp+5'   ok
+  [center13] -> '0x1.4f46d7f0a9fc5p+5'   ok
+  [outside13] -> '0x1.1364096104f9ep+9'   ok
+  [rand14] -> '0x1.2bd2e98b84f68p+7'   ok
+  [center14] -> '0x1.9efed2cdd8d4p+5'   ok
+  [outside14] -> '0x1.8529620bd8ddbp+9'   ok
+  [rand15] -> '0x1.3bd76d9f320f3p+6'   ok
+  [center15] -> '0x1.85f90b575e995p+6'   ok
+  [outside15] -> '0x1.40513686f1ea5p+10'   ok
+  [rand16] -> '0x1.15d5cc741fd96p+1'   ok
+  [center16] -> '0x1.17af0c8e07237p+5'   ok
+  [outside16] -> '0x1.cb748d37a4b6fp+8'   ok
+  [rand17] -> '0x1.556e3a0804b12p+5'   ok
+  [center17] -> '0x1.a14f967e7b7d4p+5'   ok
+  [outside17] -> '0x1.56c5b37768ebap+9'   ok
+  [rand18] -> '0x1.87ae34158493p+2'   ok
+  [center18] -> '0x1.101e12c5c6566p+5'   ok
+  [outside18] -> '0x1.cd4955a22058fp+8'   ok
+  [rand19] -> '0x1.3bef0d37b617p+2'   ok
+  [center19] -> '0x1.3b7af1ff136ap+4'   ok
+  [outside19] -> '0x1.03215949a9234p+8'   ok
+  [rand20] -> '0x1.4cef3b1b34148p+2'   ok
+  [center20] -> '0x1.10f7d5b8ad8c7p+5'   ok
+  [outside20] -> '0x1.c06c488adf763p+8'   ok
+  [rand21] -> '0x1.68402e6e1c599p+5'   ok
+  [center21] -> '0x1.36ca6b3cc0475p+6'   ok
+  [outside21] -> '0x1.ff9707e2fa00ap+9'   ok
+  [rand22] -> '0x1.c68c17d2698eap+2'   ok
+  [center22] -> '0x1.93d1d0055b202p+3'   ok
+  [outside22] -> '0x1.4bb0d3bc24f34p+7'   ok
+  [rand23] -> '0x1.4a56c9cc6738ap+2'   ok
+  [center23] -> '0x1.50315c5e3f697p+2'   ok
+  [outside23] -> '0x1.1424aa4f193c6p+6'   ok
+  [rand24] -> '0x1.5334b9cf0db15p+7'   ok
+  [center24] -> '0x1.2d7ed4d76335ep+6'   ok
+  [outside24] -> '0x1.face39f220d79p+9'   ok
+  [rand25] -> '0x1.b3cd12eefec3cp+3'   ok
+  [center25] -> '0x1.17f01a8172fcdp+4'   ok
+  [outside25] -> '0x1.e4a4b3441138cp+7'   ok
+  [rand26] -> '0x1.4abe908e696e9p+6'   ok
+  [center26] -> '0x1.79b0ce93a5b8bp+6'   ok
+  [outside26] -> '0x1.363a96a02f6edp+10'   ok
+  [rand27] -> '0x1.9559d0b4c71b8p+2'   ok
+  [center27] -> '0x1.a99492d269c2p+4'   ok
+  [outside27] -> '0x1.648fce09079cfp+8'   ok
+  [rand28] -> '0x1.af482279c0067p+6'   ok
+  [center28] -> '0x1.7df19390fbb21p+6'   ok
+  [outside28] -> '0x1.3b5c0852db42bp+10'   ok
+  [rand29] -> '0x1.a3c9ba121ac08p+2'   ok
+  [center29] -> '0x1.c53d86293e4d9p+3'   ok
+  [outside29] -> '0x1.7448bbddc5363p+7'   ok
+  [rand30] -> '0x1.75f727dee7ef8p+3'   ok
+  [center30] -> '0x1.35ba5e9fb0ef3p+6'   ok
+  [outside30] -> '0x1.084ba0f0a1fa1p+10'   ok
+  [rand31] -> '0x1.67024e0c79fe7p+4'   ok
+  [center31] -> '0x1.957fa31245d56p+4'   ok
+  [outside31] -> '0x1.4e0f026769284p+8'   ok
+  [rand32] -> '0x1.15e9118748bcep+5'   ok
+  [center32] -> '0x1.a3db14308d1a9p+5'   ok
+  [outside32] -> '0x1.58dcd3320418cp+9'   ok
+  [rand33] -> '0x1.a8e93742684e4p+3'   ok
+  [center33] -> '0x1.2732cce901cebp+3'   ok
+  [outside33] -> '0x1.f2a35e5abed2fp+6'   ok
+  [rand34] -> '0x1.fdd0fdbedd22fp+3'   ok
+  [center34] -> '0x1.452d87c6d1a1ap+5'   ok
+  [outside34] -> '0x1.1c9e6552f9916p+9'   ok
+  [rand35] -> '0x1.d64da26184fa7p+5'   ok
+  [center35] -> '0x1.3743c6a51f9e5p+4'   ok
+  [outside35] -> '0x1.02ace649ecc4bp+8'   ok
+  [rand36] -> '0x1.56408e118130cp+7'   ok
+  [center36] -> '0x1.067fc71358278p+6'   ok
+  [outside36] -> '0x1.ed38ff34f45b4p+9'   ok
+  [rand37] -> '0x1.6aaee5f399517p+4'   ok
+  [center37] -> '0x1.299d6efed9d0dp+4'   ok
+  [outside37] -> '0x1.e8e97bd01bc24p+7'   ok
+  [rand38] -> '0x1.66b3ed5e744a6p+3'   ok
+  [center38] -> '0x1.6804b432de8fep+4'   ok
+  [outside38] -> '0x1.2c0b982d25986p+8'   ok
+  [rand39] -> '0x1.13b76729ec0a4p+1'   ok
+  [center39] -> '0x1.1137dd4390dp+2'   ok
+  [outside39] -> '0x1.c0fb010ff22a8p+5'   ok
+
+# All invariants (I1 radial, I2 endpoint, I3 degen, I4 center, I5 nonneg) hold.
