@@ -1,10 +1,38 @@
-  [R=5 d=+2] -> 4
-A 0x1.cp+2 0x0p+0 0x0p+0 0x1.cp+2 -0x1.cp+2 0x0p+0
-A -0x1.cp+2 0x0p+0 -0x1.9a8...   ok
+  [R=5 d=+2] -> '4\nA 0x1.cp+2 0x0p+0 0x0p+0 0x1.cp+2 -0x1.cp+2 0x0p+0\nA -0x1.cp+2 0x0p+0 -0x1.9a827999fcef3p+2 -0x1.6a09e667f3bccp+0 -0x1.4p+2 -0x1p+1\nC -0x1.4p+2 -0x1p+1 0x1.4p+2 -0x1p+1\nA 0x1.4p+2 -0x1p+1 0x1.9a827999fcef3p+2 -0x1.6a09e667f3bccp+0 0x1.cp+2 0x0p+0\nAREA 0x1.9d02421c87558p+6'   ok
   [R=5 d=-2] -> 'DEGENERATE'   ok (expected collapse/degen)
   [R=5 collapse d=-5] -> 'EMPTY'   ok (expected collapse/degen)
-  [tiny d=+0.1] -> 4
-A -0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4 -0x1.21a185...   ok
+  [R=5 large outward d=+50] -> '4\nA 0x1.b8p+5 0x0p+0 0x0p+0 0x1.b8p+5 -0x1.b8p+5 0x0p+0\nA -0x1.b8p+5 0x0p+0 -0x1.42d7bc01366b7p+5 -0x1.1ad7bc01366b7p+5 -0x1.4p+2 -0x1.9p+5\nC -0x1.4p+2 -0x1.9p+5 0x1.4p+2 -0x1.9p+5\nA 0x1.4p+2 -0x1.9p+5 0x1.42d7bc01366b7p+5 -0x1.1ad7bc01366b7p+5 0x1.b8p+5 0x0p+0\nAREA 0x1.1ed53298d1b09p+13'   ok
+  [tiny d=+0.1] -> '4\nA -0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4 -0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4\nA -0x1.21a1851ff630bp-4 0x1.25ba1894b29b3p-4 -0x1.7a6bca5c20a9fp-4 0x1.41afaf3f014d3p-5 -0x1.999999999999ap-4 0x1.0624dd2f1a9fcp-10\nC -0x1.999999999999ap-4 0x1.0624dd2f1a9fcp-10 -0x1.999999999999ap-4 0x0p+0\nA -0x1.999999999999ap-4 0x0p+0 -0x1.7a6bca5c20a9fp-4 -0x1.397e885588783p-5 -0x1.21a1851ff630bp-4 -0x1.21a1851ff630bp-4\nAREA 0x1.04eb7d05976c8p-5'   ok
   [degen collinear d=1] -> 'DEGENERATE'   ok (expected collapse/degen)
+
+## B. Sweep over arcs (gating offset presence and buffer invariants).
+  [unit @origin d=-0.9] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [unit @origin d=-0.5] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [unit @origin d=0] -> '2\nA 0x1p+0 0x0p+0 0x0p+0 0x1p+0 -0x1p+0 0x0p+0\nC -0x1p+0 0x0p+0 0x1p+0 0x0p+0\nAREA 0x1.921fb54442d18p+0'   ok
+  [unit @origin d=0.5] -> '4\nA 0x1.8p+0 0x0p+0 0x0p+0 0x1.8p+0 -0x1.8p+0 0x0p+0\nA -0x1.8p+0 0x0p+0 -0x1.5a827999fcef3p+0 -0x1.6a09e667f3bccp-2 -0x1p+0 -0x1p-1\nC -0x1p+0 -0x1p-1 0x1p+0 -0x1p-1\nA 0x1p+0 -0x1p-1 0x1.5a827999fcef3p+0 -0x1.6a09e667f3bccp-2 0x1.8p+0 0x0p+0\nAREA 0x1.3b53d14aa9c2fp+2'   ok
+  [unit @origin d=2] -> '4\nA 0x1.8p+1 0x0p+0 0x0p+0 0x1.8p+1 -0x1.8p+1 0x0p+0\nA -0x1.8p+1 0x0p+0 -0x1.3504f333f9de6p+1 -0x1.6a09e667f3bccp+0 -0x1p+0 -0x1p+1\nC -0x1p+0 -0x1p+1 0x1p+0 -0x1p+1\nA 0x1p+0 -0x1p+1 0x1.3504f333f9de6p+1 -0x1.6a09e667f3bccp+0 0x1.8p+1 0x0p+0\nAREA 0x1.86b9c347764a4p+4'   ok
+  [unit @origin d=-1] -> 'EMPTY'   ok (expected collapse/degen)
+  [unit @origin d=-1.5] -> 'EMPTY'   ok (expected collapse/degen)
+  [R=5 lower d=-4.5] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [R=5 lower d=-2.5] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [R=5 lower d=0] -> '2\nA -0x1.4p+2 0x0p+0 0x0p+0 -0x1.4p+2 0x1.4p+2 0x0p+0\nC 0x1.4p+2 0x0p+0 -0x1.4p+2 0x0p+0\nAREA 0x1.3a28c59d5433bp+5'   ok
+  [R=5 lower d=2.5] -> '4\nA -0x1.ep+2 0x0p+0 0x0p+0 -0x1.ep+2 0x1.ep+2 0x0p+0\nA 0x1.ep+2 0x0p+0 0x1.b12318007c2bp+2 0x1.c48c6001f0abfp+0 0x1.4p+2 0x1.4p+1\nC 0x1.4p+2 0x1.4p+1 -0x1.4p+2 0x1.4p+1\nA -0x1.4p+2 0x1.4p+1 -0x1.b12318007c2bp+2 0x1.c48c6001f0abfp+0 -0x1.ep+2 0x0p+0\nAREA 0x1.ecb2f704a940ap+6'   ok
+  [R=5 lower d=10] -> '4\nA -0x1.ep+3 0x0p+0 0x0p+0 -0x1.ep+3 0x1.ep+3 0x0p+0\nA 0x1.ep+3 0x0p+0 0x1.82463000f856p+3 0x1.c48c6001f0abfp+2 0x1.4p+2 0x1.4p+3\nC 0x1.4p+2 0x1.4p+3 -0x1.4p+2 0x1.4p+3\nA -0x1.4p+2 0x1.4p+3 -0x1.82463000f856p+3 0x1.c48c6001f0abfp+2 -0x1.ep+3 0x0p+0\nAREA 0x1.3141208fd469fp+9'   ok
+  [R=5 lower d=-5] -> 'EMPTY'   ok (expected collapse/degen)
+  [R=5 lower d=-7.5] -> 'EMPTY'   ok (expected collapse/degen)
+  [off-centre R=2 @ (3,4) d=-1.8] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [off-centre R=2 @ (3,4) d=-1] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [off-centre R=2 @ (3,4) d=0] -> '2\nA 0x1.4p+2 0x1p+2 0x1.8p+1 0x1.8p+2 0x1p+0 0x1p+2\nC 0x1p+0 0x1p+2 0x1.4p+2 0x1p+2\nAREA 0x1.921fb54442d18p+2'   ok
+  [off-centre R=2 @ (3,4) d=1] -> '4\nA 0x1.8p+2 0x1p+2 0x1.8p+1 0x1.cp+2 0x0p+0 0x1p+2\nA 0x0p+0 0x1p+2 0x1.2bec333018868p-2 0x1.a57d86660310dp+1 0x1p+0 0x1.8p+1\nC 0x1p+0 0x1.8p+1 0x1.4p+2 0x1.8p+1\nA 0x1.4p+2 0x1.8p+1 0x1.6d413cccfe77ap+2 0x1.a57d86660310dp+1 0x1.8p+2 0x1p+2\nAREA 0x1.3b53d14aa9c3p+4'   ok
+  [off-centre R=2 @ (3,4) d=4] -> '4\nA 0x1.2p+3 0x1p+2 0x1.8p+1 0x1.4p+3 -0x1.8p+1 0x1p+2\nA -0x1.8p+1 0x1p+2 -0x1.d413cccfe7798p+0 0x1.2bec333018868p+0 0x1p+0 0x0p+0\nC 0x1p+0 0x0p+0 0x1.4p+2 0x0p+0\nA 0x1.4p+2 0x0p+0 0x1.f504f333f9de6p+2 0x1.2bec333018868p+0 0x1.2p+3 0x1p+2\nAREA 0x1.86b9c347764a4p+6'   ok
+  [off-centre R=2 @ (3,4) d=-2] -> 'EMPTY'   ok (expected collapse/degen)
+  [off-centre R=2 @ (3,4) d=-3] -> 'EMPTY'   ok (expected collapse/degen)
+  [small quarter d=-1.8] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [small quarter d=-1] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [small quarter d=0] -> '2\nA 0x1p+1 0x0p+0 0x1.6a09e667f3bcdp+0 0x1.6a09e667f3bcdp+0 0x0p+0 0x1p+1\nC 0x0p+0 0x1p+1 0x1p+1 0x0p+0\nAREA 0x1.243f6a8885a3p+0'   ok
+  [small quarter d=1] -> '4\nA 0x1.8000000000001p+1 -0x1.7c891e988434p-53 0x1.0f876ccdf6cdbp+1 0x1.0f876ccdf6cdbp+1 -0x1.7c891e988434p-53 0x1.8000000000001p+1\nA -0x1.7c891e988433fp-53 0x1.8p+1 -0x1.d906bcf328d45p-1 0x1.30fbc54d5d52dp+1 -0x1.6a09e667f3bccp-1 0x1.4afb0ccc0621ap+0\nC -0x1.6a09e667f3bccp-1 0x1.4afb0ccc0621ap+0 0x1.4afb0ccc0621ap+0 -0x1.6a09e667f3bccp-1\nA 0x1.4afb0ccc0621ap+0 -0x1.6a09e667f3bccp-1 0x1.30fbc54d5d52dp+1 -0x1.d906bcf328d45p-1 0x1.8p+1 -0x1.7c891e988433fp-53\nAREA 0x1.481a418d2f0c7p+3'   ok
+  [small quarter d=4] -> '4\nA 0x1.8000000000001p+2 -0x1.7c891e9884341p-51 0x1.0f876ccdf6cdap+2 0x1.0f876ccdf6cdap+2 -0x1.7c891e9884341p-51 0x1.8000000000001p+2\nA -0x1.7c891e988433fp-51 0x1.8000000000001p+2 -0x1.d906bcf328d45p+1 0x1.c3ef1535754b4p+1 -0x1.6a09e667f3bccp+1 -0x1.a827999fcef3p-1\nC -0x1.6a09e667f3bccp+1 -0x1.a827999fcef3p-1 -0x1.a827999fcef3p-1 -0x1.6a09e667f3bccp+1\nA -0x1.a827999fcef3p-1 -0x1.6a09e667f3bccp+1 0x1.c3ef1535754b4p+1 -0x1.d906bcf328d45p+1 0x1.8000000000001p+2 -0x1.7c891e988433fp-51\nAREA 0x1.2d260bc1ca512p+6'   ok
+  [small quarter d=-2] -> 'EMPTY'   ok (expected collapse/degen)
+  [small quarter d=-3] -> 'EMPTY'   ok (expected collapse/degen)
 
 # Single-arc buffer simple cases (via BUFFER_REGION degenerate ring) hold.

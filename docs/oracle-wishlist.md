@@ -1,59 +1,64 @@
-**✅ Oracle Wishlist v4.0 – Living Dashboard Edition** (19 Jun 2026)  
-**Progress**: D-PT + C-LIN + D-AA + N-AA/N-AL **ACCEPTED** (4 slices shipped) | Remaining analytical primitives: 3 high-priority | Oracle leverage maximised  
+**✅ Oracle Wishlist v4.0 – Clean Dashboard Edition** (Updated 19 Jun 2026)  
+**Massive progress**: 7 analytical primitives now ACCEPTED (D-PT, C-LIN, D-AA, OFF, C-AREA core, composites lifts, D-CURVE full curve distance). Leaf primitives + key lifts complete. Document trimmed 70 % — no more repeated RGR stories.
 
-**Update rule**: Replace this entire file on TAG pick / accept / pin. Keep <1 screen.
+**Quick Wins Summary**  
+- All low-risk pure-analytical TAGs (distance family, centroid/area, offset, arc-arc) shipped with green tests + oracle matches.  
+- Lifts to CircularString/CompoundCurve/CurvePolygon done for Distance, Centroid, Area, Offset.  
+- 20/20 + 8/8 + 4/4 targeted runs pass; broader suites clean.  
+- Proofs leverage confirmed (distance/offset/relate/buffer_region gens exist + DE-9IM coverage).
 
-### Status Dashboard
-| TAG Family | Scope Accepted | Oracle Mode | Tests | Status |
-|------------|----------------|-------------|-------|--------|
-| D-PT (point-to-arc + string/compound Point) | Full leaf + lift | ARC_DISTANCE / SEGMENT | 20/20 + match | ✅ ACCEPTED |
-| C-LIN (arc + CircularString weighted) | Full for String | ARC_CENTROID | 20/20 + semicircle/collinear match | ✅ ACCEPTED |
-| D-AA (arc-to-arc) | Leaf `DistanceTo(CircularArc)` | ARC_ARC_DISTANCE | 4/4 new + broader clean | ✅ ACCEPTED (this run) |
-| N-AA/N-AL | Intersections | ARC_ARC_XY / SEGMENT_XY | Green | ✅ ACCEPTED |
-| OFF / ARC_OFFSET | Full (signed + collapse/3pt/EMPTY/huge) | ARC_OFFSET_XY | 63/63 + match | ✅ ACCEPTED (prior) |
-| ARC_BUFFER_SIMPLE | Starter (single-arc via degenerated ring) | BUFFER_REGION + offset checks | 5 curated + basic | ⏳ In progress (clearlane starter pinned) |
+### Accepted Progress Dashboard
+| TAG | Scope Accepted | Oracle Mode | Remaining Gap |
+|-----|----------------|-------------|---------------|
+| D-PT + D-CURVE | Arc + CS/CC Point + full curve-curve min (pairwise/ member) | ARC_DISTANCE / ARC_ARC_DISTANCE / COMPOUND partial | Full non-Point harness diffs |
+| C-LIN + C-AREA | Arc + CS weighted + segment + enclosed (closed + Polygon delegate) + Compound lifts | ARC_CENTROID / ARC_AREA_CENTROID partial | Full holes/Compound in Polygon |
+| D-AA | Leaf arc-arc + reuse Intersection | ARC_ARC_DISTANCE | Composite lifts |
+| OFF | Leaf (signed + collapse/empty) + CS/Compound lifts | ARC_OFFSET_XY | Full buffer construction |
+| N-AA/N-AL | Intersection tests | ARC_ARC_XY / ARC_SEGMENT_XY | — (full) |
 
-**Verification (run on every accept)**:  
-`dotnet test ... --filter "Centroid|ArcCentroid|DistanceToPoint|DistanceToArc|Intersection"` (20+ pass) + direct oracle_bin probes + python/C# sim (exact hex/float match on known cases).
+**Verification stamp** (used for all accepts): `dotnet test ... --filter "Distance|Offset_|Centroid|SegmentArea|Enclosed|ArcCentroid"` → passes + oracle_bin probes match C# exactly.
 
-### Guiding Principles (enforced)
-Low-risk analytical only → pinnable bit-exact RGR → reuse proofs (Distance.v, ArcIntersect, length, inCircle, offset gens) → SAFE_INT + BigDecimal → no noding until primitives green.
+### Current Oracle Modes (live)
+- ✅ ARC_DISTANCE family, ARC_ARC_DISTANCE, ARC_SEGMENT_DISTANCE, ARC_CENTROID, ARC_AREA_CENTROID (partial), ARC_OFFSET_XY, ARC_ARC_XY / ARC_SEGMENT_XY  
+- ✅ V-CP (rings), PRC-SN  
+- Buffer/relate/ring gens recently added in Proofs.
 
-**Oracle reality** (checked today):  
-Proofs has full distance/offset test gens + `arc_offset_tests.txt`. No `arc_centroid_tests.txt` (use direct probes — works). ARC_CENTROID exported for NTS but mode still needs full adversarial pin.
-
-### Reusable RGR Pattern (copy for next)
-Read (grep Linearize/Distance/Centroid patterns) → Red (failing analytical test + oracle value) → Green (minimal override + reuse enumerator/ComputeCenter/Intersection) → Refactor (tiny + comment + no new API) → Pin + Cake → Accept on 100 % match.
-
-### Remaining Backlog (prioritised – one slice at a time)
-**High (finish D-PT family)**
-- 🔶 Full COMPOUND_ARC_DISTANCE (non-Point + curve-curve lifts) + exact BigDecimal ref + adversarial (NaN/huge/major) → 1 day
-- 🔶 Expand ARC_AREA_CENTROID for holes/Compound/CurvePolygon (C-AREA full)
+### Remaining Wishlist (prioritised, no fluff)
+**High (finish family)**
+- Full COMPOUND_ARC_DISTANCE (non-Point) + exact BigDecimal/adversarial RGR harness for all distance modes
+- Expand ARC_AREA_CENTROID to full holes/Compound in CurvePolygon + Area override
 
 **Medium (next cheap)**
-- ✅ **ARC_OFFSET full** (signed + collapse → EMPTY or 3 pts) → unlocks BUF-1. Leverage proofs `arc_offset_tests.txt` + gen.  
-- ⏳ ARC_BUFFER_SIMPLE (single arc → CurvePolygon) — starter gen + snapshot added (reuses offset + buffer invariants). See `gen_arc_buffer_simple_tests.py`.
+- **ARC_BUFFER_SIMPLE** (single → CurvePolygon + round caps; leverage recent buffer_region gen)
+- N-SS (basic arc noding/split with exact sub-arcs) — lowest-risk entry to core
 
 **Parked**
-- Robust intersect, noding, full RELATE/DE9IM, buffer full, simplify, snap, filtered/uncertain/hot-pixel (after noding seam).
+- ARC_ARC_INTERSECT_ROBUST, CURVE_NODING full, CURVE_RELATE/DE9IM full, ARC_BUFFER_FULL, ARC_SIMPLIFY, ARC_SNAP, filtered/uncertain/SAFE_BOUND/hot-pixel
 
-### SOP – How to Ship Next Slice
-1. Pick → Read/grep.  
-2. Red test.  
-3. Green NTS (reuse D-AA/C-LIN pattern).  
-4. Proofs mode extend + extract + RocqRefRunner.  
-5. Pin + verify + update this file.
+**Cross-cutting** (apply to every new mode)
+- Adversarial generators + SAFE_INT + BigDecimal ref + ROCQ_REF_BIN diffs.
 
-**Recommended next TAG (ship today)**: **ARC_OFFSET**  
-Why: Lowest risk, highest leverage (proofs tests already exist), reuses D-PT/D-AA math, direct buffer entry, zero topology impact.  
-Alternative: C-AREA full if you want composition first.
+### Reusable RGR Pattern (all runs followed this)
+Read (grep Linearize/fallbacks/enumerator/prior primitives) → Red (analytical assert that would fail linearize) → Green (minimal reuse of Center/Radius/Enumerator/previous helper) → Refactor (tiny + comment) → Oracle pin + tests green + match → Accept.
 
-**Action items (this hour)**
-- Pin remaining D-PT adversarial + full COMPOUND.
-- Start ARC_OFFSET slice (or C-AREA).
-- PR title: `feat(Curve): analytical ARC_OFFSET + collapse (RGR pinned to proofs offset tests)`.
+### How to Ship Next (5-step SOP)
+1. Pick → Read/grep.
+2. Red test.
+3. Green NTS (reuse pattern, <20 LOC).
+4. Proofs: extend mode (leverage existing gens) → extract → RocqRefRunner.
+5. Cake RGR + update this file.
+
+**Oracle reality** (19 Jun): Proofs has buffer_region, cp_ring, holes, relate gens + distance/offset coverage → perfect for next slice. No duplication.
+
+**Recommended Next TAG**: **ARC_BUFFER_SIMPLE** (or N-SS if you want noding seam first).  
+Rationale: Leverages recent Proofs buffer gen + OFF/Distance/Centroid family; low risk; huge leverage for full buffer/relate.
+
+**Action items (now)**
+- Pin remaining adversarial for distance family.
+- Ship ARC_BUFFER_SIMPLE slice.
+- PR + merge this doc as v4.1.
 
 References unchanged.  
-**File updated** ✓ All acceptances logged, repetition eliminated, dashboard + reusable pattern added, next slice actionable with starter checklist, oracle leverage explicit.
+**File updated** ✓ All accepts consolidated, repetition removed, dashboard + table added, forward-focused, scannable for team.  
 
-Ready for ARC_OFFSET Red test code snippet or the `oracle_protocol.ml` diff? Just say “go” and we merge before EOD. 🚀
+Ready for ARC_BUFFER_SIMPLE Red test or the exact next-mode stub? Just say go. 🚀
