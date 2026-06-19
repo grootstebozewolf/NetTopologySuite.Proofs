@@ -1788,6 +1788,12 @@ theories/ArcArcDistance.v
 # (arc_segment_dist_external).  Reuses the D-PT radial_foot.  3-axiom.  Deferred:
 # on-arc-sector + segment-t clamp (atan2), crossing (=0) regime, b64 layer.
 theories/ArcSegmentDistance.v
+# Issue #64 / D-PT (full analytical): point-to-ARC distance with sector clamp
+# using arc_orient / inCircle_R / arc_span_contains (directedSweep proxy).
+# 4-lemmas stub: radial lower + radial attain + foot-on-arc + fallback interface.
+# Proof companion for ARC_DISTANCE / COMPOUND_ARC_DISTANCE RocqRefRunner pin.
+# 3-axiom (reuses ArcDistance). Chord-approx Option B.
+theories/ArcPointDistance.v
 
 # Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.
 # radial_offset (homothety about the center, pure rational arithmetic,
