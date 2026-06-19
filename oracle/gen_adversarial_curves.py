@@ -171,8 +171,8 @@ def hunt_curve_ring_point_in(n=200):
     emit("## HUNT (next slice): POINT_IN_CURVE_RING with Elliptic/Bezier rings (syntax demo)")
     # Hard-coded small examples using the supported syntax
     examples = [
-        ("Bezier3(2) small", "POINT_IN_CURVE_RING\n1\n2\nB 0 0 1 0.5 2 0 3 0\nC 3 0 0 0\n0.5 0.1\n"),
-        ("Elliptic(1) small", "POINT_IN_CURVE_RING\n1\n2\nE 1.5 1.5 1.5 1.0 0.0 0.0 6.28\nC 3 1.5 0 1.5\n1.5 1.5\n"),
+        ("Bezier3(2) small", "POINT_IN_CURVE_RING\n2\nB 0 0 1 0.5 2 0 3 0\nC 3 0 0 0\n0.5 0.1\n"),
+        ("Elliptic(1) small", "POINT_IN_CURVE_RING\n2\nE 1.5 1.5 1.5 1.0 0.0 0.0 6.28\nC 3 1.5 0 1.5\n1.5 1.5\n"),
     ]
     for name, stdin in examples:
         res = run_oracle("POINT_IN_CURVE_RING", stdin)

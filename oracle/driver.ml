@@ -1832,6 +1832,10 @@ let run_ring_simple () =
       | `Elliptic _, `Elliptic _
       | `Bezier _, `Bezier _
       | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+          []
+      (* Mixed Arc + new types (conservative proxy) *)
+      | `Arc _, `Elliptic _ | `Elliptic _, `Arc _
+      | `Arc _, `Bezier _ | `Bezier _, `Arc _ ->
           [] in
     (* permitted shared vertices for an adjacent pair (i, j) *)
     let permitted i j =
@@ -2228,6 +2232,10 @@ let run_holes_disjoint () =
       | `Elliptic _, `Elliptic _
       | `Bezier _, `Bezier _
       | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+          []
+      (* Mixed Arc + new types (conservative proxy) *)
+      | `Arc _, `Elliptic _ | `Elliptic _, `Arc _
+      | `Arc _, `Bezier _ | `Bezier _, `Arc _ ->
           [] in
     (* --- arc-aware point-in-curve-ring (mirror POINT_IN_CURVE_RING) --- *)
     let point_in (ring : _ array) (px, py) =
@@ -2462,6 +2470,10 @@ let run_curve_relate_matrix () =
       | `Elliptic _, `Elliptic _
       | `Bezier _, `Bezier _
       | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+          []
+      (* Mixed Arc + new types (conservative proxy) *)
+      | `Arc _, `Elliptic _ | `Elliptic _, `Arc _
+      | `Arc _, `Bezier _ | `Bezier _, `Arc _ ->
           [] in
     (* --- arc-aware point-in-ring ray cast (mirror POINT_IN_CURVE_RING) --- *)
     let point_in_ring (ring : _ array) (px, py) =
@@ -2562,7 +2574,7 @@ let run_curve_relate_matrix () =
           (p0.bx +. t *. (p3.bx -. p0.bx), p0.by_ +. t *. (p3.by_ -. p0.by_))
       | `Elliptic (c, _, _, _, _, _) ->
           (* Proxy: sample at center (degenerate); proper sampling deferred *)
-          (c.bx, c.by) in
+          (c.bx, c.by_) in
     (* scan self's boundary, classify each sample vs other; record, per other-
        stratum (0/1/2), whether it appears as an isolated point and as a run
        (>= 2 consecutive samples on one segment). *)
