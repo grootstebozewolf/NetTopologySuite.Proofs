@@ -1698,7 +1698,9 @@ let run_ring_simple () =
   let segs = Array.init n (fun _ -> parse_seg ()) in
   let seg_pts = function
     | `Chord (a, b) -> [a; b]
-    | `Arc (a, b, c) -> [a; b; c] in
+    | `Arc (a, b, c) -> [a; b; c]
+    | `Elliptic (c, _, _, _, _, _) -> [c]
+    | `Bezier (p0, _, _, p3) -> [p0; p3] in
   let seg_start = function
     | `Chord (a, _) -> a | `Arc (a, _, _) -> a
     | `Elliptic (c, _, _, _, _, _) -> c   (* proxy; real start computed by hunter model *)
@@ -1713,7 +1715,7 @@ let run_ring_simple () =
             | `Arc (a, b, c) ->
                 circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
                   (qf c.bx, qf c.by_) = None
-            | `Chord _ -> false) (Array.to_list segs)
+            | `Chord _ | `Elliptic _ | `Bezier _ -> false) (Array.to_list segs)
   then print_endline "DEGENERATE"
   else begin
     let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
@@ -1945,7 +1947,9 @@ let run_point_in_curve_ring () =
   let query = parse_point (input_line stdin) in
   let seg_pts = function
     | `Chord (a, b) -> [a; b]
-    | `Arc (a, b, c) -> [a; b; c] in
+    | `Arc (a, b, c) -> [a; b; c]
+    | `Elliptic (c, _, _, _, _, _) -> [c]
+    | `Bezier (p0, _, _, p3) -> [p0; p3] in
   let all_pts = query :: (Array.to_list segs |> List.concat_map seg_pts) in
   if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
   else begin
@@ -1977,8 +1981,16 @@ let run_point_in_curve_ring () =
                    if x > px && point_on_arc_sector (oxf, oyf) a b c (x, py)
                    then incr cnt)
                    [ oxf +. sq; oxf -. sq ]
-               end))
-      segs;
+               end)
+      | `Elliptic _ ->
+          (* Elliptic: full math deferred to hunter's independent model.
+             For now approximate as no crossing on this simple ray (conservative for hunters). *)
+          ()
+      | `Bezier (p0, _, _, p3) ->
+          (* Approximate Bezier by its main chord start-end for the ray cast.
+             Real on-curve testing is done via the Python model in the hunter. *)
+          if edge_cross p0 p3 then incr cnt
+      ) segs;
     print_endline (if !cnt mod 2 = 1 then "IN" else "OUT")
   end
 
@@ -2026,7 +2038,9 @@ let run_ring_orientation () =
   let segs = Array.init n (fun _ -> parse_seg ()) in
   let seg_pts = function
     | `Chord (a, b) -> [a; b]
-    | `Arc (a, b, c) -> [a; b; c] in
+    | `Arc (a, b, c) -> [a; b; c]
+    | `Elliptic (c, _, _, _, _, _) -> [c]
+    | `Bezier (p0, _, _, p3) -> [p0; p3] in
   let all_pts = Array.to_list segs |> List.concat_map seg_pts in
   if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
   else begin
@@ -2051,8 +2065,15 @@ let run_ring_orientation () =
                let orient = Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
                                   (Q.mul (Q.sub by_ ay) (Q.sub cx ax)) in
                let sb = float_of_int (Q.sign orient) in
-               s2 := !s2 +. sb *. r2f *. (theta -. sin theta)))
-      segs;
+               s2 := !s2 +. sb *. r2f *. (theta -. sin theta))
+      | `Bezier (p0, _, _, p3) ->
+          (* Bezier: main chord contribution (bulge approx 0 for this slice) *)
+          s2 := !s2 +. cross p0 p3
+      | `Elliptic _ ->
+          (* Elliptic: chord contribution approximated as 0 for this slice;
+             hunters rely on independent Python model for accurate orientation. *)
+          ()
+    ) segs;
     let tol = 1e-9 *. (1.0 +. abs_float !s2) in
     if abs_float !s2 <= tol then print_endline "DEGENERATE"
     else Printf.printf "%s %h\n" (if !s2 > 0.0 then "CCW" else "CW") (!s2 /. 2.0)
