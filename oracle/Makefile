@@ -101,8 +101,6 @@ buffer-region-tests: $(TARGET)
 arc-centroid-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_centroid_tests.py
 
-<<<<<<< HEAD
-=======
 # C-AREA ARC_AREA_CENTROID: area centroid of circular segment.  Gates I1 bounds,
 # I2 bisector, specials, nonneg, degenerate.  Backing ArcAreaCentroid.v .
 arc-area-centroid-tests: $(TARGET)
@@ -113,7 +111,6 @@ arc-area-centroid-tests: $(TARGET)
 arc-distance-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_distance_tests.py
 
->>>>>>> 3947c31 (Pin ARC_CENTROID: add test generator + snapshot + Makefile target)
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.
 curve-adversarial-hunt:
