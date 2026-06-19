@@ -10,7 +10,8 @@
 | C-LIN (arc + CircularString weighted) | Full for String | ARC_CENTROID | 20/20 + semicircle/collinear match | ✅ ACCEPTED |
 | D-AA (arc-to-arc) | Leaf `DistanceTo(CircularArc)` | ARC_ARC_DISTANCE | 4/4 new + broader clean | ✅ ACCEPTED (this run) |
 | N-AA/N-AL | Intersections | ARC_ARC_XY / SEGMENT_XY | Green | ✅ ACCEPTED |
-| OFF / ARC_OFFSET | — | Stub + tests.txt exists | — | ⏳ **Next** |
+| OFF / ARC_OFFSET | Full (signed + collapse/3pt/EMPTY/huge) | ARC_OFFSET_XY | 63/63 + match | ✅ ACCEPTED (prior) |
+| ARC_BUFFER_SIMPLE | Starter (single-arc via degenerated ring) | BUFFER_REGION + offset checks | 5 curated + basic | ⏳ In progress (clearlane starter pinned) |
 
 **Verification (run on every accept)**:  
 `dotnet test ... --filter "Centroid|ArcCentroid|DistanceToPoint|DistanceToArc|Intersection"` (20+ pass) + direct oracle_bin probes + python/C# sim (exact hex/float match on known cases).
@@ -30,9 +31,8 @@ Read (grep Linearize/Distance/Centroid patterns) → Red (failing analytical tes
 - 🔶 Expand ARC_AREA_CENTROID for holes/Compound/CurvePolygon (C-AREA full)
 
 **Medium (next cheap)**
-- ⏳ **ARC_OFFSET full** (signed + collapse → EMPTY or 3 pts) → unlocks BUF-1. Leverage proofs `arc_offset_tests.txt` + gen.  
-  **Starter checklist**: (1) `ArcOffset` helper in CircularArc, (2) degenerate test, (3) pin mode, (4) Cake run.
-- ARC_BUFFER_SIMPLE (single arc → CurvePolygon)
+- ✅ **ARC_OFFSET full** (signed + collapse → EMPTY or 3 pts) → unlocks BUF-1. Leverage proofs `arc_offset_tests.txt` + gen.  
+- ⏳ ARC_BUFFER_SIMPLE (single arc → CurvePolygon) — starter gen + snapshot added (reuses offset + buffer invariants). See `gen_arc_buffer_simple_tests.py`.
 
 **Parked**
 - Robust intersect, noding, full RELATE/DE9IM, buffer full, simplify, snap, filtered/uncertain/hot-pixel (after noding seam).

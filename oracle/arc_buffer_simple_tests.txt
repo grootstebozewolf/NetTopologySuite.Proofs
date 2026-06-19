@@ -1,7 +1,10 @@
-  [R=5 d=+2] -> '0x1.cp+2 0x0p+0 0x0p+0 0x1.cp+2 -0x1.cp+2 0x0p+0'   ok
-  [R=5 d=-2 (may collapse or not)] -> '0x1.8p+1 0x0p+0 0x0p+0 0x1.8p+1 -0x1.8p+1 0x0p+0'   ok
-  [R=5 d=-5 collapse] -> 'EMPTY'   ok (collapse/degen)
-  [tiny d=+0.1] -> '-0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4 -0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4'   ok
-  [degen input] -> 'DEGENERATE'   ok (collapse/degen)
+  [R=5 d=+2] -> 4
+A 0x1.cp+2 0x0p+0 0x0p+0 0x1.cp+2 -0x1.cp+2 0x0p+0
+A -0x1.cp+2 0x0p+0 -0x1.9a8...   ok
+  [R=5 d=-2] -> 'DEGENERATE'   ok (expected collapse/degen)
+  [R=5 collapse d=-5] -> 'EMPTY'   ok (expected collapse/degen)
+  [tiny d=+0.1] -> 4
+A -0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4 -0x1.21a185...   ok
+  [degen collinear d=1] -> 'DEGENERATE'   ok (expected collapse/degen)
 
-# Single-arc buffer simple cases (via BUFFER_REGION on arc+chord ring) hold.
+# Single-arc buffer simple cases (via BUFFER_REGION degenerate ring) hold.
