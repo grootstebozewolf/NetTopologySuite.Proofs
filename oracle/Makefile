@@ -61,6 +61,7 @@ cp-ring-simple-tests: $(TARGET)
 # Adversarial ARC_OFFSET_XY suite (OFF/BUF-1/BUF-NEG, JTS #1195 §7): gates
 # I1 radial-dist |d|, I2 distance |r+d| from centre, I3 radial ray (homothety),
 # I4 EMPTY iff r+d<=0, I5 identity at d=0.  Nonzero exit on any violation.
+# Full slice: signed, collapse/3pt/EMPTY boundary, huge coords, major sweeps, tiny.
 arc-offset-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_offset_tests.py
 
