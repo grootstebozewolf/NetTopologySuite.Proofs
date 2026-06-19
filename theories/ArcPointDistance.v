@@ -91,12 +91,8 @@ Lemma point_to_arc_dist_radial_lower :
     arc_span_contains a F ->
     Rabs (dist O P - r) <= dist P X.
 Proof.
-  intros a P X Hva Hon O r Hd F HspanF.
-  destruct Hon as [Hic HspanX].
-  (* Any X on the arc's circle satisfies dist O X = r. *)
-  assert (HOnCircleX : dist O X = r).
-  { admit. } (* true: X on arc (inCircle=0) and S/M/E equidistant from O ⇒ X equidistant (concyclic uniqueness); full proof uses inCircle_R definition + nsatz or the inverse of inCircle_R_zero_of_equidistant *)
-  apply (point_circle_dist_lower O P X r HOnCircleX).
+  (* Stub. The missing step (on_arc X ==> dist O X = r) is the converse of
+     inCircle_R_zero_of_equidistant. See deferred-proof registry entry. *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)
@@ -149,10 +145,10 @@ Proof.
      For the stub we prove a trivial but sound weak bound (distances >= 0) so the
      file typechecks and documents the interface.  Tight proof reuses arc_orient
      monotonicity on the two sides of the chord. *)
-  unfold point_to_arc_candidate_endpoints.
-  (* Weak but correct: distances to arc points are non-negative.  The real
-     argument belongs in a 1-line follow-up using the side test (arc_orient of F). *)
-  admit.
+  (* Stub: when the radial foot is outside the directed sweep, the min
+     distance to the arc segment is attained at an endpoint.
+     Requires monotonicity of distance along the arc away from the foot.
+     See deferred-proof registry. *)
 Admitted.
 
 (* Centre case: every point on the arc is exactly r from O. *)
@@ -163,7 +159,9 @@ Lemma point_to_arc_dist_centre_is_r :
     on_arc a X ->
     arc_radius a = dist P X.
 Proof.
-  admit.
+  (* Stub: when P is the centre, every point on the (non-degenerate) arc is
+     exactly at distance = radius. Trivial once on_arc implies on the circle.
+     See deferred-proof registry. *)
 Admitted.
 
 (* -------------------------------------------------------------------------- *)

@@ -56,7 +56,14 @@
 # LIVE ENTRIES
 # ============================================================================
 
-# (none -- the deferred-proof registry is EMPTY as of 2026-06-14.)
+# (none -- the deferred-proof registry was EMPTY as of 2026-06-14.
+# New live entries added for ArcPointDistance.v D-PT analytical stubs.)
+
+theories/ArcPointDistance.v:point_to_arc_dist_radial_lower | theories/ArcPointDistance.v (see header + §2 "Soundness lemma 1") | in-sweep radial case; delegates to point_circle_dist_lower once on_arc => dist O X = r (converse of inCircle_R_zero_of_equidistant)
+
+theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/ArcPointDistance.v (see §4) | fallback to nearer endpoint when radial foot lies outside the directed sweep (arc_span_contains); requires distance monotonicity along arc away from projection
+
+theories/ArcPointDistance.v:point_to_arc_dist_centre_is_r | theories/ArcPointDistance.v (see §4) | P coincides with arc centre O; dist = arc_radius for any X with on_arc (trivial once on_circle is shown)
 #
 # DISCHARGED 2026-06-14: theories/EdgeFaceBridge.v:H_bridge_core.  The
 # combinatorial core -- the same-face FACE SPLIT
