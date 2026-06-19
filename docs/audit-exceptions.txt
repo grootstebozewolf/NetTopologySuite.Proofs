@@ -348,6 +348,15 @@ theories/ArcCentroid.v
 # Removal tracks ArcLength's cleanup.
 theories/ArcAreaCentroid.v
 
+# Category C (R-side, same sin_lt_x lineage as ArcArea.v): issue #65 BUF-1/BUF-NEG
+# buffer-region AREA companion of the BUFFER_REGION oracle.  buffer_arc_area_zero
+# / buffer_arc_safe_iff_sq / buffer_boundary_arcs_valid / buffer_offset_point_dist
+# are 3-axiom, but buffer_arc_area_grows reuses ArcArea.segment_area's
+# `theta - sin theta >= 0` (Stdlib `sin_lt_x` -> Classical_Prop.classic), so the
+# file is 4-axiom.  No Admitteds; all headlines Qed-closed.  Removal tracks
+# ArcLength's / ArcArea's cleanup.
+theories/CurveBufferArea.v
+
 # Category C (R-side, same atan/sin lineage as ArcLength.v / AngleBetween.v):
 # route (B) follow-up, equal-angle budget discharge.  arc_central_angle is
 # built on angle_between = atan2(...), and sin_sq_le_sq uses Stdlib `sin_lt_x`

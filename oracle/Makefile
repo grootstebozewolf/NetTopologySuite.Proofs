@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -88,6 +88,13 @@ holes-disjoint-tests: $(TARGET)
 # on any violation.
 curve-relate-matrix-tests: $(TARGET)
 	cd .. && python3 oracle/gen_curve_relate_matrix_tests.py
+
+# BUF-1 / BUF-NEG BUFFER_REGION (JTS #1195 §7): assemble the offset boundary of a
+# closed curve ring + its signed area.  Gates I1 parallel-distance, I2 area vs
+# Minkowski sampling, I3 convex Steiner, I4 EMPTY, I5 d=0 identity, I6 monotonic.
+# Nonzero exit on any violation.
+buffer-region-tests: $(TARGET)
+	cd .. && python3 oracle/gen_buffer_region_tests.py
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.

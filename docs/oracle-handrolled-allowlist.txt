@@ -263,3 +263,22 @@ run_holes_disjoint
 # computed cell-DIMENSION soundness (Jordan/overlay) is the deferred frontier,
 # pinned by oracle/gen_curve_relate_matrix_tests.py.
 run_curve_relate_matrix
+
+# --- BUFFER_REGION (BUF-1 / BUF-NEG, JTS #1195 §7) ---------------------------
+# Mode BUFFER_REGION ASSEMBLES the offset boundary of a closed curve ring at
+# signed distance d and emits it + its TRUE signed area -- the buffer-region
+# certificate.  It composes the run_arc_offset_xy radial homothety (arc offset to
+# radius r+sigma*d, sigma = arc sweep-sign * ring orientation = convex/concave
+# outward radial sign), the BufferOffset chord normal offset, CurveRoundJoin
+# round-join arcs at convex corners, and the run_ring_orientation signed-area
+# kernel (chord shoelace + arc sector areas).  All carry sqrt + atan2/asin off the
+# EXACT circumcentre_q / arc_invariants_q, so the emitted coordinates and area
+# round once past certified Q -- the float IS the JTS/NTS buffer interface.  The
+# reused primitives are inner `let`s, so the detector attributes their arithmetic
+# to this enclosing function.  Backed (3-axiom) by the offset-assembly rungs
+# (CurveRingOffset .. CurveOffsetAssemblyTotal.curve_ring_offset_total_valid,
+# CurveRoundJoin.round_join_arc_valid) + theories/CurveBufferArea.v (boundary
+# validity + area algebra: d=0 identity, EMPTY/safety decision, orientation
+# preservation); the geometric "signed area = true Minkowski buffer area" is the
+# deferred P2 frontier, pinned by oracle/gen_buffer_region_tests.py.
+run_buffer_region

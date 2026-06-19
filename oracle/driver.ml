@@ -2086,6 +2086,174 @@ let run_ring_orientation () =
     else Printf.printf "%s %h\n" (if !s2 > 0.0 then "CCW" else "CW") (!s2 /. 2.0)
   end
 
+(* ----- BUFFER_REGION (BUF-1 / BUF-NEG, JTS #1195 §7): the buffer-region
+   certificate -- ASSEMBLE the offset boundary of a closed curve ring at signed
+   distance d and emit it + its signed area.
+   ---------------------------------------------------------------------------
+   The single-arc offset (ARC_OFFSET_XY) is pinned and the offset-boundary
+   ASSEMBLY is proven valid-as-a-curve-ring (CurveRingOffset -> ...Total, round
+   joins); what was NOT independently certifiable is the area / Minkowski
+   semantics.  This mode assembles the boundary (per-segment outward offset +
+   round-join arcs at convex corners) and reports its TRUE signed area (the
+   RING_ORIENTATION kernel: chord shoelace + arc sector areas).
+
+   Outward side from the ring orientation (sign of the signed area).  Chord a->b:
+   outward unit normal n = orient*(t.y,-t.x)/|t|, offset a+d n -> b+d n.  Arc
+   (a,b,c): radial homothety to radius r + sigma*d (sigma = +1 if the centre O is
+   inside the ring, else -1 -- the convex/concave outward radial sign), controls
+   O + ((r+sigma*d)/r)(P-O); EMPTY if r+sigma*d <= 0 (collapse).  Round join at a
+   non-G1 join with a GAP (d>0, convex corner): the arc P+d n1 -> P+d m -> P+d n2,
+   m = (n1+n2)/|n1+n2| (CurveRoundJoin.round_join_arc).
+
+   v1 (proven-clean regime, documented): convex shells.  d>0 outward with round
+   joins; d<0 inward for SMOOTH (all-G1) rings.  A reflex / U-turn corner, or a
+   non-G1 corner with d<0 (the inward-miter / self-intersection cleanup = the
+   noding/P2 frontier), or a collinear arc, emits DEGENERATE rather than a
+   self-intersecting ring.  INTERFACE-BOUNDARY float (sqrt/atan2 off the exact
+   circumcentre), allowlisted run_buffer_region.  Proof companion:
+   theories/CurveBufferArea.v (boundary validity via curve_ring_offset_total_valid
+   + the area algebra: d=0 identity, EMPTY/safety decision, orientation
+   preservation); geometric "signed area = true Minkowski buffer area" is the
+   deferred P2 frontier, pinned by oracle/gen_buffer_region_tests.py.
+
+   Input:  line 2 = n (segment count of the closed ring); lines 3.. = segments
+           ("C x1 y1 x2 y2" | "A sx sy mx my ex ey"); then a line with d.
+   Output: <m> then m assembled boundary segment lines, then "AREA <a>" (a=S/2);
+           "EMPTY" (collapse); "DEGENERATE" (out of v1 scope); "NAN". *)
+exception Buffer_empty
+exception Buffer_degenerate
+let run_buffer_region () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks =
+      List.filter (fun s -> s <> "")
+        (String.split_on_char ' '
+           (String.map (fun c -> if c = '\t' then ' ' else c)
+              (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "BUFFER_REGION: bad segment line" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let d = float_of_string (String.trim (input_line stdin)) in
+  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = Array.to_list segs |> List.concat_map seg_pts in
+  if not (List.for_all finite_bpoint all_pts && finite_float d) then print_endline "NAN"
+  else begin
+    let bp x y = { bx = x; by_ = y } in
+    (* signed twice-area of an assembled segment list (the RING_ORIENTATION kernel) *)
+    let signed_area2 (arr : _ list) =
+      let cross (p : bPoint) (q : bPoint) = p.bx *. q.by_ -. p.by_ *. q.bx in
+      let s2 = ref 0.0 in
+      List.iter (fun seg -> match seg with
+        | `Chord (p, q) -> s2 := !s2 +. cross p q
+        | `Arc (a, b, c) ->
+            s2 := !s2 +. cross a c;
+            (match arc_invariants_q a b c with
+             | ArcDegenerate -> ()
+             | ArcInv (r2, cos_full, major) ->
+                 let r2f = Q.to_float r2 in
+                 let sv = Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2)) in
+                 let s = sqrt (if sv < 0.0 then 0.0 else sv) in
+                 let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
+                 let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+                 let ax = qf a.bx and ay = qf a.by_ in
+                 let bx = qf b.bx and by_ = qf b.by_ in
+                 let cx = qf c.bx and cy = qf c.by_ in
+                 let orient = Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
+                                    (Q.mul (Q.sub by_ ay) (Q.sub cx ax)) in
+                 let sb = float_of_int (Q.sign orient) in
+                 s2 := !s2 +. sb *. r2f *. (theta -. sin theta))) arr;
+      !s2 in
+    (* sweep sign of an arc's control triple (a,b,c): sign((b-a) x (c-a)), exact Q.
+       The arc's outward radial sign is sigma = sb * orient -- convex (center on the
+       interior side, sb = orient) offsets to radius r+d; concave to r-d.  This is
+       robust (no ray cast, so no vertex-grazing on the sigma test). *)
+    let arc_sweep_sign (a : bPoint) (b : bPoint) (c : bPoint) =
+      let ax = qf a.bx and ay = qf a.by_ in
+      let bx = qf b.bx and by_ = qf b.by_ in
+      let cx = qf c.bx and cy = qf c.by_ in
+      float_of_int (Q.sign (Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
+                                  (Q.mul (Q.sub by_ ay) (Q.sub cx ax)))) in
+    let s2_in = signed_area2 (Array.to_list segs) in
+    if abs_float s2_in <= 1e-12 *. (1.0 +. abs_float s2_in) then print_endline "DEGENERATE"
+    else begin
+      let orient = if s2_in > 0.0 then 1.0 else -1.0 in
+      (* offset one segment outward by d; return (offset_seg, n_start, n_end)
+         where n_* are outward UNIT normals at the segment endpoints. *)
+      let offset_seg = function
+        | `Chord (a, b) ->
+            let tx = b.bx -. a.bx and ty = b.by_ -. a.by_ in
+            let l = sqrt (tx *. tx +. ty *. ty) in
+            if l <= 0.0 then raise Buffer_degenerate;
+            let nx = orient *. ty /. l and ny = orient *. (-. tx) /. l in
+            (`Chord (bp (a.bx +. d *. nx) (a.by_ +. d *. ny),
+                     bp (b.bx +. d *. nx) (b.by_ +. d *. ny)),
+             (nx, ny), (nx, ny))
+        | `Arc (a, b, c) ->
+            (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                     (qf c.bx, qf c.by_) with
+             | None -> raise Buffer_degenerate
+             | Some (ox, oy, r2) ->
+                 let oxf = Q.to_float ox and oyf = Q.to_float oy in
+                 let r = sqrt (Q.to_float r2) in
+                 let sigma = arc_sweep_sign a b c *. orient in
+                 let rr = r +. sigma *. d in
+                 if rr <= 0.0 then raise Buffer_empty;
+                 let k = rr /. r in
+                 let off (p : bPoint) = bp (oxf +. k *. (p.bx -. oxf))
+                                           (oyf +. k *. (p.by_ -. oyf)) in
+                 let nrm (p : bPoint) = (sigma *. (p.bx -. oxf) /. r,
+                                         sigma *. (p.by_ -. oyf) /. r) in
+                 (`Arc (off a, off b, off c), nrm a, nrm c)) in
+      let join_pt = function `Chord (_, b) -> b | `Arc (_, _, c) -> c in
+      try
+        let offs = Array.map offset_seg segs in
+        (* assemble: each offset segment, plus a round-join arc at each non-G1
+           join (including the closing join). *)
+        let out = ref [] in
+        let emit s = out := s :: !out in
+        for i = 0 to n - 1 do
+          let (oseg, _, ne) = offs.(i) in
+          emit oseg;
+          let (_, ns2, _) = offs.((i + 1) mod n) in
+          let (nx1, ny1) = ne and (nx2, ny2) = ns2 in
+          let cross = nx1 *. ny2 -. ny1 *. nx2 in
+          let dot = nx1 *. nx2 +. ny1 *. ny2 in
+          let g1 = abs_float cross <= 1e-9 && dot > 0.0 in
+          if not g1 && d <> 0.0 then begin
+            (* non-G1 corner with a real gap *)
+            if d > 0.0 && cross *. orient > 1e-12 then begin
+              (* convex corner -> round join arc, centre = join point P, radius |d| *)
+              let p = join_pt segs.(i) in
+              let mx = nx1 +. nx2 and my = ny1 +. ny2 in
+              let mn = sqrt (mx *. mx +. my *. my) in
+              if mn <= 1e-12 then raise Buffer_degenerate;  (* U-turn *)
+              let mhx = mx /. mn and mhy = my /. mn in
+              emit (`Arc (bp (p.bx +. d *. nx1) (p.by_ +. d *. ny1),
+                          bp (p.bx +. d *. mhx) (p.by_ +. d *. mhy),
+                          bp (p.bx +. d *. nx2) (p.by_ +. d *. ny2)))
+            end else
+              (* reflex corner, or d<0 non-G1: inward-miter / cleanup out of v1 *)
+              raise Buffer_degenerate
+          end
+        done;
+        let asm = List.rev !out in
+        let area = signed_area2 asm /. 2.0 in
+        let line = function
+          | `Chord (a, b) -> Printf.sprintf "C %h %h %h %h" a.bx a.by_ b.bx b.by_
+          | `Arc (a, b, c) ->
+              Printf.sprintf "A %h %h %h %h %h %h" a.bx a.by_ b.bx b.by_ c.bx c.by_ in
+        Printf.printf "%d\n" (List.length asm);
+        List.iter (fun s -> print_endline (line s)) asm;
+        Printf.printf "AREA %h\n" area
+      with
+      | Buffer_empty -> print_endline "EMPTY"
+      | Buffer_degenerate -> print_endline "DEGENERATE"
+    end
+  end
+
 (* ----- HOLES_DISJOINT (V-CP / CP_VALID, JTS #1195 §7): two curve rings disjoint?
    ---------------------------------------------------------------------------
    Two hole rings' regions are disjoint unless their BOUNDARIES meet or one is
@@ -2791,6 +2959,7 @@ let () =
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()
        | "RING_ORIENTATION"         -> run_ring_orientation ()
+       | "BUFFER_REGION"            -> run_buffer_region ()
        | "HOLES_DISJOINT"           -> run_holes_disjoint ()
        | "CURVE_RELATE_MATRIX"      -> run_curve_relate_matrix ()
        | "CURVE_SNAP_DECISION"          -> run_curve_snap_decision ()

@@ -1966,6 +1966,17 @@ theories/CurveReverse.v
 # now produces a valid compound ring.  No Admitteds.
 theories/CurveCapWalk.v
 
+# Issue #65 / JTS #1195 §7 (BUF-1 / BUF-NEG): the buffer-region AREA companion of
+# the BUFFER_REGION oracle (assemble offset boundary + signed area).  Per-arc
+# buffer segment area buffer_arc_area = segment_area (r+d); d=0 identity;
+# buffer_arc_area_grows (outward buffer grows each arc's segment area); reuse of
+# offset_safe_iff_sq (rational EMPTY decision), curve_ring_offset_arcs_valid
+# (boundary validity), arc_offset_dist_exact (the parallel-distance property).
+# 4-axiom [exact] (segment_area magnitude pulls the sin_lt_x lineage).  The
+# geometric "signed area = true Minkowski buffer area" is the deferred P2 frontier,
+# pinned by oracle/gen_buffer_region_tests.py.
+theories/CurveBufferArea.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
