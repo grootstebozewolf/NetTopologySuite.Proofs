@@ -1,0 +1,28 @@
+# EllipticArc×line DE-9IM oracle vectors — Esri 300 chord seed (following clothoid).
+# Coq pins: theories/RelateEllipticArc.v (EllipticArcChord + S2 delegate).
+# Fill: theories/RelateMatrixEllipticArc.v — elliptic_arc_fill EAR_*.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt.
+#
+# Model (chord path): EllipticArcChord uses only start–end for the relate chord.
+# Full elliptic parameters (center, axes, rotation, angles) are future.
+
+REGIME CHORD_CROSS
+ELLIPTIC (0 0) (2 0)
+SEG (0 2) (2 -2)
+COQ eac_matrix_point_ii
+FILL elliptic_arc_fill EAR_ChordProperCross
+NOTES elliptic_arc_chord_proper_cross; geometry via line_line_proper_cross_geom.
+
+REGIME CHORD_DISJ
+ELLIPTIC (0 0) (2 0)
+SEG (0 3) (2 4)
+COQ eac_matrix_disjoint
+FILL elliptic_arc_fill EAR_ChordDisjoint
+NOTES elliptic_arc_chord_rejected; same-side rejection.
+
+REGIME CHORD_SHARE
+ELLIPTIC (0 0) (2 0)
+SEG (1 0) (3 0)
+COQ eac_matrix_point_ii
+FILL elliptic_arc_fill EAR_ChordShare
+NOTES elliptic_arc_chord_share; chord endpoint on segment interior.

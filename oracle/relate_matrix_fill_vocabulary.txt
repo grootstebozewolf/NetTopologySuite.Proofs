@@ -49,6 +49,18 @@ FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordDisjoint    => cl_matrix_di
 FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordProperCross => cl_matrix_point_ii
 FILL_API RelateMatrixClothoid clothoid_fill CLR_ChordShare       => cl_matrix_point_ii
 # Oracle: oracle/de9im_clothoid_vectors.txt
+
+# EllipticArc×line chord seed (Esri 300, theories/RelateMatrixEllipticArc.v):
+FILL_API RelateMatrixEllipticArc elliptic_arc_fill EAR_ChordDisjoint    => eac_matrix_disjoint
+FILL_API RelateMatrixEllipticArc elliptic_arc_fill EAR_ChordProperCross => eac_matrix_point_ii
+FILL_API RelateMatrixEllipticArc elliptic_arc_fill EAR_ChordShare       => eac_matrix_point_ii
+# Oracle: oracle/de9im_elliptic_vectors.txt
+
+# Bezier3Curve×line chord seed (Esri 300, theories/RelateMatrixBezier3.v):
+FILL_API RelateMatrixBezier3 bezier3_fill B3R_ChordDisjoint    => b3c_matrix_disjoint
+FILL_API RelateMatrixBezier3 bezier3_fill B3R_ChordProperCross => b3c_matrix_point_ii
+FILL_API RelateMatrixBezier3 bezier3_fill B3R_ChordShare       => b3c_matrix_point_ii
+# Oracle: oracle/de9im_bezier3_vectors.txt
 #
 # Curve-polygon×point (theories/RelateMatrixCurveAreaPoint.v):
 FILL_API RelateMatrixCurveAreaPoint curve_point_fill CPR_StrictInterior    => cap_matrix_rect_contains_point

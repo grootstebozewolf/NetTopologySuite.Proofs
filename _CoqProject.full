@@ -590,6 +590,13 @@ theories/RelateArcAnalytic.v
 theories/RelateMatrixArcAnalytic.v
 theories/RelateClothoid.v
 theories/RelateMatrixClothoid.v
+# Esri 300 new geometry (EllipticArc + Bezier3Curve) — chord seed relate,
+# added the same way as Clothoid (S10b). Minimal 2-pt chord carriers +
+# regime→witness fill for DE-9IM chord path. No Admitted.
+theories/RelateEllipticArc.v
+theories/RelateMatrixEllipticArc.v
+theories/RelateBezier3.v
+theories/RelateMatrixBezier3.v
 # Issue #67 S10b follow-up: the law-of-cosines chord-length bridge at
 # arc_sweep_angle (the analytic gap RelateArcAnalytic/RelateClothoid defer).
 # Squared form: dist_sq(start,end) = 2*dist_sq(center,start)*(1-cos sweep),

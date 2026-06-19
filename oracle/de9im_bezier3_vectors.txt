@@ -1,0 +1,27 @@
+# Bezier3Curve×line DE-9IM oracle vectors — Esri 300 chord seed (following clothoid).
+# Coq pins: theories/RelateBezier3.v (Bezier3Chord + S2 delegate).
+# Fill: theories/RelateMatrixBezier3.v — bezier3_fill B3R_*.
+# Vocabulary: oracle/relate_matrix_fill_vocabulary.txt.
+#
+# Model (chord path): Bezier3Chord uses start–end (controls affect shape only).
+
+REGIME CHORD_CROSS
+BEZIER3 (0 0) (2 0)
+SEG (0 2) (2 -2)
+COQ b3c_matrix_point_ii
+FILL bezier3_fill B3R_ChordProperCross
+NOTES bezier3_chord_proper_cross; geometry via line_line_proper_cross_geom.
+
+REGIME CHORD_DISJ
+BEZIER3 (0 0) (2 0)
+SEG (0 3) (2 4)
+COQ b3c_matrix_disjoint
+FILL bezier3_fill B3R_ChordDisjoint
+NOTES bezier3_chord_rejected; same-side rejection.
+
+REGIME CHORD_SHARE
+BEZIER3 (0 0) (2 0)
+SEG (1 0) (3 0)
+COQ b3c_matrix_point_ii
+FILL bezier3_fill B3R_ChordShare
+NOTES bezier3_chord_share; chord endpoint on segment interior.

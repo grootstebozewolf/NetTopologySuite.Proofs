@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -88,6 +88,17 @@ holes-disjoint-tests: $(TARGET)
 # on any violation.
 curve-relate-matrix-tests: $(TARGET)
 	cd .. && python3 oracle/gen_curve_relate_matrix_tests.py
+
+# CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
+# These are the primary "adversarial tests for the enum" created via oracle-driven search.
+curve-adversarial-hunt:
+	cd .. && python3 oracle/gen_adversarial_curves.py --types 0,1,2 --budget 20000
+
+elliptic-hunt:
+	cd .. && python3 oracle/gen_adversarial_curves.py --types 1 --budget 10000
+
+bezier-hunt:
+	cd .. && python3 oracle/gen_adversarial_curves.py --types 2 --budget 10000
 
 extracted.cmi: extracted.mli
 	$(OCAMLOPT) -c $<
