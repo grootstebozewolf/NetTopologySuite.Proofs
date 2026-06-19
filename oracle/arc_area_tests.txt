@@ -1,0 +1,21 @@
+# Adversarial tests for ARC_AREA (RocqRefRunner), M-AREA-CP / issue #64.
+# I1 nonneg  I2 semicircle==pi r^2/2  I3 full==pi r^2  I4 degen. Backing: ArcArea.v
+# '!!' lines are gated-invariant / expectation violations (CI-failing).
+
+## A. Curated (exact half/full/disc cases).
+  [R=5 semicircle] -> '0x1.3a28c59d5433bp+5'   ok
+  [R=5 full turn approx (almost)] -> '0x1.3a18b0472be69p+6'   ok
+  [degenerate collinear] -> 'DEGENERATE'   ok
+
+## B. Sweep + adversarial (small theta, major, huge, near boundary).
+  [unit @origin] -> '0x1.921fb54442d18p+0'   ok
+  [R=5 lower] -> '0x1.3a28c59d5433bp+5'   ok
+  [off-centre R=2 @ (3,4)] -> '0x1.921fb54442d18p+2'   ok
+  [small quarter] -> '0x1.243f6a8885a3p+0'   ok
+  [huge] -> '0x1.be727995d90d3p+53'   ok
+  [tiny flat arc] -> '0x1.65ebcd2d6f648p-20'   ok
+  [near semicircle major] -> '0x1.a742ca78952fbp+0'   ok
+  [R=1 near flat minor] -> '0x1.a5a84d380748bp-20'   ok
+  [large outward major] -> '0x1.921fb54442d18p+0'   ok
+
+# All invariants (I1 nonneg, I2 semicircle, I3 full, I4 degen + formula match) hold.

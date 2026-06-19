@@ -21,6 +21,9 @@
 #                     fails past the centre; inner_offset_past_center_not_at_distance).
 #   I5  IDENTITY      d = 0 reproduces the input controls.
 #
+# Full slice adds coverage for: signed d (pos/neg), EMPTY collapse boundary,
+# 3pt preservation on extremes, huge coords, major sweeps, tiny arcs, near-singularity.
+#
 # Run from repo root:
 #   python3 oracle/gen_arc_offset_tests.py > oracle/arc_offset_tests.txt
 # Exit status: nonzero iff a gated invariant or curated expectation fails.
@@ -132,7 +135,7 @@ emit("# Adversarial tests for ARC_OFFSET_XY (RocqRefRunner), OFF/BUF / JTS #1195
 emit("# I1 radial-dist |d|  I2 distance |r+d| from centre  I3 radial ray (homothety)")
 emit("# I4 EMPTY iff r+d<=0  I5 identity at d=0.  Backing: ArcOffsetThreePoint")
 emit("# arc_offset_preserves_arc / radial_offset_dist_exact + the EMPTY witness.")
-emit("# '!!' lines are gated-invariant / expectation violations (CI-failing).")
+emit("# Full: signed/collapse/3pt/EMPTY/huge/major/tiny. '!!' lines fail CI.")
 emit()
 emit("## A. Curated (offset radii hand-verified).")
 
@@ -144,6 +147,12 @@ assess("R=5 arc, d=-5 (r+d=0, EMPTY)", UA, -5, expect="EMPTY")
 assess("R=5 arc, d=-6 (r+d<0, EMPTY)", UA, -6, expect="EMPTY")
 assess("R=5 arc, large outward d=+50", UA, 50, expect="XY")
 assess("degenerate arc (collinear)", ((0, 0), (1, 0), (2, 0)), 2, expect="DEGENERATE")
+
+# Collapse / 3pt / signed extremes (full slice)
+assess("R=5 arc, d=-4.999 (near collapse from out)", UA, -4.999, expect="XY")
+assess("R=5 arc, d=-5.001 (past collapse)", UA, -5.001, expect="EMPTY")
+assess("tiny arc, d=+0.1", ((0,0),(0.001,0),(0,0.001)), 0.1, expect="XY")
+assess("tiny arc, d=-0.0005 (r~0.0007, still XY)", ((0,0),(0.001,0),(0,0.001)), -0.0005, expect="XY")
 
 emit()
 emit("## B. Sweep over arcs and offsets (gating I1-I5).")
@@ -157,6 +166,18 @@ for nm, arc in ARCS.items():
     r = circumcentre(arc)[2]
     for d in (-0.9 * r, -0.5 * r, -0.01 * r, 0.0, 0.5 * r, 3 * r, -r, -1.5 * r):
         assess(f"{nm} d={d:.3g} (r={r:.3g})", arc, round(d, 12))
+
+emit()
+emit("## C. Adversarial huge / major-ish / extreme signed (full collapse/3pt/EMPTY/huge coverage).")
+HUGE = ((1e8, 0.0), (0.0, 1e8), (-1e8, 0.0))
+rh = circumcentre(HUGE)[2]
+for d in (1e6, -0.5*rh, -rh, -rh-1e4, 1e10):
+    assess(f"huge d={d:.3g}", HUGE, d)
+
+# Major-ish (long sweep controls)
+MAJ = ((1,0), (-1,0.1), (-1,-0.1))  # roughly major around
+assess("major-ish d=+1", MAJ, 1.0)
+assess("major-ish d=-0.5", MAJ, -0.5)
 
 emit()
 if violations:

@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -61,6 +61,7 @@ cp-ring-simple-tests: $(TARGET)
 # Adversarial ARC_OFFSET_XY suite (OFF/BUF-1/BUF-NEG, JTS #1195 §7): gates
 # I1 radial-dist |d|, I2 distance |r+d| from centre, I3 radial ray (homothety),
 # I4 EMPTY iff r+d<=0, I5 identity at d=0.  Nonzero exit on any violation.
+# Full slice: signed, collapse/3pt/EMPTY boundary, huge coords, major sweeps, tiny.
 arc-offset-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_offset_tests.py
 
@@ -110,6 +111,11 @@ arc-area-centroid-tests: $(TARGET)
 # Gates I1 radial if in, I2 fallback, I3 degen, I4 center, I5 nonneg. Backing ArcPointDistance.v + ArcDistance.v
 arc-distance-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_distance_tests.py
+
+# M-AREA-CP ARC_AREA: circular segment area (between arc + chord). Gates I1 nonneg,
+# I2 semicircle pi r^2/2, I3 full pi r^2, I4 degen + formula match. Backing ArcArea.v .
+arc-area-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_area_tests.py
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.

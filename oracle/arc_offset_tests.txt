@@ -2,7 +2,7 @@
 # I1 radial-dist |d|  I2 distance |r+d| from centre  I3 radial ray (homothety)
 # I4 EMPTY iff r+d<=0  I5 identity at d=0.  Backing: ArcOffsetThreePoint
 # arc_offset_preserves_arc / radial_offset_dist_exact + the EMPTY witness.
-# '!!' lines are gated-invariant / expectation violations (CI-failing).
+# Full: signed/collapse/3pt/EMPTY/huge/major/tiny. '!!' lines fail CI.
 
 ## A. Curated (offset radii hand-verified).
   [R=5 arc, d=+2 (radius 7)] -> '0x1.cp+2 0x0p+0 0x0p+0 0x1.cp+2 -0x1.cp+2 0x0p+0'   ok
@@ -12,6 +12,10 @@
   [R=5 arc, d=-6 (r+d<0, EMPTY)] -> 'EMPTY'   ok
   [R=5 arc, large outward d=+50] -> '0x1.b8p+5 0x0p+0 0x0p+0 0x1.b8p+5 -0x1.b8p+5 0x0p+0'   ok
   [degenerate arc (collinear)] -> 'DEGENERATE'   ok
+  [R=5 arc, d=-4.999 (near collapse from out)] -> '0x1.0624dd2f1bp-10 0x0p+0 0x0p+0 0x1.0624dd2f1bp-10 -0x1.0624dd2f1bp-10 0x0p+0'   ok
+  [R=5 arc, d=-5.001 (past collapse)] -> 'EMPTY'   ok
+  [tiny arc, d=+0.1] -> '-0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4 -0x1.21a1851ff630ap-4 -0x1.21a1851ff630ap-4 0x1.25ba1894b29b2p-4'   ok
+  [tiny arc, d=-0.0005 (r~0.0007, still XY)] -> '0x1.72ba43fff3718p-12 0x1.72ba43fff3718p-12 0x1.52ec985e3b86cp-11 0x1.72ba43fff3718p-12 0x1.72ba43fff3718p-12 0x1.52ec985e3b86cp-11'   ok
 
 ## B. Sweep over arcs and offsets (gating I1-I5).
   [unit @origin d=-0.9 (r=1)] -> '0x1.9999999999998p-4 0x0p+0 0x0p+0 0x1.9999999999998p-4 -0x1.9999999999998p-4 0x0p+0'   ok
@@ -46,5 +50,14 @@
   [small quarter d=6 (r=2)] -> '0x1p+3 -0x1.1d66d6f26327p-50 0x1.6a09e667f3bcdp+2 0x1.6a09e667f3bcdp+2 -0x1.1d66d6f26327p-50 0x1p+3'   ok
   [small quarter d=-2 (r=2)] -> 'EMPTY'   ok
   [small quarter d=-3 (r=2)] -> 'EMPTY'   ok
+
+## C. Adversarial huge / major-ish / extreme signed (full collapse/3pt/EMPTY/huge coverage).
+  [huge d=1e+06] -> '0x1.8148dp+26 0x0p+0 0x0p+0 0x1.8148dp+26 -0x1.8148dp+26 0x0p+0'   ok
+  [huge d=-5e+07] -> '0x1.7d784p+25 0x0p+0 0x0p+0 0x1.7d784p+25 -0x1.7d784p+25 0x0p+0'   ok
+  [huge d=-1e+08] -> 'EMPTY'   ok
+  [huge d=-1e+08] -> 'EMPTY'   ok
+  [huge d=1e+10] -> '0x1.2d00e28p+33 0x0p+0 0x0p+0 0x1.2d00e28p+33 -0x1.2d00e28p+33 0x0p+0'   ok
+  [major-ish d=+1] -> '0x1p+1 0x0p+0 -0x1.feb9231cba6ap+0 0x1.9916dad84a90dp-3 -0x1.feb9231cba6ap+0 -0x1.9916dad84a90dp-3'   ok
+  [major-ish d=-0.5] -> '0x1.fffffffffffffp-2 0x0p+0 -0x1.0146dce34596p-1 0x1.9a9f171c37ab4p-5 -0x1.0146dce34596p-1 -0x1.9a9f171c37ab4p-5'   ok
 
 # All invariants (I1 radial-dist, I2 same-circle, I3 radial-ray, I4 EMPTY, I5 identity) hold.
