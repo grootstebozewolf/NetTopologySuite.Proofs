@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -100,6 +100,16 @@ buffer-region-tests: $(TARGET)
 # I2 on bisector, specials, bounds, degenerate.  Backing ArcCentroid.v .
 arc-centroid-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_centroid_tests.py
+
+# C-AREA ARC_AREA_CENTROID: area centroid of circular segment.  Gates I1 bounds,
+# I2 bisector, specials, nonneg, degenerate.  Backing ArcAreaCentroid.v .
+arc-area-centroid-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_area_centroid_tests.py
+
+# D-PT ARC_DISTANCE: point to arc shortest dist with sweep clamp + endpoint fallback.
+# Gates I1 radial if in, I2 fallback, I3 degen, I4 center, I5 nonneg. Backing ArcPointDistance.v + ArcDistance.v
+arc-distance-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_distance_tests.py
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.
