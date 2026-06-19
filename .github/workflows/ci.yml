@@ -40,15 +40,16 @@ jobs:
       - name: Show Rocq version
         run: rocq -v
 
-      - name: Generate Makefile
-        run: coq_makefile -f _CoqProject -o Makefile
+      - name: Generate Makefile (parity with container + docs)
+        # Use the same modern driver + .gen naming as the container job,
+        # Dockerfile, README, and the committed convenience Makefile.
+        # Never write to plain "Makefile" — that is the safe committed
+        # convenience layer (make help, make host, etc.).
+        run: rocq makefile -f _CoqProject -o Makefile.gen
 
       - name: Build proofs
-        # Parallel across the runner's cores.  Apple's bundled GNU make
-        # 3.81 supports -j (it predates --output-sync, but nothing here
-        # parses this job's build log, so interleaving is harmless --
-        # the axiom audit runs on the container job's synced log).
-        run: make -j"$(sysctl -n hw.ncpu)"
+        # Parallel + output-sync for readable logs (matches container job).
+        run: make -f Makefile.gen -j"$(sysctl -n hw.ncpu)" --output-sync=target || make -f Makefile.gen -j"$(sysctl -n hw.ncpu)"
 
       - name: Verify no .v file is missing a Qed (two-tier Admitted check)
         # Scans BOTH theories/ and theories-flocq/.  The directory split

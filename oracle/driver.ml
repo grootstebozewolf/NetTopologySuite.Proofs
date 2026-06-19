@@ -1237,6 +1237,9 @@ let run_arc_area_centroid () =
 
 (* ----- ARC_DISTANCE (issue #64/#69 D-PT): shortest distance from a point to one
    circular ARC.
+   Proof companion: theories/ArcDistance.v (circle core) + theories/ArcPointDistance.v
+   (full D-PT with 4 lemmas: radial_lower, attains_radial, foot_on_arc_when_span,
+   fallback_ends_lower) using arc_orient / inCircle_R / arc_span_contains (directedSweep).
    ---------------------------------------------------------------------------
    The nearest point on the FULL circle to P is the radial foot O + r*(P-O)/|P-O|,
    at distance ||P-O| - r|.  If that foot lies on the arc A->B->C the answer is
