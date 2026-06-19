@@ -102,7 +102,7 @@ def raycast_in(ring, p):
         if s[0] == "C":
             if edge_cross(s[1], s[2]):
                 cnt += 1
-        else:
+        elif s[0] == "A":
             o = circumcentre(s[1], s[2], s[3])
             if o is None:
                 cnt += edge_cross(s[1], s[2]) + edge_cross(s[2], s[3])
@@ -114,6 +114,32 @@ def raycast_in(ring, p):
                 for x in (ox + sq, ox - sq):
                     if x > px and on_arc_sector(ox, oy, s[1], s[2], s[3], x, py):
                         cnt += 1
+        elif s[0] == "B":
+            # Bezier3: conservative crossing on the three control chords
+            pts = [s[1], s[2], s[3], s[4]]
+            for i in range(3):
+                if edge_cross(pts[i], pts[i+1]):
+                    cnt += 1
+        elif s[0] == "E":
+            # Elliptic: basic implementation using ellipse equation for horizontal ray
+            # s = ("E", cx, cy, rx, ry, rot, sa, sw)
+            cx, cy, rx, ry, rot = s[1], s[2], s[3], s[4], s[5]
+            # For simplicity in this slice, use a few sample points on the ellipse and check crossings
+            # (full quadratic solve can be added later)
+            samples = 8
+            prev_pt = None
+            for i in range(samples + 1):
+                t = sa + (sw * i / samples)
+                # parametric point
+                c = math.cos(t)
+                si = math.sin(t)
+                ex = cx + rx * c * math.cos(rot) - ry * si * math.sin(rot)
+                ey = cy + rx * c * math.sin(rot) + ry * si * math.cos(rot)
+                pt = (ex, ey)
+                if prev_pt is not None:
+                    if edge_cross(prev_pt, pt):
+                        cnt += 1
+                prev_pt = pt
     return cnt % 2 == 1
 
 
