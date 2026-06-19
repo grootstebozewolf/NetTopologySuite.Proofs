@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -95,6 +95,11 @@ curve-relate-matrix-tests: $(TARGET)
 # Nonzero exit on any violation.
 buffer-region-tests: $(TARGET)
 	cd .. && python3 oracle/gen_buffer_region_tests.py
+
+# C-LIN ARC_CENTROID: arc length weighted centroid of circular arc.  Gates I1 dist==offset,
+# I2 on bisector, specials, bounds, degenerate.  Backing ArcCentroid.v .
+arc-centroid-tests: $(TARGET)
+	cd .. && python3 oracle/gen_arc_centroid_tests.py
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.
