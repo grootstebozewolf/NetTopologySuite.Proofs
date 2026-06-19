@@ -123,7 +123,7 @@ def raycast_in(ring, p):
         elif s[0] == "E":
             # Elliptic: basic implementation using ellipse equation for horizontal ray
             # s = ("E", cx, cy, rx, ry, rot, sa, sw)
-            cx, cy, rx, ry, rot = s[1], s[2], s[3], s[4], s[5]
+            cx, cy, rx, ry, rot, sa, sw = s[1], s[2], s[3], s[4], s[5], s[6], s[7]
             # For simplicity in this slice, use a few sample points on the ellipse and check crossings
             # (full quadratic solve can be added later)
             samples = 8

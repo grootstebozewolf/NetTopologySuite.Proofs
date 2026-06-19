@@ -2242,7 +2242,9 @@ let run_holes_disjoint () =
         | `Arc (a, b, c) ->
             (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
                      (qf c.bx, qf c.by_) with
-             | None -> (if edge_cross a b then incr cnt); (if edge_cross b c then incr cnt)
+             | None ->
+                 (if edge_cross a b then incr cnt);
+                 (if edge_cross b c then incr cnt)
              | Some (ox, oy, r2) ->
                  let oxf = Q.to_float ox and oyf = Q.to_float oy in
                  let r = sqrt (Q.to_float r2) in
@@ -2251,9 +2253,13 @@ let run_holes_disjoint () =
                    let sq = sqrt disc in
                    List.iter (fun x ->
                      if x > px && point_on_arc_sector (oxf, oyf) a b c (x, py)
-                     then incr cnt) [ oxf +. sq; oxf -. sq ]
-                 end))
-        ring;
+                     then incr cnt)
+                     [ oxf +. sq; oxf -. sq ]
+                 end)
+        | `Elliptic _ -> ()
+        | `Bezier (p0, _, _, p3) ->
+            if edge_cross p0 p3 then incr cnt
+      ) ring;
       !cnt mod 2 = 1 in
     let seg_start = function
       | `Chord (a, _) -> a | `Arc (a, _, _) -> a
@@ -2470,7 +2476,9 @@ let run_curve_relate_matrix () =
         | `Arc (a, b, c) ->
             (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
                      (qf c.bx, qf c.by_) with
-             | None -> (if edge_cross a b then incr cnt); (if edge_cross b c then incr cnt)
+             | None ->
+                 (if edge_cross a b then incr cnt);
+                 (if edge_cross b c then incr cnt)
              | Some (ox, oy, r2) ->
                  let oxf = Q.to_float ox and oyf = Q.to_float oy in
                  let r = sqrt (Q.to_float r2) in
@@ -2479,9 +2487,13 @@ let run_curve_relate_matrix () =
                    let sq = sqrt disc in
                    List.iter (fun x ->
                      if x > px && point_on_arc_sector (oxf, oyf) a b c (x, py)
-                     then incr cnt) [ oxf +. sq; oxf -. sq ]
-                 end))
-        ring;
+                     then incr cnt)
+                     [ oxf +. sq; oxf -. sq ]
+                 end)
+        | `Elliptic _ -> ()
+        | `Bezier (p0, _, _, p3) ->
+            if edge_cross p0 p3 then incr cnt
+      ) ring;
       !cnt mod 2 = 1 in
     (* in the closed region: inside outer ring AND outside every hole ring *)
     let in_region (g : _ array array) pt =
@@ -2510,7 +2522,16 @@ let run_curve_relate_matrix () =
                let r = sqrt (Q.to_float r2) in
                abs_float (sqrt ((x -. oxf) *. (x -. oxf) +. (y -. oyf) *. (y -. oyf)) -. r)
                  <= 1e-7 *. (1.0 +. r)
-               && point_on_arc_sector (oxf, oyf) a b c (x, y)) in
+               && point_on_arc_sector (oxf, oyf) a b c (x, y))
+      | `Bezier (p0, _, _, p3) ->
+          (* Proxy: main chord p0-p3 for boundary probe *)
+          let cross = (p3.bx -. p0.bx) *. (y -. p0.by_) -. (p3.by_ -. p0.by_) *. (x -. p0.bx) in
+          let l2 = (p3.bx -. p0.bx) *. (p3.bx -. p0.bx) +. (p3.by_ -. p0.by_) *. (p3.by_ -. p0.by_) in
+          let dot = (x -. p0.bx) *. (p3.bx -. p0.bx) +. (y -. p0.by_) *. (p3.by_ -. p0.by_) in
+          abs_float cross <= 1e-7 *. (1.0 +. l2) && dot >= -1e-7 && dot <= l2 +. 1e-7
+      | `Elliptic _ ->
+          (* Conservative proxy for now; full on-ellipse test in Python model *)
+          false in
     let on_boundary (g : _ array array) pt =
       Array.exists (fun ring -> Array.exists (fun s -> on_seg_pt s pt) ring) g in
     (* classify a probe vs a geometry: 0 = interior, 1 = boundary, 2 = exterior *)
@@ -2535,7 +2556,13 @@ let run_curve_relate_matrix () =
                let dac = ccw a0 (ang (c.bx, c.by_)) in
                let sweep = if dab <= dac then dac else dac -. 2.0 *. pi in
                let th = a0 +. t *. sweep in
-               (oxf +. r *. cos th, oyf +. r *. sin th)) in
+               (oxf +. r *. cos th, oyf +. r *. sin th))
+      | `Bezier (p0, _, _, p3) ->
+          (* Linear interp on main chord for sampling *)
+          (p0.bx +. t *. (p3.bx -. p0.bx), p0.by_ +. t *. (p3.by_ -. p0.by_))
+      | `Elliptic (c, _, _, _, _, _) ->
+          (* Proxy: sample at center (degenerate); proper sampling deferred *)
+          (c.bx, c.by) in
     (* scan self's boundary, classify each sample vs other; record, per other-
        stratum (0/1/2), whether it appears as an isolated point and as a run
        (>= 2 consecutive samples on one segment). *)
