@@ -151,7 +151,7 @@ def assess_simple(name, arc, d, expect_kind=None):
     if expect_kind and out != expect_kind:
         violations += 1
         tags.append(f"!! EXPECTED_{expect_kind}_GOT_{out}")
-    emit(f"  [{name}] -> {out[:80]}...   {' '.join(tags) if tags else 'ok'}")
+    emit(f"  [{name}] -> {out!r}   {' '.join(tags) if tags else 'ok'}")
 
 
 # Curated single-arc "simple" cases (arc + implicit chord ring)
@@ -159,8 +159,22 @@ UA = ((5, 0), (0, 5), (-5, 0))  # r~5
 assess_simple("R=5 d=+2", UA, 2)
 assess_simple("R=5 d=-2", UA, -2)
 assess_simple("R=5 collapse d=-5", UA, -5, expect_kind="EMPTY")
+assess_simple("R=5 large outward d=+50", UA, 50)
 assess_simple("tiny d=+0.1", ((0,0),(0.001,0),(0,0.001)), 0.1)
 assess_simple("degen collinear d=1", ((0,0),(1,0),(2,0)), 1, expect_kind="DEGENERATE")
+
+emit()
+emit("## B. Sweep over arcs (gating offset presence and buffer invariants).")
+ARCS = {
+    "unit @origin": ((1, 0), (0, 1), (-1, 0)),
+    "R=5 lower": ((-5, 0), (0, -5), (5, 0)),
+    "off-centre R=2 @ (3,4)": ((5, 4), (3, 6), (1, 4)),
+    "small quarter": ((2, 0), (1.4142135623730951, 1.4142135623730951), (0, 2)),
+}
+for nm, arc in ARCS.items():
+    r = circumcentre(arc)[2] if circumcentre(arc) else 1.0
+    for d in (-0.9 * r, -0.5 * r, 0.0, 0.5 * r, 2 * r, -r, -1.5 * r):
+        assess_simple(f"{nm} d={d:.3g}", arc, round(d, 12))
 
 emit()
 if violations:
