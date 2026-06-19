@@ -164,6 +164,20 @@ def hunt_passes_and_noding(n=3000):
         if f not in ("TRUE", "FALSE"):
             emit(f"  INTERESTING passes {f} for type{ctype}")
 
+def hunt_curve_ring_point_in(n=200):
+    """Next slice starter: demonstrate POINT_IN_CURVE_RING with rings containing the new CurveType segments.
+    (Full formatting and validation will be in the gens; here we show the syntax is accepted.)
+    """
+    emit("## HUNT (next slice): POINT_IN_CURVE_RING with Elliptic/Bezier rings (syntax demo)")
+    # Hard-coded small examples using the supported syntax
+    examples = [
+        ("Bezier3(2) small", "POINT_IN_CURVE_RING\n1\n2\nB 0 0 1 0.5 2 0 3 0\nC 3 0 0 0\n0.5 0.1\n"),
+        ("Elliptic(1) small", "POINT_IN_CURVE_RING\n1\n2\nE 1.5 1.5 1.5 1.0 0.0 0.0 6.28\nC 3 1.5 0 1.5\n1.5 1.5\n"),
+    ]
+    for name, stdin in examples:
+        res = run_oracle("POINT_IN_CURVE_RING", stdin)
+        emit(f"  {name}: {res}")
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--types", default="0,1,2")
@@ -178,6 +192,7 @@ def main():
     if 0 in wanted or 1 in wanted or 2 in wanted:
         hunt_orientation_and_incircle(args.budget // 2)
     hunt_passes_and_noding(args.budget // 2)
+    hunt_curve_ring_point_in(50)  # next slice starter
 
     emit("# hunter finished")
 
