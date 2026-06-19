@@ -1689,13 +1689,24 @@ let run_ring_simple () =
     match toks with
     | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | "E" :: cx :: cy :: rx :: ry :: rot :: sa :: sw :: _ ->
+        `Elliptic (p cx cy, float_of_string rx, float_of_string ry,
+                   float_of_string rot, float_of_string sa, float_of_string sw)
+    | "B" :: x0::y0::x1::y1::x2::y2::x3::y3::_ ->
+        `Bezier (p x0 y0, p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "RING_SIMPLE: bad segment line" in
   let segs = Array.init n (fun _ -> parse_seg ()) in
   let seg_pts = function
     | `Chord (a, b) -> [a; b]
     | `Arc (a, b, c) -> [a; b; c] in
-  let seg_start = function `Chord (a, _) -> a | `Arc (a, _, _) -> a in
-  let seg_end   = function `Chord (_, b) -> b | `Arc (_, _, c) -> c in
+  let seg_start = function
+    | `Chord (a, _) -> a | `Arc (a, _, _) -> a
+    | `Elliptic (c, _, _, _, _, _) -> c   (* proxy; real start computed by hunter model *)
+    | `Bezier (p0, _, _, _) -> p0 in
+  let seg_end   = function
+    | `Chord (_, b) -> b | `Arc (_, _, c) -> c
+    | `Elliptic (c, _, _, _, _, _) -> c
+    | `Bezier (_, _, _, p3) -> p3 in
   let all_pts = Array.to_list segs |> List.concat_map seg_pts in
   if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
   else if List.exists (fun s -> match s with
@@ -1806,7 +1817,20 @@ let run_ring_simple () =
       match s1, s2 with
       | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
       | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
-      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2 in
+      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
+      (* E/B treated as their end-to-end chord for current boundary-cross / pair logic.
+         Real classification for adversarial cases is done by the independent Python
+         model inside the hunter / gen scripts. *)
+      | `Elliptic (c, _, _, _, _, _), `Chord (p, q)
+      | `Chord (p, q), `Elliptic (c, _, _, _, _, _) ->
+          chord_chord_pts (c, c) (p, q)
+      | `Bezier (p0, _, _, p3), `Chord (p, q)
+      | `Chord (p, q), `Bezier (p0, _, _, p3) ->
+          chord_chord_pts (p0, p3) (p, q)
+      | `Elliptic _, `Elliptic _
+      | `Bezier _, `Bezier _
+      | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+          [] in
     (* permitted shared vertices for an adjacent pair (i, j) *)
     let permitted i j =
       let v = ref [] in
@@ -1911,6 +1935,11 @@ let run_point_in_curve_ring () =
     match toks with
     | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | "E" :: cx :: cy :: rx :: ry :: rot :: sa :: sw :: _ ->
+        `Elliptic (p cx cy, float_of_string rx, float_of_string ry,
+                   float_of_string rot, float_of_string sa, float_of_string sw)
+    | "B" :: x0::y0::x1::y1::x2::y2::x3::y3::_ ->
+        `Bezier (p x0 y0, p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "POINT_IN_CURVE_RING: bad segment line" in
   let segs = Array.init n (fun _ -> parse_seg ()) in
   let query = parse_point (input_line stdin) in
@@ -1988,6 +2017,11 @@ let run_ring_orientation () =
     match toks with
     | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | "E" :: cx :: cy :: rx :: ry :: rot :: sa :: sw :: _ ->
+        `Elliptic (p cx cy, float_of_string rx, float_of_string ry,
+                   float_of_string rot, float_of_string sa, float_of_string sw)
+    | "B" :: x0::y0::x1::y1::x2::y2::x3::y3::_ ->
+        `Bezier (p x0 y0, p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "RING_ORIENTATION: bad segment line" in
   let segs = Array.init n (fun _ -> parse_seg ()) in
   let seg_pts = function
@@ -2051,10 +2085,19 @@ let run_holes_disjoint () =
       match toks with
       | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
       | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+      | "E" :: cx :: cy :: rx :: ry :: rot :: sa :: sw :: _ ->
+          `Elliptic (p cx cy, float_of_string rx, float_of_string ry,
+                     float_of_string rot, float_of_string sa, float_of_string sw)
+      | "B" :: x0::y0::x1::y1::x2::y2::x3::y3::_ ->
+          `Bezier (p x0 y0, p x1 y1, p x2 y2, p x3 y3)
       | _ -> failwith "HOLES_DISJOINT: bad segment line") in
   let ra = parse_ring () in
   let rb = parse_ring () in
-  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c]
+    | `Elliptic (cen, _, _, _, _, _) -> [cen]   (* controls sampled by hunters / independent model *)
+    | `Bezier (p0, _, _, p3) -> [p0; p3] in
   let all_pts = (Array.to_list ra |> List.concat_map seg_pts)
               @ (Array.to_list rb |> List.concat_map seg_pts) in
   if not (List.for_all finite_bpoint all_pts) then print_endline "NAN"
@@ -2151,7 +2194,20 @@ let run_holes_disjoint () =
       match s1, s2 with
       | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
       | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
-      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2 in
+      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
+      (* E/B treated as their end-to-end chord for current boundary-cross / pair logic.
+         Real classification for adversarial cases is done by the independent Python
+         model inside the hunter / gen scripts. *)
+      | `Elliptic (c, _, _, _, _, _), `Chord (p, q)
+      | `Chord (p, q), `Elliptic (c, _, _, _, _, _) ->
+          chord_chord_pts (c, c) (p, q)
+      | `Bezier (p0, _, _, p3), `Chord (p, q)
+      | `Chord (p, q), `Bezier (p0, _, _, p3) ->
+          chord_chord_pts (p0, p3) (p, q)
+      | `Elliptic _, `Elliptic _
+      | `Bezier _, `Bezier _
+      | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+          [] in
     (* --- arc-aware point-in-curve-ring (mirror POINT_IN_CURVE_RING) --- *)
     let point_in (ring : _ array) (px, py) =
       let edge_cross (a : bPoint) (b : bPoint) =
@@ -2178,7 +2234,10 @@ let run_holes_disjoint () =
                  end))
         ring;
       !cnt mod 2 = 1 in
-    let seg_start = function `Chord (a, _) -> a | `Arc (a, _, _) -> a in
+    let seg_start = function
+      | `Chord (a, _) -> a | `Arc (a, _, _) -> a
+      | `Elliptic (c, _, _, _, _, _) -> c
+      | `Bezier (p0, _, _, _) -> p0 in
     (* (1) boundary meeting *)
     let cross = ref None in
     Array.iteri (fun ia sa ->
@@ -2243,6 +2302,14 @@ let run_curve_relate_matrix () =
     match toks with
     | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    (* CurveType 1 (EllipticArc) and 2 (Bezier3Curve) — minimal syntax for hunters.
+       For now the numeric fields are accepted; full on-curve tests fall back
+       to control chord or are handled by the independent Python model in the gens. *)
+    | "E" :: cx :: cy :: rx :: ry :: rot :: sa :: sw :: _ ->
+        `Elliptic (p cx cy, float_of_string rx, float_of_string ry,
+                   float_of_string rot, float_of_string sa, float_of_string sw)
+    | "B" :: x0::y0::x1::y1::x2::y2::x3::y3::_ ->
+        `Bezier (p x0 y0, p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "CURVE_RELATE_MATRIX: bad segment line" in
   let parse_ring () =
     let m = int_of_string (String.trim (input_line stdin)) in
@@ -2252,7 +2319,11 @@ let run_curve_relate_matrix () =
     Array.init nr (fun _ -> parse_ring ()) in
   let ga = parse_geom () in
   let gb = parse_geom () in
-  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c]
+    | `Elliptic (cen, _, _, _, _, _) -> [cen]   (* controls sampled by hunters / independent model *)
+    | `Bezier (p0, _, _, p3) -> [p0; p3] in
   let geom_pts g =
     Array.to_list g |> List.concat_map (fun ring ->
       Array.to_list ring |> List.concat_map seg_pts) in
@@ -2351,7 +2422,20 @@ let run_curve_relate_matrix () =
       match s1, s2 with
       | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
       | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
-      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2 in
+      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
+      (* E/B treated as their end-to-end chord for current boundary-cross / pair logic.
+         Real classification for adversarial cases is done by the independent Python
+         model inside the hunter / gen scripts. *)
+      | `Elliptic (c, _, _, _, _, _), `Chord (p, q)
+      | `Chord (p, q), `Elliptic (c, _, _, _, _, _) ->
+          chord_chord_pts (c, c) (p, q)
+      | `Bezier (p0, _, _, p3), `Chord (p, q)
+      | `Chord (p, q), `Bezier (p0, _, _, p3) ->
+          chord_chord_pts (p0, p3) (p, q)
+      | `Elliptic _, `Elliptic _
+      | `Bezier _, `Bezier _
+      | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+          [] in
     (* --- arc-aware point-in-ring ray cast (mirror POINT_IN_CURVE_RING) --- *)
     let point_in_ring (ring : _ array) (px, py) =
       let edge_cross (a : bPoint) (b : bPoint) =

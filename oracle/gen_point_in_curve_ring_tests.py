@@ -42,7 +42,15 @@ def emit(s=""):
 def seg_line(s):
     if s[0] == "C":
         return f"C {s[1][0]} {s[1][1]} {s[2][0]} {s[2][1]}"
-    return f"A {s[1][0]} {s[1][1]} {s[2][0]} {s[2][1]} {s[3][0]} {s[3][1]}"
+    if s[0] == "A":
+        return f"A {s[1][0]} {s[1][1]} {s[2][0]} {s[2][1]} {s[3][0]} {s[3][1]}"
+    if s[0] == "E":
+        # CurveType=1
+        return " ".join(map(str, s))
+    if s[0] == "B":
+        # CurveType=2
+        return " ".join(map(str, s))
+    return " ".join(map(str, s))
 
 
 def oracle(ring, p):

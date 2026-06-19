@@ -155,6 +155,11 @@ let catalog =
     "ac_matrix_point_ii", "0FFFFFFFF";
     "cl_matrix_disjoint", "FFFFFFFFF";
     "cl_matrix_point_ii", "0FFFFFFFF";
+    (* elliptic arc / bezier3 chord path (Esri 300) *)
+    "eac_matrix_disjoint", "FFFFFFFFF";
+    "eac_matrix_point_ii", "0FFFFFFFF";
+    "b3c_matrix_disjoint", "FFFFFFFFF";
+    "b3c_matrix_point_ii", "0FFFFFFFF";
     (* fill API aliases (relate_matrix_fill_vocabulary.txt) *)
     "rect_pair_fill RPR_Disjoint", "FFFFFFFFF";
     "rect_pair_fill RPR_Overlap", "2FFF1FFF2";
@@ -176,6 +181,12 @@ let catalog =
     "clothoid_fill CLR_ChordDisjoint", "FFFFFFFFF";
     "clothoid_fill CLR_ChordProperCross", "0FFFFFFFF";
     "clothoid_fill CLR_ChordShare", "0FFFFFFFF";
+    "elliptic_arc_fill EAR_ChordDisjoint", "FFFFFFFFF";
+    "elliptic_arc_fill EAR_ChordProperCross", "0FFFFFFFF";
+    "elliptic_arc_fill EAR_ChordShare", "0FFFFFFFF";
+    "bezier3_fill B3R_ChordDisjoint", "FFFFFFFFF";
+    "bezier3_fill B3R_ChordProperCross", "0FFFFFFFF";
+    "bezier3_fill B3R_ChordShare", "0FFFFFFFF";
     (* curve-polygon × point (RelateCurveAreaPoint.v, S12) *)
     "cap_matrix_rect_contains_point", "0FFFFFFF0";
     "cap_matrix_rect_touches_boundary", "FFFFFFF0F";
