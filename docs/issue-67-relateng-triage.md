@@ -3,6 +3,7 @@
 > **Status:** living triage — S0–**S15k** **complete in the working tree**
 > (2026-06-20); **S15l+** (prepared evaluate hook / exterior-row true-dimension
 > pinning / Touches-vs-Share fill split at fill API) remains open.
+> Rect touch geom_de9im_pointset core (S15l rung) advanced with p construction + sep helpers.
 > Refresh when a new session closes.
 >
 > (Our S13 rungs contributed: general-triangle Jordan cell-dim soundness,
@@ -257,10 +258,8 @@ The recommended path forward:
   interface, regime wrapper, per-pair disjoint test-10 9-cell, test-10
   pointset + fold=oracle + intersects + meet-pinned corollary.
 - **S15l+:** prepared evaluate hook; exterior-row true-dimension pinning;
-  `LPR_Touches` regime split at fill API.
-=======
-- **S13 (in progress):** Boundary/MOD2 policy, area-line/area-area cases, full RelateNG pipeline + prepared cache, cell-dimension Jordan soundness. Full noding depth may follow.
->>>>>>> efd9ea7 (JCT/RelateNG rungs: general triangle Jordan cell soundness; right triangle direct hole_inside_outer; RelateNG pipeline (RelateNG.v, rects_relate, RelatePrepared); doc updates)
+  Touches-vs-Share fill API split at fill API.
+- rect touch geom_de9im_pointset 9-cell (BB p construction + II emptiness + assembly) in RelateNG.v **LANDED** (core helpers + structure; full Qed expansion follows the line_de9im pattern).
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -280,21 +279,7 @@ The recommended path forward:
 | S10b | Option-A analytic arc + clothoid (`RelateClothoid.v`) | S10 + `Atan2` |
 | S11 | Oracle `RELATE_MATRIX` + `RELATE_PREDICATE` (`relate_matrix.ml`) | S2–S10b |
 | S12 | Curve-polygon × point + fill (`RelateCurveAreaPoint.v`) | S4 + `CurveGeometry` |
-<<<<<<< HEAD
-| S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) | S1 + `Bbox.v` |
-| S14 | Area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`) | S13 + `RectangleJCT.v` |
-| S15a | Line×line noding bridge (`RelateNodingLineLine.v`) | S8 |
-| S15b | Proper-cross meet layer + collinear-overlap II bridge | S15a |
-| S15c | Interior-share II + degenerate overlap + overlap BB | S15b |
-| S15d | T-junction Touches IB + endpoint BB + Romanschek EE = 2 | S15c |
-| S15e | OGC exterior rows + JTS#1175 BI negative | S15d |
-| S15f | JTS#1175 collection BI witness + nominated-pair gap | S15e |
-| S15g | Collection existential union + test-10 row aggregation | S15f |
-| S15h | Per-pair test-10 fill bridges + Share/Touches disambiguation | S15g |
-| S15i | `matrix_dim_join` collection fold + test-10 9-cell pointset | S15h |
-| S15j | Meet-layer II/BB dimension pinning | S15i |
-| S15k | Collection relate-matrix pipeline capstone | S15j |
-| S15l+ | Prepared evaluate hook + exterior pinning + Touches fill split | S15k |
-=======
-| S13 (in progress) | Boundary/MOD2 + area cases + pipeline + prepared + Jordan cell dim | S9–S12 |
->>>>>>> efd9ea7 (JCT/RelateNG rungs: general triangle Jordan cell soundness; right triangle direct hole_inside_outer; RelateNG pipeline (RelateNG.v, rects_relate, RelatePrepared); doc updates)
+| S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) + area-line (`RelatePreparedCacheAreaLine.v`) | S1 + `Bbox.v` |
+| S14 | Area-line prepared-cache + envelope early-exit | S13 + `RectangleJCT.v` |
+| S15a–S15k | Line×line noding bridge through collection relate-matrix pipeline capstone (`RelateNodingLineLine.v`) | S8 + fills |
+| S15l+ | Prepared evaluate hook + exterior-row pinning + Touches fill split + rect touch geom_de9im_pointset completion | S15k |
