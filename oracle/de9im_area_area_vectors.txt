@@ -10,6 +10,8 @@
 #   OVERLAP   — partial 2-d overlap ⇒ `aa_matrix_partial_overlap` (overlaps_pp_aa)
 #   CONTAINS  — inner strictly inside outer ⇒ `aa_matrix_contains`
 #   TOUCH     — vertical edge adjacency ⇒ `aa_matrix_touch_vertical` (touches_1, BB=1)
+#
+# + first batch of TOUCH variants (see bottom) for S15l rect-touch geom_de9im + pinning.
 
 REGIME DISJOINT
 RECT_A 0 0 1 1
@@ -38,3 +40,33 @@ RECT_B 1 0 2 1
 COQ aa_matrix_touch_vertical
 FILL rect_pair_fill RPR_TouchVert
 NOTES rects_touch_vertical_edge (ax1 = bx0, overlapping y-range).
+# EE=2 via touch_regime_exterior_row_pinned
+
+# First batch of additional rect touch oracle vectors (S15l vertical-touch focus).
+# These exercise varied y-overlap + x-adjacent cases; all pin to aa_matrix_touch_vertical
+# (BB=1, EE=2, other exterior cells None per touch_regime_exterior_row_pinned).
+# For RELATE_MATRIX differential + future rects_relate pointset tests.
+
+REGIME TOUCH
+RECT_A 0 0 1 2
+RECT_B 1 0.5 2 1.5
+COQ aa_matrix_touch_vertical
+FILL rect_pair_fill RPR_TouchVert
+# EE=2 via touch_regime_exterior_row_pinned
+NOTES y-overlap mid-range (Rmax low < Rmin high); EE=Some 2, IE/EI/BE/EB=None.
+
+REGIME TOUCH
+RECT_A -1 0 0 1
+RECT_B 0 0 1 1
+COQ aa_matrix_touch_vertical
+FILL rect_pair_fill RPR_TouchVert
+# EE=2 via touch_regime_exterior_row_pinned
+NOTES left-adjacent touch at x=0, full y-overlap; touch_y_overlap_nonempty holds.
+
+REGIME TOUCH
+RECT_A 5 1 6 4
+RECT_B 6 2 7 3.5
+COQ aa_matrix_touch_vertical
+FILL rect_pair_fill RPR_TouchVert
+# EE=2 via touch_regime_exterior_row_pinned
+NOTES positive coords, partial y-overlap (1.5 units); verifies exterior row pin + touches.
