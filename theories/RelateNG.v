@@ -120,14 +120,14 @@ Definition rect_pair_regime (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : RectPairRegi
      Detects vertical/horizontal touch (using the symmetric guards), contains
      (either dir), partial overlap, else disjoint. Mirrors the S6 predicates.
      Transpose for reverse-contains is handled in `relate`. *)
-  match Req_dec ax1 bx0 with
+  match Req_dec_T ax1 bx0 with
   | left _ =>
       match Rlt_dec (Rmax ay0 by0) (Rmin ay1 by1) with
       | left _ => RPR_TouchVert
       | right _ => RPR_Disjoint
       end
   | right _ =>
-      match Req_dec ay1 by0 with
+      match Req_dec_T ay1 by0 with
       | left _ =>
           match Rlt_dec (Rmax ax0 bx0) (Rmin ax1 bx1) with
           | left _ => RPR_TouchHoriz
@@ -195,7 +195,18 @@ Definition rect_pair_regime (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : RectPairRegi
 (* rects_relate wrapper (defined before use) *)
 Definition rects_relate (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R)
     (r : RectPairRegime) : IntersectionMatrix :=
-  rect_pair_fill r.
+  (* `rect_pair_regime` maps BOTH A⊃B and B⊃A to RPR_Contains; the latter
+     (strict B-within-A: bx0<ax0 ∧ ax1<bx1 ∧ by0<ay0 ∧ ay1<by1) is the
+     "within" case, whose matrix is the transpose of contains. Folding that
+     here keeps `relate` = `rects_relate … regime` definitionally. *)
+  match r with
+  | RPR_Contains =>
+      match Rlt_dec bx0 ax0, Rlt_dec ax1 bx1, Rlt_dec by0 ay0, Rlt_dec ay1 by1 with
+      | left _, left _, left _, left _ => matrix_transpose (rect_pair_fill r)
+      | _, _, _, _ => rect_pair_fill r
+      end
+  | _ => rect_pair_fill r
+  end.
 
 Lemma rects_relate_touch_eq :
   forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
@@ -208,17 +219,8 @@ Qed.
 Definition relate (A B : Geometry) : IntersectionMatrix :=
   match rect_geometry_bounds A, rect_geometry_bounds B with
   | Some (ax0, ay0, ax1, ay1), Some (bx0, by0, bx1, by1) =>
-      let regime := rect_pair_regime ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 in
-      let m := rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 regime in
-      (* Handle symmetry for Contains *)
-      match regime with
-      | RPR_Contains =>
-          match Rlt_dec bx0 ax0, Rlt_dec ax1 bx1, Rlt_dec by0 ay0, Rlt_dec ay1 by1 with
-          | left _, left _, left _, left _ => matrix_transpose m
-          | _, _, _, _ => m
-          end
-      | _ => m
-      end
+      rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1
+        (rect_pair_regime ax0 ay0 ax1 ay1 bx0 by0 bx1 by1)
   | _, _ => ll_matrix_disjoint  (* fall back; general case later *)
   end.
 
@@ -229,7 +231,7 @@ Lemma rect_pair_regime_vert_touch :
     rect_pair_regime ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 = RPR_TouchVert.
 Proof.
   intros. unfold rect_pair_regime.
-  destruct (Req_dec ax1 bx0); [ | congruence ].
+  destruct (Req_dec_T ax1 bx0); [ | congruence ].
   destruct (Rlt_dec (Rmax ay0 by0) (Rmin ay1 by1)); [ reflexivity | lra ].
 Qed.
 
@@ -240,9 +242,12 @@ Lemma rect_pair_regime_horiz_touch :
     rect_pair_regime ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 = RPR_TouchHoriz.
 Proof.
   intros. unfold rect_pair_regime.
-  destruct (Req_dec ax1 bx0); [ congruence | ].
-  destruct (Req_dec ay1 by0); [ | congruence ].
-  destruct (Rlt_dec (Rmax ax0 bx0) (Rmin ax1 bx1)); [ reflexivity | lra ].
+  destruct (Req_dec_T ax1 bx0) as [Hax | Hax].
+  - (* ax1 = bx0 contradicts the strict x-overlap Rmax ax0 bx0 < Rmin ax1 bx1 *)
+    exfalso. rewrite Hax in H0.
+    pose proof (Rmin_l bx0 bx1). pose proof (Rmax_r ax0 bx0). lra.
+  - destruct (Req_dec_T ay1 by0) as [Hay | Hay]; [ | congruence ].
+    destruct (Rlt_dec (Rmax ax0 bx0) (Rmin ax1 bx1)); [ reflexivity | lra ].
 Qed.
 
 Lemma relate_on_rects_dispatches :
@@ -264,17 +269,15 @@ Lemma relate_rect_touch :
     relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1) =
     rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_TouchVert.
 Proof.
-  intros Htouch.
-  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon.
-  simpl.
-  f_equal.
+  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch.
+  rewrite relate_on_rects_dispatches. f_equal.
   apply rect_pair_regime_vert_touch.
-  destruct Htouch as [_ [_ [_ [_ [Heq _]]]]].
-  exact Heq.
-  destruct Htouch as [_ [_ [_ [_ [_ [Hov _]]]]]].
-  (* the y overlap from guard implies the Rlt on max/min *)
-  unfold Rmax, Rmin.
-  destruct (Rle_dec ay0 by0); destruct (Rle_dec ay1 by1); lra.
+  - destruct Htouch as [_ [_ [_ [_ [Heq _]]]]]. exact Heq.
+  - destruct Htouch as [_ [Hay [_ [Hby [_ [H6 H7]]]]]].
+    (* y-overlap (ay0<by1, by0<ay1) + each rect's own height bound covers
+       all four Rmax/Rmin branches *)
+    unfold Rmax, Rmin.
+    destruct (Rle_dec ay0 by0); destruct (Rle_dec ay1 by1); lra.
 Qed.
 
 Lemma touch_regime_exterior_row_pinned :
@@ -286,13 +289,10 @@ Lemma touch_regime_exterior_row_pinned :
     im_be (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = None /\
     im_eb (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = None.
 Proof.
-  intros Htouch.
-  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon.
-  simpl.
-  unfold rects_relate.
-  unfold rect_pair_fill.
-  unfold aa_matrix_touch_vertical.
-  split; [ reflexivity | split; [ reflexivity | split; [ reflexivity | split; reflexivity ] ] ].
+  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch.
+  rewrite (relate_rect_touch ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch).
+  rewrite rects_relate_touch_eq.
+  repeat split; reflexivity.
 Qed.
 
 Lemma relate_delegates_line_disjoint :
@@ -487,316 +487,26 @@ Proof.
   pose proof (touch_y_overlap_nonempty _ _ _ _ _ _ _ _ Htouch).
   unfold touch_vertical_bb_point. simpl.
   split; [ | split ].
-  - (* ylo <= mid <= yhi *)
-    assert (ylo < yhi) by lra. lra.
+  - (* Rmax ay0 by0 <= mid <= Rmin ay1 by1, from the y-overlap H *)
+    lra.
   - (* in A's range *)
-    destruct Htouch as (Hax & Hay & _ & _ & Heq & _ & _). subst.
+    destruct Htouch as (Hax & Hay & Hbx & Hby & Heq & H6 & H7). subst.
     unfold Rmax, Rmin.
     destruct (Rle_dec ay0 by0); destruct (Rle_dec ay1 by1); lra.
   - (* similarly for upper *)
-    destruct Htouch as (Hax & Hay & _ & _ & Heq & _ & _). subst.
+    destruct Htouch as (Hax & Hay & Hbx & Hby & Heq & H6 & H7). subst.
     unfold Rmax, Rmin.
     destruct (Rle_dec ay0 by0); destruct (Rle_dec ay1 by1); lra.
 Qed.
 
-(* BB p is between on A's right vertical edge (and B's left). *)
-Lemma touch_bb_between_on_a_right :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    let p := touch_vertical_bb_point ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 in
-    between (mkPoint ax1 ay0) (mkPoint ax1 ay1) p.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch p. subst p.
-  apply between_of_on_line_and_coord_range.
-  - apply touch_vertical_bb_cross_zero; assumption.
-  - (* x range: ax1 = ax1 *)
-    destruct Htouch as (Hax & _). lra.
-  - (* y range *)
-    pose proof (touch_vertical_bb_y_between_a _ _ _ _ _ _ _ _ Htouch) as Hy.
-    simpl in *. lra.
-Qed.
-
-Lemma touch_bb_between_on_b_left :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    let p := touch_vertical_bb_point ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 in
-    between (mkPoint bx0 by0) (mkPoint bx0 by1) p.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch p. subst p.
-  destruct Htouch as [_ [_ [_ [_ [Heq _]]]]]. subst bx0.
-  apply between_of_on_line_and_coord_range.
-  - (* cross 0 *)
-    ring.
-  - lra.
-  - pose proof (touch_vertical_bb_y_between_a _ _ _ _ _ _ _ _ Htouch) as Hy.
-    simpl in *. lra.
-Qed.
-
-(* BB point is on boundary of both rect geometries (using point_on_boundary + correct edge). *)
-Lemma touch_bb_on_boundary_A :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    let p := touch_vertical_bb_point ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 in
-    point_on_boundary (rect_geometry ax0 ay0 ax1 ay1) p.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch p. subst p.
-  unfold point_on_boundary, rect_geometry, rect_polygon.
-  exists (rect_polygon ax0 ay0 ax1 ay1). split; [ simpl; auto | ].
-  exists (rect_ring ax0 ay0 ax1 ay1). split; [ simpl; auto | ].
-  exists (mkPoint ax1 ay0, mkPoint ax1 ay1). split.
-  - rewrite ring_edges_rect. simpl. auto.
-  - apply touch_bb_between_on_a_right; assumption.
-Qed.
-
-Lemma touch_bb_on_boundary_B :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    let p := touch_vertical_bb_point ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 in
-    point_on_boundary (rect_geometry bx0 by0 bx1 by1) p.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch p. subst p.
-  unfold point_on_boundary, rect_geometry, rect_polygon.
-  exists (rect_polygon bx0 by0 bx1 by1). split; [ simpl; auto | ].
-  exists (rect_ring bx0 by0 bx1 by1). split; [ simpl; auto | ].
-  exists (mkPoint bx0 by0, mkPoint bx0 by1). split.
-  - rewrite ring_edges_rect. simpl. auto.
-  - apply touch_bb_between_on_b_left; assumption.
-Qed.
-
-Lemma touch_rect_pair_bb_cell :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    RelateCurveMatrix.cell_ok (Some 1%nat) RelateCurveMatrix.SBnd RelateCurveMatrix.SBnd
-      (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1).
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch.
-  unfold RelateCurveMatrix.cell_ok.
-  split.
-  - simpl. auto. (* Some 1 ok *)
-  - split.
-    + (* nonempty *)
-      intro _.
-      exists (touch_vertical_bb_point ax0 ay0 ax1 ay1 bx0 by0 bx1 by1).
-      split.
-      * apply touch_bb_on_boundary_A; assumption.
-      * apply touch_bb_on_boundary_B; assumption.
-    + (* converse trivial for now *)
-      intros _ . discriminate.
-Qed.
-
-(* BB cell nonempty: the constructed point lies on boundary of both rects.
-   p is the midpoint of the y-overlap on the shared vertical edge.
-   Degenerate (zero-length y-overlap) reduces to a point-touch case which is
-   excluded by the strict `rects_touch_vertical_edge` (open y-overlap) or
-   handled as a separate 0-dim BB corner-touch regime later.
-*)
-(* BB nonempty elided for lra details in this snapshot; construction is:
-     p = mkPoint ax1 ((Rmax ay0 by0 + Rmin ay1 by1)/2)
-   between via range lemma or endpoint lemmas. See the "THIS RUNG" comment. *)
-
-(* ==========================================================================
-   Emptiness proofs for the "F" (None) cells under vertical touch.
-   Key: interiors are strictly x-separated at the shared edge ax1=bx0.
-   ========================================================================== *)
-
-Lemma touch_vertical_intA_x_lt_ax1 :
-  forall ax0 ay0 ax1 ay1 p,
-    point_strictly_in_open_rect ax0 ay0 ax1 ay1 p ->
-    px p < ax1.
-Proof.
-  intros ax0 ay0 ax1 ay1 p [Hx _]. lra.
-Qed.
-
-Lemma touch_vertical_intB_x_gt_bx0 :
-  forall bx0 by0 bx1 by1 p,
-    point_strictly_in_open_rect bx0 by0 bx1 by1 p ->
-    bx0 < px p.
-Proof.
-  intros bx0 by0 bx1 by1 p [Hx _]. lra.
-Qed.
-
-Lemma vertical_touch_no_interior_intersection :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 p,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    point_strictly_in_open_rect ax0 ay0 ax1 ay1 p ->
-    point_strictly_in_open_rect bx0 by0 bx1 by1 p ->
-    False.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 p Htouch Hinta Hintb.
-  pose proof (touch_vertical_intA_x_lt_ax1 _ _ _ _ p Hinta).
-  pose proof (touch_vertical_intB_x_gt_bx0 _ _ _ _ p Hintb).
-  destruct Htouch as [_ [_ [_ [_ [Heq _]]]]]. subst bx0. lra.
-Qed.
-
-(* II empty under touch. *)
-(* touch_ii_cell_empty removed (point_set does intersect at BB; II uses strict int) *)
-
-(* Simpler direct route for the cell_ok emptiness (no interior point exists
-   in both because of x-separation; we use the open-rect predicate which is
-   the honest interior characterisation for rectangles). *)
-Lemma touch_rects_no_shared_interior_point :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    ~ exists p, point_strictly_in_open_rect ax0 ay0 ax1 ay1 p /\
-                point_strictly_in_open_rect bx0 by0 bx1 by1 p.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch [p [Ha Hb]].
-  eapply vertical_touch_no_interior_intersection; eassumption.
-Qed.
-
-(* For cell_ok with None, we need ~ (dim_nonempty) i.e. no p in the strata. *)
-Lemma touch_rect_pair_ii_cell :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    RelateCurveMatrix.cell_ok None RelateCurveMatrix.SInt RelateCurveMatrix.SInt
-      (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1).
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch.
-  unfold RelateCurveMatrix.cell_ok.
-  split; [ simpl; auto | split ].
-  - (* ~ nonempty : common point_set contradicts x-sep (half-open rect point_in_ring + touch) *)
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    (* derive px bounds from point_in_ring_rect_iff (point_set -> point_in_ring for no hole) *)
-    assert (point_in_rect_geometry ax0 ay0 ax1 ay1 p) as HAp.
-    { unfold point_set in HA. destruct HA as [poly [? Hpoly]]; simpl in *; subst; auto. }
-    assert (point_in_rect_geometry bx0 by0 bx1 by1 p) as HBp.
-    { unfold point_set in HB. destruct HB as [poly [? Hpoly]]; simpl in *; subst; auto. }
-    (* use the box from iff *)
-    (* from A: px < ax1 *)
-    assert (px p < ax1).
-    { unfold point_in_rect_geometry in HAp.
-      destruct HAp as [? [? Hin]].
-      apply rect_polygon_no_holes in Hin.
-      apply point_in_ring_rect_iff in Hin; [ | lra | lra ].
-      destruct Hin as [_ Hx]; lra. }
-    (* from B: ax1 <= px *)
-    assert (ax1 <= px p).
-    { unfold point_in_rect_geometry in HBp.
-      destruct HBp as [? [? Hin]].
-      apply rect_polygon_no_holes in Hin.
-      apply point_in_ring_rect_iff in Hin; [ | lra | lra ].
-      destruct Hin as [Hx _]; lra. }
-    lra.
-  - intros _ . discriminate.
-Qed.
-
-(* Similar cells for other F combinations (IB, IE, BI, BE, EI, EB) are empty
-   under pure vertical boundary touch: interiors do not reach the opposite
-   boundary, and boundary share is only BB. We elide full cases for the
-   minimal deliverable (pattern identical; lra on coords + boundary defs). *)
-
-(* For completeness of this rung deliverable we assemble using the matrix shape.
-   The expected matrix for vertical boundary touch (pat_touches_1 style):
-     II IB IE
-     BI BB BE
-     EI EB EE
-   =  0  0  0
-      0  1  0
-      0  0  2
-   (BB=1 for the shared edge segment, II empty by interior separation,
-    EE=2 by exterior meeting.)
-
-   (Horizontal touch now supported at regime + predicate level; full pointset
-   for horiz touch follows the same pattern with y-sep and x-midpoint.) *)
-
-Lemma touch_rects_satisfy_pointset :
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
-    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
-    let A := rect_geometry ax0 ay0 ax1 ay1 in
-    let B := rect_geometry bx0 by0 bx1 by1 in
-    let m := rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_TouchVert in
-    geom_de9im_pointset A B m.
-Proof.
-  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch A B m.
-  subst A B m.
-  unfold geom_de9im_pointset.
-  unfold rects_relate.
-  unfold rect_pair_fill.
-  (* matrix known from shape *)
-  split.
-  { apply touch_rect_pair_ii_cell; assumption. }
-  split.
-  { (* IB SInt SBnd: int A x < ax1 , bnd B x = ax1 contra *)
-    apply RelateCurveMatrix.cell_ok_None; simpl; auto.
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    assert (px p < ax1).
-    { (* from point_set A => box for A half: px < ax1 *)
-      unfold point_set in HA.
-      destruct HA as [poly [? Hpoly]]; simpl in *; subst.
-      unfold point_in_polygon in Hpoly.
-      destruct Hpoly as [Hin _].
-      apply rect_polygon_no_holes in Hin.
-      apply point_in_ring_rect_iff in Hin; [ | lra | lra ].
-      destruct Hin as [_ [? ?]]; lra. }
-    (* HB on bnd B at x=ax1 (shared) *)
-    (* from on_bnd_B : x = ax1 *)
-    (* or direct from touch bnd *)
-    assert (px p = ax1) by (destruct Htouch as [_ [_ [_ [_ [Heq _]]]]; simpl; lra). (* approx *)
-    lra.
-  }
-  split.
-  { (* IE etc F int involved: use no shared strict as honest *)
-    apply RelateCurveMatrix.cell_ok_None; simpl; auto.
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    eapply touch_rects_no_shared_interior_point; eassumption.
-  }
-  split.
-  { apply RelateCurveMatrix.cell_ok_None; simpl; auto.
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    eapply touch_rects_no_shared_interior_point; eassumption.
-  }
-  split.
-  { apply touch_rect_pair_bb_cell; assumption. }
-  split.
-  { apply RelateCurveMatrix.cell_ok_None; simpl; auto.
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    (* BE: bnd A and ext B; by half open shared may not be ext or use excl *)
-    (* simple lra or sep *)
-    eapply touch_rects_no_shared_interior_point; eassumption.
-  }
-  split.
-  { apply RelateCurveMatrix.cell_ok_None; simpl; auto.
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    eapply touch_rects_no_shared_interior_point; eassumption.
-  }
-  split.
-  { apply RelateCurveMatrix.cell_ok_None; simpl; auto.
-    intro Hne.
-    destruct (proj1 Hne) as [p [HA HB]].
-    eapply touch_rects_no_shared_interior_point; eassumption.
-  }
-  { apply touch_rect_pair_ee_cell; assumption. }
-Qed.
-
-Lemma touch_rects_satisfy_pointset_and_general :
-  (* generalize using the real regime: for classify r the fill satisfies the pointset *)
-  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 r,
-    classify_rect_pair ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 r ->
-    geom_de9im_pointset (rect_geometry ax0 ay0 ax1 ay1)
-                        (rect_geometry bx0 by0 bx1 by1)
-                        (rect_pair_fill r).
-Proof.
-  intros.
-  unfold classify_rect_pair in H.
-  destruct r eqn:Er; try (apply touch_rects_satisfy_pointset; assumption).
-  - (* disjoint example *)
-    (* only EE *)
-    unfold geom_de9im_pointset, rect_pair_fill.
-    repeat split; try (apply RelateCurveMatrix.cell_ok_None; simpl; auto; intro Hne; exfalso; lra).
-    apply touch_rect_pair_ee_cell.
-    (* for disjoint hyp *)
-    admit. (* structure; full would use sep *)
-  - (* similar for overlap contains *)
-    admit.
-Qed.
-
-(* touch_rects_satisfy_pointset and full 9-cell assembly -- the capstone. *)
+(* ------------------------------------------------------------------------- *)
+(* DEFERRED (trimmed 2026-06-20): the BB/II/EE per-cell lemmas and the 9-cell
+   capstone `touch_rects_satisfy_pointset` are removed pending repair -- the
+   original proofs did not compile, and the capstone's IB-cell step was
+   hand-waved (a boundary point of B satisfies `px >= bx0`, not `px = ax1`).
+   The proven dispatch / regime-fidelity / exterior-pinning / touch-metric
+   results above stand; the pointset capstone is future work. *)
+(* ------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
 (* Concrete examples (1-2 for claims + oracle batch).                         *)
@@ -827,10 +537,11 @@ Example relate_rect_touch_matrix_shape :
   relate (rect_geometry 0 0 1 1) (rect_geometry 1 0 2 1) =
   rects_relate 0 0 1 1 1 0 2 1 RPR_TouchVert.
 Proof.
-  (* Full regime now decides; this input pair is vertical touch and reduces correctly. *)
-  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon, rect_pair_regime, rects_relate.
-  simpl.
-  reflexivity.
+  (* Rlt_dec / Req_dec_T on reals do not compute under `simpl`, so we discharge
+     the concrete vertical-touch hypothesis and reuse `relate_rect_touch`. *)
+  assert (Htouch : rects_touch_vertical_edge 0 0 1 1 1 0 2 1).
+  { unfold rects_touch_vertical_edge. repeat split; lra. }
+  exact (relate_rect_touch 0 0 1 1 1 0 2 1 Htouch).
 Qed.
 
 (* Example exercising the real regime decision for a disjoint rect pair
@@ -839,7 +550,10 @@ Example relate_rect_disjoint_via_regime :
   relate (rect_geometry 0 0 1 1) (rect_geometry 2 0 3 1) =
   rects_relate 0 0 1 1 2 0 3 1 RPR_Disjoint.
 Proof.
-  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon, rect_pair_regime, rects_relate.
-  simpl.
+  rewrite relate_on_rects_dispatches. f_equal. unfold rect_pair_regime.
+  destruct (Req_dec_T 1 2); try lra.
+  destruct (Req_dec_T 1 0); try lra.
+  destruct (Rlt_dec 0 2); try lra.
+  destruct (Rlt_dec 3 1); try lra.
   reflexivity.
 Qed.
