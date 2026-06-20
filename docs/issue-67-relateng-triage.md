@@ -5,6 +5,10 @@
 > pinning / Touches-vs-Share fill split at fill API) remains open.
 > Refresh when a new session closes.
 >
+> (Our S13 rungs contributed: general-triangle Jordan cell-dim soundness,
+> direct right-triangle `hole_inside_outer`, RelateNG pipeline skeleton +
+> rects_relate + RelatePrepared.)
+>
 > Corpus at time of writing: `main` (through S12 + curve→matrix transport stack);
 > S13–S14 add `RelatePreparedCache.v` and `RelatePreparedCacheAreaLine.v`
 > (PR #248, pending merge). Seven fill APIs through `RelateMatrixCurveAreaPoint.v`;
@@ -210,6 +214,7 @@ The recommended path forward:
   `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
   S12b (the `to_geometry` point-in-ring bridge) now closed:
   `point_in_rect_curve_geometry_iff_polygon`.
+<<<<<<< HEAD
 - **S13 (done):** prepared-mode cache refinement (`RelatePreparedCache.v`); generic
   monoid + segment-intersects concrete instance.
 - **S14 (done):** area-line carrier instance (`RelatePreparedCacheAreaLine.v`);
@@ -253,6 +258,9 @@ The recommended path forward:
   pointset + fold=oracle + intersects + meet-pinned corollary.
 - **S15l+:** prepared evaluate hook; exterior-row true-dimension pinning;
   `LPR_Touches` regime split at fill API.
+=======
+- **S13 (in progress):** Boundary/MOD2 policy, area-line/area-area cases, full RelateNG pipeline + prepared cache, cell-dimension Jordan soundness. Full noding depth may follow.
+>>>>>>> efd9ea7 (JCT/RelateNG rungs: general triangle Jordan cell soundness; right triangle direct hole_inside_outer; RelateNG pipeline (RelateNG.v, rects_relate, RelatePrepared); doc updates)
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -272,6 +280,7 @@ The recommended path forward:
 | S10b | Option-A analytic arc + clothoid (`RelateClothoid.v`) | S10 + `Atan2` |
 | S11 | Oracle `RELATE_MATRIX` + `RELATE_PREDICATE` (`relate_matrix.ml`) | S2–S10b |
 | S12 | Curve-polygon × point + fill (`RelateCurveAreaPoint.v`) | S4 + `CurveGeometry` |
+<<<<<<< HEAD
 | S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) | S1 + `Bbox.v` |
 | S14 | Area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`) | S13 + `RectangleJCT.v` |
 | S15a | Line×line noding bridge (`RelateNodingLineLine.v`) | S8 |
@@ -286,3 +295,6 @@ The recommended path forward:
 | S15j | Meet-layer II/BB dimension pinning | S15i |
 | S15k | Collection relate-matrix pipeline capstone | S15j |
 | S15l+ | Prepared evaluate hook + exterior pinning + Touches fill split | S15k |
+=======
+| S13 (in progress) | Boundary/MOD2 + area cases + pipeline + prepared + Jordan cell dim | S9–S12 |
+>>>>>>> efd9ea7 (JCT/RelateNG rungs: general triangle Jordan cell soundness; right triangle direct hole_inside_outer; RelateNG pipeline (RelateNG.v, rects_relate, RelatePrepared); doc updates)

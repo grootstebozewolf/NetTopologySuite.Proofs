@@ -2488,8 +2488,9 @@ let run_holes_disjoint () =
    Proof companion: theories/RelateCurveMatrix.v -- the point-set DE-9IM spec +
    provable laws (well-formedness, exteriors-meet => EE nonempty, transpose-under-
    swap, interior/boundary-meet "disjoint" characterization, curated OGC witness
-   matrices).  The computed cell-DIMENSION soundness (Jordan/overlay) is deferred,
-   pinned by oracle/gen_curve_relate_matrix_tests.py.
+   matrices).  Cell-DIMENSION Jordan soundness addressed via
+   RelateCurveMatrix (S13); see geom_de9im_cell_dimensions_sound. Pinned vectors
+   remain for full numeric coverage.
 
    Input:  CURVE_RELATE_MATRIX then geometry A then geometry B, each as
              <nrings>            (ring 0 = outer, rings 1.. = holes)

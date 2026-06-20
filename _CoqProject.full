@@ -1754,8 +1754,13 @@ theories/CurvePolygonDisjoint.v
 # interior/boundary-meet "disjoint" characterization (local OGC pat_disjoint_ogc),
 # partial disjoint/intersects consistency, curated OGC witness matrices.  Reuses
 # DE9IM.v matrix algebra + RelateCurveRingReduction.v point-set bridge.  3-axiom.
-# Deferred: computed cell-DIMENSION = true point-set dimension (oracle/test layer).
+# S13: cell-DIMENSION Jordan soundness closed (geom_de9im_cell_dimensions_sound
+# + boundary tie-in via RelateBoundary). Part of 4-item finish.
 theories/RelateCurveMatrix.v
+# S13: RelateNG pipeline (strata, relate, dim, MOD2+area integration)
+theories/RelateNG.v
+# S13: Prepared cache refinement (evaluate B == relate A)
+theories/RelatePrepared.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition

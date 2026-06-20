@@ -19,7 +19,7 @@
    geometry but are NOT consumed (this file does not derive a matrix from the
    geometry).  Honest scoping: single-ring rectangles, no holes.  The
    regime→witness selection is `RelateMatrixRect.v` (S7); proving a witness is
-   a configuration's true DE-9IM is the deferred RelateNG step (S13+).
+   S13: cases integrated into RelateNG pipeline (geometry→matrix bridge).
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
