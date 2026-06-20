@@ -832,6 +832,11 @@ Full `line_pair_fill` exterior bridges without hypotheses and pairwise
 | `Distance.v : dist_sq_nonneg` | Squared distance ≥ 0 `[exact]` | 3 |
 | `Distance.v : dist_sq_zero_iff_eq` | Squared distance = 0 ⇔ points coincide `[exact]` | 3 |
 | `Distance.v : dist_le_iff_dist_sq_le` | Distance compare ⇔ squared-distance compare (justifies sqrt-free fast path) `[exact]` | 3 |
+| `Distance.v : dist_lt_iff_dist_sq_lt` | **Strict** distance compare ⇔ squared-distance compare — the `distance(p,q) < tol` form of the JTS#1111 / NTS#828 snapping optimisation (the `≤` row's strict companion) `[exact]` | 3 |
+| `Distance.v : dist_mul_self` | `dist p q · dist p q = dist_sq p q` — the sqrt bridge between the two distance forms `[exact]` | 3 |
+| `Distance.v : dist_pos_iff_distinct` | `0 < dist p q` ⇔ the points are distinct (distance-level companion to `dist_sq_pos_iff_distinct`) `[exact]` | 3 |
+| `Distance.v : cauchy_schwarz_2d` | 2-D Cauchy–Schwarz `(ac+bd)² ≤ (a²+b²)(c²+d²)` via the Lagrange identity `(ad−bc)² ≥ 0` `[exact]` | 3 |
+| `Distance.v : dist_triangle` | **Triangle inequality** `dist p r ≤ dist p q + dist q r` — with `dist_nonneg` / `dist_eq_zero_iff` / `dist_sym` this makes `(Point, dist)` a metric space `[exact]` | 3 |
 
 Unconditional exact-reals — the most directly citable rows.
 | `HexagonNesting.v : hex_point_in_ring` (+ `hex_ring_simple`) | **Convex hexagon parity (Stage C, unconditional):** `point_in_ring (2,1) hex_ring` for a concrete convex 6-gon by ray-parity edge enumeration (one slanted edge crossed -> odd); the hexagon is also `ring_simple` `[exact]` | 3 |

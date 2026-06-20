@@ -284,6 +284,114 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Distance as a genuine metric: the sqrt bridge, the strict comparison form,  *)
+(* positivity, and the triangle inequality.                                    *)
+(*                                                                            *)
+(* Together with dist_nonneg / dist_eq_zero_iff / dist_sym (above), the        *)
+(* triangle inequality makes (Point, dist) a metric space — the foundational   *)
+(* fact every distance-based predicate (nearest-point, snapping, buffering)    *)
+(* silently relies on.                                                        *)
+(* -------------------------------------------------------------------------- *)
+
+(* The sqrt bridge: dist squared (the value, not dist_sq) recovers dist_sq.    *)
+Lemma dist_mul_self : forall p q, dist p q * dist p q = dist_sq p q.
+Proof.
+  intros p q. unfold dist. apply sqrt_sqrt. apply dist_sq_nonneg.
+Qed.
+
+(* Strict counterpart of sq_monotone_nonneg. *)
+Lemma sq_strict_monotone_nonneg : forall x y, 0 <= x -> 0 <= y ->
+  (x < y <-> x * x < y * y).
+Proof.
+  intros x y Hx Hy. split; intros H.
+  - apply Rmult_le_0_lt_compat; lra.
+  - destruct (Rle_or_lt y x) as [Hle | Hlt].
+    + exfalso. assert (y * y <= x * x) by (apply Rmult_le_compat; lra). lra.
+    + exact Hlt.
+Qed.
+
+(* The strict form of the squared-distance fast path: matches the `distance <  *)
+(* tol` comparison in the JTS PR #1111 / NTS #828 snapping optimisation        *)
+(* (the file header's motivating case), which the existing `<=` row does not   *)
+(* cover.                                                                      *)
+Theorem dist_lt_iff_dist_sq_lt : forall p q t,
+  0 <= t -> (dist p q < t <-> dist_sq p q < t * t).
+Proof.
+  intros p q t Ht. unfold dist.
+  pose proof (dist_sq_nonneg p q) as Hd.
+  pose proof (sqrt_pos (dist_sq p q)) as Hsd.
+  rewrite (sq_strict_monotone_nonneg (sqrt (dist_sq p q)) t Hsd Ht).
+  rewrite sqrt_sqrt by exact Hd. reflexivity.
+Qed.
+
+(* Positivity at the distance level (companion to dist_sq_pos_iff_distinct). *)
+Lemma dist_pos_iff_distinct : forall p q,
+  0 < dist p q <-> ~ (px p = px q /\ py p = py q).
+Proof.
+  intros p q. split.
+  - intros H Hxy. apply dist_eq_zero_iff in Hxy. lra.
+  - intros H. pose proof (dist_nonneg p q) as Hnn.
+    destruct (Req_dec (dist p q) 0) as [Heq | Hne].
+    + exfalso. apply H. apply dist_eq_zero_iff. exact Heq.
+    + lra.
+Qed.
+
+(* 2-D Cauchy–Schwarz: |u·v|² ≤ |u|²|v|², from the Lagrange identity           *)
+(* (a²+b²)(c²+d²) − (ac+bd)² = (ad−bc)² ≥ 0.                                   *)
+Lemma cauchy_schwarz_2d : forall a b c d,
+  (a * c + b * d) * (a * c + b * d) <= (a * a + b * b) * (c * c + d * d).
+Proof.
+  intros a b c d. pose proof (sqr_nonneg (a * d - b * c)). nra.
+Qed.
+
+(* The triangle inequality.  Proof: with u = p−q, v = q−r, the dot product     *)
+(* dot = u·v satisfies dist_sq p r = dist_sq p q + dist_sq q r + 2·dot, and    *)
+(* Cauchy–Schwarz gives dot ≤ √(dist_sq p q · dist_sq q r); squaring the       *)
+(* (non-negative) target reduces the goal to that bound.                       *)
+Theorem dist_triangle : forall p q r,
+  dist p r <= dist p q + dist q r.
+Proof.
+  intros p q r.
+  pose proof (dist_sq_nonneg p q) as HX.
+  pose proof (dist_sq_nonneg q r) as HY.
+  pose proof (dist_sq_nonneg p r) as HZ.
+  set (dot := (px p - px q) * (px q - px r) + (py p - py q) * (py q - py r)).
+  assert (Hdec : dist_sq p r = dist_sq p q + dist_sq q r + 2 * dot)
+    by (unfold dist_sq, dot; ring).
+  assert (HcsS : dot * dot <= dist_sq p q * dist_sq q r).
+  { unfold dot, dist_sq.
+    pose proof (sqr_nonneg ((px p - px q) * (py q - py r)
+                            - (py p - py q) * (px q - px r))). nra. }
+  pose proof (sqrt_pos (dist_sq p q * dist_sq q r)) as HSpos.
+  assert (HSsq : sqrt (dist_sq p q * dist_sq q r)
+                 * sqrt (dist_sq p q * dist_sq q r)
+                 = dist_sq p q * dist_sq q r).
+  { apply sqrt_sqrt. apply Rmult_le_pos; assumption. }
+  assert (Hdot_le : dot <= sqrt (dist_sq p q * dist_sq q r)).
+  { destruct (Rle_or_lt dot 0) as [Hle | Hgt].
+    - lra.
+    - apply (proj2 (sq_monotone_nonneg dot
+               (sqrt (dist_sq p q * dist_sq q r)) (Rlt_le _ _ Hgt) HSpos)).
+      rewrite HSsq. exact HcsS. }
+  unfold dist.
+  pose proof (sqrt_pos (dist_sq p q)) as HsX.
+  pose proof (sqrt_pos (dist_sq q r)) as HsY.
+  apply (proj2 (sq_monotone_nonneg (sqrt (dist_sq p r))
+            (sqrt (dist_sq p q) + sqrt (dist_sq q r))
+            (sqrt_pos _) (Rplus_le_le_0_compat _ _ HsX HsY))).
+  rewrite (sqrt_sqrt (dist_sq p r) HZ).
+  replace ((sqrt (dist_sq p q) + sqrt (dist_sq q r))
+           * (sqrt (dist_sq p q) + sqrt (dist_sq q r)))
+    with (sqrt (dist_sq p q) * sqrt (dist_sq p q)
+          + sqrt (dist_sq q r) * sqrt (dist_sq q r)
+          + 2 * (sqrt (dist_sq p q) * sqrt (dist_sq q r))) by ring.
+  rewrite (sqrt_sqrt (dist_sq p q) HX).
+  rewrite (sqrt_sqrt (dist_sq q r) HY).
+  rewrite <- (sqrt_mult (dist_sq p q) (dist_sq q r) HX HY).
+  rewrite Hdec. lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit. The proofs above rely only on the constructions of the   *)
 (* standard library's classical real arithmetic.  Run with `make` or          *)
 (* `rocq compile theories/Distance.v` and inspect the `Print Assumptions`     *)
@@ -291,3 +399,4 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions dist_le_iff_dist_sq_le.
+Print Assumptions dist_triangle.
