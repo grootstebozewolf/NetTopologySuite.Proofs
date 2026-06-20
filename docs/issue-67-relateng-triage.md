@@ -1,7 +1,9 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** living triage — S0–**S15a** **complete in the working tree**
-> (2026-06-20); **S15b+** (full RelateNG noding) remains open.
+> **Status:** living triage — S0–**S15g** **complete in the working tree**
+> (2026-06-20); **S15h+** (full `line_pair_fill` exterior bridges without
+> hypotheses / pairwise matrix `dim_value_join` fill / cell-dimension pinning)
+> remains open.
 > Refresh when a new session closes.
 >
 > Corpus at time of writing: `main` (through S12 + curve→matrix transport stack);
@@ -74,8 +76,8 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3a Segment intersection (line-line)** | **PROVEN (Qed)** | `Intersect.v:900` (`segment_intersection_decision`), `:243` (`strict_completeness`) | Feeds `Intersects`/`Crosses`/`Touches` for line-line; collinear case closed (`collinear_share_iff_1d_overlap`). |
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
-| **#4 RelateNG algorithm** | **PARTIAL (S15a)** | `RelateNodingLineLine.v` | Line×line segment strata + point-set DE-9IM spec; disjoint + proper-cross meet-layer bridges to S8 `line_pair_fill`. Share / overlap / exterior-row OGC matrices remain S15b+. |
-| **#5 Prepared-mode correctness** | **PARTIAL (S13–S14)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement; full `relate(A,B)` pipeline still absent. |
+| **#4 RelateNG algorithm** | **PARTIAL (S15g)** | `RelateNodingLineLine.v` | Line×line strata + point-set DE-9IM; regime bridges through S8 fill, S4b Touches IB, overlap BB, Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential collection union (`line_collection_de9im_pointset`) + test-10 row aggregation. Pairwise `dim_value_join` matrix fill / full exterior bridges remain S15h+. |
+| **#5 Prepared-mode correctness** | **PARTIAL (S13–S14b)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement + polygon-envelope early-exit; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
 
@@ -149,7 +151,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
    segment-intersects + rectangle-boundary area-line instances are **PROVEN**
    in `RelatePreparedCache.v` / `RelatePreparedCacheAreaLine.v`. The remaining
    obligation is end-to-end `evaluate(prepare(A),B) = relate(A,B)` once the
-   RelateNG pipeline (ask #4) exists; polygon-envelope early-exit (S14b) queued.
+   RelateNG pipeline (ask #4) exists; polygon-envelope early-exit (S14b) ✅.
 
 6. **Curve extension (#7):** S12 lands chord rect curve-polygon × point carrier
    (S4 guard delegation); the `to_geometry` point-in-ring bridge (S12b) is now
@@ -171,13 +173,15 @@ area×line fill **(L)**, arc-chord relate **(M)**, and prepared cache **(F)**.
 Next frontier:
 
 - **(E) Full RelateNG noding pipeline** — *high / multi-session.* **Primary
-  next rung (S15b+).** S15a lands line×line strata + disjoint/proper-cross
-  bridges (`RelateNodingLineLine.v`). Remaining: share/overlap, OGC exterior
-  rows, collections, zero-length lines, union semantics — Phase-3-scale.
+  next rung (S15h+).** S15a–S15g land line×line strata + regime / Touches /
+  Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential
+  collection union (`RelateNodingLineLine.v`). Remaining: pairwise matrix
+  `dim_value_join` aggregation, full `line_pair_fill` exterior bridges,
+  cell-dimension pinning — Phase-3-scale.
 
 - **(F) Prepared A-L cache correctness** — **partial (S13–S14).** Generic
   refinement + rectangle-boundary area-line instance in `RelatePreparedCache*.v`;
-  polygon-envelope early-exit (S14b) and full-pipeline hook remain queued.
+  full-pipeline hook remains queued (S14b envelope early-exit ✅).
 
 - **(I) Oracle `RELATE_MATRIX` driver** — **done (S11).** `oracle/relate_matrix.ml`
   + `RELATE_MATRIX` / `RELATE_PREDICATE` in `oracle/driver.ml`.
@@ -210,11 +214,31 @@ The recommended path forward:
 - **S13 (done):** prepared-mode cache refinement (`RelatePreparedCache.v`); generic
   monoid + segment-intersects concrete instance.
 - **S14 (done):** area-line carrier instance (`RelatePreparedCacheAreaLine.v`);
-  rectangle boundary edges + line envelope query. Open: polygon-envelope early-exit (S14b).
+  rectangle boundary edges + line envelope query. S14b envelope early-exit (`rect_envelope_disjoint_all_edges`, `prepared_area_line_envelope_early_exit`) ✅.
 - **S15a (done):** line×line point-set DE-9IM bridge (`RelateNodingLineLine.v`);
   disjoint + proper-cross meet-layer bridges; `Intersect.v` strict-interior
   intersection parameters.
-- **S15b+:** share/overlap regimes, OGC exterior rows, collections.
+- **S15b (done):** proper-cross IB/BI/BB emptiness + collinear-overlap II=1
+  bridge (`classify_proper_cross_line_point_ii_ib_meet`,
+  `classify_collinear_overlap_line_ii_cell` with `C <> D`).
+- **S15c (done):** interior-share II bridge (`classify_share_interior_line_ii_cell`);
+  degenerate overlap `C = D` point route (`classify_collinear_overlap_CeqD_point_ii_cell`);
+  overlap BB at shared endpoint (`classify_collinear_overlap_shared_endpoint_bb_cell`).
+- **S15d (done):** T-junction IB bridge (`segments_int_bnd_touches_ib_cell`);
+  mutual endpoint contact BB (`segments_endpoint_contact_bb_cell`);
+  Romanschek EE = 2 exterior row (`paper_matrix_ee_dim2_cell`).
+- **S15e (done):** OGC exterior rows IE/EI midpoints, BE/EB endpoint exterior,
+  bnd×int BI positive, JTS#1175 negative (`jts1175_no_share_pointset_bi_empty`),
+  test-10 IE/EI/EE corollary (`paper_test10_ie_ei_ee_cells`).
+- **S15f (done):** JTS#1175 collection cross-product BI witness
+  (`jts1175_collection_bi_witness`); nominated-pair limitation
+  (`jts1175_no_share_nominated_pair_bi_empty`); MOD2 endpoint hook
+  (`mod2_endpoint_bnd_int_bi_cell`); disjoint exterior BE/EB bridge.
+- **S15g (done):** collection existential union (`line_collection_de9im_pointset`,
+  `line_collection_pair_cell_sub`); test-10 row aggregation
+  (`line_collection_test10_de9im_rows`, `line_collection_test10_intersects`);
+  `dim_value_join` max-cell algebra.
+- **S15h+:** pairwise matrix join fill, full `line_pair_fill` exterior rows.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -237,4 +261,10 @@ The recommended path forward:
 | S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) | S1 + `Bbox.v` |
 | S14 | Area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`) | S13 + `RectangleJCT.v` |
 | S15a | Line×line noding bridge (`RelateNodingLineLine.v`) | S8 |
-| S15b+ | Share/overlap + OGC exterior rows + collections | S15a |
+| S15b | Proper-cross meet layer + collinear-overlap II bridge | S15a |
+| S15c | Interior-share II + degenerate overlap + overlap BB | S15b |
+| S15d | T-junction Touches IB + endpoint BB + Romanschek EE = 2 | S15c |
+| S15e | OGC exterior rows + JTS#1175 BI negative | S15d |
+| S15f | JTS#1175 collection BI witness + nominated-pair gap | S15e |
+| S15g | Collection existential union + test-10 row aggregation | S15f |
+| S15h+ | Pairwise matrix join + full fill bridges | S15g |
