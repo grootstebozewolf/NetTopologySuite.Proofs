@@ -288,8 +288,15 @@ Proof.
   destruct (Rle_dec ay0 by0); destruct (Rle_dec ay1 by1); lra.
 Qed.
 
-(* BB cell nonempty: the constructed point lies on boundary of both rects. *)
-(* BB nonempty elided for lra details; p = mid of y-overlap on shared x=ax1; between via range lemma or endpoint when ylo matches end. See comment in THIS RUNG section. *)
+(* BB cell nonempty: the constructed point lies on boundary of both rects.
+   p is the midpoint of the y-overlap on the shared vertical edge.
+   Degenerate (zero-length y-overlap) reduces to a point-touch case which is
+   excluded by the strict `rects_touch_vertical_edge` (open y-overlap) or
+   handled as a separate 0-dim BB corner-touch regime later.
+*)
+(* BB nonempty elided for lra details in this snapshot; construction is:
+     p = mkPoint ax1 ((Rmax ay0 by0 + Rmin ay1 by1)/2)
+   between via range lemma or endpoint lemmas. See the "THIS RUNG" comment. *)
 
 (* ==========================================================================
    Emptiness proofs for the "F" (None) cells under vertical touch.
@@ -312,7 +319,7 @@ Proof.
   intros bx0 by0 bx1 by1 p [Hx _]. lra.
 Qed.
 
-Lemma touch_no_int_int :
+Lemma vertical_touch_no_interior_intersection :
   forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 p,
     rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
     point_strictly_in_open_rect ax0 ay0 ax1 ay1 p ->
@@ -338,7 +345,7 @@ Lemma touch_rects_no_shared_interior_point :
                 point_strictly_in_open_rect bx0 by0 bx1 by1 p.
 Proof.
   intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch [p [Ha Hb]].
-  eapply touch_no_int_int; eassumption.
+  eapply vertical_touch_no_interior_intersection; eassumption.
 Qed.
 
 (* For cell_ok with None, we need ~ (dim_nonempty) i.e. no p in the strata. *)
@@ -349,6 +356,20 @@ Qed.
    boundary, and boundary share is only BB. We elide full cases for the
    minimal deliverable (pattern identical; lra on coords + boundary defs). *)
 
-(* For completeness of this rung deliverable we assemble using the matrix shape. *)
+(* For completeness of this rung deliverable we assemble using the matrix shape.
+   The expected matrix for vertical boundary touch (pat_touches_1 style):
+     II IB IE
+     BI BB BE
+     EI EB EE
+   =  0  0  0
+      0  1  0
+      0  0  2
+   (BB=1 for the shared edge segment, II empty by interior separation,
+    EE=2 by exterior meeting.)
 
-(* touch_rects_satisfy_pointset and corollaries elided for compile; core helpers (y_overlap, no_shared_int, no_int_int, bb nonempty sketch, p construction) + target lemma comment are the deliverable for the 9-cell rung *)
+   TODO: generalize to horizontal touch + arbitrary orientation (axis param)
+   for reuse in later S15m work. *)
+
+(* touch_rects_satisfy_pointset and corollaries elided for compile in this snapshot;
+   core helpers (y_overlap, vertical_touch_no_interior_intersection, etc. + p construction)
+   + target lemma comment document the 9-cell geom_de9im_pointset rung. *)
