@@ -1,13 +1,13 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** living triage — S0–**S12** **complete in the working tree**
-> (2026-06-11); **S13+** (full RelateNG noding, prepared cache) remains open.
+> **Status:** living triage — S0–**S15a** **complete in the working tree**
+> (2026-06-20); **S15b+** (full RelateNG noding) remains open.
 > Refresh when a new session closes.
 >
-> Corpus at time of writing: `main` through S3; S4–S10 add `RelateAreaPoint.v`,
-> `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`,
-> `RelateMatrixRect.v`, `RelateMatrixLineLine.v`, `RelateMatrixAreaLine.v`,
-> `RelateArcChord.v`, `RelateMatrixArcChord.v` (pending commit).
+> Corpus at time of writing: `main` (through S12 + curve→matrix transport stack);
+> S13–S14 add `RelatePreparedCache.v` and `RelatePreparedCacheAreaLine.v`
+> (PR #248, pending merge). Seven fill APIs through `RelateMatrixCurveAreaPoint.v`;
+> oracle `RELATE_MATRIX` / `RELATE_PREDICATE` modes landed (S11).
 
 ## 1. What #67 asks for
 
@@ -33,7 +33,7 @@ Concrete goals from the issue body:
 | Ref | Status | Relevance |
 |-----|--------|-----------|
 | [JTS#1175](https://github.com/locationtech/jts/issues/1175) — `computeLineEnds()` skips boundary points on disjoint line components | **Fixed** ([JTS#1200](https://github.com/locationtech/jts/pull/1200)) | Boundary/line-end regression; good counterexample target |
-| [NTS#819](https://github.com/NetTopologySuite/NetTopologySuite/issues/819) — prepared A-L cache (JTS#1099) | Open (perf) | Prepared correctness must be **result-independent of cache path** |
+| [NTS#819](https://github.com/NetTopologySuite/NetTopologySuite/issues/819) — prepared A-L cache (JTS#1099) | Open (perf); **proof companion partial (S13–S14)** | Prepared correctness must be **result-independent of cache path**; generic + rectangle-boundary area-line refinement in `RelatePreparedCache*.v` |
 | Overlay/relate bugs (#1000, #1122, …) | Mixed | Predicate errors often surface via overlay validity |
 
 ## 2. Strategic context already on record
@@ -60,8 +60,10 @@ segment intersection machinery but need a **new DE-9IM layer**.
   the parity ↔ interior seam (`parity_characterises_interior_cont_strict`) is
   the genuine JCT content. Predicate proofs that reduce to "point in polygon"
   inherit this seam honestly (conditional headlines or guarded special cases).
-- `DE9IM.v` / `IntersectionMatrix` landed in S1; **RelateNG matrix-fill**
-  and prepared-cache paths are still absent from `theories/`.
+- `DE9IM.v` / `IntersectionMatrix` landed in S1; regime→witness selection
+  through S12; **prepared-cache refinement** landed S13–S14 (`RelatePreparedCache.v`,
+  `RelatePreparedCacheAreaLine.v`). Full RelateNG matrix-fill from geometry
+  (noding) remains absent.
 
 ## 3. Per-ask status
 
@@ -72,8 +74,8 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3a Segment intersection (line-line)** | **PROVEN (Qed)** | `Intersect.v:900` (`segment_intersection_decision`), `:243` (`strict_completeness`) | Feeds `Intersects`/`Crosses`/`Touches` for line-line; collinear case closed (`collinear_share_iff_1d_overlap`). |
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
-| **#4 RelateNG algorithm** | **ABSENT** | — | No noding + matrix-fill pipeline; JTS uses point-local topology + union semantics for collections. |
-| **#5 Prepared-mode correctness** | **ABSENT** | — | NTS#819 is perf-only; proof obligation is `evaluate(B) = relate(A,B)` regardless of cache. |
+| **#4 RelateNG algorithm** | **PARTIAL (S15a)** | `RelateNodingLineLine.v` | Line×line segment strata + point-set DE-9IM spec; disjoint + proper-cross meet-layer bridges to S8 `line_pair_fill`. Share / overlap / exterior-row OGC matrices remain S15b+. |
+| **#5 Prepared-mode correctness** | **PARTIAL (S13–S14)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
 
@@ -89,6 +91,12 @@ segment intersection machinery but need a **new DE-9IM layer**.
   headlines, generic-position guards.
 - `Bbox.v` — `bbox_disjoint` (necessary but not sufficient for geometry
   disjoint).
+- `RelatePreparedCache.v` — prepared-mode cache refinement (`evaluate_eq_brute`,
+  `prepared_intersects_eq_brute`); STRtree query = permutation of bbox-overlap
+  filter; path-independence corollaries.
+- `RelatePreparedCacheAreaLine.v` — area-line carrier instance
+  (`rect_boundary_segments`, `prepared_area_line_intersects_eq_brute`); rectangle
+  boundary edges indexed once, line envelope as query box (NTS#819 shape).
 
 **Flocq layer (`theories-flocq/`):**
 
@@ -137,8 +145,11 @@ segment intersection machinery but need a **new DE-9IM layer**.
    line-end enumeration on multi-component collections and matrix-fill
    fidelity remain open.
 
-5. **Prepared cache (#5):** Correctness of memoisation is a **refinement**
-   theorem — tractable once base `relate` is specified.
+5. **Prepared cache (#5) — partial (S13–S14):** Generic monoid refinement +
+   segment-intersects + rectangle-boundary area-line instances are **PROVEN**
+   in `RelatePreparedCache.v` / `RelatePreparedCacheAreaLine.v`. The remaining
+   obligation is end-to-end `evaluate(prepare(A),B) = relate(A,B)` once the
+   RelateNG pipeline (ask #4) exists; polygon-envelope early-exit (S14b) queued.
 
 6. **Curve extension (#7):** S12 lands chord rect curve-polygon × point carrier
    (S4 guard delegation); the `to_geometry` point-in-ring bridge (S12b) is now
@@ -154,15 +165,19 @@ segment intersection machinery but need a **new DE-9IM layer**.
 
 ## 6. Risk/cost-ordered options for the next (Coq) terminal
 
-S0–S10 closed items **(A)–(D)**, JTS#1175 **(C)**, area-line **(G)**,
+S0–S14 closed items **(A)–(D)**, JTS#1175 **(C)**, area-line **(G)**,
 area-area **(H)**, rect×rect fill **(J)**, line×line fill **(K)**,
-area×line fill **(L)**, and arc-chord relate **(M)**. Next frontier:
+area×line fill **(L)**, arc-chord relate **(M)**, and prepared cache **(F)**.
+Next frontier:
 
-- **(E) Full RelateNG noding pipeline** — *high / multi-session.*
-  Collections, zero-length lines, union semantics — Phase-3-scale engagement.
+- **(E) Full RelateNG noding pipeline** — *high / multi-session.* **Primary
+  next rung (S15b+).** S15a lands line×line strata + disjoint/proper-cross
+  bridges (`RelateNodingLineLine.v`). Remaining: share/overlap, OGC exterior
+  rows, collections, zero-length lines, union semantics — Phase-3-scale.
 
-- **(F) Prepared A-L cache correctness** — *medium after (E).* Show cached
-  `evaluate` = uncached `relate` for area-line pairs (NTS#819 proof companion).
+- **(F) Prepared A-L cache correctness** — **partial (S13–S14).** Generic
+  refinement + rectangle-boundary area-line instance in `RelatePreparedCache*.v`;
+  polygon-envelope early-exit (S14b) and full-pipeline hook remain queued.
 
 - **(I) Oracle `RELATE_MATRIX` driver** — **done (S11).** `oracle/relate_matrix.ml`
   + `RELATE_MATRIX` / `RELATE_PREDICATE` in `oracle/driver.ml`.
@@ -170,8 +185,9 @@ area×line fill **(L)**, and arc-chord relate **(M)**. Next frontier:
 ## 7. Scope note for the issue owner
 
 #67 spans **predicate semantics** (seeded through S12 curve-polygon × point +
-seven fill APIs) and **RelateNG implementation fidelity** (full noding still
-open; S11 oracle modes landed). The recommended path forward:
+seven fill APIs), **prepared-cache refinement** (S13–S14), and **RelateNG
+implementation fidelity** (full noding still open; S11 oracle modes landed).
+The recommended path forward:
 
 - **S10b (done):** Option-A analytic arc (`RelateArcAnalytic.v`,
   `RelateMatrixArcAnalytic.v`); clothoid chord seed (`RelateClothoid.v`,
@@ -191,7 +207,14 @@ open; S11 oracle modes landed). The recommended path forward:
   `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
   S12b (the `to_geometry` point-in-ring bridge) now closed:
   `point_in_rect_curve_geometry_iff_polygon`.
-- **S13+:** full noding, prepared cache (**F**).
+- **S13 (done):** prepared-mode cache refinement (`RelatePreparedCache.v`); generic
+  monoid + segment-intersects concrete instance.
+- **S14 (done):** area-line carrier instance (`RelatePreparedCacheAreaLine.v`);
+  rectangle boundary edges + line envelope query. Open: polygon-envelope early-exit (S14b).
+- **S15a (done):** line×line point-set DE-9IM bridge (`RelateNodingLineLine.v`);
+  disjoint + proper-cross meet-layer bridges; `Intersect.v` strict-interior
+  intersection parameters.
+- **S15b+:** share/overlap regimes, OGC exterior rows, collections.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -211,4 +234,7 @@ open; S11 oracle modes landed). The recommended path forward:
 | S10b | Option-A analytic arc + clothoid (`RelateClothoid.v`) | S10 + `Atan2` |
 | S11 | Oracle `RELATE_MATRIX` + `RELATE_PREDICATE` (`relate_matrix.ml`) | S2–S10b |
 | S12 | Curve-polygon × point + fill (`RelateCurveAreaPoint.v`) | S4 + `CurveGeometry` |
-| S13+ | Full noding / prepared cache | S9–S12 |
+| S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) | S1 + `Bbox.v` |
+| S14 | Area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`) | S13 + `RectangleJCT.v` |
+| S15a | Line×line noding bridge (`RelateNodingLineLine.v`) | S8 |
+| S15b+ | Share/overlap + OGC exterior rows + collections | S15a |

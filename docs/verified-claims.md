@@ -463,8 +463,8 @@ regime-wide `bpow 13` for every non-worst-case input.
 | `DE9IM.v : im_covers_transpose_coveredBy` (+`predicate_covers_transpose_coveredBy`) | `covers` on `m` ⇔ `coveredBy` on transpose (`pattern_transpose` on all four JTS covers patterns) `[exact]` | 0 |
 | `DE9IM.v : disjoint_intersects3_example_holds` | **Honest gap:** a matrix can be both `disjoint` and `intersects₃` (abstract IM algebra ≠ complete geometry IM) `[exact]` | 0 |
 
-Full RelateNG noding, arc/clothoid carriers, and prepared-cache slices remain
-follow-up (#67 S10+).
+Prepared-mode cache refinement landed (#67 S13); full RelateNG noding and
+arc/clothoid carrier gaps remain follow-up (#67 S14+).
 
 ## Issue #67 — line-line DE-9IM: witnesses + geometry (`RelateLineLine.v`, session 2)
 
@@ -749,6 +749,48 @@ so the S4 facts transport to the curve geometry's point set.
 | `RelateMatrixCurveAreaPoint.v : curve_point_fill_contains_witness` | **Witness:** `Contains` on `curve_point_fill CPR_StrictInterior` `[exact]` | 0 |
 | `RelateMatrixCurveAreaPoint.v : curve_point_fill_touch_witness` | **Witness:** `Touches` on `curve_point_fill CPR_LeftBoundaryTouch` `[exact]` | 0 |
 | `RelateMatrixCurveAreaPoint.v : strict_interior_not_left_boundary_touch` | **Geometry:** strict interior excludes left-boundary touch `[exact]` | 0 |
+
+## Issue #67 — prepared-mode cache refinement (`RelatePreparedCache.v`, S13)
+
+STRtree query contract modelled as a permutation of bbox-overlap-filtered items.
+Generic commutative-monoid fold proves prepared evaluation equals brute force;
+concrete segment-intersects instance discharges envelope-rejection soundness via
+`Bbox.disjoint_bboxes_imply_no_shared_point`. NTS#819 / JTS#1099 obligation:
+result-independent-of-cache-path.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelatePreparedCache.v : evaluate_eq_brute` | **Generic refinement:** any valid index query (permutation of `filter keep items`) folds to the same answer as brute force over all items `[exact]` | 3 |
+| `RelatePreparedCache.v : evaluate_path_independent` | **Cache-path independence:** two conforming queries yield identical prepared answers `[exact]` | 3 |
+| `RelatePreparedCache.v : prepared_intersects_eq_brute` | **Concrete refinement:** prepared "any A-segment intersects t" equals brute `orb` fold, for any sound `intersect_test` `[exact]` | 3 |
+| `RelatePreparedCache.v : prepared_intersects_path_independent` | **Concrete path independence:** STRtree build/order irrelevant for segment-intersects prepared mode `[exact]` | 3 |
+
+## Issue #67 — area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`, S14)
+
+Rectangle boundary edges (`rect_boundary_segments`) as the prepared-area indexed
+item list; line segment envelope as query box. Instantiates S13 refinement for
+the NTS#819 area-line carrier.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
+| `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
+
+## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a)
+
+First RelateNG-noding rung: closed-segment strata + point-set DE-9IM
+specification (`line_de9im_pointset`), with meet-layer bridges from S8
+`classify_line_pair` / `line_pair_fill` for the disjoint and proper-cross
+regimes. Exterior-row cells and share / collinear-overlap regimes remain S15b+.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelateNodingLineLine.v : two_segments_exterior_meet` | Two bounded segments share an exterior point (EE-inhabited substrate) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_de9im_ee_inhabited` | Full `line_de9im_pointset` ⇒ EE cell nonempty `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_line_no_ib_meet` | `LPR_Disjoint` ⇒ four interior/boundary-meet cells empty for `ll_matrix_disjoint` `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_proper_cross_line_ii_cell` | `LPR_ProperCross` ⇒ II = 0-dim point cell for `ll_matrix_point_ii` `[exact]` | 3 |
+| `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
+| `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
 
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 
