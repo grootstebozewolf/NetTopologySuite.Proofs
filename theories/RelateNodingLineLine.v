@@ -39,9 +39,12 @@
      `line_de9im_pointset` packaging (proper-cross meet layer, overlap
      meet + EE).  Test-10 BI = 0-dim remains collection-level (JTS#1175).
 
-   Honest gaps (deferred S15i+):
+   S15i (§17–§18): `matrix_dim_join` + collection cell join soundness +
+     cross-product `line_collection_matrix_fold`; test-10 full 9-cell
+     `line_collection_de9im_pointset` capstone.
 
-     - Pairwise `dim_value_join` aggregation over full 9-cell matrix fill.
+   Honest gaps (deferred S15j+):
+
      - `line_pair_fill LPR_Share` vs Touches witness selection at fill API;
        full cell-dimension pinning.
 
@@ -1586,6 +1589,420 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §17  Matrix max-join + collection cell join soundness (S15i).              *)
+(* -------------------------------------------------------------------------- *)
+
+Definition matrix_dim_join (m1 m2 : IntersectionMatrix) : IntersectionMatrix :=
+  {| im_ii := dim_value_join (im_ii m1) (im_ii m2);
+     im_ib := dim_value_join (im_ib m1) (im_ib m2);
+     im_ie := dim_value_join (im_ie m1) (im_ie m2);
+     im_bi := dim_value_join (im_bi m1) (im_bi m2);
+     im_bb := dim_value_join (im_bb m1) (im_bb m2);
+     im_be := dim_value_join (im_be m1) (im_be m2);
+     im_ei := dim_value_join (im_ei m1) (im_ei m2);
+     im_eb := dim_value_join (im_eb m1) (im_eb m2);
+     im_ee := dim_value_join (im_ee m1) (im_ee m2) |}.
+
+Lemma matrix_dim_join_commut :
+  forall m1 m2, matrix_dim_join m1 m2 = matrix_dim_join m2 m1.
+Proof.
+  intros m1 m2.
+  destruct m1 as [ii1 ib1 ie1 bi1 bb1 be1 ei1 eb1 ee1].
+  destruct m2 as [ii2 ib2 ie2 bi2 bb2 be2 ei2 eb2 ee2].
+  unfold matrix_dim_join. simpl. f_equal.
+  all: apply dim_value_join_commut.
+Qed.
+
+Lemma matrix_dim_join_assoc :
+  forall m1 m2 m3,
+    matrix_dim_join (matrix_dim_join m1 m2) m3 =
+    matrix_dim_join m1 (matrix_dim_join m2 m3).
+Proof.
+  intros m1 m2 m3.
+  destruct m1 as [ii1 ib1 ie1 bi1 bb1 be1 ei1 eb1 ee1].
+  destruct m2 as [ii2 ib2 ie2 bi2 bb2 be2 ei2 eb2 ee2].
+  destruct m3 as [ii3 ib3 ie3 bi3 bb3 be3 ei3 eb3 ee3].
+  unfold matrix_dim_join. simpl. f_equal.
+  all: apply dim_value_join_assoc.
+Qed.
+
+Lemma matrix_dim_join_empty_left :
+  forall m, matrix_dim_join ll_matrix_disjoint m = m.
+Proof.
+  intros m.
+  destruct m as [ii ib ie bi bb be ei eb ee].
+  unfold matrix_dim_join, ll_matrix_disjoint. simpl. f_equal.
+  all: apply dim_value_join_none_left.
+Qed.
+
+Lemma matrix_dim_join_empty_right :
+  forall m, matrix_dim_join m ll_matrix_disjoint = m.
+Proof.
+  intros m. rewrite matrix_dim_join_commut.
+  apply matrix_dim_join_empty_left.
+Qed.
+
+Lemma dim_value_ok_join :
+  forall d1 d2,
+    dim_value_ok d1 ->
+    dim_value_ok d2 ->
+    dim_value_ok (dim_value_join d1 d2).
+Proof.
+  intros d1 d2 Hd1 Hd2.
+  destruct d1 as [n1|], d2 as [n2|]; simpl; try tauto.
+  simpl. unfold dim_value_ok in Hd1, Hd2. simpl in Hd1, Hd2.
+  unfold dim_value_ok. simpl.
+  destruct (Nat.le_gt_cases n1 n2) as [Hle | Hgt].
+  - rewrite Nat.max_r by lia. exact Hd2.
+  - rewrite Nat.max_l by lia. exact Hd1.
+Qed.
+
+Lemma matrix_dim_join_ok :
+  forall m1 m2, matrix_ok m1 -> matrix_ok m2 -> matrix_ok (matrix_dim_join m1 m2).
+Proof.
+  intros m1 m2.
+  intros [Hii1 [Hib1 [Hie1 [Hbi1 [Hbb1 [Hbe1 [Hei1 [Heb1 Hee1]]]]]]]].
+  intros [Hii2 [Hib2 [Hie2 [Hbi2 [Hbb2 [Hbe2 [Hei2 [Heb2 Hee2]]]]]]]].
+  unfold matrix_ok, matrix_dim_join. repeat split.
+  all: apply dim_value_ok_join; assumption.
+Qed.
+
+Lemma line_cell_ok_max_dim_right :
+  forall n1 n2 sX sY A B C D,
+    (n1 <= n2)%nat ->
+    line_cell_ok (Some n2) sX sY A B C D ->
+    line_cell_ok (Some (Nat.max n1 n2)) sX sY A B C D.
+Proof.
+  intros n1 n2 sX sY A B C D Hle [Hdok [Hdn Hex]].
+  assert (Heq : Nat.max n1 n2 = n2) by lia.
+  split.
+  - rewrite Heq. exact Hdok.
+  - rewrite Heq. split; assumption.
+Qed.
+
+Lemma line_cell_ok_max_dim_left :
+  forall n1 n2 sX sY A B C D,
+    (n2 <= n1)%nat ->
+    line_cell_ok (Some n1) sX sY A B C D ->
+    line_cell_ok (Some (Nat.max n1 n2)) sX sY A B C D.
+Proof.
+  intros n1 n2 sX sY A B C D Hle [Hdok [Hdn Hex]].
+  assert (Heq : Nat.max n1 n2 = n1) by lia.
+  split.
+  - rewrite Heq. exact Hdok.
+  - rewrite Heq. split; assumption.
+Qed.
+
+Theorem line_collection_cell_ok_dim_join :
+  forall segsA segsB d1 d2 sX sY,
+    line_collection_cell_ok segsA segsB d1 sX sY ->
+    line_collection_cell_ok segsA segsB d2 sX sY ->
+    line_collection_cell_ok segsA segsB (dim_value_join d1 d2) sX sY.
+Proof.
+  intros segsA segsB d1 d2 sX sY H1 H2.
+  destruct d1 as [n1|], d2 as [n2|]; simpl.
+  - destruct (Nat.le_gt_cases n1 n2) as [Hle | Hgt].
+    + destruct H2 as [A [B [C [D [HinA [HinB Hcell]]]]]].
+      exists A; exists B; exists C; exists D.
+      split; [exact HinA | split; [exact HinB | ]].
+      apply (line_cell_ok_max_dim_right n1 n2 sX sY A B C D Hle).
+      exact Hcell.
+    + destruct H1 as [A [B [C [D [HinA [HinB Hcell]]]]]].
+      exists A; exists B; exists C; exists D.
+      split; [exact HinA | split; [exact HinB | ]].
+      apply (line_cell_ok_max_dim_left n1 n2 sX sY A B C D).
+      * lia.
+      * exact Hcell.
+  - exact H1.
+  - exact H2.
+  - exact H1.
+Qed.
+
+Lemma line_de9im_pointset_collection_cells :
+  forall segsA segsB A B C D m,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    line_de9im_pointset A B C D m ->
+    line_collection_cell_ok segsA segsB (im_ii m) LSInt LSInt /\
+    line_collection_cell_ok segsA segsB (im_ib m) LSInt LSBnd /\
+    line_collection_cell_ok segsA segsB (im_ie m) LSInt LSExt /\
+    line_collection_cell_ok segsA segsB (im_bi m) LSBnd LSInt /\
+    line_collection_cell_ok segsA segsB (im_bb m) LSBnd LSBnd /\
+    line_collection_cell_ok segsA segsB (im_be m) LSBnd LSExt /\
+    line_collection_cell_ok segsA segsB (im_ei m) LSExt LSInt /\
+    line_collection_cell_ok segsA segsB (im_eb m) LSExt LSBnd /\
+    line_collection_cell_ok segsA segsB (im_ee m) LSExt LSExt.
+Proof.
+  intros segsA segsB A B C D m HinA HinB Hps.
+  destruct Hps as [Hii [Hib [Hie [Hbi [Hbb [Hbe [Hei [Heb Hee]]]]]]]].
+  repeat split.
+  all: apply (line_collection_pair_cell_sub segsA segsB A B C D); assumption.
+Qed.
+
+Theorem line_collection_de9im_pointset_join :
+  forall segsA segsB m1 m2,
+    line_collection_de9im_pointset segsA segsB m1 ->
+    line_collection_de9im_pointset segsA segsB m2 ->
+    line_collection_de9im_pointset segsA segsB (matrix_dim_join m1 m2).
+Proof.
+  intros segsA segsB m1 m2 H1 H2.
+  destruct H1 as [Hii1 [Hib1 [Hie1 [Hbi1 [Hbb1 [Hbe1 [Hei1 [Heb1 Hee1]]]]]]]].
+  destruct H2 as [Hii2 [Hib2 [Hie2 [Hbi2 [Hbb2 [Hbe2 [Hei2 [Heb2 Hee2]]]]]]]].
+  unfold line_collection_de9im_pointset, matrix_dim_join. simpl.
+  repeat split.
+  all: apply line_collection_cell_ok_dim_join; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §18  Cross-product matrix fold (S15i).                                       *)
+(* -------------------------------------------------------------------------- *)
+
+Fixpoint line_collection_matrix_fold_segsB
+    (assign : Point -> Point -> Point -> Point -> IntersectionMatrix)
+    (A B : Point) (segsB : list Segment2) : IntersectionMatrix :=
+  match segsB with
+  | nil => ll_matrix_disjoint
+  | (C, D) :: rest =>
+      matrix_dim_join (assign A B C D)
+        (line_collection_matrix_fold_segsB assign A B rest)
+  end.
+
+Fixpoint line_collection_matrix_fold
+    (assign : Point -> Point -> Point -> Point -> IntersectionMatrix)
+    (segsA segsB : list Segment2) : IntersectionMatrix :=
+  match segsA with
+  | nil => ll_matrix_disjoint
+  | (A, B) :: rest =>
+      matrix_dim_join
+        (line_collection_matrix_fold assign rest segsB)
+        (line_collection_matrix_fold_segsB assign A B segsB)
+  end.
+
+Lemma line_collection_cell_ok_segsB_cons :
+  forall segsA segsB C0 D0 d sX sY,
+    line_collection_cell_ok segsA segsB d sX sY ->
+    line_collection_cell_ok segsA ((C0, D0) :: segsB) d sX sY.
+Proof.
+  intros segsA segsB C0 D0 d sX sY H.
+  destruct H as [A [B [C [D [HinA [HinB Hcell]]]]]].
+  exists A; exists B; exists C; exists D.
+  split.
+  - exact HinA.
+  - split.
+    + right. exact HinB.
+    + exact Hcell.
+Qed.
+
+Lemma line_collection_de9im_pointset_segsB_cons :
+  forall segsA segsB C0 D0 m,
+    line_collection_de9im_pointset segsA segsB m ->
+    line_collection_de9im_pointset segsA ((C0, D0) :: segsB) m.
+Proof.
+  intros segsA segsB C0 D0 m H.
+  destruct H as [Hii [Hib [Hie [Hbi [Hbb [Hbe [Hei [Heb Hee]]]]]]]].
+  repeat split.
+  all: apply line_collection_cell_ok_segsB_cons with (C0 := C0) (D0 := D0); assumption.
+Qed.
+
+Lemma line_collection_cell_ok_segsA_cons :
+  forall segsA segsB A0 B0 d sX sY,
+    line_collection_cell_ok segsA segsB d sX sY ->
+    line_collection_cell_ok ((A0, B0) :: segsA) segsB d sX sY.
+Proof.
+  intros segsA segsB A0 B0 d sX sY H.
+  destruct H as [A [B [C [D [HinA [HinB Hcell]]]]]].
+  exists A; exists B; exists C; exists D.
+  split.
+  - right. exact HinA.
+  - split; [exact HinB | exact Hcell].
+Qed.
+
+Lemma line_collection_de9im_pointset_segsA_cons :
+  forall segsA segsB A0 B0 m,
+    line_collection_de9im_pointset segsA segsB m ->
+    line_collection_de9im_pointset ((A0, B0) :: segsA) segsB m.
+Proof.
+  intros segsA segsB A0 B0 m H.
+  destruct H as [Hii [Hib [Hie [Hbi [Hbb [Hbe [Hei [Heb Hee]]]]]]]].
+  repeat split.
+  all: apply line_collection_cell_ok_segsA_cons with (A0 := A0) (B0 := B0); assumption.
+Qed.
+
+Lemma line_de9im_pointset_implies_collection :
+  forall segsA segsB A B C D m,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    line_de9im_pointset A B C D m ->
+    line_collection_de9im_pointset segsA segsB m.
+Proof.
+  intros segsA segsB A B C D m HinA HinB Hps.
+  destruct (line_de9im_pointset_collection_cells segsA segsB A B C D m HinA HinB Hps)
+    as [Hii [Hib [Hie [Hbi [Hbb [Hbe [Hei [Heb Hee]]]]]]]].
+  repeat split; assumption.
+Qed.
+
+Lemma line_collection_matrix_fold_segsB_sound :
+  forall assign segsA segsB A B,
+    In (A, B) segsA ->
+    (forall C D,
+       In (C, D) segsB ->
+       line_de9im_pointset A B C D (assign A B C D)) ->
+    (exists C D, In (C, D) segsB) ->
+    line_collection_de9im_pointset segsA segsB
+      (line_collection_matrix_fold_segsB assign A B segsB).
+Proof.
+  intros assign segsA segsB A B HinA Hpair HexB.
+  induction segsB as [| [C D] rest IH]; simpl.
+  - destruct HexB as [C [D H]]. simpl in H. destruct H.
+  - destruct HexB as [C0 [D0 HinB]].
+    destruct HinB as [Hhead | Htail].
+    + inversion Hhead. subst C0 D0.
+      destruct rest as [| [C1 D1] rest'].
+      * rewrite matrix_dim_join_empty_right.
+        apply (line_de9im_pointset_implies_collection segsA ((C, D) :: nil) A B C D
+            (assign A B C D)).
+        exact HinA. left. reflexivity. apply Hpair. left. reflexivity.
+      * apply line_collection_de9im_pointset_join.
+        -- apply (line_de9im_pointset_implies_collection segsA ((C, D) :: (C1, D1) :: rest')
+            A B C D (assign A B C D)).
+           exact HinA. left. reflexivity. apply Hpair. left. reflexivity.
+        -- apply line_collection_de9im_pointset_segsB_cons with (C0 := C) (D0 := D).
+           apply IH.
+           intros C' D' HinB'. apply Hpair. right. exact HinB'.
+           exists C1. exists D1. left. reflexivity.
+    + apply line_collection_de9im_pointset_join.
+      -- apply (line_de9im_pointset_implies_collection segsA ((C, D) :: rest)
+          A B C D (assign A B C D)).
+         exact HinA. left. reflexivity. apply Hpair. left. reflexivity.
+      -- apply line_collection_de9im_pointset_segsB_cons with (C0 := C) (D0 := D).
+         apply IH.
+         intros C' D' HinB'. apply Hpair. right. exact HinB'.
+         exists C0. exists D0. exact Htail.
+Qed.
+
+Theorem line_collection_matrix_fold_sound :
+  forall assign segsA segsB,
+    (exists A B, In (A, B) segsA) ->
+    (exists C D, In (C, D) segsB) ->
+    (forall A B C D,
+       In (A, B) segsA ->
+       In (C, D) segsB ->
+       line_de9im_pointset A B C D (assign A B C D)) ->
+    line_collection_de9im_pointset segsA segsB
+      (line_collection_matrix_fold assign segsA segsB).
+Proof.
+  intros assign segsA segsB HexA HexB Hpair.
+  induction segsA as [| [A0 B0] rest IH]; simpl.
+  - destruct HexA as [A [B H]]. simpl in H. destruct H.
+  - destruct rest as [| [A1 B1] rest'].
+    + simpl. rewrite matrix_dim_join_empty_left.
+      apply line_collection_matrix_fold_segsB_sound.
+      * left. reflexivity.
+      * intros C D HinB. apply Hpair; [left; reflexivity | exact HinB].
+      * exact HexB.
+    + apply line_collection_de9im_pointset_join.
+      * apply line_collection_de9im_pointset_segsA_cons with (A0 := A0) (B0 := B0).
+        apply IH.
+        -- exists A1. exists B1. left. reflexivity.
+        -- intros A B C D HinA HinB.
+           apply Hpair; [right; exact HinA | exact HinB].
+      * apply line_collection_matrix_fold_segsB_sound.
+        -- left. reflexivity.
+        -- intros C D HinB. apply Hpair; [left; reflexivity | exact HinB].
+        -- exact HexB.
+Qed.
+
+Theorem line_collection_de9im_pointset_implies_rows :
+  forall segsA segsB m,
+    line_collection_de9im_pointset segsA segsB m ->
+    line_collection_cell_ok segsA segsB (im_bi m) LSBnd LSInt /\
+    line_collection_cell_ok segsA segsB (im_ie m) LSInt LSExt /\
+    line_collection_cell_ok segsA segsB (im_ei m) LSExt LSInt /\
+    line_collection_cell_ok segsA segsB (im_ee m) LSExt LSExt.
+Proof.
+  intros segsA segsB m H.
+  destruct H as [_ [_ [Hie [Hbi [_ [_ [Hei [_ Hee]]]]]]]].
+  repeat split; assumption.
+Qed.
+
+Theorem line_collection_no_share_empty_meet_cells :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_cell_ok segsA segsB None LSInt LSInt /\
+    line_collection_cell_ok segsA segsB None LSInt LSBnd /\
+    line_collection_cell_ok segsA segsB None LSBnd LSBnd.
+Proof.
+  intros segsA segsB A B C D HinA HinB Hnoshare.
+  assert (Hns : ~ segments_share A B C D).
+  { apply Hnoshare; assumption. }
+  split.
+  - apply (line_collection_pair_cell_sub segsA segsB A B C D None LSInt LSInt HinA HinB).
+    apply (line_cell_ok_none_when LSInt LSInt A B C D).
+    eauto using no_share_no_int_int.
+  - split.
+    + apply (line_collection_pair_cell_sub segsA segsB A B C D None LSInt LSBnd HinA HinB).
+      apply (line_cell_ok_none_when LSInt LSBnd A B C D).
+      eauto using no_share_no_int_bnd.
+    + apply (line_collection_pair_cell_sub segsA segsB A B C D None LSBnd LSBnd HinA HinB).
+      apply (line_cell_ok_none_when LSBnd LSBnd A B C D).
+      eauto using no_share_no_bnd_bnd.
+Qed.
+
+Theorem line_collection_be_eb_test10_cells :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_cell_ok segsA segsB (im_be ll_matrix_paper_test10) LSBnd LSExt /\
+    line_collection_cell_ok segsA segsB (im_eb ll_matrix_paper_test10) LSExt LSBnd.
+Proof.
+  intros segsA segsB A B C D HinA HinB Hnoshare.
+  assert (Hns : ~ segments_share A B C D).
+  { apply Hnoshare; assumption. }
+  destruct (separated_segments_endpoint_exterior_be_eb A B C D Hns)
+    as [Hbe Heb].
+  split.
+  - apply (line_collection_pair_cell_sub segsA segsB A B C D
+      (im_be ll_matrix_paper_test10) LSBnd LSExt HinA HinB).
+    unfold im_be, ll_matrix_paper_test10 in Hbe. simpl. exact Hbe.
+  - apply (line_collection_pair_cell_sub segsA segsB A B C D
+      (im_eb ll_matrix_paper_test10) LSExt LSBnd HinA HinB).
+    unfold im_eb, ll_matrix_paper_test10 in Heb. simpl. exact Heb.
+Qed.
+
+Theorem line_collection_test10_de9im_pointset :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    A <> B ->
+    C <> D ->
+    line_collection_bnd_int_contact segsA segsB ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_de9im_pointset segsA segsB ll_matrix_paper_test10.
+Proof.
+  intros segsA segsB A B C D HinA HinB HneAB HneCD Hbndint Hnoshare.
+  unfold line_collection_de9im_pointset.
+  destruct (line_collection_no_share_empty_meet_cells segsA segsB A B C D HinA HinB Hnoshare)
+    as [Hii [Hib Hbb]].
+  destruct (line_collection_test10_de9im_rows segsA segsB A B C D HinA HinB HneAB HneCD Hbndint Hnoshare)
+    as [Hbi [Hie [Hei Hee]]].
+  destruct (line_collection_be_eb_test10_cells segsA segsB A B C D HinA HinB Hnoshare)
+    as [Hbe Heb].
+  repeat split.
+  - unfold im_ii, ll_matrix_paper_test10. simpl. exact Hii.
+  - unfold im_ib, ll_matrix_paper_test10. simpl. exact Hib.
+  - exact Hie.
+  - exact Hbi.
+  - unfold im_bb, ll_matrix_paper_test10. simpl. exact Hbb.
+  - exact Hbe.
+  - exact Hei.
+  - exact Heb.
+  - exact Hee.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1622,3 +2039,7 @@ Print Assumptions classify_share_endpoint_only_touches_ib.
 Print Assumptions classify_share_interior_vs_touches.
 Print Assumptions classify_proper_cross_line_de9im_pointset.
 Print Assumptions classify_collinear_overlap_line_de9im_pointset.
+Print Assumptions matrix_dim_join_ok.
+Print Assumptions line_collection_de9im_pointset_join.
+Print Assumptions line_collection_matrix_fold_sound.
+Print Assumptions line_collection_test10_de9im_pointset.
