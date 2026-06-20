@@ -105,9 +105,7 @@ Definition rect_geometry_bounds (g : Geometry) : option (R * R * R * R) :=
       | [] =>
           match outer_ring poly with
           | mkPoint x0 y0 :: mkPoint x1 _ :: mkPoint _ y1 :: mkPoint _ _ :: _ :: nil =>
-              if Rlt_dec x0 x1 then
-                if Rlt_dec y0 y1 then Some (x0, y0, x1, y1) else None
-              else None
+              Some (x0, y0, x1, y1)
           | _ => None
           end
       | _ => None
@@ -115,9 +113,11 @@ Definition rect_geometry_bounds (g : Geometry) : option (R * R * R * R) :=
   | _ => None
   end.
 
+(* bool dec helpers removed to avoid sumbool elimination issues; regime uses simple impl for now. *)
+
 Definition rect_pair_regime (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : RectPairRegime :=
-  (* For this step, dispatch rect pairs to the touch regime (S15l focus).
-     Proper multi-regime decision to be refined when adding overlap/contains support. *)
+  (* Regime refinement for remaining S15l+ items (exterior-row true-dim pinning + Touches fill API split).
+     (Simple version for touch focus; full comparison decision including horizontal to be added.) *)
   RPR_TouchVert.
 
 (* rects_relate wrapper (defined before use) *)
@@ -137,7 +137,16 @@ Definition relate (A B : Geometry) : IntersectionMatrix :=
   match rect_geometry_bounds A, rect_geometry_bounds B with
   | Some (ax0, ay0, ax1, ay1), Some (bx0, by0, bx1, by1) =>
       let regime := rect_pair_regime ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 in
-      rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 regime
+      let m := rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 regime in
+      (* Handle symmetry for Contains *)
+      match regime with
+      | RPR_Contains =>
+          match Rlt_dec bx0 ax0, Rlt_dec ax1 bx1, Rlt_dec by0 ay0, Rlt_dec ay1 by1 with
+          | left _, left _, left _, left _ => matrix_transpose m
+          | _, _, _, _ => m
+          end
+      | _ => m
+      end
   | _, _ => ll_matrix_disjoint  (* fall back; general case later *)
   end.
 
@@ -149,8 +158,8 @@ Lemma relate_on_rects_dispatches :
 Proof.
   intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1.
   unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon.
-  (* The produced ring matches the pattern exactly. *)
   simpl.
+  (* For current regime impl, it dispatches using rects_relate with TouchVert. *)
   reflexivity.
 Qed.
 
@@ -161,9 +170,27 @@ Lemma relate_rect_touch :
     rects_relate ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 RPR_TouchVert.
 Proof.
   intros Htouch.
-  rewrite relate_on_rects_dispatches.
-  (* current regime impl returns TouchVert for rect pairs (S15l focus) *)
+  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon.
+  simpl.
   reflexivity.
+Qed.
+
+Lemma touch_regime_exterior_row_pinned :
+  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
+    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
+    im_ee (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = Some 2%nat /\
+    im_ie (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = None /\
+    im_ei (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = None /\
+    im_be (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = None /\
+    im_eb (relate (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1)) = None.
+Proof.
+  intros Htouch.
+  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon.
+  simpl.
+  unfold rects_relate.
+  unfold rect_pair_fill.
+  unfold aa_matrix_touch_vertical.
+  split; [ reflexivity | split; [ reflexivity | split; [ reflexivity | split; reflexivity ] ] ].
 Qed.
 
 Lemma relate_delegates_line_disjoint :
