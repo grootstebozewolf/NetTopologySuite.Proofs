@@ -87,6 +87,16 @@ jobs:
         # scripts/check_readme_axioms.sh for the exact check.
         run: bash scripts/check_readme_axioms.sh
 
+      - name: Deferred-registry doc sync (guardrail 4b)
+        # Keeps source-of-record prose (README, CONTRIBUTING,
+        # TRIAGE_NTS_JTS_ISSUES) honest about the Admitted registries: when a
+        # theorem is added to docs/admitted-deferred-proofs.txt, any stale
+        # "registry is EMPTY (0)" / "0 deferred" claim fails here instead of
+        # rotting silently.  Historical mentions opt out with the inline
+        # sentinel <!-- registry-sync:ok -->.  See
+        # scripts/check_deferred_registry_sync.sh.
+        run: bash scripts/check_deferred_registry_sync.sh
+
       - name: verified-claims.md references exist (guardrail 5)
         # Keeps docs/verified-claims.md honest: every `Module.v : theorem`
         # it cites must resolve to a real definition in theories/ or

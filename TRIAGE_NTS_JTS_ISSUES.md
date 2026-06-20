@@ -133,7 +133,7 @@ spending further proof effort — several are stale.
    proof was discharged 2026-06-14 (see finding 5), but the deferred-proof
    registry is **not** empty today — it holds **3** `ArcPointDistance.v`
    sweep-clamp residuals registered since (`check_admitted.sh`: 9 total = 6
-   counterexample + 3 deferred-proof). Any "EMPTY (0)" wording below is the
+   counterexample + 3 deferred-proof). Any "EMPTY (0)" wording below is the <!-- registry-sync:ok -->
    2026-06-14 state, superseded — see finding 7.
 3. **Label vs. reality reconciled (2026-06-08).** #67 bumped `Urgent → Immediate`
    (was the under-built area); #65 trimmed `Immediate → Urgent` (linear buffer
@@ -193,7 +193,7 @@ spending further proof effort — several are stale.
    `idet_abs_le_sq` is in review (PR #251, this branch). Tooling: the in-repo
    **Observatory dashboard** + the Rocq-provisioning **SessionStart hook**
    landed (PR #250). **Registry correction:** earlier findings' "deferred-proof
-   registry EMPTY (0)" is **stale** — `scripts/check_admitted.sh` reports **9
+   registry EMPTY (0)" is **stale** <!-- registry-sync:ok --> — `scripts/check_admitted.sh` reports **9
    total = 6 counterexample + 3 deferred-proof**. The 3 deferred entries are all
    `ArcPointDistance.v` sweep-clamp residuals (`point_to_arc_dist_radial_lower`,
    `point_to_arc_dist_fallback_ends_lower`, `point_to_arc_dist_centre_is_r`),
