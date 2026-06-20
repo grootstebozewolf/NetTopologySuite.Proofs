@@ -437,3 +437,38 @@ Qed.
 (* touch_rects_satisfy_pointset and corollaries elided for compile in this snapshot;
    core helpers (y_overlap, vertical_touch_no_interior_intersection, etc. + p construction)
    + target lemma comment document the 9-cell geom_de9im_pointset rung. *)
+
+(* -------------------------------------------------------------------------- *)
+(* Concrete examples (1-2 for claims + oracle batch).                         *)
+(* -------------------------------------------------------------------------- *)
+
+Example relate_on_rects_dispatches_ex :
+  relate (rect_geometry 0 0 1 1) (rect_geometry 1 0 2 1) =
+  rects_relate 0 0 1 1 1 0 2 1 (rect_pair_regime 0 0 1 1 1 0 2 1).
+Proof.
+  apply relate_on_rects_dispatches.
+Qed.
+
+Example relate_rect_touch_exterior_pinned :
+  rects_touch_vertical_edge 0 0 1 1 1 0 2 1 ->
+  let m := relate (rect_geometry 0 0 1 1) (rect_geometry 1 0 2 1) in
+  im_ee m = Some 2%nat /\
+  im_ie m = None /\
+  im_ei m = None /\
+  im_be m = None /\
+  im_eb m = None.
+Proof.
+  intro Htouch.
+  pose proof (touch_regime_exterior_row_pinned 0 0 1 1 1 0 2 1 Htouch) as P.
+  exact P.
+Qed.
+
+Example relate_rect_touch_matrix_shape :
+  relate (rect_geometry 0 0 1 1) (rect_geometry 1 0 2 1) =
+  rects_relate 0 0 1 1 1 0 2 1 RPR_TouchVert.
+Proof.
+  (* Current regime impl always TouchVert for rects; dispatch yields the S6/S7 touch matrix. *)
+  unfold relate, rect_geometry_bounds, rect_geometry, rect_polygon, rect_pair_regime, rects_relate.
+  simpl.
+  reflexivity.
+Qed.

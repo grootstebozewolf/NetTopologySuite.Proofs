@@ -79,6 +79,14 @@ Proof.
   intro g; apply prepared_evaluate_agrees.
 Qed.
 
+(* Second concrete example: rect prepare populates non-trivial cache. *)
+Example prepared_rect_has_bounds_cache :
+  let pg := prepare (rect_geometry 0 0 1 1) in
+  pg_cache pg = Some (0, 0, 1, 1).
+Proof.
+  reflexivity.
+Qed.
+
 Print Assumptions prepared_evaluate_agrees.
 Print Assumptions prepared_rect_evaluate_agrees.
 Print Assumptions prepared_identity.
