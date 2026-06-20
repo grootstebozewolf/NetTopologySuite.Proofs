@@ -1,6 +1,9 @@
 # NetTopologySuite.Proofs
 
 [![build proofs](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml/badge.svg)](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/ci.yml)
+[![dashboard](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/pages.yml/badge.svg)](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/actions/workflows/pages.yml)
+
+📊 **[Observatory dashboard](https://grootstebozewolf.github.io/NetTopologySuite.Proofs/)** — a generated status view of the corpus (cited theorems by regime, per-issue verdicts, oracle coverage, trust footprint). Reports only in-repo source of record and deep-links out to [JTS](https://github.com/locationtech/jts) / [NTS](https://github.com/NetTopologySuite/NetTopologySuite); not a JTS/NTS test runner. See [`dashboard/`](dashboard/).
 
 Mechanically-verified formal proofs of foundational properties of the
 geometry algorithms in

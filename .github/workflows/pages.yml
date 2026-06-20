@@ -1,0 +1,49 @@
+# Regenerate the in-repo observatory dashboard from source of record and
+# publish it to GitHub Pages.  The dashboard reports ONLY on data that lives in
+# this repo (docs/verified-claims.md, TRIAGE_NTS_JTS_ISSUES.md, oracle/*, the
+# Admitted/handroll registries); it is not a JTS/NTS test runner.
+#
+# One-time setup: repo Settings -> Pages -> Build and deployment -> Source =
+# "GitHub Actions".  After that this workflow publishes on every push to main
+# that touches the dashboard inputs.
+name: Deploy dashboard to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/verified-claims.md
+      - TRIAGE_NTS_JTS_ISSUES.md
+      - oracle/**
+      - docs/admitted-counterexamples.txt
+      - docs/admitted-deferred-proofs.txt
+      - docs/oracle-handrolled-allowlist.txt
+      - scripts/gen_dashboard.py
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate dashboard
+        run: python3 scripts/gen_dashboard.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+      - id: deployment
+        uses: actions/deploy-pages@v4
