@@ -1,0 +1,41 @@
+# Adversarial tests for CP_BOUNDARY_SIMPLIFY (Oracle wishlist #1: surfaces).
+# Pipeline: densify_arc -> greedy_simplify_perp_b64 -> b64_orient_sign_filtered.
+# INTSAFE corners are certified by b64_orient_sign_filtered_sound_small_int
+# (Orient_b64_exact.v:990); APPROX corners (irrational densified arc vertices)
+# are differential-test interface only.  '!!' lines are CI-failing.
+
+## Case 1 -- integer square + collinear midpoint (500,0): simplifier drops
+## it; the 4 survivors are INTSAFE and orientation is CERTIFIED (CCW -> POS).
+  V 0x0p+0 0x0p+0
+  V 0x1.f4p+9 0x0p+0
+  V 0x1.f4p+9 0x1.f4p+9
+  V 0x0p+0 0x1.f4p+9
+  O POS INTSAFE
+  O POS INTSAFE
+  O POS INTSAFE
+  O POS INTSAFE
+
+## Case 2 -- near-collinear-at-scale: corner ((-2^25,-2^25),(0,1),(-1,0))
+## has cross=1, detsum~2^51 -> errbound~1.5 > 1 -> filter ABSTAINS.  INTSAFE
+## but UNCERTAIN: the certificate's committal clause is vacuous here.
+  V -0x1p+25 -0x1p+25
+  V 0x0p+0 0x1p+0
+  V -0x1p+0 0x0p+0
+  O UNCERTAIN INTSAFE
+  O POS INTSAFE
+  O POS INTSAFE
+
+## Case 3 -- true unit quarter-circle arc densified (n=4): irrational
+## vertices -> APPROX, orientation is interface-only (NOT certified).
+  V 0x1.fffffffffffffp-1 0x0p+0
+  V 0x1.d906bcf328d45p-1 0x1.87de2a6aea963p-2
+  V 0x1.6a09e667f3bccp-1 0x1.6a09e667f3bcdp-1
+  V 0x1.87de2a6aea961p-2 0x1.d906bcf328d46p-1
+  V 0x0p+0 0x1p+0
+  O POS APPROX
+  O POS APPROX
+  O POS APPROX
+  O POS APPROX
+  O POS APPROX
+
+# I1 certified-scope, I2 simplifier-sound, I3 filter-honest: all hold.

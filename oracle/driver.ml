@@ -2903,6 +2903,101 @@ let run_relate_predicate () =
   let holds = Relate_matrix.check_predicate matrix_key predicate in
   print_endline (if holds then "TRUE" else "FALSE")
 
+(* ----- CP_BOUNDARY_SIMPLIFY mode (Oracle wishlist #1: surfaces). ----------
+   Densify a CurvePolygon shell ring -> simplify with the EXTRACTED
+   GreedyPerpSimplifier -> classify each surviving corner with the EXTRACTED
+   filtered orientation.  Two Coq-extracted kernels + one interface-boundary
+   densify step (densify_arc).
+
+   Input (after the mode line):
+     "<eps> <n>"            eps = perp tolerance (binary64); n = arc densify segs
+     then ring segments, one per line, blank-terminated:
+       C x1 y1 x2 y2         chord (start, end)
+       A x1 y1 x2 y2 x3 y3   arc   (start, mid, end)
+   Output:
+     "V <m>" then m vertices (hex);  "O <m>" then m lines "<sign> <flag>"
+       sign = POS|NEG|ZERO|UNCERTAIN|NAN   (b64_orient_sign_filtered)
+       flag = INTSAFE | APPROX
+
+   CERTIFICATE SCOPE: b64_orient_sign_filtered_sound_small_int
+   (Orient_b64_exact.v:990) certifies sign = sign(cross_R_BP) ONLY for INTSAFE
+   triples (orient2d_inputs_int_safe: integer coords, |coord| <= 2^25).
+   Densified ARC vertices are O + r*(cos,sin): irrational -> APPROX -> the
+   orientation is the differential-test interface value, NOT certified.
+   Simplifier totality: greedy_simplify_binary64_never_none (Validate_binary64.v:469). *)
+
+(* INTSAFE guard: a binary64 is an integer with |.| <= 2^25.  Pure predicate --
+   no float operator / trig / Float.* call, so it is NOT a numeric kernel
+   (range-check first so int_of_float is only applied in-range). *)
+let coord_int_safe_f (x : float) : bool =
+  finite_float x && x <= 33554432.0 && x >= -33554432.0
+  && float_of_int (int_of_float x) = x
+
+let triple_int_safe a b c =
+  coord_int_safe_f a.bx && coord_int_safe_f a.by_ &&
+  coord_int_safe_f b.bx && coord_int_safe_f b.by_ &&
+  coord_int_safe_f c.bx && coord_int_safe_f c.by_
+
+(* Densify arc A->B->C into n points (start..end-exclusive, so segments join
+   without duplicate vertices).  EXACT circumcentre_q centre; r and the swept
+   angle are the single transcendental rounding (sqrt + atan2 + sin/cos) off
+   the exact centre -- same interface-boundary discipline as run_arc_length. *)
+let densify_arc n a b c : bPoint list =
+  match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                       (qf c.bx, qf c.by_) with
+  | None -> [a]                                   (* collinear: keep start only *)
+  | Some (oxq, oyq, r2q) ->
+      let ox = Q.to_float oxq and oy = Q.to_float oyq in
+      let r = sqrt (Q.to_float r2q) in
+      let twopi = 2.0 *. Float.pi in
+      let ang p = atan2 (p.by_ -. oy) (p.bx -. ox) in
+      let a0 = ang a in
+      let norm t = let u = Float.rem (t -. a0) twopi in
+                   if u < 0.0 then u +. twopi else u in
+      let m = norm (ang b) and e = norm (ang c) in
+      let sweep = if m <= e then e else e -. twopi in   (* dir through the mid *)
+      List.init n (fun i ->
+        let t = a0 +. sweep *. (float_of_int i /. float_of_int n) in
+        { bx = ox +. r *. cos t; by_ = oy +. r *. sin t })
+
+let read_cp_boundary_input () =
+  let eps, n =
+    match String.split_on_char ' ' (String.trim (input_line stdin)) with
+    | [e; k] -> float_of_string e, max 1 (int_of_string k)
+    | _ -> failwith "oracle: CP_BOUNDARY_SIMPLIFY header must be '<eps> <n>'" in
+  let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+  let rec loop acc =
+    match (try Some (input_line stdin) with End_of_file -> None) with
+    | None -> List.rev acc
+    | Some raw ->
+      let line = String.trim raw in
+      if line = "" then List.rev acc
+      else
+        let seg = match String.split_on_char ' ' line with
+          | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+          | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ ->
+              `Arc (p x1 y1, p x2 y2, p x3 y3)
+          | _ -> failwith (Printf.sprintf "oracle: bad CP segment: %s" line) in
+        loop (seg :: acc)
+  in (eps, n, loop [])
+
+let run_cp_boundary_simplify () =
+  let (eps, n, segs) = read_cp_boundary_input () in
+  let dense = List.concat_map (function
+    | `Chord (s, _)   -> [s]
+    | `Arc (a, b, c)  -> densify_arc n a b c) segs in
+  let arr = Array.of_list (greedy_simplify_perp_b64 eps dense) in   (* EXTRACTED *)
+  let m = Array.length arr in
+  Printf.printf "V %d\n" m;
+  Array.iter print_point arr;
+  Printf.printf "O %d\n" m;
+  for i = 0 to m - 1 do
+    let a = arr.(i) and b = arr.((i + 1) mod m) and c = arr.((i + 2) mod m) in
+    let s = b64_orient_sign_filtered a b c in                       (* EXTRACTED *)
+    Printf.printf "%s %s\n" (sign_robust_string s)
+      (if triple_int_safe a b c then "INTSAFE" else "APPROX")
+  done
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -2967,6 +3062,7 @@ let () =
        | "SNAP_SCALED"                  -> run_snap_scaled ()
        | "RELATE_MATRIX"                -> run_relate_matrix ()
        | "RELATE_PREDICATE"             -> run_relate_predicate ()
+       | "CP_BOUNDARY_SIMPLIFY"     -> run_cp_boundary_simplify ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()

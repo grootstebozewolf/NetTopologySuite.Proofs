@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -57,6 +57,21 @@ ring-simple-tests: $(TARGET)
 # witness-soundness, I3 hole-reuse.  Nonzero exit on any violation.
 cp-ring-simple-tests: $(TARGET)
 	cd .. && python3 oracle/gen_cp_ring_simple_tests.py
+
+# CP_BOUNDARY_SIMPLIFY suite (Oracle wishlist #1: surfaces): densify a
+# CurvePolygon ring -> EXTRACTED greedy_simplify_perp_b64 -> EXTRACTED
+# b64_orient_sign_filtered per corner.  Gates I1 certified-scope (INTSAFE vs
+# APPROX), I2 simplifier-sound (totality/head/length), I3 filter-honest
+# (UNCERTAIN on near-collinear-at-scale).  Nonzero exit on any violation.
+cp-boundary-simplify-tests: $(TARGET)
+	cd .. && python3 oracle/gen_cp_boundary_simplify_tests.py > oracle/cp_boundary_simplify_tests.txt
+
+# CurvePolygon exterior-ring boundary test (F-CP Option A, issue #849):
+# builds sample CurvePolygons (oracle/curve_polygon.py) and asserts the
+# CP_BOUNDARY_SIMPLIFY V/O output + INTSAFE/APPROX tagging.  Nonzero exit on
+# any failed assertion.
+cp-boundary-simplify-test: $(TARGET)
+	ORACLE_BIN=./oracle_bin python3 test_cp_boundary_simplify.py
 
 # Adversarial ARC_OFFSET_XY suite (OFF/BUF-1/BUF-NEG, JTS #1195 §7): gates
 # I1 radial-dist |d|, I2 distance |r+d| from centre, I3 radial ray (homothety),
