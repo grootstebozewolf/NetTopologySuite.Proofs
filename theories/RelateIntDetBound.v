@@ -249,6 +249,12 @@ Proof.
   eapply idet_abs_affine_reduce; eauto; lia.
 Qed.
 
+Lemma coord0_le_c : forall c, 0 <= c -> 0 <= 0 <= c.
+Proof. intros. split; [reflexivity | lia]. Qed.
+
+Lemma coordc_le_c : forall c, 0 <= c -> 0 <= c <= c.
+Proof. intros. split; [lia | reflexivity]. Qed.
+
 Lemma idet_abs_le_sq_corners :
   forall c ax ay bx by_ cx cy,
     0 <= c ->
@@ -267,6 +273,27 @@ Proof.
   repeat (destruct Hcy as [-> | ->]);
   apply Z.abs_le; split; nia.
 Qed.
+(* Corner transport: one affine reduction per axis, then max over endpoints. *)
+Ltac idet_corner_side kind :=
+  match eval cbv in kind with
+  | 1 => left; reflexivity
+  | _ => right; reflexivity
+  end.
+
+Ltac idet_corners6 kax kay kbx kby kcx kcy :=
+  match goal with
+  | Hc0 : ?Hc0T |- _ =>
+      apply idet_abs_le_sq_corners;
+        [ exact Hc0
+        | idet_corner_side kax
+        | idet_corner_side kay
+        | idet_corner_side kbx
+        | idet_corner_side kby
+        | idet_corner_side kcx
+        | idet_corner_side kcy
+        ]
+  end.
+
 Lemma idet_abs_le_sq :
   forall c ax ay bx by_ cx cy,
     0 <= c ->
@@ -275,515 +302,328 @@ Lemma idet_abs_le_sq :
     Z.abs (idet ax ay bx by_ cx cy) <= c * c.
 Proof.
   intros c ax ay bx by_ cx cy Hc0 Hax Hay Hbx Hby Hcx Hcy.
-  assert (Hax0 : 0 <= 0 <= c) by (split; [reflexivity | lia]).
-  assert (Haxc : 0 <= c <= c) by (split; [lia | reflexivity]).
-  assert (Hay0 : 0 <= 0 <= c) by (split; [reflexivity | lia]).
-  assert (Hayc : 0 <= c <= c) by (split; [lia | reflexivity]).
-  assert (Hbx0 : 0 <= 0 <= c) by (split; [reflexivity | lia]).
-  assert (Hbxc : 0 <= c <= c) by (split; [lia | reflexivity]).
-  assert (Hby0 : 0 <= 0 <= c) by (split; [reflexivity | lia]).
-  assert (Hbyc : 0 <= c <= c) by (split; [lia | reflexivity]).
-  assert (Hcx0 : 0 <= 0 <= c) by (split; [reflexivity | lia]).
-  assert (Hcxc : 0 <= c <= c) by (split; [lia | reflexivity]).
-  assert (Hcy0 : 0 <= 0 <= c) by (split; [reflexivity | lia]).
-  assert (Hcyc : 0 <= c <= c) by (split; [lia | reflexivity]).
-  assert (Hf0_ := idet_abs_reduce_ax c ax ay bx by_ cx cy Hc0 Hax Hay Hbx Hby Hcx Hcy).
+  pose proof (coord0_le_c c Hc0) as Hax0.
+  pose proof (coordc_le_c c Hc0) as Haxc.
+  pose proof (coord0_le_c c Hc0) as Hay0.
+  pose proof (coordc_le_c c Hc0) as Hayc.
+  pose proof (coord0_le_c c Hc0) as Hbx0.
+  pose proof (coordc_le_c c Hc0) as Hbxc.
+  pose proof (coord0_le_c c Hc0) as Hby0.
+  pose proof (coordc_le_c c Hc0) as Hbyc.
+  pose proof (coord0_le_c c Hc0) as Hcx0.
+  pose proof (coordc_le_c c Hc0) as Hcxc.
+  pose proof (coord0_le_c c Hc0) as Hcy0.
+  pose proof (coordc_le_c c Hc0) as Hcyc.
   eapply Z.le_trans.
-  { exact Hf0_. }
+  { exact (idet_abs_reduce_ax c ax ay bx by_ cx cy Hc0 Hax Hay Hbx Hby Hcx Hcy). }
   { apply Zmax_le_both.
-    { 
-      assert (Hf1_0 := idet_abs_reduce_ay c 0 ay bx by_ cx cy Hc0 Hax0 Hay Hbx Hby Hcx Hcy).
+    eapply Z.le_trans.
+    { exact (idet_abs_reduce_ay c 0 ay bx by_ cx cy Hc0 Hax0 Hay Hbx Hby Hcx Hcy). }
+    { apply Zmax_le_both.
       eapply Z.le_trans.
-      { exact Hf1_0. }
+      { exact (idet_abs_reduce_bx c 0 0 bx by_ cx cy Hc0 Hax0 Hay0 Hbx Hby Hcx Hcy). }
       { apply Zmax_le_both.
-        { 
-          assert (Hf2_00 := idet_abs_reduce_bx c 0 0 bx by_ cx cy Hc0 Hax0 Hay0 Hbx Hby Hcx Hcy).
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c 0 0 0 by_ cx cy Hc0 Hax0 Hay0 Hbx0 Hby Hcx Hcy). }
+        { apply Zmax_le_both.
           eapply Z.le_trans.
-          { exact Hf2_00. }
+          { exact (idet_abs_reduce_cx c 0 0 0 0 cx cy Hc0 Hax0 Hay0 Hbx0 Hby0 Hcx Hcy). }
           { apply Zmax_le_both.
-            { 
-              assert (Hf3_000 := idet_abs_reduce_by c 0 0 0 by_ cx cy Hc0 Hax0 Hay0 Hbx0 Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_000. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_0000 := idet_abs_reduce_cx c 0 0 0 0 cx cy Hc0 Hax0 Hay0 Hbx0 Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_0000. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_00000 := idet_abs_reduce_cy c 0 0 0 0 0 cy Hc0 Hax0 Hay0 Hbx0 Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_00000. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_0000c := idet_abs_reduce_cy c 0 0 0 0 c cy Hc0 Hax0 Hay0 Hbx0 Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0000c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_000c := idet_abs_reduce_cx c 0 0 0 c cx cy Hc0 Hax0 Hay0 Hbx0 Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_000c. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_000c0 := idet_abs_reduce_cy c 0 0 0 c 0 cy Hc0 Hax0 Hay0 Hbx0 Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_000c0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_000cc := idet_abs_reduce_cy c 0 0 0 c c cy Hc0 Hax0 Hay0 Hbx0 Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_000cc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 0 0 0 cy Hc0 Hax0 Hay0 Hbx0 Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 1 1 1 1.
+              idet_corners6 1 1 1 1 1 2.
             }
-            { 
-              assert (Hf3_00c := idet_abs_reduce_by c 0 0 c by_ cx cy Hc0 Hax0 Hay0 Hbxc Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_00c. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_00c0 := idet_abs_reduce_cx c 0 0 c 0 cx cy Hc0 Hax0 Hay0 Hbxc Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_00c0. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_00c00 := idet_abs_reduce_cy c 0 0 c 0 0 cy Hc0 Hax0 Hay0 Hbxc Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_00c00. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_00c0c := idet_abs_reduce_cy c 0 0 c 0 c cy Hc0 Hax0 Hay0 Hbxc Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_00c0c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_00cc := idet_abs_reduce_cx c 0 0 c c cx cy Hc0 Hax0 Hay0 Hbxc Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_00cc. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_00cc0 := idet_abs_reduce_cy c 0 0 c c 0 cy Hc0 Hax0 Hay0 Hbxc Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_00cc0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_00ccc := idet_abs_reduce_cy c 0 0 c c c cy Hc0 Hax0 Hay0 Hbxc Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_00ccc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 0 0 c cy Hc0 Hax0 Hay0 Hbx0 Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 1 1 2 1.
+              idet_corners6 1 1 1 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c 0 0 0 c cx cy Hc0 Hax0 Hay0 Hbx0 Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 0 c 0 cy Hc0 Hax0 Hay0 Hbx0 Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 1 2 1 1.
+              idet_corners6 1 1 1 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 0 c c cy Hc0 Hax0 Hay0 Hbx0 Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 1 2 2 1.
+              idet_corners6 1 1 1 2 2 2.
             }
           }
         }
-        { 
-          assert (Hf2_0c := idet_abs_reduce_bx c 0 c bx by_ cx cy Hc0 Hax0 Hayc Hbx Hby Hcx Hcy).
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c 0 0 c by_ cx cy Hc0 Hax0 Hay0 Hbxc Hby Hcx Hcy). }
+        { apply Zmax_le_both.
           eapply Z.le_trans.
-          { exact Hf2_0c. }
+          { exact (idet_abs_reduce_cx c 0 0 c 0 cx cy Hc0 Hax0 Hay0 Hbxc Hby0 Hcx Hcy). }
           { apply Zmax_le_both.
-            { 
-              assert (Hf3_0c0 := idet_abs_reduce_by c 0 c 0 by_ cx cy Hc0 Hax0 Hayc Hbx0 Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_0c0. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_0c00 := idet_abs_reduce_cx c 0 c 0 0 cx cy Hc0 Hax0 Hayc Hbx0 Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_0c00. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_0c000 := idet_abs_reduce_cy c 0 c 0 0 0 cy Hc0 Hax0 Hayc Hbx0 Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0c000. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_0c00c := idet_abs_reduce_cy c 0 c 0 0 c cy Hc0 Hax0 Hayc Hbx0 Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0c00c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_0c0c := idet_abs_reduce_cx c 0 c 0 c cx cy Hc0 Hax0 Hayc Hbx0 Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_0c0c. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_0c0c0 := idet_abs_reduce_cy c 0 c 0 c 0 cy Hc0 Hax0 Hayc Hbx0 Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0c0c0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_0c0cc := idet_abs_reduce_cy c 0 c 0 c c cy Hc0 Hax0 Hayc Hbx0 Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0c0cc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 c 0 0 cy Hc0 Hax0 Hay0 Hbxc Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 2 1 1 1.
+              idet_corners6 1 1 2 1 1 2.
             }
-            { 
-              assert (Hf3_0cc := idet_abs_reduce_by c 0 c c by_ cx cy Hc0 Hax0 Hayc Hbxc Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_0cc. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_0cc0 := idet_abs_reduce_cx c 0 c c 0 cx cy Hc0 Hax0 Hayc Hbxc Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_0cc0. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_0cc00 := idet_abs_reduce_cy c 0 c c 0 0 cy Hc0 Hax0 Hayc Hbxc Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0cc00. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_0cc0c := idet_abs_reduce_cy c 0 c c 0 c cy Hc0 Hax0 Hayc Hbxc Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0cc0c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_0ccc := idet_abs_reduce_cx c 0 c c c cx cy Hc0 Hax0 Hayc Hbxc Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_0ccc. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_0ccc0 := idet_abs_reduce_cy c 0 c c c 0 cy Hc0 Hax0 Hayc Hbxc Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0ccc0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_0cccc := idet_abs_reduce_cy c 0 c c c c cy Hc0 Hax0 Hayc Hbxc Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_0cccc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 c 0 c cy Hc0 Hax0 Hay0 Hbxc Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 2 1 2 1.
+              idet_corners6 1 1 2 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c 0 0 c c cx cy Hc0 Hax0 Hay0 Hbxc Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 c c 0 cy Hc0 Hax0 Hay0 Hbxc Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 2 2 1 1.
+              idet_corners6 1 1 2 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 0 c c c cy Hc0 Hax0 Hay0 Hbxc Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 1 2 2 2 1.
+              idet_corners6 1 1 2 2 2 2.
+            }
+          }
+        }
+      }
+      eapply Z.le_trans.
+      { exact (idet_abs_reduce_bx c 0 c bx by_ cx cy Hc0 Hax0 Hayc Hbx Hby Hcx Hcy). }
+      { apply Zmax_le_both.
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c 0 c 0 by_ cx cy Hc0 Hax0 Hayc Hbx0 Hby Hcx Hcy). }
+        { apply Zmax_le_both.
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c 0 c 0 0 cx cy Hc0 Hax0 Hayc Hbx0 Hby0 Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c 0 0 0 cy Hc0 Hax0 Hayc Hbx0 Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 1 1 1 1.
+              idet_corners6 1 2 1 1 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c 0 0 c cy Hc0 Hax0 Hayc Hbx0 Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 1 1 2 1.
+              idet_corners6 1 2 1 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c 0 c 0 c cx cy Hc0 Hax0 Hayc Hbx0 Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c 0 c 0 cy Hc0 Hax0 Hayc Hbx0 Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 1 2 1 1.
+              idet_corners6 1 2 1 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c 0 c c cy Hc0 Hax0 Hayc Hbx0 Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 1 2 2 1.
+              idet_corners6 1 2 1 2 2 2.
+            }
+          }
+        }
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c 0 c c by_ cx cy Hc0 Hax0 Hayc Hbxc Hby Hcx Hcy). }
+        { apply Zmax_le_both.
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c 0 c c 0 cx cy Hc0 Hax0 Hayc Hbxc Hby0 Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c c 0 0 cy Hc0 Hax0 Hayc Hbxc Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 2 1 1 1.
+              idet_corners6 1 2 2 1 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c c 0 c cy Hc0 Hax0 Hayc Hbxc Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 2 1 2 1.
+              idet_corners6 1 2 2 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c 0 c c c cx cy Hc0 Hax0 Hayc Hbxc Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c c c 0 cy Hc0 Hax0 Hayc Hbxc Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 2 2 1 1.
+              idet_corners6 1 2 2 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c 0 c c c c cy Hc0 Hax0 Hayc Hbxc Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 1 2 2 2 2 1.
+              idet_corners6 1 2 2 2 2 2.
             }
           }
         }
       }
     }
-    { 
-      assert (Hf1_c := idet_abs_reduce_ay c c ay bx by_ cx cy Hc0 Haxc Hay Hbx Hby Hcx Hcy).
+    eapply Z.le_trans.
+    { exact (idet_abs_reduce_ay c c ay bx by_ cx cy Hc0 Haxc Hay Hbx Hby Hcx Hcy). }
+    { apply Zmax_le_both.
       eapply Z.le_trans.
-      { exact Hf1_c. }
+      { exact (idet_abs_reduce_bx c c 0 bx by_ cx cy Hc0 Haxc Hay0 Hbx Hby Hcx Hcy). }
       { apply Zmax_le_both.
-        { 
-          assert (Hf2_c0 := idet_abs_reduce_bx c c 0 bx by_ cx cy Hc0 Haxc Hay0 Hbx Hby Hcx Hcy).
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c c 0 0 by_ cx cy Hc0 Haxc Hay0 Hbx0 Hby Hcx Hcy). }
+        { apply Zmax_le_both.
           eapply Z.le_trans.
-          { exact Hf2_c0. }
+          { exact (idet_abs_reduce_cx c c 0 0 0 cx cy Hc0 Haxc Hay0 Hbx0 Hby0 Hcx Hcy). }
           { apply Zmax_le_both.
-            { 
-              assert (Hf3_c00 := idet_abs_reduce_by c c 0 0 by_ cx cy Hc0 Haxc Hay0 Hbx0 Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_c00. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_c000 := idet_abs_reduce_cx c c 0 0 0 cx cy Hc0 Haxc Hay0 Hbx0 Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_c000. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_c0000 := idet_abs_reduce_cy c c 0 0 0 0 cy Hc0 Haxc Hay0 Hbx0 Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c0000. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_c000c := idet_abs_reduce_cy c c 0 0 0 c cy Hc0 Haxc Hay0 Hbx0 Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c000c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_c00c := idet_abs_reduce_cx c c 0 0 c cx cy Hc0 Haxc Hay0 Hbx0 Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_c00c. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_c00c0 := idet_abs_reduce_cy c c 0 0 c 0 cy Hc0 Haxc Hay0 Hbx0 Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c00c0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_c00cc := idet_abs_reduce_cy c c 0 0 c c cy Hc0 Haxc Hay0 Hbx0 Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c00cc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 0 0 0 cy Hc0 Haxc Hay0 Hbx0 Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 1 1 1 1.
+              idet_corners6 2 1 1 1 1 2.
             }
-            { 
-              assert (Hf3_c0c := idet_abs_reduce_by c c 0 c by_ cx cy Hc0 Haxc Hay0 Hbxc Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_c0c. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_c0c0 := idet_abs_reduce_cx c c 0 c 0 cx cy Hc0 Haxc Hay0 Hbxc Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_c0c0. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_c0c00 := idet_abs_reduce_cy c c 0 c 0 0 cy Hc0 Haxc Hay0 Hbxc Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c0c00. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_c0c0c := idet_abs_reduce_cy c c 0 c 0 c cy Hc0 Haxc Hay0 Hbxc Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c0c0c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_c0cc := idet_abs_reduce_cx c c 0 c c cx cy Hc0 Haxc Hay0 Hbxc Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_c0cc. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_c0cc0 := idet_abs_reduce_cy c c 0 c c 0 cy Hc0 Haxc Hay0 Hbxc Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c0cc0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_c0ccc := idet_abs_reduce_cy c c 0 c c c cy Hc0 Haxc Hay0 Hbxc Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_c0ccc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 0 0 c cy Hc0 Haxc Hay0 Hbx0 Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 1 1 2 1.
+              idet_corners6 2 1 1 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c c 0 0 c cx cy Hc0 Haxc Hay0 Hbx0 Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 0 c 0 cy Hc0 Haxc Hay0 Hbx0 Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 1 2 1 1.
+              idet_corners6 2 1 1 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 0 c c cy Hc0 Haxc Hay0 Hbx0 Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 1 2 2 1.
+              idet_corners6 2 1 1 2 2 2.
             }
           }
         }
-        { 
-          assert (Hf2_cc := idet_abs_reduce_bx c c c bx by_ cx cy Hc0 Haxc Hayc Hbx Hby Hcx Hcy).
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c c 0 c by_ cx cy Hc0 Haxc Hay0 Hbxc Hby Hcx Hcy). }
+        { apply Zmax_le_both.
           eapply Z.le_trans.
-          { exact Hf2_cc. }
+          { exact (idet_abs_reduce_cx c c 0 c 0 cx cy Hc0 Haxc Hay0 Hbxc Hby0 Hcx Hcy). }
           { apply Zmax_le_both.
-            { 
-              assert (Hf3_cc0 := idet_abs_reduce_by c c c 0 by_ cx cy Hc0 Haxc Hayc Hbx0 Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_cc0. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_cc00 := idet_abs_reduce_cx c c c 0 0 cx cy Hc0 Haxc Hayc Hbx0 Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_cc00. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_cc000 := idet_abs_reduce_cy c c c 0 0 0 cy Hc0 Haxc Hayc Hbx0 Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_cc000. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_cc00c := idet_abs_reduce_cy c c c 0 0 c cy Hc0 Haxc Hayc Hbx0 Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_cc00c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_cc0c := idet_abs_reduce_cx c c c 0 c cx cy Hc0 Haxc Hayc Hbx0 Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_cc0c. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_cc0c0 := idet_abs_reduce_cy c c c 0 c 0 cy Hc0 Haxc Hayc Hbx0 Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_cc0c0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_cc0cc := idet_abs_reduce_cy c c c 0 c c cy Hc0 Haxc Hayc Hbx0 Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_cc0cc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 c 0 0 cy Hc0 Haxc Hay0 Hbxc Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 2 1 1 1.
+              idet_corners6 2 1 2 1 1 2.
             }
-            { 
-              assert (Hf3_ccc := idet_abs_reduce_by c c c c by_ cx cy Hc0 Haxc Hayc Hbxc Hby Hcx Hcy).
-              eapply Z.le_trans.
-              { exact Hf3_ccc. }
-              { apply Zmax_le_both.
-                { 
-                  assert (Hf4_ccc0 := idet_abs_reduce_cx c c c c 0 cx cy Hc0 Haxc Hayc Hbxc Hby0 Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_ccc0. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_ccc00 := idet_abs_reduce_cy c c c c 0 0 cy Hc0 Haxc Hayc Hbxc Hby0 Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_ccc00. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_ccc0c := idet_abs_reduce_cy c c c c 0 c cy Hc0 Haxc Hayc Hbxc Hby0 Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_ccc0c. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-                { 
-                  assert (Hf4_cccc := idet_abs_reduce_cx c c c c c cx cy Hc0 Haxc Hayc Hbxc Hbyc Hcx Hcy).
-                  eapply Z.le_trans.
-                  { exact Hf4_cccc. }
-                  { apply Zmax_le_both.
-                    { 
-                      assert (Hf5_cccc0 := idet_abs_reduce_cy c c c c c 0 cy Hc0 Haxc Hayc Hbxc Hbyc Hcx0 Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_cccc0. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                    { 
-                      assert (Hf5_ccccc := idet_abs_reduce_cy c c c c c c cy Hc0 Haxc Hayc Hbxc Hbyc Hcxc Hcy).
-                      eapply Z.le_trans.
-                      { exact Hf5_ccccc. }
-                      { apply Zmax_le_both.
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | left; reflexivity]. }
-                        { apply idet_abs_le_sq_corners; [exact Hc0 | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity | right; reflexivity]. }
-                      }
-                    }
-                  }
-                }
-              }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 c 0 c cy Hc0 Haxc Hay0 Hbxc Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 2 1 2 1.
+              idet_corners6 2 1 2 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c c 0 c c cx cy Hc0 Haxc Hay0 Hbxc Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 c c 0 cy Hc0 Haxc Hay0 Hbxc Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 2 2 1 1.
+              idet_corners6 2 1 2 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c 0 c c c cy Hc0 Haxc Hay0 Hbxc Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 1 2 2 2 1.
+              idet_corners6 2 1 2 2 2 2.
+            }
+          }
+        }
+      }
+      eapply Z.le_trans.
+      { exact (idet_abs_reduce_bx c c c bx by_ cx cy Hc0 Haxc Hayc Hbx Hby Hcx Hcy). }
+      { apply Zmax_le_both.
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c c c 0 by_ cx cy Hc0 Haxc Hayc Hbx0 Hby Hcx Hcy). }
+        { apply Zmax_le_both.
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c c c 0 0 cx cy Hc0 Haxc Hayc Hbx0 Hby0 Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c 0 0 0 cy Hc0 Haxc Hayc Hbx0 Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 1 1 1 1.
+              idet_corners6 2 2 1 1 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c 0 0 c cy Hc0 Haxc Hayc Hbx0 Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 1 1 2 1.
+              idet_corners6 2 2 1 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c c c 0 c cx cy Hc0 Haxc Hayc Hbx0 Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c 0 c 0 cy Hc0 Haxc Hayc Hbx0 Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 1 2 1 1.
+              idet_corners6 2 2 1 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c 0 c c cy Hc0 Haxc Hayc Hbx0 Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 1 2 2 1.
+              idet_corners6 2 2 1 2 2 2.
+            }
+          }
+        }
+        eapply Z.le_trans.
+        { exact (idet_abs_reduce_by c c c c by_ cx cy Hc0 Haxc Hayc Hbxc Hby Hcx Hcy). }
+        { apply Zmax_le_both.
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c c c c 0 cx cy Hc0 Haxc Hayc Hbxc Hby0 Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c c 0 0 cy Hc0 Haxc Hayc Hbxc Hby0 Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 2 1 1 1.
+              idet_corners6 2 2 2 1 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c c 0 c cy Hc0 Haxc Hayc Hbxc Hby0 Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 2 1 2 1.
+              idet_corners6 2 2 2 1 2 2.
+            }
+          }
+          eapply Z.le_trans.
+          { exact (idet_abs_reduce_cx c c c c c cx cy Hc0 Haxc Hayc Hbxc Hbyc Hcx Hcy). }
+          { apply Zmax_le_both.
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c c c 0 cy Hc0 Haxc Hayc Hbxc Hbyc Hcx0 Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 2 2 1 1.
+              idet_corners6 2 2 2 2 1 2.
+            }
+            eapply Z.le_trans.
+            { exact (idet_abs_reduce_cy c c c c c c cy Hc0 Haxc Hayc Hbxc Hbyc Hcxc Hcy). }
+            { apply Zmax_le_both.
+              idet_corners6 2 2 2 2 2 1.
+              idet_corners6 2 2 2 2 2 2.
             }
           }
         }
@@ -791,7 +631,6 @@ Proof.
     }
   }
 Qed.
-
 
 (* Regime 1: 32-bit coordinates => 64-bit determinant is overflow-free.        *)
 (* -------------------------------------------------------------------------- *)
