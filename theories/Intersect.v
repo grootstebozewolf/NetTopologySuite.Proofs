@@ -376,6 +376,84 @@ Proof.
   - exists t. repeat split; try assumption; reflexivity.
 Qed.
 
+(* Closed unit-interval parameters are open under the proper-cross sign       *)
+(* condition: endpoints would force a zero cross-product, contradicting < 0.  *)
+Lemma div_in_open_unit_interval :
+  forall a b : R,
+    a * b < 0 ->
+    let t := a / (a - b) in
+    0 <= t <= 1 -> 0 < t < 1.
+Proof.
+  intros a b Hprod t [Ht0 Ht1].
+  assert (Hden : a - b <> 0) by nra.
+  assert (Hane : a <> 0) by nra.
+  assert (Hbne : b <> 0) by nra.
+  split.
+  - destruct (Rtotal_order 0 t) as [Hgt0 | [H0 | Hlt0]].
+    + exact Hgt0.
+    + exfalso. assert (Ht0eq : a / (a - b) = 0) by (fold t; symmetry; exact H0).
+      assert (Ha0 : a = 0).
+      { assert (Hmul : a = (a - b) * (a / (a - b))) by (field; auto).
+        rewrite Ht0eq in Hmul. rewrite Rmult_0_r in Hmul. exact Hmul. }
+      rewrite Ha0 in Hprod. lra.
+    + exfalso. apply Rlt_not_le in Hlt0. apply Hlt0. exact Ht0.
+  - destruct (Rtotal_order t 1) as [Hlt | [Heq | Hgt]].
+    + exact Hlt.
+    + exfalso. assert (Ht1eq : a / (a - b) = 1) by (fold t; rewrite Heq; reflexivity).
+      assert (Hab : a = a - b).
+      { assert (Hmul : a = (a - b) * (a / (a - b))) by (field; auto).
+        rewrite Ht1eq in Hmul. rewrite Rmult_1_r in Hmul. exact Hmul. }
+      assert (Hb0 : b = 0) by nra.
+      rewrite Hb0 in Hprod. lra.
+    + exfalso. apply Rle_not_lt in Hgt. apply Hgt. exact Ht1.
+Qed.
+
+Lemma strict_intersection_point_open_ab :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    exists t : R,
+      0 < t < 1 /\
+      px (strict_intersection_point A B C D) = (1 - t) * px A + t * px B /\
+      py (strict_intersection_point A B C D) = (1 - t) * py A + t * py B.
+Proof.
+  intros A B C D HABCD HCDAB.
+  assert (Hden_t : cross A B C - cross A B D <> 0) by nra.
+  assert (Hden_s : cross C D A - cross C D B <> 0) by nra.
+  unfold strict_intersection_point.
+  set (t := cross A B C / (cross A B C - cross A B D)).
+  set (s := cross C D A / (cross C D A - cross C D B)).
+  pose proof (div_in_unit_interval (cross C D A) (cross C D B) HCDAB) as [Hs_lo Hs_hi].
+  fold s in Hs_lo, Hs_hi.
+  destruct (div_in_open_unit_interval (cross C D A) (cross C D B) HCDAB (conj Hs_lo Hs_hi))
+    as [Hlo Hhi].
+  refine (ex_intro _ s (conj (conj Hlo Hhi) (conj ?[px] ?[py]))).
+  all: simpl; unfold s, t, cross; field; auto.
+Qed.
+
+Lemma strict_intersection_point_open_cd :
+  forall A B C D,
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    exists t : R,
+      0 < t < 1 /\
+      px (strict_intersection_point A B C D) = (1 - t) * px C + t * px D /\
+      py (strict_intersection_point A B C D) = (1 - t) * py C + t * py D.
+Proof.
+  intros A B C D HABCD HCDAB.
+  assert (Hden_t : cross A B C - cross A B D <> 0) by nra.
+  assert (Hden_s : cross C D A - cross C D B <> 0) by nra.
+  unfold strict_intersection_point.
+  set (t := cross A B C / (cross A B C - cross A B D)).
+  set (s := cross C D A / (cross C D A - cross C D B)).
+  pose proof (div_in_unit_interval (cross A B C) (cross A B D) HABCD) as [Ht_lo Ht_hi].
+  fold t in Ht_lo, Ht_hi.
+  destruct (div_in_open_unit_interval (cross A B C) (cross A B D) HABCD (conj Ht_lo Ht_hi))
+    as [Hlo Hhi].
+  refine (ex_intro _ t (conj (conj Hlo Hhi) (conj ?[px] ?[py]))).
+  all: simpl; unfold s, t, cross; field; auto.
+Qed.
+
 (* Closed form: under the proper-crossing condition, any shared point IS      *)
 (* `strict_intersection_point A B C D`.                                       *)
 Theorem strict_intersection_eq_formula :
