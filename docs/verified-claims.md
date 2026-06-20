@@ -765,6 +765,17 @@ result-independent-of-cache-path.
 | `RelatePreparedCache.v : prepared_intersects_eq_brute` | **Concrete refinement:** prepared "any A-segment intersects t" equals brute `orb` fold, for any sound `intersect_test` `[exact]` | 3 |
 | `RelatePreparedCache.v : prepared_intersects_path_independent` | **Concrete path independence:** STRtree build/order irrelevant for segment-intersects prepared mode `[exact]` | 3 |
 
+## Issue #67 — area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`, S14)
+
+Rectangle boundary edges (`rect_boundary_segments`) as the prepared-area indexed
+item list; line segment envelope as query box. Instantiates S13 refinement for
+the NTS#819 area-line carrier.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
+| `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
+
 ## Foundational — squared distance / degenerate cases (`Distance.v`)
 
 | `file : theorem` | Meaning | Ax |
