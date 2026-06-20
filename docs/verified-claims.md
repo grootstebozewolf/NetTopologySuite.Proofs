@@ -776,14 +776,15 @@ the NTS#819 area-line carrier.
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
 
-## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15f)
+## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15g)
 
 First RelateNG-noding rung: closed-segment strata + point-set DE-9IM
 specification (`line_de9im_pointset`), with meet-layer bridges from S8
 `classify_line_pair` / `line_pair_fill`, S4b `ll_matrix_touches_endpoint`,
-Romanschek EE = 2 / test-10 exterior rows, and JTS#1175 collection-level
-BI witnesses. Full `line_pair_fill` IE/EI/BE/EB bridges and cell-dimension
-pinning remain S15g+.
+Romanschek EE = 2 / test-10 exterior rows, JTS#1175 collection BI witnesses,
+and existential collection union (`line_collection_de9im_pointset`).
+Full `line_pair_fill` exterior bridges without hypotheses and pairwise
+`dim_value_join` matrix aggregation remain S15h+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -814,6 +815,11 @@ pinning remain S15g+.
 | `RelateNodingLineLine.v : jts1175_collection_bi_witness` | Multi-segment collection bnd×int contact ⇒ ∃ cross-product pair with test-10 BI = 0-dim `[exact]` | 3 |
 | `RelateNodingLineLine.v : mod2_endpoint_bnd_int_bi_cell` | MOD2 degree-1 endpoint + bnd×int contact ⇒ test-10 BI = 0-dim `[exact]` | 3 |
 | `RelateNodingLineLine.v : classify_disjoint_exterior_be_eb_cells` | `LPR_Disjoint` + four endpoint-exterior hypotheses ⇒ test-10 BE/EB = 0-dim `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_pair_cell_sub` | Pairwise `line_cell_ok` ⇒ collection cross-product cell witness `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_bnd_int_bi_cell_ok` | Collection bnd×int contact ⇒ collection BI = 0-dim witness `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_test10_de9im_rows` | Collection bnd×int + all-no-share ⇒ test-10 BI/IE/EI/EE row witnesses `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_test10_intersects` | Collection bnd×int + all-no-share ⇒ `im_intersects` for test-10 matrix `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_classify_disjoint_test10_rows` | Collection disjoint regime + bnd×int + all-no-share ⇒ test-10 exterior rows `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
 

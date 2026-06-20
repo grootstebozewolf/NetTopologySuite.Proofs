@@ -1,8 +1,9 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** living triage — S0–**S15f** **complete in the working tree**
-> (2026-06-20); **S15g+** (full `line_pair_fill` exterior bridges /
-> collection union semantics / cell-dimension pinning) remains open.
+> **Status:** living triage — S0–**S15g** **complete in the working tree**
+> (2026-06-20); **S15h+** (full `line_pair_fill` exterior bridges without
+> hypotheses / pairwise matrix `dim_value_join` fill / cell-dimension pinning)
+> remains open.
 > Refresh when a new session closes.
 >
 > Corpus at time of writing: `main` (through S12 + curve→matrix transport stack);
@@ -75,7 +76,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3a Segment intersection (line-line)** | **PROVEN (Qed)** | `Intersect.v:900` (`segment_intersection_decision`), `:243` (`strict_completeness`) | Feeds `Intersects`/`Crosses`/`Touches` for line-line; collinear case closed (`collinear_share_iff_1d_overlap`). |
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
-| **#4 RelateNG algorithm** | **PARTIAL (S15f)** | `RelateNodingLineLine.v` | Line×line strata + point-set DE-9IM; regime bridges through S8 fill, S4b Touches IB, overlap BB, Romanschek EE/IE/EI rows, JTS#1175 collection BI witness + nominated-pair limitation. Collection union semantics / full fill bridges remain S15g+. |
+| **#4 RelateNG algorithm** | **PARTIAL (S15g)** | `RelateNodingLineLine.v` | Line×line strata + point-set DE-9IM; regime bridges through S8 fill, S4b Touches IB, overlap BB, Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential collection union (`line_collection_de9im_pointset`) + test-10 row aggregation. Pairwise `dim_value_join` matrix fill / full exterior bridges remain S15h+. |
 | **#5 Prepared-mode correctness** | **PARTIAL (S13–S14)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
@@ -172,10 +173,11 @@ area×line fill **(L)**, arc-chord relate **(M)**, and prepared cache **(F)**.
 Next frontier:
 
 - **(E) Full RelateNG noding pipeline** — *high / multi-session.* **Primary
-  next rung (S15g+).** S15a–S15f land line×line strata + regime / Touches /
-  Romanschek EE/IE/EI rows, JTS#1175 collection BI witness
-  (`RelateNodingLineLine.v`). Remaining: collection union semantics, full
-  `line_pair_fill` exterior bridges, cell-dimension pinning — Phase-3-scale.
+  next rung (S15h+).** S15a–S15g land line×line strata + regime / Touches /
+  Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential
+  collection union (`RelateNodingLineLine.v`). Remaining: pairwise matrix
+  `dim_value_join` aggregation, full `line_pair_fill` exterior bridges,
+  cell-dimension pinning — Phase-3-scale.
 
 - **(F) Prepared A-L cache correctness** — **partial (S13–S14).** Generic
   refinement + rectangle-boundary area-line instance in `RelatePreparedCache*.v`;
@@ -232,7 +234,11 @@ The recommended path forward:
   (`jts1175_collection_bi_witness`); nominated-pair limitation
   (`jts1175_no_share_nominated_pair_bi_empty`); MOD2 endpoint hook
   (`mod2_endpoint_bnd_int_bi_cell`); disjoint exterior BE/EB bridge.
-- **S15g+:** collection union semantics, full `line_pair_fill` exterior rows.
+- **S15g (done):** collection existential union (`line_collection_de9im_pointset`,
+  `line_collection_pair_cell_sub`); test-10 row aggregation
+  (`line_collection_test10_de9im_rows`, `line_collection_test10_intersects`);
+  `dim_value_join` max-cell algebra.
+- **S15h+:** pairwise matrix join fill, full `line_pair_fill` exterior rows.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -260,4 +266,5 @@ The recommended path forward:
 | S15d | T-junction Touches IB + endpoint BB + Romanschek EE = 2 | S15c |
 | S15e | OGC exterior rows + JTS#1175 BI negative | S15d |
 | S15f | JTS#1175 collection BI witness + nominated-pair gap | S15e |
-| S15g+ | Collection union + full fill bridges | S15f |
+| S15g | Collection existential union + test-10 row aggregation | S15f |
+| S15h+ | Pairwise matrix join + full fill bridges | S15g |

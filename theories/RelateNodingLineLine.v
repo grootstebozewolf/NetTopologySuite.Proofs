@@ -1,7 +1,7 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateNodingLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 15a–15f (S15a–S15f): line×line point-set DE-9IM bridge.
+   Issue #67 session 15a–15g (S15a–S15g): line×line point-set DE-9IM bridge.
 
    First RelateNG-noding rung: closed-segment strata (strict interior /
    endpoint boundary / exterior) and a 9-cell `line_de9im_pointset`
@@ -30,12 +30,15 @@
          not derivable here); bnd×int share ⇒ BI = 0-dim;
          endpoint exterior to other segment ⇒ BE/EB = 0-dim;
          JTS#1175 collection cross-product BI witness (bnd×int contact
-         across segment lists); nominated-pair no-share ⇏ BI = 0-dim
+         across segment lists); nominated-pair no-share ⇏ BI = 0-dim;
+         collection existential union (`line_collection_de9im_pointset`)
+         + test-10 row aggregation + `dim_value_join` max cell algebra
 
-   Honest gaps (deferred S15g+):
+   Honest gaps (deferred S15h+):
 
-     - Full IE/EI/BE/EB from `line_pair_fill` alone; collection union
-       semantics and matrix aggregation over segment cross-products.
+     - Full IE/EI/BE/EB from `line_pair_fill` alone without exterior
+       hypotheses; pairwise `dim_value_join` aggregation over full 9-cell
+       matrix fill.
      - `line_pair_fill LPR_Share` vs Touches / overlap witnesses;
        full cell-dimension pinning.
 
@@ -47,7 +50,7 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra List.
+From Stdlib Require Import Reals Lra List Lia.
 Import ListNotations.
 From NTS.Proofs Require Import DE9IM Distance Orientation Segment Intersect
   RelateLineLine RelateBoundary RelateMatrixLineLine.
@@ -1217,6 +1220,188 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §15  Collection union semantics (existential cross-product aggregation).   *)
+(* -------------------------------------------------------------------------- *)
+
+Definition line_collection_all_no_share (segsA segsB : list Segment2) : Prop :=
+  forall A B C D,
+    In (A, B) segsA -> In (C, D) segsB -> ~ segments_share A B C D.
+
+Definition line_collection_cell_ok (segsA segsB : list Segment2)
+    (d : DimValue) (sX sY : LineStratum) : Prop :=
+  exists A B C D,
+    In (A, B) segsA /\ In (C, D) segsB /\
+    line_cell_ok d sX sY A B C D.
+
+Definition line_collection_de9im_pointset (segsA segsB : list Segment2)
+    (m : IntersectionMatrix) : Prop :=
+  line_collection_cell_ok segsA segsB (im_ii m) LSInt LSInt /\
+  line_collection_cell_ok segsA segsB (im_ib m) LSInt LSBnd /\
+  line_collection_cell_ok segsA segsB (im_ie m) LSInt LSExt /\
+  line_collection_cell_ok segsA segsB (im_bi m) LSBnd LSInt /\
+  line_collection_cell_ok segsA segsB (im_bb m) LSBnd LSBnd /\
+  line_collection_cell_ok segsA segsB (im_be m) LSBnd LSExt /\
+  line_collection_cell_ok segsA segsB (im_ei m) LSExt LSInt /\
+  line_collection_cell_ok segsA segsB (im_eb m) LSExt LSBnd /\
+  line_collection_cell_ok segsA segsB (im_ee m) LSExt LSExt.
+
+Definition dim_value_join (d1 d2 : DimValue) : DimValue :=
+  match d1, d2 with
+  | None, d => d
+  | d, None => d
+  | Some n1, Some n2 => Some (Nat.max n1 n2)
+  end.
+
+Lemma dim_value_join_none_left :
+  forall d, dim_value_join None d = d.
+Proof. intros [n|]; reflexivity. Qed.
+
+Lemma dim_value_join_none_right :
+  forall d, dim_value_join d None = d.
+Proof. intros [n|]; reflexivity. Qed.
+
+Lemma dim_value_join_commut :
+  forall d1 d2, dim_value_join d1 d2 = dim_value_join d2 d1.
+Proof.
+  intros d1 d2. destruct d1 as [n1|], d2 as [n2|]; simpl; try reflexivity.
+  f_equal. lia.
+Qed.
+
+Lemma dim_value_join_assoc :
+  forall d1 d2 d3,
+    dim_value_join (dim_value_join d1 d2) d3 =
+    dim_value_join d1 (dim_value_join d2 d3).
+Proof.
+  intros d1 d2 d3.
+  destruct d1 as [n1|], d2 as [n2|], d3 as [n3|]; simpl; try reflexivity.
+  f_equal. lia.
+Qed.
+
+Theorem line_collection_pair_cell_sub :
+  forall segsA segsB A B C D d sX sY,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    line_cell_ok d sX sY A B C D ->
+    line_collection_cell_ok segsA segsB d sX sY.
+Proof.
+  intros segsA segsB A B C D d sX sY HinA HinB Hcell.
+  exists A; exists B; exists C; exists D.
+  split; [exact HinA | split; [exact HinB | exact Hcell]].
+Qed.
+
+Theorem line_collection_bnd_int_bi_cell_ok :
+  forall segsA segsB,
+    line_collection_bnd_int_contact segsA segsB ->
+    line_collection_cell_ok segsA segsB (ll_dim0) LSBnd LSInt.
+Proof.
+  intros segsA segsB [A [B [C [D [HinA [HinB Hcontact]]]]]].
+  exists A; exists B; exists C; exists D.
+  split; [exact HinA | split; [exact HinB | ]].
+  apply segments_bnd_int_bi_cell in Hcontact.
+  unfold line_bi_point_cell, ll_matrix_paper_test10 in Hcontact.
+  simpl in Hcontact. exact Hcontact.
+Qed.
+
+Theorem line_collection_no_share_ie_cell :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    A <> B ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_cell_ok segsA segsB (ll_dim1) LSInt LSExt.
+Proof.
+  intros segsA segsB A B C D HinA HinB Hne Hnoshare.
+  exists A; exists B; exists C; exists D.
+  split; [exact HinA | split; [exact HinB | ]].
+  apply no_share_midpoint_ie_cell.
+  - exact Hne.
+  - apply Hnoshare; assumption.
+Qed.
+
+Theorem line_collection_no_share_ei_cell :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    C <> D ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_cell_ok segsA segsB (ll_dim1) LSExt LSInt.
+Proof.
+  intros segsA segsB A B C D HinA HinB Hne Hnoshare.
+  exists A; exists B; exists C; exists D.
+  split; [exact HinA | split; [exact HinB | ]].
+  apply no_share_midpoint_ei_cell.
+  - exact Hne.
+  - apply Hnoshare; assumption.
+Qed.
+
+Theorem line_collection_ee_dim2_cell :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    line_collection_cell_ok segsA segsB (ll_dim2) LSExt LSExt.
+Proof.
+  intros segsA segsB A B C D HinA HinB.
+  exists A; exists B; exists C; exists D.
+  split; [exact HinA | split; [exact HinB | apply segments_bounded_ee_dim2_cell]].
+Qed.
+
+Theorem line_collection_test10_de9im_rows :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    A <> B ->
+    C <> D ->
+    line_collection_bnd_int_contact segsA segsB ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_cell_ok segsA segsB (im_bi ll_matrix_paper_test10) LSBnd LSInt /\
+    line_collection_cell_ok segsA segsB (im_ie ll_matrix_paper_test10) LSInt LSExt /\
+    line_collection_cell_ok segsA segsB (im_ei ll_matrix_paper_test10) LSExt LSInt /\
+    line_collection_cell_ok segsA segsB (im_ee ll_matrix_paper_test10) LSExt LSExt.
+Proof.
+  intros segsA segsB A B C D HinA HinB HneAB HneCD Hbndint Hnoshare.
+  split.
+  - apply line_collection_bnd_int_bi_cell_ok. exact Hbndint.
+  - split.
+    + apply (line_collection_no_share_ie_cell segsA segsB A B C D); assumption.
+    + split.
+      * apply (line_collection_no_share_ei_cell segsA segsB A B C D); assumption.
+      * apply (line_collection_ee_dim2_cell segsA segsB A B C D); assumption.
+Qed.
+
+Theorem line_collection_test10_intersects :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    A <> B ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_bnd_int_contact segsA segsB ->
+    im_intersects ll_matrix_paper_test10.
+Proof.
+  intros segsA segsB A B C D HinA HinB HneAB Hnoshare Hbndint.
+  unfold im_intersects. right; right; left.
+  apply intersects3_matches_some_ie with (n := 1%nat).
+  unfold ll_matrix_paper_test10. simpl. reflexivity.
+Qed.
+
+Theorem line_collection_classify_disjoint_test10_rows :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    classify_line_pair A B C D LPR_Disjoint ->
+    A <> B ->
+    C <> D ->
+    line_collection_bnd_int_contact segsA segsB ->
+    line_collection_all_no_share segsA segsB ->
+    line_collection_cell_ok segsA segsB (im_bi ll_matrix_paper_test10) LSBnd LSInt /\
+    line_collection_cell_ok segsA segsB (im_ie ll_matrix_paper_test10) LSInt LSExt /\
+    line_collection_cell_ok segsA segsB (im_ei ll_matrix_paper_test10) LSExt LSInt /\
+    line_collection_cell_ok segsA segsB (im_ee ll_matrix_paper_test10) LSExt LSExt.
+Proof.
+  intros segsA segsB A B C D HinA HinB _ HneAB HneCD Hbndint Hnoshare.
+  apply (line_collection_test10_de9im_rows segsA segsB A B C D); assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1239,5 +1424,10 @@ Print Assumptions jts1175_no_share_nominated_pair_bi_empty.
 Print Assumptions jts1175_collection_bi_witness.
 Print Assumptions mod2_endpoint_bnd_int_bi_cell.
 Print Assumptions classify_disjoint_exterior_be_eb_cells.
+Print Assumptions line_collection_pair_cell_sub.
+Print Assumptions line_collection_bnd_int_bi_cell_ok.
+Print Assumptions line_collection_test10_de9im_rows.
+Print Assumptions line_collection_test10_intersects.
+Print Assumptions line_collection_classify_disjoint_test10_rows.
 Print Assumptions two_segments_exterior_meet.
 Print Assumptions line_de9im_ee_inhabited.
