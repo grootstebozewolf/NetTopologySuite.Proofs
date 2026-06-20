@@ -57,6 +57,14 @@ Definition rects_touch_vertical_edge (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : Pro
   ax1 = bx0 /\
   ay0 < by1 /\ by0 < ay1.
 
+(* Symmetric horizontal shared-edge touch (A below B: A's top edge touches B's bottom edge,
+   with x-ranges overlapping). This completes the "full rect family" for boundary touch
+   (vertical + horizontal). The resulting DE-9IM matrix shape is identical (BB=1, EE=2). *)
+Definition rects_touch_horizontal_edge (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : Prop :=
+  ax0 < ax1 /\ ay0 < ay1 /\ bx0 < bx1 /\ by0 < by1 /\
+  ay1 = by0 /\
+  ax0 < bx1 /\ bx0 < ax1.
+
 (* -------------------------------------------------------------------------- *)
 (* Hand-specified witness matrices (regime targets, not derived from geometry).*)
 (* -------------------------------------------------------------------------- *)

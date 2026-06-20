@@ -42,7 +42,8 @@ Inductive RectPairRegime : Type :=
 | RPR_Disjoint
 | RPR_Overlap
 | RPR_Contains
-| RPR_TouchVert.
+| RPR_TouchVert
+| RPR_TouchHoriz.  (* horizontal shared edge; matrix shape identical to TouchVert *)
 
 Definition rect_pair_fill (r : RectPairRegime) : IntersectionMatrix :=
   match r with
@@ -50,6 +51,7 @@ Definition rect_pair_fill (r : RectPairRegime) : IntersectionMatrix :=
   | RPR_Overlap     => aa_matrix_partial_overlap
   | RPR_Contains    => aa_matrix_contains
   | RPR_TouchVert   => aa_matrix_touch_vertical
+  | RPR_TouchHoriz  => aa_matrix_touch_vertical  (* same BB=1 / EE=2 shape *)
   end.
 
 Lemma rect_pair_fill_disjoint_eq :
@@ -68,6 +70,10 @@ Lemma rect_pair_fill_touch_eq :
   rect_pair_fill RPR_TouchVert = aa_matrix_touch_vertical.
 Proof. reflexivity. Qed.
 
+Lemma rect_pair_fill_touch_horiz_eq :
+  rect_pair_fill RPR_TouchHoriz = aa_matrix_touch_vertical.
+Proof. reflexivity. Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Classifier — mirrors S6 guards.                                            *)
 (* -------------------------------------------------------------------------- *)
@@ -79,6 +85,7 @@ Definition classify_rect_pair (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R)
   | RPR_Overlap     => rects_partial_overlap ax0 ay0 ax1 ay1 bx0 by0 bx1 by1
   | RPR_Contains    => rect_a_strictly_contains_rect_b ax0 ay0 ax1 ay1 bx0 by0 bx1 by1
   | RPR_TouchVert   => rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1
+  | RPR_TouchHoriz  => rects_touch_horizontal_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1
   end.
 
 (* Strict horizontal separation (classifier discrimination; S6 disjoint

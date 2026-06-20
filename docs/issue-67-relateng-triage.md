@@ -1,11 +1,10 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
 > **Status:** living triage — S0–**S15k** **complete in the working tree**
-> (2026-06-20); rect relate dispatch + prepared evaluate hook + exterior-row pinning
-> for touch (S15l) **advanced/landed** (RelateNG + RelatePrepared); full geom_de9im_pointset
-> 9-cell expansion + regime refinements (horizontal + Touches fill split) remain.
-> Rect touch geom_de9im_pointset core helpers (y-overlap, no-shared-int, dispatch, pinning)
-> + first oracle vectors batch + concrete examples landed.
+> (2026-06-20); rect relate dispatch + prepared hook + exterior pinning + **horizontal
+> expansion + full rect family regime decision** (S15l) **landed** (real rect_pair_regime
+> deciding all regimes + TouchHoriz; horiz predicate; fidelity). Full 9-cell pointset
+> wiring remains the capstone. Core helpers + examples + oracle batch landed.
 > Refresh when a new session closes.
 >
 > (Our S13 rungs contributed: general-triangle Jordan cell-dim soundness,
@@ -259,8 +258,10 @@ The recommended path forward:
 - **S15k (done):** collection relate-matrix pipeline capstone — fold-assign
   interface, regime wrapper, per-pair disjoint test-10 9-cell, test-10
   pointset + fold=oracle + intersects + meet-pinned corollary.
-- **S15l+:** prepared evaluate hook (landed with rect bounds cache); exterior-row true-dimension pinning (landed for vertical touch via touch_regime_exterior_row_pinned); Touches-vs-Share fill API split + full rect touch geom_de9im_pointset assembly + horizontal regime remain.
-- rect touch geom_de9im_pointset core (touch_y_overlap_nonempty, vertical_touch_no_interior_intersection, touch_rects_no_shared_interior_point, relate_on_rects_dispatches, relate_rect_touch, touch_regime_exterior_row_pinned, concrete examples) + prepared rect hook **LANDED** in RelateNG.v/RelatePrepared.v (dispatch + pinning + first oracle TOUCH batch; full 9-cell + horiz follows line_de9im pattern).
+- **S15l+:** prepared + dispatch + exterior pinning + horiz/full rect family regime decision (landed); full 9-cell geom_de9im_pointset assembly + Touches/Share split remain.
+- rect touch geom_de9im_pointset core helpers + dispatch + pinning + examples + **horizontal + full rect family decision** (landed) + **9-cell pointset capstone** (touch_rects_satisfy_pointset + BB on bnd + cells + assembly Qed for touch; generalize started) **LANDED**. Prepared rect hook landed. Oracle consumption test started (added rect asserts in test_relate_matrix.ml). 
+
+Pivot decision per user: consumption test first (done); next balance with #64 arcs or #66 overlay after feedback from the rect oracles.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -283,4 +284,4 @@ The recommended path forward:
 | S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) + area-line (`RelatePreparedCacheAreaLine.v`) | S1 + `Bbox.v` |
 | S14 | Area-line prepared-cache + envelope early-exit | S13 + `RectangleJCT.v` |
 | S15a–S15k | Line×line noding bridge through collection relate-matrix pipeline capstone (`RelateNodingLineLine.v`) | S8 + fills |
-| S15l+ | Prepared evaluate hook (done) + exterior-row pinning for touch (done) + Touches fill split + full rect touch geom_de9im_pointset 9-cell + regime refinements (horizontal) | S15k |
+| S15l+ | Prepared + dispatch + exterior pinning + horizontal/full rect family regime (done) + full rect touch 9-cell pointset capstone (done) + consumption test + Touches split / pivot | S15k |
