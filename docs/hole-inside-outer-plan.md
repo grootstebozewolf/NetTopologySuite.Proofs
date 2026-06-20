@@ -91,11 +91,12 @@ strict interior ⇒ `0 < conv_min` ⇒ `in_bounded_component_cont` (separation) 
 `point_in_ring`. Yields `hole_inside_outer` for convex outer faces. Reuses
 `Convex.half_plane`, `conv_min`, and the IVT engine.
 
-### Stage D — Triangle (parallel stepping stone) — *medium*
+### Stage D — Triangle (parallel stepping stone) — *medium* — **DONE**
 
-`RightTriangleSeparation` / `GeneralTriangleSeparation` already give the
-separation; assemble the triangle JCT exactly as in the rectangle case. Subsumed
-by Stage C once convex is general, but a smaller concrete rung if C is deferred.
+`RightTriangleSeparation` / `GeneralTriangleSeparation` give the separation.
+Assembly complete: `GeneralTriangleHoleNesting.v` (hole_inside_outer_triangle + gtri_band_in_ring), `GeneralTriangleJCT.v` (gtri_ray_coverage discharges band; general_triangle_parity_characterises_interior for guarded strict-interior; hole_inside_outer_triangle_guarded + _generic with no band bookkeeping; closes the "assembly TODO" of Stage D). See verified-claims for green entries. Subsumed by Stage C (convex) but rung completed.
+
+(Note: general triangle also enables right-triangle "for free" in ConvexOffringSeam.v.)
 
 ### Stage E — General simple-polygon JCT — *research-grade, stays the residual*
 
@@ -151,6 +152,17 @@ gap. See #188 and `EdgeConnectivity.v` §5 for the remaining named fact.
 
 ---
 
+**Convex monotonicity campaign — COMPLETE (under strict guard).** Rungs 1–5 + JCT
+compositions (`MonotoneChainParity`, `MonotoneChainConstruction`,
+`MonotoneChainCoverage`, `ConvexYUnimodal`, `ConvexChainSplit`, `ConvexRayCrossing`,
+`ConvexJCT`, `ConvexExteriorEven`) land the general y-unimodal + strict-convex
+cases with no remaining named geometric residuals inside the guard. Diamond and
+hexagon are exercised both concretely and through the general path. The guarded
+`hole_inside_outer_convex_guarded` + `convex_parity_seam_offring_of` now yield
+unconditional instances for all families that meet the guard. (2026-06-16)
+
+---
+
 ## Stage C — second convex instance: hexagon (2026-06-13, `theories/HexagonNesting.v`)
 
 A concrete convex HEXAGON now joins the diamond as a Stage-C witness:
@@ -166,17 +178,18 @@ remains the route once that lemma lands.
 
 ---
 
-## General convex, guarded (2026-06-13, `theories/ConvexNesting.v`)
+## General convex, guarded + strict-unconditional (2026-06-13/16, `theories/ConvexNesting.v` + campaign)
 
 `hole_inside_outer_convex_guarded` packages the general convex case: a hole
 with a vertex strictly inside a convex outer (`0 < conv_min hps`, general
 position) nests inside, conditional on the single named residual
-`convex_interior_parity` — the convex-chain monotonicity (a rightward ray from
-a strictly-interior point crosses an odd number of edges), which is exactly the
-interior-parity obligation `ConvexOffringSeam.convex_parity_seam_offring_of`
-leaves open. Concrete convex families (rectangle, triangle; and the explicit
-diamond/hexagon point witnesses) discharge it directly; the general n-gon
-monotonicity remains the one open lemma.
+`convex_interior_parity`.  The monotonicity campaign (Rungs 1–5 + capstones) discharges
+the residual for y-unimodal rings and, under the strict-convexity guard
+(`strict_ccw_turns`, `unique_bottom`, `chain_y_distinct`), unconditionally via
+`convex_strict_start_bimonotone` + `interior_hits_one_chain_of_edge_hps`.  Concrete
+families (diamond, hexagon) and the general strict case now reach `hole_inside_outer`
+outright (via the off-ring seam or direct parity).  The bare unguarded general n-gon
+remains the documented open (degeneracies require the hygiene).
 
 ## Convex monotonicity campaign (2026-06-13, `theories/MonotoneChainParity.v`)
 
@@ -223,19 +236,37 @@ assembles the campaign: `convex_interior_parity_from_split` proves that given `b
 The remaining open lemma (sole residual of the campaign) is isolated exactly in
 `interior_hits_one_chain`:
 
-**Sole open residual — connecting `conv_min > 0` to vertex ordering.** Two structural facts
-remain, both captured by `interior_hits_one_chain`:
-(a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation) splits at its
-unique min-y and max-y vertices into an increasing chain followed by a decreasing chain
-(`bimonotone_split`) — the structural bridge from the half-plane presentation to vertex ordering;
-and (b) a strictly-interior point hits exactly one chain.
-(a) a convex CCW ring (in the `vertices_in_halfplane`/`conv_min` presentation)
-splits at its unique min-y and max-y vertices into an increasing chain followed by
-a decreasing chain whose concatenation is `ring_edges` — the structural bridge
-from the half-plane presentation to the two `chain_increasing`/`chain_decreasing`
-objects `bimonotone_split` consumes; and
-(b) a strictly-interior point (`0 < conv_min hps`) has `py p` strictly between the
-ring's min-y and max-y, so the rightward ray hits exactly one of the two chains
-(the XOR of `bimonotone_split_parity` is true) ⇒ `point_in_ring` ⇒
-`convex_interior_parity` discharged ⇒ general convex `hole_inside_outer`
-unconditional (instantiating `hole_inside_outer_convex_guarded`).
+**Rung 3 (landed, continued): the structural residuals discharged under guard.** The two facts
+(a) bimonotone split from convexity and (b) interior hits exactly one chain were closed by
+subsequent rungs.  Rung 3.5 (`MonotoneChainConstruction.bimonotone_split_unimodal`) reduces
+the split to a purely combinatorial `y_unimodal_decomposition` (rise to one apex then descend).
+Rung 4 (`MonotoneChainCoverage.interior_hits_one_chain_of_edge_hps`) closes the coverage:
+for any y-unimodal ring, a strict-interior point (`0 < conv_min`) crosses the increasing chain
+and misses the decreasing one (via the hp_slack = cross identity + straddle coverage).
+
+**Rung 5 / close (landed): convexity implies y-unimodal under honest strict guard.**
+`ConvexYUnimodal` isolates the combinatorial heart (`no_interior_ymin_unimodal`: no interior
+strict y-local-min + distinct consecutive heights ⇒ y-unimodal) and the single geometric
+residual as the named `convex_no_interior_ymin`.  The residual is **not** true bare (a
+degenerate collinear spike is a counterexample to the predicate as stated).  Under the
+strict-convexity guard (`strict_ccw_turns` + `unique_bottom` + `chain_y_distinct`),
+`convex_strict_no_interior_ymin` discharges it (each candidate valley is a global min by
+`valley_min`/`convex_valley_is_global_min`, contradicting unique bottom).  This yields the
+unconditional `convex_strict_start_y_unimodal` and `convex_strict_start_bimonotone` — a
+strictly-convex ring presented from its unique bottom vertex **is** y-unimodal, with no
+named residual.
+
+**Capstones (landed).** `ConvexRayCrossing.convex_strict_in_ring_iff_one_crossing` gives the
+exact one-crossing characterisation unconditionally under the strict guard.  
+`ConvexJCT.convex_unimodal_point_in_ring_iff_interior` (and its canonical form) composes
+interior-odd (`interior_hits_one_chain_of_edge_hps`) + exterior-even (`convex_exterior_even_of_unimodal`)
++ `bimonotone_split_parity` into `point_in_ring q outer ↔ 0 < conv_min hps q` for y-unimodal
+convex rings in general position.  `ConvexExteriorEven` factors the exterior obligation out
+generically.  Diamond and hexagon validate end-to-end through the general path.
+
+**Result.** `hole_inside_outer_convex_guarded` + `convex_interior_parity_from_split` +
+`interior_hits_one_chain_of_edge_hps` + `convex_strict_start_bimonotone` (via
+`convex_parity_seam_offring_of`) let concrete families and the strict-convex case reach
+unconditional `hole_inside_outer` and full `parity_characterises_interior_cont_offring`.
+The bare general n-gon without any guard remains the honest open (degeneracies); the strict
+guard is the documented, necessary hygiene.  Stage C/D convex beachhead advanced.
