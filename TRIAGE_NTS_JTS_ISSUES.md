@@ -84,7 +84,7 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **PRC-SN** | `PrecisionModel.makePrecise` on curves | #66 | oracle `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (exact-`Q`) | ✅ curve-snap grid-friendliness |
 | **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `OverlayCorrectness.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
 | **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `DE9IM.v`, `RelateLineLine.v`, `RelateAreaPoint.v`, `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`, `RelateArcChord.v`, `RelateArcAnalytic.v`, `RelateClothoid.v`, `RelateEllipticArc.v`, `RelateBezier3.v`, `RelateCurveAreaPoint.v`, `RelateMatrix*.v`, `RelateCurveMatrix.v`, `RelatePreparedCache*.v`, `RelateNodingLineLine.v`; oracle `CURVE_RELATE_MATRIX` / `RELATE_MATRIX` / `RELATE_PREDICATE` | 🟡 matrix algebra + witnesses ✅ (S0–S12); prepared-cache refinement ✅ (S13–S14b); **line×line noding pipeline partial** ✅ through S15k (collection capstone); cell-**dimension** (Jordan/overlay) + S15l+ hooks deferred |
-| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. Deferred-proof registry is now EMPTY (0); `extract_rings_valid` carries the planar Euler hypotheses |
+| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. This PLG/ring-assembly deferral is itself discharged; the deferred-proof registry is **not** empty, however — it currently holds **3** unrelated `ArcPointDistance.v` sweep-clamp residuals (`check_admitted.sh`: 9 = 6 counterexample + 3 deferred; see finding 7); `extract_rings_valid` carries the planar Euler hypotheses |
 | **TRI-DT** | Delaunay on (densified) curved boundaries | #68 | `theories-flocq/InCircle_b64_exact.v` (primitive), `Triangle.v`, `Tin.v` | 🟡 in-circle primitive ✅; Delaunay proper planned |
 | **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
 | **TB-\* / F-RD** | TestBuilder rendering / `ShapeWriter` hooks | — | — | — not proof-relevant |
@@ -129,10 +129,12 @@ spending further proof effort — several are stale.
 2. **Stale upstream refs.** JTS#1175 is fixed (jts#1200) and is struck through
    with the PR ref in #64, #66, #67. The buffer/overlay "summary of failures"
    refs (JTS#1102, #1000, etc.) should still be re-checked against current JTS
-   before more proof spend. *Internal doc-drift (resolved 2026-06-14):* the
-   deferred proof has been fully discharged (see finding 5); `README.md` /
-   `CONTRIBUTING.md` and the registries now record an EMPTY deferred-proof
-   registry (0 entries).
+   before more proof spend. *Internal doc-drift:* the PLG/ring-assembly deferred
+   proof was discharged 2026-06-14 (see finding 5), but the deferred-proof
+   registry is **not** empty today — it holds **3** `ArcPointDistance.v`
+   sweep-clamp residuals registered since (`check_admitted.sh`: 9 total = 6
+   counterexample + 3 deferred-proof). Any "EMPTY (0)" wording below is the
+   2026-06-14 state, superseded — see finding 7.
 3. **Label vs. reality reconciled (2026-06-08).** #67 bumped `Urgent → Immediate`
    (was the under-built area); #65 trimmed `Immediate → Urgent` (linear buffer
    foundation mature, curve output blocked on #64).
@@ -143,8 +145,9 @@ spending further proof effort — several are stale.
    finding 6. #68's `inCircle` primitive is now available. The first two items of
    the prior order of attack are done/started.
 5. **Progress since 2026-06-09 (2026-06-14) — the PLG / ring-assembly lineage.**
-   `extract_rings_valid` is a conditional Qed and the deferred-proof registry is
-   now EMPTY (1 → 0). The planar same-face ⇒ bridge seam (formerly the `Admitted`
+   `extract_rings_valid` is a conditional Qed and the deferred-proof registry
+   was EMPTY at that date (1 → 0) — *current state is 3, see finding 7*. The
+   planar same-face ⇒ bridge seam (formerly the `Admitted`
    `EdgeFaceBridge.H_bridge_core`) is now carried as the named premise
    `H_bridge_premise`, threaded through the EdgeFaceBridge chain (all `Qed`
    parametrically over it) and DISCHARGED downstream in `theories/HBridgeEuler.v`
@@ -181,6 +184,21 @@ spending further proof effort — several are stale.
    coordinate and the true-region (Jordan / Minkowski / cell-dimension) soundness
    are the recorded deferred frontiers. The hand-roll ratchet is at 19 frozen
    interface-boundary kernels (`docs/oracle-handrolled-allowlist.txt`).
+7. **Reconcile 2026-06-20 (later) + deferred-registry correction.** Since the
+   arc wave, `origin/main` took the **#67 prepared-cache spine** (S13 PR #248,
+   S14/S14b PR #249 — `RelatePreparedCache*.v`, the NTS#819 refinement) and the
+   **`Distance.v` metric foundations** (PR #252: `dist_triangle` +
+   `dist_lt_iff_dist_sq_lt` + `cauchy_schwarz_2d`, making `(Point, dist)` a
+   proven metric space). The **line×line noding capstone** S15h–k +
+   `idet_abs_le_sq` is in review (PR #251, this branch). Tooling: the in-repo
+   **Observatory dashboard** + the Rocq-provisioning **SessionStart hook**
+   landed (PR #250). **Registry correction:** earlier findings' "deferred-proof
+   registry EMPTY (0)" is **stale** — `scripts/check_admitted.sh` reports **9
+   total = 6 counterexample + 3 deferred-proof**. The 3 deferred entries are all
+   `ArcPointDistance.v` sweep-clamp residuals (`point_to_arc_dist_radial_lower`,
+   `point_to_arc_dist_fallback_ends_lower`, `point_to_arc_dist_centre_is_r`),
+   the on-arc/sweep-clamp frontier of #64's D-PT distance row — not the PLG seam,
+   which is genuinely discharged.
 
 ## Recommended order of attack (revised 2026-06-20)
 
