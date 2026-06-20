@@ -282,3 +282,14 @@ run_curve_relate_matrix
 # preservation); the geometric "signed area = true Minkowski buffer area" is the
 # deferred P2 frontier, pinned by oracle/gen_buffer_region_tests.py.
 run_buffer_region
+
+# --- densify_arc (CP_BOUNDARY_SIMPLIFY, Oracle wishlist #1: surfaces) --------
+# Helper for mode CP_BOUNDARY_SIMPLIFY: samples a CircularString arc into a
+# polyline for the GreedyPerpSimplifier.  r = sqrt r2 and the per-step angle
+# (atan2 + sin/cos) are transcendental -> NO Coq-extractable form (Flocq has
+# no Batan2/Bsin), applied ONCE off the EXACT circumcentre_q centre/radius^2,
+# so densified coordinates round only past certified Q.  The float densified
+# boundary IS the JTS/NTS CurvedGeometry.getCoordinates() interface the
+# simplifier consumes.  Simplify + orient route through the EXTRACTED
+# greedy_simplify_perp_b64 / b64_orient_sign_filtered (not hand-rolled).
+densify_arc
