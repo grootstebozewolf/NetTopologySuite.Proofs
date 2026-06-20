@@ -194,6 +194,92 @@ Qed.
 (* and exterior (Disjoint) directions.                                         *)
 (* -------------------------------------------------------------------------- *)
 
+Lemma point_set_rect_curve_chord_iff_rect :
+  forall x0 y0 x1 y1 n p,
+    point_set (to_geometry (rect_curve_geometry x0 y0 x1 y1) n) p <->
+    point_set (rect_geometry x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 n p.
+  unfold point_set, to_geometry, rect_curve_geometry, rect_curve_polygon, rect_curve_ring.
+  (* linearised chord ring for rect curve = rect ring on point_in *)
+  split; intros [poly [Hin Hpoly]]; simpl in *.
+  - exists poly; split; [assumption|].
+    rewrite rect_polygon_no_holes in *.
+    apply (proj1 (point_in_ring_chord_rect_iff x0 y0 x1 y1 n p) Hpoly).
+  - exists poly; split; [assumption|].
+    rewrite rect_polygon_no_holes in *.
+    apply (proj2 (point_in_ring_chord_rect_iff x0 y0 x1 y1 n p) Hpoly).
+Qed.
+
+Lemma geom_boundary_rect_curve_chord_iff_rect :
+  forall x0 y0 x1 y1 n p,
+    geom_boundary (to_geometry (rect_curve_geometry x0 y0 x1 y1) n) p <->
+    geom_boundary (rect_geometry x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 n p.
+  unfold geom_boundary, point_on_boundary.
+  (* rings and edges same for chord rect vs rect *)
+  split; intros [poly [Hin [r [Hrin [e [Hein Hbet]]]]]]; simpl in *.
+  - exists poly; split; [assumption|].
+    exists r; split; [assumption|].
+    exists e; split; [ | assumption ].
+    (* edges match by chord for rect *)
+    rewrite ring_edges_chord_rect in Hein.
+    rewrite ring_edges_rect in *; assumption.
+  - exists poly; split; [assumption|].
+    exists r; split; [assumption|].
+    exists e; split; [ | assumption ].
+    rewrite ring_edges_rect in Hein.
+    rewrite ring_edges_chord_rect in *; assumption.
+Qed.
+
+(* in_stratum identical => geom_de9im_pointset identical for chord-curve-rect-geo vs rect-geo *)
+Lemma in_stratum_rect_curve_chord_iff_rect :
+  forall x0 y0 x1 y1 n s p,
+    RelateCurveMatrix.in_stratum s (to_geometry (rect_curve_geometry x0 y0 x1 y1) n) p <->
+    RelateCurveMatrix.in_stratum s (rect_geometry x0 y0 x1 y1) p.
+Proof.
+  intros x0 y0 x1 y1 n s p.
+  unfold RelateCurveMatrix.in_stratum.
+  destruct s; simpl.
+  - split; apply point_set_rect_curve_chord_iff_rect.
+  - split; apply geom_boundary_rect_curve_chord_iff_rect.
+  - split; intros H; apply not_iff_compat; apply point_set_rect_curve_chord_iff_rect; assumption.
+Qed.
+
+Lemma geom_de9im_pointset_rect_curve_to_rect :
+  forall x0 y0 x1 y1 n A m,
+    geom_de9im_pointset (to_geometry (rect_curve_geometry x0 y0 x1 y1) n) A m <->
+    geom_de9im_pointset (rect_geometry x0 y0 x1 y1) A m.
+Proof.
+  intros x0 y0 x1 y1 n A m.
+  unfold geom_de9im_pointset.
+  (* each cell_ok uses in_stratum which equiv *)
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply and_iff_compat; [apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity | ].
+  apply (in_stratum_rect_curve_chord_iff_rect _ _ _ _ n); reflexivity.
+Qed.
+
+(* Leverage the new rect relate + pointset (from #67 work) for curve-rect de9im.
+   The chord linearisation of rect curve geo has identical point_set / geom_boundary
+   as the rect geo, so the de9im_pointset (and the matrix that satisfies it)
+   transport directly. This is the curve-rect relate bridge for chord rects
+   (and base for arc cases via reductions). *)
+Lemma relate_rect_satisfies_geom_de9im_for_curve_rect :
+  forall x0 y0 x1 y1 n B,
+    geom_de9im_pointset (rect_geometry x0 y0 x1 y1) B (relate (rect_geometry x0 y0 x1 y1) B) ->
+    geom_de9im_pointset (to_geometry (rect_curve_geometry x0 y0 x1 y1) n) B (relate (rect_geometry x0 y0 x1 y1) B).
+Proof.
+  intros x0 y0 x1 y1 n B H.
+  apply (proj1 (geom_de9im_pointset_rect_curve_to_rect x0 y0 x1 y1 n B _)); assumption.
+Qed.
+
 Theorem point_in_ring_chord_rect_characterisation :
   forall x0 y0 x1 y1 n p,
     x0 < x1 -> y0 < y1 ->
