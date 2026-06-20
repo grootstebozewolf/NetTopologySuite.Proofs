@@ -34,12 +34,15 @@
          collection existential union (`line_collection_de9im_pointset`)
          + test-10 row aggregation + `dim_value_join` max cell algebra
 
-   Honest gaps (deferred S15h+):
+   S15h (§16): per-pair 9-cell noding bridges — disjoint test-10 exterior
+     rows + meet fill; Share vs Touches IB disambiguation; regime-keyed
+     `line_de9im_pointset` packaging (proper-cross meet layer, overlap
+     meet + EE).  Test-10 BI = 0-dim remains collection-level (JTS#1175).
 
-     - Full IE/EI/BE/EB from `line_pair_fill` alone without exterior
-       hypotheses; pairwise `dim_value_join` aggregation over full 9-cell
-       matrix fill.
-     - `line_pair_fill LPR_Share` vs Touches / overlap witnesses;
+   Honest gaps (deferred S15i+):
+
+     - Pairwise `dim_value_join` aggregation over full 9-cell matrix fill.
+     - `line_pair_fill LPR_Share` vs Touches witness selection at fill API;
        full cell-dimension pinning.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
@@ -1402,6 +1405,187 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §16  Per-pair 9-cell noding bridges (S15h).                                *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma no_share_endpoint_a_exterior_cd :
+  forall A B C D, ~ segments_share A B C D -> ~ between C D A.
+Proof.
+  intros A B C D Hnoshare Hbet.
+  apply Hnoshare. exists A. split.
+  - apply endpoint_implies_between. apply seg_in_stratum_bnd_left.
+  - exact Hbet.
+Qed.
+
+Lemma no_share_endpoint_b_exterior_cd :
+  forall A B C D, ~ segments_share A B C D -> ~ between C D B.
+Proof.
+  intros A B C D Hnoshare Hbet.
+  apply Hnoshare. exists B. split.
+  - apply endpoint_implies_between. apply seg_in_stratum_bnd_right.
+  - exact Hbet.
+Qed.
+
+Lemma no_share_endpoint_c_exterior_ab :
+  forall A B C D, ~ segments_share A B C D -> ~ between A B C.
+Proof.
+  intros A B C D Hnoshare Hbet.
+  apply Hnoshare. exists C. split.
+  - exact Hbet.
+  - apply endpoint_implies_between. apply seg_in_stratum_bnd_left.
+Qed.
+
+Lemma no_share_endpoint_d_exterior_ab :
+  forall A B C D, ~ segments_share A B C D -> ~ between A B D.
+Proof.
+  intros A B C D Hnoshare Hbet.
+  apply Hnoshare. exists D. split.
+  - exact Hbet.
+  - apply endpoint_implies_between. apply seg_in_stratum_bnd_right.
+Qed.
+
+Theorem separated_segments_endpoint_exterior_be_eb :
+  forall A B C D,
+    ~ segments_share A B C D ->
+    line_be_dim0_cell A B C D ll_matrix_paper_test10 /\
+    line_eb_dim0_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hnoshare.
+  split.
+  - apply endpoint_a_exterior_be_cell.
+    exact (no_share_endpoint_a_exterior_cd A B C D Hnoshare).
+  - apply endpoint_c_exterior_eb_cell.
+    exact (no_share_endpoint_c_exterior_ab A B C D Hnoshare).
+Qed.
+
+Theorem classify_disjoint_paper_test10_exterior_rows :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Disjoint ->
+    A <> B ->
+    C <> D ->
+    line_ie_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_ei_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_be_dim0_cell A B C D ll_matrix_paper_test10 /\
+    line_eb_dim0_cell A B C D ll_matrix_paper_test10 /\
+    line_ee_dim2_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hdisj HneAB HneCD.
+  assert (Hnoshare : ~ segments_share A B C D).
+  { intro Hshare. apply (rejection_not_share A B C D). exact Hdisj. exact Hshare. }
+  destruct (classify_disjoint_midpoint_ie_ei_cells A B C D Hdisj HneAB HneCD)
+    as [Hie Hei].
+  destruct (separated_segments_endpoint_exterior_be_eb A B C D Hnoshare)
+    as [Hbe Heb].
+  split.
+  - exact Hie.
+  - split.
+    + exact Hei.
+    + split.
+      * exact Hbe.
+      * split.
+        -- exact Heb.
+        -- apply paper_test10_ee_dim2_cell.
+Qed.
+
+Theorem classify_disjoint_test10_empty_meet_rows :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Disjoint ->
+    line_cell_ok (im_ii ll_matrix_paper_test10) LSInt LSInt A B C D /\
+    line_cell_ok (im_ib ll_matrix_paper_test10) LSInt LSBnd A B C D /\
+    line_cell_ok (im_bb ll_matrix_paper_test10) LSBnd LSBnd A B C D.
+Proof.
+  intros A B C D Hdisj.
+  assert (Hnoshare : ~ segments_share A B C D).
+  { intro Hshare. apply (rejection_not_share A B C D). exact Hdisj. exact Hshare. }
+  unfold im_ii, im_ib, im_bb, ll_matrix_paper_test10. simpl.
+  repeat split.
+  all: apply (line_cell_ok_none_when _ _ A B C D);
+    eauto using no_share_no_int_int, no_share_no_int_bnd, no_share_no_bnd_bnd.
+Qed.
+
+Theorem classify_disjoint_line_de9im_pointset_test10 :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Disjoint ->
+    A <> B ->
+    C <> D ->
+    line_no_ib_meet A B C D (line_pair_fill LPR_Disjoint) /\
+    line_ie_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_ei_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_be_dim0_cell A B C D ll_matrix_paper_test10 /\
+    line_eb_dim0_cell A B C D ll_matrix_paper_test10 /\
+    line_ee_dim2_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hdisj HneAB HneCD.
+  split.
+  - apply classify_disjoint_line_no_ib_meet. exact Hdisj.
+  - apply classify_disjoint_paper_test10_exterior_rows; assumption.
+Qed.
+
+Theorem classify_share_endpoint_only_touches_ib :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Share ->
+    segments_int_bnd_contact A B C D ->
+    line_ib_point_cell A B C D ll_matrix_touches_endpoint.
+Proof.
+  intros A B C D _ Hcontact.
+  apply segments_int_bnd_touches_ib_cell. exact Hcontact.
+Qed.
+
+Theorem classify_share_interior_vs_touches :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Share ->
+    segments_interior_share A B C D ->
+    line_ii_point_cell A B C D (line_pair_fill LPR_Share).
+Proof.
+  intros A B C D Hshare Hint.
+  apply classify_share_interior_line_ii_cell; assumption.
+Qed.
+
+Theorem classify_share_int_bnd_touches_vs_interior :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Share ->
+    segments_int_bnd_contact A B C D ->
+    ~ segments_interior_share A B C D ->
+    line_ib_point_cell A B C D ll_matrix_touches_endpoint.
+Proof.
+  intros A B C D Hshare Hcontact Hnoint.
+  apply classify_share_endpoint_only_touches_ib; assumption.
+Qed.
+
+Theorem classify_proper_cross_line_de9im_pointset :
+  forall A B C D,
+    classify_line_pair A B C D LPR_ProperCross ->
+    line_point_ii_ib_meet A B C D (line_pair_fill LPR_ProperCross).
+Proof.
+  intros A B C D Hcross.
+  apply classify_proper_cross_line_point_ii_ib_meet. exact Hcross.
+Qed.
+
+Theorem segments_collinear_overlap_ee_dim0_cell :
+  forall A B C D,
+    line_cell_ok (im_ee ll_matrix_overlap_ii) LSExt LSExt A B C D.
+Proof.
+  intros A B C D.
+  unfold im_ee, ll_matrix_overlap_ii. simpl.
+  destruct (two_segments_exterior_meet A B C D) as [p [HA HB]].
+  apply (line_cell_ok_dim0 LSExt LSExt A B C D p); assumption.
+Qed.
+
+Theorem classify_collinear_overlap_line_de9im_pointset :
+  forall A B C D,
+    classify_line_pair A B C D LPR_CollinearOverlap ->
+    C <> D ->
+    line_ii_dim1_cell A B C D (line_pair_fill LPR_CollinearOverlap) /\
+    line_cell_ok (im_ee (line_pair_fill LPR_CollinearOverlap)) LSExt LSExt A B C D.
+Proof.
+  intros A B C D Hov Hne.
+  rewrite line_pair_fill_collinear_overlap_eq.
+  split.
+  - apply classify_collinear_overlap_line_ii_cell; assumption.
+  - apply segments_collinear_overlap_ee_dim0_cell.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1431,3 +1615,10 @@ Print Assumptions line_collection_test10_intersects.
 Print Assumptions line_collection_classify_disjoint_test10_rows.
 Print Assumptions two_segments_exterior_meet.
 Print Assumptions line_de9im_ee_inhabited.
+Print Assumptions separated_segments_endpoint_exterior_be_eb.
+Print Assumptions classify_disjoint_paper_test10_exterior_rows.
+Print Assumptions classify_disjoint_line_de9im_pointset_test10.
+Print Assumptions classify_share_endpoint_only_touches_ib.
+Print Assumptions classify_share_interior_vs_touches.
+Print Assumptions classify_proper_cross_line_de9im_pointset.
+Print Assumptions classify_collinear_overlap_line_de9im_pointset.
