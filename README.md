@@ -57,8 +57,11 @@ discipline across both directories:
 - **Tier 3** — an `Admitted` registered in
   [`docs/admitted-deferred-proofs.txt`](docs/admitted-deferred-proofs.txt)
   is allowed temporarily: the theorem is *true*, its proof structure is
-  documented, and the remaining work is multi-session. **0 entries today —
-  the registry is empty.** Its sole former entry,
+  documented, and the remaining work is multi-session. **3 entries today** —
+  the on-arc / sweep-clamp residuals `point_to_arc_dist_radial_lower`,
+  `point_to_arc_dist_fallback_ends_lower`, and `point_to_arc_dist_centre_is_r`
+  (all in `theories/ArcPointDistance.v`), the #64 point-to-arc distance frontier.
+  The registry's first-ever entry,
   `EdgeFaceBridge.H_bridge_core` (the planar same-face⇒bridge seam behind
   Phase 3's ring assembly), has been discharged via the planar Euler route:
   the bridge fact is now a named premise threaded through the EdgeFaceBridge
@@ -354,8 +357,8 @@ the BDFL paths.)
 - This is **not** complete. Current coverage is over 1,100 Qed-closed
   theorems across 67 `.v` modules (25 foundational Stdlib-only under
   `theories/`, plus Flocq-dependent work under `theories-flocq/`), with
-  exactly 6 `Admitted` theorems (all counterexample; the deferred-proof
-  registry is now empty), each registered in the counterexample registry
+  exactly 9 `Admitted` theorems (6 counterexample + 3 deferred-proof), each
+  registered in one of the two registries
   (see the registries and `scripts/check_admitted.sh`).
   Coverage spans the algebraic foundations (real-number, vector, distance,
   orientation, line, disk, lattice, lex order), segment and bounding-box

@@ -76,13 +76,17 @@ shell). Once configured, `39a9017` and `7b92a5d` both landed on the remote.
 
 ## Open items (S15h+)
 
+> **Update (S15h–k, 2026-06-20):** pairwise fold, per-pair regime fill, and
+> II/BB pinning landed — see
+> [`issue-67-s15h-k-retro.md`](issue-67-s15h-k-retro.md).
+
 | Item | Notes |
 |---|---|
-| Pairwise `dim_value_join` matrix fill | `dim_value_join` algebra is in §15; sound lift from per-pair matrices to collection matrix not yet proved |
-| Full IE/EI/BE/EB from `line_pair_fill` alone | Still need exterior hypotheses or all-no-share collection guard |
-| Cell-dimension pinning | Jordan/overlay soundness layer; separate from witness selection |
+| Pairwise `dim_value_join` matrix fill | **Closed S15i** (`line_collection_matrix_fold_sound`) |
+| Full IE/EI/BE/EB from `line_pair_fill` alone | **Closed S15h** for disjoint + no-share; collection guards unchanged |
+| Cell-dimension pinning | **Partial S15j** (II/BB meet cells); exterior rows remain S15l+ |
 | PR #248 merge | S13–S14 prepared cache still pending on `main` |
-| `LPR_Share` vs Touches witness mismatch | Honest gap from S15a header; untouched this cycle |
+| `LPR_Share` vs Touches witness mismatch | **Documented S15j** (`line_pair_fill_share_ii_not_pinned_int_bnd_only`); fill API split S15l+ |
 
 ## Session ordering note
 

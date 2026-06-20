@@ -181,9 +181,10 @@ full:
 	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
 check:
-	@echo "Running corpus guardrails (check_admitted + check_readme_axioms) ..."
+	@echo "Running corpus guardrails (check_admitted + check_readme_axioms + registry-sync) ..."
 	bash scripts/check_admitted.sh
 	bash scripts/check_readme_axioms.sh
+	bash scripts/check_deferred_registry_sync.sh
 	@echo ""
 	@echo "Guardrails passed (or see output above)."
 

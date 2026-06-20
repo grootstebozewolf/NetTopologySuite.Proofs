@@ -7,8 +7,9 @@
 > *proven* from *gap*, and recording priority and ordering decisions.
 >
 > Generated from the 2026-06-03 issue batch; last reconciled **2026-06-20**
-> against the current working corpus (branch `claude/dreamy-gates-6osfpv`, ahead
-> of the local `origin/main` snapshot). The prior reconciliation (2026-06-14,
+> against the current working corpus (`origin/main` through PR #250 + PR #251
+> pending — S15h–k line×line noding capstone + geometric `idet_abs_le_sq`).
+> The prior reconciliation (2026-06-14,
 > branch `claude/cycle-count-partition-yjgjmy`, PR #195 — the H_bridge Euler
 > route + `ClassCount` convergence) predates the **arc-metrics / curve-relate /
 > buffer-region / ring-validity oracle wave** (PRs ≈ #216–#246): the curve
@@ -44,7 +45,7 @@ tracker: **#69**.
 | **#64** | Circular-arc primitives (length, sweep, in-arc, in-circle) | `Immediate` | **Most progressed; metric + intersection suite now landed.** Asks #1/#2: `Atan2.v` + `AngleBetween.v` + `ArcLength.v` (`r·θ`, `chord_le_arc_length`) Qed. **Ask #4b PROVEN (PR #146):** `InCircle_b64_exact.v` — full-plane `b64_inCircle` sign exactness at **3 axioms, no `classic`** + `2¹¹` integer-regime value exactness + Perron witness. **Metrics landed since #195:** circular-segment area (`ArcArea.v`), arc + segment centroids (`ArcCentroid.v`, `ArcAreaCentroid.v`), point-to-arc / arc-arc / arc-segment distance (`ArcDistance.v`, `ArcPointDistance.v`, `ArcArcDistance.v`, `ArcSegmentDistance.v`), arc-arc & arc-segment intersection existence (`ArcArcCircles.v`, `ArcArcSound.v`, `ArcSegmentCircles.v`) — each with an oracle mode (ARC_AREA / ARC_CENTROID / ARC_AREA_CENTROID / ARC_DISTANCE / ARC_ARC_DISTANCE / ARC_SEGMENT_DISTANCE / ARC_ARC_XY / ARC_SEGMENT_XY), exact rational invariants proven, transcendental output as documented interface-boundary. **Ask #5a partial:** `ArcLineIntersect_b64_exact.v` Scope A (pre-division Cramer prefix bit-exact); coordinate **identity** (Scope B/C) + quartic arc-arc coordinates remain the deferred *exactness* frontier. `ArcOrient`/`ArcIntersect`/`ArcIntersectIVT`/`ArcHotPixel`/`ArcChordApprox`/`ArcOverlay` Qed. | Keep Immediate — metric/intersection oracles done; only Scope B/C + arc-arc coordinate identity remain |
 | **#65** | Buffer / offset curve correctness | `Urgent` | Heaviest existing corpus: 18 `Buffer*.v` files + `ExtractBufferRings.v`, plus 3 documented counterexamples (depth enclosure / horizontal-edge / vertex-graze). **Curve-aware output now has an oracle certificate (since #195):** arc offset (`ArcOffset.v`, `ArcOffsetThreePoint.v` — `arc_offset_preserves_arc`), ring/curve offset assembly (`CurveRingOffset.v`, `CurveOffsetAssembly{,Total}.v`, `CurveRoundJoin.v`), and the buffer-region certificate (`CurveBufferArea.v` — boundary validity + signed-area algebra) drive oracle modes ARC_OFFSET_XY / BUFFER_REGION (+ ARC_BUFFER_SIMPLE/FULL pins). 3-axiom; the geometric "signed area = true Minkowski buffer area" is the deferred P2 frontier. | Keep Urgent — arc buffer/offset boundary+area certificate landed; Minkowski-area soundness deferred |
 | **#66** | Precision / snap-rounding / OverlayNG soundness | `Urgent` | **Strongest coverage of the batch.** `SnapRounding_b64`, `HotPixel*`, `Hobby*`, the `PassesThrough_*` family (C1 grid-exactness reduction; plus a segment-reversal asymmetry negative that — correction 2026-06-17 — models a Liang-Barsky divide-from-c0 filter and does **NOT** map to JTS#752/#1133, since JTS's `HotPixel.intersectsScaled` canonicalizes to +X first), `Overlay*`, `RingArea979` (JTS#979). Multiple honest machine-checked **negatives** (rounded filter unsound/incomplete/asymmetric — cautions about that filter design, not JTS defects). | Keep Urgent — largely delivered, closing gaps |
-| **#67** | RelateNG / 9IM matrix & boundary handling | `Immediate` | **Broad DE-9IM suite now landed (S0–S12).** Per `docs/issue-67-relateng-triage.md` + `docs/verified-claims.md`: `DE9IM.v` (matrix type + pattern algebra), `RelateIntDetBound.v` (integer determinant bound), line-line (`RelateLineLine.v`), area-point (`RelateAreaPoint.v`), boundary/MOD2 (`RelateBoundary.v`), area-line (`RelateAreaLine.v`), area-area (`RelateAreaArea.v`), regime→witness families (`RelateMatrix{Rect,LineLine,AreaLine,ArcChord,ArcAnalytic,Clothoid,CurveAreaPoint,Bezier3,EllipticArc}.v`), arc×line chord + analytic (`RelateArcChord.v`, `RelateArcAnalytic.v`), clothoid/elliptic/bezier curve types, and curve-polygon×point (`RelateCurveAreaPoint.v`). The **full 9-cell curve DE-9IM** is computed by oracle `CURVE_RELATE_MATRIX` (`RelateCurveMatrix.v`), with `RELATE_MATRIX` / `RELATE_PREDICATE` drivers + `de9im_*_vectors.txt`. Remaining: cell-**dimension** (Jordan/overlay) soundness, RelateNG pipeline + prepared cache. JTS#1175 fixed upstream (jts#1200). | Keep Immediate — matrix algebra + curve oracle broad; cell-dimension Jordan soundness + pipeline remain |
+| **#67** | RelateNG / 9IM matrix & boundary handling | `Immediate` | **DE-9IM suite through S15k in the working tree.** Per `docs/issue-67-relateng-triage.md` + `docs/verified-claims.md`: matrix algebra + witnesses (S0–S12), prepared-cache refinement (S13–S14b — `RelatePreparedCache*.v`, NTS#819 shape), and **line×line RelateNG noding** (S15a–k — `RelateNodingLineLine.v`: strata/regime bridges, per-pair test-10 fill, `matrix_dim_join` fold soundness, II/BB dimension pinning, collection relate-matrix capstone). Integer substrate: `RelateIntDetBound.v` now closes the geometric bound `idet_abs_le_sq` + `idet_fits_int64_for_cmax_coords` (0 axioms). Curve DE-9IM oracle `CURVE_RELATE_MATRIX` (`RelateCurveMatrix.v`) + `RELATE_MATRIX` / `RELATE_PREDICATE` drivers. **Remaining (S15l+):** prepared evaluate hook, exterior-row true-dimension pinning, Touches fill API split; global cell-**dimension** (Jordan/overlay) soundness; full multi-geometry pipeline beyond line×line. JTS#1175 fixed upstream (jts#1200). | Keep Immediate — line×line pipeline capstone landed; S15l+ + Jordan soundness remain |
 | **#68** | Delaunay triangulation / Voronoi correctness | `Non-urgent` | `Triangle.v`, `Tin.v`, `GeneralTriangle{Parity,Separation}.v`, `RightTriangle*` exist; no empty-circle Delaunay / Voronoi proofs yet. **Core primitive now available:** `inCircle_R` / `b64_inCircle` proven via #146. | Correctly labeled — primitive unblocked, not yet started |
 | **#69** | Umbrella / epic tracker | `Expectant` | Tracking issue only. | Keep open as the epic tracker |
 
@@ -82,8 +83,8 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **N-SS** | `SegmentString` / `Noder` for curves | #66 | `SnapRounding_b64.v`, `HotPixel*`; oracle `CURVE_SNAP_DECISION` | 🟡 linear noding ✅; curve-snap decision oracle ✅ |
 | **PRC-SN** | `PrecisionModel.makePrecise` on curves | #66 | oracle `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (exact-`Q`) | ✅ curve-snap grid-friendliness |
 | **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `OverlayCorrectness.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
-| **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `DE9IM.v`, `RelateLineLine.v`, `RelateAreaPoint.v`, `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`, `RelateArcChord.v`, `RelateArcAnalytic.v`, `RelateClothoid.v`, `RelateEllipticArc.v`, `RelateBezier3.v`, `RelateCurveAreaPoint.v`, `RelateMatrix*.v`, `RelateCurveMatrix.v`; oracle `CURVE_RELATE_MATRIX` / `RELATE_MATRIX` / `RELATE_PREDICATE` | 🟡 full 9-cell curve DE-9IM matrix algebra + witnesses ✅ (S0–S12); cell-**dimension** (Jordan/overlay) soundness deferred |
-| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. Deferred-proof registry is now EMPTY (0); `extract_rings_valid` carries the planar Euler hypotheses |
+| **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `DE9IM.v`, `RelateLineLine.v`, `RelateAreaPoint.v`, `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`, `RelateArcChord.v`, `RelateArcAnalytic.v`, `RelateClothoid.v`, `RelateEllipticArc.v`, `RelateBezier3.v`, `RelateCurveAreaPoint.v`, `RelateMatrix*.v`, `RelateCurveMatrix.v`, `RelatePreparedCache*.v`, `RelateNodingLineLine.v`; oracle `CURVE_RELATE_MATRIX` / `RELATE_MATRIX` / `RELATE_PREDICATE` | 🟡 matrix algebra + witnesses ✅ (S0–S12); prepared-cache refinement ✅ (S13–S14b); **line×line noding pipeline partial** ✅ through S15k (collection capstone); cell-**dimension** (Jordan/overlay) + S15l+ hooks deferred |
+| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. This PLG/ring-assembly deferral is itself discharged; the deferred-proof registry is **not** empty, however — it currently holds **3** unrelated `ArcPointDistance.v` sweep-clamp residuals (`check_admitted.sh`: 9 = 6 counterexample + 3 deferred; see finding 7); `extract_rings_valid` carries the planar Euler hypotheses |
 | **TRI-DT** | Delaunay on (densified) curved boundaries | #68 | `theories-flocq/InCircle_b64_exact.v` (primitive), `Triangle.v`, `Tin.v` | 🟡 in-circle primitive ✅; Delaunay proper planned |
 | **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
 | **TB-\* / F-RD** | TestBuilder rendering / `ShapeWriter` hooks | — | — | — not proof-relevant |
@@ -115,7 +116,7 @@ spending further proof effort — several are stale.
 | JTS#1190, #1138, #1039, #20 — Delaunay/Voronoi robustness | #68 | Open |
 | NTS#828 — align epic | #69 | Open |
 | NTS#815 — OffsetCurve miter for polygonal (JTS#1109) | #64, #65, #69 | Open — port target |
-| NTS#819 — RelateNG cache for prepared A-L (JTS#1099) | #67 | Open |
+| NTS#819 — RelateNG cache for prepared A-L (JTS#1099) | #67 | Open (perf); **proof companion partial (S13–S14b)** — `RelatePreparedCache*.v` |
 | NTS#247, #570 — curves / GML curves | #64, #69 | Open — old but relevant |
 | NTS#719, #638 — GeometryPrecisionReducer / buffer holes | #66 | Open |
 
@@ -128,21 +129,25 @@ spending further proof effort — several are stale.
 2. **Stale upstream refs.** JTS#1175 is fixed (jts#1200) and is struck through
    with the PR ref in #64, #66, #67. The buffer/overlay "summary of failures"
    refs (JTS#1102, #1000, etc.) should still be re-checked against current JTS
-   before more proof spend. *Internal doc-drift (resolved 2026-06-14):* the
-   deferred proof has been fully discharged (see finding 5); `README.md` /
-   `CONTRIBUTING.md` and the registries now record an EMPTY deferred-proof
-   registry (0 entries).
+   before more proof spend. *Internal doc-drift:* the PLG/ring-assembly deferred
+   proof was discharged 2026-06-14 (see finding 5), but the deferred-proof
+   registry is **not** empty today — it holds **3** `ArcPointDistance.v`
+   sweep-clamp residuals registered since (`check_admitted.sh`: 9 total = 6
+   counterexample + 3 deferred-proof). Any "EMPTY (0)" wording below is the <!-- registry-sync:ok -->
+   2026-06-14 state, superseded — see finding 7.
 3. **Label vs. reality reconciled (2026-06-08).** #67 bumped `Urgent → Immediate`
    (was the under-built area); #65 trimmed `Immediate → Urgent` (linear buffer
    foundation mature, curve output blocked on #64).
 4. **Progress since 2026-06-08 (2026-06-09).** PR #146 merged: #64 ask #4b
    (`b64_inCircle` sign exactness) closed at 3 axioms full-plane, arc-line
    Scope A landed. #67 moved from blank to S0–S3 (`DE9IM.v`, `RelateLineLine.v`,
-   `RelateIntDetBound.v` + oracle vectors). #68's `inCircle` primitive is now
-   available. The first two items of the prior order of attack are done/started.
+   `RelateIntDetBound.v` + oracle vectors) — since extended through S15k; see
+   finding 6. #68's `inCircle` primitive is now available. The first two items of
+   the prior order of attack are done/started.
 5. **Progress since 2026-06-09 (2026-06-14) — the PLG / ring-assembly lineage.**
-   `extract_rings_valid` is a conditional Qed and the deferred-proof registry is
-   now EMPTY (1 → 0). The planar same-face ⇒ bridge seam (formerly the `Admitted`
+   `extract_rings_valid` is a conditional Qed and the deferred-proof registry
+   was EMPTY at that date (1 → 0) — *current state is 3, see finding 7*. The
+   planar same-face ⇒ bridge seam (formerly the `Admitted`
    `EdgeFaceBridge.H_bridge_core`) is now carried as the named premise
    `H_bridge_premise`, threaded through the EdgeFaceBridge chain (all `Qed`
    parametrically over it) and DISCHARGED downstream in `theories/HBridgeEuler.v`
@@ -169,20 +174,41 @@ spending further proof effort — several are stale.
    `CurveRoundJoin.v`, `CurveBufferArea.v` + ARC_OFFSET_XY / BUFFER_REGION), curve
    **validity** (`CurveRingSimple.v`, `CurvePolygon{Simple,Valid,Orientation,Disjoint}.v`
    + RING_SIMPLE / POINT_IN_CURVE_RING / RING_ORIENTATION / HOLES_DISJOINT), the
-   full **DE-9IM** suite (#67 S0–S12 + CURVE_RELATE_MATRIX), and curve
+   full **DE-9IM** suite (#67 S0–S12 + CURVE_RELATE_MATRIX), curve
    **simplification** (`CP_BOUNDARY_SIMPLIFY` + `oracle/curve_polygon.py`,
-   surfaces wishlist #1). Pattern across all: exact rational invariants / witness
-   soundness Qed-closed; the transcendental output coordinate and the true-region
-   (Jordan / Minkowski / cell-dimension) soundness are the recorded deferred
-   frontiers. The hand-roll ratchet is at 19 frozen interface-boundary kernels
-   (`docs/oracle-handrolled-allowlist.txt`).
+   surfaces wishlist #1), and the **RelateNG noding spine** (#67 S13–S15k:
+   prepared-cache refinement `RelatePreparedCache*.v`, line×line strata through
+   collection relate-matrix capstone `RelateNodingLineLine.v`, geometric
+   `idet_abs_le_sq` in `RelateIntDetBound.v`). Pattern across all: exact
+   rational invariants / witness soundness Qed-closed; the transcendental output
+   coordinate and the true-region (Jordan / Minkowski / cell-dimension) soundness
+   are the recorded deferred frontiers. The hand-roll ratchet is at 19 frozen
+   interface-boundary kernels (`docs/oracle-handrolled-allowlist.txt`).
+7. **Reconcile 2026-06-20 (later) + deferred-registry correction.** Since the
+   arc wave, `origin/main` took the **#67 prepared-cache spine** (S13 PR #248,
+   S14/S14b PR #249 — `RelatePreparedCache*.v`, the NTS#819 refinement) and the
+   **`Distance.v` metric foundations** (PR #252: `dist_triangle` +
+   `dist_lt_iff_dist_sq_lt` + `cauchy_schwarz_2d`, making `(Point, dist)` a
+   proven metric space). The **line×line noding capstone** S15h–k +
+   `idet_abs_le_sq` is in review (PR #251, this branch). Tooling: the in-repo
+   **Observatory dashboard** + the Rocq-provisioning **SessionStart hook**
+   landed (PR #250). **Registry correction:** earlier findings' "deferred-proof
+   registry EMPTY (0)" is **stale** <!-- registry-sync:ok --> — `scripts/check_admitted.sh` reports **9
+   total = 6 counterexample + 3 deferred-proof**. The 3 deferred entries are all
+   `ArcPointDistance.v` sweep-clamp residuals (`point_to_arc_dist_radial_lower`,
+   `point_to_arc_dist_fallback_ends_lower`, `point_to_arc_dist_centre_is_r`),
+   the on-arc/sweep-clamp frontier of #64's D-PT distance row — not the PLG seam,
+   which is genuinely discharged.
 
 ## Recommended order of attack (revised 2026-06-20)
 
-1. **#67** — still the deepest *unfinished* build, but now well advanced: the
-   matrix algebra + witnesses are landed through S12 and the curve DE-9IM is
-   computable (CURVE_RELATE_MATRIX). Remaining: cell-**dimension** (Jordan/overlay)
-   soundness, the RelateNG pipeline, and the prepared cache.
+1. **#67** — still the deepest *unfinished* build, but now well advanced: matrix
+   algebra + witnesses (S0–S12), curve DE-9IM oracle (CURVE_RELATE_MATRIX),
+   prepared-cache refinement (S13–S14b), and **line×line RelateNG noding through
+   S15k** (`RelateNodingLineLine.v` collection capstone). Remaining: **S15l+**
+   (prepared evaluate hook, exterior-row pinning, Touches fill split), global
+   cell-**dimension** (Jordan/overlay) soundness, and multi-geometry pipeline
+   beyond line×line.
 2. **#64** — finish ask #5a Scope B/C (arc-line coordinate **identity** + forward
    error) and the quartic arc-arc coordinates; the sign/length/area/distance and
    intersection-**existence** foundation is now done.
