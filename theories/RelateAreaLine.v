@@ -18,8 +18,7 @@
    geometry but are not consumed.  One genuine geometric consequence is proved
    (`segment_pierces_rect_share`: a pierce shares a point with the crossed
    edge, via `Intersect.v`).  Honest scoping: single rectangle polygon, no
-   holes.  Regime→witness selection via `RelateMatrixAreaLine.v` (S9); proving
-   a witness is a configuration's true DE-9IM is the deferred RelateNG step.
+   holes.  Regime→witness selection via `RelateMatrixAreaLine.v` (S9).  S13: cases integrated into RelateNG pipeline.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 

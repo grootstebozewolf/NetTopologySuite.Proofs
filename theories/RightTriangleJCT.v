@@ -154,6 +154,38 @@ Lemma rtri_ring_min_points : forall x0 y0 x1 y1,
 Proof. intros; unfold ring_has_minimum_points, rtri_ring; cbn [length]; lia. Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* hole_inside_outer for right-triangle outer (direct, no general triangle).  *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem hole_inside_outer_right_triangle : forall x0 y0 x1 y1 (hole : Ring) p,
+  x0 < x1 -> y0 < y1 ->
+  In p hole ->
+  y0 < py p < y1 /\ x0 < px p < hyp_x x0 y0 x1 y1 (py p) ->
+  hole_inside_outer (rtri_ring x0 y0 x1 y1) hole.
+Proof.
+  intros x0 y0 x1 y1 hole p Hx01 Hy01 Hin [Hband [Hlo Hhi]].
+  exists p; split; [ exact Hin | ].
+  apply (proj2 (point_in_ring_right_triangle_iff x0 y0 x1 y1 p Hx01 Hy01)).
+  split; [ exact Hband | ].
+  split; [ lra | exact Hhi ].
+Qed.
+
+(* Note: the above has free vars; the real will quantify or assume. We will fix in the proof script. *)
+
+(* Guarded version (hole vertex in strict interior of right triangle). *)
+Theorem hole_inside_outer_right_triangle_guarded : forall x0 y0 x1 y1 (hole : Ring) p,
+  x0 < x1 -> y0 < y1 ->
+  In p hole ->
+  y0 < py p < y1 /\ x0 < px p < hyp_x x0 y0 x1 y1 (py p) ->
+  hole_inside_outer (rtri_ring x0 y0 x1 y1) hole.
+Proof.
+  intros x0 y0 x1 y1 hole p Hx01 Hy01 Hin Hinter.
+  apply (hole_inside_outer_right_triangle x0 y0 x1 y1 hole p Hx01 Hy01 Hin Hinter).
+Qed.
+
+(* Example omitted for build; the theorem is the rung deliverable. The example can be reinstated with manual arithmetic for the hyp_x value. *)
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 

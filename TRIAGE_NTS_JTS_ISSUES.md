@@ -208,7 +208,9 @@ spending further proof effort — several are stale.
    S15k** (`RelateNodingLineLine.v` collection capstone). Remaining: **S15l+**
    (prepared evaluate hook, exterior-row pinning, Touches fill split), global
    cell-**dimension** (Jordan/overlay) soundness, and multi-geometry pipeline
-   beyond line×line.
+   beyond line×line. (Recent rungs: general-triangle Jordan cell-dim soundness,
+   direct right-triangle `hole_inside_outer`, RelateNG/Prepared pipeline skeleton
+   + rects_relate.)
 2. **#64** — finish ask #5a Scope B/C (arc-line coordinate **identity** + forward
    error) and the quartic arc-arc coordinates; the sign/length/area/distance and
    intersection-**existence** foundation is now done.

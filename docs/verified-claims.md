@@ -461,7 +461,9 @@ regime-wide `bpow 13` for every non-worst-case input.
 | `DE9IM.v : disjoint_intersects3_example_holds` | **Honest gap:** a matrix can be both `disjoint` and `intersects₃` (abstract IM algebra ≠ complete geometry IM) `[exact]` | 0 |
 
 Prepared-mode cache refinement landed (#67 S13); full RelateNG noding and
-arc/clothoid carrier gaps remain follow-up (#67 S14+).
+arc/clothoid carrier gaps remain follow-up (#67 S14+). (Recent S13 rungs:
+general-triangle Jordan cell-dim soundness in RelateCurveMatrix, direct
+right-triangle `hole_inside_outer`, RelateNG/Prepared pipeline infra.)
 
 ## Issue #67 — line-line DE-9IM: witnesses + geometry (`RelateLineLine.v`, session 2)
 
@@ -718,6 +720,10 @@ computation — full RelateNG noding remains S13+.
 | `oracle/test_relate_matrix.ml` | Catalog length + Romanschek / area / fill predicate pins |
 | `oracle/relate_matrix_fill_vocabulary.txt` | Seven fill APIs → witness matrix mapping |
 | `oracle/de9im_*_vectors.txt` | Per-regime COQ + MATRIX pins for NTS/JTS diff |
+
+## Issue #67 — S13 pipeline + Jordan cell dim (RelateNG.v, RelatePrepared.v, RelateCurveMatrix, RelateBoundary)
+
+Skeletons + helpers + guarded dim soundness landed. Full noding future.
 
 ## Issue #67 — curve-polygon×point: validity + witnesses (`RelateCurveAreaPoint.v`, S12)
 

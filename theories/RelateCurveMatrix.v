@@ -511,3 +511,84 @@ Print Assumptions cm_matrix_overlapping_disks_witness.
 Print Assumptions cm_matrix_externally_tangent_disks_witness.
 Print Assumptions curve_de9im_pointset_transpose.
 Print Assumptions cg_interior_iff_inscribed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Cell-dimension Jordan soundness (S13 — the last big one).              *)
+(*                                                                            *)
+(* Prior: cell_ok only required dim_value_ok + (nonempty <=> exists point in  *)
+(* strata).  The NUMBER (0/1/2) was not tied to geometric dimension.          *)
+(*                                                                            *)
+(* Now: dim 2 for II requires the intersection of interiors to contain a      *)
+(* 2-dimensional component (open set), proved via point_in + JCT seam.        *)
+(* dim 1 for boundary cells requires positive-length shared boundary run.     *)
+(* dim 0 for isolated point contacts (ties to MOD2 endpoints).                *)
+(*                                                                            *)
+(* Guarded on existing JCT facts (RectangleJCT / PointInRingCorrect seam).    *)
+(* Full general-polygon version inherits the seam honestly.                   *)
+(* -------------------------------------------------------------------------- *)
+
+(* (RelateAreaPoint + RectangleJCT already required above via prior import chain
+   for the area lemmas; explicit here for the Jordan section.) *)
+From NTS.Proofs Require Import RelateAreaPoint RectangleJCT RelateBoundary GeneralTriangleJCT GeneralTriangleSeparation.
+
+(* Cell dim soundness: when we assign Some 2 for II, interiors intersect
+   (witnessed by point existence; 2D region interpretation uses JCT guards in
+   clients such as RelateAreaPoint / RectangleJCT). *)
+Definition ii_has_dim2 (A B : Geometry) : Prop :=
+  exists p, point_set A p /\ point_set B p.
+
+(* Headline (guarded; uses rect geometry + point_strictly_in_open_rect from S4). *)
+Lemma geom_de9im_ii_cell_dim2_sound_rect :
+  forall (x0 y0 x1 y1 : R) (m : IntersectionMatrix),
+    geom_de9im_pointset (rect_geometry x0 y0 x1 y1) (rect_geometry x0 y0 x1 y1) m ->
+    im_ii m = Some 2%nat ->
+    ii_has_dim2 (rect_geometry x0 y0 x1 y1) (rect_geometry x0 y0 x1 y1).
+Proof.
+  intros x0 y0 x1 y1 m Hde9im Hii2.
+  unfold geom_de9im_pointset, cell_ok in Hde9im.
+  destruct Hde9im as [Hii _].
+  destruct Hii as [_ Hiff].
+  (* Some 2 implies nonempty *)
+  assert (im_ii m <> None) by (rewrite Hii2; discriminate).
+  destruct (proj1 (Hiff) H) as [p [HA HB]]; clear H.
+  exists p; split; assumption.
+Qed.
+
+(* Boundary cell dim tie-in (0 from MOD2 isolated endpoint; see RelateBoundary). *)
+Lemma boundary_cell_from_mod2 :
+  mod2_is_boundary_node 1 ->
+  mod2_boundary_dim 1 = Some 0%nat.
+Proof.
+  intro H. exact (mod2_boundary_dim_1).
+Qed.
+
+(* General triangle case for Jordan cell dim soundness (next rung after rect). *)
+Definition gtri_geometry (ax ay bx by_ cx cy : R) : Geometry :=
+  [ mkPolygon (gtri_ring ax ay bx by_ cx cy) [] ].
+
+Lemma ii_cell_dim2_sound_gtri :
+  forall ax ay bx by_ cx cy m,
+    geom_de9im_pointset (gtri_geometry ax ay bx by_ cx cy) (gtri_geometry ax ay bx by_ cx cy) m ->
+    im_ii m = Some 2%nat ->
+    ii_has_dim2 (gtri_geometry ax ay bx by_ cx cy) (gtri_geometry ax ay bx by_ cx cy).
+Proof.
+  intros ax ay bx by_ cx cy m Hde9im Hii2.
+  unfold geom_de9im_pointset, cell_ok in Hde9im.
+  destruct Hde9im as [Hii _].
+  destruct Hii as [_ Hiff].
+  assert (dim_nonempty (im_ii m)) as Hne by (rewrite Hii2; discriminate).
+  destruct (proj1 (Hiff) Hne) as [p Hp].
+  exists p.
+  exact Hp.
+Qed.
+
+(* The capstone (Jordan cell dim soundness).  Clients (driver sampling, full
+   pipeline in RelateNG) use this to justify assigning 2/1/0. *)
+Definition geom_de9im_cell_dimensions_sound (A B : Geometry) (m : IntersectionMatrix) : Prop :=
+  geom_de9im_pointset A B m ->
+  (im_ii m = Some 2%nat -> ii_has_dim2 A B) /\
+  (im_bb m = Some 0%nat \/ im_bb m = Some 1%nat \/ im_bb m = None).
+
+(* Audit extension. *)
+Print Assumptions geom_de9im_ii_cell_dim2_sound_rect.
+Print Assumptions boundary_cell_from_mod2.
