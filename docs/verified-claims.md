@@ -778,15 +778,17 @@ the NTS#819 area-line carrier.
 | `RelatePreparedCacheAreaLine.v : rect_envelope_disjoint_all_edges` | **Polygon-envelope early-exit soundness (issue #67 S14b / NTS#819):** when the rectangle envelope `bbox_of_rect` and the query-segment envelope are disjoint, no boundary edge of `rect_boundary_segments` can meet the query segment — the soundness floor for skipping the STRtree query entirely `[exact]` | 3 |
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_envelope_early_exit` | **Early-exit corollary (S14b):** under the same envelope-disjoint hypothesis, the brute-force `area_line_intersects_brute` fold is `false` for any sound `intersect_test` — the prepared area-line predicate may short-circuit before per-edge enumeration `[exact]` | 3 |
 
-## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15g)
+## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15k)
 
 First RelateNG-noding rung: closed-segment strata + point-set DE-9IM
 specification (`line_de9im_pointset`), with meet-layer bridges from S8
 `classify_line_pair` / `line_pair_fill`, S4b `ll_matrix_touches_endpoint`,
 Romanschek EE = 2 / test-10 exterior rows, JTS#1175 collection BI witnesses,
-and existential collection union (`line_collection_de9im_pointset`).
-Full `line_pair_fill` exterior bridges without hypotheses and pairwise
-`dim_value_join` matrix aggregation remain S15h+.
+existential collection union, `matrix_dim_join` fold soundness (S15i),
+meet-layer II/BB dimension pinning (S15j), and collection relate-matrix
+pipeline capstone with test-10 pointset + fold=oracle (S15k).
+Exterior-row true-dimension pinning, per-pair full `line_pair_fill` bridges
+without hypotheses, and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -822,6 +824,26 @@ Full `line_pair_fill` exterior bridges without hypotheses and pairwise
 | `RelateNodingLineLine.v : line_collection_test10_de9im_rows` | Collection bnd×int + all-no-share ⇒ test-10 BI/IE/EI/EE row witnesses `[exact]` | 3 |
 | `RelateNodingLineLine.v : line_collection_test10_intersects` | Collection bnd×int + all-no-share ⇒ `im_intersects` for test-10 matrix `[exact]` | 3 |
 | `RelateNodingLineLine.v : line_collection_classify_disjoint_test10_rows` | Collection disjoint regime + bnd×int + all-no-share ⇒ test-10 exterior rows `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_test10_empty_meet_rows` | `LPR_Disjoint` ⇒ test-10 II/IB/BB meet cells empty (S15h per-pair fill) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_line_de9im_pointset_test10` | `LPR_Disjoint` + non-degenerate segments ⇒ full test-10 meet + exterior rows (S15h) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_proper_cross_line_de9im_pointset` | `LPR_ProperCross` ⇒ `line_de9im_pointset` for proper-cross fill (S15h) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_collinear_overlap_line_de9im_pointset` | `LPR_CollinearOverlap` + `C <> D` ⇒ `line_de9im_pointset` for overlap fill (S15h) `[exact]` | 3 |
+| `RelateNodingLineLine.v : dim_value_join_idem` | `dim_value_join` idempotent on max-cell algebra (S15k) `[exact]` | 3 |
+| `RelateNodingLineLine.v : matrix_dim_join_idem` | `matrix_dim_join` idempotent — constant-fold substrate (S15k) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_de9im_pointset_join` | Pairwise `line_collection_de9im_pointset` closed under `matrix_dim_join` (S15i) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_matrix_fold_sound` | Cross-product fold sound when every pair satisfies `line_de9im_pointset` (S15i) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_test10_de9im_pointset` | Collection bnd×int + all-no-share ⇒ full 9-cell `line_collection_de9im_pointset` for test 10 (S15i) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_cell_ok_pinned_implies_ok` | `line_cell_ok_pinned` ⇒ `line_cell_ok` forward bridge (S15j) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_ii_dim_pinned` | `LPR_Disjoint` pins test-10 II cell dimension (S15j) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_proper_cross_ii_dim_pinned` | `LPR_ProperCross` pins II = 0-dim point cell (S15j) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_share_interior_ii_dim_pinned` | `LPR_Share` + interior share pins II = 0-dim (S15j) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_pair_fill_share_ii_not_pinned_int_bnd_only` | Share fill II not pinned when only int×bnd contact (Touches gap) (S15j) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_relate_matrix_fold_sound` | Fold-assign interface soundness headline (S15k capstone) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_relate_matrix_regime_fold_sound` | Regime-driven fold sound with separate classify + de9im hypotheses (S15k) `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_pair_de9im_pointset_test10` | Disjoint + bnd×int + non-degenerate ⇒ per-pair full 9-cell test-10 pointset (S15k) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_relate_matrix_test10` | Collection test-10 pointset + fold equals oracle matrix (S15k) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_relate_matrix_test10_intersects` | Collection test-10 fold ⇒ `im_intersects` (S15k) `[exact]` | 3 |
+| `RelateNodingLineLine.v : line_collection_relate_matrix_test10_meet_pinned` | Collection disjoint + all-no-share ⇒ II/BB meet cells pinned on witness pairs (S15k) `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
 

@@ -1,9 +1,8 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** living triage — S0–**S15g** **complete in the working tree**
-> (2026-06-20); **S15h+** (full `line_pair_fill` exterior bridges without
-> hypotheses / pairwise matrix `dim_value_join` fill / cell-dimension pinning)
-> remains open.
+> **Status:** living triage — S0–**S15k** **complete in the working tree**
+> (2026-06-20); **S15l+** (prepared evaluate hook / exterior-row true-dimension
+> pinning / Touches-vs-Share fill split at fill API) remains open.
 > Refresh when a new session closes.
 >
 > Corpus at time of writing: `main` (through S12 + curve→matrix transport stack);
@@ -76,7 +75,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3a Segment intersection (line-line)** | **PROVEN (Qed)** | `Intersect.v:900` (`segment_intersection_decision`), `:243` (`strict_completeness`) | Feeds `Intersects`/`Crosses`/`Touches` for line-line; collinear case closed (`collinear_share_iff_1d_overlap`). |
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
-| **#4 RelateNG algorithm** | **PARTIAL (S15g)** | `RelateNodingLineLine.v` | Line×line strata + point-set DE-9IM; regime bridges through S8 fill, S4b Touches IB, overlap BB, Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential collection union (`line_collection_de9im_pointset`) + test-10 row aggregation. Pairwise `dim_value_join` matrix fill / full exterior bridges remain S15h+. |
+| **#4 RelateNG algorithm** | **PARTIAL (S15k)** | `RelateNodingLineLine.v` | Line×line strata + point-set DE-9IM; regime bridges through S8 fill; collection `matrix_dim_join` fold soundness (S15i); per-pair test-10 fill bridges + II/BB dimension pinning (S15h–j); collection relate-matrix pipeline capstone — fold-assign soundness, regime wrapper, test-10 pointset + fold=oracle + intersects (S15k). Prepared evaluate hook / exterior-row pinning / Touches fill split remain S15l+. |
 | **#5 Prepared-mode correctness** | **PARTIAL (S13–S14b)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement + polygon-envelope early-exit; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
@@ -173,11 +172,11 @@ area×line fill **(L)**, arc-chord relate **(M)**, and prepared cache **(F)**.
 Next frontier:
 
 - **(E) Full RelateNG noding pipeline** — *high / multi-session.* **Primary
-  next rung (S15h+).** S15a–S15g land line×line strata + regime / Touches /
-  Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential
-  collection union (`RelateNodingLineLine.v`). Remaining: pairwise matrix
-  `dim_value_join` aggregation, full `line_pair_fill` exterior bridges,
-  cell-dimension pinning — Phase-3-scale.
+  next rung (S15l+).** S15a–S15k land line×line strata + regime bridges,
+  collection `matrix_dim_join` fold, per-pair test-10 fill, II/BB pinning,
+  and collection relate-matrix capstone (`RelateNodingLineLine.v`). Remaining:
+  prepared evaluate hook, exterior-row true-dimension pinning, Touches-vs-Share
+  fill API split — Phase-3-scale.
 
 - **(F) Prepared A-L cache correctness** — **partial (S13–S14).** Generic
   refinement + rectangle-boundary area-line instance in `RelatePreparedCache*.v`;
@@ -238,7 +237,22 @@ The recommended path forward:
   `line_collection_pair_cell_sub`); test-10 row aggregation
   (`line_collection_test10_de9im_rows`, `line_collection_test10_intersects`);
   `dim_value_join` max-cell algebra.
-- **S15h+:** pairwise matrix join fill, full `line_pair_fill` exterior rows.
+- **S15h (done):** per-pair test-10 meet + exterior fill bridges
+  (`classify_disjoint_line_de9im_pointset_test10`,
+  `classify_proper_cross_line_de9im_pointset`,
+  `classify_collinear_overlap_line_de9im_pointset`); Share vs Touches IB
+  disambiguation.
+- **S15i (done):** `matrix_dim_join` collection fold soundness
+  (`line_collection_matrix_fold_sound`); test-10 full 9-cell collection
+  pointset (`line_collection_test10_de9im_pointset`).
+- **S15j (done):** meet-layer cell-dimension pinning (`line_cell_ok_pinned`,
+  `line_cell_true_dim`, regime II/BB pins); Share/Touches fill gap documented
+  (`line_pair_fill_share_ii_not_pinned_int_bnd_only`).
+- **S15k (done):** collection relate-matrix pipeline capstone — fold-assign
+  interface, regime wrapper, per-pair disjoint test-10 9-cell, test-10
+  pointset + fold=oracle + intersects + meet-pinned corollary.
+- **S15l+:** prepared evaluate hook; exterior-row true-dimension pinning;
+  `LPR_Touches` regime split at fill API.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -267,4 +281,8 @@ The recommended path forward:
 | S15e | OGC exterior rows + JTS#1175 BI negative | S15d |
 | S15f | JTS#1175 collection BI witness + nominated-pair gap | S15e |
 | S15g | Collection existential union + test-10 row aggregation | S15f |
-| S15h+ | Pairwise matrix join + full fill bridges | S15g |
+| S15h | Per-pair test-10 fill bridges + Share/Touches disambiguation | S15g |
+| S15i | `matrix_dim_join` collection fold + test-10 9-cell pointset | S15h |
+| S15j | Meet-layer II/BB dimension pinning | S15i |
+| S15k | Collection relate-matrix pipeline capstone | S15j |
+| S15l+ | Prepared evaluate hook + exterior pinning + Touches fill split | S15k |

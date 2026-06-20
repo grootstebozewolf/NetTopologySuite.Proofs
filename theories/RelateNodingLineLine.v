@@ -1,7 +1,7 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateNodingLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 15a–15g (S15a–S15g): line×line point-set DE-9IM bridge.
+   Issue #67 session 15a–15k (S15a–S15k): line×line point-set DE-9IM bridge.
 
    First RelateNG-noding rung: closed-segment strata (strict interior /
    endpoint boundary / exterior) and a 9-cell `line_de9im_pointset`
@@ -32,7 +32,10 @@
          JTS#1175 collection cross-product BI witness (bnd×int contact
          across segment lists); nominated-pair no-share ⇏ BI = 0-dim;
          collection existential union (`line_collection_de9im_pointset`)
-         + test-10 row aggregation + `dim_value_join` max cell algebra
+         + test-10 row aggregation + `dim_value_join` max cell algebra;
+         S15h–k: per-pair test-10 fill bridges, `matrix_dim_join` fold
+         soundness, II/BB dimension pinning, collection relate-matrix
+         capstone (fold-assign + test-10 pointset/fold/intersects)
 
    S15h (§16): per-pair 9-cell noding bridges — disjoint test-10 exterior
      rows + meet fill; Share vs Touches IB disambiguation; regime-keyed
