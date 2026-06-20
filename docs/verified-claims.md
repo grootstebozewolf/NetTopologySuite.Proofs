@@ -66,14 +66,11 @@ window.
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `RelateIntDetBound.v : idet_abs_le_2sq` | Orientation determinant on coords in `[0,c]` satisfies `\|idet\| ≤ 2c²` (conservative algebraic bound) `[int]` | 0 |
+| `RelateIntDetBound.v : idet_abs_le_sq` | Orientation determinant on coords in `[0,c]` satisfies `\|idet\| ≤ c²` (paper Eq 4 geometric bound — affine corner reduction) `[int]` | 0 |
 | `RelateIntDetBound.v : idet_fits_int64_for_int32_coords` | 32-bit integer coords ⇒ determinant fits a signed 64-bit integer (`2·(2³¹−1)² ≤ 2⁶³−1`) — the paper's "32 bit integers can be used for the coordinates" `[int]` | 0 |
+| `RelateIntDetBound.v : idet_fits_int64_for_cmax_coords` | Coords in `[0, cmax]` ⇒ determinant fits a signed 64-bit integer (`cmax² ≤ 2⁶³−1`) — licenses the paper's full 64-bit coordinate window `[int]` | 0 |
 | `RelateIntDetBound.v : cmax_sq_le_int64` (+`cmax_succ_sq_gt_int64`) | `cmax = 3 037 000 499 = ⌊√(2⁶³−1)⌋` pinned exactly (the paper's tight 64-bit window, Eq 5/8) `[int]` | 0 |
 | `RelateIntDetBound.v : idet_max_witness` (+`idet_min_witness`) | Triangles realize `±cmax²` ⇒ the determinant range `[−cmax², cmax²]` is tight `[int]` | 0 |
-
-**Honest scope.** The universal *geometric* bound `\|idet\| ≤ c²` (Eq 4 — the
-half-box-area fact that would license the full `[0, cmax]` window) is deferred;
-what is closed is the conservative `2c²` bound (sufficient for the 32-bit
-regime), the exact `cmax` bracketing, and the `±cmax²` tightness witnesses.
 
 ## Phase 1 — Robust segment intersection (`RobustLineIntersector`)
 
