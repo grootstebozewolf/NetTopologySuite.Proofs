@@ -6,12 +6,20 @@
 > (`theories/`, `theories-flocq/`, `docs/verified-claims.md`), separating
 > *proven* from *gap*, and recording priority and ordering decisions.
 >
-> Generated from the 2026-06-03 issue batch; last reconciled **2026-06-14**
-> against branch `claude/cycle-count-partition-yjgjmy` (PR #195 — the H_bridge
-> Euler route + `ClassCount` convergence — merged to `main`). This file is the
-> cross-cutting overview; the
-> per-area detail lives in the GitHub issues and the sibling docs
-> `docs/issue-64-arc-primitives-triage.md` and
+> Generated from the 2026-06-03 issue batch; last reconciled **2026-06-20**
+> against the current working corpus (branch `claude/dreamy-gates-6osfpv`, ahead
+> of the local `origin/main` snapshot). The prior reconciliation (2026-06-14,
+> branch `claude/cycle-count-partition-yjgjmy`, PR #195 — the H_bridge Euler
+> route + `ClassCount` convergence) predates the **arc-metrics / curve-relate /
+> buffer-region / ring-validity oracle wave** (PRs ≈ #216–#246): the curve
+> oracle suite is now broad — ARC_AREA / ARC_CENTROID / ARC_AREA_CENTROID /
+> ARC_DISTANCE / ARC_ARC_XY / ARC_SEGMENT_XY / ARC_ARC_DISTANCE /
+> ARC_SEGMENT_DISTANCE / ARC_OFFSET_XY / RING_SIMPLE / POINT_IN_CURVE_RING /
+> RING_ORIENTATION / HOLES_DISJOINT / CURVE_RELATE_MATRIX / BUFFER_REGION /
+> CP_BOUNDARY_SIMPLIFY — each backed by a named theory file with an honestly
+> recorded deferred frontier (see `docs/oracle-handrolled-allowlist.txt`). This
+> file is the cross-cutting overview; the per-area detail lives in the GitHub
+> issues and the sibling docs `docs/issue-64-arc-primitives-triage.md` and
 > `docs/issue-67-relateng-triage.md`.
 
 ## Scope
@@ -33,10 +41,10 @@ tracker: **#69**.
 
 | Issue | Area | Priority | Proof state | Verdict |
 |---|---|---|---|---|
-| **#64** | Circular-arc primitives (length, sweep, in-arc, in-circle) | `Immediate` | **Most progressed; top gap closed.** Asks #1/#2: `Atan2.v` + `AngleBetween.v` + `ArcLength.v` (`r·θ`, `chord_le_arc_length`) Qed. **Ask #4b PROVEN & merged (PR #146):** `InCircle_b64_exact.v` — full-plane `b64_inCircle` sign exactness at **3 axioms, no `classic`** (integer-ℤ determinant, matching orient2d's full-plane result — see [`docs/phase0-completion.md`](docs/phase0-completion.md)) + `2¹¹` integer-regime value exactness + Perron worst-case witness. **Ask #5a partial:** `ArcLineIntersect_b64_exact.v` Scope A (pre-division Cramer prefix bit-exact); coordinate identity (Scope B/C) and arc-arc deferred. `ArcOrient`/`ArcIntersect`/`ArcIntersectIVT`/`ArcHotPixel`/`ArcChordApprox`/`ArcOverlay` Qed. | Keep Immediate — only #5a Scope B/C + arc-arc remain |
-| **#65** | Buffer / offset curve correctness | `Urgent` | Heaviest existing corpus: 18 `Buffer*.v` files + `ExtractBufferRings.v`, plus 3 documented counterexamples (depth enclosure / horizontal-edge / vertex-graze). Coverage is **linear** buffer; curve-aware `CurvePolygon` output not yet proven (blocked on #64 arc coords). | Trimmed Immediate → Urgent (2026-06-08) |
+| **#64** | Circular-arc primitives (length, sweep, in-arc, in-circle) | `Immediate` | **Most progressed; metric + intersection suite now landed.** Asks #1/#2: `Atan2.v` + `AngleBetween.v` + `ArcLength.v` (`r·θ`, `chord_le_arc_length`) Qed. **Ask #4b PROVEN (PR #146):** `InCircle_b64_exact.v` — full-plane `b64_inCircle` sign exactness at **3 axioms, no `classic`** + `2¹¹` integer-regime value exactness + Perron witness. **Metrics landed since #195:** circular-segment area (`ArcArea.v`), arc + segment centroids (`ArcCentroid.v`, `ArcAreaCentroid.v`), point-to-arc / arc-arc / arc-segment distance (`ArcDistance.v`, `ArcPointDistance.v`, `ArcArcDistance.v`, `ArcSegmentDistance.v`), arc-arc & arc-segment intersection existence (`ArcArcCircles.v`, `ArcArcSound.v`, `ArcSegmentCircles.v`) — each with an oracle mode (ARC_AREA / ARC_CENTROID / ARC_AREA_CENTROID / ARC_DISTANCE / ARC_ARC_DISTANCE / ARC_SEGMENT_DISTANCE / ARC_ARC_XY / ARC_SEGMENT_XY), exact rational invariants proven, transcendental output as documented interface-boundary. **Ask #5a partial:** `ArcLineIntersect_b64_exact.v` Scope A (pre-division Cramer prefix bit-exact); coordinate **identity** (Scope B/C) + quartic arc-arc coordinates remain the deferred *exactness* frontier. `ArcOrient`/`ArcIntersect`/`ArcIntersectIVT`/`ArcHotPixel`/`ArcChordApprox`/`ArcOverlay` Qed. | Keep Immediate — metric/intersection oracles done; only Scope B/C + arc-arc coordinate identity remain |
+| **#65** | Buffer / offset curve correctness | `Urgent` | Heaviest existing corpus: 18 `Buffer*.v` files + `ExtractBufferRings.v`, plus 3 documented counterexamples (depth enclosure / horizontal-edge / vertex-graze). **Curve-aware output now has an oracle certificate (since #195):** arc offset (`ArcOffset.v`, `ArcOffsetThreePoint.v` — `arc_offset_preserves_arc`), ring/curve offset assembly (`CurveRingOffset.v`, `CurveOffsetAssembly{,Total}.v`, `CurveRoundJoin.v`), and the buffer-region certificate (`CurveBufferArea.v` — boundary validity + signed-area algebra) drive oracle modes ARC_OFFSET_XY / BUFFER_REGION (+ ARC_BUFFER_SIMPLE/FULL pins). 3-axiom; the geometric "signed area = true Minkowski buffer area" is the deferred P2 frontier. | Keep Urgent — arc buffer/offset boundary+area certificate landed; Minkowski-area soundness deferred |
 | **#66** | Precision / snap-rounding / OverlayNG soundness | `Urgent` | **Strongest coverage of the batch.** `SnapRounding_b64`, `HotPixel*`, `Hobby*`, the `PassesThrough_*` family (C1 grid-exactness reduction; plus a segment-reversal asymmetry negative that — correction 2026-06-17 — models a Liang-Barsky divide-from-c0 filter and does **NOT** map to JTS#752/#1133, since JTS's `HotPixel.intersectsScaled` canonicalizes to +X first), `Overlay*`, `RingArea979` (JTS#979). Multiple honest machine-checked **negatives** (rounded filter unsound/incomplete/asymmetric — cautions about that filter design, not JTS defects). | Keep Urgent — largely delivered, closing gaps |
-| **#67** | RelateNG / 9IM matrix & boundary handling | `Immediate` | **Now under active construction (was a blank page on 2026-06-08).** Per `docs/issue-67-relateng-triage.md`: `theories/DE9IM.v` (matrix type + pattern algebra, S1), `theories/RelateLineLine.v` (line-line DE-9IM soundness via `Intersect.v`, S2), `theories/RelateIntDetBound.v` (integer determinant range bound, S0), + `oracle/de9im_line_line_vectors.txt` (S3). Remaining: boundary/MOD2 policy, area-line/area-area, RelateNG pipeline, prepared cache. Headline ref JTS#1175 fixed upstream (jts#1200). | Bumped Urgent → Immediate (2026-06-08); now the active frontier |
+| **#67** | RelateNG / 9IM matrix & boundary handling | `Immediate` | **Broad DE-9IM suite now landed (S0–S12).** Per `docs/issue-67-relateng-triage.md` + `docs/verified-claims.md`: `DE9IM.v` (matrix type + pattern algebra), `RelateIntDetBound.v` (integer determinant bound), line-line (`RelateLineLine.v`), area-point (`RelateAreaPoint.v`), boundary/MOD2 (`RelateBoundary.v`), area-line (`RelateAreaLine.v`), area-area (`RelateAreaArea.v`), regime→witness families (`RelateMatrix{Rect,LineLine,AreaLine,ArcChord,ArcAnalytic,Clothoid,CurveAreaPoint,Bezier3,EllipticArc}.v`), arc×line chord + analytic (`RelateArcChord.v`, `RelateArcAnalytic.v`), clothoid/elliptic/bezier curve types, and curve-polygon×point (`RelateCurveAreaPoint.v`). The **full 9-cell curve DE-9IM** is computed by oracle `CURVE_RELATE_MATRIX` (`RelateCurveMatrix.v`), with `RELATE_MATRIX` / `RELATE_PREDICATE` drivers + `de9im_*_vectors.txt`. Remaining: cell-**dimension** (Jordan/overlay) soundness, RelateNG pipeline + prepared cache. JTS#1175 fixed upstream (jts#1200). | Keep Immediate — matrix algebra + curve oracle broad; cell-dimension Jordan soundness + pipeline remain |
 | **#68** | Delaunay triangulation / Voronoi correctness | `Non-urgent` | `Triangle.v`, `Tin.v`, `GeneralTriangle{Parity,Separation}.v`, `RightTriangle*` exist; no empty-circle Delaunay / Voronoi proofs yet. **Core primitive now available:** `inCircle_R` / `b64_inCircle` proven via #146. | Correctly labeled — primitive unblocked, not yet started |
 | **#69** | Umbrella / epic tracker | `Expectant` | Tracking issue only. | Keep open as the epic tracker |
 
@@ -51,29 +59,30 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 
 | JTS TAG | What it is | Proof issue | Corpus artifact / oracle | Status |
 |---|---|---|---|---|
-| **F-CP / F-MC / F-MS** | Structural `CurvePolygon` / `MultiCurve` / `MultiSurface` (preserve ring/member curves) | #69, #64 | `theories/CurveGeometry.v` (SQL/MM types, `CurveRing`, validity, chord bridge) | 🟡 structural model exists |
-| **B-CP / B-MS** | Boundary of curve composites | #69 | — | ⬜ |
+| **F-CP / F-MC / F-MS** | Structural `CurvePolygon` / `MultiCurve` / `MultiSurface` (preserve ring/member curves) | #69, #64 | `CurveGeometry.v` (SQL/MM types, `CurveRing`, validity, chord bridge); `CurvePolygon{Valid,Simple,Orientation,Disjoint,Offset}.v`; oracle-backed exterior ring (`oracle/curve_polygon.py`, `CP_BOUNDARY_SIMPLIFY`) | 🟡 structural model + validity/simplicity witness-sound; true-region (Jordan) deferred |
+| **B-CP / B-MS** | Boundary of curve composites | #69, #65 | oracle `CP_BOUNDARY_SIMPLIFY` (densify → extracted `greedy_simplify_perp_b64` → per-corner `b64_orient_sign_filtered`); `CurveBufferArea.v` boundary | 🟡 densified-boundary oracle exists (INTSAFE corners certified by `_sound_small_int`); composite-boundary point-set spec deferred |
 | **M-LEN-CS / M-LEN-CC** | Arc / compound-curve length (`r·θ`) | #64 | `ArcLength.v`, `Atan2.v`, `AngleBetween.v`; oracle `ARC_LENGTH_INVARIANTS_EXACT` / `ARC_SHORTER` | ✅ exact invariants; float length is interface-boundary |
-| **M-AREA-CP** | `CurvePolygon` area (Green's theorem + circular-segment correction) | #64 | oracle `ARC_AREA_INVARIANTS_EXACT` | ✅ exact rational invariants; float area interface-boundary |
+| **M-AREA-CP** | `CurvePolygon` area (Green's theorem + circular-segment correction) | #64 | `ArcArea.v` (`segment_area`); oracle `ARC_AREA_INVARIANTS_EXACT` / `ARC_AREA` / `RING_ORIENTATION` (signed area) | ✅ exact rational invariants; float area interface-boundary |
 | **M-DIM** | Dimension of curve geometries | #69 | — | ⬜ structural |
-| **V-CP / V-CS** | Arc-aware validity (arc self-intersection, orientation via sector area, holes-in-shell) | #64 | `ArcOrient.v`, `ArcHotPixel.v`, `theories-flocq/InCircle_b64_exact.v` | 🟡 in-circle sign ✅ (full-plane, 3-ax); arc-span/self-intersect soundness open (`arc_chord_intersect_sound`) |
-| **D-PT** | Analytical point-to-arc distance | #64 | `Distance.v` (foundation) + arc primitives | 🟡 |
-| **D-AA** | Arc-arc distance | #64 | `ArcIntersect.v` (predicate) | 🟡 |
-| **C-\*** | Centroid of curve geometries | #69 | `Centroid.v` (linear) | ⬜ curve case planned |
+| **V-CP / V-CS** | Arc-aware validity (arc self-intersection, orientation via sector area, holes-in-shell) | #64 | `CurveRingSimple.v` (`curve_ring_not_simple_of_witness`), `CurvePolygonSimple.v`, `CurvePolygonValid.v`, `CurvePolygonOrientation.v`, `CurvePolygonDisjoint.v`, `InCircle_b64_exact.v`; oracle `RING_SIMPLE` / `POINT_IN_CURVE_RING` / `RING_ORIENTATION` / `HOLES_DISJOINT` | 🟡 in-circle sign ✅ (full-plane, 3-ax) + per-ring witness-soundness ✅; completeness + true-region (Jordan) deferred |
+| **D-PT** | Analytical point-to-arc distance | #64 | `ArcDistance.v`, `ArcPointDistance.v`; oracle `ARC_DISTANCE` | 🟡 radial-foot core ✅; on-arc/sweep clamp deferred |
+| **D-AA** | Arc-arc distance | #64 | `ArcArcDistance.v`, `ArcIntersect.v` (predicate); oracle `ARC_ARC_DISTANCE` | 🟡 disjoint circle-to-circle core ✅; sweep clamp deferred |
+| **D-SL** | Arc-segment distance | #64 | `ArcSegmentDistance.v`; oracle `ARC_SEGMENT_DISTANCE` | 🟡 line-outside-circle core ✅; sweep/segment clamp deferred |
+| **C-\*** | Centroid of curve geometries | #69, #64 | `ArcCentroid.v` (`arc_centroid_offset`), `ArcAreaCentroid.v`; oracle `ARC_CENTROID` / `ARC_AREA_CENTROID` | 🟡 offset spec proven (exact invariants); centroid POINT is interface-boundary (transcendental) |
 | **H-\*** | Hulls over curve inputs | #69 | `Convex.v` (linear) | ⬜ curve case planned |
-| **S-\*** | Simplification of curves | #69 | `Simplify.v`, `Linearise.v` (linear) | ⬜ curve case planned |
+| **S-\*** | Simplification of curves | #69 | `Simplify.v` (greedy-perp structural), `Linearise.v`; oracle `CP_BOUNDARY_SIMPLIFY` (extracted simplifier ∘ densify, `oracle/curve_polygon.py`) | 🟡 oracle composes extracted `greedy_simplify_perp_b64` over a densified boundary; simplification-preserves-curve soundness open |
 | **AT-\*** | Affine transforms (non-similarity → detect-and-densify, §7 risk) | #69 | — | ⬜ |
 | **LRF-\*** | Linear referencing on curves | #69 | — | ⬜ |
-| **DSF** | Densifier (curve → chords internally) | #64, #65 | `ArcChordApprox.v` (sagitta bound), `CurveLinearise.v` (`chord_approx_ring_closed`) | ✅ chord-approx faithfulness (closure); sagitta/`ring_simple` open |
-| **BUF-1 / BUF-N** | Single-/multi-arc buffer → `CurvePolygon` | #65 | 18× `Buffer*.v` (linear), `ExtractBufferRings.v` | 🟡 linear proven; arc-output blocked on #64 coords |
-| **OFF** | Offset curve (arc-preserving) | #65 | `BufferOffset.v` | 🟡 linear; arc planned |
+| **DSF** | Densifier (curve → chords internally) | #64, #65 | `ArcChordApprox.v` (sagitta bound), `ArcChord{Density,Subdivision,Length,Sound}.v`, `CurveLinearise.v` (`chord_approx_ring_closed`); oracle `CP_BOUNDARY_SIMPLIFY` densify (`densify_arc`) | ✅ chord-approx faithfulness (closure); sagitta/`ring_simple` open |
+| **BUF-1 / BUF-N** | Single-/multi-arc buffer → `CurvePolygon` | #65 | 18× `Buffer*.v` (linear), `ExtractBufferRings.v`; `CurveBufferArea.v`, `CurveRingOffset.v`, `CurveOffsetAssembly{,Total}.v`, `CurveRoundJoin.v`; oracle `BUFFER_REGION` (+ `ARC_BUFFER_SIMPLE/FULL` pins) | 🟡 arc buffer-region boundary+area certificate ✅ (3-ax); Minkowski-area soundness deferred |
+| **OFF** | Offset curve (arc-preserving) | #65 | `BufferOffset.v`, `ArcOffset.v`, `ArcOffsetThreePoint.v` (`arc_offset_preserves_arc`), `CurvePolygonOffset.v`, `CurveRingOffset.v`; oracle `ARC_OFFSET_XY` | 🟡 arc offset ✅ (valid arc → valid arc, radius r+d); assembly conditional |
 | **VBF** | Variable-distance buffer | #65 | — | ⬜ |
-| **N-AL** | Arc-line noding / intersection | #64 | `theories-flocq/ArcLineIntersect_b64_exact.v` (Scope A), `ArcIntersect.v`, `ArcIntersectIVT.v` | 🟡 Scope A (pre-division) ✅; coordinate identity (Scope B/C) queued |
-| **N-AA** | Arc-arc noding / intersection | #64 | `ArcIntersect.v` (`arc_arc_intersects` predicate) | 🟡 existence predicate ✅; quartic coordinates open |
+| **N-AL** | Arc-line noding / intersection | #64 | `theories-flocq/ArcLineIntersect_b64_exact.v` (Scope A), `ArcSegmentCircles.v` (`line_circle_radical_point`), `ArcIntersect.v`, `ArcIntersectIVT.v`; oracle `ARC_SEGMENT_XY` / `ARC_LINE_XY` | 🟡 Scope A (pre-division) ✅ + existence ✅; coordinate identity (Scope B/C) queued |
+| **N-AA** | Arc-arc noding / intersection | #64 | `ArcArcCircles.v`, `ArcArcSound.v`, `ArcIntersect.v` (`arc_arc_intersects` predicate); oracle `ARC_ARC_XY` | 🟡 circles-intersect (Stage B) ✅; quartic coordinates open |
 | **N-SS** | `SegmentString` / `Noder` for curves | #66 | `SnapRounding_b64.v`, `HotPixel*`; oracle `CURVE_SNAP_DECISION` | 🟡 linear noding ✅; curve-snap decision oracle ✅ |
 | **PRC-SN** | `PrecisionModel.makePrecise` on curves | #66 | oracle `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (exact-`Q`) | ✅ curve-snap grid-friendliness |
-| **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
-| **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `theories/DE9IM.v`, `RelateLineLine.v`, `RelateIntDetBound.v` | 🟡 line-line DE-9IM ✅; arc-aware planned |
+| **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `OverlayCorrectness.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
+| **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `DE9IM.v`, `RelateLineLine.v`, `RelateAreaPoint.v`, `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`, `RelateArcChord.v`, `RelateArcAnalytic.v`, `RelateClothoid.v`, `RelateEllipticArc.v`, `RelateBezier3.v`, `RelateCurveAreaPoint.v`, `RelateMatrix*.v`, `RelateCurveMatrix.v`; oracle `CURVE_RELATE_MATRIX` / `RELATE_MATRIX` / `RELATE_PREDICATE` | 🟡 full 9-cell curve DE-9IM matrix algebra + witnesses ✅ (S0–S12); cell-**dimension** (Jordan/overlay) soundness deferred |
 | **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. Deferred-proof registry is now EMPTY (0); `extract_rings_valid` carries the planar Euler hypotheses |
 | **TRI-DT** | Delaunay on (densified) curved boundaries | #68 | `theories-flocq/InCircle_b64_exact.v` (primitive), `Triangle.v`, `Tin.v` | 🟡 in-circle primitive ✅; Delaunay proper planned |
 | **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
@@ -148,16 +157,38 @@ spending further proof effort — several are stale.
    same-face FACE SPLIT `num_faces (E_minus E d) = num_faces E + 1`. The only
    residual is the named planar Euler identity itself, now a hypothesis on the
    headline `extract_rings_valid` (carried by design, never axiomatized).
+6. **Progress since 2026-06-14 (2026-06-20) — the arc-metrics / curve-relate /
+   buffer-region / ring-validity oracle wave.** A broad curve oracle suite
+   landed (PRs ≈ #216–#246): arc **metrics** (`ArcArea.v`, `ArcCentroid.v`,
+   `ArcAreaCentroid.v` + ARC_AREA / ARC_CENTROID / ARC_AREA_CENTROID), arc
+   **distance** (`ArcDistance.v`, `ArcArcDistance.v`, `ArcSegmentDistance.v` +
+   ARC_DISTANCE / ARC_ARC_DISTANCE / ARC_SEGMENT_DISTANCE), arc-arc / arc-segment
+   **intersection** existence (`ArcArcCircles.v`, `ArcArcSound.v`,
+   `ArcSegmentCircles.v` + ARC_ARC_XY / ARC_SEGMENT_XY), arc **offset / buffer**
+   (`ArcOffsetThreePoint.v`, `CurveRingOffset.v`, `CurveOffsetAssembly{,Total}.v`,
+   `CurveRoundJoin.v`, `CurveBufferArea.v` + ARC_OFFSET_XY / BUFFER_REGION), curve
+   **validity** (`CurveRingSimple.v`, `CurvePolygon{Simple,Valid,Orientation,Disjoint}.v`
+   + RING_SIMPLE / POINT_IN_CURVE_RING / RING_ORIENTATION / HOLES_DISJOINT), the
+   full **DE-9IM** suite (#67 S0–S12 + CURVE_RELATE_MATRIX), and curve
+   **simplification** (`CP_BOUNDARY_SIMPLIFY` + `oracle/curve_polygon.py`,
+   surfaces wishlist #1). Pattern across all: exact rational invariants / witness
+   soundness Qed-closed; the transcendental output coordinate and the true-region
+   (Jordan / Minkowski / cell-dimension) soundness are the recorded deferred
+   frontiers. The hand-roll ratchet is at 19 frozen interface-boundary kernels
+   (`docs/oracle-handrolled-allowlist.txt`).
 
-## Recommended order of attack (revised 2026-06-09)
+## Recommended order of attack (revised 2026-06-20)
 
-1. **#67** — now the active frontier and largest *unfinished* build: extend the
-   landed line-line DE-9IM (S0–S3) to boundary/MOD2 policy, area-line/area-area,
-   and the RelateNG pipeline + prepared cache (S4+).
-2. **#64** — finish ask #5a Scope B/C (arc-line coordinate identity + forward
-   error) and arc-arc; the sign/length foundation is done.
-3. **#66** — finish remaining precision/overlay gaps (mostly there).
-4. **#65** — curve-aware buffer output once #64 arc coords land.
+1. **#67** — still the deepest *unfinished* build, but now well advanced: the
+   matrix algebra + witnesses are landed through S12 and the curve DE-9IM is
+   computable (CURVE_RELATE_MATRIX). Remaining: cell-**dimension** (Jordan/overlay)
+   soundness, the RelateNG pipeline, and the prepared cache.
+2. **#64** — finish ask #5a Scope B/C (arc-line coordinate **identity** + forward
+   error) and the quartic arc-arc coordinates; the sign/length/area/distance and
+   intersection-**existence** foundation is now done.
+3. **#65** — close the geometric "signed area = true Minkowski buffer area" gap
+   above the landed BUFFER_REGION certificate.
+4. **#66** — finish remaining precision/overlay gaps (mostly there).
 5. **#68** — Delaunay / Voronoi on top of the now-proven `inCircle_R`.
 
 ## How to cite the corpus
