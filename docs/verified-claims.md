@@ -776,13 +776,14 @@ the NTS#819 area-line carrier.
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
 
-## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15d)
+## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15f)
 
 First RelateNG-noding rung: closed-segment strata + point-set DE-9IM
 specification (`line_de9im_pointset`), with meet-layer bridges from S8
 `classify_line_pair` / `line_pair_fill`, S4b `ll_matrix_touches_endpoint`,
-and Romanschek EE = 2 oracle rows. JTS#1175 BI-without-share and collections
-remain S15e+.
+Romanschek EE = 2 / test-10 exterior rows, and JTS#1175 collection-level
+BI witnesses. Full `line_pair_fill` IE/EI/BE/EB bridges and cell-dimension
+pinning remain S15g+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -798,6 +799,21 @@ remain S15e+.
 | `RelateNodingLineLine.v : segments_int_bnd_touches_ib_cell` | T-junction (int×bnd) ⇒ IB = 0-dim for `ll_matrix_touches_endpoint` `[exact]` | 3 |
 | `RelateNodingLineLine.v : segments_endpoint_contact_bb_cell` | Mutual endpoint contact ⇒ BB = 0-dim for `ll_matrix_overlap_ii` `[exact]` | 3 |
 | `RelateNodingLineLine.v : paper_matrix_ee_dim2_cell` | Romanschek EE = 2 row inhabited for any bounded segment pair `[exact]` | 3 |
+| `RelateNodingLineLine.v : no_share_midpoint_ie_cell` | No-share + `A <> B` ⇒ IE = 1-dim via AB midpoint witness `[exact]` | 3 |
+| `RelateNodingLineLine.v : no_share_midpoint_ei_cell` | No-share + `C <> D` ⇒ EI = 1-dim via CD midpoint witness `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_midpoint_ie_ei_cells` | `LPR_Disjoint` + non-degenerate segments ⇒ test-10 IE/EI = 1-dim `[exact]` | 3 |
+| `RelateNodingLineLine.v : segments_bnd_int_bi_cell` | Bnd×int contact ⇒ BI = 0-dim for `ll_matrix_paper_test10` `[exact]` | 3 |
+| `RelateNodingLineLine.v : jts1175_no_share_pointset_bi_empty` | No-share ⇒ point-set BI cell empty (test-10 BI=0 not derivable on nominated pair alone) `[exact]` | 3 |
+| `RelateNodingLineLine.v : endpoint_a_exterior_be_cell` | `A` exterior to CD ⇒ BE = 0-dim for test 10 `[exact]` | 3 |
+| `RelateNodingLineLine.v : endpoint_b_exterior_be_cell` | `B` exterior to CD ⇒ BE = 0-dim for test 10 `[exact]` | 3 |
+| `RelateNodingLineLine.v : endpoint_c_exterior_eb_cell` | `C` exterior to AB ⇒ EB = 0-dim for test 10 `[exact]` | 3 |
+| `RelateNodingLineLine.v : endpoint_d_exterior_eb_cell` | `D` exterior to AB ⇒ EB = 0-dim for test 10 `[exact]` | 3 |
+| `RelateNodingLineLine.v : paper_test10_ie_ei_ee_cells` | No-share + non-degenerate segments ⇒ test-10 IE/EI/EE row witnesses `[exact]` | 3 |
+| `RelateNodingLineLine.v : bnd_int_contact_implies_segments_share` | Bnd×int contact ⇒ `segments_share` (single-pair BI needs share) `[exact]` | 3 |
+| `RelateNodingLineLine.v : jts1175_no_share_nominated_pair_bi_empty` | No-share nominated pair cannot carry test-10 BI = 0-dim cell `[exact]` | 3 |
+| `RelateNodingLineLine.v : jts1175_collection_bi_witness` | Multi-segment collection bnd×int contact ⇒ ∃ cross-product pair with test-10 BI = 0-dim `[exact]` | 3 |
+| `RelateNodingLineLine.v : mod2_endpoint_bnd_int_bi_cell` | MOD2 degree-1 endpoint + bnd×int contact ⇒ test-10 BI = 0-dim `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_disjoint_exterior_be_eb_cells` | `LPR_Disjoint` + four endpoint-exterior hypotheses ⇒ test-10 BE/EB = 0-dim `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
 

@@ -1,7 +1,7 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateNodingLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 15a–15d (S15a–S15d): line×line point-set DE-9IM bridge.
+   Issue #67 session 15a–15f (S15a–S15f): line×line point-set DE-9IM bridge.
 
    First RelateNG-noding rung: closed-segment strata (strict interior /
    endpoint boundary / exterior) and a 9-cell `line_de9im_pointset`
@@ -24,15 +24,20 @@
          `ll_matrix_point_ii`; shared-endpoint overlap ⇒ BB = 0-dim cell;
          T-junction int×bnd contact ⇒ IB = 0-dim for
          `ll_matrix_touches_endpoint`; mutual endpoint contact ⇒ BB = 0-dim;
-         Romanschek EE = 2 exterior cell for any bounded segment pair
+         Romanschek EE = 2 exterior cell for any bounded segment pair;
+         no-share midpoints ⇒ IE/EI = 1-dim (OGC exterior rows);
+         JTS#1175 negative: no-share ⇒ point-set BI empty (test 10 BI=0
+         not derivable here); bnd×int share ⇒ BI = 0-dim;
+         endpoint exterior to other segment ⇒ BE/EB = 0-dim;
+         JTS#1175 collection cross-product BI witness (bnd×int contact
+         across segment lists); nominated-pair no-share ⇏ BI = 0-dim
 
-   Honest gaps (deferred S15e+):
+   Honest gaps (deferred S15g+):
 
-     - S8 simplified witnesses leave IE/EI/BE/EB rows `None` (non-OGC);
-       JTS#1175 BI without geometric share (test 10) not derivable from
-       closed-segment strata alone.
-     - `line_pair_fill LPR_Share` vs Touches / overlap witnesses on
-       endpoint-only regimes; collections; full cell-dimension pinning.
+     - Full IE/EI/BE/EB from `line_pair_fill` alone; collection union
+       semantics and matrix aggregation over segment cross-products.
+     - `line_pair_fill LPR_Share` vs Touches / overlap witnesses;
+       full cell-dimension pinning.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -42,7 +47,8 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra.
+From Stdlib Require Import Reals Lra List.
+Import ListNotations.
 From NTS.Proofs Require Import DE9IM Distance Orientation Segment Intersect
   RelateLineLine RelateBoundary RelateMatrixLineLine.
 Open Scope R_scope.
@@ -864,7 +870,218 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §12  Matrix well-formedness corollary.                                     *)
+(* §12  OGC exterior rows + JTS#1175 BI negative (no-share regime).           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition line_ie_dim1_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_ie m) LSInt LSExt A B C D.
+
+Definition line_ei_dim1_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_ei m) LSExt LSInt A B C D.
+
+Definition line_be_dim0_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_be m) LSBnd LSExt A B C D.
+
+Definition line_eb_dim0_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_eb m) LSExt LSBnd A B C D.
+
+Definition line_bi_point_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_bi m) LSBnd LSInt A B C D.
+
+Definition segments_bnd_int_contact (A B C D : Point) : Prop :=
+  exists p : Point, seg_in_stratum LSBnd A B p /\ seg_in_stratum LSInt C D p.
+
+Lemma int_on_cd_share :
+  forall A B C D p,
+    seg_in_stratum LSInt A B p ->
+    between C D p ->
+    segments_share A B C D.
+Proof.
+  intros A B C D p HAB Hbet.
+  exists p. split.
+  - apply between_strict_implies_between. exact HAB.
+  - exact Hbet.
+Qed.
+
+Lemma int_on_ab_share :
+  forall A B C D p,
+    seg_in_stratum LSInt C D p ->
+    between A B p ->
+    segments_share A B C D.
+Proof.
+  intros A B C D p HCD Hbet.
+  exists p. split.
+  - exact Hbet.
+  - apply between_strict_implies_between. exact HCD.
+Qed.
+
+Lemma no_share_interior_not_on_cd :
+  forall A B C D p,
+    seg_in_stratum LSInt A B p ->
+    ~ segments_share A B C D ->
+    ~ between C D p.
+Proof.
+  intros A B C D p HAB Hnoshare Hbet.
+  apply Hnoshare. eauto using int_on_cd_share.
+Qed.
+
+Lemma no_share_interior_not_on_ab :
+  forall A B C D p,
+    seg_in_stratum LSInt C D p ->
+    ~ segments_share A B C D ->
+    ~ between A B p.
+Proof.
+  intros A B C D p HCD Hnoshare Hbet.
+  apply Hnoshare. eauto using int_on_ab_share.
+Qed.
+
+Theorem no_share_midpoint_ie_cell :
+  forall A B C D,
+    A <> B ->
+    ~ segments_share A B C D ->
+    line_ie_dim1_cell A B C D
+      {| im_ii := ll_cell_empty; im_ib := ll_cell_empty; im_ie := ll_dim1;
+         im_bi := ll_cell_empty; im_bb := ll_cell_empty; im_be := ll_cell_empty;
+         im_ei := ll_cell_empty; im_eb := ll_cell_empty; im_ee := ll_cell_empty |}.
+Proof.
+  intros A B C D Hne Hnoshare.
+  unfold line_ie_dim1_cell. simpl.
+  apply (line_cell_ok_dim1 LSInt LSExt A B C D (midpoint A B)).
+  - apply between_strict_midpoint. exact Hne.
+  - unfold seg_in_stratum. simpl.
+    intro Hbet. apply Hnoshare.
+    apply int_on_cd_share with (p := midpoint A B).
+    + apply between_strict_midpoint. exact Hne.
+    + exact Hbet.
+Qed.
+
+Theorem no_share_midpoint_ei_cell :
+  forall A B C D,
+    C <> D ->
+    ~ segments_share A B C D ->
+    line_ei_dim1_cell A B C D
+      {| im_ii := ll_cell_empty; im_ib := ll_cell_empty; im_ie := ll_cell_empty;
+         im_bi := ll_cell_empty; im_bb := ll_cell_empty; im_be := ll_cell_empty;
+         im_ei := ll_dim1; im_eb := ll_cell_empty; im_ee := ll_cell_empty |}.
+Proof.
+  intros A B C D Hne Hnoshare.
+  unfold line_ei_dim1_cell. simpl.
+  apply (line_cell_ok_dim1 LSExt LSInt A B C D (midpoint C D)).
+  - unfold seg_in_stratum. simpl.
+    intro Hbet. apply Hnoshare.
+    apply int_on_ab_share with (p := midpoint C D).
+    + apply between_strict_midpoint. exact Hne.
+    + exact Hbet.
+  - apply between_strict_midpoint. exact Hne.
+Qed.
+
+Theorem classify_disjoint_midpoint_ie_ei_cells :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Disjoint ->
+    A <> B ->
+    C <> D ->
+    line_ie_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_ei_dim1_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hdisj HneAB HneCD.
+  unfold line_ie_dim1_cell, line_ei_dim1_cell, ll_matrix_paper_test10. simpl.
+  split.
+  - apply no_share_midpoint_ie_cell.
+    + exact HneAB.
+    + intro Hshare. apply (rejection_not_share A B C D Hdisj Hshare).
+  - apply no_share_midpoint_ei_cell.
+    + exact HneCD.
+    + intro Hshare. apply (rejection_not_share A B C D Hdisj Hshare).
+Qed.
+
+Theorem segments_bnd_int_bi_cell :
+  forall A B C D,
+    segments_bnd_int_contact A B C D ->
+    line_bi_point_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D [p [HAB HCD]].
+  unfold line_bi_point_cell, ll_matrix_paper_test10. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSInt A B C D p); assumption.
+Qed.
+
+Theorem jts1175_no_share_pointset_bi_empty :
+  forall A B C D,
+    ~ segments_share A B C D ->
+    line_cell_ok None LSBnd LSInt A B C D.
+Proof.
+  intros. apply (line_cell_ok_none_when LSBnd LSInt A B C D).
+  eauto using no_share_no_bnd_int.
+Qed.
+
+Theorem endpoint_a_exterior_be_cell :
+  forall A B C D,
+    ~ between C D A ->
+    line_be_dim0_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hext.
+  unfold line_be_dim0_cell, ll_matrix_paper_test10. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSExt A B C D A).
+  - apply seg_in_stratum_bnd_left.
+  - unfold seg_in_stratum. simpl. exact Hext.
+Qed.
+
+Theorem endpoint_b_exterior_be_cell :
+  forall A B C D,
+    ~ between C D B ->
+    line_be_dim0_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hext.
+  unfold line_be_dim0_cell, ll_matrix_paper_test10. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSExt A B C D B).
+  - apply seg_in_stratum_bnd_right.
+  - unfold seg_in_stratum. simpl. exact Hext.
+Qed.
+
+Theorem endpoint_c_exterior_eb_cell :
+  forall A B C D,
+    ~ between A B C ->
+    line_eb_dim0_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hext.
+  unfold line_eb_dim0_cell, ll_matrix_paper_test10. simpl.
+  apply (line_cell_ok_dim0 LSExt LSBnd A B C D C).
+  - unfold seg_in_stratum. simpl. exact Hext.
+  - apply seg_in_stratum_bnd_left.
+Qed.
+
+Theorem endpoint_d_exterior_eb_cell :
+  forall A B C D,
+    ~ between A B D ->
+    line_eb_dim0_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hext.
+  unfold line_eb_dim0_cell, ll_matrix_paper_test10. simpl.
+  apply (line_cell_ok_dim0 LSExt LSBnd A B C D D).
+  - unfold seg_in_stratum. simpl. exact Hext.
+  - apply seg_in_stratum_bnd_right.
+Qed.
+
+Theorem paper_test10_ie_ei_ee_cells :
+  forall A B C D,
+    A <> B ->
+    C <> D ->
+    ~ segments_share A B C D ->
+    line_ie_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_ei_dim1_cell A B C D ll_matrix_paper_test10 /\
+    line_ee_dim2_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D HneAB HneCD Hnoshare.
+  split.
+  - unfold line_ie_dim1_cell, ll_matrix_paper_test10. simpl.
+    apply no_share_midpoint_ie_cell; assumption.
+  - split.
+    + unfold line_ei_dim1_cell, ll_matrix_paper_test10. simpl.
+      apply no_share_midpoint_ei_cell; assumption.
+    + apply paper_test10_ee_dim2_cell.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §13  Matrix well-formedness corollary.                                     *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem line_de9im_matrix_ok :
@@ -877,6 +1094,126 @@ Proof.
     [ apply (proj1 Hii) | apply (proj1 Hib) | apply (proj1 Hie)
     | apply (proj1 Hbi) | apply (proj1 Hbb) | apply (proj1 Hbe)
     | apply (proj1 Hei) | apply (proj1 Heb) | apply (proj1 Hee) ].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §14  JTS#1175 collection BI witness + nominated-pair limitation.           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition Segment2 : Type := (Point * Point)%type.
+
+Definition line_collection_bnd_int_contact (segsA segsB : list Segment2) : Prop :=
+  exists A B C D,
+    In (A, B) segsA /\ In (C, D) segsB /\
+    segments_bnd_int_contact A B C D.
+
+Lemma bnd_int_contact_implies_segments_share :
+  forall A B C D,
+    segments_bnd_int_contact A B C D ->
+    segments_share A B C D.
+Proof.
+  intros A B C D [p [Hbnd Hint]].
+  exists p. split.
+  - apply endpoint_implies_between. exact Hbnd.
+  - apply between_strict_implies_between. exact Hint.
+Qed.
+
+Lemma no_share_no_bnd_int_contact :
+  forall A B C D,
+    ~ segments_share A B C D ->
+    ~ segments_bnd_int_contact A B C D.
+Proof.
+  intros A B C D Hnoshare Hcontact.
+  apply Hnoshare. eauto using bnd_int_contact_implies_segments_share.
+Qed.
+
+Lemma bi_point_cell_implies_bnd_int_contact :
+  forall A B C D d,
+    line_cell_ok d LSBnd LSInt A B C D ->
+    dim_nonempty d ->
+    segments_bnd_int_contact A B C D.
+Proof.
+  intros A B C D d Hcell Hdn.
+  destruct Hcell as [_ Hiff].
+  destruct Hiff as [Hto _].
+  destruct (Hto Hdn) as [p [Hbnd Hint]].
+  exists p. split; assumption.
+Qed.
+
+Lemma bi_point_cell_implies_bnd_int_contact_matrix :
+  forall A B C D m,
+    line_bi_point_cell A B C D m ->
+    dim_nonempty (im_bi m) ->
+    segments_bnd_int_contact A B C D.
+Proof.
+  intros A B C D m Hbi Hdn.
+  unfold line_bi_point_cell in Hbi.
+  eauto using bi_point_cell_implies_bnd_int_contact.
+Qed.
+
+Theorem jts1175_no_share_nominated_pair_bi_empty :
+  forall A B C D,
+    ~ segments_share A B C D ->
+    ~ line_bi_point_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D Hnoshare Hbi.
+  apply no_share_no_bnd_int_contact with (A := A) (B := B) (C := C) (D := D).
+  - exact Hnoshare.
+  - unfold line_bi_point_cell, ll_matrix_paper_test10 in Hbi.
+    simpl in Hbi.
+    apply (bi_point_cell_implies_bnd_int_contact A B C D (ll_dim0) Hbi).
+    simpl. discriminate.
+Qed.
+
+Theorem line_collection_bnd_int_bi_cell :
+  forall segsA segsB A B C D,
+    In (A, B) segsA ->
+    In (C, D) segsB ->
+    segments_bnd_int_contact A B C D ->
+    line_bi_point_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros segsA segsB A B C D _ _ Hcontact.
+  apply segments_bnd_int_bi_cell. exact Hcontact.
+Qed.
+
+Theorem jts1175_collection_bi_witness :
+  forall segsA segsB,
+    line_collection_bnd_int_contact segsA segsB ->
+    exists A B C D,
+      In (A, B) segsA /\
+      In (C, D) segsB /\
+      line_bi_point_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros segsA segsB [A [B [C [D [HinA [HinB Hcontact]]]]]].
+  exists A; exists B; exists C; exists D.
+  split; [exact HinA | split; [exact HinB | ]].
+  apply (line_collection_bnd_int_bi_cell segsA segsB A B C D HinA HinB Hcontact).
+Qed.
+
+Theorem mod2_endpoint_bnd_int_bi_cell :
+  forall A B C D,
+    mod2_is_boundary_node 1 ->
+    segments_bnd_int_contact A B C D ->
+    line_bi_point_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D _ Hcontact.
+  apply segments_bnd_int_bi_cell. exact Hcontact.
+Qed.
+
+Theorem classify_disjoint_exterior_be_eb_cells :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Disjoint ->
+    ~ between C D A ->
+    ~ between C D B ->
+    ~ between A B C ->
+    ~ between A B D ->
+    line_be_dim0_cell A B C D ll_matrix_paper_test10 /\
+    line_eb_dim0_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros A B C D _ HextA HextB HextC HextD.
+  split.
+  - apply endpoint_a_exterior_be_cell. exact HextA.
+  - apply endpoint_c_exterior_eb_cell. exact HextC.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -893,5 +1230,14 @@ Print Assumptions classify_collinear_overlap_shared_endpoint_bb_cell.
 Print Assumptions segments_int_bnd_touches_ib_cell.
 Print Assumptions segments_endpoint_contact_bb_cell.
 Print Assumptions paper_matrix_ee_dim2_cell.
+Print Assumptions classify_disjoint_midpoint_ie_ei_cells.
+Print Assumptions jts1175_no_share_pointset_bi_empty.
+Print Assumptions segments_bnd_int_bi_cell.
+Print Assumptions paper_test10_ie_ei_ee_cells.
+Print Assumptions bnd_int_contact_implies_segments_share.
+Print Assumptions jts1175_no_share_nominated_pair_bi_empty.
+Print Assumptions jts1175_collection_bi_witness.
+Print Assumptions mod2_endpoint_bnd_int_bi_cell.
+Print Assumptions classify_disjoint_exterior_be_eb_cells.
 Print Assumptions two_segments_exterior_meet.
 Print Assumptions line_de9im_ee_inhabited.
