@@ -653,9 +653,9 @@ theories/RelatePreparedCache.v
 # boundary segments as indexed items + envelope-rejection soundness at polygon
 # level.  Inherits S13.  No Admitted.
 theories/RelatePreparedCacheAreaLine.v
-# Issue #67 session 15a–15c (S15a–S15c): line×line point-set DE-9IM bridge —
-# segment strata + meet-layer bridges for disjoint / proper-cross /
-# interior-share / collinear-overlap regimes to S8 `line_pair_fill`.  No Admitted.
+# Issue #67 session 15a–15d (S15a–S15d): line×line point-set DE-9IM bridge —
+# segment strata + meet-layer bridges for S8 fill, S4b Touches, overlap BB,
+# and Romanschek EE = 2 exterior row.  No Admitted.
 theories/RelateNodingLineLine.v
 # Special-case JCT, first sloped-edge family: the axis-aligned right triangle.
 # Generalises RectangleJCT's ray-parity computation to a ring with a sloped

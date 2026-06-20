@@ -776,13 +776,13 @@ the NTS#819 area-line carrier.
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
 
-## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15c)
+## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15d)
 
 First RelateNG-noding rung: closed-segment strata + point-set DE-9IM
 specification (`line_de9im_pointset`), with meet-layer bridges from S8
-`classify_line_pair` / `line_pair_fill` for the disjoint, proper-cross,
-interior-share, and collinear-overlap regimes. Bare endpoint-only share,
-OGC exterior rows, and collections remain S15d+.
+`classify_line_pair` / `line_pair_fill`, S4b `ll_matrix_touches_endpoint`,
+and Romanschek EE = 2 oracle rows. JTS#1175 BI-without-share and collections
+remain S15e+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -795,6 +795,9 @@ OGC exterior rows, and collections remain S15d+.
 | `RelateNodingLineLine.v : classify_share_interior_line_ii_cell` | `LPR_Share` + `segments_interior_share` ⇒ II = 0-dim point cell for `ll_matrix_point_ii` `[exact]` | 3 |
 | `RelateNodingLineLine.v : classify_collinear_overlap_CeqD_point_ii_cell` | `LPR_CollinearOverlap` + `C = D` + strict interior on AB ⇒ point II cell for `ll_matrix_point_ii` `[exact]` | 3 |
 | `RelateNodingLineLine.v : classify_collinear_overlap_shared_endpoint_bb_cell` | `LPR_CollinearOverlap` + shared endpoint ⇒ BB = 0-dim cell for `ll_matrix_overlap_ii` `[exact]` | 3 |
+| `RelateNodingLineLine.v : segments_int_bnd_touches_ib_cell` | T-junction (int×bnd) ⇒ IB = 0-dim for `ll_matrix_touches_endpoint` `[exact]` | 3 |
+| `RelateNodingLineLine.v : segments_endpoint_contact_bb_cell` | Mutual endpoint contact ⇒ BB = 0-dim for `ll_matrix_overlap_ii` `[exact]` | 3 |
+| `RelateNodingLineLine.v : paper_matrix_ee_dim2_cell` | Romanschek EE = 2 row inhabited for any bounded segment pair `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
 

@@ -1,12 +1,12 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateNodingLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 15a–15c (S15a–S15c): line×line point-set DE-9IM bridge.
+   Issue #67 session 15a–15d (S15a–S15d): line×line point-set DE-9IM bridge.
 
    First RelateNG-noding rung: closed-segment strata (strict interior /
    endpoint boundary / exterior) and a 9-cell `line_de9im_pointset`
-   specification, bridged to the S8 regime→witness selection for the
-   disjoint, proper-cross, share (interior), and collinear-overlap regimes.
+   specification, bridged to the S8 regime→witness selection and the S4b
+   Touches / Romanschek oracle matrices.
 
    Delivers:
 
@@ -21,16 +21,18 @@
          cell for `ll_matrix_point_ii`;
          `LPR_CollinearOverlap` (with `C <> D`) ⇒ II = 1-dimensional cell
          for `ll_matrix_overlap_ii`; degenerate `C = D` routes to
-         `ll_matrix_point_ii`; shared-endpoint overlap ⇒ BB = 0-dim cell
+         `ll_matrix_point_ii`; shared-endpoint overlap ⇒ BB = 0-dim cell;
+         T-junction int×bnd contact ⇒ IB = 0-dim for
+         `ll_matrix_touches_endpoint`; mutual endpoint contact ⇒ BB = 0-dim;
+         Romanschek EE = 2 exterior cell for any bounded segment pair
 
-   Honest gaps (deferred S15d+):
+   Honest gaps (deferred S15e+):
 
-     - S8 `ll_matrix_disjoint` / `ll_matrix_point_ii` leave exterior-row
-       cells `None` (non-OGC simplification; cf. Romanschek paper test 10/13
-       with EE = 2 in `RelateLineLine.v`).
-     - Bare `LPR_Share` (endpoint-only / T-junction) vs `ll_matrix_point_ii`
-       meet layer; overlap EE = 2; collections.
-     - Cell *dimension* pinning beyond nonempty/empty.
+     - S8 simplified witnesses leave IE/EI/BE/EB rows `None` (non-OGC);
+       JTS#1175 BI without geometric share (test 10) not derivable from
+       closed-segment strata alone.
+     - `line_pair_fill LPR_Share` vs Touches / overlap witnesses on
+       endpoint-only regimes; collections; full cell-dimension pinning.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -182,6 +184,19 @@ Lemma line_cell_ok_dim1 :
     seg_in_stratum sX A B p ->
     seg_in_stratum sY C D p ->
     line_cell_ok (Some 1%nat) sX sY A B C D.
+Proof.
+  intros sX sY A B C D p HsX HsY.
+  split.
+  - unfold dim_value_ok. simpl. repeat constructor.
+  - split; [ intros _; exists p; split; assumption | ].
+    intros [p' [Hp' _]]. intro H. discriminate H.
+Qed.
+
+Lemma line_cell_ok_dim2 :
+  forall sX sY A B C D p,
+    seg_in_stratum sX A B p ->
+    seg_in_stratum sY C D p ->
+    line_cell_ok (Some 2%nat) sX sY A B C D.
 Proof.
   intros sX sY A B C D p HsX HsY.
   split.
@@ -754,7 +769,102 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §10  Matrix well-formedness corollary.                                     *)
+(* §10  T-junction / endpoint contact — Touches and overlap BB witnesses.       *)
+(* -------------------------------------------------------------------------- *)
+
+Definition segments_int_bnd_contact (A B C D : Point) : Prop :=
+  exists p : Point, seg_in_stratum LSInt A B p /\ seg_in_stratum LSBnd C D p.
+
+Definition line_ib_point_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_ib m) LSInt LSBnd A B C D.
+
+Theorem segments_int_bnd_touches_ib_cell :
+  forall A B C D,
+    segments_int_bnd_contact A B C D ->
+    line_ib_point_cell A B C D ll_matrix_touches_endpoint.
+Proof.
+  intros A B C D [p [HAB HCD]].
+  unfold line_ib_point_cell, ll_matrix_touches_endpoint. simpl.
+  apply (line_cell_ok_dim0 LSInt LSBnd A B C D p); assumption.
+Qed.
+
+Theorem segments_share_int_bnd_touches_ib_cell :
+  forall A B C D,
+    segments_share A B C D ->
+    segments_int_bnd_contact A B C D ->
+    line_ib_point_cell A B C D ll_matrix_touches_endpoint.
+Proof.
+  intros A B C D _ Hint.
+  apply segments_int_bnd_touches_ib_cell. exact Hint.
+Qed.
+
+Theorem segments_endpoint_contact_bb_cell :
+  forall A B C D,
+    segments_endpoint_contact A B C D ->
+    line_bb_point_cell A B C D ll_matrix_overlap_ii.
+Proof.
+  intros A B C D [X [HAB [HCD [HendAB HendCD]]]].
+  unfold line_bb_point_cell, ll_matrix_overlap_ii. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSBnd A B C D X).
+  - unfold seg_in_stratum. simpl. exact HendAB.
+  - unfold seg_in_stratum. simpl. exact HendCD.
+Qed.
+
+Theorem segments_share_endpoint_contact_bb_cell :
+  forall A B C D,
+    segments_share A B C D ->
+    segments_endpoint_contact A B C D ->
+    line_bb_point_cell A B C D ll_matrix_overlap_ii.
+Proof.
+  intros A B C D _ Hcontact.
+  apply segments_endpoint_contact_bb_cell. exact Hcontact.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §11  OGC exterior row — EE = 2 for Romanschek / bounded segment pairs.     *)
+(* -------------------------------------------------------------------------- *)
+
+Definition line_ee_dim2_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_ee m) LSExt LSExt A B C D.
+
+Theorem segments_bounded_ee_dim2_cell :
+  forall A B C D,
+    line_ee_dim2_cell A B C D
+      {| im_ii := ll_cell_empty; im_ib := ll_cell_empty; im_ie := ll_cell_empty;
+         im_bi := ll_cell_empty; im_bb := ll_cell_empty; im_be := ll_cell_empty;
+         im_ei := ll_cell_empty; im_eb := ll_cell_empty; im_ee := ll_dim2 |}.
+Proof.
+  intros A B C D.
+  unfold line_ee_dim2_cell, ll_dim2. simpl.
+  destruct (two_segments_exterior_meet A B C D) as [p [HA HB]].
+  apply (line_cell_ok_dim2 LSExt LSExt A B C D p); assumption.
+Qed.
+
+Theorem paper_matrix_ee_dim2_cell :
+  forall A B C D (m : IntersectionMatrix),
+    im_ee m = Some 2%nat ->
+    line_ee_dim2_cell A B C D m.
+Proof.
+  intros A B C D m Heq.
+  unfold line_ee_dim2_cell. rewrite Heq. simpl.
+  destruct (two_segments_exterior_meet A B C D) as [p [HA HB]].
+  apply (line_cell_ok_dim2 LSExt LSExt A B C D p); assumption.
+Qed.
+
+Theorem paper_test10_ee_dim2_cell :
+  forall A B C D, line_ee_dim2_cell A B C D ll_matrix_paper_test10.
+Proof.
+  intros. apply paper_matrix_ee_dim2_cell. reflexivity.
+Qed.
+
+Theorem paper_test13_ee_dim2_cell :
+  forall A B C D, line_ee_dim2_cell A B C D ll_matrix_paper_test13.
+Proof.
+  intros. apply paper_matrix_ee_dim2_cell. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §12  Matrix well-formedness corollary.                                     *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem line_de9im_matrix_ok :
@@ -780,5 +890,8 @@ Print Assumptions classify_collinear_overlap_line_ii_cell.
 Print Assumptions classify_share_interior_line_ii_cell.
 Print Assumptions classify_collinear_overlap_CeqD_point_ii_cell.
 Print Assumptions classify_collinear_overlap_shared_endpoint_bb_cell.
+Print Assumptions segments_int_bnd_touches_ib_cell.
+Print Assumptions segments_endpoint_contact_bb_cell.
+Print Assumptions paper_matrix_ee_dim2_cell.
 Print Assumptions two_segments_exterior_meet.
 Print Assumptions line_de9im_ee_inhabited.
