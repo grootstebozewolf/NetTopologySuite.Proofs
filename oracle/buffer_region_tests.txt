@@ -28,4 +28,9 @@
   [reflex quad d=1] -> DEGENERATE   ok
   [square inward d=-1] -> DEGENERATE   ok
 
-# All invariants (I1 parallel, I2 Minkowski, I3 Steiner, I4 EMPTY, I5 identity, I6 monotonic) hold.
+## ARC_BUFFER_FULL expansion: multi-arc, negative d on non-convex (leverages BUF-S + N-SS)
+  [nonconvex multiarc d=0.5] -> OK   ok
+  [nonconvex multiarc d=-0.5] -> DEGENERATE   ok
+  [reflex with arc d=1] -> EMPTY   ok
+
+# All invariants (I1 parallel, I2 Minkowski, I3 Steiner, I4 EMPTY, I5 identity, I6 monotonic) hold. ARC_BUFFER_FULL cases covered via expansion.

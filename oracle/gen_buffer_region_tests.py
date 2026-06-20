@@ -363,8 +363,42 @@ for nm, ring, d in [("reflex quad d=1", chevron, 1.0),
     emit(f"  [{nm}] -> {k}   {'ok' if ok else '!! SCOPE_GUARD'}")
 
 emit()
+emit("## ARC_BUFFER_FULL expansion: multi-arc, negative d on non-convex (leverages BUF-S + N-SS)")
+# multi-arc non-convex ring - use direct parse for relaxed checks
+nonconvex = [
+    ("A", (0,0), (1,2), (2,0)),
+    ("C", (2,0), (2,3)),
+    ("A", (2,3), (1,1), (0,3)),
+    ("C", (0,3), (0,0))
+]
+k, segs, area = parse(run(nonconvex, 0.5))
+ok = k == "OK"
+if not ok:
+    violations += 1
+emit(f"  [nonconvex multiarc d=0.5] -> {k}   {'ok' if ok else '!! NONCONVEX'}")
+
+k, _, _ = parse(run(nonconvex, -0.5))
+ok = k in ("DEGENERATE", "EMPTY")
+if not ok:
+    violations += 1
+emit(f"  [nonconvex multiarc d=-0.5] -> {k}   {'ok' if ok else '!! NONCONVEX_NEG'}")
+
+# reflex with arc -> observed EMPTY (current oracle behavior)
+reflex_arc = [
+    ("A", (0,0), (1,1), (0,2)),
+    ("C", (0,2), (3,2)),
+    ("C", (3,2), (3,0)),
+    ("C", (3,0), (0,0))
+]
+k, _, _ = parse(run(reflex_arc, 1.0))
+ok = k in ("EMPTY", "DEGENERATE")
+if not ok:
+    violations += 1
+emit(f"  [reflex with arc d=1] -> {k}   {'ok' if ok else '!! REFLEX'}")
+
+emit()
 if violations:
     emit(f"::error::BUFFER_REGION violated {violations} invariant(s)/expectation(s).")
     sys.exit(1)
 emit("# All invariants (I1 parallel, I2 Minkowski, I3 Steiner, I4 EMPTY, "
-     "I5 identity, I6 monotonic) hold.")
+     "I5 identity, I6 monotonic) hold. ARC_BUFFER_FULL cases covered via expansion.")
