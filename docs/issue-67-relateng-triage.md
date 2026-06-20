@@ -1,7 +1,8 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** living triage — S0–**S15b** **complete in the working tree**
-> (2026-06-20); **S15c+** (share / OGC exterior / collections) remains open.
+> **Status:** living triage — S0–**S15c** **complete in the working tree**
+> (2026-06-20); **S15d+** (endpoint-only share / OGC exterior / collections)
+> remains open.
 > Refresh when a new session closes.
 >
 > Corpus at time of writing: `main` (through S12 + curve→matrix transport stack);
@@ -74,7 +75,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3a Segment intersection (line-line)** | **PROVEN (Qed)** | `Intersect.v:900` (`segment_intersection_decision`), `:243` (`strict_completeness`) | Feeds `Intersects`/`Crosses`/`Touches` for line-line; collinear case closed (`collinear_share_iff_1d_overlap`). |
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
-| **#4 RelateNG algorithm** | **PARTIAL (S15b)** | `RelateNodingLineLine.v` | Line×line segment strata + point-set DE-9IM spec; disjoint + proper-cross + collinear-overlap meet-layer bridges to S8 `line_pair_fill`. Share / OGC exterior rows / collections remain S15c+. |
+| **#4 RelateNG algorithm** | **PARTIAL (S15c)** | `RelateNodingLineLine.v` | Line×line segment strata + point-set DE-9IM spec; disjoint + proper-cross + interior-share + collinear-overlap (II/BB/degenerate) bridges to S8 `line_pair_fill`. Endpoint-only share / OGC exterior / collections remain S15d+. |
 | **#5 Prepared-mode correctness** | **PARTIAL (S13–S14)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
@@ -171,10 +172,10 @@ area×line fill **(L)**, arc-chord relate **(M)**, and prepared cache **(F)**.
 Next frontier:
 
 - **(E) Full RelateNG noding pipeline** — *high / multi-session.* **Primary
-  next rung (S15c+).** S15a–S15b land line×line strata + disjoint/proper-cross/
-  collinear-overlap bridges (`RelateNodingLineLine.v`). Remaining: share regime,
-  OGC exterior rows, collections, zero-length lines, union semantics —
-  Phase-3-scale.
+  next rung (S15d+).** S15a–S15c land line×line strata + regime meet-layer
+  bridges (`RelateNodingLineLine.v`). Remaining: endpoint-only share /
+  T-junction, OGC exterior rows, collections, zero-length lines, union
+  semantics — Phase-3-scale.
 
 - **(F) Prepared A-L cache correctness** — **partial (S13–S14).** Generic
   refinement + rectangle-boundary area-line instance in `RelatePreparedCache*.v`;
@@ -218,7 +219,10 @@ The recommended path forward:
 - **S15b (done):** proper-cross IB/BI/BB emptiness + collinear-overlap II=1
   bridge (`classify_proper_cross_line_point_ii_ib_meet`,
   `classify_collinear_overlap_line_ii_cell` with `C <> D`).
-- **S15c+:** share regime, OGC exterior rows, collections.
+- **S15c (done):** interior-share II bridge (`classify_share_interior_line_ii_cell`);
+  degenerate overlap `C = D` point route (`classify_collinear_overlap_CeqD_point_ii_cell`);
+  overlap BB at shared endpoint (`classify_collinear_overlap_shared_endpoint_bb_cell`).
+- **S15d+:** endpoint-only share / T-junction, OGC exterior rows, collections.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -242,4 +246,5 @@ The recommended path forward:
 | S14 | Area-line prepared-cache instance (`RelatePreparedCacheAreaLine.v`) | S13 + `RectangleJCT.v` |
 | S15a | Line×line noding bridge (`RelateNodingLineLine.v`) | S8 |
 | S15b | Proper-cross meet layer + collinear-overlap II bridge | S15a |
-| S15c+ | Share + OGC exterior rows + collections | S15b |
+| S15c | Interior-share II + degenerate overlap + overlap BB | S15b |
+| S15d+ | Endpoint-only share + OGC exterior rows + collections | S15c |

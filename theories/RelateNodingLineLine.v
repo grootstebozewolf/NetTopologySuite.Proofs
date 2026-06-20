@@ -1,12 +1,12 @@
 (* ============================================================================
    NetTopologySuite.Proofs.RelateNodingLineLine
    ----------------------------------------------------------------------------
-   Issue #67 session 15a–15b (S15a–S15b): line×line point-set DE-9IM bridge.
+   Issue #67 session 15a–15c (S15a–S15c): line×line point-set DE-9IM bridge.
 
    First RelateNG-noding rung: closed-segment strata (strict interior /
    endpoint boundary / exterior) and a 9-cell `line_de9im_pointset`
    specification, bridged to the S8 regime→witness selection for the
-   disjoint, proper-cross, and collinear-overlap regimes.
+   disjoint, proper-cross, share (interior), and collinear-overlap regimes.
 
    Delivers:
 
@@ -17,16 +17,20 @@
          cells empty (`line_no_ib_meet`);
          `segments_proper_cross` / `LPR_ProperCross` ⇒ II = 0-dimensional
          point cell with IB/BI/BB empty (`line_point_ii_ib_meet`);
+         `segments_interior_share` / `LPR_Share` (interior) ⇒ II = 0-dim point
+         cell for `ll_matrix_point_ii`;
          `LPR_CollinearOverlap` (with `C <> D`) ⇒ II = 1-dimensional cell
-         for `ll_matrix_overlap_ii`
+         for `ll_matrix_overlap_ii`; degenerate `C = D` routes to
+         `ll_matrix_point_ii`; shared-endpoint overlap ⇒ BB = 0-dim cell
 
-   Honest gaps (deferred S15c+):
+   Honest gaps (deferred S15d+):
 
      - S8 `ll_matrix_disjoint` / `ll_matrix_point_ii` leave exterior-row
        cells `None` (non-OGC simplification; cf. Romanschek paper test 10/13
        with EE = 2 in `RelateLineLine.v`).
-     - `LPR_Share` / degenerate collinear overlap (`C = D`) full-matrix bridges.
-     - Cell *dimension* pinning beyond nonempty/empty (e.g. BB = 0 on overlap).
+     - Bare `LPR_Share` (endpoint-only / T-junction) vs `ll_matrix_point_ii`
+       meet layer; overlap EE = 2; collections.
+     - Cell *dimension* pinning beyond nonempty/empty.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
@@ -65,6 +69,20 @@ Lemma endpoint_implies_between :
   forall P0 P1 Q, on_segment_endpoint P0 P1 Q -> between P0 P1 Q.
 Proof.
   intros P0 P1 Q [H _]. exact H.
+Qed.
+
+Lemma seg_in_stratum_bnd_left :
+  forall P0 P1, seg_in_stratum LSBnd P0 P1 P0.
+Proof.
+  intros P0 P1. unfold seg_in_stratum. simpl.
+  split; [ apply between_P0 | left; reflexivity ].
+Qed.
+
+Lemma seg_in_stratum_bnd_right :
+  forall P0 P1, seg_in_stratum LSBnd P0 P1 P1.
+Proof.
+  intros P0 P1. unfold seg_in_stratum. simpl.
+  split; [ apply between_P1 | right; reflexivity ].
 Qed.
 
 Lemma between_py_le_max :
@@ -597,7 +615,146 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §7  Matrix well-formedness corollary.                                      *)
+(* §7  Interior share ⇒ II point cell (share regime, strict-interior witness). *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem segments_interior_share_line_ii_cell :
+  forall A B C D,
+    segments_interior_share A B C D ->
+    line_ii_point_cell A B C D ll_matrix_point_ii.
+Proof.
+  intros A B C D [X [HAB HCD]].
+  unfold line_ii_point_cell, ll_matrix_point_ii. simpl.
+  apply (line_cell_ok_dim0 LSInt LSInt A B C D X).
+  - unfold seg_in_stratum. simpl. exact HAB.
+  - unfold seg_in_stratum. simpl. exact HCD.
+Qed.
+
+Theorem classify_share_interior_line_ii_cell :
+  forall A B C D,
+    classify_line_pair A B C D LPR_Share ->
+    segments_interior_share A B C D ->
+    line_ii_point_cell A B C D (line_pair_fill LPR_Share).
+Proof.
+  intros A B C D _ Hshare.
+  rewrite line_pair_fill_share_eq.
+  apply segments_interior_share_line_ii_cell. exact Hshare.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §8  Degenerate collinear overlap (`C = D`) ⇒ point II cell.                *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma between_strict_self :
+  forall P, between_strict P P P.
+Proof.
+  intros P. exists (1 / 2). split.
+  - split; lra.
+  - split; simpl; ring.
+Qed.
+
+Lemma between_strict_same_endpoints :
+  forall P Q, between_strict P P Q -> Q = P.
+Proof.
+  intros P Q [t [Ht [Hx Hy]]].
+  destruct P, Q. simpl in Hx, Hy. f_equal; lra.
+Qed.
+
+Theorem segments_collinear_overlap_CeqD_point_ii_cell :
+  forall A B C D,
+    C = D ->
+    between_strict A B C ->
+    line_ii_point_cell A B C D ll_matrix_point_ii.
+Proof.
+  intros A B C D Heq Hstrict.
+  subst D.
+  unfold line_ii_point_cell, ll_matrix_point_ii. simpl.
+  apply (line_cell_ok_dim0 LSInt LSInt A B C C C).
+  - unfold seg_in_stratum. simpl. exact Hstrict.
+  - unfold seg_in_stratum. simpl. apply between_strict_self.
+Qed.
+
+Theorem classify_collinear_overlap_CeqD_point_ii_cell :
+  forall A B C D,
+    classify_line_pair A B C D LPR_CollinearOverlap ->
+    C = D ->
+    between_strict A B C ->
+    line_ii_point_cell A B C D ll_matrix_point_ii.
+Proof.
+  intros A B C D _ Heq Hstrict.
+  apply segments_collinear_overlap_CeqD_point_ii_cell; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §9  Collinear overlap — BB point cell at a shared segment endpoint.        *)
+(* -------------------------------------------------------------------------- *)
+
+Definition line_bb_point_cell (A B C D : Point) (m : IntersectionMatrix) : Prop :=
+  line_cell_ok (im_bb m) LSBnd LSBnd A B C D.
+
+Theorem collinear_overlap_endpoint_A_C_bb_cell :
+  forall A B C D, A = C -> line_bb_point_cell A B C D ll_matrix_overlap_ii.
+Proof.
+  intros A B C D Heq.
+  subst C.
+  unfold line_bb_point_cell, ll_matrix_overlap_ii. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSBnd A B A D A).
+  - apply seg_in_stratum_bnd_left.
+  - apply seg_in_stratum_bnd_left.
+Qed.
+
+Theorem collinear_overlap_endpoint_A_D_bb_cell :
+  forall A B C D, A = D -> line_bb_point_cell A B C D ll_matrix_overlap_ii.
+Proof.
+  intros A B C D Heq.
+  subst D.
+  unfold line_bb_point_cell, ll_matrix_overlap_ii. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSBnd A B C A A).
+  - apply seg_in_stratum_bnd_left.
+  - apply seg_in_stratum_bnd_right.
+Qed.
+
+Theorem collinear_overlap_endpoint_B_C_bb_cell :
+  forall A B C D, B = C -> line_bb_point_cell A B C D ll_matrix_overlap_ii.
+Proof.
+  intros A B C D Heq.
+  subst C.
+  unfold line_bb_point_cell, ll_matrix_overlap_ii. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSBnd A B B D B).
+  - apply seg_in_stratum_bnd_right.
+  - apply seg_in_stratum_bnd_left.
+Qed.
+
+Theorem collinear_overlap_endpoint_B_D_bb_cell :
+  forall A B C D, B = D -> line_bb_point_cell A B C D ll_matrix_overlap_ii.
+Proof.
+  intros A B C D Heq.
+  subst D.
+  unfold line_bb_point_cell, ll_matrix_overlap_ii. simpl.
+  apply (line_cell_ok_dim0 LSBnd LSBnd A B C B B).
+  - apply seg_in_stratum_bnd_right.
+  - apply seg_in_stratum_bnd_right.
+Qed.
+
+Theorem classify_collinear_overlap_shared_endpoint_bb_cell :
+  forall A B C D,
+    classify_line_pair A B C D LPR_CollinearOverlap ->
+    (A = C \/ A = D \/ B = C \/ B = D) ->
+    line_bb_point_cell A B C D (line_pair_fill LPR_CollinearOverlap).
+Proof.
+  intros A B C D _ [HAC | [HAD | [HBC | HBD]]].
+  - rewrite line_pair_fill_collinear_overlap_eq.
+    apply collinear_overlap_endpoint_A_C_bb_cell. exact HAC.
+  - rewrite line_pair_fill_collinear_overlap_eq.
+    apply collinear_overlap_endpoint_A_D_bb_cell. exact HAD.
+  - rewrite line_pair_fill_collinear_overlap_eq.
+    apply collinear_overlap_endpoint_B_C_bb_cell. exact HBC.
+  - rewrite line_pair_fill_collinear_overlap_eq.
+    apply collinear_overlap_endpoint_B_D_bb_cell. exact HBD.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §10  Matrix well-formedness corollary.                                     *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem line_de9im_matrix_ok :
@@ -620,5 +777,8 @@ Print Assumptions classify_disjoint_line_no_ib_meet.
 Print Assumptions classify_proper_cross_line_ii_cell.
 Print Assumptions classify_proper_cross_line_point_ii_ib_meet.
 Print Assumptions classify_collinear_overlap_line_ii_cell.
+Print Assumptions classify_share_interior_line_ii_cell.
+Print Assumptions classify_collinear_overlap_CeqD_point_ii_cell.
+Print Assumptions classify_collinear_overlap_shared_endpoint_bb_cell.
 Print Assumptions two_segments_exterior_meet.
 Print Assumptions line_de9im_ee_inhabited.

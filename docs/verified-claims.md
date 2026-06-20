@@ -776,13 +776,13 @@ the NTS#819 area-line carrier.
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
 
-## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15b)
+## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15c)
 
 First RelateNG-noding rung: closed-segment strata + point-set DE-9IM
 specification (`line_de9im_pointset`), with meet-layer bridges from S8
-`classify_line_pair` / `line_pair_fill` for the disjoint, proper-cross, and
-collinear-overlap regimes. Share regime, degenerate overlap (`C = D`), and
-OGC exterior rows remain S15c+.
+`classify_line_pair` / `line_pair_fill` for the disjoint, proper-cross,
+interior-share, and collinear-overlap regimes. Bare endpoint-only share,
+OGC exterior rows, and collections remain S15d+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -792,6 +792,9 @@ OGC exterior rows remain S15c+.
 | `RelateNodingLineLine.v : classify_proper_cross_line_ii_cell` | `LPR_ProperCross` ⇒ II = 0-dim point cell for `ll_matrix_point_ii` `[exact]` | 3 |
 | `RelateNodingLineLine.v : classify_proper_cross_line_point_ii_ib_meet` | `LPR_ProperCross` ⇒ II = 0 + IB/BI/BB empty for `ll_matrix_point_ii` `[exact]` | 3 |
 | `RelateNodingLineLine.v : classify_collinear_overlap_line_ii_cell` | `LPR_CollinearOverlap` + `C <> D` ⇒ II = 1-dim cell for `ll_matrix_overlap_ii` `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_share_interior_line_ii_cell` | `LPR_Share` + `segments_interior_share` ⇒ II = 0-dim point cell for `ll_matrix_point_ii` `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_collinear_overlap_CeqD_point_ii_cell` | `LPR_CollinearOverlap` + `C = D` + strict interior on AB ⇒ point II cell for `ll_matrix_point_ii` `[exact]` | 3 |
+| `RelateNodingLineLine.v : classify_collinear_overlap_shared_endpoint_bb_cell` | `LPR_CollinearOverlap` + shared endpoint ⇒ BB = 0-dim cell for `ll_matrix_overlap_ii` `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
 
