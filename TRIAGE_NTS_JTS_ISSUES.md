@@ -7,8 +7,9 @@
 > *proven* from *gap*, and recording priority and ordering decisions.
 >
 > Generated from the 2026-06-03 issue batch; last reconciled **2026-06-20**
-> against the current working corpus (`origin/main` through PR #250 + PR #251
-> pending — S15h–k line×line noding capstone + geometric `idet_abs_le_sq`).
+> against main (PR #250 + #251 merged — S15h–k line×line noding capstone +
+> geometric `idet_abs_le_sq`; + the 2026-06-20 NTS/JTS open-bug scan & driver
+> refresh in "Referenced upstream issues" below).
 > The prior reconciliation (2026-06-14,
 > branch `claude/cycle-count-partition-yjgjmy`, PR #195 — the H_bridge Euler
 > route + `ClassCount` convergence) predates the **arc-metrics / curve-relate /
@@ -106,19 +107,24 @@ spending further proof effort — several are stale.
 | JTS#1195 — Curve Awareness EPIC | #64, #65, #66, #68, #69 | Open — primary driver |
 | JTS#1175 — RelateNG.computeLineEnds() skips boundary points | #64, #66, #67 | **Fixed (jts#1200)** — struck through in #64/#66/#67 |
 | JTS#979 — buffer with fixed precision removes hole | #64, #65, #66 | Open — backed by `RingArea979.v` |
+| JTS#96 — incorrect results with fixed-precision buffer | #65, #66 | Open — sibling of JTS#979 (fixed-precision buffer soundness); new driver, 2026-06-20 scan |
 | JTS#752 — TopologyException in UnaryUnionNG (floating precision) | #66 | Open — **NOT explained by the asymmetry lane** (correction 2026-06-17): JTS's `HotPixel.intersectsScaled` canonicalizes to +X before testing, so it is reversal-symmetric by construction; `PassesThrough_b64_compute_asymmetric.v` models a Liang-Barsky divide-from-c0 filter JTS does not use. Root unidentified here. |
-| JTS#1133 — snapRoundingNoder on polygons returns MultiLineString | #66 | Open — **same correction**: asymmetry lane does not map to this defect (JTS canonicalizes endpoints); root unidentified here |
+| JTS#1133 — snapRoundingNoder on polygons returns MultiLineString | #66 | **Open** — 2026-06-20 verify: reclassified `type-bug` → `type-question` (why it left the bug scan), **not** resolved. Same correction: asymmetry lane does not map (JTS canonicalizes endpoints) |
 | JTS#1106 — orientation robustness summary | #64, #66 | Open — `Orient_b64_exact*` is the ground-truth spec |
-| JTS#1147, #739, #1028, #178, #180, #592, #866, #876, #908, #1102, #1183 — buffer/offset quality | #64, #65 | Open — "summary of failures" refs need re-check vs current JTS |
+| JTS#750 — Orientation.Index problem with COLLINEARity | #66, #67 | Open — companion to JTS#1106; `Orient_b64_exact*` collinear (`cross = 0`) sign is the ground-truth spec; new driver, 2026-06-20 scan |
+| JTS#163 — increase spatial-predicate accuracy via better DD conversion | #66, #67 | Open — relate/predicate robustness substrate (DE-9IM #67); new driver, 2026-06-20 scan |
+| JTS#1147, #739, #1028, #178, #180, #592, #866, #876, #908, #1102, #1183 — buffer/offset quality | #64, #65 | Open — "summary of failures" refs need re-check vs current JTS. 2026-06-20 scan: #739, #1028, #178, #180, #592, #876, #908, #1102, #1183 confirmed open `type-bug`; #1147 ("Unexpected `OffsetCurve.getCurve()` output since jts 1.20.0" — offset regression, relevant to NTS#815) & #866 ("Buffer unexpected boundary artifacts") **open, reclassified `type-bug` → `type-question`** |
 | JTS#1000 — OverlayNG failures summary | #64, #66, #67 | Open |
 | JTS#865 — OverlayNG intersection rotates vertices | #64, #66 | Open |
 | JTS#1122 — CoverageValidator misses gap if tolerance too large | #64, #66, #67 | Open |
-| JTS#1190, #1138, #1039, #20 — Delaunay/Voronoi robustness | #68 | Open |
+| JTS#1190, #1138, #1039, #20 — Delaunay/Voronoi robustness | #68 | Open — 2026-06-20 scan: #1138, #1039, #20 confirmed open `type-bug`; #1190 ("ConformingDelaunayTriangulationBuilder poor triangulation", last activity 2026-04-13) **open, reclassified `type-bug` → `type-question`** |
 | NTS#828 — align epic | #69 | Open |
 | NTS#815 — OffsetCurve miter for polygonal (JTS#1109) | #64, #65, #69 | Open — port target |
 | NTS#819 — RelateNG cache for prepared A-L (JTS#1099) | #67 | Open (perf); **proof companion partial (S13–S14b)** — `RelatePreparedCache*.v` |
 | NTS#247, #570 — curves / GML curves | #64, #69 | Open — old but relevant |
-| NTS#719, #638 — GeometryPrecisionReducer / buffer holes | #66 | Open |
+| NTS#719, #638 — GeometryPrecisionReducer / buffer holes | #66 | Open — both confirmed open `bug` (2026-06-20 scan) |
+| NTS#429 — Simplification and topology | #69 | Open (`bug`) — S-* / `Simplify.v`; the deferred *simplification-preserves-topology / curve* soundness frontier; new driver, 2026-06-20 scan |
+| NTS#780 — InputLines not set when calling RobustLineIntersector | #66, #67 | Open (`bug`) — port/API surface on the `RobustLineIntersector` differential-test path (Phase 0/1 oracle); note, 2026-06-20 scan |
 
 ## Cross-cutting findings
 
