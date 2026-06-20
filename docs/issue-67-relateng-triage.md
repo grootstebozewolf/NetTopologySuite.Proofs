@@ -1,7 +1,8 @@
 # Issue #67 — RelateNG / DE-9IM predicates: research & gap triage
 
-> **Status:** living triage — S0–**S12** **complete in the working tree**
-> (2026-06-11); **S13+** (full RelateNG noding, prepared cache) remains open.
+> **Status:** living triage — S0–**S13** **complete in the working tree**
+> (2026-06-20); **S14+** (full RelateNG noding, area-line cache instance, S12b
+> bridge) remains open.
 > Refresh when a new session closes.
 >
 > Corpus at time of writing: `main` through S3; S4–S10 add `RelateAreaPoint.v`,
@@ -73,7 +74,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
 | **#4 RelateNG algorithm** | **ABSENT** | — | No noding + matrix-fill pipeline; JTS uses point-local topology + union semantics for collections. |
-| **#5 Prepared-mode correctness** | **ABSENT** | — | NTS#819 is perf-only; proof obligation is `evaluate(B) = relate(A,B)` regardless of cache. |
+| **#5 Prepared-mode correctness** | **PARTIAL (S13)** | `RelatePreparedCache.v` (`evaluate_eq_brute`, `prepared_intersects_eq_brute`) | Generic STRtree contract + segment-intersects refinement; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
 
@@ -89,6 +90,9 @@ segment intersection machinery but need a **new DE-9IM layer**.
   headlines, generic-position guards.
 - `Bbox.v` — `bbox_disjoint` (necessary but not sufficient for geometry
   disjoint).
+- `RelatePreparedCache.v` — prepared-mode cache refinement (`evaluate_eq_brute`,
+  `prepared_intersects_eq_brute`); STRtree query = permutation of bbox-overlap
+  filter; path-independence corollaries.
 
 **Flocq layer (`theories-flocq/`):**
 
@@ -191,7 +195,9 @@ open; S11 oracle modes landed). The recommended path forward:
   `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
   S12b (the `to_geometry` point-in-ring bridge) now closed:
   `point_in_rect_curve_geometry_iff_polygon`.
-- **S13+:** full noding, prepared cache (**F**).
+- **S13 (done):** prepared-mode cache refinement (`RelatePreparedCache.v`); generic
+  monoid + segment-intersects concrete instance. Open: area-line instantiation.
+- **S14+:** full noding.
 
 ## 8. Proposed milestone sketch (if accepted)
 
@@ -211,4 +217,5 @@ open; S11 oracle modes landed). The recommended path forward:
 | S10b | Option-A analytic arc + clothoid (`RelateClothoid.v`) | S10 + `Atan2` |
 | S11 | Oracle `RELATE_MATRIX` + `RELATE_PREDICATE` (`relate_matrix.ml`) | S2–S10b |
 | S12 | Curve-polygon × point + fill (`RelateCurveAreaPoint.v`) | S4 + `CurveGeometry` |
-| S13+ | Full noding / prepared cache | S9–S12 |
+| S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) | S1 + `Bbox.v` |
+| S14+ | Full noding / area-line cache instance / S12b bridge | S9–S13 |
