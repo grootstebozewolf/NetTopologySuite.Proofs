@@ -77,7 +77,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
 | **#3b Point-in-polygon (area-point)** | **DEFINED; correctness PARTIAL** | `Overlay.v:183-203` (`point_in_ring`, `point_in_polygon`, `point_in_geometry`) | Algorithm defined; full correctness is conditional on JCT seam (`point_in_ring_correct_jct_cont` in `PointInRingCorrect.v`). |
 | **#3c Boundary / endpoint semantics** | **PARTIAL (S4b)** | `RelateBoundary.v` | MOD2 `BoundaryNodeRule`, endpoint vs interior contact predicates, Touches/Intersects soundness; JTS#1175 class pinned via test 10. Area-point boundary Touches in `RelateAreaPoint.v`. Full RelateNG boundary fill still absent. |
 | **#4 RelateNG algorithm** | **PARTIAL (S15g)** | `RelateNodingLineLine.v` | Line×line strata + point-set DE-9IM; regime bridges through S8 fill, S4b Touches IB, overlap BB, Romanschek EE/IE/EI rows, JTS#1175 collection BI witness, existential collection union (`line_collection_de9im_pointset`) + test-10 row aggregation. Pairwise `dim_value_join` matrix fill / full exterior bridges remain S15h+. |
-| **#5 Prepared-mode correctness** | **PARTIAL (S13–S14)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement; full `relate(A,B)` pipeline still absent. |
+| **#5 Prepared-mode correctness** | **PARTIAL (S13–S14b)** | `RelatePreparedCache.v`, `RelatePreparedCacheAreaLine.v` | Generic + segment + rectangle-boundary area-line refinement + polygon-envelope early-exit; full `relate(A,B)` pipeline still absent. |
 | **#6 Oracle / extraction** | **PARTIAL (S11)** | `oracle/relate_matrix.ml`, `driver.ml` | `RELATE_MATRIX` + `RELATE_PREDICATE` on pinned catalog; no geometry compute. |
 | **#7 Curve-aware predicates (V-CP, R-*)** | **PARTIAL (S12)** | `RelateArcChord.v`, `RelateCurveAreaPoint.v` | Arc×line + curve-polygon×point (chord rect via `to_geometry`). Chord-length bridge now closed (`ArcChordLength.v`); arc-span soundness partially closed (`ArcChordSound.v`, side/endpoint-conditioned). `to_geometry` point-in-ring bridge (S12b) now closed (`point_in_rect_curve_geometry_iff_polygon`). |
 
@@ -151,7 +151,7 @@ segment intersection machinery but need a **new DE-9IM layer**.
    segment-intersects + rectangle-boundary area-line instances are **PROVEN**
    in `RelatePreparedCache.v` / `RelatePreparedCacheAreaLine.v`. The remaining
    obligation is end-to-end `evaluate(prepare(A),B) = relate(A,B)` once the
-   RelateNG pipeline (ask #4) exists; polygon-envelope early-exit (S14b) queued.
+   RelateNG pipeline (ask #4) exists; polygon-envelope early-exit (S14b) ✅.
 
 6. **Curve extension (#7):** S12 lands chord rect curve-polygon × point carrier
    (S4 guard delegation); the `to_geometry` point-in-ring bridge (S12b) is now
@@ -181,7 +181,7 @@ Next frontier:
 
 - **(F) Prepared A-L cache correctness** — **partial (S13–S14).** Generic
   refinement + rectangle-boundary area-line instance in `RelatePreparedCache*.v`;
-  polygon-envelope early-exit (S14b) and full-pipeline hook remain queued.
+  full-pipeline hook remains queued (S14b envelope early-exit ✅).
 
 - **(I) Oracle `RELATE_MATRIX` driver** — **done (S11).** `oracle/relate_matrix.ml`
   + `RELATE_MATRIX` / `RELATE_PREDICATE` in `oracle/driver.ml`.
@@ -214,7 +214,7 @@ The recommended path forward:
 - **S13 (done):** prepared-mode cache refinement (`RelatePreparedCache.v`); generic
   monoid + segment-intersects concrete instance.
 - **S14 (done):** area-line carrier instance (`RelatePreparedCacheAreaLine.v`);
-  rectangle boundary edges + line envelope query. Open: polygon-envelope early-exit (S14b).
+  rectangle boundary edges + line envelope query. S14b envelope early-exit (`rect_envelope_disjoint_all_edges`, `prepared_area_line_envelope_early_exit`) ✅.
 - **S15a (done):** line×line point-set DE-9IM bridge (`RelateNodingLineLine.v`);
   disjoint + proper-cross meet-layer bridges; `Intersect.v` strict-interior
   intersection parameters.

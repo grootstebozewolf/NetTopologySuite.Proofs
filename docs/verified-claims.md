@@ -775,6 +775,8 @@ the NTS#819 area-line carrier.
 |---|---|---|
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_eq_brute` | **Area-line refinement:** prepared candidate fold over rectangle boundary edges = brute force, for any sound `intersect_test` `[exact]` | 3 |
 | `RelatePreparedCacheAreaLine.v : prepared_area_line_intersects_path_independent` | **Area-line path independence:** STRtree build/order irrelevant for rectangle×line prepared mode `[exact]` | 3 |
+| `RelatePreparedCacheAreaLine.v : rect_envelope_disjoint_all_edges` | **Polygon-envelope early-exit soundness (issue #67 S14b / NTS#819):** when the rectangle envelope `bbox_of_rect` and the query-segment envelope are disjoint, no boundary edge of `rect_boundary_segments` can meet the query segment — the soundness floor for skipping the STRtree query entirely `[exact]` | 3 |
+| `RelatePreparedCacheAreaLine.v : prepared_area_line_envelope_early_exit` | **Early-exit corollary (S14b):** under the same envelope-disjoint hypothesis, the brute-force `area_line_intersects_brute` fold is `false` for any sound `intersect_test` — the prepared area-line predicate may short-circuit before per-edge enumeration `[exact]` | 3 |
 
 ## Issue #67 — line×line noding bridge (`RelateNodingLineLine.v`, S15a–S15g)
 
