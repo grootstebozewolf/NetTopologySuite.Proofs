@@ -138,9 +138,11 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 #   Qed: regime guard (r = TPR_TouchEdge) + touch_triangles_satisfy_pointset.
 
 # DISCHARGED 2026-06-21 (conditional Qed): theories/RelateNG.v:touch_triangle_pair_ii_cell
-#   Qed under named H_ii_disjoint : ~exists p, point_set A p /\ point_set B p (following H_bridge_premise pattern).
-#   The algebraic separation 0<gtriA => gtriB<0 is supplied by touch_triangle_gtri_neg.
-#   The premise documents the lift from strict gtri separation to point_set (half-open parity); see Jordan seam below.
+#   Qed under named H_ii_disjoint : ~exists p, point_set A p /\ point_set B p (H_bridge pattern).
+#   Provides cell_ok None SInt SInt. The premise is the point_set form of II separation;
+#   algebraic 0<gtri separation is unconditional via touch_triangle_pair_strict_ii_no_common.
+#   Full unconditional ii_cell (and geom_de9im_pointset use) deferred on the lift below
+#   (point_set_characterises_geometric_interior). See also touch_int_ext_exclusion.
 
 # DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangle_f_cells_trimmed
 #   Qed by splitting/composition: first conjunct via touch_triangle_pair_strict_ii_no_common (Qed);
@@ -152,14 +154,14 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 #   Proof uses dispatch + rewrite + reflexivity (H_bridge pattern).
 
 theories/RelateNG.v:relate_triangle_touch | theories/RelateNG.v (relate under touch) + triangle_pair_fill | records intended matrix under explicit triangles_touch_on_shared_edge; regime stub blocks definitional equality today
-theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam fix) + g_sum/opposite_sides | fixed to TRUE claim (0 < gtri A p → gtri B p < 0); pending full derivation; used for ii_cell cases
+theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam fix) + g_sum/opposite_sides | fixed to TRUE claim (0 < gtri A p → gtri B p < 0); weak ~ (0 < ...) form now Qed (touch_int_ext_exclusion_weak); strict <0 pending =0 case analysis on shared-edge separation (see touch_int_ext_exclusion_weak proof). Used for ii_cell cases.
 
 # Jordan soundness seam (architectural): in_stratum SInt = point_set (half-open parity via point_in_ring)
 # vs true geometric interior {p | 0 < gtri p}. cell_ok None SInt SInt claims II=None under point_set,
 # but connecting to geometric_interior_cont (for full geom_de9im_pointset + dim2) requires
 # point_set A p <-> geometric_interior_cont A p (non-bnd p) via general_triangle_parity_characterises_interior.
 # Long-term refactor; not discharged in this session.
-theories/RelateNG.v:point_set_characterises_geometric_interior | Jordan soundness seam (SInt vs 0<gtri) + general triangle JCT | uses general_triangle_parity_characterises_interior; deferred lift for cell_ok / geom_de9im_pointset under SInt
+theories/RelateNG.v:point_set_characterises_geometric_interior | JCT / point_set → 0 < gtri lift (for touch_triangle_pair_ii_cell + geom_de9im_pointset) | uses general_triangle_parity_characterises_interior (guarded); see touch_triangle_pair_ii_cell comment in RelateNG.v and GeneralTriangleJCT.v; needed to remove named H_ii_disjoint premise and align stratum SInt with algebraic interiors for triangle touch cells.
 
 # Note: only the triangle touch family from the S15l lift. Rect work on this branch is already Qed or properly trimmed.
 

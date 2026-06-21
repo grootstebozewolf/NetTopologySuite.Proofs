@@ -8,7 +8,7 @@
 - Touch helpers (triangles_touch_on_shared_edge via shares + opposite_sides/cross, touch_triangle_bb_point + between).
 - Strict II no-common (`touch_triangle_pair_strict_ii_no_common` using gtri_pos_iff + shared edge sign flip).
 - Cell lemmas:
-  - `touch_triangle_pair_ii_cell` (None for SInt/SInt via strict 0 < gtri)
+  - `touch_triangle_pair_ii_cell` (None for SInt/SInt via point_set disjoint under named H_ii; 0<gtri form unconditional; lift deferred)
   - `touch_triangle_pair_bb_cell` (Some 1 for SBnd/SBnd via shared bnd point)
   - `touch_triangle_pair_ee_cell` (Some 2 for SExt/SExt via two_geometries_exterior_meet)
 - Capstone: `touch_triangles_satisfy_pointset` (and `_and_general`) assembling the provable cells.
