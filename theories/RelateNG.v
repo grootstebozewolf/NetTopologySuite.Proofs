@@ -28,12 +28,12 @@
    License: BSD-3-Clause (see LICENSE)
    ========================================================================== *)
 
-From Stdlib Require Import Reals List Lia Lra.
+From Stdlib Require Import Reals List Lia Lra Ranalysis.
 From NTS.Proofs Require Import DE9IM Distance Overlay Segment RelateBoundary
   RelateLineLine RelateAreaPoint RelateAreaLine RelateAreaArea
   RelateMatrixLineLine RelateMatrixAreaLine RelateMatrixRect RelateMatrixTriangle
   RelateCurveMatrix RectangleJCT Intersect Orientation.  (* cross for between collinear *)
-From NTS.Proofs Require Import GeneralTriangleSeparation.  (* gtri / gtri_ring for triangle interiors *)
+From NTS.Proofs Require Import GeneralTriangleSeparation GeneralTriangleParity.  (* gtri / JCT planar covering for triangle interiors & exterior signs *)
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -391,7 +391,9 @@ Proof.
 Qed.
 
 (* The strict form (gtri B p < 0) remains the target; see deferred registry for
-   touch_int_ext_exclusion. *)
+   touch_int_ext_exclusion.  The proof structure uses the sign flip on the shared
+   edge (opposite_sides) + gtri_pos_iff + case analysis on shares (JCT planar
+   covering / half-plane separation from GeneralTriangleParity + Separation). *)
 Lemma touch_int_ext_exclusion :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy p,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
