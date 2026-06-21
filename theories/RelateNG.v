@@ -490,6 +490,18 @@ Proof.
   - intros _. discriminate.
 Qed.
 
+(* JCT seam: interior of A and exterior of B are disjoint under shared-edge touch.
+   Requires the GeneralTriangleParity lift: point_in_interior -> 0 < gtri, then
+   a point strictly inside A cannot be strictly outside B when they share an edge
+   (their interiors together cover the plane minus the shared boundary). DEFERRED. *)
+Lemma touch_int_ext_exclusion :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    forall p, point_in_interior (triangle_geometry ax ay bx by_ cx cy) p ->
+              ~ point_in_exterior (triangle_geometry dx dy ex ey fx fy) p.
+Admitted. (* JCT seam: needs GeneralTriangleParity to lift point_set interior to 0<gtri, then planar covering argument *)
+
 (* F-exclusion (trimmed): the critical II/EE/BB are handled above; other F cells
    (IB/BI/BE/EB/EI/IE) follow from no interior overlap (strict) + exterior meet.
    Full 9-cell geom_de9im_pointset is DEFERRED (see note in capstone and rect precedent:
@@ -502,7 +514,12 @@ Lemma touch_triangle_f_cells_trimmed :
     (~ exists p, 0 < gtri ax ay bx by_ cx cy p /\ 0 < gtri dx dy ex ey fx fy p) /\
     (forall p, point_in_interior (triangle_geometry ax ay bx by_ cx cy) p ->
                ~ point_in_exterior (triangle_geometry dx dy ex ey fx fy) p).
-Admitted.  (* f trim: core claim is the strict no_common + ext/int exclusion. Lift details + JCT seam DEFERRED (see GeneralTriangle files); only provable cells used in capstone. *)
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
+  split.
+  - apply touch_triangle_pair_strict_ii_no_common; assumption.
+  - apply touch_int_ext_exclusion; assumption.
+Qed.
 
 (* Capstone: assemble the provable cells for triangle shared-edge touch.
    Provable: strict-II none, BB (bnd meet), EE (exterior meet), F-excl for key.
@@ -570,21 +587,24 @@ Proof.
   exact I.
 Qed.
 
-(* Relate under explicit touch (dispatch is currently stub-regime, but the
-   touch helper + matrix fill give the shape under the hyp). *)
+(* Relate under explicit touch. Conditional on the classifier returning TPR_TouchEdge
+   (which the stub currently does not; see triangle_pair_regime). Once the decision
+   procedure is implemented, Hregime becomes a proved lemma and this becomes unconditional.
+   H_bridge_premise pattern: we prove the dispatch equality, not the classifier. *)
 Lemma relate_triangle_touch :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy = TPR_TouchEdge ->
     relate (triangle_geometry ax ay bx by_ cx cy)
            (triangle_geometry dx dy ex ey fx fy) =
     tris_relate ax ay bx by_ cx cy dx dy ex ey fx fy TPR_TouchEdge.
 Proof.
-  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
-  (* Current regime stub returns Disjoint; the equality to Touch fill is the
-     intended dispatch once classify is filled. The capstone lives in the
-     helpers + pointset cells (see satisfy_pointset). *)
-Admitted.  (* intent recorded; shape agreement via triangle_pair_fill TPR_TouchEdge = aa touch matrix. *)
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy _Htouch Hregime.
+  rewrite relate_on_triangles_dispatches.
+  rewrite Hregime.
+  reflexivity.
+Qed.
 
 (* Concrete touch matrix shape (matches aa for touch edge). *)
 Lemma touch_triangle_pair_bb_cell_shape :
