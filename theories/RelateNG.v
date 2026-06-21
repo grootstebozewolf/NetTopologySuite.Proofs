@@ -435,7 +435,7 @@ Print Assumptions touch_rect_pair_bb_cell_shape.
 (* ========================================================================== *)
 (* Rect touch regime: provable cells (II + EE) + helpers. Full 9-cell         *)
 (* geom_de9im_pointset assembly deferred (matrix F cells vs. geom nonempty    *)
-(* on shared edge + E*). II cell (interior separation) landed.                *)
+(* on shared edge + E* cells). II cell (interior separation) landed.                *)
 (* ========================================================================== *)
 
 (* (Point construction helpers for BB and separation for II belong to the
