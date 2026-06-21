@@ -178,6 +178,8 @@ with `θ` the central angle from `atan2`.
 
 **2026-06-21 pivot:** `arc_length_of` for CircularArc (r * |sweep|) using atan2 `angle_between` landed in RelateArcAnalytic.v + ArcLength.v (nonneg Qed). Chord ≤ arc_length bridge in ArcChordLength.v landed Qed (ds = c² + sqrt_Rsqr + chord_le; |sweep| + cos even + sin_ge_0 under principal range).
 
+**Fresh #64 continuation:** added `arc_sweep` (mid-point disambiguation of principal sweep by ±2π when arc_mid selects the major arc). Updated `arc_length_of` and minor guard. Addresses short-vs-long selection for ask #2.
+
 ## 9. Update (PR #146): `b64_inCircle` exactness + arc-line Scope A
 
 PR #146 (`claude/perron-incircle-b64-exact`) lands the first Flocq soundness
