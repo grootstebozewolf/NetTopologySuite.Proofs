@@ -72,9 +72,12 @@ def git(*args, default=""):
 
 def parse_claims():
     txt = read("docs/verified-claims.md") or ""
-    rows = re.findall(r'^\| `[^`]+ : ', txt, re.M)
-    total = len(rows)
-    regime_counts = {r: len(re.findall(r'\[' + re.escape(r) + r'\]', txt))
+    theorem_lines = [ln for ln in txt.splitlines()
+                     if re.match(r'^\| `[^`]+ : ', ln)]
+    total = len(theorem_lines)
+    # count regime tags only in actual theorem rows, not headers/legends
+    regime_counts = {r: sum(len(re.findall(r'\[' + re.escape(r) + r'\]', ln))
+                             for ln in theorem_lines)
                      for r in REGIMES}
     # per-section row + regime breakdown
     sections = []
