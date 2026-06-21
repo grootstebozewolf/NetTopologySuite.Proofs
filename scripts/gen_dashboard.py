@@ -80,15 +80,27 @@ def parse_claims():
     regime_counts = {r: sum(len(re.findall(r'\[' + re.escape(r) + r'\]', ln))
                              for ln in theorem_lines)
                      for r in REGIMES}
-    # per-section row + regime breakdown
+    # per-section row + regime breakdown; all Issue #67 sections are merged
+    def _is_67(title):
+        return (re.search(r'Issue #67', title) or
+                re.search(r'integer-coordinate substrate.*#67', title))
+
     sections = []
+    group67 = {"title": "Issue #67 — RelateNG / DE-9IM (all sessions)",
+               "rows": 0, "regimes": {r: 0 for r in REGIMES}, "group": True}
     cur = None
     for line in txt.splitlines():
         m = re.match(r'^## (.+)$', line)
         if m:
-            cur = {"title": m.group(1).strip(), "rows": 0,
-                   "regimes": {r: 0 for r in REGIMES}}
-            sections.append(cur)
+            title = m.group(1).strip()
+            if _is_67(title):
+                cur = group67
+                if group67 not in sections:
+                    sections.append(group67)
+            else:
+                cur = {"title": title, "rows": 0,
+                       "regimes": {r: 0 for r in REGIMES}}
+                sections.append(cur)
         elif cur is not None and re.match(r'^\| `[^`]+ : ', line):
             cur["rows"] += 1
             for r in REGIMES:
@@ -223,8 +235,11 @@ def render(data):
     sec_rows = ""
     for s in sections:
         segs = [(s["regimes"][r], REGIME_COLOR[r]) for r in REGIMES]
+        is_group = s.get("group", False)
+        style = ' style="font-weight:600;background:#f8fafc"' if is_group else ""
         sec_rows += (
-            f'<tr><td>{e(s["title"])}</td><td class="num">{s["rows"]}</td>'
+            f'<tr{style}><td>{e(s["title"])}</td>'
+            f'<td class="num">{s["rows"]}</td>'
             f'<td>{bar(segs)}</td></tr>')
 
     # ---- oracle modes
