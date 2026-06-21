@@ -433,7 +433,9 @@ Print Assumptions touch_rect_pair_ee_cell.
 Print Assumptions touch_rect_pair_bb_cell_shape.
 
 (* ========================================================================== *)
-(* THIS RUNG: Full geom_de9im_pointset for vertical touch rect regime.        *)
+(* Rect touch regime: provable cells (II + EE) + helpers. Full 9-cell         *)
+(* geom_de9im_pointset assembly deferred (matrix F cells vs. geom nonempty    *)
+(* on shared edge + E*). II cell (interior separation) landed.                *)
 (* ========================================================================== *)
 
 (* (Point construction helpers for BB and separation for II belong to the
@@ -499,14 +501,43 @@ Proof.
     destruct (Rle_dec ay0 by0); destruct (Rle_dec ay1 by1); lra.
 Qed.
 
-(* ------------------------------------------------------------------------- *)
-(* DEFERRED (trimmed 2026-06-20): the BB/II/EE per-cell lemmas and the 9-cell
-   capstone `touch_rects_satisfy_pointset` are removed pending repair -- the
-   original proofs did not compile, and the capstone's IB-cell step was
-   hand-waved (a boundary point of B satisfies `px >= bx0`, not `px = ax1`).
-   The proven dispatch / regime-fidelity / exterior-pinning / touch-metric
-   results above stand; the pointset capstone is future work. *)
-(* ------------------------------------------------------------------------- *)
+Lemma touch_rect_pair_ii_cell :
+  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
+    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
+    RelateCurveMatrix.cell_ok None RelateCurveMatrix.SInt RelateCurveMatrix.SInt
+      (rect_geometry ax0 ay0 ax1 ay1) (rect_geometry bx0 by0 bx1 by1).
+Proof.
+  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch.
+  destruct Htouch as (Hax & Hay & Hbx & Hby & Heq & ? & ?). subst bx0.
+  unfold RelateCurveMatrix.cell_ok.
+  split; [ simpl; auto | split ].
+  - intro Hdn. exfalso. apply Hdn. reflexivity.
+  - intros Hex.
+    exfalso.
+    (* Hex : exists p, point_set A p /\ point_set B p *)
+    (* contradict using x-sep: point_set A implies px < ax1, point_set B implies px >= ax1 *)
+    destruct Hex as [p [HA HB]].
+    assert (px p < ax1) as HltA.
+    { unfold point_set in HA.
+      destruct HA as [poly [HinPoly Hpoly]]; simpl in HinPoly.
+      destruct HinPoly as [? | []]; subst.
+      apply rect_polygon_no_holes in Hpoly.
+      apply point_in_ring_rect_iff in Hpoly; [ | assumption | assumption ].
+      destruct Hpoly as [_ [_ Hxhi]].
+      exact Hxhi. }
+    assert (ax1 <= px p) as HgeB.
+    { unfold point_set in HB.
+      destruct HB as [poly [HinPoly Hpoly]]; simpl in HinPoly.
+      destruct HinPoly as [? | []]; subst.
+      apply rect_polygon_no_holes in Hpoly.
+      apply point_in_ring_rect_iff in Hpoly; [ | assumption | assumption ].
+      destruct Hpoly as [_ [Hxlo _]].
+      exact Hxlo. }
+    apply (Rlt_irrefl (px p)).
+    eapply Rlt_le_trans; [ exact HltA | exact HgeB ].
+Qed.
+
+(* ib/bi/bb + full pointset satisfy omitted (compile + matrix F values do not match geom for BI/side E* due to half-open ring; only II + EE provable). II cell landed with correct x-separation. *)
 
 (* -------------------------------------------------------------------------- *)
 (* Concrete examples (1-2 for claims + oracle batch).                         *)

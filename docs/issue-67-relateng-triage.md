@@ -258,8 +258,8 @@ The recommended path forward:
 - **S15k (done):** collection relate-matrix pipeline capstone — fold-assign
   interface, regime wrapper, per-pair disjoint test-10 9-cell, test-10
   pointset + fold=oracle + intersects + meet-pinned corollary.
-- **S15l+:** prepared + dispatch + exterior pinning + horiz/full rect family regime decision (landed); full 9-cell geom_de9im_pointset assembly + Touches/Share split remain.
-- rect touch: **dispatch + exterior-row pinning + horizontal/full rect family regime decision + touch-metric helpers (y-overlap, BB point) + examples LANDED** (`relate_on_rects_dispatches`, `relate_rect_touch`, `touch_regime_exterior_row_pinned`, `rect_pair_regime_{vert,horiz}_touch`, `touch_y_overlap_nonempty`). The **9-cell `geom_de9im_pointset` capstone + per-cell (BB/II/EE) lemmas are DEFERRED** — trimmed 2026-06-20 because the original proofs did not compile (and the capstone's IB cell was hand-waved: `px ≥ bx0`, not `px = ax1`). Oracle consumption asserts added in test_relate_matrix.ml. 
+- **S15l+:** prepared + dispatch + exterior pinning + horiz/full rect family regime decision + II cell (interior disjoint for vertical touch) landed; full 9-cell geom_de9im_pointset assembly deferred (matrix vs geometry mismatch on shared bnd + E*); Touches/Share split remain.
+- rect touch: **dispatch + exterior-row pinning + horizontal/full rect family regime decision + touch-metric helpers (y-overlap, BB point ctor) + examples + II cell (interior disjointness) LANDED** (`relate_on_rects_dispatches`, `relate_rect_touch`, `touch_regime_exterior_row_pinned`, `rect_pair_regime_{vert,horiz}_touch`, `touch_y_overlap_nonempty`, `touch_rect_pair_ii_cell`). The **full 9-cell `geom_de9im_pointset` capstone assembly is DEFERRED** (BI + side E* cells mismatch the hand-specified `aa_matrix_touch_vertical` / `pat_touches_1` F values due to half-open ring inclusion on shared edge; only II/IB/BB/EE provably align). Trimmed for build; II cell uses correct `px < ax1` vs `>=` from `point_in_ring_rect_iff`. Oracle consumption in `test_relate_matrix.ml`. 
 
 Pivot decision per user: consumption test first (done); next balance with #64 arcs or #66 overlay after feedback from the rect oracles.
 
@@ -284,4 +284,4 @@ Pivot decision per user: consumption test first (done); next balance with #64 ar
 | S13 | Prepared-mode cache refinement (`RelatePreparedCache.v`) + area-line (`RelatePreparedCacheAreaLine.v`) | S1 + `Bbox.v` |
 | S14 | Area-line prepared-cache + envelope early-exit | S13 + `RectangleJCT.v` |
 | S15a–S15k | Line×line noding bridge through collection relate-matrix pipeline capstone (`RelateNodingLineLine.v`) | S8 + fills |
-| S15l+ | Prepared + dispatch + exterior pinning + horizontal/full rect family regime + touch metrics (done) + consumption test; **9-cell pointset capstone deferred** (trimmed pending repair) + Touches split / pivot | S15k |
+| S15l+ | Prepared + dispatch + exterior pinning + horizontal/full rect family regime + touch metrics (y-overlap, BB point) + II cell (SInt separation) landed + consumption test; **full 9-cell pointset capstone deferred** (BI/E* mismatch; only provable cells II/EE align with matrix) + Touches split / pivot | S15k |
