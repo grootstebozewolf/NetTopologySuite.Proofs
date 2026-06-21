@@ -117,6 +117,22 @@ theories/ArcPointDistance.v:point_to_arc_dist_centre_is_r | theories/ArcPointDis
 #          carries the planar Euler hypotheses as named premises.
 #          [2026-06-14]  See theories-flocq/OverlayBridge.v §8,
 #          EdgeConnectivity.v §5, docs/extract-faces-bridge.md §22.
+
+# S15l triangle touch capstone (RelateNG + RelateMatrixTriangle)
+theories/RelateNG.v:touch_triangle_pair_strict_ii_no_common | theories/RelateNG.v (touch helpers section) + GeneralTriangleSeparation.gtri_pos_iff + cross antisymmetry | 9-case analysis on shares_edge + opposite_sides; shared-line gs slack sign flip (same-dir => gdbl sign conflict; reverse-dir => cross >0 vs <0 for p)
+theories/RelateNG.v:touch_triangle_pair_ii_cell | theories/RelateNG.v (cell lemmas) + point_set via point_in_ring + strict separation | uses strict_ii_no_common; honest note that SInt uses point_set (bnd shared) while claim is 0<gtri
+theories/RelateNG.v:touch_triangle_pair_bb_cell | theories/RelateNG.v (bb cell) + touch_triangle_bb_point_between + between_P0 + point_on_boundary + ring_edges_gtri | midpoint (or shared vert) on shared edge is in both geom_boundary; between on the edge pair
+theories/RelateNG.v:touch_triangle_f_cells_trimmed | theories/RelateNG.v (F trim) | exclusion from no-common-strict + two_geometries_exterior_meet; full 9-cell deferred like rect
+theories/RelateNG.v:touch_triangles_satisfy_pointset | theories/RelateNG.v (capstone) + ee/bb/ii cells + two_geometries_exterior_meet | assemble (strict II none /\ BB cell /\ EE cell); honest bnd-vs-matrix note
+theories/RelateNG.v:touch_triangles_satisfy_pointset_and_general | theories/RelateNG.v (general) + S6 facts | regime guard + touch capstone; bridge for overlap/contains composition
+theories/RelateNG.v:relate_triangle_touch | theories/RelateNG.v (relate under touch) + triangle_pair_fill | records intended matrix under explicit triangles_touch_on_shared_edge; regime stub blocks definitional equality today
+theories/RelateNG.v:touch_triangle_pair_ii_cell | (duplicate entry from inner admit cleanup; covered above) | point_set lift to 0<gtri deferred to JCT seam (GeneralTriangleParity etc.)
+
+# Note: only the triangle touch family from the S15l lift. Rect work on this branch is already Qed or properly trimmed.
+
+# #64 Option-A arc length (atan2 sweep)
+theories/RelateArcAnalytic.v:chord_le_arc_length_of | RelateArcAnalytic + ArcLength.chord_subtended_sq + scalar sin_le_x | chord = 2 r sin(|theta|/2) + sin x <= x from scalar; full numeric details from law_of_cosines in ArcChordLength
+theories/ArcLength.v:arc_length_of_nonneg | (if any remaining) scalar r * abs(theta) nonneg | trivial from Rmult_le_pos on dist and Rabs_pos
 #   - `H_bridge_core` (the combinatorial planar same-face => bridge seam)
 #       -> DISCHARGED 2026-06-14 via the planar Euler route (see the LIVE-section
 #          note above).  Refactored into the named premise H_bridge_premise and

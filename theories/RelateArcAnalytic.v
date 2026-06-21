@@ -38,7 +38,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import DE9IM Distance CurveGeometry ArcChordApprox
-  AngleBetween RelateArcChord.
+  AngleBetween RelateArcChord ArcLength.  (* ArcLength for scalar arc_length *)
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -126,6 +126,24 @@ Proof.
   unfold arc_sweep_angle.
   destruct (arc_center_vectors_nonzero a Hva) as [Hu Hv].
   apply angle_between_range; assumption.
+Qed.
+
+(* Arc length for a CircularArc using the atan2-backed sweep (Option-A #64). *)
+Definition arc_length_of (a : CircularArc) : R :=
+  arc_length (arc_radius a) (Rabs (arc_sweep_angle a)).
+
+Lemma arc_length_of_nonneg :
+  forall a : CircularArc,
+    valid_arc a ->
+    0 <= arc_length_of a.
+Proof.
+  intros a Hva.
+  unfold arc_length_of.
+  assert (Hr : 0 <= arc_radius a).
+  { unfold arc_radius, dist. apply sqrt_pos. }
+  assert (Habs : 0 <= Rabs (arc_sweep_angle a)).
+  { apply Rabs_pos. }
+  apply arc_length_nonneg; assumption.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

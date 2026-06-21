@@ -25,6 +25,7 @@
 
 Require Import Reals.
 Require Import Lra.
+(* ArcLength is the scalar foundation. High-level arc_length_of for CircularArc lives in RelateArcAnalytic to avoid cycles. *)
 Local Open Scope R_scope.
 
 Definition arc_length (r theta : R) : R := r * theta.
@@ -68,3 +69,6 @@ Qed.
 
 Print Assumptions chord_le_arc_length.
 Print Assumptions chord_subtended_sq.
+
+(* arc_length_of for CircularArc lives in RelateArcAnalytic.v (no cycle with arc_sweep_angle).
+   This file contains only the scalar arc_length / chord_subtended foundations. *)
