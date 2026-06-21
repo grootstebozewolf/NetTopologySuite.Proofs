@@ -133,3 +133,11 @@ theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_she
 #   committed low parts and cancellation residues are bit-disjoint but not
 #   half-ulp-close.
 theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_pathAB_chain_from_nonoverlap | docs/shewchuk-thm13-headline-counterexample.md | §Consequence,§Recommendation
+
+# `touch_int_ext_exclusion` (and derived in f_cells_trimmed) -- FALSE claim that touching triangles have no strict interior/exterior separation in point_set.
+# Counterexample (manual + gtri facts; to be witnessed in a small .v if needed):
+#   p=(0.25,0.25), A=(0,0)(1,0)(0,1), B=(1,0)(1,1)(0,1)
+#   0 < gtri A p (interior, gtri_interior_in_ring), gtri B p < 0 (opposite_sides / g_sum conflict under touch), ~point_set B p (gtri_exterior_even_parity + parity).
+# The statement "point_set A p → point_set B p" (or interior A implies not exterior B) is FALSE for touching triangles.
+# Achievable: the true claim "0 < gtri A p → gtri B p < 0" (strict int A → ext B) or conditional under touch + half-open notes.
+theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v-touch_int_ext_exclusion-ce.v | p=(0.25,0.25), A=(0,0)(1,0)(0,1), B=(1,0)(1,1)(0,1): point_set A p holds (gtri_interior_in_ring), gtri B p < 0 (opposite_sides), ~ point_set B p (gtri_exterior_even_parity). Statement point_set A p -> point_set B p is FALSE.
