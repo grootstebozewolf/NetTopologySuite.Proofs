@@ -32,23 +32,24 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "dashboard", "index.html")
 
-REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "cond", "oracle"]
+REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "int", "cond", "oracle"]
 REGIME_LABEL = {
     "exact": "exact reals",
     "full-b64": "all finite binary64",
     "int-b64": "int-coord binary64",
     "int-b64-arc": "int-coord binary64 (arc)",
+    "int": "exact integer (0 axioms)",
     "cond": "conditional (named hyps)",
     "oracle": "extracted / differential",
 }
 # proven (unconditional soundness) vs conditional vs oracle-only
 REGIME_KIND = {
     "exact": "proven", "full-b64": "proven", "int-b64": "proven",
-    "int-b64-arc": "proven", "cond": "conditional", "oracle": "oracle",
+    "int-b64-arc": "proven", "int": "proven", "cond": "conditional", "oracle": "oracle",
 }
 REGIME_COLOR = {
     "exact": "#16a34a", "full-b64": "#15803d", "int-b64": "#65a30d",
-    "int-b64-arc": "#84cc16", "cond": "#d97706", "oracle": "#2563eb",
+    "int-b64-arc": "#84cc16", "int": "#0891b2", "cond": "#d97706", "oracle": "#2563eb",
 }
 
 
@@ -72,19 +73,34 @@ def git(*args, default=""):
 
 def parse_claims():
     txt = read("docs/verified-claims.md") or ""
-    rows = re.findall(r'^\| `[^`]+ : ', txt, re.M)
-    total = len(rows)
-    regime_counts = {r: len(re.findall(r'\[' + re.escape(r) + r'\]', txt))
+    theorem_lines = [ln for ln in txt.splitlines()
+                     if re.match(r'^\| `[^`]+ : ', ln)]
+    total = len(theorem_lines)
+    # count regime tags only in actual theorem rows, not headers/legends
+    regime_counts = {r: sum(len(re.findall(r'\[' + re.escape(r) + r'\]', ln))
+                             for ln in theorem_lines)
                      for r in REGIMES}
-    # per-section row + regime breakdown
+    # per-section row + regime breakdown; all Issue #67 sections are merged
+    def _is_67(title):
+        return (re.search(r'Issue #67', title) or
+                re.search(r'integer-coordinate substrate.*#67', title))
+
     sections = []
+    group67 = {"title": "Issue #67 — RelateNG / DE-9IM (all sessions)",
+               "rows": 0, "regimes": {r: 0 for r in REGIMES}, "group": True}
     cur = None
     for line in txt.splitlines():
         m = re.match(r'^## (.+)$', line)
         if m:
-            cur = {"title": m.group(1).strip(), "rows": 0,
-                   "regimes": {r: 0 for r in REGIMES}}
-            sections.append(cur)
+            title = m.group(1).strip()
+            if _is_67(title):
+                cur = group67
+                if group67 not in sections:
+                    sections.append(group67)
+            else:
+                cur = {"title": title, "rows": 0,
+                       "regimes": {r: 0 for r in REGIMES}}
+                sections.append(cur)
         elif cur is not None and re.match(r'^\| `[^`]+ : ', line):
             cur["rows"] += 1
             for r in REGIMES:
@@ -219,8 +235,11 @@ def render(data):
     sec_rows = ""
     for s in sections:
         segs = [(s["regimes"][r], REGIME_COLOR[r]) for r in REGIMES]
+        is_group = s.get("group", False)
+        style = ' style="font-weight:600;background:#f8fafc"' if is_group else ""
         sec_rows += (
-            f'<tr><td>{e(s["title"])}</td><td class="num">{s["rows"]}</td>'
+            f'<tr{style}><td>{e(s["title"])}</td>'
+            f'<td class="num">{s["rows"]}</td>'
             f'<td>{bar(segs)}</td></tr>')
 
     # ---- oracle modes
