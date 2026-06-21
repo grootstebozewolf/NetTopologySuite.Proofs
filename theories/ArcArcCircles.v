@@ -29,6 +29,10 @@
          `inCircle_R_zero_of_equidistant` — corollary: P equidistant from
          the circumcenter as the control points ⇒ inCircle_R = 0
          (arc_center_equidistant supplies OA=OB=OC, so all four concyclic).
+         `inCircle_R_circle_factored` + `inCircle_R_zero_implies_equidistant`
+         — CONVERSE (§1c): for a valid arc (orient2d ≠ 0), inCircle_R = 0
+         forces P onto the circumcircle, i.e. dist_sq O P = dist_sq O A.
+         Together these give the full `iff`.
 
      §3  `two_circles_radical_point` — HEADLINE unconditional existence: for
          properly-intersecting circles (|r1−r2| < d < r1+r2), the
@@ -99,6 +103,92 @@ Proof.
   intros a P Hva Heq.
   pose proof (arc_center_equidistant a Hva) as [Hab Hbc].
   apply (inCircle_R_concyclic _ _ _ _ (arc_center a)); lra.
+Qed.
+
+(* ========================================================================== *)
+(* §1c  Converse: on the circumcircle ⇒ equidistant from the circumcenter    *)
+(*                                                                            *)
+(* Proof: translate the arc center to the origin; all three control points    *)
+(* then lie on a circle of squared-radius R2 = dist_sq O (arc_start).        *)
+(* The polynomial identity                                                    *)
+(*   inCircle_R A B C P = orient2d(A,B,C) · (R2 − |P|²)                      *)
+(* holds modulo the three circle constraints (proved by nsatz below).         *)
+(* Since valid_arc ⇒ orient2d ≠ 0, det = 0 forces |P|² = R2,               *)
+(* i.e. dist_sq O P = dist_sq O (arc_start).                                 *)
+(* ========================================================================== *)
+
+(* The algebraic identity: all three defining points on circle of sq-radius R2
+   centred at origin ⇒ inCircle_R = orient2d × (R2 − |P|²). *)
+Lemma inCircle_R_circle_factored :
+  forall ax ay bx by_ cx cy qx qy R2 : R,
+    ax * ax + ay * ay = R2 ->
+    bx * bx + by_ * by_ = R2 ->
+    cx * cx + cy * cy = R2 ->
+    inCircle_R (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy) (mkPoint qx qy)
+    = (ax * (by_ - cy) + bx * (cy - ay) + cx * (ay - by_))
+      * (R2 - qx * qx - qy * qy).
+Proof.
+  intros ax ay bx by_ cx cy qx qy R2 Har Hbr Hcr.
+  unfold inCircle_R. cbn.
+  (* Replace the squared translated-norms using on-circle conditions,
+     then substitute R2 = ax²+ay², leaving a pure polynomial identity for ring. *)
+  replace ((bx - qx) * (bx - qx) + (by_ - qy) * (by_ - qy))
+    with (R2 - 2 * (bx * qx + by_ * qy) + (qx * qx + qy * qy))
+    by (rewrite <- Hbr; ring).
+  replace ((cx - qx) * (cx - qx) + (cy - qy) * (cy - qy))
+    with (R2 - 2 * (cx * qx + cy * qy) + (qx * qx + qy * qy))
+    by (rewrite <- Hcr; ring).
+  replace ((ax - qx) * (ax - qx) + (ay - qy) * (ay - qy))
+    with (R2 - 2 * (ax * qx + ay * qy) + (qx * qx + qy * qy))
+    by (rewrite <- Har; ring).
+  replace R2 with (ax * ax + ay * ay) by lra.
+  ring.
+Qed.
+
+(* The converse of inCircle_R_zero_of_equidistant: for a valid arc (the
+   orientation is nonzero), inCircle_R = 0 forces P onto the circumcircle. *)
+Lemma inCircle_R_zero_implies_equidistant :
+  forall (a : CircularArc) (P : Point),
+    valid_arc a ->
+    inCircle_R (arc_start a) (arc_mid a) (arc_end a) P = 0 ->
+    dist_sq (arc_center a) P = dist_sq (arc_center a) (arc_start a).
+Proof.
+  intros a P Hva Hdet.
+  set (O := arc_center a).
+  set (R2 := dist_sq O (arc_start a)).
+  (* Translate by -O so the circumcenter is at the origin. *)
+  rewrite <- (inCircle_R_translation_invariant
+                (arc_start a) (arc_mid a) (arc_end a) P (- px O) (- py O)) in Hdet.
+  pose proof (arc_center_equidistant a Hva) as [Hsm Hse].
+  (* Circle constraints in translated frame. *)
+  assert (Har : (px (arc_start a) + - px O) * (px (arc_start a) + - px O)
+              + (py (arc_start a) + - py O) * (py (arc_start a) + - py O) = R2).
+  { unfold R2, dist_sq. cbn [px py]. ring. }
+  assert (Hbr : (px (arc_mid a) + - px O) * (px (arc_mid a) + - px O)
+              + (py (arc_mid a) + - py O) * (py (arc_mid a) + - py O) = R2).
+  { unfold R2, O. rewrite Hsm. unfold dist_sq. cbn [px py]. ring. }
+  assert (Hcr : (px (arc_end a) + - px O) * (px (arc_end a) + - px O)
+              + (py (arc_end a) + - py O) * (py (arc_end a) + - py O) = R2).
+  { unfold R2, O. rewrite Hse. unfold dist_sq. cbn [px py]. ring. }
+  (* Apply the factored identity. *)
+  pose proof (inCircle_R_circle_factored
+    (px (arc_start a) + - px O) (py (arc_start a) + - py O)
+    (px (arc_mid   a) + - px O) (py (arc_mid   a) + - py O)
+    (px (arc_end   a) + - px O) (py (arc_end   a) + - py O)
+    (px P + - px O) (py P + - py O) R2
+    Har Hbr Hcr) as Hfact.
+  rewrite Hfact in Hdet.
+  (* orient2d(arc_start, arc_mid, arc_end) ≠ 0 from valid_arc. *)
+  assert (Hor : (px (arc_start a) + - px O) * ((py (arc_mid a) + - py O) - (py (arc_end a) + - py O))
+              + (px (arc_mid   a) + - px O) * ((py (arc_end a) + - py O) - (py (arc_start a) + - py O))
+              + (px (arc_end   a) + - px O) * ((py (arc_start a) + - py O) - (py (arc_mid a) + - py O))
+              <> 0).
+  { unfold O. unfold valid_arc in Hva. cbn [px py] in *. intro Heq. apply Hva. lra. }
+  (* Rmult_integral: one factor must be zero; orient2d ≠ 0 forces R2 - |P|² = 0. *)
+  apply Rmult_integral in Hdet as [Hmul | Hrsq].
+  - exfalso. apply Hor. exact Hmul.
+  - (* R2 - |P-O|² = 0, i.e., dist_sq O P = R2 = dist_sq O (arc_start a). *)
+    unfold R2, dist_sq in *. cbn [px py] in *. lra.
 Qed.
 
 (* ========================================================================== *)
@@ -310,5 +400,6 @@ Qed.
 (* ========================================================================== *)
 
 Print Assumptions inCircle_R_zero_of_equidistant.
+Print Assumptions inCircle_R_zero_implies_equidistant.
 Print Assumptions two_circles_radical_point.
 Print Assumptions arc_arc_circles_intersect.
