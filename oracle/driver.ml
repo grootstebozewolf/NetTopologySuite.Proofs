@@ -2274,11 +2274,7 @@ let run_arc_buffer_simple () =
 
 let run_arc_simplify_decision () =
   (* tolerance vs preserve-arc boolean for arc *)
-  let line = String.trim (input_line stdin) in
-  let toks =
-    List.filter (fun s -> s <> "")
-      (String.split_on_char ' '
-         (String.map (fun c -> if c = '\t' then ' ' else c) line)) in
+  let _arc_line = String.trim (input_line stdin) in
   let tol = float_of_string (String.trim (input_line stdin)) in
   (* stub using chord error heuristic; in full would densify and see if simplified keeps arc points or not *)
   let preserve = tol >= 1e-9 in

@@ -1,8 +1,20 @@
 # ARC_SIMPLIFY_DECISION pins (tolerance vs preserve-arc)
-# format: input lines, output
+# input: arc line + tol; output: PRESERVE_ARC | SIMPLIFY_TO_CHORDS
 A 1 0 0 1 -1 0
 0.01
 PRESERVE_ARC
 A 1 0 0 1 -1 0
 1e-12
+SIMPLIFY_TO_CHORDS
+A 5 0 0 5 -5 0
+1.0
+PRESERVE_ARC
+A 5 0 0 5 -5 0
+1e-10
+SIMPLIFY_TO_CHORDS
+A 2 3 4 5 6 7
+0.5
+PRESERVE_ARC
+A 2 3 4 5 6 7
+1e-15
 SIMPLIFY_TO_CHORDS

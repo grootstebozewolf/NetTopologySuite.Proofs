@@ -138,10 +138,10 @@ arc-buffer-simple-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_buffer_simple_tests.py
 
 arc-simplify-decision-tests: $(TARGET)
-	@echo 'ARC_SIMPLIFY_DECISION (tolerance vs preserve) pinned via stub + RGR'
+	printf 'ARC_SIMPLIFY_DECISION\nA 1 0 0 1 -1 0\n0.01\n' | ./$(TARGET) | grep -q PRESERVE_ARC && echo 'ARC_SIMPLIFY_DECISION basic ok'
 
 arc-offset-filtered-tests: $(TARGET)
-	@echo 'FILTERED_BINARY64 variant for arc offset pinned'
+	printf 'ARC_OFFSET_FILTERED\nA 1 0 0 1 -1 0\n0.5\n' | ./$(TARGET) | grep -q FILTERED && echo 'ARC_OFFSET_FILTERED basic ok'
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.
