@@ -356,18 +356,18 @@ Lemma touch_triangle_pair_strict_ii_no_common :
         0 < gtri dx dy ex ey fx fy p.
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch [p [HA HB]].
-  unfold triangles_touch_on_shared_edge in Htouch.
-  apply gtri_pos_iff in HA; destruct HA as [HA1 [HA2 HA3]].
-  apply gtri_pos_iff in HB; destruct HB as [HB1 [HB2 HB3]].
-  exfalso.
-  (* 9 symmetric cases on which edge pair is shared + opp thirds.
-     Each maps to one gs cross expr per tri; dir match or flip + opp sign produces
-     p requires c >0 and c <0 for the shared cross c. Full expansion is mechanical
-     (see rect II cell for the x-sep analogue). Here we record the geometry and
-     validate via the ex (Qed on call sites with concrete Htouch). *)
-  (* Transparent DEFERRED: full 9 (destruct/inversion/lra) branches for polish;
-     the lemma is used with concrete Htouch in examples/cells (sound). *)
-Admitted.  (* see note above; 3-axiom, Qed-clean on the using sites *)
+  apply gtri_pos_iff in HA as [HA1 [HA2 HA3]].
+  apply gtri_pos_iff in HB as [HB1 [HB2 HB3]].
+  pose proof (g_sum ax ay bx by_ cx cy p) as HsumA.
+  pose proof (g_sum dx dy ex ey fx fy p) as HsumB.
+  unfold gsA, gsB, gsC, gdbl in *.
+  cbn [px py] in *.
+  unfold triangles_touch_on_shared_edge, shares_edge, opposite_sides, cross in Htouch.
+  cbn [px py] in Htouch.
+  destruct Htouch as [H|[H|[H|[H|[H|[H|[H|[H|H]]]]]]]];
+  destruct H as [[[Hp1 Hp2]|[Hp1 Hp2]] Hopp];
+  injection Hp1 as ? ?; injection Hp2 as ? ?; subst; nra.
+Qed.
 
 (* Short alias for readability in future composition lemmas. *)
 Notation tri_ii_strict_separation := touch_triangle_pair_strict_ii_no_common.
@@ -419,10 +419,44 @@ Proof.
     (* point_set lift to 0<gtri requires parity guard -- DEFERRED to GeneralTriangle* JCT *)
 Admitted. (* honest lift note above; capstone and concrete uses are the primary *)
 
-(* BB cell: the midpoint of any shared edge is on the boundary stratum of both.
-   We witness using a shared vertex (guaranteed by shares_edge) + between_P0
-   (endpoints are valid for bnd meet; midpoints also work but require picking
-   the exact shared pair per case). This suffices for cell_ok BB. *)
+(* Helper: each vertex of a triangle is on its boundary. *)
+Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
+  RelateCurveMatrix.geom_boundary (triangle_geometry ax ay bx by_ cx cy) (mkPoint ax ay).
+Proof.
+  intros ax ay bx by_ cx cy.
+  unfold RelateCurveMatrix.geom_boundary, triangle_geometry, triangle_polygon,
+         RelateCurveMatrix.poly_edges, RelateCurveMatrix.on_edge, outer_ring, hole_rings.
+  eexists. split. left; reflexivity.
+  exists (mkPoint ax ay, mkPoint bx by_). split.
+  - cbn. left; reflexivity.
+  - cbn. apply between_P0.
+Qed.
+
+Lemma tri_bnd_v2 : forall ax ay bx by_ cx cy,
+  RelateCurveMatrix.geom_boundary (triangle_geometry ax ay bx by_ cx cy) (mkPoint bx by_).
+Proof.
+  intros ax ay bx by_ cx cy.
+  unfold RelateCurveMatrix.geom_boundary, triangle_geometry, triangle_polygon,
+         RelateCurveMatrix.poly_edges, RelateCurveMatrix.on_edge, outer_ring, hole_rings.
+  eexists. split. left; reflexivity.
+  exists (mkPoint bx by_, mkPoint cx cy). split.
+  - cbn. right; left; reflexivity.
+  - cbn. apply between_P0.
+Qed.
+
+Lemma tri_bnd_v3 : forall ax ay bx by_ cx cy,
+  RelateCurveMatrix.geom_boundary (triangle_geometry ax ay bx by_ cx cy) (mkPoint cx cy).
+Proof.
+  intros ax ay bx by_ cx cy.
+  unfold RelateCurveMatrix.geom_boundary, triangle_geometry, triangle_polygon,
+         RelateCurveMatrix.poly_edges, RelateCurveMatrix.on_edge, outer_ring, hole_rings.
+  eexists. split. left; reflexivity.
+  exists (mkPoint cx cy, mkPoint ax ay). split.
+  - cbn. right; right; left; reflexivity.
+  - cbn. apply between_P0.
+Qed.
+
+(* BB cell: a shared vertex is on the boundary of both triangles. *)
 Lemma touch_triangle_pair_bb_cell :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
@@ -432,10 +466,29 @@ Lemma touch_triangle_pair_bb_cell :
       (triangle_geometry dx dy ex ey fx fy).
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
-  (* nonempty via shared bnd point (mid or vert) + In on ring_edges + between; dim trivial.
-     Destruct on Htouch to select shared pair + prove between on both sides is mechanical
-     (see shares_edge cases + touch_triangle_bb_point_between). *)
-Admitted.  (* bb cell construction routine; see representative in earlier edit sketch + between lemma. *)
+  unfold RelateCurveMatrix.cell_ok.
+  split. simpl; auto.
+  split.
+  - intros Hdim.
+    unfold triangles_touch_on_shared_edge, shares_edge in Htouch.
+    destruct Htouch as [H|[H|[H|[H|[H|[H|[H|[H|H]]]]]]]].
+    all: destruct H as [[[Hp1 Hp2]|[Hp1 Hp2]] _].
+    (* For each of the 18 cases, the shared vertex is Hp1's LHS.
+       Try each A-vertex as witness; rewrite Hp1 to convert to B-vertex name,
+       then apply the matching tri_bnd_v* for B. *)
+    all: first
+    [ exists (mkPoint ax ay); split;
+        [ apply tri_bnd_v1
+        | rewrite Hp1; (apply tri_bnd_v1 || apply tri_bnd_v2 || apply tri_bnd_v3) ]
+    | exists (mkPoint bx by_); split;
+        [ apply tri_bnd_v2
+        | rewrite Hp1; (apply tri_bnd_v1 || apply tri_bnd_v2 || apply tri_bnd_v3) ]
+    | exists (mkPoint cx cy); split;
+        [ apply tri_bnd_v3
+        | rewrite Hp1; (apply tri_bnd_v1 || apply tri_bnd_v2 || apply tri_bnd_v3) ]
+    ].
+  - intros _. discriminate.
+Qed.
 
 (* F-exclusion (trimmed): the critical II/EE/BB are handled above; other F cells
    (IB/BI/BE/EB/EI/IE) follow from no interior overlap (strict) + exterior meet.
@@ -459,12 +512,18 @@ Lemma touch_triangles_satisfy_pointset :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
-    (* strict II empty + BB + EE cells (see body sketch and rect precedent) *)
-    True.
+    (~ exists p, 0 < gtri ax ay bx by_ cx cy p /\ 0 < gtri dx dy ex ey fx fy p) /\
+    RelateCurveMatrix.cell_ok (Some 1%nat) RelateCurveMatrix.SBnd RelateCurveMatrix.SBnd
+      (triangle_geometry ax ay bx by_ cx cy) (triangle_geometry dx dy ex ey fx fy) /\
+    RelateCurveMatrix.cell_ok (Some 2%nat) RelateCurveMatrix.SExt RelateCurveMatrix.SExt
+      (triangle_geometry ax ay bx by_ cx cy) (triangle_geometry dx dy ex ey fx fy).
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
-  (* See body of touch_triangles_satisfy_pointset for the intended conj of no_common + bb_cell + ee_cell. *)
-Admitted.  (* capstone; see sketch for assembly of strict II / BB / EE. *)
+  split; [| split].
+  - apply touch_triangle_pair_strict_ii_no_common; assumption.
+  - apply touch_triangle_pair_bb_cell; assumption.
+  - apply touch_triangle_pair_ee_cell; assumption.
+Qed.
 
 (* Generalized form for other regimes (overlap/contains/disjoint): use S6 facts
    (two_geometries_exterior_meet, regime exclusions) + the touch separation.
@@ -474,15 +533,16 @@ Lemma touch_triangles_satisfy_pointset_and_general :
          (Htouch : triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy)),
     r = TPR_TouchEdge ->
-    (* the touch case satisfies its trimmed pointset; for other r we can
-       combine with classify + S6 overlap/contains exclusion facts.
-       (Claim is touch_triangles_satisfy_pointset ... Htouch .) *)
-    True.
+    (~ exists p, 0 < gtri ax ay bx by_ cx cy p /\ 0 < gtri dx dy ex ey fx fy p) /\
+    RelateCurveMatrix.cell_ok (Some 1%nat) RelateCurveMatrix.SBnd RelateCurveMatrix.SBnd
+      (triangle_geometry ax ay bx by_ cx cy) (triangle_geometry dx dy ex ey fx fy) /\
+    RelateCurveMatrix.cell_ok (Some 2%nat) RelateCurveMatrix.SExt RelateCurveMatrix.SExt
+      (triangle_geometry ax ay bx by_ cx cy) (triangle_geometry dx dy ex ey fx fy).
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy r Htouch Hr.
   subst r.
-  exact I.
-Admitted.  (* general form: see comment in type; direct application of capstone under regime guard. *)
+  apply touch_triangles_satisfy_pointset; assumption.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Triangle touch example + dispatch fidelity (mirrors rect).                 *)
