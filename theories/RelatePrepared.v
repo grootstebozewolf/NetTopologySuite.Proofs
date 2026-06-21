@@ -24,17 +24,19 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals.
-From NTS.Proofs Require Import DE9IM Overlay RelateNG RelateAreaArea RelateMatrixRect RelateAreaPoint.
+From NTS.Proofs Require Import DE9IM Overlay RelateNG RelateAreaArea RelateMatrixRect RelateMatrixTriangle RelateAreaPoint.
 
 Record PreparedGeometry : Type := mkPrepared {
   pg_geom : Geometry;
   (* For rect geometries we cache the extracted bounds (non-trivial cache).
      None = trivial/unknown. This is the tiny NTS#819-style example for rects. *)
-  pg_cache : option (R * R * R * R)
+  pg_cache : option (R * R * R * R);
+  (* Tiny non-identity cache extension for triangle points (6 coords). *)
+  pg_tri_cache : option (R * R * R * R * R * R)
 }.
 
 Definition prepare (g : Geometry) : PreparedGeometry :=
-  mkPrepared g (rect_geometry_bounds g).
+  mkPrepared g (rect_geometry_bounds g) (triangle_geometry_points g).
 
 Definition evaluate (pg : PreparedGeometry) (g : Geometry) : IntersectionMatrix :=
   relate (pg_geom pg) g.
@@ -68,6 +70,24 @@ Proof.
   apply prepared_rect_evaluate_agrees.
 Qed.
 
+(* Triangle-specific: non-identity cache for the 6 points. *)
+Theorem prepared_triangle_evaluate_agrees :
+  forall ax ay bx by_ cx cy (g : Geometry),
+    evaluate (prepare (triangle_geometry ax ay bx by_ cx cy)) g =
+    relate (triangle_geometry ax ay bx by_ cx cy) g.
+Proof.
+  intros; apply prepared_evaluate_agrees.
+Qed.
+
+(* Tiny triangle touch cached example (uses the shared-edge touch config). *)
+Example prepared_triangle_touch_cached :
+  let pg := prepare (triangle_geometry 0 0 1 0 0 1) in
+  let b := triangle_geometry 1 0 1 1 0 1 in
+  evaluate pg b = relate (pg_geom pg) b.
+Proof.
+  apply prepared_triangle_evaluate_agrees.
+Qed.
+
 (* Note: for rects, prepare now stores bounds in pg_cache (non-unit, unlike the trivial original).
    A production cache could use it to avoid re-extraction or precompute the regime/matrix. *)
 
@@ -87,7 +107,17 @@ Proof.
   reflexivity.
 Qed.
 
+(* Triangle cache population example (tiny non-id cache). *)
+Example prepared_triangle_has_points_cache :
+  let pg := prepare (triangle_geometry 0 0 1 0 0 1) in
+  pg_tri_cache pg = Some (0, 0, 1, 0, 0, 1).
+Proof.
+  reflexivity.
+Qed.
+
 Print Assumptions prepared_evaluate_agrees.
 Print Assumptions prepared_rect_evaluate_agrees.
+Print Assumptions prepared_triangle_evaluate_agrees.
 Print Assumptions prepared_identity.
 Print Assumptions prepared_rect_touch_cached.
+Print Assumptions prepared_triangle_touch_cached.

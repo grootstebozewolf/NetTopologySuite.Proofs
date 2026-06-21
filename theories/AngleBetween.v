@@ -10,6 +10,9 @@
 
      angle_between u v := atan2 (cross u v) (dot u v),
        cross u v = ux*vy - uy*vx,   dot u v = ux*vx + uy*vy.
+   (Why atan2 not acos? acos loses the sign of the oriented angle and has
+    numerical instability near ±1; atan2(cross,dot) is the JTS-robust,
+    quadrant-correct, signed form directly from the 2D cross/dot identities.)
 
    Headlines (for nonzero u, v):
      cos (angle_between u v) = dot / (|u| * |v|),

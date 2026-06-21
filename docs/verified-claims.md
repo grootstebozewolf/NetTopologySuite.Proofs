@@ -724,7 +724,7 @@ computation — full RelateNG noding remains S13+.
 
 ## Issue #67 — S13 pipeline + Jordan cell dim (RelateNG.v, RelatePrepared.v, RelateCurveMatrix, RelateBoundary)
 
-Skeletons + helpers + guarded dim soundness landed. `rects_relate` regime selection and strata in RelateNG; rect dispatch + exterior-row pinning for touch; II cell (SInt separation under vertical touch) landed; prepared evaluate hook with rect non-identity cache (bounds) example; `ii_cell_dim2_sound_gtri`. Full 9-cell pointset + noding remain S15l+.
+Skeletons + helpers + guarded dim soundness landed. Rect + triangle helpers + EE cell + prepared tri cache + registry entries added. Full capstone (strict-II/BB/satisfy_pointset) + regime DEFERRED (registered). See docs/rect-triangle-touch-milestone.md.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -898,3 +898,5 @@ Unconditional exact-reals — the most directly citable rows.
 | `RelateNG.v : touch_regime_exterior_row_pinned` | **#67 RelateNG S15l exterior pinning for touch:** under rects_touch_vertical_edge, relate yields EE=Some 2, IE/EI/BE/EB=None (exterior row true-dim for touch; matches aa_matrix_touch_vertical + regime). `[exact]` | 3 |
 | `RelateNG.v : relate_rect_touch_matrix_shape` (+ `relate_on_rects_dispatches_ex`, `relate_rect_touch_exterior_pinned`) | **Concrete examples:** dispatch equality, touch matrix = aa_matrix_touch_vertical, exterior row pinned under hyp (used for oracle vectors batch + claims). Cross-references `touch_regime_exterior_row_pinned`. `[exact]` | 3 |
 | `RelateNG.v : rect_pair_regime_vert_touch` (+ `rect_pair_regime_horiz_touch`, `relate_rect_disjoint_via_regime`) | **Horizontal expansion + full rect family:** real `rect_pair_regime` now decides among Disjoint/Overlap/Contains/TouchVert/TouchHoriz using bounds comparisons (symmetric to vertical). Fidelity lemmas + disjoint example. Low-risk follow-up to dispatch. `[exact]` | 3 |
+| `RelateNG.v : touch_triangle_pair_ee_cell` (+ `touch_triangle_bb_point_between`, `ex_triangles_touch_on_shared_edge`) | Triangle touch helpers + EE cell (Qed via two_geometries_exterior_meet) + concrete touch hyp example. Strict II/BB/satisfy_pointset + regime still DEFERRED (registered). | 3 |
+| `RelatePrepared.v : prepared_triangle_evaluate_agrees` (+ `prepared_triangle_touch_cached`, `prepared_triangle_has_points_cache`) | **Prepared triangle cache extension:** tiny non-id pg_tri_cache for triangle points (parallel rect bounds); agrees + cached touch ex. `[exact]` | 0 |

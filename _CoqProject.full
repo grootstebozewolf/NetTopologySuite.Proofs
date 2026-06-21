@@ -570,6 +570,7 @@ theories/RelateAreaArea.v
 # `rect_pair_fill`, classifier + compute-path soundness linked to S6 witnesses.
 # Inherits `RelateAreaArea.v`.  Three-axiom base.  No Admitted.
 theories/RelateMatrixRect.v
+theories/RelateMatrixTriangle.v
 # Issue #67 session 8 (S8): line×line matrix fill — `LinePairRegime`,
 # `line_pair_fill`, classifier + compute-path soundness linked to S2 witnesses.
 # Inherits `RelateLineLine.v`.  Three-axiom base.  No Admitted.
