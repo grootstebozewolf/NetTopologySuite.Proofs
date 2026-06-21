@@ -25,6 +25,10 @@
    `theories/AngleBetween.v` and `theories/RelateArcAnalytic.v`).  This file is
    exempted in docs/audit-exceptions.txt accordingly.
 
+   #64 arc length finish: the chord ≤ arc_length bridge is here (Qed via
+   ds = c² identity + sqrt_Rsqr + chord_le_arc_length; uses |sweep| and sin_ge_0
+   under principal range).
+
    No `Admitted`, no `Axiom`, no `Parameter`.
 
    Author: NetTopologySuite.Proofs contributors
@@ -36,7 +40,7 @@
 From Stdlib Require Import Reals Lra.
 
 From NTS.Proofs Require Import Distance CurveGeometry AngleBetween
-                               ArcChordApprox RelateArcAnalytic.
+                               ArcChordApprox RelateArcAnalytic ArcLength.
 
 Local Open Scope R_scope.
 
@@ -117,3 +121,70 @@ Qed.
 
 Print Assumptions law_of_cosines_equal_norm.
 Print Assumptions arc_chord_dist_sq_via_sweep.
+
+Theorem arc_chord_le_arc_length :
+  forall a : CircularArc,
+    valid_arc a ->
+    dist (arc_start a) (arc_end a) <= arc_length (arc_radius a) (Rabs (arc_sweep_angle a)).
+Proof.
+  intros a Hva.
+  pose proof (arc_chord_dist_sq_via_sweep a Hva) as Hsq.
+  pose proof (chord_subtended_sq (arc_radius a) (Rabs (arc_sweep_angle a))) as Hcs.
+  assert (Hr : 0 <= arc_radius a) by apply arc_radius_nonneg.
+  assert (Ht : 0 <= Rabs (arc_sweep_angle a)) by apply Rabs_pos.
+  pose proof (chord_le_arc_length (arc_radius a) (Rabs (arc_sweep_angle a)) Hr Ht) as Hcle.
+  pose proof (arc_sweep_principal_range a Hva) as Hrange.
+  (* ds(start, end) = chord_subtended(r, |theta|)^2 via sq-identity + cos even + r^2 *)
+  assert (Hds_eq_csq :
+    dist_sq (arc_start a) (arc_end a) =
+    chord_subtended (arc_radius a) (Rabs (arc_sweep_angle a)) *
+    chord_subtended (arc_radius a) (Rabs (arc_sweep_angle a))).
+  { rewrite Hsq.
+    assert (Hcos : cos (arc_sweep_angle a) = cos (Rabs (arc_sweep_angle a))).
+    { destruct (Rlt_dec (arc_sweep_angle a) 0) as [Hlt | Hge].
+      - rewrite (Rabs_left (arc_sweep_angle a) Hlt).
+        rewrite cos_neg.
+        reflexivity.
+      - rewrite (Rabs_right (arc_sweep_angle a) (Rnot_lt_ge (arc_sweep_angle a) 0 Hge)).
+        reflexivity.
+    }
+    rewrite Hcos.
+    assert (Hrc2 : dist_sq (arc_center a) (arc_start a) = arc_radius a * arc_radius a).
+    { rewrite (arc_radius_eq_sqrt a).
+      rewrite sqrt_sqrt by apply arc_radius_sq_nonneg.
+      unfold arc_radius_sq.
+      reflexivity.
+    }
+    rewrite Hrc2.
+    rewrite <- Hcs.
+    reflexivity.
+  }
+  (* chord_subtended(r, |theta|) >= 0 (r>=0 and sin(|theta|/2)>=0 for |theta|<=PI) *)
+  assert (Hcpos : 0 <= chord_subtended (arc_radius a) (Rabs (arc_sweep_angle a))).
+  { unfold chord_subtended.
+    assert (Hsin : 0 <= sin (Rabs (arc_sweep_angle a) / 2)).
+    { apply sin_ge_0.
+      + apply Rmult_le_pos; [apply Rabs_pos | lra].
+      + destruct Hrange as [Hgt Hle].
+        apply Rle_trans with (PI / 2); [| lra].
+        apply Rmult_le_compat_r; [lra | ].
+        apply Rabs_le; split; [apply Rlt_le; exact Hgt | exact Hle].
+    }
+    nra.
+  }
+  unfold dist.
+  (* dist = sqrt(ds) = sqrt(c * c) = c (via Rsqr), then chord_le gives <= arcL *)
+  rewrite Hds_eq_csq.
+  replace (chord_subtended (arc_radius a) (Rabs (arc_sweep_angle a)) *
+           chord_subtended (arc_radius a) (Rabs (arc_sweep_angle a)))
+    with (Rsqr (chord_subtended (arc_radius a) (Rabs (arc_sweep_angle a))))
+    by (unfold Rsqr; ring).
+  rewrite sqrt_Rsqr by exact Hcpos.
+  exact Hcle.
+Qed.
+
+Print Assumptions arc_chord_le_arc_length.
+
+
+(* Note: this re-uses the scalar chord_le_arc_length and the sq identity.
+   The |sweep| ensures the length is non-negative independent of orientation. *)
