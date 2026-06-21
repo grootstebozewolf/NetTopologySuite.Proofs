@@ -373,8 +373,25 @@ Qed.
 Notation tri_ii_strict_separation := touch_triangle_pair_strict_ii_no_common.
 
 (* Fixed statement per plan Option B (the original point_set version was the FALSE claim
-   registered in counterexamples). This algebraic form is derivable from g_sum + opposite_sides;
-   kept Admitted pending full case proof (or used via H_ii pattern in cell). *)
+   registered in counterexamples). The negation form (~ both positive) is immediate from
+   touch_triangle_pair_strict_ii_no_common. The strict <0 (ruling out =0 on B's boundary)
+   requires the additional case that a strict interior point of A cannot lie on B's legs
+   (separated by the shared edge line) or the shared edge itself (would force gtriA=0 too).
+   The weak form is used where ~ (0 < ...) suffices. *)
+Lemma touch_int_ext_exclusion_weak :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy p,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    0 < gtri ax ay bx by_ cx cy p ->
+    ~ (0 < gtri dx dy ex ey fx fy p).
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HApos HBpos.
+  apply (touch_triangle_pair_strict_ii_no_common ax ay bx by_ cx cy dx dy ex ey fx fy Htouch).
+  exists p; split; assumption.
+Qed.
+
+(* The strict form (gtri B p < 0) remains the target; see deferred registry for
+   touch_int_ext_exclusion. *)
 Lemma touch_int_ext_exclusion :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy p,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
@@ -418,7 +435,8 @@ Lemma touch_triangle_pair_ii_cell :
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
     (* H_ii_disjoint is the point_set version of separation (under half-open parity for SInt).
        The algebraic form (0<gtri) is Qed via gtri_neg + strict_ii. The lift point_set <-> 0<gtri
-       for non-boundary p is the JCT seam (deferred; see general_triangle_parity_characterises_interior). *)
+       for non-boundary p is the JCT seam (deferred; see general_triangle_parity_characterises_interior
+       and point_set_characterises_geometric_interior below). *)
     (~ exists p,
         RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt (triangle_geometry ax ay bx by_ cx cy) p /\
         RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt (triangle_geometry dx dy ex ey fx fy) p) ->
@@ -434,6 +452,20 @@ Proof.
     + intro Hdn. exfalso. apply Hdn. reflexivity.
     + intro Hex. exfalso. apply Hii. exact Hex.
 Qed.
+
+(* JCT / point_set → 0 < gtri lift (for triangle touch II cell and geom_de9im_pointset).
+   Connects the parity-based point_set (used by in_stratum SInt + cell_ok) to the
+   algebraic 0 < gtri (used by separation). See GeneralTriangleJCT.v for the guarded
+   direction(s) via general_triangle_parity_characterises_interior. The unguarded or
+   converse lift (point_set interior p ==> 0 < gtri p) is the seam for making
+   touch_triangle_pair_ii_cell unconditional (H_ii_disjoint premise removal) and for
+   full point-set satisfaction of DE-9IM cells under SInt.
+   (touch_triangle_pair_ii_cell entry in deferred registry.) *)
+Lemma point_set_characterises_geometric_interior :
+  forall ax ay bx by_ cx cy p,
+    point_set (triangle_geometry ax ay bx by_ cx cy) p ->
+    0 < gtri ax ay bx by_ cx cy p.
+Admitted.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
