@@ -59,11 +59,15 @@
 # (none -- the deferred-proof registry was EMPTY as of 2026-06-14.
 # New live entries added for ArcPointDistance.v D-PT analytical stubs.)
 
-theories/ArcPointDistance.v:point_to_arc_dist_radial_lower | theories/ArcPointDistance.v (see header + §2 "Soundness lemma 1") | in-sweep radial case; delegates to point_circle_dist_lower once on_arc => dist O X = r (converse of inCircle_R_zero_of_equidistant)
-
 theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/ArcPointDistance.v (see §4) | fallback to nearer endpoint when radial foot lies outside the directed sweep (arc_span_contains); requires distance monotonicity along arc away from projection
 
-theories/ArcPointDistance.v:point_to_arc_dist_centre_is_r | theories/ArcPointDistance.v (see §4) | P coincides with arc centre O; dist = arc_radius for any X with on_arc (trivial once on_circle is shown)
+# DISCHARGED 2026-06-21: theories/ArcPointDistance.v:point_to_arc_dist_radial_lower
+#   Qed via inCircle_R_zero_implies_equidistant (ArcArcCircles §1c) + point_circle_dist_lower.
+#   on_arc X ==> inCircle_R = 0 ==> dist_sq O X = dist_sq O (arc_start) ==> dist O X = r.
+
+# DISCHARGED 2026-06-21: theories/ArcPointDistance.v:point_to_arc_dist_centre_is_r
+#   Qed via dist_eq_zero_iff (P=O coord-wise) + inCircle_R_zero_implies_equidistant.
+#   on_arc X ==> dist O X = r; P=O ==> dist P X = dist O X = r.
 #
 # DISCHARGED 2026-06-14: theories/EdgeFaceBridge.v:H_bridge_core.  The
 # combinatorial core -- the same-face FACE SPLIT
@@ -119,14 +123,23 @@ theories/ArcPointDistance.v:point_to_arc_dist_centre_is_r | theories/ArcPointDis
 #          EdgeConnectivity.v §5, docs/extract-faces-bridge.md §22.
 
 # S15l triangle touch capstone (RelateNG + RelateMatrixTriangle)
-theories/RelateNG.v:touch_triangle_pair_strict_ii_no_common | theories/RelateNG.v (touch helpers section) + GeneralTriangleSeparation.gtri_pos_iff + cross antisymmetry | 9-case analysis on shares_edge + opposite_sides; shared-line gs slack sign flip (same-dir => gdbl sign conflict; reverse-dir => cross >0 vs <0 for p)
+# DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangle_pair_strict_ii_no_common
+#   Qed via g_sum + gtri_pos_iff + opposite_sides sign argument.
+#   After injection+subst on shares_edge, nra closes all 18 cases using
+#   gdbl_A > 0 (from gsA+gsB+gsC=gdbl_A, all gs>0) and gdbl_B > 0 similarly,
+#   but opposite_sides forces gdbl_A*gdbl_B < 0. Contradiction.
+# DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangle_pair_bb_cell
+#   Qed via tri_bnd_v1/v2/v3 helpers (geom_boundary for each triangle vertex)
+#   + all: first [...] tactic that tries each A-vertex as witness, rewrites via Hp1,
+#   then applies the matching tri_bnd_v* for B. 18 cases all close.
+# DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangles_satisfy_pointset
+#   Qed: real conclusion (not True) assembled from strict_ii_no_common + bb_cell + ee_cell.
+# DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangles_satisfy_pointset_and_general
+#   Qed: regime guard (r = TPR_TouchEdge) + touch_triangles_satisfy_pointset.
+
 theories/RelateNG.v:touch_triangle_pair_ii_cell | theories/RelateNG.v (cell lemmas) + point_set via point_in_ring + strict separation | uses strict_ii_no_common; honest note that SInt uses point_set (bnd shared) while claim is 0<gtri
-theories/RelateNG.v:touch_triangle_pair_bb_cell | theories/RelateNG.v (bb cell) + touch_triangle_bb_point_between + between_P0 + point_on_boundary + ring_edges_gtri | midpoint (or shared vert) on shared edge is in both geom_boundary; between on the edge pair
 theories/RelateNG.v:touch_triangle_f_cells_trimmed | theories/RelateNG.v (F trim) | exclusion from no-common-strict + two_geometries_exterior_meet; full 9-cell deferred like rect
-theories/RelateNG.v:touch_triangles_satisfy_pointset | theories/RelateNG.v (capstone) + ee/bb/ii cells + two_geometries_exterior_meet | assemble (strict II none /\ BB cell /\ EE cell); honest bnd-vs-matrix note
-theories/RelateNG.v:touch_triangles_satisfy_pointset_and_general | theories/RelateNG.v (general) + S6 facts | regime guard + touch capstone; bridge for overlap/contains composition
 theories/RelateNG.v:relate_triangle_touch | theories/RelateNG.v (relate under touch) + triangle_pair_fill | records intended matrix under explicit triangles_touch_on_shared_edge; regime stub blocks definitional equality today
-theories/RelateNG.v:touch_triangle_pair_ii_cell | (duplicate entry from inner admit cleanup; covered above) | point_set lift to 0<gtri deferred to JCT seam (GeneralTriangleParity etc.)
 
 # Note: only the triangle touch family from the S15l lift. Rect work on this branch is already Qed or properly trimmed.
 
