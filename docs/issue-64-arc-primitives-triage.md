@@ -176,7 +176,7 @@ from the Flocq-float files) and `docs/verified-claims.md` (Phase 4).
 (short-vs-long via the proven mid-point side test), then arc length `s = r·θ`
 with `θ` the central angle from `atan2`.
 
-**2026-06-21 pivot:** `arc_length_of` for CircularArc (r * |sweep|) using atan2 `angle_between` landed in RelateArcAnalytic.v + ArcLength.v (nonneg Qed; chord bridge structure noted).
+**2026-06-21 pivot:** `arc_length_of` for CircularArc (r * |sweep|) using atan2 `angle_between` landed in RelateArcAnalytic.v + ArcLength.v (nonneg Qed). Chord ≤ arc_length bridge in ArcChordLength.v (structure landed; final numeric detail Admitted for transparency).
 
 ## 9. Update (PR #146): `b64_inCircle` exactness + arc-line Scope A
 

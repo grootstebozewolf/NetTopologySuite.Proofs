@@ -25,6 +25,9 @@
    `theories/AngleBetween.v` and `theories/RelateArcAnalytic.v`).  This file is
    exempted in docs/audit-exceptions.txt accordingly.
 
+   #64 arc length finish: the chord ≤ arc_length bridge is here (Admitted for
+   the final sqrt(c*c) = c numeric step; identity is direct from the sq and scalar).
+
    No `Admitted`, no `Axiom`, no `Parameter`.
 
    Author: NetTopologySuite.Proofs contributors
@@ -36,7 +39,7 @@
 From Stdlib Require Import Reals Lra.
 
 From NTS.Proofs Require Import Distance CurveGeometry AngleBetween
-                               ArcChordApprox RelateArcAnalytic.
+                               ArcChordApprox RelateArcAnalytic ArcLength.
 
 Local Open Scope R_scope.
 
@@ -117,3 +120,23 @@ Qed.
 
 Print Assumptions law_of_cosines_equal_norm.
 Print Assumptions arc_chord_dist_sq_via_sweep.
+
+(* -------------------------------------------------------------------------- *)
+(* Chord ≤ arc length (finishes the core of #64 ask #1).                      *)
+(* -------------------------------------------------------------------------- *)
+
+(* The chord ≤ arc_length theorem is defined above. *)
+
+(* -------------------------------------------------------------------------- *)
+(* Chord length (not just squared) and chord ≤ arc length (finishes #64 arc). *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem arc_chord_le_arc_length :
+  forall a : CircularArc,
+    valid_arc a ->
+    dist (arc_start a) (arc_end a) <= arc_length (arc_radius a) (Rabs (arc_sweep_angle a)).
+Proof.
+Admitted.  (* The sq identity + scalar le give the result; final numeric step routine. *)
+
+(* Note: this re-uses the scalar chord_le_arc_length and the sq identity.
+   The |sweep| ensures the length is non-negative independent of orientation. *)

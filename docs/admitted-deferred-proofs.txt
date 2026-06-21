@@ -131,8 +131,8 @@ theories/RelateNG.v:touch_triangle_pair_ii_cell | (duplicate entry from inner ad
 # Note: only the triangle touch family from the S15l lift. Rect work on this branch is already Qed or properly trimmed.
 
 # #64 Option-A arc length (atan2 sweep)
-theories/RelateArcAnalytic.v:chord_le_arc_length_of | RelateArcAnalytic + ArcLength.chord_subtended_sq + scalar sin_le_x | chord = 2 r sin(|theta|/2) + sin x <= x from scalar; full numeric details from law_of_cosines in ArcChordLength
-theories/ArcLength.v:arc_length_of_nonneg | (if any remaining) scalar r * abs(theta) nonneg | trivial from Rmult_le_pos on dist and Rabs_pos
+theories/ArcChordLength.v:arc_chord_le_arc_length | ArcChordLength + arc_chord_dist_sq_via_sweep + chord_subtended_sq + scalar chord_le | chord length = chord_subtended r |theta| from sq identity; <= from scalar sin x <= x ; numeric sqrt detail for c*c
+theories/RelateArcAnalytic.v:arc_length_of_nonneg | scalar r * abs(theta) nonneg | trivial from Rmult_le_pos on dist and Rabs_pos
 #   - `H_bridge_core` (the combinatorial planar same-face => bridge seam)
 #       -> DISCHARGED 2026-06-14 via the planar Euler route (see the LIVE-section
 #          note above).  Refactored into the named premise H_bridge_premise and
