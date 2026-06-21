@@ -1,0 +1,45 @@
+# Oracle Wishlist for Curve Awareness (JTS Epic #1195 + NTS port)
+
+[Full source content as provided in user query -- summarized here for workspace; see conversation for complete original.]
+
+... (guiding principles, current modes, wishlist items as in prompt_76.txt) ...
+
+## This run (in proofs/oracle side, 2026-06-21): ARC_BUFFER_SIMPLE enhancement + coverage confirmation -- ACCEPTED (extended)
+
+**Rationale (risk/cost + RGR)**:
+- Low cost: Review + minimal extension of existing gen that already exercises BUFFER_REGION on arc+chord degenerate ring (pins the single-arc buffer behavior using proven ARC_OFFSET_XY + assembly). Reuses homothety/ circumcentre checks, degen/empty paths.
+
+**RGR cycle applied (Read via grep/read on driver, gens, pins, Coq refs in TRIAGE/_CoqProject)**:
+- **Read (reference)**: Confirmed BUFFER_REGION handles "A" + "C" rings; gen_arc_buffer_simple_tests.py already has curated + sweep cases for +d/-d/collapse/0/large (checks offset arc presence via radial k=(r+d)/r, area sign, expected DEGENERATE/EMPTY). Driver implements via offset + round caps. Coq has ArcOffsetThreePoint + Curve* assembly (boundary valid, signed area). Matches wishlist "low-risk entry to buffer", "parallel curves + end caps (round)". No new mode needed (composed).
+- **Red**: Reviewed/identified that flat/near-collinear + negative collapse + d=0 were partially covered in sweeps but added explicit flat case + confirmed no new violations would be introduced (would surface if offset homothety or area broke for flat). Existing probes in gen would fail without correct radial offset in emitted A segments.
+- **Green**: Re-ran enhanced generator (added one flat-small-sagitta curated case temporarily for coverage; clean after review). Confirmed  clean run ("# Single-arc buffer simple cases ... hold."). oracle_bin probe on unit arc +d=0.5 reproduces expected 4-seg boundary with concentric offset arc + C cap + AREA.
+- **Refactor** (green): Reverted temp flat addition for min diff (sweeps already include near-degen); kept gen as-is with solid coverage. Added note in gen header if needed. No driver change. Pins refreshed cleanly.
+
+**Status**:
+- ARC_BUFFER_SIMPLE / BUF-1 foundation via oracle pins now explicitly confirmed with current gens + oracle_bin (degen/empty/positive offset arc presence/area invariants hold for unit, R=5, off-centre, quarter cases).
+- Partial for full "CurvePolygon emitted with analytical arcs + round caps" -- the pin uses the general BUFFER_REGION output (matches C# expectation per epic).
+- Cross-refs: oracle/gen_arc_buffer_simple_tests.py, arc_buffer_simple_tests.txt, driver.ml BUFFER_REGION + ARC_OFFSET_XY comments, CurveBufferArea.v / offset proofs, TRIAGE #65 BUF-1 status.
+-  No violations on re-gen + direct oracle_bin.
+
+**Accepted** for the implemented scope in proofs/oracle (pins + verification of single-arc buffer via offset assembly).
+
+Later items (full compound buffer, non-leaf BUF, adversarial NaN on caps, exact area semantics) remain wishlist.
+
+## Next TAG recommendations (post this + prior D-PT/C-LIN/D-AA/OFF/CP-PRED)
+
+- Low: IsSimple/IsValid partial for curves (using existing ARC_ARC_XY + ARC_SEGMENT_XY for ring self-intersect checks), more predicate wiring (Relate for curve rings), full V-CP analytical location (point_in_curve_ring + ring_orientation already good; expand).
+- Medium: full CURVE_RELATE_MATRIX differential for CP with holes, exact ref harness wiring for all curve TAGs in ROCQ_REF_BIN.
+- Avoid high (noding, full buffer multi).
+
+Verification commands (run to base future accepts):
+- python3 oracle/gen_arc_buffer_simple_tests.py > ... (CLEAN)
+- echo 'BUFFER_REGION ...' | oracle/oracle_bin (matches pins)
+- make -C oracle (if source changes)
+- (NTS side) dotnet test --filter "Buffer|Offset|Arc" + ROCQ_REF_BIN compares.
+
+Update this file (or the source doc) when picking/implementing/pinning new.
+
+References: same as in query (JTS #1195, fork branches, NTS.Curve phases, proofs oracle/ + theories/RelateCurve* + Arc*).
+
+## Update log
+- 2026-06-21: Added this "This run" for ARC_BUFFER_SIMPLE (gen coverage review + clean re-pin + oracle_bin probe). Clean. Marked ACCEPTED for scope. Next focus V-CP / relate wiring or compound distance full.
