@@ -369,6 +369,9 @@ Proof.
      the lemma is used with concrete Htouch in examples/cells (sound). *)
 Admitted.  (* see note above; 3-axiom, Qed-clean on the using sites *)
 
+(* Short alias for readability in future composition lemmas. *)
+Notation tri_ii_strict_separation := touch_triangle_pair_strict_ii_no_common.
+
 (* -------------------------------------------------------------------------- *)
 (* Triangle touch cell lemmas (BB/EE/II/F) mirroring rect touch cells.        *)
 (* BB uses midpoint of a shared edge (provably between on both rings).        *)

@@ -15,10 +15,37 @@
 - Honest notes everywhere on:
   - Strict interior for II (boundary points assigned to BB cell — half-open philosophy mirroring rect).
   - Trimmed F cells and full 9-cell geom_de9im_pointset DEFERRED (bnd inclusion in point_set).
-  - DEFERRED: arbitrary polygon composition.
+  - DEFERRED: arbitrary polygon composition (target #68).
 - Prepared extension: `pg_tri_cache`, `prepare` populates it, `prepared_triangle_*` agrees + cached touch example.
 - Concrete examples (`ex_triangles_touch_on_shared_edge`, `touch_triangles_satisfy_pointset_ex`, relate under touch).
 - Claims + triage refresh (new rows, "triangle touch capstone landed", #68 pointer).
+
+### Concrete example (shared-edge touch)
+```coq
+(* Two triangles sharing the interior of edge (1,0)--(0,1).
+   Third points (0,0) and (1,1) lie on opposite sides of the shared line
+   (cross-product sign flip). Their strict interiors are disjoint (0 < gtri
+   cannot hold for both), the shared edge interior point is in both boundaries
+   (BB), and exteriors meet (EE). *)
+Example tri_touch_shared_edge :
+  triangles_touch_on_shared_edge
+    (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+    (mkPoint 1 0) (mkPoint 1 1) (mkPoint 0 1).
+(* Satisfies the trimmed pointset: ~exists p, 0<gtriA p /\ 0<gtriB p  (strict II)
+   + BB cell + EE cell. *)
+```
+
+A simple ASCII sketch:
+```
+      C=(0,1)               B'=(1,1)
+       / \                   / \
+      /   \                 /   \
+A=(0,0)--B=(1,0)     B=(1,0)--C'=(0,1)
+      \   /                 \   /
+       \ /                   \ /
+      A'=(0,0) wait no: left tri A(0,0) B(1,0) C(0,1); right B(1,0) B'(1,1) C(0,1)
+Shared edge B--C ; opposite thirds A and B'.
+```
 
 ## Reuse & style
 - Heavy reuse of gtri/gtri_pos_iff, point_set/point_on_boundary, cell_ok, two_geometries_exterior_meet, between, cross, ring_edges.
@@ -31,7 +58,7 @@ This + the rect touch work gives a solid rect+triangle building block.
 Opens the door to:
 - Vertex-touch variant
 - Overlap/Contains regimes for tris
-- Pairwise composition lemmas
+- Pairwise composition lemmas (see deferred entries in admitted-deferred-proofs.txt linked to #68)
 - Delaunay (#68) — empty circumcircle <=> local relate matrices on adjacent triangles.
 
 See:
