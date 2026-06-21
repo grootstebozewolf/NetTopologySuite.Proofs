@@ -52,6 +52,7 @@
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance Overlay CurveGeometry CurveLinearise
   RelateCurveAreaPoint RayParityDegenerate.
+From NTS.Proofs Require Import CurveRingOffset BufferOffset ArcOffsetThreePoint.
 From NTS.Proofs Require Import PointInRingCorrect JordanCurveSeam
   GeneralTriangleSeparation GeneralTriangleJCT.
 Import ListNotations.
@@ -291,3 +292,114 @@ Print Assumptions point_in_arc_seg_curve_polygon_iff_triangle.
 Print Assumptions point_in_arc_seg_curve_geometry_iff_triangle.
 Print Assumptions arc_seg_control_interior_in_curve_geometry.
 Print Assumptions point_in_arc_seg_curve_geometry_iff_control_interior.
+
+(* -------------------------------------------------------------------------- *)
+(* ARC_BUFFER_SIMPLE: single arc (as arc+chord lens) → CurvePolygon or degen. *)
+(*                                                                            *)
+(* BUF-1 cheap lane exercised by the oracle via BUFFER_REGION on the 2-seg    *)
+(* "degenerate ring" [CSArc a; CSChord end start].  For d=0 recovers the lens; *)
+(* outward yields expanded CurvePolygon (offset arc + round/connector pieces); *)
+(* inward may hit DEGENERATE (partial collapse) or EMPTY (r+d <= 0).           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition arc_buffer_simple (a : CircularArc) (d : R) : CurvePolygon :=
+  {| curve_outer := curve_ring_offset (arc_seg_curve_ring a) d;
+     curve_holes := [] |}.
+
+Lemma arc_buffer_simple_first_segment_is_offset :
+  forall a d,
+    hd_error (curve_ring_offset (arc_seg_curve_ring a) d)
+    = Some (CSArc (arc_offset_arc a d)).
+Proof.
+  intros a d.
+  unfold arc_seg_curve_ring, curve_ring_offset.
+  reflexivity.
+Qed.
+
+Lemma arc_buffer_simple_d0_is_identity :
+  forall a : CircularArc,
+    arc_buffer_simple a 0 = arc_seg_curve_polygon a.
+Proof.
+  intros a.
+  unfold arc_buffer_simple, arc_seg_curve_polygon.
+  f_equal.
+  unfold curve_ring_offset, arc_seg_curve_ring.
+  simpl.
+  (* chord parts at d=0 are identity *)
+  assert (Hch1 : offset_point (arc_end a) (arc_start a) (arc_end a) 0 = arc_end a).
+  { unfold offset_point, pt_translate, offset_normal, seg_vec.
+    simpl. ring. }
+  assert (Hch2 : offset_point (arc_end a) (arc_start a) (arc_start a) 0 = arc_start a).
+  { unfold offset_point, pt_translate, offset_normal, seg_vec.
+    simpl. ring. }
+  rewrite Hch1, Hch2.
+  (* arc at d=0 is identity: k=1, homothety C 1 P = P *)
+  assert (Har : arc_offset_arc a 0 = a).
+  { unfold arc_offset_arc, radial_offset, homothety.
+    unfold arc_start, arc_mid, arc_end, mkCircularArc.
+    (* (r+0)/r = 1 , so C + 1*(P-C) = P for each control *)
+    destruct a as [s m e]; simpl.
+    unfold pt_translate; simpl.
+    f_equal; ring. }
+  rewrite Har.
+  reflexivity.
+Qed.
+
+Lemma arc_offset_arc_radius :
+  forall a d,
+    valid_arc a ->
+    arc_radius (arc_offset_arc a d) = Rabs (arc_radius a + d).
+Proof.
+  intros a d Hva.
+  pose proof (arc_radius_pos a Hva) as Hr.
+  pose proof (arc_center_equidistant_offset a d Hva) as Heq.
+  unfold arc_radius, dist, arc_offset_arc in *.
+  simpl.
+  assert (Hdist : dist (arc_center a) (arc_start (arc_offset_arc a d)) = Rabs (arc_radius a + d)).
+  { apply radial_offset_center_dist.
+    - exact Hr.
+    - apply arc_center_equidistant; assumption.
+  }
+  rewrite Hdist.
+  reflexivity.
+Qed.
+
+Lemma arc_buffer_simple_unsafe_radius :
+  forall a d,
+    valid_arc a ->
+    arc_radius a + d <= 0 ->
+    arc_radius (arc_offset_arc a d) = - (arc_radius a + d).
+Proof.
+  intros a d Hva Hle.
+  rewrite arc_offset_arc_radius by assumption.
+  apply Rabs_left1.
+  lra.
+Qed.
+
+Lemma arc_buffer_simple_valid_when_safe :
+  forall a d,
+    valid_arc a ->
+    ring_offset_safe (arc_seg_curve_ring a) d ->
+    valid_curve_polygon (arc_buffer_simple a d).
+Proof.
+  intros a d Hva Hsafe.
+  unfold arc_buffer_simple, valid_curve_polygon; simpl.
+  split.
+  - apply curve_ring_offset_valid.
+    + apply valid_arc_seg_curve_ring; exact Hva.
+    + exact (valid_arc_seg_curve_ring a Hva).
+    + exact Hsafe.
+  - constructor.
+Qed.
+
+(* When the per-arc safety fails (r + d <= 0 for the lens arc), construction   *)
+(* yields a "polygon" whose arc has non-positive radius; oracle treats as      *)
+(* EMPTY / DEGENERATE depending on exact collapse.  We record the radius fact. *)
+(* Note: degen/EMPTY decision is by the caller using ring_offset_safe (or the   *)
+(* per-arc r+d <=0 test); the polygon is always built; unsafe cases produce    *)
+(* polygons containing invalid (radius <=0) arcs, which higher layers treat as *)
+(* degenerate/empty rather than emitting.  The area companion (CurveBufferArea) *)
+(* already records the per-arc safety + growth.                                 *)
+
+Print Assumptions arc_buffer_simple_valid_when_safe.
+Print Assumptions arc_buffer_simple_first_segment_is_offset.
