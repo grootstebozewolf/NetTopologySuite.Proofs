@@ -182,9 +182,172 @@ Proof.
   tauto.
 Qed.
 
-(* TODO next rung: arc_sweep_abs_le_2pi (range for disambiguated sweep) Qed.
-   Core slice prioritizes the definition itself and minor guard implication for now. *)
-(* arc_sweep range lemma (core next rung) to be completed with elementary R tactics. *)
+Lemma arc_sweep_is_principal_or_reflex :
+  forall a : CircularArc,
+    valid_arc a ->
+    arc_sweep a = arc_sweep_angle a \/
+    arc_sweep a = arc_sweep_angle a + 2 * PI \/
+    arc_sweep a = arc_sweep_angle a - 2 * PI.
+Proof.
+  intros a Hva.
+  unfold arc_sweep.
+  set (alpha := arc_sweep_angle a).
+  set (c := arc_center a).
+  set (vsx := px (arc_start a) - px c).
+  set (vsy := py (arc_start a) - py c).
+  set (vmx := px (arc_mid a) - px c).
+  set (vmy := py (arc_mid a) - py c).
+  set (phi := angle_between vsx vsy vmx vmy).
+  destruct (Rgt_dec alpha 0) as [ | ].
+  - destruct (Rgt_dec phi 0) as [ | ].
+    + destruct (Rlt_dec phi alpha) as [ | ].
+      * left; reflexivity.
+      * right; right; reflexivity.
+    + right; right; reflexivity.
+  - destruct (Rlt_dec alpha 0) as [ | ].
+    + destruct (Rlt_dec phi 0) as [ | ].
+      * destruct (Rlt_dec alpha phi) as [ | ].
+        ** left; reflexivity.
+        ** right; left; reflexivity.
+      * right; left; reflexivity.
+    + left.
+      { destruct (Rle_dec alpha 0) as [Hle | Hgt'].
+        - destruct (Rle_dec 0 alpha) as [Hge | Hlt'].
+          + apply Rle_antisym; assumption.
+          + exfalso.
+            apply Rnot_le_lt in Hlt'.
+            exact (n0 Hlt').
+        - exfalso.
+          apply Rnot_le_lt in Hgt'.
+          exact (n Hgt').
+      }
+Qed.
+
+Lemma arc_sweep_range :
+  forall a : CircularArc,
+    valid_arc a ->
+    - 2 * PI < arc_sweep a <= 2 * PI.
+Proof.
+  intros a Hva.
+  pose proof (arc_sweep_principal_range a Hva) as Hpr.
+  assert (HPI : 0 < PI) by apply PI_RGT_0.
+  assert (H2PI : PI < 2 * PI).
+  { replace (2 * PI) with (PI + PI) by ring.
+    replace PI with (PI + 0) at 1 by ring.
+    apply Rplus_lt_compat_l.
+    exact HPI.
+  }
+  assert (Hm2PI_lt_mPI : - 2 * PI < - PI).
+  { replace (- 2 * PI) with (- (2 * PI)) by ring.
+    apply Ropp_lt_contravar.
+    exact H2PI.
+  }
+  unfold arc_sweep.
+  set (theta := arc_sweep_angle a).
+  set (c := arc_center a).
+  set (vsx := px (arc_start a) - px c).
+  set (vsy := py (arc_start a) - py c).
+  set (vmx := px (arc_mid a) - px c).
+  set (vmy := py (arc_mid a) - py c).
+  set (phi := angle_between vsx vsy vmx vmy).
+  destruct (Rgt_dec theta 0) as [Hgt | Hnle].
+  - (* theta > 0 : returns theta or theta - 2*PI *)
+    destruct (Rgt_dec phi 0) as [Hphigt | _].
+    + destruct (Rlt_dec phi theta) as [_ | _].
+      * (* returns theta *)
+        split.
+        -- (* -2*PI < theta *)
+           apply Rlt_trans with (- PI).
+           ++ exact Hm2PI_lt_mPI.
+           ++ exact (proj1 Hpr).
+        -- (* theta <= 2*PI *)
+           apply Rle_trans with PI.
+           ++ exact (proj2 Hpr).
+           ++ apply Rlt_le. exact H2PI.
+      * (* returns theta - 2*PI *)
+        split.
+        -- (* -2*PI < theta - 2*PI *)
+           { set (r := - 2 * PI).
+             pose proof (@Rplus_lt_compat_l r 0 theta Hgt) as Hadd.
+             replace (r + 0) with r in Hadd by (unfold r; ring).
+             replace (r + theta) with (theta - 2 * PI) in Hadd by (unfold r; ring).
+             exact Hadd. }
+        -- (* theta - 2*PI <= 2*PI *)
+           apply Rle_trans with theta.
+           ++ replace (theta - 2 * PI) with (theta + (- 2 * PI)) by ring.
+              replace theta with (theta + 0) at 2 by ring.
+              apply Rplus_le_compat_l with (r := theta).
+              apply Rlt_le.
+              assert (H2lt : 0 < 2 * PI).
+              { assert (H02 : 0 < 2).
+                { apply Rlt_trans with 1; [apply Rlt_0_1 | apply (Rlt_plus_1 1)]. }
+                exact (Rmult_lt_0_compat 2 PI H02 HPI).
+              }
+              apply Ropp_lt_contravar in H2lt.
+              replace (- (2 * PI)) with (- 2 * PI) in H2lt by ring.
+              replace (- 0) with 0 in H2lt by ring.
+              exact H2lt.
+           ++ apply Rle_trans with PI.
+              ** exact (proj2 Hpr).
+              ** apply Rlt_le. exact H2PI.
+    + (* returns theta - 2*PI *)
+      split.
+      -- (* -2*PI < theta - 2*PI *)
+         { set (r := - 2 * PI).
+           pose proof (@Rplus_lt_compat_l r 0 theta Hgt) as Hadd.
+           replace (r + 0) with r in Hadd by (unfold r; ring).
+           replace (r + theta) with (theta - 2 * PI) in Hadd by (unfold r; ring).
+           exact Hadd. }
+      -- (* theta - 2*PI <= 2*PI *)
+         assert (Ht : theta <= PI) by exact (proj2 Hpr).
+         assert (Hg : 0 < theta) by exact Hgt.
+         lra.
+  - destruct (Rlt_dec theta 0) as [Hlt | Hnlt].
+    + destruct (Rlt_dec phi 0) as [_ | _].
+      * destruct (Rlt_dec theta phi) as [_ | _].
+        ** (* returns theta *)
+           split.
+           -- (* -2*PI < theta *)
+              apply Rlt_trans with (- PI).
+              ++ exact Hm2PI_lt_mPI.
+              ++ exact (proj1 Hpr).
+           -- (* theta <= 2*PI *)
+              apply Rle_trans with PI.
+              ++ exact (proj2 Hpr).
+              ++ apply Rlt_le. exact H2PI.
+        ** (* returns theta + 2*PI *)
+           split.
+           -- (* -2*PI < theta + 2*PI *)
+              assert (Hpr1 : - PI < theta) by exact (proj1 Hpr).
+              assert (Hpi : 0 < PI) by exact HPI.
+              lra.
+           -- (* theta + 2*PI <= 2*PI *)
+              assert (Hlt0 : theta < 0) by exact Hlt.
+              lra.
+      * (* returns theta + 2*PI *)
+        split.
+        -- (* -2*PI < theta + 2*PI *)
+           assert (Hpr1 : - PI < theta) by exact (proj1 Hpr).
+           assert (Hpi : 0 < PI) by exact HPI.
+           lra.
+        -- (* theta + 2*PI <= 2*PI *)
+           assert (Hlt0 : theta < 0) by exact Hlt.
+           lra.
+    + (* theta = 0 , returns 0 *)
+      split.
+      -- (* -2*PI < 0 *)
+         assert (HPIpos : 0 < PI) by exact HPI.
+         lra.
+      -- (* 0 <= 2*PI *)
+         assert (HPIpos : 0 < PI) by exact HPI.
+         lra.
+Qed.
+
+
+
+
+
+
 
 (* Arc length for a CircularArc using the atan2-backed sweep (Option-A #64). *)
 (* Uses mid-disambiguated arc_sweep so that major arcs (mid on long side) get  *)
