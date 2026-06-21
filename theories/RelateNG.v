@@ -386,7 +386,7 @@ Lemma touch_int_ext_exclusion_weak :
     ~ (0 < gtri dx dy ex ey fx fy p).
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HApos HBpos.
-  apply (touch_triangle_pair_strict_ii_no_common Htouch).
+  apply (touch_triangle_pair_strict_ii_no_common ax ay bx by_ cx cy dx dy ex ey fx fy Htouch).
   exists p; split; assumption.
 Qed.
 
