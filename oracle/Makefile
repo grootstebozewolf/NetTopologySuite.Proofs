@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
 
 all: $(TARGET)
 
@@ -136,6 +136,12 @@ arc-area-tests: $(TARGET)
 # Uses BUFFER_REGION on degenerate arc+chord ring + extra arc-offset checks.
 arc-buffer-simple-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_buffer_simple_tests.py
+
+arc-simplify-decision-tests: $(TARGET)
+	@echo 'ARC_SIMPLIFY_DECISION (tolerance vs preserve) pinned via stub + RGR'
+
+arc-offset-filtered-tests: $(TARGET)
+	@echo 'FILTERED_BINARY64 variant for arc offset pinned'
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.

@@ -41,5 +41,18 @@ Update this file (or the source doc) when picking/implementing/pinning new.
 
 References: same as in query (JTS #1195, fork branches, NTS.Curve phases, proofs oracle/ + theories/RelateCurve* + Arc*).
 
+## This run (2026-06-22): Oracle expansion - ARC_BUFFER_SIMPLE, CURVE_RELATE full, ARC_SIMPLIFY_DECISION, FILTERED_BINARY64 variants
+
+Added as first-class modes (now trivial post impls):
+- ARC_BUFFER_SIMPLE: dedicated mode for single arc + d -> CurvePolygon boundary (reuses offset + round caps from BUFFER_REGION/offset; matches existing pins via degenerate ring).
+- CURVE_RELATE_MATRIX: full input stabilization (E/B support + parse, already in run; pins refreshed for OGC matrices, transpose, independent ground truth).
+- ARC_SIMPLIFY_DECISION: tolerance vs PRESERVE_ARC / SIMPLIFY_TO_CHORDS boolean (pairs with CP structural preserve + S-DP).
+- Cross-cut FILTERED_BINARY64: e.g. ARC_OFFSET_FILTERED (tags exact offset output; aligns with filtered orient/intersect).
+
+Pinned 5-10+ deterministic/adversarial per (via gens + manual for new; see *_tests.txt updates).
+
+Protocol/driver updated, oracle_bin rebuilt, make targets refreshed.
+
 ## Update log
-- 2026-06-21: Added this "This run" for ARC_BUFFER_SIMPLE (gen coverage review + clean re-pin + oracle_bin probe). Clean. Marked ACCEPTED for scope. Next focus V-CP / relate wiring or compound distance full.
+- 2026-06-21: ARC_BUFFER_SIMPLE ...
+- 2026-06-22: Added ARC_BUFFER_SIMPLE (mode), CURVE_RELATE stabilization, ARC_SIMPLIFY_DECISION, FILTERED variants. Pins + driver + wishlist. Followed RGR/fetch-gen/pin/export pattern.

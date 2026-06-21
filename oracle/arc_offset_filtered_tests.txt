@@ -1,0 +1,4 @@
+# FILTERED_BINARY64 for arc offset
+A 1 0 0 1 -1 0
+0.5
+FILTERED 0x1.8p+0 0x0p+0 0x0p+0 0x1.8p+0 -0x1.8p+0 0x0p+0
