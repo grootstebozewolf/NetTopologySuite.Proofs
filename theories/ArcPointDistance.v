@@ -91,9 +91,16 @@ Lemma point_to_arc_dist_radial_lower :
     arc_span_contains a F ->
     Rabs (dist O P - r) <= dist P X.
 Proof.
-  (* Stub. The missing step (on_arc X ==> dist O X = r) is the converse of
-     inCircle_R_zero_of_equidistant. See deferred-proof registry entry. *)
-Admitted.
+  intros a P X Hva Hon O r Hd F _.
+  (* on_arc X gives inCircle_R = 0, from which we derive dist O X = r. *)
+  destruct Hon as [Hdet _].
+  assert (Heq : dist_sq (arc_center a) X = dist_sq (arc_center a) (arc_start a))
+    by (apply inCircle_R_zero_implies_equidistant; assumption).
+  assert (HdX : dist O X = r).
+  { unfold O, r, arc_radius, dist.
+    f_equal. exact Heq. }
+  apply point_circle_dist_lower. exact HdX.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §3  Soundness lemma 2 + attainment: radial foot case.                       *)
@@ -159,10 +166,20 @@ Lemma point_to_arc_dist_centre_is_r :
     on_arc a X ->
     arc_radius a = dist P X.
 Proof.
-  (* Stub: when P is the centre, every point on the (non-degenerate) arc is
-     exactly at distance = radius. Trivial once on_arc implies on the circle.
-     See deferred-proof registry. *)
-Admitted.
+  intros a P X Hva Hdist Hon.
+  (* dist(O, P) = 0 implies P has same coords as O. *)
+  apply dist_eq_zero_iff in Hdist as [Hpx Hpy].
+  (* on_arc X implies dist O X = r via inCircle_R_zero_implies_equidistant. *)
+  destruct Hon as [Hdet _].
+  assert (Hsq : dist_sq (arc_center a) X = dist_sq (arc_center a) (arc_start a))
+    by (apply inCircle_R_zero_implies_equidistant; assumption).
+  assert (HdX : dist (arc_center a) X = arc_radius a).
+  { unfold arc_radius, dist. f_equal. exact Hsq. }
+  (* dist P X = dist (arc_center a) X since px P = px O and py P = py O. *)
+  assert (HPeqO : dist P X = dist (arc_center a) X).
+  { unfold dist, dist_sq. cbn [px py]. rewrite Hpx, Hpy. reflexivity. }
+  lra.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Headline 4-lemma bundle (the "4 lemmas" for oracle_protocol / extraction).  *)
