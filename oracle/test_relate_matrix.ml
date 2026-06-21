@@ -68,6 +68,11 @@ let () =
   assert_pred "aa_matrix_touch_vertical" "Touches" true;
   assert_pred "aa_matrix_disjoint" "Disjoint" true;
 
+  (* additional TOUCH from first batch (consumption of rect oracles) *)
+  assert_pred "aa_matrix_touch_vertical" "Touches" true;
+  assert_pred "aa_matrix_touch_vertical" "Intersects" true; (* since touch intersects *)
+  assert_pred "aa_matrix_disjoint" "Disjoint" true;
+
   (* area-line regimes *)
   assert_pred "al_matrix_segment_crosses" "Crosses" true;
   assert_pred "al_matrix_boundary_touch" "Touches" true;
