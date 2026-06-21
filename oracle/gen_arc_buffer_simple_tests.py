@@ -115,9 +115,18 @@ def is_offset_of_input(input_arc, emitted_arc_pts, d, tol=1e-6):
 def assess_simple(name, arc, d, expect_kind=None):
     global violations
     a, b, c = arc
-    # 2-seg ring: arc + closing chord C->A
+    # 2-seg ring: arc + closing chord C->A (exercises BUFFER_REGION path)
     ring = [("A", a, b, c), ("C", c, a)]
     out = run_buffer_region(ring, d)
+
+    # Also exercise the dedicated first-class ARC_BUFFER_SIMPLE mode (parity check)
+    # Direct protocol: ARC_BUFFER_SIMPLE\nA sx sy mx my ex ey\nd
+    arc_line = f"A {a[0]} {a[1]} {b[0]} {b[1]} {c[0]} {c[1]}"
+    stdin = f"ARC_BUFFER_SIMPLE\n{arc_line}\n{d}\n"
+    out_direct = subprocess.run([BIN], input=stdin, capture_output=True, text=True).stdout.strip()
+    if out_direct != out:
+        violations += 1
+        tags.append(f"!! DEDICATED_MODE_MISMATCH vs BUFFER_REGION")
     tags = []
     if out in ("EMPTY", "DEGENERATE", "NAN"):
         if d <= -0.1 or expect_kind in ("EMPTY", "DEGENERATE"):

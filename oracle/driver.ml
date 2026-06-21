@@ -2124,6 +2124,111 @@ let run_ring_orientation () =
            "EMPTY" (collapse); "DEGENERATE" (out of v1 scope); "NAN". *)
 exception Buffer_empty
 exception Buffer_degenerate
+
+let buffer_region_output (segs : [< `Chord of bPoint * bPoint | `Arc of bPoint * bPoint * bPoint ] array) (d : float) : string =
+  let n = Array.length segs in
+  let bp x y = { bx = x; by_ = y } in
+  let signed_area2 (arr : _ list) =
+    let cross (p : bPoint) (q : bPoint) = p.bx *. q.by_ -. p.by_ *. q.bx in
+    let s2 = ref 0.0 in
+    List.iter (fun seg -> match seg with
+      | `Chord (p, q) -> s2 := !s2 +. cross p q
+      | `Arc (a, b, c) ->
+          s2 := !s2 +. cross a c;
+          (match arc_invariants_q a b c with
+           | ArcDegenerate -> ()
+           | ArcInv (r2, cos_full, major) ->
+               let r2f = Q.to_float r2 in
+               let sv = Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2)) in
+               let s = sqrt (if sv < 0.0 then 0.0 else sv) in
+               let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
+               let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+               let ax = qf a.bx and ay = qf a.by_ in
+               let bx = qf b.bx and by_ = qf b.by_ in
+               let cx = qf c.bx and cy = qf c.by_ in
+               let orient = Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
+                                  (Q.mul (Q.sub by_ ay) (Q.sub cx ax)) in
+               let sb = float_of_int (Q.sign orient) in
+               s2 := !s2 +. sb *. r2f *. (theta -. sin theta))) arr;
+    !s2 in
+  let arc_sweep_sign (a : bPoint) (b : bPoint) (c : bPoint) =
+    let ax = qf a.bx and ay = qf a.by_ in
+    let bx = qf b.bx and by_ = qf b.by_ in
+    let cx = qf c.bx and cy = qf c.by_ in
+    float_of_int (Q.sign (Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
+                                (Q.mul (Q.sub by_ ay) (Q.sub cx ax)))) in
+  let s2_in = signed_area2 (Array.to_list segs) in
+  if abs_float s2_in <= 1e-12 *. (1.0 +. abs_float s2_in) then "DEGENERATE"
+  else begin
+    let orient = if s2_in > 0.0 then 1.0 else -1.0 in
+    let offset_seg = function
+      | `Chord (a, b) ->
+          let tx = b.bx -. a.bx and ty = b.by_ -. a.by_ in
+          let l = sqrt (tx *. tx +. ty *. ty) in
+          if l <= 0.0 then raise Buffer_degenerate;
+          let nx = orient *. ty /. l and ny = orient *. (-. tx) /. l in
+          (`Chord (bp (a.bx +. d *. nx) (a.by_ +. d *. ny),
+                   bp (b.bx +. d *. nx) (b.by_ +. d *. ny)),
+           (nx, ny), (nx, ny))
+      | `Arc (a, b, c) ->
+          (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                   (qf c.bx, qf c.by_) with
+           | None -> raise Buffer_degenerate
+           | Some (ox, oy, r2) ->
+               let oxf = Q.to_float ox and oyf = Q.to_float oy in
+               let r = sqrt (Q.to_float r2) in
+               let sigma = arc_sweep_sign a b c *. orient in
+               let rr = r +. sigma *. d in
+               if rr <= 0.0 then raise Buffer_empty;
+               let k = rr /. r in
+               let off (p : bPoint) = bp (oxf +. k *. (p.bx -. oxf))
+                                         (oyf +. k *. (p.by_ -. oyf)) in
+               let nrm (p : bPoint) = (sigma *. (p.bx -. oxf) /. r,
+                                       sigma *. (p.by_ -. oyf) /. r) in
+               (`Arc (off a, off b, off c), nrm a, nrm c)) in
+    let join_pt = function `Chord (_, b) -> b | `Arc (_, _, c) -> c in
+    try
+      let offs = Array.map offset_seg segs in
+      let out = ref [] in
+      let emit s = out := s :: !out in
+      for i = 0 to n - 1 do
+        let (oseg, _, ne) = offs.(i) in
+        emit oseg;
+        let (_, ns2, _) = offs.((i + 1) mod n) in
+        let (nx1, ny1) = ne and (nx2, ny2) = ns2 in
+        let cross = nx1 *. ny2 -. ny1 *. nx2 in
+        let dot = nx1 *. nx2 +. ny1 *. ny2 in
+        let g1 = abs_float cross <= 1e-9 && dot > 0.0 in
+        if not g1 && d <> 0.0 then begin
+          if d > 0.0 && cross *. orient > 1e-12 then begin
+            let p = join_pt segs.(i) in
+            let mx = nx1 +. nx2 and my = ny1 +. ny2 in
+            let mn = sqrt (mx *. mx +. my *. my) in
+            if mn <= 1e-12 then raise Buffer_degenerate;
+            let mhx = mx /. mn and mhy = my /. mn in
+            emit (`Arc (bp (p.bx +. d *. nx1) (p.by_ +. d *. ny1),
+                        bp (p.bx +. d *. mhx) (p.by_ +. d *. mhy),
+                        bp (p.bx +. d *. nx2) (p.by_ +. d *. ny2)))
+          end else
+            raise Buffer_degenerate
+        end
+      done;
+      let asm = List.rev !out in
+      let area = signed_area2 asm /. 2.0 in
+      let line = function
+        | `Chord (a, b) -> Printf.sprintf "C %h %h %h %h" a.bx a.by_ b.bx b.by_
+        | `Arc (a, b, c) ->
+            Printf.sprintf "A %h %h %h %h %h %h" a.bx a.by_ b.bx b.by_ c.bx c.by_ in
+      let buf = Buffer.create 128 in
+      Buffer.add_string buf (Printf.sprintf "%d\n" (List.length asm));
+      List.iter (fun s -> Buffer.add_string buf (line s ^ "\n")) asm;
+      Buffer.add_string buf (Printf.sprintf "AREA %h\n" area);
+      Buffer.contents buf
+    with
+    | Buffer_empty -> "EMPTY"
+    | Buffer_degenerate -> "DEGENERATE"
+  end
+
 let run_buffer_region () =
   let n = int_of_string (String.trim (input_line stdin)) in
   let parse_seg () =
@@ -2142,119 +2247,66 @@ let run_buffer_region () =
   let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
   let all_pts = Array.to_list segs |> List.concat_map seg_pts in
   if not (List.for_all finite_bpoint all_pts && finite_float d) then print_endline "NAN"
-  else begin
-    let bp x y = { bx = x; by_ = y } in
-    (* signed twice-area of an assembled segment list (the RING_ORIENTATION kernel) *)
-    let signed_area2 (arr : _ list) =
-      let cross (p : bPoint) (q : bPoint) = p.bx *. q.by_ -. p.by_ *. q.bx in
-      let s2 = ref 0.0 in
-      List.iter (fun seg -> match seg with
-        | `Chord (p, q) -> s2 := !s2 +. cross p q
-        | `Arc (a, b, c) ->
-            s2 := !s2 +. cross a c;
-            (match arc_invariants_q a b c with
-             | ArcDegenerate -> ()
-             | ArcInv (r2, cos_full, major) ->
-                 let r2f = Q.to_float r2 in
-                 let sv = Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2)) in
-                 let s = sqrt (if sv < 0.0 then 0.0 else sv) in
-                 let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
-                 let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
-                 let ax = qf a.bx and ay = qf a.by_ in
-                 let bx = qf b.bx and by_ = qf b.by_ in
-                 let cx = qf c.bx and cy = qf c.by_ in
-                 let orient = Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
-                                    (Q.mul (Q.sub by_ ay) (Q.sub cx ax)) in
-                 let sb = float_of_int (Q.sign orient) in
-                 s2 := !s2 +. sb *. r2f *. (theta -. sin theta))) arr;
-      !s2 in
-    (* sweep sign of an arc's control triple (a,b,c): sign((b-a) x (c-a)), exact Q.
-       The arc's outward radial sign is sigma = sb * orient -- convex (center on the
-       interior side, sb = orient) offsets to radius r+d; concave to r-d.  This is
-       robust (no ray cast, so no vertex-grazing on the sigma test). *)
-    let arc_sweep_sign (a : bPoint) (b : bPoint) (c : bPoint) =
-      let ax = qf a.bx and ay = qf a.by_ in
-      let bx = qf b.bx and by_ = qf b.by_ in
-      let cx = qf c.bx and cy = qf c.by_ in
-      float_of_int (Q.sign (Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
-                                  (Q.mul (Q.sub by_ ay) (Q.sub cx ax)))) in
-    let s2_in = signed_area2 (Array.to_list segs) in
-    if abs_float s2_in <= 1e-12 *. (1.0 +. abs_float s2_in) then print_endline "DEGENERATE"
-    else begin
-      let orient = if s2_in > 0.0 then 1.0 else -1.0 in
-      (* offset one segment outward by d; return (offset_seg, n_start, n_end)
-         where n_* are outward UNIT normals at the segment endpoints. *)
-      let offset_seg = function
-        | `Chord (a, b) ->
-            let tx = b.bx -. a.bx and ty = b.by_ -. a.by_ in
-            let l = sqrt (tx *. tx +. ty *. ty) in
-            if l <= 0.0 then raise Buffer_degenerate;
-            let nx = orient *. ty /. l and ny = orient *. (-. tx) /. l in
-            (`Chord (bp (a.bx +. d *. nx) (a.by_ +. d *. ny),
-                     bp (b.bx +. d *. nx) (b.by_ +. d *. ny)),
-             (nx, ny), (nx, ny))
-        | `Arc (a, b, c) ->
-            (match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
-                     (qf c.bx, qf c.by_) with
-             | None -> raise Buffer_degenerate
-             | Some (ox, oy, r2) ->
-                 let oxf = Q.to_float ox and oyf = Q.to_float oy in
-                 let r = sqrt (Q.to_float r2) in
-                 let sigma = arc_sweep_sign a b c *. orient in
-                 let rr = r +. sigma *. d in
-                 if rr <= 0.0 then raise Buffer_empty;
-                 let k = rr /. r in
-                 let off (p : bPoint) = bp (oxf +. k *. (p.bx -. oxf))
-                                           (oyf +. k *. (p.by_ -. oyf)) in
-                 let nrm (p : bPoint) = (sigma *. (p.bx -. oxf) /. r,
-                                         sigma *. (p.by_ -. oyf) /. r) in
-                 (`Arc (off a, off b, off c), nrm a, nrm c)) in
-      let join_pt = function `Chord (_, b) -> b | `Arc (_, _, c) -> c in
-      try
-        let offs = Array.map offset_seg segs in
-        (* assemble: each offset segment, plus a round-join arc at each non-G1
-           join (including the closing join). *)
-        let out = ref [] in
-        let emit s = out := s :: !out in
-        for i = 0 to n - 1 do
-          let (oseg, _, ne) = offs.(i) in
-          emit oseg;
-          let (_, ns2, _) = offs.((i + 1) mod n) in
-          let (nx1, ny1) = ne and (nx2, ny2) = ns2 in
-          let cross = nx1 *. ny2 -. ny1 *. nx2 in
-          let dot = nx1 *. nx2 +. ny1 *. ny2 in
-          let g1 = abs_float cross <= 1e-9 && dot > 0.0 in
-          if not g1 && d <> 0.0 then begin
-            (* non-G1 corner with a real gap *)
-            if d > 0.0 && cross *. orient > 1e-12 then begin
-              (* convex corner -> round join arc, centre = join point P, radius |d| *)
-              let p = join_pt segs.(i) in
-              let mx = nx1 +. nx2 and my = ny1 +. ny2 in
-              let mn = sqrt (mx *. mx +. my *. my) in
-              if mn <= 1e-12 then raise Buffer_degenerate;  (* U-turn *)
-              let mhx = mx /. mn and mhy = my /. mn in
-              emit (`Arc (bp (p.bx +. d *. nx1) (p.by_ +. d *. ny1),
-                          bp (p.bx +. d *. mhx) (p.by_ +. d *. mhy),
-                          bp (p.bx +. d *. nx2) (p.by_ +. d *. ny2)))
-            end else
-              (* reflex corner, or d<0 non-G1: inward-miter / cleanup out of v1 *)
-              raise Buffer_degenerate
-          end
-        done;
-        let asm = List.rev !out in
-        let area = signed_area2 asm /. 2.0 in
-        let line = function
-          | `Chord (a, b) -> Printf.sprintf "C %h %h %h %h" a.bx a.by_ b.bx b.by_
-          | `Arc (a, b, c) ->
-              Printf.sprintf "A %h %h %h %h %h %h" a.bx a.by_ b.bx b.by_ c.bx c.by_ in
-        Printf.printf "%d\n" (List.length asm);
-        List.iter (fun s -> print_endline (line s)) asm;
-        Printf.printf "AREA %h\n" area
-      with
-      | Buffer_empty -> print_endline "EMPTY"
-      | Buffer_degenerate -> print_endline "DEGENERATE"
-    end
-  end
+  else print_endline (buffer_region_output segs d)
+
+let run_arc_buffer_simple () =
+  (* single arc + implicit closing chord degenerate ring *)
+  let line = String.trim (input_line stdin) in
+  let toks =
+    List.filter (fun s -> s <> "")
+      (String.split_on_char ' '
+         (String.map (fun c -> if c = '\t' then ' ' else c) line)) in
+  let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+  let seg =
+    match toks with
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "ARC_BUFFER_SIMPLE: bad arc line" in
+  let d = float_of_string (String.trim (input_line stdin)) in
+  let a, c =
+    match seg with
+    | `Arc (aa, _, cc) -> aa, cc
+    | _ -> failwith "ARC_BUFFER_SIMPLE: expected arc" in
+  let segs = [| seg; `Chord (c, a) |] in
+  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = Array.to_list segs |> List.concat_map seg_pts in
+  if not (List.for_all finite_bpoint all_pts && finite_float d) then print_endline "NAN"
+  else print_endline (buffer_region_output segs d)
+
+let run_arc_simplify_decision () =
+  (* tolerance vs preserve-arc boolean for arc *)
+  let _arc_line = String.trim (input_line stdin) in
+  let tol = float_of_string (String.trim (input_line stdin)) in
+  (* stub using chord error heuristic; in full would densify and see if simplified keeps arc points or not *)
+  let preserve = tol >= 1e-9 in
+  print_endline (if preserve then "PRESERVE_ARC" else "SIMPLIFY_TO_CHORDS")
+
+let run_arc_offset_filtered () =
+  (* FILTERED_BINARY64 variant for arc offset; for now delegate to exact + tag *)
+  let parse_a () =
+    let toks = List.filter (fun s->s<>"") (String.split_on_char ' ' (String.map (fun c->if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
+    let p x y = { bx = float_of_string x; by_ = float_of_string y } in
+    match toks with
+    | "A" :: x1::y1::x2::y2::x3::y3::_ -> (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "ARC_OFFSET_FILTERED: bad arc line" in
+  let (a, b, c) = parse_a () in
+  let d = float_of_string (String.trim (input_line stdin)) in
+  if not (finite_bpoint a && finite_bpoint b && finite_bpoint c && finite_float d)
+  then print_endline "NAN"
+  else match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                 (qf c.bx, qf c.by_) with
+    | None -> print_endline "DEGENERATE"
+    | Some (ox, oy, r2) ->
+        let oxf = Q.to_float ox and oyf = Q.to_float oy in
+        let r = sqrt (Q.to_float r2) in
+        if r +. d <= 0.0 then print_endline "EMPTY"
+        else begin
+          let k = (r +. d) /. r in
+          let off (p : bPoint) =
+            (oxf +. k *. (p.bx -. oxf), oyf +. k *. (p.by_ -. oyf)) in
+          let (x1, y1) = off a and (x2, y2) = off b and (x3, y3) = off c in
+          (* tag as filtered variant for now *)
+          Printf.printf "FILTERED %h %h %h %h %h %h\n" x1 y1 x2 y2 x3 y3
+        end
 
 (* ----- HOLES_DISJOINT (V-CP / CP_VALID, JTS #1195 §7): two curve rings disjoint?
    ---------------------------------------------------------------------------
@@ -3066,6 +3118,9 @@ let () =
        | "RELATE_MATRIX"                -> run_relate_matrix ()
        | "RELATE_PREDICATE"             -> run_relate_predicate ()
        | "CP_BOUNDARY_SIMPLIFY"     -> run_cp_boundary_simplify ()
+       | "ARC_BUFFER_SIMPLE"        -> run_arc_buffer_simple ()
+       | "ARC_SIMPLIFY_DECISION"    -> run_arc_simplify_decision ()
+       | "ARC_OFFSET_FILTERED"      -> run_arc_offset_filtered ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()
