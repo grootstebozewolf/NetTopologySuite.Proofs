@@ -154,7 +154,7 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 #   Proof uses dispatch + rewrite + reflexivity (H_bridge pattern).
 
 theories/RelateNG.v:relate_triangle_touch | theories/RelateNG.v (relate under touch) + triangle_pair_fill | records intended matrix under explicit triangles_touch_on_shared_edge; regime stub blocks definitional equality today
-theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam fix) + g_sum/opposite_sides | fixed to TRUE claim (0 < gtri A p → gtri B p < 0); weak ~ (0 < ...) form now Qed (touch_int_ext_exclusion_weak); strict <0 pending =0 case analysis on shared-edge separation (see touch_int_ext_exclusion_weak proof). Used for ii_cell cases.
+theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam fix) + g_sum/opposite_sides + GeneralTriangleParity planar covering | fixed to TRUE claim (0 < gtri A p → gtri B p < 0); weak ~ (0 < ...) form now Qed (touch_int_ext_exclusion_weak); strict <0 uses JCT planar-covering (sign flip on shared edge from opposite_sides + gtri_pos_iff + 18-case shares analysis, GeneralTriangleParity for half-plane covering of exterior). Used for ii_cell cases.
 
 # Jordan soundness seam (architectural): in_stratum SInt = point_set (half-open parity via point_in_ring)
 # vs true geometric interior {p | 0 < gtri p}. cell_ok None SInt SInt claims II=None under point_set,
