@@ -128,7 +128,6 @@ Proof.
     rewrite Hx, Hy, Hmx, Hmy in Hva.
     simpl in Hva. nra.
 Qed.
-
 Lemma arc_center_vectors_nonzero :
   forall (a : CircularArc),
     valid_arc a ->
@@ -159,7 +158,6 @@ Proof.
     unfold dist_sq in Hstart, Hse.
     lra.
 Qed.
-
 Lemma arc_sweep_principal_range :
   forall (a : CircularArc),
     valid_arc a ->
@@ -170,7 +168,6 @@ Proof.
   destruct (arc_center_vectors_nonzero a Hva) as [Hu Hv].
   apply angle_between_range; assumption.
 Qed.
-
 Lemma arc_analytic_minor_guard_implies_principal_range :
   forall a : CircularArc,
     arc_analytic_minor_guard a ->
@@ -181,7 +178,6 @@ Proof.
   unfold arc_analytic_minor_guard in Hguard.
   tauto.
 Qed.
-
 Lemma arc_sweep_is_principal_or_reflex :
   forall a : CircularArc,
     valid_arc a ->
@@ -222,7 +218,6 @@ Proof.
           exact (n Hgt').
       }
 Qed.
-
 Lemma arc_sweep_range :
   forall a : CircularArc,
     valid_arc a ->
@@ -342,13 +337,6 @@ Proof.
          assert (HPIpos : 0 < PI) by exact HPI.
          lra.
 Qed.
-
-
-
-
-
-
-
 (* Arc length for a CircularArc using the atan2-backed sweep (Option-A #64). *)
 (* Uses mid-disambiguated arc_sweep so that major arcs (mid on long side) get  *)
 (* the long arc length > π·r.                                                   *)
@@ -368,9 +356,7 @@ Proof.
   { apply Rabs_pos. }
   apply arc_length_nonneg; assumption.
 Qed.
-
 (* The chord–arc length bridge is now landed in ArcChordLength.v (see arc_chord_le_arc_length and supporting lemmas). *)
-
 (* -------------------------------------------------------------------------- *)
 (* Analytic-guarded chord geometry (S10 delegate).                            *)
 (*                                                                            *)
@@ -387,11 +373,11 @@ Proof.
   intros a P Q [ _ Hcross].
   exact (arc_chord_proper_cross_share a P Q Hcross).
 Qed.
-
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
-
 Print Assumptions arc_sweep_principal_range.
 Print Assumptions arc_sweep.
+Print Assumptions arc_sweep_is_principal_or_reflex.
+Print Assumptions arc_sweep_range.
 Print Assumptions arc_analytic_proper_cross_share.
