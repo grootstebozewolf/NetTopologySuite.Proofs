@@ -15,7 +15,7 @@
 
    Chord–arc length bridge (`chord_subtended` at `arc_sweep_angle`) in
    ArcChordLength.v (reusing the scalar `chord_le_arc_length` and law-of-cosines
-   sq identity).  #64 ask #1 core complete (numeric detail Admitted for transparency).
+   sq identity).  #64 ask #1 core complete (Qed).
 
    Honest scoping: minor-arc disambiguation via mid-point is not promoted to a
    full arc-span membership theorem; the arc-span↔witness bridge remains a gap.
