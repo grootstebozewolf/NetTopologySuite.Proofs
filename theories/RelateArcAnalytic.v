@@ -13,9 +13,9 @@
      - Analytic-guarded chord geometry: proper cross ⇒ shared point
        (`arc_analytic_proper_cross_share`, delegates to `RelateArcChord`)
 
-   Chord–arc length bridge (`chord_subtended` at `arc_sweep_angle`) is deferred:
-   the law-of-cosines step needs a `pose`/`set` transparency seam on vector
-   names; reuse `ArcLength.chord_le_arc_length` once that lemma is closed.
+   Chord–arc length bridge (`chord_subtended` at `arc_sweep_angle`) in
+   ArcChordLength.v (reusing the scalar `chord_le_arc_length` and law-of-cosines
+   sq identity).  #64 ask #1 core complete (Qed).
 
    Honest scoping: minor-arc disambiguation via mid-point is not promoted to a
    full arc-span membership theorem; the arc-span↔witness bridge remains a gap.
@@ -38,7 +38,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import DE9IM Distance CurveGeometry ArcChordApprox
-  AngleBetween RelateArcChord ArcLength.  (* ArcLength for scalar arc_length *)
+  AngleBetween RelateArcChord ArcLength.  (* ArcLength for scalar; chord bridge landed in ArcChordLength *)
 Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -145,6 +145,8 @@ Proof.
   { apply Rabs_pos. }
   apply arc_length_nonneg; assumption.
 Qed.
+
+(* The chord–arc length bridge is now landed in ArcChordLength.v (see arc_chord_le_arc_length and supporting lemmas). *)
 
 (* -------------------------------------------------------------------------- *)
 (* Analytic-guarded chord geometry (S10 delegate).                            *)
