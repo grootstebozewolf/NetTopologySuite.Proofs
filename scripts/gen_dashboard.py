@@ -32,23 +32,24 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "dashboard", "index.html")
 
-REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "cond", "oracle"]
+REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "int", "cond", "oracle"]
 REGIME_LABEL = {
     "exact": "exact reals",
     "full-b64": "all finite binary64",
     "int-b64": "int-coord binary64",
     "int-b64-arc": "int-coord binary64 (arc)",
+    "int": "exact integer (0 axioms)",
     "cond": "conditional (named hyps)",
     "oracle": "extracted / differential",
 }
 # proven (unconditional soundness) vs conditional vs oracle-only
 REGIME_KIND = {
     "exact": "proven", "full-b64": "proven", "int-b64": "proven",
-    "int-b64-arc": "proven", "cond": "conditional", "oracle": "oracle",
+    "int-b64-arc": "proven", "int": "proven", "cond": "conditional", "oracle": "oracle",
 }
 REGIME_COLOR = {
     "exact": "#16a34a", "full-b64": "#15803d", "int-b64": "#65a30d",
-    "int-b64-arc": "#84cc16", "cond": "#d97706", "oracle": "#2563eb",
+    "int-b64-arc": "#84cc16", "int": "#0891b2", "cond": "#d97706", "oracle": "#2563eb",
 }
 
 
