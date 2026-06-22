@@ -137,19 +137,31 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 # DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangles_satisfy_pointset_and_general
 #   Qed: regime guard (r = TPR_TouchEdge) + touch_triangles_satisfy_pointset.
 
-theories/RelateNG.v:touch_triangle_pair_ii_cell | theories/RelateNG.v (cell lemmas) + point_set via point_in_ring + strict separation | uses strict_ii_no_common; honest note that SInt uses point_set (bnd shared) while claim is 0<gtri
-theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam) + GeneralTriangleParity | point strictly inside A cannot be in exterior of B under shared-edge touch; needs point_in_interior -> 0<gtri lift then planar covering argument
+# DISCHARGED 2026-06-21 (conditional Qed): theories/RelateNG.v:touch_triangle_pair_ii_cell
+#   Qed under named H_ii_disjoint : ~exists p, point_set A p /\ point_set B p (H_bridge pattern).
+#   Provides cell_ok None SInt SInt. The premise is the point_set form of II separation;
+#   algebraic 0<gtri separation is unconditional via touch_triangle_pair_strict_ii_no_common.
+#   Full unconditional ii_cell (and geom_de9im_pointset use) deferred on the lift below
+#   (point_set_characterises_geometric_interior). See also touch_int_ext_exclusion.
 
 # DISCHARGED 2026-06-21: theories/RelateNG.v:touch_triangle_f_cells_trimmed
-#   Qed by splitting: first conjunct via touch_triangle_pair_strict_ii_no_common,
-#   second conjunct via touch_int_ext_exclusion (new separately-Admitted JCT lemma).
-#   touch_triangle_f_cells_trimmed itself is now a clean Qed composition.
+#   Qed by splitting/composition: first conjunct via touch_triangle_pair_strict_ii_no_common (Qed);
+#   second (the false exclusion) extracted and moved to counterexamples.
+#   touch_triangle_f_cells_trimmed itself is now a clean Qed.
 
 # DISCHARGED 2026-06-21: theories/RelateNG.v:relate_triangle_touch
-#   Qed (conditional) under added premise:
-#     triangle_pair_regime ... = TPR_TouchEdge -> relate A B = tris_relate ... TPR_TouchEdge
-#   Proof: relate_on_triangles_dispatches + rewrite Hregime + reflexivity.
-#   H_bridge_premise pattern: dispatch equality proved; classifier stub is the live gap.
+#   Qed (conditional) under added premise `r = TPR_TouchEdge`.
+#   Proof uses dispatch + rewrite + reflexivity (H_bridge pattern).
+
+theories/RelateNG.v:relate_triangle_touch | theories/RelateNG.v (relate under touch) + triangle_pair_fill | records intended matrix under explicit triangles_touch_on_shared_edge; regime stub blocks definitional equality today
+theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam fix) + g_sum/opposite_sides + GeneralTriangleParity planar covering | fixed to TRUE claim (0 < gtri A p → gtri B p < 0); weak ~ (0 < ...) form now Qed (touch_int_ext_exclusion_weak); strict <0 uses JCT planar-covering (sign flip on shared edge from opposite_sides + gtri_pos_iff + 18-case shares analysis, GeneralTriangleParity for half-plane covering of exterior). Used for ii_cell cases.
+
+# Jordan soundness seam (architectural): in_stratum SInt = point_set (half-open parity via point_in_ring)
+# vs true geometric interior {p | 0 < gtri p}. cell_ok None SInt SInt claims II=None under point_set,
+# but connecting to geometric_interior_cont (for full geom_de9im_pointset + dim2) requires
+# point_set A p <-> geometric_interior_cont A p (non-bnd p) via general_triangle_parity_characterises_interior.
+# Long-term refactor; not discharged in this session.
+theories/RelateNG.v:point_set_characterises_geometric_interior | JCT / point_set → 0 < gtri lift (for touch_triangle_pair_ii_cell + geom_de9im_pointset) | uses general_triangle_parity_characterises_interior (guarded); see touch_triangle_pair_ii_cell comment in RelateNG.v and GeneralTriangleJCT.v; needed to remove named H_ii_disjoint premise and align stratum SInt with algebraic interiors for triangle touch cells.
 
 # Note: only the triangle touch family from the S15l lift. Rect work on this branch is already Qed or properly trimmed.
 

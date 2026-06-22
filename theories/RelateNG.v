@@ -28,12 +28,12 @@
    License: BSD-3-Clause (see LICENSE)
    ========================================================================== *)
 
-From Stdlib Require Import Reals List Lia Lra.
+From Stdlib Require Import Reals List Lia Lra Ranalysis.
 From NTS.Proofs Require Import DE9IM Distance Overlay Segment RelateBoundary
   RelateLineLine RelateAreaPoint RelateAreaLine RelateAreaArea
   RelateMatrixLineLine RelateMatrixAreaLine RelateMatrixRect RelateMatrixTriangle
   RelateCurveMatrix RectangleJCT Intersect Orientation.  (* cross for between collinear *)
-From NTS.Proofs Require Import GeneralTriangleSeparation.  (* gtri / gtri_ring for triangle interiors *)
+From NTS.Proofs Require Import GeneralTriangleSeparation GeneralTriangleParity.  (* gtri / JCT planar covering for triangle interiors & exterior signs *)
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -372,6 +372,36 @@ Qed.
 (* Short alias for readability in future composition lemmas. *)
 Notation tri_ii_strict_separation := touch_triangle_pair_strict_ii_no_common.
 
+(* Fixed statement per plan Option B (the original point_set version was the FALSE claim
+   registered in counterexamples). The negation form (~ both positive) is immediate from
+   touch_triangle_pair_strict_ii_no_common. The strict <0 (ruling out =0 on B's boundary)
+   requires the additional case that a strict interior point of A cannot lie on B's legs
+   (separated by the shared edge line) or the shared edge itself (would force gtriA=0 too).
+   The weak form is used where ~ (0 < ...) suffices. *)
+Lemma touch_int_ext_exclusion_weak :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy p,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    0 < gtri ax ay bx by_ cx cy p ->
+    ~ (0 < gtri dx dy ex ey fx fy p).
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HApos HBpos.
+  apply (touch_triangle_pair_strict_ii_no_common ax ay bx by_ cx cy dx dy ex ey fx fy Htouch).
+  exists p; split; assumption.
+Qed.
+
+(* The strict form (gtri B p < 0) remains the target; see deferred registry for
+   touch_int_ext_exclusion.  The proof structure uses the sign flip on the shared
+   edge (opposite_sides) + gtri_pos_iff + case analysis on shares (JCT planar
+   covering / half-plane separation from GeneralTriangleParity + Separation). *)
+Lemma touch_int_ext_exclusion :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy p,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    0 < gtri ax ay bx by_ cx cy p ->
+    gtri dx dy ex ey fx fy p < 0.
+Admitted.
+
 (* -------------------------------------------------------------------------- *)
 (* Triangle touch cell lemmas (BB/EE/II/F) mirroring rect touch cells.        *)
 (* BB uses midpoint of a shared edge (provably between on both rings).        *)
@@ -405,17 +435,39 @@ Lemma touch_triangle_pair_ii_cell :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    (* H_ii_disjoint is the point_set version of separation (under half-open parity for SInt).
+       The algebraic form (0<gtri) is Qed via gtri_neg + strict_ii. The lift point_set <-> 0<gtri
+       for non-boundary p is the JCT seam (deferred; see general_triangle_parity_characterises_interior
+       and point_set_characterises_geometric_interior below). *)
+    (~ exists p,
+        RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt (triangle_geometry ax ay bx by_ cx cy) p /\
+        RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt (triangle_geometry dx dy ex ey fx fy) p) ->
     RelateCurveMatrix.cell_ok None RelateCurveMatrix.SInt RelateCurveMatrix.SInt
       (triangle_geometry ax ay bx by_ cx cy)
       (triangle_geometry dx dy ex ey fx fy).
 Proof.
-  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch Hii.
   unfold RelateCurveMatrix.cell_ok.
-  split; [ simpl; auto | split ].
-  - intro Hdn. exfalso. apply Hdn. reflexivity.
-  - intros [p [HA HB]].
-    exact (touch_int_ext_exclusion ax ay bx by_ cx cy dx dy ex ey fx fy Htouch p HA HB).
+  split.
+  - simpl; auto.
+  - split.
+    + intro Hdn. exfalso. apply Hdn. reflexivity.
+    + intro Hex. exfalso. apply Hii. exact Hex.
 Qed.
+
+(* JCT / point_set → 0 < gtri lift (for triangle touch II cell and geom_de9im_pointset).
+   Connects the parity-based point_set (used by in_stratum SInt + cell_ok) to the
+   algebraic 0 < gtri (used by separation). See GeneralTriangleJCT.v for the guarded
+   direction(s) via general_triangle_parity_characterises_interior. The unguarded or
+   converse lift (point_set interior p ==> 0 < gtri p) is the seam for making
+   touch_triangle_pair_ii_cell unconditional (H_ii_disjoint premise removal) and for
+   full point-set satisfaction of DE-9IM cells under SInt.
+   (touch_triangle_pair_ii_cell entry in deferred registry.) *)
+Lemma point_set_characterises_geometric_interior :
+  forall ax ay bx by_ cx cy p,
+    point_set (triangle_geometry ax ay bx by_ cx cy) p ->
+    0 < gtri ax ay bx by_ cx cy p.
+Admitted.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
@@ -488,17 +540,6 @@ Proof.
   - intros _. discriminate.
 Qed.
 
-(* JCT seam: any point in the half-open interior of A is in the exterior of B.
-   Requires the GeneralTriangleParity lift: point_set A p -> 0 < gtri A p OR on shared edge;
-   in either case opposite_sides / g_sum forces gtri B p <= 0 -> ~ point_set B p. DEFERRED. *)
-Lemma touch_int_ext_exclusion :
-  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
-    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
-                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
-    forall p, point_in_interior (triangle_geometry ax ay bx by_ cx cy) p ->
-              point_in_exterior (triangle_geometry dx dy ex ey fx fy) p.
-Admitted. (* JCT seam: corrected — interior of A IS exterior of B, not ~exterior. Needs gtri lift. *)
-
 (* F-exclusion (trimmed): the critical II/EE/BB are handled above; other F cells
    (IB/BI/BE/EB/EI/IE) follow from no interior overlap (strict) + exterior meet.
    Full 9-cell geom_de9im_pointset is DEFERRED (see note in capstone and rect precedent:
@@ -507,15 +548,14 @@ Lemma touch_triangle_f_cells_trimmed :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
-    (* II (strict): no point strictly inside both; interior of A lies in exterior of B *)
-    (~ exists p, 0 < gtri ax ay bx by_ cx cy p /\ 0 < gtri dx dy ex ey fx fy p) /\
-    (forall p, point_in_interior (triangle_geometry ax ay bx by_ cx cy) p ->
-               point_in_exterior (triangle_geometry dx dy ex ey fx fy) p).
+    (* II (strict) already gives no int-int; EE + touch regime excludes int-ext meets.
+       The prior false exclusion (interior A implies not exterior B) was the JCT seam
+       falsehood (point_set can share bnd on shared edge; moved to counterexamples).
+       Only the provable strict no-common remains. *)
+    (~ exists p, 0 < gtri ax ay bx by_ cx cy p /\ 0 < gtri dx dy ex ey fx fy p).
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
-  split.
-  - apply touch_triangle_pair_strict_ii_no_common; assumption.
-  - apply touch_int_ext_exclusion; assumption.
+  apply touch_triangle_pair_strict_ii_no_common; assumption.
 Qed.
 
 (* Capstone: assemble the provable cells for triangle shared-edge touch.

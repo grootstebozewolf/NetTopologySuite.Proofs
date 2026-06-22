@@ -50,8 +50,9 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance Overlay CurveGeometry CurveLinearise
-  RelateCurveAreaPoint RayParityDegenerate.
+From NTS.Proofs Require Import Distance Vec Overlay CurveGeometry CurveLinearise
+  RelateCurveAreaPoint RayParityDegenerate ArcChordApprox.
+From NTS.Proofs Require Import CurveRingOffset BufferOffset ArcOffsetThreePoint.
 From NTS.Proofs Require Import PointInRingCorrect JordanCurveSeam
   GeneralTriangleSeparation GeneralTriangleJCT.
 Import ListNotations.
@@ -291,3 +292,101 @@ Print Assumptions point_in_arc_seg_curve_polygon_iff_triangle.
 Print Assumptions point_in_arc_seg_curve_geometry_iff_triangle.
 Print Assumptions arc_seg_control_interior_in_curve_geometry.
 Print Assumptions point_in_arc_seg_curve_geometry_iff_control_interior.
+
+(* -------------------------------------------------------------------------- *)
+(* ARC_BUFFER_SIMPLE: single arc (as arc+chord lens) → CurvePolygon or degen. *)
+(*                                                                            *)
+(* BUF-1 cheap lane exercised by the oracle via BUFFER_REGION on the 2-seg    *)
+(* "degenerate ring" [CSArc a; CSChord end start].  For d=0 recovers the lens; *)
+(* outward yields expanded CurvePolygon (offset arc + round/connector pieces); *)
+(* inward may hit DEGENERATE (partial collapse) or EMPTY (r+d <= 0).           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition arc_buffer_simple (a : CircularArc) (d : R) : CurvePolygon :=
+  {| curve_outer := curve_ring_offset (arc_seg_curve_ring a) d;
+     curve_holes := [] |}.
+
+Lemma arc_buffer_simple_first_segment_is_offset :
+  forall a d,
+    hd_error (curve_ring_offset (arc_seg_curve_ring a) d)
+    = Some (CSArc (arc_offset_arc a d)).
+Proof.
+  intros a d.
+  unfold arc_seg_curve_ring, curve_ring_offset.
+  reflexivity.
+Qed.
+
+Lemma offset_point_0 : forall P A B, offset_point A B P 0 = P.
+Proof.
+  intros P A B.
+  unfold offset_point, pt_translate.
+  simpl.
+  rewrite Rmult_0_l at 1.
+  rewrite Rmult_0_l at 1.
+  simpl.
+  destruct P as [px py].
+  simpl.
+  apply (f_equal2 mkPoint).
+  - apply Rplus_0_r.
+  - apply Rplus_0_r.
+Qed.
+
+Lemma homothety_1 : forall C P, homothety C 1 P = P.
+Proof.
+  intros C P.
+  unfold homothety.
+  simpl.
+  destruct C as [cx cy].
+  destruct P as [px py].
+  simpl.
+  apply (f_equal2 mkPoint).
+  - ring.
+  - ring.
+Qed.
+
+Lemma arc_offset_arc_0 : forall a, arc_radius a > 0 -> arc_offset_arc a 0 = a.
+Proof.
+  intros a Hr.
+  unfold arc_offset_arc.
+  unfold radial_offset.
+  replace ((arc_radius a + 0) / arc_radius a) with 1 by (unfold Rdiv; field; lra).
+  destruct a as [s m e].
+  simpl.
+  repeat rewrite homothety_1.
+  reflexivity.
+Qed.
+
+Lemma arc_buffer_simple_d0_is_identity :
+  forall a : CircularArc,
+    valid_arc a ->
+    arc_buffer_simple a 0 = arc_seg_curve_polygon a.
+Proof.
+  intros a Hva.
+  unfold arc_buffer_simple, arc_seg_curve_polygon.
+  f_equal.
+  unfold curve_ring_offset, arc_seg_curve_ring.
+  simpl.
+  rewrite (arc_offset_arc_0 a (arc_radius_pos a Hva)).
+  rewrite (offset_point_0 _ _ _).
+  rewrite (offset_point_0 _ _ _).
+  reflexivity.
+Qed.
+
+(* valid_when_safe requires additional normals consistent for the lens ring, deferred for this slice. *)
+
+
+(* When the per-arc safety fails (r + d <= 0 for the lens arc), construction   *)
+(* yields a "polygon" whose arc has non-positive radius; oracle treats as      *)
+(* EMPTY / DEGENERATE depending on exact collapse.  We record the radius fact. *)
+(* Note: degen/EMPTY decision is by the caller using ring_offset_safe (or the   *)
+(* per-arc r+d <=0 test); the polygon is always built; unsafe cases produce    *)
+(* polygons containing invalid (radius <=0) arcs, which higher layers treat as *)
+(* degenerate/empty rather than emitting.  The area companion (CurveBufferArea) *)
+(* already records the per-arc safety + growth.                                 *)
+
+(* Print Assumptions arc_buffer_simple_valid_when_safe. (deferred) *)
+Print Assumptions arc_buffer_simple_first_segment_is_offset.
+Print Assumptions arc_offset_arc_0.
+Print Assumptions arc_buffer_simple_d0_is_identity.
+Print Assumptions offset_point_0.
+Print Assumptions homothety_1.
