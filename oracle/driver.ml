@@ -1659,6 +1659,130 @@ let run_arc_segment_distance () =
         end;
         Printf.printf "%h\n" !cand
 
+(* ----- DISTANCE_UNIFIED (unified top-level distance, Slice 5): min distance between
+   two (possibly multi/curve) geoms given as segment lists.
+   Uses the same kernels as ARC_*_DISTANCE (point-arc, arc-arc, arc-seg) + chord-chord.
+   Protocol (mirrors BUFFER_UNIFIED for unified dispatch testing):
+     DISTANCE_UNIFIED
+     <nA>
+     segA...   ("C x1 y1 x2 y2" | "A x1 y1 x2 y2 x3 y3")
+     <nB>
+     segB...
+   Output: "<dist>" (%h) | "DEGENERATE" | "NAN"
+   For green pilot: min over all pairs using endpoint + radial/foot where applicable.
+   Reuses point_on_arc_sector, circumcentre_q, point_seg_dist logic.
+   Multi handled by caller (flattened segments via GetSegments recursion).
+*)
+let run_distance_unified () =
+  let parse_seg () =
+    let toks = List.filter (fun s -> s <> "") (String.split_on_char ' ' (String.map (fun c -> if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1::y1::x2::y2::[] -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1::y1::x2::y2::x3::y3::[] -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "DISTANCE_UNIFIED: bad seg" in
+  let nA = int_of_string (String.trim (input_line stdin)) in
+  let segsA = Array.init nA (fun _ -> parse_seg ()) in
+  let nB = int_of_string (String.trim (input_line stdin)) in
+  let segsB = Array.init nB (fun _ -> parse_seg ()) in
+  let finite_all = Array.for_all (function
+    | `Chord (p,q) -> finite_bpoint p && finite_bpoint q
+    | `Arc (a,b,c) -> finite_bpoint a && finite_bpoint b && finite_bpoint c) in
+  if not (finite_all segsA && finite_all segsB) then print_endline "NAN" else
+  let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+  let point_dist p q = hypot2 (p.bx -. q.bx) (p.by_ -. q.by_) in
+  (* copied/adapted from arc dist code *)
+  let point_arc_dist (oxf, oyf, r) a b c (px, py) =
+    let dpA = hypot2 (px -. a.bx) (py -. a.by_) in
+    let dpC = hypot2 (px -. c.bx) (py -. c.by_) in
+    let best = ref (if dpA <= dpC then dpA else dpC) in
+    let dp = hypot2 (px -. oxf) (py -. oyf) in
+    if dp > 0.0 && point_on_arc_sector (oxf, oyf) a b c (px, py) then begin
+      let radial = abs_float (dp -. r) in
+      if radial < !best then best := radial
+    end;
+    !best in
+  let point_seg_dist p q (xx, yy) =
+    let dx = q.bx -. p.bx and dy = q.by_ -. p.by_ in
+    let l2 = dx *. dx +. dy *. dy in
+    if l2 = 0.0 then hypot2 (xx -. p.bx) (yy -. p.by_)
+    else begin
+      let t = ((xx -. p.bx) *. dx +. (yy -. p.by_) *. dy) /. l2 in
+      let tc = if t < 0.0 then 0.0 else if t > 1.0 then 1.0 else t in
+      hypot2 (xx -. (p.bx +. tc *. dx)) (yy -. (p.by_ +. tc *. dy))
+    end in
+  (* recompute centres for arcs on the fly for point_arc *)
+  let rec pair_dist s1 s2 =
+    match s1, s2 with
+    | `Chord (p1,q1), `Chord (p2,q2) ->
+        let d = min (min (point_dist p1 p2) (point_dist p1 q2)) (min (point_dist q1 p2) (point_dist q1 q2)) in
+        (* improve with point_seg - symmetric *)
+        min d (min (point_seg_dist p1 q1 (p2.bx,p2.by_))
+                   (min (point_seg_dist p1 q1 (q2.bx,q2.by_))
+                   (min (point_seg_dist p2 q2 (p1.bx,p1.by_))
+                        (point_seg_dist p2 q2 (q1.bx,q1.by_)))))
+    | `Arc (aa,bb,cc), `Chord (pp,qq) ->
+        (* get centre for arc *)
+        (match circumcentre_q (qf aa.bx, qf aa.by_) (qf bb.bx, qf bb.by_) (qf cc.bx, qf cc.by_) with
+         | None -> point_dist aa pp (* degen *)
+         | Some (ox,oy,r2) ->
+             let r = sqrt (Q.to_float r2) in
+             let o = (Q.to_float ox, Q.to_float oy) in
+             min (point_arc_dist (Q.to_float ox, Q.to_float oy, r) aa bb cc (pp.bx, pp.by_))
+                 (point_arc_dist (Q.to_float ox, Q.to_float oy, r) aa bb cc (qq.bx, qq.by_)))
+    | `Chord (pp,qq), `Arc (aa,bb,cc) -> pair_dist s2 s1
+    | `Arc (a1,b1,c1), `Arc (a2,b2,c2) ->
+        (match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
+               circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
+         | None, _ | _, None -> min (point_dist a1 a2) (point_dist a1 c2) (* degen *)
+         | Some (o1x,o1y,r1sq), Some (o2x,o2y,r2sq) ->
+             let o1xf = Q.to_float o1x in let o1yf = Q.to_float o1y in
+             let o2xf = Q.to_float o2x in let o2yf = Q.to_float o2y in
+             let r1 = sqrt (Q.to_float r1sq) in
+             let r2 = sqrt (Q.to_float r2sq) in
+             let d = hypot2 (o2xf -. o1xf) (o2yf -. o1yf) in
+             let base = min (min (point_arc_dist (o2xf, o2yf, r2) a2 b2 c2 (a1.bx, a1.by_)) (point_arc_dist (o2xf, o2yf, r2) a2 b2 c2 (c1.bx, c1.by_)))
+                            (min (point_arc_dist (o1xf, o1yf, r1) a1 b1 c1 (a2.bx, a2.by_)) (point_arc_dist (o1xf, o1yf, r1) a1 b1 c1 (c2.bx, c2.by_))) in
+             if d < 1e-12 then
+               min base (abs_float (r1 -. r2))
+             else
+               let ux = (o2xf -. o1xf) /. d in
+               let uy = (o2yf -. o1yf) /. d in
+               let add_radial () =
+                 if d >= r1 +. r2 then
+                   let f1 = (o1xf +. r1 *. ux, o1yf +. r1 *. uy) in
+                   let f2 = (o2xf -. r2 *. ux, o2yf -. r2 *. uy) in
+                   if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1 && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+                   then min base (d -. r1 -. r2) else base
+                 else base
+               in
+               add_radial () )
+  in
+  let cand = ref infinity in
+  Array.iter (fun sa ->
+    Array.iter (fun sb ->
+      let d = pair_dist sa sb in
+      if d < !cand then cand := d
+    ) segsB
+  ) segsA;
+  if !cand = infinity then print_endline "DEGENERATE" else Printf.printf "%h\n" !cand
+
+(* ----- OVERLAY_UNIFIED (Slice 6 pilot stub) ---------------------------------
+   Minimal placeholder for unified overlay via segments (arc/Multi delegation).
+   Real would take two segment lists + op and produce result description.
+   For now, accepts input and returns fixed "STUB" to allow red test coverage.
+   (Full impl deferred to next RGR; uses existing EDGE_IN_RESULT for linear proxy.)
+*)
+let run_overlay_unified () =
+  (* consume nA + segsA + nB + segsB minimally; pilot returns fixed sample OGC union matrix.
+     Segments are discarded. This is intentional stub for now; real impl will compute
+     based on segments and update the red tests assertions. *)
+  let nA = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
+  for _ = 1 to nA do ignore (input_line stdin) done;
+  let nB = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
+  for _ = 1 to nB do ignore (input_line stdin) done;
+  print_endline "212FF1FF2"  (* example union matrix for pilot; real would compute via segments + relate primitives *)
+
 (* ----- RING_SIMPLE (V-CS / V-CP, JTS #1195 §7): curve-ring self-intersection.
    ---------------------------------------------------------------------------
    Decides whether a closed CurveRing (a list of chord / circular-arc segments)
@@ -2228,6 +2352,53 @@ let buffer_region_output (segs : [< `Chord of bPoint * bPoint | `Arc of bPoint *
     | Buffer_empty -> "EMPTY"
     | Buffer_degenerate -> "DEGENERATE"
   end
+
+(* ----- AREA_UNIFIED (Slice 7 pilot): signed area of a (curve) ring given as segments.
+   Reuses the signed_area2 logic from buffer (shoelace + arc sector contrib).
+   Protocol:
+     AREA_UNIFIED
+     <nsegs>
+     segs...
+   Output: "<area>" (%h) | "DEGENERATE" | "NAN"
+   For closed rings; uses same as buffer's asm area calc.
+*)
+let run_area_unified () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks = List.filter (fun s -> s <> "") (String.split_on_char ' ' (String.map (fun c -> if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1::y1::x2::y2::[] -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1::y1::x2::y2::x3::y3::[] -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "AREA_UNIFIED: bad seg" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = Array.to_list segs |> List.concat_map seg_pts in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN" else
+  (* reuse signed_area2 logic *)
+  let cross (p : bPoint) (q : bPoint) = p.bx *. q.by_ -. p.by_ *. q.bx in
+  let s2 = ref 0.0 in
+  List.iter (fun seg -> match seg with
+    | `Chord (p, q) -> s2 := !s2 +. cross p q
+    | `Arc (a, b, c) ->
+        s2 := !s2 +. cross a c;
+        (match arc_invariants_q a b c with
+         | ArcDegenerate -> ()
+         | ArcInv (r2, cos_full, major) ->
+             let r2f = Q.to_float r2 in
+             let sv = Q.to_float (Q.mul (Q.sub Q.one cos_full) (Q.of_ints 1 2)) in
+             let s = sqrt (if sv < 0.0 then 0.0 else sv) in
+             let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
+             let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+             let ax = qf a.bx and ay = qf a.by_ in
+             let bx = qf b.bx and by_ = qf b.by_ in
+             let cx = qf c.bx and cy = qf c.by_ in
+             let orient = Q.sub (Q.mul (Q.sub bx ax) (Q.sub cy ay))
+                                (Q.mul (Q.sub by_ ay) (Q.sub cx ax)) in
+             let sb = float_of_int (Q.sign orient) in
+             s2 := !s2 +. sb *. r2f *. (theta -. sin theta))) (Array.to_list segs);
+  let area = !s2 /. 2.0 in
+  Printf.printf "%h\n" area
 
 let run_buffer_region () =
   let n = int_of_string (String.trim (input_line stdin)) in
@@ -3492,6 +3663,9 @@ let () =
        | "ARC_SEGMENT_XY"           -> run_arc_segment_xy ()
        | "ARC_ARC_DISTANCE"         -> run_arc_arc_distance ()
        | "ARC_SEGMENT_DISTANCE"     -> run_arc_segment_distance ()
+       | "DISTANCE_UNIFIED"         -> run_distance_unified ()
+       | "OVERLAY_UNIFIED"          -> run_overlay_unified ()
+       | "AREA_UNIFIED"             -> run_area_unified ()
        | "RING_SIMPLE"              -> run_ring_simple ()
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()

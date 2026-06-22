@@ -306,3 +306,19 @@ run_arc_offset_filtered
 # allowlisted buffer_region_output.  Justification: same as BUFFER_REGION
 # (transcendental boundary, exact-Q centres underneath).
 buffer_path_output
+
+# --- DISTANCE_UNIFIED (unified top-level distance via segments, JTS #1195) -----
+# Mode DISTANCE_UNIFIED emits the min distance between two (curve) geoms given as
+# segment lists (for differential testing of NTS unified GetSegments + dispatcher
+# on Distance). Uses exact circumcentre_q + Q arith for centres/radii; only final
+# hypot/sqrt + atan2 (point-arc, point-seg, radial feet) are interface-boundary
+# float. The float IS the JTS/NTS Geometry.distance() interface value.
+# Reuses the same kernels as ARC_*_DISTANCE (exact companions). Pilot for big-bang
+# unified distance column.
+run_distance_unified
+
+# --- AREA_UNIFIED (unified top-level area via segments, JTS #1195) -----
+# Mode AREA_UNIFIED emits signed area (shoelace + arc sector) for curve/Multi.
+# Uses exact Q invariants + one rounding past (transcendental sin/theta). Float IS the
+# JTS/NTS area interface value. Reuses ARC_AREA / buffer patterns.
+run_area_unified

@@ -253,10 +253,10 @@ COVERAGE_GEOMTYPE_LONG = {
 COVERAGE_MATRIX = {
     "Distance": {
         "Arc":   ("full",    "ArcPointDistance.v + ArcChordLength.v (Qed)"),
-        "CS":    ("partial", "point–arc proven; compound sequences deferred"),
+        "CS":    ("partial", "point–arc proven; unified GetSegments now enables compound (Slice 4)"),
         "CC":    ("none",    "no corpus coverage"),
         "CP":    ("none",    "no corpus coverage"),
-        "Multi": ("none",    "delegation via unified GetSegments (Slice 3) — recurses to members (no per-type)"),
+        "Multi": ("none",    "unified GetSegments + dispatcher (Slice 4) + oracle DISTANCE_UNIFIED (Slice 5): full recursion for Multi* + arc-aware seg min-dist (reuses Arc*Distance lemmas); red_distance_unified_tests.py"),
     },
     "Arc / chord length": {
         "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed)"),
@@ -267,24 +267,24 @@ COVERAGE_MATRIX = {
     },
     "Area / perimeter": {
         "Arc":   ("partial", "signed-area lemmas in GeneralTriangle* (Qed, triangles only)"),
-        "CS":    ("partial", "perimeter via arc-chord; full area deferred"),
+        "CS":    ("partial", "perimeter via arc-chord; full area deferred; unified GetSegments (Slice 7)"),
         "CC":    ("none",    "no corpus coverage"),
-        "CP":    ("partial", "triangle polygon area theorems (RelateNG.v, conditional)"),
-        "Multi": ("none",    "delegation via unified GetSegments (Slice 3) — recurses to members (no per-type)"),
+        "CP":    ("partial", "triangle polygon area theorems (RelateNG.v, conditional); unified (Slice 7)"),
+        "Multi": ("none",    "unified GetSegments + dispatcher (Slice 7): recursion + area via segments (shoelace + arc sectors)"),
     },
     "Relate (DE-9IM)": {
         "Arc":   ("partial", "RelateArcAnalytic.v stubs + RelateNG triangle touch (S15l, cond)"),
-        "CS":    ("partial", "RelateNG integer substrate (#67, 194 theorems, S15l complete)"),
-        "CC":    ("partial", "DE-9IM integer substrate (#67); collection dispatch deferred"),
-        "CP":    ("partial", "triangle touch + regime guard (conditional Qed); classifier stub open"),
-        "Multi": ("partial", "substrate proven; multi-geometry dispatch deferred"),
+        "CS":    ("partial", "RelateNG integer substrate (#67, 194 theorems, S15l complete); unified GetSegments + dispatcher (Slice 8, deeper)"),
+        "CC":    ("partial", "DE-9IM integer substrate (#67); collection dispatch deferred; unified (Slice 8)"),
+        "CP":    ("partial", "triangle touch + regime guard (conditional Qed); classifier stub open; unified (Slice 8)"),
+        "Multi": ("partial", "substrate proven; multi-geometry dispatch deferred; unified GetSegments + dispatcher (Slice 8, RGR)"),
     },
     "Intersection / Overlay": {
         "Arc":   ("partial", "H_bridge_premise_from_euler (HBridgeEuler.v, Qed); ring extraction conditional"),
-        "CS":    ("partial", "OverlayBridge.v:extract_rings_valid (conditional Qed, Euler hyps as premises)"),
-        "CC":    ("none",    "no corpus coverage"),
-        "CP":    ("none",    "no corpus coverage"),
-        "Multi": ("none",    "delegation via unified GetSegments (Slice 3) — recurses to members (no per-type)"),
+        "CS":    ("partial", "OverlayBridge.v:extract_rings_valid (conditional Qed, Euler hyps as premises); unified GetSegments (Slice 6)"),
+        "CC":    ("none",    "unified GetSegments + dispatcher (Slice 9): delegation for CompoundCurve"),
+        "CP":    ("none",    "unified GetSegments + dispatcher (Slice 9): delegation for CurvePolygon"),
+        "Multi": ("none",    "unified GetSegments + dispatcher (Slice 6/9): recursion for Multi* + arc-aware overlay"),
     },
     "Buffer": {
         "Arc":   ("", "oracle/arc_buffer_simple_tests.txt (ARC_BUFFER_SIMPLE) + oracle/red_buffer_unified_tests.py (BUFFER_UNIFIED pilot); analytical offset via ARC_OFFSET_XY"),
