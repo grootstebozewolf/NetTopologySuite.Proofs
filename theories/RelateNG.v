@@ -455,14 +455,7 @@ Proof.
     + intro Hex. exfalso. apply Hii. exact Hex.
 Qed.
 
-(* JCT / point_set → 0 < gtri lift (for triangle touch II cell and geom_de9im_pointset).
-   Connects the parity-based point_set (used by in_stratum SInt + cell_ok) to the
-   algebraic 0 < gtri (used by separation). See GeneralTriangleJCT.v for the guarded
-   direction(s) via general_triangle_parity_characterises_interior. The unguarded or
-   converse lift (point_set interior p ==> 0 < gtri p) is the seam for making
-   touch_triangle_pair_ii_cell unconditional (H_ii_disjoint premise removal) and for
-   full point-set satisfaction of DE-9IM cells under SInt.
-   (touch_triangle_pair_ii_cell entry in deferred registry.) *)
+(* JCT seam lift (deferred per registry; see GeneralTriangleJCT.v for guarded form). *)
 Lemma point_set_characterises_geometric_interior :
   forall ax ay bx by_ cx cy p,
     point_set (triangle_geometry ax ay bx by_ cx cy) p ->

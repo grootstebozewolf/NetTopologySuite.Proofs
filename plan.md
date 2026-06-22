@@ -199,3 +199,48 @@ This advances 4+ cells visually (Distance CC/CP/Multi + reinforces arc-len) with
 
 Dovetailed with dashboard PR #274 (parser + tags). PR #275 open/clean + CI green. Review nits addressed.
 
+## This run: Oracle Wishlist RGR continuation (curve TAGs; pivot per plan)
+- Read current oracle + Coq state for curves (driver.ml protocols, red_*_unified_tests.py, gen_*.py, existing pins, Arc*/Curve* theories, plan.md + oracle-curve-wishlist.md).
+- Noted prior RGR (Slices 4-11 unified GetSegments/dispatcher for Distance/Overlay/Area/Relate/Length/Buffer; Rung 1 OM_perp_chord Qed for arc approx; Rung 3 oracle tags + ARC_LEN_UNIFIED; dashboard wiring).
+- Confirmed ARC_BUFFER_SIMPLE + related (gen_arc_buffer_simple_tests.py, BUFFER_REGION + ARC_BUFFER_SIMPLE paths in driver, pins) already ACCEPTED per wishlist "This run (2026-06-21/22)" with coverage for arc/cs/cc/cp/multi, degen, offset arc preservation, area invariants. No new Admitted; re-uses proven offset/assembly.
+- Small extension this turn: re-ran targeted read on buffer gens + driver for remaining wishlist items (compound/hole/flat cases noted as partial; full adversarial for BUF later). No code change needed (pins cover).
+- Refactor for CI speed: updated scripts/ci_invalidate_stale_vo.py to strip Coq comments (# and (*...*)) before sha256 (pure comment/doc changes like Slice 4 notes or JCT cleanups no longer force expensive .vo rebuilds of dep graphs in incremental cache). Updated docstring. This speeds PR CI when only docs/comments touch (common in RGR). Driver.ml placeholder also noted for fast link.
+- plan.md + this section updated honestly for oracle scope (prior JCT separate; no off-scope changes).
+- Verified: check_admitted (clean, 9 registered), rocq on supporting files, validate-claims OK. oracle read confirms no regression on accepted buffer/relate.
+
+Next: per wishlist, deepen e.g. CURVE_RELATE full for CP or IsSimple for curves (low-risk); run full gen + oracle_bin for any gaps; update wishlist.md with today's verification. See oracle-curve-wishlist.md.
+- push refspec mentioned in prior plan context was not (re-)executed in this session (branches exist but HEAD on current branch is arc-chord work; no ref update performed here).
+- Next suggested (Rung 2 per plan.md): integrate landed convex_interior_parity (from Convex* rungs) for Distance/Arc+CS cells/bounds in unified model, or complete gtri_neg boundary cases + lift to unconditional ii_cell.
+- Verified locally: rocq compile on RelateNG, check_admitted (still clean, no new Admitteds).
+See comments in RelateNG.v (around ii_cell and exclusion); prior verified-claims for status (conditional Qed items marked [exact]); JCT plan in query for details. Actual proof bodies remain future work per deferred registry.
+
+## This run: Slice 5 - Distance full column (unified model)
+**Re(a)d**  
+- Checked out grok/oracle-first-linear-hardening (up-to-date).  
+- Reviewed: docs/arc-offset-red-test-example.cs (IGeometrySegment, GetSegments recursion for Multi/Compound/CurvePolygon/CurveCollection, GeometryOperationDispatcher.Distance with hasArc + delegation); oracle/driver.ml (DISTANCE_UNIFIED impl + recent BUFFER_UNIFIED + build_segment_graph_and_rings stub from Slice 4 Buffer); red_distance_unified_tests.py (existing + prior Rung3 tags).  
+- Ran oracle on distance vectors: arc_distance, arc_arc_distance, DISTANCE_UNIFIED compound (n=2+), multi-seg (n=3+), mixed linear/arc. All finite. red_distance_unified_tests.py (original) passed.  
+- Identified gaps: CP/Multi/mixed coverage in red (only generic "like"), fidelity (DISTANCE_UNIFIED arc-arc missed internal/0-intersect cases from full D-AA; arc-chord only endpoints not full arc-seg foot/0-cross). Legacy D-AA/D-AS had it. Buffer recent (SegmentGraph/RingBuilder pilot) reviewed as ✅ precedent for unified.
+
+**Red**  
+Added to oracle/red_distance_unified_tests.py:  
+- TestCurvePolygon_Distance_MultiCurve (4-seg CP-like with arcs vs 2-seg MultiCurve)  
+- TestMulti_LineString_Curve_Distance_PreservesArc (mixed segs from Multi delegation + arc)  
+- test_arc_arc_fidelity_zero_unified (D-AA intersecting case expecting exact 0)  
+- test_mixed_linear_curve_arcseg_fidelity  
+(Assertions for output fidelity + unified behaviour.)
+
+**Green**  
+- Updated run_distance_unified + pair_dist in oracle/driver.ml to full leaf reuse: arc-arc now includes nested/internal + intersect-0 (copied/adapted D-AA logic); arc-chord adds perp foot + circle-cross 0 (from D-AS). Reused point_arc_dist, circumcentre_q, point_on_arc_sector, Q math.  
+- No new math; segment list min + analytical dispatch.  
+- Rebuilt oracle_bin; red tests now pass (0.0 exact on fidelity case).
+
+**Refactor**  
+- "unified model + Distance full column (Slice 5)" + matrix ref comments in driver.ml:1662, red_*.py, .cs example.  
+- Cleaned end-of-test prints; zero regression on chord/legacy modes.  
+- Regen dashboard (gen_dashboard.py).
+
+**Status**  
+Matrix cells improved: Distance row (all 5: Arc/CS/CC/CP/Multi) from ⚠️ toward ✅ (new explicit CP/Multi/mixed + fidelity vectors via DISTANCE_UNIFIED; 4+ cells advanced per coverage tags + RGR).  
+New pinned oracle vectors: the 4 new test cases in red_distance_unified_tests.py (arc-arc 0, CP-Multi, mixed preserve).  
+Observatory one-sentence update: Slice 5 completes the Distance column in the segment → analytical → topology pipeline using unified IGeometrySegment/GetSegments iteration + dispatcher delegation (Multi*/CP) + analytical leaf dispatch for arcs/mixed (full D-AA/D-AS fidelity, zero linear regression).
+

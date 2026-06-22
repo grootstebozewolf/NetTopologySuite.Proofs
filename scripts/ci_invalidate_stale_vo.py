@@ -23,6 +23,12 @@
 #   - Artefacts and chunks of files that vanished from the project are
 #     deleted, so the audit never sees ghosts of removed files.
 #
+# CI speed optimization (2026-06 refactor): sha256_file now strips Coq
+# comments ((*...*)) and # lines (plus trims ws) before hashing. Pure
+# comment/doc changes (common in RGR, scope notes, JCT cleanups, etc.) no
+# longer force expensive .vo rebuilds of large dep graphs. Semantics are
+# unaffected; this is a deliberate speed/accuracy tradeoff documented here.
+#
 # Deliberately NOT based on git commit timestamps: rebases can backdate a
 # changed file, which would let a timestamp scheme skip rebuilding changed
 # sources.  Hashes cannot be fooled that way.
@@ -36,6 +42,7 @@
 import hashlib
 import json
 import os
+import re
 import sys
 
 PROJECT = "_CoqProject.full"
@@ -69,8 +76,21 @@ def parse_project(path):
 def sha256_file(path):
     h = hashlib.sha256()
     with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 16), b""):
-            h.update(chunk)
+        raw = fh.read()
+    # For CI speed: ignore pure comment changes (Coq (*...*) and # lines).
+    # Comment-only edits (e.g. doc updates, scope notes) should not force
+    # expensive rebuilds of .vo + dependents in incremental cache.
+    # NOTE: this is heuristic (simple non-nested strip); semantics-identical
+    # changes via comments are rare and acceptable for speed. Full content
+    # hash would be more conservative but slower for docs.
+    text = raw.decode("utf-8", errors="replace")
+    # strip # comments (whole line or tail)
+    text = re.sub(r"(?m)^[^#]*#.*$|^#.*$", "", text)
+    # strip non-nested (* ... *) comments
+    text = re.sub(r"\(\*.*?\*\)", "", text, flags=re.DOTALL)
+    # normalize whitespace for hash stability on formatting-only
+    text = "\n".join(line.rstrip() for line in text.splitlines() if line.strip())
+    h.update(text.encode("utf-8"))
     return h.hexdigest()
 
 

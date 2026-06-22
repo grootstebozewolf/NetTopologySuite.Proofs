@@ -37,6 +37,16 @@ Later items (full compound buffer, non-leaf BUF, adversarial NaN on caps, exact 
   Red tests: oracle/red_curve_lineal_relate_tests.py (point-on-boundary, crosses, touch, equal).
 - Avoid high (noding, full buffer multi).
 
+This session (2026-06-22 /check-work follow-up): Read confirmed ARC_BUFFER_SIMPLE / BUF coverage solid (gen + pins + driver ARC_BUFFER_SIMPLE path + prior RGR ACCEPTED). No new pins/Admitted needed. Small re-read on compound cases noted as partial per wishlist (future Red extension for more CP holes in red_buffer_unified_tests.py). Checks (admitted, claims) clean. Pivot from prior JCT complete; oracle RGR on track.
+
+## This run (2026-06-22): Slice 5 - Distance full column (unified model)
+**RGR**:
+- Re(a)d: reviewed IGeometrySegment/GetSegments/dispatcher (from .cs sketch + driver), Buffer Slice 4 (graph+ring pilot), ran all distance vectors (arc/arc_arc/compound/multi/mixed via DISTANCE_UNIFIED + legacy); gaps: fidelity (D-AA/D-AS), explicit CP/Multi/mixed red tests.
+- Red: added TestCurvePolygon_Distance_MultiCurve, TestMulti_LineString_Curve_Distance_PreservesArc + fidelity zero cases to red_distance_unified_tests.py (fail until impl).
+- Green: minimal upgrade to DISTANCE_UNIFIED pair_dist (full reuse of arc-arc intersect/internal + arc-seg foot/0 logic from run_arc_*_distance leaves); rebuilt oracle_bin.
+- Refactor: "unified model + Distance full column (Slice 5)" comments + matrix refs; dashboard regen; zero regression.
+**Status**: Distance column advanced (Arc/CS/CC/CP/Multi); tags now 8; new red pins for mixed/CP fidelity. Entire column now covered via unified segments (delegation for Multi*/CP, analytical arcs). 4+ cells improved. See plan.md + red_distance_unified_tests.py.
+
 Verification commands (run to base future accepts):
 - python3 oracle/gen_arc_buffer_simple_tests.py > ... (CLEAN)
 - echo 'BUFFER_REGION ...' | oracle/oracle_bin (matches pins)

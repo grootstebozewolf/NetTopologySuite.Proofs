@@ -148,3 +148,80 @@ print("RED for Multi support via comps (delegation proxy)")
 print("RED Multi* case added (see .cs for NTS dispatcher delegation test)")
 
 print("RED tests for Slice 2 added (holes, multi, output). Assertions passed with unified multi-comp support.")
+
+# --- Slice 4 Red: topology assembly (SegmentGraph + RingBuilder)
+# These will fail with pilot (no noding, raw offset chains, DEGENERATE on crosses/concave, wrong ring count on thin/erosion/holes).
+# Expect proper extracted rings, hole assignment, no spurious, correct counts after noding.
+
+def test_cp_hole_survival():
+    # CP outer + hole; d small, hole survives as inner ring (not merged or lost).
+    # Expect 2 rings (1 outer + 1 hole), arcs if present preserved, no spurious.
+    stdin = """BUFFER_UNIFIED
+2
+4
+C 0 0 10 0
+C 10 0 10 10
+C 10 10 0 10
+C 0 10 0 0
+CLOSED 1
+4
+C 1 1 9 1
+C 9 1 9 9
+C 9 9 1 9
+C 1 9 1 1
+CLOSED 1
+0.5
+"""
+    out, err, rc = run(stdin)
+    print("RED_NOTE cp_hole_survival_got=", (out or "")[:200])
+    num_rings = out.count("AREA") if out else 0
+    if rc != 0 or num_rings != 2 or "DEGENERATE" in (out or ""):
+        fail("TestBuffer_CurvePolygon_HoleSurvival", out or "err", "exactly 2 AREA rings (outer+hole survived, no spurious/DEGEN)", stdin)
+    print("RED for TestBuffer_CurvePolygon_HoleSurvival (will require RingBuilder + hole assignment)")
+
+def test_multi_no_spurious_rings():
+    # Multi with members that when buffered produce crosses in offset; expect no spurious extra rings.
+    stdin = """BUFFER_UNIFIED
+2
+3
+C 0 0 5 0
+C 5 0 5 5
+C 5 5 0 5
+CLOSED 1
+1
+A 10 0 10.7071 0.7071 11 0
+CLOSED 0
+0.3
+"""
+    out, err, rc = run(stdin)
+    print("RED_NOTE multi_no_spurious_got=", (out or "")[:200])
+    num_rings = out.count("AREA") if out else 0
+    if rc != 0 or num_rings != 2 or "spurious" in (out or "").lower() or "DEGENERATE" in (out or ""):
+        fail("TestBuffer_Multi_NoSpuriousRings", out or "err", "exactly 2 rings, no spurious from un-noded crosses", stdin)
+    print("RED for TestBuffer_Multi_NoSpuriousRings (will require noding + graph to avoid extras)")
+
+def test_thin_compound_erosion():
+    # Thin compound (arc+chord thin neck); erosion d that collapses the thin part.
+    # Expect correct reduced ring count (1 or 0), no fragments/spurious.
+    stdin = """BUFFER_UNIFIED
+1
+4
+C 0 0 1 0
+A 1 0 1.1 0.5 1 1
+C 1 1 0 1
+C 0 1 0 0
+CLOSED 1
+0.6
+"""
+    out, err, rc = run(stdin)
+    print("RED_NOTE thin_erosion_got=", (out or "")[:200])
+    num_rings = out.count("AREA") if out else 0
+    if rc != 0 or num_rings > 1 or "DEGENERATE" in (out or ""):
+        fail("TestBuffer_ThinCompound_ErosionCorrectRingCount", out or "err", "correct reduced ring count (no spurious fragments)", stdin)
+    print("RED for TestBuffer_ThinCompound_ErosionCorrectRingCount (will require graph noding + collapse detection)")
+
+test_cp_hole_survival()
+test_multi_no_spurious_rings()
+test_thin_compound_erosion()
+
+print("RED tests for Slice 4 added. These will fail until SegmentGraph+RingBuilder.")
