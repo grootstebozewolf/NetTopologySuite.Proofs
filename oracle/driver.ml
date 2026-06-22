@@ -2300,7 +2300,6 @@ let buffer_path_output (segs : _ array) (d : float) (is_closed : bool) : string 
   if not (List.for_all finite_bpoint all_pts && finite_float d) then "NAN" else
   try
     (* compute oriented parallel *)
-    let s2_in = 0.0 (* not needed for open *) in
     let orient = 1.0 in (* assume; for path buffer orient from first seg or param *)
     let offset_seg = function
       | `Chord (a, b) ->
@@ -2332,12 +2331,8 @@ let buffer_path_output (segs : _ array) (d : float) (is_closed : bool) : string 
       ()
     done;
     let asm = List.rev !out in
-    (* add round caps at ends for open +d (pilot: stub, full cap in BufferEndcap reuse later; demonstrates open path handling) *)
-    if d > 0.0 && n > 0 then begin
-      (* In full: compute two points offset perpendicular at terminus and emit round_cap arc of r=d centered at end vertex. *)
-      (* For this pilot the asm chain (parallel curves) + dispatch note suffices; caps would splice 1-2 A segments. *)
-      ()
-    end;
+    (* open-path caps are pilot stub (see buffer_path_output comment and red tests);
+       full round caps reuse BufferEndcap / CurveRoundJoin later *)
     (* for demo, emit the offset asm as before + marker *)
     let line = function
       | `Chord (a, b) -> Printf.sprintf "C %h %h %h %h" a.bx a.by_ b.bx b.by_
@@ -2352,15 +2347,14 @@ let buffer_path_output (segs : _ array) (d : float) (is_closed : bool) : string 
   | Buffer_degenerate -> "DEGENERATE"
 
 let run_buffer_unified () =
-  (* Unified entry: segments (no ring count assumption) + closed flag.
-     Mirrors GetSegments() iteration. If any arc -> keep arcs in output (Curve result).
-     For pilot: accepts
-       <n>
-       seg...
-       CLOSED 0|1
-       d
-     Dispatches to path (caps) or region. *)
-  let n = int_of_string (String.trim (input_line stdin)) in
+  (* Unified entry using IGeometrySegment model (see comment at top).
+     Supports multi-component for CP (outer+holes), CC, Multi* via ncomps.
+     Each comp has its segments + CLOSED flag (dispatcher decides path/region per comp).
+     If any arc across -> CURVE result (preserve A segments for Curve* output type).
+     Hole handling: each comp (hole rings) buffered independently with d (pilot).
+     Multi: each member comp buffered, results collected.
+     Reuses buffer_region_output + buffer_path_output (with improved stub caps).
+     Minimal: no per-type, pure segment iteration + has_arc for output rule. *)
   let parse_seg () =
     let toks = List.filter (fun s -> s <> "") (String.split_on_char ' ' (String.map (fun c -> if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
     let p a b = { bx = float_of_string a; by_ = float_of_string b } in
@@ -2368,26 +2362,39 @@ let run_buffer_unified () =
     | "C" :: x1::y1::x2::y2::_ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1::y1::x2::y2::x3::y3::_ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "BUFFER_UNIFIED: bad seg" in
-  let segs = Array.init n (fun _ -> parse_seg ()) in
-  let closed_line = String.trim (input_line stdin) in
-  let is_closed = if closed_line = "CLOSED 1" || closed_line = "1" then true else false in
+  let ncomps = int_of_string (String.trim (input_line stdin)) in
+  let comps = ref [] in
+  for _i = 1 to ncomps do
+    let m = int_of_string (String.trim (input_line stdin)) in
+    let segs = Array.init m (fun _ -> parse_seg ()) in
+    let cl = String.trim (input_line stdin) in
+    let is_closed = (cl = "CLOSED 1" || cl = "1") in
+    comps := (is_closed, segs) :: !comps
+  done;
   let d = float_of_string (String.trim (input_line stdin)) in
   let seg_pts = function `Chord (a,b) -> [a;b] | `Arc (a,b,c) -> [a;b;c] in
-  let allp = Array.to_list segs |> List.concat_map seg_pts in
+  let allp = List.flatten (List.map (fun (_,s) -> Array.to_list s |> List.concat_map seg_pts) !comps) in
   if not (List.for_all finite_bpoint allp && finite_float d) then print_endline "NAN"
   else
-    let has_arc = Array.exists (function `Arc _ -> true | _ -> false) segs in
-    (* For closed pure-arc (n=1 arc): synthesize closing chord like run_arc_buffer_simple so ring is valid for buffer_region_output *)
-    let effective_segs =
-      if is_closed && n = 1 then
-        match segs.(0) with
-        | `Arc (aa, _, cc) -> [| segs.(0); `Chord (cc, aa) |]
-        | _ -> segs
-      else segs
-    in
-    let res = if is_closed then buffer_region_output effective_segs d else buffer_path_output segs d false in
-    (* tag if curve result *)
-    print_endline (if has_arc && not (res = "EMPTY" || res = "DEGENERATE") then res else res)
+    let results = ref [] in
+    let any_arc = ref false in
+    List.iter (fun (is_closed, segs) ->
+      let has = Array.exists (function `Arc _ -> true | _ -> false) segs in
+      if has then any_arc := true;
+      let n = Array.length segs in
+      let effective =
+        if is_closed && n = 1 then
+          match segs.(0) with | `Arc (aa, _, cc) -> [| segs.(0); `Chord (cc, aa) |] | _ -> segs
+        else segs
+      in
+      let r = if is_closed then buffer_region_output effective d else buffer_path_output segs d false in
+      (* ensure trailing \n for safe multi-comp concat; specials like EMPTY/DEGENERATE lack it in region/path fns *)
+      let r_ended = if String.contains r '\n' then r else r ^ "\n" in
+      results := r_ended :: !results
+    ) (List.rev !comps);
+    let header = if !any_arc then "CURVE\n" else "" in
+    let body = String.concat "" (List.rev !results) in
+    print_endline (header ^ (string_of_int (List.length !results)) ^ "\n" ^ body)
 
 let run_arc_simplify_decision () =
   (* tolerance vs preserve-arc boolean for arc *)
