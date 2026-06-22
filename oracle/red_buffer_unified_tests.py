@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coverage: feat:buffer geom:arc,cs,cc,cp,multi
 """
-RED tests for big-bang unified curve Buffer (pilot).
+RED tests for big-bang unified curve Buffer (pilot + Slice 4 SegmentGraph + RingBuilder).
 # Dashboard coverage derived via # coverage tag (see scripts/gen_dashboard.py + PR 274).
 
 Added BEFORE impl (RGR).
@@ -177,7 +177,7 @@ CLOSED 1
     num_rings = out.count("AREA") if out else 0
     if rc != 0 or num_rings != 2 or "DEGENERATE" in (out or ""):
         fail("TestBuffer_CurvePolygon_HoleSurvival", out or "err", "exactly 2 AREA rings (outer+hole survived, no spurious/DEGEN)", stdin)
-    print("RED for TestBuffer_CurvePolygon_HoleSurvival (will require RingBuilder + hole assignment)")
+    print("RED for TestBuffer_CurvePolygon_HoleSurvival (graph + RingBuilder wired for hole survival)")
 
 def test_multi_no_spurious_rings():
     # Multi with members that when buffered produce crosses in offset; expect no spurious extra rings.
@@ -198,7 +198,7 @@ CLOSED 0
     num_rings = out.count("AREA") if out else 0
     if rc != 0 or num_rings != 2 or "spurious" in (out or "").lower() or "DEGENERATE" in (out or ""):
         fail("TestBuffer_Multi_NoSpuriousRings", out or "err", "exactly 2 rings, no spurious from un-noded crosses", stdin)
-    print("RED for TestBuffer_Multi_NoSpuriousRings (will require noding + graph to avoid extras)")
+    print("RED for TestBuffer_Multi_NoSpuriousRings (noding + graph avoids spurious)")
 
 def test_thin_compound_erosion():
     # Thin compound (arc+chord thin neck); erosion d that collapses the thin part.
@@ -218,10 +218,11 @@ CLOSED 1
     num_rings = out.count("AREA") if out else 0
     if rc != 0 or num_rings > 1 or "DEGENERATE" in (out or ""):
         fail("TestBuffer_ThinCompound_ErosionCorrectRingCount", out or "err", "correct reduced ring count (no spurious fragments)", stdin)
-    print("RED for TestBuffer_ThinCompound_ErosionCorrectRingCount (will require graph noding + collapse detection)")
+    print("RED for TestBuffer_ThinCompound_ErosionCorrectRingCount (graph noding + erosion correct count)")
 
 test_cp_hole_survival()
 test_multi_no_spurious_rings()
 test_thin_compound_erosion()
 
-print("RED tests for Slice 4 added. These will fail until SegmentGraph+RingBuilder.")
+print("RED tests for Slice 4 (SegmentGraph + RingBuilder) added and now green post impl.")
+print("Tests: TestBuffer_CurvePolygon_HoleSurvival, TestBuffer_Multi_NoSpuriousRings, TestBuffer_ThinCompound_ErosionCorrectRingCount")

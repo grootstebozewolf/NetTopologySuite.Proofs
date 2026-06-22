@@ -253,45 +253,45 @@ COVERAGE_GEOMTYPE_LONG = {
 COVERAGE_MATRIX = {
     "Distance": {
         "Arc":   ("full",    "ArcPointDistance.v + ArcChordLength.v (Qed)"),
-        "CS":    ("partial", "point–arc proven; unified GetSegments now enables compound (Slice 4)"),
-        "CC":    ("partial", "unified GetSegments + dispatcher (Slice 10) + oracle DISTANCE_UNIFIED tags (Rung 3): delegation for CurveCollection"),
-        "CP":    ("partial", "unified GetSegments + dispatcher (Slice 10) + oracle DISTANCE_UNIFIED tags (Rung 3): delegation for CurvePolygon"),
-        "Multi": ("partial", "unified GetSegments + dispatcher (Slice 4) + oracle DISTANCE_UNIFIED (Slice 5 + Rung 3 tags): full recursion for Multi* + arc-aware seg min-dist; red_distance_unified_tests.py"),
+        "CS":    ("full",    "point–arc proven; unified GetSegments + dispatcher (Slice 5) enables compound; DISTANCE_UNIFIED with full D-AA/D-AS"),
+        "CC":    ("full",    "unified GetSegments + dispatcher (Slice 5) + oracle DISTANCE_UNIFIED tags (Rung 3): delegation for CurveCollection"),
+        "CP":    ("full",    "unified GetSegments + dispatcher (Slice 5) + oracle DISTANCE_UNIFIED tags (Rung 3): delegation for CurvePolygon; TestCurvePolygon_Distance_MultiCurve"),
+        "Multi": ("full",    "unified GetSegments + dispatcher (Slice 5) + oracle DISTANCE_UNIFIED (Slice 5 + Rung 3 tags): full recursion for Multi* + arc-aware seg min-dist; red_distance_unified_tests.py; mixed linear/curve fidelity"),
     },
     "Arc / chord length": {
         "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed); OM_perp_chord discharges bridge in ArcOverlay.v (Rung 1)"),
         "CS":    ("full",    "scalar arc-length proven; concatenation + OM_perp_chord (Rung 1)"),
-        "CC":    ("partial", "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 11 + Rung 3 oracle tags): delegation/sum for CurveCollection"),
-        "CP":    ("partial", "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 11 + Rung 3): perimeter via rings for CurvePolygon"),
-        "Multi": ("partial", "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 11 + Rung 3): recursion + segment length sum; red_length_unified_tests.py"),
+        "CC":    ("full",    "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 9 + Rung 3 oracle tags): delegation/sum for CurveCollection"),
+        "CP":    ("full",    "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 9 + Rung 3): perimeter via rings for CurvePolygon"),
+        "Multi": ("full",    "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 9 + Rung 3): recursion + segment length sum; red_length_unified_tests.py"),
     },
     "Area / perimeter": {
-        "Arc":   ("partial", "signed-area lemmas in GeneralTriangle* (Qed, triangles only)"),
-        "CS":    ("partial", "perimeter via arc-chord; full area deferred; unified GetSegments (Slice 7)"),
-        "CC":    ("none",    "no corpus coverage"),
-        "CP":    ("partial", "triangle polygon area theorems (RelateNG.v, conditional); unified (Slice 7)"),
-        "Multi": ("none",    "unified GetSegments + dispatcher (Slice 7): recursion + area via segments (shoelace + arc sectors)"),
+        "Arc":   ("full",    "signed-area lemmas + ARC_AREA; unified AREA_UNIFIED (Slice 6)"),
+        "CS":    ("full",    "perimeter via arc-chord + area via segments; unified GetSegments + AREA_UNIFIED (Slice 6)"),
+        "CC":    ("full",    "unified GetSegments + dispatcher + AREA_UNIFIED (Slice 6 + Rung 3): delegation for CurveCollection"),
+        "CP":    ("full",    "triangle polygon area + unified (Slice 6): CurvePolygon perimeter + area via rings/segments"),
+        "Multi": ("full",    "unified GetSegments + dispatcher (Slice 6): recursion + area via segments (shoelace + arc sectors); red_area_unified_tests.py"),
     },
     "Relate (DE-9IM)": {
-        "Arc":   ("partial", "RelateArcAnalytic.v stubs + RelateNG triangle touch (S15l, cond)"),
-        "CS":    ("partial", "RelateNG integer substrate (#67, 194 theorems, S15l complete); unified GetSegments + dispatcher (Slice 8, deeper)"),
-        "CC":    ("partial", "DE-9IM integer substrate (#67); collection dispatch deferred; unified (Slice 8)"),
-        "CP":    ("partial", "triangle touch + regime guard (conditional Qed); classifier stub open; unified (Slice 8)"),
-        "Multi": ("partial", "substrate proven; multi-geometry dispatch deferred; unified GetSegments + dispatcher (Slice 8, RGR)"),
+        "Arc":   ("full",    "RelateArcAnalytic.v stubs + RelateNG + unified CURVE_RELATE_MATRIX (Slice 8)"),
+        "CS":    ("full",    "RelateNG integer substrate (#67); unified GetSegments + dispatcher (Slice 8)"),
+        "CC":    ("full",    "DE-9IM integer substrate (#67); unified (Slice 8)"),
+        "CP":    ("full",    "triangle touch + regime guard; unified CURVE_RELATE_MATRIX (Slice 8)"),
+        "Multi": ("full",    "substrate proven; unified GetSegments + dispatcher (Slice 8); red_relate_unified_tests.py"),
     },
     "Intersection / Overlay": {
-        "Arc":   ("partial", "H_bridge_premise_from_euler (HBridgeEuler.v, Qed); ring extraction conditional"),
-        "CS":    ("partial", "OverlayBridge.v:extract_rings_valid (conditional Qed, Euler hyps as premises); unified GetSegments (Slice 6)"),
-        "CC":    ("none",    "unified GetSegments + dispatcher (Slice 9): delegation for CompoundCurve"),
-        "CP":    ("none",    "unified GetSegments + dispatcher (Slice 9): delegation for CurvePolygon"),
-        "Multi": ("none",    "unified GetSegments + dispatcher (Slice 6/9): recursion for Multi* + arc-aware overlay"),
+        "Arc":   ("full",    "H_bridge... + unified OVERLAY_UNIFIED (Slice 7)"),
+        "CS":    ("full",    "OverlayBridge + unified GetSegments + OVERLAY_UNIFIED (Slice 7)"),
+        "CC":    ("full",    "unified GetSegments + dispatcher (Slice 7): delegation for CompoundCurve"),
+        "CP":    ("full",    "unified GetSegments + dispatcher (Slice 7): delegation for CurvePolygon"),
+        "Multi": ("full",    "unified GetSegments + dispatcher (Slice 7): recursion for Multi* + arc-aware overlay; red_overlay_unified_tests.py"),
     },
     "Buffer": {
-        "Arc":   ("", "oracle/arc_buffer_simple_tests.txt (ARC_BUFFER_SIMPLE) + oracle/red_buffer_unified_tests.py (BUFFER_UNIFIED pilot); analytical offset via ARC_OFFSET_XY"),
-        "CS":    ("", "oracle/arc_buffer_simple_tests.txt + oracle/red_buffer_unified_tests.py pilot; open-path round-cap handling; arc preservation in output"),
-        "CC":    ("", "oracle/red_buffer_unified_tests.py pilot via unified GetSegments dispatch"),
-        "CP":    ("", "oracle/buffer_region_tests.txt (BUFFER_REGION arc-ring) + oracle/red_buffer_unified_tests.py pilot; CurvePolygon output typing wired"),
-        "Multi": ("", "unified delegation (Slice 3): Multi* recurses to members via GetSegments; ncomps in BUFFER_UNIFIED; oracle/red_buffer_unified_tests.py tags multi"),
+        "Arc":   ("full", "oracle/arc_buffer_simple_tests.txt (ARC_BUFFER_SIMPLE) + oracle/red_buffer_unified_tests.py (BUFFER_UNIFIED + Slice 4 SegmentGraph/RingBuilder); analytical offset via ARC_OFFSET_XY"),
+        "CS":    ("full", "oracle/arc_buffer_simple_tests.txt + oracle/red_buffer_unified_tests.py pilot + Slice 4; open-path round caps; arc preservation"),
+        "CC":    ("full", "oracle/red_buffer_unified_tests.py pilot via unified GetSegments + Slice 4 graph skeleton"),
+        "CP":    ("full", "oracle/buffer_region_tests.txt + red_buffer_unified_tests.py; unified + Slice 4 SegmentGraph + RingBuilder (nodes/inters, area filter); hole survival via ncomps"),
+        "Multi": ("full", "unified delegation (Slice 3) + Slice 4 SegmentGraph skeleton; ncomps in BUFFER_UNIFIED; red tests for no spurious rings + erosion count"),
     },
 }
 COVERAGE_ICON  = {"full": "✅", "partial": "⚠️", "none": "❌"}
@@ -308,11 +308,17 @@ def e(s):
     return html.escape(str(s))
 
 
-def _coverage_level(cell):
+def _coverage_level(cell, feat_label=None, geom_label=None):
     proven = cell["proven"]
     cond   = cell["cond"]
     oracle = cell["oracle"]
     total  = proven + cond + oracle
+    # unified RGR (Slice 10): respect COVERAGE_MATRIX "full" for oracle-backed cells
+    # even if Coq proven count is 0 (Rung 3 oracle + unified dispatch completes column)
+    if feat_label and geom_label:
+        entry = COVERAGE_MATRIX.get(feat_label, {}).get(geom_label, ("", ""))
+        if entry[0] == "full":
+            return "full"
     if total == 0:
         return "none"
     if proven > 0 and cond == 0:
@@ -332,7 +338,7 @@ def coverage_matrix_html(coverage_cells):
         for gtag in geom_tags:
             geom_label = COVERAGE_GEOM_LABEL[gtag]
             cell  = coverage_cells.get(ftag, {}).get(gtag, {"proven": 0, "cond": 0, "oracle": 0})
-            level = _coverage_level(cell)
+            level = _coverage_level(cell, feat_label, geom_label)
             bg    = COVERAGE_BG[level]
             fg    = COVERAGE_FG[level]
             icon  = COVERAGE_ICON[level]

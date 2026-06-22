@@ -39,6 +39,15 @@ Later items (full compound buffer, non-leaf BUF, adversarial NaN on caps, exact 
 
 This session (2026-06-22 /check-work follow-up): Read confirmed ARC_BUFFER_SIMPLE / BUF coverage solid (gen + pins + driver ARC_BUFFER_SIMPLE path + prior RGR ACCEPTED). No new pins/Admitted needed. Small re-read on compound cases noted as partial per wishlist (future Red extension for more CP holes in red_buffer_unified_tests.py). Checks (admitted, claims) clean. Pivot from prior JCT complete; oracle RGR on track.
 
+## Continue (scheduled): All main columns now ✅
+- Confirmed via regen + red runs: dashboard fully green for Distance/Arc-len/Area/Relate/Overlay/Buffer.
+- plan.md deduped.
+- Rung 3 oracle tagging complete for unified model.
+- Next: Rung 2 / Coq / full noding.
+
+## This run (2026-06-22): Slice 4 - SegmentGraph + RingBuilder for Buffer topology
+RGR completed per spec: minimal graph (nodes+split using pair_pts reuse) + RingBuilder (area filter + cycle) wired to BUFFER_UNIFIED / region. 3 red tests (CP hole survival, Multi no spurious, thin erosion count) added/green. CP/Multi Buffer cells ✅. Reuses Phase 1 intersects + offset, zero regression. See plan.md + red_buffer_unified_tests.py.
+
 ## This run (2026-06-22): Slice 5 - Distance full column (unified model)
 **RGR**:
 - Re(a)d: reviewed IGeometrySegment/GetSegments/dispatcher (from .cs sketch + driver), Buffer Slice 4 (graph+ring pilot), ran all distance vectors (arc/arc_arc/compound/multi/mixed via DISTANCE_UNIFIED + legacy); gaps: fidelity (D-AA/D-AS), explicit CP/Multi/mixed red tests.

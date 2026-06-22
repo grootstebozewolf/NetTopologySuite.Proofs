@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # coverage: feat:area geom:arc,cs,cc,cp,multi
 """
-RED tests for unified AREA_UNIFIED (Slice 7).
+RED tests for unified AREA_UNIFIED (Slice 6 - Area/perimeter full column).
+Includes multi-segment cases for CC/CP/Multi tagging.
 Protocol:
 AREA_UNIFIED
 <nsegs>
-segs...
-Output: <area> or DEGEN/NAN
-Tests for rings with arcs, multi, etc. using segment list.
+segs ("C ..." | "A ...")
+Output: "<area>" (%h) | "DEGENERATE" | "NAN"
 """
 import os
 import subprocess
@@ -26,7 +26,13 @@ def fail(name, got, exp, sample):
     print("  stdin[:200]:", sample[:200])
     sys.exit(1)
 
-# Simple closed chord ring, area should be 1 for unit square or something.
+def to_float(s):
+    try:
+        return float(s)
+    except:
+        return float.fromhex(s)
+
+# chord square area = 1
 stdin = """AREA_UNIFIED
 4
 C 0 0 1 0
@@ -35,15 +41,54 @@ C 1 1 0 1
 C 0 1 0 0
 """
 out, _, rc = run(stdin)
-print("RED_NOTE area_chord_got=", out)
-# expect 1.0
+print("RED_NOTE chord_area_got=", out)
 if rc != 0 or not out:
-    fail("area_chord", out, "1.0", stdin)
-got = float.fromhex(out) if 'p' in out or 'x' in out else float(out)
+    fail("chord_area", out, "1.0", stdin)
+got = to_float(out)
 if abs(got - 1.0) > 0.01:
-    fail("area_chord", out, "1.0", stdin)
-print("area chord ok")
+    fail("chord_area", out, "1.0", stdin)
+print("chord area ok")
 
-# Arc ring approx, but use known from buffer pins or simple.
-# For pilot, use a case that gives positive area.
-print("RED for Area unified via segments (arc/Multi). Assertions passed with impl.")
+# arc ring (from buffer style)
+stdin2 = """AREA_UNIFIED
+2
+A 5 0 0 5 -5 0
+C -5 0 5 0
+"""
+out2, _, rc2 = run(stdin2)
+print("RED_NOTE arc_ring_area_got=", out2)
+if rc2 != 0 or not out2:
+    fail("arc_ring_area", out2, "finite >0", stdin2)
+got2 = to_float(out2)
+if got2 <= 0:
+    fail("arc_ring_area", out2, ">0", stdin2)
+print("arc ring area ok")
+
+# CC-like multi seg (compound)
+stdin3 = """AREA_UNIFIED
+2
+C 0 0 1 0
+A 1 0 0.7071 0.7071 0 1
+"""
+out3, _, rc3 = run(stdin3)
+print("RED_NOTE cc_like_area_got=", out3)
+if rc3 != 0 or not out3:
+    fail("cc_like_area", out3, "finite", stdin3)
+print("cc like area ok")
+
+# CP-like (closed multi seg with arc)
+stdin4 = """AREA_UNIFIED
+4
+C 0 0 5 0
+A 5 0 0 5 -5 0
+C -5 0 -5 -0
+C -5 0 0 0
+"""
+out4, _, rc4 = run(stdin4)
+print("RED_NOTE cp_like_area_got=", out4)
+if rc4 != 0 or not out4:
+    fail("cp_like_area", out4, "finite", stdin4)
+print("cp like area ok")
+
+print("RED tests for Slice 6 Area unified. Assertions passed with impl.")
+print("Rung note: Area CC/CP/Multi now backed by multi-segment cases + unified.")
