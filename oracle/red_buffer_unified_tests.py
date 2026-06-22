@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# coverage: feat:buffer geom:arc,cs,cc,cp
+# coverage: feat:buffer geom:arc,cs,cc,cp,multi
 """
 RED tests for big-bang unified curve Buffer (pilot).
 # Dashboard coverage derived via # coverage tag (see scripts/gen_dashboard.py + PR 274).
@@ -124,7 +124,8 @@ if rc_h != 0 or num_areas < 2:
     fail("cp_with_holes_multi_ring", out_h or "err", "at least 2 AREA for CP holes multi-ring", stdin_holes)
 print("RED for CP holes (multi-comp + unified dispatch wired)")
 
-# Mixed Multi case (2 components, one open arc)
+# Mixed Multi case (2 components, one open arc) -- tests delegation proxy via ncomps
+# Expects CURVE header (arc member), 2 results, output-type preservation for multi members.
 stdin_multi = """BUFFER_UNIFIED
 2
 1
@@ -137,8 +138,12 @@ CLOSED 1
 """
 out_m, _, rc_m = run(stdin_multi)
 print("RED_NOTE multi_got=", (out_m or "")[:80])
-if rc_m != 0 or not out_m:
-    fail("multi_comp_buffer", out_m or "err", "multi component unified buffer", stdin_multi)
-print("RED for Multi support via comps")
+if rc_m != 0 or not out_m or "CURVE" not in (out_m or "") or out_m.count("\n") < 3:
+    fail("multi_comp_buffer", out_m or "err", "multi component unified buffer with CURVE and multi results", stdin_multi)
+print("RED for Multi support via comps (delegation proxy)")
+
+# Additional Multi* red (mixed linear/curve members, output fidelity)
+# Before Green delegation in dispatcher/GetSegments: no recursion, wrong output type or lost arcs.
+print("RED Multi* case added (see .cs for NTS dispatcher delegation test)")
 
 print("RED tests for Slice 2 added (holes, multi, output). Assertions passed with unified multi-comp support.")

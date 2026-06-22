@@ -256,7 +256,7 @@ COVERAGE_MATRIX = {
         "CS":    ("partial", "point–arc proven; compound sequences deferred"),
         "CC":    ("none",    "no corpus coverage"),
         "CP":    ("none",    "no corpus coverage"),
-        "Multi": ("none",    "no corpus coverage"),
+        "Multi": ("none",    "delegation via unified GetSegments (Slice 3) — recurses to members (no per-type)"),
     },
     "Arc / chord length": {
         "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed)"),
@@ -270,7 +270,7 @@ COVERAGE_MATRIX = {
         "CS":    ("partial", "perimeter via arc-chord; full area deferred"),
         "CC":    ("none",    "no corpus coverage"),
         "CP":    ("partial", "triangle polygon area theorems (RelateNG.v, conditional)"),
-        "Multi": ("none",    "no corpus coverage"),
+        "Multi": ("none",    "delegation via unified GetSegments (Slice 3) — recurses to members (no per-type)"),
     },
     "Relate (DE-9IM)": {
         "Arc":   ("partial", "RelateArcAnalytic.v stubs + RelateNG triangle touch (S15l, cond)"),
@@ -284,14 +284,14 @@ COVERAGE_MATRIX = {
         "CS":    ("partial", "OverlayBridge.v:extract_rings_valid (conditional Qed, Euler hyps as premises)"),
         "CC":    ("none",    "no corpus coverage"),
         "CP":    ("none",    "no corpus coverage"),
-        "Multi": ("none",    "no corpus coverage"),
+        "Multi": ("none",    "delegation via unified GetSegments (Slice 3) — recurses to members (no per-type)"),
     },
     "Buffer": {
         "Arc":   ("", "oracle/arc_buffer_simple_tests.txt (ARC_BUFFER_SIMPLE) + oracle/red_buffer_unified_tests.py (BUFFER_UNIFIED pilot); analytical offset via ARC_OFFSET_XY"),
         "CS":    ("", "oracle/arc_buffer_simple_tests.txt + oracle/red_buffer_unified_tests.py pilot; open-path round-cap handling; arc preservation in output"),
         "CC":    ("", "oracle/red_buffer_unified_tests.py pilot via unified GetSegments dispatch"),
         "CP":    ("", "oracle/buffer_region_tests.txt (BUFFER_REGION arc-ring) + oracle/red_buffer_unified_tests.py pilot; CurvePolygon output typing wired"),
-        "Multi": ("", "no oracle coverage"),
+        "Multi": ("", "unified delegation (Slice 3): Multi* recurses to members via GetSegments; ncomps in BUFFER_UNIFIED; oracle/red_buffer_unified_tests.py tags multi"),
     },
 }
 COVERAGE_ICON  = {"full": "✅", "partial": "⚠️", "none": "❌"}

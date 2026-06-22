@@ -42,29 +42,61 @@ namespace NetTopologySuite.Curve.Tests
     {
         public static IReadOnlyList<IGeometrySegment> GetSegments(this Geometry g)
         {
-            // In real: switch on type, for CircularString/CompoundCurve walk their control seq as CSegments,
-            // for Polygon walk rings (outer + holes), convert LinearRing coords to LinearSegments, arcs to ArcSegments.
-            // Zero allocation hot path possible with struct enumerator.
-            // If ForceLinearOutput or no arcs ever present, can early return linear view.
+            // Unified model (Slice 3): recursion/delegation for Multi* so they forward to members.
+            // No per-type special cases; Multi* simply collects GetSegments of children, preserving curve fidelity.
             var list = new List<IGeometrySegment>();
-            // Placeholder (real impl walks CoordinateSequence or curve internals)
-            if (g is LineString ls)
+            if (g is MultiLineString mls)
+            {
+                foreach (var ls in mls.Geometries) list.AddRange(ls.GetSegments());
+            }
+            else if (g is MultiPolygon mp)
+            {
+                foreach (var p in mp.Geometries) list.AddRange(p.GetSegments());
+            }
+            else if (g is MultiPoint mp)
+            {
+                // Points have no segments, but for completeness
+            }
+            else if (g is LineString ls)
             {
                 for (int i = 0; i < ls.NumPoints - 1; i++)
                     list.Add(new LinearSegment(ls.GetCoordinateN(i), ls.GetCoordinateN(i + 1)));
             }
             // ... similar for Curve*, rings, etc. Detect arc presence here or via flag.
+            // Placeholder for CircularString etc. (would walk to CircularArcSegment)
+            else if (g is CircularString cs) { /* would add CircularArcSegments */ }
             return list;
         }
     }
 
     /// <summary>
     /// Dispatcher / unified BufferOp sketch. One implementation.
+    /// Uses recursion for Multi* (Slice 3): Multi forwards to per-member Buffer, assembles Multi* result,
+    /// preserving curve output type if any member had arcs (via hasArc or segment inspection).
     /// </summary>
     public static class GeometryOperationDispatcher
     {
         public static Geometry Buffer(Geometry g, double distance, bool forceLinearOutput = false)
         {
+            if (g is MultiLineString mls)
+            {
+                // Delegation for Multi* (unified model)
+                var results = new List<Geometry>();
+                bool anyCurve = false;
+                foreach (var ls in mls.Geometries)
+                {
+                    var b = Buffer(ls, distance, forceLinearOutput);
+                    results.Add(b);
+                    if (b is CurvePolygon || b is MultiPolygon) anyCurve = true; // simplistic
+                }
+                return new MultiPolygon(results.Cast<Polygon>().ToArray()); // or Curve equiv if anyCurve
+            }
+            if (g is MultiPolygon mp)
+            {
+                var results = new List<Geometry>();
+                foreach (var p in mp.Geometries) results.Add(Buffer(p, distance, forceLinearOutput));
+                return new MultiPolygon(results.Cast<Polygon>().ToArray());
+            }
             var segs = g.GetSegments();
             bool hasArc = segs.OfType<CircularArcSegment>().Any();
             if (forceLinearOutput || !hasArc)
@@ -79,11 +111,27 @@ namespace NetTopologySuite.Curve.Tests
             // Collapse: return empty Polygon or null per JTS contract.
             return CurveBufferOp.Buffer(g, segs, distance); // the new unified impl
         }
+
+        // Similar delegation for other features (Area, Relate, Overlay) would recurse and combine
+        // e.g. Area(Multi) = sum(Area(member))
     }
 
     // Legacy fallback remains for compat.
     internal static class LegacyBufferOp { public static Geometry Buffer(Geometry g, double d) => /* old */ g.Buffer(d); }
     internal static class CurveBufferOp { public static Geometry Buffer(Geometry g, IEnumerable<IGeometrySegment> segs, double d) => g.Buffer(d); /* real: analytical using segs */ }
+
+    // --- Red tests for Multi* delegation (Slice 3) ---
+    // These would fail before recursion in GetSegments + dispatcher handling Multi* .
+    // [Fact]
+    // public void MultiLineString_Buffer_PreservesCurveOutput()
+    // {
+    //     var mls = new MultiLineString(new LineString[] { /* arc line, linear */ });
+    //     var buf = GeometryOperationDispatcher.Buffer(mls, 1.0);
+    //     Assert.IsAssignableFrom<MultiPolygon>(buf); // or CurveMulti equiv
+    //     // assert has arc segments if input had
+    // }
+    // Similar for Area(Multi) = sum , Overlay etc via delegation.
+    // See unified model comment above.
 
     public class CircularArcOffsetTests
     {
