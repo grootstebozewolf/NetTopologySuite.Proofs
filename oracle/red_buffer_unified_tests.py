@@ -16,11 +16,12 @@ Proposed protocol extension for oracle (unified segments, explicit for RGR):
   BUFFER_UNIFIED
   <ncomps>   # e.g. 1 for simple CS, 2 for CP (outer+hole)
   for each comp:
-    CLOSED 1|0
     <nsegs>
     segs ("C ..." | "A ...")
+    CLOSED 1|0
   d
-Output: same as BUFFER_REGION but for the unioned result; or multi if needed. For v1 pilot, first comp result.
+Output: multi-comp results prefixed by count; CURVE\n if any arc. Each comp result is region/path output (or EMPTY/DEGENERATE).
+For CP holes and Multi*: each comp buffered; outer/ring closed, paths open. See driver.ml:run_buffer_unified.
 
 When run before GREEN impl, this will FAIL (parse error or wrong output lacking caps/arcs or claiming linear).
 

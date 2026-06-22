@@ -2368,7 +2368,7 @@ let run_buffer_unified () =
     let m = int_of_string (String.trim (input_line stdin)) in
     let segs = Array.init m (fun _ -> parse_seg ()) in
     let cl = String.trim (input_line stdin) in
-    let is_closed = (cl = "CLOSED 1" || cl = "1" || String.contains cl '1') in
+    let is_closed = (cl = "CLOSED 1" || cl = "1") in
     comps := (is_closed, segs) :: !comps
   done;
   let d = float_of_string (String.trim (input_line stdin)) in
@@ -2388,7 +2388,9 @@ let run_buffer_unified () =
         else segs
       in
       let r = if is_closed then buffer_region_output effective d else buffer_path_output segs d false in
-      results := r :: !results
+      (* ensure trailing \n for safe multi-comp concat; specials like EMPTY/DEGENERATE lack it in region/path fns *)
+      let r_ended = if String.contains r '\n' then r else r ^ "\n" in
+      results := r_ended :: !results
     ) (List.rev !comps);
     let header = if !any_arc then "CURVE\n" else "" in
     let body = String.concat "" (List.rev !results) in
