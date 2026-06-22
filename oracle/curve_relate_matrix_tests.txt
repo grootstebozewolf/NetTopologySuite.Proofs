@@ -43,3 +43,12 @@
   [far-apart lenses] OGC INTERSECTS=False   ok
 
 # All invariants (I1 curated, I2 transpose, I3 agreement, I4 OGC predicates) hold.
+
+# LINEAL analytical slice (CircularArc/CircularString/CompoundCurve + Point vs lineal)
+# Added in first real CURVE_RELATE_MATRIX matrix mode (R-PR). Uses L <n> form.
+# Reuses ARC_ARC/SEGMENT witness kernels + lemmas (see docs/curve-relate-matrix-lemma-reuse-map.md).
+#  [point on arc mid] L 1 C <mid> <mid>  vs L 1 A ...  -> 0FFFFFFFF
+#  [chord cross] C 0 0 2 2 vs C 0 2 2 0 -> 0F1FF0102
+#  [endpoint touch] C 0 0 1 1 vs C 1 1 2 0 -> F0FFFFFF2 (or hasBB marker)
+#  [equal] identical segments -> 1FFF0FFF0
+# Point classification is analytical (inCircle+span or endpoint), not chord-linearised.
