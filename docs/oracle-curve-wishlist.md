@@ -37,6 +37,8 @@ Later items (full compound buffer, non-leaf BUF, adversarial NaN on caps, exact 
   Red tests: oracle/red_curve_lineal_relate_tests.py (point-on-boundary, crosses, touch, equal).
 - Avoid high (noding, full buffer multi).
 
+This session (2026-06-22 /check-work follow-up): Read confirmed ARC_BUFFER_SIMPLE / BUF coverage solid (gen + pins + driver ARC_BUFFER_SIMPLE path + prior RGR ACCEPTED). No new pins/Admitted needed. Small re-read on compound cases noted as partial per wishlist (future Red extension for more CP holes in red_buffer_unified_tests.py). Checks (admitted, claims) clean. Pivot from prior JCT complete; oracle RGR on track.
+
 Verification commands (run to base future accepts):
 - python3 oracle/gen_arc_buffer_simple_tests.py > ... (CLEAN)
 - echo 'BUFFER_REGION ...' | oracle/oracle_bin (matches pins)
