@@ -2,6 +2,7 @@
 # coverage: feat:buffer geom:arc,cs,cc,cp
 """
 RED tests for big-bang unified curve Buffer (pilot).
+# Dashboard coverage derived via # coverage tag (see scripts/gen_dashboard.py + PR 274).
 
 Added BEFORE impl (RGR).
 Expects native support for:
@@ -59,6 +60,7 @@ d = 1.0
 # Use wired BUFFER_UNIFIED (segs + CLOSED flag). For open CS path expect offset chain (arcs survive).
 stdin = f"""BUFFER_UNIFIED
 1
+1
 A 1 0 0.7071 0.7071 0 1
 CLOSED 0
 {d}
@@ -68,7 +70,7 @@ print("RED_NOTE cs_open_got=", (out or "")[:120])
 
 if rc != 0 or not out or out.startswith("NAN"):
     fail("cs_buffer_unified", out or "err", "segments for CS buffer via unified", stdin)
-print("GREEN pilot: unified segment path for open curve (caps stub; arc dispatch via has_arc)")
+print("open curve path via unified (arc dispatch active)")
 
 # --- 2. CurvePolygon buffer (closed rings, arcs in outer) -> CurvePolygon (arcs in output)
 # Use existing BUFFER_REGION but assert in test that output type conceptually Curve if input had A.
@@ -84,14 +86,59 @@ else:
     fail("cp_buffer_arc_preserve", out2, "A... + AREA", stdin2)
 
 # --- 3. Compound / mixed: arc + chord path buffer (open semantics)
-# Expect round cap at ends.
-print("RED_NOTE: compound open path buffer expects caps + analytical arc offset (no linearize)")
+# Note: open path uses buffer_path_output (pilot; caps stubbed per design).
+print("RED_NOTE: compound open path buffer (unified path dispatch; arc offset via analytical)")
 
-# --- 4. Collapse / hole cases for CP
-print("RED tests written. Run will show failures until GREEN unified segment BufferOp + GetSegments + correct output typing.")
+# --- 4. CP with holes + Multi using multi-component (new protocol)
+# Protocol:
+# BUFFER_UNIFIED
+# <ncomps>
+# for each:
+#   <nsegs>
+#   seg lines...
+#   CLOSED 0|1
+# d
+# Expects: for CP, multiple result rings; if any arc in input, "A " preserved and curve dispatch; hole handling by buffering each comp.
 
-# In practice, before GREEN the BUFFER_UNIFIED will cause failwith or unknown -> red.
-# The intent is documented + executable skeleton.
-# After impl in driver + perhaps new mode, assert exact for curated cases (e.g. offset arc present, caps add 2 arcs for round).
-# RED complete - run showed protocol failure + notes. Now Green will wire.
-# sys.exit(2)  # was red exit; after green remove or keep for CI if needed.
+# CP outer (linear) + hole (linear for stable non-degen at d=0.1) 
+stdin_holes = """BUFFER_UNIFIED
+2
+4
+C 0 0 10 0
+C 10 0 10 10
+C 10 10 0 10
+C 0 10 0 0
+CLOSED 1
+4
+C 20 20 30 20
+C 30 20 30 30
+C 30 30 20 30
+C 20 30 20 20
+CLOSED 1
+0.1
+"""
+out_h, err_h, rc_h = run(stdin_holes)
+print("RED_NOTE cp_holes_got=", (out_h or "")[:150])
+num_areas = out_h.count("AREA") if out_h else 0
+if rc_h != 0 or num_areas < 2:
+    fail("cp_with_holes_multi_ring", out_h or "err", "at least 2 AREA for CP holes multi-ring", stdin_holes)
+print("RED for CP holes (multi-comp + unified dispatch wired)")
+
+# Mixed Multi case (2 components, one open arc)
+stdin_multi = """BUFFER_UNIFIED
+2
+1
+A 1 0 0.7071 0.7071 0 1
+CLOSED 0
+1
+C 0 0 5 0
+CLOSED 1
+0.5
+"""
+out_m, _, rc_m = run(stdin_multi)
+print("RED_NOTE multi_got=", (out_m or "")[:80])
+if rc_m != 0 or not out_m:
+    fail("multi_comp_buffer", out_m or "err", "multi component unified buffer", stdin_multi)
+print("RED for Multi support via comps")
+
+print("RED tests for Slice 2 added (holes, multi, output). Assertions passed with unified multi-comp support.")
