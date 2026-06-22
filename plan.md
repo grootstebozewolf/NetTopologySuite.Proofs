@@ -377,6 +377,13 @@ Observatory one-sentence update: Slice 10 makes the dashboard matrix reflect the
 - State stable for main unified columns.
 - No new RGR needed; Rung 3 oracle complete.
 
+## Red phase for Overlay (post PR #279)
+Added failing tests in red_overlay_unified_tests.py for disjoint cases expecting different DE-9IM matrices (e.g. FFFFFFFFF) and CURVE prefix.
+These intentionally fail on current pilot stub (always returns 212FF1FF2 or CURVE+212...) to drive Green for real segment-based overlay computation.
+Run shows RED FAIL as expected.
+Refs: oracle/red_overlay_unified_tests.py (new tests), driver.ml (still stub).
+
+
 
 
 

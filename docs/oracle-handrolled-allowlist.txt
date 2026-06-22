@@ -307,6 +307,16 @@ run_arc_offset_filtered
 # (transcendental boundary, exact-Q centres underneath).
 buffer_path_output
 
+# --- build_segment_graph_and_rings (BUFFER_UNIFIED pilot topology, Slice 4) ---
+# Minimal SegmentGraph + RingBuilder for offset noding/ring extraction/hole
+# assignment in unified Buffer (used by BUFFER_UNIFIED).  Float eps, param t/u
+# for chord inters, same-point tests, area calcs.  Pilot/skeleton (bypass for
+# legacy fidelity in BUFFER_REGION gens); real full noding deferred.  The float
+# assembly supports differential testing of native curve Buffer topology.
+# Justification: same pilot rationale as buffer_path_output / BUFFER_UNIFIED
+# (transcendental boundary ops, exact-Q underneath from prior proofs).
+build_segment_graph_and_rings
+
 # --- DISTANCE_UNIFIED (unified top-level distance via segments, JTS #1195) -----
 # Mode DISTANCE_UNIFIED emits the min distance between two (curve) geoms given as
 # segment lists (for differential testing of NTS unified GetSegments + dispatcher

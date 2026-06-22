@@ -2323,7 +2323,9 @@ let build_segment_graph_and_rings (asm : _ list) : _ list list =
       signed_area2, circumcentre_q; no new math).
      SegmentGraph skeleton (nodes=inters+ends collected via pair inter logic) + RingBuilder (area filter for spurious).
      Full splitting/cycle extraction/hole depth for later; current bypass preserves legacy fidelity.
-     Matrix: Buffer/CP + Buffer/Multi (pilot stage). *)
+     Matrix: Buffer/CP + Buffer/Multi (pilot stage).
+     Allowlisted as INTERFACE-BOUNDARY pilot (see docs/oracle-handrolled-allowlist.txt);
+     hand-rolled floats for eps/params (ratchet: new hand-rolls only for justified pilots). *)
   if asm = [] then [] else
   let n = List.length asm in
   let eps = 1e-9 in

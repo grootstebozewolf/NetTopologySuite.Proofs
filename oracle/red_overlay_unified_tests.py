@@ -77,5 +77,33 @@ if rc4 != 0 or "CURVE" not in (out4 or ""):
     fail("overlay_multi", out4, "CURVE for Multi with arc", stdin4)
 print("Multi overlay ok")
 
+# Disjoint linear - pilot stub always returns the contains-like matrix; full impl would compute different DE-9IM (e.g. FFFFFFFFF for disjoint)
+# This is RED (will fail until real overlay logic using segments + relate primitives)
+stdin5 = """OVERLAY_UNIFIED
+1
+C 0 0 1 0
+1
+C 10 0 11 0
+"""
+out5, _, rc5 = run(stdin5)
+print("RED_NOTE overlay_disjoint_linear_got=", out5)
+if rc5 != 0 or out5 != "FFFFFFFFF":
+    fail("overlay_disjoint_linear", out5, "FFFFFFFFF (disjoint)", stdin5)
+print("disjoint linear ok (would require full)")
+
+# Disjoint arc case - expect CURVE prefix + disjoint matrix
+stdin6 = """OVERLAY_UNIFIED
+1
+A 0 1 0.7071 0.7071 1 0
+1
+A 10 1 10.7071 0.7071 11 0
+"""
+out6, _, rc6 = run(stdin6)
+print("RED_NOTE overlay_disjoint_arc_got=", out6)
+if rc6 != 0 or "FFFFFFFFF" not in (out6 or ""):
+    fail("overlay_disjoint_arc", out6, "CURVE\\n...FFFFFFFFF", stdin6)
+print("disjoint arc ok (would require full)")
+
 print("RED tests for Slice 7 Overlay unification added.")
 print("Matrix cells targeted: Overlay/Arc,CS,CC,CP,Multi")
+print("Note: some tests are intentionally failing (RED) to drive full impl in Green.")
