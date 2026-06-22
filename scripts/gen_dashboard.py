@@ -71,6 +71,9 @@ def git(*args, default=""):
 
 # -- verified-claims.md ------------------------------------------------------
 
+PROVEN_REGIMES = {"exact", "full-b64", "int-b64", "int-b64-arc", "int"}
+
+
 def parse_claims():
     txt = read("docs/verified-claims.md") or ""
     theorem_lines = [ln for ln in txt.splitlines()
@@ -85,14 +88,28 @@ def parse_claims():
         return (re.search(r'Issue #67', title) or
                 re.search(r'integer-coordinate substrate.*#67', title))
 
+    # coverage_cells[feat_tag][geom_tag] = {"proven": int, "cond": int, "oracle": int}
+    coverage_cells = {f: {g: {"proven": 0, "cond": 0, "oracle": 0}
+                          for g in COVERAGE_GEOM_TAGS}
+                      for f in COVERAGE_FEAT_TAGS}
+
     sections = []
     group67 = {"title": "Issue #67 — RelateNG / DE-9IM (all sessions)",
                "rows": 0, "regimes": {r: 0 for r in REGIMES}, "group": True}
     cur = None
+    cur_feats = []
+    cur_geoms = []
     for line in txt.splitlines():
         m = re.match(r'^## (.+)$', line)
         if m:
-            title = m.group(1).strip()
+            raw = m.group(1).strip()
+            # strip trailing HTML comment to get display title
+            title = re.sub(r'\s*<!--.*?-->', '', raw).strip()
+            # parse feat/geom tags from the comment
+            feat_m = re.search(r'feat:([\w,\-]+)', raw)
+            geom_m = re.search(r'geom:([\w,]+)', raw)
+            cur_feats = feat_m.group(1).split(',') if feat_m else []
+            cur_geoms = geom_m.group(1).split(',') if geom_m else []
             if _is_67(title):
                 cur = group67
                 if group67 not in sections:
@@ -105,8 +122,21 @@ def parse_claims():
             cur["rows"] += 1
             for r in REGIMES:
                 cur["regimes"][r] += len(re.findall(r'\[' + re.escape(r) + r'\]', line))
+            # accumulate coverage matrix counts
+            if cur_feats and cur_geoms:
+                row_proven = sum(len(re.findall(r'\[' + re.escape(r) + r'\]', line))
+                                 for r in PROVEN_REGIMES)
+                row_cond   = len(re.findall(r'\[cond\]', line))
+                row_oracle = len(re.findall(r'\[oracle\]', line))
+                for ftag in cur_feats:
+                    if ftag in coverage_cells:
+                        for gtag in cur_geoms:
+                            if gtag in coverage_cells[ftag]:
+                                coverage_cells[ftag][gtag]["proven"] += row_proven
+                                coverage_cells[ftag][gtag]["cond"]   += row_cond
+                                coverage_cells[ftag][gtag]["oracle"]  += row_oracle
     sections = [s for s in sections if s["rows"] > 0]
-    return total, regime_counts, sections
+    return total, regime_counts, sections, coverage_cells
 
 
 # -- TRIAGE issue table ------------------------------------------------------
@@ -159,6 +189,85 @@ def count_entries(path):
 # HTML rendering
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Coverage matrix — which NTS features are proven for which geometry types
+# ---------------------------------------------------------------------------
+# Levels: "full"=Qed theorems, "partial"=some/conditional coverage, "none"=no coverage
+# Short tag keys used in verified-claims.md section comments.
+# COVERAGE_FEAT_TAGS / COVERAGE_GEOM_TAGS define the canonical order.
+COVERAGE_FEAT_TAGS = ["distance", "arc-len", "area", "relate", "overlay", "buffer"]
+COVERAGE_GEOM_TAGS = ["arc", "cs", "cc", "cp", "multi"]
+
+COVERAGE_FEAT_LABEL = {
+    "distance": "Distance",
+    "arc-len":  "Arc / chord length",
+    "area":     "Area / perimeter",
+    "relate":   "Relate (DE-9IM)",
+    "overlay":  "Intersection / Overlay",
+    "buffer":   "Buffer",
+}
+COVERAGE_GEOM_LABEL = {
+    "arc": "Arc", "cs": "CS", "cc": "CC", "cp": "CP", "multi": "Multi",
+}
+# Keep display names for backward compat (COVERAGE_MATRIX tooltip lookup)
+COVERAGE_FEATURES  = [COVERAGE_FEAT_LABEL[t] for t in COVERAGE_FEAT_TAGS]
+COVERAGE_GEOMTYPES = [COVERAGE_GEOM_LABEL[t] for t in COVERAGE_GEOM_TAGS]
+COVERAGE_GEOMTYPE_LONG = {
+    "Arc": "CircularArc",
+    "CS": "CompoundCurve",
+    "CC": "CurveCollection",
+    "CP": "CurvePolygon",
+    "Multi": "MultiSurface / MultiCurve",
+}
+# Source-of-record for each cell (file:lemma or prose note for deferred items)
+COVERAGE_MATRIX = {
+    "Distance": {
+        "Arc":   ("full",    "ArcPointDistance.v + ArcChordLength.v (Qed)"),
+        "CS":    ("partial", "point–arc proven; compound sequences deferred"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Arc / chord length": {
+        "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed)"),
+        "CS":    ("partial", "scalar arc-length proven; concatenation deferred"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Area / perimeter": {
+        "Arc":   ("partial", "signed-area lemmas in GeneralTriangle* (Qed, triangles only)"),
+        "CS":    ("partial", "perimeter via arc-chord; full area deferred"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("partial", "triangle polygon area theorems (RelateNG.v, conditional)"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Relate (DE-9IM)": {
+        "Arc":   ("partial", "RelateArcAnalytic.v stubs + RelateNG triangle touch (S15l, cond)"),
+        "CS":    ("partial", "RelateNG integer substrate (#67, 194 theorems, S15l complete)"),
+        "CC":    ("partial", "DE-9IM integer substrate (#67); collection dispatch deferred"),
+        "CP":    ("partial", "triangle touch + regime guard (conditional Qed); classifier stub open"),
+        "Multi": ("partial", "substrate proven; multi-geometry dispatch deferred"),
+    },
+    "Intersection / Overlay": {
+        "Arc":   ("partial", "H_bridge_premise_from_euler (HBridgeEuler.v, Qed); ring extraction conditional"),
+        "CS":    ("partial", "OverlayBridge.v:extract_rings_valid (conditional Qed, Euler hyps as premises)"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Buffer": {
+        "Arc":   ("none",    "no corpus coverage"),
+        "CS":    ("none",    "no corpus coverage"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+}
+COVERAGE_ICON  = {"full": "✅", "partial": "⚠️", "none": "❌"}
+COVERAGE_BG    = {"full": "#dcfce7", "partial": "#fef9c3", "none": "#fee2e2"}
+COVERAGE_FG    = {"full": "#166534", "partial": "#854d0e", "none": "#991b1b"}
+
 PRIORITY_COLOR = {
     "Immediate": "#dc2626", "Urgent": "#ea580c",
     "Non-urgent": "#0891b2", "Expectant": "#6b7280",
@@ -167,6 +276,51 @@ PRIORITY_COLOR = {
 
 def e(s):
     return html.escape(str(s))
+
+
+def _coverage_level(cell):
+    proven = cell["proven"]
+    cond   = cell["cond"]
+    oracle = cell["oracle"]
+    total  = proven + cond + oracle
+    if total == 0:
+        return "none"
+    if proven > 0 and cond == 0:
+        return "full"
+    return "partial"
+
+
+def coverage_matrix_html(coverage_cells):
+    geom_tags = COVERAGE_GEOM_TAGS
+    header = "".join(
+        f'<th title="{e(COVERAGE_GEOMTYPE_LONG[COVERAGE_GEOM_LABEL[g]])}">'
+        f'{e(COVERAGE_GEOM_LABEL[g])}</th>' for g in geom_tags)
+    rows = ""
+    for ftag in COVERAGE_FEAT_TAGS:
+        feat_label = COVERAGE_FEAT_LABEL[ftag]
+        cells = ""
+        for gtag in geom_tags:
+            geom_label = COVERAGE_GEOM_LABEL[gtag]
+            cell  = coverage_cells.get(ftag, {}).get(gtag, {"proven": 0, "cond": 0, "oracle": 0})
+            level = _coverage_level(cell)
+            bg    = COVERAGE_BG[level]
+            fg    = COVERAGE_FG[level]
+            icon  = COVERAGE_ICON[level]
+            p, cond_n, o = cell["proven"], cell["cond"], cell["oracle"]
+            tip = f"{p} proven, {cond_n} cond, {o} oracle tag(s)"
+            static_note = COVERAGE_MATRIX.get(feat_label, {}).get(geom_label, ("", ""))[1]
+            if static_note:
+                tip += f" — {static_note}"
+            cells += (f'<td style="text-align:center;background:{bg};color:{fg}'
+                      f';font-size:16px" title="{e(tip)}">{icon}</td>')
+        rows += f"<tr><td><b>{e(feat_label)}</b></td>{cells}</tr>"
+    return (
+        f'<table><thead><tr><th>Feature \\ Geometry</th>{header}</tr></thead>'
+        f'<tbody>{rows}</tbody></table>'
+        f'<p class="muted" style="font-size:12px;margin-top:6px">'
+        f'✅&nbsp;Qed (unconditional)&nbsp; ⚠️&nbsp;partial / conditional&nbsp; '
+        f'❌&nbsp;no corpus coverage — hover a cell for theorem counts + source note.</p>'
+    )
 
 
 def bar(segments, width=320):
@@ -185,7 +339,7 @@ def bar(segments, width=320):
 
 
 def render(data):
-    claims_total, regime_counts, sections = data["claims"]
+    claims_total, regime_counts, sections, coverage_cells = data["claims"]
     issues = data["issues"]
     modes = data["oracle"]
     reg = data["registries"]
@@ -270,7 +424,7 @@ def render(data):
         sha_short=e(sha_short), sha=e(sha), when=e(when),
         card_html=card_html, regime_legend=regime_legend(),
         issue_rows=issue_rows, sec_rows=sec_rows, mode_rows=mode_rows,
-        audit_rows=audit_rows,
+        audit_rows=audit_rows, coverage_matrix=coverage_matrix_html(coverage_cells),
         claims_total=claims_total, n_modes=len(modes),
         oracle_vectors=oracle_vectors, oracle_tagged=oracle_tagged)
 
@@ -366,6 +520,16 @@ TEMPLATE = """<!DOCTYPE html>
     <table><thead><tr><th>Issue</th><th>Area</th><th>Priority</th>
       <th>Verdict (from TRIAGE)</th></tr></thead>
       <tbody>{issue_rows}</tbody></table>
+  </section>
+
+  <section>
+    <h2>Feature × geometry-type coverage</h2>
+    <p class="muted">Which NTS operations have mechanically-verified proofs for
+      each curve geometry type. Column headers: Arc&nbsp;=&nbsp;CircularArc,
+      CS&nbsp;=&nbsp;CompoundCurve, CC&nbsp;=&nbsp;CurveCollection,
+      CP&nbsp;=&nbsp;CurvePolygon, Multi&nbsp;=&nbsp;Multi*.
+      Hover a cell for the source-of-record lemma or deferral note.</p>
+    {coverage_matrix}
   </section>
 
   <section>
