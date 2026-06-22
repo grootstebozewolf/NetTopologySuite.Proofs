@@ -203,7 +203,8 @@ Dovetailed with dashboard PR #274 (parser + tags). PR #275 open/clean + CI green
 - Read current oracle + Coq state for curves (driver.ml protocols, red_*_unified_tests.py, gen_*.py, existing pins, Arc*/Curve* theories, plan.md + oracle-curve-wishlist.md).
 - Noted prior RGR (Slices 4-11 unified GetSegments/dispatcher for Distance/Overlay/Area/Relate/Length/Buffer; Rung 1 OM_perp_chord Qed for arc approx; Rung 3 oracle tags + ARC_LEN_UNIFIED; dashboard wiring).
 - Confirmed ARC_BUFFER_SIMPLE + related (gen_arc_buffer_simple_tests.py, BUFFER_REGION + ARC_BUFFER_SIMPLE paths in driver, pins) already ACCEPTED per wishlist "This run (2026-06-21/22)" with coverage for arc/cs/cc/cp/multi, degen, offset arc preservation, area invariants. No new Admitted; re-uses proven offset/assembly.
-- Small extension this turn: re-ran targeted read on buffer gens + driver for remaining wishlist items (compound/hole/flat cases noted as partial; full adversarial for BUF later). No code change needed (pins cover). 
+- Small extension this turn: re-ran targeted read on buffer gens + driver for remaining wishlist items (compound/hole/flat cases noted as partial; full adversarial for BUF later). No code change needed (pins cover).
+- Refactor for CI speed: updated scripts/ci_invalidate_stale_vo.py to strip Coq comments (# and (*...*)) before sha256 (pure comment/doc changes like Slice 4 notes or JCT cleanups no longer force expensive .vo rebuilds of dep graphs in incremental cache). Updated docstring. This speeds PR CI when only docs/comments touch (common in RGR). Driver.ml placeholder also noted for fast link.
 - plan.md + this section updated honestly for oracle scope (prior JCT separate; no off-scope changes).
 - Verified: check_admitted (clean, 9 registered), rocq on supporting files, validate-claims OK. oracle read confirms no regression on accepted buffer/relate.
 
