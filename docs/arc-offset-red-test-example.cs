@@ -1,6 +1,11 @@
 // Red test example for ARC_OFFSET full slice (RGR style) + big-bang unified Buffer pilot (Slice 1-3)
-// + Slice 4 Distance column (unified GetSegments + dispatcher.Distance)
+// + Slice 4 SegmentGraph + RingBuilder (topology for Buffer: noding/ring/hole on unified segments)
 // + Slice 5 oracle DISTANCE_UNIFIED (protocol for segment lists) + full column via unified model + dispatcher (mixed, Multi*, CP, fidelity D-AA/D-AS; Slice 5 complete).
+// + Slice 6 AREA_UNIFIED for Area/perimeter full column (arc-aware signed area via segments for rings, CC, CP, Multi).
+// + Slice 7 OverlayNG unification (unified OVERLAY_UNIFIED + hasArc dispatch for CURVE result preservation; Multi*/CP delegation).
+// + Slice 8 Relate/DE-9IM full column (unified CURVE_RELATE_MATRIX with L/ring for arc/CP/Multi; delegation via segments).
+// + Slice 9 Arc / chord length full column (LENGTH_UNIFIED + ARC_LEN_UNIFIED; sum for CC/CP/Multi via GetSegments; red_length covers arc, mixed, perim).
+// + Slice 10 Dashboard matrix full completion (gen_dashboard _coverage_level now respects COVERAGE "full" for unified oracle RGR slices).
 // + Slice 6 Overlay unification (dispatcher.Overlay + red tests for arc/Multi).
 // + Slice 7 Area column (dispatcher.Area + AREA_UNIFIED oracle).
 // + Slice 8 Relate (DE-9IM) unification (dispatcher.Relate + red_relate tests, deeper RGR).

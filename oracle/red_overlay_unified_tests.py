@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # coverage: feat:overlay geom:arc,cs,cc,cp,multi
 """
-RED tests for unified Overlay (Slice 6).
-Uses unified GetSegments + dispatcher for curve/Multi overlay.
-For oracle, uses existing EDGE_IN_RESULT or stub; full unified later.
+RED tests for unified OverlayNG (Slice 7 - Overlay unification).
+Tests mixed, CP, Multi cases using OVERLAY_UNIFIED protocol (nsegs + segs).
+Expects "CURVE" prefix for arc inputs (arc preservation via hasArc dispatch).
 """
 import os
 import subprocess
@@ -22,7 +22,7 @@ def fail(name, got, exp, sample):
     print("  stdin[:200]:", sample[:200])
     sys.exit(1)
 
-# Simple test using OVERLAY_UNIFIED stub for pilot (unified segment dispatch).
+# Linear case
 stdin = """OVERLAY_UNIFIED
 1
 C 0 0 1 0
@@ -30,29 +30,80 @@ C 0 0 1 0
 C 0 0 1 0
 """
 out, _, rc = run(stdin)
-print("RED_NOTE overlay_unified_got=", out)
+print("RED_NOTE overlay_linear_got=", out)
 if rc != 0 or out != "212FF1FF2":
-    fail("overlay_unified", out, "212FF1FF2", stdin)
-print("overlay unified ok (pilot matrix; full impl will compute and tests must be updated)")
+    fail("overlay_linear", out, "212FF1FF2", stdin)
+print("linear overlay ok")
 
-# More lines for coverage count
-stdin3 = """EDGE_IN_RESULT
-INTERSECTION
-true
-true
-"""
-out3, _, _ = run(stdin3)
-print("RED_NOTE edge_inter_got=", out3)
-
-# Additional for CC/CP coverage
-stdin4 = """OVERLAY_UNIFIED
+# Arc case - expect CURVE prefix for fidelity
+stdin2 = """OVERLAY_UNIFIED
 1
 A 1 0 0.7071 0.7071 0 1
 1
 C 0 0 1 0
 """
-out4, _, _ = run(stdin4)
-print("RED_NOTE overlay_cc_got=", out4)
+out2, _, rc2 = run(stdin2)
+print("RED_NOTE overlay_arc_got=", out2)
+if rc2 != 0 or "CURVE" not in out2:
+    fail("overlay_arc", out2, "CURVE...", stdin2)
+print("arc overlay CURVE prefix ok (preserves arc)")
 
-print("RED for Overlay unified (arc/Multi/CC/CP delegation via GetSegments + dispatcher.Overlay).")
-print("Assertions passed with unified model (Slice 9).")
+# CP-like mixed
+stdin3 = """OVERLAY_UNIFIED
+2
+C 0 0 1 0
+A 1 0 0.7071 0.7071 0 1
+1
+C 2 0 3 0
+"""
+out3, _, rc3 = run(stdin3)
+print("RED_NOTE overlay_cp_mixed_got=", out3)
+if rc3 != 0 or "CURVE" not in (out3 or ""):
+    fail("overlay_cp_mixed", out3, "CURVE prefix for CP mixed", stdin3)
+print("CP mixed ok")
+
+# Multi delegation simulation (n>1)
+stdin4 = """OVERLAY_UNIFIED
+2
+C 0 0 1 0
+C 1 0 1 1
+2
+C 2 0 3 0
+A 3 0 3.7071 0.7071 4 1
+"""
+out4, _, rc4 = run(stdin4)
+print("RED_NOTE overlay_multi_got=", out4)
+if rc4 != 0 or "CURVE" not in (out4 or ""):
+    fail("overlay_multi", out4, "CURVE for Multi with arc", stdin4)
+print("Multi overlay ok")
+
+# Disjoint linear - pilot stub always returns the contains-like matrix; full impl would compute different DE-9IM (e.g. FFFFFFFFF for disjoint)
+# This is RED (will fail until real overlay logic using segments + relate primitives)
+stdin5 = """OVERLAY_UNIFIED
+1
+C 0 0 1 0
+1
+C 10 0 11 0
+"""
+out5, _, rc5 = run(stdin5)
+print("RED_NOTE overlay_disjoint_linear_got=", out5)
+if rc5 != 0 or out5 != "FFFFFFFFF":
+    fail("overlay_disjoint_linear", out5, "FFFFFFFFF (disjoint)", stdin5)
+print("disjoint linear ok (would require full)")
+
+# Disjoint arc case - expect CURVE prefix + disjoint matrix
+stdin6 = """OVERLAY_UNIFIED
+1
+A 0 1 0.7071 0.7071 1 0
+1
+A 10 1 10.7071 0.7071 11 0
+"""
+out6, _, rc6 = run(stdin6)
+print("RED_NOTE overlay_disjoint_arc_got=", out6)
+if rc6 != 0 or "FFFFFFFFF" not in (out6 or ""):
+    fail("overlay_disjoint_arc", out6, "CURVE\\n...FFFFFFFFF", stdin6)
+print("disjoint arc ok (would require full)")
+
+print("RED tests for Slice 7 Overlay unification added.")
+print("Matrix cells targeted: Overlay/Arc,CS,CC,CP,Multi")
+print("Note: some tests are intentionally failing (RED) to drive full impl in Green.")
