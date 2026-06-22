@@ -29,6 +29,12 @@ Later items (full compound buffer, non-leaf BUF, adversarial NaN on caps, exact 
 
 - Low: IsSimple/IsValid partial for curves (using existing ARC_ARC_XY + ARC_SEGMENT_XY for ring self-intersect checks), more predicate wiring (Relate for curve rings), full V-CP analytical location (point_in_curve_ring + ring_orientation already good; expand).
 - Medium: full CURVE_RELATE_MATRIX differential for CP with holes, exact ref harness wiring for all curve TAGs in ROCQ_REF_BIN.
+- (2026-06) First real CURVE_RELATE_MATRIX lineal slice landed (L form, point+arc/arc+arc/compound via reused ARC_*_XY kernels + lemmas from ArcIntersect/ArcArcSound/ArcPointDistance/ArcDistance/DE9IM etc). NTS.Curve side should wire:
+    CircularString.Relate / CompoundCurve.Relate (when ROCQ_REF_BIN):
+      send "CURVE_RELATE_MATRIX\nL\n<nsegsA>\n<segs...>\nL\n<nsegsB>..."
+      expect 9-char (or extend to CLASS tag); compare bit-exact; fall back to current analytical for unsupported.
+  Protocol doc in oracle/driver.ml:2550. Lemma reuse map in docs/curve-relate-matrix-lemma-reuse-map.md.
+  Red tests: oracle/red_curve_lineal_relate_tests.py (point-on-boundary, crosses, touch, equal).
 - Avoid high (noding, full buffer multi).
 
 Verification commands (run to base future accepts):

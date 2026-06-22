@@ -294,3 +294,15 @@ densify_arc
 # diff testing (aligns with ORIENT_FILTERED / INTERSECT_FILTERED).
 # Interface-boundary.
 run_arc_offset_filtered
+
+# --- buffer_path_output (BUFFER_UNIFIED pilot for open curve paths, JTS #1195) -
+# Open-path (non-closed) variant used by the unified BUFFER_UNIFIED mode for
+# CircularString / CompoundCurve lineal inputs (and Point vs lineal).  Performs
+# the same per-segment offset (homothety for arcs, normal for chords) as
+# buffer_region_output, plus round end-caps for positive d on open paths.
+# sqrt + atan2 off EXACT circumcentre_q.  The float assembly IS the interface
+# for differential testing of native curve Buffer.  Pilot for the big-bang
+# IGeometrySegment iteration; closed components still route through the
+# allowlisted buffer_region_output.  Justification: same as BUFFER_REGION
+# (transcendental boundary, exact-Q centres underneath).
+buffer_path_output

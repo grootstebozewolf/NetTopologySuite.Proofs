@@ -1,14 +1,90 @@
-// Red test example for ARC_OFFSET full slice (RGR style)
-// To be placed in NTS.Curve.Tests / CircularArcTests.cs or similar
-// Run with: dotnet test --filter "Offset|ArcOffset"
-// Pinned to proofs oracle (arc_offset_tests.txt + gen) + ArcOffset*.v proofs.
+// Red test example for ARC_OFFSET full slice (RGR style) + big-bang unified Buffer pilot.
+// To be placed in NTS.Curve.Tests / ... or NetTopologySuite.Curve/ 
+// Run with: dotnet test --filter "Offset|Buffer|Arc"
+// Pinned to proofs oracle + leaf primitives (ARC_OFFSET_XY, CurveRingOffset etc).
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 using NetTopologySuite.Geometries;
 
 namespace NetTopologySuite.Curve.Tests
 {
+    // =============================================
+    // Unified segment model (big-bang, no more per-type + Linearize fallbacks)
+    // Pilot: Buffer. Every Geometry now exposes segments uniformly.
+    // Dispatcher in BufferOp decides curve vs linear path.
+    // =============================================
+
+    /// <summary>
+    /// Unified segment abstraction. Replaces ad-hoc Coordinate[] walks.
+    /// </summary>
+    public interface IGeometrySegment { }
+
+    public sealed class LinearSegment : IGeometrySegment
+    {
+        public Coordinate Start { get; }
+        public Coordinate End { get; }
+        public LinearSegment(Coordinate s, Coordinate e) { Start = s; End = e; }
+    }
+
+    public sealed class CircularArcSegment : IGeometrySegment
+    {
+        public Coordinate Start { get; }
+        public Coordinate Mid { get; }   // on-arc control
+        public Coordinate End { get; }
+        public CircularArcSegment(Coordinate s, Coordinate m, Coordinate e) { Start = s; Mid = m; End = e; }
+    }
+
+    // Extension on Geometry types (implemented in LineString, Polygon, CircularString, CompoundCurve, CurvePolygon, etc.)
+    public static class GeometrySegments
+    {
+        public static IReadOnlyList<IGeometrySegment> GetSegments(this Geometry g)
+        {
+            // In real: switch on type, for CircularString/CompoundCurve walk their control seq as CSegments,
+            // for Polygon walk rings (outer + holes), convert LinearRing coords to LinearSegments, arcs to ArcSegments.
+            // Zero allocation hot path possible with struct enumerator.
+            // If ForceLinearOutput or no arcs ever present, can early return linear view.
+            var list = new List<IGeometrySegment>();
+            // Placeholder (real impl walks CoordinateSequence or curve internals)
+            if (g is LineString ls)
+            {
+                for (int i = 0; i < ls.NumPoints - 1; i++)
+                    list.Add(new LinearSegment(ls.GetCoordinateN(i), ls.GetCoordinateN(i + 1)));
+            }
+            // ... similar for Curve*, rings, etc. Detect arc presence here or via flag.
+            return list;
+        }
+    }
+
+    /// <summary>
+    /// Dispatcher / unified BufferOp sketch. One implementation.
+    /// </summary>
+    public static class GeometryOperationDispatcher
+    {
+        public static Geometry Buffer(Geometry g, double distance, bool forceLinearOutput = false)
+        {
+            var segs = g.GetSegments();
+            bool hasArc = segs.OfType<CircularArcSegment>().Any();
+            if (forceLinearOutput || !hasArc)
+            {
+                // delegate to existing pure-linear BufferOp (zero regression)
+                return LegacyBufferOp.Buffer(g, distance);
+            }
+            // Curve path: iterate segs once, use analytical offset (ARC_OFFSET_XY / homothety + chord offset)
+            // + round joins/caps from leaf primitives, assembly per CurveRingOffset etc.
+            // Output type: if input areal or closed -> CurvePolygon; lineal open -> CurvePolygon (with caps).
+            // Holes: process outer + holes, apply inset rules.
+            // Collapse: return empty Polygon or null per JTS contract.
+            return CurveBufferOp.Buffer(g, segs, distance); // the new unified impl
+        }
+    }
+
+    // Legacy fallback remains for compat.
+    internal static class LegacyBufferOp { public static Geometry Buffer(Geometry g, double d) => /* old */ g.Buffer(d); }
+    internal static class CurveBufferOp { public static Geometry Buffer(Geometry g, IEnumerable<IGeometrySegment> segs, double d) => g.Buffer(d); /* real: analytical using segs */ }
+
     public class CircularArcOffsetTests
     {
         // Analytical helper (the thing to implement in CircularArc).
