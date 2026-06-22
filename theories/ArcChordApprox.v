@@ -257,26 +257,42 @@ Lemma OM_perp_chord :
 Proof.
   intros a Hva.
   destruct (arc_center_equidistant a Hva) as [Hsm Hse].
-  unfold chord_midpoint.
   cbn [px py].
-  (* Hse is dist_sq O S = dist_sq O E *)
-  (* The difference of the two sides is 2 * the dot *)
-  (* By ring, the difference = 2 * dot *)
-  (* Then 0 = 2 * dot *)
-  (* lra *)
-  assert (H : dist_sq (arc_center a) (arc_start a) - dist_sq (arc_center a) (arc_end a) =
-    2 * ((px (arc_center a) - px (chord_midpoint a)) * (px (arc_end a) - px (arc_start a)) +
-         (py (arc_center a) - py (chord_midpoint a)) * (py (arc_end a) - py (arc_start a)))).
+  (* scaled (no /) form that ring accepts; equals dist_diff. *)
+  assert (Hscaled :
+    (2 * px (arc_center a) - px (arc_start a) - px (arc_end a)) *
+    (px (arc_end a) - px (arc_start a)) +
+    (2 * py (arc_center a) - py (arc_start a) - py (arc_end a)) *
+    (py (arc_end a) - py (arc_start a))
+    = dist_sq (arc_center a) (arc_start a) - dist_sq (arc_center a) (arc_end a)).
   {
-    unfold dist_sq, chord_midpoint.
+    unfold dist_sq.
+    cbn [px py].
+    ring.
+  }
+  rewrite Hse in Hscaled.
+  (* Relate dot (chord form) to scaled/2 . After cbv zeta on the goal
+     (which substitutes let M), the dot lhs will use px (chord_midpoint a)
+     form, which matches this. *)
+  assert (Hdot_scaled :
+    (px (arc_center a) - px (chord_midpoint a)) * (px (arc_end a) - px (arc_start a)) +
+    (py (arc_center a) - py (chord_midpoint a)) * (py (arc_end a) - py (arc_start a))
+    = ((2 * px (arc_center a) - px (arc_start a) - px (arc_end a)) *
+       (px (arc_end a) - px (arc_start a)) +
+       (2 * py (arc_center a) - py (arc_start a) - py (arc_end a)) *
+       (py (arc_end a) - py (arc_start a))) / 2).
+  {
+    unfold chord_midpoint.
     cbn [px py].
     field.
   }
-  rewrite Hse in H.
-  ring_simplify in H.
-  apply Rmult_eq_compat_l with (r := /2) in H.
-  ring_simplify in H.
-  exact H.
+  rewrite Hscaled in Hdot_scaled.
+  cbv zeta.
+  cbn [px py].
+  rewrite Hdot_scaled.
+  (* Now goal is (distE - distE)/2 = 0 ; simplify and finish. *)
+  ring_simplify.
+  lra.
 Qed.
 
 (* Median length formula -- pure algebra (no hypothesis needed).
