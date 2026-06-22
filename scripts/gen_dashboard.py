@@ -602,7 +602,50 @@ TEMPLATE = """<!DOCTYPE html>
 """
 
 
+_grounding_error_count = 0
+
+# Count hardcoded in render()'s audit table — must stay in sync with axiom-allowlist.txt
+_STATIC_AXIOM_COUNT = 3
+
+
+def _check_grounding():
+    errors = []
+    # 1. Axiom allowlist count must match the hardcoded value shown in the audit table
+    n_axioms = count_entries("docs/axiom-allowlist.txt")
+    if n_axioms is None:
+        errors.append("docs/axiom-allowlist.txt not found (shown in audit table as 3)")
+    elif n_axioms != _STATIC_AXIOM_COUNT:
+        errors.append(
+            f"docs/axiom-allowlist.txt has {n_axioms} entries "
+            f"but render() hardcodes {_STATIC_AXIOM_COUNT}")
+    # 2. All registry files referenced by the audit table must exist
+    for path in [
+        "docs/admitted-counterexamples.txt",
+        "docs/admitted-deferred-proofs.txt",
+        "docs/oracle-handrolled-allowlist.txt",
+    ]:
+        if count_entries(path) is None:
+            errors.append(f"{path} not found (referenced in audit table)")
+    # 3. Every [tag] in table rows of verified-claims.md must be a known regime
+    txt = read("docs/verified-claims.md") or ""
+    known = set(REGIMES)
+    seen_unknown = set()
+    for line in txt.splitlines():
+        if not (line.startswith("|") and "`" in line):
+            continue
+        for tag in re.findall(r'`\[([a-z][a-z0-9-]*)\]`', line):
+            if tag not in known and tag not in seen_unknown:
+                seen_unknown.add(tag)
+                errors.append(
+                    f"unknown regime tag [{tag}] in docs/verified-claims.md table "
+                    f"(known: {', '.join(REGIMES)})")
+    for msg in errors:
+        print("GROUNDING WARN:", msg, file=sys.stderr)
+    return len(errors)
+
+
 def build():
+    global _grounding_error_count
     when = git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d")
     if not when:
         when = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -628,10 +671,18 @@ def build():
         "sha": git("rev-parse", "HEAD"),
         "when": when,
     }
+    _grounding_error_count = _check_grounding()
     return render(data)
 
 
 def main():
+    if "--check-grounding" in sys.argv:
+        build()
+        n = count_entries("docs/axiom-allowlist.txt") or 0
+        if _grounding_error_count:
+            sys.exit(1)
+        print(f"grounding ok: axiom count={n}, registry files present, regime tags clean")
+        return
     out_html = build()
     if "--check" in sys.argv:
         existing = ""
