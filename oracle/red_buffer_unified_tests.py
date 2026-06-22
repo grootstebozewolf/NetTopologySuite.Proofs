@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# coverage: feat:buffer geom:arc,cs,cc,cp
 """
 RED tests for big-bang unified curve Buffer (pilot).
 

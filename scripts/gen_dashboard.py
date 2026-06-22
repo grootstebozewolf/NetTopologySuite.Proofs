@@ -159,19 +159,49 @@ def parse_issues():
 
 # -- oracle modes ------------------------------------------------------------
 
+def _parse_coverage_tag(path):
+    """Return list of (feat, geom) pairs from a '# coverage: feat:X geom:Y,Z' line."""
+    pairs = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for i, ln in enumerate(f):
+                if i > 10:
+                    break
+                m = re.search(r'coverage:\s*feat:([\w,\-]+)\s+geom:([\w,]+)', ln)
+                if m:
+                    for ft in m.group(1).split(","):
+                        for gt in m.group(2).split(","):
+                            pairs.append((ft.strip(), gt.strip()))
+    except OSError:
+        pass
+    return pairs
+
+
 def parse_oracle():
     odir = os.path.join(ROOT, "oracle")
     modes = []
     if os.path.isdir(odir):
         for fn in sorted(os.listdir(odir)):
-            if not (fn.endswith("_vectors.txt") or fn.endswith("_tests.txt")):
+            fpath = os.path.join(odir, fn)
+            if fn.endswith("_vectors.txt"):
+                kind, name = "vectors", fn[:-len("_vectors.txt")]
+                with open(fpath, encoding="utf-8") as f:
+                    n = sum(1 for ln in f
+                            if ln.strip() and not ln.lstrip().startswith("#"))
+            elif fn.endswith("_tests.txt"):
+                kind, name = "tests", fn[:-len("_tests.txt")]
+                with open(fpath, encoding="utf-8") as f:
+                    n = sum(1 for ln in f
+                            if ln.strip() and not ln.lstrip().startswith("#"))
+            elif fn.startswith("red_") and fn.endswith("_tests.py"):
+                kind, name = "red-tests", fn[:-len("_tests.py")]
+                with open(fpath, encoding="utf-8") as f:
+                    n = sum(1 for ln in f if "= run(" in ln)
+            else:
                 continue
-            kind = "vectors" if fn.endswith("_vectors.txt") else "tests"
-            name = fn[:-len("_vectors.txt")] if kind == "vectors" else fn[:-len("_tests.txt")]
-            with open(os.path.join(odir, fn), encoding="utf-8") as f:
-                n = sum(1 for ln in f
-                        if ln.strip() and not ln.lstrip().startswith("#"))
-            modes.append({"name": name, "kind": kind, "count": n, "file": fn})
+            coverage_tags = _parse_coverage_tag(fpath)
+            modes.append({"name": name, "kind": kind, "count": n,
+                          "file": fn, "coverage_tags": coverage_tags})
     return modes
 
 
@@ -257,11 +287,11 @@ COVERAGE_MATRIX = {
         "Multi": ("none",    "no corpus coverage"),
     },
     "Buffer": {
-        "Arc":   ("none",    "no corpus coverage"),
-        "CS":    ("none",    "no corpus coverage"),
-        "CC":    ("none",    "no corpus coverage"),
-        "CP":    ("none",    "no corpus coverage"),
-        "Multi": ("none",    "no corpus coverage"),
+        "Arc":   ("", "oracle/arc_buffer_simple_tests.txt (ARC_BUFFER_SIMPLE) + oracle/red_buffer_unified_tests.py (BUFFER_UNIFIED pilot); analytical offset via ARC_OFFSET_XY"),
+        "CS":    ("", "oracle/arc_buffer_simple_tests.txt + oracle/red_buffer_unified_tests.py pilot; open-path round-cap handling; arc preservation in output"),
+        "CC":    ("", "oracle/red_buffer_unified_tests.py pilot via unified GetSegments dispatch"),
+        "CP":    ("", "oracle/buffer_region_tests.txt (BUFFER_REGION arc-ring) + oracle/red_buffer_unified_tests.py pilot; CurvePolygon output typing wired"),
+        "Multi": ("", "no oracle coverage"),
     },
 }
 COVERAGE_ICON  = {"full": "✅", "partial": "⚠️", "none": "❌"}
@@ -576,10 +606,20 @@ def build():
     when = git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d")
     if not when:
         when = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    claims_data = parse_claims()
+    oracle_modes = parse_oracle()
+
+    # Merge oracle coverage tags into coverage_cells (oracle contribution alongside proofs)
+    _, _, _, coverage_cells = claims_data
+    for mode in oracle_modes:
+        for (ft, gt) in mode.get("coverage_tags", []):
+            if ft in coverage_cells and gt in coverage_cells[ft]:
+                coverage_cells[ft][gt]["oracle"] += mode["count"] or 1
+
     data = {
-        "claims": parse_claims(),
+        "claims": claims_data,
         "issues": parse_issues(),
-        "oracle": parse_oracle(),
+        "oracle": oracle_modes,
         "registries": {
             "counterexamples": count_entries("docs/admitted-counterexamples.txt"),
             "deferred": count_entries("docs/admitted-deferred-proofs.txt"),
