@@ -40,6 +40,7 @@ From NTS.Proofs Require Import ArcOrient.
 From NTS.Proofs Require Import ArcIntersect.
 From NTS.Proofs Require Import ArcHotPixel.
 From NTS.Proofs Require Import ArcChordApprox.
+From NTS.Proofs Require Import ArcDistance.
 
 Import ListNotations.
 
@@ -232,6 +233,11 @@ Proof. intros. reflexivity. Qed.
 Lemma arcs_of_segment_arc :
   forall a, arcs_of_segment (CSArc a) = [a].
 Proof. intros. reflexivity. Qed.
+
+(* Rung 1 (oracle side + minimal centerline support sketched in history):     *)
+(* full unconditional headline deferred pending bridge lemmas + region        *)
+(* semantics (see plan.md and verified-claims).                               *)
+(* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
 (* §7  What this session does NOT close (and why).                            *)

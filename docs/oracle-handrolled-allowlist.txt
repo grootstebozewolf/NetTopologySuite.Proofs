@@ -322,3 +322,12 @@ run_distance_unified
 # Uses exact Q invariants + one rounding past (transcendental sin/theta). Float IS the
 # JTS/NTS area interface value. Reuses ARC_AREA / buffer patterns.
 run_area_unified
+
+# --- LENGTH_UNIFIED (M-LEN-CS/M-LEN-CC, JTS #1195 §7 + arc-len CC/CP) --------
+# Mode LENGTH_UNIFIED emits total length of curve geom (or perimeter for CP)
+# given as segment list: sum of euclid chords for Linear + r*theta (via same
+# asin path off arc_invariants_q) for arcs. The float IS the JTS/NTS .Length
+# interface value for arc-aware curves (unified model for CC/CP). Reuses the
+# ARC_LENGTH interface-boundary kernel (exact companion ARC_LENGTH_INVARIANTS_EXACT).
+# Covers CC/CP/Multi cells via GetSegments flattening + sum.
+run_length_unified
