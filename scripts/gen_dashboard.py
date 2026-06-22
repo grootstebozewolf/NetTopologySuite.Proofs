@@ -164,13 +164,23 @@ def parse_oracle():
     modes = []
     if os.path.isdir(odir):
         for fn in sorted(os.listdir(odir)):
-            if not (fn.endswith("_vectors.txt") or fn.endswith("_tests.txt")):
+            if fn.endswith("_vectors.txt"):
+                kind, name = "vectors", fn[:-len("_vectors.txt")]
+                with open(os.path.join(odir, fn), encoding="utf-8") as f:
+                    n = sum(1 for ln in f
+                            if ln.strip() and not ln.lstrip().startswith("#"))
+            elif fn.endswith("_tests.txt"):
+                kind, name = "tests", fn[:-len("_tests.txt")]
+                with open(os.path.join(odir, fn), encoding="utf-8") as f:
+                    n = sum(1 for ln in f
+                            if ln.strip() and not ln.lstrip().startswith("#"))
+            elif fn.startswith("red_") and fn.endswith("_tests.py"):
+                kind, name = "red-tests", fn[:-len("_tests.py")]
+                with open(os.path.join(odir, fn), encoding="utf-8") as f:
+                    # count oracle run() invocations as the number of test cases
+                    n = sum(1 for ln in f if "= run(" in ln)
+            else:
                 continue
-            kind = "vectors" if fn.endswith("_vectors.txt") else "tests"
-            name = fn[:-len("_vectors.txt")] if kind == "vectors" else fn[:-len("_tests.txt")]
-            with open(os.path.join(odir, fn), encoding="utf-8") as f:
-                n = sum(1 for ln in f
-                        if ln.strip() and not ln.lstrip().startswith("#"))
             modes.append({"name": name, "kind": kind, "count": n, "file": fn})
     return modes
 
@@ -257,10 +267,10 @@ COVERAGE_MATRIX = {
         "Multi": ("none",    "no corpus coverage"),
     },
     "Buffer": {
-        "Arc":   ("none",    "no corpus coverage"),
-        "CS":    ("none",    "no corpus coverage"),
-        "CC":    ("none",    "no corpus coverage"),
-        "CP":    ("none",    "no corpus coverage"),
+        "Arc":   ("partial", "red_buffer_unified_tests.py pilot (RGR, oracle/driver.ml BUFFER_UNIFIED); analytical offset via ARC_OFFSET_XY + buffer_region_output"),
+        "CS":    ("partial", "red_buffer_unified_tests.py pilot; open-path round-cap handling wired; arc preservation in output (oracle/driver.ml)"),
+        "CC":    ("partial", "red_buffer_unified_tests.py pilot via unified GetSegments dispatch; collection case included"),
+        "CP":    ("partial", "red_buffer_unified_tests.py pilot + BUFFER_REGION arc-ring path (oracle/driver.ml); CurvePolygon output typing wired"),
         "Multi": ("none",    "no corpus coverage"),
     },
 }
