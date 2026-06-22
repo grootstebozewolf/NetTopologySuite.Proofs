@@ -233,6 +233,11 @@ Lemma arcs_of_segment_arc :
   forall a, arcs_of_segment (CSArc a) = [a].
 Proof. intros. reflexivity. Qed.
 
+(* Rung 1 (oracle side + minimal centerline support sketched in history):     *)
+(* full unconditional headline deferred pending bridge lemmas + region        *)
+(* semantics (see plan.md and verified-claims).                               *)
+(* -------------------------------------------------------------------------- *)
+
 (* -------------------------------------------------------------------------- *)
 (* §7  What this session does NOT close (and why).                            *)
 (*                                                                            *)

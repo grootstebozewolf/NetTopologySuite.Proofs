@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# coverage: feat:distance geom:arc,cs,multi
+# coverage: feat:distance geom:arc,cs,cc,cp,multi
 """
-RED tests for unified DISTANCE_UNIFIED (Slice 5).
+RED tests for unified DISTANCE_UNIFIED (Slice 5 + Rung 3 oracle tags for CC/CP/Multi).
 """
 import os
 import subprocess

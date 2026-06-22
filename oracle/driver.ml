@@ -2400,6 +2400,56 @@ let run_area_unified () =
   let area = !s2 /. 2.0 in
   Printf.printf "%h\n" area
 
+(* ----- LENGTH_UNIFIED (Slice 11: Arc / chord length CC/CP): total length
+   of a (curve) path/ring/boundary given as segments.
+   For arcs: r*Theta using same robust asin((1-cos)/2) path as ARC_LENGTH
+   (reuses arc_invariants_q + exact Q; rounds only at interface).
+   For chords (and degenerate arcs): euclid end-to-end.
+   Sums over the flattened segment list.
+   Protocol (mirrors AREA_UNIFIED / DISTANCE_UNIFIED for unified dispatch):
+     LENGTH_UNIFIED
+     <n>
+     seg...   ("C x1 y1 x2 y2" | "A x1 y1 x2 y2 x3 y3")
+   Also accepted as ARC_LEN_UNIFIED for matrix tagging (Rung 3).
+   Output: "<len>" (%h) | "DEGENERATE" | "NAN"
+   CC: sum of member lengths (via GetSegments recursion).
+   CP: perimeter length = sum of exterior ring + hole rings segment lengths.
+   Multi: sum of members.
+   Uses interface-boundary float only for the transcendental arc parts (sanctioned).
+*)
+let run_length_unified () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let parse_seg () =
+    let toks = List.filter (fun s -> s <> "") (String.split_on_char ' ' (String.map (fun c -> if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1::y1::x2::y2::[] -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1::y1::x2::y2::x3::y3::[] -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "LENGTH_UNIFIED: bad seg" in
+  let segs = Array.init n (fun _ -> parse_seg ()) in
+  let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = Array.to_list segs |> List.concat_map seg_pts in
+  if not (List.for_all finite_bpoint all_pts) then print_endline "NAN" else
+  let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
+  let point_dist p q = hypot2 (p.bx -. q.bx) (p.by_ -. q.by_) in
+  let arc_len a b c =
+    match arc_invariants_q a b c with
+    | ArcDegenerate -> point_dist a c  (* collinear arc contributes its chord *)
+    | ArcInv (r2, cos_full, major) ->
+        let r = sqrt (Q.to_float r2) in
+        let sv = Q.to_float (Q.mul (Q.sub Q.one cos_full) (Q.of_ints 1 2)) in
+        let s = sqrt (if sv < 0.0 then 0.0 else sv) in
+        let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
+        let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
+        r *. theta
+  in
+  let total = ref 0.0 in
+  Array.iter (fun seg -> match seg with
+    | `Chord (p, q) -> total := !total +. point_dist p q
+    | `Arc (a, b, c) -> total := !total +. arc_len a b c
+  ) segs;
+  Printf.printf "%h\n" !total
+
 let run_buffer_region () =
   let n = int_of_string (String.trim (input_line stdin)) in
   let parse_seg () =
@@ -3666,6 +3716,8 @@ let () =
        | "DISTANCE_UNIFIED"         -> run_distance_unified ()
        | "OVERLAY_UNIFIED"          -> run_overlay_unified ()
        | "AREA_UNIFIED"             -> run_area_unified ()
+       | "LENGTH_UNIFIED"           -> run_length_unified ()
+       | "ARC_LEN_UNIFIED"          -> run_length_unified ()  (* alias for Rung 3 arc-len column *)
        | "RING_SIMPLE"              -> run_ring_simple ()
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()

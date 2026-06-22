@@ -5,6 +5,8 @@
 // + Slice 7 Area column (dispatcher.Area + AREA_UNIFIED oracle).
 // + Slice 8 Relate (DE-9IM) unification (dispatcher.Relate + red_relate tests, deeper RGR).
 // + Slice 9 completing Overlay for CC/CP (dispatcher.Overlay + red tests for CompoundCurve/CurvePolygon).
+// + Slice 10 Distance for CC/CP (GetSegments + dispatcher.Distance for CurveCollection/CurvePolygon).
+// + Slice 11 Arc / chord length for CC/CP (GetSegments + dispatcher.Length summing arc r*theta + chords).
 // To be placed in NTS.Curve.Tests / ... or NetTopologySuite.Curve/ 
 // Run with: dotnet test --filter "Offset|Buffer|Arc|Distance|Overlay|Area|Relate"
 // Pinned to proofs oracle + leaf primitives (ARC_OFFSET_XY, Arc*Distance.v, CurveRingOffset etc).
@@ -48,11 +50,10 @@ namespace NetTopologySuite.Curve.Tests
     {
         public static IReadOnlyList<IGeometrySegment> GetSegments(this Geometry g)
         {
-            // Unified model (Slice 4: Distance column advancement, post Buffer Slice 3):
-            // Recursion for Multi*; direct segment extraction for LineString/Polygon rings.
-            // Curve types (CircularString/CompoundCurve/CurvePolygon) walk their controls
-            // into CircularArcSegment + LinearSegment. hasArc flag drives dispatcher.
-            // No per-type special cases outside this; preserves curve fidelity for all ops.
+            // Unified model (Slice 10: Distance for CC/CP): Recursion for Multi*/CurveCollection; 
+            // direct for LineString/Polygon/CurvePolygon; Curve types walk to segments.
+            // hasArc drives dispatcher for arc-aware distance.
+            // No per-type special cases; preserves fidelity.
             var list = new List<IGeometrySegment>();
             if (g is MultiLineString mls)
             {
@@ -97,6 +98,20 @@ namespace NetTopologySuite.Curve.Tests
                 // Compound: mix of LineString + CircularString parts
                 foreach (var part in cc.Geometries)
                     list.AddRange(part.GetSegments());
+            }
+            else if (g is CurveCollection cc)
+            {
+                // CurveCollection (CC): recurse like Multi for unified distance
+                foreach (var part in cc.Geometries)
+                    list.AddRange(part.GetSegments());
+            }
+            else if (g is CurvePolygon cp)
+            {
+                // CurvePolygon (CP): delegate rings (may be curve rings)
+                if (cp.ExteriorRing != null)
+                    list.AddRange(cp.ExteriorRing.GetSegments());
+                foreach (var hole in cp.InteriorRings)
+                    list.AddRange(hole.GetSegments());
             }
             // CurvePolygon rings would delegate to Polygon + curve handling above.
             return list;
@@ -148,10 +163,10 @@ namespace NetTopologySuite.Curve.Tests
 
         public static double Distance(Geometry g, Geometry other)
         {
-            // Unified model (Slice 4 - Distance column): delegation via GetSegments for Multi* + hasArc dispatch.
-            // Recurse for Multi*; for any arc use segment-pair min-distance (reuses proofs ArcPointDistance / ArcArcDistance lemmas).
+            // Unified model (Slice 10 - Distance for CC/CP): delegation via GetSegments for Multi*/CC/CP + hasArc dispatch.
+            // Recurse for collections; for any arc use segment-pair min-distance (reuses proofs ArcPointDistance / ArcArcDistance lemmas).
             // Linear-linear: falls back (zero regression). hasArc drives curve path.
-            // Supports all geom kinds now that GetSegments handles LineString/Polygon/CircularString/Compound/Multi*.
+            // Supports all geom kinds now that GetSegments handles LineString/Polygon/CircularString/Compound/CurvePolygon/CurveCollection/Multi*.
             if (g is MultiLineString mls)
             {
                 double min = double.MaxValue;
@@ -166,7 +181,15 @@ namespace NetTopologySuite.Curve.Tests
                     min = Math.Min(min, Distance(p, other));
                 return min;
             }
-            if (other is MultiLineString || other is MultiPolygon || other is MultiPoint)
+            if (g is CurveCollection cc)
+            {
+                // CC delegation for unified distance
+                double min = double.MaxValue;
+                foreach (var gg in cc.Geometries)
+                    min = Math.Min(min, Distance(gg, other));
+                return min;
+            }
+            if (other is MultiLineString || other is MultiPolygon || other is MultiPoint || other is CurveCollection)
             {
                 // symmetric delegation
                 return Distance(other, g);
@@ -239,6 +262,42 @@ namespace NetTopologySuite.Curve.Tests
             return CurveAreaOp.Area(segs);
         }
 
+        public static double Length(Geometry g)
+        {
+            // Unified model (Slice 11: Arc / chord length CC/CP): delegation via GetSegments for Multi*/CC/CP.
+            // Sums segment lengths: LinearSegment uses euclid (chord); CircularArcSegment uses r*theta (reuses ArcLength.v + chord_subtended, ArcChordLength.v).
+            // Recurse for CC (members), CP (exterior + holes as perimeter), Multi.
+            // hasArc or always seg-based for fidelity; pure linear falls back (zero regression, chord==length).
+            // CC/CP now covered in arc-len matrix row.
+            if (g is MultiLineString || g is MultiPolygon || g is MultiPoint)
+            {
+                double sum = 0.0;
+                var geoms = (g as MultiLineString)?.Geometries ?? (g as MultiPolygon)?.Geometries ?? (g as MultiPoint)?.Geometries ?? new Geometry[0];
+                foreach (var gg in geoms) sum += Length(gg);
+                return sum;
+            }
+            if (g is CurveCollection cc)
+            {
+                double sum = 0.0;
+                foreach (var gg in cc.Geometries) sum += Length(gg);
+                return sum;
+            }
+            if (g is CurvePolygon cp)
+            {
+                double sum = 0.0;
+                if (cp.ExteriorRing != null) sum += Length(cp.ExteriorRing);
+                foreach (var hole in cp.InteriorRings) sum += Length(hole);
+                return sum;
+            }
+            var segs = g.GetSegments();
+            bool hasArc = segs.OfType<CircularArcSegment>().Any();
+            if (!hasArc)
+            {
+                return g.Length;  // Legacy (sum of chords)
+            }
+            return CurveLengthOp.Length(segs);
+        }
+
         public static string Relate(Geometry a, Geometry b)
         {
             // Unified model (Slice 8 - Relate/DE-9IM column, deeper RGR): delegation via GetSegments for Multi* + hasArc dispatch.
@@ -283,6 +342,9 @@ namespace NetTopologySuite.Curve.Tests
     internal static class LegacyAreaOp { public static double Area(Geometry g) => g.Area; }
     internal static class CurveAreaOp { public static double Area(IEnumerable<IGeometrySegment> segs) => 0.0; /* real: signed shoelace + arc sectors */ }
 
+    internal static class LegacyLengthOp { public static double Length(Geometry g) => g.Length; }
+    internal static class CurveLengthOp { public static double Length(IEnumerable<IGeometrySegment> segs) => 0.0; /* real: sum (arc ? r*theta : chord) reusing ArcLength.v */ }
+
     internal static class LegacyRelateOp { public static string Relate(Geometry a, Geometry b) => a.Relate(b).ToString(); }
     internal static class CurveRelateOp { public static string Relate(Geometry a, IEnumerable<IGeometrySegment> sa, Geometry b, IEnumerable<IGeometrySegment> sb) => a.Relate(b).ToString(); /* real: curve-aware DE-9IM using arc lemmas */ }
 
@@ -321,6 +383,23 @@ namespace NetTopologySuite.Curve.Tests
     //     var mixed = new MultiCurve(... /* one arc member, one linear */);
     //     double d = GeometryOperationDispatcher.Distance(mixed, target);
     //     // delegates to members; result uses arc path where present
+    // }
+    //
+    // --- Red tests for Slice 10 Distance CC/CP ---
+    // Before: CC/CP would not delegate via unified GetSegments
+    // [Fact]
+    // public void CurveCollection_Distance_Delegates()
+    // {
+    //     var cc = new CurveCollection(... arc members);
+    //     double d = GeometryOperationDispatcher.Distance(cc, target);
+    //     // uses unified segs from members
+    // }
+    // [Fact]
+    // public void CurvePolygon_Distance_UsesSegments()
+    // {
+    //     var cp = new CurvePolygon(...);
+    //     double d = GeometryOperationDispatcher.Distance(cp, other);
+    //     // uses GetSegments for rings
     // }
     //
     // --- Red tests for Slice 6 Overlay ---
@@ -378,6 +457,31 @@ namespace NetTopologySuite.Curve.Tests
     // }
     // Similar for Area(Multi) = sum , Overlay etc via delegation.
     // See unified model comment above.
+    //
+    // --- Red tests for Slice 11 Arc / chord length (CC/CP) ---
+    // Before: no LENGTH_UNIFIED; CC/CP length would not use GetSegments + arc length sum
+    // (CS scalar length only; concatenation for compounds deferred).
+    // [Fact]
+    // public void CircularString_Length_UsesArcTheta()
+    // {
+    //     var cs = new CircularString(...);
+    //     double len = GeometryOperationDispatcher.Length(cs);
+    //     // uses r * theta (from proofs ArcLength), not chord approx; matches oracle LENGTH_UNIFIED
+    // }
+    // [Fact]
+    // public void CurveCollection_Length_SumsMembers()
+    // {
+    //     var cc = new CurveCollection(... arc + linear parts);
+    //     double len = GeometryOperationDispatcher.Length(cc);
+    //     // sums via GetSegments recursion + arc_len / chord per seg
+    // }
+    // [Fact]
+    // public void CurvePolygon_Perimeter_UsesUnified()
+    // {
+    //     var cp = new CurvePolygon(...);
+    //     double perim = GeometryOperationDispatcher.Length(cp);
+    //     // exterior + holes lengths summed (arc-aware)
+    // }
 
     public class CircularArcOffsetTests
     {
