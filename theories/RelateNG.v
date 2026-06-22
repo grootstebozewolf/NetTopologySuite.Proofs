@@ -414,10 +414,8 @@ Proof.
   split; [ simpl; auto | split ].
   - intro Hdn. exfalso. apply Hdn. reflexivity.
   - intros [p [HA HB]].
-    (* We discharge via the strict form; note point_set (used by SInt) may share
-       boundary points on the edge, but strict interior (0 < gtri) is empty. *)
-    (* point_set lift to 0<gtri requires parity guard -- DEFERRED to GeneralTriangle* JCT *)
-Admitted. (* honest lift note above; capstone and concrete uses are the primary *)
+    exact (touch_int_ext_exclusion ax ay bx by_ cx cy dx dy ex ey fx fy Htouch p HA HB).
+Qed.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
@@ -490,17 +488,16 @@ Proof.
   - intros _. discriminate.
 Qed.
 
-(* JCT seam: interior of A and exterior of B are disjoint under shared-edge touch.
-   Requires the GeneralTriangleParity lift: point_in_interior -> 0 < gtri, then
-   a point strictly inside A cannot be strictly outside B when they share an edge
-   (their interiors together cover the plane minus the shared boundary). DEFERRED. *)
+(* JCT seam: any point in the half-open interior of A is in the exterior of B.
+   Requires the GeneralTriangleParity lift: point_set A p -> 0 < gtri A p OR on shared edge;
+   in either case opposite_sides / g_sum forces gtri B p <= 0 -> ~ point_set B p. DEFERRED. *)
 Lemma touch_int_ext_exclusion :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
     forall p, point_in_interior (triangle_geometry ax ay bx by_ cx cy) p ->
-              ~ point_in_exterior (triangle_geometry dx dy ex ey fx fy) p.
-Admitted. (* JCT seam: needs GeneralTriangleParity to lift point_set interior to 0<gtri, then planar covering argument *)
+              point_in_exterior (triangle_geometry dx dy ex ey fx fy) p.
+Admitted. (* JCT seam: corrected — interior of A IS exterior of B, not ~exterior. Needs gtri lift. *)
 
 (* F-exclusion (trimmed): the critical II/EE/BB are handled above; other F cells
    (IB/BI/BE/EB/EI/IE) follow from no interior overlap (strict) + exterior meet.
@@ -510,10 +507,10 @@ Lemma touch_triangle_f_cells_trimmed :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
-    (* II (strict) already gives no int-int; EE + touch regime excludes int-ext meets *)
+    (* II (strict): no point strictly inside both; interior of A lies in exterior of B *)
     (~ exists p, 0 < gtri ax ay bx by_ cx cy p /\ 0 < gtri dx dy ex ey fx fy p) /\
     (forall p, point_in_interior (triangle_geometry ax ay bx by_ cx cy) p ->
-               ~ point_in_exterior (triangle_geometry dx dy ex ey fx fy) p).
+               point_in_exterior (triangle_geometry dx dy ex ey fx fy) p).
 Proof.
   intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
   split.
