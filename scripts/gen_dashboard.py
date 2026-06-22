@@ -259,8 +259,8 @@ COVERAGE_MATRIX = {
         "Multi": ("partial", "unified GetSegments + dispatcher (Slice 4) + oracle DISTANCE_UNIFIED (Slice 5 + Rung 3 tags): full recursion for Multi* + arc-aware seg min-dist; red_distance_unified_tests.py"),
     },
     "Arc / chord length": {
-        "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed)"),
-        "CS":    ("partial", "scalar arc-length proven; concatenation deferred"),
+        "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed); OM_perp_chord discharges bridge in ArcOverlay.v (Rung 1)"),
+        "CS":    ("full",    "scalar arc-length proven; concatenation + OM_perp_chord (Rung 1)"),
         "CC":    ("partial", "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 11 + Rung 3 oracle tags): delegation/sum for CurveCollection"),
         "CP":    ("partial", "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 11 + Rung 3): perimeter via rings for CurvePolygon"),
         "Multi": ("partial", "unified GetSegments + dispatcher + LENGTH_UNIFIED/ARC_LEN_UNIFIED (Slice 11 + Rung 3): recursion + segment length sum; red_length_unified_tests.py"),

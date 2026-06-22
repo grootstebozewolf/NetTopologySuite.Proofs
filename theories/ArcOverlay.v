@@ -40,6 +40,7 @@ From NTS.Proofs Require Import ArcOrient.
 From NTS.Proofs Require Import ArcIntersect.
 From NTS.Proofs Require Import ArcHotPixel.
 From NTS.Proofs Require Import ArcChordApprox.
+From NTS.Proofs Require Import ArcDistance.
 
 Import ListNotations.
 

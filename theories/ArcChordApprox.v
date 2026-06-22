@@ -246,6 +246,39 @@ Definition chord_midpoint (a : CircularArc) : Point :=
   mkPoint ((px (arc_start a) + px (arc_end a)) / 2)
           ((py (arc_start a) + py (arc_end a)) / 2).
 
+Lemma OM_perp_chord :
+  forall a : CircularArc,
+    valid_arc a ->
+    let O := arc_center a in
+    let M := chord_midpoint a in
+    let S := arc_start a in
+    let E := arc_end a in
+    (px O - px M) * (px E - px S) + (py O - py M) * (py E - py S) = 0.
+Proof.
+  intros a Hva.
+  destruct (arc_center_equidistant a Hva) as [Hsm Hse].
+  unfold chord_midpoint.
+  cbn [px py].
+  (* Hse is dist_sq O S = dist_sq O E *)
+  (* The difference of the two sides is 2 * the dot *)
+  (* By ring, the difference = 2 * dot *)
+  (* Then 0 = 2 * dot *)
+  (* lra *)
+  assert (H : dist_sq (arc_center a) (arc_start a) - dist_sq (arc_center a) (arc_end a) =
+    2 * ((px (arc_center a) - px (chord_midpoint a)) * (px (arc_end a) - px (arc_start a)) +
+         (py (arc_center a) - py (chord_midpoint a)) * (py (arc_end a) - py (arc_start a)))).
+  {
+    unfold dist_sq, chord_midpoint.
+    cbn [px py].
+    field.
+  }
+  rewrite Hse in H.
+  ring_simplify in H.
+  apply Rmult_eq_compat_l with (r := /2) in H.
+  ring_simplify in H.
+  exact H.
+Qed.
+
 (* Median length formula -- pure algebra (no hypothesis needed).
    For any three points A, B, C:
      dist_sq C A + dist_sq C B = 2 * dist_sq C M + dist_sq A B / 2
