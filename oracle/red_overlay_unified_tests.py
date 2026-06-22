@@ -33,7 +33,7 @@ out, _, rc = run(stdin)
 print("RED_NOTE overlay_unified_got=", out)
 if rc != 0 or out != "212FF1FF2":
     fail("overlay_unified", out, "212FF1FF2", stdin)
-print("overlay unified ok (pilot matrix; full would use unified segments + arc-aware primitives)")
+print("overlay unified ok (pilot matrix; full impl will compute and tests must be updated)")
 
 # More lines for coverage count
 stdin3 = """EDGE_IN_RESULT

@@ -1678,8 +1678,8 @@ let run_distance_unified () =
     let toks = List.filter (fun s -> s <> "") (String.split_on_char ' ' (String.map (fun c -> if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
     let p a b = { bx = float_of_string a; by_ = float_of_string b } in
     match toks with
-    | "C" :: x1::y1::x2::y2::_ -> `Chord (p x1 y1, p x2 y2)
-    | "A" :: x1::y1::x2::y2::x3::y3::_ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | "C" :: x1::y1::x2::y2::[] -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1::y1::x2::y2::x3::y3::[] -> `Arc (p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "DISTANCE_UNIFIED: bad seg" in
   let nA = int_of_string (String.trim (input_line stdin)) in
   let segsA = Array.init nA (fun _ -> parse_seg ()) in
@@ -1716,8 +1716,11 @@ let run_distance_unified () =
     match s1, s2 with
     | `Chord (p1,q1), `Chord (p2,q2) ->
         let d = min (min (point_dist p1 p2) (point_dist p1 q2)) (min (point_dist q1 p2) (point_dist q1 q2)) in
-        (* improve with point_seg *)
-        min d (min (point_seg_dist p1 q1 (p2.bx,p2.by_)) (point_seg_dist p1 q1 (q2.bx,q2.by_)))
+        (* improve with point_seg - symmetric *)
+        min d (min (point_seg_dist p1 q1 (p2.bx,p2.by_))
+                   (min (point_seg_dist p1 q1 (q2.bx,q2.by_))
+                   (min (point_seg_dist p2 q2 (p1.bx,p1.by_))
+                        (point_seg_dist p2 q2 (q1.bx,q1.by_)))))
     | `Arc (aa,bb,cc), `Chord (pp,qq) ->
         (* get centre for arc *)
         (match circumcentre_q (qf aa.bx, qf aa.by_) (qf bb.bx, qf bb.by_) (qf cc.bx, qf cc.by_) with
@@ -1740,7 +1743,9 @@ let run_distance_unified () =
              let d = hypot2 (o2xf -. o1xf) (o2yf -. o1yf) in
              let base = min (min (point_arc_dist (o2xf, o2yf, r2) a2 b2 c2 (a1.bx, a1.by_)) (point_arc_dist (o2xf, o2yf, r2) a2 b2 c2 (c1.bx, c1.by_)))
                             (min (point_arc_dist (o1xf, o1yf, r1) a1 b1 c1 (a2.bx, a2.by_)) (point_arc_dist (o1xf, o1yf, r1) a1 b1 c1 (c2.bx, c2.by_))) in
-             if d > 0. then
+             if d < 1e-12 then
+               min base (abs_float (r1 -. r2))
+             else
                let ux = (o2xf -. o1xf) /. d in
                let uy = (o2yf -. o1yf) /. d in
                let add_radial () =
@@ -1751,8 +1756,7 @@ let run_distance_unified () =
                    then min base (d -. r1 -. r2) else base
                  else base
                in
-               add_radial ()
-             else base)
+               add_radial () )
   in
   let cand = ref infinity in
   Array.iter (fun sa ->
@@ -1770,7 +1774,9 @@ let run_distance_unified () =
    (Full impl deferred to next RGR; uses existing EDGE_IN_RESULT for linear proxy.)
 *)
 let run_overlay_unified () =
-  (* consume nA + segsA + nB + segsB minimally; pilot returns sample OGC union matrix *)
+  (* consume nA + segsA + nB + segsB minimally; pilot returns fixed sample OGC union matrix.
+     Segments are discarded. This is intentional stub for now; real impl will compute
+     based on segments and update the red tests assertions. *)
   let nA = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
   for _ = 1 to nA do ignore (input_line stdin) done;
   let nB = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
@@ -2362,8 +2368,8 @@ let run_area_unified () =
     let toks = List.filter (fun s -> s <> "") (String.split_on_char ' ' (String.map (fun c -> if c='\t' then ' ' else c) (String.trim (input_line stdin)))) in
     let p a b = { bx = float_of_string a; by_ = float_of_string b } in
     match toks with
-    | "C" :: x1::y1::x2::y2::_ -> `Chord (p x1 y1, p x2 y2)
-    | "A" :: x1::y1::x2::y2::x3::y3::_ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | "C" :: x1::y1::x2::y2::[] -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1::y1::x2::y2::x3::y3::[] -> `Arc (p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "AREA_UNIFIED: bad seg" in
   let segs = Array.init n (fun _ -> parse_seg ()) in
   let seg_pts = function `Chord (a, b) -> [a; b] | `Arc (a, b, c) -> [a; b; c] in
@@ -2380,7 +2386,7 @@ let run_area_unified () =
          | ArcDegenerate -> ()
          | ArcInv (r2, cos_full, major) ->
              let r2f = Q.to_float r2 in
-             let sv = Q.to_float (Q.mul (Q.sub q1 cos_full) (Q.of_ints 1 2)) in
+             let sv = Q.to_float (Q.mul (Q.sub Q.one cos_full) (Q.of_ints 1 2)) in
              let s = sqrt (if sv < 0.0 then 0.0 else sv) in
              let t0 = 2.0 *. asin (if s > 1.0 then 1.0 else s) in
              let theta = if major = 1 then 2.0 *. Float.pi -. t0 else t0 in
