@@ -1,3 +1,4 @@
+# coverage: feat:buffer geom:arc,cs,cp
 # Adversarial tests for BUFFER_REGION (RocqRefRunner), BUF-1/BUF-NEG, JTS #1195 §7.
 # Assembles the offset boundary of a closed curve ring + its signed area.
 # I1 parallel-dist, I2 area vs Minkowski, I3 Steiner, I4 EMPTY, I5 d=0, I6 monotonic.
