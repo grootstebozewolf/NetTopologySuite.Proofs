@@ -1,6 +1,6 @@
 // Red test example for ARC_OFFSET full slice (RGR style) + big-bang unified Buffer pilot (Slice 1-3)
 // + Slice 4 Distance column (unified GetSegments + dispatcher.Distance)
-// + Slice 5 oracle DISTANCE_UNIFIED (protocol for segment lists + ncomps ready).
+// + Slice 5 oracle DISTANCE_UNIFIED (protocol for segment lists) + full column via unified model + dispatcher (mixed, Multi*, CP, fidelity D-AA/D-AS; Slice 5 complete).
 // + Slice 6 Overlay unification (dispatcher.Overlay + red tests for arc/Multi).
 // + Slice 7 Area column (dispatcher.Area + AREA_UNIFIED oracle).
 // + Slice 8 Relate (DE-9IM) unification (dispatcher.Relate + red_relate tests, deeper RGR).
@@ -163,7 +163,8 @@ namespace NetTopologySuite.Curve.Tests
 
         public static double Distance(Geometry g, Geometry other)
         {
-            // Unified model (Slice 10 - Distance for CC/CP): delegation via GetSegments for Multi*/CC/CP + hasArc dispatch.
+            // Unified model + Distance full column (Slice 5): delegation via GetSegments recursion for Multi*/CC/CP + hasArc dispatch to analytical.
+            // Reuses leaf D-PT/D-AA/D-CURVE; mixed linear/curve and output fidelity covered.
             // Recurse for collections; for any arc use segment-pair min-distance (reuses proofs ArcPointDistance / ArcArcDistance lemmas).
             // Linear-linear: falls back (zero regression). hasArc drives curve path.
             // Supports all geom kinds now that GetSegments handles LineString/Polygon/CircularString/Compound/CurvePolygon/CurveCollection/Multi*.
