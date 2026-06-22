@@ -159,6 +159,75 @@ def count_entries(path):
 # HTML rendering
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Coverage matrix — which NTS features are proven for which geometry types
+# ---------------------------------------------------------------------------
+# Levels: "full"=Qed theorems, "partial"=some/conditional coverage, "none"=no coverage
+COVERAGE_FEATURES = [
+    "Distance",
+    "Arc / chord length",
+    "Area / perimeter",
+    "Relate (DE-9IM)",
+    "Intersection / Overlay",
+    "Buffer",
+]
+COVERAGE_GEOMTYPES = ["Arc", "CS", "CC", "CP", "Multi"]
+COVERAGE_GEOMTYPE_LONG = {
+    "Arc": "CircularArc",
+    "CS": "CompoundCurve",
+    "CC": "CurveCollection",
+    "CP": "CurvePolygon",
+    "Multi": "MultiSurface / MultiCurve",
+}
+# Source-of-record for each cell (file:lemma or prose note for deferred items)
+COVERAGE_MATRIX = {
+    "Distance": {
+        "Arc":   ("full",    "ArcPointDistance.v + ArcChordLength.v (Qed)"),
+        "CS":    ("partial", "point–arc proven; compound sequences deferred"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Arc / chord length": {
+        "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed)"),
+        "CS":    ("partial", "scalar arc-length proven; concatenation deferred"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Area / perimeter": {
+        "Arc":   ("partial", "signed-area lemmas in GeneralTriangle* (Qed, triangles only)"),
+        "CS":    ("partial", "perimeter via arc-chord; full area deferred"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("partial", "triangle polygon area theorems (RelateNG.v, conditional)"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Relate (DE-9IM)": {
+        "Arc":   ("partial", "RelateArcAnalytic.v stubs + RelateNG triangle touch (S15l, cond)"),
+        "CS":    ("partial", "RelateNG integer substrate (#67, 194 theorems, S15l complete)"),
+        "CC":    ("partial", "DE-9IM integer substrate (#67); collection dispatch deferred"),
+        "CP":    ("partial", "triangle touch + regime guard (conditional Qed); classifier stub open"),
+        "Multi": ("partial", "substrate proven; multi-geometry dispatch deferred"),
+    },
+    "Intersection / Overlay": {
+        "Arc":   ("partial", "H_bridge_premise_from_euler (HBridgeEuler.v, Qed); ring extraction conditional"),
+        "CS":    ("partial", "OverlayBridge.v:extract_rings_valid (conditional Qed, Euler hyps as premises)"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+    "Buffer": {
+        "Arc":   ("none",    "no corpus coverage"),
+        "CS":    ("none",    "no corpus coverage"),
+        "CC":    ("none",    "no corpus coverage"),
+        "CP":    ("none",    "no corpus coverage"),
+        "Multi": ("none",    "no corpus coverage"),
+    },
+}
+COVERAGE_ICON  = {"full": "✅", "partial": "⚠️", "none": "❌"}
+COVERAGE_BG    = {"full": "#dcfce7", "partial": "#fef9c3", "none": "#fee2e2"}
+COVERAGE_FG    = {"full": "#166534", "partial": "#854d0e", "none": "#991b1b"}
+
 PRIORITY_COLOR = {
     "Immediate": "#dc2626", "Urgent": "#ea580c",
     "Non-urgent": "#0891b2", "Expectant": "#6b7280",
@@ -167,6 +236,30 @@ PRIORITY_COLOR = {
 
 def e(s):
     return html.escape(str(s))
+
+
+def coverage_matrix_html():
+    cols = COVERAGE_GEOMTYPES
+    header = "".join(
+        f'<th title="{e(COVERAGE_GEOMTYPE_LONG[c])}">{e(c)}</th>' for c in cols)
+    rows = ""
+    for feat in COVERAGE_FEATURES:
+        cells = ""
+        for c in cols:
+            level, note = COVERAGE_MATRIX[feat][c]
+            bg  = COVERAGE_BG[level]
+            fg  = COVERAGE_FG[level]
+            icon = COVERAGE_ICON[level]
+            cells += (f'<td style="text-align:center;background:{bg};color:{fg}'
+                      f';font-size:16px" title="{e(note)}">{icon}</td>')
+        rows += f"<tr><td><b>{e(feat)}</b></td>{cells}</tr>"
+    return (
+        f'<table><thead><tr><th>Feature \\ Geometry</th>{header}</tr></thead>'
+        f'<tbody>{rows}</tbody></table>'
+        f'<p class="muted" style="font-size:12px;margin-top:6px">'
+        f'✅&nbsp;Qed (unconditional)&nbsp; ⚠️&nbsp;partial / conditional&nbsp; '
+        f'❌&nbsp;no corpus coverage — hover a cell for source details.</p>'
+    )
 
 
 def bar(segments, width=320):
@@ -270,7 +363,7 @@ def render(data):
         sha_short=e(sha_short), sha=e(sha), when=e(when),
         card_html=card_html, regime_legend=regime_legend(),
         issue_rows=issue_rows, sec_rows=sec_rows, mode_rows=mode_rows,
-        audit_rows=audit_rows,
+        audit_rows=audit_rows, coverage_matrix=coverage_matrix_html(),
         claims_total=claims_total, n_modes=len(modes),
         oracle_vectors=oracle_vectors, oracle_tagged=oracle_tagged)
 
@@ -366,6 +459,16 @@ TEMPLATE = """<!DOCTYPE html>
     <table><thead><tr><th>Issue</th><th>Area</th><th>Priority</th>
       <th>Verdict (from TRIAGE)</th></tr></thead>
       <tbody>{issue_rows}</tbody></table>
+  </section>
+
+  <section>
+    <h2>Feature × geometry-type coverage</h2>
+    <p class="muted">Which NTS operations have mechanically-verified proofs for
+      each curve geometry type. Column headers: Arc&nbsp;=&nbsp;CircularArc,
+      CS&nbsp;=&nbsp;CompoundCurve, CC&nbsp;=&nbsp;CurveCollection,
+      CP&nbsp;=&nbsp;CurvePolygon, Multi&nbsp;=&nbsp;Multi*.
+      Hover a cell for the source-of-record lemma or deferral note.</p>
+    {coverage_matrix}
   </section>
 
   <section>
