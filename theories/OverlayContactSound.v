@@ -48,7 +48,8 @@
 
 From Stdlib Require Import Reals.
 From NTS.Proofs Require Import Distance Segment Orientation CurveGeometry
-  ArcOrient ArcIntersect ArcIntersectIVT ArcChordSound ArcArcSound Intersect.
+  ArcOrient ArcIntersect ArcIntersectIVT ArcChordSound ArcArcSound Intersect
+  CircumcentreQSound.
 
 Local Open Scope R_scope.
 
@@ -75,6 +76,16 @@ Theorem chord_chord_contact_rejection_sound :
     (cross A B C * cross A B D > 0 \/ cross C D A * cross C D B > 0) ->
     ~ exists X, between A B X /\ between C D X.
 Proof. exact same_side_rejection_is_sound. Qed.
+
+(** §1c  Collinear 1D-overlap: when both cross-product products are zero
+    (all four points collinear), a shared point exists iff at least one
+    endpoint of one segment lies between the endpoints of the other.
+    Backed by Intersect.segments_1d_overlap_share. *)
+Theorem chord_chord_contact_collinear_sound :
+  forall A B C D : Point,
+    segments_1d_overlap A B C D ->
+    exists X, between A B X /\ between C D X.
+Proof. exact segments_1d_overlap_share. Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §2  Arc-chord contact soundness.                                           *)
@@ -137,11 +148,52 @@ Theorem arc_arc_contact_circle_cross_cond :
 Proof. exact arc_arc_intersects_of_chord_cross_cond. Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §4  Audit footprint.                                                       *)
+(* §4  Circumcenter kernel soundness.                                         *)
+(*                                                                            *)
+(* The arc_seg_contact and arc_arc_contact kernels call circumcentre_q to    *)
+(* get (ox, oy, r²), then test candidate intersection points by checking     *)
+(* (x−ox)² + (y−oy)² = r².  The next two lemmas formally state the           *)
+(* correctness of that test, backed by CircumcentreQSound.                   *)
+(* -------------------------------------------------------------------------- *)
+
+(** If (ox,oy) is the circumcenter of A,B,C with squared radius r2, then any
+    point P at squared distance r2 from (ox,oy) lies on the circumcircle. *)
+Theorem overlay_circumcenter_candidate_sound :
+  forall ax ay bx by_ cx cy ox oy r2 px_ py_ : R,
+    r2 = (ax - ox) * (ax - ox) + (ay - oy) * (ay - oy) ->
+    (bx - ox) * (bx - ox) + (by_ - oy) * (by_ - oy) = r2 ->
+    (cx - ox) * (cx - ox) + (cy - oy) * (cy - oy) = r2 ->
+    (px_ - ox) * (px_ - ox) + (py_ - oy) * (py_ - oy) = r2 ->
+    inCircle_R (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy) (mkPoint px_ py_) = 0.
+Proof. exact circumcentre_formula_inCircle_R. Qed.
+
+(** The circumcenter formula itself is equidistant from all three input points
+    (equidistance is the defining property of circumcentre_q). *)
+Theorem overlay_circumcenter_formula_sound :
+  forall ax ay bx by_ cx cy ox oy r2 : R,
+    ax * (by_ - cy) + bx * (cy - ay) + cx * (ay - by_) <> 0 ->
+    ox = (  (ax*ax + ay*ay) * (by_ - cy)
+          + (bx*bx + by_*by_) * (cy - ay)
+          + (cx*cx + cy*cy) * (ay - by_))
+         / (2 * (ax * (by_ - cy) + bx * (cy - ay) + cx * (ay - by_))) ->
+    oy = (  (ax*ax + ay*ay) * (cx - bx)
+          + (bx*bx + by_*by_) * (ax - cx)
+          + (cx*cx + cy*cy) * (bx - ax))
+         / (2 * (ax * (by_ - cy) + bx * (cy - ay) + cx * (ay - by_))) ->
+    r2 = (ax - ox) * (ax - ox) + (ay - oy) * (ay - oy) ->
+    (bx - ox) * (bx - ox) + (by_ - oy) * (by_ - oy) = r2 /\
+    (cx - ox) * (cx - ox) + (cy - oy) * (cy - oy) = r2.
+Proof. exact circumcentre_formula_equidistant. Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §5  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions chord_chord_contact_crossing_sound.
 Print Assumptions chord_chord_contact_rejection_sound.
+Print Assumptions chord_chord_contact_collinear_sound.
 Print Assumptions arc_chord_contact_sound.
 Print Assumptions arc_arc_contact_shared_endpoint.
 Print Assumptions arc_arc_contact_circle_cross_cond.
+Print Assumptions overlay_circumcenter_candidate_sound.
+Print Assumptions overlay_circumcenter_formula_sound.

@@ -1701,6 +1701,14 @@ theories/ArcArcSound.v
 # P+ = M+h·perp(u) on both circles (ring+lra).  3-axiom.  Deferred:
 # arc_span_contains (atan2), arc_arc_intersects (full predicate), b64 layer.
 theories/ArcArcCircles.v
+# Slice 7 / formal soundness of oracle/driver.ml:circumcentre_q.  Raw-coordinate
+# counterpart of arc_center_equidistant (ArcChordApprox) and
+# inCircle_R_zero_of_equidistant (ArcArcCircles): proves the circumcenter formula
+# is equidistant from its three defining points (field), and that any candidate at
+# the circumradius satisfies inCircle_R=0 (inCircle_R_concyclic).  Definitional
+# bridge circumcentre_formula_arc_center_{x,y} ties the raw formula to arc_center.
+# 3-axiom.  No Admitted.
+theories/CircumcentreQSound.v
 # Slice 7 / Precision + Overlay trusted-kernel pass: proof companions for the
 # three contact kernels of run_overlay_unified (oracle/driver.ml).  Re-exports
 # Intersect.strict_completeness (crossing => shared point),
