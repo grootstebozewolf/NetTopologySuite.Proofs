@@ -1701,6 +1701,15 @@ theories/ArcArcSound.v
 # P+ = M+h·perp(u) on both circles (ring+lra).  3-axiom.  Deferred:
 # arc_span_contains (atan2), arc_arc_intersects (full predicate), b64 layer.
 theories/ArcArcCircles.v
+# Slice 7 / Precision + Overlay trusted-kernel pass: proof companions for the
+# three contact kernels of run_overlay_unified (oracle/driver.ml).  Re-exports
+# Intersect.strict_completeness (crossing => shared point),
+# Intersect.same_side_rejection_is_sound (same-side => no point),
+# ArcChordSound.chord_crosses_arc_circle_span_sound (arc-chord, span hypothesis),
+# ArcArcSound.arc_arc_intersects_shared_vertex (shared endpoint, unconditional),
+# ArcArcSound.arc_arc_intersects_of_chord_cross_cond (arc-arc, conditional floor).
+# 3-axiom.  No Admitted.
+theories/OverlayContactSound.v
 # Issue #64 / JTS #1195 §7 V-CS/V-CP: SIMPLE curve rings, proof companion of the
 # RING_SIMPLE oracle mode.  Adds the simplicity layer on valid_curve_ring:
 # on_curve_segment / curve_segments_meet membership; curve_ring_simple (no two
