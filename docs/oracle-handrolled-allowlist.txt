@@ -191,7 +191,14 @@ run_arc_segment_distance
 # test (transcendental, no Coq-extractable form), so the float IS the interface
 # (same boundary as ARC_ARC_XY / point_on_arc_sector).  The JTS/NTS
 # isSimple/isValid interface value (V-CS/V-CP); the NOT_SIMPLE-witness soundness
-# is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness),
+# is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness) and
+# lifted to the actual contact kernels in theories/RingContactSound.v
+# (ring_not_simple_of_{chord_chord_crossing,chord_chord_collinear,
+# chord_chord_endpoint,arc_chord,arc_chord_witness,arc_arc_circle_cross,
+# arc_arc_witness,arc_arc_shared_endpoint}: a kernel verdict on a non-adjacent
+# pair refutes simplicity, reusing OverlayContactSound + the same named atan2
+# span premise; the _endpoint / _witness variants back the inclusive t,u in
+# [0,1] Cramer branch and the h=0 tangent / concentric direct-witness cases);
 # completeness + reflex-arc spans deferred.
 run_ring_simple
 
@@ -241,7 +248,14 @@ run_ring_orientation
 # sqrt + atan2 (sweep / circle-line intersection) -> no Coq-extractable form, the
 # float IS the interface (same boundary as ARC_ARC_XY / point_on_arc_sector).
 # The structural soundness (a boundary meeting or nesting witness => not
-# disjoint) is proven in theories/CurvePolygonDisjoint.v; true-region
+# disjoint) is proven in theories/CurvePolygonDisjoint.v and lifted to the
+# actual contact kernels in theories/RingContactSound.v
+# (holes_not_disjoint_of_{chord_chord_crossing,chord_chord_collinear,
+# chord_chord_endpoint,arc_chord,arc_chord_witness,arc_arc_circle_cross,
+# arc_arc_witness,arc_arc_shared_endpoint}: a kernel verdict between two distinct
+# holes refutes disjointness, reusing OverlayContactSound + the same named atan2
+# span premise; the _endpoint / _witness variants back the inclusive Cramer
+# branch and the h=0 tangent / concentric direct-witness cases); true-region
 # containment soundness is the deferred frontier, pinned by
 # oracle/gen_holes_disjoint_tests.py.
 run_holes_disjoint
@@ -341,3 +355,20 @@ run_area_unified
 # ARC_LENGTH interface-boundary kernel (exact companion ARC_LENGTH_INVARIANTS_EXACT).
 # Covers CC/CP/Multi cells via GetSegments flattening + sum.
 run_length_unified
+
+# --- OVERLAY_UNIFIED (Precision + Overlay trusted-kernel pass, Slice 7) -------
+# Mode OVERLAY_UNIFIED computes the DE-9IM contact relationship between two
+# segment-list geometries via three hand-rolled kernels:
+#   chord_chord_contact  -- Cramer's-rule crossing + collinear 1-D overlap
+#   arc_seg_contact      -- circumcentre_q + point_on_arc_sector (atan2 sweep)
+#   arc_arc_contact      -- circumcentre_q + point_on_arc_sector (atan2 sweep)
+# Centres and squared radii are EXACT (circumcentre_q); only the final atan2
+# sweep-membership test (point_on_arc_sector) and the chord crossing sqrt
+# are transcendental -> NO Coq-extractable form (Flocq has no Batan2).
+# The float IS the JTS/NTS DE-9IM relate/overlay interface value.
+# Soundness backed by theories/OverlayContactSound.v (chord_chord_contact_*_sound,
+# arc_chord_contact_sound, arc_arc_contact_*) and theories/CircumcentreQSound.v
+# (circumcentre_formula_equidistant, circumcentre_formula_inCircle_R); the
+# atan2 span test is the permanent interface-boundary exception (same boundary
+# as point_on_arc_sector / ARC_ARC_XY). 3-axiom. No Admitted.
+run_overlay_unified

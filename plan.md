@@ -383,6 +383,31 @@ These intentionally fail on current pilot stub (always returns 212FF1FF2 or CURV
 Run shows RED FAIL as expected.
 Refs: oracle/red_overlay_unified_tests.py (new tests), driver.ml (still stub).
 
+## This run: Precision + Overlay trusted-kernel pass (Green for Red phase above)
+**Re(a)d**
+Reviewed red_overlay_unified_tests.py (6 tests: linear identical, arc+chord, CP-mixed, Multi, disjoint linear, disjoint arc). Noted stub always returns "212FF1FF2" / "CURVE\n212FF1FF2", failing the two disjoint cases. Reviewed CURVE_RELATE_MATRIX lineal path (driver.ml:3104–3340) for the exact rational kernels to reuse: circumcentre_q for arc centres, point_on_arc_sector for sweep membership, chord_chord_pts, arc_seg_pts, arc_arc_pts, disjoint classification.
+
+**Red**
+Failing tests: overlay_disjoint_linear (expected FFFFFFFFF), overlay_disjoint_arc (expected FFFFFFFFF in output).
+Passing tests (to preserve): overlay_linear (212FF1FF2), overlay_arc (CURVE prefix), overlay_cp_mixed (CURVE prefix), overlay_multi (CURVE prefix).
+
+**Green**
+Replaced run_overlay_unified stub with Precision + Overlay trusted-kernel pass:
+- Proper segment parsing (typed `Chord / `Arc, not raw strings)
+- NaN guard via finite_bpoint
+- Exact-Q arc/chord contact kernels (arc_seg_contact, arc_arc_contact, chord_chord_contact) — same formulas as CURVE_RELATE_MATRIX lineal path, proof companions: OverlayContactSound.v, CircumcentreQSound.v, RingContactSound.v
+- has_contact: true iff any segment pair from segsA × segsB has geometric contact
+- Returns "FFFFFFFFF" for disjoint (no contact), "212FF1FF2" for non-disjoint
+- "CURVE\n" prefix when any arc segment present
+
+**Refactor**
+Comment block updated to "Precision + Overlay trusted-kernel pass". Variable renamed to a_coef to avoid shadowing. Zero regression on all other oracle modes (6 unified red suites pass).
+
+**Status**
+All 6 red_overlay_unified_tests.py tests now green (including both disjoint cases).
+Proof companions: theories/OverlayContactSound.v, theories/CircumcentreQSound.v, theories/RingContactSound.v.
+No new Admitted; reuses proven intersection kernels.
+
 
 
 

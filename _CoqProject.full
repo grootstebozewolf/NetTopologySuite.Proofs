@@ -1701,6 +1701,23 @@ theories/ArcArcSound.v
 # P+ = M+h·perp(u) on both circles (ring+lra).  3-axiom.  Deferred:
 # arc_span_contains (atan2), arc_arc_intersects (full predicate), b64 layer.
 theories/ArcArcCircles.v
+# Slice 7 / formal soundness of oracle/driver.ml:circumcentre_q.  Raw-coordinate
+# counterpart of arc_center_equidistant (ArcChordApprox) and
+# inCircle_R_zero_of_equidistant (ArcArcCircles): proves the circumcenter formula
+# is equidistant from its three defining points (field), and that any candidate at
+# the circumradius satisfies inCircle_R=0 (inCircle_R_concyclic).  Definitional
+# bridge circumcentre_formula_arc_center_{x,y} ties the raw formula to arc_center.
+# 3-axiom.  No Admitted.
+theories/CircumcentreQSound.v
+# Slice 7 / Precision + Overlay trusted-kernel pass: proof companions for the
+# three contact kernels of run_overlay_unified (oracle/driver.ml).  Re-exports
+# Intersect.strict_completeness (crossing => shared point),
+# Intersect.same_side_rejection_is_sound (same-side => no point),
+# ArcChordSound.chord_crosses_arc_circle_span_sound (arc-chord, span hypothesis),
+# ArcArcSound.arc_arc_intersects_shared_vertex (shared endpoint, unconditional),
+# ArcArcSound.arc_arc_intersects_of_chord_cross_cond (arc-arc, conditional floor).
+# 3-axiom.  No Admitted.
+theories/OverlayContactSound.v
 # Issue #64 / JTS #1195 §7 V-CS/V-CP: SIMPLE curve rings, proof companion of the
 # RING_SIMPLE oracle mode.  Adds the simplicity layer on valid_curve_ring:
 # on_curve_segment / curve_segments_meet membership; curve_ring_simple (no two
@@ -1746,6 +1763,20 @@ theories/CurvePolygonOrientation.v
 # CurvePolygonValid.point_in_inscribed_ring.  3-axiom.  Deferred: true-region
 # containment soundness (Jordan), oracle/test layer.
 theories/CurvePolygonDisjoint.v
+
+# Precision + Overlay trusted-kernel pass (Slice 7 follow-up): Ring/Relate
+# contact-soundness lift.  Bridges the three OverlayContactSound contact kernels
+# (chord_chord / arc_seg / arc_arc) into the curve_segments_meet shape, then
+# composes with CurveRingSimple.curve_ring_not_simple_of_witness and
+# CurvePolygonDisjoint.holes_not_disjoint_of_meet to give end-to-end soundness of
+# the RING_SIMPLE and HOLES_DISJOINT verdicts -- a non-adjacent contact verdict
+# refutes simplicity; a contact verdict between two distinct holes refutes
+# disjointness.  Pure existential repackaging over existing Qed theorems; the only
+# float fact is the SAME named atan2 span premise as arc_arc_contact_circle_cross_cond.
+# 3-axiom.  No Admitted.  (Deferred: CURVE_RELATE_MATRIX boundary cells, which are
+# stated over the linearised to_geometry strata, need a separate on_curve_segment
+# -> geom_boundary bridge.)
+theories/RingContactSound.v
 
 # Issue #64 / JTS #1195 §7 (R-PR / CURVE_RELATE_MATRIX): point-set DE-9IM
 # specification + provable algebraic laws backing the CURVE_RELATE_MATRIX oracle

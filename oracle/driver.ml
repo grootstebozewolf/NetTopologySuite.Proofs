@@ -1830,26 +1830,180 @@ let run_distance_unified () =
   ) segsA;
   if !cand = infinity then print_endline "DEGENERATE" else Printf.printf "%h\n" !cand
 
-(* ----- OVERLAY_UNIFIED (Slice 6 pilot stub) ---------------------------------
-   Minimal placeholder for unified overlay via segments (arc/Multi delegation).
-   Real would take two segment lists + op and produce result description.
-   For now, accepts input and returns fixed "STUB" to allow red test coverage.
-   (Full impl deferred to next RGR; uses existing EDGE_IN_RESULT for linear proxy.)
+(* ----- OVERLAY_UNIFIED (Precision + Overlay trusted-kernel pass) ------------
+   Computes the DE-9IM for two segment-list geometries using the same exact
+   rational kernels as CURVE_RELATE_MATRIX (lineal path): circumcentre_q for
+   arc centres, point_on_arc_sector for sweep membership.
+   Returns "FFFFFFFFF" for disjoint geometries; "212FF1FF2" when contact exists.
+   Prefixes "CURVE\n" when either input contains a circular-arc segment.
+   Proof companions: theories/OverlayContactSound.v, theories/CircumcentreQSound.v,
+   theories/RingContactSound.v.
+
+   Stdin protocol (same format as RING_SIMPLE / DISTANCE_UNIFIED):
+     Line 1:  integer nA — number of segments in geometry A
+     Lines 2..nA+1: one segment per line:
+       "C x1 y1 x2 y2"            — chord from (x1,y1) to (x2,y2)
+       "A x1 y1 x2 y2 x3 y3"      — circular arc with control points start/mid/end
+     Line nA+2: integer nB — number of segments in geometry B
+     Lines nA+3..nA+nB+2: same format for geometry B
+   Stdout:  "CURVE\n<matrix>" if any arc present, else "<matrix>"
+            matrix = "212FF1FF2" (contact) | "FFFFFFFFF" (disjoint) | "NAN" (non-finite input)
 *)
 let run_overlay_unified () =
-  (* unified model + OverlayNG (Slice 7): consume nA segsA nB segsB.
-     Pilot detects arcs via unified segment parse (hasArc dispatch).
-     Returns "CURVE\n..." prefix if any arc (for arc preservation in overlay result per unified model).
-     Reuses the fixed matrix for base; real would use relate/edge primitives + segment noding.
-     Multi*/CP delegation via GetSegments recursion in caller. *)
-  let nA = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
-  let segsA = ref [] in
-  for _ = 1 to nA do segsA := (String.trim (input_line stdin)) :: !segsA done;
-  let nB = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
-  let segsB = ref [] in
-  for _ = 1 to nB do segsB := (String.trim (input_line stdin)) :: !segsB done;
-  let has_arc = List.exists (fun s -> String.contains s 'A') (!segsA @ !segsB) in
-  if has_arc then print_endline "CURVE\n212FF1FF2" else print_endline "212FF1FF2"
+  let parse_seg () =
+    let toks = List.filter (fun s -> s <> "")
+      (String.split_on_char ' '
+         (String.map (fun c -> if c = '\t' then ' ' else c)
+            (String.trim (input_line stdin)))) in
+    let p a b = { bx = float_of_string a; by_ = float_of_string b } in
+    match toks with
+    | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
+    | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
+    | _ -> failwith "OVERLAY_UNIFIED: bad segment line" in
+  (* Protected reader: a negative count, EOF mid-input, or a malformed segment
+     line is a protocol violation; emit "NAN" rather than crashing with an
+     uncaught Invalid_argument / End_of_file / Failure.  Counts must be >= 0
+     (Array.init rejects negatives). *)
+  let read_segs () =
+    let nA = int_of_string (String.trim (input_line stdin)) in
+    if nA < 0 then failwith "OVERLAY_UNIFIED: negative count";
+    let segsA = Array.init nA (fun _ -> parse_seg ()) in
+    let nB = int_of_string (String.trim (input_line stdin)) in
+    if nB < 0 then failwith "OVERLAY_UNIFIED: negative count";
+    let segsB = Array.init nB (fun _ -> parse_seg ()) in
+    (segsA, segsB) in
+  match (try Some (read_segs ()) with _ -> None) with
+  | None -> print_endline "NAN"
+  | Some (segsA, segsB) ->
+  let has_arc = Array.exists (function `Arc _ -> true | _ -> false) segsA
+             || Array.exists (function `Arc _ -> true | _ -> false) segsB in
+  let seg_pts = function
+    | `Chord (a, b) -> [a; b]
+    | `Arc (a, b, c) -> [a; b; c] in
+  let all_pts = Array.to_list segsA |> List.concat_map seg_pts
+             |> List.append (Array.to_list segsB |> List.concat_map seg_pts) in
+  if not (List.for_all finite_bpoint all_pts) then
+    print_endline (if has_arc then "CURVE\nNAN" else "NAN")
+  else begin
+    (* Exact-Q arc/chord contact kernels — same formulas as CURVE_RELATE_MATRIX lineal path.
+       NOTE: arc_seg_contact / arc_arc_contact / chord_chord_contact duplicate the
+       projection/radical-axis logic of arc_seg_pts / arc_arc_pts / chord_chord_pts in
+       run_ring_simple (returning bool instead of point list).  True deduplication
+       requires lifting those helpers out of run_ring_simple's local scope; deferred
+       to a dedicated refactor commit (see run_ring_simple below). *)
+    let rec arc_seg_contact (a, b, c) (p : bPoint) (q : bPoint) =
+      match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+              (qf c.bx, qf c.by_) with
+      | None ->
+          (* Collinear arc controls: degenerate arc is the chord a→c. *)
+          chord_chord_contact (a, c) (p, q)
+      | Some (ox, oy, r2) ->
+          let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
+          let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
+          if qeq l2q q0 then false
+          else begin
+            let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
+                              (Q.mul (Q.sub oy (qf p.by_)) dyq) in
+            let s = Q.div projn l2q in
+            let fxq = Q.add (qf p.bx) (Q.mul s dxq)
+            and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
+            let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
+                            (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
+            let h2q = Q.sub r2 d2q in
+            if qlt h2q q0 then false
+            else begin
+              let oxf = Q.to_float ox and oyf = Q.to_float oy in
+              let l2f = Q.to_float l2q in
+              if l2f = 0.0 then false
+              else
+              let lf = sqrt l2f in
+              let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
+              let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
+              let sf = Q.to_float s and h = sqrt (max 0.0 (Q.to_float h2q)) in
+              let hl = h /. lf in
+              let cands = [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
+                           (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
+              (* Small epsilon on t consistent with chord_chord_contact's on_seg 1e-9
+                 tolerance; guards rounding in Q.to_float of near-endpoint s values. *)
+              List.exists (fun (x, y, t) ->
+                t >= -.1e-9 && t <= 1.0 +. 1e-9
+                && point_on_arc_sector (oxf, oyf) a b c (x, y)
+              ) cands
+            end
+          end
+    and chord_chord_contact (p1, q1) (p2, q2) =
+      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
+      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
+      let denom = d1x *. d2y -. d1y *. d2x in
+      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
+      if abs_float denom > 1e-12 *. scale *. scale then begin
+        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
+        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
+        t >= -.1e-9 && t <= 1.0 +. 1e-9 && u >= -.1e-9 && u <= 1.0 +. 1e-9
+      end else begin
+        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
+          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
+          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
+        List.exists (fun x -> on_seg p1 q1 x) [p2; q2]
+        || List.exists (fun x -> on_seg p2 q2 x) [p1; q1]
+      end in
+    let arc_arc_contact (a1, b1, c1) (a2, b2, c2) =
+      match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
+            circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
+      | None, None -> chord_chord_contact (a1, c1) (a2, c2)
+      | None, Some _ -> arc_seg_contact (a2, b2, c2) a1 c1
+      | Some _, None -> arc_seg_contact (a1, b1, c1) a2 c2
+      | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+          let endpoints_share =
+            (a1.bx = a2.bx && a1.by_ = a2.by_) || (a1.bx = c2.bx && a1.by_ = c2.by_) ||
+            (c1.bx = a2.bx && c1.by_ = a2.by_) || (c1.bx = c2.bx && c1.by_ = c2.by_) in
+          if endpoints_share then true
+          else
+          let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                         (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+          let span1 pt = point_on_arc_sector (o1xf, o1yf) a1 b1 c1 pt in
+          let span2 pt = point_on_arc_sector (o2xf, o2yf) a2 b2 c2 pt in
+          if qeq dq q0 then
+            qeq r1sq r2sq &&
+            (List.exists (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
+             || List.exists (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1])
+          else begin
+            (* Discriminant computed exactly in Q (mirroring arc_seg_contact's
+               h2q guard) so near-tangent arc-arc pairs are not lost to float
+               rounding in a_coef.  With aq = dq + r1sq - r2sq (= 2*d*a_coef),
+               a_coef^2 = aq^2 / (4*dq), so h2 = r1sq - aq^2/(4*dq) has the same
+               sign as 4*dq*r1sq - aq^2; dq > 0 in this branch. *)
+            let aq = Q.add (Q.sub dq r2sq) r1sq in
+            let h2_numq = Q.sub (Q.mul (Q.mul (Q.of_int 4) dq) r1sq) (Q.mul aq aq) in
+            if qlt h2_numq q0 then false
+            else begin
+              let d2 = Q.to_float dq in
+              let d = sqrt d2 in
+              let a_coef = Q.to_float aq /. (2.0 *. d) in
+              let h2 = Q.to_float h2_numq /. (4.0 *. d2) in
+              let h = sqrt (max 0.0 h2) in
+              let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+              let mx = o1xf +. a_coef *. ux and my = o1yf +. a_coef *. uy in
+              let cands = [(mx -. h *. uy, my +. h *. ux);
+                           (mx +. h *. uy, my -. h *. ux)] in
+              List.exists (fun pt -> span1 pt && span2 pt) cands
+            end
+          end in
+    let seg_contact s1 s2 =
+      match s1, s2 with
+      | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_contact (p1, q1) (p2, q2)
+      | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_contact arc p q
+      | `Arc a1, `Arc a2 -> arc_arc_contact a1 a2
+      | _ -> false in
+    let has_contact =
+      Array.exists (fun sa -> Array.exists (fun sb -> seg_contact sa sb) segsB) segsA in
+    let matrix = if has_contact then "212FF1FF2" else "FFFFFFFFF" in
+    print_endline (if has_arc then "CURVE\n" ^ matrix else matrix)
+  end
 
 (* ----- RING_SIMPLE (V-CS / V-CP, JTS #1195 §7): curve-ring self-intersection.
    ---------------------------------------------------------------------------
