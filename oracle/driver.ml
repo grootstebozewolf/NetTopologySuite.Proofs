@@ -1913,14 +1913,16 @@ let run_overlay_unified () =
             if qlt h2q q0 then false
             else begin
               let oxf = Q.to_float ox and oyf = Q.to_float oy in
-              let lf = sqrt (Q.to_float l2q) in
+              let l2f = Q.to_float l2q in
+              if l2f = 0.0 then false
+              else
+              let lf = sqrt l2f in
               let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
               let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
-              let sf = Q.to_float s and h = sqrt (Q.to_float h2q) in
+              let sf = Q.to_float s and h = sqrt (max 0.0 (Q.to_float h2q)) in
               let hl = h /. lf in
-              let cands = if h = 0.0 then [(fxf, fyf, sf)]
-                          else [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
-                                (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
+              let cands = [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
+                           (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
               (* Small epsilon on t consistent with chord_chord_contact's on_seg 1e-9
                  tolerance; guards rounding in Q.to_float of near-endpoint s values. *)
               List.exists (fun (x, y, t) ->
@@ -1937,7 +1939,7 @@ let run_overlay_unified () =
       if abs_float denom > 1e-12 *. scale *. scale then begin
         let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
         let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
-        t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+        t >= -.1e-9 && t <= 1.0 +. 1e-9 && u >= -.1e-9 && u <= 1.0 +. 1e-9
       end else begin
         let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
           let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
@@ -1954,6 +1956,11 @@ let run_overlay_unified () =
       | None, Some _ -> arc_seg_contact (a2, b2, c2) a1 c1
       | Some _, None -> arc_seg_contact (a1, b1, c1) a2 c2
       | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+          let endpoints_share =
+            (a1.bx = a2.bx && a1.by_ = a2.by_) || (a1.bx = c2.bx && a1.by_ = c2.by_) ||
+            (c1.bx = a2.bx && c1.by_ = a2.by_) || (c1.bx = c2.bx && c1.by_ = c2.by_) in
+          if endpoints_share then true
+          else
           let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
                          (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
           let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
@@ -1981,9 +1988,8 @@ let run_overlay_unified () =
               let h = sqrt (max 0.0 h2) in
               let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
               let mx = o1xf +. a_coef *. ux and my = o1yf +. a_coef *. uy in
-              let cands = if h = 0.0 then [(mx -. h *. uy, my +. h *. ux)]
-                          else [(mx -. h *. uy, my +. h *. ux);
-                                (mx +. h *. uy, my -. h *. ux)] in
+              let cands = [(mx -. h *. uy, my +. h *. ux);
+                           (mx +. h *. uy, my -. h *. ux)] in
               List.exists (fun pt -> span1 pt && span2 pt) cands
             end
           end in

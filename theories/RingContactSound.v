@@ -135,7 +135,9 @@ Lemma arc_arc_meet_of_intersects :
     curve_segments_meet (CSArc a1) (CSArc a2).
 Proof.
   intros a1 a2 [X [Hc1 [Hc2 [Hs1 Hs2]]]].
-  exists X. split; unfold on_curve_segment, on_arc; split; assumption.
+  exists X. split.
+  - unfold on_curve_segment, on_arc. split; [ exact Hc1 | exact Hs1 ].
+  - unfold on_curve_segment, on_arc. split; [ exact Hc2 | exact Hs2 ].
 Qed.
 
 (** A shared endpoint (end of a1 = start of a2) makes the two arc segments meet

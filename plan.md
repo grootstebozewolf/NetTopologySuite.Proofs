@@ -395,7 +395,7 @@ Passing tests (to preserve): overlay_linear (212FF1FF2), overlay_arc (CURVE pref
 Replaced run_overlay_unified stub with Precision + Overlay trusted-kernel pass:
 - Proper segment parsing (typed `Chord / `Arc, not raw strings)
 - NaN guard via finite_bpoint
-- Exact-Q arc/chord contact kernels (arc_seg_contact, arc_arc_contact, chord_chord_contact) — same formulas as CURVE_RELATE_MATRIX lineal path, proof companions: RelateCurveMatrix.v, ArcArcSound.v, ArcPointDistance.v
+- Exact-Q arc/chord contact kernels (arc_seg_contact, arc_arc_contact, chord_chord_contact) — same formulas as CURVE_RELATE_MATRIX lineal path, proof companions: OverlayContactSound.v, CircumcentreQSound.v, RingContactSound.v
 - has_contact: true iff any segment pair from segsA × segsB has geometric contact
 - Returns "FFFFFFFFF" for disjoint (no contact), "212FF1FF2" for non-disjoint
 - "CURVE\n" prefix when any arc segment present
@@ -405,7 +405,7 @@ Comment block updated to "Precision + Overlay trusted-kernel pass". Variable ren
 
 **Status**
 All 6 red_overlay_unified_tests.py tests now green (including both disjoint cases).
-Proof companions: theories/RelateCurveMatrix.v, theories/ArcArcSound.v, theories/ArcPointDistance.v.
+Proof companions: theories/OverlayContactSound.v, theories/CircumcentreQSound.v, theories/RingContactSound.v.
 No new Admitted; reuses proven intersection kernels.
 
 
