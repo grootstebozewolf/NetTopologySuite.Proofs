@@ -44,7 +44,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Linearise ArcDistance CurveGeometry
-  ArcChordApprox ArcOffsetThreePoint.
+  ArcChordApprox ArcOffsetThreePoint ArcIntersect.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -155,6 +155,43 @@ Proof.
   assert (Hr2 : 0 < arc_radius a2) by (apply arc_radius_pos; exact Hva2).
   assert (Hd : 0 < dist (arc_center a1) (arc_center a2)) by lra.
   apply two_circles_dist_radial; lra.
+Qed.
+
+(* Sweep-clamp tightness wrapper for the external case.
+   When the caller has determined (via its atan2 sector test, mirrored here
+   by arc_span_contains) that both radial feet lie in their arc sweeps, the
+   external gap value computed by arc_arc_dist_external is the correct one
+   to use.  The lower-bound direction already holds unconditionally over the
+   circumcircles (two_circles_dist_lower); the span hyps simply justify
+   selecting the radial candidate instead of an endpoint pair. *)
+Lemma arc_arc_external_feet_on_arcs_tight :
+  forall (a1 a2 : CircularArc),
+    valid_arc a1 -> valid_arc a2 ->
+    let O1 := arc_center a1 in
+    let O2 := arc_center a2 in
+    let r1 := arc_radius a1 in
+    let r2 := arc_radius a2 in
+    let d := dist O1 O2 in
+    0 < d ->
+    r1 + r2 <= d ->
+    let f1 := radial_foot O1 O2 r1 in
+    let f2 := radial_foot O2 O1 r2 in
+    arc_span_contains a1 f1 ->
+    arc_span_contains a2 f2 ->
+    (* The gap value from the external core is attained at the feet and is a
+       lower bound for any pair on the circumcircles (hence for arc points). *)
+    dist f1 f2 = d - r1 - r2 /\
+    (forall X1 X2,
+       dist O1 X1 = r1 ->
+       dist O2 X2 = r2 ->
+       d - r1 - r2 <= dist X1 X2).
+Proof.
+  intros a1 a2 Hva1 Hva2 O1 O2 r1 r2 d Hd Hext f1 f2 Hspan1 Hspan2.
+  pose proof (arc_arc_dist_external a1 a2 Hva1 Hva2 Hext) as
+    [_ [_ [Hgap Hlower]]].
+  split.
+  - exact Hgap.
+  - exact Hlower.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

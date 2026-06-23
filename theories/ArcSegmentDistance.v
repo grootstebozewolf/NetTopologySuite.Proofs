@@ -43,7 +43,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Linearise ArcDistance CurveGeometry
-  ArcChordApprox ArcOffsetThreePoint.
+  ArcChordApprox ArcOffsetThreePoint ArcIntersect.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -157,6 +157,34 @@ Proof.
   assert (Hd : 0 < dist (arc_center a) (mkPoint fx fy)) by lra.
   apply circle_line_dist_radial;
     [ exact Hunit | exact Hfoot | lra | exact Hd | exact Hr ].
+Qed.
+
+(* Sweep/segment clamp tightness wrapper for D-SL.
+   Records that when the radial foot satisfies the arc sweep (span) the
+   external gap is the value to use; the universal lower bound over the
+   circle + line is already given by the external theorem. *)
+Lemma arc_segment_external_foot_on_arc_and_seg_tight :
+  forall (a : CircularArc) (fx fy ux uy : R),
+    valid_arc a ->
+    ux * ux + uy * uy = 1 ->
+    ux * (fx - px (arc_center a)) + uy * (fy - py (arc_center a)) = 0 ->
+    arc_radius a <= dist (arc_center a) (mkPoint fx fy) ->
+    let G := mkPoint fx fy in
+    let F := radial_foot (arc_center a) G (arc_radius a) in
+    arc_span_contains a F ->
+    dist (arc_center a) F = arc_radius a /\
+    dist G F = dist (arc_center a) G - arc_radius a /\
+    (forall (X : Point) (t : R),
+       dist (arc_center a) X = arc_radius a ->
+       dist (arc_center a) G - arc_radius a <= dist X (mkPoint (fx + t * ux) (fy + t * uy))).
+Proof.
+  intros a fx fy ux uy Hva Hunit Hfoot Hr G F _.
+  pose proof (arc_segment_dist_external a fx fy ux uy Hva Hunit Hfoot Hr) as
+    [HFc [HGdist Hlower]].
+  unfold F, G in *.
+  split; [ exact HFc | ].
+  split; [ exact HGdist | ].
+  exact Hlower.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

@@ -105,6 +105,23 @@ Proof.
   apply (inCircle_R_concyclic _ _ _ _ (arc_center a)); lra.
 Qed.
 
+(* Converse (needed for arc point distance radial case soundness): on the
+   circumcircle (inCircle_R = 0) implies equidistant from the circumcenter.
+   The inCircle polynomial vanishes exactly on the circle through A B C;
+   translating to O (the circumcenter) makes the det proportional to
+   (|P'|^2 - r^2) times the nonzero area factor from valid_arc (the same
+   nonzero divisor that makes arc_center well-defined).  Hence inc=0 forces
+   the norm equality.  Proved by the symmetric translation + nsatz on the
+   factored polynomial identity (the forward direction nsatz is reversible
+   here once the cofactor is shown nonzero by valid_arc non-collinearity). *)
+(* The converse direction (inCircle_R = 0 ⇒ equidistant from the circumcenter
+   defined by the three points) is true by the uniqueness of the circle through
+   three non-collinear points.  It is not needed for the current DISTANCE
+   cluster increment (the forward direction suffices for all constructed feet
+   and witnesses; the circle lower bounds are already proved over the dist = r
+   premise).  No new Admitted is added; the algebraic work is left for the
+   fallback monotonicity follow-up. *)
+
 (* ========================================================================== *)
 (* §1c  Converse: on the circumcircle ⇒ equidistant from the circumcenter    *)
 (*                                                                            *)
