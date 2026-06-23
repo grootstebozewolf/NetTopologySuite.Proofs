@@ -191,8 +191,12 @@ run_arc_segment_distance
 # test (transcendental, no Coq-extractable form), so the float IS the interface
 # (same boundary as ARC_ARC_XY / point_on_arc_sector).  The JTS/NTS
 # isSimple/isValid interface value (V-CS/V-CP); the NOT_SIMPLE-witness soundness
-# is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness),
-# completeness + reflex-arc spans deferred.
+# is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness) and
+# lifted to the actual contact kernels in theories/RingContactSound.v
+# (ring_not_simple_of_{chord_chord_crossing,chord_chord_collinear,arc_chord,
+# arc_arc_circle_cross,arc_arc_shared_endpoint}: a kernel verdict on a
+# non-adjacent pair refutes simplicity, reusing OverlayContactSound + the same
+# named atan2 span premise); completeness + reflex-arc spans deferred.
 run_ring_simple
 
 # --- ARC_OFFSET_XY (OFF / BUF-1 / BUF-NEG, JTS #1195 §7) ---------------------
@@ -241,9 +245,13 @@ run_ring_orientation
 # sqrt + atan2 (sweep / circle-line intersection) -> no Coq-extractable form, the
 # float IS the interface (same boundary as ARC_ARC_XY / point_on_arc_sector).
 # The structural soundness (a boundary meeting or nesting witness => not
-# disjoint) is proven in theories/CurvePolygonDisjoint.v; true-region
-# containment soundness is the deferred frontier, pinned by
-# oracle/gen_holes_disjoint_tests.py.
+# disjoint) is proven in theories/CurvePolygonDisjoint.v and lifted to the
+# actual contact kernels in theories/RingContactSound.v
+# (holes_not_disjoint_of_{chord_chord_crossing,chord_chord_collinear,arc_chord,
+# arc_arc_circle_cross,arc_arc_shared_endpoint}: a kernel verdict between two
+# distinct holes refutes disjointness, reusing OverlayContactSound + the same
+# named atan2 span premise); true-region containment soundness is the deferred
+# frontier, pinned by oracle/gen_holes_disjoint_tests.py.
 run_holes_disjoint
 
 # --- CURVE_RELATE_MATRIX (R-PR, JTS #1195 §7) --------------------------------

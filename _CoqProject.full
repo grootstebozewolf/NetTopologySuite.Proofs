@@ -1764,6 +1764,20 @@ theories/CurvePolygonOrientation.v
 # containment soundness (Jordan), oracle/test layer.
 theories/CurvePolygonDisjoint.v
 
+# Precision + Overlay trusted-kernel pass (Slice 7 follow-up): Ring/Relate
+# contact-soundness lift.  Bridges the three OverlayContactSound contact kernels
+# (chord_chord / arc_seg / arc_arc) into the curve_segments_meet shape, then
+# composes with CurveRingSimple.curve_ring_not_simple_of_witness and
+# CurvePolygonDisjoint.holes_not_disjoint_of_meet to give end-to-end soundness of
+# the RING_SIMPLE and HOLES_DISJOINT verdicts -- a non-adjacent contact verdict
+# refutes simplicity; a contact verdict between two distinct holes refutes
+# disjointness.  Pure existential repackaging over existing Qed theorems; the only
+# float fact is the SAME named atan2 span premise as arc_arc_contact_circle_cross_cond.
+# 3-axiom.  No Admitted.  (Deferred: CURVE_RELATE_MATRIX boundary cells, which are
+# stated over the linearised to_geometry strata, need a separate on_curve_segment
+# -> geom_boundary bridge.)
+theories/RingContactSound.v
+
 # Issue #64 / JTS #1195 §7 (R-PR / CURVE_RELATE_MATRIX): point-set DE-9IM
 # specification + provable algebraic laws backing the CURVE_RELATE_MATRIX oracle
 # (which COMPUTES the full 9-cell matrix from two curve geometries).  TRUE OGC
