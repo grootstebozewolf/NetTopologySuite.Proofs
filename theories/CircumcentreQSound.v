@@ -38,8 +38,8 @@
          ArcChordApprox.arc_center_equidistant and
          ArcArcCircles.inCircle_R_zero_of_equidistant chains.
 
-   Three-axiom policy: only the classical-reals trio.  No Admitted / Axiom /
-   Parameter.
+   Three-axiom policy: only the classical-reals trio.  No Admitted, no Axiom,
+   no Parameter declarations.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
