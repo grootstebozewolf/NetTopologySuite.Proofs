@@ -31,10 +31,14 @@
    trig / atan2 / sin_lt_x), so no `docs/audit-exceptions.txt` entry.  No
    `Admitted`/`Axiom`/`Parameter`.
 
-   DEFERRED (honest scope, mirroring D-PT): the on-arc-sector clamping (feet
-   off-sweep -> nearest endpoint-pair, matching the oracle's atan2 sector
-   test); the INTERNAL (d <= |r1 - r2|, distance |r1 - r2| - d) and OVERLAPPING
-   (distance 0) regimes; arc-segment distance; and a binary64 layer.
+   SELECTION (external case): covered by arc_arc_external_feet_attains_when_spans_ok
+   (selection via arc_span_contains lifts the circle lower/attainment; see
+   selection_preserves_minimum contract in the lemma).
+
+   DEFERRED: on-arc-sector clamping when span rejects (falls to endpoints;
+   depends on pending arc_orient monotonicity for fallback_ends_lower);
+   INTERNAL / OVERLAPPING regimes; arc-segment distance (see sibling file);
+   and a binary64 layer.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -157,14 +161,26 @@ Proof.
   apply two_circles_dist_radial; lra.
 Qed.
 
-(* Sweep-clamp tightness wrapper for the external case.
-   When the caller has determined (via its atan2 sector test, mirrored here
-   by arc_span_contains) that both radial feet lie in their arc sweeps, the
-   external gap value computed by arc_arc_dist_external is the correct one
-   to use.  The lower-bound direction already holds unconditionally over the
-   circumcircles (two_circles_dist_lower); the span hyps simply justify
-   selecting the radial candidate instead of an endpoint pair. *)
-Lemma arc_arc_external_feet_on_arcs_tight :
+(* selection_preserves_minimum (external case for arc-arc).
+
+   Generic contract (to be reused for variants):
+     Given:
+       - two_circles_dist_lower (unconditional lower bound over circumcircles)
+       - circle_feet_dist / attainment at the constructed feet
+       - span_ok (arc_span_contains) for both feet
+     Then:
+       - the feet lie on the arcs (by span + radial_on_circle)
+       - the external gap d is attained exactly at those arc points
+       - d is a lower bound for *any* points on the two arcs
+
+   This is *selection*, not re-proof of geometry: the heavy lifting
+   (reverse triangle through centres) is already done in the circle layer.
+
+   Correctness note: this lemma's soundness depends on arc_span_contains
+   correctly characterising the directed sweep (which in turn depends on
+   pending arc_orient monotonicity for the fallback direction).
+*)
+Lemma arc_arc_external_feet_attains_when_spans_ok :
   forall (a1 a2 : CircularArc),
     valid_arc a1 -> valid_arc a2 ->
     let O1 := arc_center a1 in

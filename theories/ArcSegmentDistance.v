@@ -31,9 +31,11 @@
    D-PT `radial_foot` lemmas.  THREE-AXIOM (the classical-reals trio -- no
    trig / atan2 / sin_lt_x).  No `Admitted`/`Axiom`/`Parameter`.
 
-   DEFERRED (honest scope, mirroring D-PT/D-AA): on-arc-sector clamping and the
-   segment-parameter (0 <= t <= 1) clamp (the oracle's atan2/float layer); the
-   crossing (line meets circle, distance 0) regime; a binary64 layer.
+   SELECTION (external case): covered by arc_segment_external_foot_attains_when_span_ok
+   (selection via arc_span_contains; see selection_preserves_minimum contract).
+
+   DEFERRED: on-arc-sector + segment-t clamp when span rejects (depends on
+   arc_orient monotonicity); crossing regime (=0); binary64 layer.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -159,11 +161,28 @@ Proof.
     [ exact Hunit | exact Hfoot | lra | exact Hd | exact Hr ].
 Qed.
 
-(* Sweep/segment clamp tightness wrapper for D-SL.
-   Records that when the radial foot satisfies the arc sweep (span) the
-   external gap is the value to use; the universal lower bound over the
-   circle + line is already given by the external theorem. *)
-Lemma arc_segment_external_foot_on_arc_and_seg_tight :
+(* selection_preserves_minimum (external case for arc-segment).
+
+   Generic contract (shared shape with arc-arc):
+     Given:
+       - circle_line_dist_lower (unconditional lower bound over circle + line)
+       - circle_line_dist_radial / attainment at the radial foot over G
+       - span_ok (arc_span_contains) for the foot F
+       - G lies on the segment (between P Q)
+     Then:
+       - F lies on the arc
+       - the external gap (perp - r) is attained exactly at F for the arc
+         and at G for the segment
+       - the gap is a lower bound for any X on the arc and any Y on the line
+         (hence on the segment)
+
+   This is selection via the sweep predicate, not re-derivation of the
+   perpendicular-foot geometry.
+
+   Correctness note: depends on arc_span_contains (pending arc_orient
+   monotonicity for the full fallback story).
+*)
+Lemma arc_segment_external_foot_attains_when_span_ok :
   forall (a : CircularArc) (fx fy ux uy : R),
     valid_arc a ->
     ux * ux + uy * uy = 1 ->

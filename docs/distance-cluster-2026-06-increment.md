@@ -3,10 +3,14 @@
 Axis chosen: DISTANCE cluster (max surface / min new geometry among the three candidates).
 
 ## What landed (truthful summary after verification)
-- Added two thin, proved "sweep selection" wrapper lemmas (no new mathematics):
-  - `arc_arc_external_feet_on_arcs_tight` in `theories/ArcArcDistance.v`
-  - `arc_segment_external_foot_on_arc_and_seg_tight` in `theories/ArcSegmentDistance.v`
-  These simply record "when arc_span_contains accepts the foot computed by the external core, that value is the one the oracle should emit". They reuse the already-Qed external theorems + the existing `arc_span_contains`.
+- Added two thin, proved "selection preserves minimum" wrapper lemmas (no new mathematics; following PR review tightening):
+  - `arc_arc_external_feet_attains_when_spans_ok` in `theories/ArcArcDistance.v`
+  - `arc_segment_external_foot_attains_when_span_ok` in `theories/ArcSegmentDistance.v`
+  These record the contract:
+    span_ok(foot) ∧ external_attains(foot, d) ∧ external_lower(d)
+    ⇒ d is attained at arc points and minimal for the arc/segment pair.
+  They reuse the already-Qed external theorems + the existing `arc_span_contains`.
+  (The generic schema "selection_preserves_minimum" is documented in the lemma comments for future reuse.)
 - The three D-PT analytical stubs in `ArcPointDistance.v` (`point_to_arc_dist_radial_lower`, `point_to_arc_dist_fallback_ends_lower`, `point_to_arc_dist_centre_is_r`) remain live registered `Admitted.` (unchanged).
 - The converse lemma `inCircle_R_equidistant_of_zero` was attempted multiple times (translation + nsatz/ring/field + cofactor extraction using the d from arc_center) but could not be closed in this pass. A comment in `ArcArcCircles.v` explicitly leaves it for the fallback monotonicity work.
 - Documentation cleaned for accuracy:
@@ -28,7 +32,7 @@ Axis chosen: DISTANCE cluster (max surface / min new geometry among the three ca
 
 ## Session shape (Red/Green/Refactor)
 - Red: targets = converse + two discharges + two clamp lemmas (per synthesis).
-- Green: only the two thin clamp lemmas landed as proved code. Converse attempts failed to Qed; the two easy discharges were therefore left as the registered Admitteds.
+- Green: the two selection lemmas landed (renamed per review for clarity: *_attains_when_spans_ok). Converse attempts failed; discharges remain Admitted. Added explicit contract notes and pending arc_orient dependency annotation.
 - Refactor: docs + claims corrected for truthfulness; dashboard regenerated; full build + guardrails confirmed green.
 - No new Admitteds. No axiom drift.
 
