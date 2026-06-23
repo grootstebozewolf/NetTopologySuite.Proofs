@@ -252,11 +252,11 @@ COVERAGE_GEOMTYPE_LONG = {
 # Source-of-record for each cell (file:lemma or prose note for deferred items)
 COVERAGE_MATRIX = {
     "Distance": {
-        "Arc":   ("full",    "ArcPointDistance.v + ArcChordLength.v (Qed)"),
-        "CS":    ("full",    "point–arc proven; unified GetSegments + dispatcher (Slice 5) enables compound; DISTANCE_UNIFIED with full D-AA/D-AS"),
-        "CC":    ("full",    "unified GetSegments + dispatcher (Slice 5) + oracle DISTANCE_UNIFIED tags (Rung 3): delegation for CurveCollection"),
-        "CP":    ("full",    "unified GetSegments + dispatcher (Slice 5) + oracle DISTANCE_UNIFIED tags (Rung 3): delegation for CurvePolygon; TestCurvePolygon_Distance_MultiCurve"),
-        "Multi": ("full",    "unified GetSegments + dispatcher (Slice 5) + oracle DISTANCE_UNIFIED (Slice 5 + Rung 3 tags): full recursion for Multi* + arc-aware seg min-dist; red_distance_unified_tests.py; mixed linear/curve fidelity"),
+        "Arc":   ("full",    "ArcPointDistance.v + ArcChordLength.v (Qed); radial/sweep core + fallback stub"),
+        "CS":    ("partial", "Arc support for members (via Phase 4 arc,cs tag); unified GetSegments + DISTANCE_UNIFIED in oracle/RED (Slice 5); no Qed Coq unified dispatcher for CompoundCurve yet"),
+        "CC":    ("partial", "oracle DISTANCE_UNIFIED tags (Rung 3) + planned delegation via GetSegments; 0 Qed proofs for CurveCollection distance"),
+        "CP":    ("partial", "oracle DISTANCE_UNIFIED + TestCurvePolygon_Distance_MultiCurve (Rung 3); planned; core arc proven but composite dispatch not Qed"),
+        "Multi": ("partial", "oracle DISTANCE_UNIFIED + red tests (Slice 5 + Rung 3); recursion planned; mixed linear/curve; no full Qed composite support"),
     },
     "Arc / chord length": {
         "Arc":   ("full",    "ArcChordLength.v:arc_chord_le_arc_length + RelateArcAnalytic.v (Qed); OM_perp_chord discharges bridge in ArcOverlay.v (Rung 1)"),
@@ -313,16 +313,13 @@ def _coverage_level(cell, feat_label=None, geom_label=None):
     cond   = cell["cond"]
     oracle = cell["oracle"]
     total  = proven + cond + oracle
-    # unified RGR (Slice 10): respect COVERAGE_MATRIX "full" for oracle-backed cells
-    # even if Coq proven count is 0 (Rung 3 oracle + unified dispatch completes column)
-    if feat_label and geom_label:
-        entry = COVERAGE_MATRIX.get(feat_label, {}).get(geom_label, ("", ""))
-        if entry[0] == "full":
-            return "full"
     if total == 0:
         return "none"
     if proven > 0 and cond == 0:
         return "full"
+    # matrix notes may describe "full" aspirational/oracle-backed plans (e.g. unified dispatch)
+    # but icon/level follows actual theorem counts from claims + oracle tags.
+    # "partial" for planned but not-yet-Qed composite support.
     return "partial"
 
 
