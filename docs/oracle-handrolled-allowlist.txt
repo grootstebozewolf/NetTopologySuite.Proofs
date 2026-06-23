@@ -193,10 +193,13 @@ run_arc_segment_distance
 # isSimple/isValid interface value (V-CS/V-CP); the NOT_SIMPLE-witness soundness
 # is proven in theories/CurveRingSimple.v (curve_ring_not_simple_of_witness) and
 # lifted to the actual contact kernels in theories/RingContactSound.v
-# (ring_not_simple_of_{chord_chord_crossing,chord_chord_collinear,arc_chord,
-# arc_arc_circle_cross,arc_arc_shared_endpoint}: a kernel verdict on a
-# non-adjacent pair refutes simplicity, reusing OverlayContactSound + the same
-# named atan2 span premise); completeness + reflex-arc spans deferred.
+# (ring_not_simple_of_{chord_chord_crossing,chord_chord_collinear,
+# chord_chord_endpoint,arc_chord,arc_chord_witness,arc_arc_circle_cross,
+# arc_arc_witness,arc_arc_shared_endpoint}: a kernel verdict on a non-adjacent
+# pair refutes simplicity, reusing OverlayContactSound + the same named atan2
+# span premise; the _endpoint / _witness variants back the inclusive t,u in
+# [0,1] Cramer branch and the h=0 tangent / concentric direct-witness cases);
+# completeness + reflex-arc spans deferred.
 run_ring_simple
 
 # --- ARC_OFFSET_XY (OFF / BUF-1 / BUF-NEG, JTS #1195 §7) ---------------------
@@ -247,11 +250,14 @@ run_ring_orientation
 # The structural soundness (a boundary meeting or nesting witness => not
 # disjoint) is proven in theories/CurvePolygonDisjoint.v and lifted to the
 # actual contact kernels in theories/RingContactSound.v
-# (holes_not_disjoint_of_{chord_chord_crossing,chord_chord_collinear,arc_chord,
-# arc_arc_circle_cross,arc_arc_shared_endpoint}: a kernel verdict between two
-# distinct holes refutes disjointness, reusing OverlayContactSound + the same
-# named atan2 span premise); true-region containment soundness is the deferred
-# frontier, pinned by oracle/gen_holes_disjoint_tests.py.
+# (holes_not_disjoint_of_{chord_chord_crossing,chord_chord_collinear,
+# chord_chord_endpoint,arc_chord,arc_chord_witness,arc_arc_circle_cross,
+# arc_arc_witness,arc_arc_shared_endpoint}: a kernel verdict between two distinct
+# holes refutes disjointness, reusing OverlayContactSound + the same named atan2
+# span premise; the _endpoint / _witness variants back the inclusive Cramer
+# branch and the h=0 tangent / concentric direct-witness cases); true-region
+# containment soundness is the deferred frontier, pinned by
+# oracle/gen_holes_disjoint_tests.py.
 run_holes_disjoint
 
 # --- CURVE_RELATE_MATRIX (R-PR, JTS #1195 §7) --------------------------------

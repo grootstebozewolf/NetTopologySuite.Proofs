@@ -23,6 +23,9 @@
          Proper crossing (strict opposite inCircle_R/cross signs) → shared
          point exists (Intersect.strict_completeness); same side → no shared
          point (Intersect.same_side_rejection_is_sound).
+         §1c collinear 1-D overlap; §1d endpoint / T-junction (one endpoint on
+         the other segment); §1e shared vertex (endpoint equality) — these back
+         the inclusive t,u ∈ [0,1] Cramer / on_seg branches of the OCaml kernel.
 
      §2  arc_chord_contact_sound
          Circle-crossing + span hypothesis → arc_chord_intersects is

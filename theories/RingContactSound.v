@@ -32,10 +32,13 @@
    OverlayContactSound.arc_arc_contact_circle_cross_cond -- it stays a hypothesis,
    exactly as in ArcArcSound / ArcChordSound):
 
-     §1  contact verdict  =>  curve_segments_meet  (five bridges)
+     §1  contact verdict  =>  curve_segments_meet  (six bridges, incl. the
+         chord endpoint / T-junction case and the arc direct-witness forms)
      §2  RING_SIMPLE: a non-adjacent contact verdict  =>  ~ curve_ring_simple
+         (crossing, collinear, chord-endpoint, arc-chord circle-cross + direct
+          witness, arc-arc circle-cross + direct witness + shared endpoint)
      §3  HOLES_DISJOINT: a contact verdict between two distinct holes
-         =>  ~ curve_polygon_holes_disjoint
+         =>  ~ curve_polygon_holes_disjoint  (same kernel split as §2)
 
    NOT covered (honest scope): the CURVE_RELATE_MATRIX boundary-meet cells
    (RelateCurveMatrix.v) are stated over the LINEARISED `to_geometry` strata
@@ -92,6 +95,22 @@ Lemma chord_chord_meet_of_collinear :
 Proof.
   intros A B C D H.
   destruct (chord_chord_contact_collinear_sound A B C D H) as [X [Hab Hcd]].
+  exists X. split; [ exact Hab | exact Hcd ].
+Qed.
+
+(** Endpoint / T-junction contact of two chords yields a shared point (the
+    endpoint itself).  Backs the inclusive t,u in [0,1] Cramer branch of the
+    OCaml chord_chord_contact, where one segment's endpoint lies on the other
+    even though the cross-product product is 0 (not strictly negative) and the
+    directions are non-parallel (so neither §1a crossing nor the collinear
+    overlap path fires). *)
+Lemma chord_chord_meet_of_endpoint :
+  forall A B C D : Point,
+    between C D A \/ between C D B \/ between A B C \/ between A B D ->
+    curve_segments_meet (CSChord A B) (CSChord C D).
+Proof.
+  intros A B C D H.
+  destruct (chord_chord_contact_endpoint_sound A B C D H) as [X [Hab Hcd]].
   exists X. split; [ exact Hab | exact Hcd ].
 Qed.
 
@@ -186,6 +205,22 @@ Proof.
   apply chord_chord_meet_of_collinear; assumption.
 Qed.
 
+(** chord_chord_contact endpoint / T-junction verdict on a non-adjacent pair
+    (inclusive t,u in [0,1] Cramer branch). *)
+Theorem ring_not_simple_of_chord_chord_endpoint :
+  forall (r : CurveRing) (i j : nat) (A B C D : Point),
+    nth_error r i = Some (CSChord A B) ->
+    nth_error r j = Some (CSChord C D) ->
+    i <> j ->
+    ~ ring_adjacent_positions (length r) i j ->
+    between C D A \/ between C D B \/ between A B C \/ between A B D ->
+    ~ curve_ring_simple r.
+Proof.
+  intros r i j A B C D H1 H2 Hij Hnadj Hend.
+  apply (ring_not_simple_of_meet r i j (CSChord A B) (CSChord C D) H1 H2 Hij Hnadj).
+  apply chord_chord_meet_of_endpoint; assumption.
+Qed.
+
 (** arc_seg_contact verdict (circle crossing + atan2 span premise) on a
     non-adjacent arc/chord pair. *)
 Theorem ring_not_simple_of_arc_chord :
@@ -205,6 +240,28 @@ Proof.
   apply (ring_not_simple_of_meet r i j (CSArc a) (CSChord P Q) H1 H2 Hij Hnadj).
   apply arc_chord_meet_of_contact.
   apply arc_chord_contact_sound; assumption.
+Qed.
+
+(** arc_seg_contact direct-witness verdict on a non-adjacent arc/chord pair:
+    a point on the chord, on the arc circle, and in the arc span (the h = 0
+    tangent foot or an endpoint-on-circle candidate that chord_crosses_arc_circle
+    -- strict sP*sQ < 0 -- does NOT cover).  Routed through
+    arc_chord_contact_witness_sound; the atan2 span fact stays a hypothesis. *)
+Theorem ring_not_simple_of_arc_chord_witness :
+  forall (r : CurveRing) (i j : nat) (a : CircularArc) (P Q X : Point),
+    nth_error r i = Some (CSArc a) ->
+    nth_error r j = Some (CSChord P Q) ->
+    i <> j ->
+    ~ ring_adjacent_positions (length r) i j ->
+    between P Q X ->
+    inCircle_R (arc_start a) (arc_mid a) (arc_end a) X = 0 ->
+    arc_span_contains a X ->
+    ~ curve_ring_simple r.
+Proof.
+  intros r i j a P Q X H1 H2 Hij Hnadj Hbtw Hcirc Hspan.
+  apply (ring_not_simple_of_meet r i j (CSArc a) (CSChord P Q) H1 H2 Hij Hnadj).
+  apply arc_chord_meet_of_contact.
+  exact (arc_chord_contact_witness_sound a P Q X Hbtw Hcirc Hspan).
 Qed.
 
 (** arc_arc_contact circle-crossing verdict (+ bundled atan2 span premise) on a
@@ -228,6 +285,29 @@ Proof.
   apply (ring_not_simple_of_meet r i j (CSArc a1) (CSArc a2) H1 H2 Hij Hnadj).
   apply arc_arc_meet_of_intersects.
   apply arc_arc_contact_circle_cross_cond; assumption.
+Qed.
+
+(** arc_arc_contact direct-witness verdict on a non-adjacent arc/arc pair:
+    a point on both circumcircles and in both spans (backs the concentric
+    equal-radius branch, where a control point of one arc serves as witness).
+    Routed through arc_arc_contact_witness_sound; both atan2 span facts stay
+    hypotheses. *)
+Theorem ring_not_simple_of_arc_arc_witness :
+  forall (r : CurveRing) (i j : nat) (a1 a2 : CircularArc) (X : Point),
+    nth_error r i = Some (CSArc a1) ->
+    nth_error r j = Some (CSArc a2) ->
+    i <> j ->
+    ~ ring_adjacent_positions (length r) i j ->
+    inCircle_R (arc_start a1) (arc_mid a1) (arc_end a1) X = 0 ->
+    inCircle_R (arc_start a2) (arc_mid a2) (arc_end a2) X = 0 ->
+    arc_span_contains a1 X ->
+    arc_span_contains a2 X ->
+    ~ curve_ring_simple r.
+Proof.
+  intros r i j a1 a2 X H1 H2 Hij Hnadj Hc1 Hc2 Hs1 Hs2.
+  apply (ring_not_simple_of_meet r i j (CSArc a1) (CSArc a2) H1 H2 Hij Hnadj).
+  apply arc_arc_meet_of_intersects.
+  exact (arc_arc_contact_witness_sound a1 a2 X Hc1 Hc2 Hs1 Hs2).
 Qed.
 
 (** arc_arc_contact shared-endpoint verdict on a NON-ADJACENT arc/arc pair
@@ -307,6 +387,24 @@ Proof.
   apply chord_chord_meet_of_collinear; assumption.
 Qed.
 
+(** chord_chord_contact endpoint / T-junction verdict between two distinct
+    holes (inclusive t,u in [0,1] Cramer branch). *)
+Theorem holes_not_disjoint_of_chord_chord_endpoint :
+  forall (cp : CurvePolygon) (n i j : nat) (A B : CurveRing)
+         (P0 P1 Q0 Q1 : Point),
+    nth_error (curve_holes cp) i = Some A ->
+    nth_error (curve_holes cp) j = Some B ->
+    i <> j ->
+    In (CSChord P0 P1) A -> In (CSChord Q0 Q1) B ->
+    between Q0 Q1 P0 \/ between Q0 Q1 P1 \/ between P0 P1 Q0 \/ between P0 P1 Q1 ->
+    ~ curve_polygon_holes_disjoint cp n.
+Proof.
+  intros cp n i j A B P0 P1 Q0 Q1 HA HB Hij HinA HinB Hend.
+  apply (holes_not_disjoint_of_segments_meet cp n i j A B
+           (CSChord P0 P1) (CSChord Q0 Q1) HA HB Hij HinA HinB).
+  apply chord_chord_meet_of_endpoint; assumption.
+Qed.
+
 (** arc_seg_contact verdict (arc in hole A, chord in hole B). *)
 Theorem holes_not_disjoint_of_arc_chord :
   forall (cp : CurvePolygon) (n i j : nat) (A B : CurveRing)
@@ -327,6 +425,29 @@ Proof.
            (CSArc a) (CSChord P Q) HA HB Hij HinA HinB).
   apply arc_chord_meet_of_contact.
   apply arc_chord_contact_sound; assumption.
+Qed.
+
+(** arc_seg_contact direct-witness verdict between two distinct holes (h = 0
+    tangent / endpoint-on-circle candidate not covered by the strict
+    chord_crosses_arc_circle filter).  Routed through
+    arc_chord_contact_witness_sound. *)
+Theorem holes_not_disjoint_of_arc_chord_witness :
+  forall (cp : CurvePolygon) (n i j : nat) (A B : CurveRing)
+         (a : CircularArc) (P Q X : Point),
+    nth_error (curve_holes cp) i = Some A ->
+    nth_error (curve_holes cp) j = Some B ->
+    i <> j ->
+    In (CSArc a) A -> In (CSChord P Q) B ->
+    between P Q X ->
+    inCircle_R (arc_start a) (arc_mid a) (arc_end a) X = 0 ->
+    arc_span_contains a X ->
+    ~ curve_polygon_holes_disjoint cp n.
+Proof.
+  intros cp n i j A B a P Q X HA HB Hij HinA HinB Hbtw Hcirc Hspan.
+  apply (holes_not_disjoint_of_segments_meet cp n i j A B
+           (CSArc a) (CSChord P Q) HA HB Hij HinA HinB).
+  apply arc_chord_meet_of_contact.
+  exact (arc_chord_contact_witness_sound a P Q X Hbtw Hcirc Hspan).
 Qed.
 
 (** arc_arc_contact circle-crossing verdict between two distinct holes. *)
@@ -353,6 +474,29 @@ Proof.
   apply arc_arc_contact_circle_cross_cond; assumption.
 Qed.
 
+(** arc_arc_contact direct-witness verdict between two distinct holes (backs the
+    concentric equal-radius branch).  Routed through
+    arc_arc_contact_witness_sound. *)
+Theorem holes_not_disjoint_of_arc_arc_witness :
+  forall (cp : CurvePolygon) (n i j : nat) (A B : CurveRing)
+         (a1 a2 : CircularArc) (X : Point),
+    nth_error (curve_holes cp) i = Some A ->
+    nth_error (curve_holes cp) j = Some B ->
+    i <> j ->
+    In (CSArc a1) A -> In (CSArc a2) B ->
+    inCircle_R (arc_start a1) (arc_mid a1) (arc_end a1) X = 0 ->
+    inCircle_R (arc_start a2) (arc_mid a2) (arc_end a2) X = 0 ->
+    arc_span_contains a1 X ->
+    arc_span_contains a2 X ->
+    ~ curve_polygon_holes_disjoint cp n.
+Proof.
+  intros cp n i j A B a1 a2 X HA HB Hij HinA HinB Hc1 Hc2 Hs1 Hs2.
+  apply (holes_not_disjoint_of_segments_meet cp n i j A B
+           (CSArc a1) (CSArc a2) HA HB Hij HinA HinB).
+  apply arc_arc_meet_of_intersects.
+  exact (arc_arc_contact_witness_sound a1 a2 X Hc1 Hc2 Hs1 Hs2).
+Qed.
+
 (** arc_arc_contact shared-endpoint verdict between two distinct holes. *)
 Theorem holes_not_disjoint_of_arc_arc_shared_endpoint :
   forall (cp : CurvePolygon) (n i j : nat) (A B : CurveRing)
@@ -376,16 +520,23 @@ Qed.
 
 Print Assumptions chord_chord_meet_of_crossing.
 Print Assumptions chord_chord_meet_of_collinear.
+Print Assumptions chord_chord_meet_of_endpoint.
 Print Assumptions arc_chord_meet_of_contact.
 Print Assumptions arc_arc_meet_of_intersects.
 Print Assumptions arc_arc_meet_of_shared_endpoint.
 Print Assumptions ring_not_simple_of_chord_chord_crossing.
 Print Assumptions ring_not_simple_of_chord_chord_collinear.
+Print Assumptions ring_not_simple_of_chord_chord_endpoint.
 Print Assumptions ring_not_simple_of_arc_chord.
+Print Assumptions ring_not_simple_of_arc_chord_witness.
 Print Assumptions ring_not_simple_of_arc_arc_circle_cross.
+Print Assumptions ring_not_simple_of_arc_arc_witness.
 Print Assumptions ring_not_simple_of_arc_arc_shared_endpoint.
 Print Assumptions holes_not_disjoint_of_chord_chord_crossing.
 Print Assumptions holes_not_disjoint_of_chord_chord_collinear.
+Print Assumptions holes_not_disjoint_of_chord_chord_endpoint.
 Print Assumptions holes_not_disjoint_of_arc_chord.
+Print Assumptions holes_not_disjoint_of_arc_chord_witness.
 Print Assumptions holes_not_disjoint_of_arc_arc_circle_cross.
+Print Assumptions holes_not_disjoint_of_arc_arc_witness.
 Print Assumptions holes_not_disjoint_of_arc_arc_shared_endpoint.

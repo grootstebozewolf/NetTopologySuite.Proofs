@@ -1860,10 +1860,21 @@ let run_overlay_unified () =
     | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
     | _ -> failwith "OVERLAY_UNIFIED: bad segment line" in
-  let nA = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
-  let segsA = Array.init nA (fun _ -> parse_seg ()) in
-  let nB = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
-  let segsB = Array.init nB (fun _ -> parse_seg ()) in
+  (* Protected reader: a negative count, EOF mid-input, or a malformed segment
+     line is a protocol violation; emit "NAN" rather than crashing with an
+     uncaught Invalid_argument / End_of_file / Failure.  Counts must be >= 0
+     (Array.init rejects negatives). *)
+  let read_segs () =
+    let nA = int_of_string (String.trim (input_line stdin)) in
+    if nA < 0 then failwith "OVERLAY_UNIFIED: negative count";
+    let segsA = Array.init nA (fun _ -> parse_seg ()) in
+    let nB = int_of_string (String.trim (input_line stdin)) in
+    if nB < 0 then failwith "OVERLAY_UNIFIED: negative count";
+    let segsB = Array.init nB (fun _ -> parse_seg ()) in
+    (segsA, segsB) in
+  match (try Some (read_segs ()) with _ -> None) with
+  | None -> print_endline "NAN"
+  | Some (segsA, segsB) ->
   let has_arc = Array.exists (function `Arc _ -> true | _ -> false) segsA
              || Array.exists (function `Arc _ -> true | _ -> false) segsB in
   let seg_pts = function
@@ -1954,15 +1965,19 @@ let run_overlay_unified () =
             (List.exists (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
              || List.exists (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1])
           else begin
-            let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
-            let d2 = Q.to_float dq in
-            let d = sqrt d2 in
-            let a_coef = (d2 +. r1f -. r2f) /. (2.0 *. d) in
-            let h2 = r1f -. a_coef *. a_coef in
-            (* Small epsilon guards near-tangent contacts lost to FP rounding
-               in a_coef; consistent with chord_chord_contact's on_seg 1e-9. *)
-            if h2 < -1e-9 then false
+            (* Discriminant computed exactly in Q (mirroring arc_seg_contact's
+               h2q guard) so near-tangent arc-arc pairs are not lost to float
+               rounding in a_coef.  With aq = dq + r1sq - r2sq (= 2*d*a_coef),
+               a_coef^2 = aq^2 / (4*dq), so h2 = r1sq - aq^2/(4*dq) has the same
+               sign as 4*dq*r1sq - aq^2; dq > 0 in this branch. *)
+            let aq = Q.add (Q.sub dq r2sq) r1sq in
+            let h2_numq = Q.sub (Q.mul (Q.mul (Q.of_int 4) dq) r1sq) (Q.mul aq aq) in
+            if qlt h2_numq q0 then false
             else begin
+              let d2 = Q.to_float dq in
+              let d = sqrt d2 in
+              let a_coef = Q.to_float aq /. (2.0 *. d) in
+              let h2 = Q.to_float h2_numq /. (4.0 *. d2) in
               let h = sqrt (max 0.0 h2) in
               let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
               let mx = o1xf +. a_coef *. ux and my = o1yf +. a_coef *. uy in
