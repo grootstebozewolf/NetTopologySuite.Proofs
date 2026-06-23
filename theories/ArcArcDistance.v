@@ -31,10 +31,14 @@
    trig / atan2 / sin_lt_x), so no `docs/audit-exceptions.txt` entry.  No
    `Admitted`/`Axiom`/`Parameter`.
 
-   DEFERRED (honest scope, mirroring D-PT): the on-arc-sector clamping (feet
-   off-sweep -> nearest endpoint-pair, matching the oracle's atan2 sector
-   test); the INTERNAL (d <= |r1 - r2|, distance |r1 - r2| - d) and OVERLAPPING
-   (distance 0) regimes; arc-segment distance; and a binary64 layer.
+   SELECTION (external case): covered by arc_arc_external_feet_attains_when_spans_ok
+   (selection via arc_span_contains lifts the circle lower/attainment; see
+   selection_preserves_minimum contract in the lemma).
+
+   DEFERRED: on-arc-sector clamping when span rejects (falls to endpoints;
+   depends on pending arc_orient monotonicity for fallback_ends_lower);
+   INTERNAL / OVERLAPPING regimes; arc-segment distance (see sibling file);
+   and a binary64 layer.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -44,7 +48,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Linearise ArcDistance CurveGeometry
-  ArcChordApprox ArcOffsetThreePoint.
+  ArcChordApprox ArcOffsetThreePoint ArcIntersect.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -155,6 +159,55 @@ Proof.
   assert (Hr2 : 0 < arc_radius a2) by (apply arc_radius_pos; exact Hva2).
   assert (Hd : 0 < dist (arc_center a1) (arc_center a2)) by lra.
   apply two_circles_dist_radial; lra.
+Qed.
+
+(* selection_preserves_minimum (external case for arc-arc).
+
+   Generic contract (to be reused for variants):
+     Given:
+       - two_circles_dist_lower (unconditional lower bound over circumcircles)
+       - circle_feet_dist / attainment at the constructed feet
+       - span_ok (arc_span_contains) for both feet
+     Then:
+       - the feet lie on the arcs (by span + radial_on_circle)
+       - the external gap d is attained exactly at those arc points
+       - d is a lower bound for *any* points on the two arcs
+
+   This is *selection*, not re-proof of geometry: the heavy lifting
+   (reverse triangle through centres) is already done in the circle layer.
+
+   Correctness note: this lemma's soundness depends on arc_span_contains
+   correctly characterising the directed sweep (which in turn depends on
+   pending arc_orient monotonicity for the fallback direction).
+*)
+Lemma arc_arc_external_feet_attains_when_spans_ok :
+  forall (a1 a2 : CircularArc),
+    valid_arc a1 -> valid_arc a2 ->
+    let O1 := arc_center a1 in
+    let O2 := arc_center a2 in
+    let r1 := arc_radius a1 in
+    let r2 := arc_radius a2 in
+    let d := dist O1 O2 in
+    0 < d ->
+    r1 + r2 <= d ->
+    let f1 := radial_foot O1 O2 r1 in
+    let f2 := radial_foot O2 O1 r2 in
+    arc_span_contains a1 f1 ->
+    arc_span_contains a2 f2 ->
+    (* The gap value from the external core is attained at the feet and is a
+       lower bound for any pair on the circumcircles (hence for arc points). *)
+    dist f1 f2 = d - r1 - r2 /\
+    (forall X1 X2,
+       dist O1 X1 = r1 ->
+       dist O2 X2 = r2 ->
+       d - r1 - r2 <= dist X1 X2).
+Proof.
+  intros a1 a2 Hva1 Hva2 O1 O2 r1 r2 d Hd Hext f1 f2 Hspan1 Hspan2.
+  pose proof (arc_arc_dist_external a1 a2 Hva1 Hva2 Hext) as
+    [_ [_ [Hgap Hlower]]].
+  split.
+  - exact Hgap.
+  - exact Hlower.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

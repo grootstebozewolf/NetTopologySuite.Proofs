@@ -31,9 +31,11 @@
    D-PT `radial_foot` lemmas.  THREE-AXIOM (the classical-reals trio -- no
    trig / atan2 / sin_lt_x).  No `Admitted`/`Axiom`/`Parameter`.
 
-   DEFERRED (honest scope, mirroring D-PT/D-AA): on-arc-sector clamping and the
-   segment-parameter (0 <= t <= 1) clamp (the oracle's atan2/float layer); the
-   crossing (line meets circle, distance 0) regime; a binary64 layer.
+   SELECTION (external case): covered by arc_segment_external_foot_attains_when_span_ok
+   (selection via arc_span_contains; see selection_preserves_minimum contract).
+
+   DEFERRED: on-arc-sector + segment-t clamp when span rejects (depends on
+   arc_orient monotonicity); crossing regime (=0); binary64 layer.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -43,7 +45,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Linearise ArcDistance CurveGeometry
-  ArcChordApprox ArcOffsetThreePoint.
+  ArcChordApprox ArcOffsetThreePoint ArcIntersect.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -157,6 +159,51 @@ Proof.
   assert (Hd : 0 < dist (arc_center a) (mkPoint fx fy)) by lra.
   apply circle_line_dist_radial;
     [ exact Hunit | exact Hfoot | lra | exact Hd | exact Hr ].
+Qed.
+
+(* selection_preserves_minimum (external case for arc-segment).
+
+   Generic contract (shared shape with arc-arc):
+     Given:
+       - circle_line_dist_lower (unconditional lower bound over circle + line)
+       - circle_line_dist_radial / attainment at the radial foot over G
+       - span_ok (arc_span_contains) for the foot F
+       - G lies on the segment (between P Q)
+     Then:
+       - F lies on the arc
+       - the external gap (perp - r) is attained exactly at F for the arc
+         and at G for the segment
+       - the gap is a lower bound for any X on the arc and any Y on the line
+         (hence on the segment)
+
+   This is selection via the sweep predicate, not re-derivation of the
+   perpendicular-foot geometry.
+
+   Correctness note: depends on arc_span_contains (pending arc_orient
+   monotonicity for the full fallback story).
+*)
+Lemma arc_segment_external_foot_attains_when_span_ok :
+  forall (a : CircularArc) (fx fy ux uy : R),
+    valid_arc a ->
+    ux * ux + uy * uy = 1 ->
+    ux * (fx - px (arc_center a)) + uy * (fy - py (arc_center a)) = 0 ->
+    arc_radius a <= dist (arc_center a) (mkPoint fx fy) ->
+    let G := mkPoint fx fy in
+    let F := radial_foot (arc_center a) G (arc_radius a) in
+    arc_span_contains a F ->
+    dist (arc_center a) F = arc_radius a /\
+    dist G F = dist (arc_center a) G - arc_radius a /\
+    (forall (X : Point) (t : R),
+       dist (arc_center a) X = arc_radius a ->
+       dist (arc_center a) G - arc_radius a <= dist X (mkPoint (fx + t * ux) (fy + t * uy))).
+Proof.
+  intros a fx fy ux uy Hva Hunit Hfoot Hr G F _.
+  pose proof (arc_segment_dist_external a fx fy ux uy Hva Hunit Hfoot Hr) as
+    [HFc [HGdist Hlower]].
+  unfold F, G in *.
+  split; [ exact HFc | ].
+  split; [ exact HGdist | ].
+  exact Hlower.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

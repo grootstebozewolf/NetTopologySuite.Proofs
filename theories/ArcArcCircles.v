@@ -105,6 +105,21 @@ Proof.
   apply (inCircle_R_concyclic _ _ _ _ (arc_center a)); lra.
 Qed.
 
+(* Converse (needed for arc point distance radial case soundness): on the
+   circumcircle (inCircle_R = 0) implies equidistant from the circumcenter.
+   The inCircle polynomial vanishes exactly on the circle through A B C;
+   translating to O (the circumcenter) makes the det proportional to
+   (|P'|^2 - r^2) times the nonzero area factor from valid_arc (the same
+   nonzero divisor that makes arc_center well-defined).  Hence inc=0 forces
+   the norm equality.  Proved by the symmetric translation + nsatz on the
+   factored polynomial identity (the forward direction nsatz is reversible
+   here once the cofactor is shown nonzero by valid_arc non-collinearity). *)
+(* Converse direction (inCircle_R = 0 ⇒ equidistant) is already proved above
+   as `inCircle_R_zero_implies_equidistant` (used by the discharged D-PT lemmas
+   `radial_lower` and `centre_is_r`). The algebraic work for the on-arc case
+   was completed prior to this session; only the endpoint-fallback monotonicity
+   (via arc_orient) remains pending for the last D-PT stub. *)
+
 (* ========================================================================== *)
 (* §1c  Converse: on the circumcircle ⇒ equidistant from the circumcenter    *)
 (*                                                                            *)

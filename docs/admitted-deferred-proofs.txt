@@ -69,6 +69,12 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 #   Qed via dist_eq_zero_iff (P=O coord-wise) + inCircle_R_zero_implies_equidistant.
 #   on_arc X ==> dist O X = r; P=O ==> dist P X = dist O X = r.
 #
+# Only `fallback_ends_lower` remains a live deferred-proof stub among the
+# original D-PT analytical entries.
+# Clamp lemmas for AA/AL landed as thin wrappers over the external cores;
+# full monotonicity for the fallback case remains the active item.
+#  DISTANCE family.)
+#
 # DISCHARGED 2026-06-14: theories/EdgeFaceBridge.v:H_bridge_core.  The
 # combinatorial core -- the same-face FACE SPLIT
 # num_faces (E_minus E d) = num_faces E + 1 -- was PROVED via the generic
