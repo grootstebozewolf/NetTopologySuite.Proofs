@@ -1310,8 +1310,30 @@ let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy)
      e.g. a tangency or shared vertex exactly at A).  Re-include dAQ = 0. *)
   if dAB <= dAC then dAQ <= dAC else (dAQ >= dAC || dAQ = 0.0)
 
+(* chord-chord segment intersection (proper crossing or collinear overlap) *)
+let chord_chord_pts (p1, q1) (p2, q2) =
+  let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
+  let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
+  let denom = d1x *. d2y -. d1y *. d2x in
+  let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
+  if abs_float denom > 1e-12 *. scale *. scale then begin
+    let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
+    let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
+    if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+    then [(p1.bx +. t *. d1x, p1.by_ +. t *. d1y)] else []
+  end else begin
+    (* parallel: collinear-overlap via endpoint containment *)
+    let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
+      let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
+      let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
+      let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
+      abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
+    List.filter_map (fun x -> if on_seg p1 q1 x then Some (x.bx, x.by_) else None) [p2; q2]
+    @ List.filter_map (fun x -> if on_seg p2 q2 x then Some (x.bx, x.by_) else None) [p1; q1]
+  end
+
 (* circle (arc circumcircle) intersect segment, points in sweep AND on [0,1] *)
-let rec arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
+let arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
   match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
           (qf c.bx, qf c.by_) with
   | None ->
@@ -1351,7 +1373,7 @@ let rec arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
       end
 
 (* two arcs' circumcircles intersect, points in BOTH sweeps *)
-and arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
+let arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
   match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
         circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
   | None, None -> chord_chord_pts (a1, c1) (a2, c2)
@@ -1392,29 +1414,7 @@ and arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
         end
       end
 
-(* chord-chord segment intersection (proper crossing or collinear overlap) *)
-and chord_chord_pts (p1, q1) (p2, q2) =
-  let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
-  let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
-  let denom = d1x *. d2y -. d1y *. d2x in
-  let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
-  if abs_float denom > 1e-12 *. scale *. scale then begin
-    let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
-    let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
-    if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
-    then [(p1.bx +. t *. d1x, p1.by_ +. t *. d1y)] else []
-  end else begin
-    (* parallel: collinear-overlap via endpoint containment *)
-    let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
-      let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
-      let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
-      let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
-      abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
-    List.filter_map (fun x -> if on_seg p1 q1 x then Some (x.bx, x.by_) else None) [p2; q2]
-    @ List.filter_map (fun x -> if on_seg p2 q2 x then Some (x.bx, x.by_) else None) [p1; q1]
-  end
-
-and pair_pts s1 s2 =
+let pair_pts s1 s2 =
   match s1, s2 with
   | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
   | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q

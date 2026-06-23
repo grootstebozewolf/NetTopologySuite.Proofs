@@ -133,6 +133,22 @@ run_arc_distance
 # inline sector test).  Interface-boundary helper off the exact circumcentre.
 point_on_arc_sector
 
+# --- arc_seg_pts / arc_arc_pts / chord_chord_pts (hoisted intersection kernels)
+# Shared implementations of the three point calculators, hoisted for
+# deduplication (see goal: deduplicate the three contact kernels against
+# run_ring_simple's *_pts helpers).  They contain the projection/radical/cramer
+# math + sqrt (for chord length / h) + point_on_arc_sector (atan2 for sweep).
+# The transcendental parts (sqrt + atan2) have no Coq-extractable form; the
+# float IS the interface for RING_SIMPLE (witness points), OVERLAY_UNIFIED
+# (contact via non-empty), HOLES_DISJOINT, CURVE_RELATE_MATRIX, etc.
+# (justification same as point_on_arc_sector / run_ring_simple).
+# The previous duplicate bodies inside run_overlay_unified were removed
+# (now thin delegates); run_overlay_unified itself no longer performs the
+# arithmetic.
+arc_seg_pts
+arc_arc_pts
+chord_chord_pts
+
 # --- ARC_ARC_XY (N-AA, issue #64 #5b) ---------------------------------------
 # Mode ARC_ARC_XY emits the intersection POINTS of two circular arcs.  Two
 # circumcircles meet on the radical line; the coordinates carry an irrational
@@ -358,17 +374,14 @@ run_length_unified
 
 # --- OVERLAY_UNIFIED (Precision + Overlay trusted-kernel pass, Slice 7) -------
 # Mode OVERLAY_UNIFIED computes the DE-9IM contact relationship between two
-# segment-list geometries via three hand-rolled kernels:
-#   chord_chord_contact  -- Cramer's-rule crossing + collinear 1-D overlap
-#   arc_seg_contact      -- circumcentre_q + point_on_arc_sector (atan2 sweep)
-#   arc_arc_contact      -- circumcentre_q + point_on_arc_sector (atan2 sweep)
-# Centres and squared radii are EXACT (circumcentre_q); only the final atan2
-# sweep-membership test (point_on_arc_sector) and the chord crossing sqrt
-# are transcendental -> NO Coq-extractable form (Flocq has no Batan2).
+# segment-list geometries by delegating to the hoisted thin predicates:
+#   arc_seg_contact / arc_arc_contact / chord_chord_contact / pair_pts
+# (see the arc_*_pts / chord_chord_pts entries above).  The arithmetic kernels
+# themselves are the hoisted ones (now canonical, no duplication).
 # The float IS the JTS/NTS DE-9IM relate/overlay interface value.
-# Soundness backed by theories/OverlayContactSound.v (chord_chord_contact_*_sound,
-# arc_chord_contact_sound, arc_arc_contact_*) and theories/CircumcentreQSound.v
-# (circumcentre_formula_equidistant, circumcentre_formula_inCircle_R); the
-# atan2 span test is the permanent interface-boundary exception (same boundary
-# as point_on_arc_sector / ARC_ARC_XY). 3-axiom. No Admitted.
-run_overlay_unified
+# Soundness backed by theories/OverlayContactSound.v ... (same as before).
+# (The previous inline kernels were deduped into the pts; this entry is kept
+# for documentation of the mode even though the direct hand-rolled bodies
+# moved.)
+# Note: the name run_overlay_unified itself no longer contains the
+# arithmetic (stale for ratchet); the kernels are listed separately above.
