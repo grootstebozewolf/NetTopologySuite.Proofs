@@ -104,6 +104,33 @@ if rc6 != 0 or "FFFFFFFFF" not in (out6 or ""):
     fail("overlay_disjoint_arc", out6, "CURVE\\n...FFFFFFFFF", stdin6)
 print("disjoint arc ok (would require full)")
 
+# Degen arc (collinear controls) treated as chord for contact; must match chord-chord result.
+# Drives the None branch in arc_seg delegate + overlay contact matrix.
+stdin7 = """OVERLAY_UNIFIED
+1
+A 0 0 0.5 0 1 0
+1
+C 0.5 1 0.5 -1
+"""
+out7, _, rc7 = run(stdin7)
+print("RED_NOTE overlay_degen_arc_contact_got=", out7)
+if rc7 != 0 or out7 != "CURVE\n212FF1FF2":
+    fail("overlay_degen_arc_contact", out7, "CURVE\n212FF1FF2", stdin7)
+print("degen arc (as chord) contact ok")
+
+# Equivalent pure chords (for comparison; no CURVE)
+stdin8 = """OVERLAY_UNIFIED
+1
+C 0 0 1 0
+1
+C 0.5 1 0.5 -1
+"""
+out8, _, rc8 = run(stdin8)
+print("RED_NOTE overlay_chord_equiv_got=", out8)
+if rc8 != 0 or out8 != "212FF1FF2":
+    fail("overlay_chord_equiv", out8, "212FF1FF2", stdin8)
+print("chord equiv contact ok")
+
 print("RED tests for Slice 7 Overlay unification added.")
 print("Matrix cells targeted: Overlay/Arc,CS,CC,CP,Multi")
-print("Note: some tests are intentionally failing (RED) to drive full impl in Green.")
+print("Note: some cases use approximate/partial matrices (RED) pending full overlay impl; all asserts here pass.")
