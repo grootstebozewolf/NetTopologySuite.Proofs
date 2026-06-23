@@ -87,6 +87,27 @@ Theorem chord_chord_contact_collinear_sound :
     exists X, between A B X /\ between C D X.
 Proof. exact segments_1d_overlap_share. Qed.
 
+(** §1d  Endpoint / T-junction contact: one endpoint of one segment lies on
+    the other segment (cross-product product is zero, not strictly negative,
+    so §1a does not apply; the collinear fallback may not trigger when the
+    Cramer denominator is large).  The shared point is the endpoint itself.
+    Backs the inclusive t/u ∈ [0,1] range in the OCaml chord_chord_contact
+    Cramer branch. *)
+Theorem chord_chord_contact_endpoint_sound :
+  forall A B C D : Point,
+    between C D A \/
+    between C D B \/
+    between A B C \/
+    between A B D ->
+    exists X, between A B X /\ between C D X.
+Proof.
+  intros A B C D [H | [H | [H | H]]].
+  - exists A. split. apply between_P0. exact H.
+  - exists B. split. apply between_P1. exact H.
+  - exists C. split. exact H. apply between_P0.
+  - exists D. split. exact H. apply between_P1.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §2  Arc-chord contact soundness.                                           *)
 (*                                                                            *)
@@ -109,6 +130,23 @@ Theorem arc_chord_contact_sound :
        arc_span_contains a X) ->
     arc_chord_intersects a P Q.
 Proof. exact chord_crosses_arc_circle_span_sound. Qed.
+
+(** Arc-chord contact, direct-witness form: any point simultaneously on the
+    circumcircle and in the arc span, that also lies on the chord segment,
+    witnesses arc_chord_intersects.  Backs the h = 0 tangent branch of
+    arc_seg_contact (where the foot of perpendicular is the unique candidate)
+    and the endpoint-on-circle case.  The atan2 span test stays at the
+    interface boundary; the caller supplies arc_span_contains as a hypothesis. *)
+Theorem arc_chord_contact_witness_sound :
+  forall (a : CircularArc) (P Q X : Point),
+    between P Q X ->
+    inCircle_R (arc_start a) (arc_mid a) (arc_end a) X = 0 ->
+    arc_span_contains a X ->
+    arc_chord_intersects a P Q.
+Proof.
+  intros a P Q X Hbet Hcirc Hspan.
+  exists X. exact (conj Hbet (conj Hcirc Hspan)).
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §3  Arc-arc contact soundness.                                             *)
@@ -146,6 +184,24 @@ Theorem arc_arc_contact_circle_cross_cond :
        /\ arc_span_contains a2 X) ->
     arc_arc_intersects a1 a2.
 Proof. exact arc_arc_intersects_of_chord_cross_cond. Qed.
+
+(** §3c  Direct-witness form: any point on both circumcircles and in both arc
+    spans witnesses arc_arc_intersects.  Backs the concentric equal-radius
+    branch of arc_arc_contact, where a control point of one arc serves as the
+    witness (control points lie on their own circumcircle and are trivially in
+    their own span via arc_span_contains_start / arc_span_contains_end; the
+    atan2 span check for the other arc stays at the interface boundary). *)
+Theorem arc_arc_contact_witness_sound :
+  forall (a1 a2 : CircularArc) (X : Point),
+    inCircle_R (arc_start a1) (arc_mid a1) (arc_end a1) X = 0 ->
+    inCircle_R (arc_start a2) (arc_mid a2) (arc_end a2) X = 0 ->
+    arc_span_contains a1 X ->
+    arc_span_contains a2 X ->
+    arc_arc_intersects a1 a2.
+Proof.
+  intros a1 a2 X H1 H2 Hsp1 Hsp2.
+  exists X. exact (conj H1 (conj H2 (conj Hsp1 Hsp2))).
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §4  Circumcenter kernel soundness.                                         *)
@@ -192,8 +248,11 @@ Proof. exact circumcentre_formula_equidistant. Qed.
 Print Assumptions chord_chord_contact_crossing_sound.
 Print Assumptions chord_chord_contact_rejection_sound.
 Print Assumptions chord_chord_contact_collinear_sound.
+Print Assumptions chord_chord_contact_endpoint_sound.
 Print Assumptions arc_chord_contact_sound.
+Print Assumptions arc_chord_contact_witness_sound.
 Print Assumptions arc_arc_contact_shared_endpoint.
 Print Assumptions arc_arc_contact_circle_cross_cond.
+Print Assumptions arc_arc_contact_witness_sound.
 Print Assumptions overlay_circumcenter_candidate_sound.
 Print Assumptions overlay_circumcenter_formula_sound.

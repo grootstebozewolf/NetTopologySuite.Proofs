@@ -1836,7 +1836,18 @@ let run_distance_unified () =
    arc centres, point_on_arc_sector for sweep membership.
    Returns "FFFFFFFFF" for disjoint geometries; "212FF1FF2" when contact exists.
    Prefixes "CURVE\n" when either input contains a circular-arc segment.
-   Proof companions: theories/RelateCurveMatrix.v, ArcArcSound.v, ArcPointDistance.v.
+   Proof companions: theories/OverlayContactSound.v, theories/CircumcentreQSound.v,
+   theories/RingContactSound.v.
+
+   Stdin protocol (same format as RING_SIMPLE / DISTANCE_UNIFIED):
+     Line 1:  integer nA — number of segments in geometry A
+     Lines 2..nA+1: one segment per line:
+       "C x1 y1 x2 y2"            — chord from (x1,y1) to (x2,y2)
+       "A x1 y1 x2 y2 x3 y3"      — circular arc with control points start/mid/end
+     Line nA+2: integer nB — number of segments in geometry B
+     Lines nA+3..nA+nB+2: same format for geometry B
+   Stdout:  "CURVE\n<matrix>" if any arc present, else "<matrix>"
+            matrix = "212FF1FF2" (contact) | "FFFFFFFFF" (disjoint) | "NAN" (non-finite input)
 *)
 let run_overlay_unified () =
   let parse_seg () =
@@ -1848,7 +1859,7 @@ let run_overlay_unified () =
     match toks with
     | "C" :: x1 :: y1 :: x2 :: y2 :: _ -> `Chord (p x1 y1, p x2 y2)
     | "A" :: x1 :: y1 :: x2 :: y2 :: x3 :: y3 :: _ -> `Arc (p x1 y1, p x2 y2, p x3 y3)
-    | _ -> `Chord ({ bx = 0.; by_ = 0. }, { bx = 0.; by_ = 0. }) in
+    | _ -> failwith "OVERLAY_UNIFIED: bad segment line" in
   let nA = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
   let segsA = Array.init nA (fun _ -> parse_seg ()) in
   let nB = try int_of_string (String.trim (input_line stdin)) with _ -> 0 in
@@ -1863,11 +1874,18 @@ let run_overlay_unified () =
   if not (List.for_all finite_bpoint all_pts) then
     print_endline (if has_arc then "CURVE\nNAN" else "NAN")
   else begin
-    (* Exact-Q arc/chord contact kernels — same formulas as CURVE_RELATE_MATRIX lineal path. *)
-    let arc_seg_contact (a, b, c) (p : bPoint) (q : bPoint) =
+    (* Exact-Q arc/chord contact kernels — same formulas as CURVE_RELATE_MATRIX lineal path.
+       NOTE: arc_seg_contact / arc_arc_contact / chord_chord_contact duplicate the
+       projection/radical-axis logic of arc_seg_pts / arc_arc_pts / chord_chord_pts in
+       run_ring_simple (returning bool instead of point list).  True deduplication
+       requires lifting those helpers out of run_ring_simple's local scope; deferred
+       to a dedicated refactor commit (see run_ring_simple below). *)
+    let rec arc_seg_contact (a, b, c) (p : bPoint) (q : bPoint) =
       match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
               (qf c.bx, qf c.by_) with
-      | None -> false
+      | None ->
+          (* Collinear arc controls: degenerate arc is the chord a→c. *)
+          chord_chord_contact (a, c) (p, q)
       | Some (ox, oy, r2) ->
           let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
           let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
@@ -1892,15 +1910,38 @@ let run_overlay_unified () =
               let cands = if h = 0.0 then [(fxf, fyf, sf)]
                           else [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
                                 (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
+              (* Small epsilon on t consistent with chord_chord_contact's on_seg 1e-9
+                 tolerance; guards rounding in Q.to_float of near-endpoint s values. *)
               List.exists (fun (x, y, t) ->
-                t >= 0.0 && t <= 1.0 && point_on_arc_sector (oxf, oyf) a b c (x, y)
+                t >= -.1e-9 && t <= 1.0 +. 1e-9
+                && point_on_arc_sector (oxf, oyf) a b c (x, y)
               ) cands
             end
-          end in
+          end
+    and chord_chord_contact (p1, q1) (p2, q2) =
+      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
+      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
+      let denom = d1x *. d2y -. d1y *. d2x in
+      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
+      if abs_float denom > 1e-12 *. scale *. scale then begin
+        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
+        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
+        t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+      end else begin
+        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
+          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
+          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
+          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
+        List.exists (fun x -> on_seg p1 q1 x) [p2; q2]
+        || List.exists (fun x -> on_seg p2 q2 x) [p1; q1]
+      end in
     let arc_arc_contact (a1, b1, c1) (a2, b2, c2) =
       match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
             circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
-      | None, _ | _, None -> false
+      | None, None -> chord_chord_contact (a1, c1) (a2, c2)
+      | None, Some _ -> arc_seg_contact (a2, b2, c2) a1 c1
+      | Some _, None -> arc_seg_contact (a1, b1, c1) a2 c2
       | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
           let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
                          (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
@@ -1929,24 +1970,6 @@ let run_overlay_unified () =
               List.exists (fun pt -> span1 pt && span2 pt) cands
             end
           end in
-    let chord_chord_contact (p1, q1) (p2, q2) =
-      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
-      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
-      let denom = d1x *. d2y -. d1y *. d2x in
-      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
-      if abs_float denom > 1e-12 *. scale *. scale then begin
-        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
-        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
-        t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
-      end else begin
-        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
-          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
-          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
-          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
-          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
-        List.exists (fun x -> on_seg p1 q1 x) [p2; q2]
-        || List.exists (fun x -> on_seg p2 q2 x) [p1; q1]
-      end in
     let seg_contact s1 s2 =
       match s1, s2 with
       | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_contact (p1, q1) (p2, q2)
