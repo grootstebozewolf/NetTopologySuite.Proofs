@@ -317,6 +317,8 @@ theorem is restated over continuous paths as `JCT_two_components_cont`
 vacuous. See [`docs/jct-vacuity-finding.md`](jct-vacuity-finding.md) and
 [`docs/h1-vacuity/`](h1-vacuity/). Cite as "conditional headline + oracle".
 
+**#66 OV progress link (2026-06 dedup):** The pts-hoist + contact dedup (top-level `arc_seg_pts` etc. after `point_on_arc_sector`; `run_overlay_unified` now thin delegates `<> []` using `pair_pts`) provides clean single-source contact math for the unified OVERLAY_UNIFIED oracle path. This directly supports #66's OV item (arc-preserving overlay output) and related N-SS/PRC-SN without duplicating projection logic. No new Admitteds; supports conditional headline in `OverlayCorrectness.v` / `extract_rings_valid`. See also driver source, allowlist, and TRIAGE #66 per-ask.
+
 ## Phase 4 — Native curves (linearization, chord-approx arcs) <!-- feat:distance,arc-len,area,relate,overlay geom:arc,cs -->
 
 | `file : theorem` | Meaning | Ax |

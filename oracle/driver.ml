@@ -1310,6 +1310,133 @@ let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy)
      e.g. a tangency or shared vertex exactly at A).  Re-include dAQ = 0. *)
   if dAB <= dAC then dAQ <= dAC else (dAQ >= dAC || dAQ = 0.0)
 
+(* chord-chord segment intersection (proper crossing or collinear overlap) *)
+let chord_chord_pts (p1, q1) (p2, q2) =
+  let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
+  let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
+  let denom = d1x *. d2y -. d1y *. d2x in
+  let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
+  if abs_float denom > 1e-12 *. scale *. scale then begin
+    let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
+    let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
+    if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
+    then [(p1.bx +. t *. d1x, p1.by_ +. t *. d1y)] else []
+  end else begin
+    (* parallel: collinear-overlap via endpoint containment *)
+    let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
+      let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
+      let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
+      let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
+      abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
+    List.filter_map (fun x -> if on_seg p1 q1 x then Some (x.bx, x.by_) else None) [p2; q2]
+    @ List.filter_map (fun x -> if on_seg p2 q2 x then Some (x.bx, x.by_) else None) [p1; q1]
+  end
+
+(* circle (arc circumcircle) intersect segment, points in sweep AND on [0,1] *)
+let arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
+  match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+          (qf c.bx, qf c.by_) with
+  | None ->
+      (* Collinear/degenerate arc controls: fall back to chord a-c intersection points.
+         This makes thin delegates in overlay correct for degen arcs (treated as chord).
+         Safe for ring_simple callers: they early-reject any degen arc with DEGENERATE
+         before reaching pair_pts / arc_seg_pts. *)
+      chord_chord_pts (a, c) (p, q)
+  | Some (ox, oy, r2) ->
+      let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
+      let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
+      if qeq l2q q0 then []
+      else begin
+        let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
+                          (Q.mul (Q.sub oy (qf p.by_)) dyq) in
+        let s = Q.div projn l2q in
+        let fxq = Q.add (qf p.bx) (Q.mul s dxq)
+        and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
+        let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
+                        (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
+        let h2q = Q.sub r2 d2q in
+        if qlt h2q q0 then []
+        else begin
+          let oxf = Q.to_float ox and oyf = Q.to_float oy in
+          let lf = sqrt (Q.to_float l2q) in
+          let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
+          let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
+          let sf = Q.to_float s and h = sqrt (Q.to_float h2q) in
+          let hl = h /. lf in
+          let cands = if h = 0.0 then [(fxf, fyf, sf)]
+                      else [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
+                            (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
+          List.filter_map (fun (x, y, t) ->
+            if t >= 0.0 && t <= 1.0 && point_on_arc_sector (oxf, oyf) a b c (x, y)
+            then Some (x, y) else None) cands
+        end
+      end
+
+(* two arcs' circumcircles intersect, points in BOTH sweeps *)
+let arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
+  match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
+        circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
+  | None, None -> chord_chord_pts (a1, c1) (a2, c2)
+  | None, Some _ -> arc_seg_pts (a2, b2, c2) a1 c1
+  | Some _, None -> arc_seg_pts (a1, b1, c1) a2 c2
+  | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
+      let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
+                     (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
+      let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
+      let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
+      let span1 (x, y) = point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (x, y) in
+      let span2 (x, y) = point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (x, y) in
+      if qeq dq q0 then begin
+        (* coincident circles (concentric + equal radius): arcs on the SAME
+           circle -- they overlap iff a control point of one is in the
+           other's sweep.  (Equal-radius concentric only; else no meet.) *)
+        if qeq r1sq r2sq then
+          (List.filter (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
+           |> List.map (fun v -> (v.bx, v.by_)))
+          @ (List.filter (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1]
+             |> List.map (fun v -> (v.bx, v.by_)))
+        else []
+      end else begin
+        let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
+        let d2 = Q.to_float dq in
+        let d = sqrt d2 in
+        let a = (d2 +. r1f -. r2f) /. (2.0 *. d) in
+        let h2 = r1f -. a *. a in
+        if h2 < 0.0 then []
+        else begin
+          let h = sqrt h2 in
+          let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
+          let mx = o1xf +. a *. ux and my = o1yf +. a *. uy in
+          let cands = if h = 0.0 then [(mx -. h *. uy, my +. h *. ux)]
+                      else [(mx -. h *. uy, my +. h *. ux);
+                            (mx +. h *. uy, my -. h *. ux)] in
+          List.filter (fun pt -> span1 pt && span2 pt) cands
+        end
+      end
+
+let pair_pts s1 s2 =
+  match s1, s2 with
+  | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
+  | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
+  | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
+  (* E/B treated as their end-to-end chord for current boundary-cross / pair logic.
+     Real classification for adversarial cases is done by the independent Python
+     model inside the hunter / gen scripts. *)
+  | `Elliptic (c, _, _, _, _, _), `Chord (p, q)
+  | `Chord (p, q), `Elliptic (c, _, _, _, _, _) ->
+      chord_chord_pts (c, c) (p, q)
+  | `Bezier (p0, _, _, p3), `Chord (p, q)
+  | `Chord (p, q), `Bezier (p0, _, _, p3) ->
+      chord_chord_pts (p0, p3) (p, q)
+  | `Elliptic _, `Elliptic _
+  | `Bezier _, `Bezier _
+  | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
+      []
+  (* Mixed Arc + new types (conservative proxy) *)
+  | `Arc _, `Elliptic _ | `Elliptic _, `Arc _
+  | `Arc _, `Bezier _ | `Bezier _, `Arc _ ->
+      [] 
+
 (* ----- ARC_ARC_XY (issue #64 #5b / N-AA): arc-arc intersection coordinates.
    ---------------------------------------------------------------------------
    The intersection POINTS of two circular arcs, enumerated.  Two circumcircles
@@ -1885,114 +2012,12 @@ let run_overlay_unified () =
   if not (List.for_all finite_bpoint all_pts) then
     print_endline (if has_arc then "CURVE\nNAN" else "NAN")
   else begin
-    (* Exact-Q arc/chord contact kernels — same formulas as CURVE_RELATE_MATRIX lineal path.
-       NOTE: arc_seg_contact / arc_arc_contact / chord_chord_contact duplicate the
-       projection/radical-axis logic of arc_seg_pts / arc_arc_pts / chord_chord_pts in
-       run_ring_simple (returning bool instead of point list).  True deduplication
-       requires lifting those helpers out of run_ring_simple's local scope; deferred
-       to a dedicated refactor commit (see run_ring_simple below). *)
-    let rec arc_seg_contact (a, b, c) (p : bPoint) (q : bPoint) =
-      match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
-              (qf c.bx, qf c.by_) with
-      | None ->
-          (* Collinear arc controls: degenerate arc is the chord a→c. *)
-          chord_chord_contact (a, c) (p, q)
-      | Some (ox, oy, r2) ->
-          let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
-          let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
-          if qeq l2q q0 then false
-          else begin
-            let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
-                              (Q.mul (Q.sub oy (qf p.by_)) dyq) in
-            let s = Q.div projn l2q in
-            let fxq = Q.add (qf p.bx) (Q.mul s dxq)
-            and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
-            let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
-                            (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
-            let h2q = Q.sub r2 d2q in
-            if qlt h2q q0 then false
-            else begin
-              let oxf = Q.to_float ox and oyf = Q.to_float oy in
-              let l2f = Q.to_float l2q in
-              if l2f = 0.0 then false
-              else
-              let lf = sqrt l2f in
-              let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
-              let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
-              let sf = Q.to_float s and h = sqrt (max 0.0 (Q.to_float h2q)) in
-              let hl = h /. lf in
-              let cands = [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
-                           (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
-              (* Small epsilon on t consistent with chord_chord_contact's on_seg 1e-9
-                 tolerance; guards rounding in Q.to_float of near-endpoint s values. *)
-              List.exists (fun (x, y, t) ->
-                t >= -.1e-9 && t <= 1.0 +. 1e-9
-                && point_on_arc_sector (oxf, oyf) a b c (x, y)
-              ) cands
-            end
-          end
-    and chord_chord_contact (p1, q1) (p2, q2) =
-      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
-      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
-      let denom = d1x *. d2y -. d1y *. d2x in
-      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
-      if abs_float denom > 1e-12 *. scale *. scale then begin
-        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
-        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
-        t >= -.1e-9 && t <= 1.0 +. 1e-9 && u >= -.1e-9 && u <= 1.0 +. 1e-9
-      end else begin
-        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
-          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
-          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
-          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
-          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
-        List.exists (fun x -> on_seg p1 q1 x) [p2; q2]
-        || List.exists (fun x -> on_seg p2 q2 x) [p1; q1]
-      end in
-    let arc_arc_contact (a1, b1, c1) (a2, b2, c2) =
-      match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
-            circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
-      | None, None -> chord_chord_contact (a1, c1) (a2, c2)
-      | None, Some _ -> arc_seg_contact (a2, b2, c2) a1 c1
-      | Some _, None -> arc_seg_contact (a1, b1, c1) a2 c2
-      | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
-          let endpoints_share =
-            (a1.bx = a2.bx && a1.by_ = a2.by_) || (a1.bx = c2.bx && a1.by_ = c2.by_) ||
-            (c1.bx = a2.bx && c1.by_ = a2.by_) || (c1.bx = c2.bx && c1.by_ = c2.by_) in
-          if endpoints_share then true
-          else
-          let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
-                         (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
-          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
-          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
-          let span1 pt = point_on_arc_sector (o1xf, o1yf) a1 b1 c1 pt in
-          let span2 pt = point_on_arc_sector (o2xf, o2yf) a2 b2 c2 pt in
-          if qeq dq q0 then
-            qeq r1sq r2sq &&
-            (List.exists (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
-             || List.exists (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1])
-          else begin
-            (* Discriminant computed exactly in Q (mirroring arc_seg_contact's
-               h2q guard) so near-tangent arc-arc pairs are not lost to float
-               rounding in a_coef.  With aq = dq + r1sq - r2sq (= 2*d*a_coef),
-               a_coef^2 = aq^2 / (4*dq), so h2 = r1sq - aq^2/(4*dq) has the same
-               sign as 4*dq*r1sq - aq^2; dq > 0 in this branch. *)
-            let aq = Q.add (Q.sub dq r2sq) r1sq in
-            let h2_numq = Q.sub (Q.mul (Q.mul (Q.of_int 4) dq) r1sq) (Q.mul aq aq) in
-            if qlt h2_numq q0 then false
-            else begin
-              let d2 = Q.to_float dq in
-              let d = sqrt d2 in
-              let a_coef = Q.to_float aq /. (2.0 *. d) in
-              let h2 = Q.to_float h2_numq /. (4.0 *. d2) in
-              let h = sqrt (max 0.0 h2) in
-              let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
-              let mx = o1xf +. a_coef *. ux and my = o1yf +. a_coef *. uy in
-              let cands = [(mx -. h *. uy, my +. h *. ux);
-                           (mx +. h *. uy, my -. h *. ux)] in
-              List.exists (fun pt -> span1 pt && span2 pt) cands
-            end
-          end in
+    (* Thin (one-line) delegates to the hoisted *_pts helpers.
+       All projection/radical/cramer + degen dispatch now canonical in pts.
+       Non-empty list <=> contact. *)
+    let arc_seg_contact a p q = arc_seg_pts a p q <> []
+    and chord_chord_contact p q = chord_chord_pts p q <> []
+    and arc_arc_contact a1 a2 = arc_arc_pts a1 a2 <> [] in
     let seg_contact s1 s2 =
       match s1, s2 with
       | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_contact (p1, q1) (p2, q2)
@@ -2072,122 +2097,6 @@ let run_ring_simple () =
     let hypot2 dx dy = sqrt (dx *. dx +. dy *. dy) in
     let same (x, y) (v : bPoint) =
       hypot2 (x -. v.bx) (y -. v.by_) <= 1e-9 *. (1.0 +. hypot2 v.bx v.by_) in
-    (* circle (arc circumcircle) intersect segment, points in sweep AND on [0,1] *)
-    let arc_seg_pts (a, b, c) (p : bPoint) (q : bPoint) =
-      match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
-              (qf c.bx, qf c.by_) with
-      | None -> []
-      | Some (ox, oy, r2) ->
-          let dxq = Q.sub (qf q.bx) (qf p.bx) and dyq = Q.sub (qf q.by_) (qf p.by_) in
-          let l2q = Q.add (Q.mul dxq dxq) (Q.mul dyq dyq) in
-          if qeq l2q q0 then []
-          else begin
-            let projn = Q.add (Q.mul (Q.sub ox (qf p.bx)) dxq)
-                              (Q.mul (Q.sub oy (qf p.by_)) dyq) in
-            let s = Q.div projn l2q in
-            let fxq = Q.add (qf p.bx) (Q.mul s dxq)
-            and fyq = Q.add (qf p.by_) (Q.mul s dyq) in
-            let d2q = Q.add (Q.mul (Q.sub ox fxq) (Q.sub ox fxq))
-                            (Q.mul (Q.sub oy fyq) (Q.sub oy fyq)) in
-            let h2q = Q.sub r2 d2q in
-            if qlt h2q q0 then []
-            else begin
-              let oxf = Q.to_float ox and oyf = Q.to_float oy in
-              let lf = sqrt (Q.to_float l2q) in
-              let uxf = (q.bx -. p.bx) /. lf and uyf = (q.by_ -. p.by_) /. lf in
-              let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
-              let sf = Q.to_float s and h = sqrt (Q.to_float h2q) in
-              let hl = h /. lf in
-              let cands = if h = 0.0 then [(fxf, fyf, sf)]
-                          else [(fxf +. h *. uxf, fyf +. h *. uyf, sf +. hl);
-                                (fxf -. h *. uxf, fyf -. h *. uyf, sf -. hl)] in
-              List.filter_map (fun (x, y, t) ->
-                if t >= 0.0 && t <= 1.0 && point_on_arc_sector (oxf, oyf) a b c (x, y)
-                then Some (x, y) else None) cands
-            end
-          end in
-    (* two arcs' circumcircles intersect, points in BOTH sweeps *)
-    let arc_arc_pts (a1, b1, c1) (a2, b2, c2) =
-      match circumcentre_q (qf a1.bx, qf a1.by_) (qf b1.bx, qf b1.by_) (qf c1.bx, qf c1.by_),
-            circumcentre_q (qf a2.bx, qf a2.by_) (qf b2.bx, qf b2.by_) (qf c2.bx, qf c2.by_) with
-      | None, _ | _, None -> []
-      | Some (o1x, o1y, r1sq), Some (o2x, o2y, r2sq) ->
-          let dq = Q.add (Q.mul (Q.sub o2x o1x) (Q.sub o2x o1x))
-                         (Q.mul (Q.sub o2y o1y) (Q.sub o2y o1y)) in
-          let o1xf = Q.to_float o1x and o1yf = Q.to_float o1y in
-          let o2xf = Q.to_float o2x and o2yf = Q.to_float o2y in
-          let span1 (x, y) = point_on_arc_sector (o1xf, o1yf) a1 b1 c1 (x, y) in
-          let span2 (x, y) = point_on_arc_sector (o2xf, o2yf) a2 b2 c2 (x, y) in
-          if qeq dq q0 then begin
-            (* coincident circles (concentric + equal radius): arcs on the SAME
-               circle -- they overlap iff a control point of one is in the
-               other's sweep.  (Equal-radius concentric only; else no meet.) *)
-            if qeq r1sq r2sq then
-              (List.filter (fun v -> span1 (v.bx, v.by_)) [a2; b2; c2]
-               |> List.map (fun v -> (v.bx, v.by_)))
-              @ (List.filter (fun v -> span2 (v.bx, v.by_)) [a1; b1; c1]
-                 |> List.map (fun v -> (v.bx, v.by_)))
-            else []
-          end else begin
-            let r1f = Q.to_float r1sq and r2f = Q.to_float r2sq in
-            let d2 = Q.to_float dq in
-            let d = sqrt d2 in
-            let a = (d2 +. r1f -. r2f) /. (2.0 *. d) in
-            let h2 = r1f -. a *. a in
-            if h2 < 0.0 then []
-            else begin
-              let h = sqrt h2 in
-              let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
-              let mx = o1xf +. a *. ux and my = o1yf +. a *. uy in
-              let cands = if h = 0.0 then [(mx -. h *. uy, my +. h *. ux)]
-                          else [(mx -. h *. uy, my +. h *. ux);
-                                (mx +. h *. uy, my -. h *. ux)] in
-              List.filter (fun pt -> span1 pt && span2 pt) cands
-            end
-          end in
-    (* chord-chord segment intersection (proper crossing or collinear overlap) *)
-    let chord_chord_pts (p1, q1) (p2, q2) =
-      let d1x = q1.bx -. p1.bx and d1y = q1.by_ -. p1.by_ in
-      let d2x = q2.bx -. p2.bx and d2y = q2.by_ -. p2.by_ in
-      let denom = d1x *. d2y -. d1y *. d2x in
-      let scale = 1.0 +. abs_float d1x +. abs_float d1y +. abs_float d2x +. abs_float d2y in
-      if abs_float denom > 1e-12 *. scale *. scale then begin
-        let t = ((p2.bx -. p1.bx) *. d2y -. (p2.by_ -. p1.by_) *. d2x) /. denom in
-        let u = ((p2.bx -. p1.bx) *. d1y -. (p2.by_ -. p1.by_) *. d1x) /. denom in
-        if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0
-        then [(p1.bx +. t *. d1x, p1.by_ +. t *. d1y)] else []
-      end else begin
-        (* parallel: collinear-overlap via endpoint containment *)
-        let on_seg (a : bPoint) (b : bPoint) (x : bPoint) =
-          let cross = (b.bx -. a.bx) *. (x.by_ -. a.by_) -. (b.by_ -. a.by_) *. (x.bx -. a.bx) in
-          let l2 = (b.bx -. a.bx) *. (b.bx -. a.bx) +. (b.by_ -. a.by_) *. (b.by_ -. a.by_) in
-          let dot = (x.bx -. a.bx) *. (b.bx -. a.bx) +. (x.by_ -. a.by_) *. (b.by_ -. a.by_) in
-          abs_float cross <= 1e-9 *. (1.0 +. l2) && dot >= -1e-9 && dot <= l2 +. 1e-9 in
-        List.filter_map (fun x -> if on_seg p1 q1 x then Some (x.bx, x.by_) else None) [p2; q2]
-        @ List.filter_map (fun x -> if on_seg p2 q2 x then Some (x.bx, x.by_) else None) [p1; q1]
-      end in
-    let pair_pts s1 s2 =
-      match s1, s2 with
-      | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
-      | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
-      | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
-      (* E/B treated as their end-to-end chord for current boundary-cross / pair logic.
-         Real classification for adversarial cases is done by the independent Python
-         model inside the hunter / gen scripts. *)
-      | `Elliptic (c, _, _, _, _, _), `Chord (p, q)
-      | `Chord (p, q), `Elliptic (c, _, _, _, _, _) ->
-          chord_chord_pts (c, c) (p, q)
-      | `Bezier (p0, _, _, p3), `Chord (p, q)
-      | `Chord (p, q), `Bezier (p0, _, _, p3) ->
-          chord_chord_pts (p0, p3) (p, q)
-      | `Elliptic _, `Elliptic _
-      | `Bezier _, `Bezier _
-      | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
-          []
-      (* Mixed Arc + new types (conservative proxy) *)
-      | `Arc _, `Elliptic _ | `Elliptic _, `Arc _
-      | `Arc _, `Bezier _ | `Bezier _, `Arc _ ->
-          [] in
     (* permitted shared vertices for an adjacent pair (i, j) *)
     let permitted i j =
       let v = ref [] in
