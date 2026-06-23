@@ -114,13 +114,11 @@ Qed.
    the norm equality.  Proved by the symmetric translation + nsatz on the
    factored polynomial identity (the forward direction nsatz is reversible
    here once the cofactor is shown nonzero by valid_arc non-collinearity). *)
-(* The converse direction (inCircle_R = 0 ⇒ equidistant from the circumcenter
-   defined by the three points) is true by the uniqueness of the circle through
-   three non-collinear points.  It is not needed for the current DISTANCE
-   cluster increment (the forward direction suffices for all constructed feet
-   and witnesses; the circle lower bounds are already proved over the dist = r
-   premise).  No new Admitted is added; the algebraic work is left for the
-   fallback monotonicity follow-up. *)
+(* Converse direction (inCircle_R = 0 ⇒ equidistant) is already proved above
+   as `inCircle_R_zero_implies_equidistant` (used by the discharged D-PT lemmas
+   `radial_lower` and `centre_is_r`). The algebraic work for the on-arc case
+   was completed prior to this session; only the endpoint-fallback monotonicity
+   (via arc_orient) remains pending for the last D-PT stub. *)
 
 (* ========================================================================== *)
 (* §1c  Converse: on the circumcircle ⇒ equidistant from the circumcenter    *)

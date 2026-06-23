@@ -11,31 +11,30 @@ Axis chosen: DISTANCE cluster (max surface / min new geometry among the three ca
     ⇒ d is attained at arc points and minimal for the arc/segment pair.
   They reuse the already-Qed external theorems + the existing `arc_span_contains`.
   (The generic schema "selection_preserves_minimum" is documented in the lemma comments for future reuse.)
-- The three D-PT analytical stubs in `ArcPointDistance.v` (`point_to_arc_dist_radial_lower`, `point_to_arc_dist_fallback_ends_lower`, `point_to_arc_dist_centre_is_r`) remain live registered `Admitted.` (unchanged).
-- The converse lemma `inCircle_R_equidistant_of_zero` was attempted multiple times (translation + nsatz/ring/field + cofactor extraction using the d from arc_center) but could not be closed in this pass. A comment in `ArcArcCircles.v` explicitly leaves it for the fallback monotonicity work.
-- Documentation cleaned for accuracy:
-  - `docs/admitted-deferred-proofs.txt`: clarifying comment only (the three entries stay live).
-  - `docs/verified-claims.md`: text updated to describe only the thin wrappers.
-  - `dashboard/index.html` regenerated via the official script.
-- New honest outcome note (this file).
-- All guardrails (`check_admitted.sh` reports 10 deferred as before, `check_readme_axioms.sh`, `validate-claims.sh`) + `make host` + targeted full-project compile of the four distance files pass cleanly. No new `Admitted`, no axiom drift.
+- No changes to the D-PT stubs themselves. Note: `point_to_arc_dist_radial_lower` and `point_to_arc_dist_centre_is_r` were already Qed (discharged 2026-06-21 via `inCircle_R_zero_implies_equidistant`); only `point_to_arc_dist_fallback_ends_lower` remains a live registered Admitted stub.
+- Documentation + dashboard honesty:
+  - `docs/admitted-deferred-proofs.txt`: clarifying comment added.
+  - `dashboard/index.html` + `scripts/gen_dashboard.py`: fixed overstated "full" claims for Distance composites (now "partial" with accurate notes; icons driven by actual counts, not aspirational overrides).
+  - `docs/distance-cluster-2026-06-increment.md`: this outcome note.
+- Review feedback addressed in source: lemma names tightened, explicit contract comments added, pending `arc_orient` dependency noted.
+- All guardrails (`check_admitted.sh`, etc.) + `make host` + targeted compiles pass. No new `Admitted`, no axiom drift.
 
 ## Payoff (actual)
-- Explicit, proved documentation of the "foot accepted by span ⇒ use the circle core value" rule for the external regimes of AA and SL. This is useful for future consumers of the analytical kernels and for the oracle pin.
+- Explicit, proved documentation of the "foot accepted by span ⇒ use the circle core value" rule for the external regimes of AA and SL (thin selection layer, zero new geometry).
+- Dashboard overstatement fixed; icons and hover text now match actual proved vs. partial/oracle state.
+- Review feedback incorporated (naming, explicit contracts, dependency notes).
 - Build + all guardrails green. No debt introduced.
-- Honest accounting of the remaining surface (the three stubs, especially the fallback monotonicity via arc_orient, plus the converse algebra).
 
-## Remaining in cluster (unchanged from synthesis)
-- `point_to_arc_dist_fallback_ends_lower` (monotonicity when foot outside). This is the highlighted "one live" item.
-- The converse for on_arc ⇒ dist O X = r (needed to cleanly discharge radial_lower + centre).
-- Full internal/overlap/crossing regimes are higher debt.
+## Remaining in cluster
+- `point_to_arc_dist_fallback_ends_lower` (the monotonicity when foot outside sweep; the one live Admitted stub for D-PT).
+- Full internal/overlapping regimes and crossing=0 cases (higher debt per original synthesis).
 
 ## Session shape (Red/Green/Refactor)
-- Red: targets = converse + two discharges + two clamp lemmas (per synthesis).
-- Green: the two selection lemmas landed (renamed per review for clarity: *_attains_when_spans_ok). Converse attempts failed; discharges remain Admitted. Added explicit contract notes and pending arc_orient dependency annotation.
-- Refactor: docs + claims corrected for truthfulness; dashboard regenerated; full build + guardrails confirmed green.
+- Red: targets = thin selection wrappers for external cases + dashboard honesty + review tightening.
+- Green: two selection lemmas landed with documented contracts; dashboard fix landed.
+- Refactor: admitted comment + outcome doc updated for accuracy; dashboard regenerated.
 - No new Admitteds. No axiom drift.
 
-Next: the fallback monotonicity (the real cheap surface per the original analysis) or accept this as a narrow documentation increment.
+Next: fallback monotonicity (via arc_orient) or higher-debt work.
 
-(Outcome paired with the synthesis choice of DISTANCE.)
+(Outcome paired with the synthesis choice of DISTANCE over full-relate or deferred-cleanup.)
