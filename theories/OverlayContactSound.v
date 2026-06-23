@@ -108,6 +108,15 @@ Proof.
   - exists D. split. exact H. apply between_P1.
 Qed.
 
+(** §1e  Shared-vertex contact: one endpoint of one segment equals one
+    endpoint of the other (the "corner meets corner" case).  Backed by
+    Intersect.shared_endpoint_share_point; no cross-product premise needed. *)
+Theorem chord_chord_contact_shared_vertex :
+  forall A B C D : Point,
+    (A = C \/ A = D \/ B = C \/ B = D) ->
+    exists X, between A B X /\ between C D X.
+Proof. exact shared_endpoint_share_point. Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §2  Arc-chord contact soundness.                                           *)
 (*                                                                            *)
@@ -249,6 +258,7 @@ Print Assumptions chord_chord_contact_crossing_sound.
 Print Assumptions chord_chord_contact_rejection_sound.
 Print Assumptions chord_chord_contact_collinear_sound.
 Print Assumptions chord_chord_contact_endpoint_sound.
+Print Assumptions chord_chord_contact_shared_vertex.
 Print Assumptions arc_chord_contact_sound.
 Print Assumptions arc_chord_contact_witness_sound.
 Print Assumptions arc_arc_contact_shared_endpoint.

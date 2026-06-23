@@ -1959,9 +1959,11 @@ let run_overlay_unified () =
             let d = sqrt d2 in
             let a_coef = (d2 +. r1f -. r2f) /. (2.0 *. d) in
             let h2 = r1f -. a_coef *. a_coef in
-            if h2 < 0.0 then false
+            (* Small epsilon guards near-tangent contacts lost to FP rounding
+               in a_coef; consistent with chord_chord_contact's on_seg 1e-9. *)
+            if h2 < -1e-9 then false
             else begin
-              let h = sqrt h2 in
+              let h = sqrt (max 0.0 h2) in
               let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
               let mx = o1xf +. a_coef *. ux and my = o1yf +. a_coef *. uy in
               let cands = if h = 0.0 then [(mx -. h *. uy, my +. h *. ux)]
