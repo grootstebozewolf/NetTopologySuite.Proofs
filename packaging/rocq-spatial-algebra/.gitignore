@@ -1,8 +1,9 @@
 # Vendored source files (assembled from the corpus via ./assemble.sh; the
-# source of record lives in ../../theories).
-/theories/
+# source of record lives in ../../theories). The committed theories/dune stays.
+/theories/*.v
 
-# Rocq build artefacts
+# Rocq / dune / coq_makefile build artefacts
+_build/
 Makefile.coq
 Makefile.coq.conf
 *.vo

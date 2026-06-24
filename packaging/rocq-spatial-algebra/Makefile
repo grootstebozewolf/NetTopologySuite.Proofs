@@ -23,7 +23,7 @@ package: clean
 	tar czf dist/coq-spatial-algebra.tar.gz \
 	    --transform 's,^,coq-spatial-algebra/,' \
 	    MANIFEST _CoqProject Makefile assemble.sh README.md LICENSE \
-	    coq-spatial-algebra.opam theories
+	    coq-spatial-algebra.opam dune-project default.nix theories
 	@echo "Wrote dist/coq-spatial-algebra.tar.gz"
 
 clean:
@@ -31,7 +31,8 @@ clean:
 	rm -f Makefile.coq Makefile.coq.conf
 
 # Remove vendored sources too (back to the committed infra-only state).
+# Keeps theories/dune (committed); only the assembled *.v are removed.
 distclean: clean
-	rm -rf theories
+	rm -f theories/*.v
 
 .PHONY: all install package clean distclean

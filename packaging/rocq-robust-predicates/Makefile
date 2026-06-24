@@ -23,7 +23,8 @@ package: clean
 	tar czf dist/coq-robust-predicates.tar.gz \
 	    --transform 's,^,coq-robust-predicates/,' \
 	    MANIFEST _CoqProject Makefile assemble.sh README.md LICENSE \
-	    coq-robust-predicates.opam theories theories-flocq
+	    coq-robust-predicates.opam dune-project default.nix \
+	    theories theories-flocq
 	@echo "Wrote dist/coq-robust-predicates.tar.gz"
 
 clean:
@@ -31,7 +32,8 @@ clean:
 	rm -f Makefile.coq Makefile.coq.conf
 
 # Remove vendored sources too (back to the committed infra-only state).
+# Keeps the committed theories/dune + theories-flocq/dune; only *.v are removed.
 distclean: clean
-	rm -rf theories theories-flocq
+	rm -f theories/*.v theories-flocq/*.v
 
 .PHONY: all install package clean distclean

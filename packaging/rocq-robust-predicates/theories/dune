@@ -1,0 +1,3 @@
+(coq.theory
+ (name NTS.Proofs)
+ (package coq-robust-predicates))

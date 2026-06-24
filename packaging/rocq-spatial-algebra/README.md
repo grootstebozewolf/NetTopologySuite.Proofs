@@ -23,18 +23,32 @@ else in the corpus.
 ## Build & install
 
 The `.v` files are vendored from the corpus via a manifest (so they never
-silently drift from the source of record). From a clone of the parent repo:
+silently drift from the source of record). First assemble them (the release
+tarball is already assembled, so this step is only for an in-repo build):
 
 ```sh
 cd packaging/rocq-spatial-algebra
 ./assemble.sh            # copy the 2 source files from the corpus
-make                     # build
-make install             # install to user-contrib under NTS.Proofs
+```
+
+Then build with **any** of the three supported toolchains (inspired by the
+[rocq-community/templates](https://github.com/coq-community/templates) layout):
+
+```sh
+# opam / coq_makefile
+make && make install
+
+# dune
+dune build && dune install
+
+# nix (self-contained nixpkgs)
+nix-build
 ```
 
 Requirements: `rocq-core >= 9.0` and `rocq-stdlib >= 9.0` (no Flocq).
 
-To produce a standalone opam source tarball (self-contained, no corpus needed):
+To produce a standalone opam source tarball (self-contained, no corpus needed
+— bundles the opam, dune, and nix files):
 
 ```sh
 make package             # -> dist/coq-spatial-algebra.tar.gz

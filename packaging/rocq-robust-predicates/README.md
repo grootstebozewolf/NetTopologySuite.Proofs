@@ -41,23 +41,42 @@ therefore exposes only fully unconditional `Qed`s.
 ## Build & install
 
 This package vendors its `.v` files from the corpus via a manifest (so they
-never silently drift from the source of record). From a clone of the parent
-repo:
+never silently drift from the source of record). First assemble them (the
+release tarball is already assembled, so this step is only for an in-repo
+build):
 
 ```sh
 cd packaging/rocq-robust-predicates
 ./assemble.sh            # copy the 15 source files from the corpus
-make                     # build (prints Print Assumptions footprints)
-make install             # install to user-contrib under NTS.Proofs[.Flocq]
+```
+
+Then build with **any** of the three supported toolchains (inspired by the
+[rocq-community/templates](https://github.com/coq-community/templates) layout):
+
+```sh
+# opam / coq_makefile
+make && make install
+
+# dune
+dune build && dune install
+
+# nix (self-contained nixpkgs)
+nix-build
 ```
 
 Requirements: `rocq-core >= 9.0` and `coq-flocq >= 4.2.0`.
 
+> **dune + Flocq:** the dune build resolves Flocq via `(theories Flocq)` in
+> `theories-flocq/dune`, which requires Flocq to be a dune-discoverable theory
+> (it is in nixpkgs `coqPackages.flocq` and in dune-built opam Flocq). The
+> Flocq-free base layer (`theories/`, namespace `NTS.Proofs`) builds with dune
+> unconditionally; the `make`/opam path has no such requirement.
+
 To produce a standalone opam source tarball (self-contained, no corpus needed
-to build it):
+— bundles the opam, dune, and nix files):
 
 ```sh
-make package             # -> ../coq-robust-predicates.tar.gz
+make package             # -> dist/coq-robust-predicates.tar.gz
 ```
 
 ## Namespace
