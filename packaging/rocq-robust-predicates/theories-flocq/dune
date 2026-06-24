@@ -1,0 +1,4 @@
+(coq.theory
+ (name NTS.Proofs.Flocq)
+ (package coq-robust-predicates)
+ (theories NTS.Proofs Flocq))

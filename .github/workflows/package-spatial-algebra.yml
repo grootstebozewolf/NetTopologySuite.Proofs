@@ -1,0 +1,213 @@
+name: Package coq-spatial-algebra
+
+# Validate and publish the standalone `coq-spatial-algebra` opam package
+# (packaging/rocq-spatial-algebra/), extracted from the corpus via its
+# MANIFEST + assemble.sh.  Mirrors package-robust-predicates.yml.
+#
+# NOTE: the package itself needs NO Flocq -- its only deps are rocq-core +
+# rocq-stdlib, and both source files are axiom-free ("Closed under the global
+# context").  CI nonetheless reuses the pinned `toolchain` container (which
+# already has rocq + opam) purely for reliability and parity with the other
+# package/oracle workflows; Flocq present in the image is simply unused.
+#
+#   - validate: on PRs/pushes touching the package (and on demand) assemble
+#     the sources, `opam lint`, then `make` + `make install` -- exactly the
+#     commands opam runs.  Catches manifest drift, opam-file regressions,
+#     and build breakage.
+#   - publish: on a `spatial-algebra-v*` release, build the self-contained
+#     source tarball (`make package`), attach it + sha256 to the release, and
+#     -- when OPAM_PUBLISH_TOKEN is configured -- open the opam-repository PR
+#     via `opam publish` (otherwise prints the manual command, still succeeds).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packaging/rocq-spatial-algebra/**'
+      - 'Dockerfile'
+      - '.github/workflows/package-spatial-algebra.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/rocq-spatial-algebra/**'
+      - 'Dockerfile'
+      - '.github/workflows/package-spatial-algebra.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  TOOLCHAIN_IMAGE: ghcr.io/${{ github.repository_owner }}/nts-proofs-toolchain
+  PKG_DIR: packaging/rocq-spatial-algebra
+  OPAM_FILE: coq-spatial-algebra.opam
+
+concurrency:
+  group: package-spatial-algebra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Assemble, build, lint, install
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute toolchain tag (content-addressed by Dockerfile)
+        id: toolchain
+        run: echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image from GHCR
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Assemble, build, lint, and install the package
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e PKG_DIR -e OPAM_FILE \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              cd "$PKG_DIR"
+              ./assemble.sh /workspace
+              opam lint "$OPAM_FILE"
+              make -j"$(nproc)"
+              make install
+              echo "OK: built $(ls theories/*.vo | wc -l)/2 .vo, linted, installed."
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+
+  publish:
+    name: Build tarball and publish on release
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'spatial-algebra-v')
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute toolchain tag
+        id: toolchain
+        run: echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image (with buildx fallback)
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build self-contained source tarball
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e PKG_DIR \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              cd "$PKG_DIR"
+              make package
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+          ls -la packaging/rocq-spatial-algebra/dist/coq-spatial-algebra.tar.gz
+          sha256sum packaging/rocq-spatial-algebra/dist/coq-spatial-algebra.tar.gz | tee packaging/rocq-spatial-algebra/dist/coq-spatial-algebra.tar.gz.sha256
+
+      - name: Attach tarball to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            packaging/rocq-spatial-algebra/dist/coq-spatial-algebra.tar.gz
+            packaging/rocq-spatial-algebra/dist/coq-spatial-algebra.tar.gz.sha256
+
+      - name: Submit to opam-repository (if OPAM_PUBLISH_TOKEN configured)
+        env:
+          OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
+          OPAM_TARGET_REPO: ${{ vars.OPAM_TARGET_REPO || 'coq/opam' }}
+          TAG: ${{ github.event.release.tag_name }}
+          TARBALL_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/coq-spatial-algebra.tar.gz
+        run: |
+          if [ -z "${OPAM_PUBLISH_TOKEN:-}" ]; then
+            echo "::notice::OPAM_PUBLISH_TOKEN not set -- skipping automated opam-repository PR; tarball is attached to the release."
+            {
+              echo "To submit manually:"
+              echo "  opam publish --repo=$OPAM_TARGET_REPO --tag=$TAG \\"
+              echo "    $TARBALL_URL \\"
+              echo "    $PKG_DIR/$OPAM_FILE"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e OPAMYES=1 \
+            -e GITHUB_TOKEN="$OPAM_PUBLISH_TOKEN" \
+            -e OPAM_TARGET_REPO -e TAG -e TARBALL_URL -e PKG_DIR -e OPAM_FILE \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              opam install -y opam-publish
+              opam publish --no-browser \
+                --repo="$OPAM_TARGET_REPO" \
+                --tag="$TAG" \
+                "$TARBALL_URL" \
+                "$PKG_DIR/$OPAM_FILE"
+            '

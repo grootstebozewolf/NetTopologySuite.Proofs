@@ -1,0 +1,32 @@
+# MANIFEST for coq-robust-predicates
+# ---------------------------------------------------------------------------
+# Source-of-record paths (relative to the NetTopologySuite.Proofs repo root)
+# for every .v file vendored into this standalone package.  `assemble.sh`
+# copies these into ./theories and ./theories-flocq, preserving the
+# NTS.Proofs / NTS.Proofs.Flocq namespaces so no import statement needs
+# editing.  This file is the single point of truth for the package's contents
+# -- the .v files themselves are NOT committed here (they live in the corpus),
+# so there is no risk of a vendored copy silently drifting from the original.
+#
+# Closure verified: this 15-file set is closed under intra-corpus imports
+# (every `From NTS.Proofs[.Flocq] Require` resolves within the set); the only
+# external dependencies are Rocq's Stdlib and Flocq.
+
+# --- exact-real / integer spec base (4 files) ------------------------------
+theories/Orientation.v
+theories/Segment.v
+theories/Distance.v
+theories/Intersect.v
+
+# --- binary64 (Flocq) robustness layer (11 files) --------------------------
+theories-flocq/Validate_binary64.v
+theories-flocq/Orientation_b64.v
+theories-flocq/B64_bridge.v
+theories-flocq/B64_lib.v
+theories-flocq/Orient_b64_R.v
+theories-flocq/Orient_b64_sound.v
+theories-flocq/Orient_b64_exact.v
+theories-flocq/Orient_b64_exact_full.v
+theories-flocq/B64_Expansion.v
+theories-flocq/Intersect_b64.v
+theories-flocq/Intersect_b64_exact.v
