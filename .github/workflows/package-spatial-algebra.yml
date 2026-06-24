@@ -197,17 +197,25 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+          # Clean semver from the tag (strip the "spatial-algebra-v" prefix):
+          #   spatial-algebra-v0.1.0 -> 0.1.0
+          VERSION="${TAG#spatial-algebra-v}"
           docker run --rm -v "$PWD:/workspace" -w /workspace \
             -e OPAMYES=1 \
             -e GITHUB_TOKEN="$OPAM_PUBLISH_TOKEN" \
-            -e OPAM_TARGET_REPO -e TAG -e TARBALL_URL -e PKG_DIR -e OPAM_FILE \
+            -e OPAM_TARGET_REPO -e TARBALL_URL -e PKG_DIR -e OPAM_FILE -e VERSION \
             nts-proofs-toolchain:ci \
             bash -lc '
               set -euxo pipefail
               opam install -y opam-publish
+              # opam-publish takes the package NAME from the opam filename
+              # (coq-spatial-algebra) and the VERSION from the version: field;
+              # set it from the tag so the submitted package is
+              # coq-spatial-algebra.$VERSION (not the raw tag).
+              echo "version: \"$VERSION\"" >> "$PKG_DIR/$OPAM_FILE"
               opam publish --no-browser \
                 --repo="$OPAM_TARGET_REPO" \
-                --tag="$TAG" \
                 "$TARBALL_URL" \
                 "$PKG_DIR/$OPAM_FILE"
             '
+
