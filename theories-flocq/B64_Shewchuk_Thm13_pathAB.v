@@ -614,9 +614,17 @@ Lemma cascade_pathAB_chain_from_nonoverlap :
         cascade_pathAB_chain (initial_cascade_state x prov) rest
     end.
 Proof.
-  (* Counterexample registry: strict_succ_b64/nonoverlap_shewchuk too strong;
-     valid inputs can yield [256;1]-style output (B64_Shewchuk_Thm13_counterexample.v). *)
-Admitted.
+  (* Indischargeable -- discharging it would close the FALSE Shewchuk Thm 13
+     headline via the Qed conditional O8 below (see
+     cascade_pathAB_chain_from_nonoverlap_entails_headline).  Counterexample
+     lineage: strict_succ_b64/nonoverlap_shewchuk too strong; valid inputs
+     yield [256;1]-style output (B64_Shewchuk_Thm13_counterexample.v).
+     `Abort` (not `Admitted`): a false/indischargeable statement left as
+     `Admitted` is `apply`-able and would silently close the false headline.
+     The honest conditional form is
+     `fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional`, which takes
+     the cascade chain as an explicit hypothesis. *)
+Abort.
 
 Theorem fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional :
   forall (e f : list binary64),

@@ -88,6 +88,7 @@ Definition b64_orient_sign_exact (P0 P1 Q : BPoint) : orient_sign_robust :=
 
 Theorem b64_orient_sign_exact_sound :
   forall P0 P1 Q : BPoint,
+    fast_expansion_sum_strong_nonoverlap_headline ->
     b64_orient2d_expansion_safe P0 P1 Q ->
     match b64_orient_sign_exact P0 P1 Q with
     | OrientRPos       => 0 < cross_R_BP P0 P1 Q
@@ -97,9 +98,9 @@ Theorem b64_orient_sign_exact_sound :
     | OrientRUncertain => True
     end.
 Proof.
-  intros P0 P1 Q Hsafe.
+  intros P0 P1 Q Hheadline Hsafe.
   unfold b64_orient_sign_exact, expansion_sign_to_orient_robust.
-  pose proof (b64_orient2d_expansion_sign_correct P0 P1 Q Hsafe) as Hsign.
+  pose proof (b64_orient2d_expansion_sign_correct P0 P1 Q Hheadline Hsafe) as Hsign.
   destruct (b64_orient2d_expansion_sign P0 P1 Q); exact Hsign.
 Qed.
 
@@ -142,6 +143,7 @@ Definition b64_orient_sign_stage_d (P0 P1 Q : BPoint) : orient_sign_robust :=
 
 Theorem b64_orient_sign_stage_d_sound :
   forall P0 P1 Q : BPoint,
+    fast_expansion_sum_strong_nonoverlap_headline ->
     orient2d_inputs_int_safe P0 P1 Q ->
     b64_orient2d_expansion_safe P0 P1 Q ->
     match b64_orient_sign_stage_d P0 P1 Q with
@@ -152,10 +154,10 @@ Theorem b64_orient_sign_stage_d_sound :
     | OrientRUncertain => True
     end.
 Proof.
-  intros P0 P1 Q Hint Hexp.
+  intros P0 P1 Q Hheadline Hint Hexp.
   unfold b64_orient_sign_stage_d.
   pose proof (b64_orient_sign_filtered_sound_small_int P0 P1 Q Hint) as Hfilt.
-  pose proof (b64_orient_sign_exact_sound P0 P1 Q Hexp) as Hexact.
+  pose proof (b64_orient_sign_exact_sound P0 P1 Q Hheadline Hexp) as Hexact.
   destruct (b64_orient_sign_filtered P0 P1 Q);
     [exact Hfilt | exact Hfilt | exact Hfilt | exact Hexact | exact Hexact].
 Qed.

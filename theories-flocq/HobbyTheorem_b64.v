@@ -362,7 +362,16 @@ Lemma hobby_lemma_4_3_no_proper :
     ~ segments_intersect_properly
         (snap_round P0 1) (snap_round P1 1)
         (snap_round Q0 1) (snap_round Q1 1).
-Admitted.
+(* FALSE AS STATED.  Qed-closed refutation in
+   theories-flocq/HobbyCounterexample_b64.v (hobby_lemma_4_3_no_proper_is_false):
+   parallel non-touching segments at y=0.7 and y=1.3 snap to the same grid line
+   y=1, manufacturing a proper intersection.  `Abort` (not `Admitted`): an
+   Admitted false statement is `apply`-able and would silently poison the
+   arrangement-level Hobby 4.1 proof.  The faithful unconditional Hobby 4.1
+   restates preservation over noded arrangements; until then the headline is
+   carried as `hobby_theorem_4_1_conditional`, which takes per-pair
+   preservation as an explicit hypothesis. *)
+Abort.
 
 (* Sub-lemma (b): if the originals share a literal endpoint, the
    snapped versions share that snapped endpoint.  Qed-closed via
@@ -382,8 +391,14 @@ Proof.
   - right. right. right. rewrite H. reflexivity.
 Qed.
 
-(* Composition: `hobby_lemma_4_3` is now Qed-closed by case-splitting on
-   the hypothesis disjunction and dispatching to the two sub-lemmas. *)
+(* Composition: `hobby_lemma_4_3` would case-split the hypothesis disjunction
+   onto the two sub-lemmas -- but case (a) needs `hobby_lemma_4_3_no_proper`,
+   which is FALSE as stated (Aborted above).  So the composed lemma is itself
+   false as stated (the no-proper branch fails on the parallel-collapse
+   counterexample) and is `Abort`ed rather than carried as a false `Admitted`.
+   Case (b) alone is Qed-closed as `hobby_lemma_4_3_shared_endpoint`; the
+   arrangement headline lives in `hobby_theorem_4_1_conditional`, which takes
+   per-pair preservation as an explicit hypothesis. *)
 Lemma hobby_lemma_4_3 :
   forall (P0 P1 Q0 Q1 : Point),
     segments_intersect_only_at_endpoints (P0, P1) (Q0, Q1) ->
@@ -392,22 +407,7 @@ Lemma hobby_lemma_4_3 :
       In sigma2 (snap_round_segments [(Q0, Q1)]) ->
       sigma1 <> sigma2 ->
       segments_intersect_only_at_endpoints sigma1 sigma2.
-Proof.
-  intros P0 P1 Q0 Q1 Horig sigma1 sigma2 Hin1 Hin2 Hne.
-  (* Extract sigma1, sigma2 from the singleton-list `In` premises. *)
-  simpl in Hin1, Hin2.
-  destruct Hin1 as [Heq1 | []].
-  destruct Hin2 as [Heq2 | []].
-  subst sigma1 sigma2.
-  simpl.
-  destruct Horig as [Hnoprop | Hshare].
-  - (* Case (a): originals don't intersect properly.  Apply
-       hobby_lemma_4_3_no_proper. *)
-    left. apply hobby_lemma_4_3_no_proper. exact Hnoprop.
-  - (* Case (b): originals share a literal endpoint.  Apply
-       hobby_lemma_4_3_shared_endpoint. *)
-    right. apply hobby_lemma_4_3_shared_endpoint. exact Hshare.
-Qed.
+Abort.
 
 (* -------------------------------------------------------------------------- *)
 (* §4 Hobby Theorem 4.1 -- conditional.                                       *)
