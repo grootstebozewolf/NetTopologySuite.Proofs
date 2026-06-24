@@ -1,0 +1,15 @@
+# MANIFEST for coq-spatial-algebra
+# ---------------------------------------------------------------------------
+# Source-of-record paths (relative to the NetTopologySuite.Proofs repo root)
+# for every .v file vendored into this standalone package.  `assemble.sh`
+# copies these into ./theories, preserving the NTS.Proofs namespace so the
+# proof files build unmodified.  The .v files are NOT committed here (they
+# live in the corpus) -- this manifest is the single point of truth, so a
+# vendored copy can never silently drift from the original.
+#
+# Both files import only Rocq's Stdlib (List / Lia / ZArith); they have zero
+# intra-corpus dependencies and zero axioms ("Closed under the global
+# context").  No Flocq, no classical reals.
+
+theories/DE9IM.v
+theories/RelateIntDetBound.v
