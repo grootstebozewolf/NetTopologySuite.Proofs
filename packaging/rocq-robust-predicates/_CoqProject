@@ -1,0 +1,18 @@
+-Q theories NTS.Proofs
+-Q theories-flocq NTS.Proofs.Flocq
+
+theories/Orientation.v
+theories/Segment.v
+theories/Distance.v
+theories/Intersect.v
+theories-flocq/Validate_binary64.v
+theories-flocq/Orientation_b64.v
+theories-flocq/B64_bridge.v
+theories-flocq/B64_lib.v
+theories-flocq/Orient_b64_R.v
+theories-flocq/Orient_b64_sound.v
+theories-flocq/Orient_b64_exact.v
+theories-flocq/Orient_b64_exact_full.v
+theories-flocq/B64_Expansion.v
+theories-flocq/Intersect_b64.v
+theories-flocq/Intersect_b64_exact.v
