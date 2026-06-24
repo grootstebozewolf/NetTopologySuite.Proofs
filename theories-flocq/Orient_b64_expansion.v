@@ -58,6 +58,27 @@ From NTS.Proofs.Flocq Require Import B64_FastExpansionSum_Shewchuk.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
+(* Explicit dependence on the Shewchuk Theorem 13 headline.                   *)
+(*                                                                            *)
+(* `fast_expansion_sum_nonoverlap_shewchuk` (B64_FastExpansionSum_Shewchuk.v) *)
+(* is FALSE as stated (Tier-2 counterexample) and is therefore NOT carried as *)
+(* an `Admitted` -- a false `Admitted` is `apply`-able and would silently     *)
+(* poison every soundness theorem below.  Instead we name the headline as an  *)
+(* explicit `Prop` and take it as a hypothesis wherever it is needed, so the  *)
+(* dependence on the (in-general-false) statement is visible in the type.     *)
+(* It HOLDS in the int-safe regime via                                        *)
+(* `fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs` (Qed); a TRUE  *)
+(* general form awaits weakening `nonoverlap_strict` to bit-disjoint.         *)
+(* -------------------------------------------------------------------------- *)
+
+Definition fast_expansion_sum_strong_nonoverlap_headline : Prop :=
+  forall e f : list binary64,
+    fast_expansion_sum_safe e f ->
+    nonoverlap_shewchuk e ->
+    nonoverlap_shewchuk f ->
+    nonoverlap_shewchuk (fast_expansion_sum e f).
+
+(* -------------------------------------------------------------------------- *)
 (* The expansion definition.                                                  *)
 (* -------------------------------------------------------------------------- *)
 
@@ -231,10 +252,11 @@ Qed.
 
 Theorem b64_orient2d_expansion_nonoverlap :
   forall P0 P1 Q : BPoint,
+    fast_expansion_sum_strong_nonoverlap_headline ->
     b64_orient2d_expansion_safe P0 P1 Q ->
     nonoverlap_shewchuk (b64_orient2d_expansion P0 P1 Q).
 Proof.
-  intros P0 P1 Q Hsafe.
+  intros P0 P1 Q Hheadline Hsafe.
   unfold b64_orient2d_expansion_safe in Hsafe.
   destruct Hsafe as [_ [_ [HDek1 [HDek2 [Hund1 [Hund2 Hfes]]]]]].
   unfold b64_orient2d_expansion.
@@ -254,9 +276,10 @@ Proof.
                 (b64_minus (by_ P1) (by_ P0)) HDek2 Hund2) as Hno2.
   rewrite HD2 in Hno2.
   cbv beta iota zeta in Hno2.
-  (* Apply fast_expansion_sum_nonoverlap_shewchuk (currently Admitted/deferred). *)
-  apply (fast_expansion_sum_nonoverlap_shewchuk
-           (r1 :: t1 :: nil) (r2 :: t2 :: nil) Hfes Hno1 Hno2).
+  (* Apply the explicit headline hypothesis (the false-as-stated
+     fast_expansion_sum_nonoverlap_shewchuk is no longer in the environment);
+     `Hfes` here is the fast_expansion_sum_safe component of Hsafe. *)
+  apply (Hheadline (r1 :: t1 :: nil) (r2 :: t2 :: nil) Hfes Hno1 Hno2).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -274,6 +297,7 @@ Definition b64_orient2d_expansion_sign (P0 P1 Q : BPoint) : expansion_sign :=
 
 Theorem b64_orient2d_expansion_sign_correct :
   forall P0 P1 Q : BPoint,
+    fast_expansion_sum_strong_nonoverlap_headline ->
     b64_orient2d_expansion_safe P0 P1 Q ->
     match b64_orient2d_expansion_sign P0 P1 Q with
     | ExpPos  => 0 < cross_R_BP P0 P1 Q
@@ -281,9 +305,9 @@ Theorem b64_orient2d_expansion_sign_correct :
     | ExpZero => cross_R_BP P0 P1 Q = 0
     end.
 Proof.
-  intros P0 P1 Q Hsafe.
+  intros P0 P1 Q Hheadline Hsafe.
   unfold b64_orient2d_expansion_sign.
-  pose proof (b64_orient2d_expansion_nonoverlap P0 P1 Q Hsafe) as Hno.
+  pose proof (b64_orient2d_expansion_nonoverlap P0 P1 Q Hheadline Hsafe) as Hno.
   pose proof (sign_of_expansion_correct_shewchuk
                 (b64_orient2d_expansion P0 P1 Q) Hno) as Hsign.
   pose proof (b64_orient2d_expansion_sum P0 P1 Q Hsafe) as Hsum.

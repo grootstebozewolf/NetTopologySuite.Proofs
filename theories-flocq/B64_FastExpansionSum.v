@@ -276,10 +276,15 @@ Theorem b64_grow_expansion_nonoverlap :
     nonoverlap_strict e ->
     nonoverlap_strict (b64_grow_expansion e b).
 Proof.
-  (* TANGENT: documented in docs/stage-d-grow-expansion-nonoverlap-tangent.md *)
-  (* Theorem statement is incompatible with the algorithm; the next session  *)
-  (* picks the predicate-weakening or compress-filter resolution.            *)
-Admitted.
+  (* FALSE AS STATED (Tier-2 counterexample, docs/stage-d-grow-expansion-     *)
+  (* nonoverlap-tangent.md §3,§9): the cascade naturally emits internal zeros *)
+  (* / near-equal-magnitude adjacents that violate `nonoverlap_strict`'s      *)
+  (* half-ulp bound.  We do NOT carry it as `Admitted` -- an Admitted false   *)
+  (* statement can be `apply`-ed by downstream proofs, silently poisoning     *)
+  (* them.  `Abort` removes it from the environment entirely; the achievable  *)
+  (* result is `b64_grow_expansion_nonoverlap_pathA` (Qed) for the dominated  *)
+  (* regime.                                                                  *)
+Abort.
 
 (* -------------------------------------------------------------------------- *)
 (* COROLLARY (deferred): chain3-sorted sum + nonoverlap.                      *)
@@ -489,11 +494,13 @@ Lemma round_eq_under_strict_dominance :
     Rabs y < ulp radix2 (SpecFloat.fexp prec emax) x / 2 ->
     round radix2 (SpecFloat.fexp prec emax) (round_mode mode_b64) (x + y) = x.
 Proof.
-  (* TANGENT: FALSE at binade boundaries x = 2^k.  See counterexample
+  (* FALSE at binade boundaries x = 2^k.  See the Qed-closed counterexample
      lemmas counterex_loose_precondition_holds, counterex_below_midpoint,
-     counterex_gap_magnitude above (all Qed-closed).  Resolution: migrate
-     to `round_eq_pathA_positive` with tighter precondition `|y| < ulp(pred x)/2`. *)
-Admitted.
+     counterex_gap_magnitude above.  `Abort` (not `Admitted`): a false
+     statement left as `Admitted` is `apply`-able by downstream proofs.  The
+     true replacement is `round_eq_pathA_positive` with the tighter
+     precondition `|y| < ulp(pred x)/2`. *)
+Abort.
 
 (* Under strict dominance, `b64_plus x y = x` at the R-level.  This is
    the Path A version using the tighter `ulp(pred x)/2` bound and
@@ -516,23 +523,18 @@ Proof.
   - exact Hy.
 Qed.
 
-(* The original `b64_plus_under_strict_dominance` is admitted because  *)
-(* it cites the false `round_eq_under_strict_dominance`.  Kept as the  *)
-(* historical statement; consumers should use Path A's variant.        *)
+(* The original `b64_plus_under_strict_dominance` is FALSE -- it inherits the
+   binade-boundary counterexample of `round_eq_under_strict_dominance` (it
+   was only ever "proved" by `apply`-ing that false lemma).  `Abort` (not
+   `Admitted`/`Qed`): consumers must use Path A's variant
+   `b64_plus_under_pathA_dominance` (Qed, above). *)
 Lemma b64_plus_under_strict_dominance :
   forall x y : binary64,
     b64_safe Rplus x y ->
     Rabs (Binary.B2R prec emax y)
       < ulp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax x) / 2 ->
     Binary.B2R prec emax (b64_plus x y) = Binary.B2R prec emax x.
-Proof.
-  intros x y Hsafe Hy.
-  pose proof (b64_plus_correct x y Hsafe) as [HB2R _].
-  rewrite HB2R.
-  apply round_eq_under_strict_dominance.
-  - apply b64_format_B2R.
-  - exact Hy.
-Qed.
+Abort.
 
 (* The cascade theorem statement under the dominance precondition.
    Captures the "b sits at the bottom of the nonoverlap chain" case.
@@ -555,13 +557,13 @@ Theorem b64_grow_expansion_nonoverlap_dominated :
     nonoverlap_strict (e ++ b :: nil) ->
     nonoverlap_strict (b64_grow_expansion e b).
 Proof.
-  (* TANGENT: proof depends on `round_eq_under_strict_dominance`        *)
-  (* (admitted above pending boundary-case resolution) AND the cascade  *)
-  (* invariant lemma that the cascade output equals `e ++ [b]` under    *)
-  (* this precondition.  The cascade invariant has been proved below as *)
-  (* `b64_grow_expansion_aux_pathA_matches`; the remaining work is the  *)
-  (* compress + nonoverlap-from-B2R lemmas to finish the composition.    *)
-Admitted.
+  (* FALSE AS STATED (same counterexample lineage as the general          *)
+  (* `b64_grow_expansion_nonoverlap`, docs/stage-d-grow-expansion-         *)
+  (* nonoverlap-tangent.md §3,§9,§13): it also cited the false             *)
+  (* `round_eq_under_strict_dominance`.  `Abort` (not `Admitted`): the     *)
+  (* achievable, Qed-closed result is `b64_grow_expansion_nonoverlap_pathA`*)
+  (* for the dominated regime under the tighter Path A precondition.       *)
+Abort.
 
 (* ============================================================================
    PATH A CASCADE-STRUCTURE INVARIANT (Qed-closed).

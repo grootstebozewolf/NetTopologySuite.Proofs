@@ -494,11 +494,20 @@ Proof.
      256 and 1) that are NOT within a half-ulp.  Machine-checked witness:
      theories-flocq/B64_Shewchuk_Thm13_counterexample.v (e=[2^60;1],
      f=[-(2^60-256)] valid; their sum's representation [256;1] fails
-     nonoverlap_shewchuk).  Registered in docs/admitted-counterexamples.txt;
-     analysis in docs/shewchuk-thm13-headline-counterexample.md.
-     To recover a TRUE headline, weaken nonoverlap_strict to the bit-disjoint
-     predicate and re-aim the pathA-OR-pathB obligations. *)
-Admitted.
+     nonoverlap_shewchuk).  Analysis in
+     docs/shewchuk-thm13-headline-counterexample.md.
+     `Abort` (NOT `Admitted`): an Admitted false statement is `apply`-able and
+     WAS silently propping up `b64_orient2d_expansion_nonoverlap` and the whole
+     Stage-D exact-orientation soundness chain.  Downstream consumers now take
+     this headline as an EXPLICIT hypothesis
+     (`fast_expansion_sum_strong_nonoverlap_headline`, Orient_b64_expansion.v),
+     so the dependence on the (in-general-false, Tier-2) statement is visible
+     in their types instead of hidden.  The genuinely TRUE restricted result
+     is `fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs` (Qed,
+     B64_FastExpansionSum_Shewchuk_Route2.v) for the int-safe regime.  To
+     recover a TRUE general headline, weaken nonoverlap_strict to the
+     bit-disjoint predicate and re-aim the pathA-OR-pathB obligations. *)
+Abort.
 
 (* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)

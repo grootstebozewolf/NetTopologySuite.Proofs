@@ -107,6 +107,7 @@ Qed.
 
 Theorem shewchuk_stage_d_agrees_with_exact_intdet :
   forall P0 P1 Q : BPoint,
+    fast_expansion_sum_strong_nonoverlap_headline ->
     orient2d_inputs_int_safe P0 P1 Q ->
     b64_orient2d_expansion_safe P0 P1 Q ->
     match b64_orient_sign_stage_d P0 P1 Q with
@@ -117,9 +118,9 @@ Theorem shewchuk_stage_d_agrees_with_exact_intdet :
     | OrientRUncertain => True
     end.
 Proof.
-  intros P0 P1 Q Hint Hexp.
+  intros P0 P1 Q Hheadline Hint Hexp.
   pose proof (int_safe_all_finite P0 P1 Q Hint) as Hfin.
-  pose proof (b64_orient_sign_stage_d_sound P0 P1 Q Hint Hexp) as Hsd.
+  pose proof (b64_orient_sign_stage_d_sound P0 P1 Q Hheadline Hint Hexp) as Hsd.
   pose proof (Orient_b64_exact_full.b64_orient2d_exact_sound P0 P1 Q Hfin)
     as (Hpos & Hneg & Hzero).
   destruct (b64_orient_sign_stage_d P0 P1 Q).
@@ -144,6 +145,7 @@ Qed.
 
 Theorem shewchuk_vs_z2_tiny_headline :
   forall P0 P1 Q : BPoint,
+    fast_expansion_sum_strong_nonoverlap_headline ->
     orient2d_inputs_tiny_int_safe P0 P1 Q ->
     b64_orient2d_expansion_safe P0 P1 Q ->
     cross_R_BP P0 P1 Q <> 0 ->
@@ -156,10 +158,11 @@ Theorem shewchuk_vs_z2_tiny_headline :
        | OrientRUncertain => True
        end.
 Proof.
-  intros P0 P1 Q Htiny Hexp Hnz.
+  intros P0 P1 Q Hheadline Htiny Hexp Hnz.
   split.
   - exact (b64_orient_sign_stage_d_tiny_regime_decisive P0 P1 Q Htiny Hnz).
   - apply shewchuk_stage_d_agrees_with_exact_intdet.
+    + exact Hheadline.
     + exact (orient2d_inputs_tiny_int_safe_imp_int_safe P0 P1 Q Htiny).
     + exact Hexp.
 Qed.
