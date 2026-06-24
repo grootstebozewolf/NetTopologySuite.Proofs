@@ -198,11 +198,17 @@ jobs:
             exit 0
           fi
           # Clean semver from the tag (strip the "spatial-algebra-v" prefix):
-          #   spatial-algebra-v0.1.0 -> 0.1.0
-          VERSION="${TAG#spatial-algebra-v}"
+          #   spatial-algebra-v0.1.0 -> 0.1.0.  MUST be exported so `docker -e
+          #   VERSION` passes it into the container (a bare assignment is not
+          #   in the environment -> `set -u` would trip).
+          export VERSION="${TAG#spatial-algebra-v}"
+          # opam-publish reads its GitHub token from OPAM_PUBLISH_GH_TOKEN
+          # (NOT GITHUB_TOKEN).  Best-effort: the tarball is already attached,
+          # so if opam publish trips (auth/fork/etc.) we warn + print the
+          # manual command and still succeed.
           docker run --rm -v "$PWD:/workspace" -w /workspace \
             -e OPAMYES=1 \
-            -e GITHUB_TOKEN="$OPAM_PUBLISH_TOKEN" \
+            -e OPAM_PUBLISH_GH_TOKEN="$OPAM_PUBLISH_TOKEN" \
             -e OPAM_TARGET_REPO -e TARBALL_URL -e PKG_DIR -e OPAM_FILE -e VERSION \
             nts-proofs-toolchain:ci \
             bash -lc '
@@ -217,5 +223,8 @@ jobs:
                 --repo="$OPAM_TARGET_REPO" \
                 "$TARBALL_URL" \
                 "$PKG_DIR/$OPAM_FILE"
-            '
+            ' || {
+              echo "::warning::opam publish did not complete; the release tarball is attached. Submit manually: OPAM_PUBLISH_GH_TOKEN=<token> opam publish --repo=$OPAM_TARGET_REPO $TARBALL_URL $PKG_DIR/$OPAM_FILE"
+              printf 'opam publish skipped/failed; the release tarball is attached. Submit manually: OPAM_PUBLISH_GH_TOKEN=<token> opam publish --repo=%s %s %s\n' "$OPAM_TARGET_REPO" "$TARBALL_URL" "$PKG_DIR/$OPAM_FILE" >> "$GITHUB_STEP_SUMMARY"
+            }
 
