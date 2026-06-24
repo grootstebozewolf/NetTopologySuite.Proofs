@@ -1,0 +1,224 @@
+name: Package coq-robust-predicates
+
+# Validate and publish the standalone `coq-robust-predicates` opam package
+# (packaging/rocq-robust-predicates/), extracted from the corpus via its
+# MANIFEST + assemble.sh.
+#
+#   - validate: on PRs/pushes touching the package (and on demand) assemble
+#     the sources, build them, `opam lint` the metadata, and run the opam
+#     install target -- i.e. exactly the commands opam itself would run
+#     (build: [make]; install: [make install]).  This catches manifest drift
+#     (a renamed/removed source file makes assemble.sh fail), opam-file
+#     regressions, and build breakage.
+#   - publish: on a `robust-predicates-v*` release, build the self-contained
+#     source tarball (`make package`), attach it to the release, and -- when
+#     an OPAM_PUBLISH_TOKEN secret is configured -- open the opam-repository
+#     PR via `opam publish`.  Without the secret it attaches the tarball and
+#     prints the manual submission command (the job still succeeds).
+#
+# Toolchain pin: reuses the project's Dockerfile `toolchain` stage
+# (rocq 9.1.1 + ocaml 4.14.2-flambda + coq-flocq.4.2.2 + ocamlfind), pulled
+# from GHCR under its Dockerfile-hash tag (published by ci.yml on main pushes)
+# with a buildx fallback on a miss -- identical to build-oracle.yml.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packaging/rocq-robust-predicates/**'
+      - 'Dockerfile'
+      - '.github/workflows/package-robust-predicates.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/rocq-robust-predicates/**'
+      - 'Dockerfile'
+      - '.github/workflows/package-robust-predicates.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+# Opt into Node.js 24 for JavaScript actions, matching the other workflows.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  TOOLCHAIN_IMAGE: ghcr.io/${{ github.repository_owner }}/nts-proofs-toolchain
+  PKG_DIR: packaging/rocq-robust-predicates
+  OPAM_FILE: coq-robust-predicates.opam
+
+concurrency:
+  group: package-robust-predicates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Assemble, build, lint, install
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute toolchain tag (content-addressed by Dockerfile)
+        id: toolchain
+        run: echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image from GHCR
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Assemble, build, lint, and install the package
+        # Inside the pinned container, on the mounted checkout.  Runs exactly
+        # the commands opam would (make; make install), plus assemble.sh
+        # (vendors the MANIFEST'd sources) and opam lint (metadata).  Vars are
+        # passed via -e so there is no shell-quoting gymnastics; chmod/chown
+        # bridge the uid-1000 `rocq` user and the runner-owned workspace.
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e PKG_DIR -e OPAM_FILE \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              cd "$PKG_DIR"
+              ./assemble.sh /workspace
+              opam lint "$OPAM_FILE"
+              make -j"$(nproc)"
+              make install
+              echo "OK: built $(ls theories/*.vo theories-flocq/*.vo | wc -l)/15 .vo, linted, installed."
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+
+  publish:
+    name: Build tarball and publish on release
+    # Only the package's own release tags; ignores corpus/oracle releases.
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'robust-predicates-v')
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # attach the tarball to the release
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute toolchain tag
+        id: toolchain
+        run: echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image (with buildx fallback)
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build self-contained source tarball
+        # `make package` runs assemble.sh then archives the vendored tree to
+        # packaging/rocq-robust-predicates/dist/coq-robust-predicates.tar.gz (builds with no corpus present).
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e PKG_DIR \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              cd "$PKG_DIR"
+              make package
+            '
+          sudo chown -R "$(id -u):$(id -g)" .
+          ls -la packaging/rocq-robust-predicates/dist/coq-robust-predicates.tar.gz
+          sha256sum packaging/rocq-robust-predicates/dist/coq-robust-predicates.tar.gz | tee packaging/rocq-robust-predicates/dist/coq-robust-predicates.tar.gz.sha256
+
+      - name: Attach tarball to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            packaging/rocq-robust-predicates/dist/coq-robust-predicates.tar.gz
+            packaging/rocq-robust-predicates/dist/coq-robust-predicates.tar.gz.sha256
+
+      - name: Submit to opam-repository (if OPAM_PUBLISH_TOKEN configured)
+        env:
+          OPAM_PUBLISH_TOKEN: ${{ secrets.OPAM_PUBLISH_TOKEN }}
+          OPAM_TARGET_REPO: ${{ vars.OPAM_TARGET_REPO || 'coq/opam' }}
+          TAG: ${{ github.event.release.tag_name }}
+          TARBALL_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/coq-robust-predicates.tar.gz
+        run: |
+          if [ -z "${OPAM_PUBLISH_TOKEN:-}" ]; then
+            echo "::notice::OPAM_PUBLISH_TOKEN not set -- skipping automated opam-repository PR; tarball is attached to the release."
+            {
+              echo "To submit manually:"
+              echo "  opam publish --repo=$OPAM_TARGET_REPO --tag=$TAG \\"
+              echo "    $TARBALL_URL \\"
+              echo "    $PKG_DIR/$OPAM_FILE"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            -e OPAMYES=1 \
+            -e GITHUB_TOKEN="$OPAM_PUBLISH_TOKEN" \
+            -e OPAM_TARGET_REPO -e TAG -e TARBALL_URL -e PKG_DIR -e OPAM_FILE \
+            nts-proofs-toolchain:ci \
+            bash -lc '
+              set -euxo pipefail
+              opam install -y opam-publish
+              opam publish --no-browser \
+                --repo="$OPAM_TARGET_REPO" \
+                --tag="$TAG" \
+                "$TARBALL_URL" \
+                "$PKG_DIR/$OPAM_FILE"
+            '

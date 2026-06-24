@@ -19,11 +19,12 @@ install: Makefile.coq
 # Produce a self-contained opam source tarball (vendors files, then archives).
 package: clean
 	./assemble.sh
-	tar czf ../coq-robust-predicates.tar.gz \
+	mkdir -p dist
+	tar czf dist/coq-robust-predicates.tar.gz \
 	    --transform 's,^,coq-robust-predicates/,' \
 	    MANIFEST _CoqProject Makefile assemble.sh README.md LICENSE \
 	    coq-robust-predicates.opam theories theories-flocq
-	@echo "Wrote ../coq-robust-predicates.tar.gz"
+	@echo "Wrote dist/coq-robust-predicates.tar.gz"
 
 clean:
 	@if [ -f Makefile.coq ]; then $(MAKE) -f Makefile.coq cleanall || true; fi

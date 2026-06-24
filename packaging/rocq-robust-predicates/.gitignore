@@ -16,5 +16,5 @@ Makefile.coq.conf
 *.cmx
 *.o
 
-# Packaged tarball
-/../coq-robust-predicates.tar.gz
+# Packaged opam source tarball
+/dist/
