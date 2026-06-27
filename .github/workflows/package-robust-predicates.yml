@@ -230,7 +230,12 @@ jobs:
               # set it from the tag so the submitted package is
               # coq-robust-predicates.$VERSION (not the raw tag).
               echo "version: \"$VERSION\"" >> "$PKG_DIR/$OPAM_FILE"
-              opam publish --no-browser \
+              # opam-publish prompts (Continue/Submit) and reads no on EOF in
+              # CI (OPAMYES did not suppress it). Feed y to all prompts via
+              # yes. pipefail OFF so yes getting SIGPIPE (141) does not mask
+              # the opam publish exit code.
+              set +o pipefail
+              yes | opam publish --no-browser \
                 --repo="$OPAM_TARGET_REPO" \
                 "$TARBALL_URL" \
                 "$PKG_DIR/$OPAM_FILE"
