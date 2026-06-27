@@ -66,6 +66,15 @@ env:
 jobs:
   build-oracle:
     name: Build oracle_bin in pinned rocq 9.1.1 + flocq 4.2.2 container
+    # Skip standalone-package releases (robust-predicates-v* / spatial-algebra-v*):
+    # those are published by the package-*.yml workflows and have nothing to do
+    # with oracle_bin.  Without this guard, every package release triggers this
+    # job and its release-attach step fails ("Resource not accessible by
+    # integration" -- this job only has contents: read), reding the release.
+    if: >-
+      github.event_name != 'release' ||
+      (!startsWith(github.event.release.tag_name, 'robust-predicates-v') &&
+       !startsWith(github.event.release.tag_name, 'spatial-algebra-v'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
