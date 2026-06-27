@@ -292,6 +292,11 @@ run_holes_disjoint
 # curated OGC witness matrices) are proven in theories/RelateCurveMatrix.v; the
 # computed cell-DIMENSION soundness (Jordan/overlay) addressed in S13
 # (RelateCurveMatrix + RelateNG); vectors continue to pin numeric behaviour.
+# LINEAL boundary-meet: theories/RelateCurveBoundaryMeet.v lifts the chord-chord
+# contact kernels (OverlayContactSound) into the im_bb cell -- a chord-chord
+# contact between two curve-geometry boundaries makes their linearised boundaries
+# meet (dim_nonempty (im_bb m) / ~ im_disjoint_ogc m).  Arc boundary cells +
+# interior cells remain the deferred cell-dimension frontier.
 run_curve_relate_matrix
 
 # --- buffer_region_output (BUFFER_REGION + ARC_BUFFER_SIMPLE, JTS #1195 §7) --

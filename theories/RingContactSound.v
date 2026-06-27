@@ -40,12 +40,16 @@
      §3  HOLES_DISJOINT: a contact verdict between two distinct holes
          =>  ~ curve_polygon_holes_disjoint  (same kernel split as §2)
 
-   NOT covered (honest scope): the CURVE_RELATE_MATRIX boundary-meet cells
+   Partially covered downstream: the CURVE_RELATE_MATRIX boundary-meet cells
    (RelateCurveMatrix.v) are stated over the LINEARISED `to_geometry` strata
-   (point_set / geom_boundary), not `curve_segments_meet`; bridging a
-   curve-segment witness to a `geom_boundary` witness needs an extra linearisation
-   lemma and is left as a follow-up (alongside that file's deferred cell-dimension
-   frontier).
+   (point_set / geom_boundary), not `curve_segments_meet`.  For the LINEAL
+   (chord-chord) case the bridge is now discharged in
+   `RelateCurveBoundaryMeet.v` -- chords linearise to themselves, so a chord
+   contact witness lands directly on a `geom_boundary` edge (im_bb cell
+   non-empty / ~ im_disjoint_ogc).  The ARC boundary cells (the contact point
+   lies on the true arc, not on a linearised chord edge) and the interior cells
+   (im_ib / im_bi / im_ii, needing overlap / Jordan witnesses) remain on the
+   deferred cell-dimension frontier.
 
    Three-axiom policy: only Classical_Prop.classic / functional_extensionality /
    Raxioms enter (transitively, via the imported files).  No new Admitted / Axiom
