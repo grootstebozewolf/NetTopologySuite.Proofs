@@ -1789,6 +1789,14 @@ theories/RingContactSound.v
 # S13: cell-DIMENSION Jordan soundness closed (geom_de9im_cell_dimensions_sound
 # + boundary tie-in via RelateBoundary). Part of 4-item finish.
 theories/RelateCurveMatrix.v
+# Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
+# geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
+# bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
+# (chords linearise to themselves under to_geometry, so it is pure repackaging).
+# Arc boundary cells + interior cells stay on the deferred frontier.  Reuses
+# OverlayContactSound chord_chord_contact_* + RelateCurveMatrix cell machinery.
+# 3-axiom, no Admitted.
+theories/RelateCurveBoundaryMeet.v
 # S13: RelateNG pipeline (strata, relate, dim, MOD2+area integration)
 theories/RelateNG.v
 # S13: Prepared cache refinement (evaluate B == relate A)
