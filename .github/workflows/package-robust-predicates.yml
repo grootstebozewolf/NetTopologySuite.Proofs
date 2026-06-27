@@ -230,12 +230,13 @@ jobs:
               # set it from the tag so the submitted package is
               # coq-robust-predicates.$VERSION (not the raw tag).
               echo "version: \"$VERSION\"" >> "$PKG_DIR/$OPAM_FILE"
-              # opam-publish prompts (Continue/Submit) and reads no on EOF in
-              # CI (OPAMYES did not suppress it). Feed y to all prompts via
-              # yes. pipefail OFF so yes getting SIGPIPE (141) does not mask
-              # the opam publish exit code.
-              set +o pipefail
-              yes | opam publish --no-browser \
+              # opam-publish ignores piped stdin for its confirm in CI (stdin
+              # is not a tty, so `yes |` and OPAMYES were both ignored and it
+              # auto-answered no). OPAMCONFIRMLEVEL=unsafe-yes is the documented
+              # mechanism that makes opam auto-answer every confirmation
+              # WITHOUT reading input.
+              export OPAMCONFIRMLEVEL=unsafe-yes OPAMYES=1
+              opam publish --no-browser \
                 --repo="$OPAM_TARGET_REPO" \
                 "$TARBALL_URL" \
                 "$PKG_DIR/$OPAM_FILE"
