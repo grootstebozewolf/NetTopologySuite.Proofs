@@ -233,5 +233,8 @@ So ask **#5a is closed**: existence predicate (R-side) + bit-exact prefix (A) +
 round-chain identity (B) + forward-error bounds (C, absolute and data-dependent),
 all `Qed` at the 4-axiom footprint. #3c/#4c arc-chord soundness is now PARTIALLY
 closed (`ArcChordSound.v`, side/endpoint-conditioned, 3-axiom); the
-genuinely-open arc gaps are the *unconditional* sweep≥π promotion (still
-quarantined) and #5b (arc-arc quartic coordinates).
+genuinely-open arc gaps are the *unconditional* sweep≤π promotion (still
+quarantined), #5b (arc-arc quartic coordinates), and the single isolated planar
+single-peak dot bound `ArcSinglePeak.arc_dot_max_at_endpoint` (the only Tier-3
+deferred obligation in the arc point-distance stack; the metric layer above it is
+fully Qed).
