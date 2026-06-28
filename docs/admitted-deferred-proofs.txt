@@ -172,12 +172,23 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 # NOTE: theories/RelateNG.v:relate_triangle_touch was already DISCHARGED 2026-06-21
 #   (Qed at RelateNG.v; see the entry above); its stale live registry line is removed.
 
-# Jordan soundness seam (architectural): in_stratum SInt = point_set (half-open parity via point_in_ring)
-# vs true geometric interior {p | 0 < gtri p}. cell_ok None SInt SInt claims II=None under point_set,
-# but connecting to geometric_interior_cont (for full geom_de9im_pointset + dim2) requires
-# point_set A p <-> geometric_interior_cont A p (non-bnd p) via general_triangle_parity_characterises_interior.
-# Long-term refactor; not discharged in this session.
-theories/RelateNG.v:point_set_characterises_geometric_interior | JCT / point_set → 0 < gtri lift (for touch_triangle_pair_ii_cell + geom_de9im_pointset) | uses general_triangle_parity_characterises_interior (guarded); see touch_triangle_pair_ii_cell comment in RelateNG.v and GeneralTriangleJCT.v; needed to remove named H_ii_disjoint premise and align stratum SInt with algebraic interiors for triangle touch cells.
+# DISCHARGED 2026-06-28: theories/RelateNG.v:point_set_characterises_geometric_interior
+#   Qed via the in-house JCT assembly (NO external library): the converse Jordan
+#   direction "ray-parity inside ==> 0 < gtri" is
+#   JCTSeamAssembly.point_in_ring_imp_geometric_cont (the trapped half, via
+#   odd_parity_trapped) giving geometric_interior_cont, then a trichotomy on gtri
+#   closed by GeneralTriangleExterior.gtri_exterior_escapes (gtri<0 escapes the
+#   bounded component) and GeneralTriangleSeparation.gtri_zero_imp_ring_image
+#   (gtri=0 lies on the ring image, contradicting ring_complement). Core slice
+#   exported as gtri_point_in_ring_imp_pos.
+#   IMPORTANT: the original UNGUARDED statement was too strong (false for CW
+#   triangles, where 0<gtri is impossible, and for on-edge / vertex-grazing
+#   points -- cf. GeneralTriangleParityRED.gtri_parity_spec_false and the JCT_*
+#   counterexamples). The discharged theorem carries the natural guards: CCW
+#   (0 < gdbl), off-ring (ring_complement), and ray genericity
+#   (ray_avoids_vertices). 3-axiom (classical-reals trio only; Print Assumptions
+#   confirmed). The standalone seam has no in-code consumer
+#   (touch_triangle_pair_ii_cell takes its separation premise directly).
 
 # Note: only the triangle touch family from the S15l lift. Rect work on this branch is already Qed or properly trimmed.
 

@@ -34,6 +34,9 @@ From NTS.Proofs Require Import DE9IM Distance Overlay Segment RelateBoundary
   RelateMatrixLineLine RelateMatrixAreaLine RelateMatrixRect RelateMatrixTriangle
   RelateCurveMatrix RectangleJCT Intersect Orientation.  (* cross for between collinear *)
 From NTS.Proofs Require Import GeneralTriangleSeparation GeneralTriangleParity.  (* gtri / JCT planar covering for triangle interiors & exterior signs *)
+From NTS.Proofs Require Import GeneralTriangleJCT GeneralTriangleExterior
+  TriangleValidPolygon JCTSeamAssembly PointInRingCorrect PointInRingTangents
+  JordanCurveSeam.  (* assembled in-house JCT converse: point_in_ring -> 0 < gtri *)
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -486,12 +489,56 @@ Proof.
     + intro Hex. exfalso. apply Hii. exact Hex.
 Qed.
 
-(* JCT seam lift (deferred per registry; see GeneralTriangleJCT.v for guarded form). *)
+(* JCT seam lift -- DISCHARGED (was Admitted).  The converse Jordan direction
+   "ray-parity inside ==> strictly inside" assembled 3-axiom from the in-house
+   JCT machinery: JCTSeamAssembly.point_in_ring_imp_geometric_cont (the trapped
+   half) gives geometric_interior_cont, then a trichotomy on gtri closes it via
+   GeneralTriangleExterior.gtri_exterior_escapes (gtri<0 escapes the bounded
+   component) and GeneralTriangleSeparation.gtri_zero_imp_ring_image (gtri=0 is
+   on the ring image, contradicting ring_complement).
+
+   The unguarded statement is FALSE (refuted by GeneralTriangleParityRED and the
+   vertex-grazing / on-edge counterexamples, and for CW triangles where 0<gtri is
+   impossible), so the true theorem carries the natural guards: CCW (0 < gdbl),
+   the point off the ring image (ring_complement), and ray genericity
+   (ray_avoids_vertices).  This standalone seam has no in-code consumer
+   (touch_triangle_pair_ii_cell takes its separation premise directly). *)
+Lemma gtri_point_in_ring_imp_pos : forall ax ay bx by_ cx cy p,
+  0 < gdbl ax ay bx by_ cx cy ->
+  ring_complement (gtri_ring ax ay bx by_ cx cy) p ->
+  ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy) ->
+  point_in_ring p (gtri_ring ax ay bx by_ cx cy) ->
+  0 < gtri ax ay bx by_ cx cy p.
+Proof.
+  intros ax ay bx by_ cx cy p Hccw Hcompl Hrav Hpir.
+  pose proof (gtri_ring_closed ax ay bx by_ cx cy) as Hclosed.
+  pose proof (point_in_ring_imp_geometric_cont
+                (gtri_ring ax ay bx by_ cx cy) p Hclosed Hcompl Hrav Hpir)
+    as [_ Hbnd].
+  destruct (Rtotal_order (gtri ax ay bx by_ cx cy p) 0) as [Hneg | [Hzero | Hpos]].
+  - exfalso. exact (gtri_exterior_escapes ax ay bx by_ cx cy p Hccw Hneg Hbnd).
+  - exfalso. apply Hcompl.
+    exact (gtri_zero_imp_ring_image ax ay bx by_ cx cy Hccw p Hzero).
+  - exact Hpos.
+Qed.
+
 Lemma point_set_characterises_geometric_interior :
   forall ax ay bx by_ cx cy p,
+    0 < gdbl ax ay bx by_ cx cy ->
+    ring_complement (gtri_ring ax ay bx by_ cx cy) p ->
+    ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy) ->
     point_set (triangle_geometry ax ay bx by_ cx cy) p ->
     0 < gtri ax ay bx by_ cx cy p.
-Admitted.
+Proof.
+  intros ax ay bx by_ cx cy p Hccw Hcompl Hrav Hps.
+  apply (gtri_point_in_ring_imp_pos ax ay bx by_ cx cy p Hccw Hcompl Hrav).
+  destruct Hps as [poly [Hin Hpip]].
+  simpl in Hin. destruct Hin as [Heq | []]. subst poly.
+  destruct Hpip as [Hpir _].
+  unfold triangle_polygon in Hpir. simpl in Hpir.
+  unfold triangle_ring in Hpir. unfold gtri_ring.
+  exact Hpir.
+Qed.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
