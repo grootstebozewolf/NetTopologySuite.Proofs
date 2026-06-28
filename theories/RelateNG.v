@@ -501,8 +501,10 @@ Qed.
    vertex-grazing / on-edge counterexamples, and for CW triangles where 0<gtri is
    impossible), so the true theorem carries the natural guards: CCW (0 < gdbl),
    the point off the ring image (ring_complement), and ray genericity
-   (ray_avoids_vertices).  This standalone seam has no in-code consumer
-   (touch_triangle_pair_ii_cell takes its separation premise directly). *)
+   (ray_avoids_vertices).  Its first in-code consumers are
+   touch_triangle_interiors_disjoint_generic and touch_triangle_pair_ii_cell_via_seam
+   below, which derive the ii-cell point_set separation from this seam rather
+   than assuming it. *)
 Lemma gtri_point_in_ring_imp_pos : forall ax ay bx by_ cx cy p,
   0 < gdbl ax ay bx by_ cx cy ->
   ring_complement (gtri_ring ax ay bx by_ cx cy) p ->
@@ -538,6 +540,82 @@ Proof.
   unfold triangle_polygon in Hpir. simpl in Hpir.
   unfold triangle_ring in Hpir. unfold gtri_ring.
   exact Hpir.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* FIRST CONSUMER of the Jordan seam point_set_characterises_geometric_interior. *)
+(*                                                                            *)
+(* Two CCW triangles touching on a shared edge have interiors separated by    *)
+(* the shared edge's line, so no point that is interior to BOTH (in the       *)
+(* parity point_set sense) AND off both ring images AND ray-generic for both  *)
+(* can exist: the seam lifts each parity-interior membership to the strict    *)
+(* algebraic form 0 < gtri, and the unconditional line separation             *)
+(* touch_int_ext_exclusion (0 < gtri A p -> gtri B p < 0) then contradicts.   *)
+(* The off-ring / ray-generic side conditions are exactly the seam's guards   *)
+(* (CCW + ring_complement + ray_avoids_vertices); dropping the ray-genericity *)
+(* one for an arbitrary witness is the residual genericity-removal rung.      *)
+(* 3-axiom (classical-reals trio only). *)
+Lemma touch_triangle_interiors_disjoint_generic :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    0 < gdbl ax ay bx by_ cx cy ->
+    0 < gdbl dx dy ex ey fx fy ->
+    ~ exists p,
+        (ring_complement (gtri_ring ax ay bx by_ cx cy) p /\
+         ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy) /\
+         point_set (triangle_geometry ax ay bx by_ cx cy) p) /\
+        (ring_complement (gtri_ring dx dy ex ey fx fy) p /\
+         ray_avoids_vertices p (gtri_ring dx dy ex ey fx fy) /\
+         point_set (triangle_geometry dx dy ex ey fx fy) p).
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch HccwA HccwB
+         [p [[HcA [HrA HpsA]] [HcB [HrB HpsB]]]].
+  pose proof (point_set_characterises_geometric_interior
+                ax ay bx by_ cx cy p HccwA HcA HrA HpsA) as HgA.
+  pose proof (point_set_characterises_geometric_interior
+                dx dy ex ey fx fy p HccwB HcB HrB HpsB) as HgB.
+  pose proof (touch_int_ext_exclusion
+                ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HgA) as HgBneg.
+  lra.
+Qed.
+
+(* The ii cell (cell_ok None SInt SInt), now wired THROUGH the seam: the opaque
+   point_set-disjointness premise H_ii_disjoint is replaced by the explicit,
+   seam-derivable residual -- that every common interior witness is off both ring
+   images and ray-generic for both rings (plus the two CCW guards).  This is the
+   honest remaining obligation (genericity removal would discharge it outright);
+   the disjointness itself is now PROVED from the landed seam rather than
+   assumed.  3-axiom (classical-reals trio only). *)
+Lemma touch_triangle_pair_ii_cell_via_seam :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    0 < gdbl ax ay bx by_ cx cy ->
+    0 < gdbl dx dy ex ey fx fy ->
+    (forall p,
+        point_set (triangle_geometry ax ay bx by_ cx cy) p ->
+        point_set (triangle_geometry dx dy ex ey fx fy) p ->
+        (ring_complement (gtri_ring ax ay bx by_ cx cy) p /\
+         ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy)) /\
+        (ring_complement (gtri_ring dx dy ex ey fx fy) p /\
+         ray_avoids_vertices p (gtri_ring dx dy ex ey fx fy))) ->
+    RelateCurveMatrix.cell_ok None RelateCurveMatrix.SInt RelateCurveMatrix.SInt
+      (triangle_geometry ax ay bx by_ cx cy)
+      (triangle_geometry dx dy ex ey fx fy).
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch HccwA HccwB Hgen.
+  apply (touch_triangle_pair_ii_cell ax ay bx by_ cx cy dx dy ex ey fx fy Htouch).
+  intros [p [HsA HsB]].
+  unfold RelateCurveMatrix.in_stratum in HsA, HsB.
+  destruct (Hgen p HsA HsB) as [[HcA HrA] [HcB HrB]].
+  pose proof (point_set_characterises_geometric_interior
+                ax ay bx by_ cx cy p HccwA HcA HrA HsA) as HgA.
+  pose proof (point_set_characterises_geometric_interior
+                dx dy ex ey fx fy p HccwB HcB HrB HsB) as HgB.
+  pose proof (touch_int_ext_exclusion
+                ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HgA) as HgBneg.
+  lra.
 Qed.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
