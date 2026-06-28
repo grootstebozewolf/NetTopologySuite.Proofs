@@ -5,7 +5,7 @@
     largest; when the radial foot (the global dot-maximiser) lies OUTSIDE the
     directed sweep, that maximum over the arc is attained at an ENDPOINT.
 
-    This file BANKS the reusable circle/dot monotonicity helpers (§1, both Qed),
+    This file BANKS the reusable circle/dot monotonicity helpers (§1, all Qed),
     then ISOLATES the one residual planar inequality (§2) — the "single-peak dot
     bound".  The metric seam `point_to_arc_dist_fallback_ends_lower` is
     discharged in `ArcPointDistance.v` by reducing it to §2, so the only
@@ -23,7 +23,8 @@
         inequality, kept as the single named deferred obligation.
 
     Translates directly to the NTS CircularString / point-to-arc distance
-    fallback guard.  Pure-R; classical-reals trio only.  *)
+    fallback guard.  Pure-R; the §1 helpers are classical-reals trio only, §2 is
+    the lone isolated obligation.  *)
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance ArcDistance.

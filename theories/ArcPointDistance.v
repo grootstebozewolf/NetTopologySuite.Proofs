@@ -28,7 +28,10 @@
    ArcSinglePeak.v (circle_dist_le_of_dot_ge + arc_dot_max_at_endpoint); the only
    residual obligation is the isolated planar inequality arc_dot_max_at_endpoint.
 
-   Pure math + decidable side tests.  3-axiom footprint (same as ArcDistance.v).
+   Pure math + decidable side tests.  Classical-reals trio, plus the single
+   isolated planar obligation arc_dot_max_at_endpoint (ArcSinglePeak.v) on which
+   only the fallback lemma depends; the radial/centre/zero lemmas are pure
+   3-axiom (same as ArcDistance.v).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
