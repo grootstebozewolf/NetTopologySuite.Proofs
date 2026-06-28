@@ -1851,6 +1851,10 @@ theories/ArcSegmentDistance.v
 # 4-lemmas stub: radial lower + radial attain + foot-on-arc + fallback interface.
 # Proof companion for ARC_DISTANCE / COMPOUND_ARC_DISTANCE RocqRefRunner pin.
 # 3-axiom (reuses ArcDistance). Chord-approx Option B.
+# Banks the circle/dot monotonicity helpers (all Qed) and isolates the single
+# residual planar single-peak dot bound (arc_dot_max_at_endpoint) that the
+# point-to-arc fallback reduces to.  Must precede ArcPointDistance.v.
+theories/ArcSinglePeak.v
 theories/ArcPointDistance.v
 
 # Issue #65 curve-aware buffer, rung 2: the SQL/MM three-point bridge.

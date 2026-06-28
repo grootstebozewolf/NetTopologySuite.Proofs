@@ -59,7 +59,9 @@ far declined. Ask #2 (atan2-based sweep) inherits this blocker.
 
 ## 4. Inventory of existing arc assets
 
-**R-side (`theories/`, 3 standard axioms, Admitted-free):**
+**R-side (`theories/`, 3 standard axioms; one isolated deferred obligation —
+`ArcSinglePeak.arc_dot_max_at_endpoint`, the residual planar single-peak dot
+bound; everything else Qed):**
 - `CurveGeometry.v` — SQL/MM types (`CircularArc`, `CurveSegment`, `CurveRing`,
   `CurvePolygon`, `CurveGeometry`) + validity + chord-approx bridge.
 - `ArcOrient.v` — `cross_R_pt`, `inCircle_R` (`:89`), arc orientation trichotomy
@@ -73,6 +75,14 @@ far declined. Ask #2 (atan2-based sweep) inherits this blocker.
 - `ArcChordApprox.v` — `arc_center_equidistant` (`:48`), sagitta foundations,
   `sagitta_le_arc_radius` (15 Qed lemmas).
 - `ArcOverlay.v` — conditional overlay headline + 6 Qed structural lemmas.
+- `ArcSinglePeak.v` — banked circle/dot monotonicity (`dist2_via_center_dot`,
+  `circle_dist_le_of_dot_ge`, `sign_opp`, all Qed) + the single isolated planar
+  `arc_dot_max_at_endpoint` (the sole open obligation; chord-frame reduction
+  documented in-file; falsity-checked TRUE; `nra`/CSDP-`psatz` insufficient).
+- `ArcPointDistance.v` — point-to-arc distance soundness (D-PT). All five
+  edge-case families Qed; the fallback lower-bound
+  `point_to_arc_dist_fallback_ends_lower` is **discharged** by reducing to
+  `ArcSinglePeak.arc_dot_max_at_endpoint` (no metric residue).
 - `Azimuth.v` — direction tooling; explicitly *no* `atan2`.
 
 **Flocq layer (`theories-flocq/`, +`Classical_Prop.classic`):**
@@ -223,5 +233,8 @@ So ask **#5a is closed**: existence predicate (R-side) + bit-exact prefix (A) +
 round-chain identity (B) + forward-error bounds (C, absolute and data-dependent),
 all `Qed` at the 4-axiom footprint. #3c/#4c arc-chord soundness is now PARTIALLY
 closed (`ArcChordSound.v`, side/endpoint-conditioned, 3-axiom); the
-genuinely-open arc gaps are the *unconditional* sweep≥π promotion (still
-quarantined) and #5b (arc-arc quartic coordinates).
+genuinely-open arc gaps are the *unconditional* sweep≤π promotion (still
+quarantined), #5b (arc-arc quartic coordinates), and the single isolated planar
+single-peak dot bound `ArcSinglePeak.arc_dot_max_at_endpoint` (the only Tier-3
+deferred obligation in the arc point-distance stack; the metric layer above it is
+fully Qed).
