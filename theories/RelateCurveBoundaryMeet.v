@@ -3,6 +3,11 @@
    ----------------------------------------------------------------------------
    The lineal boundary-meet bridge for CURVE_RELATE_MATRIX.
 
+   STATUS: boundary stratum now COMPLETE for lineal curves (im_bb negative +
+   positive verdicts, outer + hole rings, n-independent exactness); the interior
+   cells (im_ii / im_ib / im_bi) remain gated on the Jordan seam
+   `RelateNG.point_set_characterises_geometric_interior`.
+
    `RelateCurveMatrix.v` states the DE-9IM cells over the LINEARISED
    `to_geometry` strata (`geom_boundary` / `point_set`), whereas the contact
    kernels of `run_overlay_unified` / `run_curve_relate_matrix` are certified
