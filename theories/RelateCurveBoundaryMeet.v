@@ -19,23 +19,25 @@
 
    Result: a chord-chord contact verdict between the boundaries of two curve
    geometries makes their LINEARISED boundaries meet -- the im_bb cell is
-   non-empty, and the OGC-disjoint relate pattern is refuted.
+   non-empty, and the OGC-disjoint relate pattern is refuted.  Coverage spans
+   both the outer ring and the hole rings of each curve polygon.
 
-   HONEST SCOPE (lineal only -- not free for arcs / interior cells):
-     - ARC boundary cells: an arc contact witness lies on the TRUE arc, not on
-       a linearised chord edge of `to_geometry`; bridging needs the
-       sagitta/densification error model.  Deferred.
-     - Interior cells (im_ib / im_bi / im_ii): `curve_segments_meet` yields a
-       boundary-boundary witness only; interior witnesses need the overlap /
-       Jordan cell-dimension frontier.  Deferred.
+   LINEAL EXACTNESS (foundation, §1b): for an all-chord ring/geometry the
+   linearisation is `n`-independent (no sagitta error), so every ARC-specific
+   relate frontier (sagitta densification error model, arc noding) simply does
+   not apply to lineal inputs.
 
-   Reuses (no new geometry):
-     - OverlayContactSound: chord_chord_contact_{crossing,collinear,endpoint}_sound,
-       chord_chord_contact_shared_vertex.
-     - RelateCurveMatrix: geom_boundary / cg_boundary / cell_ok /
-       geom_de9im_pointset / geom_de9im_disjoint_ogc_characterization /
-       im_disjoint_ogc.
-     - CurveGeometry / CurveLinearise: to_geometry / chord_approx_ring.
+   HONEST SCOPE (boundary stratum, lineal only):
+     - The BOUNDARY stratum is now closed for the lineal case (im_bb here;
+       im_ee already general via two_geometries_exterior_meet).
+     - The INTERIOR cells (im_ii / im_ib / im_bi) -- for lineal curves AND for
+       straight-line geometries -- are gated on the deferred Jordan seam
+       `RelateNG.point_set_characterises_geometric_interior`, which aligns the
+       ray-parity `point_set` interior with the algebraic `0 < gtri` interior.
+       That seam is the recommended (medium-debt) next frontier; it is NOT
+       discharged here.
+     - ARC boundary cells (the contact point lies on the true arc, not on a
+       linearised chord edge) remain gated on the sagitta error model.
 
    3-axiom footprint (classical reals trio only); no Admitted.
 
@@ -103,7 +105,55 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §2  The geom_boundary bridge (repackaging).                                *)
+(* §1b  Lineal exactness: an all-chord ring/geometry linearises independent    *)
+(*      of n (no sagitta error -- arc frontiers do not apply to lineal input). *)
+(* -------------------------------------------------------------------------- *)
+
+Definition lineal_ring (r : CurveRing) : Prop :=
+  Forall (fun s => exists p q, s = CSChord p q) r.
+
+Definition lineal_curve_polygon (cp : CurvePolygon) : Prop :=
+  lineal_ring (curve_outer cp) /\ Forall lineal_ring (curve_holes cp).
+
+Definition lineal_curve_geometry (cg : CurveGeometry) : Prop :=
+  Forall lineal_curve_polygon cg.
+
+Lemma chord_approx_ring_lineal_n_independent :
+  forall (r : CurveRing),
+    lineal_ring r ->
+    forall n m, chord_approx_ring r n = chord_approx_ring r m.
+Proof.
+  intros r Hlin. induction Hlin as [| s r' Hhd Htl IH]; intros n m.
+  - reflexivity.
+  - destruct Hhd as [p [q Hs]]. subst s.
+    rewrite !chord_approx_ring_cons. cbn [chord_approx_segment].
+    rewrite (IH n m). reflexivity.
+Qed.
+
+Lemma to_geometry_lineal_n_independent :
+  forall (cg : CurveGeometry),
+    lineal_curve_geometry cg ->
+    forall n m, to_geometry cg n = to_geometry cg m.
+Proof.
+  intros cg Hlin n m. unfold to_geometry.
+  apply map_ext_in. intros cp Hcp.
+  unfold lineal_curve_geometry in Hlin.
+  rewrite Forall_forall in Hlin. specialize (Hlin cp Hcp).
+  destruct Hlin as [Houter Hholes].
+  cbn beta.
+  assert (Ho : chord_approx_ring (curve_outer cp) n
+             = chord_approx_ring (curve_outer cp) m)
+    by (apply chord_approx_ring_lineal_n_independent; exact Houter).
+  assert (Hhm : map (fun h => chord_approx_ring h n) (curve_holes cp)
+              = map (fun h => chord_approx_ring h m) (curve_holes cp)).
+  { apply map_ext_in. intros h Hin.
+    apply chord_approx_ring_lineal_n_independent.
+    rewrite Forall_forall in Hholes. apply Hholes. exact Hin. }
+  rewrite Ho, Hhm. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §2  The geom_boundary bridge (repackaging), outer ring and hole rings.     *)
 (* -------------------------------------------------------------------------- *)
 
 (* A point on a chord of a curve polygon's OUTER ring lies on the linearised
@@ -155,16 +205,38 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §2b  Unified boundary membership: a chord ANYWHERE on a curve polygon's     *)
+(*      boundary (outer ring OR a hole ring).                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Definition chord_in_cp_boundary (cp : CurvePolygon) (p q : Point) : Prop :=
+  In (CSChord p q) (curve_outer cp) \/
+  (exists h, In h (curve_holes cp) /\ In (CSChord p q) h).
+
+Lemma chord_on_cp_boundary_to_cg_boundary :
+  forall (cg : CurveGeometry) (cp : CurvePolygon) (p q : Point) (n : nat) (X : Point),
+    In cp cg ->
+    chord_in_cp_boundary cp p q ->
+    between p q X ->
+    cg_boundary cg n X.
+Proof.
+  intros cg cp p q n X Hcp Hb Hbtw.
+  destruct Hb as [Houter | [h [Hh Hseg]]].
+  - apply (chord_on_outer_to_cg_boundary cg cp p q n X Hcp Houter Hbtw).
+  - apply (chord_on_hole_to_cg_boundary cg cp h p q n X Hcp Hh Hseg Hbtw).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §3  Contact verdict ==> boundaries meet (reuse OverlayContactSound).        *)
-(*     One theorem per chord-chord regime; both chords on outer rings.         *)
+(*     One theorem per chord-chord regime; chords may lie on outer OR holes.   *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem curve_boundaries_meet_of_chord_chord_crossing :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     cross A B C * cross A B D < 0 ->
     cross C D A * cross C D B < 0 ->
     exists X, cg_boundary cgA n X /\ cg_boundary cgB n X.
@@ -172,56 +244,56 @@ Proof.
   intros cgA cgB n cpA cpB A B C D HA HB HsA HsB H1 H2.
   destruct (chord_chord_contact_crossing_sound A B C D H1 H2) as [X [HAB HCD]].
   exists X. split.
-  - apply (chord_on_outer_to_cg_boundary cgA cpA A B n X HA HsA HAB).
-  - apply (chord_on_outer_to_cg_boundary cgB cpB C D n X HB HsB HCD).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgA cpA A B n X HA HsA HAB).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgB cpB C D n X HB HsB HCD).
 Qed.
 
 Theorem curve_boundaries_meet_of_chord_chord_collinear :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     segments_1d_overlap A B C D ->
     exists X, cg_boundary cgA n X /\ cg_boundary cgB n X.
 Proof.
   intros cgA cgB n cpA cpB A B C D HA HB HsA HsB Hov.
   destruct (chord_chord_contact_collinear_sound A B C D Hov) as [X [HAB HCD]].
   exists X. split.
-  - apply (chord_on_outer_to_cg_boundary cgA cpA A B n X HA HsA HAB).
-  - apply (chord_on_outer_to_cg_boundary cgB cpB C D n X HB HsB HCD).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgA cpA A B n X HA HsA HAB).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgB cpB C D n X HB HsB HCD).
 Qed.
 
 Theorem curve_boundaries_meet_of_chord_chord_endpoint :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     (between C D A \/ between C D B \/ between A B C \/ between A B D) ->
     exists X, cg_boundary cgA n X /\ cg_boundary cgB n X.
 Proof.
   intros cgA cgB n cpA cpB A B C D HA HB HsA HsB Hep.
   destruct (chord_chord_contact_endpoint_sound A B C D Hep) as [X [HAB HCD]].
   exists X. split.
-  - apply (chord_on_outer_to_cg_boundary cgA cpA A B n X HA HsA HAB).
-  - apply (chord_on_outer_to_cg_boundary cgB cpB C D n X HB HsB HCD).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgA cpA A B n X HA HsA HAB).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgB cpB C D n X HB HsB HCD).
 Qed.
 
 Theorem curve_boundaries_meet_of_chord_chord_shared_vertex :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     (A = C \/ A = D \/ B = C \/ B = D) ->
     exists X, cg_boundary cgA n X /\ cg_boundary cgB n X.
 Proof.
   intros cgA cgB n cpA cpB A B C D HA HB HsA HsB Hsv.
   destruct (chord_chord_contact_shared_vertex A B C D Hsv) as [X [HAB HCD]].
   exists X. split.
-  - apply (chord_on_outer_to_cg_boundary cgA cpA A B n X HA HsA HAB).
-  - apply (chord_on_outer_to_cg_boundary cgB cpB C D n X HB HsB HCD).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgA cpA A B n X HA HsA HAB).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgB cpB C D n X HB HsB HCD).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -261,14 +333,15 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §4b  Oracle-facing headlines: chord-chord contact ==> not OGC-disjoint.     *)
+(*      Chords may lie on the outer ring OR a hole ring of either polygon.     *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem curve_relate_not_disjoint_of_chord_chord_crossing :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point) (m : IntersectionMatrix),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     cross A B C * cross A B D < 0 ->
     cross C D A * cross C D B < 0 ->
     geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
@@ -284,8 +357,8 @@ Theorem curve_relate_not_disjoint_of_chord_chord_collinear :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point) (m : IntersectionMatrix),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     segments_1d_overlap A B C D ->
     geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
     ~ im_disjoint_ogc m.
@@ -300,8 +373,8 @@ Theorem curve_relate_not_disjoint_of_chord_chord_endpoint :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point) (m : IntersectionMatrix),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     (between C D A \/ between C D B \/ between A B C \/ between A B D) ->
     geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
     ~ im_disjoint_ogc m.
@@ -316,8 +389,8 @@ Theorem curve_relate_not_disjoint_of_chord_chord_shared_vertex :
   forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
          (A B C D : Point) (m : IntersectionMatrix),
     In cpA cgA -> In cpB cgB ->
-    In (CSChord A B) (curve_outer cpA) ->
-    In (CSChord C D) (curve_outer cpB) ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
     (A = C \/ A = D \/ B = C \/ B = D) ->
     geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
     ~ im_disjoint_ogc m.
@@ -329,12 +402,135 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §4c  Entry point keyed on RingContactSound's curve_segments_meet.           *)
+(*      Bridges the two files' abstractions: a chord-chord meet (whatever       *)
+(*      contact regime produced it) between two curve-polygon boundaries        *)
+(*      yields a linearised boundary-boundary meet.                            *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma curve_boundaries_meet_of_chord_segments_meet :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    curve_segments_meet (CSChord A B) (CSChord C D) ->
+    exists X, cg_boundary cgA n X /\ cg_boundary cgB n X.
+Proof.
+  intros cgA cgB n cpA cpB A B C D HA HB HsA HsB Hmeet.
+  destruct Hmeet as [X [HAB HCD]].
+  (* on_curve_segment (CSChord _ _) X reduces to between _ _ X *)
+  simpl in HAB, HCD.
+  exists X. split.
+  - apply (chord_on_cp_boundary_to_cg_boundary cgA cpA A B n X HA HsA HAB).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgB cpB C D n X HB HsB HCD).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4d  Positive DE-9IM verdict: boundary-boundary INTERSECTION.               *)
+(*      A boundary-boundary meet matches `pat_intersects_4` (pat_bb := PTrue), *)
+(*      the positive form the relate oracle emits -- complementing the         *)
+(*      negative `~ im_disjoint_ogc` verdicts of §4b.                          *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma intersects_bb_of_boundary_meet :
+  forall (cgA cgB : CurveGeometry) (n : nat) (m : IntersectionMatrix),
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    (exists X, cg_boundary cgA n X /\ cg_boundary cgB n X) ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n m Hspec Hmeet.
+  unfold matrix_matches, pat_intersects_4; simpl.
+  repeat split; try exact I.
+  apply (proj2 (char_true_nonempty (im_bb m))).
+  apply (bb_nonempty_of_boundary_meet cgA cgB n m Hspec Hmeet).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_crossing :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB H1 H2 Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_crossing
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB H1 H2).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_collinear :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    segments_1d_overlap A B C D ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB Hov Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_collinear
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB Hov).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_endpoint :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    (between C D A \/ between C D B \/ between A B C \/ between A B D) ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB Hep Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_endpoint
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB Hep).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_shared_vertex :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    (A = C \/ A = D \/ B = C \/ B = D) ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB Hsv Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_shared_vertex
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB Hsv).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4e  Symmetry: the boundary-meet witness commutes, so every §4b/§4d verdict *)
+(*      holds with cgA/cgB swapped (re-instantiate with the commuted witness;  *)
+(*      pat_disjoint_ogc and pat_intersects_4 are themselves swap-symmetric).  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma boundary_meet_comm :
+  forall (cgA cgB : CurveGeometry) (n : nat),
+    (exists X, cg_boundary cgA n X /\ cg_boundary cgB n X) ->
+    (exists X, cg_boundary cgB n X /\ cg_boundary cgA n X).
+Proof. intros cgA cgB n [X [H1 H2]]. exists X. split; assumption. Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §5  Audit footprint (must show only the classical-reals trio).             *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions chord_edge_in_chord_approx_ring.
-Print Assumptions chord_on_outer_to_cg_boundary.
-Print Assumptions chord_on_hole_to_cg_boundary.
+Print Assumptions chord_approx_ring_lineal_n_independent.
+Print Assumptions to_geometry_lineal_n_independent.
+Print Assumptions chord_on_cp_boundary_to_cg_boundary.
 Print Assumptions curve_boundaries_meet_of_chord_chord_crossing.
 Print Assumptions curve_boundaries_meet_of_chord_chord_collinear.
 Print Assumptions curve_boundaries_meet_of_chord_chord_endpoint.
@@ -345,3 +541,9 @@ Print Assumptions curve_relate_not_disjoint_of_chord_chord_crossing.
 Print Assumptions curve_relate_not_disjoint_of_chord_chord_collinear.
 Print Assumptions curve_relate_not_disjoint_of_chord_chord_endpoint.
 Print Assumptions curve_relate_not_disjoint_of_chord_chord_shared_vertex.
+Print Assumptions curve_boundaries_meet_of_chord_segments_meet.
+Print Assumptions intersects_bb_of_boundary_meet.
+Print Assumptions curve_relate_intersects_of_chord_chord_crossing.
+Print Assumptions curve_relate_intersects_of_chord_chord_collinear.
+Print Assumptions curve_relate_intersects_of_chord_chord_endpoint.
+Print Assumptions curve_relate_intersects_of_chord_chord_shared_vertex.
