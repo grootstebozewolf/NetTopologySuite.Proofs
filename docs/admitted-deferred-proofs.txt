@@ -159,8 +159,18 @@ theories/ArcPointDistance.v:point_to_arc_dist_fallback_ends_lower | theories/Arc
 #   Qed (conditional) under added premise `r = TPR_TouchEdge`.
 #   Proof uses dispatch + rewrite + reflexivity (H_bridge pattern).
 
-theories/RelateNG.v:relate_triangle_touch | theories/RelateNG.v (relate under touch) + triangle_pair_fill | records intended matrix under explicit triangles_touch_on_shared_edge; regime stub blocks definitional equality today
-theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v (JCT seam fix) + g_sum/opposite_sides + GeneralTriangleParity planar covering | fixed to TRUE claim (0 < gtri A p → gtri B p < 0); weak ~ (0 < ...) form now Qed (touch_int_ext_exclusion_weak); strict <0 uses JCT planar-covering (sign flip on shared edge from opposite_sides + gtri_pos_iff + 18-case shares analysis, GeneralTriangleParity for half-plane covering of exterior). Used for ii_cell cases.
+# DISCHARGED 2026-06-28: theories/RelateNG.v:touch_int_ext_exclusion
+#   Qed via the in-house algebraic route (NO JCT planar-covering machinery, NO
+#   external library). gtri B p < 0 is obtained by refuting "all three B-slacks
+#   >= 0" (helper rmin3_neg_intro: 0 <= Rmin(Rmin a b) c forces a,b,c >= 0): in
+#   each of the 18 shares x orientation cases, p strictly interior to A
+#   (gtri_pos_iff giving the three A-slacks > 0) + opposite_sides + g_sum close by
+#   nra. In some cases B's shared-edge slack equals a positive A-slack, so no
+#   single B-slack is provably negative -- only the joint all-nonnegative
+#   impossibility is, which is exactly what rmin3_neg_intro needs. 3-axiom
+#   (classical-reals trio only; confirmed via Print Assumptions).
+# NOTE: theories/RelateNG.v:relate_triangle_touch was already DISCHARGED 2026-06-21
+#   (Qed at RelateNG.v; see the entry above); its stale live registry line is removed.
 
 # Jordan soundness seam (architectural): in_stratum SInt = point_set (half-open parity via point_in_ring)
 # vs true geometric interior {p | 0 < gtri p}. cell_ok None SInt SInt claims II=None under point_set,

@@ -390,17 +390,48 @@ Proof.
   exists p; split; assumption.
 Qed.
 
-(* The strict form (gtri B p < 0) remains the target; see deferred registry for
-   touch_int_ext_exclusion.  The proof structure uses the sign flip on the shared
-   edge (opposite_sides) + gtri_pos_iff + case analysis on shares (JCT planar
-   covering / half-plane separation from GeneralTriangleParity + Separation). *)
+(* `gtri = Rmin (Rmin gsA gsB) gsC`.  To prove it strictly negative it suffices to
+   refute "all three slacks >= 0" (the min is >= 0 iff all three are).  This is the
+   uniform shape that works across all 18 touch cases: in some the shared-edge slack
+   of B coincides with a positive A-slack, so no single B-slack is provably negative
+   on its own -- only the joint impossibility of all-nonnegative is. *)
+Lemma rmin3_neg_intro :
+  forall a b c : R, (0 <= a -> 0 <= b -> 0 <= c -> False) -> Rmin (Rmin a b) c < 0.
+Proof.
+  intros a b c H.
+  destruct (Rlt_le_dec (Rmin (Rmin a b) c) 0) as [Hlt | Hge]; [ exact Hlt | exfalso ].
+  apply H.
+  - eapply Rle_trans; [ exact Hge | ]. eapply Rle_trans; [ apply Rmin_l | apply Rmin_l ].
+  - eapply Rle_trans; [ exact Hge | ]. eapply Rle_trans; [ apply Rmin_l | apply Rmin_r ].
+  - eapply Rle_trans; [ exact Hge | apply Rmin_r ].
+Qed.
+
+(* Strict interior/exterior exclusion on a shared edge: if p is strictly interior
+   to A (all three A-slacks > 0, so p is strictly on a3's side of the shared edge)
+   and the touch puts b3 on the OPPOSITE side, then B's shared-edge slack at p is
+   strictly negative, hence gtri B p < 0.  Same 18-case shape as
+   touch_triangle_pair_strict_ii_no_common, concluding the slack sign rather than
+   a contradiction.  Pure-R / nra; no JCT machinery, no extra axioms. *)
 Lemma touch_int_ext_exclusion :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy p,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
     0 < gtri ax ay bx by_ cx cy p ->
     gtri dx dy ex ey fx fy p < 0.
-Admitted.
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HApos.
+  apply gtri_pos_iff in HApos as [HA1 [HA2 HA3]].
+  pose proof (g_sum ax ay bx by_ cx cy p) as HsumA.
+  pose proof (g_sum dx dy ex ey fx fy p) as HsumB.
+  unfold gtri. apply rmin3_neg_intro. intros Hb1 Hb2 Hb3.
+  unfold gsA, gsB, gsC, gdbl in *.
+  cbn [px py] in *.
+  unfold triangles_touch_on_shared_edge, shares_edge, opposite_sides, cross in Htouch.
+  cbn [px py] in Htouch.
+  destruct Htouch as [H|[H|[H|[H|[H|[H|[H|[H|H]]]]]]]];
+  destruct H as [[[Hp1 Hp2]|[Hp1 Hp2]] Hopp];
+  injection Hp1 as ? ?; injection Hp2 as ? ?; subst; nra.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Triangle touch cell lemmas (BB/EE/II/F) mirroring rect touch cells.        *)
