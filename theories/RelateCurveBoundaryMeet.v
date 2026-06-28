@@ -402,6 +402,128 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* §4c  Entry point keyed on RingContactSound's curve_segments_meet.           *)
+(*      Bridges the two files' abstractions: a chord-chord meet (whatever       *)
+(*      contact regime produced it) between two curve-polygon boundaries        *)
+(*      yields a linearised boundary-boundary meet.                            *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma curve_boundaries_meet_of_chord_segments_meet :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    curve_segments_meet (CSChord A B) (CSChord C D) ->
+    exists X, cg_boundary cgA n X /\ cg_boundary cgB n X.
+Proof.
+  intros cgA cgB n cpA cpB A B C D HA HB HsA HsB Hmeet.
+  destruct Hmeet as [X [HAB HCD]].
+  (* on_curve_segment (CSChord _ _) X reduces to between _ _ X *)
+  simpl in HAB, HCD.
+  exists X. split.
+  - apply (chord_on_cp_boundary_to_cg_boundary cgA cpA A B n X HA HsA HAB).
+  - apply (chord_on_cp_boundary_to_cg_boundary cgB cpB C D n X HB HsB HCD).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4d  Positive DE-9IM verdict: boundary-boundary INTERSECTION.               *)
+(*      A boundary-boundary meet matches `pat_intersects_4` (pat_bb := PTrue), *)
+(*      the positive form the relate oracle emits -- complementing the         *)
+(*      negative `~ im_disjoint_ogc` verdicts of §4b.                          *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma intersects_bb_of_boundary_meet :
+  forall (cgA cgB : CurveGeometry) (n : nat) (m : IntersectionMatrix),
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    (exists X, cg_boundary cgA n X /\ cg_boundary cgB n X) ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n m Hspec Hmeet.
+  unfold matrix_matches, pat_intersects_4; simpl.
+  repeat split; try exact I.
+  apply (proj2 (char_true_nonempty (im_bb m))).
+  apply (bb_nonempty_of_boundary_meet cgA cgB n m Hspec Hmeet).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_crossing :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    cross A B C * cross A B D < 0 ->
+    cross C D A * cross C D B < 0 ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB H1 H2 Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_crossing
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB H1 H2).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_collinear :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    segments_1d_overlap A B C D ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB Hov Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_collinear
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB Hov).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_endpoint :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    (between C D A \/ between C D B \/ between A B C \/ between A B D) ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB Hep Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_endpoint
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB Hep).
+Qed.
+
+Theorem curve_relate_intersects_of_chord_chord_shared_vertex :
+  forall (cgA cgB : CurveGeometry) (n : nat) (cpA cpB : CurvePolygon)
+         (A B C D : Point) (m : IntersectionMatrix),
+    In cpA cgA -> In cpB cgB ->
+    chord_in_cp_boundary cpA A B ->
+    chord_in_cp_boundary cpB C D ->
+    (A = C \/ A = D \/ B = C \/ B = D) ->
+    geom_de9im_pointset (to_geometry cgA n) (to_geometry cgB n) m ->
+    matrix_matches pat_intersects_4 m.
+Proof.
+  intros cgA cgB n cpA cpB A B C D m HA HB HsA HsB Hsv Hspec.
+  apply (intersects_bb_of_boundary_meet cgA cgB n m Hspec).
+  apply (curve_boundaries_meet_of_chord_chord_shared_vertex
+           cgA cgB n cpA cpB A B C D HA HB HsA HsB Hsv).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §4e  Symmetry: the boundary-meet witness commutes, so every §4b/§4d verdict *)
+(*      holds with cgA/cgB swapped (re-instantiate with the commuted witness;  *)
+(*      pat_disjoint_ogc and pat_intersects_4 are themselves swap-symmetric).  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma boundary_meet_comm :
+  forall (cgA cgB : CurveGeometry) (n : nat),
+    (exists X, cg_boundary cgA n X /\ cg_boundary cgB n X) ->
+    (exists X, cg_boundary cgB n X /\ cg_boundary cgA n X).
+Proof. intros cgA cgB n [X [H1 H2]]. exists X. split; assumption. Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* §5  Audit footprint (must show only the classical-reals trio).             *)
 (* -------------------------------------------------------------------------- *)
 
@@ -419,3 +541,9 @@ Print Assumptions curve_relate_not_disjoint_of_chord_chord_crossing.
 Print Assumptions curve_relate_not_disjoint_of_chord_chord_collinear.
 Print Assumptions curve_relate_not_disjoint_of_chord_chord_endpoint.
 Print Assumptions curve_relate_not_disjoint_of_chord_chord_shared_vertex.
+Print Assumptions curve_boundaries_meet_of_chord_segments_meet.
+Print Assumptions intersects_bb_of_boundary_meet.
+Print Assumptions curve_relate_intersects_of_chord_chord_crossing.
+Print Assumptions curve_relate_intersects_of_chord_chord_collinear.
+Print Assumptions curve_relate_intersects_of_chord_chord_endpoint.
+Print Assumptions curve_relate_intersects_of_chord_chord_shared_vertex.
