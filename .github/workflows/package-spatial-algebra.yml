@@ -219,16 +219,16 @@ jobs:
               # set it from the tag so the submitted package is
               # coq-spatial-algebra.$VERSION (not the raw tag).
               echo "version: \"$VERSION\"" >> "$PKG_DIR/$OPAM_FILE"
-              # opam-publish ignores piped stdin for its confirm in CI (stdin
-              # is not a tty, so `yes |` and OPAMYES were both ignored and it
-              # auto-answered no). OPAMCONFIRMLEVEL=unsafe-yes is the documented
-              # mechanism that makes opam auto-answer every confirmation
-              # WITHOUT reading input.
-              export OPAMCONFIRMLEVEL=unsafe-yes OPAMYES=1
-              opam publish --no-browser \
-                --repo="$OPAM_TARGET_REPO" \
-                "$TARBALL_URL" \
-                "$PKG_DIR/$OPAM_FILE"
+              # opam-publish reads its Continue/Submit confirmations from the
+              # controlling TTY, not stdin, so in CI (no tty) it aborts with no
+              # regardless of yes-pipe, OPAMYES, or OPAMCONFIRMLEVEL (all three
+              # were verified ineffective). Run it under a pseudo-tty via
+              # util-linux script(1) and feed y to every prompt. pipefail OFF
+              # so the yes SIGPIPE does not mask the exit code; script -e
+              # returns the wrapped opam publish exit status.
+              export OPAMYES=1 OPAMCONFIRMLEVEL=unsafe-yes
+              set +o pipefail
+              yes | script -qec "opam publish --no-browser --repo=$OPAM_TARGET_REPO $TARBALL_URL $PKG_DIR/$OPAM_FILE" /dev/null
             ' || {
               echo "::warning::opam publish did not complete; the release tarball is attached. Submit manually: OPAM_PUBLISH_GH_TOKEN=<token> opam publish --repo=$OPAM_TARGET_REPO $TARBALL_URL $PKG_DIR/$OPAM_FILE"
               printf 'opam publish skipped/failed; the release tarball is attached. Submit manually: OPAM_PUBLISH_GH_TOKEN=<token> opam publish --repo=%s %s %s\n' "$OPAM_TARGET_REPO" "$TARBALL_URL" "$PKG_DIR/$OPAM_FILE" >> "$GITHUB_STEP_SUMMARY"
