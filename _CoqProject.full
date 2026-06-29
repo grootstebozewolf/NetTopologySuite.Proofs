@@ -1850,6 +1850,12 @@ theories/ArcSegmentCircles.v
 # (inverted-negative-buffer artifact class), and the arc_length
 # offset bridge (M-LEN).  No Admitteds.
 theories/ArcOffset.v
+# Clothoid-aware buffer soundness: the offset of a clothoid's local osculating
+# arc is a valid parallel curve when the buffer distance respects the clothoid's
+# minimum radius of curvature (1 / max curvature). Bridges the curvature-linear
+# spiral (kappa = k0 + (k1-k0)*tau) to arc_offset_dist_exact; the inner buffer
+# (d<0) is where the bound bites. Depends on Distance + ArcOffset. Three-axiom.
+theories/ClothoidBufferBridge.v
 # Issue #64 / D-PT: point-to-circle distance |dist O P - r| (proof companion of
 # the ARC_DISTANCE oracle mode).  Reverse-triangle lower bound (every circle point
 # >= |dist O P - r|) + radial-foot attainment.  3-axiom.  Deferred: the CircularArc
