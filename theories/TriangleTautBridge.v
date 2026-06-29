@@ -20,7 +20,7 @@
                               -- non-collinearity from 0 < gdbl rules out any
                               interior meeting; the per-pair certificate is the
                               ideal identity (1-t)*gdbl = 0 or t*gdbl = 0).
-   - `tri_parity_seam`     : the capstone -- `parity_characterises_interior_cont_offring`
+   - `tri_parity_seam_offring_taut` : the capstone -- `parity_characterises_interior_cont_offring`
                               for the triangle, by feeding the three predicates to
                               `parity_seam_offring_taut`.
 
@@ -30,9 +30,18 @@
    / a vertex on another edge's interior.  `ring_taut` is strictly stronger
    (`ring_taut_implies_simple`; the `bowtie` in RingSimple.v is simple but not
    taut).  A general overlay taut bridge therefore needs a STRONGER noding
-   predicate than the current extraction provides.  This file does not claim
-   otherwise; it validates the taut-seam path on a concrete ring and banks the
-   per-predicate lemmas for reuse.
+   predicate than the current extraction provides: concretely, one of the form
+   `ring_no_vertex_on_foreign_edge_interior r` (no ring vertex lies in the
+   relative interior of a non-incident edge) added to the noding contract, from
+   which `ring_taut` would follow for arbitrary extracted rings.  This file does
+   not attempt that; it validates the taut-seam path on a concrete ring and banks
+   the per-predicate lemmas for reuse.
+
+   USAGE (for future overlay work): to discharge the off-ring H1 biconditional on
+   any concrete ring, supply `ring_taut` + `ring_core_nodup` + `no_horizontal_edges`
+   to `parity_seam_offring_taut` exactly as `tri_parity_seam_offring_taut` does
+   here; `*_generic` shows the ray guard can be reduced to a finite height
+   condition.  The three per-predicate lemmas below are the reusable templates.
 
    Pure-R; classical-reals trio only.
 
@@ -154,8 +163,9 @@ Qed.
    holds: at every off-ring, ray-generic point with no horizontal edge at its
    height, parity membership coincides with continuous geometric interiority.
    This is `parity_seam_offring_taut` discharged via the three predicates
-   above -- the first concrete ring for which the taut Jordan seam is realized. *)
-Lemma tri_parity_seam : forall ax ay bx by_ cx cy p,
+   above -- the first concrete ring for which the taut Jordan seam is realized.
+   Named for symmetry with the source lemma `parity_seam_offring_taut`. *)
+Lemma tri_parity_seam_offring_taut : forall ax ay bx by_ cx cy p,
   0 < gdbl ax ay bx by_ cx cy ->
   ay <> by_ -> by_ <> cy -> cy <> ay ->
   parity_characterises_interior_cont_offring p (gtri_ring ax ay bx by_ cx cy).
@@ -171,7 +181,7 @@ Qed.
 (* §6  Genericity: the ray guard is GENERIC, and NECESSARY (not removable).    *)
 (*                                                                            *)
 (* The natural "next rung" would be to drop `ray_avoids_vertices` from         *)
-(* `tri_parity_seam` (and from the triangle ii-cell consumers in RelateNG.v).  *)
+(* `tri_parity_seam_offring_taut` (and the triangle ii-cell consumers).        *)
 (* That is NOT possible for the closed strict-straddle `point_in_ring` that    *)
 (* `point_set` is built on: the diamond in JCT_VertexGrazingCounterexample.v   *)
 (* exhibits an off-ring point whose rightward ray GRAZES a vertex, so          *)
@@ -182,7 +192,7 @@ Qed.
 (*                                                                            *)
 (* What IS true and useful is that the guard is GENERIC: for a triangle it can *)
 (* fail only at the three vertex heights, so it holds for every point whose    *)
-(* y-coordinate avoids {ay, by_, cy}.  `tri_parity_seam` thus characterises    *)
+(* y-coordinate avoids {ay, by_, cy}.  the capstone thus characterises         *)
 (* interiority at every off-ring point except those on three horizontal lines  *)
 (* -- the standard general-position coverage.                                  *)
 (* -------------------------------------------------------------------------- *)
@@ -213,7 +223,7 @@ Corollary tri_parity_seam_generic : forall ax ay bx by_ cx cy p,
      <-> point_in_ring p (gtri_ring ax ay bx by_ cx cy)).
 Proof.
   intros ax ay bx by_ cx cy p Hccw Hab Hbc Hca Hcompl Hnoh Hpa Hpb Hpc.
-  apply (tri_parity_seam ax ay bx by_ cx cy p Hccw Hab Hbc Hca).
+  apply (tri_parity_seam_offring_taut ax ay bx by_ cx cy p Hccw Hab Hbc Hca).
   - apply ring_taut_implies_simple, tri_ring_taut; exact Hccw.
   - apply ring_core_nodup_closed, tri_core_nodup; exact Hccw.
   - unfold ring_has_minimum_points, gtri_ring; simpl; lia.
@@ -229,6 +239,6 @@ Qed.
 Print Assumptions tri_core_nodup.
 Print Assumptions tri_no_horizontal_edges.
 Print Assumptions tri_ring_taut.
-Print Assumptions tri_parity_seam.
+Print Assumptions tri_parity_seam_offring_taut.
 Print Assumptions tri_ray_generic_off_vertex_heights.
 Print Assumptions tri_parity_seam_generic.
