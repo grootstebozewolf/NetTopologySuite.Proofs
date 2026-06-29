@@ -1338,6 +1338,13 @@ theories/JCTPayoffRides.v
 # polygonal Jordan seam holds for taut, proper, horizontal-free rings --
 # every premise a theorem, no stub, exactly the three allowed axioms.
 theories/JCTEscapeDescentHolds.v
+# Ring-class bridge, concrete instance: the generic-height CCW triangle satisfies
+# ring_taut + ring_core_nodup + no_horizontal_edges, giving the FIRST end-to-end
+# instantiation of parity_seam_offring_taut.  Banks the per-predicate lemmas;
+# documents the general-overlay obstruction (stronger noding needed -- ring_simple
+# allows T-junctions, ring_taut does not).  Depends on JCTEscapeDescentHolds +
+# GeneralTriangleSeparation + JCT_OnEdgeCounterexample.  Three-axiom.
+theories/TriangleTautBridge.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
