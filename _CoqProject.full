@@ -1422,6 +1422,14 @@ theories/JCT_Counterexample.v
 # first with-holes valid_polygon whose analytic clause needs no Jordan hypothesis.
 # Three-axiom.  No Admitted.
 theories/TriangleValidPolygon.v
+# Half-open migration, rung 1: the TRAPPED half of the polygonal Jordan seam
+# stated over half-open parity (point_in_ring_ho) needs NO ray-genericity guard
+# -- invariant_traps takes the ho invariant directly, bypassing the guarded
+# closed-to-ho agreement.  ho_trapped + triangle instantiation.  Documents that
+# the escape half and any closed/point_set-level result still pay the guard.
+# Depends on JCTParityTransport + JCTHalfOpenParity + JCTSeamAssembly +
+# GeneralTriangleSeparation + TriangleValidPolygon.  Three-axiom.
+theories/HalfOpenTrapped.v
 
 # Why no_horizontal_edge_at is NOT enough for ray-parity to characterise the
 # interior (docs/jct-vertex-grazing-counterexample.md).  A convex diamond and
