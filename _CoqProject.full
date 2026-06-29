@@ -1914,6 +1914,12 @@ theories/ArcOffsetThreePoint.v
 # join edges remain necessary (JTS#1147 / OffsetCurve artifact class).
 # No Admitteds.
 theories/CurveRingOffset.v
+# Clothoid-clothoid offset contact soundness (adjacent pair): the reusable
+# internal-tangency uniqueness engine (two circles at centre distance |r1-r2|,
+# r1<>r2, meet at one point) + the intended G1 join contact surviving the offset.
+# Depends on ArcOffsetThreePoint + ArcArcSound + CurveRingOffset + ArcArcCircles.
+# Three-axiom.
+theories/ClothoidOffsetContact.v
 
 # Issue #65 curve-aware buffer, rung 5: the ROUND JOIN ARC in SQL/MM
 # three-point form -- the join edge CurveRingOffset's tear witness
