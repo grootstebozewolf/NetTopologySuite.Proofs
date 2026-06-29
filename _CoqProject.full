@@ -283,6 +283,11 @@ theories/RayParityDegenerate.v
 # land here; tangents that don't are documented in
 # docs/point-in-ring-tangent-attempts.md.  No Admitted.
 theories/PointInRingTangents.v
+# The complement of a ring's boundary image is OPEN (off-ring points have a
+# whole ball of off-ring points): per-edge clamped-projection distance lower
+# bound + finite Rmin over the edge list.  Foundation for the half-open escape
+# perturbation.  Depends only on Distance + Overlay + PointInRingTangents.
+theories/RingComplementOpen.v
 # Phase 3 milestone 2: planar topology graph type.  TopologyGraph
 # record (vertices, edges with EdgeLabel), valid_topology_graph
 # well-formedness predicate, three construction helpers (empty_graph,
@@ -1430,6 +1435,12 @@ theories/TriangleValidPolygon.v
 # Depends on JCTParityTransport + JCTHalfOpenParity + JCTSeamAssembly +
 # GeneralTriangleSeparation + TriangleValidPolygon.  Three-axiom.
 theories/HalfOpenTrapped.v
+# Half-open migration, rung 2 (escape foundations): the analytic pigeonhole
+# exists_real_avoiding (an open interval contains a real avoiding a finite list
+# -- the vertex heights), the gating sublemma for perturbing a non-generic even
+# point to a generic one. The escape assembly proper consumes this +
+# RingComplementOpen + the JCT escape machinery.
+theories/HalfOpenEscape.v
 
 # Why no_horizontal_edge_at is NOT enough for ray-parity to characterise the
 # interior (docs/jct-vertex-grazing-counterexample.md).  A convex diamond and
@@ -1839,6 +1850,12 @@ theories/ArcSegmentCircles.v
 # (inverted-negative-buffer artifact class), and the arc_length
 # offset bridge (M-LEN).  No Admitteds.
 theories/ArcOffset.v
+# Clothoid-aware buffer soundness: the offset of a clothoid's local osculating
+# arc is a valid parallel curve when the buffer distance respects the clothoid's
+# minimum radius of curvature (1 / max curvature). Bridges the curvature-linear
+# spiral (kappa = k0 + (k1-k0)*tau) to arc_offset_dist_exact; the inner buffer
+# (d<0) is where the bound bites. Depends on Distance + ArcOffset. Three-axiom.
+theories/ClothoidBufferBridge.v
 # Issue #64 / D-PT: point-to-circle distance |dist O P - r| (proof companion of
 # the ARC_DISTANCE oracle mode).  Reverse-triangle lower bound (every circle point
 # >= |dist O P - r|) + radial-foot attainment.  3-axiom.  Deferred: the CircularArc
