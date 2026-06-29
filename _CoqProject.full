@@ -1921,6 +1921,14 @@ theories/CurveRingOffset.v
 # Three-axiom.
 theories/ClothoidOffsetContact.v
 
+# Global clothoid offset assembly soundness (adjacency level, whole ring):
+# lifts ClothoidOffsetContact's pairwise "meet only at join" over a closed
+# clothoid arc-ring -- every consecutive offset-arc pair (interior + wrap) is a
+# single clean contact, and the offset ring is valid (clothoid_ring_offset_valid).
+# Depends on CurveRingOffset + ClothoidOffsetContact + ClothoidBufferBridge.
+# Three-axiom.
+theories/ClothoidBufferAssembly.v
+
 # Issue #65 curve-aware buffer, rung 5: the ROUND JOIN ARC in SQL/MM
 # three-point form -- the join edge CurveRingOffset's tear witness
 # forces at non-G1 joins, emitted AS AN ARC.  unit_cross_nonzero (the
