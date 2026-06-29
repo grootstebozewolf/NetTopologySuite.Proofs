@@ -1435,6 +1435,12 @@ theories/TriangleValidPolygon.v
 # Depends on JCTParityTransport + JCTHalfOpenParity + JCTSeamAssembly +
 # GeneralTriangleSeparation + TriangleValidPolygon.  Three-axiom.
 theories/HalfOpenTrapped.v
+# Half-open migration, rung 2 (escape foundations): the analytic pigeonhole
+# exists_real_avoiding (an open interval contains a real avoiding a finite list
+# -- the vertex heights), the gating sublemma for perturbing a non-generic even
+# point to a generic one. The escape assembly proper consumes this +
+# RingComplementOpen + the JCT escape machinery.
+theories/HalfOpenEscape.v
 
 # Why no_horizontal_edge_at is NOT enough for ray-parity to characterise the
 # interior (docs/jct-vertex-grazing-counterexample.md).  A convex diamond and
