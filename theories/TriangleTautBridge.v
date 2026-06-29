@@ -45,6 +45,7 @@
 From Stdlib Require Import Reals Lra Lia List Nsatz.
 From NTS.Proofs Require Import Distance Overlay.
 From NTS.Proofs Require Import GeneralTriangleSeparation.
+From NTS.Proofs Require Import JordanCurveSeam PointInRingCorrect PointInRingTangents.
 From NTS.Proofs Require Import JCTTautClearance JCTRingCycle JCTHugStep.
 From NTS.Proofs Require Import JCT_OnEdgeCounterexample JCTEscapeDescentHolds.
 Import ListNotations.
@@ -167,10 +168,67 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §6  Audit footprint.                                                       *)
+(* §6  Genericity: the ray guard is GENERIC, and NECESSARY (not removable).    *)
+(*                                                                            *)
+(* The natural "next rung" would be to drop `ray_avoids_vertices` from         *)
+(* `tri_parity_seam` (and from the triangle ii-cell consumers in RelateNG.v).  *)
+(* That is NOT possible for the closed strict-straddle `point_in_ring` that    *)
+(* `point_set` is built on: the diamond in JCT_VertexGrazingCounterexample.v   *)
+(* exhibits an off-ring point whose rightward ray GRAZES a vertex, so          *)
+(* `edge_crosses_ray`'s strict y-straddle miscounts the crossing and flips the *)
+(* parity -- a genuine failure of the unguarded test.  Hence the guard is      *)
+(* NECESSARY; "genericity removal" can only RELOCATE it (e.g. to a half-open   *)
+(* convention), not eliminate it for this convention.                         *)
+(*                                                                            *)
+(* What IS true and useful is that the guard is GENERIC: for a triangle it can *)
+(* fail only at the three vertex heights, so it holds for every point whose    *)
+(* y-coordinate avoids {ay, by_, cy}.  `tri_parity_seam` thus characterises    *)
+(* interiority at every off-ring point except those on three horizontal lines  *)
+(* -- the standard general-position coverage.                                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma tri_ray_generic_off_vertex_heights : forall ax ay bx by_ cx cy p,
+  py p <> ay -> py p <> by_ -> py p <> cy ->
+  ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy).
+Proof.
+  intros ax ay bx by_ cx cy p Ha Hb Hc v Hin [Hpy _].
+  unfold gtri_ring in Hin. simpl in Hin.
+  destruct Hin as [Hv | [Hv | [Hv | [Hv | []]]]]; subst v; cbn [px py] in Hpy.
+  - apply Ha; symmetry; exact Hpy.
+  - apply Hb; symmetry; exact Hpy.
+  - apply Hc; symmetry; exact Hpy.
+  - apply Ha; symmetry; exact Hpy.
+Qed.
+
+(* Corollary: at any off-ring point off the three vertex heights, the taut
+   Jordan biconditional holds for the triangle -- the guard discharged from a
+   pure height condition (general position). *)
+Corollary tri_parity_seam_generic : forall ax ay bx by_ cx cy p,
+  0 < gdbl ax ay bx by_ cx cy ->
+  ay <> by_ -> by_ <> cy -> cy <> ay ->
+  ring_complement (gtri_ring ax ay bx by_ cx cy) p ->
+  no_horizontal_edge_at p (gtri_ring ax ay bx by_ cx cy) ->
+  py p <> ay -> py p <> by_ -> py p <> cy ->
+  (geometric_interior_cont p (gtri_ring ax ay bx by_ cx cy)
+     <-> point_in_ring p (gtri_ring ax ay bx by_ cx cy)).
+Proof.
+  intros ax ay bx by_ cx cy p Hccw Hab Hbc Hca Hcompl Hnoh Hpa Hpb Hpc.
+  apply (tri_parity_seam ax ay bx by_ cx cy p Hccw Hab Hbc Hca).
+  - apply ring_taut_implies_simple, tri_ring_taut; exact Hccw.
+  - apply ring_core_nodup_closed, tri_core_nodup; exact Hccw.
+  - unfold ring_has_minimum_points, gtri_ring; simpl; lia.
+  - exact Hcompl.
+  - exact Hnoh.
+  - apply tri_ray_generic_off_vertex_heights; assumption.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §7  Audit footprint.                                                       *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions tri_core_nodup.
 Print Assumptions tri_no_horizontal_edges.
 Print Assumptions tri_ring_taut.
 Print Assumptions tri_parity_seam.
+Print Assumptions tri_ray_generic_off_vertex_heights.
+Print Assumptions tri_parity_seam_generic.
