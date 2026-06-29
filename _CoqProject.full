@@ -283,6 +283,11 @@ theories/RayParityDegenerate.v
 # land here; tangents that don't are documented in
 # docs/point-in-ring-tangent-attempts.md.  No Admitted.
 theories/PointInRingTangents.v
+# The complement of a ring's boundary image is OPEN (off-ring points have a
+# whole ball of off-ring points): per-edge clamped-projection distance lower
+# bound + finite Rmin over the edge list.  Foundation for the half-open escape
+# perturbation.  Depends only on Distance + Overlay + PointInRingTangents.
+theories/RingComplementOpen.v
 # Phase 3 milestone 2: planar topology graph type.  TopologyGraph
 # record (vertices, edges with EdgeLabel), valid_topology_graph
 # well-formedness predicate, three construction helpers (empty_graph,
