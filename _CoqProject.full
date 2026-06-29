@@ -1929,6 +1929,15 @@ theories/ClothoidOffsetContact.v
 # Three-axiom.
 theories/ClothoidBufferAssembly.v
 
+# Offset-ring simplicity from clearance (the global, non-adjacent half): a valid,
+# safely-offset CurveRing whose non-adjacent source segments have pairwise
+# clearance > 2|d| offsets to a curve_ring_simple ring (a metric tube argument:
+# every offset point is within |d| of its source segment -- chords parallel,
+# arcs radial). Covers chords + arcs, so clothoid arc-rings included.
+# Depends on ArcOffsetThreePoint + ArcArcCircles + BufferOffset + CurveRingOffset
+# + CurveRingSimple. Three-axiom.
+theories/CurveRingOffsetSimple.v
+
 # Issue #65 curve-aware buffer, rung 5: the ROUND JOIN ARC in SQL/MM
 # three-point form -- the join edge CurveRingOffset's tear witness
 # forces at non-G1 joins, emitted AS AN ARC.  unit_cross_nonzero (the
