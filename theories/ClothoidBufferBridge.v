@@ -26,9 +26,13 @@
    osculating-arc offset is sound.  The bite is the INNER buffer (d < 0); outer
    buffers (d >= 0) are trivially safe.
 
-   SCOPE (honest): this is the local osculating-arc soundness -- the standard
-   differential-geometry primitive a curve-aware buffer uses -- not a global
-   Fresnel-integral offset theorem (the corpus does not materialize the spiral).
+   SCOPE (honest): this is the LOCAL osculating-arc soundness -- the standard
+   differential-geometry linearisation primitive a curve-aware buffer uses --
+   not a global Fresnel-integral offset theorem (the corpus does not materialize
+   the spiral).  Respecting the clothoid minimum radius 1/kappa_max (via the
+   endpoint Rmax) is the practical buffer-safety condition for inner offsets;
+   the singularity at d < -1/kappa_max (clothoid_offset_below_min_radius_fails,
+   below) is why the bound is both tight and necessary.
 
    Pure-R; classical-reals trio only (inherits ArcOffset's footprint).
 
@@ -92,7 +96,9 @@ Qed.
 
 (* Headline: with the global min-radius safety bound, the offset of the local
    osculating arc (radius 1/kappa(tau)) is a sound parallel curve at distance
-   |d| -- every circle point is at least |d| away, attained radially. *)
+   |d| -- every circle point is at least |d| away, attained radially (the
+   arc_offset_dist_exact enclosure + radial attainment hold under the
+   min-radius guard). *)
 Theorem clothoid_osculating_offset_sound : forall k0 k1 tau d C theta,
   0 < k0 -> 0 < k1 -> 0 <= tau <= 1 ->
   - (1 / Rmax k0 k1) <= d ->
