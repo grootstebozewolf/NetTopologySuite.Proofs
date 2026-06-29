@@ -23,14 +23,16 @@
      §3  join_normals_center_dist -- derives the internal-tangency relation
          dist(C1,C2) = |arc_radius a1 - arc_radius a2| from join_normals_consistent
          (a division-heavy `field` derivation, no nra).
-     §4  two_clothoid_offset_arcs_meet_only_at_join -- the HEADLINE: every common
+     §4  clothoid_clothoid_offset_contact_sound -- the HEADLINE: every common
          point of the two offset circles equals the offset join.  Glues §3 (the
          centre distance equals |rho1-rho2|, so the offset circles are internally
          tangent) into §1 (internal tangency forces a unique meeting point), with
          the join itself a witness via §2.
 
-   Scope (honest): adjacent-pair contact soundness.  NON-adjacent ring simplicity
-   is the noder's job (raw offset is not simple -- RingSimple.bowtie), not claimed.
+   Scope (honest): adjacent-pair local contacts via osculating-arc reduction; full
+   global clothoid offset assembly remains future work.  NON-adjacent ring
+   simplicity is the noder's job (raw offset is not simple -- RingSimple.bowtie),
+   not claimed.
 
    Pure-R; classical-reals trio only.  (nra is unreliable in this build, so the
    algebra is done with ring identities + lra + sqr_eq_zero.)
@@ -215,7 +217,7 @@ Qed.
 (* equals the offset join -- no spurious second crossing.  arcs are subsets of *)
 (* their circumcircles, so they too meet only at the join.                    *)
 (* -------------------------------------------------------------------------- *)
-Theorem two_clothoid_offset_arcs_meet_only_at_join : forall a1 a2 d,
+Theorem clothoid_clothoid_offset_contact_sound : forall a1 a2 d,
   valid_arc a1 -> valid_arc a2 ->
   arc_end a1 = arc_start a2 ->
   join_normals_consistent a1 a2 ->
@@ -260,4 +262,4 @@ Qed.
 Print Assumptions internally_tangent_circles_unique.
 Print Assumptions two_offset_arcs_join_contact.
 Print Assumptions join_normals_center_dist.
-Print Assumptions two_clothoid_offset_arcs_meet_only_at_join.
+Print Assumptions clothoid_clothoid_offset_contact_sound.
