@@ -271,6 +271,13 @@ theories/HoleInsideOuterRect.v
 # docs/point-in-ring-seam-attempts.md for per-seam outcomes.
 # No Admitted, no Axiom, no Parameter.
 theories/PointInRingCorrect.v
+# Winding number verification mechanism (atan2-free, Z-valued): the signed
+# ray-crossing count (Sunday's algorithm). Its parity equals the unsigned
+# crossing-count parity, so Z.odd (winding_number p r) decides point_in_ring
+# (winding_decides_membership), reusing point_in_ring_eq_parity. The {-1,0,+1}
+# simple-polygon characterisation stays deferred. Depends on Overlay +
+# PointInRingCorrect. Three-axiom.
+theories/WindingNumber.v
 # Issue #67 curve->matrix transport foundation: a zero-length edge (v,v) is
 # parity-neutral for the crossing-number point-in-ring test (it never
 # satisfies edge_crosses_ray's strict y-straddle).  Unblocks transporting
