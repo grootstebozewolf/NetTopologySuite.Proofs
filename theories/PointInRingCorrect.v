@@ -406,6 +406,18 @@ End ConditionalPointInRingCorrect.
 (* §5  Seam 5: winding_number for simple polygons.                            *)
 (* -------------------------------------------------------------------------- *)
 
+(* RESOLVED (downstream) -- a winding number now lives in `theories/WindingNumber.v`.
+   The atan2 obstacle below is sidestepped by the SIGNED ray-crossing count
+   (Sunday's algorithm), which is Z-valued and needs no trigonometry.  Its
+   parity equals the unsigned crossing-count parity, so
+   `WindingNumber.winding_decides_membership` proves
+   `Z.odd (winding_number p r) = true <-> point_in_ring p r`
+   (under `no_horizontal_edge_at`), reusing `point_in_ring_eq_parity` below.
+   No `Require Import` is added here: WindingNumber imports THIS file, so a back
+   reference would be a cycle -- the pointer is intentionally comment-only.  The
+   full {-1,0,+1} characterisation for simple polygons remains the open piece 3.
+   The original deferral analysis is kept verbatim below as historical context. *)
+
 (* DEFERRED -- `winding_number` not in the corpus.
 
    The natural definition is a sum over edges of the signed angle
