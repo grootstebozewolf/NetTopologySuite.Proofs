@@ -2258,6 +2258,68 @@ let run_point_in_curve_ring () =
     print_endline (if !cnt mod 2 = 1 then "IN" else "OUT")
   end
 
+(* ----- WINDING_NUMBER (signed ray-crossing winding number for a linear ring).
+   ---------------------------------------------------------------------------
+   Implements Sunday's signed ray-crossing algorithm -- the same algorithm
+   proved correct in `theories/WindingNumber.v` (winding_decides_membership,
+   winding_crossing_parity_aux).  Each edge (A,B) contributes:
+     +1 if the rightward ray from P crosses the edge UPWARD  (py A < py P < py B)
+     -1 if it crosses DOWNWARD (py B < py P < py A)
+      0 otherwise (no crossing or horizontal edge excluded by strict inequalities).
+   For generic-position points the result is the winding number w(P, ring).
+
+   Verified properties (from WindingNumber.v, all Qed):
+     edge_winding_triple:            each edge ∈ {0, +1, -1}
+     winding_parity_eq_crossing_parity: parity matches unsigned crossing count
+     winding_decides_membership:     Z.odd(w) = true ↔ point_in_ring
+
+   Scope: LINEAR rings only (chord vertices; use POINT_IN_CURVE_RING for arcs).
+   No ring_simple guarantee -- callers may observe |w| > 1 for non-simple rings
+   (e.g. a star polygon's doubly-wound interior gives w = 2).
+
+   Precision: the intermediate x-intercept `xint` is computed in OCaml float64
+   (IEEE 754 binary64), matching the float-level behaviour the proof targets.
+   The output is always an exact signed integer (Z); `xint` is used only for the
+   sign test `px < xint` and is never stored or emitted.  For non-degenerate
+   generic-position inputs (P not on any edge or vertex) the strict inequalities
+   prevent any float rounding from flipping the crossing count; on-boundary
+   inputs (P on a vertex or edge) return 0 by convention (implementation-defined,
+   consistent with NTS RayCrossingCounter strict-open-interval convention).
+
+   Allowlisted in docs/oracle-handrolled-allowlist.txt (INTERFACE-BOUNDARY):
+   NTS equivalent is Algorithm.RayCrossingCounter / JTS CGAlgorithms.isPointInRing.
+
+   Input:  n (vertex count, closing vertex NOT repeated)
+           n lines of "x y" vertices
+           "qx qy" query point
+   Output: signed integer winding number | "NAN" if any coord is non-finite.
+
+   Proof companion: theories/WindingNumber.v.
+   Pure float; three-axiom. *)
+let run_winding_number () =
+  let n = int_of_string (String.trim (input_line stdin)) in
+  let verts = Array.init n (fun _ -> parse_point (input_line stdin)) in
+  let q = parse_point (input_line stdin) in
+  if not (finite_bpoint q && Array.for_all finite_bpoint verts)
+  then print_endline "NAN"
+  else begin
+    let px = q.bx and py = q.by_ in
+    let winding = ref 0 in
+    for i = 0 to n - 1 do
+      let a = verts.(i) and b = verts.((i + 1) mod n) in
+      if a.by_ < py && py < b.by_ then begin
+        (* edge goes UP through ray height: x-intercept to the RIGHT → +1 *)
+        let xint = a.bx +. (b.bx -. a.bx) *. (py -. a.by_) /. (b.by_ -. a.by_) in
+        if px < xint then incr winding
+      end else if b.by_ < py && py < a.by_ then begin
+        (* edge goes DOWN through ray height: x-intercept to the RIGHT → -1 *)
+        let xint = b.bx +. (a.bx -. b.bx) *. (py -. b.by_) /. (a.by_ -. b.by_) in
+        if px < xint then decr winding
+      end
+    done;
+    Printf.printf "%d\n" !winding
+  end
+
 (* ----- RING_ORIENTATION (V-CP / CP_VALID sector orientation, JTS #1195 §7).
    ---------------------------------------------------------------------------
    The TRUE signed area of a curve ring -> CCW / CW orientation.  By Green's
@@ -3925,6 +3987,7 @@ let () =
        | "RING_SIMPLE"              -> run_ring_simple ()
        | "ARC_OFFSET_XY"            -> run_arc_offset_xy ()
        | "POINT_IN_CURVE_RING"      -> run_point_in_curve_ring ()
+       | "WINDING_NUMBER"           -> run_winding_number ()
        | "RING_ORIENTATION"         -> run_ring_orientation ()
        | "BUFFER_REGION"            -> run_buffer_region ()
        | "BUFFER_UNIFIED"           -> run_buffer_unified ()

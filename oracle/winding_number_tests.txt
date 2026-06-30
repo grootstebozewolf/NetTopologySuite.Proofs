@@ -1,0 +1,57 @@
+# Winding-number tests for WINDING_NUMBER oracle mode.
+# Backing proof: theories/WindingNumber.v (winding_decides_membership, Qed).
+# I1 parity↔PIP  I2 simple→|w|≤1  I3 reversal  I4 exterior=0
+# '!!' lines are gated-invariant violations (CI-failing).
+
+## A. Unit square (simple, CCW and CW).
+  [square-ccw-interior] -> '1'   ok
+  [square-ccw-exterior] -> '0'   ok
+  [square-ccw-far-exterior] -> '0'   ok
+  [square-cw-interior] -> '-1'   ok
+  [square-cw-exterior] -> '0'   ok
+
+## B. Triangle (simple, CCW).
+  [triangle-interior] -> '1'   ok
+  [triangle-exterior] -> '0'   ok
+  [triangle-below] -> '0'   ok
+
+## C. Hexagon (simple, CCW).
+  [hexagon-centre] -> '1'   ok
+  [hexagon-near-edge] -> '1'   ok
+  [hexagon-exterior] -> '0'   ok
+
+## D. Reversal invariant (I3): reversing ring flips winding sign.
+  [square-reversal-fwd] -> '1'   ok
+  [square-reversal-rev] -> '-1'   ok
+  [triangle-reversal-fwd] -> '1'   ok
+  [triangle-reversal-rev] -> '-1'   ok
+  [hexagon-reversal-fwd] -> '1'   ok
+  [hexagon-reversal-rev] -> '-1'   ok
+
+## E. Far exterior (I4): winding = 0 for all rings.
+  [far-exterior-square] -> '0'   ok
+  [far-exterior-triangle] -> '0'   ok
+  [far-exterior-hexagon] -> '0'   ok
+  [far-exterior-star] -> '0'   ok
+
+## F. Pentagram (non-simple star): |w| = 2 at inner pentagon.
+# inner pentagon centroid ≈ (0, 0); outer triangle point ≈ (0, 1.5)
+# Demonstrates why ring_simple precondition is load-bearing for {-1,0,+1}.
+  [star-inner-pentagon] -> '-2'   ok
+  [star-outer-point] -> '-1'   ok
+  [star-exterior] -> '0'   ok
+
+## G. Degenerate: 1-vertex ring (no edges → winding = 0).
+  [degen-1vertex] -> '0'   ok
+
+## H. On-boundary cases (implementation-defined, informational).
+# Sunday's strict-inequality algorithm is half-open: a rightward ray from P
+# counts edge crossings only when ay < py < by (strictly).  Consequences:
+#   - Horizontal edges and vertices at the exact ray height: never counted → 0.
+#   - Non-horizontal edge where xint == px exactly: that edge contributes 0,
+#     but edges on the far side still count — so a left-boundary point returns
+#     the same winding as the interior (1 for CCW rings).
+# I1 parity NOT gated: POINT_IN_CURVE_RING may return ON for boundary inputs.
+  [boundary-edge-midpoint] -> '0'   ok
+  [boundary-vertex] -> '0'   ok
+  [boundary-left-edge] -> '1'   ok

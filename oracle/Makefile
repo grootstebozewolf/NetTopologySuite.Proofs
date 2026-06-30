@@ -17,7 +17,7 @@
 OCAMLOPT := ocamlfind ocamlopt
 TARGET   := oracle_bin
 
-.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt
+.PHONY: all clean arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt winding-number-tests
 
 all: $(TARGET)
 
@@ -142,6 +142,13 @@ arc-simplify-decision-tests: $(TARGET)
 
 arc-offset-filtered-tests: $(TARGET)
 	printf 'ARC_OFFSET_FILTERED\nA 1 0 0 1 -1 0\n0.5\n' | ./$(TARGET) | grep -q FILTERED && echo 'ARC_OFFSET_FILTERED basic ok'
+
+# WINDING_NUMBER: signed ray-crossing winding number for linear polygon rings.
+# Gates I1 parity↔POINT_IN_CURVE_RING agreement, I2 simple→|w|≤1, I3 sign-flip
+# under reversal, I4 exterior=0.  Star polygon shows |w|=2 (non-simple).
+# Backing proof: theories/WindingNumber.v (winding_decides_membership, Qed).
+winding-number-tests: $(TARGET)
+	cd .. && python3 oracle/gen_winding_number_tests.py > oracle/winding_number_tests.txt
 
 # CurveType hunters (0=CircularArc, 1=EllipticArc, 2=Bezier3Curve).
 # These are the primary "adversarial tests for the enum" created via oracle-driven search.
