@@ -6,8 +6,14 @@
 > (`theories/`, `theories-flocq/`, `docs/verified-claims.md`), separating
 > *proven* from *gap*, and recording priority and ordering decisions.
 >
-> Generated from the 2026-06-03 issue batch; last reconciled **2026-06-21**
-> against HEAD (e2552db + prior): ARC_BUFFER_SIMPLE oracle RGR + d=0 soundness;
+> Generated from the 2026-06-03 issue batch; last reconciled **2026-06-30**
+> against HEAD (PRs #302–#307): the **clothoid buffer-soundness + winding-number
+> wave** — clothoid offset validity/sharpness (`ClothoidBufferBridge.v`),
+> clothoid–clothoid offset contact (`ClothoidOffsetContact.v`), whole-ring offset
+> assembly (`ClothoidBufferAssembly.v`), offset-ring simplicity from clearance
+> (`CurveRingOffsetSimple.v`), and an atan2-free **winding number** point-in-ring
+> decider (`WindingNumber.v` — `winding_decides_membership`). Prior reconcile
+> **2026-06-21** (HEAD e2552db): ARC_BUFFER_SIMPLE oracle RGR + d=0 soundness;
 > #67 S15l JCT seam + Jordan cell-dimension + touch dispatch discharges;
 > #64 arc point-dist two D-PT stubs discharged (one deferred remains);
 > dashboard/claims refreshes. See per-child and oracle-curve-wishlist.md.
@@ -45,7 +51,7 @@ tracker: **#69**.
 | Issue | Area | Priority | Proof state | Verdict |
 |---|---|---|---|---|
 | **#64** | Circular-arc primitives (length, sweep, in-arc, in-circle) | `Immediate` | **Most progressed; metric + intersection suite landed.** Asks #1/#2: `Atan2.v` + `AngleBetween.v` + `ArcLength.v` (incl. `chord_le_arc_length`) Qed. **Ask #4b PROVEN (PR #146):** `InCircle_b64_exact.v`. **Metrics + intersect existence:** area/centroid/distance/oracle suite (ARC_*). **Arc sweep** disambiguation + fixes (`RelateArcAnalytic.v`, `arc_sweep_*`). **D-PT:** two deferreds discharged 2026-06-21 (`radial_lower`, `centre_is_r`); only `fallback_ends_lower` remains. Arc-line Scope B/C + arc-arc quartic coords are the exactness frontier. | Keep Immediate — D-PT progress; arc-arc coords + one D-PT stub remain |
-| **#65** | Buffer / offset curve correctness | `Urgent` | Heaviest existing corpus: 18 `Buffer*.v` files + `ExtractBufferRings.v`, plus 3 documented counterexamples. **Curve-aware:** arc offset (`arc_offset_preserves_arc`), assembly, buffer-region cert (`CurveBufferArea.v`). Oracle: ARC_OFFSET_XY / BUFFER_REGION / ARC_BUFFER_SIMPLE pins. **2026-06-21:** Coq `arc_buffer_simple_d0_is_identity` + unsafe radius lemmas; oracle RGR confirmation + coverage for ARC_BUFFER_SIMPLE (single-arc via offset+round-caps, degen/empty/pos cases) — ACCEPTED. Minkowski-area soundness deferred. | Keep Urgent — arc buffer/offset boundary+area + ARC_BUFFER_SIMPLE foundation landed; Minkowski deferred |
+| **#65** | Buffer / offset curve correctness | `Urgent` | Heaviest existing corpus: 18 `Buffer*.v` files + `ExtractBufferRings.v`, plus 3 documented counterexamples. **Curve-aware:** arc offset (`arc_offset_preserves_arc`), assembly, buffer-region cert (`CurveBufferArea.v`). Oracle: ARC_OFFSET_XY / BUFFER_REGION / ARC_BUFFER_SIMPLE pins. **2026-06-21:** Coq `arc_buffer_simple_d0_is_identity` + unsafe radius lemmas; oracle RGR confirmation + coverage for ARC_BUFFER_SIMPLE (single-arc via offset+round-caps, degen/empty/pos cases) — ACCEPTED. **2026-06-30 (PRs #302–#306) clothoid buffer-ring soundness chain (all 3-axiom, Qed):** `clothoid_ring_offset_valid` (min-radius offset stays a valid ring) + sharpness; `clothoid_clothoid_offset_contact_sound` (two adjacent offset osculating arcs meet ONLY at their shared join); `clothoid_buffer_assembly_sound` (every join of the whole offset ring — interior + wrap — is a single clean contact); `curve_ring_simple_of_clearance` (non-adjacent offset segments meet NOWHERE when source clearance > 2·\|d\|, via a metric tube argument — chords + arcs). Together: a **simple-closed-curve certificate for well-separated clothoid buffer rings**. Minkowski-area soundness + the {-1,0,+1} winding characterisation for unconditional simplicity remain deferred. | Keep Urgent — clothoid buffer-ring soundness chain (validity → adjacent contact → whole-ring assembly → clearance simplicity) landed; Minkowski + unconditional simplicity deferred |
 | **#66** | Precision / snap-rounding / OverlayNG soundness | `Urgent` | **Strongest coverage of the batch.** `SnapRounding_b64`, `HotPixel*`, `Hobby*`, the `PassesThrough_*` family (C1 grid-exactness reduction; plus a segment-reversal asymmetry negative that — correction 2026-06-17 — models a Liang-Barsky divide-from-c0 filter and does **NOT** map to JTS#752/#1133, since JTS's `HotPixel.intersectsScaled` canonicalizes to +X first), `Overlay*`, `RingArea979` (JTS#979). Multiple honest machine-checked **negatives** (rounded filter unsound/incomplete/asymmetric — cautions about that filter design, not JTS defects). C1 grid-exactness tight regime closed; overlay/ring conditional; curve-snap oracle present; JTS#979 mechanism certified; remaining gaps (C1 width, C2 parked, unconditional OV headline, arc Hobby) explicitly named in docs. | Keep Urgent — largely delivered, closing gaps |
 | **#67** | RelateNG / 9IM matrix & boundary handling | `Immediate` | **DE-9IM suite through S15l + JCT/Jordan capstones.** S0–S12 matrix/witnesses, S13–S14 prepared-cache, S15a–k line×line noding. **S15l triangle touch (PR #263 + follow-ups):** strict_ii_no_common, bb_cell, satisfy_pointset + `touch_triangle_f_cells_trimmed`, `relate_triangle_touch` discharged (2026-06-21). **JCT seam + Jordan cell-dimension soundness** for triangle touch landed (d153665). Integer 0-axiom substrate. Curve oracle `CURVE_RELATE_MATRIX`. Remaining: full multi-geom pipeline, some cell seams, prepared hook. | Keep Immediate — S15l + JCT seam + Jordan soundness landed; pipeline capstones remain |
 | **#68** | Delaunay triangulation / Voronoi correctness | `Non-urgent` | `Triangle.v`, `Tin.v`, `GeneralTriangle{Parity,Separation}.v`, `RightTriangle*` exist; no empty-circle Delaunay / Voronoi proofs yet. **Core primitive now available:** `inCircle_R` / `b64_inCircle` proven via #146. | Correctly labeled — primitive unblocked, not yet started |
@@ -79,7 +85,7 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **M-LEN-CS / M-LEN-CC** | Arc / compound-curve length (`r·θ`) | #64 | `ArcLength.v`, `Atan2.v`, `AngleBetween.v`; oracle `ARC_LENGTH_INVARIANTS_EXACT` / `ARC_SHORTER` | ✅ exact invariants; float length is interface-boundary |
 | **M-AREA-CP** | `CurvePolygon` area (Green's theorem + circular-segment correction) | #64 | `ArcArea.v` (`segment_area`); oracle `ARC_AREA_INVARIANTS_EXACT` / `ARC_AREA` / `RING_ORIENTATION` (signed area) | ✅ exact rational invariants; float area interface-boundary |
 | **M-DIM** | Dimension of curve geometries | #69 | — | ⬜ structural |
-| **V-CP / V-CS** | Arc-aware validity (arc self-intersection, orientation via sector area, holes-in-shell) | #64 | `CurveRingSimple.v` (`curve_ring_not_simple_of_witness`), `CurvePolygonSimple.v`, `CurvePolygonValid.v`, `CurvePolygonOrientation.v`, `CurvePolygonDisjoint.v`, `InCircle_b64_exact.v`; oracle `RING_SIMPLE` / `POINT_IN_CURVE_RING` / `RING_ORIENTATION` / `HOLES_DISJOINT` | 🟡 in-circle sign ✅ (full-plane, 3-ax) + per-ring witness-soundness ✅; completeness + true-region (Jordan) deferred |
+| **V-CP / V-CS** | Arc-aware validity (arc self-intersection, orientation via sector area, holes-in-shell) | #64 | `CurveRingSimple.v` (`curve_ring_not_simple_of_witness`), `CurvePolygonSimple.v`, `CurvePolygonValid.v`, `CurvePolygonOrientation.v`, `CurvePolygonDisjoint.v`, `InCircle_b64_exact.v`, **`CurveRingOffsetSimple.v`** (`curve_ring_simple_of_clearance`), **`WindingNumber.v`** (`winding_decides_membership`); oracle `RING_SIMPLE` / `POINT_IN_CURVE_RING` / `RING_ORIENTATION` / `HOLES_DISJOINT` | 🟡 in-circle sign ✅ (full-plane, 3-ax) + per-ring witness-soundness ✅; **offset-ring simplicity now POSITIVELY certified under a clearance hypothesis (2026-06-30), and a Z-valued winding number decides point-in-ring (`Z.odd ∘ winding_number` ⟺ `point_in_ring`)**; completeness + unconditional true-region (Jordan / {-1,0,+1} winding) deferred |
 | **D-PT** | Analytical point-to-arc distance | #64 | `ArcDistance.v`, `ArcPointDistance.v`; oracle `ARC_DISTANCE` | 🟡 radial-foot core ✅; on-arc/sweep clamp deferred |
 | **D-AA** | Arc-arc distance | #64 | `ArcArcDistance.v`, `ArcIntersect.v` (predicate); oracle `ARC_ARC_DISTANCE` | 🟡 disjoint circle-to-circle core ✅; sweep clamp deferred |
 | **D-SL** | Arc-segment distance | #64 | `ArcSegmentDistance.v`; oracle `ARC_SEGMENT_DISTANCE` | 🟡 line-outside-circle core ✅; sweep/segment clamp deferred |
@@ -89,8 +95,8 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **AT-\*** | Affine transforms (non-similarity → detect-and-densify, §7 risk) | #69 | — | ⬜ |
 | **LRF-\*** | Linear referencing on curves | #69 | — | ⬜ |
 | **DSF** | Densifier (curve → chords internally) | #64, #65 | `ArcChordApprox.v` (sagitta bound), `ArcChord{Density,Subdivision,Length,Sound}.v`, `CurveLinearise.v` (`chord_approx_ring_closed`); oracle `CP_BOUNDARY_SIMPLIFY` densify (`densify_arc`) | ✅ chord-approx faithfulness (closure); sagitta/`ring_simple` open |
-| **BUF-1 / BUF-N** | Single-/multi-arc buffer → `CurvePolygon` | #65 | 18× `Buffer*.v` (linear), `ExtractBufferRings.v`; `CurveBufferArea.v`, `CurveRingOffset.v`, `CurveOffsetAssembly{,Total}.v`, `CurveRoundJoin.v`; oracle `BUFFER_REGION` (+ `ARC_BUFFER_SIMPLE/FULL` pins); **oracle pilot for unified segments + NTS sketch (2026-06)** | 🟡 arc buffer-region boundary+area cert ✅ (3-ax) + d=0 + helpers; oracle pilot + dispatcher sketch added for Arc/CS/CC/CP (known gaps in open caps + full NTS impl); pure-linear regression zero; Minkowski deferred. |
-| **OFF** | Offset curve (arc-preserving) | #65 | `BufferOffset.v`, `ArcOffset.v`, `ArcOffsetThreePoint.v` (`arc_offset_preserves_arc`), `CurvePolygonOffset.v`, `CurveRingOffset.v`; oracle `ARC_OFFSET_XY` | 🟡 arc offset ✅ (valid arc → valid arc, radius r+d); assembly conditional |
+| **BUF-1 / BUF-N** | Single-/multi-arc buffer → `CurvePolygon` | #65 | 18× `Buffer*.v` (linear), `ExtractBufferRings.v`; `CurveBufferArea.v`, `CurveRingOffset.v`, `CurveOffsetAssembly{,Total}.v`, `CurveRoundJoin.v`, **`ClothoidBufferBridge.v`, `ClothoidOffsetContact.v`, `ClothoidBufferAssembly.v`, `CurveRingOffsetSimple.v`** (clothoid chain); oracle `BUFFER_REGION` (+ `ARC_BUFFER_SIMPLE/FULL` pins); **oracle pilot for unified segments + NTS sketch (2026-06)** | 🟡 arc buffer-region boundary+area cert ✅ (3-ax) + d=0 + helpers; **clothoid buffer-ring chain ✅ (2026-06-30): validity → adjacent offset contact → whole-ring assembly cleanliness → non-adjacent simplicity under clearance > 2·\|d\| = simple-closed-curve cert**; oracle pilot + dispatcher sketch for Arc/CS/CC/CP; pure-linear regression zero; Minkowski + unconditional simplicity deferred. |
+| **OFF** | Offset curve (arc-preserving) | #65 | `BufferOffset.v`, `ArcOffset.v`, `ArcOffsetThreePoint.v` (`arc_offset_preserves_arc`), `CurvePolygonOffset.v`, `CurveRingOffset.v`, `ClothoidBufferBridge.v` (`clothoid_ring_offset_valid` + sharpness), `ClothoidOffsetContact.v`, `ClothoidBufferAssembly.v`, `CurveRingOffsetSimple.v`; oracle `ARC_OFFSET_XY` | 🟡 arc offset ✅ (valid arc → valid arc, radius r+d); **clothoid ring offset now soundness-complete at the adjacency level + non-adjacent simplicity gated on a clearance hypothesis (2026-06-30)** |
 | **VBF** | Variable-distance buffer | #65 | — | ⬜ |
 | **N-AL** | Arc-line noding / intersection | #64 | `theories-flocq/ArcLineIntersect_b64_exact.v` (Scope A), `ArcSegmentCircles.v` (`line_circle_radical_point`), `ArcIntersect.v`, `ArcIntersectIVT.v`; oracle `ARC_SEGMENT_XY` / `ARC_LINE_XY` | 🟡 Scope A (pre-division) ✅ + existence ✅; coordinate identity (Scope B/C) queued |
 | **N-AA** | Arc-arc noding / intersection | #64 | `ArcArcCircles.v`, `ArcArcSound.v`, `ArcIntersect.v` (`arc_arc_intersects` predicate); oracle `ARC_ARC_XY` | 🟡 circles-intersect (Stage B) ✅; quartic coordinates open |
@@ -98,7 +104,7 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **PRC-SN** | `PrecisionModel.makePrecise` on curves | #66 | oracle `CURVE_SNAP_DECISION` / `CURVE_SNAP_INVARIANTS_EXACT` (exact-`Q`) | ✅ curve-snap grid-friendliness |
 | **OV** | Arc-preserving overlay output | #66, #64 | `Overlay*.v`, `OverlayCorrectness.v`, `ArcOverlay.v` | 🟡 conditional headline (`arc_overlay_correct_chord_approx`, 2 bridge hyps) |
 | **R-\* (R-CONT, R-PR)** | Predicates / relate on curved inputs | #67 | `DE9IM.v`, `RelateLineLine.v`, `RelateAreaPoint.v`, `RelateBoundary.v`, `RelateAreaLine.v`, `RelateAreaArea.v`, `RelateArcChord.v`, `RelateArcAnalytic.v`, `RelateClothoid.v`, `RelateEllipticArc.v`, `RelateBezier3.v`, `RelateCurveAreaPoint.v`, `RelateMatrix*.v`, `RelateCurveMatrix.v`, `RelatePreparedCache*.v`, `RelateNodingLineLine.v`; oracle `CURVE_RELATE_MATRIX` / `RELATE_MATRIX` / `RELATE_PREDICATE` | 🟡 matrix algebra + witnesses ✅ (S0–S12); prepared-cache refinement ✅ (S13–S14b); **line×line noding pipeline partial** ✅ through S15k (collection capstone); cell-**dimension** (Jordan/overlay) + S15l+ hooks deferred |
-| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. This PLG/ring-assembly deferral is itself discharged; the deferred-proof registry is **not** empty, however — it currently holds **3** unrelated `ArcPointDistance.v` sweep-clamp residuals (`check_admitted.sh`: 9 = 6 counterexample + 3 deferred; see finding 7); `extract_rings_valid` carries the planar Euler hypotheses |
+| **PLG** | Polygonizer accepting `CompoundCurve` edges | #69, #66 | `RingExtract.v` / overlay ring assembly; `PermCycleSplice.v`, `NumFacesSplice.v`, `EulerBridge.v` | 🟢 linear `extract_rings_valid` is a conditional-Qed; its former named seam `EdgeFaceBridge.H_bridge_core` (planar same-face ⇒ bridge) is now fully DISCHARGED — carried as the named premise `H_bridge_premise`, proved in `HBridgeEuler.v` from the named planar Euler identity + face split `num_faces_E_minus_splice`. This PLG/ring-assembly deferral is itself discharged; the deferred-proof registry is **not** empty, however — it currently holds **1** unrelated residual (`arc_dot_max_at_endpoint`, `ArcSinglePeak.v`; `check_admitted.sh`: 1 = 0 counterexample + 1 deferred; see finding 8 — the finding-7 `ArcPointDistance.v` sweep-clamp residuals are since discharged); `extract_rings_valid` carries the planar Euler hypotheses |
 | **TRI-DT** | Delaunay on (densified) curved boundaries | #68 | `theories-flocq/InCircle_b64_exact.v` (primitive), `Triangle.v`, `Tin.v` | 🟡 in-circle primitive ✅; Delaunay proper planned |
 | **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
 | **TB-\* / F-RD** | TestBuilder rendering / `ShapeWriter` hooks | — | — | — not proof-relevant |
@@ -218,6 +224,36 @@ spending further proof effort — several are stale.
    `point_to_arc_dist_fallback_ends_lower`, `point_to_arc_dist_centre_is_r`),
    the on-arc/sweep-clamp frontier of #64's D-PT distance row — not the PLG seam,
    which is genuinely discharged.
+8. **Reconcile 2026-06-30 — the clothoid buffer-soundness + winding-number wave
+   (#65, with #66/#67 PIP spillover).** `origin/main` took PRs #302–#307, all
+   3-axiom (classical-reals trio) and Qed: **(#302/#303)** `ClothoidBufferBridge.v`
+   — `clothoid_ring_offset_valid` (a curvature-bounded clothoid arc-ring offsets to
+   a valid ring when `d > −1/κ_max`) + `clothoid_offset_below_min_radius_fails`
+   sharpness; **(#304)** `ClothoidOffsetContact.v` — `internally_tangent_circles_unique`
+   (reusable nra-free engine) + `clothoid_clothoid_offset_contact_sound` (two
+   adjacent G¹-joined offset osculating arcs meet ONLY at their shared join);
+   **(#305)** `ClothoidBufferAssembly.v` — `clothoid_buffer_assembly_sound` lifts
+   that pairwise fact to the whole closed ring (every interior + wrap join is a
+   single clean contact); **(#306)** `CurveRingOffsetSimple.v` —
+   `curve_ring_simple_of_clearance` (non-adjacent offset segments meet NOWHERE
+   when source clearance `> 2·|d|`, a metric tube argument covering chords AND
+   arcs). Together: a **simple-closed-curve certificate for well-separated clothoid
+   buffer rings.** **(#307)** `WindingNumber.v` resolves the long-deferred
+   `PointInRingCorrect.v §5` winding-number seam without `atan2`: the signed
+   ray-crossing count (Sunday's algorithm) is `Z`-valued, and
+   `winding_decides_membership` proves `Z.odd (winding_number p r) = true ↔
+   point_in_ring p r` (reusing `point_in_ring_eq_parity`) — a verified
+   winding-number point-in-ring decider. **Trust footprint unchanged:** the
+   classical-reals trio holds; `scripts/check_admitted.sh` reports **1 total
+   (0 counterexample + 1 deferred-proof)** — now the sole residual obligation
+   `arc_dot_max_at_endpoint` (`ArcSinglePeak.v` §2, a planar single-peak dot bound
+   awaiting `psatz`/CSDP; the earlier D-PT `ArcPointDistance` sweep-clamp residuals
+   of finding 7 are since discharged); the oracle hand-roll ratchet is at **28**
+   frozen kernels. Deferred
+   frontier: Minkowski buffer-area soundness, and the `{−1,0,+1}` winding
+   characterisation for SIMPLE polygons (unconditional Jordan simplicity — the
+   genuine global-geometry rung that #306's clearance hypothesis and #307's parity
+   decider now sit beneath).
 
 ## Recommended order of attack (revised 2026-06-20)
 
