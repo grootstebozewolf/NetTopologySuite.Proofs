@@ -233,17 +233,22 @@ check("degen-1vertex", [(0, 0)], (0, 0), 0,
 emit()
 
 emit("## H. On-boundary cases (implementation-defined, informational).")
-emit("# Strict inequalities (ay < py < by) exclude points on vertices and horizontal")
-emit("# edges.  The result is 0 (same as exterior) for all on-boundary inputs.")
-emit("# I1 parity NOT gated here: POINT_IN_CURVE_RING may return ON, not IN/OUT.")
-# Point on bottom edge midpoint of unit square
+emit("# Sunday's strict-inequality algorithm is half-open: a rightward ray from P")
+emit("# counts edge crossings only when ay < py < by (strictly).  Consequences:")
+emit("#   - Horizontal edges and vertices at the exact ray height: never counted → 0.")
+emit("#   - Non-horizontal edge where xint == px exactly: that edge contributes 0,")
+emit("#     but edges on the far side still count — so a left-boundary point returns")
+emit("#     the same winding as the interior (1 for CCW rings).")
+emit("# I1 parity NOT gated: POINT_IN_CURVE_RING may return ON for boundary inputs.")
+# Bottom horizontal edge midpoint — no edge fires (ay<0<by requires by>0; bottom edge ay=by=0)
 check("boundary-edge-midpoint", SQUARE_CCW, (0.5, 0.0), 0,
       gated_i1=False, gated_i2=True, gated_i3=False, is_simple=True)
-# Point on a vertex of unit square
+# Bottom-left vertex — adjacent edges both have ay or by == py == 0; strict inequalities exclude them
 check("boundary-vertex", SQUARE_CCW, (0.0, 0.0), 0,
       gated_i1=False, gated_i2=True, gated_i3=False, is_simple=True)
-# Point on a non-horizontal edge midpoint of unit square (left edge midpoint)
-check("boundary-left-edge", SQUARE_CCW, (0.0, 0.5), 0,
+# Left edge midpoint — right edge (1,0)→(1,1) crosses ray at xint=1 > px=0 (+1);
+# left edge (0,1)→(0,0) fires but xint=0 == px, so px < xint is false (no contribution)
+check("boundary-left-edge", SQUARE_CCW, (0.0, 0.5), 1,
       gated_i1=False, gated_i2=True, gated_i3=False, is_simple=True)
 emit()
 

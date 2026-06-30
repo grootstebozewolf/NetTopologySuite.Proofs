@@ -43,3 +43,15 @@
 
 ## G. Degenerate: 1-vertex ring (no edges → winding = 0).
   [degen-1vertex] -> '0'   ok
+
+## H. On-boundary cases (implementation-defined, informational).
+# Sunday's strict-inequality algorithm is half-open: a rightward ray from P
+# counts edge crossings only when ay < py < by (strictly).  Consequences:
+#   - Horizontal edges and vertices at the exact ray height: never counted → 0.
+#   - Non-horizontal edge where xint == px exactly: that edge contributes 0,
+#     but edges on the far side still count — so a left-boundary point returns
+#     the same winding as the interior (1 for CCW rings).
+# I1 parity NOT gated: POINT_IN_CURVE_RING may return ON for boundary inputs.
+  [boundary-edge-midpoint] -> '0'   ok
+  [boundary-vertex] -> '0'   ok
+  [boundary-left-edge] -> '1'   ok
