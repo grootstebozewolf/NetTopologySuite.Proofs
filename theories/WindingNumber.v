@@ -53,6 +53,15 @@ Definition edge_winding (p : Point) (e : Edge) : Z :=
 Definition winding_number (p : Point) (r : Ring) : Z :=
   fold_left (fun acc e => (acc + edge_winding p e)%Z) (ring_edges r) 0%Z.
 
+(* Each edge contributes exactly one of {0, +1, -1} -- useful for extraction and
+   for any sign/bound reasoning over the winding sum. *)
+Lemma edge_winding_triple : forall (p : Point) (e : Edge),
+  edge_winding p e = 0%Z \/ edge_winding p e = 1%Z \/ edge_winding p e = (-1)%Z.
+Proof.
+  intros p [A B]. unfold edge_winding.
+  destruct (segment_crosses_ray p A B); [ destruct (Rlt_b (py A) (py B)) | ]; auto.
+Qed.
+
 (* The computable verification mechanism: winding parity. *)
 Definition winding_in_ring_b (p : Point) (r : Ring) : bool :=
   Z.odd (winding_number p r).
@@ -104,5 +113,6 @@ Proof.
   symmetry. apply point_in_ring_eq_parity. exact Hnh.
 Qed.
 
+Print Assumptions edge_winding_triple.
 Print Assumptions winding_parity_eq_crossing_parity.
 Print Assumptions winding_decides_membership.
