@@ -28,13 +28,15 @@ written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 
 ---
 
-**Over 1,100 theorems, every proof sealed with `Qed.` on just three
+**Over 3,400 theorems, every proof sealed with `Qed.` on just three
 axioms** — the standard classical-reals trio Rocq ships with, none of
 this corpus's own; `Axiom`, `Parameter`, and `admit.` appear nowhere.
-The only `Admitted`s are **6 machine-checked counterexamples**
-(false-as-stated theorems, each with a committed witness) — disproofs,
-not gaps — and CI fails any unregistered one. (The Flocq lane
-structurally inherits one further axiom; details below.)
+The only `Admitted` today is **1 registered deferred proof** — a
+theorem believed true whose multi-session proof is structured but
+unfinished (`arc_dot_max_at_endpoint`, a planar single-peak dot bound
+awaiting external `psatz`/CSDP). The counterexample registry is
+currently empty, and CI fails any unregistered `Admitted`. (The Flocq
+lane structurally inherits one further axiom; details below.)
 
 CI (`scripts/check_admitted.sh`) enforces a three-tier `Admitted`
 discipline across both directories:
@@ -44,24 +46,29 @@ discipline across both directories:
 - **Tier 2** — an `Admitted` registered in
   [`docs/admitted-counterexamples.txt`](docs/admitted-counterexamples.txt)
   is allowed permanently: the theorem *as stated* is false, with a
-  verified counterexample on file. 6 entries today: three in the Stage D
-  expansion-arithmetic work (`b64_grow_expansion_nonoverlap` and two
-  companions), Hobby Lemma 4.3's no-proper-intersection half
-  (`hobby_lemma_4_3_no_proper`) — false for arbitrary, non-noded segment
-  pairs (`HobbyCounterexample_b64.v`), Shewchuk Theorem 13's general
-  headline (`fast_expansion_sum_nonoverlap_shewchuk`) and O7 completeness
-  (`cascade_pathAB_chain_from_nonoverlap`) — both **false as stated**
-  because half-ulp `strict_succ_b64` is stronger than Shewchuk's bit-disjoint
-  nonoverlapping ([`B64_Shewchuk_Thm13_counterexample.v`](theories-flocq/B64_Shewchuk_Thm13_counterexample.v),
-  [`docs/shewchuk-thm13-headline-counterexample.md`](docs/shewchuk-thm13-headline-counterexample.md)).
+  verified counterexample on file. **None today — the counterexample
+  registry is currently unpopulated.** The headline disproofs it once carried — Hobby Lemma
+  4.3's no-proper-intersection half, and Shewchuk Theorem 13's general
+  headline + O7 completeness (all **false as stated** because half-ulp
+  `strict_succ_b64` is stronger than Shewchuk's bit-disjoint nonoverlapping) —
+  have since been restated and **Qed-closed as disproof theorems** (no
+  `Admitted` remains), in
+  [`HobbyCounterexample_b64.v`](theories-flocq/HobbyCounterexample_b64.v),
+  [`B64_Shewchuk_Thm13_counterexample.v`](theories-flocq/B64_Shewchuk_Thm13_counterexample.v),
+  and [`docs/shewchuk-thm13-headline-counterexample.md`](docs/shewchuk-thm13-headline-counterexample.md).
 - **Tier 3** — an `Admitted` registered in
   [`docs/admitted-deferred-proofs.txt`](docs/admitted-deferred-proofs.txt)
   is allowed temporarily: the theorem is *true*, its proof structure is
-  documented, and the remaining work is multi-session. **3 entries today** —
-  the on-arc / sweep-clamp residuals `point_to_arc_dist_radial_lower`,
-  `point_to_arc_dist_fallback_ends_lower`, and `point_to_arc_dist_centre_is_r`
-  (all in `theories/ArcPointDistance.v`), the #64 point-to-arc distance frontier.
-  The registry's first-ever entry,
+  documented, and the remaining work is multi-session. **1 entry today** —
+  `arc_dot_max_at_endpoint` (`theories/ArcSinglePeak.v` §2), a planar
+  single-peak dot bound that is believed true (falsity-checked on symmetric
+  and asymmetric configurations, no counterexample) but needs an external
+  `psatz`/CSDP backend (`nra` is insufficient for the degree-2
+  Positivstellensatz). The earlier on-arc / sweep-clamp residuals
+  (`point_to_arc_dist_radial_lower`, `point_to_arc_dist_fallback_ends_lower`,
+  `point_to_arc_dist_centre_is_r` in `theories/ArcPointDistance.v`, the #64
+  point-to-arc distance frontier) have since been discharged. The registry's
+  first-ever entry,
   `EdgeFaceBridge.H_bridge_core` (the planar same-face⇒bridge seam behind
   Phase 3's ring assembly), has been discharged via the planar Euler route:
   the bridge fact is now a named premise threaded through the EdgeFaceBridge
@@ -70,7 +77,8 @@ discipline across both directories:
   conditional Qed with no `Admitted`. An entry comes off the registry only
   when the proof lands. (Hobby Lemma 4.3's no-proper-intersection half,
   Shewchuk Theorem 13's headline, and O7 completeness were previously here;
-  each is now a Tier-2 counterexample — machine-checked **false** as stated.)
+  each is now a Qed-closed disproof theorem — machine-checked **false** as
+  stated, no `Admitted` remaining.)
 
 The only axioms used are the three standard ones bundled with Rocq's
 classical real arithmetic library (printed at the end of each `theories/`
@@ -111,9 +119,9 @@ The repository has two source directories:
   directory split is about which CI runner builds the file (host vs
   container), not about which proof standard it meets.
 
-The host `_CoqProject` builds the 25 foundational `theories/` modules;
-the container `_CoqProject.full` builds the entire corpus (all 62
-modules — 36 in `theories/`, 26 in `theories-flocq/`).
+The host `_CoqProject` builds 40 foundational `theories/` modules;
+the container `_CoqProject.full` builds the entire corpus (all 348
+modules — 281 in `theories/`, 67 in `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,
 orientation, segment, bbox, triangle, convex, lex-order, plus their
@@ -201,9 +209,9 @@ publishable.
 | Phase | Deliverable | Status | `NetTopologySuite.Curve` consumer |
 |---|---|---|---|
 | Simplifier *(warm-up, not in the chokepoint sequence)* | `Validate_binary64.v` — greedy perpendicular-distance simplifier on binary64 + RocqRefRunner | Qed-closed structural (14 lemmas); soundness bridge deferred | **100%** — `Robust.Simplify.GreedyPerpSimplifier`, 262 / 262 tests bit-exact against RocqRefRunner; the `CP_BOUNDARY_SIMPLIFY` mode (surfaces wishlist #1) composes the extracted simplifier with `b64_orient_sign_filtered` to densify→simplify→orient a CurvePolygon boundary, tagging each corner INTSAFE (certified by `_sound_small_int`) vs APPROX (irrational arc vertices, interface-only) |
-| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stage D expansion arithmetic now under construction (`B64_Expansion*`, `B64_FastExpansionSum*`, `Orient_b64_expansion.v`, `Orient_b64_stage_d.v` — sum-correctness Qed-closed, the general non-overlap headline a Tier-2 counterexample (false as stated — [`B64_Shewchuk_Thm13_counterexample.v`](theories-flocq/B64_Shewchuk_Thm13_counterexample.v)); specialised integer-safe headlines Qed-closed); **exact full-`binary64` orientation soundness now Qed-closed over the entire double-coordinate plane** (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three axioms, no `Classical_Prop.classic`), while the *fast* adaptive filter's general bounded-magnitude soundness (Stages B–D) stays deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md), [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes; `ORIENT_EXACT` provides the exact full-plane ground truth for the JTS #1106 differential test |
+| 0 | `Orientation_b64.v` — Shewchuk-adaptive orientation under Flocq binary64 | Stage A filter Qed-closed (`b64_orient_sign_filtered`, decidability, totality, 5-constructor distinctness, NaN-safety); decoder consistency + cross_R soundness for integer regime `\|coord\| <= 2^25` Qed-closed (`Orient_b64_exact.v` — antisymmetry, all three vertex degeneracies, both cyclic permutations, headline `_sound_small_int`); Stage D expansion arithmetic now under construction (`B64_Expansion*`, `B64_FastExpansionSum*`, `Orient_b64_expansion.v`, `Orient_b64_stage_d.v` — sum-correctness Qed-closed, the general non-overlap headline a machine-checked counterexample, Qed-closed as a disproof (false as stated — [`B64_Shewchuk_Thm13_counterexample.v`](theories-flocq/B64_Shewchuk_Thm13_counterexample.v)); specialised integer-safe headlines Qed-closed); **exact full-`binary64` orientation soundness now Qed-closed over the entire double-coordinate plane** (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three axioms, no `Classical_Prop.classic`), while the *fast* adaptive filter's general bounded-magnitude soundness (Stages B–D) stays deferred — see [`docs/soundness-strategy.md`](docs/soundness-strategy.md), [`docs/audit-shewchuk-stages.md`](docs/audit-shewchuk-stages.md) | **filter-complete** — `Robust.Orientation.RobustOrientation` (`Orient2d` / `Sign` / `SignFiltered` with 5-valued `OrientSignRobust`) bit-exact against RocqRefRunner `ORIENT` + `ORIENT_FILTERED` modes; `ORIENT_EXACT` provides the exact full-plane ground truth for the JTS #1106 differential test |
 | 1 | `Intersect_b64.v` + `Intersect_b64_exact.v` — robust segment intersection, predicate + coordinate | **shipped end-to-end** — five-valued `IntersectSign` filter on top of Phase 0's `b64_orient_sign_filtered`; structural lemmas Qed-closed (decidability, totality, 10-way distinctness, NaN propagation); integer-regime cross_R soundness for both `IntersectNone` and `IntersectPoint` via the R-side `strict_completeness` theorem in `theories/Intersect.v`; intersection-point projections (`b64_intersect_point_{x,y}`) with a Qed-closed forward-error bound in `K·eps` / condition-number form + soundness typeclass; `IntersectCollinear` sub-case disambiguation is the only remaining gap — see [`docs/phase1-completion.md`](docs/phase1-completion.md), [`docs/phase1-c2-tight-retro.md`](docs/phase1-c2-tight-retro.md) | **complete** — `Robust.Intersect.RobustLineIntersector` (`SignFiltered`, `IntersectPoint*`) bit-exact against RocqRefRunner `INTERSECT_FILTERED` / `INTERSECT_POINT_*` modes, 187 / 187 differential cases including integer-regime adversarial family |
-| 2 | `SnapRounding_b64.v` / `HobbyTheorem_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **milestones 1–4 landed** — hot-pixel layer (`HotPixel.v` + `HotPixel_b64.v`) through the segment-touches-pixel filter, the Liang–Barsky parameter-interval filter, the passes-through relation (+ tight half-open variant), the snap-rounding correctness invariant (`SnapRounding_b64.v`), and the topological-correctness theorem at the supported level (`TopologicalCorrectness_b64.v`); Hobby Theorem 4.1 stated as a Qed-closed conditional with Lemma 4.2 closed and Lemma 4.3's no-proper half a Tier-2 counterexample ([`HobbyCounterexample_b64.v`](theories-flocq/HobbyCounterexample_b64.v)) — see [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md), [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md), [`docs/hobby-theorem-proof-structure.md`](docs/hobby-theorem-proof-structure.md) | oracle modes `PASSES_THROUGH_FILTER` / `PASSES_THROUGH_HALFOPEN` extracted |
+| 2 | `SnapRounding_b64.v` / `HobbyTheorem_b64.v` — formal model of Hobby 1999 + Halperin-Packer 2002 (ISR) | **milestones 1–4 landed** — hot-pixel layer (`HotPixel.v` + `HotPixel_b64.v`) through the segment-touches-pixel filter, the Liang–Barsky parameter-interval filter, the passes-through relation (+ tight half-open variant), the snap-rounding correctness invariant (`SnapRounding_b64.v`), and the topological-correctness theorem at the supported level (`TopologicalCorrectness_b64.v`); Hobby Theorem 4.1 stated as a Qed-closed conditional with Lemma 4.2 closed and Lemma 4.3's no-proper half a Qed-closed disproof theorem ([`HobbyCounterexample_b64.v`](theories-flocq/HobbyCounterexample_b64.v)) — see [`docs/audit-phase2-snap-rounding.md`](docs/audit-phase2-snap-rounding.md), [`docs/phase2-hotpixel-progress.md`](docs/phase2-hotpixel-progress.md), [`docs/hobby-theorem-proof-structure.md`](docs/hobby-theorem-proof-structure.md) | oracle modes `PASSES_THROUGH_FILTER` / `PASSES_THROUGH_HALFOPEN` extracted |
 | 3 | `OverlayNG` — topology graph + boolean overlay with labelling | **conditional headline Qed-closed** — `valid_geometry` + `boolean_op` (`Overlay.v`), the planar `TopologyGraph` + `build_graph` + labelling + `correct_labels_all_ops` (`OverlayGraph.v`), the snap-rounding noding bridge (`OverlayBridge.v`), and `overlay_ng_correct_conditional` (`OverlayCorrectness.v`) under three named hypotheses (JCT, DCEL ring-assembly = `extract_rings_valid`, now conditional-Qed modulo the registered `H_bridge_core` seam, semantic bridge); JCT seam work in `PointInRing*` — the prior `geometric_interior_stdlib` formulation is **refuted as vacuous** (`JordanCurveSeam.v : geometric_interior_stdlib_vacuous`) and restated over continuous paths, with the headline **H1 re-pointed onto `geometric_interior_cont`** and the canonical `JCT_two_components_cont` hypothesis now carrying the inter-component **separation clause** (sufficiency proved by `jct_cont_interior_is_geometric`); the continuous-component spine (`JCT.v`) then proves the equivalence-relation + bounded-component-invariance algebra, so the trapped-interior separation `no_path_from_interior_to_exterior` is a **free Qed corollary** (the sketch's "thesis-scale core" is in fact free), isolating the genuine remaining seam to `parity_characterises_interior_cont` behind the non-vacuous headline `point_in_ring_correct_jct_cont`; the JCT itself stated not proved — see [`docs/jct-vacuity-finding.md`](docs/jct-vacuity-finding.md), [`docs/jct-proof-structure.md`](docs/jct-proof-structure.md), [`docs/h1-vacuity/`](docs/h1-vacuity/), [`docs/audit-phase3-overlay.md`](docs/audit-phase3-overlay.md), [`docs/audit-phase3-milestone5.md`](docs/audit-phase3-milestone5.md) | oracle mode `EDGE_IN_RESULT` extracted |
 | 4 | Native circular-arc primitives (chord-approximation / Option B) | **conditional headline Qed-closed** — `CurveGeometry` types + `to_geometry` bridge, `inCircle_R` / `arc_orient` (`ArcOrient.v`), arc-chord / arc-arc intersection (`ArcIntersect.v`) with the IVT gap closed (`ArcIntersectIVT.v`), `arc_in_hot_pixel` (`ArcHotPixel.v`), sagitta machinery (`ArcChordApprox.v`), and `arc_overlay_correct_chord_approx` (`ArcOverlay.v`) under named hypotheses; **Flocq in-circle soundness** (`InCircle_b64_exact.v` — full-plane sign + `2¹¹` integer-regime value exactness, PR #146) and **arc-line Scope A** (`ArcLineIntersect_b64_exact.v` — first-stage `sP`/`sQ`/`dx`/`dy` before division); native (non-chord) circular arithmetic remains far future — see [`docs/audit-phase4-curves.md`](docs/audit-phase4-curves.md), [`docs/audit-phase4-chord-overfitting.md`](docs/audit-phase4-chord-overfitting.md), [`docs/issue-64-arc-primitives-triage.md`](docs/issue-64-arc-primitives-triage.md) | extracted oracle modes `INCIRCLE_SIGN` / `ARC_CHORD_CROSSES_CIRCLE` / `ARC_PASSES_THROUGH_PIXEL` (INCIRCLE backed by `b64_inCircle_B2R_sign_sound_small_int`) |
 | 5 | Extraction toolchain + C# FFI to production NTS | pending Phase 1+ | 0% |
@@ -354,12 +362,12 @@ the BDFL paths.)
 - This is **not** a substitute for unit tests. Tests cover behaviour the
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
-- This is **not** complete. Current coverage is over 1,100 Qed-closed
-  theorems across 67 `.v` modules (25 foundational Stdlib-only under
-  `theories/`, plus Flocq-dependent work under `theories-flocq/`), with
-  exactly 9 `Admitted` theorems (6 counterexample + 3 deferred-proof), each
-  registered in one of the two registries
-  (see the registries and `scripts/check_admitted.sh`).
+- This is **not** complete. Current coverage is over 3,400 Qed-closed
+  theorems across 348 `.v` modules (281 under `theories/` — 40 of them in
+  the host `_CoqProject` foundational target — plus 67 Flocq-dependent
+  modules under `theories-flocq/`), with exactly 1 `Admitted` theorem
+  (0 counterexample + 1 deferred-proof), registered in the deferred-proof
+  registry (see the registries and `scripts/check_admitted.sh`).
   Coverage spans the algebraic foundations (real-number, vector, distance,
   orientation, line, disk, lattice, lex order), segment and bounding-box
   primitives, triangle / convex / centroid / reflection laws, the
@@ -386,7 +394,7 @@ rocq makefile -f _CoqProject -o Makefile.gen
 make -f Makefile.gen
 ```
 
-This builds the 25 foundational Stdlib-only modules in `_CoqProject`.
+This builds the 40 foundational Stdlib-only modules in `_CoqProject`.
 Modules with external dependencies (Flocq), plus the Stdlib-only Phase
 3/4 modules built alongside them, live in `_CoqProject.full` and are
 built inside the container only (see below).
