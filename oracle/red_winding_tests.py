@@ -11,6 +11,11 @@
 # These tests are the empirical complement of:
 #   edge_winding_triple  — each edge ∈ {0, +1, -1}
 #   winding_decides_membership — Z.odd(w) = true ↔ point_in_ring (Qed)
+#
+# Adversarial scope: sign-convention (CCW=+1, CW=-1), reversal negation (I3),
+# parity↔PIP agreement (I1), and the non-simple star polygon that produces
+# |winding| = 2 — demonstrating that ring_simple is load-bearing for the
+# {-1, 0, +1} characterisation deferred in WindingNumber.v §4.
 # =============================================================================
 import math
 import os

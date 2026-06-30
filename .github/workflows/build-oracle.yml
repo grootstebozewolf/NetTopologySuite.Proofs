@@ -200,6 +200,14 @@ jobs:
           file oracle/oracle_bin
           ls -la oracle/oracle_bin
 
+      - name: Run oracle gated-invariant tests
+        # Runs each oracle test generator that gates proven invariants.
+        # oracle/oracle_bin was just built and is at the expected path.
+        # Nonzero exit on any '!!' invariant violation fails the build.
+        run: |
+          ORACLE_BIN=oracle/oracle_bin python3 oracle/gen_winding_number_tests.py \
+            > oracle/winding_number_tests.txt
+
       - name: Upload oracle_bin artifact (90-day retention)
         uses: actions/upload-artifact@v4
         with:

@@ -232,6 +232,21 @@ check("degen-1vertex", [(0, 0)], (0, 0), 0,
       gated_i1=False, gated_i2=False, gated_i3=False, is_simple=False)
 emit()
 
+emit("## H. On-boundary cases (implementation-defined, informational).")
+emit("# Strict inequalities (ay < py < by) exclude points on vertices and horizontal")
+emit("# edges.  The result is 0 (same as exterior) for all on-boundary inputs.")
+emit("# I1 parity NOT gated here: POINT_IN_CURVE_RING may return ON, not IN/OUT.")
+# Point on bottom edge midpoint of unit square
+check("boundary-edge-midpoint", SQUARE_CCW, (0.5, 0.0), 0,
+      gated_i1=False, gated_i2=True, gated_i3=False, is_simple=True)
+# Point on a vertex of unit square
+check("boundary-vertex", SQUARE_CCW, (0.0, 0.0), 0,
+      gated_i1=False, gated_i2=True, gated_i3=False, is_simple=True)
+# Point on a non-horizontal edge midpoint of unit square (left edge midpoint)
+check("boundary-left-edge", SQUARE_CCW, (0.0, 0.5), 0,
+      gated_i1=False, gated_i2=True, gated_i3=False, is_simple=True)
+emit()
+
 if violations:
     print(f"\n!! {violations} gated invariant violation(s) — see '!!' lines above.", file=sys.stderr)
     sys.exit(1)

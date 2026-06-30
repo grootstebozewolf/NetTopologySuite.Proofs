@@ -2277,6 +2277,18 @@ let run_point_in_curve_ring () =
    No ring_simple guarantee -- callers may observe |w| > 1 for non-simple rings
    (e.g. a star polygon's doubly-wound interior gives w = 2).
 
+   Precision: the intermediate x-intercept `xint` is computed in OCaml float64
+   (IEEE 754 binary64), matching the float-level behaviour the proof targets.
+   The output is always an exact signed integer (Z); `xint` is used only for the
+   sign test `px < xint` and is never stored or emitted.  For non-degenerate
+   generic-position inputs (P not on any edge or vertex) the strict inequalities
+   prevent any float rounding from flipping the crossing count; on-boundary
+   inputs (P on a vertex or edge) return 0 by convention (implementation-defined,
+   consistent with NTS RayCrossingCounter strict-open-interval convention).
+
+   Allowlisted in docs/oracle-handrolled-allowlist.txt (INTERFACE-BOUNDARY):
+   NTS equivalent is Algorithm.RayCrossingCounter / JTS CGAlgorithms.isPointInRing.
+
    Input:  n (vertex count, closing vertex NOT repeated)
            n lines of "x y" vertices
            "qx qy" query point

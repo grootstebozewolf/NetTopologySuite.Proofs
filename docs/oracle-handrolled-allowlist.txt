@@ -390,3 +390,20 @@ run_length_unified
 # moved.)
 # Note: the name run_overlay_unified itself no longer contains the
 # arithmetic (stale for ratchet); the kernels are listed separately above.
+
+# --- WINDING_NUMBER (signed ray-crossing winding number, PR #307) ------------
+# Mode WINDING_NUMBER emits the signed integer winding number w(P, ring) for a
+# linear polygon ring + query point, implementing Sunday's ray-crossing algorithm
+# proved correct in theories/WindingNumber.v (winding_decides_membership, Qed).
+# The intermediate float arithmetic computes the x-intercept of each crossing
+#   xint = A.x + (B.x - A.x) * (py - A.y) / (B.y - A.y)
+# used ONLY for the sign test `px < xint`; xint itself is never stored or emitted.
+# The output is always an exact signed integer (no rounding in the result).
+# Differential-test reference: NTS Algorithm.RayCrossingCounter / JTS
+# CGAlgorithms.isPointInRing (same strict-inequality ray-crossing convention).
+# The arithmetic is rational (no transcendental calls); a Coq-extracted form is
+# theoretically possible but requires theories-flocq/ support not yet in scope.
+# Precision note: strict-inequality construction (ay < py < by) is sound for
+# non-degenerate inputs; on-boundary behaviour (point on vertex/edge) returns 0
+# consistently (implementation-defined, documented in gen_winding_number_tests.py).
+run_winding_number
