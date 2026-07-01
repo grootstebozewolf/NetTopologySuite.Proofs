@@ -548,3 +548,32 @@ both cache lanes (`_CoqProject.full` and `_CoqProject`) round-trip correctly via
 the shared `ci_vo_hash` module.
 
 
+
+---
+
+## Observatory — extract_rings_valid Euler premise: status (2026-07-01)
+
+**Decision: keep the sound conditional state + clear documentation (option b).**
+
+`extract_rings_valid` (theories-flocq/OverlayBridge.v §8) remains a conditional
+Qed carrying the planar Euler identity `euler_characteristic` as a single,
+clearly-named hypothesis — shared UNCHANGED by the linear and curve extractors
+(the curve case adds no new Euler obligation). Corpus stays at 0 Admitted.
+
+**Why not unconditional.** Discharging `euler_characteristic` standalone is the
+discrete genus-0 planar Euler theorem for the geometric arrangement. It is
+circular with the current stack: `EulerBridge.H_bridge_core_conclusion_from_euler`
+proves the bridge/cut-edge property FROM Euler, while an inductive Euler proof
+(delete one edge at a time to the base case) needs, per edge, a face-count delta
+classified by `same_face` to move in lockstep with a component delta classified
+by reachability — i.e. an Euler-free `same_face d <-> d is a cut edge` (the
+combinatorial Jordan step, the corpus's already-deferred JCT frontier). Not a
+wiring gap; a genuine deferred theorem.
+
+**Banked foundation (theories/EulerFormula.v, all Qed, 3-axiom, no Admitted):**
+induction base case `euler_characteristic_nil`; the transfer skeleton
+`euler_transfer_bridge` / `euler_transfer_cycle`; and a precise plan naming the
+exact remaining UNCONDITIONAL lemmas [EF-1] bridge components-split, [EF-2]
+cycle face-merge, [EF-3] cycle connectivity, [EF-4] vertex/degree-2 core — with
+the crux ([EF-2] + the Euler-free bridge<->same_face equivalence) flagged as the
+Jordan residual. OverlayBridge.v §8 now cross-references this plan at the premise.

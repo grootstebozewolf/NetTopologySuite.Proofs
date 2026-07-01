@@ -485,6 +485,17 @@ Qed.
 (* OverlayCorrectness.overlay_ng_correct_conditional still carries a           *)
 (* *geometric* H_bridge (JCT-gated).  See EdgeConnectivity.v §5 /              *)
 (* docs/extract-faces-bridge.md §19.                                           *)
+(*                                                                            *)
+(* REMAINING PREMISE (the two `euler_characteristic` clauses below): this is    *)
+(* the genus-0 planar Euler identity for the geometric arrangement, carried as  *)
+(* a NAMED HYPOTHESIS, shared UNCHANGED by the linear and curve extractors      *)
+(* (the curve case adds no new Euler obligation).  It is NOT dischargeable with *)
+(* the current stack: a standalone inductive proof needs an Euler-free          *)
+(* `same_face d <-> d is a cut edge` (the combinatorial Jordan step), whereas   *)
+(* EulerBridge proves the bridge property FROM Euler -- a genuine dependency    *)
+(* loop, not missing wiring.  theories/EulerFormula.v banks the induction base  *)
+(* case + transfer skeleton (all Qed, 3-axiom) and enumerates the exact         *)
+(* remaining unconditional lemmas ([EF-1..4]) needed to close it.               *)
 (* -------------------------------------------------------------------------- *)
 
 (* H4 (face_twin_free closure rung 2): the survivor edge list of the noded graph
