@@ -628,3 +628,12 @@ flat-topped hexagons) still cannot route through this general bridge -- they
 keep their existing bespoke separation-field arguments. The general bridge's
 domain is exactly "simple polygons with no horizontal edge", which is the
 natural generic-position complement of the axis-aligned families already done.
+
+**Status (PR #312).** Closes the stated goal for the horizontal-edge-free
+regime: "extend rectangle/triangle/diamond to the general case" is now
+literally one theorem (`parity_seam_offring_of_simple`) instead of N bespoke
+per-shape arguments, with a non-convex witness (the dart) proving the
+generalization is real and not a relabelling of the triangle proof. The next
+natural rung -- relaxing `no_horizontal_edges` to a horizontal-tolerant
+variant so axis-aligned shapes route through the same general bridge -- is a
+clean, well-scoped extension point, deliberately left open here.

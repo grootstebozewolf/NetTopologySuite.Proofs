@@ -98,7 +98,9 @@ Qed.
 
 (* No endpoint of a distinct edge f lies in the OPEN interior of e.  Together
    with `ring_simple` (no proper interior-interior crossings) this is exactly
-   the classical "simple polygon" noding condition. *)
+   the classical "simple polygon" noding condition -- precisely the extra
+   condition `TriangleTautBridge.v`'s "HONEST OBSTRUCTION" paragraph names as
+   missing from `ring_simple` alone (see the top-of-file note there). *)
 Definition ring_no_vertex_on_foreign_edge_interior (r : Ring) : Prop :=
   forall e f : Edge,
     In e (ring_edges r) -> In f (ring_edges r) -> e <> f ->
@@ -182,6 +184,15 @@ Qed.
 (* ring = A,B,C,D,A.  C sits INSIDE the triangle A-B-D, making the polygon    *)
 (* concave at C -- no convexity, no CCW/signed-area machinery anywhere in     *)
 (* this section, only the four ring-class predicates.                        *)
+(*                                                                            *)
+(* Why this is a good stress test for the bridge, specifically: it has a      *)
+(* REFLEX vertex (so no convexity/CCW shortcut is available, unlike every     *)
+(* prior instance), it is SIMPLE (checked directly, no proper crossings), it  *)
+(* is T-junction-free (no vertex grazes a non-incident edge -- the exact new  *)
+(* condition this file adds), and every edge is sloped (no horizontal edge,   *)
+(* satisfying the bridge's one real restriction).  It is the minimal shape    *)
+(* that exercises all four hypotheses of `parity_seam_offring_of_simple` at   *)
+(* once while being neither convex nor axis-aligned.                          *)
 (* -------------------------------------------------------------------------- *)
 
 Definition dart_A : Point := mkPoint 0 0.
