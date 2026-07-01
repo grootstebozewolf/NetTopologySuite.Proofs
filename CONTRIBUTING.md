@@ -6,7 +6,7 @@ Thank you for your interest in contributing to this corpus of mechanically-verif
 
 > Every theorem must end with `Qed.` (or `Defined.` for computable terms).  
 > No bare `Admitted`, no `Axiom`, no `Parameter`, no `admit.` tactic in the `.v` files.  
-> The only exception today is the single registered `Admitted` entry — 1 deferred proof (`arc_dot_max_at_endpoint`) in `admitted-deferred-proofs.txt`, with a concrete seam on file and discharge plan; the counterexample registry (`admitted-counterexamples.txt`) is currently unpopulated. Any `Admitted` must appear in one of those two registries or CI fails.
+> There are no exceptions today: both registries are empty — the deferred-proof registry (`admitted-deferred-proofs.txt`) after `arc_dot_max_at_endpoint` was discharged (2026-07-01), and the counterexample registry (`admitted-counterexamples.txt`) is unpopulated. Any `Admitted` must appear in one of those two registries or CI fails.
 
 The [Reading Guide](docs/READING-GUIDE.md) and friendly [Help cards](docs/HELP.md) define the consolidated actor roles (lightly collapsed from an original 17 for overlap) and exactly what each should read (and what to skip). Use them to orient yourself.
 

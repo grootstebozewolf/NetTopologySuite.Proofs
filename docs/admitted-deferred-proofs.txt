@@ -56,10 +56,23 @@
 # LIVE ENTRIES
 # ============================================================================
 
-# (none -- the deferred-proof registry was EMPTY as of 2026-06-14.
-# New live entries added for ArcPointDistance.v D-PT analytical stubs.)
+# (none -- the deferred-proof registry is EMPTY as of 2026-07-01, after the
+# last live entry (arc_dot_max_at_endpoint) was discharged; see below.)
 
-theories/ArcSinglePeak.v:arc_dot_max_at_endpoint | theories/ArcSinglePeak.v §2 | planar single-peak dot bound: S,E,X on the circle and X opposite the radial foot across chord SE ==> gdot O P X <= Rmax (gdot O P S) (gdot O P E). Chord-frame reduction documented in-file (reduces to a*pt + b*pn <= h*Rabs pt). Believed TRUE (falsity-checked on symmetric/asymmetric configs and both signs of the center offset; no counterexample). nra insufficient (degree-2 Positivstellensatz); psatz R N needs external CSDP (absent). This is the SOLE residual obligation -- no metric residue.
+# DISCHARGED 2026-07-01: theories/ArcSinglePeak.v:arc_dot_max_at_endpoint
+#   Qed via the chord-frame reduction the in-file comment documented.  Work in the
+#   unnormalised, L-scaled chord frame (chord SE on the horizontal axis): there
+#   `side S E Y` is proportional to Y's perpendicular coordinate, so the peak-side
+#   hypothesis becomes a sign condition on that coordinate.  The scalar core closes
+#   from (i) the tangent bound <E-O, X-E> <= 0 (Cauchy-Schwarz: the circle lies on
+#   one side of its tangent at E) and (ii) `need_bound` -- the radial-foot side
+#   condition (dp*d + r*beta <= 0) pins the sign of pa*d + h*beta via a squared-
+#   magnitude comparison (|P-O| >= |(P-O).n|, r >= |d|), discharged by sign cases
+#   with only ring/lra/nra/field (NO nra-on-the-whole-goal, NO psatz/CSDP).
+#   Reflecting the chord frame (S <-> E) handles the second endpoint.  The lemma
+#   gained the hypothesis `0 < dist S E` (the bound is FALSE when S = E; the sole
+#   caller point_to_arc_dist_fallback_ends_lower supplies it from valid_arc).
+#   3-axiom (classical-reals trio only; Print Assumptions confirmed).
 
 # DISCHARGED 2026-06-21: theories/ArcPointDistance.v:point_to_arc_dist_radial_lower
 #   Qed via inCircle_R_zero_implies_equidistant (ArcArcCircles §1c) + point_circle_dist_lower.

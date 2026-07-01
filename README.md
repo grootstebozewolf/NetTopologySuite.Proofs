@@ -31,12 +31,11 @@ written in [Rocq Prover](https://rocq-prover.org/) (formerly Coq).
 **Over 3,400 theorems, every proof sealed with `Qed.` on just three
 axioms** — the standard classical-reals trio Rocq ships with, none of
 this corpus's own; `Axiom`, `Parameter`, and `admit.` appear nowhere.
-The only `Admitted` today is **1 registered deferred proof** — a
-theorem believed true whose multi-session proof is structured but
-unfinished (`arc_dot_max_at_endpoint`, a planar single-peak dot bound
-awaiting external `psatz`/CSDP). The counterexample registry is
-currently empty, and CI fails any unregistered `Admitted`. (The Flocq
-lane structurally inherits one further axiom; details below.)
+There are **no `Admitted` theorems today** — both the deferred-proof and
+counterexample registries are empty (the last deferred entry,
+`arc_dot_max_at_endpoint`, was discharged 2026-07-01). CI fails any
+unregistered `Admitted`. (The Flocq lane structurally inherits one
+further axiom; details below.)
 
 CI (`scripts/check_admitted.sh`) enforces a three-tier `Admitted`
 discipline across both directories:
@@ -59,15 +58,18 @@ discipline across both directories:
 - **Tier 3** — an `Admitted` registered in
   [`docs/admitted-deferred-proofs.txt`](docs/admitted-deferred-proofs.txt)
   is allowed temporarily: the theorem is *true*, its proof structure is
-  documented, and the remaining work is multi-session. **1 entry today** —
-  `arc_dot_max_at_endpoint` (`theories/ArcSinglePeak.v` §2), a planar
-  single-peak dot bound that is believed true (falsity-checked on symmetric
-  and asymmetric configurations, no counterexample) but needs an external
-  `psatz`/CSDP backend (`nra` is insufficient for the degree-2
-  Positivstellensatz). The earlier on-arc / sweep-clamp residuals
+  documented, and the remaining work is multi-session. **None today.**
+  The last entry, `arc_dot_max_at_endpoint` (`theories/ArcSinglePeak.v` §2),
+  a planar single-peak dot bound, was discharged 2026-07-01 via its
+  documented chord-frame reduction — no external `psatz`/CSDP needed after
+  all: in the chord frame the peak-side condition becomes a sign test on one
+  coordinate, and a tangent bound plus a squared-magnitude comparison close
+  the scalar core with only `ring`/`lra`/`nra`/`field` (the lemma gained the
+  hypothesis `0 < dist S E`, true in every calling context via `valid_arc`).
+  The earlier on-arc / sweep-clamp residuals
   (`point_to_arc_dist_radial_lower`, `point_to_arc_dist_fallback_ends_lower`,
   `point_to_arc_dist_centre_is_r` in `theories/ArcPointDistance.v`, the #64
-  point-to-arc distance frontier) have since been discharged. The registry's
+  point-to-arc distance frontier) were discharged earlier. The registry's
   first-ever entry,
   `EdgeFaceBridge.H_bridge_core` (the planar same-face⇒bridge seam behind
   Phase 3's ring assembly), has been discharged via the planar Euler route:

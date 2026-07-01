@@ -184,8 +184,15 @@ Proof.
       unfold side, S. cbn [px py]. nra.
     - rewrite HXE. rewrite <- (Hbridge (arc_end a)).
       unfold side, E. cbn [px py]. nra. }
+  (* S <> E: valid_arc forbids a degenerate chord. *)
+  assert (HSE : 0 < dist S E).
+  { pose proof (dist_nonneg S E) as Hnn.
+    destruct (Rle_lt_or_eq_dec 0 (dist S E) Hnn) as [Hlt | Heq0]; [ exact Hlt | exfalso ].
+    symmetry in Heq0. apply dist_eq_zero_iff in Heq0. destruct Heq0 as [Hx Hy].
+    unfold valid_arc in Hva. apply Hva. unfold S, E in Hx, Hy.
+    rewrite <- Hx, <- Hy. ring. }
   (* The dot bound, then monotonicity-in-dot to compare endpoint distances. *)
-  pose proof (arc_dot_max_at_endpoint O P S E X r HS HE HX Hside Hd) as Hdot.
+  pose proof (arc_dot_max_at_endpoint O P S E X r HS HE HX Hside Hd HSE) as Hdot.
   (* candidate (min endpoint dist) <= each endpoint dist *)
   assert (Hcda : point_to_arc_candidate_endpoints a P <= dist (arc_start a) P).
   { unfold point_to_arc_candidate_endpoints.
