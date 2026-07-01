@@ -3,6 +3,11 @@
 
    Cycle-count SPLICE, stage 5: the INSTANTIATION.
 
+   Dual of `NumFacesMerge.num_faces_E_minus_merge` ([EF-2]): the same_face
+   case here is a SPLIT (faces +1), the non-same_face case is a MERGE
+   (faces -1). Together they close the face-delta half of the Euler
+   induction step.
+
    `PermCycleSplice.cycle_count_surgery` is a generic fact about a permutation cut:
    given a permutation `f` of `S` whose orbit of `d` (minimal period `per`)
    reaches `td` first at index `k` (`2 <= k <= per-2`), the surgered map `f'` on

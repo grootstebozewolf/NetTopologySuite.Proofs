@@ -25,6 +25,11 @@
    same orbit to begin with, so this section's premise list is actually
    SHORTER than `CycleSplice`'s.
 
+   Intuition by example: a 3-cycle containing `d` and a 4-cycle containing
+   `td`, stitched by the redirect, become ONE 5-cycle (`per1+per2-2 = 3+4-2`)
+   -- the orbit count drops from 2 to 1, exactly the `-1` `cycle_count_merge`
+   proves in general, and exactly the `-1` `[EF-2]` needs for `num_faces`.
+
    Pure combinatorial wiring; no `Admitted` / `Axiom` / `Parameter`; allowlist
    axioms only.
 

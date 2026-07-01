@@ -3,6 +3,10 @@
 
    [EF-2] Euler ladder: cycle-count MERGE, the INSTANTIATION.
 
+   Dual of `NumFacesSplice.num_faces_E_minus_splice`: the same_face case is a
+   SPLIT (faces +1), the non-same_face case here is a MERGE (faces -1).
+   Together they close the face-delta half of the Euler induction step.
+
    `PermCycleMerge.cycle_count_merge` is the generic mirror-image fact: given
    a permutation `f` of `S` whose orbit of `d` (period `per1`) and orbit of
    `td` (period `per2`) are DISTINCT (`~ same_orbit f d td`), the surgered map
