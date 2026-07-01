@@ -117,6 +117,20 @@ Proof.
   split; intro H; nra.
 Qed.
 
+(* The orientation-REVERSING sibling (e.g. a mirror-reflected chart): negative
+   determinant flips every `vcross` sign, rather than preserving it.  Not
+   needed by the Klein/gnomonic charts above (both orientation-preserving by
+   construction), but the natural complement of `vcross_sign_preserved_pos_det`
+   for any future chart built from a reflection (mirrored hemisphere, etc). *)
+Corollary vcross_sign_flipped_neg_det : forall a b c d v w,
+  a * d - b * c < 0 ->
+  (0 < vcross v w <-> vcross (lin2 a b c d v) (lin2 a b c d w) < 0).
+Proof.
+  intros a b c d v w Hdet.
+  rewrite (vcross_lin2 a b c d v w).
+  split; intro H; nra.
+Qed.
+
 Corollary vcross_zero_preserved_pos_det : forall a b c d v w,
   0 < a * d - b * c ->
   (vcross v w = 0 <-> vcross (lin2 a b c d v) (lin2 a b c d w) = 0).
@@ -233,6 +247,9 @@ Corollary extract_rings_valid_hyperbolic :
       valid_polygon poly.
 Proof.
   intros _ op A B _ _ Hwn Hns H2ec Heul HeulM poly Hin.
+  (* Literally `extract_rings_valid`'s own proof term: the correspondence and
+     domain-confinement hypotheses above are carried for the reading, not
+     consumed here -- no curvature-specific reasoning is needed or added. *)
   exact (extract_rings_valid op A B Hwn Hns H2ec Heul HeulM poly Hin).
 Qed.
 
@@ -277,6 +294,8 @@ Corollary extract_rings_valid_spherical_hemisphere :
       valid_polygon poly.
 Proof.
   intros _ op A B Hwn Hns H2ec Heul HeulM poly Hin.
+  (* Literally `extract_rings_valid`'s own proof term: the correspondence
+     hypothesis above is carried for the reading, not consumed here. *)
   exact (extract_rings_valid op A B Hwn Hns H2ec Heul HeulM poly Hin).
 Qed.
 
@@ -286,6 +305,7 @@ Qed.
 
 Print Assumptions vcross_lin2.
 Print Assumptions vcross_sign_preserved_pos_det.
+Print Assumptions vcross_sign_flipped_neg_det.
 Print Assumptions open_disk_convex.
 Print Assumptions extract_rings_valid_hyperbolic.
 Print Assumptions extract_rings_valid_spherical_hemisphere.

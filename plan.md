@@ -685,3 +685,13 @@ mistake the flat-planar theorem for the curved one without the side condition
 that licenses the reading. Building faithful geodesic-based `Ring`/`Polygon`
 predicates FROM a from-scratch hyperbolic/spherical axiomatisation (rather
 than via these two classical charts) remains the larger, un-attempted project.
+
+**Future work (PR #313 review).**
+  - [ ] Full spherical coverage (not just one open hemisphere): stereographic
+    projection covers the sphere minus a single point, a strictly larger
+    domain than gnomonic's hemisphere, at the cost of geodesics becoming
+    circles/lines rather than always-lines (needs a circle-or-line incidence
+    test, not a pure straight-line one).
+  - [ ] Hyperbolic WITH boundary: the Poincare disk model (angle-preserving,
+    unlike Klein) once the corpus has a circle-arc / circle-line incidence
+    test to match its curved (non-chord) geodesics.
