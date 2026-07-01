@@ -36,7 +36,10 @@ SHELL := /bin/bash
 ROCQ := $(shell command -v rocq 2>/dev/null || command -v coqc 2>/dev/null || echo "")
 
 # Phony targets only — this file never produces real build artefacts.
-.PHONY: help status host full check ci-guards ci-pr ci-full oracle clean-env env-info
+.PHONY: help status host full check ci-guards ci-pr ci-full theories-changed oracle clean-env env-info
+
+# Base ref for `make theories-changed` (override: make theories-changed BASE=main).
+BASE ?= origin/main
 
 # -----------------------------------------------------------------------------
 # Default target — the most important UX surface after `git clone`
@@ -209,6 +212,17 @@ ci-pr: ci-guards host
 ci-full: ci-guards full oracle
 	@echo ""
 	@echo "Full local gate complete."
+
+# theories-changed — incremental local rebuild: only the theories/ files
+# changed vs BASE (default origin/main) plus their transitive reverse-
+# dependents (coqdep-exact), via scripts/theories_changed.sh.  A developer
+# convenience for fast "did I break anything downstream?" checks; CI still
+# compiles the whole lane, so this can never under-check on merge.
+#   make theories-changed              # vs origin/main
+#   make theories-changed BASE=main    # vs a different base
+#   DRY_RUN=1 make theories-changed    # list targets, don't build
+theories-changed:
+	bash scripts/theories_changed.sh "$(BASE)"
 
 oracle:
 	@echo "Building the oracle binary (RocqRefRunner) ..."

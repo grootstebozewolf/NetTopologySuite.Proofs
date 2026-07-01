@@ -31,6 +31,9 @@ jobs:
     # `.vo` and no `rocq`.  Reproduce locally with `make ci-guards`.
     name: Corpus guardrails (build-independent)
     runs-on: ubuntu-latest
+    # Pure grep/perl/python; seconds in practice. A low ceiling turns a hung
+    # script into a fast, clear failure instead of a 6h default-timeout stall.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
 
@@ -54,6 +57,8 @@ jobs:
     # job (so branch protection on this build still implies guards pass).
     needs: guards
     runs-on: macos-latest
+    # A full theories/ build is well under this; the ceiling caps a runaway.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -68,7 +73,31 @@ jobs:
         run: brew install rocq
 
       - name: Show Rocq version
-        run: rocq -v
+        id: rocqv
+        # Capture the ACTUAL installed version: `brew install rocq` is
+        # unpinned, so the .vo cache key must track what Homebrew shipped
+        # (not the cosmetic matrix string) or a compiler bump would try to
+        # load version-incompatible cached .vo.
+        run: |
+          rocq -v
+          echo "ver=$(rocq --version | head -1 | tr -cd '[:alnum:].-')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore theories/ .vo cache (PRs only)
+        # PR == "theories-quick": restore the previous run's .vo + manifest so
+        # only changed files + dependents recompile.  Pushes to main skip this
+        # and build "theories-full" from clean, re-seeding the cache — the
+        # integrity anchor (every merge revalidates the whole lane).
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            theories/*.vo*
+            theories/*.glob
+            theories/.*.aux
+            .vo-manifest-theories
+          key: theories-vo-${{ steps.rocqv.outputs.ver }}-${{ github.run_id }}
+          restore-keys: |
+            theories-vo-${{ steps.rocqv.outputs.ver }}-
 
       - name: Generate Makefile (parity with container + docs)
         # Use the same modern driver + .gen naming as the container job,
@@ -77,6 +106,15 @@ jobs:
         # convenience layer (make help, make host, etc.).
         run: rocq makefile -f _CoqProject -o Makefile.gen
 
+      - name: Invalidate stale artefacts (content-addressed, theories/ lane)
+        # Same content-addressed pass as the flocq job, pointed at the
+        # Stdlib-only project + its own manifest: ages unchanged .v so make
+        # skips them, touches changed/new ones so make rebuilds them + their
+        # dependents.  No-op on a cold cache (main, or first PR run).
+        run: |
+          CI_VO_PROJECT=_CoqProject CI_VO_MANIFEST=.vo-manifest-theories \
+            python3 scripts/ci_invalidate_stale_vo.py
+
       - name: Build proofs
         # Parallel + output-sync for readable logs (matches container job).
         # This job now does exactly one thing — compile the Stdlib-only
@@ -84,6 +122,23 @@ jobs:
         # run separately in the `guards` job above (fast, parallel), and
         # the Admitted scan there covers this lane's sources too.
         run: make -f Makefile.gen -j"$(sysctl -n hw.ncpu)" --output-sync=target || make -f Makefile.gen -j"$(sysctl -n hw.ncpu)"
+
+      - name: Refresh theories/ manifest
+        # Only reached when the build passed: records the content hash of every
+        # host-lane .v so the next PR run's invalidation is sound.
+        run: |
+          CI_VO_PROJECT=_CoqProject CI_VO_MANIFEST=.vo-manifest-theories \
+            python3 scripts/ci_write_vo_manifest.py
+
+      - name: Save theories/ .vo cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            theories/*.vo*
+            theories/*.glob
+            theories/.*.aux
+            .vo-manifest-theories
+          key: theories-vo-${{ steps.rocqv.outputs.ver }}-${{ github.run_id }}
 
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus
@@ -128,6 +183,9 @@ jobs:
     # when a build-independent guardrail already failed.
     needs: guards
     runs-on: ubuntu-latest
+    # Cold path (toolchain build + full corpus + audit) fits comfortably;
+    # the ceiling turns a hang into a clear failure well before GitHub's 6h.
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
