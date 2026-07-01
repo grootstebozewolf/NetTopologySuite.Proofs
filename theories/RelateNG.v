@@ -28,7 +28,7 @@
    License: BSD-3-Clause (see LICENSE)
    ========================================================================== *)
 
-From Stdlib Require Import Reals List Lia Lra Ranalysis.
+From Stdlib Require Import Reals List Lia Lra Ranalysis Bool Btauto.
 From NTS.Proofs Require Import DE9IM Distance Overlay Segment RelateBoundary
   RelateLineLine RelateAreaPoint RelateAreaLine RelateAreaArea
   RelateMatrixLineLine RelateMatrixAreaLine RelateMatrixRect RelateMatrixTriangle
@@ -156,16 +156,45 @@ Definition point_in_triangle (ax ay bx by_ cx cy : R) (p : Point) : Prop :=
 (* For now, a simple structural decision; full geometry predicates in classify. *)
 (* -------------------------------------------------------------------------- *)
 
+(* Decidable detectors for the shared-edge touch regime (boolean mirrors of the
+   `shares_edge` / `opposite_sides` Props defined below; kept standalone so the
+   classifier can use them).  Point equality and the strict cross-product sign
+   are decidable over R via Req_dec_T / Rlt_dec (as in rect_pair_regime). *)
+Definition point_eqb (p q : Point) : bool :=
+  if Req_dec_T (px p) (px q)
+  then if Req_dec_T (py p) (py q) then true else false
+  else false.
+
+Definition shares_edge_b (p1 p2 q1 q2 : Point) : bool :=
+  orb (andb (point_eqb p1 q1) (point_eqb p2 q2))
+      (andb (point_eqb p1 q2) (point_eqb p2 q1)).
+
+Definition opposite_sides_b (p1 p2 p q : Point) : bool :=
+  if Rlt_dec (cross p1 p2 p * cross p1 p2 q) 0 then true else false.
+
+(* True iff some edge of triangle A coincides with some edge of triangle B and
+   the two apex vertices lie on opposite sides of that shared edge -- the nine
+   (edge-of-A x edge-of-B) cases of `triangles_touch_on_shared_edge`. *)
+Definition touch_edge_b (a1 a2 a3 b1 b2 b3 : Point) : bool :=
+  (shares_edge_b a1 a2 b1 b2 && opposite_sides_b a1 a2 a3 b3) ||
+  (shares_edge_b a1 a2 b2 b3 && opposite_sides_b a1 a2 a3 b1) ||
+  (shares_edge_b a1 a2 b3 b1 && opposite_sides_b a1 a2 a3 b2) ||
+  (shares_edge_b a2 a3 b1 b2 && opposite_sides_b a2 a3 a1 b3) ||
+  (shares_edge_b a2 a3 b2 b3 && opposite_sides_b a2 a3 a1 b1) ||
+  (shares_edge_b a2 a3 b3 b1 && opposite_sides_b a2 a3 a1 b2) ||
+  (shares_edge_b a3 a1 b1 b2 && opposite_sides_b a3 a1 a2 b3) ||
+  (shares_edge_b a3 a1 b2 b3 && opposite_sides_b a3 a1 a2 b1) ||
+  (shares_edge_b a3 a1 b3 b1 && opposite_sides_b a3 a1 a2 b2).
+
+(* Triangle regime classifier.  Now DETECTS the shared-edge touch regime
+   (the `touch_edge_b` decision, proven correct on the `triangles_touch_on_shared_edge`
+   inputs by `triangle_pair_regime_touch` below), returning TPR_Disjoint as the
+   default for the not-yet-classified regimes (contains/overlap). *)
 Definition triangle_pair_regime (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : TrianglePairRegime :=
-  (* TODO: implement full decision using:
-     - cross / area2 for orientations and degeneracy checks
-     - between / on_edge for shared edge or vertex (touch)
-     - point_in_triangle (gtri >0 for all 3 pts) for strict contains
-     - mixed inside/outside for overlap
-     Analogous to rect_pair_regime but on 3 points per triangle.
-     For this starter implementation we return a safe default; specific
-     regimes are witnessed via lemmas like the rect_*_touch ones. *)
-  TPR_Disjoint.
+  if touch_edge_b (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                  (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy)
+  then TPR_TouchEdge
+  else TPR_Disjoint.
 
 (* bool dec helpers removed... (kept comment for style) *)
 
@@ -304,12 +333,21 @@ Proof.
   reflexivity.
 Qed.
 
-(* Basic example of triangle dispatch reducing (using the starter default regime). *)
+(* Basic example of triangle dispatch reducing.  These two triangles share no
+   edge, so the tightened classifier returns TPR_Disjoint (the shared-edge
+   detector `touch_edge_b` is false -- every candidate vertex match fails on a
+   differing coordinate). *)
 Example relate_triangle_dispatch_ex :
   relate (triangle_geometry 0 0 1 0 0 1) (triangle_geometry 2 0 3 0 2 1) =
   tris_relate 0 0 1 0 0 1 2 0 3 0 2 1 TPR_Disjoint.
 Proof.
-  reflexivity.
+  rewrite relate_on_triangles_dispatches.
+  assert (Hreg : triangle_pair_regime 0 0 1 0 0 1 2 0 3 0 2 1 = TPR_Disjoint).
+  { unfold triangle_pair_regime, touch_edge_b, shares_edge_b, point_eqb.
+    cbn [px py].
+    repeat (destruct (Req_dec_T _ _) as [?e | ?n]; try (exfalso; lra)).
+    all: reflexivity. }
+  rewrite Hreg. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -335,6 +373,60 @@ Definition triangles_touch_on_shared_edge (a1 a2 a3 b1 b2 b3 : Point) : Prop :=
   (shares_edge a3 a1 b1 b2 /\ opposite_sides a3 a1 a2 b3) \/
   (shares_edge a3 a1 b2 b3 /\ opposite_sides a3 a1 a2 b1) \/
   (shares_edge a3 a1 b3 b1 /\ opposite_sides a3 a1 a2 b2).
+
+(* -------------------------------------------------------------------------- *)
+(* Classifier correctness on touch inputs: the boolean detectors agree with    *)
+(* the Props, so `triangle_pair_regime` returns TPR_TouchEdge exactly when the  *)
+(* triangles touch on a shared edge -- discharging the regime premise that      *)
+(* `relate_triangle_touch` used to carry.                                       *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma point_eqb_true : forall p q, p = q -> point_eqb p q = true.
+Proof.
+  intros p q ->. unfold point_eqb.
+  destruct (Req_dec_T (px q) (px q)) as [_ | Hn]; [ | congruence ].
+  destruct (Req_dec_T (py q) (py q)) as [_ | Hn]; [ reflexivity | congruence ].
+Qed.
+
+Lemma shares_edge_b_of : forall p1 p2 q1 q2,
+  shares_edge p1 p2 q1 q2 -> shares_edge_b p1 p2 q1 q2 = true.
+Proof.
+  intros p1 p2 q1 q2 [[-> ->] | [-> ->]]; unfold shares_edge_b.
+  - rewrite !point_eqb_true by reflexivity. reflexivity.
+  - rewrite (point_eqb_true q2 q2), (point_eqb_true q1 q1) by reflexivity.
+    rewrite Bool.andb_true_r, Bool.orb_true_r. reflexivity.
+Qed.
+
+Lemma opposite_sides_b_of : forall p1 p2 p q,
+  opposite_sides p1 p2 p q -> opposite_sides_b p1 p2 p q = true.
+Proof.
+  intros p1 p2 p q H. unfold opposite_sides_b, opposite_sides in *.
+  destruct (Rlt_dec (cross p1 p2 p * cross p1 p2 q) 0) as [_ | Hn];
+    [ reflexivity | exfalso; exact (Hn H) ].
+Qed.
+
+Lemma touch_edge_b_of : forall a1 a2 a3 b1 b2 b3,
+  triangles_touch_on_shared_edge a1 a2 a3 b1 b2 b3 ->
+  touch_edge_b a1 a2 a3 b1 b2 b3 = true.
+Proof.
+  intros a1 a2 a3 b1 b2 b3 H. unfold touch_edge_b.
+  (* each disjunct fills its andb with the two _b_of facts, then btauto collapses. *)
+  destruct H as
+    [[He Ho] | [[He Ho] | [[He Ho] | [[He Ho] | [[He Ho]
+    | [[He Ho] | [[He Ho] | [[He Ho] | [He Ho]]]]]]]]];
+    rewrite (shares_edge_b_of _ _ _ _ He), (opposite_sides_b_of _ _ _ _ Ho);
+    btauto.
+Qed.
+
+Lemma triangle_pair_regime_touch :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy = TPR_TouchEdge.
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
+  unfold triangle_pair_regime. rewrite (touch_edge_b_of _ _ _ _ _ _ Htouch). reflexivity.
+Qed.
 
 (* BB point: interior point of the shared edge (midpoint for concreteness). *)
 Definition touch_triangle_bb_point (p1 p2 : Point) : Point :=
@@ -773,22 +865,21 @@ Proof.
   exact I.
 Qed.
 
-(* Relate under explicit touch. Conditional on the classifier returning TPR_TouchEdge
-   (which the stub currently does not; see triangle_pair_regime). Once the decision
-   procedure is implemented, Hregime becomes a proved lemma and this becomes unconditional.
-   H_bridge_premise pattern: we prove the dispatch equality, not the classifier. *)
+(* Relate under explicit touch -- now UNCONDITIONAL.  The classifier
+   (triangle_pair_regime, tightened above) provably returns TPR_TouchEdge on any
+   shared-edge touch (triangle_pair_regime_touch), so the former regime premise
+   is discharged from Htouch and no longer carried. *)
 Lemma relate_triangle_touch :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
-    triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy = TPR_TouchEdge ->
     relate (triangle_geometry ax ay bx by_ cx cy)
            (triangle_geometry dx dy ex ey fx fy) =
     tris_relate ax ay bx by_ cx cy dx dy ex ey fx fy TPR_TouchEdge.
 Proof.
-  intros ax ay bx by_ cx cy dx dy ex ey fx fy _Htouch Hregime.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
   rewrite relate_on_triangles_dispatches.
-  rewrite Hregime.
+  rewrite (triangle_pair_regime_touch ax ay bx by_ cx cy dx dy ex ey fx fy Htouch).
   reflexivity.
 Qed.
 
