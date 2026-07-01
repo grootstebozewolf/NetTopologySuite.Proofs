@@ -586,3 +586,54 @@ unconditional` closes the geometric-interior II separation outright, while
 ray-parity `point_set` proxy cannot follow suit -- both act as data points for
 whichever future attack on the combinatorial-Jordan / genericity-removal
 crux above turns out to be tractable.
+
+---
+
+## Observatory — JCT parity seam: general simple-polygon case (2026-07-01)
+
+**Goal.** Extend the discharged families (rectangle `RectangleJCT.v`, right
+triangle `RightTriangleJCT.v`, general triangle `GeneralTriangleJCT.v` /
+`TriangleTautBridge.v`, diamond/convex `ConvexJCT.v`) -- each a bespoke,
+per-shape argument -- to a single theorem covering ARBITRARY simple polygons.
+
+**Done (`theories/GeneralTautBridge.v`, all Qed, classical-reals trio only, no
+Admitted).** `TriangleTautBridge.v`'s "HONEST OBSTRUCTION" note flagged the
+exact gap: the taut Jordan seam `JCTEscapeDescentHolds.parity_seam_offring_taut`
+needs `ring_taut` (no proper crossings AND no T-junctions), but
+`Overlay.ring_simple` only forbids proper crossings -- so only the triangle had
+an end-to-end instantiation, via a bespoke per-edge `nsatz` argument. This file
+supplies the missing noding predicate and closes the gap for good:
+
+  - `ring_no_vertex_on_foreign_edge_interior` : the precise T-junction ban (no
+    endpoint of a distinct edge lies in another edge's open interior).
+  - `ring_taut_of_simple_and_no_foreign_vertex` : `ring_simple r ->
+    ring_no_vertex_on_foreign_edge_interior r -> ring_taut r` -- the general
+    bridge, by a 3-way case split on the coincidence parameter (boundary /
+    foreign-vertex-in-interior / proper-crossing) that needs only `Req_dec_T`
+    (no new axioms).
+  - `parity_seam_offring_of_simple` : the capstone -- any `ring_simple` +
+    T-junction-free + vertex-distinct (`ring_core_nodup`) + horizontal-edge-free
+    ring satisfies `parity_characterises_interior_cont_offring`
+    UNCONDITIONALLY, with NO per-shape combinatorics.  One theorem now
+    subsumes the triangle bridge and extends to shapes no prior file covers.
+  - Demonstrated on a concrete NON-CONVEX simple quadrilateral (a "dart" /
+    arrowhead with one reflex vertex, `dart_ring`) via
+    `dart_parity_seam_offring` -- proof that the generalization is real: every
+    family discharged before this (rectangle/triangle/diamond) is convex.
+
+**Residual scope, honestly.** `no_horizontal_edges` is a GLOBAL, whole-ring
+guard (unlike the local `no_horizontal_edge_at p r` the pointwise seam needs),
+so shapes with an intrinsically horizontal edge (axis-aligned rectangles,
+flat-topped hexagons) still cannot route through this general bridge -- they
+keep their existing bespoke separation-field arguments. The general bridge's
+domain is exactly "simple polygons with no horizontal edge", which is the
+natural generic-position complement of the axis-aligned families already done.
+
+**Status (PR #312).** Closes the stated goal for the horizontal-edge-free
+regime: "extend rectangle/triangle/diamond to the general case" is now
+literally one theorem (`parity_seam_offring_of_simple`) instead of N bespoke
+per-shape arguments, with a non-convex witness (the dart) proving the
+generalization is real and not a relabelling of the triangle proof. The next
+natural rung -- relaxing `no_horizontal_edges` to a horizontal-tolerant
+variant so axis-aligned shapes route through the same general bridge -- is a
+clean, well-scoped extension point, deliberately left open here.
