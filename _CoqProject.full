@@ -997,6 +997,10 @@ theories/EulerWitness.v
 # EdgeFaceBridge.H_bridge_premise from the planar Euler identity (via
 # H_bridge_core_conclusion_from_euler + num_faces_E_minus_splice).  No Admitteds.
 theories/HBridgeEuler.v
+# Toward an unconditional discharge of the planar Euler identity: base case
+# (euler_characteristic []) + the deletion-transfer arithmetic skeleton, plus
+# an in-corpus plan of the exact missing (unconditional) deltas.  No Admitteds.
+theories/EulerFormula.v
 # H_bridge Euler route (Rung 3b-vii, PR #194): generic decidable-relation class
 # counter (count_classes) -- order-independent counting core.
 theories/ClassCount.v

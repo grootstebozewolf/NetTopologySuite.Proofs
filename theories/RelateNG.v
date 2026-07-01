@@ -28,7 +28,7 @@
    License: BSD-3-Clause (see LICENSE)
    ========================================================================== *)
 
-From Stdlib Require Import Reals List Lia Lra Ranalysis.
+From Stdlib Require Import Reals List Lia Lra Ranalysis Bool Btauto.
 From NTS.Proofs Require Import DE9IM Distance Overlay Segment RelateBoundary
   RelateLineLine RelateAreaPoint RelateAreaLine RelateAreaArea
   RelateMatrixLineLine RelateMatrixAreaLine RelateMatrixRect RelateMatrixTriangle
@@ -156,16 +156,53 @@ Definition point_in_triangle (ax ay bx by_ cx cy : R) (p : Point) : Prop :=
 (* For now, a simple structural decision; full geometry predicates in classify. *)
 (* -------------------------------------------------------------------------- *)
 
+(* Decidable detectors for the shared-edge touch regime (boolean mirrors of the
+   `shares_edge` / `opposite_sides` Props defined below; kept standalone so the
+   classifier can use them).  Point equality and the strict cross-product sign
+   are decidable over R via Req_dec_T / Rlt_dec (as in rect_pair_regime). *)
+Definition point_eqb (p q : Point) : bool :=
+  if Req_dec_T (px p) (px q)
+  then if Req_dec_T (py p) (py q) then true else false
+  else false.
+
+Definition shares_edge_b (p1 p2 q1 q2 : Point) : bool :=
+  orb (andb (point_eqb p1 q1) (point_eqb p2 q2))
+      (andb (point_eqb p1 q2) (point_eqb p2 q1)).
+
+Definition opposite_sides_b (p1 p2 p q : Point) : bool :=
+  if Rlt_dec (cross p1 p2 p * cross p1 p2 q) 0 then true else false.
+
+(* True iff some edge of triangle A coincides with some edge of triangle B and
+   the two apex vertices lie on opposite sides of that shared edge -- the nine
+   (edge-of-A x edge-of-B) cases of `triangles_touch_on_shared_edge`. *)
+Definition touch_edge_b (a1 a2 a3 b1 b2 b3 : Point) : bool :=
+  (shares_edge_b a1 a2 b1 b2 && opposite_sides_b a1 a2 a3 b3) ||
+  (shares_edge_b a1 a2 b2 b3 && opposite_sides_b a1 a2 a3 b1) ||
+  (shares_edge_b a1 a2 b3 b1 && opposite_sides_b a1 a2 a3 b2) ||
+  (shares_edge_b a2 a3 b1 b2 && opposite_sides_b a2 a3 a1 b3) ||
+  (shares_edge_b a2 a3 b2 b3 && opposite_sides_b a2 a3 a1 b1) ||
+  (shares_edge_b a2 a3 b3 b1 && opposite_sides_b a2 a3 a1 b2) ||
+  (shares_edge_b a3 a1 b1 b2 && opposite_sides_b a3 a1 a2 b3) ||
+  (shares_edge_b a3 a1 b2 b3 && opposite_sides_b a3 a1 a2 b1) ||
+  (shares_edge_b a3 a1 b3 b1 && opposite_sides_b a3 a1 a2 b2).
+
+(* Triangle regime classifier.  Now DETECTS the shared-edge touch regime
+   (the `touch_edge_b` decision, proven correct on the `triangles_touch_on_shared_edge`
+   inputs by `triangle_pair_regime_touch` below), returning TPR_Disjoint as the
+   default for the not-yet-classified regimes (contains/overlap). *)
 Definition triangle_pair_regime (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : TrianglePairRegime :=
-  (* TODO: implement full decision using:
-     - cross / area2 for orientations and degeneracy checks
-     - between / on_edge for shared edge or vertex (touch)
-     - point_in_triangle (gtri >0 for all 3 pts) for strict contains
-     - mixed inside/outside for overlap
-     Analogous to rect_pair_regime but on 3 points per triangle.
-     For this starter implementation we return a safe default; specific
-     regimes are witnessed via lemmas like the rect_*_touch ones. *)
-  TPR_Disjoint.
+  if touch_edge_b (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                  (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy)
+  then TPR_TouchEdge
+  else TPR_Disjoint.
+
+(* Decidable equality on the classifier's result type -- consistent with the
+   Req_dec_T / Rlt_dec approach used throughout the boolean detectors above,
+   and available for any future case dispatch on `triangle_pair_regime`
+   (mirroring the rectangle regime's decidability). *)
+Lemma triangle_pair_regime_eq_dec :
+  forall r1 r2 : TrianglePairRegime, {r1 = r2} + {r1 <> r2}.
+Proof. decide equality. Qed.
 
 (* bool dec helpers removed... (kept comment for style) *)
 
@@ -304,12 +341,21 @@ Proof.
   reflexivity.
 Qed.
 
-(* Basic example of triangle dispatch reducing (using the starter default regime). *)
+(* Basic example of triangle dispatch reducing.  These two triangles share no
+   edge, so the tightened classifier returns TPR_Disjoint (the shared-edge
+   detector `touch_edge_b` is false -- every candidate vertex match fails on a
+   differing coordinate). *)
 Example relate_triangle_dispatch_ex :
   relate (triangle_geometry 0 0 1 0 0 1) (triangle_geometry 2 0 3 0 2 1) =
   tris_relate 0 0 1 0 0 1 2 0 3 0 2 1 TPR_Disjoint.
 Proof.
-  reflexivity.
+  rewrite relate_on_triangles_dispatches.
+  assert (Hreg : triangle_pair_regime 0 0 1 0 0 1 2 0 3 0 2 1 = TPR_Disjoint).
+  { unfold triangle_pair_regime, touch_edge_b, shares_edge_b, point_eqb.
+    cbn [px py].
+    repeat (destruct (Req_dec_T _ _) as [?e | ?n]; try (exfalso; lra)).
+    all: reflexivity. }
+  rewrite Hreg. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -335,6 +381,60 @@ Definition triangles_touch_on_shared_edge (a1 a2 a3 b1 b2 b3 : Point) : Prop :=
   (shares_edge a3 a1 b1 b2 /\ opposite_sides a3 a1 a2 b3) \/
   (shares_edge a3 a1 b2 b3 /\ opposite_sides a3 a1 a2 b1) \/
   (shares_edge a3 a1 b3 b1 /\ opposite_sides a3 a1 a2 b2).
+
+(* -------------------------------------------------------------------------- *)
+(* Classifier correctness on touch inputs: the boolean detectors agree with    *)
+(* the Props, so `triangle_pair_regime` returns TPR_TouchEdge exactly when the  *)
+(* triangles touch on a shared edge -- discharging the regime premise that      *)
+(* `relate_triangle_touch` used to carry.                                       *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma point_eqb_true : forall p q, p = q -> point_eqb p q = true.
+Proof.
+  intros p q ->. unfold point_eqb.
+  destruct (Req_dec_T (px q) (px q)) as [_ | Hn]; [ | congruence ].
+  destruct (Req_dec_T (py q) (py q)) as [_ | Hn]; [ reflexivity | congruence ].
+Qed.
+
+Lemma shares_edge_b_of : forall p1 p2 q1 q2,
+  shares_edge p1 p2 q1 q2 -> shares_edge_b p1 p2 q1 q2 = true.
+Proof.
+  intros p1 p2 q1 q2 [[-> ->] | [-> ->]]; unfold shares_edge_b.
+  - rewrite !point_eqb_true by reflexivity. reflexivity.
+  - rewrite (point_eqb_true q2 q2), (point_eqb_true q1 q1) by reflexivity.
+    rewrite Bool.andb_true_r, Bool.orb_true_r. reflexivity.
+Qed.
+
+Lemma opposite_sides_b_of : forall p1 p2 p q,
+  opposite_sides p1 p2 p q -> opposite_sides_b p1 p2 p q = true.
+Proof.
+  intros p1 p2 p q H. unfold opposite_sides_b, opposite_sides in *.
+  destruct (Rlt_dec (cross p1 p2 p * cross p1 p2 q) 0) as [_ | Hn];
+    [ reflexivity | exfalso; exact (Hn H) ].
+Qed.
+
+Lemma touch_edge_b_of : forall a1 a2 a3 b1 b2 b3,
+  triangles_touch_on_shared_edge a1 a2 a3 b1 b2 b3 ->
+  touch_edge_b a1 a2 a3 b1 b2 b3 = true.
+Proof.
+  intros a1 a2 a3 b1 b2 b3 H. unfold touch_edge_b.
+  (* each disjunct fills its andb with the two _b_of facts, then btauto collapses. *)
+  destruct H as
+    [[He Ho] | [[He Ho] | [[He Ho] | [[He Ho] | [[He Ho]
+    | [[He Ho] | [[He Ho] | [[He Ho] | [He Ho]]]]]]]]];
+    rewrite (shares_edge_b_of _ _ _ _ He), (opposite_sides_b_of _ _ _ _ Ho);
+    btauto.
+Qed.
+
+Lemma triangle_pair_regime_touch :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy = TPR_TouchEdge.
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
+  unfold triangle_pair_regime. rewrite (touch_edge_b_of _ _ _ _ _ _ Htouch). reflexivity.
+Qed.
 
 (* BB point: interior point of the shared edge (midpoint for concreteness). *)
 Definition touch_triangle_bb_point (p1 p2 : Point) : Point :=
@@ -553,7 +653,8 @@ Qed.
 (* touch_int_ext_exclusion (0 < gtri A p -> gtri B p < 0) then contradicts.   *)
 (* The off-ring / ray-generic side conditions are exactly the seam's guards   *)
 (* (CCW + ring_complement + ray_avoids_vertices); dropping the ray-genericity *)
-(* one for an arbitrary witness is the residual genericity-removal rung.      *)
+(* one for an arbitrary witness is impossible -- see the RED refutation        *)
+(* touch_triangle_ii_separation_not_unconditional below.                       *)
 (* 3-axiom (classical-reals trio only). *)
 Lemma touch_triangle_interiors_disjoint_generic :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
@@ -584,9 +685,14 @@ Qed.
    point_set-disjointness premise H_ii_disjoint is replaced by the explicit,
    seam-derivable residual -- that every common interior witness is off both ring
    images and ray-generic for both rings (plus the two CCW guards).  This is the
-   honest remaining obligation (genericity removal would discharge it outright);
-   the disjointness itself is now PROVED from the landed seam rather than
-   assumed.  3-axiom (classical-reals trio only). *)
+   honest remaining obligation, and it is IRREDUCIBLE: the ray-genericity part
+   cannot be dropped even for off-ring witnesses.
+   `touch_triangle_ii_separation_not_unconditional` (below) exhibits two CCW
+   triangles touching on a shared edge whose SInt point-sets genuinely overlap
+   at an off-ring point that grazes a vertex -- so an unconditional (guard-free)
+   H_ii_disjoint would be a FALSE theorem, and this guarded form is maximal.
+   The disjointness itself is PROVED from the landed seam rather than assumed.
+   3-axiom (classical-reals trio only). *)
 Lemma touch_triangle_pair_ii_cell_via_seam :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
@@ -617,6 +723,213 @@ Proof.
                 ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HgA) as HgBneg.
   lra.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* NECESSITY of the guard: the point-set II separation is NOT unconditional.   *)
+(*                                                                            *)
+(* `touch_triangle_pair_ii_cell_via_seam` carries a genericity residual (every *)
+(* common interior witness is off both ring images AND ray-generic for both).  *)
+(* This section proves that residual CANNOT be dropped -- an unconditional     *)
+(* (guard-free) lift of H_ii_disjoint would be a FALSE theorem -- by a         *)
+(* concrete, Qed-closed refutation:                                           *)
+(*                                                                            *)
+(*     A = (0,0),(4,1),(0,2)   and   B = (0,0),(0,2),(-4,1)                     *)
+(*                                                                            *)
+(* are BOTH CCW and touch on the shared edge (0,0)-(0,2) (third vertices       *)
+(* (4,1),(-4,1) on opposite sides), yet the point p = (-1,1) lies in the       *)
+(* parity point-set (in_stratum SInt) of BOTH.  For B the membership is        *)
+(* genuine (0 < gtri B p).  For A it is SPURIOUS: p's rightward ray GRAZES     *)
+(* A's vertex (4,1) -- ray_avoids_vertices FAILS -- so the parity count reads  *)
+(* "inside" while p is algebraically EXTERIOR (gtri A p < 0).  This is exactly *)
+(* the false-POSITIVE that the ray-genericity guard exists to exclude, and it  *)
+(* is distinct from the false-NEGATIVE diamond graze in                        *)
+(* JCT_VertexGrazingCounterexample.v (there parity misses a true interior      *)
+(* point; here parity invents a spurious one).  Because p is off both ring     *)
+(* images, ring_complement alone does NOT rescue the lift: the ray-genericity  *)
+(* premise is essential, so `touch_triangle_pair_ii_cell_via_seam` is maximal. *)
+(*                                                                            *)
+(*        (0,2)                                                              *)
+(*         /|\                                                               *)
+(*        / | \                                                              *)
+(*   B   /  |  \   A         p = (-1,1) --------> ray (rightward, height 1)  *)
+(*      /   |   \                          |                                *)
+(* (-4,1)   |   (4,1)  <--- ray GRAZES this vertex: A's parity count is       *)
+(*      \   |   /            ambiguous here, miscounted as "inside" even     *)
+(*       \  |  /              though p is on A's OUTWARD side (gtri A p < 0) *)
+(*        \ | /                                                              *)
+(*         \|/                                                               *)
+(*        (0,0)                                                              *)
+(*                                                                            *)
+(* p sits genuinely inside B (left of the shared edge) but only APPEARS      *)
+(* inside A (right of the shared edge) because its ray exits exactly through *)
+(* A's far vertex instead of cleanly crossing or missing an edge.            *)
+(* 3-axiom (classical-reals trio only). *)
+
+Definition ttc_A : R * R * R * R * R * R := (0, 0, 4, 1, 0, 2).
+Definition ttc_B : R * R * R * R * R * R := (0, 0, 0, 2, -4, 1).
+Definition ttc_p : Point := mkPoint (-1) 1.
+
+(* Both triangles are counter-clockwise. *)
+Lemma ttc_A_ccw : 0 < gdbl 0 0 4 1 0 2.
+Proof. unfold gdbl; lra. Qed.
+
+Lemma ttc_B_ccw : 0 < gdbl 0 0 0 2 (-4) 1.
+Proof. unfold gdbl; lra. Qed.
+
+(* They touch on the shared edge (0,0)-(0,2): A's edge a3-a1 = B's edge b1-b2. *)
+Lemma ttc_touch :
+  triangles_touch_on_shared_edge
+    (mkPoint 0 0) (mkPoint 4 1) (mkPoint 0 2)
+    (mkPoint 0 0) (mkPoint 0 2) (mkPoint (-4) 1).
+Proof.
+  right; right; right; right; right; right; left.
+  split.
+  - unfold shares_edge. right. split; reflexivity.
+  - unfold opposite_sides, cross; cbn [px py]; lra.
+Qed.
+
+(* p is genuinely interior to B (0 < gtri) ... *)
+Lemma ttc_gtri_B_pos : 0 < gtri 0 0 0 2 (-4) 1 ttc_p.
+Proof.
+  apply (proj2 (gtri_pos_iff 0 0 0 2 (-4) 1 ttc_p)).
+  unfold gsA, gsB, gsC, ttc_p; cbn [px py]; repeat split; lra.
+Qed.
+
+(* ... but algebraically EXTERIOR to A (gtri < 0): the parity "inside" verdict
+   for A is spurious. *)
+Lemma ttc_gtri_A_neg : gtri 0 0 4 1 0 2 ttc_p < 0.
+Proof.
+  unfold gtri, ttc_p. eapply Rle_lt_trans; [ apply Rmin_r | ].
+  unfold gsC; cbn [px py]; lra.
+Qed.
+
+(* p is in the parity point-set of A (spurious: ray grazes vertex (4,1)). *)
+Lemma ttc_in_A : RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+                   (triangle_geometry 0 0 4 1 0 2) ttc_p.
+Proof.
+  unfold RelateCurveMatrix.in_stratum, point_set, triangle_geometry.
+  exists (triangle_polygon 0 0 4 1 0 2). split; [ left; reflexivity | ].
+  unfold point_in_polygon, triangle_polygon, outer_ring, hole_rings, triangle_ring.
+  split; [ | intros h [] ].
+  unfold point_in_ring, ttc_p. cbn.
+  apply rpo_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpo_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpo_cross;
+    [ unfold edge_crosses_ray; cbn; right; repeat split; lra | ].
+  apply rpe_nil.
+Qed.
+
+(* p is in the parity point-set of B (genuine interior). *)
+Lemma ttc_in_B : RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+                   (triangle_geometry 0 0 0 2 (-4) 1) ttc_p.
+Proof.
+  unfold RelateCurveMatrix.in_stratum, point_set, triangle_geometry.
+  exists (triangle_polygon 0 0 0 2 (-4) 1). split; [ left; reflexivity | ].
+  unfold point_in_polygon, triangle_polygon, outer_ring, hole_rings, triangle_ring.
+  split; [ | intros h [] ].
+  unfold point_in_ring, ttc_p. cbn.
+  apply rpo_cross;
+    [ unfold edge_crosses_ray; cbn; left; repeat split; lra | ].
+  apply rpe_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpe_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpe_nil.
+Qed.
+
+(* HEADLINE (RED): the two CCW triangles touch on a shared edge, yet their
+   SInt point-sets are NOT disjoint.  Hence the H_ii_disjoint premise of
+   touch_triangle_pair_ii_cell is unsatisfiable for this pair, so no
+   guard-free (unconditional) II-cell separation lemma can exist -- the
+   ray-genericity guard in touch_triangle_pair_ii_cell_via_seam is ESSENTIAL. *)
+Theorem touch_triangle_ii_separation_not_unconditional :
+  triangles_touch_on_shared_edge
+    (mkPoint 0 0) (mkPoint 4 1) (mkPoint 0 2)
+    (mkPoint 0 0) (mkPoint 0 2) (mkPoint (-4) 1)
+  /\ 0 < gdbl 0 0 4 1 0 2
+  /\ 0 < gdbl 0 0 0 2 (-4) 1
+  /\ (exists p,
+        RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+          (triangle_geometry 0 0 4 1 0 2) p /\
+        RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+          (triangle_geometry 0 0 0 2 (-4) 1) p).
+Proof.
+  split; [ exact ttc_touch | ].
+  split; [ exact ttc_A_ccw | ].
+  split; [ exact ttc_B_ccw | ].
+  exists ttc_p. split; [ exact ttc_in_A | exact ttc_in_B ].
+Qed.
+
+Print Assumptions touch_triangle_ii_separation_not_unconditional.
+
+(* -------------------------------------------------------------------------- *)
+(* THE UNCONDITIONAL LIFT (main regime): II separation against the geometric   *)
+(* interior.                                                                   *)
+(*                                                                            *)
+(* The matrix the touch dispatch produces sets im_ii = None                    *)
+(* (touch_triangle_pair_bb_cell_shape) -- it CLAIMS the interiors are          *)
+(* disjoint.  That claim is UNCONDITIONALLY SOUND against the geometrically-   *)
+(* correct interior of a triangle (strict signed-area positivity, which for    *)
+(* CCW triangles is the true topological interior,                            *)
+(* GeneralTriangleSeparation.gtri_interior_is_geometric).  The parity          *)
+(* point_set proxy needs the ray-genericity guard                             *)
+(* (touch_triangle_ii_separation_not_unconditional shows exactly why), but the *)
+(* interior the DE-9IM intends is separated with NO guard at all.  This is the *)
+(* lift of H_ii_disjoint for the main regime, discharged outright.             *)
+(* -------------------------------------------------------------------------- *)
+
+(* The geometrically-correct interior of a triangle: strictly positive slack.  *)
+Definition tri_interior (ax ay bx by_ cx cy : R) (p : Point) : Prop :=
+  0 < gtri ax ay bx by_ cx cy p.
+
+(* UNCONDITIONAL: two triangles touching on a shared edge have disjoint
+   geometric interiors -- no CCW, ring_complement, or ray-genericity guard. *)
+Theorem touch_triangle_pair_ii_disjoint_unconditional :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    ~ exists p, tri_interior ax ay bx by_ cx cy p
+             /\ tri_interior dx dy ex ey fx fy p.
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
+  unfold tri_interior.
+  apply touch_triangle_pair_strict_ii_no_common; assumption.
+Qed.
+
+(* The two interiors coincide OFF the ray-genericity-failing set: under the
+   natural guards (CCW + off-ring + ray-generic) the geometric interior and the
+   parity point_set agree, so the unconditional geometric separation above
+   transfers to the parity point_set for every generic witness -- the guarded
+   parity form (touch_triangle_pair_ii_cell_via_seam) is then exactly its
+   restriction to those witnesses, and the RED above is the whole gap. *)
+Theorem tri_interior_iff_point_set_generic :
+  forall ax ay bx by_ cx cy p,
+    0 < gdbl ax ay bx by_ cx cy ->
+    ring_complement (gtri_ring ax ay bx by_ cx cy) p ->
+    ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy) ->
+    (tri_interior ax ay bx by_ cx cy p
+       <-> point_set (triangle_geometry ax ay bx by_ cx cy) p).
+Proof.
+  intros ax ay bx by_ cx cy p Hccw Hcompl Hrav. unfold tri_interior. split.
+  - intro Hpos.
+    exists (triangle_polygon ax ay bx by_ cx cy).
+    split; [ left; reflexivity | ].
+    unfold point_in_polygon, triangle_polygon, outer_ring, hole_rings.
+    split; [ | intros h [] ].
+    exact (gtri_interior_in_ring ax ay bx by_ cx cy p Hpos Hrav).
+  - intro Hps.
+    exact (point_set_characterises_geometric_interior
+             ax ay bx by_ cx cy p Hccw Hcompl Hrav Hps).
+Qed.
+
+Print Assumptions touch_triangle_pair_ii_disjoint_unconditional.
+Print Assumptions tri_interior_iff_point_set_generic.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
@@ -773,22 +1086,21 @@ Proof.
   exact I.
 Qed.
 
-(* Relate under explicit touch. Conditional on the classifier returning TPR_TouchEdge
-   (which the stub currently does not; see triangle_pair_regime). Once the decision
-   procedure is implemented, Hregime becomes a proved lemma and this becomes unconditional.
-   H_bridge_premise pattern: we prove the dispatch equality, not the classifier. *)
+(* Relate under explicit touch -- now UNCONDITIONAL.  The classifier
+   (triangle_pair_regime, tightened above) provably returns TPR_TouchEdge on any
+   shared-edge touch (triangle_pair_regime_touch), so the former regime premise
+   is discharged from Htouch and no longer carried. *)
 Lemma relate_triangle_touch :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
                                    (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
-    triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy = TPR_TouchEdge ->
     relate (triangle_geometry ax ay bx by_ cx cy)
            (triangle_geometry dx dy ex ey fx fy) =
     tris_relate ax ay bx by_ cx cy dx dy ex ey fx fy TPR_TouchEdge.
 Proof.
-  intros ax ay bx by_ cx cy dx dy ex ey fx fy _Htouch Hregime.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
   rewrite relate_on_triangles_dispatches.
-  rewrite Hregime.
+  rewrite (triangle_pair_regime_touch ax ay bx by_ cx cy dx dy ex ey fx fy Htouch).
   reflexivity.
 Qed.
 
