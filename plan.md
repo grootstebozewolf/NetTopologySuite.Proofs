@@ -622,16 +622,47 @@ combinatorics, 0 axioms); the Dart-layer instantiation carries the corpus's
 standard 2-axiom footprint (matching `NumFacesSplice.v`'s own exactly). 0
 Admitted.
 
+**`[EF-4]` partial (`PermCycleShrink.cycle_count_shrink`) is now Qed,
+unconditionally and AXIOM-FREE (2026-07-01).** [EF-1]/[EF-2]/[EF-3] all
+implicitly stand on `no_spurs` (no dart immediately fsteps to its own twin);
+a degree-1 (leaf) vertex's unique dart `d0` VIOLATES this at its twin
+(`fstep D (twin d0) = d0` is forced), so none of the existing split/merge
+machinery can apply to peeling a leaf edge -- it is a genuinely separate,
+previously-missing third case. It corresponds exactly to the `k = 1`
+boundary `PermCycleSplice.v`'s SPLIT excludes outright (`Hk_range : 2 <= k <=
+per-2`). `theories/PermCycleShrink.v` supplies the missing "shrink" surgery:
+when `f d = td` directly (the single-step collision) and the shared orbit has
+period `>= 3` (excluding the further-degenerate isolated-2-cycle sub-case --
+an edge with BOTH endpoints degree-1, a lone K2 component, deliberately not
+attempted here), the same same_face-agnostic cross-wiring redirect
+(`FaceStepRemove.fstep_E_minus_splice`) leaves the orbit count UNCHANGED --
+the correct face-count delta (0) for a leaf-edge deletion. Structurally it
+mirrors `PermCycleMerge.v` (same `InArc`/`Outside`/`inO`-class-constancy/
+`count_classes_filter_split` architecture) but simpler: a single surviving
+arc, so both sides of the final count land on exactly ONE class and the
+capstone closes by `reflexivity` rather than `lia`. `cycle_count_shrink`
+itself is FULLY AXIOM-FREE (0 axioms; pure permutation/list/nat
+combinatorics) -- matching, and slightly exceeding, `cycle_count_merge`'s own
+axiom-free footprint. 0 Admitted. Still OPEN, deliberately left for the next
+rung: the Dart-layer instantiation (`NumFacesShrink.v`) needs a hypothesis
+this corpus does not yet supply anywhere -- that the leaf edge's far endpoint
+is not itself degree-1 (`per >= 3` rather than `per = 2`, since
+`no_short_faces_of_proper_nospur` cannot be invoked here, `no_spurs` being
+exactly what fails) -- plus the companion Delta V = -1 / Delta C = 0 facts
+for a vertex disappearing from the carrier entirely.
+
 **Status of the Euler ladder.** [EF-1], [EF-2], and [EF-3] -- EVERY arithmetic
 delta the induction step needs (component split, component no-change, face
 merge; face split was already banked pre-existing) -- are now ALL fully
-closed and Euler-free. The sole remaining gap is exclusively the `same_face
-<-> cut edge` combinatorial-Jordan equivalence itself (which would let the
-induction dispatch on the decidable `same_face` test alone, rather than
-needing the correct delta supplied externally per edge) plus [EF-4]'s
-vertex-delta/degree-2-core bookkeeping for the induction's base case -- the
-genuine planar-content frontier, unchanged in kind but now isolated to
-exactly one combinatorial-Jordan lemma instead of three separate deltas.
+closed and Euler-free. [EF-4] now has its missing permutation-surgery case
+([EF-4] partial, `PermCycleShrink.v`) closed the same way, unconditionally
+and axiom-free, though the Dart-layer wiring and the vertex/component deltas
+for leaf-peeling remain open. The sole remaining gap beyond that is
+exclusively the `same_face <-> cut edge` combinatorial-Jordan equivalence
+itself (which would let the induction dispatch on the decidable `same_face`
+test alone, rather than needing the correct delta supplied externally per
+edge) plus finishing [EF-4]'s vertex-delta/degree-2-core bookkeeping for the
+induction's base case -- the genuine planar-content frontier.
 
 ---
 

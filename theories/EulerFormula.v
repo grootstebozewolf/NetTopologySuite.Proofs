@@ -81,6 +81,30 @@
             induction must either track the exact Delta V or induct over a
             degree->=2 core (the standard Euler proof deletes degree-1 vertices
             first).  Base case then generalises from [] to a forest.
+            *** PARTIAL: the missing permutation-surgery case is now proved,
+             UNCONDITIONALLY and AXIOM-FREE, as `PermCycleShrink.cycle_count_shrink`.
+             ***  A degree-1 (leaf) vertex's unique dart `d0` forces a SPUR at
+             its twin (`fstep D (twin d0) = d0`), so `no_spurs` -- the standing
+             hypothesis of EVERY [EF-1]/[EF-2]/[EF-3] lemma above -- fails
+             exactly there; none of the split/merge machinery applies to
+             leaf-peeling.  This is precisely the `k = 1` boundary case
+             `PermCycleSplice.v`'s SPLIT excludes outright
+             (`Hk_range : 2 <= k <= per-2`).  `PermCycleShrink.v` supplies that
+             missing third permutation surgery: when `f d = td` directly and
+             the shared orbit has period `>= 3` (excluding the further
+             degenerate sub-case where `{d, td}` is an isolated 2-cycle, i.e. an
+             edge whose BOTH endpoints are degree-1 -- a lone K2 component,
+             genuinely simpler and not attempted here), the same same_face-
+             agnostic redirect leaves the orbit count UNCHANGED -- the correct
+             face-count delta (0) for peeling a leaf edge.  Still OPEN: the
+             Dart-layer instantiation (a `NumFacesShrink.v` analogous to
+             `NumFacesSplice.v`/`NumFacesMerge.v`) needs a fresh hypothesis this
+             corpus does not yet supply -- that the far endpoint `b` of the leaf
+             edge is not ITSELF degree-1 (i.e. `per >= 3` rather than `per = 2`)
+             -- plus the companion Delta V = -1 / Delta C = 0 facts for a
+             vertex vanishing from the carrier.  Assembling those and wiring
+             the standalone "peeling a degree-1 vertex's edge preserves
+             `euler_characteristic`" theorem is the next well-scoped step.
 
    The genuinely hard, planar-content lemma is the equivalence
    `same_face E d  <->  d is a cut edge of E` proven WITHOUT Euler -- i.e. the
