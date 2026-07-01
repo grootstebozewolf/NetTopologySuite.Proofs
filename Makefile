@@ -36,7 +36,7 @@ SHELL := /bin/bash
 ROCQ := $(shell command -v rocq 2>/dev/null || command -v coqc 2>/dev/null || echo "")
 
 # Phony targets only — this file never produces real build artefacts.
-.PHONY: help status host full check oracle clean-env env-info
+.PHONY: help status host full check ci-guards ci-pr ci-full oracle clean-env env-info
 
 # -----------------------------------------------------------------------------
 # Default target — the most important UX surface after `git clone`
@@ -180,13 +180,35 @@ full:
 	rocq makefile -f _CoqProject.full -o Makefile.gen
 	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
-check:
-	@echo "Running corpus guardrails (check_admitted + check_readme_axioms + registry-sync) ..."
+check: ci-guards
+
+# ci-guards — the complete set of build-INDEPENDENT corpus guardrails.
+# These are pure grep/perl/python (no .vo, no `rocq`), so they run in
+# seconds and give fast fail-feedback decoupled from the proof build.
+# CI runs exactly this set in a dedicated parallel `guards` job (see
+# .github/workflows/ci.yml); `make ci-guards` reproduces it locally.
+ci-guards:
+	@echo "Running corpus guardrails (build-independent) ..."
 	bash scripts/check_admitted.sh
 	bash scripts/check_readme_axioms.sh
 	bash scripts/check_deferred_registry_sync.sh
+	bash scripts/validate-claims.sh
+	bash scripts/check_oracle_handrolled.sh
 	@echo ""
-	@echo "Guardrails passed (or see output above)."
+	@echo "All guardrails passed (or see output above)."
+
+# ci-pr — the fast local PR pre-flight: guardrails + the Stdlib-only
+# `theories/` build (the same lane as CI's macOS `rocq` job).  Mirrors
+# what a typical proof/doc PR must satisfy without paying for the Flocq
+# lane or the oracle link.
+ci-pr: ci-guards host
+
+# ci-full — the full local gate: guardrails + the whole corpus
+# (`_CoqProject.full`, needs Flocq) + the oracle binary.  Matches what
+# `main` re-validates end to end on every merge.
+ci-full: ci-guards full oracle
+	@echo ""
+	@echo "Full local gate complete."
 
 oracle:
 	@echo "Building the oracle binary (RocqRefRunner) ..."

@@ -21,8 +21,38 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
+  guards:
+    # Build-INDEPENDENT corpus guardrails, split into their own job so
+    # registry / doc / allowlist drift fails in ~seconds and IN PARALLEL
+    # with the proof builds, instead of gating behind the multi-minute
+    # macOS `theories/` compile (where these used to run as trailing
+    # steps).  Every script here is pure grep/perl/python and scans the
+    # SOURCE tree (both theories/ and theories-flocq/), so it needs no
+    # `.vo` and no `rocq`.  Reproduce locally with `make ci-guards`.
+    name: Corpus guardrails (build-independent)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run all corpus guardrails (make ci-guards)
+        # Covers, in one fast pass (see the per-script headers for detail):
+        #   check_admitted               two-tier Admitted registry
+        #   check_readme_axioms          README <-> axiom-allowlist sync
+        #   check_deferred_registry_sync doc <-> Admitted-registry drift
+        #   validate-claims              verified-claims.md references resolve
+        #   check_oracle_handrolled      hand-rolled float-kernel ratchet
+        # The macOS `rocq` job below no longer repeats these — this job is
+        # the single source of the guardrail verdict on every PR and push.
+        run: make ci-guards
+
   rocq:
     name: Build with Rocq ${{ matrix.rocq-version }}
+    # Gate the (slow, paid-runner) build on the fast guardrails: a
+    # registry/doc/allowlist failure skips this job entirely instead of
+    # burning a full macOS compile, and keeps the guardrail verdict a
+    # hard prerequisite of this build even though it now lives in its own
+    # job (so branch protection on this build still implies guards pass).
+    needs: guards
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -49,70 +79,11 @@ jobs:
 
       - name: Build proofs
         # Parallel + output-sync for readable logs (matches container job).
+        # This job now does exactly one thing — compile the Stdlib-only
+        # `theories/` lane end to end.  The build-independent guardrails
+        # run separately in the `guards` job above (fast, parallel), and
+        # the Admitted scan there covers this lane's sources too.
         run: make -f Makefile.gen -j"$(sysctl -n hw.ncpu)" --output-sync=target || make -f Makefile.gen -j"$(sysctl -n hw.ncpu)"
-
-      - name: Verify no .v file is missing a Qed (two-tier Admitted check)
-        # Scans BOTH theories/ and theories-flocq/.  The directory split
-        # is about which CI runner builds the file (host vs container),
-        # not about which proof standard it meets.  Same rule applies.
-        #
-        # TWO-TIER SYSTEM (May 2026):
-        #
-        # Tier 1 (standard): Admitted without registry entry -> BUILD FAILURE.
-        #   The default rule.  Every Admitted that isn't in the
-        #   counterexample registry fails CI.
-        #
-        # Tier 2 (counterexample): Admitted with registry entry in
-        #   docs/admitted-counterexamples.txt referencing a verified
-        #   counterexample -> ALLOWED, tracked.
-        #
-        # This catches the proxy-vs-precision drift the old grep had:
-        # "no Admitted" was really "no unverified gaps."  The registry
-        # makes the rule precise: "no gaps that haven't been
-        # characterized with a verified counterexample."
-        #
-        # Axiom / Parameter / admit. remain BANNED outright -- the
-        # registry covers Admitted theorems only.
-        #
-        # The script anchors each banned keyword to the start of a
-        # line (modulo whitespace) so prose mentions in comments don't
-        # trip the check.  `admit.` keeps word-boundary form because
-        # it appears mid-line as a tactic.
-        run: bash scripts/check_admitted.sh
-
-      - name: README <-> allowlist consistency (guardrail 3)
-        # Verifies the README's prose claim about "the three standard
-        # axioms" matches docs/axiom-allowlist.txt verbatim.  Catches
-        # silent drift of either source from the other.  See
-        # scripts/check_readme_axioms.sh for the exact check.
-        run: bash scripts/check_readme_axioms.sh
-
-      - name: Deferred-registry doc sync (guardrail 4b)
-        # Keeps source-of-record prose (README, CONTRIBUTING,
-        # TRIAGE_NTS_JTS_ISSUES) honest about the Admitted registries: when a
-        # theorem is added to docs/admitted-deferred-proofs.txt, any stale
-        # "registry is EMPTY (0)" / "0 deferred" claim fails here instead of
-        # rotting silently.  Historical mentions opt out with the inline
-        # sentinel <!-- registry-sync:ok -->.  See
-        # scripts/check_deferred_registry_sync.sh.
-        run: bash scripts/check_deferred_registry_sync.sh
-
-      - name: verified-claims.md references exist (guardrail 5)
-        # Keeps docs/verified-claims.md honest: every `Module.v : theorem`
-        # it cites must resolve to a real definition in theories/ or
-        # theories-flocq/.  A rename/removal that orphans a claim fails
-        # here instead of silently rotting.  Grep-only (no build needed).
-        run: bash scripts/validate-claims.sh
-
-      - name: Oracle hand-roll ratchet (guardrail 6)
-        # The RocqRefRunner is credible only if every mode is bit-exact
-        # against a Coq-EXTRACTED reference.  This ratchet freezes the
-        # existing hand-rolled float kernels in oracle/driver.ml
-        # (docs/oracle-handrolled-allowlist.txt) so the set can only
-        # shrink: a new hand-rolled mode, or a stale allowlist entry left
-        # after a migration, fails here.  Backlog for shrinking it:
-        # docs/oracle-handroll-migration.md.  perl/awk-only (no build).
-        run: bash scripts/check_oracle_handrolled.sh
 
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus
@@ -152,6 +123,10 @@ jobs:
     # investigation showed plain parallel logs interleave; output-sync
     # removes that at the root (the old -j1 rebuild is gone).
     name: Build theories-flocq in pinned container
+    # Same fast-fail gate as the `rocq` job: don't spin up the container
+    # build (toolchain pull + incremental corpus compile + axiom audit)
+    # when a build-independent guardrail already failed.
+    needs: guards
     runs-on: ubuntu-latest
     permissions:
       contents: read

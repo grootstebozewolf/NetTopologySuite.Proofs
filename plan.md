@@ -457,7 +457,41 @@ invariants enforced; I2 SIMPLE scope honest (star uses `is_simple=False`). Star 
 counterexample (winding = -2) explicitly demonstrates why `ring_simple` is load-bearing for
 the {-1,0,+1} characterisation — consistent with the deferred status in WindingNumber.v §4.
 
+---
 
+## Observatory — CI speed: fast-fail guardrail job (2026-07-01)
 
+**What.** Split the five build-INDEPENDENT corpus guardrails
+(`check_admitted`, `check_readme_axioms`, `check_deferred_registry_sync`,
+`validate-claims`, `check_oracle_handrolled`) out of the macOS `rocq` job in
+`.github/workflows/ci.yml` into a dedicated `guards` job, and made both build
+jobs (`rocq`, `rocq-flocq`) `needs: guards`.
+
+**Why.** The guards are pure grep/perl/python over the SOURCE tree — no `.vo`,
+no `rocq`. Previously they ran as trailing steps of the multi-minute macOS
+`theories/` compile, so registry/doc/allowlist drift only surfaced after a full
+build. Now they fail in ~seconds, in parallel, and — via `needs:` — a guard
+failure SKIPS the paid macOS + container builds entirely (fail-fast resource
+saving) while keeping the guardrail verdict a hard prerequisite of the
+(branch-protected) build jobs, so enforcement is preserved without touching
+branch-protection settings.
+
+**Local parity.** New Makefile targets: `make ci-guards` runs exactly the CI
+`guards` set; `make ci-pr` = guards + the Stdlib-only `theories/` build (the PR
+lane); `make ci-full` = guards + full corpus + oracle (the merge lane). `make
+check` now aliases `ci-guards` (previously ran only three of the five).
+
+**Deliberately NOT changed (verification-strength constraint).** No incremental
+`.vo` caching was added to the macOS `theories/` job: the content-addressed
+cache machinery (`ci_invalidate_stale_vo.py` + `.vo-manifest`) is tied to
+`_CoqProject.full` and the flocq lane's manifest, and wiring a second lane
+without being able to exercise GitHub Actions risks silent under-checking. The
+flocq lane already builds incrementally on PRs and from clean on `main`; that
+integrity model is untouched. No selective/changed-only proof checking was wired
+into the gate for the same reason — over-approximating is safe, under-checking is
+not, so the gate still compiles the full lane.
+
+**Status.** `make ci-guards` green (0 Admitted; all five guardrails pass);
+`ci.yml` parses and the job graph is `guards → {rocq, rocq-flocq}`.
 
 
