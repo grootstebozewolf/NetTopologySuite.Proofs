@@ -844,6 +844,69 @@ Qed.
 
 Print Assumptions touch_triangle_ii_separation_not_unconditional.
 
+(* -------------------------------------------------------------------------- *)
+(* THE UNCONDITIONAL LIFT (main regime): II separation against the geometric   *)
+(* interior.                                                                   *)
+(*                                                                            *)
+(* The matrix the touch dispatch produces sets im_ii = None                    *)
+(* (touch_triangle_pair_bb_cell_shape) -- it CLAIMS the interiors are          *)
+(* disjoint.  That claim is UNCONDITIONALLY SOUND against the geometrically-   *)
+(* correct interior of a triangle (strict signed-area positivity, which for    *)
+(* CCW triangles is the true topological interior,                            *)
+(* GeneralTriangleSeparation.gtri_interior_is_geometric).  The parity          *)
+(* point_set proxy needs the ray-genericity guard                             *)
+(* (touch_triangle_ii_separation_not_unconditional shows exactly why), but the *)
+(* interior the DE-9IM intends is separated with NO guard at all.  This is the *)
+(* lift of H_ii_disjoint for the main regime, discharged outright.             *)
+(* -------------------------------------------------------------------------- *)
+
+(* The geometrically-correct interior of a triangle: strictly positive slack.  *)
+Definition tri_interior (ax ay bx by_ cx cy : R) (p : Point) : Prop :=
+  0 < gtri ax ay bx by_ cx cy p.
+
+(* UNCONDITIONAL: two triangles touching on a shared edge have disjoint
+   geometric interiors -- no CCW, ring_complement, or ray-genericity guard. *)
+Theorem touch_triangle_pair_ii_disjoint_unconditional :
+  forall ax ay bx by_ cx cy dx dy ex ey fx fy,
+    triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+                                   (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy) ->
+    ~ exists p, tri_interior ax ay bx by_ cx cy p
+             /\ tri_interior dx dy ex ey fx fy p.
+Proof.
+  intros ax ay bx by_ cx cy dx dy ex ey fx fy Htouch.
+  unfold tri_interior.
+  apply touch_triangle_pair_strict_ii_no_common; assumption.
+Qed.
+
+(* The two interiors coincide OFF the ray-genericity-failing set: under the
+   natural guards (CCW + off-ring + ray-generic) the geometric interior and the
+   parity point_set agree, so the unconditional geometric separation above
+   transfers to the parity point_set for every generic witness -- the guarded
+   parity form (touch_triangle_pair_ii_cell_via_seam) is then exactly its
+   restriction to those witnesses, and the RED above is the whole gap. *)
+Theorem tri_interior_iff_point_set_generic :
+  forall ax ay bx by_ cx cy p,
+    0 < gdbl ax ay bx by_ cx cy ->
+    ring_complement (gtri_ring ax ay bx by_ cx cy) p ->
+    ray_avoids_vertices p (gtri_ring ax ay bx by_ cx cy) ->
+    (tri_interior ax ay bx by_ cx cy p
+       <-> point_set (triangle_geometry ax ay bx by_ cx cy) p).
+Proof.
+  intros ax ay bx by_ cx cy p Hccw Hcompl Hrav. unfold tri_interior. split.
+  - intro Hpos.
+    exists (triangle_polygon ax ay bx by_ cx cy).
+    split; [ left; reflexivity | ].
+    unfold point_in_polygon, triangle_polygon, outer_ring, hole_rings.
+    split; [ | intros h [] ].
+    exact (gtri_interior_in_ring ax ay bx by_ cx cy p Hpos Hrav).
+  - intro Hps.
+    exact (point_set_characterises_geometric_interior
+             ax ay bx by_ cx cy p Hccw Hcompl Hrav Hps).
+Qed.
+
+Print Assumptions touch_triangle_pair_ii_disjoint_unconditional.
+Print Assumptions tri_interior_iff_point_set_generic.
+
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
   RelateCurveMatrix.geom_boundary (triangle_geometry ax ay bx by_ cx cy) (mkPoint ax ay).
