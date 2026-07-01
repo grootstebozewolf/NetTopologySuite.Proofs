@@ -6,7 +6,7 @@
 > a renamed or removed theorem orphans its claim and fails the build. (Qed-
 > closure itself is enforced corpus-wide by `scripts/check_admitted.sh`.)
 
-Citable index of what is actually proved (Rocq 9.1.1; Flocq 4.2.2 for the
+Citable index of what is actually proved (Rocq 9.2.0; Flocq 4.2.2 for the
 binary64 layer). Each row: `file : theorem`, plain meaning, axiom footprint,
 regime. These are *soundness* statements, not a verified re-implementation.
 

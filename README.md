@@ -412,7 +412,7 @@ host build on `macos-latest`, then:
   matches `docs/axiom-allowlist.txt` verbatim.
 
 A second CI job builds the `_CoqProject.full` corpus inside the pinned
-Rocq 9.1.1 + Flocq 4.2.2 container with `make --output-sync=target` (so
+Rocq 9.2.0 + Flocq 4.2.2 container with `make --output-sync=target` (so
 each file's output stays contiguous), incrementally on pull requests —
 unchanged files are restored from a content-addressed cache — and from
 clean on every push to `main`.  The output-synced log is split into
@@ -422,13 +422,13 @@ chunks of **every** project file against the allowlist (file-level
 exemptions from `docs/audit-exceptions.txt`), and a missing chunk for
 any file fails the build, so audit coverage never silently shrinks.
 
-### Containerised build (Rocq 9.1.1 + Flocq 4.2.2)
+### Containerised build (Rocq 9.2.0 + Flocq 4.2.2)
 
 For modules that need [Flocq](https://flocq.gitlabpages.inria.fr/) (the
 `theories-flocq/` corpus, linking the validation, orientation,
 intersection, snap-rounding, and overlay layers to IEEE-754 binary64)
 the canonical environment is a podman container based on the
-official `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` image with
+official `rocq/rocq-prover:9.2.0-ocaml-4.14.2-flambda` image with
 `coq-flocq.4.2.2` pinned via opam. This matches the toolchain Boldo et al.
 JAR 2015 §5 uses.
 

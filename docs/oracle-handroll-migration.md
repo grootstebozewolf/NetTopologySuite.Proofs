@@ -181,7 +181,7 @@ Coq-extracted function in `oracle/extracted.ml`; no hand-rolled float
 arithmetic remains in `oracle/driver.ml`. Each migration was validated
 bit-exact against the prior native kernel over 2,000,000 cases
 (`oracle/test_{pt,ic,arc,pixel}.ml`), and the full `_CoqProject.full` corpus
-builds green under the pinned Rocq 9.1.1 + Flocq 4.2.2 toolchain.
+builds green under the pinned Rocq 9.2.0 + Flocq 4.2.2 toolchain.
 
 **Remaining (orthogonal, deferred):** the *soundness* of the extracted
 binary64 predicates to their R-side geometric specs — integer-regime exactness

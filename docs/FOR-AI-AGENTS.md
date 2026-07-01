@@ -63,7 +63,7 @@ Never move or delete without following the process (inventory against the define
 - In practice: when in doubt on a design or prune decision, document the rationale as if Joost is reviewing.
 
 ## Practical Tips for Agents
-- The `.claude/startup-rocq.sh` (or equivalent) sets up the pinned Rocq 9.1.1 + Flocq 4.2.2 environment.
+- The `.claude/startup-rocq.sh` (or equivalent) sets up the pinned Rocq 9.2.0 + Flocq 4.2.2 environment.
 - Use the root `Makefile`: `make help`, `make host` (for theories/), `make check` (guardrails), `make env-info`.
 - For extraction/oracle work: see `oracle/` + `docs/oracle-handroll-migration.md` etc. Consumer Connie path.
 - Cross-reference JTS/NTS: every file header should name the corresponding module/algorithm. Use the sibling `jts/` checkout for mapping.

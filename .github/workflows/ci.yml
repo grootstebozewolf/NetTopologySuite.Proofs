@@ -57,7 +57,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rocq-version: ['9.1.1']
+        rocq-version: ['9.2.0']
     steps:
       - uses: actions/checkout@v6
 
@@ -90,7 +90,7 @@ jobs:
     # (`theories-flocq/`).  The host-runner `rocq` job above only builds
     # `theories/` -- it grep-scans `theories-flocq/` for the corpus
     # invariant but does not compile those files.  This job closes that
-    # gap using the project's pinned toolchain (Rocq 9.1.1 + opam
+    # gap using the project's pinned toolchain (Rocq 9.2.0 + opam
     # `coq-flocq.4.2.2`, see Dockerfile) to build `_CoqProject.full`.
     #
     # SPEED ARCHITECTURE (June 2026):

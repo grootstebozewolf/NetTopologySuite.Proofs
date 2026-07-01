@@ -44,7 +44,7 @@ This repository contains mechanically verified Rocq proofs of foundational prope
 
 ## Quick build notes
 
-- The easy foundational layer (`theories/`) builds with stock Rocq 9.1.1 (no Flocq needed) via `make host`.
+- The easy foundational layer (`theories/`) builds with stock Rocq 9.2.0 (no Flocq needed) via `make host`.
 - The full corpus (including binary64 proofs under Flocq) is normally built inside the pinned container described in the `Dockerfile`.
 - All CI guardrails (`check_admitted.sh`, axiom audit, etc.) are runnable locally once you have a build.
 

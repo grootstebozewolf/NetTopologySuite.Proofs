@@ -3,9 +3,18 @@
 # .claude/hooks/session-start.sh
 # -----------------------------------------------------------------------------
 # SessionStart hook for Claude Code on the web.  Provisions the pinned Rocq
-# 9.1.1 + rocq-stdlib 9.0.0 + Flocq 4.2.2 toolchain so the agent can build and
-# verify the corpus immediately — without re-discovering the host-install
-# fallback by hand every session.
+# + rocq-stdlib + Flocq 4.2.2 toolchain so the agent can build and verify the
+# corpus immediately — without re-discovering the host-install fallback by
+# hand every session.
+#
+# ROCQ VERSION (2026-07 upgrade to 9.2.0): the shipping toolchain (Dockerfile,
+# CI) is Rocq 9.2.0.  The `rocq/rocq-prover:9.2.0` image bundles a matching
+# rocq-stdlib, but the DEFAULT opam repo used by this host-install fallback may
+# not yet carry `rocq-stdlib` for 9.2 (rocq-core and rocq-stdlib are published
+# independently, and stdlib can lag).  So we TRY 9.2.0 (letting opam resolve the
+# matching stdlib) and fall back to the previous known-good pin (9.1.1 +
+# rocq-stdlib 9.0.0) when 9.2 is not yet resolvable — the dev env never breaks
+# and auto-adopts 9.2 the moment opam can satisfy it.
 #
 # This mirrors docs/development-environment.md (the proven restricted-network
 # recipe) and only the reachable hosts it documents are used:
@@ -24,8 +33,9 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
 fi
 
 SWITCH="nts-flocq"
-ROCQ_VER="9.1.1"
-STDLIB_VER="9.0.0"
+ROCQ_VER="9.2.0"                    # shipping target (Dockerfile / CI)
+FALLBACK_ROCQ_VER="9.1.1"          # known-good pin while 9.2 stdlib lags in opam
+FALLBACK_STDLIB_VER="9.0.0"
 FLOCQ_TAG="flocq-4.2.2"
 
 log() { echo "[session-start] $*"; }
@@ -55,10 +65,15 @@ fi
 eval "$(opam env --switch="$SWITCH")"
 
 # --- 3. Rocq (rocq-core + rocq-stdlib) from the default opam repo ------------
-if ! rocq --version 2>/dev/null | grep -q "$ROCQ_VER"; then
-  log "installing rocq-core.$ROCQ_VER + rocq-stdlib.$STDLIB_VER (source build; slow first run)"
-  opam install --confirm-level=unsafe-yes \
-    "rocq-core.$ROCQ_VER" "rocq-stdlib.$STDLIB_VER"
+# Prefer the shipping target (9.2.0, matching stdlib resolved by opam); fall
+# back to the known-good pin if the default opam repo can't yet satisfy 9.2.
+if ! rocq --version 2>/dev/null | grep -qE "$ROCQ_VER|$FALLBACK_ROCQ_VER"; then
+  log "installing rocq-core.$ROCQ_VER (+ matching rocq-stdlib; source build, slow first run)"
+  if ! opam install --confirm-level=unsafe-yes "rocq-core.$ROCQ_VER" rocq-stdlib 2>/dev/null; then
+    log "rocq $ROCQ_VER not resolvable in this opam repo yet — falling back to $FALLBACK_ROCQ_VER"
+    opam install --confirm-level=unsafe-yes \
+      "rocq-core.$FALLBACK_ROCQ_VER" "rocq-stdlib.$FALLBACK_STDLIB_VER"
+  fi
   eval "$(opam env --switch="$SWITCH")"
 fi
 
