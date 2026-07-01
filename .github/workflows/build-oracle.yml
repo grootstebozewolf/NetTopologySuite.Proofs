@@ -7,7 +7,7 @@ name: Build and publish oracle_bin
 # a stable URL to consume.
 #
 # Toolchain pin: reuses the project's Dockerfile `toolchain` stage
-# (rocq 9.1.1 + ocaml 4.14.2-flambda + coq-flocq.4.2.2 + ocamlfind),
+# (rocq 9.2.0 + ocaml 4.14.2-flambda + coq-flocq.4.2.2 + ocamlfind),
 # pulled from GHCR under its Dockerfile-hash tag (published by ci.yml on
 # main pushes) with a buildx + GHA-layer-cache fallback on a miss, so
 # the slow `opam install coq-flocq.4.2.2` step is not repeated.
@@ -65,7 +65,7 @@ env:
 
 jobs:
   build-oracle:
-    name: Build oracle_bin in pinned rocq 9.1.1 + flocq 4.2.2 container
+    name: Build oracle_bin in pinned rocq 9.2.0 + flocq 4.2.2 container
     # Skip standalone-package releases (robust-predicates-v* / spatial-algebra-v*):
     # those are published by the package-*.yml workflows and have nothing to do
     # with oracle_bin.  Without this guard, every package release triggers this

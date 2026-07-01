@@ -39,59 +39,23 @@
 # Exit codes: 0 on success (including cold cache), 2 on usage/IO errors.
 # =============================================================================
 
-import hashlib
 import json
 import os
-import re
 import sys
 
-PROJECT = "_CoqProject.full"
-MANIFEST = ".vo-manifest"
+# Shared, canonical hash + project parser (see scripts/ci_vo_hash.py).  This
+# script and scripts/ci_write_vo_manifest.py MUST hash identically, or every
+# file compares "changed" and the incremental cache silently becomes a full
+# rebuild -- exactly the bug that motivated extracting the shared module.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from ci_vo_hash import parse_project, source_sha256  # noqa: E402
+
+# Which _CoqProject / manifest this run targets (see ci_write_vo_manifest.py).
+PROJECT = os.environ.get("CI_VO_PROJECT", "_CoqProject.full")
+MANIFEST = os.environ.get("CI_VO_MANIFEST", ".vo-manifest")
 PALOG_DIR = ".palog"
 # 2001-01-01T00:00:00Z -- predates every cached .vo by construction.
 OLD_MTIME = 978307200
-
-
-def parse_project(path):
-    """Return (source_files, flags_hash) from a _CoqProject file.
-
-    Comment text is stripped FIRST: prose comments may end in `.v`
-    (e.g. `# ... companion to theories/SpectreExample.v`) and must not
-    be mistaken for entries.
-    """
-    sources, flag_lines = [], []
-    with open(path, encoding="utf-8") as fh:
-        for raw in fh:
-            line = raw.split("#", 1)[0].strip()
-            if not line:
-                continue
-            if line.endswith(".v"):
-                sources.append(line)
-            else:
-                flag_lines.append(line)
-    flags_hash = hashlib.sha256("\n".join(flag_lines).encode()).hexdigest()
-    return sources, flags_hash
-
-
-def sha256_file(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        raw = fh.read()
-    # For CI speed: ignore pure comment changes (Coq (*...*) and # lines).
-    # Comment-only edits (e.g. doc updates, scope notes) should not force
-    # expensive rebuilds of .vo + dependents in incremental cache.
-    # NOTE: this is heuristic (simple non-nested strip); semantics-identical
-    # changes via comments are rare and acceptable for speed. Full content
-    # hash would be more conservative but slower for docs.
-    text = raw.decode("utf-8", errors="replace")
-    # strip # comments (whole line or tail)
-    text = re.sub(r"(?m)^[^#]*#.*$|^#.*$", "", text)
-    # strip non-nested (* ... *) comments
-    text = re.sub(r"\(\*.*?\*\)", "", text, flags=re.DOTALL)
-    # normalize whitespace for hash stability on formatting-only
-    text = "\n".join(line.rstrip() for line in text.splitlines() if line.strip())
-    h.update(text.encode("utf-8"))
-    return h.hexdigest()
 
 
 def artefacts_of(vfile):
@@ -149,7 +113,7 @@ def main():
         if not os.path.isfile(vfile):
             # Listed but missing: the build will fail loudly on its own.
             continue
-        if recorded.get(vfile) == sha256_file(vfile):
+        if recorded.get(vfile) == source_sha256(vfile):
             os.utime(vfile, (OLD_MTIME, OLD_MTIME))
             unchanged += 1
         else:

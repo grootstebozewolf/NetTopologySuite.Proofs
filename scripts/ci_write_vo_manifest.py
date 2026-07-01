@@ -14,36 +14,22 @@
 # scripts/ci_invalidate_stale_vo.py is the consumer.
 # =============================================================================
 
-import hashlib
 import json
 import os
 import sys
 
-PROJECT = "_CoqProject.full"
-MANIFEST = ".vo-manifest"
+# Shared, canonical hash + project parser (see scripts/ci_vo_hash.py).  The
+# writer and the invalidator MUST agree bit-for-bit, so both import the same
+# `source_sha256`/`parse_project` -- a full-bytes hash here (the historical
+# bug) made every file compare "changed" and defeated the incremental cache.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from ci_vo_hash import parse_project, source_sha256  # noqa: E402
 
-
-def parse_project(path):
-    sources, flag_lines = [], []
-    with open(path, encoding="utf-8") as fh:
-        for raw in fh:
-            line = raw.split("#", 1)[0].strip()
-            if not line:
-                continue
-            if line.endswith(".v"):
-                sources.append(line)
-            else:
-                flag_lines.append(line)
-    flags_hash = hashlib.sha256("\n".join(flag_lines).encode()).hexdigest()
-    return sources, flags_hash
-
-
-def sha256_file(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 16), b""):
-            h.update(chunk)
-    return h.hexdigest()
+# Which _CoqProject / manifest this run targets.  Defaults preserve the
+# original Flocq-lane behaviour; the Stdlib-only `theories/` lane overrides
+# them via CI_VO_PROJECT=_CoqProject and CI_VO_MANIFEST=.vo-manifest-theories.
+PROJECT = os.environ.get("CI_VO_PROJECT", "_CoqProject.full")
+MANIFEST = os.environ.get("CI_VO_MANIFEST", ".vo-manifest")
 
 
 def main():
@@ -53,7 +39,7 @@ def main():
     sources, flags_hash = parse_project(PROJECT)
     manifest = {
         "flags": flags_hash,
-        "files": {v: sha256_file(v) for v in sources if os.path.isfile(v)},
+        "files": {v: source_sha256(v) for v in sources if os.path.isfile(v)},
     }
     with open(MANIFEST, "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, indent=0, sort_keys=True)

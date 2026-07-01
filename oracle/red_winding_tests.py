@@ -7,6 +7,12 @@
 # Each test calls oracle_bin and verifies the result or a derived invariant.
 # Exit nonzero on any failure.
 #
+# Run (from repo root, after `make -C oracle`):
+#   ORACLE_BIN=oracle/oracle_bin python3 oracle/red_winding_tests.py
+# Exit status: 0 iff every assertion passes; nonzero (with a "!! N test(s)
+# FAILED" line on stderr) otherwise — so it drops straight into the red/green
+# CI gate alongside the other oracle red-test scripts.
+#
 # Backing proof: theories/WindingNumber.v (winding_decides_membership, Qed).
 # These tests are the empirical complement of:
 #   edge_winding_triple  — each edge ∈ {0, +1, -1}

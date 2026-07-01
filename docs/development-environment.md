@@ -3,8 +3,8 @@
 **New here?** See your role card in [`docs/HELP.md`](HELP.md) or the full [`docs/READING-GUIDE.md`](READING-GUIDE.md). Newbie Nate (and CI / Quality Gatekeeper) paths explicitly need this document.
 
 The canonical build path is the **container** described in the
-[Dockerfile](../Dockerfile): Rocq 9.1.1 + Flocq 4.2.2 baked into an
-image based on `rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda`.  CI uses
+[Dockerfile](../Dockerfile): Rocq 9.2.0 + Flocq 4.2.2 baked into an
+image based on `rocq/rocq-prover:9.2.0-ocaml-4.14.2-flambda`.  CI uses
 this image; macOS and Linux developers run it via `podman`/`docker`
 locally.
 
@@ -34,7 +34,7 @@ Both of these can fail in restricted-network environments:
 
 In both cases the symptom is the Dockerfile failing at step `[2/5]`
 (apt) or `[3/5]` (opam install).  The base
-`rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` image itself remains
+`rocq/rocq-prover:9.2.0-ocaml-4.14.2-flambda` image itself remains
 pullable, but the Flocq install on top of it cannot complete.
 
 ## Host-install fallback
@@ -73,20 +73,20 @@ compiler, avoiding a full opam-driven OCaml rebuild.
 ### Step 3 — install Rocq from the default opam repo
 
 ```sh
-opam install --confirm-level=unsafe-yes rocq-core.9.1.1 rocq-stdlib.9.0.0
+opam install --confirm-level=unsafe-yes rocq-core.9.2.0 rocq-stdlib
 ```
 
-The default opam repository at `opam.ocaml.org` carries both
-packages.  The version pair (`rocq-core.9.1.1` +
-`rocq-stdlib.9.0.0`) matches the upstream
-`rocq/rocq-prover:9.1.1-ocaml-4.14.2-flambda` image's installed
-package list exactly.
+The default opam repository at `opam.ocaml.org` carries both packages.
+Pin `rocq-core.9.2.0` (the version baked into the upstream
+`rocq/rocq-prover:9.2.0-ocaml-4.14.2-flambda` image) and let opam select
+the matching `rocq-stdlib` — its minor tracks `rocq-core` independently
+(9.1.1 paired with `rocq-stdlib.9.0.0`, for example), so pin `rocq-core`
+and take whatever `rocq-stdlib` its dependency constraint resolves to.
 
-> **Why not `rocq-prover.9.1.1`?**  The default opam repo's
-> `rocq-prover` package only goes up to `9.0.0` (it is a thin
-> metapackage that pulls in `rocq-core` + `rocq-stdlib`; the version
-> tracking is independent).  Installing `rocq-core.9.1.1` directly
-> bypasses the metapackage and gives the same end result.
+> **Why not `rocq-prover.9.2.0`?**  The default opam repo's
+> `rocq-prover` package is a thin metapackage that pulls in `rocq-core`
+> + `rocq-stdlib` and lags the core version.  Installing `rocq-core.9.2.0`
+> directly bypasses the metapackage and gives the same end result.
 
 ### Step 4 — build Flocq from gitlab source
 
@@ -105,7 +105,7 @@ cd flocq
 # does not -- autoconf is in build-essential).
 autoconf
 
-# Configure against the opam-installed rocq.  Rocq 9.1.1 ships
+# Configure against the opam-installed rocq.  Rocq 9.2.0 ships
 # `rocq` as the binary; Flocq's build expects `coqc`/`coqdep`, so
 # we pass the rocq subcommand spellings explicitly.
 COQC="rocq c" COQDEP="rocq dep" ./configure
@@ -219,9 +219,9 @@ worth knowing:
     permits, `podman build` / `docker build` followed by `podman run
     --rm nts-proofs` is the simpler path.
   - **Package versions are pinned to the same values.**  `rocq-core
-    9.1.1`, `rocq-stdlib 9.0.0`, `coq-flocq 4.2.2`.  Source-built
-    Flocq from the `flocq-4.2.2` git tag produces byte-identical
-    `.vo` files to the opam-installed one.
+    9.2.0` (with the `rocq-stdlib` its constraint resolves to) and
+    `coq-flocq 4.2.2`.  Source-built Flocq from the `flocq-4.2.2` git
+    tag produces byte-identical `.vo` files to the opam-installed one.
 
 ## Network policy reference
 

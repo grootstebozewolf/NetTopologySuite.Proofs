@@ -457,7 +457,94 @@ invariants enforced; I2 SIMPLE scope honest (star uses `is_simple=False`). Star 
 counterexample (winding = -2) explicitly demonstrates why `ring_simple` is load-bearing for
 the {-1,0,+1} characterisation — consistent with the deferred status in WindingNumber.v §4.
 
+---
 
+## Observatory — CI speed: fast-fail guardrail job (2026-07-01)
 
+**What.** Split the five build-INDEPENDENT corpus guardrails
+(`check_admitted`, `check_readme_axioms`, `check_deferred_registry_sync`,
+`validate-claims`, `check_oracle_handrolled`) out of the macOS `rocq` job in
+`.github/workflows/ci.yml` into a dedicated `guards` job, and made both build
+jobs (`rocq`, `rocq-flocq`) `needs: guards`.
+
+**Why.** The guards are pure grep/perl/python over the SOURCE tree — no `.vo`,
+no `rocq`. Previously they ran as trailing steps of the multi-minute macOS
+`theories/` compile, so registry/doc/allowlist drift only surfaced after a full
+build. Now they fail in ~seconds, in parallel, and — via `needs:` — a guard
+failure SKIPS the paid macOS + container builds entirely (fail-fast resource
+saving) while keeping the guardrail verdict a hard prerequisite of the
+(branch-protected) build jobs, so enforcement is preserved without touching
+branch-protection settings.
+
+**Local parity.** New Makefile targets: `make ci-guards` runs exactly the CI
+`guards` set; `make ci-pr` = guards + the Stdlib-only `theories/` build (the PR
+lane); `make ci-full` = guards + full corpus + oracle (the merge lane). `make
+check` now aliases `ci-guards` (previously ran only three of the five).
+
+**Deliberately NOT changed (verification-strength constraint).** No incremental
+`.vo` caching was added to the macOS `theories/` job: the content-addressed
+cache machinery (`ci_invalidate_stale_vo.py` + `.vo-manifest`) is tied to
+`_CoqProject.full` and the flocq lane's manifest, and wiring a second lane
+without being able to exercise GitHub Actions risks silent under-checking. The
+flocq lane already builds incrementally on PRs and from clean on `main`; that
+integrity model is untouched. No selective/changed-only proof checking was wired
+into the gate for the same reason — over-approximating is safe, under-checking is
+not, so the gate still compiles the full lane.
+
+**Incremental-cache correctness fix (item 2).** The flocq lane's "incremental"
+PR cache was silently a FULL rebuild every run: `ci_write_vo_manifest.py` recorded
+a *full-bytes* sha256 while `ci_invalidate_stale_vo.py` compared a
+*comment-stripped* sha256, so every file always looked "changed" and got touched.
+Extracted the one canonical hash into `scripts/ci_vo_hash.py` and made both
+scripts import it, so they agree by construction (round-trip verified: 40/40
+files "unchanged (aged)" with no edit; comment-only edits stay unchanged). Both
+scripts also now honour `CI_VO_PROJECT` / `CI_VO_MANIFEST` env overrides
+(defaults unchanged) so the same content-addressed incremental machinery can be
+pointed at the Stdlib-only `theories/` lane, not just `_CoqProject.full`.
+
+**theories/ lane incremental cache + theories-quick/full (items 1, 2, 4).**
+The macOS `rocq` job now caches `theories/*.vo` (+ its own
+`.vo-manifest-theories`), keyed on the ACTUAL installed rocq version (Homebrew
+is unpinned, so the matrix string would be an unsound key). On a PR it restores
+the cache and runs the (now-correct) content-addressed invalidation against
+`_CoqProject` — "theories-quick", only changed files + dependents recompile; on
+`main` it skips the restore and builds "theories-full" from clean, re-seeding
+the cache. This reuses the same `ci_vo_hash` / invalidate / manifest scripts as
+the flocq lane via the `CI_VO_PROJECT` / `CI_VO_MANIFEST` overrides. Net: a
+docs-only or single-file PR no longer pays a full `theories/` recompile, and no
+required check is ever skipped (jobs always run to completion), so branch
+protection is unaffected.
+
+**Local incremental target (item 2).** `make theories-changed [BASE=…]` runs
+`scripts/theories_changed.sh`, which diffs vs the base ref and rebuilds only the
+changed `theories/*.v` plus their transitive reverse-dependents — a coqdep-exact
+closure (verified: a leaf edit → 2 targets; `Distance.v` → 298/348). Dev-only;
+CI still compiles the whole lane, so merge is never under-checked.
+
+**Timeouts + fail-fast (item 5).** Every job carries a `timeout-minutes`
+(guards 10, rocq 60, rocq-flocq 90) so a hang fails fast instead of burning
+GitHub's 6h default; `needs: guards` already skips both paid builds on any
+guardrail failure.
+
+**Already-optimal, left as-is (items 3, 4, 5 — documented not re-done).**
+- Oracle (item 3): `build-oracle.yml` already PR-gates on `paths:`
+  (`oracle/**`, `theories-flocq/**`, `_CoqProject.full`, `Dockerfile`) and reuses
+  the flocq `.vo` cache read-only, and builds with `-j`. Skipping the Flocq lane
+  wholesale on PRs is unsafe — `theories-flocq/` imports `theories/`, so a
+  `theories/` edit can break it — so that lane stays gated by `needs: guards`
+  + incrementality, not by path-skipping.
+- Toolchain cache (item 4): the GHCR content-addressed toolchain image
+  (Dockerfile-hash tag) already avoids the ~5-min `opam install coq-flocq` on
+  every run; `oracle_bin` is published as a GHA artifact. Dashboard/gens use only
+  the Python stdlib — no pip/npm cache to add.
+- Dashboard (item 5): `pages.yml` already regenerates only on push-to-`main`
+  touching dashboard inputs, with `concurrency: cancel-in-progress`.
+- Guard scripts (item 5): grep/perl/python, already sub-second; no change.
+
+**Status.** `make ci-guards` green (0 Admitted; all five guardrails pass);
+`make theories-changed` selects the exact reverse-dependency closure;
+`ci.yml` parses, job graph `guards → {rocq, rocq-flocq}`, all jobs time-boxed;
+both cache lanes (`_CoqProject.full` and `_CoqProject`) round-trip correctly via
+the shared `ci_vo_hash` module.
 
 
