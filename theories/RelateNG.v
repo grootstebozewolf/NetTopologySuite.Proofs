@@ -645,7 +645,8 @@ Qed.
 (* touch_int_ext_exclusion (0 < gtri A p -> gtri B p < 0) then contradicts.   *)
 (* The off-ring / ray-generic side conditions are exactly the seam's guards   *)
 (* (CCW + ring_complement + ray_avoids_vertices); dropping the ray-genericity *)
-(* one for an arbitrary witness is the residual genericity-removal rung.      *)
+(* one for an arbitrary witness is impossible -- see the RED refutation        *)
+(* touch_triangle_ii_separation_not_unconditional below.                       *)
 (* 3-axiom (classical-reals trio only). *)
 Lemma touch_triangle_interiors_disjoint_generic :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
@@ -676,9 +677,14 @@ Qed.
    point_set-disjointness premise H_ii_disjoint is replaced by the explicit,
    seam-derivable residual -- that every common interior witness is off both ring
    images and ray-generic for both rings (plus the two CCW guards).  This is the
-   honest remaining obligation (genericity removal would discharge it outright);
-   the disjointness itself is now PROVED from the landed seam rather than
-   assumed.  3-axiom (classical-reals trio only). *)
+   honest remaining obligation, and it is IRREDUCIBLE: the ray-genericity part
+   cannot be dropped even for off-ring witnesses.
+   `touch_triangle_ii_separation_not_unconditional` (below) exhibits two CCW
+   triangles touching on a shared edge whose SInt point-sets genuinely overlap
+   at an off-ring point that grazes a vertex -- so an unconditional (guard-free)
+   H_ii_disjoint would be a FALSE theorem, and this guarded form is maximal.
+   The disjointness itself is PROVED from the landed seam rather than assumed.
+   3-axiom (classical-reals trio only). *)
 Lemma touch_triangle_pair_ii_cell_via_seam :
   forall ax ay bx by_ cx cy dx dy ex ey fx fy,
     triangles_touch_on_shared_edge (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
@@ -709,6 +715,134 @@ Proof.
                 ax ay bx by_ cx cy dx dy ex ey fx fy p Htouch HgA) as HgBneg.
   lra.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* NECESSITY of the guard: the point-set II separation is NOT unconditional.   *)
+(*                                                                            *)
+(* `touch_triangle_pair_ii_cell_via_seam` carries a genericity residual (every *)
+(* common interior witness is off both ring images AND ray-generic for both).  *)
+(* This section proves that residual CANNOT be dropped -- an unconditional     *)
+(* (guard-free) lift of H_ii_disjoint would be a FALSE theorem -- by a         *)
+(* concrete, Qed-closed refutation:                                           *)
+(*                                                                            *)
+(*     A = (0,0),(4,1),(0,2)   and   B = (0,0),(0,2),(-4,1)                     *)
+(*                                                                            *)
+(* are BOTH CCW and touch on the shared edge (0,0)-(0,2) (third vertices       *)
+(* (4,1),(-4,1) on opposite sides), yet the point p = (-1,1) lies in the       *)
+(* parity point-set (in_stratum SInt) of BOTH.  For B the membership is        *)
+(* genuine (0 < gtri B p).  For A it is SPURIOUS: p's rightward ray GRAZES     *)
+(* A's vertex (4,1) -- ray_avoids_vertices FAILS -- so the parity count reads  *)
+(* "inside" while p is algebraically EXTERIOR (gtri A p < 0).  This is exactly *)
+(* the false-POSITIVE that the ray-genericity guard exists to exclude, and it  *)
+(* is distinct from the false-NEGATIVE diamond graze in                        *)
+(* JCT_VertexGrazingCounterexample.v (there parity misses a true interior      *)
+(* point; here parity invents a spurious one).  Because p is off both ring     *)
+(* images, ring_complement alone does NOT rescue the lift: the ray-genericity  *)
+(* premise is essential, so `touch_triangle_pair_ii_cell_via_seam` is maximal. *)
+(* 3-axiom (classical-reals trio only). *)
+
+Definition ttc_A : R * R * R * R * R * R := (0, 0, 4, 1, 0, 2).
+Definition ttc_B : R * R * R * R * R * R := (0, 0, 0, 2, -4, 1).
+Definition ttc_p : Point := mkPoint (-1) 1.
+
+(* Both triangles are counter-clockwise. *)
+Lemma ttc_A_ccw : 0 < gdbl 0 0 4 1 0 2.
+Proof. unfold gdbl; lra. Qed.
+
+Lemma ttc_B_ccw : 0 < gdbl 0 0 0 2 (-4) 1.
+Proof. unfold gdbl; lra. Qed.
+
+(* They touch on the shared edge (0,0)-(0,2): A's edge a3-a1 = B's edge b1-b2. *)
+Lemma ttc_touch :
+  triangles_touch_on_shared_edge
+    (mkPoint 0 0) (mkPoint 4 1) (mkPoint 0 2)
+    (mkPoint 0 0) (mkPoint 0 2) (mkPoint (-4) 1).
+Proof.
+  right; right; right; right; right; right; left.
+  split.
+  - unfold shares_edge. right. split; reflexivity.
+  - unfold opposite_sides, cross; cbn [px py]; lra.
+Qed.
+
+(* p is genuinely interior to B (0 < gtri) ... *)
+Lemma ttc_gtri_B_pos : 0 < gtri 0 0 0 2 (-4) 1 ttc_p.
+Proof.
+  apply (proj2 (gtri_pos_iff 0 0 0 2 (-4) 1 ttc_p)).
+  unfold gsA, gsB, gsC, ttc_p; cbn [px py]; repeat split; lra.
+Qed.
+
+(* ... but algebraically EXTERIOR to A (gtri < 0): the parity "inside" verdict
+   for A is spurious. *)
+Lemma ttc_gtri_A_neg : gtri 0 0 4 1 0 2 ttc_p < 0.
+Proof.
+  unfold gtri, ttc_p. eapply Rle_lt_trans; [ apply Rmin_r | ].
+  unfold gsC; cbn [px py]; lra.
+Qed.
+
+(* p is in the parity point-set of A (spurious: ray grazes vertex (4,1)). *)
+Lemma ttc_in_A : RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+                   (triangle_geometry 0 0 4 1 0 2) ttc_p.
+Proof.
+  unfold RelateCurveMatrix.in_stratum, point_set, triangle_geometry.
+  exists (triangle_polygon 0 0 4 1 0 2). split; [ left; reflexivity | ].
+  unfold point_in_polygon, triangle_polygon, outer_ring, hole_rings, triangle_ring.
+  split; [ | intros h [] ].
+  unfold point_in_ring, ttc_p. cbn.
+  apply rpo_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpo_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpo_cross;
+    [ unfold edge_crosses_ray; cbn; right; repeat split; lra | ].
+  apply rpe_nil.
+Qed.
+
+(* p is in the parity point-set of B (genuine interior). *)
+Lemma ttc_in_B : RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+                   (triangle_geometry 0 0 0 2 (-4) 1) ttc_p.
+Proof.
+  unfold RelateCurveMatrix.in_stratum, point_set, triangle_geometry.
+  exists (triangle_polygon 0 0 0 2 (-4) 1). split; [ left; reflexivity | ].
+  unfold point_in_polygon, triangle_polygon, outer_ring, hole_rings, triangle_ring.
+  split; [ | intros h [] ].
+  unfold point_in_ring, ttc_p. cbn.
+  apply rpo_cross;
+    [ unfold edge_crosses_ray; cbn; left; repeat split; lra | ].
+  apply rpe_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpe_skip;
+    [ intro H; unfold edge_crosses_ray in H; cbn in H;
+      destruct H as [[[??]?]|[[??]?]]; lra | ].
+  apply rpe_nil.
+Qed.
+
+(* HEADLINE (RED): the two CCW triangles touch on a shared edge, yet their
+   SInt point-sets are NOT disjoint.  Hence the H_ii_disjoint premise of
+   touch_triangle_pair_ii_cell is unsatisfiable for this pair, so no
+   guard-free (unconditional) II-cell separation lemma can exist -- the
+   ray-genericity guard in touch_triangle_pair_ii_cell_via_seam is ESSENTIAL. *)
+Theorem touch_triangle_ii_separation_not_unconditional :
+  triangles_touch_on_shared_edge
+    (mkPoint 0 0) (mkPoint 4 1) (mkPoint 0 2)
+    (mkPoint 0 0) (mkPoint 0 2) (mkPoint (-4) 1)
+  /\ 0 < gdbl 0 0 4 1 0 2
+  /\ 0 < gdbl 0 0 0 2 (-4) 1
+  /\ (exists p,
+        RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+          (triangle_geometry 0 0 4 1 0 2) p /\
+        RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
+          (triangle_geometry 0 0 0 2 (-4) 1) p).
+Proof.
+  split; [ exact ttc_touch | ].
+  split; [ exact ttc_A_ccw | ].
+  split; [ exact ttc_B_ccw | ].
+  exists ttc_p. split; [ exact ttc_in_A | exact ttc_in_B ].
+Qed.
+
+Print Assumptions touch_triangle_ii_separation_not_unconditional.
 
 (* Helper: each vertex of a triangle is on its boundary. *)
 Lemma tri_bnd_v1 : forall ax ay bx by_ cx cy,
