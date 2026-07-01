@@ -491,7 +491,19 @@ integrity model is untouched. No selective/changed-only proof checking was wired
 into the gate for the same reason — over-approximating is safe, under-checking is
 not, so the gate still compiles the full lane.
 
+**Incremental-cache correctness fix (item 2).** The flocq lane's "incremental"
+PR cache was silently a FULL rebuild every run: `ci_write_vo_manifest.py` recorded
+a *full-bytes* sha256 while `ci_invalidate_stale_vo.py` compared a
+*comment-stripped* sha256, so every file always looked "changed" and got touched.
+Extracted the one canonical hash into `scripts/ci_vo_hash.py` and made both
+scripts import it, so they agree by construction (round-trip verified: 40/40
+files "unchanged (aged)" with no edit; comment-only edits stay unchanged). Both
+scripts also now honour `CI_VO_PROJECT` / `CI_VO_MANIFEST` env overrides
+(defaults unchanged) so the same content-addressed incremental machinery can be
+pointed at the Stdlib-only `theories/` lane, not just `_CoqProject.full`.
+
 **Status.** `make ci-guards` green (0 Admitted; all five guardrails pass);
-`ci.yml` parses and the job graph is `guards → {rocq, rocq-flocq}`.
+`ci.yml` parses and the job graph is `guards → {rocq, rocq-flocq}`; the two
+cache scripts round-trip correctly on both lanes.
 
 
