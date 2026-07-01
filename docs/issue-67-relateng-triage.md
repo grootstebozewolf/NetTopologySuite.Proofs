@@ -216,7 +216,6 @@ The recommended path forward:
   `RelateMatrixCurveAreaPoint.v`); oracle `de9im_curve_area_point_vectors.txt`.
   S12b (the `to_geometry` point-in-ring bridge) now closed:
   `point_in_rect_curve_geometry_iff_polygon`.
-<<<<<<< HEAD
 - **S13 (done):** prepared-mode cache refinement (`RelatePreparedCache.v`); generic
   monoid + segment-intersects concrete instance.
 - **S14 (done):** area-line carrier instance (`RelatePreparedCacheAreaLine.v`);

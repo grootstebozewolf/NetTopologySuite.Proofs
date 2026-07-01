@@ -587,6 +587,26 @@ ray-parity `point_set` proxy cannot follow suit -- both act as data points for
 whichever future attack on the combinatorial-Jordan / genericity-removal
 crux above turns out to be tractable.
 
+**`[EF-1]` (`bridge_components_split`) is now ALSO Qed, unconditionally
+(2026-07-01).** A cut edge whose endpoints both survive as vertices via some
+other edge increases the component count by exactly one when removed. The
+proof composes two pieces: `reachable_add_edge_iff` (the semantic bridge --
+E-reachability is exactly (E minus d)-reachability plus whatever a single
+crossing of `d` newly connects, proved by structural induction on the
+`reachable` derivation so it is robust to `d` being crossed any number of
+times in a longer walk) with the GENERIC "+1 splice" engine already banked in
+`ClassCount.v` (`count_classes_filter_split` / `count_classes_eq_1`) --
+previously used only for the face-orbit splice ([EF-2]'s sibling machinery,
+`PermCycleSplice.v`) -- now reused verbatim for the reachability relation.
+2-axiom, no new axioms, 0 Admitted.
+
+**Status of the Euler ladder.** [EF-1] and [EF-3] -- BOTH component-side
+deltas the induction needs -- are now fully closed and Euler-free. The sole
+remaining gap is [EF-2] (the fstep-orbit MERGE for a non-bridge deletion) and
+the `same_face <-> cut edge` combinatorial-Jordan equivalence that would let
+the induction dispatch on `same_face` alone rather than needing reachability
+supplied at each step -- unchanged as the genuine planar-content frontier.
+
 ---
 
 ## Observatory — JCT parity seam: general simple-polygon case (2026-07-01)
