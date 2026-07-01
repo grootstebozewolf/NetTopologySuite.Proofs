@@ -196,6 +196,11 @@ Proof.
 Qed.
 
 (* §2b  The planar single-peak dot bound (headline, Qed).             *)
+(* Reader's map: the proof sets up the L-scaled chord frame described in the   *)
+(* CHORD-FRAME REDUCTION comment above (SE horizontal, so `side` is the         *)
+(* perpendicular coordinate), discharges the bridge identities to the scalar    *)
+(* hypotheses of the §2a core, then applies `chord_caseE` at endpoint E and its *)
+(* S<->E reflection at endpoint S.                                              *)
 Lemma arc_dot_max_at_endpoint : forall O P S E X r,
   dist O S = r -> dist O E = r -> dist O X = r ->
   side S E X * side S E (radial_foot O P r) <= 0 ->
