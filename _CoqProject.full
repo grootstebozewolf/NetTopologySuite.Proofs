@@ -960,6 +960,12 @@ theories/PermCycleCount.v
 # generic orbit-transversal substrate (orbit_reps_indep/_NoDup, orbit_rep_in,
 # orbit_reps_length_mono) for counting same_orbit classes.  No Admitteds.
 theories/PermCycleSplice.v
+# [EF-2] Euler ladder: the mirror-image generic permutation combinatorics --
+# deleting two points that sit on TWO DISTINCT orbits and cross-wiring their
+# neighbours (the same same_face-agnostic redirect PermCycleSplice.v's SPLIT
+# case uses) MERGES those orbits into one, dropping the orbit count by
+# exactly one. No Admitteds.
+theories/PermCycleMerge.v
 # H_bridge Euler route (Rung 3b-iv), Phase C NL-1: E_minus arrangement
 # scaffolding -- removing an edge only removes darts (incl), fan_ok is
 # downward-closed, so arrangement_ok survives edge removal; plus the exact
@@ -978,6 +984,11 @@ theories/MapCounts.v
 # splice (PermCycleSplice.cycle_count_surgery) at the face permutation --
 # num_faces_E_minus_splice: deleting a same-face edge raises num_faces by one.
 theories/NumFacesSplice.v
+# [EF-2] Euler ladder: instantiate the generic cycle-count merge
+# (PermCycleMerge.cycle_count_merge) at the face permutation --
+# num_faces_E_minus_merge: deleting a non-same-face edge lowers num_faces by
+# one. No Admitteds.
+theories/NumFacesMerge.v
 # H_bridge Euler route (Rung 3b-viii): num_vertices / num_edges + the Euler
 # identity V+F=E+2*C as a NAMED HYPOTHESIS (not an axiom), plus the edge-count
 # deletion instance num_edges_E_minus.  No Admitteds.

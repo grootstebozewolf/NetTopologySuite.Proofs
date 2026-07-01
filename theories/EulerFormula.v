@@ -57,8 +57,18 @@
              exactly two (E minus d)-classes, every other class is untouched.)
      [EF-2] cycle face merge:  ~ same_face-edge d =>
             num_faces (E_minus E d) = num_faces E - 1.
-            (Today NumFacesSplice only covers the same_face F+1 case; the
-             fstep-orbit MERGE for a non-bridge deletion is unproved.)
+            *** DONE, UNCONDITIONALLY, as `NumFacesMerge.num_faces_E_minus_merge` ***
+            (theories/PermCycleMerge.v + theories/NumFacesMerge.v.  The mirror
+             image of `PermCycleSplice.cycle_count_surgery`: `d` and `twin d`
+             sit on two DISTINCT fstep-orbits (periods per1, per2); the SAME
+             cross-wiring redirect `FaceStepRemove.fstep_E_minus_splice`
+             (already proved WITHOUT any same-face hypothesis) STITCHES them
+             into one orbit of length per1+per2-2, via the SAME generic "+1"
+             splice engine EF-1 reused (`ClassCount.count_classes_filter_split`
+             / `count_classes_eq_1`), run in the opposite direction.
+             `PermCycleMerge.cycle_count_merge` is fully axiom-free (0 axioms:
+             pure permutation/list/nat combinatorics); the Dart-layer
+             instantiation carries the corpus's standard 2-axiom footprint.)
      [EF-3] cycle connectivity: bypass (d not a cut edge) =>
             num_components (E_minus E d) = num_components E.
             *** DONE below, UNCONDITIONALLY, as `cycle_components_eq` ***
@@ -74,12 +84,16 @@
 
    The genuinely hard, planar-content lemma is the equivalence
    `same_face E d  <->  d is a cut edge of E` proven WITHOUT Euler -- i.e. the
-   combinatorial Jordan step.  [EF-1] and [EF-3] are now BOTH Euler-free and
-   unconditional (the reachability/component side of the induction is fully
-   closed); what remains is [EF-2] (the fstep-orbit MERGE for a non-bridge
-   deletion) and the same_face<->cut-edge equivalence itself that would let
-   the induction dispatch on `same_face` rather than needing reachability
-   supplied separately at each step.
+   combinatorial Jordan step.  [EF-1], [EF-2], and [EF-3] are now ALL
+   Euler-free and unconditional -- every arithmetic DELTA the induction step
+   needs (component split, component no-change, face merge; the face SPLIT
+   delta was already banked pre-existing as `NumFacesSplice`) is proved.  What
+   remains is exclusively the same_face<->cut-edge equivalence itself: with it
+   the induction could dispatch on `same_face` alone (a decidable, purely
+   combinatorial test) instead of needing the correct delta supplied
+   externally per edge, and [EF-4]'s vertex-delta/degree-2-core bookkeeping
+   for the induction's base case.  This is the sole surviving combinatorial
+   Jordan step; the corpus already knows every OTHER piece of the arithmetic.
 
    Until then `euler_characteristic` stays the single, clearly-named planar
    hypothesis, SHARED unchanged by the linear and curve extractors (the curve
