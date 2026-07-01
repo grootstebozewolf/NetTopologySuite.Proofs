@@ -196,6 +196,14 @@ Definition triangle_pair_regime (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : Tri
   then TPR_TouchEdge
   else TPR_Disjoint.
 
+(* Decidable equality on the classifier's result type -- consistent with the
+   Req_dec_T / Rlt_dec approach used throughout the boolean detectors above,
+   and available for any future case dispatch on `triangle_pair_regime`
+   (mirroring the rectangle regime's decidability). *)
+Lemma triangle_pair_regime_eq_dec :
+  forall r1 r2 : TrianglePairRegime, {r1 = r2} + {r1 <> r2}.
+Proof. decide equality. Qed.
+
 (* bool dec helpers removed... (kept comment for style) *)
 
 Definition rect_pair_regime (ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 : R) : RectPairRegime :=
@@ -739,6 +747,22 @@ Qed.
 (* point; here parity invents a spurious one).  Because p is off both ring     *)
 (* images, ring_complement alone does NOT rescue the lift: the ray-genericity  *)
 (* premise is essential, so `touch_triangle_pair_ii_cell_via_seam` is maximal. *)
+(*                                                                            *)
+(*        (0,2)                                                              *)
+(*         /|\                                                               *)
+(*        / | \                                                              *)
+(*   B   /  |  \   A         p = (-1,1) --------> ray (rightward, height 1)  *)
+(*      /   |   \                          |                                *)
+(* (-4,1)   |   (4,1)  <--- ray GRAZES this vertex: A's parity count is       *)
+(*      \   |   /            ambiguous here, miscounted as "inside" even     *)
+(*       \  |  /              though p is on A's OUTWARD side (gtri A p < 0) *)
+(*        \ | /                                                              *)
+(*         \|/                                                               *)
+(*        (0,0)                                                              *)
+(*                                                                            *)
+(* p sits genuinely inside B (left of the shared edge) but only APPEARS      *)
+(* inside A (right of the shared edge) because its ray exits exactly through *)
+(* A's far vertex instead of cleanly crossing or missing an edge.            *)
 (* 3-axiom (classical-reals trio only). *)
 
 Definition ttc_A : R * R * R * R * R * R := (0, 0, 4, 1, 0, 2).

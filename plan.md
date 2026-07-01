@@ -577,3 +577,12 @@ exact remaining UNCONDITIONAL lemmas [EF-1] bridge components-split, [EF-2]
 cycle face-merge, [EF-3] cycle connectivity, [EF-4] vertex/degree-2 core — with
 the crux ([EF-2] + the Euler-free bridge<->same_face equivalence) flagged as the
 Jordan residual. OverlayBridge.v §8 now cross-references this plan at the premise.
+
+`[EF-3]` (`cycle_components_eq`) is now Qed on this branch (PR #311), alongside
+the RelateNG touch-cell work below (2026-07-01), advancing the same Jordan/
+genericity frontier from the RelateNG side: `touch_triangle_pair_ii_disjoint_
+unconditional` closes the geometric-interior II separation outright, while
+`touch_triangle_ii_separation_not_unconditional` pins down exactly why the
+ray-parity `point_set` proxy cannot follow suit -- both act as data points for
+whichever future attack on the combinatorial-Jordan / genericity-removal
+crux above turns out to be tractable.
