@@ -1361,6 +1361,13 @@ theories/JCTEscapeDescentHolds.v
 # allows T-junctions, ring_taut does not).  Depends on JCTEscapeDescentHolds +
 # GeneralTriangleSeparation + JCT_OnEdgeCounterexample.  Three-axiom.
 theories/TriangleTautBridge.v
+# GeneralTautBridge: closes the TriangleTautBridge "HONEST OBSTRUCTION" -- the
+# general noding predicate ring_no_vertex_on_foreign_edge_interior (no
+# T-junctions) plus ring_simple implies ring_taut for ANY ring, so the taut
+# Jordan seam now covers arbitrary simple polygons, not just the triangle.
+# Demonstrated on a non-convex "dart" quadrilateral. Depends on TriangleTautBridge's
+# imports (JCTEscapeDescentHolds etc). Three-axiom.
+theories/GeneralTautBridge.v
 # Showcase: the "hat" aperiodic monotile (Smith-Myers-Kaplan-Goodman-Strauss
 # 2023) as a concrete non-convex 13-gon Ring (hexPt shear, exact sqrt 3 coords).
 # ring_closed / 13-edge count / >=4 vertices / genuine NON-CONVEXITY (boundary
