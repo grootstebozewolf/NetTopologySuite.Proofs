@@ -52,10 +52,13 @@
             num_faces (E_minus E d) = num_faces E - 1.
             (Today NumFacesSplice only covers the same_face F+1 case; the
              fstep-orbit MERGE for a non-bridge deletion is unproved.)
-     [EF-3] cycle connectivity: ~ same_face-edge d =>
+     [EF-3] cycle connectivity: bypass (d not a cut edge) =>
             num_components (E_minus E d) = num_components E.
-            (`EulerBridge.bypass_reachable_iff` + `num_components_E_minus_le`
-             give most of this; needs the bypass to exist for a non-bridge.)
+            *** DONE below, UNCONDITIONALLY, as `cycle_components_eq` ***
+            (reachability form: `reachable (E_minus E d) (fst d) (snd d)` with
+             distinct endpoints; Euler-free, 2-axiom.  This is the correct
+             graph-theoretic framing -- the delta is classified by REACHABILITY,
+             not same_face; the same_face<->cut-edge link is the residual crux.)
      [EF-4] vertex delta over the induction: `num_vertices_E_minus_eq` needs
             min-degree-2; peeling edges eventually breaks that, so the
             induction must either track the exact Delta V or induct over a
@@ -82,7 +85,7 @@
 
 From Stdlib Require Import List Arith Lia.
 From NTS.Proofs Require Import Distance Overlay OverlayGraph EdgeConnectivity
-                               EulerArrangement MapCounts ReachableDec.
+                               EulerArrangement MapCounts ReachableDec EulerBridge.
 
 Import ListNotations.
 
@@ -140,8 +143,81 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* [EF-3] Cycle component delta, UNCONDITIONAL (Euler-free graph theory).       *)
+(*                                                                            *)
+(* If deleting a (non-loop) edge d leaves its endpoints connected -- a bypass  *)
+(* exists, i.e. d is NOT a cut edge -- then the component count is unchanged.   *)
+(* This is one of the two component-side deltas the Euler induction needs, and *)
+(* it needs NO Euler hypothesis (contrast euler_component_increase, which does).*)
+(* -------------------------------------------------------------------------- *)
+
+(* A non-trivial walk starts at a genuine vertex: the first adjacency step is
+   an incident edge. *)
+Lemma reachable_ne_in_verts : forall E u v,
+  reachable E u v -> u <> v -> In u (verts E).
+Proof.
+  intros E u v Hr Hne. destruct Hr as [u | u v' w Hadj Hrec].
+  - contradiction.
+  - destruct Hadj as [e [He Hor]]. apply in_verts. exists e. split; [ exact He | ].
+    destruct Hor as [[Hf _] | [_ Hs]]; [ left | right ]; assumption.
+Qed.
+
+(* Under a bypass (with distinct endpoints) no vertex is dropped, so the vertex
+   sets of E and E_minus E d coincide. *)
+Lemma verts_incl_E_of_bypass : forall E d,
+  fst d <> snd d ->
+  reachable (E_minus E d) (fst d) (snd d) ->
+  incl (verts E) (verts (E_minus E d)).
+Proof.
+  intros E d Hne Hby p Hp.
+  apply in_verts in Hp. destruct Hp as [e [He Hend]].
+  destruct (edge_eq_dec e d) as [-> | Hedne].
+  - (* p is an endpoint of d itself; both endpoints survive via the bypass. *)
+    destruct Hend as [Hf | Hs].
+    + rewrite <- Hf. apply (reachable_ne_in_verts (E_minus E d) (fst d) (snd d) Hby Hne).
+    + rewrite <- Hs.
+      apply (reachable_ne_in_verts (E_minus E d) (snd d) (fst d)
+               (reach_sym _ _ _ Hby) (fun h => Hne (eq_sym h))).
+  - (* p is an endpoint of a surviving edge e <> d. *)
+    apply in_verts. exists e. split; [ apply in_E_minus; split; assumption | exact Hend ].
+Qed.
+
+Lemma cycle_components_eq : forall E d,
+  fst d <> snd d ->
+  reachable (E_minus E d) (fst d) (snd d) ->
+  num_components (E_minus E d) = num_components E.
+Proof.
+  intros E d Hne Hby.
+  (* reachability agrees on E and E_minus E d (bypass reroutes every use of d). *)
+  assert (Hrel : forall u v, reachable E u v <-> reachable (E_minus E d) u v)
+    by (intros u v; apply bypass_reachable_iff; exact Hby).
+  assert (Hb : forall u v, reachable_b (E_minus E d) u v = reachable_b E u v).
+  { intros u v.
+    destruct (reachable_b (E_minus E d) u v) eqn:H1;
+      destruct (reachable_b E u v) eqn:H2; try reflexivity; exfalso.
+    - apply reachable_b_true_iff in H1. apply (proj2 (Hrel u v)) in H1.
+      apply reachable_b_true_iff in H1. congruence.
+    - apply reachable_b_true_iff in H2. apply (proj1 (Hrel u v)) in H2.
+      apply reachable_b_true_iff in H2. congruence. }
+  (* vertex sets coincide (bypass, distinct endpoints). *)
+  assert (Hincl1 : incl (verts (E_minus E d)) (verts E)) by (apply verts_E_minus_incl).
+  assert (Hincl2 : incl (verts E) (verts (E_minus E d)))
+    by (apply verts_incl_E_of_bypass; assumption).
+  (* num_components on each, rewritten to a common relation via comp_reps_ext. *)
+  unfold num_components.
+  rewrite (comp_reps_ext (E_minus E d) E
+             (nodup point_eq_dec (verts (E_minus E d))) Hb).
+  apply Nat.le_antisymm.
+  - apply comp_reps_length_mono. intros x Hx. rewrite nodup_In in Hx. rewrite nodup_In.
+    apply Hincl1; exact Hx.
+  - apply comp_reps_length_mono. intros x Hx. rewrite nodup_In in Hx. rewrite nodup_In.
+    apply Hincl2; exact Hx.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Assumption audit: base case + transfer skeleton, no Admitted/Axiom.         *)
 (* -------------------------------------------------------------------------- *)
 Print Assumptions euler_characteristic_nil.
+Print Assumptions cycle_components_eq.
 Print Assumptions euler_transfer_bridge.
 Print Assumptions euler_transfer_cycle.
