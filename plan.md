@@ -600,12 +600,38 @@ previously used only for the face-orbit splice ([EF-2]'s sibling machinery,
 `PermCycleSplice.v`) -- now reused verbatim for the reachability relation.
 2-axiom, no new axioms, 0 Admitted.
 
-**Status of the Euler ladder.** [EF-1] and [EF-3] -- BOTH component-side
-deltas the induction needs -- are now fully closed and Euler-free. The sole
-remaining gap is [EF-2] (the fstep-orbit MERGE for a non-bridge deletion) and
-the `same_face <-> cut edge` combinatorial-Jordan equivalence that would let
-the induction dispatch on `same_face` alone rather than needing reachability
-supplied at each step -- unchanged as the genuine planar-content frontier.
+**`[EF-2]` (`NumFacesMerge.num_faces_E_minus_merge`) is now ALSO Qed,
+unconditionally (2026-07-01).** Deleting a non-same-face edge merges the two
+faces it borders, dropping the face count by exactly one. This is the mirror
+image of the pre-existing `NumFacesSplice.num_faces_E_minus_splice` (the
+same-face SPLIT case): `theories/PermCycleMerge.v` proves the generic
+permutation fact -- two points on DISTINCT orbits (periods `per1`, `per2`),
+cross-wired by the SAME redirect formula the split case uses
+(`FaceStepRemove.fstep_E_minus_splice`, already proved without any same-face
+hypothesis), get STITCHED into one orbit of length `per1+per2-2` -- via the
+identical generic "+1/-1 splice" engine (`ClassCount.count_classes_filter_
+split` / `count_classes_eq_1`) run in the opposite direction: instead of
+splitting one `inO`-block into two classes via a sub-predicate, TWO disjoint
+original-orbit classes merge into the SAME `f'`-orbit (shown by relating every
+point of both arcs to a single representative, `it 1 d`). `theories/
+NumFacesMerge.v` instantiates it at the face-step permutation, using
+`NoShortFaces.no_short_faces_of_proper_nospur` for the period lower bounds
+(period >= 3, from properness + no-spurs alone -- no new geometric content).
+`cycle_count_merge` itself is FULLY AXIOM-FREE (pure permutation/list/nat
+combinatorics, 0 axioms); the Dart-layer instantiation carries the corpus's
+standard 2-axiom footprint (matching `NumFacesSplice.v`'s own exactly). 0
+Admitted.
+
+**Status of the Euler ladder.** [EF-1], [EF-2], and [EF-3] -- EVERY arithmetic
+delta the induction step needs (component split, component no-change, face
+merge; face split was already banked pre-existing) -- are now ALL fully
+closed and Euler-free. The sole remaining gap is exclusively the `same_face
+<-> cut edge` combinatorial-Jordan equivalence itself (which would let the
+induction dispatch on the decidable `same_face` test alone, rather than
+needing the correct delta supplied externally per edge) plus [EF-4]'s
+vertex-delta/degree-2-core bookkeeping for the induction's base case -- the
+genuine planar-content frontier, unchanged in kind but now isolated to
+exactly one combinatorial-Jordan lemma instead of three separate deltas.
 
 ---
 
