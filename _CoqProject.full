@@ -2492,6 +2492,14 @@ theories-flocq/Validate_binary64_extract.v
 # pulled from HobbyTheorem_b64's snap_round_segments closure.
 theories-flocq/OverlayBridge.v
 
+# RingCurvatureModels: does extract_rings_valid generalise from planar to
+# hyperbolic/spherical space?  Answer: its statement never mentions distance
+# or curvature, only px/py sign tests, so a Beltrami-Klein-disk (hyperbolic) or
+# gnomonic-projection (spherical) ring configuration literally IS a corpus
+# Ring/Geometry and extract_rings_valid applies with zero new proof.  Imports
+# OverlayBridge (Category C, see docs/audit-exceptions.txt). No Admitteds.
+theories-flocq/RingCurvatureModels.v
+
 # extract_rings_valid R5, slice 3i: the bridge discharge (RED).  Machine-checks
 # that ExtractFaces.extract_faces_valid's H1 (pairwise_no_proper_cross of the
 # dart set) is UNSATISFIABLE for non-degenerate edges -- a segment properly
