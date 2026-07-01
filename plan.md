@@ -637,3 +637,61 @@ generalization is real and not a relabelling of the triangle proof. The next
 natural rung -- relaxing `no_horizontal_edges` to a horizontal-tolerant
 variant so axis-aligned shapes route through the same general bridge -- is a
 clean, well-scoped extension point, deliberately left open here.
+
+---
+
+## Observatory — extract_rings_valid across curvature regimes (2026-07-01)
+
+**Goal.** Does `extract_rings_valid` (OverlayBridge.v §8) generalise from
+implicitly-Euclidean/flat-planar space to HYPERBOLIC or SPHERICAL geometry?
+
+**Done (`theories-flocq/RingCurvatureModels.v`, no Admitted).** The precise
+answer: `extract_rings_valid`'s STATEMENT never mentions distance, angle, or
+curvature -- only `px`/`py` sign tests (`cross`/`vcross`, ray-parity crossing).
+Two classical differential-geometry facts (cited as named Props,
+`beltrami_klein_correspondence` / `gnomonic_correspondence`, in the corpus's
+`euler_characteristic`-style hypothesis convention -- deriving them from a
+from-scratch hyperbolic/spherical axiomatisation is a separate, substantial
+project, out of scope here) map GEODESICS to literal EUCLIDEAN STRAIGHT LINES:
+
+  - HYPERBOLIC plane, Beltrami-Klein disk model: every geodesic is a straight
+    chord of the open unit disk.
+  - SPHERICAL geometry (one open hemisphere), gnomonic projection: every
+    great-circle arc is a straight line, and the chart is a BIJECTION onto all
+    of R^2 (no bounded-domain side condition at all, unlike the disk case).
+
+So a hyperbolic (Klein) or spherical-hemisphere (gnomonic) ring configuration
+literally IS a corpus `Ring`/`Geometry`, and `extract_rings_valid` applies with
+ZERO new proof: `extract_rings_valid_hyperbolic` /
+`extract_rings_valid_spherical_hemisphere` are the SAME `extract_rings_valid`
+proof term, re-exposed under the curvature-scoped name and carrying the
+domain-confinement + correspondence hypotheses explicitly (so the semantic
+reading is never silently assumed). Two genuinely new, fully Qed (no cited
+fact) results underlie this: `vcross_lin2` / `vcross_sign_preserved_pos_det`
+(any 2x2 linear map with positive determinant preserves every `vcross`/`cross`
+SIGN exactly -- WHY orientation-based predicates survive any orientation-
+preserving reparametrization, not just these two classical charts) and
+`open_disk_convex` (the open unit disk is convex, so Klein-model EDGES, not
+just vertices, automatically stay in the valid hyperbolic domain).
+
+**Honest scope.** This file is Category C (`docs/audit-exceptions.txt`): its
+two corollaries inherit `Classical_Prop.classic` transitively through
+`OverlayBridge.v` -> `HobbyTheorem_b64`'s `snap_round_segments` closure (same
+lineage as `OverlayBridge.v` itself); the file's own new lemmas (§0/§1) stay
+classical-reals-trio only. The corollaries' domain-confinement hypotheses are
+NOT consumed by the proof (the underlying `extract_rings_valid` is already
+curvature-agnostic) -- they are carried explicitly so a reader can never
+mistake the flat-planar theorem for the curved one without the side condition
+that licenses the reading. Building faithful geodesic-based `Ring`/`Polygon`
+predicates FROM a from-scratch hyperbolic/spherical axiomatisation (rather
+than via these two classical charts) remains the larger, un-attempted project.
+
+**Future work (PR #313 review).**
+  - [ ] Full spherical coverage (not just one open hemisphere): stereographic
+    projection covers the sphere minus a single point, a strictly larger
+    domain than gnomonic's hemisphere, at the cost of geodesics becoming
+    circles/lines rather than always-lines (needs a circle-or-line incidence
+    test, not a pure straight-line one).
+  - [ ] Hyperbolic WITH boundary: the Poincare disk model (angle-preserving,
+    unlike Klein) once the corpus has a circle-arc / circle-line incidence
+    test to match its curved (non-chord) geodesics.
