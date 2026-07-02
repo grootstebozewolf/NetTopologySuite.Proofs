@@ -96,15 +96,23 @@
              edge whose BOTH endpoints are degree-1 -- a lone K2 component,
              genuinely simpler and not attempted here), the same same_face-
              agnostic redirect leaves the orbit count UNCHANGED -- the correct
-             face-count delta (0) for peeling a leaf edge.  Still OPEN: the
-             Dart-layer instantiation (a `NumFacesShrink.v` analogous to
-             `NumFacesSplice.v`/`NumFacesMerge.v`) needs a fresh hypothesis this
-             corpus does not yet supply -- that the far endpoint `b` of the leaf
-             edge is not ITSELF degree-1 (i.e. `per >= 3` rather than `per = 2`)
-             -- plus the companion Delta V = -1 / Delta C = 0 facts for a
-             vertex vanishing from the carrier.  Assembling those and wiring
-             the standalone "peeling a degree-1 vertex's edge preserves
-             `euler_characteristic`" theorem is the next well-scoped step.
+             face-count delta (0) for peeling a leaf edge.
+             *** The Dart-layer instantiation is ALSO now DONE, UNCONDITIONALLY,
+             as `NumFacesShrink.num_faces_E_minus_shrink` ***: for a leaf edge
+             `d` (`outgoing (dbase d) (darts_of E) = [d]`, i.e. `dbase d` is
+             degree-1 with unique outgoing dart `d`) whose far endpoint is not
+             ITSELF a reciprocal leaf (`fstep (darts_of E) d <> twin d` --
+             the one honestly new hypothesis added, ruling out the isolated
+             K2 sub-case), `num_faces (E_minus E d) = num_faces E`.  The spur
+             fact comes for free from the pre-existing
+             `EulerWitness.fstep_of_singleton_fan`; the period bound `per >= 3`
+             is DERIVED (not assumed) from properness (rules out `per = 1`)
+             plus the new far-endpoint hypothesis (rules out `per = 2`, via
+             `NoShortFaces.period2_imp_spur`'s converse shape).  Still OPEN:
+             the companion Delta V = -1 / Delta C = 0 facts for a vertex
+             vanishing from the carrier, and assembling the standalone
+             "peeling a degree-1 vertex's edge preserves `euler_characteristic`"
+             theorem, which is the next well-scoped step.
 
    The genuinely hard, planar-content lemma is the equivalence
    `same_face E d  <->  d is a cut edge of E` proven WITHOUT Euler -- i.e. the

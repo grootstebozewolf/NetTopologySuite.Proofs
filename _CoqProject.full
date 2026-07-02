@@ -976,6 +976,12 @@ theories/PermCycleMerge.v
 # [EF-1]/[EF-2]/[EF-3]'s no_spurs-based lemmas apply -- this is the missing
 # third case.  No Admitteds.
 theories/PermCycleShrink.v
+# [EF-4 partial] Euler ladder: instantiate the generic cycle-count shrink
+# (PermCycleShrink.cycle_count_shrink) at the face permutation --
+# num_faces_E_minus_shrink: deleting a leaf edge (base is degree-1, far
+# endpoint not itself a reciprocal degree-1 vertex) leaves num_faces
+# unchanged. No Admitteds.
+theories/NumFacesShrink.v
 # H_bridge Euler route (Rung 3b-iv), Phase C NL-1: E_minus arrangement
 # scaffolding -- removing an edge only removes darts (incl), fan_ok is
 # downward-closed, so arrangement_ok survives edge removal; plus the exact

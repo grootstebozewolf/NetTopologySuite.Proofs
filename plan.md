@@ -643,25 +643,40 @@ arc, so both sides of the final count land on exactly ONE class and the
 capstone closes by `reflexivity` rather than `lia`. `cycle_count_shrink`
 itself is FULLY AXIOM-FREE (0 axioms; pure permutation/list/nat
 combinatorics) -- matching, and slightly exceeding, `cycle_count_merge`'s own
-axiom-free footprint. 0 Admitted. Still OPEN, deliberately left for the next
-rung: the Dart-layer instantiation (`NumFacesShrink.v`) needs a hypothesis
-this corpus does not yet supply anywhere -- that the leaf edge's far endpoint
-is not itself degree-1 (`per >= 3` rather than `per = 2`, since
-`no_short_faces_of_proper_nospur` cannot be invoked here, `no_spurs` being
-exactly what fails) -- plus the companion Delta V = -1 / Delta C = 0 facts
-for a vertex disappearing from the carrier entirely.
+axiom-free footprint. 0 Admitted.
+
+**`[EF-4]` partial, Dart-layer (`NumFacesShrink.num_faces_E_minus_shrink`) is
+now ALSO Qed, unconditionally (2026-07-01).** Instantiates
+`cycle_count_shrink` at the face-step permutation for a leaf edge `d`
+(`outgoing (dbase d) (darts_of E) = [d]`): deleting it leaves `num_faces`
+UNCHANGED. The spur fact `fstep (darts_of E) (twin d) = d` comes for free
+from the pre-existing `EulerWitness.fstep_of_singleton_fan`; the one
+honestly new hypothesis this file adds is that the far endpoint is not
+itself a reciprocal leaf (`fstep (darts_of E) d <> twin d`), ruling out the
+isolated-K2 sub-case. From that plus properness, the period bound `per >= 3`
+is DERIVED rather than assumed: `per = 1` is excluded by properness
+(`twin_neq_self`), and `per = 2` is excluded by the new hypothesis via
+`NoShortFaces.period2_imp_spur`'s converse shape (`per = 2` would force
+`fstep (darts_of E) d = twin d`, contradicting it directly). Standard
+corpus 2-axiom footprint (matching `NumFacesSplice.v`/`NumFacesMerge.v`
+exactly). 0 Admitted. Still OPEN: the companion Delta V = -1 / Delta C = 0
+facts for a vertex disappearing from the carrier entirely, needed to
+assemble the standalone "peeling a degree-1 vertex's edge preserves
+`euler_characteristic`" theorem.
 
 **Status of the Euler ladder.** [EF-1], [EF-2], and [EF-3] -- EVERY arithmetic
 delta the induction step needs (component split, component no-change, face
 merge; face split was already banked pre-existing) -- are now ALL fully
-closed and Euler-free. [EF-4] now has its missing permutation-surgery case
-([EF-4] partial, `PermCycleShrink.v`) closed the same way, unconditionally
-and axiom-free, though the Dart-layer wiring and the vertex/component deltas
-for leaf-peeling remain open. The sole remaining gap beyond that is
-exclusively the `same_face <-> cut edge` combinatorial-Jordan equivalence
-itself (which would let the induction dispatch on the decidable `same_face`
-test alone, rather than needing the correct delta supplied externally per
-edge) plus finishing [EF-4]'s vertex-delta/degree-2-core bookkeeping for the
+closed and Euler-free. [EF-4]'s missing permutation-surgery case AND its
+Dart-layer instantiation ([EF-4] partial, `PermCycleShrink.v` +
+`NumFacesShrink.v`) are now also closed unconditionally: leaf-edge deletion
+provably leaves the face count unchanged. Still open for [EF-4]: the vertex
+and component deltas for a vertex vanishing from the carrier when its last
+edge is peeled. The sole remaining gap beyond that is exclusively the
+`same_face <-> cut edge` combinatorial-Jordan equivalence itself (which
+would let the induction dispatch on the decidable `same_face` test alone,
+rather than needing the correct delta supplied externally per edge) plus
+finishing [EF-4]'s vertex-delta/degree-2-core bookkeeping for the
 induction's base case -- the genuine planar-content frontier.
 
 ---
