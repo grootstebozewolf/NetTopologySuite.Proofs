@@ -659,25 +659,41 @@ is DERIVED rather than assumed: `per = 1` is excluded by properness
 `NoShortFaces.period2_imp_spur`'s converse shape (`per = 2` would force
 `fstep (darts_of E) d = twin d`, contradicting it directly). Standard
 corpus 2-axiom footprint (matching `NumFacesSplice.v`/`NumFacesMerge.v`
-exactly). 0 Admitted. Still OPEN: the companion Delta V = -1 / Delta C = 0
-facts for a vertex disappearing from the carrier entirely, needed to
-assemble the standalone "peeling a degree-1 vertex's edge preserves
-`euler_characteristic`" theorem.
+exactly). 0 Admitted.
 
-**Status of the Euler ladder.** [EF-1], [EF-2], and [EF-3] -- EVERY arithmetic
-delta the induction step needs (component split, component no-change, face
-merge; face split was already banked pre-existing) -- are now ALL fully
-closed and Euler-free. [EF-4]'s missing permutation-surgery case AND its
-Dart-layer instantiation ([EF-4] partial, `PermCycleShrink.v` +
-`NumFacesShrink.v`) are now also closed unconditionally: leaf-edge deletion
-provably leaves the face count unchanged. Still open for [EF-4]: the vertex
-and component deltas for a vertex vanishing from the carrier when its last
-edge is peeled. The sole remaining gap beyond that is exclusively the
-`same_face <-> cut edge` combinatorial-Jordan equivalence itself (which
-would let the induction dispatch on the decidable `same_face` test alone,
-rather than needing the correct delta supplied externally per edge) plus
-finishing [EF-4]'s vertex-delta/degree-2-core bookkeeping for the
-induction's base case -- the genuine planar-content frontier.
+**`[EF-4]` is now FULLY DONE for the leaf-edge case
+(`euler_characteristic_leaf_edge_transfer`, 2026-07-02).** The two remaining
+deltas -- Delta V = -1 (`num_vertices_E_minus_shrink`: the leaf vertex
+vanishes from the carrier entirely; every OTHER vertex, including the far
+endpoint, survives) and Delta C = 0 (`num_components_E_minus_shrink`: a
+degree-1 vertex is never a cut vertex for any pair EXCLUDING itself, so
+every reachability class among the survivors is untouched) -- are now ALSO
+Qed, unconditionally. The component-count proof elegantly REUSES [EF-1]'s
+own `reachable_add_edge_iff`: away from the vanished leaf, both of
+`reachable_add_edge_iff`'s extra "crossing `d`" disjuncts collapse to False
+(the leaf has no edges left on the `E_minus E d` side to be reached
+through), so `E`- and `(E_minus E d)`-reachability agree exactly on every
+surviving vertex. Combined with the pre-existing edge delta
+(`EulerArrangement.num_edges_E_minus`) and the already-closed face delta
+(`NumFacesShrink.num_faces_E_minus_shrink`), the new headline theorem
+`euler_characteristic_leaf_edge_transfer` assembles ALL FOUR deltas into a
+single unconditional Euler-transfer theorem for leaf-edge deletion: standard
+corpus 2-axiom footprint, 0 Admitted, 0 new axioms.
+
+**Status of the Euler ladder.** [EF-1], [EF-2], [EF-3], and now [EF-4]'s
+leaf-edge case -- EVERY arithmetic delta BOTH the min-degree->=2 induction
+step (component split, component no-change, face merge/split) AND the
+degree-1 leaf-peeling base case (vertex loss, edge loss, face invariance,
+component invariance) need -- are now ALL fully closed, Euler-free, and
+unconditional. What remains toward the FULL induction is exclusively (a) the
+`same_face <-> cut edge` combinatorial-Jordan equivalence for the
+min-degree->=2 core (which would let the induction dispatch on the decidable
+`same_face` test alone, rather than needing the correct delta supplied
+externally per edge), and (b) threading the now-complete leaf-peeling base
+case into a genuine degree->=2-core induction principle (peel leaves down to
+a min-degree->=2 remainder, or the empty graph, before invoking the
+bridge/cycle step) -- the genuine planar-content and induction-scaffolding
+frontier that remains.
 
 ---
 

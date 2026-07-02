@@ -39,6 +39,13 @@
        (V+F) -> (V+F+1) ;  (E+2C) -> (E-1) + 2(C+1) = E+2C+1     -- preserved.
      cycle edge d (not same_face):Delta V = 0, Delta E = -1, Delta F = -1, Delta C = 0
        (V+F) -> (V+F-1) ;  (E+2C) -> (E-1) + 2C     = E+2C-1     -- preserved.
+     leaf edge d (degree-1 base): Delta V = -1, Delta E = -1, Delta F = 0, Delta C = 0
+       (V+F) -> (V+F-1) ;  (E+2C) -> (E-1) + 2C     = E+2C-1     -- preserved.
+       *** DONE, UNCONDITIONALLY, as `euler_characteristic_leaf_edge_transfer` ***
+       (the degree->=2-core induction's base-case peeling step: the leaf
+        vertex itself is never a cut vertex for any OTHER pair, so no
+        component splits; its unique edge borders one face on both sides,
+        already shown unchanged by `NumFacesShrink.num_faces_E_minus_shrink`.)
 
    MISSING LEMMAS (each unconditional, i.e. NOT assuming euler_characteristic):
 
@@ -108,24 +115,43 @@
              `EulerWitness.fstep_of_singleton_fan`; the period bound `per >= 3`
              is DERIVED (not assumed) from properness (rules out `per = 1`)
              plus the new far-endpoint hypothesis (rules out `per = 2`, via
-             `NoShortFaces.period2_imp_spur`'s converse shape).  Still OPEN:
-             the companion Delta V = -1 / Delta C = 0 facts for a vertex
-             vanishing from the carrier, and assembling the standalone
-             "peeling a degree-1 vertex's edge preserves `euler_characteristic`"
-             theorem, which is the next well-scoped step.
+             `NoShortFaces.period2_imp_spur`'s converse shape).
+             *** [EF-4] is now FULLY DONE for the leaf-edge case, as the
+             headline theorem `euler_characteristic_leaf_edge_transfer` ***:
+             the companion Delta V = -1 (`num_vertices_E_minus_shrink`, the
+             leaf vertex vanishes, every other vertex including the far
+             endpoint survives) and Delta C = 0
+             (`num_components_E_minus_shrink`, a leaf is never a cut vertex
+             for any OTHER pair, so no reachability class among the survivors
+             changes -- proved by reusing [EF-1]'s own
+             `reachable_add_edge_iff` to show E/E-minus-d reachability agree
+             away from the vanished leaf) are now ALSO Qed, unconditionally.
+             Combined with the pre-existing edge delta (`num_edges_E_minus`)
+             and the face delta above, `euler_characteristic_leaf_edge_transfer`
+             assembles all four into ONE unconditional Euler transfer for
+             leaf-edge deletion -- standard corpus 2-axiom footprint, zero
+             Admitted proofs.  What remains for the FULL induction (beyond
+             this base case) is the degree->=2-core generalisation and the
+             `same_face <-> cut-edge` combinatorial-Jordan equivalence below.
 
    The genuinely hard, planar-content lemma is the equivalence
    `same_face E d  <->  d is a cut edge of E` proven WITHOUT Euler -- i.e. the
-   combinatorial Jordan step.  [EF-1], [EF-2], and [EF-3] are now ALL
-   Euler-free and unconditional -- every arithmetic DELTA the induction step
-   needs (component split, component no-change, face merge; the face SPLIT
-   delta was already banked pre-existing as `NumFacesSplice`) is proved.  What
-   remains is exclusively the same_face<->cut-edge equivalence itself: with it
-   the induction could dispatch on `same_face` alone (a decidable, purely
-   combinatorial test) instead of needing the correct delta supplied
-   externally per edge, and [EF-4]'s vertex-delta/degree-2-core bookkeeping
-   for the induction's base case.  This is the sole surviving combinatorial
-   Jordan step; the corpus already knows every OTHER piece of the arithmetic.
+   combinatorial Jordan step.  [EF-1], [EF-2], [EF-3], and now [EF-4]'s
+   leaf-edge case are ALL Euler-free and unconditional -- every arithmetic
+   DELTA the induction step needs, for BOTH a min-degree->=2 edge deletion
+   (component split, component no-change, face merge/split) AND the
+   degree-1 leaf-peeling base case (vertex loss, edge loss, face-count
+   invariance, component-count invariance, and the single headline transfer
+   theorem tying all four together) is proved.  What remains toward the FULL
+   induction is exclusively (a) the same_face<->cut-edge equivalence itself
+   for the min-degree->=2 core: with it the induction could dispatch on
+   `same_face` alone (a decidable, purely combinatorial test) instead of
+   needing the correct delta supplied externally per edge; and (b) threading
+   the leaf-peeling base case into a genuine degree->=2-core induction
+   principle (peel leaves down to a min-degree->=2 remainder, or the empty
+   graph, before invoking the bridge/cycle step). These are the sole
+   surviving combinatorial-Jordan / induction-scaffolding steps; the corpus
+   already knows every OTHER piece of the arithmetic.
 
    Until then `euler_characteristic` stays the single, clearly-named planar
    hypothesis, SHARED unchanged by the linear and curve extractors (the curve
@@ -143,7 +169,8 @@
 From Stdlib Require Import List Arith Lia Bool.
 From NTS.Proofs Require Import Distance Overlay OverlayGraph EdgeConnectivity
                                EulerArrangement MapCounts ReachableDec EulerBridge
-                               ClassCount.
+                               ClassCount Dart DartNextSpec DartFace
+                               ArrangementEMinus NumFacesShrink.
 
 Import ListNotations.
 
@@ -534,8 +561,208 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Assumption audit: base case + transfer skeleton + [EF-1] + [EF-3], no       *)
-(* Admitted/Axiom.                                                            *)
+(* [EF-4] Leaf-edge (degree-1 vertex) deltas, UNCONDITIONAL (Euler-free).       *)
+(*                                                                            *)
+(* Deleting a leaf edge (whose base is a degree-1 vertex, whose far endpoint   *)
+(* survives via some other edge) drops the vertex count by exactly one and    *)
+(* leaves the component count UNCHANGED.  Combined with [EF-4 partial]'s       *)
+(* already-closed face delta (`NumFacesShrink.num_faces_E_minus_shrink`) and   *)
+(* the pre-existing edge delta (`num_edges_E_minus`), this supplies EVERY      *)
+(* delta the leaf-peeling induction step needs -- the headline theorem below   *)
+(* assembles them into a single unconditional Euler transfer.                 *)
+(* -------------------------------------------------------------------------- *)
+
+(* Every OTHER vertex of E besides the leaf `fst d` already survives in
+   `E_minus E d`, given the far endpoint `snd d` does. Mirrors
+   `verts_incl_E_of_survivors`, but asymmetrically: only ONE endpoint is
+   assumed to survive (the leaf endpoint genuinely vanishes). *)
+Lemma verts_E_eq_cons_of_leaf : forall E d p,
+  In d E -> In (snd d) (verts (E_minus E d)) ->
+  In p (verts E) -> p <> fst d -> In p (verts (E_minus E d)).
+Proof.
+  intros E d p HdE Hb Hp Hne.
+  apply in_verts in Hp. destruct Hp as [e [He Hend]].
+  destruct (edge_eq_dec e d) as [-> | Hedne].
+  - destruct Hend as [Hf | Hs]; [ contradiction (Hne (eq_sym Hf)) | rewrite <- Hs; exact Hb ].
+  - apply in_verts. exists e. split; [ apply in_E_minus; split; assumption | exact Hend ].
+Qed.
+
+(* Delta V = -1: the leaf vertex `fst d` disappears; every other vertex,
+   including the far endpoint `snd d`, survives. *)
+Lemma num_vertices_E_minus_shrink : forall E d,
+  In d E -> ~ In (fst d) (verts (E_minus E d)) -> In (snd d) (verts (E_minus E d)) ->
+  num_vertices (E_minus E d) + 1 = num_vertices E.
+Proof.
+  intros E d HdE Ha Hb.
+  unfold num_vertices.
+  set (V := nodup point_eq_dec (verts (E_minus E d))).
+  assert (HaE : In (fst d) (verts E))
+    by (apply in_verts; exists d; split; [ exact HdE | left; reflexivity ]).
+  assert (Hcons_nodup : NoDup (fst d :: V))
+    by (constructor; [ intro Hc; apply nodup_In in Hc; exact (Ha Hc) | apply NoDup_nodup ]).
+  assert (Hincl1 : incl (nodup point_eq_dec (verts E)) (fst d :: V)).
+  { intros p Hp. apply nodup_In in Hp.
+    destruct (point_eq_dec p (fst d)) as [-> | Hne].
+    - left; reflexivity.
+    - right. unfold V. apply nodup_In.
+      exact (verts_E_eq_cons_of_leaf E d p HdE Hb Hp Hne). }
+  assert (Hincl2 : incl (fst d :: V) (nodup point_eq_dec (verts E))).
+  { intros p [<- | Hp].
+    - apply nodup_In. exact HaE.
+    - apply nodup_In. unfold V in Hp. apply nodup_In in Hp.
+      apply (verts_E_minus_incl E d). exact Hp. }
+  assert (Hlen : length (nodup point_eq_dec (verts E)) = length (fst d :: V)).
+  { apply Nat.le_antisymm.
+    - apply NoDup_incl_length; [ apply NoDup_nodup | exact Hincl1 ].
+    - apply NoDup_incl_length; [ exact Hcons_nodup | exact Hincl2 ]. }
+  rewrite Hlen. cbn [length]. unfold V. lia.
+Qed.
+
+(* If the leaf vertex `fst d` has vanished from `E_minus E d`, nothing can
+   reach it there except itself. *)
+Lemma reachable_Ed_x_a_false : forall E d x,
+  ~ In (fst d) (verts (E_minus E d)) -> x <> fst d -> ~ reachable (E_minus E d) x (fst d).
+Proof.
+  intros E d x Ha Hne Hr.
+  apply Ha. apply (reachable_ne_in_verts (E_minus E d) (fst d) x
+                     (reach_sym _ _ _ Hr) (fun h => Hne (eq_sym h))).
+Qed.
+
+(* Away from the vanished leaf vertex, E and (E minus d)-reachability agree
+   exactly: crossing `d` to reach the leaf is impossible on the (E minus d)
+   side (it has no edges left), so `reachable_add_edge_iff`'s two extra
+   disjuncts both collapse to False. *)
+Lemma reachable_agree_away_from_leaf : forall E d u v,
+  In d E -> ~ In (fst d) (verts (E_minus E d)) ->
+  u <> fst d -> v <> fst d ->
+  (reachable E u v <-> reachable (E_minus E d) u v).
+Proof.
+  intros E d u v HdE Ha Hu Hv.
+  rewrite (reachable_add_edge_iff E d u v HdE).
+  split.
+  - intros [H1 | [[H2a _] | [_ H3b]]].
+    + exact H1.
+    + exfalso. exact (reachable_Ed_x_a_false E d u Ha Hu H2a).
+    + exfalso. exact (reachable_Ed_x_a_false E d v Ha Hv (reach_sym _ _ _ H3b)).
+  - intro H. left. exact H.
+Qed.
+
+(* Delta C = 0: peeling a leaf edge changes no component -- the leaf vertex
+   was never a cut vertex for any OTHER pair (its only edge was `d` itself),
+   so every reachability class among the survivors is untouched; the leaf's
+   own class merely loses its (redundant) extra representative. *)
+Lemma num_components_E_minus_shrink : forall E d,
+  In d E -> ~ In (fst d) (verts (E_minus E d)) -> In (snd d) (verts (E_minus E d)) ->
+  num_components (E_minus E d) = num_components E.
+Proof.
+  intros E d HdE Ha Hb.
+  set (Ed := E_minus E d).
+  set (V := nodup point_eq_dec (verts Ed)).
+  assert (HbV : In (snd d) V) by (unfold V; apply nodup_In; exact Hb).
+  (* Step 1: num_components E, recomputed over (fst d :: V) instead of
+     nodup(verts E) -- both are the SAME vertex set. *)
+  assert (Hincl1 : forall p, In p (nodup point_eq_dec (verts E)) -> In p (fst d :: V)).
+  { intros p Hp. apply nodup_In in Hp.
+    destruct (point_eq_dec p (fst d)) as [-> | Hne].
+    - left; reflexivity.
+    - right. unfold V. apply nodup_In. exact (verts_E_eq_cons_of_leaf E d p HdE Hb Hp Hne). }
+  assert (Hincl2 : forall p, In p (fst d :: V) -> In p (nodup point_eq_dec (verts E))).
+  { intros p [<- | Hp].
+    - apply nodup_In. apply in_verts; exists d; split; [ exact HdE | left; reflexivity ].
+    - apply nodup_In. unfold V in Hp. apply nodup_In in Hp. apply (verts_E_minus_incl E d); exact Hp. }
+  assert (Heq1 : length (comp_reps E (nodup point_eq_dec (verts E))) = length (comp_reps E (fst d :: V))).
+  { apply Nat.le_antisymm.
+    - apply comp_reps_length_mono. exact Hincl1.
+    - apply comp_reps_length_mono. exact Hincl2. }
+  (* Step 2: (fst d :: V) collapses to V -- `fst d` is E-reachable to `snd d`,
+     already represented in V, so it contributes no new class. *)
+  assert (Hexists : existsb (fun z => reachable_b E z (fst d)) (comp_reps E V) = true).
+  { apply existsb_exists.
+    destruct (comp_reps_cover E V (snd d) HbV) as [r [Hr Hrb]].
+    exists r. split; [ exact Hr | ].
+    assert (Hab : reachable_b E (fst d) (snd d) = true)
+      by (apply reachable_b_true_iff, reach_one, adj_edge, HdE).
+    assert (Hba : reachable_b E (snd d) (fst d) = true) by (rewrite reachable_b_sym; exact Hab).
+    exact (reachable_b_trans E r (snd d) (fst d) Hrb Hba). }
+  assert (Hcons : comp_reps E (fst d :: V) = comp_reps E V).
+  { unfold comp_reps. cbn [class_reps]. fold (comp_reps E V). rewrite Hexists. reflexivity. }
+  (* Step 3: on V (which excludes the vanished leaf), E and Ed reachability
+     agree exactly, so their class-representative lists coincide outright. *)
+  assert (Hagree : forall x y, In x V -> In y V -> reachable_b E x y = reachable_b Ed x y).
+  { intros x y Hx Hy.
+    assert (Hxne : x <> fst d) by (intro Heq; subst x; unfold V in Hx; apply nodup_In in Hx; exact (Ha Hx)).
+    assert (Hyne : y <> fst d) by (intro Heq; subst y; unfold V in Hy; apply nodup_In in Hy; exact (Ha Hy)).
+    destruct (reachable_b E x y) eqn:Hxy1; destruct (reachable_b Ed x y) eqn:Hxy2;
+      try reflexivity; exfalso.
+    - apply reachable_b_true_iff in Hxy1.
+      apply (proj1 (reachable_agree_away_from_leaf E d x y HdE Ha Hxne Hyne)) in Hxy1.
+      apply reachable_b_true_iff in Hxy1. fold Ed in Hxy1. congruence.
+    - apply reachable_b_true_iff in Hxy2. fold Ed in Hxy2.
+      apply (proj2 (reachable_agree_away_from_leaf E d x y HdE Ha Hxne Hyne)) in Hxy2.
+      apply reachable_b_true_iff in Hxy2. congruence. }
+  assert (Hstep3 : comp_reps E V = comp_reps Ed V)
+    by (unfold comp_reps; apply class_reps_ext_on; exact Hagree).
+  unfold num_components. fold V. rewrite Heq1, Hcons, Hstep3. reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* [EF-4] Headline: leaf-edge deletion preserves `euler_characteristic`,       *)
+(* UNCONDITIONALLY, no Euler hypothesis anywhere.  Ties [EF-4 partial]'s face  *)
+(* delta together with the vertex/component deltas above and the pre-existing *)
+(* edge delta into ONE transfer theorem, exactly the shape                    *)
+(* `euler_transfer_bridge` / `euler_transfer_cycle` already give [EF-1]/[EF-2] *)
+(* and [EF-3]/[EF-2].                                                         *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma euler_transfer_shrink : forall E d,
+  num_vertices (E_minus E d) + 1 = num_vertices E ->
+  num_edges (E_minus E d) + 1 = num_edges E ->
+  num_faces (E_minus E d) = num_faces E ->
+  num_components (E_minus E d) = num_components E ->
+  (euler_characteristic E <-> euler_characteristic (E_minus E d)).
+Proof.
+  intros E d HV HE HF HC. unfold euler_characteristic. lia.
+Qed.
+
+Theorem euler_characteristic_leaf_edge_transfer : forall E d,
+  NoDup E ->
+  (forall v : Point, fan_ok (outgoing v (darts_of E))) ->
+  In d E -> ~ In (twin d) E ->
+  dbase d <> dtip d ->
+  outgoing (dbase d) (darts_of E) = [d] ->
+  fstep (darts_of E) d <> twin d ->
+  In (snd d) (verts (E_minus E d)) ->
+  (euler_characteristic E <-> euler_characteristic (E_minus E d)).
+Proof.
+  intros E d Hnodup Hfan HdE Hntwin Hproper Hleaf Hnotrecip Hb.
+  assert (Ha : ~ In (fst d) (verts (E_minus E d))).
+  { intro Hcontra. apply in_verts in Hcontra. destruct Hcontra as [e [He Hend]].
+    destruct (proj1 (in_E_minus E d e) He) as [HeE Hene].
+    destruct Hend as [Hf | Hs].
+    - (* `e` itself is based at the leaf vertex `fst d`. *)
+      assert (HeD : In e (darts_of E)) by (apply in_darts_of_orig; exact HeE).
+      assert (HeOut : In e (outgoing (dbase d) (darts_of E)))
+        by (apply in_outgoing; split; [ exact HeD | unfold dbase; exact Hf ]).
+      rewrite Hleaf in HeOut. destruct HeOut as [Heq | []]. exact (Hene (eq_sym Heq)).
+    - (* `twin e` is based at the leaf vertex `fst d`. *)
+      assert (HteD : In (twin e) (darts_of E)) by (apply in_darts_of_twin; exact HeE).
+      assert (HteOut : In (twin e) (outgoing (dbase d) (darts_of E))).
+      { apply in_outgoing. split; [ exact HteD | ].
+        unfold dbase, twin. cbn. exact Hs. }
+      rewrite Hleaf in HteOut. destruct HteOut as [Heq | []].
+      apply Hntwin.
+      assert (Hte : twin d = e) by (rewrite Heq, twin_involutive; reflexivity).
+      rewrite Hte. exact HeE. }
+  apply euler_transfer_shrink.
+  - exact (num_vertices_E_minus_shrink E d HdE Ha Hb).
+  - apply num_edges_E_minus, count_occ_1_of_NoDup; assumption.
+  - exact (num_faces_E_minus_shrink E d Hfan HdE Hntwin Hproper Hleaf Hnotrecip).
+  - exact (num_components_E_minus_shrink E d HdE Ha Hb).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Assumption audit: base case + transfer skeleton + [EF-1] + [EF-3] +         *)
+(* [EF-4] headline, no Admitted/Axiom.                                        *)
 (* -------------------------------------------------------------------------- *)
 Print Assumptions euler_characteristic_nil.
 Print Assumptions cycle_components_eq.
@@ -544,3 +771,6 @@ Print Assumptions euler_transfer_cycle.
 Print Assumptions reachable_add_edge_iff.
 Print Assumptions verts_incl_E_of_survivors.
 Print Assumptions bridge_components_split.
+Print Assumptions num_vertices_E_minus_shrink.
+Print Assumptions num_components_E_minus_shrink.
+Print Assumptions euler_characteristic_leaf_edge_transfer.
