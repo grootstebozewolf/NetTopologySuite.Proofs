@@ -803,3 +803,73 @@ than via these two classical charts) remains the larger, un-attempted project.
   - [ ] Hyperbolic WITH boundary: the Poincare disk model (angle-preserving,
     unlike Klein) once the corpus has a circle-arc / circle-line incidence
     test to match its curved (non-chord) geodesics.
+
+---
+
+## Observatory — JCT + Euler unification attempt: NEGATIVE RESULT (2026-07-02)
+
+**Goal attempted.** Discharge `EdgeFaceBridge.H_bridge_premise` (equivalently,
+`same_face E d (twin d) -> ~ reachable (E_minus E d) (dtip d) (dbase d)`) --
+the sole remaining named-hypothesis gap in `HBridgeEuler.H_bridge_premise_from_euler`
+after [EF-1]-[EF-4] made every OTHER delta unconditional -- WITHOUT routing
+through `euler_characteristic`, by connecting the combinatorial face-orbit
+world to the corpus's independently-developed real-coordinate JCT/winding-
+number strand (`WindingNumber.v`, `GeneralTautBridge.v`,
+`FaceRingSimple.face_ring_simple`).
+
+**The idea.** `FaceRingSimple.face_ring_simple` already turns a face's
+boundary walk (`FaceChain.face_chain` -> `RingExtract.ring_of_chain`) into a
+geometric `Ring`. If that ring were `ring_simple`, `GeneralTautBridge.
+parity_seam_offring_of_simple` would give a genuine winding-number-backed
+interior/exterior separation for it, which looked like it might bridge to
+the disconnection fact.
+
+**Why it fails, precisely.** `Overlay.ring_simple` requires, for every pair
+of DISTINCT ring edges `e1 <> e2`, `~ segments_intersect_properly (fst e1)
+(snd e1) (fst e2) (snd e2)`. When `same_face (darts_of E) d (twin d)` holds,
+BOTH `d` and `twin d` are edges of the SAME face's ring (that is exactly what
+`same_face` means). But `d = (dbase d, dtip d)` and `twin d = (dtip d, dbase
+d)` are literally the same segment reversed, and for any two points `A <> B`,
+`segments_intersect_properly A B B A` is TRUE for every `t` in `(0,1)`
+paired with `s := 1 - t` (both parametrisations trace the same point along
+the shared line). So **whenever `same_face D d (twin d)` holds, the
+resulting face ring is PROVABLY NOT `ring_simple`** -- the one hypothesis
+`GeneralTautBridge`'s whole winding-number chain requires is violated in
+EXACTLY the case we need it for. `parity_seam_offring_of_simple` (and
+everything built on `ring_simple`) is a dead end for this ring.
+
+This is not a new phenomenon: `FaceTwinAware.v`'s own header already records
+the SAME algebraic fact ("a segment properly crosses its own reversal") as
+the reason the FULL-dart-set predicate `pairwise_no_proper_cross (darts_of
+E)` is unsatisfiable, motivating that file's twin-aware replacement
+predicate `pairwise_no_proper_cross_twin_aware` (which explicitly EXEMPTS
+exactly the `d1 = twin d2` pair from the crossing check). That twin-aware
+predicate is satisfiable and useful elsewhere, but it says NOTHING about
+whether `d` and `twin d` cross -- it exempts the question entirely -- so it
+cannot supply the missing content either.
+
+**What the manual combinatorics show instead.** Splitting a face's closed
+walk at its two occurrences of `d` / `twin d` (positions `0` and `k`, `k`
+from `EdgeFaceBridge.same_face_twin_first_step_index`) does NOT yield an
+open path connecting `dbase d` and `dtip d`: it yields TWO already-closed
+sub-arcs (one a loop based at `dtip d`, the other a loop based at `dbase
+d`), exactly the `InArc1`/`InArc2` decomposition `PermCycleSplice.v` already
+formalises (and `NumFacesSplice.num_faces_E_minus_splice` already proves
+each sub-arc becomes ITS OWN face of `E_minus E d`). This confirms
+[EF-1]/[EF-2]'s existing machinery already captures the full LOCAL
+consequence of `same_face` at the single-face level; there is no additional
+local/combinatorial fact left to bank from this face alone. The genuinely
+missing content is GLOBAL: knowing the two new faces are simple, disjoint
+regions says nothing about whether `dbase d` and `dtip d` stay connected via
+some entirely different part of the graph -- that is a statement about the
+WHOLE embedding's planarity (equivalent in depth to Euler's formula itself,
+which is exactly why the corpus's authors flagged this as the one
+irreducible planar-content step).
+
+**Status.** No new axioms, no `Admitted`, no code changes from this
+investigation -- per the corpus's discipline, a dead-end route is recorded
+here rather than forced into a proof. `same_face <-> cut edge` remains open;
+this rules out the ring_simple/winding-number route specifically, so a
+future attempt should look for a genuinely GLOBAL argument (e.g. planar
+duality via an actual embedding/rotation-system genus argument, or a
+different induction altogether) rather than a per-face local one.
