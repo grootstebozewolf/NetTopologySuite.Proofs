@@ -17,9 +17,9 @@ Order of work: top-down from #64, with the freebie first.
 | 05 | ~~[Retire #65 — buffer and offset curves](closed/05-retire-65-buffer-and-offset.md)~~ **closed** → #515 #513 #514, ADR-0002 | grilling | — |
 | 06 | ~~[Retire #66 — precision models, snap rounding, OverlayNG](closed/06-retire-66-precision-and-overlay.md)~~ **closed** → #517 #518 #519 #520, ADR-0002 amended | grilling | — |
 | 07 | ~~[Retire #67 — RelateNG matrix and boundary handling](closed/07-retire-67-relateng.md)~~ **closed: decided not to close #67** → ADR-0003, #522, #523 | grilling | — |
-| 11 | [Retire #67 — second pass](11-retire-67-second-pass.md) | grilling | **#522 fixed** |
+| 11 | [Retire #67 — second pass](11-retire-67-second-pass.md) | grilling | ADR-0003 unconsumed, **#523**, **#503** — precondition 1 largely met by #530 |
 | 08 | ~~[Retire #68 — Delaunay triangulation and Voronoi diagrams](closed/08-retire-68-delaunay-voronoi.md)~~ **closed** → #525 (global tier), #526 | grilling | — |
-| 09 | [End #69's umbrella role and re-parent the standing epics](09-end-69-umbrella.md) | grilling | 04, 05, 06, 07, 08 |
+| 09 | [End #69's umbrella role and re-parent the standing epics](09-end-69-umbrella.md) | grilling | 11 (04–08 all closed) |
 | 10 | [Resync surviving issue bodies to corpus state](10-resync-surviving-bodies.md) | task | **#506 queue empty**, 09 |
 
 ```
@@ -30,13 +30,25 @@ Order of work: top-down from #64, with the freebie first.
 04 ═══════════════════════╗       │  #64 closed → #508 #509 #510 #511
 05 ═══════════════════════╣       │  #65 closed → #515 (hero shot), #513 #514
 06 ═══════════════════════╣       │  #66 closed → #517 #518 #519 #520
-07 ═══ 11 ────────────────╣       │  #67 NOT closed → ADR-0003, #522, #523
-       (needs #522 fixed) ║       │  11 = second pass
-08 ────────── 09 ─────────╝───────┘
+07 ═══ 11 ────────────────╣       │  #67 still open (reopened after an
+       (ADR-0003, #523,   ║       │  accidental keyword closure) → ADR-0003,
+        #503)             ║       │  #522 half-fixed by #530, #523
+08 ═══════════ 09 ────────╝───────┘  #68 closed → #525 (global tier), #526
 ```
 
-**Frontier:** 08 — one takeable. Ticket 11 is blocked on **#522** being fixed
-(an out-of-map code change), so #69's hinge now waits on 08 and 11.
+**Frontier: empty.** Every remaining ticket waits on out-of-map execution —
+proof work, an oracle fix, and documentation corrections — not on a decision:
 
-Three epics retired, one deliberately not: **an epic closes only when its closure
-comment would be true.**
+| Ticket | Waiting on |
+|---|---|
+| 11 · second pass at #67 | ADR-0003 consumed by the capstone work · #523 · #503's four defects. Precondition 1 largely met by #530. |
+| 09 · end #69's umbrella | ticket 11 |
+| 10 · resync surviving bodies | #506's split queue emptying · ticket 09 |
+
+**The map has done its job.** Four of the six epics are retired, the fifth is
+deliberately open with its blockers named and one of them now fixed, and the sixth
+is a hinge that cannot move until the fifth does. What remains is work, not
+wayfinding — so the next useful session is `/implement`, not this skill.
+
+Three epics retired on evidence, one deliberately not: **an epic closes only when
+its closure comment would be true.**

@@ -68,3 +68,36 @@ Facts a skill should know before writing to this tracker (audited 2026-08-22):
 - **PR bodies carry review-gate tags** — `topics:`, `witness:`, `claimId:`, and
   an issue reference; a tooling-only PR should also state its proof surface
   explicitly (see merged `#494`–`#500` for the pattern).
+
+## Machinery reads prose — two traps, both observed
+
+Commits, PR bodies and docs in this repo routinely *discuss* issues and proof
+artefacts rather than acting on them. Two scanners cannot tell the difference,
+and both have already fired on text that asserted the opposite of what they
+concluded.
+
+**1. A negated closing keyword still closes.** GitHub matches
+`close`/`closes`/`closed`/`fix`/`fixes`/`resolve`/`resolves` immediately followed
+by an issue reference, and ignores everything before it. This subject line closed
+issue #67:
+
+```
+Resolve ticket 07: decide NOT to close #67; settle the convention as ADR-0003
+```
+
+The commit's entire purpose was recording the decision *not* to close it. When a
+commit or PR discusses an issue it is not closing, avoid those verbs next to the
+number — write **retire**, **stands down**, **declines to close**, **leaves
+open**, or move the reference into a separate clause. Reserve the keywords for
+closures you intend.
+
+**2. The review gate's "No new Admitted" check scans added lines regardless of
+file type.** A docs-only PR (#502) was refuted because a sentence *asserted* the
+corpus contains no admitted proofs and therefore contained the token. Write about
+admitted proofs without the literal `Admitted.` form, or expect the block. Note
+the build guard is looser than the review gate here: `scripts/check_admitted.sh`
+only walks `theories*/` and anchors the pattern to a line of its own.
+
+The general rule: **when writing about a mechanism, assume its scanner is
+reading.** Both traps cost a round trip, and both looked like a substantive
+review failure until the text was read.
