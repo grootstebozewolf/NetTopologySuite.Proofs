@@ -97,6 +97,10 @@ does not set WSJF.
   buffer refuse via `ensureNoCurvedComponents` and stamp via
   `getLinearized`. Ticket 30 closed. See
   [`closed/30-compoundcurve-flatten-elimination.md`](tickets/closed/30-compoundcurve-flatten-elimination.md).
+- ST_Clothoid, ST_Circle, ST_GeodesicString, ST_NURBSCurve, and
+  ST_SpiralCurve are instantiable in ISO/IEC 13249-3 §4.2.1. They
+  are not optional extras. GEOS WKT refuses them as SQL/MM types.
+  Do not remint `508-*`. Do not grow `CurveSegment`. Not leftover `Ⅺ`.
 
 ## Fog
 

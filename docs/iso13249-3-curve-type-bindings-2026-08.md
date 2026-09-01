@@ -40,6 +40,12 @@ TYPE` definitions in clauses 5–8):
 | ST_Curve | ST_Geometry | **no** (`NOT INSTANTIABLE`) | §4.2.4 / §7.1.1 | `Curve` (abstract), `Geometries/Curve.cs:10` |
 | ST_LineString | ST_Curve | yes | §4.2.5 / §7.2.1 | `LineString` |
 | ST_CircularString | ST_Curve | yes | §4.2.6 / §7.3.1 | `Curves/CircularString.cs:36` |
+| ST_Circle | ST_Curve | yes | §4.2.7 | absent — **not an optional extra** |
+| ST_GeodesicString | ST_Curve | yes | §4.2.8 | absent — **not an optional extra** |
+| ST_EllipticalCurve | ST_Curve | yes | §4.2.9 | absent — **not an optional extra** |
+| ST_NURBSCurve | ST_Curve | yes | §4.2.10 | absent — **not an optional extra** |
+| ST_Clothoid | ST_Curve | yes | §4.2.11 | absent — **not an optional extra** |
+| ST_SpiralCurve | ST_Curve | yes | §4.2.12 | absent — **not an optional extra** |
 | ST_CompoundCurve | ST_Curve | yes | §4.2.13 / §7.10.1 | `Curves/CompoundCurve.cs:36` |
 | ST_Surface | ST_Geometry | **no** | §4.2.14 / §8.1.1 | `Surface<T>` (abstract), `Geometries/Surface.cs:16` |
 | ST_CurvePolygon | ST_Surface | yes | §4.2.15 / §8.2.1 | `Curves/CurvePolygon.cs:38` (`Surface<Curve>`) |
@@ -47,14 +53,17 @@ TYPE` definitions in clauses 5–8):
 | ST_MultiCurve | ST_GeomCollection | "may be instantiable" | §4.2.25 | `Curves/MultiCurve.cs:19` |
 | ST_MultiSurface | ST_GeomCollection | "may be instantiable" | §4.2.27 | `Curves/MultiSurface.cs:19` |
 
-The spec also defines further instantiable ST_Curve subtypes the branch does not
-model: ST_Circle (§4.2.7), ST_GeodesicString (§4.2.8), ST_EllipticalCurve
-(§4.2.9), ST_NURBSCurve (§4.2.10), ST_Clothoid (§4.2.11), ST_SpiralCurve
-(§4.2.12 — spiral types "initially limited to" clothoid, bloss, biquadratic,
-sine, cosine). These are the CONTEXT.md "expansion backlog", verified present in
-the spec. §4.2.1 also explicitly permits an implementation to add subtypes and
-to interpose types, provided subtype relationships are preserved — this is the
-clause that legitimises `Curve`/`Surface<T>` as interposed abstractions.
+ST_Circle, ST_GeodesicString, ST_EllipticalCurve, ST_NURBSCurve,
+ST_Clothoid, and ST_SpiralCurve (spiral types "initially limited to"
+clothoid, bloss, biquadratic, sine, cosine) are instantiable ST_Curve
+subtypes in the §4.2.1 hierarchy. They are **not optional extras**.
+The NTS curve-foundation branch does not yet carry them. GEOS WKT
+names them and refuses; calling them "Unknown type" is a lie.
+§4.2.1 also permits an implementation to add subtypes and to interpose
+types, provided subtype relationships are preserved — that clause
+legitimises `Curve`/`Surface<T>` as interposed abstractions, not a
+licence to drop these types from the model. Do not remint `508-*`.
+Do not grow `CurveSegment`.
 
 ST_Curve semantics that bind every curve subtype (§4.2.4):
 

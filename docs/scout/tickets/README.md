@@ -66,6 +66,9 @@ CURVEPOLYGON [`map-curvepolygon.md`](../map-curvepolygon.md) (tickets 31 / 32; 3
 MULTICURVE [`map-multicurve.md`](../map-multicurve.md) (tickets 33 / 34; 34 closed on GEOS),
 MULTISURFACE [`map-multisurface.md`](../map-multisurface.md) (tickets 35 / 36; 36 closed on GEOS).
 Do not remint `#509`. Off JTS #7. Do not steal across leftovers. NTS/JTS leftover sites stay an engine grill.
+ST_Clothoid / ST_Circle / ST_GeodesicString / ST_NURBSCurve / ST_SpiralCurve
+are instantiable in ISO/IEC 13249-3 §4.2.1 — not optional extras. GEOS WKT
+refuses them as SQL/MM types. Do not remint `508-*`. Not leftover `Ⅺ`.
 
 The #522 children (bar 1 → bar 2) have their own
 frontier: [`docs/scout/map-522.md`](../map-522.md). Wrap-up leftovers:

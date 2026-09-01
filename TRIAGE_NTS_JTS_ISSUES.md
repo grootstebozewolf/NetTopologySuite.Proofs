@@ -121,6 +121,12 @@ proven, soundness or coordinates open) · **⬜ planned** (not yet started) ·
 | **TRI-VR** | Voronoi on curved input | #68 | — | ⬜ |
 | **TB-\* / F-RD** | TestBuilder rendering / `ShapeWriter` hooks | — | — | — not proof-relevant |
 
+**§4.2.1 types that are not optional extras.** `ST_Clothoid`,
+`ST_Circle`, `ST_GeodesicString`, `ST_NURBSCurve`, `ST_SpiralCurve`
+are instantiable ST_Curve subtypes in ISO/IEC 13249-3 §4.2.1. GEOS
+WKT names them and refuses. Not leftover `Ⅺ`. Do not remint `508-*`.
+Do not grow `CurveSegment`. Do not flip F-CP / F-MC / F-MS / V-CP.
+
 **Reading the table against the EPIC's Definition of Done (§10).** JTS#1195's
 DoD requires curve-preserving output "**where mathematically sound**" — which is
 exactly what the ✅ rows certify and the 🟡 rows bound. The §7 "arc intersection
