@@ -4849,6 +4849,15 @@ let run_cp_boundary_simplify () =
       (if triple_int_safe a b c then "INTSAFE" else "APPROX")
   done
 
+(* ----- SQLMM_WKT (structural I/O identity; no binary64).
+   ISO/IEC 13249-3 §4.2.1 instantiable ST_Curve subtypes that the engines
+   do not yet carry, plus the SPIRALTYPE open-set lexer deviation.
+   Implementation lives in sqlmm_wkt.ml so this mode cannot grow a
+   hand-rolled float kernel.  See oracle/red_sqlmm_wkt_tests.py. *)
+let run_sqlmm_wkt () =
+  let line = input_line stdin in
+  print_endline (Sqlmm_wkt.parse_line line)
+
 (* ----- Mode dispatch. ----------------------------------------------------- *)
 
 (* Persistent loop: SIMPLIFY exits after one call (it reads its input
@@ -4932,6 +4941,7 @@ let () =
        | "ARC_BUFFER_SIMPLE"        -> run_arc_buffer_simple ()
        | "ARC_SIMPLIFY_DECISION"    -> run_arc_simplify_decision ()
        | "ARC_OFFSET_FILTERED"      -> run_arc_offset_filtered ()
+       | "SQLMM_WKT"                -> run_sqlmm_wkt ()
        | other -> failwith (Printf.sprintf "oracle: unknown mode: %s" other));
       flush stdout;
       loop ()

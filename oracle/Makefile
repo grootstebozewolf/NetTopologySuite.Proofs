@@ -45,7 +45,7 @@ FFI_LDLIBS  := -L$(OCAML_WHERE) -lasmrun_pic -lm -ldl -lpthread
 SCOUT_IC_LIB   := libscout_incircle.$(FFI_SOEXT)
 SCOUT_IC_PROBE := scout_incircle_probe
 
-.PHONY: all clean ffi ffi-parity jts1093-orient-scout scout-incircle-ffi jts1094-scout arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt winding-number-tests disc-overlay-tests lec-circle-tests obstacle-distance-tests i-circular-tests ieee-oracle-bridge-tests
+.PHONY: all clean ffi ffi-parity jts1093-orient-scout scout-incircle-ffi jts1094-scout arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt winding-number-tests disc-overlay-tests lec-circle-tests obstacle-distance-tests i-circular-tests ieee-oracle-bridge-tests sqlmm-wkt-tests
 
 all: $(TARGET)
 
@@ -237,11 +237,22 @@ extracted.cmx: extracted.ml extracted.cmi
 relate_matrix.cmx: relate_matrix.ml
 	$(OCAMLOPT) -c $<
 
-driver.cmx: driver.ml extracted.cmi relate_matrix.cmx
+sqlmm_wkt.cmx: sqlmm_wkt.ml
+	$(OCAMLOPT) -c $<
+
+driver.cmx: driver.ml extracted.cmi relate_matrix.cmx sqlmm_wkt.cmx
 	$(OCAMLOPT) -package zarith -c driver.ml
 
-$(TARGET): extracted.cmx driver.cmx relate_matrix.cmx
-	$(OCAMLOPT) -package str,zarith -linkpkg extracted.cmx relate_matrix.cmx driver.cmx -o $@
+$(TARGET): extracted.cmx driver.cmx relate_matrix.cmx sqlmm_wkt.cmx
+	$(OCAMLOPT) -package str,zarith -linkpkg extracted.cmx relate_matrix.cmx sqlmm_wkt.cmx driver.cmx -o $@
+
+# Structural SQL/MM WKT oracle (no extracted.ml).  Same SQLMM_WKT protocol
+# as oracle_bin; used to run red_sqlmm_wkt_tests.py without a full rebuild.
+sqlmm_wkt_bin: sqlmm_wkt.ml sqlmm_wkt_main.ml
+	ocamlopt -o sqlmm_wkt_bin sqlmm_wkt.ml sqlmm_wkt_main.ml
+
+sqlmm-wkt-tests: sqlmm_wkt_bin
+	cd .. && ORACLE_BIN=oracle/sqlmm_wkt_bin python3 oracle/red_sqlmm_wkt_tests.py
 
 # ---- Phase 5: in-process C ABI (libntsrocq) --------------------------------
 
@@ -303,6 +314,5 @@ jts1094-scout: scout-incircle-ffi $(TARGET)
 
 clean:
 	rm -f *.cmi *.cmo *.cmx *.o $(TARGET) $(FFI_LIB) $(FFI_PROBE) \
-	  $(SCOUT_IC_LIB) $(SCOUT_IC_PROBE) scout_incircle_ml.o scout_incircle_stubs.o
-# Extracted I_circles_z (I_CIRCULAR). Gates HIT / EMPTY / DECLINE / TOUCH / replay.
-	cd .. && python3 oracle/gen_i_circular_tests.py
+	  $(SCOUT_IC_LIB) $(SCOUT_IC_PROBE) scout_incircle_ml.o scout_incircle_stubs.o \
+	  sqlmm_wkt_bin

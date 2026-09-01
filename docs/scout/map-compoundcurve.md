@@ -100,7 +100,8 @@ does not set WSJF.
 - ST_Clothoid, ST_Circle, ST_GeodesicString, ST_NURBSCurve, and
   ST_SpiralCurve are instantiable in ISO/IEC 13249-3 §4.2.1. They
   are not optional extras. GEOS WKT refuses them as SQL/MM types.
-  Do not remint `508-*`. Do not grow `CurveSegment`. Not leftover `Ⅺ`.
+  Oracle mode `SQLMM_WKT` parses type identity (ticket 37). Do not
+  remint `508-*`. Do not grow `CurveSegment`. Not leftover `Ⅺ`.
 
 ## Fog
 

@@ -35,6 +35,7 @@ Order of work: top-down from #64, with the freebie first.
 | 34 | ~~[Silent MultiLineString collapse — MULTICURVE type honesty](closed/34-multicurve-silent-multilinestring-collapse.md)~~ **closed** → GEOS OverlayNG | implement | 33 |
 | 35 | ~~[Chart MULTISURFACE type honesty](closed/35-multisurface-type-chart.md)~~ **closed** → [`map-multisurface.md`](../map-multisurface.md) | grilling | — |
 | 36 | ~~[Silent MultiPolygon collapse — MULTISURFACE type honesty](closed/36-multisurface-silent-multipolygon-collapse.md)~~ **closed** → GEOS `restrictToSurfaces` | implement | 35 |
+| 37 | ~~[SQL/MM WKT oracle — CLOTHOID / CIRCLE / GEODESICSTRING / NURBSCURVE / SPIRALCURVE](closed/37-sqlmm-wkt-oracle.md)~~ **closed** → oracle `SQLMM_WKT` | implement | 30 / 32 / 34 / 36 |
 
 ```
 01 ══════════════════════════════════════ closed 2026-08-22 (#482)
@@ -68,7 +69,9 @@ MULTISURFACE [`map-multisurface.md`](../map-multisurface.md) (tickets 35 / 36; 3
 Do not remint `#509`. Off JTS #7. Do not steal across leftovers. NTS/JTS leftover sites stay an engine grill.
 ST_Clothoid / ST_Circle / ST_GeodesicString / ST_NURBSCurve / ST_SpiralCurve
 are instantiable in ISO/IEC 13249-3 §4.2.1 — not optional extras. GEOS WKT
-refuses them as SQL/MM types. Do not remint `508-*`. Not leftover `Ⅺ`.
+refuses them as SQL/MM types. Oracle mode `SQLMM_WKT` parses type identity
+(ticket 37; SPIRALTYPE open-set lexer deviation in the clause-book §8).
+Do not remint `508-*`. Not leftover `Ⅺ`.
 
 The #522 children (bar 1 → bar 2) have their own
 frontier: [`docs/scout/map-522.md`](../map-522.md). Wrap-up leftovers:

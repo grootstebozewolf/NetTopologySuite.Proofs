@@ -53,6 +53,7 @@ __pycache__/
 
 # Prebuilt oracle binary (from CI artifacts for local harden/vector gen; reproducible via Dockerfile+make)
 oracle/oracle_bin
+oracle/sqlmm_wkt_bin
 oracle/extracted.ml
 oracle/circular_cook_extracted.ml
 oracle/circular_cook_extracted.mli
