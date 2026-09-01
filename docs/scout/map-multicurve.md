@@ -44,7 +44,7 @@ surface leftover; it is not this collection).
 
 | Word | What it is | Park | Status |
 |---|---|---|---|
-| Silent MultiLineString collapse | Overlay / hull / TestBuilder eat `MULTICURVE` and emit `MULTILINESTRING` / `LineString[]` chords with no stamp; or treat the JTS `MultiLineString` supertype as if members were linearized | leftover **silent-multilinestring-collapse** | Named here. HOLD implement stands. Ticket 34. Distinct from ticket 30 (single compound Flatten) and ticket 32 (CURVEPOLYGON → POLYGON). |
+| Silent MultiLineString collapse | Overlay / hull / TestBuilder eat `MULTICURVE` and emit `MULTILINESTRING` / `LineString[]` chords with no stamp; or treat the JTS `MultiLineString` supertype as if members were linearized | leftover **silent-multilinestring-collapse** | Named on GEOS OverlayNG. Ticket 34 closed. Distinct from ticket 30 (single compound Flatten) and ticket 32 (CURVEPOLYGON → POLYGON). |
 | Named linear fallback | `Linearize` / `toLinear` / `chord_approx_ring` / OverlayNGCurve `APPROX` + `isApproximate()` | technique (named) | Allowed. JTS `MultiCurve.toLinear` returns `MultiLineString` and is named. Coq `CurveLinearise.v : chord_approx_ring_closed` is the named ring bridge, not a MultiCurve pin. |
 | Collection / member list | Members stay ST_Curve; the collection is not a COMPOUNDCURVE splice | already named on the engine; **missing in Coq** | JTS type exists. NTS `OgcGeometryType.MultiCurve = 11`. Coq has `CurveGeometry.v : CurveSegment` (`CSChord` \| `CSArc`) as a *member* alphabet and no MultiCurve carrier. `CurveGeometry.v : valid_curve_geometry` is `list CurvePolygon` (F-MS-shaped). Do not cite it as MultiCurve. |
 
@@ -80,7 +80,7 @@ does not set WSJF.
 
 | Id | Leftover | Kind | Park | Status | Do not |
 |---|---|---|---|---|---|
-| silent-multilinestring-collapse | Silent emit of `MULTILINESTRING` / `LineString[]` at overlay / hull / TestBuilder, or treating the `MultiLineString` supertype as linearized members | CRV-MC | technique | Named here. HOLD implement stands (no Architect SIGN on this leftover). Ticket 34. | steal ticket 30; steal ticket 32; steal `#509`; treat WKB-8-12 as overlay honesty; merge into JTS #7; mint a Coq MultiCurve carrier as this leftover; mint a second MultiCurve type |
+| silent-multilinestring-collapse | Silent emit of `MULTILINESTRING` / `LineString[]` at overlay / hull / TestBuilder, or treating the `MultiLineString` supertype as linearized members | CRV-MC | technique | Named on GEOS OverlayNG (MULTICURVE ∪ POINT does not emit MULTILINESTRING). Ticket 34 closed. Coq still has no MultiCurve carrier. NTS/JTS leftover sites stay an engine grill. | steal ticket 30; steal ticket 32; steal `#509`; treat WKB-8-12 as overlay honesty; merge into JTS #7; mint a Coq MultiCurve carrier as this leftover; mint a second MultiCurve type |
 | — | COMPOUNDCURVE flatten-elimination | CRV-CC / ticket 30 | technique | Sibling in this packet. Single contiguous compound. | steal ticket 30 for a MultiCurve site |
 | — | CURVEPOLYGON silent POLYGON collapse | CRV-CP / ticket 32 | technique | Sibling in this packet. Surface type. | steal ticket 32 |
 | — | F-MS / MULTISURFACE | sibling | sequencing | `CurveGeometry.v : valid_curve_geometry` is closer to this than to MultiCurve. Not this letter. | pull F-MS into CRV-MC; remint the bundled F-CP / F-MC / F-MS row as done |
@@ -115,14 +115,17 @@ does not set WSJF.
 - `#509` owns Jordan. F-CP / F-MC / F-MS TRIAGE rows do not flip.
 - COMPOUNDCURVE ticket 30 and CURVEPOLYGON ticket 32 stay siblings.
 - JTS #27 is out. JTS #38 stays off #7. No public noder.
-- HOLD merge into #7. HOLD a second MultiCurve type. HOLD implement
-  for ticket 34. No priority from this letter.
+- HOLD merge into #7. HOLD a second MultiCurve type. No priority
+  from this letter.
+- `/implement 660` on GEOS named the leftover: OverlayNG keeps
+  MULTICURVE. Ticket 34 closed. See
+  [`closed/34-multicurve-silent-multilinestring-collapse.md`](tickets/closed/34-multicurve-silent-multilinestring-collapse.md).
 
 ## Fog
 
 - **Which NTS / JTS overlay entry still emits MultiLineString without
-  a stamp** is an engine grill for a later implement, not a Coq lemma
-  in this letter. HOLD implement stands until Architect SIGN.
+  a stamp** is an NTS/JTS engine leftover, not a Coq lemma. GEOS
+  OverlayNG already keeps MULTICURVE.
 - **NTS `develop` has the enum and not the class.** The clause-book
   path is the curve-foundation branch. Do not treat the missing
   `.cs` file on `develop` as Bea dropping the type.
@@ -132,9 +135,10 @@ does not set WSJF.
 
 ## Frontier
 
-Ticket 33 (this chart) is closed. Ticket 34 names the leftover.
-HOLD implement stands. Next useful session is Architect SIGN on
-ticket 34, or stop. Do not `/implement` ticket 34 from this letter.
+Ticket 33 (this chart) is closed. Ticket 34 is closed on GEOS:
+OverlayNG keeps MULTICURVE. Coq still has no MultiCurve carrier.
+NTS/JTS overlay sites stay an engine grill. Next useful session
+is an NTS or JTS letter, or stop.
 
 Sibling COMPOUNDCURVE tickets 29 / 30 live in this packet
 (`map-compoundcurve.md`). Sibling CURVEPOLYGON tickets 31 / 32
@@ -148,14 +152,14 @@ valid_curve_geometry ══════════ list CurvePolygon ── F-M
 I/O type 11 / WKB-8-12 ════════ identity, not op honesty ── off #7
 JTS MultiCurve ════════════════ Option A + named toLinear
 #509 V-CP Jordan ══════════════ surface ── stays OPEN
-CRV-CC ticket 30 ══════════════ lineal Flatten ── sibling
-CRV-CP ticket 32 ══════════════ POLYGON emit ── sibling
+CRV-CC ticket 30 ══════════════ lineal Flatten ── sibling, closed on GEOS
+CRV-CP ticket 32 ══════════════ POLYGON emit ── sibling, closed on GEOS
 
-silent-multilinestring-collapse ── ticket 34 ── HOLD implement stands
+silent-multilinestring-collapse ── ticket 34 closed on GEOS
 #27 ── out
 #38 ── Option C DCEL ── off #7 ── no public noder
 second type / type-11 reader / GEO-TIN 15–17 ── HOLD
-Coq MultiCurve carrier ── missing ── not this letter
+Coq MultiCurve carrier ── missing ── not this leftover
 ```
 
 ## Do not

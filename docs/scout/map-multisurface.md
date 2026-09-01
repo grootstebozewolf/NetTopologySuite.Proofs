@@ -43,7 +43,7 @@ per-member true-region leftover; it is not this collection).
 
 | Word | What it is | Park | Status |
 |---|---|---|---|
-| Silent MultiPolygon collapse | Overlay / hull / TestBuilder eat `MULTISURFACE` and emit `MULTIPOLYGON` / `Polygon[]` chords with no stamp; or treat the JTS `MultiPolygon` supertype as if members were linearized | leftover **silent-multipolygon-collapse** | Named here. HOLD implement stands. Ticket 36. Distinct from ticket 32 (single CURVEPOLYGON → POLYGON) and ticket 34 (MULTICURVE → MULTILINESTRING). |
+| Silent MultiPolygon collapse | Overlay / hull / TestBuilder eat `MULTISURFACE` and emit `MULTIPOLYGON` / `Polygon[]` chords with no stamp; or treat the JTS `MultiPolygon` supertype as if members were linearized | leftover **silent-multipolygon-collapse** | Named on GEOS `restrictToSurfaces` (`hasCurvedTypes`). Ticket 36 closed. Distinct from ticket 32 (single CURVEPOLYGON → POLYGON) and ticket 34 (MULTICURVE → MULTILINESTRING). |
 | Named linear fallback | `Linearize` / `toLinear` / `to_geometry` / `chord_approx_ring` / OverlayNGCurve `APPROX` + `isApproximate()` | technique (named) | Allowed. JTS `MultiSurface.toLinear` returns `MultiPolygon` and is named. Coq `CurveGeometry.v : to_geometry` maps `list CurvePolygon` to linear `Geometry`. `CurveLinearise.v : to_geometry_outer_ring_closed` is the named ring bridge. |
 | Collection / member list | Members stay ST_Surface / CurvePolygon; the collection is not one CurvePolygon | already landed (structural) | Coq `CurveGeometry.v : valid_curve_geometry` is `Forall valid_curve_polygon` on `list CurvePolygon`. Nil/cons: `CurveGeometry.v : valid_curve_geometry_nil` / `CurveGeometry.v : valid_curve_geometry_cons`. Structural only. Not Jordan. Not overlay honesty. |
 
@@ -82,7 +82,7 @@ does not set WSJF.
 
 | Id | Leftover | Kind | Park | Status | Do not |
 |---|---|---|---|---|---|
-| silent-multipolygon-collapse | Silent emit of `MULTIPOLYGON` / `Polygon[]` at overlay / hull / TestBuilder, or treating the `MultiPolygon` supertype as linearized members | CRV-MS | technique | Named here. HOLD implement stands (no Architect SIGN on this leftover). Ticket 36. | steal ticket 32; steal ticket 34; steal `#509`; treat `to_geometry` / WKB-8-12 as overlay honesty; merge into JTS #7; mint a second MultiSurface type |
+| silent-multipolygon-collapse | Silent emit of `MULTIPOLYGON` / `Polygon[]` at overlay / hull / TestBuilder, or treating the `MultiPolygon` supertype as linearized members | CRV-MS | technique | Named on GEOS `CascadedPolygonUnion::restrictToSurfaces` (`hasCurvedTypes`, not `hasCurvedComponents`). Ticket 36 closed. OverlayNG already kept MULTISURFACE. NTS/JTS leftover sites stay an engine grill. | steal ticket 32; steal ticket 34; steal `#509`; treat `to_geometry` / WKB-8-12 as overlay honesty; merge into JTS #7; mint a second MultiSurface type |
 | — | CURVEPOLYGON silent POLYGON collapse | CRV-CP / ticket 32 | technique | Sibling in this packet. One surface. | steal ticket 32 for a MultiSurface site |
 | — | MULTICURVE silent MultiLineString collapse | CRV-MC / ticket 34 | technique | Sibling in this packet. Lineal collection. | steal ticket 34 |
 | — | COMPOUNDCURVE flatten-elimination | CRV-CC / ticket 30 | technique | Sibling in this packet. Single contiguous compound. | steal ticket 30 |
@@ -119,14 +119,19 @@ does not set WSJF.
 - `#509` owns Jordan. F-CP / F-MC / F-MS TRIAGE rows do not flip.
 - Tickets 30 / 32 / 34 stay siblings.
 - JTS #27 is out. JTS #38 stays off #7. No public noder.
-- HOLD merge into #7. HOLD a second MultiSurface type. HOLD implement
-  for ticket 36. No priority from this letter.
+- HOLD merge into #7. HOLD a second MultiSurface type. No priority
+  from this letter.
+- `/implement 660` on GEOS named the leftover:
+  `CascadedPolygonUnion::restrictToSurfaces` now checks
+  `hasCurvedTypes()`. Ticket 36 closed. See
+  [`closed/36-multisurface-silent-multipolygon-collapse.md`](tickets/closed/36-multisurface-silent-multipolygon-collapse.md).
 
 ## Fog
 
 - **Which NTS / JTS overlay entry still emits MultiPolygon without a
-  stamp** is an engine grill for a later implement, not a Coq lemma
-  in this letter. HOLD implement stands until Architect SIGN.
+  stamp** is an NTS/JTS engine leftover, not a Coq lemma. GEOS
+  OverlayNG already keeps MULTISURFACE;
+  `restrictToSurfaces` now keeps all-linear CurvePolygon members.
   OverlayNGCurve already has named exact MultiSurface cells; unnamed
   cells still densify.
 - **NTS `develop` has the enum and not the class.** The clause-book
@@ -137,9 +142,10 @@ does not set WSJF.
 
 ## Frontier
 
-Ticket 35 (this chart) is closed. Ticket 36 names the leftover.
-HOLD implement stands. Next useful session is Architect SIGN on
-ticket 36, or stop. Do not `/implement` ticket 36 from this letter.
+Ticket 35 (this chart) is closed. Ticket 36 is closed on GEOS:
+`restrictToSurfaces` checks `hasCurvedTypes()`. NTS/JTS overlay
+sites stay an engine grill. Next useful session is an NTS or JTS
+letter, or stop.
 
 Sibling COMPOUNDCURVE tickets 29 / 30 live in this packet
 (`map-compoundcurve.md`). Sibling CURVEPOLYGON tickets 31 / 32
@@ -154,10 +160,10 @@ to_geometry ══════════════════ named collect
 I/O type 12 / WKB-8-12 ════════ identity, not op honesty ── off #7
 JTS MultiSurface ══════════════ Option A + named toLinear
 #509 V-CP Jordan ══════════════ per-member true-region ── stays OPEN
-CRV-CP ticket 32 ══════════════ one-surface POLYGON emit ── sibling
-CRV-MC ticket 34 ══════════════ lineal MULTILINESTRING emit ── sibling
+CRV-CP ticket 32 ══════════════ one-surface POLYGON emit ── sibling, closed on GEOS
+CRV-MC ticket 34 ══════════════ lineal MULTILINESTRING emit ── sibling, closed on GEOS
 
-silent-multipolygon-collapse ── ticket 36 ── HOLD implement stands
+silent-multipolygon-collapse ── ticket 36 closed on GEOS
 #27 ── out
 #38 ── Option C DCEL ── off #7 ── no public noder
 second type / type-12 reader / GEO-TIN 15–17 ── HOLD

@@ -1,7 +1,8 @@
 # Flatten-elimination — silent COMPOUNDCURVE chord path
 
-**Type:** implement · **Map:** [COMPOUNDCURVE](../map-compoundcurve.md)
-**Blocked by:** ~~[Chart COMPOUNDCURVE flatten-elimination](closed/29-compoundcurve-flatten-chart.md)~~ ✔
+**Type:** implement · **Map:** [COMPOUNDCURVE](../../map-compoundcurve.md)
+**Claimed:** implement 2026-09-01 · **Closed:** 2026-09-01 (GEOS named the leftover)
+**Blocked by:** ~~[Chart COMPOUNDCURVE flatten-elimination](29-compoundcurve-flatten-chart.md)~~ ✔
 **claimId:** none · **GitHub:** none · **witness:** none
 
 Board card: Notion CRV-CC. Architect SIGN lifted HOLD implement for
@@ -42,3 +43,19 @@ A later `/implement` can point at one named site (engine or Coq)
 and say whether it refused or stamped. This ticket stays open until
 that letter lands. Do not mint `CRV-CC` as a Proofs claimId unless
 that letter names a new lemma.
+
+## Resolution
+
+**Implemented 2026-09-01 on GEOS** (`cursor/sqlmm-type-honesty-ccfa`).
+
+Named site: `geos::util::ensureNoCurvedComponents` (hull / centroid /
+buffer / …). It **refuses** a `COMPOUNDCURVE` with curved components
+and names `getLinearized` as the only allowed linear fallback.
+
+GEOS OverlayNG already keeps `COMPOUNDCURVE` / `CIRCULARSTRING` when
+`CurveToLineParams` is unset. C API overlay does not flatten just
+because those params are registered.
+
+H-CC exact hull stays on tracker 424
+(`HullExactExtrema.v : h_cc_still_densify`). No new Coq lemma.
+claimId: none. witness: none.

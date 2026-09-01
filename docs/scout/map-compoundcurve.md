@@ -36,7 +36,7 @@ Epic creation stays owner-scope.
 
 | Word | What it is | Park | Status |
 |---|---|---|---|
-| Silent chord Flatten | Overlay / hull / TestBuilder eat `COMPOUNDCURVE` as `Coordinate[]` / `LineString` chords with no stamp | leftover **flatten-elimination** | Named here. HOLD implement lifted for this only. Ticket 30. |
+| Silent chord Flatten | Overlay / hull / TestBuilder eat `COMPOUNDCURVE` as `Coordinate[]` / `LineString` chords with no stamp | leftover **flatten-elimination** | Named on GEOS. Ticket 30 closed. `ensureNoCurvedComponents` refuses and names `getLinearized`. NTS/JTS overlay path still `Coordinate[]`. |
 | Named linear fallback | `Linearize` / `toLinear` / `chord_approx_ring` / OverlayNGCurve `APPROX` + `isApproximate()` | technique (named) | Allowed. NTS `ILinearizable.Linearize`. JTS `toLinear`. Coq `CurveLinearise.v : chord_approx_ring_closed`. Clothoid / uncertified mix stays named. |
 | Member / splice flatten | LEC min-over-members; ISO nested-CC splice into the component list | already landed | `LECFlattenRow.v : empty_disk_flatten_iff`. #615-b nested-CC splice (`2c4c7bc`) is §7.10.1, not chord densify. Do not remint `615-b`. |
 
@@ -69,7 +69,7 @@ does not set WSJF.
 
 | Id | Leftover | Kind | Park | Status | Do not |
 |---|---|---|---|---|---|
-| flatten-elimination | Silent chord path at overlay / hull / TestBuilder | CRV-CC | technique | HOLD implement lifted for this only. NTS `Operation/` has no `CompoundCurve` overlay path — the data plane is still `Coordinate[]` (`docs/audit-phase4-curves.md`). JTS OverlayNGCurve kits exist for some CompoundCurve shells; unnamed cells densify with `isApproximate()`. Ticket 30. | steal `424-b`; treat I/O refuse as overlay honesty; merge into JTS #7; mint a second CompoundCurve type; remint `615-b` / LEC flatten as this leftover |
+| flatten-elimination | Silent chord path at overlay / hull / TestBuilder | CRV-CC | technique | Named on GEOS (`ensureNoCurvedComponents` refuse + `getLinearized`). Ticket 30 closed. NTS `Operation/` has no `CompoundCurve` overlay path — the data plane is still `Coordinate[]` (`docs/audit-phase4-curves.md`). JTS OverlayNGCurve kits exist for some CompoundCurve shells; unnamed cells densify with `isApproximate()`. | steal `424-b`; treat I/O refuse as overlay honesty; merge into JTS #7; mint a second CompoundCurve type; remint `615-b` / LEC flatten as this leftover |
 | — | H-CC CompoundCurve hull | #424 | technique | Already a leftover of `424-b`. JTS #6. | remint `424-b`; pull H-CC into CRV-CC |
 | — | QG-CURVE-CHORD path stamp | sibling board card | sequencing | HOLD implement. Does not join flatten-elimination. | invent EXACT / NAMED-APPROX / CHORD-PATH CI on this letter |
 | — | TestBuilder draw CompoundCurve | sibling TB card | sequencing | tb-t-1/2 not SIGNed. TB-\* is not proof-relevant in TRIAGE. | open a type-9 reader PR to "see" it |
@@ -93,11 +93,16 @@ does not set WSJF.
 - JTS #27 is out. JTS #38 stays off #7. No public noder.
 - HOLD merge into #7. HOLD a second CompoundCurve type. No priority
   from this letter.
+- `/implement 660` on GEOS named the leftover: hull / centroid /
+  buffer refuse via `ensureNoCurvedComponents` and stamp via
+  `getLinearized`. Ticket 30 closed. See
+  [`closed/30-compoundcurve-flatten-elimination.md`](tickets/closed/30-compoundcurve-flatten-elimination.md).
 
 ## Fog
 
 - **Which NTS overlay entry still densifies without a stamp** is an
-  engine grill for ticket 30, not a Coq lemma in this letter. The
+  NTS/JTS engine leftover, not a Coq lemma. GEOS named the refuse
+  (`ensureNoCurvedComponents`) and the stamp (`getLinearized`). The
   audit-phase4 `Flatten()` at `CurveGeometryOverlay.cs:36` names the
   historical `.Curve` extension; this NTS clone has `Linearize` and no
   `Flatten()` on curve types.
@@ -109,13 +114,13 @@ does not set WSJF.
 
 ## Frontier
 
-Ticket 29 (this chart) is closed. Ticket 30 is the one takeable
-implement leftover. Next useful session is `/implement` on ticket 30,
-or stop.
+Ticket 29 (this chart) is closed. Ticket 30 is closed on GEOS:
+`ensureNoCurvedComponents` refuses and names `getLinearized`.
+NTS/JTS overlay still has no CompoundCurve path. Next useful
+session is an NTS or JTS letter, or stop.
 
 Sibling CURVEPOLYGON / MULTICURVE / MULTISURFACE leftovers
-(tickets 32 / 34 / 36) live in this packet. HOLD implement
-stands on those three.
+(tickets 32 / 34 / 36) are also closed on GEOS in this packet.
 
 ```
 HELP / READING-GUIDE ════════════ COMPOUNDCURVE named ── Joost met
@@ -124,7 +129,7 @@ I/O type 9 ════════════════════ identity
 LEC / #615-b ══════════════════ member/splice flatten ── not this leftover
 424-b h_cc_still_densify ══════ H-CC stays on #424
 
-flatten-elimination ────────── ticket 30 ── HOLD implement lifted
+flatten-elimination ────────── ticket 30 closed on GEOS
 #27 ── out
 #38 ── Option C DCEL ── off #7 ── no public noder
 second type / type-9 reader / GEO-TIN 15–17 ── HOLD

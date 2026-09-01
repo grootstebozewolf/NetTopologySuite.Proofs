@@ -1,10 +1,11 @@
 # Silent POLYGON collapse — CURVEPOLYGON type honesty
 
-**Type:** implement · **Map:** [CURVEPOLYGON](../map-curvepolygon.md)
-**Blocked by:** ~~[Chart CURVEPOLYGON type honesty](closed/31-curvepolygon-type-chart.md)~~ ✔
+**Type:** implement · **Map:** [CURVEPOLYGON](../../map-curvepolygon.md)
+**Claimed:** implement 2026-09-01 · **Closed:** 2026-09-01 (GEOS named the leftover)
+**Blocked by:** ~~[Chart CURVEPOLYGON type honesty](31-curvepolygon-type-chart.md)~~ ✔
 **claimId:** none · **GitHub:** none · **witness:** none
 
-HOLD implement stands. No Architect SIGN lifts this leftover.
+HOLD implement stood until `/implement 660` on GEOS.
 Sibling COMPOUNDCURVE ticket 30 (this packet) is lineal Flatten, not this.
 
 ## Ask
@@ -49,3 +50,18 @@ A later `/implement`, **after** Architect SIGN, can point at one named
 site (engine or Coq) and say whether it refused or stamped. This ticket
 stays open until that letter lands. Do not mint `CRV-CP` as a Proofs
 claimId unless that letter names a new lemma.
+
+## Resolution
+
+**Implemented 2026-09-01 on GEOS** after `/implement 660` SIGN.
+
+Named site: GEOS OverlayNG + C API overlay. A `CURVEPOLYGON` stays a
+`CURVEPOLYGON` (including all-linear LineString rings via
+`GeometryFactory::createSurface`). Silent `POLYGON` emit is a refuse
+unless the caller used `getLinearized`.
+
+`getExteriorRing()` on GEOS `Surface` is already `Curve*`, not a
+`LinearRing` collapse.
+
+Jordan stays on tracker 509. F-CP / V-CP TRIAGE rows do not flip.
+No new Coq lemma. claimId: none. witness: none.

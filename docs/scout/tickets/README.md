@@ -28,13 +28,13 @@ Order of work: top-down from #64, with the freebie first.
 | 09 | ~~[End #69's umbrella role and re-parent the standing epics](closed/09-end-69-umbrella.md)~~ **closed** → [`69-closing-summary.md`](../69-closing-summary.md); no replacement umbrella | grilling | 11 (04–08 all closed) |
 | 10 | [Resync surviving issue bodies to corpus state](10-resync-surviving-bodies.md) | task | **#506 queue empty** · 09 done |
 | 29 | ~~[Chart COMPOUNDCURVE flatten-elimination](closed/29-compoundcurve-flatten-chart.md)~~ **closed** → [`map-compoundcurve.md`](../map-compoundcurve.md) | grilling | — |
-| 30 | [Flatten-elimination — silent COMPOUNDCURVE chord path](30-compoundcurve-flatten-elimination.md) | implement | 29 · HOLD implement **lifted** |
+| 30 | ~~[Flatten-elimination — silent COMPOUNDCURVE chord path](closed/30-compoundcurve-flatten-elimination.md)~~ **closed** → GEOS `ensureNoCurvedComponents` + `getLinearized` | implement | 29 |
 | 31 | ~~[Chart CURVEPOLYGON type honesty](closed/31-curvepolygon-type-chart.md)~~ **closed** → [`map-curvepolygon.md`](../map-curvepolygon.md) | grilling | — |
-| 32 | [Silent POLYGON collapse — CURVEPOLYGON type honesty](32-curvepolygon-silent-polygon-collapse.md) | implement | 31 · **HOLD implement** |
+| 32 | ~~[Silent POLYGON collapse — CURVEPOLYGON type honesty](closed/32-curvepolygon-silent-polygon-collapse.md)~~ **closed** → GEOS OverlayNG + `createSurface` | implement | 31 |
 | 33 | ~~[Chart MULTICURVE type honesty](closed/33-multicurve-type-chart.md)~~ **closed** → [`map-multicurve.md`](../map-multicurve.md) | grilling | — |
-| 34 | [Silent MultiLineString collapse — MULTICURVE type honesty](34-multicurve-silent-multilinestring-collapse.md) | implement | 33 · **HOLD implement** |
+| 34 | ~~[Silent MultiLineString collapse — MULTICURVE type honesty](closed/34-multicurve-silent-multilinestring-collapse.md)~~ **closed** → GEOS OverlayNG | implement | 33 |
 | 35 | ~~[Chart MULTISURFACE type honesty](closed/35-multisurface-type-chart.md)~~ **closed** → [`map-multisurface.md`](../map-multisurface.md) | grilling | — |
-| 36 | [Silent MultiPolygon collapse — MULTISURFACE type honesty](36-multisurface-silent-multipolygon-collapse.md) | implement | 35 · **HOLD implement** |
+| 36 | ~~[Silent MultiPolygon collapse — MULTISURFACE type honesty](closed/36-multisurface-silent-multipolygon-collapse.md)~~ **closed** → GEOS `restrictToSurfaces` | implement | 35 |
 
 ```
 01 ══════════════════════════════════════ closed 2026-08-22 (#482)
@@ -61,11 +61,11 @@ Implement spec (NTS + GEOS; Notion tickets `NTS-812` / `GEOS-DHD`):
 Do not remint `423-a`. Do not take ticket 10 for that inventory.
 
 **Related living maps.** SQL/MM type-honesty packet (one PR; four maps):
-COMPOUNDCURVE [`map-compoundcurve.md`](../map-compoundcurve.md) (tickets 29 / 30; HOLD implement lifted for 30 only),
-CURVEPOLYGON [`map-curvepolygon.md`](../map-curvepolygon.md) (tickets 31 / 32; HOLD implement),
-MULTICURVE [`map-multicurve.md`](../map-multicurve.md) (tickets 33 / 34; HOLD implement),
-MULTISURFACE [`map-multisurface.md`](../map-multisurface.md) (tickets 35 / 36; HOLD implement).
-Do not remint `#509`. Off JTS #7. Do not steal across leftovers.
+COMPOUNDCURVE [`map-compoundcurve.md`](../map-compoundcurve.md) (tickets 29 / 30; 30 closed on GEOS),
+CURVEPOLYGON [`map-curvepolygon.md`](../map-curvepolygon.md) (tickets 31 / 32; 32 closed on GEOS),
+MULTICURVE [`map-multicurve.md`](../map-multicurve.md) (tickets 33 / 34; 34 closed on GEOS),
+MULTISURFACE [`map-multisurface.md`](../map-multisurface.md) (tickets 35 / 36; 36 closed on GEOS).
+Do not remint `#509`. Off JTS #7. Do not steal across leftovers. NTS/JTS leftover sites stay an engine grill.
 
 The #522 children (bar 1 → bar 2) have their own
 frontier: [`docs/scout/map-522.md`](../map-522.md). Wrap-up leftovers:
@@ -95,13 +95,13 @@ on the #506 queue. Ticket 523 stays open, not accepted.
 | 09 · end #69's umbrella | closed — owner-retire packet written; GitHub object stays for owner review |
 | 10 · resync surviving bodies | #506's split queue emptying |
 | 29 · COMPOUNDCURVE chart | closed — [`map-compoundcurve.md`](../map-compoundcurve.md) |
-| 30 · flatten-elimination | takeable — HOLD implement lifted for this leftover only |
+| 30 · flatten-elimination | closed on GEOS — `ensureNoCurvedComponents` refuse + `getLinearized` |
 | 31 · CURVEPOLYGON chart | closed — [`map-curvepolygon.md`](../map-curvepolygon.md) |
-| 32 · silent-polygon-collapse | named leftover — HOLD implement stands |
+| 32 · silent-polygon-collapse | closed on GEOS — OverlayNG + `createSurface` |
 | 33 · MULTICURVE chart | closed — [`map-multicurve.md`](../map-multicurve.md) |
-| 34 · silent-multilinestring-collapse | named leftover — HOLD implement stands |
+| 34 · silent-multilinestring-collapse | closed on GEOS — OverlayNG |
 | 35 · MULTISURFACE chart | closed — [`map-multisurface.md`](../map-multisurface.md) |
-| 36 · silent-multipolygon-collapse | named leftover — HOLD implement stands |
+| 36 · silent-multipolygon-collapse | closed on GEOS — `restrictToSurfaces` `hasCurvedTypes` |
 
 The next useful session on this map is not another wayfinder letter.
 Owner review of [`69-closing-summary.md`](../69-closing-summary.md)

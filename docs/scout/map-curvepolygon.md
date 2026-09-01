@@ -40,7 +40,7 @@ Epic creation stays owner-scope. `#509` stays OPEN.
 
 | Word | What it is | Park | Status |
 |---|---|---|---|
-| Silent POLYGON collapse | Overlay / hull / TestBuilder eat `CURVEPOLYGON` and emit `POLYGON` / `LinearRing` chords with no stamp; or treat JTS `getExteriorRing()` as if it were the curve | leftover **silent-polygon-collapse** | Named here. HOLD implement stands. Ticket 32. Distinct from COMPOUNDCURVE ticket 30 (lineal chord Flatten). |
+| Silent POLYGON collapse | Overlay / hull / TestBuilder eat `CURVEPOLYGON` and emit `POLYGON` / `LinearRing` chords with no stamp; or treat JTS `getExteriorRing()` as if it were the curve | leftover **silent-polygon-collapse** | Named on GEOS OverlayNG + `createSurface`. Ticket 32 closed. Distinct from COMPOUNDCURVE ticket 30 (lineal chord Flatten). |
 | Named linear fallback | `Linearize` / `toLinear` / `chord_approx_ring` / OverlayNGCurve `APPROX` + `isApproximate()` | technique (named) | Allowed. NTS `ILinearizable<Polygon>.Linearize`. JTS `toLinear`. Coq `CurveLinearise.v : to_geometry_outer_ring_closed` and `CurveLinearise.v : chord_approx_ring_closed`. |
 | Structural F-CP / Jordan | Rings stay `Curve` on NTS; Coq `CurvePolygon` is structural; true-region waits on `#509` | already landed / `#509` | NTS `CurvePolygon.ExteriorRing => _shell` (`Curve`). `CurveGeometry.v : valid_curve_polygon` is structural only. V-CP Jordan is `#509`. Do not remint `#509`. |
 
@@ -74,7 +74,7 @@ does not set WSJF.
 
 | Id | Leftover | Kind | Park | Status | Do not |
 |---|---|---|---|---|---|
-| silent-polygon-collapse | Silent emit of `POLYGON` / `LinearRing` at overlay / hull / TestBuilder, or treating `getExteriorRing()` as the curve | CRV-CP | technique | Named here. HOLD implement stands (no Architect SIGN on this leftover). Ticket 32. | steal `#509`; steal COMPOUNDCURVE ticket 30; treat FCP-S I/O as overlay honesty; merge into JTS #7; mint a second CurvePolygon type |
+| silent-polygon-collapse | Silent emit of `POLYGON` / `LinearRing` at overlay / hull / TestBuilder, or treating `getExteriorRing()` as the curve | CRV-CP | technique | Named on GEOS OverlayNG + `createSurface` (all-linear rings stay CURVEPOLYGON). Ticket 32 closed. NTS/JTS leftover sites stay an engine grill. | steal `#509`; steal COMPOUNDCURVE ticket 30; treat FCP-S I/O as overlay honesty; merge into JTS #7; mint a second CurvePolygon type |
 | — | V-CP Jordan true-region | `#509` | technique | Already the V-CP true-region epic. Stays OPEN. | remint `#509`; pull Jordan into CRV-CP |
 | — | COMPOUNDCURVE flatten-elimination | CRV-CC / ticket 30 | technique | Sibling in this packet. Lineal compound chord Flatten. | steal ticket 30 for a CURVEPOLYGON site |
 | — | QG-CURVE-CHORD path stamp | sibling board card | sequencing | HOLD implement. Does not join silent-polygon-collapse. | invent EXACT / NAMED-APPROX / CHORD-PATH CI on this letter |
@@ -104,14 +104,18 @@ does not set WSJF.
 - Kit-completeness stays fog.
 - COMPOUNDCURVE ticket 30 stays a lineal Flatten leftover.
 - JTS #27 is out. JTS #38 stays off #7. No public noder.
-- HOLD merge into #7. HOLD a second CurvePolygon type. HOLD implement
-  for ticket 32. No priority from this letter.
+- HOLD merge into #7. HOLD a second CurvePolygon type. No priority
+  from this letter.
+- `/implement 660` on GEOS named the leftover: OverlayNG keeps
+  CURVEPOLYGON (including all-linear LineString rings via
+  `createSurface`). Ticket 32 closed. See
+  [`closed/32-curvepolygon-silent-polygon-collapse.md`](tickets/closed/32-curvepolygon-silent-polygon-collapse.md).
 
 ## Fog
 
 - **Which NTS / JTS overlay entry still emits POLYGON without a stamp**
-  is an engine grill for a later implement, not a Coq lemma in this
-  letter. HOLD implement stands until Architect SIGN.
+  is an NTS/JTS engine leftover, not a Coq lemma. GEOS OverlayNG
+  already keeps CURVEPOLYGON.
 - **HELP still says `Flatten()`** while the NTS method is `Linearize`.
   Name drift. Do not treat it as Bea dropping CURVEPOLYGON again.
 - **T-in / T-out** is vocabulary this corpus does not have.
@@ -119,9 +123,10 @@ does not set WSJF.
 
 ## Frontier
 
-Ticket 31 (this chart) is closed. Ticket 32 names the leftover.
-HOLD implement stands. Next useful session is Architect SIGN on
-ticket 32, or stop. Do not `/implement` ticket 32 from this letter.
+Ticket 31 (this chart) is closed. Ticket 32 is closed on GEOS:
+OverlayNG + `createSurface` keep CURVEPOLYGON. NTS/JTS overlay
+sites stay an engine grill. Next useful session is an NTS or JTS
+letter, or stop.
 
 Sibling COMPOUNDCURVE tickets 29 / 30 live in this packet
 (`map-compoundcurve.md`). Numbered 31 / 32 so the leftovers stay
@@ -132,9 +137,9 @@ HELP / READING-GUIDE ════════════ CURVEPOLYGON named ─
 CurveGeometry + CurvePolygon* ══ structural F-CP / V-CP floor
 I/O type 10 / FCP-S ════════════ identity, not op honesty ── off #7
 #509 V-CP Jordan ══════════════ true-region ── stays OPEN
-CRV-CC ticket 30 ══════════════ lineal Flatten ── sibling, not this
+CRV-CC ticket 30 ══════════════ lineal Flatten ── sibling, closed on GEOS
 
-silent-polygon-collapse ────── ticket 32 ── HOLD implement stands
+silent-polygon-collapse ────── ticket 32 closed on GEOS
 #27 ── out
 #38 ── Option C DCEL ── off #7 ── no public noder
 second type / type-10 reader / GEO-TIN 15–17 ── HOLD

@@ -1,10 +1,11 @@
 # Silent MultiLineString collapse — MULTICURVE type honesty
 
-**Type:** implement · **Map:** [MULTICURVE](../map-multicurve.md)
-**Blocked by:** ~~[Chart MULTICURVE type honesty](closed/33-multicurve-type-chart.md)~~ ✔
+**Type:** implement · **Map:** [MULTICURVE](../../map-multicurve.md)
+**Claimed:** implement 2026-09-01 · **Closed:** 2026-09-01 (GEOS named the leftover)
+**Blocked by:** ~~[Chart MULTICURVE type honesty](33-multicurve-type-chart.md)~~ ✔
 **claimId:** none · **GitHub:** none · **witness:** none
 
-HOLD implement stands. No Architect SIGN lifts this leftover.
+HOLD implement stood until `/implement 660` on GEOS.
 Sibling COMPOUNDCURVE ticket 30 (this packet) is lineal Flatten, not this.
 Sibling CURVEPOLYGON ticket 32 (this packet) is POLYGON emit, not this.
 
@@ -56,3 +57,16 @@ A later `/implement`, **after** Architect SIGN, can point at one named
 site (engine or Coq) and say whether it refused or stamped. This ticket
 stays open until that letter lands. Do not mint `CRV-MC` as a Proofs
 claimId unless that letter names a new lemma.
+
+## Resolution
+
+**Implemented 2026-09-01 on GEOS** after `/implement 660` SIGN.
+
+Named site: GEOS OverlayNG + C API overlay. A `MULTICURVE` overlay
+result keeps curved types; silent `MULTILINESTRING` emit is a refuse
+unless the caller used `getLinearized`.
+
+Coq still has no MultiCurve carrier
+(`CurveGeometry.v : valid_curve_geometry` is F-MS-shaped). That
+missing type is not this leftover. No new Coq lemma.
+claimId: none. witness: none.
