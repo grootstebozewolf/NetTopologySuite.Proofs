@@ -100,8 +100,9 @@ does not set WSJF.
 - ST_Clothoid, ST_Circle, ST_GeodesicString, ST_NURBSCurve, and
   ST_SpiralCurve are instantiable in ISO/IEC 13249-3 §4.2.1. They
   are not optional extras. GEOS WKT refuses them as SQL/MM types.
-  Oracle mode `SQLMM_WKT` parses type identity (ticket 37). Do not
-  remint `508-*`. Do not grow `CurveSegment`. Not leftover `Ⅺ`.
+  Oracle mode `SQLMM_WKT` parses type identity (ticket 37). NTS WKT
+  names them and refuses (ticket 38), matching GEOS. Do not remint
+  `508-*`. Do not grow `CurveSegment`. Not leftover `Ⅺ`.
 
 ## Fog
 
@@ -121,8 +122,9 @@ does not set WSJF.
 
 Ticket 29 (this chart) is closed. Ticket 30 is closed on GEOS:
 `ensureNoCurvedComponents` refuses and names `getLinearized`.
-NTS/JTS overlay still has no CompoundCurve path. Next useful
-session is an NTS or JTS letter, or stop.
+Ticket 38 is closed on NTS: `WKTReader` names the §4.2.1 types and
+refuses (not `Unknown type`). JTS overlay still has no CompoundCurve
+path. Next useful session is a JTS letter, or stop.
 
 Sibling CURVEPOLYGON / MULTICURVE / MULTISURFACE leftovers
 (tickets 32 / 34 / 36) are also closed on GEOS in this packet.

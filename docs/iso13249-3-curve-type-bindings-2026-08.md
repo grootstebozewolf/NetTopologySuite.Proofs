@@ -57,8 +57,8 @@ ST_Circle, ST_GeodesicString, ST_EllipticalCurve, ST_NURBSCurve,
 ST_Clothoid, and ST_SpiralCurve (spiral types "initially limited to"
 clothoid, bloss, biquadratic, sine, cosine) are instantiable ST_Curve
 subtypes in the §4.2.1 hierarchy. They are **not optional extras**.
-The NTS curve-foundation branch does not yet carry them. GEOS WKT
-names them and refuses; calling them "Unknown type" is a lie.
+The NTS curve-foundation branch does not yet carry them. GEOS and
+NTS WKT name them and refuse; calling them "Unknown type" is a lie.
 §4.2.1 also permits an implementation to add subtypes and to interpose
 types, provided subtype relationships are preserved — that clause
 legitimises `Curve`/`Surface<T>` as interposed abstractions, not a

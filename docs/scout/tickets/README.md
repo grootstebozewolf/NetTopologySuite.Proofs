@@ -36,6 +36,7 @@ Order of work: top-down from #64, with the freebie first.
 | 35 | ~~[Chart MULTISURFACE type honesty](closed/35-multisurface-type-chart.md)~~ **closed** → [`map-multisurface.md`](../map-multisurface.md) | grilling | — |
 | 36 | ~~[Silent MultiPolygon collapse — MULTISURFACE type honesty](closed/36-multisurface-silent-multipolygon-collapse.md)~~ **closed** → GEOS `restrictToSurfaces` | implement | 35 |
 | 37 | ~~[SQL/MM WKT oracle — CLOTHOID / CIRCLE / GEODESICSTRING / NURBSCURVE / SPIRALCURVE](closed/37-sqlmm-wkt-oracle.md)~~ **closed** → oracle `SQLMM_WKT` | implement | 30 / 32 / 34 / 36 |
+| 38 | ~~[NTS WKT named refuse for §4.2.1 curve types](closed/38-nts-sqlmm-named-refuse.md)~~ **closed** → NTS `WKTReader` named refuse | implement | 37 |
 
 ```
 01 ══════════════════════════════════════ closed 2026-08-22 (#482)
@@ -71,7 +72,8 @@ ST_Clothoid / ST_Circle / ST_GeodesicString / ST_NURBSCurve / ST_SpiralCurve
 are instantiable in ISO/IEC 13249-3 §4.2.1 — not optional extras. GEOS WKT
 refuses them as SQL/MM types. Oracle mode `SQLMM_WKT` parses type identity
 (ticket 37; SPIRALTYPE open-set lexer deviation in the clause-book §8).
-Do not remint `508-*`. Not leftover `Ⅺ`.
+NTS WKT names them and refuses (ticket 38), matching GEOS. Do not remint
+`508-*`. Not leftover `Ⅺ`.
 
 The #522 children (bar 1 → bar 2) have their own
 frontier: [`docs/scout/map-522.md`](../map-522.md). Wrap-up leftovers:
@@ -108,6 +110,8 @@ on the #506 queue. Ticket 523 stays open, not accepted.
 | 34 · silent-multilinestring-collapse | closed on GEOS — OverlayNG |
 | 35 · MULTISURFACE chart | closed — [`map-multisurface.md`](../map-multisurface.md) |
 | 36 · silent-multipolygon-collapse | closed on GEOS — `restrictToSurfaces` `hasCurvedTypes` |
+| 37 · SQLMM_WKT oracle | closed — `oracle/sqlmm_wkt.ml` |
+| 38 · NTS named refuse | closed on NTS — `WKTReader` names §4.2.1 types and refuses |
 
 The next useful session on this map is not another wayfinder letter.
 Owner review of [`69-closing-summary.md`](../69-closing-summary.md)
