@@ -260,6 +260,13 @@ theories-flocq/HobbyTheorem_b64.v
 # identical lineage to HobbyTheorem_b64.v above.  No Admitteds.
 theories-flocq/HobbyCounterexample_b64.v
 
+# Category C: hunt probe reconstructing the anonymous second premise of
+# hobby_theorem_4_1_conditional.  Same snap-layer classic as
+# HobbyCounterexample_b64 (via snap_round).  Off _CoqProject.full; the
+# flocq smoke log is prefixed `ROCQ compile` and fed to audit_axioms.sh
+# so this line is load-bearing, not a silent bypass.
+docs/h1-vacuity/HobbyHlemma43Check.v
+
 # Category C: the weaker-but-true noding-preservation claim (separated pairs)
 # and its buffer bridgehead.  References `snap_round` / `snap_round_coord`
 # (via the tolerance bound and snap_round_segments), pulling

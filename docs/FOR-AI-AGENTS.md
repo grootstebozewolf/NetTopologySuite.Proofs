@@ -73,6 +73,7 @@ Never move or delete without following the process (inventory against the define
 
 ## Key Files for Agents (quick reference)
 - Invariants & registries: the four .txt files in docs/.
+- Hunt tickets: `docs/attacks/`. Qed-claiming probes: `docs/h1-vacuity/` (compiled by the flocq job via `scripts/hunt_probe_smoke.sh`; not product modules in `_CoqProject.full`).
 - Session examples: the `*-retro.md` + specific session prompt/outcome pairs in history/sessions/ (when needed).
 - Proof structures: `hobby-theorem-proof-structure.md`, `shewchuk-theorem-13-proof-structure.md`, seam maps.
 - Soundness strategy: `soundness-strategy.md`, `stage-d-*.md` cluster.

@@ -50,6 +50,10 @@ lines-only builds).
 
 - Bug-hunt writeups: `docs/<topic>-<yyyy-mm>.md`, pin oracle/tool provenance
   (run id, commit) and record a `SUMMARY ok/warn/bug` line.
+- Hunt tickets (claim-attacker): `docs/attacks/YYYY-MM-DD-<slug>.md` with an
+  `OUTCOME` line. Qed-claiming probes live in `docs/h1-vacuity/` and are
+  smoke-compiled by the flocq job (`scripts/hunt_probe_smoke.sh`), not
+  product modules in `_CoqProject.full`.
 - There is no solution file; build/test per-project by path.
 
 ## Agent skills

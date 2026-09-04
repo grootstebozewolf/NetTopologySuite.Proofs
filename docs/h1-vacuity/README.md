@@ -159,3 +159,16 @@ rocq c -Q theories NTS.Proofs docs/h1-vacuity/WitnessCheck.v
 ```
 
 Both end in `Print Assumptions` output listing only the Stdlib-Reals axioms.
+
+## Other hunt probes
+
+[`HobbyHlemma43Check.v`](HobbyHlemma43Check.v) reconstructs the *anonymous
+second premise* of `HobbyTheorem_b64.v : hobby_theorem_4_1_conditional`
+(prose alias Hlemma43 — not a kernel `Hypothesis`). Flocq-lane; needs
+`HobbyCounterexample_b64.vo`. Tickets live in [`docs/attacks/`](../attacks/).
+CI compiles it after the flocq corpus via `scripts/hunt_probe_smoke.sh`.
+
+```sh
+rocq c -Q theories NTS.Proofs -Q theories-flocq NTS.Proofs.Flocq \
+  docs/h1-vacuity/HobbyHlemma43Check.v
+```
