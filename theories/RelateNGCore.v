@@ -555,15 +555,58 @@ Definition mixed_cone_vertex_b (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : bool
           (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy))
   else false else false.
 
+(* Leftover Ⅵ: remaining vertices of both triangles sit on the
+   *same* (strictly positive) side of the other's cone normal at a
+   shared vertex. Not a remint of `cone_separates_b` / `touch_vertex_b`
+   (#572; that pin is same-sign *opposite* cone — both-neg vs nA),
+   leftover Ⅱ (product 0), or leftover Ⅴ (opposite signs).
+   `negb` of both cones and of `mixed_cone_from_v` keeps those
+   families false (belt-and-suspenders: leftover Ⅴ `opp` is
+   already exclusive of `both_strict_pos`). Pure `Rlt_dec`. *)
+Definition same_cone_from_v (v a1 a2 a3 b1 b2 b3 : Point) : bool :=
+  is_vertex_b v a1 a2 a3
+  && is_vertex_b v b1 b2 b3
+  && both_strict_pos_b v
+       (vec_sum_from v (others_fst v a1 a2 a3) (others_snd v a1 a2 a3))
+       (others_fst v b1 b2 b3) (others_snd v b1 b2 b3)
+  && both_strict_pos_b v
+       (vec_sum_from v (others_fst v b1 b2 b3) (others_snd v b1 b2 b3))
+       (others_fst v a1 a2 a3) (others_snd v a1 a2 a3)
+  && negb (cone_separates_b v
+       (others_fst v a1 a2 a3) (others_snd v a1 a2 a3)
+       (others_fst v b1 b2 b3) (others_snd v b1 b2 b3))
+  && negb (closed_cone_separates_b v
+       (others_fst v a1 a2 a3) (others_snd v a1 a2 a3)
+       (others_fst v b1 b2 b3) (others_snd v b1 b2 b3))
+  && negb (mixed_cone_from_v v a1 a2 a3 b1 b2 b3).
+
+Definition same_cone_vertex_b (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : bool :=
+  if Rlt_dec 0 (gdbl ax ay bx by_ cx cy) then
+  if Rlt_dec 0 (gdbl dx dy ex ey fx fy) then
+    exactly_one_shared_from_a
+      (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+      (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy)
+    && (same_cone_from_v (mkPoint ax ay)
+          (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+          (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy)
+        || same_cone_from_v (mkPoint bx by_)
+          (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+          (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy)
+        || same_cone_from_v (mkPoint cx cy)
+          (mkPoint ax ay) (mkPoint bx by_) (mkPoint cx cy)
+          (mkPoint dx dy) (mkPoint ex ey) (mkPoint fx fy))
+  else false else false.
+
 (* Triangle regime classifier.  DETECTS shared-edge touch, containment,
    the vertex-stab overlap certificate, a separating-edge disjoint
    certificate, a vertex-touch certificate, leftover Ⅰ's collinear
    partial-edge kiss (`touch_partial_edge_b`, after `touch_edge_b` so a
    full shared edge still wins), leftover Ⅲ∨Ⅳ (`touch_onesided_t_b`),
    leftover Ⅱ (`touch_obtuse_vertex_b`, after `touch_vertex_b` so
-   the strict cone still wins), and leftover Ⅴ
+   the strict cone still wins), leftover Ⅴ
    (`mixed_cone_vertex_b`, after leftover Ⅱ so a closed cone still
-   wins).  DECLINES on everything else.
+   wins), and leftover Ⅵ (`same_cone_vertex_b`, after leftover Ⅴ
+   so opposite-sign still wins).  DECLINES on everything else.
 
    The default used to be TPR_Disjoint, which was unsound: failing the
    shared-edge and containment tests does not establish disjointness, so
@@ -575,8 +618,9 @@ Definition mixed_cone_vertex_b (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : bool
    when `touch_partial_edge_b` fires.  Leftover Ⅲ∨Ⅳ is reachable
    when `touch_onesided_t_b` fires (after leftover Ⅰ). Leftover Ⅱ
    is reachable when `touch_obtuse_vertex_b` fires. Leftover Ⅴ is
-   reachable when `mixed_cone_vertex_b` fires. Completeness stays
-   false on an unnamed CCW pair (not leftover `Ⅵ`).
+   reachable when `mixed_cone_vertex_b` fires. Leftover Ⅵ is
+   reachable when `same_cone_vertex_b` fires. Completeness stays
+   false on an unnamed lens pair (not leftover `Ⅶ`).
    Do not reorder the four wired certificates. Do not remint
    `cone_separates_b`. *)
 Definition triangle_pair_regime (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : TrianglePairRegime :=
@@ -603,6 +647,8 @@ Definition triangle_pair_regime (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : Tri
   then TPR_TouchObtuse
   else if mixed_cone_vertex_b ax ay bx by_ cx cy dx dy ex ey fx fy
   then TPR_MixedCone
+  else if same_cone_vertex_b ax ay bx by_ cx cy dx dy ex ey fx fy
+  then TPR_SameCone
   else TPR_Unsupported.
 
 (* Decidable equality on the classifier's result type -- consistent with the

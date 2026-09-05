@@ -2846,9 +2846,16 @@ theories/RelateNGTouchObtuse.v
 # CCW pair (not leftover Ⅵ). Not CONTEXT Bar 1. Does not remint
 # cone_separates_b / touch_obtuse_vertex_b / aa_matrix_*.
 theories/RelateNGTouchMixedCone.v
+# Leftover Ⅵ: same-sign cone spill at a shared vertex. Detector
+# same_cone_vertex_b; constructor TPR_SameCone stays on
+# im_unsupported. After leftover Ⅴ. Completeness is an unnamed
+# lens pair (not leftover Ⅶ). Not CONTEXT Bar 1. Does not remint
+# cone_separates_b / mixed_cone_vertex_b / overlap_b / aa_matrix_*.
+theories/RelateNGTouchSameCone.v
 # Epic #522 ticket-named QED ∨ QEX stop. Wraps
-# triangle_pair_regime_ccw_stop (QEX) and leftover Ⅰ–Ⅴ classify
-# (QED). Does not remint detectors / aa_matrix_* / 522-j. No Admitted.
+# triangle_pair_regime_ccw_stop (QEX on the unnamed lens after
+# leftover Ⅵ) and leftover Ⅰ–Ⅵ classify (QED). Does not remint
+# detectors / aa_matrix_* / 522-j. No Admitted.
 theories/RelateNGEpic522.v
 # #568 / 522-g: half-open ring-inclusion groundwork.  Strict-gtri
 # neighbourhood (explicit Lipschitz radius) + dim-1 on a segment +

@@ -10,6 +10,7 @@ docs/scout/map-522-leftovers.md
 docs/scout/map-tjunction-cert.md
 docs/scout/map-obtuse-cert.md
 docs/scout/map-mixed-cone-cert.md
+docs/scout/map-same-cone-cert.md
 docs/scout/map-interior-side-cert.md
 docs/scout/map-interior-side-grill.md
 docs/scout/spec-interior-side.md

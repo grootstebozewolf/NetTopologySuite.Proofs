@@ -58,8 +58,12 @@
      - RelateNGTouchMixedCone.v leftover `Ⅴ`: opposite-sign cone
          detector `mixed_cone_vertex_b` reaches `TPR_MixedCone`
          (fill stays `im_unsupported`; not CONTEXT Bar 1).
-         Leftover `Ⅴ` is QED. Completeness is an unnamed CCW
-         pair (not leftover `Ⅵ`).
+         Leftover `Ⅴ` is QED.
+     - RelateNGTouchSameCone.v leftover `Ⅵ`: same-sign cone
+         detector `same_cone_vertex_b` reaches `TPR_SameCone`
+         (fill stays `im_unsupported`; not CONTEXT Bar 1).
+         Leftover `Ⅵ` is QED. Completeness is an unnamed lens
+         pair (not leftover `Ⅶ`).
      - RelateNGRingInclusion.v  half-open ring-inclusion groundwork
          (#568 / 522-g): a strict-`gtri` point has an explicit open
          disk of strict points; a nondegenerate segment carries dim-1;

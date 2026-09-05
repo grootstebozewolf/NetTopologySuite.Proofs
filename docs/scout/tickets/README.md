@@ -55,7 +55,7 @@ The #522 children (bar 1 → bar 2) have their own
 frontier: [`docs/scout/map-522.md`](../map-522.md). Wrap-up leftovers:
 [`docs/scout/map-522-leftovers.md`](../map-522-leftovers.md).
 `/wayfinder 522 leftovers` refreshes the leftovers chart. Leftover `Ⅰ` is the mutual vertex-in-open-edge sliver. Leftover `Ⅱ` is
-the obtuse-at-v certificate ([`map-obtuse-cert.md`](../map-obtuse-cert.md); ticket [27](closed/27-leftover-ii-obtuse.md) closed — `RelateNGTouchObtuse.v : triangle_pair_regime_obtuse`; fill token). Leftover `Ⅲ` is the exterior-side one-sided T (`Ⅲ∨Ⅳ` xor, two compiled witnesses, one constructor / one fill token / one `True` arm). Leftover `Ⅳ` is the interior-side stem ([`map-interior-side-cert.md`](../map-interior-side-cert.md); grill [`map-interior-side-grill.md`](../map-interior-side-grill.md); ticket [26](closed/26-leftover-iv-compile-or-empty.md) closed — `RelateNGComplete.v : interior_side_pair_inhabits`; not CONTEXT Bar 1). Leftover `Ⅴ` is mixed-cone ([`map-mixed-cone-cert.md`](../map-mixed-cone-cert.md); ticket [28](closed/28-leftover-v-mixed-cone.md) closed — `RelateNGTouchMixedCone.v : triangle_pair_regime_mixedcone`; fill token; #522 stop QED ∨ QEX on `triangle_pair_regime_ccw_stop`). ISO `ST_Relate` QEX catalog (stacked numerals, not leftover `Ⅰ`–`Ⅹ`):
+the obtuse-at-v certificate ([`map-obtuse-cert.md`](../map-obtuse-cert.md); ticket [27](closed/27-leftover-ii-obtuse.md) closed — `RelateNGTouchObtuse.v : triangle_pair_regime_obtuse`; fill token). Leftover `Ⅲ` is the exterior-side one-sided T (`Ⅲ∨Ⅳ` xor, two compiled witnesses, one constructor / one fill token / one `True` arm). Leftover `Ⅳ` is the interior-side stem ([`map-interior-side-cert.md`](../map-interior-side-cert.md); grill [`map-interior-side-grill.md`](../map-interior-side-grill.md); ticket [26](closed/26-leftover-iv-compile-or-empty.md) closed — `RelateNGComplete.v : interior_side_pair_inhabits`; not CONTEXT Bar 1). Leftover `Ⅴ` is mixed-cone ([`map-mixed-cone-cert.md`](../map-mixed-cone-cert.md); ticket [28](closed/28-leftover-v-mixed-cone.md) closed — `RelateNGTouchMixedCone.v : triangle_pair_regime_mixedcone`; fill token). Leftover `Ⅵ` is same-cone inhabitance ([`map-same-cone-cert.md`](../map-same-cone-cert.md); ticket [29](closed/29-leftover-vi-same-cone.md) closed — `RelateNGTouchSameCone.v : triangle_pair_regime_samecone`; fill token; no denotation; leftover `Ⅶ` is already #642). ISO `ST_Relate` QEX catalog (stacked numerals, not leftover `Ⅰ`–`Ⅹ`):
 [`docs/scout/map-iso-st-relate-qex.md`](../map-iso-st-relate-qex.md). Do not mint `522-n` from that catalog. Sibling #523 alphabet grill:
 [`docs/scout/map-523.md`](../map-523.md). Takeable spec:
 [`docs/scout/spec-523.md`](../spec-523.md). Alphabet letter landed:
@@ -79,11 +79,11 @@ on the #506 queue. Ticket 523 stays open, not accepted.
 | 09 · end #69's umbrella | closed — owner-retire packet written; GitHub object stays for owner review |
 | 10 · resync surviving bodies | #506's split queue emptying |
 
-The next useful session on this map is not another wayfinder letter.
-Owner review of [`69-closing-summary.md`](../69-closing-summary.md)
-retires the tracker. Ticket 10 is a later chore. Leftover `Ⅰ` / `Ⅱ`
-/ `Ⅲ` / `Ⅳ` / `Ⅴ` are compiled. Completeness is an unnamed CCW
-pair (not leftover `Ⅵ`).
+The next useful session is not another #523 letter. Owner resolve-or-accept
+is the gate for ticket 11 precondition 3. Owner review of
+[`69-closing-summary.md`](../69-closing-summary.md) retires the tracker.
+Ticket 10 is a later chore. Leftover `Ⅰ` / `Ⅱ` / `Ⅲ` / `Ⅳ` / `Ⅴ` /
+`Ⅵ` are compiled. Completeness is an unnamed lens pair (not leftover `Ⅶ`).
 
 Five children retired; the tracker is owner-retire ready: **an epic
 closes only when its closure comment would be true.**
