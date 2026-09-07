@@ -115,20 +115,11 @@ Qed.
 (* Locked fixture: (0,0)/(7,0) r=5 → Hit with radical p* and hens 0,1.       *)
 (* -------------------------------------------------------------------------- *)
 
-Lemma izr_0 : IZR 0%Z = 0.
-Proof. reflexivity. Qed.
-
-Lemma izr_5 : IZR 5%Z = 5.
-Proof. vm_compute. reflexivity. Qed.
-
-Lemma izr_7 : IZR 7%Z = 7.
-Proof. vm_compute. reflexivity. Qed.
-
 Lemma zpt_00 : zpt 0%Z 0%Z = mkPoint 0 0.
-Proof. unfold zpt. rewrite izr_0. reflexivity. Qed.
+Proof. unfold zpt. reflexivity. Qed.
 
 Lemma zpt_70 : zpt 7%Z 0%Z = mkPoint 7 0.
-Proof. unfold zpt. rewrite izr_7, izr_0. reflexivity. Qed.
+Proof. unfold zpt. reflexivity. Qed.
 
 (* WITNESS {"claimId":"64-i-circular","topic":"core","lemma":"locked_I_circles_on_z_sheet_hit","title":"Year-1 circular I attaches radical p* and mints hens 0,1 on locked (0,0)/(7,0) r=5","file":"theories/CircularCook.v","witness":"64-i-circular-locked","board":"ADR-0007"} *)
 
@@ -141,7 +132,7 @@ Lemma locked_I_circles_on_z_sheet_hit :
 Proof.
   unfold I_circles_on_z_sheet.
   rewrite locked_I_circles_z_hit.
-  rewrite zpt_00, zpt_70, izr_5.
+  rewrite zpt_00, zpt_70.
   reflexivity.
 Qed.
 

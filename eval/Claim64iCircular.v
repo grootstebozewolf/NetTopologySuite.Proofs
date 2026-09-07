@@ -22,21 +22,21 @@ Inductive IZResult : Type :=
 | IZEmpty
 | IZDecline.
 
+Definition circ_d2 (o1x o1y o2x o2y : Z) : Z :=
+  (o2x - o1x) * (o2x - o1x) + (o2y - o1y) * (o2y - o1y).
+
+Definition mint_pair : IZResult := IZHit hen_plus hen_minus.
+
 Definition I_circles_z (o1x o1y r1 o2x o2y r2 : Z) : IZResult :=
   if (r1 <=? 0) || (r2 <=? 0) then IZDecline
-  else
-    let dx := o2x - o1x in
-    let dy := o2y - o1y in
-    let d2 := dx * dx + dy * dy in
-    if d2 =? 0 then IZDecline
-    else
-      let sum := r1 + r2 in
-      let dif := r1 - r2 in
-      let sum2 := sum * sum in
-      let dif2 := dif * dif in
-      if (d2 =? sum2) || (d2 =? dif2) then IZDecline
-      else if (sum2 <? d2) || (d2 <? dif2) then IZEmpty
-      else IZHit hen_plus hen_minus.
+  else if circ_d2 o1x o1y o2x o2y =? 0 then IZDecline
+  else if (circ_d2 o1x o1y o2x o2y =? (r1 + r2) * (r1 + r2))
+          || (circ_d2 o1x o1y o2x o2y =? (r1 - r2) * (r1 - r2))
+       then IZDecline
+  else if ((r1 + r2) * (r1 + r2) <? circ_d2 o1x o1y o2x o2y)
+          || (circ_d2 o1x o1y o2x o2y <? (r1 - r2) * (r1 - r2))
+       then IZEmpty
+  else mint_pair.
 
 Lemma locked_I_circles_z_hit :
   I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus.
