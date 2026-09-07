@@ -234,7 +234,7 @@ Modules: `theories/SheetHenCook.v` (sheet / hen / egg / chicken / `𝓘` /
 first-cook scope) and `theories/Adr0007NodingEpic.v` (ticket stops).
 Registered in `_CoqProject` (host / pure-R / Stdlib lane).
 
-**ADR-0006 coupling.** Testable `𝓘` / cook results sit on the accepted
+**ADR-0006 coupling.** Reciprocal note lives on ADR-0006 section Related — ADR-0007. Testable `𝓘` / cook results sit on the accepted
 Oracle line protocol (`docs/adr/ADR-0006-oracle-protocol-is-the-test-surface.md`).
 This cut mints no keyword and no second external seam (no FFI pin, no
 RocqRefRunner dispatch). A later keyword, if one is ever wanted, attaches
