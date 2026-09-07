@@ -272,6 +272,39 @@ individually proven true. Spell the bar out in prose; "RBL" is WIP shorthand
 only.
 _Avoid_: level (unqualified), RBL (in prose)
 
+### Noding constructor (ADR-0007, Proposed)
+
+**Sheet**:
+An oriented affine plane `S = (O; e₁, e₂)` with optional lattice `Λ`.
+A constructor runs on one sheet; changing `S` or `Λ` is a different instance.
+_Avoid_: plane (unqualified), snap grid (that is `Λ` alone)
+
+**Hen**:
+A vertex identifier the cook mints. Identity is structural (the cook's
+decision), not coordinate-pair equality.
+_Avoid_: vertex (the owned point), dart (a coordinate pair)
+
+**Egg**:
+An interpolant `γ : [0,1] → S` of a named class (chord, circular arc,
+clothoid, …). First cook scope is chord–chord only.
+_Avoid_: CurveSegment (year-1 `CSChord | CSArc`, not reminted here)
+
+**Chicken**:
+A directed use of an egg between two hens `(h_src, h_dst, e)`. Twin
+reverses orientation.
+_Avoid_: dart (coordinate pair), edge (unqualified)
+
+**Cook / 𝓘**:
+The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
+or 𝓘 Decline (no algorithm). Predicates never mint hens. Snap-rounding
+is a different constructor under already-noded `G`. Display is a view.
+_Avoid_: noder (the full loop), snap-rounding (not 𝓘)
+
+**𝓘 Decline** (ADR-0007 cook):
+The pairwise intersection oracle has no algorithm for this egg pair on
+this sheet. Distinct from relate Decline and from Empty (disjoint images).
+_Avoid_: empty (the disjoint 𝓘 outcome), unsupported matrix
+
 ### Roadmap
 
 **Sequencing park**:
