@@ -291,13 +291,21 @@ _Avoid_: CurveSegment (year-1 `CSChord | CSArc`, not reminted here)
 
 **Chicken**:
 A directed use of an egg between two hens `(h_src, h_dst, e)`. Twin
-reverses orientation.
+reverses orientation. A later remint reseats `Dart` as a hen-id pair —
+one view of a chicken, not a third type — so `DartAngularOrder.ddir`
+reads `γ'` from the egg. Orbit proofs keep `dart_eq_dec` as *a*
+decidable equality.
 _Avoid_: dart (coordinate pair), edge (unqualified)
 
 **Cook / 𝓘**:
 The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
-or 𝓘 Decline (no algorithm). Predicates never mint hens. Snap-rounding
-is a different constructor under already-noded `G`. Display is a view.
+or 𝓘 Decline (no algorithm). Predicates never mint hens. Pairwise
+interior split of chords is finite (width measure); bag-level
+termination and confluence of the repeat-until-noded loop remain
+obligations of 𝓘 families. binary64 is a coordinate realization of
+points of `S`, not a second sheet. OverlayNGRobust is a snap-sequence
+`S → Λ`, not 𝓘. Snap-rounding is a different constructor under
+already-noded `G`. Display is a view.
 _Avoid_: noder (the full loop), snap-rounding (not 𝓘)
 
 **𝓘 Decline** (ADR-0007 cook):
