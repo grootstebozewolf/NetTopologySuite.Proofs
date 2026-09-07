@@ -305,8 +305,12 @@ termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of
 points of `S`, not a second sheet. OverlayNGRobust is a snap-sequence
 `S → Λ`, not 𝓘. Snap-rounding is a different constructor under
-already-noded `G`. Display is a view.
-_Avoid_: noder (the full loop), snap-rounding (not 𝓘)
+already-noded `G`. Display is a view. A **kiss** (tangent eggs,
+discriminant zero) is not a shared endpoint; CRV-TOUCH owns the
+certificate and keeps three tangency decision procedures live. Arc
+cook termination is a sister card. Accepting ADR-0007 is out of
+scope of that map.
+_Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared endpoint)
 
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on

@@ -1892,6 +1892,9 @@ accept. This letter does not retire epic 508.
 Supporting QED ∨ QEX shapes plus the Ready-for-BDFL memo. Not a
 noder. Not owner accept. Status stays Proposed. Testable `𝓘` / cook
 results sit on ADR-0006's Oracle line protocol; no second seam.
+CRV-TOUCH assumes this vocabulary; kiss certificate, binary64 sheet
+vs kiss, arc cook termination, and an ADR-0006 cook-mode stay on
+that map. This ADR is not edited by those tickets.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|

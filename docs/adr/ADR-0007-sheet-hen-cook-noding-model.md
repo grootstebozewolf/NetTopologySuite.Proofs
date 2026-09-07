@@ -315,23 +315,66 @@ QEX is not acceptance. Supporting shapes are not a noder.
 | (c) Chicken vs Dart so `ddir` reviewers do not invent three types | paragraph above: `Dart` := hen-id pair = chicken view |
 | (d) This memo | this section |
 
+### CRV-TOUCH / RGR (vocabulary law, not kiss)
+
+NTS RGR Board: [board](https://app.notion.com/p/b494beb4c5d04a08886e1169be9b6cb1).
+Card Touch for noding (`CRV-TOUCH`, Lane red):
+[card](https://app.notion.com/p/3be1c9833b0681f8a944ce851d463236).
+Wayfinder: [CRV-TOUCH · wayfinder map](https://app.notion.com/p/3d41c9833b068143b870c30feba956c3).
+RGR is the JTS fork branch `feature/sfa-curve-rgr` (fork PR 7).
+`CurveSegmentNoder` lives on the Bar 2 stack off that branch, not here.
+
+CRV-TOUCH **assumes** this ADR's vocabulary (sheet, hen, egg, chicken,
+cook, `𝓘`, Empty ≠ Decline, view). Accepting this ADR is **out of
+scope** of that map. Tickets may record a proposed amendment; they do
+not edit this file. Jeroen is Architect on every CRV-TOUCH ticket.
+Joost appears only as a note where a ticket proposes an amendment.
+
+Accept as vocabulary law does **not** settle kiss / tangency.
+
+- **Kiss** is external / internal circle tangency and arc–line
+  tangency (discriminant zero). Two eggs sharing an endpoint is
+  **not** a kiss; the cook already handles that case.
+- Three tangency decision procedures stay live on CRV-TOUCH: exact
+  rational discriminant, identity by construction, ulp-floored
+  window. This ADR does not pick one.
+- The kiss spec is written on ℝ² (MerkatorBV `ChordCook.v`; this
+  clone's host-lane ℝ² vocabulary is `SheetHenCook.v`). What a
+  binary64 sheet owes the kiss is a CRV-TOUCH grilling ticket, not
+  a second sheet here.
+- Arc cook termination is out of scope here. It belongs to the
+  Curve noding / General circular noding sisters, not this Accept.
+- An ADR-0006 cook-mode keyword that reports a kiss hen (beyond
+  `DISC_OVERLAY` EXT_TANGENT / INT_TANGENT and `ARC_SEGMENT_XY`
+  count-1) is a CRV-TOUCH ticket after a prototype. This ADR mints
+  no keyword.
+
 ### Honest remaining opens (Accept does not close these)
 
-- Identity policy detail beyond `ShareOne` / `MintTwo` (which `𝓘` decides, on what basis).
-- A binary64 / floating-point noder (`𝓘` realized in Flocq). Not a second sheet.
+- Identity policy detail beyond `ShareOne` / `MintTwo` (which `𝓘` decides, on what basis). Kiss certificate is the CRV-TOUCH form of this question, not a silent extra hen type.
+- A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet.
 - Hobby 4.1 / 4.3. Snap-rounding stays a different constructor under already-noded `G`.
-- The repeat-until-noded bag loop (termination + confluence). Pairwise width decrease is not that discharge.
+- The repeat-until-noded bag loop (termination + confluence) on the **chord** lane. Pairwise width decrease is not that discharge. **Arc** cook termination is a sister card, not this Accept.
 - Later constructive rungs (one Hit `split(t)` step; constructed `𝓘` from proper-cross signs) are letters after Accept, not Accept blockers.
+- ADR-0006 cook-mode for a kiss hen — CRV-TOUCH, after a prototype.
 
 ### Decision requested
 
-**Accept** ADR-0007 as the specification of the noding constructor
-(sheet / hen / egg / chicken / cook / `𝓘`) with first cook scope
-chord–chord, Empty ≠ Decline, identity structural, testable results on
-the ADR-0006 Oracle line protocol.
+**Accept** ADR-0007 as the **vocabulary law** CRV-TOUCH already
+assumes: sheet / hen / egg / chicken / cook / `𝓘`, first cook scope
+chord–chord, Empty ≠ Decline, identity structural, host lane on ℝ²,
+testable results on the ADR-0006 Oracle line protocol (no new
+cook-mode keyword in this cut).
+
+Accept does **not** settle kiss / tangency, does **not** pick among
+the three tangency decision procedures, and does **not** discharge
+binary64-sheet-vs-kiss, arc cook termination, or an ADR-0006
+cook-mode. Those stay CRV-TOUCH tickets. CRV-TOUCH does not edit
+this ADR.
 
 **Reject** if the constructor-in-the-specification frame is wrong, if
 first cook scope must be wider than chord–chord, or if identity must
 be numeric rather than structural.
 
-Do not flip the Status line except by this decision.
+Do not flip the Status line except by this decision. Status stays
+**Proposed** until Joost stamps Accept.
