@@ -240,7 +240,8 @@ This cut mints no keyword and no second external seam (no FFI pin, no
 RocqRefRunner dispatch). A later keyword, if one is ever wanted, attaches
 as an Oracle adapter (ADR-0006 Decision 1–2: line protocol + own
 compilation unit + driver print) — never as FFI or RocqRefRunner.
-Comment + this cross-link is the coupling.
+ADR-0006's Related subsection points back here. Both sides of the
+cross-link are the coupling. Status of ADR-0006 stays Accepted.
 
 ### Acceptance checklist (four prior review conditions)
 

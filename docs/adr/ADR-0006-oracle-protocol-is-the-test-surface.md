@@ -100,3 +100,16 @@ A third primitives unit that length/overlay would open is out of scope.
   opener. No clothoid / NURBS / geodesic keywords.
 - A ring remains a predicate (`IsClosed` ∧ `IsSimple`) on a Curve. Intake
   vs IsValid and two-tier interior are not reopened here.
+
+## Related — ADR-0007 cook / 𝓘
+
+ADR-0007's pairwise cook oracle `𝓘` and testable cook results use this
+Oracle line protocol as their **only** external test surface. There is
+no second seam: no FFI pin, no RocqRefRunner keyword. This ADR mints no
+cook-mode keyword for that work. A later keyword, if one is ever
+wanted, attaches as an Oracle adapter (Decision 1–2), never as FFI or
+RocqRefRunner.
+
+See [`ADR-0007-sheet-hen-cook-noding-model.md`](ADR-0007-sheet-hen-cook-noding-model.md)
+(coupling paragraph in the supporting-shapes addendum). Status of this
+ADR stays **Accepted**. ADR-0007 stays Proposed.
