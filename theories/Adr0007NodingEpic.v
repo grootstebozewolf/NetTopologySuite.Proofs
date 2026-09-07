@@ -23,12 +23,19 @@
    `ticket_0007_dart_eq_qed_or_qex` discharges right.
    `ticket_0007_silent_nodable_qed_or_qex` discharges right.
 
+   Cook termination: pairwise interior split of chords is finite
+   (width measure); the bag-level repeat-until-noded loop stays an
+   𝓘-family obligation (termination + confluence).
+   `ticket_0007_cook_term_qed_or_qex` discharges right.
+
    QEX is not BDFL accept. ADR-0007 stays Proposed. Do not remint
    CurveSegment / Exact* zoo types / Dart. Do not steal 508-* / 522-*
    board mints. Do not claim a complete FP noder or close Hobby.
 
    Testable 𝓘 / cook results sit on the accepted Oracle line protocol
    (ADR-0006). This module mints no keyword and no second external seam.
+   A later keyword attaches as an Oracle adapter, never as FFI or
+   RocqRefRunner.
 
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
    lane: proofs
@@ -164,6 +171,22 @@ Proof.
   - exact crossing_not_nodable_shadow.
 Qed.
 
+(* Cook termination on the chord lane (QED: bag loop discharged) or
+   pairwise split is finite and the bag loop remains an 𝓘-family
+   obligation (QEX). Discharged QEX — interior Hit splits [0,1]
+   into two strictly shorter leftovers; repeat-until-noded
+   termination and confluence are not theorems of this cut. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 cook termination is bag-loop discharged (QED) or pairwise split finite and the bag loop an I-family obligation (QEX); discharged QEX on leftover-width measure","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
+Theorem ticket_0007_cook_term_qed_or_qex :
+  (cook_loop_status = LoopDischarged /\ interior_split_finite)
+  \/
+  (cook_loop_status = LoopObligation /\ interior_split_finite).
+Proof.
+  right.
+  split; [exact cook_loop_is_obligation|].
+  exact interior_split_finite_holds.
+Qed.
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.
@@ -171,3 +194,4 @@ Print Assumptions ticket_0007_identity_qed_or_qex.
 Print Assumptions ticket_0007_dart_eq_qed_or_qex.
 Print Assumptions ticket_0007_noded_cook_qed_or_qex.
 Print Assumptions ticket_0007_silent_nodable_qed_or_qex.
+Print Assumptions ticket_0007_cook_term_qed_or_qex.

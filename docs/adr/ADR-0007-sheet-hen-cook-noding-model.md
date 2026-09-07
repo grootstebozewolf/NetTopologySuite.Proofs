@@ -3,7 +3,7 @@
 | Field | Value |
 |---------------|--------------------------------------------------------------|
 | **Order** | ADR-0007 |
-| **Status** | **Proposed** — supporting shapes landed; awaiting BDFL |
+| **Status** | **Proposed** — supporting shapes landed; Ready for BDFL |
 | **Deciders** | Joost (BDFL); proposed by Jeroen Bloemscheer |
 | **Date** | 2026-09-05 |
 | **Superseded by** | — (none) |
@@ -237,7 +237,10 @@ Registered in `_CoqProject` (host / pure-R / Stdlib lane).
 **ADR-0006 coupling.** Testable `𝓘` / cook results sit on the accepted
 Oracle line protocol (`docs/adr/ADR-0006-oracle-protocol-is-the-test-surface.md`).
 This cut mints no keyword and no second external seam (no FFI pin, no
-RocqRefRunner dispatch). Comment + this cross-link is the coupling.
+RocqRefRunner dispatch). A later keyword, if one is ever wanted, attaches
+as an Oracle adapter (ADR-0006 Decision 1–2: line protocol + own
+compilation unit + driver print) — never as FFI or RocqRefRunner.
+Comment + this cross-link is the coupling.
 
 ### Acceptance checklist (four prior review conditions)
 
@@ -252,8 +255,126 @@ RocqRefRunner dispatch). Comment + this cross-link is the coupling.
 | — | Empty ≠ Decline | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` | **QED** | `SheetHenCook.v : IEmpty_neq_IDecline` |
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCook.v : noded_crossing` |
 | — | Silent `pairwise_nodable` / `fully_intersected` does not discharge the constructor | `Adr0007NodingEpic.v : ticket_0007_silent_nodable_qed_or_qex` | **QEX** — a proper crossing is the noder's job and is excluded by the shadow | `SheetHenCook.v : crossing_not_nodable_shadow` |
+| — | Cook termination / confluence on the chord lane | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — pairwise interior split is finite; the bag loop stays an `𝓘`-family obligation | `SheetHenCook.v : interior_split_finite_holds`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
 
+### Dart := hen-id pair (chicken view)
+
+A later remint reseats `Dart` as a hen-id pair `(h_src, h_dst)` — one
+view of a chicken, not a third type. `DartAngularOrder.ddir` then reads
+`γ'` from the chicken's egg. Orbit / `next` / face proofs consume
+`dart_eq_dec` as *a* decidable equality and never inspect coordinates
+(`DartFace.v`, `DartNextInjective.v`, `DartNextRemove.v`); they do not
+remint. Local `HenIdDart` (`SheetHenCook.v : hen_id_dart_of_chicken`)
+is that view; it is not a remint of `Dart.v:50`. Reviewers of
+`ddir` should not invent a third directed-edge type.
+
+### binary64 and OverlayNGRobust sit on a sheet
+
+Points of `S` are affine. The working number type — ℝ in the host lane,
+binary64 / Flocq in `theories-flocq/` — is a *coordinate realization* of
+those points (`SheetHenCook.v : CoordRealization`,
+`SheetHenCook.v : coord_realization_preserves_sheet`). Changing the
+number type does not change the sheet origin or basis. A binary64 noder
+is `𝓘` realized in that number type on one sheet; it is not a second
+sheet and is not discharged here.
+
+OverlayNGRobust is a finite sequence of snap maps `S → Λ` attempted
+until noded `G` validates or the process throws. Each attempt is
+Hobby-shaped: it assumes `G` was already noded. It is not `𝓘`
+(`SheetHenCook.v : overlay_ng_robust_is_snap_not_I`). Failure to
+validate is not `𝓘` Decline and not Empty.
+
 WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex · board: ADR-0007
+
+---
+
+## Ready for BDFL (2026-09-07)
+
+Status stays **Proposed**. This section is the Accept / Reject memo.
+QEX is not acceptance. Supporting shapes are not a noder.
+
+### Four prior review conditions — discharged
+
+| # | Condition | Stop | Arm |
+|---|-----------|------|-----|
+| 1 | Identity policy sketch (structural hen minting) | `ticket_0007_identity_qed_or_qex` | **QED** — `ShareOne` |
+| 1b | Numeric `dart_eq_dec` is not vertex identity | `ticket_0007_dart_eq_qed_or_qex` | **QEX** |
+| 2 | Minimal chord–chord `𝓘` | `ticket_0007_chord_chord_qed_or_qex` | **QED** — Hit / Empty / never Decline in scope |
+| 3 | Cross-link accepted ADR-0006 | module headers + coupling paragraph | Oracle line protocol only; later keyword = adapter, not FFI / RocqRefRunner |
+| 4 | First cook scope = chord–chord only | `ticket_0007_qed_or_qex` | **QEX** on clothoid–clothoid |
+
+### Soft gaps this cut names
+
+| Soft gap | Where |
+|----------|-------|
+| (a) Cook termination / confluence as an explicit chord-lane obligation | `ticket_0007_cook_term_qed_or_qex` — pairwise split finite (QED lemma); bag loop remains an `𝓘`-family obligation (QEX) |
+| (b) How binary64 / OverlayNGRobust sit on a sheet | paragraph above + `coord_realization_preserves_sheet` / `overlay_ng_robust_is_snap_not_I` |
+| (c) Chicken vs Dart so `ddir` reviewers do not invent three types | paragraph above: `Dart` := hen-id pair = chicken view |
+| (d) This memo | this section |
+
+### CRV-TOUCH / RGR (vocabulary law, not kiss)
+
+NTS RGR Board: [board](https://app.notion.com/p/b494beb4c5d04a08886e1169be9b6cb1).
+Card Touch for noding (`CRV-TOUCH`, Lane red):
+[card](https://app.notion.com/p/3be1c9833b0681f8a944ce851d463236).
+Wayfinder: [CRV-TOUCH · wayfinder map](https://app.notion.com/p/3d41c9833b068143b870c30feba956c3).
+RGR is the JTS fork branch `feature/sfa-curve-rgr` (fork PR 7).
+`CurveSegmentNoder` lives on the Bar 2 stack off that branch, not here.
+
+CRV-TOUCH **assumes** this ADR's vocabulary (sheet, hen, egg, chicken,
+cook, `𝓘`, Empty ≠ Decline, view). Accepting this ADR is **out of
+scope** of that map. Tickets may record a proposed amendment; they do
+not edit this file. Jeroen is Architect on every CRV-TOUCH ticket.
+Joost appears only as a note where a ticket proposes an amendment.
+
+Accept as vocabulary law does **not** settle kiss / tangency.
+
+- **Kiss** is external / internal circle tangency and arc–line
+  tangency (discriminant zero). Two eggs sharing an endpoint is
+  **not** a kiss; the cook already handles that case.
+- Three tangency decision procedures stay live on CRV-TOUCH: exact
+  rational discriminant, identity by construction, ulp-floored
+  window. This ADR does not pick one.
+- The kiss spec is written on ℝ² (MerkatorBV `ChordCook.v`; this
+  clone's host-lane ℝ² vocabulary is `SheetHenCook.v`). What a
+  binary64 sheet owes the kiss is a CRV-TOUCH grilling ticket, not
+  a second sheet here.
+- Arc cook termination is out of scope here. It belongs to the
+  Curve noding / General circular noding sisters, not this Accept.
+- An ADR-0006 cook-mode keyword that reports a kiss hen (beyond
+  `DISC_OVERLAY` EXT_TANGENT / INT_TANGENT and `ARC_SEGMENT_XY`
+  count-1) is a CRV-TOUCH ticket after a prototype. This ADR mints
+  no keyword.
+
+### Honest remaining opens (Accept does not close these)
+
+- Identity policy detail beyond `ShareOne` / `MintTwo` (which `𝓘` decides, on what basis). Kiss certificate is the CRV-TOUCH form of this question, not a silent extra hen type.
+- A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet.
+- Hobby 4.1 / 4.3. Snap-rounding stays a different constructor under already-noded `G`.
+- The repeat-until-noded bag loop (termination + confluence) on the **chord** lane. Pairwise width decrease is not that discharge. **Arc** cook termination is a sister card, not this Accept.
+- Later constructive rungs (one Hit `split(t)` step; constructed `𝓘` from proper-cross signs) are letters after Accept, not Accept blockers.
+- ADR-0006 cook-mode for a kiss hen — CRV-TOUCH, after a prototype.
+
+### Decision requested
+
+**Accept** ADR-0007 as the **vocabulary law** CRV-TOUCH already
+assumes: sheet / hen / egg / chicken / cook / `𝓘`, first cook scope
+chord–chord, Empty ≠ Decline, identity structural, host lane on ℝ²,
+testable results on the ADR-0006 Oracle line protocol (no new
+cook-mode keyword in this cut).
+
+Accept does **not** settle kiss / tangency, does **not** pick among
+the three tangency decision procedures, and does **not** discharge
+binary64-sheet-vs-kiss, arc cook termination, or an ADR-0006
+cook-mode. Those stay CRV-TOUCH tickets. CRV-TOUCH does not edit
+this ADR.
+
+**Reject** if the constructor-in-the-specification frame is wrong, if
+first cook scope must be wider than chord–chord, or if identity must
+be numeric rather than structural.
+
+Do not flip the Status line except by this decision. Status stays
+**Proposed** until Joost stamps Accept.
