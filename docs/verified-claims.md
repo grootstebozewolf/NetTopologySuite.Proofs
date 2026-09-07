@@ -1895,11 +1895,11 @@ results sit on ADR-0006's Oracle line protocol; no second seam.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` (+ `SheetHenCook.v : clothoid_clothoid_not_first_scope`) | **ADR-0007 QED ∨ QEX:** first cook scope is complete, or a documented pair is missing. Discharged QEX on clothoid–clothoid `[exact]` | 3 |
+| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` (+ `SheetHenCook.v : clothoid_clothoid_not_first_scope`) | **ADR-0007 QED ∨ QEX:** first cook scope is complete, or a documented pair is missing. Discharged QEX on clothoid–clothoid `[exact]` | 0 |
 | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` (+ `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : crossing_witness`, `SheetHenCook.v : disjoint_witness`, `SheetHenCook.v : I_ok_chord_not_decline`) | **Chord–chord cook inhabitance:** Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope `[exact]` | 3 |
-| `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` (+ `SheetHenCook.v : IEmpty_neq_IDecline`) | **Empty ≠ Decline** as distinct `𝓘` constructors `[exact]` | 3 |
-| `Adr0007NodingEpic.v : ticket_0007_identity_qed_or_qex` (+ `SheetHenCook.v : share_one_same_hen`) | **Structural identity:** `ShareOne` yields one hen `[exact]` | 3 |
+| `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` (+ `SheetHenCook.v : IEmpty_neq_IDecline`) | **Empty ≠ Decline** as distinct `𝓘` constructors `[exact]` | 0 |
+| `Adr0007NodingEpic.v : ticket_0007_identity_qed_or_qex` (+ `SheetHenCook.v : share_one_same_hen`) | **Structural identity:** `ShareOne` yields one hen `[exact]` | 0 |
 | `Adr0007NodingEpic.v : ticket_0007_dart_eq_qed_or_qex` (+ `SheetHenCook.v : coord_eq_not_hen_eq`) | **QEX:** coord-pair equality is not hen identity. Local `CoordDart` mirrors the `Dart` coordinate-pair type; not a remint `[exact]` | 3 |
 | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` (+ `SheetHenCook.v : noded_crossing`) | **Noded on S** is cook evidence `[exact]` | 3 |
 | `Adr0007NodingEpic.v : ticket_0007_silent_nodable_qed_or_qex` (+ `SheetHenCook.v : crossing_not_nodable_shadow`) | **QEX:** silent `pairwise_nodable` excludes the proper-crossing case `[exact]` | 3 |
-| `SheetHenCook.v : snap_round_neq_I` | Snap-rounding is a different constructor than `𝓘` `[exact]` | 3 |
+| `SheetHenCook.v : snap_round_neq_I` | Snap-rounding is a different constructor than `𝓘` `[exact]` | 0 |

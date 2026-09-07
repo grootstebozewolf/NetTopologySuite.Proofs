@@ -329,8 +329,9 @@ Proof.
     (mkPoint 0 0, mkPoint 2 0)) as [Hf _].
   assert (Heq : 0%nat = 0%nat) by reflexivity.
   apply Hf in Heq.
-  injection Heq as _ Hq.
-  exact (points_10_neq_20 Hq).
+  apply (f_equal snd) in Heq.
+  simpl in Heq.
+  exact (points_10_neq_20 Heq).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
