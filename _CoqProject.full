@@ -2673,11 +2673,11 @@ theories/ArcSpanAtan2.v
 # 4-axiom (atan2/Classic lineage via ArcSpanAtan2, docs/audit-exceptions.txt).
 # No Admitted.
 theories/ArcArcQuartic.v
-# Issue #64 ask #5b / N-AA: isolated quartic identity (3-axiom).
-# Named Sylvester Res_y / Res_x of the two circle polynomials; radical-line
-# intersection coordinates are roots.  One Year-1 guard
-# (`circles_properly_intersect`).  Classic-free — does not Require
-# ArcArcQuartic / Atan2.  Locked-fixture witness x = 7/2.  No Admitted.
+# Issue #64 ask #5b / N-AA: Year-1 circular–circular 𝓘 Hit (ADR-0007).
+# Isolated quartic identity (3-axiom): radical-line p* are roots.
+# One Year-1 guard (`circles_properly_intersect`).  Decline of the
+# missing circular Egg interpolant is documented, not a SheetHenCook
+# remint.  Classic-free.  Locked-fixture witness x = 7/2.  No Admitted.
 theories/ArcArcIsolatedQuartic.v
 # Slice 7 / formal soundness of oracle/driver.ml:circumcentre_q.  Raw-coordinate
 # counterpart of arc_center_equidistant (ArcChordApprox) and

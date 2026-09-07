@@ -1,55 +1,59 @@
 (* ============================================================================
    NetTopologySuite.Proofs.ArcArcIsolatedQuartic
    ----------------------------------------------------------------------------
-   Issue #64 ask #5b / JTS curve-awareness N-AA: ISOLATED QUARTIC IDENTITY
-   for arc-arc intersection coordinates.
+   Issue #64 ask #5b / N-AA — first Year-1 𝓘 for two circular eggs on
+   one sheet (ADR-0007 Accepted: sheet / hen / cook;
+   𝓘 = Hit p*, ti, tj | empty | Decline).  Not a separate cathedral
+   and not a remint of `SheetHenCook.v` (first cook scope stays
+   chord–chord).
 
-   Year-1 already names the radical-line candidates
-   (`ArcArcCircles.radical_point_plus` / `_minus`) and proves they lie on
-   both circumcircles (`radical_points_on_circles`).  `ArcArcQuartic.v`
-   then records Vieta sum/product identities, but that file is 4-axiom
-   (atan2 / Classic lineage).  TRIAGE still names "#5b coords" as the
-   exactness frontier because the *named polynomial* whose roots those
-   coordinates are had not been isolated at the 3-axiom floor.
+   ADR-0007 𝓘 on this slice:
 
-   This file closes that gap, Classic-free:
+     Hit    — under the Year-1 guard `circles_properly_intersect`,
+              p* is `radical_point_plus` / `_minus`, and those
+              coordinates are roots of the isolated quartic
+              (`radical_points_satisfy_isolated_quartic`).
+     empty  — disjoint circumcircles (d > r1+r2 or |r1−r2| > d) are
+              𝓘 = empty; not this slice (the guard is proper intersection).
+     Decline — legal 0007 answer.  Written in one paragraph below.
+
+   Decline / missing constructor (not Empty, not a QEX-as-headline):
+     `SheetHenCook` first cook scope is chord–chord; Year-1
+     `CircularArc` is not an Egg interpolant γ:[0,1]→S there, and this
+     file does not mint that constructor or widen first_cook_scope.
+     The isolated quartic constructs p* (the Hit point on the sheet).
+     The full triple p*, ti, tj would need that circular interpolant
+     plus a sweep parameter — those constructors are not in this file.
+     Coincident centres / zero radius refuse the Year-1 radical-axis
+     guard (`coincident_centres_not_proper`): Decline of the cook, not ∅.
+
+   Named polynomial (Classic-free, 3-axiom):
 
      circle_poly O r x y  :=  (x − Ox)² + (y − Oy)² − r²
-
      isolated_quartic_x   :=  Sylvester Res_y of the two circle
-                              polynomials (the isolated affine
-                              polynomial of the pencil).
+                              polynomials (affine elimination).
 
-   Bézout counts four intersections of two conics in the projective
-   plane.  For two circles the two circular points at infinity account
-   for degree 2; the affine resultant is therefore degree ≤ 2.  The
-   traditional name "quartic" is the Bézout count; the named polynomial
-   here is the elimination resultant, derived from the two circle
-   equations, not from the radical-line closed form.
+   Bézout counts four intersections of two conics.  The two circular
+   points at infinity take degree 2; the affine resultant is degree ≤ 2.
+   The traditional name "quartic" is the Bézout count.  `ArcArcQuartic.v`
+   stays the 4-axiom atan2/Vieta discharge; this file does not Require it.
 
    HEADLINE (one named Year-1 guard):
      `radical_points_satisfy_isolated_quartic`
-     — both named radical-line x- and y-coordinates are roots of the
-       corresponding isolated resultant.
+     — 𝓘 Hit coordinates: both named radical-line x- and y-coordinates
+       are roots of the corresponding isolated resultant.
 
    Supporting (hypothesis-free):
-     `isolated_quartic_vanishes_on_common_zeros`
-     — any common zero of the two circle polynomials has x-coordinate
-       a root of `isolated_quartic_x`.
-
-   Degenerate-pencil / missing-real-root boundary (not the headline;
-   documented so the QEX constructor is not silently omitted):
-     coincident centres (`dist = 0`) or a non-positive radius refuse
-     `circles_properly_intersect`.  That is the Year-1 guard already
-     used by `two_circles_radical_point`; no new primitive is missing.
+     `isolated_quartic_vanishes_on_common_zeros`.
 
    WITNESS topic: core · claimId: 64-naa-quartic · witness: locked-7-2
    lane: proofs
    issue: #64
+   ADR-0007: Year-1 circular–circular 𝓘 Hit p*; do not remint
+   SheetHenCook / first cook scope / Egg constructors.
    Eval (RED until the named resultant is shown to vanish):
      isolated_quartic_x (0,0) (7,0) 5 5 (7/2) = 0
-     — the DiscOverlay / ARC_ARC_XY locked fixture, x-coordinate of
-       both radical-line nodes.  Example
+     — DiscOverlay / ARC_ARC_XY locked fixture.  Example
        `locked_fixture_isolated_quartic_x` is that Eval, Qed by field.
 
    No new oracle vectors: ARC_ARC_XY already exercises this fixture
@@ -57,7 +61,7 @@
 
    Proved here (THREE-AXIOM, no atan2, no Classic, no exemption).
    No `Admitted`, no `Axiom`, no `Parameter`.  Does not Require
-   ArcArcQuartic / ArcSpanAtan2 / Atan2.
+   ArcArcQuartic / ArcSpanAtan2 / Atan2 / SheetHenCook.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -132,7 +136,7 @@ Definition isolated_quartic_y (O1 O2 : Point) (r1 r2 y : R) : R :=
 (* this Example does not close.                                               *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"64-naa-quartic","topic":"core","lemma":"radical_points_satisfy_isolated_quartic","title":"Radical-line intersection coordinates are roots of the isolated circle-circle resultant","file":"theories/ArcArcIsolatedQuartic.v","witness":"locked-7-2","board":"#64"} *)
+(* WITNESS {"claimId":"64-naa-quartic","topic":"core","lemma":"radical_points_satisfy_isolated_quartic","title":"Year-1 circular-circular I Hit: radical-line p* are roots of the isolated quartic","file":"theories/ArcArcIsolatedQuartic.v","witness":"locked-7-2","board":"#64"} *)
 
 Example locked_fixture_isolated_quartic_x :
   isolated_quartic_x (mkPoint 0 0) (mkPoint 7 0) 5 5 (7 / 2) = 0.
@@ -197,7 +201,12 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §4  Year-1 guard (one named hyp) and the coordinate-identity headline.     *)
+(* §4  Year-1 𝓘 Hit p* under one named guard.                                 *)
+(*                                                                            *)
+(* ADR-0007: 𝓘 = Hit p*, ti, tj | empty | Decline.  This theorem is the      *)
+(* Hit coordinate: p* = radical_point_plus/minus lies on the isolated        *)
+(* quartic.  ti, tj are not minted here (no circular gamma Egg; see header   *)
+(* Decline).                                                                 *)
 (* -------------------------------------------------------------------------- *)
 
 (* Bundles the guards already used by `two_circles_radical_point` /
@@ -210,8 +219,8 @@ Definition circles_properly_intersect (O1 O2 : Point) (r1 r2 : R) : Prop :=
   Rabs (r1 - r2) < dist O1 O2 /\
   dist O1 O2 < r1 + r2.
 
-(* Degenerate pencil: coincident centres.  The radical-axis construction
-   divides by dist = 0; the pair is not `circles_properly_intersect`. *)
+(* Decline of the radical-axis cook (not 𝓘 = empty): coincident centres
+   divide by dist = 0.  Legal ADR-0007 Decline, not a missing primitive. *)
 Lemma coincident_centres_not_proper :
   forall (O1 O2 : Point) (r1 r2 : R),
     dist O1 O2 = 0 ->
@@ -221,6 +230,8 @@ Proof.
   lra.
 Qed.
 
+(* Year-1 circular–circular 𝓘 Hit on one sheet: p* from the isolated
+   quartic under the Year-1 proper-intersection guard. *)
 Theorem radical_points_satisfy_isolated_quartic :
   forall (O1 O2 : Point) (r1 r2 : R),
     circles_properly_intersect O1 O2 r1 r2 ->
