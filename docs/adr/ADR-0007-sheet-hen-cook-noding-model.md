@@ -228,7 +228,7 @@ here.
 Host-lane vocabulary and ticket-named QED ∨ QEX stops for Joost's
 conditional acceptance. Not a noder. Not a `Geometry` subclass. Not a
 remint of `CurveSegment` / Exact* zoo types / `Dart` / Hobby.
-QEX is not BDFL accept. **Status stays Proposed.**
+QEX is not acceptance of a missing constructor. **Status is Accepted** (Joost, BDFL, 2026-09-07).
 
 Modules: `theories/SheetHenCook.v` (sheet / hen / egg / chicken / `𝓘` /
 first-cook scope) and `theories/Adr0007NodingEpic.v` (ticket stops).
