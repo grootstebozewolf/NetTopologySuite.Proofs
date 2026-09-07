@@ -385,6 +385,181 @@ Proof.
     split; [exact crossing_midpoint_ab | exact crossing_midpoint_cd].
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Next rung: chord split(t) + one Hit cook step. On success the cook mints   *)
+(* one hen and replaces each crossed chicken by two incident on that hen.     *)
+(* Not the repeat-until-noded loop. Not a remint of Intersect.strict_         *)
+(* completeness.                                                              *)
+(* -------------------------------------------------------------------------- *)
+
+Definition chord_split (c : ChordEgg) (t : R) : ChordEgg * ChordEgg :=
+  let m := chord_eval c t in
+  (mkChordEgg (ce_p0 c) m, mkChordEgg m (ce_p1 c)).
+
+Lemma chord_split_join :
+  forall c t,
+    ce_p1 (fst (chord_split c t)) = chord_eval c t /\
+    ce_p0 (snd (chord_split c t)) = chord_eval c t.
+Proof.
+  intros c t. split; reflexivity.
+Qed.
+
+Lemma chord_split_ends :
+  forall c t,
+    ce_p0 (fst (chord_split c t)) = ce_p0 c /\
+    ce_p1 (snd (chord_split c t)) = ce_p1 c.
+Proof.
+  intros c t. split; reflexivity.
+Qed.
+
+Lemma chord_split_left_reparam :
+  forall c t u,
+    chord_eval (fst (chord_split c t)) u = chord_eval c (u * t).
+Proof.
+  intros [p0 p1] t u.
+  unfold chord_split, chord_eval. simpl.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma chord_split_right_reparam :
+  forall c t u,
+    chord_eval (snd (chord_split c t)) u = chord_eval c (t + u * (1 - t)).
+Proof.
+  intros [p0 p1] t u.
+  unfold chord_split, chord_eval. simpl.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Record CookedPair : Type := mkCookedPair {
+  cp_hen : Hen;
+  cp_left1 : Chicken;
+  cp_right1 : Chicken;
+  cp_left2 : Chicken;
+  cp_right2 : Chicken
+}.
+
+Definition cook_hit_chords
+  (c1 c2 : Chicken) (e1 e2 : ChordEgg) (ti tj : R) (h_new : Hen)
+  : CookedPair :=
+  let s1 := chord_split e1 ti in
+  let s2 := chord_split e2 tj in
+  mkCookedPair h_new
+    (mkChicken (ck_src c1) h_new (MkChord (fst s1)))
+    (mkChicken h_new (ck_dst c1) (MkChord (snd s1)))
+    (mkChicken (ck_src c2) h_new (MkChord (fst s2)))
+    (mkChicken h_new (ck_dst c2) (MkChord (snd s2))).
+
+Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
+  : option CookedPair :=
+  match ck_egg c1, ck_egg c2, o with
+  | MkChord e1, MkChord e2, IHit _ ti tj =>
+      Some (cook_hit_chords c1 c2 e1 e2 ti tj h_new)
+  | _, _, _ => None
+  end.
+
+Definition cooked_shares_hen (cp : CookedPair) : Prop :=
+  ck_dst (cp_left1 cp) = cp_hen cp /\
+  ck_src (cp_right1 cp) = cp_hen cp /\
+  ck_dst (cp_left2 cp) = cp_hen cp /\
+  ck_src (cp_right2 cp) = cp_hen cp.
+
+Lemma cook_hit_chords_shares_hen :
+  forall c1 c2 e1 e2 ti tj h,
+    cooked_shares_hen (cook_hit_chords c1 c2 e1 e2 ti tj h).
+Proof.
+  intros. repeat split; reflexivity.
+Qed.
+
+Lemma try_cook_hit_decline_none :
+  forall c1 c2 h, try_cook_hit c1 c2 IDecline h = None.
+Proof.
+  intros [s1 d1 e1] [s2 d2 e2] h.
+  destruct e1, e2; reflexivity.
+Qed.
+
+Lemma try_cook_hit_empty_none :
+  forall c1 c2 h, try_cook_hit c1 c2 IEmpty h = None.
+Proof.
+  intros [s1 d1 e1] [s2 d2 e2] h.
+  destruct e1, e2; reflexivity.
+Qed.
+
+Lemma try_cook_hit_out_of_scope_none :
+  forall c1 c2 p ti tj h,
+    egg_class (ck_egg c1) <> EggChord \/
+    egg_class (ck_egg c2) <> EggChord ->
+    try_cook_hit c1 c2 (IHit p ti tj) h = None.
+Proof.
+  intros [s1 d1 e1] [s2 d2 e2] p ti tj h H.
+  destruct e1, e2; simpl in *; try reflexivity.
+  destruct H as [H | H]; exfalso; apply H; reflexivity.
+Qed.
+
+Lemma try_cook_hit_chord_hit_some :
+  forall c1 c2 e1 e2 p ti tj h,
+    ck_egg c1 = MkChord e1 ->
+    ck_egg c2 = MkChord e2 ->
+    exists cp,
+      try_cook_hit c1 c2 (IHit p ti tj) h = Some cp /\
+      cooked_shares_hen cp /\
+      cp_hen cp = h.
+Proof.
+  intros [s1 d1 eg1] [s2 d2 eg2] e1 e2 p ti tj h He1 He2.
+  simpl in He1, He2. subst. simpl.
+  exists (cook_hit_chords (mkChicken s1 d1 (MkChord e1))
+                          (mkChicken s2 d2 (MkChord e2)) e1 e2 ti tj h).
+  split; [reflexivity|].
+  split; [apply cook_hit_chords_shares_hen|].
+  reflexivity.
+Qed.
+
+Definition crossing_ck1 : Chicken :=
+  mkChicken 0%nat 1%nat (MkChord diag_ab).
+Definition crossing_ck2 : Chicken :=
+  mkChicken 2%nat 3%nat (MkChord diag_cd).
+Definition crossing_hen : Hen := 4%nat.
+
+Definition cooked_crossing : CookedPair :=
+  cook_hit_chords crossing_ck1 crossing_ck2 diag_ab diag_cd
+    (1 / 2) (1 / 2) crossing_hen.
+
+Lemma cooked_crossing_shares :
+  cooked_shares_hen cooked_crossing.
+Proof.
+  apply cook_hit_chords_shares_hen.
+Qed.
+
+Lemma cooked_crossing_try :
+  try_cook_hit crossing_ck1 crossing_ck2
+    (cw_result crossing_witness) crossing_hen = Some cooked_crossing.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma cooked_crossing_join :
+  ce_p1 (fst (chord_split diag_ab (1 / 2))) = cross_pt /\
+  ce_p0 (snd (chord_split diag_ab (1 / 2))) = cross_pt /\
+  ce_p1 (fst (chord_split diag_cd (1 / 2))) = cross_pt /\
+  ce_p0 (snd (chord_split diag_cd (1 / 2))) = cross_pt.
+Proof.
+  repeat split;
+    (rewrite (proj1 (chord_split_join _ _)) ||
+     rewrite (proj2 (chord_split_join _ _)));
+    unfold cross_pt; unfold chord_eval, diag_ab, diag_cd; simpl;
+    apply (f_equal2 mkPoint); field.
+Qed.
+
+Definition clothoid_ck1 : Chicken :=
+  mkChicken 0%nat 1%nat (MkOutOfScope EggClothoid).
+Definition clothoid_ck2 : Chicken :=
+  mkChicken 2%nat 3%nat (MkOutOfScope EggClothoid).
+
+Lemma try_cook_hit_clothoid_none :
+  try_cook_hit clothoid_ck1 clothoid_ck2 IDecline crossing_hen = None.
+Proof.
+  reflexivity.
+Qed.
+
 Print Assumptions first_cook_scope_chord_chord.
 Print Assumptions clothoid_clothoid_not_first_scope.
 Print Assumptions IEmpty_neq_IDecline.
@@ -395,3 +570,8 @@ Print Assumptions coord_eq_not_hen_eq.
 Print Assumptions noded_crossing.
 Print Assumptions crossing_not_nodable_shadow.
 Print Assumptions snap_round_neq_I.
+Print Assumptions chord_split_left_reparam.
+Print Assumptions cook_hit_chords_shares_hen.
+Print Assumptions cooked_crossing_try.
+Print Assumptions cooked_crossing_join.
+Print Assumptions try_cook_hit_clothoid_none.

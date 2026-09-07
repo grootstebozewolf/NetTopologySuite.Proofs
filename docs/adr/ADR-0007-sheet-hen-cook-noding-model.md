@@ -257,3 +257,17 @@ Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
 
 WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex · board: ADR-0007
+
+### Next rung — one Hit cook step (2026-09-07)
+
+The Decision's first constructive sentence after `𝓘`: on success the cook
+inserts a point-hen and replaces each crossed chicken by two via
+`split(t)`. That is this rung. It is not the repeat-until-noded loop
+and not owner accept.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `Adr0007NodingEpic.v : ticket_0007_cook_step_qed_or_qex` | **QED** — crossing chickens share one minted hen after `split(t)` | `SheetHenCook.v : cooked_crossing_try`, `SheetHenCook.v : cooked_crossing_shares`, `SheetHenCook.v : chord_split_left_reparam` |
+| `Adr0007NodingEpic.v : ticket_0007_cook_step_scope_qed_or_qex` | **QEX** — Decline / Empty / out-of-scope allocate no hen | `SheetHenCook.v : try_cook_hit_clothoid_none`, `SheetHenCook.v : try_cook_hit_empty_none` |
+
+Witness: `0007-cook-split`. Still Proposed.
