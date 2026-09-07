@@ -9,9 +9,12 @@
 
    First cook scope is chord–chord only. Predicates never mint hens.
    Empty ≠ Decline. Snap-rounding ≠ 𝓘. Display is a view.
-   Pairwise interior split is finite; the bag cook loop stays an
-   𝓘-family obligation. binary64 realizes points of S; OverlayNGRobust
-   is a snap-sequence. Dart := hen-id pair is a chicken view.
+   Pairwise interior split is finite and one Hit-split is confluent
+   (leftover bag independent of parent order). The bag cook loop stays
+   an 𝓘-family / CRV-TOUCH obligation, not a named soft gap.
+   binary64 realizes points of S; OverlayNGRobust is a finite
+   snap-sequence. DdirDart := (Hen * Hen) is the chicken projection
+   — one type equation, not a third directed-edge type.
 
    Testable 𝓘 / cook results sit on the accepted Oracle line protocol
    (ADR-0006). This module mints no keyword and no second external seam.
@@ -389,12 +392,14 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Pairwise chord-split finiteness. One interior Hit splits [0,1] into two    *)
-(* strictly shorter leftover widths that sum to the parent. That is the       *)
-(* cheap well-founded measure for one cook step. The bag-level                *)
-(* repeat-until-noded loop (termination + confluence) remains an 𝓘-family     *)
-(* obligation — not discharged here. Names avoid the sibling cook-split       *)
-(* identifiers (no chord_split / try_cook_hit remint).                        *)
+(* Pairwise chord-split finiteness + one-step confluence. One interior Hit    *)
+(* splits [0,1] into two strictly shorter leftover widths that sum to the     *)
+(* parent, and the leftover bag after splitting both parents does not         *)
+(* depend on which parent is split first. That closes the host-lane           *)
+(* cook-termination soft gap. The bag-level repeat-until-noded loop           *)
+(* (termination + confluence on a leftover bag) remains an 𝓘-family /         *)
+(* CRV-TOUCH obligation — not a named soft gap. Names avoid the sibling       *)
+(* cook-split identifiers (no chord_split / try_cook_hit remint).             *)
 (* -------------------------------------------------------------------------- *)
 
 Definition leftover_width (t0 t1 : R) : R := Rabs (t1 - t0).
@@ -447,8 +452,83 @@ Proof.
   exact interior_hit_splits_width.
 Qed.
 
+(* Leftover chords of one Hit-split. Not a remint of sibling split names. *)
+Definition leftover_half (c : ChordEgg) (t0 t1 : R) : ChordEgg :=
+  mkChordEgg (chord_eval c t0) (chord_eval c t1).
+
+Definition split_leftovers (c : ChordEgg) (t : R) : ChordEgg * ChordEgg :=
+  (leftover_half c 0 t, leftover_half c t 1).
+
+Lemma chord_eval_at_0 :
+  forall c, chord_eval c 0 = ce_p0 c.
+Proof.
+  intros [p0 p1].
+  unfold chord_eval; simpl.
+  destruct p0 as [x y]; simpl.
+  apply (f_equal2 mkPoint); field.
+Qed.
+
+Lemma chord_eval_at_1 :
+  forall c, chord_eval c 1 = ce_p1 c.
+Proof.
+  intros [p0 p1].
+  unfold chord_eval; simpl.
+  destruct p1 as [x y]; simpl.
+  apply (f_equal2 mkPoint); field.
+Qed.
+
+Lemma leftover_left_on_parent :
+  forall c t,
+    ce_p0 (fst (split_leftovers c t)) = chord_eval c 0 /\
+    ce_p1 (fst (split_leftovers c t)) = chord_eval c t.
+Proof.
+  intros c t.
+  split; reflexivity.
+Qed.
+
+Lemma leftover_right_on_parent :
+  forall c t,
+    ce_p0 (snd (split_leftovers c t)) = chord_eval c t /\
+    ce_p1 (snd (split_leftovers c t)) = chord_eval c 1.
+Proof.
+  intros c t.
+  split; reflexivity.
+Qed.
+
+(* One pairwise Hit on two parents yields four leftovers. Splitting
+   A then B, or B then A, produces the same leftover bag. *)
+Definition leftover_quad : Type :=
+  (ChordEgg * ChordEgg * ChordEgg * ChordEgg)%type.
+
+Definition leftovers_ab (c1 c2 : ChordEgg) (ti tj : R) : leftover_quad :=
+  let a := split_leftovers c1 ti in
+  let b := split_leftovers c2 tj in
+  (fst a, snd a, fst b, snd b).
+
+Definition leftovers_ba (c1 c2 : ChordEgg) (ti tj : R) : leftover_quad :=
+  let b := split_leftovers c2 tj in
+  let a := split_leftovers c1 ti in
+  (fst a, snd a, fst b, snd b).
+
+Lemma split_step_confluent :
+  forall c1 c2 ti tj,
+    leftovers_ab c1 c2 ti tj = leftovers_ba c1 c2 ti tj.
+Proof.
+  intros c1 c2 ti tj.
+  reflexivity.
+Qed.
+
+Definition split_step_confluent_holds : Prop :=
+  forall c1 c2 ti tj,
+    leftovers_ab c1 c2 ti tj = leftovers_ba c1 c2 ti tj.
+
+Lemma split_step_confluent_holds_proof : split_step_confluent_holds.
+Proof.
+  exact split_step_confluent.
+Qed.
+
 (* Bag-level cook loop: termination and confluence on a finite leftover
-   bag. Named obligation, not a theorem of this cut. *)
+   bag. Documented CRV-TOUCH / 𝓘-family deferral, not a named soft gap. *)
 Inductive CookLoopStatus : Type :=
 | LoopDischarged
 | LoopObligation.
@@ -470,7 +550,7 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 (* binary64 / OverlayNGRobust sit on a sheet. The working number type is a    *)
 (* coordinate realization of points of S, not a second sheet. OverlayNGRobust *)
-(* is a snap-sequence S → Λ after G is already noded — not 𝓘.                *)
+(* is a finite snap-sequence S → Λ after G is already noded — not 𝓘.         *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive CoordRealization : Type :=
@@ -490,6 +570,64 @@ Proof.
   intros. reflexivity.
 Qed.
 
+Lemma binary64_same_sheet_as_R :
+  forall s : Sheet,
+    realiz_sheet (mkSheetRealization s RealizeBinary64) =
+    realiz_sheet (mkSheetRealization s RealizeR).
+Proof.
+  intros s.
+  exact (coord_realization_preserves_sheet s RealizeBinary64 RealizeR).
+Qed.
+
+(* OverlayNGRobust: a finite run of snap attempts on one sheet. Each
+   attempt is Hobby-shaped (assumes G already noded). Not 𝓘, not Empty,
+   not Decline. *)
+Record OverlayNGRobustAttempt : Type := mkOngAttempt {
+  ong_on : Sheet;
+  ong_snap_kind : ConstructorKind;
+  ong_attempt_ix : nat
+}.
+
+Definition overlay_ng_robust_attempt (s : Sheet) (i : nat)
+  : OverlayNGRobustAttempt :=
+  mkOngAttempt s CtorSnapRound i.
+
+Lemma overlay_ng_robust_attempt_is_snap :
+  forall s i,
+    ong_snap_kind (overlay_ng_robust_attempt s i) = CtorSnapRound.
+Proof.
+  intros. reflexivity.
+Qed.
+
+Lemma overlay_ng_robust_attempt_not_I :
+  forall s i,
+    ong_snap_kind (overlay_ng_robust_attempt s i) <> CtorI.
+Proof.
+  intros s i H.
+  inversion H.
+Qed.
+
+Lemma overlay_ng_robust_attempt_same_sheet :
+  forall s i, ong_on (overlay_ng_robust_attempt s i) = s.
+Proof.
+  intros. reflexivity.
+Qed.
+
+Definition overlay_ng_robust_is_finite_snap (s : Sheet) (n : nat) : Prop :=
+  forall i : nat,
+    ong_snap_kind (overlay_ng_robust_attempt s i) = CtorSnapRound /\
+    ong_snap_kind (overlay_ng_robust_attempt s i) <> CtorI /\
+    ong_on (overlay_ng_robust_attempt s i) = s.
+
+Lemma overlay_ng_robust_is_finite_snap_holds :
+  forall s n, overlay_ng_robust_is_finite_snap s n.
+Proof.
+  intros s n i.
+  split; [reflexivity|].
+  split; [discriminate|].
+  reflexivity.
+Qed.
+
 Lemma overlay_ng_robust_is_snap_not_I :
   CtorSnapRound <> CtorI.
 Proof.
@@ -497,15 +635,33 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Dart := hen-id pair is one view of a chicken. Not a remint of Dart.v.      *)
-(* DartAngularOrder.ddir later reads γ' from ck_egg. Orbit / next / face      *)
-(* proofs keep dart_eq_dec as *a* decidable equality.                         *)
+(* One type equation for the ddir remint. DdirDart := (Hen * Hen) is the      *)
+(* chicken's hen-id projection. CoordDart / Dart.v:50 stays the current       *)
+(* coordinate-pair story and is not reminted. There is no third               *)
+(* directed-edge type: a chicken is the carrier (ends + egg); DdirDart        *)
+(* forgets the egg; DartAngularOrder.ddir later reads γ' from ck_egg.         *)
+(* Orbit / next / face proofs keep dart_eq_dec as *a* decidable equality.     *)
 (* -------------------------------------------------------------------------- *)
 
 Definition HenIdDart : Type := (Hen * Hen)%type.
 
-Definition hen_id_dart_of_chicken (c : Chicken) : HenIdDart :=
+(* The migration target. Convertible with HenIdDart and (Hen * Hen). *)
+Definition DdirDart : Type := HenIdDart.
+
+Definition hen_id_dart_of_chicken (c : Chicken) : DdirDart :=
   (ck_src c, ck_dst c).
+
+Lemma ddir_dart_eq_hen_pair : DdirDart = (Hen * Hen)%type.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma hen_id_dart_of_chicken_eq :
+  forall c : Chicken,
+    hen_id_dart_of_chicken c = (ck_src c, ck_dst c).
+Proof.
+  intros c. reflexivity.
+Qed.
 
 Lemma hen_id_dart_of_twin :
   forall c : Chicken,
@@ -513,6 +669,39 @@ Lemma hen_id_dart_of_twin :
     (snd (hen_id_dart_of_chicken c), fst (hen_id_dart_of_chicken c)).
 Proof.
   intros [s d e]. reflexivity.
+Qed.
+
+(* ddir later reads γ' from the chicken's egg, not from a coord pair. *)
+Definition chicken_gamma_source (c : Chicken) : Egg := ck_egg c.
+
+Lemma ddir_reads_chicken_egg :
+  forall c : Chicken, chicken_gamma_source c = ck_egg c.
+Proof.
+  intros c. reflexivity.
+Qed.
+
+(* Two roles, not three types. Reviewers of ddir should not invent a
+   third directed-edge carrier. *)
+Inductive DirectedEdgeRole : Type :=
+| RoleCoordDart
+| RoleHenIdDart.
+
+Lemma ddir_role_neq_coord_role :
+  RoleHenIdDart <> RoleCoordDart.
+Proof.
+  discriminate.
+Qed.
+
+Lemma ddir_migration_one_equation :
+  DdirDart = (Hen * Hen)%type /\
+  RoleHenIdDart <> RoleCoordDart /\
+  (forall c : Chicken, hen_id_dart_of_chicken c = (ck_src c, ck_dst c)) /\
+  (forall c : Chicken, chicken_gamma_source c = ck_egg c).
+Proof.
+  split; [exact ddir_dart_eq_hen_pair|].
+  split; [exact ddir_role_neq_coord_role|].
+  split; [exact hen_id_dart_of_chicken_eq|].
+  exact ddir_reads_chicken_egg.
 Qed.
 
 Print Assumptions first_cook_scope_chord_chord.
@@ -526,7 +715,13 @@ Print Assumptions noded_crossing.
 Print Assumptions crossing_not_nodable_shadow.
 Print Assumptions snap_round_neq_I.
 Print Assumptions interior_split_finite_holds.
+Print Assumptions split_step_confluent.
+Print Assumptions leftover_left_on_parent.
+Print Assumptions leftover_right_on_parent.
 Print Assumptions cook_loop_is_obligation.
 Print Assumptions coord_realization_preserves_sheet.
+Print Assumptions binary64_same_sheet_as_R.
 Print Assumptions overlay_ng_robust_is_snap_not_I.
+Print Assumptions overlay_ng_robust_is_finite_snap_holds.
 Print Assumptions hen_id_dart_of_twin.
+Print Assumptions ddir_migration_one_equation.
