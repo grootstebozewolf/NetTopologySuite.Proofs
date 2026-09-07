@@ -90,6 +90,5 @@ theories/CircularStringOddCount.v
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
 theories/SheetHenCook.v
 theories/Adr0007NodingEpic.v
-# Year-1 extractable circular 𝓘 (ADR-0007 item 1). Integer-sheet
-# classifier + hen mint. 0-axiom. first_cook_scope stays chord–chord.
+# Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v

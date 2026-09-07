@@ -1,10 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.CircularCookExtract
    ----------------------------------------------------------------------------
-   Host-lane extraction of I_circles_z. Not part of the trusted proof base.
-   Produces oracle/circular_cook_extracted.ml for the I_CIRCULAR probe and
-   as a second realization next to the official Validate_binary64_extract
-   pin (same Coq function, Coq Z vs OCaml int).
+   Host-lane extraction of I_circles_z (OCaml int Z). Official pin is
+   Validate_binary64_extract (inductive Z). Not trusted.
 
    Not compiled by `_CoqProject` / `_CoqProject.full` — run:
 

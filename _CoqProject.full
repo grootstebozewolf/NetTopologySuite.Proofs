@@ -2777,12 +2777,9 @@ theories/RelateCurveAlphabet.v
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
 theories/SheetHenCook.v
 theories/Adr0007NodingEpic.v
-# Year-1 extractable circular 𝓘 (ADR-0007 item 1 / claimId 64-i-circular).
-# Integer-sheet classifier + hen mint. 0-axiom. Not a remint of the
-# #671 resultant. first_cook_scope stays chord–chord.
+# Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
-# R-side attach of radical p* to I_circles_z. QEX: no γ:[0,1] on
-# CircularArc. Not OverlayNGCurve / not fully_intersected retirement.
+# R-side p* attach. QEX: no γ:[0,1]. Classical reals.
 theories/CircularCook.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the

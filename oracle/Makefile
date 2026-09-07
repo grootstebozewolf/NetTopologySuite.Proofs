@@ -55,8 +55,7 @@ all: $(TARGET)
 arc-arc-tests: $(TARGET)
 	cd .. && python3 oracle/gen_arc_arc_tests.py
 
-# Extracted Year-1 circular 𝓘 (I_CIRCULAR / CircularCookZ.v). Gates I1 locked
-# HIT 0 1, I2 EMPTY, I3–I5 DECLINE, I6 replay hens. Nonzero exit on violation.
+# Extracted I_circles_z (I_CIRCULAR). Gates HIT / EMPTY / DECLINE / TOUCH / replay.
 i-circular-tests: $(TARGET)
 	cd .. && python3 oracle/gen_i_circular_tests.py
 

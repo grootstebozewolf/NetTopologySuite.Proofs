@@ -1553,26 +1553,12 @@ let run_arc_arc_xy () =
           end
         end
 
-(* ----- I_CIRCULAR (ADR-0007 item 1 / claimId 64-i-circular).
+(* ----- I_CIRCULAR (claimId 64-i-circular).
    ---------------------------------------------------------------------------
-   Extracted Year-1 circular 𝓘 on one sheet: Hit / Empty / Decline + hen ids.
-   Calls CircularCookZ.I_circles_z (same symbol as Validate_binary64_extract).
-   Same named radical root ⇒ same hen by construction — not coord equality.
-
-   Not ARC_ARC_XY (that emits numerical radical nodes). Not OverlayNGCurve.
-   Not fully_intersected retirement. Not the #671 resultant.
-
-   Input:
-     line 2:  o1x o1y r1
-     line 3:  o2x o2y r2
-   Output (one line):
-     HIT <h_plus> <h_minus>     proper intersection; hens are 0 and 1
-     EMPTY                      disjoint circumcircles (no real radical root)
-     DECLINE                    zero/negative radius, coincident centres, kiss
-     NAN                        non-finite input
-
-   Classification is exact Q (zarith) scaled onto the extracted Z function.
-   No interface-boundary sqrt: this mode does not emit p*. *)
+   Extracted CircularCookZ.I_circles_z: integer circle–circle discriminant.
+   Input: two lines `o1x o1y r1` / `o2x o2y r2`.
+   Output: HIT <h+> <h-> | EMPTY | TOUCH <h> | DECLINE | NAN.
+   Hens are birth certificates (0/1). No p*. Not glossary 𝓘. *)
 let parse_centre_radius line =
   match String.split_on_char ' ' (String.trim line) with
   | [x; y; r] -> (float_of_string x, float_of_string y, float_of_string r)
@@ -1618,6 +1604,8 @@ let run_i_circular () =
         | IZHit (hp, hm) ->
             Printf.printf "HIT %d %d\n" (int_of_coq_nat hp) (int_of_coq_nat hm)
         | IZEmpty -> print_endline "EMPTY"
+        | IZTouch h ->
+            Printf.printf "TOUCH %d\n" (int_of_coq_nat h)
         | IZDecline -> print_endline "DECLINE"
         end
     | _ -> print_endline "NAN"

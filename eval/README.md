@@ -129,13 +129,9 @@ and the two mismatch probes (same radius off-centre escapes the left
 wall; radius 3/5 has no admissible centre). Polycenter cell subdivision
 and the achievable-radius bound (9004-d) deferred.
 
-Production home for 64-i-circular (Green/Qed: Year-1 extractable circular
-𝓘 — Hit/Empty/Decline on the integer sheet, locked `(0,0)/(7,0)` r=5 is
-Hit hens 0/1, same named root ⇒ same hen by construction):
-`theories/CircularCookZ.v` (same WITNESS tag). R-side radical `p*` attach
-and the γ/`first_cook_scope` QEX live in `theories/CircularCook.v`.
-Oracle mode `I_CIRCULAR`. Not OverlayNGCurve; not `fully_intersected`
-retirement.
+Production home for 64-i-circular (integer circle–circle discriminant +
+hen mint; locked Hit 0 1; kiss is Touch): `theories/CircularCookZ.v`.
+R-side `p*` and γ QEX: `theories/CircularCook.v`. Oracle `I_CIRCULAR`.
 
 Production home for 9004-d (Green/Qed: the cell pruning bound behind
 Polycenter / JTS Cell.getMaxDistance — an empty radius achievable at any
