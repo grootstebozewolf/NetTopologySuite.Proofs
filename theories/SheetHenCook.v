@@ -402,7 +402,10 @@ Definition leftover_width (t0 t1 : R) : R := Rabs (t1 - t0).
 Lemma leftover_width_parent :
   leftover_width 0 1 = 1.
 Proof.
-  unfold leftover_width. rewrite Rminus_0_r, Rabs_R1. reflexivity.
+  unfold leftover_width.
+  assert (H : 0 <= 1 - 0) by lra.
+  rewrite (Rabs_pos_eq (1 - 0) H).
+  lra.
 Qed.
 
 Lemma interior_hit_splits_width :
@@ -413,11 +416,12 @@ Lemma interior_hit_splits_width :
 Proof.
   intros t [Hlo Hhi].
   unfold leftover_width.
-  rewrite Rminus_0_r, Rabs_R1.
-  assert (Htpos : 0 <= t) by lra.
-  assert (H1tpos : 0 <= 1 - t) by lra.
-  rewrite (Rabs_pos_eq t Htpos).
-  rewrite (Rabs_pos_eq (1 - t) H1tpos).
+  assert (Ht : 0 <= t - 0) by lra.
+  assert (H1t : 0 <= 1 - t) by lra.
+  assert (H10 : 0 <= 1 - 0) by lra.
+  rewrite (Rabs_pos_eq (t - 0) Ht).
+  rewrite (Rabs_pos_eq (1 - t) H1t).
+  rewrite (Rabs_pos_eq (1 - 0) H10).
   split; [lra|].
   split; lra.
 Qed.
