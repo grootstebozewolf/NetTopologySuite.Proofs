@@ -2766,6 +2766,11 @@ theories/RelateCurveMatrix.v
 # encodes as F, never '?'. Discharged QEX on CRR_Unknown. Stdlib + DE9IM
 # only. Does not remint WireCell / 522-f. No Admitted.
 theories/RelateCurveAlphabet.v
+# ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
+# Host/pure-R. First cook scope is chord–chord. Does not remint
+# CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
+theories/SheetHenCook.v
+theories/Adr0007NodingEpic.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

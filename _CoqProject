@@ -85,3 +85,8 @@ theories/OverlayNGCurve.v
 # EX-CS-4 / JTS 81c2e996: PostGIS odd control count. Four-item
 # CIRCULARSTRING(A,B,C,A) is invalid. Does not reuse claimId V-CS.
 theories/CircularStringOddCount.v
+# ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
+# Host/pure-R. First cook scope is chord–chord. Does not remint
+# CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
+theories/SheetHenCook.v
+theories/Adr0007NodingEpic.v
