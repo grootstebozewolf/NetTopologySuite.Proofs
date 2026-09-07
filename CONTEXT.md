@@ -291,25 +291,28 @@ _Avoid_: CurveSegment (year-1 `CSChord | CSArc`, not reminted here)
 
 **Chicken**:
 A directed use of an egg between two hens `(h_src, h_dst, e)`. Twin
-reverses orientation. A later remint reseats `Dart` as a hen-id pair —
-one view of a chicken, not a third type — so `DartAngularOrder.ddir`
-reads `γ'` from the egg. Orbit proofs keep `dart_eq_dec` as *a*
-decidable equality.
+reverses orientation. `DdirDart` := `(Hen * Hen)` is that pair — one
+view of a chicken, not a third type — so `DartAngularOrder.ddir`
+later reads `γ'` from the egg. Orbit proofs keep `dart_eq_dec` as *a*
+decidable equality. CoordDart / `Dart.v:50` stays the current
+coordinate-pair story and is not reminted here.
 _Avoid_: dart (coordinate pair), edge (unqualified)
 
 **Cook / 𝓘**:
 The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
 or 𝓘 Decline (no algorithm). Predicates never mint hens. Pairwise
-interior split of chords is finite (width measure); bag-level
-termination and confluence of the repeat-until-noded loop remain
-obligations of 𝓘 families. binary64 is a coordinate realization of
-points of `S`, not a second sheet. OverlayNGRobust is a snap-sequence
-`S → Λ`, not 𝓘. Snap-rounding is a different constructor under
-already-noded `G`. Display is a view. A **kiss** (tangent eggs,
-discriminant zero) is not a shared endpoint; CRV-TOUCH owns the
-certificate and keeps three tangency decision procedures live. Arc
-cook termination is a sister card. Accepting ADR-0007 is out of
-scope of that map.
+interior split of chords is finite and one Hit-split is confluent
+(width measure; leftover bag independent of parent order). The
+bag-level repeat-until-noded loop remains an 𝓘-family / CRV-TOUCH
+obligation, not a named soft gap. binary64 is a coordinate realization
+of points of `S`, not a second sheet. OverlayNGRobust is a finite
+snap-sequence `S → Λ`, not 𝓘. `DdirDart` := `(Hen * Hen)` is the
+chicken projection — one type equation, not a third directed-edge
+type. Snap-rounding is a different constructor under already-noded
+`G`. Display is a view. A **kiss** (tangent eggs, discriminant zero)
+is not a shared endpoint; CRV-TOUCH owns the certificate and keeps
+three tangency decision procedures live. Arc cook termination is a
+sister card. Accepting ADR-0007 is out of scope of that map.
 _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared endpoint)
 
 **𝓘 Decline** (ADR-0007 cook):
