@@ -309,7 +309,7 @@ WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex · board: ADR-0
 
 ## Ready for BDFL (historical, 2026-09-07)
 
-Status stays **Proposed**. This section is the Accept / Reject memo.
+**Accepted** 2026-09-07. This section is retained as the Accept memo archive.
 QEX is not acceptance. Supporting shapes are not a noder.
 
 **Joost brief (soft gaps, 2026-09-07).** Former soft gaps (a)(b)(c) are
@@ -332,14 +332,14 @@ opens, not a named soft gap. **Accepted** by Joost (BDFL) 2026-09-07.
 ### Soft gaps closed
 
 Former named soft gaps (a)(b)(c) are checklist rows, not open naming.
-Status stays **Proposed**. QEX is not Accept.
+**Accepted** 2026-09-07. QEX is not Accept of a missing constructor.
 
 | Former | Stop | Arm | Settled as |
 |--------|------|-----|------------|
 | (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is `ticket_0007_cook_term_qed_or_qex` **QEX** (CRV-TOUCH / `𝓘`-family), listed under Honest remaining opens — not a soft gap |
 | (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
 | (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
-| (d) This memo | this section | brief only | Soft gaps closed; Accept still Proposed awaiting BDFL |
+| (d) This memo | this section | brief only | Soft gaps closed; **Accepted** 2026-09-07 |
 
 ### CRV-TOUCH / RGR (vocabulary law, not kiss)
 
@@ -403,4 +403,4 @@ first cook scope must be wider than chord–chord, or if identity must
 be numeric rather than structural.
 
 Do not flip the Status line except by this decision. Status stays
-**Proposed** until Joost stamps Accept.
+**Accepted** by Joost (BDFL) 2026-09-07.
