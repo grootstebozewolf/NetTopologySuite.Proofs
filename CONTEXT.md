@@ -294,8 +294,8 @@ A directed use of an egg between two hens `(h_src, h_dst, e)`. Twin
 reverses orientation. `DdirDart` := `(Hen * Hen)` is that pair — one
 view of a chicken, not a third type — so `DartAngularOrder.ddir`
 later reads `γ'` from the egg. Orbit proofs keep `dart_eq_dec` as *a*
-decidable equality. CoordDart / `Dart.v:50` stays the current
-coordinate-pair story and is not reminted here.
+decidable equality. CoordDart / the `Dart.v` coordinate-pair definition
+stays the current story and is not reminted here.
 _Avoid_: dart (coordinate pair), edge (unqualified)
 
 **Cook / 𝓘**:

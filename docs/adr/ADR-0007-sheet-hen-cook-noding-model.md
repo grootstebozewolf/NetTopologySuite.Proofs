@@ -258,7 +258,7 @@ Comment + this cross-link is the coupling.
 | — | Pairwise interior split + one-step confluence | `Adr0007NodingEpic.v : ticket_0007_pairwise_split_qed_or_qex` | **QED** — leftover-width decrease; leftover bag independent of parent order | `SheetHenCook.v : interior_split_finite_holds`, `SheetHenCook.v : split_step_confluent` |
 | — | Bag-level cook loop (term / confl on a leftover bag) | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — documented CRV-TOUCH / `𝓘`-family deferral, not a named soft gap | `SheetHenCook.v : cook_loop_is_obligation` |
 | — | binary64 / OverlayNGRobust sit on one sheet | `Adr0007NodingEpic.v : ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | `SheetHenCook.v : coord_realization_preserves_sheet`, `SheetHenCook.v : overlay_ng_robust_is_finite_snap_holds`, `SheetHenCook.v : overlay_ng_robust_is_snap_not_I` |
-| — | `ddir` migration is one type equation | `Adr0007NodingEpic.v : ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart stays `Dart.v:50`; no third type | `SheetHenCook.v : ddir_migration_one_equation` |
+| — | `ddir` migration is one type equation | `Adr0007NodingEpic.v : ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart stays the `Dart.v` coordinate-pair story; no third type | `SheetHenCook.v : ddir_migration_one_equation` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -275,7 +275,7 @@ with `hen_id_dart_of_chicken c = (ck_src c, ck_dst c)`
 proofs consume `dart_eq_dec` as *a* decidable equality and never
 inspect coordinates (`DartFace.v`, `DartNextInjective.v`,
 `DartNextRemove.v`); they do not remint. Local `HenIdDart` /
-`DdirDart` is that view; it is not a remint of `Dart.v:50`.
+`DdirDart` is that view; it is not a remint of the `Dart.v` coordinate-pair definition.
 `CoordDart` stays the current coordinate-pair story
 (`SheetHenCook.v : ddir_role_neq_coord_role`). Reviewers of `ddir`
 should not invent a third directed-edge type.
@@ -333,7 +333,7 @@ Status stays **Proposed**. QEX is not Accept.
 |--------|------|-----|------------|
 | (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is `ticket_0007_cook_term_qed_or_qex` **QEX** (CRV-TOUCH / `𝓘`-family), listed under Honest remaining opens — not a soft gap |
 | (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
-| (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting `Dart.v:50` is a later letter, not a third type |
+| (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
 | (d) This memo | this section | brief only | Soft gaps closed; Accept still Proposed awaiting BDFL |
 
 ### CRV-TOUCH / RGR (vocabulary law, not kiss)
