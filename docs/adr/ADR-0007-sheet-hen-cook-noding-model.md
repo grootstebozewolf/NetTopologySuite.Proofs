@@ -404,3 +404,27 @@ be numeric rather than structural.
 
 Do not flip the Status line except by this decision. Status stays
 **Accepted** by Joost (BDFL) 2026-09-07.
+
+---
+
+## Year-1 circular 𝓘 (2026-09-07) — revolutionary cut item 1
+
+ADR-0007 is **Accepted**. This addendum records that `𝓘` is now a
+function for the Year-1 circular–circular fragment, not a comment.
+It does not reopen Status.
+
+- Extractable classifier: `CircularCookZ.v : I_circles_z` — Hit / Empty /
+  Decline on an integer sheet. Hit mints named-root hens 0 and 1. Same
+  named root ⇒ same hen by construction (`CircularCookZ.v : same_named_root_same_hen`).
+- R-side attach: `CircularCook.v : I_circles_on_z_sheet` puts
+  `radical_point_plus` / `_minus` on a Hit. Locked fixture `(0,0)/(7,0)`
+  r=5 is Hit (`CircularCookZ.v : locked_I_circles_z_hit`).
+- Oracle: `I_CIRCULAR` runs the extracted function (ADR-0006 adapter).
+- QEX: no `γ : [0,1] → S` on Year-1 `CircularArc`
+  (`CircularCook.v : circular_gamma_is_qex`). `tᵢ, tⱼ` wait on that
+  constructor. `SheetHenCook.first_cook_scope` stays chord–chord
+  (`CircularCook.v : circular_not_first_cook_scope`).
+
+This is **not** OverlayNGCurve wiring, **not** `fully_intersected`
+retirement, and **not** a remint of the #671 resultant as `𝓘`. Kiss /
+CRV-TOUCH stays Decline here.
