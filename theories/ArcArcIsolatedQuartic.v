@@ -4,10 +4,11 @@
    Issue #64 ask #5b / N-AA — coordinate certificate: the named
    radical-line points are roots of the affine circle–circle resultant.
 
-   This is a certificate on the existing radical-axis constructor
-   (`ArcArcCircles.radical_point_plus` / `_minus`).  It is not an
-   ADR-0007 cook and not a first Year-1 𝓘 Hit.  Hit coordinates for
-   circumcircles, nothing more.
+   Landscaping, not revolutionary: this names coordinates a later
+   extracted 𝓘 / cook would write if it existed.  It does not
+   implement 𝓘, mint hens, or execute ADR-0007.  Certificate on the
+   existing radical-axis constructor
+   (`ArcArcCircles.radical_point_plus` / `_minus`) only.
 
    QEX (explicit, not a headline): circular γ : [0,1] → S and the
    parameters (ti, tj) are not constructed; spans are not minted.

@@ -2676,7 +2676,8 @@ theories/ArcArcQuartic.v
 # Issue #64 ask #5b / N-AA: coordinate certificate (3-axiom).
 # Affine circle–circle resultant (`circle_circle_res_x` / `_y`); radical-line
 # points are roots under `circles_properly_intersect`.  Classic-free.
-# Not an ADR-0007 cook.  Locked-fixture witness x and both y.  No Admitted.
+# Landscaping: names coords a later cook would write; does not implement
+# 𝓘 or mint hens.  Locked-fixture witness x and both y.  No Admitted.
 theories/ArcArcIsolatedQuartic.v
 # Slice 7 / formal soundness of oracle/driver.ml:circumcentre_q.  Raw-coordinate
 # counterpart of arc_center_equidistant (ArcChordApprox) and
