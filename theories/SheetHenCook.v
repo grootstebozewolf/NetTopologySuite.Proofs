@@ -33,7 +33,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import Distance Segment.
+From NTS.Proofs Require Import Distance Orientation Segment Intersect.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -880,6 +880,178 @@ Proof.
   reflexivity.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Letter after Accept: constructive 𝓘. Proper-cross signs license            *)
+(* Intersect.strict_intersection_point as p-star plus the two open-interval   *)
+(* parameters. Not a remint of Intersect. Not a total noder. Missing          *)
+(* signs is not Decline (Decline is out-of-scope); it is no constructed       *)
+(* Hit. Equal constructed p-star (swap of operands) licenses ShareOne.        *)
+(* -------------------------------------------------------------------------- *)
+
+Definition proper_cross_signs (c1 c2 : ChordEgg) : Prop :=
+  cross (ce_p0 c1) (ce_p1 c1) (ce_p0 c2)
+    * cross (ce_p0 c1) (ce_p1 c1) (ce_p1 c2) < 0 /\
+  cross (ce_p0 c2) (ce_p1 c2) (ce_p0 c1)
+    * cross (ce_p0 c2) (ce_p1 c2) (ce_p1 c1) < 0.
+
+Definition constructed_ab_param (c1 c2 : ChordEgg) : R :=
+  let A := ce_p0 c1 in
+  let B := ce_p1 c1 in
+  let C := ce_p0 c2 in
+  let D := ce_p1 c2 in
+  cross C D A / (cross C D A - cross C D B).
+
+Definition constructed_cd_param (c1 c2 : ChordEgg) : R :=
+  let A := ce_p0 c1 in
+  let B := ce_p1 c1 in
+  let C := ce_p0 c2 in
+  let D := ce_p1 c2 in
+  cross A B C / (cross A B C - cross A B D).
+
+Definition constructed_p (c1 c2 : ChordEgg) : Point :=
+  strict_intersection_point (ce_p0 c1) (ce_p1 c1) (ce_p0 c2) (ce_p1 c2).
+
+Definition constructed_hit (c1 c2 : ChordEgg) : IResult :=
+  IHit (constructed_p c1 c2)
+       (constructed_ab_param c1 c2)
+       (constructed_cd_param c1 c2).
+
+Lemma proper_cross_signs_sym :
+  forall c1 c2,
+    proper_cross_signs c1 c2 -> proper_cross_signs c2 c1.
+Proof.
+  intros c1 c2 [H1 H2]. split; assumption.
+Qed.
+
+Lemma constructed_hit_on_c1 :
+  forall c1 c2,
+    proper_cross_signs c1 c2 ->
+    on_chord c1 (constructed_ab_param c1 c2) (constructed_p c1 c2).
+Proof.
+  intros c1 c2 [H1 H2].
+  set (A := ce_p0 c1).
+  set (B := ce_p1 c1).
+  set (C := ce_p0 c2).
+  set (D := ce_p1 c2).
+  fold A B C D in H1, H2.
+  assert (Hden_t : cross A B C - cross A B D <> 0) by nra.
+  assert (Hden_s : cross C D A - cross C D B <> 0) by nra.
+  unfold on_chord, constructed_ab_param, constructed_p, chord_eval,
+         strict_intersection_point.
+  fold A B C D.
+  pose proof (div_in_unit_interval (cross C D A) (cross C D B) H2) as Hs.
+  split.
+  - exact Hs.
+  - apply (f_equal2 mkPoint); unfold cross; field; split; assumption.
+Qed.
+
+Lemma constructed_hit_on_c2 :
+  forall c1 c2,
+    proper_cross_signs c1 c2 ->
+    on_chord c2 (constructed_cd_param c1 c2) (constructed_p c1 c2).
+Proof.
+  intros [A B] [C D] [H1 H2].
+  unfold on_chord, constructed_cd_param, constructed_p, chord_eval,
+         strict_intersection_point.
+  simpl.
+  pose proof (div_in_unit_interval (cross A B C) (cross A B D) H1) as Ht.
+  split.
+  - exact Ht.
+  - apply (f_equal2 mkPoint); reflexivity.
+Qed.
+
+Lemma constructed_hit_I_ok :
+  forall c1 c2,
+    proper_cross_signs c1 c2 ->
+    I_ok (MkChord c1) (MkChord c2) (constructed_hit c1 c2).
+Proof.
+  intros c1 c2 H.
+  unfold constructed_hit, I_ok.
+  split.
+  - apply constructed_hit_on_c1; exact H.
+  - apply constructed_hit_on_c2; exact H.
+Qed.
+
+Lemma crossing_proper_cross_signs :
+  proper_cross_signs diag_ab diag_cd.
+Proof.
+  unfold proper_cross_signs, diag_ab, diag_cd, cross.
+  simpl. split; lra.
+Qed.
+
+Lemma constructed_hit_crossing_eq :
+  constructed_hit diag_ab diag_cd = IHit cross_pt (1 / 2) (1 / 2).
+Proof.
+  unfold constructed_hit, constructed_p, constructed_ab_param,
+         constructed_cd_param, strict_intersection_point,
+         diag_ab, diag_cd, cross_pt, cross.
+  simpl.
+  f_equal; [apply (f_equal2 mkPoint); field | field | field].
+Qed.
+
+Lemma disjoint_not_proper_cross :
+  ~ proper_cross_signs hor_bot hor_top.
+Proof.
+  unfold proper_cross_signs, hor_bot, hor_top, cross.
+  simpl. intros [H _]. lra.
+Qed.
+
+Definition hit_point (o : IResult) : option Point :=
+  match o with
+  | IHit p _ _ => Some p
+  | _ => None
+  end.
+
+Lemma constructed_hit_sym_same_p :
+  forall c1 c2,
+    proper_cross_signs c1 c2 ->
+    hit_point (constructed_hit c1 c2) = hit_point (constructed_hit c2 c1).
+Proof.
+  intros [A B] [C D] [H1 H2].
+  unfold constructed_hit, constructed_p, hit_point.
+  simpl.
+  apply f_equal.
+  apply strict_intersection_point_sym; assumption.
+Qed.
+
+Lemma equal_constructed_p_share :
+  forall c1 c2 h,
+    proper_cross_signs c1 c2 ->
+    hit_point (constructed_hit c1 c2) = hit_point (constructed_hit c2 c1) /\
+    fst (apply_id_decision (ShareOne h)) =
+    snd (apply_id_decision (ShareOne h)).
+Proof.
+  intros c1 c2 h H.
+  split.
+  - apply constructed_hit_sym_same_p; exact H.
+  - apply share_one_same_hen.
+Qed.
+
+Lemma constructed_p_unique :
+  forall c1 c2 X,
+    proper_cross_signs c1 c2 ->
+    between (ce_p0 c1) (ce_p1 c1) X ->
+    between (ce_p0 c2) (ce_p1 c2) X ->
+    X = constructed_p c1 c2.
+Proof.
+  intros [A B] [C D] X [H1 H2] HAB HCD.
+  unfold constructed_p. simpl.
+  apply (strict_intersection_eq_formula A B C D X H1 H2 HAB HCD).
+Qed.
+
+Definition constructed_crossing_witness : CookWitness :=
+  mkCookWitness (MkChord diag_ab) (MkChord diag_cd)
+    (constructed_hit diag_ab diag_cd)
+    (constructed_hit_I_ok diag_ab diag_cd crossing_proper_cross_signs).
+
+Lemma cooked_constructed_crossing :
+  try_cook_hit crossing_ck1 crossing_ck2
+    (constructed_hit diag_ab diag_cd) crossing_hen = Some cooked_crossing.
+Proof.
+  rewrite constructed_hit_crossing_eq.
+  reflexivity.
+Qed.
+
 Print Assumptions first_cook_scope_chord_chord.
 Print Assumptions clothoid_clothoid_not_first_scope.
 Print Assumptions IEmpty_neq_IDecline.
@@ -906,3 +1078,9 @@ Print Assumptions cook_hit_chords_shares_hen.
 Print Assumptions cooked_crossing_try.
 Print Assumptions cooked_crossing_join.
 Print Assumptions try_cook_hit_clothoid_none.
+Print Assumptions constructed_hit_I_ok.
+Print Assumptions constructed_hit_crossing_eq.
+Print Assumptions disjoint_not_proper_cross.
+Print Assumptions constructed_hit_sym_same_p.
+Print Assumptions equal_constructed_p_share.
+Print Assumptions cooked_constructed_crossing.

@@ -45,6 +45,15 @@
    nothing (`ticket_0007_cook_step_scope_qed_or_qex` discharges
    right). Not a remint of leftover_width / pairwise_split.
 
+   Letter after Accept (not a noder): proper-cross signs license a constructed
+   Hit via Intersect.strict_intersection_point. That Hit recovers
+   the unit-square witness and cooks. `ticket_0007_constructed_I_qed_or_qex`
+   discharges left. Missing signs do not license the formula
+   (`ticket_0007_constructed_I_scope_qed_or_qex` discharges right).
+   Equal constructed p* (operand swap) licenses ShareOne
+   (`ticket_0007_share_constructed_qed_or_qex` discharges left).
+   Not a remint of Intersect. Not a total 𝓘.
+
    QEX is not BDFL accept. ADR-0007 stays Proposed. Do not remint
    CurveSegment / Exact* zoo types / Dart. Do not steal 508-* / 522-*
    board mints. Do not claim a complete FP noder or close Hobby.
@@ -301,6 +310,65 @@ Proof.
   apply try_cook_hit_empty_none.
 Qed.
 
+(* Next rung: constructed 𝓘 from proper-cross signs (QED) or the
+   formula is not licensed (QEX). Discharged QED — signs on the
+   unit-square diagonals produce the same Hit the cook already
+   splits, via Intersect.strict_intersection_point. Not a remint. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_constructed_I_qed_or_qex","title":"ADR-0007 next rung is constructed I from proper-cross signs (QED) or the formula is unlicensed (QEX); discharged QED on Intersect.strict_intersection_point recovering the unit-square Hit","file":"theories/Adr0007NodingEpic.v","witness":"0007-constructed-I","board":"ADR-0007"} *)
+Theorem ticket_0007_constructed_I_qed_or_qex :
+  (proper_cross_signs diag_ab diag_cd /\
+   I_ok (MkChord diag_ab) (MkChord diag_cd)
+        (constructed_hit diag_ab diag_cd) /\
+   constructed_hit diag_ab diag_cd = IHit cross_pt (1 / 2) (1 / 2) /\
+   try_cook_hit crossing_ck1 crossing_ck2
+     (constructed_hit diag_ab diag_cd) crossing_hen = Some cooked_crossing /\
+   cooked_shares_hen cooked_crossing)
+  \/
+  ~ proper_cross_signs diag_ab diag_cd.
+Proof.
+  left.
+  split; [exact crossing_proper_cross_signs|].
+  split; [apply constructed_hit_I_ok; exact crossing_proper_cross_signs|].
+  split; [exact constructed_hit_crossing_eq|].
+  split; [exact cooked_constructed_crossing|].
+  exact cooked_crossing_shares.
+Qed.
+
+(* Constructed 𝓘 is total on chord–chord (QED) or missing signs do
+   not license the formula (QEX). Discharged QEX — disjoint
+   horizontals are Empty, not a constructed Hit. *)
+Theorem ticket_0007_constructed_I_scope_qed_or_qex :
+  (forall c1 c2,
+     I_ok (MkChord c1) (MkChord c2) (constructed_hit c1 c2))
+  \/
+  (~ proper_cross_signs hor_bot hor_top /\
+   I_ok (MkChord hor_bot) (MkChord hor_top) IEmpty).
+Proof.
+  right.
+  split; [exact disjoint_not_proper_cross|].
+  exact disjoint_I_ok.
+Qed.
+
+(* Equal constructed p* licenses ShareOne (QED) or operand swap
+   names two points (QEX). Discharged QED — Intersect.strict_
+   intersection_point_sym. The basis, not dart_eq_dec. *)
+Theorem ticket_0007_share_constructed_qed_or_qex :
+  (forall h : Hen,
+     hit_point (constructed_hit diag_ab diag_cd) =
+     hit_point (constructed_hit diag_cd diag_ab) /\
+     fst (apply_id_decision (ShareOne h)) =
+     snd (apply_id_decision (ShareOne h)))
+  \/
+  (exists h : Hen,
+     hit_point (constructed_hit diag_ab diag_cd) <>
+     hit_point (constructed_hit diag_cd diag_ab)).
+Proof.
+  left.
+  intros h.
+  apply (equal_constructed_p_share diag_ab diag_cd h
+           crossing_proper_cross_signs).
+Qed.
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.
@@ -314,3 +382,6 @@ Print Assumptions ticket_0007_sheet_realiz_qed_or_qex.
 Print Assumptions ticket_0007_chicken_dart_qed_or_qex.
 Print Assumptions ticket_0007_cook_step_qed_or_qex.
 Print Assumptions ticket_0007_cook_step_scope_qed_or_qex.
+Print Assumptions ticket_0007_constructed_I_qed_or_qex.
+Print Assumptions ticket_0007_constructed_I_scope_qed_or_qex.
+Print Assumptions ticket_0007_share_constructed_qed_or_qex.
