@@ -101,13 +101,15 @@ A third primitives unit that length/overlay would open is out of scope.
 - A ring remains a predicate (`IsClosed` ∧ `IsSimple`) on a Curve. Intake
   vs IsValid and two-tier interior are not reopened here.
 
-## Related — ADR-0007 (cook / intersection oracle)
+## Related — ADR-0007 cook / 𝓘
 
-[ADR-0007](ADR-0007-sheet-hen-cook-noding-model.md) makes the noding
-constructor part of the specification (sheet / hen / egg / chicken / cook).
-Its pairwise intersection oracle and any *testable* cook results sit on
-**this** Oracle line protocol as the only external test surface (Decision 1):
-adapters may later print cook outcomes as keywords; they do not open a second
-seam (no FFI pin, no RocqRefRunner dispatch keyword). Minting a cook-mode
-keyword is an adapter cut under this ADR, not a reopening of Decision 1.
-ADR-0007 Status may still be Proposed; this related note does not Accept it.
+ADR-0007's pairwise cook oracle `𝓘` and testable cook results use this
+Oracle line protocol as their **only** external test surface. There is
+no second seam: no FFI pin, no RocqRefRunner keyword. This ADR mints no
+cook-mode keyword for that work. A later keyword, if one is ever
+wanted, attaches as an Oracle adapter (Decision 1–2), never as FFI or
+RocqRefRunner.
+
+See [`ADR-0007-sheet-hen-cook-noding-model.md`](ADR-0007-sheet-hen-cook-noding-model.md)
+(coupling paragraph in the supporting-shapes addendum). Status of this
+ADR stays **Accepted**. ADR-0007 stays Proposed.

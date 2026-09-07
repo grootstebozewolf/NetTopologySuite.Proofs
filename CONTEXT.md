@@ -381,3 +381,7 @@ _Avoid_: channel, plane
 Self-overlap of a single input after linearization — e.g. a CIRCULARSTRING
 whose second arc retraces the first.
 _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
+
+## ADR-0007 Accepted
+
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed; see `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.

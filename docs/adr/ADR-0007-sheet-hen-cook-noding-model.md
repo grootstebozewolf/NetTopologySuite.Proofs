@@ -3,14 +3,14 @@
 | Field | Value |
 |---------------|--------------------------------------------------------------|
 | **Order** | ADR-0007 |
-| **Status** | **Proposed** — supporting shapes landed; Ready for BDFL |
+| **Status** | **Accepted** — 2026-09-07 (Joost, BDFL) |
 | **Deciders** | Joost (BDFL); proposed by Jeroen Bloemscheer |
 | **Date** | 2026-09-05 |
 | **Superseded by** | — (none) |
 
 Status lifecycle: *Proposed → Accepted / Rejected → (possibly) Superseded*.
 
-QEX is not acceptance. These supporting shapes do not close the ADR.
+QEX is not acceptance of a missing constructor. BDFL Accepted the sheet/hen/cook frame on 2026-09-07.
 
 ---
 
@@ -234,13 +234,14 @@ Modules: `theories/SheetHenCook.v` (sheet / hen / egg / chicken / `𝓘` /
 first-cook scope) and `theories/Adr0007NodingEpic.v` (ticket stops).
 Registered in `_CoqProject` (host / pure-R / Stdlib lane).
 
-**ADR-0006 coupling.** Reciprocal note lives on ADR-0006 section Related — ADR-0007. Testable `𝓘` / cook results sit on the accepted
+**ADR-0006 coupling.** Testable `𝓘` / cook results sit on the accepted
 Oracle line protocol (`docs/adr/ADR-0006-oracle-protocol-is-the-test-surface.md`).
 This cut mints no keyword and no second external seam (no FFI pin, no
 RocqRefRunner dispatch). A later keyword, if one is ever wanted, attaches
 as an Oracle adapter (ADR-0006 Decision 1–2: line protocol + own
 compilation unit + driver print) — never as FFI or RocqRefRunner.
-Comment + this cross-link is the coupling.
+ADR-0006's Related subsection points back here. Both sides of the
+cross-link are the coupling. Status of ADR-0006 stays Accepted.
 
 ### Acceptance checklist (four prior review conditions)
 
@@ -255,28 +256,38 @@ Comment + this cross-link is the coupling.
 | — | Empty ≠ Decline | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` | **QED** | `SheetHenCook.v : IEmpty_neq_IDecline` |
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCook.v : noded_crossing` |
 | — | Silent `pairwise_nodable` / `fully_intersected` does not discharge the constructor | `Adr0007NodingEpic.v : ticket_0007_silent_nodable_qed_or_qex` | **QEX** — a proper crossing is the noder's job and is excluded by the shadow | `SheetHenCook.v : crossing_not_nodable_shadow` |
-| — | Cook termination / confluence on the chord lane | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — pairwise interior split is finite; the bag loop stays an `𝓘`-family obligation | `SheetHenCook.v : interior_split_finite_holds`, `SheetHenCook.v : cook_loop_is_obligation` |
+| — | Pairwise interior split + one-step confluence | `Adr0007NodingEpic.v : ticket_0007_pairwise_split_qed_or_qex` | **QED** — leftover-width decrease; leftover bag independent of parent order | `SheetHenCook.v : interior_split_finite_holds`, `SheetHenCook.v : split_step_confluent` |
+| — | Bag-level cook loop (term / confl on a leftover bag) | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — documented CRV-TOUCH / `𝓘`-family deferral, not a named soft gap | `SheetHenCook.v : cook_loop_is_obligation` |
+| — | binary64 / OverlayNGRobust sit on one sheet | `Adr0007NodingEpic.v : ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | `SheetHenCook.v : coord_realization_preserves_sheet`, `SheetHenCook.v : overlay_ng_robust_is_finite_snap_holds`, `SheetHenCook.v : overlay_ng_robust_is_snap_not_I` |
+| — | `ddir` migration is one type equation | `Adr0007NodingEpic.v : ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart stays the `Dart.v` coordinate-pair story; no third type | `SheetHenCook.v : ddir_migration_one_equation` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
 
-### Dart := hen-id pair (chicken view)
+### Dart := hen-id pair (chicken view) — closed
 
 A later remint reseats `Dart` as a hen-id pair `(h_src, h_dst)` — one
-view of a chicken, not a third type. `DartAngularOrder.ddir` then reads
-`γ'` from the chicken's egg. Orbit / `next` / face proofs consume
-`dart_eq_dec` as *a* decidable equality and never inspect coordinates
-(`DartFace.v`, `DartNextInjective.v`, `DartNextRemove.v`); they do not
-remint. Local `HenIdDart` (`SheetHenCook.v : hen_id_dart_of_chicken`)
-is that view; it is not a remint of `Dart.v:50`. Reviewers of
-`ddir` should not invent a third directed-edge type.
+view of a chicken, not a third type. The host-lane equation is
+`DdirDart = (Hen * Hen)` (`SheetHenCook.v : ddir_dart_eq_hen_pair`)
+with `hen_id_dart_of_chicken c = (ck_src c, ck_dst c)`
+(`SheetHenCook.v : hen_id_dart_of_chicken_eq`).
+`DartAngularOrder.ddir` then reads `γ'` from the chicken's egg
+(`SheetHenCook.v : ddir_reads_chicken_egg`). Orbit / `next` / face
+proofs consume `dart_eq_dec` as *a* decidable equality and never
+inspect coordinates (`DartFace.v`, `DartNextInjective.v`,
+`DartNextRemove.v`); they do not remint. Local `HenIdDart` /
+`DdirDart` is that view; it is not a remint of the `Dart.v` coordinate-pair definition.
+`CoordDart` stays the current coordinate-pair story
+(`SheetHenCook.v : ddir_role_neq_coord_role`). Reviewers of `ddir`
+should not invent a third directed-edge type.
 
-### binary64 and OverlayNGRobust sit on a sheet
+### binary64 and OverlayNGRobust sit on a sheet — closed
 
 Points of `S` are affine. The working number type — ℝ in the host lane,
 binary64 / Flocq in `theories-flocq/` — is a *coordinate realization* of
 those points (`SheetHenCook.v : CoordRealization`,
-`SheetHenCook.v : coord_realization_preserves_sheet`). Changing the
+`SheetHenCook.v : coord_realization_preserves_sheet`,
+`SheetHenCook.v : binary64_same_sheet_as_R`). Changing the
 number type does not change the sheet origin or basis. A binary64 noder
 is `𝓘` realized in that number type on one sheet; it is not a second
 sheet and is not discharged here.
@@ -284,17 +295,29 @@ sheet and is not discharged here.
 OverlayNGRobust is a finite sequence of snap maps `S → Λ` attempted
 until noded `G` validates or the process throws. Each attempt is
 Hobby-shaped: it assumes `G` was already noded. It is not `𝓘`
-(`SheetHenCook.v : overlay_ng_robust_is_snap_not_I`). Failure to
+(`SheetHenCook.v : overlay_ng_robust_is_finite_snap_holds`,
+`SheetHenCook.v : overlay_ng_robust_is_snap_not_I`). Failure to
 validate is not `𝓘` Decline and not Empty.
 
 WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex · board: ADR-0007
 
 ---
 
-## Ready for BDFL (2026-09-07)
+## Accepted (2026-09-07)
+
+**Decision:** Accepted by Joost (BDFL). Vocabulary law for CRV-TOUCH / RGR. Soft gaps (a)(b)(c) closed as checklist rows. Honest remaining opens (FP noder, Hobby, bag loop, kiss) stay open and do not reopen Status.
+
+## Ready for BDFL (historical, 2026-09-07)
 
 Status stays **Proposed**. This section is the Accept / Reject memo.
 QEX is not acceptance. Supporting shapes are not a noder.
+
+**Joost brief (soft gaps, 2026-09-07).** Former soft gaps (a)(b)(c) are
+closed checklist rows: pairwise chord-split finiteness plus one-step
+confluence is QED; binary64 / OverlayNGRobust sit on one sheet is QED;
+`DdirDart` := `(Hen * Hen)` = chicken ends is QED. The bag-level cook
+loop is a documented CRV-TOUCH / `𝓘`-family QEX under Honest remaining
+opens, not a named soft gap. **Accepted** by Joost (BDFL) 2026-09-07.
 
 ### Four prior review conditions — discharged
 
@@ -306,14 +329,17 @@ QEX is not acceptance. Supporting shapes are not a noder.
 | 3 | Cross-link accepted ADR-0006 | module headers + coupling paragraph | Oracle line protocol only; later keyword = adapter, not FFI / RocqRefRunner |
 | 4 | First cook scope = chord–chord only | `ticket_0007_qed_or_qex` | **QEX** on clothoid–clothoid |
 
-### Soft gaps this cut names
+### Soft gaps closed
 
-| Soft gap | Where |
-|----------|-------|
-| (a) Cook termination / confluence as an explicit chord-lane obligation | `ticket_0007_cook_term_qed_or_qex` — pairwise split finite (QED lemma); bag loop remains an `𝓘`-family obligation (QEX) |
-| (b) How binary64 / OverlayNGRobust sit on a sheet | paragraph above + `coord_realization_preserves_sheet` / `overlay_ng_robust_is_snap_not_I` |
-| (c) Chicken vs Dart so `ddir` reviewers do not invent three types | paragraph above: `Dart` := hen-id pair = chicken view |
-| (d) This memo | this section |
+Former named soft gaps (a)(b)(c) are checklist rows, not open naming.
+Status stays **Proposed**. QEX is not Accept.
+
+| Former | Stop | Arm | Settled as |
+|--------|------|-----|------------|
+| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is `ticket_0007_cook_term_qed_or_qex` **QEX** (CRV-TOUCH / `𝓘`-family), listed under Honest remaining opens — not a soft gap |
+| (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
+| (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
+| (d) This memo | this section | brief only | Soft gaps closed; Accept still Proposed awaiting BDFL |
 
 ### CRV-TOUCH / RGR (vocabulary law, not kiss)
 
@@ -352,9 +378,9 @@ Accept as vocabulary law does **not** settle kiss / tangency.
 ### Honest remaining opens (Accept does not close these)
 
 - Identity policy detail beyond `ShareOne` / `MintTwo` (which `𝓘` decides, on what basis). Kiss certificate is the CRV-TOUCH form of this question, not a silent extra hen type.
-- A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet.
+- A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet. Host-lane “sits on a sheet” is closed above.
 - Hobby 4.1 / 4.3. Snap-rounding stays a different constructor under already-noded `G`.
-- The repeat-until-noded bag loop (termination + confluence) on the **chord** lane. Pairwise width decrease is not that discharge. **Arc** cook termination is a sister card, not this Accept.
+- The repeat-until-noded **bag** loop (termination + confluence) on the chord lane — `ticket_0007_cook_term_qed_or_qex` QEX / CRV-TOUCH. Pairwise width decrease and one-step confluence are discharged QED, not this item. **Arc** cook termination is a sister card, not this Accept.
 - Later constructive rungs (one Hit `split(t)` step; constructed `𝓘` from proper-cross signs) are letters after Accept, not Accept blockers.
 - ADR-0006 cook-mode for a kiss hen — CRV-TOUCH, after a prototype.
 

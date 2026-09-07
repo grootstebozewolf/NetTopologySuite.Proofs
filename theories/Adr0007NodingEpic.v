@@ -23,10 +23,20 @@
    `ticket_0007_dart_eq_qed_or_qex` discharges right.
    `ticket_0007_silent_nodable_qed_or_qex` discharges right.
 
-   Cook termination: pairwise interior split of chords is finite
-   (width measure); the bag-level repeat-until-noded loop stays an
-   𝓘-family obligation (termination + confluence).
+   Cook termination host-lane close: pairwise interior split is
+   finite and one Hit-split is confluent (leftover bag independent
+   of parent order).
+   `ticket_0007_pairwise_split_qed_or_qex` discharges left.
+   The bag-level repeat-until-noded loop stays an 𝓘-family /
+   CRV-TOUCH obligation (not a named soft gap).
    `ticket_0007_cook_term_qed_or_qex` discharges right.
+
+   binary64 / OverlayNGRobust sit on one sheet (QED).
+   `ticket_0007_sheet_realiz_qed_or_qex` discharges left.
+
+   Chicken vs Dart: DdirDart := (Hen * Hen) is the chicken
+   projection (QED). One type equation, not three types.
+   `ticket_0007_chicken_dart_qed_or_qex` discharges left.
 
    QEX is not BDFL accept. ADR-0007 stays Proposed. Do not remint
    CurveSegment / Exact* zoo types / Dart. Do not steal 508-* / 522-*
@@ -171,12 +181,27 @@ Proof.
   - exact crossing_not_nodable_shadow.
 Qed.
 
-(* Cook termination on the chord lane (QED: bag loop discharged) or
-   pairwise split is finite and the bag loop remains an 𝓘-family
-   obligation (QEX). Discharged QEX — interior Hit splits [0,1]
-   into two strictly shorter leftovers; repeat-until-noded
-   termination and confluence are not theorems of this cut. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 cook termination is bag-loop discharged (QED) or pairwise split finite and the bag loop an I-family obligation (QEX); discharged QEX on leftover-width measure","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
+(* Pairwise interior split + one-step confluence on the chord lane
+   (QED) or the leftover-width measure fails (QEX). Discharged QED —
+   interior Hit splits [0,1] into two strictly shorter leftovers
+   whose bag does not depend on parent order. The bag loop is not
+   this stop. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_pairwise_split_qed_or_qex","title":"ADR-0007 pairwise chord split is finite and one Hit-split is confluent (QED) or the leftover-width measure fails (QEX); discharged QED","file":"theories/Adr0007NodingEpic.v","witness":"0007-pairwise-split","board":"ADR-0007"} *)
+Theorem ticket_0007_pairwise_split_qed_or_qex :
+  (interior_split_finite /\ split_step_confluent_holds)
+  \/
+  ~ interior_split_finite.
+Proof.
+  left.
+  split; [exact interior_split_finite_holds|].
+  exact split_step_confluent_holds_proof.
+Qed.
+
+(* Bag-level cook loop on the chord lane (QED: discharged) or the
+   loop remains an 𝓘-family / CRV-TOUCH obligation (QEX). Discharged
+   QEX — pairwise width decrease is not that discharge. Not a named
+   soft gap; Honest remaining open. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged (QED) or an I-family CRV-TOUCH obligation (QEX); discharged QEX; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
 Theorem ticket_0007_cook_term_qed_or_qex :
   (cook_loop_status = LoopDischarged /\ interior_split_finite)
   \/
@@ -187,6 +212,47 @@ Proof.
   exact interior_split_finite_holds.
 Qed.
 
+(* binary64 / OverlayNGRobust sit on one sheet (QED) or changing the
+   number type yields a second sheet (QEX). Discharged QED —
+   realization preserves S; OverlayNGRobust is a finite snap-sequence,
+   not 𝓘. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_sheet_realiz_qed_or_qex","title":"ADR-0007 binary64 and OverlayNGRobust sit on one sheet (QED) or a second sheet appears (QEX); discharged QED","file":"theories/Adr0007NodingEpic.v","witness":"0007-sheet-realiz","board":"ADR-0007"} *)
+Theorem ticket_0007_sheet_realiz_qed_or_qex :
+  ((forall (s : Sheet) (n1 n2 : CoordRealization),
+      realiz_sheet (mkSheetRealization s n1) =
+      realiz_sheet (mkSheetRealization s n2))
+   /\
+   (forall (s : Sheet) (n : nat),
+      overlay_ng_robust_is_finite_snap s n)
+   /\
+   CtorSnapRound <> CtorI)
+  \/
+  (exists (s : Sheet) (n1 n2 : CoordRealization),
+     realiz_sheet (mkSheetRealization s n1) <>
+     realiz_sheet (mkSheetRealization s n2)).
+Proof.
+  left.
+  split; [exact coord_realization_preserves_sheet|].
+  split; [exact overlay_ng_robust_is_finite_snap_holds|].
+  exact overlay_ng_robust_is_snap_not_I.
+Qed.
+
+(* DdirDart := (Hen * Hen) is the chicken projection (QED) or the
+   hen-id view is not that pair (QEX). Discharged QED — one type
+   equation; CoordDart stays the Dart.v:50 story; no third type. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_chicken_dart_qed_or_qex","title":"ADR-0007 ddir migration is Hen-id pair equals chicken ends (QED) or that equation fails (QEX); discharged QED","file":"theories/Adr0007NodingEpic.v","witness":"0007-chicken-dart","board":"ADR-0007"} *)
+Theorem ticket_0007_chicken_dart_qed_or_qex :
+  (DdirDart = (Hen * Hen)%type /\
+   RoleHenIdDart <> RoleCoordDart /\
+   (forall c : Chicken, hen_id_dart_of_chicken c = (ck_src c, ck_dst c)) /\
+   (forall c : Chicken, chicken_gamma_source c = ck_egg c))
+  \/
+  DdirDart <> (Hen * Hen)%type.
+Proof.
+  left.
+  exact ddir_migration_one_equation.
+Qed.
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.
@@ -194,4 +260,7 @@ Print Assumptions ticket_0007_identity_qed_or_qex.
 Print Assumptions ticket_0007_dart_eq_qed_or_qex.
 Print Assumptions ticket_0007_noded_cook_qed_or_qex.
 Print Assumptions ticket_0007_silent_nodable_qed_or_qex.
+Print Assumptions ticket_0007_pairwise_split_qed_or_qex.
 Print Assumptions ticket_0007_cook_term_qed_or_qex.
+Print Assumptions ticket_0007_sheet_realiz_qed_or_qex.
+Print Assumptions ticket_0007_chicken_dart_qed_or_qex.
