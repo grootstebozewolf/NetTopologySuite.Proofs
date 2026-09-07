@@ -38,6 +38,13 @@
    projection (QED). One type equation, not three types.
    `ticket_0007_chicken_dart_qed_or_qex` discharges left.
 
+   Letter after Accept (not a noder): chord split(t) + one Hit cook
+   step mints one hen and replaces each crossed chicken by two
+   incident on that hen. `ticket_0007_cook_step_qed_or_qex`
+   discharges left on the crossing pair. Out-of-scope pairs mint
+   nothing (`ticket_0007_cook_step_scope_qed_or_qex` discharges
+   right). Not a remint of leftover_width / pairwise_split.
+
    QEX is not BDFL accept. ADR-0007 stays Proposed. Do not remint
    CurveSegment / Exact* zoo types / Dart. Do not steal 508-* / 522-*
    board mints. Do not claim a complete FP noder or close Hobby.
@@ -259,6 +266,41 @@ Qed.
    CircularCook.v host flag). Not Required here — host lane stays
    atan2-free. Host CircGamma stays QEX; first cook stays chord–chord. *)
 
+(* Letter after Accept: one Hit cook step on chord–chord (QED) or
+   the step fails to mint (QEX). Discharged QED — crossing chickens
+   share one minted hen after split(t). Not the bag noder loop. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_step_qed_or_qex","title":"ADR-0007 letter after Accept is one Hit cook step (QED) or no mint (QEX); discharged QED on chord-chord split sharing one hen","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-split","board":"ADR-0007"} *)
+Theorem ticket_0007_cook_step_qed_or_qex :
+  (exists cp : CookedPair,
+     try_cook_hit crossing_ck1 crossing_ck2
+       (cw_result crossing_witness) crossing_hen = Some cp /\
+     cooked_shares_hen cp /\
+     cp_hen cp = crossing_hen)
+  \/
+  try_cook_hit crossing_ck1 crossing_ck2
+    (cw_result crossing_witness) crossing_hen = None.
+Proof.
+  left.
+  exists cooked_crossing.
+  split; [exact cooked_crossing_try|].
+  split; [exact cooked_crossing_shares|].
+  reflexivity.
+Qed.
+
+(* Out-of-scope / Empty / Decline mint a hen (QED) or they do not
+   (QEX). Discharged QEX — clothoid Decline and chord Empty allocate
+   no hen. *)
+Theorem ticket_0007_cook_step_scope_qed_or_qex :
+  (forall c1 c2 o h, try_cook_hit c1 c2 o h <> None)
+  \/
+  (try_cook_hit clothoid_ck1 clothoid_ck2 IDecline crossing_hen = None /\
+   try_cook_hit crossing_ck1 crossing_ck2 IEmpty crossing_hen = None).
+Proof.
+  right.
+  split; [exact try_cook_hit_clothoid_none|].
+  apply try_cook_hit_empty_none.
+Qed.
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.
@@ -270,3 +312,5 @@ Print Assumptions ticket_0007_pairwise_split_qed_or_qex.
 Print Assumptions ticket_0007_cook_term_qed_or_qex.
 Print Assumptions ticket_0007_sheet_realiz_qed_or_qex.
 Print Assumptions ticket_0007_chicken_dart_qed_or_qex.
+Print Assumptions ticket_0007_cook_step_qed_or_qex.
+Print Assumptions ticket_0007_cook_step_scope_qed_or_qex.
