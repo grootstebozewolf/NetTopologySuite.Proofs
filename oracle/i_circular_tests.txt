@@ -1,0 +1,14 @@
+# I_CIRCULAR I_circles_z (CircularCookZ.v)
+ok I1 locked hit: HIT 0 1
+ok I2 disjoint empty: EMPTY
+ok I3 coincident decline: DECLINE
+ok I4 zero radius: DECLINE
+ok I5 external kiss: TOUCH 0
+ok I6 replay same hens: HIT 0 1
+ok I7 internal kiss: TOUCH 0
+ok I8 unequal radii hit: HIT 0 1
+ok I9 non-integer rejected: NAN
+ok I9 leading-plus rejected: NAN
+ok I9 hex rejected: NAN
+ok I10 negative centre hit: HIT 0 1
+I_CIRCULAR invariants I1-I10 ok.

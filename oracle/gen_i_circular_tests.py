@@ -12,12 +12,12 @@
 #   I5  EXTERNAL-KISS    d = r1+r2 → TOUCH 0
 #   I6  REPLAY           two calls on the locked pair mint the same hens
 #   I7  INTERNAL-KISS    (0,0) r=5 vs (3,0) r=2 → TOUCH 0
-#   I8  WRONG-INTEGER    locked 7 replaced by 10 → TOUCH, not HIT
-#   I9  NON-INTEGER      7.5 is rejected (NAN), not scaled
+#   I8  UNEQUAL-RADII    locked pair r2=8 → HIT 0 1 (not the I5 kiss)
+#   I9  NON-INTEGER      7.5 / +7 / 0x7 rejected (NAN); digits-only grammar
 #   I10 NEGATIVE-CENTRE  (0,0) r=5 vs (-7,0) r=5 → HIT 0 1
 #
 # Run from repo root:
-#   python3 oracle/gen_i_circular_tests.py
+#   python3 oracle/gen_i_circular_tests.py > oracle/i_circular_tests.txt
 # Exit nonzero iff a proven invariant is violated.
 # =============================================================================
 import os
@@ -74,14 +74,20 @@ def main():
         violations += 1
         emit(f"!! I6 expected HIT 0 1 on replay, got {a!r}")
     expect("I7 internal kiss", run(0, 0, 5, 3, 0, 2), "TOUCH 0")
-    wrong = run(0, 0, 5, 10, 0, 5)
-    expect("I8 wrong integer is touch not hit", wrong, "TOUCH 0")
-    if wrong == a:
-        violations += 1
-        emit(f"!! I8 replay must fail on wrong integers: {wrong!r} == {a!r}")
+    expect("I8 unequal radii hit", run(0, 0, 5, 7, 0, 8), "HIT 0 1")
     expect(
         "I9 non-integer rejected",
         run_raw("I_CIRCULAR\n0 0 5\n7.5 0 5\n"),
+        "NAN",
+    )
+    expect(
+        "I9 leading-plus rejected",
+        run_raw("I_CIRCULAR\n0 0 5\n+7 0 5\n"),
+        "NAN",
+    )
+    expect(
+        "I9 hex rejected",
+        run_raw("I_CIRCULAR\n0 0 5\n0x7 0 5\n"),
         "NAN",
     )
     expect("I10 negative centre hit", run(0, 0, 5, -7, 0, 5), "HIT 0 1")

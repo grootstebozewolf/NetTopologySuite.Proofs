@@ -120,11 +120,6 @@ Definition circ_diff2 (r1 r2 : Z) : Z := (r1 - r2) * (r1 - r2).
 
 (* |r1−r2|² = (r1−r2)²; circ_diff2 is the squared test the classifier runs. *)
 
-Lemma Z_sq_nlt_0 : forall z, ~ (z * z < 0).
-Proof.
-  intro z. destruct z; simpl; lia.
-Qed.
-
 (* WITNESS {"claimId":"64-circ-z-partition","topic":"core","lemma":"I_circles_z_hit_iff","title":"Hit iff positive radii and |r1-r2|^2 < d^2 < (r1+r2)^2","file":"theories/CircularCookZ.v","witness":"64-circ-z-internal-kiss","board":"ADR-0007"} *)
 
 Theorem I_circles_z_hit_iff :
@@ -148,7 +143,8 @@ Proof.
     destruct (circ_d2 o1x o1y o2x o2y =? 0) eqn:Hd0.
     + apply Z.eqb_eq in Hd0. split; [discriminate|].
       intros [_ [_ [Hlt _]]].
-      rewrite Hd0 in Hlt. exfalso. exact (Z_sq_nlt_0 (r1 - r2) Hlt).
+      rewrite Hd0 in Hlt. exfalso.
+      pose proof (Z.square_nonneg (r1 - r2)). lia.
     + apply Z.eqb_neq in Hd0.
       destruct ((circ_d2 o1x o1y o2x o2y =? (r1 + r2) * (r1 + r2))
                 || (circ_d2 o1x o1y o2x o2y =? (r1 - r2) * (r1 - r2))) eqn:Hk.
