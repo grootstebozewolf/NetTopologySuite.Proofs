@@ -7,7 +7,7 @@
    curve segments (chords and/or circular arcs), filled by the corpus
    Jordan/parity convention.  Positive-radius closed discs inhabit the
    domain as two-semicircle CurvePolygons whose fill is Disk.in_disk
-   (reused from CurvedCapObligation — no reminted radical/disc stack).
+   (reused from CurvedFilledDisc — no reminted radical/disc stack).
 
    Kiss (relation).  cl(A) ∩ cl(B) ≠ ∅ ∧ int(A) ∩ int(B) = ∅.  On discs
    that is OverlayTouchRow.disks_touch.  kiss ≠ CAP; kiss ≠ self-kiss
@@ -37,6 +37,8 @@
        `disks_touch`;
      * `disks_touch_iff_bb_and_no_II` — kiss ↔ (circle–circle contact
        ∧ interiors disjoint);
+     * `on_circle_radial_in` lives next to `on_circle_radial_out` in
+       OverlayTouchRow (no remint);
      * `disks_touch_no_II` / `disks_touch_cap_not_2cell` — reuse
        `touch_no_II_2cell` / `T_cap_not_2cell` (no remint);
      * `disks_touch_is_external` — T-ext is kiss and neither covers;
@@ -57,9 +59,9 @@
    WITNESS topic: overlay · claimId: ov-curved-kiss-qex
    witness: kiss-discs · board: OverlayNGCurve / G-family
 
-   Full-only: imports CurvedCapObligation (and thus OverlayTouchRow /
-   DiscOverlay).  Classical-reals trio only (see Print Assumptions).
-   No new axioms.
+   Full-only: imports CurvedFilledDisc / OverlayTouchRow /
+   CurvedCapObligation.  Classical-reals trio only (see Print
+   Assumptions).  No new axioms.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -69,7 +71,8 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Disk Overlay CurveGeometry
-                               DiscOverlay OverlayTouchRow CurvedCapObligation.
+                               DiscOverlay OverlayTouchRow CurvedFilledDisc
+                               CurvedCapObligation.
 
 Local Open Scope R_scope.
 
@@ -215,7 +218,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §5  Open-disc ball and inward radial step (dual of on_circle_radial_out).  *)
+(* §5  Open-disc ball (inward radial step is OverlayTouchRow.on_circle_radial_in). *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma in_disk_int_open :
@@ -239,49 +242,6 @@ Proof.
   { apply (proj2 (dist_lt_iff_dist_sq_lt p q rho (Rlt_le _ _ Hrho))).
     exact Hq. }
   unfold rho in Hpq. lra.
-Qed.
-
-(** Inward dual of [on_circle_radial_out]: a positive-radius circle
-    point has nearby points strictly inside the open disc. *)
-Lemma on_circle_radial_in :
-  forall (c : Point) (r : R) (q : Point) (rho : R),
-    0 < r ->
-    0 < rho ->
-    dist_sq c q = r * r ->
-    exists p, dist_sq q p < rho * rho /\ dist_sq c p < r * r.
-Proof.
-  intros c r q rho Hr Hrho Hon.
-  set (t := Rmin (rho / (2 * r)) (1 / 2)).
-  assert (Ht : 0 < t).
-  { unfold t. apply Rmin_glb_lt.
-    - apply Rdiv_lt_0_compat; lra.
-    - lra. }
-  assert (Ht1 : t <= 1 / 2) by apply Rmin_r.
-  assert (Htr : t <= rho / (2 * r)) by apply Rmin_l.
-  set (p := mkPoint (px c + (1 - t) * (px q - px c))
-                    (py c + (1 - t) * (py q - py c))).
-  assert (Hcp : dist_sq c p = (1 - t) * (1 - t) * dist_sq c q).
-  { unfold p, dist_sq. cbn [px py]. ring. }
-  assert (Hqp : dist_sq q p = t * t * dist_sq c q).
-  { unfold p, dist_sq. cbn [px py]. ring. }
-  exists p. split.
-  - rewrite Hqp, Hon.
-    unfold t in Htr.
-    assert (Hexp : (rho / (2 * r)) * (rho / (2 * r)) * (r * r)
-                   = rho * rho / 4) by (field; lra).
-    assert (Hle : t * t * (r * r)
-                  <= (rho / (2 * r)) * (rho / (2 * r)) * (r * r)).
-    { apply Rmult_le_compat_r.
-      - nra.
-      - apply Rmult_le_compat; try lra; exact Htr. }
-    rewrite Hexp in Hle. nra.
-  - rewrite Hcp, Hon.
-    assert (Hlt : 0 < t < 1) by lra.
-    replace ((1 - t) * (1 - t) * (r * r))
-      with (r * r - (2 * t - t * t) * (r * r)) by ring.
-    assert (Hpos : 0 < (2 * t - t * t) * (r * r)).
-    { apply Rmult_lt_0_compat; nra. }
-    lra.
 Qed.
 
 Lemma int_and_other_circle_meets_II :
