@@ -146,9 +146,11 @@ Record CircCookedPair : Type := mkCircCookedPair {
 Definition cook_circ_root
   (O1 : Point) (r1 : R) (O2 : Point) (r2 : R)
   (ti tj : R) (h : Hen) : CircCookedPair :=
-  let s1 := circ_split O1 r1 ti in
-  let s2 := circ_split O2 r2 tj in
-  mkCircCookedPair h (fst s1) (snd s1) (fst s2) (snd s2).
+  mkCircCookedPair h
+    (fst (circ_split O1 r1 ti))
+    (snd (circ_split O1 r1 ti))
+    (fst (circ_split O2 r2 tj))
+    (snd (circ_split O2 r2 tj)).
 
 Definition circ_cooked_meets (cp : CircCookedPair) (p : Point) : Prop :=
   circ_leftover_eval (ccp_L1 cp) 1 = p /\
@@ -215,17 +217,19 @@ Qed.
 Lemma cooked_circ_plus_ok :
   circ_cooked_ok cooked_circ_plus hen_plus locked_p_plus.
 Proof.
-  unfold circ_cooked_ok, circ_cooked_meets, cooked_circ_plus,
-         cook_circ_root.
+  unfold circ_cooked_ok, cooked_circ_plus.
   split; [reflexivity|].
-  destruct (circ_split_join locked_O1 locked_r locked_ti_plus) as [HL1 HR1].
-  destruct (circ_split_join locked_O2 locked_r locked_tj_plus) as [HL2 HR2].
+  unfold circ_cooked_meets, cook_circ_root.
+  cbn [ccp_L1 ccp_R1 ccp_L2 ccp_R2].
   destruct locked_plus_gamma as [Hp1 Hp2].
-  repeat split.
-  - rewrite HL1. exact Hp1.
-  - rewrite HR1. exact Hp1.
-  - rewrite HL2. exact Hp2.
-  - rewrite HR2. exact Hp2.
+  rewrite !circ_split_left_reparam, !circ_split_right_reparam.
+  replace (1 * locked_ti_plus) with locked_ti_plus by ring.
+  replace (locked_ti_plus + 0 * (1 - locked_ti_plus))
+    with locked_ti_plus by ring.
+  replace (1 * locked_tj_plus) with locked_tj_plus by ring.
+  replace (locked_tj_plus + 0 * (1 - locked_tj_plus))
+    with locked_tj_plus by ring.
+  repeat split; assumption.
 Qed.
 
 Lemma cooked_circ_plus_try :
