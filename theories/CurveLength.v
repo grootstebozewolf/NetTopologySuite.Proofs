@@ -21,6 +21,8 @@
      - curve_length_unique    : the spec pins L
      - curve_length_additive  : L(a,c) = L(a,b) + L(b,c)
      - is_curve_length_ext    : pointwise-equal curves carry the same lengths
+     - is_curve_length_ext_on : same, with equality required only on [a,b]
+       (the spec samples that window; used by piecewise/golden consumers)
      - is_curve_length_shift  : translated parameterizations too (t ↦ g (c+t))
      - is_curve_length_reparam: any weakly monotone map with explicit
        preimages carries lengths over (t ↦ g (φ t)) — the general monotone
@@ -305,6 +307,45 @@ Proof.
   split.
   - intros l Hl. exact (Hub _ (H21 _ Hl)).
   - intros M HM. apply Hlst. intros l Hl. exact (HM _ (H12 _ Hl)).
+Qed.
+
+(* Windowed sibling: inscribed polylines only sample [a,b], so pointwise
+   equality on that interval is enough.  Lifted from the 508-a golden
+   quarter (was a local copy in NurbsConicExact.v). *)
+Lemma polyline_len_ext_on :
+  forall (g1 g2 : Curve) a b ts t,
+    (forall u, a <= u -> u <= b -> g1 u = g2 u) ->
+    a <= t -> chain t ts b ->
+    polyline_len g1 t (ts ++ [b]) = polyline_len g2 t (ts ++ [b]).
+Proof.
+  intros g1 g2 a b ts; induction ts as [|u tl IH];
+    intros t Hg Hat Hch; simpl.
+  - assert (Htb : t <= b) by exact Hch.
+    assert (Hab : a <= b) by lra.
+    rewrite (Hg t Hat Htb), (Hg b Hab (Rle_refl b)).
+    reflexivity.
+  - destruct Hch as [Htu Hch].
+    pose proof (chain_le tl u b Hch) as Hub.
+    assert (Hau : a <= u) by lra.
+    rewrite (Hg t Hat ltac:(lra)), (Hg u Hau Hub).
+    rewrite (IH u Hg Hau Hch).
+    reflexivity.
+Qed.
+
+Lemma is_curve_length_ext_on : forall (g1 g2 : Curve) a b L,
+  (forall t, a <= t -> t <= b -> g1 t = g2 t) ->
+  is_curve_length g1 a b L -> is_curve_length g2 a b L.
+Proof.
+  intros g1 g2 a b L Hg [Hub Hlst].
+  split.
+  - intros l (ts & Hch & Hl). subst l.
+    apply Hub. exists ts. split; [exact Hch |].
+    rewrite <- (polyline_len_ext_on g1 g2 a b ts a Hg (Rle_refl a) Hch).
+    reflexivity.
+  - intros M HM. apply Hlst. intros l (ts & Hch & Hl). subst l.
+    apply HM. exists ts. split; [exact Hch |].
+    rewrite (polyline_len_ext_on g1 g2 a b ts a Hg (Rle_refl a) Hch).
+    reflexivity.
 Qed.
 
 Lemma chain_shift : forall c ts lo hi,

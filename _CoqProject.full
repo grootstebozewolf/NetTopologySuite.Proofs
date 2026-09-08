@@ -6,8 +6,9 @@ theories/Distance.v
 # #508 M-LEN-ZOO curve-length spec lane (ADR-0004): the canonical metric-length
 # spec — is_curve_length as is_lub of inscribed polyline lengths — with the
 # chord lower bound, uniqueness, and waypoint additivity (the theorem behind
-# LENGTH_UNIFIED's sum-of-members aggregation).  Arc r·θ rectifiability is the
-# next rung.  3-axiom.
+# LENGTH_UNIFIED's sum-of-members aggregation).  Also the windowed
+# is_curve_length_ext_on (equality only on [a,b]).  Arc r·θ rectifiability
+# is the next rung.  3-axiom.
 theories/CurveLength.v
 # #508 arc rung: r·θ IS the metric length — the circle parameterization
 # satisfies is_curve_length with L = r·(b−a).  Upper half telescopes chord
@@ -98,10 +99,16 @@ theories/ClothoidFresnelInhab.v
 # and the weight-conditioned control-net Lipschitz bound
 # L <= 2*(wmax/wmin)^2 * max(net edge) * (b−a) on [a,b] ⊆ [0,1].  3-axiom.
 theories/NurbsQuadraticLength.v
+# Shared 2·atan / tan-on-[0,π/4] identities.  Lifted from the 508-a
+# golden quarter so later Weierstrass consumers do not copy them.
+# Category C (Stdlib atan / Ratan).  No golden content.
+theories/AtanDoubleAngle.v
 # #508-a / #559: golden rational quarter circle has metric length π/2.
 # Weierstrass φ(t) = 2·atan(t/(√2+(1-√2)·t)); reparam + ext onto the
-# golden nurbs2_param.  Category C (Stdlib atan / Ratan), same lineage
-# as ArcParamBridge.v.  Does not grow CurveSegment or remint ADR-0004.
+# golden nurbs2_param.  Generic 2·atan lives in AtanDoubleAngle.v;
+# windowed ext lives in CurveLength.v.  Category C (Stdlib atan /
+# Ratan), same lineage as ArcParamBridge.v.  Does not grow
+# CurveSegment or remint ADR-0004.
 theories/NurbsConicExact.v
 # #508 NURBS P1: general degree (equal-weight rational cubic ↔ polynomial
 # cubic), knot-span additivity (curve_length_additive), and the
