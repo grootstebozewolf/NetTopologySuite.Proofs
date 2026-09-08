@@ -13,11 +13,11 @@
 #     immediately above the file line explaining what makes the file
 #     Category C / transitional and the planned resolution).
 #
-# Current state: 91 files are listed below -- 74 in `theories-flocq/` (the
+# Current state: 92 files are listed below -- 74 in `theories-flocq/` (the
 # initial bulk block for binary ops Bplus/Bminus/Bmult pulling
 # `Classical_Prop.classic` via Flocq, plus additional Category C for
 # snap-rounding, overlay, expansion-arithmetic, and Stage D as documented
-# per-file) and 17 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
+# per-file) and 18 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
 # plus #564 RiemannInt for the Fresnel inhabitant, documented per-file
 # below).  The five all-C2 arc files (`ArcLength` / `ArcArea` /
 # `ArcCentroid` / `ArcAreaCentroid` / `CurveBufferArea`) left this list
@@ -388,6 +388,13 @@ theories/Atan2.v
 # so inherits Classical_Prop.classic.  Headlines cos/sin_angle_between and
 # atan2_range Qed-closed; no Admitteds.
 theories/AngleBetween.v
+
+# Category C (R-side, same atan lineage as Atan2.v / AngleBetween.v):
+# ADR-0007 core-slice Hit (h*, p*, tᵢ, tⱼ). circ_t / circ_gamma_retract
+# use atan2_on_circle and atan2_range, so inherit
+# Classical_Prop.classic. Locked-fixture QED; CircGamma stays QEX.
+# No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
+theories/CircularCookHit.v
 
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
