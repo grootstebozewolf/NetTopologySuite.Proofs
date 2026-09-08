@@ -58,7 +58,7 @@
 
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance Disk Overlay CurveGeometry
-                               DiscOverlay OverlayTouchRow.
+                               ArcArcCircles DiscOverlay OverlayTouchRow.
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -172,8 +172,8 @@ Lemma disc_filled_as_curve_polygon :
 Proof.
   intros D.
   unfold disc_filled, curve_polygon_filled, disc_as_curve_polygon,
-         curve_polygon_boundary. cbn.
-  rewrite app_nil_r. reflexivity.
+         curve_polygon_boundary. cbn [curve_outer curve_holes].
+  rewrite concat_nil, app_nil_r. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -306,8 +306,9 @@ Theorem curved_cap_obligation_specializes_to_disc_lens :
     disc_overlay Intersection A B p.
 Proof.
   intros A B p.
-  rewrite disc_intersection_is_lens.
-  symmetry. apply disc_overlay_cap_is_lens.
+  unfold point_set_intersection, disc_filled, disc_overlay,
+         overlayng_cap, lens. cbn.
+  reflexivity.
 Qed.
 
 Theorem two_disc_cap_discharges_curved_obligation :
