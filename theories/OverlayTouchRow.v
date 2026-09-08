@@ -514,7 +514,11 @@ Proof.
                    = rho * rho / 4) by (field; lra).
     rewrite Hexp. nra.
   - rewrite Hcp, Hon.
-    nra.
+    replace ((1 + t) * (1 + t) * (r * r))
+      with (r * r + (2 * t + t * t) * (r * r)) by ring.
+    assert (Hpos : 0 < (2 * t + t * t) * (r * r)).
+    { apply Rmult_lt_0_compat; nra. }
+    lra.
 Qed.
 
 (** A singleton region contains no open disc. *)
