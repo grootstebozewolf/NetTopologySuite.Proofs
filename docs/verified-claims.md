@@ -1356,6 +1356,23 @@ topic: overlay · claimId: laser-ov · witness: kiss-discs — unit discs at (0,
 | `OverlayTouchRow.v : touch_no_II_2cell` | All TOUCH: interiors disjoint — no II 2-cell. Definitional from `disks_touch`; does not claim int(CAP)=∅ for T-int `[exact]` | 1 |
 | `OverlayTouchRow.v : T_int_cap_empty_interior_hypothesis_refuted` (+ `int_cap_is_2cell`) | **QEX of "every tangency, int(CAP)=∅".** T-int (d = \|r1 − r2\|) is the cex: closed CAP is the covered smaller disc and HAS a metric ball `[exact]` | 3 |
 
+## G1 does not forbid self-kiss — one-body anti-collapse (`OverlaySelfKiss.v`) <!-- feat:overlay geom:poly -->
+
+**Self-kiss ≠ G1.** G1 is point-set CAP self (`A ∩ A = A`). Self-kiss is a boundary pinch: two non-adjacent pieces of ∂A meet and the local open side-interiors stay disjoint. **kiss (two-body T) ≠ self-kiss** — `T_cap_not_2cell` is the two-body sibling; this cut is the one-body figure-8. Not CircGamma.
+
+Witness: two CCW triangles sharing exactly the origin, walked as one closed ring (`figure8_ring` / `figure8-bowtie`). The ring is `ring_simple` yet not `ring_vertices_distinct`. Open wedges at the pinch are inhabited and disjoint (squared half-plane inequalities; no atan2).
+
+topic: overlay · claimId: ov-g1-ne-selfkiss · witness: figure8-bowtie — right △(0,0)(1,−1)(1,1), left △(0,0)(−1,1)(−1,−1), pinch (0,0).
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `OverlaySelfKiss.v : G1_ne_selfkiss` (+ `figure8_g1`, `figure8_self_kiss_vertex`, `figure8_geometry_self_kiss`) | **Headline.** Exists a geometry on which G1 holds and a self-kiss pinch is present — CAP self does not collapse into “no figure-8” `[exact]` | 2 |
+| `OverlaySelfKiss.v : g1_does_not_forbid_selfkiss` | Equivalent: refute “G1 ⇒ ¬self_kiss” on the same figure-8 body `[exact]` | 2 |
+| `OverlaySelfKiss.v : self_kiss_vertex` (+ `consecutive_ring_edges`, `geometry_self_kiss`) | Narrow combinatorial pinch: two non-adjacent ring edges share a vertex `[exact]` | 0 |
+| `OverlaySelfKiss.v : figure8_ring_simple` (+ `figure8_not_injective`, `figure8_right_ccw`, `figure8_left_ccw`, `figure8_valid_polygon`) | Fixture is `ring_simple` (kiss, not a proper cross) and `valid_polygon` as currently stated, yet revisits the origin — injectivity is a separate premise `[exact]` | 2 |
+| `OverlaySelfKiss.v : figure8_open_wedges_disjoint` (+ `figure8_right_open_inhabited`, `figure8_left_open_inhabited`) | Local side-interiors stay disjoint; each open lobe is inhabited `[exact]` | 2 |
+| `OverlaySelfKiss.v : curved_polygon_selfkiss_qex` | **QEX obligation (named, not a flag).** Domain: a Jordan-style self-kiss Prop on (possibly circular) CurvePolygon. Conclusion: that Prop agrees with `self_kiss_vertex` + disjoint open wedges on this fixture. Not discharged `[exact]` | 0 |
+
 ## The TOUCH pair's DE-9IM — FF2F01212, every cell point-set-backed (`RelateTouchDiscs.v`) <!-- feat:relate geom:arc,cp -->
 
 | `RelateTouchDiscs.v : touch_discs_de9im_sound` (+ `td_ii_empty`, `td_ib_empty`, `td_bi_empty`, `td_ie_ball`, `td_ei_ball`, `td_ee_ball`, `td_be_nonempty`, `td_eb_nonempty`) | **Headline.** The externally tangent pair's DE-9IM is FF2F01212 with every cell backed by a point-set fact: F-cells proven empty (triangle squeeze at the kiss), 2-cells each containing a metric ball, 1-cells nonempty — the relate lane's first curved-pair matrix earned from geometry rather than hand-specified `[exact]` | 3 |
