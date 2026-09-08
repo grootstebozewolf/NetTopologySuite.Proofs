@@ -1564,7 +1564,7 @@ let integer_token s =
   let n = String.length s in
   if n = 0 then false
   else
-    let start = if s.[0] = '-' || s.[0] = '+' then 1 else 0 in
+    let start = if s.[0] = '-' then 1 else 0 in
     start < n &&
     (let rec loop i =
        if i = n then true
