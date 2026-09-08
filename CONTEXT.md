@@ -304,7 +304,10 @@ cook may `split(t)` and mint one hen (letter after Accept; not the
 bag loop). On chord–chord, proper-cross signs license a constructed
 Hit via `Intersect.strict_intersection_point` (not a remint of that
 lemma; not a total `𝓘`; not `I_circles_z` / `I_CIRCULAR`; not
-glossary `𝓘` with γ / tᵢ,tⱼ). Host CircGamma stays QEX. Pairwise
+glossary `𝓘` with γ / tᵢ,tⱼ). Host CircGamma stays QEX. A circular
+IHit does not feed host `try_cook_hit` (circular eggs stay
+`MkOutOfScope`); the 4-axiom sidecar cooks the locked circular Hit
+via `circ_gamma` `split(t)` without discharging CircGamma. Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of

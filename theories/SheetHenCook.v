@@ -19,6 +19,9 @@
    ADR-0007 is Accepted (2026-09-07). Letters here do not reopen
    Status. Constructed chord-chord I is not I_circles_z / I_CIRCULAR
    and not glossary I with gamma / t. Host CircGamma stays QEX.
+   Circular chickens (MkOutOfScope EggCircularArc) still get None
+   from try_cook_hit, even on an IHit — the host cook step does not
+   expand first cook scope.
 
    Testable 𝓘 / cook results sit on the accepted Oracle line protocol
    (ADR-0006). This module mints no keyword and no second external seam.
@@ -884,6 +887,28 @@ Proof.
   reflexivity.
 Qed.
 
+(* Circular eggs stay MkOutOfScope. A constructed circular Hit
+   (parameters or not) does not feed this host cook step. *)
+Definition circular_ck1 : Chicken :=
+  mkChicken 0%nat 1%nat (MkOutOfScope EggCircularArc).
+Definition circular_ck2 : Chicken :=
+  mkChicken 2%nat 3%nat (MkOutOfScope EggCircularArc).
+
+Lemma circular_egg_not_first_cook_scope :
+  ~ first_cook_scope EggCircularArc EggCircularArc.
+Proof.
+  intro H. exact H.
+Qed.
+
+Lemma try_cook_hit_circular_hit_none :
+  forall p ti tj h,
+    try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None.
+Proof.
+  intros p ti tj h.
+  apply try_cook_hit_out_of_scope_none.
+  left. discriminate.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Letter after Accept: constructive 𝓘. Proper-cross signs license            *)
 (* Intersect.strict_intersection_point as p-star plus the two open-interval   *)
@@ -1082,6 +1107,8 @@ Print Assumptions cook_hit_chords_shares_hen.
 Print Assumptions cooked_crossing_try.
 Print Assumptions cooked_crossing_join.
 Print Assumptions try_cook_hit_clothoid_none.
+Print Assumptions try_cook_hit_circular_hit_none.
+Print Assumptions circular_egg_not_first_cook_scope.
 Print Assumptions constructed_hit_I_ok.
 Print Assumptions constructed_hit_crossing_eq.
 Print Assumptions disjoint_not_proper_cross.

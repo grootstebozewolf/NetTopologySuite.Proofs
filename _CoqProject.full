@@ -2819,6 +2819,12 @@ theories/CircularCookHit.v
 # + locked proper-arc Hit. Host CircGamma stays QEX (3-axiom / atan2 split).
 # 4-axiom atan2 sidecar. Not first cook scope.
 theories/CircularCookSpan.v
+# ADR-0007 letter: circular Hit (h*, p*, tᵢ, tⱼ) feeds a same-shape
+# split(t) cook on the locked discs. QED plus-root leftovers meet at p+.
+# QEX Touch/Empty/Decline allocate no hen. Host CircGamma stays QEX;
+# try_cook_hit still declines circular eggs. 4-axiom atan2 sidecar.
+# Not first cook scope. Not ArcSplitAtNode. Not a noder.
+theories/CircularCookSplit.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
