@@ -2785,6 +2785,10 @@ theories/CircularCook.v
 # Full-circle γ : [0,1] → S + Hit (h*, p*, tᵢ, tⱼ). Locked fixture QED.
 # CircGamma on CircularArc stays QEX. 4-axiom atan2. Not first cook scope.
 theories/CircularCookHit.v
+# Span-restricted γ on CircularArc (principal signed span). QED interpolant
+# + locked proper-arc Hit. Host CircGamma stays QEX (3-axiom / atan2 split).
+# 4-axiom atan2 sidecar. Not first cook scope.
+theories/CircularCookSpan.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

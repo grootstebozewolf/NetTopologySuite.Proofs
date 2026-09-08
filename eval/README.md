@@ -144,6 +144,11 @@ locked Hit carries constructed `(h*, p*, tᵢ, tⱼ)` with `γ(t)=p*`;
 CircGamma on CircularArc stays QEX): `theories/CircularCookHit.v`.
 4-axiom atan2 lane; no micro-kernel twin (radical `p*` + atan2 cone).
 
+Production home for 64-circ-span-gamma (span-restricted γ on
+`valid_arc` CircularArc; locked proper arcs keep radical `p+` and
+reject `p−`; host CircGamma stays QEX): `theories/CircularCookSpan.v`.
+4-axiom atan2 sidecar; no micro-kernel twin (atan2 / `arc_center` cone).
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.
