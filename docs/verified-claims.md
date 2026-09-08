@@ -1400,7 +1400,7 @@ topic: overlay · claimId: ov-curved-ops-qex · witness: disc-ops-closed-form �
 | `CurvedOpObligation.v : curved_op_obligation_specializes_to_disc` (+ `point_set_op_disc_overlay`, `curved_cup_obligation_specializes_to_disc_blob`, `curved_sub_obligation_specializes_to_disc_crescent`, `curved_xor_obligation_specializes_to_disc_crescents`) | On full discs the conclusion *is* `disc_overlay op` — CUP = blob, SUB = crescent, XOR = crescents (`boolean_op` on discs) `[exact]` | 1 |
 | `CurvedOpObligation.v : two_disc_op_discharges_curved_obligation` (+ `two_disc_cup_discharges_curved_obligation`, `two_disc_sub_discharges_curved_obligation`, `two_disc_xor_discharges_curved_obligation`) | **Qed inhabitant.** Positive-radius discs discharge the Record for every `BooleanOp`: domain = two valid semicircles; noding = radical-node uniqueness; faces = `disc_overlay op` `[exact]` | 3 |
 | `CurvedOpObligation.v : curved_op_modulo_qex` (+ `curved_cup_modulo_qex`, `curved_sub_modulo_qex`, `curved_xor_modulo_qex`) | **Named remaining stop.** The disc-slice obligation is equivalent to the already-Qed closed form. General CurvePolygon stays the residual Prop `[exact]` | 3 |
-| `CurvedOpObligation.v : disc_cap_or_xor_iff_cup` | On discs, (A ∩ B) ∪ (A △ B) = A ∪ B — `lens_or_crescents_iff_blob` restated on `disc_overlay` `[exact]` | 3 |
+| `CurvedOpObligation.v : disc_cap_or_xor_iff_cup` | On discs, (A ∩ B) ∪ (A △ B) = A ∪ B — `lens_or_crescents_iff_blob` restated on `disc_overlay` `[exact]` | 2 |
 
 ## The TOUCH pair's DE-9IM — FF2F01212, every cell point-set-backed (`RelateTouchDiscs.v`) <!-- feat:relate geom:arc,cp -->
 
