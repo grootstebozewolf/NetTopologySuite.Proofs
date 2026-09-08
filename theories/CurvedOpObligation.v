@@ -4,8 +4,8 @@
    Named modulo-QEX for curved-polygon CUP / SUB / XOR after exact noding.
 
    Sibling of CurvedCapObligation (#679): same CurvedFilled carrier, same
-   two-semicircle disc encoding, same radical-node noding hyp.  This file
-   does not remint that scaffolding.  One Record is parameterized by
+   two-semicircle disc encoding, same radical-node noding hyp — all from
+   `CurvedFilledDisc`, not reminted here.  One Record is parameterized by
    Overlay.BooleanOp; CAP is the Intersection instance (Qed equivalence,
    no rewrite of the CAP module).
 
@@ -57,8 +57,9 @@
    WITNESS topic: overlay · claimId: ov-curved-ops-qex
    witness: disc-ops-closed-form · board: OverlayNGCurve / G-family
 
-   Full-only: imports CurvedCapObligation (and thus DiscOverlay).
-   Classical-reals trio only (see Print Assumptions).  No new axioms.
+   Full-only: imports CurvedFilledDisc / CurvedCapObligation
+   (and thus DiscOverlay).  Classical-reals trio only (see Print
+   Assumptions).  No new axioms.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -68,7 +69,8 @@
 
 From Stdlib Require Import Reals.
 From NTS.Proofs Require Import Distance Disk Overlay CurveGeometry
-                               DiscOverlay CurvedCapObligation.
+                               DiscOverlay CurvedFilledDisc
+                               CurvedCapObligation.
 
 Local Open Scope R_scope.
 
@@ -106,7 +108,7 @@ Proof. intros op A B p. destruct op; reflexivity. Qed.
 (* Record at Union / Difference / SymDiff.  [extracted_faces] is whatever     *)
 (* a noder+extractor would emit for that op.  [H_exact_noding] is the         *)
 (* noding hyp the consumer supplies.  On discs that hyp is                    *)
-(* [disc_pair_exactly_noded] (reused from CurvedCapObligation).               *)
+(* [disc_pair_exactly_noded] (reused from CurvedFilledDisc).                  *)
 (* -------------------------------------------------------------------------- *)
 
 Record CurvedOpExactNodingObligation

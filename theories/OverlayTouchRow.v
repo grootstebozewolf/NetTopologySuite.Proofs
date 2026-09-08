@@ -67,6 +67,10 @@
    disjoint).  The false "every tangency, int(CAP)=∅" is refuted
    (`T_int_cap_empty_interior_hypothesis_refuted`).
 
+   Radial pair (single definition site): `on_circle_radial_out` (used
+   by T_cap_not_2cell) and `on_circle_radial_in` (used by the kiss
+   obligation).  `region_not_2cell` is also defined only here.
+
    WITNESS topic: overlay · claimId: laser-ov · witness: kiss-discs
    WITNESS topic: overlay · claimId: ov-t-cap-not-2cell · witness: kiss-discs
    ADR-0001 tripwire not needed: Overlay → Distance only; this module
@@ -521,6 +525,49 @@ Proof.
     lra.
 Qed.
 
+(** Inward dual of [on_circle_radial_out]: a positive-radius circle
+    point has nearby points strictly inside the open disc. *)
+Lemma on_circle_radial_in :
+  forall (c : Point) (r : R) (q : Point) (rho : R),
+    0 < r ->
+    0 < rho ->
+    dist_sq c q = r * r ->
+    exists p, dist_sq q p < rho * rho /\ dist_sq c p < r * r.
+Proof.
+  intros c r q rho Hr Hrho Hon.
+  set (t := Rmin (rho / (2 * r)) (1 / 2)).
+  assert (Ht : 0 < t).
+  { unfold t. apply Rmin_glb_lt.
+    - apply Rdiv_lt_0_compat; lra.
+    - lra. }
+  assert (Ht1 : t <= 1 / 2) by apply Rmin_r.
+  assert (Htr : t <= rho / (2 * r)) by apply Rmin_l.
+  set (p := mkPoint (px c + (1 - t) * (px q - px c))
+                    (py c + (1 - t) * (py q - py c))).
+  assert (Hcp : dist_sq c p = (1 - t) * (1 - t) * dist_sq c q).
+  { unfold p, dist_sq. cbn [px py]. ring. }
+  assert (Hqp : dist_sq q p = t * t * dist_sq c q).
+  { unfold p, dist_sq. cbn [px py]. ring. }
+  exists p. split.
+  - rewrite Hqp, Hon.
+    unfold t in Htr.
+    assert (Hexp : (rho / (2 * r)) * (rho / (2 * r)) * (r * r)
+                   = rho * rho / 4) by (field; lra).
+    assert (Hle : t * t * (r * r)
+                  <= (rho / (2 * r)) * (rho / (2 * r)) * (r * r)).
+    { apply Rmult_le_compat_r.
+      - nra.
+      - apply Rmult_le_compat; try lra; exact Htr. }
+    rewrite Hexp in Hle. nra.
+  - rewrite Hcp, Hon.
+    assert (Hlt : 0 < t < 1) by lra.
+    replace ((1 - t) * (1 - t) * (r * r))
+      with (r * r - (2 * t - t * t) * (r * r)) by ring.
+    assert (Hpos : 0 < (2 * t - t * t) * (r * r)).
+    { apply Rmult_lt_0_compat; nra. }
+    lra.
+Qed.
+
 (** A singleton region contains no open disc. *)
 Lemma singleton_not_2cell : forall (S : Point -> Prop) (k : Point),
   (forall p, S p -> p = k) ->
@@ -658,6 +705,8 @@ Print Assumptions seven_row_not_candidate_complete.
 Print Assumptions eight_row_is_candidate_complete.
 Print Assumptions t_ext_misses_seven_row.
 Print Assumptions t_int_is_covers_not_a_gap.
+Print Assumptions on_circle_radial_out.
+Print Assumptions on_circle_radial_in.
 Print Assumptions T_ext_cap_not_2cell.
 Print Assumptions T_cap_not_2cell.
 Print Assumptions touch_no_II_2cell.

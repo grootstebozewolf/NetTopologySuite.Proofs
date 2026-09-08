@@ -2644,26 +2644,30 @@ theories/DiscOverlay.v
 # R-side spec for DISC_OVERLAY's EXT_TANGENT/INT_TANGENT configs
 # (generator family E).  Full-only: imports DiscOverlay.v.
 theories/OverlayTouchRow.v
+# Shared CurvedFilled carrier + two-semicircle disc encoding + radical-node
+# noding hyp.  Single definition site for Cap / Op / Kiss; no new overlay
+# theorem.  Full-only: imports DiscOverlay / CurveGeometry.
+theories/CurvedFilledDisc.v
 # Curved-polygon CAP after exact noding — named obligation (modulo QEX).
 # Disc slice = DiscOverlay lens / boolean_op Intersection (Qed).  TOUCH
 # CAP faces are not II 2-cells (#677).  Residual CurvePolygon
 # noding+extract stays the named Prop; not a status flag.  Full-only:
-# imports DiscOverlay / OverlayTouchRow.  Never OverlayNGCurved.
+# imports CurvedFilledDisc / OverlayTouchRow.  Never OverlayNGCurved.
 theories/CurvedCapObligation.v
 # Curved-polygon CUP/SUB/XOR after exact noding — parameterized obligation
 # (modulo QEX) over BooleanOp.  Disc slice = DiscOverlay blob / crescent /
 # crescents (Qed).  CAP (#679) is the Intersection instance.  Residual
 # CurvePolygon noding+extract stays the named Prop; not a status flag.
-# Full-only: imports CurvedCapObligation.  Never OverlayNGCurved.
-# Curved ops QEX ≠ G1; ≠ kiss; ≠ self-kiss.
+# Full-only: imports CurvedFilledDisc / CurvedCapObligation.
+# Never OverlayNGCurved.  Curved ops QEX ≠ G1; ≠ kiss; ≠ self-kiss.
 theories/CurvedOpObligation.v
 # Two-body kiss on curved polygons — named obligation (modulo QEX).
 # Disc slice = OverlayTouchRow.disks_touch ↔ (BB contact ∧ no II).
 # Qed TOUCH bridges reuse T_cap_not_2cell / touch_no_II_2cell.
 # T-int is covers, not TOUCH.  Residual CurvePolygon noding+BB extract
 # stays the named Prop; not a status flag.  Full-only: imports
-# CurvedCapObligation / OverlayTouchRow.  Never OverlayNGCurved.
-# Two-body kiss ≠ self-kiss (#678); ≠ CircGamma; ≠ G1.
+# CurvedFilledDisc / OverlayTouchRow / CurvedCapObligation.
+# Never OverlayNGCurved.  Two-body kiss ≠ self-kiss (#678); ≠ CircGamma; ≠ G1.
 theories/CurvedKissObligation.v
 theories/RelateTouchDiscs.v
 # General circular noding rung 1: splitting an arc at an N-AA node is sound,
