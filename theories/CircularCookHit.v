@@ -46,11 +46,6 @@ Definition circ_t (O P : Point) : R :=
 Definition on_full_circle (O : Point) (r t : R) (p : Point) : Prop :=
   0 <= t <= 1 /\ p = circ_gamma O r t.
 
-Lemma two_PI_neq_0 : 2 * PI <> 0.
-Proof.
-  pose proof PI_RGT_0. lra.
-Qed.
-
 Lemma two_PI_pos : 0 < 2 * PI.
 Proof.
   pose proof PI_RGT_0. lra.
@@ -181,8 +176,8 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Glossary-shaped result: Hit (h*, p*, tᵢ, tⱼ) | Empty | Touch | Decline.    *)
-(* Hens are minted by the Z seam; t is constructed from p*.                   *)
+(* Full-circle Hit with constructed (h*, p*, tᵢ, tⱼ). CircGamma / CircularArc *)
+(* interpolant stays QEX — this is not glossary 𝓘 for arc eggs.               *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive ICircG : Type :=
@@ -385,6 +380,87 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Locked internal kiss (0,0) r=5 vs (3,0) r=2: Touch with constructed t.     *)
+(* Mirrors CircularCook.locked_I_circles_internal_kiss.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Definition ikiss_O2 : Point := mkPoint 3 0.
+Definition ikiss_r2 : R := 2.
+Definition ikiss_p : Point :=
+  radical_point_plus locked_O1 ikiss_O2 locked_r ikiss_r2.
+
+Lemma ikiss_centers_dist : dist locked_O1 ikiss_O2 = 3.
+Proof.
+  unfold locked_O1, ikiss_O2, dist, dist_sq. cbn [px py].
+  replace ((0 - 3) * (0 - 3) + (0 - 0) * (0 - 0)) with (Rsqr 3)
+    by (unfold Rsqr; ring).
+  apply sqrt_Rsqr. lra.
+Qed.
+
+Lemma ikiss_radical_a :
+  radical_axis_a locked_O1 ikiss_O2 locked_r ikiss_r2 = 5.
+Proof.
+  unfold radical_axis_a, locked_r, ikiss_r2.
+  rewrite ikiss_centers_dist. field.
+Qed.
+
+Lemma ikiss_radical_ux : radical_axis_ux locked_O1 ikiss_O2 = 1.
+Proof.
+  unfold radical_axis_ux. rewrite ikiss_centers_dist.
+  unfold locked_O1, ikiss_O2. cbn [px py]. field.
+Qed.
+
+Lemma ikiss_radical_uy : radical_axis_uy locked_O1 ikiss_O2 = 0.
+Proof.
+  unfold radical_axis_uy. rewrite ikiss_centers_dist.
+  unfold locked_O1, ikiss_O2. cbn [px py]. field.
+Qed.
+
+Lemma ikiss_radical_h :
+  radical_axis_h locked_O1 ikiss_O2 locked_r ikiss_r2 = 0.
+Proof.
+  unfold radical_axis_h. rewrite ikiss_radical_a.
+  unfold locked_r. replace (5 * 5 - 5 * 5) with 0 by ring. apply sqrt_0.
+Qed.
+
+Lemma ikiss_p_eq_50 : ikiss_p = mkPoint 5 0.
+Proof.
+  unfold ikiss_p, radical_point_plus.
+  rewrite ikiss_radical_a, ikiss_radical_h, ikiss_radical_ux, ikiss_radical_uy.
+  unfold locked_O1. cbn [px py].
+  apply point_eq_of_coords; cbn [px py]; ring.
+Qed.
+
+Lemma ikiss_p_on_circles :
+  dist_sq locked_O1 ikiss_p = locked_r * locked_r /\
+  dist_sq ikiss_O2 ikiss_p = ikiss_r2 * ikiss_r2.
+Proof.
+  rewrite ikiss_p_eq_50. unfold locked_O1, ikiss_O2, locked_r, ikiss_r2, dist_sq.
+  cbn [px py]. split; field.
+Qed.
+
+Lemma locked_I_circles_gamma_internal_kiss :
+  I_circles_gamma 0 0 5 3 0 2 =
+  ICircGTouch hen_plus ikiss_p
+    (circ_t locked_O1 ikiss_p) (circ_t ikiss_O2 ikiss_p).
+Proof.
+  unfold I_circles_gamma, ikiss_p, locked_O1, ikiss_O2, locked_r, ikiss_r2.
+  rewrite locked_I_circles_internal_kiss.
+  rewrite zpt_00.
+  unfold zpt. reflexivity.
+Qed.
+
+Lemma locked_internal_kiss_on_gamma :
+  on_full_circle locked_O1 locked_r (circ_t locked_O1 ikiss_p) ikiss_p /\
+  on_full_circle ikiss_O2 ikiss_r2 (circ_t ikiss_O2 ikiss_p) ikiss_p.
+Proof.
+  destruct ikiss_p_on_circles as [H1 H2].
+  split.
+  - apply on_full_circle_of_retract; [unfold locked_r; lra|exact H1].
+  - apply on_full_circle_of_retract; [unfold ikiss_r2; lra|exact H2].
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* CircGamma stays QEX — CircularArc still has no γ. Honest; not Discharge.   *)
 (* -------------------------------------------------------------------------- *)
 
@@ -437,5 +513,7 @@ Print Assumptions circ_gamma_retract.
 Print Assumptions locked_I_circles_gamma_hit.
 Print Assumptions locked_hit_plus_on_gamma.
 Print Assumptions locked_touch_on_gamma.
+Print Assumptions locked_I_circles_gamma_internal_kiss.
+Print Assumptions locked_internal_kiss_on_gamma.
 Print Assumptions ticket_64_circ_hit_params_qed_or_qex.
 Print Assumptions ICircGEmpty_neq_ICircGDecline.
