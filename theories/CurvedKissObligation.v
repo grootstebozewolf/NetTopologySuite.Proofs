@@ -365,7 +365,7 @@ Proof.
   intros A B HrA HrB. split.
   - intros Ht. split.
     + apply disks_touch_bb_contact; assumption.
-    + apply touch_no_II_2cell. exact Ht.
+    + exact (touch_no_II_2cell A B Ht).
   - intros [[p [HA HB]] Hii].
     split.
     + exists p. split; apply disc_on_circle_in_disk; assumption.
@@ -420,56 +420,50 @@ Lemma disk_covers_meets_interiors :
     exists p, in_disk_int A p /\ in_disk_int B p.
 Proof.
   intros A B HrA HrB Hcov.
-  exists (dcentre B). split.
-  - (* cB ∈ cl(A) and, if it were on ∂A, the far point of B would leave A. *)
-    assert (Hin : in_disk A (dcentre B)).
-    { apply covers_centre_in; [lra | exact Hcov]. }
-    unfold in_disk, in_disk_int in *.
-    destruct (Req_dec (dist (dcentre A) (dcentre B)) 0) as [Hz | Hnz].
-    + pose proof (dist_mul_self (dcentre A) (dcentre B)) as Hm.
-      rewrite Hz in Hm. nra.
-    + destruct (Req_dec (dist (dcentre A) (dcentre B)) (dradius A))
-        as [Heq | Hne].
-      * (* d = rA: the outward far point of B leaves A. *)
-        assert (Hdpos : 0 < dist (dcentre A) (dcentre B)) by lra.
-        assert (Hdne : dist (dcentre A) (dcentre B) <> 0) by lra.
-        set (K := mkPoint
-                    (px (dcentre B)
-                     + (dradius B / dist (dcentre A) (dcentre B))
-                       * (px (dcentre B) - px (dcentre A)))
-                    (py (dcentre B)
-                     + (dradius B / dist (dcentre A) (dcentre B))
-                       * (py (dcentre B) - py (dcentre A)))).
-        pose proof (dist_mul_self (dcentre A) (dcentre B)) as Hd2.
-        assert (HKB0 : dist_sq (dcentre B) K
-                       = (dradius B / dist (dcentre A) (dcentre B))
-                         * (dradius B / dist (dcentre A) (dcentre B))
-                         * dist_sq (dcentre A) (dcentre B)).
-        { unfold K, dist_sq. cbn [px py]. ring. }
-        assert (HKB : dist_sq (dcentre B) K = dradius B * dradius B).
-        { rewrite HKB0, <- Hd2. field. exact Hdne. }
-        assert (HKA0 : dist_sq (dcentre A) K
-                       = (1 + dradius B / dist (dcentre A) (dcentre B))
-                         * (1 + dradius B / dist (dcentre A) (dcentre B))
-                         * dist_sq (dcentre A) (dcentre B)).
-        { unfold K, dist_sq. cbn [px py]. ring. }
-        assert (HKA : dist_sq (dcentre A) K
-                      = (dist (dcentre A) (dcentre B) + dradius B)
-                        * (dist (dcentre A) (dcentre B) + dradius B)).
-        { rewrite HKA0, <- Hd2. field. exact Hdne. }
-        exfalso.
-        assert (HinK : in_disk A K).
-        { apply Hcov. unfold in_disk. rewrite HKB. lra. }
-        unfold in_disk in HinK. rewrite HKA, Heq in HinK.
-        nra.
-      * pose proof (dist_mul_self (dcentre A) (dcentre B)) as Hm.
-        assert (HdA : dist (dcentre A) (dcentre B) <= dradius A).
-        { apply (proj2 (dist_le_iff_dist_sq_le
-                          (dcentre A) (dcentre B) (dradius A)
-                          (Rlt_le _ _ HrA))).
-          exact Hin. }
-        nra.
-  - apply in_disk_int_centre. exact HrB.
+  exists (dcentre B). split; [| apply in_disk_int_centre; exact HrB].
+  assert (Hin : in_disk A (dcentre B)).
+  { apply covers_centre_in; [lra | exact Hcov]. }
+  destruct (Rlt_dec (dist_sq (dcentre A) (dcentre B))
+                    (dradius A * dradius A)) as [Hi | Hn].
+  - exact Hi.
+  - (* cB on ∂A: the outward far point of B leaves A. *)
+    assert (Hon : disc_on_circle A (dcentre B)).
+    { apply closed_not_int_on_circle; [exact Hin|].
+      unfold in_disk_int. lra. }
+    pose proof (dist_eq_of_sq (dcentre A) (dcentre B) (dradius A)
+                  (Rlt_le _ _ HrA) Hon) as Heq.
+    assert (Hdpos : 0 < dist (dcentre A) (dcentre B)).
+    { rewrite Heq. exact HrA. }
+    assert (Hdne : dist (dcentre A) (dcentre B) <> 0) by lra.
+    set (K := mkPoint
+                (px (dcentre B)
+                 + (dradius B / dist (dcentre A) (dcentre B))
+                   * (px (dcentre B) - px (dcentre A)))
+                (py (dcentre B)
+                 + (dradius B / dist (dcentre A) (dcentre B))
+                   * (py (dcentre B) - py (dcentre A)))).
+    pose proof (dist_mul_self (dcentre A) (dcentre B)) as Hd2.
+    assert (HKB0 : dist_sq (dcentre B) K
+                   = (dradius B / dist (dcentre A) (dcentre B))
+                     * (dradius B / dist (dcentre A) (dcentre B))
+                     * dist_sq (dcentre A) (dcentre B)).
+    { unfold K, dist_sq. cbn [px py]. ring. }
+    assert (HKB : dist_sq (dcentre B) K = dradius B * dradius B).
+    { rewrite HKB0, <- Hd2. field. exact Hdne. }
+    assert (HKA0 : dist_sq (dcentre A) K
+                   = (1 + dradius B / dist (dcentre A) (dcentre B))
+                     * (1 + dradius B / dist (dcentre A) (dcentre B))
+                     * dist_sq (dcentre A) (dcentre B)).
+    { unfold K, dist_sq. cbn [px py]. ring. }
+    assert (HKA : dist_sq (dcentre A) K
+                  = (dist (dcentre A) (dcentre B) + dradius B)
+                    * (dist (dcentre A) (dcentre B) + dradius B)).
+    { rewrite HKA0, <- Hd2. field. exact Hdne. }
+    exfalso.
+    assert (HinK : in_disk A K).
+    { apply Hcov. unfold in_disk. rewrite HKB. lra. }
+    unfold in_disk in HinK. rewrite HKA, Heq in HinK.
+    nra.
 Qed.
 
 Lemma disks_touch_not_covers :
@@ -560,10 +554,10 @@ Theorem two_disc_kiss_discharges_curved_obligation :
       (disc_no_II A B).
 Proof.
   intros A B HrA HrB.
-  refine (mk_curved_kiss_obligation _ _ _ _ _ _ _ _).
+  constructor.
   - exact (disc_pair_domain A B HrA HrB).
   - exact (disc_pair_exactly_noded_hold A B).
-  - intros. cbn [cf_fill disc_filled].
+  - cbn [cf_fill disc_filled].
     rewrite bodies_kiss_disc_iff_touch.
     apply disks_touch_iff_bb_and_no_II; assumption.
 Qed.
@@ -588,9 +582,8 @@ Theorem curved_kiss_modulo_qex :
     (disks_touch A B <-> (disc_bb_contact A B /\ disc_no_II A B)).
 Proof.
   intros A B HrA HrB. split.
-  - intros [_ _ Hk].
-    rewrite <- bodies_kiss_disc_iff_touch.
-    exact Hk.
+  - intros _.
+    apply disks_touch_iff_bb_and_no_II; assumption.
   - intros _.
     exact (two_disc_kiss_discharges_curved_obligation A B HrA HrB).
 Qed.
