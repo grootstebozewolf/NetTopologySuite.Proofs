@@ -27,6 +27,11 @@ Definition circ_d2 (o1x o1y o2x o2y : Z) : Z :=
 Definition circ_sum2 (r1 r2 : Z) : Z := (r1 + r2) * (r1 + r2).
 Definition circ_diff2 (r1 r2 : Z) : Z := (r1 - r2) * (r1 - r2).
 
+Lemma Z_sq_nlt_0 : forall z, ~ (z * z < 0).
+Proof.
+  intro z. destruct z; simpl; lia.
+Qed.
+
 Definition mint_pair : IZResult := IZHit hen_plus hen_minus.
 Definition mint_touch : IZResult := IZTouch hen_plus.
 
@@ -62,7 +67,7 @@ Proof.
     destruct (circ_d2 o1x o1y o2x o2y =? 0) eqn:Hd0.
     + apply Z.eqb_eq in Hd0. split; [discriminate|].
       intros [_ [_ [Hlt _]]].
-      assert (0 <= (r1 - r2) * (r1 - r2)) by nia. lia.
+      rewrite Hd0 in Hlt. exfalso. exact (Z_sq_nlt_0 (r1 - r2) Hlt).
     + apply Z.eqb_neq in Hd0.
       destruct ((circ_d2 o1x o1y o2x o2y =? (r1 + r2) * (r1 + r2))
                 || (circ_d2 o1x o1y o2x o2y =? (r1 - r2) * (r1 - r2))) eqn:Hk.
