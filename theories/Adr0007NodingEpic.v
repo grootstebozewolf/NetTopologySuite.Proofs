@@ -54,6 +54,14 @@
    (`ticket_0007_share_constructed_qed_or_qex` discharges left).
    Not a remint of Intersect. Not a total 𝓘.
 
+   Letter after Accept (not a noder): a circular IHit still cannot
+   feed the host cook step. Circular eggs stay MkOutOfScope;
+   try_cook_hit returns None. `ticket_0007_circ_host_cook_qed_or_qex`
+   discharges right. First cook scope stays chord–chord. Host
+   CircGamma stays QEX (CircularCook.v). The 4-axiom sidecar
+   CircularCookSplit.v feeds the locked circular Hit into a
+   same-shape split(t) cook; that is not this host module.
+
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
    not I_circles_z / I_CIRCULAR and not glossary I with gamma / t.
@@ -274,9 +282,12 @@ Qed.
 
 (* Core-slice circular tickets: ticket_64_circ_hit_params_qed_or_qex
    (QED, CircularCookHit.v, full/atan2), CircularCookSpan.v span γ
-   (QED, 4-axiom sidecar), and ticket_64_circ_gamma_qed_or_qex (QEX,
-   CircularCook.v host flag). Not Required here — host lane stays
-   atan2-free. Host CircGamma stays QEX; first cook stays chord–chord. *)
+   (QED, 4-axiom sidecar), ticket_64_circ_gamma_qed_or_qex (QEX,
+   CircularCook.v host flag), and CircularCookSplit.v (4-axiom
+   sidecar cook of a locked circular Hit). Not Required here — host
+   lane stays atan2-free. Host CircGamma stays QEX; first cook stays
+   chord–chord. The host circular-Hit→cook bridge is the QEX stop
+   ticket_0007_circ_host_cook_qed_or_qex below. *)
 
 (* Letter after Accept: one Hit cook step on chord–chord (QED) or
    the step fails to mint (QEX). Discharged QED — crossing chickens
@@ -372,6 +383,27 @@ Proof.
            crossing_proper_cross_signs).
 Qed.
 
+(* Next rung: a circular IHit feeds the host cook step (QED) or the
+   host cook still declines circular eggs (QEX). Discharged QEX —
+   MkOutOfScope EggCircularArc is not first cook scope, so
+   try_cook_hit returns None even when the result is IHit.
+   CircGamma stays QEX in CircularCook.v; do not fake Discharge.
+   Not a remint of ArcSplitAtNode. Kiss/Touch is not this stop. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_host_cook_qed_or_qex","title":"ADR-0007 circular IHit feeds the host cook (QED) or try_cook_hit still declines circular eggs (QEX); discharged QEX; CircGamma stays QEX","file":"theories/Adr0007NodingEpic.v","witness":"0007-circ-cook","board":"ADR-0007"} *)
+Theorem ticket_0007_circ_host_cook_qed_or_qex :
+  (exists cp : CookedPair,
+     try_cook_hit circular_ck1 circular_ck2
+       (IHit cross_pt (1 / 2) (1 / 2)) crossing_hen = Some cp)
+  \/
+  (try_cook_hit circular_ck1 circular_ck2
+     (IHit cross_pt (1 / 2) (1 / 2)) crossing_hen = None
+   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+Proof.
+  right.
+  split; [apply try_cook_hit_circular_hit_none|].
+  exact circular_egg_not_first_cook_scope.
+Qed.
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.
@@ -388,3 +420,4 @@ Print Assumptions ticket_0007_cook_step_scope_qed_or_qex.
 Print Assumptions ticket_0007_constructed_I_qed_or_qex.
 Print Assumptions ticket_0007_constructed_I_scope_qed_or_qex.
 Print Assumptions ticket_0007_share_constructed_qed_or_qex.
+Print Assumptions ticket_0007_circ_host_cook_qed_or_qex.

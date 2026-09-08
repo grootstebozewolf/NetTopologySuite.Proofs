@@ -263,6 +263,9 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | Full-circle Hit carries constructed `(h*, p*, tᵢ, tⱼ)` | `CircularCookHit.v : ticket_64_circ_hit_params_qed_or_qex` | **QED** — locked `(0,0)/(7,0)` r=5; `γ(t)=p*` | `CircularCookHit.v : locked_I_circles_gamma_hit`, `CircularCookHit.v : locked_hit_plus_on_gamma` |
 | — | CircularArc γ / CircGamma | `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | **QEX** — 3-axiom host has no atan2-free interpolant; do not fake Discharge | `CircularCook.v : circular_gamma_is_qex` |
 | — | Span-restricted γ on CircularArc | `CircularCookSpan.v : circular_arc_gamma_constructed` | **QED** — principal-span interpolant; locked proper arcs keep `p+`, reject `p−` | `CircularCookSpan.v : locked_span_gamma_hit`, `CircularCookSpan.v : arc_gamma_retract` |
+| — | Host circular IHit → `try_cook_hit` | `Adr0007NodingEpic.v : ticket_0007_circ_host_cook_qed_or_qex` | **QEX** — circular eggs stay `MkOutOfScope`; host cook declines even on IHit | `SheetHenCook.v : try_cook_hit_circular_hit_none`, `SheetHenCook.v : circular_egg_not_first_cook_scope` |
+| — | Circular Hit feeds sidecar `split(t)` | `CircularCookSplit.v : ticket_0007_circ_cook_step_qed_or_qex` | **QED** — locked plus-root leftovers meet at `p+`; CircGamma stays QEX | `CircularCookSplit.v : cooked_circ_plus_try`, `CircularCookSplit.v : cooked_circ_plus_ok` |
+| — | Circular Touch / Empty / Decline cook | `CircularCookSplit.v : ticket_0007_circ_cook_scope_qed_or_qex` | **QEX** — kiss is a fenced scope arm, not a CRV-TOUCH procedure | `CircularCookSplit.v : locked_circ_touch_none` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -426,7 +429,9 @@ Span-restricted γ on CircularArc is QED in the 4-axiom sidecar
 QEX (`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`;
 `CircularCook.v : circular_gamma_is_qex`) — remaining obligation is
 an atan2-free interpolant on the 3-axiom host.
-Not first cook scope. Not a noder.
+The next letter feeds that circular Hit into a same-shape cook
+(`CircularCookSplit.v`); host `try_cook_hit` still declines circular
+eggs. Not first cook scope. Not a noder.
 
 ### Letter after Accept — one Hit cook step (2026-09-07)
 
@@ -460,3 +465,26 @@ Does not reopen Status. Host CircGamma stays QEX.
 | `Adr0007NodingEpic.v : ticket_0007_share_constructed_qed_or_qex` | **QED** — operand swap names the same `p*`; `ShareOne` follows | `SheetHenCook.v : constructed_hit_sym_same_p`, `SheetHenCook.v : equal_constructed_p_share` |
 
 Witness: `0007-constructed-I`. Status stays **Accepted**.
+
+### Letter after Accept — circular Hit → cook bridge (2026-09-08)
+
+#666 closed chord–chord constructed Hit → cook `split(t)`. The circular
+side already had `I_circles_z` / `I_CIRCULAR`, constructed
+`(h*, p*, tᵢ, tⱼ)` on locked discs, and principal-span γ. This letter
+feeds that circular Hit into a same-shape cook step — leftovers via
+`circ_gamma` `split(t)`, incidence on the Hit's hen — without faking
+atan2-free host γ and without expanding first cook scope.
+
+The *host* cook (`try_cook_hit`) still declines circular eggs: they
+remain `MkOutOfScope`. CircGamma stays QEX. Touch / kiss is a fenced
+QEX arm, not a CRV-TOUCH kiss decision. Not a remint of
+`ArcSplitAtNode`. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `Adr0007NodingEpic.v : ticket_0007_circ_host_cook_qed_or_qex` | **QEX** — circular IHit does not feed host `try_cook_hit` | `SheetHenCook.v : try_cook_hit_circular_hit_none` |
+| `CircularCookSplit.v : ticket_0007_circ_split_qed_or_qex` | **QED** — locked plus-root leftovers meet at `p+` | `CircularCookSplit.v : circ_split_join`, `CircularCookHit.v : locked_hit_plus_on_gamma` |
+| `CircularCookSplit.v : ticket_0007_circ_cook_step_qed_or_qex` | **QED** — `I_circles_gamma` Hit cooks; CircGamma stays QEX | `CircularCookSplit.v : cooked_circ_plus_try`, `CircularCookSplit.v : cooked_circ_plus_ok` |
+| `CircularCookSplit.v : ticket_0007_circ_cook_scope_qed_or_qex` | **QEX** — Touch / Empty / Decline allocate no hen | `CircularCookSplit.v : locked_circ_touch_none` |
+
+Witness: `0007-circ-cook`. Status stays **Accepted**. Host CircGamma stays QEX.

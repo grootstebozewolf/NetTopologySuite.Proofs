@@ -4,7 +4,9 @@
    R-side attach of radical p* to CircularCookZ.I_circles_z.
    Classical-reals (3-axiom) via radical_point / IZR. Not glossary 𝓘:
    QEX — no 3-axiom γ : [0,1] → S on CircularArc (atan2 interpolant
-   lives in CircularCookSpan.v). first_cook_scope stays chord–chord.
+   lives in CircularCookSpan.v; sidecar cook of a circular Hit lives
+   in CircularCookSplit.v). first_cook_scope stays chord–chord.
+   CircGamma stays QEX; the sidecar does not fake Discharge.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked
 

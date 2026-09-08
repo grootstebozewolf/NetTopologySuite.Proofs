@@ -149,6 +149,13 @@ Production home for 64-circ-span-gamma (span-restricted γ on
 reject `p−`; host CircGamma stays QEX): `theories/CircularCookSpan.v`.
 4-axiom atan2 sidecar; no micro-kernel twin (atan2 / `arc_center` cone).
 
+Production home for 0007-circ-cook (circular Hit feeds a same-shape
+`split(t)` cook on locked discs; host `try_cook_hit` still declines
+circular eggs; CircGamma stays QEX; Touch is a fenced QEX arm):
+`theories/CircularCookSplit.v` (sidecar) and
+`theories/Adr0007NodingEpic.v` (host QEX). 4-axiom atan2 sidecar;
+no micro-kernel twin (atan2 / radical `p*` cone).
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.
