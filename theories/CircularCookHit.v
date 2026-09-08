@@ -79,7 +79,14 @@ Lemma circ_point_ne_of_on_circle : forall O P r,
   ~ (px P - px O = 0 /\ py P - py O = 0).
 Proof.
   intros O P r Hr Heq [Hx Hy].
-  rewrite <- circ_delta_sq in Heq. rewrite Hx, Hy in Heq. lra.
+  assert (H0 : dist_sq O P = 0).
+  { unfold dist_sq.
+    replace (px O - px P) with (- (px P - px O)) by ring.
+    replace (py O - py P) with (- (py P - py O)) by ring.
+    rewrite Hx, Hy. ring. }
+  rewrite H0 in Heq.
+  symmetry in Heq.
+  apply sqr_eq_zero in Heq. lra.
 Qed.
 
 Lemma circ_radius_sqrt : forall O P r,
@@ -89,8 +96,8 @@ Lemma circ_radius_sqrt : forall O P r,
 Proof.
   intros O P r Hr Heq.
   rewrite circ_delta_sq, Heq.
-  rewrite <- (sqrt_Rsqr r) by lra.
-  unfold Rsqr. reflexivity.
+  change (r * r) with (Rsqr r).
+  apply sqrt_Rsqr. lra.
 Qed.
 
 (* Polar retract: a point on the circle is γ(circ_t O P). *)
@@ -108,15 +115,20 @@ Proof.
   pose proof (circ_radius_sqrt O P r Hr Heq) as Hsr.
   fold x y in Hsr. rewrite Hsr in Hc, Hs.
   unfold circ_gamma, circ_t, circ_angle. fold x y.
+  pose proof PI_RGT_0 as HPI.
   destruct (Rle_dec 0 (atan2 y x)) as [_|Hth].
   - replace (2 * PI * (atan2 y x / (2 * PI))) with (atan2 y x)
-      by (field; apply two_PI_neq_0).
-    apply point_eq_of_coords; cbn [px py]; unfold x, y in Hc, Hs; lra.
+      by (field; lra).
+    apply point_eq_of_coords; cbn [px py].
+    + rewrite Hc. unfold x. ring.
+    + rewrite Hs. unfold y. ring.
   - replace (2 * PI * ((atan2 y x + 2 * PI) / (2 * PI)))
       with (atan2 y x + 2 * PI)
-      by (field; apply two_PI_neq_0).
+      by (field; lra).
     rewrite cos_plus_2PI, sin_plus_2PI.
-    apply point_eq_of_coords; cbn [px py]; unfold x, y in Hc, Hs; lra.
+    apply point_eq_of_coords; cbn [px py].
+    + rewrite Hc. unfold x. ring.
+    + rewrite Hs. unfold y. ring.
 Qed.
 
 Lemma circ_t_range : forall O P,
@@ -131,9 +143,19 @@ Proof.
   pose proof PI_RGT_0 as HPI.
   assert (Hinv : 0 < / (2 * PI)) by (apply Rinv_0_lt_compat; exact H2).
   unfold circ_t, circ_angle, Rdiv. fold x y.
-  destruct (Rle_dec 0 (atan2 y x)) as [Hth|Hth].
-  - split; nra.
-  - split; nra.
+  set (th := atan2 y x) in *.
+  destruct (Rle_dec 0 th) as [Hth|Hth].
+  - split.
+    + apply Rmult_le_pos; [exact Hth | apply Rlt_le, Hinv].
+    + apply (Rmult_lt_reg_r (2 * PI)); [exact H2|].
+      replace (th * / (2 * PI) * (2 * PI)) with th by (field; lra).
+      lra.
+  - split.
+    + apply Rmult_le_pos; [lra | apply Rlt_le, Hinv].
+    + apply (Rmult_lt_reg_r (2 * PI)); [exact H2|].
+      replace ((th + 2 * PI) * / (2 * PI) * (2 * PI))
+        with (th + 2 * PI) by (field; lra).
+      lra.
 Qed.
 
 Lemma circ_t_in_unit : forall O P r,
@@ -408,7 +430,7 @@ Proof.
   split; [exact locked_I_circles_gamma_hit|].
   destruct locked_hit_plus_on_gamma as [Hp1 Hp2].
   destruct locked_hit_minus_on_gamma as [Hm1 Hm2].
-  repeat split; assumption.
+  refine (conj Hp1 (conj Hp2 (conj Hm1 Hm2))).
 Qed.
 
 Print Assumptions circ_gamma_retract.
