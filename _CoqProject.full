@@ -2650,6 +2650,13 @@ theories/OverlayTouchRow.v
 # noding+extract stays the named Prop; not a status flag.  Full-only:
 # imports DiscOverlay / OverlayTouchRow.  Never OverlayNGCurved.
 theories/CurvedCapObligation.v
+# Curved-polygon CUP/SUB/XOR after exact noding — parameterized obligation
+# (modulo QEX) over BooleanOp.  Disc slice = DiscOverlay blob / crescent /
+# crescents (Qed).  CAP (#679) is the Intersection instance.  Residual
+# CurvePolygon noding+extract stays the named Prop; not a status flag.
+# Full-only: imports CurvedCapObligation.  Never OverlayNGCurved.
+# Curved ops QEX ≠ G1; ≠ kiss; ≠ self-kiss.
+theories/CurvedOpObligation.v
 theories/RelateTouchDiscs.v
 # General circular noding rung 1: splitting an arc at an N-AA node is sound,
 # witness-scoped on the DISC_OVERLAY locked fixture — child cut-chord side
