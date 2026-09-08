@@ -139,6 +139,11 @@ on positive radii; Empty / Touch / Decline against the same squared
 tests; locked internal kiss `(0,0)` r=5 vs `(3,0)` r=2 is Touch):
 `theories/CircularCookZ.v`. Oracle `I_CIRCULAR` takes integer tokens.
 
+Production home for 64-circ-hit-params (full-circle γ : [0,1] → S;
+locked Hit carries constructed `(h*, p*, tᵢ, tⱼ)` with `γ(t)=p*`;
+CircGamma on CircularArc stays QEX): `theories/CircularCookHit.v`.
+4-axiom atan2 lane; no micro-kernel twin (radical `p*` + atan2 cone).
+
 Production home for 9004-d (Green/Qed: the cell pruning bound behind
 Polycenter / JTS Cell.getMaxDistance — an empty radius achievable at any
 point of a square cell of centre c, half-side h is at most

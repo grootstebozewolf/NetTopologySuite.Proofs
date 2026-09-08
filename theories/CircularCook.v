@@ -119,9 +119,21 @@ Proof.
   discriminate.
 Qed.
 
+(* WITNESS {"claimId":"64-circ-hit-params","topic":"core","lemma":"ticket_64_circ_gamma_qed_or_qex","title":"CircularArc gamma is discharged (QED) or still CircGammaQEX (QEX); discharged QEX","file":"theories/CircularCook.v","witness":"64-i-circular-locked","board":"ADR-0007"} *)
+
+Theorem ticket_64_circ_gamma_qed_or_qex :
+  circular_gamma_status = CircGammaDischarged
+  \/
+  circular_gamma_status = CircGammaQEX.
+Proof.
+  right.
+  exact circular_gamma_is_qex.
+Qed.
+
 Print Assumptions circular_gamma_is_qex.
 Print Assumptions circular_not_first_cook_scope.
 Print Assumptions locked_I_circles_on_z_sheet_hit.
 Print Assumptions locked_I_circles_touch.
 Print Assumptions locked_I_circles_internal_kiss.
 Print Assumptions ICircEmpty_neq_ICircDecline.
+Print Assumptions ticket_64_circ_gamma_qed_or_qex.

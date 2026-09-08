@@ -260,6 +260,8 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | Bag-level cook loop (term / confl on a leftover bag) | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — documented CRV-TOUCH / `𝓘`-family deferral, not a named soft gap | `SheetHenCook.v : cook_loop_is_obligation` |
 | — | binary64 / OverlayNGRobust sit on one sheet | `Adr0007NodingEpic.v : ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | `SheetHenCook.v : coord_realization_preserves_sheet`, `SheetHenCook.v : overlay_ng_robust_is_finite_snap_holds`, `SheetHenCook.v : overlay_ng_robust_is_snap_not_I` |
 | — | `ddir` migration is one type equation | `Adr0007NodingEpic.v : ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart stays the `Dart.v` coordinate-pair story; no third type | `SheetHenCook.v : ddir_migration_one_equation` |
+| — | Full-circle Hit carries constructed `(h*, p*, tᵢ, tⱼ)` | `CircularCookHit.v : ticket_64_circ_hit_params_qed_or_qex` | **QED** — locked `(0,0)/(7,0)` r=5; `γ(t)=p*` | `CircularCookHit.v : locked_I_circles_gamma_hit`, `CircularCookHit.v : locked_hit_plus_on_gamma` |
+| — | CircularArc γ / CircGamma | `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | **QEX** — no γ : `[0,1]` → S on CircularArc; do not fake Discharge | `CircularCook.v : circular_gamma_is_qex` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -413,3 +415,11 @@ Do not flip the Status line except by this decision. Status stays
 (Hit / Empty / Touch / Decline) and mints named-root hens; oracle
 `I_CIRCULAR` takes integer tokens. Hit is the open squared interval;
 internal kiss is Touch. Does not reopen Status.
+
+Full-circle interpolant γ(t) = O + r·(cos 2πt, sin 2πt) and
+Hit (h*, p*, tᵢ, tⱼ) live in `CircularCookHit.v`. Locked
+`(0,0)/(7,0)` r=5 is QED (`ticket_64_circ_hit_params_qed_or_qex`).
+CircularArc γ / span restriction stays QEX
+(`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`;
+`CircularCook.v : circular_gamma_is_qex`).
+Not first cook scope. Not a noder.

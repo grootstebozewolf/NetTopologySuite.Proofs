@@ -253,6 +253,12 @@ Proof.
   exact ddir_migration_one_equation.
 Qed.
 
+(* Core-slice circular tickets: ticket_64_circ_hit_params_qed_or_qex
+   (QED, CircularCookHit.v, full/atan2) and
+   ticket_64_circ_gamma_qed_or_qex (QEX, CircularCook.v). Not Required
+   here — host lane stays atan2-free. CircGamma stays QEX; first cook
+   stays chord–chord. *)
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.

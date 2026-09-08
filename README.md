@@ -75,7 +75,7 @@ make host
 ```
 
 `make host` builds the 47 foundational Stdlib-only modules. The full
-corpus (520 registered modules) is the pinned container. Toolchain:
+corpus (521 registered modules) is the pinned container. Toolchain:
 **Rocq 9.2.0 + Flocq 4.2.2**.
 
 ## What this is not

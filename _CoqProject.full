@@ -2781,6 +2781,9 @@ theories/Adr0007NodingEpic.v
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
 theories/CircularCook.v
+# Full-circle γ : [0,1] → S + Hit (h*, p*, tᵢ, tⱼ). Locked fixture QED.
+# CircGamma on CircularArc stays QEX. 4-axiom atan2. Not first cook scope.
+theories/CircularCookHit.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
