@@ -3901,6 +3901,28 @@ let run_holes_disjoint () =
          else print_endline "DISJOINT")
   end
 
+(* 523-a capability refuse (witness 523-a-eb-refuse).
+   Year-1 CURVE_RELATE_MATRIX does not compute elliptic / Bézier. Any `E` / `B`
+   segment in either argument failwiths — no 9-char, not Decline.
+   Distinguish:
+     - capability refuse: this helper (`failwith`). Same *intent* as the
+       buffer modes, which refuse E/B at parse (C/A grammar only) and never
+       construct `Elliptic / `Bezier — they do not share this walk.
+     - Decline: whole-line `UNSUPPORTED`
+       (RelateNGCore.v : relate_unsupported_no_predicate). T-junction golden
+       stays that token. Do not steal it for E/B.
+     - matrix cell `?`: 523-c, emptiness not established (probe miss /
+       lineal undistinguished). Not Coq None.
+     - matrix cell `F`: emptiness established
+       (RelateCurveMatrix.v : cell_none_iff_empty).
+   LENGTH_UNIFIED accepts E/B and computes — not a precedent. *)
+let refuse_elliptic_bezier ~mode gs =
+  let seg_eb = function `Elliptic _ | `Bezier _ -> true | _ -> false in
+  let geom_eb g =
+    Array.exists (fun ring -> Array.exists seg_eb ring) g in
+  if List.exists geom_eb gs then
+    failwith (mode ^ ": elliptic / Bézier refuse")
+
 (* ----- CURVE_RELATE_MATRIX (R-PR, JTS #1195 §7): COMPUTE the full 9-cell
    DE-9IM intersection matrix of two curve geometries.
    ---------------------------------------------------------------------------
@@ -3951,8 +3973,10 @@ let run_holes_disjoint () =
            open cell as `?`: no sample found.  That is not
            RelateCurveMatrix.v : cell_none_iff_empty.  EE stays 2
            (geom_de9im_ee_nonempty).  Elliptic / Bézier refuse the mode
-           (failwith), same shape as BUFFER_REGION / BUFFER_UNIFIED /
-           ARC_BUFFER_SIMPLE — not UNSUPPORTED.  See
+           via refuse_elliptic_bezier (failwith), same *intent* as
+           BUFFER_REGION / BUFFER_UNIFIED / ARC_BUFFER_SIMPLE (those
+           refuse E/B at the C/A parse grammar, not this walk) — not
+           UNSUPPORTED.  See
            docs/curve-relate-matrix-lemma-reuse-map.md. *)
 let run_curve_relate_matrix () =
   let parse_seg () =
@@ -3995,13 +4019,8 @@ let run_curve_relate_matrix () =
   let (kindA, ga) = parse_geom_or_lineal () in
   let (kindB, gb) = parse_geom_or_lineal () in
   let is_lineal = (kindA = `Lineal) && (kindB = `Lineal) in
-  (* 523-a: E/B is a capability refuse, not a Decline and not a 9-char.
-     Buffer precedent: BUFFER_REGION / BUFFER_UNIFIED / ARC_BUFFER_SIMPLE. *)
-  let seg_eb = function `Elliptic _ | `Bezier _ -> true | _ -> false in
-  let geom_eb g =
-    Array.exists (fun ring -> Array.exists seg_eb ring) g in
-  if geom_eb ga || geom_eb gb then
-    failwith "CURVE_RELATE_MATRIX: elliptic / Bézier refuse";
+  (* 523-a: E/B is a capability refuse, not a Decline and not a 9-char. *)
+  refuse_elliptic_bezier ~mode:"CURVE_RELATE_MATRIX" [ga; gb];
   (* For point-vs-lineal v1 we also accept a degenerate chord as point proxy.
      Mixed (point as degenerate + lineal) is handled in the lineal block below. *)
   let seg_pts = function
@@ -4140,7 +4159,8 @@ let run_curve_relate_matrix () =
       | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
       | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
       | `Elliptic _, _ | _, `Elliptic _ | `Bezier _, _ | _, `Bezier _ ->
-          (* conservative for v1 lineal slice; full handled by hunter gens *)
+          (* Unreachable after refuse_elliptic_bezier (523-a). Kept so a
+             reorder cannot silently return [] → "FFFFFFFFF". *)
           []
       | _ -> [] in
 
@@ -4349,9 +4369,8 @@ let run_curve_relate_matrix () =
       | `Chord (p1, q1), `Chord (p2, q2) -> chord_chord_pts (p1, q1) (p2, q2)
       | `Arc arc, `Chord (p, q) | `Chord (p, q), `Arc arc -> arc_seg_pts arc p q
       | `Arc a1, `Arc a2 -> arc_arc_pts a1 a2
-      (* E/B treated as their end-to-end chord for current boundary-cross / pair logic.
-         Real classification for adversarial cases is done by the independent Python
-         model inside the hunter / gen scripts. *)
+      (* Unreachable after refuse_elliptic_bezier (523-a). Chord/centre
+         proxies kept so a reorder cannot silently print a 9-char. *)
       | `Elliptic (c, _, _, _, _, _), `Chord (p, q)
       | `Chord (p, q), `Elliptic (c, _, _, _, _, _) ->
           chord_chord_pts (c, c) (p, q)
@@ -4362,7 +4381,7 @@ let run_curve_relate_matrix () =
       | `Bezier _, `Bezier _
       | `Elliptic _, `Bezier _ | `Bezier _, `Elliptic _ ->
           []
-      (* Mixed Arc + new types (conservative proxy) *)
+      (* Mixed Arc + new types (conservative proxy; also 523-a-unreachable) *)
       | `Arc _, `Elliptic _ | `Elliptic _, `Arc _
       | `Arc _, `Bezier _ | `Bezier _, `Arc _ ->
           [] in

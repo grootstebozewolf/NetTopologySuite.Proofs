@@ -36,7 +36,7 @@ if rc != 0 or out != "FFFFFFFFF":
     fail("relate_disjoint", out, "FFFFFFFFF", stdin)
 print("relate disjoint ok")
 
-# 523-a: E/B refuse — failwith, no 9-char, not UNSUPPORTED
+# 523-a: E/B refuse — refuse_elliptic_bezier failwith, no 9-char, not UNSUPPORTED
 stdin_eb = """CURVE_RELATE_MATRIX
 L
 1
