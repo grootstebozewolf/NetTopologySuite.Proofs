@@ -56,10 +56,32 @@ Local Open Scope R_scope.
 Definition edge_incident (e : Edge) (v : Point) : Prop :=
   fst e = v \/ snd e = v.
 
+(** Walk-successor pairs of a (possibly open) edge list. *)
+Fixpoint adjacent_pairs (es : list Edge) : list (Edge * Edge) :=
+  match es with
+  | a :: rest =>
+      match rest with
+      | b :: _ => (a, b) :: adjacent_pairs rest
+      | nil => nil
+      end
+  | nil => nil
+  end.
+
+(** Closing corner: last edge followed by first. *)
+Definition wrap_pair (es : list Edge) : option (Edge * Edge) :=
+  match es with
+  | a :: rest =>
+      match rev rest with
+      | b :: _ => Some (b, a)
+      | nil => None
+      end
+  | nil => None
+  end.
+
 (** Consecutive along the cyclic edge list, including wrap last→first. *)
 Definition consecutive_ring_edges (r : Ring) (e1 e2 : Edge) : Prop :=
-  (exists pre suf, ring_edges r = pre ++ e1 :: e2 :: suf) \/
-  (exists mid, ring_edges r = e2 :: mid ++ [e1]).
+  In (e1, e2) (adjacent_pairs (ring_edges r)) \/
+  wrap_pair (ring_edges r) = Some (e1, e2).
 
 (** Pinch: two non-adjacent pieces of the boundary meet at [v]. *)
 Definition self_kiss_vertex (r : Ring) (v : Point) : Prop :=
@@ -196,54 +218,56 @@ Proof.
   intros H. injection H as _ Hy. inversion Hy. lra.
 Qed.
 
-(* Concrete list equality: a non-adjacent pair cannot be a walk-successor
-   or the wrap-around pair. *)
+Lemma figure8_adjacent_pairs :
+  adjacent_pairs (ring_edges figure8_ring) =
+    (figure8_eR, (mkPoint 1 (-1), mkPoint 1 1))
+    :: ((mkPoint 1 (-1), mkPoint 1 1), (mkPoint 1 1, mkPoint 0 0))
+    :: ((mkPoint 1 1, mkPoint 0 0), figure8_eL)
+    :: (figure8_eL, (mkPoint (-1) 1, mkPoint (-1) (-1)))
+    :: ((mkPoint (-1) 1, mkPoint (-1) (-1)), (mkPoint (-1) (-1), mkPoint 0 0))
+    :: nil.
+Proof. rewrite figure8_ring_edges. simpl. reflexivity. Qed.
+
+Lemma figure8_wrap_pair :
+  wrap_pair (ring_edges figure8_ring) =
+    Some ((mkPoint (-1) (-1), mkPoint 0 0), figure8_eR).
+Proof. rewrite figure8_ring_edges. simpl. reflexivity. Qed.
+
+Ltac contra_pair H :=
+  injection H; intros;
+  repeat match goal with
+  | H : figure8_eR = figure8_eL |- _ => apply figure8_eR_ne_eL in H; contradiction
+  | H : figure8_eL = figure8_eR |- _ =>
+      apply figure8_eR_ne_eL; symmetry; exact H
+  | H : (?a, ?b) = (?c, ?d) |- _ => injection H; intros; clear H
+  | H : mkPoint _ _ = mkPoint _ _ |- _ => inversion H; subst
+  end;
+  cbn in *; exfalso; lra.
+
 Lemma figure8_eR_eL_not_consecutive :
   ~ consecutive_ring_edges figure8_ring figure8_eR figure8_eL.
 Proof.
-  intros [[pre [suf H]] | [mid H]].
-  - rewrite figure8_ring_edges in H.
-    destruct pre as [|a pre]; simpl in H.
-    + inversion H. unfold figure8_eL, figure8_eR in H2.
-      inversion H2. lra.
-    + destruct pre as [|b pre]; simpl in H.
-      * inversion H. unfold figure8_eR in H1. inversion H1. lra.
-      * destruct pre as [|c pre]; simpl in H.
-        -- inversion H. unfold figure8_eR in H1. inversion H1. lra.
-        -- destruct pre as [|d pre]; simpl in H.
-           ++ inversion H. unfold figure8_eL, figure8_eR in H2.
-              inversion H2. lra.
-           ++ destruct pre as [|e pre]; simpl in H.
-              ** inversion H. unfold figure8_eR in H1. inversion H1. lra.
-              ** destruct pre as [|f pre]; simpl in H.
-                 --- inversion H. unfold figure8_eR in H1. inversion H1. lra.
-                 --- discriminate H.
-  - rewrite figure8_ring_edges in H.
-    inversion H as [Heq _]. exact (figure8_eR_ne_eL Heq).
+  intros [Hin | Hwrap].
+  - rewrite figure8_adjacent_pairs in Hin.
+    simpl in Hin.
+    destruct Hin as [H | [H | [H | [H | [H | []]]]]]; contra_pair H.
+  - rewrite figure8_wrap_pair in Hwrap.
+    unfold figure8_eR, figure8_eL in Hwrap.
+    inversion Hwrap.
+    cbn in *; lra.
 Qed.
 
 Lemma figure8_eL_eR_not_consecutive :
   ~ consecutive_ring_edges figure8_ring figure8_eL figure8_eR.
 Proof.
-  intros [[pre [suf H]] | [mid H]].
-  - rewrite figure8_ring_edges in H.
-    destruct pre as [|a pre]; simpl in H.
-    + inversion H. unfold figure8_eL, figure8_eR in H1. inversion H1. lra.
-    + destruct pre as [|b pre]; simpl in H.
-      * inversion H. unfold figure8_eL in H1. inversion H1. lra.
-      * destruct pre as [|c pre]; simpl in H.
-        -- inversion H. unfold figure8_eL in H1. inversion H1. lra.
-        -- destruct pre as [|d pre]; simpl in H.
-           ++ inversion H. unfold figure8_eR, figure8_eL in H2.
-              inversion H2. lra.
-           ++ destruct pre as [|e pre]; simpl in H.
-              ** inversion H. unfold figure8_eL in H1. inversion H1. lra.
-              ** destruct pre as [|f pre]; simpl in H.
-                 --- inversion H. unfold figure8_eL in H1. inversion H1. lra.
-                 --- discriminate H.
-  - rewrite figure8_ring_edges in H.
-    inversion H as [Heq _].
-    apply figure8_eR_ne_eL. symmetry. exact Heq.
+  intros [Hin | Hwrap].
+  - rewrite figure8_adjacent_pairs in Hin.
+    simpl in Hin.
+    destruct Hin as [H | [H | [H | [H | [H | []]]]]]; contra_pair H.
+  - rewrite figure8_wrap_pair in Hwrap.
+    unfold figure8_eR, figure8_eL in Hwrap.
+    inversion Hwrap.
+    cbn in *; lra.
 Qed.
 
 Lemma figure8_self_kiss_vertex :
@@ -282,7 +306,7 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Lemma figure8_g1 : g1_cap_self_geom figure8_geom.
-Proof. apply boolean_op_intersection_self. Qed.
+Proof. intros p. apply boolean_op_intersection_self. Qed.
 
 (* WITNESS {"claimId":"ov-g1-ne-selfkiss","topic":"overlay","lemma":"G1_ne_selfkiss","title":"G1 (CAP self) does not forbid self-kiss; figure-8 pinch witness","witness":"figure8-bowtie","board":"OverlayNGCurve / G-family"} *)
 

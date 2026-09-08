@@ -1366,8 +1366,8 @@ topic: overlay · claimId: ov-g1-ne-selfkiss · witness: figure8-bowtie — righ
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `OverlaySelfKiss.v : G1_ne_selfkiss` (+ `figure8_g1`, `figure8_self_kiss_vertex`, `figure8_geometry_self_kiss`) | **Headline.** Exists a geometry on which G1 holds and a self-kiss pinch is present — CAP self does not collapse into “no figure-8” `[exact]` | 2 |
-| `OverlaySelfKiss.v : g1_does_not_forbid_selfkiss` | Equivalent: refute “G1 ⇒ ¬self_kiss” on the same figure-8 body `[exact]` | 2 |
+| `OverlaySelfKiss.v : G1_ne_selfkiss` (+ `figure8_g1`, `figure8_self_kiss_vertex`, `figure8_geometry_self_kiss`) | **Headline.** Exists a geometry on which G1 holds and a self-kiss pinch is present — CAP self does not collapse into “no figure-8”. Print Assumptions: 2 of the classical-reals trio `[exact]` | 2 |
+| `OverlaySelfKiss.v : g1_does_not_forbid_selfkiss` | Equivalent: refute “G1 ⇒ ¬self_kiss” on the same figure-8 body. Same 2-axiom footprint `[exact]` | 2 |
 | `OverlaySelfKiss.v : self_kiss_vertex` (+ `consecutive_ring_edges`, `geometry_self_kiss`) | Narrow combinatorial pinch: two non-adjacent ring edges share a vertex `[exact]` | 0 |
 | `OverlaySelfKiss.v : figure8_ring_simple` (+ `figure8_not_injective`, `figure8_right_ccw`, `figure8_left_ccw`, `figure8_valid_polygon`) | Fixture is `ring_simple` (kiss, not a proper cross) and `valid_polygon` as currently stated, yet revisits the origin — injectivity is a separate premise `[exact]` | 2 |
 | `OverlaySelfKiss.v : figure8_open_wedges_disjoint` (+ `figure8_right_open_inhabited`, `figure8_left_open_inhabited`) | Local side-interiors stay disjoint; each open lobe is inhabited `[exact]` | 2 |
