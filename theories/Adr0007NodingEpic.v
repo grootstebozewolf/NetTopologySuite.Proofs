@@ -60,7 +60,8 @@
    discharges right. First cook scope stays chord–chord. Host
    CircGamma stays QEX (CircularCook.v). The 4-axiom sidecar
    CircularCookSplit.v feeds the locked circular Hit into a
-   same-shape split(t) cook; that is not this host module.
+   same-shape split(t) cook; I.7 MintTwo / p- lives there too.
+   That is not this host module. Do not fake CircGamma Discharge.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is

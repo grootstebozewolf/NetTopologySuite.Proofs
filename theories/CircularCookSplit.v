@@ -10,6 +10,9 @@
 
    QED: locked (0,0)/(7,0) r=5 plus-root Hit cooks; leftovers meet at
    p+; leftover γ stays on the parent circle.
+   I.7 / MintTwo: p− is a second Hit, not optional. Allocation across
+   the two radical roots is MintTwo (hen+, hen−). Leftover shared
+   endpoint is Hit incidence, not a kiss.
    QEX: Touch / Empty / Decline allocate no hen (kiss is a fenced
    scope arm — not a CRV-TOUCH kiss decision). Host try_cook_hit still
    declines circular eggs (Adr0007NodingEpic.v :
@@ -24,7 +27,8 @@
      CurveSegment / Exact* / Dart / Hobby / leftover_width.
      Do not fake atan2-free host γ.
 
-   WITNESS topic: overlay · claimId: 0007 · witness: 0007-circ-cook
+   WITNESS topic: overlay · claimId: 0007
+   witness: 0007-circ-cook / 0007-I.7-mint-two
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic via CircularCookHit).
    No Admitted / Axiom / Parameter.
@@ -291,6 +295,245 @@ Proof.
   exact circular_not_first_cook_scope.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* I.7 / MintTwo: p− is a second Hit. Allocation across both radical          *)
+(* roots is MintTwo. Shared leftover endpoint ≠ kiss. Empty / Decline /       *)
+(* Touch still mint nothing. Not a CRV-TOUCH tangency procedure.              *)
+(* -------------------------------------------------------------------------- *)
+
+Definition locked_ti_minus : R := circ_t locked_O1 locked_p_minus.
+Definition locked_tj_minus : R := circ_t locked_O2 locked_p_minus.
+
+Definition cooked_circ_minus : CircCookedPair :=
+  cook_circ_root locked_O1 locked_r locked_O2 locked_r
+    locked_ti_minus locked_tj_minus hen_minus.
+
+Lemma locked_minus_gamma :
+  circ_gamma locked_O1 locked_r locked_ti_minus = locked_p_minus /\
+  circ_gamma locked_O2 locked_r locked_tj_minus = locked_p_minus.
+Proof.
+  unfold locked_ti_minus, locked_tj_minus.
+  destruct locked_hit_minus_on_gamma as [[_ H1] [_ H2]].
+  split; [symmetry; exact H1 | symmetry; exact H2].
+Qed.
+
+Lemma cooked_circ_minus_ok :
+  circ_cooked_ok cooked_circ_minus hen_minus locked_p_minus.
+Proof.
+  unfold circ_cooked_ok, cooked_circ_minus.
+  split; [reflexivity|].
+  unfold circ_cooked_meets, cook_circ_root.
+  cbn [ccp_L1 ccp_R1 ccp_L2 ccp_R2].
+  destruct locked_minus_gamma as [Hp1 Hp2].
+  rewrite !circ_split_left_reparam, !circ_split_right_reparam.
+  replace (1 * locked_ti_minus) with locked_ti_minus by ring.
+  replace (locked_ti_minus + 0 * (1 - locked_ti_minus))
+    with locked_ti_minus by ring.
+  replace (1 * locked_tj_minus) with locked_tj_minus by ring.
+  replace (locked_tj_minus + 0 * (1 - locked_tj_minus))
+    with locked_tj_minus by ring.
+  repeat split; assumption.
+Qed.
+
+Lemma hen_plus_neq_hen_minus : hen_plus <> hen_minus.
+Proof.
+  discriminate.
+Qed.
+
+Lemma locked_radical_a :
+  radical_axis_a locked_O1 locked_O2 locked_r locked_r = 7 / 2.
+Proof.
+  unfold radical_axis_a, locked_r.
+  rewrite locked_centers_dist. field.
+Qed.
+
+Lemma locked_radical_ux : radical_axis_ux locked_O1 locked_O2 = 1.
+Proof.
+  unfold radical_axis_ux. rewrite locked_centers_dist.
+  unfold locked_O1, locked_O2. cbn [px py]. field.
+Qed.
+
+Lemma locked_radical_uy : radical_axis_uy locked_O1 locked_O2 = 0.
+Proof.
+  unfold radical_axis_uy. rewrite locked_centers_dist.
+  unfold locked_O1, locked_O2. cbn [px py]. field.
+Qed.
+
+Lemma locked_h2 :
+  locked_r * locked_r
+    - radical_axis_a locked_O1 locked_O2 locked_r locked_r
+      * radical_axis_a locked_O1 locked_O2 locked_r locked_r
+  = 51 / 4.
+Proof.
+  rewrite locked_radical_a. unfold locked_r. field.
+Qed.
+
+Lemma locked_h_pos :
+  0 < radical_axis_h locked_O1 locked_O2 locked_r locked_r.
+Proof.
+  unfold radical_axis_h. rewrite locked_h2. apply sqrt_lt_R0. lra.
+Qed.
+
+Lemma locked_p_plus_coords :
+  px locked_p_plus = 7 / 2 /\
+  py locked_p_plus = radical_axis_h locked_O1 locked_O2 locked_r locked_r.
+Proof.
+  unfold locked_p_plus, radical_point_plus.
+  rewrite locked_radical_a, locked_radical_ux, locked_radical_uy.
+  unfold locked_O1. cbn [px py]. split; ring.
+Qed.
+
+Lemma locked_p_minus_coords :
+  px locked_p_minus = 7 / 2 /\
+  py locked_p_minus = - radical_axis_h locked_O1 locked_O2 locked_r locked_r.
+Proof.
+  unfold locked_p_minus, radical_point_minus.
+  rewrite locked_radical_a, locked_radical_ux, locked_radical_uy.
+  unfold locked_O1. cbn [px py]. split; ring.
+Qed.
+
+Lemma locked_p_plus_neq_minus : locked_p_plus <> locked_p_minus.
+Proof.
+  intro Heq.
+  apply (f_equal py) in Heq.
+  destruct locked_p_plus_coords as [_ Hp].
+  destruct locked_p_minus_coords as [_ Hm].
+  rewrite Hp, Hm in Heq.
+  pose proof locked_h_pos as Hh.
+  lra.
+Qed.
+
+Record CircCookedMintTwo : Type := mkCircCookedMintTwo {
+  ccm_id : CookIdDecision;
+  ccm_plus : CircCookedPair;
+  ccm_minus : CircCookedPair
+}.
+
+Definition cook_circ_hit_mint_two
+  (O1 : Point) (r1 : R) (O2 : Point) (r2 : R)
+  (ti_p tj_p : R) (h_p : Hen)
+  (ti_m tj_m : R) (h_m : Hen) : CircCookedMintTwo :=
+  mkCircCookedMintTwo
+    (MintTwo h_p h_m)
+    (cook_circ_root O1 r1 O2 r2 ti_p tj_p h_p)
+    (cook_circ_root O1 r1 O2 r2 ti_m tj_m h_m).
+
+Definition try_cook_circ_hit_mint_two
+  (O1 : Point) (r1 : R) (O2 : Point) (r2 : R)
+  (o : ICircG) : option CircCookedMintTwo :=
+  match o with
+  | ICircGHit hp _ tip tjp hm _ tim tjm =>
+      Some (cook_circ_hit_mint_two O1 r1 O2 r2 tip tjp hp tim tjm hm)
+  | ICircGEmpty => None
+  | ICircGTouch _ _ _ _ => None
+  | ICircGDecline => None
+  end.
+
+Definition circ_mint_two_ok
+  (cm : CircCookedMintTwo) (hp hm : Hen) (pp pm : Point) : Prop :=
+  ccm_id cm = MintTwo hp hm
+  /\ apply_id_decision (ccm_id cm) = (hp, hm)
+  /\ fst (apply_id_decision (ccm_id cm)) <> snd (apply_id_decision (ccm_id cm))
+  /\ circ_cooked_ok (ccm_plus cm) hp pp
+  /\ circ_cooked_ok (ccm_minus cm) hm pm
+  /\ pp <> pm.
+
+Definition cooked_circ_mint_two : CircCookedMintTwo :=
+  cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+    locked_ti_plus locked_tj_plus hen_plus
+    locked_ti_minus locked_tj_minus hen_minus.
+
+Lemma cooked_circ_mint_two_ok :
+  circ_mint_two_ok cooked_circ_mint_two
+    hen_plus hen_minus locked_p_plus locked_p_minus.
+Proof.
+  unfold circ_mint_two_ok, cooked_circ_mint_two, cook_circ_hit_mint_two,
+         apply_id_decision.
+  cbn [ccm_id ccm_plus ccm_minus].
+  split; [reflexivity|].
+  split; [reflexivity|].
+  split; [exact hen_plus_neq_hen_minus|].
+  split; [exact cooked_circ_plus_ok|].
+  split; [exact cooked_circ_minus_ok|].
+  exact locked_p_plus_neq_minus.
+Qed.
+
+Lemma cooked_circ_mint_two_try :
+  try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+    (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two.
+Proof.
+  unfold try_cook_circ_hit_mint_two, cooked_circ_mint_two,
+         cook_circ_hit_mint_two, locked_ti_plus, locked_tj_plus,
+         locked_ti_minus, locked_tj_minus.
+  rewrite locked_I_circles_gamma_hit.
+  reflexivity.
+Qed.
+
+Lemma try_cook_circ_hit_mint_two_empty_none :
+  forall O1 r1 O2 r2,
+    try_cook_circ_hit_mint_two O1 r1 O2 r2 ICircGEmpty = None.
+Proof.
+  intros. reflexivity.
+Qed.
+
+Lemma try_cook_circ_hit_mint_two_decline_none :
+  forall O1 r1 O2 r2,
+    try_cook_circ_hit_mint_two O1 r1 O2 r2 ICircGDecline = None.
+Proof.
+  intros. reflexivity.
+Qed.
+
+Lemma try_cook_circ_hit_mint_two_touch_none :
+  forall O1 r1 O2 r2 h p ti tj,
+    try_cook_circ_hit_mint_two O1 r1 O2 r2 (ICircGTouch h p ti tj) = None.
+Proof.
+  intros. reflexivity.
+Qed.
+
+Lemma locked_circ_mint_two_empty_none :
+  try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+    (I_circles_gamma 0 0 5 20 0 5) = None.
+Proof.
+  unfold try_cook_circ_hit_mint_two.
+  rewrite locked_I_circles_gamma_empty.
+  reflexivity.
+Qed.
+
+Lemma locked_circ_mint_two_decline_none :
+  try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+    (I_circles_gamma 0 0 5 0 0 5) = None.
+Proof.
+  unfold try_cook_circ_hit_mint_two.
+  rewrite locked_I_circles_gamma_decline.
+  reflexivity.
+Qed.
+
+Lemma locked_circ_mint_two_touch_none :
+  try_cook_circ_hit_mint_two locked_O1 locked_r kiss_O2 locked_r
+    (I_circles_gamma 0 0 5 10 0 5) = None.
+Proof.
+  unfold try_cook_circ_hit_mint_two.
+  rewrite locked_I_circles_gamma_touch.
+  reflexivity.
+Qed.
+
+(* Leftover join at p* is Hit incidence. Two leftover pieces sharing
+   that endpoint is not a kiss / Touch. Distinct radical roots stay
+   two Hits — not a collapsed tangency. *)
+Lemma leftover_shared_endpoint_not_touch :
+  circ_cooked_meets cooked_circ_plus locked_p_plus
+  /\ circ_cooked_meets cooked_circ_minus locked_p_minus
+  /\ locked_p_plus <> locked_p_minus
+  /\ I_circles_gamma 0 0 5 7 0 5 <>
+       ICircGTouch hen_plus locked_p_plus locked_ti_plus locked_tj_plus.
+Proof.
+  split; [exact (proj2 cooked_circ_plus_ok)|].
+  split; [exact (proj2 cooked_circ_minus_ok)|].
+  split; [exact locked_p_plus_neq_minus|].
+  rewrite locked_I_circles_gamma_hit.
+  discriminate.
+Qed.
+
 (* Host try_cook_hit still declines circular eggs — same cook step. *)
 Lemma host_try_cook_hit_still_none :
   forall p ti tj h,
@@ -376,3 +619,95 @@ Print Assumptions host_try_cook_hit_still_none.
 Print Assumptions ticket_0007_circ_split_qed_or_qex.
 Print Assumptions ticket_0007_circ_cook_step_qed_or_qex.
 Print Assumptions ticket_0007_circ_cook_scope_qed_or_qex.
+
+(* -------------------------------------------------------------------------- *)
+(* I.7 ticket-named QED ∨ QEX stops.                                          *)
+(* -------------------------------------------------------------------------- *)
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_minus_qed_or_qex","title":"Locked circular Hit minus-root leftovers meet at p- after split(t) (QED) or the join fails (QEX); discharged QED; I.7 p- is a second Hit","file":"theories/CircularCookSplit.v","witness":"0007-I.7-mint-two","board":"ADR-0007"} *)
+
+Theorem ticket_0007_circ_minus_qed_or_qex :
+  (circ_leftover_eval (fst (circ_split locked_O1 locked_r locked_ti_minus)) 1
+     = locked_p_minus
+   /\ circ_leftover_eval (snd (circ_split locked_O1 locked_r locked_ti_minus)) 0
+        = locked_p_minus
+   /\ circ_leftover_eval (fst (circ_split locked_O2 locked_r locked_tj_minus)) 1
+        = locked_p_minus
+   /\ circ_leftover_eval (snd (circ_split locked_O2 locked_r locked_tj_minus)) 0
+        = locked_p_minus
+   /\ dist_sq locked_O1 locked_p_minus = locked_r * locked_r)
+  \/
+  circ_gamma locked_O1 locked_r locked_ti_minus <> locked_p_minus.
+Proof.
+  left.
+  destruct (circ_split_join locked_O1 locked_r locked_ti_minus) as [H1 H2].
+  destruct (circ_split_join locked_O2 locked_r locked_tj_minus) as [H3 H4].
+  destruct locked_minus_gamma as [Hp1 Hp2].
+  split; [rewrite H1; exact Hp1|].
+  split; [rewrite H2; exact Hp1|].
+  split; [rewrite H3; exact Hp2|].
+  split; [rewrite H4; exact Hp2|].
+  exact (proj1 (proj2 (proj2 locked_radical_on_circles))).
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_mint_two_qed_or_qex","title":"Locked circular Hit allocates MintTwo across p+ and p- (QED) or try_cook_circ_hit_mint_two declines a Hit (QEX); discharged QED; I.7","file":"theories/CircularCookSplit.v","witness":"0007-I.7-mint-two","board":"ADR-0007"} *)
+
+Theorem ticket_0007_circ_mint_two_qed_or_qex :
+  (try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+     (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
+   /\ circ_mint_two_ok cooked_circ_mint_two
+        hen_plus hen_minus locked_p_plus locked_p_minus
+   /\ circular_gamma_status = CircGammaQEX)
+  \/
+  try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+    (I_circles_gamma 0 0 5 7 0 5) = None.
+Proof.
+  left.
+  split; [exact cooked_circ_mint_two_try|].
+  split; [exact cooked_circ_mint_two_ok|].
+  exact circular_gamma_host_still_qex.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_shared_neq_kiss_qed_or_qex","title":"Leftover shared endpoint is Hit incidence not Touch (QED) or the join is a kiss (QEX); discharged QED; I.7 shared endpoint neq kiss","file":"theories/CircularCookSplit.v","witness":"0007-I.7-mint-two","board":"ADR-0007"} *)
+
+Theorem ticket_0007_circ_shared_neq_kiss_qed_or_qex :
+  (circ_cooked_meets cooked_circ_plus locked_p_plus
+   /\ circ_cooked_meets cooked_circ_minus locked_p_minus
+   /\ locked_p_plus <> locked_p_minus
+   /\ I_circles_gamma 0 0 5 7 0 5 <>
+        ICircGTouch hen_plus locked_p_plus locked_ti_plus locked_tj_plus)
+  \/
+  I_circles_gamma 0 0 5 7 0 5 =
+    ICircGTouch hen_plus locked_p_plus locked_ti_plus locked_tj_plus.
+Proof.
+  left.
+  exact leftover_shared_endpoint_not_touch.
+Qed.
+
+(* Touch / Empty / Decline still allocate no hen under MintTwo (QED)
+   or they mint nothing (QEX). Discharged QEX — same fence as #686. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_mint_two_scope_qed_or_qex","title":"MintTwo Circular Touch/Empty/Decline cook (QED) or allocate no hen (QEX); discharged QEX; I.7 Empty/Decline/Touch mint nothing","file":"theories/CircularCookSplit.v","witness":"0007-I.7-mint-two","board":"ADR-0007"} *)
+
+Theorem ticket_0007_circ_mint_two_scope_qed_or_qex :
+  (forall O1 r1 O2 r2 o, try_cook_circ_hit_mint_two O1 r1 O2 r2 o <> None)
+  \/
+  (try_cook_circ_hit_mint_two locked_O1 locked_r kiss_O2 locked_r
+     (I_circles_gamma 0 0 5 10 0 5) = None
+   /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+        (I_circles_gamma 0 0 5 20 0 5) = None
+   /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+        (I_circles_gamma 0 0 5 0 0 5) = None).
+Proof.
+  right.
+  split; [exact locked_circ_mint_two_touch_none|].
+  split; [exact locked_circ_mint_two_empty_none|].
+  exact locked_circ_mint_two_decline_none.
+Qed.
+
+Print Assumptions cooked_circ_minus_ok.
+Print Assumptions cooked_circ_mint_two_ok.
+Print Assumptions leftover_shared_endpoint_not_touch.
+Print Assumptions ticket_0007_circ_minus_qed_or_qex.
+Print Assumptions ticket_0007_circ_mint_two_qed_or_qex.
+Print Assumptions ticket_0007_circ_shared_neq_kiss_qed_or_qex.
+Print Assumptions ticket_0007_circ_mint_two_scope_qed_or_qex.

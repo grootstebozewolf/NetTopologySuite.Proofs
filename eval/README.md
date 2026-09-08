@@ -156,6 +156,12 @@ circular eggs; CircGamma stays QEX; Touch is a fenced QEX arm):
 `theories/Adr0007NodingEpic.v` (host QEX). 4-axiom atan2 sidecar;
 no micro-kernel twin (atan2 / radical `p*` cone).
 
+Production home for 0007-I.7-mint-two (`p−` is a second Hit;
+allocation across `p+` and `p−` is `MintTwo`; leftover shared
+endpoint ≠ kiss; Empty / Decline / Touch still mint nothing):
+`theories/CircularCookSplit.v`. 4-axiom atan2 sidecar; no
+micro-kernel twin (atan2 / radical `p*` cone).
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

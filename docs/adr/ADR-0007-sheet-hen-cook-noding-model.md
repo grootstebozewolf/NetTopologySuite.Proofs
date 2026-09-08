@@ -266,6 +266,9 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | Host circular IHit → `try_cook_hit` | `Adr0007NodingEpic.v : ticket_0007_circ_host_cook_qed_or_qex` | **QEX** — circular eggs stay `MkOutOfScope`; host cook declines even on IHit | `SheetHenCook.v : try_cook_hit_circular_hit_none`, `SheetHenCook.v : circular_egg_not_first_cook_scope` |
 | — | Circular Hit feeds sidecar `split(t)` | `CircularCookSplit.v : ticket_0007_circ_cook_step_qed_or_qex` | **QED** — locked plus-root leftovers meet at `p+`; CircGamma stays QEX | `CircularCookSplit.v : cooked_circ_plus_try`, `CircularCookSplit.v : cooked_circ_plus_ok` |
 | — | Circular Touch / Empty / Decline cook | `CircularCookSplit.v : ticket_0007_circ_cook_scope_qed_or_qex` | **QEX** — kiss is a fenced scope arm, not a CRV-TOUCH procedure | `CircularCookSplit.v : locked_circ_touch_none` |
+| — | I.7 MintTwo / `p−` is a second Hit | `CircularCookSplit.v : ticket_0007_circ_mint_two_qed_or_qex` | **QED** — allocation across both radical roots is `MintTwo`; leftovers meet at `p−` | `CircularCookSplit.v : cooked_circ_mint_two_try`, `CircularCookSplit.v : cooked_circ_minus_ok` |
+| — | I.7 leftover shared endpoint ≠ kiss | `CircularCookSplit.v : ticket_0007_circ_shared_neq_kiss_qed_or_qex` | **QED** — leftover join is Hit incidence, not Touch | `CircularCookSplit.v : leftover_shared_endpoint_not_touch` |
+| — | I.7 MintTwo Empty / Decline / Touch | `CircularCookSplit.v : ticket_0007_circ_mint_two_scope_qed_or_qex` | **QEX** — still allocate no hen | `CircularCookSplit.v : locked_circ_mint_two_touch_none` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -488,3 +491,24 @@ QEX arm, not a CRV-TOUCH kiss decision. Not a remint of
 | `CircularCookSplit.v : ticket_0007_circ_cook_scope_qed_or_qex` | **QEX** — Touch / Empty / Decline allocate no hen | `CircularCookSplit.v : locked_circ_touch_none` |
 
 Witness: `0007-circ-cook`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.7 MintTwo / p− (2026-09-08)
+
+#686 cooked the plus-root. Both radical roots are Hits: `p−` is a
+second Hit, not optional. Allocation across `p+` and `p−` is
+`MintTwo` (`hen_plus`, `hen_minus`). Leftover pieces that share the
+split endpoint are Hit incidence, not a kiss. Empty / Decline /
+Touch still mint nothing (same QEX fence as #686). Does not pick
+among the three CRV-TOUCH tangency procedures (exact-Q / identity /
+ulp). Four fences: `I_circles_z` ≠ `I_circles_gamma` ≠ sidecar cook
+≠ glossary `𝓘`. Host CircGamma stays QEX. Not first cook scope.
+Not a noder. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookSplit.v : ticket_0007_circ_minus_qed_or_qex` | **QED** — locked minus-root leftovers meet at `p−` | `CircularCookSplit.v : cooked_circ_minus_ok`, `CircularCookHit.v : locked_hit_minus_on_gamma` |
+| `CircularCookSplit.v : ticket_0007_circ_mint_two_qed_or_qex` | **QED** — Hit allocates `MintTwo`; both roots cook; CircGamma stays QEX | `CircularCookSplit.v : cooked_circ_mint_two_try`, `CircularCookSplit.v : cooked_circ_mint_two_ok` |
+| `CircularCookSplit.v : ticket_0007_circ_shared_neq_kiss_qed_or_qex` | **QED** — leftover shared endpoint is Hit incidence, not Touch | `CircularCookSplit.v : leftover_shared_endpoint_not_touch` |
+| `CircularCookSplit.v : ticket_0007_circ_mint_two_scope_qed_or_qex` | **QEX** — Empty / Decline / Touch still allocate no hen | `CircularCookSplit.v : locked_circ_mint_two_touch_none` |
+
+Witness: `0007-I.7-mint-two`. Status stays **Accepted**. Host CircGamma stays QEX.
