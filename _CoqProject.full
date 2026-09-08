@@ -516,6 +516,11 @@ theories/RelateBoundary.v
 # five structural lemmas.  Self-contained: imports Reals, Lra, List, and
 # the corpus's Distance.  No Admitted; no Classical_Prop.classic.
 theories/Overlay.v
+# G1 ⊭ ¬self-kiss (one-body anti-collapse sibling of OverlayTouchRow).
+# Figure-8 / bowtie witness: two CCW triangles glued at the origin.
+# Combinatorial self_kiss_vertex Qed; CP/Jordan lift is named QEX.
+# Overlay + Distance + Orientation only.  No CircGamma.  No Admitted.
+theories/OverlaySelfKiss.v
 
 # Issue #425 subtask 425-a — GREEN+REFACTOR: polygonal coverage gap/overlap
 # cleaner validity on the rational two-cell overlap witness (classical reals).
