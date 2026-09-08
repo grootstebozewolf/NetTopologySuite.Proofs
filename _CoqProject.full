@@ -2674,11 +2674,12 @@ theories/ArcSpanAtan2.v
 # No Admitted.
 theories/ArcArcQuartic.v
 # Issue #64 ask #5b / N-AA: coordinate certificate (3-axiom).
-# Affine circle–circle resultant (`circle_circle_res_x` / `_y`); radical-line
-# points are roots under `circles_properly_intersect`.  Classic-free.
+# Affine circle–circle resultant (`circle_circle_res_x` / `_y`); constructor
+# ⇒ resultant root under `circles_properly_intersect` (not the converse;
+# not a Bézout/degree proof).  Classic-free.
 # Landscaping: names coords a later cook would write; does not implement
 # 𝓘 or mint hens.  Locked-fixture witness x and both y.  No Admitted.
-theories/ArcArcIsolatedQuartic.v
+theories/CircleCircleResultant.v
 # Slice 7 / formal soundness of oracle/driver.ml:circumcentre_q.  Raw-coordinate
 # counterpart of arc_center_equidistant (ArcChordApprox) and
 # inCircle_R_zero_of_equidistant (ArcArcCircles): proves the circumcenter formula

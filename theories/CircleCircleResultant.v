@@ -1,8 +1,12 @@
 (* ============================================================================
-   NetTopologySuite.Proofs.ArcArcIsolatedQuartic
+   NetTopologySuite.Proofs.CircleCircleResultant
    ----------------------------------------------------------------------------
-   Issue #64 ask #5b / N-AA — coordinate certificate: the named
-   radical-line points are roots of the affine circle–circle resultant.
+   Issue #64 ask #5b / N-AA — coordinate certificate: constructor ⇒
+   resultant root.  Under `circles_properly_intersect`, the named
+   radical-line points (`radical_point_plus` / `_minus`) are roots of
+   the affine circle–circle resultants.  This is not the converse
+   (resultant vanishing does not identify these radical coordinates),
+   and not a formal degree / Bézout / homogenisation proof.
 
    Landscaping, not revolutionary: this names coordinates a later
    extracted 𝓘 / cook would write if it existed.  It does not
@@ -21,18 +25,19 @@
                                  polynomials (affine elimination).
      circle_circle_res_y     :=  Sylvester Res_x (symmetric).
 
-   Bézout counts 4 intersections of two conics (2 at the circular
-   points at infinity); the affine certificate is degree ≤ 2.
-   `ArcArcQuartic.v` stays the 4-axiom atan2/Vieta discharge; this
-   file does not Require it.
+   Informal Bézout remark (not proved here): two conics meet in 4
+   points, 2 at the circular points at infinity; the affine
+   certificate is degree ≤ 2.  `ArcArcQuartic.v` stays the 4-axiom
+   atan2/Vieta discharge; this file does not Require it.
 
-   HEADLINE (one named Year-1 guard):
+   HEADLINE (constructor ⇒ resultant root; one named Year-1 guard):
      `radical_points_satisfy_circle_circle_res`
      — both named radical-line x- and y-coordinates are roots of the
        corresponding affine resultant.
 
    Supporting (hypothesis-free):
-     `circle_circle_res_vanishes_on_common_zeros`.
+     `circle_circle_res_vanishes_on_common_zeros` and
+     `circle_circle_res_y_vanishes_on_common_zeros`.
 
    WITNESS topic: core · claimId: 64-naa-res · witness: locked-7-2
    lane: proofs
@@ -106,14 +111,14 @@ Definition sylvester_res_monic_quad (b1 c1 b2 c2 : R) : R :=
   let dc := c1 - c2 in
   dc * dc - db * (c1 * b2 - c2 * b1).
 
-(* Affine Res_y of the two circle equations.  Bézout counts 4 (2 at
-   infinity); this certificate is degree ≤ 2. *)
+(* Affine Res_y of the two circle equations.  Informal Bézout remark
+   (not a degree proof): counts 4 (2 at infinity); affine cert ≤ 2. *)
 Definition circle_circle_res_x (O1 O2 : Point) (r1 r2 x : R) : R :=
   sylvester_res_monic_quad
     (circle_y_lin O1) (circle_y_const O1 r1 x)
     (circle_y_lin O2) (circle_y_const O2 r2 x).
 
-(* Affine Res_x of the two circle equations.  Same Bézout remark. *)
+(* Affine Res_x of the two circle equations.  Same informal remark. *)
 Definition circle_circle_res_y (O1 O2 : Point) (r1 r2 y : R) : R :=
   sylvester_res_monic_quad
     (circle_x_lin O1) (circle_x_const O1 r1 y)
@@ -126,7 +131,7 @@ Definition circle_circle_res_y (O1 O2 : Point) (r1 r2 y : R) : R :=
 (* Nodes (7/2, ±√(51/4)).  x-only was too thin: a wrong res_y still closed. *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"64-naa-res","topic":"core","lemma":"radical_points_satisfy_circle_circle_res","title":"Radical-line intersection coordinates are roots of the affine circle-circle resultant","file":"theories/ArcArcIsolatedQuartic.v","witness":"locked-7-2","board":"#64"} *)
+(* WITNESS {"claimId":"64-naa-res","topic":"core","lemma":"radical_points_satisfy_circle_circle_res","title":"Radical-line intersection coordinates are roots of the affine circle-circle resultant","file":"theories/CircleCircleResultant.v","witness":"locked-7-2","board":"#64"} *)
 
 Example locked_fixture_res_x :
   circle_circle_res_x (mkPoint 0 0) (mkPoint 7 0) 5 5 (7 / 2) = 0.
@@ -230,7 +235,8 @@ Definition circles_properly_intersect (O1 O2 : Point) (r1 r2 : R) : Prop :=
   Rabs (r1 - r2) < dist O1 O2 /\
   dist O1 O2 < r1 + r2.
 
-(* Year-1 guard: coincident centres are not a proper pair (dist = 0). *)
+(* Year-1 guard, unused by headline: coincident centres are not a
+   proper pair (dist = 0). *)
 Lemma coincident_centres_not_proper :
   forall (O1 O2 : Point) (r1 r2 : R),
     dist O1 O2 = 0 ->

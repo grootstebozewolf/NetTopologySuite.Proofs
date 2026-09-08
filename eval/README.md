@@ -144,6 +144,11 @@ locked Hit carries constructed `(h*, p*, tᵢ, tⱼ)` with `γ(t)=p*`;
 CircGamma on CircularArc stays QEX): `theories/CircularCookHit.v`.
 4-axiom atan2 lane; no micro-kernel twin (radical `p*` + atan2 cone).
 
+Production home for 64-naa-res (constructor ⇒ affine circle–circle
+resultant root under `circles_properly_intersect`; not the converse
+and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.
+3-axiom; no micro-kernel twin.
+
 Production home for 9004-d (Green/Qed: the cell pruning bound behind
 Polycenter / JTS Cell.getMaxDistance — an empty radius achievable at any
 point of a square cell of centre c, half-side h is at most
