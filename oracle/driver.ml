@@ -1553,16 +1553,37 @@ let run_arc_arc_xy () =
           end
         end
 
-(* ----- I_CIRCULAR (claimId 64-i-circular).
+(* ----- I_CIRCULAR (claimId 64-circ-z-partition).
    ---------------------------------------------------------------------------
    Extracted CircularCookZ.I_circles_z: integer circle–circle discriminant.
-   Input: two lines `o1x o1y r1` / `o2x o2y r2`.
+   Input: two lines of integer (Z / BigZ) tokens `o1x o1y r1` / `o2x o2y r2`.
+   No float parse, no Q scale. Non-integer tokens → NAN.
    Output: HIT <h+> <h-> | EMPTY | TOUCH <h> | DECLINE | NAN.
    Hens are birth certificates (0/1). No p*. Not glossary 𝓘. *)
-let parse_centre_radius line =
+let integer_token s =
+  let n = String.length s in
+  if n = 0 then false
+  else
+    let start = if s.[0] = '-' then 1 else 0 in
+    start < n &&
+    (let rec loop i =
+       if i = n then true
+       else
+         let c = s.[i] in
+         '0' <= c && c <= '9' && loop (i + 1)
+     in loop start)
+
+let parse_z_token s =
+  if integer_token s then Some (BigZ.of_string s) else None
+
+let parse_centre_radius_z line =
   match String.split_on_char ' ' (String.trim line) with
-  | [x; y; r] -> (float_of_string x, float_of_string y, float_of_string r)
-  | _ -> failwith (Printf.sprintf "oracle: bad centre-radius line: %s" line)
+  | [x; y; r] ->
+      begin match parse_z_token x, parse_z_token y, parse_z_token r with
+      | Some x, Some y, Some r -> Some (x, y, r)
+      | _ -> None
+      end
+  | _ -> None
 
 let rec coq_pos_of_bigz (z : BigZ.t) : positive =
   if BigZ.equal z BigZ.one then XH
@@ -1581,34 +1602,22 @@ let rec int_of_coq_nat = function
   | O -> 0
   | S n -> 1 + int_of_coq_nat n
 
-let scale_q_to_z (qs : Q.t list) : BigZ.t list =
-  let dens = List.map Q.den qs in
-  let lcm = List.fold_left BigZ.lcm BigZ.one dens in
-  List.map (fun q -> BigZ.div (BigZ.mul (Q.num q) lcm) (Q.den q)) qs
-
 let run_i_circular () =
-  let (o1x, o1y, r1) = parse_centre_radius (input_line stdin) in
-  let (o2x, o2y, r2) = parse_centre_radius (input_line stdin) in
-  if not (finite_float o1x && finite_float o1y && finite_float r1 &&
-          finite_float o2x && finite_float o2y && finite_float r2)
-  then print_endline "NAN"
-  else
-    match scale_q_to_z
-            [Q.of_float o1x; Q.of_float o1y; Q.of_float r1;
-             Q.of_float o2x; Q.of_float o2y; Q.of_float r2] with
-    | [z1x; z1y; zr1; z2x; z2y; zr2] ->
-        begin match i_circles_z
-                      (coq_z_of_bigz z1x) (coq_z_of_bigz z1y) (coq_z_of_bigz zr1)
-                      (coq_z_of_bigz z2x) (coq_z_of_bigz z2y) (coq_z_of_bigz zr2)
-        with
-        | IZHit (hp, hm) ->
-            Printf.printf "HIT %d %d\n" (int_of_coq_nat hp) (int_of_coq_nat hm)
-        | IZEmpty -> print_endline "EMPTY"
-        | IZTouch h ->
-            Printf.printf "TOUCH %d\n" (int_of_coq_nat h)
-        | IZDecline -> print_endline "DECLINE"
-        end
-    | _ -> print_endline "NAN"
+  match parse_centre_radius_z (input_line stdin),
+        parse_centre_radius_z (input_line stdin) with
+  | Some (o1x, o1y, r1), Some (o2x, o2y, r2) ->
+      begin match i_circles_z
+                    (coq_z_of_bigz o1x) (coq_z_of_bigz o1y) (coq_z_of_bigz r1)
+                    (coq_z_of_bigz o2x) (coq_z_of_bigz o2y) (coq_z_of_bigz r2)
+      with
+      | IZHit (hp, hm) ->
+          Printf.printf "HIT %d %d\n" (int_of_coq_nat hp) (int_of_coq_nat hm)
+      | IZEmpty -> print_endline "EMPTY"
+      | IZTouch h ->
+          Printf.printf "TOUCH %d\n" (int_of_coq_nat h)
+      | IZDecline -> print_endline "DECLINE"
+      end
+  | _ -> print_endline "NAN"
 
 (* ----- DISC_OVERLAY (OV-DISC / OverlayNGCurve two-disc closed form).
    ---------------------------------------------------------------------------

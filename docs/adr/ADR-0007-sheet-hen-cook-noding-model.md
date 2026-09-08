@@ -411,5 +411,5 @@ Do not flip the Status line except by this decision. Status stays
 
 `CircularCookZ.v : I_circles_z` classifies two integer circles
 (Hit / Empty / Touch / Decline) and mints named-root hens; oracle
-`I_CIRCULAR`. QEX: no γ/[0,1], so this is not glossary 𝓘. Does not
-reopen Status.
+`I_CIRCULAR` takes integer tokens. Hit is the open squared interval;
+internal kiss is Touch. Does not reopen Status.
