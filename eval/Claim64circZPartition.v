@@ -1,42 +1,19 @@
 (* ============================================================================
-   NetTopologySuite.Proofs.CircularCookZ
+   nts-eval micro unit — claimId 64-circ-z-partition
    ----------------------------------------------------------------------------
-   Integer circle–circle discriminant classifier + named-root hen mint.
-
-   I_circles_z is an extractable seam, not glossary 𝓘 (that is Hit (p*, tᵢ, tⱼ);
-   there is no γ / [0,1] here). Hens 0/1 are birth certificates of the named
-   radical roots, not a proved identity.
-
-       I_circles_z : Hit | Empty | Touch | Decline
-
-   Touch is tangent contact (one hen). Decline is degenerate input
-   (r ≤ 0 or coincident centres), not the egg/arc case.
-
-   WITNESS topic: core · claimId: 64-circ-z-partition · witness: 64-circ-z-internal-kiss
-   0-axiom (Z only). No Admitted / Axiom / Parameter.
-
-   Author: NetTopologySuite.Proofs contributors
-   License: BSD-3-Clause (see LICENSE)
+   Twin of CircularCookZ partition: Hit ↔ |r1−r2|² < d² < (r1+r2)²
+   (positive radii) plus complementary Empty / Touch / Decline, and the
+   locked internal-kiss Touch witness.
    ========================================================================== *)
+
+(* WITNESS {"claimId":"64-circ-z-partition","topic":"core","lemma":"I_circles_z_hit_iff","title":"Hit iff positive radii and |r1-r2|^2 < d^2 < (r1+r2)^2"} *)
 
 From Stdlib Require Import ZArith Bool Lia.
 Open Scope Z_scope.
 
 Definition HenZ : Type := nat.
-
-(* Birth certificates: plus/minus radical roots. *)
 Definition hen_plus : HenZ := 0%nat.
 Definition hen_minus : HenZ := 1%nat.
-
-Inductive RadicalRoot : Type :=
-| RootPlus
-| RootMinus.
-
-Definition hen_of_root (r : RadicalRoot) : HenZ :=
-  match r with
-  | RootPlus => hen_plus
-  | RootMinus => hen_minus
-  end.
 
 Inductive IZResult : Type :=
 | IZHit (h_plus h_minus : HenZ)
@@ -47,15 +24,12 @@ Inductive IZResult : Type :=
 Definition circ_d2 (o1x o1y o2x o2y : Z) : Z :=
   (o2x - o1x) * (o2x - o1x) + (o2y - o1y) * (o2y - o1y).
 
-Definition mint_pair : IZResult := IZHit hen_plus hen_minus.
+Definition circ_sum2 (r1 r2 : Z) : Z := (r1 + r2) * (r1 + r2).
+Definition circ_diff2 (r1 r2 : Z) : Z := (r1 - r2) * (r1 - r2).
 
+Definition mint_pair : IZResult := IZHit hen_plus hen_minus.
 Definition mint_touch : IZResult := IZTouch hen_plus.
 
-(* Squared tests, no sqrt.
-   Decline: r ≤ 0 or coincident centres.
-   Touch:   kiss (d = r1±r2).
-   Empty:   disjoint circumcircles.
-   Hit:     proper intersection; mint plus/minus hens. *)
 Definition I_circles_z (o1x o1y r1 o2x o2y r2 : Z) : IZResult :=
   if (r1 <=? 0) || (r2 <=? 0) then IZDecline
   else if circ_d2 o1x o1y o2x o2y =? 0 then IZDecline
@@ -66,61 +40,6 @@ Definition I_circles_z (o1x o1y r1 o2x o2y r2 : Z) : IZResult :=
           || (circ_d2 o1x o1y o2x o2y <? (r1 - r2) * (r1 - r2))
        then IZEmpty
   else mint_pair.
-
-(* WITNESS {"claimId":"64-i-circular","topic":"core","lemma":"locked_I_circles_z_hit","title":"Integer circle-circle discriminant: locked (0,0)/(7,0) r=5 is Hit hens 0 and 1","file":"theories/CircularCookZ.v","witness":"64-i-circular-locked","board":"ADR-0007"} *)
-
-Lemma locked_I_circles_z_hit :
-  I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus.
-Proof.
-  vm_compute. reflexivity.
-Qed.
-
-Lemma locked_disjoint_is_empty :
-  I_circles_z 0 0 5 20 0 5 = IZEmpty.
-Proof.
-  vm_compute. reflexivity.
-Qed.
-
-Lemma locked_coincident_is_decline :
-  I_circles_z 0 0 5 0 0 5 = IZDecline.
-Proof.
-  vm_compute. reflexivity.
-Qed.
-
-Lemma locked_zero_radius_is_decline :
-  I_circles_z 0 0 0 7 0 5 = IZDecline.
-Proof.
-  vm_compute. reflexivity.
-Qed.
-
-Lemma locked_external_kiss_is_touch :
-  I_circles_z 0 0 5 10 0 5 = IZTouch hen_plus.
-Proof.
-  vm_compute. reflexivity.
-Qed.
-
-Lemma IZEmpty_neq_IZDecline : IZEmpty <> IZDecline.
-Proof.
-  discriminate.
-Qed.
-
-Lemma IZTouch_neq_IZDecline : forall h, IZTouch h <> IZDecline.
-Proof.
-  intros. discriminate.
-Qed.
-
-(* -------------------------------------------------------------------------- *)
-(* Partition: constructor ↔ the same squared tests the classifier runs.        *)
-(* Hit is the open interval |r1−r2|² < d² < (r1+r2)² on positive radii.       *)
-(* Decline owns r≤0 and coincident centres (d²=0), so those are not Empty.    *)
-(* -------------------------------------------------------------------------- *)
-
-Definition circ_sum2 (r1 r2 : Z) : Z := (r1 + r2) * (r1 + r2).
-Definition circ_diff2 (r1 r2 : Z) : Z := (r1 - r2) * (r1 - r2).
-
-(* |r1−r2|² = (r1−r2)²; circ_diff2 is the squared test the classifier runs. *)
-
-(* WITNESS {"claimId":"64-circ-z-partition","topic":"core","lemma":"I_circles_z_hit_iff","title":"Hit iff positive radii and |r1-r2|^2 < d^2 < (r1+r2)^2","file":"theories/CircularCookZ.v","witness":"64-circ-z-internal-kiss","board":"ADR-0007"} *)
 
 Theorem I_circles_z_hit_iff :
   forall o1x o1y r1 o2x o2y r2,
@@ -287,7 +206,6 @@ Proof.
         -- split; [discriminate|]. intros [H|[H|H]]; lia.
 Qed.
 
-(* Internal kiss: smaller circle inside the larger, d = |r1−r2|. Touch. *)
 Lemma locked_internal_kiss_is_touch :
   I_circles_z 0 0 5 3 0 2 = IZTouch hen_plus.
 Proof.
@@ -295,10 +213,6 @@ Proof.
   unfold circ_d2, circ_sum2, circ_diff2. lia.
 Qed.
 
-Print Assumptions locked_I_circles_z_hit.
-Print Assumptions locked_external_kiss_is_touch.
-Print Assumptions IZEmpty_neq_IZDecline.
-Print Assumptions IZTouch_neq_IZDecline.
 Print Assumptions I_circles_z_hit_iff.
 Print Assumptions I_circles_z_touch_iff.
 Print Assumptions I_circles_z_empty_iff.

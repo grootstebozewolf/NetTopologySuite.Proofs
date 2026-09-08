@@ -104,6 +104,16 @@ Proof.
   unfold zpt. reflexivity.
 Qed.
 
+Lemma locked_I_circles_internal_kiss :
+  I_circles_on_z_sheet 0 0 5 3 0 2 =
+  ICircTouch hen_plus
+    (radical_point_plus (mkPoint 0 0) (mkPoint 3 0) 5 2).
+Proof.
+  unfold I_circles_on_z_sheet.
+  rewrite locked_internal_kiss_is_touch.
+  unfold zpt. reflexivity.
+Qed.
+
 Lemma ICircEmpty_neq_ICircDecline : ICircEmpty <> ICircDecline.
 Proof.
   discriminate.
@@ -113,4 +123,5 @@ Print Assumptions circular_gamma_is_qex.
 Print Assumptions circular_not_first_cook_scope.
 Print Assumptions locked_I_circles_on_z_sheet_hit.
 Print Assumptions locked_I_circles_touch.
+Print Assumptions locked_I_circles_internal_kiss.
 Print Assumptions ICircEmpty_neq_ICircDecline.
