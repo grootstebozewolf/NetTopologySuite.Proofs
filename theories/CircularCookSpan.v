@@ -30,9 +30,9 @@
    ========================================================================== *)
 
 From Stdlib Require Import ZArith Reals Lra.
-From NTS.Proofs Require Import Distance CurveGeometry ArcOrient ArcIntersect
-  ArcOffsetThreePoint ArcArcCircles Atan2 AngleBetween ArcSpanAtan2
-  CircularCook CircularCookHit.
+From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry ArcOrient
+  ArcIntersect ArcOffsetThreePoint ArcArcCircles Atan2 AngleBetween
+  ArcSpanAtan2 CircularCook CircularCookHit.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -105,7 +105,7 @@ Proof.
   pose proof (atan2_on_circle (px A - px O) (py A - py O) Hne) as [Hc Hs].
   pose proof (circ_radius_sqrt O A r Hr HA) as Hsr.
   rewrite Hsr in Hc, Hs.
-  unfold circ_angle. split; [exact Hc | exact Hs].
+  unfold circ_angle. split; [symmetry; exact Hc | symmetry; exact Hs].
 Qed.
 
 Lemma rotate_dot_cross_x : forall sx sy ex ey,
@@ -175,17 +175,13 @@ Proof.
   rewrite <- Hth in Hcos, Hsin.
   assert (Hrne : r <> 0) by lra.
   assert (Hdot : sx * ex + sy * ey = r * r * cos theta).
-  { apply (Rmult_eq_reg_r (/ (r * r))); [ | apply Rinv_neq_0_compat; nra ].
-    field_simplify; [ | nra ].
-    unfold Rdiv in Hcos. rewrite Hcos. field; nra. }
+  { rewrite Hcos. field. nra. }
   assert (Hcross : sx * ey - sy * ex = r * r * sin theta).
-  { apply (Rmult_eq_reg_r (/ (r * r))); [ | apply Rinv_neq_0_compat; nra ].
-    field_simplify; [ | nra ].
-    unfold Rdiv in Hsin. rewrite Hsin. field; nra. }
+  { rewrite Hsin. field. nra. }
   assert (Huu : sx * sx + sy * sy = r * r).
   { unfold dist_sq in HA. unfold sx, sy. lra. }
   split.
-  - rewrite cos_plus, Hsx, Hsy.
+  - rewrite cos_plus.
     replace (r * (cos th0 * cos theta - sin th0 * sin theta))
       with (sx * cos theta - sy * sin theta) by (rewrite Hsx, Hsy; field; exact Hrne).
     apply (Rmult_eq_reg_r (r * r)); [ | nra ].
@@ -193,7 +189,7 @@ Proof.
       with (sx * (r * r * cos theta) - sy * (r * r * sin theta)) by ring.
     rewrite <- Hdot, <- Hcross, rotate_dot_cross_x, Huu.
     unfold ex. ring.
-  - rewrite sin_plus, Hsx, Hsy.
+  - rewrite sin_plus.
     replace (r * (sin th0 * cos theta + cos th0 * sin theta))
       with (sy * cos theta + sx * sin theta) by (rewrite Hsx, Hsy; field; exact Hrne).
     apply (Rmult_eq_reg_r (r * r)); [ | nra ].
@@ -227,26 +223,28 @@ Proof.
   intros a b Ha Hb Hcos Hsin.
   pose proof PI_RGT_0 as HPI.
   assert (Hcd : cos (a - b) = 1).
-  { rewrite cos_minus, Hcos, Hsin. rewrite <- sin2_cos2. unfold Rsqr. ring. }
+  { rewrite cos_minus, Hcos, Hsin.
+    replace (cos b * cos b + sin b * sin b)
+      with (Rsqr (sin b) + Rsqr (cos b)) by (unfold Rsqr; ring).
+    apply sin2_cos2. }
   assert (Hhalf : 1 - cos (a - b) = 2 * Rsqr (sin ((a - b) / 2))).
   { replace (a - b) with (2 * ((a - b) / 2)) at 1 by lra.
     rewrite cos_2a_sin. unfold Rsqr. ring. }
   rewrite Hcd in Hhalf.
   assert (Hs0 : sin ((a - b) / 2) = 0).
   { unfold Rsqr in Hhalf.
-    assert (sin ((a - b) / 2) * sin ((a - b) / 2) = 0) by lra.
-    apply Rmult_integral in H. destruct H; [exact H | exact H]. }
-  destruct (sin_eq_0_0 _ Hs0) as [k Hk].
-  assert (Hdiff : a - b = IZR (2 * k)%Z * PI).
-  { replace (a - b) with (2 * ((a - b) / 2)) by lra.
-    rewrite Hk, mult_IZR. ring. }
-  assert (Hk0 : k = 0%Z).
-  { destruct (Z.eq_dec k 0%Z) as [E|E]; [exact E|].
-    exfalso.
-    assert (Habs : (1 <= Z.abs (2 * k))%Z) by lia.
-    apply IZR_le in Habs. rewrite abs_IZR, <- Hdiff in Habs.
-    unfold Rabs in Habs. destruct (Rcase_abs (a - b)); lra. }
-  rewrite Hk0, Hdiff, IZR_0. ring.
+    assert (Hsq : sin ((a - b) / 2) * sin ((a - b) / 2) = 0) by lra.
+    apply Rmult_integral in Hsq. destruct Hsq; [exact H | exact H]. }
+  set (th := (a - b) / 2) in *.
+  assert (Hrng : - PI < th < PI) by (unfold th; lra).
+  destruct (Rtotal_order th 0) as [Hlt|[Heq|Hgt]].
+  - exfalso.
+    assert (Hneg : sin th < 0) by (apply sin_lt_0_var; lra).
+    lra.
+  - unfold th in Heq. lra.
+  - exfalso.
+    assert (Hpos : 0 < sin th) by (apply sin_gt_0; lra).
+    lra.
 Qed.
 
 Lemma atan2_sin_cos : forall alpha,
@@ -255,13 +253,13 @@ Lemma atan2_sin_cos : forall alpha,
 Proof.
   intros alpha Hrng.
   assert (Hne : ~ (cos alpha = 0 /\ sin alpha = 0)).
-  { intros [Hc Hs]. pose proof (sin2_cos2 alpha) as H. unfold Rsqr in H. lra. }
+  { intros [Hc Hs]. pose proof (sin2_cos2 alpha) as H. unfold Rsqr in H. nra. }
   pose proof (atan2_range (cos alpha) (sin alpha) Hne) as Hbeta.
   pose proof (cos_atan2 (cos alpha) (sin alpha) Hne) as Hccos.
   pose proof (sin_atan2 (cos alpha) (sin alpha) Hne) as Hcsin.
   assert (Hr1 : sqrt (cos alpha * cos alpha + sin alpha * sin alpha) = 1).
   { replace (cos alpha * cos alpha + sin alpha * sin alpha)
-      with (Rsqr (cos alpha) + Rsqr (sin alpha)) by (unfold Rsqr; ring).
+      with (Rsqr (sin alpha) + Rsqr (cos alpha)) by (unfold Rsqr; ring).
     rewrite sin2_cos2. apply sqrt_1. }
   rewrite Hr1 in Hccos, Hcsin.
   replace (cos alpha / 1) with (cos alpha) in Hccos by field.
@@ -354,16 +352,27 @@ Qed.
 (* §3  Endpoints, on-circle, and signed-angle of γ(t).                        *)
 (* -------------------------------------------------------------------------- *)
 
+Lemma polar_offset_dist_sq : forall ox oy r th,
+  (ox - (ox + r * cos th)) * (ox - (ox + r * cos th))
+  + (oy - (oy + r * sin th)) * (oy - (oy + r * sin th))
+  = r * r.
+Proof.
+  intros ox oy r th.
+  replace (ox - (ox + r * cos th)) with (- r * cos th) by ring.
+  replace (oy - (oy + r * sin th)) with (- r * sin th) by ring.
+  replace ((- r * cos th) * (- r * cos th) + (- r * sin th) * (- r * sin th))
+    with (r * r * (sin th * sin th + cos th * cos th)) by ring.
+  pose proof (sin2_cos2 th) as Hpyth. unfold Rsqr in Hpyth.
+  rewrite Hpyth. ring.
+Qed.
+
 Lemma arc_gamma_on_circle : forall a t,
   dist_sq (arc_center a) (arc_gamma a t) = arc_radius a * arc_radius a.
 Proof.
   intros a t.
   rewrite arc_gamma_polar.
   unfold dist_sq. cbn [px py].
-  ring_simplify.
-  rewrite <- (Rmult_1_r (arc_radius a * arc_radius a)) at 2.
-  rewrite <- sin2_cos2.
-  unfold Rsqr. ring.
+  apply polar_offset_dist_sq.
 Qed.
 
 Lemma arc_gamma_start : forall a,
@@ -406,39 +415,69 @@ Proof.
   intros t. apply arc_gamma_on_circle.
 Qed.
 
+Lemma rotate_cross_to_sin : forall th0 alpha r,
+  r * cos th0 * (r * sin (th0 + alpha))
+  - r * sin th0 * (r * cos (th0 + alpha))
+  = r * r * sin alpha.
+Proof.
+  intros th0 alpha r.
+  replace (r * cos th0 * (r * sin (th0 + alpha))
+           - r * sin th0 * (r * cos (th0 + alpha)))
+    with (r * r * (sin (th0 + alpha) * cos th0
+                   - cos (th0 + alpha) * sin th0)) by ring.
+  rewrite <- sin_minus.
+  replace (th0 + alpha - th0) with alpha by ring.
+  reflexivity.
+Qed.
+
+Lemma rotate_dot_to_cos : forall th0 alpha r,
+  r * cos th0 * (r * cos (th0 + alpha))
+  + r * sin th0 * (r * sin (th0 + alpha))
+  = r * r * cos alpha.
+Proof.
+  intros th0 alpha r.
+  replace (r * cos th0 * (r * cos (th0 + alpha))
+           + r * sin th0 * (r * sin (th0 + alpha)))
+    with (r * r * (cos (th0 + alpha) * cos th0
+                   + sin (th0 + alpha) * sin th0)) by ring.
+  rewrite <- cos_minus.
+  replace (th0 + alpha - th0) with alpha by ring.
+  reflexivity.
+Qed.
+
 Lemma arc_gamma_signed_angle : forall a t,
   valid_arc a ->
   0 <= t <= 1 ->
   arc_angle_from_start a (arc_gamma a t) = t * arc_span a.
 Proof.
   intros a t Hva Ht.
-  set (O := arc_center a).
-  set (r := arc_radius a).
-  set (A := arc_start a).
-  set (th0 := circ_angle O A).
-  assert (Hr : 0 < r) by (apply arc_radius_pos; exact Hva).
+  assert (Hr : 0 < arc_radius a) by (apply arc_radius_pos; exact Hva).
   pose proof (start_offset_from_angle a Hva) as [Hsx Hsy].
   rewrite arc_gamma_polar.
   unfold arc_angle_from_start, signed_angle_from, angle_between.
   cbn [px py].
-  replace (px O + r * cos (th0 + t * arc_span a) - px O)
-    with (r * cos (th0 + t * arc_span a)) by ring.
-  replace (py O + r * sin (th0 + t * arc_span a) - py O)
-    with (r * sin (th0 + t * arc_span a)) by ring.
+  replace (px (arc_center a)
+            + arc_radius a
+              * cos (circ_angle (arc_center a) (arc_start a) + t * arc_span a)
+            - px (arc_center a))
+    with (arc_radius a
+          * cos (circ_angle (arc_center a) (arc_start a) + t * arc_span a))
+    by ring.
+  replace (py (arc_center a)
+            + arc_radius a
+              * sin (circ_angle (arc_center a) (arc_start a) + t * arc_span a)
+            - py (arc_center a))
+    with (arc_radius a
+          * sin (circ_angle (arc_center a) (arc_start a) + t * arc_span a))
+    by ring.
   rewrite Hsx, Hsy.
-  replace (r * cos th0 * (r * sin (th0 + t * arc_span a))
-           - r * sin th0 * (r * cos (th0 + t * arc_span a)))
-    with (r * r * sin (t * arc_span a))
-    by (rewrite sin_plus, cos_plus; ring).
-  replace (r * cos th0 * (r * cos (th0 + t * arc_span a))
-           + r * sin th0 * (r * sin (th0 + t * arc_span a)))
-    with (r * r * cos (t * arc_span a))
-    by (rewrite sin_plus, cos_plus; ring).
-  assert (Hne : ~ (sin (t * arc_span a) = 0 /\ cos (t * arc_span a) = 0)).
-  { intros [Hs Hc]. pose proof (sin2_cos2 (t * arc_span a)) as H.
-    unfold Rsqr in H. lra. }
-  rewrite (atan2_pos_scale (r * r) (cos (t * arc_span a))
-             (sin (t * arc_span a)) ltac:(nra) Hne).
+  rewrite rotate_cross_to_sin, rotate_dot_to_cos.
+  assert (Hne : ~ (cos (t * arc_span a) = 0 /\ sin (t * arc_span a) = 0)).
+  { intros [Hc Hs]. pose proof (sin2_cos2 (t * arc_span a)) as H.
+    unfold Rsqr in H. nra. }
+  rewrite (atan2_pos_scale (arc_radius a * arc_radius a)
+             (cos (t * arc_span a)) (sin (t * arc_span a))
+             ltac:(nra) Hne).
   apply atan2_sin_cos.
   exact (interpolated_span_principal a t Hva Ht).
 Qed.
@@ -447,16 +486,34 @@ Qed.
 (* §4  Interior parameters land in the atan2 span (principal mid).            *)
 (* -------------------------------------------------------------------------- *)
 
+Lemma span_param_interior_product_pos : forall t gamma thetaM : R,
+  0 < t < 1 ->
+  gamma <> 0 ->
+  thetaM * (thetaM - gamma) < 0 ->
+  0 < (t * (t - 1) * (gamma * gamma)) * (thetaM * (thetaM - gamma)).
+Proof.
+  intros t gamma thetaM Ht Hg Hm.
+  assert (Hgsq : 0 < gamma * gamma).
+  { change (gamma * gamma) with (Rsqr gamma). apply Rsqr_pos_lt. exact Hg. }
+  assert (Htprod : t * (t - 1) < 0) by nra.
+  assert (HA : t * (t - 1) * (gamma * gamma) < 0) by nra.
+  assert (HAneg : 0 < - (t * (t - 1) * (gamma * gamma))) by lra.
+  assert (HBneg : 0 < - (thetaM * (thetaM - gamma))) by lra.
+  pose proof (Rmult_lt_0_compat _ _ HAneg HBneg) as Hpos.
+  replace ((- (t * (t - 1) * (gamma * gamma))) * (- (thetaM * (thetaM - gamma))))
+    with ((t * (t - 1) * (gamma * gamma)) * (thetaM * (thetaM - gamma)))
+    in Hpos by ring.
+  exact Hpos.
+Qed.
+
 Lemma mid_principal_thetaM_product_neg : forall a,
   valid_arc a ->
   arc_mid_on_principal_span a ->
-  let gamma := arc_span a in
-  let thetaM := arc_angle_from_start a (arc_mid a) in
-  thetaM * (thetaM - gamma) < 0.
+  arc_angle_from_start a (arc_mid a)
+    * (arc_angle_from_start a (arc_mid a) - arc_span a) < 0.
 Proof.
-  intros a Hva Hmid gamma thetaM.
+  intros a Hva Hmid.
   unfold arc_mid_on_principal_span in Hmid.
-  fold gamma thetaM in Hmid.
   nra.
 Qed.
 
@@ -470,11 +527,15 @@ Proof.
   pose proof (arc_gamma_signed_angle a t Hva ltac:(lra)) as Hth.
   pose proof (mid_principal_thetaM_product_neg a Hva Hmid) as Hm.
   pose proof (arc_gamma_nonzero a Hva) as Hgnz.
-  unfold arc_span_contains_atan2.
+  unfold arc_span_contains_atan2, arc_span in *.
   left.
   rewrite Hth.
-  unfold arc_span in Hm, Hgnz.
-  nra.
+  set (gamma := arc_angle_from_start a (arc_end a)) in *.
+  set (thetaM := arc_angle_from_start a (arc_mid a)) in *.
+  replace ((t * gamma) * (t * gamma - gamma) * (thetaM * (thetaM - gamma)))
+    with ((t * (t - 1) * (gamma * gamma)) * (thetaM * (thetaM - gamma)))
+    by ring.
+  apply span_param_interior_product_pos; [exact Ht | exact Hgnz | exact Hm].
 Qed.
 
 Lemma arc_gamma_in_span : forall a t,
@@ -515,6 +576,65 @@ Proof.
   apply point_eq_of_coords; cbn [px py]; lra.
 Qed.
 
+Lemma between_open_when_gamma_neg : forall theta gamma : R,
+  theta * (theta - gamma) < 0 ->
+  gamma < 0 ->
+  gamma < theta < 0.
+Proof.
+  intros theta gamma Hp Hg. split.
+  - apply Rnot_le_lt. intro Hle.
+    assert (theta - gamma <= 0) by lra.
+    nra.
+  - apply Rnot_le_lt. intro Hge.
+    assert (0 <= theta - gamma) by lra.
+    nra.
+Qed.
+
+Lemma between_open_when_gamma_pos : forall theta gamma : R,
+  theta * (theta - gamma) < 0 ->
+  0 < gamma ->
+  0 < theta < gamma.
+Proof.
+  intros theta gamma Hp Hg. split.
+  - apply Rnot_le_lt. intro Hle.
+    assert (theta - gamma < 0) by lra.
+    nra.
+  - apply Rnot_le_lt. intro Hge.
+    assert (0 <= theta - gamma) by lra.
+    nra.
+Qed.
+
+Lemma div_in_unit_neg : forall theta gamma : R,
+  gamma < theta < 0 ->
+  0 <= theta / gamma <= 1.
+Proof.
+  intros theta gamma [Hgt Hth].
+  unfold Rdiv.
+  assert (Hginv : / gamma < 0) by (apply Rinv_lt_0_compat; lra).
+  split.
+  - apply Rlt_le.
+    pose proof (Rmult_lt_0_compat (- theta) (- / gamma) ltac:(lra) ltac:(lra)) as Hpos.
+    replace ((- theta) * (- / gamma)) with (theta * / gamma) in Hpos by ring.
+    exact Hpos.
+  - apply Rmult_le_reg_r with (r := - gamma); [lra|].
+    replace (theta * / gamma * - gamma) with (- theta) by (field; lra).
+    lra.
+Qed.
+
+Lemma div_in_unit_pos : forall theta gamma : R,
+  0 < theta < gamma ->
+  0 <= theta / gamma <= 1.
+Proof.
+  intros theta gamma [Hth Hgt].
+  unfold Rdiv.
+  assert (Hginv : 0 < / gamma) by (apply Rinv_0_lt_compat; lra).
+  split.
+  - apply Rlt_le, Rmult_lt_0_compat; lra.
+  - apply Rmult_le_reg_r with (r := gamma); [lra|].
+    replace (theta * / gamma * gamma) with theta by (field; lra).
+    lra.
+Qed.
+
 Lemma arc_t_in_unit : forall a P,
   valid_arc a ->
   arc_mid_on_principal_span a ->
@@ -529,18 +649,22 @@ Proof.
   set (gamma := arc_angle_from_start a (arc_end a)) in *.
   set (thetaM := arc_angle_from_start a (arc_mid a)) in *.
   pose proof (mid_principal_thetaM_product_neg a Hva Hmid) as Hm.
+  unfold arc_span in Hm.
   fold gamma thetaM in Hm.
   destruct Hspan as [Hprod|[Hs|He]].
   - assert (Hbet : theta * (theta - gamma) < 0) by nra.
     destruct (Rtotal_order gamma 0) as [Hg|[Hgz|Hg]]; [|exfalso; apply Hgnz; exact Hgz|].
-    + assert (gamma < theta < 0) by nra.
-      unfold Rdiv. nra.
-    + assert (0 < theta < gamma) by nra.
-      unfold Rdiv. nra.
-  - rewrite Hs, (arc_angle_from_start_self a Hva).
-    unfold Rdiv. nra.
-  - rewrite He. unfold Rdiv.
-    replace (gamma / gamma) with 1 by (field; exact Hgnz). lra.
+    + apply div_in_unit_neg.
+      exact (between_open_when_gamma_neg theta gamma Hbet Hg).
+    + apply div_in_unit_pos.
+      exact (between_open_when_gamma_pos theta gamma Hbet Hg).
+  - unfold theta. rewrite Hs, (arc_angle_from_start_self a Hva).
+    unfold Rdiv. rewrite Rmult_0_l. lra.
+  - unfold theta, gamma. rewrite He.
+    replace (arc_angle_from_start a (arc_end a)
+             / arc_angle_from_start a (arc_end a))
+      with 1 by (field; exact Hgnz).
+    lra.
 Qed.
 
 Lemma arc_gamma_retract : forall a P,
@@ -553,7 +677,7 @@ Proof.
   intros a P Hva HP Hmid Hspan.
   split.
   - exact (arc_t_in_unit a P Hva Hmid Hspan).
-  - symmetry. exact (on_circle_eq_arc_gamma_at_angle a P Hva HP).
+  - exact (on_circle_eq_arc_gamma_at_angle a P Hva HP).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -672,13 +796,12 @@ Qed.
 Lemma span_locked_h_gt_three_halves :
   3 / 2 < radical_axis_h locked_O1 locked_O2 locked_r locked_r.
 Proof.
-  apply Rnot_le_lt. intro Hle.
-  pose proof span_locked_h_pos as Hpos.
-  pose proof span_locked_h_sq as Hsq.
-  apply (Rmult_le_compat _ _ _ _ Hle Hle) in Hle.
-  2: lra.
-  2: lra.
-  nra.
+  unfold radical_axis_h. rewrite span_locked_h2.
+  assert (H32 : 3 / 2 = sqrt (9 / 4)).
+  { replace (9 / 4) with (Rsqr (3 / 2)) by (unfold Rsqr; field).
+    rewrite sqrt_Rsqr; [reflexivity | lra]. }
+  rewrite H32.
+  apply sqrt_lt_1; lra.
 Qed.
 
 Lemma span_p_plus_coords :
@@ -754,7 +877,7 @@ Proof.
   cbn [px py arc_start arc_mid arc_end].
   destruct span_p_plus_coords as [Hx Hy].
   rewrite Hx, Hy.
-  pose proof span_locked_h_pos as Hh.
+  pose proof span_locked_h_gt_three_halves as Hh.
   nra.
 Qed.
 
@@ -801,8 +924,12 @@ Lemma span_p_minus_not_A_ends :
   locked_p_minus <> arc_end span_arc_A.
 Proof.
   unfold span_arc_A. cbn [arc_start arc_end].
-  split; intro H; apply (f_equal py) in H; cbn in H;
-    pose proof span_p_minus_y_neg; lra.
+  pose proof span_p_minus_y_neg as Hy.
+  split.
+  - intro H. apply (f_equal py) in H. cbn [py] in H.
+    change (py (mkPoint 5 0)) with 0 in H. lra.
+  - intro H. apply (f_equal py) in H. cbn [py] in H.
+    change (py (mkPoint 0 5)) with 5 in H. lra.
 Qed.
 
 Lemma span_p_minus_rejected_A :
@@ -827,11 +954,12 @@ Qed.
 Lemma span_arc_A_angle_end :
   arc_angle_from_start span_arc_A (arc_end span_arc_A) = PI / 2.
 Proof.
-  unfold arc_angle_from_start, signed_angle_from, angle_between, span_arc_A.
-  rewrite span_arc_A_center. unfold locked_O1.
+  unfold arc_angle_from_start, signed_angle_from, angle_between.
+  rewrite span_arc_A_center.
+  unfold span_arc_A, locked_O1.
   cbn [px py arc_start arc_end].
-  replace (5 * 5 - 0 * 0) with 25 by ring.
-  replace (5 * 0 + 0 * 5) with 0 by ring.
+  replace ((5 - 0) * (5 - 0) - (0 - 0) * (0 - 0)) with 25 by ring.
+  replace ((5 - 0) * (0 - 0) + (0 - 0) * (5 - 0)) with 0 by ring.
   unfold atan2.
   destruct (Rlt_dec 0 0); [lra|].
   destruct (Rlt_dec 0 0); [lra|].
@@ -842,11 +970,12 @@ Qed.
 Lemma span_arc_A_angle_mid :
   arc_angle_from_start span_arc_A (arc_mid span_arc_A) = atan (4 / 3).
 Proof.
-  unfold arc_angle_from_start, signed_angle_from, angle_between, span_arc_A.
-  rewrite span_arc_A_center. unfold locked_O1.
+  unfold arc_angle_from_start, signed_angle_from, angle_between.
+  rewrite span_arc_A_center.
+  unfold span_arc_A, locked_O1.
   cbn [px py arc_start arc_mid].
-  replace (5 * 4 - 0 * 3) with 20 by ring.
-  replace (5 * 3 + 0 * 4) with 15 by ring.
+  replace ((5 - 0) * (4 - 0) - (0 - 0) * (3 - 0)) with 20 by ring.
+  replace ((5 - 0) * (3 - 0) + (0 - 0) * (4 - 0)) with 15 by ring.
   unfold atan2.
   destruct (Rlt_dec 0 15) as [Hx|Hx]; [|lra].
   replace (20 / 15) with (4 / 3) by field.
@@ -866,8 +995,9 @@ Qed.
 Lemma span_arc_B_angle_end :
   arc_angle_from_start span_arc_B (arc_end span_arc_B) = - (PI / 2).
 Proof.
-  unfold arc_angle_from_start, signed_angle_from, angle_between, span_arc_B.
-  rewrite span_arc_B_center. unfold locked_O2.
+  unfold arc_angle_from_start, signed_angle_from, angle_between.
+  rewrite span_arc_B_center.
+  unfold span_arc_B, locked_O2.
   cbn [px py arc_start arc_end].
   replace ((2 - 7) * (5 - 0) - (0 - 0) * (7 - 7)) with (-25) by ring.
   replace ((2 - 7) * (7 - 7) + (0 - 0) * (5 - 0)) with 0 by ring.
@@ -881,8 +1011,9 @@ Qed.
 Lemma span_arc_B_angle_mid :
   arc_angle_from_start span_arc_B (arc_mid span_arc_B) = atan (-4 / 3).
 Proof.
-  unfold arc_angle_from_start, signed_angle_from, angle_between, span_arc_B.
-  rewrite span_arc_B_center. unfold locked_O2.
+  unfold arc_angle_from_start, signed_angle_from, angle_between.
+  rewrite span_arc_B_center.
+  unfold span_arc_B, locked_O2.
   cbn [px py arc_start arc_mid].
   replace ((2 - 7) * (4 - 0) - (0 - 0) * (4 - 7)) with (-20) by ring.
   replace ((2 - 7) * (4 - 7) + (0 - 0) * (4 - 0)) with 15 by ring.
@@ -896,7 +1027,8 @@ Lemma span_arc_B_mid_principal : arc_mid_on_principal_span span_arc_B.
 Proof.
   unfold arc_mid_on_principal_span, arc_span.
   rewrite span_arc_B_angle_end, span_arc_B_angle_mid.
-  rewrite atan_opp.
+  replace (atan (-4 / 3)) with (- atan (4 / 3)).
+  2: { replace (-4 / 3) with (- (4 / 3)) by field. symmetry. apply atan_opp. }
   pose proof (atan_bound (4 / 3)) as Hb.
   pose proof (atan_gt_0 (4 / 3) ltac:(lra)) as Hpos.
   pose proof PI_RGT_0 as HPI.
@@ -934,16 +1066,13 @@ Theorem locked_span_gamma_hit :
   arc_span_contains_atan2 span_arc_B locked_p_plus /\
   ~ arc_span_contains_atan2 span_arc_A locked_p_minus.
 Proof.
-  repeat split.
-  - exact span_arc_A_valid.
-  - exact span_arc_B_valid.
-  - apply (proj1 span_p_plus_on_gamma_A).
-  - apply (proj2 span_p_plus_on_gamma_A).
-  - apply (proj1 span_p_plus_on_gamma_B).
-  - apply (proj2 span_p_plus_on_gamma_B).
-  - exact span_p_plus_in_A.
-  - exact span_p_plus_in_B.
-  - exact span_p_minus_rejected_A.
+  split; [exact span_arc_A_valid|].
+  split; [exact span_arc_B_valid|].
+  split; [exact span_p_plus_on_gamma_A|].
+  split; [exact span_p_plus_on_gamma_B|].
+  split; [exact span_p_plus_in_A|].
+  split; [exact span_p_plus_in_B|].
+  exact span_p_minus_rejected_A.
 Qed.
 
 Lemma circular_still_not_first_cook_scope :
