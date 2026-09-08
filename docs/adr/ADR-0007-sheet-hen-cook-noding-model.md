@@ -384,7 +384,7 @@ Accept as vocabulary law does **not** settle kiss / tangency.
 - A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet. Host-lane “sits on a sheet” is closed above.
 - Hobby 4.1 / 4.3. Snap-rounding stays a different constructor under already-noded `G`.
 - The repeat-until-noded **bag** loop (termination + confluence) on the chord lane — `ticket_0007_cook_term_qed_or_qex` QEX / CRV-TOUCH. Pairwise width decrease and one-step confluence are discharged QED, not this item. **Arc** cook termination is a sister card, not this Accept.
-- Later constructive rungs (one Hit `split(t)` step; constructed `𝓘` from proper-cross signs) are letters after Accept, not Accept blockers.
+- Later constructive rungs: one Hit `split(t)` step is `ticket_0007_cook_step_qed_or_qex` / `ticket_0007_cook_step_scope_qed_or_qex`; constructed `𝓘` from proper-cross signs is `ticket_0007_constructed_I_qed_or_qex` / `ticket_0007_constructed_I_scope_qed_or_qex` / `ticket_0007_share_constructed_qed_or_qex`. Letters after Accept, not Accept blockers.
 - ADR-0006 cook-mode for a kiss hen — CRV-TOUCH, after a prototype.
 
 ### Decision requested
@@ -427,3 +427,36 @@ QEX (`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`;
 `CircularCook.v : circular_gamma_is_qex`) — remaining obligation is
 an atan2-free interpolant on the 3-axiom host.
 Not first cook scope. Not a noder.
+
+### Letter after Accept — one Hit cook step (2026-09-07)
+
+The Decision's first constructive sentence after `𝓘`: on success the cook
+inserts a point-hen and replaces each crossed chicken by two via
+`split(t)`. That is this letter. It is not the bag-level
+repeat-until-noded loop and does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `Adr0007NodingEpic.v : ticket_0007_cook_step_qed_or_qex` | **QED** — crossing chickens share one minted hen after `split(t)` | `SheetHenCook.v : cooked_crossing_try`, `SheetHenCook.v : cooked_crossing_shares`, `SheetHenCook.v : chord_split_left_reparam` |
+| `Adr0007NodingEpic.v : ticket_0007_cook_step_scope_qed_or_qex` | **QEX** — Decline / Empty / out-of-scope allocate no hen | `SheetHenCook.v : try_cook_hit_clothoid_none`, `SheetHenCook.v : try_cook_hit_empty_none` |
+
+Witness: `0007-cook-split`. Status stays **Accepted**. Not a remint of leftover-width / pairwise_split. Host CircGamma stays QEX.
+
+### Letter after Accept — constructed 𝓘 from proper-cross signs (2026-09-07)
+
+The Decision's `𝓘` is not a hardcoded midpoint. Proper-cross sign
+conditions license `Intersect.strict_intersection_point` as `p*` plus
+the two open-interval parameters. That constructed Hit recovers the
+unit-square witness and cooks. Missing signs do not license the
+formula (they are not Decline). Equal constructed `p*` under operand
+swap licenses `ShareOne` — the identity basis, not `dart_eq_dec`.
+Not a remint of `Intersect`. Not a total `𝓘`. Not the noder loop.
+Does not reopen Status. Host CircGamma stays QEX.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `Adr0007NodingEpic.v : ticket_0007_constructed_I_qed_or_qex` | **QED** — signs on the unit-square diagonals produce the same Hit the cook already splits | `SheetHenCook.v : constructed_hit_I_ok`, `SheetHenCook.v : constructed_hit_crossing_eq`, `SheetHenCook.v : cooked_constructed_crossing` |
+| `Adr0007NodingEpic.v : ticket_0007_constructed_I_scope_qed_or_qex` | **QEX** — disjoint horizontals have no proper-cross signs; Empty stays Empty | `SheetHenCook.v : disjoint_not_proper_cross`, `SheetHenCook.v : disjoint_I_ok` |
+| `Adr0007NodingEpic.v : ticket_0007_share_constructed_qed_or_qex` | **QED** — operand swap names the same `p*`; `ShareOne` follows | `SheetHenCook.v : constructed_hit_sym_same_p`, `SheetHenCook.v : equal_constructed_p_share` |
+
+Witness: `0007-constructed-I`. Status stays **Accepted**.

@@ -272,7 +272,7 @@ individually proven true. Spell the bar out in prose; "RBL" is WIP shorthand
 only.
 _Avoid_: level (unqualified), RBL (in prose)
 
-### Noding constructor (ADR-0007, Proposed)
+### Noding constructor (ADR-0007, Accepted)
 
 **Sheet**:
 An oriented affine plane `S = (O; e₁, e₂)` with optional lattice `Λ`.
@@ -299,7 +299,12 @@ _Avoid_: dart (coordinate pair), edge (unqualified)
 
 **Cook / 𝓘**:
 The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
-or 𝓘 Decline (no algorithm). Predicates never mint hens. Pairwise
+or 𝓘 Decline (no algorithm). Predicates never mint hens. On a Hit the
+cook may `split(t)` and mint one hen (letter after Accept; not the
+bag loop). On chord–chord, proper-cross signs license a constructed
+Hit via `Intersect.strict_intersection_point` (not a remint of that
+lemma; not a total `𝓘`; not `I_circles_z` / `I_CIRCULAR`; not
+glossary `𝓘` with γ / tᵢ,tⱼ). Host CircGamma stays QEX. Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of
