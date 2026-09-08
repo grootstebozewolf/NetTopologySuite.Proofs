@@ -57,7 +57,18 @@
    on this domain (= `phase0_relation`); `eight_row_family` adds T-ext.
    The §3 / §6 theorems inhabit those names; no second headline.
 
+   kiss ≠ CAP.  The TOUCH contact is a 0-cell pinch; CAP is the closed
+   intersection.  On T-ext that intersection collapses to the kiss and
+   is therefore not a 2-cell (`T_cap_not_2cell` / `T_ext_cap_not_2cell`).
+   This is not G1 (CAP self, A ∩ A = A).  T-int is covers, not TOUCH:
+   closed CAP is the smaller disc and HAS nonempty interior
+   (`int_cap_is_2cell`) — do not claim int(CAP)=∅ for T-int.  Every
+   TOUCH pair still has no II 2-cell (`touch_no_II_2cell`: interiors
+   disjoint).  The false "every tangency, int(CAP)=∅" is refuted
+   (`T_int_cap_empty_interior_hypothesis_refuted`).
+
    WITNESS topic: overlay · claimId: laser-ov · witness: kiss-discs
+   WITNESS topic: overlay · claimId: ov-t-cap-not-2cell · witness: kiss-discs
    ADR-0001 tripwire not needed: Overlay → Distance only; this module
    is a consumer; no Overlay ↔ Jordan / ArcOrient cycle.
 
@@ -465,7 +476,170 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §7  Audit footprint (classical-reals trio only).                            *)
+(* §7  TOUCH CAP is not a 2-cell.                                              *)
+(*                                                                            *)
+(* kiss ≠ CAP; this is not G1.  T-int does not get a false int(CAP)=∅          *)
+(* claim: internal tangency is covers, and closed CAP is the smaller disc.     *)
+(* -------------------------------------------------------------------------- *)
+
+(** No open disc sits inside S — Euclidean interior empty; S is not a
+    2-cell of the overlay arrangement.  Same shape as
+    RelateTouchDiscs.region_no_ball; defined here so this overlay
+    module does not import the relate lane. *)
+Definition region_not_2cell (S : Point -> Prop) : Prop :=
+  forall q rho, 0 < rho -> exists p, dist_sq q p < rho * rho /\ ~ S p.
+
+(** Radial outward nudge: a positive-radius circle point has nearby
+    points strictly outside the closed disc. *)
+Lemma on_circle_radial_out :
+  forall (c : Point) (r : R) (q : Point) (rho : R),
+    0 < r ->
+    0 < rho ->
+    dist_sq c q = r * r ->
+    exists p, dist_sq q p < rho * rho /\ r * r < dist_sq c p.
+Proof.
+  intros c r q rho Hr Hrho Hon.
+  set (t := rho / (2 * r)).
+  assert (Ht : 0 < t) by (unfold t; apply Rdiv_lt_0_compat; lra).
+  set (p := mkPoint (px c + (1 + t) * (px q - px c))
+                    (py c + (1 + t) * (py q - py c))).
+  assert (Hcp : dist_sq c p = (1 + t) * (1 + t) * dist_sq c q).
+  { unfold p, dist_sq. cbn [px py]. ring. }
+  assert (Hqp : dist_sq q p = t * t * dist_sq c q).
+  { unfold p, dist_sq. cbn [px py]. ring. }
+  exists p. split.
+  - rewrite Hqp, Hon.
+    unfold t.
+    assert (Hexp : rho / (2 * r) * (rho / (2 * r)) * (r * r)
+                   = rho * rho / 4) by (field; lra).
+    rewrite Hexp. nra.
+  - rewrite Hcp, Hon.
+    nra.
+Qed.
+
+(** A singleton region contains no open disc. *)
+Lemma singleton_not_2cell : forall (S : Point -> Prop) (k : Point),
+  (forall p, S p -> p = k) ->
+  region_not_2cell S.
+Proof.
+  intros S k Hsub q rho Hrho.
+  destruct (Req_dec (px q) (px k)) as [Hx | Hnx];
+    destruct (Req_dec (py q) (py k)) as [Hy | Hny].
+  - set (p := mkPoint (px k + rho / 2) (py k)).
+    exists p. split.
+    + unfold p, dist_sq. cbn [px py].
+      replace (px q - (px k + rho / 2)) with (- (rho / 2))
+        by (rewrite Hx; ring).
+      replace (py q - py k) with 0 by (rewrite Hy; ring).
+      nra.
+    + intros HS. apply Hsub in HS.
+      assert (Hpx : px p = px k) by (rewrite HS; reflexivity).
+      unfold p in Hpx. cbn [px] in Hpx. lra.
+  - exists q. split.
+    + rewrite dist_sq_self_zero. nra.
+    + intros HS. apply Hsub in HS. apply Hny. rewrite HS. reflexivity.
+  - exists q. split.
+    + rewrite dist_sq_self_zero. nra.
+    + intros HS. apply Hsub in HS. apply Hnx. rewrite HS. reflexivity.
+  - exists q. split.
+    + rewrite dist_sq_self_zero. nra.
+    + intros HS. apply Hsub in HS. apply Hnx. rewrite HS. reflexivity.
+Qed.
+
+(** Fixture T-ext: CAP = {kiss} so the Euclidean interior is empty. *)
+Corollary T_ext_cap_not_2cell : region_not_2cell (lens ext_A ext_B).
+Proof.
+  apply (singleton_not_2cell _ ext_kiss).
+  intros p Hp. apply ext_cap_singleton. exact Hp.
+Qed.
+
+(* WITNESS {"claimId":"ov-t-cap-not-2cell","topic":"overlay","lemma":"T_cap_not_2cell","title":"On disks_touch, CAP contains no open disc (not a 2-cell); T-int scoped out","witness":"kiss-discs","board":"OverlayNGCurve / G-family"} *)
+
+(** HEADLINE.  On TOUCH (T-ext for discs), closed CAP = A ∩ B contains
+    no open disc: there is no II 2-cell of the overlay arrangement.
+    Not G1.  T-int is out of scope — see [int_cap_is_2cell]. *)
+Theorem T_cap_not_2cell : forall A B : Disk,
+  0 < dradius A -> 0 < dradius B ->
+  disks_touch A B ->
+  region_not_2cell (lens A B).
+Proof.
+  intros A B HrA HrB [Hmeet Hii] q rho Hrho.
+  destruct (Rle_dec (dist_sq (dcentre A) q) (dradius A * dradius A))
+    as [HA | HnA].
+  - destruct (Rle_dec (dist_sq (dcentre B) q) (dradius B * dradius B))
+      as [HB | HnB].
+    + destruct (Rlt_dec (dist_sq (dcentre A) q) (dradius A * dradius A))
+        as [HiA | HnAi].
+      * destruct (Rlt_dec (dist_sq (dcentre B) q) (dradius B * dradius B))
+          as [HiB | HnBi].
+        -- exfalso. apply (Hii q).
+           split; [exact HiA | exact HiB].
+        -- assert (HeqB : dist_sq (dcentre B) q = dradius B * dradius B)
+             by lra.
+           destruct (on_circle_radial_out (dcentre B) (dradius B) q rho
+                       HrB Hrho HeqB) as [p [Hball Hout]].
+           exists p. split; [exact Hball |].
+           intros [_ HBp]. unfold in_disk in HBp. lra.
+      * assert (HeqA : dist_sq (dcentre A) q = dradius A * dradius A)
+          by lra.
+        destruct (on_circle_radial_out (dcentre A) (dradius A) q rho
+                    HrA Hrho HeqA) as [p [Hball Hout]].
+        exists p. split; [exact Hball |].
+        intros [HAp _]. unfold in_disk in HAp. lra.
+    + exists q. split.
+      * rewrite dist_sq_self_zero. nra.
+      * intros [_ HB]. exact (HnB HB).
+  - exists q. split.
+    + rewrite dist_sq_self_zero. nra.
+    + intros [HA _]. exact (HnA HA).
+Qed.
+
+(** (C) All TOUCH: no II 2-cell — interiors are disjoint.  Definitional
+    from [disks_touch]; kiss ≠ shared flesh.  Does not claim int(CAP)=∅
+    for T-int. *)
+Corollary touch_no_II_2cell : forall A B : Disk,
+  disks_touch A B ->
+  forall p, ~ (in_disk_int A p /\ in_disk_int B p).
+Proof.
+  intros A B [_ Hii]. exact Hii.
+Qed.
+
+(** Honesty pin: T-int closed CAP is the covered smaller disc and HAS
+    a metric ball — int(CAP)=∅ is FALSE for internal tangency. *)
+Lemma int_cap_is_2cell :
+  exists q rho, 0 < rho /\
+    forall p, dist_sq q p < rho * rho -> lens int_A int_B p.
+Proof.
+  exists (mkPoint 1 0), (1 / 2). split; [lra |].
+  intros [x y] Hp.
+  unfold dist_sq in Hp. cbn in Hp.
+  unfold lens, in_disk, int_A, int_B, dist_sq. cbn [dcentre dradius px py].
+  split; nra.
+Qed.
+
+(** QEX of the false general headline "every tangency, int(CAP)=∅".
+    Internal tangency (d = |r1 − r2|) is the cex: CAP is a 2-cell. *)
+Theorem T_int_cap_empty_interior_hypothesis_refuted :
+  ~ (forall A B : Disk,
+       0 < dradius A -> 0 < dradius B ->
+       dist (dcentre A) (dcentre B) = Rabs (dradius A - dradius B) ->
+       region_not_2cell (lens A B)).
+Proof.
+  intro H.
+  assert (HrA : 0 < dradius int_A) by (cbn; lra).
+  assert (HrB : 0 < dradius int_B) by (cbn; lra).
+  assert (Htang : dist (dcentre int_A) (dcentre int_B)
+                  = Rabs (dradius int_A - dradius int_B)).
+  { cbn [dcentre dradius int_A int_B].
+    rewrite int_centre_dist. rewrite Rabs_right; lra. }
+  specialize (H int_A int_B HrA HrB Htang).
+  destruct int_cap_is_2cell as [q [rho [Hrho Hball]]].
+  destruct (H q rho Hrho) as [p [Hin Hn]].
+  exact (Hn (Hball p Hin)).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §8  Audit footprint (classical-reals trio only).                            *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions phase0_relation_complete_hypothesis_refuted.
@@ -480,3 +654,8 @@ Print Assumptions seven_row_not_candidate_complete.
 Print Assumptions eight_row_is_candidate_complete.
 Print Assumptions t_ext_misses_seven_row.
 Print Assumptions t_int_is_covers_not_a_gap.
+Print Assumptions T_ext_cap_not_2cell.
+Print Assumptions T_cap_not_2cell.
+Print Assumptions touch_no_II_2cell.
+Print Assumptions int_cap_is_2cell.
+Print Assumptions T_int_cap_empty_interior_hypothesis_refuted.
