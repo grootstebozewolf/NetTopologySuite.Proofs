@@ -54,9 +54,12 @@
    (`ticket_0007_share_constructed_qed_or_qex` discharges left).
    Not a remint of Intersect. Not a total 𝓘.
 
-   QEX is not BDFL accept. ADR-0007 stays Proposed. Do not remint
-   CurveSegment / Exact* zoo types / Dart. Do not steal 508-* / 522-*
-   board mints. Do not claim a complete FP noder or close Hobby.
+   QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
+   These letters do not reopen Status. Constructed chord-chord I is
+   not I_circles_z / I_CIRCULAR and not glossary I with gamma / t.
+   Host CircGamma stays QEX. Do not remint CurveSegment / Exact*
+   zoo types / Dart. Do not steal 508-* / 522-* board mints. Do
+   not claim a complete FP noder or close Hobby. Do not close 510.
 
    Testable 𝓘 / cook results sit on the accepted Oracle line protocol
    (ADR-0006). This module mints no keyword and no second external seam.

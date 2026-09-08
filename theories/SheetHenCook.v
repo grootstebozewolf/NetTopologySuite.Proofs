@@ -16,6 +16,10 @@
    snap-sequence. DdirDart := (Hen * Hen) is the chicken projection
    — one type equation, not a third directed-edge type.
 
+   ADR-0007 is Accepted (2026-09-07). Letters here do not reopen
+   Status. Constructed chord-chord I is not I_circles_z / I_CIRCULAR
+   and not glossary I with gamma / t. Host CircGamma stays QEX.
+
    Testable 𝓘 / cook results sit on the accepted Oracle line protocol
    (ADR-0006). This module mints no keyword and no second external seam.
 
