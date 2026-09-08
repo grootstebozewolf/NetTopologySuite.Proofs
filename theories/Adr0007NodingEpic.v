@@ -254,10 +254,10 @@ Proof.
 Qed.
 
 (* Core-slice circular tickets: ticket_64_circ_hit_params_qed_or_qex
-   (QED, CircularCookHit.v, full/atan2) and
-   ticket_64_circ_gamma_qed_or_qex (QEX, CircularCook.v). Not Required
-   here — host lane stays atan2-free. CircGamma stays QEX; first cook
-   stays chord–chord. *)
+   (QED, CircularCookHit.v, full/atan2), CircularCookSpan.v span γ
+   (QED, 4-axiom sidecar), and ticket_64_circ_gamma_qed_or_qex (QEX,
+   CircularCook.v host flag). Not Required here — host lane stays
+   atan2-free. Host CircGamma stays QEX; first cook stays chord–chord. *)
 
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.

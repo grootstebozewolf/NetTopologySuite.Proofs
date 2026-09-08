@@ -13,11 +13,11 @@
 #     immediately above the file line explaining what makes the file
 #     Category C / transitional and the planned resolution).
 #
-# Current state: 92 files are listed below -- 74 in `theories-flocq/` (the
+# Current state: 93 files are listed below -- 74 in `theories-flocq/` (the
 # initial bulk block for binary ops Bplus/Bminus/Bmult pulling
 # `Classical_Prop.classic` via Flocq, plus additional Category C for
 # snap-rounding, overlay, expansion-arithmetic, and Stage D as documented
-# per-file) and 18 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
+# per-file) and 19 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
 # plus #564 RiemannInt for the Fresnel inhabitant, documented per-file
 # below).  The five all-C2 arc files (`ArcLength` / `ArcArea` /
 # `ArcCentroid` / `ArcAreaCentroid` / `CurveBufferArea`) left this list
@@ -395,6 +395,14 @@ theories/AngleBetween.v
 # Classical_Prop.classic. Locked-fixture QED; CircGamma stays QEX.
 # No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
 theories/CircularCookHit.v
+
+# Category C (R-side, same atan lineage as CircularCookHit.v / ArcSpanAtan2.v):
+# span-restricted γ on CircularArc. arc_gamma / arc_t / retract use
+# circ_angle, arc_angle_from_start, atan2_sin_cos, so inherit
+# Classical_Prop.classic. Constructed interpolant QED; host CircGamma
+# stays QEX (3-axiom CircularCook cannot Require this sidecar).
+# No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
+theories/CircularCookSpan.v
 
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
