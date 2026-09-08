@@ -2777,6 +2777,10 @@ theories/RelateCurveAlphabet.v
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
 theories/SheetHenCook.v
 theories/Adr0007NodingEpic.v
+# Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
+theories/CircularCookZ.v
+# R-side p* attach. QEX: no γ:[0,1]. Classical reals.
+theories/CircularCook.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

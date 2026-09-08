@@ -1553,6 +1553,63 @@ let run_arc_arc_xy () =
           end
         end
 
+(* ----- I_CIRCULAR (claimId 64-i-circular).
+   ---------------------------------------------------------------------------
+   Extracted CircularCookZ.I_circles_z: integer circle–circle discriminant.
+   Input: two lines `o1x o1y r1` / `o2x o2y r2`.
+   Output: HIT <h+> <h-> | EMPTY | TOUCH <h> | DECLINE | NAN.
+   Hens are birth certificates (0/1). No p*. Not glossary 𝓘. *)
+let parse_centre_radius line =
+  match String.split_on_char ' ' (String.trim line) with
+  | [x; y; r] -> (float_of_string x, float_of_string y, float_of_string r)
+  | _ -> failwith (Printf.sprintf "oracle: bad centre-radius line: %s" line)
+
+let rec coq_pos_of_bigz (z : BigZ.t) : positive =
+  if BigZ.equal z BigZ.one then XH
+  else
+    let q = BigZ.shift_right z 1 in
+    if BigZ.equal (BigZ.logand z BigZ.one) BigZ.zero then XO (coq_pos_of_bigz q)
+    else XI (coq_pos_of_bigz q)
+
+let coq_z_of_bigz (z : BigZ.t) : z =
+  let c = BigZ.compare z BigZ.zero in
+  if c = 0 then Z0
+  else if c > 0 then Zpos (coq_pos_of_bigz z)
+  else Zneg (coq_pos_of_bigz (BigZ.neg z))
+
+let rec int_of_coq_nat = function
+  | O -> 0
+  | S n -> 1 + int_of_coq_nat n
+
+let scale_q_to_z (qs : Q.t list) : BigZ.t list =
+  let dens = List.map Q.den qs in
+  let lcm = List.fold_left BigZ.lcm BigZ.one dens in
+  List.map (fun q -> BigZ.div (BigZ.mul (Q.num q) lcm) (Q.den q)) qs
+
+let run_i_circular () =
+  let (o1x, o1y, r1) = parse_centre_radius (input_line stdin) in
+  let (o2x, o2y, r2) = parse_centre_radius (input_line stdin) in
+  if not (finite_float o1x && finite_float o1y && finite_float r1 &&
+          finite_float o2x && finite_float o2y && finite_float r2)
+  then print_endline "NAN"
+  else
+    match scale_q_to_z
+            [Q.of_float o1x; Q.of_float o1y; Q.of_float r1;
+             Q.of_float o2x; Q.of_float o2y; Q.of_float r2] with
+    | [z1x; z1y; zr1; z2x; z2y; zr2] ->
+        begin match i_circles_z
+                      (coq_z_of_bigz z1x) (coq_z_of_bigz z1y) (coq_z_of_bigz zr1)
+                      (coq_z_of_bigz z2x) (coq_z_of_bigz z2y) (coq_z_of_bigz zr2)
+        with
+        | IZHit (hp, hm) ->
+            Printf.printf "HIT %d %d\n" (int_of_coq_nat hp) (int_of_coq_nat hm)
+        | IZEmpty -> print_endline "EMPTY"
+        | IZTouch h ->
+            Printf.printf "TOUCH %d\n" (int_of_coq_nat h)
+        | IZDecline -> print_endline "DECLINE"
+        end
+    | _ -> print_endline "NAN"
+
 (* ----- DISC_OVERLAY (OV-DISC / OverlayNGCurve two-disc closed form).
    ---------------------------------------------------------------------------
    Exact two-disc overlay of FULL circular discs (not general circular noding).
@@ -4706,6 +4763,7 @@ let () =
        | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
        | "ARC_DISTANCE"             -> run_arc_distance ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
+       | "I_CIRCULAR"               -> run_i_circular ()
        | "DISC_OVERLAY"             -> run_disc_overlay ()
        | "LEC_CIRCLE"               -> run_lec_circle ()
        | "OBSTACLE_DISTANCE"        -> run_obstacle_distance ()

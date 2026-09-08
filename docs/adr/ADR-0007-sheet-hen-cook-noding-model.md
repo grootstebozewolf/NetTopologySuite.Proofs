@@ -404,3 +404,12 @@ be numeric rather than structural.
 
 Do not flip the Status line except by this decision. Status stays
 **Accepted** by Joost (BDFL) 2026-09-07.
+
+---
+
+## Integer circle–circle seam (2026-09-07)
+
+`CircularCookZ.v : I_circles_z` classifies two integer circles
+(Hit / Empty / Touch / Decline) and mints named-root hens; oracle
+`I_CIRCULAR`. QEX: no γ/[0,1], so this is not glossary 𝓘. Does not
+reopen Status.

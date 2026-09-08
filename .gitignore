@@ -41,6 +41,9 @@ __pycache__/
 # Prebuilt oracle binary (from CI artifacts for local harden/vector gen; reproducible via Dockerfile+make)
 oracle/oracle_bin
 oracle/extracted.ml
+oracle/circular_cook_extracted.ml
+oracle/circular_cook_extracted.mli
+oracle/i_circular_probe
 
 # Local agent / MCP scratch (not part of the corpus)
 /agent-tools/

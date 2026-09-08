@@ -90,3 +90,5 @@ theories/CircularStringOddCount.v
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
 theories/SheetHenCook.v
 theories/Adr0007NodingEpic.v
+# Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
+theories/CircularCookZ.v
