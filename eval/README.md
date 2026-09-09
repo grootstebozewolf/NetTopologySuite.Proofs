@@ -224,6 +224,14 @@ locked far pair inhabits Empty; host CircGamma stays QEX;
 II.4 / H⊥ / SQL/MM cathedral stay parked):
 `theories/CircularCookOkCirc.v`. 4-axiom atan2 sidecar.
 
+Production home for 0007-II.4-campaign-ii-close (Campaign II
+close letter; sidecar `I_ok_circ` inhabitant; host CircGamma
+stays QEX; `first_cook_scope` stays chord–chord; H⊥ parked;
+not a bag noder; Phase B SQL/MM Part 3 required-type gaps
+named — CircularString / CompoundCurve / CurvePolygon; not
+SQL/MM done): `theories/CircularCookCloseII.v`. 4-axiom
+atan2 sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

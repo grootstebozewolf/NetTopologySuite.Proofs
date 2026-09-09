@@ -479,6 +479,18 @@ theories/CircularCookSpanSplit.v
 # lineage. Headlines Qed-closed. Not CS concat. Not host I_ok.
 theories/CircularCookOkCirc.v
 
+# Category C (R-side, same atan lineage as CircularCookOkCirc.v):
+# ADR-0007 II.4 Campaign-II close letter. I_ok_circ exists as
+# sidecar glossary inhabitant. Host CircGamma stays QEX.
+# first_cook_scope stays chord–chord. H⊥ parked. Not a bag
+# noder. Phase B SQL/MM Part 3 required-type gaps named
+# (CircularString / CompoundCurve / CurvePolygon). Not
+# SQL/MM done. Inherits Classical_Prop.classic via
+# CircularCookOkCirc / Span / atan2 (claimId 0007 / II.4).
+# No extra axioms beyond the atan2 lineage. Headlines
+# Qed-closed. Not CS concat. No new kernel.
+theories/CircularCookCloseII.v
+
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
 # so inherit Classical_Prop.classic.  Headlines in_arc_point_on_minor_arc and

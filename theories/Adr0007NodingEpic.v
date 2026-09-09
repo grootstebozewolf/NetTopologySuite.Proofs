@@ -77,8 +77,11 @@
    in-span t lives in CircularCookSpanSplit.v (4-axiom sidecar;
    not Required here). II.3 I_ok_circ lives in
    CircularCookOkCirc.v (4-axiom sidecar; not Required here).
-   Host CircGamma stays QEX. II.4 / H⊥ / SQL/MM cathedral
-   stay parked. Not this host module.
+   II.4 Campaign-II close lives in CircularCookCloseII.v
+   (4-axiom sidecar; not Required here). Host CircGamma stays
+   QEX. first cook stays chord–chord. H⊥ stays parked. Not a
+   bag noder. Phase B SQL/MM Part 3 required-type gaps (CS /
+   CC / CP) are named — not SQL/MM done. Not this host module.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
