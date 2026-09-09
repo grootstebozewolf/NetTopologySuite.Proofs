@@ -2857,6 +2857,14 @@ theories/CircularCookClose.v
 # cathedral stay parked. 4-axiom atan2 sidecar (classic via Span).
 # Not CircularString concat. Not first cook scope. Not a noder.
 theories/CircularCookSpanFilter.v
+# II.2 split γ_span at in-span t (leftovers meet at p*).
+# Reuses arc_gamma / on_arc_gamma / I_span_root. Not circ_split /
+# γ_full. Locked p+ leftovers meet at p*; leftover stays on the
+# parent circle. Locked p− stays Empty — no invented span cook.
+# Host CircGamma stays QEX. II.3–II.4 / H⊥ / SQL/MM cathedral
+# stay parked. 4-axiom atan2 sidecar (classic via Span / Filter).
+# Not CircularString concat. Not first cook scope. Not a noder.
+theories/CircularCookSpanSplit.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

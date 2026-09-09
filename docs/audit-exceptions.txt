@@ -459,6 +459,16 @@ theories/CircularCookClose.v
 # beyond the atan2 lineage. Headlines Qed-closed. Not CS concat.
 theories/CircularCookSpanFilter.v
 
+# Category C (R-side, same atan lineage as CircularCookSpan.v):
+# ADR-0007 II.2 split γ_span at in-span t. Leftovers of arc_gamma
+# meet at locked p*. Leftover stays on the parent circle.
+# Locked p− stays Empty — no invented span cook. Host CircGamma
+# stays QEX. II.3–II.4 / H⊥ / SQL/MM cathedral stay parked.
+# Inherits Classical_Prop.classic via CircularCookSpan / atan2
+# (claimId 0007 / II.2). No extra axioms beyond the atan2 lineage.
+# Headlines Qed-closed. Not circ_split. Not CS concat.
+theories/CircularCookSpanSplit.v
+
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
 # so inherit Classical_Prop.classic.  Headlines in_arc_point_on_minor_arc and
