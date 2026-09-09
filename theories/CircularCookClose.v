@@ -6,6 +6,7 @@
    Campaign I is the circular sidecar cook programme on Accepted
    ADR-0007 (#666 + #686–#692). This letter tickets the close. It
    does not start Campaign II or H⊥. It does not remint a kernel.
+   II.1 (later letter) lives in CircularCookSpanFilter.v.
 
    QED: sidecar cook exists on a constructed circular Hit (both
    radical roots / MintTwo); I_CIRCULAR stays a classifier (tags

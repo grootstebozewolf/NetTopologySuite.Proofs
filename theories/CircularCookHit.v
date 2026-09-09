@@ -22,7 +22,8 @@
    / #857 / fully_intersected / ticket 523.  Not chord-lane constructed 𝓘.
    I.9 classifier ≠ cook lives in CircularCookLicense.v.
    I.10 Campaign-I close lives in CircularCookClose.v.
-   Not Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
+   II.1 span filter lives in CircularCookSpanFilter.v.
+   Not II.2–II.4 / H⊥ / a CRV-TOUCH kiss procedure.
 
    WITNESS topic: core · claimId: 64-circ-hit-params / 0007
    witness: 64-i-circular-locked / 0007-I.2-hit-sound
