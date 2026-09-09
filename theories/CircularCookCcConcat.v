@@ -10,7 +10,7 @@
    head to tail — the SQL/MM Part 3 required-type reading already
    used in II.4 / B.1 fences. Mixed linear and curved by construction.
    Not a remint of CurveSegment / Exact* / Dart. Not the Koc C¹
-   clothoid assembly (CompoundCurveKoc*).
+   clothoid assembly (CompoundCurveKoc family).
 
    Reuse, not a new kernel:
      LS–LS joint is host I_ok Hit at (ce_p1, tᵢ=1, tⱼ=0) via
@@ -49,7 +49,7 @@
      Not CurvePolygon. Not ring closure as CP. Not G¹ / H⊥.
      Not a remint of CurveSegment / Exact* / Dart / Hobby /
      leftover_width / ArcSplitAtNode leftover-width / host
-     circ_split / CircularStringValid / CompoundCurveKoc*.
+     circ_split / CircularStringValid / CompoundCurveKoc family.
      Do not fake atan2-free host γ. Do not expand first_cook_scope.
      Do not start CurvePolygon / H⊥ / a CRV-TOUCH kiss procedure /
      CircGamma remint / full SQL/MM cathedral. No MerkatorBV.
