@@ -183,6 +183,13 @@ on concentric unequal radii; CircGamma stays QEX):
 `theories/CircularCookEmpty.v`. 4-axiom atan2 lane; sidecar cook
 stays locked.
 
+Production home for 0007-I.8-leftover-confluence (`circ_leftovers_ab`
+= `circ_leftovers_ba` on γ_full; circular analogue of
+`split_step_confluent`; cook leftovers inhabit that bag; one-step
+≠ bag loop; CircGamma stays QEX):
+`theories/CircularCookConfluence.v`. 4-axiom atan2 sidecar; not
+leftover-width; not I.9–I.10.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

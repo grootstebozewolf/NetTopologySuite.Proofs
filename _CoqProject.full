@@ -2828,6 +2828,11 @@ theories/CircularCookSpan.v
 # try_cook_hit still declines circular eggs. 4-axiom atan2 sidecar.
 # Not first cook scope. Not ArcSplitAtNode. Not a noder.
 theories/CircularCookSplit.v
+# I.8 one-step leftover confluence on γ_full. Circular analogue of
+# SheetHenCook.split_step_confluent (leftovers_ab = leftovers_ba).
+# Not the bag loop. Not leftover_width. CircGamma stays QEX.
+# 4-axiom atan2 sidecar. Not I.9–I.10 / Campaign II / H⊥.
+theories/CircularCookConfluence.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
