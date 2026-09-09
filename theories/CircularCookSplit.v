@@ -40,8 +40,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import ZArith Reals Lra.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookZ
-  CircularCook CircularCookHit.
+From NTS.Proofs Require Import Distance SheetHenCook ArcArcCircles
+  CircularCookZ CircularCook CircularCookHit.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
