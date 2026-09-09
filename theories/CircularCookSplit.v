@@ -29,7 +29,7 @@
    (leftovers_ab = leftovers_ba on γ_full; not the bag loop).
    I.9 classifier ≠ cook lives in CircularCookLicense.v
    (Z Hit ⇏ host try_cook_hit / circ_split / first_cook_scope).
-   This sidecar does not start I.10.
+   I.10 Campaign-I close lives in CircularCookClose.v.
 
    Honesty fences:
      constructed chord–chord 𝓘 ≠ I_circles_z / I_CIRCULAR ≠ this

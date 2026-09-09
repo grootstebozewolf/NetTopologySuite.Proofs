@@ -21,7 +21,8 @@
    Not glossary 𝓘 for CircularArc eggs.  Not a noder.  Not OverlayNGCurve
    / #857 / fully_intersected / ticket 523.  Not chord-lane constructed 𝓘.
    I.9 classifier ≠ cook lives in CircularCookLicense.v.
-   Not I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
+   I.10 Campaign-I close lives in CircularCookClose.v.
+   Not Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
 
    WITNESS topic: core · claimId: 64-circ-hit-params / 0007
    witness: 64-i-circular-locked / 0007-I.2-hit-sound

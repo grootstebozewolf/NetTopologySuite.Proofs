@@ -2831,13 +2831,19 @@ theories/CircularCookSplit.v
 # I.8 one-step leftover confluence on γ_full. Circular analogue of
 # SheetHenCook.split_step_confluent (leftovers_ab = leftovers_ba).
 # Not the bag loop. Not leftover_width. CircGamma stays QEX.
-# 4-axiom atan2 sidecar. Not I.10 / Campaign II / H⊥.
+# 4-axiom atan2 sidecar. Campaign I close is I.10.
 theories/CircularCookConfluence.v
 # I.9 classifier ≠ cook. I_circles_z / I_CIRCULAR Hit is tags 0/1,
 # not (p*, tᵢ, tⱼ). Does not license host try_cook_hit / circ_split
 # / first_cook_scope expansion. CircGamma stays QEX.
-# 4-axiom atan2 sidecar. Not I.10 / Campaign II / H⊥.
+# 4-axiom atan2 sidecar. Campaign I close is I.10.
 theories/CircularCookLicense.v
+# I.10 Campaign-I close letter. Sidecar cook on constructed circular
+# Hit (both roots). Host CircGamma stays QEX. first_cook_scope stays
+# chord–chord. I_CIRCULAR stays a classifier. #666 fence holds.
+# Campaign II and H⊥ are named parked. No new kernel. Not SQL/MM done.
+# 4-axiom atan2 sidecar (classic via Split / circ_gamma).
+theories/CircularCookClose.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

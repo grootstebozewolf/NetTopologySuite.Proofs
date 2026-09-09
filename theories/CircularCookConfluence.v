@@ -21,8 +21,8 @@
      leftover_width / ArcSplitAtNode leftover-width.
      Do not fake atan2-free host γ.
      I.9 classifier ≠ cook lives in CircularCookLicense.v.
-     Do not start I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss
-     procedure.
+     I.10 Campaign-I close lives in CircularCookClose.v.
+     Do not start Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
 
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-I.8-leftover-confluence
@@ -48,7 +48,7 @@ Local Open Scope R_scope.
    kind=QED-one-step-leftover-confluence-gamma-full
    analogue=SheetHenCook.split_step_confluent
    not=bag-loop,leftover-width,CircGamma-Discharge,CircularArc-span
-   not=I.10,Campaign-II,Hperp,CRV-TOUCH-kiss *)
+   not=Campaign-II,Hperp,CRV-TOUCH-kiss *)
 
 (* -------------------------------------------------------------------------- *)
 (* Leftover bags on γ_full. Named circ_* because SheetHenCook already          *)
@@ -195,7 +195,7 @@ Qed.
 
 (* I.8 is γ_full leftover-bag confluence, not CircularArc span and
    not the bag loop. CircGamma stays QEX. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i8_scope_qed_or_qex","title":"I.8 discharges CircGamma and the bag loop (QED) or gamma_full one-step confluence while CircGamma stays QEX (QEX); discharged QEX; not I.10","file":"theories/CircularCookConfluence.v","witness":"0007-I.8-leftover-confluence","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i8_scope_qed_or_qex","title":"I.8 discharges CircGamma and the bag loop (QED) or gamma_full one-step confluence while CircGamma stays QEX (QEX); discharged QEX; Campaign I close is I.10","file":"theories/CircularCookConfluence.v","witness":"0007-I.8-leftover-confluence","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i8_scope_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
