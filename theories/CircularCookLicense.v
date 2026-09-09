@@ -59,8 +59,8 @@ Local Open Scope R_scope.
 Lemma i9_locked_z_hit_is_tags :
   I_circles_z 0 0 5 7 0 5 = IZHit 0%nat 1%nat.
 Proof.
-  destruct classifier_hens_are_tags as [Hp Hm].
-  rewrite <- Hp, <- Hm.
+  (* hen_plus := 0, hen_minus := 1. Do not rewrite 0%nat — that
+     rewrites the 0 inside 1%nat (= S 0) and leaves no 1%nat. *)
   exact locked_I_circles_z_hit.
 Qed.
 
