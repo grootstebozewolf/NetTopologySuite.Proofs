@@ -463,7 +463,7 @@ for name, ga, gb, expect in CASES:
     # the documented DE9IM.disjoint_intersects3 quirk; im_overlaps omits the
     # IE/EI requirement so it fires on `equal`), so they are intentionally NOT
     # routed through the repo engine -- the independent engine is the oracle.
-    if len(got) == 9 and all(c in "FT012?" for c in got) and "?" not in got:
+    if len(got) == 9 and all(c in "F012?" for c in got) and "?" not in got:
         for pred in ("CONTAINS", "WITHIN"):
             ind = ogc_holds(got, pred)
             repo = predicate(got, pred) == "TRUE"

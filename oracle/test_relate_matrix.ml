@@ -111,6 +111,13 @@ let () =
      Printf.eprintf "FAIL lookup_matrix accepted ? as a catalog / fill key\n";
      exit 1
    with Invalid_argument _ -> ());
+  (* 523-b: result predicate accepts ?; catalog lookup stays F/0/1/2. *)
+  assert_bool "result FF?FF1212" (is_valid_de9im_result "FF?FF1212") true;
+  assert_bool "result FFFFFFFFF" (is_valid_de9im_result "FFFFFFFFF") true;
+  assert_bool "result nine ?" (is_valid_de9im_result "?????????") true;
+  assert_bool "result bare ?" (is_valid_de9im_result "?") false;
+  assert_bool "result token" (is_valid_de9im_result "UNSUPPORTED") false;
+  assert_bool "result T cell" (is_valid_de9im_result "FF0FF121T") false;
 
   (* additional TOUCH from first batch (consumption of rect oracles) *)
   assert_pred "aa_matrix_touch_vertical" "Touches" true;
