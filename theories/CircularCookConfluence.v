@@ -36,8 +36,10 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals.
+(* CircularCookHit is required for locked_O1 / locked_O2 / locked_r.
+   CircularCookSplit Imports Hit and does not Export those witnesses. *)
 From NTS.Proofs Require Import Distance SheetHenCook CircularCook
-  CircularCookSplit.
+  CircularCookHit CircularCookSplit.
 Local Open Scope R_scope.
 
 (* WITNESS: campaign=I rung=I.8 claim=0007
