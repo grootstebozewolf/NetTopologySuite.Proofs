@@ -51,7 +51,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import Distance SheetHenCook ArcSpanAtan2
+From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry ArcSpanAtan2
   CircularCook CircularCookHit CircularCookSpan.
 Local Open Scope R_scope.
 
