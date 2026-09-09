@@ -24,6 +24,8 @@
    (CircularCookSpanFilter.v): Hit iff on_arc_gamma both.
    II.2 splits this interpolant at in-span t
    (CircularCookSpanSplit.v): leftovers meet at p*.
+   II.3 inhabits glossary I as I_ok_circ on this interpolant
+   (CircularCookOkCirc.v): locked Hit licenses the split.
 
    WITNESS topic: core · claimId: 64-circ-span-gamma · witness: 64-circ-span-locked
    board: ADR-0007

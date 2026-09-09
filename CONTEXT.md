@@ -338,9 +338,17 @@ II.2: split each span interpolant `arc_gamma` at the Hit’s
 in-span `tᵢ` / `tⱼ`; leftovers meet at `p*` (Hit incidence, not
 a kiss); leftover γ stays on the parent circle. Locked `p−`
 stays Empty — no invented span cook. Not `circ_split` / γ_full.
-II.3 (`I_ok_circ`), II.4, H⊥, and the SQL/MM Part 3
-required-type cathedral (CS / CC / CP) stay parked. A
-CircularString theorem needs concatenation; this is one Arc.
+II.3: first glossary-type inhabitant `I_ok_circ` on
+EggCircularArc × EggCircularArc using sidecar `arc_gamma`
+(span filter + span split). Locked `p+` Hit licenses
+`span_split`; a far quarter of the I.3 disjoint circles
+inhabits Empty. Host CircGamma stays QEX; host circular
+`I_ok` stays Decline; `I_ok_circ` Hit ≠ host `I_ok`.
+`first_cook_scope` stays chord–chord. ∀ Hit / Empty /
+Decline as a Prop are definitional; not a computed
+classifier. II.4, H⊥, and the SQL/MM Part 3 required-type
+cathedral (CS / CC / CP) stay parked. A CircularString
+theorem needs concatenation; this is one Arc.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

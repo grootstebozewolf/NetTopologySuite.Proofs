@@ -290,6 +290,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.9 not CircGamma / not scope expand | `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
 | — | II.1 span filter as IResult | `CircularCookSpanFilter.v : ticket_0007_ii1_hit_qed_or_qex` | **QED** — arc Hit iff `on_arc_gamma` both; locked `p+` in-span, `p−` out | `CircularCookSpanFilter.v : I_span_root_hit_iff`, `CircularCookSpanFilter.v : ii1_locked_plus_span_hit` |
 | — | II.2 split γ_span at in-span t | `CircularCookSpanSplit.v : ticket_0007_ii2_meet_qed_or_qex` | **QED** — leftovers of `arc_gamma` meet at locked `p+`; leftover on parent circle; `p−` stays Empty | `CircularCookSpanSplit.v : cooked_span_plus_meets`, `CircularCookSpanSplit.v : cooked_span_plus_on_parent` |
+| — | II.3 I_ok_circ on circular eggs | `CircularCookOkCirc.v : ticket_0007_ii3_hit_qed_or_qex` | **QED** — first glossary-type inhabitant; locked `p+` Hit licenses `span_split` | `CircularCookOkCirc.v : I_ok_circ_hit_iff`, `CircularCookOkCirc.v : ii3_locked_plus_licenses_cook` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -729,3 +730,35 @@ procedure. Does not reopen Status.
 | `CircularCookSpanSplit.v : ticket_0007_ii2_park_qed_or_qex` | **QEX** — II.3–II.4 / H⊥ / SQL/MM cathedral parked; II.2 landed | `CircularCookSpanSplit.v : campaign_ii2_is_landed`, `CircularCookSpanSplit.v : campaign_ii3_is_parked` |
 
 Witness: `0007-II.2-span-split`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — II.3 I_ok_circ on EggCircularArc × EggCircularArc (2026-09-09)
+
+II.2 unparked the span split and named II.3–II.4 parked. This letter
+unparks **II.3 only**. `I_ok_circ` is the first glossary-type
+inhabitant on EggCircularArc × EggCircularArc using sidecar
+`arc_gamma` / span filter / span split. Host `I_ok` on circular
+eggs stays Decline; span Hit ≠ host `I_ok` until this letter —
+an `I_ok_circ` Hit licenses the II.2 cook. Locked `(0,0)/(7,0)`
+r=5 proper arcs inhabit Hit at `p+`. Pair-level Empty is a far
+quarter of the I.3 `(0,0)/(20,0)` r=5 disjoint circles (the
+locked A×B pair is Hit, so per-root `p−` Empty is not pair
+Empty). Invalid controls Decline. ∀ Hit / Empty / Decline as a
+Prop are definitional; this letter does not mint a computed
+classifier. Host CircGamma stays QEX. `first_cook_scope` stays
+chord–chord. II.4 honesty letter, H⊥, and the SQL/MM Part 3
+required-type cathedral (CircularString / CompoundCurve /
+CurvePolygon) stay parked. A CircularString theorem needs
+concatenation; this is one Arc. Does not remint
+`CurveSegment` / Exact* / `Dart` / Hobby / `ArcSplitAtNode`
+leftover-width. Does not start II.4 / H⊥ / a CRV-TOUCH kiss
+procedure. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookOkCirc.v : ticket_0007_ii3_hit_qed_or_qex` | **QED** — Hit iff `on_arc_gamma` both; locked `p+` inhabits | `CircularCookOkCirc.v : I_ok_circ_hit_iff`, `CircularCookOkCirc.v : ii3_locked_plus_I_ok_circ` |
+| `CircularCookOkCirc.v : ticket_0007_ii3_license_qed_or_qex` | **QED** — `I_ok_circ` Hit licenses `span_split`; leftovers meet at `p+` | `CircularCookOkCirc.v : I_ok_circ_hit_licenses_span_cook`, `CircularCookOkCirc.v : ii3_locked_plus_licenses_cook` |
+| `CircularCookOkCirc.v : ticket_0007_ii3_empty_qed_or_qex` | **QED** — locked far pair inhabits Empty; Empty ≠ Decline; pair Hit ≠ per-root Empty | `CircularCookOkCirc.v : ii3_locked_empty`, `CircularCookOkCirc.v : ii3_pair_hit_neq_root_empty` |
+| `CircularCookOkCirc.v : ticket_0007_ii3_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; `I_ok_circ` Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `CircularCookOkCirc.v : ii3_I_ok_circ_hit_not_host_I_ok` |
+| `CircularCookOkCirc.v : ticket_0007_ii3_park_qed_or_qex` | **QEX** — II.4 / H⊥ / SQL/MM cathedral parked; II.3 landed | `CircularCookOkCirc.v : campaign_ii3_is_landed`, `CircularCookOkCirc.v : campaign_ii4_is_parked` |
+
+Witness: `0007-II.3-I-ok-circ`. Status stays **Accepted**. Host CircGamma stays QEX.
