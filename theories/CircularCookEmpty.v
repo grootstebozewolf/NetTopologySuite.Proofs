@@ -22,7 +22,7 @@
    Hobby / leftover-width.
    ============================================================================ *)
 
-From Stdlib Require Import ZArith Reals Lra Lia.
+From Stdlib Require Import ZArith Reals Lra Lia Bool.
 From NTS.Proofs Require Import Distance SheetHenCook CircularCookZ
   CircularCook CircularCookHit.
 Local Open Scope R_scope.
