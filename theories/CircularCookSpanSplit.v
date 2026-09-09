@@ -378,7 +378,6 @@ Lemma cooked_span_plus_on_parent : forall u,
     (span_leftover_eval (scp_R2 cooked_span_plus) u).
 Proof.
   intros u Hu.
-  unfold cooked_span_plus.
   destruct (cook_span_root_on_circle span_arc_A span_arc_B
               locked_span_ti_plus locked_span_tj_plus u)
     as [Hc1 [Hc2 [Hc3 Hc4]]].
@@ -387,7 +386,16 @@ Proof.
               Hti Hu) as [Hl1 Hr1].
   destruct (span_split_leftover_on_parent span_arc_B locked_span_tj_plus u
               Htj Hu) as [Hl2 Hr2].
-  repeat split; assumption.
+  unfold cooked_span_plus, cook_span_root.
+  cbn [scp_L1 scp_R1 scp_L2 scp_R2].
+  split; [exact Hc1|].
+  split; [exact Hc2|].
+  split; [exact Hc3|].
+  split; [exact Hc4|].
+  split; [exact Hl1|].
+  split; [exact Hr1|].
+  split; [exact Hl2|].
+  exact Hr2.
 Qed.
 
 (* Locked p− stays II.1 Empty. Do not invent a span cook. *)
