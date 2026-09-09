@@ -13,11 +13,11 @@
 #     immediately above the file line explaining what makes the file
 #     Category C / transitional and the planned resolution).
 #
-# Current state: 95 files are listed below -- 74 in `theories-flocq/` (the
+# Current state: 96 files are listed below -- 74 in `theories-flocq/` (the
 # initial bulk block for binary ops Bplus/Bminus/Bmult pulling
 # `Classical_Prop.classic` via Flocq, plus additional Category C for
 # snap-rounding, overlay, expansion-arithmetic, and Stage D as documented
-# per-file) and 21 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
+# per-file) and 22 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
 # plus #564 RiemannInt for the Fresnel inhabitant, documented per-file
 # below).  The five all-C2 arc files (`ArcLength` / `ArcArea` /
 # `ArcCentroid` / `ArcAreaCentroid` / `CurveBufferArea`) left this list
@@ -490,6 +490,18 @@ theories/CircularCookOkCirc.v
 # No extra axioms beyond the atan2 lineage. Headlines
 # Qed-closed. Not CS concat. No new kernel.
 theories/CircularCookCloseII.v
+
+# Category C (R-side, same atan lineage as CircularCookOkCirc.v):
+# ADR-0007 Phase B.1 CircularString concat joints. CS is a
+# sequence of CircEgg; joint is I_ok_circ Hit at (end, t=1,
+# t=0) via sidecar arc_gamma / I_ok_circ. Joint params not
+# interior. Locked 2-arc V-CS odd_closed fixture. Host
+# CircGamma stays QEX. CompoundCurve / CurvePolygon / H⊥
+# parked. Not SQL/MM done. Inherits Classical_Prop.classic
+# via CircularCookOkCirc / Span / atan2 (claimId 0007 / B.1).
+# No extra axioms beyond the atan2 lineage. Headlines
+# Qed-closed. No new kernel. Not a CircGamma remint.
+theories/CircularCookCsConcat.v
 
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,

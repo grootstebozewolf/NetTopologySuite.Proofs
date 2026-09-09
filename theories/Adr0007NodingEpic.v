@@ -78,10 +78,12 @@
    not Required here). II.3 I_ok_circ lives in
    CircularCookOkCirc.v (4-axiom sidecar; not Required here).
    II.4 Campaign-II close lives in CircularCookCloseII.v
-   (4-axiom sidecar; not Required here). Host CircGamma stays
-   QEX. first cook stays chord–chord. H⊥ stays parked. Not a
-   bag noder. Phase B SQL/MM Part 3 required-type gaps (CS /
-   CC / CP) are named — not SQL/MM done. Not this host module.
+   (4-axiom sidecar; not Required here). Phase B.1 CircularString
+   concat joints live in CircularCookCsConcat.v (4-axiom sidecar
+   reuse of I_ok_circ / arc_gamma; not Required here). Host
+   CircGamma stays QEX. first cook stays chord–chord. H⊥ stays
+   parked. Not a bag noder. CompoundCurve / CurvePolygon stay
+   named Phase B gaps — not SQL/MM done. Not this host module.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
