@@ -102,6 +102,7 @@ Lemma i10_sidecar_cook_both_roots :
   try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
     (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
   /\ circ_mint_two_ok cooked_circ_mint_two
+       hen_plus hen_minus locked_p_plus locked_p_minus
   /\ circular_gamma_status = CircGammaQEX.
 Proof.
   split; [exact cooked_circ_mint_two_try|].
@@ -177,6 +178,7 @@ Theorem ticket_0007_i10_sidecar_qed_or_qex :
   (try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
      (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
    /\ circ_mint_two_ok cooked_circ_mint_two
+        hen_plus hen_minus locked_p_plus locked_p_minus
    /\ circular_gamma_status = CircGammaQEX)
   \/
   try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
