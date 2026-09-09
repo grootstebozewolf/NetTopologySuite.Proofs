@@ -23,9 +23,10 @@
    on the locked Z^6 witness — not a type synonym. Touch ≠ IHit;
    circular Empty ≠ Decline. Host I_gloss stays QEX.
 
-   I.2 ∀ Hit soundness lives in CircularCookHit.v (classifier,
-   γ_full, both roots). This sidecar cook stays locked — I.2 does
-   not drop the cook lock and does not start I.3.
+   I.2 ∀ Hit soundness lives in CircularCookHit.v; I.3 ∀ Empty /
+   Decline lives in CircularCookEmpty.v (classifier, γ_full).
+   This sidecar cook stays locked — I.3 does not drop the cook
+   lock and does not start I.8–I.10.
 
    Honesty fences:
      constructed chord–chord 𝓘 ≠ I_circles_z / I_CIRCULAR ≠ this
@@ -37,7 +38,8 @@
 
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-circ-cook / 0007-I.7-mint-two / 0007-I.1-fence
-     / 0007-I.2-hit-sound (classifier ∀ in CircularCookHit)
+     / 0007-I.2-hit-sound / 0007-I.3-empty-decline
+     (Hit ∀ in CircularCookHit; Empty/Decline ∀ in CircularCookEmpty)
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic via CircularCookHit).
    No Admitted / Axiom / Parameter.

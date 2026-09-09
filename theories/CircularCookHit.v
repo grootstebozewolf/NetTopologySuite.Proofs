@@ -12,15 +12,19 @@
    I.2: ∀ Hit soundness off that lock — I_circles_gamma = Hit iff
    proper discriminant and on_full_circle on both radical roots
    (γ_full, not CircularArc span). R3 is the locked witness.
+   I.3: ∀ Empty / Decline lives in CircularCookEmpty (sibling
+   after this module; image-disjoint ≠ discriminant Empty).
    QEX: CircularArc still has no γ / (tᵢ, tⱼ) — CircGamma stays QEX;
    do not fake Discharge.  first_cook_scope stays chord–chord.
+   Sidecar cook stays locked.
 
    Not glossary 𝓘 for CircularArc eggs.  Not a noder.  Not OverlayNGCurve
    / #857 / fully_intersected / ticket 523.  Not chord-lane constructed 𝓘.
-   Not I.3 / I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
+   Not I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
 
    WITNESS topic: core · claimId: 64-circ-hit-params / 0007
    witness: 64-i-circular-locked / 0007-I.2-hit-sound
+   (I.3 tickets live in CircularCookEmpty)
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic). No Admitted / Axiom / Parameter.
 
@@ -178,6 +182,27 @@ Proof.
   split.
   - exact (circ_t_in_unit O P r Hr Heq).
   - symmetry. exact (circ_gamma_retract O P r Hr Heq).
+Qed.
+
+Lemma circ_gamma_on_circle :
+  forall O r t,
+    dist_sq O (circ_gamma O r t) = r * r.
+Proof.
+  intros O r t.
+  unfold circ_gamma, dist_sq.
+  cbn [px py].
+  replace (px O - (px O + r * cos (2 * PI * t)))
+    with (- r * cos (2 * PI * t)) by ring.
+  replace (py O - (py O + r * sin (2 * PI * t)))
+    with (- r * sin (2 * PI * t)) by ring.
+  replace ((- r * cos (2 * PI * t)) * (- r * cos (2 * PI * t))
+           + (- r * sin (2 * PI * t)) * (- r * sin (2 * PI * t)))
+    with (r * r * (sin (2 * PI * t) * sin (2 * PI * t)
+                   + cos (2 * PI * t) * cos (2 * PI * t))) by ring.
+  pose proof (sin2_cos2 (2 * PI * t)) as Hpyth.
+  unfold Rsqr in Hpyth.
+  rewrite Hpyth.
+  ring.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

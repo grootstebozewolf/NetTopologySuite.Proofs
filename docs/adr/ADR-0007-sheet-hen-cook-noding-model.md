@@ -276,6 +276,10 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.1 I_gloss / host CircGamma | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; host circular `I_ok` is Decline only | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : circular_decline_I_ok` |
 | — | I.2 ∀ Hit soundness | `CircularCookHit.v : ticket_0007_i2_hit_sound_qed_or_qex` | **QED** — `I_circles_gamma` = Hit iff proper disc ∧ `on_full_circle` on both roots; R3 locked witness recovered | `CircularCookHit.v : I_circles_gamma_hit_iff`, `CircularCookHit.v : i2_recovers_locked_r3` |
 | — | I.2 not arc membership | `CircularCookHit.v : ticket_0007_i2_arc_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
+| — | I.3 ∀ Empty | `CircularCookEmpty.v : ticket_0007_i3_empty_qed_or_qex` | **QED** — `I_circles_gamma` = Empty iff proper pair ∧ γ_full images disjoint on S | `CircularCookEmpty.v : I_circles_gamma_empty_iff`, `CircularCookEmpty.v : i3_recovers_locked_empty` |
+| — | I.3 ∀ Decline | `CircularCookEmpty.v : ticket_0007_i3_decline_qed_or_qex` | **QED** — Decline iff not a proper pair (`d=0` or `r≤0`) | `CircularCookEmpty.v : I_circles_gamma_decline_iff` |
+| — | I.3 discriminant ≠ image-disjoint | `CircularCookEmpty.v : ticket_0007_i3_disc_neq_image_qed_or_qex` | **QED** — concentric unequal radii are image-disjoint and Decline, not Empty | `CircularCookEmpty.v : concentric_unequal_images_disjoint` |
+| — | I.3 not arc membership | `CircularCookEmpty.v : ticket_0007_i3_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; sidecar cook stays locked | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -567,3 +571,26 @@ Does not reopen Status.
 | `CircularCookHit.v : ticket_0007_i2_arc_scope_qed_or_qex` | **QEX** — not arc membership; CircGamma stays QEX | `CircularCook.v : circular_gamma_is_qex` |
 
 Witness: `0007-I.2-hit-sound`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.3 ∀ Empty / Decline (2026-09-09)
+
+#689 dropped the lock on Hit. This letter drops it on Empty and Decline
+without folding them into I.2's discriminant Hit iff. `ICircGEmpty`
+iff the pair is proper and the γ_full images are disjoint on S
+(triangle inequality). `ICircGDecline` iff the pair is not proper
+(`d=0` or `r≤0`). Discriminant Empty and image-disjoint are different
+proofs: concentric unequal radii are image-disjoint and Decline.
+Not CircularArc span membership. Sidecar cook stays locked. Host
+CircGamma stays QEX. Does not remint `CurveSegment` / Exact* /
+`Dart` / Hobby / `ArcSplitAtNode` leftover-width. Does not start
+I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not
+reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookEmpty.v : ticket_0007_i3_empty_qed_or_qex` | **QED** — ∀ Empty iff proper ∧ γ_full images disjoint | `CircularCookEmpty.v : I_circles_gamma_empty_iff` |
+| `CircularCookEmpty.v : ticket_0007_i3_decline_qed_or_qex` | **QED** — ∀ Decline iff not a proper pair | `CircularCookEmpty.v : I_circles_gamma_decline_iff` |
+| `CircularCookEmpty.v : ticket_0007_i3_disc_neq_image_qed_or_qex` | **QED** — concentric unequal radii: disjoint images, Decline | `CircularCookEmpty.v : concentric_unequal_images_disjoint` |
+| `CircularCookEmpty.v : ticket_0007_i3_scope_qed_or_qex` | **QEX** — not arc membership; CircGamma stays QEX | `CircularCook.v : circular_gamma_is_qex` |
+
+Witness: `0007-I.3-empty-decline`. Status stays **Accepted**. Host CircGamma stays QEX.
