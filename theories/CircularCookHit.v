@@ -205,6 +205,14 @@ Proof.
   discriminate.
 Qed.
 
+Lemma ICircGTouch_neq_ICircGHit :
+  forall h p ti tj hp pp tip tjp hm pm tim tjm,
+    ICircGTouch h p ti tj <>
+    ICircGHit hp pp tip tjp hm pm tim tjm.
+Proof.
+  intros. discriminate.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Locked fixture (0,0)/(7,0) r=5 — same witness as 64-i-circular-locked.     *)
 (* -------------------------------------------------------------------------- *)
@@ -517,3 +525,4 @@ Print Assumptions locked_I_circles_gamma_internal_kiss.
 Print Assumptions locked_internal_kiss_on_gamma.
 Print Assumptions ticket_64_circ_hit_params_qed_or_qex.
 Print Assumptions ICircGEmpty_neq_ICircGDecline.
+Print Assumptions ICircGTouch_neq_ICircGHit.

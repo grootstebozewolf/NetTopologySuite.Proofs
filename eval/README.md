@@ -162,6 +162,14 @@ endpoint ≠ kiss; Empty / Decline / Touch still mint nothing):
 `theories/CircularCookSplit.v`. 4-axiom atan2 sidecar; no
 micro-kernel twin (atan2 / radical `p*` cone).
 
+Production home for 0007-I.1-fence (four objects pairwise unequal
+by locked observation, not a type synonym; Touch ≠ IHit; circular
+Empty ≠ Decline; chord × circular Decline inhabits `I_ok`;
+`I_gloss` stays QEX): `theories/CircularCookSplit.v` (fence /
+Touch / Empty tickets), `theories/Adr0007NodingEpic.v` (mixed
+Decline), `theories/CircularCook.v` (`I_gloss` QEX). Sidecar
+4-axiom atan2; host tickets atan2-free.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

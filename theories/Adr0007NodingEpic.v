@@ -62,6 +62,9 @@
    CircularCookSplit.v feeds the locked circular Hit into a
    same-shape split(t) cook; I.7 MintTwo / p- lives there too.
    That is not this host module. Do not fake CircGamma Discharge.
+   I.1 Fence: chord × circular Decline inhabits I_ok (honest host
+   arm). A constructed mixed Hit does not. The four-object pairwise
+   fence lives in CircularCookSplit.v — not a type synonym.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
@@ -405,6 +408,30 @@ Proof.
   exact circular_egg_not_first_cook_scope.
 Qed.
 
+(* I.1: chord × circular Decline inhabits I_ok (QED) or a mixed
+   constructed Hit is licensed (QEX). Discharged QED — first cook
+   scope stays chord–chord; mixed Empty / Hit are False. Not a
+   constructed mixed Hit. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_chord_circ_decline_qed_or_qex","title":"Chord times circular Decline inhabits I_ok (QED) or a mixed Hit is licensed (QEX); discharged QED; I.1 honest host arm","file":"theories/Adr0007NodingEpic.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
+
+Theorem ticket_0007_chord_circ_decline_qed_or_qex :
+  (I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) IDecline
+   /\ (forall p ti tj,
+         ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc)
+              (IHit p ti tj))
+   /\ ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) IEmpty
+   /\ ~ first_cook_scope EggChord EggCircularArc)
+  \/
+  I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc)
+       (IHit cross_pt (1 / 2) (1 / 2)).
+Proof.
+  left.
+  split; [exact chord_circular_decline_I_ok|].
+  split; [exact chord_circular_hit_not_I_ok|].
+  split; [exact chord_circular_empty_not_I_ok|].
+  exact chord_circular_not_first_cook_scope.
+Qed.
+
 Print Assumptions ticket_0007_qed_or_qex.
 Print Assumptions ticket_0007_chord_chord_qed_or_qex.
 Print Assumptions ticket_0007_empty_neq_decline_qed_or_qex.
@@ -422,3 +449,4 @@ Print Assumptions ticket_0007_constructed_I_qed_or_qex.
 Print Assumptions ticket_0007_constructed_I_scope_qed_or_qex.
 Print Assumptions ticket_0007_share_constructed_qed_or_qex.
 Print Assumptions ticket_0007_circ_host_cook_qed_or_qex.
+Print Assumptions ticket_0007_chord_circ_decline_qed_or_qex.

@@ -269,6 +269,11 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.7 MintTwo / `p−` is a second Hit | `CircularCookSplit.v : ticket_0007_circ_mint_two_qed_or_qex` | **QED** — allocation across both radical roots is `MintTwo`; leftovers meet at `p−` | `CircularCookSplit.v : cooked_circ_mint_two_try`, `CircularCookSplit.v : cooked_circ_minus_ok` |
 | — | I.7 leftover shared endpoint ≠ kiss | `CircularCookSplit.v : ticket_0007_circ_shared_neq_kiss_qed_or_qex` | **QED** — leftover join is Hit incidence, not Touch | `CircularCookSplit.v : leftover_shared_endpoint_not_touch` |
 | — | I.7 MintTwo Empty / Decline / Touch | `CircularCookSplit.v : ticket_0007_circ_mint_two_scope_qed_or_qex` | **QEX** — still allocate no hen | `CircularCookSplit.v : locked_circ_mint_two_touch_none` |
+| — | I.1 four-object fence | `CircularCookSplit.v : ticket_0007_i1_fence_qed_or_qex` | **QED** — locked observations; not a type synonym | `CircularCookSplit.v : i1_z_neq_gamma_obs`, `CircularCookSplit.v : i1_sidecar_neq_gloss_obs` |
+| — | I.1 Touch ≠ IHit | `CircularCookSplit.v : ticket_0007_touch_neq_ihit_qed_or_qex` | **QED** — kiss Touch ≠ proper-cross Hit on Z and γ | `CircularCookZ.v : IZTouch_neq_IZHit`, `CircularCookHit.v : ICircGTouch_neq_ICircGHit` |
+| — | I.1 circular Empty ≠ Decline | `CircularCookSplit.v : ticket_0007_empty_neq_decline_circ_qed_or_qex` | **QED** — locked Empty / Decline fixtures differ | `CircularCookZ.v : IZEmpty_neq_IZDecline`, `CircularCookHit.v : ICircGEmpty_neq_ICircGDecline` |
+| — | I.1 chord × circular Decline | `Adr0007NodingEpic.v : ticket_0007_chord_circ_decline_qed_or_qex` | **QED** — mixed pair inhabits `I_ok` as Decline, not a constructed Hit | `SheetHenCook.v : chord_circular_decline_I_ok`, `SheetHenCook.v : chord_circular_hit_not_I_ok` |
+| — | I.1 I_gloss / host CircGamma | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; host circular `I_ok` is Decline only | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : circular_decline_I_ok` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -512,3 +517,31 @@ Not a noder. Does not reopen Status.
 | `CircularCookSplit.v : ticket_0007_circ_mint_two_scope_qed_or_qex` | **QEX** — Empty / Decline / Touch still allocate no hen | `CircularCookSplit.v : locked_circ_mint_two_touch_none` |
 
 Witness: `0007-I.7-mint-two`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.1 Fence (2026-09-09)
+
+#666's honesty fence was prose. This letter closes it as tickets, not
+a type synonym. The four objects are pairwise unequal by observation
+on the locked `(0,0)/(7,0)` r=5 witness:
+
+1. `I_circles_z` / Oracle `I_CIRCULAR` — Z⁶ classifier; hens 0/1; no t.
+2. `I_circles_gamma` — locked full-circle witness with t on γ_full.
+3. Sidecar cook (`CircularCookSplit` after #686/#687) — leftovers / `MintTwo`.
+4. `I_gloss` — host `I_ok` + CircGamma; undefined while CircGamma is QEX.
+
+Touch ≠ IHit on the circular classifiers. Circular Empty ≠ Decline
+(host `IEmpty` ≠ `IDecline` already stands). Chord × circular Decline
+inhabits `I_ok` as the honest host arm — not a constructed mixed Hit.
+Does not remint `CurveSegment` / Exact* / `Dart` / Hobby /
+`ArcSplitAtNode` leftover-width. Does not start I.2–I.3 / I.8–I.10 /
+Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookSplit.v : ticket_0007_i1_fence_qed_or_qex` | **QED** — six locked pairwise observations | `CircularCookSplit.v : i1_z_neq_gamma_obs`, `CircularCookSplit.v : i1_sidecar_neq_gloss_obs` |
+| `CircularCookSplit.v : ticket_0007_touch_neq_ihit_qed_or_qex` | **QED** — kiss Touch ≠ proper-cross Hit | `CircularCookZ.v : IZTouch_neq_IZHit`, `CircularCookHit.v : ICircGTouch_neq_ICircGHit` |
+| `CircularCookSplit.v : ticket_0007_empty_neq_decline_circ_qed_or_qex` | **QED** — circular Empty ≠ Decline | `CircularCookZ.v : IZEmpty_neq_IZDecline` |
+| `Adr0007NodingEpic.v : ticket_0007_chord_circ_decline_qed_or_qex` | **QED** — mixed Decline inhabits `I_ok` | `SheetHenCook.v : chord_circular_decline_I_ok` |
+| `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined while CircGamma is QEX | `CircularCook.v : circular_gamma_is_qex` |
+
+Witness: `0007-I.1-fence`. Status stays **Accepted**. Host CircGamma stays QEX.

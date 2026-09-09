@@ -109,6 +109,12 @@ Proof.
   intros. discriminate.
 Qed.
 
+Lemma IZTouch_neq_IZHit :
+  forall h hp hm, IZTouch h <> IZHit hp hm.
+Proof.
+  intros. discriminate.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Partition: constructor ↔ the same squared tests the classifier runs.        *)
 (* Hit is the open interval |r1−r2|² < d² < (r1+r2)² on positive radii.       *)
@@ -300,6 +306,7 @@ Print Assumptions locked_I_circles_z_hit.
 Print Assumptions locked_external_kiss_is_touch.
 Print Assumptions IZEmpty_neq_IZDecline.
 Print Assumptions IZTouch_neq_IZDecline.
+Print Assumptions IZTouch_neq_IZHit.
 Print Assumptions I_circles_z_hit_iff.
 Print Assumptions I_circles_z_touch_iff.
 Print Assumptions I_circles_z_empty_iff.
