@@ -18,7 +18,8 @@
    Not glossary 𝓘 for CircularArc eggs.  Not a noder.  Not OverlayNGCurve
    / #857 / fully_intersected / ticket 523.  Not chord-lane constructed 𝓘.
    I.9 classifier ≠ cook lives in CircularCookLicense.v.
-   Not I.10 / Campaign II / H⊥ / CRV-TOUCH kiss procedure.
+   I.10 Campaign-I close lives in CircularCookClose.v.
+   Not Campaign II / H⊥ / CRV-TOUCH kiss procedure.
    Not a remint of CurveSegment / ExactIntersectionPoints / Dart /
    Hobby / leftover-width.
    ============================================================================ *)
@@ -33,7 +34,7 @@ Local Open Scope R_scope.
    kind=QED-empty-decline-gamma-full
    lock=sidecar-cook-stays-locked
    not=CircGamma-Discharge,CircularArc-span,first-cook-noding
-   not=I.10,Campaign-II,Hperp,CRV-TOUCH-kiss *)
+   not=Campaign-II,Hperp,CRV-TOUCH-kiss *)
 
 (* -------------------------------------------------------------------------- *)
 (* I.3 ∀ Empty / Decline. Image-disjoint ≠ discriminant Empty.                *)

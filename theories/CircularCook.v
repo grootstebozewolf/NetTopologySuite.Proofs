@@ -13,6 +13,7 @@
    I.3 ∀ Empty / Decline lives in CircularCookEmpty.v (γ_full);
    I.8 leftover confluence lives in CircularCookConfluence.v;
    I.9 classifier ≠ cook lives in CircularCookLicense.v;
+   I.10 Campaign-I close lives in CircularCookClose.v;
    this host flag stays QEX.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked

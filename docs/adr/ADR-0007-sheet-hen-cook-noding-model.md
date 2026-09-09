@@ -650,3 +650,25 @@ Status.
 | `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex` |
 
 Witness: `0007-I.9-classifier-neq-cook`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.10 Campaign-I close (2026-09-09)
+
+#692 ticketed that a classifier Hit is not a cook license. This
+letter closes Campaign I. Sidecar cook exists on a constructed
+circular Hit (both radical roots / `MintTwo`). Host CircGamma stays
+QEX. `first_cook_scope` stays chord–chord. `I_CIRCULAR` stays a
+classifier (tags 0/1). The #666 four-object fence holds by
+observation. Campaign II and H⊥ are named parked — not silently
+done. No new kernel. Not SQL/MM done. Does not remint
+`CurveSegment` / Exact* / `Dart` / Hobby / `ArcSplitAtNode`
+leftover-width. Does not start Campaign II / H⊥ / a CRV-TOUCH
+kiss procedure. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookClose.v : ticket_0007_i10_sidecar_qed_or_qex` | **QED** — sidecar cook on constructed circular Hit, both roots | `CircularCookClose.v : i10_sidecar_cook_both_roots`, `CircularCookSplit.v : cooked_circ_mint_two_ok` |
+| `CircularCookClose.v : ticket_0007_i10_classifier_qed_or_qex` | **QED** — `I_CIRCULAR` stays tags 0/1; #666 fence holds | `CircularCookClose.v : i10_classifier_stays_tags`, `CircularCookClose.v : i10_fence_holds` |
+| `CircularCookClose.v : ticket_0007_i10_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
+| `CircularCookClose.v : ticket_0007_i10_park_qed_or_qex` | **QEX** — Campaign II and H⊥ named parked; SQL/MM not done | `CircularCookClose.v : campaign_ii_is_parked`, `CircularCookClose.v : hperp_is_parked` |
+
+Witness: `0007-I.10-campaign-i-close`. Status stays **Accepted**. Host CircGamma stays QEX.

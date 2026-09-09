@@ -324,6 +324,11 @@ are different proofs. I.8: leftovers_ab = leftovers_ba on γ_full
 I.9: an `I_circles_z` / `I_CIRCULAR` Hit is tags 0/1, not
 glossary `(p*, tᵢ, tⱼ)`, and does not license host
 `try_cook_hit` / `circ_split` / first-cook expansion.
+I.10 closes Campaign I: sidecar cook exists on a constructed
+circular Hit (both roots); host CircGamma stays QEX;
+`first_cook_scope` stays chord–chord; `I_CIRCULAR` stays a
+classifier; the #666 fence holds; Campaign II and H⊥ are named
+parked; no new kernel; not SQL/MM done.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

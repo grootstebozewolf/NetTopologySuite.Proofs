@@ -20,8 +20,8 @@
      Not a remint of CurveSegment / Exact* / Dart / Hobby /
      leftover_width / ArcSplitAtNode leftover-width.
      Do not fake atan2-free host γ.
-     Do not start I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss
-     procedure.
+     I.10 Campaign-I close lives in CircularCookClose.v.
+     Do not start Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
 
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-I.9-classifier-neq-cook
@@ -47,7 +47,7 @@ Local Open Scope R_scope.
    file=theories/CircularCookLicense.v
    kind=QED-classifier-hit-not-cook-license
    not=CircGamma-Discharge,first-cook-noding,bag-loop,leftover-width
-   not=I.10,Campaign-II,Hperp,CRV-TOUCH-kiss *)
+   not=Campaign-II,Hperp,CRV-TOUCH-kiss *)
 
 (* -------------------------------------------------------------------------- *)
 (* Classifier hens are tags 0/1. Glossary IHit carries (p*, tᵢ, tⱼ).          *)
@@ -166,7 +166,7 @@ Proof.
 Qed.
 
 (* I.9 does not discharge CircGamma or expand first cook scope. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i9_scope_qed_or_qex","title":"I.9 discharges CircGamma and expands first cook scope (QED) or CircGamma stays QEX and first cook stays chord-chord (QEX); discharged QEX; not I.10","file":"theories/CircularCookLicense.v","witness":"0007-I.9-classifier-neq-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i9_scope_qed_or_qex","title":"I.9 discharges CircGamma and expands first cook scope (QED) or CircGamma stays QEX and first cook stays chord-chord (QEX); discharged QEX; Campaign I close is I.10","file":"theories/CircularCookLicense.v","witness":"0007-I.9-classifier-neq-cook","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i9_scope_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged

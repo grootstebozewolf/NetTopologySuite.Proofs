@@ -190,13 +190,20 @@ Production home for 0007-I.8-leftover-confluence (`circ_leftovers_ab`
 `split_step_confluent`; cook leftovers inhabit that bag; one-step
 ≠ bag loop; CircGamma stays QEX):
 `theories/CircularCookConfluence.v`. 4-axiom atan2 sidecar; not
-leftover-width; not I.10.
+leftover-width. Campaign I close is I.10.
 
 Production home for 0007-I.9-classifier-neq-cook (`I_circles_z` /
 `I_CIRCULAR` Hit is tags 0/1, not glossary `(p*, tᵢ, tⱼ)`; Z Hit
 ⇏ host `try_cook_hit` / `circ_split` / first-cook expansion;
 CircGamma stays QEX): `theories/CircularCookLicense.v`. 4-axiom
-atan2 sidecar; not I.10.
+atan2 sidecar. Campaign I close is I.10.
+
+Production home for 0007-I.10-campaign-i-close (sidecar cook on
+constructed circular Hit, both roots; host CircGamma stays QEX;
+`first_cook_scope` stays chord–chord; `I_CIRCULAR` stays a
+classifier; #666 fence holds; Campaign II and H⊥ named parked;
+no new kernel; not SQL/MM done):
+`theories/CircularCookClose.v`. 4-axiom atan2 sidecar.
 
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse

@@ -68,6 +68,10 @@
    I.9 classifier ≠ cook lives in CircularCookLicense.v — a
    Z-classifier Hit is tags 0/1 and does not license host
    try_cook_hit / circ_split / first_cook_scope expansion.
+   I.10 Campaign-I close lives in CircularCookClose.v — sidecar
+   cook on both roots; CircGamma stays QEX; first cook stays
+   chord–chord; I_CIRCULAR stays a classifier; #666 fence holds;
+   Campaign II and H⊥ are named parked. Not this host module.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is

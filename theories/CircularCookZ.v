@@ -6,7 +6,8 @@
    I_circles_z is an extractable seam, not glossary 𝓘 (that is Hit (p*, tᵢ, tⱼ);
    there is no γ / [0,1] here). Hens 0/1 are birth certificates of the named
    radical roots, not a proved identity. I.9: those tags are not a cook
-   license (CircularCookLicense.v).
+   license (CircularCookLicense.v). I.10: I_CIRCULAR stays a
+   classifier (CircularCookClose.v).
 
        I_circles_z : Hit | Empty | Touch | Decline
 
