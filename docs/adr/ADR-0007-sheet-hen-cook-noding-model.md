@@ -288,6 +288,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.9 Z Hit ⇏ host cook | `CircularCookLicense.v : ticket_0007_i9_not_host_cook_qed_or_qex` | **QED** — I_circles_z Hit does not feed `try_cook_hit` and does not expand first cook scope | `CircularCookLicense.v : i9_z_hit_not_try_cook_hit`, `CircularCookLicense.v : i9_z_hit_not_first_cook_scope` |
 | — | I.9 Z Hit ⇏ circ_split | `CircularCookLicense.v : ticket_0007_i9_not_circ_split_qed_or_qex` | **QED** — same tags; plus/minus leftovers meet at distinct `p*`; t comes from γ | `CircularCookLicense.v : i9_z_hit_not_circ_split_license` |
 | — | I.9 not CircGamma / not scope expand | `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
+| — | II.1 span filter as IResult | `CircularCookSpanFilter.v : ticket_0007_ii1_hit_qed_or_qex` | **QED** — arc Hit iff `on_arc_gamma` both; locked `p+` in-span, `p−` out | `CircularCookSpanFilter.v : I_span_root_hit_iff`, `CircularCookSpanFilter.v : ii1_locked_plus_span_hit` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -672,3 +673,29 @@ kiss procedure. Does not reopen Status.
 | `CircularCookClose.v : ticket_0007_i10_park_qed_or_qex` | **QEX** — Campaign II and H⊥ named parked; SQL/MM not done | `CircularCookClose.v : campaign_ii_is_parked`, `CircularCookClose.v : hperp_is_parked` |
 
 Witness: `0007-I.10-campaign-i-close`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — II.1 span filter as IResult (2026-09-09)
+
+I.10 closed Campaign I and named Campaign II parked. This letter
+unparks **II.1 only**. A radical root is an **arc** Hit iff
+`on_arc_gamma` both — an IResult / Hit|Empty|Decline-style filter
+on span γ, not γ_full. Locked `(0,0)/(7,0)` r=5 proper arcs: `p+`
+in-span (Hit); `p−` out-of-span (Empty) while still on γ_full
+(I.2). Host CircGamma stays QEX. Host circular `I_ok` stays
+Decline. Span Hit is not host `I_ok`. II.2–II.4, H⊥, and the
+SQL/MM Part 3 required-type cathedral (CircularString /
+CompoundCurve / CurvePolygon) stay parked. A CircularString
+theorem needs concatenation; this is one Arc. Does not remint
+`CurveSegment` / Exact* / `Dart` / Hobby / `ArcSplitAtNode`
+leftover-width. Does not start II.2–II.4 / H⊥ / a CRV-TOUCH kiss
+procedure. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookSpanFilter.v : ticket_0007_ii1_hit_qed_or_qex` | **QED** — Hit iff `on_arc_gamma` both; locked `p+` inhabits | `CircularCookSpanFilter.v : I_span_root_hit_iff`, `CircularCookSpanFilter.v : ii1_locked_plus_span_hit` |
+| `CircularCookSpanFilter.v : ticket_0007_ii1_minus_qed_or_qex` | **QED** — locked `p−` is Empty and still on γ_full | `CircularCookSpanFilter.v : ii1_locked_minus_span_empty`, `CircularCookSpanFilter.v : ii1_minus_full_not_span` |
+| `CircularCookSpanFilter.v : ticket_0007_ii1_empty_neq_decline_qed_or_qex` | **QED** — Empty ≠ Decline; invalid controls Decline | `CircularCookSpanFilter.v : ii1_span_empty_neq_decline`, `CircularCookSpanFilter.v : ii1_invalid_decline` |
+| `CircularCookSpanFilter.v : ticket_0007_ii1_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; span Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `CircularCookSpanFilter.v : ii1_span_hit_not_host_I_ok` |
+| `CircularCookSpanFilter.v : ticket_0007_ii1_park_qed_or_qex` | **QEX** — II.2–II.4 / H⊥ / SQL/MM cathedral parked; II.1 landed | `CircularCookSpanFilter.v : campaign_ii1_is_landed`, `CircularCookSpanFilter.v : campaign_ii2_is_parked` |
+
+Witness: `0007-II.1-span-filter`. Status stays **Accepted**. Host CircGamma stays QEX.

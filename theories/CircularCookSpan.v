@@ -20,6 +20,8 @@
 
    first_cook_scope stays chord–chord.  Not glossary 𝓘.  Not a noder.
    Not OverlayNGCurve / fully_intersected / ticket 523.
+   II.1 expresses this interpolant as an IResult span filter
+   (CircularCookSpanFilter.v): Hit iff on_arc_gamma both.
 
    WITNESS topic: core · claimId: 64-circ-span-gamma · witness: 64-circ-span-locked
    board: ADR-0007

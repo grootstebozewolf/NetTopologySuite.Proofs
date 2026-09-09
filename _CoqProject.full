@@ -2851,6 +2851,12 @@ theories/CircularCookLicense.v
 # Campaign II and H⊥ are named parked. No new kernel. Not SQL/MM done.
 # 4-axiom atan2 sidecar (classic via Split / circ_gamma).
 theories/CircularCookClose.v
+# II.1 span filter as IResult on CircularArc γ (not γ_full).
+# Radical root is arc Hit iff on_arc_gamma both. Locked p+ Hit,
+# p− Empty. Host CircGamma stays QEX. II.2–II.4 / H⊥ / SQL/MM
+# cathedral stay parked. 4-axiom atan2 sidecar (classic via Span).
+# Not CircularString concat. Not first cook scope. Not a noder.
+theories/CircularCookSpanFilter.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

@@ -205,6 +205,12 @@ classifier; #666 fence holds; Campaign II and H⊥ named parked;
 no new kernel; not SQL/MM done):
 `theories/CircularCookClose.v`. 4-axiom atan2 sidecar.
 
+Production home for 0007-II.1-span-filter (radical root is an arc
+Hit iff `on_arc_gamma` both; IResult filter on span γ, not γ_full;
+locked `p+` Hit, `p−` Empty; host CircGamma stays QEX; II.2–II.4 /
+H⊥ / SQL/MM cathedral stay parked):
+`theories/CircularCookSpanFilter.v`. 4-axiom atan2 sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

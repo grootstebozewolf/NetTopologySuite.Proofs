@@ -327,8 +327,16 @@ glossary `(p*, tᵢ, tⱼ)`, and does not license host
 I.10 closes Campaign I: sidecar cook exists on a constructed
 circular Hit (both roots); host CircGamma stays QEX;
 `first_cook_scope` stays chord–chord; `I_CIRCULAR` stays a
-classifier; the #666 fence holds; Campaign II and H⊥ are named
-parked; no new kernel; not SQL/MM done.
+classifier; the #666 fence holds; Campaign II and H⊥ were named
+parked at that close; no new kernel; not SQL/MM done.
+II.1 (Campaign II, first rung): a radical root is an **arc**
+Hit iff `on_arc_gamma` both — IResult / Hit|Empty|Decline-style
+filter on span γ, not γ_full. Locked (p+) in-span Hit; (p−)
+out-of-span Empty (still on γ_full). Host CircGamma stays QEX;
+host circular `I_ok` stays Decline. II.2–II.4, H⊥, and the
+SQL/MM Part 3 required-type cathedral (CS / CC / CP) stay
+parked. A CircularString theorem needs concatenation; this is
+one Arc.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
