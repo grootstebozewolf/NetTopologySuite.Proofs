@@ -390,8 +390,8 @@ Lemma b1_rest_parked :
   phase_b_compound_curve_status = PhaseBRequiredGap
   /\ phase_b_curve_polygon_status = PhaseBRequiredGap
   /\ b1_hperp_status = B1HperpParked
-  /\ b1_sql_mm_status = B1SqlMmNotDone
   /\ b1_circgamma_remint_status = B1CircGammaRemintParked
+  /\ b1_sql_mm_status = B1SqlMmNotDone
   /\ cook_loop_status = LoopObligation.
 Proof.
   repeat split; reflexivity.
