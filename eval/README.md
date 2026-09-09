@@ -240,6 +240,16 @@ odd_closed fixture; host CircGamma stays QEX; CompoundCurve /
 CurvePolygon / H⊥ parked; not SQL/MM done; no new kernel):
 `theories/CircularCookCsConcat.v`. 4-axiom atan2 sidecar.
 
+Production home for 0007-B.2-cc-member-joints (Phase B.2
+CompoundCurve member joints; CC is a sequence of LineString
+chords and CircularString `CircEgg` members; LS–LS joint is
+host `I_ok` Hit at `(end, t=1, t=0)`; CS–CS member joint
+reuses `I_ok_circ`; mixed LS–CS joint is host `I_ok` Decline
+(I.1); locked mixed fixture; host CircGamma stays QEX;
+CurvePolygon / H⊥ parked; not SQL/MM done; CC Landed; no new
+kernel): `theories/CircularCookCcConcat.v`. 4-axiom atan2
+sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

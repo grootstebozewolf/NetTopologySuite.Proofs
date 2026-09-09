@@ -2890,6 +2890,18 @@ theories/CircularCookCloseII.v
 # sidecar (classic via OkCirc / Span). No new kernel. Not a
 # CircGamma remint. Not first cook scope. Not a noder.
 theories/CircularCookCsConcat.v
+# Phase B.2 CompoundCurve member joints (sidecar / host reuse).
+# CC is a sequence of LineString (chords) and CircularString
+# (CircEgg) members. LS–LS joint is host I_ok Hit at (end, t=1,
+# t=0). CS–CS member joint reuses I_ok_circ. Mixed LS–CS joint
+# is host I_ok Decline (I.1). Locked mixed fixture
+# COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0)).
+# Host CircGamma stays QEX. first_cook_scope stays chord–chord.
+# CurvePolygon / H⊥ parked. Not SQL/MM done. CC Landed.
+# 4-axiom atan2 sidecar (classic via CsConcat / OkCirc / Span).
+# No new kernel. Not a CircGamma remint. Not CurveSegment remint.
+# Not first cook scope. Not a noder. Not CurvePolygon.
+theories/CircularCookCcConcat.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
