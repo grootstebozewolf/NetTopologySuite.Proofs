@@ -289,6 +289,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.9 Z Hit ⇏ circ_split | `CircularCookLicense.v : ticket_0007_i9_not_circ_split_qed_or_qex` | **QED** — same tags; plus/minus leftovers meet at distinct `p*`; t comes from γ | `CircularCookLicense.v : i9_z_hit_not_circ_split_license` |
 | — | I.9 not CircGamma / not scope expand | `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
 | — | II.1 span filter as IResult | `CircularCookSpanFilter.v : ticket_0007_ii1_hit_qed_or_qex` | **QED** — arc Hit iff `on_arc_gamma` both; locked `p+` in-span, `p−` out | `CircularCookSpanFilter.v : I_span_root_hit_iff`, `CircularCookSpanFilter.v : ii1_locked_plus_span_hit` |
+| — | II.2 split γ_span at in-span t | `CircularCookSpanSplit.v : ticket_0007_ii2_meet_qed_or_qex` | **QED** — leftovers of `arc_gamma` meet at locked `p+`; leftover on parent circle; `p−` stays Empty | `CircularCookSpanSplit.v : cooked_span_plus_meets`, `CircularCookSpanSplit.v : cooked_span_plus_on_parent` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -699,3 +700,32 @@ procedure. Does not reopen Status.
 | `CircularCookSpanFilter.v : ticket_0007_ii1_park_qed_or_qex` | **QEX** — II.2–II.4 / H⊥ / SQL/MM cathedral parked; II.1 landed | `CircularCookSpanFilter.v : campaign_ii1_is_landed`, `CircularCookSpanFilter.v : campaign_ii2_is_parked` |
 
 Witness: `0007-II.1-span-filter`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — II.2 split γ_span at in-span t (2026-09-09)
+
+II.1 unparked the span filter and named II.2–II.4 parked. This letter
+unparks **II.2 only**. An in-span Hit (`on_arc_gamma` / `I_span_root`
+/ locked `p+`) splits each **span** interpolant `arc_gamma` at the
+Hit’s in-span `tᵢ` / `tⱼ`. Leftovers meet at `p*` — shared endpoint
+is Hit incidence, not a kiss. Leftover γ stays on the parent circle
+and on the parent `on_arc_gamma` honesty story. Not γ_full. Not
+`circ_split` from `CircularCookSplit`. Locked `p−` stays II.1 Empty
+— this letter does not invent a span cook for it. Host CircGamma
+stays QEX. Host circular `I_ok` stays Decline. Span Hit is not host
+`I_ok`. II.3 (`I_ok_circ`), II.4 honesty letter, H⊥, and the SQL/MM
+Part 3 required-type cathedral (CircularString / CompoundCurve /
+CurvePolygon) stay parked. A CircularString theorem needs
+concatenation; this is one Arc split. Does not remint
+`CurveSegment` / Exact* / `Dart` / Hobby / `ArcSplitAtNode`
+leftover-width. Does not start II.3–II.4 / H⊥ / a CRV-TOUCH kiss
+procedure. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookSpanSplit.v : ticket_0007_ii2_meet_qed_or_qex` | **QED** — leftovers meet at locked `p+`; join is the II.1 Hit, not Empty | `CircularCookSpanSplit.v : cooked_span_plus_meets`, `CircularCookSpanSplit.v : leftover_meet_is_hit_not_kiss` |
+| `CircularCookSpanSplit.v : ticket_0007_ii2_honesty_qed_or_qex` | **QED** — leftover γ on the parent circle and parent `on_arc_gamma` | `CircularCookSpanSplit.v : cooked_span_plus_on_parent`, `CircularCookSpanSplit.v : span_split_uses_arc_gamma` |
+| `CircularCookSpanSplit.v : ticket_0007_ii2_minus_qed_or_qex` | **QED** — locked `p−` stays Empty; Empty / Decline mint no span cook | `CircularCookSpanSplit.v : cooked_span_minus_none` |
+| `CircularCookSpanSplit.v : ticket_0007_ii2_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; span Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `CircularCookSpanSplit.v : ii2_span_hit_not_host_I_ok` |
+| `CircularCookSpanSplit.v : ticket_0007_ii2_park_qed_or_qex` | **QEX** — II.3–II.4 / H⊥ / SQL/MM cathedral parked; II.2 landed | `CircularCookSpanSplit.v : campaign_ii2_is_landed`, `CircularCookSpanSplit.v : campaign_ii3_is_parked` |
+
+Witness: `0007-II.2-span-split`. Status stays **Accepted**. Host CircGamma stays QEX.

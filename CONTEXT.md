@@ -333,10 +333,14 @@ II.1 (Campaign II, first rung): a radical root is an **arc**
 Hit iff `on_arc_gamma` both — IResult / Hit|Empty|Decline-style
 filter on span γ, not γ_full. Locked (p+) in-span Hit; (p−)
 out-of-span Empty (still on γ_full). Host CircGamma stays QEX;
-host circular `I_ok` stays Decline. II.2–II.4, H⊥, and the
-SQL/MM Part 3 required-type cathedral (CS / CC / CP) stay
-parked. A CircularString theorem needs concatenation; this is
-one Arc.
+host circular `I_ok` stays Decline.
+II.2: split each span interpolant `arc_gamma` at the Hit’s
+in-span `tᵢ` / `tⱼ`; leftovers meet at `p*` (Hit incidence, not
+a kiss); leftover γ stays on the parent circle. Locked `p−`
+stays Empty — no invented span cook. Not `circ_split` / γ_full.
+II.3 (`I_ok_circ`), II.4, H⊥, and the SQL/MM Part 3
+required-type cathedral (CS / CC / CP) stay parked. A
+CircularString theorem needs concatenation; this is one Arc.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

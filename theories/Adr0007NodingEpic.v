@@ -73,9 +73,10 @@
    chord–chord; I_CIRCULAR stays a classifier; #666 fence holds;
    Campaign II and H⊥ were named parked at that close.
    II.1 span filter as IResult lives in CircularCookSpanFilter.v
-   (4-axiom sidecar; not Required here). Host CircGamma stays
-   QEX. II.2–II.4 / H⊥ / SQL/MM cathedral stay parked. Not this
-   host module.
+   (4-axiom sidecar; not Required here). II.2 span split at
+   in-span t lives in CircularCookSpanSplit.v (4-axiom sidecar;
+   not Required here). Host CircGamma stays QEX. II.3–II.4 /
+   H⊥ / SQL/MM cathedral stay parked. Not this host module.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is

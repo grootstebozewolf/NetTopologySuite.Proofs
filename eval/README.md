@@ -211,6 +211,12 @@ locked `p+` Hit, `p−` Empty; host CircGamma stays QEX; II.2–II.4 /
 H⊥ / SQL/MM cathedral stay parked):
 `theories/CircularCookSpanFilter.v`. 4-axiom atan2 sidecar.
 
+Production home for 0007-II.2-span-split (split `arc_gamma` at
+in-span `t`; leftovers meet at locked `p+`; leftover on parent
+circle; locked `p−` stays Empty / no invented span cook; host
+CircGamma stays QEX; II.3–II.4 / H⊥ / SQL/MM cathedral stay
+parked): `theories/CircularCookSpanSplit.v`. 4-axiom atan2 sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

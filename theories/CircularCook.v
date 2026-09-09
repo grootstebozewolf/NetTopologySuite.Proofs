@@ -15,6 +15,7 @@
    I.9 classifier ≠ cook lives in CircularCookLicense.v;
    I.10 Campaign-I close lives in CircularCookClose.v;
    II.1 span filter as IResult lives in CircularCookSpanFilter.v;
+   II.2 span split at in-span t lives in CircularCookSpanSplit.v;
    this host flag stays QEX.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked
