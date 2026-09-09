@@ -528,15 +528,25 @@ theories/ArcTraversalBridge.v
 # No Admitteds; headlines Qed-closed.
 theories/ArcMidSweep.v
 
-# Category C (R-side, same atan lineage as ArcParamBridge.v): issue #559
-# / claimId 508-a.  nurbs2_golden_quarter_length pulls
+# Category C (R-side, same atan lineage as ArcParamBridge.v): generic
+# 2·atan / tan-on-[0, π/4] identities extracted from claimId 508-a.
+# cos_2_atan / sin_2_atan pull Classical_Prop.classic through Stdlib
+# Ratan.atan.  No golden weights.  Removal tracks AngleBetween's
+# cleanup — do not lift C1 elsewhere.  No Admitteds; headlines
+# Qed-closed.
+theories/AtanDoubleAngle.v
+
+# Category C (R-side, same atan lineage as AtanDoubleAngle.v): issue
+# #559 / claimId 508-a.  nurbs2_golden_quarter_length pulls
 # Classical_Prop.classic through Stdlib Ratan.atan (Weierstrass φ and
-# the explicit tan preimage).  The 3-axiom route is closed: the reparam
-# contract demands an explicit preimage and forbids IVT, so atan is the
-# named inverse.  CurveLength / ArcRectifiable stay 3-axiom in their
-# own files.  Removal tracks AngleBetween's cleanup — do not lift C1
-# elsewhere.  No CurveSegment growth, no ADR-0004 remint, no new 64-a
-# r·θ.  No Admitteds; headline Qed-closed.
+# the explicit tan preimage) and through AtanDoubleAngle.  The 3-axiom
+# route is closed: the reparam contract demands an explicit preimage
+# and forbids IVT, so atan is the named inverse.  Windowed
+# is_curve_length_ext_on now lives in CurveLength.v (3-axiom).
+# CurveLength / ArcRectifiable stay 3-axiom in their own files.
+# Removal tracks AngleBetween's cleanup — do not lift C1 elsewhere.
+# No CurveSegment growth, no ADR-0004 remint, no new 64-a r·θ.  No
+# Admitteds; headline Qed-closed.
 theories/NurbsConicExact.v
 
 # Category C (R-side, same atan lineage as NurbsConicExact.v): issue #565

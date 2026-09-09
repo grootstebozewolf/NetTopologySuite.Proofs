@@ -1810,7 +1810,7 @@ stay 3-axiom in their own files.  This letter does not retire epic 508
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `NurbsConicExact.v : nurbs2_golden_quarter_length` (+ `golden_pt_on_circle`, `golden_phi_mono`, `golden_phi_surj`, `cos_2_atan`, `sin_2_atan`) | **Golden rational quarter circle (#508/#559, claimId: 508-a, witness: 508-a-golden-quarter):** `is_curve_length` of the oracle `N` vector on `[0,1]` equals `π/2` — Weierstrass `φ` is weakly monotone with explicit `tan` preimages (no IVT); the unit circle on `[0, π/2]` transfers by `is_curve_length_reparam` and windowed ext. Category C (`atan`). Does not retire epic 508 `[exact]` | 4 |
+| `NurbsConicExact.v : nurbs2_golden_quarter_length` (+ `golden_pt_on_circle`, `golden_phi_mono`, `golden_phi_surj`; helpers `AtanDoubleAngle.v : cos_2_atan`, `AtanDoubleAngle.v : sin_2_atan`, `CurveLength.v : is_curve_length_ext_on`) | **Golden rational quarter circle (#508/#559, claimId: 508-a, witness: 508-a-golden-quarter):** `is_curve_length` of the oracle `N` vector on `[0,1]` equals `π/2` — Weierstrass `φ` is weakly monotone with explicit `tan` preimages (no IVT); the unit circle on `[0, π/2]` transfers by `is_curve_length_reparam` and windowed ext. Category C (`atan`). Maintainability split: generic 2·atan in `AtanDoubleAngle.v`, windowed ext in `CurveLength.v`. Does not retire epic 508 `[exact]` | 4 |
 
 ## Issue #508 — integral machinery: speed-integral premises (`SpeedIntegral.v`) <!-- feat:arc-len geom:arc -->
 
