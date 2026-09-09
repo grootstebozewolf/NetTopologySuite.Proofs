@@ -283,6 +283,33 @@ static class Program
                 Hit("OK", "REL/bare_unknown_rejected",
                     "bare ? is not Decline and not RELATE_TOKENS");
             }
+
+            if (Oracle.IsValidDe9imResult("FF?FF1212") && Oracle.IsValidDe9imResult("?????????"))
+                Hit("OK", "REL/valid_result_unknown",
+                    "IsValidDe9imResult accepts ? cells (523-b)");
+            else
+                Hit("FAIL", "REL/valid_result_unknown",
+                    "IsValidDe9imResult rejected a 9-char with ?");
+
+            if (Oracle.IsValidDe9imResult("?")
+                || Oracle.IsValidDe9imResult("UNSUPPORTED")
+                || Oracle.IsValidDe9imResult("FF0FF121T"))
+                Hit("FAIL", "REL/valid_result_rejects",
+                    "bare ? / token / pattern T treated as a result matrix");
+            else
+                Hit("OK", "REL/valid_result_rejects",
+                    "T is not a result cell; token and bare ? are not matrices");
+
+            try
+            {
+                var (kind, val) = Oracle.ParseRelateWire("?????????");
+                if (kind == "matrix" && val == "?????????")
+                    Hit("OK", "REL/matrix_all_unknown",
+                        "nine ? is a matrix, not Decline");
+                else
+                    Hit("FAIL", "REL/matrix_all_unknown", $"got {kind} {val}");
+            }
+            catch (Exception ex) { Hit("FAIL", "REL/matrix_all_unknown", ex.Message); }
         }
 
         Console.WriteLine("=== RELATE_MATRIX golden vectors (oracle catalog; #575 / 522-f) ===");
@@ -415,15 +442,27 @@ static class Oracle
     }
 
     /// <summary>
+    /// True iff <paramref name="s"/> is a 9-char result matrix (cells F/0/1/2/?).
+    /// A <c>?</c> cell is uncomputed (523-b), not Decline and not a catalog key.
+    /// Pattern <c>T</c> is not a result cell.
+    /// </summary>
+    public static bool IsValidDe9imResult(string s)
+    {
+        string t = s.Trim();
+        return t.Length == 9 && t.All(c => c is 'F' or '0' or '1' or '2' or '?');
+    }
+
+    /// <summary>
     /// Classify one RELATE_MATRIX oracle line.
     /// <c>UNSUPPORTED</c> is a decline (result position only), not a parse error.
+    /// Two kinds only — no third kind for <c>?</c>.
     /// </summary>
     public static (string Kind, string Value) ParseRelateWire(string s)
     {
         string t = s.Trim();
         if (t == "UNSUPPORTED")
             return ("token", t);
-        if (t.Length == 9 && t.All(c => c is 'F' or '0' or '1' or '2' or '?'))
+        if (IsValidDe9imResult(t))
             return ("matrix", t);
         throw new Exception(
             $"relate wire: not a 9-char matrix and not an allowlisted token: '{t}'");

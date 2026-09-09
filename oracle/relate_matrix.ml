@@ -225,6 +225,14 @@ let normalize_key s =
    valid *result* cell string (523-b harness parse), not a catalog key. *)
 let catalog_ok_char c = c = 'F' || (c >= '0' && c <= '2')
 
+(* Result cells may be `?` (523-b, uncomputed).  Do not use this as a
+   lookup / fill / shared-pin key — that stays catalog_ok_char. *)
+let result_ok_char c = catalog_ok_char c || c = '?'
+
+let is_valid_de9im_result s =
+  let t = String.trim s in
+  String.length t = 9 && String.for_all result_ok_char t
+
 let lookup_matrix key =
   let k = normalize_key key in
   if String.length k = 9 && String.for_all catalog_ok_char k then

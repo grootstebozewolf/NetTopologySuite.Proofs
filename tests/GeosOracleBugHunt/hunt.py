@@ -74,16 +74,28 @@ RELATE_TOKENS = frozenset({"UNSUPPORTED"})
 RELATE_MATRIX_CHARS = set("F012?")
 
 
+def is_valid_de9im_result(s: str) -> bool:
+    """True iff ``s`` is a 9-char result matrix (cells F/0/1/2/?).
+
+    A ``?`` cell is uncomputed (523-b), not Decline and not a catalog key.
+    Whole-line ``UNSUPPORTED`` is a token, not a matrix.  Pattern ``T`` is
+    not a result cell.
+    """
+    t = s.strip()
+    return len(t) == 9 and all(c in RELATE_MATRIX_CHARS for c in t)
+
+
 def parse_relate_wire(s: str) -> tuple[str, str]:
     """Classify one RELATE_MATRIX oracle line.
 
     Returns ``("token", name)`` or ``("matrix", ninechar)``.
-    ``UNSUPPORTED`` is a decline, not a parse error.
+    ``UNSUPPORTED`` is a decline, not a parse error.  Two kinds only —
+    no third kind for ``?``.
     """
     t = s.strip()
     if t in RELATE_TOKENS:
         return ("token", t)
-    if len(t) == 9 and all(c in RELATE_MATRIX_CHARS for c in t):
+    if is_valid_de9im_result(t):
         return ("matrix", t)
     raise ValueError(
         f"relate wire: not a 9-char matrix and not an allowlisted token: {t!r}"
@@ -579,6 +591,36 @@ def selfcheck_relate_token() -> None:
     except ValueError:
         hit("OK", "REL/bare_unknown_rejected",
             "bare ? is not Decline and not RELATE_TOKENS")
+    if "?" in RELATE_TOKENS:
+        hit("FAIL", "REL/question_not_token", "? was added to RELATE_TOKENS")
+    else:
+        hit("OK", "REL/question_not_token",
+            "? is a matrix cell, not RELATE_TOKENS (523-b)")
+    if is_valid_de9im_result("FF?FF1212") and is_valid_de9im_result("?????????"):
+        hit("OK", "REL/valid_result_unknown",
+            "is_valid_de9im_result accepts ? cells")
+    else:
+        hit("FAIL", "REL/valid_result_unknown",
+            "is_valid_de9im_result rejected a 9-char with ?")
+    if (
+        is_valid_de9im_result("?")
+        or is_valid_de9im_result("UNSUPPORTED")
+        or is_valid_de9im_result("FF0FF121T")
+    ):
+        hit("FAIL", "REL/valid_result_rejects",
+            "bare ? / token / pattern T treated as a result matrix")
+    else:
+        hit("OK", "REL/valid_result_rejects",
+            "T is not a result cell; token and bare ? are not matrices")
+    try:
+        kind, val = parse_relate_wire("?????????")
+        if kind == "matrix" and val == "?????????":
+            hit("OK", "REL/matrix_all_unknown",
+                "nine ? is a matrix, not Decline")
+        else:
+            hit("FAIL", "REL/matrix_all_unknown", f"got {kind} {val}")
+    except Exception as e:
+        hit("FAIL", "REL/matrix_all_unknown", str(e))
 
 
 def hunt_relate_matrix() -> None:
