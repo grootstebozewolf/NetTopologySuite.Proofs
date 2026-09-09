@@ -321,6 +321,9 @@ proper pair and γ_full images disjoint on S; Decline iff not a
 proper pair (`d=0` or `r≤0`). Discriminant Empty and image-disjoint
 are different proofs. I.8: leftovers_ab = leftovers_ba on γ_full
 (circular analogue of `split_step_confluent`; not the bag loop).
+I.9: an `I_circles_z` / `I_CIRCULAR` Hit is tags 0/1, not
+glossary `(p*, tᵢ, tⱼ)`, and does not license host
+`try_cook_hit` / `circ_split` / first-cook expansion.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
