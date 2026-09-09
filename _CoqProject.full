@@ -2813,7 +2813,9 @@ theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
 theories/CircularCook.v
 # Full-circle γ : [0,1] → S + Hit (h*, p*, tᵢ, tⱼ). Locked fixture QED.
-# CircGamma on CircularArc stays QEX. 4-axiom atan2. Not first cook scope.
+# I.2 ∀ Hit soundness off the lock (proper disc ∧ on_full_circle both
+# roots). CircGamma on CircularArc stays QEX. 4-axiom atan2. Not first
+# cook scope. Not arc membership.
 theories/CircularCookHit.v
 # Span-restricted γ on CircularArc (principal signed span). QED interpolant
 # + locked proper-arc Hit. Host CircGamma stays QEX (3-axiom / atan2 split).

@@ -170,6 +170,12 @@ Touch / Empty tickets), `theories/Adr0007NodingEpic.v` (mixed
 Decline), `theories/CircularCook.v` (`I_gloss` QEX). Sidecar
 4-axiom atan2; host tickets atan2-free.
 
+Production home for 0007-I.2-hit-sound (`I_circles_gamma` Hit iff
+proper discriminant ∧ `on_full_circle` on both radical roots;
+γ_full, not CircularArc span; R3 locked witness recovered;
+CircGamma stays QEX): `theories/CircularCookHit.v`. 4-axiom atan2
+lane; sidecar cook stays locked.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

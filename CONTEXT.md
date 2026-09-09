@@ -314,7 +314,9 @@ Leftover shared endpoint is not a kiss. I.1 tickets the #666
 fence: `I_circles_z` ≠ `I_circles_gamma` ≠ sidecar cook ≠ host
 `I_gloss` (CircGamma QEX) by observation, not a type synonym.
 Touch ≠ IHit. Circular Empty ≠ Decline. Chord × circular Decline
-inhabits `I_ok`; a mixed Hit does not. Pairwise
+inhabits `I_ok`; a mixed Hit does not. I.2 drops the lock on
+`I_circles_gamma`: Hit iff proper discriminant and `on_full_circle`
+on both radical roots (γ_full, not arc membership). Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of

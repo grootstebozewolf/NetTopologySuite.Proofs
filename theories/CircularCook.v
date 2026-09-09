@@ -9,7 +9,8 @@
    CircGamma stays QEX; the sidecar does not fake Discharge.
    I.1: I_gloss (host I_ok + CircGamma) is undefined while this
    flag is QEX — not a type synonym for the Z / gamma / sidecar
-   objects.
+   objects. I.2 ∀ Hit soundness lives in CircularCookHit.v
+   (γ_full); this host flag stays QEX.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked
 
