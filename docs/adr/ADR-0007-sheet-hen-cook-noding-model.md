@@ -274,6 +274,8 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.1 circular Empty ≠ Decline | `CircularCookSplit.v : ticket_0007_empty_neq_decline_circ_qed_or_qex` | **QED** — locked Empty / Decline fixtures differ | `CircularCookZ.v : IZEmpty_neq_IZDecline`, `CircularCookHit.v : ICircGEmpty_neq_ICircGDecline` |
 | — | I.1 chord × circular Decline | `Adr0007NodingEpic.v : ticket_0007_chord_circ_decline_qed_or_qex` | **QED** — mixed pair inhabits `I_ok` as Decline, not a constructed Hit | `SheetHenCook.v : chord_circular_decline_I_ok`, `SheetHenCook.v : chord_circular_hit_not_I_ok` |
 | — | I.1 I_gloss / host CircGamma | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; host circular `I_ok` is Decline only | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : circular_decline_I_ok` |
+| — | I.2 ∀ Hit soundness | `CircularCookHit.v : ticket_0007_i2_hit_sound_qed_or_qex` | **QED** — `I_circles_gamma` = Hit iff proper disc ∧ `on_full_circle` on both roots; R3 locked witness recovered | `CircularCookHit.v : I_circles_gamma_hit_iff`, `CircularCookHit.v : i2_recovers_locked_r3` |
+| — | I.2 not arc membership | `CircularCookHit.v : ticket_0007_i2_arc_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -545,3 +547,23 @@ Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen Status.
 | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined while CircGamma is QEX | `CircularCook.v : circular_gamma_is_qex` |
 
 Witness: `0007-I.1-fence`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.2 ∀ Hit soundness (2026-09-09)
+
+#688 ticketed the four-object fence on the locked witness. This letter
+drops the lock on the γ classifier: `I_circles_gamma` is Hit iff the
+integer proper discriminant and `on_full_circle` on both radical roots
+(`p+` and `p−`, γ_full). R3 is the locked `(0,0)/(7,0)` r=5 witness
+(`ticket_64_circ_hit_params_qed_or_qex`); I.2 recovers it as an
+instance. Not CircularArc span membership. Sidecar cook stays locked
+(I.3). Host CircGamma stays QEX. Does not remint `CurveSegment` /
+Exact* / `Dart` / Hobby / `ArcSplitAtNode` leftover-width. Does not
+start I.3 / I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
+Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookHit.v : ticket_0007_i2_hit_sound_qed_or_qex` | **QED** — ∀ Hit iff proper disc ∧ `on_full_circle` both roots | `CircularCookHit.v : I_circles_gamma_hit_iff`, `CircularCookHit.v : on_full_circle_both_of_proper` |
+| `CircularCookHit.v : ticket_0007_i2_arc_scope_qed_or_qex` | **QEX** — not arc membership; CircGamma stays QEX | `CircularCook.v : circular_gamma_is_qex` |
+
+Witness: `0007-I.2-hit-sound`. Status stays **Accepted**. Host CircGamma stays QEX.

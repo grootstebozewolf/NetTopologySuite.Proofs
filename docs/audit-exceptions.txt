@@ -392,7 +392,8 @@ theories/AngleBetween.v
 # Category C (R-side, same atan lineage as Atan2.v / AngleBetween.v):
 # ADR-0007 core-slice Hit (h*, p*, tᵢ, tⱼ). circ_t / circ_gamma_retract
 # use atan2_on_circle and atan2_range, so inherit
-# Classical_Prop.classic. Locked-fixture QED; CircGamma stays QEX.
+# Classical_Prop.classic. Locked-fixture QED; I.2 ∀ Hit soundness
+# off the lock (γ_full, both roots). CircGamma stays QEX.
 # No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
 theories/CircularCookHit.v
 

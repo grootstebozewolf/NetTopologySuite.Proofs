@@ -9,13 +9,18 @@
 
    QED: locked (0,0)/(7,0) r=5 Hit carries constructed (h*, p*, tᵢ, tⱼ)
    with γᵢ(tᵢ) = γⱼ(tⱼ) = p* and t ∈ [0,1].  Kiss Touch carries t too.
+   I.2: ∀ Hit soundness off that lock — I_circles_gamma = Hit iff
+   proper discriminant and on_full_circle on both radical roots
+   (γ_full, not CircularArc span). R3 is the locked witness.
    QEX: CircularArc still has no γ / (tᵢ, tⱼ) — CircGamma stays QEX;
    do not fake Discharge.  first_cook_scope stays chord–chord.
 
    Not glossary 𝓘 for CircularArc eggs.  Not a noder.  Not OverlayNGCurve
    / #857 / fully_intersected / ticket 523.  Not chord-lane constructed 𝓘.
+   Not I.3 / I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
 
-   WITNESS topic: core · claimId: 64-circ-hit-params · witness: 64-i-circular-locked
+   WITNESS topic: core · claimId: 64-circ-hit-params / 0007
+   witness: 64-i-circular-locked / 0007-I.2-hit-sound
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic). No Admitted / Axiom / Parameter.
 
@@ -23,7 +28,7 @@
    License: BSD-3-Clause (see LICENSE)
    ========================================================================== *)
 
-From Stdlib Require Import ZArith Reals Lra.
+From Stdlib Require Import ZArith Reals Lra Lia.
 From NTS.Proofs Require Import Distance SheetHenCook ArcArcCircles
   Atan2 AngleBetween CircularCookZ CircularCook.
 Local Open Scope R_scope.
@@ -526,3 +531,261 @@ Print Assumptions locked_internal_kiss_on_gamma.
 Print Assumptions ticket_64_circ_hit_params_qed_or_qex.
 Print Assumptions ICircGEmpty_neq_ICircGDecline.
 Print Assumptions ICircGTouch_neq_ICircGHit.
+
+(* -------------------------------------------------------------------------- *)
+(* I.2 ∀ Hit soundness. Drop the lock; keep γ_full. Both radical roots.       *)
+(* Not CircularArc span membership. CircGamma stays QEX. R3 is the locked     *)
+(* (0,0)/(7,0) r=5 witness above.                                             *)
+(* -------------------------------------------------------------------------- *)
+
+Definition proper_circ_disc (o1x o1y r1 o2x o2y r2 : Z) : Prop :=
+  (0 < r1)%Z /\ (0 < r2)%Z /\
+  (circ_diff2 r1 r2 < circ_d2 o1x o1y o2x o2y)%Z /\
+  (circ_d2 o1x o1y o2x o2y < circ_sum2 r1 r2)%Z.
+
+Definition gamma_p_plus (o1x o1y r1 o2x o2y r2 : Z) : Point :=
+  radical_point_plus (zpt o1x o1y) (zpt o2x o2y) (IZR r1) (IZR r2).
+
+Definition gamma_p_minus (o1x o1y r1 o2x o2y r2 : Z) : Point :=
+  radical_point_minus (zpt o1x o1y) (zpt o2x o2y) (IZR r1) (IZR r2).
+
+Definition I_circles_gamma_hit_val (o1x o1y r1 o2x o2y r2 : Z) : ICircG :=
+  let O1 := zpt o1x o1y in
+  let O2 := zpt o2x o2y in
+  let pp := gamma_p_plus o1x o1y r1 o2x o2y r2 in
+  let pm := gamma_p_minus o1x o1y r1 o2x o2y r2 in
+  ICircGHit hen_plus pp (circ_t O1 pp) (circ_t O2 pp)
+            hen_minus pm (circ_t O1 pm) (circ_t O2 pm).
+
+Definition on_full_circle_both_roots
+  (o1x o1y r1 o2x o2y r2 : Z) : Prop :=
+  let O1 := zpt o1x o1y in
+  let O2 := zpt o2x o2y in
+  let R1 := IZR r1 in
+  let R2 := IZR r2 in
+  let pp := gamma_p_plus o1x o1y r1 o2x o2y r2 in
+  let pm := gamma_p_minus o1x o1y r1 o2x o2y r2 in
+  on_full_circle O1 R1 (circ_t O1 pp) pp /\
+  on_full_circle O2 R2 (circ_t O2 pp) pp /\
+  on_full_circle O1 R1 (circ_t O1 pm) pm /\
+  on_full_circle O2 R2 (circ_t O2 pm) pm.
+
+Lemma I_circles_gamma_eq_hit_val :
+  forall o1x o1y r1 o2x o2y r2,
+    I_circles_gamma o1x o1y r1 o2x o2y r2 =
+      I_circles_gamma_hit_val o1x o1y r1 o2x o2y r2
+    <->
+    I_circles_z o1x o1y r1 o2x o2y r2 = IZHit hen_plus hen_minus.
+Proof.
+  intros o1x o1y r1 o2x o2y r2.
+  unfold I_circles_gamma, I_circles_gamma_hit_val, I_circles_on_z_sheet,
+         gamma_p_plus, gamma_p_minus.
+  destruct (I_circles_z o1x o1y r1 o2x o2y r2) as [hp hm | | h | ] eqn:Hz.
+  - split.
+    + intros Heq. inversion Heq. subst. reflexivity.
+    + intros Heq. inversion Heq. subst. reflexivity.
+  - split; discriminate.
+  - split; discriminate.
+  - split; discriminate.
+Qed.
+
+Lemma sq_monotone_nonneg_lt : forall x y,
+  0 <= x -> 0 <= y -> (x < y <-> x * x < y * y).
+Proof.
+  intros x y Hx Hy.
+  split; intros H.
+  - apply Rmult_le_0_lt_compat; lra.
+  - destruct (Rle_or_lt y x) as [Hle | Hlt].
+    + exfalso.
+      assert (y * y <= x * x) by (apply Rmult_le_compat; lra).
+      lra.
+    + exact Hlt.
+Qed.
+
+Lemma zpt_dist_sq :
+  forall o1x o1y o2x o2y,
+    dist_sq (zpt o1x o1y) (zpt o2x o2y) = IZR (circ_d2 o1x o1y o2x o2y).
+Proof.
+  intros o1x o1y o2x o2y.
+  unfold dist_sq, zpt, circ_d2. cbn [px py].
+  rewrite <- !minus_IZR, <- !mult_IZR, <- plus_IZR.
+  apply f_equal.
+  lia.
+Qed.
+
+Lemma IZR_circ_sum2 :
+  forall r1 r2,
+    IZR (circ_sum2 r1 r2) = (IZR r1 + IZR r2) * (IZR r1 + IZR r2).
+Proof.
+  intros r1 r2.
+  unfold circ_sum2.
+  rewrite mult_IZR, plus_IZR.
+  reflexivity.
+Qed.
+
+Lemma IZR_circ_diff2 :
+  forall r1 r2,
+    IZR (circ_diff2 r1 r2) = (IZR r1 - IZR r2) * (IZR r1 - IZR r2).
+Proof.
+  intros r1 r2.
+  unfold circ_diff2.
+  rewrite mult_IZR, minus_IZR.
+  reflexivity.
+Qed.
+
+Lemma proper_circ_disc_lifts :
+  forall o1x o1y r1 o2x o2y r2,
+    proper_circ_disc o1x o1y r1 o2x o2y r2 ->
+    0 < IZR r1 /\
+    0 < IZR r2 /\
+    0 < dist (zpt o1x o1y) (zpt o2x o2y) /\
+    Rabs (IZR r1 - IZR r2) < dist (zpt o1x o1y) (zpt o2x o2y) /\
+    dist (zpt o1x o1y) (zpt o2x o2y) < IZR r1 + IZR r2.
+Proof.
+  intros o1x o1y r1 o2x o2y r2 [Hr1 [Hr2 [Hdiff Hsum]]].
+  assert (Hr1R : 0 < IZR r1) by (apply IZR_lt; exact Hr1).
+  assert (Hr2R : 0 < IZR r2) by (apply IZR_lt; exact Hr2).
+  assert (Hd2pos : (0 < circ_d2 o1x o1y o2x o2y)%Z).
+  { pose proof (Z.square_nonneg (r1 - r2)) as Hnn.
+    unfold circ_diff2 in Hdiff. lia.
+  }
+  assert (Hdsq : dist_sq (zpt o1x o1y) (zpt o2x o2y) =
+                   IZR (circ_d2 o1x o1y o2x o2y))
+    by apply zpt_dist_sq.
+  assert (Hdsq_pos : 0 < dist_sq (zpt o1x o1y) (zpt o2x o2y)).
+  { rewrite Hdsq. apply IZR_lt. exact Hd2pos. }
+  assert (Hdpos : 0 < dist (zpt o1x o1y) (zpt o2x o2y)).
+  { unfold dist. apply sqrt_lt_R0. exact Hdsq_pos. }
+  assert (HsumR : 0 < IZR r1 + IZR r2) by lra.
+  assert (Habsnn : 0 <= Rabs (IZR r1 - IZR r2)) by apply Rabs_pos.
+  assert (Hdnn : 0 <= dist (zpt o1x o1y) (zpt o2x o2y)) by apply dist_nonneg.
+  split; [exact Hr1R|].
+  split; [exact Hr2R|].
+  split; [exact Hdpos|].
+  split.
+  - apply (sq_monotone_nonneg_lt _ _ Habsnn Hdnn).
+    unfold dist.
+    rewrite sqrt_sqrt by apply dist_sq_nonneg.
+    rewrite Hdsq.
+    assert (Habs_sq :
+              Rabs (IZR r1 - IZR r2) * Rabs (IZR r1 - IZR r2)
+              = IZR (circ_diff2 r1 r2)).
+    { rewrite IZR_circ_diff2.
+      pose proof (Rsqr_abs (IZR r1 - IZR r2)) as Habs2.
+      unfold Rsqr in Habs2.
+      symmetry. exact Habs2. }
+    rewrite Habs_sq.
+    apply IZR_lt. exact Hdiff.
+  - apply (sq_monotone_nonneg_lt _ _ Hdnn (Rlt_le _ _ HsumR)).
+    unfold dist.
+    rewrite sqrt_sqrt by apply dist_sq_nonneg.
+    rewrite Hdsq.
+    assert (Hsum_sq :
+              (IZR r1 + IZR r2) * (IZR r1 + IZR r2)
+              = IZR (circ_sum2 r1 r2)).
+    { rewrite IZR_circ_sum2. reflexivity. }
+    rewrite Hsum_sq.
+    apply IZR_lt. exact Hsum.
+Qed.
+
+Lemma on_full_circle_both_of_proper :
+  forall o1x o1y r1 o2x o2y r2,
+    proper_circ_disc o1x o1y r1 o2x o2y r2 ->
+    on_full_circle_both_roots o1x o1y r1 o2x o2y r2.
+Proof.
+  intros o1x o1y r1 o2x o2y r2 Hdisc.
+  destruct (proper_circ_disc_lifts o1x o1y r1 o2x o2y r2 Hdisc)
+    as [Hr1 [Hr2 [Hdpos [Habs Hsum]]]].
+  unfold on_full_circle_both_roots, gamma_p_plus, gamma_p_minus.
+  pose proof (radical_points_on_circles
+                (zpt o1x o1y) (zpt o2x o2y) (IZR r1) (IZR r2)
+                Hr1 Hr2 Hdpos Habs Hsum)
+    as [[Hp1 Hp2] [Hm1 Hm2]].
+  split; [apply on_full_circle_of_retract; [exact Hr1|exact Hp1]|].
+  split; [apply on_full_circle_of_retract; [exact Hr2|exact Hp2]|].
+  split; [apply on_full_circle_of_retract; [exact Hr1|exact Hm1]|].
+  apply on_full_circle_of_retract; [exact Hr2|exact Hm2].
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"I_circles_gamma_hit_iff","title":"I.2 forall Hit soundness: I_circles_gamma is Hit iff proper discriminant and on_full_circle on both radical roots (gamma_full)","file":"theories/CircularCookHit.v","witness":"0007-I.2-hit-sound","board":"ADR-0007"} *)
+
+Theorem I_circles_gamma_hit_iff :
+  forall o1x o1y r1 o2x o2y r2,
+    I_circles_gamma o1x o1y r1 o2x o2y r2 =
+      I_circles_gamma_hit_val o1x o1y r1 o2x o2y r2
+    <->
+    proper_circ_disc o1x o1y r1 o2x o2y r2 /\
+    on_full_circle_both_roots o1x o1y r1 o2x o2y r2.
+Proof.
+  intros o1x o1y r1 o2x o2y r2.
+  split.
+  - intros Hhit.
+    apply I_circles_gamma_eq_hit_val in Hhit.
+    apply I_circles_z_hit_iff in Hhit.
+    split; [exact Hhit|].
+    apply on_full_circle_both_of_proper. exact Hhit.
+  - intros [Hdisc _].
+    apply I_circles_gamma_eq_hit_val.
+    apply I_circles_z_hit_iff. exact Hdisc.
+Qed.
+
+(* R3: the locked witness inhabits the forall. *)
+Lemma i2_recovers_locked_r3 :
+  I_circles_gamma 0 0 5 7 0 5 =
+    I_circles_gamma_hit_val 0 0 5 7 0 5
+  <->
+  proper_circ_disc 0 0 5 7 0 5 /\
+  on_full_circle_both_roots 0 0 5 7 0 5.
+Proof.
+  apply I_circles_gamma_hit_iff.
+Qed.
+
+Lemma locked_is_gamma_hit_val :
+  I_circles_gamma_hit_val 0 0 5 7 0 5 =
+  ICircGHit hen_plus locked_p_plus
+    (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+    hen_minus locked_p_minus
+    (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus).
+Proof.
+  unfold I_circles_gamma_hit_val, gamma_p_plus, gamma_p_minus,
+         locked_p_plus, locked_p_minus, locked_O1, locked_O2, locked_r.
+  rewrite zpt_00, zpt_70.
+  reflexivity.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i2_hit_sound_qed_or_qex","title":"I.2 forall Hit soundness off the lock (QED) or the locked R3 witness declines (QEX); discharged QED; both roots on gamma_full","file":"theories/CircularCookHit.v","witness":"0007-I.2-hit-sound","board":"ADR-0007"} *)
+
+Theorem ticket_0007_i2_hit_sound_qed_or_qex :
+  (forall o1x o1y r1 o2x o2y r2,
+     I_circles_gamma o1x o1y r1 o2x o2y r2 =
+       I_circles_gamma_hit_val o1x o1y r1 o2x o2y r2
+     <->
+     proper_circ_disc o1x o1y r1 o2x o2y r2 /\
+     on_full_circle_both_roots o1x o1y r1 o2x o2y r2)
+  \/
+  I_circles_gamma 0 0 5 7 0 5 = ICircGDecline.
+Proof.
+  left.
+  exact I_circles_gamma_hit_iff.
+Qed.
+
+(* I.2 is γ_full, not CircularArc span membership. CircGamma stays QEX. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i2_arc_scope_qed_or_qex","title":"I.2 is arc-span membership (QED) or gamma_full only while CircGamma stays QEX (QEX); discharged QEX; not CircularArc membership","file":"theories/CircularCookHit.v","witness":"0007-I.2-hit-sound","board":"ADR-0007"} *)
+
+Theorem ticket_0007_i2_arc_scope_qed_or_qex :
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc)
+  \/
+  (circular_gamma_status = CircGammaQEX
+   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+Proof.
+  right.
+  split; [exact circular_gamma_is_qex|exact circular_not_first_cook_scope].
+Qed.
+
+Print Assumptions I_circles_gamma_hit_iff.
+Print Assumptions proper_circ_disc_lifts.
+Print Assumptions on_full_circle_both_of_proper.
+Print Assumptions i2_recovers_locked_r3.
+Print Assumptions ticket_0007_i2_hit_sound_qed_or_qex.
+Print Assumptions ticket_0007_i2_arc_scope_qed_or_qex.
