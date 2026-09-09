@@ -276,7 +276,8 @@ Proof.
   intros a b ti tj u.
   unfold cook_span_root.
   cbn [scp_L1 scp_R1 scp_L2 scp_R2].
-  repeat split; apply span_leftover_on_circle.
+  rewrite !span_split_left_reparam, !span_split_right_reparam.
+  repeat split; apply arc_gamma_on_circle.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
