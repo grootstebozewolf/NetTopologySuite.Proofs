@@ -469,6 +469,16 @@ theories/CircularCookSpanFilter.v
 # Headlines Qed-closed. Not circ_split. Not CS concat.
 theories/CircularCookSpanSplit.v
 
+# Category C (R-side, same atan lineage as CircularCookSpan.v):
+# ADR-0007 II.3 I_ok_circ on EggCircularArc × EggCircularArc.
+# First glossary-type inhabitant using sidecar arc_gamma /
+# span filter / span split. Host CircGamma stays QEX.
+# II.4 / H⊥ / SQL/MM cathedral stay parked. Inherits
+# Classical_Prop.classic via CircularCookSpan / atan2
+# (claimId 0007 / II.3). No extra axioms beyond the atan2
+# lineage. Headlines Qed-closed. Not CS concat. Not host I_ok.
+theories/CircularCookOkCirc.v
+
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
 # so inherit Classical_Prop.classic.  Headlines in_arc_point_on_minor_arc and

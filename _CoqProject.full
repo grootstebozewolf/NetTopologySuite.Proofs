@@ -2865,6 +2865,14 @@ theories/CircularCookSpanFilter.v
 # stay parked. 4-axiom atan2 sidecar (classic via Span / Filter).
 # Not CircularString concat. Not first cook scope. Not a noder.
 theories/CircularCookSpanSplit.v
+# II.3 I_ok_circ on EggCircularArc × EggCircularArc (sidecar
+# arc_gamma). First glossary-type inhabitant. Locked p+ Hit
+# licenses span_split; locked far pair inhabits Empty.
+# Host CircGamma stays QEX. first_cook_scope stays chord–chord.
+# II.4 / H⊥ / SQL/MM cathedral stay parked. 4-axiom atan2
+# sidecar (classic via Span / Filter / Split). Not CS concat.
+# Not first cook scope. Not a noder. Not a computed classifier.
+theories/CircularCookOkCirc.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
