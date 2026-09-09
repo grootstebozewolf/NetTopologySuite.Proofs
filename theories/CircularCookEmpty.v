@@ -98,6 +98,24 @@ Proof.
   inversion Hz. reflexivity.
 Qed.
 
+Lemma I_circles_z_hit_is_plus_minus :
+  forall o1x o1y r1 o2x o2y r2 hp hm,
+    I_circles_z o1x o1y r1 o2x o2y r2 = IZHit hp hm ->
+    hp = hen_plus /\ hm = hen_minus.
+Proof.
+  intros o1x o1y r1 o2x o2y r2 hp hm Hz.
+  unfold I_circles_z, mint_pair, mint_touch in Hz.
+  destruct ((r1 <=? 0)%Z || (r2 <=? 0)%Z); [discriminate|].
+  destruct (circ_d2 o1x o1y o2x o2y =? 0)%Z; [discriminate|].
+  destruct ((circ_d2 o1x o1y o2x o2y =? (r1 + r2) * (r1 + r2))%Z
+            || (circ_d2 o1x o1y o2x o2y =? (r1 - r2) * (r1 - r2))%Z);
+    [discriminate|].
+  destruct (((r1 + r2) * (r1 + r2) <? circ_d2 o1x o1y o2x o2y)%Z
+            || (circ_d2 o1x o1y o2x o2y <? (r1 - r2) * (r1 - r2))%Z);
+    [discriminate|].
+  inversion Hz. split; reflexivity.
+Qed.
+
 Lemma proper_circ_pair_neg_iff :
   forall o1x o1y r1 o2x o2y r2,
     ~ proper_circ_pair o1x o1y r1 o2x o2y r2 <->
@@ -204,16 +222,17 @@ Proof.
   split.
   - apply (proj1 (sq_monotone_nonneg
                     (Rabs (r1 - r2)) (dist O1 O2) Habsnn Hdnn)) in Habs.
-    rewrite <- (Rsqr_abs (r1 - r2)) in Habs.
-    unfold Rsqr in Habs.
-    unfold dist in Habs.
-    rewrite sqrt_sqrt in Habs by apply dist_sq_nonneg.
-    lra.
+    assert (Hrabs2 :
+              Rabs (r1 - r2) * Rabs (r1 - r2) = (r1 - r2) * (r1 - r2)).
+    { rewrite <- Rabs_mult. apply Rabs_right. apply Rle_ge.
+      pose proof (Rle_0_sqr (r1 - r2)) as Hz.
+      unfold Rsqr in Hz. exact Hz. }
+    rewrite Hrabs2, Hdd in Habs.
+    exact Habs.
   - apply (proj1 (sq_monotone_nonneg
                     (dist O1 O2) (r1 + r2) Hdnn Hsumnn)) in Hsum.
-    unfold dist in Hsum.
-    rewrite sqrt_sqrt in Hsum by apply dist_sq_nonneg.
-    lra.
+    rewrite Hdd in Hsum.
+    exact Hsum.
 Qed.
 
 Definition line_scale (O1 O2 : Point) (s : R) : Point :=
@@ -254,7 +273,7 @@ Proof.
     rewrite line_scale_dist_sq_from_O1, line_scale_dist_sq_from_O2, <- Hdd.
     split.
     + field. exact Hdne.
-    + rewrite Hext. field. exact Hdne.
+    + rewrite Hext. field. rewrite <- Hext. exact Hdne.
   - destruct (Rle_dec r2 r1) as [Hle | Hgt].
     + assert (Hdabs : d = r1 - r2).
       { rewrite Hint. rewrite Rabs_right; lra. }
@@ -262,14 +281,14 @@ Proof.
       rewrite line_scale_dist_sq_from_O1, line_scale_dist_sq_from_O2, <- Hdd.
       split.
       * field. exact Hdne.
-      * rewrite Hdabs. field. exact Hdne.
+      * rewrite Hdabs. field. rewrite <- Hdabs. exact Hdne.
     + assert (Hdabs : d = r2 - r1).
       { rewrite Hint. rewrite Rabs_left; lra. }
       exists (line_scale O1 O2 (- r1 / d)).
       rewrite line_scale_dist_sq_from_O1, line_scale_dist_sq_from_O2, <- Hdd.
       split.
       * field. exact Hdne.
-      * rewrite Hdabs. field. exact Hdne.
+      * rewrite Hdabs. field. rewrite <- Hdabs. exact Hdne.
 Qed.
 
 Lemma touch_lifts_kiss_radii :
@@ -289,7 +308,10 @@ Proof.
   assert (Hdsq : dist_sq (zpt o1x o1y) (zpt o2x o2y) =
                    IZR (circ_d2 o1x o1y o2x o2y))
     by apply zpt_dist_sq.
-  assert (Hd2pos : (0 < circ_d2 o1x o1y o2x o2y)%Z) by lia.
+  assert (Hd2pos : (0 < circ_d2 o1x o1y o2x o2y)%Z).
+  { pose proof (Z.square_nonneg (o2x - o1x)).
+    pose proof (Z.square_nonneg (o2y - o1y)).
+    unfold circ_d2 in Hd0 |- *. lia. }
   assert (Hdsq_pos : 0 < dist_sq (zpt o1x o1y) (zpt o2x o2y)).
   { rewrite Hdsq. apply IZR_lt. exact Hd2pos. }
   assert (Hdpos : 0 < dist (zpt o1x o1y) (zpt o2x o2y)).
@@ -334,18 +356,13 @@ Lemma hit_images_meet :
 Proof.
   intros o1x o1y r1 o2x o2y r2 Hhit Hdisj.
   apply I_circles_gamma_hit_iff in Hhit.
-  destruct Hhit as [Hdisc Hon].
-  unfold on_full_circle_both_roots, gamma_images_disjoint,
-         full_circle_images_disjoint in *.
-  destruct Hon as [Hp1 _].
+  destruct Hhit as [_ Hon].
+  destruct Hon as [Hp1 [Hp2 _]].
   apply (Hdisj (gamma_p_plus o1x o1y r1 o2x o2y r2)).
   split.
   - exists (circ_t (zpt o1x o1y) (gamma_p_plus o1x o1y r1 o2x o2y r2)).
     exact Hp1.
-  - destruct Hdisc as [Hr1 [Hr2 _]].
-    pose proof (on_full_circle_both_of_proper o1x o1y r1 o2x o2y r2 Hdisc)
-      as [_ [Hp2 _]].
-    exists (circ_t (zpt o2x o2y) (gamma_p_plus o1x o1y r1 o2x o2y r2)).
+  - exists (circ_t (zpt o2x o2y) (gamma_p_plus o1x o1y r1 o2x o2y r2)).
     exact Hp2.
 Qed.
 
@@ -374,8 +391,8 @@ Proof.
     rewrite zpt_dist_sq, <- IZR_circ_diff2 in Hlo.
     rewrite zpt_dist_sq, <- IZR_circ_sum2 in Hhi.
     destruct He as [Hgt | Hlt].
-    + apply IZR_le in Hhi. lia.
-    + apply IZR_le in Hlo. lia.
+    + apply le_IZR in Hhi. lia.
+    + apply le_IZR in Hlo. lia.
 Qed.
 
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"I_circles_gamma_empty_iff","title":"I.3 forall Empty: I_circles_gamma is Empty iff proper pair and full-circle images disjoint on S","file":"theories/CircularCookEmpty.v","witness":"0007-I.3-empty-decline","board":"ADR-0007"} *)
@@ -396,6 +413,8 @@ Proof.
     unfold I_circles_gamma, I_circles_on_z_sheet.
     destruct (I_circles_z o1x o1y r1 o2x o2y r2) as [hp hm | | h | ] eqn:Hz.
     + exfalso.
+      destruct (I_circles_z_hit_is_plus_minus
+                  o1x o1y r1 o2x o2y r2 hp hm Hz) as [-> ->].
       apply (hit_images_meet o1x o1y r1 o2x o2y r2); [|exact Hdisj].
       apply I_circles_gamma_eq_hit_val. exact Hz.
     + reflexivity.
