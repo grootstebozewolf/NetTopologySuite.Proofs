@@ -371,6 +371,21 @@ Locked mixed fixture
 `phase_b_compound_curve_status` Landed. Host CircGamma stays
 QEX. CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
 CircGamma remint. Not a remint of `CurveSegment`.
+B.3 (Phase B, CurvePolygon required-type cut): a CP ring is
+a closed CircularString or closed CompoundCurve (B.2 members
+contiguous and closed; last joins first). Sequential joints
+stay B.2. CS–CS closing reuses `I_ok_circ` / B.1 `cs_joint`.
+LS–LS closing is host `I_ok`. Mixed closing is host `I_ok`
+Decline (I.1); a constructed mixed Hit does not. Locked
+CS-ring
+`CURVEPOLYGON((CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)))`
+and mixed-ring
+`CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))))`.
+`phase_b_curve_polygon_status` Landed. Phase B done-when
+met (CS + CC + CP Landed). Host CircGamma stays QEX. H⊥ /
+CircGamma remint / bag-noder stay parked. Not SQL/MM done
+(cathedral / Multi / optional Part 3 types). Not a remint
+of `CurveSegment` / `CurveGeometry.CurvePolygon`.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

@@ -22,6 +22,8 @@
    CircularCookCsConcat.v (4-axiom sidecar reuse of I_ok_circ);
    Phase B.2 CompoundCurve member joints live in
    CircularCookCcConcat.v (4-axiom sidecar / host reuse);
+   Phase B.3 CurvePolygon ring closure lives in
+   CircularCookCpConcat.v (4-axiom sidecar / host reuse);
    this host flag stays QEX.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked

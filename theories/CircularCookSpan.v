@@ -31,6 +31,9 @@
    Phase B.2 lifts the same reuse to CompoundCurve member joints
    (CircularCookCcConcat.v): LS–LS host I_ok; CS–CS I_ok_circ;
    mixed host Decline.
+   Phase B.3 lifts the same reuse to CurvePolygon ring closure
+   (CircularCookCpConcat.v): last member joins first; CS–CS
+   closing I_ok_circ; mixed closing host Decline.
 
    WITNESS topic: core · claimId: 64-circ-span-gamma · witness: 64-circ-span-locked
    board: ADR-0007
