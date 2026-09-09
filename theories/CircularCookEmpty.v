@@ -175,11 +175,11 @@ Proof.
   pose proof (dist_of_on_circle_pos O1 p r1 Hr1 H1) as Hd1.
   pose proof (dist_of_on_circle_pos O2 p r2 Hr2 H2) as Hd2.
   pose proof (dist_triangle O1 p O2) as Hsum.
-  rewrite Hd1, dist_sym, Hd2 in Hsum.
+  rewrite Hd1, (dist_sym p O2), Hd2 in Hsum.
   pose proof (dist_triangle O1 O2 p) as Hrev1.
-  rewrite Hd1 in Hrev1.
+  rewrite Hd1, Hd2 in Hrev1.
   pose proof (dist_triangle O2 O1 p) as Hrev2.
-  rewrite dist_sym, Hd2 in Hrev2.
+  rewrite Hd2, (dist_sym O2 O1), Hd1 in Hrev2.
   split.
   - apply Rabs_le. lra.
   - exact Hsum.
