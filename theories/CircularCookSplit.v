@@ -807,12 +807,36 @@ Qed.
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i1_fence_qed_or_qex","title":"Four I objects are pairwise unequal by locked observation (QED) or they collapse (QEX); discharged QED; I.1 fence not a type synonym","file":"theories/CircularCookSplit.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i1_fence_qed_or_qex :
-  (i1_z_neq_gamma_obs
-   /\ i1_z_neq_sidecar_obs
-   /\ i1_z_neq_gloss_obs
-   /\ i1_gamma_neq_sidecar_obs
-   /\ i1_gamma_neq_gloss_obs
-   /\ i1_sidecar_neq_gloss_obs)
+  ((I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+    /\ I_circles_gamma 0 0 5 7 0 5 =
+         ICircGHit hen_plus locked_p_plus
+           (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+           hen_minus locked_p_minus
+           (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus)
+    /\ on_full_circle locked_O1 locked_r
+         (circ_t locked_O1 locked_p_plus) locked_p_plus)
+   /\ (I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+       /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+            (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two)
+   /\ (I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+       /\ circular_gamma_status = CircGammaQEX)
+   /\ (I_circles_gamma 0 0 5 7 0 5 =
+         ICircGHit hen_plus locked_p_plus
+           (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+           hen_minus locked_p_minus
+           (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus)
+       /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+            (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
+       /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+            (I_circles_gamma 0 0 5 20 0 5) = None)
+   /\ (on_full_circle locked_O1 locked_r
+         (circ_t locked_O1 locked_p_plus) locked_p_plus
+       /\ circular_gamma_status = CircGammaQEX)
+   /\ (try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+         (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
+       /\ (forall p ti tj h,
+             try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
+       /\ circular_gamma_status = CircGammaQEX))
   \/
   (circular_gamma_status = CircGammaDischarged
    /\ I_circles_z 0 0 5 7 0 5 = IZDecline).
