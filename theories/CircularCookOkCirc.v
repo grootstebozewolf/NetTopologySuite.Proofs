@@ -345,17 +345,19 @@ Proof.
   rewrite <- Ha in HA. rewrite <- Hb in HB.
   rewrite span_arc_A_center, span_arc_A_radius in HA.
   rewrite span_empty_far_center, span_empty_far_radius in HB.
-  unfold locked_O1, locked_r, span_empty_far_O, dist_sq in HA, HB.
+  unfold locked_O1, locked_r, dist_sq in HA.
+  unfold span_empty_far_O, dist_sq in HB.
   cbn [px py] in HA, HB.
-  assert (Hsub :
-    (px p - 20) * (px p - 20) + py p * py p
-      - (px p * px p + py p * py p) = 0)
-    by lra.
-  replace ((px p - 20) * (px p - 20) + py p * py p
-             - (px p * px p + py p * py p))
-    with (400 - 40 * px p) in Hsub by ring.
+  replace ((0 - px p) * (0 - px p) + (0 - py p) * (0 - py p))
+    with (px p * px p + py p * py p) in HA by ring.
+  replace ((20 - px p) * (20 - px p) + (0 - py p) * (0 - py p))
+    with ((20 - px p) * (20 - px p) + py p * py p) in HB by ring.
+  assert (Hdiff : (20 - px p) * (20 - px p) - px p * px p = 0) by lra.
+  replace ((20 - px p) * (20 - px p) - px p * px p)
+    with (400 - 40 * px p) in Hdiff by ring.
   assert (Hpx : px p = 10) by lra.
   rewrite Hpx in HA.
+  assert (Hnn : 0 <= py p * py p) by nra.
   lra.
 Qed.
 
