@@ -250,6 +250,17 @@ CurvePolygon / H⊥ parked; not SQL/MM done; CC Landed; no new
 kernel): `theories/CircularCookCcConcat.v`. 4-axiom atan2
 sidecar.
 
+Production home for 0007-B.3-cp-ring-closure (Phase B.3
+CurvePolygon ring closure; CP ring is a closed CircularString
+or closed CompoundCurve — B.2 members contiguous and closed,
+last joins first; CS–CS closing reuses `I_ok_circ`; mixed
+closing is host `I_ok` Decline (I.1); locked CS-ring and
+mixed-ring fixtures; host CircGamma stays QEX; H⊥ /
+CircGamma remint / bag-noder parked; not SQL/MM done; CP
+Landed; Phase B done-when met (CS + CC + CP Landed); no new
+kernel): `theories/CircularCookCpConcat.v`. 4-axiom atan2
+sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.
