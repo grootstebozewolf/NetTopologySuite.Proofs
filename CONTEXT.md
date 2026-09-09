@@ -360,7 +360,17 @@ not interior. Reuse `I_ok_circ` — no new kernel. Locked
 2-arc V-CS odd_closed fixture. Host CircGamma stays QEX;
 host circular `I_ok` stays Decline. CompoundCurve /
 CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
-CircGamma remint.
+CircGamma remint. B.2 (Phase B, CompoundCurve required-type
+cut): CompoundCurve is a sequence of LineString (chords) and
+CircularString (`CircEgg`) members. LS–LS joint is host
+`I_ok` Hit at `(ce_p1, t=1, t=0)`. CS–CS member joint reuses
+`I_ok_circ` / B.1 `cs_joint`. Mixed LS–CS joint is host
+`I_ok` Decline (I.1); a constructed mixed Hit does not.
+Locked mixed fixture
+`COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))`.
+`phase_b_compound_curve_status` Landed. Host CircGamma stays
+QEX. CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
+CircGamma remint. Not a remint of `CurveSegment`.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

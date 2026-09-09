@@ -20,6 +20,8 @@
    II.4 Campaign-II close lives in CircularCookCloseII.v
    (4-axiom sidecar); Phase B.1 CS concat joints live in
    CircularCookCsConcat.v (4-axiom sidecar reuse of I_ok_circ);
+   Phase B.2 CompoundCurve member joints live in
+   CircularCookCcConcat.v (4-axiom sidecar / host reuse);
    this host flag stays QEX.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked

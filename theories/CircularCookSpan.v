@@ -28,6 +28,9 @@
    (CircularCookOkCirc.v): locked Hit licenses the split.
    Phase B.1 lifts I_ok_circ to CircularString concat joints
    (CircularCookCsConcat.v): joint Hit at (end, t=1, t=0).
+   Phase B.2 lifts the same reuse to CompoundCurve member joints
+   (CircularCookCcConcat.v): LS–LS host I_ok; CS–CS I_ok_circ;
+   mixed host Decline.
 
    WITNESS topic: core · claimId: 64-circ-span-gamma · witness: 64-circ-span-locked
    board: ADR-0007

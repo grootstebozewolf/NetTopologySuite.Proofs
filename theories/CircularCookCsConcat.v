@@ -28,7 +28,9 @@
    QEX: host CircGamma stays QEX; first cook stays chord–chord;
    host circular I_ok is Decline; I_ok_circ Hit ≠ host I_ok;
    CompoundCurve / CurvePolygon / H⊥ stay parked; SQL/MM is
-   not done; not a CircGamma remint.
+   not done; not a CircGamma remint. Phase B.2 CompoundCurve
+   member joints live in CircularCookCcConcat.v (this letter's
+   park ticket still names CC as a B.1-local gap).
 
    Honesty fences:
      Host-Decline / CircGamma-QEX at the top of this module.
