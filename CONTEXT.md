@@ -319,7 +319,9 @@ inhabits `I_ok`; a mixed Hit does not. I.2 drops the lock on
 on both radical roots (γ_full, not arc membership). I.3: Empty iff
 proper pair and γ_full images disjoint on S; Decline iff not a
 proper pair (`d=0` or `r≤0`). Discriminant Empty and image-disjoint
-are different proofs. Pairwise
+are different proofs. I.8: leftovers_ab = leftovers_ba on γ_full
+(circular analogue of `split_step_confluent`; not the bag loop).
+Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of

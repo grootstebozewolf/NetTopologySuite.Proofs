@@ -280,6 +280,10 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.3 ∀ Decline | `CircularCookEmpty.v : ticket_0007_i3_decline_qed_or_qex` | **QED** — Decline iff not a proper pair (`d=0` or `r≤0`) | `CircularCookEmpty.v : I_circles_gamma_decline_iff` |
 | — | I.3 discriminant ≠ image-disjoint | `CircularCookEmpty.v : ticket_0007_i3_disc_neq_image_qed_or_qex` | **QED** — concentric unequal radii are image-disjoint and Decline, not Empty | `CircularCookEmpty.v : concentric_unequal_images_disjoint` |
 | — | I.3 not arc membership | `CircularCookEmpty.v : ticket_0007_i3_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; sidecar cook stays locked | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
+| — | I.8 leftover confluence | `CircularCookConfluence.v : ticket_0007_i8_confluent_qed_or_qex` | **QED** — `leftovers_ab` = `leftovers_ba` on γ_full; circular analogue of `split_step_confluent` | `CircularCookConfluence.v : circ_split_step_confluent` |
+| — | I.8 cook bag inhabits leftovers | `CircularCookConfluence.v : ticket_0007_i8_cook_qed_or_qex` | **QED** — `cook_circ_root` leftovers are that bag; locked plus/minus recovered | `CircularCookConfluence.v : cook_circ_root_is_leftovers_ab`, `CircularCookConfluence.v : i8_recovers_locked_plus` |
+| — | I.8 one-step ≠ bag loop | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — confluence is one Hit-split; `cook_loop` stays obligation | `CircularCookConfluence.v : i8_one_step_not_bag_loop`, `SheetHenCook.v : cook_loop_is_obligation` |
+| — | I.8 not arc / not bag discharge | `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; bag loop stays QEX | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -594,3 +598,28 @@ reopen Status.
 | `CircularCookEmpty.v : ticket_0007_i3_scope_qed_or_qex` | **QEX** — not arc membership; CircGamma stays QEX | `CircularCook.v : circular_gamma_is_qex` |
 
 Witness: `0007-I.3-empty-decline`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.8 one-step leftover confluence (2026-09-09)
+
+#690 dropped the lock on Empty / Decline. This letter drops the cook
+lock on leftover *order*: `circ_leftovers_ab` = `circ_leftovers_ba`
+on γ_full — the circular analogue of `SheetHenCook.v :
+split_step_confluent`. Splitting parent A then B, or B then A,
+yields the same leftover bag. Sidecar `cook_circ_root` leftovers
+inhabit that bag; the locked plus / minus cooks recover it.
+This is not the bag-level repeat-until-noded loop
+(`cook_loop_status` stays `LoopObligation`). Not leftover-width.
+Not CircularArc span membership. Host CircGamma stays QEX. Does
+not remint `CurveSegment` / Exact* / `Dart` / Hobby /
+`ArcSplitAtNode` leftover-width. Does not start I.9–I.10 /
+Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen
+Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookConfluence.v : ticket_0007_i8_confluent_qed_or_qex` | **QED** — ∀ leftovers_ab = leftovers_ba on γ_full | `CircularCookConfluence.v : circ_split_step_confluent` |
+| `CircularCookConfluence.v : ticket_0007_i8_cook_qed_or_qex` | **QED** — cook leftovers inhabit the bag; locked plus/minus recovered | `CircularCookConfluence.v : cook_circ_root_is_leftovers_ab` |
+| `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — one-step ≠ bag loop | `CircularCookConfluence.v : i8_one_step_not_bag_loop` |
+| `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; bag loop stays obligation | `CircularCook.v : circular_gamma_is_qex` |
+
+Witness: `0007-I.8-leftover-confluence`. Status stays **Accepted**. Host CircGamma stays QEX.

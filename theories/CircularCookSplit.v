@@ -25,8 +25,9 @@
 
    I.2 ∀ Hit soundness lives in CircularCookHit.v; I.3 ∀ Empty /
    Decline lives in CircularCookEmpty.v (classifier, γ_full).
-   This sidecar cook stays locked — I.3 does not drop the cook
-   lock and does not start I.8–I.10.
+   I.8 one-step leftover confluence lives in CircularCookConfluence.v
+   (leftovers_ab = leftovers_ba on γ_full; not the bag loop).
+   This sidecar does not start I.9–I.10.
 
    Honesty fences:
      constructed chord–chord 𝓘 ≠ I_circles_z / I_CIRCULAR ≠ this
@@ -39,7 +40,9 @@
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-circ-cook / 0007-I.7-mint-two / 0007-I.1-fence
      / 0007-I.2-hit-sound / 0007-I.3-empty-decline
-     (Hit ∀ in CircularCookHit; Empty/Decline ∀ in CircularCookEmpty)
+     / 0007-I.8-leftover-confluence
+     (Hit ∀ in CircularCookHit; Empty/Decline ∀ in CircularCookEmpty;
+      leftover confluence in CircularCookConfluence)
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic via CircularCookHit).
    No Admitted / Axiom / Parameter.
@@ -116,26 +119,8 @@ Proof.
   split; [apply f_equal; ring | apply f_equal; ring].
 Qed.
 
-Lemma circ_gamma_on_circle :
-  forall O r t,
-    dist_sq O (circ_gamma O r t) = r * r.
-Proof.
-  intros O r t.
-  unfold circ_gamma, dist_sq.
-  cbn [px py].
-  replace (px O - (px O + r * cos (2 * PI * t)))
-    with (- r * cos (2 * PI * t)) by ring.
-  replace (py O - (py O + r * sin (2 * PI * t)))
-    with (- r * sin (2 * PI * t)) by ring.
-  replace ((- r * cos (2 * PI * t)) * (- r * cos (2 * PI * t))
-           + (- r * sin (2 * PI * t)) * (- r * sin (2 * PI * t)))
-    with (r * r * (sin (2 * PI * t) * sin (2 * PI * t)
-                   + cos (2 * PI * t) * cos (2 * PI * t))) by ring.
-  pose proof (sin2_cos2 (2 * PI * t)) as Hpyth.
-  unfold Rsqr in Hpyth.
-  rewrite Hpyth.
-  ring.
-Qed.
+(* circ_gamma_on_circle lives in CircularCookHit (I.3 moved a copy
+   there). Do not remint it here — theories-flocq Bool / Rsqr clash. *)
 
 Lemma circ_leftover_on_circle :
   forall cl u,

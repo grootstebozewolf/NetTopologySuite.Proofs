@@ -292,8 +292,10 @@ Qed.
    lives in CircularCookHit.v (ticket_0007_i2_hit_sound_qed_or_qex);
    I.3 ∀ Empty / Decline lives in CircularCookEmpty.v
    (ticket_0007_i3_empty_qed_or_qex; 4-axiom γ_full; not Required
-   here). Not Required here — host lane stays atan2-free. Host
-   CircGamma stays QEX; first cook stays chord–chord. The host
+   here); I.8 leftover confluence lives in CircularCookConfluence.v
+   (ticket_0007_i8_confluent_qed_or_qex; 4-axiom γ_full; not
+   Required here). Not Required here — host lane stays atan2-free.
+   Host CircGamma stays QEX; first cook stays chord–chord. The host
    circular-Hit→cook bridge is the QEX stop
    ticket_0007_circ_host_cook_qed_or_qex below. *)
 
