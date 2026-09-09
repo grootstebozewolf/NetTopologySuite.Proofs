@@ -397,6 +397,14 @@ theories/AngleBetween.v
 # No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
 theories/CircularCookHit.v
 
+# Category C (R-side, same atan lineage as CircularCookHit.v):
+# ADR-0007 I.3 ∀ Empty / Decline. Image-disjoint ≠ discriminant
+# Empty; Decline iff not a proper pair. Inherits
+# Classical_Prop.classic via circ_gamma / on_full_circle.
+# CircGamma stays QEX. No extra axioms beyond the atan2 lineage.
+# Headlines Qed-closed.
+theories/CircularCookEmpty.v
+
 # Category C (R-side, same atan lineage as CircularCookHit.v / ArcSpanAtan2.v):
 # span-restricted γ on CircularArc. arc_gamma / arc_t / retract use
 # circ_angle, arc_angle_from_start, atan2_sin_cos, so inherit

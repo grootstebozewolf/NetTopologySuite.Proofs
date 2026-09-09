@@ -176,6 +176,13 @@ proper discriminant ∧ `on_full_circle` on both radical roots;
 CircGamma stays QEX): `theories/CircularCookHit.v`. 4-axiom atan2
 lane; sidecar cook stays locked.
 
+Production home for 0007-I.3-empty-decline (`I_circles_gamma` Empty
+iff proper pair ∧ γ_full images disjoint on S; Decline iff not a
+proper pair (`d=0` or `r≤0`); discriminant Empty ≠ image-disjoint
+on concentric unequal radii; CircGamma stays QEX):
+`theories/CircularCookEmpty.v`. 4-axiom atan2 lane; sidecar cook
+stays locked.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

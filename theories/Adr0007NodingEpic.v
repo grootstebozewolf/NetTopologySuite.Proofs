@@ -288,11 +288,13 @@ Qed.
    (QED, CircularCookHit.v, full/atan2), CircularCookSpan.v span γ
    (QED, 4-axiom sidecar), ticket_64_circ_gamma_qed_or_qex (QEX,
    CircularCook.v host flag), and CircularCookSplit.v (4-axiom
-   sidecar cook of a locked circular Hit). I.2 ∀ Hit soundness is
-   CircularCookHit.v : ticket_0007_i2_hit_sound_qed_or_qex (4-axiom
-   γ_full; not Required here). Not Required here — host lane stays
-   atan2-free. Host CircGamma stays QEX; first cook stays
-   chord–chord. The host circular-Hit→cook bridge is the QEX stop
+   sidecar cook of a locked circular Hit). I.2 ∀ Hit soundness
+   lives in CircularCookHit.v (ticket_0007_i2_hit_sound_qed_or_qex);
+   I.3 ∀ Empty / Decline lives in CircularCookEmpty.v
+   (ticket_0007_i3_empty_qed_or_qex; 4-axiom γ_full; not Required
+   here). Not Required here — host lane stays atan2-free. Host
+   CircGamma stays QEX; first cook stays chord–chord. The host
+   circular-Hit→cook bridge is the QEX stop
    ticket_0007_circ_host_cook_qed_or_qex below. *)
 
 (* Letter after Accept: one Hit cook step on chord–chord (QED) or

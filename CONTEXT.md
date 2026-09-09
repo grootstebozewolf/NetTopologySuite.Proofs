@@ -316,7 +316,10 @@ fence: `I_circles_z` ≠ `I_circles_gamma` ≠ sidecar cook ≠ host
 Touch ≠ IHit. Circular Empty ≠ Decline. Chord × circular Decline
 inhabits `I_ok`; a mixed Hit does not. I.2 drops the lock on
 `I_circles_gamma`: Hit iff proper discriminant and `on_full_circle`
-on both radical roots (γ_full, not arc membership). Pairwise
+on both radical roots (γ_full, not arc membership). I.3: Empty iff
+proper pair and γ_full images disjoint on S; Decline iff not a
+proper pair (`d=0` or `r≤0`). Discriminant Empty and image-disjoint
+are different proofs. Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of
