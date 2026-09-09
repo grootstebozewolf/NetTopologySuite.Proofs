@@ -19,6 +19,10 @@
    ticket_0007_circ_host_cook_qed_or_qex). CircGamma stays QEX
    (CircularCook.v : circular_gamma_is_qex).
 
+   I.1 Fence: the four objects are pairwise unequal by observation
+   on the locked Z^6 witness — not a type synonym. Touch ≠ IHit;
+   circular Empty ≠ Decline. Host I_gloss stays QEX.
+
    Honesty fences:
      constructed chord–chord 𝓘 ≠ I_circles_z / I_CIRCULAR ≠ this
      sidecar cook ≠ glossary 𝓘 with host γ / t.
@@ -28,7 +32,7 @@
      Do not fake atan2-free host γ.
 
    WITNESS topic: overlay · claimId: 0007
-   witness: 0007-circ-cook / 0007-I.7-mint-two
+   witness: 0007-circ-cook / 0007-I.7-mint-two / 0007-I.1-fence
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic via CircularCookHit).
    No Admitted / Axiom / Parameter.
@@ -711,3 +715,172 @@ Print Assumptions ticket_0007_circ_minus_qed_or_qex.
 Print Assumptions ticket_0007_circ_mint_two_qed_or_qex.
 Print Assumptions ticket_0007_circ_shared_neq_kiss_qed_or_qex.
 Print Assumptions ticket_0007_circ_mint_two_scope_qed_or_qex.
+
+(* -------------------------------------------------------------------------- *)
+(* I.1 Fence: four objects pairwise unequal by observation, not a             *)
+(* type synonym. Touch ≠ IHit. Circular Empty ≠ Decline. Host                 *)
+(* I_gloss / CircGamma stays QEX.                                             *)
+(*                                                                            *)
+(*   1. I_circles_z / I_CIRCULAR — Z^6 classifier; hens 0/1; no t            *)
+(*   2. I_circles_gamma — locked full-circle witness with t on γ_full        *)
+(*   3. sidecar cook — same IResult-shaped cook, sidecar Γ                   *)
+(*   4. I_gloss — host I_ok + CircGamma; undefined while CircGamma QEX       *)
+(* -------------------------------------------------------------------------- *)
+
+(* z ≠ gamma: same Z^6 input. z Hit is hens-only; gamma Hit carries t
+   with γ(t)=p*. *)
+Lemma i1_z_neq_gamma_obs :
+  I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+  /\ I_circles_gamma 0 0 5 7 0 5 =
+       ICircGHit hen_plus locked_p_plus
+         (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+         hen_minus locked_p_minus
+         (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus)
+  /\ on_full_circle locked_O1 locked_r
+       (circ_t locked_O1 locked_p_plus) locked_p_plus.
+Proof.
+  split; [exact locked_I_circles_z_hit|].
+  split; [exact locked_I_circles_gamma_hit|].
+  exact (proj1 locked_hit_plus_on_gamma).
+Qed.
+
+(* z ≠ sidecar: Z classifies hens; sidecar cooks leftovers. *)
+Lemma i1_z_neq_sidecar_obs :
+  I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+  /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+       (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two.
+Proof.
+  split; [exact locked_I_circles_z_hit|].
+  exact cooked_circ_mint_two_try.
+Qed.
+
+(* z ≠ I_gloss: Z Hit is defined; host CircGamma is QEX. *)
+Lemma i1_z_neq_gloss_obs :
+  I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+  /\ circular_gamma_status = CircGammaQEX.
+Proof.
+  split; [exact locked_I_circles_z_hit|].
+  exact circular_gamma_host_still_qex.
+Qed.
+
+(* gamma ≠ sidecar: classifier Hit vs cook leftovers; Empty does
+   not cook. *)
+Lemma i1_gamma_neq_sidecar_obs :
+  I_circles_gamma 0 0 5 7 0 5 =
+    ICircGHit hen_plus locked_p_plus
+      (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+      hen_minus locked_p_minus
+      (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus)
+  /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+       (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
+  /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+       (I_circles_gamma 0 0 5 20 0 5) = None.
+Proof.
+  split; [exact locked_I_circles_gamma_hit|].
+  split; [exact cooked_circ_mint_two_try|].
+  exact locked_circ_mint_two_empty_none.
+Qed.
+
+(* gamma ≠ I_gloss: sidecar t on γ_full; host CircGamma QEX. *)
+Lemma i1_gamma_neq_gloss_obs :
+  on_full_circle locked_O1 locked_r
+    (circ_t locked_O1 locked_p_plus) locked_p_plus
+  /\ circular_gamma_status = CircGammaQEX.
+Proof.
+  split; [exact (proj1 locked_hit_plus_on_gamma)|].
+  exact circular_gamma_host_still_qex.
+Qed.
+
+(* sidecar ≠ I_gloss: sidecar cooks; host try_cook_hit is None. *)
+Lemma i1_sidecar_neq_gloss_obs :
+  try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
+    (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
+  /\ (forall p ti tj h,
+        try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
+  /\ circular_gamma_status = CircGammaQEX.
+Proof.
+  split; [exact cooked_circ_mint_two_try|].
+  split; [exact host_try_cook_hit_still_none|].
+  exact circular_gamma_host_still_qex.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i1_fence_qed_or_qex","title":"Four I objects are pairwise unequal by locked observation (QED) or they collapse (QEX); discharged QED; I.1 fence not a type synonym","file":"theories/CircularCookSplit.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
+
+Theorem ticket_0007_i1_fence_qed_or_qex :
+  (i1_z_neq_gamma_obs
+   /\ i1_z_neq_sidecar_obs
+   /\ i1_z_neq_gloss_obs
+   /\ i1_gamma_neq_sidecar_obs
+   /\ i1_gamma_neq_gloss_obs
+   /\ i1_sidecar_neq_gloss_obs)
+  \/
+  (circular_gamma_status = CircGammaDischarged
+   /\ I_circles_z 0 0 5 7 0 5 = IZDecline).
+Proof.
+  left.
+  split; [exact i1_z_neq_gamma_obs|].
+  split; [exact i1_z_neq_sidecar_obs|].
+  split; [exact i1_z_neq_gloss_obs|].
+  split; [exact i1_gamma_neq_sidecar_obs|].
+  split; [exact i1_gamma_neq_gloss_obs|].
+  exact i1_sidecar_neq_gloss_obs.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_touch_neq_ihit_qed_or_qex","title":"Circular Touch differs from proper-cross Hit (QED) or the kiss is a Hit (QEX); discharged QED; I.1 Touch neq IHit","file":"theories/CircularCookSplit.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
+
+Theorem ticket_0007_touch_neq_ihit_qed_or_qex :
+  (I_circles_z 0 0 5 10 0 5 = IZTouch hen_plus
+   /\ I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
+   /\ IZTouch hen_plus <> IZHit hen_plus hen_minus
+   /\ I_circles_gamma 0 0 5 10 0 5 =
+        ICircGTouch hen_plus kiss_p
+          (circ_t locked_O1 kiss_p) (circ_t kiss_O2 kiss_p)
+   /\ I_circles_gamma 0 0 5 7 0 5 =
+        ICircGHit hen_plus locked_p_plus
+          (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+          hen_minus locked_p_minus
+          (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus)
+   /\ ICircGTouch hen_plus kiss_p
+        (circ_t locked_O1 kiss_p) (circ_t kiss_O2 kiss_p) <>
+      ICircGHit hen_plus locked_p_plus
+        (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
+        hen_minus locked_p_minus
+        (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus))
+  \/
+  I_circles_z 0 0 5 10 0 5 = IZHit hen_plus hen_minus.
+Proof.
+  left.
+  split; [exact locked_external_kiss_is_touch|].
+  split; [exact locked_I_circles_z_hit|].
+  split; [apply IZTouch_neq_IZHit|].
+  split; [exact locked_I_circles_gamma_touch|].
+  split; [exact locked_I_circles_gamma_hit|].
+  apply ICircGTouch_neq_ICircGHit.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_empty_neq_decline_circ_qed_or_qex","title":"Circular Empty differs from Decline (QED) or they coincide (QEX); discharged QED; I.1 circular Empty neq Decline","file":"theories/CircularCookSplit.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
+
+Theorem ticket_0007_empty_neq_decline_circ_qed_or_qex :
+  (I_circles_z 0 0 5 20 0 5 = IZEmpty
+   /\ I_circles_z 0 0 5 0 0 5 = IZDecline
+   /\ IZEmpty <> IZDecline
+   /\ I_circles_gamma 0 0 5 20 0 5 = ICircGEmpty
+   /\ I_circles_gamma 0 0 5 0 0 5 = ICircGDecline
+   /\ ICircGEmpty <> ICircGDecline)
+  \/
+  IZEmpty = IZDecline.
+Proof.
+  left.
+  split; [exact locked_disjoint_is_empty|].
+  split; [exact locked_coincident_is_decline|].
+  split; [exact IZEmpty_neq_IZDecline|].
+  split; [exact locked_I_circles_gamma_empty|].
+  split; [exact locked_I_circles_gamma_decline|].
+  exact ICircGEmpty_neq_ICircGDecline.
+Qed.
+
+Print Assumptions i1_z_neq_gamma_obs.
+Print Assumptions i1_sidecar_neq_gloss_obs.
+Print Assumptions ticket_0007_i1_fence_qed_or_qex.
+Print Assumptions ticket_0007_touch_neq_ihit_qed_or_qex.
+Print Assumptions ticket_0007_empty_neq_decline_circ_qed_or_qex.

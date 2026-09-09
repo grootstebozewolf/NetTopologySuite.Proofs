@@ -21,7 +21,8 @@
    and not glossary I with gamma / t. Host CircGamma stays QEX.
    Circular chickens (MkOutOfScope EggCircularArc) still get None
    from try_cook_hit, even on an IHit — the host cook step does not
-   expand first cook scope.
+   expand first cook scope. I.1: chord × circular Decline inhabits
+   I_ok (honest host arm); a constructed mixed Hit does not.
 
    Testable 𝓘 / cook results sit on the accepted Oracle line protocol
    (ADR-0006). This module mints no keyword and no second external seam.
@@ -290,6 +291,60 @@ Qed.
 Definition clothoid_decline_witness : CookWitness :=
   mkCookWitness (MkOutOfScope EggClothoid) (MkOutOfScope EggClothoid)
     IDecline clothoid_decline_I_ok.
+
+(* I.1 host arm: circular eggs are out of first cook scope. I_ok
+   admits only Decline — not a constructed Hit, not Empty. *)
+Lemma circular_decline_I_ok :
+  I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline.
+Proof.
+  unfold I_ok, first_cook_scope, egg_class.
+  intro H. exact H.
+Qed.
+
+Lemma circular_hit_not_I_ok :
+  forall p ti tj,
+    ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
+         (IHit p ti tj).
+Proof.
+  intros p ti tj H. exact H.
+Qed.
+
+Lemma circular_empty_not_I_ok :
+  ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IEmpty.
+Proof.
+  intro H. exact H.
+Qed.
+
+(* Mixed chord × circular: honest Decline, not a constructed mixed Hit. *)
+Lemma chord_circular_not_first_cook_scope :
+  ~ first_cook_scope EggChord EggCircularArc.
+Proof.
+  intro H. exact H.
+Qed.
+
+Lemma chord_circular_decline_I_ok :
+  I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) IDecline.
+Proof.
+  unfold I_ok, first_cook_scope, egg_class.
+  intro H. exact H.
+Qed.
+
+Lemma chord_circular_hit_not_I_ok :
+  forall p ti tj,
+    ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) (IHit p ti tj).
+Proof.
+  intros p ti tj H. exact H.
+Qed.
+
+Lemma chord_circular_empty_not_I_ok :
+  ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) IEmpty.
+Proof.
+  intro H. exact H.
+Qed.
+
+Definition chord_circular_decline_witness : CookWitness :=
+  mkCookWitness (MkChord hor_bot) (MkOutOfScope EggCircularArc)
+    IDecline chord_circular_decline_I_ok.
 
 (* -------------------------------------------------------------------------- *)
 (* Identity: cook decision is structural. Coord-pair dart_eq_dec is not hen   *)
@@ -1109,6 +1164,11 @@ Print Assumptions cooked_crossing_join.
 Print Assumptions try_cook_hit_clothoid_none.
 Print Assumptions try_cook_hit_circular_hit_none.
 Print Assumptions circular_egg_not_first_cook_scope.
+Print Assumptions circular_decline_I_ok.
+Print Assumptions circular_hit_not_I_ok.
+Print Assumptions chord_circular_decline_I_ok.
+Print Assumptions chord_circular_hit_not_I_ok.
+Print Assumptions chord_circular_empty_not_I_ok.
 Print Assumptions constructed_hit_I_ok.
 Print Assumptions constructed_hit_crossing_eq.
 Print Assumptions disjoint_not_proper_cross.

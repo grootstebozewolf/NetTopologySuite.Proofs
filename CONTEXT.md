@@ -310,7 +310,11 @@ IHit does not feed host `try_cook_hit` (circular eggs stay
 via `circ_gamma` `split(t)` without discharging CircGamma. On a
 two-root circular Hit the sidecar allocates `MintTwo` (`p+` and
 `p−` are both Hits). Empty / Decline / Touch mint nothing.
-Leftover shared endpoint is not a kiss. Pairwise
+Leftover shared endpoint is not a kiss. I.1 tickets the #666
+fence: `I_circles_z` ≠ `I_circles_gamma` ≠ sidecar cook ≠ host
+`I_gloss` (CircGamma QEX) by observation, not a type synonym.
+Touch ≠ IHit. Circular Empty ≠ Decline. Chord × circular Decline
+inhabits `I_ok`; a mixed Hit does not. Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
 obligations of 𝓘 families. binary64 is a coordinate realization of

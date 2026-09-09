@@ -7,6 +7,9 @@
    lives in CircularCookSpan.v; sidecar cook of a circular Hit lives
    in CircularCookSplit.v). first_cook_scope stays chord–chord.
    CircGamma stays QEX; the sidecar does not fake Discharge.
+   I.1: I_gloss (host I_ok + CircGamma) is undefined while this
+   flag is QEX — not a type synonym for the Z / gamma / sidecar
+   objects.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked
 
@@ -132,6 +135,30 @@ Proof.
   exact circular_gamma_is_qex.
 Qed.
 
+(* I.1: I_gloss on circular eggs is I_ok + host CircGamma. While
+   CircGamma is QEX the host admits only Decline — not a constructed
+   circular Hit. Not a type synonym for I_circles_z / I_circles_gamma
+   / the sidecar cook. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i1_gloss_qed_or_qex","title":"Host I_gloss on circular eggs is discharged CircGamma (QED) or still QEX with I_ok Decline only (QEX); discharged QEX; I.1 I_gloss undefined","file":"theories/CircularCook.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
+
+Theorem ticket_0007_i1_gloss_qed_or_qex :
+  (circular_gamma_status = CircGammaDischarged
+   /\ exists p ti tj,
+        I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
+             (IHit p ti tj))
+  \/
+  (circular_gamma_status = CircGammaQEX
+   /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
+   /\ (forall p ti tj,
+         ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
+              (IHit p ti tj))).
+Proof.
+  right.
+  split; [exact circular_gamma_is_qex|].
+  split; [exact circular_decline_I_ok|].
+  exact circular_hit_not_I_ok.
+Qed.
+
 Print Assumptions circular_gamma_is_qex.
 Print Assumptions circular_not_first_cook_scope.
 Print Assumptions locked_I_circles_on_z_sheet_hit.
@@ -139,3 +166,4 @@ Print Assumptions locked_I_circles_touch.
 Print Assumptions locked_I_circles_internal_kiss.
 Print Assumptions ICircEmpty_neq_ICircDecline.
 Print Assumptions ticket_64_circ_gamma_qed_or_qex.
+Print Assumptions ticket_0007_i1_gloss_qed_or_qex.
