@@ -292,6 +292,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | II.2 split γ_span at in-span t | `CircularCookSpanSplit.v : ticket_0007_ii2_meet_qed_or_qex` | **QED** — leftovers of `arc_gamma` meet at locked `p+`; leftover on parent circle; `p−` stays Empty | `CircularCookSpanSplit.v : cooked_span_plus_meets`, `CircularCookSpanSplit.v : cooked_span_plus_on_parent` |
 | — | II.3 I_ok_circ on circular eggs | `CircularCookOkCirc.v : ticket_0007_ii3_hit_qed_or_qex` | **QED** — first glossary-type inhabitant; locked `p+` Hit licenses `span_split` | `CircularCookOkCirc.v : I_ok_circ_hit_iff`, `CircularCookOkCirc.v : ii3_locked_plus_licenses_cook` |
 | — | II.4 Campaign-II close / Phase B gaps | `CircularCookCloseII.v : ticket_0007_ii4_inhabitant_qed_or_qex` | **QED** — sidecar `I_ok_circ` inhabitant; leftover meet is ¬Empty | `CircularCookCloseII.v : ii4_sidecar_inhabitant`, `CircularCookCloseII.v : ii4_leftover_meet_not_empty` |
+| — | Phase B.1 CircularString concat joints | `CircularCookCsConcat.v : ticket_0007_b1_joint_qed_or_qex` | **QED** — ∀ CS joint is `I_ok_circ` Hit at `(end, 1, 0)`; reuse, no new kernel | `CircularCookCsConcat.v : cs_joint_I_ok_circ`, `CircularCookCsConcat.v : locked_cs_contiguous` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -792,3 +793,38 @@ Does not reopen Status.
 | `CircularCookCloseII.v : ticket_0007_ii4_phase_b_qed_or_qex` | **QEX** — Phase B CS / CC / CP gaps named; bag loop stays obligation; H⊥ parked; SQL/MM not done; Campaign II closed | `CircularCookCloseII.v : phase_b_cs_is_gap`, `CircularCookCloseII.v : ii4_not_bag_noder`, `CircularCookCloseII.v : campaign_ii_is_closed` |
 
 Witness: `0007-II.4-campaign-ii-close`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — Phase B.1 CircularString concat joints (2026-09-09)
+
+II.4 closed Campaign II and named Phase B SQL/MM Part 3
+**required**-type gaps (CircularString / CompoundCurve /
+CurvePolygon). This letter unparks **CircularString joints
+only**. A CircularString is a sequence of `CircEgg` :=
+`CircularArc`. A concat joint is `I_ok_circ` Hit at
+`(arc_end a, tᵢ=1, tⱼ=0)` via sidecar `arc_gamma` —
+reuse of the II.1–II.3 stack, not a new kernel. Joint
+params are not interior (`0<t<1`); the join is concat
+incidence (already a hen), not an interior span cook and
+not a CRV-TOUCH kiss certificate.
+
+Locked fixture: the V-CS odd_closed 5-control
+`CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)` as two
+`CircEgg`. Not a remint of `CircularStringValid.v`.
+Host CircGamma stays QEX. `first_cook_scope` stays
+chord–chord. Host circular `I_ok` stays Decline.
+`I_ok_circ` Hit ≠ host `I_ok`. CompoundCurve /
+CurvePolygon / H⊥ stay parked. Not a CircGamma remint.
+Not “SQL/MM done”. Does not remint `CurveSegment` /
+Exact* / `Dart` / Hobby / `ArcSplitAtNode` leftover-width.
+Does not start CompoundCurve / CurvePolygon / H⊥ / a
+CRV-TOUCH kiss procedure. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookCsConcat.v : ticket_0007_b1_joint_qed_or_qex` | **QED** — ∀ `cs_joint` is `I_ok_circ` Hit at `(end, 1, 0)`; `CircEgg` = `CircularArc` | `CircularCookCsConcat.v : cs_joint_I_ok_circ` |
+| `CircularCookCsConcat.v : ticket_0007_b1_not_interior_qed_or_qex` | **QED** — locked 2-arc CS is contiguous; joint params not interior | `CircularCookCsConcat.v : locked_cs_contiguous`, `CircularCookCsConcat.v : joint_params_not_interior` |
+| `CircularCookCsConcat.v : ticket_0007_b1_reuse_qed_or_qex` | **QED** — reuse `I_ok_circ`; no new kernel; joint Hit ≠ host `I_ok` | `CircularCookCsConcat.v : b1_reuse_no_new_kernel`, `CircularCookCsConcat.v : b1_I_ok_circ_hit_not_host_I_ok` |
+| `CircularCookCsConcat.v : ticket_0007_b1_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
+| `CircularCookCsConcat.v : ticket_0007_b1_park_qed_or_qex` | **QEX** — CompoundCurve / CurvePolygon / H⊥ parked; SQL/MM not done; B.1 landed | `CircularCookCsConcat.v : phase_b1_is_landed`, `CircularCookCsConcat.v : phase_b_cc_is_gap` |
+
+Witness: `0007-B.1-cs-concat-joints`. Status stays **Accepted**. Host CircGamma stays QEX.

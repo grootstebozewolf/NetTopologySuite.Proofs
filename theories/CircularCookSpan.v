@@ -26,6 +26,8 @@
    (CircularCookSpanSplit.v): leftovers meet at p*.
    II.3 inhabits glossary I as I_ok_circ on this interpolant
    (CircularCookOkCirc.v): locked Hit licenses the split.
+   Phase B.1 lifts I_ok_circ to CircularString concat joints
+   (CircularCookCsConcat.v): joint Hit at (end, t=1, t=0).
 
    WITNESS topic: core · claimId: 64-circ-span-gamma · witness: 64-circ-span-locked
    board: ADR-0007

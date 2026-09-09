@@ -232,6 +232,14 @@ named — CircularString / CompoundCurve / CurvePolygon; not
 SQL/MM done): `theories/CircularCookCloseII.v`. 4-axiom
 atan2 sidecar.
 
+Production home for 0007-B.1-cs-concat-joints (Phase B.1
+CircularString concat joints; CS is a sequence of `CircEgg`;
+joint is `I_ok_circ` Hit at `(end, t=1, t=0)` via sidecar
+`arc_gamma`; joint params not interior; locked 2-arc V-CS
+odd_closed fixture; host CircGamma stays QEX; CompoundCurve /
+CurvePolygon / H⊥ parked; not SQL/MM done; no new kernel):
+`theories/CircularCookCsConcat.v`. 4-axiom atan2 sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

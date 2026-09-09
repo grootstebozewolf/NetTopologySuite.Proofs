@@ -353,7 +353,14 @@ parked; not a bag noder. Phase B SQL/MM Part 3
 **required**-type gaps are named (CircularString /
 CompoundCurve / CurvePolygon) — not SQL/MM done. A
 CircularString theorem needs concatenation; this is one
-Arc.
+Arc. B.1 (Phase B, first required-type cut): CircularString
+is a sequence of CircEgg; a concat joint is `I_ok_circ` Hit
+at `(arc_end, t=1, t=0)` via `arc_gamma`. Joint params are
+not interior. Reuse `I_ok_circ` — no new kernel. Locked
+2-arc V-CS odd_closed fixture. Host CircGamma stays QEX;
+host circular `I_ok` stays Decline. CompoundCurve /
+CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
+CircGamma remint.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

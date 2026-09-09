@@ -2881,6 +2881,15 @@ theories/CircularCookOkCirc.v
 # SQL/MM done. 4-axiom atan2 sidecar (classic via OkCirc /
 # Span). Not CS concat. Not first cook scope. No new kernel.
 theories/CircularCookCloseII.v
+# Phase B.1 CircularString concat joints (sidecar reuse).
+# CS is a sequence of CircEgg; joint is I_ok_circ Hit at
+# (end, t=1, t=0) via arc_gamma. Joint params not interior.
+# Locked 2-arc V-CS odd_closed fixture. Host CircGamma stays
+# QEX. first_cook_scope stays chord–chord. CompoundCurve /
+# CurvePolygon / H⊥ parked. Not SQL/MM done. 4-axiom atan2
+# sidecar (classic via OkCirc / Span). No new kernel. Not a
+# CircGamma remint. Not first cook scope. Not a noder.
+theories/CircularCookCsConcat.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
