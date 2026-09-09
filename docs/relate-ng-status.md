@@ -118,11 +118,15 @@ disguised as disjointness — that was #530.
   Do not bucket with leftover `Ⅰ`.
 - **Mixed-cone certificate** — leftover `Ⅴ` classified.
   Headline `RelateNGTouchMixedCone.v : triangle_pair_regime_mixedcone`.
+  Fill stays `im_unsupported`.
+- **Same-cone certificate** — leftover `Ⅵ` classified.
+  Headline `RelateNGTouchSameCone.v : triangle_pair_regime_samecone`.
   Fill stays `im_unsupported`. Epic #522 stop is QED ∨ QEX
   (`RelateNGEpic522.v : ticket_522_qed_or_qex`),
-  discharged QEX on an unnamed CCW pair. Leftover `Ⅰ`–`Ⅴ` are QED
-  (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex`). Do not
-  mint leftover `Ⅵ`.
+  discharged QEX on an unnamed lens after leftover `Ⅵ`. Leftover
+  `Ⅰ`–`Ⅵ` are classified
+  (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex`). Leftover
+  `Ⅶ` is already #642.
 - **Exterior-side one-sided T** — leftover `Ⅲ`. `Ⅲ∨Ⅳ` xor with two
   witnesses. Headline
   `RelateNGTouchOnesided.v : triangle_pair_regime_onesided`. Fill token

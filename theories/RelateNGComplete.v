@@ -7,8 +7,8 @@
    Leftover `Ⅰ` classifies the T-junction as `TPR_TouchPartialEdge`.
    Leftover `Ⅱ` classifies obtuse-at-v as `TPR_TouchObtuse`.
    Leftover `Ⅴ` classifies mixed-cone as `TPR_MixedCone`.
-   Completeness is still FALSE: an unnamed CCW pair emits
-   `TPR_Unsupported`. Do not mint leftover `Ⅵ`.
+   Leftover `Ⅵ` classifies same-cone as `TPR_SameCone`.
+   Completeness is still FALSE on an unnamed lens (`TPR_Unsupported`).
 
    Hard pairs that DO classify are cited, not re-proved. Catalog
    ids: disjoint #571 / 522-c; overlap #570 / 522-b; vertex-touch
@@ -21,7 +21,7 @@
    Five names are not a partition. Leftover `Ⅲ`/`Ⅳ` share
    `TPR_TouchOnesided` (fill token). `522-j` is the #577 ticket
    id. `522-m` retries after excluding the T-junction: still
-   FALSE (unnamed CCW pair after leftover `Ⅴ`). Not an ADR-0004 remint.
+   FALSE (unnamed lens after leftover `Ⅵ`). Not an ADR-0004 remint.
 
    WITNESS topic: relate · claimId: 522-j · witness: 522-j-sentinel-cex
    WITNESS topic: relate · claimId: 522-m · witness: 522-m-complete-filtered
@@ -195,8 +195,8 @@ Proof.
   exact (touch_vertex_b_false_of_non_ccw _ _ _ _ _ _ _ _ _ _ _ _ H).
 Qed.
 
-(* 522-m: leftover Ⅴ classified mixed-cone. Live cex is unnamed
-   A=(0,0)(2,0)(0,2) vs B=(0,0)(3,1)(1,3). Do not mint leftover `Ⅵ`. *)
+(* 522-m: leftover Ⅵ classified same-cone. Live cex is unnamed
+   A=(0,0)(3,0)(0,3) vs B=(2,-1)(2,2)(-1,2). Do not mint leftover `Ⅶ`. *)
 
 Definition tjunction_pair_coords
     (ax ay bx by_ cx cy dx dy ex ey fx fy : R) : Prop :=
@@ -577,7 +577,7 @@ Qed.
 
 (* WITNESS {"claimId":"Ⅴ","topic":"relate","lemma":"mixed_cone_pair_mixedcone","title":"Leftover Ⅴ mixed-cone classifies as TPR_MixedCone","file":"theories/RelateNGComplete.v","witness":"Ⅴ-mixed-cone-cex","board":"leftover-Ⅴ"} *)
 
-(* WITNESS {"claimId":"522-j","topic":"relate","lemma":"triangle_pair_regime_ccw_incomplete","title":"Classifier completeness is still false after leftover Ⅴ: an unnamed CCW pair emits TPR_Unsupported","file":"theories/RelateNGComplete.v","witness":"522-j-sentinel-cex","board":"#577"} *)
+(* WITNESS {"claimId":"522-j","topic":"relate","lemma":"triangle_pair_regime_ccw_incomplete","title":"Classifier completeness is still false after leftover Ⅵ: an unnamed lens pair emits TPR_Unsupported","file":"theories/RelateNGComplete.v","witness":"522-j-sentinel-cex","board":"#577"} *)
 Theorem triangle_pair_regime_ccw_incomplete :
   exists ax ay bx by_ cx cy dx dy ex ey fx fy : R,
     0 < gdbl ax ay bx by_ cx cy /\
@@ -585,13 +585,13 @@ Theorem triangle_pair_regime_ccw_incomplete :
     triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy
       = TPR_Unsupported.
 Proof.
-  exists 0, 0, 2, 0, 0, 2, 0, 0, 3, 1, 1, 3.
+  exists 0, 0, 3, 0, 0, 3, 2, (-1), 2, 2, (-1), 2.
   split; [unfold gdbl; lra|].
   split; [unfold gdbl; lra|].
   exact unnamed_ccw_pair_unsupported.
 Qed.
 
-(* WITNESS {"claimId":"522-m","topic":"relate","lemma":"triangle_pair_regime_ccw_incomplete_not_tjunction","title":"Filtered CCW-completeness is still false: an unnamed pair declines after leftover Ⅴ classifies mixed-cone","file":"theories/RelateNGComplete.v","witness":"522-m-complete-filtered","board":"#522"} *)
+(* WITNESS {"claimId":"522-m","topic":"relate","lemma":"triangle_pair_regime_ccw_incomplete_not_tjunction","title":"Filtered CCW-completeness is still false: an unnamed lens declines after leftover Ⅵ classifies same-cone","file":"theories/RelateNGComplete.v","witness":"522-m-complete-filtered","board":"#522"} *)
 Theorem triangle_pair_regime_ccw_incomplete_not_tjunction :
   exists ax ay bx by_ cx cy dx dy ex ey fx fy : R,
     0 < gdbl ax ay bx by_ cx cy /\
@@ -600,10 +600,10 @@ Theorem triangle_pair_regime_ccw_incomplete_not_tjunction :
     triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy
       = TPR_Unsupported.
 Proof.
-  exists 0, 0, 2, 0, 0, 2, 0, 0, 3, 1, 1, 3.
+  exists 0, 0, 3, 0, 0, 3, 2, (-1), 2, 2, (-1), 2.
   split; [unfold gdbl; lra|].
   split; [unfold gdbl; lra|].
-  split; [intros [Hax [Hay [Hbx [Hby [Hcx [Hcy _]]]]]]; lra|].
+  split; [intros [Hax [Hay [Hbx [Hby [Hcx [Hcy [Hdx _]]]]]]]; lra|].
   exact unnamed_ccw_pair_unsupported.
 Qed.
 

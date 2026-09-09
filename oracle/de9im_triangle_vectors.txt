@@ -12,6 +12,7 @@
 #   TPR_TouchPartialEdge  UNSUPPORTED  (leftover Ⅰ; fill not named)
 #   TPR_TouchObtuse       UNSUPPORTED  (leftover Ⅱ; fill not named)
 #   TPR_MixedCone         UNSUPPORTED  (leftover Ⅴ; fill not named)
+#   TPR_SameCone          UNSUPPORTED  (leftover Ⅵ; fill not named)
 #
 # Provenance (classifier witness pairs, not geometry computation):
 #   DISJOINT      #571 / 522-c sentinel (the #530 pair, now classified)
@@ -22,7 +23,8 @@
 #   TOUCH_PARTIAL leftover Ⅰ kiss — classified, fill still UNSUPPORTED
 #   TOUCH_OBTUSE  leftover Ⅱ obtuse-at-v — classified, fill still UNSUPPORTED
 #   TOUCH_MIXED   leftover Ⅴ mixed-cone — classified, fill still UNSUPPORTED
-#   DECLINE       unnamed CCW pair — NOT leftover Ⅴ (now classified)
+#   SAME_CONE     leftover Ⅵ same-cone — classified, fill still UNSUPPORTED
+#   DECLINE       unnamed lens pair — NOT leftover Ⅵ (now classified)
 #
 # Oracle mode: RELATE_MATRIX now prints UNSUPPORTED for decline keys.
 
@@ -87,9 +89,16 @@ TOKEN UNSUPPORTED
 FILL triangle_pair_fill TPR_MixedCone
 NOTES Leftover Ⅴ mixed-cone. Classified TPR_MixedCone; fill not named. Not a matrix.
 
-REGIME DECLINE
+REGIME SAME_CONE
 TRI_A 0 0  2 0  0 2
 TRI_B 0 0  3 1  1 3
 TOKEN UNSUPPORTED
+FILL triangle_pair_fill TPR_SameCone
+NOTES Leftover Ⅵ same-cone. Classified TPR_SameCone; fill not named. Not a matrix.
+
+REGIME DECLINE
+TRI_A 0 0  3 0  0 3
+TRI_B 2 -1  2 2  -1 2
+TOKEN UNSUPPORTED
 FILL triangle_pair_fill TPR_Unsupported
-NOTES Unnamed CCW pair after leftover Ⅴ (not leftover Ⅵ). Not a matrix. Leftover Ⅴ classifies mixed-cone.
+NOTES Unnamed lens pair after leftover Ⅵ (not leftover Ⅶ). Not a matrix. Leftover Ⅵ classifies same-cone.

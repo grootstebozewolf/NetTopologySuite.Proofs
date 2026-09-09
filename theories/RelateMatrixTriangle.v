@@ -23,8 +23,9 @@
    `im_unsupported` until a fill is named). Leftover `Ⅲ` adds
    `TPR_TouchOnesided` (same fill honesty). Leftover `Ⅱ` adds
    `TPR_TouchObtuse` (same fill honesty). Leftover `Ⅴ` adds
-   `TPR_MixedCone` (same fill honesty). Completeness is an unnamed
-   CCW pair (not leftover `Ⅵ`).
+   `TPR_MixedCone` (same fill honesty). Leftover `Ⅵ` adds
+   `TPR_SameCone` (same fill honesty). Completeness is an unnamed
+   lens pair (not leftover `Ⅶ`).
 
    Honest scoping: triangles only (convex, no holes). Full pointset
    satisfaction and noding bridge in RelateNG.
@@ -57,6 +58,7 @@ Inductive TrianglePairRegime : Type :=
 | TPR_TouchOnesided (* leftover Ⅲ∨Ⅳ: one-sided vertex-in-open-edge; fill is the token *)
 | TPR_TouchObtuse   (* leftover Ⅱ: closed-cone vertex kiss; fill is the token *)
 | TPR_MixedCone     (* leftover Ⅴ: opposite-sign cone at a shared vertex; fill is the token *)
+| TPR_SameCone      (* leftover Ⅵ: same-sign cone spill at a shared vertex; fill is the token *)
 | TPR_Unsupported.  (* the classifier declined -- NOT a geometric verdict *)
 
 Definition triangle_pair_fill (r : TrianglePairRegime) : IntersectionMatrix :=
@@ -70,6 +72,7 @@ Definition triangle_pair_fill (r : TrianglePairRegime) : IntersectionMatrix :=
   | TPR_TouchOnesided => im_unsupported          (* leftover Ⅲ∨Ⅳ: classified, fill not named *)
   | TPR_TouchObtuse => im_unsupported            (* leftover Ⅱ: classified, fill not named *)
   | TPR_MixedCone => im_unsupported              (* leftover Ⅴ: classified, fill not named *)
+  | TPR_SameCone => im_unsupported               (* leftover Ⅵ: classified, fill not named *)
   | TPR_Unsupported => im_unsupported            (* decline; see DE9IM.im_unsupported *)
   end.
 
@@ -107,6 +110,10 @@ Proof. reflexivity. Qed.
 
 Lemma triangle_pair_fill_touch_mixed_eq :
   triangle_pair_fill TPR_MixedCone = im_unsupported.
+Proof. reflexivity. Qed.
+
+Lemma triangle_pair_fill_touch_samecone_eq :
+  triangle_pair_fill TPR_SameCone = im_unsupported.
 Proof. reflexivity. Qed.
 
 Lemma triangle_pair_fill_unsupported_eq :
@@ -348,6 +355,14 @@ Definition classify_triangle_pair (a1 a2 a3 b1 b2 b3 : Point)
      Bar 1. Opposite-sign cone at a shared vertex; do not remint
      [cone_separates_b] / [touch_obtuse_vertex_b]. *)
   | TPR_MixedCone => True
+  (* Leftover Ⅵ: same honesty as leftover Ⅰ. [True] is not a
+     denotation. Do not prove [classify_triangle_pair] facts about
+     this constructor. Fill stays [im_unsupported]. Not CONTEXT
+     Bar 1. Same-sign cone spill at a shared vertex; interiors
+     may meet. Do not remint [cone_separates_b] /
+     [mixed_cone_vertex_b] / [overlap_b]. Do not emit
+     [2FFF1FFF2]. *)
+  | TPR_SameCone => True
   (* `TPR_Unsupported` names no configuration -- it records that the
      classifier made no claim.  `True` is the correct denotation of "no
      claim"; unlike the five arms above it is not a geometric predicate. *)
