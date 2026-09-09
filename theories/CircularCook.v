@@ -17,7 +17,8 @@
    II.1 span filter as IResult lives in CircularCookSpanFilter.v;
    II.2 span split at in-span t lives in CircularCookSpanSplit.v;
    II.3 I_ok_circ lives in CircularCookOkCirc.v (4-axiom sidecar);
-   this host flag stays QEX.
+   II.4 Campaign-II close lives in CircularCookCloseII.v
+   (4-axiom sidecar); this host flag stays QEX.
 
    WITNESS topic: core · claimId: 64-i-circular · witness: 64-i-circular-locked
 

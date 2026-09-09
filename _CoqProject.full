@@ -2873,6 +2873,14 @@ theories/CircularCookSpanSplit.v
 # sidecar (classic via Span / Filter / Split). Not CS concat.
 # Not first cook scope. Not a noder. Not a computed classifier.
 theories/CircularCookOkCirc.v
+# II.4 Campaign-II close letter. I_ok_circ exists as sidecar
+# glossary inhabitant. Host CircGamma stays QEX.
+# first_cook_scope stays chord–chord. H⊥ parked. Not a bag
+# noder. Phase B SQL/MM Part 3 required-type gaps named
+# (CircularString / CompoundCurve / CurvePolygon). Not
+# SQL/MM done. 4-axiom atan2 sidecar (classic via OkCirc /
+# Span). Not CS concat. Not first cook scope. No new kernel.
+theories/CircularCookCloseII.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

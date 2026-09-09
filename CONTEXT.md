@@ -346,9 +346,14 @@ inhabits Empty. Host CircGamma stays QEX; host circular
 `I_ok` stays Decline; `I_ok_circ` Hit ≠ host `I_ok`.
 `first_cook_scope` stays chord–chord. ∀ Hit / Empty /
 Decline as a Prop are definitional; not a computed
-classifier. II.4, H⊥, and the SQL/MM Part 3 required-type
-cathedral (CS / CC / CP) stay parked. A CircularString
-theorem needs concatenation; this is one Arc.
+classifier. II.4 closes Campaign II: `I_ok_circ` exists
+as the sidecar glossary inhabitant; host CircGamma stays
+QEX; `first_cook_scope` stays chord–chord; H⊥ stays
+parked; not a bag noder. Phase B SQL/MM Part 3
+**required**-type gaps are named (CircularString /
+CompoundCurve / CurvePolygon) — not SQL/MM done. A
+CircularString theorem needs concatenation; this is one
+Arc.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
