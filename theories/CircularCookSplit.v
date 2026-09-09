@@ -27,7 +27,9 @@
    Decline lives in CircularCookEmpty.v (classifier, γ_full).
    I.8 one-step leftover confluence lives in CircularCookConfluence.v
    (leftovers_ab = leftovers_ba on γ_full; not the bag loop).
-   This sidecar does not start I.9–I.10.
+   I.9 classifier ≠ cook lives in CircularCookLicense.v
+   (Z Hit ⇏ host try_cook_hit / circ_split / first_cook_scope).
+   This sidecar does not start I.10.
 
    Honesty fences:
      constructed chord–chord 𝓘 ≠ I_circles_z / I_CIRCULAR ≠ this
@@ -41,8 +43,10 @@
    witness: 0007-circ-cook / 0007-I.7-mint-two / 0007-I.1-fence
      / 0007-I.2-hit-sound / 0007-I.3-empty-decline
      / 0007-I.8-leftover-confluence
+     / 0007-I.9-classifier-neq-cook
      (Hit ∀ in CircularCookHit; Empty/Decline ∀ in CircularCookEmpty;
-      leftover confluence in CircularCookConfluence)
+      leftover confluence in CircularCookConfluence;
+      classifier ≠ cook in CircularCookLicense)
    board: ADR-0007
    4-axiom (atan2 / Classical_Prop.classic via CircularCookHit).
    No Admitted / Axiom / Parameter.

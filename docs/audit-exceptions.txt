@@ -431,6 +431,15 @@ theories/CircularCookSplit.v
 # Headlines Qed-closed.
 theories/CircularCookConfluence.v
 
+# Category C (R-side, same atan lineage as CircularCookSplit.v):
+# ADR-0007 I.9 classifier ≠ cook. I_circles_z / I_CIRCULAR Hit is
+# tags 0/1, not glossary (p*, tᵢ, tⱼ). Does not license host
+# try_cook_hit / circ_split / first_cook_scope expansion.
+# Inherits Classical_Prop.classic via CircularCookSplit / circ_gamma
+# (claimId 0007 / I.9). CircGamma stays QEX. No extra axioms beyond
+# the atan2 lineage. Headlines Qed-closed.
+theories/CircularCookLicense.v
+
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
 # so inherit Classical_Prop.classic.  Headlines in_arc_point_on_minor_arc and

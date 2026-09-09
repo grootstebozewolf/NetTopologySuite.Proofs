@@ -138,6 +138,8 @@ Production home for 64-circ-z-partition (Hit ↔ `|r1−r2|² < d² < (r1+r2)²`
 on positive radii; Empty / Touch / Decline against the same squared
 tests; locked internal kiss `(0,0)` r=5 vs `(3,0)` r=2 is Touch):
 `theories/CircularCookZ.v`. Oracle `I_CIRCULAR` takes integer tokens.
+I.9 (`0007-I.9-classifier-neq-cook`) tickets that a Z Hit is tags
+0/1 and is not a cook license: `theories/CircularCookLicense.v`.
 
 Production home for 64-circ-hit-params (full-circle γ : [0,1] → S;
 locked Hit carries constructed `(h*, p*, tᵢ, tⱼ)` with `γ(t)=p*`;
@@ -188,7 +190,13 @@ Production home for 0007-I.8-leftover-confluence (`circ_leftovers_ab`
 `split_step_confluent`; cook leftovers inhabit that bag; one-step
 ≠ bag loop; CircGamma stays QEX):
 `theories/CircularCookConfluence.v`. 4-axiom atan2 sidecar; not
-leftover-width; not I.9–I.10.
+leftover-width; not I.10.
+
+Production home for 0007-I.9-classifier-neq-cook (`I_circles_z` /
+`I_CIRCULAR` Hit is tags 0/1, not glossary `(p*, tᵢ, tⱼ)`; Z Hit
+⇏ host `try_cook_hit` / `circ_split` / first-cook expansion;
+CircGamma stays QEX): `theories/CircularCookLicense.v`. 4-axiom
+atan2 sidecar; not I.10.
 
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse

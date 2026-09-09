@@ -284,6 +284,10 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.8 cook bag inhabits leftovers | `CircularCookConfluence.v : ticket_0007_i8_cook_qed_or_qex` | **QED** — `cook_circ_root` leftovers are that bag; locked plus/minus recovered | `CircularCookConfluence.v : cook_circ_root_is_leftovers_ab`, `CircularCookConfluence.v : i8_recovers_locked_plus` |
 | — | I.8 one-step ≠ bag loop | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — confluence is one Hit-split; `cook_loop` stays obligation | `CircularCookConfluence.v : i8_one_step_not_bag_loop`, `SheetHenCook.v : cook_loop_is_obligation` |
 | — | I.8 not arc / not bag discharge | `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; bag loop stays QEX | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : cook_loop_is_obligation` |
+| — | I.9 classifier hens are tags | `CircularCookLicense.v : ticket_0007_i9_tags_qed_or_qex` | **QED** — hens 0/1; ∀ IZHit is those tags; `I_CIRCULAR` HIT 0 1 | `CircularCookZ.v : classifier_hens_are_tags`, `CircularCookZ.v : iz_hit_only_tags` |
+| — | I.9 Z Hit ⇏ host cook | `CircularCookLicense.v : ticket_0007_i9_not_host_cook_qed_or_qex` | **QED** — I_circles_z Hit does not feed `try_cook_hit` and does not expand first cook scope | `CircularCookLicense.v : i9_z_hit_not_try_cook_hit`, `CircularCookLicense.v : i9_z_hit_not_first_cook_scope` |
+| — | I.9 Z Hit ⇏ circ_split | `CircularCookLicense.v : ticket_0007_i9_not_circ_split_qed_or_qex` | **QED** — same tags; plus/minus leftovers meet at distinct `p*`; t comes from γ | `CircularCookLicense.v : i9_z_hit_not_circ_split_license` |
+| — | I.9 not CircGamma / not scope expand | `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -623,3 +627,26 @@ Status.
 | `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; bag loop stays obligation | `CircularCook.v : circular_gamma_is_qex` |
 
 Witness: `0007-I.8-leftover-confluence`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — I.9 classifier ≠ cook (2026-09-09)
+
+#691 ticketed one-step leftover confluence. This letter tickets the
+honesty fence as a license denial: an `I_circles_z` / `I_CIRCULAR`
+Hit is tags 0/1, not glossary `(p*, tᵢ, tⱼ)`. That Hit does **not**
+license host `try_cook_hit`, sidecar `circ_split`, or
+`first_cook_scope` expansion. Plus / minus leftovers on the locked
+fixture meet at distinct `p*` — `t` comes from γ, not from the
+classifier tags. Host CircGamma stays QEX. First cook stays
+chord–chord. Does not remint `CurveSegment` / Exact* / `Dart` /
+Hobby / `ArcSplitAtNode` leftover-width. Does not start I.10 /
+Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen
+Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCookLicense.v : ticket_0007_i9_tags_qed_or_qex` | **QED** — hens are tags 0/1; ∀ IZHit is those tags | `CircularCookZ.v : classifier_hens_are_tags`, `CircularCookZ.v : iz_hit_only_tags` |
+| `CircularCookLicense.v : ticket_0007_i9_not_host_cook_qed_or_qex` | **QED** — Z Hit ⇏ `try_cook_hit`; ⇏ first-cook expansion | `CircularCookLicense.v : i9_z_hit_not_try_cook_hit` |
+| `CircularCookLicense.v : ticket_0007_i9_not_circ_split_qed_or_qex` | **QED** — same tags; plus/minus leftovers at distinct `p*` | `CircularCookLicense.v : i9_z_hit_not_circ_split_license` |
+| `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex` |
+
+Witness: `0007-I.9-classifier-neq-cook`. Status stays **Accepted**. Host CircGamma stays QEX.

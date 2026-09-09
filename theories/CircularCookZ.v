@@ -5,7 +5,8 @@
 
    I_circles_z is an extractable seam, not glossary 𝓘 (that is Hit (p*, tᵢ, tⱼ);
    there is no γ / [0,1] here). Hens 0/1 are birth certificates of the named
-   radical roots, not a proved identity.
+   radical roots, not a proved identity. I.9: those tags are not a cook
+   license (CircularCookLicense.v).
 
        I_circles_z : Hit | Empty | Touch | Decline
 
@@ -302,6 +303,32 @@ Proof.
   unfold circ_d2, circ_sum2, circ_diff2. lia.
 Qed.
 
+(* I.9: classifier hens are tags 0/1. IZHit never carries (p*, t).
+   Oracle I_CIRCULAR prints HIT 0 1 on the locked fixture. *)
+Lemma classifier_hens_are_tags :
+  hen_plus = 0%nat /\ hen_minus = 1%nat.
+Proof.
+  split; reflexivity.
+Qed.
+
+Lemma iz_hit_only_tags :
+  forall o1x o1y r1 o2x o2y r2 hp hm,
+    I_circles_z o1x o1y r1 o2x o2y r2 = IZHit hp hm ->
+    hp = hen_plus /\ hm = hen_minus.
+Proof.
+  intros o1x o1y r1 o2x o2y r2 hp hm H.
+  unfold I_circles_z, mint_pair, mint_touch in H.
+  destruct ((r1 <=? 0) || (r2 <=? 0)); [discriminate H|].
+  destruct (circ_d2 o1x o1y o2x o2y =? 0); [discriminate H|].
+  destruct ((circ_d2 o1x o1y o2x o2y =? (r1 + r2) * (r1 + r2))
+            || (circ_d2 o1x o1y o2x o2y =? (r1 - r2) * (r1 - r2)));
+    [discriminate H|].
+  destruct (((r1 + r2) * (r1 + r2) <? circ_d2 o1x o1y o2x o2y)
+            || (circ_d2 o1x o1y o2x o2y <? (r1 - r2) * (r1 - r2)));
+    [discriminate H|].
+  inversion H. split; reflexivity.
+Qed.
+
 Print Assumptions locked_I_circles_z_hit.
 Print Assumptions locked_external_kiss_is_touch.
 Print Assumptions IZEmpty_neq_IZDecline.
@@ -312,3 +339,5 @@ Print Assumptions I_circles_z_touch_iff.
 Print Assumptions I_circles_z_empty_iff.
 Print Assumptions I_circles_z_decline_iff.
 Print Assumptions locked_internal_kiss_is_touch.
+Print Assumptions classifier_hens_are_tags.
+Print Assumptions iz_hit_only_tags.

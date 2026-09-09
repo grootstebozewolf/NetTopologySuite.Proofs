@@ -65,6 +65,9 @@
    I.1 Fence: chord × circular Decline inhabits I_ok (honest host
    arm). A constructed mixed Hit does not. The four-object pairwise
    fence lives in CircularCookSplit.v — not a type synonym.
+   I.9 classifier ≠ cook lives in CircularCookLicense.v — a
+   Z-classifier Hit is tags 0/1 and does not license host
+   try_cook_hit / circ_split / first_cook_scope expansion.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
@@ -294,7 +297,9 @@ Qed.
    (ticket_0007_i3_empty_qed_or_qex; 4-axiom γ_full; not Required
    here); I.8 leftover confluence lives in CircularCookConfluence.v
    (ticket_0007_i8_confluent_qed_or_qex; 4-axiom γ_full; not
-   Required here). Not Required here — host lane stays atan2-free.
+   Required here); I.9 classifier ≠ cook lives in
+   CircularCookLicense.v (ticket_0007_i9_tags_qed_or_qex; 4-axiom;
+   not Required here). Not Required here — host lane stays atan2-free.
    Host CircGamma stays QEX; first cook stays chord–chord. The host
    circular-Hit→cook bridge is the QEX stop
    ticket_0007_circ_host_cook_qed_or_qex below. *)
