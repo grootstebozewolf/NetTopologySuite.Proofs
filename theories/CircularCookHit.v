@@ -664,14 +664,27 @@ Proof.
   split; [exact Hdpos|].
   split.
   - apply (sq_monotone_nonneg_lt _ _ Habsnn Hdnn).
-    pose proof (Rsqr_abs (IZR r1 - IZR r2)) as Habs2.
-    unfold Rsqr in Habs2. rewrite Habs2.
-    unfold dist. rewrite sqrt_sqrt by apply dist_sq_nonneg.
-    rewrite Hdsq, <- IZR_circ_diff2.
+    unfold dist.
+    rewrite sqrt_sqrt by apply dist_sq_nonneg.
+    rewrite Hdsq.
+    assert (Habs_sq :
+              Rabs (IZR r1 - IZR r2) * Rabs (IZR r1 - IZR r2)
+              = IZR (circ_diff2 r1 r2)).
+    { rewrite IZR_circ_diff2.
+      pose proof (Rsqr_abs (IZR r1 - IZR r2)) as Habs2.
+      unfold Rsqr in Habs2.
+      symmetry. exact Habs2. }
+    rewrite Habs_sq.
     apply IZR_lt. exact Hdiff.
   - apply (sq_monotone_nonneg_lt _ _ Hdnn (Rlt_le _ _ HsumR)).
-    unfold dist. rewrite sqrt_sqrt by apply dist_sq_nonneg.
-    rewrite Hdsq, <- IZR_circ_sum2.
+    unfold dist.
+    rewrite sqrt_sqrt by apply dist_sq_nonneg.
+    rewrite Hdsq.
+    assert (Hsum_sq :
+              (IZR r1 + IZR r2) * (IZR r1 + IZR r2)
+              = IZR (circ_sum2 r1 r2)).
+    { rewrite IZR_circ_sum2. reflexivity. }
+    rewrite Hsum_sq.
     apply IZR_lt. exact Hsum.
 Qed.
 
@@ -688,11 +701,10 @@ Proof.
                 (zpt o1x o1y) (zpt o2x o2y) (IZR r1) (IZR r2)
                 Hr1 Hr2 Hdpos Habs Hsum)
     as [[Hp1 Hp2] [Hm1 Hm2]].
-  repeat split.
-  - apply on_full_circle_of_retract; [exact Hr1|exact Hp1].
-  - apply on_full_circle_of_retract; [exact Hr2|exact Hp2].
-  - apply on_full_circle_of_retract; [exact Hr1|exact Hm1].
-  - apply on_full_circle_of_retract; [exact Hr2|exact Hm2].
+  split; [apply on_full_circle_of_retract; [exact Hr1|exact Hp1]|].
+  split; [apply on_full_circle_of_retract; [exact Hr2|exact Hp2]|].
+  split; [apply on_full_circle_of_retract; [exact Hr1|exact Hm1]|].
+  apply on_full_circle_of_retract; [exact Hr2|exact Hm2].
 Qed.
 
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"I_circles_gamma_hit_iff","title":"I.2 forall Hit soundness: I_circles_gamma is Hit iff proper discriminant and on_full_circle on both radical roots (gamma_full)","file":"theories/CircularCookHit.v","witness":"0007-I.2-hit-sound","board":"ADR-0007"} *)
