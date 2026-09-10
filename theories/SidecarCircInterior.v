@@ -191,8 +191,10 @@ Proof.
   intros m p ti tj H.
   destruct m as [c a | a c];
     unfold I_ok_mixed, SidecarCircMixed.I_ok_mixed in H;
-    destruct H as [_ [_ [_ Hm]]];
-    split; [exact Hm|];
+    destruct H as [_ [_ [_ Hm]]].
+  - split; [exact Hm|].
+    exact (SidecarCircMixed.mixed_joint_params_not_interior ti tj Hm).
+  - split; [exact Hm|].
     exact (SidecarCircMixed.mixed_joint_params_not_interior ti tj Hm).
 Qed.
 
@@ -216,8 +218,9 @@ Proof.
   intros m p ti tj Harm.
   destruct m as [c a | a c];
     unfold I_ok_mixed_interior_arm in Harm;
-    destruct Harm as [_ [_ [_ Hinner]]];
-    exact (I_ok_mixed_interior_hit_false _ p ti tj Hinner).
+    destruct Harm as [_ [_ [_ Hinner]]].
+  - exact (I_ok_mixed_interior_hit_false _ p ti tj Hinner).
+  - exact (I_ok_mixed_interior_hit_false _ p ti tj Hinner).
 Qed.
 
 Lemma interior_span_params_half_half :
