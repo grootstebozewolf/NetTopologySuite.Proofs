@@ -511,7 +511,8 @@ theories/CircularCookCsConcat.v
 # LS–CS joint is host I_ok Decline (I.1 fence); not a
 # constructed mixed Hit. Locked mixed LS+CS fixture. Host
 # CircGamma stays QEX. CurvePolygon / H⊥ parked. Not SQL/MM
-# done. CC Landed. Inherits Classical_Prop.classic via
+# done. CC required-type Gap (mixed LS–CS host Decline;
+# letter B.2 landed ≠ required-type Landed). Inherits Classical_Prop.classic via
 # CircularCookCsConcat / OkCirc / Span / atan2 (claimId 0007 /
 # B.2). No extra axioms beyond the atan2 lineage. Headlines
 # Qed-closed. No new kernel. Not a CircGamma remint. Not a
@@ -527,7 +528,9 @@ theories/CircularCookCcConcat.v
 # Decline (I.1 fence); not a constructed mixed Hit. Locked
 # CS-ring and mixed-ring fixtures. Host CircGamma stays QEX.
 # H⊥ / CircGamma remint / bag-noder parked. Not SQL/MM done.
-# CP Landed. Phase B done-when met (CS + CC + CP Landed).
+# CP / CC required-type Gap (mixed LS–CS host Decline).
+# Phase B Open (letter B.3 landed ≠ required-type Landed /
+# done-when).
 # Inherits Classical_Prop.classic via CircularCookCcConcat /
 # CsConcat / OkCirc / Span / atan2 (claimId 0007 / B.3). No
 # extra axioms beyond the atan2 lineage. Headlines Qed-closed.

@@ -246,7 +246,9 @@ chords and CircularString `CircEgg` members; LS–LS joint is
 host `I_ok` Hit at `(end, t=1, t=0)`; CS–CS member joint
 reuses `I_ok_circ`; mixed LS–CS joint is host `I_ok` Decline
 (I.1); locked mixed fixture; host CircGamma stays QEX;
-CurvePolygon / H⊥ parked; not SQL/MM done; CC Landed; no new
+CurvePolygon / H⊥ parked; not SQL/MM done; CC required-type
+Gap (mixed LS–CS host Decline; letter B.2 landed ≠
+required-type Landed); no new
 kernel): `theories/CircularCookCcConcat.v`. 4-axiom atan2
 sidecar.
 
@@ -256,8 +258,9 @@ or closed CompoundCurve — B.2 members contiguous and closed,
 last joins first; CS–CS closing reuses `I_ok_circ`; mixed
 closing is host `I_ok` Decline (I.1); locked CS-ring and
 mixed-ring fixtures; host CircGamma stays QEX; H⊥ /
-CircGamma remint / bag-noder parked; not SQL/MM done; CP
-Landed; Phase B done-when met (CS + CC + CP Landed); no new
+CircGamma remint / bag-noder parked; not SQL/MM done; CP / CC
+required-type Gap (mixed LS–CS host Decline); Phase B Open
+(letter B.3 landed ≠ required-type Landed / done-when); no new
 kernel): `theories/CircularCookCpConcat.v`. 4-axiom atan2
 sidecar.
 

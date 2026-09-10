@@ -2897,7 +2897,9 @@ theories/CircularCookCsConcat.v
 # is host I_ok Decline (I.1). Locked mixed fixture
 # COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0)).
 # Host CircGamma stays QEX. first_cook_scope stays chord–chord.
-# CurvePolygon / H⊥ parked. Not SQL/MM done. CC Landed.
+# CurvePolygon / H⊥ parked. Not SQL/MM done. CC required-type
+# Gap (mixed LS–CS host Decline; letter B.2 landed ≠
+# required-type Landed).
 # 4-axiom atan2 sidecar (classic via CsConcat / OkCirc / Span).
 # No new kernel. Not a CircGamma remint. Not CurveSegment remint.
 # Not first cook scope. Not a noder. Not CurvePolygon.
@@ -2912,8 +2914,10 @@ theories/CircularCookCcConcat.v
 # and mixed-ring CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0),
 # CIRCULARSTRING(5 0, 0 -5, -5 0)))). Host CircGamma stays
 # QEX. first_cook_scope stays chord–chord. H⊥ / CircGamma
-# remint / bag-noder parked. Not SQL/MM done. CP Landed.
-# Phase B done-when met (CS + CC + CP Landed). 4-axiom atan2
+# remint / bag-noder parked. Not SQL/MM done. CP / CC
+# required-type Gap (mixed LS–CS host Decline). Phase B Open
+# (letter B.3 landed ≠ required-type Landed / done-when).
+# 4-axiom atan2
 # sidecar (classic via CcConcat / CsConcat / OkCirc / Span).
 # No new kernel. Not a CircGamma remint. Not CurveSegment
 # remint. Not CurveGeometry.CurvePolygon remint. Not first

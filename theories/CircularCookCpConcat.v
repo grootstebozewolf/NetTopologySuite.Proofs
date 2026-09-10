@@ -48,8 +48,10 @@
    host circular I_ok is Decline; I_ok_circ Hit ≠ host I_ok;
    H⊥ / CircGamma remint / bag-noder stay parked; SQL/MM is not
    done (cathedral / Multi / optional Part 3 types). CurvePolygon
-   required-type gap is Landed. Phase B done-when is met (CS +
-   CC + CP Landed).
+   required-type status stays Gap — mixed LS–CS closing is host
+   Decline. CompoundCurve required-type stays Gap. Phase B
+   stays Open. Letter B.3 landed (PhaseB3Landed) ≠
+   required-type Landed / SQL/MM done / Phase B done-when.
 
    Honesty fences:
      Host-Decline / CircGamma-QEX at the top of this module.
@@ -100,12 +102,13 @@ Local Open Scope R_scope.
    reuse=I_ok_circ,arc_gamma,cs_joint,cc_joint,host-I_ok-chord-chord
    not=new-kernel,CircGamma-Discharge,first-cook-noding,SQL-MM-done
    not=bag-noder,CRV-TOUCH-kiss,CurveSegment-remint,CurvePolygon-remint
-   park=Hperp,CircGamma-remint,bag-noder,SQL-MM-done
-   land=Phase-B-CP,Phase-B *)
+   park=Hperp,CircGamma-remint,bag-noder,SQL-MM-done,Phase-B-CC-CP-required-type
+   land=Phase-B.3 *)
 
 (* B.1 / B.2 names, reused. Not imported so this letter can mark
-   phase_b_curve_polygon_status Landed without clashing B.2's
-   letter-local Gap. *)
+   PhaseB3Landed without clashing B.2's letter-local Gap.
+   Required-type CP / CC stay Gap (mixed LS–CS host Decline).
+   Phase B stays Open. *)
 Definition cs_joint := CircularCookCsConcat.cs_joint.
 Definition cs_joint_hit := CircularCookCsConcat.cs_joint_hit.
 Definition locked_cs_arc_1 := CircularCookCsConcat.locked_cs_arc_1.
@@ -456,7 +459,9 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Phase B.3 lands CurvePolygon. H⊥ / remint / bag / SQL/MM stay parked.      *)
+(* Phase B.3 letter landed. CP / CC required-type stay Gap (mixed
+   Decline). Phase B stays Open. H⊥ / remint / bag / SQL/MM stay
+   parked. Letter landed ≠ required-type Landed / done-when.           *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive PhaseB3Status : Type :=
@@ -475,29 +480,31 @@ Inductive PhaseBGapStatus : Type :=
 | PhaseBRequiredGap
 | PhaseBRequiredLanded.
 
+(* Same-kind joints in B.1–B.3 are not required-type 𝓘 Landed.
+   Mixed LS–CS remains host Decline. *)
 Definition phase_b_circular_string_status : PhaseBGapStatus :=
-  PhaseBRequiredLanded.
+  PhaseBRequiredGap.
 
 Definition phase_b_compound_curve_status : PhaseBGapStatus :=
-  PhaseBRequiredLanded.
+  PhaseBRequiredGap.
 
 Definition phase_b_curve_polygon_status : PhaseBGapStatus :=
-  PhaseBRequiredLanded.
+  PhaseBRequiredGap.
 
-Lemma phase_b_cs_is_landed :
-  phase_b_circular_string_status = PhaseBRequiredLanded.
+Lemma phase_b_cs_is_gap :
+  phase_b_circular_string_status = PhaseBRequiredGap.
 Proof.
   reflexivity.
 Qed.
 
-Lemma phase_b_cc_is_landed :
-  phase_b_compound_curve_status = PhaseBRequiredLanded.
+Lemma phase_b_cc_is_gap :
+  phase_b_compound_curve_status = PhaseBRequiredGap.
 Proof.
   reflexivity.
 Qed.
 
-Lemma phase_b_cp_is_landed :
-  phase_b_curve_polygon_status = PhaseBRequiredLanded.
+Lemma phase_b_cp_is_gap :
+  phase_b_curve_polygon_status = PhaseBRequiredGap.
 Proof.
   reflexivity.
 Qed.
@@ -506,10 +513,10 @@ Inductive PhaseBCampaignStatus : Type :=
 | PhaseBLanded
 | PhaseBOpen.
 
-Definition phase_b_status : PhaseBCampaignStatus := PhaseBLanded.
+Definition phase_b_status : PhaseBCampaignStatus := PhaseBOpen.
 
-Lemma phase_b_is_landed :
-  phase_b_status = PhaseBLanded.
+Lemma phase_b_is_open :
+  phase_b_status = PhaseBOpen.
 Proof.
   reflexivity.
 Qed.
@@ -561,10 +568,10 @@ Qed.
 
 Lemma b3_rest_parked :
   phase_b3_status = PhaseB3Landed
-  /\ phase_b_circular_string_status = PhaseBRequiredLanded
-  /\ phase_b_compound_curve_status = PhaseBRequiredLanded
-  /\ phase_b_curve_polygon_status = PhaseBRequiredLanded
-  /\ phase_b_status = PhaseBLanded
+  /\ phase_b_circular_string_status = PhaseBRequiredGap
+  /\ phase_b_compound_curve_status = PhaseBRequiredGap
+  /\ phase_b_curve_polygon_status = PhaseBRequiredGap
+  /\ phase_b_status = PhaseBOpen
   /\ b3_hperp_status = B3HperpParked
   /\ b3_circgamma_remint_status = B3CircGammaRemintParked
   /\ b3_sql_mm_status = B3SqlMmNotDone
@@ -688,7 +695,7 @@ Proof.
   exact Hhost.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_park_qed_or_qex","title":"Phase B.3 discharges Hperp, CircGamma remint, bag noder, and SQL/MM (QED) or names them parked / not-done and lands CurvePolygon plus Phase B (QEX); discharged QEX; B.3 landed; CP Landed; CS+CC+CP Landed; not SQL/MM done","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_park_qed_or_qex","title":"Phase B.3 discharges Hperp, CircGamma remint, bag noder, and SQL/MM (QED) or names them parked / not-done (QEX); discharged QEX; B.3 letter landed; CP CC required-type Gap (mixed LS-CS host Decline); Phase B Open; letter landed != required-type Landed / done-when; not SQL/MM done","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
 
 Theorem ticket_0007_b3_park_qed_or_qex :
   (b3_hperp_status = B3HperpDischarged
@@ -697,10 +704,10 @@ Theorem ticket_0007_b3_park_qed_or_qex :
    /\ cook_loop_status = LoopDischarged)
   \/
   (phase_b3_status = PhaseB3Landed
-   /\ phase_b_circular_string_status = PhaseBRequiredLanded
-   /\ phase_b_compound_curve_status = PhaseBRequiredLanded
-   /\ phase_b_curve_polygon_status = PhaseBRequiredLanded
-   /\ phase_b_status = PhaseBLanded
+   /\ phase_b_circular_string_status = PhaseBRequiredGap
+   /\ phase_b_compound_curve_status = PhaseBRequiredGap
+   /\ phase_b_curve_polygon_status = PhaseBRequiredGap
+   /\ phase_b_status = PhaseBOpen
    /\ b3_hperp_status = B3HperpParked
    /\ b3_circgamma_remint_status = B3CircGammaRemintParked
    /\ b3_sql_mm_status = B3SqlMmNotDone
@@ -724,8 +731,10 @@ Print Assumptions b3_reuse_no_new_kernel.
 Print Assumptions b3_I_ok_circ_hit_not_host_I_ok.
 Print Assumptions b3_not_bag_noder.
 Print Assumptions phase_b3_is_landed.
-Print Assumptions phase_b_cp_is_landed.
-Print Assumptions phase_b_is_landed.
+Print Assumptions phase_b_cs_is_gap.
+Print Assumptions phase_b_cc_is_gap.
+Print Assumptions phase_b_cp_is_gap.
+Print Assumptions phase_b_is_open.
 Print Assumptions b3_sql_mm_is_not_done.
 Print Assumptions ticket_0007_b3_closed_qed_or_qex.
 Print Assumptions ticket_0007_b3_reuse_qed_or_qex.

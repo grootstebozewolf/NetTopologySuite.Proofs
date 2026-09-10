@@ -368,7 +368,8 @@ CircularString (`CircEgg`) members. LS–LS joint is host
 `I_ok` Decline (I.1); a constructed mixed Hit does not.
 Locked mixed fixture
 `COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))`.
-`phase_b_compound_curve_status` Landed. Host CircGamma stays
+`phase_b_compound_curve_status` Gap (mixed LS–CS host Decline).
+Letter B.2 landed ≠ required-type Landed. Host CircGamma stays
 QEX. CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
 CircGamma remint. Not a remint of `CurveSegment`.
 B.3 (Phase B, CurvePolygon required-type cut): a CP ring is
@@ -381,8 +382,9 @@ CS-ring
 `CURVEPOLYGON((CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)))`
 and mixed-ring
 `CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))))`.
-`phase_b_curve_polygon_status` Landed. Phase B done-when
-met (CS + CC + CP Landed). Host CircGamma stays QEX. H⊥ /
+`phase_b_curve_polygon_status` Gap (mixed LS–CS host Decline).
+Phase B Open — letter B.3 landed ≠ required-type Landed /
+done-when. Host CircGamma stays QEX. H⊥ /
 CircGamma remint / bag-noder stay parked. Not SQL/MM done
 (cathedral / Multi / optional Part 3 types). Not a remint
 of `CurveSegment` / `CurveGeometry.CurvePolygon`.
