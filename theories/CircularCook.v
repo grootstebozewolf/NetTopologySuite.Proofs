@@ -184,17 +184,20 @@ Qed.
 Lemma two_over_sqrt2 : 2 * / sqrt 2 = sqrt 2.
 Proof.
   rewrite <- sqrt2_sq at 1.
-  rewrite Rmult_assoc, Rinv_r, Rmult_1_r; [|exact sqrt2_neq_0].
+  rewrite Rmult_assoc.
+  rewrite (Rinv_r (sqrt 2) sqrt2_neq_0).
+  rewrite Rmult_1_r.
   reflexivity.
 Qed.
 
 Lemma one_lt_sqrt2 : 1 < sqrt 2.
 Proof.
   apply Rnot_le_lt. intro Hle.
-  assert (sqrt 2 * sqrt 2 <= 1 * 1).
-  { apply Rmult_le_compat; try lra.
-    apply Rlt_le. apply sqrt_lt_R0. lra. }
-  rewrite sqrt2_sq in H. lra.
+  assert (Hz : 0 <= sqrt 2).
+  { apply Rlt_le. apply sqrt_lt_R0. lra. }
+  assert (Hprod : sqrt 2 * sqrt 2 <= 1 * 1).
+  { apply Rmult_le_compat; [exact Hz | exact Hz | exact Hle | exact Hle]. }
+  rewrite sqrt2_sq in Hprod. lra.
 Qed.
 
 Lemma reflex_nlerp_misses_principal :
