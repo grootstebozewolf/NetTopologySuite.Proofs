@@ -14,9 +14,9 @@
    on-circle points in that span; locked proper-arc Hit on the (0,0)/(7,0)
    r=5 radical pair keeps p+ and rejects p−.
 
-   QEX (host CircGamma): 3-axiom interpolant on CircularArc, or a host-lane
-   policy change allowing this sidecar to flip circular_gamma_status.
-   Stated as that remaining obligation — not a bool proved by `right`.
+   QEX (host CircGamma): named gap in CircularCook.v — no MkCirc on Egg;
+   nlerp misses the reflex principal span; Discharge needs atan2 /
+   Classic or a first-cook expand. This sidecar arc_gamma is not host Γ.
 
    first_cook_scope stays chord–chord.  Not glossary 𝓘.  Not a noder.
    Not OverlayNGCurve / fully_intersected / ticket 523.
@@ -1099,8 +1099,10 @@ Proof.
 Qed.
 
 (* Host CircGamma stays CircGammaQEX: 3-axiom CircularCook cannot import
-   this atan2 interpolant. Remaining obligation: an atan2-free γ on
-   CircularArc, or a host-lane policy change. Not a bool. *)
+   this atan2 interpolant. Named gap (not a bool): Egg has no MkCirc;
+   chord-project nlerp misses the reflex principal span; Discharge
+   needs atan2 / Classic or a first-cook expand. This sidecar
+   arc_gamma is not host Γ. *)
 
 Lemma circular_gamma_host_still_qex :
   circular_gamma_status = CircGammaQEX.

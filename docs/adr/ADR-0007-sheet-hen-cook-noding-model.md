@@ -261,7 +261,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | binary64 / OverlayNGRobust sit on one sheet | `Adr0007NodingEpic.v : ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | `SheetHenCook.v : coord_realization_preserves_sheet`, `SheetHenCook.v : overlay_ng_robust_is_finite_snap_holds`, `SheetHenCook.v : overlay_ng_robust_is_snap_not_I` |
 | — | `ddir` migration is one type equation | `Adr0007NodingEpic.v : ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart stays the `Dart.v` coordinate-pair story; no third type | `SheetHenCook.v : ddir_migration_one_equation` |
 | — | Full-circle Hit carries constructed `(h*, p*, tᵢ, tⱼ)` | `CircularCookHit.v : ticket_64_circ_hit_params_qed_or_qex` | **QED** — locked `(0,0)/(7,0)` r=5; `γ(t)=p*` | `CircularCookHit.v : locked_I_circles_gamma_hit`, `CircularCookHit.v : locked_hit_plus_on_gamma` |
-| — | CircularArc γ / CircGamma | `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | **QEX** — 3-axiom host has no atan2-free interpolant; do not fake Discharge | `CircularCook.v : circular_gamma_is_qex` |
+| — | CircularArc γ / CircGamma | `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | **QEX** — named gap: no `MkCirc` on Egg; nlerp misses reflex principal span; Discharge needs atan2/Classic or first-cook expand; do not fake Discharge | `CircularCook.v : circ_gamma_mkcirc_missing`, `CircularCook.v : reflex_nlerp_misses_principal`, `CircularCook.v : circular_gamma_is_qex` |
 | — | Span-restricted γ on CircularArc | `CircularCookSpan.v : circular_arc_gamma_constructed` | **QED** — principal-span interpolant; locked proper arcs keep `p+`, reject `p−` | `CircularCookSpan.v : locked_span_gamma_hit`, `CircularCookSpan.v : arc_gamma_retract` |
 | — | Host circular IHit → `try_cook_hit` | `Adr0007NodingEpic.v : ticket_0007_circ_host_cook_qed_or_qex` | **QEX** — circular eggs stay `MkOutOfScope`; host cook declines even on IHit | `SheetHenCook.v : try_cook_hit_circular_hit_none`, `SheetHenCook.v : circular_egg_not_first_cook_scope` |
 | — | Circular Hit feeds sidecar `split(t)` | `CircularCookSplit.v : ticket_0007_circ_cook_step_qed_or_qex` | **QED** — locked plus-root leftovers meet at `p+`; CircGamma stays QEX | `CircularCookSplit.v : cooked_circ_plus_try`, `CircularCookSplit.v : cooked_circ_plus_ok` |
@@ -273,7 +273,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | I.1 Touch ≠ IHit | `CircularCookSplit.v : ticket_0007_touch_neq_ihit_qed_or_qex` | **QED** — kiss Touch ≠ proper-cross Hit on Z and γ | `CircularCookZ.v : IZTouch_neq_IZHit`, `CircularCookHit.v : ICircGTouch_neq_ICircGHit` |
 | — | I.1 circular Empty ≠ Decline | `CircularCookSplit.v : ticket_0007_empty_neq_decline_circ_qed_or_qex` | **QED** — locked Empty / Decline fixtures differ | `CircularCookZ.v : IZEmpty_neq_IZDecline`, `CircularCookHit.v : ICircGEmpty_neq_ICircGDecline` |
 | — | I.1 chord × circular Decline | `Adr0007NodingEpic.v : ticket_0007_chord_circ_decline_qed_or_qex` | **QED** — mixed pair inhabits `I_ok` as Decline, not a constructed Hit | `SheetHenCook.v : chord_circular_decline_I_ok`, `SheetHenCook.v : chord_circular_hit_not_I_ok` |
-| — | I.1 I_gloss / host CircGamma | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; host circular `I_ok` is Decline only | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : circular_decline_I_ok` |
+| — | I.1 I_gloss / host CircGamma | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; `MkCirc` missing; host circular `I_ok` is Decline only | `CircularCook.v : circ_gamma_mkcirc_missing`, `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : circular_decline_I_ok` |
 | — | I.2 ∀ Hit soundness | `CircularCookHit.v : ticket_0007_i2_hit_sound_qed_or_qex` | **QED** — `I_circles_gamma` = Hit iff proper disc ∧ `on_full_circle` on both roots; R3 locked witness recovered | `CircularCookHit.v : I_circles_gamma_hit_iff`, `CircularCookHit.v : i2_recovers_locked_r3` |
 | — | I.2 not arc membership | `CircularCookHit.v : ticket_0007_i2_arc_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `CircularCook.v : circular_not_first_cook_scope` |
 | — | I.3 ∀ Empty | `CircularCookEmpty.v : ticket_0007_i3_empty_qed_or_qex` | **QED** — `I_circles_gamma` = Empty iff proper pair ∧ γ_full images disjoint on S | `CircularCookEmpty.v : I_circles_gamma_empty_iff`, `CircularCookEmpty.v : i3_recovers_locked_empty` |
@@ -459,8 +459,11 @@ Span-restricted γ on CircularArc is QED in the 4-axiom sidecar
 (`CircularCookSpan.v : circular_arc_gamma_constructed`;
 `CircularCookSpan.v : locked_span_gamma_hit`). Host CircGamma stays
 QEX (`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`;
-`CircularCook.v : circular_gamma_is_qex`) — remaining obligation is
-an atan2-free interpolant on the 3-axiom host.
+`CircularCook.v : circ_gamma_mkcirc_missing`;
+`CircularCook.v : reflex_nlerp_misses_principal`) — named gap,
+not a bool: Egg has no `MkCirc`; chord-project nlerp misses the
+reflex principal span; Discharge needs atan2 / Classic or a
+first-cook expand. Sidecar `arc_gamma` is not host Γ.
 The next letter feeds that circular Hit into a same-shape cook
 (`CircularCookSplit.v`); host `try_cook_hit` still declines circular
 eggs. Not first cook scope. Not a noder.
@@ -1028,3 +1031,39 @@ Multi required-type Landed. ADR-0007 stays Accepted.
 | `SidecarCircInterior.v : ticket_0007_iota_park_qed_or_qex` | **QEX** — interior cook / H⊥ / bag noder / cathedral parked; Phase B Open; ι letter landed | `SidecarCircInterior.v : iota_letter_is_landed`, `SidecarCircInterior.v : iota_interior_cook_is_parked` |
 
 Witness: `0007-iota-interior-mixed`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — Γ CircGamma core-slice stop (2026-09-10)
+
+Host CircGamma (Γ) is the 3-axiom interpolant `γ : [0,1] → S` on
+`CircularArc` that would flip `circular_gamma_status` to
+`CircGammaDischarged` and let `I_gloss` become defined. The sidecar
+already has span-restricted `arc_gamma` (`CircularCookSpan.v`) —
+that is **not** host Γ. This letter is the honest QED∨QEX stop.
+
+**QEX** (discharged). Discharge is not available without atan2 /
+`Classical_Prop.classic` (sidecar `circ_gamma` / `arc_gamma`) or
+without expanding `Egg` / `first_cook_scope`. Named gap, not a
+bool:
+
+1. `Egg` has no `MkCirc` constructor — circular eggs are only
+   `MkOutOfScope` (`CircularCook.v : circular_egg_only_out_of_scope`).
+2. Chord-project nlerp, the natural 3-axiom interpolant, misses the
+   principal span on the reflex fixture start `(1,0)` → mid `(−1,0)`
+   → end `(0,1)` (`CircularCook.v : reflex_nlerp_misses_principal`).
+   Piecewise nlerp through mid is not total (that half is antipodal).
+3. Campaign tickets couple `CircGammaDischarged` with
+   `first_cook_scope` circular–circular. This letter does not expand
+   first cook. ADR-0007 stays Accepted.
+
+`I_gloss` stays undefined (`CircularCook.v : ticket_0007_i1_gloss_qed_or_qex`).
+Host circular `I_ok` stays Decline. `I_ok_circ` / `I_ok_mixed` Hit
+is not host `I_ok`. Do not rename sidecar `arc_gamma` as host
+CircGamma. Do not fake Discharge.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | **QEX** — `MkCirc` missing; nlerp misses reflex principal span; first cook stays chord–chord | `CircularCook.v : circ_gamma_mkcirc_missing`, `CircularCook.v : reflex_nlerp_misses_principal` |
+| `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; `MkCirc` missing; host circular `I_ok` is Decline only | `CircularCook.v : circ_gamma_mkcirc_missing`, `SheetHenCook.v : circular_decline_I_ok` |
+| `CircularCook.v : ticket_0007_gamma_nlerp_qed_or_qex` | **QEX** — nlerp misses principal span; piecewise nlerp degenerate on the same fixture | `CircularCook.v : reflex_nlerp_misses_principal`, `CircularCook.v : reflex_piecewise_nlerp_degenerate` |
+
+Witness: `0007-Gamma-circgamma`. Status stays **Accepted**. Host CircGamma stays QEX.
