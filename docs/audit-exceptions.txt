@@ -2,42 +2,28 @@
 #
 # Each non-comment, non-blank line names a file (relative to repo root)
 # whose `Print Assumptions` blocks are exempted from the allowlist check.
-# Listed files may pull axioms beyond `docs/axiom-allowlist.txt`; their
-# contamination is the *known, transitional* state captured below.
+# Listed files may pull axioms beyond `docs/axiom-allowlist.txt`.
 #
-# The discipline this file enforces:
+# Discipline:
 #   - Files NOT listed here MUST satisfy the allowlist on every CI run.
-#   - Files listed here are tracked for cleanup; removing a file from this
-#     list is the final step of refactoring it to be classic-clean.
-#   - Adding a file to this list requires PR justification (a comment
-#     immediately above the file line explaining what makes the file
-#     Category C / transitional and the planned resolution).
+#   - A file leaves this list only when every PA block is within
+#     `docs/axiom-allowlist.txt` (verified, not hoped).
+#   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# Current state: 96 files are listed below -- 74 in `theories-flocq/` (the
-# initial bulk block for binary ops Bplus/Bminus/Bmult pulling
-# `Classical_Prop.classic` via Flocq, plus additional Category C for
-# snap-rounding, overlay, expansion-arithmetic, and Stage D as documented
-# per-file) and 22 in `theories/` (R-side lineages: Stdlib `atan`/`Ratan`,
-# plus #564 RiemannInt for the Fresnel inhabitant, documented per-file
-# below).  The five all-C2 arc files (`ArcLength` / `ArcArea` /
-# `ArcCentroid` / `ArcAreaCentroid` / `CurveBufferArea`) left this list
-# after a 3-axiom Taylor-envelope proof of `sin x < x` replaced Stdlib
-# `sin_lt_x` (MVT → classic).  Per-theorem categorisation of every listed file:
-# docs/category-c-distribution.md (2026-08-16 pass; 1002 theorems -- 362
-# co-located clean, 618 C1, 18 C2, 4 definition seeds).  The Flocq contamination is a pre-existing condition the
-# corpus inherited from Flocq's binary model; the parametric refactor clears
-# files one by one where possible.  Removal from this list is the per-file
-# completion criterion for the binary-op lineage.
+# LIVE: 110 files (74 theories-flocq/ + 35 theories/ + 1 hunt probe).
+# None are allowlist-clean.  Flocq C1 (`Classical_Prop.classic` via
+# Bplus/Bminus/Bmult/Bdiv/round/B2R) cannot leave while Flocq's binary
+# model is in use (`docs/category-c-policy.md`).  R-side files carry
+# classic via atan2/Ratan or RiemannInt.  Five all-C2 arc files already
+# left (2026-08-25): ArcLength / ArcArea / ArcCentroid / ArcAreaCentroid
+# / CurveBufferArea.  Snapshot categorisation:
+# docs/category-c-distribution.md (2026-08-16; list has grown since).
+#
+# Trio-only siblings deliberately NOT listed: Intersect_b64_exact_refs.v,
+# HotPixel_b64_refs.v, InCircle_b64_exact_refs.v, ClothoidFresnel.v,
+# PassesThrough_b64_grid_exact.v (umbrella, no PA).
 
-# Category C (binary-op lineage, original bulk block): the fifteen files
-# below are the b64 arithmetic foundation -- their theorem types mention
-# Flocq's `Bplus`/`Bminus`/`Bmult` (directly or via the `b64_*` aliases),
-# whose definition closure carries `Classical_Prop.classic` (Category C1 in
-# `docs/category-c-policy.md`; policy status: Draft, decision pending).
-# This block predates the per-file justification rule above.  Transitional:
-# a file leaves this list when the parametric-architecture refactor reaches
-# it (note the policy doc's section 6: C1 removal is impossible while
-# Flocq's binary model is in use).
+# Flocq C1 — binary-op / clothoid / intersect foundation
 theories-flocq/Orient_b64_exact.v
 theories-flocq/ClothoidDegenerate_b64.v
 theories-flocq/ClothoidScopeA_b64.v
@@ -45,15 +31,6 @@ theories-flocq/ClothoidResidual_b64_exact.v
 theories-flocq/ClothoidHalley_b64.v
 theories-flocq/Intersect_b64.v
 theories-flocq/B64_bridge.v
-# Split (2026-08-16): the former monolith Intersect_b64_exact.v is now six
-# layered modules.  The pure-R reference layer was extracted to
-# Intersect_b64_exact_refs.v, which imports NO Flocq and is trio-only --
-# deliberately NOT on this list, the first Intersect-lineage module to
-# leave it (mirroring PassesThrough's meso-audit B4).  The five binary64
-# layers below state their lemmas over Flocq binary64 ops / `Binary.B2R`
-# and inherit the former exemption.  The umbrella Intersect_b64_exact.v is
-# a pure Require Export re-export with no Print Assumptions output and is
-# deliberately NOT listed either.
 theories-flocq/Intersect_b64_exact_core.v
 theories-flocq/Intersect_b64_exact_round_chain.v
 theories-flocq/Intersect_b64_exact_forward_error.v
@@ -63,885 +40,111 @@ theories-flocq/B64_lib.v
 theories-flocq/Orient_b64_R.v
 theories-flocq/Validate_binary64_bridge.v
 theories-flocq/Orientation_b64.v
-# HotPixel_b64.v: hot-pixel membership + segment-crossing + passes-through
-# layer over b64 predicates.  Four C2 exemplars (`b64_le_R_of_true` and
-# kin) are now allowlist (payload Bcompare, no Bcompare_correct); 32 C1
-# stay.  Highest-fan-in b64 module (21 dependents incl. the oracle
-# extraction path via Validate_binary64_extract.v).
-# The Flocq-free R-side kernel lives in HotPixel_b64_refs.v and is
-# deliberately NOT on this list (trio-only footprint).
 theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
-# Category C: Shewchuk Theorem 13 pathB exact-cancellation brick.
-# b64_TwoSum_exact_of_format_sum / b64_TwoSum_sterbenz_exact / b64_round_0 are
-# stated over `b64_TwoSum` / `b64_plus` / `b64_minus` (Flocq Bplus/Bminus) and
-# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
-# b64-arithmetic / Pff lineage that exempts B64_Pff_bridge.v above (where
-# b64_TwoSum lives).  No Admitteds; both lemmas + helper are Qed-closed, and the
-# file does NOT use the deferred fast_expansion_sum_nonoverlap_shewchuk (it is a
-# building block toward it).  Removable once the parametric refactor reaches the
-# binary64 primitives.
+# Flocq C1 — Shewchuk / expansion / Stage D
 theories-flocq/B64_TwoSum_sterbenz.v
-
-# Category C: Shewchuk Theorem 13 obligation O1' (residue granularity).
-# residue_ge_half_ulp and its helpers are stated over `generic_format` / `cexp`
-# / `mag` / `bpow` and `Binary.B2R`; the binary64 instantiation pulls
-# `Classical_Prop.classic` transitively through Flocq's real-number / mag
-# machinery -- the SAME b64-arithmetic lineage that exempts B64_TwoSum_sterbenz.v
-# and B64_Pff_bridge.v above.  No Admitteds; all lemmas Qed-closed; no dependence
-# on the deferred fast_expansion_sum_nonoverlap_shewchuk.  Removable once the
-# parametric refactor reaches the binary64 primitives.
 theories-flocq/B64_residue_granularity.v
-
-# Category C: Shewchuk Theorem 13 obligation O1 core (nonoverlap head lemmas).
-# nonoverlap_shewchuk_cons_zero / nonoverlap_shewchuk_head_replace /
-# compress_cons_zero are pure list lemmas over `compress` / `nonoverlap_strict`
-# / `Binary.B2R`; the binary64 instantiation pulls `Classical_Prop.classic`
-# transitively through Flocq's `Rcompare` (the compress decision) -- the SAME
-# real-comparison lineage that exempts the other expansion-arithmetic files.
-# No Admitteds; all lemmas Qed-closed; no dependence on the deferred
-# fast_expansion_sum_nonoverlap_shewchuk.  Removable once the parametric refactor
-# reaches the binary64 primitives.
 theories-flocq/B64_nonoverlap_head.v
-
-# Category C: Shewchuk Theorem 13 headline counterexample.
-# nonoverlap_shewchuk_256_1_false / e_nonoverlap / f_nonoverlap / inputs_sum_eq
-# are stated over `nonoverlap_shewchuk` / `strict_succ_b64` / `ulp` / `Binary.B2R`;
-# the binary64 instantiation pulls `Classical_Prop.classic` through Flocq's
-# real/ulp machinery -- same lineage as B64_nonoverlap_head.v above.  No
-# Admitteds; all Qed-closed; no dependence on the deferred headline (it REFUTES
-# the headline's strong-nonoverlap postcondition).
 theories-flocq/B64_Shewchuk_Thm13_counterexample.v
-
-# Category C: Shewchuk Theorem 13 §4.A vm_compute cascade traces.
-# B64_pathB_trace_4A.v exercises b64_TwoSum / cascade_step_state on concrete
-# binary64 witnesses; closure carries Classical_Prop.classic through the same
-# B64_Pff_bridge / Rcompare lineage as B64_nonoverlap_head.v above.  No
-# Admitteds; all lemmas Qed-closed; refutes pathB_fires_only_when_output_compressed_empty.
 theories-flocq/B64_pathB_trace_4A.v
-
-# Category C: Shewchuk Theorem 13 pathA∨pathB cascade scaffolding.
-# B64_Shewchuk_Thm13_pathAB.v: O1–O6 + bootstrap Qed.  (Historical: the
-# O7-completeness cascade_pathAB_chain_from_nonoverlap was a registered
-# Tier-2 counterexample per PR #142, and the headline was Admitted in
-# B64_FastExpansionSum_Shewchuk.v; both have since been Qed-closed -- the
-# registries are empty and the corpus is Admitted-free.  Discharge history:
-# docs/history/deferred-proofs-registry-archive.md.)
 theories-flocq/B64_Shewchuk_Thm13_pathAB.v
-
-# Category C: C1 division-rounding core (division-by-power-of-two is exact).
-# `b64_div_pow2_exact` and its helpers state results about `b64_div` (Flocq's
-# `Bdiv`), `Binary.B2R` and `Binary.is_finite`, whose definition closure
-# carries `Classical_Prop.classic` -- the SAME b64-arithmetic lineage that
-# exempts Orient_b64_exact.v / B64_bridge.v above (those reference
-# Bplus/Bminus/Bmult).  No Admitteds in this file; the three lemmas
-# (div_bpow_eq_mult_bpow_neg, generic_format_IZR_mult_bpow_neg,
-# b64_div_pow2_exact) are Qed-closed.  Removable once the parametric-
-# architecture refactor reaches the binary64 arithmetic primitives.
 theories-flocq/DivRoundPow2_b64.v
-
-# Category C: Stage D Dekker integer-exactness bridge.  Both lemmas
-# (b64_Dekker_exact_of_format, b64_Dekker_int_exact) are stated over
-# `b64_Dekker` / `b64_mult` (Flocq's `Bmult` + Pff's Dekker TwoProduct) and
-# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
-# b64-arithmetic / Pff lineage that exempts B64_Pff_bridge.v (where
-# `b64_Dekker_correct` lives) and Orient_b64_exact.v above.  No Admitteds in
-# this file; both lemmas are Qed-closed.  Removable once the parametric-
-# architecture refactor reaches the binary64 arithmetic primitives.
 theories-flocq/Orient_b64_dekker_int.v
-
-# Category C: Stage D orient2d integer-regime nonoverlap + sign-correctness.
-# b64_Dekker_finite / b64_orient2d_expansion_int_nonoverlap /
-# b64_orient2d_expansion_int_sign_correct are stated over `b64_Dekker` /
-# `b64_mult` / `b64_plus` / `b64_minus` (Flocq's Bmult/Bplus/Bminus + Pff
-# Dekker) and `Binary.B2R`, whose closure carries `Classical_Prop.classic` --
-# the SAME b64-arithmetic / Pff lineage that exempts Orient_b64_dekker_int.v,
-# B64_Pff_bridge.v and Orient_b64_expansion.v above.  NOTE: these results do
-# NOT depend on the deferred general fast_expansion_sum_nonoverlap_shewchuk
-# (verified absent from Print Assumptions) -- they route through the proven,
-# unconditional fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs.
-# No Admitteds in this file; all three lemmas are Qed-closed.  Removable once
-# the parametric-architecture refactor reaches the binary64 primitives.
 theories-flocq/Orient_b64_int_safe.v
-
-# Category C: Stage D orient2d integer-COORDINATE guarantee.  The wrapper
-# theorems (b64_orient2d_expansion_int_nonoverlap_coords /
-# b64_orient2d_expansion_int_sign_correct_coords) and helpers are stated over
-# `b64_minus` / the expansion / `cross_R_BP`, whose closure carries
-# `Classical_Prop.classic` -- the SAME b64-arithmetic / Pff lineage that exempts
-# Orient_b64_int_safe.v, Orient_b64_dekker_int.v and Orient_b64_expansion.v
-# above.  As with Orient_b64_int_safe.v, these do NOT depend on the deferred
-# general fast_expansion_sum_nonoverlap_shewchuk.  No Admitteds; all theorems
-# Qed-closed.  Removable once the parametric refactor reaches the b64 primitives.
 theories-flocq/Orient_b64_int_safe_coords.v
-
-# Category C: Stage D orient2d on the Besicovitch-Kakeya gnarlies (concrete demo).
-# b64Z / kakeya_inputs_int_safe / kakeya_cross_zero / kakeya_orient2d_sign_zero
-# are stated over `binary_normalize` / `cross_R_BP` / the expansion predicate and
-# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
-# b64-arithmetic lineage that exempts Orient_b64_int_safe_coords.v and
-# Orient_b64_exact.v above.  No Admitteds; all three Qed-closed; no dependence on
-# the deferred fast_expansion_sum_nonoverlap_shewchuk.  Removable once the
-# parametric refactor reaches the binary64 primitives.
 theories-flocq/KakeyaOrient2d_b64.v
-
-# Category C: the Perron/Kakeya binary64 coordinate-safety stress test.
-# perron_b64_inputs_int_safe / perron_tri_b64_orient_exact / _cross_positive /
-# perron_b64_apex_unsafe_at_25 are stated over `b64_orient2d` / `cross_R_BP` /
-# `b64Z` / `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the
-# SAME b64-arithmetic lineage as KakeyaOrient2d_b64.v / Orient_b64_exact.v
-# above.  No Admitteds; all theorems Qed-closed.  Removable once the parametric
-# refactor reaches the binary64 primitives.
 theories-flocq/KakeyaPerron_b64.v
-
-# Category C: Issue #64 ask #4b — b64_inCircle sign + integer-regime exactness.
-# b64_inCircle_exact_sound / b64_inCircle_exact_for_small_int and the Perron
-# witness chain are stated over `b64_inCircle` / `b64_minus` / `b64_mult` /
-# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the SAME
-# b64-arithmetic lineage that exempts Orient_b64_exact.v and
-# KakeyaOrient2d_b64.v above.  No Admitteds; all theorems Qed-closed.
-# The Flocq-free Z/R kernel lives in InCircle_b64_exact_refs.v and is
-# deliberately NOT on this list (trio-only footprint).  Removable once
-# the parametric refactor reaches the remaining binary64 primitives.
 theories-flocq/InCircle_b64_exact.v
-
-# Category C: Issue #64 ask #5a Scope A — arc-line first-stage exactness.
-# b64_arc_line_sP_R / sQ_R / dx_R / dy_R compose `b64_inCircle` and
-# `b64_minus` over `Binary.B2R`, inheriting `Classical_Prop.classic` from
-# the same b64-arithmetic lineage as InCircle_b64_exact.v above.  No
-# Admitteds; Scope A only (prefix before division).  Removable once the
-# parametric refactor reaches the binary64 primitives.
 theories-flocq/ArcLineIntersect_b64_exact.v
+theories-flocq/Validate_binary64.v
+theories-flocq/B64_FastExpansionSum.v
+theories-flocq/B64_Expansion_Shewchuk.v
+theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
+theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v
+theories-flocq/B64_FastExpansionSum_Shewchuk.v
+theories-flocq/Orient_b64_expansion.v
+theories-flocq/Orient_b64_stage_d.v
+theories-flocq/Shewchuk_vs_Z2.v
+theories-flocq/Orient_b64_underflow_unsound.v
+theories-flocq/Orient_b64_underflow_recovery.v
+theories-flocq/Orient_b64_stage_d_safe.v
+theories-flocq/OrientHybridPackage.v
+theories-flocq/Orient_geos968_onsegment_pins.v
+theories-flocq/OrientStratifiedAPF.v
 
-# Category C: C1 scaled snap bridge.  `b64_snap_coord_scaled_B2R` states a
-# result about `b64_div` / `b64_mult` / `b64_snap_coord` (Bnearbyint) and
-# `snap_round_coord`, whose closure carries `Classical_Prop.classic` -- the
-# same snap-layer / b64-arithmetic lineage that exempts SnapRounding_b64.v
-# and HotPixel_b64.v above.  No Admitteds; the bridge is Qed-closed.
+# Flocq C1 — snap / Hobby / passes-through
 theories-flocq/SnapRoundingScale_b64.v
-
-# Category C: Phase 2 milestone 3 (Slice 12) snap-rounding correctness.
-# Every theorem here references `snap_round` / `b64_snap` /
-# `b64_passes_through_hot_pixel`, defined in HotPixel_b64.v.  Their statements
-# pull `Classical_Prop.classic` transitively via Flocq's `round` with
-# `round_mode mode_NE` (the real-comparison closure `Rcompare`/`total_order_T`
-# behind round-to-nearest-even) and the Liang-Barsky `Rle_bool`/`Req_dec_T`
-# machinery -- the SAME lineage that exempts HotPixel_b64.v, where these very
-# predicates are defined.  This is intrinsic to any theorem about `snap_round`
-# (even the pure-R `snap_round_coord_idem` surfaces `classic`); it is not
-# removable without a parametric refactor of the snap layer.  No Admitteds in
-# this file; the three deliverable theorems are Qed-closed.
 theories-flocq/SnapRounding_b64.v
-
-# Category C: Phase 2 milestone 4 (Slice 13) topological correctness.
-# Every theorem references `snap_round` / `b64_snap` (via SnapRounding_b64),
-# whose closure pulls `Classical_Prop.classic` through Flocq's `round` /
-# `round_mode` -- the identical lineage that exempts SnapRounding_b64.v and
-# HotPixel_b64.v.  Intrinsic to any theorem about `snap_round`; not removable
-# without a parametric refactor of the snap layer.  No Admitteds in this file;
-# the three deliverable theorems are Qed-closed.
 theories-flocq/TopologicalCorrectness_b64.v
-
-# Category C: Phase 2 Hobby Theorem 4.1 infrastructure.
-# Definitions + conditional theorem + supporting lemmas hobby_lemma_4_2 /
-# hobby_lemma_4_3 (formerly Admitted with deferred-proof registry entries;
-# since Qed-closed).  References `snap_round` via
-# `snap_round_segments`, pulling `Classical_Prop.classic` through Flocq's
-# `round` / `round_mode` -- identical lineage to the other snap files.
 theories-flocq/HobbyTheorem_b64.v
-
-# Category C: refutation of hobby_lemma_4_3_no_proper.  An explicit
-# parallel-collapse witness whose snap-rounded images intersect properly
-# though the originals do not (Qed-closed counterexample; counterexample
-# registry).  References `snap_round` (via snap_round_coord), pulling
-# `Classical_Prop.classic` through Flocq's `round` / `round_mode` --
-# identical lineage to HobbyTheorem_b64.v above.  No Admitteds.
 theories-flocq/HobbyCounterexample_b64.v
-
-# Category C: hunt probe reconstructing the anonymous second premise of
-# hobby_theorem_4_1_conditional.  Same snap-layer classic as
-# HobbyCounterexample_b64 (via snap_round).  Off _CoqProject.full; the
-# flocq smoke log is prefixed `ROCQ compile` and fed to audit_axioms.sh
-# so this line is load-bearing, not a silent bypass.
+# Off _CoqProject.full; flocq smoke prefixes ROCQ compile so this line
+# is load-bearing for audit_axioms.sh.
 docs/h1-vacuity/HobbyHlemma43Check.v
-
-# Category C: the weaker-but-true noding-preservation claim (separated pairs)
-# and its buffer bridgehead.  References `snap_round` / `snap_round_coord`
-# (via the tolerance bound and snap_round_segments), pulling
-# `Classical_Prop.classic` through Flocq's `round` / `round_mode` -- identical
-# lineage to HobbyTheorem_b64.v.  No Admitteds; all Qed-closed.
 theories-flocq/NodingSeparation_b64.v
-
-# Category C: Phase 2 follow-up -- b64_passes_through_hot_pixel_halfopen.
-# Strict half-open filter (tight characterisation of in_hot_pixel's `<= , <`
-# slab convention) used as the b64 mirror of the oracle's PASSES_THROUGH_HALFOPEN
-# mode.  References snap_round / b64_snap directly (the snap layer's
-# Classical_Prop.classic via Flocq's `round` / `round_mode`).  Same lineage
-# as the other snap files.  No Admitteds; sound/complete/bracket all
-# Qed-closed.
 theories-flocq/PassesThroughHalfopen_b64.v
-
-# Category C: machine-checked soundness counterexample for the rounded compute
-# filter.  The theorem statement references `b64_liang_barsky_touches` /
-# `b64_passes_through_hot_pixel` (the R-spec, defined in HotPixel_b64.v),
-# pulling `Classical_Prop.classic` through the same Liang-Barsky
-# `Rle_bool`/`Req_dec_T` + Flocq `B2R` lineage that exempts HotPixel_b64.v.
-# Not removable without a parametric refactor of the spec layer.  No
-# Admitteds; the counterexample theorem is Qed-closed.
 theories-flocq/PassesThrough_b64_compute_unsound.v
-
-# Category C: guard-discharge audit witness (issue #66 round 2, item 1).
-# References `b64_snap_coord` / `B2R` / `py` (BPoint-to-Point bridge, defined
-# in HotPixel_b64.v / Distance.v), pulling `Classical_Prop.classic` through
-# the same Flocq `B2R` lineage that exempts HotPixel_b64.v.  Not removable
-# without a parametric refactor of the spec layer.  No Admitteds; both
-# theorems are Qed-closed.
 theories-flocq/SnapRoundingGuardAudit.v
-
-# Category C: compute-level half-open => closed refinement.  Pure boolean
-# structural lemmas, but their statements reference the compute predicates
-# (`b64_liang_barsky_touches_compute` etc.), whose definition closure threads
-# `b64_div` / `Binary.Bdiv` and so pulls `Classical_Prop.classic` -- the same
-# Flocq-float lineage that exempts the other b64 files.  No Admitteds; the
-# refinement theorem is Qed-closed.
 theories-flocq/PassesThrough_b64_compute_refine.v
-
-# Category C: machine-checked half-open soundness counterexample.  Same
-# lineage as PassesThrough_b64_compute_unsound.v -- references the half-open
-# R-spec `b64_liang_barsky_touches_halfopen` (Liang-Barsky `Rle_bool` + Flocq
-# `B2R`), so pulls `Classical_Prop.classic`.  No Admitteds; Qed-closed.
 theories-flocq/PassesThroughHalfopen_b64_compute_unsound.v
-
-# Category C: machine-checked half-open INCOMPLETENESS counterexample (rounded
-# half-open filter drops a real pass).  Same lineage -- references the
-# half-open R-spec `b64_passes_through_hot_pixel_halfopen` (Liang-Barsky
-# `Rle_bool`/`Rlt_bool` + Flocq `B2R`/`round`), so pulls `Classical_Prop.classic`.
-# No Admitteds; Qed-closed.
 theories-flocq/PassesThroughHalfopen_b64_compute_incomplete.v
-
-# Category C: machine-checked ASYMMETRY counterexample (rounded passes-through
-# filter is not invariant under segment reversal -- the order-dependent-noding
-# root behind JTS#752 / JTS#1133).  Both halves are vm_compute, but the file
-# imports HotPixel_b64 / PassesThrough_b64_compute, whose binary64 layer pulls
-# `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
 theories-flocq/PassesThrough_b64_compute_asymmetric.v
-
-# Category C: GREEN companion -- the EXACT R-spec passes-through filter IS
-# symmetric under segment reversal (b64_passes_through_hot_pixel_symmetric).
-# Pure R-arithmetic over the Liang-Barsky bounds; imports HotPixel_b64, whose
-# R-spec layer pulls `Classical_Prop.classic` transitively.  No Admitteds.
 theories-flocq/PassesThrough_b64_spec_symmetric.v
-
-# Category C (same lineage): issue #66 C1 grid-exactness layer
-# (docs/snap-rounding-rgr-pivot.md).  Began as the GREEN reduction (on the
-# unit grid the snap-consistency conjunct of passes-through is vacuous,
-# reducing compute=spec to a single Liang-Barsky touch); 18 slices deep,
-# closing C1 on-grid soundness UNCONDITIONALLY on the tight integer grid
-# (|n| <= 2^22, Slice 18).  Imports HotPixel_b64 / SnapRounding_b64 /
-# PassesThrough_b64_compute, whose binary64 layer pulls
-# `Classical_Prop.classic` transitively.  No Admitteds; Qed-closed.
-# PA footers per theorem since B1 (2026-08-15).
-# SPLIT (2026-08-15, B4 executed with user/BDFL direction): the former
-# monolith PassesThrough_b64_grid_exact.v is now five layered modules;
-# the five below inherit this exemption (same classic lineage).  The
-# umbrella PassesThrough_b64_grid_exact.v is a pure Require Export shell
-# with no PA output of its own — not listed.
-# CORRECTION (2026-08-16 categorisation pass): the B4 exit of
-# _grid_gap_kernel.v was premature.  The module had no Print Assumptions
-# footer of its own (its lemmas were printed only from the sibling
-# separation module), so the per-file audit never saw that the slice-13
-# ulp lemmas (b64_ulp_round_le_bpow / _unit) mention `b64_round` in their
-# STATEMENTS and carry `Classical_Prop.classic` (Category C1).  The
-# slice-12 rational-gap lemmas (IZR_abs_ge_1, rational_gap,
-# grid_quotient_ratio) are machine-verified classic-free.  The module now
-# prints its own leaves and is re-listed with its siblings; the clean
-# half can leave again only under a per-theorem registry (policy
-# Option 2).
+# grid_gap_kernel: slice-13 ulp lemmas are C1 (b64_round in the
+# statement).  Slice-12 rational-gap lemmas are trio-only.
 theories-flocq/PassesThrough_b64_grid_gap_kernel.v
 theories-flocq/PassesThrough_b64_grid_core.v
 theories-flocq/PassesThrough_b64_grid_bounds.v
 theories-flocq/PassesThrough_b64_grid_complete.v
 theories-flocq/PassesThrough_b64_grid_separation.v
-
-# Category C (GREEN witness, same lineage): a witness test of the C1 grid
-# machinery on a 2x-scaled SPECTRE monotile edge (companion to
-# theories/SpectreExample.v).  Discharges bpoint_int_safe on a real Spectre edge
-# and exhibits the extracted compute filter's vm_compute verdicts; imports the
-# PassesThrough_b64_* layer, whose binary64 ops pull `Classical_Prop.classic`
-# transitively.  No Admitteds; Qed-closed.
 theories-flocq/SpectrePassesThroughWitness.v
 
-# Category C (R-side, distinct lineage): issue #64 Option-A atan2 foundation.
-# Unlike every other entry here (which pull `classic` through Flocq float ops),
-# this is a pure-Stdlib theories/ file: `classic` enters via Stdlib's `Ratan`
-# development (the `atan` function itself -- verified: `atan_0` pulls classic
-# while `cos_0`/`sqrt_1` do not).  Any atan2-based angle/arc-length proof
-# inherits it; this is the intrinsic axiom cost of the JTS-faithful atan2
-# representation chosen for #64 (the implicit sin/cos representation would have
-# stayed at 3 axioms).  No Admitteds; cos_atan2 / sin_atan2 Qed-closed.
+# Flocq C1 — overlay / ring-extract (classic via Hobby snap_round)
+theories-flocq/OverlayBridge.v
+theories-flocq/OverlayBridgeUnconditional.v
+theories-flocq/CurveLineariseGuardBridge.v
+theories-flocq/RingCurvatureModels.v
+theories-flocq/ExtractFacesBridge.v
+theories-flocq/OverlayCorrectness.v
+
+# R-side C1 — atan2 / Ratan (Stdlib atan pulls classic)
 theories/Atan2.v
-
-# Category C (R-side, same atan lineage as Atan2.v): issue #64 Option-A
-# foundation 2.  angle_between = atan2 (cross) (dot); imports Atan2 / `atan`,
-# so inherits Classical_Prop.classic.  Headlines cos/sin_angle_between and
-# atan2_range Qed-closed; no Admitteds.
 theories/AngleBetween.v
-
-# Category C (R-side, same atan lineage as Atan2.v / AngleBetween.v):
-# ADR-0007 core-slice Hit (h*, p*, tᵢ, tⱼ). circ_t / circ_gamma_retract
-# use atan2_on_circle and atan2_range, so inherit
-# Classical_Prop.classic. Locked-fixture QED; I.2 ∀ Hit soundness
-# off the lock (γ_full, both roots). CircGamma stays QEX.
-# No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
 theories/CircularCookHit.v
-
-# Category C (R-side, same atan lineage as CircularCookHit.v):
-# ADR-0007 I.3 ∀ Empty / Decline. Image-disjoint ≠ discriminant
-# Empty; Decline iff not a proper pair. Inherits
-# Classical_Prop.classic via circ_gamma / on_full_circle.
-# CircGamma stays QEX. No extra axioms beyond the atan2 lineage.
-# Headlines Qed-closed.
 theories/CircularCookEmpty.v
-
-# Category C (R-side, same atan lineage as CircularCookHit.v / ArcSpanAtan2.v):
-# span-restricted γ on CircularArc. arc_gamma / arc_t / retract use
-# circ_angle, arc_angle_from_start, atan2_sin_cos, so inherit
-# Classical_Prop.classic. Constructed interpolant QED; host CircGamma
-# stays QEX (3-axiom CircularCook cannot Require this sidecar).
-# No extra axioms beyond the atan2 lineage. Headlines Qed-closed.
 theories/CircularCookSpan.v
-
-# Category C (R-side, same atan lineage as CircularCookHit.v):
-# ADR-0007 letter — circular Hit feeds a same-shape split(t) cook.
-# Leftover eval is circ_gamma; locked plus-root join uses
-# circ_gamma_retract / on_full_circle, so inherits
-# Classical_Prop.classic. Host CircGamma stays QEX; Touch is a
-# fenced QEX arm. No extra axioms beyond the atan2 lineage.
-# Headlines Qed-closed.
 theories/CircularCookSplit.v
-
-# Category C (R-side, same atan lineage as CircularCookSplit.v):
-# ADR-0007 I.8 one-step leftover confluence on γ_full.
-# leftovers_ab = leftovers_ba; circular analogue of
-# split_step_confluent. Not the bag loop. Not leftover-width.
-# Inherits Classical_Prop.classic via CircularCookSplit / circ_gamma.
-# CircGamma stays QEX. No extra axioms beyond the atan2 lineage.
-# Headlines Qed-closed.
 theories/CircularCookConfluence.v
-
-# Category C (R-side, same atan lineage as CircularCookSplit.v):
-# ADR-0007 I.9 classifier ≠ cook. I_circles_z / I_CIRCULAR Hit is
-# tags 0/1, not glossary (p*, tᵢ, tⱼ). Does not license host
-# try_cook_hit / circ_split / first_cook_scope expansion.
-# Inherits Classical_Prop.classic via CircularCookSplit / circ_gamma
-# (claimId 0007 / I.9). CircGamma stays QEX. No extra axioms beyond
-# the atan2 lineage. Headlines Qed-closed.
 theories/CircularCookLicense.v
-
-# Category C (R-side, same atan lineage as CircularCookSplit.v):
-# ADR-0007 I.10 Campaign-I close letter. Sidecar cook on constructed
-# circular Hit (both roots). Host CircGamma stays QEX.
-# first_cook_scope stays chord–chord. I_CIRCULAR stays a classifier.
-# #666 fence holds. Campaign II and H⊥ are named parked.
-# Inherits Classical_Prop.classic via CircularCookSplit / circ_gamma
-# (claimId 0007 / I.10). No extra axioms beyond the atan2 lineage.
-# Headlines Qed-closed. No new kernel. Not SQL/MM done.
 theories/CircularCookClose.v
-
-# Category C (R-side, same atan lineage as CircularCookSpan.v):
-# ADR-0007 II.1 span filter as IResult. Radical root is arc Hit
-# iff on_arc_gamma both (span γ, not γ_full). Locked p+ Hit, p−
-# Empty. Host CircGamma stays QEX. II.2–II.4 / H⊥ / SQL/MM
-# cathedral stay parked. Inherits Classical_Prop.classic via
-# CircularCookSpan / atan2 (claimId 0007 / II.1). No extra axioms
-# beyond the atan2 lineage. Headlines Qed-closed. Not CS concat.
 theories/CircularCookSpanFilter.v
-
-# Category C (R-side, same atan lineage as CircularCookSpan.v):
-# ADR-0007 II.2 split γ_span at in-span t. Leftovers of arc_gamma
-# meet at locked p*. Leftover stays on the parent circle.
-# Locked p− stays Empty — no invented span cook. Host CircGamma
-# stays QEX. II.3–II.4 / H⊥ / SQL/MM cathedral stay parked.
-# Inherits Classical_Prop.classic via CircularCookSpan / atan2
-# (claimId 0007 / II.2). No extra axioms beyond the atan2 lineage.
-# Headlines Qed-closed. Not circ_split. Not CS concat.
 theories/CircularCookSpanSplit.v
-
-# Category C (R-side, same atan lineage as CircularCookSpan.v):
-# ADR-0007 II.3 I_ok_circ on EggCircularArc × EggCircularArc.
-# First glossary-type inhabitant using sidecar arc_gamma /
-# span filter / span split. Host CircGamma stays QEX.
-# II.4 / H⊥ / SQL/MM cathedral stay parked. Inherits
-# Classical_Prop.classic via CircularCookSpan / atan2
-# (claimId 0007 / II.3). No extra axioms beyond the atan2
-# lineage. Headlines Qed-closed. Not CS concat. Not host I_ok.
 theories/CircularCookOkCirc.v
-
-# Category C (R-side, same atan lineage as CircularCookOkCirc.v):
-# ADR-0007 II.4 Campaign-II close letter. I_ok_circ exists as
-# sidecar glossary inhabitant. Host CircGamma stays QEX.
-# first_cook_scope stays chord–chord. H⊥ parked. Not a bag
-# noder. Phase B SQL/MM Part 3 required-type gaps named
-# (CircularString / CompoundCurve / CurvePolygon). Not
-# SQL/MM done. Inherits Classical_Prop.classic via
-# CircularCookOkCirc / Span / atan2 (claimId 0007 / II.4).
-# No extra axioms beyond the atan2 lineage. Headlines
-# Qed-closed. Not CS concat. No new kernel.
 theories/CircularCookCloseII.v
-
-# Category C (R-side, same atan lineage as CircularCookOkCirc.v):
-# ADR-0007 Phase B.1 CircularString concat joints. CS is a
-# sequence of CircEgg; joint is I_ok_circ Hit at (end, t=1,
-# t=0) via sidecar arc_gamma / I_ok_circ. Joint params not
-# interior. Locked 2-arc V-CS odd_closed fixture. Host
-# CircGamma stays QEX. CompoundCurve / CurvePolygon / H⊥
-# parked. Not SQL/MM done. Inherits Classical_Prop.classic
-# via CircularCookOkCirc / Span / atan2 (claimId 0007 / B.1).
-# No extra axioms beyond the atan2 lineage. Headlines
-# Qed-closed. No new kernel. Not a CircGamma remint.
 theories/CircularCookCsConcat.v
-
-# Category C (R-side, same atan lineage as CircularCookCsConcat.v):
-# ADR-0007 Phase B mixed LS–CS joints. Contiguous LS×CS / CS×LS
-# joints inhabit I_ok_mixed Hit at (end, t=1, t=0) via host
-# chord_eval + sidecar arc_gamma. Host I_ok mixed stays Decline
-# (I.1). Host CircGamma stays QEX. Interior mixed cook parked.
-# Not SQL/MM done. Inherits Classical_Prop.classic via
-# CircularCookCsConcat / OkCirc / Span / atan2 (claimId 0007 /
-# B-mixed). No extra axioms beyond the atan2 lineage. Headlines
-# Qed-closed. No new kernel. Not a CircGamma remint.
 theories/SidecarCircMixed.v
-
-# Category C (R-side, same atan lineage as CircularCookCsConcat.v):
-# ADR-0007 Phase B.2 CompoundCurve member joints. CC is a
-# sequence of LineString (chords) and CircularString (CircEgg)
-# members. LS–LS joint is host I_ok Hit at (end, t=1, t=0).
-# CS–CS member joint reuses I_ok_circ / B.1 cs_joint. Mixed
-# LS–CS joint is I_ok_mixed Hit; host I_ok mixed stays Decline
-# (I.1 fence). Locked mixed LS+CS fixture. Host CircGamma stays
-# QEX. CurvePolygon / H⊥ / interior mixed cook parked. Not
-# SQL/MM done. CC required-type Landed (mixed I_ok_mixed Hit,
-# not host I_ok; letter B.2 landed ≠ SQL/MM done / Phase B
-# done-when). Inherits Classical_Prop.classic via
-# CircularCookCsConcat / OkCirc / Span / atan2 (claimId 0007 /
-# B.2). No extra axioms beyond the atan2 lineage. Headlines
-# Qed-closed. No new kernel. Not a CircGamma remint. Not a
-# CurveSegment remint.
 theories/CircularCookCcConcat.v
-
-# Category C (R-side, same atan lineage as CircularCookCcConcat.v):
-# ADR-0007 Phase B.3 CurvePolygon ring closure. CP ring is a
-# closed CircularString or closed CompoundCurve (B.2 members
-# contiguous and closed; last joins first). Sequential joints
-# stay B.2. CS–CS closing reuses I_ok_circ / B.1 cs_joint.
-# LS–LS closing is host I_ok. Mixed closing is I_ok_mixed Hit;
-# host I_ok mixed stays Decline (I.1 fence). Locked CS-ring
-# and mixed-ring fixtures. Host CircGamma stays QEX. H⊥ /
-# CircGamma remint / bag-noder / interior mixed cook parked.
-# Not SQL/MM done. CP / CC required-type Landed (mixed
-# I_ok_mixed Hit, not host I_ok). Phase B Open (letter B.3
-# landed ≠ SQL/MM done / Phase B done-when).
-# Inherits Classical_Prop.classic via CircularCookCcConcat /
-# CsConcat / OkCirc / Span / atan2 (claimId 0007 / B.3). No
-# extra axioms beyond the atan2 lineage. Headlines Qed-closed.
-# No new kernel. Not a CircGamma remint. Not a CurveSegment
-# remint. Not a CurveGeometry.CurvePolygon remint.
 theories/CircularCookCpConcat.v
-
-# Category C (R-side, same atan lineage as CircularCookCpConcat.v):
-# ADR-0007 Phase B MultiCurve / MultiSurface as bags of already-Qed
-# members. MultiCurve is a bag of CS / CC; MultiSurface is a bag of
-# CP. Members need not be contiguous (bag ≠ concat). Membership /
-# pairwise joints reuse I_ok / I_ok_circ / I_ok_mixed. Host I_ok
-# mixed stays Decline (I.1). Host CircGamma stays QEX. Interior
-# mixed cook parked. Bag noder / H⊥ / CircGamma remint / SQL/MM
-# cathedral parked. Multi required-type Gap. Phase B Open (letter
-# landed ≠ cathedral Landed / Phase B done-when). Inherits
-# Classical_Prop.classic via CircularCookCpConcat / CcConcat /
-# CsConcat / OkCirc / Span / atan2 (claimId 0007 / B-bags). No
-# extra axioms beyond the atan2 lineage. Headlines Qed-closed.
-# No new kernel. Not a CircGamma remint. Not a CurveSegment remint.
 theories/SidecarCircBags.v
-
-# Category C (R-side, same atan lineage as SidecarCircMixed.v):
-# ADR-0007 Phase B ι interior circular×chord cook. Honest QEX:
-# I_ok_mixed Hit is gated by mixed_joint_params (μ joint already
-# Qed). An interior_span_params Hit does not inhabit I_ok_mixed.
-# Named missing constructor: no interior-params Hit arm.
-# Host I_ok mixed stays Decline (I.1). Host CircGamma stays QEX.
-# first_cook_scope stays chord–chord. Interior cook stays parked.
-# Letter landed ≠ cook Landed / cathedral Landed / Phase B
-# done-when. Inherits Classical_Prop.classic via SidecarCircMixed
-# / CsConcat / OkCirc / Span / atan2 (claimId 0007 / iota). No
-# extra axioms beyond the atan2 lineage. Headlines Qed-closed.
-# No new kernel. Not a CircGamma remint. Not an I_ok_mixed remint.
 theories/SidecarCircInterior.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
-# 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
-# so inherit Classical_Prop.classic.  Headlines in_arc_point_on_minor_arc and
-# in_arc_point_on_major_arc_rejected Qed-closed on the rational unit-circle
-# witness; no Admitteds.
 theories/InArc.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v / InArc.v): issue #64
-# subtask 64-b sweep CCW ↔ signed central angle > 0.  sweep_ccw /
-# sweep_ccw_iff_signed_central_angle_pos are built on atan2 / angle_between /
-# central_angle, so inherit Classical_Prop.classic.  Headline and unit-circle
-# witnesses Qed-closed; no Admitteds.  Removal tracks AngleBetween's cleanup.
 theories/ArcSweepCcw.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v / InArc.v): issue #64
-# subtask 64-e InSector closed minor circular-sector membership.  InSector uses
-# central_angle (via InArc) for the angular cone plus a closed-disk radial
-# bound, so inherits Classical_Prop.classic.  Headlines and unit-quarter
-# witnesses Qed-closed; no Admitteds.  Removal tracks AngleBetween's cleanup.
 theories/InSector.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v): buffer/noder
-# pipeline seam S3 (docs/buffer-noder-pipeline.md), round-join corner-arc
-# relation.  corner_arc_sweep_eq_turn / _unit and atan2_pos_scale are built
-# on angle_between = atan2(...), so inherit Classical_Prop.classic.  All
-# headlines Qed-closed; no Admitteds.
 theories/BufferJoin.v
-
-# Category C (R-side, atan2 lineage as AngleBetween.v): route (B) follow-up,
-# equal-angle budget discharge.  arc_central_angle is built on
-# angle_between = atan2(...), so the angle/headline theorems inherit
-# Classical_Prop.classic (4-axiom).  chord_sq_law_of_cosines,
-# one_minus_cos_half_angle, and sin_sq_le_sq (via the 3-axiom
-# ArcLength.sin_le_x Taylor envelope) stay on the allowlist.  No Admitteds;
-# all headlines Qed-closed.
 theories/ArcChordSubdivision.v
-
-# Category C (R-side): issue #67 Option-A analytic arc slice (S10b).
-# arc_sweep_principal_range is built on AngleBetween.angle_between_range, so it
-# inherits Classical_Prop.classic via the Atan2 / AngleBetween lane above (same
-# lineage as theories/AngleBetween.v).  The chord-geometry / witness theorems in
-# the file are 3-axiom; only the sweep-range lemma crosses the lane.  No
-# Admitteds; all headlines Qed-closed.  Removal tracks AngleBetween's cleanup.
 theories/RelateArcAnalytic.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v): issue #67 S10b
-# follow-up.  arc_chord_dist_sq_via_sweep / law_of_cosines_equal_norm pull
-# Classical_Prop.classic through cos (angle_between ..) = cos_atan2 .. atan2.
-# Same lineage as theories/AngleBetween.v / theories/RelateArcAnalytic.v.  No
-# Admitteds; both headlines Qed-closed.  Removal tracks AngleBetween's cleanup.
 theories/ArcChordLength.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v): issue #508 bridge.
-# arc_sweep_param_bridge pulls Classical_Prop.classic through
-# cos_atan2/sin_atan2 (the start-angle anchor) and cos/sin_angle_between (the
-# sweep rotation) — the 3-point CircularArc model is atan2-carried by
-# definition.  The CurveLength/ArcRectifiable machinery it instantiates stays
-# 3-axiom in its own files.  No Admitteds; headline Qed-closed.  Removal
-# tracks AngleBetween's cleanup.
 theories/ArcParamBridge.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v): issue #508
-# arc-lane final rung.  arc_traversal_param_bridge inherits
-# Classical_Prop.classic through ArcParamBridge's anchor lemmas (atan2 /
-# angle_between); its own additions (2π-periodicity shifts, arc_sweep case
-# enumeration) are axiom-free.  No Admitteds; headline Qed-closed.  Removal
-# tracks AngleBetween's cleanup.
 theories/ArcTraversalBridge.v
-
-# Category C (R-side, same atan lineage as AngleBetween.v): issue #508 P2
-# leftovers from #552.  `valid_arc_sweep_nonzero` and
-# `arc_mid_on_circle_param` pull Classical_Prop.classic through
-# sin/cos_angle_between and cos/sin_atan2 (the mid-angle anchor).  The
-# 3-axiom prelude `valid_arc_start_neq_end` does not.  Removal tracks
-# AngleBetween's cleanup — do not lift C1 elsewhere.  No new 64-a r·θ.
-# No Admitteds; headlines Qed-closed.
 theories/ArcMidSweep.v
-
-# Category C (R-side, same atan lineage as ArcParamBridge.v): generic
-# 2·atan / tan-on-[0, π/4] identities extracted from claimId 508-a.
-# cos_2_atan / sin_2_atan pull Classical_Prop.classic through Stdlib
-# Ratan.atan.  No golden weights.  Removal tracks AngleBetween's
-# cleanup — do not lift C1 elsewhere.  No Admitteds; headlines
-# Qed-closed.
 theories/AtanDoubleAngle.v
-
-# Category C (R-side, same atan lineage as AtanDoubleAngle.v): issue
-# #559 / claimId 508-a.  nurbs2_golden_quarter_length pulls
-# Classical_Prop.classic through Stdlib Ratan.atan (Weierstrass φ and
-# the explicit tan preimage) and through AtanDoubleAngle.  The 3-axiom
-# route is closed: the reparam contract demands an explicit preimage
-# and forbids IVT, so atan is the named inverse.  Windowed
-# is_curve_length_ext_on now lives in CurveLength.v (3-axiom).
-# CurveLength / ArcRectifiable stay 3-axiom in their own files.
-# Removal tracks AngleBetween's cleanup — do not lift C1 elsewhere.
-# No CurveSegment growth, no ADR-0004 remint, no new 64-a r·θ.  No
-# Admitteds; headline Qed-closed.
 theories/NurbsConicExact.v
-
-# Category C (R-side, same atan lineage as NurbsConicExact.v): issue #565
-# / claimId 508-g.  nurbs_spans_additive is 3-axiom list induction on
-# curve_length_additive.  golden_half_circle_length pulls
-# Classical_Prop.classic only through 508-a's
-# nurbs2_golden_quarter_length (Stdlib Ratan.atan).  This is two
-# golden quarters added, not a new π theorem and not Cox-de Boor.
-# Removal tracks NurbsConicExact / AngleBetween — do not lift C1
-# elsewhere.  No CurveSegment growth, no ADR-0004 remint, no remint of
-# nurbs_knot_span_additive.  No Admitteds; headlines Qed-closed.
 theories/NurbsKnotSpans.v
-
-# Category C (R-side, RiemannInt lineage — distinct from atan): issue #564 /
-# claimId 508-e Fresnel inhabitant.  fresnel_Cx / fresnel_Cy are Stdlib
-# RiemannInt of (cos,sin)(t²/2) from 0; continuity_implies_RiemannInt and
-# RiemannInt_const_bound pull Classical_Prop.classic.  ClothoidFresnel.v
-# (the conditional pack) stays 3-axiom and is deliberately NOT listed.
-# ADR-0001 Coquelicot lane stays consumer-gated (Halley); this letter only
-# needs the integral comparison that discharges increment_squeezed.
-# No Admitteds; headlines Qed-closed.  Removal tracks a future Coquelicot
-# lane or a classic-free integral characterisation — do not lift C1 into
-# ClothoidFresnel.v.
-theories/ClothoidFresnelInhab.v
-
-# Category C (R-side, same atan lineage as Atan2.v / AngleBetween.v): issue
-# #64 arc-span atan2 sector membership.  `arc_span_contains_atan2` and the
-# headline `arc_span_contains_atan2_iff_chord_sign` are built on
-# `signed_angle_from` = `AngleBetween.angle_between`, so they inherit
-# `Classical_Prop.classic` via the Atan2 / AngleBetween lane above (same
-# lineage as theories/RelateArcAnalytic.v).  The pure-algebra helpers
-# (`cross_dot_lagrange_2d`, `sin_sum_to_product`, `same_sign_mult`,
-# `two_circles_radical_point_unique`, `arc_arc_intersects_of_circles_and_radical_signs`)
-# stay on the 3-axiom allowlist; only the atan2-sector lemmas cross the lane.
-# No Admitteds; all headlines Qed-closed.  Removal tracks AngleBetween's cleanup.
 theories/ArcSpanAtan2.v
-
-# #64 N-AA quartic certificate + atan2 discharge.  `arc_arc_intersects_of_atan2_radical_span`
-# imports `ArcSpanAtan2` (which carries `arc_span_contains_atan2` and the iff bridge), so the
-# entire file inherits `Classical_Prop.classic` via the same atan2/AngleBetween lineage.  The
-# Vieta sum/product lemmas and the `inCircle_R = 0` helpers are pure algebra and stay on the
-# 3-axiom allowlist, but the file as a whole is exempted.  No Admitteds; all headlines Qed-closed.
-# Removal tracks ArcSpanAtan2.v's cleanup (same upstream dependency).
 theories/ArcArcQuartic.v
 
-# Category C: one explicitly-documented theorem whose statement cannot be
-# parametrised without losing content.  See the `(* CATEGORY C *)` block
-# in the file itself; resolution pending policy decision.
-theories-flocq/Validate_binary64.v
-
-# Category C: Stage D chain composition.  This file pulls
-# `Classical_Prop.classic` transitively via `b64_TwoSum_correct`'s
-# closure (same lineage as the other expansion-arithmetic files
-# listed above).
-#
-# (Historical: the file formerly carried THREE Admitted theorems with
-# verified counterexamples registered in `docs/admitted-counterexamples.txt`
-# -- `b64_grow_expansion_nonoverlap`, `round_eq_under_strict_dominance`,
-# `b64_grow_expansion_nonoverlap_dominated`.  All statements now in the
-# file, including those names and the pathA variants, are Qed-closed; both
-# registries are empty and the corpus is Admitted-free.)
-#
-# See `docs/stage-d-grow-expansion-nonoverlap-tangent.md` for the full
-# design history and the verified counterexample arithmetic.
-theories-flocq/B64_FastExpansionSum.v
-
-# Category C: Slice A pieces 1+2.  This file defines `nonoverlap_shewchuk`
-# (weakened predicate tolerating internal zeros) and proves
-# `sign_of_expansion_correct_shewchuk` (Qed-closed).  Pulls
-# `Classical_Prop.classic` transitively via `sign_of_expansion_correct`'s
-# closure on `Binary.B2R` -- same lineage as the other expansion-arithmetic
-# files listed above.  No Admitteds in this file.  Foundation for Slice A
-# pieces 3-7 (fast-expansion-sum + orient2d_exact composition).
-theories-flocq/B64_Expansion_Shewchuk.v
-
-# Category C: Slice A piece 5b Route 2 framework (Session 1).  Defines
-# provenance tagging on the cascade input plus the cascade_invariant
-# predicate.  Pulls `Classical_Prop.classic` transitively via the
-# B2R chain (same lineage as the other expansion-arithmetic files).
-# No Admitteds in this file; the load-bearing
-# cascade_step_preserves_invariant is deferred to a follow-up session
-# (still covered by the existing deferred-proof entry for
-# fast_expansion_sum_nonoverlap_shewchuk).
-theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v
-
-# Category C: verified finding that the Route-2 `cascade_pathA_chain`
-# reduction is too strong (false on a cross-source opposite-sign leading
-# pair).  Single Qed lemma `cascade_handover_fails_mixed_sign`; pulls
-# `Classical_Prop.classic` transitively via the same B2R/expansion lineage.
-# No Admitteds.  Redirects the deferred fast_expansion_sum_nonoverlap_shewchuk
-# proof toward a pathA-OR-pathB invariant.
-theories-flocq/B64_Shewchuk_Thm13_pathA_defect.v
-
-# Category C: Slice A piece 3.  Defines `fast_expansion_sum`
-# (Shewchuk's canonical algorithm: insertion sort by magnitude
-# ascending + TwoSum cascade) and the sort-level sum-preservation
-# helpers `expansion_R_insert_by_abs` and `expansion_R_sort_by_abs`
-# (both Qed-closed).  Pulls `Classical_Prop.classic` transitively via
-# the reused `b64_grow_expansion_aux` from B64_FastExpansionSum.v --
-# same lineage as the other expansion-arithmetic files.  No Admitteds
-# in this file; pieces 4 and 5 (sum-correctness and
-# nonoverlap_shewchuk preservation) are next.
-theories-flocq/B64_FastExpansionSum_Shewchuk.v
-
-# Category C: Slice A piece 6.  Composes b64_Dekker + fast_expansion_sum
-# into b64_orient2d_expansion.  Pulls `Classical_Prop.classic`
-# transitively via the B2R chain (same lineage as the expansion-arithmetic
-# files above).  Sum-correctness is Qed-closed (under an explicit
-# diffs_exact precondition).  Nonoverlap and sign-correctness theorems
-# reference `fast_expansion_sum_nonoverlap_shewchuk` (formerly Admitted in
-# B64_FastExpansionSum_Shewchuk.v with a deferred-proof registry entry;
-# since Qed-closed, so the extra-axiom line no longer appears in this
-# file's Print Assumptions blocks and only the Category C lineage remains).
-theories-flocq/Orient_b64_expansion.v
-
-# Category C: Slice A piece 7.  Stage D headline.  Composes Piece 6's
-# expansion-based decoder with the existing Stage A filter into the
-# full b64_orient_sign_stage_d decoder + soundness theorem.  Same
-# audit lineage as Piece 6: Classical_Prop.classic transitively via
-# the B2R chain + fast_expansion_sum_nonoverlap_shewchuk reference
-# (deferred-proof, removable when Piece 5b closes).  The tiny-regime
-# decisive theorem is Qed-closed without the deferred reference.
-theories-flocq/Orient_b64_stage_d.v
-
-# Category C: Issue #66 grounded headline.  Composes Stage D's
-# b64_orient_sign_stage_d_sound with the full-plane exact
-# integer-determinant model (Orient_b64_exact_full.b64_orient2d_exact_sound)
-# to prove the Shewchuk decoder AGREES with the exact model
-# (shewchuk_stage_d_agrees_with_exact_intdet) and is decisive in the tiny
-# regime (shewchuk_vs_z2_tiny_headline).  No Admitteds in this file; it
-# inherits exactly the Stage D lineage: Classical_Prop.classic transitively
-# via the B2R chain + the fast_expansion_sum_nonoverlap_shewchuk reference
-# (deferred-proof, removable when Piece 5b closes).  Replaces the ungrounded
-# "Shewchuk_vs_Z2" Hypothesis draft from the #66 discussion.
-theories-flocq/Shewchuk_vs_Z2.v
-
-# Category C: Issue #66 unsoundness witness.  Concrete finite binary64
-# points where the float product underflows to +0, so the Stage A filter
-# b64_orient_sign_filtered reports OrientRZero while the exact
-# integer-determinant model returns +1 and the true cross product is > 0
-# (stage_a_filter_unsound_under_underflow, Qed-closed via vm_compute).
-# Pulls Classical_Prop.classic transitively via the cross_R_BP / B2R real
-# lineage (same as the other binary64-arithmetic files).  No Admitteds,
-# and -- unlike the Stage D files -- no fast_expansion_sum_nonoverlap_shewchuk
-# reference (it touches only the filter and the exact model).
-theories-flocq/Orient_b64_underflow_unsound.v
-
-# Category C: Issue #66 underflow recovery.  Proves the float Stage D
-# decoder does NOT recover on the underflow witness (returns OrientRZero),
-# defines the integer-mantissa decoder b64_orient_sign_intexact and proves
-# it sound over the whole finite plane + correct (OrientRPos) on the
-# witness.  Pulls Classical_Prop.classic transitively via the cross_R_BP /
-# B2R real lineage (same as the other binary64 files).  No Admitteds, and no
-# fast_expansion_sum_nonoverlap_shewchuk reference (Stage D's value is only
-# vm_computed; its deferred-proof soundness theorem is not used).
-theories-flocq/Orient_b64_underflow_recovery.v
-
-# Category C: Issue #66 corrected Stage D (b64_orient_sign_stage_d_safe).
-# Routes every non-committal filter verdict through the integer-mantissa
-# exact decoder; sound whenever the filter is indefinite (no precondition),
-# sound under int-safety alone (drops expansion-safety), total, and correct
-# on the underflow witness.  Pulls Classical_Prop.classic transitively via
-# the cross_R_BP / B2R real lineage (same as the other binary64 files).  No
-# Admitteds, and no fast_expansion_sum_nonoverlap_shewchuk reference (the
-# corrected decoder abandons the expansion path -- the exact fallback is the
-# integer-mantissa model, not the EFT expansion).
-theories-flocq/Orient_b64_stage_d_safe.v
-
-# Category C: Issue #66 / #488 orientation-filter hypothesis package.
-# Headlines restated over `b64_orient2d` / `b64_orient_sign_naive` /
-# `b64_orient_sign_filtered` / `b64_orient_sign_intexact` and
-# `Binary.B2R`, whose closure carries `Classical_Prop.classic` -- the
-# SAME b64-arithmetic lineage that exempts Orient_b64_underflow_unsound.v,
-# Orient_b64_underflow_recovery.v and Orient_b64_stage_d_safe.v above
-# (the facts this file packages).  Seven of the nine PA footers pull
-# `classic`; two stay on the allowlist.  No Admitteds; all headlines
-# Qed-closed.  Landed in #488 without this exemption; first container
-# axioms-audit after that merge is #489.  Removable once the parametric
-# refactor reaches the binary64 primitives.
-theories-flocq/OrientHybridPackage.v
-
-# C1: GEOS #968 / #1505 on-segment det-scale pins.  Headlines
-# `geos1505_onsegment_det_scales` / `geos968_orig_ozaki_failure` /
-# `geos1505_review_ozaki_failure` name `b64_geos_onsegment_det`
-# (`b64_minus` / `b64_mult` = Flocq Bminus/Bmult).  Three of six PA
-# footers pull `classic` via that DAG; the decimal-collinear /
-# true-cross / K-disequality pins stay allowlist.  No Admitteds.
-# Same binary-op lineage as Orient_b64_exact.v.  Removable once the
-# parametric refactor reaches the binary64 primitives.  Landed in
-# #540 without this line; container axioms-audit is the first failure.
-theories-flocq/Orient_geos968_onsegment_pins.v
-
-# Category C: Stratified Adaptive Precision Filter (OrientStratifiedAPF).
-# Witness-carrying refinement of the filter+expansion Stage D decoder;
-# re-derives integer-regime soundness without the strong-nonoverlap headline
-# and adds decisiveness + a provenance witness algebra.  Inherits
-# Classical_Prop.classic transitively through the shared binary-op lineage
-# (B64_bridge Bplus/Bminus/Bmult) under the Orient_b64_* / expansion stack it
-# composes.  Introduces no axioms of its own; no Admitteds.
-theories-flocq/OrientStratifiedAPF.v
-
-# Category C: Phase 3 Milestone 4 (Flocq layer) -- noding-to-graph bridge.
-# Defines noded_segments and proves snap_noding_bridge +
-# valid_topology_graph_noded_labeled_graph by lifting the R-side
-# `valid_topology_graph_build_graph` / `valid_topology_graph_build_labeled_graph`
-# through Phase 2's snap_round_segments.  Inherits Classical_Prop.classic
-# transitively from HobbyTheorem_b64's snap_round_segments (Flocq binary
-# arithmetic closure).  No Admitteds added by this file.
-theories-flocq/OverlayBridge.v
-
-# Category C: OverlayBridgeUnconditional -- extract_rings_valid restated over
-# the geometric/noding guard set (the euler_characteristic clauses replaced by
-# WalkResidualDischarge.H_bridge_premise_holds, rung E-4).  Inherits
-# Classical_Prop.classic transitively from OverlayBridge's noded_labeled_graph
-# (HobbyTheorem_b64 snap_round_segments, Flocq binary arithmetic closure) --
-# the guard-side inputs themselves are allowlist-trio only.  Clears together
-# with OverlayBridge under the parametric refactor.  No Admitteds.
-theories-flocq/OverlayBridgeUnconditional.v
-
-# Category C: CurveLineariseGuardBridge -- Issue #64 V-CP wiring of linearised
-# CurveGeometry (CurveLinearise.to_geometry) into the guard-only
-# extract_rings_valid_of_guards (rung E-4).  `to_geometry_result_valid_of_guards`
-# / `to_geometry_result_valid_geometry_of_guards` are direct corollaries at a
-# curve call site, no new proof content beyond instantiation.  Inherits
-# Classical_Prop.classic transitively via OverlayBridgeUnconditional's own
-# OverlayBridge import (same Flocq/HobbyTheorem_b64 lineage as above).  No
-# Admitteds.
-theories-flocq/CurveLineariseGuardBridge.v
-
-# Category C: RingCurvatureModels -- extract_rings_valid re-exposed for the
-# hyperbolic (Beltrami-Klein disk) and spherical-hemisphere (gnomonic
-# projection) readings.  extract_rings_valid_hyperbolic /
-# extract_rings_valid_spherical_hemisphere are literally the same
-# extract_rings_valid proof term; the file's own new content (the linear-
-# algebra sign-invariance lemma vcross_lin2 and the unit-disk convexity lemma
-# open_disk_convex) is classical-reals-trio only.  Imports OverlayBridge,
-# which transitively pulls Classical_Prop.classic via HobbyTheorem_b64's
-# snap_round_segments (same Flocq lineage as OverlayBridge above).  No
-# Admitteds added by this file.
-theories-flocq/RingCurvatureModels.v
-
-# Category C: extract_rings_valid R5 slice 3i -- the bridge discharge (RED).
-# Machine-checks that ExtractFaces.extract_faces_valid's H1
-# (pairwise_no_proper_cross of the result dart set) is UNSATISFIABLE for any
-# non-degenerate surviving edge: a segment properly crosses its own reversal
-# (seg_properly_crosses_reversal), and darts_of always supplies the twin, so
-# the deferred extract_rings_valid cannot be re-pointed onto extract_faces by
-# discharging H1 from fully_intersected.  Imports OverlayBridge + ExtractFaces
-# + HobbyTheorem_b64, which transitively pull Classical_Prop.classic via
-# snap_round_segments / dart_eq_dec (same Flocq lineage as OverlayBridge
-# above).  All lemmas Qed; no Admitteds added by this file.
-theories-flocq/ExtractFacesBridge.v
-
-# Category C: Phase 3 Milestone 5 Session 15 -- the conditional headline.
-# Defines and proves overlay_ng_correct_conditional (Qed-closed) plus
-# its forward/backward corollaries.  Imports OverlayBridge for
-# correct_labels_all_ops + valid_topology_graph_noded_labeled_graph,
-# which transitively pull Classical_Prop.classic via snap_round_segments
-# (same lineage as OverlayBridge above).  Three named hypotheses
-# (JCT, DCEL valid polygons, semantic bridge) carried in the theorem's
-# signature.  Post-S15 update: the opaque Section Variable
-# `geometric_interior` was replaced with the concrete
-# `geometric_interior_stdlib` from `theories/PointInRingTangents.v`
-# -- the topological-interior definition (pure Stdlib R, no fourcolor),
-# strengthening the H1 hypothesis from "any predicate" to "the concrete
-# bounded-component-of-complement predicate".  The JCT gap remains
-# in the H1 biconditional's content, not in the predicate definition.
-# No Admitteds added by this file.
-theories-flocq/OverlayCorrectness.v
+# R-side C1 — RiemannInt (#564 Fresnel inhabitant; pack stays 3-axiom)
+theories/ClothoidFresnelInhab.v

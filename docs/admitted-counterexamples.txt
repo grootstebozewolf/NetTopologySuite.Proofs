@@ -1,189 +1,22 @@
-# Documented-counterexample registry for Admitted theorems.
+# Counterexample registry for theorems that are false as stated.
+# Complement of `docs/admitted-deferred-proofs.txt`.
 #
-# Each `Admitted.` in `theories/` or `theories-flocq/` MUST appear in
-# this file with a reference to a verified counterexample.  The CI
-# script `scripts/check_admitted.sh` enforces this.
+#   Tier 1: unregistered `Admitted` -- BUILD FAILURE.
+#   Tier 2: THIS file -- statement is too strong; a weaker form is the
+#           most that is achievable.  Permanent until the theorem is
+#           re-scoped.
+#   Tier 3: deferred-proof registry -- statement is believed true.
 #
-# Format (one entry per non-comment, non-blank line):
+# `scripts/check_admitted.sh` requires every `Admitted` in theories/ and
+# theories-flocq/ to appear in EXACTLY ONE of the two registries.
+#
+# Format (one live entry per non-comment, non-blank line):
 #
 #   file:theorem_name | counterexample_doc | section_references
 #
-# - file: path relative to repo root (e.g., theories-flocq/B64_X.v).
-# - theorem_name: the exact Coq identifier of the Theorem/Lemma.
-# - counterexample_doc: path to a doc containing the verified
-#   counterexample artifacts.
-# - section_references: section anchors within the doc (e.g., "§3,§9")
-#   that point at the specific counterexample proofs.
+# Removing an entry without closing or re-scoping the theorem violates
+# the epistemic invariant.
 #
-# The section field is non-negotiable -- it makes entries auditable.
-# A reader navigates directly to the counterexample rather than
-# searching the doc.
+# LIVE: none
 #
-# An Admitted WITHOUT a registry entry IS A BUILD FAILURE.
-# The default rule (no Admitteds) holds; this file documents the
-# exceptions with explicit justification.
-#
-# Removing an entry from this registry requires the theorem to be
-# Qed-closed (possibly under a re-scoped statement that the
-# counterexample no longer rules out).  Removing an entry without
-# closing the theorem is a violation of the corpus's epistemic
-# invariant.
-#
-# Semantics: an entry here says "this theorem, AS CURRENTLY STATED,
-# cannot be proved because the statement is too strong -- the
-# counterexample proves a weaker version is the most that's
-# achievable."  The entry is an invitation to re-scope the theorem,
-# not a tombstone.
-
-# ============================================================================
-# Stage D chain composition: three Admitteds with documented counterexamples.
-# All share the same counterexample lineage (Path A track, May 2026).
-# ============================================================================
-
-# `b64_grow_expansion_nonoverlap` -- general case, NOT provable as stated.
-# Two verified counterexamples (binary64 inputs explicitly constructed,
-# Coq-verified via bpow_lt arithmetic in the same file):
-#   - With `nonoverlap_strict`'s half-ulp bound, internal zeros from
-#     exact cascade steps violate the predicate (§3 counterex).
-#   - Adding compress doesn't help: cancellation intermediates leave
-#     adjacent non-zero elements at near-equal magnitudes (§9 counterex).
-# Achievable: the Path A dominated case `b64_grow_expansion_nonoverlap_pathA`
-# (Qed-closed) handles a specific narrow regime; the full general case
-# requires Slice A (fast-expansion-sum + weakened predicate).
-# RESOLVED-VIA-ABORT 2026-06-24: no longer `Admitted`.  A false statement left
-# as `Admitted` is `apply`-able and can silently poison downstream proofs
-# (the CI registry permits the Admitted but does not stop dependence).  The
-# theorem is now `Abort`ed in B64_FastExpansionSum.v; the achievable result is
-# `b64_grow_expansion_nonoverlap_pathA` (Qed).  Counterexample analysis stays
-# in docs/stage-d-grow-expansion-nonoverlap-tangent.md §3,§9.
-# theories-flocq/B64_FastExpansionSum.v:b64_grow_expansion_nonoverlap | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §3,§9
-
-# `round_eq_under_strict_dominance` -- loose round-equality helper,
-# FALSE at binade boundaries.  Counterexample (§13): x = 1 (= bpow 0,
-# positive binade boundary), y = -3 * bpow(-55).  |y| < bpow(-53) =
-# ulp(1)/2 (loose precondition HOLDS) but round(x + y) = pred 1 < 1
-# (conclusion FAILS).  Coq-verified via three Qed-closed lemmas in the
-# same file: counterex_loose_precondition_holds,
-# counterex_below_midpoint, counterex_gap_magnitude.
-# Achievable: `round_eq_pathA_positive`, `_negative`, `_zero` (all
-# Qed-closed) under tighter precondition `|y| < ulp(pred x)/2`.
-# RESOLVED-VIA-ABORT 2026-06-24: no longer `Admitted` (was `apply`-ed by the
-# also-false `b64_plus_under_strict_dominance`, now likewise `Abort`ed).  The
-# Qed-closed counterexample lemmas (counterex_loose_precondition_holds,
-# counterex_below_midpoint, counterex_gap_magnitude) remain in
-# B64_FastExpansionSum.v; the true replacement is `round_eq_pathA_positive`.
-# theories-flocq/B64_FastExpansionSum.v:round_eq_under_strict_dominance | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §13
-
-# `b64_grow_expansion_nonoverlap_dominated` -- cites the false
-# `round_eq_under_strict_dominance` and the cascade-structure work
-# (which IS Qed-closed for Path A's tighter precondition).  Subsumed
-# by `b64_grow_expansion_nonoverlap_pathA` (Qed-closed).  Kept here as
-# the historical statement; the loose-precondition variant is not
-# provable for the same reasons as the general case above.
-# RESOLVED-VIA-ABORT 2026-06-24: no longer `Admitted`.  Same counterexample
-# lineage as the general case; subsumed by the Qed-closed
-# `b64_grow_expansion_nonoverlap_pathA`.  Now `Abort`ed in
-# B64_FastExpansionSum.v.
-# theories-flocq/B64_FastExpansionSum.v:b64_grow_expansion_nonoverlap_dominated | docs/stage-d-grow-expansion-nonoverlap-tangent.md | §3,§9,§13
-
-# ============================================================================
-# Phase 2 Hobby Theorem 4.1: the no-proper-intersection preservation lemma
-# is too strong for arbitrary (non-noded) segment pairs.
-# ============================================================================
-
-# `hobby_lemma_4_3_no_proper` -- previously a deferred-proof entry
-# (thesis-shaped, 4-6 weeks).  FALSE as stated: it claims snap-rounding
-# preserves "no proper intersection" for ANY two segments, dropping the
-# noded-arrangement context that Hobby (1999) Theorem 4.1 actually
-# requires.  Refutation (Qed-closed) in
-# theories-flocq/HobbyCounterexample_b64.v:
-#   - hobby_lemma_4_3_no_proper_counterexample -- exhibits the witness;
-#   - hobby_lemma_4_3_no_proper_is_false       -- the lemma => False.
-# Witness: parallel horizontal segments at y = 0.7 and y = 1.3 (no shared
-# point => no proper intersection) snap to the SAME grid line y = 1,
-# becoming collinear and overlapping -- a proper intersection at (5,1),
-# t = s = 1/2.  Snap evaluations proved via Flocq round_FIX_IZR +
-# Znearest_imp.
-# Achievable: a preservation lemma RESTRICTED to pairs from a
-# fully_intersected arrangement (where the collinear-collapse witness is
-# excluded by prior noding).  See
-# docs/hobby-lemma-4-3-no-proper-refutation.md §3,§4.
-# RESOLVED-VIA-ABORT 2026-06-24: no longer `Admitted`.  The Qed-closed
-# refutation `hobby_lemma_4_3_no_proper_is_false` remains in
-# theories-flocq/HobbyCounterexample_b64.v.  Both the sub-lemma and the
-# composed `hobby_lemma_4_3` are now `Abort`ed in HobbyTheorem_b64.v; the
-# arrangement headline `hobby_theorem_4_1_conditional` takes per-pair
-# preservation as an explicit hypothesis.
-# theories-flocq/HobbyTheorem_b64.v:hobby_lemma_4_3_no_proper | docs/hobby-lemma-4-3-no-proper-refutation.md | §2,§4
-
-# Shewchuk Theorem 13 headline: the strong-nonoverlap postcondition is too
-# strong for fast-expansion-sum (reclassified deferred -> counterexample
-# 2026-06-08).
-# ============================================================================
-
-# `fast_expansion_sum_nonoverlap_shewchuk` -- previously a deferred-proof
-# entry (thesis-scale).  FALSE as stated: it claims `fast_expansion_sum` of
-# `nonoverlap_shewchuk` inputs is `nonoverlap_shewchuk`, but the corpus's
-# `strict_succ_b64 a b := |B2R b| <= ulp(B2R a)/2` (half-ulp) is strictly
-# stronger than Shewchuk's bit-disjoint "(strongly) nonoverlapping" -- correct
-# for a single TwoSum's (high,low), but multi-term fast-expansion-sum emits
-# bit-disjoint components that are not half-ulp-close.  Machine-checked core in
-# theories-flocq/B64_Shewchuk_Thm13_counterexample.v:
-#   - nonoverlap_shewchuk_256_1_false -- nonoverlap_shewchuk [256;1] is False
-#     (1 > ulp(256)/2 = 2^-45);
-#   - e_nonoverlap / f_nonoverlap     -- e=[2^60;1], f=[-(2^60-256)] are valid;
-#   - inputs_sum_eq                   -- expansion_R e + expansion_R f
-#                                        = expansion_R [256;1] = 257.
-# So a sum of valid inputs has the bit-disjoint representation [256;1] the
-# strong predicate rejects.  The fast_expansion_sum -> [256;1] emission is
-# hand-traced in docs/shewchuk-thm13-headline-counterexample.md and exercised
-# on concrete binary64 in B64_pathB_trace_4A.v (sort_by_abs/compress use
-# Rcompare, not vm_compute-able).
-# Achievable: weaken `strict_succ_b64`/`nonoverlap_strict` to Shewchuk's true
-# bit-disjoint predicate and re-aim O1-O8 (the #135-#137 pathB bricks carry
-# over; the half-ulp dominance arguments must be re-derived).
-# RESOLVED-VIA-ABORT 2026-06-24: no longer `Admitted`.  This false headline
-# WAS silently `apply`-ed by `b64_orient2d_expansion_nonoverlap`, propping up
-# the entire Stage-D exact-orientation soundness chain through an unsound Qed.
-# It is now `Abort`ed in B64_FastExpansionSum_Shewchuk.v; the soundness chain
-# (b64_orient2d_expansion_nonoverlap / _sign_correct / b64_orient_sign_exact_sound
-# / b64_orient_sign_stage_d_sound / shewchuk_*) now takes the headline as an
-# EXPLICIT hypothesis `fast_expansion_sum_strong_nonoverlap_headline`
-# (Orient_b64_expansion.v), so the dependence is visible in the types.  The
-# machine-checked witness stays in B64_Shewchuk_Thm13_counterexample.v; the
-# genuinely TRUE restricted form is
-# `fast_expansion_sum_nonoverlap_shewchuk_int_safe_two_pairs` (Qed).
-# theories-flocq/B64_FastExpansionSum_Shewchuk.v:fast_expansion_sum_nonoverlap_shewchuk | docs/shewchuk-thm13-headline-counterexample.md | §Root cause,§Witness,§Consequence
-
-# `cascade_pathAB_chain_from_nonoverlap` -- indischargable from nonoverlap inputs.
-# Discharging this would supply the hypothesis of the Qed conditional O8 theorem,
-# closing the false headline.  Indirect refutation spine Qed:
-#   cascade_pathAB_chain_from_nonoverlap_entails_headline (pathAB.v) shows
-#   O7-completeness + O8 would close the false headline; composed with the
-#   [256;1] witness output (hand-traced).  Same counterexample lineage:
-#   pathB_output_head_bound (O1) is not derivable from the invariant when
-#   committed low parts and cancellation residues are bit-disjoint but not
-#   half-ulp-close.
-# RESOLVED-VIA-ABORT 2026-06-24: no longer `Admitted`.  Indischargeable
-# (discharging it would close the false headline via the Qed conditional O8).
-# Now `Abort`ed in B64_Shewchuk_Thm13_pathAB.v; the honest conditional form
-# `fast_expansion_sum_nonoverlap_shewchuk_pathAB_conditional` takes the cascade
-# chain as an explicit hypothesis, and
-# `cascade_pathAB_chain_from_nonoverlap_entails_headline` records the
-# refutation spine (hypothesis -> false headline).
-# theories-flocq/B64_Shewchuk_Thm13_pathAB.v:cascade_pathAB_chain_from_nonoverlap | docs/shewchuk-thm13-headline-counterexample.md | §Consequence,§Recommendation
-
-# `touch_int_ext_exclusion` (and derived in f_cells_trimmed) -- FALSE claim that touching triangles have no strict interior/exterior separation in point_set.
-# Counterexample (manual + gtri facts; to be witnessed in a small .v if needed):
-#   p=(0.25,0.25), A=(0,0)(1,0)(0,1), B=(1,0)(1,1)(0,1)
-#   0 < gtri A p (interior, gtri_interior_in_ring), gtri B p < 0 (opposite_sides / g_sum conflict under touch), ~point_set B p (gtri_exterior_even_parity + parity).
-# The statement "point_set A p → point_set B p" (or interior A implies not exterior B) is FALSE for touching triangles.
-# Achievable: the true claim "0 < gtri A p → gtri B p < 0" (strict int A → ext B) or conditional under touch + half-open notes.
-# RE-SCOPED 2026-06-24: the FALSE point_set claim ("point_set A p -> point_set B p")
-# is gone -- the lemma in RelateNG.v now states the TRUE achievable claim
-# (0 < gtri A p -> gtri B p < 0).  As a believed-true deferred proof it belongs
-# in docs/admitted-deferred-proofs.txt (where it is already registered), NOT
-# here.  Retiring this stale counterexample entry removes the double
-# registration.  The false point_set form was extracted out of
-# touch_triangle_f_cells_trimmed (now a clean Qed).
-# theories/RelateNG.v:touch_int_ext_exclusion | theories/RelateNG.v-touch_int_ext_exclusion-ce.v | (re-scoped to true claim; see deferred registry)
+# Resolved / aborted historical statements: git history of this file.
