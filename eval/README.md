@@ -244,23 +244,34 @@ Production home for 0007-B.2-cc-member-joints (Phase B.2
 CompoundCurve member joints; CC is a sequence of LineString
 chords and CircularString `CircEgg` members; LS–LS joint is
 host `I_ok` Hit at `(end, t=1, t=0)`; CS–CS member joint
-reuses `I_ok_circ`; mixed LS–CS joint is host `I_ok` Decline
+reuses `I_ok_circ`; mixed LS–CS joint is `I_ok_mixed` Hit
+(`SidecarCircMixed.v`); host `I_ok` mixed stays Decline
 (I.1); locked mixed fixture; host CircGamma stays QEX;
-CurvePolygon / H⊥ parked; not SQL/MM done; CC required-type
-Gap (mixed LS–CS host Decline; letter B.2 landed ≠
-required-type Landed); no new
+CurvePolygon / H⊥ / interior mixed cook parked; not SQL/MM
+done; CC required-type Landed (mixed `I_ok_mixed` Hit, not
+host `I_ok`; letter B.2 landed ≠ SQL/MM done / Phase B
+done-when); no new
 kernel): `theories/CircularCookCcConcat.v`. 4-axiom atan2
 sidecar.
+
+Production home for 0007-B-mixed-ls-cs-joints (Phase B mixed
+LS–CS joints; contiguous LS×CS / CS×LS inhabit sidecar
+`I_ok_mixed` Hit at `(end, t=1, t=0)` via `chord_eval` +
+`arc_gamma`; host `I_ok` mixed stays Decline; CircGamma stays
+QEX; first cook stays chord–chord; interior mixed cook
+parked; not SQL/MM done; no new kernel):
+`theories/SidecarCircMixed.v`. 4-axiom atan2 sidecar.
 
 Production home for 0007-B.3-cp-ring-closure (Phase B.3
 CurvePolygon ring closure; CP ring is a closed CircularString
 or closed CompoundCurve — B.2 members contiguous and closed,
 last joins first; CS–CS closing reuses `I_ok_circ`; mixed
-closing is host `I_ok` Decline (I.1); locked CS-ring and
-mixed-ring fixtures; host CircGamma stays QEX; H⊥ /
-CircGamma remint / bag-noder parked; not SQL/MM done; CP / CC
-required-type Gap (mixed LS–CS host Decline); Phase B Open
-(letter B.3 landed ≠ required-type Landed / done-when); no new
+closing is `I_ok_mixed` Hit; host `I_ok` mixed stays Decline
+(I.1); locked CS-ring and mixed-ring fixtures; host CircGamma
+stays QEX; H⊥ / CircGamma remint / bag-noder / interior mixed
+cook parked; not SQL/MM done; CP / CC required-type Landed
+(mixed `I_ok_mixed` Hit, not host `I_ok`); Phase B Open
+(letter B.3 landed ≠ SQL/MM done / Phase B done-when); no new
 kernel): `theories/CircularCookCpConcat.v`. 4-axiom atan2
 sidecar.
 
