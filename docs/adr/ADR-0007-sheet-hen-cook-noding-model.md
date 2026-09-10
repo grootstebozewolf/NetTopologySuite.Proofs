@@ -243,6 +243,34 @@ compilation unit + driver print) — never as FFI or RocqRefRunner.
 ADR-0006's Related subsection points back here. Both sides of the
 cross-link are the coupling. Status of ADR-0006 stays Accepted.
 
+### Glossary (Accepted law)
+
+The Decision above is the vocabulary. One sheet `S`; hens are minted
+identifiers; eggs are interpolants of a named class; chickens are
+directed uses of an egg between two hens; cook / `𝓘` returns Hit
+`(p*, tᵢ, tⱼ)`, Empty (disjoint images), or Decline (no algorithm).
+Empty ≠ Decline. Snap-rounding ≠ `𝓘`. Display is a view. First cook
+scope is chord–chord. Identity is structural (`ShareOne` / `MintTwo`).
+QEX is not Accept of a missing constructor.
+
+Campaign I / II / Phase B letters below keep every ticket row that
+cites a theorem. Prose cites **Parks** once for the three landed
+named QEX stops instead of restaging CircGamma / interior-mixed /
+bag-loop theater in each paragraph.
+
+### Parks (named QEX, landed)
+
+Three honest stops. Named gaps, not bools. Later letters point here.
+
+| Park | Landed | Ticket | Named gap |
+|------|--------|--------|-----------|
+| **Γ CircGamma** | #706 @ `da5593a` | `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | Egg has no `MkCirc` (`CircularCook.v : circ_gamma_mkcirc_missing`); chord-project nlerp misses the reflex principal span (`CircularCook.v : reflex_nlerp_misses_principal`). Sidecar `arc_gamma` is not host Γ. Discharge would need atan2 / Classic or a first-cook expand. |
+| **ι interior circular×chord** | #707 @ `1dbc2c2` | `SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex` | `I_ok_mixed` Hit is gated by `mixed_joint_params`; the interior-params arm does not inhabit (`SidecarCircInterior.v : interior_mixed_hit_arm_missing`). ι is not μ, not host `I_ok`, not Γ. |
+| **ρ bag-loop** | #708 @ `e9d89d6` | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | `CookLoopBagTerm` missing (`SheetHenCookLoop.v : cook_loop_bag_term_missing`); leftover_quad width conserved (`SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise leftover-width + I.8 one-step confluence stay sibling QED. ρ leftover_quad ≠ η Multi bags. |
+
+Do not remint CircGamma, `I_ok_mixed`, or `LoopDischarged`. Do not start
+H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
+
 ### Acceptance checklist (four prior review conditions)
 
 | # | Condition | Stop | Arm | Lemma |
@@ -343,7 +371,7 @@ WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex · board: ADR-0
 
 ## Accepted (2026-09-07)
 
-**Decision:** Accepted by Joost (BDFL). Vocabulary law for CRV-TOUCH / RGR. Soft gaps (a)(b)(c) closed as checklist rows. Honest remaining opens (FP noder, Hobby, bag loop, kiss) stay open and do not reopen Status.
+**Decision:** Accepted by Joost (BDFL). Vocabulary law for CRV-TOUCH / RGR. Soft gaps (a)(b)(c) closed as checklist rows. Parks Γ / ι / ρ are landed named QEX. Honest remaining opens (FP noder, Hobby, kiss) stay open and do not reopen Status.
 
 ## Ready for BDFL (historical, 2026-09-07)
 
@@ -354,8 +382,8 @@ QEX is not acceptance. Supporting shapes are not a noder.
 closed checklist rows: pairwise chord-split finiteness plus one-step
 confluence is QED; binary64 / OverlayNGRobust sit on one sheet is QED;
 `DdirDart` := `(Hen * Hen)` = chicken ends is QED. The bag-level cook
-loop is a named 508-style QEX (`CookLoopBagTerm` missing) under Honest
-remaining opens, not a soft gap. **Accepted** by Joost (BDFL) 2026-09-07.
+loop is Parks ρ (named 508-style QEX), not a soft gap. **Accepted**
+by Joost (BDFL) 2026-09-07.
 
 ### Four prior review conditions — discharged
 
@@ -374,7 +402,7 @@ Former named soft gaps (a)(b)(c) are checklist rows, not open naming.
 
 | Former | Stop | Arm | Settled as |
 |--------|------|-----|------------|
-| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is `ticket_0007_cook_term_qed_or_qex` **QEX** (named 508-style `CookLoopBagTerm` gap / CRV-TOUCH), listed under Honest remaining opens — not a soft gap |
+| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is Parks ρ (`ticket_0007_cook_term_qed_or_qex` **QEX**) — not a soft gap |
 | (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
 | (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
 | (d) This memo | this section | brief only | Soft gaps closed; **Accepted** 2026-09-07 |
@@ -418,7 +446,7 @@ Accept as vocabulary law does **not** settle kiss / tangency.
 - Identity policy detail beyond `ShareOne` / `MintTwo` (which `𝓘` decides, on what basis). Kiss certificate is the CRV-TOUCH form of this question, not a silent extra hen type.
 - A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet. Host-lane “sits on a sheet” is closed above.
 - Hobby 4.1 / 4.3. Snap-rounding stays a different constructor under already-noded `G`.
-- The repeat-until-noded **bag** loop (termination + confluence) on the chord lane — `ticket_0007_cook_term_qed_or_qex` QEX / named 508-style gap (`SheetHenCookLoop.v : CookLoopBagTerm` missing; leftover_quad width conserved; kiss / ShareOne / MintTwo not covered). Pairwise width decrease and one-step confluence are discharged QED, not this item. ρ leftover_quad ≠ η Multi bags. **Arc** cook termination is a sister card, not this Accept.
+- Parks Γ / ι / ρ — landed named QEX (see Parks). Pairwise leftover-width and I.8 one-step confluence stay sibling QED. **Arc** cook termination is a sister card, not this Accept.
 - Later constructive rungs: one Hit `split(t)` step is `ticket_0007_cook_step_qed_or_qex` / `ticket_0007_cook_step_scope_qed_or_qex`; constructed `𝓘` from proper-cross signs is `ticket_0007_constructed_I_qed_or_qex` / `ticket_0007_constructed_I_scope_qed_or_qex` / `ticket_0007_share_constructed_qed_or_qex`. Letters after Accept, not Accept blockers.
 - ADR-0006 cook-mode for a kiss hen — CRV-TOUCH, after a prototype.
 
@@ -457,13 +485,8 @@ Hit (h*, p*, tᵢ, tⱼ) live in `CircularCookHit.v`. Locked
 `(0,0)/(7,0)` r=5 is QED (`ticket_64_circ_hit_params_qed_or_qex`).
 Span-restricted γ on CircularArc is QED in the 4-axiom sidecar
 (`CircularCookSpan.v : circular_arc_gamma_constructed`;
-`CircularCookSpan.v : locked_span_gamma_hit`). Host CircGamma stays
-QEX (`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`;
-`CircularCook.v : circ_gamma_mkcirc_missing`;
-`CircularCook.v : reflex_nlerp_misses_principal`) — named gap,
-not a bool: Egg has no `MkCirc`; chord-project nlerp misses the
-reflex principal span; Discharge needs atan2 / Classic or a
-first-cook expand. Sidecar `arc_gamma` is not host Γ.
+`CircularCookSpan.v : locked_span_gamma_hit`). Parks Γ — named
+MkCirc + nlerp gap; sidecar `arc_gamma` is not host Γ.
 The next letter feeds that circular Hit into a same-shape cook
 (`CircularCookSplit.v`); host `try_cook_hit` still declines circular
 eggs. Not first cook scope. Not a noder.
@@ -480,7 +503,7 @@ repeat-until-noded loop and does not reopen Status.
 | `Adr0007NodingEpic.v : ticket_0007_cook_step_qed_or_qex` | **QED** — crossing chickens share one minted hen after `split(t)` | `SheetHenCook.v : cooked_crossing_try`, `SheetHenCook.v : cooked_crossing_shares`, `SheetHenCook.v : chord_split_left_reparam` |
 | `Adr0007NodingEpic.v : ticket_0007_cook_step_scope_qed_or_qex` | **QEX** — Decline / Empty / out-of-scope allocate no hen | `SheetHenCook.v : try_cook_hit_clothoid_none`, `SheetHenCook.v : try_cook_hit_empty_none` |
 
-Witness: `0007-cook-split`. Status stays **Accepted**. Not a remint of leftover-width / pairwise_split. Host CircGamma stays QEX.
+Witness: `0007-cook-split`. Status stays **Accepted**. Not a remint of leftover-width / pairwise_split. Parks Γ / ι / ρ. 
 
 ### Letter after Accept — constructed 𝓘 from proper-cross signs (2026-09-07)
 
@@ -491,7 +514,7 @@ unit-square witness and cooks. Missing signs do not license the
 formula (they are not Decline). Equal constructed `p*` under operand
 swap licenses `ShareOne` — the identity basis, not `dart_eq_dec`.
 Not a remint of `Intersect`. Not a total `𝓘`. Not the noder loop.
-Does not reopen Status. Host CircGamma stays QEX.
+Does not reopen Status.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
@@ -499,7 +522,7 @@ Does not reopen Status. Host CircGamma stays QEX.
 | `Adr0007NodingEpic.v : ticket_0007_constructed_I_scope_qed_or_qex` | **QEX** — disjoint horizontals have no proper-cross signs; Empty stays Empty | `SheetHenCook.v : disjoint_not_proper_cross`, `SheetHenCook.v : disjoint_I_ok` |
 | `Adr0007NodingEpic.v : ticket_0007_share_constructed_qed_or_qex` | **QED** — operand swap names the same `p*`; `ShareOne` follows | `SheetHenCook.v : constructed_hit_sym_same_p`, `SheetHenCook.v : equal_constructed_p_share` |
 
-Witness: `0007-constructed-I`. Status stays **Accepted**.
+Witness: `0007-constructed-I`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — circular Hit → cook bridge (2026-09-08)
 
@@ -511,7 +534,7 @@ feeds that circular Hit into a same-shape cook step — leftovers via
 atan2-free host γ and without expanding first cook scope.
 
 The *host* cook (`try_cook_hit`) still declines circular eggs: they
-remain `MkOutOfScope`. CircGamma stays QEX. Touch / kiss is a fenced
+remain `MkOutOfScope`. Touch / kiss is a fenced
 QEX arm, not a CRV-TOUCH kiss decision. Not a remint of
 `ArcSplitAtNode`. Does not reopen Status.
 
@@ -522,7 +545,7 @@ QEX arm, not a CRV-TOUCH kiss decision. Not a remint of
 | `CircularCookSplit.v : ticket_0007_circ_cook_step_qed_or_qex` | **QED** — `I_circles_gamma` Hit cooks; CircGamma stays QEX | `CircularCookSplit.v : cooked_circ_plus_try`, `CircularCookSplit.v : cooked_circ_plus_ok` |
 | `CircularCookSplit.v : ticket_0007_circ_cook_scope_qed_or_qex` | **QEX** — Touch / Empty / Decline allocate no hen | `CircularCookSplit.v : locked_circ_touch_none` |
 
-Witness: `0007-circ-cook`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-circ-cook`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.7 MintTwo / p− (2026-09-08)
 
@@ -533,7 +556,7 @@ split endpoint are Hit incidence, not a kiss. Empty / Decline /
 Touch still mint nothing (same QEX fence as #686). Does not pick
 among the three CRV-TOUCH tangency procedures (exact-Q / identity /
 ulp). Four fences: `I_circles_z` ≠ `I_circles_gamma` ≠ sidecar cook
-≠ glossary `𝓘`. Host CircGamma stays QEX. Not first cook scope.
+≠ glossary `𝓘`. Not first cook scope.
 Not a noder. Does not reopen Status.
 
 | Stop | Arm | Lemma |
@@ -543,7 +566,7 @@ Not a noder. Does not reopen Status.
 | `CircularCookSplit.v : ticket_0007_circ_shared_neq_kiss_qed_or_qex` | **QED** — leftover shared endpoint is Hit incidence, not Touch | `CircularCookSplit.v : leftover_shared_endpoint_not_touch` |
 | `CircularCookSplit.v : ticket_0007_circ_mint_two_scope_qed_or_qex` | **QEX** — Empty / Decline / Touch still allocate no hen | `CircularCookSplit.v : locked_circ_mint_two_touch_none` |
 
-Witness: `0007-I.7-mint-two`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.7-mint-two`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.1 Fence (2026-09-09)
 
@@ -571,7 +594,7 @@ Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen Status.
 | `Adr0007NodingEpic.v : ticket_0007_chord_circ_decline_qed_or_qex` | **QED** — mixed Decline inhabits `I_ok` | `SheetHenCook.v : chord_circular_decline_I_ok` |
 | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined while CircGamma is QEX | `CircularCook.v : circular_gamma_is_qex` |
 
-Witness: `0007-I.1-fence`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.1-fence`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.2 ∀ Hit soundness (2026-09-09)
 
@@ -581,7 +604,7 @@ integer proper discriminant and `on_full_circle` on both radical roots
 (`p+` and `p−`, γ_full). R3 is the locked `(0,0)/(7,0)` r=5 witness
 (`ticket_64_circ_hit_params_qed_or_qex`); I.2 recovers it as an
 instance. Not CircularArc span membership. Sidecar cook stays locked
-(I.3). Host CircGamma stays QEX. Does not remint `CurveSegment` /
+(I.3). Does not remint `CurveSegment` /
 Exact* / `Dart` / Hobby / `ArcSplitAtNode` leftover-width. Does not
 start I.3 / I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure.
 Does not reopen Status.
@@ -591,7 +614,7 @@ Does not reopen Status.
 | `CircularCookHit.v : ticket_0007_i2_hit_sound_qed_or_qex` | **QED** — ∀ Hit iff proper disc ∧ `on_full_circle` both roots | `CircularCookHit.v : I_circles_gamma_hit_iff`, `CircularCookHit.v : on_full_circle_both_of_proper` |
 | `CircularCookHit.v : ticket_0007_i2_arc_scope_qed_or_qex` | **QEX** — not arc membership; CircGamma stays QEX | `CircularCook.v : circular_gamma_is_qex` |
 
-Witness: `0007-I.2-hit-sound`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.2-hit-sound`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.3 ∀ Empty / Decline (2026-09-09)
 
@@ -601,8 +624,8 @@ iff the pair is proper and the γ_full images are disjoint on S
 (triangle inequality). `ICircGDecline` iff the pair is not proper
 (`d=0` or `r≤0`). Discriminant Empty and image-disjoint are different
 proofs: concentric unequal radii are image-disjoint and Decline.
-Not CircularArc span membership. Sidecar cook stays locked. Host
-CircGamma stays QEX. Does not remint `CurveSegment` / Exact* /
+Not CircularArc span membership. Sidecar cook stays locked.
+Does not remint `CurveSegment` / Exact* /
 `Dart` / Hobby / `ArcSplitAtNode` leftover-width. Does not start
 I.8–I.10 / Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not
 reopen Status.
@@ -614,7 +637,7 @@ reopen Status.
 | `CircularCookEmpty.v : ticket_0007_i3_disc_neq_image_qed_or_qex` | **QED** — concentric unequal radii: disjoint images, Decline | `CircularCookEmpty.v : concentric_unequal_images_disjoint` |
 | `CircularCookEmpty.v : ticket_0007_i3_scope_qed_or_qex` | **QEX** — not arc membership; CircGamma stays QEX | `CircularCook.v : circular_gamma_is_qex` |
 
-Witness: `0007-I.3-empty-decline`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.3-empty-decline`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.8 one-step leftover confluence (2026-09-09)
 
@@ -625,8 +648,8 @@ split_step_confluent`. Splitting parent A then B, or B then A,
 yields the same leftover bag. Sidecar `cook_circ_root` leftovers
 inhabit that bag; the locked plus / minus cooks recover it.
 This is not the bag-level repeat-until-noded loop
-(`cook_loop_status` stays `LoopObligation`). Not leftover-width.
-Not CircularArc span membership. Host CircGamma stays QEX. Does
+(Parks ρ). Not leftover-width.
+Not CircularArc span membership. Does
 not remint `CurveSegment` / Exact* / `Dart` / Hobby /
 `ArcSplitAtNode` leftover-width. Does not start I.9–I.10 /
 Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen
@@ -639,7 +662,7 @@ Status.
 | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — one-step ≠ bag loop | `CircularCookConfluence.v : i8_one_step_not_bag_loop` |
 | `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; bag loop stays obligation | `CircularCook.v : circular_gamma_is_qex` |
 
-Witness: `0007-I.8-leftover-confluence`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.8-leftover-confluence`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.9 classifier ≠ cook (2026-09-09)
 
@@ -649,7 +672,7 @@ Hit is tags 0/1, not glossary `(p*, tᵢ, tⱼ)`. That Hit does **not**
 license host `try_cook_hit`, sidecar `circ_split`, or
 `first_cook_scope` expansion. Plus / minus leftovers on the locked
 fixture meet at distinct `p*` — `t` comes from γ, not from the
-classifier tags. Host CircGamma stays QEX. First cook stays
+classifier tags. First cook stays
 chord–chord. Does not remint `CurveSegment` / Exact* / `Dart` /
 Hobby / `ArcSplitAtNode` leftover-width. Does not start I.10 /
 Campaign II / H⊥ / a CRV-TOUCH kiss procedure. Does not reopen
@@ -662,14 +685,14 @@ Status.
 | `CircularCookLicense.v : ticket_0007_i9_not_circ_split_qed_or_qex` | **QED** — same tags; plus/minus leftovers at distinct `p*` | `CircularCookLicense.v : i9_z_hit_not_circ_split_license` |
 | `CircularCookLicense.v : ticket_0007_i9_scope_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex` |
 
-Witness: `0007-I.9-classifier-neq-cook`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.9-classifier-neq-cook`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — I.10 Campaign-I close (2026-09-09)
 
 #692 ticketed that a classifier Hit is not a cook license. This
 letter closes Campaign I. Sidecar cook exists on a constructed
-circular Hit (both radical roots / `MintTwo`). Host CircGamma stays
-QEX. `first_cook_scope` stays chord–chord. `I_CIRCULAR` stays a
+circular Hit (both radical roots / `MintTwo`). Parks Γ.
+`first_cook_scope` stays chord–chord. `I_CIRCULAR` stays a
 classifier (tags 0/1). The #666 four-object fence holds by
 observation. Campaign II and H⊥ are named parked — not silently
 done. No new kernel. Not SQL/MM done. Does not remint
@@ -684,7 +707,7 @@ kiss procedure. Does not reopen Status.
 | `CircularCookClose.v : ticket_0007_i10_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `CircularCookClose.v : ticket_0007_i10_park_qed_or_qex` | **QEX** — Campaign II and H⊥ named parked; SQL/MM not done | `CircularCookClose.v : campaign_ii_is_parked`, `CircularCookClose.v : hperp_is_parked` |
 
-Witness: `0007-I.10-campaign-i-close`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-I.10-campaign-i-close`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — II.1 span filter as IResult (2026-09-09)
 
@@ -693,7 +716,7 @@ unparks **II.1 only**. A radical root is an **arc** Hit iff
 `on_arc_gamma` both — an IResult / Hit|Empty|Decline-style filter
 on span γ, not γ_full. Locked `(0,0)/(7,0)` r=5 proper arcs: `p+`
 in-span (Hit); `p−` out-of-span (Empty) while still on γ_full
-(I.2). Host CircGamma stays QEX. Host circular `I_ok` stays
+(I.2). Host circular `I_ok` stays
 Decline. Span Hit is not host `I_ok`. II.2–II.4, H⊥, and the
 SQL/MM Part 3 required-type cathedral (CircularString /
 CompoundCurve / CurvePolygon) stay parked. A CircularString
@@ -710,7 +733,7 @@ procedure. Does not reopen Status.
 | `CircularCookSpanFilter.v : ticket_0007_ii1_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; span Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `CircularCookSpanFilter.v : ii1_span_hit_not_host_I_ok` |
 | `CircularCookSpanFilter.v : ticket_0007_ii1_park_qed_or_qex` | **QEX** — II.2–II.4 / H⊥ / SQL/MM cathedral parked; II.1 landed | `CircularCookSpanFilter.v : campaign_ii1_is_landed`, `CircularCookSpanFilter.v : campaign_ii2_is_parked` |
 
-Witness: `0007-II.1-span-filter`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-II.1-span-filter`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — II.2 split γ_span at in-span t (2026-09-09)
 
@@ -721,8 +744,8 @@ Hit’s in-span `tᵢ` / `tⱼ`. Leftovers meet at `p*` — shared endpoint
 is Hit incidence, not a kiss. Leftover γ stays on the parent circle
 and on the parent `on_arc_gamma` honesty story. Not γ_full. Not
 `circ_split` from `CircularCookSplit`. Locked `p−` stays II.1 Empty
-— this letter does not invent a span cook for it. Host CircGamma
-stays QEX. Host circular `I_ok` stays Decline. Span Hit is not host
+— this letter does not invent a span cook for it. Host circular
+`I_ok` stays Decline. Span Hit is not host
 `I_ok`. II.3 (`I_ok_circ`), II.4 honesty letter, H⊥, and the SQL/MM
 Part 3 required-type cathedral (CircularString / CompoundCurve /
 CurvePolygon) stay parked. A CircularString theorem needs
@@ -739,7 +762,7 @@ procedure. Does not reopen Status.
 | `CircularCookSpanSplit.v : ticket_0007_ii2_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; span Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `CircularCookSpanSplit.v : ii2_span_hit_not_host_I_ok` |
 | `CircularCookSpanSplit.v : ticket_0007_ii2_park_qed_or_qex` | **QEX** — II.3–II.4 / H⊥ / SQL/MM cathedral parked; II.2 landed | `CircularCookSpanSplit.v : campaign_ii2_is_landed`, `CircularCookSpanSplit.v : campaign_ii3_is_parked` |
 
-Witness: `0007-II.2-span-split`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-II.2-span-split`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — II.3 I_ok_circ on EggCircularArc × EggCircularArc (2026-09-09)
 
@@ -754,7 +777,7 @@ quarter of the I.3 `(0,0)/(20,0)` r=5 disjoint circles (the
 locked A×B pair is Hit, so per-root `p−` Empty is not pair
 Empty). Invalid controls Decline. ∀ Hit / Empty / Decline as a
 Prop are definitional; this letter does not mint a computed
-classifier. Host CircGamma stays QEX. `first_cook_scope` stays
+classifier. `first_cook_scope` stays
 chord–chord. II.4 honesty letter, H⊥, and the SQL/MM Part 3
 required-type cathedral (CircularString / CompoundCurve /
 CurvePolygon) stay parked. A CircularString theorem needs
@@ -771,18 +794,18 @@ procedure. Does not reopen Status.
 | `CircularCookOkCirc.v : ticket_0007_ii3_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; `I_ok_circ` Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `CircularCookOkCirc.v : ii3_I_ok_circ_hit_not_host_I_ok` |
 | `CircularCookOkCirc.v : ticket_0007_ii3_park_qed_or_qex` | **QEX** — II.4 / H⊥ / SQL/MM cathedral parked; II.3 landed | `CircularCookOkCirc.v : campaign_ii3_is_landed`, `CircularCookOkCirc.v : campaign_ii4_is_parked` |
 
-Witness: `0007-II.3-I-ok-circ`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-II.3-I-ok-circ`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — II.4 Campaign-II close (2026-09-09)
 
 II.3 unparked `I_ok_circ` and named II.4 / H⊥ / SQL/MM parked.
 This letter **closes Campaign II**. `I_ok_circ` exists as the
 sidecar glossary inhabitant on EggCircularArc × EggCircularArc
-(one Arc). Host CircGamma stays QEX. `first_cook_scope` stays
+(one Arc). `first_cook_scope` stays
 chord–chord. Host circular `I_ok` stays Decline. `I_ok_circ`
 Hit ≠ host `I_ok`. Leftover shared endpoint is Hit incidence
 (= ¬Empty), not a CRV-TOUCH kiss certificate. Not a bag noder
-(`cook_loop` stays obligation). H⊥ stays parked.
+(Parks ρ). H⊥ stays parked.
 
 Phase B SQL/MM Part 3 **required**-type gaps are named so AFK
 Phase B can start the smallest required-type 𝓘 cuts:
@@ -800,7 +823,7 @@ Does not reopen Status.
 | `CircularCookCloseII.v : ticket_0007_ii4_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `CircularCookCloseII.v : ticket_0007_ii4_phase_b_qed_or_qex` | **QEX** — Phase B CS / CC / CP gaps named; bag loop stays obligation; H⊥ parked; SQL/MM not done; Campaign II closed | `CircularCookCloseII.v : phase_b_cs_is_gap`, `CircularCookCloseII.v : ii4_not_bag_noder`, `CircularCookCloseII.v : campaign_ii_is_closed` |
 
-Witness: `0007-II.4-campaign-ii-close`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-II.4-campaign-ii-close`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — Phase B.1 CircularString concat joints (2026-09-09)
 
@@ -818,7 +841,7 @@ not a CRV-TOUCH kiss certificate.
 Locked fixture: the V-CS odd_closed 5-control
 `CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)` as two
 `CircEgg`. Not a remint of `CircularStringValid.v`.
-Host CircGamma stays QEX. `first_cook_scope` stays
+`first_cook_scope` stays
 chord–chord. Host circular `I_ok` stays Decline.
 `I_ok_circ` Hit ≠ host `I_ok`. CompoundCurve /
 CurvePolygon / H⊥ stay parked. Not a CircGamma remint.
@@ -835,7 +858,7 @@ CRV-TOUCH kiss procedure. Does not reopen Status.
 | `CircularCookCsConcat.v : ticket_0007_b1_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `CircularCookCsConcat.v : ticket_0007_b1_park_qed_or_qex` | **QEX** — CompoundCurve / CurvePolygon / H⊥ parked; SQL/MM not done; B.1 landed | `CircularCookCsConcat.v : phase_b1_is_landed`, `CircularCookCsConcat.v : phase_b_cc_is_gap` |
 
-Witness: `0007-B.1-cs-concat-joints`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-B.1-cs-concat-joints`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — Phase B.2 CompoundCurve member joints (2026-09-09)
 
@@ -862,12 +885,12 @@ Reuse, not a new kernel:
 
 Locked mixed fixture (type-distinct inhabitant):
 `COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))`.
-Host CircGamma stays QEX. `first_cook_scope` stays
+`first_cook_scope` stays
 chord–chord. Host circular `I_ok` stays Decline.
 `phase_b_compound_curve_status` is **Landed** (mixed LS–CS
 inhabits `I_ok_mixed`, not host `I_ok`). Letter B.2 landed
 (`PhaseB2Landed`) ≠ SQL/MM done / Phase B done-when.
-CurvePolygon / H⊥ / interior mixed cook stay parked. Not a
+CurvePolygon / H⊥ stay parked. Parks ι. Not a
 CircGamma remint. Not “SQL/MM done”.
 Does not remint `CurveSegment` / Exact* / `Dart` / Hobby /
 `ArcSplitAtNode` leftover-width / `CompoundCurveKoc*`.
@@ -882,7 +905,7 @@ procedure. Does not reopen Status.
 | `CircularCookCcConcat.v : ticket_0007_b2_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; mixed Hit is not host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `CircularCookCcConcat.v : ticket_0007_b2_park_qed_or_qex` | **QEX** — CurvePolygon / H⊥ / interior mixed cook parked; SQL/MM not done; B.2 letter landed; CC required-type Landed (`I_ok_mixed`, not host `I_ok`) | `CircularCookCcConcat.v : phase_b2_is_landed`, `CircularCookCcConcat.v : phase_b_cc_is_landed`, `CircularCookCcConcat.v : phase_b_cp_is_gap` |
 
-Witness: `0007-B.2-cc-member-joints`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-B.2-cc-member-joints`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — Phase B.3 CurvePolygon ring closure (2026-09-09)
 
@@ -913,7 +936,7 @@ Locked CS-ring fixture:
 `CURVEPOLYGON((CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)))`.
 Locked mixed-ring fixture:
 `CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))))`.
-Host CircGamma stays QEX. `first_cook_scope` stays
+`first_cook_scope` stays
 chord–chord. Host circular `I_ok` stays Decline.
 `phase_b_curve_polygon_status` is **Landed** (mixed LS–CS
 closing inhabits `I_ok_mixed`, not host `I_ok`).
@@ -921,8 +944,7 @@ closing inhabits `I_ok_mixed`, not host `I_ok`).
 **Open** — letter B.3 landed (`PhaseB3Landed`) ≠ SQL/MM done
 / Phase B done-when. Letter enum vs required-type stay
 distinct.
-H⊥ / CircGamma remint
-/ bag-noder stay parked. Not a CircGamma remint. Not
+H⊥ stays parked. Parks Γ / ρ. Not a CircGamma remint. Not
 “SQL/MM done” (cathedral / Multi / optional Part 3 types).
 Does not remint `CurveSegment` / Exact* / `Dart` / Hobby /
 `ArcSplitAtNode` leftover-width / the CompoundCurveKoc family.
@@ -937,7 +959,7 @@ reopen Status.
 | `CircularCookCpConcat.v : ticket_0007_b3_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; mixed closing Hit is not host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `CircularCookCpConcat.v : ticket_0007_b3_park_qed_or_qex` | **QEX** — H⊥ / CircGamma remint / bag-noder / interior mixed cook parked; SQL/MM not done; B.3 letter landed; CP / CC required-type Landed (`I_ok_mixed`, not host `I_ok`); Phase B Open | `CircularCookCpConcat.v : phase_b3_is_landed`, `CircularCookCpConcat.v : phase_b_cp_is_landed`, `CircularCookCpConcat.v : phase_b_is_open` |
 
-Witness: `0007-B.3-cp-ring-closure`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-B.3-cp-ring-closure`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — Phase B mixed LS–CS joints (2026-09-10)
 
@@ -948,10 +970,9 @@ a contiguous endpoint. This letter cuts the smallest honest
 Hit: sidecar `I_ok_mixed` on `ChordEgg` × `CircEgg` at
 `(p, tᵢ=1, tⱼ=0)` via host `chord_eval` and sidecar
 `arc_gamma`. Joint params are not interior. Concat incidence
-is already a hen. Host CircGamma stays QEX.
+is already a hen. 
 `first_cook_scope` stays chord–chord. Host mixed `I_ok`
-stays Decline. `I_ok_mixed` Hit ≠ host `I_ok`. Interior
-mixed cook is not invented (QEX park). Not a CircGamma remint.
+stays Decline. `I_ok_mixed` Hit ≠ host `I_ok`. Parks ι. Not a CircGamma remint.
 Not “SQL/MM done”. Does not expand first cook to
 circular×chord interiors. Does not start H⊥ / a CRV-TOUCH
 kiss procedure / a bag noder / MultiCurve. Does not reopen
@@ -964,7 +985,7 @@ Status.
 | `SidecarCircMixed.v : ticket_0007_b_mixed_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; interior mixed cook parked; `I_ok_mixed` Hit ≠ host `I_ok` | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `SidecarCircMixed.v : ticket_0007_b_mixed_park_qed_or_qex` | **QEX** — interior mixed cook / H⊥ / CircGamma remint / bag noder parked; SQL/MM not done; mixed letter landed | `SidecarCircMixed.v : mixed_letter_is_landed`, `SidecarCircMixed.v : mixed_interior_cook_is_parked` |
 
-Witness: `0007-B-mixed-ls-cs-joints`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-B-mixed-ls-cs-joints`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — Phase B MultiCurve / MultiSurface bags (2026-09-10)
 
@@ -974,13 +995,13 @@ bag of already-Qed Curve members (CircularString /
 CompoundCurve). MultiSurface is a bag of already-Qed Surface
 members (CurvePolygon). Members need not be contiguous —
 that is the bag vs sequence distinction, not the bag-level
-cook loop (`cook_loop` stays `LoopObligation`). Membership
+cook loop (Parks ρ). Membership
 and optional shared-endpoint pairwise joints reuse existing
 `I_ok` / `I_ok_circ` / `I_ok_mixed`. No new kernel.
 
-Host CircGamma stays QEX. `first_cook_scope` stays
-chord–chord. Host mixed `I_ok` stays Decline. Interior
-circular×chord cook is not invented. Multi required-type
+`first_cook_scope` stays
+chord–chord. Host mixed `I_ok` stays Decline. Parks ι.
+Multi required-type
 stays **Gap** (optional Part 3). Phase B stays **Open**.
 Letter landed ≠ cathedral Landed / Phase B done-when /
 SQL/MM done. Not a CircGamma remint. Does not start H⊥ /
@@ -994,7 +1015,7 @@ Status.
 | `SidecarCircBags.v : ticket_0007_b_bags_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; host mixed `I_ok` Decline; interior mixed cook parked | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `SidecarCircBags.v : ticket_0007_b_bags_park_qed_or_qex` | **QEX** — bag noder / H⊥ / CircGamma remint / SQL/MM cathedral parked; Multi required-type Gap; Phase B Open; bags letter landed | `SidecarCircBags.v : bags_letter_is_landed`, `SidecarCircBags.v : multi_required_is_gap`, `SidecarCircBags.v : bags_cathedral_is_not_landed` |
 
-Witness: `0007-B-bags`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-B-bags`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — ι interior circular×chord (2026-09-10)
 
@@ -1030,7 +1051,7 @@ Multi required-type Landed. ADR-0007 stays Accepted.
 | `SidecarCircInterior.v : ticket_0007_iota_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; host mixed `I_ok` Decline | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
 | `SidecarCircInterior.v : ticket_0007_iota_park_qed_or_qex` | **QEX** — interior cook / H⊥ / bag noder / cathedral parked; Phase B Open; ι letter landed | `SidecarCircInterior.v : iota_letter_is_landed`, `SidecarCircInterior.v : iota_interior_cook_is_parked` |
 
-Witness: `0007-iota-interior-mixed`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-iota-interior-mixed`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — Γ CircGamma core-slice stop (2026-09-10)
 
@@ -1066,7 +1087,7 @@ CircGamma. Do not fake Discharge.
 | `CircularCook.v : ticket_0007_i1_gloss_qed_or_qex` | **QEX** — `I_gloss` undefined; `MkCirc` missing; host circular `I_ok` is Decline only | `CircularCook.v : circ_gamma_mkcirc_missing`, `SheetHenCook.v : circular_decline_I_ok` |
 | `CircularCook.v : ticket_0007_gamma_nlerp_qed_or_qex` | **QEX** — nlerp misses principal span; piecewise nlerp degenerate on the same fixture | `CircularCook.v : reflex_nlerp_misses_principal`, `CircularCook.v : reflex_piecewise_nlerp_degenerate` |
 
-Witness: `0007-Gamma-circgamma`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-Gamma-circgamma`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 ### Letter after Accept — ρ bag-loop named QEX (2026-09-10)
 
@@ -1106,4 +1127,4 @@ done-when / SQL/MM cathedral. Does not reopen Status.
 | `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` stays obligation | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
 | `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; first cook stays chord–chord | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
 
-Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Host CircGamma stays QEX.
+Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Parks Γ / ι / ρ.
