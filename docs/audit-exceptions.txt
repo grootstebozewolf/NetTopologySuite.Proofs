@@ -504,15 +504,27 @@ theories/CircularCookCloseII.v
 theories/CircularCookCsConcat.v
 
 # Category C (R-side, same atan lineage as CircularCookCsConcat.v):
+# ADR-0007 Phase B mixed LS–CS joints. Contiguous LS×CS / CS×LS
+# joints inhabit I_ok_mixed Hit at (end, t=1, t=0) via host
+# chord_eval + sidecar arc_gamma. Host I_ok mixed stays Decline
+# (I.1). Host CircGamma stays QEX. Interior mixed cook parked.
+# Not SQL/MM done. Inherits Classical_Prop.classic via
+# CircularCookCsConcat / OkCirc / Span / atan2 (claimId 0007 /
+# B-mixed). No extra axioms beyond the atan2 lineage. Headlines
+# Qed-closed. No new kernel. Not a CircGamma remint.
+theories/SidecarCircMixed.v
+
+# Category C (R-side, same atan lineage as CircularCookCsConcat.v):
 # ADR-0007 Phase B.2 CompoundCurve member joints. CC is a
 # sequence of LineString (chords) and CircularString (CircEgg)
 # members. LS–LS joint is host I_ok Hit at (end, t=1, t=0).
 # CS–CS member joint reuses I_ok_circ / B.1 cs_joint. Mixed
-# LS–CS joint is host I_ok Decline (I.1 fence); not a
-# constructed mixed Hit. Locked mixed LS+CS fixture. Host
-# CircGamma stays QEX. CurvePolygon / H⊥ parked. Not SQL/MM
-# done. CC required-type Gap (mixed LS–CS host Decline;
-# letter B.2 landed ≠ required-type Landed). Inherits Classical_Prop.classic via
+# LS–CS joint is I_ok_mixed Hit; host I_ok mixed stays Decline
+# (I.1 fence). Locked mixed LS+CS fixture. Host CircGamma stays
+# QEX. CurvePolygon / H⊥ / interior mixed cook parked. Not
+# SQL/MM done. CC required-type Landed (mixed I_ok_mixed Hit,
+# not host I_ok; letter B.2 landed ≠ SQL/MM done / Phase B
+# done-when). Inherits Classical_Prop.classic via
 # CircularCookCsConcat / OkCirc / Span / atan2 (claimId 0007 /
 # B.2). No extra axioms beyond the atan2 lineage. Headlines
 # Qed-closed. No new kernel. Not a CircGamma remint. Not a
@@ -524,13 +536,13 @@ theories/CircularCookCcConcat.v
 # closed CircularString or closed CompoundCurve (B.2 members
 # contiguous and closed; last joins first). Sequential joints
 # stay B.2. CS–CS closing reuses I_ok_circ / B.1 cs_joint.
-# LS–LS closing is host I_ok. Mixed closing is host I_ok
-# Decline (I.1 fence); not a constructed mixed Hit. Locked
-# CS-ring and mixed-ring fixtures. Host CircGamma stays QEX.
-# H⊥ / CircGamma remint / bag-noder parked. Not SQL/MM done.
-# CP / CC required-type Gap (mixed LS–CS host Decline).
-# Phase B Open (letter B.3 landed ≠ required-type Landed /
-# done-when).
+# LS–LS closing is host I_ok. Mixed closing is I_ok_mixed Hit;
+# host I_ok mixed stays Decline (I.1 fence). Locked CS-ring
+# and mixed-ring fixtures. Host CircGamma stays QEX. H⊥ /
+# CircGamma remint / bag-noder / interior mixed cook parked.
+# Not SQL/MM done. CP / CC required-type Landed (mixed
+# I_ok_mixed Hit, not host I_ok). Phase B Open (letter B.3
+# landed ≠ SQL/MM done / Phase B done-when).
 # Inherits Classical_Prop.classic via CircularCookCcConcat /
 # CsConcat / OkCirc / Span / atan2 (claimId 0007 / B.3). No
 # extra axioms beyond the atan2 lineage. Headlines Qed-closed.

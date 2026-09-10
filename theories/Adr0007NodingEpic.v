@@ -82,15 +82,18 @@
    concat joints live in CircularCookCsConcat.v (4-axiom sidecar
    reuse of I_ok_circ / arc_gamma; not Required here). Phase B.2
    CompoundCurve member joints live in CircularCookCcConcat.v
-   (4-axiom sidecar / host reuse; not Required here). Phase B.3
-   CurvePolygon ring closure lives in CircularCookCpConcat.v
-   (4-axiom sidecar / host reuse of B.1 I_ok_circ / B.2 host
-   I_ok / mixed Decline; not Required here). Host CircGamma
-   stays QEX. first cook stays chord–chord. H⊥ stays parked.
-   Not a bag noder. Phase B.1–B.3 letters landed (same-kind
-   joints; mixed LS–CS is host Decline). Required-type CS / CC /
-   CP stay Gap; Phase B stays Open — letter landed ≠
-   required-type Landed / SQL/MM done / Phase B done-when. Not
+   (4-axiom sidecar / host reuse; not Required here). Phase B
+   mixed LS–CS joints live in SidecarCircMixed.v (4-axiom
+   sidecar I_ok_mixed Hit at concat endpoints; not Required
+   here). Phase B.3 CurvePolygon ring closure lives in
+   CircularCookCpConcat.v (4-axiom sidecar / host reuse of B.1
+   I_ok_circ / B.2 host I_ok / I_ok_mixed; not Required here).
+   Host CircGamma stays QEX. first cook stays chord–chord. H⊥
+   stays parked. Not a bag noder. Phase B.1–B.3 letters landed.
+   Mixed LS–CS inhabits sidecar I_ok_mixed; host I_ok mixed
+   stays Decline (I.1). Required-type CC / CP Landed (mixed
+   I_ok_mixed Hit, not host I_ok); CS stays Gap; Phase B stays
+   Open — letter landed ≠ SQL/MM done / Phase B done-when. Not
    this host module.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).

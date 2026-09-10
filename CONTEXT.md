@@ -364,27 +364,30 @@ CircGamma remint. B.2 (Phase B, CompoundCurve required-type
 cut): CompoundCurve is a sequence of LineString (chords) and
 CircularString (`CircEgg`) members. LS–LS joint is host
 `I_ok` Hit at `(ce_p1, t=1, t=0)`. CS–CS member joint reuses
-`I_ok_circ` / B.1 `cs_joint`. Mixed LS–CS joint is host
-`I_ok` Decline (I.1); a constructed mixed Hit does not.
-Locked mixed fixture
+`I_ok_circ` / B.1 `cs_joint`. Mixed LS–CS joint is sidecar
+`I_ok_mixed` Hit at `(ce_p1, t=1, t=0)` (`SidecarCircMixed.v`);
+host `I_ok` mixed stays Decline (I.1); `I_ok_mixed` Hit ≠ host
+`I_ok`. Locked mixed fixture
 `COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))`.
-`phase_b_compound_curve_status` Gap (mixed LS–CS host Decline).
-Letter B.2 landed ≠ required-type Landed. Host CircGamma stays
-QEX. CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
+`phase_b_compound_curve_status` Landed (mixed `I_ok_mixed` Hit,
+not host `I_ok`). Letter B.2 landed ≠ SQL/MM done / Phase B
+done-when. Host CircGamma stays QEX. CurvePolygon letter /
+H⊥ / interior mixed cook stay parked. Not SQL/MM done. Not a
 CircGamma remint. Not a remint of `CurveSegment`.
 B.3 (Phase B, CurvePolygon required-type cut): a CP ring is
 a closed CircularString or closed CompoundCurve (B.2 members
 contiguous and closed; last joins first). Sequential joints
 stay B.2. CS–CS closing reuses `I_ok_circ` / B.1 `cs_joint`.
-LS–LS closing is host `I_ok`. Mixed closing is host `I_ok`
-Decline (I.1); a constructed mixed Hit does not. Locked
+LS–LS closing is host `I_ok`. Mixed closing is sidecar
+`I_ok_mixed` Hit at `(arc_end, t=1, t=0)`; host `I_ok` mixed
+stays Decline (I.1). Locked
 CS-ring
 `CURVEPOLYGON((CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)))`
 and mixed-ring
 `CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))))`.
-`phase_b_curve_polygon_status` Gap (mixed LS–CS host Decline).
-Phase B Open — letter B.3 landed ≠ required-type Landed /
-done-when. Host CircGamma stays QEX. H⊥ /
+`phase_b_curve_polygon_status` Landed (mixed `I_ok_mixed` Hit,
+not host `I_ok`). Phase B Open — letter B.3 landed ≠ SQL/MM
+done / Phase B done-when. Host CircGamma stays QEX. H⊥ /
 CircGamma remint / bag-noder stay parked. Not SQL/MM done
 (cathedral / Multi / optional Part 3 types). Not a remint
 of `CurveSegment` / `CurveGeometry.CurvePolygon`.

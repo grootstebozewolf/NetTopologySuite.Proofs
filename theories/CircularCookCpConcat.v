@@ -18,14 +18,15 @@
 
    Reuse, not a new kernel:
      Sequential member joints stay B.2 (LS–LS host I_ok Hit;
-     CS–CS I_ok_circ; mixed host Decline).
+     CS–CS I_ok_circ; mixed I_ok_mixed).
      Closing joint (last to first) uses the same cooks:
        CS–CS closing is I_ok_circ Hit at (arc_end, tᵢ=1, tⱼ=0)
        via B.1 cs_joint / arc_gamma.
        LS–LS closing is host I_ok Hit at (ce_p1, tᵢ=1, tⱼ=0)
        via chord_eval (first cook).
-       Mixed closing is host I_ok Decline (I.1 fence); a
-       constructed mixed Hit does not inhabit I_ok.
+       Mixed closing is sidecar I_ok_mixed Hit at
+       (arc_end, tᵢ=1, tⱼ=0) via SidecarCircMixed. Host I_ok
+       mixed stays Decline (I.1); I_ok_mixed Hit ≠ host I_ok.
      Concat / ring-close incidence is already a hen, not an
      interior span cook and not a CRV-TOUCH kiss certificate.
 
@@ -36,31 +37,36 @@
    Locked mixed-ring fixture (type-distinct — cannot be a CS):
      CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0),
        CIRCULARSTRING(5 0, 0 -5, -5 0))))
-   Sequential mixed joint is B.2 Decline at (5,0). Closing mixed
-   joint is host Decline at (-5,0). Hole-free shells; holes are
-   the same ring type (not a new cook).
+   Sequential mixed joint is B.2 I_ok_mixed Hit at (5,0). Closing
+   mixed joint is I_ok_mixed Hit at (-5,0). Host I_ok mixed stays
+   Decline. Hole-free shells; holes are the same ring type (not
+   a new cook).
 
    QED: locked CS / mixed rings are contiguous and closed; CS
-   closing is I_ok_circ Hit at (end, 1, 0); mixed closing inhabits
-   host Decline and not a constructed Hit; joint params are not
-   interior; hole-free CPs inhabit; reuse B.1 / B.2 — no new kernel.
+   closing is I_ok_circ Hit at (end, 1, 0); mixed closing is
+   I_ok_mixed Hit at (end, 1, 0); host I_ok mixed stays Decline;
+   joint params are not interior; hole-free CPs inhabit; reuse
+   B.1 / B.2 / SidecarCircMixed — no new kernel.
    QEX: host CircGamma stays QEX; first cook stays chord–chord;
-   host circular I_ok is Decline; I_ok_circ Hit ≠ host I_ok;
-   H⊥ / CircGamma remint / bag-noder stay parked; SQL/MM is not
-   done (cathedral / Multi / optional Part 3 types). CurvePolygon
-   required-type status stays Gap — mixed LS–CS closing is host
-   Decline. CompoundCurve required-type stays Gap. Phase B
-   stays Open. Letter B.3 landed (PhaseB3Landed) ≠
-   required-type Landed / SQL/MM done / Phase B done-when.
+   host circular I_ok is Decline; I_ok_circ / I_ok_mixed Hit ≠
+   host I_ok; H⊥ / CircGamma remint / bag-noder / interior mixed
+   cook stay parked; SQL/MM is not done (cathedral / Multi /
+   optional Part 3 types). CurvePolygon required-type status is
+   Landed — mixed LS–CS closing inhabits I_ok_mixed (not host
+   I_ok). CompoundCurve required-type is Landed. Phase B stays
+   Open. Letter B.3 landed (PhaseB3Landed) ≠ SQL/MM done /
+   Phase B done-when. Letter enum vs required-type stay distinct.
 
    Honesty fences:
      Host-Decline / CircGamma-QEX at the top of this module.
      I_circles_z ≠ I_circles_gamma ≠ sidecar cook ≠ span filter ≠
      span split ≠ I_ok_circ ≠ CS concat joint ≠ CC member joint ≠
      CP ring-close joint ≠ glossary I_gloss / host I_ok.
-     Mixed Hit is not licensed. Sidecar ≠ host try_cook_hit /
-     host I_ok. Closing joint is ring-close incidence, not an
-     interior span cook and not a CRV-TOUCH kiss certificate.
+     I_ok_mixed Hit is licensed for concat / ring-close joints
+     only. Sidecar ≠ host try_cook_hit / host I_ok. Closing
+     joint is ring-close incidence, not an interior span cook
+     and not a CRV-TOUCH kiss certificate. Interior mixed cook
+     stays parked.
      Not first cook scope. Not a bag noder. Not ArcSplitAtNode.
      Not G¹ / H⊥. Not holes-inside-shell. Not MultiCurve.
      Not a remint of CurveSegment / CurveGeometry.CurvePolygon /
@@ -92,6 +98,7 @@ From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry
   CircularCookSpanSplit CircularCookOkCirc.
 From NTS.Proofs Require CircularCookCsConcat.
 From NTS.Proofs Require CircularCookCcConcat.
+From NTS.Proofs Require SidecarCircMixed.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -99,16 +106,16 @@ Local Open Scope R_scope.
    file=theories/CircularCookCpConcat.v
    kind=QED-or-QEX-cp-ring-closure-sidecar-host-reuse
    gamma=arc-span-not-gamma-full
-   reuse=I_ok_circ,arc_gamma,cs_joint,cc_joint,host-I_ok-chord-chord
+   reuse=I_ok_circ,I_ok_mixed,arc_gamma,cs_joint,cc_joint,host-I_ok-chord-chord
    not=new-kernel,CircGamma-Discharge,first-cook-noding,SQL-MM-done
    not=bag-noder,CRV-TOUCH-kiss,CurveSegment-remint,CurvePolygon-remint
-   park=Hperp,CircGamma-remint,bag-noder,SQL-MM-done,Phase-B-CC-CP-required-type
-   land=Phase-B.3 *)
+   park=Hperp,CircGamma-remint,bag-noder,SQL-MM-done,interior-mixed-cook
+   land=Phase-B.3,Phase-B-CC-CP-required-type *)
 
 (* B.1 / B.2 names, reused. Not imported so this letter can mark
    PhaseB3Landed without clashing B.2's letter-local Gap.
-   Required-type CP / CC stay Gap (mixed LS–CS host Decline).
-   Phase B stays Open. *)
+   Required-type CP / CC are Landed (mixed LS–CS inhabits
+   I_ok_mixed). Phase B stays Open. *)
 Definition cs_joint := CircularCookCsConcat.cs_joint.
 Definition cs_joint_hit := CircularCookCsConcat.cs_joint_hit.
 Definition locked_cs_arc_1 := CircularCookCsConcat.locked_cs_arc_1.
@@ -217,6 +224,21 @@ Theorem cp_closing_ls_ls_I_ok :
     ls_joint c1 c2 -> I_ok (MkChord c1) (MkChord c2) (ls_joint_hit c1 c2).
 Proof.
   exact CircularCookCcConcat.ls_joint_I_ok.
+Qed.
+
+Definition cs_ls_joint := SidecarCircMixed.cs_ls_joint.
+Definition cs_ls_joint_hit := SidecarCircMixed.cs_ls_joint_hit.
+Definition I_ok_mixed := SidecarCircMixed.I_ok_mixed.
+Definition MixCsLs := SidecarCircMixed.MixCsLs.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"cp_closing_mixed_cs_ls_I_ok_mixed","title":"Phase B.3 forall CS-LS CurvePolygon closing joint is I_ok_mixed Hit at (arc_end, t=1, t=0); SidecarCircMixed reuse; host I_ok mixed stays Decline; ring-close incidence; no interior arc-chord cook","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
+
+Theorem cp_closing_mixed_cs_ls_I_ok_mixed :
+  forall a c,
+    cs_ls_joint a c ->
+    I_ok_mixed (MixCsLs a c) (cs_ls_joint_hit a c).
+Proof.
+  exact SidecarCircMixed.cs_ls_joint_I_ok_mixed.
 Qed.
 
 Lemma cp_closing_mixed_ls_cs_host_decline :
@@ -388,6 +410,23 @@ Proof.
   constructor.
 Qed.
 
+Lemma locked_cp_mixed_closing_joint :
+  cs_ls_joint locked_cc_cs locked_cc_ls.
+Proof.
+  unfold cs_ls_joint, SidecarCircMixed.cs_ls_joint,
+    locked_cc_ls, locked_cc_cs.
+  split; [exact CircularCookCsConcat.locked_cs_arc_2_valid|].
+  reflexivity.
+Qed.
+
+Lemma locked_cp_mixed_closing_I_ok_mixed :
+  I_ok_mixed (MixCsLs locked_cc_cs locked_cc_ls)
+    (cs_ls_joint_hit locked_cc_cs locked_cc_ls).
+Proof.
+  apply cp_closing_mixed_cs_ls_I_ok_mixed.
+  exact locked_cp_mixed_closing_joint.
+Qed.
+
 Lemma locked_cp_mixed_closing_decline :
   I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls) IDecline.
 Proof.
@@ -417,6 +456,8 @@ Lemma b3_reuse_no_new_kernel :
   /\ CpRing = CircularCookCcConcat.CompoundCurveMembers
   /\ I_ok_circ locked_cs_arc_2 locked_cs_arc_1
        (cs_joint_hit locked_cs_arc_2 locked_cs_arc_1)
+  /\ I_ok_mixed (MixCsLs locked_cc_cs locked_cc_ls)
+       (cs_ls_joint_hit locked_cc_cs locked_cc_ls)
   /\ I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls) IDecline
   /\ cp_poly_ok locked_cp_cs
   /\ cp_poly_ok locked_cp_mixed.
@@ -424,6 +465,7 @@ Proof.
   split; [reflexivity|].
   split; [reflexivity|].
   split; [exact locked_cp_cs_closing_I_ok_circ|].
+  split; [exact locked_cp_mixed_closing_I_ok_mixed|].
   split; [exact locked_cp_mixed_closing_decline|].
   split; [exact locked_cp_cs_ok|].
   exact locked_cp_mixed_ok.
@@ -459,9 +501,11 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Phase B.3 letter landed. CP / CC required-type stay Gap (mixed
-   Decline). Phase B stays Open. H⊥ / remint / bag / SQL/MM stay
-   parked. Letter landed ≠ required-type Landed / done-when.           *)
+(* Phase B.3 letter landed. CP / CC required-type Landed (mixed
+   I_ok_mixed Hit). Phase B stays Open. H⊥ / remint / bag /
+   interior mixed cook / SQL/MM stay parked. Letter landed ≠
+   SQL/MM done / Phase B done-when. Letter enum vs required-type
+   stay distinct.                                                   *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive PhaseB3Status : Type :=
@@ -480,16 +524,18 @@ Inductive PhaseBGapStatus : Type :=
 | PhaseBRequiredGap
 | PhaseBRequiredLanded.
 
-(* Same-kind joints in B.1–B.3 are not required-type 𝓘 Landed.
-   Mixed LS–CS remains host Decline. *)
+(* Mixed LS–CS inhabits I_ok_mixed. CC / CP required-type Landed.
+   CS stays Gap (B.1 joints are I_ok_circ; not reminted here).
+   Phase B campaign stays Open. Letter enum vs required-type
+   stay distinct. *)
 Definition phase_b_circular_string_status : PhaseBGapStatus :=
   PhaseBRequiredGap.
 
 Definition phase_b_compound_curve_status : PhaseBGapStatus :=
-  PhaseBRequiredGap.
+  PhaseBRequiredLanded.
 
 Definition phase_b_curve_polygon_status : PhaseBGapStatus :=
-  PhaseBRequiredGap.
+  PhaseBRequiredLanded.
 
 Lemma phase_b_cs_is_gap :
   phase_b_circular_string_status = PhaseBRequiredGap.
@@ -497,14 +543,14 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma phase_b_cc_is_gap :
-  phase_b_compound_curve_status = PhaseBRequiredGap.
+Lemma phase_b_cc_is_landed :
+  phase_b_compound_curve_status = PhaseBRequiredLanded.
 Proof.
   reflexivity.
 Qed.
 
-Lemma phase_b_cp_is_gap :
-  phase_b_curve_polygon_status = PhaseBRequiredGap.
+Lemma phase_b_cp_is_landed :
+  phase_b_curve_polygon_status = PhaseBRequiredLanded.
 Proof.
   reflexivity.
 Qed.
@@ -569,8 +615,8 @@ Qed.
 Lemma b3_rest_parked :
   phase_b3_status = PhaseB3Landed
   /\ phase_b_circular_string_status = PhaseBRequiredGap
-  /\ phase_b_compound_curve_status = PhaseBRequiredGap
-  /\ phase_b_curve_polygon_status = PhaseBRequiredGap
+  /\ phase_b_compound_curve_status = PhaseBRequiredLanded
+  /\ phase_b_curve_polygon_status = PhaseBRequiredLanded
   /\ phase_b_status = PhaseBOpen
   /\ b3_hperp_status = B3HperpParked
   /\ b3_circgamma_remint_status = B3CircGammaRemintParked
@@ -584,13 +630,15 @@ Qed.
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_closed_qed_or_qex","title":"Phase B.3 locked CS and mixed CurvePolygon rings are closed and contiguous; CS closing is I_ok_circ Hit; mixed closing is host I_ok Decline not Hit (QED) or a locked ring is not closed (QEX); discharged QED; ring-close incidence; I.1 fence on mixed close; not a constructed mixed Hit","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_closed_qed_or_qex","title":"Phase B.3 locked CS and mixed CurvePolygon rings are closed and contiguous; CS closing is I_ok_circ Hit; mixed closing is I_ok_mixed Hit at (end, 1, 0); host I_ok mixed stays Decline (QED) or a locked ring is not closed (QEX); discharged QED; ring-close incidence; SidecarCircMixed reuse; I.1 fence on host I_ok; not a constructed interior mixed Hit","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
 
 Theorem ticket_0007_b3_closed_qed_or_qex :
   (cp_ring_ok locked_cp_cs_ring
    /\ cp_ring_ok locked_cp_mixed_ring
    /\ I_ok_circ locked_cs_arc_2 locked_cs_arc_1
         (cs_joint_hit locked_cs_arc_2 locked_cs_arc_1)
+   /\ I_ok_mixed (MixCsLs locked_cc_cs locked_cc_ls)
+        (cs_ls_joint_hit locked_cc_cs locked_cc_ls)
    /\ I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls) IDecline
    /\ ~ I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls)
           (IHit locked_cp_cs_close_pt 1 0)
@@ -602,12 +650,13 @@ Proof.
   split; [exact locked_cp_cs_ring_ok|].
   split; [exact locked_cp_mixed_ring_ok|].
   split; [exact locked_cp_cs_closing_I_ok_circ|].
+  split; [exact locked_cp_mixed_closing_I_ok_mixed|].
   split; [exact locked_cp_mixed_closing_decline|].
   split; [exact locked_cp_mixed_closing_hit_not_I_ok|].
   discriminate.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_reuse_qed_or_qex","title":"Phase B.3 closing joints reuse B.1 I_ok_circ and B.2 host I_ok; CpRing is B.2 members (QED) or a locked closing declines (QEX); discharged QED; no new kernel; not CurveSegment remint; not CurveGeometry.CurvePolygon remint","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_reuse_qed_or_qex","title":"Phase B.3 closing joints reuse B.1 I_ok_circ, B.2 host I_ok, and SidecarCircMixed I_ok_mixed; CpRing is B.2 members (QED) or a locked closing declines (QEX); discharged QED; no new kernel; not CurveSegment remint; not CurveGeometry.CurvePolygon remint","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
 
 Theorem ticket_0007_b3_reuse_qed_or_qex :
   (CircEgg = CircularArc
@@ -615,8 +664,12 @@ Theorem ticket_0007_b3_reuse_qed_or_qex :
    /\ (forall a b, cs_joint a b -> I_ok_circ a b (cs_joint_hit a b))
    /\ (forall c1 c2, ls_joint c1 c2 ->
          I_ok (MkChord c1) (MkChord c2) (ls_joint_hit c1 c2))
+   /\ (forall a c, cs_ls_joint a c ->
+         I_ok_mixed (MixCsLs a c) (cs_ls_joint_hit a c))
    /\ I_ok_circ locked_cs_arc_2 locked_cs_arc_1
         (cs_joint_hit locked_cs_arc_2 locked_cs_arc_1)
+   /\ I_ok_mixed (MixCsLs locked_cc_cs locked_cc_ls)
+        (cs_ls_joint_hit locked_cc_cs locked_cc_ls)
    /\ I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls) IDecline
    /\ ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
         (cs_joint_hit locked_cs_arc_2 locked_cs_arc_1))
@@ -629,7 +682,9 @@ Proof.
   split; [reflexivity|].
   split; [exact cp_closing_cs_cs_I_ok_circ|].
   split; [exact cp_closing_ls_ls_I_ok|].
+  split; [exact cp_closing_mixed_cs_ls_I_ok_mixed|].
   split; [exact Hh|].
+  split; [exact locked_cp_mixed_closing_I_ok_mixed|].
   split; [exact locked_cp_mixed_closing_decline|].
   exact Hhost.
 Qed.
@@ -695,7 +750,7 @@ Proof.
   exact Hhost.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_park_qed_or_qex","title":"Phase B.3 discharges Hperp, CircGamma remint, bag noder, and SQL/MM (QED) or names them parked / not-done (QEX); discharged QEX; B.3 letter landed; CP CC required-type Gap (mixed LS-CS host Decline); Phase B Open; letter landed != required-type Landed / done-when; not SQL/MM done","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b3_park_qed_or_qex","title":"Phase B.3 discharges Hperp, CircGamma remint, bag noder, and SQL/MM (QED) or names them parked / not-done (QEX); discharged QEX; B.3 letter landed; CP CC required-type Landed (mixed I_ok_mixed Hit, not host I_ok); CS required-type Gap; Phase B Open; letter enum != SQL/MM done / Phase B done-when","file":"theories/CircularCookCpConcat.v","witness":"0007-B.3-cp-ring-closure","board":"ADR-0007"} *)
 
 Theorem ticket_0007_b3_park_qed_or_qex :
   (b3_hperp_status = B3HperpDischarged
@@ -705,8 +760,8 @@ Theorem ticket_0007_b3_park_qed_or_qex :
   \/
   (phase_b3_status = PhaseB3Landed
    /\ phase_b_circular_string_status = PhaseBRequiredGap
-   /\ phase_b_compound_curve_status = PhaseBRequiredGap
-   /\ phase_b_curve_polygon_status = PhaseBRequiredGap
+   /\ phase_b_compound_curve_status = PhaseBRequiredLanded
+   /\ phase_b_curve_polygon_status = PhaseBRequiredLanded
    /\ phase_b_status = PhaseBOpen
    /\ b3_hperp_status = B3HperpParked
    /\ b3_circgamma_remint_status = B3CircGammaRemintParked
@@ -721,19 +776,21 @@ Print Assumptions b3_host_circgamma_qex.
 Print Assumptions cp_closing_cs_cs_I_ok_circ.
 Print Assumptions cp_closing_ls_ls_I_ok.
 Print Assumptions cp_closing_mixed_cs_ls_host_decline.
+Print Assumptions cp_closing_mixed_cs_ls_I_ok_mixed.
 Print Assumptions locked_cp_cs_ring_closed.
 Print Assumptions locked_cp_cs_ok.
 Print Assumptions locked_cp_cs_closing_I_ok_circ.
 Print Assumptions locked_cp_mixed_ring_closed.
 Print Assumptions locked_cp_mixed_ok.
+Print Assumptions locked_cp_mixed_closing_I_ok_mixed.
 Print Assumptions locked_cp_mixed_closing_decline.
 Print Assumptions b3_reuse_no_new_kernel.
 Print Assumptions b3_I_ok_circ_hit_not_host_I_ok.
 Print Assumptions b3_not_bag_noder.
 Print Assumptions phase_b3_is_landed.
 Print Assumptions phase_b_cs_is_gap.
-Print Assumptions phase_b_cc_is_gap.
-Print Assumptions phase_b_cp_is_gap.
+Print Assumptions phase_b_cc_is_landed.
+Print Assumptions phase_b_cp_is_landed.
 Print Assumptions phase_b_is_open.
 Print Assumptions b3_sql_mm_is_not_done.
 Print Assumptions ticket_0007_b3_closed_qed_or_qex.

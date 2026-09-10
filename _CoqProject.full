@@ -2890,16 +2890,25 @@ theories/CircularCookCloseII.v
 # sidecar (classic via OkCirc / Span). No new kernel. Not a
 # CircGamma remint. Not first cook scope. Not a noder.
 theories/CircularCookCsConcat.v
+# Phase B mixed LS–CS joints (SidecarCircMixed). Contiguous
+# LS×CS / CS×LS joints inhabit I_ok_mixed Hit at (end, t=1, t=0)
+# via host chord_eval + sidecar arc_gamma. Host I_ok mixed stays
+# Decline (I.1). Host CircGamma stays QEX. first_cook_scope stays
+# chord–chord. Interior mixed cook parked. Not a CircGamma remint.
+# 4-axiom atan2 sidecar (classic via CsConcat / OkCirc / Span).
+# No new kernel. Not first cook scope. Not a noder.
+theories/SidecarCircMixed.v
 # Phase B.2 CompoundCurve member joints (sidecar / host reuse).
 # CC is a sequence of LineString (chords) and CircularString
 # (CircEgg) members. LS–LS joint is host I_ok Hit at (end, t=1,
 # t=0). CS–CS member joint reuses I_ok_circ. Mixed LS–CS joint
-# is host I_ok Decline (I.1). Locked mixed fixture
+# is I_ok_mixed Hit at (end, t=1, t=0); host I_ok mixed stays
+# Decline (I.1). Locked mixed fixture
 # COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0)).
 # Host CircGamma stays QEX. first_cook_scope stays chord–chord.
-# CurvePolygon / H⊥ parked. Not SQL/MM done. CC required-type
-# Gap (mixed LS–CS host Decline; letter B.2 landed ≠
-# required-type Landed).
+# CurvePolygon / H⊥ / interior mixed cook parked. Not SQL/MM
+# done. CC required-type Landed (mixed I_ok_mixed Hit, not host
+# I_ok; letter B.2 landed ≠ SQL/MM done / Phase B done-when).
 # 4-axiom atan2 sidecar (classic via CsConcat / OkCirc / Span).
 # No new kernel. Not a CircGamma remint. Not CurveSegment remint.
 # Not first cook scope. Not a noder. Not CurvePolygon.
@@ -2909,14 +2918,16 @@ theories/CircularCookCcConcat.v
 # (B.2 CompoundCurveMembers that is contiguous and closed;
 # last member joins first). Sequential joints stay B.2.
 # CS–CS closing reuses I_ok_circ; LS–LS closing is host I_ok;
-# mixed closing is host I_ok Decline (I.1). Locked CS-ring
+# mixed closing is I_ok_mixed Hit at (end, t=1, t=0); host I_ok
+# mixed stays Decline (I.1). Locked CS-ring
 # CURVEPOLYGON((CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)))
 # and mixed-ring CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0),
 # CIRCULARSTRING(5 0, 0 -5, -5 0)))). Host CircGamma stays
 # QEX. first_cook_scope stays chord–chord. H⊥ / CircGamma
-# remint / bag-noder parked. Not SQL/MM done. CP / CC
-# required-type Gap (mixed LS–CS host Decline). Phase B Open
-# (letter B.3 landed ≠ required-type Landed / done-when).
+# remint / bag-noder / interior mixed cook parked. Not SQL/MM
+# done. CP / CC required-type Landed (mixed I_ok_mixed Hit, not
+# host I_ok). Phase B Open (letter B.3 landed ≠ SQL/MM done /
+# Phase B done-when).
 # 4-axiom atan2
 # sidecar (classic via CcConcat / CsConcat / OkCirc / Span).
 # No new kernel. Not a CircGamma remint. Not CurveSegment
