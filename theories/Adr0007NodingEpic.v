@@ -325,7 +325,8 @@ Qed.
 (* Core-slice circular tickets: ticket_64_circ_hit_params_qed_or_qex
    (QED, CircularCookHit.v, full/atan2), CircularCookSpan.v span γ
    (QED, 4-axiom sidecar), ticket_64_circ_gamma_qed_or_qex (QEX,
-   CircularCook.v host flag), and CircularCookSplit.v (4-axiom
+   CircularCook.v named gap: no MkCirc / nlerp miss / no first-cook
+   expand; sidecar arc_gamma is not host Γ), and CircularCookSplit.v (4-axiom
    sidecar cook of a locked circular Hit). I.2 ∀ Hit soundness
    lives in CircularCookHit.v (ticket_0007_i2_hit_sound_qed_or_qex);
    I.3 ∀ Empty / Decline lives in CircularCookEmpty.v

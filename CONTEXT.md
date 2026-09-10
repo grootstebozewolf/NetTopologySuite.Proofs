@@ -304,7 +304,12 @@ cook may `split(t)` and mint one hen (letter after Accept; not the
 bag loop). On chord–chord, proper-cross signs license a constructed
 Hit via `Intersect.strict_intersection_point` (not a remint of that
 lemma; not a total `𝓘`; not `I_circles_z` / `I_CIRCULAR`; not
-glossary `𝓘` with γ / tᵢ,tⱼ). Host CircGamma stays QEX. A circular
+glossary `𝓘` with γ / tᵢ,tⱼ). Host CircGamma stays QEX — named gap:
+Egg has no `MkCirc` constructor (circular eggs are only
+`MkOutOfScope`); chord-project nlerp misses the principal span on a
+reflex fixture (`CircularCook.v : reflex_nlerp_misses_principal`);
+sidecar `arc_gamma` is not host Γ; Discharge would need atan2 /
+Classic or a first-cook expand this letter does not make. A circular
 IHit does not feed host `try_cook_hit` (circular eggs stay
 `MkOutOfScope`); the 4-axiom sidecar cooks the locked circular Hit
 via `circ_gamma` `split(t)` without discharging CircGamma. On a
