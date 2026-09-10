@@ -270,9 +270,8 @@ Lemma iota_mu_hit_not_host_I_ok :
   /\ ~ I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc)
         (SidecarCircMixed.ls_cs_joint_hit locked_mixed_ls locked_mixed_cs).
 Proof.
-  exact SidecarCircMixed.I_ok_mixed_hit_not_host_I_ok
-    locked_mixed_ls locked_mixed_cs
-    SidecarCircMixed.locked_mixed_ls_cs_joint.
+  apply SidecarCircMixed.I_ok_mixed_hit_not_host_I_ok.
+  exact SidecarCircMixed.locked_mixed_ls_cs_joint.
 Qed.
 
 Lemma iota_host_stays_qex :
