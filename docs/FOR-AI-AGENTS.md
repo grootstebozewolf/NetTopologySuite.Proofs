@@ -1,5 +1,6 @@
 # For AI Agents (and deep contributors using agent workflows)
 
+Root baseline (disclosure, smallest change, guards): [`AGENTS.md`](../AGENTS.md).
 This document extracts the session workflow, invariants, and practical guidance relevant to AI coding agents (Claude, Grok, etc.) working on this corpus. It is informed by the paths for Scholar Sam, Scrum-Master Sara, Tech-Lead Tess, and Joost the BDFL in the [Reading Guide](READING-GUIDE.md) and [Help cards](HELP.md).
 
 **Always start here for context:**

@@ -92,6 +92,7 @@ corpus (522 registered modules) is the pinned container. Toolchain:
 - [`docs/READING-GUIDE.md`](docs/READING-GUIDE.md) — full map + long-form status
 - [`GETTING-STARTED.md`](GETTING-STARTED.md) — 60-second on-ramp
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to add theorems
+- [`AGENTS.md`](AGENTS.md) — baseline rules for AI agents (NTS#875 adopted)
 
 ## Roles
 

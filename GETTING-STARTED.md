@@ -39,7 +39,7 @@ This repository contains mechanically verified Rocq proofs of foundational prope
 - **I use NTS / JTS and want to know what is proved** — Follow the GIS Gus or NTS-Upstream Norm / Consumer Connie card in `docs/HELP.md`.
 - **I care about CIRCULARSTRING / COMPOUNDCURVE / CURVEPOLYGON (SQL/MM ISO/IEC 13249-3)** — Follow the BIM Bea card. NTS `Flatten()` to chords is named and lossy; it is not the curve.
 - **I want to build the proofs locally** — See `docs/development-environment.md` (container is canonical; host fallback documented).
-- **I want to contribute (or run an AI coding session)** — Read `CONTRIBUTING.md` + [`docs/FOR-AI-AGENTS.md`](docs/FOR-AI-AGENTS.md) + the relevant sections of the Reading Guide for session workflow and invariants.
+- **I want to contribute (or run an AI coding session)** — Read [`AGENTS.md`](AGENTS.md) + `CONTRIBUTING.md` + [`docs/FOR-AI-AGENTS.md`](docs/FOR-AI-AGENTS.md) + the relevant sections of the Reading Guide for session workflow and invariants.
 - **I maintain or review this corpus** — Start with the four registry files in `docs/` (`admitted-*.txt`, `axiom-allowlist.txt`, `audit-exceptions.txt`).
 
 ## Quick build notes
