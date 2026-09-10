@@ -171,14 +171,44 @@ Definition nlerp_misses_reflex_principal : Prop :=
   chord_cross reflex_start reflex_end reflex_mid
   * chord_cross reflex_start reflex_end reflex_nlerp_half < 0.
 
+Lemma sqrt2_sq : sqrt 2 * sqrt 2 = 2.
+Proof.
+  apply sqrt_sqrt. lra.
+Qed.
+
+Lemma sqrt2_neq_0 : sqrt 2 <> 0.
+Proof.
+  apply Rgt_not_eq. apply sqrt_lt_R0. lra.
+Qed.
+
+Lemma two_over_sqrt2 : 2 * / sqrt 2 = sqrt 2.
+Proof.
+  apply (Rmult_eq_reg_r (sqrt 2)); [exact sqrt2_neq_0|].
+  rewrite Rmult_assoc, Rinv_l, Rmult_1_r; [|exact sqrt2_neq_0].
+  symmetry. exact sqrt2_sq.
+Qed.
+
+Lemma one_lt_sqrt2 : 1 < sqrt 2.
+Proof.
+  apply Rnot_le_lt. intro Hle.
+  assert (sqrt 2 * sqrt 2 <= 1 * 1).
+  { apply Rmult_le_compat; try lra.
+    apply Rlt_le. apply sqrt_lt_R0. lra. }
+  rewrite sqrt2_sq in H. lra.
+Qed.
+
 Lemma reflex_nlerp_half_on_unit_circle :
   px reflex_nlerp_half * px reflex_nlerp_half
   + py reflex_nlerp_half * py reflex_nlerp_half = 1.
 Proof.
-  unfold reflex_nlerp_half. cbn [px py].
-  assert (Hs : 0 < sqrt 2).
-  { apply sqrt_lt_R0. lra. }
-  field. lra.
+  unfold reflex_nlerp_half. cbn [px py]. unfold Rdiv.
+  replace (1 * / sqrt 2 * (1 * / sqrt 2)
+           + 1 * / sqrt 2 * (1 * / sqrt 2))
+    with (2 * (/ sqrt 2 * / sqrt 2)) by ring.
+  replace (/ sqrt 2 * / sqrt 2) with (/ (sqrt 2 * sqrt 2)).
+  2: { symmetry. apply Rinv_mult_distr; exact sqrt2_neq_0. }
+  rewrite sqrt2_sq.
+  apply Rinv_r. lra.
 Qed.
 
 Lemma reflex_nlerp_misses_principal :
@@ -186,23 +216,14 @@ Lemma reflex_nlerp_misses_principal :
 Proof.
   unfold nlerp_misses_reflex_principal, reflex_nlerp_half,
          chord_cross, reflex_start, reflex_mid, reflex_end.
-  cbn [px py].
-  assert (Hsq : sqrt 2 * sqrt 2 = 2) by (apply sqrt_sqrt; lra).
-  assert (Hspos : 0 <= sqrt 2).
-  { apply Rlt_le. apply sqrt_lt_R0. lra. }
-  assert (Hsqrt : 1 < sqrt 2).
-  { apply Rnot_le_lt. intro Hle.
-    assert (sqrt 2 * sqrt 2 <= 1 * 1).
-    { apply Rmult_le_compat; lra. }
-    rewrite Hsq in H. lra. }
-  assert (Hinv : sqrt 2 <> 0) by lra.
+  cbn [px py]. unfold Rdiv.
   assert (Hmid :
     (0 - 1) * (0 - 0) - (1 - 0) * (-1 - 1) = 2) by ring.
   assert (Hn :
-    (0 - 1) * (1 / sqrt 2 - 0) - (1 - 0) * (1 / sqrt 2 - 1)
-    = 1 - 2 / sqrt 2) by (field; exact Hinv).
-  rewrite Hmid, Hn.
-  replace (2 / sqrt 2) with (sqrt 2) by (field; exact Hinv).
+    (0 - 1) * (1 * / sqrt 2 - 0) - (1 - 0) * (1 * / sqrt 2 - 1)
+    = 1 - 2 * / sqrt 2) by ring.
+  rewrite Hmid, Hn, two_over_sqrt2.
+  pose proof one_lt_sqrt2.
   lra.
 Qed.
 
