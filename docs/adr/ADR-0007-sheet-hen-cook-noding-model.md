@@ -257,7 +257,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCook.v : noded_crossing` |
 | — | Silent `pairwise_nodable` / `fully_intersected` does not discharge the constructor | `Adr0007NodingEpic.v : ticket_0007_silent_nodable_qed_or_qex` | **QEX** — a proper crossing is the noder's job and is excluded by the shadow | `SheetHenCook.v : crossing_not_nodable_shadow` |
 | — | Pairwise interior split + one-step confluence | `Adr0007NodingEpic.v : ticket_0007_pairwise_split_qed_or_qex` | **QED** — leftover-width decrease; leftover bag independent of parent order | `SheetHenCook.v : interior_split_finite_holds`, `SheetHenCook.v : split_step_confluent` |
-| — | Bag-level cook loop (term / confl on a leftover bag) | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — documented CRV-TOUCH / `𝓘`-family deferral, not a named soft gap | `SheetHenCook.v : cook_loop_is_obligation` |
+| — | Bag-level cook loop (term / confl on a leftover bag) | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — named 508-style gap: `CookLoopBagTerm` missing; leftover_quad width conserved; kiss / share / mint not covered. CRV-TOUCH / `𝓘`-family; not a soft gap | `SheetHenCookLoop.v : cook_loop_bag_term_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
 | — | binary64 / OverlayNGRobust sit on one sheet | `Adr0007NodingEpic.v : ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | `SheetHenCook.v : coord_realization_preserves_sheet`, `SheetHenCook.v : overlay_ng_robust_is_finite_snap_holds`, `SheetHenCook.v : overlay_ng_robust_is_snap_not_I` |
 | — | `ddir` migration is one type equation | `Adr0007NodingEpic.v : ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart stays the `Dart.v` coordinate-pair story; no third type | `SheetHenCook.v : ddir_migration_one_equation` |
 | — | Full-circle Hit carries constructed `(h*, p*, tᵢ, tⱼ)` | `CircularCookHit.v : ticket_64_circ_hit_params_qed_or_qex` | **QED** — locked `(0,0)/(7,0)` r=5; `γ(t)=p*` | `CircularCookHit.v : locked_I_circles_gamma_hit`, `CircularCookHit.v : locked_hit_plus_on_gamma` |
@@ -354,8 +354,8 @@ QEX is not acceptance. Supporting shapes are not a noder.
 closed checklist rows: pairwise chord-split finiteness plus one-step
 confluence is QED; binary64 / OverlayNGRobust sit on one sheet is QED;
 `DdirDart` := `(Hen * Hen)` = chicken ends is QED. The bag-level cook
-loop is a documented CRV-TOUCH / `𝓘`-family QEX under Honest remaining
-opens, not a named soft gap. **Accepted** by Joost (BDFL) 2026-09-07.
+loop is a named 508-style QEX (`CookLoopBagTerm` missing) under Honest
+remaining opens, not a soft gap. **Accepted** by Joost (BDFL) 2026-09-07.
 
 ### Four prior review conditions — discharged
 
@@ -374,7 +374,7 @@ Former named soft gaps (a)(b)(c) are checklist rows, not open naming.
 
 | Former | Stop | Arm | Settled as |
 |--------|------|-----|------------|
-| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is `ticket_0007_cook_term_qed_or_qex` **QEX** (CRV-TOUCH / `𝓘`-family), listed under Honest remaining opens — not a soft gap |
+| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is `ticket_0007_cook_term_qed_or_qex` **QEX** (named 508-style `CookLoopBagTerm` gap / CRV-TOUCH), listed under Honest remaining opens — not a soft gap |
 | (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
 | (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
 | (d) This memo | this section | brief only | Soft gaps closed; **Accepted** 2026-09-07 |
@@ -418,7 +418,7 @@ Accept as vocabulary law does **not** settle kiss / tangency.
 - Identity policy detail beyond `ShareOne` / `MintTwo` (which `𝓘` decides, on what basis). Kiss certificate is the CRV-TOUCH form of this question, not a silent extra hen type.
 - A binary64 / floating-point noder (`𝓘` realized in Flocq), including binary64 sheet vs kiss. Not a second sheet. Host-lane “sits on a sheet” is closed above.
 - Hobby 4.1 / 4.3. Snap-rounding stays a different constructor under already-noded `G`.
-- The repeat-until-noded **bag** loop (termination + confluence) on the chord lane — `ticket_0007_cook_term_qed_or_qex` QEX / CRV-TOUCH. Pairwise width decrease and one-step confluence are discharged QED, not this item. **Arc** cook termination is a sister card, not this Accept.
+- The repeat-until-noded **bag** loop (termination + confluence) on the chord lane — `ticket_0007_cook_term_qed_or_qex` QEX / named 508-style gap (`SheetHenCookLoop.v : CookLoopBagTerm` missing; leftover_quad width conserved; kiss / ShareOne / MintTwo not covered). Pairwise width decrease and one-step confluence are discharged QED, not this item. ρ leftover_quad ≠ η Multi bags. **Arc** cook termination is a sister card, not this Accept.
 - Later constructive rungs: one Hit `split(t)` step is `ticket_0007_cook_step_qed_or_qex` / `ticket_0007_cook_step_scope_qed_or_qex`; constructed `𝓘` from proper-cross signs is `ticket_0007_constructed_I_qed_or_qex` / `ticket_0007_constructed_I_scope_qed_or_qex` / `ticket_0007_share_constructed_qed_or_qex`. Letters after Accept, not Accept blockers.
 - ADR-0006 cook-mode for a kiss hen — CRV-TOUCH, after a prototype.
 
@@ -1067,3 +1067,43 @@ CircGamma. Do not fake Discharge.
 | `CircularCook.v : ticket_0007_gamma_nlerp_qed_or_qex` | **QEX** — nlerp misses principal span; piecewise nlerp degenerate on the same fixture | `CircularCook.v : reflex_nlerp_misses_principal`, `CircularCook.v : reflex_piecewise_nlerp_degenerate` |
 
 Witness: `0007-Gamma-circgamma`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — ρ bag-loop named QEX (2026-09-10)
+
+Pairwise leftover-width decrease and one-step confluence are
+already QED (`ticket_0007_pairwise_split_qed_or_qex` / I.8).
+This letter is the **bag** loop, not that pairwise step and
+not η Multi bags (`SidecarCircBags`).
+
+QED would flip `cook_loop_status` to `LoopDischarged` with a
+real termination + confluence theorem on leftover bags. That
+needs a bag-term measure covering kiss / ShareOne / MintTwo
+cycles — not available without a CRV-TOUCH prototype.
+
+QEX (this letter): named 508-style gap, not a bool.
+
+1. `CookLoopBagTerm` does not inhabit. `leftover_width` is
+   pairwise on `[t0,t1]`. The leftover_quad bag-sum is
+   conserved (`leftover_quad_width ti tj = 1+1`).
+2. Empty / Decline allocate no leftover split. ShareOne
+   ignores leftover_width. MintTwo may increase hen
+   cardinality while leftover_width of `[0,1]` stays 1.
+3. I.8 one-step confluence does not flip `LoopDischarged`.
+   Arc cook termination is a sister card.
+
+Do **not** fake Discharge. Do **not** collapse I.8 into
+bag-loop Discharge. Host CircGamma stays QEX.
+`first_cook_scope` stays chord–chord. Does not remint
+`I_ok_mixed` / CircGamma / leftover_width. Does not start
+H⊥ / a CRV-TOUCH kiss procedure / Multi Landed / Phase B
+done-when / SQL/MM cathedral. Does not reopen Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — `LoopObligation`; `CookLoopBagTerm` missing; leftover_quad width conserved; pairwise split stays sibling QED | `SheetHenCookLoop.v : cook_loop_bag_term_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
+| `SheetHenCookLoop.v : ticket_0007_rho_gap_qed_or_qex` | **QEX** — named missing constructor + conserved bag-sum | `SheetHenCookLoop.v : leftover_quad_width_conserved` |
+| `SheetHenCookLoop.v : ticket_0007_rho_cycles_qed_or_qex` | **QEX** — Empty / Decline mint nothing; ShareOne ignores width; MintTwo is not a width bound | `SheetHenCookLoop.v : no_hit_no_leftover_split`, `SheetHenCookLoop.v : mint_two_not_width_bound` |
+| `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` stays obligation | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
+| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; first cook stays chord–chord | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
+
+Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Host CircGamma stays QEX.

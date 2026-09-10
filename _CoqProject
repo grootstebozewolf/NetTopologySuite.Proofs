@@ -89,6 +89,11 @@ theories/CircularStringOddCount.v
 # Host/pure-R. First cook scope is chord–chord. Does not remint
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
 theories/SheetHenCook.v
+# ρ bag-loop named QEX gap (508-style missing CookLoopBagTerm).
+# Host/pure-R. leftover_quad width conserved; kiss/share/mint not
+# covered. Pairwise leftover-width stays a sibling QED. Not Multi
+# bags. Arc cook termination is a sister card. No Admitted.
+theories/SheetHenCookLoop.v
 theories/Adr0007NodingEpic.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v

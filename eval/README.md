@@ -295,6 +295,14 @@ landed ≠ cook Landed / cathedral Landed / Phase B done-when;
 ι ≠ μ ≠ host `I_ok` ≠ Γ; no new kernel):
 `theories/SidecarCircInterior.v`. 4-axiom atan2 sidecar.
 
+Production home for 0007-rho-bag-loop (ρ bag-level cook loop
+named QEX; `CookLoopBagTerm` missing; leftover_quad width
+conserved; kiss / ShareOne / MintTwo not covered; pairwise
+leftover-width stays sibling QED; ≠ I.8 Discharge; ≠ η Multi
+bags; arc cook termination sister; CircGamma stays QEX;
+first cook stays chord–chord):
+`theories/SheetHenCookLoop.v`. 3-axiom host.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.
