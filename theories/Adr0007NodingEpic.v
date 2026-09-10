@@ -27,8 +27,11 @@
    finite and one Hit-split is confluent (leftover bag independent
    of parent order).
    `ticket_0007_pairwise_split_qed_or_qex` discharges left.
-   The bag-level repeat-until-noded loop stays an 𝓘-family /
-   CRV-TOUCH obligation (not a named soft gap).
+   The bag-level repeat-until-noded loop is a named 508-style
+   QEX gap (missing CookLoopBagTerm; leftover_quad width
+   conserved; kiss / share / mint not covered). Not a soft gap.
+   ρ letter lives in SheetHenCookLoop.v
+   (`ticket_0007_rho_gap_qed_or_qex` and friends).
    `ticket_0007_cook_term_qed_or_qex` discharges right.
 
    binary64 / OverlayNGRobust sit on one sheet (QED).
@@ -129,7 +132,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals.
-From NTS.Proofs Require Import Distance Segment SheetHenCook.
+From NTS.Proofs Require Import Distance Segment SheetHenCook SheetHenCookLoop.
 Local Open Scope R_scope.
 
 (* ADR-0007 stop: every egg-class pair is in first cook scope (QED)
@@ -266,19 +269,36 @@ Proof.
   exact split_step_confluent_holds_proof.
 Qed.
 
-(* Bag-level cook loop on the chord lane (QED: discharged) or the
-   loop remains an 𝓘-family / CRV-TOUCH obligation (QEX). Discharged
-   QEX — pairwise width decrease is not that discharge. Not a named
-   soft gap; Honest remaining open. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged (QED) or an I-family CRV-TOUCH obligation (QEX); discharged QEX; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
+(* Bag-level cook loop on the chord lane (QED: discharged with a
+   bag-term measure) or the named 508-style gap (QEX). Discharged
+   QEX — CookLoopBagTerm is missing; leftover_quad width is
+   conserved; pairwise width decrease is a sibling QED stop, not
+   this discharge. Honest remaining / CRV-TOUCH. Not a soft gap.
+   ρ letter: SheetHenCookLoop.v / witness 0007-rho-bag-loop. *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged with a bag-term measure (QED) or named QEX: CookLoopBagTerm missing, leftover_quad width conserved; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
 Theorem ticket_0007_cook_term_qed_or_qex :
-  (cook_loop_status = LoopDischarged /\ interior_split_finite)
+  (cook_loop_status = LoopDischarged
+   /\ cook_loop_ctor_inhabits CookLoopBagTerm
+   /\ interior_split_finite)
   \/
-  (cook_loop_status = LoopObligation /\ interior_split_finite).
+  (cook_loop_status = LoopObligation
+   /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm
+   /\ interior_split_finite
+   /\ split_step_confluent_holds
+   /\ (forall ti tj,
+         0 < ti < 1 ->
+         0 < tj < 1 ->
+         leftover_quad_width ti tj =
+         leftover_width 0 1 + leftover_width 0 1)
+   /\ arc_cook_term_status = ArcTermSister).
 Proof.
   right.
   split; [exact cook_loop_is_obligation|].
-  exact interior_split_finite_holds.
+  split; [exact cook_loop_bag_term_missing|].
+  split; [exact interior_split_finite_holds|].
+  split; [exact split_step_confluent_holds_proof|].
+  split; [exact leftover_quad_width_conserved|].
+  reflexivity.
 Qed.
 
 (* binary64 / OverlayNGRobust sit on one sheet (QED) or changing the

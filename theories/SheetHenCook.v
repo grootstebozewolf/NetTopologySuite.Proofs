@@ -10,8 +10,9 @@
    First cook scope is chord–chord only. Predicates never mint hens.
    Empty ≠ Decline. Snap-rounding ≠ 𝓘. Display is a view.
    Pairwise interior split is finite and one Hit-split is confluent
-   (leftover bag independent of parent order). The bag cook loop stays
-   an 𝓘-family / CRV-TOUCH obligation, not a named soft gap.
+   (leftover bag independent of parent order). The bag cook loop is a
+   named 508-style QEX gap (SheetHenCookLoop.v / CookLoopBagTerm
+   missing); not a soft gap and not pairwise-width Discharge.
    binary64 realizes points of S; OverlayNGRobust is a finite
    snap-sequence. DdirDart := (Hen * Hen) is the chicken projection
    — one type equation, not a third directed-edge type.
@@ -459,8 +460,9 @@ Qed.
 (* parent, and the leftover bag after splitting both parents does not         *)
 (* depend on which parent is split first. That closes the host-lane           *)
 (* cook-termination soft gap. The bag-level repeat-until-noded loop           *)
-(* (termination + confluence on a leftover bag) remains an 𝓘-family /         *)
-(* CRV-TOUCH obligation — not a named soft gap. Leftover-width names are      *)
+(* (termination + confluence on a leftover bag) is a named 508-style          *)
+(* QEX gap — SheetHenCookLoop.v / CookLoopBagTerm missing. Not a soft         *)
+(* gap. Leftover-width names are                                              *)
 (* not a remint of the sibling cook-split identifiers (chord_split /          *)
 (* try_cook_hit), which mint hens on a Hit.                                   *)
 (* -------------------------------------------------------------------------- *)
@@ -591,7 +593,8 @@ Proof.
 Qed.
 
 (* Bag-level cook loop: termination and confluence on a finite leftover
-   bag. Documented CRV-TOUCH / 𝓘-family deferral, not a named soft gap. *)
+   bag. Named 508-style QEX gap in SheetHenCookLoop.v (missing
+   CookLoopBagTerm). CRV-TOUCH / 𝓘-family; not a soft gap. *)
 Inductive CookLoopStatus : Type :=
 | LoopDischarged
 | LoopObligation.

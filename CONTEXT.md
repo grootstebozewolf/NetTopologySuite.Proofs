@@ -403,7 +403,11 @@ contiguous (bag ≠ concat). Membership / pairwise joints
 reuse `I_ok` / `I_ok_circ` / `I_ok_mixed` (`SidecarCircBags.v`)
 — no new kernel. Host CircGamma stays QEX; host mixed `I_ok`
 stays Decline; interior circular×chord cook parked. Bag noder
-(`cook_loop`) stays obligation. Multi required-type Gap
+(`cook_loop`) stays obligation — named 508-style QEX
+(`SheetHenCookLoop.v` / `CookLoopBagTerm` missing;
+leftover_quad width conserved; kiss / ShareOne / MintTwo
+not covered). ρ leftover_quad ≠ η Multi bags. Multi
+required-type Gap
 (optional Part 3). Phase B Open — bags letter landed ≠
 cathedral Landed / Phase B done-when. Not SQL/MM done.
 ι (Phase B, interior circular×chord): sidecar `I_ok_mixed`
@@ -419,7 +423,7 @@ cathedral Landed / Phase B done-when / Multi Landed.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
-obligations of 𝓘 families. binary64 is a coordinate realization of
+named QEX of 𝓘 families (not pairwise-width Discharge). binary64 is a coordinate realization of
 points of `S`, not a second sheet. OverlayNGRobust is a snap-sequence
 `S → Λ`, not 𝓘. Snap-rounding is a different constructor under
 already-noded `G`. Display is a view. A **kiss** (tangent eggs,
