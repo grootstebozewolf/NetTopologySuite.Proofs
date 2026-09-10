@@ -162,7 +162,9 @@ Proof.
   unfold nlerp_half_origin, reflex_nlerp_half, reflex_start, reflex_end.
   cbn [px py].
   replace ((1 + 0) * (1 + 0) + (0 + 1) * (0 + 1)) with 2 by ring.
-  apply (f_equal2 mkPoint); ring.
+  replace (1 + 0) with 1 by ring.
+  replace (0 + 1) with 1 by ring.
+  reflexivity.
 Qed.
 
 Definition nlerp_misses_reflex_principal : Prop :=
@@ -187,7 +189,7 @@ Proof.
   cbn [px py].
   assert (Hsq : sqrt 2 * sqrt 2 = 2) by (apply sqrt_sqrt; lra).
   assert (Hspos : 0 <= sqrt 2).
-  { apply sqrt_positivity. lra. }
+  { apply Rlt_le. apply sqrt_lt_R0. lra. }
   assert (Hsqrt : 1 < sqrt 2).
   { apply Rnot_le_lt. intro Hle.
     assert (sqrt 2 * sqrt 2 <= 1 * 1).
