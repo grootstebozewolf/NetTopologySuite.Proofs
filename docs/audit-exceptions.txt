@@ -550,6 +550,21 @@ theories/CircularCookCcConcat.v
 # remint. Not a CurveGeometry.CurvePolygon remint.
 theories/CircularCookCpConcat.v
 
+# Category C (R-side, same atan lineage as CircularCookCpConcat.v):
+# ADR-0007 Phase B MultiCurve / MultiSurface as bags of already-Qed
+# members. MultiCurve is a bag of CS / CC; MultiSurface is a bag of
+# CP. Members need not be contiguous (bag ≠ concat). Membership /
+# pairwise joints reuse I_ok / I_ok_circ / I_ok_mixed. Host I_ok
+# mixed stays Decline (I.1). Host CircGamma stays QEX. Interior
+# mixed cook parked. Bag noder / H⊥ / CircGamma remint / SQL/MM
+# cathedral parked. Multi required-type Gap. Phase B Open (letter
+# landed ≠ cathedral Landed / Phase B done-when). Inherits
+# Classical_Prop.classic via CircularCookCpConcat / CcConcat /
+# CsConcat / OkCirc / Span / atan2 (claimId 0007 / B-bags). No
+# extra axioms beyond the atan2 lineage. Headlines Qed-closed.
+# No new kernel. Not a CircGamma remint. Not a CurveSegment remint.
+theories/SidecarCircBags.v
+
 # Category C (R-side, same atan lineage as AngleBetween.v): issue #64 subtask
 # 64-c InArc minor-arc membership.  InArc / central_angle use angle_between,
 # so inherit Classical_Prop.classic.  Headlines in_arc_point_on_minor_arc and

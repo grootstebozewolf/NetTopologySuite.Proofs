@@ -68,7 +68,8 @@
      and not a CRV-TOUCH kiss certificate. Interior mixed cook
      stays parked.
      Not first cook scope. Not a bag noder. Not ArcSplitAtNode.
-     Not G¹ / H⊥. Not holes-inside-shell. Not MultiCurve.
+     Not G¹ / H⊥. Not holes-inside-shell. Not MultiCurve
+     (bags live in SidecarCircBags.v).
      Not a remint of CurveSegment / CurveGeometry.CurvePolygon /
      Exact* / Dart / Hobby / leftover_width / ArcSplitAtNode
      leftover-width / host circ_split / CircularStringValid /

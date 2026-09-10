@@ -391,6 +391,16 @@ done / Phase B done-when. Host CircGamma stays QEX. H⊥ /
 CircGamma remint / bag-noder stay parked. Not SQL/MM done
 (cathedral / Multi / optional Part 3 types). Not a remint
 of `CurveSegment` / `CurveGeometry.CurvePolygon`.
+B-bags (Phase B, Multi as bags): MultiCurve is a bag of
+already-Qed Curve members (CS / CC); MultiSurface is a bag
+of already-Qed Surface members (CP). Members need not be
+contiguous (bag ≠ concat). Membership / pairwise joints
+reuse `I_ok` / `I_ok_circ` / `I_ok_mixed` (`SidecarCircBags.v`)
+— no new kernel. Host CircGamma stays QEX; host mixed `I_ok`
+stays Decline; interior circular×chord cook parked. Bag noder
+(`cook_loop`) stays obligation. Multi required-type Gap
+(optional Part 3). Phase B Open — bags letter landed ≠
+cathedral Landed / Phase B done-when. Not SQL/MM done.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

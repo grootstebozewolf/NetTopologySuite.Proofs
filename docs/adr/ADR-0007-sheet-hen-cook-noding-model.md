@@ -296,6 +296,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | Phase B mixed LS–CS joints | `SidecarCircMixed.v : ticket_0007_b_mixed_hit_qed_or_qex` | **QED** — ∀ LS–CS / CS–LS joint is `I_ok_mixed` Hit at `(end, 1, 0)` | `SidecarCircMixed.v : ls_cs_joint_I_ok_mixed`, `SidecarCircMixed.v : cs_ls_joint_I_ok_mixed` |
 | — | Phase B.2 CompoundCurve member joints | `CircularCookCcConcat.v : ticket_0007_b2_mixed_qed_or_qex` | **QED** — locked mixed LS+CS CC contiguous; mixed joint is `I_ok_mixed` Hit; host `I_ok` stays Decline | `CircularCookCcConcat.v : locked_cc_mixed_contiguous`, `CircularCookCcConcat.v : locked_cc_mixed_I_ok_mixed` |
 | — | Phase B.3 CurvePolygon ring closure | `CircularCookCpConcat.v : ticket_0007_b3_closed_qed_or_qex` | **QED** — locked CS / mixed rings closed + contiguous; CS closing `I_ok_circ`; mixed closing `I_ok_mixed` | `CircularCookCpConcat.v : locked_cp_cs_ring_closed`, `CircularCookCpConcat.v : locked_cp_mixed_closing_I_ok_mixed` |
+| — | Phase B MultiCurve / MultiSurface bags | `SidecarCircBags.v : ticket_0007_b_bags_inhabit_qed_or_qex` | **QED** — MultiCurve / MultiSurface inhabit as bags of already-Qed CS / CC / CP members; bag ≠ concat | `SidecarCircBags.v : locked_mc_typed_ok`, `SidecarCircBags.v : locked_ms_ok`, `SidecarCircBags.v : bags_not_concat` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -960,3 +961,33 @@ Status.
 | `SidecarCircMixed.v : ticket_0007_b_mixed_park_qed_or_qex` | **QEX** — interior mixed cook / H⊥ / CircGamma remint / bag noder parked; SQL/MM not done; mixed letter landed | `SidecarCircMixed.v : mixed_letter_is_landed`, `SidecarCircMixed.v : mixed_interior_cook_is_parked` |
 
 Witness: `0007-B-mixed-ls-cs-joints`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — Phase B MultiCurve / MultiSurface bags (2026-09-10)
+
+B.1–B.3 plus mixed sidecar Hit inhabit CS / CC / CP joints.
+This letter unparks **Multi as bags only**. MultiCurve is a
+bag of already-Qed Curve members (CircularString /
+CompoundCurve). MultiSurface is a bag of already-Qed Surface
+members (CurvePolygon). Members need not be contiguous —
+that is the bag vs sequence distinction, not the bag-level
+cook loop (`cook_loop` stays `LoopObligation`). Membership
+and optional shared-endpoint pairwise joints reuse existing
+`I_ok` / `I_ok_circ` / `I_ok_mixed`. No new kernel.
+
+Host CircGamma stays QEX. `first_cook_scope` stays
+chord–chord. Host mixed `I_ok` stays Decline. Interior
+circular×chord cook is not invented. Multi required-type
+stays **Gap** (optional Part 3). Phase B stays **Open**.
+Letter landed ≠ cathedral Landed / Phase B done-when /
+SQL/MM done. Not a CircGamma remint. Does not start H⊥ /
+a CRV-TOUCH kiss procedure / a bag noder. Does not reopen
+Status.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarCircBags.v : ticket_0007_b_bags_inhabit_qed_or_qex` | **QED** — locked MultiCurve / MultiSurface inhabit as bags; far MultiCurve is bag-ok and not contiguous | `SidecarCircBags.v : locked_mc_typed_ok`, `SidecarCircBags.v : locked_ms_ok`, `SidecarCircBags.v : bags_not_concat` |
+| `SidecarCircBags.v : ticket_0007_b_bags_reuse_qed_or_qex` | **QED** — membership joints reuse `I_ok` / `I_ok_circ` / `I_ok_mixed`; optional pair reuses `I_ok_mixed`; no new kernel | `SidecarCircBags.v : bags_cs_member_joint_I_ok_circ`, `SidecarCircBags.v : bags_cc_member_joint_I_ok_mixed`, `SidecarCircBags.v : bags_optional_pair_I_ok_mixed` |
+| `SidecarCircBags.v : ticket_0007_b_bags_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; host mixed `I_ok` Decline; interior mixed cook parked | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
+| `SidecarCircBags.v : ticket_0007_b_bags_park_qed_or_qex` | **QEX** — bag noder / H⊥ / CircGamma remint / SQL/MM cathedral parked; Multi required-type Gap; Phase B Open; bags letter landed | `SidecarCircBags.v : bags_letter_is_landed`, `SidecarCircBags.v : multi_required_is_gap`, `SidecarCircBags.v : bags_cathedral_is_not_landed` |
+
+Witness: `0007-B-bags`. Status stays **Accepted**. Host CircGamma stays QEX.
