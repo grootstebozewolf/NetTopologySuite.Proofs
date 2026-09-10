@@ -34,6 +34,9 @@
    Phase B.3 lifts the same reuse to CurvePolygon ring closure
    (CircularCookCpConcat.v): last member joins first; CS–CS
    closing I_ok_circ; mixed closing I_ok_mixed.
+   Phase B bags lift the same reuse to MultiCurve / MultiSurface
+   (SidecarCircBags.v): bags of already-Qed CS / CC / CP members;
+   bag ≠ concat; joints stay I_ok / I_ok_circ / I_ok_mixed.
 
    WITNESS topic: core · claimId: 64-circ-span-gamma · witness: 64-circ-span-locked
    board: ADR-0007

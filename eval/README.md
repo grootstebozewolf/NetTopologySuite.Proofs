@@ -275,6 +275,15 @@ cook parked; not SQL/MM done; CP / CC required-type Landed
 kernel): `theories/CircularCookCpConcat.v`. 4-axiom atan2
 sidecar.
 
+Production home for 0007-B-bags (Phase B MultiCurve /
+MultiSurface as bags of already-Qed CS / CC / CP members;
+bag ≠ concat; membership joints reuse `I_ok` / `I_ok_circ` /
+`I_ok_mixed`; host mixed `I_ok` stays Decline; CircGamma stays
+QEX; first cook stays chord–chord; bag noder / H⊥ / cathedral
+parked; Multi required-type Gap; Phase B Open; letter landed ≠
+cathedral Landed / Phase B done-when; no new kernel):
+`theories/SidecarCircBags.v`. 4-axiom atan2 sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.
