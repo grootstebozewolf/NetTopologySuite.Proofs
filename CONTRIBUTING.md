@@ -51,7 +51,7 @@ See your role in [docs/HELP.md](docs/HELP.md) (or the full [docs/READING-GUIDE.m
 
 - **Stacked PRs / cascades**: Common for multi-session engagements. Review the bottom PR first; the rest inherit its content.
 
-- **AI assistance**: Disclose it (the existing files set the pattern). The session workflow in the Reading Guide is the expected shape for agent-driven work.
+- **AI assistance**: Disclose it (the existing files set the pattern). The root [AGENTS.md](AGENTS.md) is the baseline agent rule (disclosure, smallest change, guards). The session workflow in the Reading Guide is the expected shape for agent-driven work.
 
 ## Where to ask / review
 

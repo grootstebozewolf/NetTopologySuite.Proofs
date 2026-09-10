@@ -123,7 +123,7 @@ help+dispatch only.
 - **I want the complete map** → [`READING-GUIDE.md`](READING-GUIDE.md)
 - **I have literally never seen a proof assistant before** → [`pythagoras-for-beginners.v`](pythagoras-for-beginners.v) (step through it in an IDE; linked from the Newbie Nate / Rocq Rookie card)
 - **I want to build something** → [`development-environment.md`](development-environment.md) + the root `Makefile`
-- **I contribute (or an AI agent does)** → `CONTRIBUTING.md` + [`FOR-AI-AGENTS.md`](FOR-AI-AGENTS.md) + the session workflow sections of the Reading Guide
+- **I contribute (or an AI agent does)** → [`AGENTS.md`](../AGENTS.md) + `CONTRIBUTING.md` + [`FOR-AI-AGENTS.md`](FOR-AI-AGENTS.md) + the session workflow sections of the Reading Guide
 - **I am hunting claims** → tickets in [`attacks/`](attacks/); Qed-claiming probes in [`h1-vacuity/`](h1-vacuity/) (flocq job smoke, not `_CoqProject.full`)
 - **I am Joost the BDFL** → full README + entire READING-GUIDE + `docs/history/` tree + pruning log in history/README.md
 
