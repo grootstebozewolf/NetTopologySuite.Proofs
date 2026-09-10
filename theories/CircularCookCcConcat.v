@@ -35,7 +35,9 @@
    QEX: host CircGamma stays QEX; first cook stays chord–chord;
    host circular I_ok is Decline; I_ok_circ Hit ≠ host I_ok;
    CurvePolygon / H⊥ stay parked; SQL/MM is not done; not a
-   CircGamma remint. CompoundCurve required-type gap is Landed.
+   CircGamma remint. CompoundCurve required-type status stays
+   Gap — mixed LS–CS is host Decline. Letter B.2 landed
+   (PhaseB2Landed) ≠ required-type Landed / SQL/MM done.
 
    Honesty fences:
      Host-Decline / CircGamma-QEX at the top of this module.
@@ -84,12 +86,12 @@ Local Open Scope R_scope.
    reuse=I_ok_circ,arc_gamma,cs_joint,host-I_ok-chord-chord
    not=new-kernel,CircGamma-Discharge,first-cook-noding,SQL-MM-done
    not=bag-noder,CurvePolygon,CRV-TOUCH-kiss,CurveSegment-remint
-   park=Hperp,Phase-B-CP
-   land=Phase-B-CC *)
+   park=Hperp,Phase-B-CP,Phase-B-CC-required-type
+   land=Phase-B.2 *)
 
 (* B.1 names, reused. Not imported so this letter can mark
-   phase_b_compound_curve_status Landed without clashing B.1's
-   letter-local Gap. *)
+   PhaseB2Landed without clashing B.1's letter-local Gap.
+   Required-type CC stays Gap (mixed LS–CS host Decline). *)
 Definition cs_joint := CircularCookCsConcat.cs_joint.
 Definition cs_joint_hit := CircularCookCsConcat.cs_joint_hit.
 Definition locked_cs_arc_1 := CircularCookCsConcat.locked_cs_arc_1.
@@ -491,7 +493,9 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Phase B.2 lands CompoundCurve. CP / H⊥ / SQL/MM cathedral stay parked.     *)
+(* Phase B.2 letter landed. CC required-type stays Gap (mixed Decline).
+   CP / H⊥ / SQL/MM cathedral stay parked. Letter landed ≠
+   required-type Landed / SQL/MM done.                                     *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive PhaseB2Status : Type :=
@@ -511,13 +515,13 @@ Inductive PhaseBGapStatus : Type :=
 | PhaseBRequiredLanded.
 
 Definition phase_b_compound_curve_status : PhaseBGapStatus :=
-  PhaseBRequiredLanded.
+  PhaseBRequiredGap.
 
 Definition phase_b_curve_polygon_status : PhaseBGapStatus :=
   PhaseBRequiredGap.
 
-Lemma phase_b_cc_is_landed :
-  phase_b_compound_curve_status = PhaseBRequiredLanded.
+Lemma phase_b_cc_is_gap :
+  phase_b_compound_curve_status = PhaseBRequiredGap.
 Proof.
   reflexivity.
 Qed.
@@ -575,7 +579,7 @@ Qed.
 
 Lemma b2_rest_parked :
   phase_b2_status = PhaseB2Landed
-  /\ phase_b_compound_curve_status = PhaseBRequiredLanded
+  /\ phase_b_compound_curve_status = PhaseBRequiredGap
   /\ phase_b_curve_polygon_status = PhaseBRequiredGap
   /\ b2_hperp_status = B2HperpParked
   /\ b2_circgamma_remint_status = B2CircGammaRemintParked
@@ -699,7 +703,7 @@ Proof.
   exact Hhost.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b2_park_qed_or_qex","title":"Phase B.2 discharges CurvePolygon, Hperp, CircGamma remint, and SQL/MM (QED) or names them parked / not-done and lands CompoundCurve (QEX); discharged QEX; B.2 landed; CC Landed; CP still a gap; not SQL/MM done","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b2_park_qed_or_qex","title":"Phase B.2 discharges CurvePolygon, Hperp, CircGamma remint, and SQL/MM (QED) or names them parked / not-done (QEX); discharged QEX; B.2 letter landed; CC required-type Gap (mixed LS-CS host Decline); CP still a gap; letter landed != required-type Landed; not SQL/MM done","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
 
 Theorem ticket_0007_b2_park_qed_or_qex :
   (phase_b_curve_polygon_status = PhaseBRequiredLanded
@@ -709,7 +713,7 @@ Theorem ticket_0007_b2_park_qed_or_qex :
    /\ cook_loop_status = LoopDischarged)
   \/
   (phase_b2_status = PhaseB2Landed
-   /\ phase_b_compound_curve_status = PhaseBRequiredLanded
+   /\ phase_b_compound_curve_status = PhaseBRequiredGap
    /\ phase_b_curve_polygon_status = PhaseBRequiredGap
    /\ b2_hperp_status = B2HperpParked
    /\ b2_circgamma_remint_status = B2CircGammaRemintParked
@@ -733,7 +737,7 @@ Print Assumptions b2_reuse_no_new_kernel.
 Print Assumptions b2_I_ok_circ_hit_not_host_I_ok.
 Print Assumptions b2_not_bag_noder.
 Print Assumptions phase_b2_is_landed.
-Print Assumptions phase_b_cc_is_landed.
+Print Assumptions phase_b_cc_is_gap.
 Print Assumptions phase_b_cp_is_gap.
 Print Assumptions b2_sql_mm_is_not_done.
 Print Assumptions ticket_0007_b2_mixed_qed_or_qex.
