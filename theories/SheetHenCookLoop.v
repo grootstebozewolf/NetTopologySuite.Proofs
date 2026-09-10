@@ -98,7 +98,9 @@ Proof.
   unfold leftover_quad_width.
   destruct (interior_hit_splits_width ti Hti) as [Ha _].
   destruct (interior_hit_splits_width tj Htj) as [Hb _].
-  rewrite Ha, Hb.
+  rewrite Ha.
+  rewrite Rplus_assoc.
+  rewrite Hb.
   reflexivity.
 Qed.
 
