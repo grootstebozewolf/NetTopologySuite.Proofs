@@ -300,138 +300,37 @@ _Avoid_: dart (coordinate pair), edge (unqualified)
 **Cook / 𝓘**:
 The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
 or 𝓘 Decline (no algorithm). Predicates never mint hens. On a Hit the
-cook may `split(t)` and mint one hen (letter after Accept; not the
-bag loop). On chord–chord, proper-cross signs license a constructed
-Hit via `Intersect.strict_intersection_point` (not a remint of that
-lemma; not a total `𝓘`; not `I_circles_z` / `I_CIRCULAR`; not
-glossary `𝓘` with γ / tᵢ,tⱼ). Host CircGamma stays QEX — named gap:
-Egg has no `MkCirc` constructor (circular eggs are only
-`MkOutOfScope`); chord-project nlerp misses the principal span on a
-reflex fixture (`CircularCook.v : reflex_nlerp_misses_principal`);
-sidecar `arc_gamma` is not host Γ; Discharge would need atan2 /
-Classic or a first-cook expand this letter does not make. A circular
-IHit does not feed host `try_cook_hit` (circular eggs stay
-`MkOutOfScope`); the 4-axiom sidecar cooks the locked circular Hit
-via `circ_gamma` `split(t)` without discharging CircGamma. On a
-two-root circular Hit the sidecar allocates `MintTwo` (`p+` and
-`p−` are both Hits). Empty / Decline / Touch mint nothing.
-Leftover shared endpoint is not a kiss. I.1 tickets the #666
-fence: `I_circles_z` ≠ `I_circles_gamma` ≠ sidecar cook ≠ host
-`I_gloss` (CircGamma QEX) by observation, not a type synonym.
-Touch ≠ IHit. Circular Empty ≠ Decline. Chord × circular Decline
-inhabits `I_ok`; a mixed Hit does not. I.2 drops the lock on
-`I_circles_gamma`: Hit iff proper discriminant and `on_full_circle`
-on both radical roots (γ_full, not arc membership). I.3: Empty iff
-proper pair and γ_full images disjoint on S; Decline iff not a
-proper pair (`d=0` or `r≤0`). Discriminant Empty and image-disjoint
-are different proofs. I.8: leftovers_ab = leftovers_ba on γ_full
-(circular analogue of `split_step_confluent`; not the bag loop).
-I.9: an `I_circles_z` / `I_CIRCULAR` Hit is tags 0/1, not
-glossary `(p*, tᵢ, tⱼ)`, and does not license host
-`try_cook_hit` / `circ_split` / first-cook expansion.
-I.10 closes Campaign I: sidecar cook exists on a constructed
-circular Hit (both roots); host CircGamma stays QEX;
-`first_cook_scope` stays chord–chord; `I_CIRCULAR` stays a
-classifier; the #666 fence holds; Campaign II and H⊥ were named
-parked at that close; no new kernel; not SQL/MM done.
-II.1 (Campaign II, first rung): a radical root is an **arc**
-Hit iff `on_arc_gamma` both — IResult / Hit|Empty|Decline-style
-filter on span γ, not γ_full. Locked (p+) in-span Hit; (p−)
-out-of-span Empty (still on γ_full). Host CircGamma stays QEX;
-host circular `I_ok` stays Decline.
-II.2: split each span interpolant `arc_gamma` at the Hit’s
-in-span `tᵢ` / `tⱼ`; leftovers meet at `p*` (Hit incidence, not
-a kiss); leftover γ stays on the parent circle. Locked `p−`
-stays Empty — no invented span cook. Not `circ_split` / γ_full.
-II.3: first glossary-type inhabitant `I_ok_circ` on
-EggCircularArc × EggCircularArc using sidecar `arc_gamma`
-(span filter + span split). Locked `p+` Hit licenses
-`span_split`; a far quarter of the I.3 disjoint circles
-inhabits Empty. Host CircGamma stays QEX; host circular
-`I_ok` stays Decline; `I_ok_circ` Hit ≠ host `I_ok`.
-`first_cook_scope` stays chord–chord. ∀ Hit / Empty /
-Decline as a Prop are definitional; not a computed
-classifier. II.4 closes Campaign II: `I_ok_circ` exists
-as the sidecar glossary inhabitant; host CircGamma stays
-QEX; `first_cook_scope` stays chord–chord; H⊥ stays
-parked; not a bag noder. Phase B SQL/MM Part 3
-**required**-type gaps are named (CircularString /
-CompoundCurve / CurvePolygon) — not SQL/MM done. A
-CircularString theorem needs concatenation; this is one
-Arc. B.1 (Phase B, first required-type cut): CircularString
-is a sequence of CircEgg; a concat joint is `I_ok_circ` Hit
-at `(arc_end, t=1, t=0)` via `arc_gamma`. Joint params are
-not interior. Reuse `I_ok_circ` — no new kernel. Locked
-2-arc V-CS odd_closed fixture. Host CircGamma stays QEX;
-host circular `I_ok` stays Decline. CompoundCurve /
-CurvePolygon / H⊥ stay parked. Not SQL/MM done. Not a
-CircGamma remint. B.2 (Phase B, CompoundCurve required-type
-cut): CompoundCurve is a sequence of LineString (chords) and
-CircularString (`CircEgg`) members. LS–LS joint is host
-`I_ok` Hit at `(ce_p1, t=1, t=0)`. CS–CS member joint reuses
-`I_ok_circ` / B.1 `cs_joint`. Mixed LS–CS joint is sidecar
-`I_ok_mixed` Hit at `(ce_p1, t=1, t=0)` (`SidecarCircMixed.v`);
-host `I_ok` mixed stays Decline (I.1); `I_ok_mixed` Hit ≠ host
-`I_ok`. Locked mixed fixture
-`COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))`.
-`phase_b_compound_curve_status` Landed (mixed `I_ok_mixed` Hit,
-not host `I_ok`). Letter B.2 landed ≠ SQL/MM done / Phase B
-done-when. Host CircGamma stays QEX. CurvePolygon letter /
-H⊥ / interior mixed cook stay parked. Not SQL/MM done. Not a
-CircGamma remint. Not a remint of `CurveSegment`.
-B.3 (Phase B, CurvePolygon required-type cut): a CP ring is
-a closed CircularString or closed CompoundCurve (B.2 members
-contiguous and closed; last joins first). Sequential joints
-stay B.2. CS–CS closing reuses `I_ok_circ` / B.1 `cs_joint`.
-LS–LS closing is host `I_ok`. Mixed closing is sidecar
-`I_ok_mixed` Hit at `(arc_end, t=1, t=0)`; host `I_ok` mixed
-stays Decline (I.1). Locked
-CS-ring
-`CURVEPOLYGON((CIRCULARSTRING(-5 0, 0 5, 5 0, 0 -5, -5 0)))`
-and mixed-ring
-`CURVEPOLYGON((COMPOUNDCURVE((-5 0, 5 0), CIRCULARSTRING(5 0, 0 -5, -5 0))))`.
-`phase_b_curve_polygon_status` Landed (mixed `I_ok_mixed` Hit,
-not host `I_ok`). Phase B Open — letter B.3 landed ≠ SQL/MM
-done / Phase B done-when. Host CircGamma stays QEX. H⊥ /
-CircGamma remint / bag-noder stay parked. Not SQL/MM done
-(cathedral / Multi / optional Part 3 types). Not a remint
-of `CurveSegment` / `CurveGeometry.CurvePolygon`.
-B-bags (Phase B, Multi as bags): MultiCurve is a bag of
-already-Qed Curve members (CS / CC); MultiSurface is a bag
-of already-Qed Surface members (CP). Members need not be
-contiguous (bag ≠ concat). Membership / pairwise joints
-reuse `I_ok` / `I_ok_circ` / `I_ok_mixed` (`SidecarCircBags.v`)
-— no new kernel. Host CircGamma stays QEX; host mixed `I_ok`
-stays Decline; interior circular×chord cook parked. Bag noder
-(`cook_loop`) stays obligation — named 508-style QEX
-(`SheetHenCookLoop.v` / `CookLoopBagTerm` missing;
-leftover_quad width conserved; kiss / ShareOne / MintTwo
-not covered). ρ leftover_quad ≠ η Multi bags. Multi
-required-type Gap
-(optional Part 3). Phase B Open — bags letter landed ≠
-cathedral Landed / Phase B done-when. Not SQL/MM done.
-ι (Phase B, interior circular×chord): sidecar `I_ok_mixed`
-Hit is gated by `mixed_joint_params` — the μ joint at
-`(end, t=1, t=0)` already Qed in `SidecarCircMixed.v` / B.2.
-An `interior_span_params` Hit does not inhabit `I_ok_mixed`
-(`SidecarCircInterior.v`). Named missing constructor: no
-interior-params Hit arm on `MixLsCs` / `MixCsLs`. Host mixed
-`I_ok` stays Decline; host CircGamma stays QEX; first cook
-stays chord–chord. ι is not μ, not host `I_ok`, not Γ.
-Interior cook stays parked. Letter landed ≠ cook Landed /
-cathedral Landed / Phase B done-when / Multi Landed.
-Pairwise
-interior split of chords is finite (width measure); bag-level
-termination and confluence of the repeat-until-noded loop remain
-named QEX of 𝓘 families (not pairwise-width Discharge). binary64 is a coordinate realization of
-points of `S`, not a second sheet. OverlayNGRobust is a snap-sequence
-`S → Λ`, not 𝓘. Snap-rounding is a different constructor under
-already-noded `G`. Display is a view. A **kiss** (tangent eggs,
-discriminant zero) is not a shared endpoint; CRV-TOUCH owns the
-certificate and keeps three tangency decision procedures live. Arc
-cook termination is a sister card. Accepting ADR-0007 is out of
-scope of that map.
+cook may `split(t)` and mint hens (`ShareOne` / `MintTwo`). Empty /
+Decline / Touch mint nothing. Leftover shared endpoint is not a kiss.
+First cook scope is chord–chord. Host circular / mixed `I_ok` is
+Decline for out-of-scope eggs. Sidecar `I_ok_circ` / `I_ok_mixed`
+Hit is not host `I_ok`. Four-object fence: `I_circles_z` ≠
+`I_circles_gamma` ≠ sidecar cook ≠ host `I_gloss`. Snap-rounding is
+a different constructor under already-noded `G`. Display is a view.
+binary64 realizes the same sheet. OverlayNGRobust is a snap-sequence
+`S → Λ`, not 𝓘. A **kiss** (tangent eggs, discriminant zero) is not
+a shared endpoint; CRV-TOUCH owns the certificate. Arc cook
+termination is a sister card. Accepting ADR-0007 is out of scope of
+that map. Campaign I / II / Phase B ticket evidence lives on the
+ADR-0007 checklist and in `docs/verified-claims.md`.
 _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared endpoint)
+
+**Parks Γ / ι / ρ** (named QEX, landed — ADR-0007 Parks):
+- **Γ CircGamma** — Egg has no `MkCirc`; nlerp misses the reflex
+  principal span (`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`,
+  `CircularCook.v : circ_gamma_mkcirc_missing`,
+  `CircularCook.v : reflex_nlerp_misses_principal`). Sidecar
+  `arc_gamma` is not host Γ.
+- **ι interior circular×chord** — `I_ok_mixed` Hit is joint-params
+  only (`SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex`,
+  `SidecarCircInterior.v : interior_mixed_hit_arm_missing`). ι is
+  not μ, not host `I_ok`, not Γ.
+- **ρ bag-loop** — `CookLoopBagTerm` missing; leftover_quad width
+  conserved (`Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex`,
+  `SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise
+  leftover-width is QED, not this item. ρ leftover_quad ≠ η Multi bags.
+_Avoid_: atan2-free interpolant remaining (the named Γ gap), soft bool
+for CircGamma / interior / bag loop, noder (the full loop)
 
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
@@ -505,4 +404,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed; see `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
