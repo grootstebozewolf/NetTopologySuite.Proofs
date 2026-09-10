@@ -230,8 +230,11 @@ Lemma mixed_joint_params_not_interior :
   forall ti tj,
     mixed_joint_params ti tj -> ~ interior_span_params ti tj.
 Proof.
-  intros ti tj [ [Hti Htj] | [Hti Htj] ];
-    intros [[_ Hi] _]; subst; lra.
+  intros ti tj Hm Hinner.
+  unfold mixed_joint_params in Hm.
+  unfold interior_span_params, CircularCookCsConcat.interior_span_params in Hinner.
+  destruct Hm as [[-> ->] | [-> ->]];
+    destruct Hinner as [[Hlo Hhi] _]; lra.
 Qed.
 
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ls_cs_joint_I_ok_mixed","title":"Phase B mixed forall LS-CS CompoundCurve joint is I_ok_mixed Hit at (ce_p1, t=1, t=0) via chord_eval and sidecar arc_gamma; concat incidence; no interior arc-chord cook; no new kernel","file":"theories/SidecarCircMixed.v","witness":"0007-B-mixed-ls-cs-joints","board":"ADR-0007"} *)
