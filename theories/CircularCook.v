@@ -192,12 +192,7 @@ Qed.
 
 Lemma one_lt_sqrt2 : 1 < sqrt 2.
 Proof.
-  apply Rnot_le_lt. intro Hle.
-  assert (Hz : 0 <= sqrt 2).
-  { apply Rlt_le. apply sqrt_lt_R0. lra. }
-  assert (Hprod : sqrt 2 * sqrt 2 <= 1 * 1).
-  { apply Rmult_le_compat; [exact Hz | exact Hz | exact Hle | exact Hle]. }
-  rewrite sqrt2_sq in Hprod. lra.
+  rewrite <- sqrt_1. apply sqrt_lt_1; lra.
 Qed.
 
 Lemma reflex_nlerp_misses_principal :
@@ -217,12 +212,17 @@ Proof.
 Qed.
 
 (* Piecewise nlerp start→mid→end is not total: this reflex half
-   is antipodal, so (start−O)+(mid−O) = 0 and normalize fails. *)
-Lemma reflex_piecewise_nlerp_degenerate :
+   is antipodal, so (start−O)+(mid−O) = 0 and normalize fails.
+   Named Prop (not the lemma itself) so tickets can conjoin it. *)
+Definition reflex_piecewise_nlerp_degenerate : Prop :=
   px reflex_start + px reflex_mid = 0 /\
   py reflex_start + py reflex_mid = 0.
+
+Lemma reflex_piecewise_nlerp_degenerate_holds :
+  reflex_piecewise_nlerp_degenerate.
 Proof.
-  unfold reflex_start, reflex_mid. cbn [px py]. split; ring.
+  unfold reflex_piecewise_nlerp_degenerate, reflex_start, reflex_mid.
+  cbn [px py]. split; ring.
 Qed.
 
 (* Chord interpolant inhabits the host. Circular γ does not. *)
@@ -358,7 +358,7 @@ Proof.
   right.
   split; [exact circular_gamma_is_qex|].
   split; [exact reflex_nlerp_misses_principal|].
-  exact reflex_piecewise_nlerp_degenerate.
+  exact reflex_piecewise_nlerp_degenerate_holds.
 Qed.
 
 Print Assumptions circular_gamma_is_qex.
@@ -370,7 +370,7 @@ Print Assumptions two_over_sqrt2.
 Print Assumptions one_lt_sqrt2.
 Print Assumptions reflex_nlerp_half_eval.
 Print Assumptions reflex_nlerp_misses_principal.
-Print Assumptions reflex_piecewise_nlerp_degenerate.
+Print Assumptions reflex_piecewise_nlerp_degenerate_holds.
 Print Assumptions host_chord_gamma_inhabits.
 Print Assumptions locked_I_circles_on_z_sheet_hit.
 Print Assumptions locked_I_circles_touch.
