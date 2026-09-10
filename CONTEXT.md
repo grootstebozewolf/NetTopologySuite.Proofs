@@ -401,6 +401,16 @@ stays Decline; interior circular×chord cook parked. Bag noder
 (`cook_loop`) stays obligation. Multi required-type Gap
 (optional Part 3). Phase B Open — bags letter landed ≠
 cathedral Landed / Phase B done-when. Not SQL/MM done.
+ι (Phase B, interior circular×chord): sidecar `I_ok_mixed`
+Hit is gated by `mixed_joint_params` — the μ joint at
+`(end, t=1, t=0)` already Qed in `SidecarCircMixed.v` / B.2.
+An `interior_span_params` Hit does not inhabit `I_ok_mixed`
+(`SidecarCircInterior.v`). Named missing constructor: no
+interior-params Hit arm on `MixLsCs` / `MixCsLs`. Host mixed
+`I_ok` stays Decline; host CircGamma stays QEX; first cook
+stays chord–chord. ι is not μ, not host `I_ok`, not Γ.
+Interior cook stays parked. Letter landed ≠ cook Landed /
+cathedral Landed / Phase B done-when / Multi Landed.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain

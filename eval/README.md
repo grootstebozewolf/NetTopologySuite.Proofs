@@ -284,6 +284,17 @@ parked; Multi required-type Gap; Phase B Open; letter landed ≠
 cathedral Landed / Phase B done-when; no new kernel):
 `theories/SidecarCircBags.v`. 4-axiom atan2 sidecar.
 
+Production home for 0007-iota-interior-mixed (Phase B ι
+interior circular×chord; `I_ok_mixed` Hit is gated by
+`mixed_joint_params`; μ joint at `(end, 1, 0)` already Qed;
+an `interior_span_params` Hit does not inhabit `I_ok_mixed`;
+named missing constructor — no interior-params Hit arm;
+host mixed `I_ok` stays Decline; CircGamma stays QEX; first
+cook stays chord–chord; interior cook stays parked; letter
+landed ≠ cook Landed / cathedral Landed / Phase B done-when;
+ι ≠ μ ≠ host `I_ok` ≠ Γ; no new kernel):
+`theories/SidecarCircInterior.v`. 4-axiom atan2 sidecar.
+
 Production home for 64-naa-res (constructor ⇒ affine circle–circle
 resultant root under `circles_properly_intersect`; not the converse
 and not a Bézout/degree proof): `theories/CircleCircleResultant.v`.

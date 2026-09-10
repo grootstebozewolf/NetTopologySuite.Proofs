@@ -297,6 +297,7 @@ cross-link are the coupling. Status of ADR-0006 stays Accepted.
 | — | Phase B.2 CompoundCurve member joints | `CircularCookCcConcat.v : ticket_0007_b2_mixed_qed_or_qex` | **QED** — locked mixed LS+CS CC contiguous; mixed joint is `I_ok_mixed` Hit; host `I_ok` stays Decline | `CircularCookCcConcat.v : locked_cc_mixed_contiguous`, `CircularCookCcConcat.v : locked_cc_mixed_I_ok_mixed` |
 | — | Phase B.3 CurvePolygon ring closure | `CircularCookCpConcat.v : ticket_0007_b3_closed_qed_or_qex` | **QED** — locked CS / mixed rings closed + contiguous; CS closing `I_ok_circ`; mixed closing `I_ok_mixed` | `CircularCookCpConcat.v : locked_cp_cs_ring_closed`, `CircularCookCpConcat.v : locked_cp_mixed_closing_I_ok_mixed` |
 | — | Phase B MultiCurve / MultiSurface bags | `SidecarCircBags.v : ticket_0007_b_bags_inhabit_qed_or_qex` | **QED** — MultiCurve / MultiSurface inhabit as bags of already-Qed CS / CC / CP members; bag ≠ concat | `SidecarCircBags.v : locked_mc_typed_ok`, `SidecarCircBags.v : locked_ms_ok`, `SidecarCircBags.v : bags_not_concat` |
+| — | Phase B ι interior circular×chord | `SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex` | **QEX** — `I_ok_mixed` Hit is joint-only; interior-params arm missing; do not remint `I_ok_mixed` / CircGamma / host `I_ok` | `SidecarCircInterior.v : interior_mixed_hit_arm_missing`, `SidecarCircInterior.v : I_ok_mixed_interior_hit_false` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -991,3 +992,39 @@ Status.
 | `SidecarCircBags.v : ticket_0007_b_bags_park_qed_or_qex` | **QEX** — bag noder / H⊥ / CircGamma remint / SQL/MM cathedral parked; Multi required-type Gap; Phase B Open; bags letter landed | `SidecarCircBags.v : bags_letter_is_landed`, `SidecarCircBags.v : multi_required_is_gap`, `SidecarCircBags.v : bags_cathedral_is_not_landed` |
 
 Witness: `0007-B-bags`. Status stays **Accepted**. Host CircGamma stays QEX.
+
+### Letter after Accept — ι interior circular×chord (2026-09-10)
+
+Sidecar `I_ok_mixed` already inhabits the μ LS–CS / CS–LS joint
+at `(end, t=1, t=0)` (`SidecarCircMixed.v`). That Hit is concat
+incidence, not an interior proper-cross. `mixed_joint_params` is
+`(1,0)` or `(0,1)`; `interior_span_params` is `0<ti<1 ∧ 0<tj<1`.
+Those fences are incompatible
+(`SidecarCircMixed.v : mixed_joint_params_not_interior`).
+
+**QEX** (discharged). An interior `I_ok_mixed` Hit is not
+available without reminting `I_ok_mixed`'s Hit arm, expanding
+`first_cook_scope` to circular×chord, or reminting CircGamma /
+host `I_ok`. Named gap, not a bool:
+
+1. `I_ok_mixed` Hit is gated by `mixed_joint_params`. Any Hit
+   therefore has `~ interior_span_params`
+   (`SidecarCircInterior.v : I_ok_mixed_hit_is_joint_params`).
+2. The would-be interior arm (`on_chord ∧ on_arc_gamma ∧
+   interior_span_params`) does not inhabit `I_ok_mixed`
+   (`SidecarCircInterior.v : interior_arm_not_I_ok_mixed`).
+3. Host mixed `I_ok` Hit stays False; first cook stays
+   chord–chord. Host CircGamma stays QEX.
+
+ι is not μ. ι is not host `I_ok`. ι is not Γ. Letter landed ≠
+interior cook Landed / Phase B done-when / cathedral Landed /
+Multi required-type Landed. ADR-0007 stays Accepted.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex` | **QEX** — `I_ok_mixed` Hit is joint-only; interior arm missing | `SidecarCircInterior.v : interior_mixed_hit_arm_missing`, `SidecarCircInterior.v : I_ok_mixed_interior_hit_false` |
+| `SidecarCircInterior.v : ticket_0007_iota_mu_qed_or_qex` | **QED** — μ joint still inhabits `I_ok_mixed` at `(end, 1, 0)` and is not interior | `SidecarCircInterior.v : iota_mu_joint_not_interior` |
+| `SidecarCircInterior.v : ticket_0007_iota_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; host mixed `I_ok` Decline | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
+| `SidecarCircInterior.v : ticket_0007_iota_park_qed_or_qex` | **QEX** — interior cook / H⊥ / bag noder / cathedral parked; Phase B Open; ι letter landed | `SidecarCircInterior.v : iota_letter_is_landed`, `SidecarCircInterior.v : iota_interior_cook_is_parked` |
+
+Witness: `0007-iota-interior-mixed`. Status stays **Accepted**. Host CircGamma stays QEX.

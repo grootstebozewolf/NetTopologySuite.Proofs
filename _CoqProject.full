@@ -2946,6 +2946,20 @@ theories/CircularCookCpConcat.v
 # CpConcat / CcConcat / CsConcat / OkCirc / Span). No new kernel.
 # Not first cook scope. Not a noder.
 theories/SidecarCircBags.v
+# Phase B ι interior circular×chord cook (SidecarCircInterior).
+# Honest QEX: I_ok_mixed Hit is gated by mixed_joint_params
+# (μ joint at (end, 1, 0) already Qed). An interior_span_params
+# Hit does not inhabit I_ok_mixed. Named missing constructor:
+# no interior-params Hit arm on MixLsCs / MixCsLs. Host I_ok
+# mixed stays Decline (I.1). Host CircGamma stays QEX.
+# first_cook_scope stays chord–chord. Do not remint I_ok_mixed
+# / CircGamma / host I_ok. Interior cook stays parked. Letter
+# landed ≠ cook Landed / cathedral Landed / Phase B done-when /
+# Multi Landed. H⊥ / bag-loop / SQL/MM cathedral parked.
+# 4-axiom atan2 sidecar (classic via SidecarCircMixed / CsConcat
+# / OkCirc / Span). No new kernel. Not first cook scope. Not a
+# noder. Not a CRV-TOUCH kiss.
+theories/SidecarCircInterior.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
