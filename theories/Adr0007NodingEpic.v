@@ -90,15 +90,19 @@
    I_ok_circ / B.2 host I_ok / I_ok_mixed; not Required here).
    Phase B MultiCurve / MultiSurface bags live in
    SidecarCircBags.v (4-axiom sidecar reuse of B.1–B.3 /
-   I_ok_mixed; bag ≠ concat; not Required here). Host CircGamma
-   stays QEX. first cook stays chord–chord. H⊥ stays parked.
-   Not a bag noder. Phase B.1–B.3 letters landed.
-   Mixed LS–CS inhabits sidecar I_ok_mixed; host I_ok mixed
-   stays Decline (I.1). Required-type CC / CP Landed (mixed
-   I_ok_mixed Hit, not host I_ok); CS stays Gap; Multi stays
-   Gap (optional Part 3 bag inhabitant, not required-type).
-   Phase B stays Open — letter landed ≠ SQL/MM done / Phase B
-   done-when / cathedral Landed. Not this host module.
+   I_ok_mixed; bag ≠ concat; not Required here). Phase B ι
+   interior circular×chord cook lives in SidecarCircInterior.v
+   (4-axiom sidecar QEX: I_ok_mixed Hit is joint-only; not
+   Required here). Host CircGamma stays QEX. first cook stays
+   chord–chord. H⊥ stays parked. Not a bag noder.
+   Phase B.1–B.3 letters landed. Mixed LS–CS inhabits sidecar
+   I_ok_mixed; host I_ok mixed stays Decline (I.1). Interior
+   mixed cook stays parked (named mixed_joint_params gate).
+   Required-type CC / CP Landed (mixed I_ok_mixed Hit, not
+   host I_ok); CS stays Gap; Multi stays Gap (optional Part 3
+   bag inhabitant, not required-type). Phase B stays Open —
+   letter landed ≠ SQL/MM done / Phase B done-when /
+   cathedral Landed. Not this host module.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
