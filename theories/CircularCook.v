@@ -183,9 +183,9 @@ Qed.
 
 Lemma two_over_sqrt2 : 2 * / sqrt 2 = sqrt 2.
 Proof.
-  apply (Rmult_eq_reg_r (sqrt 2)); [exact sqrt2_neq_0|].
-  rewrite Rmult_assoc, Rinv_l, Rmult_1_r; [|exact sqrt2_neq_0].
-  symmetry. exact sqrt2_sq.
+  rewrite <- sqrt2_sq at 1.
+  rewrite Rmult_assoc, Rinv_r, Rmult_1_r; [|exact sqrt2_neq_0].
+  reflexivity.
 Qed.
 
 Lemma one_lt_sqrt2 : 1 < sqrt 2.
@@ -195,20 +195,6 @@ Proof.
   { apply Rmult_le_compat; try lra.
     apply Rlt_le. apply sqrt_lt_R0. lra. }
   rewrite sqrt2_sq in H. lra.
-Qed.
-
-Lemma reflex_nlerp_half_on_unit_circle :
-  px reflex_nlerp_half * px reflex_nlerp_half
-  + py reflex_nlerp_half * py reflex_nlerp_half = 1.
-Proof.
-  unfold reflex_nlerp_half. cbn [px py]. unfold Rdiv.
-  replace (1 * / sqrt 2 * (1 * / sqrt 2)
-           + 1 * / sqrt 2 * (1 * / sqrt 2))
-    with (2 * (/ sqrt 2 * / sqrt 2)) by ring.
-  replace (/ sqrt 2 * / sqrt 2) with (/ (sqrt 2 * sqrt 2)).
-  2: { symmetry. apply Rinv_mult_distr; exact sqrt2_neq_0. }
-  rewrite sqrt2_sq.
-  apply Rinv_r. lra.
 Qed.
 
 Lemma reflex_nlerp_misses_principal :
@@ -376,8 +362,10 @@ Print Assumptions circular_gamma_is_qex.
 Print Assumptions circular_not_first_cook_scope.
 Print Assumptions circ_gamma_mkcirc_missing.
 Print Assumptions circular_egg_only_out_of_scope.
+Print Assumptions sqrt2_sq.
+Print Assumptions two_over_sqrt2.
+Print Assumptions one_lt_sqrt2.
 Print Assumptions reflex_nlerp_half_eval.
-Print Assumptions reflex_nlerp_half_on_unit_circle.
 Print Assumptions reflex_nlerp_misses_principal.
 Print Assumptions reflex_piecewise_nlerp_degenerate.
 Print Assumptions host_chord_gamma_inhabits.
