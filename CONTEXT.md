@@ -317,12 +317,15 @@ that map. Campaign I / II / Phase B ticket evidence lives on the
 ADR-0007 checklist and in `docs/verified-claims.md`.
 _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared endpoint)
 
-**Parks Γ / ι / ρ** (named QEX, landed — ADR-0007 Parks):
-- **Γ CircGamma** — Egg has no `MkCirc`; nlerp misses the reflex
-  principal span (`CircularCook.v : ticket_64_circ_gamma_qed_or_qex`,
-  `CircularCook.v : circ_gamma_mkcirc_missing`,
-  `CircularCook.v : reflex_nlerp_misses_principal`). Sidecar
-  `arc_gamma` is not host Γ.
+**Parks ι / ρ** (named QEX, landed — ADR-0007 Parks). **Γ CircGamma**
+is discharged by host `MkCirc` (claimId `0007-gamma-mkcirc`):
+- **Γ CircGamma** — `circular_gamma_status = CircGammaDischarged`
+  (`CircularCook.v : circular_gamma_is_discharged`,
+  `CircularCook.v : circ_gamma_mkcirc_inhabits`,
+  `CircularCook.v : ticket_64_circ_gamma_qed_or_qex`). Host γ is
+  atan2-free `θ₀ + t·Δθ` on `CircularEgg`. nlerp still misses the
+  reflex principal span (`CircularCook.v : reflex_nlerp_misses_principal`)
+  — that is not the remaining Γ hole. Sidecar `arc_gamma` is not host Γ.
 - **ι interior circular×chord** — `I_ok_mixed` Hit stays
   joint-params only (`SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex`,
   `SidecarCircInterior.v : interior_mixed_hit_arm_missing`). Sidecar
@@ -334,8 +337,8 @@ _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared end
   conserved (`Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex`,
   `SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise
   leftover-width is QED, not this item. ρ leftover_quad ≠ η Multi bags.
-_Avoid_: atan2-free interpolant remaining (the named Γ gap), soft bool
-for CircGamma / interior / bag loop, noder (the full loop)
+_Avoid_: reminting sidecar `I_ok_circ` as host Γ, soft bool
+for interior / bag loop, noder (the full loop)
 
 **NodingNG (chord)**:
 The product face of ADR-0007 first-cook on one sheet: pairwise 𝓘 +
@@ -425,11 +428,11 @@ vocabulary (`SidecarCircEgg.v : sidecar_circ_egg_inhabits`,
 the already-Qed host Decline fence (`circular_decline_I_ok`,
 `try_cook_hit_circular_hit_none`). Locked unit-square chords
 demote to NodingNG / host first cook, not a circular Hit.
-Circular×circular is not first cook; MkCirc / CircGamma / host
-Hit arm stay named QEX
-(`SidecarCircEgg.v : ticket_0007_circle_not_first_cook_qed_or_qex`).
-Does not remint CircularCook* Campaign I/II or Parks Γ Discharge.
-_Avoid_: host circular cook, CircGamma Discharge, MkCirc, Campaign I, I_ok_circ remint
+Sidecar CircEgg stays packaging: host Decline-on-tag plus demoted
+chord seed (`SidecarCircEgg.v : ticket_0007_circle_not_first_cook_qed_or_qex`).
+Host circular cook is MkCirc (claimId `0007-gamma-mkcirc`), not this
+sidecar. Does not remint CircularCook* Campaign I/II as host.
+_Avoid_: reminting sidecar CircEgg as host MkCirc, Campaign I, I_ok_circ remint
 
 **Elliptic egg (sidecar)**:
 The product / sidecar face of `EggEllipse` on the ADR-0007
@@ -544,4 +547,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): Decline-on-host + RelateClothoid chord-seed; clothoid×clothoid stays QEX. NURBS egg sidecar is the next cook-axis EggClass face (`theories/SidecarNurbsEgg.v`): Decline-on-host + demoted unit-square chord-seed; NURBS×NURBS stays QEX; #508 length stays metric. Sinusoid (SIN) egg sidecar is the next cook-axis EggClass face (`theories/SidecarSinEgg.v`): Decline-on-host + demoted unit-square chord-seed; sinusoid×sinusoid stays QEX; thin Spectre profile corpus stays research, not cook. Circle / circular egg sidecar is the next cook-axis EggClass face (`theories/SidecarCircEgg.v`): packages host EggCircularArc Decline + demoted unit-square chord-seed; circular×circular / MkCirc / CircGamma stay QEX (Parks Γ cited, not reminted). Elliptical Curve / EllipticArc egg sidecar is the next cook-axis EggClass face (`theories/SidecarEllipticEgg.v`): Decline-on-host + RelateEllipticArc chord-seed; ellipse×ellipse stays QEX; #508 ellipse length / elliptic-E stay metric. SQL/MM GeodesicString egg sidecar is the next cook-axis EggClass face (`theories/SidecarGeodesicEgg.v`): Decline-on-host + demoted unit-square chord-seed; geodesic×geodesic stays QEX; type-zoo packaging (MkOutOfScope), not Γ progress. SQL/MM ST_SpiralCurve egg sidecar is the last Lesson-1 cook-axis EggClass face (`theories/SidecarSpiralEgg.v`): Decline-on-host + demoted unit-square chord-seed; five ISO names + Unknown on one egg; `EggClothoid` stays; spiral×spiral stays QEX; type-zoo packaging (MkOutOfScope), not Γ / not 𝓘 progress. ι interior Hit discharge is the sidecar circular×chord face (`theories/SidecarCircInteriorHit.v`): distinct `I_ok_interior` Hit; `I_ok_mixed` joint gate stands. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks ι / ρ remain landed named QEX. Γ CircGamma is discharged by host MkCirc (claimId `0007-gamma-mkcirc`; `CircularCook.v : circular_gamma_is_discharged`). NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): Decline-on-host + RelateClothoid chord-seed; clothoid×clothoid stays QEX. NURBS egg sidecar is the next cook-axis EggClass face (`theories/SidecarNurbsEgg.v`): Decline-on-host + demoted unit-square chord-seed; NURBS×NURBS stays QEX; #508 length stays metric. Sinusoid (SIN) egg sidecar is the next cook-axis EggClass face (`theories/SidecarSinEgg.v`): Decline-on-host + demoted unit-square chord-seed; sinusoid×sinusoid stays QEX; thin Spectre profile corpus stays research, not cook. Circle / circular egg sidecar is the next cook-axis EggClass face (`theories/SidecarCircEgg.v`): packages host EggCircularArc tag-Decline + demoted unit-square chord-seed; host circular cook is MkCirc (`theories/CircularCookMkCirc.v`), not this sidecar. Elliptical Curve / EllipticArc egg sidecar is the next cook-axis EggClass face (`theories/SidecarEllipticEgg.v`): Decline-on-host + RelateEllipticArc chord-seed; ellipse×ellipse stays QEX; #508 ellipse length / elliptic-E stay metric. SQL/MM GeodesicString egg sidecar is the next cook-axis EggClass face (`theories/SidecarGeodesicEgg.v`): Decline-on-host + demoted unit-square chord-seed; geodesic×geodesic stays QEX; type-zoo packaging (MkOutOfScope), not Γ progress. SQL/MM ST_SpiralCurve egg sidecar is the last Lesson-1 cook-axis EggClass face (`theories/SidecarSpiralEgg.v`): Decline-on-host + demoted unit-square chord-seed; five ISO names + Unknown on one egg; `EggClothoid` stays; spiral×spiral stays QEX; type-zoo packaging (MkOutOfScope), not Γ / not 𝓘 progress. ι interior Hit discharge is the sidecar circular×chord face (`theories/SidecarCircInteriorHit.v`): distinct `I_ok_interior` Hit; `I_ok_mixed` joint gate stands. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.

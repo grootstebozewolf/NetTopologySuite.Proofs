@@ -5,7 +5,8 @@
    ticket 522).
 
    The noding constructor is part of the specification: sheet, hen,
-   egg, chicken, cook / 𝓘. First cook scope is chord–chord only.
+   egg, chicken, cook / 𝓘. First cook scope is chord–chord and
+   circular–circular (MkCirc). Mixed and tags stay Decline.
 
    QED: chord–chord inhabits the cook interface; Empty ≠ Decline;
    ShareOne mints one hen; noded-on-S is cook evidence.
@@ -57,14 +58,14 @@
    (`ticket_0007_share_constructed_qed_or_qex` discharges left).
    Not a remint of Intersect. Not a total 𝓘.
 
-   Letter after Accept (not a noder): a circular IHit still cannot
-   feed the host cook step. Circular eggs stay MkOutOfScope;
-   try_cook_hit returns None. `ticket_0007_circ_host_cook_qed_or_qex`
-   discharges right. First cook scope stays chord–chord. Host
-   CircGamma stays QEX (CircularCook.v). The 4-axiom sidecar
+   Letter after Accept (not a noder): MkCirc IHit feeds the host
+   cook step. `ticket_0007_circ_host_cook_qed_or_qex` discharges
+   left on the locked quarter-circle pair (CircularCookMkCirc.v).
+   MkOutOfScope EggCircularArc tags still return None. Host
+   CircGamma is discharged (CircularCook.v). The 4-axiom sidecar
    CircularCookSplit.v feeds the locked circular Hit into a
    same-shape split(t) cook; I.7 MintTwo / p- lives there too.
-   That is not this host module. Do not fake CircGamma Discharge.
+   That is not this host module. Host CircGamma Discharge is MkCirc.
    I.1 Fence: chord × circular Decline inhabits I_ok (honest host
    arm). A constructed mixed Hit does not. The four-object pairwise
    fence lives in CircularCookSplit.v — not a type synonym.
@@ -72,8 +73,9 @@
    Z-classifier Hit is tags 0/1 and does not license host
    try_cook_hit / circ_split / first_cook_scope expansion.
    I.10 Campaign-I close lives in CircularCookClose.v — sidecar
-   cook on both roots; CircGamma stays QEX; first cook stays
-   chord–chord; I_CIRCULAR stays a classifier; #666 fence holds;
+   cook on both roots; CircGamma is discharged by MkCirc; first
+   cook includes circular–circular; I_CIRCULAR stays a classifier;
+   #666 fence holds;
    Campaign II and H⊥ were named parked at that close.
    II.1 span filter as IResult lives in CircularCookSpanFilter.v
    (4-axiom sidecar; not Required here). II.2 span split at
@@ -96,8 +98,9 @@
    I_ok_mixed; bag ≠ concat; not Required here). Phase B ι
    interior circular×chord cook lives in SidecarCircInterior.v
    (4-axiom sidecar QEX: I_ok_mixed Hit is joint-only; not
-   Required here). Host CircGamma stays QEX. first cook stays
-   chord–chord. H⊥ stays parked. Not a bag noder.
+   Required here). Host CircGamma is discharged (MkCirc). first
+   cook includes circular–circular. Mixed stays sidecar. H⊥ stays
+   parked. Not a bag noder.
    Phase B.1–B.3 letters landed. Mixed LS–CS inhabits sidecar
    I_ok_mixed; host I_ok mixed stays Decline (I.1). Interior
    mixed cook stays parked (named mixed_joint_params gate).
@@ -118,12 +121,12 @@
    ι interior Hit discharge lives in
    SidecarCircInteriorHit.v (4-axiom sidecar; I_ok_interior
    ≠ I_ok_mixed; joint gate stands; not Required here).
-   First cook stays chord–chord.
+   First cook is chord–chord and circular–circular (MkCirc).
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
    not I_circles_z / I_CIRCULAR and not glossary I with gamma / t.
-   Host CircGamma stays QEX. Do not remint CurveSegment / Exact*
+   Host CircGamma is discharged by MkCirc. Do not remint CurveSegment / Exact*
    zoo types / Dart. Do not steal 508-* / 522-* board mints. Do
    not claim a complete FP noder or close Hobby. Do not close 510.
 
@@ -145,7 +148,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals.
-From NTS.Proofs Require Import Distance Segment SheetHenCook SheetHenCookLoop.
+From NTS.Proofs Require Import Distance Segment SheetHenCook SheetHenCookLoop
+  CircularCookMkCirc.
 Local Open Scope R_scope.
 
 (* ADR-0007 stop: every egg-class pair is in first cook scope (QED)
@@ -467,25 +471,24 @@ Proof.
            crossing_proper_cross_signs).
 Qed.
 
-(* Next rung: a circular IHit feeds the host cook step (QED) or the
-   host cook still declines circular eggs (QEX). Discharged QEX —
-   MkOutOfScope EggCircularArc is not first cook scope, so
-   try_cook_hit returns None even when the result is IHit.
-   CircGamma stays QEX in CircularCook.v; do not fake Discharge.
+(* Next rung: MkCirc IHit feeds the host cook step (QED) or the
+   host cook still declines circular tags (QEX). Discharged QED —
+   locked MkCirc chickens mint via try_cook_hit. Tags stay None.
+   CircGamma is discharged in CircularCook.v. Mixed stays sidecar.
    Not a remint of ArcSplitAtNode. Kiss/Touch is not this stop. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_host_cook_qed_or_qex","title":"ADR-0007 circular IHit feeds the host cook (QED) or try_cook_hit still declines circular eggs (QEX); discharged QEX; CircGamma stays QEX","file":"theories/Adr0007NodingEpic.v","witness":"0007-circ-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_circ_host_cook_qed_or_qex","title":"ADR-0007 MkCirc IHit feeds the host cook (QED) or try_cook_hit still declines circular tags (QEX); discharged QED; CircGamma MkCirc mint; tags stay None","file":"theories/Adr0007NodingEpic.v","witness":"0007-circ-cook","board":"ADR-0007"} *)
 Theorem ticket_0007_circ_host_cook_qed_or_qex :
   (exists cp : CookedPair,
-     try_cook_hit circular_ck1 circular_ck2
-       (IHit cross_pt (1 / 2) (1 / 2)) crossing_hen = Some cp)
+     try_cook_hit locked_mkcirc_ck1 locked_mkcirc_ck2
+       locked_mkcirc_hit crossing_hen = Some cp)
   \/
   (try_cook_hit circular_ck1 circular_ck2
      (IHit cross_pt (1 / 2) (1 / 2)) crossing_hen = None
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+   /\ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
-  right.
-  split; [apply try_cook_hit_circular_hit_none|].
-  exact circular_egg_not_first_cook_scope.
+  left.
+  exists cooked_mkcirc.
+  exact cooked_mkcirc_try.
 Qed.
 
 (* I.1: chord × circular Decline inhabits I_ok (QED) or a mixed

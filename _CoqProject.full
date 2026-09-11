@@ -2810,10 +2810,18 @@ theories/RelateCurveMatrix.v
 # encodes as F, never '?'. Discharged QEX on CRR_Unknown. Stdlib + DE9IM
 # only. Does not remint WireCell / 522-f. No Admitted.
 theories/RelateCurveAlphabet.v
+# ADR-0007 CircularEgg payload for host MkCirc (claimId 0007-gamma-mkcirc).
+# Host/pure-R. atan2-free angle interpolant. Required by SheetHenCook.
+theories/SheetHenCircEgg.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
-# Host/pure-R. First cook scope is chord–chord. Does not remint
+# Host/pure-R. First cook scope is chord–chord and circular–circular
+# (MkCirc). Does not remint
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
 theories/SheetHenCook.v
+# ADR-0007 Γ host MkCirc / CircGamma locked fixture (claimId 0007-gamma-mkcirc).
+# Host/pure-R. atan2-free CircularEgg interpolant; I_ok Hit + try_cook_hit
+# mint on two MkCirc chickens. Tags / mixed stay Decline. 3-axiom.
+theories/CircularCookMkCirc.v
 # ρ bag-loop named QEX gap (508-style missing CookLoopBagTerm).
 # Host/pure-R. leftover_quad width conserved; kiss/share/mint not
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi

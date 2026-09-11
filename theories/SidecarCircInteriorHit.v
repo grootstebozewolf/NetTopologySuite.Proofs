@@ -117,9 +117,9 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Lemma iota_hit_host_circgamma_qex :
-  circular_gamma_status = CircGammaQEX.
+  circular_gamma_status = CircGammaDischarged.
 Proof.
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 Lemma iota_hit_first_cook_stays_chord_chord :
@@ -535,8 +535,8 @@ Theorem ticket_0007_iota_interior_host_qed_or_qex :
         I_ok (MkChord locked_interior_ls) (MkOutOfScope EggCircularArc)
              (IHit p ti tj))
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord
    /\ ~ first_cook_scope EggChord EggCircularArc
    /\ ~ SidecarCircInterior.interior_mixed_constructor_inhabits
@@ -557,7 +557,7 @@ Proof.
   right.
   destruct locked_interior_hit_not_host_I_ok as [Hhit Hhost].
   split; [exact iota_hit_host_circgamma_qex|].
-  split; [exact circular_not_first_cook_scope|].
+  split; [exact circular_is_first_cook_scope|].
   split; [exact iota_hit_first_cook_stays_chord_chord|].
   split; [exact iota_hit_not_first_cook_mixed|].
   split; [exact SidecarCircInterior.interior_mixed_hit_arm_missing|].

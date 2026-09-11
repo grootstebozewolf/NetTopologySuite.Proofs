@@ -202,13 +202,13 @@ Theorem ticket_0007_i8_scope_qed_or_qex :
    /\ cook_loop_status = LoopDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
-  (circular_gamma_status = CircGammaQEX
+  (circular_gamma_status = CircGammaDischarged
    /\ cook_loop_status = LoopObligation
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+   /\ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
   right.
-  split; [exact circular_gamma_is_qex|].
-  split; [exact cook_loop_is_obligation|exact circular_not_first_cook_scope].
+  split; [exact circular_gamma_is_discharged|].
+  split; [exact cook_loop_is_obligation|exact circular_is_first_cook_scope].
 Qed.
 
 Print Assumptions circ_split_step_confluent.

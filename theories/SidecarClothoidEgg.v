@@ -175,8 +175,7 @@ Lemma sidecar_clothoid_try_cook_hit_none :
       = None.
 Proof.
   intros p ti tj h.
-  apply try_cook_hit_out_of_scope_none.
-  left. discriminate.
+  reflexivity.
 Qed.
 
 Lemma sidecar_clothoid_empty_neq_decline : IEmpty <> IDecline.
@@ -302,11 +301,11 @@ Qed.
 Lemma sidecar_clothoid_first_cook_stays_chord_chord :
   first_cook_scope EggChord EggChord /\
   ~ first_cook_scope EggClothoid EggClothoid /\
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
   split; [exact clothoid_clothoid_not_first_scope|].
-  exact circular_egg_not_first_cook_scope.
+  exact circular_egg_first_cook_scope.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

@@ -506,15 +506,15 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Lemma circular_gamma_still_qex :
-  circular_gamma_status = CircGammaQEX.
+  circular_gamma_status = CircGammaDischarged.
 Proof.
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 Lemma circular_still_not_first_cook_scope :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  exact circular_not_first_cook_scope.
+  exact circular_is_first_cook_scope.
 Qed.
 
 (* CircGamma QEX ticket lives in CircularCook.v (3-axiom stamp).
@@ -804,11 +804,11 @@ Theorem ticket_0007_i2_arc_scope_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
   right.
-  split; [exact circular_gamma_is_qex|exact circular_not_first_cook_scope].
+  split; [exact circular_gamma_is_discharged|exact circular_is_first_cook_scope].
 Qed.
 
 Print Assumptions I_circles_gamma_hit_iff.

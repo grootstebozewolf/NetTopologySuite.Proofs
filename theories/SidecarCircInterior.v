@@ -93,15 +93,15 @@ Local Open Scope R_scope.
 (* -------------------------------------------------------------------------- *)
 
 Lemma iota_host_circgamma_qex :
-  circular_gamma_status = CircGammaQEX.
+  circular_gamma_status = CircGammaDischarged.
 Proof.
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 Lemma iota_host_not_first_cook :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  exact circular_not_first_cook_scope.
+  exact circular_is_first_cook_scope.
 Qed.
 
 Lemma iota_first_cook_stays_chord_chord :
@@ -275,8 +275,8 @@ Proof.
 Qed.
 
 Lemma iota_host_stays_qex :
-  circular_gamma_status = CircGammaQEX
-  /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  circular_gamma_status = CircGammaDischarged
+  /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggChord EggChord
   /\ ~ first_cook_scope EggChord EggCircularArc
   /\ I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc) IDecline
@@ -460,8 +460,8 @@ Theorem ticket_0007_iota_host_qed_or_qex :
         I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc)
              (IHit p ti tj))
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord
    /\ ~ first_cook_scope EggChord EggCircularArc
    /\ ~ interior_mixed_constructor_inhabits InteriorMixedHitArm

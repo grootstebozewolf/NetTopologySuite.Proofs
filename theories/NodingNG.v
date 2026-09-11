@@ -440,14 +440,14 @@ Theorem ticket_0007_nodingng_scope_qed_or_qex :
    /\ cook_loop_status = LoopDischarged)
   \/
   (first_cook_scope EggChord EggChord
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc
+   /\ first_cook_scope EggCircularArc EggCircularArc
    /\ ~ first_cook_scope EggClothoid EggClothoid
    /\ cook_loop_status = LoopObligation
    /\ nodingng_letter_status = NodingNGChordLanded).
 Proof.
   right.
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact circular_egg_not_first_cook_scope|].
+  split; [exact circular_egg_first_cook_scope|].
   split; [exact clothoid_clothoid_not_first_scope|].
   split; [exact cook_loop_is_obligation|].
   reflexivity.

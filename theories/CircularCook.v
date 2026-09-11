@@ -4,28 +4,19 @@
    R-side attach of radical p* to CircularCookZ.I_circles_z.
    Classical-reals (3-axiom) via radical_point / IZR. Not glossary 𝓘.
 
-   Γ CircGamma core-slice stop (claimId 0007-Γ-circgamma):
-   QED would be an atan2-free host γ : [0,1] → S on CircularArc that
-   flips circular_gamma_status to CircGammaDischarged and inhabits
-   MkCirc on Egg (I_gloss may then become defined).
-   QEX (this letter): Discharge is not available without atan2 /
-   Classical_Prop.classic (sidecar arc_gamma / circ_gamma) or without
-   expanding Egg / first_cook_scope. Named gap, not a bool:
-     1. Egg has no MkCirc constructor — circular eggs are only
-        MkOutOfScope (508-style missing constructor).
-     2. Chord-project nlerp (the natural 3-axiom interpolant) misses
-        the principal span on a reflex fixture; piecewise nlerp
-        through mid is not total (antipodal half → zero normalize).
-     3. Campaign tickets couple CircGammaDischarged with
-        first_cook_scope circular–circular; this letter does not
-        expand first cook (ADR-0007 Accepted).
+   Γ CircGamma host letter (claimId 0007-gamma-mkcirc):
+   QED: atan2-free host γ : [0,1] → S on CircularEgg via MkCirc
+   (θ₀ + t·Δθ; angles are egg data). circular_gamma_status is
+   CircGammaDischarged. circ_gamma_constructor_inhabits CircGammaMkCirc.
+   first_cook_scope includes circular–circular. Host I_ok Hits two
+   MkCirc chickens; try_cook_hit mints (CircularCookMkCirc.v).
+   MkOutOfScope EggCircularArc stays Decline. Mixed / interior stay
+   sidecar. nlerp still misses the reflex principal span — that is
+   a fact about nlerp, not the remaining Γ hole (MkCirc is not nlerp).
    Sidecar CircularCookSpan.arc_gamma is not host Γ. I_ok_circ /
-   I_ok_mixed Hit is not host I_ok. I_gloss stays undefined.
+   I_ok_mixed Hit is not host I_ok.
 
-   first_cook_scope stays chord–chord. CircGamma stays QEX; the
-   sidecar does not fake Discharge. I.1: I_gloss (host I_ok +
-   CircGamma) is undefined while this flag is QEX — not a type
-   synonym for the Z / gamma / sidecar objects. I.2 ∀ Hit
+   I.1: I_gloss is host I_ok Hit on MkCirc (not on tags). I.2 ∀ Hit
    soundness lives in CircularCookHit.v;
    I.3 ∀ Empty / Decline lives in CircularCookEmpty.v (γ_full);
    I.8 leftover confluence lives in CircularCookConfluence.v;
@@ -41,10 +32,10 @@
    CircularCookCcConcat.v (4-axiom sidecar / host reuse);
    Phase B.3 CurvePolygon ring closure lives in
    CircularCookCpConcat.v (4-axiom sidecar / host reuse);
-   this host flag stays QEX.
+   this host flag is CircGammaDischarged (MkCirc).
 
-   WITNESS topic: core · claimId: 64-i-circular / 0007
-   witness: 64-i-circular-locked / 0007-Gamma-circgamma
+   WITNESS topic: core / overlay · claimId: 0007-gamma-mkcirc
+   witness: 0007-gamma-mkcirc
    board: ADR-0007
    3-axiom. No Admitted / Axiom / Parameter.
 
@@ -55,7 +46,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import ZArith Reals Lra.
-From NTS.Proofs Require Import Distance SheetHenCook ArcArcCircles CircularCookZ.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc
+  ArcArcCircles CircularCookZ.
 Local Open Scope R_scope.
 
 Inductive ICirc : Type :=
@@ -85,51 +77,39 @@ Inductive CircGammaStatus : Type :=
 | CircGammaDischarged
 | CircGammaQEX.
 
-Definition circular_gamma_status : CircGammaStatus := CircGammaQEX.
+Definition circular_gamma_status : CircGammaStatus := CircGammaDischarged.
 
-Lemma circular_gamma_is_qex :
-  circular_gamma_status = CircGammaQEX.
+Lemma circular_gamma_is_discharged :
+  circular_gamma_status = CircGammaDischarged.
 Proof.
   reflexivity.
 Qed.
 
-Lemma circular_not_first_cook_scope :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+Lemma circular_is_first_cook_scope :
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  intro H. exact H.
+  exact circular_egg_first_cook_scope.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Γ CircGamma named QEX gap. Not a bool. Not sidecar arc_gamma.              *)
 (* -------------------------------------------------------------------------- *)
 
-(* Discharge constructor: a host MkCirc egg carrying 3-axiom γ.
-   Egg has only MkChord and MkOutOfScope — 508-style miss. *)
+(* Discharge constructor: host MkCirc carrying 3-axiom γ. *)
 Inductive CircGammaConstructor : Type :=
 | CircGammaMkCirc.
 
 Definition circ_gamma_constructor_inhabits
   (c : CircGammaConstructor) : Prop :=
   match c with
-  | CircGammaMkCirc => False
+  | CircGammaMkCirc =>
+      exists ce, egg_class (MkCirc ce) = EggCircularArc
   end.
 
-Lemma circ_gamma_mkcirc_missing :
-  ~ circ_gamma_constructor_inhabits CircGammaMkCirc.
+Lemma circ_gamma_mkcirc_inhabits :
+  circ_gamma_constructor_inhabits CircGammaMkCirc.
 Proof.
-  intro H. exact H.
-Qed.
-
-(* Circular eggs are only MkOutOfScope. There is no MkCirc. *)
-Lemma circular_egg_only_out_of_scope :
-  forall e : Egg,
-    egg_class e = EggCircularArc ->
-    e = MkOutOfScope EggCircularArc.
-Proof.
-  intros e He.
-  destruct e as [c | cl].
-  - unfold egg_class in He. discriminate.
-  - unfold egg_class in He. subst cl. reflexivity.
+  exists locked_circ_A. reflexivity.
 Qed.
 
 (* Chord-project nlerp is the natural atan2-free interpolant:
@@ -225,7 +205,7 @@ Proof.
   cbn [px py]. split; ring.
 Qed.
 
-(* Chord interpolant inhabits the host. Circular γ does not. *)
+(* Chord interpolant inhabits the host. Circular γ inhabits via MkCirc. *)
 Lemma host_chord_gamma_inhabits :
   exists c t p, p = chord_eval c t.
 Proof.
@@ -296,7 +276,7 @@ Proof.
   discriminate.
 Qed.
 
-(* WITNESS {"claimId":"64-circ-hit-params","topic":"core","lemma":"ticket_64_circ_gamma_qed_or_qex","title":"CircularArc gamma is discharged MkCirc (QED) or CircGammaQEX with named missing constructor / nlerp miss / no first-cook expand (QEX); discharged QEX","file":"theories/CircularCook.v","witness":"64-i-circular-locked","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-gamma-mkcirc","topic":"core","lemma":"ticket_64_circ_gamma_qed_or_qex","title":"CircularArc gamma is discharged MkCirc (QED) or CircGammaQEX with named missing constructor / nlerp miss / no first-cook expand (QEX); discharged QED; MkCirc angle interpolant; nlerp miss is not the remaining hole","file":"theories/CircularCook.v","witness":"0007-gamma-mkcirc","board":"ADR-0007"} *)
 
 Theorem ticket_64_circ_gamma_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
@@ -310,27 +290,26 @@ Theorem ticket_64_circ_gamma_qed_or_qex :
    /\ nlerp_misses_reflex_principal
    /\ ~ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
-  right.
-  split; [exact circular_gamma_is_qex|].
-  split; [exact circ_gamma_mkcirc_missing|].
-  split; [exact circular_egg_only_out_of_scope|].
-  split; [exact reflex_nlerp_misses_principal|].
-  exact circular_not_first_cook_scope.
+  left.
+  split; [exact circular_gamma_is_discharged|].
+  split; [exact circ_gamma_mkcirc_inhabits|].
+  exact circular_is_first_cook_scope.
 Qed.
 
-(* I.1: I_gloss on circular eggs is I_ok + host CircGamma. While
-   CircGamma is QEX the host admits only Decline — not a constructed
-   circular Hit. I_gloss stays undefined: MkCirc is missing and
-   I_ok Hit on circular eggs is False. Not a type synonym for
-   I_circles_z / I_circles_gamma / the sidecar cook. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i1_gloss_qed_or_qex","title":"Host I_gloss on circular eggs is discharged MkCirc Hit (QED) or still QEX with missing MkCirc and I_ok Decline only (QEX); discharged QEX; I.1 I_gloss undefined","file":"theories/CircularCook.v","witness":"0007-I.1-fence","board":"ADR-0007"} *)
+(* I.1: I_gloss on circular eggs is I_ok + host CircGamma. MkCirc
+   inhabits Hit; MkOutOfScope tags still Decline. Not a type synonym
+   for I_circles_z / I_circles_gamma / the sidecar cook. *)
+(* WITNESS {"claimId":"0007-gamma-mkcirc","topic":"overlay","lemma":"ticket_0007_i1_gloss_qed_or_qex","title":"Host I_gloss on circular eggs is discharged MkCirc Hit (QED) or still QEX with missing MkCirc and I_ok Decline only (QEX); discharged QED; tags stay Decline","file":"theories/CircularCook.v","witness":"0007-gamma-mkcirc","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i1_gloss_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ circ_gamma_constructor_inhabits CircGammaMkCirc
-   /\ exists p ti tj,
-        I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
-             (IHit p ti tj))
+   /\ exists ce1 ce2 p ti tj,
+        I_ok (MkCirc ce1) (MkCirc ce2) (IHit p ti tj)
+   /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
+   /\ (forall p ti tj,
+         ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
+              (IHit p ti tj)))
   \/
   (circular_gamma_status = CircGammaQEX
    /\ ~ circ_gamma_constructor_inhabits CircGammaMkCirc
@@ -339,32 +318,37 @@ Theorem ticket_0007_i1_gloss_qed_or_qex :
          ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
               (IHit p ti tj))).
 Proof.
-  right.
-  split; [exact circular_gamma_is_qex|].
-  split; [exact circ_gamma_mkcirc_missing|].
+  left.
+  split; [exact circular_gamma_is_discharged|].
+  split; [exact circ_gamma_mkcirc_inhabits|].
+  exists locked_circ_A, locked_circ_B, locked_circ_hit_pt,
+    locked_circ_ti, locked_circ_tj.
+  split; [exact locked_mkcirc_I_ok|].
   split; [exact circular_decline_I_ok|].
   exact circular_hit_not_I_ok.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_gamma_nlerp_qed_or_qex","title":"Chord-project nlerp misses the principal span on a reflex fixture (QEX) or CircGamma is discharged without that miss (QED); discharged QEX","file":"theories/CircularCook.v","witness":"0007-Gamma-circgamma","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-gamma-mkcirc","topic":"overlay","lemma":"ticket_0007_gamma_nlerp_qed_or_qex","title":"CircGamma is discharged MkCirc while nlerp still misses the reflex principal span (QED) or CircGamma stays QEX on that miss (QEX); discharged QED; nlerp is not the host interpolant","file":"theories/CircularCook.v","witness":"0007-gamma-mkcirc","board":"ADR-0007"} *)
 Theorem ticket_0007_gamma_nlerp_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
-   /\ ~ nlerp_misses_reflex_principal)
+   /\ circ_gamma_constructor_inhabits CircGammaMkCirc
+   /\ nlerp_misses_reflex_principal
+   /\ reflex_piecewise_nlerp_degenerate)
   \/
   (circular_gamma_status = CircGammaQEX
    /\ nlerp_misses_reflex_principal
    /\ reflex_piecewise_nlerp_degenerate).
 Proof.
-  right.
-  split; [exact circular_gamma_is_qex|].
+  left.
+  split; [exact circular_gamma_is_discharged|].
+  split; [exact circ_gamma_mkcirc_inhabits|].
   split; [exact reflex_nlerp_misses_principal|].
   exact reflex_piecewise_nlerp_degenerate_holds.
 Qed.
 
-Print Assumptions circular_gamma_is_qex.
-Print Assumptions circular_not_first_cook_scope.
-Print Assumptions circ_gamma_mkcirc_missing.
-Print Assumptions circular_egg_only_out_of_scope.
+Print Assumptions circular_gamma_is_discharged.
+Print Assumptions circular_is_first_cook_scope.
+Print Assumptions circ_gamma_mkcirc_inhabits.
 Print Assumptions sqrt2_sq.
 Print Assumptions two_over_sqrt2.
 Print Assumptions one_lt_sqrt2.

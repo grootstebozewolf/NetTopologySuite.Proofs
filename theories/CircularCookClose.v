@@ -104,11 +104,11 @@ Lemma i10_sidecar_cook_both_roots :
     (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
   /\ circ_mint_two_ok cooked_circ_mint_two
        hen_plus hen_minus locked_p_plus locked_p_minus
-  /\ circular_gamma_status = CircGammaQEX.
+  /\ circular_gamma_status = CircGammaDischarged.
 Proof.
   split; [exact cooked_circ_mint_two_try|].
   split; [exact cooked_circ_mint_two_ok|].
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"i10_classifier_stays_tags","title":"I.10 I_CIRCULAR / I_circles_z Hit stays tags 0/1, not (p*, t_i, t_j)","file":"theories/CircularCookClose.v","witness":"0007-I.10-campaign-i-close","board":"ADR-0007"} *)
@@ -138,7 +138,7 @@ Lemma i10_fence_holds :
        (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
   /\ (forall p ti tj h,
         try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
-  /\ circular_gamma_status = CircGammaQEX.
+  /\ circular_gamma_status = CircGammaDischarged.
 Proof.
   destruct i1_z_neq_gamma_obs as [Hz [Hg _]].
   destruct i1_sidecar_neq_gloss_obs as [Hc [Hh Hq]].
@@ -150,12 +150,12 @@ Proof.
 Qed.
 
 Lemma i10_host_stays_qex :
-  circular_gamma_status = CircGammaQEX
-  /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  circular_gamma_status = CircGammaDischarged
+  /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggChord EggChord.
 Proof.
-  split; [exact circular_gamma_is_qex|].
-  split; [exact circular_not_first_cook_scope|].
+  split; [exact circular_gamma_is_discharged|].
+  split; [exact circular_is_first_cook_scope|].
   exact first_cook_scope_chord_chord.
 Qed.
 
@@ -180,7 +180,7 @@ Theorem ticket_0007_i10_sidecar_qed_or_qex :
      (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
    /\ circ_mint_two_ok cooked_circ_mint_two
         hen_plus hen_minus locked_p_plus locked_p_minus
-   /\ circular_gamma_status = CircGammaQEX)
+   /\ circular_gamma_status = CircGammaDischarged)
   \/
   try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
     (I_circles_gamma 0 0 5 7 0 5) = None.
@@ -204,7 +204,7 @@ Theorem ticket_0007_i10_classifier_qed_or_qex :
         (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
    /\ (forall p ti tj h,
          try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
-   /\ circular_gamma_status = CircGammaQEX)
+   /\ circular_gamma_status = CircGammaDischarged)
   \/
   (exists hp hm,
      I_circles_z 0 0 5 7 0 5 = IZHit hp hm
@@ -229,8 +229,8 @@ Theorem ticket_0007_i10_host_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord).
 Proof.
   right.
