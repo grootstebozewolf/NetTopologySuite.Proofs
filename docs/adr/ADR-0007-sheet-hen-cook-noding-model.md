@@ -237,11 +237,13 @@ Registered in `_CoqProject` (host / pure-R / Stdlib lane).
 **ADR-0006 coupling.** Testable `𝓘` / cook results sit on the accepted
 Oracle line protocol (`docs/adr/ADR-0006-oracle-protocol-is-the-test-surface.md`).
 This cut mints no keyword and no second external seam (no FFI pin, no
-RocqRefRunner dispatch). A later keyword, if one is ever wanted, attaches
-as an Oracle adapter (ADR-0006 Decision 1–2: line protocol + own
-compilation unit + driver print) — never as FFI or RocqRefRunner.
-ADR-0006's Related subsection points back here. Both sides of the
-cross-link are the coupling. Status of ADR-0006 stays Accepted.
+RocqRefRunner dispatch). The IEEE↔R bridge letter attaches as adapters
+on existing keywords (`INTERSECT_FILTERED` / `INTERSECT_POINT_XY` /
+`OVERLAY_UNIFIED` / `ORIENT`) — still no new keyword, never FFI or
+RocqRefRunner (ADR-0006 Decision 1–2). ADR-0006's Related subsection
+points back here. Oracle + IEEE↔R bridge is the test surface for
+NodingNG / OverlayNG / RelateNG. Both sides of the cross-link are the
+coupling. Status of ADR-0006 stays Accepted.
 
 ### Glossary (Accepted law)
 
@@ -1219,3 +1221,40 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 | `RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex` | **QEX** — full Jordan true-region, S15l+ multi-geom, ticket 523 ISO `?`; `cell_none_iff_empty` stays Coq emptiness | `RelateNGFace.v : relateng_jordan_true_region_missing`, `RelateCurveAlphabet.v : question_mark_not_iso_result`, `RelateCurveMatrix.v : cell_none_iff_empty` |
 
 Witness: `0007-relateng-face`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — IEEE↔R oracle bridge (2026-09-11)
+
+North star: NodingNG / OverlayNG / RelateNG product faces + SQL/MM
+Part 3, non-big-OOP. This letter is the **product face** for the
+two-way IEEE binary64 ↔ ℝ bridge the Oracle (ADR-0006 Accepted line
+protocol) uses to generate tests against those faces. It packages
+existing bridges — `SheetHenCook.CoordRealization` /
+`binary64_same_sheet_as_R` / `coord_realization_preserves_sheet`,
+`Validate_binary64_bridge.B2R_bp` / `map_B2R_bp`, `B64_bridge` /
+`B64_lib` round-trip helpers, `Orient_b64_exact.coord_int_safe` —
+and does not remint them.
+
+**QED.** IEEE→ℝ (`B2R` / `B2R_bp`) then `round` is identity; ℝ→IEEE
+(`ieee_of_Z` / `binary_normalize`) recovers `IZR` on the integer
+window (`|m| ≤ 2⁵³` finite, `|m| ≤ 2²⁵` int-safe). Same sheet as ℝ
+realization. Bridge ≠ `𝓘` / ≠ cook / ≠ OverlayNG snap. Locked
+NodingNG Hit (unit-square diagonals) and RelateNG 67-c parallel
+chords decode.
+
+**QEX.** Full FP noder; unrestricted round-trip outside the safe
+regime; kiss on the binary64 sheet. Honest remaining. Named missing
+constructors, not bools. Do not fake Discharge. Shewchuk A–D /
+Hobby / full Jordan stay off the critical path.
+
+Oracle generators attach as adapters on existing keywords
+(`INTERSECT_FILTERED`, `INTERSECT_POINT_XY`, `OVERLAY_UNIFIED`,
+`ORIENT`). No new keyword. No second seam. ADR-0006 Status stays
+**Accepted**. ADR-0007 Status stays **Accepted**. Parks Γ / ι / ρ.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `IeeeRBridge.v : ticket_0007_ieee_bridge_qed_or_qex` | **QED** — two-way B2R/round inhabitant; same-sheet realization; ≠ cook / ≠ `𝓘` / ≠ OverlayNG snap; NodingNG Hit + 67-c points decode | `IeeeRBridge.v : ieee_bridge_inhabits`, `IeeeRBridge.v : ieee_to_R_round_id`, `IeeeRBridge.v : ieee_of_Z_B2R`, `IeeeRBridge.v : ieee_same_sheet_as_R` |
+| `IeeeRBridge.v : ticket_0007_ieee_bridge_fp_noder_qed_or_qex` | **QEX** — full FP noder stays Honest remaining; bridge is not a cook | `IeeeRBridge.v : ieee_fp_noder_missing`, `IeeeRBridge.v : ieee_bridge_neq_cook` |
+| `IeeeRBridge.v : ticket_0007_ieee_bridge_unrestricted_qed_or_qex` | **QEX** — unrestricted round-trip and kiss on the binary64 sheet stay Honest remaining | `IeeeRBridge.v : ieee_unrestricted_missing`, `IeeeRBridge.v : ieee_kiss_on_b64_missing` |
+
+Witness: `0007-ieee-oracle-bridge`. Status stays **Accepted**. Parks Γ / ι / ρ.

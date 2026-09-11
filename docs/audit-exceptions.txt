@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 110 files (74 theories-flocq/ + 35 theories/ + 1 hunt probe).
+# LIVE: 111 files (75 theories-flocq/ + 35 theories/ + 1 hunt probe).
 # None are allowlist-clean.  Flocq C1 (`Classical_Prop.classic` via
 # Bplus/Bminus/Bmult/Bdiv/round/B2R) cannot leave while Flocq's binary
 # model is in use (`docs/category-c-policy.md`).  R-side files carry
@@ -39,6 +39,10 @@ theories-flocq/Intersect_b64_exact_tight.v
 theories-flocq/B64_lib.v
 theories-flocq/Orient_b64_R.v
 theories-flocq/Validate_binary64_bridge.v
+# Flocq C1 — IEEE↔R product face (B2R / round / binary_normalize).
+# Packages existing bridges; does not remint. Stays C1 while Flocq's
+# binary model is in use (category-c-policy).
+theories-flocq/IeeeRBridge.v
 theories-flocq/Orientation_b64.v
 theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v

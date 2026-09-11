@@ -45,7 +45,7 @@ FFI_LDLIBS  := -L$(OCAML_WHERE) -lasmrun_pic -lm -ldl -lpthread
 SCOUT_IC_LIB   := libscout_incircle.$(FFI_SOEXT)
 SCOUT_IC_PROBE := scout_incircle_probe
 
-.PHONY: all clean ffi ffi-parity jts1093-orient-scout scout-incircle-ffi jts1094-scout arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt winding-number-tests disc-overlay-tests lec-circle-tests obstacle-distance-tests i-circular-tests
+.PHONY: all clean ffi ffi-parity jts1093-orient-scout scout-incircle-ffi jts1094-scout arc-arc-tests arc-segment-tests arc-arc-distance-tests arc-segment-distance-tests ring-simple-tests cp-ring-simple-tests cp-boundary-simplify-tests cp-boundary-simplify-test arc-offset-tests point-in-curve-ring-tests ring-orientation-tests holes-disjoint-tests curve-relate-matrix-tests buffer-region-tests arc-centroid-tests arc-area-centroid-tests arc-distance-tests arc-area-tests arc-buffer-simple-tests arc-simplify-decision-tests arc-offset-filtered-tests curve-adversarial-hunt elliptic-hunt bezier-hunt winding-number-tests disc-overlay-tests lec-circle-tests obstacle-distance-tests i-circular-tests ieee-oracle-bridge-tests
 
 all: $(TARGET)
 
@@ -58,6 +58,14 @@ arc-arc-tests: $(TARGET)
 # Extracted I_circles_z (I_CIRCULAR). Gates HIT / EMPTY / DECLINE / TOUCH / replay.
 i-circular-tests: $(TARGET)
 	cd .. && python3 oracle/gen_i_circular_tests.py
+
+# IEEE↔R bridge (claimId 0007-ieee-oracle-bridge): existing keywords only
+# (INTERSECT_FILTERED / INTERSECT_POINT_XY / OVERLAY_UNIFIED / ORIENT).
+# Gates NodingNG Hit/Empty + OverlayNG/RelateNG 67-c parallel chords.
+# Fixture: oracle/ieee_oracle_bridge_tests.txt
+#   python3 oracle/gen_ieee_oracle_bridge_tests.py --write-fixture
+ieee-oracle-bridge-tests: $(TARGET)
+	cd .. && python3 oracle/gen_ieee_oracle_bridge_tests.py
 
 # Adversarial DISC_OVERLAY suite (OV-DISC / OverlayNGCurve two-disc): gates
 # the Qed-proven invariants (I1 nodes on both circles, I2 locked fixture
