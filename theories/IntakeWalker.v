@@ -174,12 +174,18 @@ Definition overlap_ls_cst : TaggedCst :=
 
 Definition hens_of_n (n : nat) : list Hen := seq 0 n.
 
-Fixpoint chords_of_pts (pts : list Point) (h0 : nat) : list Chicken :=
+(* Recurse on the structural tail. `q :: rest` is a rebuilt cons, so Rocq
+   cannot see a decreasing argument if we pass that reconstructed list. *)
+Fixpoint chords_of_pts (pts : list Point) (h0 : nat) {struct pts} : list Chicken :=
   match pts with
-  | p :: q :: rest =>
-      mkChicken h0 (S h0) (MkChord (mkChordEgg p q))
-        :: chords_of_pts (q :: rest) (S h0)
-  | _ => []
+  | [] => []
+  | p :: rest =>
+      match rest with
+      | [] => []
+      | q :: _ =>
+          mkChicken h0 (S h0) (MkChord (mkChordEgg p q))
+            :: chords_of_pts rest (S h0)
+      end
   end.
 
 Definition map_point (s : Sheet) (p : Point) : ShcBag :=
@@ -216,16 +222,26 @@ Definition map_cc_locked (s : Sheet) : ShcBag :=
        [mkChicken 0%nat 1%nat (MkChord (mkChordEgg p00 p50))])
     (map_cs_quarter s).
 
-Fixpoint has_iso_clothoid (ms : list TaggedCst) : bool :=
+(* Mutual so nested COMPOUNDCURVE members are a structural subterm of
+   TaggedCst, not a rebuilt list argument. ISO ticket still wins at any
+   depth before a later JTS clothoid would emit ID_MkOutOfScope. *)
+Fixpoint cst_has_iso_clothoid (t : TaggedCst) : bool :=
+  match t with
+  | TClothoidIso => true
+  | TCompoundCurve ms => list_has_iso_clothoid ms
+  | _ => false
+  end
+with list_has_iso_clothoid (ms : list TaggedCst) : bool :=
   match ms with
   | [] => false
-  | TClothoidIso :: _ => true
-  | TCompoundCurve inner :: rest =>
-      if has_iso_clothoid inner then true else has_iso_clothoid rest
-  | _ :: rest => has_iso_clothoid rest
+  | m :: rest =>
+      if cst_has_iso_clothoid m then true else list_has_iso_clothoid rest
   end.
 
-Fixpoint intake_map (s : Sheet) (t : TaggedCst) : IntakeResult :=
+Definition has_iso_clothoid : list TaggedCst -> bool :=
+  list_has_iso_clothoid.
+
+Fixpoint intake_map (s : Sheet) (t : TaggedCst) {struct t} : IntakeResult :=
   match t with
   | TPoint p => IntakeBag (map_point s p)
   | TLineString pts =>
@@ -242,29 +258,31 @@ Fixpoint intake_map (s : Sheet) (t : TaggedCst) : IntakeResult :=
   | TCircle CircUnknown _ => IntakeDecline ID_CircGammaLeftover
   | TCompoundCurve ms =>
       if has_iso_clothoid ms then IntakeDecline ID_IsoClothoid
-      else
-      match ms with
-      | [] => IntakeDecline ID_Empty
-      | m :: rest =>
-          match intake_map s m with
-          | IntakeDecline r => IntakeDecline r
-          | IntakeBag b0 =>
-              (fix go (acc : ShcBag) (xs : list TaggedCst) : IntakeResult :=
-                 match xs with
-                 | [] => IntakeBag acc
-                 | y :: ys =>
-                     match intake_map s y with
-                     | IntakeDecline r => IntakeDecline r
-                     | IntakeBag by => go (append_bags s acc by) ys
-                     end
-                 end) b0 rest
-          end
-      end
+      else intake_map_cc s ms
   | TClothoidJts => IntakeDecline ID_MkOutOfScope
   | TClothoidIso => IntakeDecline ID_IsoClothoid
   | TGeodesicString => IntakeDecline ID_GeodesicString
   | TSpiralCurve => IntakeDecline ID_SpiralCurve
   | TOutOfSlice => IntakeDecline ID_NotFirstSlice
+  end
+with intake_map_cc (s : Sheet) (ms : list TaggedCst) {struct ms} : IntakeResult :=
+  match ms with
+  | [] => IntakeDecline ID_Empty
+  | m :: rest =>
+      match intake_map s m with
+      | IntakeDecline r => IntakeDecline r
+      | IntakeBag b0 => intake_map_cc_go s b0 rest
+      end
+  end
+with intake_map_cc_go (s : Sheet) (acc : ShcBag) (xs : list TaggedCst)
+     {struct xs} : IntakeResult :=
+  match xs with
+  | [] => IntakeBag acc
+  | y :: ys =>
+      match intake_map s y with
+      | IntakeDecline r => IntakeDecline r
+      | IntakeBag by => intake_map_cc_go s (append_bags s acc by) ys
+      end
   end.
 
 (* -------------------------------------------------------------------------- *)
