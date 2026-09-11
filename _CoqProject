@@ -110,6 +110,11 @@ theories/OverlayNG.v
 # Host/pure-R. First cook stays chord–chord. Not Fresnel noding.
 # Not Campaign I–II. No Admitted.
 theories/SidecarClothoidEgg.v
+# ADR-0007 NURBS egg sidecar (SidecarNurbsEgg). Packages EggNurbs
+# Decline-on-host + demoted unit-square chord-seed. Host/pure-R.
+# First cook stays chord–chord. Not #508 length-as-noding.
+# Not Campaign I–II. No Admitted.
+theories/SidecarNurbsEgg.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
