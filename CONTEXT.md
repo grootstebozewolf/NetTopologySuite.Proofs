@@ -348,8 +348,8 @@ sequence of snap maps `S → Λ` attempted until validate or give up,
 on the same sheet as ℝ realization, assuming already-noded `G`
 (`OverlayNG.v : overlayng_sheet_inhabits`,
 `OverlayNG.v : ticket_0007_overlayng_sheet_qed_or_qex`). Hobby-shaped:
-`G` was already noded (`SheetHenCook.v : noded_crossing`; NodingNG
-#712 / `NodingNG.v` when present). Not `𝓘` / cook / NodingNG. Not
+`G` was already noded (`NodingNG.v : nodingng_crossing_noded`;
+`SheetHenCook.v : noded_crossing`). Not `𝓘` / cook / NodingNG. Not
 OverlayNGCurve Phase-0 point-set algebra (G1–G5). Not Shewchuk A–D.
 Not Hobby 4.1 Discharge (`OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex`).
 Not Jordan / RelateNG. Not DCEL / Geometry subclass.

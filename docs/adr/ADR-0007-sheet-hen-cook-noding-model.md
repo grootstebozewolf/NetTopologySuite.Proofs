@@ -1169,8 +1169,8 @@ not a DCEL kernel, and not a `Geometry` subclass.
 
 **QED.** Snap maps `S → Λ` attempted until validate or give up inhabit
 a finite snap-sequence ≠ `𝓘` on the same sheet as ℝ realization.
-Hobby-shaped: `G` was already noded (`SheetHenCook.v : noded_crossing`;
-NodingNG #712 / `NodingNG.v` when present). Failure to validate is not
+Hobby-shaped: `G` was already noded (`NodingNG.v : nodingng_crossing_noded`;
+`SheetHenCook.v : noded_crossing`). Failure to validate is not
 `𝓘` Decline and not Empty.
 
 **QEX.** Full Hobby 4.1 “image stays noded” / unconditional overlay
@@ -1182,7 +1182,7 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `OverlayNG.v : ticket_0007_overlayng_sheet_qed_or_qex` | **QED** — finite snap-sequence ≠ `𝓘`; same-sheet realization; not NodingNG / OverlayNGCurve / RelateNG / Shewchuk / Jordan / DCEL | `OverlayNG.v : overlayng_sheet_inhabits`, `OverlayNG.v : overlayng_is_finite_snap`, `OverlayNG.v : overlayng_snap_neq_I`, `OverlayNG.v : overlayng_same_sheet_as_R` |
-| `OverlayNG.v : ticket_0007_overlayng_assumes_noded_qed_or_qex` | **QED** — locked run assumes `noded_crossing` on the same sheet; Hobby-shaped finite snap; not `𝓘` + cook | `OverlayNG.v : overlayng_assumes_noded_crossing`, `OverlayNG.v : overlayng_locked_run_is_finite_snap`, `SheetHenCook.v : noded_crossing` |
+| `OverlayNG.v : ticket_0007_overlayng_assumes_noded_qed_or_qex` | **QED** — locked run assumes `NodingNG.v : nodingng_crossing_noded` on the same sheet; Hobby-shaped finite snap; not `𝓘` + cook | `OverlayNG.v : overlayng_assumes_noded_crossing`, `OverlayNG.v : overlayng_assumes_nodingng_face`, `OverlayNG.v : overlayng_locked_run_is_finite_snap`, `NodingNG.v : nodingng_crossing_noded` |
 | `OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex` | **QEX** — Hobby 4.1 image-stays-noded / unconditional overlay correctness stay Honest remaining; do not fake Discharge | `OverlayNG.v : overlayng_hobby41_missing`, `OverlayNG.v : overlayng_unconditional_missing` |
 
 Witness: `0007-overlayng-sheet`. Status stays **Accepted**. Parks Γ / ι / ρ.

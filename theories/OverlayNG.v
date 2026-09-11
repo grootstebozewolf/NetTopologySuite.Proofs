@@ -16,8 +16,8 @@
 
    QED: named OverlayNG sheet inhabitant — finite snap-sequence
    ≠ 𝓘, same-sheet realization, Hobby-shaped already-noded G
-   (SheetHenCook.noded_crossing; NodingNG #712 / NodingNG.v when
-   present). Failure to validate is not 𝓘 Decline and not Empty.
+   (NodingNG.nodingng_crossing_noded / SheetHenCook.noded_crossing).
+   Failure to validate is not 𝓘 Decline and not Empty.
 
    QEX: full Hobby 4.1 “image stays noded” / unconditional overlay
    correctness stays Honest remaining. Named missing constructor,
@@ -47,7 +47,7 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
-From NTS.Proofs Require Import SheetHenCook.
+From NTS.Proofs Require Import SheetHenCook NodingNG.
 
 (* -------------------------------------------------------------------------- *)
 (* Product face: an OverlayNG sheet run is a finite snap-sequence on one      *)
@@ -60,10 +60,11 @@ Record OverlayNGSheetRun : Type := mkOngSheetRun {
   ong_run_bound : nat
 }.
 
-(* Locked inhabitant: Hobby-shaped G is SheetHenCook.noded_crossing
-   (NodingNG #712 / NodingNG.v when that letter is present). *)
+(* Locked inhabitant: Hobby-shaped G is NodingNG's crossing noded
+   face (sibling product of 𝓘 + cook). SheetHenCook.noded_crossing
+   is the vocabulary witness underneath. *)
 Definition overlayng_locked_run : OverlayNGSheetRun :=
-  mkOngSheetRun default_sheet noded_crossing 0.
+  mkOngSheetRun default_sheet nodingng_crossing_noded 0.
 
 Lemma overlayng_locked_run_g_on_sheet :
   noded_sheet (ong_run_g overlayng_locked_run) = ong_run_sheet overlayng_locked_run.
@@ -72,7 +73,7 @@ Proof.
 Qed.
 
 Lemma overlayng_assumes_noded_crossing :
-  ong_run_g overlayng_locked_run = noded_crossing /\
+  ong_run_g overlayng_locked_run = nodingng_crossing_noded /\
   noded_sheet (ong_run_g overlayng_locked_run) = default_sheet.
 Proof.
   split; reflexivity.
@@ -170,6 +171,13 @@ Qed.
 Lemma overlayng_not_nodingng : overlayng_kind <> ONG_I_plus_cook.
 Proof.
   discriminate.
+Qed.
+
+Lemma overlayng_assumes_nodingng_face :
+  nodingng_kind = NNG_I_plus_cook /\
+  overlayng_kind <> ONG_I_plus_cook.
+Proof.
+  split; [exact nodingng_is_I_plus_cook|exact overlayng_not_nodingng].
 Qed.
 
 Lemma overlayng_not_overlayngcurve : overlayng_kind <> ONG_OverlayNGCurve.
@@ -307,24 +315,26 @@ Proof.
   exact overlayng_sheet_inhabits.
 Qed.
 
-(* OverlayNG assumes already-noded G (noded_crossing; NodingNG #712
-   when present). It does not cook and does not mint 𝓘. *)
-(* WITNESS {"claimId":"0007-overlayng-sheet","topic":"overlay","lemma":"ticket_0007_overlayng_assumes_noded_qed_or_qex","title":"OverlayNG sheet assumes already-noded G on the same sheet (QED) or the locked run leaves noded_crossing (QEX); discharged QED; Hobby-shaped; not I plus cook","file":"theories/OverlayNG.v","witness":"0007-overlayng-sheet","board":"ADR-0007"} *)
+(* OverlayNG assumes already-noded G from the NodingNG chord face.
+   It does not cook and does not mint 𝓘. *)
+(* WITNESS {"claimId":"0007-overlayng-sheet","topic":"overlay","lemma":"ticket_0007_overlayng_assumes_noded_qed_or_qex","title":"OverlayNG sheet assumes NodingNG already-noded G on the same sheet (QED) or the locked run leaves nodingng_crossing_noded (QEX); discharged QED; Hobby-shaped; not I plus cook","file":"theories/OverlayNG.v","witness":"0007-overlayng-sheet","board":"ADR-0007"} *)
 Theorem ticket_0007_overlayng_assumes_noded_qed_or_qex :
-  (ong_run_g overlayng_locked_run = noded_crossing /\
+  (ong_run_g overlayng_locked_run = nodingng_crossing_noded /\
    noded_sheet (ong_run_g overlayng_locked_run) = ong_run_sheet overlayng_locked_run /\
    noded_sheet (ong_run_g overlayng_locked_run) = default_sheet /\
    overlayng_run_is_finite_snap overlayng_locked_run /\
+   nodingng_kind = NNG_I_plus_cook /\
    overlayng_kind = ONG_SnapSequence /\
    overlayng_kind <> ONG_I_plus_cook)
   \/
-  ong_run_g overlayng_locked_run <> noded_crossing.
+  ong_run_g overlayng_locked_run <> nodingng_crossing_noded.
 Proof.
   left.
   split; [reflexivity|].
   split; [exact overlayng_locked_run_g_on_sheet|].
   split; [reflexivity|].
   split; [exact overlayng_locked_run_is_finite_snap|].
+  split; [exact nodingng_is_I_plus_cook|].
   split; [exact overlayng_is_snap_sequence|].
   exact overlayng_not_nodingng.
 Qed.
@@ -356,6 +366,7 @@ Print Assumptions overlayng_snap_neq_I.
 Print Assumptions overlayng_same_sheet_as_R.
 Print Assumptions overlayng_locked_run_is_finite_snap.
 Print Assumptions overlayng_assumes_noded_crossing.
+Print Assumptions overlayng_assumes_nodingng_face.
 Print Assumptions overlayng_sheet_inhabits.
 Print Assumptions overlayng_hobby41_missing.
 Print Assumptions ticket_0007_overlayng_sheet_qed_or_qex.
