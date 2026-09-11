@@ -152,6 +152,10 @@ theories/SidecarGeodesicEgg.v
 # EggClothoid stays. Host/pure-R. First cook stays chord–chord.
 # Not a spiral interpolant / noder. Not Campaign I–II. No Admitted.
 theories/SidecarSpiralEgg.v
+# ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
+# SHC bag | Intake Decline. Reuses MkChord / MkCirc. Host/pure-R.
+# Grammar pin: grammars-v4 #4997. No new oracle keyword. No Admitted.
+theories/IntakeWalker.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
