@@ -46,7 +46,7 @@ board #564). Year-1 `CurveSegment` is `CSChord` or `CSArc`. QEX
 | Single-span NURBS (golden) | unit quarter = `π/2` | `NurbsConicExact.v : nurbs2_golden_quarter_length` | Category C (`atan`) |
 | NURBS ⊃ Bézier | equal weights collapse the denominator | `NurbsQuadraticLength.v : nurbs2_equal_weights_cubic`, `NurbsGeneralLength.v : nurbs3_equal_weights_length` | unconditional inclusion |
 | NURBS knot list | span lengths sum | `NurbsKnotSpans.v : nurbs_spans_additive` | unconditional additivity; not Cox-de Boor |
-| NURBS two-quarter instance | `π/2 + π/2 = π` | `NurbsKnotSpans.v : golden_half_circle_length` | two glued 508-a quarters; not a new `π` theorem |
+| NURBS two-quarter instance | `π/2 + π/2 = π` | `NurbsConicExact.v : golden_half_circle_length` | two glued 508-a quarters; not a new `π` theorem |
 
 Speed-integral pack (the method, not a zoo member):
 `SpeedIntegral.v : speed_integral_is_curve_length`. Bernstein plumbing:

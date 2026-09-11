@@ -14,7 +14,7 @@ types, ADR-0004 remint) are untouched.  Year-1 engine stays circular-only.
 | P1 | clothoid | `theories/ClothoidLength_unit.v` | `unit_line_discharges_window` — unit-speed straight inhabits the [sd,ed] contract; Euler-spiral integrals stay Route-1 primitives | Qed + Technique park, 3-axiom |
 | P1 | clothoid | `theories/ClothoidFresnel.v` + `ClothoidFresnelInhab.v` | pack `fresnel_is_curve_length` (3-axiom conditional); inhabitant `fresnel_unit_window_length_inhab` via Stdlib RiemannInt of (cos,sin)(t²/2) — `[0,1]` length 1 | Qed + inhabitant, Category C (#564 / 508-e) |
 | P1 | nurbs | `theories/NurbsGeneralLength.v` | equal-weight rational cubic ↔ cubic; two-window `nurbs_knot_span_additive`; conditional primitive | Qed, 3-axiom |
-| P1 | nurbs | `theories/NurbsKnotSpans.v` | `nurbs_spans_additive` — knot-vector induction; instance `golden_half_circle_length` (two 508-a quarters) | Qed, 3-axiom additivity / Category C instance (#565 / 508-g) |
+| P1 | nurbs | `theories/NurbsKnotSpans.v` | `nurbs_spans_additive` — knot-vector induction (3-axiom). Instance `NurbsConicExact.v : golden_half_circle_length` (two 508-a quarters, Category C) | Qed, 3-axiom additivity / Category C instance (#565 / 508-g) |
 | P2 | arc | `theories/ArcMidSweep.v` | `valid_arc_sweep_nonzero`; `arc_mid_on_circle_param` | Qed, Category C (atan2; removal tracks AngleBetween) |
 | — | framework | `theories/BernsteinBasis.v` | `bern_partition`; `bern_elevate_2` (n=2 instance of `elevate_ctrl`); `bezier3_elevation_pointwise` re-proved through it | Qed, 3-axiom (#562 / 508-f) |
 | — | stop | `theories/ExactCurveEpic508.v` | `ticket_508_qed_or_qex` — zoo-on-CurveSegment (QED) or missing constructor (QEX); discharged QEX on the ellipse | Qed, 3-axiom (508-qed-qex) |
@@ -85,7 +85,7 @@ Wrap-up is #566.
 `curve_length_additive`.  It does not remint
 `NurbsGeneralLength.nurbs_knot_span_additive` (two-window special
 case).  Not Cox-de Boor.  Oracle `N` stays single-span.  Instance
-`golden_half_circle_length` glues two 508-a golden quarters
+`NurbsConicExact.v : golden_half_circle_length` glues two 508-a golden quarters
 (`π/2 + π/2 = π`); Category C through `atan` only.  Does not
 retire epic 508.  Wrap-up is #566.  Board #564 inhabitant landed.
 
@@ -105,7 +105,7 @@ Wrap-up letter. TRIAGE `M-LEN-ZOO` flips to ✅ with honest scope
 notes. Bible §4.2 satisfaction is
 [`docs/scout/508-closing-summary.md`](scout/508-closing-summary.md).
 Does not remint `NurbsKnotSpans.v : nurbs_spans_additive` or
-`NurbsKnotSpans.v : golden_half_circle_length`. Does not remint
+`NurbsConicExact.v : golden_half_circle_length`. Does not remint
 `SpeedIntegral.v` / `ClothoidLength_unit.v` / `ClothoidFresnel.v`.
 Fresnel inhabitant is a later #564 letter (`ClothoidFresnelInhab.v`).
 QEX is not owner accept. This letter does

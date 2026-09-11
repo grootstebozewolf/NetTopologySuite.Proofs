@@ -103,23 +103,24 @@ theories/NurbsQuadraticLength.v
 # golden quarter so later Weierstrass consumers do not copy them.
 # Category C (Stdlib atan / Ratan).  No golden content.
 theories/AtanDoubleAngle.v
+# #508-g / #565: knot-vector carrier + induction over spans.  3-axiom
+# (curve_length_additive).  Golden half-circle instance lives in
+# NurbsConicExact.v (Category C via 508-a atan).  Not a remint of
+# NurbsGeneralLength.nurbs_knot_span_additive.  Not Cox-de Boor.
+theories/NurbsKnotSpans.v
 # #508-a / #559: golden rational quarter circle has metric length π/2.
 # Weierstrass φ(t) = 2·atan(t/(√2+(1-√2)·t)); reparam + ext onto the
 # golden nurbs2_param.  Generic 2·atan lives in AtanDoubleAngle.v;
-# windowed ext lives in CurveLength.v.  Category C (Stdlib atan /
-# Ratan), same lineage as ArcParamBridge.v.  Does not grow
-# CurveSegment or remint ADR-0004.
+# windowed ext lives in CurveLength.v.  Two-golden-quarter half-circle
+# instance (π/2 + π/2 = π) is here so KnotSpans stays 3-axiom.
+# Category C (Stdlib atan / Ratan), same lineage as ArcParamBridge.v.
+# Does not grow CurveSegment or remint ADR-0004.
 theories/NurbsConicExact.v
 # #508 NURBS P1: general degree (equal-weight rational cubic ↔ polynomial
 # cubic), knot-span additivity (curve_length_additive), and the
 # conditional exact primitive through curve_length_of_primitive.
 # Single-span oracle N.  No ExactNurbsSegment.  3-axiom.
 theories/NurbsGeneralLength.v
-# #508-g / #565: knot-vector carrier + induction over spans, and the
-# two-golden-quarter half-circle instance (π/2 + π/2 = π).  Not a remint
-# of NurbsGeneralLength.nurbs_knot_span_additive.  Not Cox-de Boor.
-# Oracle N stays single-span.  Instance is Category C via 508-a atan.
-theories/NurbsKnotSpans.v
 # #508 arc P2 leftovers from #552: valid_arc ⇒ arc_sweep ≠ 0, and
 # arc_mid is a parameterized circumcircle point.  atan2 lane, 4-axiom
 # (docs/audit-exceptions.txt).  Does not start a new 64-a r·θ.
@@ -2698,17 +2699,9 @@ theories/ArcArcCirclesSpan.v
 # plus a same-sign combinator (no iff fed to nra).  4-axiom (atan2 lineage,
 # see docs/audit-exceptions.txt).  No Admitted.
 theories/ArcSpanAtan2.v
-# Issue #64 round-2 items ② and ④ (N-AA quartic certificate + atan2 discharge).
-# §1 Vieta coordinate identities for radical_point_plus/minus: x/y sum and
-# product formulas (ring proofs, no hypotheses) — the degree-2 polynomial
-# certificate certifying the radical-axis intersection is quadratic, not quartic.
-# §2 Four inCircle_R = 0 helpers (radical_points_on_circles +
-# inCircle_R_zero_of_equidistant) place each named point on each circumcircle.
-# §3 arc_arc_intersects_of_atan2_radical_span: headline promotion — atan2 span
-# membership for one radical point w.r.t. both arcs → arc_arc_intersects, via
-# arc_span_contains_atan2_iff_chord_sign + arc_arc_intersects_of_circles_and_radical_signs.
-# 4-axiom (atan2/Classic lineage via ArcSpanAtan2, docs/audit-exceptions.txt).
-# No Admitted.
+# Issue #64 round-2 item ④ — N-AA Vieta coordinate identities
+# (radical_point plus/minus x/y sum and product).  Pure ring, 3-axiom.
+# Item ② atan2 discharge lives in ArcSpanAtan2.v.
 theories/ArcArcQuartic.v
 # Issue #64 ask #5b / N-AA: coordinate certificate (3-axiom).
 # Affine circle–circle resultant (`circle_circle_res_x` / `_y`); constructor

@@ -27,8 +27,9 @@
 
    Informal Bézout remark (not proved here): two conics meet in 4
    points, 2 at the circular points at infinity; the affine
-   certificate is degree ≤ 2.  `ArcArcQuartic.v` stays the 4-axiom
-   atan2/Vieta discharge; this file does not Require it.
+   certificate is degree ≤ 2.  `ArcArcQuartic.v` is the 3-axiom Vieta
+   certificate; atan2 discharge lives in `ArcSpanAtan2.v`.  This file
+   does not Require either.
 
    HEADLINE (constructor ⇒ resultant root; one named Year-1 guard):
      `radical_points_satisfy_circle_circle_res`

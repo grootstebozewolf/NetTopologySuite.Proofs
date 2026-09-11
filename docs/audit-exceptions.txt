@@ -10,13 +10,12 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 110 files (74 theories-flocq/ + 35 theories/ + 1 hunt probe).
-# None are allowlist-clean.  Flocq C1 (`Classical_Prop.classic` via
-# Bplus/Bminus/Bmult/Bdiv/round/B2R) cannot leave while Flocq's binary
-# model is in use (`docs/category-c-policy.md`).  R-side files carry
-# classic via atan2/Ratan or RiemannInt.  Five all-C2 arc files already
-# left (2026-08-25): ArcLength / ArcArea / ArcCentroid / ArcAreaCentroid
-# / CurveBufferArea.  Snapshot categorisation:
+# LIVE: 108 files (74 theories-flocq/ + 33 theories/ + 1 hunt probe).
+# Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
+# moved into already-excepted siblings).  Remaining R-side files carry
+# classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
+# Bplus/Bminus/Bmult/round) cannot leave while Flocq's binary model is
+# in use (`docs/category-c-policy.md`).  Snapshot:
 # docs/category-c-distribution.md (2026-08-16; list has grown since).
 #
 # Trio-only siblings deliberately NOT listed: Intersect_b64_exact_refs.v,
@@ -142,9 +141,7 @@ theories/ArcTraversalBridge.v
 theories/ArcMidSweep.v
 theories/AtanDoubleAngle.v
 theories/NurbsConicExact.v
-theories/NurbsKnotSpans.v
 theories/ArcSpanAtan2.v
-theories/ArcArcQuartic.v
 
 # R-side C1 — RiemannInt (#564 Fresnel inhabitant; pack stays 3-axiom)
 theories/ClothoidFresnelInhab.v
