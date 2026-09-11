@@ -64,7 +64,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra Ranalysis1.
-From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateClothoid.
+From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateLineLine
+  RelateClothoid.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
