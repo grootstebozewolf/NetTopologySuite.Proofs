@@ -207,12 +207,12 @@ Definition map_circle (s : Sheet) : ShcBag :=
     [mkChicken 0%nat 1%nat (MkCirc locked_full_circle_egg)].
 
 Definition shift_chicken (off : nat) (c : Chicken) : Chicken :=
-  mkChicken (off + ck_src c) (off + ck_dst c) (ck_egg c).
+  mkChicken (off + ck_src c)%nat (off + ck_dst c)%nat (ck_egg c).
 
 Definition append_bags (s : Sheet) (a b : ShcBag) : ShcBag :=
   let off := length (bag_hens a) in
   mkShcBag s
-    (bag_hens a ++ map (fun h => off + h) (bag_hens b))
+    (bag_hens a ++ map (fun h => (off + h)%nat) (bag_hens b))
     (bag_pts a ++ bag_pts b)
     (bag_chickens a ++ map (shift_chicken off) (bag_chickens b)).
 
