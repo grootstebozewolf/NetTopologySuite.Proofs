@@ -4,8 +4,7 @@
    ClothoidEgg payload for host MkClothoid
    (claimId 0007-intake-mkclothoid). Locked inhabitance record:
    chord-seed ends plus JTS (k0, k1, L). Not a Fresnel interpolant.
-   Not clothoid×clothoid first cook. 3-axiom. No Admitted / Axiom /
-   Parameter.
+   Not clothoid×clothoid first cook. 3-axiom. No Admitted, no Axiom, no Parameter.
 
    Grammar has two surface forms (ISO REFERENCELOCATION, JTS
    (k0,k1,L)). One host egg. OGC≡ISO bag discipline lives in
