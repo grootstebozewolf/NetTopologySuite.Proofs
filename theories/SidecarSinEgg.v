@@ -6,13 +6,13 @@
 
    Product / sidecar face: sinusoid as an EggClass on the ADR-0007
    sheet / hen / cook vocabulary. Host already has EggSinusoid /
-   MkOutOfScope EggSinusoid. This letter adds the missing Decline /
-   not-first-cook host lemmas (sinusoid_sinusoid_not_first_scope,
-   sinusoid_decline_I_ok / sinusoid_decline_witness,
-   try_cook_hit_sinusoid_none) and packages that fence plus one
-   locked demoted-chord fixture. Prefer SidecarSin* over reminting
-   host cook (same preference as SidecarNurbs* / SidecarClothoid* /
-   SidecarCirc* for non-host).
+   MkOutOfScope EggSinusoid. SheetHenCook is at the module-split
+   ceiling after NURBS #718 — this letter does not grow it.
+   Decline / not-first-cook / try_cook None live here and cite the
+   existing first_cook_scope / I_ok / try_cook_hit_out_of_scope_none
+   machinery, plus one locked demoted-chord fixture. Prefer
+   SidecarSin* over reminting host cook (same preference as
+   SidecarNurbs* / SidecarClothoid* / SidecarCirc* for non-host).
 
    The existing sinusoid corpus is thin versus clothoid / NURBS
    (SpectreCurvedEdge sine_profile / sine_edge is profile research,
@@ -155,7 +155,22 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Decline-on-host. Sinusoid eggs stay MkOutOfScope. Not a constructed Hit.   *)
+(* Lemmas live here (SheetHenCook must not grow). Cite first_cook_scope /    *)
+(* I_ok / try_cook_hit — same occupants as clothoid / NURBS host copies.     *)
 (* -------------------------------------------------------------------------- *)
+
+Lemma sinusoid_sinusoid_not_first_scope :
+  ~ first_cook_scope EggSinusoid EggSinusoid.
+Proof.
+  intro H. exact H.
+Qed.
+
+Lemma sinusoid_decline_I_ok :
+  I_ok (MkOutOfScope EggSinusoid) (MkOutOfScope EggSinusoid) IDecline.
+Proof.
+  unfold I_ok, first_cook_scope, egg_class.
+  intro H. exact H.
+Qed.
 
 Lemma sidecar_sin_host_decline :
   I_ok (sidecar_sin_host_egg locked_sse_ab)
@@ -509,7 +524,7 @@ Theorem ticket_0007_sin_not_first_cook_qed_or_qex :
    (forall p ti tj,
       ~ I_ok (MkOutOfScope EggSinusoid) (MkOutOfScope EggSinusoid)
            (IHit p ti tj)) /\
-   try_cook_hit sinusoid_ck1 sinusoid_ck2 IDecline crossing_hen = None).
+   try_cook_hit locked_sin_ck1 locked_sin_ck2 IDecline crossing_hen = None).
 Proof.
   right.
   split; [exact sinusoid_sinusoid_not_first_scope|].
@@ -520,7 +535,7 @@ Proof.
   split; [exact sidecar_sin_letter_is_landed|].
   split; [exact sinusoid_decline_I_ok|].
   split; [intros p ti tj H; exact H|].
-  exact try_cook_hit_sinusoid_none.
+  exact sidecar_sin_try_cook_none.
 Qed.
 
 (* WITNESS {"claimId":"0007-sin-egg","topic":"overlay","lemma":"ticket_0007_sin_parks_qed_or_qex","title":"Sidecar sinusoid discharges Campaign I-II, remints Spectre sine_profile as noding, and flips LoopDischarged (QED) or names them parked and cites Parks Gamma/iota/rho once (QEX); discharged QEX; letter landed != first-cook expand / Campaign / bag noder","file":"theories/SidecarSinEgg.v","witness":"0007-sin-egg","board":"ADR-0007"} *)

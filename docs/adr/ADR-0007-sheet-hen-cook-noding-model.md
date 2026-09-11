@@ -1359,10 +1359,12 @@ Witness: `0007-nurbs-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 ### Letter after Accept — SIN / sinusoid egg sidecar (2026-09-11)
 
 Cook-axis sidecar: sinusoid as an EggClass on the ADR-0007 vocabulary.
-Host already has `EggSinusoid` / `MkOutOfScope EggSinusoid`. This letter
-adds the missing Decline / not-first-cook host lemmas
-(`sinusoid_sinusoid_not_first_scope`, `sinusoid_decline_I_ok`) and
-packages them. Prefer `SidecarSin*` over reminting host cook. Existing
+Host already has `EggSinusoid` / `MkOutOfScope EggSinusoid`.
+`SheetHenCook.v` is at the module-split ceiling after NURBS #718 —
+this letter does not grow it. Decline / not-first-cook / try_cook None
+live in `SidecarSinEgg.v` and cite existing `first_cook_scope` / `I_ok`
+/ `try_cook_hit_out_of_scope_none`. Prefer `SidecarSin*` over reminting
+host cook. Existing
 sinusoid corpus is thin (Spectre `sine_profile` / `sine_edge` is
 profile research) — do not invent a heavy metric remint. One locked
 demote-to-chord / chord-seed fixture. Do not ship a sinusoid×sinusoid
@@ -1383,7 +1385,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarSinEgg.v : ticket_0007_sin_egg_qed_or_qex` | **QED** — EggSinusoid packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; profile stays research | `SidecarSinEgg.v : sidecar_sin_egg_inhabits`, `SidecarSinEgg.v : sidecar_sin_chord_seed`, `SidecarSinEgg.v : sidecar_sin_host_decline` |
-| `SidecarSinEgg.v : ticket_0007_sin_not_first_cook_qed_or_qex` | **QEX** — sinusoid×sinusoid stays out of first cook; `MkSinusoid` / Hit-arm missing | `SheetHenCook.v : sinusoid_sinusoid_not_first_scope`, `SidecarSinEgg.v : sidecar_sin_mksinusoid_missing`, `SidecarSinEgg.v : sidecar_sin_hit_arm_missing` |
+| `SidecarSinEgg.v : ticket_0007_sin_not_first_cook_qed_or_qex` | **QEX** — sinusoid×sinusoid stays out of first cook; `MkSinusoid` / Hit-arm missing | `SidecarSinEgg.v : sinusoid_sinusoid_not_first_scope`, `SidecarSinEgg.v : sidecar_sin_mksinusoid_missing`, `SidecarSinEgg.v : sidecar_sin_hit_arm_missing` |
 | `SidecarSinEgg.v : ticket_0007_sin_parks_qed_or_qex` | **QEX** — Campaign I–II / profile-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarSinEgg.v : sidecar_sin_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-sin-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.

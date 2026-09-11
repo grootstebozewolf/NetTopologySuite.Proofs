@@ -173,10 +173,6 @@ Proof.
   intro H. exact H.
 Qed.
 
-Lemma sinusoid_sinusoid_not_first_scope :
-  ~ first_cook_scope EggSinusoid EggSinusoid.
-Proof. intro H. exact H. Qed.
-
 Lemma IEmpty_neq_IDecline : IEmpty <> IDecline.
 Proof.
   discriminate.
@@ -313,10 +309,6 @@ Qed.
 Definition nurbs_decline_witness : CookWitness :=
   mkCookWitness (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
     IDecline nurbs_decline_I_ok.
-
-Lemma sinusoid_decline_I_ok :
-  I_ok (MkOutOfScope EggSinusoid) (MkOutOfScope EggSinusoid) IDecline.
-Proof. unfold I_ok, first_cook_scope, egg_class. intro H. exact H. Qed.
 
 (* I.1 host arm: circular eggs are out of first cook scope. I_ok
    admits only Decline — not a constructed Hit, not Empty. *)
@@ -981,14 +973,6 @@ Proof.
   reflexivity.
 Qed.
 
-Definition sinusoid_ck1 : Chicken :=
-  mkChicken 0%nat 1%nat (MkOutOfScope EggSinusoid).
-Definition sinusoid_ck2 : Chicken :=
-  mkChicken 2%nat 3%nat (MkOutOfScope EggSinusoid).
-Lemma try_cook_hit_sinusoid_none :
-  try_cook_hit sinusoid_ck1 sinusoid_ck2 IDecline crossing_hen = None.
-Proof. reflexivity. Qed.
-
 (* Circular eggs stay MkOutOfScope. A constructed circular Hit
    (parameters or not) does not feed this host cook step. *)
 Definition circular_ck1 : Chicken :=
@@ -1212,9 +1196,6 @@ Print Assumptions try_cook_hit_clothoid_none.
 Print Assumptions nurbs_nurbs_not_first_scope.
 Print Assumptions nurbs_decline_I_ok.
 Print Assumptions try_cook_hit_nurbs_none.
-Print Assumptions sinusoid_sinusoid_not_first_scope.
-Print Assumptions sinusoid_decline_I_ok.
-Print Assumptions try_cook_hit_sinusoid_none.
 Print Assumptions try_cook_hit_circular_hit_none.
 Print Assumptions circular_egg_not_first_cook_scope.
 Print Assumptions circular_decline_I_ok.
