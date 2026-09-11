@@ -898,7 +898,7 @@ Proof.
   exact cook_loop_not_discharged.
 Qed.
 
-(* WITNESS {"claimId":"0007-intake-mkclothoid","topic":"overlay","lemma":"ticket_0007_intake_mkclothoid_qed_or_qex","title":"Intake maps ISO and JTS clothoid CST to the same MkClothoid SHC bag (QED) or MkClothoid stays QEX and ISO clothoid Declines ID_IsoClothoid (QEX); discharged QED; one host constructor; OGC\equiv ISO same egg; no silent chord demote; clothoid times clothoid stays not first cook","file":"theories/IntakeWalker.v","witness":"0007-intake-mkclothoid","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-mkclothoid","topic":"overlay","lemma":"ticket_0007_intake_mkclothoid_qed_or_qex","title":"Intake maps ISO and JTS clothoid CST to the same MkClothoid SHC bag (QED) or MkClothoid stays QEX and ISO clothoid Declines ID_IsoClothoid (QEX); discharged QED; one host constructor; OGC\equiv ISO same egg; no silent chord demote; first-cook Hit is the clothoid first-cook letter","file":"theories/IntakeWalker.v","witness":"0007-intake-mkclothoid","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
   (intake_ctor_inhabits IntakeMkClothoid /\
    intake_map default_sheet TClothoidJts =
@@ -915,10 +915,7 @@ Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
    intake_map default_sheet example5_cc_both_clothoid_cst =
      IntakeBag (map_cc_example5 default_sheet) /\
    intake_map default_sheet example5_cc_both_clothoid_cst <>
-     IntakeDecline ID_IsoClothoid /\
-   ~ first_cook_scope EggClothoid EggClothoid /\
-   I_ok (MkClothoid locked_clothoid_egg) (MkClothoid locked_clothoid_egg)
-        IDecline)
+     IntakeDecline ID_IsoClothoid)
   \/
   (~ intake_ctor_inhabits IntakeMkClothoid /\
    intake_map default_sheet TClothoidIso =
@@ -936,9 +933,7 @@ Proof.
   split; [exact He|].
   split; [exact Hcls|].
   split; [exact example5_cc_bags_both_clothoid|].
-  split; [exact example5_cc_not_iso_decline|].
-  split; [exact clothoid_clothoid_not_first_scope|].
-  unfold I_ok, interpolant_pair. intro H. exact H.
+  exact example5_cc_not_iso_decline.
 Qed.
 
 Print Assumptions locked_point_maps.

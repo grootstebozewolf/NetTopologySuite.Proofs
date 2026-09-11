@@ -94,17 +94,23 @@ theories/CircularStringOddCount.v
 # Host/pure-R. atan2-free angle interpolant. Required by SheetHenCook.
 theories/SheetHenCircEgg.v
 # ADR-0007 ClothoidEgg payload for host MkClothoid
-# (claimId 0007-intake-mkclothoid). Locked inhabitance record.
-# Not Fresnel γ. Required by SheetHenCook. No Admitted.
+# (claimId 0007-intake-mkclothoid / 0007-clothoid-first-cook).
+# Locked inhabitance record + Fresnel-free cloth_eval. Required by
+# SheetHenCook. No Admitted.
 theories/SheetHenClothoidEgg.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
-# Host/pure-R. First cook scope is chord–chord and circular–circular
-# (MkCirc). Does not remint CurveSegment / Dart / Hobby. No Admitted.
+# Host/pure-R. First cook scope is chord–chord, circular–circular
+# (MkCirc), and clothoid–clothoid (MkClothoid). Does not remint
+# CurveSegment / Dart / Hobby. No Admitted.
 theories/SheetHenCook.v
 # ADR-0007 Γ host MkCirc / CircGamma locked fixture (claimId 0007-gamma-mkcirc).
 # Host/pure-R. atan2-free CircularEgg interpolant; I_ok Hit + try_cook_hit
 # mint on two MkCirc chickens. Tags / mixed stay Decline. 3-axiom.
 theories/CircularCookMkCirc.v
+# ADR-0007 clothoid×clothoid first-cook Hit (claimId 0007-clothoid-first-cook).
+# Host/pure-R. Locked MkClothoid pair; I_ok Hit + try_cook_hit mint.
+# Tags / mixed stay Decline. Not Fresnel-as-noding. 3-axiom.
+theories/ClothoidCookMkClothoid.v
 # ρ bag-loop named QEX gap (508-style missing CookLoopBagTerm).
 # Host/pure-R. leftover_quad width conserved; kiss/share/mint not
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi
@@ -120,9 +126,10 @@ theories/NodingNG.v
 # Not 𝓘 / cook / OverlayNGCurve / RelateNG. No Admitted.
 theories/OverlayNG.v
 # ADR-0007 clothoid egg sidecar (SidecarClothoidEgg). Packages
-# EggClothoid Decline-on-host + RelateClothoid chord-seed.
-# Host/pure-R. First cook stays chord–chord. Not Fresnel noding.
-# Not Campaign I–II. No Admitted.
+# EggClothoid tag-Decline + RelateClothoid chord-seed.
+# Host/pure-R. Host first cook includes clothoid×clothoid
+# (ClothoidCookMkClothoid). Not Fresnel noding. Not Campaign I–II.
+# No Admitted.
 theories/SidecarClothoidEgg.v
 # ADR-0007 NURBS egg sidecar (SidecarNurbsEgg). Packages EggNurbs
 # Decline-on-host + demoted unit-square chord-seed. Host/pure-R.

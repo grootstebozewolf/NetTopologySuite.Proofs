@@ -6,13 +6,14 @@
 
    Product / sidecar face: clothoid as an EggClass on the ADR-0007
    sheet / hen / cook vocabulary. Host already has EggClothoid /
-   MkOutOfScope EggClothoid, clothoid_clothoid_not_first_scope,
-   clothoid_decline_I_ok / clothoid_decline_witness. This module
-   packages that Decline-on-host fence plus one already-Qed
+   MkOutOfScope EggClothoid, clothoid_egg_first_cook_scope,
+   clothoid_decline_I_ok / clothoid_decline_witness (tags). This
+   module packages the tag-Decline fence plus one already-Qed
    constructive witness (RelateClothoid chord-seed; residual
    uniqueness stays metric). Prefer SidecarClothoid* over reminting
    host cook (same preference as SidecarCirc* over CircularCook*
-   for non-host).
+   for non-host). Host first-cook Hit lives in
+   ClothoidCookMkClothoid.v.
 
    The existing clothoid corpus (RelateClothoid, ClothoidLength*,
    ClothoidHalley, ClothoidResidual, Fresnel inhab, …) is
@@ -28,24 +29,22 @@
    reuse clothoid_chord_proper_cross_share; demote-to-chord is
    NodingNG / host first cook, not a clothoid Hit.
 
-   QEX: clothoid×clothoid is not first cook (checklist 4). Host
-   MkClothoid now inhabits Egg (intake letter
-   0007-intake-mkclothoid). Named remaining gaps: no I_ok Hit
-   arm on clothoid eggs; no first-cook expand. Do not fake
-   first-cook expand or LoopDischarged.
+   QEX parks: Fresnel-as-noding / Campaign / ρ stay parked.
+   Host MkClothoid inhabits Egg (intake). Hit-arm / first-cook
+   expand are now inhabited (claimId 0007-clothoid-first-cook).
+   Do not fake LoopDischarged.
 
    What this is not:
-     Host first_cook_scope / try_cook_hit expand to
-     clothoid×clothoid. CircGamma / ι / ρ remint. MkCirc. Host
-     circular cook. Shewchuk / Hobby / Priest / Jordan /
-     HotPixel / OverlayNG snap remint. SQL/MM Multi Landed /
-     Phase B done-when / H⊥ / MerkatorBV / 522-n. Full
+     Fresnel / Halley remint as noding. CircGamma / ι / ρ remint.
+     MkCirc. Host circular cook. Shewchuk / Hobby / Priest /
+     Jordan / HotPixel / OverlayNG snap remint. SQL/MM Multi
+     Landed / Phase B done-when / H⊥ / MerkatorBV / 522-n. Full
      clothoid×clothoid noder. Bag-loop ρ Discharge.
 
-   Parks Γ / ι / ρ (named QEX, landed). This letter cites them
-   once; it does not remint CircGamma, ι, leftover_width, or
-   LoopDischarged. First cook stays chord–chord. Host CircGamma
-   stays QEX.
+   Parks ι / ρ (named QEX, landed). This letter cites them
+   once; it does not remint leftover_width or LoopDischarged.
+   Host first cook includes clothoid×clothoid. Host CircGamma
+   stays discharged by MkCirc.
 
    ADR-0007 is Accepted (2026-09-07). This letter does not reopen
    Status. QEX is not a new Accept cycle. ADR-0006 Status stays
@@ -65,7 +64,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Ranalysis1.
-From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateClothoid.
+From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateClothoid
+  ClothoidCookMkClothoid.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -273,8 +273,8 @@ Definition sidecar_clothoid_ctor_inhabits
   (c : SidecarClothoidCookCtor) : Prop :=
   match c with
   | ClothoidMkClothoid => True
-  | ClothoidClothoidHitArm => False
-  | ClothoidFirstCookExpand => False
+  | ClothoidClothoidHitArm => True
+  | ClothoidFirstCookExpand => True
   end.
 
 Lemma sidecar_clothoid_mkclothoid_inhabits :
@@ -308,26 +308,18 @@ Proof.
   intros c d H. discriminate.
 Qed.
 
-Lemma mkclothoid_pair_not_interpolant :
+Lemma mkclothoid_pair_is_interpolant :
   forall c1 c2,
-    ~ interpolant_pair (MkClothoid c1) (MkClothoid c2).
+    interpolant_pair (MkClothoid c1) (MkClothoid c2).
 Proof.
-  intros c1 c2 H. exact H.
+  intros c1 c2. exact I.
 Qed.
 
-Lemma mkclothoid_pair_decline_I_ok :
+Lemma mkclothoid_pair_hit_I_ok :
   I_ok (MkClothoid locked_clothoid_egg) (MkClothoid locked_clothoid_egg)
-       IDecline.
+       (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)).
 Proof.
-  unfold I_ok, interpolant_pair. intro H. exact H.
-Qed.
-
-Lemma mkclothoid_pair_hit_false :
-  forall p ti tj,
-    ~ I_ok (MkClothoid locked_clothoid_egg) (MkClothoid locked_clothoid_egg)
-         (IHit p ti tj).
-Proof.
-  intros p ti tj H. exact H.
+  exact locked_intake_egg_self_hit.
 Qed.
 
 Definition locked_mkclothoid_ck1 : Chicken :=
@@ -336,39 +328,43 @@ Definition locked_mkclothoid_ck1 : Chicken :=
 Definition locked_mkclothoid_ck2 : Chicken :=
   mkChicken 2%nat 3%nat (MkClothoid locked_clothoid_egg).
 
-Lemma try_cook_hit_mkclothoid_none :
-  forall p ti tj h,
-    try_cook_hit locked_mkclothoid_ck1 locked_mkclothoid_ck2
-      (IHit p ti tj) h = None.
+Definition cooked_intake_mkclothoid : CookedPair :=
+  cook_hit_clothoids locked_mkclothoid_ck1 locked_mkclothoid_ck2
+    locked_clothoid_egg locked_clothoid_egg (1 / 2) (1 / 2) crossing_hen.
+
+Lemma try_cook_hit_mkclothoid_some :
+  try_cook_hit locked_mkclothoid_ck1 locked_mkclothoid_ck2
+    (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)) crossing_hen
+    = Some cooked_intake_mkclothoid.
 Proof.
-  intros p ti tj h. reflexivity.
+  reflexivity.
 Qed.
 
-Lemma sidecar_clothoid_hit_arm_missing :
-  ~ sidecar_clothoid_ctor_inhabits ClothoidClothoidHitArm.
+Lemma sidecar_clothoid_hit_arm_inhabits :
+  sidecar_clothoid_ctor_inhabits ClothoidClothoidHitArm.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
-Lemma sidecar_clothoid_first_cook_expand_missing :
-  ~ sidecar_clothoid_ctor_inhabits ClothoidFirstCookExpand.
+Lemma sidecar_clothoid_first_cook_expand_inhabits :
+  sidecar_clothoid_ctor_inhabits ClothoidFirstCookExpand.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
-Lemma sidecar_clothoid_not_first_cook :
-  ~ first_cook_scope EggClothoid EggClothoid.
+Lemma sidecar_clothoid_is_first_cook :
+  first_cook_scope EggClothoid EggClothoid.
 Proof.
-  exact clothoid_clothoid_not_first_scope.
+  exact clothoid_egg_first_cook_scope.
 Qed.
 
-Lemma sidecar_clothoid_first_cook_stays_chord_chord :
+Lemma sidecar_clothoid_first_cook_includes_clothoid :
   first_cook_scope EggChord EggChord /\
-  ~ first_cook_scope EggClothoid EggClothoid /\
+  first_cook_scope EggClothoid EggClothoid /\
   first_cook_scope EggCircularArc EggCircularArc.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact clothoid_clothoid_not_first_scope|].
+  split; [exact clothoid_egg_first_cook_scope|].
   exact circular_egg_first_cook_scope.
 Qed.
 
@@ -428,16 +424,16 @@ Inductive SidecarClothoidLetterStatus : Type :=
 | SidecarClothoidCampaignDischarged.
 
 Definition sidecar_clothoid_letter_status : SidecarClothoidLetterStatus :=
-  SidecarClothoidEggLanded.
+  SidecarClothoidFirstCookExpanded.
 
-Lemma sidecar_clothoid_letter_is_landed :
-  sidecar_clothoid_letter_status = SidecarClothoidEggLanded.
+Lemma sidecar_clothoid_letter_is_first_cook_expanded :
+  sidecar_clothoid_letter_status = SidecarClothoidFirstCookExpanded.
 Proof.
   reflexivity.
 Qed.
 
-Lemma sidecar_clothoid_not_first_cook_expanded :
-  sidecar_clothoid_letter_status <> SidecarClothoidFirstCookExpanded.
+Lemma sidecar_clothoid_letter_is_landed :
+  sidecar_clothoid_letter_status <> SidecarClothoidEggLanded.
 Proof.
   discriminate.
 Qed.
@@ -521,7 +517,7 @@ Proof.
   exact sidecar_clothoid_not_fresnel_noding.
 Qed.
 
-(* WITNESS {"claimId":"0007-clothoid-egg","topic":"overlay","lemma":"ticket_0007_clothoid_not_first_cook_qed_or_qex","title":"Sidecar clothoid expands first_cook_scope to clothoid times clothoid and inhabits I_ok Hit (QED) or clothoid times clothoid stays QEX with named Hit-arm / first-cook-expand gaps (QEX); discharged QEX; MkClothoid now inhabits host Egg; checklist 4; do not fake first-cook expand","file":"theories/SidecarClothoidEgg.v","witness":"0007-clothoid-egg","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-clothoid-egg","topic":"overlay","lemma":"ticket_0007_clothoid_not_first_cook_qed_or_qex","title":"Sidecar clothoid expands first_cook_scope to clothoid times clothoid and inhabits I_ok Hit (QED) or clothoid times clothoid stays QEX with named Hit-arm / first-cook-expand gaps (QEX); discharged QED; host first-cook letter 0007-clothoid-first-cook; tags stay Decline","file":"theories/SidecarClothoidEgg.v","witness":"0007-clothoid-egg","board":"ADR-0007"} *)
 Theorem ticket_0007_clothoid_not_first_cook_qed_or_qex :
   (first_cook_scope EggClothoid EggClothoid /\
    sidecar_clothoid_ctor_inhabits ClothoidClothoidHitArm /\
@@ -551,22 +547,16 @@ Theorem ticket_0007_clothoid_not_first_cook_qed_or_qex :
       try_cook_hit locked_mkclothoid_ck1 locked_mkclothoid_ck2
         (IHit p ti tj) h = None)).
 Proof.
-  right.
-  split; [exact clothoid_clothoid_not_first_scope|].
-  split; [exact first_cook_scope_chord_chord|].
-  split; [exact sidecar_clothoid_mkclothoid_inhabits|].
-  split; [exact sidecar_clothoid_hit_arm_missing|].
-  split; [exact sidecar_clothoid_first_cook_expand_missing|].
-  split; [exact sidecar_clothoid_letter_is_landed|].
-  split; [exact clothoid_decline_I_ok|].
-  split; [exact mkclothoid_pair_decline_I_ok|].
-  split; [intros p ti tj H; exact H|].
-  split; [exact mkclothoid_pair_hit_false|].
-  split; [exact try_cook_hit_clothoid_none|].
-  exact try_cook_hit_mkclothoid_none.
+  left.
+  split; [exact clothoid_egg_first_cook_scope|].
+  split; [exact sidecar_clothoid_hit_arm_inhabits|].
+  split; [exact sidecar_clothoid_first_cook_expand_inhabits|].
+  split; [exact sidecar_clothoid_letter_is_first_cook_expanded|].
+  exists (mkPoint (1 / 2) 0), (1 / 2), (1 / 2).
+  exact mkclothoid_pair_hit_I_ok.
 Qed.
 
-(* WITNESS {"claimId":"0007-clothoid-egg","topic":"overlay","lemma":"ticket_0007_clothoid_parks_qed_or_qex","title":"Sidecar clothoid discharges Campaign I-II, remints Fresnel/Halley as noding, and flips LoopDischarged (QED) or names them parked and cites Parks Gamma/iota/rho once (QEX); discharged QEX; letter landed != first-cook expand / Campaign / bag noder","file":"theories/SidecarClothoidEgg.v","witness":"0007-clothoid-egg","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-clothoid-egg","topic":"overlay","lemma":"ticket_0007_clothoid_parks_qed_or_qex","title":"Sidecar clothoid discharges Campaign I-II, remints Fresnel/Halley as noding, and flips LoopDischarged (QED) or names them parked and cites Parks iota/rho once (QEX); discharged QEX; first-cook expand landed != Campaign / Fresnel-as-noding / bag noder","file":"theories/SidecarClothoidEgg.v","witness":"0007-clothoid-egg","board":"ADR-0007"} *)
 Theorem ticket_0007_clothoid_parks_qed_or_qex :
   (sidecar_clothoid_letter_status = SidecarClothoidCampaignDischarged /\
    sidecar_clothoid_kind = SCE_CampaignI /\
@@ -574,7 +564,7 @@ Theorem ticket_0007_clothoid_parks_qed_or_qex :
    sidecar_clothoid_kind = SCE_LoopNoder /\
    cook_loop_status = LoopDischarged)
   \/
-  (sidecar_clothoid_letter_status = SidecarClothoidEggLanded /\
+  (sidecar_clothoid_letter_status = SidecarClothoidFirstCookExpanded /\
    sidecar_clothoid_letter_status <> SidecarClothoidCampaignDischarged /\
    sidecar_clothoid_kind = SCE_EggPackaging /\
    sidecar_clothoid_kind <> SCE_CampaignI /\
@@ -583,10 +573,11 @@ Theorem ticket_0007_clothoid_parks_qed_or_qex :
    cook_loop_status = LoopObligation /\
    cook_loop_status <> LoopDischarged /\
    first_cook_scope EggChord EggChord /\
-   ~ first_cook_scope EggClothoid EggClothoid).
+   first_cook_scope EggClothoid EggClothoid /\
+   ~ first_cook_scope EggNurbs EggNurbs).
 Proof.
   right.
-  split; [exact sidecar_clothoid_letter_is_landed|].
+  split; [exact sidecar_clothoid_letter_is_first_cook_expanded|].
   split; [exact sidecar_clothoid_campaign_not_discharged|].
   split; [exact sidecar_clothoid_is_egg_packaging|].
   split; [exact sidecar_clothoid_not_campaign_i|].
@@ -595,7 +586,8 @@ Proof.
   split; [exact cook_loop_is_obligation|].
   split; [exact cook_loop_not_discharged|].
   split; [exact first_cook_scope_chord_chord|].
-  exact clothoid_clothoid_not_first_scope.
+  split; [exact clothoid_egg_first_cook_scope|].
+  exact nurbs_nurbs_not_first_scope.
 Qed.
 
 Print Assumptions sidecar_clothoid_class.
@@ -605,9 +597,9 @@ Print Assumptions sidecar_clothoid_chord_seed.
 Print Assumptions sidecar_clothoid_demote_is_nodingng_crossing.
 Print Assumptions sidecar_clothoid_residual_is_metric.
 Print Assumptions sidecar_clothoid_mkclothoid_inhabits.
-Print Assumptions mkclothoid_pair_decline_I_ok.
-Print Assumptions try_cook_hit_mkclothoid_none.
-Print Assumptions sidecar_clothoid_hit_arm_missing.
+Print Assumptions mkclothoid_pair_hit_I_ok.
+Print Assumptions try_cook_hit_mkclothoid_some.
+Print Assumptions sidecar_clothoid_hit_arm_inhabits.
 Print Assumptions sidecar_clothoid_egg_inhabits.
 Print Assumptions ticket_0007_clothoid_egg_qed_or_qex.
 Print Assumptions ticket_0007_clothoid_not_first_cook_qed_or_qex.

@@ -283,7 +283,7 @@ Do not start H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
 | 1b | Numeric `dart_eq_dec` does not decide vertex identity | `Adr0007NodingEpic.v : ticket_0007_dart_eq_qed_or_qex` | **QEX** — coord-pair `=` is not hen `=` | `SheetHenCook.v : coord_eq_not_hen_eq` |
 | 2 | Minimal `𝓘` obligations for the segment/chord lane | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** — Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope | `SheetHenCook.v : crossing_witness`, `SheetHenCook.v : disjoint_witness`, `SheetHenCook.v : I_ok_chord_not_decline` |
 | 3 | Cross-link to accepted ADR-0006 | header of both modules + this addendum | comment / docs (no second seam) | — |
-| 4 | First cook scope = chord–chord only | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — clothoid–clothoid missing (508 mirror) | `SheetHenCook.v : clothoid_clothoid_not_first_scope` |
+| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — NURBS–NURBS missing (508 mirror); clothoid×clothoid is first cook | `SheetHenCook.v : nurbs_nurbs_not_first_scope`, `SheetHenCook.v : clothoid_egg_first_cook_scope` |
 | 4b | Chord–chord inhabits the cook interface | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** | `SheetHenCook.v : first_cook_scope_chord_chord` |
 | — | Empty ≠ Decline | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` | **QED** | `SheetHenCook.v : IEmpty_neq_IDecline` |
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCook.v : noded_crossing` |
@@ -1128,7 +1128,7 @@ done-when / SQL/MM cathedral. Does not reopen Status.
 | `SheetHenCookLoop.v : ticket_0007_rho_gap_qed_or_qex` | **QEX** — named missing constructor + conserved bag-sum | `SheetHenCookLoop.v : leftover_quad_width_conserved` |
 | `SheetHenCookLoop.v : ticket_0007_rho_cycles_qed_or_qex` | **QEX** — Empty / Decline mint nothing; ShareOne ignores width; MintTwo is not a width bound | `SheetHenCookLoop.v : no_hit_no_leftover_split`, `SheetHenCookLoop.v : mint_two_not_width_bound` |
 | `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` stays obligation | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
-| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; first cook stays chord–chord | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
+| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; bag loop stays obligation; NURBS stays out | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
 
 Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1156,7 +1156,7 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 |------|-----|-------|
 | `NodingNG.v : ticket_0007_nodingng_chord_qed_or_qex` | **QED** — chord `𝓘` + one cook step (or locked two-pair bag) yields `NodedOnSheet`; Empty ≠ Decline; snap ≠ `𝓘`; `ShareOne` / `MintTwo` structural | `NodingNG.v : nodingng_chord_inhabits`, `NodingNG.v : nodingng_crossing_hit_cooks`, `NodingNG.v : nodingng_locked_bag_inhabits` |
 | `NodingNG.v : ticket_0007_nodingng_rho_qed_or_qex` | **QEX** — NodingNG chord is pairwise / one-step, not `LoopDischarged`; Parks ρ | `SheetHenCookLoop.v : cook_loop_bag_term_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
-| `NodingNG.v : ticket_0007_nodingng_scope_qed_or_qex` | **QEX** — first cook stays chord–chord; circular / clothoid stay out of scope | `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : circular_egg_first_cook_scope` |
+| `NodingNG.v : ticket_0007_nodingng_scope_qed_or_qex` | **QEX** — NodingNG stays pairwise/one-step; host first cook includes chord/circular/clothoid; NURBS stays out | `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : circular_egg_first_cook_scope`, `SheetHenCook.v : clothoid_egg_first_cook_scope` |
 
 Witness: `0007-nodingng-chord`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1264,7 +1264,7 @@ Witness: `0007-ieee-oracle-bridge`. Status stays **Accepted**. Parks Γ / ι / �
 
 Cook-axis sidecar: clothoid as an EggClass on the ADR-0007 vocabulary.
 Host already has `EggClothoid` / `MkOutOfScope EggClothoid`,
-`clothoid_clothoid_not_first_scope`, `clothoid_decline_I_ok`. Prefer
+`clothoid_egg_first_cook_scope`, `clothoid_decline_I_ok` (tags). Prefer
 `SidecarClothoid*` over reminting host cook. Existing clothoid corpus
 is metric / relate / buffer research — package what is already Qed;
 do not remint Fresnel / Halley as noding. One locked fixture. Do not
@@ -1274,19 +1274,19 @@ ship Campaign I–II.
 chord-seed reuse (`RelateClothoid.v : clothoid_chord_proper_cross_share`).
 Demote-to-chord is NodingNG / host first cook, not a clothoid Hit.
 
-**QEX.** Clothoid×clothoid is not first cook (checklist 4). Host
-`MkClothoid` now inhabits `Egg` (intake letter
-`0007-intake-mkclothoid`). Named remaining gaps: no `I_ok` Hit
-arm; no first-cook expand. Do not fake first-cook expand or
-`LoopDischarged`. Parks Γ / ι / ρ cited once.
+**QEX parks.** Campaign I–II / Fresnel-as-noding / bag loop.
+Host `MkClothoid` inhabits `Egg` (intake letter
+`0007-intake-mkclothoid`). Hit-arm / first-cook expand are
+discharged QED by claimId `0007-clothoid-first-cook`. Do not fake
+`LoopDischarged`. Parks ι / ρ cited once.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_egg_qed_or_qex` | **QED** — EggClothoid packaging; host Decline; locked chord-seed; demote is NodingNG first cook | `SidecarClothoidEgg.v : sidecar_clothoid_egg_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_chord_seed`, `SidecarClothoidEgg.v : sidecar_clothoid_host_decline` |
-| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QEX** — clothoid×clothoid stays out of first cook; `MkClothoid` inhabits; Hit-arm / first-cook expand missing | `SheetHenCook.v : clothoid_clothoid_not_first_scope`, `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_missing` |
-| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — clothoid×clothoid is first cook; `MkClothoid` / Hit-arm / first-cook expand inhabit | `SheetHenCook.v : clothoid_egg_first_cook_scope`, `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / bag loop parked; Parks ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_first_cook_expanded`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-clothoid-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1656,11 +1656,10 @@ LineString plus both clothoid members. `ID_IsoClothoid` /
 `ID_MkOutOfScope` stay on the Decline type; they are not the
 well-formed clothoid answer. No silent chord demote.
 
-Sidecar QEX flips only the **MkClothoid missing** arm
+Sidecar QEX flips the **MkClothoid missing** arm
 (`sidecar_clothoid_ctor_inhabits ClothoidMkClothoid`). Hit-arm
-and first-cook expand stay QEX. Host `I_ok` on two `MkClothoid`
-eggs is Decline (`~ interpolant_pair`). `try_cook_hit` stays
-None.
+and first-cook expand are the first-cook letter
+(`0007-clothoid-first-cook`).
 
 Java visitor (`tools/WktIntakeWalker`) stays in sync. No new
 oracle keyword (ADR-0006).
@@ -1669,16 +1668,52 @@ oracle keyword (ADR-0006).
 → `IntakeBag` whose chickens use `MkClothoid` (`EggClothoid`).
 Same bag / same egg. `example5` no longer Declines ISO clothoid.
 
-**QEX.** Clothoid×clothoid Hit-arm / first-cook expand. Fresnel
-as noding. WKB-order Γ walk / WKT zoo / Lesson-1 remints / host
-cook expand / new oracle keyword / ρ stay parked.
+**QEX.** Fresnel as noding. WKB-order Γ walk / WKT zoo / Lesson-1
+remints / new oracle keyword / ρ stay parked. Clothoid×clothoid
+Hit-arm is the first-cook letter.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalker.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5 bags; not first cook | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalker.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalker.v : example5_cc_bags_both_clothoid`, `IntakeWalker.v : iso_clothoid_chickens_mkclothoid` |
-| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QEX** — Hit-arm / first-cook expand stay missing; `MkClothoid` inhabits | `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_missing`, `SidecarClothoidEgg.v : mkclothoid_pair_decline_I_ok` |
+| `IntakeWalker.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5 bags | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalker.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalker.v : example5_cc_bags_both_clothoid`, `IntakeWalker.v : iso_clothoid_chickens_mkclothoid` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit; `MkClothoid` inhabits | `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : mkclothoid_pair_hit_I_ok` |
 | `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword / ρ parked | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
-Witness: `0007-intake-mkclothoid`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is intake egg inhabitance, not Fresnel noding and not first-cook expand.
+Witness: `0007-intake-mkclothoid`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is intake egg inhabitance, not Fresnel noding. First-cook expand is the next letter.
+
+### Letter after Accept — clothoid×clothoid first-cook (2026-09-11)
+
+Needle AFTER intake MkClothoid (#727 @ `35ca6e5`). claimId
+`0007-clothoid-first-cook`. Put `EggClothoid × EggClothoid` in
+`first_cook_scope`. `MkClothoid` pairs are `interpolant_pair`.
+Locked crossing pair inhabits host `IHit` via `on_cloth`
+(Fresnel-free chord-parameter interpolant; eggs keep `(k0,k1,L)`;
+`cloth_split` mints `MkClothoid` children). `try_cook_hit` returns
+`Some`. Thin sibling `ClothoidCookMkClothoid.v` — `SheetHenCook.v`
+stays at the module-split ceiling.
+
+Not a silent `I_ok` demote to `on_chord`. Not Fresnel / Halley /
+length as the noding engine. Mixed clothoid×chord stays Decline.
+NURBS / SIN / ellipse / spiral / geodesic stay out of first cook.
+Tags (`MkOutOfScope EggClothoid`) stay Decline. Intake bags from
+#727 stand. No new oracle keyword (ADR-0006).
+
+**QED.** `first_cook_scope EggClothoid EggClothoid`. Locked
+`I_ok (MkClothoid _) (MkClothoid _) (IHit …)`. `try_cook_hit` mints.
+Sidecar Hit-arm / first-cook expand inhabit.
+
+**QEX.** Fresnel-as-noding / Campaign / ρ. Mixed clothoid×chord.
+Other egg first-cooks. Completeness of first cook (NURBS still
+missing).
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `ClothoidCookMkClothoid.v : ticket_0007_clothoid_first_cook_qed_or_qex` | **QED** — scope + locked Hit + mint; tags / mixed Decline; NURBS / ρ parked | `ClothoidCookMkClothoid.v : locked_mkclothoid_I_ok`, `ClothoidCookMkClothoid.v : cooked_mkclothoid_try`, `SheetHenCook.v : clothoid_egg_first_cook_scope` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit | `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_first_cook_expand_inhabits` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign / Fresnel-as-noding / ρ parked | `SidecarClothoidEgg.v : sidecar_clothoid_not_fresnel_noding`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses NURBS–NURBS | `SheetHenCook.v : nurbs_nurbs_not_first_scope` |
+
+Witness: `0007-clothoid-first-cook`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is first cook only, not a noder and not Fresnel-as-noding.

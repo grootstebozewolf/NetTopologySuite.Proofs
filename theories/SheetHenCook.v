@@ -2,34 +2,14 @@
    NetTopologySuite.Proofs.SheetHenCook
    ----------------------------------------------------------------------------
    ADR-0007 vocabulary: sheet, hen, egg, chicken, cook / 𝓘.
-
-   Thin host-lane types for the ticket stops in Adr0007NodingEpic.v.
-   Not a noder. Not a Geometry subclass. Not a remint of CurveSegment,
-   Exact* zoo types, Dart, or Hobby / NodingSeparation_b64.
-
-   First cook scope is chord–chord and circular–circular (MkCirc).
-   MkClothoid inhabits Egg; clothoid×clothoid is not first cook.
-   Predicates never mint hens. Empty ≠ Decline. Snap-rounding ≠ 𝓘.
-   Display is a view. One Hit-split is confluent. The bag cook
-   loop is a named 508-style QEX (CookLoopBagTerm missing).
-   binary64 realizes points of S; OverlayNGRobust is a finite
-   snap-sequence. DdirDart := (Hen * Hen) is the chicken
-   projection — one type equation, not a third directed-edge type.
-
-   ADR-0007 is Accepted (2026-09-07). Letters here do not reopen
-   Status. Host CircGamma is discharged by MkCirc
-   (claimId 0007-gamma-mkcirc). Tags / mixed still Decline.
-
-   Testable 𝓘 / cook results sit on the accepted Oracle line protocol
-   (ADR-0006). This module mints no keyword and no second external seam.
-
+   Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
+   subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
+   First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
+   (MkClothoid). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
+   Bag cook loop is named QEX (CookLoopBagTerm). CircGamma discharged
+   by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
-   lane: proofs
-   board: ADR-0007
-   ADR-0004: not a leftover numeral and not a 508-* / 522-* board mint.
-
    No `Admitted`, no `Axiom`, no `Parameter`.
-
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
@@ -97,7 +77,7 @@ Definition egg_class (e : Egg) : EggClass :=
 
 Definition interpolant_pair (e1 e2 : Egg) : Prop :=
   match e1, e2 with
-  | MkChord _, MkChord _ | MkCirc _, MkCirc _ => True
+  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _ => True
   | _, _ => False
   end.
 
@@ -118,7 +98,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord–chord, MkCirc×MkCirc.   *)
+(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid pairs. *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive IResult : Type :=
@@ -130,6 +110,7 @@ Definition first_cook_scope (a b : EggClass) : Prop :=
   match a, b with
   | EggChord, EggChord => True
   | EggCircularArc, EggCircularArc => True
+  | EggClothoid, EggClothoid => True
   | _, _ => False
   end.
 
@@ -150,6 +131,10 @@ Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   | MkCirc c1, MkCirc c2, IEmpty =>
       ~ exists X t1 t2, on_circ c1 t1 X /\ on_circ c2 t2 X
   | MkCirc _, MkCirc _, IDecline => False
+  | MkClothoid c1, MkClothoid c2, IHit p ti tj => on_cloth c1 ti p /\ on_cloth c2 tj p
+  | MkClothoid c1, MkClothoid c2, IEmpty =>
+      ~ exists X t1 t2, on_cloth c1 t1 X /\ on_cloth c2 t2 X
+  | MkClothoid _, MkClothoid _, IDecline => False
   | _, _, IDecline => ~ interpolant_pair e1 e2
   | _, _, IHit _ _ _ => False
   | _, _, IEmpty => False
@@ -168,10 +153,10 @@ Proof.
   exact I.
 Qed.
 
-Lemma clothoid_clothoid_not_first_scope :
-  ~ first_cook_scope EggClothoid EggClothoid.
+Lemma clothoid_egg_first_cook_scope :
+  first_cook_scope EggClothoid EggClothoid.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
 Lemma ellipse_ellipse_not_first_scope :
@@ -228,8 +213,7 @@ Inductive DisplayView : Type :=
 | ViewSFA.
 
 (* -------------------------------------------------------------------------- *)
-(* Chord–chord inhabitance. Crossing diagonals Hit; disjoint horizontals      *)
-(* Empty; clothoid–clothoid Decline. Not a total noder.                       *)
+(* Chord–chord inhabitance. Crossing Hit; disjoint Empty; tags Decline.     *)
 (* -------------------------------------------------------------------------- *)
 
 Definition diag_ab : ChordEgg := mkChordEgg (mkPoint 0 0) (mkPoint 2 2).
@@ -874,6 +858,16 @@ Definition cook_hit_circs
     (mkChicken (ck_src c2) h_new (MkCirc (fst s2)))
     (mkChicken h_new (ck_dst c2) (MkCirc (snd s2))).
 
+Definition cook_hit_clothoids
+  (c1 c2 : Chicken) (e1 e2 : ClothoidEgg) (ti tj : R) (h_new : Hen)
+  : CookedPair :=
+  let s1 := cloth_split e1 ti in let s2 := cloth_split e2 tj in
+  mkCookedPair h_new
+    (mkChicken (ck_src c1) h_new (MkClothoid (fst s1)))
+    (mkChicken h_new (ck_dst c1) (MkClothoid (snd s1)))
+    (mkChicken (ck_src c2) h_new (MkClothoid (fst s2)))
+    (mkChicken h_new (ck_dst c2) (MkClothoid (snd s2))).
+
 Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
   : option CookedPair :=
   match ck_egg c1, ck_egg c2, o with
@@ -881,6 +875,7 @@ Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
       Some (cook_hit_chords c1 c2 e1 e2 ti tj h_new)
   | MkCirc e1, MkCirc e2, IHit _ ti tj =>
       Some (cook_hit_circs c1 c2 e1 e2 ti tj h_new)
+  | MkClothoid e1, MkClothoid e2, IHit _ ti tj => Some (cook_hit_clothoids c1 c2 e1 e2 ti tj h_new)
   | _, _, _ => None
   end.
 
@@ -1190,7 +1185,7 @@ Proof.
 Qed.
 
 Print Assumptions first_cook_scope_chord_chord.
-Print Assumptions clothoid_clothoid_not_first_scope.
+Print Assumptions clothoid_egg_first_cook_scope.
 Print Assumptions IEmpty_neq_IDecline.
 Print Assumptions crossing_witness.
 Print Assumptions disjoint_witness.
