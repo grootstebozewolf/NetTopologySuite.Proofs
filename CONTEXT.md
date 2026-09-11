@@ -212,6 +212,8 @@ _Avoid_: MVP, milestone, marketable (alone — the constraint is *minimum*)
 **Oracle**:
 The Rocq-extracted reference binary that answers geometric queries over a text
 line protocol; the source of truth every engine is compared against.
+Together with the IEEE↔R bridge it is the test surface for NodingNG /
+OverlayNG / RelateNG (ADR-0006 line protocol only).
 _Avoid_: reference implementation, ground truth binary
 
 **Harness**:
@@ -367,6 +369,18 @@ Shewchuk A–D / Hobby / Priest. Not full unconditional Jordan. Not
 Completeness stays false (`RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex`).
 _Avoid_: NodingNG, OverlayNG, RelateNG.v (the umbrella), 522-n
 
+**IEEE↔R bridge**:
+The two-way binary64 ↔ ℝ coordinate realization the Oracle uses to
+generate tests against NodingNG / OverlayNG / RelateNG
+(`IeeeRBridge.v : ticket_0007_ieee_bridge_qed_or_qex`). IEEE→ℝ is
+`B2R` / `B2R_bp`; ℝ→IEEE is `round` / `ieee_of_Z` under the finite /
+no-overflow / int-safe window. Same sheet as ℝ realization. Bridge
+≠ `𝓘` / ≠ cook / ≠ OverlayNG snap. Not a full FP noder. Unrestricted
+round-trip and kiss-on-binary64 stay named QEX
+(`IeeeRBridge.v : ticket_0007_ieee_bridge_fp_noder_qed_or_qex`,
+`IeeeRBridge.v : ticket_0007_ieee_bridge_unrestricted_qed_or_qex`).
+_Avoid_: cook, OverlayNG snap, FP noder, unrestricted bit-exact
+
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
 this sheet. Distinct from relate Decline and from Empty (disjoint images).
@@ -439,4 +453,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.

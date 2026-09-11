@@ -112,4 +112,14 @@ RocqRefRunner.
 
 See [`ADR-0007-sheet-hen-cook-noding-model.md`](ADR-0007-sheet-hen-cook-noding-model.md)
 (coupling paragraph in the supporting-shapes addendum). Status of this
-ADR stays **Accepted**. ADR-0007 stays Proposed.
+ADR stays **Accepted**. ADR-0007 stays **Accepted**.
+
+**IEEE↔R bridge (2026-09-11).** The Oracle line protocol plus the
+two-way binary64 ↔ ℝ realization (`theories-flocq/IeeeRBridge.v`) is
+the test surface for the three chord product faces — NodingNG
+(`𝓘` + cook), OverlayNG (snap ≠ `𝓘`), RelateNG (matrix/witness,
+67-c parallel chords). Generators attach as adapters on existing
+keywords (`INTERSECT_FILTERED`, `INTERSECT_POINT_XY`,
+`OVERLAY_UNIFIED`, `ORIENT`). No new keyword. No FFI pin. No
+RocqRefRunner dispatch. No extract `eval` collapse. Status of this
+ADR stays **Accepted**.

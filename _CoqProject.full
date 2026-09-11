@@ -3515,6 +3515,13 @@ theories-flocq/Intersect_b64_exact.v
 # the structural file (Validate_binary64.v) so the four Stdlib classical-
 # reals axioms are only paid when the soundness surface is consumed.
 theories-flocq/Validate_binary64_bridge.v
+# ADR-0007 letter: two-way IEEE binary64 ↔ ℝ bridge (claimId
+# 0007-ieee-oracle-bridge). Packages CoordRealization / B2R_bp /
+# B64_bridge / B64_lib / coord_int_safe. Same sheet as ℝ; ≠ 𝓘 /
+# cook / OverlayNG snap. QEX: FP noder / unrestricted / kiss on b64.
+# Flocq C1 (audit-exceptions). Oracle adapters on existing keywords.
+# Not a remint. No Admitted.
+theories-flocq/IeeeRBridge.v
 # Stage D bridge module: discharges Pff2Flocq's section parameters for
 # binary64 (specifically: choice_sym for round_mode mode_NE = ZnearestE).
 # One-time work that unblocks every subsequent Pff2Flocq lift.  Ships

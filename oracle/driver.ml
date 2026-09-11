@@ -264,6 +264,15 @@
    "infinity", "neg_infinity", "nan".  Output uses "%h" (hex-float) so
    consumers can round-trip bits exactly.
 
+   IEEE↔R bridge (claimId 0007-ieee-oracle-bridge, IeeeRBridge.v): the
+   Oracle line protocol is the only test surface for NodingNG /
+   OverlayNG / RelateNG. Generators attach as adapters on existing
+   keywords — INTERSECT_FILTERED / INTERSECT_POINT_XY (NodingNG
+   Hit/Empty), OVERLAY_UNIFIED (OverlayNG / RelateNG 67-c parallel
+   chords), ORIENT (int-safe finite decode). No new keyword. Not FFI.
+   Not RocqRefRunner. Not an extract `eval` collapse (ADR-0006
+   Decision 1–2).
+
    Persistent-mode dispatch.  All modes except SIMPLIFY return after
    emitting their reply and loop back to read the next mode line.  This
    lets a long-running C# differential test process keep a single
