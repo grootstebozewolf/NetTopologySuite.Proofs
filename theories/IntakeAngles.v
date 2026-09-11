@@ -75,17 +75,19 @@ Definition circumcenter_of (a b c : Point) : Point :=
 Definition sweep_from_denom (d : R) : R :=
   if Rlt_dec 0 d then 2 * PI else - (2 * PI).
 
+(* Req_dec is Prop (`or`) in Rocq 9.2 and cannot inhabit AngleResult.
+   Req_EM_T is the Type-level sumbool; 3-axiom classical reals. *)
 Definition try_triple (a b c : Point) : AngleResult CircularEgg :=
-  if Req_dec (dist_sq a b) 0 then inr AF_Duplicate
-  else if Req_dec (dist_sq b c) 0 then inr AF_Duplicate
-  else if Req_dec (dist_sq a c) 0 then inr AF_Duplicate
+  if Req_EM_T (dist_sq a b) 0 then inr AF_Duplicate
+  else if Req_EM_T (dist_sq b c) 0 then inr AF_Duplicate
+  else if Req_EM_T (dist_sq a c) 0 then inr AF_Duplicate
   else
     let d := circ_denom a b c in
-    if Req_dec d 0 then inr AF_Collinear
+    if Req_EM_T d 0 then inr AF_Collinear
     else
       let o := circumcenter_of a b c in
       let r := dist o a in
-      if Req_dec r 0 then inr AF_Degenerate
+      if Req_EM_T r 0 then inr AF_Degenerate
       else inl (mkCircularEgg o r 0 (sweep_from_denom d)).
 
 (* Recurse on the matched tail `rest2` (the list starting at the
@@ -206,15 +208,15 @@ Qed.
 Lemma ang_triple_egg : try_triple ang_a ang_b ang_c = inl ang_egg.
 Proof.
   unfold try_triple.
-  destruct (Req_dec (dist_sq ang_a ang_b) 0) as [Hab|Hab];
+  destruct (Req_EM_T (dist_sq ang_a ang_b) 0) as [Hab|Hab];
     [exfalso; exact (ang_dab_nz Hab)|].
-  destruct (Req_dec (dist_sq ang_b ang_c) 0) as [Hbc|Hbc];
+  destruct (Req_EM_T (dist_sq ang_b ang_c) 0) as [Hbc|Hbc];
     [exfalso; exact (ang_dbc_nz Hbc)|].
-  destruct (Req_dec (dist_sq ang_a ang_c) 0) as [Hac|Hac];
+  destruct (Req_EM_T (dist_sq ang_a ang_c) 0) as [Hac|Hac];
     [exfalso; exact (ang_dac_nz Hac)|].
-  destruct (Req_dec (circ_denom ang_a ang_b ang_c) 0) as [Hd|Hd];
+  destruct (Req_EM_T (circ_denom ang_a ang_b ang_c) 0) as [Hd|Hd];
     [exfalso; rewrite ang_denom in Hd; lra|].
-  destruct (Req_dec (dist (circumcenter_of ang_a ang_b ang_c) ang_a) 0)
+  destruct (Req_EM_T (dist (circumcenter_of ang_a ang_b ang_c) ang_a) 0)
     as [Hr|Hr];
     [exfalso; exact (ang_r_nz Hr)|].
   unfold sweep_from_denom, ang_egg.
@@ -274,7 +276,7 @@ Lemma try_triple_dup_ab :
 Proof.
   intros a b c H.
   unfold try_triple.
-  destruct (Req_dec (dist_sq a b) 0) as [H'|H']; [reflexivity|].
+  destruct (Req_EM_T (dist_sq a b) 0) as [H'|H']; [reflexivity|].
   exfalso. apply H'. exact H.
 Qed.
 
@@ -288,10 +290,10 @@ Lemma try_triple_collinear :
 Proof.
   intros a b c Hab Hbc Hac Hd.
   unfold try_triple.
-  destruct (Req_dec (dist_sq a b) 0) as [H1|H1]; [exfalso; apply Hab; exact H1|].
-  destruct (Req_dec (dist_sq b c) 0) as [H2|H2]; [exfalso; apply Hbc; exact H2|].
-  destruct (Req_dec (dist_sq a c) 0) as [H3|H3]; [exfalso; apply Hac; exact H3|].
-  destruct (Req_dec (circ_denom a b c) 0) as [H4|H4]; [reflexivity|].
+  destruct (Req_EM_T (dist_sq a b) 0) as [H1|H1]; [exfalso; apply Hab; exact H1|].
+  destruct (Req_EM_T (dist_sq b c) 0) as [H2|H2]; [exfalso; apply Hbc; exact H2|].
+  destruct (Req_EM_T (dist_sq a c) 0) as [H3|H3]; [exfalso; apply Hac; exact H3|].
+  destruct (Req_EM_T (circ_denom a b c) 0) as [H4|H4]; [reflexivity|].
   exfalso. apply H4. exact Hd.
 Qed.
 
