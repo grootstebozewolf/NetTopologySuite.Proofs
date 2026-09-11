@@ -1492,3 +1492,44 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `SidecarGeodesicEgg.v : ticket_0007_geodesic_parks_qed_or_qex` | **QEX** — Campaign I–II / geodetic-interpolant-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarGeodesicEgg.v : sidecar_geodesic_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-geodesicstring-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — SQL/MM ST_SpiralCurve egg sidecar (2026-09-11)
+
+Cook-axis sidecar: SQL/MM `ST_SpiralCurve` (ISO 13249-3 §4.2.12)
+as an EggClass on the ADR-0007 vocabulary. Host `EggClass` did
+not have this arm — this letter adds `EggSpiralCurve` only (one
+`MkOutOfScope` tag). Do not explode `EggClass` into five spiral
+eggs. No Decline / not-first-cook / try_cook lemmas were added
+to `SheetHenCook.v` (module-split ceiling after GeodesicString
+#722). Those live in `SidecarSpiralEgg.v` and cite existing
+`first_cook_scope` / `I_ok` / `try_cook_hit_out_of_scope_none`.
+Prefer `SidecarSpiral*` over reminting host cook. Locked
+unit-square chords reuse `RelateLineLine.v : line_line_proper_cross_geom`.
+SQL/MM type-zoo packaging (MkOutOfScope), not Γ progress, not
+𝓘 progress, and not Zoo membership. Five required names
+(clothoid, bloss, biquadratic, sine, cosine) plus Unknown
+inhabit one sidecar egg. `EggClothoid` / ST_Clothoid stays its
+own host tag — the clothoid arm is a nameplate, not a remint.
+No invented spiral interpolant. One locked fixture. Last
+Lesson-1 packaging extra. Do not ship a spiral×spiral noder,
+CircGamma, or Campaign I–II.
+
+**QED.** Sidecar egg packaging + host Decline + locked unit-square
+demoted-chord seed. Five ISO names + Unknown inhabit one egg.
+`EggClothoid` still present. Demote-to-chord is NodingNG / host
+first cook, not a spiral Hit.
+
+**QEX.** Spiral×spiral is not first cook (checklist 4). Named
+missing constructors: no `MkSpiral` on `Egg`; no `I_ok` Hit arm;
+no first-cook expand. Do not fake first-cook expand or
+`LoopDischarged`. Parks Γ / ι / ρ cited once.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarSpiralEgg.v : ticket_0007_spiral_egg_qed_or_qex` | **QED** — EggSpiralCurve packaging; host Decline; five ISO names + Unknown; EggClothoid stays; locked demoted-chord seed; demote is NodingNG first cook; SQL/MM type zoo stays packaging | `SidecarSpiralEgg.v : sidecar_spiral_egg_inhabits`, `SidecarSpiralEgg.v : sidecar_spiral_chord_seed`, `SidecarSpiralEgg.v : sidecar_spiral_host_decline`, `SidecarSpiralEgg.v : sidecar_spiral_iso_names_inhabit`, `SidecarSpiralEgg.v : egg_clothoid_still_present` |
+| `SidecarSpiralEgg.v : ticket_0007_spiral_not_first_cook_qed_or_qex` | **QEX** — spiral×spiral stays out of first cook; `MkSpiral` / Hit-arm missing | `SidecarSpiralEgg.v : spiral_spiral_not_first_scope`, `SidecarSpiralEgg.v : sidecar_spiral_mkspiral_missing`, `SidecarSpiralEgg.v : sidecar_spiral_hit_arm_missing` |
+| `SidecarSpiralEgg.v : ticket_0007_spiral_parks_qed_or_qex` | **QEX** — Campaign I–II / spiral-interpolant-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarSpiralEgg.v : sidecar_spiral_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-spiral-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.

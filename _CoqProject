@@ -139,6 +139,12 @@ theories/SidecarEllipticEgg.v
 # chord-seed. Host/pure-R. First cook stays chord–chord. Not a
 # geodetic interpolant / noder. Not Campaign I–II. No Admitted.
 theories/SidecarGeodesicEgg.v
+# ADR-0007 SQL/MM ST_SpiralCurve egg sidecar (SidecarSpiralEgg).
+# Packages EggSpiralCurve Decline-on-host + demoted unit-square
+# chord-seed. Five ISO 13249-3 names + Unknown on one egg.
+# EggClothoid stays. Host/pure-R. First cook stays chord–chord.
+# Not a spiral interpolant / noder. Not Campaign I–II. No Admitted.
+theories/SidecarSpiralEgg.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
