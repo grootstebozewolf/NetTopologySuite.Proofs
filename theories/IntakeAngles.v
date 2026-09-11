@@ -18,7 +18,8 @@
 
    Fail closed: empty / bad count / duplicate control / collinear
    / zero-radius. No silent chord demote. Demote is later
-   cook/view. IntakeMkClothoid stays QEX (parks stop).
+   cook/view. IntakeMkClothoid is the next letter
+   (claimId 0007-intake-mkclothoid).
 
    Mapper consumers live in IntakeWalker.v. This module is the
    thin construction sibling.

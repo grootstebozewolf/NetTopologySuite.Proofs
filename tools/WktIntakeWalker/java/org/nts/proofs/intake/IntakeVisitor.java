@@ -83,9 +83,6 @@ public final class IntakeVisitor extends wktParserBaseVisitor<IntakeResult> {
         for (wktParser.CompoundCurveMemberContext member : ctx.compoundCurveMember()) {
             IntakeResult next = visit(member.curveMember());
             if (!next.isBag()) {
-                if (next.decline == Reason.ID_IsoClothoid) {
-                    return next;
-                }
                 if (firstDecline == null) {
                     firstDecline = next;
                 }
@@ -131,10 +128,7 @@ public final class IntakeVisitor extends wktParserBaseVisitor<IntakeResult> {
         if (text.EMPTY_() != null) {
             return IntakeResult.decline(Reason.ID_Empty);
         }
-        if (text.referenceLocationText() != null) {
-            return IntakeResult.decline(Reason.ID_IsoClothoid);
-        }
-        return IntakeResult.decline(Reason.ID_MkOutOfScope);
+        return mapClothoid();
     }
 
     @Override
@@ -286,6 +280,14 @@ public final class IntakeVisitor extends wktParserBaseVisitor<IntakeResult> {
 
     private static IntakeResult circBag(List<Point> pts, String egg) {
         return IntakeResult.bag(new Bag(List.of(0, 1), pts, List.of(new Chicken(0, 1, egg))));
+    }
+
+    /** Same locked bag as {@code theories/IntakeWalker.v} {@code map_clothoid}. */
+    static IntakeResult mapClothoid() {
+        return IntakeResult.bag(new Bag(
+                List.of(0, 1),
+                List.of(new Point(0, 0), new Point(1, 0)),
+                List.of(new Chicken(0, 1, "MkClothoid"))));
     }
 
     private static Bag append(Bag a, Bag b) {

@@ -1274,17 +1274,18 @@ ship Campaign I–II.
 chord-seed reuse (`RelateClothoid.v : clothoid_chord_proper_cross_share`).
 Demote-to-chord is NodingNG / host first cook, not a clothoid Hit.
 
-**QEX.** Clothoid×clothoid is not first cook (checklist 4). Named
-missing constructors: no `MkClothoid` on `Egg`; no `I_ok` Hit arm.
-Do not fake first-cook expand or `LoopDischarged`. Parks Γ / ι / ρ
-cited once.
+**QEX.** Clothoid×clothoid is not first cook (checklist 4). Host
+`MkClothoid` now inhabits `Egg` (intake letter
+`0007-intake-mkclothoid`). Named remaining gaps: no `I_ok` Hit
+arm; no first-cook expand. Do not fake first-cook expand or
+`LoopDischarged`. Parks Γ / ι / ρ cited once.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_egg_qed_or_qex` | **QED** — EggClothoid packaging; host Decline; locked chord-seed; demote is NodingNG first cook | `SidecarClothoidEgg.v : sidecar_clothoid_egg_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_chord_seed`, `SidecarClothoidEgg.v : sidecar_clothoid_host_decline` |
-| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QEX** — clothoid×clothoid stays out of first cook; `MkClothoid` / Hit-arm missing | `SheetHenCook.v : clothoid_clothoid_not_first_scope`, `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_missing`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_missing` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QEX** — clothoid×clothoid stays out of first cook; `MkClothoid` inhabits; Hit-arm / first-cook expand missing | `SheetHenCook.v : clothoid_clothoid_not_first_scope`, `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_missing` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-clothoid-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
@@ -1559,25 +1560,25 @@ CIRCLE map to the same full-span egg.
 
 Fail closed: `GEODESICSTRING`, `SPIRALCURVE`, MkOutOfScope
 leftovers. No silent chord demote at intake. `example5.txt`: both
-CLOTHOID forms in one COMPOUNDCURVE → Decline the ISO form with
-named ticket `ID_IsoClothoid`. CircUnknown well-formed CS is the
+CLOTHOID forms in one COMPOUNDCURVE bag via the MkClothoid letter
+(`0007-intake-mkclothoid`). CircUnknown well-formed CS is the
 angles letter (`0007-intake-angles`), not leftover Decline.
 
 **QED.** First-slice mapper inhabits locked Point / LineString /
 CircularString / Circle / CompoundCurve bags. Named Declines.
-OGC≡ISO same MkCirc egg. example5 ISO ticket.
+OGC≡ISO same MkCirc egg.
 
-**QEX.** `MkClothoid` missing (parks stop). WKB-order Γ walk /
-WKT zoo / Lesson-1 remints / host cook expand / new oracle
-keyword parked.
+**QEX.** WKB-order Γ walk / WKT zoo / Lesson-1 remints / host
+cook expand / new oracle keyword parked. Clothoid is the
+MkClothoid letter, not this parks stop.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed named Declines; OGC≡ISO same full-span egg; example5 ISO ticket; grammar accept is CST only | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : ogc_iso_circle_same_egg`, `IntakeWalker.v : example5_cc_declines_iso` |
+| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed named Declines; OGC≡ISO same full-span egg; grammar accept is CST only | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : ogc_iso_circle_same_egg`, `IntakeWalker.v : geodesic_declines` |
 | `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — see the angles letter below | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc` |
-| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword / `MkClothoid` parked; bag loop stays obligation | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_mkclothoid_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; bag loop stays obligation; clothoid split out | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-intake-walker`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). Angles-from-points is the next letter (`0007-intake-angles`), not a CircGamma remint.
 
@@ -1611,8 +1612,8 @@ Fail closed by name: empty (`ID_Empty`), even / short count
 (`ID_DuplicateControl`), collinear (`ID_Collinear`),
 zero-radius (`ID_DegenerateArc`). No silent chord demote.
 `ID_CircGammaLeftover` remains on the Decline type; it is not
-the well-formed unknown-CS answer. `IntakeMkClothoid` stays
-QEX on the parks stop (split out of this ticket).
+the well-formed unknown-CS answer. `IntakeMkClothoid` is the
+next letter (`0007-intake-mkclothoid`), not this parks stop.
 
 Mapper stays thin: no noding, no `split(t)`, no snap, no
 intersection hens. Java visitor
@@ -1624,15 +1625,60 @@ keyword (ADR-0006).
 pts` to an `IntakeBag` whose chickens are `MkCirc`. Collinear /
 duplicate / bad count Decline by name.
 
-**QEX.** `MkClothoid` / WKB-order Γ walk / WKT zoo / Lesson-1
-remints / host cook expand / new oracle keyword stay on the
-parks stop.
+**QEX.** WKB-order Γ walk / WKT zoo / Lesson-1 remints / host
+cook expand / new oracle keyword stay on the parks stop.
+Clothoid is the MkClothoid letter.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — ctor inhabits; unknown CS bags `MkCirc`; not leftover; not chord demote | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc`, `IntakeAngles.v : ang_cs_ok`, `IntakeWalker.v : collinear_cs_declines`, `IntakeWalker.v : duplicate_cs_declines` |
-| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — `MkClothoid` / WKB / zoo / Lesson-1 / host cook / new keyword parked | `IntakeWalker.v : intake_mkclothoid_missing`, `IntakeWalker.v : iso_clothoid_declines` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword parked; clothoid split out | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-intake-angles`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724); this letter is intake egg data, not a CircGamma remint.
+
+### Letter after Accept — intake MkClothoid (2026-09-11)
+
+Needle AFTER intake angles (#726). claimId `0007-intake-mkclothoid`.
+One host `MkClothoid : ClothoidEgg -> Egg` (parallel to `MkCirc`,
+not two invented constructors). Grammar has two clothoid surface
+forms (ISO `REFERENCELOCATION`, JTS `(k0,k1,L)`). Both map onto
+the **same** locked `ClothoidEgg` SHC bag (OGC≡ISO discipline).
+
+Locked inhabitance record (`SheetHenClothoidEgg.v`): chord-seed
+ends plus JTS `(k0,k1,L)` from `example5.txt`. Not a Fresnel
+interpolant. Not clothoid×clothoid first cook. `EggClothoid`
+stays; spiral's clothoid nameplate stays distinct.
+
+`example5.txt` / `example5_cc_both_clothoid_cst` bags the
+LineString plus both clothoid members. `ID_IsoClothoid` /
+`ID_MkOutOfScope` stay on the Decline type; they are not the
+well-formed clothoid answer. No silent chord demote.
+
+Sidecar QEX flips only the **MkClothoid missing** arm
+(`sidecar_clothoid_ctor_inhabits ClothoidMkClothoid`). Hit-arm
+and first-cook expand stay QEX. Host `I_ok` on two `MkClothoid`
+eggs is Decline (`~ interpolant_pair`). `try_cook_hit` stays
+None.
+
+Java visitor (`tools/WktIntakeWalker`) stays in sync. No new
+oracle keyword (ADR-0006).
+
+**QED.** `IntakeMkClothoid` inhabits. ISO and JTS clothoid CST
+→ `IntakeBag` whose chickens use `MkClothoid` (`EggClothoid`).
+Same bag / same egg. `example5` no longer Declines ISO clothoid.
+
+**QEX.** Clothoid×clothoid Hit-arm / first-cook expand. Fresnel
+as noding. WKB-order Γ walk / WKT zoo / Lesson-1 remints / host
+cook expand / new oracle keyword / ρ stay parked.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `IntakeWalker.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5 bags; not first cook | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalker.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalker.v : example5_cc_bags_both_clothoid`, `IntakeWalker.v : iso_clothoid_chickens_mkclothoid` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QEX** — Hit-arm / first-cook expand stay missing; `MkClothoid` inhabits | `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_missing`, `SidecarClothoidEgg.v : mkclothoid_pair_decline_I_ok` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword / ρ parked | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-intake-mkclothoid`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is intake egg inhabitance, not Fresnel noding and not first-cook expand.

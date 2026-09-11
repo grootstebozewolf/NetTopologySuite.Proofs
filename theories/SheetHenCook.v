@@ -8,15 +8,13 @@
    Exact* zoo types, Dart, or Hobby / NodingSeparation_b64.
 
    First cook scope is chord–chord and circular–circular (MkCirc).
+   MkClothoid inhabits Egg; clothoid×clothoid is not first cook.
    Predicates never mint hens. Empty ≠ Decline. Snap-rounding ≠ 𝓘.
-   Display is a view. Pairwise interior split is finite and one
-   Hit-split is confluent (leftover bag independent of parent order).
-   The bag cook loop is a named 508-style QEX gap
-   (SheetHenCookLoop.v / CookLoopBagTerm missing); not a soft gap
-   and not pairwise-width Discharge. binary64 realizes points of S;
-   OverlayNGRobust is a finite snap-sequence. DdirDart := (Hen * Hen)
-   is the chicken projection — one type equation, not a third
-   directed-edge type.
+   Display is a view. One Hit-split is confluent. The bag cook
+   loop is a named 508-style QEX (CookLoopBagTerm missing).
+   binary64 realizes points of S; OverlayNGRobust is a finite
+   snap-sequence. DdirDart := (Hen * Hen) is the chicken
+   projection — one type equation, not a third directed-edge type.
 
    ADR-0007 is Accepted (2026-09-07). Letters here do not reopen
    Status. Host CircGamma is discharged by MkCirc
@@ -40,7 +38,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Orientation Segment Intersect.
-From NTS.Proofs Require Export SheetHenCircEgg.
+From NTS.Proofs Require Export SheetHenCircEgg SheetHenClothoidEgg.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -86,12 +84,14 @@ Definition chord_eval (c : ChordEgg) (t : R) : Point :=
 Inductive Egg : Type :=
 | MkChord : ChordEgg -> Egg
 | MkCirc : CircularEgg -> Egg
+| MkClothoid : ClothoidEgg -> Egg
 | MkOutOfScope : EggClass -> Egg.
 
 Definition egg_class (e : Egg) : EggClass :=
   match e with
   | MkChord _ => EggChord
   | MkCirc _ => EggCircularArc
+  | MkClothoid _ => EggClothoid
   | MkOutOfScope c => c
   end.
 
