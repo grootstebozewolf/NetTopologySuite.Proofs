@@ -93,6 +93,10 @@ theories/CircularStringOddCount.v
 # ADR-0007 CircularEgg payload for host MkCirc (claimId 0007-gamma-mkcirc).
 # Host/pure-R. atan2-free angle interpolant. Required by SheetHenCook.
 theories/SheetHenCircEgg.v
+# ADR-0007 ClothoidEgg payload for host MkClothoid
+# (claimId 0007-intake-mkclothoid). Locked inhabitance record.
+# Not Fresnel γ. Required by SheetHenCook. No Admitted.
+theories/SheetHenClothoidEgg.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
 # Host/pure-R. First cook scope is chord–chord and circular–circular
 # (MkCirc). Does not remint CurveSegment / Dart / Hobby. No Admitted.
@@ -158,8 +162,9 @@ theories/SidecarSpiralEgg.v
 # Required by IntakeWalker CircUnknown. No Admitted.
 theories/IntakeAngles.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
-# SHC bag | Intake Decline. Reuses MkChord / MkCirc. Host/pure-R.
-# Grammar pin: grammars-v4 #4997. No new oracle keyword. No Admitted.
+# SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
+# Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
+# keyword. No Admitted.
 theories/IntakeWalker.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.

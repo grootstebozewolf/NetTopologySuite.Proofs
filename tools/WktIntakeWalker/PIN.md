@@ -19,6 +19,8 @@ from the JTS `(k0, k1, L)` form by the token after the opening
 parenthesis (`REFERENCELOCATION` vs a number).
 
 This tool's visitor maps a successful parse to a tagged CST, then the
-mapper (`theories/IntakeWalker.v` + `theories/IntakeAngles.v`) emits
-an SHC bag or a named Intake Decline. Grammar accept ≠ valid geometry
-≠ cooked graph. CircUnknown well-formed CS is `MkCirc`, not leftover.
+mapper (`theories/IntakeWalker.v` + `theories/IntakeAngles.v` +
+`theories/SheetHenClothoidEgg.v`) emits an SHC bag or a named Intake
+Decline. Grammar accept ≠ valid geometry ≠ cooked graph. CircUnknown
+well-formed CS is `MkCirc`, not leftover. Both CLOTHOID forms bag
+the same `MkClothoid` egg.
