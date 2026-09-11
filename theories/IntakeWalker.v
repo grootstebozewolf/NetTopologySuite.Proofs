@@ -41,7 +41,7 @@
 
    Visitor tags locked CircularString / Circle shapes (exact
    control-point match). Mapper is structural on those tags.
-   CircUnknown uses IntakeAngles (Req_dec on denom / duplicates;
+   CircUnknown uses IntakeAngles (Req_EM_T on denom / duplicates;
    3-axiom classical reals, no Atan2.v / no Ratan classic).
 
    What this is not:
