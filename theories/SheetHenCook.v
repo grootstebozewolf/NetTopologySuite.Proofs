@@ -72,7 +72,8 @@ Inductive EggClass : Type :=
 | EggEllipse
 | EggBezier
 | EggNurbs
-| EggGeodesicString.
+| EggGeodesicString
+| EggSpiralCurve.
 
 (* Chord interpolant γ(t) = (1-t)·P + t·Q. Out-of-scope classes are tags. *)
 Record ChordEgg : Type := mkChordEgg {

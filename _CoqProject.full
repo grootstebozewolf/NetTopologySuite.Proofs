@@ -2860,6 +2860,13 @@ theories/SidecarEllipticEgg.v
 # geodetic interpolant / noder. Not Campaign I–II. Not a noder.
 # No Admitted.
 theories/SidecarGeodesicEgg.v
+# ADR-0007 SQL/MM ST_SpiralCurve egg sidecar (SidecarSpiralEgg).
+# Packages EggSpiralCurve Decline-on-host + demoted unit-square
+# chord-seed. Five ISO 13249-3 names + Unknown on one egg.
+# EggClothoid stays. Host/pure-R. First cook stays chord–chord.
+# Not a spiral interpolant / noder. Not Campaign I–II. Not a noder.
+# No Admitted.
+theories/SidecarSpiralEgg.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
