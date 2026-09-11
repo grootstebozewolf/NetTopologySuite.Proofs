@@ -442,7 +442,7 @@ Proof.
 Qed.
 
 Lemma iso_clothoid_maps :
-  intake_map default_sheet example5_iso_clothoid_cst =
+  intake_map default_sheet TClothoidIso =
     IntakeBag (map_clothoid default_sheet).
 Proof.
   reflexivity.
@@ -473,7 +473,7 @@ Qed.
 
 Lemma iso_clothoid_chickens_mkclothoid :
   exists b c e,
-    intake_map default_sheet example5_iso_clothoid_cst = IntakeBag b /\
+    intake_map default_sheet TClothoidIso = IntakeBag b /\
     In c (bag_chickens b) /\
     ck_egg c = MkClothoid e /\
     egg_class (ck_egg c) = EggClothoid.
@@ -515,7 +515,7 @@ Proof.
 Qed.
 
 Lemma clothoid_intake_not_iso_decline :
-  intake_map default_sheet example5_iso_clothoid_cst <>
+  intake_map default_sheet TClothoidIso <>
     IntakeDecline ID_IsoClothoid /\
   intake_map default_sheet TClothoidJts <>
     IntakeDecline ID_MkOutOfScope.
@@ -552,9 +552,10 @@ Proof.
             (mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg))).
   exists locked_clothoid_egg.
   split; [reflexivity|].
-  unfold map_cc_example5, append_bags, map_clothoid. cbn.
+  unfold map_cc_example5, append_bags, map_clothoid, shift_chicken.
+  simpl.
   split.
-  - right. now left.
+  - right. left. reflexivity.
   - split; reflexivity.
 Qed.
 
@@ -907,7 +908,7 @@ Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
    intake_map default_sheet TClothoidJts =
      intake_map default_sheet TClothoidIso /\
    exists b c e,
-     intake_map default_sheet example5_iso_clothoid_cst = IntakeBag b /\
+     intake_map default_sheet TClothoidIso = IntakeBag b /\
      In c (bag_chickens b) /\
      ck_egg c = MkClothoid e /\
      egg_class (ck_egg c) = EggClothoid /\
@@ -920,7 +921,7 @@ Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
         IDecline)
   \/
   (~ intake_ctor_inhabits IntakeMkClothoid /\
-   intake_map default_sheet example5_iso_clothoid_cst =
+   intake_map default_sheet TClothoidIso =
      IntakeDecline ID_IsoClothoid).
 Proof.
   left.
