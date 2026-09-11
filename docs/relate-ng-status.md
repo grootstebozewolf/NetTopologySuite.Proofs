@@ -9,6 +9,25 @@ Cross-epic source of record for batch status remains
 [`TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md). The #522
 children have their own live gate: [`docs/scout/map-522.md`](scout/map-522.md).
 
+## Product face (2026-09-11)
+
+`theories/RelateNGFace.v` is the named product API beside NodingNG
+(`theories/NodingNG.v`) and OverlayNG (`theories/OverlayNG.v`, snap ≠ `𝓘`). It packages
+Accepted DE-9IM / RelateNG chord-lane facts — it does not remint the
+RelateNG* / RelateNoding* zoo.
+
+- **QED.** `RelateNGFace.v : ticket_0007_relateng_face_qed_or_qex` —
+  matrix/witness + honesty decline
+  (`RelateNGCore.v : relate_unsupported_no_predicate`) + locked 67-c
+  pin (`RelateNodingLineLineExtPinned.v : parallel_unit_segments_exterior_row_pinned`)
+  on NodingNG-noded chords (`RelateNGFace.v : relateng_consumes_nodingng`).
+- **QEX.** Completeness false / T-junction unsupported
+  (`RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex`).
+  Full Jordan true-region, S15l+ multi-geom, ticket 523 ISO `?`
+  (`RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex`;
+  `RelateCurveMatrix.v : cell_none_iff_empty` is Coq emptiness, not
+  523 closed).
+
 ## What to open
 
 | Question | Surface |

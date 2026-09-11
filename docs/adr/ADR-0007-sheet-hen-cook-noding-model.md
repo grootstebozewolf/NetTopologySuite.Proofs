@@ -1186,3 +1186,36 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 | `OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex` | **QEX** — Hobby 4.1 image-stays-noded / unconditional overlay correctness stay Honest remaining; do not fake Discharge | `OverlayNG.v : overlayng_hobby41_missing`, `OverlayNG.v : overlayng_unconditional_missing` |
 
 Witness: `0007-overlayng-sheet`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — RelateNG (face) (2026-09-11)
+
+North star: RelateNG + NodingNG + OverlayNG + SQL/MM Part 3, non-big-OOP.
+This letter is the **product face** for Accepted DE-9IM / RelateNG
+chord-lane facts. It packages existing lemmas by name — it is not a
+remint of the RelateNG* / RelateNoding* zoo, not NodingNG, not OverlayNG
+snap, not Shewchuk A–D / Hobby / Priest, not full unconditional Jordan,
+not #522 leftover remint / T-junction wire complete /
+`geom_de9im_pointset` nine-cell, not SQL/MM cathedral / Multi Landed,
+not a DCEL kernel, and not a `Geometry` subclass.
+
+**QED.** Matrix/witness surface (`im_unsupported_no_predicate`,
+contains ↔ transpose within) + honesty decline
+(`relate_unsupported_no_predicate`) + the locked 67-c parallel-unit
+exterior-row pin on the same chords NodingNG Empty-noded
+(`NodedOnSheet`). Triangle shared-edge touch and prepared-cache
+short-circuit stay cited siblings.
+
+**QEX.** Completeness is false; T-junction fill stays unsupported.
+Full Jordan true-region, S15l+ multi-geom leftovers, and ticket 523
+ISO `?` stay named missing constructors. `cell_none_iff_empty` is the
+Coq emptiness side (Qed) — do not fake 523 closed. Do not mint `522-n`.
+
+Status stays **Accepted**. Parks Γ / ι / ρ.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `RelateNGFace.v : ticket_0007_relateng_face_qed_or_qex` | **QED** — DE-9IM matrix/witness + honesty decline + 67-c line×line pin on NodingNG-noded chords; not NodingNG / OverlayNG snap / Shewchuk / DCEL | `RelateNGFace.v : relateng_face_inhabits`, `RelateNGFace.v : relateng_honesty_decline`, `RelateNGFace.v : relateng_locked_line_line_pin`, `RelateNGFace.v : relateng_consumes_nodingng` |
+| `RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex` | **QEX** — completeness false; T-junction fill stays `im_unsupported`; do not mint `522-n` | `RelateNGComplete.v : triangle_pair_regime_ccw_incomplete`, `RelateNGDisjoint.v : relate_tjunction_pair_no_predicate` |
+| `RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex` | **QEX** — full Jordan true-region, S15l+ multi-geom, ticket 523 ISO `?`; `cell_none_iff_empty` stays Coq emptiness | `RelateNGFace.v : relateng_jordan_true_region_missing`, `RelateCurveAlphabet.v : question_mark_not_iso_result`, `RelateCurveMatrix.v : cell_none_iff_empty` |
+
+Witness: `0007-relateng-face`. Status stays **Accepted**. Parks Γ / ι / ρ.

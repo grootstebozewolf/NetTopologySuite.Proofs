@@ -3091,6 +3091,11 @@ theories/RelateNGOracleSurface.v
 theories/RelateNG.v
 # S13: Prepared cache refinement (evaluate B == relate A)
 theories/RelatePrepared.v
+# RelateNG product-face letter: DE-9IM matrix/witness + honesty
+# decline + 67-c pin. Consumes NodingNG / NodedOnSheet. Parks
+# completeness / Jordan / S15l+ / 523 ?. Not a remint of the
+# RelateNG* zoo, not NodingNG, not OverlayNG. No Admitted.
+theories/RelateNGFace.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
