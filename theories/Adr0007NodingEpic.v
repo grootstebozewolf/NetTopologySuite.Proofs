@@ -111,7 +111,11 @@
    not Required here). NURBS egg sidecar lives in
    SidecarNurbsEgg.v (3-axiom; Decline-on-host + demoted
    unit-square chord-seed; metric length stays #508; not
-   Required here). ι interior Hit discharge lives in
+   Required here). SIN / sinusoid egg sidecar lives in
+   SidecarSinEgg.v (3-axiom; Decline-on-host + demoted
+   unit-square chord-seed; thin profile corpus stays
+   Spectre research, not cook; not Required here).
+   ι interior Hit discharge lives in
    SidecarCircInteriorHit.v (4-axiom sidecar; I_ok_interior
    ≠ I_ok_mixed; joint gate stands; not Required here).
    First cook stays chord–chord.
