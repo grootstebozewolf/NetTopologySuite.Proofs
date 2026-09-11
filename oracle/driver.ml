@@ -9,6 +9,12 @@
    (Consumer Connie path) + the phase completion/audit docs for the mapping of
    oracle modes to verified Coq theorems.
 
+   Intake walker (claimId 0007-intake-walker) sits UPSTREAM of this
+   protocol: WKT → tagged CST → SHC bag | Intake Decline, then engines
+   test the bag. Grammar pin: antlr/grammars-v4 PR #4997. Visitor:
+   tools/WktIntakeWalker. Rocq: theories/IntakeWalker.v. This driver
+   mints no INTAKE keyword (ADR-0006). Intake Decline ≠ cook IDecline.
+
    Protocol (text, ASCII).  The first non-blank line is the mode:
 
      SIMPLIFY        -- greedy perpendicular-distance polyline simplifier.

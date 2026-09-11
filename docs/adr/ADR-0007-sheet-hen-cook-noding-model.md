@@ -1533,3 +1533,51 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `SidecarSpiralEgg.v : ticket_0007_spiral_parks_qed_or_qex` | **QEX** — Campaign I–II / spiral-interpolant-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarSpiralEgg.v : sidecar_spiral_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-spiral-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — intake walker first slice (2026-09-11)
+
+Needle AFTER Γ (host MkCirc / CircGamma #724). First-slice intake
+seam: successful WKT parse → tagged CST only → mapper total
+(`CST × Sheet S`) → SHC bag | Intake Decline(reason). Grammar
+accept ≠ valid geometry ≠ cooked graph. Intake Decline ≠ cook
+`IDecline`. Mapper is thin: no noding, no `split(t)`, no snap
+lattice, no intersection hens. Self-overlapping WKT still literal
+chickens.
+
+Grammar source of truth: antlr/grammars-v4 PR #4997 (MERGED
+2026-09-08, merge `181f4c9`). ISO/IEC 13249-3 §5.1.67. Pin lives
+in `tools/WktIntakeWalker/grammar/`. ANTLR Java visitor wired
+upstream of `oracle/driver.ml` (no new keyword; ADR-0006). One
+grammar, one mapping table, one bag. Do not treat `example3.txt`
+as an oracle source.
+
+First slice ONLY (what `SheetHenCook` already inhabits): Point,
+LineString, CircularString, CompoundCurve of those two,
+Circle-as-full-span-arc (`MkCirc`, sweep `2π`). Reuses `MkChord` /
+`MkCirc`. No new host γ. OGC CIRCULARSTRING start=end and ISO
+CIRCLE map to the same full-span egg.
+
+Fail closed: `GEODESICSTRING`, `SPIRALCURVE`, MkOutOfScope
+leftovers, CircGamma leftover (angles-from-control-points still
+need atan2 — not a remint of Parks Γ). No silent chord demote at
+intake. `example5.txt`: both CLOTHOID forms in one COMPOUNDCURVE
+→ Decline the ISO form with named ticket `ID_IsoClothoid`.
+
+**QED.** First-slice mapper inhabits locked Point / LineString /
+CircularString / Circle / CompoundCurve bags. Named Declines.
+OGC≡ISO same MkCirc egg. example5 ISO ticket.
+
+**QEX.** General CS/Circle → `CircularEgg` needs atan2-from-points
+(`IntakeAnglesFromPoints` missing). `MkClothoid` missing. WKB-order
+Γ walk / WKT zoo / Lesson-1 remints / host cook expand / new
+oracle keyword parked.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed named Declines; OGC≡ISO same full-span egg; example5 ISO ticket; grammar accept is CST only | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : ogc_iso_circle_same_egg`, `IntakeWalker.v : example5_cc_declines_iso` |
+| `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QEX** — angles-from-points missing; unknown CS Declines `ID_CircGammaLeftover`; `MkClothoid` missing | `IntakeWalker.v : intake_angles_from_points_missing`, `IntakeWalker.v : unknown_cs_declines_leftover` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; bag loop stays obligation | `IntakeWalker.v : intake_walker_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-intake-walker`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724); intake leftover is atan2-from-points, not a CircGamma remint.

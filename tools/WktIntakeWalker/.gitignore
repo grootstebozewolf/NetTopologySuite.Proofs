@@ -1,0 +1,3 @@
+.antlr/
+.build/
+java/org/nts/proofs/intake/gen/
