@@ -161,10 +161,12 @@ Qed.
 (* Coq emptiness stays None. Ticket 523 ISO `?` stays a named QEX. *)
 Lemma relateng_cell_none_iff_empty :
   forall d sX sY A B,
-    cell_ok d sX sY A B ->
-    (d = None <-> ~ exists p, in_stratum sX A p /\ in_stratum sY B p).
+    RelateCurveMatrix.cell_ok d sX sY A B ->
+    (d = None <->
+     ~ exists p, RelateCurveMatrix.in_stratum sX A p /\
+                 RelateCurveMatrix.in_stratum sY B p).
 Proof.
-  exact cell_none_iff_empty.
+  exact RelateCurveMatrix.cell_none_iff_empty.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
