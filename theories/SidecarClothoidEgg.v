@@ -195,6 +195,8 @@ Lemma locked_clothoid_chord_proper_cross :
   clothoid_chord_proper_cross locked_clothoid_ab
     (cc_start locked_clothoid_cd) (cc_end locked_clothoid_cd).
 Proof.
+  (* segments_proper_cross is RelateLineLine's name; RelateClothoid
+     aliases it as clothoid_chord_proper_cross and does not export it. *)
   unfold clothoid_chord_proper_cross, segments_proper_cross,
          locked_clothoid_ab, locked_clothoid_cd, diag_ab, diag_cd, cross.
   simpl. split; lra.
