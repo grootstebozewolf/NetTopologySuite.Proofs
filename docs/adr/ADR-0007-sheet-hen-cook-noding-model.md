@@ -1558,26 +1558,81 @@ Circle-as-full-span-arc (`MkCirc`, sweep `2π`). Reuses `MkChord` /
 CIRCLE map to the same full-span egg.
 
 Fail closed: `GEODESICSTRING`, `SPIRALCURVE`, MkOutOfScope
-leftovers, CircGamma leftover (angles-from-control-points still
-need atan2 — not a remint of Parks Γ). No silent chord demote at
-intake. `example5.txt`: both CLOTHOID forms in one COMPOUNDCURVE
-→ Decline the ISO form with named ticket `ID_IsoClothoid`.
+leftovers. No silent chord demote at intake. `example5.txt`: both
+CLOTHOID forms in one COMPOUNDCURVE → Decline the ISO form with
+named ticket `ID_IsoClothoid`. CircUnknown well-formed CS is the
+angles letter (`0007-intake-angles`), not leftover Decline.
 
 **QED.** First-slice mapper inhabits locked Point / LineString /
 CircularString / Circle / CompoundCurve bags. Named Declines.
 OGC≡ISO same MkCirc egg. example5 ISO ticket.
 
-**QEX.** General CS/Circle → `CircularEgg` needs atan2-from-points
-(`IntakeAnglesFromPoints` missing). `MkClothoid` missing. WKB-order
-Γ walk / WKT zoo / Lesson-1 remints / host cook expand / new
-oracle keyword parked.
+**QEX.** `MkClothoid` missing (parks stop). WKB-order Γ walk /
+WKT zoo / Lesson-1 remints / host cook expand / new oracle
+keyword parked.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed named Declines; OGC≡ISO same full-span egg; example5 ISO ticket; grammar accept is CST only | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : ogc_iso_circle_same_egg`, `IntakeWalker.v : example5_cc_declines_iso` |
-| `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QEX** — angles-from-points missing; unknown CS Declines `ID_CircGammaLeftover`; `MkClothoid` missing | `IntakeWalker.v : intake_angles_from_points_missing`, `IntakeWalker.v : unknown_cs_declines_leftover` |
-| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; bag loop stays obligation | `IntakeWalker.v : intake_walker_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — see the angles letter below | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword / `MkClothoid` parked; bag loop stays obligation | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_mkclothoid_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
-Witness: `0007-intake-walker`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724); intake leftover is atan2-from-points, not a CircGamma remint.
+Witness: `0007-intake-walker`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). Angles-from-points is the next letter (`0007-intake-angles`), not a CircGamma remint.
+
+### Letter after Accept — intake angles-from-points (2026-09-11)
+
+Needle AFTER first-slice walker (#725). claimId `0007-intake-angles`.
+CircUnknown CircularString / Circle no longer Declines
+`ID_CircGammaLeftover`. Intake constructs a `CircularEgg` /
+`MkCirc` chicken bag from arbitrary well-formed WKT circular
+control points.
+
+Three distinct non-collinear control points determine a unique
+circumcircle (algebraic `O`, `r`; same formula as
+`CurveGeometry.v`). Angle fields are inhabited from that
+geometry without importing `Atan2.v` / Stdlib `atan` (Ratan
+proofs are Category C / `classic` and would contaminate
+first-slice Print Assumptions on the shared `intake_map`).
+`θ₀` is the sheet `e₁` ray (`0`). `Δθ` is the oriented full
+span `±2π` (sign = sign of the three-point area). Host `γ`
+stays the atan2-free interpolant on `CircularEgg` data
+(`CircularCookMkCirc.v`). Not a remint of Parks Γ / host
+CircGamma (`0007-gamma-mkcirc`).
+
+Each CircularString arc span (odd control count `2n+1`, `n≥1`)
+mints one `MkCirc` chicken. ISO Circle is one full-span
+`MkCirc`. Locked CircQuarter / CircFullOgc tags stay the
+first-slice fixtures (OGC≡ISO same-bag discipline).
+
+Fail closed by name: empty (`ID_Empty`), even / short count
+(`ID_BadPointCount`), coincident control
+(`ID_DuplicateControl`), collinear (`ID_Collinear`),
+zero-radius (`ID_DegenerateArc`). No silent chord demote.
+`ID_CircGammaLeftover` remains on the Decline type; it is not
+the well-formed unknown-CS answer. `IntakeMkClothoid` stays
+QEX on the parks stop (split out of this ticket).
+
+Mapper stays thin: no noding, no `split(t)`, no snap, no
+intersection hens. Java visitor
+(`tools/WktIntakeWalker`) stays in sync. No new oracle
+keyword (ADR-0006).
+
+**QED.** `IntakeAnglesFromPoints` inhabits. Fixture
+`pts = [p00; p20; mkPoint 3 1]` maps `TCircularString CircUnknown
+pts` to an `IntakeBag` whose chickens are `MkCirc`. Collinear /
+duplicate / bad count Decline by name.
+
+**QEX.** `MkClothoid` / WKB-order Γ walk / WKT zoo / Lesson-1
+remints / host cook expand / new oracle keyword stay on the
+parks stop.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — ctor inhabits; unknown CS bags `MkCirc`; not leftover; not chord demote | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc`, `IntakeAngles.v : ang_cs_ok`, `IntakeWalker.v : collinear_cs_declines`, `IntakeWalker.v : duplicate_cs_declines` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — `MkClothoid` / WKB / zoo / Lesson-1 / host cook / new keyword parked | `IntakeWalker.v : intake_mkclothoid_missing`, `IntakeWalker.v : iso_clothoid_declines` |
+
+Witness: `0007-intake-angles`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724); this letter is intake egg data, not a CircGamma remint.

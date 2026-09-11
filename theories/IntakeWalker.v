@@ -23,9 +23,14 @@
    Reuses MkChord / MkCirc. No new host γ.
 
    Fail closed: GEODESICSTRING, SPIRALCURVE, MkOutOfScope
-   leftovers, CircGamma leftover (angles-from-control-points
-   still need atan2 — not a remint of Parks Γ). NO silent
-   chord demote at intake. Demote is later cook/view.
+   leftovers, ISO clothoid. CircUnknown well-formed CS/Circle
+   now maps through IntakeAngles (claimId 0007-intake-angles):
+   unique circumcircle + inhabited angle fields, MkCirc
+   chickens. Collinear / duplicate / bad count / empty /
+   zero-radius Decline by name. NO silent chord demote at
+   intake. Demote is later cook/view. ID_CircGammaLeftover
+   stays on the type (first-slice leftover name) but is not
+   the well-formed unknown-CS answer.
 
    example5.txt: both CLOTHOID forms in one COMPOUNDCURVE.
    Honest stop: Decline the ISO form with named ticket
@@ -35,8 +40,9 @@
    (locked CIRCLE vs start=end CIRCULARSTRING full-span).
 
    Visitor tags locked CircularString / Circle shapes (exact
-   control-point match). Mapper is structural on those tags —
-   no Req_EM_T, no new axiom.
+   control-point match). Mapper is structural on those tags.
+   CircUnknown uses IntakeAngles (Req_EM_T on denom / duplicates;
+   3-axiom classical reals, no Atan2.v / no Ratan classic).
 
    What this is not:
      WKB-order Γ walk / Table 15. Lesson-1 packaging remints.
@@ -62,7 +68,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -98,7 +104,19 @@ Inductive IntakeDeclineReason : Type :=
 | ID_IsoClothoid
 | ID_MkOutOfScope
 | ID_CircGammaLeftover
+| ID_Collinear
+| ID_DuplicateControl
+| ID_DegenerateArc
 | ID_NotFirstSlice.
+
+Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
+  match f with
+  | AF_Empty => ID_Empty
+  | AF_BadCount => ID_BadPointCount
+  | AF_Duplicate => ID_DuplicateControl
+  | AF_Collinear => ID_Collinear
+  | AF_Degenerate => ID_DegenerateArc
+  end.
 
 Record ShcBag : Type := mkShcBag {
   bag_sheet : Sheet;
@@ -194,6 +212,22 @@ Definition map_point (s : Sheet) (p : Point) : ShcBag :=
 Definition map_ls (s : Sheet) (pts : list Point) : ShcBag :=
   mkShcBag s (hens_of_n (length pts)) pts (chords_of_pts pts 0%nat).
 
+Definition map_cs_from_build (s : Sheet)
+  (eggs : list CircularEgg) (ends : list Point) : ShcBag :=
+  mkShcBag s (hens_of_n (length ends)) ends (circ_chickens eggs 0%nat).
+
+Definition map_cs_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
+  match try_cs_eggs pts with
+  | inr f => IntakeDecline (angle_fail_reason f)
+  | inl (eggs, ends) => IntakeBag (map_cs_from_build s eggs ends)
+  end.
+
+Definition map_circle_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
+  match try_circle_eggs pts with
+  | inr f => IntakeDecline (angle_fail_reason f)
+  | inl (eggs, ends) => IntakeBag (map_cs_from_build s eggs ends)
+  end.
+
 Definition map_cs_quarter (s : Sheet) : ShcBag :=
   mkShcBag s [0%nat; 1%nat] [p50; p05]
     [mkChicken 0%nat 1%nat (MkCirc locked_circ_A)].
@@ -251,10 +285,10 @@ Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
       end
   | TCircularString CircQuarter _ => IntakeBag (map_cs_quarter s)
   | TCircularString CircFullOgc _ => IntakeBag (map_cs_full s)
-  | TCircularString CircUnknown _ => IntakeDecline ID_CircGammaLeftover
+  | TCircularString CircUnknown pts => map_cs_unknown s pts
   | TCircle CircFullOgc _ => IntakeBag (map_circle s)
   | TCircle CircQuarter _ => IntakeBag (map_cs_quarter s)
-  | TCircle CircUnknown _ => IntakeDecline ID_CircGammaLeftover
+  | TCircle CircUnknown pts => map_circle_unknown s pts
   | TCompoundCurve _ => IntakeDecline ID_NotFirstSlice
   | TClothoidJts => IntakeDecline ID_MkOutOfScope
   | TClothoidIso => IntakeDecline ID_IsoClothoid
@@ -432,18 +466,80 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma unknown_cs_declines_leftover :
+Lemma unknown_cs_maps_mkcirc :
   intake_map default_sheet unknown_cs_cst =
+    IntakeBag (map_cs_from_build default_sheet [ang_egg] [p00; mkPoint 3 1]).
+Proof.
+  unfold unknown_cs_cst, intake_map, intake_map_atom, map_cs_unknown.
+  change p00 with ang_a.
+  change p20 with ang_b.
+  change (mkPoint 3 1) with ang_c.
+  rewrite ang_cs_ok.
+  reflexivity.
+Qed.
+
+Lemma unknown_cs_chickens_mkcirc :
+  exists b c e,
+    intake_map default_sheet unknown_cs_cst = IntakeBag b /\
+    In c (bag_chickens b) /\
+    ck_egg c = MkCirc e.
+Proof.
+  rewrite unknown_cs_maps_mkcirc.
+  exists (map_cs_from_build default_sheet [ang_egg] [p00; mkPoint 3 1]).
+  exists (mkChicken 0%nat 1%nat (MkCirc ang_egg)).
+  exists ang_egg.
+  split; [reflexivity|].
+  split; [now left|].
+  reflexivity.
+Qed.
+
+Lemma unknown_cs_not_leftover :
+  intake_map default_sheet unknown_cs_cst <>
     IntakeDecline ID_CircGammaLeftover.
 Proof.
-  reflexivity.
+  rewrite unknown_cs_maps_mkcirc.
+  discriminate.
 Qed.
 
 Lemma unknown_cs_not_chord_demote :
   intake_map default_sheet unknown_cs_cst <>
     IntakeBag (map_ls default_sheet [p00; p20; mkPoint 3 1]).
 Proof.
+  rewrite unknown_cs_maps_mkcirc.
   discriminate.
+Qed.
+
+Lemma collinear_cs_declines :
+  intake_map default_sheet (TCircularString CircUnknown [col_a; col_b; col_c]) =
+    IntakeDecline ID_Collinear.
+Proof.
+  unfold intake_map, intake_map_atom, map_cs_unknown.
+  rewrite col_cs_collinear.
+  reflexivity.
+Qed.
+
+Lemma duplicate_cs_declines :
+  intake_map default_sheet (TCircularString CircUnknown [dup_a; dup_b; dup_c]) =
+    IntakeDecline ID_DuplicateControl.
+Proof.
+  unfold intake_map, intake_map_atom, map_cs_unknown.
+  rewrite dup_cs.
+  reflexivity.
+Qed.
+
+Lemma badcount_cs_declines :
+  intake_map default_sheet (TCircularString CircUnknown [p00; p20]) =
+    IntakeDecline ID_BadPointCount.
+Proof.
+  unfold intake_map, intake_map_atom, map_cs_unknown, try_cs_eggs, go_arcs.
+  reflexivity.
+Qed.
+
+Lemma empty_cs_declines :
+  intake_map default_sheet (TCircularString CircUnknown []) =
+    IntakeDecline ID_Empty.
+Proof.
+  reflexivity.
 Qed.
 
 Lemma overlap_ls_literal_chickens :
@@ -553,12 +649,16 @@ Inductive IntakeCtor : Type :=
 | IntakeMkClothoid
 | IntakeWkbOrder.
 
-Definition intake_ctor_inhabits (c : IntakeCtor) : Prop := False.
+Definition intake_ctor_inhabits (c : IntakeCtor) : Prop :=
+  match c with
+  | IntakeAnglesFromPoints => True
+  | _ => False
+  end.
 
-Lemma intake_angles_from_points_missing :
-  ~ intake_ctor_inhabits IntakeAnglesFromPoints.
+Lemma intake_angles_from_points_inhabits :
+  intake_ctor_inhabits IntakeAnglesFromPoints.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
 Lemma intake_mkclothoid_missing :
@@ -600,8 +700,6 @@ Lemma first_slice_inhabits :
     IntakeDecline ID_IsoClothoid /\
   intake_map default_sheet TClothoidJts =
     IntakeDecline ID_MkOutOfScope /\
-  intake_map default_sheet unknown_cs_cst =
-    IntakeDecline ID_CircGammaLeftover /\
   intake_walker_kind = IW_FirstSlice.
 Proof.
   repeat split; reflexivity.
@@ -640,8 +738,6 @@ Theorem ticket_0007_intake_walker_qed_or_qex :
      IntakeDecline ID_IsoClothoid /\
    intake_map default_sheet TClothoidJts =
      IntakeDecline ID_MkOutOfScope /\
-   intake_map default_sheet unknown_cs_cst =
-     IntakeDecline ID_CircGammaLeftover /\
    grammar_accept_not_valid /\ grammar_accept_not_cooked /\
    intake_walker_kind = IW_FirstSlice /\
    intake_walker_kind <> IW_WktZoo /\
@@ -656,29 +752,29 @@ Proof.
   repeat split; try reflexivity; try discriminate.
 Qed.
 
-(* WITNESS {"claimId":"0007-intake-walker","topic":"core","lemma":"ticket_0007_intake_angles_qed_or_qex","title":"Intake constructs CircularEgg from arbitrary WKT control points (QED) or angles-from-points stays QEX and unknown CircularString Declines ID_CircGammaLeftover (QEX); discharged QEX; not a CircGamma remint; no silent chord demote","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"ticket_0007_intake_angles_qed_or_qex","title":"Intake constructs CircularEgg / MkCirc from arbitrary well-formed WKT circular control points (QED) or angles-from-points stays QEX and unknown CircularString Declines ID_CircGammaLeftover (QEX); discharged QED; not a CircGamma remint; no silent chord demote; clothoid stays parks QEX","file":"theories/IntakeWalker.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_angles_qed_or_qex :
   (intake_ctor_inhabits IntakeAnglesFromPoints /\
    exists pts,
      pts = [p00; p20; mkPoint 3 1] /\
-     exists b, intake_map default_sheet (TCircularString CircUnknown pts)
-               = IntakeBag b)
+     exists b c e,
+       intake_map default_sheet (TCircularString CircUnknown pts)
+         = IntakeBag b /\
+       In c (bag_chickens b) /\
+       ck_egg c = MkCirc e)
   \/
   (~ intake_ctor_inhabits IntakeAnglesFromPoints /\
    intake_map default_sheet unknown_cs_cst =
-     IntakeDecline ID_CircGammaLeftover /\
-   ~ intake_ctor_inhabits IntakeMkClothoid /\
-   intake_map default_sheet example5_iso_clothoid_cst =
-     IntakeDecline ID_IsoClothoid).
+     IntakeDecline ID_CircGammaLeftover).
 Proof.
-  right.
-  split; [exact intake_angles_from_points_missing|].
-  split; [exact unknown_cs_declines_leftover|].
-  split; [exact intake_mkclothoid_missing|].
-  exact iso_clothoid_declines.
+  left.
+  split; [exact intake_angles_from_points_inhabits|].
+  exists [p00; p20; mkPoint 3 1].
+  split; [reflexivity|].
+  exact unknown_cs_chickens_mkcirc.
 Qed.
 
-(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_parks_qed_or_qex","title":"Intake walker discharges WKB-order Gamma walk, WKT zoo, Lesson-1 remints, host cook expand, and new oracle keyword (QED) or names them parked (QEX); discharged QEX; letter landed != first-cook expand / Campaign / bag noder","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_parks_qed_or_qex","title":"Intake walker discharges WKB-order Gamma walk, WKT zoo, Lesson-1 remints, host cook expand, new oracle keyword, and MkClothoid (QED) or names them parked (QEX); discharged QEX; clothoid split out of the angles ticket; letter landed != first-cook expand / Campaign / bag noder","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_parks_qed_or_qex :
   (intake_walker_letter_status = IntakeWalkerCampaignDischarged /\
    intake_walker_kind = IW_WkbGammaWalk /\
@@ -696,6 +792,9 @@ Theorem ticket_0007_intake_parks_qed_or_qex :
    intake_walker_kind <> IW_HostCook /\
    intake_walker_kind <> IW_NewOracleKeyword /\
    ~ intake_ctor_inhabits IntakeWkbOrder /\
+   ~ intake_ctor_inhabits IntakeMkClothoid /\
+   intake_map default_sheet example5_iso_clothoid_cst =
+     IntakeDecline ID_IsoClothoid /\
    cook_loop_status = LoopObligation /\
    cook_loop_status <> LoopDischarged).
 Proof.
@@ -709,6 +808,8 @@ Proof.
   split; [exact intake_walker_not_host_cook|].
   split; [exact intake_walker_not_new_keyword|].
   split; [exact intake_wkb_order_missing|].
+  split; [exact intake_mkclothoid_missing|].
+  split; [exact iso_clothoid_declines|].
   split; [exact cook_loop_is_obligation|].
   exact cook_loop_not_discharged.
 Qed.
@@ -723,10 +824,17 @@ Print Assumptions geodesic_declines.
 Print Assumptions spiral_declines.
 Print Assumptions iso_clothoid_declines.
 Print Assumptions example5_cc_declines_iso.
-Print Assumptions unknown_cs_declines_leftover.
+Print Assumptions unknown_cs_maps_mkcirc.
+Print Assumptions unknown_cs_chickens_mkcirc.
+Print Assumptions unknown_cs_not_leftover.
 Print Assumptions unknown_cs_not_chord_demote.
+Print Assumptions collinear_cs_declines.
+Print Assumptions duplicate_cs_declines.
+Print Assumptions badcount_cs_declines.
+Print Assumptions empty_cs_declines.
 Print Assumptions overlap_ls_literal_chickens.
 Print Assumptions first_slice_inhabits.
+Print Assumptions intake_angles_from_points_inhabits.
 Print Assumptions ticket_0007_intake_walker_qed_or_qex.
 Print Assumptions ticket_0007_intake_angles_qed_or_qex.
 Print Assumptions ticket_0007_intake_parks_qed_or_qex.

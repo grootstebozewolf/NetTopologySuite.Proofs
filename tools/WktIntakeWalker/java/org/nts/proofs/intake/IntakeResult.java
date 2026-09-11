@@ -18,6 +18,9 @@ public final class IntakeResult {
         ID_IsoClothoid,
         ID_MkOutOfScope,
         ID_CircGammaLeftover,
+        ID_Collinear,
+        ID_DuplicateControl,
+        ID_DegenerateArc,
         ID_NotFirstSlice,
         ID_ParseFail
     }
