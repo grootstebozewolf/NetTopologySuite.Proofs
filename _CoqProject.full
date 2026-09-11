@@ -2854,6 +2854,12 @@ theories/SidecarCircEgg.v
 # chord–chord. Not #508 ellipse-length-as-noding. Not Campaign I–II.
 # Does not grow SheetHenCook. Not a noder. No Admitted.
 theories/SidecarEllipticEgg.v
+# ADR-0007 SQL/MM GeodesicString egg sidecar (SidecarGeodesicEgg).
+# Packages EggGeodesicString Decline-on-host + demoted unit-square
+# chord-seed. Host/pure-R. First cook stays chord–chord. Not a
+# geodetic interpolant / noder. Not Campaign I–II. Not a noder.
+# No Admitted.
+theories/SidecarGeodesicEgg.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
