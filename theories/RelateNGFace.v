@@ -63,8 +63,12 @@ From NTS.Proofs Require Import
   DE9IM
   SheetHenCook
   NodingNG
-  RelateNG
+  RelateNodingLineLineStrata
   RelateNodingLineLineExtPinned
+  RelateMatrixTriangle
+  RelateAreaArea
+  GeneralTriangleSeparation
+  RelateNG
   RelatePrepared
   RelateCurveMatrix
   RelateCurveAlphabet.
