@@ -167,6 +167,12 @@ Proof.
   intro H. exact H.
 Qed.
 
+Lemma nurbs_nurbs_not_first_scope :
+  ~ first_cook_scope EggNurbs EggNurbs.
+Proof.
+  intro H. exact H.
+Qed.
+
 Lemma IEmpty_neq_IDecline : IEmpty <> IDecline.
 Proof.
   discriminate.
@@ -292,6 +298,17 @@ Qed.
 Definition clothoid_decline_witness : CookWitness :=
   mkCookWitness (MkOutOfScope EggClothoid) (MkOutOfScope EggClothoid)
     IDecline clothoid_decline_I_ok.
+
+Lemma nurbs_decline_I_ok :
+  I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs) IDecline.
+Proof.
+  unfold I_ok, first_cook_scope, egg_class.
+  intro H. exact H.
+Qed.
+
+Definition nurbs_decline_witness : CookWitness :=
+  mkCookWitness (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
+    IDecline nurbs_decline_I_ok.
 
 (* I.1 host arm: circular eggs are out of first cook scope. I_ok
    admits only Decline — not a constructed Hit, not Empty. *)
@@ -945,6 +962,17 @@ Proof.
   reflexivity.
 Qed.
 
+Definition nurbs_ck1 : Chicken :=
+  mkChicken 0%nat 1%nat (MkOutOfScope EggNurbs).
+Definition nurbs_ck2 : Chicken :=
+  mkChicken 2%nat 3%nat (MkOutOfScope EggNurbs).
+
+Lemma try_cook_hit_nurbs_none :
+  try_cook_hit nurbs_ck1 nurbs_ck2 IDecline crossing_hen = None.
+Proof.
+  reflexivity.
+Qed.
+
 (* Circular eggs stay MkOutOfScope. A constructed circular Hit
    (parameters or not) does not feed this host cook step. *)
 Definition circular_ck1 : Chicken :=
@@ -1165,6 +1193,9 @@ Print Assumptions cook_hit_chords_shares_hen.
 Print Assumptions cooked_crossing_try.
 Print Assumptions cooked_crossing_join.
 Print Assumptions try_cook_hit_clothoid_none.
+Print Assumptions nurbs_nurbs_not_first_scope.
+Print Assumptions nurbs_decline_I_ok.
+Print Assumptions try_cook_hit_nurbs_none.
 Print Assumptions try_cook_hit_circular_hit_none.
 Print Assumptions circular_egg_not_first_cook_scope.
 Print Assumptions circular_decline_I_ok.

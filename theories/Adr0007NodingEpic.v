@@ -108,7 +108,10 @@
    cathedral Landed. Not this host module.
    Clothoid egg sidecar lives in SidecarClothoidEgg.v
    (3-axiom; Decline-on-host + RelateClothoid chord-seed;
-   not Required here). ι interior Hit discharge lives in
+   not Required here). NURBS egg sidecar lives in
+   SidecarNurbsEgg.v (3-axiom; Decline-on-host + demoted
+   unit-square chord-seed; metric length stays #508; not
+   Required here). ι interior Hit discharge lives in
    SidecarCircInteriorHit.v (4-axiom sidecar; I_ok_interior
    ≠ I_ok_mixed; joint gate stands; not Required here).
    First cook stays chord–chord.
