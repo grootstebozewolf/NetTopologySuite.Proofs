@@ -332,6 +332,16 @@ _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared end
 _Avoid_: atan2-free interpolant remaining (the named Γ gap), soft bool
 for CircGamma / interior / bag loop, noder (the full loop)
 
+**NodingNG (chord)**:
+The product face of ADR-0007 first-cook on one sheet: pairwise 𝓘 +
+one cook step (or a finite locked bag of one-steps) yielding
+`NodedOnSheet`. Chord–chord only (`NodingNG.v : nodingng_chord_inhabits`,
+`NodingNG.v : ticket_0007_nodingng_chord_qed_or_qex`). Empty ≠ Decline.
+Snap ≠ 𝓘. Identity is structural (`ShareOne` / `MintTwo`). Not OverlayNG.
+Not RelateNG. Not the bag-level repeat-until-noded loop (Parks ρ;
+`NodingNG.v : ticket_0007_nodingng_rho_qed_or_qex`).
+_Avoid_: noder (the full loop), OverlayNG, RelateNG, DCEL
+
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
 this sheet. Distinct from relate Decline and from Empty (disjoint images).
@@ -404,4 +414,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.

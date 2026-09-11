@@ -1128,3 +1128,31 @@ done-when / SQL/MM cathedral. Does not reopen Status.
 | `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; first cook stays chord–chord | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
 
 Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — NodingNG (chord) (2026-09-11)
+
+North star: RelateNG + NodingNG + SQL/MM Part 3, non-big-OOP. This
+letter is the **product face** for the Accepted chord lane: NodingNG
+= `𝓘` + cook on one sheet. It packages `SheetHenCook` inhabitance —
+it is not a remint of that vocabulary, not OverlayNG, not RelateNG,
+not a DCEL kernel, and not a `Geometry` subclass.
+
+**QED.** Two chord eggs on one sheet, an `𝓘` result, and one cook
+step yield `NodedOnSheet` evidence. Empty ≠ Decline. Snap ≠ `𝓘`.
+Identity is structural (`ShareOne` / `MintTwo`). A locked two-pair
+bag (Hit cook + Empty no-mint) is still pairwise / one-step.
+
+**QEX.** The full repeat-until-noded bag loop stays obligation.
+Parks ρ — `CookLoopBagTerm` missing; leftover_quad width conserved.
+Do not fake `LoopDischarged`. First cook stays chord–chord.
+Shewchuk A–D / Hobby / Priest / Jordan are not dependencies.
+
+Status stays **Accepted**. Parks Γ / ι / ρ.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `NodingNG.v : ticket_0007_nodingng_chord_qed_or_qex` | **QED** — chord `𝓘` + one cook step (or locked two-pair bag) yields `NodedOnSheet`; Empty ≠ Decline; snap ≠ `𝓘`; `ShareOne` / `MintTwo` structural | `NodingNG.v : nodingng_chord_inhabits`, `NodingNG.v : nodingng_crossing_hit_cooks`, `NodingNG.v : nodingng_locked_bag_inhabits` |
+| `NodingNG.v : ticket_0007_nodingng_rho_qed_or_qex` | **QEX** — NodingNG chord is pairwise / one-step, not `LoopDischarged`; Parks ρ | `SheetHenCookLoop.v : cook_loop_bag_term_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
+| `NodingNG.v : ticket_0007_nodingng_scope_qed_or_qex` | **QEX** — first cook stays chord–chord; circular / clothoid stay out of scope | `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : circular_egg_not_first_cook_scope` |
+
+Witness: `0007-nodingng-chord`. Status stays **Accepted**. Parks Γ / ι / ρ.
