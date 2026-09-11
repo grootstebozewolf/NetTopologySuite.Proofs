@@ -2828,6 +2828,11 @@ theories/NodingNG.v
 # Host/pure-R. Reuses SheetHenCook + NodingNG. Hobby 4.1 stays QEX.
 # Not 𝓘 / cook / OverlayNGCurve / RelateNG. No Admitted.
 theories/OverlayNG.v
+# ADR-0007 clothoid egg sidecar (SidecarClothoidEgg). Packages
+# EggClothoid Decline-on-host + RelateClothoid chord-seed.
+# Host/pure-R. First cook stays chord–chord. Not Fresnel noding.
+# Not Campaign I–II. Not a noder. No Admitted.
+theories/SidecarClothoidEgg.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.

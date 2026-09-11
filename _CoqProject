@@ -62,6 +62,8 @@ theories/DE9IM.v
 theories/RelateCurveAlphabet.v
 # Issue #67 S2: line-line DE-9IM soundness (host lane; pulls Intersect.v).
 theories/RelateLineLine.v
+# Issue #67 S10b: clothoid×line chord-seed (host lane; pulls RelateLineLine).
+theories/RelateClothoid.v
 # --- Discrete -> Sh(R^2) bridge (spatial-topos lane) ----------------------
 # Frame of metric opens of the plane as Omega of Sh(R^2): Heyting adjunction,
 # frame law, EM/double-negation counterexamples (punctured plane), infinitary
@@ -103,6 +105,11 @@ theories/NodingNG.v
 # Host/pure-R. Reuses SheetHenCook + NodingNG. Hobby 4.1 stays QEX.
 # Not 𝓘 / cook / OverlayNGCurve / RelateNG. No Admitted.
 theories/OverlayNG.v
+# ADR-0007 clothoid egg sidecar (SidecarClothoidEgg). Packages
+# EggClothoid Decline-on-host + RelateClothoid chord-seed.
+# Host/pure-R. First cook stays chord–chord. Not Fresnel noding.
+# Not Campaign I–II. No Admitted.
+theories/SidecarClothoidEgg.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.

@@ -106,6 +106,9 @@
    bag inhabitant, not required-type). Phase B stays Open —
    letter landed ≠ SQL/MM done / Phase B done-when /
    cathedral Landed. Not this host module.
+   Clothoid egg sidecar lives in SidecarClothoidEgg.v
+   (3-axiom; Decline-on-host + RelateClothoid chord-seed;
+   not Required here). First cook stays chord–chord.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is

@@ -381,6 +381,17 @@ round-trip and kiss-on-binary64 stay named QEX
 `IeeeRBridge.v : ticket_0007_ieee_bridge_unrestricted_qed_or_qex`).
 _Avoid_: cook, OverlayNG snap, FP noder, unrestricted bit-exact
 
+**Clothoid egg (sidecar)**:
+The product / sidecar face of clothoid as an EggClass on the
+ADR-0007 vocabulary (`SidecarClothoidEgg.v : sidecar_clothoid_egg_inhabits`,
+`SidecarClothoidEgg.v : ticket_0007_clothoid_egg_qed_or_qex`). Host
+`I_ok` is Decline; `try_cook_hit` is None. Locked chord-seed reuses
+`RelateClothoid.v : clothoid_chord_proper_cross_share`. Demote-to-chord
+is NodingNG / host first cook, not a clothoid Hit. Clothoid×clothoid
+is not first cook (`SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex`).
+Fresnel / Halley stay metric. Not Campaign I–II.
+_Avoid_: host cook, Fresnel noding, clothoid noder, Campaign I
+
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
 this sheet. Distinct from relate Decline and from Empty (disjoint images).
@@ -453,4 +464,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): Decline-on-host + RelateClothoid chord-seed; clothoid×clothoid stays QEX. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
