@@ -1156,3 +1156,33 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 | `NodingNG.v : ticket_0007_nodingng_scope_qed_or_qex` | **QEX** — first cook stays chord–chord; circular / clothoid stay out of scope | `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : circular_egg_not_first_cook_scope` |
 
 Witness: `0007-nodingng-chord`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — OverlayNG (sheet) (2026-09-11)
+
+North star: RelateNG + NodingNG + OverlayNG + SQL/MM Part 3, non-big-OOP.
+This letter is the **product face** for Accepted OverlayNGRobust: OverlayNG
+= a finite snap-sequence on one sheet. It packages `SheetHenCook`
+inhabitance — it is not a remint of that vocabulary, not `𝓘`, not cook,
+not NodingNG, not OverlayNGCurve Phase-0 point-set algebra (G1–G5),
+not RelateNG, not Shewchuk A–D, not Hobby 4.1 Discharge, not Jordan,
+not a DCEL kernel, and not a `Geometry` subclass.
+
+**QED.** Snap maps `S → Λ` attempted until validate or give up inhabit
+a finite snap-sequence ≠ `𝓘` on the same sheet as ℝ realization.
+Hobby-shaped: `G` was already noded (`SheetHenCook.v : noded_crossing`;
+NodingNG #712 / `NodingNG.v` when present). Failure to validate is not
+`𝓘` Decline and not Empty.
+
+**QEX.** Full Hobby 4.1 “image stays noded” / unconditional overlay
+correctness stay Honest remaining. Named missing constructor, not a
+bool. Do not fake Hobby 4.1 Discharge.
+
+Status stays **Accepted**. Parks Γ / ι / ρ.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `OverlayNG.v : ticket_0007_overlayng_sheet_qed_or_qex` | **QED** — finite snap-sequence ≠ `𝓘`; same-sheet realization; not NodingNG / OverlayNGCurve / RelateNG / Shewchuk / Jordan / DCEL | `OverlayNG.v : overlayng_sheet_inhabits`, `OverlayNG.v : overlayng_is_finite_snap`, `OverlayNG.v : overlayng_snap_neq_I`, `OverlayNG.v : overlayng_same_sheet_as_R` |
+| `OverlayNG.v : ticket_0007_overlayng_assumes_noded_qed_or_qex` | **QED** — locked run assumes `noded_crossing` on the same sheet; Hobby-shaped; not `𝓘` + cook | `OverlayNG.v : overlayng_assumes_noded_crossing`, `SheetHenCook.v : noded_crossing` |
+| `OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex` | **QEX** — Hobby 4.1 image-stays-noded / unconditional overlay correctness stay Honest remaining; do not fake Discharge | `OverlayNG.v : overlayng_hobby41_missing`, `OverlayNG.v : overlayng_unconditional_missing` |
+
+Witness: `0007-overlayng-sheet`. Status stays **Accepted**. Parks Γ / ι / ρ.

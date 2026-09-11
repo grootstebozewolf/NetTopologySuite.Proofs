@@ -99,5 +99,9 @@ theories/Adr0007NodingEpic.v
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
 # RelateNG / a bag noder. No Admitted.
 theories/NodingNG.v
+# OverlayNG sheet-lane product face: finite snap-sequence on one sheet.
+# Host/pure-R. Reuses SheetHenCook. Hobby 4.1 stays QEX. Not 𝓘 /
+# NodingNG / OverlayNGCurve / RelateNG. No Admitted.
+theories/OverlayNG.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v

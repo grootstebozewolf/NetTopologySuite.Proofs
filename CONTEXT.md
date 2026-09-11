@@ -342,6 +342,19 @@ Not RelateNG. Not the bag-level repeat-until-noded loop (Parks ρ;
 `NodingNG.v : ticket_0007_nodingng_rho_qed_or_qex`).
 _Avoid_: noder (the full loop), OverlayNG, RelateNG, DCEL
 
+**OverlayNG (sheet)**:
+The product face of Accepted ADR-0007 OverlayNGRobust: a finite
+sequence of snap maps `S → Λ` attempted until validate or give up,
+on the same sheet as ℝ realization, assuming already-noded `G`
+(`OverlayNG.v : overlayng_sheet_inhabits`,
+`OverlayNG.v : ticket_0007_overlayng_sheet_qed_or_qex`). Hobby-shaped:
+`G` was already noded (`SheetHenCook.v : noded_crossing`; NodingNG
+#712 / `NodingNG.v` when present). Not `𝓘` / cook / NodingNG. Not
+OverlayNGCurve Phase-0 point-set algebra (G1–G5). Not Shewchuk A–D.
+Not Hobby 4.1 Discharge (`OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex`).
+Not Jordan / RelateNG. Not DCEL / Geometry subclass.
+_Avoid_: NodingNG, OverlayNGCurve, RelateNG, Hobby 4.1 Discharge, 𝓘
+
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
 this sheet. Distinct from relate Decline and from Empty (disjoint images).
@@ -414,4 +427,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
