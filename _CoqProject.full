@@ -2820,6 +2820,10 @@ theories/SheetHenCook.v
 # bags. Arc cook termination is a sister card. No Admitted.
 theories/SheetHenCookLoop.v
 theories/Adr0007NodingEpic.v
+# NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
+# Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
+# RelateNG / a bag noder. No Admitted.
+theories/NodingNG.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
