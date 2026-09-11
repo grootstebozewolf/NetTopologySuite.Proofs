@@ -1389,3 +1389,37 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `SidecarSinEgg.v : ticket_0007_sin_parks_qed_or_qex` | **QEX** — Campaign I–II / profile-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarSinEgg.v : sidecar_sin_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-sin-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — circle / circular egg sidecar (2026-09-11)
+
+Cook-axis sidecar: `EggCircularArc` on the ADR-0007 vocabulary.
+Host already has `EggCircularArc` / `MkOutOfScope EggCircularArc`,
+`circular_decline_I_ok`, `circular_egg_not_first_cook_scope`,
+`try_cook_hit_circular_hit_none`, chord×circular Decline. This letter
+packages that fence. `SheetHenCook.v` is at the module-split ceiling
+after SIN #719 — this letter does not grow it. Prefer
+`SidecarCircEgg*` over reminting CircularCook* Campaign I/II, Parks Γ
+CircGamma, MkCirc, or ι/ρ.
+
+**QED.** Sidecar egg packaging + host Decline + `try_cook_hit` None
+(even on IHit) + locked unit-square demoted-chord seed
+(`RelateLineLine.v : line_line_proper_cross_geom`). Demote-to-chord
+is NodingNG / host first cook, not a circular Hit. Chord × circular
+Decline stays the honest mixed arm.
+
+**QEX.** Circular×circular is not first cook (checklist 4). Named
+missing constructors: no `MkCirc` on `Egg`; CircGamma stays QEX
+(cite Parks Γ — do not fake Discharge); no host `I_ok` Hit arm; no
+first-cook expand. Do not remint `CircularCookHit` / Split / Span /
+`I_ok_circ` / Campaign I–II.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+Parks Γ / ι / ρ cited once.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarCircEgg.v : ticket_0007_circle_egg_qed_or_qex` | **QED** — EggCircularArc packaging; host Decline; try_cook None even on IHit; locked demoted-chord seed; demote is NodingNG first cook; chord×circular Decline | `SidecarCircEgg.v : sidecar_circ_egg_inhabits`, `SidecarCircEgg.v : sidecar_circ_egg_chord_seed`, `SidecarCircEgg.v : sidecar_circ_egg_host_decline` |
+| `SidecarCircEgg.v : ticket_0007_circle_not_first_cook_qed_or_qex` | **QEX** — circular×circular stays out of first cook; `MkCirc` / CircGamma / Hit-arm / first-cook-expand missing; cite Parks Γ | `SheetHenCook.v : circular_egg_not_first_cook_scope`, `SidecarCircEgg.v : sidecar_circ_egg_mkcirc_missing`, `SidecarCircEgg.v : sidecar_circ_egg_circgamma_missing` |
+| `SidecarCircEgg.v : ticket_0007_circle_parks_qed_or_qex` | **QEX** — CircGamma Discharge / Campaign I–II remint / bag loop parked; Parks Γ / ι / ρ | `SidecarCircEgg.v : sidecar_circ_egg_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-circle-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
