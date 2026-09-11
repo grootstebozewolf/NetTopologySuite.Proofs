@@ -63,9 +63,8 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra Ranalysis1.
-From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateLineLine
-  RelateClothoid.
+From Stdlib Require Import Reals Ranalysis1.
+From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateClothoid.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -195,11 +194,9 @@ Lemma locked_clothoid_chord_proper_cross :
   clothoid_chord_proper_cross locked_clothoid_ab
     (cc_start locked_clothoid_cd) (cc_end locked_clothoid_cd).
 Proof.
-  (* segments_proper_cross is RelateLineLine's name; RelateClothoid
-     aliases it as clothoid_chord_proper_cross and does not export it. *)
-  unfold clothoid_chord_proper_cross, segments_proper_cross,
-         locked_clothoid_ab, locked_clothoid_cd, diag_ab, diag_cd, cross.
-  simpl. split; lra.
+  unfold clothoid_chord_proper_cross, locked_clothoid_ab, locked_clothoid_cd.
+  cbn [cc_start cc_end].
+  exact crossing_proper_cross_signs.
 Qed.
 
 (* WITNESS {"claimId":"0007-clothoid-egg","topic":"overlay","lemma":"sidecar_clothoid_chord_seed","title":"Sidecar clothoid locked unit-square chords reuse RelateClothoid proper-cross share; demoted-chord geometry, not a clothoid times clothoid cook Hit","file":"theories/SidecarClothoidEgg.v","witness":"0007-clothoid-egg","board":"ADR-0007"} *)
