@@ -61,6 +61,7 @@
 From Stdlib Require Import Reals List.
 From NTS.Proofs Require Import
   DE9IM
+  SheetHenCook
   NodingNG
   RelateNG
   RelateNodingLineLineExtPinned
