@@ -220,7 +220,8 @@ Proof.
     as [Hr|Hr];
     [exfalso; exact (ang_r_nz Hr)|].
   unfold sweep_from_denom, ang_egg.
-  rewrite ang_r_sqrt5.
+  (* r first: ang_r_sqrt5 mentions circumcenter_of, which ang_center rewrites. *)
+  rewrite ang_r_sqrt5, ang_center.
   destruct (Rlt_dec 0 (circ_denom ang_a ang_b ang_c)) as [Hs|Hs].
   - reflexivity.
   - exfalso. rewrite ang_denom in Hs. lra.
