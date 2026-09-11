@@ -1355,3 +1355,35 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks Γ / ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-nurbs-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — SIN / sinusoid egg sidecar (2026-09-11)
+
+Cook-axis sidecar: sinusoid as an EggClass on the ADR-0007 vocabulary.
+Host already has `EggSinusoid` / `MkOutOfScope EggSinusoid`. This letter
+adds the missing Decline / not-first-cook host lemmas
+(`sinusoid_sinusoid_not_first_scope`, `sinusoid_decline_I_ok`) and
+packages them. Prefer `SidecarSin*` over reminting host cook. Existing
+sinusoid corpus is thin (Spectre `sine_profile` / `sine_edge` is
+profile research) — do not invent a heavy metric remint. One locked
+demote-to-chord / chord-seed fixture. Do not ship a sinusoid×sinusoid
+noder or Campaign I–II.
+
+**QED.** Sidecar egg packaging + host Decline + locked unit-square
+demoted-chord seed (`RelateLineLine.v : line_line_proper_cross_geom`).
+Demote-to-chord is NodingNG / host first cook, not a sinusoid Hit.
+Spectre profile stays research, not cook.
+
+**QEX.** Sinusoid×sinusoid is not first cook (checklist 4). Named
+missing constructors: no `MkSinusoid` on `Egg`; no `I_ok` Hit arm.
+Do not fake first-cook expand or `LoopDischarged`. Parks Γ / ι / ρ
+cited once.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarSinEgg.v : ticket_0007_sin_egg_qed_or_qex` | **QED** — EggSinusoid packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; profile stays research | `SidecarSinEgg.v : sidecar_sin_egg_inhabits`, `SidecarSinEgg.v : sidecar_sin_chord_seed`, `SidecarSinEgg.v : sidecar_sin_host_decline` |
+| `SidecarSinEgg.v : ticket_0007_sin_not_first_cook_qed_or_qex` | **QEX** — sinusoid×sinusoid stays out of first cook; `MkSinusoid` / Hit-arm missing | `SheetHenCook.v : sinusoid_sinusoid_not_first_scope`, `SidecarSinEgg.v : sidecar_sin_mksinusoid_missing`, `SidecarSinEgg.v : sidecar_sin_hit_arm_missing` |
+| `SidecarSinEgg.v : ticket_0007_sin_parks_qed_or_qex` | **QEX** — Campaign I–II / profile-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarSinEgg.v : sidecar_sin_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-sin-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
