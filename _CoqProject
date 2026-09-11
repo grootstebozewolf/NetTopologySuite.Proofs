@@ -64,6 +64,9 @@ theories/RelateCurveAlphabet.v
 theories/RelateLineLine.v
 # Issue #67 S10b: clothoid×line chord-seed (host lane; pulls RelateLineLine).
 theories/RelateClothoid.v
+# Esri 300 EllipticArc chord-seed (host lane; pulls RelateLineLine).
+# Consumed by SidecarEllipticEgg; not a cook Hit.
+theories/RelateEllipticArc.v
 # --- Discrete -> Sh(R^2) bridge (spatial-topos lane) ----------------------
 # Frame of metric opens of the plane as Omega of Sh(R^2): Heyting adjunction,
 # frame law, EM/double-negation counterexamples (punctured plane), infinitary
@@ -125,6 +128,12 @@ theories/SidecarSinEgg.v
 # Host/pure-R. First cook stays chord–chord. Does not remint
 # CircularCook* / CircGamma / MkCirc. Not Campaign I–II. No Admitted.
 theories/SidecarCircEgg.v
+# ADR-0007 Elliptical Curve / EllipticArc egg sidecar
+# (SidecarEllipticEgg). Packages EggEllipse Decline-on-host +
+# RelateEllipticArc chord-seed. Host/pure-R. First cook stays
+# chord–chord. Not #508 ellipse-length-as-noding. Not Campaign I–II.
+# Does not grow SheetHenCook. No Admitted.
+theories/SidecarEllipticEgg.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.

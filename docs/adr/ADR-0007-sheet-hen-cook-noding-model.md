@@ -1423,3 +1423,37 @@ Parks Γ / ι / ρ cited once.
 | `SidecarCircEgg.v : ticket_0007_circle_parks_qed_or_qex` | **QEX** — CircGamma Discharge / Campaign I–II remint / bag loop parked; Parks Γ / ι / ρ | `SidecarCircEgg.v : sidecar_circ_egg_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-circle-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — Elliptical Curve / EllipticArc egg sidecar (2026-09-11)
+
+Cook-axis sidecar: Elliptical Curve / EllipticArc as an EggClass on
+the ADR-0007 vocabulary. Host already has `EggEllipse` /
+`MkOutOfScope EggEllipse` and `ellipse_ellipse_not_first_scope`.
+`SheetHenCook.v` is at the module-split ceiling after Circle #720 —
+this letter does not grow it. Decline / not-first-cook / try_cook
+None live in `SidecarEllipticEgg.v` and cite existing
+`first_cook_scope` / `I_ok` / `try_cook_hit_out_of_scope_none`.
+Prefer `SidecarElliptic*` over reminting host cook. Reuse
+`RelateEllipticArc.v` `EllipticArcChord` the way clothoid reused
+`ClothoidChord`. #508 ellipse length / elliptic-E stay metric —
+not a cook Hit and not EllipseLength synonym theater. One locked
+fixture. Do not ship an elliptic×elliptic noder or Campaign I–II.
+
+**QED.** Sidecar egg packaging + host Decline + locked unit-square
+chord-seed (`RelateEllipticArc.v : elliptic_arc_chord_proper_cross_share`).
+Demote-to-chord is NodingNG / host first cook, not an elliptic Hit.
+
+**QEX.** Ellipse×ellipse is not first cook (checklist 4). Named
+missing constructors: no `MkElliptic` on `Egg`; no `I_ok` Hit arm;
+no first-cook expand. Do not fake first-cook expand or
+`LoopDischarged`. Parks Γ / ι / ρ cited once.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarEllipticEgg.v : ticket_0007_elliptic_egg_qed_or_qex` | **QED** — EggEllipse packaging; host Decline; locked RelateEllipticArc chord-seed; demote is NodingNG first cook; #508 ellipse length / elliptic-E stay metric | `SidecarEllipticEgg.v : sidecar_elliptic_egg_inhabits`, `SidecarEllipticEgg.v : sidecar_elliptic_chord_seed`, `SidecarEllipticEgg.v : sidecar_elliptic_host_decline` |
+| `SidecarEllipticEgg.v : ticket_0007_elliptic_not_first_cook_qed_or_qex` | **QEX** — ellipse×ellipse stays out of first cook; `MkElliptic` / Hit-arm missing | `SheetHenCook.v : ellipse_ellipse_not_first_scope`, `SidecarEllipticEgg.v : sidecar_elliptic_mkelliptic_missing`, `SidecarEllipticEgg.v : sidecar_elliptic_hit_arm_missing` |
+| `SidecarEllipticEgg.v : ticket_0007_elliptic_parks_qed_or_qex` | **QEX** — Campaign I–II / EllipseLength-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarEllipticEgg.v : sidecar_elliptic_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-elliptical-curve-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
