@@ -185,19 +185,18 @@ public final class IntakeVisitor extends wktParserBaseVisitor<IntakeResult> {
         if (pts.isEmpty()) {
             return IntakeResult.decline(Reason.ID_Empty);
         }
-        if (pts.size() != 3) {
-            return IntakeResult.decline(Reason.ID_BadPointCount);
+        if (pts.size() == 3) {
+            Point a = pts.get(0);
+            Point b = pts.get(1);
+            Point c = pts.get(2);
+            if (eq(a, P50) && eq(c, P05)) {
+                return circBag(List.of(P50, P05), "MkCirc:quarter");
+            }
+            if (eq(a, P50) && eq(b, P05) && eq(c, P50)) {
+                return circBag(List.of(P50, P50), "MkCirc:full");
+            }
         }
-        Point a = pts.get(0);
-        Point b = pts.get(1);
-        Point c = pts.get(2);
-        if (eq(a, P50) && eq(c, P05)) {
-            return circBag(List.of(P50, P05), "MkCirc:quarter");
-        }
-        if (eq(a, P50) && eq(b, P05) && eq(c, P50)) {
-            return circBag(List.of(P50, P50), "MkCirc:full");
-        }
-        return IntakeResult.decline(Reason.ID_CircGammaLeftover);
+        return mapCsUnknown(pts);
     }
 
     static IntakeResult mapCircle(List<Point> pts) {
@@ -210,7 +209,79 @@ public final class IntakeVisitor extends wktParserBaseVisitor<IntakeResult> {
         if (eq(pts.get(0), P50) && eq(pts.get(2), PM50)) {
             return circBag(List.of(P50, PM50), "MkCirc:full");
         }
-        return IntakeResult.decline(Reason.ID_CircGammaLeftover);
+        return mapCircleUnknown(pts);
+    }
+
+    /** Same table as {@code theories/IntakeAngles.v} {@code try_cs_eggs}. */
+    static IntakeResult mapCsUnknown(List<Point> pts) {
+        if (pts.isEmpty()) {
+            return IntakeResult.decline(Reason.ID_Empty);
+        }
+        if (pts.size() < 3 || pts.size() % 2 == 0) {
+            return IntakeResult.decline(Reason.ID_BadPointCount);
+        }
+        List<Point> ends = new ArrayList<>();
+        List<Chicken> chickens = new ArrayList<>();
+        ends.add(pts.get(0));
+        int hen = 0;
+        for (int i = 0; i + 2 < pts.size(); i += 2) {
+            IntakeResult triple = tryTriple(pts.get(i), pts.get(i + 1), pts.get(i + 2));
+            if (!triple.isBag()) {
+                return triple;
+            }
+            ends.add(pts.get(i + 2));
+            chickens.add(new Chicken(hen, hen + 1, "MkCirc"));
+            hen++;
+        }
+        return IntakeResult.bag(new Bag(hens(ends.size()), ends, chickens));
+    }
+
+    /** Same table as {@code theories/IntakeAngles.v} {@code try_circle_eggs}. */
+    static IntakeResult mapCircleUnknown(List<Point> pts) {
+        if (pts.isEmpty()) {
+            return IntakeResult.decline(Reason.ID_Empty);
+        }
+        if (pts.size() != 3) {
+            return IntakeResult.decline(Reason.ID_BadPointCount);
+        }
+        IntakeResult triple = tryTriple(pts.get(0), pts.get(1), pts.get(2));
+        if (!triple.isBag()) {
+            return triple;
+        }
+        return circBag(List.of(pts.get(0), pts.get(2)), "MkCirc");
+    }
+
+    static IntakeResult tryTriple(Point a, Point b, Point c) {
+        if (same(a, b) || same(b, c) || same(a, c)) {
+            return IntakeResult.decline(Reason.ID_DuplicateControl);
+        }
+        double d = circDenom(a, b, c);
+        if (d == 0.0) {
+            return IntakeResult.decline(Reason.ID_Collinear);
+        }
+        Point o = circumcenter(a, b, c, d);
+        double r2 = (a.x - o.x) * (a.x - o.x) + (a.y - o.y) * (a.y - o.y);
+        if (r2 == 0.0) {
+            return IntakeResult.decline(Reason.ID_DegenerateArc);
+        }
+        return IntakeResult.bag(new Bag(List.of(), List.of(), List.of()));
+    }
+
+    static double circDenom(Point a, Point b, Point c) {
+        return 2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+    }
+
+    static Point circumcenter(Point a, Point b, Point c, double d) {
+        double na = a.x * a.x + a.y * a.y;
+        double nb = b.x * b.x + b.y * b.y;
+        double nc = c.x * c.x + c.y * c.y;
+        double ux = (na * (b.y - c.y) + nb * (c.y - a.y) + nc * (a.y - b.y)) / d;
+        double uy = (na * (c.x - b.x) + nb * (a.x - c.x) + nc * (b.x - a.x)) / d;
+        return new Point(ux, uy);
+    }
+
+    static boolean same(Point a, Point b) {
+        return a.x == b.x && a.y == b.y;
     }
 
     private static IntakeResult circBag(List<Point> pts, String egg) {

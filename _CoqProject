@@ -152,6 +152,11 @@ theories/SidecarGeodesicEgg.v
 # EggClothoid stays. Host/pure-R. First cook stays chord–chord.
 # Not a spiral interpolant / noder. Not Campaign I–II. No Admitted.
 theories/SidecarSpiralEgg.v
+# ADR-0007 intake angles-from-points (IntakeAngles). Circumcircle
+# + inhabited CircularEgg angle fields from control points.
+# Host/pure-R. 3-axiom. No Atan2.v. Not a CircGamma remint.
+# Required by IntakeWalker CircUnknown. No Admitted.
+theories/IntakeAngles.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc. Host/pure-R.
 # Grammar pin: grammars-v4 #4997. No new oracle keyword. No Admitted.

@@ -40,7 +40,16 @@ check "BAG hens=0,1 pts=5 0;-5 0 chickens=0-1:MkCirc:full" \
   "CIRCLE (5 0, 0 5, -5 0)"
 check "BAG hens=0,1,2,3 pts=0 0;5 0;5 0;0 5 chickens=0-1:MkChord,2-3:MkCirc:quarter" \
   "COMPOUNDCURVE ((0 0, 5 0), CIRCULARSTRING (5 0, 3 4, 0 5))"
-check "DECLINE ID_CircGammaLeftover" "CIRCULARSTRING (0 0, 2 0, 3 1)"
+check "BAG hens=0,1 pts=0 0;3 1 chickens=0-1:MkCirc" \
+  "CIRCULARSTRING (0 0, 2 0, 3 1)"
+check "BAG hens=0,1 pts=0 0;3 1 chickens=0-1:MkCirc" \
+  "CIRCLE (0 0, 2 0, 3 1)"
+check "BAG hens=0,1,2 pts=0 0;2 0;4 0 chickens=0-1:MkCirc,1-2:MkCirc" \
+  "CIRCULARSTRING (0 0, 1 1, 2 0, 3 1, 4 0)"
+check "DECLINE ID_Collinear" "CIRCULARSTRING (0 0, 1 0, 2 0)"
+check "DECLINE ID_DuplicateControl" "CIRCULARSTRING (0 0, 0 0, 1 1)"
+check "DECLINE ID_BadPointCount" "CIRCULARSTRING (0 0, 1 0)"
+check "DECLINE ID_Empty" "CIRCULARSTRING EMPTY"
 check "DECLINE ID_GeodesicString" "GEODESICSTRING (0 0, 1 0)"
 check "DECLINE ID_SpiralCurve" "SPIRALCURVE EMPTY"
 check "DECLINE ID_MkOutOfScope" "CLOTHOID (0, 0.005, 80)"
