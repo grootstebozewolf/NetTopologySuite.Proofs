@@ -277,7 +277,7 @@ Fixpoint intake_map_members (s : Sheet) (ms : list TaggedCst) {struct ms}
              | y :: ys =>
                  match intake_map_atom s y with
                  | IntakeDecline r => IntakeDecline r
-                 | IntakeBag by => go (append_bags s acc by) ys
+                 | IntakeBag b1 => go (append_bags s acc b1) ys
                  end
              end) b0 rest
       end
