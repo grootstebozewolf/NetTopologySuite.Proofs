@@ -67,6 +67,7 @@ Lemma locked_cloth_A_at_ti :
   cloth_eval locked_cloth_A locked_cloth_ti = locked_cloth_hit_pt.
 Proof.
   unfold cloth_eval, locked_cloth_A, locked_cloth_ti, locked_cloth_hit_pt.
+  cbn [px py cloth_p0 cloth_p1].
   apply (f_equal2 mkPoint); field.
 Qed.
 
@@ -74,6 +75,7 @@ Lemma locked_cloth_B_at_tj :
   cloth_eval locked_cloth_B locked_cloth_tj = locked_cloth_hit_pt.
 Proof.
   unfold cloth_eval, locked_cloth_B, locked_cloth_tj, locked_cloth_hit_pt.
+  cbn [px py cloth_p0 cloth_p1].
   apply (f_equal2 mkPoint); field.
 Qed.
 
@@ -184,6 +186,7 @@ Lemma locked_intake_egg_self_hit :
        (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)).
 Proof.
   unfold I_ok, on_cloth, cloth_eval, locked_clothoid_egg.
+  cbn [px py cloth_p0 cloth_p1].
   split.
   - split; [lra|]. apply (f_equal2 mkPoint); field.
   - split; [lra|]. apply (f_equal2 mkPoint); field.
