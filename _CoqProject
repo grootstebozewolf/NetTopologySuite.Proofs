@@ -103,5 +103,7 @@ theories/NodingNG.v
 # Host/pure-R. Reuses SheetHenCook + NodingNG. Hobby 4.1 stays QEX.
 # Not 𝓘 / cook / OverlayNGCurve / RelateNG. No Admitted.
 theories/OverlayNG.v
+# RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
+# it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v

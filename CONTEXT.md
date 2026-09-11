@@ -355,6 +355,18 @@ Not Hobby 4.1 Discharge (`OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex
 Not Jordan / RelateNG. Not DCEL / Geometry subclass.
 _Avoid_: NodingNG, OverlayNGCurve, RelateNG, Hobby 4.1 Discharge, 𝓘
 
+**RelateNG (face)**:
+The product face of Accepted DE-9IM / RelateNG chord-lane facts:
+matrix algebra + witnesses, honesty decline, and the locked 67-c
+line×line exterior-row pin (`RelateNGFace.v : relateng_face_inhabits`,
+`RelateNGFace.v : ticket_0007_relateng_face_qed_or_qex`). Consumes
+NodingNG / `NodedOnSheet`; does not cook. Not OverlayNG snap. Not
+Shewchuk A–D / Hobby / Priest. Not full unconditional Jordan. Not
+#522 leftover remint / T-junction complete / nine-cell
+`geom_de9im_pointset`. Not SQL/MM cathedral / DCEL / Geometry subclass.
+Completeness stays false (`RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex`).
+_Avoid_: NodingNG, OverlayNG, RelateNG.v (the umbrella), 522-n
+
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
 this sheet. Distinct from relate Decline and from Empty (disjoint images).
@@ -427,4 +439,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
