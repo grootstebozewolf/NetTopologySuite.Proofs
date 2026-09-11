@@ -33,6 +33,14 @@ remains the 2026-08-16 snapshot.
 missing from `audit-exceptions.txt` and is now listed (85 files / 74
 `theories-flocq/`). Three PA footers are C1 via `Bminus`/`Bmult` in
 the Ozaki DAG. The TSV still does not include this file.
+**Update 2026-09-11**: Chip 2 peeled `NurbsKnotSpans.v` and
+`ArcArcQuartic.v` off `audit-exceptions.txt` after a host-lane PA
+measurement of all 35 R-side listed files (0 already allowlist-clean).
+The atan half-circle instance moved to `NurbsConicExact.v`; the atan2
+N-AA headline moved to `ArcSpanAtan2.v`. Remaining list: 108 files /
+74 `theories-flocq/` / 33 `theories/` / 1 hunt probe. No Flocq C1 file
+can leave while Flocq's binary model is in use. The TSV remains the
+2026-08-16 snapshot.
 **Update 2026-08-27**: Four HotPixel comparison lemmas
 (`b64_le_R_of_true`, `b64_le_complete`, `b64_lt_R_of_true`,
 `b64_lt_complete`) left `classic` after a payload split on finite

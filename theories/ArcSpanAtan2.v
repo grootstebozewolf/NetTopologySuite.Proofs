@@ -55,6 +55,11 @@
      side hypothesis) -- covering the reflex case the corpus previously
      believed open.
 
+   Item ② / N-AA atan2 discharge (moved from ArcArcQuartic so that file
+   can leave the exceptions list as 3-axiom Vieta):
+     `arc_arc_intersects_of_atan2_radical_span` plus the four
+     radical-point on-circle / atan2-iff helpers.
+
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
@@ -62,7 +67,8 @@
 
 From Stdlib Require Import Reals Lra Nsatz.
 From NTS.Proofs Require Import Distance CurveGeometry ArcOrient ArcIntersect
-  ArcOffsetThreePoint ArcArcCircles Atan2 AngleBetween.
+  ArcOffsetThreePoint ArcChordApprox ArcArcCircles ArcArcCirclesSpan
+  Atan2 AngleBetween.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -463,3 +469,222 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions arc_span_contains_atan2_iff_chord_sign.
+
+(* -------------------------------------------------------------------------- *)
+(* §9  N-AA item ②: radical points on both circumcircles + atan2 discharge.  *)
+(* Vieta identities stay 3-axiom in ArcArcQuartic.v.                          *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma radical_plus_on_circle_a1 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    inCircle_R (arc_start a1) (arc_mid a1) (arc_end a1)
+      (radical_point_plus (arc_center a1) (arc_center a2)
+                          (arc_radius a1) (arc_radius a2)) = 0.
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  destruct (radical_points_on_circles
+              (arc_center a1) (arc_center a2) (arc_radius a1) (arc_radius a2)
+              (arc_radius_pos a1 Hva1) (arc_radius_pos a2 Hva2)
+              Hdpos Hrabs Hdlt)
+    as [[HdP1 _] _].
+  apply inCircle_R_zero_of_equidistant; [exact Hva1 |].
+  assert (Hr1sq : arc_radius a1 * arc_radius a1
+                  = dist_sq (arc_center a1) (arc_start a1)).
+  { rewrite arc_radius_eq_sqrt. rewrite sqrt_sqrt; [| apply arc_radius_sq_nonneg].
+    unfold arc_radius_sq. reflexivity. }
+  lra.
+Qed.
+
+Lemma radical_plus_on_circle_a2 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    inCircle_R (arc_start a2) (arc_mid a2) (arc_end a2)
+      (radical_point_plus (arc_center a1) (arc_center a2)
+                          (arc_radius a1) (arc_radius a2)) = 0.
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  destruct (radical_points_on_circles
+              (arc_center a1) (arc_center a2) (arc_radius a1) (arc_radius a2)
+              (arc_radius_pos a1 Hva1) (arc_radius_pos a2 Hva2)
+              Hdpos Hrabs Hdlt)
+    as [[_ HdP2] _].
+  apply inCircle_R_zero_of_equidistant; [exact Hva2 |].
+  assert (Hr2sq : arc_radius a2 * arc_radius a2
+                  = dist_sq (arc_center a2) (arc_start a2)).
+  { rewrite arc_radius_eq_sqrt. rewrite sqrt_sqrt; [| apply arc_radius_sq_nonneg].
+    unfold arc_radius_sq. reflexivity. }
+  lra.
+Qed.
+
+Lemma radical_minus_on_circle_a1 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    inCircle_R (arc_start a1) (arc_mid a1) (arc_end a1)
+      (radical_point_minus (arc_center a1) (arc_center a2)
+                           (arc_radius a1) (arc_radius a2)) = 0.
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  destruct (radical_points_on_circles
+              (arc_center a1) (arc_center a2) (arc_radius a1) (arc_radius a2)
+              (arc_radius_pos a1 Hva1) (arc_radius_pos a2 Hva2)
+              Hdpos Hrabs Hdlt)
+    as [_ [HdM1 _]].
+  apply inCircle_R_zero_of_equidistant; [exact Hva1 |].
+  assert (Hr1sq : arc_radius a1 * arc_radius a1
+                  = dist_sq (arc_center a1) (arc_start a1)).
+  { rewrite arc_radius_eq_sqrt. rewrite sqrt_sqrt; [| apply arc_radius_sq_nonneg].
+    unfold arc_radius_sq. reflexivity. }
+  lra.
+Qed.
+
+Lemma radical_minus_on_circle_a2 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    inCircle_R (arc_start a2) (arc_mid a2) (arc_end a2)
+      (radical_point_minus (arc_center a1) (arc_center a2)
+                           (arc_radius a1) (arc_radius a2)) = 0.
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  destruct (radical_points_on_circles
+              (arc_center a1) (arc_center a2) (arc_radius a1) (arc_radius a2)
+              (arc_radius_pos a1 Hva1) (arc_radius_pos a2 Hva2)
+              Hdpos Hrabs Hdlt)
+    as [_ [_ HdM2]].
+  apply inCircle_R_zero_of_equidistant; [exact Hva2 |].
+  assert (Hr2sq : arc_radius a2 * arc_radius a2
+                  = dist_sq (arc_center a2) (arc_start a2)).
+  { rewrite arc_radius_eq_sqrt. rewrite sqrt_sqrt; [| apply arc_radius_sq_nonneg].
+    unfold arc_radius_sq. reflexivity. }
+  lra.
+Qed.
+
+Lemma radical_plus_span_iff_a1 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    (arc_span_contains_atan2 a1
+       (radical_point_plus (arc_center a1) (arc_center a2)
+                           (arc_radius a1) (arc_radius a2))
+     <->
+     arc_span_contains a1
+       (radical_point_plus (arc_center a1) (arc_center a2)
+                           (arc_radius a1) (arc_radius a2))).
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  apply arc_span_contains_atan2_iff_chord_sign; [exact Hva1 |].
+  exact (radical_plus_on_circle_a1 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+Qed.
+
+Lemma radical_plus_span_iff_a2 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    (arc_span_contains_atan2 a2
+       (radical_point_plus (arc_center a1) (arc_center a2)
+                           (arc_radius a1) (arc_radius a2))
+     <->
+     arc_span_contains a2
+       (radical_point_plus (arc_center a1) (arc_center a2)
+                           (arc_radius a1) (arc_radius a2))).
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  apply arc_span_contains_atan2_iff_chord_sign; [exact Hva2 |].
+  exact (radical_plus_on_circle_a2 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+Qed.
+
+Lemma radical_minus_span_iff_a1 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    (arc_span_contains_atan2 a1
+       (radical_point_minus (arc_center a1) (arc_center a2)
+                            (arc_radius a1) (arc_radius a2))
+     <->
+     arc_span_contains a1
+       (radical_point_minus (arc_center a1) (arc_center a2)
+                            (arc_radius a1) (arc_radius a2))).
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  apply arc_span_contains_atan2_iff_chord_sign; [exact Hva1 |].
+  exact (radical_minus_on_circle_a1 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+Qed.
+
+Lemma radical_minus_span_iff_a2 :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 -> valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    (arc_span_contains_atan2 a2
+       (radical_point_minus (arc_center a1) (arc_center a2)
+                            (arc_radius a1) (arc_radius a2))
+     <->
+     arc_span_contains a2
+       (radical_point_minus (arc_center a1) (arc_center a2)
+                            (arc_radius a1) (arc_radius a2))).
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt.
+  apply arc_span_contains_atan2_iff_chord_sign; [exact Hva2 |].
+  exact (radical_minus_on_circle_a2 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+Qed.
+
+(* WITNESS {"claimId":"64","topic":"arc","lemma":"arc_arc_intersects_of_atan2_radical_span","title":"N-AA atan2 radical-span discharge: atan2 sector on one named radical point for both arcs implies arc_arc_intersects","file":"theories/ArcSpanAtan2.v"} *)
+
+Theorem arc_arc_intersects_of_atan2_radical_span :
+  forall a1 a2 : CircularArc,
+    valid_arc a1 ->
+    valid_arc a2 ->
+    0 < dist (arc_center a1) (arc_center a2) ->
+    Rabs (arc_radius a1 - arc_radius a2) < dist (arc_center a1) (arc_center a2) ->
+    dist (arc_center a1) (arc_center a2) < arc_radius a1 + arc_radius a2 ->
+    ((arc_span_contains_atan2 a1
+        (radical_point_plus (arc_center a1) (arc_center a2)
+                            (arc_radius a1) (arc_radius a2)) /\
+      arc_span_contains_atan2 a2
+        (radical_point_plus (arc_center a1) (arc_center a2)
+                            (arc_radius a1) (arc_radius a2)))
+     \/
+     (arc_span_contains_atan2 a1
+        (radical_point_minus (arc_center a1) (arc_center a2)
+                             (arc_radius a1) (arc_radius a2)) /\
+      arc_span_contains_atan2 a2
+        (radical_point_minus (arc_center a1) (arc_center a2)
+                             (arc_radius a1) (arc_radius a2)))) ->
+    arc_arc_intersects a1 a2.
+Proof.
+  intros a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt Hatan2.
+  apply (arc_arc_intersects_of_circles_and_radical_signs
+           a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+  destruct Hatan2 as [[H1 H2] | [H1 H2]].
+  - left. split.
+    + apply (radical_plus_span_iff_a1 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+      exact H1.
+    + apply (radical_plus_span_iff_a2 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+      exact H2.
+  - right. split.
+    + apply (radical_minus_span_iff_a1 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+      exact H1.
+    + apply (radical_minus_span_iff_a2 a1 a2 Hva1 Hva2 Hdpos Hrabs Hdlt).
+      exact H2.
+Qed.
+
+Print Assumptions arc_arc_intersects_of_atan2_radical_span.
