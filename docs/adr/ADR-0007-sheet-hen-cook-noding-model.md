@@ -1258,3 +1258,32 @@ Oracle generators attach as adapters on existing keywords
 | `IeeeRBridge.v : ticket_0007_ieee_bridge_unrestricted_qed_or_qex` | **QEX** — unrestricted round-trip and kiss on the binary64 sheet stay Honest remaining | `IeeeRBridge.v : ieee_unrestricted_missing`, `IeeeRBridge.v : ieee_kiss_on_b64_missing` |
 
 Witness: `0007-ieee-oracle-bridge`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — clothoid egg sidecar (2026-09-11)
+
+Cook-axis sidecar: clothoid as an EggClass on the ADR-0007 vocabulary.
+Host already has `EggClothoid` / `MkOutOfScope EggClothoid`,
+`clothoid_clothoid_not_first_scope`, `clothoid_decline_I_ok`. Prefer
+`SidecarClothoid*` over reminting host cook. Existing clothoid corpus
+is metric / relate / buffer research — package what is already Qed;
+do not remint Fresnel / Halley as noding. One locked fixture. Do not
+ship Campaign I–II.
+
+**QED.** Sidecar egg packaging + host Decline + locked unit-square
+chord-seed reuse (`RelateClothoid.v : clothoid_chord_proper_cross_share`).
+Demote-to-chord is NodingNG / host first cook, not a clothoid Hit.
+
+**QEX.** Clothoid×clothoid is not first cook (checklist 4). Named
+missing constructors: no `MkClothoid` on `Egg`; no `I_ok` Hit arm.
+Do not fake first-cook expand or `LoopDischarged`. Parks Γ / ι / ρ
+cited once.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_egg_qed_or_qex` | **QED** — EggClothoid packaging; host Decline; locked chord-seed; demote is NodingNG first cook | `SidecarClothoidEgg.v : sidecar_clothoid_egg_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_chord_seed`, `SidecarClothoidEgg.v : sidecar_clothoid_host_decline` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QEX** — clothoid×clothoid stays out of first cook; `MkClothoid` / Hit-arm missing | `SheetHenCook.v : clothoid_clothoid_not_first_scope`, `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_missing`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_missing` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-clothoid-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
