@@ -2843,6 +2843,11 @@ theories/SidecarNurbsEgg.v
 # Host/pure-R. First cook stays chord–chord. Not Spectre profile
 # as noding. Not Campaign I–II. Not a noder. No Admitted.
 theories/SidecarSinEgg.v
+# ADR-0007 circle / circular egg sidecar (SidecarCircEgg). Packages
+# host EggCircularArc Decline fence + demoted unit-square chord-seed.
+# Host/pure-R. First cook stays chord–chord. Does not remint
+# CircularCook* / CircGamma / MkCirc. Not Campaign I–II. No Admitted.
+theories/SidecarCircEgg.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
