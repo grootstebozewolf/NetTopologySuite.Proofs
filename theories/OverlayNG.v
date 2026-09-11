@@ -264,8 +264,7 @@ Lemma overlayng_sheet_inhabits :
   overlayng_kind <> ONG_RelateNG /\
   overlayng_kind <> ONG_Shewchuk /\
   overlayng_kind <> ONG_Jordan /\
-  overlayng_kind <> ONG_DCEL /\
-  overlayng_run_is_finite_snap overlayng_locked_run.
+  overlayng_kind <> ONG_DCEL.
 Proof.
   split; [exact overlayng_is_finite_snap|].
   split; [exact overlayng_snap_neq_I|].
@@ -277,8 +276,7 @@ Proof.
   split; [exact overlayng_not_relateng|].
   split; [exact overlayng_not_shewchuk|].
   split; [exact overlayng_not_jordan|].
-  split; [exact overlayng_not_dcel|].
-  exact overlayng_locked_run_is_finite_snap.
+  exact overlayng_not_dcel.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -301,8 +299,7 @@ Theorem ticket_0007_overlayng_sheet_qed_or_qex :
    overlayng_kind <> ONG_RelateNG /\
    overlayng_kind <> ONG_Shewchuk /\
    overlayng_kind <> ONG_Jordan /\
-   overlayng_kind <> ONG_DCEL /\
-   overlayng_run_is_finite_snap overlayng_locked_run)
+   overlayng_kind <> ONG_DCEL)
   \/
   CtorSnapRound = CtorI.
 Proof.
@@ -317,6 +314,7 @@ Theorem ticket_0007_overlayng_assumes_noded_qed_or_qex :
   (ong_run_g overlayng_locked_run = noded_crossing /\
    noded_sheet (ong_run_g overlayng_locked_run) = ong_run_sheet overlayng_locked_run /\
    noded_sheet (ong_run_g overlayng_locked_run) = default_sheet /\
+   overlayng_run_is_finite_snap overlayng_locked_run /\
    overlayng_kind = ONG_SnapSequence /\
    overlayng_kind <> ONG_I_plus_cook)
   \/
@@ -326,6 +324,7 @@ Proof.
   split; [reflexivity|].
   split; [exact overlayng_locked_run_g_on_sheet|].
   split; [reflexivity|].
+  split; [exact overlayng_locked_run_is_finite_snap|].
   split; [exact overlayng_is_snap_sequence|].
   exact overlayng_not_nodingng.
 Qed.
