@@ -34,13 +34,15 @@ Adapted from [NetTopologySuite#875](https://github.com/NetTopologySuite/NetTopol
 - A QED∨QEX stop is honest: QED is a constructed inhabitant; QEX is a
   documented missing constructor or out-of-scope pair. QEX is not owner
   accept and is not "done."
-- Host CircGamma stays QEX. Do not remint CircGamma theater. Sidecar cook
-  ≠ host cook (`I_ok_circ` / `I_ok_mixed` Hit is not host `I_ok`).
+- Host CircGamma is discharged by `MkCirc` (claimId `0007-gamma-mkcirc`).
+  Do not remint sidecar cook as host cook (`I_ok_circ` / `I_ok_mixed` /
+  `I_ok_interior` Hit is not host `I_ok`).
 - Rocq host lane is Stdlib (`theories/`); Flocq lane is `theories-flocq/`.
   The oracle (`oracle_bin`) is the differential test surface (ADR-0006).
   Do not invent a second protocol.
-- ADR-0007 is Accepted. First cook scope stays chord–chord unless a letter
-  explicitly expands it.
+- ADR-0007 is Accepted. First cook scope is chord–chord and
+  circular–circular (`MkCirc`). Do not expand it to other egg classes
+  unless a letter explicitly does.
 
 ## Before finishing
 

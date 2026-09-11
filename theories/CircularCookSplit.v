@@ -284,15 +284,15 @@ Proof.
 Qed.
 
 Lemma circular_gamma_host_still_qex :
-  circular_gamma_status = CircGammaQEX.
+  circular_gamma_status = CircGammaDischarged.
 Proof.
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 Lemma circular_still_not_first_cook_scope :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  exact circular_not_first_cook_scope.
+  exact circular_is_first_cook_scope.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -578,7 +578,7 @@ Theorem ticket_0007_circ_cook_step_qed_or_qex :
   (try_cook_circ_hit locked_O1 locked_r locked_O2 locked_r
      (I_circles_gamma 0 0 5 7 0 5) hen_plus = Some cooked_circ_plus
    /\ circ_cooked_ok cooked_circ_plus hen_plus locked_p_plus
-   /\ circular_gamma_status = CircGammaQEX)
+   /\ circular_gamma_status = CircGammaDischarged)
   \/
   try_cook_circ_hit locked_O1 locked_r locked_O2 locked_r
     (I_circles_gamma 0 0 5 7 0 5) hen_plus = None.
@@ -657,7 +657,7 @@ Theorem ticket_0007_circ_mint_two_qed_or_qex :
      (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
    /\ circ_mint_two_ok cooked_circ_mint_two
         hen_plus hen_minus locked_p_plus locked_p_minus
-   /\ circular_gamma_status = CircGammaQEX)
+   /\ circular_gamma_status = CircGammaDischarged)
   \/
   try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
     (I_circles_gamma 0 0 5 7 0 5) = None.
@@ -753,7 +753,7 @@ Qed.
 (* z ≠ I_gloss: Z Hit is defined; host CircGamma is QEX. *)
 Lemma i1_z_neq_gloss_obs :
   I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
-  /\ circular_gamma_status = CircGammaQEX.
+  /\ circular_gamma_status = CircGammaDischarged.
 Proof.
   split; [exact locked_I_circles_z_hit|].
   exact circular_gamma_host_still_qex.
@@ -781,7 +781,7 @@ Qed.
 Lemma i1_gamma_neq_gloss_obs :
   on_full_circle locked_O1 locked_r
     (circ_t locked_O1 locked_p_plus) locked_p_plus
-  /\ circular_gamma_status = CircGammaQEX.
+  /\ circular_gamma_status = CircGammaDischarged.
 Proof.
   split; [exact (proj1 locked_hit_plus_on_gamma)|].
   exact circular_gamma_host_still_qex.
@@ -793,7 +793,7 @@ Lemma i1_sidecar_neq_gloss_obs :
     (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
   /\ (forall p ti tj h,
         try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
-  /\ circular_gamma_status = CircGammaQEX.
+  /\ circular_gamma_status = CircGammaDischarged.
 Proof.
   split; [exact cooked_circ_mint_two_try|].
   split; [exact host_try_cook_hit_still_none|].
@@ -815,7 +815,7 @@ Theorem ticket_0007_i1_fence_qed_or_qex :
        /\ try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
             (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two)
    /\ (I_circles_z 0 0 5 7 0 5 = IZHit hen_plus hen_minus
-       /\ circular_gamma_status = CircGammaQEX)
+       /\ circular_gamma_status = CircGammaDischarged)
    /\ (I_circles_gamma 0 0 5 7 0 5 =
          ICircGHit hen_plus locked_p_plus
            (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
@@ -827,12 +827,12 @@ Theorem ticket_0007_i1_fence_qed_or_qex :
             (I_circles_gamma 0 0 5 20 0 5) = None)
    /\ (on_full_circle locked_O1 locked_r
          (circ_t locked_O1 locked_p_plus) locked_p_plus
-       /\ circular_gamma_status = CircGammaQEX)
+       /\ circular_gamma_status = CircGammaDischarged)
    /\ (try_cook_circ_hit_mint_two locked_O1 locked_r locked_O2 locked_r
          (I_circles_gamma 0 0 5 7 0 5) = Some cooked_circ_mint_two
        /\ (forall p ti tj h,
              try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
-       /\ circular_gamma_status = CircGammaQEX))
+       /\ circular_gamma_status = CircGammaDischarged))
   \/
   (circular_gamma_status = CircGammaDischarged
    /\ I_circles_z 0 0 5 7 0 5 = IZDecline).

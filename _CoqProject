@@ -90,10 +90,17 @@ theories/OverlayNGCurve.v
 # EX-CS-4 / JTS 81c2e996: PostGIS odd control count. Four-item
 # CIRCULARSTRING(A,B,C,A) is invalid. Does not reuse claimId V-CS.
 theories/CircularStringOddCount.v
+# ADR-0007 CircularEgg payload for host MkCirc (claimId 0007-gamma-mkcirc).
+# Host/pure-R. atan2-free angle interpolant. Required by SheetHenCook.
+theories/SheetHenCircEgg.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
-# Host/pure-R. First cook scope is chord–chord. Does not remint
-# CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
+# Host/pure-R. First cook scope is chord–chord and circular–circular
+# (MkCirc). Does not remint CurveSegment / Dart / Hobby. No Admitted.
 theories/SheetHenCook.v
+# ADR-0007 Γ host MkCirc / CircGamma locked fixture (claimId 0007-gamma-mkcirc).
+# Host/pure-R. atan2-free CircularEgg interpolant; I_ok Hit + try_cook_hit
+# mint on two MkCirc chickens. Tags / mixed stay Decline. 3-axiom.
+theories/CircularCookMkCirc.v
 # ρ bag-loop named QEX gap (508-style missing CookLoopBagTerm).
 # Host/pure-R. leftover_quad width conserved; kiss/share/mint not
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi

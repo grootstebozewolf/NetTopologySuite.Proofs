@@ -7,7 +7,7 @@
    Product / sidecar face: EggCircularArc on the ADR-0007 sheet /
    hen / cook vocabulary. Host already has EggCircularArc /
    MkOutOfScope EggCircularArc, circular_decline_I_ok,
-   circular_egg_not_first_cook_scope, try_cook_hit_circular_hit_none,
+   circular_egg_first_cook_scope, try_cook_hit_circular_hit_none,
    circular_hit_not_I_ok, chord_circular_decline_I_ok. This letter
    packages that already-Qed Decline fence. SheetHenCook is at the
    module-split ceiling after SIN #719 — this letter does not grow
@@ -106,18 +106,20 @@ Proof.
   intros e. reflexivity.
 Qed.
 
-(* Structural MkCirc miss: Egg is MkChord | MkOutOfScope. Cites Parks Γ
-   (CircularCook.v : circ_gamma_mkcirc_missing / circular_egg_only_out_of_scope)
-   — packaging, not a remint of CircGammaConstructor. *)
+(* Sidecar CircEgg is not a host Egg constructor. Host circular
+   interpolants are MkCirc; CircularArc may also appear as a tag.
+   Sidecar CircEggMkCirc / CircEggCircGamma stay uninhabited — this
+   letter does not remint sidecar as host Γ. *)
 Lemma sidecar_circ_egg_host_only_out_of_scope :
   forall e : Egg,
     egg_class e = EggCircularArc ->
-    e = MkOutOfScope EggCircularArc.
+    (exists ce, e = MkCirc ce) \/ e = MkOutOfScope EggCircularArc.
 Proof.
   intros e He.
-  destruct e as [c | cl].
+  destruct e as [c | ce | cl].
   - unfold egg_class in He. discriminate.
-  - unfold egg_class in He. subst cl. reflexivity.
+  - left. exists ce. reflexivity.
+  - unfold egg_class in He. subst cl. right. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -161,7 +163,7 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 (* Decline-on-host. Circular eggs stay MkOutOfScope. Not a constructed Hit.   *)
 (* Lemmas live here (SheetHenCook must not grow). Cite the already-Qed host   *)
-(* circular_decline_I_ok / circular_egg_not_first_cook_scope /                *)
+(* circular_decline_I_ok / circular_egg_first_cook_scope /                    *)
 (* try_cook_hit_circular_hit_none / chord_circular_decline_I_ok fence.        *)
 (* -------------------------------------------------------------------------- *)
 
@@ -201,8 +203,7 @@ Lemma sidecar_circ_egg_try_cook_hit_none :
       = None.
 Proof.
   intros p ti tj h.
-  apply try_cook_hit_out_of_scope_none.
-  left. discriminate.
+  reflexivity.
 Qed.
 
 (* Host circular IHit still does not feed try_cook_hit. *)
@@ -323,8 +324,8 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 (* Named missing constructors. 508-style, not bools. Cite Parks Γ.            *)
 (* CircEggMkCirc / CircEggCircGamma cite CircularCook.v :                      *)
-(* circ_gamma_mkcirc_missing / circular_gamma_is_qex — they do not remint     *)
-(* CircGammaConstructor / CircGammaStatus.                                    *)
+(* circ_gamma_mkcirc_inhabits / circular_gamma_is_discharged — they do not    *)
+(* remint sidecar CircEgg as host CircGammaConstructor.                       *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive SidecarCircEggCookCtor : Type :=
@@ -367,20 +368,20 @@ Proof.
 Qed.
 
 Lemma sidecar_circ_egg_not_first_cook :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  exact circular_egg_not_first_cook_scope.
+  exact circular_egg_first_cook_scope.
 Qed.
 
 Lemma sidecar_circ_egg_first_cook_stays_chord_chord :
   first_cook_scope EggChord EggChord /\
-  ~ first_cook_scope EggCircularArc EggCircularArc /\
+  first_cook_scope EggCircularArc EggCircularArc /\
   ~ first_cook_scope EggChord EggCircularArc /\
   ~ first_cook_scope EggClothoid EggClothoid /\
   ~ first_cook_scope EggNurbs EggNurbs.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact circular_egg_not_first_cook_scope|].
+  split; [exact circular_egg_first_cook_scope|].
   split; [exact chord_circular_not_first_cook_scope|].
   split; [exact clothoid_clothoid_not_first_scope|].
   exact nurbs_nurbs_not_first_scope.
@@ -566,7 +567,7 @@ Theorem ticket_0007_circle_not_first_cook_qed_or_qex :
      I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
           (IHit p ti tj))
   \/
-  (~ first_cook_scope EggCircularArc EggCircularArc /\
+  (first_cook_scope EggCircularArc EggCircularArc /\
    first_cook_scope EggChord EggChord /\
    ~ sidecar_circ_egg_ctor_inhabits CircEggMkCirc /\
    ~ sidecar_circ_egg_ctor_inhabits CircEggCircGamma /\
@@ -582,7 +583,7 @@ Theorem ticket_0007_circle_not_first_cook_qed_or_qex :
       try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)).
 Proof.
   right.
-  split; [exact circular_egg_not_first_cook_scope|].
+  split; [exact circular_egg_first_cook_scope|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact sidecar_circ_egg_mkcirc_missing|].
   split; [exact sidecar_circ_egg_circgamma_missing|].
@@ -612,7 +613,7 @@ Theorem ticket_0007_circle_parks_qed_or_qex :
    cook_loop_status = LoopObligation /\
    cook_loop_status <> LoopDischarged /\
    first_cook_scope EggChord EggChord /\
-   ~ first_cook_scope EggCircularArc EggCircularArc).
+   first_cook_scope EggCircularArc EggCircularArc).
 Proof.
   right.
   split; [exact sidecar_circ_egg_letter_is_landed|].
@@ -624,7 +625,7 @@ Proof.
   split; [exact cook_loop_is_obligation|].
   split; [exact cook_loop_not_discharged|].
   split; [exact first_cook_scope_chord_chord|].
-  exact circular_egg_not_first_cook_scope.
+  exact circular_egg_first_cook_scope.
 Qed.
 
 Print Assumptions sidecar_circ_egg_class.

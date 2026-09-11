@@ -511,11 +511,11 @@ Theorem ticket_0007_i3_scope_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
   right.
-  split; [exact circular_gamma_is_qex|exact circular_not_first_cook_scope].
+  split; [exact circular_gamma_is_discharged|exact circular_is_first_cook_scope].
 Qed.
 
 Print Assumptions circ_gamma_on_circle.

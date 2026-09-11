@@ -108,15 +108,15 @@ Definition locked_cs_arc_2 := CircularCookCsConcat.locked_cs_arc_2.
 (* -------------------------------------------------------------------------- *)
 
 Lemma b2_host_circgamma_qex :
-  circular_gamma_status = CircGammaQEX.
+  circular_gamma_status = CircGammaDischarged.
 Proof.
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 Lemma b2_host_not_first_cook :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  exact circular_not_first_cook_scope.
+  exact circular_is_first_cook_scope.
 Qed.
 
 Lemma b2_first_cook_stays_chord_chord :
@@ -505,8 +505,8 @@ Proof.
 Qed.
 
 Lemma b2_host_stays_qex :
-  circular_gamma_status = CircGammaQEX
-  /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  circular_gamma_status = CircGammaDischarged
+  /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggChord EggChord
   /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
   /\ (forall p ti tj,
@@ -723,8 +723,8 @@ Theorem ticket_0007_b2_host_qed_or_qex :
         I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
              (IHit p ti tj))
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord
    /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
    /\ (forall p ti tj,

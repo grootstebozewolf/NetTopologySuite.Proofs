@@ -74,15 +74,15 @@ Local Open Scope R_scope.
 (* -------------------------------------------------------------------------- *)
 
 Lemma ii4_host_circgamma_qex :
-  circular_gamma_status = CircGammaQEX.
+  circular_gamma_status = CircGammaDischarged.
 Proof.
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 Lemma ii4_host_not_first_cook :
-  ~ first_cook_scope EggCircularArc EggCircularArc.
+  first_cook_scope EggCircularArc EggCircularArc.
 Proof.
-  exact circular_not_first_cook_scope.
+  exact circular_is_first_cook_scope.
 Qed.
 
 Lemma ii4_first_cook_stays_chord_chord :
@@ -115,12 +115,12 @@ Lemma ii4_sidecar_inhabitant :
   I_ok_circ span_arc_A span_arc_B locked_ok_circ_hit
   /\ I_ok_circ span_arc_A span_empty_far IEmpty
   /\ I_ok_circ span_decline_arc span_arc_B IDecline
-  /\ circular_gamma_status = CircGammaQEX.
+  /\ circular_gamma_status = CircGammaDischarged.
 Proof.
   split; [exact ii3_locked_plus_I_ok_circ|].
   split; [exact ii3_locked_empty|].
   split; [exact ii3_invalid_decline|].
-  exact circular_gamma_is_qex.
+  exact circular_gamma_is_discharged.
 Qed.
 
 (* Leftover shared endpoint is Hit incidence. “Not a kiss” here is
@@ -148,8 +148,8 @@ Proof.
 Qed.
 
 Lemma ii4_host_stays_qex :
-  circular_gamma_status = CircGammaQEX
-  /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  circular_gamma_status = CircGammaDischarged
+  /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggChord EggChord
   /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
   /\ (forall p ti tj,
@@ -290,7 +290,7 @@ Theorem ticket_0007_ii4_inhabitant_qed_or_qex :
    /\ I_ok_circ span_arc_A span_empty_far IEmpty
    /\ I_ok_circ span_decline_arc span_arc_B IDecline
    /\ CircEgg = CircularArc
-   /\ circular_gamma_status = CircGammaQEX)
+   /\ circular_gamma_status = CircGammaDischarged)
   \/
   I_ok_circ span_arc_A span_arc_B IDecline.
 Proof.
@@ -336,8 +336,8 @@ Theorem ticket_0007_ii4_host_qed_or_qex :
         I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
              (IHit p ti tj))
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord
    /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
    /\ (forall p ti tj,

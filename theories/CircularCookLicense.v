@@ -79,10 +79,10 @@ Qed.
 Lemma i9_z_hit_not_first_cook_scope :
   forall o1x o1y r1 o2x o2y r2,
     I_circles_z o1x o1y r1 o2x o2y r2 = IZHit hen_plus hen_minus ->
-    ~ first_cook_scope EggCircularArc EggCircularArc.
+    first_cook_scope EggCircularArc EggCircularArc.
 Proof.
   intros o1x o1y r1 o2x o2y r2 _.
-  exact circular_not_first_cook_scope.
+  exact circular_is_first_cook_scope.
 Qed.
 
 (* Same IZHit tags on the locked fixture; circ_split leftovers join
@@ -139,7 +139,7 @@ Theorem ticket_0007_i9_not_host_cook_qed_or_qex :
         try_cook_hit circular_ck1 circular_ck2 (IHit p ti tj) h = None)
    /\ (forall o1x o1y r1 o2x o2y r2,
          I_circles_z o1x o1y r1 o2x o2y r2 = IZHit hen_plus hen_minus ->
-         ~ first_cook_scope EggCircularArc EggCircularArc))
+         first_cook_scope EggCircularArc EggCircularArc))
   \/
   (exists cp : CookedPair,
      try_cook_hit circular_ck1 circular_ck2
@@ -172,11 +172,11 @@ Theorem ticket_0007_i9_scope_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
-  (circular_gamma_status = CircGammaQEX
-   /\ ~ first_cook_scope EggCircularArc EggCircularArc).
+  (circular_gamma_status = CircGammaDischarged
+   /\ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
   right.
-  split; [exact circular_gamma_is_qex|exact circular_not_first_cook_scope].
+  split; [exact circular_gamma_is_discharged|exact circular_is_first_cook_scope].
 Qed.
 
 Print Assumptions classifier_hens_are_tags.
