@@ -184,7 +184,8 @@ Lemma nodingng_disjoint_empty_no_mint :
   nodingng_empty_no_mint nodingng_disjoint_pair.
 Proof.
   split; [reflexivity|].
-  exact try_cook_hit_empty_none.
+  intros h.
+  apply try_cook_hit_empty_none.
 Qed.
 
 Lemma nodingng_disjoint_is_noded :
