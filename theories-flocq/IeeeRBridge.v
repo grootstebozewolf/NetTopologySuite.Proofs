@@ -58,6 +58,7 @@ From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lia.
 From Stdlib Require Import Lra.
+From Stdlib Require Import List.
 
 From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import IEEE754.BinarySingleNaN.
