@@ -1457,3 +1457,38 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `SidecarEllipticEgg.v : ticket_0007_elliptic_parks_qed_or_qex` | **QEX** — Campaign I–II / EllipseLength-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarEllipticEgg.v : sidecar_elliptic_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-elliptical-curve-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — SQL/MM GeodesicString egg sidecar (2026-09-11)
+
+Cook-axis sidecar: SQL/MM `ST_GeodesicString` as an EggClass on
+the ADR-0007 vocabulary. Host `EggClass` did not have this arm —
+this letter adds `EggGeodesicString` only (one `MkOutOfScope` tag).
+No Decline / not-first-cook / try_cook lemmas were added to
+`SheetHenCook.v` (module-split ceiling after Elliptical #721).
+Those live in `SidecarGeodesicEgg.v` and cite existing
+`first_cook_scope` / `I_ok` / `try_cook_hit_out_of_scope_none`.
+Prefer `SidecarGeodesic*` over reminting host cook. Locked
+unit-square chords reuse `RelateLineLine.v : line_line_proper_cross_geom`.
+SQL/MM type-zoo packaging (MkOutOfScope), not Γ progress and not
+Zoo membership. No invented geodesic interpolant. One locked
+fixture. Do not ship a geodesic×geodesic noder, Spiral egg, or
+Campaign I–II.
+
+**QED.** Sidecar egg packaging + host Decline + locked unit-square
+demoted-chord seed. Demote-to-chord is NodingNG / host first cook,
+not a geodesic Hit.
+
+**QEX.** Geodesic×geodesic is not first cook (checklist 4). Named
+missing constructors: no `MkGeodesic` on `Egg`; no `I_ok` Hit arm;
+no first-cook expand. Do not fake first-cook expand or
+`LoopDischarged`. Parks Γ / ι / ρ cited once.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarGeodesicEgg.v : ticket_0007_geodesic_egg_qed_or_qex` | **QED** — EggGeodesicString packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; SQL/MM type zoo stays packaging | `SidecarGeodesicEgg.v : sidecar_geodesic_egg_inhabits`, `SidecarGeodesicEgg.v : sidecar_geodesic_chord_seed`, `SidecarGeodesicEgg.v : sidecar_geodesic_host_decline` |
+| `SidecarGeodesicEgg.v : ticket_0007_geodesic_not_first_cook_qed_or_qex` | **QEX** — geodesic×geodesic stays out of first cook; `MkGeodesic` / Hit-arm missing | `SidecarGeodesicEgg.v : geodesic_geodesic_not_first_scope`, `SidecarGeodesicEgg.v : sidecar_geodesic_mkgeodesic_missing`, `SidecarGeodesicEgg.v : sidecar_geodesic_hit_arm_missing` |
+| `SidecarGeodesicEgg.v : ticket_0007_geodesic_parks_qed_or_qex` | **QEX** — Campaign I–II / geodetic-interpolant-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarGeodesicEgg.v : sidecar_geodesic_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+
+Witness: `0007-geodesicstring-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
