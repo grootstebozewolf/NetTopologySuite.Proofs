@@ -2848,6 +2848,12 @@ theories/SidecarSinEgg.v
 # Host/pure-R. First cook stays chord–chord. Does not remint
 # CircularCook* / CircGamma / MkCirc. Not Campaign I–II. No Admitted.
 theories/SidecarCircEgg.v
+# ADR-0007 Elliptical Curve / EllipticArc egg sidecar
+# (SidecarEllipticEgg). Packages EggEllipse Decline-on-host +
+# RelateEllipticArc chord-seed. Host/pure-R. First cook stays
+# chord–chord. Not #508 ellipse-length-as-noding. Not Campaign I–II.
+# Does not grow SheetHenCook. Not a noder. No Admitted.
+theories/SidecarEllipticEgg.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
