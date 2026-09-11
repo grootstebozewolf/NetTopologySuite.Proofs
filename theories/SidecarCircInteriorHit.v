@@ -249,13 +249,13 @@ Proof.
     + exact Hlt.
     + rewrite <- Heq0 in Heq.
       rewrite (arc_gamma_start span_arc_A span_arc_A_valid) in Heq.
-      apply locked_p_plus_neq_span_A_start.
+      exfalso. apply locked_p_plus_neq_span_A_start.
       symmetry. exact Heq.
   - destruct (Rle_lt_or_eq_dec _ _ Hhi) as [Hlt | Heq1].
     + exact Hlt.
     + rewrite Heq1 in Heq.
       rewrite (arc_gamma_end span_arc_A span_arc_A_valid) in Heq.
-      apply locked_p_plus_neq_span_A_end.
+      exfalso. apply locked_p_plus_neq_span_A_end.
       symmetry. exact Heq.
 Qed.
 
