@@ -26,7 +26,7 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra.
+From Stdlib Require Import Reals Lra Rtrigo_calc Rtrigo_facts.
 From NTS.Proofs Require Import Distance SheetHenCook.
 Local Open Scope R_scope.
 
@@ -54,14 +54,14 @@ Proof.
   pose proof PI_RGT_0. field; lra.
 Qed.
 
-Lemma cos_2PI3 : cos (2 * PI / 3) = - / 2.
+Lemma cos_2PI3 : cos (2 * PI / 3) = - (1 / 2).
 Proof.
-  rewrite two_pi_over_three, cos_PI_minus, cos_PI3. reflexivity.
+  rewrite two_pi_over_three, cos_pi_minus, cos_PI3. reflexivity.
 Qed.
 
 Lemma sin_2PI3 : sin (2 * PI / 3) = sqrt 3 / 2.
 Proof.
-  rewrite two_pi_over_three, sin_PI_minus, sin_PI3. reflexivity.
+  rewrite two_pi_over_three, sin_pi_minus, sin_PI3. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -94,19 +94,17 @@ Lemma circ_eval_on_circle :
   forall c t,
     dist_sq (circ_o c) (circ_eval c t) = (circ_r c) * (circ_r c).
 Proof.
-  intros c t.
-  unfold dist_sq, circ_eval. cbn [px py circ_o circ_r].
-  set (th := circ_theta0 c + t * circ_sweep c).
-  replace (px (circ_o c) + circ_r c * cos th - px (circ_o c))
-    with (circ_r c * cos th) by ring.
-  replace (py (circ_o c) + circ_r c * sin th - py (circ_o c))
-    with (circ_r c * sin th) by ring.
-  replace (circ_r c * cos th * (circ_r c * cos th)
-           + circ_r c * sin th * (circ_r c * sin th))
-    with (circ_r c * circ_r c * (cos th * cos th + sin th * sin th)) by ring.
-  replace (cos th * cos th + sin th * sin th)
-    with (Rsqr (sin th) + Rsqr (cos th)) by (unfold Rsqr; ring).
-  rewrite sin2_cos2. ring.
+  intros [o r th0 sw] t.
+  unfold dist_sq, circ_eval. cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  set (th := th0 + t * sw).
+  pose proof (sin2_cos2 th) as Hsc.
+  unfold Rsqr in Hsc.
+  replace (px o - (px o + r * cos th)) with (- (r * cos th)) by ring.
+  replace (py o - (py o + r * sin th)) with (- (r * sin th)) by ring.
+  replace ((- (r * cos th)) * (- (r * cos th))
+           + (- (r * sin th)) * (- (r * sin th)))
+    with (r * r * (sin th * sin th + cos th * cos th)) by ring.
+  rewrite Hsc. ring.
 Qed.
 
 Lemma locked_circ_A_at_0 :
@@ -121,7 +119,8 @@ Lemma locked_circ_A_at_1 :
   circ_eval locked_circ_A 1 = mkPoint 0 5.
 Proof.
   unfold circ_eval, locked_circ_A. cbn [px py circ_o circ_r circ_theta0 circ_sweep].
-  rewrite Rmult_1_l, Rplus_0_l, cos_PI2, sin_PI2.
+  replace (0 + 1 * (PI / 2)) with (PI / 2) by field.
+  rewrite cos_PI2, sin_PI2.
   apply (f_equal2 mkPoint); ring.
 Qed.
 
@@ -129,7 +128,8 @@ Lemma locked_circ_B_at_0 :
   circ_eval locked_circ_B 0 = mkPoint 5 5.
 Proof.
   unfold circ_eval, locked_circ_B. cbn [px py circ_o circ_r circ_theta0 circ_sweep].
-  rewrite Rmult_0_l, Rplus_0_r, cos_PI2, sin_PI2.
+  replace (PI / 2 + 0 * (PI / 2)) with (PI / 2) by field.
+  rewrite cos_PI2, sin_PI2.
   apply (f_equal2 mkPoint); ring.
 Qed.
 
@@ -148,7 +148,8 @@ Lemma locked_circ_A_at_ti :
 Proof.
   unfold circ_eval, locked_circ_A, locked_circ_ti, locked_circ_hit_pt.
   cbn [px py circ_o circ_r circ_theta0 circ_sweep].
-  rewrite Rplus_0_l, two_thirds_half_pi, cos_PI3, sin_PI3.
+  replace (0 + (2 / 3) * (PI / 2)) with (PI / 3) by (pose proof PI_RGT_0; field; lra).
+  rewrite cos_PI3, sin_PI3.
   apply (f_equal2 mkPoint); field.
 Qed.
 
