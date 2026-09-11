@@ -323,10 +323,13 @@ _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared end
   `CircularCook.v : circ_gamma_mkcirc_missing`,
   `CircularCook.v : reflex_nlerp_misses_principal`). Sidecar
   `arc_gamma` is not host Γ.
-- **ι interior circular×chord** — `I_ok_mixed` Hit is joint-params
-  only (`SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex`,
-  `SidecarCircInterior.v : interior_mixed_hit_arm_missing`). ι is
-  not μ, not host `I_ok`, not Γ.
+- **ι interior circular×chord** — `I_ok_mixed` Hit stays
+  joint-params only (`SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex`,
+  `SidecarCircInterior.v : interior_mixed_hit_arm_missing`). Sidecar
+  `I_ok_interior` inhabits a locked proper-cross Hit
+  (`SidecarCircInteriorHit.v : locked_interior_I_ok_interior`,
+  `SidecarCircInteriorHit.v : ticket_0007_iota_interior_hit_qed_or_qex`).
+  Do not drop the joint gate. ι is not μ, not host `I_ok`, not Γ.
 - **ρ bag-loop** — `CookLoopBagTerm` missing; leftover_quad width
   conserved (`Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex`,
   `SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise
@@ -464,4 +467,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): Decline-on-host + RelateClothoid chord-seed; clothoid×clothoid stays QEX. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks Γ / ι / ρ are landed named QEX. NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): Decline-on-host + RelateClothoid chord-seed; clothoid×clothoid stays QEX. ι interior Hit discharge is the sidecar circular×chord face (`theories/SidecarCircInteriorHit.v`): distinct `I_ok_interior` Hit; `I_ok_mixed` joint gate stands. See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.

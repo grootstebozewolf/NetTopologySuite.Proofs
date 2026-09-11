@@ -108,7 +108,10 @@
    cathedral Landed. Not this host module.
    Clothoid egg sidecar lives in SidecarClothoidEgg.v
    (3-axiom; Decline-on-host + RelateClothoid chord-seed;
-   not Required here). First cook stays chord–chord.
+   not Required here). ι interior Hit discharge lives in
+   SidecarCircInteriorHit.v (4-axiom sidecar; I_ok_interior
+   ≠ I_ok_mixed; joint gate stands; not Required here).
+   First cook stays chord–chord.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
