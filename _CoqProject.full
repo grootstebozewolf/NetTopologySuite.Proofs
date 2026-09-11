@@ -2978,6 +2978,18 @@ theories/SidecarCircBags.v
 # / OkCirc / Span). No new kernel. Not first cook scope. Not a
 # noder. Not a CRV-TOUCH kiss.
 theories/SidecarCircInterior.v
+# ADR-0007 ι interior Hit discharge (SidecarCircInteriorHit).
+# Distinct I_ok_interior arm packages I_ok_mixed_interior_arm.
+# Locked MixLsCs / MixCsLs inhabit Hit at interior_span_params via
+# Campaign II span_arc_A / p+ (reuse, not remint). I_ok_mixed stays
+# joint-gated (Parks ι #707). Do not drop mixed_joint_params.
+# Host I_ok mixed stays Decline. Host CircGamma stays QEX.
+# first_cook_scope stays chord–chord. Host interior cook stays
+# parked. Letter landed ≠ host cook Landed / cathedral Landed /
+# Phase B done-when. 4-axiom atan2 sidecar (classic via
+# SidecarCircInterior / Span). No new kernel. Not first cook
+# scope. Not a noder. Not a CRV-TOUCH kiss.
+theories/SidecarCircInteriorHit.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

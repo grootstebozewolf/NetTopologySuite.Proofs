@@ -267,7 +267,7 @@ Three honest stops. Named gaps, not bools. Later letters point here.
 | Park | Landed | Ticket | Named gap |
 |------|--------|--------|-----------|
 | **Γ CircGamma** | #706 @ `da5593a` | `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` | Egg has no `MkCirc` (`CircularCook.v : circ_gamma_mkcirc_missing`); chord-project nlerp misses the reflex principal span (`CircularCook.v : reflex_nlerp_misses_principal`). Sidecar `arc_gamma` is not host Γ. Discharge would need atan2 / Classic or a first-cook expand. |
-| **ι interior circular×chord** | #707 @ `1dbc2c2` | `SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex` | `I_ok_mixed` Hit is gated by `mixed_joint_params`; the interior-params arm does not inhabit (`SidecarCircInterior.v : interior_mixed_hit_arm_missing`). ι is not μ, not host `I_ok`, not Γ. |
+| **ι interior circular×chord** | #707 @ `1dbc2c2` (joint gate); discharge `SidecarCircInteriorHit.v` | `SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex` | `I_ok_mixed` Hit stays gated by `mixed_joint_params`; the interior-params arm does not inhabit that predicate (`SidecarCircInterior.v : interior_mixed_hit_arm_missing`). Sidecar `I_ok_interior` inhabits a locked proper-cross Hit under `interior_span_params` (`SidecarCircInteriorHit.v : locked_interior_I_ok_interior`). Do not drop the joint gate. ι is not μ, not host `I_ok`, not Γ. |
 | **ρ bag-loop** | #708 @ `e9d89d6` | `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | `CookLoopBagTerm` missing (`SheetHenCookLoop.v : cook_loop_bag_term_missing`); leftover_quad width conserved (`SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise leftover-width + I.8 one-step confluence stay sibling QED. ρ leftover_quad ≠ η Multi bags. |
 
 Do not remint CircGamma, `I_ok_mixed`, or `LoopDischarged`. Do not start
@@ -328,6 +328,7 @@ H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
 | — | Phase B.3 CurvePolygon ring closure | `CircularCookCpConcat.v : ticket_0007_b3_closed_qed_or_qex` | **QED** — locked CS / mixed rings closed + contiguous; CS closing `I_ok_circ`; mixed closing `I_ok_mixed` | `CircularCookCpConcat.v : locked_cp_cs_ring_closed`, `CircularCookCpConcat.v : locked_cp_mixed_closing_I_ok_mixed` |
 | — | Phase B MultiCurve / MultiSurface bags | `SidecarCircBags.v : ticket_0007_b_bags_inhabit_qed_or_qex` | **QED** — MultiCurve / MultiSurface inhabit as bags of already-Qed CS / CC / CP members; bag ≠ concat | `SidecarCircBags.v : locked_mc_typed_ok`, `SidecarCircBags.v : locked_ms_ok`, `SidecarCircBags.v : bags_not_concat` |
 | — | Phase B ι interior circular×chord | `SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex` | **QEX** — `I_ok_mixed` Hit is joint-only; interior-params arm missing; do not remint `I_ok_mixed` / CircGamma / host `I_ok` | `SidecarCircInterior.v : interior_mixed_hit_arm_missing`, `SidecarCircInterior.v : I_ok_mixed_interior_hit_false` |
+| — | ι interior Hit discharge | `SidecarCircInteriorHit.v : ticket_0007_iota_interior_hit_qed_or_qex` | **QED** — distinct `I_ok_interior` Hit on locked LS×CS / CS×LS; packages `I_ok_mixed_interior_arm`; joint gate stands | `SidecarCircInteriorHit.v : locked_interior_I_ok_interior`, `SidecarCircInteriorHit.v : locked_interior_rev_I_ok_interior` |
 
 Snap-rounding is a different constructor (`SheetHenCook.v : snap_round_neq_I`).
 Display is a view (`DisplayView`), not a kernel store.
@@ -1287,3 +1288,39 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-clothoid-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
+
+### Letter after Accept — ι interior Hit discharge (2026-09-11)
+
+Parks ι (#707 @ `1dbc2c2`) already landed as **QEX**: sidecar
+`I_ok_mixed` Hit is gated by `mixed_joint_params`; the
+interior-params arm does not inhabit
+(`SidecarCircInterior.v : interior_mixed_hit_arm_missing`).
+That gate is the μ joint story. This letter does **not** remint
+`I_ok_mixed`, drop the joint gate, remint CircGamma, or expand
+host `I_ok` / `first_cook_scope`.
+
+**QED.** A distinct sidecar predicate `I_ok_interior` packages
+the already-named `I_ok_mixed_interior_arm`
+(`valid_arc ∧ on_chord ∧ on_arc_gamma ∧ interior_span_params`).
+Locked MixLsCs / MixCsLs inhabit Hit on Campaign II
+`span_arc_A` × a horizontal chord through `p+`
+(`SidecarCircInteriorHit.v : locked_interior_I_ok_interior`).
+That Hit does not inhabit `I_ok_mixed`. μ still inhabits
+`I_ok_mixed` and is not interior.
+
+**QEX.** Host CircGamma stays QEX. First cook stays chord–chord.
+Host mixed `I_ok` is Decline. Host interior cook / H⊥ / bag
+noder / SQL/MM cathedral stay parked. `I_ok_mixed` still has
+no interior-params arm.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+Parks Γ / ι / ρ cited once; the ι row records this progress.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `SidecarCircInteriorHit.v : ticket_0007_iota_interior_hit_qed_or_qex` | **QED** — locked MixLsCs / MixCsLs inhabit `I_ok_interior` at `interior_span_params`; packages the named interior arm | `SidecarCircInteriorHit.v : locked_interior_I_ok_interior`, `SidecarCircInteriorHit.v : locked_interior_rev_I_ok_interior` |
+| `SidecarCircInteriorHit.v : ticket_0007_iota_interior_not_mixed_qed_or_qex` | **QED** — `I_ok_interior` Hit is not `I_ok_mixed`; `mixed_joint_params` gate stands; μ is not interior | `SidecarCircInteriorHit.v : locked_interior_not_I_ok_mixed`, `SidecarCircInterior.v : interior_mixed_hit_arm_missing` |
+| `SidecarCircInteriorHit.v : ticket_0007_iota_interior_host_qed_or_qex` | **QEX** — CircGamma stays QEX; first cook stays chord–chord; host mixed `I_ok` Decline; host interior cook parked | `CircularCook.v : circular_gamma_is_qex`, `SheetHenCook.v : first_cook_scope_chord_chord` |
+| `SidecarCircInteriorHit.v : ticket_0007_iota_interior_park_qed_or_qex` | **QEX** — host interior cook / H⊥ / bag noder / cathedral parked; Phase B Open; letter landed ≠ host cook Landed | `SidecarCircInteriorHit.v : iota_interior_hit_letter_is_landed`, `SidecarCircInterior.v : iota_interior_cook_is_parked` |
+
+Witness: `0007-iota-interior-discharge`. Status stays **Accepted**. Parks Γ / ι / ρ.

@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 111 files (75 theories-flocq/ + 35 theories/ + 1 hunt probe).
+# LIVE: 112 files (75 theories-flocq/ + 36 theories/ + 1 hunt probe).
 # None are allowlist-clean.  Flocq C1 (`Classical_Prop.classic` via
 # Bplus/Bminus/Bmult/Bdiv/round/B2R) cannot leave while Flocq's binary
 # model is in use (`docs/category-c-policy.md`).  R-side files carry
@@ -134,6 +134,7 @@ theories/CircularCookCcConcat.v
 theories/CircularCookCpConcat.v
 theories/SidecarCircBags.v
 theories/SidecarCircInterior.v
+theories/SidecarCircInteriorHit.v
 theories/InArc.v
 theories/ArcSweepCcw.v
 theories/InSector.v
