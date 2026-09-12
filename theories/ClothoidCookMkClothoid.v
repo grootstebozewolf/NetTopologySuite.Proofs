@@ -6,13 +6,17 @@
 
    Host interpolant is the closed-form small-angle clothoid
    (cos θ≈1, sin θ≈θ) in SheetHenClothoidEgg — not Fresnel, not
-   chord-parameter. mk_cloth sets p1 := γ(1).
+   chord-parameter. Public ctor is mk_cloth (p1 := γ(1)); cook
+   fixtures go through mk_cloth only. Algebraic model vs instance:
+   locked A/B keep |θ| small on [0,1] (named heading bounds).
 
-   Fixture: two short bent clothoids (distinct x(t)).
-     A: p0=(0,0)   κ: 0→3    L=2   γA(t)=(2t, 2t³)
-     B: p0=(1/2,1) κ: 0→-36  L=1   γB(t)=(1/2+t, 1-6t³)
-   Images cross at γ(1/2)=(1,1/4). Endpoint-chords γ(0)–γ(1) cross
-   at (4/7,4/7). Not the unit-square diagonal Hit. try_cook_hit = Some.
+   Fixture: two short bent clothoids (distinct x(t), ti≠tj).
+     A: p0=(0,0) κ: 0→1/10 L=1 θ0=1/20  γA(t)=(t, t/20+t³/60)
+     B: p0=(0,91/1620) κ: 0→-1/20 L=2 θ0=-1/40
+        γB(t)=(2t, 91/1620 − t/20 − t³/30)
+   Images cross at (ti,tj)=(2/3,1/3) → Hit (2/3, 31/810).
+   Endpoint-chords meet at named (14/27, 14/405) ≠ Hit.
+   try_cook_hit = Some. bent ≠ zero-κ.
 
    MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
    stays Decline. NURBS / SIN / ellipse / spiral / geodesic stay
@@ -34,14 +38,15 @@ From NTS.Proofs Require Import Distance SheetHenCook.
 Local Open Scope R_scope.
 
 Definition locked_cloth_A : ClothoidEgg :=
-  mk_cloth (mkPoint 0 0) 0 3 2 0.
+  mk_cloth (mkPoint 0 0) 0 (1 / 10) 1 (1 / 20).
 
 Definition locked_cloth_B : ClothoidEgg :=
-  mk_cloth (mkPoint (1 / 2) 1) 0 (-36) 1 0.
+  mk_cloth (mkPoint 0 (91 / 1620)) 0 (-1 / 20) 2 (-1 / 40).
 
-Definition locked_cloth_hit_pt : Point := mkPoint 1 (1 / 4).
-Definition locked_cloth_ti : R := 1 / 2.
-Definition locked_cloth_tj : R := 1 / 2.
+Definition locked_cloth_hit_pt : Point := mkPoint (2 / 3) (31 / 810).
+Definition locked_cloth_ti : R := 2 / 3.
+Definition locked_cloth_tj : R := 1 / 3.
+Definition locked_cloth_chord_x : Point := mkPoint (14 / 27) (14 / 405).
 
 Definition locked_cloth_ck1 : Chicken :=
   mkChicken 0%nat 1%nat (MkClothoid locked_cloth_A).
@@ -49,16 +54,73 @@ Definition locked_cloth_ck1 : Chicken :=
 Definition locked_cloth_ck2 : Chicken :=
   mkChicken 2%nat 3%nat (MkClothoid locked_cloth_B).
 
+Lemma locked_cloth_A_wf : cloth_wf locked_cloth_A.
+Proof.
+  unfold locked_cloth_A. apply cloth_wf_mk.
+Qed.
+
+Lemma locked_cloth_B_wf : cloth_wf locked_cloth_B.
+Proof.
+  unfold locked_cloth_B. apply cloth_wf_mk.
+Qed.
+
 Lemma locked_cloth_A_p1_is_gamma1 :
   cloth_p1 locked_cloth_A = cloth_eval locked_cloth_A 1.
 Proof.
-  unfold locked_cloth_A. apply cloth_eval_at_1_mk.
+  apply cloth_wf_of_p1. exact locked_cloth_A_wf.
 Qed.
 
 Lemma locked_cloth_B_p1_is_gamma1 :
   cloth_p1 locked_cloth_B = cloth_eval locked_cloth_B 1.
 Proof.
-  unfold locked_cloth_B. apply cloth_eval_at_1_mk.
+  apply cloth_wf_of_p1. exact locked_cloth_B_wf.
+Qed.
+
+Lemma locked_cloth_A_th :
+  forall t, cloth_th locked_cloth_A t = 1 / 20 + (t * t) / 20.
+Proof.
+  intros t.
+  unfold locked_cloth_A, mk_cloth, cloth_th.
+  cbn [cloth_th0 cloth_L cloth_k0 cloth_k1].
+  field.
+Qed.
+
+Lemma locked_cloth_B_th :
+  forall t, cloth_th locked_cloth_B t = -1 / 40 - (t * t) / 20.
+Proof.
+  intros t.
+  unfold locked_cloth_B, mk_cloth, cloth_th.
+  cbn [cloth_th0 cloth_L cloth_k0 cloth_k1].
+  field.
+Qed.
+
+Lemma locked_unit_sqr :
+  forall t, 0 <= t <= 1 -> 0 <= t * t <= 1.
+Proof.
+  intros t Ht. split.
+  - apply Rle_0_sqr.
+  - replace 1 with (1 * 1) by ring.
+    apply Rmult_le_compat; lra.
+Qed.
+
+Lemma locked_cloth_A_heading_small :
+  forall t, 0 <= t <= 1 -> Rabs (cloth_th locked_cloth_A t) <= 1 / 10.
+Proof.
+  intros t Ht.
+  rewrite locked_cloth_A_th.
+  pose proof (locked_unit_sqr t Ht) as Ht2.
+  rewrite Rabs_right by lra.
+  lra.
+Qed.
+
+Lemma locked_cloth_B_heading_small :
+  forall t, 0 <= t <= 1 -> Rabs (cloth_th locked_cloth_B t) <= 3 / 40.
+Proof.
+  intros t Ht.
+  rewrite locked_cloth_B_th.
+  pose proof (locked_unit_sqr t Ht) as Ht2.
+  rewrite Rabs_left1 by lra.
+  lra.
 Qed.
 
 Lemma locked_cloth_ti_in_01 : 0 <= locked_cloth_ti <= 1.
@@ -69,6 +131,11 @@ Qed.
 Lemma locked_cloth_tj_in_01 : 0 <= locked_cloth_tj <= 1.
 Proof.
   unfold locked_cloth_tj. lra.
+Qed.
+
+Lemma locked_cloth_ti_neq_tj : locked_cloth_ti <> locked_cloth_tj.
+Proof.
+  unfold locked_cloth_ti, locked_cloth_tj. lra.
 Qed.
 
 Lemma locked_cloth_A_at_ti :
@@ -111,17 +178,20 @@ Proof.
   split; [exact locked_on_cloth_A | exact locked_on_cloth_B].
 Qed.
 
-(* Endpoint-chords of γ(0)–γ(1) (= stored p0–p1) cross at (4/7,4/7). *)
+(* Endpoint-chords of γ(0)–γ(1) meet at named (14/27, 14/405) ≠ Hit. *)
 Lemma locked_mkclothoid_hit_neq_endpoint_chord_x :
   let ca := mkChordEgg (cloth_p0 locked_cloth_A) (cloth_p1 locked_cloth_A) in
   let cb := mkChordEgg (cloth_p0 locked_cloth_B) (cloth_p1 locked_cloth_B) in
-  chord_eval ca (2 / 7) = chord_eval cb (1 / 14) /\
-  chord_eval ca (2 / 7) <> locked_cloth_hit_pt.
+  chord_eval ca (14 / 27) = locked_cloth_chord_x /\
+  chord_eval cb (7 / 27) = locked_cloth_chord_x /\
+  locked_cloth_chord_x <> locked_cloth_hit_pt.
 Proof.
-  unfold locked_cloth_A, locked_cloth_B, locked_cloth_hit_pt, mk_cloth,
-         cloth_eval_seed, cloth_y_off_seed, chord_eval.
+  unfold locked_cloth_A, locked_cloth_B, locked_cloth_hit_pt,
+         locked_cloth_chord_x, mk_cloth, cloth_eval_seed, cloth_y_off_seed,
+         chord_eval.
   cbn [px py ce_p0 ce_p1 cloth_p0 cloth_p1 cloth_k0 cloth_k1 cloth_L cloth_th0].
-  split.
+  split; [|split].
+  - apply (f_equal2 mkPoint); field.
   - apply (f_equal2 mkPoint); field.
   - intros H. apply (f_equal px) in H. cbn [px] in H. lra.
 Qed.
@@ -261,10 +331,21 @@ Qed.
 
 Print Assumptions cloth_eval_at_0.
 Print Assumptions cloth_eval_at_1_mk.
+Print Assumptions cloth_wf_of_p1.
+Print Assumptions cloth_wf_mk.
+Print Assumptions cloth_split_join.
+Print Assumptions cloth_split_left_start.
+Print Assumptions cloth_split_right_end.
+Print Assumptions cloth_eval_L0.
+Print Assumptions cloth_eval_kappa0.
+Print Assumptions cloth_th0_moves_y.
 Print Assumptions locked_cloth_A_p1_is_gamma1.
 Print Assumptions locked_cloth_B_p1_is_gamma1.
+Print Assumptions locked_cloth_A_heading_small.
+Print Assumptions locked_cloth_B_heading_small.
 Print Assumptions locked_cloth_A_at_ti.
 Print Assumptions locked_cloth_B_at_tj.
+Print Assumptions locked_cloth_ti_neq_tj.
 Print Assumptions locked_mkclothoid_I_ok.
 Print Assumptions locked_mkclothoid_hit_neq_endpoint_chord_x.
 Print Assumptions cooked_mkclothoid_try.

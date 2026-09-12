@@ -1688,7 +1688,7 @@ Needle AFTER intake MkClothoid (#727 @ `35ca6e5`). claimId
 `0007-clothoid-first-cook`. Put `EggClothoid × EggClothoid` in
 `first_cook_scope`. `MkClothoid` pairs are `interpolant_pair`.
 Locked crossing pair inhabits host `IHit` via `on_cloth`
-(Fresnel-free chord-parameter interpolant; eggs keep `(k0,k1,L)`;
+(closed-form small-angle interpolant, not Fresnel, not chord-parameter; eggs keep `(k0,k1,L)`;
 `cloth_split` mints `MkClothoid` children). `try_cook_hit` returns
 `Some`. Thin sibling `ClothoidCookMkClothoid.v` — `SheetHenCook.v`
 stays at the module-split ceiling.
