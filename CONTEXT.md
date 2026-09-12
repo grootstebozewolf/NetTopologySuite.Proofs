@@ -92,7 +92,8 @@ new oracle keyword
 **Intake MkClothoid** (ADR-0007, claimId `0007-intake-mkclothoid`):
 One host `MkClothoid` on `Egg` (parallel to `MkCirc`). Grammar has
 two clothoid surface forms (ISO REFERENCELOCATION, JTS `(k0,k1,L)`);
-both map onto the same locked `ClothoidEgg` bag (OGC≡ISO). Chickens
+both map onto the same locked `ClothoidEgg` bag (OGC≡ISO), whose
+vertices are `γ(0)`, `γ(1)` of the small-angle interpolant. Chickens
 use `MkClothoid` (`EggClothoid`), not silent `MkChord`. `example5`
 bags both forms in one COMPOUNDCURVE. Clothoid×clothoid first cook
 is the next letter. `EggClothoid` is not folded away.
@@ -101,8 +102,9 @@ silent chord demote, new oracle keyword
 
 **Clothoid first-cook** (ADR-0007, claimId `0007-clothoid-first-cook`):
 Host `EggClothoid × EggClothoid` is in `first_cook_scope`. Locked
-`MkClothoid` pair inhabits host `IHit` via `on_cloth` (Fresnel-free
-chord-parameter interpolant). `try_cook_hit` mints `MkClothoid`
+`MkClothoid` pair inhabits host `IHit` via `on_cloth` (closed-form
+small-angle clothoid: `cos θ≈1`, `sin θ≈θ`; not Fresnel, not
+chord-parameter). `p1 := γ(1)`. `try_cook_hit` mints `MkClothoid`
 hens. Tags stay Decline. Mixed clothoid×chord stays Decline.
 Not Fresnel-as-noding. Not a silent `I_ok` demote to `on_chord`.
 _Avoid_: Fresnel noding, Halley noding, mixed first cook, NURBS
