@@ -6,9 +6,11 @@
 
    Host interpolant is the closed-form small-angle clothoid
    (cos θ≈1, sin θ≈θ) in SheetHenClothoidEgg — not Fresnel, not
-   chord-parameter. Public ctor is mk_cloth (p1 := γ(1)); cook
-   fixtures go through mk_cloth only. Algebraic model vs instance:
-   locked A/B keep |θ| small on [0,1] (named heading bounds).
+   chord-parameter. Raw mkClothoidEgg is the record constructor;
+   the public host ctor is mk_cloth (sets p1:=γ(1)). Do not hide
+   the record. Cook fixtures go through mk_cloth only. Algebraic
+   model vs instance: locked A/B keep |θ| small on [0,1]
+   (named heading bounds).
 
    Fixture: two short bent clothoids (distinct x(t), ti≠tj).
      A: p0=(0,0) κ: 0→1/10 L=1 θ0=1/20  γA(t)=(t, t/20+t³/60)
