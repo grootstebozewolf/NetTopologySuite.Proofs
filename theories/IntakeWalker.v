@@ -367,6 +367,15 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma locked_cs_quarter_intake_endpoints :
+  bag_pts (map_cs_quarter default_sheet) =
+    [circ_eval locked_circ_A 0; circ_eval locked_circ_A 1].
+Proof.
+  unfold map_cs_quarter, p50, p05. cbn [bag_pts].
+  rewrite <- locked_circ_A_at_0, <- locked_circ_A_at_1.
+  reflexivity.
+Qed.
+
 Lemma locked_circle_maps :
   intake_map default_sheet locked_circle_cst =
     IntakeBag (map_circle default_sheet).
@@ -939,6 +948,7 @@ Qed.
 Print Assumptions locked_point_maps.
 Print Assumptions locked_ls_maps.
 Print Assumptions locked_cs_quarter_maps.
+Print Assumptions locked_cs_quarter_intake_endpoints.
 Print Assumptions locked_circle_maps.
 Print Assumptions locked_cs_full_ogc_maps.
 Print Assumptions ogc_iso_circle_same_egg.
