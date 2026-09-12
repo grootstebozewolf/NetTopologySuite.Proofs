@@ -45,6 +45,8 @@
 
    OGC-form and ISO-form of the same in-scope type → same bag
    (locked CIRCLE vs start=end CIRCULARSTRING full-span).
+   Full-span 2π has γ(0)=γ(1); the bag is [γ(0); γ(1/2)] by
+   grammar. That is 0007-intake-angles law, not a bug.
 
    Visitor tags locked CircularString / Circle shapes (exact
    control-point match). Mapper is structural on those tags.
@@ -383,6 +385,35 @@ Lemma locked_circle_maps :
   intake_map default_sheet locked_circle_cst =
     IntakeBag (map_circle default_sheet).
 Proof.
+  reflexivity.
+Qed.
+
+Lemma locked_full_circle_egg_at_0 :
+  circ_eval locked_full_circle_egg 0 = p50.
+Proof.
+  unfold circ_eval, locked_full_circle_egg, p50.
+  cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  rewrite Rmult_0_l, Rplus_0_r, cos_0, sin_0.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_full_circle_egg_at_half :
+  circ_eval locked_full_circle_egg (1 / 2) = p_m50.
+Proof.
+  unfold circ_eval, locked_full_circle_egg, p_m50.
+  cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  replace (0 + (1 / 2) * (2 * PI)) with PI by field.
+  rewrite cos_PI, sin_PI.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_circle_intake_midpoints :
+  bag_pts (map_circle default_sheet)
+    = [circ_eval locked_full_circle_egg 0;
+       circ_eval locked_full_circle_egg (1 / 2)].
+Proof.
+  unfold map_circle. cbn [bag_pts].
+  rewrite <- locked_full_circle_egg_at_0, <- locked_full_circle_egg_at_half.
   reflexivity.
 Qed.
 
@@ -963,6 +994,9 @@ Print Assumptions locked_ls_maps.
 Print Assumptions locked_cs_quarter_maps.
 Print Assumptions locked_cs_quarter_intake_endpoints.
 Print Assumptions locked_circle_maps.
+Print Assumptions locked_full_circle_egg_at_0.
+Print Assumptions locked_full_circle_egg_at_half.
+Print Assumptions locked_circle_intake_midpoints.
 Print Assumptions locked_cs_full_ogc_maps.
 Print Assumptions ogc_iso_circle_same_egg.
 Print Assumptions geodesic_declines.
