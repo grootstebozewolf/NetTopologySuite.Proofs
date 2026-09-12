@@ -225,6 +225,49 @@ Proof.
   reflexivity.
 Qed.
 
+(* Fixture honesty: arc eval ≠ endpoint-chord lerp; chords meet at
+   (5/2, 5/2); Hit is not that crossing. Fail if γ is endpoint lerp. *)
+
+Lemma locked_circ_eval_neq_endpoint_chord :
+  circ_eval locked_circ_A locked_circ_ti <>
+  chord_eval
+    (mkChordEgg (circ_eval locked_circ_A 0) (circ_eval locked_circ_A 1))
+    locked_circ_ti.
+Proof.
+  rewrite locked_circ_A_at_0, locked_circ_A_at_1, locked_circ_A_at_ti.
+  unfold chord_eval, locked_circ_ti, locked_circ_hit_pt.
+  cbn [ce_p0 ce_p1 px py].
+  intros H. injection H as Hx _.
+  lra.
+Qed.
+
+Lemma locked_mkcirc_endpoint_chords_hit :
+  chord_eval
+    (mkChordEgg (circ_eval locked_circ_A 0) (circ_eval locked_circ_A 1))
+    (1 / 2)
+  = mkPoint (5 / 2) (5 / 2) /\
+  chord_eval
+    (mkChordEgg (circ_eval locked_circ_B 0) (circ_eval locked_circ_B 1))
+    (1 / 2)
+  = mkPoint (5 / 2) (5 / 2).
+Proof.
+  rewrite locked_circ_A_at_0, locked_circ_A_at_1,
+          locked_circ_B_at_0, locked_circ_B_at_1.
+  unfold chord_eval. cbn [ce_p0 ce_p1 px py].
+  split; apply (f_equal2 mkPoint); field.
+Qed.
+
+Lemma locked_mkcirc_hit_neq_endpoint_chord_x :
+  locked_circ_hit_pt <> mkPoint (5 / 2) (5 / 2).
+Proof.
+  unfold locked_circ_hit_pt. intros H. injection H as _ Hy.
+  apply (f_equal (fun z => z * 2 / 5)) in Hy.
+  replace ((5 * sqrt 3 / 2) * 2 / 5) with (sqrt 3) in Hy by field.
+  replace ((5 / 2) * 2 / 5) with 1 in Hy by field.
+  pose proof (sqrt_sqrt 3 ltac:(lra)) as Hsq.
+  rewrite Hy in Hsq. lra.
+Qed.
+
 Lemma mkcirc_tag_still_decline :
   I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline.
 Proof.
@@ -272,6 +315,9 @@ Print Assumptions locked_circ_A_at_ti.
 Print Assumptions locked_circ_B_at_tj.
 Print Assumptions locked_mkcirc_I_ok.
 Print Assumptions cooked_mkcirc_try.
+Print Assumptions locked_circ_eval_neq_endpoint_chord.
+Print Assumptions locked_mkcirc_endpoint_chords_hit.
+Print Assumptions locked_mkcirc_hit_neq_endpoint_chord_x.
 Print Assumptions cook_hit_circs_shares_hen.
 Print Assumptions cooked_mkcirc_shares.
 Print Assumptions circular_egg_mkcirc_or_tag.
