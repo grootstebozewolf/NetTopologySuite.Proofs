@@ -282,11 +282,19 @@ public final class IntakeVisitor extends wktParserBaseVisitor<IntakeResult> {
         return IntakeResult.bag(new Bag(List.of(0, 1), pts, List.of(new Chicken(0, 1, egg))));
     }
 
-    /** Same locked bag as {@code theories/IntakeWalker.v} {@code map_clothoid}. */
+    /**
+     * Same locked bag as {@code theories/IntakeWalker.v} {@code map_clothoid}.
+     * Vertices are γ(0), γ(1) of {@code locked_clothoid_egg}:
+     * k0=0, k1=5/1000, L=80, θ0=0 (small-angle clothoid, not chord-seed).
+     * γ(1) = (80, (k1-k0)·L²/6) = (80, 16/3).
+     */
     static IntakeResult mapClothoid() {
+        double k1 = 5.0 / 1000.0;
+        double L = 80.0;
+        double y1 = (k1 - 0.0) * (L * L) / 6.0;
         return IntakeResult.bag(new Bag(
                 List.of(0, 1),
-                List.of(new Point(0, 0), new Point(1, 0)),
+                List.of(new Point(0, 0), new Point(L, y1)),
                 List.of(new Chicken(0, 1, "MkClothoid"))));
     }
 
