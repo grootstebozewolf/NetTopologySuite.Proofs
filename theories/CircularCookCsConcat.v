@@ -32,6 +32,9 @@
    member joints live in CircularCookCcConcat.v (this letter's
    park ticket still names CC as a B.1-local gap).
 
+   Mode D / #733 is a parallel host joint on CircularEgg /
+   circ_eval. It is not “B.1 now speaks circ_eval.” Sidecar
+   B.1 still speaks CircEgg / arc_end / I_ok_circ.
    Mode D (host circ_eval joints): two consecutive host
    CircularEggs share the host endpoint. cs_joint_circ is
    circ_end A = circ_start B (SheetHenCircEgg). Then
