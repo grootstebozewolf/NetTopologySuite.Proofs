@@ -2818,10 +2818,14 @@ theories/SheetHenCircEgg.v
 # Locked inhabitance record + Fresnel-free cloth_eval. Required by
 # SheetHenCook. No Admitted.
 theories/SheetHenClothoidEgg.v
+# ADR-0007 NurbsEgg payload for host MkNurbs
+# (claimId 0007-nurbs-first-cook). Locked inhabitance record +
+# Cox-de-Boor-free nurbs_eval. Required by SheetHenCook. No Admitted.
+theories/SheetHenNurbsEgg.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
 # Host/pure-R. First cook scope is chord–chord, circular–circular
-# (MkCirc), and clothoid–clothoid (MkClothoid). Does not remint
-# CurveSegment / Dart / Hobby. No Admitted. Status stays Proposed.
+# (MkCirc), clothoid–clothoid (MkClothoid), and NURBS–NURBS (MkNurbs).
+# Does not remint CurveSegment / Dart / Hobby. No Admitted.
 theories/SheetHenCook.v
 # ADR-0007 Γ host MkCirc / CircGamma locked fixture (claimId 0007-gamma-mkcirc).
 # Host/pure-R. atan2-free CircularEgg interpolant; I_ok Hit + try_cook_hit
@@ -2831,6 +2835,10 @@ theories/CircularCookMkCirc.v
 # Host/pure-R. Locked MkClothoid pair; I_ok Hit + try_cook_hit mint.
 # Tags / mixed stay Decline. Not Fresnel-as-noding. 3-axiom.
 theories/ClothoidCookMkClothoid.v
+# ADR-0007 NURBS×NURBS first-cook Hit (claimId 0007-nurbs-first-cook).
+# Host/pure-R. Locked MkNurbs pair; I_ok Hit + try_cook_hit mint.
+# Tags / mixed stay Decline. Not length / Cox-de-Boor as noding. 3-axiom.
+theories/NurbsCookMkNurbs.v
 # ρ bag-loop named QEX gap (508-style missing CookLoopBagTerm).
 # Host/pure-R. leftover_quad width conserved; kiss/share/mint not
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi
@@ -2852,9 +2860,9 @@ theories/OverlayNG.v
 # Not a noder. No Admitted.
 theories/SidecarClothoidEgg.v
 # ADR-0007 NURBS egg sidecar (SidecarNurbsEgg). Packages EggNurbs
-# Decline-on-host + demoted unit-square chord-seed. Host/pure-R.
-# First cook stays chord–chord. Not #508 length-as-noding.
-# Not Campaign I–II. Not a noder. No Admitted.
+# Decline-on-tag + demoted unit-square chord-seed. Host/pure-R.
+# Host first cook includes NURBS×NURBS (NurbsCookMkNurbs).
+# Not #508 length-as-noding. Not Campaign I–II. Not a noder. No Admitted.
 theories/SidecarNurbsEgg.v
 # ADR-0007 SIN / sinusoid egg sidecar (SidecarSinEgg). Packages
 # EggSinusoid Decline-on-host + demoted unit-square chord-seed.

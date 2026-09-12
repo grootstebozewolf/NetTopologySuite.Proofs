@@ -251,9 +251,10 @@ Lemma circular_egg_mkcirc_or_tag :
     (exists c, e = MkCirc c) \/ e = MkOutOfScope EggCircularArc.
 Proof.
   intros e He.
-  destruct e as [c | circ | clth | cl].
+  destruct e as [c | circ | clth | nrbs | cl].
   - unfold egg_class in He. discriminate.
   - left. exists circ. reflexivity.
+  - unfold egg_class in He. discriminate.
   - unfold egg_class in He. discriminate.
   - unfold egg_class in He. subst cl. right. reflexivity.
 Qed.
