@@ -41,6 +41,15 @@
    Decline type; they are not the well-formed clothoid answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
 
+   example5 WKT seed of the clothoid member was (0,0)–(1,0).
+   The intake bag vertices are γ(0), γ(1) of
+   locked_clothoid_egg. Those are different stories. The bag
+   follows γ. On main today cloth_eval is still the
+   chord-parameter witness from #728; the bag still follows
+   that γ — #730 Mode A replaces γ later. No clothoid–clothoid
+   joint cook in this letter. No chord–clothoid joint cook
+   in this letter.
+
    OGC-form and ISO-form of the same in-scope type → same bag
    (locked CIRCLE vs start=end CIRCULARSTRING full-span).
 
@@ -533,6 +542,39 @@ Proof.
   split; discriminate.
 Qed.
 
+(* example5 WKT seed of the clothoid member was (0,0)–(1,0).
+   The intake bag vertices are γ(0), γ(1) of locked_clothoid_egg.
+   Those are different stories. The bag follows γ.
+   No clothoid–clothoid joint cook in this letter.
+   No chord–clothoid joint cook in this letter.
+   Whole map_cc_example5 is append_bags of the LS plus two
+   clothoid members — not this two-point alias. *)
+
+Lemma locked_clothoid_egg_at_0 :
+  cloth_eval locked_clothoid_egg 0 = cloth_p0 locked_clothoid_egg.
+Proof.
+  unfold cloth_eval.
+  cbn [px py cloth_p0 cloth_p1].
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_clothoid_egg_at_1 :
+  cloth_eval locked_clothoid_egg 1 = cloth_p1 locked_clothoid_egg.
+Proof.
+  unfold cloth_eval.
+  cbn [px py cloth_p0 cloth_p1].
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_cloth_intake_endpoints :
+  bag_pts (map_clothoid default_sheet) =
+    [cloth_eval locked_clothoid_egg 0; cloth_eval locked_clothoid_egg 1].
+Proof.
+  unfold map_clothoid. cbn [bag_pts].
+  rewrite <- locked_clothoid_egg_at_0, <- locked_clothoid_egg_at_1.
+  reflexivity.
+Qed.
+
 Lemma example5_cc_bags_both_clothoid :
   intake_map default_sheet example5_cc_both_clothoid_cst =
     IntakeBag (map_cc_example5 default_sheet).
@@ -957,6 +999,9 @@ Print Assumptions spiral_declines.
 Print Assumptions iso_clothoid_maps.
 Print Assumptions jts_clothoid_maps.
 Print Assumptions ogc_iso_clothoid_same_bag.
+Print Assumptions locked_clothoid_egg_at_0.
+Print Assumptions locked_clothoid_egg_at_1.
+Print Assumptions locked_cloth_intake_endpoints.
 Print Assumptions iso_clothoid_chickens_mkclothoid.
 Print Assumptions example5_cc_bags_both_clothoid.
 Print Assumptions example5_cc_has_mkclothoid.
