@@ -16,7 +16,8 @@
         γB(t)=(2t, 91/1620 − t/20 − t³/30)
    Images cross at (ti,tj)=(2/3,1/3) → Hit (2/3, 31/810).
    Endpoint-chords meet at named (14/27, 14/405) ≠ Hit.
-   try_cook_hit = Some. bent ≠ zero-κ.
+   locked_cloth_eval_neq_endpoint_chord: γ(ti) ≠ lerp(γ(0),γ(1))(ti)
+   (fails if cloth_eval is endpoint lerp). try_cook_hit = Some. bent ≠ zero-κ.
 
    MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
    stays Decline. NURBS / SIN / ellipse / spiral / geodesic stay
@@ -196,6 +197,36 @@ Proof.
   - intros H. apply (f_equal px) in H. cbn [px] in H. lra.
 Qed.
 
+(* Mirror of circle locked_circ_eval_neq_endpoint_chord: γ at ti is
+   not the endpoint-chord sample at the same parameter. *)
+Lemma locked_cloth_eval_neq_endpoint_chord :
+  cloth_eval locked_cloth_A locked_cloth_ti
+    <> chord_eval
+         (mkChordEgg (cloth_eval locked_cloth_A 0)
+                     (cloth_eval locked_cloth_A 1))
+         locked_cloth_ti.
+Proof.
+  intros H.
+  apply (f_equal py) in H.
+  unfold locked_cloth_A, locked_cloth_ti, mk_cloth,
+         cloth_eval, cloth_eval_seed, cloth_y_off_seed, chord_eval in H.
+  cbn [px py ce_p0 ce_p1 cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0] in H.
+  lra.
+Qed.
+
+Lemma locked_letter_eggs_wf :
+  cloth_wf locked_cloth_A /\
+  cloth_wf locked_cloth_B /\
+  cloth_wf locked_clothoid_egg /\
+  cloth_wf (fst (cloth_split locked_cloth_A locked_cloth_ti)) /\
+  cloth_wf (snd (cloth_split locked_cloth_A locked_cloth_ti)).
+Proof.
+  split; [exact locked_cloth_A_wf|].
+  split; [exact locked_cloth_B_wf|].
+  split; [exact locked_clothoid_egg_wf|].
+  split; [apply cloth_wf_split_left|apply cloth_wf_split_right].
+Qed.
+
 Lemma cloth_split_changes_k_on_locked_A :
   cloth_k1 (fst (cloth_split locked_cloth_A locked_cloth_ti))
     <> cloth_k1 locked_cloth_A /\
@@ -348,6 +379,8 @@ Print Assumptions locked_cloth_B_at_tj.
 Print Assumptions locked_cloth_ti_neq_tj.
 Print Assumptions locked_mkclothoid_I_ok.
 Print Assumptions locked_mkclothoid_hit_neq_endpoint_chord_x.
+Print Assumptions locked_cloth_eval_neq_endpoint_chord.
+Print Assumptions locked_letter_eggs_wf.
 Print Assumptions cooked_mkclothoid_try.
 Print Assumptions cook_hit_clothoids_shares_hen.
 Print Assumptions cooked_mkclothoid_shares.
