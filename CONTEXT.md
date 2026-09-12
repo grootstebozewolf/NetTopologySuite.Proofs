@@ -105,8 +105,18 @@ Host `EggClothoid × EggClothoid` is in `first_cook_scope`. Locked
 chord-parameter interpolant). `try_cook_hit` mints `MkClothoid`
 hens. Tags stay Decline. Mixed clothoid×chord stays Decline.
 Not Fresnel-as-noding. Not a silent `I_ok` demote to `on_chord`.
-_Avoid_: Fresnel noding, Halley noding, mixed first cook, NURBS
-first cook, Campaign I, new oracle keyword
+_Avoid_: Fresnel noding, Halley noding, mixed first cook, Campaign I,
+new oracle keyword
+
+**NURBS first-cook** (ADR-0007, claimId `0007-nurbs-first-cook`):
+Host `EggNurbs × EggNurbs` is in `first_cook_scope`. Locked
+`MkNurbs` pair inhabits host `IHit` via `on_nurbs` (Cox-de-Boor-free
+chord-parameter interpolant). `try_cook_hit` mints `MkNurbs`
+hens. Tags stay Decline. Mixed NURBS×chord stays Decline.
+Not length / Cox-de-Boor as noding. Not a silent `I_ok` demote
+to `on_chord`.
+_Avoid_: length-as-noding, Cox-de-Boor noding, mixed first cook,
+SIN / ellipse / spiral first cook, Campaign I, new oracle keyword
 
 **ISO validity**:
 Every spec "shall" beyond representability, owned by arc-aware `ST_IsValid`:
@@ -332,8 +342,8 @@ _Avoid_: vertex (the owned point), dart (a coordinate pair)
 
 **Egg**:
 An interpolant `γ : [0,1] → S` of a named class (chord, circular arc,
-clothoid, …). First cook scope is chord–chord, circular–circular
-(MkCirc), and clothoid–clothoid (MkClothoid).
+clothoid, NURBS, …). First cook scope is chord–chord, circular–circular
+(MkCirc), clothoid–clothoid (MkClothoid), and NURBS–NURBS (MkNurbs).
 _Avoid_: CurveSegment (year-1 `CSChord | CSArc`, not reminted here)
 
 **Chicken**:
@@ -449,12 +459,13 @@ _Avoid_: Fresnel noding, clothoid noder, Campaign I
 The product / sidecar face of NURBS as an EggClass on the
 ADR-0007 vocabulary (`SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`,
 `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex`). Host
-`I_ok` is Decline; `try_cook_hit` is None. Locked unit-square
+tag `I_ok` is Decline; tag `try_cook_hit` is None. Locked unit-square
 chords demote to NodingNG / host first cook, not a NURBS Hit.
-NURBS×NURBS is not first cook
-(`SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex`).
+Host `MkNurbs` inhabits. NURBS×NURBS is first cook
+(`SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex`,
+`NurbsCookMkNurbs.v : ticket_0007_nurbs_first_cook_qed_or_qex`).
 #508 length / golden quarter stay metric. Not Campaign I–II.
-_Avoid_: host cook, length-as-noding, Cox-de-Boor, NURBS noder, Campaign I
+_Avoid_: length-as-noding, Cox-de-Boor, NURBS noder, Campaign I
 
 **Sinusoid egg (sidecar)**:
 The product / sidecar face of sinusoid as an EggClass on the
@@ -594,4 +605,4 @@ _Avoid_: self-intersection (narrower), retrace (one kind of overshoot)
 
 ## ADR-0007 Accepted
 
-ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks ι / ρ remain landed named QEX. Γ CircGamma is discharged by host MkCirc (claimId `0007-gamma-mkcirc`; `CircularCook.v : circular_gamma_is_discharged`). NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): tag-Decline + RelateClothoid chord-seed; clothoid×clothoid first cook is QED (`theories/ClothoidCookMkClothoid.v`, claimId `0007-clothoid-first-cook`). NURBS egg sidecar is the next cook-axis EggClass face (`theories/SidecarNurbsEgg.v`): Decline-on-host + demoted unit-square chord-seed; NURBS×NURBS stays QEX; #508 length stays metric. Sinusoid (SIN) egg sidecar is the next cook-axis EggClass face (`theories/SidecarSinEgg.v`): Decline-on-host + demoted unit-square chord-seed; sinusoid×sinusoid stays QEX; thin Spectre profile corpus stays research, not cook. Circle / circular egg sidecar is the next cook-axis EggClass face (`theories/SidecarCircEgg.v`): packages host EggCircularArc tag-Decline + demoted unit-square chord-seed; host circular cook is MkCirc (`theories/CircularCookMkCirc.v`), not this sidecar. Elliptical Curve / EllipticArc egg sidecar is the next cook-axis EggClass face (`theories/SidecarEllipticEgg.v`): Decline-on-host + RelateEllipticArc chord-seed; ellipse×ellipse stays QEX; #508 ellipse length / elliptic-E stay metric. SQL/MM GeodesicString egg sidecar is the next cook-axis EggClass face (`theories/SidecarGeodesicEgg.v`): Decline-on-host + demoted unit-square chord-seed; geodesic×geodesic stays QEX; type-zoo packaging (MkOutOfScope), not Γ progress. SQL/MM ST_SpiralCurve egg sidecar is the last Lesson-1 cook-axis EggClass face (`theories/SidecarSpiralEgg.v`): Decline-on-host + demoted unit-square chord-seed; five ISO names + Unknown on one egg; `EggClothoid` stays; spiral×spiral stays QEX; type-zoo packaging (MkOutOfScope), not Γ / not 𝓘 progress. ι interior Hit discharge is the sidecar circular×chord face (`theories/SidecarCircInteriorHit.v`): distinct `I_ok_interior` Hit; `I_ok_mixed` joint gate stands. Intake walker is the first-slice WKT → CST → SHC bag seam (`theories/IntakeWalker.v`, claimId `0007-intake-walker`): grammar pin grammars-v4 #4997; Intake Decline ≠ cook Decline; no silent chord demote. Intake angles is the CircUnknown construction (`theories/IntakeAngles.v`, claimId `0007-intake-angles`): unique circumcircle + inhabited angle fields → `MkCirc`; collinear / duplicate / bad count Decline by name; not a CircGamma remint. Intake MkClothoid is the host clothoid constructor (`theories/SheetHenClothoidEgg.v`, claimId `0007-intake-mkclothoid`): one `MkClothoid` on `Egg`; ISO and JTS clothoid bag the same locked egg. Clothoid first-cook is the Hit letter (`theories/ClothoidCookMkClothoid.v`, claimId `0007-clothoid-first-cook`). See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
+ADR-0007 (sheet/hen/cook) **Accepted** 2026-09-07 by Joost (BDFL). Soft gaps closed. Parks ι / ρ remain landed named QEX. Γ CircGamma is discharged by host MkCirc (claimId `0007-gamma-mkcirc`; `CircularCook.v : circular_gamma_is_discharged`). NodingNG chord is the cook product face (`theories/NodingNG.v`): 𝓘 + one cook step on one sheet; ρ stays obligation. OverlayNG sheet is the snap product face (`theories/OverlayNG.v`): finite snap-sequence ≠ `𝓘` on one sheet; Hobby 4.1 stays Honest remaining. RelateNG face is the DE-9IM product face (`theories/RelateNGFace.v`): matrix/witness + honesty decline + 67-c pin; completeness / Jordan / S15l+ / 523 `?` stay named QEX. IEEE↔R bridge is the Oracle test-surface face (`theories-flocq/IeeeRBridge.v`): two-way binary64 ↔ ℝ under the int-safe regime; FP noder / unrestricted / kiss stay Honest remaining. Clothoid egg sidecar is the cook-axis EggClass face (`theories/SidecarClothoidEgg.v`): tag-Decline + RelateClothoid chord-seed; clothoid×clothoid first cook is QED (`theories/ClothoidCookMkClothoid.v`, claimId `0007-clothoid-first-cook`). NURBS egg sidecar is the next cook-axis EggClass face (`theories/SidecarNurbsEgg.v`): Decline-on-tag + demoted unit-square chord-seed; NURBS×NURBS first cook is QED (`theories/NurbsCookMkNurbs.v`, claimId `0007-nurbs-first-cook`); #508 length stays metric. Sinusoid (SIN) egg sidecar is the next cook-axis EggClass face (`theories/SidecarSinEgg.v`): Decline-on-host + demoted unit-square chord-seed; sinusoid×sinusoid stays QEX; thin Spectre profile corpus stays research, not cook. Circle / circular egg sidecar is the next cook-axis EggClass face (`theories/SidecarCircEgg.v`): packages host EggCircularArc tag-Decline + demoted unit-square chord-seed; host circular cook is MkCirc (`theories/CircularCookMkCirc.v`), not this sidecar. Elliptical Curve / EllipticArc egg sidecar is the next cook-axis EggClass face (`theories/SidecarEllipticEgg.v`): Decline-on-host + RelateEllipticArc chord-seed; ellipse×ellipse stays QEX; #508 ellipse length / elliptic-E stay metric. SQL/MM GeodesicString egg sidecar is the next cook-axis EggClass face (`theories/SidecarGeodesicEgg.v`): Decline-on-host + demoted unit-square chord-seed; geodesic×geodesic stays QEX; type-zoo packaging (MkOutOfScope), not Γ progress. SQL/MM ST_SpiralCurve egg sidecar is the last Lesson-1 cook-axis EggClass face (`theories/SidecarSpiralEgg.v`): Decline-on-host + demoted unit-square chord-seed; five ISO names + Unknown on one egg; `EggClothoid` stays; spiral×spiral stays QEX; type-zoo packaging (MkOutOfScope), not Γ / not 𝓘 progress. ι interior Hit discharge is the sidecar circular×chord face (`theories/SidecarCircInteriorHit.v`): distinct `I_ok_interior` Hit; `I_ok_mixed` joint gate stands. Intake walker is the first-slice WKT → CST → SHC bag seam (`theories/IntakeWalker.v`, claimId `0007-intake-walker`): grammar pin grammars-v4 #4997; Intake Decline ≠ cook Decline; no silent chord demote. Intake angles is the CircUnknown construction (`theories/IntakeAngles.v`, claimId `0007-intake-angles`): unique circumcircle + inhabited angle fields → `MkCirc`; collinear / duplicate / bad count Decline by name; not a CircGamma remint. Intake MkClothoid is the host clothoid constructor (`theories/SheetHenClothoidEgg.v`, claimId `0007-intake-mkclothoid`): one `MkClothoid` on `Egg`; ISO and JTS clothoid bag the same locked egg. Clothoid first-cook is the Hit letter (`theories/ClothoidCookMkClothoid.v`, claimId `0007-clothoid-first-cook`). NURBS first-cook is the Hit letter (`theories/NurbsCookMkNurbs.v`, claimId `0007-nurbs-first-cook`). See `docs/adr/ADR-0007-sheet-hen-cook-noding-model.md`. CRV-TOUCH assumes this vocabulary; kiss/FP noder remain on that map.
