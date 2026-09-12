@@ -1,28 +1,11 @@
 (* ============================================================================
    NetTopologySuite.Proofs.ClothoidCookMkClothoid
    ----------------------------------------------------------------------------
-   ADR-0007 letter: clothoid×clothoid first-cook / Hit arm
-   (claimId 0007-clothoid-first-cook).
-
-   Host MkClothoid pairs are interpolant_pair. first_cook_scope
-   includes EggClothoid × EggClothoid. I_ok Hits two MkClothoid
-   chickens on a locked crossing pair via on_cloth (Fresnel-free
-   chord-parameter interpolant). try_cook_hit mints MkClothoid
-   children — not a silent demote to MkChord.
-
-   Locked fixture reuses the SheetHenCook unit-square-diagonal
-   geometry already Qed as a proper cross (RelateClothoid chord
-   seed). Eggs carry JTS (k0, k1, L). Not Fresnel-as-noding.
-
-   MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
-   stays Decline. NURBS / SIN / ellipse / spiral / geodesic stay
-   out of first cook. ρ / Campaign / Fresnel-as-noding stay parked.
-
-   WITNESS topic: overlay · claimId: 0007-clothoid-first-cook
-   witness: 0007-clothoid-first-cook
-   board: ADR-0007
-   3-axiom. No Admitted / Axiom / Parameter.
-
+   Fixture: two short bent clothoids, θ0=0, L=2.
+     A: p0=(0,0)   κ: 0→3    γA(t)=(2t, 2t³)
+     B: p0=(0,1/2) κ: 0→-3   γB(t)=(2t, 1/2-2t³)
+   Images cross at γ(1/2)=(1,1/4). Endpoint-chords γ(0)–γ(1) cross at
+   (1/4,1/4). Not the unit-square diagonal Hit. try_cook_hit = Some.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
@@ -33,17 +16,13 @@ From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance SheetHenCook.
 Local Open Scope R_scope.
 
-(* -------------------------------------------------------------------------- *)
-(* Locked MkClothoid eggs. Same endpoints as diag_ab / diag_cd.               *)
-(* -------------------------------------------------------------------------- *)
-
 Definition locked_cloth_A : ClothoidEgg :=
-  mkClothoidEgg (mkPoint 0 0) (mkPoint 2 2) 0 (5 / 1000) 80.
+  mkClothoidEgg (mkPoint 0 0) (mkPoint 2 0) 0 3 2 0.
 
 Definition locked_cloth_B : ClothoidEgg :=
-  mkClothoidEgg (mkPoint 0 2) (mkPoint 2 0) 0 (5 / 1000) 80.
+  mkClothoidEgg (mkPoint 0 (1 / 2)) (mkPoint 2 (1 / 2)) 0 (-3) 2 0.
 
-Definition locked_cloth_hit_pt : Point := mkPoint 1 1.
+Definition locked_cloth_hit_pt : Point := mkPoint 1 (1 / 4).
 Definition locked_cloth_ti : R := 1 / 2.
 Definition locked_cloth_tj : R := 1 / 2.
 
@@ -66,16 +45,18 @@ Qed.
 Lemma locked_cloth_A_at_ti :
   cloth_eval locked_cloth_A locked_cloth_ti = locked_cloth_hit_pt.
 Proof.
-  unfold cloth_eval, locked_cloth_A, locked_cloth_ti, locked_cloth_hit_pt.
-  cbn [px py cloth_p0 cloth_p1].
+  unfold cloth_eval, cloth_y_off, locked_cloth_A, locked_cloth_ti,
+         locked_cloth_hit_pt.
+  cbn [px py cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0].
   apply (f_equal2 mkPoint); field.
 Qed.
 
 Lemma locked_cloth_B_at_tj :
   cloth_eval locked_cloth_B locked_cloth_tj = locked_cloth_hit_pt.
 Proof.
-  unfold cloth_eval, locked_cloth_B, locked_cloth_tj, locked_cloth_hit_pt.
-  cbn [px py cloth_p0 cloth_p1].
+  unfold cloth_eval, cloth_y_off, locked_cloth_B, locked_cloth_tj,
+         locked_cloth_hit_pt.
+  cbn [px py cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0].
   apply (f_equal2 mkPoint); field.
 Qed.
 
@@ -93,16 +74,40 @@ Proof.
   symmetry. exact locked_cloth_B_at_tj.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* Host I_ok Hit and try_cook_hit mint on the locked MkClothoid pair.         *)
-(* -------------------------------------------------------------------------- *)
-
 Lemma locked_mkclothoid_I_ok :
   I_ok (MkClothoid locked_cloth_A) (MkClothoid locked_cloth_B)
        (IHit locked_cloth_hit_pt locked_cloth_ti locked_cloth_tj).
 Proof.
   unfold I_ok.
   split; [exact locked_on_cloth_A | exact locked_on_cloth_B].
+Qed.
+
+(* Endpoint-chords of γ(0)–γ(1) cross at (1/4,1/4), not the clothoid Hit. *)
+Lemma locked_mkclothoid_hit_neq_endpoint_chord_x :
+  let ca := mkChordEgg (cloth_eval locked_cloth_A 0)
+                       (cloth_eval locked_cloth_A 1) in
+  let cb := mkChordEgg (cloth_eval locked_cloth_B 0)
+                       (cloth_eval locked_cloth_B 1) in
+  chord_eval ca (1 / 8) = chord_eval cb (1 / 8) /\
+  chord_eval ca (1 / 8) <> locked_cloth_hit_pt.
+Proof.
+  unfold chord_eval, cloth_eval, cloth_y_off, locked_cloth_A, locked_cloth_B,
+         locked_cloth_hit_pt.
+  cbn [px py ce_p0 ce_p1 cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0].
+  split.
+  - apply (f_equal2 mkPoint); field.
+  - intros H. apply (f_equal px) in H. cbn [px] in H. lra.
+Qed.
+
+Lemma cloth_split_changes_k_on_locked_A :
+  cloth_k1 (fst (cloth_split locked_cloth_A locked_cloth_ti))
+    <> cloth_k1 locked_cloth_A /\
+  cloth_k0 (snd (cloth_split locked_cloth_A locked_cloth_ti))
+    <> cloth_k0 locked_cloth_A.
+Proof.
+  unfold cloth_split, cloth_k_at, locked_cloth_A, locked_cloth_ti.
+  cbn [fst snd cloth_k0 cloth_k1].
+  split; lra.
 Qed.
 
 Definition locked_mkclothoid_hit : IResult :=
@@ -180,23 +185,14 @@ Proof.
   discriminate.
 Qed.
 
-(* Same-egg Hit on the intake locked record (sidecar ticket reuse). *)
 Lemma locked_intake_egg_self_hit :
   I_ok (MkClothoid locked_clothoid_egg) (MkClothoid locked_clothoid_egg)
-       (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)).
+       (IHit (cloth_eval locked_clothoid_egg (1 / 2)) (1 / 2) (1 / 2)).
 Proof.
-  unfold I_ok, on_cloth, cloth_eval, locked_clothoid_egg.
-  cbn [px py cloth_p0 cloth_p1].
-  split.
-  - split; [lra|]. apply (f_equal2 mkPoint); field.
-  - split; [lra|]. apply (f_equal2 mkPoint); field.
+  unfold I_ok, on_cloth.
+  split; [split; [lra|reflexivity]|split; [lra|reflexivity]].
 Qed.
 
-(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"locked_mkclothoid_I_ok","title":"Host I_ok Hits two MkClothoid chickens on the locked crossing clothoid pair","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
-
-(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"cooked_mkclothoid_try","title":"try_cook_hit mints MkClothoid hens on the locked clothoid Hit","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
-
-(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"ticket_0007_clothoid_first_cook_qed_or_qex","title":"Clothoid times clothoid is first cook with a locked MkClothoid IHit that try_cook_hit mints (QED) or clothoid times clothoid stays QEX (QEX); discharged QED; tags and mixed stay Decline; Fresnel-as-noding / Campaign / rho stay parked","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
 Theorem ticket_0007_clothoid_first_cook_qed_or_qex :
   (first_cook_scope EggClothoid EggClothoid /\
    interpolant_pair (MkClothoid locked_cloth_A) (MkClothoid locked_cloth_B) /\
@@ -230,15 +226,3 @@ Proof.
   split; [exact nurbs_nurbs_not_first_scope|].
   exact cook_loop_is_obligation.
 Qed.
-
-Print Assumptions locked_cloth_A_at_ti.
-Print Assumptions locked_cloth_B_at_tj.
-Print Assumptions locked_mkclothoid_I_ok.
-Print Assumptions cooked_mkclothoid_try.
-Print Assumptions cook_hit_clothoids_shares_hen.
-Print Assumptions cooked_mkclothoid_shares.
-Print Assumptions cooked_mkclothoid_children_are_clothoid.
-Print Assumptions interpolant_pair_mkclothoid.
-Print Assumptions mkclothoid_mixed_still_decline.
-Print Assumptions locked_intake_egg_self_hit.
-Print Assumptions ticket_0007_clothoid_first_cook_qed_or_qex.
