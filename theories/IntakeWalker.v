@@ -553,7 +553,7 @@ Qed.
 Lemma locked_clothoid_egg_at_0 :
   cloth_eval locked_clothoid_egg 0 = cloth_p0 locked_clothoid_egg.
 Proof.
-  unfold cloth_eval.
+  unfold cloth_eval, locked_clothoid_egg.
   cbn [px py cloth_p0 cloth_p1].
   apply (f_equal2 mkPoint); ring.
 Qed.
@@ -561,7 +561,7 @@ Qed.
 Lemma locked_clothoid_egg_at_1 :
   cloth_eval locked_clothoid_egg 1 = cloth_p1 locked_clothoid_egg.
 Proof.
-  unfold cloth_eval.
+  unfold cloth_eval, locked_clothoid_egg.
   cbn [px py cloth_p0 cloth_p1].
   apply (f_equal2 mkPoint); ring.
 Qed.
