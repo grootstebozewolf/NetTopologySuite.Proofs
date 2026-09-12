@@ -96,7 +96,9 @@ both map onto the same locked `ClothoidEgg` bag (OGC≡ISO), whose
 vertices are `γ(0)`, `γ(1)` of the small-angle interpolant. Chickens
 use `MkClothoid` (`EggClothoid`), not silent `MkChord`. `example5`
 bags both forms in one COMPOUNDCURVE. Clothoid×clothoid first cook
-is the next letter. `EggClothoid` is not folded away.
+already landed (claimId `0007-clothoid-first-cook`, #730 Mode A on
+main). Intake stays bag/`MkClothoid` mapping; host Hit is the
+Clothoid first-cook paragraph. `EggClothoid` is not folded away.
 _Avoid_: two constructors, Fresnel-as-noding, CircGamma remint,
 silent chord demote, new oracle keyword
 
@@ -353,8 +355,9 @@ The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
 or 𝓘 Decline (no algorithm). Predicates never mint hens. On a Hit the
 cook may `split(t)` and mint hens (`ShareOne` / `MintTwo`). Empty /
 Decline / Touch mint nothing. Leftover shared endpoint is not a kiss.
-First cook scope is chord–chord. Host circular / mixed `I_ok` is
-Decline for out-of-scope eggs. Sidecar `I_ok_circ` / `I_ok_mixed`
+First cook scope is chord–chord, circular–circular (MkCirc), and
+clothoid–clothoid (MkClothoid). Host mixed `I_ok` and other
+out-of-scope eggs stay Decline. Sidecar `I_ok_circ` / `I_ok_mixed`
 Hit is not host `I_ok`. Four-object fence: `I_circles_z` ≠
 `I_circles_gamma` ≠ sidecar cook ≠ host `I_gloss`. Snap-rounding is
 a different constructor under already-noded `G`. Display is a view.
@@ -446,6 +449,8 @@ Demote-to-chord is NodingNG / host first cook, not a clothoid Hit.
 Host `MkClothoid` inhabits (intake letter). Clothoid×clothoid is
 first cook (`SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex`,
 `ClothoidCookMkClothoid.v : ticket_0007_clothoid_first_cook_qed_or_qex`).
+The `not_first_cook` ticket name is historical QEX wording; host
+first-cook is landed (claimId `0007-clothoid-first-cook`).
 Fresnel / Halley stay metric. Not Campaign I–II.
 _Avoid_: Fresnel noding, clothoid noder, Campaign I
 
