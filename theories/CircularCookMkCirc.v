@@ -260,7 +260,7 @@ Qed.
 Lemma locked_mkcirc_hit_neq_endpoint_chord_x :
   locked_circ_hit_pt <> mkPoint (5 / 2) (5 / 2).
 Proof.
-  unfold locked_circ_hit_pt. intros H. injection H as _ Hy.
+  unfold locked_circ_hit_pt. intros H. injection H as Hy.
   apply (f_equal (fun z => z * 2 / 5)) in Hy.
   replace ((5 * sqrt 3 / 2) * 2 / 5) with (sqrt 3) in Hy by field.
   replace ((5 / 2) * 2 / 5) with 1 in Hy by field.
