@@ -317,7 +317,7 @@ Qed.
 
 Lemma mkclothoid_pair_hit_I_ok :
   I_ok (MkClothoid locked_clothoid_egg) (MkClothoid locked_clothoid_egg)
-       (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)).
+       (IHit (cloth_eval locked_clothoid_egg (1 / 2)) (1 / 2) (1 / 2)).
 Proof.
   exact locked_intake_egg_self_hit.
 Qed.
@@ -334,7 +334,8 @@ Definition cooked_intake_mkclothoid : CookedPair :=
 
 Lemma try_cook_hit_mkclothoid_some :
   try_cook_hit locked_mkclothoid_ck1 locked_mkclothoid_ck2
-    (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)) crossing_hen
+    (IHit (cloth_eval locked_clothoid_egg (1 / 2)) (1 / 2) (1 / 2))
+    crossing_hen
     = Some cooked_intake_mkclothoid.
 Proof.
   reflexivity.
@@ -552,7 +553,7 @@ Proof.
   split; [exact sidecar_clothoid_hit_arm_inhabits|].
   split; [exact sidecar_clothoid_first_cook_expand_inhabits|].
   split; [exact sidecar_clothoid_letter_is_first_cook_expanded|].
-  exists (mkPoint (1 / 2) 0), (1 / 2), (1 / 2).
+  exists (cloth_eval locked_clothoid_egg (1 / 2)), (1 / 2), (1 / 2).
   exact mkclothoid_pair_hit_I_ok.
 Qed.
 
