@@ -32,6 +32,15 @@
    member joints live in CircularCookCcConcat.v (this letter's
    park ticket still names CC as a B.1-local gap).
 
+   Mode D (host circ_eval joints): two consecutive host
+   CircularEggs share the host endpoint. cs_joint_circ is
+   circ_end A = circ_start B (SheetHenCircEgg). Then
+   circ_eval A 1 = circ_eval B 0, and the joint IResult is
+   IHit (circ_eval A 1) 1 0. Inhabits on circ_split of the
+   intake locked quarter (locked_circ_A). Sidecar CircEgg :=
+   CircularArc / arc_end / cs_joint_hit / I_ok_circ stay.
+   No CircEgg↔CircularEgg bridge. No cs_eval. Not host I_ok.
+
    Honesty fences:
      Host-Decline / CircGamma-QEX at the top of this module.
      I_circles_z ≠ I_circles_gamma ≠ sidecar cook ≠ span filter ≠
@@ -63,8 +72,8 @@
 
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry
-  CircularCook CircularCookHit CircularCookSpan CircularCookSpanFilter
-  CircularCookSpanSplit CircularCookOkCirc.
+  CircularCook CircularCookMkCirc CircularCookHit CircularCookSpan
+  CircularCookSpanFilter CircularCookSpanSplit CircularCookOkCirc.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -306,6 +315,116 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* Mode D: consecutive host CircularEgg joints on circ_eval.                  *)
+(* Sidecar CircEgg / I_ok_circ stay. No CircEgg↔CircularEgg bridge.           *)
+(* -------------------------------------------------------------------------- *)
+
+Definition cs_joint_circ (A B : CircularEgg) : Prop :=
+  circ_end A = circ_start B.
+
+Definition cs_joint_hit_circ (A B : CircularEgg) : IResult :=
+  IHit (circ_eval A 1) 1 0.
+
+Lemma circ_split_cs_joint_circ :
+  forall c t,
+    cs_joint_circ (fst (circ_split c t)) (snd (circ_split c t)).
+Proof.
+  intros c t.
+  unfold cs_joint_circ, circ_end, circ_start.
+  destruct (circ_split_join c t) as [Hl Hr].
+  rewrite Hl, Hr.
+  reflexivity.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"cs_joint_circ_end","title":"Mode D CS joint: two consecutive host CircularEggs meet at circ_eval A 1 = circ_eval B 0; sidecar I_ok_circ / CircEgg stay; not host I_ok","file":"theories/CircularCookCsConcat.v","witness":"0007-B.1-cs-concat-joints","board":"ADR-0007"} *)
+
+Theorem cs_joint_circ_end :
+  forall A B : CircularEgg,
+    cs_joint_circ A B ->
+    circ_eval A 1 = circ_eval B 0.
+Proof.
+  intros A B H.
+  unfold cs_joint_circ, circ_end, circ_start in H.
+  exact H.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"cs_joint_is_endpoint_hit","title":"Mode D CS joint IResult is IHit (circ_eval A 1) 1 0 under cs_joint_circ; sidecar I_ok_circ reused on CircEgg; not host I_ok","file":"theories/CircularCookCsConcat.v","witness":"0007-B.1-cs-concat-joints","board":"ADR-0007"} *)
+
+Theorem cs_joint_is_endpoint_hit :
+  forall A B : CircularEgg,
+    cs_joint_circ A B ->
+    cs_joint_hit_circ A B = IHit (circ_eval A 1) 1 0
+    /\ cs_joint_hit_circ A B = IHit (circ_end A) 1 0
+    /\ cs_joint_hit_circ A B = IHit (circ_start B) 1 0.
+Proof.
+  intros A B H.
+  unfold cs_joint_hit_circ.
+  split; [reflexivity|].
+  split.
+  - unfold circ_end. reflexivity.
+  - unfold cs_joint_circ, circ_end, circ_start in H.
+    rewrite H. reflexivity.
+Qed.
+
+(* Sidecar I_ok_circ stays the CircEgg joint cook. Host joint IHit is
+   not host I_ok (tag Decline fence). No CircEgg↔CircularEgg remint. *)
+Lemma cs_joint_circ_consumes_I_ok_circ :
+  forall a b : CircEgg,
+    cs_joint a b ->
+    I_ok_circ a b (cs_joint_hit a b)
+    /\ cs_joint_hit a b = IHit (arc_end a) 1 0.
+Proof.
+  intros a b Hj.
+  split; [apply cs_joint_I_ok_circ; exact Hj|].
+  reflexivity.
+Qed.
+
+Lemma cs_joint_hit_circ_not_host_I_ok :
+  forall A B : CircularEgg,
+    ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
+         (cs_joint_hit_circ A B).
+Proof.
+  intros A B.
+  unfold cs_joint_hit_circ.
+  apply circular_hit_not_I_ok.
+Qed.
+
+Definition locked_cs_host_1 : CircularEgg :=
+  fst (circ_split locked_circ_A (1 / 2)).
+
+Definition locked_cs_host_2 : CircularEgg :=
+  snd (circ_split locked_circ_A (1 / 2)).
+
+Lemma locked_cs_host_joint :
+  cs_joint_circ locked_cs_host_1 locked_cs_host_2.
+Proof.
+  unfold locked_cs_host_1, locked_cs_host_2.
+  apply circ_split_cs_joint_circ.
+Qed.
+
+Lemma locked_cs_host_joint_circ_end :
+  circ_eval locked_cs_host_1 1 = circ_eval locked_cs_host_2 0.
+Proof.
+  apply cs_joint_circ_end.
+  exact locked_cs_host_joint.
+Qed.
+
+Lemma locked_cs_host_joint_is_endpoint_hit :
+  cs_joint_hit_circ locked_cs_host_1 locked_cs_host_2
+    = IHit (circ_eval locked_cs_host_1 1) 1 0
+  /\ cs_joint_hit_circ locked_cs_host_1 locked_cs_host_2
+       = IHit (circ_end locked_cs_host_1) 1 0
+  /\ cs_joint_hit_circ locked_cs_host_1 locked_cs_host_2
+       = IHit (circ_start locked_cs_host_2) 1 0.
+Proof.
+  destruct (cs_joint_is_endpoint_hit locked_cs_host_1 locked_cs_host_2
+              locked_cs_host_joint) as [H1 [H2 H3]].
+  split; [exact H1|].
+  split; [exact H2|].
+  exact H3.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Phase B.1 lands CS joints. CC / CP / H⊥ / SQL/MM cathedral stay parked.    *)
 (* -------------------------------------------------------------------------- *)
 
@@ -533,3 +652,11 @@ Print Assumptions ticket_0007_b1_not_interior_qed_or_qex.
 Print Assumptions ticket_0007_b1_reuse_qed_or_qex.
 Print Assumptions ticket_0007_b1_host_qed_or_qex.
 Print Assumptions ticket_0007_b1_park_qed_or_qex.
+Print Assumptions circ_split_cs_joint_circ.
+Print Assumptions cs_joint_circ_end.
+Print Assumptions cs_joint_is_endpoint_hit.
+Print Assumptions cs_joint_circ_consumes_I_ok_circ.
+Print Assumptions cs_joint_hit_circ_not_host_I_ok.
+Print Assumptions locked_cs_host_joint.
+Print Assumptions locked_cs_host_joint_circ_end.
+Print Assumptions locked_cs_host_joint_is_endpoint_hit.
