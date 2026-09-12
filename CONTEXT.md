@@ -104,7 +104,9 @@ silent chord demote, new oracle keyword
 Host `EggClothoid × EggClothoid` is in `first_cook_scope`. Locked
 `MkClothoid` pair inhabits host `IHit` via `on_cloth` (closed-form
 small-angle clothoid: `cos θ≈1`, `sin θ≈θ`; not Fresnel, not
-chord-parameter). `p1 := γ(1)`. `try_cook_hit` mints `MkClothoid`
+chord-parameter). Small-angle clothoid `γ` is not Halley and
+not Fresnel; those stay metric, not the noding/cook engine.
+`p1 := γ(1)`. `try_cook_hit` mints `MkClothoid`
 hens. Tags stay Decline. Mixed clothoid×chord stays Decline.
 Not Fresnel-as-noding. Not a silent `I_ok` demote to `on_chord`.
 _Avoid_: Fresnel noding, Halley noding, mixed first cook, NURBS
