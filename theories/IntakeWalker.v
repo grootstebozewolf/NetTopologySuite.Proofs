@@ -36,7 +36,9 @@
    Clothoid (claimId 0007-intake-mkclothoid): one host
    MkClothoid on Egg. ISO and JTS surface forms map onto the
    same locked ClothoidEgg bag (OGC≡ISO). example5.txt bags
-   both forms in one COMPOUNDCURVE. Not two invented
+   both forms in one COMPOUNDCURVE. CIRCLE-class exception:
+   example5 WKT seed was (0,0)–(1,0); bag_pts follow interpolant
+   ends γ(0), γ(1), not the WKT chord-seed text. Not two invented
    constructors. ID_IsoClothoid / ID_MkOutOfScope stay on the
    Decline type; they are not the well-formed clothoid answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
@@ -265,10 +267,11 @@ Definition map_cc_locked (s : Sheet) : ShcBag :=
 (* First-slice CC is flat (Point / LineString / CircularString /
    named Decline tickets / clothoid). Nested CC as a member is
    ID_NotFirstSlice. Well-formed ISO / JTS clothoid bag the same
-   MkClothoid egg (claimId 0007-intake-mkclothoid). *)
+   MkClothoid egg (claimId 0007-intake-mkclothoid). CIRCLE-class:
+   bag_pts are interpolant ends, not the example5 WKT chord-seed. *)
 Definition map_clothoid (s : Sheet) : ShcBag :=
   mkShcBag s [0%nat; 1%nat]
-    [cloth_p0 locked_clothoid_egg; cloth_p1 locked_clothoid_egg]
+    [cloth_eval locked_clothoid_egg 0; cloth_eval locked_clothoid_egg 1]
     [mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg)].
 
 Definition map_cc_example5 (s : Sheet) : ShcBag :=
@@ -437,6 +440,16 @@ Qed.
 Lemma spiral_declines :
   intake_map default_sheet TSpiralCurve =
     IntakeDecline ID_SpiralCurve.
+Proof.
+  reflexivity.
+Qed.
+
+(* CIRCLE-class exception: example5 WKT seed was (0,0)–(1,0);
+   map_clothoid bags γ ends of locked_clothoid_egg, not that seed. *)
+Lemma locked_cloth_intake_endpoints :
+  bag_pts (map_clothoid default_sheet) =
+    [cloth_eval locked_clothoid_egg 0;
+     cloth_eval locked_clothoid_egg 1].
 Proof.
   reflexivity.
 Qed.
@@ -944,6 +957,7 @@ Print Assumptions locked_cs_full_ogc_maps.
 Print Assumptions ogc_iso_circle_same_egg.
 Print Assumptions geodesic_declines.
 Print Assumptions spiral_declines.
+Print Assumptions locked_cloth_intake_endpoints.
 Print Assumptions iso_clothoid_maps.
 Print Assumptions jts_clothoid_maps.
 Print Assumptions ogc_iso_clothoid_same_bag.
