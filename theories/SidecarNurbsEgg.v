@@ -10,7 +10,7 @@
    (nurbs_decline_I_ok / try_cook_hit_nurbs_none) plus one locked
    demoted-chord fixture. Host MkNurbs + NURBS×NURBS first cook
    live in NurbsCookMkNurbs.v. Prefer SidecarNurbs* for the
-   tag-packaging face (same preference as SidecarClothoid*).
+   tag-packaging face, same preference as SidecarClothoid*.
 
    The existing NURBS corpus (NurbsQuadraticLength, NurbsGeneralLength,
    NurbsKnotSpans, NurbsConicExact, BernsteinBasis, #508 length lane)
