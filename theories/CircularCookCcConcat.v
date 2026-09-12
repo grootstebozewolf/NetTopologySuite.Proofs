@@ -30,6 +30,15 @@
    CS members. LS–LS locked pair is two collinear chords through
    the origin.
 
+   Mode D (host endpoints on locked CC LS+CS):
+     Intake map_cc_locked members (IntakeWalker.p00 / p50,
+     MkCirc locked_circ_A) share the host joint
+     chord_eval (mkChordEgg p00 p50) 1
+       = circ_eval locked_circ_A 0.
+     append_bags is hen offset, not geometry. LS–LS stays host
+     I_ok. LS–CS stays sidecar I_ok_mixed / host Decline.
+     No first_cook_scope expand. No CompoundEgg / cs_eval.
+
    QED: ∀ LS–LS joint is host I_ok Hit at (end, 1, 0); ∀ CS–CS
    member joint reuses I_ok_circ; ∀ mixed LS–CS joint is
    I_ok_mixed Hit at (end, 1, 0); locked mixed CC is contiguous;
@@ -78,10 +87,11 @@
 
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry
-  CircularCook CircularCookHit CircularCookSpan CircularCookSpanFilter
-  CircularCookSpanSplit CircularCookOkCirc.
+  CircularCook CircularCookMkCirc CircularCookHit CircularCookSpan
+  CircularCookSpanFilter CircularCookSpanSplit CircularCookOkCirc.
 From NTS.Proofs Require CircularCookCsConcat.
 From NTS.Proofs Require SidecarCircMixed.
+From NTS.Proofs Require IntakeWalker.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -410,6 +420,44 @@ Lemma locked_cc_mixed_empty_not_I_ok :
   ~ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc) IEmpty.
 Proof.
   apply cc_mixed_ls_cs_empty_not_I_ok.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Mode D: locked intake CC LS+CS joint on host chord_eval / circ_eval.       *)
+(* append_bags is hen offset, not geometry. Sidecar I_ok_mixed stays.         *)
+(* -------------------------------------------------------------------------- *)
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_joint_host_endpoints","title":"Mode D CC LS+CS joint: intake map_cc_locked LS end equals quarter CS start via host chord_eval / circ_eval; append_bags is hen offset not geometry; host I_ok mixed stays Decline","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+
+Theorem locked_cc_joint_host_endpoints :
+  IntakeWalker.locked_cc_joint_pt =
+    chord_eval (mkChordEgg IntakeWalker.p00 IntakeWalker.p50) 1 /\
+  IntakeWalker.locked_cc_joint_pt =
+    circ_eval locked_circ_A 0.
+Proof.
+  exact IntakeWalker.locked_cc_joint_host_endpoints.
+Qed.
+
+Lemma locked_cc_joint_host_eval_eq :
+  chord_eval (mkChordEgg IntakeWalker.p00 IntakeWalker.p50) 1 =
+  circ_eval locked_circ_A 0.
+Proof.
+  exact IntakeWalker.locked_cc_joint_host_eval_eq.
+Qed.
+
+Lemma locked_cc_intake_ls_cs_host_decline :
+  I_ok (MkChord (mkChordEgg IntakeWalker.p00 IntakeWalker.p50))
+       (MkCirc locked_circ_A) IDecline.
+Proof.
+  exact IntakeWalker.locked_cc_ls_cs_host_decline.
+Qed.
+
+Lemma locked_cc_intake_ls_cs_hit_not_host_I_ok :
+  ~ I_ok (MkChord (mkChordEgg IntakeWalker.p00 IntakeWalker.p50))
+         (MkCirc locked_circ_A)
+         (IHit IntakeWalker.locked_cc_joint_pt 1 0).
+Proof.
+  exact IntakeWalker.locked_cc_ls_cs_hit_not_host_I_ok.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -798,3 +846,7 @@ Print Assumptions ticket_0007_b2_reuse_qed_or_qex.
 Print Assumptions ticket_0007_b2_not_interior_qed_or_qex.
 Print Assumptions ticket_0007_b2_host_qed_or_qex.
 Print Assumptions ticket_0007_b2_park_qed_or_qex.
+Print Assumptions locked_cc_joint_host_endpoints.
+Print Assumptions locked_cc_joint_host_eval_eq.
+Print Assumptions locked_cc_intake_ls_cs_host_decline.
+Print Assumptions locked_cc_intake_ls_cs_hit_not_host_I_ok.

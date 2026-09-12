@@ -43,6 +43,16 @@
    Decline type; they are not the well-formed clothoid answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
 
+   Mode D (host endpoints on locked CC LS+CS):
+     map_cc_locked members share the host joint
+     chord_eval (mkChordEgg p00 p50) 1
+       = circ_eval locked_circ_A 0.
+     append_bags is hen offset, not geometry. LS–CS stays
+     host I_ok Decline (not promoted). No CompoundEgg /
+     cs_eval. claimId 0007 kept; witnesses
+     0007-B.2-cc-member-joints / 0007-B-mixed-ls-cs-joints
+     kept (not reminted).
+
    OGC-form and ISO-form of the same in-scope type → same bag
    (locked CIRCLE vs start=end CIRCULARSTRING full-span).
    Full-span 2π has γ(0)=γ(1); the bag is [γ(0); γ(1/2)] by
@@ -68,6 +78,7 @@
    WITNESS topic: overlay / core · claimId: 0007-intake-walker
    witness: 0007-intake-walker
    also: 0007-intake-mkclothoid
+   also: 0007-B.2-cc-member-joints, 0007-B-mixed-ls-cs-joints
    board: ADR-0007
    3-axiom host. No Admitted / Axiom / Parameter.
 
@@ -464,6 +475,67 @@ Proof.
   - split.
     + right. now left.
     + split; reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Mode D: locked CC LS+CS joint on host endpoints.                           *)
+(* append_bags is hen offset, not geometry — equality is chord_eval /         *)
+(* circ_eval on the locked members that map_cc_locked is built from.          *)
+(* LS–CS stays host I_ok Decline. Not sidecar remint. Not first-cook expand.  *)
+(* -------------------------------------------------------------------------- *)
+
+Definition locked_cc_ls_egg : ChordEgg := mkChordEgg p00 p50.
+
+Definition locked_cc_joint_pt : Point := p50.
+
+Lemma locked_cc_ls_end :
+  chord_eval locked_cc_ls_egg 1 = locked_cc_joint_pt.
+Proof.
+  unfold locked_cc_ls_egg, locked_cc_joint_pt.
+  apply chord_eval_at_1.
+Qed.
+
+Lemma locked_cc_cs_start :
+  circ_eval locked_circ_A 0 = locked_cc_joint_pt.
+Proof.
+  unfold locked_cc_joint_pt, p50.
+  exact locked_circ_A_at_0.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_joint_host_endpoints","title":"Mode D CC LS+CS joint: locked map_cc_locked LS end equals quarter CS start via host chord_eval / circ_eval; append_bags is hen offset not geometry; host I_ok mixed stays Decline","file":"theories/IntakeWalker.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+
+Theorem locked_cc_joint_host_endpoints :
+  locked_cc_joint_pt = chord_eval (mkChordEgg p00 p50) 1 /\
+  locked_cc_joint_pt = circ_eval locked_circ_A 0.
+Proof.
+  split.
+  - unfold locked_cc_joint_pt.
+    change (mkChordEgg p00 p50) with locked_cc_ls_egg.
+    symmetry. exact locked_cc_ls_end.
+  - unfold locked_cc_joint_pt.
+    symmetry. exact locked_cc_cs_start.
+Qed.
+
+Lemma locked_cc_joint_host_eval_eq :
+  chord_eval (mkChordEgg p00 p50) 1 = circ_eval locked_circ_A 0.
+Proof.
+  destruct locked_cc_joint_host_endpoints as [Hl Hr].
+  rewrite <- Hl. exact Hr.
+Qed.
+
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_ls_cs_host_decline","title":"Mode D locked CC LS+CS stays host I_ok Decline; IHit at the joint is not host I_ok; sidecar I_ok_mixed stays sidecar; no first_cook_scope expand","file":"theories/IntakeWalker.v","witness":"0007-B-mixed-ls-cs-joints","board":"ADR-0007"} *)
+
+Lemma locked_cc_ls_cs_host_decline :
+  I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A) IDecline.
+Proof.
+  unfold I_ok, interpolant_pair. intro H. exact H.
+Qed.
+
+Lemma locked_cc_ls_cs_hit_not_host_I_ok :
+  ~ I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A)
+       (IHit locked_cc_joint_pt 1 0).
+Proof.
+  unfold I_ok. intro H. exact H.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -993,6 +1065,12 @@ Print Assumptions locked_point_maps.
 Print Assumptions locked_ls_maps.
 Print Assumptions locked_cs_quarter_maps.
 Print Assumptions locked_cs_quarter_intake_endpoints.
+Print Assumptions locked_cc_ls_end.
+Print Assumptions locked_cc_cs_start.
+Print Assumptions locked_cc_joint_host_endpoints.
+Print Assumptions locked_cc_joint_host_eval_eq.
+Print Assumptions locked_cc_ls_cs_host_decline.
+Print Assumptions locked_cc_ls_cs_hit_not_host_I_ok.
 Print Assumptions locked_circle_maps.
 Print Assumptions locked_full_circle_egg_at_0.
 Print Assumptions locked_full_circle_egg_at_half.
