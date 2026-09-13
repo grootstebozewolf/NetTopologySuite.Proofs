@@ -1,47 +1,45 @@
 (* ============================================================================
    NetTopologySuite.Proofs.SqlMmSignedTag
    ----------------------------------------------------------------------------
-   ADR-0007 sidecar: first-slice egg → signed Table 15 tag
+   ADR-0007 sidecar, rung 3: a pair of maps, not a relation
    (claimId 0007-sqlmm-signed-tag).
 
-   This is a total function on host eggs, not a factory and not a
-   sticker relation. SqlMmTag is the SFA 1–7 + signed-curve 8–12
-   names only. HOLD is codes {13..17, 18..21} as nats — no named
-   constructors we cannot code. CIRCLE / CLOTHOID are not signed
-   I/O (no Table 15 code on JTS #7). CIRCLE CST is the same MkCirc
-   as CIRCULARSTRING (IntakeWalker.ogc_iso_circle_same_egg).
+   T_signed = {LINESTRING, CIRCULARSTRING, CIRCLE, CLOTHOID}.
+   SFA point/polygon/multi and WKB {8..12} collections are bag
+   maps, not an egg clause. Compound / rings / emit / WKB hex
+   are rungs 4–5.
 
-   first_slice_tag:
-     MkChord _      → Some LINESTRING (2)
-     MkCirc _       → Some CIRCULARSTRING (8)   (* XOR: not CIRCLE *)
-     MkClothoid _   → None                      (* WKT-only; not signed *)
-     MkOutOfScope _ → None
+   τ : Egg ⇀ T_signed  (Definition; undefined on MkOutOfScope)
+     MkChord _      ↦ LINESTRING
+     MkCirc γ       ↦ CIRCLE           if |circ_sweep γ| = 2π
+                    ↦ CIRCULARSTRING   otherwise
+     MkClothoid _   ↦ CLOTHOID
+     MkOutOfScope _ ↦ undefined
 
-   COMPOUNDCURVE (9) is a bag, not an egg tag. Mode D joints stay
-   the joins that already live on the interpolant: cloth_joint
-   (0007-clothoid-first-cook) and circ_split_join (the #733
-   cs_joint_circ equation). Do not remint cs_joint_circ. Do not
-   label endpoint coincidence as a CompoundCurve inhabitant.
+   Full-span is CIRCLE and not CIRCULARSTRING. CIRCLE CST and
+   full-span CIRCULARSTRING CST share one MkCirc
+   (IntakeWalker.ogc_iso_circle_same_egg); τ classifies that
+   egg as CIRCLE. ISO / JTS clothoid spellings are not
+   arguments of τ — they are two intakes of the same
+   ClothoidEgg.
+
+   κ : T_signed ⇀ ℕ  (Table 15 on names that have a signed code)
+     LINESTRING ↦ 2    CIRCULARSTRING ↦ 8
+     CIRCLE     ↦ none CLOTHOID        ↦ none
+   Signed numeric I/O is {n | 1≤n≤12}. HOLD is
+   {13..17} ∪ {18..21}. Those predicates live on ℕ.
+   CIRCLE / CLOTHOID are signed names with no signed code —
+   defined partiality of κ, not WKB 18 or 22.
 
    Sidecar only. SheetHenCook.v is not grown. No new ADR-0006
-   keyword.
+   keyword. ADR-0006/0007 stay Accepted.
 
-   QED: ticket_sqlmm_signed_tag_qed_or_qex — the function; HOLD
-   codes have no signed tag; OutOfScope / clothoid are None.
-
-   QEX: ticket_sqlmm_factory_emit_qed_or_qex — Rocq does not
-   inhabit WKT/WKB bytes.
-
-   Not this letter: factory emit, first-cook expand, #729, ρ,
-   Java twin, CircGamma remint, Circle-as-18, HOLD name fanfic.
-
-   ADR-0007 is Accepted (2026-09-07). This letter does not reopen
-   Status. ADR-0006 Status stays Accepted.
+   QED: ticket_sqlmm_signed_tag_qed_or_qex — the maps.
+   QEX: ticket_sqlmm_factory_emit_qed_or_qex — emit is rung 4–5.
 
    WITNESS topic: overlay · claimId: 0007-sqlmm-signed-tag
    witness: 0007-sqlmm-signed-tag
    also: 0007-clothoid-first-cook, 0007-gamma-mkcirc, 0007-intake-walker
-   also: 0007-B.1-cs-concat-joints (cite cs_joint_circ; do not remint)
    board: ADR-0007
    3-axiom host. No Admitted / Axiom / Parameter.
 
@@ -55,37 +53,21 @@ From Stdlib Require Import Reals PeanoNat.
 From NTS.Proofs Require Import Distance SheetHenCook ClothoidCookMkClothoid.
 
 (* -------------------------------------------------------------------------- *)
-(* Named tags are exactly the codes JTS #7 signs: SFA 1–7 and 8–12.           *)
+(* T_signed: the four §5.1.67 display names on a single host egg.             *)
 (* -------------------------------------------------------------------------- *)
 
-Inductive SqlMmTag : Type :=
-| TagPoint
+Inductive SqlMmSignedTag : Type :=
 | TagLineString
-| TagPolygon
-| TagMultiPoint
-| TagMultiLineString
-| TagMultiPolygon
-| TagGeomCollection
 | TagCircularString
-| TagCompoundCurve
-| TagCurvePolygon
-| TagMultiCurve
-| TagMultiSurface.
+| TagCircle
+| TagClothoid.
 
-Definition sqlmm_wkb_code (t : SqlMmTag) : nat :=
+Definition sqlmm_kappa (t : SqlMmSignedTag) : option nat :=
   match t with
-  | TagPoint => 1%nat
-  | TagLineString => 2%nat
-  | TagPolygon => 3%nat
-  | TagMultiPoint => 4%nat
-  | TagMultiLineString => 5%nat
-  | TagMultiPolygon => 6%nat
-  | TagGeomCollection => 7%nat
-  | TagCircularString => 8%nat
-  | TagCompoundCurve => 9%nat
-  | TagCurvePolygon => 10%nat
-  | TagMultiCurve => 11%nat
-  | TagMultiSurface => 12%nat
+  | TagLineString => Some 2%nat
+  | TagCircularString => Some 8%nat
+  | TagCircle => None
+  | TagClothoid => None
   end.
 
 Definition sqlmm_signed_code (n : nat) : Prop :=
@@ -95,22 +77,10 @@ Definition sqlmm_hold_code (n : nat) : Prop :=
   ((13 <= n)%nat /\ (n <= 17)%nat) \/
   ((18 <= n)%nat /\ (n <= 21)%nat).
 
-Definition sqlmm_signed_tag (t : SqlMmTag) : bool := true.
-
-Definition tag_of_signed_wkb (n : nat) : option SqlMmTag :=
+Definition tag_of_signed_wkb (n : nat) : option SqlMmSignedTag :=
   match n with
-  | 1 => Some TagPoint
   | 2 => Some TagLineString
-  | 3 => Some TagPolygon
-  | 4 => Some TagMultiPoint
-  | 5 => Some TagMultiLineString
-  | 6 => Some TagMultiPolygon
-  | 7 => Some TagGeomCollection
   | 8 => Some TagCircularString
-  | 9 => Some TagCompoundCurve
-  | 10 => Some TagCurvePolygon
-  | 11 => Some TagMultiCurve
-  | 12 => Some TagMultiSurface
   | _ => None
   end.
 
@@ -124,14 +94,6 @@ Lemma le_leb_true :
   forall n m, (n <= m)%nat -> Nat.leb n m = true.
 Proof.
   intros n m H. exact (proj2 (Nat.leb_le n m) H).
-Qed.
-
-Lemma wkb_code_is_signed :
-  forall t, sqlmm_signed_code (sqlmm_wkb_code t).
-Proof.
-  intros t.
-  destruct t; unfold sqlmm_signed_code, sqlmm_wkb_code; split;
-    apply leb_true_le; reflexivity.
 Qed.
 
 Lemma le_12_excl_13 :
@@ -173,22 +135,117 @@ Proof.
     exact (Nat.le_trans 13 18 n le_13_18 C).
 Qed.
 
-Lemma tag_of_wkb_roundtrip :
-  forall t, tag_of_signed_wkb (sqlmm_wkb_code t) = Some t.
+Lemma kappa_signed_when_defined :
+  forall t n, sqlmm_kappa t = Some n -> sqlmm_signed_code n.
 Proof.
-  intros t. destruct t; reflexivity.
+  intros t n H.
+  destruct t; inversion H; unfold sqlmm_signed_code; split;
+    apply leb_true_le; reflexivity.
+Qed.
+
+Lemma kappa_circle_none : sqlmm_kappa TagCircle = None.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma kappa_clothoid_none : sqlmm_kappa TagClothoid = None.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma kappa_circle_not_18 : sqlmm_kappa TagCircle <> Some 18%nat.
+Proof.
+  discriminate.
+Qed.
+
+Lemma kappa_linestring_2 : sqlmm_kappa TagLineString = Some 2%nat.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma kappa_circularstring_8 : sqlmm_kappa TagCircularString = Some 8%nat.
+Proof.
+  reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Total function on host eggs. CIRCLE CST → same MkCirc → CIRCULARSTRING.    *)
-(* CLOTHOID is first-slice intake, not signed I/O.                            *)
+(* τ: partial function on host eggs.                                          *)
 (* -------------------------------------------------------------------------- *)
 
-Definition first_slice_tag (e : Egg) : option SqlMmTag :=
+Local Open Scope R_scope.
+
+Lemma two_pos : 0 < 2.
+Proof.
+  replace 2 with (1 + 1) by ring.
+  apply Rplus_lt_0_compat; exact Rlt_0_1.
+Qed.
+
+Lemma two_neq_0 : 2 <> 0.
+Proof.
+  apply not_eq_sym. apply Rlt_not_eq. exact two_pos.
+Qed.
+
+Lemma half_pi_pos : 0 < PI / 2.
+Proof.
+  unfold Rdiv.
+  apply Rmult_lt_0_compat.
+  - exact PI_RGT_0.
+  - apply Rinv_0_lt_compat. exact two_pos.
+Qed.
+
+Lemma half_pi_lt_pi : PI / 2 < PI.
+Proof.
+  apply Rmult_lt_reg_r with 2.
+  - exact two_pos.
+  - unfold Rdiv.
+    rewrite Rmult_assoc.
+    rewrite (Rinv_l 2 two_neq_0).
+    rewrite Rmult_1_r.
+    replace (PI * 2) with (PI + PI) by ring.
+    rewrite <- (Rplus_0_r PI) at 1.
+    apply Rplus_lt_compat_l.
+    exact PI_RGT_0.
+Qed.
+
+Lemma pi_lt_two_pi : PI < 2 * PI.
+Proof.
+  apply Rplus_lt_reg_l with (- PI).
+  replace (- PI + PI) with 0 by ring.
+  replace (- PI + 2 * PI) with PI by ring.
+  exact PI_RGT_0.
+Qed.
+
+Lemma rabs_half_pi : Rabs (PI / 2) = PI / 2.
+Proof.
+  apply Rabs_pos_eq. apply Rlt_le. exact half_pi_pos.
+Qed.
+
+Lemma rabs_two_pi : Rabs (2 * PI) = 2 * PI.
+Proof.
+  apply Rabs_pos_eq. apply Rlt_le.
+  apply Rmult_lt_0_compat.
+  - exact two_pos.
+  - exact PI_RGT_0.
+Qed.
+
+Lemma half_pi_abs_neq_two_pi : Rabs (PI / 2) <> 2 * PI.
+Proof.
+  rewrite rabs_half_pi.
+  apply Rlt_not_eq.
+  exact (Rlt_trans (PI / 2) PI (2 * PI) half_pi_lt_pi pi_lt_two_pi).
+Qed.
+
+Definition tau_circ (γ : CircularEgg) : SqlMmSignedTag :=
+  match Req_EM_T (Rabs (circ_sweep γ)) (2 * PI) with
+  | left _ => TagCircle
+  | right _ => TagCircularString
+  end.
+
+Definition first_slice_tag (e : Egg) : option SqlMmSignedTag :=
   match e with
   | MkChord _ => Some TagLineString
-  | MkCirc _ => Some TagCircularString
-  | MkClothoid _ => None
+  | MkCirc γ => Some (tau_circ γ)
+  | MkClothoid _ => Some TagClothoid
   | MkOutOfScope _ => None
   end.
 
@@ -198,29 +255,18 @@ Proof.
   intros c. reflexivity.
 Qed.
 
-Lemma first_slice_tag_circ :
-  forall c, first_slice_tag (MkCirc c) = Some TagCircularString.
-Proof.
-  intros c. reflexivity.
-Qed.
-
-Lemma mkcirc_tag_irrel :
-  forall c d, first_slice_tag (MkCirc c) = first_slice_tag (MkCirc d).
-Proof.
-  intros c d. reflexivity.
-Qed.
-
 Lemma first_slice_tag_clothoid :
-  forall c, first_slice_tag (MkClothoid c) = None.
+  forall k, first_slice_tag (MkClothoid k) = Some TagClothoid.
 Proof.
-  intros c. reflexivity.
+  intros k. reflexivity.
 Qed.
 
-Lemma both_clothoid_forms_untyped :
-  first_slice_tag (MkClothoid locked_cloth_A) =
-    first_slice_tag (MkClothoid locked_cloth_B).
+Lemma tau_clothoid_ext :
+  forall k1 k2,
+    k1 = k2 ->
+    first_slice_tag (MkClothoid k1) = first_slice_tag (MkClothoid k2).
 Proof.
-  reflexivity.
+  intros k1 k2 H. rewrite H. reflexivity.
 Qed.
 
 Lemma out_of_scope_no_signed_tag :
@@ -229,99 +275,94 @@ Proof.
   intros c. reflexivity.
 Qed.
 
-Lemma first_slice_some_is_signed :
-  forall e t, first_slice_tag e = Some t -> sqlmm_signed_tag t = true.
+Lemma tau_unique :
+  forall e t1 t2,
+    first_slice_tag e = Some t1 ->
+    first_slice_tag e = Some t2 ->
+    t1 = t2.
 Proof.
-  intros e t H. destruct e; inversion H; reflexivity.
+  intros e t1 t2 H1 H2. rewrite H1 in H2. inversion H2. reflexivity.
 Qed.
 
-Lemma first_slice_not_compound :
-  forall e, first_slice_tag e <> Some TagCompoundCurve.
+Lemma tau_circ_full :
+  forall γ,
+    Rabs (circ_sweep γ) = 2 * PI ->
+    tau_circ γ = TagCircle.
 Proof.
-  intros e H. destruct e; discriminate.
+  intros γ H.
+  unfold tau_circ.
+  destruct (Req_EM_T (Rabs (circ_sweep γ)) (2 * PI)) as [E|N].
+  - reflexivity.
+  - exfalso. exact (N H).
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* Mode D joints already on the interpolant. Not a CompoundCurve inhabitant.  *)
-(* -------------------------------------------------------------------------- *)
-
-Lemma circ_split_mode_d :
-  forall c t,
-    circ_eval (fst (circ_split c t)) 1%R =
-    circ_eval (snd (circ_split c t)) 0%R.
+Lemma tau_circ_not_full :
+  forall γ,
+    Rabs (circ_sweep γ) <> 2 * PI ->
+    tau_circ γ = TagCircularString.
 Proof.
-  intros c t.
-  destruct (circ_split_join c t) as [Hl Hr].
-  rewrite Hl, Hr.
+  intros γ H.
+  unfold tau_circ.
+  destruct (Req_EM_T (Rabs (circ_sweep γ)) (2 * PI)) as [E|N].
+  - exfalso. exact (H E).
+  - reflexivity.
+Qed.
+
+Lemma full_span_is_circle_not_cs :
+  forall γ,
+    Rabs (circ_sweep γ) = 2 * PI ->
+    first_slice_tag (MkCirc γ) = Some TagCircle /\
+    first_slice_tag (MkCirc γ) <> Some TagCircularString.
+Proof.
+  intros γ H.
+  change (Some (tau_circ γ) = Some TagCircle /\
+          Some (tau_circ γ) <> Some TagCircularString).
+  rewrite (tau_circ_full γ H).
+  split; [reflexivity|discriminate].
+Qed.
+
+(* Locked first-slice eggs already in the corpus (same numerals as
+   CircularCookMkCirc.locked_circ_A / IntakeWalker.locked_full_circle_egg). *)
+
+Definition locked_sqlmm_quarter : CircularEgg :=
+  mkCircularEgg (mkPoint 0 0) 5 (0) (PI / 2).
+
+Definition locked_sqlmm_full : CircularEgg :=
+  mkCircularEgg (mkPoint 0 0) 5 (0) (2 * PI).
+
+Lemma tau_locked_quarter :
+  first_slice_tag (MkCirc locked_sqlmm_quarter) = Some TagCircularString.
+Proof.
+  change (Some (tau_circ locked_sqlmm_quarter) = Some TagCircularString).
+  apply f_equal. apply tau_circ_not_full.
+  unfold locked_sqlmm_quarter. cbn [circ_sweep].
+  exact half_pi_abs_neq_two_pi.
+Qed.
+
+Lemma tau_locked_full :
+  first_slice_tag (MkCirc locked_sqlmm_full) = Some TagCircle.
+Proof.
+  change (Some (tau_circ locked_sqlmm_full) = Some TagCircle).
+  apply f_equal. apply tau_circ_full.
+  unfold locked_sqlmm_full. cbn [circ_sweep].
+  exact rabs_two_pi.
+Qed.
+
+Lemma tau_locked_cloth :
+  first_slice_tag (MkClothoid locked_cloth_A) = Some TagClothoid.
+Proof.
   reflexivity.
 Qed.
 
-Lemma circ_split_members_are_cs :
-  forall c t,
-    first_slice_tag (MkCirc (fst (circ_split c t))) = Some TagCircularString /\
-    first_slice_tag (MkCirc (snd (circ_split c t))) = Some TagCircularString.
-Proof.
-  intros c t. split; reflexivity.
-Qed.
-
-Lemma locked_cloth_split_is_joint :
-  cloth_joint locked_cloth_host_1 locked_cloth_host_2.
-Proof.
-  exact locked_cloth_host_joint.
-Qed.
-
-Lemma locked_cloth_AB_not_mode_d :
-  ~ cloth_joint locked_cloth_A locked_cloth_B.
-Proof.
-  exact locked_cloth_AB_not_joint.
-Qed.
-
-Lemma cloth_joint_members_untyped :
-  forall A B,
-    cloth_joint A B ->
-    first_slice_tag (MkClothoid A) = None /\
-    first_slice_tag (MkClothoid B) = None.
-Proof.
-  intros A B _. split; reflexivity.
-Qed.
-
-(* -------------------------------------------------------------------------- *)
-(* Named inhabitant: the function, not a factory.                             *)
-(* -------------------------------------------------------------------------- *)
-
-Lemma sqlmm_signed_tag_inhabits :
+Lemma tau_locked_chord :
   first_slice_tag (MkChord (mkChordEgg (mkPoint 0 0) (mkPoint 1 0)))
-    = Some TagLineString /\
-  (forall c, first_slice_tag (MkCirc c) = Some TagCircularString) /\
-  (forall c d, first_slice_tag (MkCirc c) = first_slice_tag (MkCirc d)) /\
-  first_slice_tag (MkClothoid locked_cloth_A) = None /\
-  (forall c, first_slice_tag (MkOutOfScope c) = None) /\
-  sqlmm_wkb_code TagCircularString = 8%nat /\
-  sqlmm_wkb_code TagCompoundCurve = 9%nat /\
-  (forall e, first_slice_tag e <> Some TagCompoundCurve) /\
-  cloth_joint locked_cloth_host_1 locked_cloth_host_2 /\
-  ~ cloth_joint locked_cloth_A locked_cloth_B /\
-  (forall t, sqlmm_signed_code (sqlmm_wkb_code t)) /\
-  (forall n, sqlmm_signed_code n -> sqlmm_hold_code n -> False) /\
-  (forall n, sqlmm_hold_code n -> tag_of_signed_wkb n = None).
+    = Some TagLineString.
 Proof.
-  split; [reflexivity|].
-  split; [intros c; reflexivity|].
-  split; [intros c d; reflexivity|].
-  split; [reflexivity|].
-  split; [intros c; reflexivity|].
-  split; [reflexivity|].
-  split; [reflexivity|].
-  split; [exact first_slice_not_compound|].
-  split; [exact locked_cloth_split_is_joint|].
-  split; [exact locked_cloth_AB_not_mode_d|].
-  split; [exact wkb_code_is_signed|].
-  split; [exact signed_code_not_hold|].
-  exact hold_has_no_signed_tag.
+  reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Emit stays QEX. Rocq does not inhabit WKT/WKB bytes.                       *)
+(* Emit is rung 4–5. Honest QEX: Rocq does not inhabit WKT/WKB bytes.         *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive SqlMmEmitCtor : Type :=
@@ -374,20 +415,32 @@ Qed.
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_signed_tag_qed_or_qex","title":"first_slice_tag is a function: MkChord to LINESTRING, every MkCirc to CIRCULARSTRING (CIRCLE CST is the same egg), MkClothoid and MkOutOfScope None; HOLD codes 13-21 have no signed tag (QED) or one egg inhabits two tags (QEX); discharged QED; COMPOUNDCURVE is not an egg tag; cloth_joint / circ_split_join stay interpolant joins; not a factory emit","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_signed_tag_qed_or_qex","title":"sqlmm_tau is a partial function: MkChord LINESTRING, MkCirc CIRCLE iff |sweep|=2pi else CIRCULARSTRING, MkClothoid CLOTHOID, MkOutOfScope none; unique; kappa LINESTRING=2 CIRCULARSTRING=8 CIRCLE/CLOTHOID none not 18; HOLD nats have no egg tag (QED) or one egg two tags (QEX); discharged QED; emit is rung 4-5","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
 Theorem ticket_sqlmm_signed_tag_qed_or_qex :
   ((forall c, first_slice_tag (MkChord c) = Some TagLineString) /\
-   (forall c, first_slice_tag (MkCirc c) = Some TagCircularString) /\
-   (forall c d, first_slice_tag (MkCirc c) = first_slice_tag (MkCirc d)) /\
-   (forall c, first_slice_tag (MkClothoid c) = None) /\
+   (forall k, first_slice_tag (MkClothoid k) = Some TagClothoid) /\
    (forall c, first_slice_tag (MkOutOfScope c) = None) /\
-   (forall e, first_slice_tag e <> Some TagCompoundCurve) /\
-   (forall e t, first_slice_tag e = Some t -> sqlmm_signed_tag t = true) /\
-   sqlmm_wkb_code TagCircularString = 8%nat /\
-   (forall n, sqlmm_hold_code n -> tag_of_signed_wkb n = None) /\
+   (forall e t1 t2,
+      first_slice_tag e = Some t1 ->
+      first_slice_tag e = Some t2 ->
+      t1 = t2) /\
+   (forall γ,
+      Rabs (circ_sweep γ) = 2 * PI ->
+      first_slice_tag (MkCirc γ) = Some TagCircle /\
+      first_slice_tag (MkCirc γ) <> Some TagCircularString) /\
+   first_slice_tag (MkCirc locked_sqlmm_quarter) = Some TagCircularString /\
+   first_slice_tag (MkCirc locked_sqlmm_full) = Some TagCircle /\
+   first_slice_tag (MkClothoid locked_cloth_A) = Some TagClothoid /\
+   first_slice_tag (MkChord (mkChordEgg (mkPoint 0 0) (mkPoint 1 0)))
+     = Some TagLineString /\
+   sqlmm_kappa TagLineString = Some 2%nat /\
+   sqlmm_kappa TagCircularString = Some 8%nat /\
+   sqlmm_kappa TagCircle = None /\
+   sqlmm_kappa TagClothoid = None /\
+   sqlmm_kappa TagCircle <> Some 18%nat /\
+   (forall t n, sqlmm_kappa t = Some n -> sqlmm_signed_code n) /\
    (forall n, sqlmm_signed_code n -> sqlmm_hold_code n -> False) /\
-   cloth_joint locked_cloth_host_1 locked_cloth_host_2 /\
-   ~ cloth_joint locked_cloth_A locked_cloth_B)
+   (forall n, sqlmm_hold_code n -> tag_of_signed_wkb n = None))
   \/
   (exists e t1 t2,
      first_slice_tag e = Some t1 /\
@@ -396,20 +449,25 @@ Theorem ticket_sqlmm_signed_tag_qed_or_qex :
 Proof.
   left.
   split; [intros c; reflexivity|].
+  split; [intros k; reflexivity|].
   split; [intros c; reflexivity|].
-  split; [intros c d; reflexivity|].
-  split; [intros c; reflexivity|].
-  split; [intros c; reflexivity|].
-  split; [exact first_slice_not_compound|].
-  split; [exact first_slice_some_is_signed|].
+  split; [exact tau_unique|].
+  split; [exact full_span_is_circle_not_cs|].
+  split; [exact tau_locked_quarter|].
+  split; [exact tau_locked_full|].
+  split; [exact tau_locked_cloth|].
+  split; [exact tau_locked_chord|].
   split; [reflexivity|].
-  split; [exact hold_has_no_signed_tag|].
+  split; [reflexivity|].
+  split; [reflexivity|].
+  split; [reflexivity|].
+  split; [exact kappa_circle_not_18|].
+  split; [exact kappa_signed_when_defined|].
   split; [exact signed_code_not_hold|].
-  split; [exact locked_cloth_split_is_joint|].
-  exact locked_cloth_AB_not_mode_d.
+  exact hold_has_no_signed_tag.
 Qed.
 
-(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_factory_emit_qed_or_qex","title":"Factory emits ANTLR-valid WKT and Table 15 WKB hex from a locked bag (QED) or WKT/WKB emit stays QEX because Rocq does not inhabit byte strings (QEX); discharged QEX; no new oracle keyword; not first-cook expand; not NURBS first-cook; not rho","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_factory_emit_qed_or_qex","title":"Factory emits ANTLR-valid WKT and Table 15 WKB hex from a locked bag (QED) or WKT/WKB emit stays QEX because Rocq does not inhabit byte strings (QEX); discharged QEX; emit is rung 4-5; no new oracle keyword; not first-cook expand; not NURBS first-cook; not rho","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
 Theorem ticket_sqlmm_factory_emit_qed_or_qex :
   (sqlmm_emit_inhabits EmitWktBytes /\
    sqlmm_emit_inhabits EmitWkbHex /\
@@ -433,17 +491,14 @@ Proof.
   exact sqlmm_no_rho.
 Qed.
 
-Print Assumptions wkb_code_is_signed.
 Print Assumptions signed_code_not_hold.
 Print Assumptions hold_has_no_signed_tag.
-Print Assumptions first_slice_tag_circ.
-Print Assumptions mkcirc_tag_irrel.
-Print Assumptions first_slice_tag_clothoid.
+Print Assumptions kappa_circle_not_18.
+Print Assumptions tau_unique.
+Print Assumptions full_span_is_circle_not_cs.
+Print Assumptions tau_locked_quarter.
+Print Assumptions tau_locked_full.
+Print Assumptions tau_locked_cloth.
 Print Assumptions out_of_scope_no_signed_tag.
-Print Assumptions first_slice_not_compound.
-Print Assumptions circ_split_mode_d.
-Print Assumptions locked_cloth_split_is_joint.
-Print Assumptions locked_cloth_AB_not_mode_d.
-Print Assumptions sqlmm_signed_tag_inhabits.
 Print Assumptions ticket_sqlmm_signed_tag_qed_or_qex.
 Print Assumptions ticket_sqlmm_factory_emit_qed_or_qex.

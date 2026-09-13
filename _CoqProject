@@ -173,10 +173,10 @@ theories/IntakeAngles.v
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
 # keyword. No Admitted.
 theories/IntakeWalker.v
-# ADR-0007 SQL/MM signed tag function (SqlMmSignedTag).
-# first_slice_tag on host eggs. Named tags are 1–12 only.
-# HOLD is codes, not constructors. Factory emit stays QEX.
-# Reuses cloth_joint / circ_split_join. Does not grow
+# ADR-0007 SQL/MM signed tag maps (SqlMmSignedTag).
+# τ: Egg ⇀ {LINESTRING, CIRCULARSTRING, CIRCLE, CLOTHOID}.
+# CIRCLE iff |sweep|=2π. κ: 2/8 or none (not 18/22).
+# HOLD is nats. Emit is rung 4–5 QEX. Does not grow
 # SheetHenCook. No new oracle keyword. No Admitted.
 theories/SqlMmSignedTag.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
