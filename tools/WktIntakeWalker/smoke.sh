@@ -55,6 +55,39 @@ check "DECLINE ID_Empty" "GEODESICSTRING EMPTY"
 check "DECLINE ID_BadPointCount" "GEODESICSTRING (0 0)"
 check "BAG hens=0,1,2,3 pts=0 0;5 0;5 0;7 0 chickens=0-1:MkChord,2-3:MkChord" \
   "COMPOUNDCURVE ((0 0, 5 0), GEODESICSTRING (5 0, 7 0))"
+
+# Famous Science/arXiv 1804.07389 fixtures (claimId 0007-famous-geodesicstring).
+# Bag-string of GEODESICSTRING equals LINESTRING on the same two points.
+# Not an Earth-length / ETOPO1 / ellipsoid / WKB-13 claim.
+check_same_ls_bag() {
+  local label="$1" wkt_g="$2" wkt_ls="$3"
+  local got_g got_ls
+  got_g="$(run "$wkt_g" || true)"
+  got_ls="$(run "$wkt_ls" || true)"
+  if [ "$got_g" != "$got_ls" ]; then
+    echo "FAIL $label bags differ"
+    echo "  GEODESICSTRING: $got_g"
+    echo "  LINESTRING:     $got_ls"
+    fail=1
+  elif [[ "$got_g" != BAG*"chickens=0-1:MkChord" ]]; then
+    echo "FAIL $label expected BAG ... chickens=0-1:MkChord"
+    echo "         got: $got_g"
+    fail=1
+  else
+    echo "OK $label $got_g"
+  fi
+}
+check "BAG hens=0,1 pts=66.6666666667 25.2833333333;162.2333333333 58.6166666667 chickens=0-1:MkChord" \
+  "GEODESICSTRING (66.6666666667 25.2833333333, 162.2333333333 58.6166666667)"
+check "BAG hens=0,1 pts=118.6333333333 24.55;-8.9166666667 37.0333333333 chickens=0-1:MkChord" \
+  "GEODESICSTRING (118.6333333333 24.55, -8.9166666667 37.0333333333)"
+check_same_ls_bag "famous-water" \
+  "GEODESICSTRING (66.6666666667 25.2833333333, 162.2333333333 58.6166666667)" \
+  "LINESTRING (66.6666666667 25.2833333333, 162.2333333333 58.6166666667)"
+check_same_ls_bag "famous-land" \
+  "GEODESICSTRING (118.6333333333 24.55, -8.9166666667 37.0333333333)" \
+  "LINESTRING (118.6333333333 24.55, -8.9166666667 37.0333333333)"
+
 check "DECLINE ID_SpiralCurve" "SPIRALCURVE EMPTY"
 check "BAG hens=0,1 pts=0 0;80 5.333333333333333 chickens=0-1:MkClothoid" "CLOTHOID (0, 0.005, 80)"
 check "BAG hens=0,1 pts=0 0;80 5.333333333333333 chickens=0-1:MkClothoid" \

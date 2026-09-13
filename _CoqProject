@@ -183,6 +183,10 @@ theories/SqlMmSignedTag.v
 # μ in IntakeWalker; joints / π / first-cook reuse here.
 # claimId 0007-intake-geodesic. No Admitted.
 theories/IntakeGeodesic.v
+# ADR-0007 famous GEODESICSTRING fixtures (IntakeFamousGeodesic).
+# Science/arXiv 1804.07389 locked endpoints on existing μ.
+# claimId 0007-famous-geodesicstring. No Admitted.
+theories/IntakeFamousGeodesic.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.

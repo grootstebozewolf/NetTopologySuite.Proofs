@@ -1717,3 +1717,53 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses NURBS–NURBS | `SheetHenCook.v : nurbs_nurbs_not_first_scope` |
 
 Witness: `0007-clothoid-first-cook`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is first cook only, not a noder and not Fresnel-as-noding.
+
+### Letter after Accept — famous GEODESICSTRING fixtures (2026-09-13)
+
+Needle AFTER intake geodesic (#744) + tools walker (#745).
+claimId `0007-famous-geodesicstring`. Fixtures + τ honesty
+park on existing μ. Not a new cook. Not a remint of
+`0007-intake-geodesic` / #744 / #745.
+
+Cite: Rohit Chabukswar and Adwait Kumar Mukherjee, “Longest
+straight line paths on water or land on the Earth”,
+arXiv:1804.07389. Science news on the longest ocean / land
+straight paths. Endpoints locked DMS → decimal lon lat
+(OGC order).
+
+**Water / sailable** Sonmiani PK → Karaginsky RU:
+
+`GEODESICSTRING (66.6666666667 25.2833333333, 162.2333333333 58.6166666667)`
+
+**Land / drivable** Quanzhou CN → Sagres PT:
+
+`GEODESICSTRING (118.6333333333 24.55, -8.9166666667 37.0333333333)`
+
+Each tagged CST is `TGeodesicString pts`. μ → `IntakeBag`
+whose chickens are `MkChord` only — the same bag as the
+matching `LINESTRING`. τ of the minted egg is LINESTRING;
+`cst_prod_tag` stays None; `T_signed` has no `TagGeodesic`;
+κ does not gain 13. Empty / singleton still `ID_Empty` /
+`ID_BadPointCount`; `SPIRALCURVE` still Declines.
+
+Java visitor (`tools/WktIntakeWalker/smoke.sh`) locks the
+same two rows (keep `GEODESICSTRING (0 0, 2 0)`). Bag-string
+of each WKT equals the LineString bag for those points.
+
+**QED.** Both fixtures bag. Same bag as LINESTRING. τ honesty.
+Empty / singleton / spiral Decline names stand.
+
+**QEX (named — do not discharge).** Earth great-circle length
+(~32090 km / ~11241 km) or angular span (~288°35′ / ~101°6′);
+ETOPO1 land/water mask / “longest uninterrupted”; sphere vs
+WGS84 ellipsoid / geoid; optimality of branch-and-bound;
+emit of GEODESICSTRING bytes / WKB 13 as signed I/O.
+
+Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
+
+| Stop | Arm | Lemma |
+|------|-----|-------|
+| `IntakeFamousGeodesic.v : ticket_0007_famous_geodesicstring_qed_or_qex` | **QED** — water + land fixtures bag as `MkChord`; same bag as LINESTRING; τ=LINESTRING; `cst_prod_tag` None; no `TagGeodesic`; κ not 13; empty/singleton/spiral Decline | `IntakeFamousGeodesic.v : famous_water_same_bag_as_ls`, `IntakeFamousGeodesic.v : famous_land_same_bag_as_ls`, `IntakeFamousGeodesic.v : famous_water_tau`, `IntakeFamousGeodesic.v : famous_no_tag_geodesic` |
+| `IntakeFamousGeodesic.v : famous_earth_length_missing` (+ `famous_etopo1_missing`, `famous_sphere_vs_wgs84_missing`, `famous_branch_bound_missing`, `famous_emit_wkb13_missing`) | **QEX** — Earth length / ETOPO1 / WGS84 / branch-and-bound / emit-WKB-13 parked | `IntakeFamousGeodesic.v : famous_geodesic_qex_inhabits` |
+
+Witness: `0007-famous-geodesicstring`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is fixtures + honesty, not Earth geodesic γ and not first-cook expand.
