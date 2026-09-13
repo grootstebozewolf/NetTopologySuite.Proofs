@@ -21,6 +21,9 @@
    locked_cloth_eval_neq_endpoint_chord: γ(ti) ≠ lerp(γ(0),γ(1))(ti)
    (fails if cloth_eval is endpoint lerp). try_cook_hit = Some. bent ≠ zero-κ.
 
+   Mode D host joint; first-cook interior Hit stays A×B;
+   this is split-children meet, not example5.
+
    MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
    stays Decline. NURBS / SIN / ellipse / spiral / geodesic stay
    out of first cook. ρ / Campaign / Fresnel-as-noding stay parked.
@@ -362,6 +365,115 @@ Proof.
   exact cook_loop_is_obligation.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Mode D: consecutive host ClothoidEgg joints on cloth_eval.                 *)
+(* Parallel host joint, not a new interpolant. Joint IHit is concat           *)
+(* incidence (t=1 then t=0), not interior I_ok Hit. First-cook interior       *)
+(* Hit stays locked_cloth_A × locked_cloth_B. This is cloth_split children    *)
+(* of locked_cloth_A at locked_cloth_ti (they meet via cloth_split_join).     *)
+(* Not A×B as the joint (those meet in the interior). Not example5.           *)
+(* Not two intake clothoids + LS. No CompoundEgg / compound_eval.             *)
+(* Do not remint sidecar I_ok_cloth as host I_ok.                             *)
+(* -------------------------------------------------------------------------- *)
+
+Definition cloth_joint (A B : ClothoidEgg) : Prop :=
+  cloth_eval A 1 = cloth_eval B 0.
+
+Definition cloth_joint_hit (A B : ClothoidEgg) : IResult :=
+  IHit (cloth_eval A 1) 1 0.
+
+Lemma cloth_split_cloth_joint :
+  forall c t,
+    cloth_joint (fst (cloth_split c t)) (snd (cloth_split c t)).
+Proof.
+  intros c t.
+  unfold cloth_joint.
+  destruct (cloth_split_join c t) as [Hl Hr].
+  rewrite Hl, Hr.
+  reflexivity.
+Qed.
+
+(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"cloth_joint_end","title":"Mode D clothoid host joint: two consecutive host ClothoidEggs meet at cloth_eval A 1 = cloth_eval B 0; concat incidence not interior I_ok Hit; first-cook Hit stays A times B","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
+Theorem cloth_joint_end :
+  forall A B : ClothoidEgg,
+    cloth_joint A B ->
+    cloth_eval A 1 = cloth_eval B 0.
+Proof.
+  intros A B H.
+  unfold cloth_joint in H.
+  exact H.
+Qed.
+
+(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"cloth_joint_is_endpoint_hit","title":"Mode D clothoid joint IResult is IHit (cloth_eval A 1) 1 0 under cloth_joint; concat incidence not interior I_ok Hit; not host I_ok remint","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
+Theorem cloth_joint_is_endpoint_hit :
+  forall A B : ClothoidEgg,
+    cloth_joint A B ->
+    cloth_joint_hit A B = IHit (cloth_eval A 1) 1 0
+    /\ cloth_joint_hit A B = IHit (cloth_eval B 0) 1 0.
+Proof.
+  intros A B H.
+  unfold cloth_joint_hit.
+  split; [reflexivity|].
+  unfold cloth_joint in H.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Definition locked_cloth_host_1 : ClothoidEgg :=
+  fst (cloth_split locked_cloth_A locked_cloth_ti).
+
+Definition locked_cloth_host_2 : ClothoidEgg :=
+  snd (cloth_split locked_cloth_A locked_cloth_ti).
+
+Lemma locked_cloth_host_joint :
+  cloth_joint locked_cloth_host_1 locked_cloth_host_2.
+Proof.
+  unfold locked_cloth_host_1, locked_cloth_host_2.
+  apply cloth_split_cloth_joint.
+Qed.
+
+Lemma locked_cloth_host_joint_end :
+  cloth_eval locked_cloth_host_1 1 = cloth_eval locked_cloth_host_2 0.
+Proof.
+  apply cloth_joint_end.
+  exact locked_cloth_host_joint.
+Qed.
+
+Lemma locked_cloth_host_joint_is_endpoint_hit :
+  cloth_joint_hit locked_cloth_host_1 locked_cloth_host_2
+    = IHit (cloth_eval locked_cloth_host_1 1) 1 0
+  /\ cloth_joint_hit locked_cloth_host_1 locked_cloth_host_2
+       = IHit (cloth_eval locked_cloth_host_2 0) 1 0.
+Proof.
+  destruct (cloth_joint_is_endpoint_hit locked_cloth_host_1
+              locked_cloth_host_2 locked_cloth_host_joint) as [H1 H2].
+  split; [exact H1|exact H2].
+Qed.
+
+(* First-cook interior Hit stays A×B. Those meet in the interior, not
+   as a Mode D endpoint joint. *)
+Lemma locked_cloth_AB_not_joint :
+  ~ cloth_joint locked_cloth_A locked_cloth_B.
+Proof.
+  unfold cloth_joint.
+  intros H.
+  apply (f_equal px) in H.
+  unfold locked_cloth_A, locked_cloth_B, mk_cloth,
+         cloth_eval, cloth_eval_seed in H.
+  cbn [px py cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0] in H.
+  lra.
+Qed.
+
+Lemma locked_cloth_joint_hit_neq_first_cook_hit :
+  cloth_joint_hit locked_cloth_host_1 locked_cloth_host_2
+    <> locked_mkclothoid_hit.
+Proof.
+  unfold cloth_joint_hit, locked_mkclothoid_hit.
+  intros H.
+  inversion H.
+  lra.
+Qed.
+
 Print Assumptions cloth_eval_at_0.
 Print Assumptions cloth_eval_at_1_mk.
 Print Assumptions cloth_wf_of_p1.
@@ -391,3 +503,11 @@ Print Assumptions interpolant_pair_mkclothoid.
 Print Assumptions mkclothoid_mixed_still_decline.
 Print Assumptions locked_intake_egg_self_hit.
 Print Assumptions ticket_0007_clothoid_first_cook_qed_or_qex.
+Print Assumptions cloth_split_cloth_joint.
+Print Assumptions cloth_joint_end.
+Print Assumptions cloth_joint_is_endpoint_hit.
+Print Assumptions locked_cloth_host_joint.
+Print Assumptions locked_cloth_host_joint_end.
+Print Assumptions locked_cloth_host_joint_is_endpoint_hit.
+Print Assumptions locked_cloth_AB_not_joint.
+Print Assumptions locked_cloth_joint_hit_neq_first_cook_hit.
