@@ -2895,6 +2895,12 @@ theories/IntakeAngles.v
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
 # keyword. No Admitted.
 theories/IntakeWalker.v
+# ADR-0007 SQL/MM signed tag function (SqlMmSignedTag).
+# first_slice_tag on host eggs. Named tags are 1–12 only.
+# HOLD is codes, not constructors. Factory emit stays QEX.
+# Reuses cloth_joint / circ_split_join. Does not grow
+# SheetHenCook. No new oracle keyword. No Admitted.
+theories/SqlMmSignedTag.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
