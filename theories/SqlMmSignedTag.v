@@ -114,21 +114,36 @@ Definition tag_of_signed_wkb (n : nat) : option SqlMmTag :=
   | _ => None
   end.
 
+Lemma leb_true_le :
+  forall n m, Nat.leb n m = true -> (n <= m)%nat.
+Proof.
+  intros n m H. exact (proj1 (Nat.leb_le n m) H).
+Qed.
+
+Lemma le_leb_true :
+  forall n m, (n <= m)%nat -> Nat.leb n m = true.
+Proof.
+  intros n m H. exact (proj2 (Nat.leb_le n m) H).
+Qed.
+
 Lemma wkb_code_is_signed :
   forall t, sqlmm_signed_code (sqlmm_wkb_code t).
 Proof.
   intros t.
   destruct t; unfold sqlmm_signed_code, sqlmm_wkb_code; split;
-    apply Nat.leb_le; reflexivity.
+    apply leb_true_le; reflexivity.
 Qed.
 
 Lemma le_12_excl_13 :
   forall n, (n <= 12)%nat -> (13 <= n)%nat -> False.
 Proof.
   intros n H12 H13.
-  apply (Nat.le_ngt n 12 H12).
-  apply (proj1 (Nat.le_succ_l 12 n)).
-  exact H13.
+  exact (proj1 (Nat.le_ngt n 12) H12 (proj1 (Nat.le_succ_l 12 n) H13)).
+Qed.
+
+Lemma le_13_18 : (13 <= 18)%nat.
+Proof.
+  apply leb_true_le. reflexivity.
 Qed.
 
 Lemma signed_code_not_hold :
@@ -136,19 +151,16 @@ Lemma signed_code_not_hold :
 Proof.
   intros n [_ Hhi] [[A _]|[C _]].
   - exact (le_12_excl_13 n Hhi A).
-  - apply (le_12_excl_13 n Hhi).
-    apply Nat.le_trans with (m := 18%nat).
-    + apply Nat.leb_le; reflexivity.
-    + exact C.
+  - exact (le_12_excl_13 n Hhi (Nat.le_trans 13 18 n le_13_18 C)).
 Qed.
 
 Lemma tag_of_signed_wkb_none_ge_13 :
   forall n, (13 <= n)%nat -> tag_of_signed_wkb n = None.
 Proof.
   intros n Hn.
-  apply Nat.leb_le in Hn.
+  pose proof (le_leb_true 13 n Hn) as Hleb.
   unfold tag_of_signed_wkb.
-  do 13 (destruct n as [|n]; [discriminate Hn|]).
+  do 13 (destruct n as [|n]; [discriminate Hleb|]).
   reflexivity.
 Qed.
 
@@ -158,9 +170,7 @@ Proof.
   intros n [[A _]|[C _]].
   - apply tag_of_signed_wkb_none_ge_13. exact A.
   - apply tag_of_signed_wkb_none_ge_13.
-    apply Nat.le_trans with (m := 18%nat).
-    + apply Nat.leb_le; reflexivity.
-    + exact C.
+    exact (Nat.le_trans 13 18 n le_13_18 C).
 Qed.
 
 Lemma tag_of_wkb_roundtrip :
