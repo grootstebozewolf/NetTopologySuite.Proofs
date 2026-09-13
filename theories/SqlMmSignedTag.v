@@ -372,32 +372,59 @@ Proof.
   exact locked_full_span.
 Qed.
 
+Lemma pi_half_lt_pi : PI / 2 < PI.
+Proof.
+  pose proof PI_RGT_0 as HP.
+  replace (PI / 2) with ((1 / 2) * PI) by field.
+  rewrite <- (Rmult_1_l PI) at 2.
+  apply Rmult_lt_compat_r; [exact HP|].
+  lra.
+Qed.
+
+Lemma pi_lt_two_pi : PI < 2 * PI.
+Proof.
+  pose proof PI_RGT_0 as HP.
+  rewrite <- (Rmult_1_l PI) at 1.
+  apply Rmult_lt_compat_r; [exact HP|].
+  lra.
+Qed.
+
+Lemma pi_half_lt_two_pi : PI / 2 < 2 * PI.
+Proof.
+  apply Rlt_trans with PI.
+  - exact pi_half_lt_pi.
+  - exact pi_lt_two_pi.
+Qed.
+
 Lemma pi_half_neq_two_pi : PI / 2 <> 2 * PI.
 Proof.
-  intro H.
+  apply Rlt_not_eq.
+  exact pi_half_lt_two_pi.
+Qed.
+
+Lemma neg_two_pi_lt_0 : - (2 * PI) < 0.
+Proof.
   pose proof PI_RGT_0 as HP.
-  assert (PI = 0) as Z.
-  { apply (Rmult_eq_reg_l 3); [lra|].
-    transitivity (2 * (2 * PI) - PI).
-    - replace (2 * (2 * PI)) with (2 * (PI / 2)) by (rewrite <- H; reflexivity).
-      field.
-    - ring. }
-  rewrite Z in HP.
-  exact (Rlt_irrefl 0 HP).
+  rewrite <- Ropp_0.
+  apply Ropp_lt_contravar.
+  apply Rmult_lt_0_compat; [lra|exact HP].
+Qed.
+
+Lemma zero_lt_pi_half : 0 < PI / 2.
+Proof.
+  pose proof PI_RGT_0 as HP.
+  replace (PI / 2) with ((1 / 2) * PI) by field.
+  apply Rmult_lt_0_compat; [lra|exact HP].
 Qed.
 
 Lemma pi_half_neq_neg_two_pi : PI / 2 <> - (2 * PI).
 Proof.
   intro H.
-  pose proof PI_RGT_0 as HP.
-  assert (PI = 0) as Z.
-  { apply (Rmult_eq_reg_l 5); [lra|].
-    transitivity (PI - 2 * (- (2 * PI))).
-    - ring.
-    - replace (- (2 * PI)) with (PI / 2) by (rewrite H; reflexivity).
-      field. }
-  rewrite Z in HP.
-  exact (Rlt_irrefl 0 HP).
+  apply (Rlt_not_eq (- (2 * PI)) (PI / 2)).
+  - apply Rlt_trans with 0.
+    + exact neg_two_pi_lt_0.
+    + exact zero_lt_pi_half.
+  - rewrite H. reflexivity.
 Qed.
 
 Lemma locked_quarter_not_full :
