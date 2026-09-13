@@ -372,11 +372,48 @@ Proof.
   exact locked_full_span.
 Qed.
 
+Lemma pi_half_neq_two_pi : PI / 2 <> 2 * PI.
+Proof.
+  intro H.
+  pose proof PI_RGT_0 as HP.
+  apply (Rmult_eq_compat_l 2) in H.
+  replace (2 * (PI / 2)) with PI in H by field.
+  replace (2 * (2 * PI)) with (4 * PI) in H by ring.
+  apply (Rplus_eq_compat_l (- PI)) in H.
+  replace (- PI + PI) with 0 in H by ring.
+  replace (- PI + 4 * PI) with (3 * PI) in H by ring.
+  apply Rlt_not_eq in HP.
+  apply HP.
+  apply (Rmult_eq_reg_l 3); [lra|].
+  rewrite Rmult_0_r, H.
+  ring.
+Qed.
+
+Lemma pi_half_neq_neg_two_pi : PI / 2 <> - (2 * PI).
+Proof.
+  intro H.
+  pose proof PI_RGT_0 as HP.
+  apply (Rmult_eq_compat_l 2) in H.
+  replace (2 * (PI / 2)) with PI in H by field.
+  replace (2 * - (2 * PI)) with (-4 * PI) in H by ring.
+  apply (Rplus_eq_compat_l (4 * PI)) in H.
+  replace (4 * PI + PI) with (5 * PI) in H by ring.
+  replace (4 * PI + -4 * PI) with 0 in H by ring.
+  apply Rlt_not_eq in HP.
+  apply HP.
+  apply (Rmult_eq_reg_l 5); [lra|].
+  rewrite Rmult_0_r.
+  rewrite <- H.
+  ring.
+Qed.
+
 Lemma locked_quarter_not_full :
   ~ circ_full_span locked_sqlmm_quarter.
 Proof.
   unfold circ_full_span, locked_sqlmm_quarter.
-  intros [H|H]; pose proof PI_RGT_0; lra.
+  intros [H|H].
+  - exact (pi_half_neq_two_pi H).
+  - exact (pi_half_neq_neg_two_pi H).
 Qed.
 
 Lemma locked_quarter_not_circle :
@@ -429,13 +466,7 @@ Lemma locked_ls_cs_mode_d :
   mode_d_joint (MkChord locked_sqlmm_ls_to_circ) (MkCirc locked_sqlmm_quarter).
 Proof.
   unfold mode_d_joint, egg_end, egg_start, locked_sqlmm_ls_to_circ.
-  unfold chord_eval. cbn [ce_p0 ce_p1 px py].
-  replace (1 - 1) with 0 by ring.
-  replace (0 * px (mkPoint 0 0) + 1 * px (circ_eval locked_sqlmm_quarter 0))
-    with (px (circ_eval locked_sqlmm_quarter 0)) by ring.
-  replace (0 * py (mkPoint 0 0) + 1 * py (circ_eval locked_sqlmm_quarter 0))
-    with (py (circ_eval locked_sqlmm_quarter 0)) by ring.
-  destruct (circ_eval locked_sqlmm_quarter 0).
+  rewrite chord_eval_at_1.
   reflexivity.
 Qed.
 
@@ -654,7 +685,10 @@ Print Assumptions cloth_joint_is_mode_d.
 Print Assumptions cs_joint_circ_is_mode_d.
 Print Assumptions cloth_joint_inhabits_compound.
 Print Assumptions circ_split_cs_joint_circ.
+Print Assumptions pi_half_neq_two_pi.
+Print Assumptions pi_half_neq_neg_two_pi.
 Print Assumptions locked_full_inhabits_circle.
+Print Assumptions locked_quarter_not_full.
 Print Assumptions locked_quarter_not_circle.
 Print Assumptions locked_cloth_split_compound.
 Print Assumptions locked_cloth_AB_no_compound.
