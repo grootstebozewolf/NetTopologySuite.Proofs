@@ -115,15 +115,13 @@ _Avoid_: Fresnel noding, Halley noding, mixed first cook, NURBS
 first cook, Campaign I, new oracle keyword
 
 **SQL/MM signed tag** (ADR-0007, claimId `0007-sqlmm-signed-tag`):
-Rung 3 is a pair of maps. `τ = first_slice_tag : Egg ⇀ T_signed`
-with `T_signed = {LINESTRING, CIRCULARSTRING, CIRCLE, CLOTHOID}`.
-`MkChord` → LINESTRING; `MkCirc` → CIRCLE iff `|sweep|=2π` else
-CIRCULARSTRING; `MkClothoid` → CLOTHOID; `MkOutOfScope` undefined.
-`κ` is Table 15: LINESTRING=2, CIRCULARSTRING=8, CIRCLE/CLOTHOID
-none (not 18/22). HOLD is nats `{13..17}∪{18..21}`. Emit is
-rung 4–5 (QEX).
-_Avoid_: inhabit-as-relation, Circle-as-18, dual inhabit, new
-oracle keyword
+Rungs 3–6 of τ=μ. `τ = first_slice_tag` on eggs; `μ = intake_map`
+on CSTs. They do not share a domain. After μ mints a singleton
+bag, `τ(e)=ρ(π(c))`. Full-span CS and CIRCLE share one MkCirc;
+τ of that egg is CIRCLE. `κ` is 2/8 or none. Emit / WKT parse
+stay QEX.
+_Avoid_: τ=π on full-span CIRCULARSTRING text, Circle-as-18,
+compound-as-τ, new oracle keyword
 
 **ISO validity**:
 Every spec "shall" beyond representability, owned by arc-aware `ST_IsValid`:
