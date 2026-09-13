@@ -376,35 +376,28 @@ Lemma pi_half_neq_two_pi : PI / 2 <> 2 * PI.
 Proof.
   intro H.
   pose proof PI_RGT_0 as HP.
-  apply (Rmult_eq_compat_l 2) in H.
-  replace (2 * (PI / 2)) with PI in H by field.
-  replace (2 * (2 * PI)) with (4 * PI) in H by ring.
-  apply (Rplus_eq_compat_l (- PI)) in H.
-  replace (- PI + PI) with 0 in H by ring.
-  replace (- PI + 4 * PI) with (3 * PI) in H by ring.
-  apply Rlt_not_eq in HP.
-  apply HP.
-  apply (Rmult_eq_reg_l 3); [lra|].
-  rewrite Rmult_0_r, H.
-  ring.
+  assert (PI = 0) as Z.
+  { apply (Rmult_eq_reg_l 3); [lra|].
+    transitivity (2 * (2 * PI) - PI).
+    - replace (2 * (2 * PI)) with (2 * (PI / 2)) by (rewrite <- H; reflexivity).
+      field.
+    - ring. }
+  rewrite Z in HP.
+  exact (Rlt_irrefl 0 HP).
 Qed.
 
 Lemma pi_half_neq_neg_two_pi : PI / 2 <> - (2 * PI).
 Proof.
   intro H.
   pose proof PI_RGT_0 as HP.
-  apply (Rmult_eq_compat_l 2) in H.
-  replace (2 * (PI / 2)) with PI in H by field.
-  replace (2 * - (2 * PI)) with (-4 * PI) in H by ring.
-  apply (Rplus_eq_compat_l (4 * PI)) in H.
-  replace (4 * PI + PI) with (5 * PI) in H by ring.
-  replace (4 * PI + -4 * PI) with 0 in H by ring.
-  apply Rlt_not_eq in HP.
-  apply HP.
-  apply (Rmult_eq_reg_l 5); [lra|].
-  rewrite Rmult_0_r.
-  rewrite <- H.
-  ring.
+  assert (PI = 0) as Z.
+  { apply (Rmult_eq_reg_l 5); [lra|].
+    transitivity (PI - 2 * (- (2 * PI))).
+    - ring.
+    - replace (- (2 * PI)) with (PI / 2) by (rewrite H; reflexivity).
+      field. }
+  rewrite Z in HP.
+  exact (Rlt_irrefl 0 HP).
 Qed.
 
 Lemma locked_quarter_not_full :
