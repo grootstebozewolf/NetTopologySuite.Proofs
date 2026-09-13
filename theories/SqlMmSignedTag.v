@@ -51,9 +51,8 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lia.
+From Stdlib Require Import Reals PeanoNat.
 From NTS.Proofs Require Import Distance SheetHenCook ClothoidCookMkClothoid.
-Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
 (* Named tags are exactly the codes JTS #7 signs: SFA 1–7 and 8–12.           *)
@@ -118,23 +117,50 @@ Definition tag_of_signed_wkb (n : nat) : option SqlMmTag :=
 Lemma wkb_code_is_signed :
   forall t, sqlmm_signed_code (sqlmm_wkb_code t).
 Proof.
-  intros t. destruct t; split; lia.
+  intros t.
+  destruct t; unfold sqlmm_signed_code, sqlmm_wkb_code; split;
+    apply Nat.leb_le; reflexivity.
+Qed.
+
+Lemma le_12_excl_13 :
+  forall n, (n <= 12)%nat -> (13 <= n)%nat -> False.
+Proof.
+  intros n H12 H13.
+  apply (Nat.le_ngt n 12 H12).
+  apply (proj1 (Nat.le_succ_l 12 n)).
+  exact H13.
 Qed.
 
 Lemma signed_code_not_hold :
   forall n, sqlmm_signed_code n -> sqlmm_hold_code n -> False.
 Proof.
-  intros n [Hlo Hhi] [[A B]|[C D]]; lia.
+  intros n [_ Hhi] [[A _]|[C _]].
+  - exact (le_12_excl_13 n Hhi A).
+  - apply (le_12_excl_13 n Hhi).
+    apply Nat.le_trans with (m := 18%nat).
+    + apply Nat.leb_le; reflexivity.
+    + exact C.
+Qed.
+
+Lemma tag_of_signed_wkb_none_ge_13 :
+  forall n, (13 <= n)%nat -> tag_of_signed_wkb n = None.
+Proof.
+  intros n Hn.
+  apply Nat.leb_le in Hn.
+  unfold tag_of_signed_wkb.
+  do 13 (destruct n as [|n]; [discriminate Hn|]).
+  reflexivity.
 Qed.
 
 Lemma hold_has_no_signed_tag :
   forall n, sqlmm_hold_code n -> tag_of_signed_wkb n = None.
 Proof.
-  intros n Hhold.
-  assert ((n = 13 \/ n = 14 \/ n = 15 \/ n = 16 \/ n = 17 \/
-           n = 18 \/ n = 19 \/ n = 20 \/ n = 21)%nat) as Hn.
-  { unfold sqlmm_hold_code in Hhold. lia. }
-  destruct Hn as [E|[E|[E|[E|[E|[E|[E|[E|E]]]]]]]]; subst n; reflexivity.
+  intros n [[A _]|[C _]].
+  - apply tag_of_signed_wkb_none_ge_13. exact A.
+  - apply tag_of_signed_wkb_none_ge_13.
+    apply Nat.le_trans with (m := 18%nat).
+    + apply Nat.leb_le; reflexivity.
+    + exact C.
 Qed.
 
 Lemma tag_of_wkb_roundtrip :
@@ -211,8 +237,8 @@ Qed.
 
 Lemma circ_split_mode_d :
   forall c t,
-    circ_eval (fst (circ_split c t)) 1 =
-    circ_eval (snd (circ_split c t)) 0.
+    circ_eval (fst (circ_split c t)) 1%R =
+    circ_eval (snd (circ_split c t)) 0%R.
 Proof.
   intros c t.
   destruct (circ_split_join c t) as [Hl Hr].
