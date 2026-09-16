@@ -72,7 +72,7 @@ Definition leftover_bag_term_measure (b : leftover_span_bag) (n : nat) : Prop :=
   exists hits, leftover_hit_listing b hits /\ length hits = n.
 
 Lemma leftover_bag_term_measure_nat_wf :
-  well_founded lt.
+  well_founded Nat.lt.
 Proof.
   exact Nat.lt_wf_0.
 Qed.
@@ -190,11 +190,13 @@ Proof.
   - apply NoDup_incl_length.
     + destruct L1 as [_ [_ N1]]. exact N1.
     + intros x Hx.
-      eapply leftover_hit_listing_same_in; [exact L1|exact L2|exact Hx].
+      apply (proj1 (leftover_hit_listing_same_in b h1 h2 x L1 L2)).
+      exact Hx.
   - apply NoDup_incl_length.
     + destruct L2 as [_ [_ N2]]. exact N2.
     + intros x Hx.
-      eapply leftover_hit_listing_same_in; [exact L2|exact L1|exact Hx].
+      apply (proj1 (leftover_hit_listing_same_in b h2 h1 x L2 L1)).
+      exact Hx.
 Qed.
 
 Lemma leftover_bag_term_measure_hit_pos :
@@ -504,7 +506,7 @@ Theorem ticket_0007_rho_bag_term_measure_qed_or_qex :
    leftover_pair_decline locked_quad_bag 0 2 /\
    leftover_bag_term_measure locked_quad_bag 0 /\
    lbag_sum locked_quad_bag = lbag_sum locked_parent_bag /\
-   well_founded lt)
+   well_founded Nat.lt)
   \/ leftover_quad_width_decreases.
 Proof.
   left.
