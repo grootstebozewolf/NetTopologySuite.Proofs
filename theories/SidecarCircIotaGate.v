@@ -343,6 +343,134 @@ Qed.
 (* Exclusive + complete.                                                      *)
 (* -------------------------------------------------------------------------- *)
 
+Definition iota_cell_pred (w1 w2 : CircChordWin) (o : IResult)
+  (c : IotaGateCell) : Prop :=
+  match c with
+  | CellChordChord => sort_chord_chord w1 w2
+  | CellCircCirc => sort_circ_circ w1 w2
+  | CellMuJoint =>
+      sort_mixed w1 w2 /\
+      (exists p ti tj, o = IHit p ti tj /\ mixed_joint_params ti tj)
+  | CellIotaCand =>
+      sort_mixed w1 w2 /\
+      (exists p ti tj, o = IHit p ti tj /\ interior_span_params ti tj)
+  | CellMiss => sort_mixed w1 w2 /\ o = IEmpty
+  | CellDecline =>
+      sort_mixed w1 w2 /\
+      (o = IDecline \/
+       exists p ti tj,
+         o = IHit p ti tj /\
+         ~ mixed_joint_params ti tj /\
+         ~ interior_span_params ti tj)
+  end.
+
+Lemma IotaGate_iff_pred :
+  forall w1 w2 o c,
+    IotaGate w1 w2 o c <-> iota_cell_pred w1 w2 o c.
+Proof.
+  intros w1 w2 o c.
+  split.
+  - intros H. destruct H; simpl.
+    + exact H.
+    + exact H.
+    + split; [exact H|]. exists p, ti, tj. split; [exact H0 | exact H1].
+    + split; [exact H|]. exists p, ti, tj. split; [exact H0 | exact H1].
+    + split; [exact H | exact H0].
+    + split; [exact H|]. right. exists p, ti, tj.
+      split; [exact H0 | split; [exact H1 | exact H2]].
+    + split; [exact H|]. left. exact H0.
+  - intros H. destruct c; simpl in H.
+    + constructor. exact H.
+    + constructor. exact H.
+    + destruct H as [Hmx [p [ti [tj [Heq Hj]]]]].
+      eapply GateMuJoint; [exact Hmx | exact Heq | exact Hj].
+    + destruct H as [Hmx [p [ti [tj [Heq Hi]]]]].
+      eapply GateIotaCand; [exact Hmx | exact Heq | exact Hi].
+    + destruct H as [Hmx Heq]. constructor; [exact Hmx | exact Heq].
+    + destruct H as [Hmx [Hdec | [p [ti [tj [Heq [Hnj Hni]]]]]]].
+      * apply GateDeclineTag; [exact Hmx | exact Hdec].
+      * eapply GateDeclineHit; [exact Hmx | exact Heq | exact Hnj | exact Hni].
+Qed.
+
+Lemma iota_cell_pred_exclusive :
+  forall w1 w2 o c1 c2,
+    iota_cell_pred w1 w2 o c1 ->
+    iota_cell_pred w1 w2 o c2 ->
+    c1 = c2.
+Proof.
+  intros w1 w2 o c1 c2 H1 H2.
+  destruct c1; destruct c2; simpl in H1, H2;
+    try reflexivity;
+    try (exfalso; eapply sort_cc_not_aa; eassumption);
+    try (exfalso; eapply sort_cc_not_mixed;
+         [exact H1 | destruct H2 as [Hmx _]; exact Hmx]);
+    try (exfalso; eapply sort_cc_not_mixed;
+         [exact H2 | destruct H1 as [Hmx _]; exact Hmx]);
+    try (exfalso; eapply sort_aa_not_mixed;
+         [exact H1 | destruct H2 as [Hmx _]; exact Hmx]);
+    try (exfalso; eapply sort_aa_not_mixed;
+         [exact H2 | destruct H1 as [Hmx _]; exact Hmx]).
+  - (* Mu / Iota *)
+    destruct H1 as [_ [p [ti [tj [Heq Hj]]]]].
+    destruct H2 as [_ [p' [ti' [tj' [Heq' Hi]]]]].
+    rewrite Heq in Heq'. inversion Heq'; subst.
+    exfalso. exact (joint_not_interior ti' tj' Hj Hi).
+  - (* Mu / Miss *)
+    destruct H1 as [_ [p [ti [tj [Heq _]]]]].
+    destruct H2 as [_ Heq']. rewrite Heq in Heq'. discriminate.
+  - (* Mu / Decline *)
+    destruct H1 as [_ [p [ti [tj [Heq Hj]]]]].
+    destruct H2 as [_ [Hdec | [p' [ti' [tj' [Heq' [Hnj _]]]]]]].
+    + rewrite Heq in Hdec. discriminate.
+    + rewrite Heq in Heq'. inversion Heq'; subst.
+      exfalso. exact (Hnj Hj).
+  - (* Iota / Mu *)
+    destruct H1 as [_ [p [ti [tj [Heq Hi]]]]].
+    destruct H2 as [_ [p' [ti' [tj' [Heq' Hj]]]]].
+    rewrite Heq in Heq'. inversion Heq'; subst.
+    exfalso. exact (joint_not_interior ti' tj' Hj Hi).
+  - (* Iota / Miss *)
+    destruct H1 as [_ [p [ti [tj [Heq _]]]]].
+    destruct H2 as [_ Heq']. rewrite Heq in Heq'. discriminate.
+  - (* Iota / Decline *)
+    destruct H1 as [_ [p [ti [tj [Heq Hi]]]]].
+    destruct H2 as [_ [Hdec | [p' [ti' [tj' [Heq' [_ Hni]]]]]]].
+    + rewrite Heq in Hdec. discriminate.
+    + rewrite Heq in Heq'. inversion Heq'; subst.
+      exfalso. exact (Hni Hi).
+  - (* Miss / Mu *)
+    destruct H1 as [_ Heq].
+    destruct H2 as [_ [p [ti [tj [Heq' _]]]]].
+    rewrite Heq' in Heq. discriminate.
+  - (* Miss / Iota *)
+    destruct H1 as [_ Heq].
+    destruct H2 as [_ [p [ti [tj [Heq' _]]]]].
+    rewrite Heq' in Heq. discriminate.
+  - (* Miss / Decline *)
+    destruct H1 as [_ Heq].
+    destruct H2 as [_ [Hdec | [p [ti [tj [Heq' _]]]]]].
+    + rewrite Heq in Hdec. discriminate.
+    + rewrite Heq' in Heq. discriminate.
+  - (* Decline / Mu *)
+    destruct H1 as [_ [Hdec | [p [ti [tj [Heq [Hnj _]]]]]]].
+    + destruct H2 as [_ [p' [ti' [tj' [Heq' _]]]]].
+      rewrite Heq' in Hdec. discriminate.
+    + destruct H2 as [_ [p' [ti' [tj' [Heq' Hj]]]]].
+      rewrite Heq in Heq'. inversion Heq'; subst.
+      exfalso. exact (Hnj Hj).
+  - (* Decline / Iota *)
+    destruct H1 as [_ [Hdec | [p [ti [tj [Heq [_ Hni]]]]]]].
+    + destruct H2 as [_ [p' [ti' [tj' [Heq' _]]]]].
+      rewrite Heq' in Hdec. discriminate.
+    + destruct H2 as [_ [p' [ti' [tj' [Heq' Hi]]]]].
+      rewrite Heq in Heq'. inversion Heq'; subst.
+      exfalso. exact (Hni Hi).
+  - (* Decline / Miss *)
+    destruct H1 as [_ [Hdec | [p [ti [tj [Heq _]]]]]].
+    + destruct H2 as [_ Heq']. rewrite Heq' in Hdec. discriminate.
+    + destruct H2 as [_ Heq']. rewrite Heq in Heq'. discriminate.
+Qed.
+
 Lemma iota_gate_exclusive :
   forall w1 w2 o c1 c2,
     IotaGate w1 w2 o c1 ->
@@ -350,20 +478,9 @@ Lemma iota_gate_exclusive :
     c1 = c2.
 Proof.
   intros w1 w2 o c1 c2 H1 H2.
-  destruct H1; destruct H2;
-    try reflexivity;
-    try (exfalso; eapply sort_cc_not_aa; eassumption);
-    try (exfalso; eapply sort_cc_not_mixed; eassumption);
-    try (exfalso; eapply sort_aa_not_mixed; eassumption);
-    try discriminate.
-  - inversion H0. subst. exfalso.
-    exact (joint_not_interior ti0 tj0 H1 H5).
-  - inversion H0. subst. exact (H6 H1).
-  - inversion H0. subst. exfalso.
-    exact (joint_not_interior ti tj H4 H1).
-  - inversion H0. subst. exact (H6 H1).
-  - inversion H0. subst. exact (H5 H1).
-  - inversion H0. subst. exact (H6 H1).
+  apply IotaGate_iff_pred in H1.
+  apply IotaGate_iff_pred in H2.
+  eapply iota_cell_pred_exclusive; eassumption.
 Qed.
 
 Lemma iota_gate_complete :
@@ -414,8 +531,9 @@ Lemma col_cs_times_chord_not_cell4 :
     ~ IotaGate (WinColCirc a ncol) (WinChord c) o CellIotaCand.
 Proof.
   intros a ncol c o H.
-  inversion H; subst.
-  destruct H3 as [[_ Hr2] | [Hr1 _]].
+  apply IotaGate_iff_pred in H.
+  destruct H as [Hmx _].
+  destruct Hmx as [[_ Hr2] | [Hr1 _]].
   - exact Hr2.
   - exact Hr1.
 Qed.
@@ -434,8 +552,9 @@ Lemma col_cs_times_col_cs_not_cell4 :
     ~ IotaGate (WinColCirc a na) (WinColCirc b nb) o CellIotaCand.
 Proof.
   intros a na b nb o H.
-  inversion H; subst.
-  destruct H3 as [[_ Hr2] | [Hr1 _]].
+  apply IotaGate_iff_pred in H.
+  destruct H as [Hmx _].
+  destruct Hmx as [[_ Hr2] | [Hr1 _]].
   - exact Hr2.
   - exact Hr1.
 Qed.
@@ -526,8 +645,7 @@ Proof.
 Qed.
 
 Lemma cell2_reuses_I_ok_circ_hit :
-  I_ok_circ span_arc_A span_arc_B
-    (IHit locked_p_plus locked_span_ti_plus locked_span_tj_plus).
+  I_ok_circ span_arc_A span_arc_B CircularCookOkCirc.locked_ok_circ_hit.
 Proof.
   exact CircularCookOkCirc.ii3_locked_plus_I_ok_circ.
 Qed.
@@ -539,14 +657,13 @@ Proof.
 Qed.
 
 Lemma cell2_two_hit_existing_cook :
-  I_circles_gamma 0 0 5 7 0 5 =
-    ICircGHit hen_plus locked_p_plus
-      (circ_t locked_O1 locked_p_plus) (circ_t locked_O2 locked_p_plus)
-      hen_minus locked_p_minus
-      (circ_t locked_O1 locked_p_minus) (circ_t locked_O2 locked_p_minus)
+  I_circles_gamma 0 0 5 7 0 5 <> ICircGEmpty
+  /\ I_circles_gamma 0 0 5 7 0 5 <> ICircGDecline
   /\ locked_p_plus <> locked_p_minus.
 Proof.
-  split; [exact locked_I_circles_gamma_hit|].
+  rewrite locked_I_circles_gamma_hit.
+  split; [discriminate|].
+  split; [discriminate|].
   intro Heq.
   apply (f_equal py) in Heq.
   pose proof span_p_plus_y_pos as Hy1.
@@ -564,8 +681,10 @@ Proof.
   intros o.
   split.
   - constructor. split; exact I.
-  - intros H. inversion H; subst.
-    destruct H3 as [[Hd1 _] | [_ Hd2]].
+  - intros H.
+    apply IotaGate_iff_pred in H.
+    destruct H as [Hmx _].
+    destruct Hmx as [[Hd1 _] | [_ Hd2]].
     + exact Hd1.
     + exact Hd2.
 Qed.
@@ -613,10 +732,12 @@ Proof.
     + reflexivity.
     + exact SidecarCircMixed.mixed_joint_params_end_start.
   - split.
-    + intros H. inversion H; subst.
-      inversion H4; subst.
-      exact (joint_not_interior 1 0
-               SidecarCircMixed.mixed_joint_params_end_start H5).
+    + intros H.
+      apply IotaGate_iff_pred in H.
+      destruct H as [_ [p [ti [tj [Heq Hi]]]]].
+      unfold SidecarCircMixed.ls_cs_joint_hit in Heq.
+      inversion Heq; subst.
+      exact (CircularCookCsConcat.joint_params_not_interior Hi).
     + exact CircularCookCsConcat.joint_params_not_interior.
 Qed.
 
