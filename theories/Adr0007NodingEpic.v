@@ -30,8 +30,9 @@
    of parent order).
    `ticket_0007_pairwise_split_qed_or_qex` discharges left.
    The bag-level repeat-until-noded loop is a named 508-style
-   QEX gap (missing CookLoopBagTerm; leftover_quad width
-   conserved; kiss / share / mint not covered). Not a soft gap.
+   QEX gap (missing LeftoverBagTermArm = leftover_quad_width_decreases
+   ∧ leftover_quad_kiss_arm ∧ leftover_quad_share_mint_arm;
+   leftover_quad width conserved). Not a soft gap.
    ρ letter lives in SheetHenCookLoop.v
    (`ticket_0007_rho_gap_qed_or_qex` and friends).
    `ticket_0007_cook_term_qed_or_qex` discharges right.
@@ -291,11 +292,11 @@ Qed.
 
 (* Bag-level cook loop on the chord lane (QED: discharged with a
    bag-term measure) or the named 508-style gap (QEX). Discharged
-   QEX — CookLoopBagTerm is missing; leftover_quad width is
+   QEX — LeftoverBagTermArm is missing; leftover_quad width is
    conserved; pairwise width decrease is a sibling QED stop, not
    this discharge. Honest remaining / CRV-TOUCH. Not a soft gap.
    ρ letter: SheetHenCookLoop.v / witness 0007-rho-bag-loop. *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged with a bag-term measure (QED) or named QEX: CookLoopBagTerm missing, leftover_quad width conserved; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged with a bag-term measure (QED) or named QEX: LeftoverBagTermArm missing, leftover_quad width conserved; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
 Theorem ticket_0007_cook_term_qed_or_qex :
   (cook_loop_status = LoopDischarged
    /\ cook_loop_ctor_inhabits CookLoopBagTerm
@@ -303,6 +304,7 @@ Theorem ticket_0007_cook_term_qed_or_qex :
   \/
   (cook_loop_status = LoopObligation
    /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm
+   /\ ~ leftover_bag_term_arm
    /\ interior_split_finite
    /\ split_step_confluent_holds
    /\ (forall ti tj,
@@ -315,6 +317,7 @@ Proof.
   right.
   split; [exact cook_loop_is_obligation|].
   split; [exact cook_loop_bag_term_missing|].
+  split; [exact leftover_bag_term_arm_missing|].
   split; [exact interior_split_finite_holds|].
   split; [exact split_step_confluent_holds_proof|].
   split; [exact leftover_quad_width_conserved|].
