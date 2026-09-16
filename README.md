@@ -29,7 +29,7 @@ The trio is a **ceiling**, not a floor. A module may rest on fewer:
 does rest on is emitted by its own `Print Assumptions` block, so the audit
 reads the footprint from the build log rather than from prose.
 
-The ceiling has named exceptions rather than silent ones: 34 files under
+The ceiling has named exceptions rather than silent ones: 35 files under
 `theories/` and 76 files under `theories-flocq/` inherit further axioms
 from their dependencies — in the Flocq lane typically
 `Classical_Prop.classic`, by way of the binary64 format layer. They are
@@ -87,8 +87,8 @@ make host
 ```
 
 `make host` builds the 75 modules in `_CoqProject`, the foundational
-Stdlib-only layer. The full corpus is 623 registered modules —
-532 registered under `theories/` and 91 registered under
+Stdlib-only layer. The full corpus is 624 registered modules —
+533 registered under `theories/` and 91 registered under
 `theories-flocq/` — and is the pinned container.
 Toolchain: **Rocq 9.2.0 + Flocq 4.2.2**. Those counts, the two
 audit-exception counts above, and the `Defined.` count are checked against
