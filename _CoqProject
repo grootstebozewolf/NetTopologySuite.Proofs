@@ -123,6 +123,11 @@ theories/SheetHenCookLoop.v
 # Hit-split + fuel iterator; pairwise leftover_width, not bag-sum
 # measure. Park stays LoopObligation. No Axiom / Parameter / stub.
 theories/SheetHenCookLoopModulo.v
+# ρ leftover-bag term measure (claimId 0007-rho-bag-term-measure).
+# Host/pure-R. leftover_hit_pair count; LStepHit decreases; LStepDecline
+# idle. leftover_quad_width stays conserved. Park stays LoopObligation.
+# NURBS belayed. No Axiom / Parameter / stub.
+theories/SheetHenCookLoopTerm.v
 theories/Adr0007NodingEpic.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
