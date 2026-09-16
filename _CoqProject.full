@@ -3075,6 +3075,14 @@ theories/SidecarCircInterior.v
 # SidecarCircInterior / Span). No new kernel. Not first cook
 # scope. Not a noder. Not a CRV-TOUCH kiss.
 theories/SidecarCircInteriorHit.v
+# ADR-0007 ι complete gate (SidecarCircIotaGate). Six exclusive complete
+# cells on circ/chord arrival windows (claimId 0007-iota-gate). Collinear
+# CircularString-as-chord is cell 1, never cell 4. Cook reuse: host I_ok
+# / CircularCook / I_ok_mixed. InteriorMixedHitArm stays missing (QEX);
+# do not drop mixed_joint_params; do not remint CircGamma / LoopDischarged.
+# 4-axiom atan2 sidecar (classic via Interior / Mixed / Span). No new
+# kernel. Not first cook expand. Not a noder. Not Overlay / GEOS.
+theories/SidecarCircIotaGate.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case

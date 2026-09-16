@@ -520,13 +520,12 @@ is discharged by host `MkCirc` (claimId `0007-gamma-mkcirc`):
   atan2-free `θ₀ + t·Δθ` on `CircularEgg`. nlerp still misses the
   reflex principal span (`CircularCook.v : reflex_nlerp_misses_principal`)
   — that is not the remaining Γ hole. Sidecar `arc_gamma` is not host Γ.
-- **ι interior circular×chord** — **QEX**
-  (`SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex`).
-  Missing ctor: `InteriorMixedHitArm` = `I_ok_mixed` Hit ∧
-  `interior_span_params` (`SidecarCircInterior.v : interior_mixed_hit_arm_missing`).
-  `I_ok_interior` is a sibling, not this ctor
-  (`SidecarCircInteriorHit.v : iota_park_not_discharged_by_I_ok_interior`).
-  Gate stays `mixed_joint_params`. Not host `I_ok` / Γ remint.
+- **ι interior circular×chord** — gate **QED**
+  (`SidecarCircIotaGate.v : ticket_0007_iota_gate_qed_or_qex`);
+  six exclusive cells; collinear CS-as-chord is cell 1, never 4.
+  Cook **QEX** (`SidecarCircIotaGate.v : ticket_0007_iota_cook_qed_or_qex`):
+  `InteriorMixedHitArm` still missing; `I_ok_interior` is not this ctor.
+  `mixed_joint_params` stands. Not host `I_ok` / Γ remint.
 - **ρ bag-loop** — **QEX**. Missing ctor: `LeftoverBagTermArm` =
   leftover_quad_width_decreases ∧ leftover_quad_kiss_arm ∧
   leftover_quad_share_mint_arm (`SheetHenCookLoop.v : leftover_bag_term_arm_missing`).
