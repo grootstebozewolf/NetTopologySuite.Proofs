@@ -100,19 +100,37 @@ Qed.
 
 (* Pairwise leftover_width decrease on an arbitrary leftover. This is
    interior_hit_splits_width, not leftover_quad_width_decreases. *)
+Definition leftover_span_lo (s : leftover_span) (t : R) : leftover_span :=
+  mkLeftoverSpan (ls_parent s) (ls_t0 s) t.
+
+Definition leftover_span_hi (s : leftover_span) (t : R) : leftover_span :=
+  mkLeftoverSpan (ls_parent s) t (ls_t1 s).
+
+Lemma leftover_span_split_fst_snd :
+  forall s t,
+    fst (leftover_span_split s t) = leftover_span_lo s t /\
+    snd (leftover_span_split s t) = leftover_span_hi s t.
+Proof.
+  intros s t.
+  split; reflexivity.
+Qed.
+
 Lemma leftover_span_split_width :
   forall s t,
     leftover_span_interior s t ->
-    leftover_span_width (fst (leftover_span_split s t))
-      + leftover_span_width (snd (leftover_span_split s t))
+    leftover_span_width (leftover_span_lo s t)
+      + leftover_span_width (leftover_span_hi s t)
       = leftover_span_width s /\
-    leftover_span_width (fst (leftover_span_split s t))
+    leftover_span_width (leftover_span_lo s t)
       < leftover_span_width s /\
-    leftover_span_width (snd (leftover_span_split s t))
+    leftover_span_width (leftover_span_hi s t)
       < leftover_span_width s.
 Proof.
-  intros [c t0 t1] t [Hlo Hhi].
-  unfold leftover_span_split, leftover_span_width, leftover_width.
+  intros [c t0 t1] t Hint.
+  unfold leftover_span_interior in Hint.
+  simpl in Hint.
+  destruct Hint as [Hlo Hhi].
+  unfold leftover_span_lo, leftover_span_hi, leftover_span_width, leftover_width.
   simpl.
   assert (H0 : 0 <= t - t0) by lra.
   assert (H1 : 0 <= t1 - t) by lra.
@@ -134,9 +152,13 @@ Lemma leftover_span_parent_split_recovers_pairwise :
       < leftover_span_width (leftover_span_parent diag_ab).
 Proof.
   intros t Ht.
-  split; [exact Ht|].
-  destruct (leftover_span_split_width (leftover_span_parent diag_ab) t Ht)
+  assert (Hint : leftover_span_interior (leftover_span_parent diag_ab) t).
+  { unfold leftover_span_parent, leftover_span_interior. simpl. exact Ht. }
+  split; [exact Hint|].
+  destruct (leftover_span_split_width (leftover_span_parent diag_ab) t Hint)
     as [_ [Hlo Hhi]].
+  destruct (leftover_span_split_fst_snd (leftover_span_parent diag_ab) t) as [Hf Hs].
+  rewrite Hf, Hs.
   split; [exact Hlo|exact Hhi].
 Qed.
 
@@ -229,6 +251,9 @@ Proof.
   intros c1 c2 ti tj.
   unfold leftover_quad_as_bag, leftover_quad_width, leftover_span_width.
   simpl.
+  rewrite Rplus_0_r.
+  rewrite <- Rplus_assoc.
+  rewrite <- Rplus_assoc.
   reflexivity.
 Qed.
 
@@ -279,8 +304,7 @@ Fixpoint lbag_replace_split (b : leftover_span_bag) (n : nat) (t : R)
   match b, n with
   | LBagNil, _ => None
   | LBagCons s r, O =>
-      let ch := leftover_span_split s t in
-      Some (LBagCons (fst ch) (LBagCons (snd ch) r))
+      Some (LBagCons (leftover_span_lo s t) (LBagCons (leftover_span_hi s t) r))
   | LBagCons s r, S n' =>
       match lbag_replace_split r n' t with
       | None => None
@@ -329,8 +353,8 @@ Proof.
   induction b as [|s0 rest IH]; intros n s t Hnth.
   - discriminate.
   - destruct n as [|n'].
-    + exists (LBagCons (fst (leftover_span_split s0 t))
-                (LBagCons (snd (leftover_span_split s0 t)) rest)).
+    + exists (LBagCons (leftover_span_lo s0 t)
+                (LBagCons (leftover_span_hi s0 t) rest)).
       reflexivity.
     + simpl in Hnth.
       destruct (IH n' s t Hnth) as [rest' Hr].
@@ -370,14 +394,13 @@ Proof.
   induction b as [|s0 rest IH]; intros n t b' s Hnth Hint Hrep.
   - discriminate.
   - destruct n as [|n'].
-    + simpl in Hnth.
-      inversion Hnth.
+    + inversion Hnth.
       subst s0.
-      simpl in Hrep.
       inversion Hrep.
       subst b'.
-      simpl.
       destruct (leftover_span_split_width s t Hint) as [Hsum _].
+      cbn [lbag_sum].
+      rewrite <- Rplus_assoc.
       rewrite Hsum.
       reflexivity.
     + simpl in Hnth.
@@ -448,13 +471,13 @@ Lemma locked_rho_cook_one_sum :
   lbag_sum (leftover_bag_cook_fuel 1 locked_rho_bag locked_rho_plan)
   = lbag_sum locked_rho_bag.
 Proof.
-  unfold leftover_bag_cook_fuel, locked_rho_plan.
-  rewrite locked_rho_replace.
-  simpl.
-  eapply lbag_replace_split_sum.
+  apply (lbag_replace_split_sum locked_rho_bag 0 (1 / 4)
+           (leftover_bag_cook_fuel 1 locked_rho_bag locked_rho_plan)
+           (mkLeftoverSpan diag_ab 0 (1 / 2))).
   - exact locked_rho_nth0.
   - unfold leftover_span_interior; simpl; lra.
-  - exact locked_rho_replace.
+  - rewrite locked_rho_replace.
+    reflexivity.
 Qed.
 
 Lemma locked_rho_cook_one_not_quad_measure :
@@ -524,12 +547,12 @@ Qed.
 Theorem ticket_0007_rho_modulo_step_qed_or_qex :
   (forall s t,
      leftover_span_interior s t ->
-     leftover_span_width (fst (leftover_span_split s t))
-       + leftover_span_width (snd (leftover_span_split s t))
+     leftover_span_width (leftover_span_lo s t)
+       + leftover_span_width (leftover_span_hi s t)
        = leftover_span_width s /\
-     leftover_span_width (fst (leftover_span_split s t))
+     leftover_span_width (leftover_span_lo s t)
        < leftover_span_width s /\
-     leftover_span_width (snd (leftover_span_split s t))
+     leftover_span_width (leftover_span_hi s t)
        < leftover_span_width s)
   \/ leftover_quad_width_decreases.
 Proof.
