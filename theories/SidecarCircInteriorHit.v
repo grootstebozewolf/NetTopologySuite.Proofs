@@ -26,13 +26,14 @@
    interior_span_params; that Hit is the named interior arm; it
    does not inhabit I_ok_mixed; μ joint still inhabits I_ok_mixed
    and is not interior; joint gate stands.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
-   host mixed I_ok is Decline; I_ok_interior Hit ≠ host I_ok;
-   I_ok_mixed still has no interior-params arm; host interior
-   cook / H⊥ / bag noder / SQL/MM cathedral stay parked.
+   QEX: CircGamma is CircGammaDischarged (do not remint); first
+   cook stays chord–chord + circular–circular; host mixed I_ok
+   is Decline; I_ok_interior Hit ≠ host I_ok; Parks ι ctor
+   InteriorMixedHitArm stays missing; host interior cook / H⊥ /
+   bag noder / SQL/MM cathedral stay parked.
 
    Honesty fences:
-     Host-Decline / CircGamma-QEX at the top of this module.
+     Host-Decline / CircGammaDischarged at the top of this module.
      I_circles_z ≠ I_circles_gamma ≠ sidecar cook ≠ span filter ≠
      span split ≠ I_ok_circ ≠ I_ok_mixed ≠ I_ok_interior ≠
      CS concat joint ≠ CC member joint ≠ μ joint ≠
@@ -317,6 +318,22 @@ Proof.
   exact locked_interior_I_ok_interior.
 Qed.
 
+(* I_ok_interior does not discharge Parks ι. Missing ctor stays
+   InteriorMixedHitArm = I_ok_mixed Hit ∧ interior_span_params. *)
+Lemma iota_park_not_discharged_by_I_ok_interior :
+  I_ok_interior (MixLsCs locked_interior_ls locked_interior_cs)
+    locked_interior_hit
+  /\ ~ SidecarCircInterior.interior_mixed_constructor_inhabits
+        SidecarCircInterior.InteriorMixedHitArm
+  /\ ~ I_ok_mixed (MixLsCs locked_interior_ls locked_interior_cs)
+        locked_interior_hit.
+Proof.
+  destruct locked_interior_not_I_ok_mixed as [Hhit Hn].
+  split; [exact Hhit|].
+  split; [exact SidecarCircInterior.interior_mixed_hit_arm_missing|].
+  exact Hn.
+Qed.
+
 Lemma locked_interior_hit_not_host_I_ok :
   I_ok_interior (MixLsCs locked_interior_ls locked_interior_cs)
     locked_interior_hit
@@ -524,7 +541,7 @@ Proof.
   exact Hnmu.
 Qed.
 
-(* WITNESS {"claimId":"0007-iota-interior-discharge","topic":"overlay","lemma":"ticket_0007_iota_interior_host_qed_or_qex","title":"iota interior Hit discharge expands first cook to circular times chord and inhabits host I_ok Hit (QED) or CircGamma stays QEX and first cook stays chord-chord (QEX); discharged QEX; host mixed I_ok is Decline; I_ok_interior Hit is not host I_ok; host interior cook stays parked","file":"theories/SidecarCircInteriorHit.v","witness":"0007-iota-interior-discharge","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-iota-interior-discharge","topic":"overlay","lemma":"ticket_0007_iota_interior_host_qed_or_qex","title":"iota interior Hit discharge expands first cook to circular times chord and inhabits host I_ok Hit (QED) or CircGamma is CircGammaDischarged and first cook stays chord-chord plus circular-circular (QEX); discharged QEX; host mixed I_ok is Decline; I_ok_interior Hit is not host I_ok; host interior cook stays parked","file":"theories/SidecarCircInteriorHit.v","witness":"0007-iota-interior-discharge","board":"ADR-0007"} *)
 
 Theorem ticket_0007_iota_interior_host_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
@@ -607,6 +624,7 @@ Print Assumptions locked_interior_params.
 Print Assumptions locked_interior_I_ok_interior.
 Print Assumptions locked_interior_rev_I_ok_interior.
 Print Assumptions locked_interior_not_I_ok_mixed.
+Print Assumptions iota_park_not_discharged_by_I_ok_interior.
 Print Assumptions locked_interior_hit_not_host_I_ok.
 Print Assumptions iota_hit_mu_joint_not_interior.
 Print Assumptions iota_interior_hit_letter_is_landed.

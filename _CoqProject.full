@@ -3038,7 +3038,7 @@ theories/SidecarCircBags.v
 # (μ joint at (end, 1, 0) already Qed). An interior_span_params
 # Hit does not inhabit I_ok_mixed. Named missing constructor:
 # no interior-params Hit arm on MixLsCs / MixCsLs. Host I_ok
-# mixed stays Decline (I.1). Host CircGamma stays QEX.
+# mixed stays Decline (I.1). Host CircGamma is CircGammaDischarged.
 # first_cook_scope stays chord–chord. Do not remint I_ok_mixed
 # / CircGamma / host I_ok. Interior cook stays parked. Letter
 # landed ≠ cook Landed / cathedral Landed / Phase B done-when /
