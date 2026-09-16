@@ -67,7 +67,7 @@ Record circ_leftover_span : Type := mkCircLeftoverSpan {
 }.
 
 Definition circ_leftover_span_ok (s : circ_leftover_span) : Prop :=
-  cls_t0 s < cls_t1 s.
+  0 <= cls_t0 s /\ cls_t0 s < cls_t1 s /\ cls_t1 s <= 1.
 
 Definition circ_leftover_interior (u : R) : Prop :=
   0 < u < 1.
@@ -113,7 +113,10 @@ Proof.
   intros [c t0 t1] u.
   unfold circ_leftover_egg, circ_leftover_span_at, circ_eval.
   cbn [circ_o circ_r circ_theta0 circ_sweep cls_parent cls_t0 cls_t1].
-  apply (f_equal2 mkPoint); ring.
+  replace (circ_theta0 c + t0 * circ_sweep c +
+           u * ((t1 - t0) * circ_sweep c))
+    with (circ_theta0 c + (t0 + u * (t1 - t0)) * circ_sweep c) by ring.
+  reflexivity.
 Qed.
 
 Lemma circ_leftover_egg_parent :
@@ -131,6 +134,15 @@ Lemma circ_leftover_span_parent_ok :
   forall c, circ_leftover_span_ok (circ_leftover_span_parent c).
 Proof.
   intros c. unfold circ_leftover_span_ok, circ_leftover_span_parent. simpl. lra.
+Qed.
+
+Lemma leftover_div_lt_1 :
+  forall a b, 0 < b -> a < b -> a / b < 1.
+Proof.
+  intros a b Hb Hab.
+  apply (Rmult_lt_reg_r b); [exact Hb|].
+  unfold Rdiv.
+  rewrite Rmult_assoc, Rinv_l, Rmult_1_r, Rmult_1_l; lra.
 Qed.
 
 Lemma circ_leftover_span_parent_at :
@@ -364,7 +376,7 @@ Definition locked_p_plus : Point :=
   mkPoint (1 / 2) (sqrt 3 / 2).
 
 Definition locked_p_minus : Point :=
-  mkPoint (1 / 2) (- sqrt 3 / 2).
+  mkPoint (1 / 2) (- (sqrt 3 / 2)).
 
 Definition locked_twohit_A_span : circ_leftover_span :=
   circ_leftover_span_parent locked_twohit_A.
@@ -502,8 +514,8 @@ Lemma locked_p_plus_neq_minus :
   locked_p_plus <> locked_p_minus.
 Proof.
   unfold locked_p_plus, locked_p_minus. intros H. injection H as Hy.
-  pose proof (Rlt_0_sqrt 3 ltac:(lra)) as Hs.
-  lra.
+  assert (Hz : sqrt 3 = 0) by lra.
+  apply sqrt_eq_0 in Hz; [lra|lra].
 Qed.
 
 Lemma locked_on_A_plus :
@@ -562,7 +574,8 @@ Lemma locked_leftover_eggs_not_same :
       (circ_leftover_egg locked_twohit_A_span)
       (circ_leftover_egg locked_twohit_B_span).
 Proof.
-  rewrite circ_leftover_egg_parent, circ_leftover_egg_parent.
+  unfold locked_twohit_A_span, locked_twohit_B_span.
+  rewrite !circ_leftover_egg_parent.
   exact locked_A_B_not_same_circle.
 Qed.
 
@@ -626,49 +639,49 @@ Lemma locked_meet_is_plus_or_minus :
     on_circ locked_twohit_B tB p ->
     p = locked_p_plus \/ p = locked_p_minus.
 Proof.
-  intros p tA tB [HA rngA] [HB rngB].
-  subst p.
+  intros p tA tB [rngA EvA] [rngB EvB].
+  rewrite EvA in EvB.
   pose proof (circ_eval_on_circle locked_twohit_A tA) as DA.
   pose proof (circ_eval_on_circle locked_twohit_B tB) as DB.
   destruct locked_centers_radii as [OA [OB [RA RB]]].
   rewrite OA, RA in DA. rewrite OB, RB in DB.
   replace (1 * 1) with 1 in DA by ring.
   replace (1 * 1) with 1 in DB by ring.
+  rewrite <- EvB in DB.
   set (q := circ_eval locked_twohit_A tA).
-  fold q in DA, DB, rngB.
-  rewrite rngB in DB.
+  fold q in DA, DB, EvA.
   pose proof (two_unit_circles_x q DA DB) as Hx.
   pose proof (two_unit_circles_y2 q DA Hx) as Hy2.
   destruct (rsqr_three_quarters (py q) Hy2) as [Hy|Hy].
-  - left. unfold locked_p_plus. apply point_eq_xy; [exact Hx|exact Hy].
-  - right. unfold locked_p_minus. apply point_eq_xy; [exact Hx|exact Hy].
+  - left. rewrite EvA. unfold locked_p_plus. apply point_eq_xy; [exact Hx|exact Hy].
+  - right. rewrite EvA. unfold locked_p_minus. apply point_eq_xy; [exact Hx|exact Hy].
 Qed.
 
 Lemma cos_strict_dec_0_PI :
-  forall x y, 0 <= x < y <= PI -> cos y < cos x.
+  forall x y, 0 <= x -> x < y -> y <= PI -> cos y < cos x.
 Proof.
-  intros x y [Hx [Hxy Hy]].
+  intros x y Hx Hxy Hy.
   set (d := y - x).
   assert (Hdpos : 0 < d) by (unfold d; lra).
   assert (Hdhi : d <= PI) by (unfold d; lra).
   replace y with (x + d) by (unfold d; ring).
   rewrite cos_plus.
-  apply Rminus_gt_0_lt.
+  apply Rlt_0_minus.
   replace (cos x - (cos x * cos d - sin x * sin d))
     with (cos x * (1 - cos d) + sin x * sin d) by ring.
-  replace d with (2 * (d / 2)) by field.
-  rewrite cos_2a_sin, sin_2a.
-  unfold Rsqr.
-  replace (cos x * (2 * (sin (d / 2) * sin (d / 2)))
-           + sin x * (2 * sin (d / 2) * cos (d / 2)))
-    with (2 * sin (d / 2) *
-          (cos x * sin (d / 2) + sin x * cos (d / 2))) by ring.
-  rewrite <- sin_plus.
+  assert (Htrig :
+            cos x * (1 - cos d) + sin x * sin d =
+            2 * sin (d / 2) * sin (x + d / 2)).
+  { set (a := d / 2).
+    replace d with (2 * a) by (unfold a; field).
+    rewrite (cos_2a_sin a), (sin_2a a), (sin_plus x a).
+    unfold Rsqr. ring. }
+  rewrite Htrig.
   assert (Hs : 0 < sin (d / 2)).
-  { apply sin_gt_0; pose proof PI_RGT_0; lra. }
+  { apply sin_gt_0; unfold d; pose proof PI_RGT_0; lra. }
   assert (Hs2 : 0 < sin (x + d / 2)).
-  { apply sin_gt_0; pose proof PI_RGT_0; lra. }
-  nra.
+  { apply sin_gt_0; unfold d; pose proof PI_RGT_0; lra. }
+  apply Rmult_lt_0_compat; [lra|exact Hs2].
 Qed.
 
 Lemma cos_inj_0_PI :
@@ -758,7 +771,7 @@ Lemma locked_on_A_plus_t :
 Proof.
   intros t [Ht He].
   rewrite <- locked_twohit_A_at_plus in He.
-  apply locked_A_eval_inj; [exact Ht|lra|exact He].
+  apply locked_A_eval_inj; [exact Ht|lra|symmetry; exact He].
 Qed.
 
 Lemma locked_on_A_minus_t :
@@ -766,7 +779,7 @@ Lemma locked_on_A_minus_t :
 Proof.
   intros t [Ht He].
   rewrite <- locked_twohit_A_at_minus in He.
-  apply locked_A_eval_inj; [exact Ht|lra|exact He].
+  apply locked_A_eval_inj; [exact Ht|lra|symmetry; exact He].
 Qed.
 
 Lemma locked_on_B_plus_t :
@@ -774,7 +787,7 @@ Lemma locked_on_B_plus_t :
 Proof.
   intros t [Ht He].
   rewrite <- locked_twohit_B_at_plus in He.
-  apply locked_B_eval_inj; [exact Ht|lra|exact He].
+  apply locked_B_eval_inj; [exact Ht|lra|symmetry; exact He].
 Qed.
 
 Lemma locked_on_B_minus_t :
@@ -782,29 +795,28 @@ Lemma locked_on_B_minus_t :
 Proof.
   intros t [Ht He].
   rewrite <- locked_twohit_B_at_minus in He.
-  apply locked_B_eval_inj; [exact Ht|lra|exact He].
+  apply locked_B_eval_inj; [exact Ht|lra|symmetry; exact He].
 Qed.
 
 Lemma circ_leftover_on_parent :
   forall s t p,
+    circ_leftover_span_ok s ->
     on_circ (circ_leftover_egg s) t p ->
     on_circ (cls_parent s) (circ_leftover_span_at s t) p /\
     (circ_leftover_interior t ->
-     circ_leftover_span_ok s ->
      circ_parent_open s (circ_leftover_span_at s t)).
 Proof.
-  intros s t p [Ht He].
+  intros s t p Hok [Ht He].
   rewrite circ_leftover_eval_parent in He.
+  unfold circ_leftover_span_ok in Hok.
   split.
   - unfold on_circ. split.
     + unfold circ_leftover_span_at.
       destruct Ht as [Hlo Hhi].
-      split.
-      * nra.
-      * nra.
+      split; nra.
     + exact He.
-  - intros [Hilo Hihi] Hok.
-    unfold circ_parent_open, circ_leftover_span_at, circ_leftover_span_ok in *.
+  - intros [Hilo Hihi].
+    unfold circ_parent_open, circ_leftover_span_at.
     split; nra.
 Qed.
 
@@ -859,8 +871,8 @@ Proof.
   intros sa sb p ua ub Ha Hb [Hoka [Hokb [Hua [Hub [_ Hok]]]]].
   unfold I_ok in Hok.
   destruct Hok as [onA onB].
-  pose proof (circ_leftover_on_parent sa ua p onA) as [onPA openA].
-  pose proof (circ_leftover_on_parent sb ub p onB) as [onPB openB].
+  pose proof (circ_leftover_on_parent sa ua p Hoka onA) as [onPA openA].
+  pose proof (circ_leftover_on_parent sb ub p Hokb onB) as [onPB openB].
   rewrite Ha in onPA. rewrite Hb in onPB.
   pose proof (locked_meet_is_plus_or_minus p _ _ onPA onPB) as Hm.
   destruct Hm as [Hp|Hp].
@@ -869,13 +881,13 @@ Proof.
     pose proof (locked_on_B_plus_t _ onPB) as tB.
     rewrite tA in openA. rewrite tB in openB.
     split; [reflexivity|].
-    split; [apply openA; [exact Hua|exact Hoka]|apply openB; [exact Hub|exact Hokb]].
+    split; [apply openA; exact Hua|apply openB; exact Hub].
   - right. subst p.
     pose proof (locked_on_A_minus_t _ onPA) as tA.
     pose proof (locked_on_B_minus_t _ onPB) as tB.
     rewrite tA in openA. rewrite tB in openB.
     split; [reflexivity|].
-    split; [apply openA; [exact Hua|exact Hoka]|apply openB; [exact Hub|exact Hokb]].
+    split; [apply openA; exact Hua|apply openB; exact Hub].
 Qed.
 
 Lemma locked_pair_hit_from_open_plus :
@@ -898,11 +910,11 @@ Proof.
   assert (Hua : circ_leftover_interior ua).
   { unfold circ_leftover_interior, ua. split.
     - apply Rdiv_lt_0_compat; lra.
-    - apply (Rmult_lt_reg_r (cls_t1 sa - cls_t0 sa)); lra. }
+    - apply leftover_div_lt_1; lra. }
   assert (Hub : circ_leftover_interior ub).
   { unfold circ_leftover_interior, ub. split.
     - apply Rdiv_lt_0_compat; lra.
-    - apply (Rmult_lt_reg_r (cls_t1 sb - cls_t0 sb)); lra. }
+    - apply leftover_div_lt_1; lra. }
   assert (Hat : circ_leftover_span_at sa ua = 5 / 6).
   { unfold circ_leftover_span_at, ua. field; lra. }
   assert (Hbt : circ_leftover_span_at sb ub = 1 / 6).
@@ -943,11 +955,11 @@ Proof.
   assert (Hua : circ_leftover_interior ua).
   { unfold circ_leftover_interior, ua. split.
     - apply Rdiv_lt_0_compat; lra.
-    - apply (Rmult_lt_reg_r (cls_t1 sa - cls_t0 sa)); lra. }
+    - apply leftover_div_lt_1; lra. }
   assert (Hub : circ_leftover_interior ub).
   { unfold circ_leftover_interior, ub. split.
     - apply Rdiv_lt_0_compat; lra.
-    - apply (Rmult_lt_reg_r (cls_t1 sb - cls_t0 sb)); lra. }
+    - apply leftover_div_lt_1; lra. }
   assert (Hat : circ_leftover_span_at sa ua = 1 / 6).
   { unfold circ_leftover_span_at, ua. field; lra. }
   assert (Hbt : circ_leftover_span_at sb ub = 5 / 6).
@@ -1020,8 +1032,6 @@ Lemma locked_parent_plus_hit :
   circ_leftover_pair_hit locked_twohit_A_span locked_twohit_B_span
     locked_p_plus (5 / 6) (1 / 6).
 Proof.
-  rewrite <- (circ_leftover_span_parent_at locked_twohit_A (5 / 6)).
-  rewrite <- (circ_leftover_span_parent_at locked_twohit_B (1 / 6)).
   replace (5 / 6) with
     ((5 / 6 - cls_t0 locked_twohit_A_span)
      / (cls_t1 locked_twohit_A_span - cls_t0 locked_twohit_A_span))
@@ -1096,15 +1106,8 @@ Proof.
          circ_leftover_span_lo, circ_leftover_span_hi,
          circ_leftover_span_at, circ_leftover_span_parent, cbag_remove_two.
   simpl.
-  apply f_equal.
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 mkCircLeftoverSpan); [reflexivity|]; field. }
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 (mkCircLeftoverSpan locked_twohit_A)); field. }
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 mkCircLeftoverSpan); [reflexivity|]; field. }
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 (mkCircLeftoverSpan locked_twohit_B)); field. }
+  replace (0 + 5 / 6 * (1 - 0)) with (5 / 6) by field.
+  replace (0 + 1 / 6 * (1 - 0)) with (1 / 6) by field.
   reflexivity.
 Qed.
 
@@ -1157,16 +1160,9 @@ Proof.
          circ_leftover_span_lo, circ_leftover_span_hi,
          circ_leftover_span_at, cbag_remove_two.
   simpl.
-  apply f_equal.
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 mkCircLeftoverSpan); [reflexivity|]; field. }
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 (mkCircLeftoverSpan locked_twohit_A)); field. }
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 (mkCircLeftoverSpan locked_twohit_B)); field. }
-  apply (f_equal2 CBagCons).
-  { apply (f_equal2 (mkCircLeftoverSpan locked_twohit_B)); field. }
-  apply (f_equal2 CBagCons); reflexivity.
+  replace (0 + 1 / 5 * (5 / 6 - 0)) with (1 / 6) by field.
+  replace (1 / 6 + 4 / 5 * (1 - 1 / 6)) with (5 / 6) by field.
+  reflexivity.
 Qed.
 
 Lemma locked_circ_hit_step_second :
@@ -1309,7 +1305,9 @@ Proof.
       destruct Hp as [Hp|Hp]; subst p; [left|right; left]; reflexivity.
     + apply NoDup_cons.
       * intros H. destruct H as [Heq|Hnil]; [|contradiction].
-        inversion Heq. exact (locked_p_plus_neq_minus H0).
+        apply (f_equal (fun trip : nat * nat * Point => snd trip)) in Heq.
+        simpl in Heq.
+        exact (locked_p_plus_neq_minus (eq_sym Heq)).
       * apply NoDup_cons; [intros H; inversion H|apply NoDup_nil].
 Qed.
 
@@ -1349,9 +1347,9 @@ Lemma locked_mid_cross_no_hit :
 Proof.
   intros sa sb p ua ub Hcase Hhit.
   assert (Ha : cls_parent sa = locked_twohit_A).
-  { destruct Hcase as [H|[[H|H]]]; subst; reflexivity. }
+  { destruct Hcase as [H|[H|H]]; destruct H; subst; reflexivity. }
   assert (Hb : cls_parent sb = locked_twohit_B).
-  { destruct Hcase as [H|[[H|H]]]; subst; reflexivity. }
+  { destruct Hcase as [H|[H|H]]; destruct H; subst; reflexivity. }
   pose proof (locked_pair_hit_is_root sa sb p ua ub Ha Hb Hhit) as Hroot.
   destruct Hcase as [[Haeq Hbeq]|[[Haeq Hbeq]|[Haeq Hbeq]]]; subst sa sb.
   - destruct Hroot as [[_ [Oa Ob]]|[_ [Oa Ob]]].
@@ -1378,10 +1376,13 @@ Proof.
     destruct j0 as [|j1].
     + rewrite N0 in Ha. rewrite N1 in Hb.
       inversion Ha. inversion Hb. subst a bsp.
-      exact (circ_same_parent_no_hit _ _ p ua ub eq_refl Hhit).
+      exfalso.
+      exact (circ_same_parent_no_hit locked_A_lo locked_A_hi p ua ub
+               eq_refl Hhit).
     + destruct j1 as [|j2].
       * rewrite N0 in Ha. rewrite N2 in Hb.
         inversion Ha. inversion Hb. subst a bsp.
+        exfalso.
         exact (locked_mid_cross_no_hit locked_A_lo locked_B_lo p ua ub
                  (or_introl (conj eq_refl eq_refl)) Hhit).
       * destruct j2 as [|j3]; [|lia].
@@ -1398,11 +1399,13 @@ Proof.
       destruct j1 as [|j2].
       * rewrite N1 in Ha. rewrite N2 in Hb.
         inversion Ha. inversion Hb. subst a bsp.
+        exfalso.
         exact (locked_mid_cross_no_hit locked_A_hi locked_B_lo p ua ub
                  (or_intror (or_introl (conj eq_refl eq_refl))) Hhit).
       * destruct j2 as [|j3]; [|lia].
         rewrite N1 in Ha. rewrite N3 in Hb.
         inversion Ha. inversion Hb. subst a bsp.
+        exfalso.
         exact (locked_mid_cross_no_hit locked_A_hi locked_B_hi p ua ub
                  (or_intror (or_intror (conj eq_refl eq_refl))) Hhit).
     + destruct i1 as [|i2]; [|lia].
@@ -1412,7 +1415,9 @@ Proof.
       destruct j2 as [|j3]; [|lia].
       rewrite N2 in Ha. rewrite N3 in Hb.
       inversion Ha. inversion Hb. subst a bsp.
-      exact (circ_same_parent_no_hit _ _ p ua ub eq_refl Hhit).
+      exfalso.
+      exact (circ_same_parent_no_hit locked_B_lo locked_B_hi p ua ub
+               eq_refl Hhit).
 Qed.
 
 Lemma locked_mid_term_measure :
@@ -1444,6 +1449,19 @@ Proof.
   repeat split; reflexivity.
 Qed.
 
+Lemma locked_final_span_ok :
+  forall s,
+    (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
+     s = locked_B0 \/ s = locked_B1 \/ s = locked_B2) ->
+    circ_leftover_span_ok s.
+Proof.
+  intros s Hs.
+  unfold circ_leftover_span_ok, locked_A0, locked_A1, locked_A2,
+         locked_B0, locked_B1, locked_B2 in *.
+  repeat (destruct Hs as [Heq|Hs]; [subst s; simpl; lra|]).
+  subst s. simpl. lra.
+Qed.
+
 Lemma locked_final_span_no_root_open :
   forall s,
     (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
@@ -1454,7 +1472,7 @@ Proof.
   unfold circ_parent_open, locked_A0, locked_A1, locked_A2,
          locked_B0, locked_B1, locked_B2 in *.
   repeat (destruct Hs as [Heq|Hs]; [subst s; simpl; split; lra|]).
-  contradiction.
+  subst s. simpl. split; lra.
 Qed.
 
 Lemma locked_final_span_parent :
@@ -1492,7 +1510,7 @@ Proof.
         right. right. right. right. left. reflexivity.
       * destruct i2 as [|i3].
         -- rewrite N3 in Hs. inversion Hs. subst.
-           right. right. right. right. right. left. reflexivity.
+           right. right. right. right. right. reflexivity.
         -- destruct i3 as [|i4].
            ++ rewrite N4 in Hs. inversion Hs. subst.
               right. right. left. reflexivity.
@@ -1542,8 +1560,8 @@ Proof.
     + apply (proj1 (locked_final_span_no_root_open a Ha)). exact Oa.
   - destruct Hhit as [Hoka [Hokb [Hua [Hub [Hsame Hok]]]]].
     unfold I_ok in Hok. destruct Hok as [onB onA].
-    pose proof (circ_leftover_on_parent a ua p onB) as [onPA openA].
-    pose proof (circ_leftover_on_parent bsp ub p onA) as [onPB openB].
+    pose proof (circ_leftover_on_parent a ua p Hoka onB) as [onPA openA].
+    pose proof (circ_leftover_on_parent bsp ub p Hokb onA) as [onPB openB].
     rewrite PA in onPA. rewrite PB in onPB.
     pose proof (locked_meet_is_plus_or_minus p _ _ onPB onPA) as Hm.
     destruct Hm as [Hp|Hp].
@@ -1551,12 +1569,12 @@ Proof.
       pose proof (locked_on_B_plus_t _ onPA) as tB.
       rewrite tB in openA.
       apply (proj1 (locked_final_span_no_root_open a Ha)).
-      apply openA; [exact Hua|exact Hoka].
+      apply openA; exact Hua.
     + subst p.
       pose proof (locked_on_B_minus_t _ onPA) as tB.
       rewrite tB in openA.
       apply (proj2 (locked_final_span_no_root_open a Ha)).
-      apply openA; [exact Hua|exact Hoka].
+      apply openA; exact Hua.
   - apply (circ_same_parent_no_hit a bsp p ua ub); congruence.
 Qed.
 
@@ -1623,7 +1641,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Noded G after the two Hits. Two point-hens (p+, p*) and leftover           *)
+(* Noded G after the two Hits. Two point-hens (p+ and p-) and leftover        *)
 (* circular eggs as chickens between hens. Not Overlay.                       *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1780,12 +1798,133 @@ Qed.
 
 Lemma locked_on_leftover_parent_t :
   forall s t p,
+    circ_leftover_span_ok s ->
     on_circ (circ_leftover_egg s) t p ->
-    0 <= circ_leftover_span_at s t <= 1 ->
     on_circ (cls_parent s) (circ_leftover_span_at s t) p.
 Proof.
-  intros s t p Hon _.
-  apply (proj1 (circ_leftover_on_parent s t p Hon)).
+  intros s t p Hok Hon.
+  apply (proj1 (circ_leftover_on_parent s t p Hok Hon)).
+Qed.
+
+Lemma leftover_span_at_between :
+  forall s t,
+    circ_leftover_span_ok s ->
+    0 <= t <= 1 ->
+    cls_t0 s <= circ_leftover_span_at s t <= cls_t1 s.
+Proof.
+  intros s t Hok Ht.
+  unfold circ_leftover_span_ok, circ_leftover_span_at in *.
+  nra.
+Qed.
+
+Lemma at_hen_from_parent_join :
+  forall s t p,
+    circ_leftover_span_ok s ->
+    on_circ (circ_leftover_egg s) t p ->
+    circ_leftover_span_at s t = cls_t0 s \/
+    circ_leftover_span_at s t = cls_t1 s ->
+    at_hen_endpoint (circ_leftover_egg s) p.
+Proof.
+  intros s t p Hok [Ht He] Hjoin.
+  rewrite circ_leftover_eval_parent in He.
+  destruct (locked_leftover_start_end s) as [Hs He1].
+  unfold at_hen_endpoint.
+  destruct Hjoin as [Hj|Hj].
+  - left. rewrite Hs, He, Hj. reflexivity.
+  - right. rewrite He1, He, Hj. reflexivity.
+Qed.
+
+Lemma locked_final_parent_is_A :
+  forall s,
+    (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
+     s = locked_B0 \/ s = locked_B1 \/ s = locked_B2) ->
+    cls_parent s = locked_twohit_A ->
+    s = locked_A0 \/ s = locked_A1 \/ s = locked_A2.
+Proof.
+  intros s Hs Hp.
+  destruct Hs as [H|[H|[H|[H|[H|H]]]]]; subst s;
+    try (left; reflexivity);
+    try (right; left; reflexivity);
+    try (right; right; reflexivity).
+  all: unfold locked_B0, locked_B1, locked_B2, locked_twohit_A,
+              locked_twohit_B in Hp; cbn in Hp; inversion Hp; lra.
+Qed.
+
+Lemma locked_final_parent_is_B :
+  forall s,
+    (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
+     s = locked_B0 \/ s = locked_B1 \/ s = locked_B2) ->
+    cls_parent s = locked_twohit_B ->
+    s = locked_B0 \/ s = locked_B1 \/ s = locked_B2.
+Proof.
+  intros s Hs Hp.
+  destruct Hs as [H|[H|[H|[H|[H|H]]]]]; subst s;
+    try (left; reflexivity);
+    try (right; left; reflexivity);
+    try (right; right; reflexivity).
+  all: unfold locked_A0, locked_A1, locked_A2, locked_twohit_A,
+              locked_twohit_B in Hp; cbn in Hp; inversion Hp; lra.
+Qed.
+
+Lemma locked_A_windows_join :
+  forall s1 s2 u,
+    (s1 = locked_A0 \/ s1 = locked_A1 \/ s1 = locked_A2) ->
+    (s2 = locked_A0 \/ s2 = locked_A1 \/ s2 = locked_A2) ->
+    s1 <> s2 ->
+    cls_t0 s1 <= u <= cls_t1 s1 ->
+    cls_t0 s2 <= u <= cls_t1 s2 ->
+    (u = cls_t0 s1 \/ u = cls_t1 s1) /\
+    (u = cls_t0 s2 \/ u = cls_t1 s2).
+Proof.
+  intros s1 s2 u H1 H2 Hne Hu1 Hu2.
+  destruct H1 as [H1|[H1|H1]]; destruct H2 as [H2|[H2|H2]];
+    subst s1 s2; unfold locked_A0, locked_A1, locked_A2 in *;
+    simpl in *; try (exfalso; apply Hne; reflexivity); split; lra.
+Qed.
+
+Lemma locked_B_windows_join :
+  forall s1 s2 u,
+    (s1 = locked_B0 \/ s1 = locked_B1 \/ s1 = locked_B2) ->
+    (s2 = locked_B0 \/ s2 = locked_B1 \/ s2 = locked_B2) ->
+    s1 <> s2 ->
+    cls_t0 s1 <= u <= cls_t1 s1 ->
+    cls_t0 s2 <= u <= cls_t1 s2 ->
+    (u = cls_t0 s1 \/ u = cls_t1 s1) /\
+    (u = cls_t0 s2 \/ u = cls_t1 s2).
+Proof.
+  intros s1 s2 u H1 H2 Hne Hu1 Hu2.
+  destruct H1 as [H1|[H1|H1]]; destruct H2 as [H2|[H2|H2]];
+    subst s1 s2; unfold locked_B0, locked_B1, locked_B2 in *;
+    simpl in *; try (exfalso; apply Hne; reflexivity); split; lra.
+Qed.
+
+Lemma locked_root_is_leftover_end :
+  forall s u,
+    (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
+     s = locked_B0 \/ s = locked_B1 \/ s = locked_B2) ->
+    cls_t0 s <= u <= cls_t1 s ->
+    u = 1 / 6 \/ u = 5 / 6 ->
+    u = cls_t0 s \/ u = cls_t1 s.
+Proof.
+  intros s u Hs Hu Hroot.
+  destruct Hs as [H|[H|[H|[H|[H|H]]]]]; subst s;
+    unfold locked_A0, locked_A1, locked_A2, locked_B0, locked_B1, locked_B2 in *;
+    simpl in *; destruct Hroot as [Hu'|Hu']; subst u; lra.
+Qed.
+
+Lemma locked_noded_egg_span :
+  forall e,
+    In e locked_noded_eggs ->
+    exists s,
+      e = circ_leftover_egg s /\
+      (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
+       s = locked_B0 \/ s = locked_B1 \/ s = locked_B2).
+Proof.
+  intros e Hin.
+  unfold locked_noded_eggs in Hin. simpl in Hin.
+  destruct Hin as [H|[H|[H|[H|[H|[H|H]]]]]];
+    try (subst e; eexists; split; [reflexivity|auto 8]).
+  contradiction.
 Qed.
 
 Lemma locked_noded_meet_only_at_hens :
@@ -1797,23 +1936,15 @@ Lemma locked_noded_meet_only_at_hens :
     at_hen_endpoint e1 p /\ at_hen_endpoint e2 p.
 Proof.
   intros e1 e2 p Hin1 Hin2 Hne [t1 [t2 [Hon1 Hon2]]].
-  unfold locked_noded_eggs in Hin1, Hin2.
-  simpl in Hin1, Hin2.
-  assert (span_of : forall e,
-      In e locked_noded_eggs ->
-      exists s, e = circ_leftover_egg s /\
-        (s = locked_A0 \/ s = locked_A1 \/ s = locked_A2 \/
-         s = locked_B0 \/ s = locked_B1 \/ s = locked_B2)).
-  { intros e Hin.
-    unfold locked_noded_eggs in Hin. simpl in Hin.
-    repeat (destruct Hin as [Heq|Hin];
-            [subst e; eexists; split; [reflexivity|auto 10]|]).
-    contradiction. }
-  destruct (span_of e1 Hin1) as [s1 [He1 Hs1]].
-  destruct (span_of e2 Hin2) as [s2 [He2 Hs2]].
+  destruct (locked_noded_egg_span e1 Hin1) as [s1 [He1 Hs1]].
+  destruct (locked_noded_egg_span e2 Hin2) as [s2 [He2 Hs2]].
   subst e1 e2.
-  pose proof (circ_leftover_on_parent s1 t1 p Hon1) as [onP1 open1].
-  pose proof (circ_leftover_on_parent s2 t2 p Hon2) as [onP2 open2].
+  pose proof (locked_final_span_ok s1 Hs1) as Ok1.
+  pose proof (locked_final_span_ok s2 Hs2) as Ok2.
+  pose proof (circ_leftover_on_parent s1 t1 p Ok1 Hon1) as [onP1 _].
+  pose proof (circ_leftover_on_parent s2 t2 p Ok2 Hon2) as [onP2 _].
+  assert (Hs12 : s1 <> s2).
+  { intros Heq. subst s2. apply Hne. reflexivity. }
   assert (Hcls1 : cls_parent s1 = locked_twohit_A \/
                   cls_parent s1 = locked_twohit_B).
   { destruct Hs1 as [H|[H|[H|[H|[H|H]]]]]; subst; auto. }
@@ -1822,223 +1953,87 @@ Proof.
   { destruct Hs2 as [H|[H|[H|[H|[H|H]]]]]; subst; auto. }
   assert (Ht1c : 0 <= t1 <= 1) by (destruct Hon1 as [Ht _]; exact Ht).
   assert (Ht2c : 0 <= t2 <= 1) by (destruct Hon2 as [Ht _]; exact Ht).
+  pose proof (leftover_span_at_between s1 t1 Ok1 Ht1c) as Bw1.
+  pose proof (leftover_span_at_between s2 t2 Ok2 Ht2c) as Bw2.
   destruct Hcls1 as [P1|P1]; destruct Hcls2 as [P2|P2].
   - rewrite P1 in onP1. rewrite P2 in onP2.
-    unfold on_circ in onP1, onP2.
     destruct onP1 as [rng1 Ev1]. destruct onP2 as [rng2 Ev2].
-    rewrite Ev2 in Ev1.
-    apply locked_A_eval_inj in Ev1; [|exact rng1|exact rng2].
-    assert (t0t1 : cls_t0 s1 <= circ_leftover_span_at s1 t1 <= cls_t1 s1).
-    { unfold circ_leftover_span_at. nra. }
-    assert (t0t2 : cls_t0 s2 <= circ_leftover_span_at s2 t2 <= cls_t1 s2).
-    { unfold circ_leftover_span_at. nra. }
-    rewrite Ev1 in t0t1.
-    unfold at_hen_endpoint.
-    destruct (locked_leftover_start_end s1) as [St1 En1].
-    destruct (locked_leftover_start_end s2) as [St2 En2].
-    unfold circ_leftover_span_at in Ev1, t0t1, t0t2.
-    assert (Hjoin : circ_leftover_span_at s1 t1 = cls_t0 s1 \/
-                    circ_leftover_span_at s1 t1 = cls_t1 s1).
-    { unfold circ_leftover_span_at in *.
-      destruct Hs1 as [H1|[H1|[H1|[H1|[H1|H1]]]]];
-      destruct Hs2 as [H2|[H2|[H2|[H2|[H2|H2]]]]];
-      subst s1 s2; simpl in *;
-      try (exfalso; apply Hne; reflexivity);
-      try lra. }
-    unfold circ_leftover_span_at in Hjoin.
+    assert (HeqT : circ_leftover_span_at s1 t1 = circ_leftover_span_at s2 t2).
+    { apply locked_A_eval_inj; [exact rng1|exact rng2|].
+      rewrite <- Ev1, Ev2. reflexivity. }
+    pose proof (locked_final_parent_is_A s1 Hs1 P1) as HA1.
+    pose proof (locked_final_parent_is_A s2 Hs2 P2) as HA2.
+    rewrite HeqT in Bw1.
+    pose proof (locked_A_windows_join s1 s2 (circ_leftover_span_at s2 t2)
+                  HA1 HA2 Hs12 Bw1 Bw2) as [J1 J2].
+    rewrite <- HeqT in J1.
     split.
-    + destruct Hjoin as [Hj|Hj].
-      * left. rewrite St1. apply f_equal. unfold circ_leftover_span_at in Ev1.
-        rewrite <- Hj. unfold circ_leftover_span_at. reflexivity.
-      * right. rewrite En1. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
-    + rewrite Ev1 in t0t2.
-      assert (Hjoin2 : circ_leftover_span_at s2 t2 = cls_t0 s2 \/
-                       circ_leftover_span_at s2 t2 = cls_t1 s2).
-      { unfold circ_leftover_span_at in *.
-        destruct Hs1 as [H1|[H1|[H1|[H1|[H1|H1]]]]];
-        destruct Hs2 as [H2|[H2|[H2|[H2|[H2|H2]]]]];
-        subst s1 s2; simpl in *;
-        try (exfalso; apply Hne; reflexivity);
-        try lra. }
-      destruct Hjoin2 as [Hj|Hj].
-      * left. rewrite St2. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
-      * right. rewrite En2. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
+    + apply (at_hen_from_parent_join s1 t1 p Ok1 Hon1 J1).
+    + apply (at_hen_from_parent_join s2 t2 p Ok2 Hon2 J2).
   - rewrite P1 in onP1. rewrite P2 in onP2.
     pose proof (locked_meet_is_plus_or_minus p _ _ onP1 onP2) as Hm.
-    unfold at_hen_endpoint.
-    destruct (locked_leftover_start_end s1) as [St1 En1].
-    destruct (locked_leftover_start_end s2) as [St2 En2].
     destruct Hm as [Hp|Hp]; subst p.
-    + split.
-      * destruct Hs1 as [H|[H|[H|[H|[H|H]]]]]; subst s1;
-          try (right; rewrite En1; unfold locked_A0, locked_A1, locked_A2,
-               locked_B0, locked_B1, locked_B2 in En1; simpl in En1;
-               rewrite ?locked_twohit_A_at_plus, ?locked_twohit_B_at_plus;
-               reflexivity);
-          try (left; rewrite St1; unfold locked_A2, locked_B0, locked_B1,
-               locked_A0, locked_A1, locked_B2 in St1; simpl in St1;
-               rewrite ?locked_twohit_A_at_plus, ?locked_twohit_B_at_plus;
-               reflexivity).
-        -- (* A0 does not contain p+ *)
-           pose proof (locked_on_A_plus_t (circ_leftover_span_at locked_A0 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A0 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_A_plus_t (circ_leftover_span_at locked_A1 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A1 in Ht. simpl in Ht.
-           right. rewrite En1. unfold locked_A1. simpl.
-           rewrite locked_twohit_A_at_plus. reflexivity.
-        -- left. rewrite St1. unfold locked_A2. simpl.
-           rewrite locked_twohit_A_at_plus. reflexivity.
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_B2 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_B2 in Ht. simpl in Ht. lra.
-      * destruct Hs2 as [H|[H|[H|[H|[H|H]]]]]; subst s2;
-          try (right; rewrite En2; unfold locked_A0, locked_A1, locked_A2,
-               locked_B0, locked_B1, locked_B2 in En2; simpl in En2;
-               rewrite ?locked_twohit_A_at_plus, ?locked_twohit_B_at_plus;
-               reflexivity);
-          try (left; rewrite St2; unfold locked_A2, locked_B0, locked_B1,
-               locked_A0, locked_A1, locked_B2 in St2; simpl in St2;
-               rewrite ?locked_twohit_A_at_plus, ?locked_twohit_B_at_plus;
-               reflexivity).
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_B0 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B0 in Ht. simpl in Ht.
-           right. rewrite En2. unfold locked_B0. simpl.
-           rewrite locked_twohit_B_at_plus. reflexivity.
-        -- left. rewrite St2. unfold locked_B1. simpl.
-           rewrite locked_twohit_B_at_plus. reflexivity.
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_B2 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B2 in Ht. simpl in Ht. lra.
-    + split.
-      * destruct Hs1 as [H|[H|[H|[H|[H|H]]]]]; subst s1.
-        -- right. apply locked_A0_endpoints.
-        -- left. apply locked_A1_endpoints.
-        -- pose proof (locked_on_A_minus_t (circ_leftover_span_at locked_A2 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A2 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_minus_t (circ_leftover_span_at locked_B0 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_B0 in Ht. simpl in Ht. lra.
-        -- right. apply locked_B1_endpoints.
-        -- left. apply locked_B2_endpoints.
-      * destruct Hs2 as [H|[H|[H|[H|[H|H]]]]]; subst s2.
-        -- right. apply locked_A0_endpoints.
-        -- left. apply locked_A1_endpoints.
-        -- pose proof (locked_on_A_minus_t (circ_leftover_span_at locked_A2 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_A2 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_minus_t (circ_leftover_span_at locked_B0 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B0 in Ht. simpl in Ht. lra.
-        -- right. apply locked_B1_endpoints.
-        -- left. apply locked_B2_endpoints.
+    + pose proof (locked_on_A_plus_t _ onP1) as TA.
+      pose proof (locked_on_B_plus_t _ onP2) as TB.
+      split.
+      * apply (at_hen_from_parent_join s1 t1 locked_p_plus Ok1 Hon1).
+        apply (locked_root_is_leftover_end s1 (circ_leftover_span_at s1 t1)
+                 Hs1 Bw1).
+        rewrite TA. right. reflexivity.
+      * apply (at_hen_from_parent_join s2 t2 locked_p_plus Ok2 Hon2).
+        apply (locked_root_is_leftover_end s2 (circ_leftover_span_at s2 t2)
+                 Hs2 Bw2).
+        rewrite TB. left. reflexivity.
+    + pose proof (locked_on_A_minus_t _ onP1) as TA.
+      pose proof (locked_on_B_minus_t _ onP2) as TB.
+      split.
+      * apply (at_hen_from_parent_join s1 t1 locked_p_minus Ok1 Hon1).
+        apply (locked_root_is_leftover_end s1 (circ_leftover_span_at s1 t1)
+                 Hs1 Bw1).
+        rewrite TA. left. reflexivity.
+      * apply (at_hen_from_parent_join s2 t2 locked_p_minus Ok2 Hon2).
+        apply (locked_root_is_leftover_end s2 (circ_leftover_span_at s2 t2)
+                 Hs2 Bw2).
+        rewrite TB. right. reflexivity.
   - rewrite P1 in onP1. rewrite P2 in onP2.
     pose proof (locked_meet_is_plus_or_minus p _ _ onP2 onP1) as Hm.
-    unfold at_hen_endpoint.
     destruct Hm as [Hp|Hp]; subst p.
-    + split.
-      * destruct Hs1 as [H|[H|[H|[H|[H|H]]]]]; subst s1.
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_A0 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A0 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_A1 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A1 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_A2 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A2 in Ht. simpl in Ht. lra.
-        -- right. apply locked_B0_endpoints.
-        -- left. apply locked_B1_endpoints.
-        -- pose proof (locked_on_B_plus_t (circ_leftover_span_at locked_B2 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_B2 in Ht. simpl in Ht. lra.
-      * destruct Hs2 as [H|[H|[H|[H|[H|H]]]]]; subst s2.
-        -- pose proof (locked_on_A_plus_t (circ_leftover_span_at locked_A0 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_A0 in Ht. simpl in Ht. lra.
-        -- right. apply locked_A1_endpoints.
-        -- left. apply locked_A2_endpoints.
-        -- pose proof (locked_on_A_plus_t (circ_leftover_span_at locked_B0 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B0 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_A_plus_t (circ_leftover_span_at locked_B1 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B1 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_A_plus_t (circ_leftover_span_at locked_B2 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B2 in Ht. simpl in Ht. lra.
-    + split.
-      * destruct Hs1 as [H|[H|[H|[H|[H|H]]]]]; subst s1.
-        -- pose proof (locked_on_B_minus_t (circ_leftover_span_at locked_A0 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A0 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_minus_t (circ_leftover_span_at locked_A1 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A1 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_minus_t (circ_leftover_span_at locked_A2 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_A2 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_B_minus_t (circ_leftover_span_at locked_B0 t1)
-                         onP1) as Ht.
-           unfold circ_leftover_span_at, locked_B0 in Ht. simpl in Ht. lra.
-        -- right. apply locked_B1_endpoints.
-        -- left. apply locked_B2_endpoints.
-      * destruct Hs2 as [H|[H|[H|[H|[H|H]]]]]; subst s2.
-        -- right. apply locked_A0_endpoints.
-        -- left. apply locked_A1_endpoints.
-        -- pose proof (locked_on_A_minus_t (circ_leftover_span_at locked_A2 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_A2 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_A_minus_t (circ_leftover_span_at locked_B0 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B0 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_A_minus_t (circ_leftover_span_at locked_B1 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B1 in Ht. simpl in Ht. lra.
-        -- pose proof (locked_on_A_minus_t (circ_leftover_span_at locked_B2 t2)
-                         onP2) as Ht.
-           unfold circ_leftover_span_at, locked_B2 in Ht. simpl in Ht. lra.
+    + pose proof (locked_on_B_plus_t _ onP1) as TB.
+      pose proof (locked_on_A_plus_t _ onP2) as TA.
+      split.
+      * apply (at_hen_from_parent_join s1 t1 locked_p_plus Ok1 Hon1).
+        apply (locked_root_is_leftover_end s1 (circ_leftover_span_at s1 t1)
+                 Hs1 Bw1).
+        rewrite TB. left. reflexivity.
+      * apply (at_hen_from_parent_join s2 t2 locked_p_plus Ok2 Hon2).
+        apply (locked_root_is_leftover_end s2 (circ_leftover_span_at s2 t2)
+                 Hs2 Bw2).
+        rewrite TA. right. reflexivity.
+    + pose proof (locked_on_B_minus_t _ onP1) as TB.
+      pose proof (locked_on_A_minus_t _ onP2) as TA.
+      split.
+      * apply (at_hen_from_parent_join s1 t1 locked_p_minus Ok1 Hon1).
+        apply (locked_root_is_leftover_end s1 (circ_leftover_span_at s1 t1)
+                 Hs1 Bw1).
+        rewrite TB. right. reflexivity.
+      * apply (at_hen_from_parent_join s2 t2 locked_p_minus Ok2 Hon2).
+        apply (locked_root_is_leftover_end s2 (circ_leftover_span_at s2 t2)
+                 Hs2 Bw2).
+        rewrite TA. left. reflexivity.
   - rewrite P1 in onP1. rewrite P2 in onP2.
-    unfold on_circ in onP1, onP2.
     destruct onP1 as [rng1 Ev1]. destruct onP2 as [rng2 Ev2].
-    rewrite Ev2 in Ev1.
-    apply locked_B_eval_inj in Ev1; [|exact rng1|exact rng2].
-    unfold at_hen_endpoint.
-    destruct (locked_leftover_start_end s1) as [St1 En1].
-    destruct (locked_leftover_start_end s2) as [St2 En2].
-    assert (Hjoin : circ_leftover_span_at s1 t1 = cls_t0 s1 \/
-                    circ_leftover_span_at s1 t1 = cls_t1 s1).
-    { unfold circ_leftover_span_at in *.
-      destruct Hs1 as [H1|[H1|[H1|[H1|[H1|H1]]]]];
-      destruct Hs2 as [H2|[H2|[H2|[H2|[H2|H2]]]]];
-      subst s1 s2; simpl in *;
-      try (exfalso; apply Hne; reflexivity);
-      try lra. }
+    assert (HeqT : circ_leftover_span_at s1 t1 = circ_leftover_span_at s2 t2).
+    { apply locked_B_eval_inj; [exact rng1|exact rng2|].
+      rewrite <- Ev1, Ev2. reflexivity. }
+    pose proof (locked_final_parent_is_B s1 Hs1 P1) as HB1.
+    pose proof (locked_final_parent_is_B s2 Hs2 P2) as HB2.
+    rewrite HeqT in Bw1.
+    pose proof (locked_B_windows_join s1 s2 (circ_leftover_span_at s2 t2)
+                  HB1 HB2 Hs12 Bw1 Bw2) as [J1 J2].
+    rewrite <- HeqT in J1.
     split.
-    + destruct Hjoin as [Hj|Hj].
-      * left. rewrite St1. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
-      * right. rewrite En1. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
-    + assert (Hjoin2 : circ_leftover_span_at s2 t2 = cls_t0 s2 \/
-                       circ_leftover_span_at s2 t2 = cls_t1 s2).
-      { unfold circ_leftover_span_at in *.
-        destruct Hs1 as [H1|[H1|[H1|[H1|[H1|H1]]]]];
-        destruct Hs2 as [H2|[H2|[H2|[H2|[H2|H2]]]]];
-        subst s1 s2; simpl in *;
-        try (exfalso; apply Hne; reflexivity);
-        try lra. }
-      destruct Hjoin2 as [Hj|Hj].
-      * left. rewrite St2. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
-      * right. rewrite En2. apply f_equal. rewrite <- Hj.
-        unfold circ_leftover_span_at. reflexivity.
+    + apply (at_hen_from_parent_join s1 t1 p Ok1 Hon1 J1).
+    + apply (at_hen_from_parent_join s2 t2 p Ok2 Hon2 J2).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -2165,9 +2160,16 @@ Theorem ticket_0007_circ_leftover_two_hit_park_qed_or_qex :
 Proof.
   right.
   destruct circ_leftover_park_unchanged as [H1 [H2 [H3 [H4 [H5 [H6 [H7 H8]]]]]]].
-  repeat split; try assumption.
-  - exact circ_leftover_loop_discharged_missing.
-  - exact circ_leftover_general_term_missing.
+  split; [exact H1|].
+  split; [exact H2|].
+  split; [exact H3|].
+  split; [exact H4|].
+  split; [exact H5|].
+  split; [exact H6|].
+  split; [exact H7|].
+  split; [exact H8|].
+  split; [exact circ_leftover_loop_discharged_missing|].
+  exact circ_leftover_general_term_missing.
 Qed.
 
 Print Assumptions circ_leftover_bag_measure_nat_wf.
