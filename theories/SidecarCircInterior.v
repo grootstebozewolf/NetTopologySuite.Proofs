@@ -26,7 +26,8 @@
         interior_span_params) does not inhabit I_ok_mixed.
      3. Putting the Hit on host I_ok requires first_cook_scope
         EggChord × EggCircularArc. This letter does not expand
-        first cook. Host CircGamma stays QEX (no MkCirc).
+        first cook. Host CircGamma is CircGammaDischarged (MkCirc);
+        do not remint Γ. Sidecar I_ok_interior is not this ctor.
 
    ι is not μ. ι is not host I_ok. ι is not Γ. Letter landed ≠
    interior cook Landed / Phase B done-when / cathedral Landed /
@@ -37,7 +38,7 @@
              joint at (5,0) — already Qed; not interior.
 
    Honesty fences:
-     Host-Decline / CircGamma-QEX at the top of this module.
+     Host-Decline / CircGammaDischarged at the top of this module.
      I_circles_z ≠ I_circles_gamma ≠ sidecar cook ≠ span filter ≠
      span split ≠ I_ok_circ ≠ I_ok_mixed ≠ CS concat joint ≠
      CC member joint ≠ μ joint ≠ interior mixed cook ≠
@@ -148,23 +149,15 @@ Definition MixedEggs := SidecarCircMixed.MixedEggs.
 Definition MixLsCs := SidecarCircMixed.MixLsCs.
 Definition MixCsLs := SidecarCircMixed.MixCsLs.
 
-(* Discharge constructor: an I_ok_mixed Hit arm that accepts
-   interior_span_params. The existing Hit clause requires
-   mixed_joint_params — 508-style miss. *)
+(* Missing ctor on I_ok_mixed itself (not I_ok_interior, not a
+   parallel gate): I_ok_mixed Hit ∧ interior_span_params.
+   mixed_joint_params stays. 508-style, not a soft bool. *)
 Inductive InteriorMixedConstructor : Type :=
 | InteriorMixedHitArm.
 
-Definition interior_mixed_constructor_inhabits
-  (c : InteriorMixedConstructor) : Prop :=
-  match c with
-  | InteriorMixedHitArm => False
-  end.
-
-Lemma interior_mixed_hit_arm_missing :
-  ~ interior_mixed_constructor_inhabits InteriorMixedHitArm.
-Proof.
-  intro H. exact H.
-Qed.
+Definition I_ok_mixed_interior_hit
+  (m : MixedEggs) (p : Point) (ti tj : R) : Prop :=
+  I_ok_mixed m (IHit p ti tj) /\ interior_span_params ti tj.
 
 (* Would-be interior arm: the geometric ingredients of a proper-cross
    Hit. This is not I_ok_mixed and this letter does not inhabit it. *)
@@ -221,6 +214,27 @@ Proof.
     destruct Harm as [_ [_ [_ Hinner]]].
   - exact (I_ok_mixed_interior_hit_false _ p ti tj Hinner).
   - exact (I_ok_mixed_interior_hit_false _ p ti tj Hinner).
+Qed.
+
+Theorem I_ok_mixed_interior_hit_uninhabited :
+  forall m p ti tj, ~ I_ok_mixed_interior_hit m p ti tj.
+Proof.
+  intros m p ti tj [Hhit Hinner].
+  exact (I_ok_mixed_interior_hit_false m p ti tj Hinner Hhit).
+Qed.
+
+Definition interior_mixed_constructor_inhabits
+  (c : InteriorMixedConstructor) : Prop :=
+  match c with
+  | InteriorMixedHitArm =>
+      exists m p ti tj, I_ok_mixed_interior_hit m p ti tj
+  end.
+
+Lemma interior_mixed_hit_arm_missing :
+  ~ interior_mixed_constructor_inhabits InteriorMixedHitArm.
+Proof.
+  intros [m [p [ti [tj H]]]].
+  exact (I_ok_mixed_interior_hit_uninhabited m p ti tj H).
 Qed.
 
 Lemma interior_span_params_half_half :
@@ -402,21 +416,16 @@ Qed.
 (* Ticket-named QED ∨ QEX stops. Headline is QEX.                             *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_iota_gap_qed_or_qex","title":"iota interior mixed locked LS-CS Hit inhabits I_ok_mixed at interior_span_params (QED) or I_ok_mixed Hit is joint-only and the interior arm is missing (QEX); discharged QEX; named mixed_joint_params gate; not a remint of I_ok_mixed; not CircGamma; not host I_ok","file":"theories/SidecarCircInterior.v","witness":"0007-iota-interior-mixed","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-iota-interior-mixed","topic":"overlay","lemma":"ticket_0007_iota_gap_qed_or_qex","title":"iota park: InteriorMixedHitArm inhabits I_ok_mixed Hit at interior_span_params (QED) or that ctor is missing and mixed_joint_params stands (QEX); discharged QEX; I_ok_interior is not this ctor; do not widen the gate; not host I_ok; CircGamma is CircGammaDischarged","file":"theories/SidecarCircInterior.v","witness":"0007-iota-interior-mixed","board":"ADR-0007"} *)
 
 Theorem ticket_0007_iota_gap_qed_or_qex :
-  (exists p ti tj,
-     I_ok_mixed (MixLsCs locked_mixed_ls locked_mixed_cs) (IHit p ti tj)
-     /\ interior_span_params ti tj
-     /\ interior_mixed_constructor_inhabits InteriorMixedHitArm)
+  interior_mixed_constructor_inhabits InteriorMixedHitArm
   \/
   (~ interior_mixed_constructor_inhabits InteriorMixedHitArm
+   /\ (forall m p ti tj, ~ I_ok_mixed_interior_hit m p ti tj)
    /\ (forall m p ti tj,
          I_ok_mixed m (IHit p ti tj) ->
          mixed_joint_params ti tj /\ ~ interior_span_params ti tj)
-   /\ (forall m p ti tj,
-         interior_span_params ti tj ->
-         ~ I_ok_mixed m (IHit p ti tj))
    /\ (forall m p ti tj,
          I_ok_mixed_interior_arm m p ti tj ->
          ~ I_ok_mixed m (IHit p ti tj))
@@ -425,8 +434,8 @@ Theorem ticket_0007_iota_gap_qed_or_qex :
 Proof.
   right.
   split; [exact interior_mixed_hit_arm_missing|].
+  split; [exact I_ok_mixed_interior_hit_uninhabited|].
   split; [exact I_ok_mixed_hit_is_joint_params|].
-  split; [exact I_ok_mixed_interior_hit_false|].
   split; [exact interior_arm_not_I_ok_mixed|].
   apply locked_interior_candidate_not_I_ok_mixed.
 Qed.
@@ -450,7 +459,7 @@ Proof.
   apply iota_host_ls_cs_decline.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_iota_host_qed_or_qex","title":"iota interior mixed discharges CircGamma and expands first cook to circular times chord interiors (QED) or CircGamma stays QEX and first cook stays chord-chord (QEX); discharged QEX; host mixed I_ok is Decline; I_ok_mixed Hit is not host I_ok; interior cook is not invented","file":"theories/SidecarCircInterior.v","witness":"0007-iota-interior-mixed","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-iota-interior-mixed","topic":"overlay","lemma":"ticket_0007_iota_host_qed_or_qex","title":"iota interior mixed expands first cook to circular times chord interiors (QED) or CircGamma is CircGammaDischarged and first cook stays chord-chord plus circular-circular (QEX); discharged QEX; host mixed I_ok is Decline; I_ok_mixed Hit is not host I_ok; do not remint MkCirc","file":"theories/SidecarCircInterior.v","witness":"0007-iota-interior-mixed","board":"ADR-0007"} *)
 
 Theorem ticket_0007_iota_host_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
@@ -515,6 +524,7 @@ Proof.
 Qed.
 
 Print Assumptions iota_host_circgamma_qex.
+Print Assumptions I_ok_mixed_interior_hit_uninhabited.
 Print Assumptions interior_mixed_hit_arm_missing.
 Print Assumptions I_ok_mixed_hit_is_joint_params.
 Print Assumptions I_ok_mixed_interior_hit_false.

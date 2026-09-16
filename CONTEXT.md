@@ -409,13 +409,13 @@ is discharged by host `MkCirc` (claimId `0007-gamma-mkcirc`):
   atan2-free `θ₀ + t·Δθ` on `CircularEgg`. nlerp still misses the
   reflex principal span (`CircularCook.v : reflex_nlerp_misses_principal`)
   — that is not the remaining Γ hole. Sidecar `arc_gamma` is not host Γ.
-- **ι interior circular×chord** — `I_ok_mixed` Hit stays
-  `mixed_joint_params` (`SidecarCircInterior.v : interior_mixed_hit_arm_missing`).
-  Gated successor `I_ok_mixed_gate` keeps Joint and adds Interior
-  (`SidecarCircMixedGate.v : ticket_0007_iota_mixed_gate_qed_or_qex`).
-  Sibling `I_ok_interior` still inhabits the locked proper-cross
-  (`SidecarCircInteriorHit.v : locked_interior_I_ok_interior`).
-  Do not drop the joint gate. Not host `I_ok` / Γ.
+- **ι interior circular×chord** — **QEX**
+  (`SidecarCircInterior.v : ticket_0007_iota_gap_qed_or_qex`).
+  Missing ctor: `InteriorMixedHitArm` = `I_ok_mixed` Hit ∧
+  `interior_span_params` (`SidecarCircInterior.v : interior_mixed_hit_arm_missing`).
+  `I_ok_interior` is a sibling, not this ctor
+  (`SidecarCircInteriorHit.v : iota_park_not_discharged_by_I_ok_interior`).
+  Gate stays `mixed_joint_params`. Not host `I_ok` / Γ remint.
 - **ρ bag-loop** — `CookLoopBagTerm` missing; leftover_quad width
   conserved (`Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex`,
   `SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise
