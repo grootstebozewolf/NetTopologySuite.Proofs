@@ -61,9 +61,10 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra Nra Classical_Prop.
+From Stdlib Require Import Reals Lra Classical_Prop.
 From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry
-  CircularCook CircularCookHit CircularCookSpan CircularCookOkCirc.
+  CircularCook CircularCookHit CircularCookSpan CircularCookSpanFilter
+  CircularCookOkCirc.
 From NTS.Proofs Require CircularCookCsConcat.
 From NTS.Proofs Require CircularCookCpConcat.
 From NTS.Proofs Require SidecarCircMixed.
@@ -416,22 +417,25 @@ Theorem iota_gate_exclusive :
     /\ (iota_cell5 w1 w2 -> ~ iota_cell6 w1 w2).
 Proof.
   intros w1 w2.
-  repeat split; intros H.
-  - exact (cell1_not_cell2 w1 w2 H).
-  - exact (cell1_not_cell3 w1 w2 H).
-  - exact (cell1_not_cell4 w1 w2 H).
-  - exact (cell1_not_cell5 w1 w2 H).
-  - exact (cell1_not_cell6 w1 w2 H).
-  - exact (cell2_not_cell3 w1 w2 H).
-  - exact (cell2_not_cell4 w1 w2 H).
-  - exact (cell2_not_cell5 w1 w2 H).
-  - exact (cell2_not_cell6 w1 w2 H).
-  - exact (cell3_not_cell4 w1 w2 H).
-  - exact (cell3_not_cell5 w1 w2 H).
-  - exact (cell3_not_cell6 w1 w2 H).
-  - exact (cell4_not_cell5 w1 w2 H).
-  - exact (cell4_not_cell6 w1 w2 H).
-  - exact (cell5_not_cell6 w1 w2 H).
+  split.
+  { intros H1. split; [exact (cell1_not_cell2 w1 w2 H1)|].
+    split; [exact (cell1_not_cell3 w1 w2 H1)|].
+    split; [exact (cell1_not_cell4 w1 w2 H1)|].
+    split; [exact (cell1_not_cell5 w1 w2 H1)|].
+    exact (cell1_not_cell6 w1 w2 H1). }
+  split.
+  { intros H2. split; [exact (cell2_not_cell3 w1 w2 H2)|].
+    split; [exact (cell2_not_cell4 w1 w2 H2)|].
+    split; [exact (cell2_not_cell5 w1 w2 H2)|].
+    exact (cell2_not_cell6 w1 w2 H2). }
+  split.
+  { intros H3. split; [exact (cell3_not_cell4 w1 w2 H3)|].
+    split; [exact (cell3_not_cell5 w1 w2 H3)|].
+    exact (cell3_not_cell6 w1 w2 H3). }
+  split.
+  { intros H4. split; [exact (cell4_not_cell5 w1 w2 H4)|].
+    exact (cell4_not_cell6 w1 w2 H4). }
+  intros H5. exact (cell5_not_cell6 w1 w2 H5).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -581,6 +585,7 @@ Proof.
   }
   destruct Hp as [Hc [Ha _]].
   rewrite <- Hc, <- Ha in Hhit.
+  unfold SidecarCircInteriorHit.locked_interior_cs in Hhit.
   unfold I_ok_mixed, SidecarCircMixed.I_ok_mixed in Hhit.
   destruct Hhit as [_ [Honc [Hona Hm]]].
   unfold mixed_joint_params, SidecarCircMixed.mixed_joint_params in Hm.
@@ -588,22 +593,22 @@ Proof.
   destruct Hona as [_ Hparc].
   destruct Hm as [[-> ->] | [-> ->]].
   - rewrite chord_eval_at_1 in Hpch.
-    rewrite (arc_gamma_start _ span_arc_A_valid) in Hparc.
+    rewrite (arc_gamma_start span_arc_A span_arc_A_valid) in Hparc.
     rewrite Hpch in Hparc.
     apply (f_equal py) in Hparc.
-    unfold SidecarCircInteriorHit.locked_interior_ls in Hparc.
-    cbn [ce_p1 px py] in Hparc.
+    change (py (ce_p1 SidecarCircInteriorHit.locked_interior_ls))
+      with (py locked_p_plus) in Hparc.
+    change (py (arc_start span_arc_A)) with 0 in Hparc.
     pose proof span_p_plus_y_pos as Hy.
-    change (py (mkPoint 5 0)) with 0 in Hparc.
     lra.
   - rewrite chord_eval_at_0 in Hpch.
-    rewrite (arc_gamma_end _ span_arc_A_valid) in Hparc.
+    rewrite (arc_gamma_end span_arc_A span_arc_A_valid) in Hparc.
     rewrite Hpch in Hparc.
     apply (f_equal px) in Hparc.
-    unfold SidecarCircInteriorHit.locked_interior_ls in Hparc.
-    cbn [ce_p0 px py] in Hparc.
+    change (px (ce_p0 SidecarCircInteriorHit.locked_interior_ls))
+      with (px locked_p_plus - 1) in Hparc.
+    change (px (arc_end span_arc_A)) with 0 in Hparc.
     destruct span_p_plus_coords as [Hx _].
-    change (px (mkPoint 0 5)) with 0 in Hparc.
     lra.
 Qed.
 
@@ -668,8 +673,11 @@ Proof.
   replace ((20 - ti) * (20 - ti) + (0 - 0) * (0 - 0))
     with ((20 - ti) * (20 - ti)) in Hon by ring.
   assert (Hsq : (20 - ti) * (20 - ti) = 25) by (rewrite Hon; ring).
-  assert (Hbd : 19 <= 20 - ti <= 20) by lra.
-  nra.
+  assert (Hlo : 19 <= 20 - ti) by lra.
+  assert (Hnn : 0 <= 19) by lra.
+  pose proof (Rsqr_incr_1 19 (20 - ti) Hlo Hnn) as Hge.
+  unfold Rsqr in Hge.
+  lra.
 Qed.
 
 Lemma locked_miss_not_mu :
@@ -757,22 +765,18 @@ Proof.
   destruct Hona as [_ Hparc].
   destruct Hm as [[-> ->] | [-> ->]].
   - rewrite chord_eval_at_1 in Hpch.
-    rewrite (arc_gamma_start _ span_arc_A_valid) in Hparc.
+    rewrite (arc_gamma_start span_arc_A span_arc_A_valid) in Hparc.
     rewrite Hpch in Hparc.
     apply (f_equal px) in Hparc.
-    unfold locked_cell6_ls in Hparc.
-    cbn [ce_p1 px] in Hparc.
-    change (px (mkPoint 15 0)) with 15 in Hparc.
-    change (px (mkPoint 5 0)) with 5 in Hparc.
+    unfold locked_cell6_ls, span_arc_A in Hparc.
+    cbn [ce_p1 arc_start px] in Hparc.
     lra.
   - rewrite chord_eval_at_0 in Hpch.
-    rewrite (arc_gamma_end _ span_arc_A_valid) in Hparc.
+    rewrite (arc_gamma_end span_arc_A span_arc_A_valid) in Hparc.
     rewrite Hpch in Hparc.
     apply (f_equal px) in Hparc.
-    unfold locked_cell6_ls in Hparc.
-    cbn [ce_p0 px] in Hparc.
-    change (px (mkPoint 5 0)) with 5 in Hparc.
-    change (px (mkPoint 0 5)) with 0 in Hparc.
+    unfold locked_cell6_ls, span_arc_A in Hparc.
+    cbn [ce_p0 arc_end px] in Hparc.
     lra.
 Qed.
 
@@ -804,8 +808,11 @@ Proof.
            + (0 - 0) * (0 - 0))
     with ((5 + 10 * ti) * (5 + 10 * ti)) in Hon by ring.
   assert (Hsq : (5 + 10 * ti) * (5 + 10 * ti) = 25) by (rewrite Hon; ring).
-  assert (Hbd : 5 < 5 + 10 * ti < 15) by lra.
-  nra.
+  assert (Hgt : 5 < 5 + 10 * ti) by lra.
+  assert (Hnn : 0 <= 5) by lra.
+  pose proof (Rsqr_incrst_1 5 (5 + 10 * ti) Hgt Hnn) as Hlt.
+  unfold Rsqr in Hlt.
+  lra.
 Qed.
 
 Lemma locked_cell6_not_miss :
