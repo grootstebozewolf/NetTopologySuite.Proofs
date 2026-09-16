@@ -14,25 +14,32 @@
 
    QEX (this letter): strengthen the obligation into a named gap,
    508-style, not a bool and not a soft gap that reopens Accept.
-     1. No CookLoopBagTerm constructor — leftover_width is pairwise
-        on a parameter interval; the leftover_quad bag-sum is
-        conserved (two parents, width 1+1), so it is not a
+     Missing ctor LeftoverBagTermArm =
+       leftover_quad_width_decreases
+       ∧ leftover_quad_kiss_arm
+       ∧ leftover_quad_share_mint_arm.
+     1. leftover_quad_width_decreases is uninhabited: leftover_width
+        is pairwise on [t0,t1]; the leftover_quad bag-sum is
+        conserved (two parents, width 1+1). That is not a
         well-founded bag measure.
-     2. Empty / Decline allocate no leftover split (try_cook_hit
-        = None); ShareOne ignores leftover_width; MintTwo may
-        increase hen cardinality while leftover_width [0,1] stays 1.
-        Kiss / share / mint cycles are not covered by pairwise width.
-     3. Pairwise leftover-width decrease + one-step confluence are
+     2. leftover_quad_kiss_arm is uninhabited: IResult has no kiss
+        (CRV-TOUCH owns the certificate); Empty / Decline allocate
+        no leftover split (try_cook_hit = None).
+     3. leftover_quad_share_mint_arm is uninhabited: ShareOne ignores
+        leftover_width; MintTwo may increase hen cardinality while
+        leftover_width [0,1] stays 1.
+     4. Pairwise leftover-width decrease + one-step confluence are
         already QED (ticket_0007_pairwise_split_qed_or_qex / I.8).
         Those do not flip LoopDischarged. Do not collapse I.8 into
         bag-loop Discharge.
-     4. ρ leftover_quad ≠ η Multi bags (SidecarCircBags: bags of
-        already-Qed CS / CC / CP members). Arc cook termination
-        is a sister card, not this stop.
+     5. ρ leftover_quad ≠ η Multi bags (SidecarCircBags: bags of
+        already-Qed CS / CC / CP members). leftover_quad is one
+        Hit-split 4-tuple, not an inductive leftover bag. Arc cook
+        termination is a sister card, not this stop.
 
-   Do not fake LoopDischarged. Host CircGamma stays QEX. first cook
-   stays chord–chord. Not a remint of I_ok_mixed / CircGamma /
-   leftover_width / pairwise_split.
+   Do not fake LoopDischarged. Host CircGamma is CircGammaDischarged
+   (MkCirc); do not remint Γ. first cook stays chord–chord. Not a
+   remint of I_ok_mixed / CircGamma / leftover_width / pairwise_split.
 
    ADR-0007 is Accepted (2026-09-07). This letter does not reopen
    Status. QEX is not a new Accept cycle.
@@ -61,24 +68,10 @@ Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
 (* Named gap (508-style): missing bag-term constructor.                       *)
+(* LeftoverBagTermArm = leftover_quad_width_decreases                         *)
+(*   ∧ leftover_quad_kiss_arm ∧ leftover_quad_share_mint_arm.                 *)
+(* Not a soft False. leftover_quad is one Hit-split, not an inductive bag.    *)
 (* -------------------------------------------------------------------------- *)
-
-(* Discharge constructor: a well-founded measure on leftover bags that
-   decreases under Hit-split / kiss / ShareOne / MintTwo. There is
-   none — leftover_width is pairwise on [t0,t1]. *)
-Inductive CookLoopConstructor : Type :=
-| CookLoopBagTerm.
-
-Definition cook_loop_ctor_inhabits (c : CookLoopConstructor) : Prop :=
-  match c with
-  | CookLoopBagTerm => False
-  end.
-
-Lemma cook_loop_bag_term_missing :
-  ~ cook_loop_ctor_inhabits CookLoopBagTerm.
-Proof.
-  intro H. exact H.
-Qed.
 
 (* leftover_width sum on one leftover_quad (two parents, each split
    at an interior Hit). Pairwise each parent decreases; the bag-sum
@@ -86,6 +79,47 @@ Qed.
 Definition leftover_quad_width (ti tj : R) : R :=
   leftover_width 0 ti + leftover_width ti 1
   + leftover_width 0 tj + leftover_width tj 1.
+
+(* Discharge constructor: a well-founded measure on leftover bags that
+   decreases under Hit-split / kiss / ShareOne / MintTwo. *)
+Inductive CookLoopConstructor : Type :=
+| CookLoopBagTerm.
+
+(* Hit-split arm: leftover_quad_width strictly decreases. Conserved
+   at 2, so this Prop is uninhabited. *)
+Definition leftover_quad_width_decreases : Prop :=
+  forall ti tj,
+    0 < ti < 1 ->
+    0 < tj < 1 ->
+    leftover_quad_width ti tj < leftover_width 0 1 + leftover_width 0 1.
+
+(* Kiss arm: leftover_quad allocated by a non-Hit IResult. IResult
+   has no kiss (CRV-TOUCH owns the certificate). Empty / Decline
+   are the only non-Hit arms and mint nothing. *)
+Definition leftover_quad_kiss_arm : Prop :=
+  exists c1 c2 o h,
+    (o = IEmpty \/ o = IDecline) /\
+    try_cook_hit c1 c2 o h <> None.
+
+(* ShareOne / MintTwo arm: identity decisions change leftover_width
+   of [0,1] or leftover count. They do not. *)
+Definition leftover_quad_share_mint_arm : Prop :=
+  leftover_width 0 1 <> 1
+  \/ pairwise_hit_leftover_count <> 4%nat.
+
+(* Missing ctor, 508-style (cf. InteriorMixedHitArm =
+   I_ok_mixed Hit ∧ interior_span_params). *)
+Definition leftover_bag_term_arm : Prop :=
+  leftover_quad_width_decreases
+  /\ leftover_quad_kiss_arm
+  /\ leftover_quad_share_mint_arm.
+
+Definition LeftoverBagTermArm : Prop := leftover_bag_term_arm.
+
+Definition cook_loop_ctor_inhabits (c : CookLoopConstructor) : Prop :=
+  match c with
+  | CookLoopBagTerm => leftover_bag_term_arm
+  end.
 
 Lemma leftover_quad_width_conserved :
   forall ti tj,
@@ -130,6 +164,58 @@ Proof.
   split; [exact Hlo|].
   split; [exact Hhi|].
   apply leftover_quad_width_conserved; exact Ht.
+Qed.
+
+Lemma leftover_quad_width_does_not_decrease :
+  ~ leftover_quad_width_decreases.
+Proof.
+  intros H.
+  assert (Ht : 0 < 1 / 2 < 1) by lra.
+  specialize (H (1 / 2) (1 / 2) Ht Ht).
+  rewrite leftover_quad_width_is_two in H; try assumption.
+  rewrite leftover_width_parent in H.
+  lra.
+Qed.
+
+Lemma leftover_quad_kiss_arm_missing :
+  ~ leftover_quad_kiss_arm.
+Proof.
+  intros [c1 [c2 [o [h [[He | Hd] Hne]]]]].
+  - subst o. rewrite try_cook_hit_empty_none in Hne. apply Hne. reflexivity.
+  - subst o. rewrite try_cook_hit_decline_none in Hne. apply Hne. reflexivity.
+Qed.
+
+Lemma leftover_quad_share_mint_arm_missing :
+  ~ leftover_quad_share_mint_arm.
+Proof.
+  intros [Hw | Hc].
+  - apply Hw. exact leftover_width_parent.
+  - apply Hc. reflexivity.
+Qed.
+
+Lemma leftover_bag_term_arm_missing :
+  ~ leftover_bag_term_arm.
+Proof.
+  intros [Hd [_ _]].
+  exact (leftover_quad_width_does_not_decrease Hd).
+Qed.
+
+Lemma leftover_bag_term_arm_uninhabited :
+  ~ leftover_bag_term_arm
+  /\ ~ leftover_quad_width_decreases
+  /\ ~ leftover_quad_kiss_arm
+  /\ ~ leftover_quad_share_mint_arm.
+Proof.
+  split; [exact leftover_bag_term_arm_missing|].
+  split; [exact leftover_quad_width_does_not_decrease|].
+  split; [exact leftover_quad_kiss_arm_missing|].
+  exact leftover_quad_share_mint_arm_missing.
+Qed.
+
+Lemma cook_loop_bag_term_missing :
+  ~ cook_loop_ctor_inhabits CookLoopBagTerm.
+Proof.
+  exact leftover_bag_term_arm_missing.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -215,13 +301,16 @@ Qed.
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_rho_gap_qed_or_qex","title":"rho bag-loop has a bag-term measure on leftover bags (QED) or CookLoopBagTerm is missing and leftover_quad width is conserved (QEX); discharged QEX; 508-style named gap; pairwise leftover-width is a sibling QED stop","file":"theories/SheetHenCookLoop.v","witness":"0007-rho-bag-loop","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_rho_gap_qed_or_qex","title":"rho park: LeftoverBagTermArm inhabits leftover_quad_width_decreases and kiss/share/mint leftover-quad rewrites (QED) or that ctor is missing and leftover_quad width is conserved (QEX); discharged QEX; 508-style named gap; pairwise leftover-width is a sibling QED stop; CircGamma is CircGammaDischarged","file":"theories/SheetHenCookLoop.v","witness":"0007-rho-bag-loop","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_gap_qed_or_qex :
-  (cook_loop_status = LoopDischarged
-   /\ cook_loop_ctor_inhabits CookLoopBagTerm)
+  cook_loop_ctor_inhabits CookLoopBagTerm
   \/
   (cook_loop_status = LoopObligation
    /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm
+   /\ ~ leftover_bag_term_arm
+   /\ ~ leftover_quad_width_decreases
+   /\ ~ leftover_quad_kiss_arm
+   /\ ~ leftover_quad_share_mint_arm
    /\ (forall ti tj,
          0 < ti < 1 ->
          0 < tj < 1 ->
@@ -231,6 +320,10 @@ Proof.
   right.
   split; [exact cook_loop_is_obligation|].
   split; [exact cook_loop_bag_term_missing|].
+  split; [exact leftover_bag_term_arm_missing|].
+  split; [exact leftover_quad_width_does_not_decrease|].
+  split; [exact leftover_quad_kiss_arm_missing|].
+  split; [exact leftover_quad_share_mint_arm_missing|].
   exact leftover_quad_width_conserved.
 Qed.
 
@@ -296,6 +389,11 @@ Proof.
   exact nurbs_nurbs_not_first_scope.
 Qed.
 
+Print Assumptions leftover_quad_width_does_not_decrease.
+Print Assumptions leftover_quad_kiss_arm_missing.
+Print Assumptions leftover_quad_share_mint_arm_missing.
+Print Assumptions leftover_bag_term_arm_missing.
+Print Assumptions leftover_bag_term_arm_uninhabited.
 Print Assumptions cook_loop_bag_term_missing.
 Print Assumptions leftover_quad_width_conserved.
 Print Assumptions leftover_quad_width_is_two.

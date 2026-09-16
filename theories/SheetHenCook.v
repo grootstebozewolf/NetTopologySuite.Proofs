@@ -6,7 +6,7 @@
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
    (MkClothoid). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
-   Bag cook loop is named QEX (CookLoopBagTerm). CircGamma discharged
+   Bag cook loop is named QEX (LeftoverBagTermArm). CircGamma discharged
    by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
    No `Admitted`, no `Axiom`, no `Parameter`.
@@ -474,7 +474,7 @@ Qed.
 (* depend on which parent is split first. That closes the host-lane           *)
 (* cook-termination soft gap. The bag-level repeat-until-noded loop           *)
 (* (termination + confluence on a leftover bag) is a named 508-style          *)
-(* QEX gap — SheetHenCookLoop.v / CookLoopBagTerm missing. Not a soft         *)
+(* QEX gap — SheetHenCookLoop.v / LeftoverBagTermArm missing. Not a soft      *)
 (* gap. Leftover-width names are                                              *)
 (* not a remint of the sibling cook-split identifiers (chord_split /          *)
 (* try_cook_hit), which mint hens on a Hit.                                   *)
@@ -607,7 +607,7 @@ Qed.
 
 (* Bag-level cook loop: termination and confluence on a finite leftover
    bag. Named 508-style QEX gap in SheetHenCookLoop.v (missing
-   CookLoopBagTerm). CRV-TOUCH / 𝓘-family; not a soft gap. *)
+   LeftoverBagTermArm). CRV-TOUCH / 𝓘-family; not a soft gap. *)
 Inductive CookLoopStatus : Type :=
 | LoopDischarged
 | LoopObligation.

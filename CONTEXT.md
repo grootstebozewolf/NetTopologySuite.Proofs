@@ -527,10 +527,10 @@ is discharged by host `MkCirc` (claimId `0007-gamma-mkcirc`):
   `I_ok_interior` is a sibling, not this ctor
   (`SidecarCircInteriorHit.v : iota_park_not_discharged_by_I_ok_interior`).
   Gate stays `mixed_joint_params`. Not host `I_ok` / Γ remint.
-- **ρ bag-loop** — `CookLoopBagTerm` missing; leftover_quad width
-  conserved (`Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex`,
-  `SheetHenCookLoop.v : leftover_quad_width_conserved`). Pairwise
-  leftover-width is QED, not this item. ρ leftover_quad ≠ η Multi bags.
+- **ρ bag-loop** — **QEX**. Missing ctor: `LeftoverBagTermArm` =
+  leftover_quad_width_decreases ∧ leftover_quad_kiss_arm ∧
+  leftover_quad_share_mint_arm (`SheetHenCookLoop.v : leftover_bag_term_arm_missing`).
+  leftover_quad width conserved; kiss/share/mint not a bag-term.
 _Avoid_: reminting sidecar `I_ok_circ` as host Γ, soft bool
 for interior / bag loop, noder (the full loop)
 
@@ -794,7 +794,7 @@ circular Hit (both roots); host CircGamma is discharged via MkCirc;
 `first_cook_scope` includes chord–chord / circular–circular (MkCirc) /
 clothoid–clothoid (MkClothoid); `I_CIRCULAR` stays a
 classifier; the #666 fence holds; Campaign II / Phase B / Parks ι ρ
-are named on the ADR; sidecar ≠ host; no invented CookLoopBagTerm discharge.
+are named on the ADR; sidecar ≠ host; no invented LeftoverBagTermArm discharge.
 Pairwise
 interior split of chords is finite (width measure); bag-level
 termination and confluence of the repeat-until-noded loop remain
