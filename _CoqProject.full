@@ -3068,6 +3068,16 @@ theories/SidecarCircInteriorHit.v
 # 4-axiom atan2 sidecar (classic via Interior / Mixed / Span). No new
 # kernel. Not first cook expand. Not a noder. Not Overlay / GEOS.
 theories/SidecarCircIotaGate.v
+# ADR-0007 ι cell-4 arm stop (SidecarCircIotaArm). claimId 0007-iota-arm.
+# Tried InteriorMixedHitArm on the locked WinCirc × WinChord interior
+# pair. Blocked by mixed_joint_params on I_ok_mixed Hit (exclusive
+# with interior_span_params). mixed_joint_params stands. Honest next
+# ctor is existing I_ok_interior, not host I_ok / first-cook remint.
+# Geometric chord_split + span_split meet at p+ and do not inhabit
+# the arm. Gate letter stays QED; cook stays this named QEX.
+# 4-axiom atan2 sidecar (classic via IotaGate / Interior / Mixed /
+# SpanSplit). No new kernel. Not first cook expand. Not a noder.
+theories/SidecarCircIotaArm.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
