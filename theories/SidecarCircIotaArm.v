@@ -260,14 +260,14 @@ Lemma locked_circ_children_meet :
   /\ CircularCookSpanSplit.span_leftover_eval
        (snd locked_circ_children) 0 = locked_p_plus.
 Proof.
-  unfold locked_circ_children, locked_cs, locked_tj.
-  destruct (CircularCookSpanSplit.span_split_join
-              SidecarCircInteriorHit.locked_interior_cs
-              SidecarCircInteriorHit.locked_interior_tj) as [Hl Hr].
+  unfold locked_circ_children.
+  destruct (CircularCookSpanSplit.span_split_join locked_cs locked_tj)
+    as [Hl Hr].
+  rewrite Hl, Hr.
+  unfold locked_cs, locked_tj, SidecarCircInteriorHit.locked_interior_cs,
+         SidecarCircInteriorHit.locked_interior_tj.
   destruct span_p_plus_on_gamma_A as [_ Heq].
-  unfold SidecarCircInteriorHit.locked_interior_cs,
-         SidecarCircInteriorHit.locked_interior_tj in Hl, Hr.
-  rewrite Hl, Hr, <- Heq.
+  rewrite <- Heq.
   split; reflexivity.
 Qed.
 
