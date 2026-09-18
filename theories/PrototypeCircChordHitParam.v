@@ -24,12 +24,12 @@ From NTS.Proofs Require Import Distance SheetHenCook.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* Locked fixture: quarter-circle × its diameter-ish chord, one interior Hit. *)
+(* Locked fixture: quarter-circle × a line-x=y chord, one interior Hit.       *)
 (*   Circ  A: O=(0,0) r=5 θ0=0 Δθ=π/2     γ: (5,0) → (0,5)                  *)
 (*   Chord S: (5,5) → (0,0)                 line x = y                       *)
 (*   Hit   P: (5√2/2, 5√2/2)               angle π/4 on A                    *)
-(*   ti = 1/2  (sweep fraction, egg data — not atan2 of P)                    *)
-(*   tj = 1 - √2/2                       (chord lerp)                        *)
+(*   ti = 1/2      sweep fraction, egg data — not atan2 of P                  *)
+(*   tj = 1 - √2/2 chord lerp                                                *)
 (* -------------------------------------------------------------------------- *)
 
 Definition proto_circ : CircularEgg :=
@@ -44,15 +44,22 @@ Definition proto_hit : Point :=
 Definition proto_ti : R := 1 / 2.
 Definition proto_tj : R := 1 - sqrt 2 / 2.
 
+Lemma proto_sqrt2_bound : 0 < sqrt 2 < 2.
+Proof.
+  split.
+  - apply sqrt_lt_R0. lra.
+  - assert (sqrt 2 * sqrt 2 < 2 * 2).
+    { rewrite sqrt_sqrt; lra. }
+    nra.
+Qed.
+
 Lemma proto_ti_in_01 : 0 <= proto_ti <= 1.
 Proof. unfold proto_ti. lra. Qed.
 
 Lemma proto_tj_in_01 : 0 <= proto_tj <= 1.
 Proof.
   unfold proto_tj.
-  pose proof sqrt2_neq_0.
-  pose proof Rlt_sqrt2_0.
-  split; lra.
+  pose proof proto_sqrt2_bound. lra.
 Qed.
 
 Lemma proto_circ_at_ti :
@@ -114,8 +121,7 @@ Qed.
 (* Host lane 3-axiom forbids Stdlib atan2 / classic Ratan. CircGamma sidecar  *)
 (* already owns this retract. Do not remint it as host I_ok.                  *)
 (*                                                                            *)
-(* The definition is written so you can see the shape, then not use it.       *)
-(* It is not computed. Print Assumptions on any user of it would go C.        *)
+(* Written so you can see the shape, then not use it.                         *)
 (* ========================================================================== *)
 
 (* Intentionally not defined:
