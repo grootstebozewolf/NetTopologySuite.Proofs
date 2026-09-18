@@ -523,9 +523,8 @@ is discharged by host `MkCirc` (claimId `0007-gamma-mkcirc`):
 - **ι interior circular×chord** — gate **QED**
   (`SidecarCircIotaGate.v : ticket_0007_iota_gate_qed_or_qex`);
   six exclusive cells; collinear CS-as-chord is cell 1, never 4.
-  Cook **QEX** (`SidecarCircIotaGate.v : ticket_0007_iota_cook_qed_or_qex`):
-  `InteriorMixedHitArm` still missing; `I_ok_interior` is not this ctor.
-  `mixed_joint_params` stands. Not host `I_ok` / Γ remint.
+  Cook **QEX** (`SidecarCircIotaArm.v : ticket_0007_iota_arm_qed_or_qex`):
+  blocked by `mixed_joint_params` on `I_ok_mixed` Hit. Not `I_ok_interior`.
 - **ρ bag-loop** — **QEX**. Missing ctor: `LeftoverBagTermArm` =
   leftover_quad_width_decreases ∧ leftover_quad_kiss_arm ∧
   leftover_quad_share_mint_arm (`SheetHenCookLoop.v : leftover_bag_term_arm_missing`).
