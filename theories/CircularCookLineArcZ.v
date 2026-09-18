@@ -34,10 +34,12 @@
    exact signs: q_signs computes them over ℚ, z_signs over ℤ after replacing
    every point X by D·(X − O) ∈ ℤ² (the centre is never formed, each tested
    quantity is a positive multiple of its ℚ counterpart). ℤ ≡ ℚ agreement is
-   locked on every integer vector below (each ℚ vector has a ℤ twin); the
-   general theorem is exactly "q_signs ∘ lift = z_signs". The partition
-   theorem and the ℚ→ℝ soundness bridge to ArcIntersect.arc_chord_intersects
-   are the other named next steps (wayfinder map #767; research #772).
+   locked on every integer vector below (each ℚ vector has a ℤ twin) and,
+   generally, by q_signs_lift_agrees: q_signs (lift P) (lift P1) (lift A)
+   (lift M) (lift C) = z_signs P P1 A M C whenever D ≠ 0 (the classifier's
+   own precondition). The partition theorem and the ℚ→ℝ soundness bridge to
+   ArcIntersect.arc_chord_intersects are the other named next steps
+   (wayfinder map #767; research #772).
 
    WITNESS topic: overlay · claimId: 0007-line-arc-z · witness: 0007-line-arc-z-locked
    board: ADR-0007
@@ -49,7 +51,7 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import ZArith QArith Qfield Bool Lia.
+From Stdlib Require Import ZArith QArith Qfield Bool Lia Lqa.
 From NTS.Proofs Require Import CircularCookZ.
 
 (* -------------------------------------------------------------------------- *)
@@ -263,6 +265,493 @@ Definition I_line_arc_z (P P1 A M C : ZPt) : ILAResult :=
 Close Scope Z_scope.
 
 (* -------------------------------------------------------------------------- *)
+(* lift : ZPt -> QPt, the embedding the agreement theorem q_signs_lift_agrees *)
+(* (below) is stated over. First the primitive identities (cross, D, chord   *)
+(* L2), each closed by pushing inject_Z through +/-/*, since qcross/qarc_D/   *)
+(* qchord_L2 and zcross/zarc_D are literally the same formula over Q and Z.   *)
+(* The D²/D⁴ scaling through the circumcentre division is handled next, in    *)
+(* qWx_scaled / qWy_scaled and the z*_scaled lemmas.                          *)
+(* -------------------------------------------------------------------------- *)
+
+Definition lift_pt (p : ZPt) : QPt := mkQPt (inject_Z (zx p)) (inject_Z (zy p)).
+
+Lemma inject_Z_minus :
+  forall x y : Z, inject_Z (x - y) = (inject_Z x - inject_Z y)%Q.
+Proof.
+  intros x y. unfold Z.sub.
+  rewrite inject_Z_plus, inject_Z_opp. reflexivity.
+Qed.
+
+Ltac push_inject_Z :=
+  repeat first
+    [ rewrite <- inject_Z_plus
+    | rewrite <- inject_Z_minus
+    | rewrite <- inject_Z_mult
+    | rewrite <- inject_Z_opp ].
+
+Lemma lift_qcross :
+  forall A C X : ZPt,
+    qcross (lift_pt A) (lift_pt C) (lift_pt X) = inject_Z (zcross A C X).
+Proof.
+  intros A C X. unfold qcross, zcross, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+Lemma lift_qarc_D :
+  forall A M C : ZPt,
+    qarc_D (lift_pt A) (lift_pt M) (lift_pt C) = inject_Z (zarc_D A M C).
+Proof.
+  intros A M C. unfold qarc_D, zarc_D, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+Lemma lift_qchord_L2 :
+  forall P P1 : ZPt,
+    qchord_L2 (lift_pt P) (lift_pt P1)
+      = inject_Z ((zx P1 - zx P) * (zx P1 - zx P)
+                  + (zy P1 - zy P) * (zy P1 - zy P)).
+Proof.
+  intros P P1. unfold qchord_L2, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+(* Decline agrees under lift: both forms Decline on exactly the same          *)
+(* degenerate condition, read through the embedding.                          *)
+Lemma lift_decline_iff :
+  forall P P1 A M C : ZPt,
+    (qarc_D (lift_pt A) (lift_pt M) (lift_pt C) == 0
+     \/ qchord_L2 (lift_pt P) (lift_pt P1) == 0)%Q
+    <-> (zarc_D A M C = 0
+         \/ (zx P1 - zx P) * (zx P1 - zx P)
+            + (zy P1 - zy P) * (zy P1 - zy P) = 0)%Z.
+Proof.
+  intros P P1 A M C.
+  rewrite lift_qarc_D, lift_qchord_L2.
+  unfold Qeq. simpl.
+  rewrite ? Z.mul_1_r.
+  split; intros [H | H]; [left | right | left | right];
+    (apply inject_Z_injective; rewrite H; reflexivity) || exact H.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* The general Z ~ Q agreement theorem (0007-line-arc-z gap 1, #784):          *)
+(* q_signs ((lift P) (lift P1) (lift A) (lift M) (lift C)) = z_signs P P1 A M C *)
+(* whenever D <> 0 (the classifier's own precondition, checked by             *)
+(* I_line_arc_z / I_line_arc_q before ever calling classify_signs). Named     *)
+(* pieces (qOx/qWx/qA_/qB_/... and their z-side twins) mirror q_signs /       *)
+(* z_signs's internal lets exactly -- q_signs_named / z_signs_named below     *)
+(* check that by `reflexivity`, so every later lemma about the named pieces   *)
+(* is a lemma about the real functions, not a shadow copy. Each of a,b,c,disc,*)
+(* U carries D^2 or D^4 (the extraction seam's own comment, above); kappa and *)
+(* the two cross-product fields carry D^0. Division only ever appears in      *)
+(* qOx/qWx, discharged once by qWx_scaled / qWy_scaled via `field` under      *)
+(* D <> 0; everything downstream is ring algebra pushing inject_Z through     *)
+(* +/-/* and comparing signs after a positive rescaling (qsgn_zsgn_scaled /   *)
+(* qz_compare_scaled).                                                        *)
+(* -------------------------------------------------------------------------- *)
+
+Open Scope Q_scope.
+(* D · ox = Nx, D · oy = Ny (the numerators z_signs computes without dividing). *)
+Definition qNx (A M C : QPt) : Q :=
+  let ax := qx A in let ay := qy A in
+  let mx := qx M in let my := qy M in
+  let cx := qx C in let cy := qy C in
+  let na := ax*ax + ay*ay in let nm := mx*mx + my*my in let nc := cx*cx + cy*cy in
+  na*(my - cy) + nm*(cy - ay) + nc*(ay - my).
+
+Definition qNy (A M C : QPt) : Q :=
+  let ax := qx A in let ay := qy A in
+  let mx := qx M in let my := qy M in
+  let cx := qx C in let cy := qy C in
+  let na := ax*ax + ay*ay in let nm := mx*mx + my*my in let nc := cx*cx + cy*cy in
+  na*(cx - mx) + nm*(ax - cx) + nc*(mx - ax).
+Close Scope Q_scope.
+
+Open Scope Z_scope.
+Definition zNx (A M C : ZPt) : Z :=
+  let ax := zx A in let ay := zy A in
+  let mx := zx M in let my := zy M in
+  let cx := zx C in let cy := zy C in
+  let na := ax*ax + ay*ay in let nm := mx*mx + my*my in let nc := cx*cx + cy*cy in
+  na*(my - cy) + nm*(cy - ay) + nc*(ay - my).
+
+Definition zNy (A M C : ZPt) : Z :=
+  let ax := zx A in let ay := zy A in
+  let mx := zx M in let my := zy M in
+  let cx := zx C in let cy := zy C in
+  let na := ax*ax + ay*ay in let nm := mx*mx + my*my in let nc := cx*cx + cy*cy in
+  na*(cx - mx) + nm*(ax - cx) + nc*(mx - ax).
+Close Scope Z_scope.
+
+Lemma lift_qNx : forall A M C : ZPt, qNx (lift_pt A) (lift_pt M) (lift_pt C) = inject_Z (zNx A M C).
+Proof. intros. unfold qNx, zNx, lift_pt. simpl. push_inject_Z. reflexivity. Qed.
+
+Lemma lift_qNy : forall A M C : ZPt, qNy (lift_pt A) (lift_pt M) (lift_pt C) = inject_Z (zNy A M C).
+Proof. intros. unfold qNy, zNy, lift_pt. simpl. push_inject_Z. reflexivity. Qed.
+
+(* -------------------- named Q-side and Z-side pieces -------------------- *)
+Open Scope Q_scope.
+Definition qOx (A M C : QPt) : Q := qNx A M C / qarc_D A M C.
+Definition qOy (A M C : QPt) : Q := qNy A M C / qarc_D A M C.
+Definition qWx (P A M C : QPt) : Q := qx P - qOx A M C.
+Definition qWy (P A M C : QPt) : Q := qy P - qOy A M C.
+Close Scope Q_scope.
+
+Open Scope Z_scope.
+Definition zPx' (P A M C : ZPt) : Z := zarc_D A M C * zx P - zNx A M C.
+Definition zPy' (P A M C : ZPt) : Z := zarc_D A M C * zy P - zNy A M C.
+Close Scope Z_scope.
+
+Lemma inject_Z_neq0 :
+  forall z : Z, z <> 0%Z -> ~ (inject_Z z == 0)%Q.
+Proof.
+  intros z Hne Heq0.
+  apply Hne.
+  apply (inject_Z_injective z 0).
+  exact Heq0.
+Qed.
+
+Lemma qWx_scaled :
+  forall P A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zarc_D A M C) * qWx (lift_pt P) (lift_pt A) (lift_pt M) (lift_pt C)
+      == inject_Z (zPx' P A M C))%Q.
+Proof.
+  intros P A M C Hne.
+  assert (HD := inject_Z_neq0 (zarc_D A M C) Hne).
+  unfold qWx, qOx, zPx'.
+  rewrite lift_qNx, lift_qarc_D.
+  rewrite inject_Z_minus, inject_Z_mult.
+  unfold lift_pt; simpl.
+  field_simplify; [ | exact HD].
+  reflexivity.
+Qed.
+
+Lemma qWy_scaled :
+  forall P A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zarc_D A M C) * qWy (lift_pt P) (lift_pt A) (lift_pt M) (lift_pt C)
+      == inject_Z (zPy' P A M C))%Q.
+Proof.
+  intros P A M C Hne.
+  assert (HD := inject_Z_neq0 (zarc_D A M C) Hne).
+  unfold qWy, qOy, zPy'.
+  rewrite lift_qNy, lift_qarc_D.
+  rewrite inject_Z_minus, inject_Z_mult.
+  unfold lift_pt; simpl.
+  field_simplify; [ | exact HD].
+  reflexivity.
+Qed.
+
+(* A itself is just qWx/qWy specialized at P := A (since ax - ox is wx with P:=A). *)
+Lemma qAx_scaled :
+  forall A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zarc_D A M C) * (qx (lift_pt A) - qOx (lift_pt A) (lift_pt M) (lift_pt C))
+      == inject_Z (zarc_D A M C * zx A - zNx A M C))%Q.
+Proof. intros. apply (qWx_scaled A A M C H). Qed.
+
+Lemma qAy_scaled :
+  forall A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zarc_D A M C) * (qy (lift_pt A) - qOy (lift_pt A) (lift_pt M) (lift_pt C))
+      == inject_Z (zarc_D A M C * zy A - zNy A M C))%Q.
+Proof. intros. apply (qWy_scaled A A M C H). Qed.
+
+Open Scope Q_scope.
+Definition qDx (P P1 : QPt) : Q := qx P1 - qx P.
+Definition qDy (P P1 : QPt) : Q := qy P1 - qy P.
+Definition qA_ (P P1 A M C : QPt) : Q := qchord_L2 P P1.
+Definition qB_ (P P1 A M C : QPt) : Q :=
+  2 * (qWx P A M C * qDx P P1 + qWy P A M C * qDy P P1).
+Definition qC_ (P P1 A M C : QPt) : Q :=
+  qWx P A M C * qWx P A M C + qWy P A M C * qWy P A M C
+  - ((qx A - qOx A M C) * (qx A - qOx A M C) + (qy A - qOy A M C) * (qy A - qOy A M C)).
+Definition qDisc_ (P P1 A M C : QPt) : Q :=
+  qB_ P P1 A M C * qB_ P P1 A M C - 4 * qA_ P P1 A M C * qC_ P P1 A M C.
+Definition qKap_ (P P1 A M C : QPt) : Q :=
+  (qx C - qx A) * qDy P P1 - qDx P P1 * (qy C - qy A).
+Definition qU_ (P P1 A M C : QPt) : Q :=
+  2 * qA_ P P1 A M C * qcross A C P - qB_ P P1 A M C * qKap_ P P1 A M C.
+Definition qTs_ (P P1 A M C : QPt) : Q :=
+  2 * ((qx A - qx P) * qDx P P1 + (qy A - qy P) * qDy P P1) + qB_ P P1 A M C.
+Close Scope Q_scope.
+
+Lemma q_signs_named :
+  forall P P1 A M C : QPt,
+    q_signs P P1 A M C =
+      mkLineArcSigns (qsgn (qDisc_ P P1 A M C)) (qsgn (qC_ P P1 A M C))
+        (qsgn (qA_ P P1 A M C + qB_ P P1 A M C + qC_ P P1 A M C))
+        (qsgn (qB_ P P1 A M C)) (qsgn (qB_ P P1 A M C + 2 * qA_ P P1 A M C))
+        (qsgn (qcross A C M)) (qsgn (qU_ P P1 A M C)) (qsgn (qKap_ P P1 A M C))
+        (Qcompare (qU_ P P1 A M C * qU_ P P1 A M C)
+                  (qDisc_ P P1 A M C * qKap_ P P1 A M C * qKap_ P P1 A M C))
+        (qsgn (qcross P P1 A)) (qsgn (qTs_ P P1 A M C)).
+Proof.
+  intros. unfold q_signs, qDisc_, qC_, qA_, qB_, qKap_, qU_, qTs_, qWx, qWy, qOx, qOy, qDx, qDy.
+  reflexivity.
+Qed.
+
+Open Scope Z_scope.
+Definition zDx (P P1 : ZPt) : Z := zx P1 - zx P.
+Definition zDy (P P1 : ZPt) : Z := zy P1 - zy P.
+Definition zDx' (P P1 A M C : ZPt) : Z := zarc_D A M C * zDx P P1.
+Definition zDy' (P P1 A M C : ZPt) : Z := zarc_D A M C * zDy P P1.
+Definition zA_ (P P1 A M C : ZPt) : Z :=
+  zDx' P P1 A M C * zDx' P P1 A M C + zDy' P P1 A M C * zDy' P P1 A M C.
+Definition zB_ (P P1 A M C : ZPt) : Z :=
+  2 * (zPx' P A M C * zDx' P P1 A M C + zPy' P A M C * zDy' P P1 A M C).
+Definition zC_ (P P1 A M C : ZPt) : Z :=
+  zPx' P A M C * zPx' P A M C + zPy' P A M C * zPy' P A M C
+  - (zPx' A A M C * zPx' A A M C + zPy' A A M C * zPy' A A M C).
+Definition zDisc_ (P P1 A M C : ZPt) : Z :=
+  zB_ P P1 A M C * zB_ P P1 A M C - 4 * zA_ P P1 A M C * zC_ P P1 A M C.
+Definition zKap_ (P P1 A M C : ZPt) : Z :=
+  (zx C - zx A) * zDy P P1 - zDx P P1 * (zy C - zy A).
+Definition zU_ (P P1 A M C : ZPt) : Z :=
+  2 * zA_ P P1 A M C * zcross A C P - zB_ P P1 A M C * zKap_ P P1 A M C.
+Definition zTs_ (P P1 A M C : ZPt) : Z :=
+  2 * ((zarc_D A M C * zx A - zNx A M C - (zarc_D A M C * zx P - zNx A M C)) * zDx' P P1 A M C
+       + (zarc_D A M C * zy A - zNy A M C - (zarc_D A M C * zy P - zNy A M C)) * zDy' P P1 A M C)
+  + zB_ P P1 A M C.
+Close Scope Z_scope.
+
+Lemma z_signs_named :
+  forall P P1 A M C : ZPt,
+    z_signs P P1 A M C =
+      mkLineArcSigns (zsgn (zDisc_ P P1 A M C)) (zsgn (zC_ P P1 A M C))
+        (zsgn (zA_ P P1 A M C + zB_ P P1 A M C + zC_ P P1 A M C))
+        (zsgn (zB_ P P1 A M C)) (zsgn (zB_ P P1 A M C + 2 * zA_ P P1 A M C))
+        (zsgn (zcross A C M)) (zsgn (zU_ P P1 A M C)) (zsgn (zKap_ P P1 A M C))
+        (Z.compare (zU_ P P1 A M C * zU_ P P1 A M C)
+                  (zDisc_ P P1 A M C * zKap_ P P1 A M C * zKap_ P P1 A M C))
+        (zsgn (zcross P P1 A)) (zsgn (zTs_ P P1 A M C)).
+Proof.
+  intros.
+  unfold z_signs, zDisc_, zC_, zA_, zB_, zKap_, zU_, zTs_, zPx', zPy', zDx', zDy', zDx, zDy.
+  reflexivity.
+Qed.
+
+Lemma zA__as_Z :
+  forall P P1 A M C : ZPt,
+    zA_ P P1 A M C =
+      (zarc_D A M C * zarc_D A M C
+       * ((zx P1 - zx P) * (zx P1 - zx P) + (zy P1 - zy P) * (zy P1 - zy P)))%Z.
+Proof. intros. unfold zA_, zDx', zDy', zDx, zDy. ring. Qed.
+
+Lemma zA__scaled :
+  forall P P1 A M C : ZPt,
+    (inject_Z (zA_ P P1 A M C)
+      == inject_Z (zarc_D A M C) * inject_Z (zarc_D A M C)
+         * qA_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros. rewrite zA__as_Z.
+  unfold qA_, qchord_L2, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+Lemma zDx'_scaled :
+  forall P P1 A M C : ZPt,
+    (inject_Z (zDx' P P1 A M C)
+      == inject_Z (zarc_D A M C) * qDx (lift_pt P) (lift_pt P1))%Q.
+Proof.
+  intros. unfold zDx', qDx, zDx, lift_pt. simpl. push_inject_Z. reflexivity.
+Qed.
+
+Lemma zDy'_scaled :
+  forall P P1 A M C : ZPt,
+    (inject_Z (zDy' P P1 A M C)
+      == inject_Z (zarc_D A M C) * qDy (lift_pt P) (lift_pt P1))%Q.
+Proof.
+  intros. unfold zDy', qDy, zDy, lift_pt. simpl. push_inject_Z. reflexivity.
+Qed.
+
+Lemma zB__scaled :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zB_ P P1 A M C)
+      == inject_Z (zarc_D A M C) * inject_Z (zarc_D A M C)
+         * qB_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros P P1 A M C Hne.
+  unfold zB_, qB_.
+  rewrite inject_Z_mult, inject_Z_plus, inject_Z_mult, inject_Z_mult.
+  rewrite <- (qWx_scaled P A M C Hne), <- (qWy_scaled P A M C Hne).
+  rewrite zDx'_scaled, zDy'_scaled.
+  ring.
+Qed.
+
+Lemma zC__scaled :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zC_ P P1 A M C)
+      == inject_Z (zarc_D A M C) * inject_Z (zarc_D A M C)
+         * qC_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros P P1 A M C Hne.
+  unfold zC_, qC_.
+  repeat rewrite ?inject_Z_minus, ?inject_Z_plus, ?inject_Z_mult.
+  rewrite <- (qWx_scaled P A M C Hne), <- (qWy_scaled P A M C Hne).
+  rewrite <- (qWx_scaled A A M C Hne), <- (qWy_scaled A A M C Hne).
+  unfold qWx, qWy.
+  ring.
+Qed.
+
+Lemma zDisc__scaled :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zDisc_ P P1 A M C)
+      == (inject_Z (zarc_D A M C)) ^ 4
+         * qDisc_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros P P1 A M C Hne.
+  unfold zDisc_, qDisc_.
+  rewrite inject_Z_minus, inject_Z_mult, inject_Z_mult, inject_Z_mult.
+  rewrite (zB__scaled P P1 A M C Hne), (zA__scaled P P1 A M C), (zC__scaled P P1 A M C Hne).
+  ring.
+Qed.
+
+Lemma zKap__scaled :
+  forall P P1 A M C : ZPt,
+    (inject_Z (zKap_ P P1 A M C)
+      == qKap_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros. unfold zKap_, qKap_, qDx, qDy, zDx, zDy, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+Lemma zU__scaled :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zU_ P P1 A M C)
+      == (inject_Z (zarc_D A M C)) * (inject_Z (zarc_D A M C))
+         * qU_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros P P1 A M C Hne.
+  unfold zU_, qU_.
+  rewrite inject_Z_minus, inject_Z_mult, inject_Z_mult, inject_Z_mult.
+  rewrite (zA__scaled P P1 A M C), (zB__scaled P P1 A M C Hne), zKap__scaled.
+  rewrite <- lift_qcross.
+  ring.
+Qed.
+
+Lemma zTs__scaled :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    (inject_Z (zTs_ P P1 A M C)
+      == inject_Z (zarc_D A M C) * inject_Z (zarc_D A M C)
+         * qTs_ (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C))%Q.
+Proof.
+  intros P P1 A M C Hne.
+  unfold zTs_, qTs_, zDx', zDy', zDx, zDy, qDx, qDy.
+  repeat rewrite ?inject_Z_plus, ?inject_Z_mult, ?inject_Z_minus.
+  rewrite (zB__scaled P P1 A M C Hne).
+  unfold lift_pt. cbn [qx qy].
+  ring.
+Qed.
+
+Lemma inject_Z_compare : forall x y : Z, Z.compare x y = Qcompare (inject_Z x) (inject_Z y).
+Proof.
+  intros x y.
+  destruct (Z.compare_spec x y) as [Heq|Hlt|Hgt].
+  - subst y. simpl. symmetry. apply Qeq_alt. reflexivity.
+  - assert (Hq : (inject_Z x < inject_Z y)%Q) by (rewrite <- Zlt_Qlt; exact Hlt).
+    symmetry. apply Qlt_alt. exact Hq.
+  - assert (Hq : (inject_Z y < inject_Z x)%Q) by (rewrite <- Zlt_Qlt; exact Hgt).
+    symmetry. apply Qgt_alt. exact Hq.
+Qed.
+
+Open Scope Q_scope.
+Lemma qsgn_zsgn_scaled :
+  forall (Xq : Q) (Xz : Z) (s : Q),
+    0 < s -> inject_Z Xz == s * Xq -> Qcompare Xq 0 = Z.compare Xz 0.
+Proof.
+  intros Xq Xz s Hs Heq.
+  rewrite inject_Z_compare.
+  assert (H0 : inject_Z 0 == 0) by reflexivity.
+  rewrite H0, Heq.
+  destruct (Qcompare_spec Xq 0) as [Heq0|Hlt0|Hgt0].
+  - rewrite Heq0. assert (Hz : s * 0 == 0) by ring. rewrite Hz. reflexivity.
+  - assert (Hlt : s * Xq < 0) by nra.
+    symmetry. apply Qlt_alt. exact Hlt.
+  - assert (Hgt : 0 < s * Xq) by nra.
+    symmetry. apply Qgt_alt. exact Hgt.
+Qed.
+Close Scope Q_scope.
+
+Open Scope Q_scope.
+Lemma Qcompare_scale_pos :
+  forall (Xq Yq s : Q), 0 < s -> Qcompare Xq Yq = Qcompare (s * Xq) (s * Yq).
+Proof.
+  intros Xq Yq s Hs.
+  destruct (Qcompare_spec Xq Yq) as [Heq|Hlt|Hgt].
+  - rewrite Heq. symmetry. apply Qeq_alt. reflexivity.
+  - symmetry. apply Qlt_alt. apply (Qmult_lt_l Xq Yq s Hs). exact Hlt.
+  - symmetry. apply Qgt_alt. apply (Qmult_lt_l Yq Xq s Hs). exact Hgt.
+Qed.
+
+Lemma qz_compare_scaled :
+  forall (Xq Yq : Q) (Xz Yz : Z) (s : Q),
+    0 < s -> inject_Z Xz == s * Xq -> inject_Z Yz == s * Yq ->
+    Qcompare Xq Yq = Z.compare Xz Yz.
+Proof.
+  intros Xq Yq Xz Yz s Hs HX HY.
+  rewrite (Qcompare_scale_pos Xq Yq s Hs).
+  rewrite <- HX, <- HY.
+  symmetry. apply inject_Z_compare.
+Qed.
+Close Scope Q_scope.
+
+Theorem q_signs_lift_agrees :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    q_signs (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = z_signs P P1 A M C.
+Proof.
+  intros P P1 A M C Hne.
+  rewrite q_signs_named, z_signs_named.
+  set (Dq := inject_Z (zarc_D A M C)).
+  assert (HDq : (0 < Dq * Dq)%Q).
+  { assert (Hne' : ~ (Dq == 0)%Q) by (apply inject_Z_neq0; exact Hne).
+    destruct (Qcompare_spec Dq 0) as [Heq|Hlt|Hgt].
+    - exfalso; apply Hne'; exact Heq.
+    - nra.
+    - nra. }
+  assert (HDq2 : (0 < Dq * Dq * (Dq * Dq))%Q) by nra.
+  f_equal.
+  - (* sg_disc *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq*(Dq*Dq)) HDq2).
+    rewrite (zDisc__scaled P P1 A M C Hne). unfold Dq. ring.
+  - (* sg_f0 = c *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq) HDq).
+    apply (zC__scaled P P1 A M C Hne).
+  - (* sg_f1 = a+b+c *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq) HDq).
+    rewrite inject_Z_plus, inject_Z_plus.
+    rewrite (zA__scaled P P1 A M C), (zB__scaled P P1 A M C Hne), (zC__scaled P P1 A M C Hne).
+    unfold Dq. ring.
+  - (* sg_b *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq) HDq).
+    apply (zB__scaled P P1 A M C Hne).
+  - (* sg_b2a *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq) HDq).
+    rewrite inject_Z_plus, inject_Z_mult.
+    rewrite (zB__scaled P P1 A M C Hne), (zA__scaled P P1 A M C).
+    unfold Dq. ring.
+  - (* sg_M *)
+    apply (qsgn_zsgn_scaled _ _ 1); [lra | rewrite Qmult_1_l, lift_qcross; reflexivity].
+  - (* sg_U *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq) HDq).
+    apply (zU__scaled P P1 A M C Hne).
+  - (* sg_kappa *) apply (qsgn_zsgn_scaled _ _ 1); [lra | rewrite Qmult_1_l; apply zKap__scaled].
+  - (* sg_U2_vs_disc_kappa2 *)
+    apply (qz_compare_scaled _ _ _ _ (Dq*Dq*(Dq*Dq)) HDq2).
+    + rewrite inject_Z_mult.
+      rewrite (zU__scaled P P1 A M C Hne). unfold Dq. ring.
+    + rewrite inject_Z_mult, inject_Z_mult.
+      rewrite (zDisc__scaled P P1 A M C Hne), zKap__scaled.
+      unfold Dq. ring.
+  - (* sg_A_side *)
+    apply (qsgn_zsgn_scaled _ _ 1); [lra | rewrite Qmult_1_l, lift_qcross; reflexivity].
+  - (* sg_tA_minus_s *) apply (qsgn_zsgn_scaled _ _ (Dq*Dq) HDq).
+    apply (zTs__scaled P P1 A M C Hne).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Structure: constructors are distinct; the kernels never Decline; Decline    *)
 (* is exactly degenerate input; hens are the canonical birth certificates.    *)
 (* -------------------------------------------------------------------------- *)
@@ -329,6 +818,85 @@ Proof.
     + apply Qeq_bool_neq in HL. split.
       * intro H. exfalso. exact (classify_signs_not_decline _ H).
       * intros [H | H]; contradiction.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* ℤ ≡ ℚ agreement (0007-line-arc-z gap 1, #784): the two wrappers Decline on  *)
+(* exactly the same locus under lift, and off that locus classify_signs sees  *)
+(* the same record (q_signs_lift_agrees), so the wrappers agree everywhere.   *)
+(* -------------------------------------------------------------------------- *)
+
+(* Bridges the two equivalent "zero-length chord" phrasings: lift_decline_iff
+   states it as a sum of squares (its Q side factors that way naturally);
+   I_line_arc_z_decline_iff states it as a coordinatewise conjunction. *)
+Lemma z_sum_sq_eq0_iff :
+  forall x y : Z, (x * x + y * y = 0 <-> x = 0 /\ y = 0)%Z.
+Proof.
+  intros x y. split.
+  - intro H. nia.
+  - intros [Hx Hy]. subst. reflexivity.
+Qed.
+
+(* WITNESS {"claimId":"0007-line-arc-z","topic":"overlay","lemma":"I_line_arc_lift_decline_iff","title":"I_line_arc_q under lift Declines iff I_line_arc_z Declines: composed from I_line_arc_q_decline_iff, I_line_arc_z_decline_iff and lift_decline_iff, not restated at the D / L2 layer","file":"theories/CircularCookLineArcZ.v","witness":"0007-line-arc-z-locked","board":"ADR-0007"} *)
+
+Lemma I_line_arc_lift_decline_iff :
+  forall P P1 A M C : ZPt,
+    I_line_arc_q (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = ILADecline
+    <-> I_line_arc_z P P1 A M C = ILADecline.
+Proof.
+  intros P P1 A M C.
+  rewrite I_line_arc_q_decline_iff, I_line_arc_z_decline_iff.
+  rewrite <- (z_sum_sq_eq0_iff (zx P1 - zx P) (zy P1 - zy P)).
+  apply lift_decline_iff.
+Qed.
+
+(* WITNESS {"claimId":"0007-line-arc-z","topic":"overlay","lemma":"I_line_arc_lift_agrees","title":"I_line_arc_q under lift equals I_line_arc_z on every integer 5-tuple: both Decline together (I_line_arc_lift_decline_iff) or neither does and classify_signs sees the same record (q_signs_lift_agrees)","file":"theories/CircularCookLineArcZ.v","witness":"0007-line-arc-z-locked","board":"ADR-0007"} *)
+
+Lemma I_line_arc_lift_agrees_nondeg :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    ~ (zx P1 - zx P = 0 /\ zy P1 - zy P = 0)%Z ->
+    I_line_arc_q (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = I_line_arc_z P P1 A M C.
+Proof.
+  intros P P1 A M C HDne HLne.
+  unfold I_line_arc_q, I_line_arc_z.
+  rewrite lift_qarc_D.
+  destruct (Qeq_bool (inject_Z (zarc_D A M C)) 0) eqn:HDb.
+  - exfalso. apply Qeq_bool_iff in HDb. apply HDne.
+    apply (inject_Z_injective (zarc_D A M C) 0). exact HDb.
+  - destruct (zarc_D A M C =? 0)%Z eqn:HDb'.
+    + apply Z.eqb_eq in HDb'. contradiction.
+    + rewrite lift_qchord_L2.
+      destruct (Qeq_bool (inject_Z ((zx P1 - zx P) * (zx P1 - zx P)
+                                    + (zy P1 - zy P) * (zy P1 - zy P))) 0) eqn:HLb.
+      * exfalso. apply Qeq_bool_iff in HLb. apply HLne.
+        apply z_sum_sq_eq0_iff.
+        apply (inject_Z_injective _ 0). exact HLb.
+      * destruct ((zx P1 - zx P =? 0)%Z && (zy P1 - zy P =? 0)%Z)%bool eqn:HLb'.
+        -- apply andb_true_iff in HLb'. destruct HLb' as [Hx Hy].
+           apply Z.eqb_eq in Hx, Hy. exfalso. apply HLne. split; assumption.
+        -- f_equal. apply (q_signs_lift_agrees P P1 A M C HDne).
+Qed.
+
+Theorem I_line_arc_lift_agrees :
+  forall P P1 A M C : ZPt,
+    I_line_arc_q (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = I_line_arc_z P P1 A M C.
+Proof.
+  intros P P1 A M C.
+  destruct (Z.eq_dec (zarc_D A M C) 0) as [HD0|HDne].
+  - assert (Hz : I_line_arc_z P P1 A M C = ILADecline)
+      by (apply I_line_arc_z_decline_iff; left; exact HD0).
+    rewrite Hz. apply I_line_arc_lift_decline_iff. exact Hz.
+  - destruct (Z.eq_dec (zx P1 - zx P) 0) as [Hx0|Hxne].
+    + destruct (Z.eq_dec (zy P1 - zy P) 0) as [Hy0|Hyne].
+      * assert (Hz : I_line_arc_z P P1 A M C = ILADecline)
+          by (apply I_line_arc_z_decline_iff; right; split; assumption).
+        rewrite Hz. apply I_line_arc_lift_decline_iff. exact Hz.
+      * apply I_line_arc_lift_agrees_nondeg; [exact HDne | intros [_ Hy]; contradiction].
+    + apply I_line_arc_lift_agrees_nondeg; [exact HDne | intros [Hx _]; contradiction].
 Qed.
 
 (* Hens are birth certificates: Hit2 mints (hen_plus, hen_minus) in that
@@ -534,6 +1102,17 @@ Lemma lv_Z02_rev : I_line_arc_z (zp 5 4) (zp 0 4) zU_A zU_M zU_C = ILAHit1 RootM
 Lemma lv_Z10_arcrev : I_line_arc_z (zp 0 10) (zp 0 5) zR_C zR_M zR_A = ILAHit1 RootMinus hen_minus (mkRootTag ChordEnd ArcAtEnd). Proof. vm_compute. reflexivity. Qed.
 Lemma lv_Z11_arcrev : I_line_arc_z (zp (-5) 4) (zp 5 4) zMaj_C zMaj_M zMaj_A = ILAHit1 RootMinus hen_minus tag_interior. Proof. vm_compute. reflexivity. Qed.
 
+Print Assumptions lift_qcross.
+Print Assumptions lift_qarc_D.
+Print Assumptions lift_qchord_L2.
+Print Assumptions lift_decline_iff.
+Print Assumptions q_signs_named.
+Print Assumptions z_signs_named.
+Print Assumptions q_signs_lift_agrees.
+Print Assumptions z_sum_sq_eq0_iff.
+Print Assumptions I_line_arc_lift_decline_iff.
+Print Assumptions I_line_arc_lift_agrees_nondeg.
+Print Assumptions I_line_arc_lift_agrees.
 Print Assumptions line_arc_disc_eq_four_L2_h2.
 Print Assumptions classify_signs_not_decline.
 Print Assumptions classify_signs_hens.
