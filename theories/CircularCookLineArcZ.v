@@ -822,6 +822,85 @@ Proof.
       * intros [H | H]; contradiction.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* ℤ ≡ ℚ agreement (0007-line-arc-z gap 1, #784): the two wrappers Decline on  *)
+(* exactly the same locus under lift, and off that locus classify_signs sees  *)
+(* the same record (q_signs_lift_agrees), so the wrappers agree everywhere.   *)
+(* -------------------------------------------------------------------------- *)
+
+(* Bridges the two equivalent "zero-length chord" phrasings: lift_decline_iff
+   states it as a sum of squares (its Q side factors that way naturally);
+   I_line_arc_z_decline_iff states it as a coordinatewise conjunction. *)
+Lemma z_sum_sq_eq0_iff :
+  forall x y : Z, (x * x + y * y = 0 <-> x = 0 /\ y = 0)%Z.
+Proof.
+  intros x y. split.
+  - intro H. nia.
+  - intros [Hx Hy]. subst. reflexivity.
+Qed.
+
+(* WITNESS {"claimId":"0007-line-arc-z","topic":"overlay","lemma":"I_line_arc_lift_decline_iff","title":"I_line_arc_q under lift Declines iff I_line_arc_z Declines: composed from I_line_arc_q_decline_iff, I_line_arc_z_decline_iff and lift_decline_iff, not restated at the D / L2 layer","file":"theories/CircularCookLineArcZ.v","witness":"0007-line-arc-z-locked","board":"ADR-0007"} *)
+
+Lemma I_line_arc_lift_decline_iff :
+  forall P P1 A M C : ZPt,
+    I_line_arc_q (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = ILADecline
+    <-> I_line_arc_z P P1 A M C = ILADecline.
+Proof.
+  intros P P1 A M C.
+  rewrite I_line_arc_q_decline_iff, I_line_arc_z_decline_iff.
+  rewrite <- (z_sum_sq_eq0_iff (zx P1 - zx P) (zy P1 - zy P)).
+  apply lift_decline_iff.
+Qed.
+
+(* WITNESS {"claimId":"0007-line-arc-z","topic":"overlay","lemma":"I_line_arc_lift_agrees","title":"I_line_arc_q under lift equals I_line_arc_z on every integer 5-tuple: both Decline together (I_line_arc_lift_decline_iff) or neither does and classify_signs sees the same record (q_signs_lift_agrees)","file":"theories/CircularCookLineArcZ.v","witness":"0007-line-arc-z-locked","board":"ADR-0007"} *)
+
+Lemma I_line_arc_lift_agrees_nondeg :
+  forall P P1 A M C : ZPt,
+    zarc_D A M C <> 0%Z ->
+    ~ (zx P1 - zx P = 0 /\ zy P1 - zy P = 0)%Z ->
+    I_line_arc_q (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = I_line_arc_z P P1 A M C.
+Proof.
+  intros P P1 A M C HDne HLne.
+  unfold I_line_arc_q, I_line_arc_z.
+  rewrite lift_qarc_D.
+  destruct (Qeq_bool (inject_Z (zarc_D A M C)) 0) eqn:HDb.
+  - exfalso. apply Qeq_bool_iff in HDb. apply HDne.
+    apply (inject_Z_injective (zarc_D A M C) 0). exact HDb.
+  - destruct (zarc_D A M C =? 0)%Z eqn:HDb'.
+    + apply Z.eqb_eq in HDb'. contradiction.
+    + rewrite lift_qchord_L2.
+      destruct (Qeq_bool (inject_Z ((zx P1 - zx P) * (zx P1 - zx P)
+                                    + (zy P1 - zy P) * (zy P1 - zy P))) 0) eqn:HLb.
+      * exfalso. apply Qeq_bool_iff in HLb. apply HLne.
+        apply z_sum_sq_eq0_iff.
+        apply (inject_Z_injective _ 0). exact HLb.
+      * destruct ((zx P1 - zx P =? 0)%Z && (zy P1 - zy P =? 0)%Z)%bool eqn:HLb'.
+        -- apply andb_true_iff in HLb'. destruct HLb' as [Hx Hy].
+           apply Z.eqb_eq in Hx, Hy. exfalso. apply HLne. split; assumption.
+        -- f_equal. apply (q_signs_lift_agrees P P1 A M C HDne).
+Qed.
+
+Theorem I_line_arc_lift_agrees :
+  forall P P1 A M C : ZPt,
+    I_line_arc_q (lift_pt P) (lift_pt P1) (lift_pt A) (lift_pt M) (lift_pt C)
+      = I_line_arc_z P P1 A M C.
+Proof.
+  intros P P1 A M C.
+  destruct (Z.eq_dec (zarc_D A M C) 0) as [HD0|HDne].
+  - assert (Hz : I_line_arc_z P P1 A M C = ILADecline)
+      by (apply I_line_arc_z_decline_iff; left; exact HD0).
+    rewrite Hz. apply I_line_arc_lift_decline_iff. exact Hz.
+  - destruct (Z.eq_dec (zx P1 - zx P) 0) as [Hx0|Hxne].
+    + destruct (Z.eq_dec (zy P1 - zy P) 0) as [Hy0|Hyne].
+      * assert (Hz : I_line_arc_z P P1 A M C = ILADecline)
+          by (apply I_line_arc_z_decline_iff; right; split; assumption).
+        rewrite Hz. apply I_line_arc_lift_decline_iff. exact Hz.
+      * apply I_line_arc_lift_agrees_nondeg; [exact HDne | intros [_ Hy]; contradiction].
+    + apply I_line_arc_lift_agrees_nondeg; [exact HDne | intros [Hx _]; contradiction].
+Qed.
+
 (* Hens are birth certificates: Hit2 mints (hen_plus, hen_minus) in that
    order (the MintTwo shape), Hit1 mints the hen of its named root, Touch
    mints hen_plus (as CircularCookZ.mint_touch). *)
@@ -1032,6 +1111,10 @@ Print Assumptions lift_decline_iff.
 Print Assumptions q_signs_named.
 Print Assumptions z_signs_named.
 Print Assumptions q_signs_lift_agrees.
+Print Assumptions z_sum_sq_eq0_iff.
+Print Assumptions I_line_arc_lift_decline_iff.
+Print Assumptions I_line_arc_lift_agrees_nondeg.
+Print Assumptions I_line_arc_lift_agrees.
 Print Assumptions line_arc_disc_eq_four_L2_h2.
 Print Assumptions classify_signs_not_decline.
 Print Assumptions classify_signs_hens.
