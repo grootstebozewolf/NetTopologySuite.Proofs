@@ -263,6 +263,77 @@ Definition I_line_arc_z (P P1 A M C : ZPt) : ILAResult :=
 Close Scope Z_scope.
 
 (* -------------------------------------------------------------------------- *)
+(* lift : ZPt -> QPt, the embedding the general agreement theorem is stated   *)
+(* over ("q_signs ∘ lift = z_signs", header above). Landed here: the          *)
+(* embedding itself, plus the primitive identities (cross, D, chord L2) any   *)
+(* such proof needs — each closed by pushing inject_Z through +/-/*, since    *)
+(* qcross/qarc_D/qchord_L2 and zcross/zarc_D are literally the same formula   *)
+(* over Q and Z. The full q_signs ∘ lift = z_signs theorem — which additionally *)
+(* has to track the D²/D⁴ scaling through the division in ox/oy — is not      *)
+(* attempted here; it stays the named next step (0007-line-arc-z, #784).      *)
+(* -------------------------------------------------------------------------- *)
+
+Definition lift_pt (p : ZPt) : QPt := mkQPt (inject_Z (zx p)) (inject_Z (zy p)).
+
+Lemma inject_Z_minus :
+  forall x y : Z, inject_Z (x - y) = (inject_Z x - inject_Z y)%Q.
+Proof.
+  intros x y. unfold Z.sub.
+  rewrite inject_Z_plus, inject_Z_opp. reflexivity.
+Qed.
+
+Ltac push_inject_Z :=
+  repeat first
+    [ rewrite <- inject_Z_plus
+    | rewrite <- inject_Z_minus
+    | rewrite <- inject_Z_mult
+    | rewrite <- inject_Z_opp ].
+
+Lemma lift_qcross :
+  forall A C X : ZPt,
+    qcross (lift_pt A) (lift_pt C) (lift_pt X) = inject_Z (zcross A C X).
+Proof.
+  intros A C X. unfold qcross, zcross, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+Lemma lift_qarc_D :
+  forall A M C : ZPt,
+    qarc_D (lift_pt A) (lift_pt M) (lift_pt C) = inject_Z (zarc_D A M C).
+Proof.
+  intros A M C. unfold qarc_D, zarc_D, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+Lemma lift_qchord_L2 :
+  forall P P1 : ZPt,
+    qchord_L2 (lift_pt P) (lift_pt P1)
+      = inject_Z ((zx P1 - zx P) * (zx P1 - zx P)
+                  + (zy P1 - zy P) * (zy P1 - zy P)).
+Proof.
+  intros P P1. unfold qchord_L2, lift_pt. simpl.
+  push_inject_Z. reflexivity.
+Qed.
+
+(* Decline agrees under lift: both forms Decline on exactly the same          *)
+(* degenerate condition, read through the embedding.                          *)
+Lemma lift_decline_iff :
+  forall P P1 A M C : ZPt,
+    (qarc_D (lift_pt A) (lift_pt M) (lift_pt C) == 0
+     \/ qchord_L2 (lift_pt P) (lift_pt P1) == 0)%Q
+    <-> (zarc_D A M C = 0
+         \/ (zx P1 - zx P) * (zx P1 - zx P)
+            + (zy P1 - zy P) * (zy P1 - zy P) = 0)%Z.
+Proof.
+  intros P P1 A M C.
+  rewrite lift_qarc_D, lift_qchord_L2.
+  unfold Qeq. simpl.
+  rewrite ? Z.mul_1_r.
+  split; intros [H | H]; [left | right | left | right];
+    (apply inject_Z_injective; rewrite H; reflexivity) || exact H.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Structure: constructors are distinct; the kernels never Decline; Decline    *)
 (* is exactly degenerate input; hens are the canonical birth certificates.    *)
 (* -------------------------------------------------------------------------- *)
@@ -534,6 +605,10 @@ Lemma lv_Z02_rev : I_line_arc_z (zp 5 4) (zp 0 4) zU_A zU_M zU_C = ILAHit1 RootM
 Lemma lv_Z10_arcrev : I_line_arc_z (zp 0 10) (zp 0 5) zR_C zR_M zR_A = ILAHit1 RootMinus hen_minus (mkRootTag ChordEnd ArcAtEnd). Proof. vm_compute. reflexivity. Qed.
 Lemma lv_Z11_arcrev : I_line_arc_z (zp (-5) 4) (zp 5 4) zMaj_C zMaj_M zMaj_A = ILAHit1 RootMinus hen_minus tag_interior. Proof. vm_compute. reflexivity. Qed.
 
+Print Assumptions lift_qcross.
+Print Assumptions lift_qarc_D.
+Print Assumptions lift_qchord_L2.
+Print Assumptions lift_decline_iff.
 Print Assumptions line_arc_disc_eq_four_L2_h2.
 Print Assumptions classify_signs_not_decline.
 Print Assumptions classify_signs_hens.
