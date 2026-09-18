@@ -265,14 +265,12 @@ Definition I_line_arc_z (P P1 A M C : ZPt) : ILAResult :=
 Close Scope Z_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* lift : ZPt -> QPt, the embedding the general agreement theorem is stated   *)
-(* over ("q_signs ∘ lift = z_signs", header above). Landed here: the          *)
-(* embedding itself, plus the primitive identities (cross, D, chord L2) any   *)
-(* such proof needs — each closed by pushing inject_Z through +/-/*, since    *)
-(* qcross/qarc_D/qchord_L2 and zcross/zarc_D are literally the same formula   *)
-(* over Q and Z. The full q_signs ∘ lift = z_signs theorem — which additionally *)
-(* has to track the D²/D⁴ scaling through the division in ox/oy — is not      *)
-(* attempted here; it stays the named next step (0007-line-arc-z, #784).      *)
+(* lift : ZPt -> QPt, the embedding the agreement theorem q_signs_lift_agrees *)
+(* (below) is stated over. First the primitive identities (cross, D, chord   *)
+(* L2), each closed by pushing inject_Z through +/-/*, since qcross/qarc_D/   *)
+(* qchord_L2 and zcross/zarc_D are literally the same formula over Q and Z.   *)
+(* The D²/D⁴ scaling through the circumcentre division is handled next, in    *)
+(* qWx_scaled / qWy_scaled and the z*_scaled lemmas.                          *)
 (* -------------------------------------------------------------------------- *)
 
 Definition lift_pt (p : ZPt) : QPt := mkQPt (inject_Z (zx p)) (inject_Z (zy p)).
