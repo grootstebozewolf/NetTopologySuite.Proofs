@@ -128,6 +128,11 @@ theories/SheetHenCookLoopModulo.v
 # idle. leftover_quad_width stays conserved. Park stays LoopObligation.
 # NURBS belayed. No Axiom / Parameter / stub.
 theories/SheetHenCookLoopTerm.v
+# Circ leftover bag for |H|=2 + noded G on the locked vesica
+# (claimId 0007-circ-leftover-two-hit). Host/pure-R. Reuses leftover-bag
+# shape (interior 𝓘 Hit / Decline idle). Locked measure 2→1→0. Parks ρ
+# stays LoopObligation. Not leftover_quad_width. No Axiom / Parameter / stub.
+theories/CircularCookLeftoverTwoHit.v
 theories/Adr0007NodingEpic.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
