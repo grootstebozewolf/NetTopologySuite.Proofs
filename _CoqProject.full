@@ -2830,6 +2830,7 @@ theories/ClothoidCookMkClothoid.v
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi
 # bags. Arc cook termination is a sister card. No Admitted.
 theories/SheetHenCookLoop.v
+theories/SheetHenDonutBag.v
 # ρ bag-loop cook modulo the named LeftoverBagTermArm QEX
 # (claimId 0007-rho-modulo-qex). Host/pure-R. Inductive leftover
 # Hit-split + fuel iterator; pairwise leftover_width, not bag-sum
@@ -3100,6 +3101,7 @@ theories/SidecarCircIotaGate.v
 # 4-axiom atan2 sidecar (classic via IotaGate / Interior / Mixed /
 # SpanSplit). No new kernel. Not first cook expand. Not a noder.
 theories/SidecarCircIotaArm.v
+theories/SidecarCircIotaTags.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
