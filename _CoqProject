@@ -118,6 +118,11 @@ theories/ClothoidCookMkClothoid.v
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi
 # bags. Arc cook termination is a sister card. No Admitted.
 theories/SheetHenCookLoop.v
+# ρ bag-loop cook modulo the named LeftoverBagTermArm QEX
+# (claimId 0007-rho-modulo-qex). Host/pure-R. Inductive leftover
+# Hit-split + fuel iterator; pairwise leftover_width, not bag-sum
+# measure. Park stays LoopObligation. No Axiom / Parameter / stub.
+theories/SheetHenCookLoopModulo.v
 theories/Adr0007NodingEpic.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
