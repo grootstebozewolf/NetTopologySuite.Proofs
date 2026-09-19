@@ -26,7 +26,7 @@ QED = agent baseline present at repo root + `make ci-guards` still green.
 
 This is **not** SQL/MM done. This is **not** NTS#857 curve types.
 NTS#857, JTS#1195, and the Phase B cathedral stay open work. ADR-0007
-stays Accepted. Host CircGamma stays QEX.
+stays Accepted.
 
 ## Not wired
 

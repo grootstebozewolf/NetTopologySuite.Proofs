@@ -236,19 +236,14 @@ _Avoid_: Fresnel noding, Halley noding, mixed first cook, NURBS
 first cook, Campaign I, new oracle keyword
 
 **SQL/MM signed tag** (ADR-0007, claimId `0007-sqlmm-signed-tag`):
-Rungs 3–6 of τ=μ. Achievable ring is locked `exists b e`
-agreement (not ∀ on all CSTs). `τ = first_slice_tag` on eggs;
-`μ = intake_map` on CSTs. They do not share a domain. After μ
-mints a singleton bag, `τ(e)=ρ(π(c))`. `intake_rho` /
-`cst_prod_tag` here are the CST production tag in that equation
-— not ADR-0007 park ρ (`EmitRhoBagLoop` / bag-loop). Full-span
-CS and CIRCLE share one MkCirc; τ of that egg is CIRCLE.
-`intake_rho` is egg-aware on CIRCULARSTRING and is not
-`cst_prod_tag`. Well-formed GeodesicString bags `MkChord`;
-τ is LINESTRING; `cst_prod_tag` stays None (production is not
-signed I/O). SpiralCurve still Declines (τ unused). `κ` is 2/8
-or none (not 13). Emit / WKT parse stay QEX. Production-level
-τ=π on full-span CIRCULARSTRING text stays QEX.
+Locked `exists b e` τ=μ (`SqlMmSignedTag.v : ticket_sqlmm_tau_mu_qed_or_qex` LEFT).
+`τ = first_slice_tag`; `μ = intake_map`; not ∀ CSTs. Full-span CS and CIRCLE share MkCirc (τ=CIRCLE).
+`intake_rho` is egg-aware on CS, not `cst_prod_tag`, not park ρ.
+Geodesic bags MkChord (τ=LINESTRING, `cst_prod_tag` None). Spiral Declines.
+κ 2/8 or none (`SqlMmSignedTag.v : ticket_sqlmm_signed_tag_qed_or_qex` LEFT).
+Emit / WKT parse stay QEX (`SqlMmSignedTag.v : ticket_sqlmm_factory_emit_qed_or_qex` RIGHT).
+Production-level τ=π on full-span CIRCULARSTRING text stays QEX
+(`SqlMmSignedTag.v : sqlmm_tau_eq_pi_fullspan_cs_missing`).
 _Avoid_: ∀-mapper on all CSTs, Circle-as-18, compound-as-τ,
 park-ρ remint, new oracle keyword
 
@@ -271,14 +266,11 @@ leans on it.
 _Avoid_: the spec (which one?), architecture doc, bible (lowercase — unfindable)
 
 **Zoo**:
-The five Exact* curve types of Bible §4.1: CircularArc (the privileged, served
-member), cubic Bézier (replacing the Bible's quadratic — §9 amendment A1,
-signed off 2026-08-27), EllipticalArc, Clothoid, and single-span NURBS.
-Membership criterion: curves living in the wild engines — never "curves that are
-easy to prove". The other ISO 13249-3 curve types (SPIRALCURVE's bloss,
-biquadratic, sine and cosine; CIRCLE; GEODESICSTRING) are expansion backlog per
-Bible §5 Year 5–7, not members.
-_Avoid_: curve types (broader), Exact family (vague), ExactCurve (the protocol, not the roster)
+Bible §4.1 Exact* roster: CircularArc, cubic Bézier, EllipticalArc, Clothoid, single-span NURBS.
+Not year-1 `CurveSegment` (`ExactCurveEpic508.v : ticket_508_qed_or_qex` RIGHT on `ECZ_Ellipse`;
+`ticket_508_carrier_qed_or_qex` LEFT `CSChord|CSArc`).
+ISO SPIRALCURVE bloss/biquadratic/sine/cosine, CIRCLE, GEODESICSTRING are §5 backlog, not members.
+_Avoid_: the zoo is exact
 
 **Exact**:
 The Bible §2.2 property: the mathematics is closed-form or exactness-preserving and

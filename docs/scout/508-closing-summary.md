@@ -27,7 +27,8 @@ additivity is induction over `curve_length_additive`, not Cox-de Boor.
 A park stays a park where named: elliptic E remains
 `increment_squeezed` with **no inhabitant**. Fresnel clothoid now has
 a Stdlib-RiemannInt inhabitant (`ClothoidFresnelInhab.v`; Category C;
-board #564). Year-1 `CurveSegment` is `CSChord` or `CSArc`. QEX
+board #564). Year-1 `CurveSegment` is `CSChord` or `CSArc`
+(`ExactCurveEpic508.v : ticket_508_carrier_qed_or_qex` LEFT). QEX
 (`ExactCurveEpic508.v : ticket_508_qed_or_qex`) is not owner accept.
 
 ## Bible §4.2 satisfaction — which theorem per zoo member
