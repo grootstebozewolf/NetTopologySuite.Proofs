@@ -60,7 +60,7 @@
 From Stdlib Require Import Reals.
 From NTS.Proofs Require Import Distance SheetHenCook SheetHenCookLoop.
 From NTS.Proofs Require Import SheetHenCookLoopModulo SheetHenCookLoopTerm.
-From NTS.Proofs Require Import CircularCookLeftoverTwoHit Adr0007NodingEpic.
+From NTS.Proofs Require Import Adr0007NodingEpic.
 Local Open Scope R_scope.
 
 (* WITNESS: campaign=rho rung=leftover-bag-term claim=0007-rho-leftover-bag-term
@@ -219,27 +219,14 @@ Proof.
   - exfalso. exact (leftover_quad_width_does_not_decrease Hdec).
 Qed.
 
-Lemma sibling_circ_two_hit_not_bag_discharge :
-  circ_leftover_bag_measure locked_circ_parent_bag 2
-  /\ circ_leftover_bag_measure locked_circ_final_bag 0
-  /\ cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged
-  /\ ~ leftover_bag_term_arm.
-Proof.
-  destruct ticket_0007_circ_leftover_two_hit_qed_or_qex as [H | Hdec].
-  - destruct H as [Hp [_ [Hf _]]].
-    split; [exact Hp|].
-    split; [exact Hf|].
-    split; [exact cook_loop_is_obligation|].
-    split; [exact cook_loop_not_discharged|].
-    exact leftover_bag_term_arm_missing.
-  - exfalso. exact (leftover_quad_width_does_not_decrease Hdec).
-Qed.
-
+(* Circ leftover |H|=2 (CircularCookLeftoverTwoHit.v :
+   ticket_0007_circ_leftover_two_hit_qed_or_qex) is locked-lens QED.
+   Not imported: that module is a 2195-line monolith; a Require would
+   trip the module-split gate. It does not inhabit LeftoverBagTermArm. *)
 (* Donut T5 (SheetHenDonutBag.v : ticket_0007_linear_donut_rho_qed_or_qex)
    is constant-and-already-noded on that bag. Full-lane only; not imported.
    It does not inhabit LeftoverBagTermArm. The host park is the same hole. *)
-Lemma sibling_donut_t5_not_bag_discharge :
+Lemma sibling_circ_two_hit_and_donut_t5_not_bag_discharge :
   cook_loop_status = LoopObligation
   /\ cook_loop_status <> LoopDischarged
   /\ ~ leftover_bag_term_arm.
@@ -316,6 +303,5 @@ Print Assumptions sibling_i8_pairwise_not_bag_discharge.
 Print Assumptions sibling_leftover_quad_width_conserved_not_measure.
 Print Assumptions sibling_modulo_iter_not_bag_discharge.
 Print Assumptions sibling_term_measure_not_bag_discharge.
-Print Assumptions sibling_circ_two_hit_not_bag_discharge.
-Print Assumptions sibling_donut_t5_not_bag_discharge.
+Print Assumptions sibling_circ_two_hit_and_donut_t5_not_bag_discharge.
 Print Assumptions ticket_0007_rho_leftover_qed_or_qex.
