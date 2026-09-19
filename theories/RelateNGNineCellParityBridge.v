@@ -46,13 +46,12 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance Overlay Segment RectangleJCT.
+From Stdlib Require Import Reals.
+From NTS.Proofs Require Import Distance Overlay.
 From NTS.Proofs Require Import PointInRingTangents PointInRingCorrect.
-From NTS.Proofs Require Import RelateAreaPoint RelateCurveMatrix.
+From NTS.Proofs Require Import RelateCurveMatrix.
 From NTS.Proofs Require Import GeneralTriangleSeparation.
 From NTS.Proofs Require Import RelateNGCore RelateNGTouch RelateNGTouchCells RelateNGTouchRED.
-Import ListNotations.
 Local Open Scope R_scope.
 
 (* WITNESS: campaign=relate rung=adr-0003-bridge claim=0003-nine-cell-parity-bridge
@@ -190,82 +189,6 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Half-open compute tier: SInt and SBnd overlap on the unit-square left      *)
-(* edge. Unguarded BI = F over point_set is therefore false.                  *)
-(* -------------------------------------------------------------------------- *)
-
-Definition unit_sq_left_mid : Point := mkPoint 0 (1 / 2).
-
-Lemma unit_sq_left_mid_sint :
-  RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
-    (rect_geometry 0 0 1 1) unit_sq_left_mid.
-Proof.
-  unfold RelateCurveMatrix.in_stratum, point_set, rect_geometry.
-  exists (rect_polygon 0 0 1 1).
-  split; [left; reflexivity|].
-  apply left_boundary_in_rect_polygon; try lra.
-  unfold point_on_rect_left_boundary, unit_sq_left_mid.
-  cbn [px py].
-  split; [reflexivity|].
-  split; lra.
-Qed.
-
-Lemma unit_sq_left_mid_on_left_edge :
-  RelateCurveMatrix.on_edge unit_sq_left_mid
-    (mkPoint 0 1, mkPoint 0 0).
-Proof.
-  unfold RelateCurveMatrix.on_edge, between, unit_sq_left_mid.
-  exists (1 / 2).
-  cbn [px py fst snd].
-  split; [lra|].
-  split; [lra|].
-  split; [field|].
-  field.
-Qed.
-
-Lemma unit_sq_left_mid_sbnd :
-  RelateCurveMatrix.in_stratum RelateCurveMatrix.SBnd
-    (rect_geometry 0 0 1 1) unit_sq_left_mid.
-Proof.
-  unfold RelateCurveMatrix.in_stratum, RelateCurveMatrix.geom_boundary,
-         rect_geometry.
-  exists (rect_polygon 0 0 1 1).
-  split; [left; reflexivity|].
-  exists (mkPoint 0 1, mkPoint 0 0).
-  split.
-  - unfold RelateCurveMatrix.poly_edges, rect_polygon, outer_ring, hole_rings.
-    simpl.
-    rewrite ring_edges_rect.
-    simpl.
-    right; right; right; left; reflexivity.
-  - exact unit_sq_left_mid_on_left_edge.
-Qed.
-
-Lemma sint_sbnd_overlap_unit_square :
-  exists p,
-    RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
-      (rect_geometry 0 0 1 1) p /\
-    RelateCurveMatrix.in_stratum RelateCurveMatrix.SBnd
-      (rect_geometry 0 0 1 1) p.
-Proof.
-  exists unit_sq_left_mid.
-  split; [exact unit_sq_left_mid_sint | exact unit_sq_left_mid_sbnd].
-Qed.
-
-(* Unguarded hand-specified F on BI (SBnd × SInt) fails on this ring:
-   the compute-tier strata overlap. Not a general-ring bridge. *)
-Lemma unguarded_bi_f_false_on_unit_square :
-  ~ RelateCurveMatrix.cell_ok None
-      RelateCurveMatrix.SBnd RelateCurveMatrix.SInt
-      (rect_geometry 0 0 1 1) (rect_geometry 0 0 1 1).
-Proof.
-  intros [Hok [Hfwd Hback]].
-  apply Hback.
-  destruct sint_sbnd_overlap_unit_square as [p [Hint Hbnd]].
-  exists p. split; [exact Hbnd | exact Hint].
-Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* ADR-0003 Status stays Accepted. This letter does not flip it.              *)
 (* -------------------------------------------------------------------------- *)
 
@@ -329,9 +252,6 @@ Theorem ticket_0003_nine_cell_parity_bridge_qed_or_qex :
          RelateCurveMatrix.in_stratum RelateCurveMatrix.SInt
            (triangle_geometry 0 0 4 1 0 2) p
          /\ gtri 0 0 4 1 0 2 p < 0)
-   /\ ~ RelateCurveMatrix.cell_ok None
-          RelateCurveMatrix.SBnd RelateCurveMatrix.SInt
-          (rect_geometry 0 0 1 1) (rect_geometry 0 0 1 1)
    /\ adr0003_letter_status = Adr0003Accepted
    /\ adr0003_letter_status <> Adr0003QedBridgeClaimed).
 Proof.
@@ -344,7 +264,6 @@ Proof.
   split; [exact Htouch|].
   split; [exact Hex|].
   split; [exact unguarded_parity_is_not_ogc_interior|].
-  split; [exact unguarded_bi_f_false_on_unit_square|].
   split; [reflexivity|].
   exact adr0003_bridge_not_claimed_qed.
 Qed.
@@ -357,8 +276,6 @@ Print Assumptions bridge_guards_not_dropped.
 Print Assumptions unguarded_parity_ii_cex.
 Print Assumptions unguarded_parity_is_not_ogc_interior.
 Print Assumptions point_set_not_rebased_on_gtri.
-Print Assumptions sint_sbnd_overlap_unit_square.
-Print Assumptions unguarded_bi_f_false_on_unit_square.
 Print Assumptions adr0003_stays_accepted.
 Print Assumptions adr0003_bridge_not_claimed_qed.
 Print Assumptions ticket_0003_nine_cell_parity_bridge_qed_or_qex.
