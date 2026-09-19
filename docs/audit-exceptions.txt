@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 113 files (76 theories-flocq/ + 36 theories/ + 1 hunt probe).
+# LIVE: 114 files (76 theories-flocq/ + 37 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -148,6 +148,10 @@ theories/SidecarCircIotaGate.v
 # Same atan2 / classic lineage as ι-gate (SidecarCircIotaGate).
 # Cell-4 arm stop; no extra axioms.
 theories/SidecarCircIotaArm.v
+# Same atan2 / classic lineage as ι-gate (SidecarCircIotaGate) and
+# SidecarCircInterior*: RootTag consumer reuses I_ok_mixed / I_ok_interior.
+# CircularCookLineArcZ.v itself stays 0-axiom; the sidecar is not imported there.
+theories/SidecarCircIotaTags.v
 theories/InArc.v
 theories/ArcSweepCcw.v
 theories/InSector.v

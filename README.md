@@ -29,7 +29,7 @@ The trio is a **ceiling**, not a floor. A module may rest on fewer:
 does rest on is emitted by its own `Print Assumptions` block, so the audit
 reads the footprint from the build log rather than from prose.
 
-The ceiling has named exceptions rather than silent ones: 36 files under
+The ceiling has named exceptions rather than silent ones: 37 files under
 `theories/` and 76 files under `theories-flocq/` inherit further axioms
 from their dependencies — in the Flocq lane typically
 `Classical_Prop.classic`, by way of the binary64 format layer. They are
