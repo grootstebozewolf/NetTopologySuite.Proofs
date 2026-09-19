@@ -2920,6 +2920,7 @@ theories/IntakeGeodesic.v
 # claimId 0007-famous-geodesicstring. No Admitted.
 theories/IntakeFamousGeodesic.v
 theories/IntakeGeodesicCook.v
+theories/IntakeKarneyPark.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # Exact chord × three-point-arc classifier (I_line_arc_q / I_line_arc_z):
