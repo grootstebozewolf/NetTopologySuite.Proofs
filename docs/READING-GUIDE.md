@@ -552,10 +552,12 @@ against [`docs/axiom-allowlist.txt`](axiom-allowlist.txt), and
 [`scripts/check_readme_axioms.sh`](../scripts/check_readme_axioms.sh)
 guarantees the list above never drifts from that allowlist. The
 allowlisted trio is the only *corpus-introduced* axiom set; host-lane
-files on the exception list are not trio-clean. 2 files under `theories/`
-are listed in
-[`docs/audit-exceptions.txt`](audit-exceptions.txt). After S1b the
-classic remainder is the Ratan bridge and Fresnel.
+files on the exception list are not trio-clean. Sixteen `theories/`
+files are listed in
+[`docs/audit-exceptions.txt`](audit-exceptions.txt) because Stdlib
+`atan` / `Ratan` / `sin_lt_x` pull `Classical_Prop.classic` (`InArc`,
+`ArcLength`, `CurveBufferArea`, `ArcChord*`, `RelateArcAnalytic`,
+`ArcSpanAtan2`, `ArcArcQuartic`, `Atan2`, `AngleBetween`, …).
 `theories-flocq/` *additionally* inherits a fourth axiom,
 `Classical_Prop.classic`, transitively from Flocq's binary-arithmetic
 operations (`Binary.Bplus` / `Bminus` / `Bmult` carry it in their
@@ -578,7 +580,9 @@ The repository has two source directories:
   directory split is about which CI runner builds the file (host vs
   container), not about which proof standard it meets.
 
-The host lane builds the 191 modules in `_CoqProject`, the foundational `theories/` layer; the container `_CoqProject.full` builds the entire corpus (756 registered modules — 665 registered under `theories/`, 91 registered under `theories-flocq/`).
+The host lane builds the 84 modules in `_CoqProject`, the
+foundational `theories/` layer;
+the container `_CoqProject.full` builds the entire corpus (648 registered modules — 557 registered under `theories/`, 91 registered under `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,
 orientation, segment, bbox, triangle, convex, lex-order, plus their
@@ -587,7 +591,24 @@ companions) is Qed-closed.  The curve-linearisation stack
 is Qed-closed in the abstract, and its binary64 instance
 (`Validate_binary64.v` + RocqRefRunner) ships to
 [NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
-The Phase 0–7 chokepoint sequence has advanced well into its early phases: **Phase 0** (robust orientation) ships the Shewchuk Stage A filter with integer-regime soundness plus an exact full-`binary64` orientation predicate proven sound over the entire double-coordinate plane (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three axioms, no `Classical_Prop.classic`), with Stage D adaptive-filter arithmetic still under way. **Phase 1** (robust segment intersection) is shipped end-to-end (predicate + intersection-point forward-error bound + C# port). **Phase 2** (snap rounding) has hot-pixel foundations, the snap-rounding correctness invariant, a topological-correctness theorem at the level the infrastructure supports, and Hobby Theorem 4.1 stated as a Qed-closed conditional. **Phase 3** (planar overlay) reaches a Qed-closed conditional headline (`overlay_ng_correct_conditional`). **Phase 4** (native curves) reaches its own Qed-closed conditional headline via the Option-B chord-approximation route (`arc_overlay_correct_chord_approx`). The remaining gaps in Phases 2–4 are carried as explicit named hypotheses or registered deferred proofs, not silent stubs.
+The Phase 0–7 chokepoint sequence has advanced well into its early
+phases: **Phase 0** (robust orientation) ships the Shewchuk Stage A
+filter with integer-regime soundness **plus an exact full-`binary64`
+orientation predicate proven sound over the entire double-coordinate
+plane** (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three
+axioms, no `Classical_Prop.classic`), with Stage D adaptive-filter
+arithmetic still under way; **Phase 1** (robust segment intersection) is shipped
+end-to-end (predicate + intersection-point forward-error bound + C#
+port); **Phase 2** (snap rounding) has hot-pixel foundations, the
+snap-rounding correctness invariant, a topological-correctness theorem
+at the level the infrastructure supports, and Hobby Theorem 4.1 stated
+as a Qed-closed conditional; **Phase 3** (planar overlay) reaches a
+Qed-closed conditional headline (`overlay_ng_correct_conditional`); and
+**Phase 4** (native curves) reaches its own Qed-closed conditional
+headline via the Option-B chord-approximation route
+(`arc_overlay_correct_chord_approx`). The remaining gaps in Phases 2–4
+are carried as explicit named hypotheses or registered deferred proofs,
+not silent stubs.
 
 ## Why this exists
 
@@ -750,12 +771,25 @@ for Scholar Sam / Tech-Lead Tess / Joost the BDFL paths.
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
 - This is **not** complete. Current coverage is over 7,600 Qed-closed
-  theorems across 756 registered modules — 665 registered under `theories/`,
-  91 registered under `theories-flocq/` (191 of them modules in `_CoqProject`
+  theorems across 648 registered modules — 557 registered under `theories/`,
+  91 registered under `theories-flocq/` (84 of them modules in `_CoqProject`
   as the host foundational target). There are **no
   `Admitted` theorems today** — both the counterexample and
   deferred-proof registries are empty (see the registries and
   `scripts/check_admitted.sh`).
+  Coverage spans the algebraic foundations (real-number, vector, distance,
+  orientation, line, disk, lattice, lex order), segment and bounding-box
+  primitives, triangle / convex / centroid / reflection laws, the
+  curve-linearisation stack (`Linearise.v` → `Simplify.v` → `Tin.v` →
+  `Validate.v` → `Validate_decidable.v` + binary64 instance), and the
+  early-to-mid phases of the chokepoint (orientation + intersection under
+  binary64, snap-rounding foundations, overlay, chord-approximated arcs).
+  The Phase 0–7 roadmap (below and in the actor Reading Guide) outlines
+  what remains: full Stage D, open JCT / DCEL / Hobby pieces carried as
+  deferred proofs or named hypotheses, and native (non-chord) curve
+  primitives. Each phase ships independently with precise caveats; see the
+  dedicated phase completion/audit docs for current status rather than
+  this summary.
 
 ## Build
 
@@ -769,7 +803,8 @@ rocq makefile -f _CoqProject -o Makefile.gen
 make -f Makefile.gen
 ```
 
-This builds the 191 modules in `_CoqProject`, the foundational Stdlib-only layer.
+This builds the 84 modules in `_CoqProject`, the foundational
+Stdlib-only layer.
 Modules with external dependencies (Flocq), plus the Stdlib-only Phase
 3/4 modules built alongside them, live in `_CoqProject.full` and are
 built inside the container only (see below).
