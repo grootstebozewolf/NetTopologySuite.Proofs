@@ -83,6 +83,10 @@ theories/ClothoidLength_unit.v
 # Discharges QEX on the ellipse (no CurveSegment constructor).
 # Does not remint CurveSegment / Exact* zoo types. No Admitted.
 theories/ExactCurveEpic508.v
+# Epic #508 SQL/MM required vs named CurveSegment split lock.
+# Required bind to CSChord|CSArc|CC-list; named stay off CS.
+# Does not remint CurveSegment / Exact* zoo types. No Admitted.
+theories/ExactCurveSqlmmCarrierSplit.v
 # #508-e / #564: #561 pack instance on (cos,sin)(t²/2) at σ≡1,
 # F = fun t => 1 * t. Cx, Cy stay increment_squeezed (no inhabitant).
 # chord_rate discharged on a compact window. Route 1 does not
