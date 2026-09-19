@@ -139,6 +139,11 @@ theories/Adr0007NodingEpic.v
 # LeftoverKissArm / LeftoverShareMintArm. LoopObligation stands.
 # Sibling QED stays sibling. No Axiom / Parameter / stub.
 theories/HostRhoLeftoverBagTerm.v
+# Parks ρ leftover-bag term QED attempt (claimId 0007-rho-leftover-bag-term-qed).
+# Host/pure-R. Named failing M candidates + idle kiss/share-mint rewrites.
+# leftover_quad_width_decreases stays uninhabited. LoopObligation stands.
+# Sibling QED / #797 park stay sibling. No Axiom / Parameter / stub.
+theories/HostRhoLeftoverBagTermQed.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
 # RelateNG / a bag noder. No Admitted.
