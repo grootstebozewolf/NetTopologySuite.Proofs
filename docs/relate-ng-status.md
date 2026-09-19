@@ -25,8 +25,8 @@ RelateNG* / RelateNoding* zoo.
   (`RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex`).
   Full Jordan true-region, S15l+ multi-geom, ticket 523 ISO `?`
   (`RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex`;
-  `RelateCurveMatrix.v : cell_none_iff_empty` is Coq emptiness, not
-  523 closed).
+  `RelateCurveMatrix.v : cell_none_iff_empty` is Coq emptiness — a
+  separate fact from ticket 523's own accept, which landed 2026-09-19).
 
 ## What to open
 
@@ -111,7 +111,8 @@ disguised as disjointness — that was #530.
   `line_pair_fill_share_ii_not_pinned_int_bnd_only`.
 - **`F` vs not-computed** on `CURVE_RELATE_MATRIX` — sibling #523, not a
   #522 child. Children `523-a` / `523-b` / `523-c` (#603 #604 #605)
-  landed. Ticket 523 stays open, not accepted. Coq emptiness is `None`
+  landed; **owner accepted 2026-09-19, issue #523 closed** (wayfinder
+  #822 → #828). Coq emptiness is `None`
   (`RelateCurveMatrix.v : cell_none_iff_empty`). The oracle prints `?`
   for lineal undistinguished cells and an exhausted 80×80 probe; E/B
   `failwith`. EE stays `2` (`geom_de9im_ee_nonempty`). Whole-matrix
