@@ -3305,6 +3305,8 @@ theories/ContextProseRatchet.v
 # F-CP structural chord-floor Qed and #791 polygonal taut ceiling.
 # #509 stays open. QEX ≠ owner accept. No Admitted.
 theories/RelateNGFstarStructTrueRegion.v
+# Pass 2 (claimId 508-context-prose-ratchet-2). Same shape.
+theories/ContextProseRatchet2.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition
