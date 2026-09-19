@@ -84,7 +84,7 @@
 From Stdlib Require Import Reals Lra Arith Lia List.
 From NTS.Proofs Require Import Distance SheetHenCook SheetHenCookLoop.
 From NTS.Proofs Require Import SheetHenCookLoopModulo SheetHenCookLoopTerm.
-From NTS.Proofs Require Import HostRhoLeftoverBagTerm.
+From NTS.Proofs Require Import Adr0007NodingEpic HostRhoLeftoverBagTerm.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -132,14 +132,16 @@ Qed.
 Lemma lbag_count_remove :
   forall b n s,
     lbag_nth b n = Some s ->
-    lbag_count (lbag_remove b n) = (lbag_count b - 1)%nat.
+    lbag_count (lbag_remove b n) = Nat.sub (lbag_count b) 1.
 Proof.
   induction b as [|s0 rest IH]; intros n s Hnth.
   - discriminate.
   - destruct n as [|n'].
     + simpl in Hnth. inversion Hnth. subst s0. simpl. lia.
     + simpl in Hnth. simpl.
-      apply IH in Hnth. lia.
+      pose proof (lbag_nth_some_lt rest n' s Hnth) as Hbound.
+      rewrite (IH n' s Hnth).
+      lia.
 Qed.
 
 Lemma lbag_count_remove_two :
@@ -147,7 +149,7 @@ Lemma lbag_count_remove_two :
     i <> j ->
     lbag_nth b i = Some a ->
     lbag_nth b j = Some bsp ->
-    lbag_count (lbag_remove_two b i j) = (lbag_count b - 2)%nat.
+    lbag_count (lbag_remove_two b i j) = Nat.sub (lbag_count b) 2.
 Proof.
   intros b i j a bsp Hne Ha Hb.
   unfold lbag_remove_two.
@@ -181,6 +183,8 @@ Proof.
   rewrite Hneqb in Hrep.
   inversion Hrep. subst b'.
   cbn [lbag_count].
+  pose proof (lbag_nth_some_lt b i a Ha) as Hi.
+  pose proof (lbag_nth_some_lt b j bsp Hb) as Hj.
   pose proof (lbag_count_remove_two b i j a bsp Hne Ha Hb) as Hrm.
   lia.
 Qed.
@@ -220,21 +224,28 @@ Definition overlap_parent_bag : leftover_span_bag :=
 Definition overlap_quad_bag : leftover_span_bag :=
   leftover_quad_as_bag diag_ab diag_ab (1 / 2) (1 / 2).
 
+Lemma overlap_diag_ab_I_ok :
+  I_ok (MkChord diag_ab) (MkChord diag_ab)
+       (IHit cross_pt (1 / 2) (1 / 2)).
+Proof.
+  unfold I_ok.
+  split; [exact crossing_on_diag_ab | exact crossing_on_diag_ab].
+Qed.
+
 Lemma overlap_parent_pair_hit :
   leftover_pair_hit
     (leftover_span_parent diag_ab)
     (leftover_span_parent diag_ab)
     cross_pt (1 / 2) (1 / 2).
 Proof.
-  unfold leftover_pair_hit.
+  unfold leftover_pair_hit, leftover_egg_interior, leftover_egg.
   split; [apply leftover_span_parent_ok|].
   split; [apply leftover_span_parent_ok|].
-  split; [unfold leftover_egg_interior; lra|].
-  split; [unfold leftover_egg_interior; lra|].
-  rewrite leftover_egg_parent.
-  rewrite leftover_egg_parent.
-  unfold I_ok.
-  split; [exact crossing_on_diag_ab | exact crossing_on_diag_ab].
+  split; [lra|].
+  split; [lra|].
+  simpl.
+  rewrite !leftover_half_parent.
+  exact overlap_diag_ab_I_ok.
 Qed.
 
 Lemma overlap_parent_step_ok :
@@ -334,14 +345,14 @@ Qed.
 Lemma overlap_lo_self_hit :
   leftover_pair_hit overlap_lo overlap_lo overlap_lo_pt (1 / 2) (1 / 2).
 Proof.
-  unfold leftover_pair_hit, overlap_lo, overlap_lo_pt.
-  split; [unfold leftover_span_ok; simpl; lra|].
-  split; [unfold leftover_span_ok; simpl; lra|].
-  split; [unfold leftover_egg_interior; lra|].
-  split; [unfold leftover_egg_interior; lra|].
-  rewrite locked_A_lo_egg.
-  rewrite locked_A_lo_egg.
-  unfold I_ok, on_chord, chord_eval.
+  unfold leftover_pair_hit, leftover_egg_interior, leftover_span_ok,
+         leftover_egg, leftover_half, overlap_lo, overlap_lo_pt, I_ok,
+         on_chord, chord_eval, diag_ab.
+  simpl.
+  split; [lra|].
+  split; [lra|].
+  split; [lra|].
+  split; [lra|].
   split.
   - split; [lra|]. apply (f_equal2 mkPoint); simpl; field.
   - split; [lra|]. apply (f_equal2 mkPoint); simpl; field.
@@ -350,14 +361,14 @@ Qed.
 Lemma overlap_hi_self_hit :
   leftover_pair_hit overlap_hi overlap_hi overlap_hi_pt (1 / 2) (1 / 2).
 Proof.
-  unfold leftover_pair_hit, overlap_hi, overlap_hi_pt.
-  split; [unfold leftover_span_ok; simpl; lra|].
-  split; [unfold leftover_span_ok; simpl; lra|].
-  split; [unfold leftover_egg_interior; lra|].
-  split; [unfold leftover_egg_interior; lra|].
-  rewrite locked_A_hi_egg.
-  rewrite locked_A_hi_egg.
-  unfold I_ok, on_chord, chord_eval.
+  unfold leftover_pair_hit, leftover_egg_interior, leftover_span_ok,
+         leftover_egg, leftover_half, overlap_hi, overlap_hi_pt, I_ok,
+         on_chord, chord_eval, diag_ab.
+  simpl.
+  split; [lra|].
+  split; [lra|].
+  split; [lra|].
+  split; [lra|].
   split.
   - split; [lra|]. apply (f_equal2 mkPoint); simpl; field.
   - split; [lra|]. apply (f_equal2 mkPoint); simpl; field.
@@ -427,7 +438,7 @@ Proof.
            unfold overlap_lo, overlap_hi in Hhit.
            exact (False_ind _ (locked_quad_Alo_Ahi_no_hit p ua ub Hhit)).
         -- destruct j1 as [|j2].
-           ++ left. apply f_equal2; reflexivity.
+           ++ left. reflexivity.
            ++ destruct j2 as [|j3]; [|lia].
               rewrite N0 in Ha. rewrite N3 in Hb.
               inversion Ha. inversion Hb. subst a bsp.
@@ -441,7 +452,7 @@ Proof.
               inversion Ha. inversion Hb. subst a bsp.
               exact (False_ind _ (overlap_Ahi_Alo_no_hit p ua ub Hhit)).
            ++ destruct j2 as [|j3]; [|lia].
-              right. left. apply f_equal2; reflexivity.
+              right. left. reflexivity.
         -- destruct i1 as [|i2]; [|lia].
            destruct j as [|j0]; [lia|].
            destruct j0 as [|j1]; [lia|].
@@ -479,7 +490,7 @@ Lemma leftover_hit_measure_decreases_missing :
 Proof.
   intros H.
   pose proof leftover_hit_measure_increases_on_overlap as [Hs [Hc [Hn [Hm _]]]].
-  specialize (H overlap_parent_bag overlap_quad_bag 1 2 Hs Hc Hn Hm).
+  specialize (H overlap_parent_bag overlap_quad_bag 1%nat 2%nat Hs Hc Hn Hm).
   lia.
 Qed.
 
@@ -505,7 +516,7 @@ Proof.
 Qed.
 
 Lemma leftover_count_hit_increases :
-  forall b b' i j p ua ub,
+  forall b i j p ua ub b',
     leftover_pair_step_ok b i j p ua ub ->
     lbag_pair_replace b i j ua ub = Some b' ->
     lbag_count b' = (lbag_count b + 2)%nat.
@@ -590,8 +601,9 @@ Definition leftover_pair_kiss_as_decreasing_step : Prop :=
 Lemma leftover_pair_kiss_as_decreasing_step_missing :
   ~ leftover_pair_kiss_as_decreasing_step.
 Proof.
-  intros [b [b' [_ [_ [_ [_ [_ [Heq [Hne _]]]]]]]]].
-  apply Hne. exact Heq.
+  intros [b [b' [i [j [_ [_ [_ [Heq [Hne _]]]]]]]]].
+  unfold leftover_kiss_on_bag in Heq.
+  apply Hne. symmetry. exact Heq.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -666,8 +678,9 @@ Definition leftover_pair_share_mint_as_decreasing_step : Prop :=
 Lemma leftover_pair_share_mint_as_decreasing_step_missing :
   ~ leftover_pair_share_mint_as_decreasing_step.
 Proof.
-  intros [b [b' [_ [_ [_ [_ [_ [_ [Heq [Hne _]]]]]]]]]].
-  apply Hne. exact Heq.
+  intros [b [b' [_ [_ [h [_ [_ [_ [Heq [Hne _]]]]]]]]]].
+  unfold leftover_share_mint_on_bag in Heq.
+  apply Hne. symmetry. exact Heq.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
