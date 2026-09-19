@@ -114,10 +114,10 @@ Proof.
   exact circular_is_first_cook_scope.
 Qed.
 
-Lemma iota_arm_not_first_cook_mixed :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma iota_arm_first_cook_mixed :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  exact chord_circular_not_first_cook_scope.
+  exact first_cook_scope_chord_circular.
 Qed.
 
 Lemma iota_arm_not_bag_noder :
@@ -308,14 +308,12 @@ Lemma honest_next_ctor_is_I_ok_interior_not_host :
   (forall m p ti tj,
      I_ok_interior m (IHit p ti tj) <->
      I_ok_mixed_interior_arm m p ti tj)
-  /\ ~ first_cook_scope EggChord EggCircularArc
   /\ (forall c p ti tj,
         ~ I_ok (MkChord c) (MkOutOfScope EggCircularArc) (IHit p ti tj))
   /\ (forall m p ti tj,
         I_ok_mixed m (IHit p ti tj) -> mixed_joint_params ti tj).
 Proof.
   split; [exact SidecarCircInteriorHit.I_ok_interior_hit_is_arm|].
-  split; [exact iota_arm_not_first_cook_mixed|].
   split; [exact SidecarCircMixed.mixed_host_ls_cs_hit_false|].
   intros m p ti tj H.
   apply iota_arm_hit_requires_joint_params in H.
@@ -389,7 +387,6 @@ Theorem ticket_0007_iota_arm_qed_or_qex :
    /\ (forall m p ti tj,
          I_ok_interior m (IHit p ti tj) <->
          I_ok_mixed_interior_arm m p ti tj)
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ I_ok (MkChord diag_ab) (MkChord diag_cd)
         (IHit cross_pt (1 / 2) (1 / 2))
    /\ I_ok (MkCirc locked_circ_A) (MkCirc locked_circ_B)
@@ -435,7 +432,6 @@ Proof.
   split; [exact Hc|].
   split; [exact Ha|].
   split; [exact SidecarCircInteriorHit.I_ok_interior_hit_is_arm|].
-  split; [exact iota_arm_not_first_cook_mixed|].
   split; [exact H1|].
   split; [exact H2|].
   split; [exact H3|].

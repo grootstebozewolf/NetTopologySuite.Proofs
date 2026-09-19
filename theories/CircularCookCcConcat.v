@@ -149,10 +149,10 @@ Proof.
   exact circular_hit_not_I_ok.
 Qed.
 
-Lemma b2_mixed_not_first_cook :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma b2_mixed_first_cook :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  exact chord_circular_not_first_cook_scope.
+  exact first_cook_scope_chord_circular.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -445,19 +445,19 @@ Proof.
   exact IntakeWalker.locked_cc_joint_host_eval_eq.
 Qed.
 
-Lemma locked_cc_intake_ls_cs_host_decline :
+Lemma locked_cc_intake_ls_cs_host_hit :
   I_ok (MkChord (mkChordEgg IntakeWalker.p00 IntakeWalker.p50))
-       (MkCirc locked_circ_A) IDecline.
+       (MkCirc locked_circ_A)
+       (IHit IntakeWalker.locked_cc_joint_pt 1 0).
 Proof.
-  exact IntakeWalker.locked_cc_ls_cs_host_decline.
+  exact IntakeWalker.locked_cc_ls_cs_host_hit.
 Qed.
 
-Lemma locked_cc_intake_ls_cs_hit_not_host_I_ok :
+Lemma locked_cc_intake_ls_cs_host_not_decline :
   ~ I_ok (MkChord (mkChordEgg IntakeWalker.p00 IntakeWalker.p50))
-         (MkCirc locked_circ_A)
-         (IHit IntakeWalker.locked_cc_joint_pt 1 0).
+         (MkCirc locked_circ_A) IDecline.
 Proof.
-  exact IntakeWalker.locked_cc_ls_cs_hit_not_host_I_ok.
+  exact IntakeWalker.locked_cc_ls_cs_host_not_decline.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -559,15 +559,13 @@ Lemma b2_host_stays_qex :
   /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
   /\ (forall p ti tj,
         ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
-             (IHit p ti tj))
-  /\ ~ first_cook_scope EggChord EggCircularArc.
+             (IHit p ti tj)).
 Proof.
   split; [exact b2_host_circgamma_qex|].
   split; [exact b2_host_not_first_cook|].
   split; [exact b2_first_cook_stays_chord_chord|].
   split; [exact b2_host_circular_decline|].
-  split; [exact b2_host_circular_hit_false|].
-  exact b2_mixed_not_first_cook.
+  exact b2_host_circular_hit_false.
 Qed.
 
 Lemma b2_I_ok_circ_hit_not_host_I_ok :
@@ -778,7 +776,6 @@ Theorem ticket_0007_b2_host_qed_or_qex :
    /\ (forall p ti tj,
          ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
               (IHit p ti tj))
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc) IDecline
    /\ ~ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc)
           (IHit locked_cc_mixed_joint_pt 1 0)
@@ -788,14 +785,13 @@ Theorem ticket_0007_b2_host_qed_or_qex :
         (cs_joint_hit locked_cs_arc_1 locked_cs_arc_2)).
 Proof.
   right.
-  destruct b2_host_stays_qex as [Hq [Hn [Hc [Hd [Hf Hm]]]]].
+  destruct b2_host_stays_qex as [Hq [Hn [Hc [Hd Hf]]]].
   destruct b2_I_ok_circ_hit_not_host_I_ok as [Hhit Hhost].
   split; [exact Hq|].
   split; [exact Hn|].
   split; [exact Hc|].
   split; [exact Hd|].
   split; [exact Hf|].
-  split; [exact Hm|].
   split; [exact locked_cc_mixed_host_decline|].
   split; [exact locked_cc_mixed_hit_not_I_ok|].
   split; [exact Hhit|].
@@ -848,5 +844,5 @@ Print Assumptions ticket_0007_b2_host_qed_or_qex.
 Print Assumptions ticket_0007_b2_park_qed_or_qex.
 Print Assumptions locked_cc_joint_host_endpoints.
 Print Assumptions locked_cc_joint_host_eval_eq.
-Print Assumptions locked_cc_intake_ls_cs_host_decline.
-Print Assumptions locked_cc_intake_ls_cs_hit_not_host_I_ok.
+Print Assumptions locked_cc_intake_ls_cs_host_hit.
+Print Assumptions locked_cc_intake_ls_cs_host_not_decline.

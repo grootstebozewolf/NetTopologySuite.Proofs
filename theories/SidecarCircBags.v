@@ -119,10 +119,10 @@ Proof.
   exact first_cook_scope_chord_chord.
 Qed.
 
-Lemma bags_not_first_cook_mixed :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma bags_first_cook_mixed :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  exact chord_circular_not_first_cook_scope.
+  exact first_cook_scope_chord_circular.
 Qed.
 
 Lemma bags_host_circular_decline :
@@ -526,7 +526,6 @@ Lemma bags_host_stays_qex :
   circular_gamma_status = CircGammaDischarged
   /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggChord EggChord
-  /\ ~ first_cook_scope EggChord EggCircularArc
   /\ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc) IDecline
   /\ (forall p ti tj,
         ~ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc)
@@ -535,7 +534,6 @@ Proof.
   split; [exact bags_host_circgamma_qex|].
   split; [exact bags_host_not_first_cook|].
   split; [exact bags_first_cook_stays_chord_chord|].
-  split; [exact bags_not_first_cook_mixed|].
   split; [apply bags_host_ls_cs_decline|].
   apply bags_host_ls_cs_hit_false.
 Qed.
@@ -729,7 +727,6 @@ Theorem ticket_0007_b_bags_host_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc) IDecline
    /\ (forall p ti tj,
          ~ I_ok (MkChord locked_cc_ls) (MkOutOfScope EggCircularArc)
@@ -742,12 +739,11 @@ Theorem ticket_0007_b_bags_host_qed_or_qex :
    /\ bags_interior_cook_status = BagsInteriorCookParked).
 Proof.
   right.
-  destruct bags_host_stays_qex as [Hq [Hn [Hc [Hm [Hd Hf]]]]].
+  destruct bags_host_stays_qex as [Hq [Hn [Hc [Hd Hf]]]].
   destruct bags_I_ok_mixed_hit_not_host_I_ok as [Hhit Hhost].
   split; [exact Hq|].
   split; [exact Hn|].
   split; [exact Hc|].
-  split; [exact Hm|].
   split; [exact Hd|].
   split; [exact Hf|].
   split; [exact Hhit|].

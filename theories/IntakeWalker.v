@@ -531,19 +531,26 @@ Proof.
   rewrite <- Hl. exact Hr.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_ls_cs_host_decline","title":"Mode D locked CC LS+CS stays host I_ok Decline; IHit at the joint is not host I_ok; sidecar I_ok_mixed stays sidecar; no first_cook_scope expand","file":"theories/IntakeWalker.v","witness":"0007-B-mixed-ls-cs-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_ls_cs_host_hit","title":"Mode D locked CC LS+CS joint inhabits host I_ok Hit at (end, 1, 0); sidecar I_ok_mixed stays sidecar","file":"theories/IntakeWalker.v","witness":"0007-B-mixed-ls-cs-joints","board":"ADR-0007"} *)
 
-Lemma locked_cc_ls_cs_host_decline :
-  I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A) IDecline.
-Proof.
-  unfold I_ok, interpolant_pair. intro H. exact H.
-Qed.
-
-Lemma locked_cc_ls_cs_hit_not_host_I_ok :
-  ~ I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A)
+Lemma locked_cc_ls_cs_host_hit :
+  I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A)
        (IHit locked_cc_joint_pt 1 0).
 Proof.
-  unfold I_ok. intro H. exact H.
+  unfold I_ok, on_chord, on_circ.
+  split.
+  - split; [lra|].
+    unfold locked_cc_joint_pt, p00, p50, chord_eval. cbn [px py ce_p0 ce_p1].
+    apply (f_equal2 mkPoint); ring.
+  - split; [lra|].
+    unfold locked_cc_joint_pt.
+    symmetry. exact locked_circ_A_at_0.
+Qed.
+
+Lemma locked_cc_ls_cs_host_not_decline :
+  ~ I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A) IDecline.
+Proof.
+  intro H. exact H.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -1112,8 +1119,8 @@ Print Assumptions locked_cc_ls_end.
 Print Assumptions locked_cc_cs_start.
 Print Assumptions locked_cc_joint_host_endpoints.
 Print Assumptions locked_cc_joint_host_eval_eq.
-Print Assumptions locked_cc_ls_cs_host_decline.
-Print Assumptions locked_cc_ls_cs_hit_not_host_I_ok.
+Print Assumptions locked_cc_ls_cs_host_hit.
+Print Assumptions locked_cc_ls_cs_host_not_decline.
 Print Assumptions locked_circle_maps.
 Print Assumptions locked_full_circle_egg_at_0.
 Print Assumptions locked_full_circle_egg_at_half.

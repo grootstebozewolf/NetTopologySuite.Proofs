@@ -282,10 +282,27 @@ Proof.
   exact circular_hit_not_I_ok.
 Qed.
 
-Lemma mkcirc_mixed_still_decline :
-  I_ok (MkChord hor_bot) (MkCirc locked_circ_A) IDecline.
+Lemma mkcirc_mixed_empty :
+  I_ok (MkChord hor_bot) (MkCirc locked_circ_A) IEmpty.
 Proof.
-  unfold I_ok, interpolant_pair. intro H. exact H.
+  unfold I_ok.
+  intros [X [t1 [t2 [Hc Hs]]]].
+  unfold on_chord, hor_bot, chord_eval in Hc.
+  destruct Hc as [Ht1 Hx].
+  unfold on_circ, locked_circ_A, circ_eval in Hs.
+  destruct Hs as [Ht2 Hy].
+  cbn [px py ce_p0 ce_p1 circ_o circ_r circ_theta0 circ_sweep] in Hx, Hy.
+  rewrite Hx in Hy.
+  injection Hy as Hpx Hpy.
+  pose proof PI_RGT_0 as Hpi.
+  assert (Hle : 0 <= t2 * (PI / 2)) by nra.
+  destruct (Rle_lt_or_eq_dec 0 (t2 * (PI / 2)) Hle) as [Hlt | Heq].
+  - assert (0 < t2 * (PI / 2) < PI).
+    { split; [exact Hlt|]. nra. }
+    pose proof (sin_gt_0 (t2 * (PI / 2)) H) as Hsg.
+    lra.
+  - rewrite <- Heq, cos_0 in Hpx.
+    lra.
 Qed.
 
 Lemma circular_egg_mkcirc_or_tag :
@@ -321,4 +338,4 @@ Print Assumptions locked_mkcirc_hit_neq_endpoint_chord_x.
 Print Assumptions cook_hit_circs_shares_hen.
 Print Assumptions cooked_mkcirc_shares.
 Print Assumptions circular_egg_mkcirc_or_tag.
-Print Assumptions mkcirc_mixed_still_decline.
+Print Assumptions mkcirc_mixed_empty.

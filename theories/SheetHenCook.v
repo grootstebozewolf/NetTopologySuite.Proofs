@@ -5,7 +5,8 @@
    Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
-   (MkClothoid). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
+   (MkClothoid), circ×chord / chord×circ. Tags Decline. Empty ≠ Decline.
+   Snap ≠ 𝓘.
    Bag cook loop is named QEX (LeftoverBagTermArm). CircGamma discharged
    by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
@@ -77,7 +78,8 @@ Definition egg_class (e : Egg) : EggClass :=
 
 Definition interpolant_pair (e1 e2 : Egg) : Prop :=
   match e1, e2 with
-  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _ => True
+  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _
+  | MkChord _, MkCirc _ | MkCirc _, MkChord _ => True
   | _, _ => False
   end.
 
@@ -111,6 +113,7 @@ Definition first_cook_scope (a b : EggClass) : Prop :=
   | EggChord, EggChord => True
   | EggCircularArc, EggCircularArc => True
   | EggClothoid, EggClothoid => True
+  | EggChord, EggCircularArc | EggCircularArc, EggChord => True
   | _, _ => False
   end.
 
@@ -135,6 +138,16 @@ Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   | MkClothoid c1, MkClothoid c2, IEmpty =>
       ~ exists X t1 t2, on_cloth c1 t1 X /\ on_cloth c2 t2 X
   | MkClothoid _, MkClothoid _, IDecline => False
+  | MkCirc c, MkChord s, IHit p ti tj =>
+      on_circ c ti p /\ on_chord s tj p
+  | MkChord s, MkCirc c, IHit p ti tj =>
+      on_chord s ti p /\ on_circ c tj p
+  | MkCirc c, MkChord s, IEmpty =>
+      ~ exists X t1 t2, on_circ c t1 X /\ on_chord s t2 X
+  | MkChord s, MkCirc c, IEmpty =>
+      ~ exists X t1 t2, on_chord s t1 X /\ on_circ c t2 X
+  | MkCirc _, MkChord _, IDecline => False
+  | MkChord _, MkCirc _, IDecline => False
   | _, _, IDecline => ~ interpolant_pair e1 e2
   | _, _, IHit _ _ _ => False
   | _, _, IEmpty => False
@@ -329,11 +342,16 @@ Proof.
   intro H. exact H.
 Qed.
 
-(* Mixed chord × circular: honest Decline, not a constructed mixed Hit. *)
-Lemma chord_circular_not_first_cook_scope :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma first_cook_scope_chord_circular :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  intro H. exact H.
+  exact I.
+Qed.
+
+Lemma first_cook_scope_circular_chord :
+  first_cook_scope EggCircularArc EggChord.
+Proof.
+  exact I.
 Qed.
 
 Lemma chord_circular_decline_I_ok :
@@ -1215,6 +1233,8 @@ Print Assumptions nurbs_decline_I_ok.
 Print Assumptions try_cook_hit_nurbs_none.
 Print Assumptions try_cook_hit_circular_hit_none.
 Print Assumptions circular_egg_first_cook_scope.
+Print Assumptions first_cook_scope_chord_circular.
+Print Assumptions first_cook_scope_circular_chord.
 Print Assumptions circular_decline_I_ok.
 Print Assumptions circular_hit_not_I_ok.
 Print Assumptions chord_circular_decline_I_ok.

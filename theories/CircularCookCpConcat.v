@@ -171,10 +171,10 @@ Proof.
   exact circular_hit_not_I_ok.
 Qed.
 
-Lemma b3_mixed_not_first_cook :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma b3_mixed_first_cook :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  exact chord_circular_not_first_cook_scope.
+  exact first_cook_scope_chord_circular.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -479,15 +479,13 @@ Lemma b3_host_stays_qex :
   /\ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc) IDecline
   /\ (forall p ti tj,
         ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
-             (IHit p ti tj))
-  /\ ~ first_cook_scope EggChord EggCircularArc.
+             (IHit p ti tj)).
 Proof.
   split; [exact b3_host_circgamma_qex|].
   split; [exact b3_host_not_first_cook|].
   split; [exact b3_first_cook_stays_chord_chord|].
   split; [exact b3_host_circular_decline|].
-  split; [exact b3_host_circular_hit_false|].
-  exact b3_mixed_not_first_cook.
+  exact b3_host_circular_hit_false.
 Qed.
 
 Lemma b3_I_ok_circ_hit_not_host_I_ok :
@@ -727,7 +725,6 @@ Theorem ticket_0007_b3_host_qed_or_qex :
    /\ (forall p ti tj,
          ~ I_ok (MkOutOfScope EggCircularArc) (MkOutOfScope EggCircularArc)
               (IHit p ti tj))
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls) IDecline
    /\ ~ I_ok (MkOutOfScope EggCircularArc) (MkChord locked_cc_ls)
           (IHit locked_cp_cs_close_pt 1 0)
@@ -737,14 +734,13 @@ Theorem ticket_0007_b3_host_qed_or_qex :
         (cs_joint_hit locked_cs_arc_2 locked_cs_arc_1)).
 Proof.
   right.
-  destruct b3_host_stays_qex as [Hq [Hn [Hc [Hd [Hf Hm]]]]].
+  destruct b3_host_stays_qex as [Hq [Hn [Hc [Hd Hf]]]].
   destruct b3_I_ok_circ_hit_not_host_I_ok as [Hhit Hhost].
   split; [exact Hq|].
   split; [exact Hn|].
   split; [exact Hc|].
   split; [exact Hd|].
   split; [exact Hf|].
-  split; [exact Hm|].
   split; [exact locked_cp_mixed_closing_decline|].
   split; [exact locked_cp_mixed_closing_hit_not_I_ok|].
   split; [exact Hhit|].

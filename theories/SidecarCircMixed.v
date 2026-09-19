@@ -107,10 +107,10 @@ Proof.
   exact first_cook_scope_chord_chord.
 Qed.
 
-Lemma mixed_not_first_cook :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma mixed_is_first_cook :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  exact chord_circular_not_first_cook_scope.
+  exact first_cook_scope_chord_circular.
 Qed.
 
 Lemma mixed_host_ls_cs_decline :
@@ -336,12 +336,10 @@ Qed.
 
 (* Interior mixed cook is not this letter. first_cook_scope stays
    chord–chord; host I_ok mixed Hit stays False. *)
-Lemma mixed_interior_not_first_cook :
-  ~ first_cook_scope EggChord EggCircularArc
-  /\ (forall c p ti tj,
-        ~ I_ok (MkChord c) (MkOutOfScope EggCircularArc) (IHit p ti tj)).
+Lemma mixed_interior_tag_hit_false :
+  forall c p ti tj,
+    ~ I_ok (MkChord c) (MkOutOfScope EggCircularArc) (IHit p ti tj).
 Proof.
-  split; [exact mixed_not_first_cook|].
   exact mixed_host_ls_cs_hit_false.
 Qed.
 
@@ -438,7 +436,6 @@ Lemma mixed_host_stays_qex :
   circular_gamma_status = CircGammaDischarged
   /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggChord EggChord
-  /\ ~ first_cook_scope EggChord EggCircularArc
   /\ I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc) IDecline
   /\ (forall p ti tj,
         ~ I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc)
@@ -447,7 +444,6 @@ Proof.
   split; [exact mixed_host_circgamma_qex|].
   split; [exact mixed_host_not_first_cook|].
   split; [exact mixed_first_cook_stays_chord_chord|].
-  split; [exact mixed_not_first_cook|].
   split; [exact locked_mixed_ls_cs_host_decline|].
   apply mixed_host_ls_cs_hit_false.
 Qed.
@@ -613,7 +609,6 @@ Theorem ticket_0007_b_mixed_host_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggChord EggChord
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc) IDecline
    /\ (forall p ti tj,
          ~ I_ok (MkChord locked_mixed_ls) (MkOutOfScope EggCircularArc)
@@ -625,12 +620,11 @@ Theorem ticket_0007_b_mixed_host_qed_or_qex :
    /\ mixed_interior_cook_status = MixedInteriorCookParked).
 Proof.
   right.
-  destruct mixed_host_stays_qex as [Hq [Hn [Hc [Hm [Hd Hf]]]]].
+  destruct mixed_host_stays_qex as [Hq [Hn [Hc [Hd Hf]]]].
   destruct locked_mixed_ls_cs_hit_not_host_I_ok as [Hhit Hhost].
   split; [exact Hq|].
   split; [exact Hn|].
   split; [exact Hc|].
-  split; [exact Hm|].
   split; [exact Hd|].
   split; [exact Hf|].
   split; [exact Hhit|].

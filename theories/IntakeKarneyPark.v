@@ -179,13 +179,11 @@ Theorem ticket_0007_karney_new_sheet_class_qed_or_qex :
   \/
   (~ karney_park_inhabits KP_EllipsoidSheetClass
    /\ (forall s : Sheet,
-         s = mkSheet (sheet_origin s) (sheet_e1 s) (sheet_e2 s) (sheet_has_lattice s))
-   /\ ~ first_cook_scope EggChord EggCircularArc).
+         s = mkSheet (sheet_origin s) (sheet_e1 s) (sheet_e2 s) (sheet_has_lattice s))).
 Proof.
   right.
   split; [exact karney_ellipsoid_sheet_missing |].
-  split; [exact sheet_is_planar_frame |].
-  exact chord_arc_not_first_cook.
+  exact sheet_is_planar_frame.
 Qed.
 
 Print Assumptions ticket_0007_karney_not_planar_intake_qed_or_qex.

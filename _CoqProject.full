@@ -2826,10 +2826,15 @@ theories/CircularCookMkCirc.v
 # Host/pure-R. Locked MkClothoid pair; I_ok Hit + try_cook_hit mint.
 # Tags / mixed stay Decline. Not Fresnel-as-noding. 3-axiom.
 theories/ClothoidCookMkClothoid.v
-# ADR-0007 host first-cook park (claimId 0007-host-first-cook-circ-chord).
-# Host/pure-R. Mixed circ×chord stays out of first_cook_scope. Named
-# QEX HostMixedHitTi / HostMixedHitSpan. Sidecar I_ok_mixed cited.
-# ADR-0007 stays Accepted. 3-axiom.
+# ADR-0007 host first-cook circ×chord cook (claimId
+# 0007-host-first-cook-circ-chord-qed). Host/pure-R. Shape C Hit,
+# try_cook_hit_mixed, Touch none, MintTwo. 3-axiom.
+theories/HostCookCircChord.v
+# ADR-0007 host first-cook circ×chord letter
+# (claimId 0007-host-first-cook-circ-chord-qed). Host/pure-R. Mixed
+# first_cook_scope arms + constructed I_ok Hit. Named HostMixedHitTi /
+# HostMixedHitSpan inhabit. Sidecar I_ok_mixed cited. ADR-0007 stays
+# Accepted. 3-axiom.
 theories/HostFirstCookCircChord.v
 # ρ bag-loop named QEX gap (508-style missing CookLoopBagTerm).
 # Host/pure-R. leftover_quad width conserved; kiss/share/mint not

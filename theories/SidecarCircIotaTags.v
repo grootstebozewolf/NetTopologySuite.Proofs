@@ -27,11 +27,10 @@
    produce (p*, t_i, t_j) — that is exactly what I_ok_interior supplies; no t
    is faked from endpoints.
 
-   T3b — host scope. QEX: mixed stays sidecar.
-   ~ first_cook_scope EggChord EggCircularArc is re-proved here as the fence.
-   The chord x arc machine is sidecar-complete on this pair class, not
-   host-complete: cooked_line_arc_try is not try_cook_hit and I_ok_interior
-   is not I_ok.
+   T3b — host scope. QEX: tag I_ok Hit stays False (MkOutOfScope).
+   first_cook_scope mixed arms are the host first-cook letter; this
+   row does not claim ι closed. cooked_line_arc_try is not
+   try_cook_hit and I_ok_interior is not I_ok.
 
    Honesty fences:
      InteriorMixedHitArm (I_ok_mixed Hit ∧ interior_span_params) stays
@@ -371,7 +370,6 @@ Theorem ticket_0007_iota_cook_qed_or_qex :
    /\ (forall r c a, cooked_line_arc_try r c a IEmpty = None)
    /\ (forall r c a, cooked_line_arc_try r c a IDecline = None)
    /\ IEmpty <> IDecline
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ try_cook_hit (mkChicken 0%nat 1%nat (MkChord iota_ls))
                    (mkChicken 2%nat 3%nat (MkOutOfScope EggCircularArc))
                    iota_hit hen_plus = None)
@@ -390,7 +388,6 @@ Proof.
   split; [exact cooked_line_arc_iempty_none |].
   split; [exact cooked_line_arc_idecline_none |].
   split; [exact IEmpty_neq_IDecline |].
-  split; [exact chord_circular_not_first_cook_scope |].
   reflexivity.
 Qed.
 
@@ -400,16 +397,13 @@ Qed.
 
 (* WITNESS {"claimId":"0007-iota-cook","topic":"overlay","lemma":"ticket_0007_iota_host_scope_qed_or_qex","title":"host scope for chord x circular arc: first_cook_scope EggChord EggCircularArc with a host I_ok Hit on the locked pair (QED) or mixed stays sidecar (QEX); discharged QEX: the donut machine is sidecar-complete on this class, not host-complete","file":"theories/SidecarCircIotaTags.v","witness":"0007-iota-cook","board":"ADR-0007"} *)
 Theorem ticket_0007_iota_host_scope_qed_or_qex :
-  (first_cook_scope EggChord EggCircularArc
-   /\ exists p ti tj, I_ok (MkChord iota_ls) (MkOutOfScope EggCircularArc) (IHit p ti tj))
+  (exists p ti tj, I_ok (MkChord iota_ls) (MkOutOfScope EggCircularArc) (IHit p ti tj))
   \/
-  (~ first_cook_scope EggChord EggCircularArc
-   /\ (forall p ti tj, ~ I_ok (MkChord iota_ls) (MkOutOfScope EggCircularArc) (IHit p ti tj))
+  ((forall p ti tj, ~ I_ok (MkChord iota_ls) (MkOutOfScope EggCircularArc) (IHit p ti tj))
    /\ I_ok (MkChord iota_ls) (MkOutOfScope EggCircularArc) IDecline
    /\ I_ok_interior (MixLsCs iota_ls iota_cs) iota_hit).
 Proof.
   right.
-  split; [exact chord_circular_not_first_cook_scope |].
   split; [intros p ti tj H; exact H |].
   split; [intro H; exact H |].
   exact iota_I_ok_interior.

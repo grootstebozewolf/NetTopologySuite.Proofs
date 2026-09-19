@@ -366,13 +366,12 @@ Lemma geodesic_class_never_first_cook :
   forall c, ~ first_cook_scope EggGeodesicString c /\ ~ first_cook_scope c EggGeodesicString.
 Proof. intros c; destruct c; split; intro H; exact H. Qed.
 
-Lemma chord_arc_not_first_cook : ~ first_cook_scope EggChord EggCircularArc.
-Proof. intro H. exact H. Qed.
+Lemma chord_arc_is_first_cook : first_cook_scope EggChord EggCircularArc.
+Proof. exact first_cook_scope_chord_circular. Qed.
 
 (* WITNESS {"claimId":"0007-geodesic-cook","topic":"overlay","lemma":"ticket_0007_geodesic_scope_qed_or_qex","title":"G5 first cook not expanded: EggGeodesicString is in first_cook_scope with nothing, ~ first_cook_scope EggChord EggCircularArc still holds, and every chicken of a geodesic bag has class EggChord (QED); or first_cook_scope EggGeodesicString EggGeodesicString inhabits (QEX, reject); discharged QED","file":"theories/IntakeGeodesicCook.v","witness":"0007-geodesic-cook","board":"ADR-0007"} *)
 Theorem ticket_0007_geodesic_scope_qed_or_qex :
   ((forall c, ~ first_cook_scope EggGeodesicString c /\ ~ first_cook_scope c EggGeodesicString)
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ ~ intake_geodesic_qex_inhabits IG_FirstCookExpand
    /\ (forall s pts ck, In ck (bag_chickens (map_ls s pts)) -> egg_class (ck_egg ck) = EggChord))
   \/
@@ -380,7 +379,6 @@ Theorem ticket_0007_geodesic_scope_qed_or_qex :
 Proof.
   left.
   split; [exact geodesic_class_never_first_cook |].
-  split; [exact chord_arc_not_first_cook |].
   split; [exact intake_geodesic_no_first_cook_expand |].
   intros s pts ck Hin.
   destruct (geodesic_bag_eggs_mkchord s pts ck Hin) as [p [q Hpq]].

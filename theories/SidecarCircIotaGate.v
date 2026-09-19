@@ -96,10 +96,10 @@ Proof.
   exact circular_is_first_cook_scope.
 Qed.
 
-Lemma iota_gate_not_first_cook_mixed :
-  ~ first_cook_scope EggChord EggCircularArc.
+Lemma iota_gate_first_cook_mixed :
+  first_cook_scope EggChord EggCircularArc.
 Proof.
-  exact chord_circular_not_first_cook_scope.
+  exact first_cook_scope_chord_circular.
 Qed.
 
 Lemma iota_gate_not_bag_noder :
@@ -909,7 +909,6 @@ Theorem ticket_0007_iota_cook_qed_or_qex :
    /\ circular_gamma_status = CircGammaDischarged
    /\ first_cook_scope EggChord EggChord
    /\ first_cook_scope EggCircularArc EggCircularArc
-   /\ ~ first_cook_scope EggChord EggCircularArc
    /\ cook_loop_status = LoopObligation
    /\ cook_loop_status <> LoopDischarged
    /\ SidecarCircInterior.iota_interior_cook_status
@@ -928,7 +927,6 @@ Proof.
   split; [exact iota_gate_host_circgamma_discharged|].
   split; [exact iota_gate_first_cook_stays_chord_chord|].
   split; [exact iota_gate_circular_is_first_cook|].
-  split; [exact iota_gate_not_first_cook_mixed|].
   destruct iota_gate_not_bag_noder as [Hob Hnd].
   split; [exact Hob|].
   split; [exact Hnd|].

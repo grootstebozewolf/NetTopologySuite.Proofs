@@ -508,8 +508,7 @@ Theorem ticket_0007_chord_circ_decline_qed_or_qex :
    /\ (forall p ti tj,
          ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc)
               (IHit p ti tj))
-   /\ ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) IEmpty
-   /\ ~ first_cook_scope EggChord EggCircularArc)
+   /\ ~ I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc) IEmpty)
   \/
   I_ok (MkChord hor_bot) (MkOutOfScope EggCircularArc)
        (IHit cross_pt (1 / 2) (1 / 2)).
@@ -517,8 +516,7 @@ Proof.
   left.
   split; [exact chord_circular_decline_I_ok|].
   split; [exact chord_circular_hit_not_I_ok|].
-  split; [exact chord_circular_empty_not_I_ok|].
-  exact chord_circular_not_first_cook_scope.
+  exact chord_circular_empty_not_I_ok.
 Qed.
 
 Print Assumptions ticket_0007_qed_or_qex.
