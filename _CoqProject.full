@@ -3170,6 +3170,12 @@ theories/RelateNGTouchVertex.v
 theories/RelateNGTouch.v
 theories/RelateNGTouchRED.v
 theories/RelateNGTouchCells.v
+# ADR-0003 nine-cell parity→spec bridge letter
+# (claimId 0003-nine-cell-parity-bridge). Host/pure-R.
+# Named missing ctor GeomDe9imPointsetNineCell. Triangle-local
+# pin is the ceiling. Unguarded form is Qed-false. ADR-0003
+# stays Accepted. 3-axiom.
+theories/RelateNGNineCellParityBridge.v
 theories/RelateNGRect.v
 # Leftover Ⅵ inhabitance + leftover Ⅶ inhabitance + leftover
 # Ⅷ inhabitance. Leftover Ⅸ nest inhabitance + unnamed swap
