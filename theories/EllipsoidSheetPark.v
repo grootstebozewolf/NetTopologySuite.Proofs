@@ -42,7 +42,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals List.
-From NTS.Proofs Require Import Distance SheetHenCook IntakeKarneyPark
+From NTS.Proofs Require Import Distance SheetHenCook IntakeWalker IntakeKarneyPark
   IntakeGeodesicCook IntakeGeodesic.
 Import ListNotations.
 Local Open Scope R_scope.
