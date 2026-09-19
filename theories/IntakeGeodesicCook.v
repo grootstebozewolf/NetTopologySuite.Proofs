@@ -247,7 +247,7 @@ Qed.
 
 (* Every Egg is a named interpolant or an out-of-scope class tag.
    There is still no MkGeodesic: geodesic is MkOutOfScope EggGeodesicString
-   (or planar MkChord bags). MkNurbs is host first cook, not geodesic. *)
+   (or planar MkChord bags). MkNurbs is scaffolding, not geodesic. *)
 Lemma egg_no_mkgeodesic :
   forall e : Egg,
     (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/

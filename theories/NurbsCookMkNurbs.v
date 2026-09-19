@@ -4,20 +4,20 @@
    ADR-0007 letter: NURBS×NURBS first-cook / Hit arm
    (claimId 0007-nurbs-first-cook).
 
-   Host MkNurbs pairs are interpolant_pair. first_cook_scope
-   includes EggNurbs × EggNurbs. I_ok Hits two MkNurbs
-   chickens on a locked crossing pair via on_nurbs (Cox-de-Boor
-   -free chord-parameter interpolant). try_cook_hit mints MkNurbs
-   children — not a silent demote to MkChord.
+   QEX. on_nurbs is endpoint-chord lerp; nurbs_ctrl is unused
+   (SheetHenNurbsEgg.v : nurbs_eval_ignores_ctrl). That is a silent
+   on_chord demote. first_cook_scope EggNurbs EggNurbs is False.
+   MkNurbs stays scaffolding; interpolant_pair / I_ok Hit / try_cook
+   mint do not treat it as a cook interpolant.
 
-   Locked fixture reuses the SheetHenCook unit-square-diagonal
-   geometry already Qed as a proper cross (sidecar NURBS chord
-   seed). Eggs carry an off-chord control point. Not length /
-   Cox-de-Boor / knot-span as noding.
+   Named missing ctor: NurbsNotChordDemote — a host IHit whose
+   on_nurbs is not definitionally endpoint-chord lerp / uses ctrl
+   (or true NURBS eval) without Cox-de-Boor-as-noder.
 
-   MkOutOfScope EggNurbs stays Decline. Mixed NURBS×chord
-   stays Decline. SIN / ellipse / spiral / geodesic stay
-   out of first cook. ρ / Campaign / length-as-noding stay parked.
+   MkOutOfScope EggNurbs stays Decline. Mixed NURBS×chord stays
+   Decline. SIN / ellipse / spiral / geodesic stay out of first
+   cook. ρ / Campaign / length-as-noding stay parked. Epic
+   completeness stays ellipse–ellipse QEX.
 
    WITNESS topic: overlay · claimId: 0007-nurbs-first-cook
    witness: 0007-nurbs-first-cook
@@ -54,99 +54,80 @@ Definition locked_nurbs_ck1 : Chicken :=
 Definition locked_nurbs_ck2 : Chicken :=
   mkChicken 2%nat 3%nat (MkNurbs locked_nurbs_B).
 
-Lemma locked_nurbs_ti_in_01 : 0 <= locked_nurbs_ti <= 1.
-Proof.
-  unfold locked_nurbs_ti. lra.
-Qed.
-
-Lemma locked_nurbs_tj_in_01 : 0 <= locked_nurbs_tj <= 1.
-Proof.
-  unfold locked_nurbs_tj. lra.
-Qed.
-
-Lemma locked_nurbs_A_at_ti :
-  nurbs_eval locked_nurbs_A locked_nurbs_ti = locked_nurbs_hit_pt.
-Proof.
-  unfold nurbs_eval, locked_nurbs_A, locked_nurbs_ti, locked_nurbs_hit_pt.
-  cbn [px py nurbs_p0 nurbs_p1].
-  apply (f_equal2 mkPoint); field.
-Qed.
-
-Lemma locked_nurbs_B_at_tj :
-  nurbs_eval locked_nurbs_B locked_nurbs_tj = locked_nurbs_hit_pt.
-Proof.
-  unfold nurbs_eval, locked_nurbs_B, locked_nurbs_tj, locked_nurbs_hit_pt.
-  cbn [px py nurbs_p0 nurbs_p1].
-  apply (f_equal2 mkPoint); field.
-Qed.
-
-Lemma locked_on_nurbs_A :
-  on_nurbs locked_nurbs_A locked_nurbs_ti locked_nurbs_hit_pt.
-Proof.
-  unfold on_nurbs. split; [exact locked_nurbs_ti_in_01|].
-  symmetry. exact locked_nurbs_A_at_ti.
-Qed.
-
-Lemma locked_on_nurbs_B :
-  on_nurbs locked_nurbs_B locked_nurbs_tj locked_nurbs_hit_pt.
-Proof.
-  unfold on_nurbs. split; [exact locked_nurbs_tj_in_01|].
-  symmetry. exact locked_nurbs_B_at_tj.
-Qed.
-
-(* -------------------------------------------------------------------------- *)
-(* Host I_ok Hit and try_cook_hit mint on the locked MkNurbs pair.            *)
-(* -------------------------------------------------------------------------- *)
-
-Lemma locked_mknurbs_I_ok :
-  I_ok (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B)
-       (IHit locked_nurbs_hit_pt locked_nurbs_ti locked_nurbs_tj).
-Proof.
-  unfold I_ok.
-  split; [exact locked_on_nurbs_A | exact locked_on_nurbs_B].
-Qed.
-
 Definition locked_mknurbs_hit : IResult :=
   IHit locked_nurbs_hit_pt locked_nurbs_ti locked_nurbs_tj.
 
-Definition cooked_mknurbs : CookedPair :=
-  cook_hit_nurbs locked_nurbs_ck1 locked_nurbs_ck2
-    locked_nurbs_A locked_nurbs_B locked_nurbs_ti locked_nurbs_tj
-    crossing_hen.
-
-Lemma cook_hit_nurbs_shares_hen :
-  forall c1 c2 e1 e2 ti tj h,
-    cooked_shares_hen (cook_hit_nurbs c1 c2 e1 e2 ti tj h).
+(* Honesty: eval ignores ctrl. Not a first-cook interpolant. *)
+Lemma locked_nurbs_eval_ignores_ctrl :
+  nurbs_eval locked_nurbs_A locked_nurbs_ti =
+  nurbs_eval (mkNurbsEgg (nurbs_p0 locked_nurbs_A)
+                         (nurbs_p1 locked_nurbs_A)
+                         (mkPoint 0 0)) locked_nurbs_ti.
 Proof.
-  intros. repeat split; reflexivity.
+  apply nurbs_eval_ignores_ctrl.
 Qed.
 
-Lemma cooked_mknurbs_shares :
-  cooked_shares_hen cooked_mknurbs.
+Lemma locked_on_nurbs_is_endpoint_lerp :
+  on_nurbs locked_nurbs_A locked_nurbs_ti locked_nurbs_hit_pt ->
+  locked_nurbs_hit_pt =
+    mkPoint ((1 - locked_nurbs_ti) * px (nurbs_p0 locked_nurbs_A)
+             + locked_nurbs_ti * px (nurbs_p1 locked_nurbs_A))
+            ((1 - locked_nurbs_ti) * py (nurbs_p0 locked_nurbs_A)
+             + locked_nurbs_ti * py (nurbs_p1 locked_nurbs_A)).
 Proof.
-  apply cook_hit_nurbs_shares_hen.
+  intro H.
+  apply on_nurbs_is_endpoint_lerp in H.
+  apply H.
 Qed.
 
-Lemma cooked_mknurbs_try :
+(* -------------------------------------------------------------------------- *)
+(* Named missing constructor. 508-style, not a bool.                          *)
+(* -------------------------------------------------------------------------- *)
+
+Inductive NurbsFirstCookCtor : Type :=
+| NurbsNotChordDemote.
+
+Definition nurbs_first_cook_ctor_inhabits
+  (c : NurbsFirstCookCtor) : Prop :=
+  match c with
+  | NurbsNotChordDemote => False
+  end.
+
+Lemma nurbs_not_chord_demote_missing :
+  ~ nurbs_first_cook_ctor_inhabits NurbsNotChordDemote.
+Proof.
+  intro H. exact H.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Host cook path does not Hit / mint on MkNurbs. Mixed / tags Decline.       *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma locked_mknurbs_hit_false :
+  forall p ti tj,
+    ~ I_ok (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B)
+         (IHit p ti tj).
+Proof.
+  intros p ti tj H. exact H.
+Qed.
+
+Lemma locked_mknurbs_not_interpolant :
+  ~ interpolant_pair (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B).
+Proof.
+  intro H. exact H.
+Qed.
+
+Lemma locked_mknurbs_decline :
+  I_ok (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B) IDecline.
+Proof.
+  unfold I_ok, interpolant_pair. intro H. exact H.
+Qed.
+
+Lemma cooked_mknurbs_try_none :
   try_cook_hit locked_nurbs_ck1 locked_nurbs_ck2
-    locked_mknurbs_hit crossing_hen = Some cooked_mknurbs.
+    locked_mknurbs_hit crossing_hen = None.
 Proof.
   reflexivity.
-Qed.
-
-Lemma cooked_mknurbs_children_are_nurbs :
-  egg_class (ck_egg (cp_left1 cooked_mknurbs)) = EggNurbs /\
-  egg_class (ck_egg (cp_right1 cooked_mknurbs)) = EggNurbs /\
-  egg_class (ck_egg (cp_left2 cooked_mknurbs)) = EggNurbs /\
-  egg_class (ck_egg (cp_right2 cooked_mknurbs)) = EggNurbs.
-Proof.
-  repeat split; reflexivity.
-Qed.
-
-Lemma interpolant_pair_mknurbs :
-  interpolant_pair (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B).
-Proof.
-  exact I.
 Qed.
 
 Lemma mknurbs_tag_still_decline :
@@ -181,32 +162,27 @@ Proof.
   discriminate.
 Qed.
 
-(* Same-egg Hit on the payload locked record (sidecar ticket reuse). *)
-Lemma locked_payload_egg_self_hit :
-  I_ok (MkNurbs locked_nurbs_egg) (MkNurbs locked_nurbs_egg)
-       (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)).
+Lemma locked_payload_egg_hit_false :
+  forall p ti tj,
+    ~ I_ok (MkNurbs locked_nurbs_egg) (MkNurbs locked_nurbs_egg)
+         (IHit p ti tj).
 Proof.
-  unfold I_ok, on_nurbs, nurbs_eval, locked_nurbs_egg.
-  cbn [px py nurbs_p0 nurbs_p1].
-  split.
-  - split; [lra|]. apply (f_equal2 mkPoint); field.
-  - split; [lra|]. apply (f_equal2 mkPoint); field.
+  intros p ti tj H. exact H.
 Qed.
 
-(* WITNESS {"claimId":"0007-nurbs-first-cook","topic":"overlay","lemma":"locked_mknurbs_I_ok","title":"Host I_ok Hits two MkNurbs chickens on the locked crossing NURBS pair","file":"theories/NurbsCookMkNurbs.v","witness":"0007-nurbs-first-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-nurbs-first-cook","topic":"overlay","lemma":"nurbs_not_chord_demote_missing","title":"Named missing ctor NurbsNotChordDemote: a host IHit whose on_nurbs is not definitionally endpoint-chord lerp / uses ctrl without Cox-de-Boor-as-noder","file":"theories/NurbsCookMkNurbs.v","witness":"0007-nurbs-first-cook","board":"ADR-0007"} *)
 
-(* WITNESS {"claimId":"0007-nurbs-first-cook","topic":"overlay","lemma":"cooked_mknurbs_try","title":"try_cook_hit mints MkNurbs hens on the locked NURBS Hit","file":"theories/NurbsCookMkNurbs.v","witness":"0007-nurbs-first-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-nurbs-first-cook","topic":"overlay","lemma":"locked_mknurbs_hit_false","title":"Host I_ok does not Hit two MkNurbs chickens; on_nurbs is silent chord demote","file":"theories/NurbsCookMkNurbs.v","witness":"0007-nurbs-first-cook","board":"ADR-0007"} *)
 
-(* WITNESS {"claimId":"0007-nurbs-first-cook","topic":"overlay","lemma":"ticket_0007_nurbs_first_cook_qed_or_qex","title":"NURBS times NURBS is first cook with a locked MkNurbs IHit that try_cook_hit mints (QED) or NURBS times NURBS stays QEX (QEX); discharged QED; tags and mixed stay Decline; length-as-noding / Cox-de-Boor / Campaign / rho stay parked","file":"theories/NurbsCookMkNurbs.v","witness":"0007-nurbs-first-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-nurbs-first-cook","topic":"overlay","lemma":"ticket_0007_nurbs_first_cook_qed_or_qex","title":"NURBS times NURBS is first cook with a locked MkNurbs IHit whose on_nurbs is not endpoint-chord lerp (QED) or NURBS times NURBS stays QEX with named missing ctor NurbsNotChordDemote (QEX); discharged QEX; tags and mixed stay Decline; length-as-noding / Cox-de-Boor / Campaign / rho stay parked","file":"theories/NurbsCookMkNurbs.v","witness":"0007-nurbs-first-cook","board":"ADR-0007"} *)
 Theorem ticket_0007_nurbs_first_cook_qed_or_qex :
   (first_cook_scope EggNurbs EggNurbs /\
+   nurbs_first_cook_ctor_inhabits NurbsNotChordDemote /\
    interpolant_pair (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B) /\
    I_ok (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B)
         (IHit locked_nurbs_hit_pt locked_nurbs_ti locked_nurbs_tj) /\
    try_cook_hit locked_nurbs_ck1 locked_nurbs_ck2
-     locked_mknurbs_hit crossing_hen = Some cooked_mknurbs /\
-   cooked_shares_hen cooked_mknurbs /\
-   egg_class (ck_egg (cp_left1 cooked_mknurbs)) = EggNurbs /\
+     locked_mknurbs_hit crossing_hen <> None /\
    I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs) IDecline /\
    I_ok (MkChord hor_bot) (MkNurbs locked_nurbs_A) IDecline /\
    ~ first_cook_scope EggNurbs EggChord /\
@@ -214,17 +190,20 @@ Theorem ticket_0007_nurbs_first_cook_qed_or_qex :
    cook_loop_status = LoopObligation)
   \/
   (~ first_cook_scope EggNurbs EggNurbs /\
-   forall p ti tj,
-     ~ I_ok (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B)
-          (IHit p ti tj)).
+   ~ nurbs_first_cook_ctor_inhabits NurbsNotChordDemote /\
+   (forall p ti tj,
+      ~ I_ok (MkNurbs locked_nurbs_A) (MkNurbs locked_nurbs_B)
+           (IHit p ti tj)) /\
+   I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs) IDecline /\
+   I_ok (MkChord hor_bot) (MkNurbs locked_nurbs_A) IDecline /\
+   ~ first_cook_scope EggNurbs EggChord /\
+   ~ first_cook_scope EggEllipse EggEllipse /\
+   cook_loop_status = LoopObligation).
 Proof.
-  left.
-  split; [exact nurbs_egg_first_cook_scope|].
-  split; [exact interpolant_pair_mknurbs|].
-  split; [exact locked_mknurbs_I_ok|].
-  split; [exact cooked_mknurbs_try|].
-  split; [exact cooked_mknurbs_shares|].
-  split; [reflexivity|].
+  right.
+  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_not_chord_demote_missing|].
+  split; [exact locked_mknurbs_hit_false|].
   split; [exact mknurbs_tag_still_decline|].
   split; [exact mknurbs_mixed_still_decline|].
   split; [exact nurbs_chord_not_first_cook_scope|].
@@ -232,14 +211,14 @@ Proof.
   exact cook_loop_is_obligation.
 Qed.
 
-Print Assumptions locked_nurbs_A_at_ti.
-Print Assumptions locked_nurbs_B_at_tj.
-Print Assumptions locked_mknurbs_I_ok.
-Print Assumptions cooked_mknurbs_try.
-Print Assumptions cook_hit_nurbs_shares_hen.
-Print Assumptions cooked_mknurbs_shares.
-Print Assumptions cooked_mknurbs_children_are_nurbs.
-Print Assumptions interpolant_pair_mknurbs.
+Print Assumptions nurbs_eval_ignores_ctrl.
+Print Assumptions on_nurbs_is_endpoint_lerp.
+Print Assumptions locked_nurbs_eval_ignores_ctrl.
+Print Assumptions nurbs_not_chord_demote_missing.
+Print Assumptions locked_mknurbs_hit_false.
+Print Assumptions locked_mknurbs_not_interpolant.
+Print Assumptions locked_mknurbs_decline.
+Print Assumptions cooked_mknurbs_try_none.
 Print Assumptions mknurbs_mixed_still_decline.
-Print Assumptions locked_payload_egg_self_hit.
+Print Assumptions locked_payload_egg_hit_false.
 Print Assumptions ticket_0007_nurbs_first_cook_qed_or_qex.

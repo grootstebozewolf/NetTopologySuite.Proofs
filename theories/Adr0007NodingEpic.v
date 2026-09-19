@@ -6,8 +6,8 @@
 
    The noding constructor is part of the specification: sheet, hen,
    egg, chicken, cook / 𝓘. First cook scope is chord–chord,
-   circular–circular (MkCirc), clothoid–clothoid (MkClothoid),
-   and NURBS–NURBS (MkNurbs). Mixed and tags stay Decline.
+   circular–circular (MkCirc), clothoid–clothoid (MkClothoid).
+   NURBS–NURBS stays QEX (NurbsNotChordDemote). Mixed and tags stay Decline.
 
    QED: chord–chord inhabits the cook interface; Empty ≠ Decline;
    ShareOne mints one hen; noded-on-S is cook evidence.
@@ -116,7 +116,7 @@
    not Required here).    NURBS egg sidecar lives in
    SidecarNurbsEgg.v (3-axiom; Decline-on-host + demoted
    unit-square chord-seed; metric length stays #508; host
-   MkNurbs first cook is NurbsCookMkNurbs.v; not
+   MkNurbs first cook stays QEX in NurbsCookMkNurbs.v; not
    Required here). SIN / sinusoid egg sidecar lives in
    SidecarSinEgg.v (3-axiom; Decline-on-host + demoted
    unit-square chord-seed; thin profile corpus stays
@@ -125,7 +125,7 @@
    SidecarCircInteriorHit.v (4-axiom sidecar; I_ok_interior
    ≠ I_ok_mixed; joint gate stands; not Required here).
    First cook is chord–chord, circular–circular (MkCirc),
-   clothoid–clothoid (MkClothoid), and NURBS–NURBS (MkNurbs).
+   clothoid–clothoid (MkClothoid). NURBS–NURBS stays QEX.
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
@@ -159,7 +159,7 @@ Local Open Scope R_scope.
 (* ADR-0007 stop: every egg-class pair is in first cook scope (QED)
    or a documented out-of-scope pair is missing (QEX). Discharged QEX
    on ellipse–ellipse — the 508-style carrier miss. NURBS×NURBS
-   is first cook (claimId 0007-nurbs-first-cook). *)
+   stays QEX (claimId 0007-nurbs-first-cook; NurbsNotChordDemote). *)
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_qed_or_qex","title":"ADR-0007 stop is first-cook-scope completeness (QED) or a documented out-of-scope pair (QEX); discharged QEX on ellipse-ellipse","file":"theories/Adr0007NodingEpic.v","witness":"0007-qed-qex","board":"ADR-0007"} *)
 
 Theorem ticket_0007_qed_or_qex :

@@ -380,14 +380,14 @@ Lemma sidecar_circ_egg_first_cook_stays_chord_chord :
   first_cook_scope EggCircularArc EggCircularArc /\
   ~ first_cook_scope EggChord EggCircularArc /\
   first_cook_scope EggClothoid EggClothoid /\
-  first_cook_scope EggNurbs EggNurbs /\
+  ~ first_cook_scope EggNurbs EggNurbs /\
   ~ first_cook_scope EggEllipse EggEllipse.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
   split; [exact circular_egg_first_cook_scope|].
   split; [exact chord_circular_not_first_cook_scope|].
   split; [exact clothoid_egg_first_cook_scope|].
-  split; [exact nurbs_egg_first_cook_scope|].
+  split; [exact nurbs_nurbs_not_first_scope|].
   exact ellipse_ellipse_not_first_scope.
 Qed.
 

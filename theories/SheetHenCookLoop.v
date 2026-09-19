@@ -378,7 +378,7 @@ Theorem ticket_0007_rho_scope_qed_or_qex :
    /\ arc_cook_term_status = ArcTermSister
    /\ first_cook_scope EggChord EggChord
    /\ first_cook_scope EggClothoid EggClothoid
-   /\ first_cook_scope EggNurbs EggNurbs
+   /\ ~ first_cook_scope EggNurbs EggNurbs
    /\ ~ first_cook_scope EggEllipse EggEllipse).
 Proof.
   right.
@@ -387,7 +387,7 @@ Proof.
   split; [reflexivity|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact clothoid_egg_first_cook_scope|].
-  split; [exact nurbs_egg_first_cook_scope|].
+  split; [exact nurbs_nurbs_not_first_scope|].
   exact ellipse_ellipse_not_first_scope.
 Qed.
 

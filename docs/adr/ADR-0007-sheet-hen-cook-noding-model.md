@@ -283,7 +283,7 @@ Do not start H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
 | 1b | Numeric `dart_eq_dec` does not decide vertex identity | `Adr0007NodingEpic.v : ticket_0007_dart_eq_qed_or_qex` | **QEX** — coord-pair `=` is not hen `=` | `SheetHenCook.v : coord_eq_not_hen_eq` |
 | 2 | Minimal `𝓘` obligations for the segment/chord lane | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** — Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope | `SheetHenCook.v : crossing_witness`, `SheetHenCook.v : disjoint_witness`, `SheetHenCook.v : I_ok_chord_not_decline` |
 | 3 | Cross-link to accepted ADR-0006 | header of both modules + this addendum | comment / docs (no second seam) | — |
-| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — ellipse–ellipse missing (508 mirror); NURBS×NURBS is first cook | `SheetHenCook.v : ellipse_ellipse_not_first_scope`, `SheetHenCook.v : nurbs_egg_first_cook_scope` |
+| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — ellipse–ellipse missing (508 mirror); NURBS×NURBS stays QEX | `SheetHenCook.v : ellipse_ellipse_not_first_scope`, `SheetHenCook.v : nurbs_nurbs_not_first_scope` |
 | 4b | Chord–chord inhabits the cook interface | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** | `SheetHenCook.v : first_cook_scope_chord_chord` |
 | — | Empty ≠ Decline | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` | **QED** | `SheetHenCook.v : IEmpty_neq_IDecline` |
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCook.v : noded_crossing` |
@@ -1156,7 +1156,7 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 |------|-----|-------|
 | `NodingNG.v : ticket_0007_nodingng_chord_qed_or_qex` | **QED** — chord `𝓘` + one cook step (or locked two-pair bag) yields `NodedOnSheet`; Empty ≠ Decline; snap ≠ `𝓘`; `ShareOne` / `MintTwo` structural | `NodingNG.v : nodingng_chord_inhabits`, `NodingNG.v : nodingng_crossing_hit_cooks`, `NodingNG.v : nodingng_locked_bag_inhabits` |
 | `NodingNG.v : ticket_0007_nodingng_rho_qed_or_qex` | **QEX** — NodingNG chord is pairwise / one-step, not `LoopDischarged`; Parks ρ | `SheetHenCookLoop.v : leftover_bag_term_arm_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
-| `NodingNG.v : ticket_0007_nodingng_scope_qed_or_qex` | **QEX** — NodingNG stays pairwise/one-step; host first cook includes chord/circular/clothoid/NURBS; ellipse stays out | `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : circular_egg_first_cook_scope`, `SheetHenCook.v : nurbs_egg_first_cook_scope` |
+| `NodingNG.v : ticket_0007_nodingng_scope_qed_or_qex` | **QEX** — NodingNG stays pairwise/one-step; host first cook includes chord/circular/clothoid; NURBS stays out | `SheetHenCook.v : first_cook_scope_chord_chord`, `SheetHenCook.v : circular_egg_first_cook_scope`, `SheetHenCook.v : nurbs_nurbs_not_first_scope` |
 
 Witness: `0007-nodingng-chord`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1340,7 +1340,7 @@ ship a NURBS×NURBS noder or Campaign I–II.
 **QED.** Sidecar egg packaging + host Decline + locked unit-square
 demoted-chord seed (`RelateLineLine.v : line_line_proper_cross_geom`).
 Demote-to-chord is NodingNG / host first cook, not a NURBS Hit.
-Golden quarter stays a metric cite. Host `MkNurbs` first cook landed.
+Golden quarter stays a metric cite. Host `MkNurbs` first cook stays QEX.
 
 **QEX parks.** Campaign I–II / length-as-noding / Cox-de-Boor /
 bag loop. Do not fake `LoopDischarged`. Parks ι / ρ
@@ -1351,8 +1351,8 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex` | **QED** — EggNurbs packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; length stays metric | `SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`, `SidecarNurbsEgg.v : sidecar_nurbs_chord_seed`, `SidecarNurbsEgg.v : sidecar_nurbs_host_decline` |
-| `NurbsCookMkNurbs.v : ticket_0007_nurbs_first_cook_qed_or_qex` | **QED** — `EggNurbs×EggNurbs` first cook; locked `MkNurbs` `IHit` via `on_nurbs`; mint; tags / mixed Decline | `NurbsCookMkNurbs.v : locked_mknurbs_I_ok`, `NurbsCookMkNurbs.v : cooked_mknurbs_try`, `SheetHenCook.v : nurbs_egg_first_cook_scope` |
-| `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_first_cook_expanded`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `NurbsCookMkNurbs.v : ticket_0007_nurbs_first_cook_qed_or_qex` | **QEX** — `EggNurbs×EggNurbs` not first cook; `NurbsNotChordDemote` missing; tags / mixed Decline | `NurbsCookMkNurbs.v : nurbs_not_chord_demote_missing`, `SheetHenCook.v : nurbs_nurbs_not_first_scope` |
+| `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-nurbs-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1694,7 +1694,7 @@ stays at the module-split ceiling.
 
 Not a silent `I_ok` demote to `on_chord`. Not Fresnel / Halley /
 length as the noding engine. Mixed clothoid×chord stays Decline.
-NURBS×NURBS is first cook (`0007-nurbs-first-cook`). SIN / ellipse /
+NURBS×NURBS stays QEX (`NurbsNotChordDemote`). SIN / ellipse /
 spiral / geodesic stay out of first cook.
 Tags (`MkOutOfScope EggClothoid`) stay Decline. Intake bags from
 #727 stand. No new oracle keyword (ADR-0006).

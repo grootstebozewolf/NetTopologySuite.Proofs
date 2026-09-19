@@ -168,7 +168,7 @@ theories/OverlayNG.v
 theories/SidecarClothoidEgg.v
 # ADR-0007 NURBS egg sidecar (SidecarNurbsEgg). Packages EggNurbs
 # Decline-on-tag + demoted unit-square chord-seed. Host/pure-R.
-# Host first cook includes NURBS×NURBS (NurbsCookMkNurbs).
+# Host NURBS×NURBS first cook stays QEX (NurbsCookMkNurbs).
 # Not #508 length-as-noding. Not Campaign I–II. No Admitted.
 theories/SidecarNurbsEgg.v
 # ADR-0007 SIN / sinusoid egg sidecar (SidecarSinEgg). Packages

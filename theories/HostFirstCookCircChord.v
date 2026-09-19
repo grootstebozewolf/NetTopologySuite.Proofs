@@ -31,7 +31,7 @@
      No atan2, no classic, no Category C on host.
      No LeftoverBagTermArm, no LoopDischarged.
      No SIN / ellipse / geodesic in first_cook_scope.
-     NURBS×NURBS first cook is sibling NurbsCookMkNurbs.
+     NURBS×NURBS first cook stays QEX (NurbsCookMkNurbs; NurbsNotChordDemote).
      No I_CIRC_CHORD keyword. No #518 / #423 / Karney / ADR-0008 Status
      flip. Not “ι closed”. Not “first cook complete”.
 
@@ -72,7 +72,7 @@ Lemma first_cook_scope_same_kind_unchanged :
   first_cook_scope EggChord EggChord
   /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggClothoid EggClothoid
-  /\ first_cook_scope EggNurbs EggNurbs
+  /\ ~ first_cook_scope EggNurbs EggNurbs
   /\ ~ first_cook_scope EggEllipse EggEllipse
   /\ ~ first_cook_scope EggSinusoid EggSinusoid
   /\ ~ first_cook_scope EggGeodesicString EggGeodesicString.
@@ -80,7 +80,7 @@ Proof.
   split; [exact first_cook_scope_chord_chord |].
   split; [exact circular_egg_first_cook_scope |].
   split; [exact clothoid_egg_first_cook_scope |].
-  split; [exact nurbs_egg_first_cook_scope |].
+  split; [exact nurbs_nurbs_not_first_scope |].
   split; [exact ellipse_ellipse_not_first_scope |].
   split; [intro H; exact H |].
   intro H. exact H.

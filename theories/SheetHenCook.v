@@ -5,7 +5,8 @@
    Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
-   (MkClothoid), NURBS–NURBS (MkNurbs). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
+   (MkClothoid). MkNurbs is scaffolding; EggNurbs×EggNurbs is not first
+   cook (on_nurbs is endpoint lerp). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
    Bag cook loop is named QEX (LeftoverBagTermArm). CircGamma discharged
    by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
@@ -76,7 +77,7 @@ Definition egg_class (e : Egg) : EggClass :=
 
 Definition interpolant_pair (e1 e2 : Egg) : Prop :=
   match e1, e2 with
-  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _ | MkNurbs _, MkNurbs _ => True
+  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _ => True
   | _, _ => False
   end.
 
@@ -97,7 +98,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid / NURBS. *)
+(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid. *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive IResult : Type :=
@@ -110,7 +111,6 @@ Definition first_cook_scope (a b : EggClass) : Prop :=
   | EggChord, EggChord => True
   | EggCircularArc, EggCircularArc => True
   | EggClothoid, EggClothoid => True
-  | EggNurbs, EggNurbs => True
   | _, _ => False
   end.
 
@@ -133,9 +133,6 @@ Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   | MkClothoid c1, MkClothoid c2, IHit p ti tj => on_cloth c1 ti p /\ on_cloth c2 tj p
   | MkClothoid c1, MkClothoid c2, IEmpty => ~ exists X t1 t2, on_cloth c1 t1 X /\ on_cloth c2 t2 X
   | MkClothoid _, MkClothoid _, IDecline => False
-  | MkNurbs n1, MkNurbs n2, IHit p ti tj => on_nurbs n1 ti p /\ on_nurbs n2 tj p
-  | MkNurbs n1, MkNurbs n2, IEmpty => ~ exists X t1 t2, on_nurbs n1 t1 X /\ on_nurbs n2 t2 X
-  | MkNurbs _, MkNurbs _, IDecline => False
   | _, _, IDecline => ~ interpolant_pair e1 e2
   | _, _, IHit _ _ _ => False
   | _, _, IEmpty => False
@@ -166,10 +163,10 @@ Proof.
   intro H. exact H.
 Qed.
 
-Lemma nurbs_egg_first_cook_scope :
-  first_cook_scope EggNurbs EggNurbs.
+Lemma nurbs_nurbs_not_first_scope :
+  ~ first_cook_scope EggNurbs EggNurbs.
 Proof.
-  exact I.
+  intro H. exact H.
 Qed.
 
 Lemma IEmpty_neq_IDecline : IEmpty <> IDecline.
@@ -864,15 +861,6 @@ Definition cook_hit_clothoids
     (mkChicken (ck_src c2) h_new (MkClothoid (fst s2)))
     (mkChicken h_new (ck_dst c2) (MkClothoid (snd s2))).
 
-Definition cook_hit_nurbs
-  (c1 c2 : Chicken) (e1 e2 : NurbsEgg) (ti tj : R) (h_new : Hen)
-  : CookedPair :=
-  let s1 := nurbs_split e1 ti in let s2 := nurbs_split e2 tj in
-  mkCookedPair h_new (mkChicken (ck_src c1) h_new (MkNurbs (fst s1)))
-    (mkChicken h_new (ck_dst c1) (MkNurbs (snd s1)))
-    (mkChicken (ck_src c2) h_new (MkNurbs (fst s2)))
-    (mkChicken h_new (ck_dst c2) (MkNurbs (snd s2))).
-
 Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
   : option CookedPair :=
   match ck_egg c1, ck_egg c2, o with
@@ -881,7 +869,6 @@ Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
   | MkCirc e1, MkCirc e2, IHit _ ti tj =>
       Some (cook_hit_circs c1 c2 e1 e2 ti tj h_new)
   | MkClothoid e1, MkClothoid e2, IHit _ ti tj => Some (cook_hit_clothoids c1 c2 e1 e2 ti tj h_new)
-  | MkNurbs e1, MkNurbs e2, IHit _ ti tj => Some (cook_hit_nurbs c1 c2 e1 e2 ti tj h_new)
   | _, _, _ => None
   end.
 
@@ -1211,7 +1198,7 @@ Print Assumptions cook_hit_chords_shares_hen.
 Print Assumptions cooked_crossing_try.
 Print Assumptions cooked_crossing_join.
 Print Assumptions try_cook_hit_clothoid_none.
-Print Assumptions nurbs_egg_first_cook_scope.
+Print Assumptions nurbs_nurbs_not_first_scope.
 Print Assumptions nurbs_decline_I_ok.
 Print Assumptions try_cook_hit_nurbs_none.
 Print Assumptions try_cook_hit_circular_hit_none.
