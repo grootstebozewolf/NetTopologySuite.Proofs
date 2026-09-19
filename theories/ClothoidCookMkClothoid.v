@@ -25,8 +25,8 @@
    this is split-children meet, not example5.
 
    MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
-   stays Decline. NURBS / SIN / ellipse / spiral / geodesic stay
-   out of first cook. ρ / Campaign / Fresnel-as-noding stay parked.
+   stays Decline. SIN / ellipse / spiral / geodesic stay out of
+   first cook. ρ / Campaign / Fresnel-as-noding stay parked.
 
    WITNESS topic: overlay · claimId: 0007-clothoid-first-cook
    witness: 0007-clothoid-first-cook
@@ -343,7 +343,7 @@ Theorem ticket_0007_clothoid_first_cook_qed_or_qex :
    I_ok (MkOutOfScope EggClothoid) (MkOutOfScope EggClothoid) IDecline /\
    I_ok (MkChord hor_bot) (MkClothoid locked_cloth_A) IDecline /\
    ~ first_cook_scope EggClothoid EggChord /\
-   ~ first_cook_scope EggNurbs EggNurbs /\
+   first_cook_scope EggNurbs EggNurbs /\
    cook_loop_status = LoopObligation)
   \/
   (~ first_cook_scope EggClothoid EggClothoid /\
@@ -361,7 +361,7 @@ Proof.
   split; [exact mkclothoid_tag_still_decline|].
   split; [exact mkclothoid_mixed_still_decline|].
   split; [exact clothoid_chord_not_first_cook_scope|].
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   exact cook_loop_is_obligation.
 Qed.
 
