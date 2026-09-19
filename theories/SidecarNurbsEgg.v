@@ -7,7 +7,7 @@
    Product / sidecar face: NURBS as an EggClass on the ADR-0007
    sheet / hen / cook vocabulary. Host already has EggNurbs /
    MkOutOfScope EggNurbs. This letter adds the missing Decline /
-   not-first-cook host lemmas (nurbs_nurbs_not_first_scope,
+   Decline / tag host lemmas (nurbs_nurbs_first_cook_scope,
    nurbs_decline_I_ok / nurbs_decline_witness, try_cook_hit_nurbs_none)
    and packages that fence plus one locked demoted-chord fixture.
    Prefer SidecarNurbs* over reminting host cook (same preference
@@ -28,14 +28,14 @@
    to the host crossing pair; demote-to-chord is NodingNG / host
    first cook, not a NURBS Hit.
 
-   QEX: NURBS×NURBS is not first cook (checklist 4). Named
-   missing constructor: no MkNurbs on Egg, no I_ok Hit arm
-   on NURBS eggs. Do not fake first-cook expand or
-   LoopDischarged. Do not remint #508 length as cook Hit.
+   QEX: no MkNurbs on Egg, no I_ok Hit arm on NURBS eggs.
+   Scope inhabit is host letter 0007-nurbs-nurbs-first-cook.
+   Do not fake Hit or LoopDischarged. Do not remint #508
+   length as cook Hit.
 
    What this is not:
-     Host first_cook_scope / try_cook_hit expand to
-     NURBS×NURBS. CircGamma / ι / ρ remint. MkCirc. Clothoid
+     Host MkNurbs / try_cook_hit Hit. CircGamma / ι / ρ remint.
+     MkCirc. Clothoid
      remint. Host circular cook. Shewchuk / Hobby / Priest /
      Jordan / HotPixel / OverlayNG snap remint. SQL/MM Multi
      Landed / Phase B done-when / H⊥ / MerkatorBV / 522-n.
@@ -308,20 +308,20 @@ Proof.
   intro H. exact H.
 Qed.
 
-Lemma sidecar_nurbs_not_first_cook :
-  ~ first_cook_scope EggNurbs EggNurbs.
+Lemma sidecar_nurbs_is_first_cook :
+  first_cook_scope EggNurbs EggNurbs.
 Proof.
-  exact nurbs_nurbs_not_first_scope.
+  exact nurbs_nurbs_first_cook_scope.
 Qed.
 
 Lemma sidecar_nurbs_first_cook_stays_chord_chord :
   first_cook_scope EggChord EggChord /\
-  ~ first_cook_scope EggNurbs EggNurbs /\
+  first_cook_scope EggNurbs EggNurbs /\
   first_cook_scope EggClothoid EggClothoid /\
   first_cook_scope EggCircularArc EggCircularArc.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   split; [exact clothoid_egg_first_cook_scope|].
   exact circular_egg_first_cook_scope.
 Qed.
@@ -488,7 +488,7 @@ Proof.
   exact sidecar_nurbs_metric_not_cook_hit.
 Qed.
 
-(* WITNESS {"claimId":"0007-nurbs-egg","topic":"overlay","lemma":"ticket_0007_nurbs_not_first_cook_qed_or_qex","title":"Sidecar NURBS expands first_cook_scope to NURBS times NURBS and inhabits I_ok Hit (QED) or NURBS times NURBS stays QEX with named MkNurbs / Hit-arm gaps (QEX); discharged QEX; checklist 4; do not fake first-cook expand","file":"theories/SidecarNurbsEgg.v","witness":"0007-nurbs-egg","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-nurbs-egg","topic":"overlay","lemma":"ticket_0007_nurbs_not_first_cook_qed_or_qex","title":"Sidecar NURBS inhabits MkNurbs / Hit-arm / I_ok Hit (QED) or those stay missing after host first_cook_scope EggNurbs EggNurbs (QEX); discharged QEX; host letter 0007-nurbs-nurbs-first-cook; do not fake Hit","file":"theories/SidecarNurbsEgg.v","witness":"0007-nurbs-egg","board":"ADR-0007"} *)
 Theorem ticket_0007_nurbs_not_first_cook_qed_or_qex :
   (first_cook_scope EggNurbs EggNurbs /\
    sidecar_nurbs_ctor_inhabits NurbsMkNurbs /\
@@ -499,7 +499,7 @@ Theorem ticket_0007_nurbs_not_first_cook_qed_or_qex :
      I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
           (IHit p ti tj))
   \/
-  (~ first_cook_scope EggNurbs EggNurbs /\
+  (first_cook_scope EggNurbs EggNurbs /\
    first_cook_scope EggChord EggChord /\
    ~ sidecar_nurbs_ctor_inhabits NurbsMkNurbs /\
    ~ sidecar_nurbs_ctor_inhabits NurbsNurbsHitArm /\
@@ -512,7 +512,7 @@ Theorem ticket_0007_nurbs_not_first_cook_qed_or_qex :
    try_cook_hit nurbs_ck1 nurbs_ck2 IDecline crossing_hen = None).
 Proof.
   right.
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact sidecar_nurbs_mknurbs_missing|].
   split; [exact sidecar_nurbs_hit_arm_missing|].
@@ -542,7 +542,7 @@ Theorem ticket_0007_nurbs_parks_qed_or_qex :
    cook_loop_status = LoopObligation /\
    cook_loop_status <> LoopDischarged /\
    first_cook_scope EggChord EggChord /\
-   ~ first_cook_scope EggNurbs EggNurbs).
+   first_cook_scope EggNurbs EggNurbs).
 Proof.
   right.
   split; [exact sidecar_nurbs_letter_is_landed|].
@@ -555,7 +555,7 @@ Proof.
   split; [exact cook_loop_is_obligation|].
   split; [exact cook_loop_not_discharged|].
   split; [exact first_cook_scope_chord_chord|].
-  exact nurbs_nurbs_not_first_scope.
+  exact nurbs_nurbs_first_cook_scope.
 Qed.
 
 Print Assumptions sidecar_nurbs_class.

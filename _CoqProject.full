@@ -2824,7 +2824,8 @@ theories/SheetHenCircEgg.v
 theories/SheetHenClothoidEgg.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
 # Host/pure-R. First cook scope is chord–chord, circular–circular
-# (MkCirc), and clothoid–clothoid (MkClothoid). Does not remint
+# (MkCirc), clothoid–clothoid (MkClothoid), NURBS–NURBS (scope).
+# Does not remint
 # CurveSegment / Dart / Hobby. No Admitted. Status stays Accepted.
 theories/SheetHenCook.v
 # ADR-0007 Γ host MkCirc / CircGamma locked fixture (claimId 0007-gamma-mkcirc).
@@ -2835,6 +2836,11 @@ theories/CircularCookMkCirc.v
 # Host/pure-R. Locked MkClothoid pair; I_ok Hit + try_cook_hit mint.
 # Tags / mixed stay Decline. Not Fresnel-as-noding. 3-axiom.
 theories/ClothoidCookMkClothoid.v
+# ADR-0007 NURBS×NURBS first-cook scope (claimId 0007-nurbs-nurbs-first-cook).
+# Host/pure-R. first_cook_scope EggNurbs EggNurbs; old
+# nurbs_nurbs_not_first_scope ceiling retired. Tags Decline.
+# No MkNurbs / on_nurbs / silent MkCirc / MkChord. 3-axiom.
+theories/NurbsNurbsFirstCook.v
 # ADR-0007 host first-cook park (claimId 0007-host-first-cook-circ-chord).
 # Host/pure-R. Mixed circ×chord stays out of first_cook_scope. Named
 # QEX HostMixedHitTi / HostMixedHitSpan. Sidecar I_ok_mixed cited.

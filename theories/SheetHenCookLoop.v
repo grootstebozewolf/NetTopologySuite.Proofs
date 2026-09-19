@@ -367,7 +367,7 @@ Proof.
   exact pairwise_qed_not_bag_discharge.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_rho_scope_qed_or_qex","title":"rho bag-loop discharges Multi bags and arc cook termination (QED) or leftover_quad is one Hit-split, arc term stays sister, bag loop stays obligation, NURBS stays out (QEX); discharged QEX; rho != eta Multi bags","file":"theories/SheetHenCookLoop.v","witness":"0007-rho-bag-loop","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_rho_scope_qed_or_qex","title":"rho bag-loop discharges Multi bags and arc cook termination (QED) or leftover_quad is one Hit-split, arc term stays sister, bag loop stays obligation (QEX); discharged QEX; rho != eta Multi bags","file":"theories/SheetHenCookLoop.v","witness":"0007-rho-bag-loop","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_scope_qed_or_qex :
   (cook_loop_status = LoopDischarged
    /\ arc_cook_term_status = ArcTermDischarged
@@ -378,7 +378,7 @@ Theorem ticket_0007_rho_scope_qed_or_qex :
    /\ arc_cook_term_status = ArcTermSister
    /\ first_cook_scope EggChord EggChord
    /\ first_cook_scope EggClothoid EggClothoid
-   /\ ~ first_cook_scope EggNurbs EggNurbs).
+   /\ first_cook_scope EggNurbs EggNurbs).
 Proof.
   right.
   split; [exact cook_loop_is_obligation|].
@@ -386,7 +386,7 @@ Proof.
   split; [reflexivity|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact clothoid_egg_first_cook_scope|].
-  exact nurbs_nurbs_not_first_scope.
+  exact nurbs_nurbs_first_cook_scope.
 Qed.
 
 Print Assumptions leftover_quad_width_does_not_decrease.

@@ -15,7 +15,7 @@
         completeness QEX after Ⅸ —
         RelateNGEpic522.v : ticket_522_qed_or_qex RIGHT
      3. first cook — SheetHenCook.v : first_cook_scope_*
-        (chord, circ, clothoid IN; mixed/ellipse/NURBS/sin/geodesic/spiral QEX)
+        (chord, circ, clothoid, NURBS IN; mixed/ellipse/sin/geodesic/spiral QEX)
      4. CurveSegment year-1 CSChord|CSArc —
         ExactCurveEpic508.v : ticket_508_carrier_qed_or_qex LEFT
      5. #791 taut polygonal Jordan —
@@ -64,7 +64,7 @@ Theorem ticket_508_context_prose_qed_or_qex :
    /\ first_cook_scope EggClothoid EggClothoid
    /\ ~ first_cook_scope EggChord EggCircularArc
    /\ ~ first_cook_scope EggEllipse EggEllipse
-   /\ ~ first_cook_scope EggNurbs EggNurbs
+   /\ first_cook_scope EggNurbs EggNurbs
    /\ ~ first_cook_scope EggSinusoid EggSinusoid
    /\ ~ first_cook_scope EggGeodesicString EggGeodesicString
    /\ ~ first_cook_scope EggSpiralCurve EggSpiralCurve
@@ -110,7 +110,7 @@ Proof.
   split; [exact clothoid_egg_first_cook_scope|].
   split; [exact chord_circular_not_first_cook_scope|].
   split; [exact ellipse_ellipse_not_first_scope|].
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   split; [intro H; exact H|].
   split; [intro H; exact H|].
   split; [intro H; exact H|].

@@ -314,14 +314,14 @@ Lemma st_nurbscurve_not_cs_ctor :
   /\ named_egg_class ST_NURBSCurve = EggNurbs
   /\ named_outofscope_tag ST_NURBSCurve = Some EggNurbs
   /\ egg_class (MkOutOfScope EggNurbs) = EggNurbs
-  /\ ~ first_cook_scope EggNurbs EggNurbs.
+  /\ first_cook_scope EggNurbs EggNurbs.
 Proof.
   split; [intro H; exact H|].
   split; [exact nurbs_not_curve_segment|].
   split; [reflexivity|].
   split; [reflexivity|].
   split; [reflexivity|].
-  exact nurbs_nurbs_not_first_scope.
+  exact nurbs_nurbs_first_cook_scope.
 Qed.
 
 Lemma st_geodesicstring_not_cs_ctor :
@@ -459,7 +459,7 @@ Theorem ticket_508_sqlmm_named_not_cs :
   /\ egg_class (MkOutOfScope EggSpiralCurve) = EggSpiralCurve
   /\ egg_class (MkOutOfScope EggBezier) = EggBezier
   /\ ~ first_cook_scope EggEllipse EggEllipse
-  /\ ~ first_cook_scope EggNurbs EggNurbs
+  /\ first_cook_scope EggNurbs EggNurbs
   /\ ~ first_cook_scope EggGeodesicString EggGeodesicString
   /\ ~ first_cook_scope EggSpiralCurve EggSpiralCurve
   /\ ~ first_cook_scope EggBezier EggBezier
@@ -481,7 +481,7 @@ Proof.
   split; [reflexivity|].
   split; [reflexivity|].
   split; [exact ellipse_ellipse_not_first_scope|].
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   split; [intro H; exact H|].
   split; [intro H; exact H|].
   split; [intro H; exact H|].
