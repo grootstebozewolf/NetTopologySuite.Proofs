@@ -2927,6 +2927,11 @@ theories/IntakeGeodesic.v
 theories/IntakeFamousGeodesic.v
 theories/IntakeGeodesicCook.v
 theories/IntakeKarneyPark.v
+# ADR-0008 ellipsoid sheet park (EllipsoidSheetPark).
+# E0–E4 QEX: named missing ctors, not a remint of ADR-0007 Sheet.
+# claimId 0008-ellipsoid-sheet-class. ADR-0008 stays Proposed.
+# 3-axiom host. No Admitted.
+theories/EllipsoidSheetPark.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # Exact chord × three-point-arc classifier (I_line_arc_q / I_line_arc_z):
