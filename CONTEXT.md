@@ -481,7 +481,7 @@ _Avoid_: vertex (the owned point), dart (a coordinate pair)
 **Egg**:
 An interpolant `γ : [0,1] → S` of a named class (chord, circular arc,
 clothoid, …). First cook scope is chord–chord, circular–circular
-(MkCirc), and clothoid–clothoid (MkClothoid).
+(MkCirc), clothoid–clothoid (MkClothoid), and NURBS–NURBS (scope).
 _Avoid_: CurveSegment (year-1 `CSChord | CSArc`, not reminted here)
 
 **Chicken**:
@@ -497,8 +497,8 @@ The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
 or 𝓘 Decline (no algorithm). Predicates never mint hens. On a Hit the
 cook may `split(t)` and mint hens (`ShareOne` / `MintTwo`). Empty /
 Decline / Touch mint nothing. Leftover shared endpoint is not a kiss.
-First cook scope is chord–chord, circular–circular (MkCirc), and
-clothoid–clothoid (MkClothoid). Host mixed `I_ok` and other
+First cook scope is chord–chord, circular–circular (MkCirc),
+clothoid–clothoid (MkClothoid), and NURBS–NURBS (scope). Host mixed `I_ok` and other
 out-of-scope eggs stay Decline. Sidecar `I_ok_circ` / `I_ok_mixed`
 Hit is not host `I_ok`. Four-object fence: `I_circles_z` ≠
 `I_circles_gamma` ≠ sidecar cook ≠ host `I_gloss`. Snap-rounding is
@@ -755,7 +755,7 @@ _Avoid_: vertex (the owned point), dart (a coordinate pair)
 
 **Egg**:
 An interpolant `γ : [0,1] → S` of a named class (chord, circular arc,
-clothoid, …). First cook scope is chord–chord, circular–circular (MkCirc), and clothoid–clothoid (MkClothoid).
+clothoid, …). First cook scope is chord–chord, circular–circular (MkCirc), clothoid–clothoid (MkClothoid), and NURBS–NURBS (scope).
 _Avoid_: CurveSegment (year-1 `CSChord | CSArc`, not reminted here)
 
 **Chicken**:
@@ -790,7 +790,7 @@ glossary `(p*, tᵢ, tⱼ)`, and does not license host
 I.10 closes Campaign I: sidecar cook exists on a constructed
 circular Hit (both roots); host CircGamma is discharged via MkCirc;
 `first_cook_scope` includes chord–chord / circular–circular (MkCirc) /
-clothoid–clothoid (MkClothoid); `I_CIRCULAR` stays a
+clothoid–clothoid (MkClothoid) / NURBS–NURBS (scope); `I_CIRCULAR` stays a
 classifier; the #666 fence holds; Campaign II / Phase B / Parks ι ρ
 are named on the ADR; sidecar ≠ host; no invented LeftoverBagTermArm discharge.
 Pairwise

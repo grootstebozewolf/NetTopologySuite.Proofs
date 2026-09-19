@@ -436,8 +436,8 @@ Proof.
 Qed.
 
 (* Scope fence: NodingNG stays chord product + LoopObligation. Host
-   first cook includes circular / clothoid; NURBS stays out. *)
-(* WITNESS {"claimId":"0007-nodingng-chord","topic":"overlay","lemma":"ticket_0007_nodingng_scope_qed_or_qex","title":"NodingNG discharges the bag loop (QED) or stays pairwise/one-step while host first cook includes chord/circular/clothoid and NURBS stays out (QEX); discharged QEX","file":"theories/NodingNG.v","witness":"0007-nodingng-chord","board":"ADR-0007"} *)
+   first cook includes circular / clothoid / NURBS. *)
+(* WITNESS {"claimId":"0007-nodingng-chord","topic":"overlay","lemma":"ticket_0007_nodingng_scope_qed_or_qex","title":"NodingNG discharges the bag loop (QED) or stays pairwise/one-step while host first cook includes chord/circular/clothoid/NURBS (QEX); discharged QEX","file":"theories/NodingNG.v","witness":"0007-nodingng-chord","board":"ADR-0007"} *)
 Theorem ticket_0007_nodingng_scope_qed_or_qex :
   (first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggClothoid EggClothoid
@@ -446,7 +446,7 @@ Theorem ticket_0007_nodingng_scope_qed_or_qex :
   (first_cook_scope EggChord EggChord
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggClothoid EggClothoid
-   /\ ~ first_cook_scope EggNurbs EggNurbs
+   /\ first_cook_scope EggNurbs EggNurbs
    /\ cook_loop_status = LoopObligation
    /\ nodingng_letter_status = NodingNGChordLanded).
 Proof.
@@ -454,7 +454,7 @@ Proof.
   split; [exact first_cook_scope_chord_chord|].
   split; [exact circular_egg_first_cook_scope|].
   split; [exact clothoid_egg_first_cook_scope|].
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   split; [exact cook_loop_is_obligation|].
   reflexivity.
 Qed.
