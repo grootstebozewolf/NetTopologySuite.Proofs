@@ -245,19 +245,21 @@ Qed.
 (* §3  G2: famous nets are chord bags; Egg has no MkGeodesic constructor.      *)
 (* -------------------------------------------------------------------------- *)
 
-(* Every Egg is one of the three interpolants or an out-of-scope class tag;
-   the only way to say "geodesic" in Egg is MkOutOfScope EggGeodesicString,
-   and no chord bag contains it. *)
+(* Every Egg is a named interpolant or an out-of-scope class tag.
+   There is still no MkGeodesic: geodesic is MkOutOfScope EggGeodesicString
+   (or planar MkChord bags). MkNurbs is scaffolding, not geodesic. *)
 Lemma egg_no_mkgeodesic :
   forall e : Egg,
     (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/
-    (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls).
+    (exists k, e = MkClothoid k) \/ (exists n, e = MkNurbs n) \/
+    (exists cls, e = MkOutOfScope cls).
 Proof.
-  intros [c | g | k | cls].
+  intros [c | g | k | n | cls].
   - left. exists c. reflexivity.
   - right. left. exists g. reflexivity.
   - right. right. left. exists k. reflexivity.
-  - right. right. right. exists cls. reflexivity.
+  - right. right. right. left. exists n. reflexivity.
+  - right. right. right. right. exists cls. reflexivity.
 Qed.
 
 Lemma geodesic_bag_not_outofscope :
@@ -280,7 +282,8 @@ Theorem ticket_0007_geodesic_famous_chords_qed_or_qex :
          In ck (bag_chickens (map_ls s pts)) -> ck_egg ck <> MkOutOfScope cls)
    /\ (forall e : Egg,
          (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/
-         (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls)))
+         (exists k, e = MkClothoid k) \/ (exists n, e = MkNurbs n) \/
+         (exists cls, e = MkOutOfScope cls)))
   \/
   famous_geodesic_qex_inhabits FG_SphereVsWgs84.
 Proof.

@@ -30,7 +30,8 @@
      Do not remint I_ok_mixed / I_ok_interior as host I_ok.
      No atan2, no classic, no Category C on host.
      No LeftoverBagTermArm, no LoopDischarged.
-     No NURBS / SIN / ellipse / geodesic in first_cook_scope.
+     No SIN / ellipse / geodesic in first_cook_scope.
+     NURBS×NURBS first cook stays QEX (NurbsCookMkNurbs; NurbsNotChordDemote).
      No I_CIRC_CHORD keyword. No #518 / #423 / Karney / ADR-0008 Status
      flip. Not “ι closed”. Not “first cook complete”.
 

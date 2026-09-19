@@ -6,12 +6,12 @@
 
    Product / sidecar face: NURBS as an EggClass on the ADR-0007
    sheet / hen / cook vocabulary. Host already has EggNurbs /
-   MkOutOfScope EggNurbs. This letter adds the missing Decline /
-   not-first-cook host lemmas (nurbs_nurbs_not_first_scope,
-   nurbs_decline_I_ok / nurbs_decline_witness, try_cook_hit_nurbs_none)
-   and packages that fence plus one locked demoted-chord fixture.
-   Prefer SidecarNurbs* over reminting host cook (same preference
-   as SidecarClothoid* / SidecarCirc* for non-host).
+   MkOutOfScope EggNurbs. This letter packages Decline-on-tag
+   (nurbs_decline_I_ok / try_cook_hit_nurbs_none) plus one locked
+   demoted-chord fixture. Host MkNurbs is scaffolding;
+   NURBS×NURBS first cook stays QEX in NurbsCookMkNurbs.v
+   (NurbsNotChordDemote). Prefer SidecarNurbs* for the
+   tag-packaging face, same preference as SidecarClothoid*.
 
    The existing NURBS corpus (NurbsQuadraticLength, NurbsGeneralLength,
    NurbsKnotSpans, NurbsConicExact, BernsteinBasis, #508 length lane)
@@ -19,6 +19,8 @@
    Qed into the egg / cook sidecar story. It does NOT remint
    length / Cox-de-Boor as noding progress. Golden quarter
    (nurbs2_golden_quarter_length) stays a metric cite.
+   Host MkNurbs scaffolding + NURBS×NURBS QEX live in
+   NurbsCookMkNurbs.v (claimId 0007-nurbs-first-cook).
 
    One honest first rung. One locked fixture. Do not ship a
    NURBS×NURBS noder or Campaign I–II in this letter.
@@ -28,24 +30,24 @@
    to the host crossing pair; demote-to-chord is NodingNG / host
    first cook, not a NURBS Hit.
 
-   QEX: NURBS×NURBS is not first cook (checklist 4). Named
-   missing constructor: no MkNurbs on Egg, no I_ok Hit arm
-   on NURBS eggs. Do not fake first-cook expand or
-   LoopDischarged. Do not remint #508 length as cook Hit.
+   Host MkNurbs is scaffolding. NURBS×NURBS stays QEX
+   (NurbsNotChordDemote). Tags stay Decline. Do not remint
+   #508 length as cook Hit. Parks length-as-noding /
+   Cox-de-Boor / Campaign / ρ.
 
    What this is not:
-     Host first_cook_scope / try_cook_hit expand to
-     NURBS×NURBS. CircGamma / ι / ρ remint. MkCirc. Clothoid
-     remint. Host circular cook. Shewchuk / Hobby / Priest /
-     Jordan / HotPixel / OverlayNG snap remint. SQL/MM Multi
-     Landed / Phase B done-when / H⊥ / MerkatorBV / 522-n.
-     Cox-de-Boor / Exact* zoo / CurveSegment growth. Full
-     NURBS×NURBS noder. Bag-loop ρ Discharge.
+     Length / Cox-de-Boor reminted as noding. CircGamma / ι / ρ
+     remint. MkCirc. Clothoid remint. Host circular cook.
+     Shewchuk / Hobby / Priest / Jordan / HotPixel / OverlayNG
+     snap remint. SQL/MM Multi Landed / Phase B done-when / H⊥ /
+     MerkatorBV / 522-n. Exact* zoo / CurveSegment growth. Full
+     NURBS×NURBS noder. Bag-loop ρ Discharge. Tag Hit.
 
    Parks Γ / ι / ρ (named QEX, landed). This letter cites them
    once; it does not remint CircGamma, ι, leftover_width, or
    LoopDischarged. ι row already records #717 discharge.
-   First cook stays chord–chord. Host CircGamma stays QEX.
+   First cook stays chord–chord / circ / clothoid. Host CircGamma
+   is discharged (MkCirc).
 
    ADR-0007 is Accepted (2026-09-07). This letter does not reopen
    Status. QEX is not a new Accept cycle. ADR-0006 Status stays
@@ -70,7 +72,8 @@ Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
 (* Product face: a sidecar NURBS egg is a named EggNurbs interpolant          *)
-(* tag plus a quadratic control net. Host Egg has no MkNurbs.                 *)
+(* tag plus a quadratic control net. Sidecar host_egg stays the               *)
+(* MkOutOfScope tag (packaging). Host Egg has MkNurbs scaffolding.            *)
 (* -------------------------------------------------------------------------- *)
 
 Record NurbsChord : Type := mkNurbsChord {
@@ -280,7 +283,8 @@ Qed.
 Inductive SidecarNurbsCookCtor : Type :=
 | NurbsMkNurbs
 | NurbsNurbsHitArm
-| NurbsFirstCookExpand.
+| NurbsFirstCookExpand
+| NurbsNotChordDemote.
 
 Definition sidecar_nurbs_ctor_inhabits
   (c : SidecarNurbsCookCtor) : Prop :=
@@ -288,12 +292,74 @@ Definition sidecar_nurbs_ctor_inhabits
   | NurbsMkNurbs => False
   | NurbsNurbsHitArm => False
   | NurbsFirstCookExpand => False
+  | NurbsNotChordDemote => False
   end.
 
 Lemma sidecar_nurbs_mknurbs_missing :
   ~ sidecar_nurbs_ctor_inhabits NurbsMkNurbs.
 Proof.
   intro H. exact H.
+Qed.
+
+Lemma sidecar_nurbs_not_chord_demote_missing :
+  ~ sidecar_nurbs_ctor_inhabits NurbsNotChordDemote.
+Proof.
+  intro H. exact H.
+Qed.
+
+Lemma nurbs_egg_mknurbs_or_tag :
+  forall e : Egg,
+    egg_class e = EggNurbs ->
+    (exists n, e = MkNurbs n) \/ e = MkOutOfScope EggNurbs.
+Proof.
+  intros e He.
+  destruct e as [ch | circ | clth | nrbs | cl].
+  - unfold egg_class in He. discriminate.
+  - unfold egg_class in He. discriminate.
+  - unfold egg_class in He. discriminate.
+  - left. exists nrbs. reflexivity.
+  - unfold egg_class in He. subst cl. right. reflexivity.
+Qed.
+
+Lemma mknurbs_class :
+  forall n, egg_class (MkNurbs n) = EggNurbs.
+Proof.
+  intros n. reflexivity.
+Qed.
+
+Lemma mknurbs_neq_mkchord :
+  forall n d, MkNurbs n <> MkChord d.
+Proof.
+  intros n d H. discriminate.
+Qed.
+
+Lemma mknurbs_pair_not_interpolant :
+  forall n1 n2,
+    ~ interpolant_pair (MkNurbs n1) (MkNurbs n2).
+Proof.
+  intros n1 n2 H. exact H.
+Qed.
+
+Lemma mknurbs_pair_hit_false :
+  forall p ti tj,
+    ~ I_ok (MkNurbs locked_nurbs_egg) (MkNurbs locked_nurbs_egg)
+         (IHit p ti tj).
+Proof.
+  intros p ti tj H. exact H.
+Qed.
+
+Definition locked_mknurbs_ck1 : Chicken :=
+  mkChicken 0%nat 1%nat (MkNurbs locked_nurbs_egg).
+
+Definition locked_mknurbs_ck2 : Chicken :=
+  mkChicken 2%nat 3%nat (MkNurbs locked_nurbs_egg).
+
+Lemma try_cook_hit_mknurbs_none :
+  try_cook_hit locked_mknurbs_ck1 locked_mknurbs_ck2
+    (IHit (mkPoint (1 / 2) 0) (1 / 2) (1 / 2)) crossing_hen
+    = None.
+Proof.
+  reflexivity.
 Qed.
 
 Lemma sidecar_nurbs_hit_arm_missing :
@@ -488,15 +554,16 @@ Proof.
   exact sidecar_nurbs_metric_not_cook_hit.
 Qed.
 
-(* WITNESS {"claimId":"0007-nurbs-egg","topic":"overlay","lemma":"ticket_0007_nurbs_not_first_cook_qed_or_qex","title":"Sidecar NURBS expands first_cook_scope to NURBS times NURBS and inhabits I_ok Hit (QED) or NURBS times NURBS stays QEX with named MkNurbs / Hit-arm gaps (QEX); discharged QEX; checklist 4; do not fake first-cook expand","file":"theories/SidecarNurbsEgg.v","witness":"0007-nurbs-egg","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-nurbs-egg","topic":"overlay","lemma":"ticket_0007_nurbs_not_first_cook_qed_or_qex","title":"Sidecar NURBS expands first_cook_scope to NURBS times NURBS and inhabits I_ok Hit (QED) or NURBS times NURBS stays QEX with named MkNurbs / Hit-arm / NurbsNotChordDemote gaps (QEX); discharged QEX; host first-cook letter 0007-nurbs-first-cook; tags stay Decline","file":"theories/SidecarNurbsEgg.v","witness":"0007-nurbs-egg","board":"ADR-0007"} *)
 Theorem ticket_0007_nurbs_not_first_cook_qed_or_qex :
   (first_cook_scope EggNurbs EggNurbs /\
    sidecar_nurbs_ctor_inhabits NurbsMkNurbs /\
    sidecar_nurbs_ctor_inhabits NurbsNurbsHitArm /\
    sidecar_nurbs_ctor_inhabits NurbsFirstCookExpand /\
+   sidecar_nurbs_ctor_inhabits NurbsNotChordDemote /\
    sidecar_nurbs_letter_status = SidecarNurbsFirstCookExpanded /\
    exists p ti tj,
-     I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
+     I_ok (MkNurbs locked_nurbs_egg) (MkNurbs locked_nurbs_egg)
           (IHit p ti tj))
   \/
   (~ first_cook_scope EggNurbs EggNurbs /\
@@ -504,6 +571,7 @@ Theorem ticket_0007_nurbs_not_first_cook_qed_or_qex :
    ~ sidecar_nurbs_ctor_inhabits NurbsMkNurbs /\
    ~ sidecar_nurbs_ctor_inhabits NurbsNurbsHitArm /\
    ~ sidecar_nurbs_ctor_inhabits NurbsFirstCookExpand /\
+   ~ sidecar_nurbs_ctor_inhabits NurbsNotChordDemote /\
    sidecar_nurbs_letter_status = SidecarNurbsEggLanded /\
    I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs) IDecline /\
    (forall p ti tj,
@@ -517,6 +585,7 @@ Proof.
   split; [exact sidecar_nurbs_mknurbs_missing|].
   split; [exact sidecar_nurbs_hit_arm_missing|].
   split; [exact sidecar_nurbs_first_cook_expand_missing|].
+  split; [exact sidecar_nurbs_not_chord_demote_missing|].
   split; [exact sidecar_nurbs_letter_is_landed|].
   split; [exact nurbs_decline_I_ok|].
   split; [intros p ti tj H; exact H|].
@@ -542,7 +611,8 @@ Theorem ticket_0007_nurbs_parks_qed_or_qex :
    cook_loop_status = LoopObligation /\
    cook_loop_status <> LoopDischarged /\
    first_cook_scope EggChord EggChord /\
-   ~ first_cook_scope EggNurbs EggNurbs).
+   ~ first_cook_scope EggNurbs EggNurbs /\
+   ~ first_cook_scope EggEllipse EggEllipse).
 Proof.
   right.
   split; [exact sidecar_nurbs_letter_is_landed|].
@@ -555,7 +625,8 @@ Proof.
   split; [exact cook_loop_is_obligation|].
   split; [exact cook_loop_not_discharged|].
   split; [exact first_cook_scope_chord_chord|].
-  exact nurbs_nurbs_not_first_scope.
+  split; [exact nurbs_nurbs_not_first_scope|].
+  exact ellipse_ellipse_not_first_scope.
 Qed.
 
 Print Assumptions sidecar_nurbs_class.
@@ -566,6 +637,9 @@ Print Assumptions sidecar_nurbs_demote_is_nodingng_crossing.
 Print Assumptions sidecar_nurbs_metric_not_cook_hit.
 Print Assumptions sidecar_nurbs_mknurbs_missing.
 Print Assumptions sidecar_nurbs_hit_arm_missing.
+Print Assumptions sidecar_nurbs_not_chord_demote_missing.
+Print Assumptions mknurbs_pair_hit_false.
+Print Assumptions try_cook_hit_mknurbs_none.
 Print Assumptions sidecar_nurbs_egg_inhabits.
 Print Assumptions ticket_0007_nurbs_egg_qed_or_qex.
 Print Assumptions ticket_0007_nurbs_not_first_cook_qed_or_qex.

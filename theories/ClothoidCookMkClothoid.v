@@ -344,6 +344,7 @@ Theorem ticket_0007_clothoid_first_cook_qed_or_qex :
    I_ok (MkChord hor_bot) (MkClothoid locked_cloth_A) IDecline /\
    ~ first_cook_scope EggClothoid EggChord /\
    ~ first_cook_scope EggNurbs EggNurbs /\
+   ~ first_cook_scope EggEllipse EggEllipse /\
    cook_loop_status = LoopObligation)
   \/
   (~ first_cook_scope EggClothoid EggClothoid /\
@@ -362,6 +363,7 @@ Proof.
   split; [exact mkclothoid_mixed_still_decline|].
   split; [exact clothoid_chord_not_first_cook_scope|].
   split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact ellipse_ellipse_not_first_scope|].
   exact cook_loop_is_obligation.
 Qed.
 
