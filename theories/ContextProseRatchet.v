@@ -41,10 +41,15 @@
      Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
+From Stdlib Require Import Reals.
 From NTS.Proofs Require Import
   SheetHenCook
   CircularCook
+  CurveGeometry
   ExactCurveEpic508
+  GeneralTriangleSeparation
+  RelateMatrixTriangle
+  RelateNGCore
   RelateNGEpic522
   RelateNGFace.
 Local Open Scope R_scope.
