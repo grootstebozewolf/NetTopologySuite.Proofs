@@ -139,6 +139,11 @@ theories/SheetHenCookLoopTerm.v
 # stays LoopObligation. Not leftover_quad_width. No Axiom / Parameter / stub.
 theories/CircularCookLeftoverTwoHit.v
 theories/Adr0007NodingEpic.v
+# Parks ρ leftover-bag term (claimId 0007-rho-leftover-bag-term).
+# Host/pure-R. Named missing ctors LeftoverWidthDecreases /
+# LeftoverKissArm / LeftoverShareMintArm. LoopObligation stands.
+# Sibling QED stays sibling. No Axiom / Parameter / stub.
+theories/HostRhoLeftoverBagTerm.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
 # RelateNG / a bag noder. No Admitted.

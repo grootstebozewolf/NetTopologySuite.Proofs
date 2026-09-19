@@ -403,7 +403,8 @@ Qed.
 
 (* Parks ρ: NodingNG chord is pairwise / one-step, not LoopDischarged.
    Cite leftover_quad_width_conserved / LeftoverBagTermArm missing.
-   Do not fake Discharge. *)
+   Sibling park HostRhoLeftoverBagTerm.ticket_0007_rho_leftover_qed_or_qex
+   (QEX; LoopObligation). Do not fake Discharge. *)
 (* WITNESS {"claimId":"0007-nodingng-chord","topic":"overlay","lemma":"ticket_0007_nodingng_rho_qed_or_qex","title":"NodingNG chord discharges the bag-level repeat-until-noded loop (QED) or stays pairwise/one-step while Parks rho LeftoverBagTermArm is missing (QEX); discharged QEX; leftover_quad width conserved","file":"theories/NodingNG.v","witness":"0007-nodingng-chord","board":"ADR-0007"} *)
 Theorem ticket_0007_nodingng_rho_qed_or_qex :
   (nodingng_letter_status = NodingNGLoopDischarged
