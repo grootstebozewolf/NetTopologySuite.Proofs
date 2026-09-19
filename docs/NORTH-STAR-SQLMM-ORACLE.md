@@ -7,7 +7,7 @@ Consumer: [grootstebozewolf/jts#7](https://github.com/grootstebozewolf/jts/pull/
 Grammar pin: [antlr/grammars-v4#4997](https://github.com/antlr/grammars-v4/pull/4997) merge `181f4c9` (ISO/IEC 13249-3 §5.1.67)
 WKB: ISO/IEC 13249-3 §5.1.68 Table 15
 
-QED∨QEX **LEFT**: every claim below is a destination. This letter does not inhabit emit, JTS #7 round-trip, or cook parks. Docs ticket in the PR body (`ticket_0007_north_star_sqlmm_qed_or_qex`); no `.v` sibling.
+QED∨QEX **LEFT**: every claim below is a destination. This letter does not inhabit emit, JTS #7 round-trip, or cook parks. Docs ticket: `ticket_0007_north_star_sqlmm_qed_or_qex` (this file; no `.v` sibling).
 
 Cite leftover-0 (MkClothoid first-cook landed), #729, CircGamma (`0007-gamma-mkcirc` / `MkCirc`), ρ (`LeftoverBagTermArm`) as parks / siblings. Do not reopen.
 
