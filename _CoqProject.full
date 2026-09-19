@@ -380,6 +380,11 @@ theories/FrechetMaxmin.v
 # attainment by nested list induction constructing the optimal walk; plus
 # nonnegativity.  Mirrors eval/Claim423b.v (same WITNESS tag).
 theories/FrechetDiscrete.v
+# 423 Hausdorff ≤ Fréchet (discrete, squared): coupling projects to the
+# max-min, so directed_hausdorff_sq ≤ dF_sq; locked man-dog / stones
+# witness 4 < 9. claimId 423-hausdorff-le-frechet. Does not remint
+# 423-a / 423-b; not densify ticket-10 line 2.
+theories/HausdorffLeFrechet.v
 # 69-a Green production home: the SQL/MM + SFA oracle-mode checklist
 # W1-W5 (ST_IsClosed pair, M-LEN squared perimeter, ST_CircularString
 # 3-point membership, relate/R-* point-on-curve, ST_IsRing) closes over
