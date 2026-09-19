@@ -24,10 +24,12 @@
    Decline is the honest host mixed arm.
 
    QEX: circular×circular is not first cook (checklist 4). Named
-   missing constructors: no MkCirc on Egg (Parks Γ), CircGamma
-   stays QEX (cite Parks Γ — do not fake Discharge), no host I_ok
-   Hit arm, no first-cook expand. Do not remint CircGammaConstructor
-   / CircGammaStatus / CircularCookHit/Split/Span/OkCirc.
+   missing constructors: no MkCirc on Egg (Parks Γ), host CircGamma
+   is LEFT/discharged (CircularCook.v :
+   ticket_64_circ_gamma_qed_or_qex LEFT / CircGammaDischarged /
+   MkCirc), no host I_ok Hit arm, no first-cook expand. Do not
+   remint CircGammaConstructor / CircGammaStatus /
+   CircularCookHit/Split/Span/OkCirc.
 
    What this is not:
      CircGamma discharge / MkCirc on Egg. Host try_cook_hit expand
@@ -39,7 +41,9 @@
    Parks Γ / ι / ρ (named QEX, landed). This letter cites them
    once; it does not remint CircGamma, ι, leftover_width, or
    LoopDischarged. First cook stays chord–chord. Host CircGamma
-   stays QEX.
+   is LEFT/discharged: CircularCook.v :
+   ticket_64_circ_gamma_qed_or_qex LEFT (CircGammaDischarged /
+   MkCirc).
 
    ADR-0007 is Accepted (2026-09-07). This letter does not reopen
    Status. QEX is not a new Accept cycle. ADR-0006 Status stays

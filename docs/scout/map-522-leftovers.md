@@ -53,10 +53,7 @@ the exterior-side one-sided T (compiled pair; II empty). `Ⅳ` is the
 interior-side stem (compiled residue pair; II nonempty). The xor
 (`RelateNGCore.v : touch_onesided_t_b`) is a `Ⅲ∨Ⅳ` configuration
 class with two compiled witnesses; it is not a leftover-`Ⅲ`
-detector. `Ⅴ`–`Ⅸ` classified. Completeness is unnamed after `Ⅸ`
-(`RelateNGEpic522.v : ticket_522_qed_or_qex` RIGHT).
-`Ⅰ`–`Ⅸ` QED (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex` LEFT).
-Do not mint leftover `Ⅹ`.
+detector. Do not mint leftover `Ⅹ`.
 
 ## Leftover table
 
@@ -92,10 +89,7 @@ Value and priority are orthogonal.
   moved it to mixed-cone; leftover `Ⅴ` moved it to an unnamed CCW pair.
 - Wrap-up — #596. Owner sign-off still required.
 - #567 DoD met; TouchEdge exclusivity carved on `main` via #597, not proved.
-- #589 wayfinder PR stays closed.
-- Leftover ids are precomposed Roman numerals. `Ⅰ`–`Ⅸ` classified
-  (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex` LEFT).
-  Completeness unnamed after `Ⅸ`. Do not mint `Ⅹ` / `522-n`.
+- #589 wayfinder PR stays closed. Do not mint `Ⅹ` / `522-n`.
 
 ## Fog
 
@@ -104,16 +98,8 @@ Value and priority are orthogonal.
 - **Remint order** if asked: disjoint is the sharpest (Qex already
   compiled); contains / touch / overlap follow the same pointer pattern
   and the same shared-pin caution.
-- **`Ⅰ`–`Ⅸ`** classified
-  (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex` LEFT).
-  Completeness QEX after `Ⅸ`
-  (`RelateNGEpic522.v : ticket_522_qed_or_qex` RIGHT).
-  Do not mint leftover `Ⅹ`.
 
 ## Frontier
-
-`Ⅰ`–`Ⅸ` classified (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex` LEFT).
-Completeness QEX after `Ⅸ` (`RelateNGEpic522.v : ticket_522_qed_or_qex` RIGHT).
 
 ```
 #522 honesty + wired bar 1/2 ════════════════════ done (#596 wrap-up)
