@@ -29,8 +29,9 @@
    cache short-circuit. Triangle shared-edge touch stays the cited
    sibling pin.
 
-   QEX: completeness false / T-junction unsupported; full Jordan
-   true-region; S15l+ multi-geom leftovers; ticket 523 ISO `?`
+   QEX: completeness false / T-junction unsupported; unconditional curve
+   Jordan (the taut polygonal true-region is inhabited, see
+   RelateNGJordanTrueRegion.v); S15l+ multi-geom leftovers; ticket 523 ISO `?`
    (cell_none_iff_empty is the Coq emptiness side — cite, do not
    fake 523 closed).
 
@@ -71,7 +72,8 @@ From NTS.Proofs Require Import
   RelateNG
   RelatePrepared
   RelateCurveMatrix
-  RelateCurveAlphabet.
+  RelateCurveAlphabet
+  RelateNGJordanTrueRegion.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -263,7 +265,7 @@ Definition relateng_park_inhabits (c : RelateNGParkCtor) : Prop :=
   match c with
   | RelateNGCompleteClassifier => False
   | RelateNGTjunctionTouchesFill => False
-  | RelateNGJordanTrueRegion => False
+  | RelateNGJordanTrueRegion => jordan_true_region_taut
   | RelateNGMultiGeomComplete => False
   | RelateNGIsoQuestionMark => False
   end.
@@ -280,10 +282,15 @@ Proof.
   intro H. exact H.
 Qed.
 
-Lemma relateng_jordan_true_region_missing :
-  ~ relateng_park_inhabits RelateNGJordanTrueRegion.
+(* Flipped (heights letter): the taut polygonal closed Jordan true-region is
+   inhabited in RelateNGJordanTrueRegion.v -- a constructed height off every
+   vertex, two guarded off-ring witnesses, one bounded odd and one unbounded
+   even component.  The unconditional curve-ring Jordan stays the park
+   RNG_JordanUncond below. *)
+Lemma relateng_jordan_true_region_inhabits :
+  relateng_park_inhabits RelateNGJordanTrueRegion.
 Proof.
-  intro H. exact H.
+  exact relateng_jordan_true_region_taut.
 Qed.
 
 Lemma relateng_multi_geom_missing :
@@ -311,13 +318,13 @@ Lemma relateng_letter_is_landed :
   relateng_letter_status <> RelateNGCompleteDischarged /\
   relateng_letter_status <> RelateNGJordanDischarged /\
   ~ relateng_park_inhabits RelateNGCompleteClassifier /\
-  ~ relateng_park_inhabits RelateNGJordanTrueRegion.
+  relateng_park_inhabits RelateNGJordanTrueRegion.
 Proof.
   split; [reflexivity|].
   split; [discriminate|].
   split; [discriminate|].
   split; [exact relateng_complete_missing|].
-  exact relateng_jordan_true_region_missing.
+  exact relateng_jordan_true_region_inhabits.
 Qed.
 
 (* Named QED package: matrix/witness + honesty + 67-c pin + NodingNG. *)
@@ -416,9 +423,10 @@ Proof.
   exact relateng_not_522n.
 Qed.
 
-(* Full Jordan true-region, S15l+ multi-geom, and ticket 523 ISO `?`.
-   cell_none_iff_empty is Qed (emptiness is None); do not fake 523 closed. *)
-(* WITNESS {"claimId":"0007-relateng-face","topic":"relate","lemma":"ticket_0007_relateng_parks_qed_or_qex","title":"RelateNG face discharges full Jordan true-region, multi-geom completeness, and ISO result-alphabet (QED) or parks them as named missing constructors (QEX); discharged QEX; cell_none_iff_empty stays Coq emptiness; ticket 523 ? is not ISO","file":"theories/RelateNGFace.v","witness":"0007-relateng-face","board":"ADR-0007"} *)
+(* Jordan true-region (taut polygonal: inhabited, RelateNGJordanTrueRegion.v;
+   unconditional curve ring: RNG_JordanUncond park), S15l+ multi-geom, and
+   ticket 523 ISO `?`.  cell_none_iff_empty is Qed; do not fake 523 closed. *)
+(* WITNESS {"claimId":"0007-relateng-face","topic":"relate","lemma":"ticket_0007_relateng_parks_qed_or_qex","title":"RelateNG face discharges full Jordan true-region with multi-geom completeness and ISO result-alphabet (QED) or stays Landed with the taut polygonal Jordan true-region inhabited (RelateNGJordanTrueRegion.v) while multi-geom and ISO stay named missing constructors (QEX); discharged QEX; unconditional curve Jordan stays RNG_JordanUncond; cell_none_iff_empty stays Coq emptiness; ticket 523 ? is not ISO","file":"theories/RelateNGFace.v","witness":"0007-relateng-face","board":"ADR-0007"} *)
 Theorem ticket_0007_relateng_parks_qed_or_qex :
   (relateng_letter_status = RelateNGJordanDischarged /\
    relateng_park_inhabits RelateNGJordanTrueRegion /\
@@ -426,7 +434,7 @@ Theorem ticket_0007_relateng_parks_qed_or_qex :
    (forall c : CurveRelateResult, iso_result_cell c))
   \/
   (relateng_letter_status = RelateNGFaceLanded /\
-   ~ relateng_park_inhabits RelateNGJordanTrueRegion /\
+   relateng_park_inhabits RelateNGJordanTrueRegion /\
    ~ relateng_park_inhabits RelateNGMultiGeomComplete /\
    ~ relateng_park_inhabits RelateNGIsoQuestionMark /\
    ~ iso_result_cell CRR_Unknown /\
@@ -437,7 +445,7 @@ Theorem ticket_0007_relateng_parks_qed_or_qex :
 Proof.
   right.
   split; [reflexivity|].
-  split; [exact relateng_jordan_true_region_missing|].
+  split; [exact relateng_jordan_true_region_inhabits|].
   split; [exact relateng_multi_geom_missing|].
   split; [exact relateng_iso_question_missing|].
   split; [exact question_mark_not_iso_result|].

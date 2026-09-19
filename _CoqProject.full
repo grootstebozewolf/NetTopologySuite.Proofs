@@ -3264,6 +3264,7 @@ theories/RelatePrepared.v
 # decline + 67-c pin. Consumes NodingNG / NodedOnSheet. Parks
 # completeness / Jordan / S15l+ / 523 ?. Not a remint of the
 # RelateNG* zoo, not NodingNG, not OverlayNG. No Admitted.
+theories/RelateNGJordanTrueRegion.v
 theories/RelateNGFace.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence

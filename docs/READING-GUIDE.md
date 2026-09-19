@@ -582,7 +582,7 @@ The repository has two source directories:
 
 The host lane builds the 78 modules in `_CoqProject`, the
 foundational `theories/` layer;
-the container `_CoqProject.full` builds the entire corpus (634 registered modules — 543 registered under `theories/`, 91 registered under `theories-flocq/`).
+the container `_CoqProject.full` builds the entire corpus (635 registered modules — 544 registered under `theories/`, 91 registered under `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,
 orientation, segment, bbox, triangle, convex, lex-order, plus their
@@ -771,7 +771,7 @@ for Scholar Sam / Tech-Lead Tess / Joost the BDFL paths.
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
 - This is **not** complete. Current coverage is over 7,600 Qed-closed
-  theorems across 634 registered modules — 543 registered under `theories/`,
+  theorems across 635 registered modules — 544 registered under `theories/`,
   91 registered under `theories-flocq/` (78 of them modules in `_CoqProject`
   as the host foundational target). There are **no
   `Admitted` theorems today** — both the counterexample and
