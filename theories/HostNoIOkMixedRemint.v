@@ -159,12 +159,26 @@ Qed.
 
 (* WITNESS {"claimId":"0007-no-i-ok-mixed-remint","topic":"overlay","lemma":"ticket_0007_no_i_ok_mixed_remint_qed_or_qex","title":"no I_ok_mixed remint: MixedSidecarNotHostIOk on locked circ times chord (QED) or I_ok_mixed is definitionally I_ok / MixedSidecarDistinct (QEX); discharged QED because the fence is inhabited, not because first_cook_scope grew mixed arms; iota host-scope stays QEX; ADR-0007 stays Accepted","file":"theories/HostNoIOkMixedRemint.v","witness":"0007-no-i-ok-mixed-remint","board":"ADR-0007"} *)
 Theorem ticket_0007_no_i_ok_mixed_remint_qed_or_qex :
-  MixedSidecarNotHostIOk
+  (~ (forall r,
+        SidecarCircMixed.I_ok_mixed
+          (SidecarCircMixed.MixCsLs
+             SidecarCircMixed.locked_mixed_cs
+             SidecarCircMixed.locked_mixed_ls) r ->
+        I_ok (MkCirc locked_host_circ) (MkChord locked_host_chord) r)
+   /\ (forall c s r, I_ok (MkCirc c) (MkChord s) r -> r = IDecline)
+   /\ ~ first_cook_scope EggChord EggCircularArc
+   /\ ~ first_cook_scope EggCircularArc EggChord
+   /\ ~ mixed_sidecar_collapse_inhabits MixedSidecarDistinct)
   \/
   mixed_sidecar_collapse_inhabits MixedSidecarDistinct.
 Proof.
   left.
-  exact MixedSidecarNotHostIOk.
+  destruct MixedSidecarNotHostIOk as [Himpl Hdec].
+  split; [exact Himpl |].
+  split; [exact Hdec |].
+  split; [exact chord_circular_not_first_cook_scope |].
+  split; [exact circular_chord_not_first_cook_scope |].
+  exact mixed_sidecar_not_definitionally_collapsed.
 Qed.
 
 Print Assumptions host_mixed_circ_chord_decline.
