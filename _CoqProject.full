@@ -3012,6 +3012,12 @@ theories/CircularCookCsConcat.v
 # 4-axiom atan2 sidecar (classic via CsConcat / OkCirc / Span).
 # No new kernel. Not first cook scope. Not a noder.
 theories/SidecarCircMixed.v
+# ADR-0007 remint fence (claimId 0007-no-i-ok-mixed-remint).
+# Host I_ok MkCirc×MkChord is Decline only (#796 restated).
+# MixedSidecarNotHostIOk: ~ (I_ok_mixed → I_ok) on locked
+# circ×chord. Not a first-cook expand. Not HostMixedHit*.
+# 4-axiom via SidecarCircMixed; Decline lemmas 3-axiom.
+theories/HostNoIOkMixedRemint.v
 # Phase B.2 CompoundCurve member joints (sidecar / host reuse).
 # CC is a sequence of LineString (chords) and CircularString
 # (CircEgg) members. LS–LS joint is host I_ok Hit at (end, t=1,

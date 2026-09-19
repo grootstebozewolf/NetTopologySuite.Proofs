@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 114 files (76 theories-flocq/ + 37 theories/ + 1 hunt probe).
+# LIVE: 115 files (76 theories-flocq/ + 38 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -137,6 +137,10 @@ theories/CircularCookOkCirc.v
 theories/CircularCookCloseII.v
 theories/CircularCookCsConcat.v
 theories/SidecarCircMixed.v
+# Same atan2 / classic lineage as SidecarCircMixed. Remint fence
+# reuses locked I_ok_mixed Hit; host Decline lemmas stay 3-axiom.
+# No extra axioms. Not a remint of I_ok_mixed as host I_ok.
+theories/HostNoIOkMixedRemint.v
 theories/CircularCookCcConcat.v
 theories/CircularCookCpConcat.v
 theories/SidecarCircBags.v
