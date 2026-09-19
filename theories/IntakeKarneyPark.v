@@ -167,13 +167,14 @@ Proof. exact I. Qed.
 Lemma k1_owns_inverse : K1OwnsInverse.
 Proof. exact ticket_0007_karney_vincenty_total_qed_or_qex. Qed.
 
+Lemma k2_k1_ownership_fence : K2OwnsChordHit /\ K1OwnsInverse.
+Proof. split; [exact k2_owns_chord_hit | exact k1_owns_inverse]. Qed.
+
 (* WITNESS {"claimId":"0007-k2-chord-hit","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 chord-hit pin: left is sheet_chord_misses_pole / sheet_chord_midpoint_on_parallel / ~ exists t, on_chord g3_chord t g3_pole, fence K2OwnsChordHit inhabited and K1OwnsInverse points at ticket_0007_karney_vincenty_total_qed_or_qex (QED); or IG_AmbientManifold / IG_EllipsoidGamma / KP_KarneySeriesAsGamma inhabit so the sheet chord is the surface geodesic (QEX); discharged QED; geodesic inequality stays the QEX arm; G3 not reminted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
 Theorem ticket_0007_karney_chord_not_geodesic_qed_or_qex :
   ((~ exists t, on_chord g3_chord t g3_pole)
    /\ chord_eval g3_chord (1/2) = mkPoint 0 45
-   /\ ~ (exists t, on_chord g3_chord t g3_pole)
-   /\ K2OwnsChordHit
-   /\ K1OwnsInverse)
+   /\ ~ (exists t, on_chord g3_chord t g3_pole))
   \/
   (intake_geodesic_qex_inhabits IG_AmbientManifold
    \/ intake_geodesic_qex_inhabits IG_EllipsoidGamma
@@ -182,9 +183,7 @@ Proof.
   left.
   split; [exact sheet_chord_misses_pole |].
   split; [exact sheet_chord_midpoint_on_parallel |].
-  split; [exact sheet_chord_misses_pole |].
-  split; [exact k2_owns_chord_hit |].
-  exact k1_owns_inverse.
+  exact sheet_chord_misses_pole.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
