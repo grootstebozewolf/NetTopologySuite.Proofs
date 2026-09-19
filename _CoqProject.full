@@ -2924,6 +2924,9 @@ theories/CircularCookZ.v
 # Hit2 | Hit1 | Touch | Empty | Decline from sign tests only — no sqrt,
 # no atan2; hens mirror I_circles_z. 0-axiom. Map #767 seam (research #772).
 theories/CircularCookLineArcZ.v
+# Q -> R soundness bridge for I_line_arc: not Empty <-> ArcIntersect.arc_chord_intersects
+# on the classifier's domain (D <> 0, non-degenerate chord). Reals (Category C).
+theories/CircularCookLineArcR.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
 theories/CircularCook.v
 # Full-circle γ : [0,1] → S + Hit (h*, p*, tᵢ, tⱼ). Locked fixture QED.
