@@ -820,6 +820,7 @@ theories/FaceTwinAware.v
 # Records that slice 3i's collinear pair fails the strengthened predicate.
 # No Admitteds.
 theories/NodedGeneralPosition.v
+theories/NodedGeneralPositionHost.v
 # extract_rings_valid R5 bridge follow-up, corrected-plan step (4a):
 # H2 (fan_ok) from a vertex-level general-position condition.  seg_dir_cross
 # = vcross o ddir bridges step (3)'s vocabulary to fan_ok's parallel/ddir;
@@ -2830,6 +2831,7 @@ theories/ClothoidCookMkClothoid.v
 # covered. Pairwise leftover-width stays a sibling QED. Not Multi
 # bags. Arc cook termination is a sister card. No Admitted.
 theories/SheetHenCookLoop.v
+theories/SheetHenDonutBag.v
 # ρ bag-loop cook modulo the named LeftoverBagTermArm QEX
 # (claimId 0007-rho-modulo-qex). Host/pure-R. Inductive leftover
 # Hit-split + fuel iterator; pairwise leftover_width, not bag-sum
@@ -2918,8 +2920,17 @@ theories/IntakeGeodesic.v
 # Science/arXiv 1804.07389 locked endpoints on existing μ.
 # claimId 0007-famous-geodesicstring. No Admitted.
 theories/IntakeFamousGeodesic.v
+theories/IntakeGeodesicCook.v
+theories/IntakeKarneyPark.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
+# Exact chord × three-point-arc classifier (I_line_arc_q / I_line_arc_z):
+# Hit2 | Hit1 | Touch | Empty | Decline from sign tests only — no sqrt,
+# no atan2; hens mirror I_circles_z. 0-axiom. Map #767 seam (research #772).
+theories/CircularCookLineArcZ.v
+# Q -> R soundness bridge for I_line_arc: not Empty <-> ArcIntersect.arc_chord_intersects
+# on the classifier's domain (D <> 0, non-degenerate chord). Reals (Category C).
+theories/CircularCookLineArcR.v
 # R-side p* attach. QEX: no γ:[0,1]. Classical reals.
 theories/CircularCook.v
 # Full-circle γ : [0,1] → S + Hit (h*, p*, tᵢ, tⱼ). Locked fixture QED.
@@ -3093,6 +3104,7 @@ theories/SidecarCircIotaGate.v
 # 4-axiom atan2 sidecar (classic via IotaGate / Interior / Mixed /
 # SpanSplit). No new kernel. Not first cook expand. Not a noder.
 theories/SidecarCircIotaArm.v
+theories/SidecarCircIotaTags.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>
 # geom_boundary witness => im_bb cell non-empty / ~ im_disjoint_ogc.  Closes the
 # bridge flagged deferred in RingContactSound.v for the LINEAL (chord) case
@@ -3253,6 +3265,7 @@ theories/RelatePrepared.v
 # decline + 67-c pin. Consumes NodingNG / NodedOnSheet. Parks
 # completeness / Jordan / S15l+ / 523 ?. Not a remint of the
 # RelateNG* zoo, not NodingNG, not OverlayNG. No Admitted.
+theories/RelateNGJordanTrueRegion.v
 theories/RelateNGFace.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
@@ -3337,6 +3350,8 @@ theories/LECArcRow.v
 # facet's endpoint is at 5).  Oracle OBSTACLE_DISTANCE SEG row §H pins.
 # Full-only: imports LargestEmptyCircle.v, LECObstacleDistance.v.
 theories/LECSegmentRow.v
+theories/HausdorffDensify.v
+theories/HausdorffDiscreteQ.v
 
 # The LEC n-ary FLATTEN row (ledger rung "CompoundCurve / n-ary flatten"
 # closed + failed path F5).  Generic exact_clearance algebra (union = Rmin,

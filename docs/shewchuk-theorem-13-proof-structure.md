@@ -215,14 +215,6 @@ safety.
 > magnitude monotonicity is exactly what the tail/error words exist to
 > capture — it is correct expansion behaviour, not a bug.
 
-**Why this should still be provable** (NOTE: superseded by the box above —
-the carry-monotonicity framing is false; retained for context): under
-`sorted_asc`, each step has `|q_{i-1}| <= |x_i|`.  The same-sign case is
-covered by the already-Qed-closed `b64_TwoSum_step_dominates_pos / _neg`.  The
-mixed-sign case is NOT covered by the strict Path A absorption (which
-needs `|q| < ulp(pred x)/2`), and — per the box above — is NOT rescued by a
-coarser carry bound either; the carry can shrink below its initial magnitude.
-
 **Why Shewchuk Theorem 13 still works**: Shewchuk's actual proof
 tracks per-element provenance (which `x_i` came from `e` vs from `f`)
 and uses the fact that consecutive *same-provenance* elements satisfy

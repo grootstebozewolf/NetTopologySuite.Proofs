@@ -345,9 +345,9 @@ witness: <fixture or none>
 4. **#66** — finish remaining precision/overlay gaps (mostly there).
 5. **#68** — Delaunay / Voronoi on top of the now-proven `inCircle_R`.
 6. **#423** — Formal proofs for distance metrics: directed/discrete Hausdorff
-   and Fréchet correctness (`metric`). `423-a` / `423-b` Green. Remaining
-   Proofs asks stay the two ticket-10 lines (densification bound;
-   `HAUSDORFF_DIRECTED` / `HAUSDORFF_SYMM`). JTS locus class is unported
+   and Fréchet correctness (`metric`). `423-a` / `423-b` Green. Ticket-10
+   line 1 (densification bound) Green: `HausdorffDensify.v : densify_step_bound`;
+   line 2 Green: `HAUSDORFF_DIRECTED` / `HAUSDORFF_SYMM` over `HausdorffDiscreteQ.v : q_ddh_sq`. JTS locus class is unported
    on NTS develop (NTS#812). Engine grill:
    [`docs/scout/map-hausdorff-functions.md`](docs/scout/map-hausdorff-functions.md).
 7. **#424** — Formal proofs for hull constructions: minimum bounding triangle,

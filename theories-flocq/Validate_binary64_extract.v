@@ -46,6 +46,7 @@ From NTS.Proofs.Flocq Require Import Intersect_b64.
 From NTS.Proofs.Flocq Require Import Intersect_b64_exact.
 From NTS.Proofs       Require Import OverlayGraph.   (* edge_in_result *)
 From NTS.Proofs       Require Import CircularCookZ.  (* I_circles_z — integer discriminant *)
+From NTS.Proofs       Require Import HausdorffDiscreteQ.  (* q_ddh_sq / q_hsymm_sq — HAUSDORFF_DIRECTED / HAUSDORFF_SYMM exact rationals *)
 From NTS.Proofs.Flocq Require Import HotPixel_b64.    (* b64_snap_coord, b64_one/two/half *)
 From NTS.Proofs.Flocq Require Import PassesThrough_b64_compute.
 From NTS.Proofs.Flocq Require Import InCircle_b64_compute.   (* b64_inCircle *)
@@ -231,4 +232,6 @@ Extraction "oracle/extracted.ml"
   b64_grow_expansion_aux
   b64_snap_coord_scaled
   b64_orient2d_exact
-  I_circles_z.
+  I_circles_z
+  q_ddh_sq
+  q_hsymm_sq.

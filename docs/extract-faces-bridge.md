@@ -443,30 +443,6 @@ proof: `theories/EdgeFaceBridge.v` (in progress).
 
 ---
 
-## CLOSED — extract_rings_valid as a conditional Qed (2026-06-13, `theories-flocq/OverlayBridge.v` §8)
-
-> **Superseded by §19 (Rung 3b-iii, 2026-06-13).** The named combinatorial
-> `H_bridge` hypothesis described below was removed; `extract_rings_valid` now
-> calls `H_bridge_well_noded`. Residual proof obligations live in
-> `EdgeFaceBridge.v` (four registry Admitted reach lemmas; two on the capstone
-> `Print Assumptions` path). Read §19 for the current state.
-
-Eighteenth RGR iteration (historical). `extract_rings_valid` — the corpus's
-last live deferred-proof Admitted at that time — became a **conditional Qed**,
-off the registry. Restated over the corrected `extract_faces` extractor (and a
-with-holes companion `extract_rings_valid_holes`), it then took
-`well_noded_darts` + `no_spurs` + `edge_2_connected (result_edges …)` plus ONE
-named hypothesis
-
-    H_bridge : ∀ E, edge_2_connected E → twins_in_different_faces (darts_of E)
-
-and discharged via `FaceOrbitSep.extract_faces_valid_sep`. That interim shape
-surfaced the 2-edge-connected precondition honestly. **§19 removes the named
-hypothesis** and discharges combinatorial H_bridge via `H_bridge_well_noded`,
-modulo reach axioms in `EdgeFaceBridge.v`.
-
----
-
 ## §19 H_bridge scaffold — rungs 1–4 (`theories/EdgeFaceBridge.v`)
 
 Nineteenth RGR iteration off §18. The combinatorial **H_bridge** packaging is
