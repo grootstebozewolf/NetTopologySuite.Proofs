@@ -3,13 +3,13 @@
 | Field | Value |
 |---------------|--------------------------------------------------------------|
 | **Order** | ADR-0008 |
-| **Status** | **Proposed** — 2026-09-19 |
+| **Status** | **Accepted** — 2026-09-19 (Joost, BDFL) |
 | **Deciders** | Joost (BDFL); proposed by Jeroen Bloemscheer |
 | **Date** | 2026-09-19 |
 | **Supersedes** | — (none) |
 | **Does not reopen** | ADR-0006 (Oracle is the test surface); ADR-0007 (planar sheet, hen, cook) |
 
-claimId `0008-ellipsoid-inverse-ctor`. Sister park of ADR-0007 G3 / K3 (`IntakeGeodesicCook.v : sheet_chord_misses_pole`, `IntakeKarneyPark.v`).
+claimId `0008-accepted` (board `0008-ellipsoid-inverse-ctor`). Sister park of ADR-0007 G3 / K3 (`IntakeGeodesicCook.v : sheet_chord_misses_pole`, `IntakeKarneyPark.v`).
 
 ---
 
