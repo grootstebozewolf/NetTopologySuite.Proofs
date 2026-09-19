@@ -9,8 +9,8 @@
    inhabitant. A CS theorem needs a concatenation argument; this is not
    that. Not CompoundCurve. Not CurvePolygon. Not the SQL/MM cathedral.
 
-   Host I_ok on circular eggs is Decline (first cook stays chord–chord;
-   CircGamma stays QEX). Span Hit ≠ host I_ok (II.1 / II.2). This letter
+   Host I_ok on circular eggs is Decline (first cook is first_cook_scope_*;
+   CircGamma is CircGammaDischarged). Span Hit ≠ host I_ok (II.1 / II.2). This letter
    is the license rung those fences pointed at: I_ok_circ inhabits the
    glossary 𝓘 shape (Hit / Empty / Decline) on sidecar CircEgg :=
    CircularArc — the EggCircularArc payload host MkOutOfScope does not
@@ -27,7 +27,7 @@
    QED: I_ok_circ Hit iff on_arc_gamma both (valid arcs); locked p+
    inhabits Hit and licenses span_split; Empty ≠ Decline; invalid
    Decline; locked far pair inhabits Empty; pair Hit ≠ per-root Empty.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    I_ok_circ Hit ≠ host I_ok; II.4, H⊥, and SQL/MM CS / CC / CP
    cathedral stay parked.
 

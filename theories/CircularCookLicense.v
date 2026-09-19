@@ -12,7 +12,8 @@
    not feed host try_cook_hit and does not expand first cook scope;
    the same Z Hit does not determine circ_split leftovers (plus /
    minus meet at distinct p* — t comes from γ, not from the tags).
-   QEX: CircGamma stays QEX; first cook stays chord–chord.
+   QEX: CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
+   first cook is SheetHenCook first_cook_scope_* (not chord-only).
 
    Honesty fences:
      I_circles_z ≠ I_circles_gamma ≠ sidecar cook ≠ glossary 𝓘.

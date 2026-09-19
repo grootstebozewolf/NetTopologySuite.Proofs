@@ -10,7 +10,7 @@
 
    Campaign II close: I_ok_circ exists as the sidecar glossary
    inhabitant on EggCircularArc × EggCircularArc (one Arc, via
-   arc_gamma / span filter / span split). Host CircGamma stays QEX.
+   arc_gamma / span filter / span split). Host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc).
    first_cook_scope stays chord–chord. Host circular I_ok stays
    Decline. I_ok_circ Hit ≠ host I_ok. Not a bag noder
    (cook_loop stays obligation). H⊥ stays parked.
@@ -24,8 +24,8 @@
    QED: sidecar I_ok_circ inhabits Hit / Empty / Decline on the
    locked fixtures; leftover meet is Hit incidence (= ¬Empty),
    not a kiss certificate; Campaign II is closed as a letter.
-   QEX: host CircGamma stays QEX; first_cook_scope stays
-   chord–chord; bag loop stays obligation; H⊥ stays parked;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
+   first cook is SheetHenCook first_cook_scope_* (not chord-only); bag loop stays obligation; H⊥ stays parked;
    Phase B CS / CC / CP gaps named; SQL/MM is not done.
 
    Honesty fences:

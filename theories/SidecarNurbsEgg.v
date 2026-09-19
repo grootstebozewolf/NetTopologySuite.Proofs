@@ -45,7 +45,7 @@
    Parks Γ / ι / ρ (named QEX, landed). This letter cites them
    once; it does not remint CircGamma, ι, leftover_width, or
    LoopDischarged. ι row already records #717 discharge.
-   First cook stays chord–chord. Host CircGamma stays QEX.
+   First cook is SheetHenCook first_cook_scope_*. Host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc).
 
    ADR-0007 is Accepted (2026-09-07). This letter does not reopen
    Status. QEX is not a new Accept cycle. ADR-0006 Status stays

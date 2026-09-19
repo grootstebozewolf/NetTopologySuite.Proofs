@@ -56,7 +56,7 @@ Do **not** mint `69-b`. Packaging facades (`JordanRingKit.v`,
 | Child #64 circular-arc scope | retired; residue #508 #509 #510 #511 | Owner already retired #508 after [`508-closing-summary.md`](508-closing-summary.md). #564 stays OPEN. |
 | Child #65 linear+arc buffer | retired; residue #515 #513 #514 | #515 is the hero shot. |
 | Child #66 precision / OverlayNG | retired; residue #517 #518 #519 #520 | C2 and arc Hobby stay parks. |
-| Child #67 RelateNG | retired by owner 2026-08-23 | Ticket 11 is overtaken, not a second-pass accept. Head is #523 (open, not accepted). Leftover `Ⅰ`–`Ⅴ` stay on [`map-522-leftovers.md`](map-522-leftovers.md). |
+| Child #67 RelateNG | retired by owner 2026-08-23 | Ticket 11 is overtaken, not a second-pass accept. Head is #523 (open, not accepted). Leftover `Ⅰ`–`Ⅸ` stay on [`map-522-leftovers.md`](map-522-leftovers.md). |
 | Child #68 local DT | retired; residue #525 #526 | Global DT / Voronoi stay Non-urgent. |
 
 ## Leftover TAGs that still said "#69" — parks, not new epics
@@ -101,6 +101,6 @@ GitHub issue comment as the source of record.
 - Remint `508-a`…`508-h` or mint `508-i`.
 - Remint leftover `Ⅰ`–`Ⅹ` or mint leftover `Ⅺ`. Do not mint `522-n`.
 - Treat `M-LEN-ZOO` ✅ as "the zoo is exact."
-- Treat ticket 523 QEX, or leftover `Ⅰ`–`Ⅴ` QED, as owner accept of #523.
+- Treat ticket 523 QEX, or leftover `Ⅰ`–`Ⅸ` QED, as owner accept of #523.
 - Reopen #67 or #522 from this letter.
 - Grow `docs/module-split-allowlist.txt`.

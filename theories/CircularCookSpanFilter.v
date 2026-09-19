@@ -22,7 +22,7 @@
    locked p+ inhabits Hit; locked p− inhabits Empty; Empty ≠
    Decline; γ_full Hit on p− is not a span Hit; span Hit is not
    host I_ok.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host circular I_ok is Decline only; II.2–II.4, H⊥, and SQL/MM
    CS / CC / CP cathedral stay parked.
 

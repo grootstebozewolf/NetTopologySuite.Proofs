@@ -3281,6 +3281,9 @@ theories/RelatePrepared.v
 # RelateNG* zoo, not NodingNG, not OverlayNG. No Admitted.
 theories/RelateNGJordanTrueRegion.v
 theories/RelateNGFace.v
+# Bible / CONTEXT prose ratchet (claimId 508-context-prose-ratchet).
+# Citation-only QED∨QEX stop. No new geometry. No Admitted.
+theories/ContextProseRatchet.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition

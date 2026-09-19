@@ -32,7 +32,7 @@
    joint is I_ok_mixed Hit at (end, 1, 0); joint params are not
    interior; Hit licenses already-hen incidence (no new split mint);
    I_ok_mixed Hit ≠ host I_ok.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host mixed I_ok is Decline; interior mixed cook stays out of
    first cook (not invented here); H⊥ / bag noder / MultiCurve /
    CircGamma remint stay parked; SQL/MM is not done.

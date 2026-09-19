@@ -15,7 +15,7 @@
 
    Prefer SidecarCircEgg* over reminting CircularCook* Campaign I/II,
    Parks Γ CircGamma, MkCirc, or ι/ρ. Sidecar I_ok_circ / I_ok_mixed
-   Hit is not host I_ok. Host first cook stays chord–chord.
+   Hit is not host I_ok. Host first cook is first_cook_scope_*.
 
    QED: sidecar egg packaging on EggCircularArc; host I_ok Decline
    and try_cook_hit None (even on IHit); locked unit-square circular

@@ -379,7 +379,7 @@ Qed.
    Required here); I.9 classifier ≠ cook lives in
    CircularCookLicense.v (ticket_0007_i9_tags_qed_or_qex; 4-axiom;
    not Required here). Not Required here — host lane stays atan2-free.
-   Host CircGamma stays QEX; first cook stays chord–chord. The host
+   Host CircGamma is CircGammaDischarged (ticket_64_circ_gamma_qed_or_qex LEFT); first cook is first_cook_scope_*. The host
    circular-Hit→cook bridge is the QEX stop
    ticket_0007_circ_host_cook_qed_or_qex below. *)
 

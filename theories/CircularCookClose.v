@@ -11,8 +11,8 @@
    QED: sidecar cook exists on a constructed circular Hit (both
    radical roots / MintTwo); I_CIRCULAR stays a classifier (tags
    0/1); the #666 four-object fence holds by observation.
-   QEX: host CircGamma stays QEX; first_cook_scope stays
-   chord–chord; Campaign II and H⊥ are named parked; SQL/MM is
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
+   first cook is SheetHenCook first_cook_scope_* (not chord-only); Campaign II and H⊥ are named parked; SQL/MM is
    not done.
 
    Honesty fences:

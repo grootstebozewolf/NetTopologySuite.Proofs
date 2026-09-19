@@ -11,8 +11,8 @@
 
    QED: leftovers_ab = leftovers_ba on γ_full; cook bag inhabits it;
    one-step ≠ bag loop (cook_loop stays LoopObligation).
-   QEX: CircGamma stays QEX; not CircularArc span; first cook stays
-   chord–chord. Not the bag-level repeat-until-noded loop.
+   QEX: CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
+   first cook is SheetHenCook first_cook_scope_* (not chord-only). Not the bag-level repeat-until-noded loop.
 
    Honesty fences:
      I_circles_z ≠ I_circles_gamma ≠ sidecar cook ≠ glossary 𝓘.
@@ -194,7 +194,7 @@ Proof.
 Qed.
 
 (* I.8 is γ_full leftover-bag confluence, not CircularArc span and
-   not the bag loop. CircGamma stays QEX. *)
+   not the bag loop. CircGamma is CircGammaDischarged. *)
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i8_scope_qed_or_qex","title":"I.8 discharges CircGamma and the bag loop (QED) or gamma_full one-step confluence while CircGamma stays QEX (QEX); discharged QEX; Campaign I close is I.10","file":"theories/CircularCookConfluence.v","witness":"0007-I.8-leftover-confluence","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i8_scope_qed_or_qex :

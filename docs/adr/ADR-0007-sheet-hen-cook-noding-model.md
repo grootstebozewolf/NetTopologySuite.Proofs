@@ -1209,9 +1209,7 @@ exterior-row pin on the same chords NodingNG Empty-noded
 short-circuit stay cited siblings.
 
 **QEX.** Completeness is false; T-junction fill stays unsupported.
-Full Jordan true-region, S15l+ multi-geom leftovers, and ticket 523
-ISO `?` stay named missing constructors. `cell_none_iff_empty` is the
-Coq emptiness side (Qed) — do not fake 523 closed. Do not mint `522-n`.
+Taut polygonal Jordan is inhabited (`RelateNGJordanTrueRegion.v : relateng_jordan_true_region_taut`); `RNG_JordanUncond` stays park (`RelateNGFace.v : relateng_not_jordan_uncond`). S15l+ / 523 `?` stay named missing constructors. Do not mint `522-n`.
 
 Status stays **Accepted**. Parks Γ / ι / ρ.
 

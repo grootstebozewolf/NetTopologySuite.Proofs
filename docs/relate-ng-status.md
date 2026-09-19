@@ -23,8 +23,9 @@ RelateNG* / RelateNoding* zoo.
   on NodingNG-noded chords (`RelateNGFace.v : relateng_consumes_nodingng`).
 - **QEX.** Completeness false / T-junction unsupported
   (`RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex`).
-  Full Jordan true-region, S15l+ multi-geom, ticket 523 ISO `?`
-  (`RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex`;
+  Taut polygonal Jordan QED (`RelateNGJordanTrueRegion.v : relateng_jordan_true_region_taut`);
+  `RNG_JordanUncond` park (`RelateNGFace.v : relateng_not_jordan_uncond`);
+  S15l+ / 523 `?` (`RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex`;
   `RelateCurveMatrix.v : cell_none_iff_empty` is Coq emptiness — a
   separate fact from ticket 523's own accept, which landed 2026-09-19).
 
@@ -139,10 +140,10 @@ disguised as disjointness — that was #530.
 - **Mixed-cone certificate** — leftover `Ⅴ` classified.
   Headline `RelateNGTouchMixedCone.v : triangle_pair_regime_mixedcone`.
   Fill stays `im_unsupported`. Epic #522 stop is QED ∨ QEX
-  (`RelateNGEpic522.v : ticket_522_qed_or_qex`),
-  discharged QEX on an unnamed CCW pair. Leftover `Ⅰ`–`Ⅴ` are QED
-  (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex`). Do not
-  mint leftover `Ⅵ`.
+  (`RelateNGEpic522.v : ticket_522_qed_or_qex` RIGHT after `Ⅸ`).
+  Leftover `Ⅰ`–`Ⅸ` are QED
+  (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex` LEFT). Do not
+  mint leftover `Ⅹ`.
 - **Exterior-side one-sided T** — leftover `Ⅲ`. `Ⅲ∨Ⅳ` xor with two
   witnesses. Headline
   `RelateNGTouchOnesided.v : triangle_pair_regime_onesided`. Fill token
