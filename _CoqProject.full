@@ -3295,6 +3295,11 @@ theories/RelateNGFace.v
 # Bible / CONTEXT prose ratchet (claimId 508-context-prose-ratchet).
 # Citation-only QED∨QEX stop. No new geometry. No Admitted.
 theories/ContextProseRatchet.v
+# Ticket 509 F-CP/F-MC/F-MS struct vs true-region QED ∨ QEX stop
+# (prelude only). Named QEX CurvePolygonTrueRegionSound. Cites
+# F-CP structural chord-floor Qed and #791 polygonal taut ceiling.
+# #509 stays open. QEX ≠ owner accept. No Admitted.
+theories/RelateNGFstarStructTrueRegion.v
 
 # Issue #224 W1 / N-AL: arc-SEGMENT (line) intersection, circle-line existence
 # core.  line_circle_radical_point: foot +- h*u on the circle (foot condition

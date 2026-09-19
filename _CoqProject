@@ -60,6 +60,9 @@ theories/BufferBridgeRound.v
 theories/DE9IM.v
 # Ticket 523 QED ∨ QEX stop (Stdlib + DE9IM only; host-lane smoke).
 theories/RelateCurveAlphabet.v
+# Ticket 509 F-CP/F-MC/F-MS struct vs true-region QED ∨ QEX stop
+# (prelude only; host-lane smoke). Named QEX CurvePolygonTrueRegionSound.
+theories/RelateNGFstarStructTrueRegion.v
 # Issue #67 S2: line-line DE-9IM soundness (host lane; pulls Intersect.v).
 theories/RelateLineLine.v
 # Issue #67 S10b: clothoid×line chord-seed (host lane; pulls RelateLineLine).
