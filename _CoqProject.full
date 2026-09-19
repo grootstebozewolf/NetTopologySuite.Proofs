@@ -2922,6 +2922,11 @@ theories/IntakeGeodesic.v
 theories/IntakeFamousGeodesic.v
 theories/IntakeGeodesicCook.v
 theories/IntakeKarneyPark.v
+# ADR-0007 G3 closed-terms / no-g (IntakeG3GeodesicGamma).
+# claimId 0007-g3-geodesic-gamma. GeodesicGammaOnSheet missing.
+# Closed term is sheet_chord_misses_pole, not g. Inverse is K1.
+# ADR-0007 stays Accepted. ADR-0008 stays Proposed. No Admitted.
+theories/IntakeG3GeodesicGamma.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
 # Exact chord × three-point-arc classifier (I_line_arc_q / I_line_arc_z):
