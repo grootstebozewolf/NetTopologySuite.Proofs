@@ -2862,6 +2862,11 @@ theories/Adr0007NodingEpic.v
 # LeftoverKissArm / LeftoverShareMintArm. LoopObligation stands.
 # Sibling QED stays sibling. No Axiom / Parameter / stub.
 theories/HostRhoLeftoverBagTerm.v
+# Parks ρ modulo kiss / share-mint (claimId 0007-rho-modulo-kiss-share).
+# Host/pure-R. Named missing ctors ModuloKissStep / ModuloShareMintStep.
+# leftover_bag_step stays Hit-or-Decline. LoopObligation stands.
+# Sibling modulo-iter / LeftoverKissArm stay sibling. No Axiom / Parameter / stub.
+theories/HostRhoModuloKissShare.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
 # Host/pure-R. Reuses SheetHenCook. Parks ρ stays QEX. Not OverlayNG /
 # RelateNG / a bag noder. No Admitted.

@@ -86,9 +86,9 @@ make help
 make host
 ```
 
-`make host` builds the 81 modules in `_CoqProject`, the foundational
-Stdlib-only layer. The full corpus is 644 registered modules —
-553 registered under `theories/` and 91 registered under
+`make host` builds the 82 modules in `_CoqProject`, the foundational
+Stdlib-only layer. The full corpus is 645 registered modules —
+554 registered under `theories/` and 91 registered under
 `theories-flocq/` — and is the pinned container.
 Toolchain: **Rocq 9.2.0 + Flocq 4.2.2**. Those counts, the two
 audit-exception counts above, and the `Defined.` count are checked against
