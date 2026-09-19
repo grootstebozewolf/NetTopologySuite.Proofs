@@ -68,6 +68,13 @@ Definition jordan_true_region_taut : Prop :=
     exists (h : R) (p_in p_out : Point),
       (* (i) h avoids every vertex height *)
       (forall v, In v r -> h <> py v) /\
+      (* (ii) h sits inside the first edge's y-span and inside the parked
+         level_gap / depth_gap window around that edge's mid-height *)
+      (exists (a0 b0 : Point) (suf : list Edge),
+         ring_edges r = (a0, b0) :: suf /\
+         Rmin (py a0) (py b0) < h < Rmax (py a0) (py b0) /\
+         (let c := (Rmin (py a0) (py b0) + Rmax (py a0) (py b0)) / 2 in
+          c - depth_gap c r < h < c + level_gap c r)) /\
       (* (iii) both witnesses on that height, off the ring, guarded *)
       py p_in = h /\ py p_out = h /\
       ring_complement r p_in /\ ring_complement r p_out /\
@@ -285,7 +292,7 @@ Proof.
   { unfold ylo, yhi. destruct (Rle_or_lt (py a0) (py b0)).
     - rewrite Rmin_left, Rmax_right by lra. lra.
     - rewrite Rmin_right, Rmax_left by lra. lra. }
-  destruct (exists_generic_height_in_window r ylo yhi Hlt) as [h [Hspan [_ Hgen]]].
+  destruct (exists_generic_height_in_window r ylo yhi Hlt) as [h [Hspan [Hwin Hgen]]].
   destruct (straddle_at_height r a0 b0 suf h Htaut Hnoh Hsplit Hnotin Hgen Hspan)
     as [ef [p1 [p2 [Hef [Hp1 [Hp2 [Hav1 [Hav2 [Hc1 [Hc2 Hflip]]]]]]]]]].
   assert (Hy1 : py p1 = h) by (rewrite Hp1; reflexivity).
@@ -295,7 +302,9 @@ Proof.
   - (* p1 odd, p2 even *)
     assert (Hnin2 : ~ point_in_ring p2 r) by (apply Hflip; exact Hin1).
     exists h, p1, p2.
-    split; [ exact Hgen | ]. split; [ exact Hy1 | ]. split; [ exact Hy2 | ].
+    split; [ exact Hgen | ].
+    split; [ exists a0, b0, suf; split; [ exact Hsplit | split; [ exact Hspan | exact Hwin ] ] | ].
+    split; [ exact Hy1 | ]. split; [ exact Hy2 | ].
     split; [ exact Hc1 | ]. split; [ exact Hc2 | ].
     split; [ exact Hav1 | ]. split; [ exact Hav2 | ].
     split; [ exact Hin1 | ].
@@ -308,7 +317,9 @@ Proof.
     { destruct (point_in_ring_dec p2 r) as [H | H]; [ exact H | ].
       exfalso. apply Hnin1. apply Hflip. exact H. }
     exists h, p2, p1.
-    split; [ exact Hgen | ]. split; [ exact Hy2 | ]. split; [ exact Hy1 | ].
+    split; [ exact Hgen | ].
+    split; [ exists a0, b0, suf; split; [ exact Hsplit | split; [ exact Hspan | exact Hwin ] ] | ].
+    split; [ exact Hy2 | ]. split; [ exact Hy1 | ].
     split; [ exact Hc2 | ]. split; [ exact Hc1 | ].
     split; [ exact Hav2 | ]. split; [ exact Hav1 | ].
     split; [ exact Hin2 | ].
