@@ -48,9 +48,10 @@
 
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance Overlay Segment RectangleJCT.
+From NTS.Proofs Require Import PointInRingTangents PointInRingCorrect.
 From NTS.Proofs Require Import RelateAreaPoint RelateCurveMatrix.
 From NTS.Proofs Require Import GeneralTriangleSeparation.
-From NTS.Proofs Require Import RelateNGTouchCells RelateNGTouchRED.
+From NTS.Proofs Require Import RelateNGTouch RelateNGTouchCells RelateNGTouchRED.
 Import ListNotations.
 Local Open Scope R_scope.
 
