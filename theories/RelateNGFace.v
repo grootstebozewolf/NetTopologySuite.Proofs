@@ -37,7 +37,7 @@
 
    Parks Γ / ι / ρ (named QEX, landed). This letter cites NodingNG;
    it does not remint CircGamma, ι, leftover_width, or LoopDischarged.
-   First cook stays chord–chord. Host CircGamma stays QEX. No H⊥ /
+   First cook is SheetHenCook first_cook_scope_*. Host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc). No H⊥ /
    Multi Landed / Phase B done-when / SQL/MM cathedral / MerkatorBV /
    522-n.
 

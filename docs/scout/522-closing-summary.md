@@ -24,7 +24,7 @@ the oracle wire. Never a confident `FFFFFFFFF` for an unclassified pair.
 | Disjoint bar 1 | classified | `RelateNGDisjoint.v : triangle_pair_regime_disjoint` |
 | Vertex-touch bar 1 | classified | `RelateNGTouchVertexRegime.v : triangle_pair_regime_touchvertex` |
 | Contains bar 1 | detector → closed containment | `RelateNGContainsBridge.v : contains_b_ccw_implies_closed_containment` |
-| Completeness | **false** (unnamed CCW pair after leftover `Ⅴ`); stop is QED ∨ QEX | `RelateNGEpic522.v : ticket_522_qed_or_qex` (QEX); leftover `Ⅰ`–`Ⅴ` QED (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex`) |
+| Completeness | **false** (unnamed after `Ⅸ`) | `RelateNGEpic522.v : ticket_522_qed_or_qex` RIGHT; `Ⅰ`–`Ⅸ` QED (`RelateNGEpic522.v : ticket_522_classified_qed_or_qex` LEFT) |
 | Disjoint bar 2 gtri | FF2FF1212 | `RelateNGDisjointCells.v : sentinel_disjoint_ogc_gtri_cells` |
 | Contains bar 2 gtri | 212FF1FF2 | `RelateNGContainsCells.v : contains_pair_ogc_gtri_cells` |
 | Touch-edge bar 2 gtri | FF2F11212 | `RelateNGTouchEdgeCells.v : touch_edge_pair_ogc_gtri_cells` |
@@ -35,8 +35,7 @@ the oracle wire. Never a confident `FFFFFFFFF` for an unclassified pair.
 Classifier fills are **not** reminted. The shared pins stay FFFFFFFFF /
 2FFF1FFF2 / 2FFFFFFF2 / FFFF1FFF2. The OGC nine-cell names are `*_ogc`.
 
-Honest decline golden vector is an unnamed CCW pair after leftover
-`Ⅴ`, not the #530 pair (that pair is classified disjoint).
+Honest decline golden is unnamed after leftover `Ⅸ`, not the #530 pair.
 
 ## Named, not proved / not a #522 child
 

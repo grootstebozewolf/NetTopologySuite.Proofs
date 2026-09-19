@@ -18,7 +18,7 @@
    kiss); leftover γ stays on the parent circle and on the parent
    arc_gamma honesty story; locked p− stays II.1 Empty and gets no
    invented span cook.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host circular I_ok is Decline only; II.3–II.4, H⊥, and SQL/MM
    CS / CC / CP cathedral stay parked.
 

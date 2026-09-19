@@ -11,7 +11,7 @@
    concentric unequal radii are image-disjoint and Decline.
 
    QED: Empty / Decline / concentric-unequal honesty fence.
-   QEX: CircularArc still has no γ / (tᵢ, tⱼ) — CircGamma stays QEX;
+   QEX: CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
    do not fake Discharge.  first_cook_scope stays chord–chord.
    Sidecar cook stays locked.
 
@@ -40,7 +40,7 @@ Local Open Scope R_scope.
 (* I.3 ∀ Empty / Decline. Image-disjoint ≠ discriminant Empty.                *)
 (* ICircGEmpty ↔ proper pair ∧ γ_full images disjoint on S.                   *)
 (* ICircGDecline ↔ not a proper pair (d=0 or r≤0).                            *)
-(* Sidecar cook stays locked. CircGamma stays QEX.                            *)
+(* Sidecar cook stays locked. CircGamma is CircGammaDischarged.               *)
 (* -------------------------------------------------------------------------- *)
 
 Definition proper_circ_pair (o1x o1y r1 o2x o2y r2 : Z) : Prop :=

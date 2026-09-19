@@ -16,8 +16,8 @@
    QEX: Touch / Empty / Decline allocate no hen (kiss is a fenced
    scope arm — not a CRV-TOUCH kiss decision). Host try_cook_hit still
    declines circular eggs (Adr0007NodingEpic.v :
-   ticket_0007_circ_host_cook_qed_or_qex). CircGamma stays QEX
-   (CircularCook.v : circular_gamma_is_qex).
+   ticket_0007_circ_host_cook_qed_or_qex). CircGamma is
+   CircGammaDischarged (CircularCook.v : ticket_64_circ_gamma_qed_or_qex LEFT).
 
    I.1 Fence: the four objects are pairwise unequal by observation
    on the locked Z^6 witness — not a type synonym. Touch ≠ IHit;
@@ -715,7 +715,7 @@ Print Assumptions ticket_0007_circ_mint_two_scope_qed_or_qex.
 (* -------------------------------------------------------------------------- *)
 (* I.1 Fence: four objects pairwise unequal by observation, not a             *)
 (* type synonym. Touch ≠ IHit. Circular Empty ≠ Decline. Host                 *)
-(* I_gloss / CircGamma stays QEX.                                             *)
+(* I_gloss sidecar ≠ host. CircGamma is CircGammaDischarged.                  *)
 (*                                                                            *)
 (*   1. I_circles_z / I_CIRCULAR — Z^6 classifier; hens 0/1; no t            *)
 (*   2. I_circles_gamma — locked full-circle witness with t on γ_full        *)

@@ -8,7 +8,7 @@ It does **not** retire the epic. Owner review retires it.
 
 Bible §4.2 `length()` is discharged in the ledger sense below: each zoo
 member has a named theorem against `CurveLength.v : is_curve_length`,
-or a named park. This is not "the zoo is unconditionally exact."
+or a named park. `ExactCurveEpic508.v : ticket_508_qed_or_qex` RIGHT on `ECZ_Ellipse`. Not "the zoo is exact."
 
 **Merge comment (one sentence).** `M-LEN-ZOO` ✅ is paperwork-with-parks:
 clothoid unconditional is the unit line, ellipse unconditional is

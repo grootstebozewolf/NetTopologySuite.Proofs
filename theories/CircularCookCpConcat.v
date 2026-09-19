@@ -47,7 +47,7 @@
    I_ok_mixed Hit at (end, 1, 0); host I_ok mixed stays Decline;
    joint params are not interior; hole-free CPs inhabit; reuse
    B.1 / B.2 / SidecarCircMixed — no new kernel.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host circular I_ok is Decline; I_ok_circ / I_ok_mixed Hit ≠
    host I_ok; H⊥ / CircGamma remint / bag-noder / interior mixed
    cook stay parked; SQL/MM is not done (cathedral / Multi /

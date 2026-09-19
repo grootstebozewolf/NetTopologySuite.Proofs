@@ -36,7 +36,7 @@
    members; membership joints reuse I_ok / I_ok_circ / I_ok_mixed;
    a two-member far MultiCurve is bag-ok and not contiguous;
    optional shared-endpoint pair reuses I_ok_mixed; no new kernel.
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host mixed I_ok is Decline; interior circular×chord cook
    parked; bag-noder / H⊥ / CircGamma remint parked; SQL/MM is
    not done; Multi required-type stays Gap; Phase B stays Open;

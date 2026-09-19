@@ -10,7 +10,7 @@ a GitHub child, **not** a remint of `522-j` / `522-m` / `522-i`, and
 > Roman numerals. This leftover is **`Ⅱ`**. The T-junction / partial-edge
 > sliver is **`Ⅰ`**. Do not swap them. Do not remint ADR-0004.
 > This map does not mint a GitHub child. Leftover `Ⅴ` is mixed-cone.
-> Do not mint leftover `Ⅵ`.
+> `Ⅵ`–`Ⅸ` later classified; do not mint `Ⅹ`.
 
 topics: relate
 claimId: Ⅱ

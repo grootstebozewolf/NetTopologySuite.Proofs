@@ -25,7 +25,7 @@
    QED: ∀ cs_joint is I_ok_circ Hit at (end, 1, 0); joint params
    are not interior (not 0<t<1); locked 2-arc CS is contiguous
    and inhabits; CircEgg = CircularArc (no new kernel).
-   QEX: host CircGamma stays QEX; first cook stays chord–chord;
+   QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host circular I_ok is Decline; I_ok_circ Hit ≠ host I_ok;
    CompoundCurve / CurvePolygon / H⊥ stay parked; SQL/MM is
    not done; not a CircGamma remint. Phase B.2 CompoundCurve

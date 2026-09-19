@@ -14,7 +14,7 @@
    (γ_full, not CircularArc span). R3 is the locked witness.
    I.3: ∀ Empty / Decline lives in CircularCookEmpty (sibling
    after this module; image-disjoint ≠ discriminant Empty).
-   QEX: CircularArc still has no γ / (tᵢ, tⱼ) — CircGamma stays QEX;
+   QEX: CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
    do not fake Discharge.  first_cook_scope stays chord–chord.
    Sidecar cook stays locked.
 
@@ -502,7 +502,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* CircGamma stays QEX — CircularArc still has no γ. Honest; not Discharge.   *)
+(* CircGamma is CircGammaDischarged (ticket_64_circ_gamma_qed_or_qex LEFT).   *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma circular_gamma_still_qex :
@@ -562,7 +562,7 @@ Print Assumptions ICircGTouch_neq_ICircGHit.
 
 (* -------------------------------------------------------------------------- *)
 (* I.2 ∀ Hit soundness. Drop the lock; keep γ_full. Both radical roots.       *)
-(* Not CircularArc span membership. CircGamma stays QEX. R3 is the locked     *)
+(* Not CircularArc span membership. CircGamma is CircGammaDischarged. R3 is the locked     *)
 (* (0,0)/(7,0) r=5 witness above.                                             *)
 (* -------------------------------------------------------------------------- *)
 
@@ -797,7 +797,7 @@ Proof.
   exact I_circles_gamma_hit_iff.
 Qed.
 
-(* I.2 is γ_full, not CircularArc span membership. CircGamma stays QEX. *)
+(* I.2 is γ_full, not CircularArc span membership. CircGamma is CircGammaDischarged. *)
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i2_arc_scope_qed_or_qex","title":"I.2 is arc-span membership (QED) or gamma_full only while CircGamma stays QEX (QEX); discharged QEX; not CircularArc membership","file":"theories/CircularCookHit.v","witness":"0007-I.2-hit-sound","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i2_arc_scope_qed_or_qex :

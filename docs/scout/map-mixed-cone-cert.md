@@ -9,7 +9,7 @@ a GitHub child, **not** a remint of `522-j` / `522-m` / `522-i`, and
 > historical. Do **not** mint `522-n`. Leftover ids are precomposed
 > Roman numerals. This leftover is **`Ⅴ`**. Do not swap it with `Ⅱ`.
 > Do not remint ADR-0004. This map does not mint a GitHub child.
-> Do not mint leftover `Ⅵ`.
+> `Ⅵ`–`Ⅸ` later classified; do not mint `Ⅹ`.
 
 topics: relate
 claimId: Ⅴ
@@ -69,4 +69,4 @@ A = `(0,0)(2,0)(0,2)`, B = `(0,0)(3,1)(1,3)`.
 | `(0,0)(2,0)(0,2)` vs `(0,0)(-2,0)(0,-2)` | #572 / `522-i`. Classified **`TPR_TouchVertex`**. Same-sign opposite cone. | remint `cone_separates_b` / steal `522-i` |
 | `(0,0)(2,0)(0,2)` vs `(0,0)(3,1)(1,3)` | Unnamed completeness cex. Same-sign spill, outside A. `RelateNGUnnamedCex.v : unnamed_ccw_pair_unsupported`. | mint leftover `Ⅵ` |
 
-Do not mint leftover `Ⅵ`. Epic `#522` stays OPEN.
+`Ⅵ`–`Ⅸ` classified. Do not mint `Ⅹ`. Epic `#522` stays OPEN.
