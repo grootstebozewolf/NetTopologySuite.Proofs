@@ -1,0 +1,16 @@
+# HAUSDORFF_DIRECTED / HAUSDORFF_SYMM q_ddh_sq / q_hsymm_sq (HausdorffDiscreteQ.v)
+ok H1 JTS pair directed: 22.360679774997898 500/1
+ok H2 JTS pair backward: 10 100/1
+ok H3 symm is max: 22.360679774997898 500/1
+ok H4 symm symmetric: 22.360679774997898 500/1
+ok H5 identical: 0 0/1
+ok H6 asymmetry forward: 2 4/1
+ok H6 asymmetry backward: 2.8284271247461903 8/1
+ok H7 decimals exact: 0.25 1/16
+ok H8 single point NAN: NAN
+ok H9 exponent token NAN: NAN
+ok H9 leading-plus NAN: NAN
+ok H9 hex NAN: NAN
+ok H10 replay: 22.360679774997898 500/1
+ok H11 float is sqrt of companion: 22.360679774997898
+HAUSDORFF_DIRECTED / HAUSDORFF_SYMM invariants H1-H11 ok.

@@ -3351,6 +3351,7 @@ theories/LECArcRow.v
 # Full-only: imports LargestEmptyCircle.v, LECObstacleDistance.v.
 theories/LECSegmentRow.v
 theories/HausdorffDensify.v
+theories/HausdorffDiscreteQ.v
 
 # The LEC n-ary FLATTEN row (ledger rung "CompoundCurve / n-ary flatten"
 # closed + failed path F5).  Generic exact_clearance algebra (union = Rmin,

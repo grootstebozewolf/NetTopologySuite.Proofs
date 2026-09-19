@@ -347,7 +347,7 @@ witness: <fixture or none>
 6. **#423** — Formal proofs for distance metrics: directed/discrete Hausdorff
    and Fréchet correctness (`metric`). `423-a` / `423-b` Green. Ticket-10
    line 1 (densification bound) Green: `HausdorffDensify.v : densify_step_bound`;
-   line 2 (`HAUSDORFF_DIRECTED` / `HAUSDORFF_SYMM`) remains. JTS locus class is unported
+   line 2 Green: `HAUSDORFF_DIRECTED` / `HAUSDORFF_SYMM` over `HausdorffDiscreteQ.v : q_ddh_sq`. JTS locus class is unported
    on NTS develop (NTS#812). Engine grill:
    [`docs/scout/map-hausdorff-functions.md`](docs/scout/map-hausdorff-functions.md).
 7. **#424** — Formal proofs for hull constructions: minimum bounding triangle,
