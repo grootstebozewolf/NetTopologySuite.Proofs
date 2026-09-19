@@ -47,12 +47,13 @@ From NTS.Proofs Require Import
   ExactCurveEpic508
   RelateNGEpic522
   RelateNGFace.
+Local Open Scope R_scope.
 
 (* WITNESS {"claimId":"508-context-prose-ratchet","topic":"docs","lemma":"ticket_508_context_prose_qed_or_qex","title":"CONTEXT/Bible priority sentences reduce to existing Qed/QEX tickets (QED) or a leftover unowned prose sentence is named (QEX); discharged QED; epic #508 stays open; QEX is not owner accept","file":"theories/ContextProseRatchet.v","witness":"508-context-prose-ratchet","board":"#508"} *)
 
 Theorem ticket_508_context_prose_qed_or_qex :
   (circular_gamma_status = CircGammaDischarged
-   /\ ticket_64_circ_gamma_qed_or_qex
+   /\ circ_gamma_constructor_inhabits CircGammaMkCirc
    /\ first_cook_scope EggChord EggChord
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggClothoid EggClothoid
@@ -62,10 +63,35 @@ Theorem ticket_508_context_prose_qed_or_qex :
    /\ ~ first_cook_scope EggSinusoid EggSinusoid
    /\ ~ first_cook_scope EggGeodesicString EggGeodesicString
    /\ ~ first_cook_scope EggSpiralCurve EggSpiralCurve
-   /\ ticket_508_carrier_qed_or_qex
-   /\ ticket_508_qed_or_qex
-   /\ ticket_522_classified_qed_or_qex
-   /\ ticket_522_qed_or_qex
+   /\ ((zoo_inhabits_curve_segment ECZ_Chord
+        /\ zoo_inhabits_curve_segment ECZ_CircularArc
+        /\ forall s : CurveSegment,
+             (exists p q, s = CSChord p q) \/ (exists a, s = CSArc a))
+       \/ (exists z : ExactCurveZoo, ~ zoo_inhabits_curve_segment z))
+   /\ ((forall z : ExactCurveZoo, zoo_inhabits_curve_segment z)
+       \/ (exists z : ExactCurveZoo, ~ zoo_inhabits_curve_segment z))
+   /\ ((triangle_pair_regime 0 0 2 0 0 1 1 0 3 0 2 1 = TPR_TouchPartialEdge
+        /\ triangle_pair_regime 0 0 2 0 0 2 0 0 (-2) 0 1 (-1) = TPR_TouchObtuse
+        /\ triangle_pair_regime 0 0 2 0 0 1 1 0 (1/2) (-1) (3/2) (-1)
+             = TPR_TouchOnesided
+        /\ triangle_pair_regime 0 0 2 0 0 1 1 0 (5/4) (1/4) (3/4) (1/4)
+             = TPR_TouchOnesided
+        /\ triangle_pair_regime 0 0 2 0 0 2 0 0 (-1) (-1) 3 1 = TPR_MixedCone
+        /\ triangle_pair_regime 0 0 2 0 0 2 0 0 3 1 1 3 = TPR_SameCone
+        /\ triangle_pair_regime 0 0 3 0 0 3 2 (-1) 2 2 (-1) 2 = TPR_Lens
+        /\ triangle_pair_regime 1 1 2 1 1 2 0 0 4 0 0 4 = TPR_Inside
+        /\ triangle_pair_regime 0 0 4 0 0 4 0 0 4 0 1 1 = TPR_Nest)
+       \/ triangle_pair_regime 0 0 4 0 1 1 0 0 4 0 0 4 = TPR_Unsupported)
+   /\ ((forall ax ay bx by_ cx cy dx dy ex ey fx fy : R,
+          0 < gdbl ax ay bx by_ cx cy ->
+          0 < gdbl dx dy ex ey fx fy ->
+          triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy
+            <> TPR_Unsupported)
+       \/ (exists ax ay bx by_ cx cy dx dy ex ey fx fy : R,
+             0 < gdbl ax ay bx by_ cx cy /\
+             0 < gdbl dx dy ex ey fx fy /\
+             triangle_pair_regime ax ay bx by_ cx cy dx dy ex ey fx fy
+               = TPR_Unsupported))
    /\ relateng_park_inhabits RelateNGJordanTrueRegion
    /\ relateng_kind <> RNG_JordanUncond)
   \/
@@ -73,7 +99,7 @@ Theorem ticket_508_context_prose_qed_or_qex :
 Proof.
   left.
   split; [exact circular_gamma_is_discharged|].
-  split; [exact ticket_64_circ_gamma_qed_or_qex|].
+  split; [exact circ_gamma_mkcirc_inhabits|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact circular_egg_first_cook_scope|].
   split; [exact clothoid_egg_first_cook_scope|].
