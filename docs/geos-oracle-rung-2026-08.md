@@ -38,7 +38,22 @@ Earlier (pre-#968): `ok=34 warn=6 bug=1` — only failure was `COVERS968/orig`.
 | MultiSurface×MultiPoint | DE-9IM A/P | **OK** (#1502 branch) |
 | #968 covers | — | **OK** after #1505 |
 
-Soft PIP grid notes (not bugs): points on the chord `y=0` are oracle `IN` (ray-cast region) but GEOS `contains=false` (boundary); apex `(0,1)` may `intersects` while oracle `OUT` under strict ray rules.
+Soft PIP grid notes (not bugs) — two distinct conventions, per
+[ADR-0003](adr/ADR-0003-two-tier-interior-spec-parity-computation.md)
+(interior is two-tier: OGC open interior specifies, half-open ray
+parity computes):
+
+- **Chord `y=0`.** GEOS `contains=false` reports the **specification**
+  tier (the OGC open interior excludes this boundary chord); the
+  oracle's `IN` reports the **computation** tier (half-open ray parity
+  includes it by construction, per `Overlay.edge_crosses_ray`). Both
+  are correct about their own tier — this is ADR-0003's reclassification
+  of the case from undecided to expected, not a divergence to chase.
+- **Apex `(0,1)`.** GEOS `intersects=true` vs. oracle `OUT` is a
+  *different* convention: the parity computation's `ray_avoids_vertices`
+  genericity guard (tangent/vertex-grazing rays), which the two-tier
+  model does not remove — ADR-0003 keeps it as a permanent, load-bearing
+  guard, not a deferral.
 
 ---
 
