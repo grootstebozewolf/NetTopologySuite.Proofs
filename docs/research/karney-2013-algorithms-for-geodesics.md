@@ -21,7 +21,7 @@ This is a research letter on an ellipsoid of revolution, not a cook, not a first
 |---|---|---|
 | K0 not planar intake | **QED** — GEODESICSTRING μ stays `MkChord` on every ADR-0007 `Sheet`; NAB is not that bag | `IntakeKarneyPark.v : ticket_0007_karney_not_planar_intake_qed_or_qex` |
 | K1 Vincenty inverse not total | **QEX** — not implemented here; failure is Karney's claim (pp. 43, 49, 53), not a corpus counterexample | `IntakeKarneyPark.v : ticket_0007_karney_vincenty_total_qed_or_qex` |
-| K2 ellipsoid geodesic ≠ sheet chord | **QEX** — pointer to G3 `IntakeGeodesicCook.v : sheet_chord_misses_pole`, not reminted | `IntakeKarneyPark.v : ticket_0007_karney_chord_not_geodesic_qed_or_qex` |
+| K2 ellipsoid geodesic ≠ sheet chord | **QEX** — pointer to G3 `IntakeGeodesicCook.v : sheet_chord_misses_pole`, not reminted; a chord-hit (`on_chord`) term, not an inverse-problem statement (inverse is K1) | `IntakeKarneyPark.v : ticket_0007_karney_chord_not_geodesic_qed_or_qex` |
 | K3 new sheet class | **QEX** — an ellipsoid sheet does not inhabit ADR-0007 `Sheet` = (O; e1, e2); a new ADR is required | `IntakeKarneyPark.v : ticket_0007_karney_new_sheet_class_qed_or_qex` |
 
 Not claimed: that the corpus solves the inverse geodesic problem. Karney is a named park (ambient ellipsoid), not a discharge of G3. ADR-0007 stays Accepted.

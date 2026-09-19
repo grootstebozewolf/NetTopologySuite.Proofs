@@ -39,6 +39,7 @@
            counterexample. No iterator is faked to "prove" it.
    K2 QEX  ellipsoid geodesic <> sheet chord: pointer to G3
            (IntakeGeodesicCook.v : sheet_chord_misses_pole), not reminted.
+           A chord-hit term (on_chord), not the inverse problem (that is K1).
    K3 QEX  a new sheet class (ellipsoid with a geodesic interpolant) does
            not inhabit ADR-0007 Sheet = (O; e1, e2); a new ADR is required.
 
@@ -133,9 +134,12 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §4  K2: ellipsoid geodesic <> sheet chord — pointer to G3, not a remint.    *)
+(*     Chord-hit term, not the inverse: sheet_chord_misses_pole is on_chord     *)
+(*     membership of one point (Hit / Empty vocabulary). It says nothing about  *)
+(*     alpha_1 / s_12 or any inverse solution; the inverse is K1's park only.   *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-karney-2013-ingest","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 ellipsoid geodesic is not the sheet chord: reuses G3 sheet_chord_misses_pole (chord (-90,45)-(90,45) never reaches (0,90)) and IG_AmbientManifold / IG_EllipsoidGamma stay uninhabited (QEX); or the sheet chord is the surface geodesic (QED); discharged QEX; no new term minted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-karney-2013-ingest","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 ellipsoid geodesic is not the sheet chord: reuses G3 sheet_chord_misses_pole (chord (-90,45)-(90,45) never reaches (0,90)), a chord-hit (on_chord) term and not an inverse-problem statement, and IG_AmbientManifold / IG_EllipsoidGamma stay uninhabited (QEX); or the sheet chord is the surface geodesic (QED); discharged QEX; no new term minted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
 Theorem ticket_0007_karney_chord_not_geodesic_qed_or_qex :
   (exists t, on_chord g3_chord t g3_pole)
   \/
