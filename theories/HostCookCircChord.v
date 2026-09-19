@@ -58,6 +58,21 @@ Proof.
     nra.
 Qed.
 
+Lemma mixed_sqrt2_neq_0 : sqrt 2 <> 0.
+Proof.
+  apply Rgt_not_eq. apply sqrt_lt_R0. lra.
+Qed.
+
+Lemma mixed_inv_sqrt2 : 1 / sqrt 2 = sqrt 2 / 2.
+Proof.
+  unfold Rdiv.
+  apply (Rmult_eq_reg_r (sqrt 2)); [|exact mixed_sqrt2_neq_0].
+  rewrite Rmult_assoc, (Rinv_l (sqrt 2) mixed_sqrt2_neq_0), Rmult_1_r.
+  replace (sqrt 2 * / 2 * sqrt 2) with (sqrt 2 * sqrt 2 * / 2) by ring.
+  rewrite (sqrt_sqrt 2 ltac:(lra)).
+  field.
+Qed.
+
 Lemma mixed_ti_in_01 : 0 <= mixed_ti <= 1.
 Proof. unfold mixed_ti. lra. Qed.
 
@@ -73,7 +88,7 @@ Proof.
   unfold circ_eval, mixed_circ, mixed_ti, mixed_hit_pt.
   cbn [px py circ_o circ_r circ_theta0 circ_sweep].
   replace (0 + (1 / 2) * (PI / 2)) with (PI / 4) by (pose proof PI_RGT_0; field; lra).
-  rewrite cos_PI4, sin_PI4.
+  rewrite cos_PI4, sin_PI4, mixed_inv_sqrt2.
   apply (f_equal2 mkPoint); field.
 Qed.
 
@@ -194,6 +209,8 @@ Proof.
   rewrite (proj1 (circ_split_join mixed_circ mixed_ti)).
   rewrite (proj2 (circ_split_join mixed_circ mixed_ti)).
   rewrite mixed_circ_at_ti.
+  rewrite (chord_eval_at_1 (fst (chord_split mixed_chord mixed_tj))).
+  rewrite (chord_eval_at_0 (snd (chord_split mixed_chord mixed_tj))).
   rewrite (proj1 (chord_split_join mixed_chord mixed_tj)).
   rewrite (proj2 (chord_split_join mixed_chord mixed_tj)).
   rewrite mixed_chord_at_tj.
@@ -267,13 +284,11 @@ Definition mint_two_tj_minus : R := (2 - sqrt 3) / 4.
 
 Lemma mint_two_sqrt3_bound : 1 < sqrt 3 < 2.
 Proof.
+  pose proof (sqrt_lt_R0 3 ltac:(lra)) as Hpos.
+  pose proof (sqrt_sqrt 3 ltac:(lra)) as Hsq.
   split.
-  - assert (1 * 1 < sqrt 3 * sqrt 3).
-    { rewrite sqrt_sqrt; lra. }
-    nra.
-  - assert (sqrt 3 * sqrt 3 < 2 * 2).
-    { rewrite sqrt_sqrt; lra. }
-    nra.
+  - apply Rsqr_incrst_0; unfold Rsqr; lra.
+  - apply Rsqr_incrst_0; unfold Rsqr; lra.
 Qed.
 
 Lemma mint_two_plus_on_circ :

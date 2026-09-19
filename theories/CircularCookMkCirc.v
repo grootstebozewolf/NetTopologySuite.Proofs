@@ -12,7 +12,7 @@
      B: O=(5,0) r=5 θ₀=π/2 Δθ=π/2   (5,5) → (0,0)
    Hit at (5/2, 5√3/2) with (tᵢ, tⱼ) = (2/3, 1/3). try_cook_hit mints.
 
-   MkOutOfScope EggCircularArc stays Decline. Mixed stays sidecar.
+   MkOutOfScope EggCircularArc stays Decline. Mixed Empty is host I_ok.
    Not CircularString / CompoundCurve / Circle-as-own-type. Not nlerp.
 
    WITNESS topic: overlay / core · claimId: 0007-gamma-mkcirc
@@ -294,12 +294,20 @@ Proof.
   cbn [px py ce_p0 ce_p1 circ_o circ_r circ_theta0 circ_sweep] in Hx, Hy.
   rewrite Hx in Hy.
   injection Hy as Hpx Hpy.
+  replace (0 + t2 * (PI / 2)) with (t2 * (PI / 2)) in Hpx, Hpy by ring.
+  replace ((1 - t1) * 0 + t1 * 0) with 0 in Hpy by ring.
+  replace (0 + 5 * sin (t2 * (PI / 2))) with (5 * sin (t2 * (PI / 2))) in Hpy by ring.
+  replace ((1 - t1) * 0 + t1 * 1) with t1 in Hpx by ring.
+  replace (0 + 5 * cos (t2 * (PI / 2))) with (5 * cos (t2 * (PI / 2))) in Hpx by ring.
   pose proof PI_RGT_0 as Hpi.
   assert (Hle : 0 <= t2 * (PI / 2)) by nra.
   destruct (Rle_lt_or_eq_dec 0 (t2 * (PI / 2)) Hle) as [Hlt | Heq].
-  - assert (0 < t2 * (PI / 2) < PI).
-    { split; [exact Hlt|]. nra. }
-    pose proof (sin_gt_0 (t2 * (PI / 2)) H) as Hsg.
+  - assert (HltPI : t2 * (PI / 2) < PI).
+    { apply Rle_lt_trans with (r2 := 1 * (PI / 2)).
+      - destruct Ht2 as [_ Ht2b].
+        apply Rmult_le_compat_r; [lra | exact Ht2b].
+      - lra. }
+    pose proof (sin_gt_0 (t2 * (PI / 2)) Hlt HltPI) as Hsg.
     lra.
   - rewrite <- Heq, cos_0 in Hpx.
     lra.
