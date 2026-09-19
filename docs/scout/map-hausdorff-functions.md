@@ -135,7 +135,7 @@ Last port comment: JTS-1.10 `DiscreteHausdorffDistance`. No
 | Already Green | Remaining ask (ticket 10; do not remint) |
 |---|---|
 | `HausdorffDiscrete.v : directed_discrete_hausdorff_max_min` (`423-a`) | Densification bound landed: `HausdorffDensify.v : densify_step_bound` (line 1); line 2 below remains |
-| `HausdorffMetricSym.v` / `HausdorffMetricInstance.v` (HKR symmetrization, discrete instance) | Oracle modes `HAUSDORFF_DIRECTED` / `HAUSDORFF_SYMM` |
+| `HausdorffMetricSym.v` / `HausdorffMetricInstance.v` (HKR symmetrization, discrete instance) | Oracle modes landed: `HAUSDORFF_DIRECTED` / `HAUSDORFF_SYMM` over `HausdorffDiscreteQ.v : q_ddh_sq` (line 2); #423 stays open (Fréchet gap, NTS#812, locus class) |
 | `FrechetDiscrete.v` / `423-b` discrete Fréchet | — |
 | `Linearise.v : hausdorff_le` sandwich | **Not** the engine. Do not steal it as the densify bound |
 

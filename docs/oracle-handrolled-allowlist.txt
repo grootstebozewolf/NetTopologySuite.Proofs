@@ -473,3 +473,14 @@ run_envelope_unified
 # non-degenerate inputs; on-boundary behaviour (point on vertex/edge) returns 0
 # consistently (implementation-defined, documented in gen_winding_number_tests.py).
 run_winding_number
+
+# --- HAUSDORFF_DIRECTED / HAUSDORFF_SYMM : INTERFACE-BOUNDARY -----------------
+# Mode: HAUSDORFF_DIRECTED / HAUSDORFF_SYMM (#423 ticket-10 line 2).
+# Java/C#: JTS DiscreteHausdorffDistance.distance / orientedDistance (NTS
+# DiscreteHausdorffDistance.Distance) return Math.sqrt of the squared
+# max-min; the sqrt is the transcendental step with no Coq-extractable form.
+# Exact companion: the squared value is the Coq-EXTRACTED rational
+# HausdorffDiscreteQ.q_ddh_sq / q_hsymm_sq (agreement theorems q_ddh_sq_R /
+# q_hsymm_sq_R against HausdorffDensify.directed_discrete_h), printed as the
+# second wire token `num/den`; the float token is sqrt(num/den) rounded once.
+hausdorff_wire_of_q

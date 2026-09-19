@@ -1634,6 +1634,99 @@ let run_i_circular () =
       end
   | _ -> print_endline "NAN"
 
+(* ----- HAUSDORFF_DIRECTED / HAUSDORFF_SYMM (claimId 423-t10-oracle).
+   ---------------------------------------------------------------------------
+   Extracted HausdorffDiscreteQ.q_ddh_sq / q_hsymm_sq: JTS
+   DiscreteHausdorffDistance's h -- vertices of A against the WHOLE geometry B
+   (point-to-segment), unsquared -- computed exactly on Q as the squared value
+   and printed as sqrt (the single float step) beside the exact rational
+   companion.  Not the locus value (DirectedHausdorffDistance); not 423-a's
+   vertex-to-vertex value.
+   Input:  <nA> then nA lines `x y`, <nB> then nB lines `x y`; tokens are
+           exact decimals (digits, optional leading '-', at most one '.').
+   Output: `<h> <num>/<den>`  where num/den = h^2 exactly (Qred canonical),
+           h = sqrt(num/den) as %.17g;  or NAN (bad token, or a polyline with
+           fewer than two points: the proven domain needs an edge). *)
+let rec bigz_of_coq_pos (p : positive) : BigZ.t =
+  match p with
+  | XH -> BigZ.one
+  | XO p' -> BigZ.shift_left (bigz_of_coq_pos p') 1
+  | XI p' -> BigZ.add (BigZ.shift_left (bigz_of_coq_pos p') 1) BigZ.one
+
+let bigz_of_coq_z (x : z) : BigZ.t =
+  match x with
+  | Z0 -> BigZ.zero
+  | Zpos p -> bigz_of_coq_pos p
+  | Zneg p -> BigZ.neg (bigz_of_coq_pos p)
+
+(* Exact decimal -> Q.  "-12.50" -> -1250 / 100.  None on any other shape. *)
+let parse_decimal_q (s : string) : q option =
+  let n = String.length s in
+  if n = 0 then None
+  else
+    let neg = s.[0] = '-' in
+    let start = if neg then 1 else 0 in
+    if start >= n then None
+    else
+      let body = String.sub s start (n - start) in
+      match String.split_on_char '.' body with
+      | [ip] when integer_token ip ->
+          let num = BigZ.of_string ip in
+          let num = if neg then BigZ.neg num else num in
+          Some { qnum = coq_z_of_bigz num; qden = XH }
+      | [ip; fp] when integer_token ip && integer_token fp ->
+          let k = String.length fp in
+          let scale = BigZ.pow (BigZ.of_int 10) k in
+          let num = BigZ.add (BigZ.mul (BigZ.of_string ip) scale) (BigZ.of_string fp) in
+          let num = if neg then BigZ.neg num else num in
+          Some { qnum = coq_z_of_bigz num; qden = coq_pos_of_bigz scale }
+      | _ -> None
+
+let parse_qpt_line (line : string) : qPt option =
+  match List.filter (fun t -> t <> "") (String.split_on_char ' ' (String.trim line)) with
+  | [x; y] ->
+      begin match parse_decimal_q x, parse_decimal_q y with
+      | Some qx, Some qy -> Some { qx; qy }
+      | _ -> None
+      end
+  | _ -> None
+
+(* Reads `<n>` then n point lines.  All n lines are consumed even when a
+   token is malformed, so a NAN reply leaves the mode stream aligned. *)
+let parse_qpt_list () : qPt list option =
+  match int_of_string_opt (String.trim (input_line stdin)) with
+  | None -> None
+  | Some n when n < 0 -> None
+  | Some n ->
+      let lines = List.init n (fun _ -> input_line stdin) in
+      List.fold_right
+        (fun line acc ->
+           match parse_qpt_line line, acc with
+           | Some p, Some ps -> Some (p :: ps)
+           | _ -> None)
+        lines (Some [])
+
+(* INTERFACE-BOUNDARY (docs/oracle-handrolled-allowlist.txt): the one float
+   step -- sqrt of the exact rational companion, as JTS Math.sqrt would round
+   it.  The rational is printed beside it. *)
+let hausdorff_wire_of_q (v : q) : string =
+  let num = bigz_of_coq_z v.qnum in
+  let den = bigz_of_coq_pos v.qden in
+  let h = sqrt (float_of_string (BigZ.to_string num) /. float_of_string (BigZ.to_string den)) in
+  Printf.sprintf "%.17g %s/%s" h (BigZ.to_string num) (BigZ.to_string den)
+
+let run_hausdorff (symm : bool) () =
+  let a = parse_qpt_list () in
+  let b = parse_qpt_list () in
+  match a, b with
+  | Some a, Some b when List.length a >= 2 && List.length b >= 2 ->
+      let v = if symm then q_hsymm_sq a b else q_ddh_sq a b in
+      print_endline (hausdorff_wire_of_q v)
+  | _ -> print_endline "NAN"
+
+let run_hausdorff_directed () = run_hausdorff false ()
+let run_hausdorff_symm () = run_hausdorff true ()
+
 (* ----- DISC_OVERLAY (OV-DISC / OverlayNGCurve two-disc closed form).
    ---------------------------------------------------------------------------
    Exact two-disc overlay of FULL circular discs (not general circular noding).
@@ -4807,6 +4900,8 @@ let () =
        | "ARC_DISTANCE"             -> run_arc_distance ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
+       | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()
+       | "HAUSDORFF_SYMM"           -> run_hausdorff_symm ()
        | "DISC_OVERLAY"             -> run_disc_overlay ()
        | "LEC_CIRCLE"               -> run_lec_circle ()
        | "OBSTACLE_DISTANCE"        -> run_obstacle_distance ()

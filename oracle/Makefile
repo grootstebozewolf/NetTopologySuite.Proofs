@@ -59,6 +59,10 @@ arc-arc-tests: $(TARGET)
 i-circular-tests: $(TARGET)
 	cd .. && python3 oracle/gen_i_circular_tests.py
 
+# Extracted q_ddh_sq / q_hsymm_sq (HAUSDORFF_DIRECTED / HAUSDORFF_SYMM, #423 t10 line 2).
+hausdorff-tests: $(TARGET)
+	cd .. && python3 oracle/gen_hausdorff_tests.py
+
 # IEEE↔R bridge (claimId 0007-ieee-oracle-bridge): existing keywords only
 # (INTERSECT_FILTERED / INTERSECT_POINT_XY / OVERLAY_UNIFIED / ORIENT).
 # Gates NodingNG Hit/Empty + OverlayNG/RelateNG 67-c parallel chords.
