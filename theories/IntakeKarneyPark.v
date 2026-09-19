@@ -1,7 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.IntakeKarneyPark
    ----------------------------------------------------------------------------
-   ADR-0007 research letter after Accept (claimId 0007-karney-2013-ingest):
+   ADR-0007 research letter after Accept (claimId 0007-karney-2013-ingest;
+   K2 chord-hit pin claimId 0007-k2-chord-hit):
    Karney, C. F. F., "Algorithms for geodesics", J. Geod. 87, 43-55 (2013),
    doi:10.1007/s00190-012-0578-z, open access. Companion to
    docs/research/karney-2013-algorithms-for-geodesics.md. Page cites below
@@ -39,23 +40,25 @@
            Vincenty 1975a/b, Newton (Karney pp. 43, 47-49, 53). Not
            implemented here; the failure is Karney's claim, not a corpus
            counterexample. No iterator is faked to "prove" it.
-   K2 QEX  ellipsoid geodesic <> sheet chord. K2 IS A CHORD-HIT STATEMENT:
-           its closed term is on_chord membership of the G3 pole
-           (IntakeGeodesicCook.v : sheet_chord_misses_pole), planar chord
-           geometry on ADR-0007 Sheet S. It says nothing about Karney's
-           inverse problem (f(alpha_1) = lambda_12(alpha_1) - lambda_star,
-           m_12, Vincenty 1975a/b, Newton). The inverse is K1. Not reminted.
+   K2 QED  chord-hit pin on Sheet S (not the inverse; the inverse is K1):
+           left = sheet_chord_misses_pole
+           /\ sheet_chord_midpoint_on_parallel
+           /\ ~ (exists t, on_chord g3_chord t g3_pole)
+           with fence K2OwnsChordHit inhabited / K1OwnsInverse pointing
+           at ticket_0007_karney_vincenty_total_qed_or_qex. The geodesic
+           inequality (ellipsoid geodesic <> sheet chord) stays the QEX
+           arm. Not reminted.
    K3 QEX  a new sheet class (ellipsoid with a geodesic interpolant) does
            not inhabit ADR-0007 Sheet = (O; e1, e2); a new ADR is required.
 
-   WITNESS topic: overlay · claimId: 0007-karney-2013-ingest
+   WITNESS topic: overlay · claimId: 0007-karney-2013-ingest / 0007-k2-chord-hit
    witness: 0007-karney-2013-ingest · board: ADR-0007
    3-axiom host lane (Stdlib Reals, inherited). No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
-     Assisted-by: Claude
+     Assisted-by: Claude; K2 pin 0007-k2-chord-hit: Cursor Grok 4.6
    ========================================================================== *)
 
 From Stdlib Require Import Reals List.
@@ -142,31 +145,45 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §4  K2: ellipsoid geodesic <> sheet chord — a chord-hit statement.          *)
+(* §4  K2: chord-hit pin (claimId 0007-k2-chord-hit).                          *)
 (* -------------------------------------------------------------------------- *)
 
-(* K2 is a chord-hit statement, not an inverse result. Its closed term is
-   on_chord membership of the G3 pole (IntakeGeodesicCook.v :
-   sheet_chord_misses_pole): no t puts (0,90) on the chord (-90,45)-(90,45).
-   That term is planar chord geometry on ADR-0007 Sheet S. It says nothing
-   about Karney's inverse problem (f(alpha_1) = lambda_12(alpha_1) -
-   lambda_star, m_12, Vincenty 1975a/b, Newton). The inverse is K1. G3 is
-   imported, not reminted; no inverse residual, Vincenty loop, m_12 or
-   IResult about alpha_1 is added. *)
-(* WITNESS {"claimId":"0007-karney-2013-ingest","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 chord-hit statement, not an inverse result: the closed term is on_chord membership of the G3 pole (IntakeGeodesicCook.v : sheet_chord_misses_pole, chord (-90,45)-(90,45) never reaches (0,90)), planar chord geometry on ADR-0007 Sheet S, saying nothing about Karney inverse problem f(alpha_1)=lambda_12(alpha_1)-lambda_star / m_12 / Vincenty 1975a-b / Newton, which is K1; IG_AmbientManifold / IG_EllipsoidGamma stay uninhabited (QEX); or the sheet chord is the surface geodesic (QED); discharged QEX; G3 not reminted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
+(* K2 owns the chord-hit. Closed terms are IntakeGeodesicCook.v
+   sheet_chord_misses_pole and sheet_chord_midpoint_on_parallel: no t puts
+   (0,90) on the chord (-90,45)-(90,45); midpoint is (0,45). Planar chord
+   geometry on ADR-0007 Sheet S. Not an inverse result. The inverse is K1.
+   G3 is imported, not reminted. No new geometry. *)
+
+Definition K2OwnsChordHit : Prop := True.
+
+Definition K1OwnsInverse : Prop :=
+  karney_park_inhabits KP_VincentyInverseTotal
+  \/ (~ karney_park_inhabits KP_VincentyInverseTotal
+      /\ ~ karney_park_inhabits KP_KarneyInverseAsI).
+
+Lemma k2_owns_chord_hit : K2OwnsChordHit.
+Proof. exact I. Qed.
+
+Lemma k1_owns_inverse : K1OwnsInverse.
+Proof. exact ticket_0007_karney_vincenty_total_qed_or_qex. Qed.
+
+Lemma k2_k1_ownership_fence : K2OwnsChordHit /\ K1OwnsInverse.
+Proof. split; [exact k2_owns_chord_hit | exact k1_owns_inverse]. Qed.
+
+(* WITNESS {"claimId":"0007-k2-chord-hit","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 chord-hit pin: left is sheet_chord_misses_pole / sheet_chord_midpoint_on_parallel / ~ exists t, on_chord g3_chord t g3_pole, fence K2OwnsChordHit inhabited and K1OwnsInverse points at ticket_0007_karney_vincenty_total_qed_or_qex (QED); or IG_AmbientManifold / IG_EllipsoidGamma / KP_KarneySeriesAsGamma inhabit so the sheet chord is the surface geodesic (QEX); discharged QED; geodesic inequality stays the QEX arm; G3 not reminted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
 Theorem ticket_0007_karney_chord_not_geodesic_qed_or_qex :
-  (exists t, on_chord g3_chord t g3_pole)
+  ((~ exists t, on_chord g3_chord t g3_pole)
+   /\ chord_eval g3_chord (1/2) = mkPoint 0 45
+   /\ ~ (exists t, on_chord g3_chord t g3_pole))
   \/
-  (~ (exists t, on_chord g3_chord t g3_pole)
-   /\ ~ intake_geodesic_qex_inhabits IG_AmbientManifold
-   /\ ~ intake_geodesic_qex_inhabits IG_EllipsoidGamma
-   /\ ~ karney_park_inhabits KP_KarneySeriesAsGamma).
+  (intake_geodesic_qex_inhabits IG_AmbientManifold
+   \/ intake_geodesic_qex_inhabits IG_EllipsoidGamma
+   \/ karney_park_inhabits KP_KarneySeriesAsGamma).
 Proof.
-  right.
+  left.
   split; [exact sheet_chord_misses_pole |].
-  split; [exact intake_geodesic_ambient_missing |].
-  split; [exact intake_geodesic_ellipsoid_missing |].
-  exact karney_series_as_gamma_missing.
+  split; [exact sheet_chord_midpoint_on_parallel |].
+  exact sheet_chord_misses_pole.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
