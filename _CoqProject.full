@@ -3350,6 +3350,7 @@ theories/LECArcRow.v
 # facet's endpoint is at 5).  Oracle OBSTACLE_DISTANCE SEG row §H pins.
 # Full-only: imports LargestEmptyCircle.v, LECObstacleDistance.v.
 theories/LECSegmentRow.v
+theories/HausdorffDensify.v
 
 # The LEC n-ary FLATTEN row (ledger rung "CompoundCurve / n-ary flatten"
 # closed + failed path F5).  Generic exact_clearance algebra (union = Rmin,
