@@ -2938,6 +2938,11 @@ theories/IntakeGeodesicCook.v
 theories/IntakeKarneyPark.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
+# #66 C2 / width 2^25 / arc-Hobby park (claimId 66-c2-width-split).
+# Host/pure-R. Named missing ctors PassesThroughWidth25 /
+# RoundedFilterC2 / ArcHobbyAnalog. C1 2^22 stays Qed. Do not remint
+# #518 / Hobby 4.1 / #805. 0-axiom. No Admitted.
+theories/PassesThroughC2WidthPark.v
 # Exact chord × three-point-arc classifier (I_line_arc_q / I_line_arc_z):
 # Hit2 | Hit1 | Touch | Empty | Decline from sign tests only — no sqrt,
 # no atan2; hens mirror I_circles_z. 0-axiom. Map #767 seam (research #772).
