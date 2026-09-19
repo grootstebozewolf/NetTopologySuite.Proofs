@@ -1219,7 +1219,7 @@ Status stays **Accepted**. Parks Γ / ι / ρ.
 |------|-----|-------|
 | `RelateNGFace.v : ticket_0007_relateng_face_qed_or_qex` | **QED** — DE-9IM matrix/witness + honesty decline + 67-c line×line pin on NodingNG-noded chords; not NodingNG / OverlayNG snap / Shewchuk / DCEL | `RelateNGFace.v : relateng_face_inhabits`, `RelateNGFace.v : relateng_honesty_decline`, `RelateNGFace.v : relateng_locked_line_line_pin`, `RelateNGFace.v : relateng_consumes_nodingng` |
 | `RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex` | **QEX** — completeness false; T-junction fill stays `im_unsupported`; do not mint `522-n` | `RelateNGComplete.v : triangle_pair_regime_ccw_incomplete`, `RelateNGDisjoint.v : relate_tjunction_pair_no_predicate` |
-| `RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex` | **QEX** — full Jordan true-region, S15l+ multi-geom, ticket 523 ISO `?`; `cell_none_iff_empty` stays Coq emptiness | `RelateNGFace.v : relateng_jordan_true_region_missing`, `RelateCurveAlphabet.v : question_mark_not_iso_result`, `RelateCurveMatrix.v : cell_none_iff_empty` |
+| `RelateNGFace.v : ticket_0007_relateng_parks_qed_or_qex` | **QEX** — taut polygonal closed Jordan true-region **inhabited** (`RelateNGJordanTrueRegion.v : relateng_jordan_true_region_taut`: vertex-free height, guarded witnesses, bounded odd + unbounded even component); unconditional curve Jordan (`RNG_JordanUncond`), S15l+ multi-geom, ticket 523 ISO `?` stay parks; `cell_none_iff_empty` stays Coq emptiness | `RelateNGFace.v : relateng_jordan_true_region_inhabits`, `RelateCurveAlphabet.v : question_mark_not_iso_result`, `RelateCurveMatrix.v : cell_none_iff_empty` |
 
 Witness: `0007-relateng-face`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
