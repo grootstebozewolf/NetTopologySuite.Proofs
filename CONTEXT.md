@@ -239,16 +239,6 @@ Not Fresnel-as-noding. Not a silent `I_ok` demote to `on_chord`.
 _Avoid_: Fresnel noding, Halley noding, mixed first cook, Campaign I,
 new oracle keyword
 
-**NURBS first-cook** (ADR-0007, claimId `0007-nurbs-first-cook`):
-Host `EggNurbs × EggNurbs` is in `first_cook_scope`. Locked
-`MkNurbs` pair inhabits host `IHit` via `on_nurbs` (Cox-de-Boor-free
-chord-parameter interpolant). `try_cook_hit` mints `MkNurbs`
-hens. Tags stay Decline. Mixed NURBS×chord stays Decline.
-Not length / Cox-de-Boor as noding. Not a silent `I_ok` demote
-to `on_chord`.
-_Avoid_: length-as-noding, Cox-de-Boor noding, mixed first cook,
-SIN / ellipse / spiral first cook, Campaign I, new oracle keyword
-
 **SQL/MM signed tag** (ADR-0007, claimId `0007-sqlmm-signed-tag`):
 Rungs 3–6 of τ=μ. Achievable ring is locked `exists b e`
 agreement (not ∀ on all CSTs). `τ = first_slice_tag` on eggs;
@@ -611,8 +601,7 @@ ADR-0007 vocabulary (`SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`,
 tag `I_ok` is Decline; tag `try_cook_hit` is None. Locked unit-square
 chords demote to NodingNG / host first cook, not a NURBS Hit.
 Host `MkNurbs` inhabits. NURBS×NURBS is first cook
-(`SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex`,
-`NurbsCookMkNurbs.v : ticket_0007_nurbs_first_cook_qed_or_qex`).
+(`NurbsCookMkNurbs.v : ticket_0007_nurbs_first_cook_qed_or_qex`).
 #508 length / golden quarter stay metric. Not Campaign I–II.
 _Avoid_: length-as-noding, Cox-de-Boor, NURBS noder, Campaign I
 
