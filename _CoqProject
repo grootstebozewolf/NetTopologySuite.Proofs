@@ -231,3 +231,8 @@ theories/CircularCookZ.v
 # RoundedFilterC2 / ArcHobbyAnalog. C1 2^22 stays Qed. Do not remint
 # #518 / Hobby 4.1 / #805. 0-axiom. No Admitted.
 theories/PassesThroughC2WidthPark.v
+# #423 ticket-10 densify line 2 (claimId 423-t10-densify-line2).
+# Host/pure-R. Named missing ctor LocusHausdorffSymEngine.
+# Line 1 + HotPixel form-(b) stay the ceiling. #423 stays open.
+# Chainsaw ≠ Laser. No Axiom / Parameter / stub.
+theories/HausdorffDensifyLine2.v
