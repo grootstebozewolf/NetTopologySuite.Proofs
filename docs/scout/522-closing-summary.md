@@ -1,10 +1,13 @@
-# #522 closing summary — owner sign-off requested
+# #522 closing summary — owner ratified 2026-09-19
 
 claimId: `522-l` · witness: `522-l-wrap-up`
 
 This is the wrap-up letter for
 [#522](https://github.com/grootstebozewolf/NetTopologySuite.Proofs/issues/522).
-It does **not** retire the epic. Owner review retires it.
+The epic was closed 2026-08-31 by `cursor[bot]`, not by owner sign-off as
+this letter originally required — the owner ratified that closure
+2026-09-19 (wayfinder #822 → #827) after re-confirming the substance
+below still holds. See the issue for the ratifying comment.
 
 ## Destination (met for the wired triangle regimes)
 
