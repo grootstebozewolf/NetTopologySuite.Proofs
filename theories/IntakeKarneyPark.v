@@ -34,12 +34,17 @@
    Tickets (QED or QEX, no third status):
    K0 QED  the paper is not planar intake: GEODESICSTRING mu stays MkChord,
            Karney's ellipsoidal triangle NAB is not that bag.
-   K1 QEX  Vincenty's inverse is not total. Not implemented here; the
-           failure is Karney's claim (p. 43, p. 49, p. 53), not a corpus
+   K1 QEX  Vincenty's inverse is not total. K1 OWNS THE INVERSE: the inverse
+           problem is f(alpha_1) = lambda_12(alpha_1) - lambda_star, m_12,
+           Vincenty 1975a/b, Newton (Karney pp. 43, 47-49, 53). Not
+           implemented here; the failure is Karney's claim, not a corpus
            counterexample. No iterator is faked to "prove" it.
-   K2 QEX  ellipsoid geodesic <> sheet chord: pointer to G3
-           (IntakeGeodesicCook.v : sheet_chord_misses_pole), not reminted.
-           A chord-hit term (on_chord), not the inverse problem (that is K1).
+   K2 QEX  ellipsoid geodesic <> sheet chord. K2 IS A CHORD-HIT STATEMENT:
+           its closed term is on_chord membership of the G3 pole
+           (IntakeGeodesicCook.v : sheet_chord_misses_pole), planar chord
+           geometry on ADR-0007 Sheet S. It says nothing about Karney's
+           inverse problem (f(alpha_1) = lambda_12(alpha_1) - lambda_star,
+           m_12, Vincenty 1975a/b, Newton). The inverse is K1. Not reminted.
    K3 QEX  a new sheet class (ellipsoid with a geodesic interpolant) does
            not inhabit ADR-0007 Sheet = (O; e1, e2); a new ADR is required.
 
@@ -118,10 +123,14 @@ Qed.
 (* §3  K1: Vincenty's inverse is not total — QEX, not implemented here.        *)
 (* -------------------------------------------------------------------------- *)
 
-(* Not implemented here; the failure is Karney's claim (p. 43: "Vincenty's
-   method fails to converge for nearly antipodal points"; p. 49; p. 53), not a
-   corpus counterexample. The QED arm would be a total IResult-valued
-   Vincenty inverse in this corpus; none exists and none is faked. *)
+(* K1 owns the inverse. The inverse problem is the root-finding
+   f(alpha_1) = lambda_12(alpha_1) - lambda_star solved by Newton with the
+   reduced length m_12 (Karney pp. 47-49); Vincenty 1975a iterates Helmert and
+   fails to converge near antipodes, Vincenty 1975b sometimes needs many
+   thousands of iterations (p. 43, p. 49, p. 53). None of that is implemented
+   here; the failure is Karney's claim, not a corpus counterexample. The QED
+   arm would be a total IResult-valued Vincenty inverse in this corpus; none
+   exists and none is faked. K2 below is not about the inverse. *)
 (* WITNESS {"claimId":"0007-karney-2013-ingest","topic":"overlay","lemma":"ticket_0007_karney_vincenty_total_qed_or_qex","title":"K1 Vincenty inverse totality: a total IResult-valued Vincenty (1975a) inverse inhabits this corpus (QED); or it is not implemented here and its non-convergence near antipodes is Karney's claim (pp. 43, 49, 53), not a corpus counterexample (QEX); discharged QEX","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
 Theorem ticket_0007_karney_vincenty_total_qed_or_qex :
   karney_park_inhabits KP_VincentyInverseTotal
@@ -133,13 +142,18 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §4  K2: ellipsoid geodesic <> sheet chord — pointer to G3, not a remint.    *)
-(*     Chord-hit term, not the inverse: sheet_chord_misses_pole is on_chord     *)
-(*     membership of one point (Hit / Empty vocabulary). It says nothing about  *)
-(*     alpha_1 / s_12 or any inverse solution; the inverse is K1's park only.   *)
+(* §4  K2: ellipsoid geodesic <> sheet chord — a chord-hit statement.          *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-karney-2013-ingest","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 ellipsoid geodesic is not the sheet chord: reuses G3 sheet_chord_misses_pole (chord (-90,45)-(90,45) never reaches (0,90)), a chord-hit (on_chord) term and not an inverse-problem statement, and IG_AmbientManifold / IG_EllipsoidGamma stay uninhabited (QEX); or the sheet chord is the surface geodesic (QED); discharged QEX; no new term minted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
+(* K2 is a chord-hit statement, not an inverse result. Its closed term is
+   on_chord membership of the G3 pole (IntakeGeodesicCook.v :
+   sheet_chord_misses_pole): no t puts (0,90) on the chord (-90,45)-(90,45).
+   That term is planar chord geometry on ADR-0007 Sheet S. It says nothing
+   about Karney's inverse problem (f(alpha_1) = lambda_12(alpha_1) -
+   lambda_star, m_12, Vincenty 1975a/b, Newton). The inverse is K1. G3 is
+   imported, not reminted; no inverse residual, Vincenty loop, m_12 or
+   IResult about alpha_1 is added. *)
+(* WITNESS {"claimId":"0007-karney-2013-ingest","topic":"overlay","lemma":"ticket_0007_karney_chord_not_geodesic_qed_or_qex","title":"K2 chord-hit statement, not an inverse result: the closed term is on_chord membership of the G3 pole (IntakeGeodesicCook.v : sheet_chord_misses_pole, chord (-90,45)-(90,45) never reaches (0,90)), planar chord geometry on ADR-0007 Sheet S, saying nothing about Karney inverse problem f(alpha_1)=lambda_12(alpha_1)-lambda_star / m_12 / Vincenty 1975a-b / Newton, which is K1; IG_AmbientManifold / IG_EllipsoidGamma stay uninhabited (QEX); or the sheet chord is the surface geodesic (QED); discharged QEX; G3 not reminted","file":"theories/IntakeKarneyPark.v","witness":"0007-karney-2013-ingest","board":"ADR-0007"} *)
 Theorem ticket_0007_karney_chord_not_geodesic_qed_or_qex :
   (exists t, on_chord g3_chord t g3_pole)
   \/
