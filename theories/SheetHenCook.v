@@ -166,7 +166,7 @@ Proof.
   intro H. exact H.
 Qed.
 
-(* Old ceiling nurbs_nurbs_not_first_scope retired (#838 Yes flip). *)
+(* Old pin nurbs_nurbs_not_first_scope discharged (#838 Yes flip). *)
 Lemma nurbs_nurbs_first_cook_scope :
   first_cook_scope EggNurbs EggNurbs.
 Proof.
