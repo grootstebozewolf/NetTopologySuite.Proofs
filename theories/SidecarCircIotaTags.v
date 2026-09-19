@@ -29,7 +29,7 @@
 
    T3b — host scope. QEX: mixed stays sidecar.
    ~ first_cook_scope EggChord EggCircularArc is re-proved here as the fence.
-   The donut machine is sidecar-complete on this pair class, not
+   The chord x arc machine is sidecar-complete on this pair class, not
    host-complete: cooked_line_arc_try is not try_cook_hit and I_ok_interior
    is not I_ok.
 
