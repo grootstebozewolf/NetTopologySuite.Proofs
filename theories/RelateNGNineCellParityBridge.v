@@ -205,6 +205,7 @@ Proof.
   split; [left; reflexivity|].
   apply left_boundary_in_rect_polygon; try lra.
   unfold point_on_rect_left_boundary, unit_sq_left_mid.
+  cbn [px py].
   split; [reflexivity|].
   split; lra.
 Qed.
@@ -213,11 +214,13 @@ Lemma unit_sq_left_mid_on_left_edge :
   RelateCurveMatrix.on_edge unit_sq_left_mid
     (mkPoint 0 1, mkPoint 0 0).
 Proof.
-  unfold RelateCurveMatrix.on_edge, unit_sq_left_mid, between.
+  unfold RelateCurveMatrix.on_edge, between, unit_sq_left_mid.
   exists (1 / 2).
+  cbn [px py fst snd].
   split; [lra|].
   split; [lra|].
-  split; simpl; field.
+  split; [field|].
+  field.
 Qed.
 
 Lemma unit_sq_left_mid_sbnd :
@@ -232,7 +235,6 @@ Proof.
   split.
   - unfold RelateCurveMatrix.poly_edges, rect_polygon, outer_ring, hole_rings.
     simpl.
-    rewrite app_nil_r.
     rewrite ring_edges_rect.
     simpl.
     right; right; right; left; reflexivity.
