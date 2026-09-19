@@ -41,7 +41,9 @@
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import
   RelateNGFace
+  RelateNGJordanTrueRegion
   JCT_VertexGrazingCounterexample
+  JordanRingKit
   CurveGeometry.
 Import ListNotations.
 Local Open Scope R_scope.
@@ -137,16 +139,16 @@ Definition locked_lens : CurveRing :=
 
 Lemma locked_lens_is_curve_ring : curve_ring locked_lens.
 Proof.
-  unfold curve_ring, valid_curve_ring.
-  split; [ unfold curve_ring_arcs_valid, locked_lens;
-           repeat constructor; [ exact locked_arc_valid | exact I ] | ].
+  unfold curve_ring, valid_curve_ring, locked_lens.
   split.
-  - unfold curve_ring_adjacent, curve_segment_end, curve_segment_start,
-      locked_lens, locked_arc.
-    split; reflexivity.
-  - unfold curve_ring_closed, curve_segment_end, curve_segment_start,
-      locked_lens, locked_arc.
-    reflexivity.
+  - unfold curve_ring_arcs_valid. repeat constructor. exact locked_arc_valid.
+  - split.
+    + unfold curve_ring_adjacent, curve_segment_end, curve_segment_start,
+        locked_arc.
+      split; reflexivity.
+    + unfold curve_ring_closed, curve_segment_end, curve_segment_start,
+        locked_arc.
+      reflexivity.
 Qed.
 
 Lemma locked_lens_has_arc_member :
