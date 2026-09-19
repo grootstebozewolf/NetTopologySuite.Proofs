@@ -2870,6 +2870,10 @@ theories/NodingNG.v
 # Host/pure-R. Reuses SheetHenCook + NodingNG. Hobby 4.1 stays QEX.
 # Not 𝓘 / cook / OverlayNGCurve / RelateNG. No Admitted.
 theories/OverlayNG.v
+# Hobby 4.1 host letter (claimId 0007-hobby-41-host).
+# Host/pure-R. Parks HostSnapRound / HostHobby41 / HostPairPreservation.
+# fully_intersected_host stays the #518 hyp, not 4.1. No Admitted.
+theories/Hobby41Host.v
 # ADR-0007 clothoid egg sidecar (SidecarClothoidEgg). Packages
 # EggClothoid tag-Decline + RelateClothoid chord-seed.
 # Host/pure-R. Host first cook includes clothoid×clothoid
