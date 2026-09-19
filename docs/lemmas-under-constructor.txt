@@ -90,3 +90,13 @@ theories-flocq/OverlayBridge.v :: snap_noding_bridge
 theories-flocq/OverlayCorrectness.v :: overlay_ng_correct_backward
 theories-flocq/OverlayCorrectness.v :: overlay_ng_correct_conditional
 theories-flocq/OverlayCorrectness.v :: overlay_ng_correct_forward
+
+# #518 core slice (theories/NodedGeneralPositionHost.v).  The lemma consumes
+# `fully_intersected_host` -- Hobby's "only at endpoints" read on Overlay's
+# proper crossing -- as a hypothesis by design: the slice is exactly the
+# arrow from Hobby's input invariant plus the named side condition
+# `shared_endpoints_noncollinear` to `noded_general_position`, the interface
+# NodedGeneralPosition.v hands to the twin-aware extractor.  It says nothing
+# about the input a caller handed in; the cook (chord_hit / oracle noding)
+# is what discharges the premise.  Filed, not counted as a headline.
+theories/NodedGeneralPositionHost.v :: noded_gp_of_fully_intersected_host

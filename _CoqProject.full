@@ -820,6 +820,7 @@ theories/FaceTwinAware.v
 # Records that slice 3i's collinear pair fails the strengthened predicate.
 # No Admitteds.
 theories/NodedGeneralPosition.v
+theories/NodedGeneralPositionHost.v
 # extract_rings_valid R5 bridge follow-up, corrected-plan step (4a):
 # H2 (fan_ok) from a vertex-level general-position condition.  seg_dir_cross
 # = vcross o ddir bridges step (3)'s vocabulary to fan_ok's parallel/ddir;
