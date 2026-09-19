@@ -5,8 +5,7 @@
    Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
-   (MkClothoid), NURBS–NURBS (scope; tags Decline, no MkNurbs).
-   Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
+   (MkClothoid), NURBS–NURBS (scope). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
    Bag cook loop is named QEX (LeftoverBagTermArm). CircGamma discharged
    by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
@@ -167,10 +166,7 @@ Proof.
   intro H. exact H.
 Qed.
 
-(* Old ceiling nurbs_nurbs_not_first_scope (~ first_cook_scope
-   EggNurbs EggNurbs) retired by claimId 0007-nurbs-nurbs-first-cook
-   (#838 Yes flip). A NURBS can fully overlap a circle, so ×self is
-   in cook scope. Tags still Decline; no MkNurbs / on_nurbs. *)
+(* Old ceiling nurbs_nurbs_not_first_scope retired (#838 Yes flip). *)
 Lemma nurbs_nurbs_first_cook_scope :
   first_cook_scope EggNurbs EggNurbs.
 Proof.
