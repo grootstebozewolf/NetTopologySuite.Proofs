@@ -66,9 +66,10 @@ Proof.
     + exists b. left. reflexivity.
     + destruct (IHcoupling p Hin) as [b' Hb'].
       exists b'. right. exact Hb'.
-  - destruct Hin as [-> | Hin].
+  - (* cpl_advB: A is a :: A on both sides; tail In p A lifts to In p (a :: A). *)
+    destruct Hin as [-> | Hin].
     + exists b. left. reflexivity.
-    + destruct (IHcoupling p Hin) as [b' Hb'].
+    + destruct (IHcoupling p (or_intror Hin)) as [b' Hb'].
       exists b'. right. exact Hb'.
   - destruct Hin as [-> | Hin].
     + exists b. left. reflexivity.
