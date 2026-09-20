@@ -3302,6 +3302,10 @@ theories/RelatePrepared.v
 # RelateNG* zoo, not NodingNG, not OverlayNG. No Admitted.
 theories/RelateNGJordanTrueRegion.v
 theories/RelateNGFace.v
+# Unconditional curve Jordan (claimId 0007-relateng-jordan-uncond):
+# UncondCurveHeight missing. #791 taut is not uncond.
+# RNG_JordanUncond stays a park. 3-axiom. No Axiom / Parameter.
+theories/RelateNGJordanUncond.v
 # Bible / CONTEXT prose ratchet (claimId 508-context-prose-ratchet).
 # Citation-only QED∨QEX stop. No new geometry. No Admitted.
 theories/ContextProseRatchet.v
