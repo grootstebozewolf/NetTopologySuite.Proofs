@@ -260,6 +260,161 @@ rules fail closed (throw naming the missing rung) — never an unchecked
 _Avoid_: invalid (for merely un-checked values), IsValid returns true (until
 the rung that checks it lands)
 
+### Named-field tokens (Year-1 absent)
+
+claimId: `context-named-field-tokens`
+witness: none
+
+WKT **named fields** from the grammar pin (antlr/grammars-v4 PR #4997,
+ISO/IEC 13249-3 §5.1.67). Not geometry types and not metrics. Every
+row is **Absent** (Year-1 omit), not “to implement”. Parallel to
+CP/MC/MS I/O; this letter does not wait. Year-2 geometry keywords
+(CIRCLE, NURBSCURVE, SPIRALCURVE, …) stay on those omit lists and
+on Backlog types, not here.
+
+#### ST_AffinePlacement / placement fields
+
+**AFFINEPLACEMENT**:
+WKT wrapper for support type ST_AffinePlacement (ISO 4.9.3). **Absent** (Year-1 omit).
+
+**LOCATION**:
+Placement origin. **Absent** (Year-1 omit).
+
+**UAXISLENGTH**:
+Placement axis scale (u). **Absent** (Year-1 omit).
+
+**VAXISLENGTH**:
+Placement axis scale (v). **Absent** (Year-1 omit).
+
+**SCALEFACTOR**:
+Placement / clothoid scale. **Absent** (Year-1 omit).
+
+**STARTANGLE**:
+Placement or clothoid bearing field. **Absent** (Year-1 omit).
+_Avoid_: STARTH (different production)
+
+**ENDANGLE**:
+Placement or clothoid bearing field. **Absent** (Year-1 omit).
+
+**STARTH**:
+Start heading field. **Absent** (Year-1 omit).
+_Avoid_: STARTANGLE (different production)
+
+#### ST_NURBSCurve / ST_NURBSPoint / ST_Knot (ISO 4.9.4–4.9.5, 7.7)
+
+**DEGREE**:
+NURBS degree field. **Absent** (Year-1 omit).
+
+**CONTROLPOINTS**:
+NURBS control-point list field. **Absent** (Year-1 omit).
+
+**NURBSPOINT**:
+One ST_NURBSPoint wrapper in that list. **Absent** (Year-1 omit).
+
+**WEIGHTEDPOINT**:
+Weighted control point inside NURBSPOINT. **Absent** (Year-1 omit).
+
+**WEIGHT**:
+NURBS weight field. **Absent** (Year-1 omit).
+_Avoid_: measure M
+
+**KNOTS**:
+Knot-list field. **Absent** (Year-1 omit).
+
+**KNOT**:
+One ST_Knot wrapper in that list. **Absent** (Year-1 omit).
+
+**VALUE**:
+Knot value field. **Absent** (Year-1 omit).
+_Avoid_: generic scalar
+
+**MULTIPLICITY**:
+Knot multiplicity. **Absent** (Year-1 omit).
+
+#### ST_Clothoid / ST_SpiralCurve (ISO 4.2.11–4.2.12, 7.8–7.9)
+
+**REFERENCELOCATION**:
+Clothoid / spiral placement origin field. ISO clothoid surface
+form (see Intake MkClothoid). **Absent** (Year-1 omit).
+
+**REFERENCEDIRECTIONS**:
+Placement axis directions. **Absent** (Year-1 omit).
+
+**STARTDISTANCE**:
+Clothoid / spiral start-parameter field. **Absent** (Year-1 omit).
+
+**ENDDISTANCE**:
+Clothoid / spiral end-parameter field. **Absent** (Year-1 omit).
+
+**STARTCURVATURE**:
+Spiral / clothoid start-curvature field. **Absent** (Year-1 omit).
+
+**ENDCURVATURE**:
+Spiral / clothoid end-curvature field. **Absent** (Year-1 omit).
+
+**LENGTH**:
+Curve-parameter length field on clothoid / spiral text. **Absent** (Year-1 omit).
+_Avoid_: Metric length
+
+**ENDM**:
+End measure (linear-referencing M). **Absent** (Year-1 omit).
+_Avoid_: end of Multi
+
+**SPIRALTYPE**:
+Open string set (ISO 4.2.12 initial: CLOTHOID, BLOSS, BIQUADRATIC,
+SINE, COSINE). Representation ≠ implementation. Year-1 fails
+closed on SPIRALCURVE; do not enumerate those names as types.
+**Absent** (Year-1 omit).
+
+#### TIN / PolyhedralSurface / CompoundSurface field tokens
+
+Members already omitted on the MULTISURFACE Year-1 card.
+
+**PATCHES**:
+Patch-list field on TIN / PolyhedralSurface text. **Absent** (Year-1 omit).
+
+**ELEMENTS**:
+Optional TIN element-list field. **Absent** (Year-1 omit).
+
+**POINTS**:
+Control / data point-list field. **Absent** (Year-1 omit).
+_Avoid_: Point geometry, CoordinateSequence
+
+**HOLE**:
+TIN / polyhedral hole field. **Absent** (Year-1 omit).
+_Avoid_: CurvePolygon interior ring
+
+**VOID**:
+TIN void field. **Absent** (Year-1 omit).
+
+**BREAKVOID**:
+TIN break-void field. **Absent** (Year-1 omit).
+
+**DRAPEVOID**:
+TIN drape-void field. **Absent** (Year-1 omit).
+
+**BREAKLINE**:
+TIN breakline field. **Absent** (Year-1 omit).
+
+**SOFTBREAK**:
+TIN soft-break field. **Absent** (Year-1 omit).
+
+**STOPLINE**:
+TIN stop-line field. **Absent** (Year-1 omit).
+
+**BOUNDARY**:
+TIN / polyhedral boundary field token. **Absent** (Year-1 omit).
+_Avoid_: Geometry.Boundary
+
+**CONTROL CONTOUR**:
+Two-word TIN contour field (keep the space). **Absent** (Year-1 omit).
+
+**GROUPSPOT**:
+TIN group-spot field. **Absent** (Year-1 omit).
+
+**MAXSIDELENGTH**:
+TIN maximum side-length field. **Absent** (Year-1 omit).
+
 ### Exact curves
 
 **Bible**:
@@ -301,6 +456,31 @@ but proved by `length_map` are element counts stating no metric fact.
 `ExactCurveEpic508.v : ticket_508_qed_or_qex` RIGHT on `ECZ_Ellipse`.
 Epic #508 stays open. QEX ≠ owner accept. Not “the zoo is exact.”
 _Avoid_: unconditionally exact zoo
+
+### Backlog types (Year 5–7)
+
+Next to Zoo: ISO types that are **missing / Year 5–7 backlog**, not
+Zoo members and not “partial”. CIRCLE is defined here; Zoo still
+excludes it.
+
+**Circle (CIRCLE)**:
+SQL/MM `ST_Circle` §7.4. WKT `CIRCLE [Z|M|ZM] (pt {, pt}…) | EMPTY`.
+WKB **18** (not 22 clothoid, not 8 CircularString). Body is a **point
+list**, not parameterized named fields (AFFINEPLACEMENT /
+REFERENCELOCATION / STARTCURVATURE stay Named-field tokens Absent —
+not CIRCLE body). Status: **missing / Year 5–7 backlog** (not
+“partial”). g4: no Year-1 production (dash). Year 1 omit — reject
+the keyword on read (CP/MC/MS I/O cards); that omit list still
+names CIRCLE; do not remove it. Zoo still excludes CIRCLE
+(Zoo ≠ CIRCLE / GEODESICSTRING / SPIRALCURVE bloss-sine-cosine).
+A full-span 5-token CIRCULARSTRING is not type CIRCLE; intake
+`MkCirc` sweep `2π` for the bag does not mint View tag CIRCLE /
+WKB 18. `CIRCULARSTRING(A,B,A)` stays a degenerate window, not a
+circle.
+_Avoid_: CircularString, CS, Arc, ExactCircularArc, clothoid, WKB 22,
+treating a 5-token CIRCULARSTRING as type CIRCLE
+
+CIRCLE missing Backlog WKB 18
 
 ### Distance metrics
 

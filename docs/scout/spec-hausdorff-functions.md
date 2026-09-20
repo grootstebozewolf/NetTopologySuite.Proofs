@@ -155,15 +155,11 @@ that is true.
 
 ## Parks
 
-- Do not remint `423-a` / `423-b` / `D-HF` / `M.1` / `NTS-812`.
-- Do not take ticket 10.
-- Do not mint leftover `Ⅺ` or `CRV-*` as a Proofs `claimId`.
-- Do not grow year-1 `CurveSegment`.
-- Do not treat `Linearise.v : hausdorff_le` as the engine.
-- Do not open GitHub issues for these slices. Notion is the ticket
-  system.
-- Cite ISO/IEC 13249-3 only where a clause is actually in play.
-  No DOI dump. Off JTS #7.
+Do not remint `423-a` / `423-b` / `D-HF` / `M.1` / `NTS-812`. Do
+not take tracker ticket 10. Do not mint leftover `Ⅺ` or `CRV-*`.
+Do not grow year-1 `CurveSegment`. Do not treat
+`Linearise.v : hausdorff_le` as the engine. Notion is the ticket
+system. Off JTS #7.
 
 ## Notion tickets
 
