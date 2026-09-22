@@ -173,9 +173,13 @@ theories/OverlayNG.v
 theories/SidecarClothoidEgg.v
 # ADR-0007 NURBS egg sidecar (SidecarNurbsEgg). Packages EggNurbs
 # Decline-on-host + demoted unit-square chord-seed. Host/pure-R.
-# First cook stays chord–chord. Not #508 length-as-noding.
+# First cook includes EggNurbs×EggNurbs. Not #508 length-as-noding.
 # Not Campaign I–II. No Admitted.
 theories/SidecarNurbsEgg.v
+# ADR-0007 host MkNurbs (NurbsMkNurbs). QEX: MkNurbs / OnNurbs /
+# NurbsGammaOnSheet missing. Tag MkOutOfScope is not the ctor.
+# Host/pure-R. Not #508 length. Not a silent MkCirc. No Admitted.
+theories/NurbsMkNurbs.v
 # ADR-0007 SIN / sinusoid egg sidecar (SidecarSinEgg). Packages
 # EggSinusoid Decline-on-host + demoted unit-square chord-seed.
 # Host/pure-R. First cook stays chord–chord. Not Spectre profile

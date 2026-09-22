@@ -1328,7 +1328,7 @@ Witness: `0007-iota-interior-discharge`. Status stays **Accepted**. Parks Γ / �
 
 Cook-axis sidecar: NURBS as an EggClass on the ADR-0007 vocabulary.
 Host already has `EggNurbs` / `MkOutOfScope EggNurbs`. This letter
-adds the missing Decline / not-first-cook host lemmas
+adds the missing Decline / first-cook scope host lemmas
 (`nurbs_nurbs_first_cook_scope`, `nurbs_decline_I_ok`) and packages
 them. Prefer `SidecarNurbs*` over reminting host cook. Existing
 NURBS corpus is metric / length research — package what is already
@@ -1340,17 +1340,17 @@ demoted-chord seed (`RelateLineLine.v : line_line_proper_cross_geom`).
 Demote-to-chord is NodingNG / host first cook, not a NURBS Hit.
 Golden quarter stays a metric cite.
 
-**QEX.** NURBS×NURBS is not first cook (checklist 4). Named
-missing constructors: no `MkNurbs` on `Egg`; no `I_ok` Hit arm.
-Do not fake first-cook expand or `LoopDischarged`. Parks Γ / ι / ρ
-cited once (ι row already records #717 discharge).
+**QEX.** NURBS×NURBS scope is inhabited (`SheetHenCook.v : nurbs_nurbs_first_cook_scope`).
+Named missing constructors: `MkNurbs` / `OnNurbs` / `NurbsGammaOnSheet`
+(`NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex`). No `I_ok` Hit arm.
+Do not fake Hit or `LoopDischarged`. Parks Γ / ι / ρ cited once (ι row records #717).
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex` | **QED** — EggNurbs packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; length stays metric | `SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`, `SidecarNurbsEgg.v : sidecar_nurbs_chord_seed`, `SidecarNurbsEgg.v : sidecar_nurbs_host_decline` |
-| `SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex` | **QEX** — scope inhabited; `MkNurbs` / Hit-arm missing | `SheetHenCook.v : nurbs_nurbs_first_cook_scope`, `SidecarNurbsEgg.v : sidecar_nurbs_mknurbs_missing`, `SidecarNurbsEgg.v : sidecar_nurbs_hit_arm_missing` |
+| `SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex` | **QEX** — scope inhabited; `MkNurbs` / `OnNurbs` / `NurbsGammaOnSheet` missing | `SheetHenCook.v : nurbs_nurbs_first_cook_scope`, `SidecarNurbsEgg.v : sidecar_nurbs_mknurbs_missing`, `NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex` |
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks Γ / ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-nurbs-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
