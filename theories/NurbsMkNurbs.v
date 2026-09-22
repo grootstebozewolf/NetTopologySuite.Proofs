@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    ADR-0007 letter: host MkNurbs (claimId 0007-mk-nurbs).
 
-   Year-1 cook scope may include NURBS×NURBS. That is not this letter.
+   Year-1 cook scope includes NURBS×NURBS. That is not this letter.
    MkNurbs is the host Egg constructor: control net + knots + weights
    give an interpolant γ on sheet S. Sidecar MkOutOfScope EggNurbs
    (SidecarNurbsEgg) is packaging, not this ctor.

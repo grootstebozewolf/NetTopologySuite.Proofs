@@ -568,8 +568,8 @@ ADR-0007 vocabulary (`SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`,
 `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex`). Host
 `I_ok` is Decline; `try_cook_hit` is None. Locked unit-square
 chords demote to NodingNG / host first cook, not a NURBS Hit.
-NURBS×NURBS is not first cook
-(`SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex`).
+NURBS×NURBS scope is inhabited (`SheetHenCook.v : nurbs_nurbs_first_cook_scope`).
+`MkNurbs` / `OnNurbs` / `NurbsGammaOnSheet` stay missing (`NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex`).
 #508 length / golden quarter stay metric. Not Campaign I–II.
 _Avoid_: host cook, length-as-noding, Cox-de-Boor, NURBS noder, Campaign I
 
