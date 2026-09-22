@@ -115,7 +115,7 @@ Lemma nurbs_tag_not_silent_demote :
   (forall c, MkOutOfScope EggNurbs <> MkChord c) /\
   (forall c, MkOutOfScope EggNurbs <> MkClothoid c).
 Proof.
-  repeat split; discriminate.
+  repeat split; intro c; discriminate.
 Qed.
 
 (* Ellipse / sinusoid / geodesic / spiral: same host fact, not new ctors. *)
