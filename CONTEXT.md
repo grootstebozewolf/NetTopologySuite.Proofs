@@ -474,8 +474,7 @@ _Avoid_: vertex (the owned point), dart (a coordinate pair)
 **Egg**:
 An interpolant `γ : [0,1] → S` of a named class.
 First cook: `SheetHenCook.v : first_cook_scope_chord_chord` /
-`circular_egg_first_cook_scope` / `clothoid_egg_first_cook_scope` /
-`nurbs_nurbs_first_cook_scope` IN;
+`circular_egg_first_cook_scope` / `clothoid_egg_first_cook_scope` / `nurbs_nurbs_first_cook_scope` IN;
 mixed/ellipse/sin/geodesic/spiral QEX.
 _Avoid_: CurveSegment (`ExactCurveEpic508.v : ticket_508_carrier_qed_or_qex` LEFT: year-1 `CSChord | CSArc`)
 
