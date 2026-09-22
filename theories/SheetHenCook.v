@@ -5,7 +5,7 @@
    Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
-   (MkClothoid). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
+   (MkClothoid), NURBS–NURBS (scope). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
    Bag cook loop is named QEX (LeftoverBagTermArm). CircGamma discharged
    by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex
@@ -98,7 +98,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid pairs. *)
+(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid / NURBS pairs. *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive IResult : Type :=
@@ -111,6 +111,7 @@ Definition first_cook_scope (a b : EggClass) : Prop :=
   | EggChord, EggChord => True
   | EggCircularArc, EggCircularArc => True
   | EggClothoid, EggClothoid => True
+  | EggNurbs, EggNurbs => True
   | _, _ => False
   end.
 
@@ -165,10 +166,11 @@ Proof.
   intro H. exact H.
 Qed.
 
-Lemma nurbs_nurbs_not_first_scope :
-  ~ first_cook_scope EggNurbs EggNurbs.
+(* Old pin nurbs_nurbs_not_first_scope discharged (#838 Yes flip). *)
+Lemma nurbs_nurbs_first_cook_scope :
+  first_cook_scope EggNurbs EggNurbs.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
 Lemma IEmpty_neq_IDecline : IEmpty <> IDecline.
@@ -1210,7 +1212,7 @@ Print Assumptions cook_hit_chords_shares_hen.
 Print Assumptions cooked_crossing_try.
 Print Assumptions cooked_crossing_join.
 Print Assumptions try_cook_hit_clothoid_none.
-Print Assumptions nurbs_nurbs_not_first_scope.
+Print Assumptions nurbs_nurbs_first_cook_scope.
 Print Assumptions nurbs_decline_I_ok.
 Print Assumptions try_cook_hit_nurbs_none.
 Print Assumptions try_cook_hit_circular_hit_none.

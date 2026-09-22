@@ -283,7 +283,7 @@ Do not start H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
 | 1b | Numeric `dart_eq_dec` does not decide vertex identity | `Adr0007NodingEpic.v : ticket_0007_dart_eq_qed_or_qex` | **QEX** — coord-pair `=` is not hen `=` | `SheetHenCook.v : coord_eq_not_hen_eq` |
 | 2 | Minimal `𝓘` obligations for the segment/chord lane | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** — Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope | `SheetHenCook.v : crossing_witness`, `SheetHenCook.v : disjoint_witness`, `SheetHenCook.v : I_ok_chord_not_decline` |
 | 3 | Cross-link to accepted ADR-0006 | header of both modules + this addendum | comment / docs (no second seam) | — |
-| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — NURBS–NURBS missing (508 mirror); clothoid×clothoid is first cook | `SheetHenCook.v : nurbs_nurbs_not_first_scope`, `SheetHenCook.v : clothoid_egg_first_cook_scope` |
+| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — ellipse–ellipse missing; NURBS×NURBS is first cook | `SheetHenCook.v : ellipse_ellipse_not_first_scope`, `SheetHenCook.v : nurbs_nurbs_first_cook_scope` |
 | 4b | Chord–chord inhabits the cook interface | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** | `SheetHenCook.v : first_cook_scope_chord_chord` |
 | — | Empty ≠ Decline | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` | **QED** | `SheetHenCook.v : IEmpty_neq_IDecline` |
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCook.v : noded_crossing` |
@@ -1329,7 +1329,7 @@ Witness: `0007-iota-interior-discharge`. Status stays **Accepted**. Parks Γ / �
 Cook-axis sidecar: NURBS as an EggClass on the ADR-0007 vocabulary.
 Host already has `EggNurbs` / `MkOutOfScope EggNurbs`. This letter
 adds the missing Decline / not-first-cook host lemmas
-(`nurbs_nurbs_not_first_scope`, `nurbs_decline_I_ok`) and packages
+(`nurbs_nurbs_first_cook_scope`, `nurbs_decline_I_ok`) and packages
 them. Prefer `SidecarNurbs*` over reminting host cook. Existing
 NURBS corpus is metric / length research — package what is already
 Qed; do not remint #508 length / Cox-de-Boor as noding. One locked
@@ -1350,7 +1350,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex` | **QED** — EggNurbs packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; length stays metric | `SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`, `SidecarNurbsEgg.v : sidecar_nurbs_chord_seed`, `SidecarNurbsEgg.v : sidecar_nurbs_host_decline` |
-| `SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex` | **QEX** — NURBS×NURBS stays out of first cook; `MkNurbs` / Hit-arm missing | `SheetHenCook.v : nurbs_nurbs_not_first_scope`, `SidecarNurbsEgg.v : sidecar_nurbs_mknurbs_missing`, `SidecarNurbsEgg.v : sidecar_nurbs_hit_arm_missing` |
+| `SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex` | **QEX** — scope inhabited; `MkNurbs` / Hit-arm missing | `SheetHenCook.v : nurbs_nurbs_first_cook_scope`, `SidecarNurbsEgg.v : sidecar_nurbs_mknurbs_missing`, `SidecarNurbsEgg.v : sidecar_nurbs_hit_arm_missing` |
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks Γ / ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-nurbs-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
@@ -1712,6 +1712,6 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `ClothoidCookMkClothoid.v : ticket_0007_clothoid_first_cook_qed_or_qex` | **QED** — scope + locked Hit + mint; tags / mixed Decline; NURBS / ρ parked | `ClothoidCookMkClothoid.v : locked_mkclothoid_I_ok`, `ClothoidCookMkClothoid.v : cooked_mkclothoid_try`, `SheetHenCook.v : clothoid_egg_first_cook_scope` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit | `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_first_cook_expand_inhabits` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign / Fresnel-as-noding / ρ parked | `SidecarClothoidEgg.v : sidecar_clothoid_not_fresnel_noding`, `SheetHenCook.v : cook_loop_is_obligation` |
-| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses NURBS–NURBS | `SheetHenCook.v : nurbs_nurbs_not_first_scope` |
+| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses ellipse–ellipse | `SheetHenCook.v : ellipse_ellipse_not_first_scope` |
 
 Witness: `0007-clothoid-first-cook`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is first cook only, not a noder and not Fresnel-as-noding.

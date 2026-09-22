@@ -221,12 +221,12 @@ Qed.
 
 Lemma modulo_kiss_share_scope_unchanged :
   first_cook_scope EggChord EggChord
-  /\ ~ first_cook_scope EggNurbs EggNurbs
+  /\ first_cook_scope EggNurbs EggNurbs
   /\ cook_loop_status = LoopObligation
   /\ cook_loop_status <> LoopDischarged.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact nurbs_nurbs_not_first_scope|].
+  split; [exact nurbs_nurbs_first_cook_scope|].
   split; [exact cook_loop_is_obligation|].
   exact cook_loop_not_discharged.
 Qed.
@@ -312,7 +312,7 @@ Theorem ticket_0007_rho_modulo_kiss_share_qed_or_qex :
    /\ leftover_bag_cook_fuel 1 locked_quad_bag locked_quad_bag
    /\ leftover_pair_decline locked_quad_bag 0 2
    /\ first_cook_scope EggChord EggChord
-   /\ ~ first_cook_scope EggNurbs EggNurbs).
+   /\ first_cook_scope EggNurbs EggNurbs).
 Proof.
   right.
   split; [exact cook_loop_is_obligation|].
@@ -334,7 +334,7 @@ Proof.
   split; [exact locked_decline_nstep|].
   split; [exact locked_quad_decline|].
   split; [exact first_cook_scope_chord_chord|].
-  exact nurbs_nurbs_not_first_scope.
+  exact nurbs_nurbs_first_cook_scope.
 Qed.
 
 Print Assumptions leftover_bag_step_hit_or_decline.
