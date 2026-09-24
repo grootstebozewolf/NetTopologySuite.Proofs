@@ -3297,6 +3297,10 @@ theories/RelateNGTouchEdgeCells.v
 # IB/BI/IE/EI/BE/EB.  Witness pair stays in RelateNGTouchEdgeCells.
 # No ring_complement / ray_avoids_vertices guard.
 theories/RelateNGTouchEdgeCellsGeneral.v
+# #847 / ADR-0003: forall vertical/horizontal rect touch, the six
+# spec-tier cells IB/BI/IE/EI/BE/EB.  BI uses rect_interior, not
+# point_set.  No ring_complement / ray_avoids_vertices guard.
+theories/RelateNGTouchRectCellsGeneral.v
 # #576 / 522-h (overlap split): nine gtri cells of OGC 212101212 on
 # the #567 / #570 overlap pair.  Names aa_matrix_overlap_ogc; does
 # not remint aa_matrix_partial_overlap (shared 2FFF1FFF2 pin).  Qex:
