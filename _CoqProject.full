@@ -2539,6 +2539,10 @@ theories/CircleChart.v
 # R1 / #559 gate. 3-axiom atan3 (IVT). Stdlib only. Not in
 # audit-exceptions.txt. No NurbsConicExact rewrite.
 theories/AtanIvt.v
+# C1 kernel: chord line vs chart circle as a zeta-quadratic.
+# Oracle lane. Imports CircleChart. Not an IResult remint.
+# No C1.4-C1.14. No Admitted.
+theories/ChartLineQuadratic.v
 
 # Companion counterexample for ArcOrient.arc_minor (in the style of
 # SpectreChordArcWitness.v): a concrete valid arc where arc_mid sits on the
