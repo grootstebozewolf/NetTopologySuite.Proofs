@@ -245,3 +245,14 @@ theories/PassesThroughC2WidthPark.v
 # Line 1 + HotPixel form-(b) stay the ceiling. #423 stays open.
 # Chainsaw ≠ Laser. No Axiom / Parameter / stub.
 theories/HausdorffDensifyLine2.v
+# C0 stereographic chart (CircleChart). Stdlib arc stack was full-only;
+# host lists it so arc_span_contains_iff_tau can cite ArcIntersect.
+# Pure-R. Not an egg remint. No Atan2. No Admitted.
+theories/Overlay.v
+theories/CurveGeometry.v
+theories/ArcOrient.v
+theories/ArcChordApprox.v
+theories/ArcIntersect.v
+# Half-angle chart τ = tan(φ/2), pole opposite the arc mid. Refs #771.
+# claimId: none. Freeze held. No Admitted.
+theories/CircleChart.v
