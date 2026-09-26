@@ -2536,6 +2536,9 @@ theories/ArcChordApprox.v
 # and that interval iff ArcIntersect.arc_span_contains. Host/pure-R.
 # Allowlist subset. No Atan2. Not an egg remint. claimId: none. No Admitted.
 theories/CircleChart.v
+# R1 / #559 gate. 3-axiom atan3 (IVT). Stdlib only. Not in
+# audit-exceptions.txt. No NurbsConicExact rewrite.
+theories/AtanIvt.v
 
 # Companion counterexample for ArcOrient.arc_minor (in the style of
 # SpectreChordArcWitness.v): a concrete valid arc where arc_mid sits on the
