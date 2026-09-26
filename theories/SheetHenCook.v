@@ -98,7 +98,9 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid / NURBS pairs. *)
+(* Pairwise oracle 𝓘. Empty ≠ Decline.
+   Class-pair flags: chord / circ / clothoid / NURBS.
+   EggNurbs×EggNurbs is a flag, not a year-1 exact cook. *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive IResult : Type :=
@@ -166,7 +168,10 @@ Proof.
   intro H. exact H.
 Qed.
 
-(* Old pin nurbs_nurbs_not_first_scope discharged (#838 Yes flip). *)
+(* Class-pair permission only. Not a year-1 exact-cook claim.
+   NTS.Curve linearizes then overlays. Two MkOutOfScope EggNurbs
+   still cook to IDecline (nurbs_decline_I_ok). Exact NURBS×NURBS
+   is year 2. See NurbsMkNurbs.v. *)
 Lemma nurbs_nurbs_first_cook_scope :
   first_cook_scope EggNurbs EggNurbs.
 Proof.
