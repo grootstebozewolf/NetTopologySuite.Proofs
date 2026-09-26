@@ -1,32 +1,33 @@
 (* ============================================================================
    NetTopologySuite.Proofs.CircleChart
    ----------------------------------------------------------------------------
-   Stereographic / half-angle chart on a circle.  τ = tan(φ/2), pole Q the
+   ζ = stereographic half-tangent chart; not the corpus tag τ, not the ArcParamBridge sweep ψ.
+   Stereographic / half-angle chart on a circle.  ζ = tan(φ/2), pole Q the
    second intersection of the line through arc-mid M and the chord midpoint
    N of AB (rational by Vieta; no square root).
 
    Chart core (field operations on R), carried from the owner's exhibit:
-     chart_on_circle, chart_left_inv, chart_right_inv, pole_on_circle.
+     chart_on_circle, zeta_left_inv, zeta_right_inv, pole_on_circle.
    Corpus points are O + v; orient is translation-invariant, so the
-   offset identity chart_orient3_offset lifts to chart_orient3.
+   offset identity zeta_orient3_offset lifts to zeta_orient3.
 
    C0 (freeze-neutral; not a CircularEgg reparameterisation):
      pole_opposite_M
        Q is strictly on the opposite side of chord AB from M.
-     tau_monotone_off_pole
-       a < b < c ⇒ τ increases and orient(P(a),P(b),P(c)) > 0
+     zeta_monotone_off_pole
+       a < b < c ⇒ ζ increases and orient(P(a),P(b),P(c)) > 0
        on the oriented circle minus Q.
-     arc_member_iff_tau_interval
+     arc_member_iff_zeta_interval
        on-circle P ≠ Q lies on the arc A‥B determined by M
-       iff τ(P) lies in the bounded chart interval with ends τ(A), τ(B).
-     arc_span_contains_iff_tau
+       iff ζ(P) lies in the bounded chart interval with ends ζ(A), ζ(B).
+     arc_span_contains_iff_zeta
        that membership is ArcIntersect.arc_span_contains on a valid_arc
        (Option S / chord-sign).  Angle-free third proof beside
        ArcSpanAtan2.arc_span_contains_atan2_iff_chord_sign.
        This file does not import Atan2 / Ratan.
 
    The projective full-circle case A = B with Q = A is outside valid_arc
-   (the chord collapses).  chart_right_inv is the statement that every
+   (the chord collapses).  zeta_right_inv is the statement that every
    non-pole point is hit.  It is not a separate Admitted.
 
    Does not remint CircGamma, leftover Ⅹ, LoopDischarged, I_ok_mixed as
@@ -54,12 +55,12 @@ Local Open Scope R_scope.
 Definition dot (ax ay bx by_ : R) : R := ax * bx + ay * by_.
 Definition crs (ax ay bx by_ : R) : R := ax * by_ - ay * bx.
 
-Definition tau (ux uy vx vy : R) : R :=
+Definition zeta_of (ux uy vx vy : R) : R :=
   crs ux uy vx vy / (dot ux uy ux uy + dot ux uy vx vy).
 
-Definition vx_of (ux uy t : R) : R :=
+Definition zeta_ptx (ux uy t : R) : R :=
   ((1 - t * t) * ux + 2 * t * (- uy)) / (1 + t * t).
-Definition vy_of (ux uy t : R) : R :=
+Definition zeta_pty (ux uy t : R) : R :=
   ((1 - t * t) * uy + 2 * t * ux) / (1 + t * t).
 
 Lemma one_t2 : forall t, 0 < 1 + t * t.
@@ -83,26 +84,26 @@ Proof.
 Qed.
 
 Theorem chart_on_circle : forall ux uy t,
-  dot (vx_of ux uy t) (vy_of ux uy t) (vx_of ux uy t) (vy_of ux uy t)
+  dot (zeta_ptx ux uy t) (zeta_pty ux uy t) (zeta_ptx ux uy t) (zeta_pty ux uy t)
     = dot ux uy ux uy.
 Proof.
   intros ux uy t. pose proof (one_t2 t) as Ht.
-  unfold dot, vx_of, vy_of. field. lra.
+  unfold dot, zeta_ptx, zeta_pty. field. lra.
 Qed.
 
-Theorem chart_left_inv : forall ux uy t, (ux, uy) <> (0, 0) ->
-  tau ux uy (vx_of ux uy t) (vy_of ux uy t) = t.
+Theorem zeta_left_inv : forall ux uy t, (ux, uy) <> (0, 0) ->
+  zeta_of ux uy (zeta_ptx ux uy t) (zeta_pty ux uy t) = t.
 Proof.
   intros ux uy t Hu. pose proof (one_t2 t) as Ht.
   assert (Hr : 0 < ux * ux + uy * uy) by (apply sumsq_pos; exact Hu).
-  unfold tau, dot, crs, vx_of, vy_of. field. split; nra.
+  unfold zeta_of, dot, crs, zeta_ptx, zeta_pty. field. split; nra.
 Qed.
 
-Theorem chart_right_inv : forall ux uy vx vy,
+Theorem zeta_right_inv : forall ux uy vx vy,
   vx * vx + vy * vy = ux * ux + uy * uy ->
   ux * ux + uy * uy + (ux * vx + uy * vy) <> 0 ->
-  vx_of ux uy (tau ux uy vx vy) = vx /\
-  vy_of ux uy (tau ux uy vx vy) = vy.
+  zeta_ptx ux uy (zeta_of ux uy vx vy) = vx /\
+  zeta_pty ux uy (zeta_of ux uy vx vy) = vy.
 Proof.
   intros ux uy vx vy Hc Hd.
   set (s := ux * ux + uy * uy) in *.
@@ -126,8 +127,8 @@ Proof.
   { assert (E : (D * D - C * C) * uy + 2 * C * D * ux - 2 * s * D * vy
               = - uy * s * (vx * vx + vy * vy - s)) by (unfold C, D, s; ring).
     rewrite Hh in E. lra. }
-  assert (Ht : tau ux uy vx vy = C / D) by (unfold tau, dot, crs; fold s; reflexivity).
-  rewrite Ht. unfold vx_of, vy_of. split.
+  assert (Ht : zeta_of ux uy vx vy = C / D) by (unfold zeta_of, dot, crs; fold s; reflexivity).
+  rewrite Ht. unfold zeta_ptx, zeta_pty. split.
   - replace ((1 - C / D * (C / D)) * ux + 2 * (C / D) * - uy) with
       (((D * D - C * C) * ux - 2 * C * D * uy) / (D * D)) by (field; exact Hd).
     replace (1 + C / D * (C / D)) with ((C * C + D * D) / (D * D)) by (field; exact Hd).
@@ -171,36 +172,36 @@ Proof.
 Qed.
 
 (* Owner fact 1, on offsets.  One field; denominators are 1+t² > 0. *)
-Lemma chart_orient3_offset : forall ux uy a b c,
-  orient3 (vx_of ux uy a) (vy_of ux uy a)
-          (vx_of ux uy b) (vy_of ux uy b)
-          (vx_of ux uy c) (vy_of ux uy c)
+Lemma zeta_orient3_offset : forall ux uy a b c,
+  orient3 (zeta_ptx ux uy a) (zeta_pty ux uy a)
+          (zeta_ptx ux uy b) (zeta_pty ux uy b)
+          (zeta_ptx ux uy c) (zeta_pty ux uy c)
   = 4 * (ux * ux + uy * uy) * (b - a) * (c - a) * (c - b)
       / ((1 + a * a) * (1 + b * b) * (1 + c * c)).
 Proof.
-  intros. unfold orient3, vx_of, vy_of, crs. field. repeat split; nra.
+  intros. unfold orient3, zeta_ptx, zeta_pty, crs. field. repeat split; nra.
 Qed.
 
-Theorem chart_orient3 : forall ox oy ux uy a b c,
-  orient3 (ox + vx_of ux uy a) (oy + vy_of ux uy a)
-          (ox + vx_of ux uy b) (oy + vy_of ux uy b)
-          (ox + vx_of ux uy c) (oy + vy_of ux uy c)
+Theorem zeta_orient3 : forall ox oy ux uy a b c,
+  orient3 (ox + zeta_ptx ux uy a) (oy + zeta_pty ux uy a)
+          (ox + zeta_ptx ux uy b) (oy + zeta_pty ux uy b)
+          (ox + zeta_ptx ux uy c) (oy + zeta_pty ux uy c)
   = 4 * (ux * ux + uy * uy) * (b - a) * (c - a) * (c - b)
       / ((1 + a * a) * (1 + b * b) * (1 + c * c)).
 Proof.
-  intros. rewrite orient3_translate. apply chart_orient3_offset.
+  intros. rewrite orient3_translate. apply zeta_orient3_offset.
 Qed.
 
 (* The pole, as an offset, is -u.  Leading coefficient of the chart
    quadratic: orient(v(ta), v(tb), -u) = 4 |u|² (tb-ta) / ((1+ta²)(1+tb²)). *)
 Lemma orient_at_pole_param : forall ux uy ta tb,
-  orient3 (vx_of ux uy ta) (vy_of ux uy ta)
-          (vx_of ux uy tb) (vy_of ux uy tb)
+  orient3 (zeta_ptx ux uy ta) (zeta_pty ux uy ta)
+          (zeta_ptx ux uy tb) (zeta_pty ux uy tb)
           (- ux) (- uy)
   = 4 * (ux * ux + uy * uy) * (tb - ta)
       / ((1 + ta * ta) * (1 + tb * tb)).
 Proof.
-  intros. unfold orient3, vx_of, vy_of, crs. field. repeat split; nra.
+  intros. unfold orient3, zeta_ptx, zeta_pty, crs. field. repeat split; nra.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -228,13 +229,13 @@ Definition pole_point (O M N : Point) : Point :=
   let k := pole_k (mx - px O) (my - py O) wx wy in
   mkPoint (mx + k * wx) (my + k * wy).
 
-Definition tau_pt (O Q P : Point) : R :=
-  tau (px O - px Q) (py O - py Q) (px P - px O) (py P - py O).
+Definition zeta_of_pt (O Q P : Point) : R :=
+  zeta_of (px O - px Q) (py O - py Q) (px P - px O) (py P - py O).
 
 (* Bounded chart interval with endpoints ta, tb (order-independent).
-   This is {τ(A), τ(B)}'s convex hull: the arc that does not contain the
+   This is {ζ(A), ζ(B)}'s convex hull: the arc that does not contain the
    pole.  Equivalent to Rmin(ta,tb) ≤ tp ≤ Rmax(ta,tb). *)
-Definition in_chart_interval (ta tb tp : R) : Prop :=
+Definition in_zeta_interval (ta tb tp : R) : Prop :=
   (tp - ta) * (tp - tb) <= 0.
 
 (* On-circle, same side of chord AB as M, or an endpoint.
@@ -467,8 +468,8 @@ Lemma chart_frame : forall O Q P,
   dist_sq O P = dist_sq O Q ->
   P <> Q ->
   0 < (px O - px Q) * (px O - px Q) + (py O - py Q) * (py O - py Q) /\
-  px P = px O + vx_of (px O - px Q) (py O - py Q) (tau_pt O Q P) /\
-  py P = py O + vy_of (px O - px Q) (py O - py Q) (tau_pt O Q P).
+  px P = px O + zeta_ptx (px O - px Q) (py O - py Q) (zeta_of_pt O Q P) /\
+  py P = py O + zeta_pty (px O - px Q) (py O - py Q) (zeta_of_pt O Q P).
 Proof.
   intros O Q P Hrad Hne.
   set (ux := px O - px Q). set (uy := py O - py Q).
@@ -512,38 +513,38 @@ Proof.
     apply dist_sq_zero_iff_eq in Hpq.
     destruct Hpq as [Hx Hy].
     apply Hne. apply Point_eq_of_coords; assumption. }
-  destruct (chart_right_inv ux uy vx vy Hv Hd) as [Hx Hy].
+  destruct (zeta_right_inv ux uy vx vy Hv Hd) as [Hx Hy].
   split; [exact Hr | split].
-  - replace (tau_pt O Q P) with (tau ux uy vx vy).
+  - replace (zeta_of_pt O Q P) with (zeta_of ux uy vx vy).
     + rewrite Hx. unfold vx. ring.
-    + unfold tau_pt, tau, ux, uy, vx, vy. reflexivity.
-  - replace (tau_pt O Q P) with (tau ux uy vx vy).
+    + unfold zeta_of_pt, zeta_of, ux, uy, vx, vy. reflexivity.
+  - replace (zeta_of_pt O Q P) with (zeta_of ux uy vx vy).
     + rewrite Hy. unfold vy. ring.
-    + unfold tau_pt, tau, ux, uy, vx, vy. reflexivity.
+    + unfold zeta_of_pt, zeta_of, ux, uy, vx, vy. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* §3  C0.                                                                    *)
 (* -------------------------------------------------------------------------- *)
 
-Theorem tau_monotone_off_pole : forall ox oy ux uy a b c,
+Theorem zeta_monotone_off_pole : forall ox oy ux uy a b c,
   (ux, uy) <> (0, 0) ->
   a < b ->
   b < c ->
-  tau ux uy (vx_of ux uy a) (vy_of ux uy a)
-    < tau ux uy (vx_of ux uy b) (vy_of ux uy b) /\
-  tau ux uy (vx_of ux uy b) (vy_of ux uy b)
-    < tau ux uy (vx_of ux uy c) (vy_of ux uy c) /\
-  0 < orient3 (ox + vx_of ux uy a) (oy + vy_of ux uy a)
-              (ox + vx_of ux uy b) (oy + vy_of ux uy b)
-              (ox + vx_of ux uy c) (oy + vy_of ux uy c).
+  zeta_of ux uy (zeta_ptx ux uy a) (zeta_pty ux uy a)
+    < zeta_of ux uy (zeta_ptx ux uy b) (zeta_pty ux uy b) /\
+  zeta_of ux uy (zeta_ptx ux uy b) (zeta_pty ux uy b)
+    < zeta_of ux uy (zeta_ptx ux uy c) (zeta_pty ux uy c) /\
+  0 < orient3 (ox + zeta_ptx ux uy a) (oy + zeta_pty ux uy a)
+              (ox + zeta_ptx ux uy b) (oy + zeta_pty ux uy b)
+              (ox + zeta_ptx ux uy c) (oy + zeta_pty ux uy c).
 Proof.
   intros ox oy ux uy a b c Hu Hab Hbc.
   assert (Hr : 0 < ux * ux + uy * uy) by (apply sumsq_pos; exact Hu).
   split; [| split].
-  - rewrite !chart_left_inv by exact Hu. exact Hab.
-  - rewrite !chart_left_inv by exact Hu. exact Hbc.
-  - rewrite chart_orient3.
+  - rewrite !zeta_left_inv by exact Hu. exact Hab.
+  - rewrite !zeta_left_inv by exact Hu. exact Hbc.
+  - rewrite zeta_orient3.
     assert (Hba : 0 < b - a) by lra.
     assert (Hca : 0 < c - a) by lra.
     assert (Hcb : 0 < c - b) by lra.
@@ -564,10 +565,10 @@ Proof.
 Qed.
 
 (* Full circle (A = B, Q = A) is not a valid_arc: the chord collapses.
-   chart_right_inv already says every non-pole point is attained, which is
+   zeta_right_inv already says every non-pole point is attained, which is
    the projective line.  No separate Admitted. *)
 
-Theorem arc_member_iff_tau_interval : forall O A B M P,
+Theorem arc_member_iff_zeta_interval : forall O A B M P,
   dist_sq O A = dist_sq O M ->
   dist_sq O B = dist_sq O M ->
   dist_sq O P = dist_sq O M ->
@@ -575,10 +576,10 @@ Theorem arc_member_iff_tau_interval : forall O A B M P,
   orient_pts A B M <> 0 ->
   P <> pole_point O M (midpoint A B) ->
   arc_member_AB_M A B M P <->
-  in_chart_interval
-    (tau_pt O (pole_point O M (midpoint A B)) A)
-    (tau_pt O (pole_point O M (midpoint A B)) B)
-    (tau_pt O (pole_point O M (midpoint A B)) P).
+  in_zeta_interval
+    (zeta_of_pt O (pole_point O M (midpoint A B)) A)
+    (zeta_of_pt O (pole_point O M (midpoint A B)) B)
+    (zeta_of_pt O (pole_point O M (midpoint A B)) P).
 Proof.
   intros O A B M P HA HB HP HAB Horient HPne.
   set (N := midpoint A B).
@@ -600,8 +601,8 @@ Proof.
   destruct (chart_frame O Q M HQM HnM) as [_ [HMx HMy]].
   destruct (chart_frame O Q P HQP HPneQ) as [_ [HPx HPy]].
   set (ux := px O - px Q). set (uy := py O - py Q).
-  set (ta := tau_pt O Q A). set (tb := tau_pt O Q B).
-  set (tm := tau_pt O Q M). set (tp := tau_pt O Q P).
+  set (ta := zeta_of_pt O Q A). set (tb := zeta_of_pt O Q B).
+  set (tm := zeta_of_pt O Q M). set (tp := zeta_of_pt O Q P).
   set (r2 := ux * ux + uy * uy).
   set (k := pole_k (px M - px O) (py M - py O)
                    (px N - px M) (py N - py M)).
@@ -619,33 +620,33 @@ Proof.
       = 4 * r2 * (tb - ta) * (tp - ta) * (tp - tb)
           / ((1 + ta * ta) * (1 + tb * tb) * (1 + tp * tp))).
   { rewrite (orient_pts_offsets O).
-    replace (px A - px O) with (vx_of ux uy ta) by (rewrite HAx; unfold ux, uy, ta; ring).
-    replace (py A - py O) with (vy_of ux uy ta) by (rewrite HAy; unfold ux, uy, ta; ring).
-    replace (px B - px O) with (vx_of ux uy tb) by (rewrite HBx; unfold ux, uy, tb; ring).
-    replace (py B - py O) with (vy_of ux uy tb) by (rewrite HBy; unfold ux, uy, tb; ring).
-    replace (px P - px O) with (vx_of ux uy tp) by (rewrite HPx; unfold ux, uy, tp; ring).
-    replace (py P - py O) with (vy_of ux uy tp) by (rewrite HPy; unfold ux, uy, tp; ring).
-    unfold r2. apply chart_orient3_offset. }
+    replace (px A - px O) with (zeta_ptx ux uy ta) by (rewrite HAx; unfold ux, uy, ta; ring).
+    replace (py A - py O) with (zeta_pty ux uy ta) by (rewrite HAy; unfold ux, uy, ta; ring).
+    replace (px B - px O) with (zeta_ptx ux uy tb) by (rewrite HBx; unfold ux, uy, tb; ring).
+    replace (py B - py O) with (zeta_pty ux uy tb) by (rewrite HBy; unfold ux, uy, tb; ring).
+    replace (px P - px O) with (zeta_ptx ux uy tp) by (rewrite HPx; unfold ux, uy, tp; ring).
+    replace (py P - py O) with (zeta_pty ux uy tp) by (rewrite HPy; unfold ux, uy, tp; ring).
+    unfold r2. apply zeta_orient3_offset. }
   assert (HoM :
     orient_pts A B M
       = 4 * r2 * (tb - ta) * (tm - ta) * (tm - tb)
           / ((1 + ta * ta) * (1 + tb * tb) * (1 + tm * tm))).
   { rewrite (orient_pts_offsets O).
-    replace (px A - px O) with (vx_of ux uy ta) by (rewrite HAx; unfold ux, uy, ta; ring).
-    replace (py A - py O) with (vy_of ux uy ta) by (rewrite HAy; unfold ux, uy, ta; ring).
-    replace (px B - px O) with (vx_of ux uy tb) by (rewrite HBx; unfold ux, uy, tb; ring).
-    replace (py B - py O) with (vy_of ux uy tb) by (rewrite HBy; unfold ux, uy, tb; ring).
-    replace (px M - px O) with (vx_of ux uy tm) by (rewrite HMx; unfold ux, uy, tm; ring).
-    replace (py M - py O) with (vy_of ux uy tm) by (rewrite HMy; unfold ux, uy, tm; ring).
-    unfold r2. apply chart_orient3_offset. }
+    replace (px A - px O) with (zeta_ptx ux uy ta) by (rewrite HAx; unfold ux, uy, ta; ring).
+    replace (py A - py O) with (zeta_pty ux uy ta) by (rewrite HAy; unfold ux, uy, ta; ring).
+    replace (px B - px O) with (zeta_ptx ux uy tb) by (rewrite HBx; unfold ux, uy, tb; ring).
+    replace (py B - py O) with (zeta_pty ux uy tb) by (rewrite HBy; unfold ux, uy, tb; ring).
+    replace (px M - px O) with (zeta_ptx ux uy tm) by (rewrite HMx; unfold ux, uy, tm; ring).
+    replace (py M - py O) with (zeta_pty ux uy tm) by (rewrite HMy; unfold ux, uy, tm; ring).
+    unfold r2. apply zeta_orient3_offset. }
   assert (HoQ :
     orient_pts A B Q
       = 4 * r2 * (tb - ta) / ((1 + ta * ta) * (1 + tb * tb))).
   { rewrite (orient_pts_offsets O).
-    replace (px A - px O) with (vx_of ux uy ta) by (rewrite HAx; unfold ux, uy, ta; ring).
-    replace (py A - py O) with (vy_of ux uy ta) by (rewrite HAy; unfold ux, uy, ta; ring).
-    replace (px B - px O) with (vx_of ux uy tb) by (rewrite HBx; unfold ux, uy, tb; ring).
-    replace (py B - py O) with (vy_of ux uy tb) by (rewrite HBy; unfold ux, uy, tb; ring).
+    replace (px A - px O) with (zeta_ptx ux uy ta) by (rewrite HAx; unfold ux, uy, ta; ring).
+    replace (py A - py O) with (zeta_pty ux uy ta) by (rewrite HAy; unfold ux, uy, ta; ring).
+    replace (px B - px O) with (zeta_ptx ux uy tb) by (rewrite HBx; unfold ux, uy, tb; ring).
+    replace (py B - py O) with (zeta_pty ux uy tb) by (rewrite HBy; unfold ux, uy, tb; ring).
     replace (px Q - px O) with (- ux) by (unfold ux; ring).
     replace (py Q - py O) with (- uy) by (unfold uy; ring).
     unfold r2. apply orient_at_pole_param. }
@@ -731,7 +732,7 @@ Proof.
       + rewrite HPx, HBx. unfold tp, tb in E. rewrite E. reflexivity.
       + rewrite HPy, HBy. unfold tp, tb in E. rewrite E. reflexivity.
     - unfold tp, tb. rewrite E. reflexivity. }
-  unfold arc_member_AB_M, in_chart_interval.
+  unfold arc_member_AB_M, in_zeta_interval.
   split.
   - intros [Hsame | [HEA | HEB]].
     + apply Rlt_le. apply (proj1 Hside). exact Hsame.
@@ -750,8 +751,8 @@ Qed.
 Definition arc_pole (a : CircularArc) : Point :=
   pole_point (arc_center a) (arc_mid a) (midpoint (arc_start a) (arc_end a)).
 
-Definition arc_tau (a : CircularArc) (P : Point) : R :=
-  tau_pt (arc_center a) (arc_pole a) P.
+Definition arc_zeta (a : CircularArc) (P : Point) : R :=
+  zeta_of_pt (arc_center a) (arc_pole a) P.
 
 Lemma valid_arc_orient_ne : forall a,
   valid_arc a -> orient_pts (arc_start a) (arc_end a) (arc_mid a) <> 0.
@@ -769,14 +770,14 @@ Proof.
   apply H. rewrite E. unfold valid_arc. cbn zeta. ring.
 Qed.
 
-Theorem arc_span_contains_iff_tau : forall (a : CircularArc) (P : Point),
+Theorem arc_span_contains_iff_zeta : forall (a : CircularArc) (P : Point),
   valid_arc a ->
   dist_sq (arc_center a) P = dist_sq (arc_center a) (arc_start a) ->
   P <> arc_pole a ->
   arc_span_contains a P <->
-  in_chart_interval (arc_tau a (arc_start a))
-                    (arc_tau a (arc_end a))
-                    (arc_tau a P).
+  in_zeta_interval (arc_zeta a (arc_start a))
+                    (arc_zeta a (arc_end a))
+                    (arc_zeta a P).
 Proof.
   intros a P Hva Hcirc Hne.
   set (O := arc_center a).
@@ -785,7 +786,7 @@ Proof.
   set (M := arc_mid a).
   destruct (arc_center_equidistant a Hva) as [Hsm Hse].
   assert (Hmem :=
-    arc_member_iff_tau_interval O A B M P
+    arc_member_iff_zeta_interval O A B M P
       Hsm
       (eq_trans (eq_sym Hse) Hsm)
       (eq_trans Hcirc Hsm)
@@ -798,16 +799,16 @@ Proof.
   { unfold arc_span_contains, arc_interior_side, arc_member_AB_M, A, B, M.
     rewrite !arc_side_eq_orient. reflexivity. }
   rewrite Hsp.
-  unfold arc_tau, arc_pole, O, A, B, M in *.
+  unfold arc_zeta, arc_pole, O, A, B, M in *.
   exact Hmem.
 Qed.
 
 Print Assumptions chart_on_circle.
-Print Assumptions chart_left_inv.
-Print Assumptions chart_right_inv.
+Print Assumptions zeta_left_inv.
+Print Assumptions zeta_right_inv.
 Print Assumptions pole_on_circle.
-Print Assumptions chart_orient3.
+Print Assumptions zeta_orient3.
 Print Assumptions pole_opposite_M.
-Print Assumptions tau_monotone_off_pole.
-Print Assumptions arc_member_iff_tau_interval.
-Print Assumptions arc_span_contains_iff_tau.
+Print Assumptions zeta_monotone_off_pole.
+Print Assumptions arc_member_iff_zeta_interval.
+Print Assumptions arc_span_contains_iff_zeta.
