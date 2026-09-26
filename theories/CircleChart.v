@@ -27,8 +27,9 @@
        This file does not import Atan2 / Ratan.
 
    The projective full-circle case A = B with Q = A is outside valid_arc
-   (the chord collapses).  zeta_right_inv is the statement that every
-   non-pole point is hit.  It is not a separate Admitted.
+   (the chord collapses).  full_circle_on_chart and full_circle_off_pole
+   are that case: the window is R ∪ {∞}, the pole is the repeated
+   endpoint, and every on-circle point is a member.  No excluded middle.
 
    Does not remint CircGamma, leftover Ⅹ, LoopDischarged, I_ok_mixed as
    host, MkNurbs, or 0007-intake-angles.  Does not inhabit
@@ -527,6 +528,47 @@ Qed.
 (* §3  C0.                                                                    *)
 (* -------------------------------------------------------------------------- *)
 
+(* Full circle.  Q is the repeated endpoint (A = B = Q), so the pole sits
+   at ζ = ∞.  Membership is every on-circle point, not a bounded interval.
+   valid_arc excludes this: the chord collapses.  F5 and the Flatten
+   full-span defect use this lemma; arc_member_iff_zeta_interval does not. *)
+Inductive ZetaExt : Type :=
+| ZFinite : R -> ZetaExt
+| ZInf : ZetaExt.
+
+Definition full_circle_at (O Q : Point) (z : ZetaExt) : Point :=
+  match z with
+  | ZInf => Q
+  | ZFinite t =>
+      mkPoint
+        (px O + zeta_ptx (px O - px Q) (py O - py Q) t)
+        (py O + zeta_pty (px O - px Q) (py O - py Q) t)
+  end.
+
+Theorem full_circle_on_chart : forall O Q z,
+  dist_sq O (full_circle_at O Q z) = dist_sq O Q.
+Proof.
+  intros O Q z. destruct z as [t|].
+  - unfold full_circle_at, dist_sq.
+    replace (px O + zeta_ptx (px O - px Q) (py O - py Q) t - px O)
+      with (zeta_ptx (px O - px Q) (py O - py Q) t) by ring.
+    replace (py O + zeta_pty (px O - px Q) (py O - py Q) t - py O)
+      with (zeta_pty (px O - px Q) (py O - py Q) t) by ring.
+    rewrite <- (chart_on_circle (px O - px Q) (py O - py Q) t).
+    unfold dot. ring.
+  - unfold full_circle_at. reflexivity.
+Qed.
+
+Theorem full_circle_off_pole : forall O Q P,
+  dist_sq O P = dist_sq O Q ->
+  P <> Q ->
+  P = full_circle_at O Q (ZFinite (zeta_of_pt O Q P)).
+Proof.
+  intros O Q P Hrad Hne.
+  destruct (chart_frame O Q P Hrad Hne) as [_ [Hpx Hpy]].
+  apply Point_eq_of_coords; assumption.
+Qed.
+
 Theorem zeta_monotone_off_pole : forall ox oy ux uy a b c,
   (ux, uy) <> (0, 0) ->
   a < b ->
@@ -564,9 +606,7 @@ Proof.
     + apply Rinv_0_lt_compat. exact Hden.
 Qed.
 
-(* Full circle (A = B, Q = A) is not a valid_arc: the chord collapses.
-   zeta_right_inv already says every non-pole point is attained, which is
-   the projective line.  No separate Admitted. *)
+(* A proper arc.  A = B is full_circle_member_iff_chart, not this theorem. *)
 
 Theorem arc_member_iff_zeta_interval : forall O A B M P,
   dist_sq O A = dist_sq O M ->
@@ -805,6 +845,8 @@ Qed.
 
 Print Assumptions chart_on_circle.
 Print Assumptions zeta_left_inv.
+Print Assumptions full_circle_on_chart.
+Print Assumptions full_circle_off_pole.
 Print Assumptions zeta_right_inv.
 Print Assumptions pole_on_circle.
 Print Assumptions zeta_orient3.
