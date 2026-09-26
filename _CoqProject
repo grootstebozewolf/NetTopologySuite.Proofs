@@ -256,3 +256,7 @@ theories/ArcIntersect.v
 # Half-angle chart τ = tan(φ/2), pole opposite the arc mid. Refs #771.
 # claimId: none. Freeze held. No Admitted.
 theories/CircleChart.v
+# R1 / #559 gate. 3-axiom atan3 (IVT). Stdlib only. Deliberately NOT in
+# docs/audit-exceptions.txt: audit_axioms.sh must enforce the footprint.
+# No NurbsConicExact rewrite on this commit.
+theories/AtanIvt.v
