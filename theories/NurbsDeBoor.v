@@ -1,19 +1,20 @@
 (* ============================================================================
    NetTopologySuite.Proofs.NurbsDeBoor
    ----------------------------------------------------------------------------
-   Clean-room A4.1 (Piegl–Tiller), homogeneous coordinates. Not a copy of
-   QGIS. GPL code is not imported. The cook of MkNurbs stays IDecline.
+   Clean-room Piegl–Tiller. A2.1 is the span contract (right end u = U[n]
+   returns span n−1). A4.1 is the homogeneous triangular scheme.
+   No QGIS source was read into this file. A future C# port must derive
+   from this spec and from Piegl–Tiller, not from QgsNurbsCurve.
 
-   Year-1 spec, degree-general where it is cheap and degree 1 for the
-   chord-error claim:
-     N-L1  a sample is an evaluation
-     N-L2  clamped start (and clamped end) evaluate to the outer control
-     N-L3  a degree-1 positive-weight curve is the chord, so the
-           uniform polyline has chord error 0
+   The cook of MkNurbs stays IDecline.
 
-   Knot denominators that are zero are outside these lemmas. QGIS skips
-   that blend; here the proved region is the one where the denominator
-   is the positive end span, so the skip does not fire.
+   N-L1  a sample is an evaluation
+   N-L2  clamped ends, computed by A4.1 at the A2.1 span, not by
+         returning the control point before the scheme runs
+   N-L3  degree 1, positive weights: the point lies on the chord
+
+   A zero knot denominator is outside these lemmas. In that region a
+   skipped blend and this division are not claimed to agree.
 
    No Admitted. No Axiom. No Parameter.
    ========================================================================== *)
@@ -129,6 +130,110 @@ Definition clamped_lo (U : list R) (p : nat) : Prop :=
 
 Definition clamped_hi (U : list R) (n p : nat) : Prop :=
   forall i, n <= i <= n + p -> nthR U i = nthR U n.
+
+(* Every consecutive pair. Clamps do not imply this. *)
+Definition knots_nondecreasing (U : list R) : Prop :=
+  forall i, S i < length U -> nthR U i <= nthR U (S i).
+
+Lemma nthR_le_idx : forall U a b,
+  knots_nondecreasing U ->
+  b < length U ->
+  a <= b ->
+  nthR U a <= nthR U b.
+Proof.
+  intros U a b H Hb Hab.
+  revert a Hab. induction b as [|b IH]; intros a Hab.
+  - assert (a = 0) by lia. subst. lra.
+  - destruct (Nat.eq_dec a (S b)) as [->|Hne].
+    + lra.
+    + assert (Ha : a <= b) by lia.
+      assert (nthR U b <= nthR U (S b)).
+      { apply H. lia. }
+      assert (nthR U a <= nthR U b).
+      { apply IH; lia. }
+      lra.
+Qed.
+
+Lemma alpha_in_01 : forall U span p k j u,
+  nthR U (knot_idx span p j) <= u ->
+  u <= nthR U (knot_idx span p j + (p - k) + 1) ->
+  nthR U (knot_idx span p j) <
+    nthR U (knot_idx span p j + (p - k) + 1) ->
+  0 <= alpha_at U span p k j u <= 1.
+Proof.
+  intros U span p k j u Hlo Hhi Hlt.
+  unfold alpha_at, knot_idx in *.
+  set (lo := nthR U (span - p + j)) in *.
+  set (hi := nthR U (span - p + j + (p - k) + 1)) in *.
+  assert (Hd : hi - lo <> 0) by lra.
+  split.
+  - unfold Rdiv. apply Rmult_le_pos; [| apply Rlt_le, Rinv_0_lt_compat]; lra.
+  - apply (Rmult_le_reg_r (hi - lo)); [lra|].
+    unfold Rdiv. rewrite Rmult_assoc. rewrite Rinv_l by exact Hd.
+    rewrite Rmult_1_r, Rmult_1_l. lra.
+Qed.
+
+Lemma alpha_in_01_of_span : forall U span p k j u,
+  knots_nondecreasing U ->
+  (k <= j <= p)%nat ->
+  (p <= span)%nat ->
+  S (knot_idx span p j + (p - k)) < length U ->
+  nthR U span <= u ->
+  u < nthR U (S span) ->
+  nthR U (knot_idx span p j) <
+    nthR U (knot_idx span p j + (p - k) + 1) ->
+  0 <= alpha_at U span p k j u <= 1.
+Proof.
+  intros U span p k j u Hmono Hkj Hs Hlen Hu0 Hu1 Hlt.
+  apply alpha_in_01; [ | | exact Hlt].
+  - unfold knot_idx. apply nthR_le_idx; try assumption; try lia.
+    unfold knot_idx in Hlen. lia.
+  - assert (Hidx : span + 1 <= knot_idx span p j + (p - k) + 1).
+    { unfold knot_idx. lia. }
+    assert (nthR U (S span) <=
+            nthR U (knot_idx span p j + (p - k) + 1)).
+    { apply nthR_le_idx; try assumption; try lia.
+      unfold knot_idx in Hlen. lia. }
+    lra.
+Qed.
+
+Lemma blend_pos : forall a w0 w1,
+  0 <= a <= 1 -> 0 < w0 -> 0 < w1 -> 0 < blend a w0 w1.
+Proof.
+  intros a w0 w1 Ha Hw0 Hw1.
+  unfold blend.
+  assert (0 <= (1 - a) * w0) by (apply Rmult_le_pos; lra).
+  assert (0 <= a * w1) by (apply Rmult_le_pos; lra).
+  assert ((1 - a) * w0 + a * w1 <> 0).
+  { intro E.
+    assert ((1 - a) * w0 = 0) by lra.
+    assert (a * w1 = 0) by lra.
+    apply Rmult_integral in H1. destruct H1 as [H1|H1].
+    - assert (a = 1) by lra. rewrite H3 in H2.
+      apply Rmult_integral in H2. destruct H2 as [H2|H2]; lra.
+    - lra. }
+  lra.
+Qed.
+
+(* A2.1's result, not its binary search.
+   u = U[n] is the special case: the span is n−1.
+   Otherwise U[s] <= u < U[s+1], with p <= s <= n−1. *)
+Definition a21_end_span (n : nat) : nat := n - 1.
+
+Definition a21_span (n p s : nat) (U : list R) (u : R) : Prop :=
+  (p <= s <= n - 1)%nat /\
+  (u = nthR U n -> s = n - 1) /\
+  (u <> nthR U n -> nthR U s <= u /\ u < nthR U (S s)).
+
+Lemma a21_at_right_end : forall n p U,
+  (1 <= p < n)%nat ->
+  a21_span n p (a21_end_span n) U (nthR U n).
+Proof.
+  intros n p U Hp. unfold a21_end_span, a21_span. split; [lia|].
+  split.
+  - intros _. lia.
+  - intro Hne. exfalso. apply Hne. reflexivity.
+Qed.
 
 Lemma alpha_zero_on_prefix : forall U span p k j u,
   span = p ->
@@ -326,7 +431,7 @@ Theorem nurbs_nl2_end : forall ctrl W U n p,
   nthR U (n - 1) <> nthR U n ->
   0 < nthR W (n - 1) ->
   let u := nthR U n in
-  let span := n - 1 in
+  let span := a21_end_span n in
   let rowX := init_row (fun j => hom_x ctrl W (span - p + j)) p in
   let rowW := init_row (fun j => nthR W (span - p + j)) p in
   let x := nth p (deboor_rounds p span p U u rowX) 0 in
@@ -335,6 +440,8 @@ Theorem nurbs_nl2_end : forall ctrl W U n p,
   x / w = px (nth (n - 1) ctrl (mkPoint 0 0)).
 Proof.
   intros ctrl W U n p Hp Hn HW Hc Hne Hwp u span rowX rowW x w.
+  assert (Hspan21 : a21_span n p span U u).
+  { unfold span, u. apply a21_at_right_end. lia. }
   assert (Ha : forall k, 1 <= k <= p -> alpha_at U span p k p u = 1).
   { intros k Hk. unfold u, span.
     apply alpha_one_at_end.
@@ -423,6 +530,9 @@ Record NurbsBlocks : Type := mkNurbsBlocks {
   nb_knot : option (list R)
 }.
 
+(* Absent weight block means every weight is 1.
+   That is the QGIS NURBSCURVE rule when the weight block is missing,
+   not a parse error and not an implicit zero. *)
 Definition nb_weight_or_one (b : NurbsBlocks) : list R :=
   match nb_weight b with
   | Some w => w
@@ -444,6 +554,7 @@ Definition nurbs_wf (c : NurbsNet) : Prop :=
   (1 <= p < n)%nat /\
   length (nn_knot c) = n + p + 1 /\
   length (nn_weight c) = n /\
+  knots_nondecreasing (nn_knot c) /\
   clamped_lo (nn_knot c) p /\
   clamped_hi (nn_knot c) n p /\
   nthR (nn_knot c) (n - 1) < nthR (nn_knot c) n /\
@@ -460,7 +571,7 @@ Theorem nurbs_wf_start : forall c,
     nth p (deboor_rounds p p p (nn_knot c) u rowW) 0
   = px (nth 0 (nn_ctrl c) (mkPoint 0 0)).
 Proof.
-  intros c [Hp [Hlenk [Hlenw [Hlo [Hhi [Hspan Hpos]]]]]] p u rowX rowW.
+  intros c [Hp [Hlenk [Hlenw [Hmono [Hlo [Hhi [Hspan Hpos]]]]]]] p u rowX rowW.
   destruct (nurbs_nl2_start (nn_ctrl c) (nn_weight c) (nn_knot c) p)
     as [Hw Hx].
   - lia.
@@ -473,6 +584,10 @@ Proof.
     + exact Hx.
 Qed.
 
+Print Assumptions alpha_in_01.
+Print Assumptions alpha_in_01_of_span.
+Print Assumptions blend_pos.
+Print Assumptions a21_at_right_end.
 Print Assumptions nurbs_nl2_start.
 Print Assumptions nurbs_nl2_end.
 Print Assumptions n_l1_sample_is_eval.

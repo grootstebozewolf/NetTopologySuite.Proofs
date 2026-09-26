@@ -2911,6 +2911,7 @@ theories/SidecarNurbsEgg.v
 theories/NurbsMkNurbs.v
 # Clean-room A4.1. Clamped endpoints and the degree-1 chord.
 theories/NurbsDeBoor.v
+theories/NurbsBasis.v
 # ADR-0007 SIN / sinusoid egg sidecar (SidecarSinEgg). Packages
 # EggSinusoid Decline-on-host + demoted unit-square chord-seed.
 # Host/pure-R. First cook stays chord–chord. Not Spectre profile
