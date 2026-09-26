@@ -2,7 +2,7 @@
 
 claimId: 0007-karney-2013-ingest · board: ADR-0007 · kind: research · source: Karney CFF, J Geod 87:43–55 (2013), doi 10.1007/s00190-012-0578-z, open access (CC-BY, p. 54) · PDF sha256 1eb833d9acf94d03d94a7b8237971c881ad946ea9d3af3e00b739f7826ccf0f1 · Coq: `IntakeKarneyPark.v`. AI-drafted, human-reviewed.
 
-This is a research letter on an ellipsoid of revolution, not a cook, not a first-cook expand, not `MkGeodesic`. The planar geodesic machine of #788 (`IntakeGeodesicCook.v`: sheet chord = geodesic on S = (O; e1, e2)) is on main (`fb3f349`). Nothing here says "geodesic closed": G3 / ambient / wire stay QEX parks. K2 is a chord-hit statement. The inverse is K1.
+Research letter on an ellipsoid of revolution, not a cook, not a first-cook expand, not `MkGeodesic`. Planar geodesic machine of #788 (`IntakeGeodesicCook.v`) is on main (`fb3f349`). G3 / ambient / wire stay QEX parks. K2 is a chord-hit pin. The inverse is K1.
 
 ## Facts from the article (page-cited, 2013 pagination)
 
@@ -21,7 +21,7 @@ This is a research letter on an ellipsoid of revolution, not a cook, not a first
 |---|---|---|
 | K0 not planar intake | **QED** — GEODESICSTRING μ stays `MkChord` on every ADR-0007 `Sheet`; NAB is not that bag | `IntakeKarneyPark.v : ticket_0007_karney_not_planar_intake_qed_or_qex` |
 | K1 Vincenty inverse not total | **QEX** — K1 owns the inverse (f(α₁)=λ₁₂(α₁)−λ★, m₁₂, Vincenty 1975a/b, Newton). Not implemented here; failure is Karney's claim (pp. 43, 49, 53), not a corpus counterexample | `IntakeKarneyPark.v : ticket_0007_karney_vincenty_total_qed_or_qex` |
-| K2 ellipsoid geodesic ≠ sheet chord | **QEX** — a chord-hit statement, not an inverse result: the closed term is `on_chord` membership of the G3 pole (`IntakeGeodesicCook.v : sheet_chord_misses_pole`), planar chord geometry on ADR-0007 Sheet S; it says nothing about Karney's inverse problem. The inverse is K1. G3 not reminted | `IntakeKarneyPark.v : ticket_0007_karney_chord_not_geodesic_qed_or_qex` |
+| K2 chord-hit pin | **QED** left `sheet_chord_misses_pole` ∧ `sheet_chord_midpoint_on_parallel` ∧ `~ exists t, on_chord g3_chord t g3_pole`; fence `K2OwnsChordHit` inhabited / `K1OwnsInverse` → `ticket_0007_karney_vincenty_total_qed_or_qex`. Geodesic ≠ chord stays QEX right | `IntakeKarneyPark.v : ticket_0007_karney_chord_not_geodesic_qed_or_qex` |
 | K3 new sheet class | **QEX** — an ellipsoid sheet does not inhabit ADR-0007 `Sheet` = (O; e1, e2); a new ADR is required | `IntakeKarneyPark.v : ticket_0007_karney_new_sheet_class_qed_or_qex` |
 
 Not claimed: that the corpus solves the inverse geodesic problem. Karney is a named park (ambient ellipsoid), not a discharge of G3. ADR-0007 stays Accepted.
