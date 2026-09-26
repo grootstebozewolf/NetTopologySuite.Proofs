@@ -39,16 +39,9 @@ continuous engine port and does not close the densification bound.
 
 ## Three words that say “Hausdorff”
 
-| Word | What it is | Engine home | Status |
-|---|---|---|---|
-| Discrete Hausdorff | Vertex (optionally densified-segment) max-min. `DHD ≤ HD`. Approaches HD as densify fraction → 0 | JTS / NTS / GEOS `DiscreteHausdorffDistance` | Ported. NTS TestRunner + `HausdorffSimilarityMeasure` + buffer validators live here |
-| Oriented discrete | One-sided discrete (`orientedDistance`). Still vertices / densified chords | JTS + NTS `DiscreteHausdorffDistance` | Ported. Not the locus class |
-| Directed Hausdorff | Locus max-min over **every point** of A. Asymmetric. Symmetric HD = max of both directions. `isFullyWithinDistance` short-circuits | JTS `DirectedHausdorffDistance` only | **Unported** on NTS develop and GEOS. NTS#812 still open |
-
-Do not say **DHD** as a type name. JTS `DiscreteHausdorffDistance`
-uses DHD for the discrete value; JTS `DirectedHausdorffDistance`
-uses DHD for the directed locus value. The collision is in the
-upstream comments.
+Glossary: `CONTEXT.md` Distance metrics (Discrete / Oriented discrete /
+Directed Hausdorff; densify fraction ≠ distance tolerance). Do not
+say **DHD** as a type name — JTS comments use it for both classes.
 
 ## Function inventory
 
@@ -139,30 +132,14 @@ Last port comment: JTS-1.10 `DiscreteHausdorffDistance`. No
 | `FrechetDiscrete.v` / `423-b` discrete Fréchet | — |
 | `Linearise.v : hausdorff_le` sandwich | **Not** the engine. Do not steal it as the densify bound |
 
-`docs/hausdorff-penetration.md` still says the discrete max-min is
-RED-by-design. That sentence is stale (`423-a` is Green). Ticket 10
-owns the issue-body resync. This grill does not take ticket 10.
+`docs/hausdorff-penetration.md` “discrete max-min is RED-by-design”
+is stale (`423-a` is Green). Tracker ticket 10 owns the issue-body
+resync. This grill does not take it.
 
 ## What a later `/implement` may own
 
-Spec: [`spec-hausdorff-functions.md`](spec-hausdorff-functions.md).
-Tickets on the Notion NTS RGR Board (`NTS-812`, `GEOS-DHD`), not
-GitHub issues. Do not remint `423-a`. Do not take ticket 10.
-
-## Parks
-
-- Do not remint `423-a` / `423-b`.
-- Do not take ticket 10.
-- Do not mint leftover `Ⅺ` or `CRV-*` as a Proofs `claimId`.
-- Do not grow year-1 `CurveSegment`.
-- Do not treat `Linearise.v` as the engine port.
-- Cite ISO/IEC 13249-3 only. No DOI dump. Off JTS #7.
-
-## Decisions so far
-
-- Non-discrete = JTS `DirectedHausdorffDistance`. Still unported on
-  NTS develop and GEOS.
-- Oriented discrete and densified discrete are already on NTS.
-- `feat/d-hf-curve-hausdorff` is still discrete.
-- `GEOSHausdorffDistance` is discrete.
-- Remaining Proofs asks stay the two ticket-10 lines on #423.
+Spec: [`spec-hausdorff-functions.md`](spec-hausdorff-functions.md)
+(`NTS-812`, `GEOS-DHD`). Do not remint `423-a` / `423-b`. Do not
+take tracker ticket 10. Do not mint leftover `Ⅺ` or `CRV-*`. Do
+not grow year-1 `CurveSegment`. Do not treat `Linearise.v` as the
+engine. Off JTS #7.

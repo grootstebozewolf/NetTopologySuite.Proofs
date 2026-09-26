@@ -49,43 +49,18 @@ This map does **not** cut the releases. Plan, don't mint.
 
 ### Findings that seeded this map (verified 2026-08-24)
 
-- **No prior release ever landed upstream.** `released/packages/` in
-  `rocq-prover/opam` (which `coq/opam` redirects to) has no entry for either
-  package, and an archive-wide code search for all four name spellings returns
-  zero hits. `coq-flocq` is present at four versions, so the path convention is
-  confirmed. All six published releases are GitHub tarballs only.
-- **`assemble.sh` never verifies manifest closure.** The claim lives only in a
-  MANIFEST header comment, and that comment is already wrong: it describes a
-  "15-file set" where the list holds 21 paths.
-- **`OPAM_PUBLISH_TOKEN` has been configured since 2026-06-24**, yet the
-  workflow's silent-fallback branch is evidently the path every release took.
-- **The declared lower bound is untested:** both packages declare
-  `rocq-core {>= "9.0"}`; CI builds only the pinned 9.2.0.
-- **`DE9IM.v` has changed since the last mint** (the `im_unsupported` sentinel),
-  so `spatial-algebra` has real content to ship rather than a bare bump.
+No archive mint (GitHub tarballs only). Manifest-closure claim is
+comment-only and stale. `OPAM_PUBLISH_TOKEN` never reached the
+archive. Declared `rocq-core {>= "9.0"}` is untested (CI is 9.2.0).
+`DE9IM.v` has changed since the last tarball. Detail lives on the
+closed tickets below.
 
 ## Decisions so far
 
-<!-- one line per closed ticket: enough to judge relevance, then open the ticket -->
-
 - [Collect the community verdict on the `rocq-*` rename](tickets-opam-mmf/closed/01-community-verdict-on-rocq-rename.md)
-  — no objection; **both** packages become `rocq-*` and restart at **0.1.0**. The
-  ideal "rocq-* depends only on rocq-*" rule initially suggested keeping
-  `robust-predicates` as `coq-*` because of `coq-flocq`; dropped deliberately,
-  since Flocq 4.2.2 already implements the Rocq standard library and only its
-  upstream *name* is still `coq-*`. New tag prefix was forced: the old
-  `*-v0.1.0` tags already exist. Old releases kept as history.
-
+  — both `rocq-*`, restart at **0.1.0**.
 - [Decide the Rocq version constraint](tickets-opam-mmf/closed/03-rocq-version-constraint.md)
-  — match `rocq-bignums`, not `coq-fourcolor`: `rocq-core {>= "9.2" & < "9.4~"}`
-  with `rocq-stdlib` unconstrained, `coq-flocq {>= "4.2.2" & < "4.3~"}`, and a
-  published tested-on date. A wider Rocq range is served by publishing
-  `+rocqX.Y` versions, never by widening a bound. Carries rename evidence to
-  ticket 01 (archive is 1111 `rocq-*` to 5302 mostly-legacy `coq-*`) and three
-  bar lines to ticket 06. **Amended same day:** the upper bound was wrong —
-  Rocq 9.3 is not released (stable tops out at 9.2.0), so `< "9.4~"` permitted
-  two nonexistent versions; corrected to `< "9.3~"`. Both packages verified to
-  build and lint locally in the same pass.
+  — `rocq-core {>= "9.2" & < "9.3~"}`; `coq-flocq {>= "4.2.2" & < "4.3~"}`.
 
 ## Not yet specified
 
