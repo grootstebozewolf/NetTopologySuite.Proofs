@@ -289,11 +289,12 @@ Lemma clothoid_egg_mkclothoid_or_tag :
     (exists c, e = MkClothoid c) \/ e = MkOutOfScope EggClothoid.
 Proof.
   intros e He.
-  destruct e as [ch | circ | clth | cl].
+  destruct e as [ch | circ | clth | cl | nu].
   - unfold egg_class in He. discriminate.
   - unfold egg_class in He. discriminate.
   - left. exists clth. reflexivity.
   - unfold egg_class in He. subst cl. right. reflexivity.
+  - unfold egg_class in He. discriminate.
 Qed.
 
 Lemma mkclothoid_class :

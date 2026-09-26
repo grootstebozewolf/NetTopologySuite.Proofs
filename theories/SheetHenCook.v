@@ -61,11 +61,19 @@ Definition chord_eval (c : ChordEgg) (t : R) : Point :=
   mkPoint ((1 - t) * px (ce_p0 c) + t * px (ce_p1 c))
           ((1 - t) * py (ce_p0 c) + t * py (ce_p1 c)).
 
+(* Placeholder carrier. Not knots, weights, or γ.
+   Well-formedness is not this arm. The arm exists so matches are
+   exhaustive and fail-closed. *)
+Record NurbsNet : Type := mkNurbsNet {
+  nn_pending : unit
+}.
+
 Inductive Egg : Type :=
 | MkChord : ChordEgg -> Egg
 | MkCirc : CircularEgg -> Egg
 | MkClothoid : ClothoidEgg -> Egg
-| MkOutOfScope : EggClass -> Egg.
+| MkOutOfScope : EggClass -> Egg
+| MkNurbs : NurbsNet -> Egg.
 
 Definition egg_class (e : Egg) : EggClass :=
   match e with
@@ -73,6 +81,7 @@ Definition egg_class (e : Egg) : EggClass :=
   | MkCirc _ => EggCircularArc
   | MkClothoid _ => EggClothoid
   | MkOutOfScope c => c
+  | MkNurbs _ => EggNurbs
   end.
 
 Definition interpolant_pair (e1 e2 : Egg) : Prop :=
@@ -136,6 +145,12 @@ Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   | MkClothoid c1, MkClothoid c2, IEmpty =>
       ~ exists X t1 t2, on_cloth c1 t1 X /\ on_cloth c2 t2 X
   | MkClothoid _, MkClothoid _, IDecline => False
+  | MkNurbs _, _, IHit _ _ _ => False
+  | MkNurbs _, _, IEmpty => False
+  | MkNurbs _, _, IDecline => True
+  | _, MkNurbs _, IHit _ _ _ => False
+  | _, MkNurbs _, IEmpty => False
+  | _, MkNurbs _, IDecline => True
   | _, _, IDecline => ~ interpolant_pair e1 e2
   | _, _, IHit _ _ _ => False
   | _, _, IEmpty => False
@@ -878,6 +893,8 @@ Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
   | MkCirc e1, MkCirc e2, IHit _ ti tj =>
       Some (cook_hit_circs c1 c2 e1 e2 ti tj h_new)
   | MkClothoid e1, MkClothoid e2, IHit _ ti tj => Some (cook_hit_clothoids c1 c2 e1 e2 ti tj h_new)
+  | MkNurbs _, _, _ => None
+  | _, MkNurbs _, _ => None
   | _, _, _ => None
   end.
 

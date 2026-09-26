@@ -120,11 +120,12 @@ Lemma sidecar_circ_egg_host_only_out_of_scope :
     (exists ce, e = MkCirc ce) \/ e = MkOutOfScope EggCircularArc.
 Proof.
   intros e He.
-  destruct e as [c | ce | clth | cl].
+  destruct e as [c | ce | clth | cl | nu].
   - unfold egg_class in He. discriminate.
   - left. exists ce. reflexivity.
   - unfold egg_class in He. discriminate.
   - unfold egg_class in He. subst cl. right. reflexivity.
+  - unfold egg_class in He. discriminate.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

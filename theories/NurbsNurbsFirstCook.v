@@ -132,16 +132,16 @@ Proof.
   intro H. exact H.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* No silent demote. EggNurbs is still only the out-of-scope tag.             *)
-(* -------------------------------------------------------------------------- *)
-
+(* EggNurbs is the out-of-scope tag or the fail-closed MkNurbs arm.
+   The arm is not an interpolant. Exact cook is not this letter. *)
 Lemma egg_nurbs_is_tag :
-  forall e, egg_class e = EggNurbs -> e = MkOutOfScope EggNurbs.
+  forall e, egg_class e = EggNurbs ->
+    e = MkOutOfScope EggNurbs \/ exists ne, e = MkNurbs ne.
 Proof.
   intros e H.
-  destruct e; simpl in H; try discriminate.
-  subst. reflexivity.
+  destruct e as [ch|ce|cl|k|ne]; simpl in H; try discriminate.
+  - left. rewrite H. reflexivity.
+  - right. exists ne. reflexivity.
 Qed.
 
 Lemma nurbs_tag_not_mkcirc :
@@ -249,7 +249,8 @@ Theorem ticket_0007_nurbs_nurbs_first_cook_qed_or_qex :
    /\ (forall p ti tj,
          ~ I_ok (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
               (IHit p ti tj))
-   /\ (forall e, egg_class e = EggNurbs -> e = MkOutOfScope EggNurbs)
+   /\ (forall e, egg_class e = EggNurbs ->
+         e = MkOutOfScope EggNurbs \/ exists ne, e = MkNurbs ne)
    /\ (forall c, MkOutOfScope EggNurbs <> MkCirc c)
    /\ (forall c, MkOutOfScope EggNurbs <> MkChord c)
    /\ ~ interpolant_pair (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
