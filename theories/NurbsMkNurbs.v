@@ -3,7 +3,17 @@
    ----------------------------------------------------------------------------
    ADR-0007 letter: host MkNurbs (claimId 0007-mk-nurbs).
 
-   Year-1 cook scope includes NURBS×NURBS. That is not this letter.
+   Year-1 exact NURBS×NURBS is not this letter, and it is not the
+   year-1 cook. NTS.Curve develop linearizes every ILinearizable
+   (including CircularString) and then runs OverlayNG. There is no
+   NURBS type and no NURBS evaluator. Exact NURBS×NURBS is year 2.
+   The year-1 host work is still MkNurbs / OnNurbs / NurbsGammaOnSheet,
+   fail-closed (MkNurbs _ => IDecline) until a dated freeze lift.
+   first_cook_scope EggNurbs EggNurbs is a class-pair flag only.
+   Spec-first: γ is Bernstein spans from Bézier extraction, plus a
+   convex-hull linearization spec, before the C# evaluator exists.
+   Cox–de Boor appears only in the extraction-equivalence lemma, which
+   is the refinement seam for a future de Boor evaluator.
    MkNurbs is the host Egg constructor: control net + knots + weights
    give an interpolant γ on sheet S. Sidecar MkOutOfScope EggNurbs
    (SidecarNurbsEgg) is packaging, not this ctor.
