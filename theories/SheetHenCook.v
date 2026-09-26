@@ -61,11 +61,14 @@ Definition chord_eval (c : ChordEgg) (t : R) : Point :=
   mkPoint ((1 - t) * px (ce_p0 c) + t * px (ce_p1 c))
           ((1 - t) * py (ce_p0 c) + t * py (ce_p1 c)).
 
-(* Placeholder carrier. Not knots, weights, or γ.
-   Well-formedness is not this arm. The arm exists so matches are
-   exhaustive and fail-closed. *)
+(* Carrier for the fail-closed arm. Cook still declines.
+   Well-formedness (clamped knots, w > 0) and A4.1 live in NurbsDeBoor.
+   This is not γ and not an exact NURBS×NURBS cook. *)
 Record NurbsNet : Type := mkNurbsNet {
-  nn_pending : unit
+  nn_degree : nat;
+  nn_ctrl : list Point;
+  nn_weight : list R;
+  nn_knot : list R
 }.
 
 Inductive Egg : Type :=
