@@ -180,6 +180,12 @@ theories/SidecarNurbsEgg.v
 # NurbsGammaOnSheet missing. Tag MkOutOfScope is not the ctor.
 # Host/pure-R. Not #508 length. Not a silent MkCirc. No Admitted.
 theories/NurbsMkNurbs.v
+# Clean-room A4.1. Clamped endpoints and the degree-1 chord.
+# Cook stays IDecline. Not a QGIS copy. No Admitted.
+theories/NurbsDeBoor.v
+# Cox–de Boor basis. Degree-0 partition at the right end.
+# General p > 0 partition and the A4.1 equality are not in this file.
+theories/NurbsBasis.v
 # ADR-0007 SIN / sinusoid egg sidecar (SidecarSinEgg). Packages
 # EggSinusoid Decline-on-host + demoted unit-square chord-seed.
 # Host/pure-R. First cook stays chord–chord. Not Spectre profile

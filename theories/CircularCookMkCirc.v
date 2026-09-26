@@ -294,11 +294,12 @@ Lemma circular_egg_mkcirc_or_tag :
     (exists c, e = MkCirc c) \/ e = MkOutOfScope EggCircularArc.
 Proof.
   intros e He.
-  destruct e as [c | circ | clth | cl].
+  destruct e as [c | circ | clth | cl | nu].
   - unfold egg_class in He. discriminate.
   - left. exists circ. reflexivity.
   - unfold egg_class in He. discriminate.
   - unfold egg_class in He. subst cl. right. reflexivity.
+  - unfold egg_class in He. discriminate.
 Qed.
 
 (* WITNESS {"claimId":"0007-gamma-mkcirc","topic":"overlay","lemma":"locked_mkcirc_I_ok","title":"Host I_ok Hits two MkCirc circular chickens on the locked quarter-circle pair","file":"theories/CircularCookMkCirc.v","witness":"0007-gamma-mkcirc","board":"ADR-0007"} *)
