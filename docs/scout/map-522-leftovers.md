@@ -113,5 +113,5 @@ unnamed ── fill remints (4 shared pins) ── sequencing ── not 522-f
 #523 ────── F vs not-computed
 parked ──── empty/empty
 
-522-n / Ⅹ ── not minted
+522-n / Ⅹ ── unminted by owner ruling (Jeroen, 2026-09-28) even though #880 lifted Ⅹ; Ⅺ fenced
 ```

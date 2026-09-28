@@ -1576,29 +1576,20 @@ CircUnknown CircularString / Circle no longer Declines
 `MkCirc` chicken bag from arbitrary well-formed WKT circular
 control points.
 
-Three distinct non-collinear control points determine a unique
-circumcircle (algebraic `O`, `r`; same formula as
-`CurveGeometry.v`). Angle fields are inhabited from that
-geometry without importing `Atan2.v` / Stdlib `atan` (Ratan
-proofs are Category C / `classic` and would contaminate
-first-slice Print Assumptions on the shared `intake_map`).
-`θ₀` is the sheet `e₁` ray (`0`). `Δθ` is the oriented full
-span `±2π` (sign = sign of the three-point area). Host `γ`
-stays the atan2-free interpolant on `CircularEgg` data
-(`CircularCookMkCirc.v`).
-
-Each CircularString arc span (odd control count `2n+1`, `n≥1`)
-mints one `MkCirc` chicken. ISO Circle is one full-span
-`MkCirc`. Locked CircQuarter / CircFullOgc tags stay the
-first-slice fixtures (OGC≡ISO same-bag discipline).
-
-Fail closed by name: empty (`ID_Empty`), even / short count
-(`ID_BadPointCount`), coincident control
-(`ID_DuplicateControl`), collinear (`ID_Collinear`),
-zero-radius (`ID_DegenerateArc`). No silent chord demote.
-`ID_CircGammaLeftover` remains on the Decline type; it is not
-the well-formed unknown-CS answer. `IntakeMkClothoid` is the
-next letter (`0007-intake-mkclothoid`), not this parks stop.
+Three distinct non-collinear points determine a unique circumcircle.
+Owner ruling (Jeroen, 2026-09-28, #771) supersedes
+`IntakeAngles.v : intake_angles_ctor_shape` (θ₀ = 0, Δθ = ±2π): WKT
+computes (θ₀, Δθ) from (A, M, B) (chart, pole opposite M, atan3, S1a
+atan2) and proves carry-and-check (`circ_eval` ends, M on the egg,
+`0 < |Δθ| < 2π`). GML/LandXML carry angles literally; paths agree by
+`atan2_unique`. Oracle window `(O, r², pole, ζA, ζB)`. Full-circle
+(A = B) unchanged. ±2π on every triple is an unsound over-approximation.
+Each arc (odd count `2n+1`, `n≥1`) mints one `MkCirc`. ISO Circle stays
+one full-span `MkCirc`. Fail closed: empty, bad count, duplicate,
+collinear, degenerate. No silent chord demote. Remint owes a clockwise
+`orient(A,M,B)` vs `ArcSweepCcw` fixture (#770 F3) and a SQLMM_WKT
+(#660) differential. #866 is split into (a) this letter and (b) a
+future GML/LandXML carrier.
 
 Mapper stays thin: no noding, no `split(t)`, no snap, no
 intersection hens. Java visitor
@@ -1632,8 +1623,7 @@ forms (ISO `REFERENCELOCATION`, JTS `(k0,k1,L)`). Both map onto
 the **same** locked `ClothoidEgg` SHC bag (OGC≡ISO discipline).
 
 Locked inhabitance record (`SheetHenClothoidEgg.v`): chord-seed
-ends plus JTS `(k0,k1,L)` from `example5.txt`. Not a Fresnel
-interpolant. Not clothoid×clothoid first cook. `EggClothoid`
+ends plus JTS `(k0,k1,L)` from `example5.txt` (landed record; ISO Fresnel host remint unlocked, #883). Not clothoid×clothoid first cook. `EggClothoid`
 stays; spiral's clothoid nameplate stays distinct.
 
 `example5.txt` / `example5_cc_both_clothoid_cst` bags the
@@ -1673,7 +1663,7 @@ Needle AFTER intake MkClothoid (#727 @ `35ca6e5`). claimId
 `0007-clothoid-first-cook`. Put `EggClothoid × EggClothoid` in
 `first_cook_scope`. `MkClothoid` pairs are `interpolant_pair`.
 Locked crossing pair inhabits host `IHit` via `on_cloth`
-(closed-form small-angle interpolant, not Fresnel, not chord-parameter; eggs keep `(k0,k1,L)`;
+(landed small-angle interpolant; ISO Fresnel `MkClothoid` remint unlocked by Joost, #883, not a freeze and not a decider gate; not chord-parameter; eggs keep `(k0,k1,L)`;
 `cloth_split` mints `MkClothoid` children). `try_cook_hit` returns
 `Some`. Thin sibling `ClothoidCookMkClothoid.v` — `SheetHenCook.v`
 stays at the module-split ceiling.
@@ -1705,15 +1695,17 @@ Witness: `0007-clothoid-first-cook`. Status stays **Accepted**. Parks ι / ρ. �
 
 ## Amendment (2026-09-28)
 
-Freeze lifted on reminting CircGamma, leftover Ⅹ, `LoopDischarged`,
-`I_ok_mixed` as host, `MkNurbs`, and claimId `0007-intake-angles`. Also
-lifted: flipping `LeftoverBagTermArm`, and reminting `CircularEgg` as
-witness `(A,M,B,σ)` or reparameterizing it by τ / home circles in `MkNurbs`.
-Reason: #867 (CircleChart, τ = tan(φ/2), no Atan2/Ratan), #868 (AtanIvt),
-#877 (C2 zeta-egg bridge), #879 (zeta host-hit), #878 (`golden_phi` via
-atan3). The τ-chart plus IVT atan3 mean the host path no longer needs a
-computed angle, and angles are now computable axiom-legally. Those items may
-be reminted as normal letters. Remints nothing and discharges nothing. The
-#771 span-source policy (carry-and-check at intake: egg carries θ₀/Δθ;
-intake computes no angles, not θ₀) is reopened for the ADR decider,
-not a decision here.
+#880 lifted the freeze on CircGamma, `LoopDischarged`, `I_ok_mixed`
+as host, `MkNurbs`, `0007-intake-angles`, `LeftoverBagTermArm`, and a
+`CircularEgg` witness `(A,M,B,σ)`. It also lifted leftover Ⅹ.
+Owner ruling (Jeroen, 2026-09-28): Ⅹ stays unminted even though #880
+lifted it; Ⅺ stays fenced; there is no `522-n`.
+`triangle_pair_de9im : Tri → Tri → Matrix` sits beside
+`triangle_pair_regime` under a new TIN/year-1 claimId, agrees with
+every concrete `triangle_pair_fill`, and leaves `522-j`, `522-m`
+(`triangle_pair_regime_ccw_incomplete` and variant) and #577 untouched.
+#771 is decided: WKT computes (θ₀, Δθ); carry-and-check is the
+predicate on that result, not a decider reopen and not the only WKT
+policy. Joost unlocked the ISO Fresnel `MkClothoid` remint (#883).
+The small-angle sentences above are the landed letter, not a freeze
+and not a decider gate.
