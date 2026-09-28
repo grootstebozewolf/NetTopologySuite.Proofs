@@ -1,17 +1,18 @@
 (* =============================================================================
    oracle/sqlmm_wkt.ml
    -----------------------------------------------------------------------------
-   Structural WKT oracle for the ISO/IEC 13249-3 §4.2.1 instantiable ST_Curve
-   subtypes that the engines do not yet carry: CLOTHOID, CIRCLE,
-   GEODESICSTRING, NURBSCURVE, SPIRALCURVE (plus ELLIPTICALCURVE, also
-   instantiable at §4.2.9, so it is not UNKNOWN).
+   Structural WKT type-identity oracle for ISO/IEC 13249-3 §4.2.1
+   instantiable ST_Curve subtypes: CLOTHOID, CIRCLE, GEODESICSTRING,
+   NURBSCURVE, SPIRALCURVE (plus ELLIPTICALCURVE at §4.2.9, so it is
+   not UNKNOWN).
 
-   This is I/O type identity.  It does not evaluate length, does not grow
-   CurveSegment, and does not remint 508-*.  Numbers stay decimal tokens;
-   there is no binary64 arithmetic here.
+   This is I/O type identity on the oracle wire.  It does not evaluate
+   length, does not grow CurveSegment, does not remint 508-*, and does
+   not discharge ADR-0007 intake or emit.  CIRCLE / GEODESICSTRING /
+   CLOTHOID intake already lives on the walker; this mode does not
+   replace it.  Numbers stay decimal tokens; there is no binary64 here.
 
-   SPIRALTYPE deviation (documented in
-   docs/iso13249-3-curve-type-bindings-2026-08.md §8):
+   SPIRALTYPE deviation:
      The standard writes <spiraltype text> as free-form <letters>, and
      §5.1.68 length-prefixes the value in WKB, so the value set is open —
      §4.2.12 lists clothoid, bloss, biquadratic, sine and cosine only as
@@ -502,7 +503,7 @@ let recognized = function
   | "POLYHEDRALSURFACE" -> true
   | _ -> false
 
-let instantiable_zoo = function
+let instantiable_st_curve = function
   | "CIRCLE" | "GEODESICSTRING" | "ELLIPTICALCURVE"
   | "NURBSCURVE" | "CLOTHOID" | "SPIRALCURVE" -> true
   | _ -> false
@@ -533,7 +534,7 @@ let parse_line raw =
     if typ = "" then raise (Parse ("UNKNOWN " ^ String.uppercase_ascii raw_typ));
     let dim = read_optional_dim c attached in
     let specialized =
-      instantiable_zoo typ || typ = "CIRCULARSTRING"
+      instantiable_st_curve typ || typ = "CIRCULARSTRING"
       || typ = "COMPOUNDCURVE" || typ = "CURVEPOLYGON"
     in
     if not specialized && not (recognized typ) then

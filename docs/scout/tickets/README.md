@@ -27,16 +27,6 @@ Order of work: top-down from #64, with the freebie first.
 | 08 | ~~[Retire #68 — Delaunay triangulation and Voronoi diagrams](closed/08-retire-68-delaunay-voronoi.md)~~ **closed** → #525 (global tier), #526 | grilling | — |
 | 09 | ~~[End #69's umbrella role and re-parent the standing epics](closed/09-end-69-umbrella.md)~~ **closed** → [`69-closing-summary.md`](../69-closing-summary.md); no replacement umbrella | grilling | 11 (04–08 all closed) |
 | 10 | [Resync surviving issue bodies to corpus state](10-resync-surviving-bodies.md) | task | **#506 queue empty** · 09 done |
-| 29 | ~~[Chart COMPOUNDCURVE flatten-elimination](closed/29-compoundcurve-flatten-chart.md)~~ **closed** → [`map-compoundcurve.md`](../map-compoundcurve.md) | grilling | — |
-| 30 | ~~[Flatten-elimination — silent COMPOUNDCURVE chord path](closed/30-compoundcurve-flatten-elimination.md)~~ **closed** → GEOS `ensureNoCurvedComponents` + `getLinearized` | implement | 29 |
-| 31 | ~~[Chart CURVEPOLYGON type honesty](closed/31-curvepolygon-type-chart.md)~~ **closed** → [`map-curvepolygon.md`](../map-curvepolygon.md) | grilling | — |
-| 32 | ~~[Silent POLYGON collapse — CURVEPOLYGON type honesty](closed/32-curvepolygon-silent-polygon-collapse.md)~~ **closed** → GEOS OverlayNG + `createSurface` | implement | 31 |
-| 33 | ~~[Chart MULTICURVE type honesty](closed/33-multicurve-type-chart.md)~~ **closed** → [`map-multicurve.md`](../map-multicurve.md) | grilling | — |
-| 34 | ~~[Silent MultiLineString collapse — MULTICURVE type honesty](closed/34-multicurve-silent-multilinestring-collapse.md)~~ **closed** → GEOS OverlayNG | implement | 33 |
-| 35 | ~~[Chart MULTISURFACE type honesty](closed/35-multisurface-type-chart.md)~~ **closed** → [`map-multisurface.md`](../map-multisurface.md) | grilling | — |
-| 36 | ~~[Silent MultiPolygon collapse — MULTISURFACE type honesty](closed/36-multisurface-silent-multipolygon-collapse.md)~~ **closed** → GEOS `restrictToSurfaces` | implement | 35 |
-| 37 | ~~[SQL/MM WKT oracle — CLOTHOID / CIRCLE / GEODESICSTRING / NURBSCURVE / SPIRALCURVE](closed/37-sqlmm-wkt-oracle.md)~~ **closed** → oracle `SQLMM_WKT` | implement | 30 / 32 / 34 / 36 |
-| 38 | ~~[NTS WKT named refuse for §4.2.1 curve types](closed/38-nts-sqlmm-named-refuse.md)~~ **closed** → NTS `WKTReader` named refuse | implement | 37 |
 
 ```
 01 ══════════════════════════════════════ closed 2026-08-22 (#482)
@@ -61,20 +51,6 @@ directed locus; NTS#812 still open):
 Implement spec (NTS + GEOS; Notion tickets `NTS-812` / `GEOS-DHD`):
 [`docs/scout/spec-hausdorff-functions.md`](../spec-hausdorff-functions.md).
 Do not remint `423-a`. Do not take ticket 10 for that inventory.
-
-**Related living maps.** SQL/MM type-honesty packet (one PR; four maps):
-COMPOUNDCURVE [`map-compoundcurve.md`](../map-compoundcurve.md) (tickets 29 / 30; 30 closed on GEOS),
-CURVEPOLYGON [`map-curvepolygon.md`](../map-curvepolygon.md) (tickets 31 / 32; 32 closed on GEOS),
-MULTICURVE [`map-multicurve.md`](../map-multicurve.md) (tickets 33 / 34; 34 closed on GEOS),
-MULTISURFACE [`map-multisurface.md`](../map-multisurface.md) (tickets 35 / 36; 36 closed on GEOS).
-Do not remint `#509`. Off JTS #7. Do not steal across leftovers. NTS/JTS leftover sites stay an engine grill.
-ST_Clothoid / ST_Circle / ST_GeodesicString / ST_NURBSCurve / ST_SpiralCurve
-are instantiable in ISO/IEC 13249-3 §4.2.1 — not optional extras. GEOS WKT
-refuses them as SQL/MM types. Oracle mode `SQLMM_WKT` parses type identity
-(ticket 37; SPIRALTYPE open-set lexer deviation in the clause-book §8).
-NTS WKT names them and refuses (ticket 38), matching GEOS. Do not remint
-`508-*`. Not leftover `Ⅺ`.
-
 The #522 children (bar 1 → bar 2) have their own
 frontier: [`docs/scout/map-522.md`](../map-522.md). Wrap-up leftovers:
 [`docs/scout/map-522-leftovers.md`](../map-522-leftovers.md).
@@ -102,16 +78,6 @@ on the #506 queue. Ticket 523 stays open, not accepted.
 | 11 · second pass at #67 | closed: overtaken |
 | 09 · end #69's umbrella | closed — owner-retire packet written; GitHub object stays for owner review |
 | 10 · resync surviving bodies | #506's split queue emptying |
-| 29 · COMPOUNDCURVE chart | closed — [`map-compoundcurve.md`](../map-compoundcurve.md) |
-| 30 · flatten-elimination | closed on GEOS — `ensureNoCurvedComponents` refuse + `getLinearized` |
-| 31 · CURVEPOLYGON chart | closed — [`map-curvepolygon.md`](../map-curvepolygon.md) |
-| 32 · silent-polygon-collapse | closed on GEOS — OverlayNG + `createSurface` |
-| 33 · MULTICURVE chart | closed — [`map-multicurve.md`](../map-multicurve.md) |
-| 34 · silent-multilinestring-collapse | closed on GEOS — OverlayNG |
-| 35 · MULTISURFACE chart | closed — [`map-multisurface.md`](../map-multisurface.md) |
-| 36 · silent-multipolygon-collapse | closed on GEOS — `restrictToSurfaces` `hasCurvedTypes` |
-| 37 · SQLMM_WKT oracle | closed — `oracle/sqlmm_wkt.ml` |
-| 38 · NTS named refuse | closed on NTS — `WKTReader` names §4.2.1 types and refuses |
 
 The next useful session on this map is not another wayfinder letter.
 Owner review of [`69-closing-summary.md`](../69-closing-summary.md)

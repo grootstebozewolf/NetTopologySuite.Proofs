@@ -4850,10 +4850,10 @@ let run_cp_boundary_simplify () =
   done
 
 (* ----- SQLMM_WKT (structural I/O identity; no binary64).
-   ISO/IEC 13249-3 §4.2.1 instantiable ST_Curve subtypes that the engines
-   do not yet carry, plus the SPIRALTYPE open-set lexer deviation.
-   Implementation lives in sqlmm_wkt.ml so this mode cannot grow a
-   hand-rolled float kernel.  See oracle/red_sqlmm_wkt_tests.py. *)
+   ISO/IEC 13249-3 §4.2.1 instantiable ST_Curve subtypes, plus the
+   SPIRALTYPE open-set lexer deviation.  Does not discharge ADR-0007
+   intake or emit.  Implementation lives in sqlmm_wkt.ml so this mode
+   cannot grow a hand-rolled float kernel.  See oracle/red_sqlmm_wkt_tests.py. *)
 let run_sqlmm_wkt () =
   let line = input_line stdin in
   print_endline (Sqlmm_wkt.parse_line line)
