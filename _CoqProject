@@ -274,6 +274,10 @@ theories/CircleChart.v
 # docs/audit-exceptions.txt: audit_axioms.sh must enforce the footprint.
 # No NurbsConicExact rewrite on this commit.
 theories/AtanIvt.v
+# S1a (#770): atan2 y x := 2*atan3(y/(r+x)) on AtanIvt, atan2_polar and
+# atan2_unique. Only to turn the pole direction into theta0. Not
+# Atan2.atan2 (Category C). 3-axiom. No Admitted.
+theories/Atan2Ivt.v
 # C1 kernel: chord line vs chart circle as a zeta-quadratic.
 # Oracle lane. Imports CircleChart. Not an IResult remint.
 # No C1.4-C1.14. No Admitted.
