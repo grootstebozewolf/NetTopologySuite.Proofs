@@ -249,7 +249,7 @@ $(TARGET): extracted.cmx driver.cmx relate_matrix.cmx sqlmm_wkt.cmx
 # Structural SQL/MM WKT oracle (no extracted.ml).  Same SQLMM_WKT protocol
 # as oracle_bin; used to run red_sqlmm_wkt_tests.py without a full rebuild.
 sqlmm_wkt_bin: sqlmm_wkt.ml sqlmm_wkt_main.ml
-	ocamlopt -o sqlmm_wkt_bin sqlmm_wkt.ml sqlmm_wkt_main.ml
+	$(OCAMLOPT) -o sqlmm_wkt_bin sqlmm_wkt.ml sqlmm_wkt_main.ml
 
 sqlmm-wkt-tests: sqlmm_wkt_bin
 	cd .. && ORACLE_BIN=oracle/sqlmm_wkt_bin python3 oracle/red_sqlmm_wkt_tests.py

@@ -12,7 +12,9 @@
 # Exit status: 0 iff every assertion passes.
 #
 # Backing notes: ISO/IEC 13249-3 §4.2.1 / §4.2.7–§4.2.12 / §5.1.67 / §5.1.68.
-# SPIRALTYPE lexer deviation: docs/iso13249-3-curve-type-bindings-2026-08.md §8.
+# SPIRALTYPE lexer deviation: clause-book §1 (the §4.2.1 paragraph in
+# docs/iso13249-3-curve-type-bindings-2026-08.md) and the header of
+# oracle/sqlmm_wkt.ml. §8 is the honesty ledger and does not state it.
 # =============================================================================
 import os
 import subprocess
@@ -62,6 +64,11 @@ assert_eq(
     "CIRCLE three points",
     sqlmm("CIRCLE (0 0, 1 0, 0 1)"),
     "OK CIRCLE XY POINTS 3",
+)
+assert_eq(
+    "CIRCULARSTRING three points is not CIRCLE",
+    sqlmm("CIRCULARSTRING (0 0, 1 0, 0 1)"),
+    "OK CIRCULARSTRING XY POINTS 3",
 )
 assert_true("CIRCLE arity 2 refuses", sqlmm("CIRCLE (0 0, 1 0)").startswith("REFUSE"))
 assert_eq(
@@ -189,6 +196,16 @@ assert_eq(
     "COMPOUNDCURVE may carry CLOTHOID + GEODESICSTRING",
     sqlmm("COMPOUNDCURVE (CLOTHOID EMPTY, GEODESICSTRING (0 0, 1 0))"),
     "OK COMPOUNDCURVE XY MEMBERS 2 [CLOTHOID,GEODESICSTRING]",
+)
+assert_eq(
+    "COMPOUNDCURVE refuses a CURVEPOLYGON member",
+    sqlmm("COMPOUNDCURVE (CURVEPOLYGON EMPTY)"),
+    "REFUSE SURFACE_MEMBER CURVEPOLYGON",
+)
+assert_eq(
+    "CURVEPOLYGON refuses a CURVEPOLYGON member",
+    sqlmm("CURVEPOLYGON (CURVEPOLYGON EMPTY)"),
+    "REFUSE SURFACE_MEMBER CURVEPOLYGON",
 )
 
 print()

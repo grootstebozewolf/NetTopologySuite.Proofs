@@ -427,6 +427,26 @@ let parse_spiral _dim c =
 
 type member_info = { kind : string; deviation : string list }
 
+(* Closed ST_Curve member list for COMPOUNDCURVE and CURVEPOLYGON.
+   LINESTRING_BARE is the untagged '(' form in parse_one_member.
+   Tagged LINESTRING stays on this list and keeps DEVIATION TAGGED_LINESTRING.
+   Nested COMPOUNDCURVE is a curve. A surface or a multi is not. *)
+let curve_member = function
+  | "LINESTRING" | "CIRCULARSTRING" | "CIRCLE" | "GEODESICSTRING"
+  | "ELLIPTICALCURVE" | "NURBSCURVE" | "CLOTHOID" | "SPIRALCURVE"
+  | "COMPOUNDCURVE" -> true
+  | _ -> false
+
+let member_refuse typ =
+  match typ with
+  | "CURVEPOLYGON" | "POLYGON" | "TRIANGLE" | "TIN" | "POLYHEDRALSURFACE" ->
+      "SURFACE_MEMBER " ^ typ
+  | "MULTIPOINT" | "MULTILINESTRING" | "MULTIPOLYGON"
+  | "MULTICURVE" | "MULTISURFACE" | "GEOMETRYCOLLECTION" ->
+      "MULTI_MEMBER " ^ typ
+  | _ ->
+      "NOT_CURVE_MEMBER " ^ typ
+
 let rec parse_tagged_body typ dim c =
   match String.uppercase_ascii typ with
   | "CIRCLE" ->
@@ -453,6 +473,7 @@ and parse_one_member dim c =
       let raw = read_word c in
       let typ0, attached = split_type_and_dim raw in
       let typ = String.uppercase_ascii typ0 in
+      if not (curve_member typ) then raise (Parse (member_refuse typ));
       let mdim = read_optional_dim c attached in
       if mdim <> XY && mdim <> dim then raise (Parse "DIM_CONFLICT");
       let use_dim = if mdim = XY then dim else mdim in
