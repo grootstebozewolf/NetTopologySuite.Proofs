@@ -40,6 +40,12 @@ TYPE` definitions in clauses 5–8):
 | ST_Curve | ST_Geometry | **no** (`NOT INSTANTIABLE`) | §4.2.4 / §7.1.1 | `Curve` (abstract), `Geometries/Curve.cs:10` |
 | ST_LineString | ST_Curve | yes | §4.2.5 / §7.2.1 | `LineString` |
 | ST_CircularString | ST_Curve | yes | §4.2.6 / §7.3.1 | `Curves/CircularString.cs:36` |
+| ST_Circle | ST_Curve | yes | §4.2.7 | absent — **not an optional extra** |
+| ST_GeodesicString | ST_Curve | yes | §4.2.8 | absent — **not an optional extra** |
+| ST_EllipticalCurve | ST_Curve | yes | §4.2.9 | absent — **not an optional extra** |
+| ST_NURBSCurve | ST_Curve | yes | §4.2.10 | absent — **not an optional extra** |
+| ST_Clothoid | ST_Curve | yes | §4.2.11 | absent — **not an optional extra** |
+| ST_SpiralCurve | ST_Curve | yes | §4.2.12 | absent — **not an optional extra** |
 | ST_CompoundCurve | ST_Curve | yes | §4.2.13 / §7.10.1 | `Curves/CompoundCurve.cs:36` |
 | ST_Surface | ST_Geometry | **no** | §4.2.14 / §8.1.1 | `Surface<T>` (abstract), `Geometries/Surface.cs:16` |
 | ST_CurvePolygon | ST_Surface | yes | §4.2.15 / §8.2.1 | `Curves/CurvePolygon.cs:38` (`Surface<Curve>`) |
@@ -47,14 +53,7 @@ TYPE` definitions in clauses 5–8):
 | ST_MultiCurve | ST_GeomCollection | "may be instantiable" | §4.2.25 | `Curves/MultiCurve.cs:19` |
 | ST_MultiSurface | ST_GeomCollection | "may be instantiable" | §4.2.27 | `Curves/MultiSurface.cs:19` |
 
-The spec also defines further instantiable ST_Curve subtypes the branch does not
-model: ST_Circle (§4.2.7), ST_GeodesicString (§4.2.8), ST_EllipticalCurve
-(§4.2.9), ST_NURBSCurve (§4.2.10), ST_Clothoid (§4.2.11), ST_SpiralCurve
-(§4.2.12 — spiral types "initially limited to" clothoid, bloss, biquadratic,
-sine, cosine). These are the CONTEXT.md "expansion backlog", verified present in
-the spec. §4.2.1 also explicitly permits an implementation to add subtypes and
-to interpose types, provided subtype relationships are preserved — this is the
-clause that legitimises `Curve`/`Surface<T>` as interposed abstractions.
+Those six types are instantiable §4.2.1 subtypes, not optional extras; §4.2.1 still permits interposed `Curve` / `Surface<T>`. Oracle `SQLMM_WKT` parses type identity (ticket 37; SPIRALTYPE reads up to a comma or parenthesis; `oracle/red_sqlmm_wkt_tests.py`). GEOS and NTS WKT name them and refuse (ticket 38). Do not remint `508-*`. Do not grow `CurveSegment`.
 
 ST_Curve semantics that bind every curve subtype (§4.2.4):
 
@@ -524,10 +523,7 @@ spec-adjacent statements, checked:
   exists only as the named methods ST_CurveToLine (§7.1.10) and
   ST_CurvePolyToPoly (§8.2.7); no metric clause authorises approximating the
   operand.
-- CONTEXT.md "Zoo" backlog list (SPIRALCURVE's bloss, biquadratic, sine,
-  cosine; CIRCLE; GEODESICSTRING) — **verified**: §4.2.12 (spiral types
-  "initially limited to clothoid, bloss, biquadratic, sine and cosine"),
-  §4.2.7, §4.2.8.
+- CONTEXT.md "Zoo" backlog (SPIRALCURVE bloss, biquadratic, sine, cosine; CIRCLE; GEODESICSTRING) — **verified** at §4.2.12 / §4.2.7 / §4.2.8. Zoo membership is not ISO instantiability.
 - Everything else in the Bible (ExactCurve protocol, 1.15× ratchet, package
   layout) is out of the spec's scope — neither confirmed nor contradicted.
 
