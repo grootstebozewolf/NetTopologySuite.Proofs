@@ -274,6 +274,12 @@ theories/CircleChart.v
 # docs/audit-exceptions.txt: audit_axioms.sh must enforce the footprint.
 # Consumed by NurbsConicExact golden_phi (2 * atan3).
 theories/AtanIvt.v
+# JTS Math.atan2 / NTS Angle. claimId: none.
+# 3-axiom IVT atan2. Not audit-excepted.
+theories/Atan2.v
+# Category C: Ratan quadrant body equals Atan2.atan2. claimId: none.
+# Audit-excepted (Classical_Prop.classic via Ratan).
+theories/Atan2RatanBridge.v
 # C1 kernel: chord line vs chart circle as a zeta-quadratic.
 # Oracle lane. Imports CircleChart. Not an IResult remint.
 # No C1.4-C1.14. No Admitted.

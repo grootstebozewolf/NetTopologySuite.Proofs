@@ -28,10 +28,7 @@
    the mixed terms cancel through ux(ux·vx + uy·vy) − uy(ux·vy − uy·vx)
    = (ux² + uy²)·vx, so no atan2 difference identity is ever needed.
 
-   Assumption footprint: 4-axiom — `atan2` facts pull
-   `Classical_Prop.classic` (same lineage as Atan2.v / AngleBetween.v /
-   RelateArcAnalytic.v / ArcChordLength.v).  Exempted in
-   docs/audit-exceptions.txt accordingly.
+   Assumption footprint: 3-axiom (IVT atan2; allowlist).  Not exempted.
 
    Deliberately NOT this file: the mid-point-disambiguated MAJOR traversal
    (`arc_sweep`, |sweep| possibly > π) — that reflex case is the next rung

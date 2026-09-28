@@ -30,8 +30,7 @@
      `in_arc_implies_in_sector`  — every on-arc minor point is in the sector;
      `in_sector_implies_in_disk` — sector ⇒ closed disk of radius r.
 
-   4-axiom (atan2 / Classical_Prop.classic lineage via InArc.central_angle /
-   AngleBetween; see docs/audit-exceptions.txt).  No Admitted.
+   3-axiom (IVT atan2 via InArc / AngleBetween; allowlist).  No Admitted.
 
    Refs: issue #64, docs/issue-64-arc-primitives-triage.md
          (ask #3/#4 region packaging; sibling of 64-c InArc, 64-d InDisk).
@@ -202,15 +201,11 @@ Qed.
 Lemma sector_theta_P_int_eq :
   central_angle sector_O sector_A sector_P_int = PI / 4.
 Proof.
-  unfold central_angle, angle_between, sector_O, sector_A, sector_P_int, atan2.
+  unfold central_angle, angle_between, sector_O, sector_A, sector_P_int.
   cbn [px py].
-  (* cross = 3/10, dot = 3/10 > 0 → atan((3/10)/(3/10)) = atan 1 = PI/4 *)
-  destruct (Rlt_dec 0 ((1 - 0) * (3 / 10 - 0) + (0 - 0) * (3 / 10 - 0)))
-    as [Hd|Hd]; [|exfalso; lra].
-  replace (((1 - 0) * (3 / 10 - 0) - (0 - 0) * (3 / 10 - 0))
-           / ((1 - 0) * (3 / 10 - 0) + (0 - 0) * (3 / 10 - 0)))
-    with 1 by (field; lra).
-  exact atan_1.
+  replace ((1 - 0) * (3 / 10 - 0) - (0 - 0) * (3 / 10 - 0)) with (3 / 10) by field.
+  replace ((1 - 0) * (3 / 10 - 0) + (0 - 0) * (3 / 10 - 0)) with (3 / 10) by field.
+  apply atan2_diag_PI4. lra.
 Qed.
 
 Lemma sector_theta_P_int_same_sign_le_gamma :
@@ -247,15 +242,11 @@ Qed.
 Lemma sector_theta_P_ray_eq :
   central_angle sector_O sector_A sector_P_ray = 0.
 Proof.
-  unfold central_angle, angle_between, sector_O, sector_A, sector_P_ray, atan2.
+  unfold central_angle, angle_between, sector_O, sector_A, sector_P_ray.
   cbn [px py].
-  (* cross = 0, dot = 1/2 > 0 → atan2 0 (1/2) = atan 0 = 0 *)
-  destruct (Rlt_dec 0 ((1 - 0) * (1 / 2 - 0) + (0 - 0) * (0 - 0)))
-    as [Hd|Hd]; [|exfalso; lra].
-  replace (((1 - 0) * (0 - 0) - (0 - 0) * (1 / 2 - 0))
-           / ((1 - 0) * (1 / 2 - 0) + (0 - 0) * (0 - 0)))
-    with 0 by (field; lra).
-  exact atan_0.
+  replace ((1 - 0) * (0 - 0) - (0 - 0) * (1 / 2 - 0)) with 0 by field.
+  replace ((1 - 0) * (1 / 2 - 0) + (0 - 0) * (0 - 0)) with (1 / 2) by field.
+  apply atan2_pos_x_axis. lra.
 Qed.
 
 Lemma sector_theta_P_ray_same_sign_le_gamma :
@@ -313,19 +304,13 @@ Qed.
 Lemma sector_theta_P_ang_eq :
   central_angle sector_O sector_A sector_P_ang = - (PI / 4).
 Proof.
-  unfold central_angle, angle_between, sector_O, sector_A, sector_P_ang, atan2.
+  unfold central_angle, angle_between, sector_O, sector_A, sector_P_ang.
   cbn [px py].
-  (* cross = −3/10, dot = 3/10 > 0 → atan((−3/10)/(3/10)) = atan(−1) = −PI/4 *)
-  destruct (Rlt_dec 0 ((1 - 0) * (3 / 10 - 0) + (0 - 0) * ((-3) / 10 - 0)))
-    as [Hd|Hd]; [|exfalso; lra].
-  set (t :=
-    ((1 - 0) * ((-3) / 10 - 0) - (0 - 0) * (3 / 10 - 0))
-    / ((1 - 0) * (3 / 10 - 0) + (0 - 0) * ((-3) / 10 - 0))).
-  assert (Ht : t = -1) by (unfold t; field; lra).
-  rewrite Ht.
-  (* atan(-1) = -atan(1) = -PI/4 *)
-  change (atan (-1)) with (atan (- (1))).
-  rewrite atan_opp. rewrite atan_1. reflexivity.
+  replace ((1 - 0) * ((-3) / 10 - 0) - (0 - 0) * (3 / 10 - 0))
+    with (- (3 / 10)) by field.
+  replace ((1 - 0) * (3 / 10 - 0) + (0 - 0) * ((-3) / 10 - 0))
+    with (3 / 10) by field.
+  apply atan2_neg_diag. lra.
 Qed.
 
 Lemma sector_P_out_dist_sq :

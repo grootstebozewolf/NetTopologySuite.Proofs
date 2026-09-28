@@ -33,10 +33,8 @@
    read off the *unit* offset normals used by `theories/BufferOffset.v`
    (`corner_arc_sweep_eq_turn_unit`).
 
-   Audit footprint.  Imports `theories/AngleBetween.v` (hence `atan2` /
-   Stdlib `atan`), so inherits `Classical_Prop.classic`; listed in
-   docs/audit-exceptions.txt under the same #64 atan lineage as Atan2.v /
-   AngleBetween.v.  No `Admitted` / `Axiom` / `Parameter`.
+   Audit footprint.  3-axiom (Atan2 via AtanIvt; allowlist).  No Ratan.
+   No `Admitted` / `Axiom` / `Parameter`.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -101,18 +99,7 @@ Qed.
    not change the angle. *)
 Lemma atan2_pos_scale : forall k y x, 0 < k -> atan2 (k * y) (k * x) = atan2 y x.
 Proof.
-  intros k y x Hk. unfold atan2.
-  destruct (Req_dec x 0) as [Hx0|Hxn].
-  - subst x. rewrite !Rmult_0_r.
-    repeat match goal with
-           | |- context[Rlt_dec ?a ?b] => destruct (Rlt_dec a b)
-           end; try reflexivity; try (exfalso; nra).
-  - assert (Hr : (k * y) / (k * x) = y / x) by (field; split; lra).
-    rewrite !Hr.
-    repeat match goal with
-           | |- context[Rlt_dec ?a ?b] => destruct (Rlt_dec a b)
-           | |- context[Rle_dec ?a ?b] => destruct (Rle_dec a b)
-           end; try reflexivity; try (exfalso; nra).
+  intros k y x Hk. apply Atan2.atan2_pos_scale. exact Hk.
 Qed.
 
 (* Hence the Vec-level angle is unchanged by a positive scalar on the left. *)

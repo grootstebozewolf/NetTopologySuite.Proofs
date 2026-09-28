@@ -58,9 +58,7 @@
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-B-mixed-ls-cs-joints
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via CircularCookCsConcat /
-     CircularCookOkCirc). Category C audit-exception: same atan2
-     lineage as B.1; no extra axioms.
+   3-axiom (IVT atan2; allowlist).
    No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors

@@ -24,8 +24,7 @@
    reasoning.  Also: `atan2_range` (principal range (-PI, PI]) and the derived
    `angle_between_range`.  Refs #64.
 
-   Inherits `Classical_Prop.classic` from `atan` (see docs/audit-exceptions.txt
-   entry for theories/Atan2.v).  No Admitted.
+   3-axiom (AtanIvt / allowlist).  No Ratan.  No Admitted.
    ========================================================================== *)
 
 Require Import Reals.
@@ -42,51 +41,11 @@ Proof.
   - destruct (Rdichotomy a 0 Ha); nra.
 Qed.
 
-(* Sign of a quotient with negative denominator (for the atan2 range branches). *)
-Lemma div_nonpos_of_neg_denom : forall x y : R, x < 0 -> 0 <= y -> y / x <= 0.
-Proof.
-  intros x y Hx Hy. unfold Rdiv.
-  assert (/ x < 0) by (apply Rinv_lt_0_compat; exact Hx). nra.
-Qed.
-Lemma div_pos_of_neg_neg : forall x y : R, x < 0 -> y < 0 -> 0 < y / x.
-Proof.
-  intros x y Hx Hy. unfold Rdiv.
-  assert (/ x < 0) by (apply Rinv_lt_0_compat; exact Hx). nra.
-Qed.
-
-(* atan is monotone through 0. *)
-Lemma atan_le_0 : forall t : R, t <= 0 -> atan t <= 0.
-Proof.
-  intros t Ht. destruct (Req_dec t 0) as [E|E].
-  - subst; rewrite atan_0; lra.
-  - rewrite <- atan_0. apply Rlt_le, atan_increasing. lra.
-Qed.
-Lemma atan_gt_0 : forall t : R, 0 < t -> 0 < atan t.
-Proof.
-  intros t Ht. rewrite <- atan_0. apply atan_increasing. lra.
-Qed.
-
 (* ---- atan2 lands in the principal range (-PI, PI]. --------------------- *)
 Theorem atan2_range : forall x y : R, ~ (x = 0 /\ y = 0) ->
   - PI < atan2 y x <= PI.
 Proof.
-  intros x y H. pose proof PI_RGT_0 as HPI. unfold atan2.
-  destruct (Rlt_dec 0 x) as [Hx|Hx].
-  - pose proof (atan_bound (y / x)); lra.
-  - destruct (Rlt_dec x 0) as [Hx2|Hx2].
-    + destruct (Rle_dec 0 y) as [Hy|Hy].
-      * pose proof (atan_bound (y / x)).
-        assert (atan (y / x) <= 0) by (apply atan_le_0, div_nonpos_of_neg_denom; lra).
-        lra.
-      * pose proof (atan_bound (y / x)).
-        assert (0 < atan (y / x)) by (apply atan_gt_0, div_pos_of_neg_neg; lra).
-        lra.
-    + assert (x = 0) by lra. subst x.
-      destruct (Rlt_dec 0 y) as [Hy|Hy].
-      * lra.
-      * destruct (Rlt_dec y 0) as [Hy2|Hy2].
-        -- lra.
-        -- exfalso. apply H. split; [ reflexivity | lra ].
+  intros x y H. apply Atan2.atan2_range. exact H.
 Qed.
 
 (* ---- The signed angle between two planar vectors. ---------------------- *)

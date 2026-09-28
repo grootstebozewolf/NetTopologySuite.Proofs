@@ -45,10 +45,8 @@
    since `arc_start a <> arc_end a` under `valid_arc`), leaving exactly the
    atan2 sign-product test -- UNCONDITIONALLY, for every sweep.
 
-   Proved here (4-axiom: inherits `Classical_Prop.classic` transitively via
-   `Atan2.atan2`/`AngleBetween.angle_between`, same lineage as
-   `RelateArcAnalytic.v` -- see the `docs/audit-exceptions.txt` entry added
-   alongside this file):
+   Proved here (3-axiom: IVT `Atan2.atan2` / `AngleBetween.angle_between`;
+   allowlist; not on `docs/audit-exceptions.txt`):
      `arc_span_contains_atan2_iff_chord_sign` -- the headline: for a valid
      arc and an on-circumcircle point P, `arc_span_contains_atan2 a P <->
      arc_span_contains a P`.  Unconditional in the sweep (no `sweep < pi`

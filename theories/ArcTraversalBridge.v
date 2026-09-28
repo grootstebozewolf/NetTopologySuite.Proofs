@@ -23,8 +23,7 @@
    under `valid_arc` it would force `arc_end = arc_start` (informally); the
    formal nonzero pin is likewise future work.
 
-   Assumption footprint: 4-axiom (inherits the atan2 lane through
-   ArcParamBridge).  Exempted in docs/audit-exceptions.txt.
+   Assumption footprint: 3-axiom (IVT atan2 via ArcParamBridge; allowlist).
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 
