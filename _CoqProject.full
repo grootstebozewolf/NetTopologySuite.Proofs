@@ -471,7 +471,8 @@ theories/AngleBetween.v
 # order, plus rational unit-circle witness
 # (A=(1,0), P=(3/5,4/5), B=(0,1); major counter Q=(-1,0)).  Headlines
 # in_arc_point_on_minor_arc and in_arc_point_on_major_arc_rejected are Qed.
-# 3-axiom (IVT atan2 via AngleBetween).
+# Headlines 3-axiom. in_arc_theta_P_eq and in_arc_theta_P_pos_lt_PI2
+# state atan (classic); file stays on audit-exceptions.
 theories/InArc.v
 # Issue #64 subtask 64-b — GREEN: circular-arc sweep is CCW iff signed central
 # angle is strictly positive.  sweep_ccw is the orientation/cross-sign reading

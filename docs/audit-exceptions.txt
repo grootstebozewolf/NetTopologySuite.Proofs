@@ -121,9 +121,12 @@ theories-flocq/RingCurvatureModels.v
 theories-flocq/ExtractFacesBridge.v
 theories-flocq/OverlayCorrectness.v
 
-# R-side C1 — still off the allowlist after S1a (Print Assumptions).
-# Atan2.v is 3-axiom (IVT). The Ratan bridge is the remaining classic source.
+# R-side C1 — still off the allowlist after the S1a full-declaration sweep.
+# Atan2.v is 3-axiom (IVT). The Ratan bridge is the classic source.
 theories/Atan2RatanBridge.v
+# in_arc_theta_P_eq and in_arc_theta_P_pos_lt_PI2 state Ratan.atan.
+# Headlines are trio-only; the file is excepted because those lemmas are not.
+theories/InArc.v
 # Span headlines still mention Ratan.atan (atan2_eq_ratan / atan_gt_0).
 theories/CircularCookSpan.v
 theories/CircularCookSpanFilter.v

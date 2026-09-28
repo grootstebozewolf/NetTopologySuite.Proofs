@@ -17,7 +17,10 @@
    strictly between them; Q on the complementary major arc is rejected by
    |θ_Q| = π > π/2 = |γ|.
 
-   3-axiom (IVT atan2 via AngleBetween; allowlist).  No Admitted.
+   Headlines are 3-axiom (IVT atan2).  `in_arc_theta_P_eq` and
+   `in_arc_theta_P_pos_lt_PI2` state `atan` and pull
+   `Classical_Prop.classic`, so the file stays on audit-exceptions.
+   No Admitted.
 
    Refs: issue #64, docs/issue-64-arc-primitives-triage.md (ask #3 / in-arc).
    Author: NetTopologySuite.Proofs contributors
