@@ -31,8 +31,8 @@
    WITNESS topic: overlay · claimId: 0007-clothoid-first-cook
    witness: 0007-clothoid-first-cook
    board: ADR-0007
-   Stdlib RiemannInt plus IVT. Print Assumptions shows classic
-   (Category C). No Admitted / Axiom / Parameter.
+   The integral is LipInt (3-axiom, no RiemannInt) plus IVT.
+   No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)

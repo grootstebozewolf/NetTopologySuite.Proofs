@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 115 files (76 theories-flocq/ + 38 theories/ + 1 hunt probe).
+# LIVE: 90 files (76 theories-flocq/ + 13 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -143,34 +143,3 @@ theories/SidecarCircIotaTags.v
 
 # R-side C1 — RiemannInt (#564 Fresnel inhabitant; pack stays 3-axiom)
 theories/ClothoidFresnelInhab.v
-
-# R-side C1 — host Fresnel clothoid. cloth_eval is the Stdlib RiemannInt
-# of the rotated Fresnel velocity. on_cloth mentions cloth_eval, and the
-# host I_ok clothoid arm mentions on_cloth, so any Print Assumptions cone
-# that reaches I_ok or cloth_eval picks up Classical_Prop.classic.
-# Same mechanism as ClothoidFresnelInhab. Not a new axiom.
-theories/ClothoidCookMkClothoid.v
-theories/SheetHenCookConstructed.v
-theories/NurbsNurbsFirstCook.v
-theories/HostFirstCookCircChord.v
-theories/CircularCookMkCirc.v
-theories/Adr0007NodingEpic.v
-theories/SheetHenCookLoopModulo.v
-theories/CircularCookLeftoverTwoHit.v
-theories/NodingNG.v
-theories/OverlayNG.v
-theories/SheetHenCookLoopTerm.v
-theories/SidecarClothoidEgg.v
-theories/IntakeWalker.v
-theories/SidecarNurbsEgg.v
-theories/SidecarSinEgg.v
-theories/SidecarCircEgg.v
-theories/SidecarGeodesicEgg.v
-theories/SidecarEllipticEgg.v
-theories/SidecarSpiralEgg.v
-theories/SqlMmSignedTag.v
-theories/NurbsMkNurbs.v
-theories/IntakeGeodesic.v
-theories/HostRhoLeftoverBagTerm.v
-theories/IntakeFamousGeodesic.v
-theories/HostRhoModuloKissShare.v

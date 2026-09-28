@@ -102,6 +102,7 @@ theories/SheetHenCircEgg.v
 # (claimId 0007-intake-mkclothoid / 0007-clothoid-first-cook).
 # Fresnel cloth_eval, split for the module gate: core, bounds, frames.
 # Umbrella keeps the old name. Required by SheetHenCook. No Admitted.
+theories/LipInt.v
 theories/SheetHenClothoidCore.v
 theories/SheetHenClothoidBounds.v
 theories/SheetHenClothoidFrames.v

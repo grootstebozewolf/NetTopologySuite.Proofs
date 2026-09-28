@@ -44,19 +44,16 @@
    of locked_clothoid_egg, not that chord seed.
    claimId: 0007-clothoid-first-cook / 0007-intake-mkclothoid
    WITNESS topic: overlay · board: ADR-0007.
-   Stdlib RiemannInt. Print Assumptions of lemmas that mention
-   cloth_eval include Classical_Prop.classic (Category C), same
-   mechanism as ClothoidFresnelInhab. No Admitted / Axiom / Parameter.
+   The integral is LipInt (dyadic Riemann sums, 3-axiom). No
+   RiemannInt. No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
    ========================================================================== *)
 
-From Stdlib Require Import Reals RiemannInt Ranalysis1 Rtrigo1 Rtrigo_alt
-  Ratan Lra Arith.Factorial.
-From Stdlib Require Import Ranalysis_reg.
-From NTS.Proofs Require Import Distance.
+From Stdlib Require Import Reals Lra.
+From NTS.Proofs Require Import Distance LipInt.
 Local Open Scope R_scope.
 
 Record AffPlace : Type := mkAffPlace {
@@ -110,224 +107,179 @@ Definition cloth_vy (c : ClothoidEgg) (s : R) : R :=
 Definition cloth_th (c : ClothoidEgg) (t : R) : R :=
   cloth_psi c (cloth_sd c + t * (cloth_ed c - cloth_sd c)).
 
-Lemma cont_id : forall x, continuity_pt id x.
+(* Lipschitz constant of phi on the window between 0 and s.
+   |phi'(u)| = |u| / A^2 <= |s| / A^2. A = 0 is the total degenerate. *)
+Definition cloth_phi_K (c : ClothoidEgg) (s : R) : R :=
+  Rabs s / (cloth_A c * cloth_A c).
+
+Lemma cloth_sigma_abs : forall c, Rabs (cloth_sigma c) = 1.
 Proof.
-  intro x. apply derivable_continuous_pt. apply derivable_pt_id.
+  intro c. unfold cloth_sigma.
+  destruct (Rle_dec 0 (cloth_cross c)).
+  - rewrite Rabs_right; lra.
+  - rewrite Rabs_left; lra.
 Qed.
 
-Lemma cloth_psi_cont : forall c x, continuity_pt (cloth_psi c) x.
+Lemma cloth_phi_K_nonneg : forall c s, 0 <= cloth_phi_K c s.
 Proof.
-  intros c x.
-  apply continuity_pt_locally_ext with
-    (f := mult_real_fct
-            (cloth_sigma c * / (2 * cloth_A c * cloth_A c))
-            (fun s => s * s))
-    (a := 1).
-  - lra.
-  - intros y _. unfold cloth_psi, Rdiv, mult_real_fct. ring.
-  - apply continuity_pt_scal.
-    apply continuity_pt_mult; apply cont_id.
+  intros c s. unfold cloth_phi_K, Rdiv.
+  apply Rmult_le_pos; [apply Rabs_pos|].
+  set (AA := cloth_A c * cloth_A c).
+  assert (Hnn : 0 <= AA) by (unfold AA; nra).
+  destruct (Req_EM_T AA 0) as [->|Hnz].
+  - rewrite Rinv_0. lra.
+  - apply Rlt_le, Rinv_0_lt_compat. lra.
 Qed.
 
-Lemma cloth_vx_cont : forall c x, continuity_pt (cloth_vx c) x.
+Lemma cloth_window_abs : forall s x,
+  Rmin 0 s <= x <= Rmax 0 s -> Rabs x <= Rabs s.
 Proof.
-  intros c x. unfold cloth_vx.
-  apply continuity_pt_minus.
-  - apply continuity_pt_mult.
-    + apply continuity_pt_const. intros a b. reflexivity.
-    + change (continuity_pt (comp cos (cloth_psi c)) x).
-      apply continuity_pt_comp; [apply cloth_psi_cont | apply continuity_cos].
-  - apply continuity_pt_mult.
-    + apply continuity_pt_const. intros a b. reflexivity.
-    + change (continuity_pt (comp sin (cloth_psi c)) x).
-      apply continuity_pt_comp; [apply cloth_psi_cont | apply continuity_sin].
+  intros s x Hx.
+  destruct (Rle_dec 0 s) as [Hs|Hs].
+  - rewrite (Rmin_left 0 s), (Rmax_right 0 s) in Hx by lra.
+    rewrite (Rabs_right x), (Rabs_right s) by lra. lra.
+  - assert (Hneg : s < 0) by (apply Rnot_le_lt; exact Hs).
+    rewrite (Rmin_right 0 s), (Rmax_left 0 s) in Hx by lra.
+    rewrite (Rabs_left1 x), (Rabs_left s) by lra. lra.
 Qed.
 
-Lemma cloth_vy_cont : forall c x, continuity_pt (cloth_vy c) x.
+Lemma cloth_psi_lip : forall c s x y,
+  Rmin 0 s <= x <= Rmax 0 s -> Rmin 0 s <= y <= Rmax 0 s ->
+  Rabs (cloth_psi c x - cloth_psi c y)
+    <= cloth_phi_K c s * Rabs (x - y).
 Proof.
-  intros c x. unfold cloth_vy.
-  apply continuity_pt_plus.
-  - apply continuity_pt_mult.
-    + apply continuity_pt_const. intros a b. reflexivity.
-    + change (continuity_pt (comp cos (cloth_psi c)) x).
-      apply continuity_pt_comp; [apply cloth_psi_cont | apply continuity_cos].
-  - apply continuity_pt_mult.
-    + apply continuity_pt_const. intros a b. reflexivity.
-    + change (continuity_pt (comp sin (cloth_psi c)) x).
-      apply continuity_pt_comp; [apply cloth_psi_cont | apply continuity_sin].
+  intros c s x y Hx Hy.
+  set (AA := cloth_A c * cloth_A c).
+  destruct (Req_EM_T AA 0) as [Hz|Hnz].
+  - assert (H0 : forall t, cloth_psi c t = 0).
+    { intro t. unfold cloth_psi, Rdiv.
+      assert (E : 2 * cloth_A c * cloth_A c = 0).
+      { unfold AA in Hz.
+        replace (2 * cloth_A c * cloth_A c) with (2 * (cloth_A c * cloth_A c)) by ring.
+        rewrite Hz. ring. }
+      rewrite E, Rinv_0. ring. }
+    rewrite !H0. unfold cloth_phi_K, Rdiv. unfold AA in Hz.
+    rewrite Hz, Rinv_0, Rminus_diag, Rabs_R0. lra.
+  - assert (Hpos : 0 < AA).
+    { assert (0 <= AA) by (unfold AA; nra). lra. }
+    assert (HA : cloth_A c <> 0).
+    { intro HzA. apply Hnz. unfold AA. rewrite HzA. ring. }
+    assert (Hinv : 0 < / (2 * AA)).
+    { apply Rinv_0_lt_compat. lra. }
+    unfold cloth_psi, cloth_phi_K, Rdiv.
+    assert (E :
+      (cloth_sigma c * x * x) * / (2 * cloth_A c * cloth_A c) -
+      (cloth_sigma c * y * y) * / (2 * cloth_A c * cloth_A c)
+      = cloth_sigma c * ((x - y) * (x + y)) * / (2 * AA)).
+    { unfold AA. field. exact HA. }
+    rewrite E. clear E.
+    rewrite !Rabs_mult.
+    rewrite cloth_sigma_abs.
+    assert (Habs : Rabs (/ (2 * AA)) = / (2 * AA)).
+    { apply Rabs_pos_eq. apply Rlt_le. exact Hinv. }
+    rewrite Habs. clear Habs.
+    assert (Hxy : Rabs (x + y) <= 2 * Rabs s).
+    { eapply Rle_trans; [apply Rabs_triang|].
+      pose proof (cloth_window_abs s x Hx).
+      pose proof (cloth_window_abs s y Hy). nra. }
+    apply Rle_trans with
+      ((1 * (Rabs (x - y) * (2 * Rabs s))) * / (2 * AA)).
+    + apply Rmult_le_compat_r; [apply Rlt_le; exact Hinv|].
+      apply Rmult_le_compat_l; [lra|].
+      apply Rmult_le_compat_l; [apply Rabs_pos| exact Hxy].
+    + unfold AA. right. field. exact HA.
 Qed.
 
-Definition RInt_cont (sigma : R -> R)
-    (Hcont : forall x, continuity_pt sigma x) (a b : R) : R :=
-  match Rle_dec a b with
-  | left Hab =>
-      RiemannInt
-        (@continuity_implies_RiemannInt sigma a b Hab (fun x _ => Hcont x))
-  | right Hn =>
-      - RiemannInt
-          (@continuity_implies_RiemannInt sigma b a
-             (Rlt_le _ _ (Rnot_le_lt _ _ Hn)) (fun x _ => Hcont x))
-  end.
-
-Lemma RInt_cont_ext :
-  forall sigma1 sigma2 H1 H2 a b,
-    (forall x, sigma1 x = sigma2 x) ->
-    RInt_cont sigma1 H1 a b = RInt_cont sigma2 H2 a b.
+Lemma cloth_cos_psi_lip : forall c s x y,
+  Rmin 0 s <= x <= Rmax 0 s -> Rmin 0 s <= y <= Rmax 0 s ->
+  Rabs (cos (cloth_psi c x) - cos (cloth_psi c y))
+    <= cloth_phi_K c s * Rabs (x - y).
 Proof.
-  intros sigma1 sigma2 H1 H2 a b Heq.
-  unfold RInt_cont.
-  destruct (Rle_dec a b) as [Hab|Hn].
-  - apply RiemannInt_P18; [exact Hab | intros x _; apply Heq].
-  - f_equal. apply RiemannInt_P18.
-    + apply Rlt_le. apply Rnot_le_lt. exact Hn.
-    + intros x _; apply Heq.
+  intros c s x y Hx Hy.
+  eapply Rle_trans; [apply cos_lip | apply cloth_psi_lip; assumption].
 Qed.
 
-Lemma RInt_cont_prfirr :
-  forall sigma H1 H2 a b, RInt_cont sigma H1 a b = RInt_cont sigma H2 a b.
+Lemma cloth_sin_psi_lip : forall c s x y,
+  Rmin 0 s <= x <= Rmax 0 s -> Rmin 0 s <= y <= Rmax 0 s ->
+  Rabs (sin (cloth_psi c x) - sin (cloth_psi c y))
+    <= cloth_phi_K c s * Rabs (x - y).
 Proof.
-  intros. apply RInt_cont_ext. intros. reflexivity.
+  intros c s x y Hx Hy.
+  eapply Rle_trans; [apply sin_lip | apply cloth_psi_lip; assumption].
 Qed.
 
-Lemma RInt_cont_le :
-  forall sigma H a b (Hab : a <= b) (pr : Riemann_integrable sigma a b),
-    RInt_cont sigma H a b = RiemannInt pr.
+Definition cloth_Icos (c : ClothoidEgg) (s : R) : R :=
+  int_seg (fun u => cos (cloth_psi c u)) (cloth_phi_K c s) 0 s
+    (cloth_phi_K_nonneg c s) (cloth_cos_psi_lip c s).
+
+Definition cloth_Isin (c : ClothoidEgg) (s : R) : R :=
+  int_seg (fun u => sin (cloth_psi c u)) (cloth_phi_K c s) 0 s
+    (cloth_phi_K_nonneg c s) (cloth_sin_psi_lip c s).
+
+Lemma cloth_psi_same_place :
+  forall pl A sd ed sd' ed' m0 m1 m0' m1' u,
+    cloth_psi (mk_cloth pl A sd ed m0 m1) u =
+    cloth_psi (mk_cloth pl A sd' ed' m0' m1') u.
 Proof.
-  intros sigma H a b Hab pr.
-  unfold RInt_cont.
-  destruct (Rle_dec a b) as [Hle|Hn].
-  - apply RiemannInt_P5.
-  - exfalso. apply Hn. exact Hab.
+  intros. unfold cloth_psi, cloth_sigma, cloth_cross, mk_cloth. cbn. reflexivity.
 Qed.
 
-Lemma RInt_cont_point :
-  forall sigma H a, RInt_cont sigma H a a = 0.
+Lemma cloth_Icos_same_place :
+  forall pl A sd ed sd' ed' m0 m1 m0' m1' s,
+    cloth_Icos (mk_cloth pl A sd ed m0 m1) s =
+    cloth_Icos (mk_cloth pl A sd' ed' m0' m1') s.
 Proof.
-  intros sigma H a.
-  unfold RInt_cont.
-  destruct (Rle_dec a a) as [Ha|Hn].
-  - apply RiemannInt_P9.
-  - exfalso. apply Hn. apply Rle_refl.
+  intros.
+  set (c1 := mk_cloth pl A sd ed m0 m1).
+  set (c2 := mk_cloth pl A sd' ed' m0' m1').
+  unfold cloth_Icos, cloth_phi_K. cbn [cloth_A].
+  set (L := Rabs s / (A * A)).
+  transitivity (int_seg (fun u => cos (cloth_psi c1 u)) L 0 s
+                  (cloth_phi_K_nonneg c2 s) (cloth_cos_psi_lip c1 s)).
+  - apply int_seg_pi.
+  - apply int_seg_ext. intros u _. reflexivity.
 Qed.
 
-Lemma RInt_cont_split0 :
-  forall sigma H a b, 0 <= a -> a <= b ->
-    RInt_cont sigma H 0 b =
-      RInt_cont sigma H 0 a + RInt_cont sigma H a b.
+Lemma cloth_Isin_same_place :
+  forall pl A sd ed sd' ed' m0 m1 m0' m1' s,
+    cloth_Isin (mk_cloth pl A sd ed m0 m1) s =
+    cloth_Isin (mk_cloth pl A sd' ed' m0' m1') s.
 Proof.
-  intros sigma H a b Ha Hab.
-  assert (H0b : 0 <= b) by lra.
-  pose (pr0a := @continuity_implies_RiemannInt sigma 0 a Ha (fun x _ => H x)).
-  pose (prab := @continuity_implies_RiemannInt sigma a b Hab (fun x _ => H x)).
-  pose (pr0b := @continuity_implies_RiemannInt sigma 0 b H0b (fun x _ => H x)).
-  rewrite (RInt_cont_le sigma H 0 a Ha pr0a).
-  rewrite (RInt_cont_le sigma H a b Hab prab).
-  rewrite (RInt_cont_le sigma H 0 b H0b pr0b).
-  symmetry. apply RiemannInt_P26.
+  intros.
+  set (c1 := mk_cloth pl A sd ed m0 m1).
+  set (c2 := mk_cloth pl A sd' ed' m0' m1').
+  unfold cloth_Isin, cloth_phi_K. cbn [cloth_A].
+  set (L := Rabs s / (A * A)).
+  transitivity (int_seg (fun u => sin (cloth_psi c1 u)) L 0 s
+                  (cloth_phi_K_nonneg c2 s) (cloth_sin_psi_lip c1 s)).
+  - apply int_seg_pi.
+  - apply int_seg_ext. intros u _. reflexivity.
 Qed.
 
-Lemma RInt_cont_bound :
-  forall sigma H a b l u, a <= b ->
-    (forall x, a < x < b -> l <= sigma x <= u) ->
-    l * (b - a) <= RInt_cont sigma H a b <= u * (b - a).
+Lemma cloth_cos0_same :
+  forall pl A sd ed sd' ed' m0 m1 m0' m1',
+    cloth_cos0 (mk_cloth pl A sd ed m0 m1) =
+    cloth_cos0 (mk_cloth pl A sd' ed' m0' m1').
 Proof.
-  intros sigma H a b l u Hab Hub.
-  pose (pr := @continuity_implies_RiemannInt sigma a b Hab (fun x _ => H x)).
-  rewrite (RInt_cont_le sigma H a b Hab pr).
-  apply RiemannInt_const_bound; [exact Hab | exact Hub].
+  intros. unfold cloth_cos0, cloth_hypot, cloth_h2, mk_cloth. cbn. reflexivity.
 Qed.
 
-Lemma RInt_cont_ge0 :
-  forall sigma H a b, a <= b ->
-    (forall x, a < x < b -> 0 <= sigma x) ->
-    0 <= RInt_cont sigma H a b.
+Lemma cloth_sin0_same :
+  forall pl A sd ed sd' ed' m0 m1 m0' m1',
+    cloth_sin0 (mk_cloth pl A sd ed m0 m1) =
+    cloth_sin0 (mk_cloth pl A sd' ed' m0' m1').
 Proof.
-  intros sigma H a b Hab Hpos.
-  pose (pr := @continuity_implies_RiemannInt sigma a b Hab (fun x _ => H x)).
-  pose (pr0 := RiemannInt_P14 a b 0).
-  rewrite (RInt_cont_le sigma H a b Hab pr).
-  assert (Hz : RiemannInt pr0 = 0).
-  { rewrite (RiemannInt_P15 pr0). ring. }
-  rewrite <- Hz.
-  apply RiemannInt_P19; [exact Hab |].
-  intros x Hx. unfold fct_cte. apply Hpos. exact Hx.
+  intros. unfold cloth_sin0, cloth_hypot, cloth_h2, mk_cloth. cbn. reflexivity.
 Qed.
 
-Lemma Riemann_scal_int :
-  forall (f : R -> R) (k a b : R)
-    (pr : Riemann_integrable f a b)
-    (prk : Riemann_integrable (fun x => k * f x) a b),
-    a <= b -> RiemannInt prk = k * RiemannInt pr.
-Proof.
-  intros f k a b pr prk Hab.
-  pose (pr0 := RiemannInt_P14 a b 0).
-  pose (prs := @RiemannInt_P10 (fct_cte 0) f a b k pr0 pr).
-  assert (He : RiemannInt prk = RiemannInt prs).
-  { apply RiemannInt_P18; [exact Hab |].
-    intros x _. unfold fct_cte. ring. }
-  rewrite He.
-  rewrite (@RiemannInt_P12 (fct_cte 0) f a b k pr0 pr prs Hab).
-  rewrite (RiemannInt_P15 pr0).
-  ring.
-Qed.
-
-Lemma RInt_cont_swap :
-  forall sigma H a b (Hba : b <= a) (pr : Riemann_integrable sigma b a),
-    a <> b ->
-    RInt_cont sigma H a b = - RiemannInt pr.
-Proof.
-  intros sigma H a b Hba pr Hne.
-  unfold RInt_cont.
-  destruct (Rle_dec a b) as [Hab|Hn].
-  - assert (a = b) by lra. contradiction.
-  - f_equal. apply RiemannInt_P5.
-Qed.
-
-Lemma RInt_cont_opp :
-  forall sigma (H : forall x, continuity_pt sigma x)
-    (Ho : forall x, continuity_pt (fun x => - sigma x) x) a b,
-    RInt_cont (fun x => - sigma x) Ho a b = - RInt_cont sigma H a b.
-Proof.
-  intros sigma H Ho a b.
-  destruct (Rle_dec a b) as [Hab|Hn].
-  - pose (pr := @continuity_implies_RiemannInt sigma a b Hab (fun x _ => H x)).
-    pose (pro := @continuity_implies_RiemannInt (fun x => - sigma x) a b Hab
-                   (fun x _ => Ho x)).
-    assert (prk : Riemann_integrable (fun x => -1 * sigma x) a b).
-    { apply Riemann_integrable_ext with (f := fun x => - sigma x).
-      - intros x _. ring.
-      - exact pro. }
-    rewrite (RInt_cont_le _ Ho a b Hab pro).
-    rewrite (RInt_cont_le _ H a b Hab pr).
-    assert (He : RiemannInt pro = RiemannInt prk).
-    { apply RiemannInt_P18; [exact Hab |]. intros x _. ring. }
-    rewrite He.
-    rewrite (Riemann_scal_int sigma (-1) a b pr prk Hab).
-    ring.
-  - assert (Hba : b <= a).
-    { apply Rlt_le. apply Rnot_le_lt. exact Hn. }
-    assert (Hne : a <> b) by lra.
-    pose (pr := @continuity_implies_RiemannInt sigma b a Hba (fun x _ => H x)).
-    pose (pro := @continuity_implies_RiemannInt (fun x => - sigma x) b a Hba
-                   (fun x _ => Ho x)).
-    assert (prk : Riemann_integrable (fun x => -1 * sigma x) b a).
-    { apply Riemann_integrable_ext with (f := fun x => - sigma x).
-      - intros x _. ring.
-      - exact pro. }
-    rewrite (RInt_cont_swap _ Ho a b Hba pro Hne).
-    rewrite (RInt_cont_swap _ H a b Hba pr Hne).
-    assert (He : RiemannInt pro = RiemannInt prk).
-    { apply RiemannInt_P18; [exact Hba |]. intros x _. ring. }
-    rewrite He.
-    rewrite (Riemann_scal_int sigma (-1) b a pr prk Hba).
-    ring.
-Qed.
 
 Definition cloth_Px (c : ClothoidEgg) (s : R) : R :=
-  px (aff_loc (cloth_place c)) + RInt_cont (cloth_vx c) (cloth_vx_cont c) 0 s.
+  px (aff_loc (cloth_place c))
+    + cloth_cos0 c * cloth_Icos c s - cloth_sin0 c * cloth_Isin c s.
 
 Definition cloth_Py (c : ClothoidEgg) (s : R) : R :=
-  py (aff_loc (cloth_place c)) + RInt_cont (cloth_vy c) (cloth_vy_cont c) 0 s.
+  py (aff_loc (cloth_place c))
+    + cloth_sin0 c * cloth_Icos c s + cloth_cos0 c * cloth_Isin c s.
 
 Definition cloth_P (c : ClothoidEgg) (s : R) : Point :=
   mkPoint (cloth_Px c s) (cloth_Py c s).
@@ -398,9 +350,20 @@ Lemma cloth_P_child :
     cloth_P (snd (cloth_split c t)) s = cloth_P c s.
 Proof.
   intros c t s.
-  unfold cloth_P, cloth_Px, cloth_Py, cloth_split, mk_cloth.
-  cbn [fst snd cloth_place].
-  split; apply f_equal2; apply f_equal; apply RInt_cont_prfirr.
+  destruct c as [pl A sd ed m0 m1].
+  unfold cloth_split. cbn [fst snd cloth_place cloth_A cloth_sd cloth_ed].
+  set (mid := sd + t * (ed - sd)).
+  unfold cloth_P, cloth_Px, cloth_Py.
+  cbn [cloth_place aff_loc cloth_cos0 cloth_sin0].
+  rewrite (cloth_Icos_same_place pl A sd mid sd ed None None m0 m1 s).
+  rewrite (cloth_Isin_same_place pl A sd mid sd ed None None m0 m1 s).
+  rewrite (cloth_cos0_same pl A sd mid sd ed None None m0 m1).
+  rewrite (cloth_sin0_same pl A sd mid sd ed None None m0 m1).
+  rewrite (cloth_Icos_same_place pl A mid ed sd ed None None m0 m1 s).
+  rewrite (cloth_Isin_same_place pl A mid ed sd ed None None m0 m1 s).
+  rewrite (cloth_cos0_same pl A mid ed sd ed None None m0 m1).
+  rewrite (cloth_sin0_same pl A mid ed sd ed None None m0 m1).
+  split; reflexivity.
 Qed.
 
 Lemma cloth_split_eval_left :
@@ -494,10 +457,11 @@ Lemma cloth_eval_kappa0 :
 Proof.
   intros pl A m0 m1 t.
   rewrite cloth_eval_L0.
-  unfold cloth_eval, cloth_P, cloth_Px, cloth_Py, cloth_s, mk_cloth.
+  unfold cloth_eval, cloth_s, cloth_P, cloth_Px, cloth_Py, cloth_Icos, cloth_Isin, mk_cloth.
   cbn [cloth_sd cloth_ed cloth_place aff_loc].
-  replace (0 + 0 * (0 - 0)) with 0 by ring.
-  rewrite RInt_cont_point, RInt_cont_point.
+  assert (Hz : 0 + 0 * (0 - 0) = 0) by ring.
+  rewrite Hz.
+  rewrite !int_seg_point.
   destruct (aff_loc pl) as [x y].
   cbn [px py].
   apply (f_equal2 mkPoint); ring.

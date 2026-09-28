@@ -44,9 +44,8 @@
    of locked_clothoid_egg, not that chord seed.
    claimId: 0007-clothoid-first-cook / 0007-intake-mkclothoid
    WITNESS topic: overlay · board: ADR-0007.
-   Stdlib RiemannInt. Print Assumptions of lemmas that mention
-   cloth_eval include Classical_Prop.classic (Category C), same
-   mechanism as ClothoidFresnelInhab. No Admitted / Axiom / Parameter.
+   The integral is LipInt (3-axiom, no RiemannInt).
+   No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
