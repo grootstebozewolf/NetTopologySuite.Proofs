@@ -20,10 +20,8 @@
    `AngleBetween.cos_angle_between`.  The arc theorem instantiates it at the
    center-to-endpoint vectors, whose equal norm is `arc_center_equidistant`.
 
-   Assumption footprint: 4-axiom — `cos (angle_between …)` pulls
-   `Classical_Prop.classic` through `cos_atan2` / `atan2` (same lineage as
-   `theories/AngleBetween.v` and `theories/RelateArcAnalytic.v`).  This file is
-   exempted in docs/audit-exceptions.txt accordingly.
+   Assumption footprint: 3-axiom (IVT atan2 via cos_angle_between; allowlist).
+   Not exempted.
 
    #64 arc length finish: the chord ≤ arc_length bridge is here (Qed via
    ds = c² identity + sqrt_Rsqr + chord_le_arc_length; uses |sweep| and sin_ge_0

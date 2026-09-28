@@ -34,8 +34,7 @@
      A=(1,0), B=(0,-1)  — CW quarter,  angle = −π/2 < 0
      A=(1,0), B=(-1,0)  — +π semicircle (atan2 cut), still CCW
 
-   4-axiom (atan2 / Classical_Prop.classic lineage via AngleBetween; see
-   docs/audit-exceptions.txt).  No Admitted.
+   3-axiom (IVT atan2 via AngleBetween; allowlist).  No Admitted.
 
    Refs: issue #64, docs/issue-64-arc-primitives-triage.md (ask #2 / sweep).
    Author: NetTopologySuite.Proofs contributors
@@ -59,51 +58,7 @@ Lemma atan2_pos_iff : forall y x : R,
   ~ (x = 0 /\ y = 0) ->
   (0 < atan2 y x) <-> (0 < y \/ (y = 0 /\ x < 0)).
 Proof.
-  intros y x Hnz. unfold atan2. split.
-  - (* => *)
-    intros Hpos.
-    destruct (Rlt_dec 0 x) as [Hx|Hx].
-    + (* x > 0: atan2 = atan(y/x); atan > 0 => y/x > 0 => y > 0. *)
-      left.
-      destruct (Rlt_dec 0 (y / x)) as [Ht|Ht].
-      * unfold Rdiv in Ht.
-        assert (0 < / x) by (apply Rinv_0_lt_compat; lra). nra.
-      * assert (atan (y / x) <= 0) by (apply atan_le_0; lra). lra.
-    + destruct (Rlt_dec x 0) as [Hx2|Hx2].
-      * (* x < 0 *)
-        destruct (Rle_dec 0 y) as [Hy|Hy].
-        -- (* y >= 0: atan2 = atan(y/x)+PI > 0; split y = 0 vs y > 0. *)
-           destruct (Req_dec y 0) as [Ey|Ey].
-           ++ right. split; [exact Ey | exact Hx2].
-           ++ left. lra.
-        -- (* y < 0: atan2 = atan(y/x)-PI < 0. *)
-           pose proof (atan_bound (y / x)). pose proof PI_RGT_0. lra.
-      * (* x = 0 *)
-        assert (x = 0) by lra. subst x.
-        destruct (Rlt_dec 0 y) as [Hy|Hy].
-        -- left. exact Hy.
-        -- destruct (Rlt_dec y 0) as [Hy2|Hy2].
-           ++ pose proof PI_RGT_0. lra.
-           ++ exfalso. apply Hnz. split; lra.
-  - (* <= *)
-    intros [Hy | [Ey Hxneg]].
-    + (* y > 0 *)
-      destruct (Rlt_dec 0 x) as [Hx|Hx].
-      * apply atan_gt_0. unfold Rdiv.
-        assert (0 < / x) by (apply Rinv_0_lt_compat; lra). nra.
-      * destruct (Rlt_dec x 0) as [Hx2|Hx2].
-        -- destruct (Rle_dec 0 y) as [Hy'|Hy']; [| lra].
-           pose proof (atan_bound (y / x)). pose proof PI_RGT_0. lra.
-        -- assert (x = 0) by lra. subst x.
-           (* Goal: 0 < (if Rlt_dec 0 y then PI/2 else ...) with y > 0. *)
-           destruct (Rlt_dec 0 y) as [Hypos|Hynonpos]; [pose proof PI_RGT_0; lra | lra].
-    + (* y = 0 /\ x < 0 => atan2 = atan(0)+PI = PI > 0 *)
-      subst y.
-      destruct (Rlt_dec 0 x) as [Hx|Hx]; [lra|].
-      destruct (Rlt_dec x 0) as [Hx2|Hx2]; [| lra].
-      destruct (Rle_dec 0 0) as [Hle|Hle]; [| lra].
-      replace (0 / x) with 0 by (field; lra).
-      rewrite atan_0. pose proof PI_RGT_0. lra.
+  intros y x Hnz. apply Atan2.atan2_pos_iff. exact Hnz.
 Qed.
 
 (** Vector form: positive [angle_between] ↔ positive cross, or antipodal cut. *)
@@ -234,18 +189,11 @@ Qed.
 Lemma sweep_gamma_cw_eq :
   central_angle sweep_O sweep_A sweep_B_cw = - (PI / 2).
 Proof.
-  unfold central_angle, angle_between, sweep_O, sweep_A, sweep_B_cw, atan2.
+  unfold central_angle, angle_between, sweep_O, sweep_A, sweep_B_cw.
   cbn [px py].
-  (* cross = −1, dot = 0 → atan2 (−1) 0 = −π/2 *)
-  destruct (Rlt_dec 0 ((1 - 0) * (0 - 0) + (0 - 0) * ((-1) - 0))) as [Hd|Hd];
-    [exfalso; lra|].
-  destruct (Rlt_dec ((1 - 0) * (0 - 0) + (0 - 0) * ((-1) - 0)) 0) as [Hd2|Hd2];
-    [exfalso; lra|].
-  destruct (Rlt_dec 0 ((1 - 0) * ((-1) - 0) - (0 - 0) * (0 - 0))) as [Hc|Hc];
-    [exfalso; lra|].
-  destruct (Rlt_dec ((1 - 0) * ((-1) - 0) - (0 - 0) * (0 - 0)) 0) as [Hc2|Hc2];
-    [|exfalso; lra].
-  reflexivity.
+  replace ((1 - 0) * ((-1) - 0) - (0 - 0) * (0 - 0)) with (-1) by ring.
+  replace ((1 - 0) * (0 - 0) + (0 - 0) * ((-1) - 0)) with 0 by ring.
+  apply atan2_neg_y_axis. lra.
 Qed.
 
 Lemma sweep_gamma_pi_eq :

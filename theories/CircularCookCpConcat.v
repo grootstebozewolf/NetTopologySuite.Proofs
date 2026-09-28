@@ -82,9 +82,7 @@
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-B.3-cp-ring-closure
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via CircularCookCcConcat /
-     CircularCookCsConcat / CircularCookOkCirc). Category C
-     audit-exception: same atan2 lineage as B.2; no extra axioms.
+   3-axiom (IVT atan2; allowlist).
    No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors

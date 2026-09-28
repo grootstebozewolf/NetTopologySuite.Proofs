@@ -121,48 +121,25 @@ theories-flocq/RingCurvatureModels.v
 theories-flocq/ExtractFacesBridge.v
 theories-flocq/OverlayCorrectness.v
 
-# R-side C1 — atan2 / Ratan (Stdlib atan pulls classic)
-theories/Atan2.v
-theories/AngleBetween.v
-theories/CircularCookHit.v
-theories/CircularCookEmpty.v
+# R-side C1 — still off the allowlist after the S1a full-declaration sweep.
+# Atan2.v is 3-axiom (IVT). The Ratan bridge is the classic source.
+theories/Atan2RatanBridge.v
+# in_arc_theta_P_eq and in_arc_theta_P_pos_lt_PI2 state Ratan.atan.
+# Headlines are trio-only; the file is excepted because those lemmas are not.
+theories/InArc.v
+# Span headlines still mention Ratan.atan (atan2_eq_ratan / atan_gt_0).
 theories/CircularCookSpan.v
-theories/CircularCookSplit.v
-theories/CircularCookConfluence.v
-theories/CircularCookLicense.v
-theories/CircularCookClose.v
 theories/CircularCookSpanFilter.v
 theories/CircularCookSpanSplit.v
 theories/CircularCookOkCirc.v
 theories/CircularCookCloseII.v
-theories/CircularCookCsConcat.v
-theories/SidecarCircMixed.v
-theories/CircularCookCcConcat.v
-theories/CircularCookCpConcat.v
-theories/SidecarCircBags.v
-theories/SidecarCircInterior.v
-theories/SidecarCircInteriorHit.v
-# Same atan2 / classic lineage as Parks ι (SidecarCircInterior*).
-# Gate completeness is 3-axiom-shaped; cook reuse pulls the sidecar.
-theories/SidecarCircIotaGate.v
-# Same atan2 / classic lineage as ι-gate (SidecarCircIotaGate).
-# Cell-4 arm stop; no extra axioms.
-theories/SidecarCircIotaArm.v
-# Same atan2 / classic lineage as ι-gate (SidecarCircIotaGate) and
-# SidecarCircInterior*: RootTag consumer reuses I_ok_mixed / I_ok_interior.
-# CircularCookLineArcZ.v itself stays 0-axiom; the sidecar is not imported there.
-theories/SidecarCircIotaTags.v
-theories/InArc.v
-theories/ArcSweepCcw.v
-theories/InSector.v
-theories/BufferJoin.v
+# equal-angle chord budget still pulls classic (not the atan2 body).
 theories/ArcChordSubdivision.v
-theories/RelateArcAnalytic.v
-theories/ArcChordLength.v
-theories/ArcParamBridge.v
-theories/ArcTraversalBridge.v
-theories/ArcMidSweep.v
-theories/ArcSpanAtan2.v
+# Parks ι consumers whose printed blocks still show classic.
+theories/SidecarCircInteriorHit.v
+theories/SidecarCircIotaGate.v
+theories/SidecarCircIotaArm.v
+theories/SidecarCircIotaTags.v
 
 # R-side C1 — RiemannInt (#564 Fresnel inhabitant; pack stays 3-axiom)
 theories/ClothoidFresnelInhab.v

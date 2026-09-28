@@ -44,9 +44,9 @@ the Ozaki DAG. The TSV still does not include this file.
 
 ## 1. Headline
 
-Across all 88 files on `docs/audit-exceptions.txt`
-(72 in `theories-flocq/`, 16 in `theories/`), the per-theorem
-audit attributes **1002 Print Assumptions outputs**:
+S1a exception list: 89 files (76 `theories-flocq/`, 13 `theories/`).
+The 2026-08-16 audit below is 88 files (72 flocq, 16 theories) and
+**1002 Print Assumptions outputs** (TSV unchanged):
 
 | Category | Count | Share | Meaning |
 |---|---|---|---|

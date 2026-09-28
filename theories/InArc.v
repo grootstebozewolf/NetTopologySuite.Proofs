@@ -17,8 +17,10 @@
    strictly between them; Q on the complementary major arc is rejected by
    |θ_Q| = π > π/2 = |γ|.
 
-   4-axiom (atan2 / Classical_Prop.classic lineage via AngleBetween; see
-   docs/audit-exceptions.txt).  No Admitted.
+   Headlines are 3-axiom (IVT atan2).  `in_arc_theta_P_eq` and
+   `in_arc_theta_P_pos_lt_PI2` state `atan` and pull
+   `Classical_Prop.classic`, so the file stays on audit-exceptions.
+   No Admitted.
 
    Refs: issue #64, docs/issue-64-arc-primitives-triage.md (ask #3 / in-arc).
    Author: NetTopologySuite.Proofs contributors
@@ -28,7 +30,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import Distance Atan2 AngleBetween.
+From NTS.Proofs Require Import Distance Atan2 AngleBetween Atan2RatanBridge.
 
 Local Open Scope R_scope.
 
@@ -141,44 +143,32 @@ Qed.
 Lemma in_arc_gamma_eq :
   central_angle in_arc_O in_arc_A in_arc_B = PI / 2.
 Proof.
-  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_B, atan2.
+  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_B.
   cbn [px py].
-  (* cross = 1, dot = 0 → atan2 1 0 = PI/2 *)
-  destruct (Rlt_dec 0 ((1 - 0) * (0 - 0) + (0 - 0) * (1 - 0))) as [Hd|Hd];
-    [exfalso; lra|].
-  destruct (Rlt_dec ((1 - 0) * (0 - 0) + (0 - 0) * (1 - 0)) 0) as [Hd2|Hd2];
-    [exfalso; lra|].
-  destruct (Rlt_dec 0 ((1 - 0) * (1 - 0) - (0 - 0) * (0 - 0))) as [Hc|Hc];
-    [|exfalso; lra].
-  reflexivity.
+  replace ((1 - 0) * (1 - 0) - (0 - 0) * (0 - 0)) with 1 by ring.
+  replace ((1 - 0) * (0 - 0) + (0 - 0) * (1 - 0)) with 0 by ring.
+  apply atan2_pos_y_axis. lra.
 Qed.
 
 Lemma in_arc_theta_P_eq :
   central_angle in_arc_O in_arc_A in_arc_P = atan (4 / 3).
 Proof.
-  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_P, atan2.
+  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_P.
   cbn [px py].
-  (* cross = 4/5, dot = 3/5 > 0 → atan ((4/5)/(3/5)) = atan (4/3) *)
-  destruct (Rlt_dec 0 ((1 - 0) * (3 / 5 - 0) + (0 - 0) * (4 / 5 - 0)))
-    as [Hd|Hd]; [|exfalso; lra].
-  f_equal. field; lra.
+  replace ((1 - 0) * (4 / 5 - 0) - (0 - 0) * (3 / 5 - 0)) with (4 / 5) by field.
+  replace ((1 - 0) * (3 / 5 - 0) + (0 - 0) * (4 / 5 - 0)) with (3 / 5) by field.
+  rewrite atan2_pos_x_eq_atan by lra.
+  f_equal. field.
 Qed.
 
 Lemma in_arc_theta_Q_eq :
   central_angle in_arc_O in_arc_A in_arc_Q_major = PI.
 Proof.
-  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_Q_major, atan2.
+  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_Q_major.
   cbn [px py].
-  (* cross = 0, dot = -1 < 0, y=0 ≥ 0 → atan(0) + PI = PI *)
-  destruct (Rlt_dec 0 ((1 - 0) * (-1 - 0) + (0 - 0) * (0 - 0))) as [Hd|Hd];
-    [exfalso; lra|].
-  destruct (Rlt_dec ((1 - 0) * (-1 - 0) + (0 - 0) * (0 - 0)) 0) as [Hd2|Hd2];
-    [|exfalso; lra].
-  destruct (Rle_dec 0 ((1 - 0) * (0 - 0) - (0 - 0) * (-1 - 0))) as [Hc|Hc];
-    [|exfalso; lra].
-  replace (((1 - 0) * (0 - 0) - (0 - 0) * (-1 - 0))
-           / ((1 - 0) * (-1 - 0) + (0 - 0) * (0 - 0))) with 0 by field.
-  rewrite atan_0. lra.
+  replace ((1 - 0) * (0 - 0) - (0 - 0) * (-1 - 0)) with 0 by ring.
+  replace ((1 - 0) * (-1 - 0) + (0 - 0) * (0 - 0)) with (-1) by ring.
+  apply atan2_neg_x_axis. lra.
 Qed.
 
 Lemma in_arc_theta_P_pos_lt_PI2 :
@@ -202,14 +192,19 @@ Lemma in_arc_theta_P_same_sign_le_gamma :
   let theta := central_angle in_arc_O in_arc_A in_arc_P in
   0 <= theta * gamma /\ Rabs theta <= Rabs gamma.
 Proof.
-  rewrite in_arc_gamma_eq, in_arc_theta_P_eq.
-  pose proof in_arc_theta_P_pos_lt_PI2 as [Hpos Hlt].
+  rewrite in_arc_gamma_eq.
+  unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_P.
+  cbn [px py].
+  replace ((1 - 0) * (4 / 5 - 0) - (0 - 0) * (3 / 5 - 0)) with (4 / 5) by field.
+  replace ((1 - 0) * (3 / 5 - 0) + (0 - 0) * (4 / 5 - 0)) with (3 / 5) by field.
+  pose proof (atan2_open_first_quadrant (3 / 5) (4 / 5) ltac:(lra) ltac:(lra)) as Hq.
+  destruct Hq as [Hp Hlt].
   pose proof PI_RGT_0 as HPI.
   split.
-  - nra.
-  - rewrite (Rabs_right (atan (4 / 3))) by lra.
-    rewrite (Rabs_right (PI / 2)) by lra.
-    lra.
+  - apply Rmult_le_pos; [apply Rlt_le; exact Hp | lra].
+  - rewrite (Rabs_right (atan2 (4 / 5) (3 / 5)) (Rle_ge _ _ (Rlt_le _ _ Hp))).
+    rewrite (Rabs_right (PI / 2) ltac:(lra)).
+    apply Rlt_le. exact Hlt.
 Qed.
 
 (* -------------------------------------------------------------------------- *)

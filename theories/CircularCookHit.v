@@ -29,7 +29,7 @@
    witness: 64-i-circular-locked / 0007-I.2-hit-sound
    (I.3 tickets live in CircularCookEmpty)
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic). No Admitted / Axiom / Parameter.
+   3-axiom (IVT atan2; allowlist). No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)

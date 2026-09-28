@@ -49,7 +49,7 @@
 From Stdlib Require Import ZArith Reals Lra.
 From NTS.Proofs Require Import Distance SheetHenCook CurveGeometry ArcOrient
   ArcIntersect ArcOffsetThreePoint ArcArcCircles Atan2 AngleBetween
-  ArcSpanAtan2 CircularCook CircularCookHit.
+  Atan2RatanBridge ArcSpanAtan2 CircularCook CircularCookHit.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -323,10 +323,7 @@ Proof.
   unfold angle_between.
   replace (ux * uy - uy * ux) with 0 by ring.
   assert (Hpos : 0 < ux * ux + uy * uy) by (apply sum_sq_pos; exact Hne).
-  unfold atan2.
-  destruct (Rlt_dec 0 (ux * ux + uy * uy)) as [_|Hx]; [|lra].
-  replace (0 / (ux * ux + uy * uy)) with 0 by (field; lra).
-  apply atan_0.
+  apply atan2_pos_x_axis. exact Hpos.
 Qed.
 
 Lemma arc_angle_from_start_self : forall a,
@@ -977,11 +974,7 @@ Proof.
   cbn [px py arc_start arc_end].
   replace ((5 - 0) * (5 - 0) - (0 - 0) * (0 - 0)) with 25 by ring.
   replace ((5 - 0) * (0 - 0) + (0 - 0) * (5 - 0)) with 0 by ring.
-  unfold atan2.
-  destruct (Rlt_dec 0 0); [lra|].
-  destruct (Rlt_dec 0 0); [lra|].
-  destruct (Rlt_dec 0 25) as [Hy|Hy]; [|lra].
-  reflexivity.
+  apply atan2_pos_y_axis. lra.
 Qed.
 
 Lemma span_arc_A_angle_mid :
@@ -993,10 +986,8 @@ Proof.
   cbn [px py arc_start arc_mid].
   replace ((5 - 0) * (4 - 0) - (0 - 0) * (3 - 0)) with 20 by ring.
   replace ((5 - 0) * (3 - 0) + (0 - 0) * (4 - 0)) with 15 by ring.
-  unfold atan2.
-  destruct (Rlt_dec 0 15) as [Hx|Hx]; [|lra].
-  replace (20 / 15) with (4 / 3) by field.
-  reflexivity.
+  rewrite atan2_pos_x_eq_atan by lra.
+  f_equal. field.
 Qed.
 
 Lemma span_arc_A_mid_principal : arc_mid_on_principal_span span_arc_A.
@@ -1018,11 +1009,7 @@ Proof.
   cbn [px py arc_start arc_end].
   replace ((2 - 7) * (5 - 0) - (0 - 0) * (7 - 7)) with (-25) by ring.
   replace ((2 - 7) * (7 - 7) + (0 - 0) * (5 - 0)) with 0 by ring.
-  unfold atan2.
-  destruct (Rlt_dec 0 0); [lra|].
-  destruct (Rlt_dec 0 0); [lra|].
-  destruct (Rlt_dec 0 (-25)); [lra|].
-  destruct (Rlt_dec (-25) 0) as [Hy|Hy]; [reflexivity | lra].
+  apply atan2_neg_y_axis. lra.
 Qed.
 
 Lemma span_arc_B_angle_mid :
@@ -1034,10 +1021,8 @@ Proof.
   cbn [px py arc_start arc_mid].
   replace ((2 - 7) * (4 - 0) - (0 - 0) * (4 - 7)) with (-20) by ring.
   replace ((2 - 7) * (4 - 7) + (0 - 0) * (4 - 0)) with 15 by ring.
-  unfold atan2.
-  destruct (Rlt_dec 0 15) as [Hx|Hx]; [|lra].
-  replace ((-20) / 15) with (-4 / 3) by field.
-  reflexivity.
+  rewrite atan2_pos_x_eq_atan by lra.
+  f_equal. field.
 Qed.
 
 Lemma span_arc_B_mid_principal : arc_mid_on_principal_span span_arc_B.

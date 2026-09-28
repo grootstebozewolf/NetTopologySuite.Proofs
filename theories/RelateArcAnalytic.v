@@ -23,10 +23,8 @@
    `RelateClothoid.v`.
 
    Assumption footprint: `arc_sweep_principal_range` is built on
-   `AngleBetween.angle_between_range`, so it inherits `Classical_Prop.classic`
-   via the `Atan2` / `AngleBetween` lane (4-axiom).  The chord-geometry / witness
-   theorems are 3-axiom.  This file is exempted in docs/audit-exceptions.txt
-   (same lineage as `theories/AngleBetween.v`).
+   `AngleBetween.angle_between_range`.  The file is 3-axiom (IVT atan2;
+   allowlist) and is not in docs/audit-exceptions.txt.
 
    No `Admitted`, no `Axiom`, no `Parameter`.
 

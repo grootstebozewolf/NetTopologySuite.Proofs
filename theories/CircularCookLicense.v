@@ -27,7 +27,7 @@
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-I.9-classifier-neq-cook
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via CircularCookSplit).
+   3-axiom (IVT atan2; allowlist).
    No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
