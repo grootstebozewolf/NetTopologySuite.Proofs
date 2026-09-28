@@ -552,11 +552,10 @@ against [`docs/axiom-allowlist.txt`](axiom-allowlist.txt), and
 [`scripts/check_readme_axioms.sh`](../scripts/check_readme_axioms.sh)
 guarantees the list above never drifts from that allowlist. The
 allowlisted trio is the only *corpus-introduced* axiom set; host-lane
-files on the exception list are not trio-clean. Thirteen `theories/`
-files are listed in
-[`docs/audit-exceptions.txt`](audit-exceptions.txt). After S1a the
-classic remainder is the Ratan bridge, `InArc` (two `atan` lemmas),
-the span cone, chord subdivision, ι sidecars, and Fresnel.
+files on the exception list are not trio-clean. 2 files under `theories/`
+are listed in
+[`docs/audit-exceptions.txt`](audit-exceptions.txt). After S1b the
+classic remainder is the Ratan bridge and Fresnel.
 `theories-flocq/` *additionally* inherits a fourth axiom,
 `Classical_Prop.classic`, transitively from Flocq's binary-arithmetic
 operations (`Binary.Bplus` / `Bminus` / `Bmult` carry it in their

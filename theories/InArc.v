@@ -9,7 +9,7 @@
    closes both headline claims with `Qed` (no Abort, no Admitted):
 
      A = (1, 0)           principal angle 0
-     P = (3/5, 4/5)       3-4-5 point, θ = atan(4/3) ∈ (0, π/2)
+     P = (3/5, 4/5)       3-4-5 point, θ = atan3(4/3) ∈ (0, π/2)
      B = (0, 1)           principal angle π/2
      Q = (-1, 0)          principal angle π  (major-arc counter-position)
 
@@ -17,9 +17,8 @@
    strictly between them; Q on the complementary major arc is rejected by
    |θ_Q| = π > π/2 = |γ|.
 
-   Headlines are 3-axiom (IVT atan2).  `in_arc_theta_P_eq` and
-   `in_arc_theta_P_pos_lt_PI2` state `atan` and pull
-   `Classical_Prop.classic`, so the file stays on audit-exceptions.
+   Every lemma is 3-axiom (IVT atan2 / atan3).  The Ratan readings of
+   `atan3 (4/3)` live only in Atan2RatanBridge.atan3_eq_atan.
    No Admitted.
 
    Refs: issue #64, docs/issue-64-arc-primitives-triage.md (ask #3 / in-arc).
@@ -30,7 +29,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import Distance Atan2 AngleBetween Atan2RatanBridge.
+From NTS.Proofs Require Import Distance Atan2 AtanIvt AngleBetween.
 
 Local Open Scope R_scope.
 
@@ -151,13 +150,13 @@ Proof.
 Qed.
 
 Lemma in_arc_theta_P_eq :
-  central_angle in_arc_O in_arc_A in_arc_P = atan (4 / 3).
+  central_angle in_arc_O in_arc_A in_arc_P = atan3 (4 / 3).
 Proof.
   unfold central_angle, angle_between, in_arc_O, in_arc_A, in_arc_P.
   cbn [px py].
   replace ((1 - 0) * (4 / 5 - 0) - (0 - 0) * (3 / 5 - 0)) with (4 / 5) by field.
   replace ((1 - 0) * (3 / 5 - 0) + (0 - 0) * (4 / 5 - 0)) with (3 / 5) by field.
-  rewrite atan2_pos_x_eq_atan by lra.
+  rewrite atan2_pos_x_eq_atan3 by lra.
   f_equal. field.
 Qed.
 
@@ -172,11 +171,11 @@ Proof.
 Qed.
 
 Lemma in_arc_theta_P_pos_lt_PI2 :
-  0 < atan (4 / 3) < PI / 2.
+  0 < atan3 (4 / 3) < PI / 2.
 Proof.
-  split.
-  - rewrite <- atan_0. apply atan_increasing. lra.
-  - pose proof (atan_bound (4 / 3)). lra.
+  replace (atan3 (4 / 3)) with (atan2 (4 / 3) 1).
+  2: { rewrite (atan2_pos_x_eq_atan3 (4 / 3) 1) by lra. f_equal. field. }
+  apply atan2_open_first_quadrant; lra.
 Qed.
 
 Lemma in_arc_gamma_abs_lt_PI :

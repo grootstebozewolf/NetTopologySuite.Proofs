@@ -47,7 +47,7 @@
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-II.4-campaign-ii-close
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via CircularCookOkCirc).
+   3-axiom (IVT atan2 via CircularCookOkCirc).
    No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors

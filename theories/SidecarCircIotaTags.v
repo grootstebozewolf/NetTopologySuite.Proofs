@@ -43,9 +43,9 @@
 
    WITNESS topic: overlay · claimId: 0007-iota-tags · witness: 0007-iota-tags
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via SidecarCircIotaGate /
-     SidecarCircInterior / SidecarCircInteriorHit / CircularCookSpan). Same lineage as Parks ι;
-     no extra axioms. CircularCookLineArcZ stays 0-axiom.
+   3-axiom (IVT atan2 via SidecarCircIotaGate /
+     SidecarCircInterior / SidecarCircInteriorHit / CircularCookSpan).
+     CircularCookLineArcZ stays 0-axiom.
    No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
