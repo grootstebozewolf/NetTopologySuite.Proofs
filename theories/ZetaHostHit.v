@@ -98,6 +98,35 @@ Proof.
     + rewrite Ey. unfold S0, dy. ring.
 Qed.
 
+(* F5's P.  Full span, |Δθ| = 2π: both arc ends are the pole, the C1 window
+   {ζ(A), ζ(B)} collapses, and every finite ζ is in span
+   (t_of_zeta_full_span).  So this is P without the window conjunct and
+   without |Δθ| < 2π.  It is a second statement beside P, not an instance
+   of it.  A chord through the pole itself (ζ = ∞) is C1.4, not here. *)
+Theorem host_circ_chord_hit_ok_full : forall z,
+  Rabs (circ_sweep c) = 2 * PI ->
+  (dx, dy) <> (0, 0) ->
+  egg_qf z = 0 -> (0 <= egg_tj z <= 1) ->
+  on_circ c (t_of_zeta c z) (zeta_pt O Q z) /\
+  on_chord s (egg_tj z) (zeta_pt O Q z).
+Proof using.
+  clear Hr Hs Hsw.
+  intros z Hfull Hd Hf Htj.
+  assert (Hs0 : circ_sweep c <> 0).
+  { intro E. rewrite E, Rabs_R0 in Hfull. pose proof PI_RGT_0. lra. }
+  split.
+  - split; [pose proof (t_of_zeta_full_span c z Hfull); lra |].
+    symmetry. unfold O, Q. apply circ_eval_t_of_zeta. exact Hs0.
+  - split; [exact Htj |].
+    destruct (on_line_param (px O) (py O) (px Q) (py Q) (px S0) (py S0)
+                dx dy z Hd Hf) as [Ex Ey].
+    unfold zeta_abs_x, zeta_abs_y in Ex, Ey.
+    unfold zeta_pt, chord_eval. fold (egg_tj z) in Ex, Ey.
+    f_equal.
+    + rewrite Ex. unfold S0, dx. ring.
+    + rewrite Ey. unfold S0, dy. ring.
+Qed.
+
 End EggChord.
 
 (* -------------------------------------------------------------------------- *)
@@ -299,9 +328,41 @@ Proof.
     + rewrite Htj. lra.
 Qed.
 
+(* F5: full span, the #872 source case CIRCULARSTRING(1 0, -1 0, 1 0).
+   O = (0,0), r = 1, θ₀ = 0, Δθ = 2π; mid π, so the pole is (1, 0), the
+   repeated endpoint.  Chord (0,0)→(0,−2) hits (0,−1) at θ = 3π/2, in the
+   second half that CircularArc.Flatten drops: ζ = 1, tj = 1/2
+   (t = 3/4 is side-ledger: it needs atan3 1).  P does not apply
+   (|Δθ| < 2π fails, and the window collapses to ζ(A) = ζ(B)), so this is
+   host_circ_chord_hit_ok_full applied once. *)
+Definition F5_egg : CircularEgg := mkCircularEgg (mkPoint 0 0) 1 0 (2 * PI).
+Definition F5_chord : ChordEgg := mkChordEgg (mkPoint 0 0) (mkPoint 0 (-2)).
+
+Theorem F5_hit :
+  on_circ F5_egg (t_of_zeta F5_egg 1) (zeta_pt (circ_o F5_egg) (egg_pole F5_egg) 1) /\
+  on_chord F5_chord (egg_tj F5_egg F5_chord 1)
+    (zeta_pt (circ_o F5_egg) (egg_pole F5_egg) 1).
+Proof.
+  pose proof PI_RGT_0 as HPI.
+  assert (Hm : egg_mid_angle F5_egg = PI)
+    by (unfold egg_mid_angle, F5_egg; simpl; field).
+  apply host_circ_chord_hit_ok_full.
+  - unfold F5_egg. simpl. apply Rabs_right. lra.
+  - unfold F5_chord. simpl. intro H. injection H. lra.
+  - unfold egg_qf, zeta_qf, zeta_qa, zeta_qb, zeta_qc, crs, dot, egg_pole.
+    rewrite Hm, cos_PI, sin_PI. unfold F5_egg, F5_chord. simpl. ring.
+  - assert (E : egg_tj F5_egg F5_chord 1 = / 2).
+    { unfold egg_tj, tj_of, zeta_abs_x, zeta_abs_y, zeta_ptx, zeta_pty,
+        dot, egg_pole.
+      rewrite Hm, cos_PI, sin_PI. unfold F5_egg, F5_chord. simpl. field. }
+    rewrite E. lra.
+Qed.
+
 Print Assumptions zeta_mid_in_window.
 Print Assumptions host_circ_chord_hit_ok.
 Print Assumptions F1_hit.
 Print Assumptions F2_hit.
 Print Assumptions F3_hit.
 Print Assumptions F4_endpoint.
+Print Assumptions host_circ_chord_hit_ok_full.
+Print Assumptions F5_hit.

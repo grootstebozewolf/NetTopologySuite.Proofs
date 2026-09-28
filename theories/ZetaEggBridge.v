@@ -21,6 +21,7 @@
      t_of_zeta_of_circ_eval   r ≠ 0, |(t − 1/2)·Δθ| < π  ⇒
                           t_of_zeta c (zeta_of_pt O Q (circ_eval c t)) = t
      t_of_zeta_window     (ζ − a)(ζ − b) ≤ 0  ⇔  (t(ζ) − t(a))(t(ζ) − t(b)) ≤ 0
+     t_of_zeta_full_span  |Δθ| = 2π  ⇒  0 < t_of_zeta c ζ < 1   (F5 window)
      zeta_to_egg_chart    another pole Q on the circle: ζ_egg = (ζ_Q + b)/(1 − b·ζ_Q)
 
    No atan2.  No branch cut.  No mod 2π: θ₀ + t·Δθ = m + 2·atan3 ζ is exact
@@ -208,6 +209,32 @@ Proof.
   split; intro H; nra.
 Qed.
 
+(* Full span.  |Δθ| = 2π puts both arc ends on the pole (ζ = ∞), and every
+   finite ζ is strictly inside the span.  No split on the sign of Δθ: the
+   bound goes through Δθ² = 4π². *)
+Theorem t_of_zeta_full_span : forall c z,
+  Rabs (circ_sweep c) = 2 * PI ->
+  0 < t_of_zeta c z < 1.
+Proof.
+  intros c z Hf.
+  pose proof PI_RGT_0 as HPI.
+  destruct (atan3_spec z) as [[Hlo Hhi] _].
+  assert (Hsq : circ_sweep c * circ_sweep c = 4 * (PI * PI)).
+  { pose proof (Rsqr_abs (circ_sweep c)) as E. unfold Rsqr in E.
+    rewrite E, Hf. ring. }
+  assert (Hs : circ_sweep c <> 0) by (intro E; rewrite E in Hsq; nra).
+  set (a := atan3 z) in *.
+  assert (Ht : (t_of_zeta c z - / 2) * circ_sweep c = 2 * a)
+    by (unfold t_of_zeta, a; field; exact Hs).
+  set (d := t_of_zeta c z - / 2) in *.
+  assert (Hd : d * d * (4 * (PI * PI)) = 4 * (a * a)).
+  { rewrite <- Hsq. replace (4 * (a * a)) with ((2 * a) * (2 * a)) by ring.
+    rewrite <- Ht. ring. }
+  assert (Ha : a * a < PI * PI / 4) by nra.
+  assert (Hd2 : d * d < / 4) by nra.
+  unfold d in Hd2. split; nra.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Chart change.  Two poles on one circle give two ζ charts; they differ by a  *)
 (* rational Möbius map (tangent addition).  b is the ζ₂ coordinate of chart    *)
@@ -297,6 +324,7 @@ Print Assumptions t_of_zeta_monotone.
 Print Assumptions circ_eval_t_of_zeta.
 Print Assumptions t_of_zeta_of_circ_eval.
 Print Assumptions t_of_zeta_window.
+Print Assumptions t_of_zeta_full_span.
 Print Assumptions t_of_zeta_mid.
 Print Assumptions zeta_chart_change.
 Print Assumptions zeta_chart_change_pt.
