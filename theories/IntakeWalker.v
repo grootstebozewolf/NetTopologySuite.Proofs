@@ -43,8 +43,9 @@
    MkClothoid on Egg. ISO and JTS surface forms map onto the
    same locked ClothoidEgg bag (OGC≡ISO). example5.txt bags
    both forms in one COMPOUNDCURVE. CIRCLE-class exception:
-   example5 WKT seed was (0,0)–(1,0); bag_pts follow interpolant
-   ends γ(0), γ(1), not the WKT chord-seed text. Not two invented
+   parameterised WKT is out of scope; the locked bag is the law.
+   bag_pts are gamma ends of locked_clothoid_egg, not the WKT
+   chord-seed (0,0)–(1,0). Not two invented
    constructors. ID_IsoClothoid / ID_MkOutOfScope stay on the
    Decline type; they are not the well-formed clothoid answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
@@ -290,7 +291,8 @@ Definition map_cc_locked (s : Sheet) : ShcBag :=
    named Decline tickets / clothoid). Nested CC as a member is
    ID_NotFirstSlice. Well-formed ISO / JTS clothoid bag the same
    MkClothoid egg (claimId 0007-intake-mkclothoid). CIRCLE-class:
-   bag_pts are interpolant ends, not the example5 WKT chord-seed. *)
+   the locked bag is the law; bag_pts are its gamma ends, not
+   the example5 WKT chord-seed. Parameterised WKT is out of scope. *)
 Definition map_clothoid (s : Sheet) : ShcBag :=
   mkShcBag s [0%nat; 1%nat]
     [cloth_eval locked_clothoid_egg 0; cloth_eval locked_clothoid_egg 1]
@@ -597,8 +599,9 @@ Proof.
   reflexivity.
 Qed.
 
-(* CIRCLE-class exception: example5 WKT seed was (0,0)–(1,0);
-   map_clothoid bags γ ends of locked_clothoid_egg, not that seed. *)
+(* CIRCLE-class exception: parameterised WKT intake is out of scope.
+   The locked bag is the law: map_clothoid bags gamma ends of
+   locked_clothoid_egg, not the example5 chord-seed (0,0)–(1,0). *)
 Lemma locked_cloth_intake_endpoints :
   bag_pts (map_clothoid default_sheet) =
     [cloth_eval locked_clothoid_egg 0;
