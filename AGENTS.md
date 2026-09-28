@@ -33,8 +33,7 @@ Adapted from [NetTopologySuite#875](https://github.com/NetTopologySuite/NetTopol
   documented missing constructor or out-of-scope pair. QEX is not owner
   accept and is not "done."
 - Host CircGamma is discharged by `MkCirc` (claimId `0007-gamma-mkcirc`).
-  Do not remint sidecar cook as host cook (`I_ok_circ` / `I_ok_mixed` /
-  `I_ok_interior` Hit is not host `I_ok`).
+  `I_ok_circ` / `I_ok_interior` Hit is not host `I_ok`.
 - Rocq host lane is Stdlib (`theories/`); Flocq lane is `theories-flocq/`.
   The oracle (`oracle_bin`) is the differential test surface (ADR-0006).
   Do not invent a second protocol.

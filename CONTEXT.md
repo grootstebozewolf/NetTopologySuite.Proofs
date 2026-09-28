@@ -203,12 +203,10 @@ Intake construction of `CircularEgg` `(O,r,θ₀,Δθ)` from well-formed
 WKT circular control points. Three distinct non-collinear points
 determine a unique circumcircle; chickens are `MkCirc`. Angle fields
 are inhabited from that geometry (θ₀ = sheet e₁ ray, Δθ = oriented
-full span ±2π). Host interpolant stays atan2-free egg data — not a
-CircGamma remint, not Stdlib atan2 / Ratan classic. Collinear /
-duplicate / bad count Decline by name. Clothoid is the MkClothoid
-letter, not this one.
-_Avoid_: CircGamma remint, silent chord demote, host cook expand,
-new oracle keyword
+full span ±2π). Host interpolant stays atan2-free egg data, not
+Stdlib atan2 / Ratan classic. Collinear / duplicate / bad count
+Decline by name. Clothoid is the MkClothoid letter, not this one.
+_Avoid_: silent chord demote, host cook expand, new oracle keyword
 
 **Intake MkClothoid** (ADR-0007, claimId `0007-intake-mkclothoid`):
 One host `MkClothoid` on `Egg` (parallel to `MkCirc`). Grammar has
@@ -220,8 +218,8 @@ bags both forms in one COMPOUNDCURVE. Clothoid×clothoid first cook
 already landed (claimId `0007-clothoid-first-cook`, #730 Mode A on
 main). Intake stays bag/`MkClothoid` mapping; host Hit is the
 Clothoid first-cook paragraph. `EggClothoid` is not folded away.
-_Avoid_: two constructors, Fresnel-as-noding, CircGamma remint,
-silent chord demote, new oracle keyword
+_Avoid_: two constructors, Fresnel-as-noding, silent chord demote,
+new oracle keyword
 
 **Clothoid first-cook** (ADR-0007, claimId `0007-clothoid-first-cook`):
 Host `EggClothoid × EggClothoid` is in `first_cook_scope`. Locked
@@ -608,7 +606,7 @@ Demote-to-chord is NodingNG / host first cook, not an elliptic Hit.
 Ellipse×ellipse is not first cook
 (`SidecarEllipticEgg.v : ticket_0007_elliptic_not_first_cook_qed_or_qex`).
 #508 ellipse length / elliptic-E stay metric. Not Campaign I–II.
-_Avoid_: host cook, EllipseLength noding, elliptic noder, CircGamma remint, Campaign I
+_Avoid_: host cook, EllipseLength noding, elliptic noder, Campaign I
 
 **GeodesicString egg (sidecar)**:
 The product / sidecar face of `EggGeodesicString` on the ADR-0007
@@ -621,7 +619,7 @@ Geodesic×geodesic is not first cook
 SQL/MM ST_GeodesicString type-zoo packaging (MkOutOfScope); geodetic
 interpolant stays research, not cook. Not Zoo membership. Not
 Campaign I–II. Not Spiral egg.
-_Avoid_: host cook, geodesic noder, geodetic interpolant, CircGamma remint, Campaign I, Spiral egg
+_Avoid_: host cook, geodesic noder, geodetic interpolant, Campaign I, Spiral egg
 
 **Spiral egg (sidecar)**:
 The product / sidecar face of `EggSpiralCurve` on the ADR-0007
@@ -637,7 +635,7 @@ sine, cosine) plus Unknown inhabit one sidecar egg. `EggClothoid`
 stays its own host tag — the clothoid arm is a nameplate, not a
 remint. Not Zoo membership. Not interpolant math. Not Γ. Last
 Lesson-1 packaging extra.
-_Avoid_: host cook, spiral noder, spiral interpolant, five host spiral eggs, EggClothoid fold-away, CircGamma remint, Campaign I, Γ
+_Avoid_: host cook, spiral noder, spiral interpolant, five host spiral eggs, EggClothoid fold-away, Campaign I
 
 **𝓘 Decline** (ADR-0007 cook):
 The pairwise intersection oracle has no algorithm for this egg pair on
