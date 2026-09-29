@@ -39,15 +39,13 @@
    (first-slice leftover name) but is not the well-formed
    unknown-CS answer.
 
-   Clothoid (claimId 0007-intake-mkclothoid): one host
-   MkClothoid on Egg. ISO and JTS surface forms map onto the
-   same locked ClothoidEgg bag (OGC≡ISO). example5.txt bags
-   both forms in one COMPOUNDCURVE. CIRCLE-class exception:
-   parameterised WKT is out of scope; the locked bag is the law.
-   bag_pts are gamma ends of locked_clothoid_egg, not the WKT
-   chord-seed (0,0)–(1,0). Not two invented
-   constructors. ID_IsoClothoid / ID_MkOutOfScope stay on the
-   Decline type; they are not the well-formed clothoid answer.
+   Clothoid (claimId 0007-intake-mkclothoid, not reminted):
+   one host MkClothoid. ISO fields are normalizer 1 in
+   IsoClothoidIntake (direct copy, not an ISO formula).
+   Similarity frame or a named Decline. The locked fixture's
+   fields map to locked_clothoid_egg (eval-level). JTS
+   (k0,k1,L) is still that locked bag. example5 bags both.
+   ID_IsoClothoid is not the well-formed answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
 
    Mode D (host endpoints on locked CC LS+CS):
@@ -92,11 +90,11 @@
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
-     Assisted-by: Cursor Grok 4.6
+     Assisted-by: Cursor Grok 4.6, Cursor Grok 4.7
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IsoClothoidIntake.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -118,7 +116,7 @@ Inductive TaggedCst : Type :=
 | TCircle : CircSlice -> list Point -> TaggedCst
 | TCompoundCurve : list TaggedCst -> TaggedCst
 | TClothoidJts : TaggedCst
-| TClothoidIso : TaggedCst
+| TClothoidIso : IsoClothoid -> TaggedCst
 | TGeodesicString : list Point -> TaggedCst
 | TSpiralCurve : TaggedCst
 | TOutOfSlice : TaggedCst.
@@ -135,6 +133,11 @@ Inductive IntakeDeclineReason : Type :=
 | ID_Collinear
 | ID_DuplicateControl
 | ID_DegenerateArc
+| ID_MissingMeasure
+| ID_UnexpectedMeasure
+| ID_NotSimilarityFrame
+| ID_NonPositiveScale
+| ID_DegenerateWindow
 | ID_NotFirstSlice.
 
 Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
@@ -204,9 +207,11 @@ Definition locked_cc_cst : TaggedCst :=
 
 (* example5.txt (grammars-v4 #4997): ISO clothoid; then one COMPOUNDCURVE
    carrying JTS (k0,k1,L) and ISO REFERENCELOCATION forms. *)
-Definition example5_iso_clothoid_cst : TaggedCst := TClothoidIso.
+Definition example5_iso_clothoid_cst : TaggedCst :=
+  TClothoidIso locked_iso_clothoid.
 Definition example5_cc_both_clothoid_cst : TaggedCst :=
-  TCompoundCurve [TLineString [p00; mkPoint 100 0]; TClothoidJts; TClothoidIso].
+  TCompoundCurve [TLineString [p00; mkPoint 100 0]; TClothoidJts;
+    TClothoidIso locked_iso_clothoid].
 
 Definition locked_full_circle_egg : CircularEgg :=
   mkCircularEgg (mkPoint 0 0) 5 0 (2 * PI).
@@ -287,24 +292,35 @@ Definition map_cc_locked (s : Sheet) : ShcBag :=
        [mkChicken 0%nat 1%nat (MkChord (mkChordEgg p00 p50))])
     (map_cs_quarter s).
 
-(* First-slice CC is flat (Point / LineString / CircularString /
-   named Decline tickets / clothoid). Nested CC as a member is
-   ID_NotFirstSlice. Well-formed ISO / JTS clothoid bag the same
-   MkClothoid egg (claimId 0007-intake-mkclothoid). CIRCLE-class:
-   the locked bag is the law; bag_pts are its gamma ends, not
-   the example5 WKT chord-seed. Parameterised WKT is out of scope. *)
-Definition map_clothoid (s : Sheet) : ShcBag :=
+(* ISO map_clothoid reads its fields. JTS is the locked instance.
+   Nested CC as a member is ID_NotFirstSlice. bag_pts are gamma ends. *)
+Definition iso_fail_id (f : IsoClothoidFail) : IntakeDeclineReason :=
+  match f with
+  | ICF_MissingMeasure => ID_MissingMeasure
+  | ICF_UnexpectedMeasure => ID_UnexpectedMeasure
+  | ICF_NotSimilarityFrame => ID_NotSimilarityFrame
+  | ICF_NonPositiveScale => ID_NonPositiveScale
+  | ICF_DegenerateWindow => ID_DegenerateWindow
+  end.
+
+Definition clothoid_bag (s : Sheet) (e : ClothoidEgg) : ShcBag :=
   mkShcBag s [0%nat; 1%nat]
-    [cloth_eval locked_clothoid_egg 0; cloth_eval locked_clothoid_egg 1]
-    [mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg)].
+    [cloth_eval e 0; cloth_eval e 1]
+    [mkChicken 0%nat 1%nat (MkClothoid e)].
+
+Definition map_clothoid (s : Sheet) (f : IsoClothoid) : IntakeResult :=
+  match try_iso_clothoid f with
+  | inl r => IntakeDecline (iso_fail_id r)
+  | inr e => IntakeBag (clothoid_bag s e)
+  end.
 
 Definition map_cc_example5 (s : Sheet) : ShcBag :=
   append_bags s
     (append_bags s
        (mkShcBag s [0%nat; 1%nat] [p00; mkPoint 100 0]
           [mkChicken 0%nat 1%nat (MkChord (mkChordEgg p00 (mkPoint 100 0)))])
-       (map_clothoid s))
-    (map_clothoid s).
+       (clothoid_bag s locked_clothoid_egg))
+    (clothoid_bag s locked_clothoid_egg).
 
 Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
   match t with
@@ -322,8 +338,8 @@ Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
   | TCircle CircQuarter _ => IntakeBag (map_cs_quarter s)
   | TCircle CircUnknown pts => map_circle_unknown s pts
   | TCompoundCurve _ => IntakeDecline ID_NotFirstSlice
-  | TClothoidJts => IntakeBag (map_clothoid s)
-  | TClothoidIso => IntakeBag (map_clothoid s)
+  | TClothoidJts => map_clothoid s locked_iso_clothoid
+  | TClothoidIso f => map_clothoid s f
   | TSpiralCurve => IntakeDecline ID_SpiralCurve
   | TOutOfSlice => IntakeDecline ID_NotFirstSlice
   end.
@@ -599,11 +615,9 @@ Proof.
   reflexivity.
 Qed.
 
-(* CIRCLE-class exception: parameterised WKT intake is out of scope.
-   The locked bag is the law: map_clothoid bags gamma ends of
-   locked_clothoid_egg, not the example5 chord-seed (0,0)–(1,0). *)
+(* Locked fixture: gamma ends of locked_clothoid_egg, not a chord seed. *)
 Lemma locked_cloth_intake_endpoints :
-  bag_pts (map_clothoid default_sheet) =
+  bag_pts (clothoid_bag default_sheet locked_clothoid_egg) =
     [cloth_eval locked_clothoid_egg 0;
      cloth_eval locked_clothoid_egg 1].
 Proof.
@@ -611,44 +625,46 @@ Proof.
 Qed.
 
 Lemma iso_clothoid_maps :
-  intake_map default_sheet TClothoidIso =
-    IntakeBag (map_clothoid default_sheet).
+  intake_map default_sheet (TClothoidIso locked_iso_clothoid) =
+    IntakeBag (clothoid_bag default_sheet locked_clothoid_egg).
 Proof.
-  reflexivity.
+  unfold intake_map, intake_map_atom, map_clothoid.
+  rewrite locked_iso_try. reflexivity.
 Qed.
 
 Lemma jts_clothoid_maps :
   intake_map default_sheet TClothoidJts =
-    IntakeBag (map_clothoid default_sheet).
+    IntakeBag (clothoid_bag default_sheet locked_clothoid_egg).
 Proof.
-  reflexivity.
+  unfold intake_map, intake_map_atom, map_clothoid.
+  rewrite locked_iso_try. reflexivity.
 Qed.
 
 Lemma ogc_iso_clothoid_same_bag :
   intake_map default_sheet TClothoidJts =
-    intake_map default_sheet TClothoidIso.
+    intake_map default_sheet (TClothoidIso locked_iso_clothoid).
 Proof.
   reflexivity.
 Qed.
 
 Lemma ogc_iso_clothoid_same_mkclothoid :
   intake_map default_sheet TClothoidJts =
-    IntakeBag (map_clothoid default_sheet) /\
-  intake_map default_sheet TClothoidIso =
-    IntakeBag (map_clothoid default_sheet).
+    IntakeBag (clothoid_bag default_sheet locked_clothoid_egg) /\
+  intake_map default_sheet (TClothoidIso locked_iso_clothoid) =
+    IntakeBag (clothoid_bag default_sheet locked_clothoid_egg).
 Proof.
-  split; reflexivity.
+  split; [exact jts_clothoid_maps|exact iso_clothoid_maps].
 Qed.
 
 Lemma iso_clothoid_chickens_mkclothoid :
   exists b c e,
-    intake_map default_sheet TClothoidIso = IntakeBag b /\
+    intake_map default_sheet (TClothoidIso locked_iso_clothoid) = IntakeBag b /\
     In c (bag_chickens b) /\
     ck_egg c = MkClothoid e /\
     egg_class (ck_egg c) = EggClothoid.
 Proof.
   rewrite iso_clothoid_maps.
-  exists (map_clothoid default_sheet).
+  exists (clothoid_bag default_sheet locked_clothoid_egg).
   exists (mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg)).
   exists locked_clothoid_egg.
   split; [reflexivity|].
@@ -663,7 +679,7 @@ Lemma jts_clothoid_chickens_mkclothoid :
     ck_egg c = MkClothoid e.
 Proof.
   rewrite jts_clothoid_maps.
-  exists (map_clothoid default_sheet).
+  exists (clothoid_bag default_sheet locked_clothoid_egg).
   exists (mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg)).
   exists locked_clothoid_egg.
   split; [reflexivity|].
@@ -672,7 +688,7 @@ Proof.
 Qed.
 
 Lemma clothoid_intake_not_chord_demote :
-  intake_map default_sheet TClothoidIso <>
+  intake_map default_sheet (TClothoidIso locked_iso_clothoid) <>
     IntakeBag (map_ls default_sheet
       [cloth_p0 locked_clothoid_egg; cloth_p1 locked_clothoid_egg]) /\
   intake_map default_sheet TClothoidJts <>
@@ -684,7 +700,7 @@ Proof.
 Qed.
 
 Lemma clothoid_intake_not_iso_decline :
-  intake_map default_sheet TClothoidIso <>
+  intake_map default_sheet (TClothoidIso locked_iso_clothoid) <>
     IntakeDecline ID_IsoClothoid /\
   intake_map default_sheet TClothoidJts <>
     IntakeDecline ID_MkOutOfScope.
@@ -697,7 +713,9 @@ Lemma example5_cc_bags_both_clothoid :
   intake_map default_sheet example5_cc_both_clothoid_cst =
     IntakeBag (map_cc_example5 default_sheet).
 Proof.
-  reflexivity.
+  unfold intake_map, example5_cc_both_clothoid_cst, intake_map_members.
+  simpl. unfold intake_map_atom, map_clothoid.
+  rewrite !locked_iso_try. unfold map_cc_example5. reflexivity.
 Qed.
 
 Lemma example5_cc_not_iso_decline :
@@ -721,7 +739,7 @@ Proof.
             (mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg))).
   exists locked_clothoid_egg.
   split; [reflexivity|].
-  unfold map_cc_example5, append_bags, map_clothoid, shift_chicken.
+  unfold map_cc_example5, append_bags, clothoid_bag, shift_chicken.
   simpl.
   split.
   - right. left. reflexivity.
@@ -1073,13 +1091,13 @@ Qed.
 Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
   (intake_ctor_inhabits IntakeMkClothoid /\
    intake_map default_sheet TClothoidJts =
-     IntakeBag (map_clothoid default_sheet) /\
-   intake_map default_sheet TClothoidIso =
-     IntakeBag (map_clothoid default_sheet) /\
+     IntakeBag (clothoid_bag default_sheet locked_clothoid_egg) /\
+   intake_map default_sheet (TClothoidIso locked_iso_clothoid) =
+     IntakeBag (clothoid_bag default_sheet locked_clothoid_egg) /\
    intake_map default_sheet TClothoidJts =
-     intake_map default_sheet TClothoidIso /\
+     intake_map default_sheet (TClothoidIso locked_iso_clothoid) /\
    exists b c e,
-     intake_map default_sheet TClothoidIso = IntakeBag b /\
+     intake_map default_sheet (TClothoidIso locked_iso_clothoid) = IntakeBag b /\
      In c (bag_chickens b) /\
      ck_egg c = MkClothoid e /\
      egg_class (ck_egg c) = EggClothoid /\
@@ -1088,8 +1106,8 @@ Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
    intake_map default_sheet example5_cc_both_clothoid_cst <>
      IntakeDecline ID_IsoClothoid)
   \/
-  (~ intake_ctor_inhabits IntakeMkClothoid /\
-   intake_map default_sheet TClothoidIso =
+   (~ intake_ctor_inhabits IntakeMkClothoid /\
+   intake_map default_sheet (TClothoidIso locked_iso_clothoid) =
      IntakeDecline ID_IsoClothoid).
 Proof.
   left.
@@ -1154,3 +1172,31 @@ Print Assumptions ticket_0007_intake_angles_qed_or_qex.
 Print Assumptions ticket_0007_intake_parks_qed_or_qex.
 Print Assumptions ticket_0007_intake_mkclothoid_qed_or_qex.
 Print Assumptions intake_geodesic_mkchord_inhabits.
+Print Assumptions intake_bag_neq_decline.
+Print Assumptions cook_ihit_neq_idecline.
+Print Assumptions grammar_accept_is_cst_only.
+Print Assumptions locked_ls_is_chord.
+Print Assumptions locked_cs_quarter_is_mkcirc.
+Print Assumptions ogc_iso_circle_same_mkcirc.
+Print Assumptions locked_cc_maps.
+Print Assumptions locked_cc_has_chord_and_circ.
+Print Assumptions locked_geodesic_not_geodesic_egg.
+Print Assumptions geodesic_badcount_declines.
+Print Assumptions ogc_iso_clothoid_same_mkclothoid.
+Print Assumptions jts_clothoid_chickens_mkclothoid.
+Print Assumptions clothoid_intake_not_iso_decline.
+Print Assumptions example5_cc_not_iso_decline.
+Print Assumptions out_of_slice_declines.
+Print Assumptions intake_not_cook_split.
+Print Assumptions empty_ls_declines.
+Print Assumptions singleton_ls_declines.
+Print Assumptions intake_walker_is_first_slice.
+Print Assumptions intake_walker_not_wkb.
+Print Assumptions intake_walker_not_zoo.
+Print Assumptions intake_walker_not_lesson1.
+Print Assumptions intake_walker_not_host_cook.
+Print Assumptions intake_walker_not_new_keyword.
+Print Assumptions intake_walker_letter_is_landed.
+Print Assumptions intake_walker_not_first_cook_expanded.
+Print Assumptions intake_walker_campaign_not_discharged.
+Print Assumptions intake_wkb_order_missing.
