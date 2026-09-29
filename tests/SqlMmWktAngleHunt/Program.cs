@@ -12,6 +12,10 @@ fails += CheckFixture("ccw", new(0, 0), new(2, 0), new(3, 1), expectPos: true);
 fails += CheckFixture("cw", new(0, 0), new(-1, 1), new(3, 1), expectPos: false);
 fails += CheckBranchCut("cut", new(0, 1), new(-1, 0), new(0, -1));
 fails += CheckCollinear("collinear", new(0, 0), new(1, 0), new(2, 0));
+fails += CheckCircle("circle-ccw", new(5, 0), new(0, 5), new(-5, 0), expectCcw: true, expectCut: false);
+fails += CheckCircle("circle-cw", new(5, 0), new(0, -5), new(-5, 0), expectCcw: false, expectCut: false);
+fails += CheckCircle("circle-cut", new(-1, 0), new(0, -1), new(1, 0), expectCcw: true, expectCut: true);
+fails += CheckClosedCs("closed-cs", new(5, 0), new(0, 5));
 if (fails != 0)
 {
     Console.Error.WriteLine($"SUMMARY bug ({fails} fixture(s))");
@@ -97,6 +101,85 @@ int CheckCollinear(string name, Pt a, Pt m, Pt b)
         $"BUG {name} denom={denom:R} oracle={oracle}");
     return 1;
 }
+
+// ISO CIRCLE(A,B,C): θ₀ = atan2(A−O), sweep = sign(orient)·2π,
+// γ(t) = O + r·(cos(θ₀+t·sweep), sin(θ₀+t·sweep)). γ(0)=γ(1)=A.
+// CIRCULARSTRING(A,B,A) is a named Decline, not this circle.
+int CheckCircle(string name, Pt a, Pt b, Pt c, bool expectCcw, bool expectCut)
+{
+    double tol = 1e-9;
+    double d = CircDenom(a, b, c);
+    double na = a.X * a.X + a.Y * a.Y;
+    double nb = b.X * b.X + b.Y * b.Y;
+    double nc = c.X * c.X + c.Y * c.Y;
+    var o = new Pt(
+        (na * (b.Y - c.Y) + nb * (c.Y - a.Y) + nc * (a.Y - b.Y)) / d,
+        (na * (c.X - b.X) + nb * (a.X - c.X) + nc * (b.X - a.X)) / d);
+    double r = Math.Sqrt((a.X - o.X) * (a.X - o.X) + (a.Y - o.Y) * (a.Y - o.Y));
+    double theta0 = Math.Atan2(a.Y - o.Y, a.X - o.X);
+    double orient = (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
+    double sweep = Math.CopySign(2 * Math.PI, orient);
+    Pt Gamma(double t) => new(
+        o.X + r * Math.Cos(theta0 + t * sweep),
+        o.Y + r * Math.Sin(theta0 + t * sweep));
+    double Param(Pt p)
+    {
+        double delta = Math.Atan2(p.Y - o.Y, p.X - o.X) - theta0;
+        if (sweep > 0)
+        {
+            if (delta <= 0) delta += 2 * Math.PI;
+        }
+        else if (delta >= 0)
+        {
+            delta -= 2 * Math.PI;
+        }
+        return delta / sweep;
+    }
+    double tb = Param(b);
+    double tc = Param(c);
+    bool ends = Near(Gamma(0), a, tol) && Near(Gamma(1), a, tol);
+    bool sign = expectCcw ? sweep > 0 && orient > 0 : sweep < 0 && orient < 0;
+    bool cut = !expectCut || Math.Abs(theta0 - Math.PI) < tol;
+    bool order = 0 < tb && tb < tc && tc < 1;
+    bool on = Math.Abs(Dist(o, b) - r) < tol && Math.Abs(Dist(o, c) - r) < tol
+        && Near(Gamma(tb), b, tol) && Near(Gamma(tc), c, tol);
+    string wkt = FormattableString.Invariant(
+        $"CIRCLE ({a.X} {a.Y}, {b.X} {b.Y}, {c.X} {c.Y})");
+    string oracle = OracleSqlmm(root, wkt);
+    bool parsed = oracle == "OK CIRCLE XY POINTS 3";
+    if (ends && sign && cut && order && on && parsed)
+    {
+        Console.WriteLine(
+            $"OK {name} theta0={theta0:R} sweep={sweep:R} tB={tb:R} tC={tc:R} oracle={oracle}");
+        return 0;
+    }
+    Console.Error.WriteLine(
+        $"BUG {name} theta0={theta0:R} sweep={sweep:R} orient={orient:R} " +
+        $"tB={tb:R} tC={tc:R} ends={ends} sign={sign} cut={cut} order={order} on={on} oracle={oracle}");
+    return 1;
+}
+
+int CheckClosedCs(string name, Pt a, Pt b)
+{
+    string wkt = FormattableString.Invariant(
+        $"CIRCULARSTRING ({a.X} {a.Y}, {b.X} {b.Y}, {a.X} {a.Y})");
+    string oracle = OracleSqlmm(root, wkt);
+    bool parsed = oracle == "OK CIRCULARSTRING XY POINTS 3";
+    if (parsed)
+    {
+        Console.WriteLine(
+            $"STRICT-DECLINE {name} proof=ID_CsClosedDegenerate lenient=ISO-circle oracle={oracle}");
+        return 0;
+    }
+    Console.Error.WriteLine($"BUG {name} oracle={oracle}");
+    return 1;
+}
+
+static bool Near(Pt p, Pt q, double tol) =>
+    Math.Abs(p.X - q.X) < tol && Math.Abs(p.Y - q.Y) < tol;
+
+static double Dist(Pt p, Pt q) =>
+    Math.Sqrt((p.X - q.X) * (p.X - q.X) + (p.Y - q.Y) * (p.Y - q.Y));
 
 static double CircDenom(Pt a, Pt mid, Pt b) =>
     2 * (a.X * (mid.Y - b.Y) + mid.X * (b.Y - a.Y) + b.X * (a.Y - mid.Y));

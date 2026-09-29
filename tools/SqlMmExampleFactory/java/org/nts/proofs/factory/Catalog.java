@@ -22,6 +22,7 @@ public final class Catalog {
         add(m, linestringEmpty());
         add(m, circularstringQuarter());
         add(m, circularstringFull());
+        add(m, circularstringFullStrict());
         add(m, circleFull());
         add(m, compoundLsCs());
         add(m, clothoidJts());
@@ -84,16 +85,29 @@ public final class Catalog {
                 .build();
     }
 
+    /** ADR-0005 lenient: CIRCULARSTRING(A,B,A) bags the CCW ISO circle. */
     static Example circularstringFull() {
         return Example.builder("circularstring-full", "CIRCULARSTRING")
                 .hens(0, 1)
                 .pt(5, 0)
-                .pt(5, 0)
+                .pt(0, 5)
                 .control(5, 0)
                 .control(0, 5)
                 .control(5, 0)
-                .chicken(0, 1, "MkCirc:full")
-                .tau("TagCircle")
+                .chicken(0, 1, "MkCirc:half")
+                .chicken(1, 0, "MkCirc:half")
+                .tau("TagCircularString")
+                .build();
+    }
+
+    /** ADR-0005 strict: the same text Declines. */
+    static Example circularstringFullStrict() {
+        return Example.builder("circularstring-full-strict", "CIRCULARSTRING")
+                .control(5, 0)
+                .control(0, 5)
+                .control(5, 0)
+                .decline("ID_CsClosedDegenerate")
+                .tau("TagCircularString")
                 .build();
     }
 
@@ -105,7 +119,8 @@ public final class Catalog {
                 .control(5, 0)
                 .control(0, 5)
                 .control(-5, 0)
-                .chicken(0, 1, "MkCirc:full")
+                .chicken(0, 1, "MkCirc:half")
+                .chicken(1, 0, "MkCirc:half")
                 .tau("TagCircle")
                 .build();
     }

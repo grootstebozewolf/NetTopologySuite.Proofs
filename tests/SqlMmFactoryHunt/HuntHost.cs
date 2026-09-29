@@ -222,19 +222,21 @@ static class HuntHost
     internal static (int Rc, string Stdout, string Stderr) FactoryList() =>
         RunJava(FactoryCp, "org.nts.proofs.factory.Main", ["--list"], stdin: null, factoryEnv: true);
 
-    internal static (int Rc, string Stdout, string Stderr) Intake(string wkt)
+    internal static (int Rc, string Stdout, string Stderr) Intake(string wkt, bool strict = false)
     {
         if (string.IsNullOrWhiteSpace(IntakeCli))
             throw new InvalidOperationException("SQLMM_INTAKE unset");
+        var tail = strict ? new List<string> { "--strict", wkt } : new List<string> { wkt };
         if (IntakeCli.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
             || IntakeCli.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
         {
             var argv = IntakeCli.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)
-                ? new List<string> { "run", "--project", IntakeCli, "--", wkt }
-                : new List<string> { IntakeCli, wkt };
+                ? new List<string> { "run", "--project", IntakeCli, "--" }
+                : new List<string> { IntakeCli };
+            argv.AddRange(tail);
             return Run(DotNet, argv, RepoRoot);
         }
-        return Run(IntakeCli, [wkt], RepoRoot);
+        return Run(IntakeCli, tail, RepoRoot);
     }
 
     static (int Rc, string Stdout, string Stderr) RunJava(

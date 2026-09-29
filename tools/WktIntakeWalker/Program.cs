@@ -12,13 +12,20 @@ static class Program
 {
     static int Main(string[] args)
     {
+        bool strict = false;
+        var rest = new List<string>();
+        foreach (var a in args)
+        {
+            if (a == "--strict") strict = true;
+            else rest.Add(a);
+        }
         var wkts = new List<string>();
-        if (args.Length == 0)
+        if (rest.Count == 0)
             wkts.AddRange(ReadStdinLines());
-        else if (args[0] == "--file" && args.Length >= 2)
-            wkts.AddRange(NonBlank(File.ReadAllLines(args[1], Encoding.UTF8)));
+        else if (rest[0] == "--file" && rest.Count >= 2)
+            wkts.AddRange(NonBlank(File.ReadAllLines(rest[1], Encoding.UTF8)));
         else
-            wkts.Add(string.Join(' ', args));
+            wkts.Add(string.Join(' ', rest));
         if (wkts.Count == 0)
         {
             Console.WriteLine(IntakeResult.OfDecline(Reason.ID_Empty).Wire());
@@ -27,7 +34,7 @@ static class Program
         int rc = 0;
         foreach (var wkt in wkts)
         {
-            var r = Intake(wkt);
+            var r = Intake(wkt, strict);
             Console.WriteLine(r.Wire());
             if (!r.IsBag)
                 rc = 3;
@@ -35,7 +42,7 @@ static class Program
         return rc;
     }
 
-    internal static IntakeResult Intake(string wkt)
+    internal static IntakeResult Intake(string wkt, bool strict = false)
     {
         var errors = new BailErrors();
         var lexer = new wktLexer(CharStreams.fromString(wkt));
@@ -47,7 +54,8 @@ static class Program
         var tree = parser.file_();
         if (errors.Failed || parser.NumberOfSyntaxErrors > 0)
             return IntakeResult.OfDecline(Reason.ID_ParseFail);
-        return new IntakeVisitor().Visit(tree);
+        var mode = strict ? IntakeMode.Strict : IntakeMode.Lenient;
+        return new IntakeVisitor(mode).Visit(tree);
     }
 
     static List<string> ReadStdinLines()

@@ -3,8 +3,10 @@
    ----------------------------------------------------------------------------
    Definitions for claimId 0007-intake-angles. The letter theorems
    stay in IntakeAngles.v. WKT compute is egg_of_points: circumcenter,
-   pole chart, principal theta0, chart sweep. Full-circle ISO Circle
-   (try_circle_eggs) stays theta0 = 0, sweep = 2*PI.
+   pole chart, principal theta0, chart sweep. ISO CIRCLE
+   (try_circle_eggs) reuses that theta0 (angle of A). The full-turn
+   egg stays circle_of_egg (sweep ±2*PI). The bag is two half-span
+   eggs (sweep ±PI) and ends [A; antipode], not a src=dst chicken.
 
    3-axiom host. No Admitted / Axiom / Parameter.
    AI assistance disclosure: AI-drafted, human-reviewed.
@@ -28,7 +30,8 @@ Inductive AngleFail : Type :=
 | AF_Duplicate
 | AF_Collinear
 | AF_Degenerate
-| AF_SpanMismatch.
+| AF_SpanMismatch
+| AF_CsClosedDegenerate.
 
 Definition AngleResult (A : Type) : Type := (A + AngleFail)%type.
 
@@ -115,12 +118,44 @@ Fixpoint go_arcs (pts : list Point) {struct pts}
       end
   end.
 
+(* Angle layer still Declines a 3-control string with first = last,
+   before the duplicate check. ADR-0005 lenient normalization is
+   IntakeWalker.map_cs_unknown (CIRCLE(A,B,ogc_c)), not this function.
+   A longer closed string is not this case. *)
 Definition try_cs_eggs (pts : list Point)
   : AngleResult (list CircularEgg * list Point) :=
   match pts with
   | [] => inr AF_Empty
+  | a :: b :: c :: [] =>
+      if Req_EM_T (dist_sq a c) 0 then inr AF_CsClosedDegenerate
+      else go_arcs pts
   | _ :: _ => go_arcs pts
   end.
+
+(* θ₀ is the chart angle of A (same egg_of_points as try_triple).
+   circle_of_egg is the full turn, sweep ±2π. The bag does not store
+   that egg: two hens at distinct points, A and γ(1/2), and two
+   MkCirc of sweep ±π (θ₀, then θ₀±π). piece_wf / bag_step do not
+   state that a chicken with ck_src = ck_dst is well-formed, so the
+   bag is not a self-loop. *)
+Definition full_sweep (a b c : Point) : R :=
+  if Rle_dec 0 (orient_pts a b c) then 2 * PI else - (2 * PI).
+
+Definition half_sweep (a b c : Point) : R :=
+  if Rle_dec 0 (orient_pts a b c) then PI else - PI.
+
+Definition circle_of_egg (e : CircularEgg) (a b c : Point) : CircularEgg :=
+  mkCircularEgg (circ_o e) (circ_r e) (circ_theta0 e) (full_sweep a b c).
+
+Definition circle_half_fst (e : CircularEgg) (a b c : Point) : CircularEgg :=
+  mkCircularEgg (circ_o e) (circ_r e) (circ_theta0 e) (half_sweep a b c).
+
+Definition circle_half_snd (e : CircularEgg) (a b c : Point) : CircularEgg :=
+  mkCircularEgg (circ_o e) (circ_r e)
+    (circ_theta0 e + half_sweep a b c) (half_sweep a b c).
+
+Definition circle_antipode (e : CircularEgg) (a b c : Point) : Point :=
+  circ_eval (circle_of_egg e a b c) (1 / 2).
 
 Definition try_circle_eggs (pts : list Point)
   : AngleResult (list CircularEgg * list Point) :=
@@ -130,13 +165,15 @@ Definition try_circle_eggs (pts : list Point)
       match try_triple a b c with
       | inr f => inr f
       | inl e =>
-          (* Full-span ISO circle stays θ₀ = 0, Δθ = 2π (A = B path
-             unchanged; three distinct controls still name the circle). *)
-          inl ([mkCircularEgg (circ_o e) (circ_r e) 0 (2 * PI)],
-               [a; c])
+          inl ([circle_half_fst e a b c; circle_half_snd e a b c],
+               [a; circle_antipode e a b c])
       end
   | _ => inr AF_BadCount
   end.
+
+(* Cycle 0→1, 1→0. circ_chickens would mint a third hen. *)
+Definition circle_cycle (e1 e2 : CircularEgg) : list Chicken :=
+  [mkChicken 0%nat 1%nat (MkCirc e1); mkChicken 1%nat 0%nat (MkCirc e2)].
 
 Fixpoint circ_chickens (es : list CircularEgg) (h0 : nat) : list Chicken :=
   match es with
@@ -154,9 +191,6 @@ Definition ang_b : Point := mkPoint 2 0.
 Definition ang_c : Point := mkPoint 3 1.
 
 Definition ang_egg : CircularEgg := egg_of_points ang_a ang_b ang_c.
-
-Definition ang_circle_egg : CircularEgg :=
-  mkCircularEgg (mkPoint 1 2) (sqrt 5) 0 (2 * PI).
 
 Lemma sqrt_pos_neq_0 : forall x, 0 < x -> sqrt x <> 0.
 Proof.
@@ -225,9 +259,10 @@ Qed.
 Lemma ang_cs_ok :
   try_cs_eggs [ang_a; ang_b; ang_c] = inl ([ang_egg], [ang_a; ang_c]).
 Proof.
-  unfold try_cs_eggs, go_arcs.
-  rewrite ang_triple_egg.
-  reflexivity.
+  unfold try_cs_eggs.
+  destruct (Req_EM_T (dist_sq ang_a ang_c) 0) as [Hac|Hac].
+  - exfalso. exact (ang_dac_nz Hac).
+  - unfold go_arcs. rewrite ang_triple_egg. reflexivity.
 Qed.
 
 Lemma ang_egg_center : circ_o ang_egg = mkPoint 1 2.
@@ -240,13 +275,63 @@ Proof.
   unfold ang_egg, egg_of_points. exact ang_r_sqrt5.
 Qed.
 
+Lemma try_triple_ok : forall a b c,
+  dist_sq a b <> 0 ->
+  dist_sq b c <> 0 ->
+  dist_sq a c <> 0 ->
+  circ_denom a b c <> 0 ->
+  dist (circumcenter_of a b c) a <> 0 ->
+  try_triple a b c = inl (egg_of_points a b c).
+Proof.
+  intros a b c Hab Hbc Hac Hd Hr.
+  unfold try_triple.
+  destruct (Req_EM_T (dist_sq a b) 0) as [E|E]; [contradiction|].
+  destruct (Req_EM_T (dist_sq b c) 0) as [E2|E2]; [contradiction|].
+  destruct (Req_EM_T (dist_sq a c) 0) as [E3|E3]; [contradiction|].
+  destruct (Req_EM_T (circ_denom a b c) 0) as [E4|E4]; [contradiction|].
+  destruct (Req_EM_T (dist (circumcenter_of a b c) a) 0) as [E5|E5];
+    [contradiction|].
+  reflexivity.
+Qed.
+
+Lemma try_circle_halves : forall a b c,
+  dist_sq a b <> 0 ->
+  dist_sq b c <> 0 ->
+  dist_sq a c <> 0 ->
+  circ_denom a b c <> 0 ->
+  dist (circumcenter_of a b c) a <> 0 ->
+  try_circle_eggs [a; b; c] =
+    inl ([circle_half_fst (egg_of_points a b c) a b c;
+          circle_half_snd (egg_of_points a b c) a b c],
+         [a; circle_antipode (egg_of_points a b c) a b c]).
+Proof.
+  intros a b c Hab Hbc Hac Hd Hr.
+  unfold try_circle_eggs.
+  rewrite (try_triple_ok a b c Hab Hbc Hac Hd Hr).
+  reflexivity.
+Qed.
+
 Lemma ang_circle_ok :
   try_circle_eggs [ang_a; ang_b; ang_c] =
-    inl ([ang_circle_egg], [ang_a; ang_c]).
+    inl ([circle_half_fst ang_egg ang_a ang_b ang_c;
+          circle_half_snd ang_egg ang_a ang_b ang_c],
+         [ang_a; circle_antipode ang_egg ang_a ang_b ang_c]).
 Proof.
-  unfold try_circle_eggs, ang_circle_egg.
-  rewrite ang_triple_egg, ang_egg_center, ang_egg_radius.
+  assert (Hd : circ_denom ang_a ang_b ang_c <> 0).
+  { rewrite ang_denom. lra. }
+  unfold ang_egg.
+  rewrite (try_circle_halves ang_a ang_b ang_c
+            ang_dab_nz ang_dbc_nz ang_dac_nz Hd ang_r_nz).
   reflexivity.
+Qed.
+
+Lemma try_cs_closed_degenerate :
+  forall a b, try_cs_eggs [a; b; a] = inr AF_CsClosedDegenerate.
+Proof.
+  intros a b. unfold try_cs_eggs.
+  destruct (Req_EM_T (dist_sq a a) 0) as [_|H].
+  - reflexivity.
+  - exfalso. apply H. unfold dist_sq. cbn. ring.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -341,9 +426,10 @@ Qed.
 Lemma col_cs_collinear :
   try_cs_eggs [col_a; col_b; col_c] = inr AF_Collinear.
 Proof.
-  unfold try_cs_eggs, go_arcs.
-  rewrite col_triple_collinear.
-  reflexivity.
+  unfold try_cs_eggs.
+  destruct (Req_EM_T (dist_sq col_a col_c) 0) as [Hac|Hac].
+  - exfalso. exact (col_dac_nz Hac).
+  - unfold go_arcs. rewrite col_triple_collinear. reflexivity.
 Qed.
 
 Definition dup_a : Point := mkPoint 0 0.
@@ -361,12 +447,18 @@ Proof.
   apply try_triple_dup_ab. exact dup_ab.
 Qed.
 
+Lemma dup_ac_nz : dist_sq dup_a dup_c <> 0.
+Proof.
+  unfold dist_sq, dup_a, dup_c. cbn. lra.
+Qed.
+
 Lemma dup_cs :
   try_cs_eggs [dup_a; dup_b; dup_c] = inr AF_Duplicate.
 Proof.
-  unfold try_cs_eggs, go_arcs.
-  rewrite dup_triple.
-  reflexivity.
+  unfold try_cs_eggs.
+  destruct (Req_EM_T (dist_sq dup_a dup_c) 0) as [Hac|Hac].
+  - exfalso. exact (dup_ac_nz Hac).
+  - unfold go_arcs. rewrite dup_triple. reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -635,7 +727,10 @@ Print Assumptions ang_triple_egg.
 Print Assumptions ang_cs_ok.
 Print Assumptions ang_egg_center.
 Print Assumptions ang_egg_radius.
+Print Assumptions try_triple_ok.
+Print Assumptions try_circle_halves.
 Print Assumptions ang_circle_ok.
+Print Assumptions try_cs_closed_degenerate.
 Print Assumptions try_cs_empty.
 Print Assumptions try_cs_singleton.
 Print Assumptions try_cs_pair.
@@ -650,6 +745,7 @@ Print Assumptions col_triple_collinear.
 Print Assumptions col_cs_collinear.
 Print Assumptions dup_ab.
 Print Assumptions dup_triple.
+Print Assumptions dup_ac_nz.
 Print Assumptions dup_cs.
 Print Assumptions circ_chickens_mkcirc.
 Print Assumptions circ_chickens_not_chord.
