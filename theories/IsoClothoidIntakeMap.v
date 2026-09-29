@@ -120,6 +120,24 @@ Proof.
   - split; [exact sample_not_locked|exact sample_wf].
 Qed.
 
+(* LOCATION z is elevation. Two records that differ only there agree. *)
+Definition with_loc_z (f : IsoClothoid) (z : R) : IsoClothoid :=
+  mkIsoClothoid (ic_dim f) (ic_loc f) z
+    (ic_ref1 f) (ic_ref1_z f) (ic_ref2 f) (ic_ref2_z f)
+    (ic_A f) (ic_sd f) (ic_ed f) (ic_m0 f) (ic_m1 f).
+
+Lemma loc_z_same_result : forall s f z1 z2,
+  try_iso_clothoid (with_loc_z f z1) =
+    try_iso_clothoid (with_loc_z f z2) /\
+  intake_map s (TClothoidIso (with_loc_z f z1)) =
+    intake_map s (TClothoidIso (with_loc_z f z2)).
+Proof.
+  intros s f z1 z2.
+  unfold with_loc_z, try_iso_clothoid, intake_map, intake_map_atom,
+    map_clothoid.
+  split; reflexivity.
+Qed.
+
 (* Next to sample_not_locked: another triple is not the locked bag. *)
 Lemma jts_other_triple_declines :
   intake_map default_sheet (TClothoidJts 0 0 1) =
@@ -150,5 +168,6 @@ Print Assumptions iso_nonpositive_scale_declines.
 Print Assumptions iso_tilted_placement_declines.
 Print Assumptions iso_horizontal_z_hits.
 Print Assumptions iso_sample_intake_hits.
+Print Assumptions loc_z_same_result.
 Print Assumptions jts_other_triple_declines.
 Print Assumptions locked_iso_intake_eval.
