@@ -99,7 +99,7 @@ GitHub issue comment as the source of record.
 
 - Remint `69-a`. Do not mint `69-b`.
 - Remint `508-a`…`508-h` or mint `508-i`.
-- Remint leftover `Ⅰ`–`Ⅹ` or mint leftover `Ⅺ`. Do not mint `522-n`.
+- Remint leftover `Ⅰ`–`Ⅹ` or mint leftover `Ⅺ`. Do not mint `522-n`. Ⅹ stays unminted by owner ruling (Jeroen, 2026-09-28) even though #880 lifted it.
 - Treat `M-LEN-ZOO` ✅ as "the zoo is exact."
 - Treat ticket 523 QEX, or leftover `Ⅰ`–`Ⅸ` QED, as owner accept of #523.
 - Reopen #67 or #522 from this letter.
