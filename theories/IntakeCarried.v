@@ -40,13 +40,18 @@ Definition span_of_angle_fail (f : AngleFail) : SpanDecline :=
   | _ => ID_SpanOther (angle_fail_reason f)
   end.
 
-(* 2n+1 points, n windows. Tail starts at the shared joint. *)
-Fixpoint circ_windows (pts : list Point) {struct pts}
+(* 2n+1 points, n windows. Recurse on the structural tail. *)
+Fixpoint circ_windows_from (a : Point) (pts : list Point) {struct pts}
   : list (Point * Point * Point) :=
   match pts with
-  | a :: m :: b :: rest =>
-      (a, m, b) :: circ_windows (b :: rest)
+  | m :: b :: rest => (a, m, b) :: circ_windows_from b rest
   | _ => []
+  end.
+
+Definition circ_windows (pts : list Point) : list (Point * Point * Point) :=
+  match pts with
+  | a :: rest => circ_windows_from a rest
+  | [] => []
   end.
 
 Definition map_window (s : Sheet) (sl : CircSlice)
@@ -106,10 +111,6 @@ Definition map_cs_span_list (s : Sheet) (sl : CircSlice)
       end
   | CircQuarter | CircUnknown => map_windows s sl (circ_windows pts) spans
   end.
-
-(* -------------------------------------------------------------------------- *)
-(* #866 inhabitance. Fail-closed when the slot is absent on A <> B.           *)
-(* -------------------------------------------------------------------------- *)
 
 Lemma circ_full_ogc_ignores_spans :
   forall s pts spans bag,
