@@ -14,11 +14,12 @@
    geometric cell_ok is the separate vertical-touch target (#848); this
    module does not remint rect_pair_fill / aa_matrix_touch_vertical.
 
-   IB, IE, EI, BE, EB are interval arithmetic on point_set and
-   geom_boundary.  BI is NOT stated against point_set: the shared edge
-   sits in B's half-open parity region (point_in_ring_rect_iff) and in
-   A's boundary, so that cell is inhabited.  BI is empty against
-   rect_interior (the open box), the rect analogue of tri_interior.
+   Spec-tier IB and BI are both empty against rect_interior (the open
+   box, the rect analogue of tri_interior) and geom_boundary.  IE, EI,
+   BE, EB stay on point_set / geom_boundary.  Coded-tier IB (half-open
+   point_set of A against ∂B) is a separate conjunct; the tiers meet at
+   rect_interior_coded_parity.  Coded-tier BI is inhabited: the shared
+   edge sits in B's half-open parity region (point_in_ring_rect_iff).
 
    No ring_complement / ray_avoids_vertices guard.
 
@@ -109,6 +110,24 @@ Proof.
   intros x0 y0 x1 y1 p Hx Hy Hi.
   apply strict_interior_in_rect_geometry; [ exact Hx | exact Hy | ].
   apply rect_interior_iff_open_rect. exact Hi.
+Qed.
+
+(* Spec tier is the open box.  Coded tier is the half-open point_set.
+   Open interior implies point_set.  The converse holds once the left
+   edge, which the half-open convention includes, is excluded. *)
+Lemma rect_interior_coded_parity :
+  forall x0 y0 x1 y1 p,
+    x0 < x1 -> y0 < y1 ->
+    rect_interior x0 y0 x1 y1 p <->
+    point_set (rect_geometry x0 y0 x1 y1) p /\ x0 < px p.
+Proof.
+  intros x0 y0 x1 y1 p Hx Hy. split.
+  - intros Hi. split.
+    + apply rect_interior_point_set; assumption.
+    + unfold rect_interior in Hi. lra.
+  - intros [Hin Hpx].
+    apply rect_point_set_half_open in Hin; try assumption.
+    unfold rect_interior. lra.
 Qed.
 
 Lemma rect_px_lt_lo_exterior :
@@ -314,6 +333,20 @@ Lemma touch_rect_vert_ib_empty :
   forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
     rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
     rect_cell_empty (fun p =>
+      rect_interior ax0 ay0 ax1 ay1 p /\
+      geom_boundary (rect_geometry bx0 by0 bx1 by1) p).
+Proof.
+  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch p [HA HB].
+  destruct Htouch as (_ & _ & Hbx & Hby & Heq & _ & _).
+  apply rect_boundary_closed_box in HB; try assumption.
+  unfold rect_interior in HA. subst bx0. lra.
+Qed.
+
+(* coded-tier.  Not the spec cell: point_set includes A's left edge. *)
+Lemma touch_rect_vert_ib_empty_coded :
+  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
+    rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
+    rect_cell_empty (fun p =>
       point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
       geom_boundary (rect_geometry bx0 by0 bx1 by1) p).
 Proof.
@@ -417,7 +450,7 @@ Lemma touch_rect_vert_six_cells :
   forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
     rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
     rect_cell_empty (fun p =>
-      point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
+      rect_interior ax0 ay0 ax1 ay1 p /\
       geom_boundary (rect_geometry bx0 by0 bx1 by1) p) /\
     rect_cell_empty (fun p =>
       geom_boundary (rect_geometry ax0 ay0 ax1 ay1) p /\
@@ -450,6 +483,20 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Lemma touch_rect_horiz_ib_empty :
+  forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
+    rects_touch_horizontal_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
+    rect_cell_empty (fun p =>
+      rect_interior ax0 ay0 ax1 ay1 p /\
+      geom_boundary (rect_geometry bx0 by0 bx1 by1) p).
+Proof.
+  intros ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 Htouch p [HA HB].
+  destruct Htouch as (_ & _ & Hbx & Hby & Heq & _ & _).
+  apply rect_boundary_closed_box in HB; try assumption.
+  unfold rect_interior in HA. subst by0. lra.
+Qed.
+
+(* coded-tier.  Not the spec cell: point_set includes A's bottom edge. *)
+Lemma touch_rect_horiz_ib_empty_coded :
   forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
     rects_touch_horizontal_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
     rect_cell_empty (fun p =>
@@ -556,7 +603,7 @@ Lemma touch_rect_horiz_six_cells :
   forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
     rects_touch_horizontal_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
     rect_cell_empty (fun p =>
-      point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
+      rect_interior ax0 ay0 ax1 ay1 p /\
       geom_boundary (rect_geometry bx0 by0 bx1 by1) p) /\
     rect_cell_empty (fun p =>
       geom_boundary (rect_geometry ax0 ay0 ax1 ay1) p /\
@@ -602,7 +649,7 @@ Qed.
 
 Lemma touch_rect_vert_witness_six_cells :
   rect_cell_empty (fun p =>
-    point_set (rect_geometry 0 0 1 1) p /\
+    rect_interior 0 0 1 1 p /\
     geom_boundary (rect_geometry 1 0 2 1) p) /\
   rect_cell_empty (fun p =>
     geom_boundary (rect_geometry 0 0 1 1) p /\
@@ -626,7 +673,7 @@ Qed.
 
 Lemma touch_rect_horiz_witness_six_cells :
   rect_cell_empty (fun p =>
-    point_set (rect_geometry 0 0 1 1) p /\
+    rect_interior 0 0 1 1 p /\
     geom_boundary (rect_geometry 0 1 1 2) p) /\
   rect_cell_empty (fun p =>
     geom_boundary (rect_geometry 0 0 1 1) p /\
@@ -676,19 +723,20 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Ticket-named QED ∨ QEX stop.  LEFT is the six forall cells, vertical and   *)
-(* horizontal.  RIGHT would be a vertical-touch pair whose open interior of   *)
-(* A meets B's point_set (the IE interval fact failing).                       *)
+(* Ticket-named QED ∨ QEX stop.  LEFT is the spec-tier six cells (IB and BI   *)
+(* on rect_interior), vertical and horizontal, plus the coded-tier IB         *)
+(* conjunct.  RIGHT would be a vertical-touch pair whose open interior of A   *)
+(* meets B's point_set (the IE interval fact failing).                        *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0003-touch-rect-cells-general","topic":"relate","lemma":"ticket_0003_touch_rect_cells_general_qed_or_qex","title":"ADR-0003 rect shared-edge touch: forall vertical and horizontal pair, IB empty on point_set/boundary, BI empty on rect_interior, IE=EI dim2, BE=EB dim1 (QED) or an open-interior point of A meets B point_set (QEX); discharged QED; no ring_complement guard","file":"theories/RelateNGTouchRectCellsGeneral.v","witness":"0003-touch-rect-cells-general","board":"ADR-0003"} *)
+(* WITNESS {"claimId":"0003-touch-rect-cells-general","topic":"relate","lemma":"ticket_0003_touch_rect_cells_general_qed_or_qex","title":"ADR-0003 rect shared-edge touch: forall vertical and horizontal pair, IB=BI empty on rect_interior, IE=EI dim2, BE=EB dim1 (QED) or an open-interior point of A meets B point_set (QEX); discharged QED; coded-tier IB is a separate conjunct via rect_interior_coded_parity; no ring_complement guard","file":"theories/RelateNGTouchRectCellsGeneral.v","witness":"0003-touch-rect-cells-general","board":"ADR-0003"} *)
 
 Theorem ticket_0003_touch_rect_cells_general_qed_or_qex :
   (
     (forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
        rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
        rect_cell_empty (fun p =>
-         point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
+         rect_interior ax0 ay0 ax1 ay1 p /\
          geom_boundary (rect_geometry bx0 by0 bx1 by1) p) /\
        rect_cell_empty (fun p =>
          geom_boundary (rect_geometry ax0 ay0 ax1 ay1) p /\
@@ -709,7 +757,7 @@ Theorem ticket_0003_touch_rect_cells_general_qed_or_qex :
     (forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
        rects_touch_horizontal_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
        rect_cell_empty (fun p =>
-         point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
+         rect_interior ax0 ay0 ax1 ay1 p /\
          geom_boundary (rect_geometry bx0 by0 bx1 by1) p) /\
        rect_cell_empty (fun p =>
          geom_boundary (rect_geometry ax0 ay0 ax1 ay1) p /\
@@ -726,6 +774,20 @@ Theorem ticket_0003_touch_rect_cells_general_qed_or_qex :
        rect_cell_dim1 (fun p =>
          ~ point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
          geom_boundary (rect_geometry bx0 by0 bx1 by1) p))
+    /\
+    (* coded-tier: half-open point_set A against ∂B.  Not the spec cell.
+       rect_interior_coded_parity is the bridge.  Coded BI stays inhabited. *)
+    (forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
+       rects_touch_vertical_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
+       rect_cell_empty (fun p =>
+         point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
+         geom_boundary (rect_geometry bx0 by0 bx1 by1) p))
+    /\
+    (forall ax0 ay0 ax1 ay1 bx0 by0 bx1 by1,
+       rects_touch_horizontal_edge ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 ->
+       rect_cell_empty (fun p =>
+         point_set (rect_geometry ax0 ay0 ax1 ay1) p /\
+         geom_boundary (rect_geometry bx0 by0 bx1 by1) p))
   )
   \/
   (exists ax0 ay0 ax1 ay1 bx0 by0 bx1 by1 p,
@@ -735,25 +797,50 @@ Theorem ticket_0003_touch_rect_cells_general_qed_or_qex :
 Proof.
   left. split.
   - exact touch_rect_vert_six_cells.
-  - exact touch_rect_horiz_six_cells.
+  - split.
+    + exact touch_rect_horiz_six_cells.
+    + split.
+      * exact touch_rect_vert_ib_empty_coded.
+      * exact touch_rect_horiz_ib_empty_coded.
 Qed.
 
+Print Assumptions rect_interior_iff_open_rect.
+Print Assumptions rect_inradius_pos.
+Print Assumptions rect_point_set_half_open.
+Print Assumptions rect_interior_point_set.
+Print Assumptions rect_interior_coded_parity.
+Print Assumptions rect_px_lt_lo_exterior.
+Print Assumptions rect_px_ge_hi_exterior.
+Print Assumptions rect_py_lt_lo_exterior.
+Print Assumptions rect_py_ge_hi_exterior.
 Print Assumptions rect_boundary_closed_box.
+Print Assumptions rect_bl_boundary.
+Print Assumptions rect_br_boundary.
+Print Assumptions rect_tr_boundary.
+Print Assumptions rect_tl_boundary.
+Print Assumptions Rabs_lt_between.
+Print Assumptions Rabs_mul_self.
+Print Assumptions abs_coord_le_dist_x.
+Print Assumptions abs_coord_le_dist_y.
 Print Assumptions rect_open_disk_interior.
 Print Assumptions touch_rect_vert_ib_empty.
+Print Assumptions touch_rect_vert_ib_empty_coded.
 Print Assumptions touch_rect_vert_bi_empty.
 Print Assumptions touch_rect_vert_ie_dim2.
 Print Assumptions touch_rect_vert_ei_dim2.
 Print Assumptions touch_rect_vert_be_dim1.
 Print Assumptions touch_rect_vert_eb_dim1.
+Print Assumptions touch_rect_vert_six_cells.
 Print Assumptions touch_rect_horiz_ib_empty.
+Print Assumptions touch_rect_horiz_ib_empty_coded.
 Print Assumptions touch_rect_horiz_bi_empty.
 Print Assumptions touch_rect_horiz_ie_dim2.
 Print Assumptions touch_rect_horiz_ei_dim2.
 Print Assumptions touch_rect_horiz_be_dim1.
 Print Assumptions touch_rect_horiz_eb_dim1.
-Print Assumptions touch_rect_vert_six_cells.
 Print Assumptions touch_rect_horiz_six_cells.
+Print Assumptions touch_rect_vert_witness_touch.
+Print Assumptions touch_rect_horiz_witness_touch.
 Print Assumptions touch_rect_vert_witness_six_cells.
 Print Assumptions touch_rect_horiz_witness_six_cells.
 Print Assumptions touch_vert_bi_point_set_inhabited.

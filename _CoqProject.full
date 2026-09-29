@@ -3491,8 +3491,9 @@ theories/RelateNGTouchEdgeCells.v
 # No ring_complement / ray_avoids_vertices guard.
 theories/RelateNGTouchEdgeCellsGeneral.v
 # #847 / ADR-0003: forall vertical/horizontal rect touch, the six
-# spec-tier cells IB/BI/IE/EI/BE/EB.  BI uses rect_interior, not
-# point_set.  No ring_complement / ray_avoids_vertices guard.
+# spec-tier cells IB/BI/IE/EI/BE/EB.  IB and BI use rect_interior.
+# Coded-tier IB is a separate conjunct.  Not host-lane.
+# No ring_complement / ray_avoids_vertices guard.
 theories/RelateNGTouchRectCellsGeneral.v
 # #576 / 522-h (overlap split): nine gtri cells of OGC 212101212 on
 # the #567 / #570 overlap pair.  Names aa_matrix_overlap_ogc; does
