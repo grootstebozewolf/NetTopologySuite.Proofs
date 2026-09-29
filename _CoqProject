@@ -108,6 +108,8 @@ theories/SheetHenCircEgg.v
 # Umbrella keeps the old name. Required by SheetHenCook. No Admitted.
 theories/LipInt.v
 theories/LipIntFTC.v
+# Leibniz rule for lint (claimId: none). Uniform modulus, no MVT.
+theories/LipIntLeibniz.v
 theories/SheetHenClothoidCore.v
 theories/ClothoidTangent.v
 theories/SheetHenClothoidBounds.v

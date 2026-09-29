@@ -6,42 +6,26 @@
    interface of theories/ClothoidResidual.v.  Route (A) of
    docs/clothoid-open-questions-triage.md.
 
-   Context.  ClothoidResidual.v proves monotone-branch uniqueness of the
-   residual f(L) = L^2 * (P(L)^2 + Q(L)^2) - d^2 CONDITIONALLY: f, f', kappa
-   are Section Variables and the analytic facts (H_deriv, H_fprime_pos)
-   are named hypotheses, externally witnessed in the companion
-   clothoid-halley-coq corpus (Coquelicot).  In the degenerate regime
-   k0 = k1 = 0 the turning angle psi vanishes identically, so the
-   Fresnel-like integrals collapse on the nose:
+   Context.  ClothoidResidual.v defines
+   f(L) = L^2 * (P(L)^2 + Q(L)^2) - d^2, with f' a definition
+   (clothoid_f_deriv) and f' > 0 on |clothoid_kappa * L| <= 1/2.
+   In the degenerate regime k0 = k1 = 0 the turning vanishes, so
 
-       P(L) = \int_0^1 cos 0 dtau = 1,     Q(L) = \int_0^1 sin 0 dtau = 0,
+       P(L) = 1,  Q(L) = 0,  f(L) = L^2 - d^2,  f'(L) = 2L
 
-   and the residual is the bare polynomial
-
-       f_deg(L) = L^2 - d^2,
-
-   with derivative f_deg'(L) = 2L.  No transcendental function survives, so
-   this regime admits what the general regime cannot (see the triage doc's
-   Q2 analysis): EXACT statements with no approximation, no rounding, and no
-   appeal to the mean value theorem's classical proof -- the MVT witness for
-   a quadratic is constructively c = (a+b)/2.
+   (clothoid_f_flat, clothoid_fprime_flat).  The quadratic MVT witness
+   is the midpoint; Stdlib MVT is not used.
 
    This file delivers two things:
 
-   1. The exact-root headline for the degenerate regime: L = d is the unique
-      positive root of f_deg (degenerate_root_exact,
-      degenerate_unique_positive_root) -- proved directly, no interface.
+   1. The exact-root headline: L = d is the unique positive root
+      (degenerate_root_exact, degenerate_unique_positive_root).
 
-   2. NON-VACUITY of ClothoidResidual.v's conditional interface: both
-      Section hypotheses are discharged concretely for f_deg with kappa = 0
-      (degenerate_H_deriv, degenerate_H_fprime_pos), and the Section-closed
-      theorems are instantiated end-to-end
-      (degenerate_unique_root_via_interface).  Strict increase comes from
-      RealMonotone, not from an MVT premise.  degenerate_H_mvt remains a
-      direct midpoint identity for the quadratic (no Classical_Prop.classic);
-      it is not a premise of the interface.  The conditional headline is
-      therefore inhabited: its hypotheses are not mutually unsatisfiable.
-      Cf. the corpus's RED non-vacuity idiom (GeneralTriangleParityRED.v).
+   2. The same facts through the residual
+      (degenerate_H_deriv, degenerate_H_fprime_pos,
+      degenerate_unique_root_via_interface).  Strict increase comes from
+      RealMonotone.  degenerate_H_mvt remains a midpoint identity; it is
+      not a premise.
 
    Queued (NOT this file): the binary64 mirror -- for integer-valued d the
    root L = d is exactly representable and the residual evaluation is exact
@@ -179,10 +163,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* The non-vacuity payoff: the Section-closed conditional theorems of         *)
-(* ClothoidResidual.v, instantiated end-to-end with the degenerate residual.  *)
-(* Every hypothesis of the conditional headline is discharged by a Qed lemma  *)
-(* above -- the interface is inhabited, hence not mutually unsatisfiable.     *)
+(* The degenerate residual through ClothoidResidual's half-branch theorems.   *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem degenerate_strictly_increasing_via_interface :
@@ -191,11 +172,14 @@ Theorem degenerate_strictly_increasing_via_interface :
     Rabs (0 * L2) <= PI ->
     degenerate_residual d L1 < degenerate_residual d L2.
 Proof.
-  intros d.
-  apply (clothoid_residual_strictly_increasing
-           (degenerate_residual d) (degenerate_residual' d) 0
-           (degenerate_H_deriv d)
-           (degenerate_H_fprime_pos d)).
+  intros d L1 L2 HL1 HL12 _.
+  unfold degenerate_residual.
+  rewrite <- (clothoid_f_flat d L1), <- (clothoid_f_flat d L2).
+  apply (clothoid_residual_strictly_increasing 0 0 d L1 L2 HL1 HL12).
+  assert (Hk0 : clothoid_kappa 0 0 = 0).
+  { unfold clothoid_kappa. rewrite Rabs_R0.
+    replace (0 - 0) with 0 by ring. rewrite Rabs_R0. field. }
+  rewrite Hk0, Rmult_0_l, Rabs_R0. lra.
 Qed.
 
 Theorem degenerate_unique_root_via_interface :
@@ -206,14 +190,17 @@ Theorem degenerate_unique_root_via_interface :
     L1 = L2.
 Proof.
   intros d L1 L2 HL1 HL2 Hf1 Hf2.
-  apply (clothoid_residual_unique_root
-           (degenerate_residual d) (degenerate_residual' d) 0
-           (degenerate_H_deriv d)
-           (degenerate_H_fprime_pos d)
-           L1 L2 HL1 HL2
-           (degenerate_branch_trivial L1)
-           (degenerate_branch_trivial L2)
-           Hf1 Hf2).
+  apply (clothoid_residual_unique_root 0 0 d L1 L2 HL1 HL2).
+  - assert (Hk0 : clothoid_kappa 0 0 = 0).
+    { unfold clothoid_kappa. rewrite Rabs_R0.
+      replace (0 - 0) with 0 by ring. rewrite Rabs_R0. field. }
+    rewrite Hk0, Rmult_0_l, Rabs_R0. lra.
+  - assert (Hk0 : clothoid_kappa 0 0 = 0).
+    { unfold clothoid_kappa. rewrite Rabs_R0.
+      replace (0 - 0) with 0 by ring. rewrite Rabs_R0. field. }
+    rewrite Hk0, Rmult_0_l, Rabs_R0. lra.
+  - unfold degenerate_residual in Hf1. rewrite <- (clothoid_f_flat d L1) in Hf1. exact Hf1.
+  - unfold degenerate_residual in Hf2. rewrite <- (clothoid_f_flat d L2) in Hf2. exact Hf2.
 Qed.
 
 (* Consistency: the interface route and the direct route agree on the
@@ -237,8 +224,11 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions degenerate_root_exact.
+Print Assumptions degenerate_strictly_increasing.
 Print Assumptions degenerate_unique_positive_root.
 Print Assumptions degenerate_H_deriv.
+Print Assumptions degenerate_H_fprime_pos.
+Print Assumptions degenerate_branch_trivial.
 Print Assumptions degenerate_H_mvt.
 Print Assumptions degenerate_strictly_increasing_via_interface.
 Print Assumptions degenerate_unique_root_via_interface.
