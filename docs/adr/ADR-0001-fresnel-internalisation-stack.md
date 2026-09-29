@@ -60,34 +60,28 @@ three-axiom allowlist unchanged and absorb any additional classical
 axioms through the existing per-file `docs/audit-exceptions.txt`
 mechanism; keep route (D) consumer-gated.**
 
-Concretely, when a consumer triggers route (D):
+## Amendment (2026-09-29) — **Proposed**
 
-1. P/Q are defined with Coquelicot's `RInt`, and the analytic facts are
-   proved using its `auto_derive`/parametric-integral machinery — the
-   path the external witness has already shown closes in days, not
-   weeks.
-2. All scripts are written fresh for this corpus under BSD-3-Clause.
-   The EUPL witness is consulted as a reference and cited in headers
-   (as it is today), but no script text is adopted verbatim; the
-   licence boundary stays file-system-clean.
-3. The new lane mirrors the Flocq lane operationally: pinned version in
-   the CI container and the host-fallback doc (Coquelicot, like Flocq,
-   is installable from the `coq-released` opam repo and source-buildable
-   from Inria GitLab when that repo is network-blocked), per-file
-   `audit-exceptions.txt` entries for whatever classical axioms the
-   `RInt` layer pulls, and `Print Assumptions` footers on every theorem.
-4. `ClothoidResidual.v` itself does not change: routes only *discharge*
-   its hypotheses. The conditional three-axiom interface remains the
-   citable artefact for consumers who do not want the heavier lane, and
-   the differential oracle remains differential — never the source of
-   truth.
+Pending Joost (BDFL) Accept. The Status row above is unchanged.
+
+Host Fresnel/clothoid evaluation is `theories/LipInt.v` (Lipschitz
+dyadic integral): axioms `sig_not_dec`, `sig_forall_dec`,
+`functional_extensionality_dep`. No `RiemannInt` (#883, `df31a4fe`;
+MkClothoid unlock #884, `b36c35d2`).
+
+FTC for `lint` is #889: claimId `0001-lint-ftc`, witness
+`lipint_ftc` wrapping `lip_ftc`. Leibniz (#896) is `lint_leibniz`
+(claimId none), as `clothoid_f_deriv`. Those two show the Coquelicot
+lane is not needed for evaluation or derivatives. Half-branch
+`|κL| ≤ 1/2` is `clothoid_fprime_pos` (`clothoid_L_unique_half_branch`).
+`H_mvt` is gone (`deriv_pos_strict_incr`). Full branch `|κL| ≤ π` stays
+`clothoid_L_unique_on_branch` under `ClothoidFPrimePos`. Fresh BSD-3
+scripts, no EUPL paste, the consumer gate, and the allowlist stand.
 
 ## Consequences
 
 **Positive.**
-- Route (D) becomes executable on demand with a known cost (the witness
-  repo demonstrates the proofs close in Coquelicot; the "3–5 day
-  mechanical" estimate applies to this stack and to no other).
+- FTC (#889, claimId `0001-lint-ftc`, witness `lipint_ftc` wrapping `lip_ftc`) and Leibniz (#896, `lint_leibniz`) discharge evaluation and derivatives in Stdlib. Full-branch `ClothoidFPrimePos` stays open; Halley end-to-end stays consumer-gated.
 - The licence question dissolves rather than being adjudicated: no
   copyleft text enters the tree, so no per-file licence mixing, no
   reliance on interpreting the witness README's grant note.
