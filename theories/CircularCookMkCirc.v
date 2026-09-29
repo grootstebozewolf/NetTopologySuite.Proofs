@@ -12,7 +12,9 @@
      B: O=(5,0) r=5 θ₀=π/2 Δθ=π/2   (5,5) → (0,0)
    Hit at (5/2, 5√3/2) with (tᵢ, tⱼ) = (2/3, 1/3). try_cook_hit mints.
 
-   MkOutOfScope EggCircularArc stays Decline. Mixed stays sidecar.
+   MkOutOfScope EggCircularArc stays Decline. In-scope MkCirc×MkChord
+   is host I_ok Hit, not a mixed-pair Decline; this file's
+   hor_bot×quarter pair does not Decline.
    Not CircularString / CompoundCurve / Circle-as-own-type. Not nlerp.
 
    WITNESS topic: overlay / core · claimId: 0007-gamma-mkcirc
@@ -282,10 +284,14 @@ Proof.
   exact circular_hit_not_I_ok.
 Qed.
 
-Lemma mkcirc_mixed_still_decline :
-  I_ok (MkChord hor_bot) (MkCirc locked_circ_A) IDecline.
+Lemma mkcirc_mixed_open_not_decline :
+  ~ I_ok (MkChord hor_bot) (MkCirc locked_circ_A) IDecline.
 Proof.
-  unfold I_ok, interpolant_pair. intro H. exact H.
+  intro H. apply H. split.
+  - unfold circ_open_span, locked_circ_A. cbn.
+    pose proof PI_RGT_0 as Hpi. lra.
+  - unfold chord_nondeg, chord_dx, chord_dy, hor_bot. cbn.
+    intro Heq. apply (f_equal fst) in Heq. cbn in Heq. lra.
 Qed.
 
 Lemma circular_egg_mkcirc_or_tag :
@@ -322,4 +328,4 @@ Print Assumptions locked_mkcirc_hit_neq_endpoint_chord_x.
 Print Assumptions cook_hit_circs_shares_hen.
 Print Assumptions cooked_mkcirc_shares.
 Print Assumptions circular_egg_mkcirc_or_tag.
-Print Assumptions mkcirc_mixed_still_decline.
+Print Assumptions mkcirc_mixed_open_not_decline.

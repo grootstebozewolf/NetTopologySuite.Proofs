@@ -5,7 +5,8 @@
    Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
-   (MkClothoid), NURBS–NURBS (scope). Tags / mixed Decline. Empty ≠ Decline. Snap ≠ 𝓘.
+   (MkClothoid), NURBS–NURBS (scope). Tags Decline. In-scope circ×chord
+   is a host Hit; full-span and degenerate chords Decline. Empty ≠ Decline. Snap ≠ 𝓘.
    Bag cook loop is named QEX (LeftoverBagTermArm). CircGamma discharged
    by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.
    WITNESS topic: overlay · claimId: 0007 · witness: 0007-qed-qex

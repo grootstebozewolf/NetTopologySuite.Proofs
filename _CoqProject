@@ -316,6 +316,11 @@ theories/ChartLineQuadratic.v
 # 3-axiom. No Admitted.
 theories/ZetaEggBridge.v
 # #770 P: a C1 zeta segment hit carries the host on_circ / on_chord check
-# at t_of_zeta / tj_of, then the F-series fixtures. Oracle lane; host
-# I_ok unchanged. 3-axiom. No Admitted.
+# at t_of_zeta / tj_of, then the F-series fixtures. Oracle lane.
+# 3-axiom. No Admitted.
 theories/ZetaHostHit.v
+# Host 𝓘 on in-scope MkCirc × MkChord (claimId 0007-host-circ-chord-oracle).
+# Soundness, completeness, named full-span / degenerate declines.
+# Locked CC LS+CS does not decline the ∀-bag; interior quarter progresses.
+# 3-axiom. No Admitted.
+theories/HostCircChordOracle.v
