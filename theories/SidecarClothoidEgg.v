@@ -247,10 +247,6 @@ Lemma sidecar_clothoid_residual_is_metric :
   forall (f f' : R -> R) (kappa : R),
     (forall L : R, derivable_pt_lim f L (f' L)) ->
     (forall L : R, 0 < L -> Rabs (kappa * L) <= PI -> 0 < f' L) ->
-    (forall a b : R,
-       a < b ->
-       (forall c : R, a <= c <= b -> derivable_pt_lim f c (f' c)) ->
-       exists c : R, f b - f a = f' c * (b - a) /\ a < c < b) ->
     forall L1 L2 : R,
       0 < L1 -> 0 < L2 ->
       Rabs (kappa * L1) <= PI -> Rabs (kappa * L2) <= PI ->

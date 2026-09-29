@@ -34,6 +34,10 @@ theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
+# Positive derivative => strict increase, from completeness (sup of the
+# good set).  No MVT / Rolle / classic.  Discharges ClothoidResidual's
+# former H_mvt premise.  claimId: none.
+theories/RealMonotone.v
 theories/ClothoidResidual.v
 theories/ClothoidDegenerate.v
 theories/ClothoidHalley.v

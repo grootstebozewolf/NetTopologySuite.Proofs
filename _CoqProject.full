@@ -261,15 +261,20 @@ theories/Validate.v
 theories/Validate_decidable.v
 theories/HotPixel.v
 theories/Azimuth.v
+# Positive derivative => strict increase, from completeness (sup of the
+# good set).  No MVT / Rolle / classic.  Discharges ClothoidResidual's
+# former H_mvt premise.  claimId: none.
+theories/RealMonotone.v
 # Clothoid chord-length residual monotonicity, Qed-closed conditional theorem
 # (Stdlib lane).  Realises the "next concrete Azimuth.v target" named in
 # Azimuth.v's cross-corpus bridge block: |kappa*L| <= pi connected to
 # f'(L) > 0.  The derivative identities enter as Section hypotheses (H_deriv,
 # H_fprime_pos), witnessed Qed in the proprietary companion
 # clothoid-halley-coq/coq/Clothoid_L.v; only the statement crosses the licence
-# boundary and is BSD-3-Clause from birth.  Listed here too so the per-theorem
-# Print Assumptions audit (scripts/audit_axioms.sh) checks it against the
-# three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
+# boundary and is BSD-3-Clause from birth.  Strict increase is
+# RealMonotone.deriv_pos_strict_incr (no equality-form MVT).  Listed here too
+# so the per-theorem Print Assumptions audit (scripts/audit_axioms.sh) checks
+# it against the three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
 theories/ClothoidResidual.v
 # Koc (2015) compound-curve railway alignment core: system-2000<->local frame
 # round-trips + isometry, clothoid end conditions (theta' = k, theta(L)=L/2R),
@@ -309,10 +314,10 @@ theories/CompoundCurveAssembly.v
 # No Admitted.
 theories/CompoundCurveCurvature.v
 # Degenerate straight-chord regime (k0 = k1 = 0): the residual collapses to
-# L^2 - d^2 with exact unique positive root L = d, and all three Section
-# hypotheses of ClothoidResidual.v are discharged concretely (MVT witness
-# exhibited at the midpoint -- no Classical_Prop.classic), proving the
-# conditional interface non-vacuous.  Route (A) of
+# L^2 - d^2 with exact unique positive root L = d, and both Section
+# hypotheses of ClothoidResidual.v are discharged concretely (strict increase
+# from RealMonotone; midpoint identity is not an interface premise), proving
+# the conditional interface non-vacuous.  Route (A) of
 # docs/clothoid-open-questions-triage.md.
 theories/ClothoidDegenerate.v
 # Route (C') conditional Halley <=4-iteration interface + fuel-bounded skeleton.
