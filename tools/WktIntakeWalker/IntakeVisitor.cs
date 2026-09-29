@@ -155,8 +155,9 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
 
     /// <summary>
     /// ADR-0005 lenient: CIRCULARSTRING(A,B,A) with B≠A is CIRCLE(A,B,C'),
-    /// C' = M + rot_−90°(A−M), M = midpoint(A,B). That triangle is CCW
-    /// (PostGIS/GEOS full-circle spelling; behavioural reference only).
+    /// C' = M + rot_+90°(A−M), M = midpoint(A,B). That triangle is CW.
+    /// GEOS addLinearizedPoints walks this collinear triple clockwise
+    /// (behavioural reference only).
     /// Strict, and A=B, decline ID_CsClosedDegenerate.
     /// </summary>
     internal static IntakeResult MapCircularString(
@@ -181,14 +182,14 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         return MapCsUnknown(pts);
     }
 
-    /// <summary>CCW completion. Centre midpoint(A,B), radius |AB|/2.</summary>
+    /// <summary>CW completion. Centre midpoint(A,B), radius |AB|/2.</summary>
     internal static Pt OgcC(Pt a, Pt b)
     {
         double mx = (a.X + b.X) / 2.0;
         double my = (a.Y + b.Y) / 2.0;
         double vx = a.X - mx;
         double vy = a.Y - my;
-        return new Pt(mx + vy, my - vx);
+        return new Pt(mx - vy, my + vx);
     }
 
     internal static IntakeResult MapCircle(IReadOnlyList<Pt> pts)

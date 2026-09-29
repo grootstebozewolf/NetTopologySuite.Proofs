@@ -63,7 +63,7 @@
    sweep ±2π) at egg level. The bag is A→antipode→A, two
    MkCirc of sweep ±π. Not a src=dst chicken.
    ADR-0005: intake_map is IntakeLenient. CIRCULARSTRING(A,B,A)
-   with B≠A normalizes to CIRCLE(A,B,ogc_c) (CCW). IntakeStrict
+   with B≠A normalizes to CIRCLE(A,B,ogc_c) (CW). IntakeStrict
    Declines ID_CsClosedDegenerate. try_cs_eggs still Declines.
 
    Visitor tags locked CircularString / Circle shapes (exact
@@ -285,9 +285,10 @@ Definition map_circle_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
 (* WKT CircUnknown: points only, so try_cs_eggs / egg_of_points.
    Carried angles are IntakeCarried.map_cs_carried, not this path.
    ADR-0005 lenient: a 3-control string with first = last and B≠A
-   is CIRCLE(A, B, ogc_c). ogc_c is the CCW completion
-   (centre midpoint(A,B), radius |AB|/2). PostGIS/GEOS spell that
-   full circle CCW; behavioural reference only. A=B still Declines. *)
+   is CIRCLE(A, B, ogc_c). ogc_c is the CW completion
+   (centre midpoint(A,B), radius |AB|/2). GEOS linearizes that
+   collinear triple clockwise; behavioural reference only.
+   A=B still Declines. *)
 Definition map_cs_from_try (s : Sheet) (pts : list Point) : IntakeResult :=
   match try_cs_eggs pts with
   | inr f => IntakeDecline (angle_fail_reason f)

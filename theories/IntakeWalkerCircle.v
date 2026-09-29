@@ -8,14 +8,16 @@
    (θ₀ of A, then θ₀±π). A src=dst chicken is not used: piece_wf
    and bag_step do not state that ck_src = ck_dst is accepted.
 
-   F5 intake half only. The chart window |Δθ| < 2π
-   (host_circ_chord_hit_ok) does not contain a full turn, so mixed
-   pairs still decline. C1 is not discharged.
+   F5 intake half only. Each bag hen has |Δθ| = π, so the chart
+   window |Δθ| < 2π (host_circ_chord_hit_ok) applies to a full
+   circle in a mixed pair. The single 2π egg stays outside that
+   window and still declines. C1 is not discharged.
 
    ADR-0005: ogc_iso_circle_same_egg is the lenient normalizer.
    CIRCULARSTRING(A,B,A), B≠A, equals CIRCLE(A,B,ogc_c). ogc_c
-   picks CCW (PostGIS/GEOS behavioural reference only). The bag
-   is the item-1 two-hen half cycle. IntakeStrict declines.
+   picks CW (GEOS addLinearizedPoints on a collinear triple;
+   behavioural reference only). The bag is the item-1 two-hen
+   half cycle. IntakeStrict declines.
 
    3-axiom host. No Admitted / Axiom / Parameter.
    AI assistance disclosure: AI-drafted, human-reviewed.
@@ -58,7 +60,7 @@ Proof.
     + apply NoDup_cons; [intros Hin; destruct Hin | apply NoDup_nil].
 Qed.
 
-(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"ogc_iso_circle_same_egg","title":"ADR-0005 lenient normalizer: CIRCULARSTRING(A,B,A) with B distinct from A equals ISO CIRCLE(A,B,ogc_c); centre midpoint(A,B), radius |AB|/2, CCW sweep +2pi, gamma(0)=A, gamma(1/2)=B, NoDup","file":"theories/IntakeWalkerCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"ogc_iso_circle_same_egg","title":"ADR-0005 lenient normalizer: CIRCULARSTRING(A,B,A) with B distinct from A equals ISO CIRCLE(A,B,ogc_c); centre midpoint(A,B), radius |AB|/2, CW sweep -2pi, gamma(0)=A, gamma(1/2)=B, NoDup","file":"theories/IntakeWalkerCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
 Theorem ogc_iso_circle_same_egg : forall a b,
   dist_sq a b <> 0 ->
   let c := ogc_c a b in
@@ -70,7 +72,7 @@ Theorem ogc_iso_circle_same_egg : forall a b,
     intake_map default_sheet (TCircle CircUnknown [a; b; c]) /\
   circ_o f = midpoint a b /\
   circ_r f = dist a b / 2 /\
-  circ_sweep f = 2 * PI /\
+  circ_sweep f = - (2 * PI) /\
   circ_eval f 0 = a /\
   circ_eval f (1 / 2) = b /\
   NoDup [a; b].
@@ -83,10 +85,10 @@ Proof.
   pose proof (ogc_r_nz a b Hab) as Hr.
   fold c in Hac, Hbc, Hd, Hr.
   destruct (circle_full_param a b c Hab Hbc Hac Hd Hr) as
-    [He0 [_ [_ [_ [_ [_ [Hpos _]]]]]]].
-  fold f in He0, Hpos.
-  assert (Hori : 0 < orient_pts a b c) by (apply ogc_orient_pos; exact Hab).
-  assert (Hsw : circ_sweep f = 2 * PI) by (apply Hpos; exact Hori).
+    [He0 [_ [_ [_ [_ [_ [_ [Hneg _]]]]]]]].
+  fold f in He0, Hneg.
+  assert (Hori : orient_pts a b c < 0) by (apply ogc_orient_neg; exact Hab).
+  assert (Hsw : circ_sweep f = - (2 * PI)) by (apply Hneg; exact Hori).
   assert (Hoc : circ_o f = midpoint a b).
   { unfold f, circle_of_egg, e, egg_of_points. cbn.
     apply ogc_center. exact Hab. }
@@ -126,7 +128,7 @@ Proof.
   intros ch. unfold I_ok, interpolant_pair. intro H. exact H.
 Qed.
 
-(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"circle_f5_intake_half_only","title":"F5 intake half only: full-span sweep is outside the strict chart window, C1 is not discharged, mixed circle-chord still declines","file":"theories/IntakeWalkerCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"circle_f5_intake_half_only","title":"F5 intake half only: the single 2pi egg is outside the strict chart window and still declines, bag halves have absolute sweep pi, C1 is not discharged","file":"theories/IntakeWalkerCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
 Theorem circle_f5_intake_half_only :
   (forall a b c, orient_pts a b c <> 0 ->
      ~ (- (2 * PI) < full_sweep a b c < 2 * PI)) /\

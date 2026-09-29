@@ -203,7 +203,7 @@ Intake construction of `CircularEgg` `(O,r,θ₀,Δθ)` from well-formed
 WKT circular control points. Three distinct non-collinear points
 determine a unique circumcircle; chickens are `MkCirc`. Angle fields
 are computed (CircleChart + 3-axiom atan2/atan3): θ₀ principal, Δθ chart sweep.
-ISO CIRCLE: θ₀=atan2(A−O), sweep=sign(orient)·2π, γ(0)=γ(1)=A; bag is A and antipode, two ±π MkCirc. Carried angles agree by check.
+ISO CIRCLE: θ₀=atan2(A−O), sweep=sign(orient)·2π, γ(0)=γ(1)=A; bag is A and antipode, two ±π MkCirc (in the |Δθ|<2π window). Carried angles agree by check.
 Not Stdlib Ratan classic. Collinear / duplicate Decline by name. ADR-0005:
 lenient closed CS normalizes; strict Declines. Clothoid is the MkClothoid letter, not this one.
 _Avoid_: silent chord demote, host cook expand, new oracle keyword

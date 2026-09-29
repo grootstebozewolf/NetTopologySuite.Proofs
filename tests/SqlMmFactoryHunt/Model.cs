@@ -243,14 +243,14 @@ static class Wire
         return ("BAG", new Bag(Enumerable.Range(0, ends.Count), ends, chicks), null);
     }
 
-    /// <summary>CCW completion: C' = M + rot_−90°(A−M). Same as IntakeVisitor.OgcC.</summary>
+    /// <summary>CW completion: C' = M + rot_+90°(A−M). Same as IntakeVisitor.OgcC.</summary>
     internal static Xy OgcC(Xy a, Xy b)
     {
         double mx = (a.X + b.X) / 2.0;
         double my = (a.Y + b.Y) / 2.0;
         double vx = a.X - mx;
         double vy = a.Y - my;
-        return new Xy(mx + vy, my - vx);
+        return new Xy(mx - vy, my + vx);
     }
 
     internal static (string Kind, Bag? Bag, string? Decline) ExpectCircle(IReadOnlyList<Xy> pts)

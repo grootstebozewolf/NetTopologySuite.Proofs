@@ -26,7 +26,7 @@ Byte order: `00` XDR, `01` NDR. Doubles IEEE-754 binary64 (Java fills hex; group
 | `POINT` | wired | 1 NDR+XDR | `EMPTY` WKT-only; WKB HOLD this slice |
 | `LINESTRING` (+ `EMPTY`) | wired | 2 NDR+XDR | empty = count 0 |
 | `CIRCULARSTRING` | wired | 8 NDR+XDR | locked 3-point |
-| `CIRCLE` | wired | HOLD | full-span `MkCirc`; **not** WKB 18 |
+| `CIRCLE` | wired | HOLD | two ±π `MkCirc`; **not** WKB 18 |
 | `COMPOUNDCURVE` of LS + CS | wired | 9 NDR+XDR | children keep type; joints are hen ids |
 | `CLOTHOID` JTS `(k0,k1,L)` | wired | HOLD | **not** WKB 22 |
 | `CLOTHOID` ISO `REFERENCELOCATION` | wired | HOLD | same `MkClothoid` bag as JTS |

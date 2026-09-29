@@ -10,7 +10,7 @@
 
    try_cs_eggs still Declines CIRCULARSTRING(A,B,A). ADR-0005
    lenient intake (IntakeWalker) normalizes that text, when B≠A,
-   to CIRCLE(A,B,ogc_c) before the angle layer. ogc_c picks CCW.
+   to CIRCLE(A,B,ogc_c) before the angle layer. ogc_c picks CW.
 
    NTS clean-room: γ(t) = O + r·(cos(θ₀+t·Δθ), sin(θ₀+t·Δθ))
    with θ₀ = atan2(Ay−Oy, Ax−Ox) and Δθ = sign(orient(A,B,C))·2π.
@@ -949,16 +949,18 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* OGC full-circle spelling. (A,B,A) does not fix orientation.               *)
-(* C' = M + rot_{-90°}(A−M), M = midpoint(A,B): centre M, radius |AB|/2,    *)
-(* orient(A,B,C')>0 (CCW). PostGIS/GEOS spell a full circle CCW; that is a  *)
-(* behavioural reference only, not an axiom of this development.            *)
+(* C' = M + rot_{+90°}(A−M), M = midpoint(A,B): centre M, radius |AB|/2,    *)
+(* orient(A,B,C')<0, so the egg sweeps −2π (CW). GEOS 3.16                   *)
+(* CircularArc::addLinearizedPoints treats Orientation::index(A,B,A) as not  *)
+(* COUNTERCLOCKWISE (no isCircle override) and emits decreasing angles.      *)
+(* Behavioural reference only, not an axiom of this development.             *)
 (* -------------------------------------------------------------------------- *)
 
 Definition ogc_c (a b : Point) : Point :=
   let m := midpoint a b in
   let vx := px a - px m in
   let vy := py a - py m in
-  mkPoint (px m + vy) (py m - vx).
+  mkPoint (px m - vy) (py m + vx).
 
 Lemma mkPoint_eq : forall p q : Point, px p = px q -> py p = py q -> p = q.
 Proof.
@@ -983,7 +985,7 @@ Lemma ogc_frame : forall a b,
   let vy := py a - py m in
   px a = px m + vx /\ py a = py m + vy /\
   px b = px m - vx /\ py b = py m - vy /\
-  px (ogc_c a b) = px m + vy /\ py (ogc_c a b) = py m - vx /\
+  px (ogc_c a b) = px m - vy /\ py (ogc_c a b) = py m + vx /\
   dist_sq m a = vx * vx + vy * vy.
 Proof.
   intros a b m vx vy.
@@ -991,10 +993,10 @@ Proof.
   repeat split; field.
 Qed.
 
-Lemma ogc_orient_pos : forall a b,
+Lemma ogc_orient_neg : forall a b,
   dist_sq a b <> 0 ->
-  orient_pts a b (ogc_c a b) = 2 * dist_sq (midpoint a b) a /\
-  0 < orient_pts a b (ogc_c a b).
+  orient_pts a b (ogc_c a b) = - (2 * dist_sq (midpoint a b) a) /\
+  orient_pts a b (ogc_c a b) < 0.
 Proof.
   intros a b Hab.
   unfold orient_pts, orient3, crs, ogc_c, dist_sq, midpoint. cbn.
@@ -1007,11 +1009,11 @@ Qed.
 
 Lemma ogc_denom_nz : forall a b,
   dist_sq a b <> 0 ->
-  circ_denom a b (ogc_c a b) = 4 * dist_sq (midpoint a b) a /\
+  circ_denom a b (ogc_c a b) = - (4 * dist_sq (midpoint a b) a) /\
   circ_denom a b (ogc_c a b) <> 0.
 Proof.
   intros a b Hab.
-  destruct (ogc_orient_pos a b Hab) as [Ho _].
+  destruct (ogc_orient_neg a b Hab) as [Ho _].
   rewrite circ_denom_orient, Ho.
   split; [ring|].
   intro Hz. apply (ogc_r2_nz a b Hab). nra.
@@ -1079,23 +1081,24 @@ Proof.
   pose proof (ogc_r_nz a b Hab) as Hr.
   fold c in Hac, Hbc, Hd, Hr.
   destruct (circle_full_param a b c Hab Hbc Hac Hd Hr) as
-    [He0 [_ [_ [_ [_ [_ [Hpos _]]]]]]].
-  fold f in He0, Hpos.
-  assert (Ho : 0 < orient_pts a b c) by (apply ogc_orient_pos; exact Hab).
-  assert (Hsw : circ_sweep f = 2 * PI) by (apply Hpos; exact Ho).
+    [He0 [_ [_ [_ [_ [_ [_ [Hneg _]]]]]]]].
+  fold f in He0, Hneg.
+  assert (Ho : orient_pts a b c < 0) by (apply ogc_orient_neg; exact Hab).
+  assert (Hsw : circ_sweep f = 2 * - PI).
+  { unfold f, e. rewrite (Hneg Ho). ring. }
   assert (Hom : circ_o f = midpoint a b).
   { unfold f, circle_of_egg, e, egg_of_points. cbn.
     apply ogc_center. exact Hab. }
   unfold circle_antipode. fold e. fold f.
-  assert (Hfmk : f = mkCircularEgg (circ_o f) (circ_r f) (circ_theta0 f) (2 * PI)).
+  assert (Hfmk : f = mkCircularEgg (circ_o f) (circ_r f) (circ_theta0 f) (2 * - PI)).
   { rewrite <- Hsw. unfold f, circle_of_egg. reflexivity. }
   rewrite Hfmk.
-  rewrite (circ_eval_half_is_opposite (circ_o f) (circ_r f) (circ_theta0 f) PI)
-    by (left; reflexivity).
+  rewrite (circ_eval_half_is_opposite (circ_o f) (circ_r f) (circ_theta0 f) (- PI))
+    by (right; reflexivity).
   assert (Hstart :
     mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
             (py (circ_o f) + circ_r f * sin (circ_theta0 f)) = a).
-  { rewrite <- (circ_eval_0_trig (circ_o f) (circ_r f) (circ_theta0 f) (2 * PI)).
+  { rewrite <- (circ_eval_0_trig (circ_o f) (circ_r f) (circ_theta0 f) (2 * - PI)).
     rewrite <- Hfmk. exact He0. }
   pose proof (f_equal px Hstart) as Hpx0.
   pose proof (f_equal py Hstart) as Hpy0.
@@ -1122,7 +1125,7 @@ Print Assumptions mkPoint_eq.
 Print Assumptions ogc_ab_four.
 Print Assumptions ogc_r2_nz.
 Print Assumptions ogc_frame.
-Print Assumptions ogc_orient_pos.
+Print Assumptions ogc_orient_neg.
 Print Assumptions ogc_denom_nz.
 Print Assumptions ogc_sep.
 Print Assumptions ogc_center.
