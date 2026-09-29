@@ -5,7 +5,7 @@ Sheet S is a plane, not an arc. A concat-endpoint Hit on sidecar `I_ok_mixed` / 
 | Field | Value |
 |---------------|--------------------------------------------------------------|
 | **Order** | ADR-0009 |
-| **Status** | **Proposed** — 2026-09-30 (grill-with-docs; Jeroen confirmed) |
+| **Status** | **Accepted** — 2026-09-30 (Joost) |
 | **Deciders** | Joost (BDFL) to Accept; proposed by Jeroen Bloemscheer |
 | **Date** | 2026-09-30 |
 | **Supersedes** | — (none) |
