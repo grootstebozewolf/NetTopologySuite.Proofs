@@ -125,7 +125,10 @@ Qed.
 Lemma circle_full_mixed_still_declines : forall ch,
   I_ok (MkCirc locked_full_circle_egg) (MkChord ch) IDecline.
 Proof.
-  intros ch. unfold I_ok, interpolant_pair. intro H. exact H.
+  intros ch. unfold I_ok. cbn.
+  intros [Ho _].
+  unfold circ_open_span, locked_full_circle_egg in Ho. cbn in Ho.
+  pose proof PI_RGT_0. lra.
 Qed.
 
 (* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"circle_f5_intake_half_only","title":"F5 intake half only: the single 2pi egg is outside the strict chart window and still declines, bag halves have absolute sweep pi, C1 is not discharged","file":"theories/IntakeWalkerCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
