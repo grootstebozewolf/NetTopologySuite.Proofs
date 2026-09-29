@@ -358,11 +358,6 @@ theories/ConvexClipPoly.v
 theories/ConvexClipComplete.v
 theories/TrianglePairCommon.v
 theories/TrianglePairClip.v
-# Separating-edge follow-up. sat_iff is deferred. Z1 leaves are Qed.
-# claimId: tri-de9im-a. witness: none. 3-axiom. No Admitted.
-theories/TrianglePairSep.v
-theories/TrianglePairSepCap.v
-theories/TrianglePairZ1.v
 # ∀-bag letter 2. ρ and finiteness. claimId none.
 # 3-axiom. No Admitted.
 theories/SheetHenRho.v
