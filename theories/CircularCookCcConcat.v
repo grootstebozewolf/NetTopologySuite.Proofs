@@ -18,8 +18,8 @@
      at (arc_end, tᵢ=1, tⱼ=0) via B.1 cs_joint / arc_gamma.
      Mixed LS–CS joint is sidecar I_ok_mixed Hit at
      (ce_p1, tᵢ=1, tⱼ=0) via SidecarCircMixed (host chord_eval +
-     sidecar arc_gamma). Host I_ok mixed stays Decline (I.1 fence);
-     I_ok_mixed Hit ≠ host I_ok. Concat incidence (shared
+     sidecar arc_gamma). MkOutOfScope host I_ok stays Decline (I.1);
+     in-scope MkCirc×MkChord is host Hit. I_ok_mixed Hit ≠ host I_ok. Concat incidence (shared
      endpoint) is already a hen, not an interior cook and not a
      CRV-TOUCH kiss certificate.
 
@@ -36,13 +36,13 @@
      chord_eval (mkChordEgg p00 p50) 1
        = circ_eval locked_circ_A 0.
      append_bags is hen offset, not geometry. LS–LS stays host
-     I_ok. LS–CS stays sidecar I_ok_mixed / host Decline.
+     I_ok. LS–CS sidecar I_ok_mixed stays; in-scope host I_ok is Hit.
      No first_cook_scope expand. No CompoundEgg / cs_eval.
 
    QED: ∀ LS–LS joint is host I_ok Hit at (end, 1, 0); ∀ CS–CS
    member joint reuses I_ok_circ; ∀ mixed LS–CS joint is
    I_ok_mixed Hit at (end, 1, 0); locked mixed CC is contiguous;
-   host I_ok mixed stays Decline; joint params are not interior.
+   MkOutOfScope host I_ok stays Decline; in-scope MkCirc×MkChord is host Hit; joint params are not interior.
    QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc); first cook is SheetHenCook first_cook_scope_* (not chord-only);
    host circular I_ok is Decline; I_ok_circ / I_ok_mixed Hit ≠
    host I_ok; interior mixed cook stays parked; CurvePolygon /
@@ -290,7 +290,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Mixed LS–CS joints. Sidecar I_ok_mixed Hit; host I_ok stays Decline.       *)
+(* Mixed LS–CS joints. Sidecar I_ok_mixed Hit; MkOutOfScope host I_ok Declines. *)
 (* -------------------------------------------------------------------------- *)
 
 Definition ls_cs_joint := SidecarCircMixed.ls_cs_joint.
@@ -298,7 +298,7 @@ Definition ls_cs_joint_hit := SidecarCircMixed.ls_cs_joint_hit.
 Definition I_ok_mixed := SidecarCircMixed.I_ok_mixed.
 Definition MixLsCs := SidecarCircMixed.MixLsCs.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"cc_mixed_ls_cs_I_ok_mixed","title":"Phase B.2 forall LS-CS CompoundCurve member joint is I_ok_mixed Hit at (ce_p1, t=1, t=0); SidecarCircMixed reuse; host I_ok mixed stays Decline; no interior arc-chord cook","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"cc_mixed_ls_cs_I_ok_mixed","title":"Phase B.2 forall LS-CS CompoundCurve member joint is I_ok_mixed Hit at (ce_p1, t=1, t=0); SidecarCircMixed reuse; MkOutOfScope host I_ok stays Decline; in-scope MkCirc x MkChord is host Hit; no interior arc-chord cook","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
 
 Theorem cc_mixed_ls_cs_I_ok_mixed :
   forall c a,
@@ -674,7 +674,7 @@ Qed.
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b2_mixed_qed_or_qex","title":"Phase B.2 locked mixed LS+CS CompoundCurve is contiguous and mixed joint is I_ok_mixed Hit at (end, 1, 0); host I_ok mixed stays Decline (QED) or the locked pair is not a joint (QEX); discharged QED; SidecarCircMixed reuse; I.1 fence on host I_ok; type-distinct inhabitant; not a constructed interior mixed Hit","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_b2_mixed_qed_or_qex","title":"Phase B.2 locked mixed LS+CS CompoundCurve is contiguous and mixed joint is I_ok_mixed Hit at (end, 1, 0); MkOutOfScope host I_ok stays Decline (QED) or the locked pair is not a joint (QEX); discharged QED; in-scope MkCirc x MkChord is host Hit; SidecarCircMixed reuse; I.1 fence on MkOutOfScope; type-distinct inhabitant; not a constructed interior mixed Hit","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
 
 Theorem ticket_0007_b2_mixed_qed_or_qex :
   (cc_contiguous locked_cc_mixed

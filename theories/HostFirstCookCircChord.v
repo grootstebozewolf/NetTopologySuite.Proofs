@@ -16,7 +16,9 @@
 
    In-scope host I_ok Hit (both orders, |Δθ| < 2π, nondegenerate chord)
    is 0007-host-circ-chord-oracle. This letter does not flip
-   first_cook_scope. Out-of-scope mixed pairs still Decline.
+   first_cook_scope. try_cook_hit stays None; the ∀-bag split is the
+   mixed cook (mixed_cook_agreement). Out-of-scope mixed pairs still
+   Decline. In-scope pairs are Hits, not a mixed-pair Decline.
    HostMixedHitTi / HostMixedHitSpan are closed (the parameter is
    on_circ / on_chord; the span guard is circ_open_span). ι host-scope
    row stays QEX (SidecarCircIotaTags.v : ticket_0007_iota_host_scope_qed_or_qex);
@@ -218,7 +220,7 @@ Qed.
 (* Ticket. QED ∨ QEX. Discharged QEX while #770 / #771 stay open.             *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-host-first-cook-circ-chord","topic":"overlay","lemma":"ticket_0007_host_first_cook_qed_or_qex","title":"host first cook circ times chord: first_cook_scope gains the mixed arms (QED) or mixed stays out of first cook, HitTi/HitSpan are closed, and Decline is exactly out of circ_chord_host_scope (QEX); discharged QEX; in-scope host Hit is 0007-host-circ-chord-oracle; sidecar I_ok_mixed cited not copied; iota host-scope stays QEX; ADR-0007 stays Accepted","file":"theories/HostFirstCookCircChord.v","witness":"0007-host-first-cook-circ-chord","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-host-first-cook-circ-chord","topic":"overlay","lemma":"ticket_0007_host_first_cook_qed_or_qex","title":"host first cook circ times chord: first_cook_scope gains the mixed arms (QED) or mixed stays out of first cook, HitTi/HitSpan are closed, and Decline is exactly out of circ_chord_host_scope (QEX); discharged QEX; in-scope host Hit is 0007-host-circ-chord-oracle; try_cook_hit stays None and the loop is the mixed cook; sidecar I_ok_mixed cited not copied; iota host-scope stays QEX; ADR-0007 stays Accepted","file":"theories/HostFirstCookCircChord.v","witness":"0007-host-first-cook-circ-chord","board":"ADR-0007"} *)
 Theorem ticket_0007_host_first_cook_qed_or_qex :
   (first_cook_scope EggChord EggCircularArc
    /\ first_cook_scope EggCircularArc EggChord)

@@ -13,7 +13,8 @@
    Hit at (5/2, 5√3/2) with (tᵢ, tⱼ) = (2/3, 1/3). try_cook_hit mints.
 
    MkOutOfScope EggCircularArc stays Decline. In-scope MkCirc×MkChord
-   is host I_ok; this file's hor_bot×quarter pair does not Decline.
+   is host I_ok Hit, not a mixed-pair Decline; this file's
+   hor_bot×quarter pair does not Decline.
    Not CircularString / CompoundCurve / Circle-as-own-type. Not nlerp.
 
    WITNESS topic: overlay / core · claimId: 0007-gamma-mkcirc

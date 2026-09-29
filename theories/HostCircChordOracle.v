@@ -8,7 +8,21 @@
    (|Δθ| < 2π, nondegenerate chord) a Hit is on both curves, and every
    such incidence is a Hit. Full-span eggs and degenerate chords Decline
    by name. circ×circ stays the existing host arm (Decline is False).
-   first_cook_scope does not gain the mixed arms.
+   first_cook_scope does not gain the mixed arms. try_cook_hit stays
+   None. mixed_cook_agreement: the ∀-bag children are circ_split /
+   chord_split, which is the cook a mixed try_cook_hit arm would mint.
+   The loop is the only mixed cook.
+
+   Two crossings: 𝓘 accepts every in-scope incidence. The loop plan
+   feeds the smaller chord parameter tj; two_cross_smaller_tj_on_right
+   puts the other hit on the right chord child for the next step.
+   Tangency: tan_I_ok is IHit at the double root; tan_not_empty,
+   because 𝓘 forbids IEmpty when a common point exists.
+   Boundary: on_circ / on_chord are closed [0,1], so t=0 and t=1 are
+   hits (boundary_endpoints_are_hits), as for chord×chord.
+
+   QEX: after #892 every ISO CIRCLE is a Δθ = ±2π egg, so a full
+   circle meeting a chord Declines by name until chart-side F5.
 
    The locked CC LS+CS joint is a host Hit, so the ∀-bag loop does not
    StepIDecline on that pair. The joint is already a vertex of both
@@ -482,6 +496,218 @@ Proof.
     repeat split; assumption.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Loop cook vs try_cook_hit. first_cook_scope stays false. The bag children *)
+(* are the circ_split / chord_split a mixed try_cook_hit arm would mint.     *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma mixed_cook_agreement :
+  forall srcC dstC (ec : CircularEgg) srcS dstS (es : ChordEgg)
+         supC (wC : Window) (provC : list Hen)
+         supS (wS : Window) (provS : list Hen)
+         (ti tj : R) (h : Hen) (p : Point),
+    cooked_four
+      (mkBagPiece (mkChicken srcC dstC (MkCirc ec)) supC wC provC)
+      (mkBagPiece (mkChicken srcS dstS (MkChord es)) supS wS provS)
+      ti tj h
+    =
+    [mkBagPiece (mkChicken srcC h (MkCirc (fst (circ_split ec ti))))
+                supC (sub_lo wC ti) provC;
+     mkBagPiece (mkChicken h dstC (MkCirc (snd (circ_split ec ti))))
+                supC (sub_hi wC ti) provC;
+     mkBagPiece (mkChicken srcS h (MkChord (fst (chord_split es tj))))
+                supS (sub_lo wS tj) provS;
+     mkBagPiece (mkChicken h dstS (MkChord (snd (chord_split es tj))))
+                supS (sub_hi wS tj) provS]
+    /\
+    try_cook_hit (mkChicken srcC dstC (MkCirc ec))
+                 (mkChicken srcS dstS (MkChord es))
+                 (IHit p ti tj) h = None.
+Proof.
+  intros. split.
+  - unfold cooked_four, split_piece. cbn. reflexivity.
+  - reflexivity.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Two crossings. Both incidences are Hits. The plan feeds the smaller chord  *)
+(* parameter; the later point lies on the right chord child.                  *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma two_cross_smaller_tj_on_right :
+  forall (c : CircularEgg) (s : ChordEgg) (p1 p2 : Point) (ti1 ti2 tj1 tj2 : R),
+    circ_chord_host_scope c s ->
+    on_circ c ti1 p1 ->
+    on_chord s tj1 p1 ->
+    on_circ c ti2 p2 ->
+    on_chord s tj2 p2 ->
+    0 <= tj1 < tj2 <= 1 ->
+    I_ok (MkCirc c) (MkChord s) (IHit p1 ti1 tj1) /\
+    I_ok (MkCirc c) (MkChord s) (IHit p2 ti2 tj2) /\
+    on_chord (snd (chord_split s tj1)) ((tj2 - tj1) / (1 - tj1)) p2.
+Proof.
+  intros c s p1 p2 ti1 ti2 tj1 tj2 Hs Hc1 Hh1 Hc2 Hh2 Hord.
+  split; [apply I_ok_circ_chord_hit_complete; assumption|].
+  split; [apply I_ok_circ_chord_hit_complete; assumption|].
+  destruct Hh2 as [_ Hp2].
+  assert (Hden : 0 < 1 - tj1) by lra.
+  set (u := (tj2 - tj1) / (1 - tj1)).
+  assert (Hu : tj1 + u * (1 - tj1) = tj2).
+  { unfold u. field. lra. }
+  assert (Hunit : 0 <= u <= 1).
+  { unfold u. split.
+    - apply (Rmult_le_reg_r (1 - tj1)); [exact Hden|].
+      unfold Rdiv. rewrite Rmult_0_l.
+      rewrite Rmult_assoc. rewrite Rinv_l; [|lra]. rewrite Rmult_1_r. lra.
+    - apply (Rmult_le_reg_r (1 - tj1)); [exact Hden|].
+      unfold Rdiv. rewrite Rmult_1_l, Rmult_assoc.
+      rewrite Rinv_l; [|lra]. rewrite Rmult_1_r. lra. }
+  unfold on_chord. split; [exact Hunit|].
+  rewrite chord_split_right_reparam. rewrite Hu. symmetry. exact Hp2.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Tangency. Horizontal offset of the quarter's midpoint: one chord root,    *)
+(* a double factor (2t-1)^2, so IHit and not IEmpty.                          *)
+(* -------------------------------------------------------------------------- *)
+
+Definition tan_a : R := 5 * (sqrt 2 / 2).
+Definition tan_pt : Point := mkPoint tan_a tan_a.
+Definition tan_chord : ChordEgg :=
+  mkChordEgg (mkPoint (tan_a - 1) (tan_a + 1))
+             (mkPoint (tan_a + 1) (tan_a - 1)).
+
+Lemma tan_radius_dot :
+  chord_dx tan_chord * px tan_pt + chord_dy tan_chord * py tan_pt = 0.
+Proof.
+  unfold chord_dx, chord_dy, tan_chord, tan_pt, tan_a. cbn. ring.
+Qed.
+
+Lemma tan_on_chord_mid : on_chord tan_chord (/ 2) tan_pt.
+Proof.
+  unfold on_chord, tan_chord, tan_pt, tan_a, chord_eval.
+  cbn [ce_p0 ce_p1 px py].
+  split; [lra|]. apply (f_equal2 mkPoint); field.
+Qed.
+
+Lemma tan_on_circ_mid : on_circ F1_egg (/ 2) tan_pt.
+Proof.
+  unfold on_circ. split; [lra|].
+  rewrite f1_mid_coords. unfold tan_pt, tan_a. reflexivity.
+Qed.
+
+Lemma tan_scope : circ_chord_host_scope F1_egg tan_chord.
+Proof.
+  split.
+  - exact (proj1 f1_host_scope).
+  - unfold chord_nondeg, chord_dx, chord_dy, tan_chord, tan_a. cbn.
+    intro Heq. apply (f_equal fst) in Heq. cbn in Heq. lra.
+Qed.
+
+Lemma tan_I_ok :
+  I_ok (MkCirc F1_egg) (MkChord tan_chord) (IHit tan_pt (/ 2) (/ 2)).
+Proof.
+  apply I_ok_circ_chord_hit_complete.
+  - exact tan_scope.
+  - exact tan_on_circ_mid.
+  - exact tan_on_chord_mid.
+Qed.
+
+Lemma tan_not_empty :
+  ~ I_ok (MkCirc F1_egg) (MkChord tan_chord) IEmpty.
+Proof.
+  intros [_ Hnone]. apply Hnone.
+  exists tan_pt, (/ 2), (/ 2).
+  split; [exact tan_on_circ_mid | exact tan_on_chord_mid].
+Qed.
+
+Lemma tan_chord_double_root :
+  forall t p,
+    on_chord tan_chord t p ->
+    px p * px p + py p * py p = 25 ->
+    t = / 2 /\ p = tan_pt.
+Proof.
+  intros t p [Ht Hp] Hcircle.
+  set (d := 2 * t - 1).
+  assert (Hx : px p = tan_a + d).
+  { rewrite Hp. unfold chord_eval, tan_chord, d, tan_a.
+    cbn [ce_p0 ce_p1 px py]. field. }
+  assert (Hy : py p = tan_a - d).
+  { rewrite Hp. unfold chord_eval, tan_chord, d, tan_a.
+    cbn [ce_p0 ce_p1 px py]. field. }
+  rewrite Hx, Hy in Hcircle.
+  replace ((tan_a + d) * (tan_a + d) + (tan_a - d) * (tan_a - d))
+    with (2 * (tan_a * tan_a) + 2 * (d * d)) in Hcircle by ring.
+  assert (Haa : tan_a * tan_a = 25 / 2).
+  { unfold tan_a.
+    pose proof (sqrt_def 2 ltac:(lra)) as Hs.
+    replace ((5 * (sqrt 2 / 2)) * (5 * (sqrt 2 / 2)))
+      with (25 * ((sqrt 2 * sqrt 2) / 4)) by field.
+    rewrite Hs. field. }
+  assert (Hd0 : d * d = 0).
+  { replace (tan_a * tan_a) with (25 / 2) in Hcircle by exact Haa.
+    assert (Hsum : 25 + 2 * (d * d) = 25).
+    { replace 25 with (2 * (25 / 2)) at 1 by field. exact Hcircle. }
+    apply (Rmult_eq_reg_l 2); [|lra].
+    replace (2 * (d * d)) with (25 + 2 * (d * d) - 25) by ring.
+    rewrite Hsum. ring. }
+  assert (Hz : d = 0).
+  { destruct (Rmult_integral _ _ Hd0) as [Hz|Hz]; exact Hz. }
+  assert (Ht12 : t = / 2).
+  { unfold d in Hz. lra. }
+  split; [exact Ht12|].
+  apply (f_equal2 mkPoint).
+  - rewrite Hx, Hz. unfold tan_pt. cbn. ring.
+  - rewrite Hy, Hz. unfold tan_pt. cbn. ring.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Boundary. Parameters are closed, so both endpoints are hits.               *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma closed_param_endpoints :
+  forall (c : CircularEgg) (s : ChordEgg),
+    on_circ c 0 (circ_eval c 0) /\
+    on_circ c 1 (circ_eval c 1) /\
+    on_chord s 0 (chord_eval s 0) /\
+    on_chord s 1 (chord_eval s 1).
+Proof.
+  intros c s. repeat split; try lra; reflexivity.
+Qed.
+
+Definition boundary_end_chord : ChordEgg :=
+  mkChordEgg (mkPoint 0 5) (mkPoint 1 5).
+
+Lemma boundary_end_scope :
+  circ_chord_host_scope locked_circ_A boundary_end_chord.
+Proof.
+  split.
+  - unfold circ_open_span, locked_circ_A. cbn.
+    pose proof PI_RGT_0 as Hpi. lra.
+  - unfold chord_nondeg, chord_dx, chord_dy, boundary_end_chord. cbn.
+    intro Heq. apply (f_equal fst) in Heq. cbn in Heq. lra.
+Qed.
+
+Lemma boundary_circ_end_hit :
+  I_ok (MkCirc locked_circ_A) (MkChord boundary_end_chord)
+       (IHit (mkPoint 0 5) 1 0).
+Proof.
+  apply I_ok_circ_chord_hit_complete.
+  - exact boundary_end_scope.
+  - unfold on_circ. split; [lra|]. symmetry. exact locked_circ_A_at_1.
+  - unfold on_chord. split; [lra|].
+    symmetry. exact (chord_eval_at_0 boundary_end_chord).
+Qed.
+
+Lemma boundary_endpoints_are_hits :
+  I_ok (MkChord locked_cc_ls_egg) (MkCirc locked_circ_A)
+       (IHit locked_cc_joint_pt 1 0) /\
+  I_ok (MkCirc locked_circ_A) (MkChord boundary_end_chord)
+       (IHit (mkPoint 0 5) 1 0).
+Proof.
+  split; [exact locked_cc_ls_cs_host_hit | exact boundary_circ_end_hit].
+Qed.
+
 (* WITNESS {"claimId":"0007-host-circ-chord-oracle","topic":"overlay","lemma":"ticket_0007_host_circ_chord_oracle_qed_or_qex","title":"host circ times chord oracle: in-scope I_ok Hit is on both curves and every in-scope incidence is a Hit, locked CC LS+CS does not decline the bag, interior quarter hit progresses with same_support (QED) or first_cook_scope gains the mixed arms (QEX); discharged QED; full-span and degenerate chord Decline; circ times circ Decline is False; not a chord demote","file":"theories/HostCircChordOracle.v","witness":"0007-host-circ-chord-oracle","board":"ADR-0007"} *)
 
 Theorem ticket_0007_host_circ_chord_oracle_qed_or_qex :
@@ -576,4 +802,17 @@ Print Assumptions f1_not_circ_vertex.
 Print Assumptions f1_I_ok.
 Print Assumptions f1_progress_hit.
 Print Assumptions locked_quarter_interior_progress.
+Print Assumptions mixed_cook_agreement.
+Print Assumptions two_cross_smaller_tj_on_right.
+Print Assumptions tan_radius_dot.
+Print Assumptions tan_on_chord_mid.
+Print Assumptions tan_on_circ_mid.
+Print Assumptions tan_scope.
+Print Assumptions tan_I_ok.
+Print Assumptions tan_not_empty.
+Print Assumptions tan_chord_double_root.
+Print Assumptions closed_param_endpoints.
+Print Assumptions boundary_end_scope.
+Print Assumptions boundary_circ_end_hit.
+Print Assumptions boundary_endpoints_are_hits.
 Print Assumptions ticket_0007_host_circ_chord_oracle_qed_or_qex.

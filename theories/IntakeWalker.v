@@ -542,7 +542,7 @@ Proof.
   exact locked_circ_A_at_0.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_joint_host_endpoints","title":"Mode D CC LS+CS joint: locked map_cc_locked LS end equals quarter CS start via host chord_eval / circ_eval; append_bags is hen offset not geometry; host I_ok mixed stays Decline","file":"theories/IntakeWalker.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_joint_host_endpoints","title":"Mode D CC LS+CS joint: locked map_cc_locked LS end equals quarter CS start via host chord_eval / circ_eval; append_bags is hen offset not geometry; in-scope host I_ok is Hit (locked_cc_ls_cs_host_hit), not Decline","file":"theories/IntakeWalker.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
 
 Theorem locked_cc_joint_host_endpoints :
   locked_cc_joint_pt = chord_eval (mkChordEgg p00 p50) 1 /\
