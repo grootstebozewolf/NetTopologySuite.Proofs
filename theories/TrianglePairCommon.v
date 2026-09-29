@@ -2,7 +2,8 @@
    Shared open-triangle and separating-edge vocabulary for the pair clip.
    topic: relate
    claimId: tri-de9im-a
-   witness: ConvexClip.clip_halfplane
+   witness: TrianglePairClip.ii_nonempty_iff
+   secondary witness: ConvexClipComplete.clip_correct
    3-axiom host. No Admitted. No Jordan.
    AI-drafted (Cursor Grok 4.7), human-reviewed.
    License: BSD-3-Clause *)
@@ -97,3 +98,11 @@ Definition some_outer (A B C D E F : Point) : Prop :=
   outer3 A B D E F \/ outer3 B C D E F \/ outer3 C A D E F \/
   outer3 D E A B C \/ outer3 E F A B C \/ outer3 F D A B C.
 
+
+(* Assumptions: sig_not_dec, sig_forall_dec, functional_extensionality_dep. *)
+Print Assumptions seg_room_pos.
+Print Assumptions slack_nonneg_room.
+Print Assumptions Rmin_pos.
+Print Assumptions rmin_list_pos.
+Print Assumptions rmin_list_le.
+Print Assumptions rmin_list_half.

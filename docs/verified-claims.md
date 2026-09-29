@@ -59,6 +59,7 @@ names. Prefer a narrow section over a broad tag.
 - **Curves.** [linearization](#phase-4--native-curves-linearization-chord-approx-arcs) · [Koc](#koc-compound-curves--satellite-survey-railway-alignment-compoundcurvekocv) · [ring contact](#curve-ring-contact-boundary-meet-and-the-inscribed-reduction-ringcontactsoundv-relatecurvearcsegmentv-relatecurveboundarymeetv-relatecurveinscribedgeometryv-overlaycontactsoundv) · [#508 length](#issue-508--the-canonical-metric-length-spec-curvelengthv)
 - **Construct.** [MIC](#mic--maximum-inscribed-circle-of-the-unit-square-maximuminscribedcirclev-board-9004--epic-813) · [LEC](#lec--largest-empty-circle-over-the-side-midpoints-largestemptycirclev-board-card-pending--epic-813) · [PIA](#pia-teaching-claim--poles-of-inaccessibility-planar-instance-evalclaim9005av-board-9005) · [topos](#discrete--shℝ²-bridge--spatial-topos-foundations-heytingopensv-planeconnectedv-discreteshbridgev)
 - **Issue #67.** [DE-9IM family](#issue-67--de-9im-matrix-algebra-de9imv) (one matrix family; dashboard merges all `#67` / substrate slices).
+- **T1a.** [triangle-pair I∩I](#t1a--convex-clip-and-the-triangle-pair-ii-entry)
 
 ## Phase 0 — Robust orientation (CCW / `Orientation.Index`) <!-- feat:relate geom:pt -->
 
@@ -2195,4 +2196,15 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 | `RelateNodingLineLineCapstone.v : line_collection_relate_matrix_test10_meet_pinned` | Collection disjoint + all-no-share ⇒ II/BB meet cells pinned on witness pairs (S15k) `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_ab` | Proper-cross intersection point lies in strict interior of AB `[exact]` | 3 |
 | `Intersect.v : strict_intersection_point_open_cd` | Proper-cross intersection point lies in strict interior of CD `[exact]` | 3 |
+
+## T1a — convex clip and the triangle-pair I∩I entry <!-- feat:relate geom:poly -->
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `TrianglePairClip.v : ii_nonempty_iff` | Open interiors of two positive triangles meet iff the three half-plane clips have positive area. Headline witness. claimId `tri-de9im-a` (owner name still to confirm) `[exact]` | 3 |
+| `ConvexClipComplete.v : clip_correct` | One half-plane clip equals the convex intersection. Secondary witness `[exact]` | 3 |
+| `TrianglePairClip.v : tri_inter_correct` | A point lies in both closed triangles iff it lies in `tri_inter` `[exact]` | 3 |
+| `TrianglePairClip.v : ii_entry` | I∩I is dimension 2 when the clip area is positive, otherwise F `[exact]` | 3 |
+| `TrianglePairClip.v : ii_entry_dimF_outer` | A separating edge forces the I∩I cell to F `[exact]` | 3 |
+| `TrianglePairClip.v : ii_entry_fixtures` | Concrete pairs, including the swapped nest, match `ii_entry`. General agreement with the five concrete `triangle_pair_fill` arms is deferred `[exact]` | 3 |
 

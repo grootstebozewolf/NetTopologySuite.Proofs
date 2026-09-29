@@ -350,6 +350,14 @@ theories/ZetaHostHit.v
 # Locked CC LS+CS does not decline the ∀-bag; interior quarter progresses.
 # 3-axiom. No Admitted.
 theories/HostCircChordOracle.v
+# T1a. Half-plane clip and the triangle-pair I∩I entry.
+# claimId: tri-de9im-a. Witness ii_nonempty_iff.
+# Secondary witness: clip_correct. 3-axiom. No Admitted.
+theories/ConvexClip.v
+theories/ConvexClipPoly.v
+theories/ConvexClipComplete.v
+theories/TrianglePairCommon.v
+theories/TrianglePairClip.v
 # ∀-bag letter 2. ρ and finiteness. claimId none.
 # 3-axiom. No Admitted.
 theories/SheetHenRho.v

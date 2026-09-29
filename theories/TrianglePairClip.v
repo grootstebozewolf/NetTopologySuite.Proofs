@@ -1,10 +1,11 @@
 (* NetTopologySuite.Proofs.TrianglePairClip
    Exact intersection of two CCW triangles by three half-plane clips,
-   the I∩I DE-9IM entry, and the separating-edge corollary.
-   I∩B, B∩I, B∩B are T1b. Exterior cells are T1c.
+   and the I∩I DE-9IM entry. The separating-edge campaign (sat_iff)
+   is a follow-up letter. I∩B, B∩I, B∩B are T1b. Exterior cells are T1c.
    topic: relate
    claimId: tri-de9im-a
-   witness: ConvexClip.clip_halfplane
+   witness: ii_nonempty_iff
+   secondary witness: ConvexClipComplete.clip_correct
    3-axiom host. No Admitted. No Jordan.
    AI-drafted (Cursor Grok 4.7), human-reviewed.
    License: BSD-3-Clause *)
@@ -909,13 +910,19 @@ Proof.
     apply strict3_outer; exact H.
 Qed.
 
-(* Concrete pairs. Swaps are the same witness with the triangles exchanged. *)
+(* Deferred: ii_entry_agrees_concrete.
+   On each concrete triangle_pair_fill arm (Disjoint, Overlap, Contains,
+   TouchEdge, TouchVertex) the II cell should equal ii_entry. Stating
+   that here would import RelateMatrixTriangle and with it
+   GeneralTriangleSeparation. Not Admitted. The pairs below are the
+   concrete check, including the swapped nest (0,0)(4,0)(0,4) against
+   (0,0)(4,0)(1,1). *)
 
 Definition fxA0 : Point := mkPoint 0 0.
 Definition fxA1 : Point := mkPoint 1 0.
 Definition fxA2 : Point := mkPoint 0 1.
 
-Lemma ii_entry_agrees_concrete :
+Lemma ii_entry_fixtures :
   ii_entry fxA0 fxA1 fxA2
     (mkPoint (1/4) (1/4)) (mkPoint (5/4) (1/4)) (mkPoint (1/4) (5/4)) = Dim2 /\
   ii_entry (mkPoint (1/4) (1/4)) (mkPoint (5/4) (1/4)) (mkPoint (1/4) (5/4))
@@ -968,3 +975,55 @@ Proof.
     + left. repeat split; unfold cross; simpl; lra.
 Qed.
 
+
+(* Assumptions: sig_not_dec, sig_forall_dec, functional_extensionality_dep. *)
+Print Assumptions tri_ccw_supports.
+Print Assumptions tri_inter_correct.
+Print Assumptions cross_ooo.
+Print Assumptions signed_area2_pair0.
+Print Assumptions signed_area2_single0.
+Print Assumptions signed_area2_nil0.
+Print Assumptions signed_area2_open3.
+Print Assumptions signed_area2_open2.
+Print Assumptions signed_area2_peel.
+Print Assumptions chain_supports_prefix.
+Print Assumptions signed_area2_fan.
+Print Assumptions fan_area_ge0.
+Print Assumptions poly_area2_ge0.
+Print Assumptions cross_le_fan.
+Print Assumptions cross_dot_zero.
+Print Assumptions hull_on_line.
+Print Assumptions three_on_line.
+Print Assumptions wpt_const.
+Print Assumptions in_hull_const.
+Print Assumptions in_hull_dup_head.
+Print Assumptions chain_supports_fewer.
+Print Assumptions verts_on_first_edge.
+Print Assumptions area_drop_dup.
+Print Assumptions supports_drop_dup.
+Print Assumptions flat_hull_len.
+Print Assumptions flat_hull.
+Print Assumptions ccw_edge_distinct.
+Print Assumptions fan_pos_triple.
+Print Assumptions area_pos_triple.
+Print Assumptions cross_centroid3.
+Print Assumptions centroid3_combo.
+Print Assumptions centroid3_in_hull.
+Print Assumptions sum3_zero.
+Print Assumptions edge_slack_centroid.
+Print Assumptions tri_open_centroid.
+Print Assumptions tri_inter_supports.
+Print Assumptions nudge_closed.
+Print Assumptions cross_nudge.
+Print Assumptions vertex_in_tri.
+Print Assumptions ii_nonempty_iff.
+Print Assumptions cross_tri_le.
+Print Assumptions tri_open_closed.
+Print Assumptions outer3_disjoint.
+Print Assumptions meet_contained.
+Print Assumptions some_outer_disjoint.
+Print Assumptions ii_entry_dim2_witness.
+Print Assumptions ii_entry_dimF_outer.
+Print Assumptions strict3_outer.
+Print Assumptions ii_entry_separated.
+Print Assumptions ii_entry_fixtures.

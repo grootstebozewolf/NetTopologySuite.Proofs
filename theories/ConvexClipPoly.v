@@ -4,25 +4,22 @@
    CCW preservation, and rational vertices.
    topic: relate
    claimId: tri-de9im-a
-   witness: ConvexClip.clip_halfplane
+   witness: TrianglePairClip.ii_nonempty_iff
+   secondary witness: ConvexClipComplete.clip_correct
    3-axiom host. No Admitted. AI-drafted (Cursor Grok 4.7), human-reviewed.
    License: BSD-3-Clause *)
-
 From Stdlib Require Import Reals Lra Lia List QArith Qreals.
 Import ListNotations.
 From NTS.Proofs Require Import Distance Orientation Convex RingArea979 ConvexClip.
 Local Open Scope R_scope.
-
 Definition line_g (p q x : Point) : R :=
   (px q - px p) * (px x - px p) + (py q - py p) * (py x - py p).
-
 Lemma g_affine : forall p q a b t,
   line_g p q (convex_combination a b t) =
     (1 - t) * line_g p q a + t * line_g p q b.
 Proof.
   intros. unfold line_g, convex_combination. destruct a, b. simpl. ring.
 Qed.
-
 Lemma g_line_hit : forall p q a b,
   cross p q a - cross p q b <> 0 ->
   line_g p q (line_hit a b p q) =
@@ -31,7 +28,6 @@ Lemma g_line_hit : forall p q a b,
 Proof.
   intros p q a b Hd. rewrite line_hit_combo, g_affine. field. exact Hd.
 Qed.
-
 Lemma g_hit_cleared : forall p q A B D,
   (cross p q B * line_g p q D - cross p q D * line_g p q B)
     * (cross p q A - cross p q D)
@@ -41,7 +37,6 @@ Lemma g_hit_cleared : forall p q A B D,
 Proof.
   intros. unfold line_g, cross, dist_sq. destruct p, q, A, B, D. simpl. ring.
 Qed.
-
 Lemma frame_inj : forall p q x y,
   line_g p q x = line_g p q y ->
   cross p q x = cross p q y ->
@@ -76,7 +71,6 @@ Proof.
   destruct Dy as [Hd1|Hy]; [exfalso; exact (Hd Hd1)|].
   f_equal; lra.
 Qed.
-
 Lemma on_line_between : forall p q h1 h2 m,
   points_distinct p q ->
   cross p q h1 = 0 -> cross p q h2 = 0 -> cross p q m = 0 ->
@@ -203,12 +197,8 @@ Proof.
     + clearbody t. rewrite Hzm, cross_combo, Hz1, Hz2.
       rewrite !Rmult_0_r, Rplus_0_l. reflexivity.
 Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* Soundness for an arbitrary vertex list: the clip hull sits in the input   *)
 (* hull and in the closed half-plane. Consecutive duplicates are harmless.   *)
-(* -------------------------------------------------------------------------- *)
-
 Lemma clip_chain_vert : forall poly prev rest p q v,
   in_hull poly prev ->
   (forall u, In u rest -> in_hull poly u) ->
@@ -227,7 +217,6 @@ Proof.
       * apply Hrest. simpl. tauto.
       * intros u Hu. apply Hrest. simpl. tauto.
 Qed.
-
 Lemma in_closed_walk : forall (a : Point) rest u,
   In u (tl ((a :: rest) ++ [a])) -> In u (a :: rest).
 Proof.
@@ -239,7 +228,6 @@ Proof.
       * simpl. tauto.
       * simpl in Hu. destruct Hu as [->|[]]. simpl. tauto.
 Qed.
-
 Lemma clip_verts_ok : forall poly p q v,
   In v (clip_halfplane poly p q) ->
   in_hull poly v /\ inside_closed p q v.
@@ -293,7 +281,6 @@ Proof.
         apply clip_chain_vert with (prev := a)
           (rest := tl ((a :: b :: c :: rest) ++ [a])); assumption.
 Qed.
-
 Theorem clip_sound : forall poly p q x,
   in_hull (clip_halfplane poly p q) x ->
   in_hull poly x /\ inside_closed p q x.
@@ -304,13 +291,9 @@ Proof.
   - apply members_inside with (K := clip_halfplane poly p q); [| exact Hx].
     intros v Hv. destruct (clip_verts_ok _ _ _ _ Hv) as [_ H]. exact H.
 Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* A polygon is CCW convex when every boundary edge, including the close,    *)
 (* has the whole vertex list in its closed left half-plane. Length < 3 is   *)
 (* included (a segment, a point, or nothing has no corner to test).          *)
-(* -------------------------------------------------------------------------- *)
-
 Fixpoint chain_supports (prev : Point) (rest all : list Point) : Prop :=
   match rest with
   | [] => True
@@ -318,7 +301,6 @@ Fixpoint chain_supports (prev : Point) (rest all : list Point) : Prop :=
       (forall v, In v all -> 0 <= cross prev cur v) /\
       chain_supports cur rest' all
   end.
-
 Definition convex_supports (ps : list Point) : Prop :=
   match ps with
   | _ :: _ :: _ :: _ =>
@@ -328,7 +310,6 @@ Definition convex_supports (ps : list Point) : Prop :=
       end
   | _ => True
   end.
-
 Lemma support_cleared : forall p q a b v,
   cross p q a * line_g p q b - cross p q b * line_g p q a
   - line_g p q v * (cross p q a - cross p q b)
@@ -337,7 +318,6 @@ Lemma support_cleared : forall p q a b v,
 Proof.
   intros. unfold line_g, cross, dist_sq. destruct p, q, a, b, v. simpl. ring.
 Qed.
-
 Lemma on_line_dx : forall p q h,
   cross p q h = 0 ->
   dist_sq q p * (px h - px p) = line_g p q h * (px q - px p) /\
@@ -363,7 +343,6 @@ Proof.
   - rewrite Ex. ring.
   - rewrite Ey. ring.
 Qed.
-
 Lemma chord_frame : forall p q h1 h2 x,
   cross p q h1 = 0 ->
   cross p q h2 = 0 ->
@@ -412,23 +391,17 @@ Proof.
     rewrite Hf. ring. }
   unfold D, G, dist_sq, cross, line_g in Ec. simpl in Ec. exact Ec.
 Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* Affine readings of a convex combination. cross and line_g are affine, so  *)
 (* on a weight-1 combination the constant term cancels.                      *)
-(* -------------------------------------------------------------------------- *)
-
 Fixpoint cross_dot (p q : Point) (w : list R) (ps : list Point) : R :=
   match w, ps with
   | a :: wt, v :: vt => a * cross p q v + cross_dot p q wt vt
   | _, _ => 0
   end.
-
 Lemma cross_at_origin : forall p q,
   cross p q (mkPoint 0 0) =
     - (px q - px p) * py p + (py q - py p) * px p.
 Proof. intros. unfold cross. simpl. ring. Qed.
-
 Lemma cross_wpt_aff : forall p q w ps,
   length w = length ps ->
   cross p q (wpt w ps) =
@@ -444,7 +417,6 @@ Proof.
     { destruct v as [vx vy]. destruct (wpt w ps) as [ax ay]. unfold cross. simpl. ring. }
     rewrite E. rewrite (IH w) by lia. ring.
 Qed.
-
 Lemma cross_wpt_sum1 : forall p q w ps,
   length w = length ps ->
   rsum w = 1 ->
@@ -452,13 +424,11 @@ Lemma cross_wpt_sum1 : forall p q w ps,
 Proof.
   intros p q w ps Hl Hs. rewrite cross_wpt_aff by exact Hl. rewrite Hs. ring.
 Qed.
-
 Fixpoint g_dot (p q : Point) (w : list R) (ps : list Point) : R :=
   match w, ps with
   | a :: wt, v :: vt => a * line_g p q v + g_dot p q wt vt
   | _, _ => 0
   end.
-
 Lemma g_wpt_aff : forall p q w ps,
   length w = length ps ->
   line_g p q (wpt w ps) =
@@ -474,7 +444,6 @@ Proof.
     { destruct v as [vx vy]. destruct (wpt w ps) as [ax ay]. unfold line_g. simpl. ring. }
     rewrite E. rewrite (IH w) by lia. ring.
 Qed.
-
 Lemma g_wpt_sum1 : forall p q w ps,
   length w = length ps ->
   rsum w = 1 ->
@@ -482,7 +451,6 @@ Lemma g_wpt_sum1 : forall p q w ps,
 Proof.
   intros p q w ps Hl Hs. rewrite g_wpt_aff by exact Hl. rewrite Hs. ring.
 Qed.
-
 Lemma cross_dot_le0 : forall p q w ps,
   length w = length ps ->
   nonneg_w w ->
@@ -502,7 +470,6 @@ Proof.
     { replace 0 with (a * 0) by ring. apply Rmult_le_compat_l; lra. }
     lra.
 Qed.
-
 Lemma cross_dot_neg : forall p q w ps,
   length w = length ps ->
   nonneg_w w ->
@@ -531,14 +498,12 @@ Proof.
       { replace 0 with (a * 0) by ring. apply Rmult_lt_compat_l; lra. }
       lra.
 Qed.
-
 Lemma wpt_seg : forall a b t,
   wpt [(1 - t); t] [a; b] = convex_combination a b t.
 Proof.
   intros a b t. unfold convex_combination. simpl.
   destruct a, b. simpl. f_equal; ring.
 Qed.
-
 Lemma seg_mem : forall a b t, 0 <= t <= 1 -> in_hull [a; b] (convex_combination a b t).
 Proof.
   intros a b t Ht.
@@ -548,7 +513,6 @@ Proof.
   - intros z Hz. simpl in Hz. destruct Hz as [<-|[<-|[]]]; lra.
   - split; [simpl; ring | apply wpt_seg].
 Qed.
-
 Lemma seg_clip_complete : forall a b p q x,
   point_eqb p q = false ->
   in_hull [a; b] x ->
@@ -651,21 +615,18 @@ Proof.
       - exact Hall. }
     unfold inside_closed in Hin. lra.
 Qed.
-
 Lemma dist_pos_distinct : forall p q,
   points_distinct p q -> 0 < dist_sq q p.
 Proof.
   intros p q H. apply dist_sq_pos_iff_distinct.
   intros [Ex Ey]. destruct H as [H|H]; congruence.
 Qed.
-
 Lemma emit_keeps_cur : forall prev cur p q,
   inside_b p q cur = true -> In cur (emit_edge prev cur p q).
 Proof.
   intros prev cur p q Hc. unfold emit_edge.
   destruct (inside_b p q prev); rewrite Hc; simpl; tauto.
 Qed.
-
 Lemma clip_chain_keeps : forall prev rest p q v,
   inside_b p q v = true ->
   In v rest ->
@@ -677,7 +638,6 @@ Proof.
   - apply in_or_app. left. apply emit_keeps_cur. exact Hc.
   - apply in_or_app. right. apply IH. exact Hin.
 Qed.
-
 Lemma in_closed_suffix : forall (a v : Point) rest,
   In v (a :: rest) -> In v (rest ++ [a]).
 Proof.
@@ -685,7 +645,6 @@ Proof.
   - apply in_or_app. right. simpl. tauto.
   - apply in_or_app. left. exact Hin.
 Qed.
-
 Lemma clip_keeps_inside : forall poly p q v,
   point_eqb p q = false ->
   (3 <= length poly)%nat ->
@@ -701,7 +660,6 @@ Proof.
   apply clip_chain_keeps; [exact Hc|].
   apply in_closed_suffix. exact Hin.
 Qed.
-
 (* A closed walk that meets both half-planes has a leaving edge and an
    entering edge. The clip emits both intersection points. *)
 Fixpoint find_leave (prev : Point) (rest : list Point) (p q : Point)
@@ -713,7 +671,6 @@ Fixpoint find_leave (prev : Point) (rest : list Point) (p q : Point)
       then Some (prev, cur)
       else find_leave cur rest' p q
   end.
-
 Fixpoint find_enter (prev : Point) (rest : list Point) (p q : Point)
   : option (Point * Point) :=
   match rest with
@@ -723,7 +680,6 @@ Fixpoint find_enter (prev : Point) (rest : list Point) (p q : Point)
       then Some (prev, cur)
       else find_enter cur rest' p q
   end.
-
 Lemma find_leave_spec : forall prev rest p q a b,
   find_leave prev rest p q = Some (a, b) ->
   inside_b p q a = true /\ inside_b p q b = false /\
@@ -738,7 +694,6 @@ Proof.
   - simpl. specialize (IH cur a b Hf) as [Ha [Hb Hin]].
     split; [exact Ha|]. split; [exact Hb|]. apply in_or_app. right. exact Hin.
 Qed.
-
 Lemma find_enter_spec : forall prev rest p q a b,
   find_enter prev rest p q = Some (a, b) ->
   inside_b p q a = false /\ inside_b p q b = true /\
@@ -753,7 +708,6 @@ Proof.
   - simpl. specialize (IH cur a b Hf) as [Ha [Hb Hin]].
     split; [exact Ha|]. split; [exact Hb|]. apply in_or_app. right. exact Hin.
 Qed.
-
 Lemma bool_run_leave : forall (prev : Point) (rest : list Point) p q,
   inside_b p q prev = true ->
   existsb (fun v => negb (inside_b p q v)) (prev :: rest) = true ->
@@ -768,7 +722,6 @@ Proof.
       simpl. rewrite Hc. simpl. exact Hex.
     + simpl. rewrite Hp, Hc. simpl. congruence.
 Qed.
-
 Lemma bool_run_enter : forall (prev : Point) (rest : list Point) p q,
   inside_b p q prev = false ->
   existsb (inside_b p q) (prev :: rest) = true ->
@@ -783,7 +736,6 @@ Proof.
       simpl in Hex. rewrite Hp, Hc in Hex. simpl in Hex.
       simpl. rewrite Hc. simpl. exact Hex.
 Qed.
-
 Lemma existsb_closed_out : forall a rest p q,
   existsb (fun v => negb (inside_b p q v)) (a :: rest) = true ->
   existsb (fun v => negb (inside_b p q v)) (rest ++ [a]) = true.
@@ -792,7 +744,6 @@ Proof.
   apply existsb_exists. exists v. split; [| exact Hv].
   apply in_closed_suffix. exact Hin.
 Qed.
-
 Lemma existsb_closed_in : forall a rest p q,
   existsb (inside_b p q) (a :: rest) = true ->
   existsb (inside_b p q) (rest ++ [a]) = true.
@@ -801,11 +752,9 @@ Proof.
   apply existsb_exists. exists v. split; [| exact Hv].
   apply in_closed_suffix. exact Hin.
 Qed.
-
 (* On a supporting leave edge the clip hit is a lower bound, in the line
    frame, for g - μ f at every vertex. An enter edge is an upper bound.
    A weight-1 combination with f = 0 therefore lies between the two hits. *)
-
 Lemma leave_psi_lin : forall p q a b v,
   cross p q a - cross p q b <> 0 ->
   (cross p q a - cross p q b) *
@@ -831,7 +780,6 @@ Proof.
   { field. exact Hd. }
   rewrite E. exact Hs.
 Qed.
-
 Lemma leave_psi_ge : forall p q a b v,
   points_distinct p q ->
   0 <= cross p q a ->
@@ -862,7 +810,6 @@ Proof.
     exact Hp. }
   lra.
 Qed.
-
 Lemma enter_psi_le : forall p q a b v,
   points_distinct p q ->
   cross p q a < 0 ->
@@ -913,10 +860,8 @@ Proof.
     rewrite Rmult_0_r. exact Hflip. }
   unfold D in *. lra.
 Qed.
-
 Definition line_mu (p q a b : Point) : R :=
   (line_g p q a - line_g p q b) / (cross p q a - cross p q b).
-
 Lemma cross_dot_ge0 : forall p q w ps,
   length w = length ps ->
   nonneg_w w ->
@@ -935,15 +880,12 @@ Proof.
     apply Rplus_le_le_0_compat; [| exact Htail].
     apply Rmult_le_pos; assumption.
 Qed.
-
 (* A consecutive pair on the clip walk inherits the polygon's support. *)
-
 Fixpoint walk_has_edge (prev : Point) (rest : list Point) (a b : Point) : Prop :=
   match rest with
   | [] => False
   | cur :: rest' => (prev = a /\ cur = b) \/ walk_has_edge cur rest' a b
   end.
-
 Lemma find_leave_has_edge : forall prev rest p q a b,
   find_leave prev rest p q = Some (a, b) ->
   walk_has_edge prev rest a b.
@@ -954,7 +896,6 @@ Proof.
   - injection Hf as -> ->. simpl. left. split; reflexivity.
   - simpl. right. apply IH. exact Hf.
 Qed.
-
 Lemma find_enter_has_edge : forall prev rest p q a b,
   find_enter prev rest p q = Some (a, b) ->
   walk_has_edge prev rest a b.
@@ -965,7 +906,6 @@ Proof.
   - injection Hf as -> ->. simpl. left. split; reflexivity.
   - simpl. right. apply IH. exact Hf.
 Qed.
-
 Lemma walk_edge_supports : forall prev rest all a b,
   chain_supports prev rest all ->
   walk_has_edge prev rest a b ->
@@ -977,7 +917,6 @@ Proof.
   - apply Hedge. exact Hv.
   - apply IH with (prev := cur); assumption.
 Qed.
-
 Lemma existsb_out_snoc : forall prev rest endp p q,
   inside_b p q endp = false ->
   existsb (fun v => negb (inside_b p q v)) (prev :: rest ++ [endp]) = true.
@@ -986,7 +925,6 @@ Proof.
   - right. apply in_or_app. right. simpl. left. reflexivity.
   - rewrite Hend. reflexivity.
 Qed.
-
 Lemma existsb_in_snoc : forall prev rest endp p q,
   inside_b p q endp = true ->
   existsb (inside_b p q) (prev :: rest ++ [endp]) = true.
@@ -995,7 +933,6 @@ Proof.
   - right. apply in_or_app. right. simpl. left. reflexivity.
   - exact Hend.
 Qed.
-
 Lemma find_leave_before_out : forall prev rest endp p q,
   inside_b p q endp = false ->
   existsb (inside_b p q) (prev :: rest) = true ->
@@ -1012,7 +949,6 @@ Proof.
       replace ((cur :: rest) ++ [endp]) with (cur :: rest ++ [endp]) by reflexivity.
       simpl. rewrite Hp. simpl. apply IH. exact Hin.
 Qed.
-
 Lemma find_enter_before_in : forall prev rest endp p q,
   inside_b p q endp = true ->
   existsb (fun v => negb (inside_b p q v)) (prev :: rest) = true ->
@@ -1029,7 +965,6 @@ Proof.
     + apply bool_run_enter; [exact Hp |].
       apply existsb_in_snoc. exact Hend.
 Qed.
-
 Lemma existsb_cons_app : forall (f : Point -> bool) a rest v,
   existsb f (a :: rest) = true ->
   existsb f (a :: rest ++ [v]) = true.
@@ -1040,7 +975,6 @@ Proof.
   - simpl. left. reflexivity.
   - simpl. right. apply in_or_app. left. exact Hu.
 Qed.
-
 Lemma closed_has_leave : forall a rest p q,
   existsb (inside_b p q) (a :: rest) = true ->
   existsb (fun v => negb (inside_b p q v)) (a :: rest) = true ->
@@ -1052,7 +986,6 @@ Proof.
     apply existsb_cons_app. exact Hout.
   - apply find_leave_before_out; [exact Ha | exact Hin].
 Qed.
-
 Lemma closed_has_enter : forall a rest p q,
   existsb (inside_b p q) (a :: rest) = true ->
   existsb (fun v => negb (inside_b p q v)) (a :: rest) = true ->
@@ -1064,7 +997,6 @@ Proof.
   - apply bool_run_enter; [exact Ha |].
     apply existsb_cons_app. exact Hin.
 Qed.
-
 Lemma weighted_psi_ge : forall p q mu bound w ps,
   length w = length ps ->
   nonneg_w w ->
@@ -1090,7 +1022,6 @@ Proof.
     { apply Rplus_le_compat; assumption. }
     { apply Req_le. ring. }
 Qed.
-
 Lemma hull_psi_ge : forall p q mu bound poly x,
   (forall v, In v poly -> bound <= line_g p q v - mu * cross p q v) ->
   in_hull poly x ->
@@ -1103,7 +1034,6 @@ Proof.
   rewrite <- (cross_wpt_sum1 p q w poly Hl Hs) in Hw.
   rewrite Hx in Hw. exact Hw.
 Qed.
-
 Lemma weighted_psi_le : forall p q mu bound w ps,
   length w = length ps ->
   nonneg_w w ->
@@ -1130,7 +1060,6 @@ Proof.
     { apply Req_le. ring. }
     { apply Rplus_le_compat; assumption. }
 Qed.
-
 Lemma hull_psi_le : forall p q mu bound poly x,
   (forall v, In v poly -> line_g p q v - mu * cross p q v <= bound) ->
   in_hull poly x ->
@@ -1142,7 +1071,6 @@ Proof.
   rewrite <- (cross_wpt_sum1 p q w poly Hl Hs) in Hw.
   rewrite Hx, Hs, Rmult_1_l in Hw. exact Hw.
 Qed.
-
 Lemma hull_between_hits : forall poly p q aL bL aE bE x,
   points_distinct p q ->
   inside_b p q aL = true -> inside_b p q bL = false ->
@@ -1193,3 +1121,57 @@ Proof.
     try assumption.
   left. split; assumption.
 Qed.
+
+(* Assumptions: sig_not_dec, sig_forall_dec, functional_extensionality_dep. *)
+Print Assumptions g_affine.
+Print Assumptions g_line_hit.
+Print Assumptions g_hit_cleared.
+Print Assumptions frame_inj.
+Print Assumptions on_line_between.
+Print Assumptions clip_chain_vert.
+Print Assumptions in_closed_walk.
+Print Assumptions clip_verts_ok.
+Print Assumptions clip_sound.
+Print Assumptions support_cleared.
+Print Assumptions on_line_dx.
+Print Assumptions chord_frame.
+Print Assumptions cross_at_origin.
+Print Assumptions cross_wpt_aff.
+Print Assumptions cross_wpt_sum1.
+Print Assumptions g_wpt_aff.
+Print Assumptions g_wpt_sum1.
+Print Assumptions cross_dot_le0.
+Print Assumptions cross_dot_neg.
+Print Assumptions wpt_seg.
+Print Assumptions seg_mem.
+Print Assumptions seg_clip_complete.
+Print Assumptions dist_pos_distinct.
+Print Assumptions emit_keeps_cur.
+Print Assumptions clip_chain_keeps.
+Print Assumptions in_closed_suffix.
+Print Assumptions clip_keeps_inside.
+Print Assumptions find_leave_spec.
+Print Assumptions find_enter_spec.
+Print Assumptions bool_run_leave.
+Print Assumptions bool_run_enter.
+Print Assumptions existsb_closed_out.
+Print Assumptions existsb_closed_in.
+Print Assumptions leave_psi_lin.
+Print Assumptions leave_psi_ge.
+Print Assumptions enter_psi_le.
+Print Assumptions cross_dot_ge0.
+Print Assumptions find_leave_has_edge.
+Print Assumptions find_enter_has_edge.
+Print Assumptions walk_edge_supports.
+Print Assumptions existsb_out_snoc.
+Print Assumptions existsb_in_snoc.
+Print Assumptions find_leave_before_out.
+Print Assumptions find_enter_before_in.
+Print Assumptions existsb_cons_app.
+Print Assumptions closed_has_leave.
+Print Assumptions closed_has_enter.
+Print Assumptions weighted_psi_ge.
+Print Assumptions hull_psi_ge.
+Print Assumptions weighted_psi_le.
+Print Assumptions hull_psi_le.
+Print Assumptions hull_between_hits.

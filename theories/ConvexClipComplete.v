@@ -1,29 +1,25 @@
 (* NetTopologySuite.Proofs.ConvexClipComplete
    Completeness, CCW preservation, and rational vertices for one
    half-plane clip. ConvexClipPoly holds the frame and the chord bound;
-   this file is the continuation so neither module crosses the split gate.
+   this file stays under the 1234-line monolith floor.
    topic: relate
    claimId: tri-de9im-a
-   witness: ConvexClip.clip_halfplane
+   witness: TrianglePairClip.ii_nonempty_iff
+   secondary witness: clip_correct
    3-axiom host. No Admitted. AI-drafted (Cursor Grok 4.7), human-reviewed.
    License: BSD-3-Clause *)
-
 From Stdlib Require Import Reals Lra Lia List Compare_dec QArith Qreals.
 Import ListNotations.
 From NTS.Proofs Require Import Distance Orientation Convex RingArea979 ConvexClip ConvexClipPoly.
 Local Open Scope R_scope.
-
-
 (* Split a weight list into the vertices a boolean keeps and the ones it drops.
    Lengths follow filter, so the two pieces are hull witnesses on their own. *)
-
 Fixpoint take_w (keep : Point -> bool) (w : list R) (ps : list Point) : list R :=
   match w, ps with
   | a :: wt, v :: vt =>
       if keep v then a :: take_w keep wt vt else take_w keep wt vt
   | _, _ => []
   end.
-
 Lemma take_w_length : forall keep w ps,
   length w = length ps ->
   length (take_w keep w ps) = length (filter keep ps).
@@ -34,7 +30,6 @@ Proof.
   - destruct (keep v) eqn:Hk; simpl; [| apply IH; lia].
     f_equal. apply IH. lia.
 Qed.
-
 Lemma take_w_nonneg : forall keep w ps,
   length w = length ps -> nonneg_w w -> nonneg_w (take_w keep w ps).
 Proof.
@@ -49,7 +44,6 @@ Proof.
     + apply (IH w); [lia | | exact Hz].
       intros u Hu. apply Hw. right. exact Hu.
 Qed.
-
 Lemma rsum_take_split : forall keep w ps,
   length w = length ps ->
   rsum (take_w keep w ps)
@@ -62,7 +56,6 @@ Proof.
     + rewrite Hk. simpl. rewrite <- IH. ring.
     + rewrite Hk. simpl. rewrite <- IH. ring.
 Qed.
-
 Lemma wpt_take_split : forall keep w ps,
   length w = length ps ->
   px (wpt w ps)
@@ -122,7 +115,6 @@ Proof.
                                  (filter (fun u => negb (keep u)) ps))).
       rewrite Ex, Ey. split; ring.
 Qed.
-
 Lemma cross_dot_scale : forall t p q w ps,
   length w = length ps ->
   cross_dot p q (rscale t w) ps = t * cross_dot p q w ps.
@@ -132,7 +124,6 @@ Proof.
   - ring.
   - rewrite (IH w) by lia. ring.
 Qed.
-
 Lemma in_hull_rescale : forall ps w,
   length w = length ps -> nonneg_w w -> 0 < rsum w ->
   in_hull ps (mkPoint (px (wpt w ps) / rsum w) (py (wpt w ps) / rsum w)).
@@ -147,7 +138,6 @@ Proof.
   - rewrite wpt_scale by exact Hl. destruct (wpt w ps) as [x y]. simpl.
     f_equal; unfold Rdiv; ring.
 Qed.
-
 Lemma take_pos_existsb : forall keep w ps,
   length w = length ps -> nonneg_w w ->
   0 < rsum (take_w keep w ps) ->
@@ -163,7 +153,6 @@ Proof.
       apply IH with (w := w); [lia | | exact Hs].
       intros z Hz. apply Hw. right. exact Hz.
 Qed.
-
 Lemma filter_in_clip : forall poly p q v,
   point_eqb p q = false ->
   (3 <= length poly)%nat ->
@@ -174,13 +163,11 @@ Proof.
   apply filter_In in Hin. destruct Hin as [Hin Hb].
   apply clip_keeps_inside; assumption.
 Qed.
-
 Lemma negb_inside_cross : forall p q v,
   negb (inside_b p q v) = true -> cross p q v < 0.
 Proof.
   intros p q v H. apply inside_b_false. apply negb_true_iff. exact H.
 Qed.
-
 (* n >= 3. Inside mass stays in the clip; outside mass crosses the chord
    between one leaving hit and one entering hit, both emitted. *)
 Lemma clip_n3_complete : forall poly p q x,
@@ -440,13 +427,11 @@ Proof.
     apply members_in_hull with (K := pI); [| exact HinI].
     intros v Hv. apply in_hull_in. apply filter_in_clip; [exact Hpq | | exact Hv]. simpl. lia.
 Qed.
-
 Lemma in_hull_nil : forall x, in_hull [] x -> False.
 Proof.
   intros x [w [Hl [_ [Hs _]]]].
   destruct w; simpl in Hl; try discriminate. simpl in Hs. exact (R1_neq_R0 (eq_sym Hs)).
 Qed.
-
 Lemma in_hull_one : forall a x, in_hull [a] x <-> x = a.
 Proof.
   intros a x. split.
@@ -464,14 +449,12 @@ Proof.
     + split; [simpl; ring|]. simpl.
       destruct a as [ax ay]. simpl. f_equal; ring.
 Qed.
-
 Lemma inside_closed_b : forall p q x,
   inside_closed p q x -> inside_b p q x = true.
 Proof.
   intros p q x H. unfold inside_b, inside_closed in *.
   destruct (Rle_dec 0 (cross p q x)); [reflexivity | exfalso; apply n; exact H].
 Qed.
-
 Theorem clip_correct : forall poly p q x,
   convex_supports poly ->
   in_hull (clip_halfplane poly p q) x <->
@@ -492,13 +475,9 @@ Proof.
         apply seg_clip_complete; assumption.
       * apply clip_n3_complete; [exact Epq | simpl; lia | exact Hconv | exact Hx | exact Hin].
 Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* CCW. A forward piece of a supporting edge stays supporting, and a chord    *)
 (* along the clip line, oriented with the line, keeps the half-plane on its  *)
 (* left. The clip walk emits only those two kinds of edge.                   *)
-(* -------------------------------------------------------------------------- *)
-
 Lemma cross_subseg : forall a b s t x,
   cross (convex_combination a b s) (convex_combination a b t) x =
     (t - s) * cross a b x.
@@ -506,7 +485,6 @@ Proof.
   intros a b s t x. unfold cross, convex_combination.
   destruct a as [ax ay], b as [bx by_], x as [xx xy]. simpl. ring.
 Qed.
-
 Lemma subseg_left : forall a b s t x,
   0 <= s <= t ->
   0 <= cross a b x ->
@@ -515,7 +493,6 @@ Proof.
   intros a b s t x [Hs Ht] Hc. rewrite cross_subseg.
   apply Rmult_le_pos; lra.
 Qed.
-
 Lemma hull_cross_ge : forall a b poly x,
   (forall v, In v poly -> 0 <= cross a b v) ->
   in_hull poly x ->
@@ -525,7 +502,6 @@ Proof.
   rewrite <- Hx. rewrite (cross_wpt_sum1 a b w poly Hl Hs).
   apply cross_dot_ge0; assumption.
 Qed.
-
 Lemma chord_left : forall p q u v x,
   points_distinct p q ->
   cross p q u = 0 ->
@@ -540,7 +516,6 @@ Proof.
   rewrite Rmult_0_r. rewrite (chord_frame p q u v x Hu Hv).
   apply Rmult_le_pos; lra.
 Qed.
-
 Lemma g_leave_enter : forall poly p q aL bL aE bE,
   points_distinct p q ->
   inside_b p q aL = true -> inside_b p q bL = false ->
@@ -578,25 +553,21 @@ Proof.
             (line_g p q (line_hit aL bL p q)) poly (line_hit aE bE p q) Hbound Hin).
   rewrite Hz, Rmult_0_r, Rminus_0_r in Hpsi. exact Hpsi.
 Qed.
-
 Definition open_left (out all : list Point) : Prop :=
   match out with
   | [] => True
   | p :: r => chain_supports p r all
   end.
-
 Fixpoint last_pt (prev : Point) (rest : list Point) : Point :=
   match rest with
   | [] => prev
   | c :: rest' => last_pt c rest'
   end.
-
 Lemma last_pt_app : forall prev rest b,
   last_pt prev (rest ++ [b]) = b.
 Proof.
   intros prev rest b. revert prev. induction rest as [|c rest IH]; intros prev; simpl; auto.
 Qed.
-
 Lemma chain_extend_last : forall prev rest all b L,
   chain_supports prev rest all ->
   last_pt prev rest = L ->
@@ -609,34 +580,29 @@ Proof.
   - destruct Hs as [Hedge Htail]. split; [exact Hedge |].
     apply IH with (L := L); [exact Htail | exact HL | exact Hall].
 Qed.
-
 Definition oplast (ps : list Point) : option Point :=
   match ps with
   | [] => None
   | p :: r => Some (last_pt p r)
   end.
-
 Lemma oplast_snoc : forall acc e, oplast (acc ++ [e]) = Some e.
 Proof.
   intros acc e. destruct acc as [|a acc]; simpl.
   - reflexivity.
   - rewrite last_pt_app. reflexivity.
 Qed.
-
 Lemma last_pt_end : forall prev xs y z,
   last_pt prev (xs ++ y :: z :: nil) = z.
 Proof.
   intros prev xs y z. revert prev.
   induction xs as [|h xs IH]; intros prev; simpl; [reflexivity | apply IH].
 Qed.
-
 Lemma oplast_app_two : forall acc e1 e2, oplast (acc ++ [e1; e2]) = Some e2.
 Proof.
   intros acc e1 e2. destruct acc as [|a acc]; simpl.
   - reflexivity.
   - rewrite last_pt_end. reflexivity.
 Qed.
-
 Lemma open_left_add : forall out all e,
   open_left out all ->
   match oplast out with
@@ -651,7 +617,6 @@ Proof.
   - apply chain_extend_last with (L := last_pt p r); [exact Ho | reflexivity |].
     exact Hedge.
 Qed.
-
 Lemma open_left_add2 : forall out all e1 e2,
   open_left out all ->
   match oplast out with
@@ -668,17 +633,14 @@ Proof.
   - apply open_left_add; [exact Ho | exact Hj].
   - rewrite oplast_snoc. exact He.
 Qed.
-
 Lemma comb0 : forall a b, convex_combination a b 0 = a.
 Proof.
   intros a b. unfold convex_combination. destruct a, b. simpl. f_equal; ring.
 Qed.
-
 Lemma comb1 : forall a b, convex_combination a b 1 = b.
 Proof.
   intros a b. unfold convex_combination. destruct a, b. simpl. f_equal; ring.
 Qed.
-
 Lemma subseg_from_start : forall a b t x,
   0 <= t ->
   0 <= cross a b x ->
@@ -687,7 +649,6 @@ Proof.
   intros a b t x Ht Hx. rewrite <- (comb0 a b) at 1.
   apply subseg_left; [split; lra | exact Hx].
 Qed.
-
 Lemma subseg_to_end : forall a b t x,
   0 <= t <= 1 ->
   0 <= cross a b x ->
@@ -696,24 +657,20 @@ Proof.
   intros a b t x Ht Hx. rewrite <- (comb1 a b) at 2.
   apply subseg_left; [exact Ht | exact Hx].
 Qed.
-
 (* Edges must keep the clipped region on the left: hull points that also
    lie in the closed half-plane. Outside vertices of the input need not. *)
 Definition kept (poly : list Point) (p q v : Point) : Prop :=
   in_hull poly v /\ inside_closed p q v.
-
 Fixpoint chain_P (prev : Point) (rest : list Point) (P : Point -> Prop) : Prop :=
   match rest with
   | [] => True
   | cur :: rs => (forall v, P v -> 0 <= cross prev cur v) /\ chain_P cur rs P
   end.
-
 Definition open_P (out : list Point) (P : Point -> Prop) : Prop :=
   match out with
   | [] => True
   | h :: rs => chain_P h rs P
   end.
-
 Lemma chain_P_extend : forall prev rest P b L,
   chain_P prev rest P ->
   last_pt prev rest = L ->
@@ -726,7 +683,6 @@ Proof.
   - destruct Hs as [Hedge Htail]. split; [exact Hedge |].
     apply IH with (L := L); [exact Htail | exact HL | exact Hall].
 Qed.
-
 Lemma open_P_add : forall out P e,
   open_P out P ->
   match oplast out with
@@ -740,7 +696,6 @@ Proof.
   - exact I.
   - apply chain_P_extend with (L := last_pt h r); [exact Ho | reflexivity | exact Hedge].
 Qed.
-
 Lemma open_P_add2 : forall out P e1 e2,
   open_P out P ->
   match oplast out with
@@ -757,7 +712,6 @@ Proof.
   - apply open_P_add; [exact Ho | exact Hj].
   - rewrite oplast_snoc. exact He.
 Qed.
-
 Lemma hit_den_nz : forall p q a b,
   inside_b p q a = true -> inside_b p q b = false ->
   cross p q a - cross p q b <> 0.
@@ -768,7 +722,6 @@ Proof.
   apply Rminus_diag_uniq in E.
   rewrite E in Ha'. apply (Rle_not_lt _ _ Ha'). exact Hb'.
 Qed.
-
 (* What the most recent emission was, relative to the vertex the walk is
    about to leave. None means nothing has been emitted on this outside or
    inside run yet. *)
@@ -784,7 +737,6 @@ Definition phase_ok (poly : list Point) (p q prev : Point) (L : option Point) : 
         inside_b p q a = true /\ inside_b p q b = false /\
         (forall z, In z poly -> 0 <= cross a b z)
   end.
-
 Lemma clip_acc_left : forall prev rest poly p q acc,
   point_eqb p q = false ->
   chain_supports prev rest poly ->
@@ -862,7 +814,6 @@ Proof.
       * destruct Hp as [aL [bL Hleave]]. exists aL, bL. exact Hleave.
       * exact I.
 Qed.
-
 Lemma chain_P_In : forall prev rest (P : Point -> Prop) all,
   chain_P prev rest P ->
   (forall v, In v all -> P v) ->
@@ -875,7 +826,6 @@ Proof.
     + intros v Hv. apply He, Hall, Hv.
     + apply IH; assumption.
 Qed.
-
 Lemma convex_short : forall ps, (length ps < 3)%nat -> convex_supports ps.
 Proof.
   intros [|a [|b [|c r]]] H.
@@ -884,13 +834,11 @@ Proof.
   - simpl. exact I.
   - simpl in H. lia.
 Qed.
-
 Lemma seg_clip_short : forall a b p q, (length (seg_clip a b p q) <= 2)%nat.
 Proof.
   intros a b p q. unfold seg_clip.
   destruct (inside_b p q a); destruct (inside_b p q b); simpl; lia.
 Qed.
-
 Lemma clip_short_out : forall poly p q,
   (length poly < 3)%nat ->
   (length (clip_halfplane poly p q) < 3)%nat.
@@ -904,7 +852,6 @@ Proof.
     + pose proof (seg_clip_short a b p q). lia.
     + lia.
 Qed.
-
 Lemma clip_chain_end_in : forall prev rest a p q,
   inside_b p q a = true ->
   exists pre, clip_chain prev (rest ++ [a]) p q = pre ++ [a].
@@ -917,7 +864,6 @@ Proof.
   - simpl. destruct (IH c) as [pre Hpre]. rewrite Hpre.
     exists (emit_edge prev c p q ++ pre). rewrite app_assoc. reflexivity.
 Qed.
-
 Lemma clip_head_enter : forall prev rest p q h t,
   inside_b p q prev = false ->
   clip_chain prev rest p q = h :: t ->
@@ -937,7 +883,6 @@ Proof.
     + destruct (IH cur h t Hc Heq) as [a [b [Hh [Ha [Hb [Ia Ib]]]]]].
       exists a, b. repeat split; try assumption; simpl; right; assumption.
 Qed.
-
 Lemma walk_in_poly : forall (a u : Point) (rest : list Point),
   In u (a :: rest ++ [a]) -> In u (a :: rest).
 Proof.
@@ -955,7 +900,6 @@ Proof.
         -- left. reflexivity.
         -- right. right. exact Hin.
 Qed.
-
 Theorem clip_convex_ccw : forall poly p q,
   convex_supports poly ->
   convex_supports (clip_halfplane poly p q).
@@ -1078,40 +1022,29 @@ Proof.
               unfold convex_supports. simpl.
               exact Hcs.
 Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* Rational coordinates survive an exact hit. The denominator is the cross    *)
 (* difference, nonzero exactly when the edge changes side.                    *)
-(* -------------------------------------------------------------------------- *)
-
 Definition coord_Q (x : R) : Prop := exists q : Q, Q2R q = x.
-
 Definition point_Q (v : Point) : Prop := coord_Q (px v) /\ coord_Q (py v).
-
 Definition list_Q (ps : list Point) : Prop := forall v, In v ps -> point_Q v.
-
 Lemma coord_Q_add : forall x y, coord_Q x -> coord_Q y -> coord_Q (x + y).
 Proof.
   intros x y [qx Hx] [qy Hy]. exists (qx + qy)%Q.
   rewrite Q2R_plus, Hx, Hy. reflexivity.
 Qed.
-
 Lemma coord_Q_opp : forall x, coord_Q x -> coord_Q (- x).
 Proof.
   intros x [qx Hx]. exists (- qx)%Q. rewrite Q2R_opp, Hx. reflexivity.
 Qed.
-
 Lemma coord_Q_sub : forall x y, coord_Q x -> coord_Q y -> coord_Q (x - y).
 Proof.
   intros x y Hx Hy. unfold Rminus. apply coord_Q_add; [| apply coord_Q_opp]; assumption.
 Qed.
-
 Lemma coord_Q_mul : forall x y, coord_Q x -> coord_Q y -> coord_Q (x * y).
 Proof.
   intros x y [qx Hx] [qy Hy]. exists (qx * qy)%Q.
   rewrite Q2R_mult, Hx, Hy. reflexivity.
 Qed.
-
 Lemma coord_Q_div : forall x y, coord_Q x -> coord_Q y -> y <> 0 -> coord_Q (x / y).
 Proof.
   intros x y [qx Hx] [qy Hy] Hnz. exists (qx / qy)%Q. rewrite Q2R_div.
@@ -1119,7 +1052,6 @@ Proof.
   - intro Hq. apply Hnz. rewrite <- Hy. rewrite (Qeq_eqR _ _ Hq).
     apply RMicromega.Q2R_0.
 Qed.
-
 Lemma cross_Q : forall p q a,
   point_Q p -> point_Q q -> point_Q a -> coord_Q (cross p q a).
 Proof.
@@ -1128,10 +1060,8 @@ Proof.
   - apply coord_Q_mul; apply coord_Q_sub; assumption.
   - apply coord_Q_mul; apply coord_Q_sub; assumption.
 Qed.
-
 Lemma point_Q_mk : forall x y, coord_Q x -> coord_Q y -> point_Q (mkPoint x y).
 Proof. intros x y Hx Hy. split; assumption. Qed.
-
 Lemma hit_den_nz_enter : forall p q a b,
   inside_b p q a = false -> inside_b p q b = true ->
   cross p q a - cross p q b <> 0.
@@ -1144,7 +1074,6 @@ Proof.
   - rewrite E. exact Hb'.
   - exact Ha'.
 Qed.
-
 Lemma line_hit_Q : forall a b p q,
   point_Q a -> point_Q b -> point_Q p -> point_Q q ->
   cross p q a - cross p q b <> 0 ->
@@ -1163,7 +1092,6 @@ Proof.
     + apply coord_Q_div; assumption.
     + apply coord_Q_sub; [exact Hby | exact Hay].
 Qed.
-
 Lemma emit_edge_Q : forall a b p q v,
   point_Q a -> point_Q b -> point_Q p -> point_Q q ->
   In v (emit_edge a b p q) -> point_Q v.
@@ -1177,7 +1105,6 @@ Proof.
     + exact Hb.
   - contradiction.
 Qed.
-
 Lemma seg_clip_Q : forall a b p q v,
   point_Q a -> point_Q b -> point_Q p -> point_Q q ->
   In v (seg_clip a b p q) -> point_Q v.
@@ -1193,7 +1120,6 @@ Proof.
     + exact Hb.
   - contradiction.
 Qed.
-
 Lemma clip_chain_Q : forall prev rest p q v,
   point_Q prev -> point_Q p -> point_Q q ->
   (forall u, In u rest -> point_Q u) ->
@@ -1216,7 +1142,6 @@ Proof.
       * intros u Hu. apply Hall. simpl. right. exact Hu.
       * exact Hin.
 Qed.
-
 Theorem clip_rational : forall poly p q,
   list_Q poly -> point_Q p -> point_Q q ->
   list_Q (clip_halfplane poly p q).
@@ -1245,3 +1170,60 @@ Proof.
       * exact Hin.
 Qed.
 
+(* Assumptions: sig_not_dec, sig_forall_dec, functional_extensionality_dep. *)
+Print Assumptions take_w_length.
+Print Assumptions take_w_nonneg.
+Print Assumptions rsum_take_split.
+Print Assumptions wpt_take_split.
+Print Assumptions cross_dot_scale.
+Print Assumptions in_hull_rescale.
+Print Assumptions take_pos_existsb.
+Print Assumptions filter_in_clip.
+Print Assumptions negb_inside_cross.
+Print Assumptions clip_n3_complete.
+Print Assumptions in_hull_nil.
+Print Assumptions in_hull_one.
+Print Assumptions inside_closed_b.
+Print Assumptions clip_correct.
+Print Assumptions cross_subseg.
+Print Assumptions subseg_left.
+Print Assumptions hull_cross_ge.
+Print Assumptions chord_left.
+Print Assumptions g_leave_enter.
+Print Assumptions last_pt_app.
+Print Assumptions chain_extend_last.
+Print Assumptions oplast_snoc.
+Print Assumptions last_pt_end.
+Print Assumptions oplast_app_two.
+Print Assumptions open_left_add.
+Print Assumptions open_left_add2.
+Print Assumptions comb0.
+Print Assumptions comb1.
+Print Assumptions subseg_from_start.
+Print Assumptions subseg_to_end.
+Print Assumptions chain_P_extend.
+Print Assumptions open_P_add.
+Print Assumptions open_P_add2.
+Print Assumptions hit_den_nz.
+Print Assumptions clip_acc_left.
+Print Assumptions chain_P_In.
+Print Assumptions convex_short.
+Print Assumptions seg_clip_short.
+Print Assumptions clip_short_out.
+Print Assumptions clip_chain_end_in.
+Print Assumptions clip_head_enter.
+Print Assumptions walk_in_poly.
+Print Assumptions clip_convex_ccw.
+Print Assumptions coord_Q_add.
+Print Assumptions coord_Q_opp.
+Print Assumptions coord_Q_sub.
+Print Assumptions coord_Q_mul.
+Print Assumptions coord_Q_div.
+Print Assumptions cross_Q.
+Print Assumptions point_Q_mk.
+Print Assumptions hit_den_nz_enter.
+Print Assumptions line_hit_Q.
+Print Assumptions emit_edge_Q.
+Print Assumptions seg_clip_Q.
+Print Assumptions clip_chain_Q.
+Print Assumptions clip_rational.
