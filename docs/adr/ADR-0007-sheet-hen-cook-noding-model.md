@@ -1544,7 +1544,7 @@ Circle-as-full-span-arc (`MkCirc`, sweep ±2π from A). Reuses `MkChord` /
 `MkCirc`. No new host γ. ADR-0005: lenient CIRCULARSTRING(A,B,A)
 normalizes; strict Declines `ID_CsClosedDegenerate`. ISO CIRCLE bags [A; antipode], two ±π MkCirc.
 
-Fail closed: `GEODESICSTRING`, `SPIRALCURVE`, MkOutOfScope
+Fail closed: `GEODESICSTRING`, non-clothoid `SPIRALCURVE`, MkOutOfScope
 leftovers. No silent chord demote at intake. `example5.txt`: both
 CLOTHOID forms in one COMPOUNDCURVE bag via the MkClothoid letter
 (`0007-intake-mkclothoid`). CircUnknown well-formed CS is the
@@ -1562,7 +1562,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed SPIRALCURVE; ADR-0005 lenient normalizes CIRCULARSTRING(A,B,A), strict Declines; grammar accept is CST only; well-formed GEODESICSTRING is `0007-intake-geodesic` | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : locked_cs_full_ogc_declines`, `IntakeWalker.v : spiral_declines` |
+| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; non-clothoid SPIRALCURVE declines; ADR-0005 lenient normalizes CIRCULARSTRING(A,B,A), strict Declines; grammar accept is CST only; well-formed GEODESICSTRING is `0007-intake-geodesic` | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : locked_cs_full_ogc_declines`, `IntakeWalker.v : spiral_declines` |
 | `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — see the angles letter below | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc` |
 | `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; bag loop stays obligation; clothoid split out | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 

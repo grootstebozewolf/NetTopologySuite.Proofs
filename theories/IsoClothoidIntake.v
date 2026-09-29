@@ -40,8 +40,9 @@
    Check order: measures, horizontal refs, similarity, A > 0,
    sd ≠ ed. jts_is_example5 is the example5 triple
    (0, 5/1000, 80) only; other JTS triples are the walker's
-   ID_JtsClothoidNotYet. SPIRALCURVE and normalizer 2 are out
-   of scope. No FTC. No Admitted / Axiom / Parameter.
+   ID_JtsClothoidNotYet. Clothoid SPIRALCURVE reuses this
+   normalizer. Normalizer 2 stays out of scope. No FTC.
+   No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)

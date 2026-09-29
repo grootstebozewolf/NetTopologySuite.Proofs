@@ -25,11 +25,11 @@
 
    GeodesicString (claimId 0007-intake-geodesic): well-formed
    pts (n≥2, same empty/bad-count as map_ls) bag map_ls S pts
-   (MkChord). Sheet geodesic = chord. No MkGeodesic. SPIRAL
-   stays Decline. ID_GeodesicString is not the well-formed
+   (MkChord). Sheet geodesic = chord. No MkGeodesic. Non-clothoid
+   SPIRAL declines. ID_GeodesicString is not the well-formed
    answer. Not ellipsoid / WKB 13 / emit / first-cook expand.
 
-   Fail closed: SPIRALCURVE, MkOutOfScope leftovers.
+   SpiralOther declines. Clothoid kind reuses map_clothoid.
    CircUnknown well-formed CS/Circle now maps
    through IntakeAngles (claimId 0007-intake-angles): chart
    θ₀/Δθ via 3-axiom atan2, then MkCirc chickens.
@@ -44,8 +44,8 @@
    IsoClothoidIntake (direct copy, not an ISO formula).
    Similarity frame or a named Decline. The locked fixture's
    fields map to locked_clothoid_egg (eval-level). JTS
-   example5 (0, 5/1000, 80) is that bag; other triples
-   decline ID_JtsClothoidNotYet. example5 bags both.
+   example5 (0, 5/1000, 80) is that bag; L <= 0 and other
+   triples decline by name. example5 bags both.
    ID_IsoClothoid is not the well-formed answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
 
@@ -97,7 +97,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake IntakeSpiralJts.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -121,7 +121,7 @@ Inductive TaggedCst : Type :=
 | TClothoidJts : R -> R -> R -> TaggedCst
 | TClothoidIso : IsoClothoid -> TaggedCst
 | TGeodesicString : list Point -> TaggedCst
-| TSpiralCurve : TaggedCst
+| TSpiralCurve : SpiralInput -> TaggedCst
 | TOutOfSlice : TaggedCst.
 
 (* Intake Decline. Distinct type from cook IResult / IDecline. *)
@@ -130,6 +130,7 @@ Inductive IntakeDeclineReason : Type :=
 | ID_BadPointCount
 | ID_GeodesicString
 | ID_SpiralCurve
+| ID_SpiralOther
 | ID_IsoClothoid
 | ID_MkOutOfScope
 | ID_CircGammaLeftover
@@ -145,6 +146,7 @@ Inductive IntakeDeclineReason : Type :=
 | ID_DegenerateWindow
 | ID_TiltedPlacement
 | ID_JtsClothoidNotYet
+| ID_JtsNonPositiveLength
 | ID_NotFirstSlice.
 
 Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
@@ -218,6 +220,8 @@ Definition locked_cc_cst : TaggedCst :=
    carrying JTS (k0,k1,L) and ISO REFERENCELOCATION forms. *)
 Definition example5_jts_cst : TaggedCst :=
   TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L.
+Definition spiral_bloss : TaggedCst :=
+  TSpiralCurve (SpiralOther SOK_Bloss).
 Definition example5_iso_clothoid_cst : TaggedCst :=
   TClothoidIso locked_iso_clothoid.
 Definition example5_cc_both_clothoid_cst : TaggedCst :=
@@ -352,9 +356,27 @@ Definition map_clothoid (s : Sheet) (f : IsoClothoid) : IntakeResult :=
   | inr e => IntakeBag (clothoid_bag s e)
   end.
 
+Definition intake_decline_of (d : CertDecline) : IntakeDeclineReason :=
+  match d with
+  | CD_SpiralOther _ => ID_SpiralOther
+  | CD_JtsNonPositiveLength _ _ _ => ID_JtsNonPositiveLength
+  | CD_JtsTripleNotYet _ _ _ => ID_JtsClothoidNotYet
+  end.
+
+Definition map_spiral (s : Sheet) (sp : SpiralInput) : IntakeResult :=
+  match cert_of_spiral sp with
+  | inr f => map_clothoid s f
+  | inl d => IntakeDecline (intake_decline_of d)
+  end.
+
 Definition map_jts_clothoid (s : Sheet) (k0 k1 len : R) : IntakeResult :=
-  if jts_is_example5 k0 k1 len then map_clothoid s locked_iso_clothoid
-  else IntakeDecline ID_JtsClothoidNotYet.
+  match classify_jts k0 k1 len with
+  | JC_Example5 => map_clothoid s locked_iso_clothoid
+  | JC_NonPositiveLength =>
+      IntakeDecline (intake_decline_of (CD_JtsNonPositiveLength k0 k1 len))
+  | JC_TripleNotYet =>
+      IntakeDecline (intake_decline_of (CD_JtsTripleNotYet k0 k1 len))
+  end.
 
 Definition map_cc_example5 (s : Sheet) : ShcBag :=
   append_bags s
@@ -382,7 +404,7 @@ Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
   | TCompoundCurve _ => IntakeDecline ID_NotFirstSlice
   | TClothoidJts k0 k1 len => map_jts_clothoid s k0 k1 len
   | TClothoidIso f => map_clothoid s f
-  | TSpiralCurve => IntakeDecline ID_SpiralCurve
+  | TSpiralCurve sp => map_spiral s sp
   | TOutOfSlice => IntakeDecline ID_NotFirstSlice
   end.
 
@@ -774,8 +796,8 @@ Lemma geodesic_badcount_declines :
 Proof. reflexivity. Qed.
 
 Lemma spiral_declines :
-  intake_map default_sheet TSpiralCurve =
-    IntakeDecline ID_SpiralCurve.
+  intake_map default_sheet spiral_bloss =
+    IntakeDecline ID_SpiralOther.
 Proof.
   reflexivity.
 Qed.
@@ -1020,8 +1042,8 @@ Lemma first_slice_inhabits :
     IntakeDecline ID_CsClosedDegenerate /\
   intake_map default_sheet locked_cs_full_ogc_cst =
     intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]) /\
-  intake_map default_sheet TSpiralCurve =
-    IntakeDecline ID_SpiralCurve /\
+  intake_map default_sheet spiral_bloss =
+    IntakeDecline ID_SpiralOther /\
   intake_walker_kind = IW_FirstSlice.
 Proof.
   repeat split; try exact locked_circle_intake_ends;
@@ -1034,7 +1056,7 @@ Qed.
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_walker_qed_or_qex","title":"First-slice intake maps Point/LineString/locked CircularString/Circle to SHC bag; ADR-0005 IntakeLenient normalizes CIRCULARSTRING(A,B,A) to CIRCLE(A,B,ogc_c) and IntakeStrict Declines ID_CsClosedDegenerate; fail-closes SPIRALCURVE (QED) or silently demotes remaining out-of-scope WKT to MkChord (QEX); discharged QED; well-formed GEODESICSTRING bagging is the 0007-intake-geodesic letter; grammar accept is CST only; Intake Decline is not cook IDecline; clothoid bagging is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_walker_qed_or_qex","title":"First-slice intake maps Point/LineString/locked CircularString/Circle to SHC bag; ADR-0005 IntakeLenient normalizes CIRCULARSTRING(A,B,A) to CIRCLE(A,B,ogc_c) and IntakeStrict Declines ID_CsClosedDegenerate; fail-closes non-clothoid SPIRALCURVE (QED) or silently demotes SpiralOther to MkChord (QEX); discharged QED; well-formed GEODESICSTRING bagging is the 0007-intake-geodesic letter; clothoid SPIRALCURVE is 0007-intake-spiral; grammar accept is CST only; Intake Decline is not cook IDecline; clothoid bagging is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_walker_qed_or_qex :
   (intake_map default_sheet locked_point_cst =
      IntakeBag (map_point default_sheet p00) /\
@@ -1051,16 +1073,15 @@ Theorem ticket_0007_intake_walker_qed_or_qex :
      IntakeDecline ID_CsClosedDegenerate /\
    intake_map default_sheet locked_cs_full_ogc_cst =
      intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]) /\
-   intake_map default_sheet TSpiralCurve =
-     IntakeDecline ID_SpiralCurve /\
+   intake_map default_sheet spiral_bloss =
+     IntakeDecline ID_SpiralOther /\
    grammar_accept_not_valid /\ grammar_accept_not_cooked /\
    intake_walker_kind = IW_FirstSlice /\
    intake_walker_kind <> IW_WktZoo /\
    intake_walker_kind <> IW_NewOracleKeyword)
   \/
-  (exists t b c,
-     intake_map default_sheet t = IntakeBag b /\
-     t = TSpiralCurve /\
+  (exists k b c,
+     intake_map default_sheet (TSpiralCurve (SpiralOther k)) = IntakeBag b /\
      In c (bag_chickens b) /\ egg_class (ck_egg c) = EggChord).
 Proof.
   left.

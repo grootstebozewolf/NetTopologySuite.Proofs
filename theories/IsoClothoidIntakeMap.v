@@ -20,7 +20,7 @@
 
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance SheetHenCook IsoClothoidIntake IntakeWalker
-  IntakeWalkerClothoid.
+  IntakeWalkerClothoid IntakeSpiralJts.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -144,8 +144,8 @@ Lemma jts_other_triple_declines :
   intake_map default_sheet (TClothoidJts 0 0 1) =
     IntakeDecline ID_JtsClothoidNotYet.
 Proof.
-  unfold intake_map, intake_map_atom, map_jts_clothoid.
-  rewrite jts_is_example5_other. reflexivity.
+  unfold intake_map, intake_map_atom, map_jts_clothoid, intake_decline_of.
+  rewrite classify_jts_other. reflexivity.
 Qed.
 
 Lemma locked_iso_intake_eval : forall t,

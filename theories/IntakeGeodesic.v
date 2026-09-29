@@ -214,7 +214,7 @@ Lemma intake_geodesic_no_new_keyword :
   ~ intake_geodesic_qex_inhabits IG_NewOracleKeyword.
 Proof. intro H. exact H. Qed.
 
-(* WITNESS {"claimId":"0007-intake-geodesic","topic":"overlay","lemma":"ticket_0007_intake_geodesic_qed_or_qex","title":"Sheet geodesic: well-formed GeodesicString bags the same MkChord SHC bag as LineString, eggs are MkChord only, gamma_ch joints, tau=LINESTRING, pi(G)=GEODESICSTRING not in T_signed, consecutive eggs already first_cook_scope (QED) or ambient manifold / conic / ellipsoid gamma / WKB 13 / emit / tau=pi / first-cook expand inhabit (QEX); discharged QED; not MkCirc/MkClothoid; SPIRALCURVE still Declines","file":"theories/IntakeGeodesic.v","witness":"0007-intake-geodesic","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-geodesic","topic":"overlay","lemma":"ticket_0007_intake_geodesic_qed_or_qex","title":"Sheet geodesic: well-formed GeodesicString bags the same MkChord SHC bag as LineString, eggs are MkChord only, gamma_ch joints, tau=LINESTRING, pi(G)=GEODESICSTRING not in T_signed, consecutive eggs already first_cook_scope (QED) or ambient manifold / conic / ellipsoid gamma / WKB 13 / emit / tau=pi / first-cook expand inhabit (QEX); discharged QED; not MkCirc/MkClothoid; non-clothoid SPIRALCURVE still Declines","file":"theories/IntakeGeodesic.v","witness":"0007-intake-geodesic","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_geodesic_qed_or_qex :
   (intake_ctor_inhabits IntakeGeodesicMkChord /\
    (forall s pts,
@@ -234,7 +234,7 @@ Theorem ticket_0007_intake_geodesic_qed_or_qex :
    cst_prod_name locked_geodesic_cst = PiGeodesicString /\
    t_signed_of_prod PiGeodesicString = None /\
    first_cook_scope EggChord EggChord /\
-   intake_map default_sheet TSpiralCurve = IntakeDecline ID_SpiralCurve)
+   intake_map default_sheet spiral_bloss = IntakeDecline ID_SpiralOther)
   \/
   (intake_geodesic_qex_inhabits IG_EllipsoidGamma /\
    intake_geodesic_qex_inhabits IG_AmbientManifold /\

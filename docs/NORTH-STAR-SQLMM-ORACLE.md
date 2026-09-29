@@ -46,7 +46,7 @@ Every instantiable §5.1.67 type has a locked row:
 1. WKT the pinned grammar accepts (`wktLexer.g4` / `wktParser.g4`; clothoid fixture `example5.txt`, not `example3.txt`).
 2. Matching WKB hex, NDR and XDR.
 3. EMPTY / Z / M / ZM where the clause defines them.
-4. Mapper verdict: SHC bag **or** named Intake Decline (`ID_Collinear`, `ID_DuplicateControl`, `ID_CsClosedDegenerate` (strict; lenient normalizes), `ID_MkOutOfScope`, fail-closed `GEODESICSTRING` / `SPIRALCURVE`, …).
+4. Mapper verdict: SHC bag **or** named Intake Decline (`ID_Collinear`, `ID_DuplicateControl`, `ID_CsClosedDegenerate` (strict; lenient normalizes), `ID_MkOutOfScope`, fail-closed `GEODESICSTRING` / non-clothoid `SPIRALCURVE`, …).
 5. JTS #7 reads both encodings and writes them back **without** `toLinear` / densify.
 6. Oracle engines see the bag (or never see the Decline). No new keyword.
 
@@ -54,7 +54,7 @@ A type may meet (1)–(5) and stay cook-QEX.
 
 **Shelf A** (signed I/O destination): `POINT` / `LINESTRING` / `POLYGON` + Multi / Collection / EMPTY; `CIRCULARSTRING` 3 and 2n+1 (A,B,A strict Declines, lenient normalizes); `CIRCLE` as two ±π `MkCirc` from A (not WKB 18); `COMPOUNDCURVE` LS+CS with named joints (`cs_joint_circ` / Mode D); `CURVEPOLYGON`; `MULTICURVE` / `MULTISURFACE`; `CLOTHOID` both surface forms → same `MkClothoid` + `cloth_joint` compound.
 
-**Shelf B** (grammar-complete, cook Decline / QEX destination): `ELLIPTICALCURVE`, `NURBSCURVE`, `GEODESICSTRING`, `SPIRALCURVE` (five ISO names only), `COMPOUNDSURFACE`, `BREPSOLID`, ISO `TRIANGLE` / `POLYHEDRALSURFACE PATCHES` / `TIN`. Mapper: named Decline or `MkOutOfScope`. #729 stays HOLD.
+**Shelf B** (grammar-complete, cook Decline / QEX destination): `ELLIPTICALCURVE`, `NURBSCURVE`, `GEODESICSTRING`, `SPIRALCURVE` (clothoid kind reuses `MkClothoid`; other names Decline), `COMPOUNDSURFACE`, `BREPSOLID`, ISO `TRIANGLE` / `POLYHEDRALSURFACE PATCHES` / `TIN`. Mapper: named Decline or `MkOutOfScope`. #729 stays HOLD.
 
 **Shelf C**: HOLD hex for codes 13–17 and 18–21. Not signed I/O. Not Circle-as-18.
 
