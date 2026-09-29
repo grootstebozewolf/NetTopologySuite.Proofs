@@ -76,7 +76,7 @@ the cross-corpus bridge status in `audit-phase4-curves.md` §6.1–6.2.
 
 | Question | Status | Anchor | Notes |
 |---|---|---|---|
-| **Q1 Fresnel integrals (R-side)** | **CONDITIONAL (Qed); integrals ABSENT by design** | `ClothoidResidual.v:99-128` | P/Q are never materialised; f, f′, κ are Section Variables and the analytic facts are named hypotheses, externally witnessed Qed in `clothoid-halley-coq/coq/Clothoid_L.v`. Three-axiom footprint preserved (audit footer). |
+| **Q1 Fresnel integrals (R-side)** | **Host position on LipInt; P/Q still hypotheses** | `SheetHenClothoidCore.v` `cloth_Icos`; `ClothoidResidual.v` | Host Fresnel position is `LipInt` (3 axioms, no `RiemannInt`). P/Q and `H_deriv` / `H_fprime_pos` / `H_mvt` stay named hypotheses, witnessed in `clothoid-halley-coq`. |
 | **Q1′ Fresnel evaluator (b64)** | **ABSENT (aspirational)** | `Intersect_b64_exact_bridge.v:80-122` | `HasClothoidIntersect` typeclass is a commented sketch; no closed form exists (transcendental Fresnel residual, `:88`); Halley-on-L intended; Coquelicot→native-Reals porting estimated 3–5 days for the identities (`:115`) — *before* any b64 lift. |
 | **Q2 Integer-parameter exact regime** | **PARTIAL — degenerate + Scope-A + Halley bound + b64 prefix LANDED (Qed/cond)** | `ClothoidDegenerate.v`; `ClothoidDegenerate_b64.v`; `ClothoidScopeA_b64.v`; `ClothoidResidual_b64_exact.v`; `ClothoidHalley.v`; `ClothoidHalley_b64.v`; precedent `ArcLineIntersect_b64_exact.v` | Polynomial predicates only: the transcendental Fresnel evaluator stays absent. Routes **(A)**, **(C)**, **(C′)**, Scope A.4–A.7 landed (§8–§15). Still open: full intersect evaluator, routes **(B)**/**(D)**. |
 | **Q3 Performance vs. linearisation** | **NOT A THEOREM; fidelity layer + density bound LANDED** | `Linearise.v:225,361,385`; `CurveLinearise.v:109,126,139`; `ArcChordDensity.v` | Operational fidelity is proven: `disjoint_under_linearise` (`Linearise.v:225`) with honest negatives `regime3_counterexample` (`:361`) and `EqualsExact_not_stable` (`:385`); structural closure `chord_approx_ring_closed` / `to_geometry_{outer,hole}_ring_closed` (`CurveLinearise.v:109,126,139`). Runtime throughput is NTS benchmarking territory, out of corpus scope; the *provable* face — the chord-count-vs-sagitta law (`ArcChordDensity.v`, §16) and the bounded-iteration (≤4) termination model (`ClothoidHalley.v`, §12) — is landed. |
@@ -156,17 +156,11 @@ under CC BY 4.0 (derived from ProRail Spoorgeometrie).
   polynomial prefix of f given oracle-supplied P/Q values, modelled on
   `ArcLineIntersect_b64_exact.v`; honest that the transcendental stage is
   never claimed.
-- **(D) Full Fresnel internalisation (Q1)** — *high / strategic.* The
-  licence gate is gone (EUPL-1.2 repro, integration-note grant); what
-  remains are the §5.1 scope decisions (Stdlib `RiemannInt` + a `classic`
-  fourth-axiom call, a Coquelicot dependency, or recorded adoption of the
-  EUPL witness scripts). **Decided 2026-06-12:** ADR-0001 (Accepted,
-  `docs/adr/ADR-0001-fresnel-internalisation-stack.md`) records the path
-  — Coquelicot lane, fresh BSD-3 scripts, allowlist unchanged — so (D)
-  is now **consumer-gated only**: it executes when a downstream consumer
-  demands end-to-end machine-checked Halley, with no policy stall; the
-  bounded-iteration termination lemma stays available conditionally (the
-  `ClothoidResidual.v` idiom) without it.
+- **(D) Full Fresnel internalisation (Q1)** — host position evaluation
+  is `LipInt` (3 axioms, no `RiemannInt`; #883). ADR-0001's Coquelicot
+  lane is the Accepted record only for FTC, d/dL of P(L)/Q(L), and
+  `H_mvt`; a **Proposed** amendment (2026-09-29) says so and does not
+  flip the Status row. Halley end-to-end stays consumer-gated.
 
 ## 7. Recommendation
 

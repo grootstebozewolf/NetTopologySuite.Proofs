@@ -11,7 +11,7 @@ types, ADR-0004 remint) are untouched.  Year-1 engine stays circular-only.
 | P0 | bezier | `theories/Bezier3Polygon.v` | `bezier3_length_le_polygon` — L ≤ control-polygon length on [0,1] | Qed, 3-axiom |
 | P1 | ellipse | `theories/EllipseLength_E.v` | `ellipse_circular_E_discharges` — rx=ry inhabits H_E_chord / H_E_approx at E(t)=r·t; general elliptic-E parked | Qed + Technique park, 3-axiom |
 | P1 | ellipse | `theories/EllipseSpeedIntegral.v` | `ellipse_speed_integral_is_curve_length` — UC + chord-rate of √σ²; increment_squeezed E σ is the remaining primitive | Qed + Technique park, 3-axiom (#563 / 508-d) |
-| P1 | clothoid | `theories/ClothoidLength_unit.v` | `unit_line_discharges_window` — unit-speed straight inhabits the [sd,ed] contract; Euler-spiral integrals stay Route-1 primitives | Qed + Technique park, 3-axiom |
+| P1 | clothoid | `theories/ClothoidLength_unit.v` | `unit_line_discharges_window` — unit-speed straight inhabits the [sd,ed] contract; host Fresnel position is LipInt, not this file | Qed + Technique park, 3-axiom |
 | P1 | clothoid | `theories/ClothoidFresnel.v` + `ClothoidFresnelInhab.v` | pack `fresnel_is_curve_length` (3-axiom conditional); inhabitant `fresnel_unit_window_length_inhab` via Stdlib RiemannInt of (cos,sin)(t²/2) — `[0,1]` length 1 | Qed + inhabitant, Category C (#564 / 508-e) |
 | P1 | nurbs | `theories/NurbsGeneralLength.v` | equal-weight rational cubic ↔ cubic; two-window `nurbs_knot_span_additive`; conditional primitive | Qed, 3-axiom |
 | P1 | nurbs | `theories/NurbsKnotSpans.v` | `nurbs_spans_additive` — knot-vector induction; instance `golden_half_circle_length` (two 508-a quarters) | Qed, 3-axiom additivity / Category C instance (#565 / 508-g) |
