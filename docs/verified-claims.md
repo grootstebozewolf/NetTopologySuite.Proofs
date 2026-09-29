@@ -1164,15 +1164,15 @@ while every compact window satisfies the contract. The ellipse tier is now
 the engine's instance at `F = elliptic-E`; the clothoid at `F = id` under
 the window-local unit-speed contract (ADR-0001 idiom, mirroring
 `ClothoidResidual.v`). Host Fresnel position is `LipInt` (`cloth_Icos`,
-`cloth_Isin`); this file's `g` stays abstract. Unit-speed discharge
-still needs FTC, which LipInt does not give; the witness lane for that
-discharge and for Halley `H_deriv` stays `clothoid-halley-coq`. Oracle
-`K` quadrature remains the differential check.
+`cloth_Isin`); this file's `g` stays abstract (`H_unit_chord`,
+`H_unit_approx`). FTC is `lipint_ftc`; Halley `H_deriv` is
+`lint_leibniz` / `clothoid_f_deriv`. Oracle `K` quadrature remains
+the differential check.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `ArcRectifiable.v : curve_length_of_primitive` (+ `uniform_lower_primitive`) | **The first-order-tight primitive engine:** if every chord within `[a,b]` is ≤ its `F`-increment and, on fine gaps within the window, the increment exceeds the chord by at most `ε·gap`, then `is_curve_length g a b (F b − F a)` — upper half by chord-modulus telescoping; least half by uniform partitions, instantiating the tightness at `ε = slack/(b−a+1)` where slack is the lub gap being refuted; no limits library; the conditional-tier headline of every integral lane `[exact]` | 3 |
-| `ClothoidLength.v : clothoid_arclength_is_curve_length` (+ `clothoid_length_upper`) | **The window-local unit-speed tier (named hypotheses `H_unit_chord`, `H_unit_approx` on the K token's own `[sd, ed]`):** a clothoid parameterized by arc length has metric length exactly `ed − sd` — the engine at `F = id`; the upper bound needs only the chord hypothesis (chord-modulus telescoping, not the full engine). Host position is LipInt; discharge of the windowed unit-speed contract still needs FTC, so it tracks `clothoid-halley-coq` `[conditional]` | 3 |
+| `ClothoidLength.v : clothoid_arclength_is_curve_length` (+ `clothoid_length_upper`) | **The window-local unit-speed tier (named hypotheses `H_unit_chord`, `H_unit_approx` on the K token's own `[sd, ed]`):** a clothoid parameterized by arc length has metric length exactly `ed − sd` — the engine at `F = id`; the upper bound needs only the chord hypothesis (chord-modulus telescoping, not the full engine). Host position is LipInt (`lipint_ftc`); this row's windowed contract stays `H_unit_chord` / `H_unit_approx` `[conditional]` | 3 |
 
 ## Issue #508 — NURBS rung 1: the rational quadratic (`NurbsQuadraticLength.v`) <!-- feat:arc-len geom:cs -->
 
@@ -1232,9 +1232,9 @@ is named and sandwiched; the missing method remains the integral of `√σ²`.
 ## Issue #508 — clothoid P1: windowed unit-speed discharge (`ClothoidLength_unit.v`) <!-- feat:arc-len geom:cs -->
 
 The `[sd, ed]` contract is inhabited in-corpus by a unit-speed straight
-line (chord = gap). Host Fresnel position is `LipInt`; this letter's
-unit-speed discharge of the spiral stays external. Tightness is never
-quantified over all of `R`.
+line (chord = gap). Host Fresnel position is `LipInt`; this letter
+does not discharge the spiral's `H_unit_chord` / `H_unit_approx`.
+Tightness is never quantified over all of `R`.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|

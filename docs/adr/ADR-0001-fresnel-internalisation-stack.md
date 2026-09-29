@@ -69,17 +69,20 @@ dyadic integral): axioms `sig_not_dec`, `sig_forall_dec`,
 `functional_extensionality_dep`. No `RiemannInt` (#883, `df31a4fe`;
 MkClothoid unlock #884, `b36c35d2`).
 
-Coquelicot remains only for what LipInt does not supply: FTC for
-`lint` / `int_seg`; differentiation under the integral for Halley
-P(L) and Q(L) (`ClothoidResidual.v` hypotheses `H_deriv` and
-`H_fprime_pos`); and MVT (`H_mvt`; LipInt has no mean-value
-theorem). Fresh BSD-3 scripts, no EUPL paste, the consumer gate,
-and the three-axiom allowlist stand for that remainder.
+`LipIntFTC.v : lipint_ftc` is FTC for `lint` (#896). `H_deriv` is
+`LipIntLeibniz.v : lint_leibniz`, instantiated as
+`ClothoidResidual.v : clothoid_f_deriv`. Half-branch `H_fprime_pos`
+(`|κL| ≤ 1/2`) is `clothoid_fprime_pos`; uniqueness is
+`RelateClothoid.v : clothoid_L_unique_half_branch`. `H_mvt` is gone
+(`RealMonotone.v : deriv_pos_strict_incr`). Full branch `|κL| ≤ π` is
+`clothoid_L_unique_on_branch` under uninhabited `ClothoidFPrimePos`.
+Coquelicot is not that discharge. Fresh BSD-3 scripts, no EUPL paste,
+the consumer gate, and the three-axiom allowlist stand.
 
 ## Consequences
 
 **Positive.**
-- The Coquelicot remainder (FTC, d/dL of P/Q, MVT) stays consumer-gated.
+- FTC (`lipint_ftc`), `H_deriv` (`lint_leibniz`), and half-branch `H_fprime_pos` (`clothoid_fprime_pos`) are Stdlib. Full-branch `ClothoidFPrimePos` stays open; Halley end-to-end stays consumer-gated.
 - The licence question dissolves rather than being adjudicated: no
   copyleft text enters the tree, so no per-file licence mixing, no
   reliance on interpreting the witness README's grant note.
