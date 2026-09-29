@@ -105,18 +105,14 @@ Theorem clothoid_L_unique_on_branch :
   forall (f : R -> R) (f' : R -> R) (kappa : R),
     (forall L : R, derivable_pt_lim f L (f' L)) ->
     (forall L : R, 0 < L -> Rabs (kappa * L) <= PI -> 0 < f' L) ->
-    (forall a b : R,
-       a < b ->
-       (forall c : R, a <= c <= b -> derivable_pt_lim f c (f' c)) ->
-       exists c : R, f b - f a = f' c * (b - a) /\ a < c < b) ->
     forall L1 L2 : R,
       0 < L1 -> 0 < L2 ->
       Rabs (kappa * L1) <= PI -> Rabs (kappa * L2) <= PI ->
       f L1 = 0 -> f L2 = 0 ->
       L1 = L2.
 Proof.
-  intros f f' kappa Hderiv Hfpos Hmvt L1 L2 HL1 HL2 Hb1 Hb2 Hf1 Hf2.
-  exact (clothoid_residual_unique_root f f' kappa Hderiv Hfpos Hmvt
+  intros f f' kappa Hderiv Hfpos L1 L2 HL1 HL2 Hb1 Hb2 Hf1 Hf2.
+  exact (clothoid_residual_unique_root f f' kappa Hderiv Hfpos
            L1 L2 HL1 HL2 Hb1 Hb2 Hf1 Hf2).
 Qed.
 

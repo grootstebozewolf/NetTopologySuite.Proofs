@@ -8,8 +8,8 @@
 
    Context.  ClothoidResidual.v proves monotone-branch uniqueness of the
    residual f(L) = L^2 * (P(L)^2 + Q(L)^2) - d^2 CONDITIONALLY: f, f', kappa
-   are Section Variables and the analytic facts (H_deriv, H_fprime_pos,
-   H_mvt) are named hypotheses, externally witnessed in the companion
+   are Section Variables and the analytic facts (H_deriv, H_fprime_pos)
+   are named hypotheses, externally witnessed in the companion
    clothoid-halley-coq corpus (Coquelicot).  In the degenerate regime
    k0 = k1 = 0 the turning angle psi vanishes identically, so the
    Fresnel-like integrals collapse on the nose:
@@ -32,12 +32,14 @@
       positive root of f_deg (degenerate_root_exact,
       degenerate_unique_positive_root) -- proved directly, no interface.
 
-   2. NON-VACUITY of ClothoidResidual.v's conditional interface: all three
+   2. NON-VACUITY of ClothoidResidual.v's conditional interface: both
       Section hypotheses are discharged concretely for f_deg with kappa = 0
-      (degenerate_H_deriv, degenerate_H_fprime_pos, degenerate_H_mvt -- the
-      last WITHOUT Classical_Prop.classic, by exhibiting the midpoint), and
-      the Section-closed theorems are instantiated end-to-end
-      (degenerate_unique_root_via_interface).  The conditional headline is
+      (degenerate_H_deriv, degenerate_H_fprime_pos), and the Section-closed
+      theorems are instantiated end-to-end
+      (degenerate_unique_root_via_interface).  Strict increase comes from
+      RealMonotone, not from an MVT premise.  degenerate_H_mvt remains a
+      direct midpoint identity for the quadratic (no Classical_Prop.classic);
+      it is not a premise of the interface.  The conditional headline is
       therefore inhabited: its hypotheses are not mutually unsatisfiable.
       Cf. the corpus's RED non-vacuity idiom (GeneralTriangleParityRED.v).
 
@@ -193,8 +195,7 @@ Proof.
   apply (clothoid_residual_strictly_increasing
            (degenerate_residual d) (degenerate_residual' d) 0
            (degenerate_H_deriv d)
-           (degenerate_H_fprime_pos d)
-           (degenerate_H_mvt d)).
+           (degenerate_H_fprime_pos d)).
 Qed.
 
 Theorem degenerate_unique_root_via_interface :
@@ -209,7 +210,6 @@ Proof.
            (degenerate_residual d) (degenerate_residual' d) 0
            (degenerate_H_deriv d)
            (degenerate_H_fprime_pos d)
-           (degenerate_H_mvt d)
            L1 L2 HL1 HL2
            (degenerate_branch_trivial L1)
            (degenerate_branch_trivial L2)
