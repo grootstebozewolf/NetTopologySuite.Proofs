@@ -7,8 +7,8 @@
    segment hit carries the host check: on_circ at t_of_zeta ζ and
    on_chord at tj_of ζ, at the chart point.  Stated over zeta_seg_hit
    (root, chart window, 0 ≤ tj ≤ 1) because classify_zeta (C1.9) is not
-   proved.  Under carry-and-check that pair is what I_ok checks; this
-   does not change host I_ok, which still declines the mixed pair.
+   proved.     Under carry-and-check that pair is what I_ok checks. An in-scope
+   zeta_seg_hit is a host I_ok Hit (HostCircChordOracle).
 
    P uses only C1 (ChartLineQuadratic) and C2 (ZetaEggBridge) lemmas:
    no cos/sin/atan3/atan2/PI lemma and no case split on the sign of Δθ,

@@ -425,7 +425,7 @@ Qed.
 (* append_bags is hen offset, not geometry. Sidecar I_ok_mixed stays.         *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_joint_host_endpoints","title":"Mode D CC LS+CS joint: intake map_cc_locked LS end equals quarter CS start via host chord_eval / circ_eval; append_bags is hen offset not geometry; host I_ok mixed stays Decline","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_joint_host_endpoints","title":"Mode D CC LS+CS joint: intake map_cc_locked LS end equals quarter CS start via host chord_eval / circ_eval; append_bags is hen offset not geometry; in-scope host I_ok is Hit","file":"theories/CircularCookCcConcat.v","witness":"0007-B.2-cc-member-joints","board":"ADR-0007"} *)
 
 Theorem locked_cc_joint_host_endpoints :
   IntakeWalker.locked_cc_joint_pt =
@@ -443,19 +443,12 @@ Proof.
   exact IntakeWalker.locked_cc_joint_host_eval_eq.
 Qed.
 
-Lemma locked_cc_intake_ls_cs_host_decline :
+Lemma locked_cc_intake_ls_cs_host_hit :
   I_ok (MkChord (mkChordEgg IntakeWalker.p00 IntakeWalker.p50))
-       (MkCirc locked_circ_A) IDecline.
+       (MkCirc locked_circ_A)
+       (IHit IntakeWalker.locked_cc_joint_pt 1 0).
 Proof.
-  exact IntakeWalker.locked_cc_ls_cs_host_decline.
-Qed.
-
-Lemma locked_cc_intake_ls_cs_hit_not_host_I_ok :
-  ~ I_ok (MkChord (mkChordEgg IntakeWalker.p00 IntakeWalker.p50))
-         (MkCirc locked_circ_A)
-         (IHit IntakeWalker.locked_cc_joint_pt 1 0).
-Proof.
-  exact IntakeWalker.locked_cc_ls_cs_hit_not_host_I_ok.
+  exact IntakeWalker.locked_cc_ls_cs_host_hit.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -846,5 +839,4 @@ Print Assumptions ticket_0007_b2_host_qed_or_qex.
 Print Assumptions ticket_0007_b2_park_qed_or_qex.
 Print Assumptions locked_cc_joint_host_endpoints.
 Print Assumptions locked_cc_joint_host_eval_eq.
-Print Assumptions locked_cc_intake_ls_cs_host_decline.
-Print Assumptions locked_cc_intake_ls_cs_hit_not_host_I_ok.
+Print Assumptions locked_cc_intake_ls_cs_host_hit.

@@ -53,8 +53,8 @@
      map_cc_locked members share the host joint
      chord_eval (mkChordEgg p00 p50) 1
        = circ_eval locked_circ_A 0.
-     append_bags is hen offset, not geometry. LS–CS stays
-     host I_ok Decline (not promoted). No CompoundEgg /
+     append_bags is hen offset, not geometry. LS–CS is host
+     I_ok Hit at the joint (in-scope). No CompoundEgg /
      cs_eval. claimId 0007 kept; witnesses
      0007-B.2-cc-member-joints / 0007-B-mixed-ls-cs-joints
      kept (not reminted).
@@ -521,7 +521,7 @@ Qed.
 (* Mode D: locked CC LS+CS joint on host endpoints.                           *)
 (* append_bags is hen offset, not geometry — equality is chord_eval /         *)
 (* circ_eval on the locked members that map_cc_locked is built from.          *)
-(* LS–CS stays host I_ok Decline. Not sidecar remint. Not first-cook expand.  *)
+(* LS–CS is host I_ok Hit at the joint. Not sidecar remint. Not first-cook expand. *)
 (* -------------------------------------------------------------------------- *)
 
 Definition locked_cc_ls_egg : ChordEgg := mkChordEgg p00 p50.
@@ -563,19 +563,29 @@ Proof.
   rewrite <- Hl. exact Hr.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_ls_cs_host_decline","title":"Mode D locked CC LS+CS stays host I_ok Decline; IHit at the joint is not host I_ok; sidecar I_ok_mixed stays sidecar; no first_cook_scope expand","file":"theories/IntakeWalker.v","witness":"0007-B-mixed-ls-cs-joints","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"locked_cc_ls_cs_host_hit","title":"Mode D locked CC LS+CS is host I_ok Hit at the joint; in-scope circ times chord; sidecar I_ok_mixed stays sidecar; no first_cook_scope expand","file":"theories/IntakeWalker.v","witness":"0007-B-mixed-ls-cs-joints","board":"ADR-0007"} *)
 
-Lemma locked_cc_ls_cs_host_decline :
-  I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A) IDecline.
+Lemma locked_cc_ls_cs_host_scope :
+  circ_chord_host_scope locked_circ_A (mkChordEgg p00 p50).
 Proof.
-  unfold I_ok, interpolant_pair. intro H. exact H.
+  split.
+  - unfold circ_open_span, locked_circ_A. cbn.
+    pose proof PI_RGT_0 as Hpi. lra.
+  - unfold chord_nondeg, chord_dx, chord_dy, p00, p50. cbn.
+    intro Heq. apply (f_equal fst) in Heq. cbn in Heq. lra.
 Qed.
 
-Lemma locked_cc_ls_cs_hit_not_host_I_ok :
-  ~ I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A)
+Lemma locked_cc_ls_cs_host_hit :
+  I_ok (MkChord (mkChordEgg p00 p50)) (MkCirc locked_circ_A)
        (IHit locked_cc_joint_pt 1 0).
 Proof.
-  unfold I_ok. intro H. exact H.
+  unfold I_ok.
+  split; [exact locked_cc_ls_cs_host_scope|].
+  split.
+  - unfold on_chord. split; [lra|].
+    unfold locked_cc_joint_pt. symmetry. exact locked_cc_ls_end.
+  - unfold on_circ. split; [lra|].
+    symmetry. exact locked_cc_cs_start.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -1149,8 +1159,8 @@ Print Assumptions locked_cc_ls_end.
 Print Assumptions locked_cc_cs_start.
 Print Assumptions locked_cc_joint_host_endpoints.
 Print Assumptions locked_cc_joint_host_eval_eq.
-Print Assumptions locked_cc_ls_cs_host_decline.
-Print Assumptions locked_cc_ls_cs_hit_not_host_I_ok.
+Print Assumptions locked_cc_ls_cs_host_scope.
+Print Assumptions locked_cc_ls_cs_host_hit.
 Print Assumptions locked_circle_maps.
 Print Assumptions locked_full_circle_egg_at_0.
 Print Assumptions locked_full_circle_egg_at_half.

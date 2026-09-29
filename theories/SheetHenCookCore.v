@@ -129,7 +129,21 @@ Definition first_cook_scope (a b : EggClass) : Prop :=
 Definition on_chord (c : ChordEgg) (t : R) (p : Point) : Prop :=
   0 <= t <= 1 /\ p = chord_eval c t.
 
-(* Hit on both interpolants; Empty is disjoint; Decline is tags/mixed. *)
+(* In-scope mixed circ×chord: open span (|Δθ| < 2π) and a nondegenerate
+   chord. Full-span eggs and degenerate chords stay Decline. *)
+Definition chord_dx (s : ChordEgg) : R :=
+  px (ce_p1 s) - px (ce_p0 s).
+Definition chord_dy (s : ChordEgg) : R :=
+  py (ce_p1 s) - py (ce_p0 s).
+Definition chord_nondeg (s : ChordEgg) : Prop :=
+  (chord_dx s, chord_dy s) <> (0, 0).
+Definition circ_open_span (c : CircularEgg) : Prop :=
+  -(2 * PI) < circ_sweep c < 2 * PI.
+Definition circ_chord_host_scope (c : CircularEgg) (s : ChordEgg) : Prop :=
+  circ_open_span c /\ chord_nondeg s.
+
+(* Hit on both interpolants; Empty is disjoint; Decline is tags or
+   out-of-scope mixed. In-scope MkCirc×MkChord is a host Hit. *)
 Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   match e1, e2, o with
   | MkChord c1, MkChord c2, IHit p ti tj =>
@@ -143,6 +157,20 @@ Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   | MkCirc c1, MkCirc c2, IEmpty =>
       ~ exists X t1 t2, on_circ c1 t1 X /\ on_circ c2 t2 X
   | MkCirc _, MkCirc _, IDecline => False
+  | MkCirc c, MkChord s, IHit p ti tj =>
+      circ_chord_host_scope c s /\ on_circ c ti p /\ on_chord s tj p
+  | MkCirc c, MkChord s, IEmpty =>
+      circ_chord_host_scope c s /\
+      ~ exists X t1 t2, on_circ c t1 X /\ on_chord s t2 X
+  | MkCirc c, MkChord s, IDecline =>
+      ~ circ_chord_host_scope c s
+  | MkChord s, MkCirc c, IHit p ti tj =>
+      circ_chord_host_scope c s /\ on_chord s ti p /\ on_circ c tj p
+  | MkChord s, MkCirc c, IEmpty =>
+      circ_chord_host_scope c s /\
+      ~ exists X t1 t2, on_chord s t1 X /\ on_circ c t2 X
+  | MkChord s, MkCirc c, IDecline =>
+      ~ circ_chord_host_scope c s
   | MkClothoid c1, MkClothoid c2, IHit p ti tj => on_cloth c1 ti p /\ on_cloth c2 tj p
   | MkClothoid c1, MkClothoid c2, IEmpty =>
       ~ exists X t1 t2, on_cloth c1 t1 X /\ on_cloth c2 t2 X

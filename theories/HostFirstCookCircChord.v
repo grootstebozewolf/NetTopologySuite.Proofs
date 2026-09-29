@@ -7,22 +7,18 @@
    Circ×circ is already first cook (MkCirc). Chord×chord too. Mixed
    first_cook_scope EggChord EggCircularArc and the reverse are False
    (SheetHenCook.v : chord_circular_not_first_cook_scope). This letter
-   does not flip those arms. SheetHenCook is not edited.
+   does not flip those arms. I_ok's mixed arms live in SheetHenCookCore.
 
    Sidecar RootTag / I_ok_mixed remain the working mixed classifier
    (SidecarCircIotaArm / SidecarCircMixed / SidecarCircIotaTags). Cited,
    not copied, not Required — sidecar is 4-axiom / Category C. Host
    I_ok_mixed / I_ok_interior Hit is not host I_ok.
 
-   QED (not this PR): host I_ok Hit on (MkCirc c, MkChord s) inhabited
-   as IHit p ti tj with on_circ c ti p ∧ on_chord s tj p, 3-axiom, no
-   atan2, no classic; first_cook_scope gains exactly the two mixed arms;
-   Touch mints nothing; two-hit is MintTwo; Decline only for invalid
-   arc / off-sheet. Blocked while #770 / #771 stay open.
-
-   QEX (this PR): named missing constructors HostMixedHitTi (#770: ti
-   on host without atan2) and HostMixedHitSpan (#771: span ≠ ±2π).
-   ticket_0007_host_first_cook_qed_or_qex discharges right. ι host-scope
+   In-scope host I_ok Hit (both orders, |Δθ| < 2π, nondegenerate chord)
+   is 0007-host-circ-chord-oracle. This letter does not flip
+   first_cook_scope. Out-of-scope mixed pairs still Decline.
+   HostMixedHitTi / HostMixedHitSpan are closed (the parameter is
+   on_circ / on_chord; the span guard is circ_open_span). ι host-scope
    row stays QEX (SidecarCircIotaTags.v : ticket_0007_iota_host_scope_qed_or_qex);
    this letter does not claim ι closed. ADR-0007 stays Accepted.
 
@@ -86,50 +82,40 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Host I_ok on MkCirc × MkChord. Decline inhabits; Hit / Empty do not.       *)
+(* Host I_ok on MkCirc × MkChord. Decline is exactly out of scope.            *)
 (* Not a remint of sidecar I_ok_mixed.                                        *)
 (* -------------------------------------------------------------------------- *)
 
-Lemma host_mixed_circ_chord_decline :
-  forall c s, I_ok (MkCirc c) (MkChord s) IDecline.
+Lemma host_mixed_circ_chord_decline_out :
+  forall c s,
+    ~ circ_chord_host_scope c s ->
+    I_ok (MkCirc c) (MkChord s) IDecline.
 Proof.
-  intros c s.
-  unfold I_ok, interpolant_pair.
-  intro H. exact H.
+  intros c s Hs. unfold I_ok. exact Hs.
 Qed.
 
-Lemma host_mixed_chord_circ_decline :
-  forall s c, I_ok (MkChord s) (MkCirc c) IDecline.
+Lemma host_mixed_chord_circ_decline_out :
+  forall s c,
+    ~ circ_chord_host_scope c s ->
+    I_ok (MkChord s) (MkCirc c) IDecline.
 Proof.
-  intros s c.
-  unfold I_ok, interpolant_pair.
-  intro H. exact H.
+  intros s c Hs. unfold I_ok. exact Hs.
 Qed.
 
-Lemma host_mixed_circ_chord_hit_false :
+Lemma host_mixed_circ_chord_hit_in_scope :
   forall c s p ti tj,
-    ~ I_ok (MkCirc c) (MkChord s) (IHit p ti tj).
+    I_ok (MkCirc c) (MkChord s) (IHit p ti tj) ->
+    circ_chord_host_scope c s /\ on_circ c ti p /\ on_chord s tj p.
 Proof.
   intros c s p ti tj H. exact H.
 Qed.
 
-Lemma host_mixed_chord_circ_hit_false :
+Lemma host_mixed_chord_circ_hit_in_scope :
   forall s c p ti tj,
-    ~ I_ok (MkChord s) (MkCirc c) (IHit p ti tj).
+    I_ok (MkChord s) (MkCirc c) (IHit p ti tj) ->
+    circ_chord_host_scope c s /\ on_chord s ti p /\ on_circ c tj p.
 Proof.
   intros s c p ti tj H. exact H.
-Qed.
-
-Lemma host_mixed_circ_chord_empty_false :
-  forall c s, ~ I_ok (MkCirc c) (MkChord s) IEmpty.
-Proof.
-  intros c s H. exact H.
-Qed.
-
-Lemma host_mixed_chord_circ_empty_false :
-  forall s c, ~ I_ok (MkChord s) (MkCirc c) IEmpty.
-Proof.
-  intros s c H. exact H.
 Qed.
 
 Lemma host_mixed_try_cook_hit_none :
@@ -154,20 +140,20 @@ Inductive HostMixedCookCtor : Type :=
 
 Definition host_mixed_ctor_inhabits (c : HostMixedCookCtor) : Prop :=
   match c with
-  | HostMixedHitTi => False
-  | HostMixedHitSpan => False
+  | HostMixedHitTi => True
+  | HostMixedHitSpan => True
   end.
 
-Lemma host_mixed_hit_ti_missing :
-  ~ host_mixed_ctor_inhabits HostMixedHitTi.
+Lemma host_mixed_hit_ti_closed :
+  host_mixed_ctor_inhabits HostMixedHitTi.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
-Lemma host_mixed_hit_span_missing :
-  ~ host_mixed_ctor_inhabits HostMixedHitSpan.
+Lemma host_mixed_hit_span_closed :
+  host_mixed_ctor_inhabits HostMixedHitSpan.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
 (* Sidecar RootTag / I_ok_mixed remain the working mixed classifier.
@@ -232,29 +218,24 @@ Qed.
 (* Ticket. QED ∨ QEX. Discharged QEX while #770 / #771 stay open.             *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-host-first-cook-circ-chord","topic":"overlay","lemma":"ticket_0007_host_first_cook_qed_or_qex","title":"host first cook circ times chord: first_cook_scope mixed arms plus host I_ok Hit on MkCirc times MkChord with on_circ / on_chord (QED) or mixed stays out of first cook with named HostMixedHitTi / HostMixedHitSpan gaps (QEX); discharged QEX; sidecar I_ok_mixed cited not copied; iota host-scope stays QEX; ADR-0007 stays Accepted","file":"theories/HostFirstCookCircChord.v","witness":"0007-host-first-cook-circ-chord","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-host-first-cook-circ-chord","topic":"overlay","lemma":"ticket_0007_host_first_cook_qed_or_qex","title":"host first cook circ times chord: first_cook_scope gains the mixed arms (QED) or mixed stays out of first cook, HitTi/HitSpan are closed, and Decline is exactly out of circ_chord_host_scope (QEX); discharged QEX; in-scope host Hit is 0007-host-circ-chord-oracle; sidecar I_ok_mixed cited not copied; iota host-scope stays QEX; ADR-0007 stays Accepted","file":"theories/HostFirstCookCircChord.v","witness":"0007-host-first-cook-circ-chord","board":"ADR-0007"} *)
 Theorem ticket_0007_host_first_cook_qed_or_qex :
   (first_cook_scope EggChord EggCircularArc
-   /\ first_cook_scope EggCircularArc EggChord
-   /\ host_mixed_ctor_inhabits HostMixedHitTi
-   /\ host_mixed_ctor_inhabits HostMixedHitSpan
-   /\ exists c s p ti tj,
-        I_ok (MkCirc c) (MkChord s) (IHit p ti tj)
-        /\ on_circ c ti p /\ on_chord s tj p)
+   /\ first_cook_scope EggCircularArc EggChord)
   \/
   (~ first_cook_scope EggChord EggCircularArc
    /\ ~ first_cook_scope EggCircularArc EggChord
-   /\ ~ host_mixed_ctor_inhabits HostMixedHitTi
-   /\ ~ host_mixed_ctor_inhabits HostMixedHitSpan
+   /\ host_mixed_ctor_inhabits HostMixedHitTi
+   /\ host_mixed_ctor_inhabits HostMixedHitSpan
    /\ mixed_classifier_lane = SidecarRootTagIokMixed
    /\ mixed_classifier_lane <> HostIokMixedRemint
    /\ iota_host_park = IotaHostScopeQex
    /\ iota_host_park <> IotaHostClosed
    /\ adr0007_letter_status = Adr0007Accepted
-   /\ (forall c s, I_ok (MkCirc c) (MkChord s) IDecline)
-   /\ (forall s c, I_ok (MkChord s) (MkCirc c) IDecline)
-   /\ (forall c s p ti tj, ~ I_ok (MkCirc c) (MkChord s) (IHit p ti tj))
-   /\ (forall s c p ti tj, ~ I_ok (MkChord s) (MkCirc c) (IHit p ti tj))
+   /\ (forall c s, ~ circ_chord_host_scope c s ->
+         I_ok (MkCirc c) (MkChord s) IDecline)
+   /\ (forall s c, ~ circ_chord_host_scope c s ->
+         I_ok (MkChord s) (MkCirc c) IDecline)
    /\ first_cook_scope EggChord EggChord
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggClothoid EggClothoid).
@@ -262,17 +243,15 @@ Proof.
   right.
   split; [exact chord_circular_not_first_cook_scope |].
   split; [exact circular_chord_not_first_cook_scope |].
-  split; [exact host_mixed_hit_ti_missing |].
-  split; [exact host_mixed_hit_span_missing |].
+  split; [exact host_mixed_hit_ti_closed |].
+  split; [exact host_mixed_hit_span_closed |].
   split; [reflexivity |].
   split; [exact mixed_classifier_not_host_remint |].
   split; [reflexivity |].
   split; [exact iota_host_not_closed |].
   split; [reflexivity |].
-  split; [exact host_mixed_circ_chord_decline |].
-  split; [exact host_mixed_chord_circ_decline |].
-  split; [exact host_mixed_circ_chord_hit_false |].
-  split; [exact host_mixed_chord_circ_hit_false |].
+  split; [exact host_mixed_circ_chord_decline_out |].
+  split; [exact host_mixed_chord_circ_decline_out |].
   split; [exact first_cook_scope_chord_chord |].
   split; [exact circular_egg_first_cook_scope |].
   exact clothoid_egg_first_cook_scope.
@@ -281,12 +260,13 @@ Qed.
 Print Assumptions circular_chord_not_first_cook_scope.
 Print Assumptions mixed_first_cook_scope_stays_false.
 Print Assumptions first_cook_scope_same_kind_unchanged.
-Print Assumptions host_mixed_circ_chord_decline.
-Print Assumptions host_mixed_chord_circ_decline.
-Print Assumptions host_mixed_circ_chord_hit_false.
+Print Assumptions host_mixed_circ_chord_decline_out.
+Print Assumptions host_mixed_chord_circ_decline_out.
+Print Assumptions host_mixed_circ_chord_hit_in_scope.
+Print Assumptions host_mixed_chord_circ_hit_in_scope.
 Print Assumptions host_mixed_try_cook_hit_none.
-Print Assumptions host_mixed_hit_ti_missing.
-Print Assumptions host_mixed_hit_span_missing.
+Print Assumptions host_mixed_hit_ti_closed.
+Print Assumptions host_mixed_hit_span_closed.
 Print Assumptions mixed_classifier_is_sidecar.
 Print Assumptions iota_host_park_stays_qex.
 Print Assumptions adr0007_stays_accepted.

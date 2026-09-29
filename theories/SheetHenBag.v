@@ -505,16 +505,26 @@ Proof.
   unfold piece_realizes in Ha, Hb. unfold I_ok in Hok.
   destruct supa as [ca|ca]; destruct ea as [ea|ea|ea|ea|ea];
     simpl in Ha, Hb, Hok; try contradiction.
-  - destruct supb as [cb|cb]; destruct eb as [eb|eb|eb|eb|eb];
-      simpl in Hb, Hok; try contradiction.
-    destruct Hok as [Ha1 Hb1].
-    destruct Ha1 as [Hti _]. destruct Hb1 as [Htj _].
-    split; assumption.
-  - destruct supb as [cb|cb]; destruct eb as [eb|eb|eb|eb|eb];
-      simpl in Hb, Hok; try contradiction.
-    destruct Hok as [Ha1 Hb1].
-    destruct Ha1 as [Hti _]. destruct Hb1 as [Htj _].
-    split; assumption.
+  - subst ea.
+    destruct supb as [cb|cb].
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [[Hti _] [Htj _]].
+      split; assumption.
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [_ [[Hti _] [Htj _]]].
+      split; assumption.
+  - subst ea.
+    destruct supb as [cb|cb].
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [_ [[Hti _] [Htj _]]].
+      split; assumption.
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [[Hti _] [Htj _]].
+      split; assumption.
 Qed.
 
 Lemma hit_at_abs :
@@ -532,21 +542,33 @@ Proof.
   destruct supa as [ca|ca]; destruct ea as [ea|ea|ea|ea|ea];
     simpl in Ha, Hb, Hok; try contradiction.
   - subst ea.
-    destruct supb as [cb|cb]; destruct eb as [eb|eb|eb|eb|eb];
-      simpl in Hb, Hok; try contradiction.
-    subst eb.
-    destruct Hok as [[_ Hp1] [_ Hp2]].
-    split.
-    + rewrite Hp1. unfold support_at. simpl. apply chord_window_eval.
-    + rewrite Hp2. unfold support_at. simpl. apply chord_window_eval.
+    destruct supb as [cb|cb].
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [[_ Hp1] [_ Hp2]].
+      split.
+      * rewrite Hp1. unfold support_at. simpl. apply chord_window_eval.
+      * rewrite Hp2. unfold support_at. simpl. apply chord_window_eval.
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [_ [[_ Hp1] [_ Hp2]]].
+      split.
+      * rewrite Hp1. unfold support_at. simpl. apply chord_window_eval.
+      * rewrite Hp2. unfold support_at. simpl. apply circ_window_eval.
   - subst ea.
-    destruct supb as [cb|cb]; destruct eb as [eb|eb|eb|eb|eb];
-      simpl in Hb, Hok; try contradiction.
-    subst eb.
-    destruct Hok as [[_ Hp1] [_ Hp2]].
-    split.
-    + rewrite Hp1. unfold support_at. simpl. apply circ_window_eval.
-    + rewrite Hp2. unfold support_at. simpl. apply circ_window_eval.
+    destruct supb as [cb|cb].
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [_ [[_ Hp1] [_ Hp2]]].
+      split.
+      * rewrite Hp1. unfold support_at. simpl. apply circ_window_eval.
+      * rewrite Hp2. unfold support_at. simpl. apply chord_window_eval.
+    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+      subst eb.
+      destruct Hok as [[_ Hp1] [_ Hp2]].
+      split.
+      * rewrite Hp1. unfold support_at. simpl. apply circ_window_eval.
+      * rewrite Hp2. unfold support_at. simpl. apply circ_window_eval.
 Qed.
 
 Lemma split_keeps_endpoints :
