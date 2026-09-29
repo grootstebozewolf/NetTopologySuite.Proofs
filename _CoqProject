@@ -117,6 +117,7 @@ theories/LipIntLeibniz.v
 theories/MetricSpeed.v
 theories/MetricEnvelope.v
 theories/MetricArea.v
+theories/MetricGreen.v
 theories/MetricCircleSmoke.v
 theories/SheetHenClothoidCore.v
 theories/ClothoidTangent.v

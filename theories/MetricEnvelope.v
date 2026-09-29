@@ -17,7 +17,9 @@
 
    Deferrals, named:
      * Rolle / IVT existence of γ'_x = 0 or γ'_y = 0 is not proved.
-     * per-type files (arc, clothoid, NURBS) exhibit the knots.
+     * clothoid, NURBS, and arc envelope instances. The arc breakpoints
+       are the multiples of π/2 inside [θ₀, θ₀+Δθ], by angle containment.
+       That arc instance is the smallest next step.
      * an equality-form mean value (Δγ = γ'(c) Δt) is not proved.
 
    WITNESS topic: metric · claimId: 0001-metric-envelope
@@ -271,6 +273,14 @@ Proof.
   split; [exact Hx0 | split; [exact Hy0 | split; [exact Hxim | exact Hyim]]].
 Qed.
 
+Print Assumptions rmin_cons_tail.
+Print Assumptions rmin_le_head.
+Print Assumptions rmin_le_tail.
+Print Assumptions rmin_front.
+Print Assumptions rmax_ge_head.
+Print Assumptions rmax_ge_tail.
+Print Assumptions rmax_front.
+Print Assumptions rlast_cons.
 Print Assumptions piece_in_ends.
 Print Assumptions chain_image.
 Print Assumptions interior_zero.

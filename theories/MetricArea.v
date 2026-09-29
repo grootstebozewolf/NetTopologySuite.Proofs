@@ -1,15 +1,23 @@
 (* ============================================================================
    NetTopologySuite.Proofs.MetricArea
    ----------------------------------------------------------------------------
-   Generic signed area of a closed chain of members. A member is a chord
-   or a circular arc. The area is the shoelace of the spine (the start
-   vertex of each member) plus a signed circular-segment bulge on each
-   arc. A chord bulge is zero. The arc bulge is ArcArea.segment_area,
-   already r²/2 · (θ − sin θ), not a second definition of that area.
+   Generic signed-area FORMULA of a closed chain of members. A member is
+   a chord or a circular arc. The formula is the shoelace of the spine
+   (the start vertex of each member) plus a signed circular-segment bulge
+   on each arc. A chord bulge is zero. The arc bulge is
+   ArcArea.segment_area, already r²/2 · (θ − sin θ).
+
+   An arc member is a CircularEgg. Its fields are not independent:
+   p = γ(0), q = γ(1), r = circ_r, θ = circ_sweep (the signed sweep),
+   with γ = circ_eval. That is the smart constructor MArc.
 
    ring_closed: consecutive members meet (end = next start) and the last
    end returns to the first start. signed_area2 closes that ring, and it
    is twice the shoelace, so the split divides it by two.
+
+   The member-level Green identity (½∫(x y' − y x') = ½ cross + bulge)
+   and the sum that makes members_area the curve's signed area live in
+   MetricGreen.v.
 
    Deferrals, named:
      * clothoid and NURBS members are not circular segments. This file
@@ -26,31 +34,37 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance RingArea979 ArcArea.
+From NTS.Proofs Require Import Distance RingArea979 ArcArea SheetHenCircEgg.
 Import ListNotations.
 Local Open Scope R_scope.
 
 Inductive area_member : Type :=
 | MChord : Point -> Point -> area_member
-| MArc : Point -> Point -> R -> R -> area_member.
+| MArc : CircularEgg -> area_member.
 
 Definition member_start (m : area_member) : Point :=
   match m with
   | MChord p _ => p
-  | MArc p _ _ _ => p
+  | MArc e => circ_eval e 0
   end.
 
 Definition member_end (m : area_member) : Point :=
   match m with
   | MChord _ q => q
-  | MArc _ q _ _ => q
+  | MArc e => circ_eval e 1
   end.
 
 Definition member_bulge (m : area_member) : R :=
   match m with
   | MChord _ _ => 0
-  | MArc _ _ r theta => segment_area r theta
+  | MArc e => segment_area (circ_r e) (circ_sweep e)
   end.
+
+Lemma marc_from_egg : forall e,
+  member_start (MArc e) = circ_eval e 0 /\
+  member_end (MArc e) = circ_eval e 1 /\
+  member_bulge (MArc e) = segment_area (circ_r e) (circ_sweep e).
+Proof. intros e. repeat split; reflexivity. Qed.
 
 Definition member_cross (m : area_member) : R :=
   edge_cross (member_start m) (member_end m).
@@ -101,13 +115,13 @@ Lemma chord_bulge_zero : forall p q, member_bulge (MChord p q) = 0.
 Proof. reflexivity. Qed.
 
 Lemma arc_bulge_is_segment :
-  forall p q r theta, member_bulge (MArc p q r theta) = segment_area r theta.
+  forall e, member_bulge (MArc e) = segment_area (circ_r e) (circ_sweep e).
 Proof. reflexivity. Qed.
 
 Lemma arc_bulge_nonneg :
-  forall p q r theta, 0 <= theta -> 0 <= member_bulge (MArc p q r theta).
+  forall e, 0 <= circ_sweep e -> 0 <= member_bulge (MArc e).
 Proof.
-  intros p q r theta Ht. rewrite arc_bulge_is_segment. apply segment_area_nonneg. exact Ht.
+  intros e Ht. rewrite arc_bulge_is_segment. apply segment_area_nonneg. exact Ht.
 Qed.
 
 Lemma crosses_cons : forall m ms, crosses (m :: ms) = member_cross m + crosses ms.
@@ -168,6 +182,7 @@ Proof.
     rewrite Hsh, <- Hsa. field.
 Qed.
 
+Print Assumptions marc_from_egg.
 Print Assumptions chord_bulge_zero.
 Print Assumptions arc_bulge_is_segment.
 Print Assumptions arc_bulge_nonneg.
