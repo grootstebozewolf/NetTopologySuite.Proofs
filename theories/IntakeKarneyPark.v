@@ -205,7 +205,15 @@ Proof.
   exact chord_arc_not_first_cook.
 Qed.
 
+Print Assumptions karney_ellipsoid_sheet_missing.
+Print Assumptions karney_vincenty_total_missing.
+Print Assumptions karney_inverse_as_I_missing.
+Print Assumptions karney_series_as_gamma_missing.
+Print Assumptions sheet_is_planar_frame.
 Print Assumptions ticket_0007_karney_not_planar_intake_qed_or_qex.
 Print Assumptions ticket_0007_karney_vincenty_total_qed_or_qex.
+Print Assumptions k2_owns_chord_hit.
+Print Assumptions k1_owns_inverse.
+Print Assumptions k2_k1_ownership_fence.
 Print Assumptions ticket_0007_karney_chord_not_geodesic_qed_or_qex.
 Print Assumptions ticket_0007_karney_new_sheet_class_qed_or_qex.
