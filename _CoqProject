@@ -153,6 +153,10 @@ theories/SheetHenCookLoopModulo.v
 # idle. leftover_quad_width stays conserved. Park stays LoopObligation.
 # NURBS belayed. No Axiom / Parameter / stub.
 theories/SheetHenCookLoopTerm.v
+# forall-bag letter 1 (claimId 0007-forall-bag, #816). Host/pure-R.
+# Support, window, bag, progress hit, step, noded. Invariant only.
+# Not LeftoverBagTermArm / LoopDischarged. No Axiom / Parameter / stub.
+theories/SheetHenBag.v
 # Circ leftover bag for |H|=2 + noded G on the locked vesica
 # (claimId 0007-circ-leftover-two-hit). Host/pure-R. Reuses leftover-bag
 # shape (interior 𝓘 Hit / Decline idle). Locked measure 2→1→0. Parks ρ
