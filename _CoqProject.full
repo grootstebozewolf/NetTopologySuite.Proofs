@@ -2567,6 +2567,9 @@ theories/ZetaHostHit.v
 # Locked CC LS+CS does not decline the ∀-bag; interior quarter progresses.
 # 3-axiom. No Admitted.
 theories/HostCircChordOracle.v
+# ∀-bag letter 2. ρ and finiteness. claimId none.
+# 3-axiom. No Admitted.
+theories/SheetHenRho.v
 
 # Companion counterexample for ArcOrient.arc_minor (in the style of
 # SpectreChordArcWitness.v): a concrete valid arc where arc_mid sits on the
