@@ -151,12 +151,11 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         if (pts.Count == 3)
         {
             var a = pts[0];
-            var b = pts[1];
             var c = pts[2];
+            if (Eq(a, c))
+                return IntakeResult.OfDecline(Reason.ID_CsClosedDegenerate);
             if (Eq(a, P50) && Eq(c, P05))
                 return CircBag([P50, P05], "MkCirc:quarter");
-            if (Eq(a, P50) && Eq(b, P05) && Eq(c, P50))
-                return CircBag([P50, P50], "MkCirc:full");
         }
         return MapCsUnknown(pts);
     }
@@ -168,7 +167,7 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         if (pts.Count != 3)
             return IntakeResult.OfDecline(Reason.ID_BadPointCount);
         if (Eq(pts[0], P50) && Eq(pts[2], PM50))
-            return CircBag([P50, PM50], "MkCirc:full");
+            return CircBag([P50, P50], "MkCirc:full");
         return MapCircleUnknown(pts);
     }
 
@@ -194,7 +193,7 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         return IntakeResult.OfBag(new Bag(Hens(ends.Count), ends, chickens));
     }
 
-    /// <summary>Same table as theories/IntakeAngles.v try_circle_eggs.</summary>
+    /// <summary>Same table as theories/IntakeAnglesCore.v try_circle_eggs. Ends are [A; A].</summary>
     internal static IntakeResult MapCircleUnknown(IReadOnlyList<Pt> pts)
     {
         if (pts.Count == 0)
@@ -204,7 +203,7 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         var triple = TryTriple(pts[0], pts[1], pts[2]);
         if (!triple.IsBag)
             return triple;
-        return CircBag([pts[0], pts[2]], "MkCirc");
+        return CircBag([pts[0], pts[0]], "MkCirc");
     }
 
     internal static IntakeResult TryTriple(Pt a, Pt b, Pt c)

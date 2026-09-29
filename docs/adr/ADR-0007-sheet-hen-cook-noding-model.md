@@ -1540,9 +1540,9 @@ as an oracle source.
 
 First slice ONLY (what `SheetHenCook` already inhabits): Point,
 LineString, CircularString, CompoundCurve of those two,
-Circle-as-full-span-arc (`MkCirc`, sweep `2π`). Reuses `MkChord` /
-`MkCirc`. No new host γ. OGC CIRCULARSTRING start=end and ISO
-CIRCLE map to the same full-span egg.
+Circle-as-full-span-arc (`MkCirc`, sweep ±2π from A). Reuses `MkChord` /
+`MkCirc`. No new host γ. CIRCULARSTRING(A,B,A) Declines
+`ID_CsClosedDegenerate`; ISO CIRCLE bags [A; A].
 
 Fail closed: `GEODESICSTRING`, `SPIRALCURVE`, MkOutOfScope
 leftovers. No silent chord demote at intake. `example5.txt`: both
@@ -1552,7 +1552,7 @@ angles letter (`0007-intake-angles`), not leftover Decline.
 
 **QED.** First-slice mapper inhabits locked Point / LineString /
 CircularString / Circle / CompoundCurve bags. Named Declines.
-OGC≡ISO same MkCirc egg.
+CIRCULARSTRING(A,B,A) is `ID_CsClosedDegenerate`.
 
 **QEX.** WKB-order Γ walk / WKT zoo / Lesson-1 remints / host
 cook expand / new oracle keyword parked. Clothoid is the
@@ -1562,7 +1562,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed SPIRALCURVE; OGC≡ISO same full-span egg; grammar accept is CST only; well-formed GEODESICSTRING is `0007-intake-geodesic` | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : ogc_iso_circle_same_egg`, `IntakeWalker.v : spiral_declines` |
+| `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; fail-closed SPIRALCURVE; CIRCULARSTRING(A,B,A) Declines; grammar accept is CST only; well-formed GEODESICSTRING is `0007-intake-geodesic` | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : locked_cs_full_ogc_declines`, `IntakeWalker.v : spiral_declines` |
 | `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — see the angles letter below | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc` |
 | `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; bag loop stays obligation; clothoid split out | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
@@ -1582,8 +1582,8 @@ Owner ruling (Jeroen, 2026-09-28, #771) supersedes
 computes (θ₀, Δθ) from (A, M, B) (chart, pole opposite M, atan3, S1a
 atan2) and proves carry-and-check (`circ_eval` ends, M on the egg,
 `0 < |Δθ| < 2π`). GML/LandXML carry angles literally; paths agree by
-`atan2_unique`. Oracle window `(O, r², pole, ζA, ζB)`. Full-circle
-(A = B) unchanged. ±2π on every triple is an unsound over-approximation.
+`atan2_unique`. Oracle window `(O, r², pole, ζA, ζB)`. ISO CIRCLE
+sweeps ±2π from A. ±2π on a proper arc is an unsound over-approximation.
 Each arc (odd count `2n+1`, `n≥1`) mints one `MkCirc`. ISO Circle stays
 one full-span `MkCirc`. Fail closed: empty, bad count, duplicate,
 collinear, degenerate. No silent chord demote. Remint owes a clockwise

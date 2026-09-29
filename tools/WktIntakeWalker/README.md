@@ -38,7 +38,7 @@ forms (ISO REFERENCELOCATION, JTS `(k0,k1,L)`) map to the same
 to the same `MkChord` bag as `LINESTRING` (Rocq μ in #744
 `0007-intake-geodesic`). Fail-closed Declines: empty / singleton
 geodesic, `SPIRALCURVE`, collinear (`ID_Collinear`), duplicate control
-(`ID_DuplicateControl`), bad count / empty. `dim` → `ID_NotFirstSlice`.
+(`ID_DuplicateControl`), closed CS (`ID_CsClosedDegenerate`), bad count. `dim` → `ID_NotFirstSlice`.
 No silent chord demote.
 `ID_CircGammaLeftover` / `ID_IsoClothoid` / `ID_MkOutOfScope` stay
 on the Decline type; they are not the well-formed clothoid answer.

@@ -59,10 +59,10 @@
      0007-B.2-cc-member-joints / 0007-B-mixed-ls-cs-joints
      kept (not reminted).
 
-   OGC-form and ISO-form of the same in-scope type → same bag
-   (locked CIRCLE vs start=end CIRCULARSTRING full-span).
-   Full-span 2π has γ(0)=γ(1); the bag is [γ(0); γ(1/2)] by
-   grammar. That is 0007-intake-angles law, not a bug.
+   ISO CIRCLE(A,B,C) is a full turn from A (θ₀ = angle of A,
+   sweep ±2π). Bag ends are [γ(0); γ(1)] = [A; A].
+   CIRCULARSTRING(A,B,A) Declines ID_CsClosedDegenerate.
+   That is 0007-intake-angles law, not a GEOS full circle.
 
    Visitor tags locked CircularString / Circle shapes (exact
    control-point match). Mapper is structural on those tags.
@@ -95,7 +95,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IsoClothoidIntake.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -134,6 +134,7 @@ Inductive IntakeDeclineReason : Type :=
 | ID_Collinear
 | ID_DuplicateControl
 | ID_DegenerateArc
+| ID_CsClosedDegenerate
 | ID_SpanMismatch
 | ID_MissingMeasure
 | ID_UnexpectedMeasure
@@ -151,6 +152,7 @@ Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
   | AF_Duplicate => ID_DuplicateControl
   | AF_Collinear => ID_Collinear
   | AF_Degenerate => ID_DegenerateArc
+  | AF_CsClosedDegenerate => ID_CsClosedDegenerate
   | AF_SpanMismatch => ID_SpanMismatch
   end.
 
@@ -277,12 +279,8 @@ Definition map_cs_quarter (s : Sheet) : ShcBag :=
   mkShcBag s [0%nat; 1%nat] [p50; p05]
     [mkChicken 0%nat 1%nat (MkCirc locked_circ_A)].
 
-Definition map_cs_full (s : Sheet) : ShcBag :=
-  mkShcBag s [0%nat; 1%nat] [p50; p50]
-    [mkChicken 0%nat 1%nat (MkCirc locked_full_circle_egg)].
-
 Definition map_circle (s : Sheet) : ShcBag :=
-  mkShcBag s [0%nat; 1%nat] [p50; p_m50]
+  mkShcBag s [0%nat; 1%nat] [p50; p50]
     [mkChicken 0%nat 1%nat (MkCirc locked_full_circle_egg)].
 
 Definition shift_chicken (off : nat) (c : Chicken) : Chicken :=
@@ -346,7 +344,7 @@ Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
       | _ :: _ :: _ => IntakeBag (map_ls s pts)
       end
   | TCircularString CircQuarter _ => IntakeBag (map_cs_quarter s)
-  | TCircularString CircFullOgc _ => IntakeBag (map_cs_full s)
+  | TCircularString CircFullOgc pts
   | TCircularString CircUnknown pts => map_cs_unknown s pts
   | TCircle CircFullOgc _ => IntakeBag (map_circle s)
   | TCircle CircQuarter _ => IntakeBag (map_cs_quarter s)
@@ -458,39 +456,57 @@ Proof.
   apply (f_equal2 mkPoint); ring.
 Qed.
 
-Lemma locked_circle_intake_midpoints :
+Lemma locked_full_circle_egg_at_1 :
+  circ_eval locked_full_circle_egg 1 = p50.
+Proof.
+  unfold circ_eval, locked_full_circle_egg, p50.
+  cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  replace (0 + 1 * (2 * PI)) with (2 * PI) by ring.
+  rewrite cos_two_pi, sin_two_pi.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_circle_intake_ends :
   bag_pts (map_circle default_sheet)
     = [circ_eval locked_full_circle_egg 0;
-       circ_eval locked_full_circle_egg (1 / 2)].
+       circ_eval locked_full_circle_egg 1].
 Proof.
   unfold map_circle. cbn [bag_pts].
-  rewrite <- locked_full_circle_egg_at_0, <- locked_full_circle_egg_at_half.
+  rewrite <- locked_full_circle_egg_at_0 at 1.
+  rewrite <- locked_full_circle_egg_at_1.
   reflexivity.
 Qed.
 
-Lemma locked_cs_full_ogc_maps :
+Lemma locked_circle_from_try :
+  try_circle_eggs [p50; p05; p_m50] =
+    inl ([locked_full_circle_egg], [p50; p50]).
+Proof.
+  change p50 with ccw_a.
+  change p05 with ccw_b.
+  change p_m50 with ccw_c.
+  rewrite ccw_try_circle.
+  unfold locked_full_circle_egg, ccw_a. reflexivity.
+Qed.
+
+Lemma cs_closed_declines : forall a b,
+  intake_map default_sheet (TCircularString CircUnknown [a; b; a]) =
+    IntakeDecline ID_CsClosedDegenerate /\
+  intake_map default_sheet (TCircularString CircFullOgc [a; b; a]) =
+    IntakeDecline ID_CsClosedDegenerate.
+Proof.
+  intros a b. split.
+  - unfold intake_map, intake_map_atom, map_cs_unknown, angle_fail_reason.
+    rewrite try_cs_closed_degenerate. reflexivity.
+  - unfold intake_map, intake_map_atom, map_cs_unknown, angle_fail_reason.
+    rewrite try_cs_closed_degenerate. reflexivity.
+Qed.
+
+Lemma locked_cs_full_ogc_declines :
   intake_map default_sheet locked_cs_full_ogc_cst =
-    IntakeBag (map_cs_full default_sheet).
+    IntakeDecline ID_CsClosedDegenerate.
 Proof.
-  reflexivity.
-Qed.
-
-Lemma ogc_iso_circle_same_egg :
-  ck_egg (hd (mkChicken 0%nat 0%nat (MkChord (mkChordEgg p00 p00)))
-             (bag_chickens (map_cs_full default_sheet)))
-  = ck_egg (hd (mkChicken 0%nat 0%nat (MkChord (mkChordEgg p00 p00)))
-               (bag_chickens (map_circle default_sheet))).
-Proof.
-  reflexivity.
-Qed.
-
-Lemma ogc_iso_circle_same_mkcirc :
-  bag_chickens (map_cs_full default_sheet) =
-    [mkChicken 0%nat 1%nat (MkCirc locked_full_circle_egg)] /\
-  bag_chickens (map_circle default_sheet) =
-    [mkChicken 0%nat 1%nat (MkCirc locked_full_circle_egg)].
-Proof.
-  split; reflexivity.
+  unfold locked_cs_full_ogc_cst.
+  exact (proj2 (cs_closed_declines p50 p05)).
 Qed.
 
 Lemma locked_cc_maps :
@@ -1002,26 +1018,24 @@ Lemma first_slice_inhabits :
     IntakeBag (map_cs_quarter default_sheet) /\
   intake_map default_sheet locked_circle_cst =
     IntakeBag (map_circle default_sheet) /\
+  bag_pts (map_circle default_sheet) =
+    [circ_eval locked_full_circle_egg 0;
+     circ_eval locked_full_circle_egg 1] /\
   intake_map default_sheet locked_cs_full_ogc_cst =
-    IntakeBag (map_cs_full default_sheet) /\
-  ck_egg (hd (mkChicken 0%nat 0%nat (MkChord (mkChordEgg p00 p00)))
-             (bag_chickens (map_cs_full default_sheet)))
-    = MkCirc locked_full_circle_egg /\
-  ck_egg (hd (mkChicken 0%nat 0%nat (MkChord (mkChordEgg p00 p00)))
-             (bag_chickens (map_circle default_sheet)))
-    = MkCirc locked_full_circle_egg /\
+    IntakeDecline ID_CsClosedDegenerate /\
   intake_map default_sheet TSpiralCurve =
     IntakeDecline ID_SpiralCurve /\
   intake_walker_kind = IW_FirstSlice.
 Proof.
-  repeat split; reflexivity.
+  repeat split; try exact locked_circle_intake_ends;
+    try exact locked_cs_full_ogc_declines; reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_walker_qed_or_qex","title":"First-slice intake maps Point/LineString/locked CircularString/Circle/CompoundCurve to SHC bag and fail-closes SPIRALCURVE (QED) or silently demotes remaining out-of-scope WKT to MkChord (QEX); discharged QED; well-formed GEODESICSTRING bagging is the 0007-intake-geodesic letter; grammar accept is CST only; Intake Decline is not cook IDecline; clothoid bagging is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_walker_qed_or_qex","title":"First-slice intake maps Point/LineString/locked CircularString/Circle to SHC bag, Declines CIRCULARSTRING(A,B,A) by ID_CsClosedDegenerate, and fail-closes SPIRALCURVE (QED) or silently demotes remaining out-of-scope WKT to MkChord (QEX); discharged QED; well-formed GEODESICSTRING bagging is the 0007-intake-geodesic letter; grammar accept is CST only; Intake Decline is not cook IDecline; clothoid bagging is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_walker_qed_or_qex :
   (intake_map default_sheet locked_point_cst =
      IntakeBag (map_point default_sheet p00) /\
@@ -1035,11 +1049,7 @@ Theorem ticket_0007_intake_walker_qed_or_qex :
    intake_map default_sheet locked_circle_cst =
      IntakeBag (map_circle default_sheet) /\
    intake_map default_sheet locked_cs_full_ogc_cst =
-     IntakeBag (map_cs_full default_sheet) /\
-   ck_egg (hd (mkChicken 0%nat 0%nat (MkChord (mkChordEgg p00 p00)))
-              (bag_chickens (map_cs_full default_sheet)))
-     = ck_egg (hd (mkChicken 0%nat 0%nat (MkChord (mkChordEgg p00 p00)))
-                  (bag_chickens (map_circle default_sheet))) /\
+     IntakeDecline ID_CsClosedDegenerate /\
    intake_map default_sheet TSpiralCurve =
      IntakeDecline ID_SpiralCurve /\
    grammar_accept_not_valid /\ grammar_accept_not_cooked /\
@@ -1053,7 +1063,8 @@ Theorem ticket_0007_intake_walker_qed_or_qex :
      In c (bag_chickens b) /\ egg_class (ck_egg c) = EggChord).
 Proof.
   left.
-  repeat split; try reflexivity; try discriminate.
+  repeat split; try exact locked_cs_full_ogc_declines;
+    try reflexivity; try discriminate.
 Qed.
 
 (* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"ticket_0007_intake_angles_qed_or_qex","title":"Intake constructs CircularEgg / MkCirc from arbitrary well-formed WKT circular control points (QED) or angles-from-points stays QEX and unknown CircularString Declines ID_CircGammaLeftover (QEX); discharged QED; not a CircGamma remint; no silent chord demote; clothoid is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
@@ -1164,9 +1175,11 @@ Print Assumptions locked_cc_ls_cs_host_hit.
 Print Assumptions locked_circle_maps.
 Print Assumptions locked_full_circle_egg_at_0.
 Print Assumptions locked_full_circle_egg_at_half.
-Print Assumptions locked_circle_intake_midpoints.
-Print Assumptions locked_cs_full_ogc_maps.
-Print Assumptions ogc_iso_circle_same_egg.
+Print Assumptions locked_full_circle_egg_at_1.
+Print Assumptions locked_circle_intake_ends.
+Print Assumptions locked_circle_from_try.
+Print Assumptions cs_closed_declines.
+Print Assumptions locked_cs_full_ogc_declines.
 Print Assumptions locked_geodesic_maps.
 Print Assumptions locked_geodesic_same_bag_as_ls.
 Print Assumptions locked_geodesic_is_chord.
@@ -1203,7 +1216,6 @@ Print Assumptions cook_ihit_neq_idecline.
 Print Assumptions grammar_accept_is_cst_only.
 Print Assumptions locked_ls_is_chord.
 Print Assumptions locked_cs_quarter_is_mkcirc.
-Print Assumptions ogc_iso_circle_same_mkcirc.
 Print Assumptions locked_cc_maps.
 Print Assumptions locked_cc_has_chord_and_circ.
 Print Assumptions locked_geodesic_not_geodesic_egg.

@@ -2984,6 +2984,10 @@ theories/SidecarSpiralEgg.v
 theories/IntakeAnglesCore.v
 theories/IntakeAnglesChart.v
 theories/IntakeAngles.v
+# ISO CIRCLE full turn (IntakeCircle). θ₀ is the chart angle of A;
+# sweep is ±2π from orient(A,B,C). CIRCULARSTRING(A,B,A) Declines.
+# claimId 0007-intake-angles, not reminted. No Admitted.
+theories/IntakeCircle.v
 # ISO CLOTHOID normalizer 1 (IsoClothoidIntake). Direct field
 # copy into ClothoidEgg; similarity frame or named Decline.
 # claimId 0007-intake-mkclothoid, not reminted. No Admitted.

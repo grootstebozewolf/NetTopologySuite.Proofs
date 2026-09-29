@@ -21,7 +21,6 @@ public final class Catalog {
         add(m, linestring02());
         add(m, linestringEmpty());
         add(m, circularstringQuarter());
-        add(m, circularstringFull());
         add(m, circleFull());
         add(m, compoundLsCs());
         add(m, clothoidJts());
@@ -84,24 +83,11 @@ public final class Catalog {
                 .build();
     }
 
-    static Example circularstringFull() {
-        return Example.builder("circularstring-full", "CIRCULARSTRING")
-                .hens(0, 1)
-                .pt(5, 0)
-                .pt(5, 0)
-                .control(5, 0)
-                .control(0, 5)
-                .control(5, 0)
-                .chicken(0, 1, "MkCirc:full")
-                .tau("TagCircle")
-                .build();
-    }
-
     static Example circleFull() {
         return Example.builder("circle-full", "CIRCLE")
                 .hens(0, 1)
                 .pt(5, 0)
-                .pt(-5, 0)
+                .pt(5, 0)
                 .control(5, 0)
                 .control(0, 5)
                 .control(-5, 0)

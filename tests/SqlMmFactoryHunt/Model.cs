@@ -215,11 +215,12 @@ static class Wire
             return ("DECLINE", null, "ID_Empty");
         if (pts.Count == 3)
         {
-            var (a, b, c) = (pts[0], pts[1], pts[2]);
+            var a = pts[0];
+            var c = pts[2];
+            if (SameXy(a, c))
+                return ("DECLINE", null, "ID_CsClosedDegenerate");
             if (SameXy(a, new(5, 0)) && SameXy(c, new(0, 5)))
                 return ("BAG", new Bag([0, 1], [new(5, 0), new(0, 5)], [(0, 1, "MkCirc:quarter")]), null);
-            if (SameXy(a, new(5, 0)) && SameXy(b, new(0, 5)) && SameXy(c, new(5, 0)))
-                return ("BAG", new Bag([0, 1], [new(5, 0), new(5, 0)], [(0, 1, "MkCirc:full")]), null);
         }
         if (pts.Count < 3 || pts.Count % 2 == 0)
             return ("DECLINE", null, "ID_BadPointCount");
@@ -245,11 +246,11 @@ static class Wire
         if (pts.Count != 3)
             return ("DECLINE", null, "ID_BadPointCount");
         if (SameXy(pts[0], new(5, 0)) && SameXy(pts[2], new(-5, 0)))
-            return ("BAG", new Bag([0, 1], [new(5, 0), new(-5, 0)], [(0, 1, "MkCirc:full")]), null);
+            return ("BAG", new Bag([0, 1], [new(5, 0), new(5, 0)], [(0, 1, "MkCirc:full")]), null);
         var dec = TryTriple(pts[0], pts[1], pts[2]);
         if (dec != null)
             return ("DECLINE", null, dec);
-        return ("BAG", new Bag([0, 1], [pts[0], pts[2]], [(0, 1, "MkCirc")]), null);
+        return ("BAG", new Bag([0, 1], [pts[0], pts[0]], [(0, 1, "MkCirc")]), null);
     }
 
     internal static (string Kind, Bag? Bag, string? Decline) ExpectClothoid() =>

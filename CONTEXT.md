@@ -203,8 +203,8 @@ Intake construction of `CircularEgg` `(O,r,θ₀,Δθ)` from well-formed
 WKT circular control points. Three distinct non-collinear points
 determine a unique circumcircle; chickens are `MkCirc`. Angle fields
 are computed (CircleChart + 3-axiom atan2/atan3): θ₀ principal, Δθ chart sweep.
-Carried angles pass only when carry-and-check agrees. Not
-Stdlib Ratan classic. Collinear / duplicate / bad count
+ISO CIRCLE: θ₀=atan2(A−O), sweep=sign(orient)·2π, γ(0)=γ(1)=A. Carried angles agree by check.
+Not Stdlib Ratan classic. Collinear / duplicate / closed CS
 Decline by name. Clothoid is the MkClothoid letter, not this one.
 _Avoid_: silent chord demote, host cook expand, new oracle keyword
 
@@ -239,14 +239,14 @@ agreement (not ∀ on all CSTs). `τ = first_slice_tag` on eggs;
 `μ = intake_map` on CSTs. They do not share a domain. After μ
 mints a singleton bag, `τ(e)=ρ(π(c))`. `intake_rho` /
 `cst_prod_tag` here are the CST production tag in that equation
-— not ADR-0007 park ρ (`EmitRhoBagLoop` / bag-loop). Full-span
-CS and CIRCLE share one MkCirc; τ of that egg is CIRCLE.
+— not ADR-0007 park ρ (`EmitRhoBagLoop` / bag-loop). ISO CIRCLE
+is one MkCirc (|sweep|=2π); CIRCULARSTRING(A,B,A) Declines.
 `intake_rho` is egg-aware on CIRCULARSTRING and is not
 `cst_prod_tag`. Well-formed GeodesicString bags `MkChord`;
 τ is LINESTRING; `cst_prod_tag` stays None (production is not
 signed I/O). SpiralCurve still Declines (τ unused). `κ` is 2/8
 or none (not 13). Emit / WKT parse stay QEX. Production-level
-τ=π on full-span CIRCULARSTRING text stays QEX.
+τ=π on closed CIRCULARSTRING text stays QEX.
 _Avoid_: ∀-mapper on all CSTs, Circle-as-18, compound-as-τ,
 park-ρ remint, new oracle keyword
 

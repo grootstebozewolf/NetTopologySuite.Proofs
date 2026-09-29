@@ -10,10 +10,10 @@
    in IntakeAnglesCore / IntakeAnglesChart. This file is the letter:
    carry-and-check, agreement by atan2_unique, and the CCW / CW
    fixtures. Supersedes the +/-2*PI statement
-   IntakeAngles.v : intake_angles_ctor_shape (theta0 = 0, sweep = +2*PI).
-   Full-circle ISO Circle (try_circle_eggs) stays theta0 = 0,
-   sweep = 2*PI. Host gamma is circ_eval. Sidecar Parks Gamma is not
-   reminted.
+   IntakeAngles.v : intake_angles_ctor_shape (theta0 = 0, sweep = +2*PI)
+   for a proper arc. ISO CIRCLE is IntakeCircle: theta0 is this chart
+   angle of A, sweep is ±2*PI. Host gamma is circ_eval. Sidecar Parks
+   Gamma is not reminted.
 
    Fail closed: empty / bad count / duplicate control / collinear
    / zero-radius. No silent chord demote. Mapper consumers live in
