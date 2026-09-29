@@ -9,9 +9,11 @@
    and n ≥ 2. arc_linearizes is that contract for circ_eval at
    n = subdiv_n step Δθ and tol = r·(1 − cos(step/2)).
 
-   The chord-to-arc half of the Hausdorff bound is proved here: a point
-   of a uniform chord lies inside the circle, at least r·cos(δ) from the
-   centre, so its distance to the arc is r − |q − O|.
+   Both Hausdorff directions are named for a later contract to wrap:
+   `arc_curve_near_polyline` (curve → polyline, via
+   `chord_approx_error_bound`) and `arc_polyline_near_curve` (polyline →
+   curve). A chord point lies inside the circle, at least r·cos(δ) from
+   the centre, so its distance to the arc is r − |q − O|.
 
    claimId: 0007-arc-linearize. witness: 0007-arc-linearize.
    3-axiom host. No Admitted / Axiom / Parameter. No RiemannInt.
@@ -587,6 +589,51 @@ Proof.
       rewrite E. unfold x in Hspan. lra.
 Qed.
 
+Theorem arc_curve_near_polyline : forall c step n,
+  (2 <= n)%nat ->
+  0 <= circ_r c ->
+  0 < step <= 2 * PI ->
+  Rabs (circ_sweep c) <= 2 * PI ->
+  Rabs (circ_sweep c) <= INR n * step ->
+  within_eps (curve_shape (circ_eval c)) (poly_shape (lin_pts c n))
+    (circ_r c * (1 - cos (step / 2))).
+Proof.
+  intros c step n Hn Hr Hstep Hcircle Hcount p [t [Ht Hp]].
+  destruct (param_bin n t Hn Ht) as [k [Hk Hbin]].
+  destruct (chord_approx_error_bound c step n k t Hn Hk Hr Hstep Hcircle Hcount Hbin)
+    as [q [Hon Hdist]].
+  exists q. split.
+  - destruct Hon as [lam [Hlam Hq]].
+    exists k, lam, (circ_start c). split; [|split].
+    + rewrite lin_pts_length by lia. lia.
+    + exact Hlam.
+    + exact Hq.
+  - rewrite Hp. exact Hdist.
+Qed.
+
+Theorem arc_polyline_near_curve : forall c step n,
+  (2 <= n)%nat ->
+  0 <= circ_r c ->
+  0 < step <= 2 * PI ->
+  Rabs (circ_sweep c) <= 2 * PI ->
+  Rabs (circ_sweep c) <= INR n * step ->
+  within_eps (poly_shape (lin_pts c n)) (curve_shape (circ_eval c))
+    (circ_r c * (1 - cos (step / 2))).
+Proof.
+  intros c step n Hn Hr Hstep Hcircle Hcount q [k [lam [d [Hk [Hlam Hq]]]]].
+  assert (Hkn : (k < n)%nat).
+  { rewrite lin_pts_length in Hk by lia. lia. }
+  assert (Ha : nth k (lin_pts c n) d = nth k (lin_pts c n) (circ_start c)).
+  { apply nth_indep. rewrite lin_pts_length by lia. lia. }
+  assert (Hb : nth (S k) (lin_pts c n) d =
+               nth (S k) (lin_pts c n) (circ_start c)).
+  { apply nth_indep. rewrite lin_pts_length by lia. lia. }
+  destruct (chord_point_near_arc c step n k lam Hn Hkn Hr Hstep Hcircle Hcount Hlam)
+    as [t [Ht Hdist]].
+  exists (circ_eval c t). split; [exists t; split; [exact Ht|reflexivity]|].
+  rewrite Hq, Ha, Hb. exact Hdist.
+Qed.
+
 Theorem arc_linearize_hausdorff : forall c step n,
   (2 <= n)%nat ->
   0 <= circ_r c ->
@@ -598,29 +645,8 @@ Theorem arc_linearize_hausdorff : forall c step n,
 Proof.
   intros c step n Hn Hr Hstep Hcircle Hcount.
   split.
-  - intros p [t [Ht Hp]].
-    destruct (param_bin n t Hn Ht) as [k [Hk Hbin]].
-    destruct (chord_approx_error_bound c step n k t Hn Hk Hr Hstep Hcircle Hcount Hbin)
-      as [q [Hon Hdist]].
-    exists q. split.
-    + destruct Hon as [lam [Hlam Hq]].
-      exists k, lam, (circ_start c). split; [|split].
-      * rewrite lin_pts_length by lia. lia.
-      * exact Hlam.
-      * exact Hq.
-    + rewrite Hp. exact Hdist.
-  - intros q [k [lam [d [Hk [Hlam Hq]]]]].
-    assert (Hkn : (k < n)%nat).
-    { rewrite lin_pts_length in Hk by lia. lia. }
-    assert (Ha : nth k (lin_pts c n) d = nth k (lin_pts c n) (circ_start c)).
-    { apply nth_indep. rewrite lin_pts_length by lia. lia. }
-    assert (Hb : nth (S k) (lin_pts c n) d =
-                 nth (S k) (lin_pts c n) (circ_start c)).
-    { apply nth_indep. rewrite lin_pts_length by lia. lia. }
-    destruct (chord_point_near_arc c step n k lam Hn Hkn Hr Hstep Hcircle Hcount Hlam)
-      as [t [Ht Hdist]].
-    exists (circ_eval c t). split; [exists t; split; [exact Ht|reflexivity]|].
-    rewrite Hq, Ha, Hb. exact Hdist.
+  - apply arc_curve_near_polyline; assumption.
+  - apply arc_polyline_near_curve; assumption.
 Qed.
 
 Theorem arc_linearizes : forall c step,
@@ -697,5 +723,7 @@ Print Assumptions offset_in_unit.
 Print Assumptions chord_point_near_arc.
 Print Assumptions int_part_nonneg.
 Print Assumptions param_bin.
+Print Assumptions arc_curve_near_polyline.
+Print Assumptions arc_polyline_near_curve.
 Print Assumptions arc_linearize_hausdorff.
 Print Assumptions arc_linearizes.
