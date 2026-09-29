@@ -8,17 +8,15 @@
    circular arc it approximates -- and proves the load-bearing
    equidistance property of `arc_center` that the sagitta depends on.
 
-   The headline `chord_approx_error_bound` connecting chord-approximated
-   `arc_passes_through_hot_pixel` to the original arc is deferred to a
-   follow-up: it requires both `arc_mid_within_sagitta` (a perpendicular-
-   distance geometric proof) and S4's `arc_chord_intersect_sound`.  The
-   latter is no longer "IVT-blocked": the raw IVT step
+   The n-chord deviation named `chord_approx_error_bound` is
+   `ArcLinearizeBound.chord_approx_error_bound`. Both Hausdorff directions
+   are `ArcLinearizeContract.arc_linearize_hausdorff`. Hot-pixel transport
+   of that bound onto `arc_passes_through_hot_pixel` is still a separate
+   composition: the perpendicular foot, and the arc-span pattern for a
+   chord with neither endpoint a control point. S4's raw IVT step
    (`ArcIntersectIVT.chord_crosses_arc_circle_implies_circle_intersection`)
    is Qed'd, and the arc-span promotion is Qed'd conditionally in
-   `ArcChordSound.v` (minor-side + control-point-anchored variants).  The
-   residual gap is the perpendicular-bisector geometry plus generalising
-   that span pattern to chords with neither endpoint a control point.  This
-   session lands the foundations on which that headline composes.
+   `ArcChordSound.v` (minor-side + control-point-anchored variants).
 
    See `docs/audit-phase4-chord-overfitting.md` §5 (Session 6 in the
    7-session plan).
@@ -398,10 +396,10 @@ Qed.
 (* foot of P on the chord-orthogonal direction -- another small geometry     *)
 (* session.  Deferred.                                                         *)
 (*                                                                            *)
-(* Also deferred: the n-chord (n >= 2) refinement of chord_approx_arc with   *)
-(* the sagitta-scaled by sub-arc decomposition.  Currently chord_approx_arc  *)
-(* is the degenerate 3-point stub (arc_start, arc_mid, arc_end); the         *)
-(* n-chord trigonometric version needs sin/cos manipulation.                  *)
+(* The n-chord walk on a certified egg is ArcLinearize. The deviation        *)
+(* inequality deferred under the name `chord_approx_error_bound` is          *)
+(* ArcLinearizeBound.chord_approx_error_bound (sagitta of each uniform       *)
+(* step). Hot-pixel transport of that bound is still a separate composition. *)
 (*                                                                            *)
 (* [2026-06-12] The trigonometric per-sub-arc half of this deferral is        *)
 (* closed: ArcChordDensity.v (chord-budget law) + ArcChordSubdivision.v       *)
@@ -412,10 +410,13 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 (* §7  What this session DOES NOT close (and why).                            *)
 (*                                                                            *)
-(* The headline `chord_approx_error_bound` -- "if the chord approximation     *)
+(* The deviation inequality named `chord_approx_error_bound` is proved in    *)
+(* ArcLinearizeBound (arc point to its chord). The converse, both-sided       *)
+(* `arc_linearize_hausdorff`, is ArcLinearizeContract. What remains here is  *)
+(* hot-pixel transport: "if the chord approximation                            *)
 (* passes through a hot pixel, the original arc passes through a nearby      *)
-(* pixel within sagitta distance" -- has TWO load-bearing dependencies        *)
-(* that this session does not provide:                                        *)
+(* pixel within sagitta distance". That transport has TWO load-bearing        *)
+(* dependencies that this session does not provide:                           *)
 (*                                                                            *)
 (*   (a) `arc_radius_sq_ge_chord_half_length_sq`: the geometric inequality   *)
 (*       arc_radius^2 >= chord_half_length^2.  Provably true for valid       *)
