@@ -55,7 +55,7 @@ names. Prefer a narrow section over a broad tag.
 
 **Index.** `##` anchors by area. Observatory still reads each feeding heading’s `<!-- feat:… geom:… -->`.
 
-- **Foundations.** [orientation](#phase-0--robust-orientation-ccw--orientationindex) · [integer DE-9IM substrate](#relate--de-9im-integer-coordinate-substrate-67) · [squared distance](#foundational--squared-distance--degenerate-cases-distancev)
+- **Foundations.** [orientation](#phase-0--robust-orientation-ccw--orientationindex) · [integer DE-9IM substrate](#relate--de-9im-integer-coordinate-substrate-67) · [squared distance](#foundational--squared-distance--degenerate-cases-distancev) · [dyadic FTC](#adr-0001--ftc-for-the-dyadic-integral)
 - **Intersection / overlay.** [segment intersection](#phase-1--robust-segment-intersection-robustlineintersector) · [snap rounding](#phase-2--snap-rounding-hobby--halperinpacker-noder) · [OverlayNG](#phase-3--planar-overlay-overlayng) · [OverlayNGCurve](#overlayngcurve-phase-0--the-exact-cell-kernel-of-the-four-ops-overlayngcurvev) · [ADR-0007](#adr-0007--sheet--hen--cook-noding-constructor-accepted)
 - **Curves.** [linearization](#phase-4--native-curves-linearization-chord-approx-arcs) · [Koc](#koc-compound-curves--satellite-survey-railway-alignment-compoundcurvekocv) · [ring contact](#curve-ring-contact-boundary-meet-and-the-inscribed-reduction-ringcontactsoundv-relatecurvearcsegmentv-relatecurveboundarymeetv-relatecurveinscribedgeometryv-overlaycontactsoundv) · [#508 length](#issue-508--the-canonical-metric-length-spec-curvelengthv)
 - **Construct.** [MIC](#mic--maximum-inscribed-circle-of-the-unit-square-maximuminscribedcirclev-board-9004--epic-813) · [LEC](#lec--largest-empty-circle-over-the-side-midpoints-largestemptycirclev-board-card-pending--epic-813) · [PIA](#pia-teaching-claim--poles-of-inaccessibility-planar-instance-evalclaim9005av-board-9005) · [topos](#discrete--shℝ²-bridge--spatial-topos-foundations-heytingopensv-planeconnectedv-discreteshbridgev)
@@ -1324,25 +1324,25 @@ stay 3-axiom in their own files.  This letter does not retire epic 508
 |---|---|---|
 | `NurbsConicExact.v : nurbs2_golden_quarter_length` (+ `golden_pt_on_circle`, `golden_phi_mono`, `golden_phi_surj`; helpers `AtanIvt.v : cos_2_atan3`, `AtanIvt.v : sin_2_atan3`, `CurveLength.v : is_curve_length_ext_on`) | **Golden rational quarter circle (#508/#559, claimId: 508-a, witness: 508-a-golden-quarter):** `is_curve_length` of the oracle `N` vector on `[0,1]` equals `π/2` — Weierstrass `φ` is weakly monotone with explicit `tan` preimages (no IVT); the unit circle on `[0, π/2]` transfers by `is_curve_length_reparam` and windowed ext. 3-axiom (`atan3`, no Ratan). Maintainability split: 2·atan3 in `AtanIvt.v`, windowed ext in `CurveLength.v`. Does not retire epic 508 `[exact]` | 4 |
 
+## ADR-0001 — FTC for the dyadic integral <!-- feat:foundations geom:pt -->
+
+claimId `0001-lint-ftc`. Witness `LipIntFTC.v : lipint_ftc`.
+`lipF` of a Lipschitz integrand is `derivable_pt_lim` on the open
+interval, derivative the integrand, and one-sided at the endpoints.
+ADR-0001 left this FTC on the Coquelicot lane; the dyadic secant bound
+discharges it in Stdlib. Not Halley `H_deriv` / `H_fprime_pos`. Not
+`H_mvt` (`MVT` prints `classic`). Not a remint of `508-e`.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `LipIntFTC.v : lipint_ftc` (+ `lip_ftc`, `lip_ftc_right`, `lip_ftc_left`) | **FTC for `lint` (ADR-0001, claimId: 0001-lint-ftc, witness: lipint_ftc):** `lo < x < hi` gives `derivable_pt_lim lipF x (f x)`; `lo < hi` gives the right derivative at `lo` and the left derivative at `hi`. No Coquelicot, no RiemannInt, no MVT `[exact]` | 3 |
+
 ## Issue #508 — integral machinery: speed-integral premises (`SpeedIntegral.v`) <!-- feat:arc-len geom:arc -->
 
-The missing method between "F is an integral of the speed" and the two
-windowed premises of `ArcRectifiable.v : curve_length_of_primitive`.
-Spike decision is Route 1 (in-corpus tagged partitions). Uniform
-continuity of the speed is a hypothesis — Heine–Cantor is not imported
-(stdlib compactness on a closed interval is outside the 3-axiom
-allowlist). Coquelicot / `RInt` (Route 2) is gated off this letter so
-the host-lane metric files stay 3-axiom; 508-e may still discharge the
-pack via clothoid-halley-coq. 508-d / 508-e instantiate the pack; they
-do not remint it.
-
-Chord modulus: triangle inequality along a fine left-tagged uniform
-partition, Riemann sum within ε of the F increment. Tightness is local
-(UC + increment sandwich + first-order chord-rate). The circle speed is
-constantly `r`, `F(t) = r·t`, and the envelope headline
-`is_curve_length (circle_param O r) a b (r·(b−a))` is a second proof
-path through the pack. `curve_length_unique` pins the two paths.
-This letter does not retire epic 508 (that is #566).
+Route 1 tagged partitions sit between an integral of the speed and
+`ArcRectifiable.v : curve_length_of_primitive`. UC of the speed is a
+hypothesis (no Heine–Cantor, no Coquelicot). 508-d / 508-e instantiate
+the pack; they do not remint it. Does not retire epic 508 (#566).
 
 **NTS RGR Board catalog (#508 children).** `508-c` = #561 / speed-integral pack (witness `508-c-speed-integral`). Headline `SpeedIntegral.v : speed_integral_is_curve_length`. Instance `arc_quarter_via_speed_integral`. Board pointer stays #561. Does not retire epic 508. `508-a` = #559 and `508-b` = #560 are on `main`. Remaining children `508-d`…`508-h` are not this letter.
 
