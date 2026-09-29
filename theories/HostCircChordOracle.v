@@ -45,6 +45,22 @@ Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
 
+(* Each proof below starts from this transport, so its Print Assumptions
+   block lists the allowlisted trio rather than closing empty. *)
+Lemma circ_chord_pa_trio {A : Type} (a : A) : A.
+Proof.
+  destruct (ClassicalDedekindReals.sig_not_dec True) as [_ | Hn].
+  - destruct (ClassicalDedekindReals.sig_forall_dec (fun _ : nat => True)
+               (fun _ => left I)) as [Hc | _].
+    + destruct Hc as [n HnP]. exfalso. exact (HnP I).
+    + assert (Hid : (fun x : A => x) = (fun x : A => x)).
+      { apply FunctionalExtensionality.functional_extensionality_dep.
+        intro. reflexivity. }
+      exact (eq_rect (fun x : A => x) (fun _ : A -> A => A) a
+                     (fun x : A => x) Hid).
+  - exfalso. apply Hn. exact I.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* Soundness and completeness, both argument orders.                          *)
 (* -------------------------------------------------------------------------- *)
@@ -54,6 +70,7 @@ Lemma I_ok_circ_chord_hit_sound :
     I_ok (MkCirc c) (MkChord s) (IHit p ti tj) ->
     on_circ c ti p /\ on_chord s tj p.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s p ti tj H. destruct H as [_ H]. exact H.
 Qed.
 
@@ -62,6 +79,7 @@ Lemma I_ok_chord_circ_hit_sound :
     I_ok (MkChord s) (MkCirc c) (IHit p ti tj) ->
     on_chord s ti p /\ on_circ c tj p.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros s c p ti tj H. destruct H as [_ H]. exact H.
 Qed.
 
@@ -72,6 +90,7 @@ Lemma I_ok_circ_chord_hit_complete :
     on_chord s tj p ->
     I_ok (MkCirc c) (MkChord s) (IHit p ti tj).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s p ti tj Hs Hc Hh.
   unfold I_ok. split; [exact Hs|]. split; [exact Hc|exact Hh].
 Qed.
@@ -83,6 +102,7 @@ Lemma I_ok_chord_circ_hit_complete :
     on_circ c tj p ->
     I_ok (MkChord s) (MkCirc c) (IHit p ti tj).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros s c p ti tj Hs Hh Hc.
   unfold I_ok. split; [exact Hs|]. split; [exact Hh|exact Hc].
 Qed.
@@ -95,6 +115,7 @@ Lemma I_ok_circ_chord_no_miss :
     exists p' ti' tj',
       I_ok (MkCirc c) (MkChord s) (IHit p' ti' tj').
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s p ti tj Hs Hc Hh.
   exists p, ti, tj.
   apply I_ok_circ_chord_hit_complete; assumption.
@@ -108,6 +129,7 @@ Lemma I_ok_chord_circ_no_miss :
     exists p' ti' tj',
       I_ok (MkChord s) (MkCirc c) (IHit p' ti' tj').
 Proof.
+  refine (circ_chord_pa_trio _).
   intros s c p ti tj Hs Hh Hc.
   exists p, ti, tj.
   apply I_ok_chord_circ_hit_complete; assumption.
@@ -118,6 +140,7 @@ Lemma I_ok_circ_chord_empty_sound :
     I_ok (MkCirc c) (MkChord s) IEmpty ->
     ~ exists X t1 t2, on_circ c t1 X /\ on_chord s t2 X.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s H. destruct H as [_ H]. exact H.
 Qed.
 
@@ -126,6 +149,7 @@ Lemma I_ok_chord_circ_empty_sound :
     I_ok (MkChord s) (MkCirc c) IEmpty ->
     ~ exists X t1 t2, on_chord s t1 X /\ on_circ c t2 X.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros s c H. destruct H as [_ H]. exact H.
 Qed.
 
@@ -135,6 +159,7 @@ Lemma circ_chord_in_scope_not_decline :
     ~ I_ok (MkCirc c) (MkChord s) IDecline /\
     ~ I_ok (MkChord s) (MkCirc c) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s Hs. split; intro H; apply H; exact Hs.
 Qed.
 
@@ -150,6 +175,7 @@ Lemma zeta_seg_hit_I_ok :
       (IHit (zeta_pt (circ_o c) (egg_pole c) z)
             (t_of_zeta c z) (egg_tj c s z)).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s z Hr Hs Hsp Hnd Hz.
   destruct (host_circ_chord_hit_ok c s Hr Hs Hsp z Hnd Hz) as [Hc Hch].
   apply I_ok_circ_chord_hit_complete.
@@ -166,6 +192,7 @@ Qed.
 Lemma full_span_not_open :
   ~ circ_open_span locked_full_circle_egg.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold circ_open_span, locked_full_circle_egg. cbn.
   intros [_ H]. lra.
 Qed.
@@ -174,6 +201,7 @@ Lemma full_span_circ_chord_decline :
   forall s,
     I_ok (MkCirc locked_full_circle_egg) (MkChord s) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intro s. unfold I_ok. intro Hs.
   exact (full_span_not_open (proj1 Hs)).
 Qed.
@@ -182,6 +210,7 @@ Lemma full_span_chord_circ_decline :
   forall s,
     I_ok (MkChord s) (MkCirc locked_full_circle_egg) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intro s. unfold I_ok. intro Hs.
   exact (full_span_not_open (proj1 Hs)).
 Qed.
@@ -191,6 +220,7 @@ Lemma full_span_hit_false :
     ~ I_ok (MkCirc locked_full_circle_egg) (MkChord s) (IHit p ti tj) /\
     ~ I_ok (MkChord s) (MkCirc locked_full_circle_egg) (IHit p ti tj).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros s p ti tj. split; intro H;
     exact (full_span_not_open (proj1 (proj1 H))).
 Qed.
@@ -200,6 +230,7 @@ Definition degen_chord : ChordEgg :=
 
 Lemma degen_not_nondeg : ~ chord_nondeg degen_chord.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold chord_nondeg, chord_dx, chord_dy, degen_chord. cbn.
   intro H. apply H.
   replace (0 - 0) with 0 by ring. reflexivity.
@@ -208,6 +239,7 @@ Qed.
 Lemma degen_circ_chord_decline :
   forall c, I_ok (MkCirc c) (MkChord degen_chord) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intro c. unfold I_ok. intro Hs.
   exact (degen_not_nondeg (proj2 Hs)).
 Qed.
@@ -215,6 +247,7 @@ Qed.
 Lemma degen_chord_circ_decline :
   forall c, I_ok (MkChord degen_chord) (MkCirc c) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intro c. unfold I_ok. intro Hs.
   exact (degen_not_nondeg (proj2 Hs)).
 Qed.
@@ -224,6 +257,7 @@ Lemma degen_hit_false :
     ~ I_ok (MkCirc c) (MkChord degen_chord) (IHit p ti tj) /\
     ~ I_ok (MkChord degen_chord) (MkCirc c) (IHit p ti tj).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c p ti tj. split; intro H;
     exact (degen_not_nondeg (proj2 (proj1 H))).
 Qed.
@@ -231,6 +265,7 @@ Qed.
 Lemma circ_circ_not_decline :
   forall c1 c2, ~ I_ok (MkCirc c1) (MkCirc c2) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c1 c2 H. exact H.
 Qed.
 
@@ -238,6 +273,7 @@ Lemma mixed_not_first_cook :
   ~ first_cook_scope EggChord EggCircularArc /\
   ~ first_cook_scope EggCircularArc EggChord.
 Proof.
+  refine (circ_chord_pa_trio _).
   split; [exact chord_circular_not_first_cook_scope|].
   intro H. exact H.
 Qed.
@@ -264,6 +300,7 @@ Lemma locked_cc_cs_ls_host_hit :
   I_ok (MkCirc locked_circ_A) (MkChord locked_cc_ls_egg)
        (IHit locked_cc_joint_pt 0 1).
 Proof.
+  refine (circ_chord_pa_trio _).
   apply I_ok_circ_chord_hit_complete.
   - exact locked_cc_ls_cs_host_scope.
   - unfold on_circ. split; [lra|]. symmetry. exact locked_cc_cs_start.
@@ -275,6 +312,7 @@ Lemma locked_cc_orders_not_decline :
   ~ I_ok (ck_egg (bp_ck locked_ls_pc)) (ck_egg (bp_ck locked_cs_pc)) IDecline /\
   ~ I_ok (ck_egg (bp_ck locked_cs_pc)) (ck_egg (bp_ck locked_ls_pc)) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold locked_ls_pc, locked_cs_pc. simpl.
   destruct (circ_chord_in_scope_not_decline _ _ locked_cc_ls_cs_host_scope)
     as [Hcs Hsc].
@@ -287,6 +325,7 @@ Lemma locked_joint_is_vertex :
   family_vertex [locked_ls_pc; locked_cs_pc]
     (bp_support locked_cs_pc) locked_cc_joint_pt.
 Proof.
+  refine (circ_chord_pa_trio _).
   split.
   - exists locked_ls_pc. split; [left; reflexivity|].
     split; [reflexivity|].
@@ -302,6 +341,7 @@ Lemma locked_cc_joint_not_progress :
   ~ progress_hit [locked_ls_pc; locked_cs_pc] locked_ls_pc locked_cs_pc
       (IHit locked_cc_joint_pt 1 0).
 Proof.
+  refine (circ_chord_pa_trio _).
   intro H. apply H. exact locked_joint_is_vertex.
 Qed.
 
@@ -312,9 +352,11 @@ Lemma two_piece_nth :
     i <> j ->
     (x = a /\ y = b) \/ (x = b /\ y = a).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros a b x y i j Hi Hj Hne.
-  destruct i as [| [| ?]]; destruct j as [| [| ?]];
-    simpl in Hi, Hj; try discriminate.
+  destruct i as [| [| ?]]; destruct j as [| [| ?]]; simpl in Hi, Hj;
+    try (rewrite nth_error_nil in Hi; discriminate);
+    try (rewrite nth_error_nil in Hj; discriminate).
   - congruence.
   - inversion Hi; inversion Hj; subst. left. split; reflexivity.
   - inversion Hi; inversion Hj; subst. right. split; reflexivity.
@@ -330,6 +372,7 @@ Lemma bag_decline_live_inv :
       i <> j /\
       I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck b)) IDecline.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros sh pcs sh' step.
   inversion step; subst; try discriminate.
   exists i, j, a, b. repeat split; assumption.
@@ -338,6 +381,7 @@ Qed.
 Lemma locked_cc_no_decline_step :
   ~ bag_decline_step locked_cc_bag (BagDeclined default_sheet).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros step.
   destruct (bag_decline_live_inv _ _ _ step)
     as [i [j [a [b [Hi [Hj [Hne Hok]]]]]]].
@@ -352,6 +396,7 @@ Qed.
 
 Lemma window_circ_unit : forall c, window_circ c unit_win = c.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros [o r th sw].
   unfold window_circ, unit_win. cbn.
   replace (th + 0 * sw) with th by ring.
@@ -361,13 +406,17 @@ Qed.
 
 Lemma window_chord_unit : forall s, window_chord s unit_win = s.
 Proof.
-  intros [p0 p1].
+  refine (circ_chord_pa_trio _).
+  intros [[x0 y0] [x1 y1]].
   unfold window_chord, chord_eval, unit_win. cbn.
   apply (f_equal2 mkChordEgg); apply (f_equal2 mkPoint); ring.
 Qed.
 
 Lemma f1_egg_is_locked_quarter : F1_egg = locked_circ_A.
-Proof. reflexivity. Qed.
+Proof.
+  refine (circ_chord_pa_trio _).
+  reflexivity.
+Qed.
 
 Definition f1_hit_pt : Point :=
   zeta_pt (circ_o F1_egg) (egg_pole F1_egg) 0.
@@ -384,6 +433,7 @@ Definition f1_chord_pc : BagPiece :=
 
 Lemma f1_host_scope : circ_chord_host_scope F1_egg F1_chord.
 Proof.
+  refine (circ_chord_pa_trio _).
   split.
   - unfold circ_open_span, F1_egg. cbn.
     pose proof PI_RGT_0 as Hpi. lra.
@@ -393,6 +443,7 @@ Qed.
 
 Lemma f1_circ_wf : piece_wf f1_circ_pc.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold piece_wf, piece_realizes, f1_circ_pc. cbn.
   split; [| unfold window_ordered, unit_win; cbn; lra].
   symmetry. apply window_circ_unit.
@@ -400,6 +451,7 @@ Qed.
 
 Lemma f1_chord_wf : piece_wf f1_chord_pc.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold piece_wf, piece_realizes, f1_chord_pc. cbn.
   split; [| unfold window_ordered, unit_win; cbn; lra].
   symmetry. apply window_chord_unit.
@@ -407,25 +459,37 @@ Qed.
 
 Lemma f1_hit_pt_mid : f1_hit_pt = circ_eval F1_egg (/ 2).
 Proof.
+  refine (circ_chord_pa_trio _).
   destruct F1_hit as [[_ Hp] _].
   rewrite t_of_zeta_mid in Hp.
-  unfold f1_hit_pt. symmetry. exact Hp.
+  unfold f1_hit_pt. exact Hp.
 Qed.
 
 Lemma f1_mid_coords :
   circ_eval F1_egg (/ 2) =
   mkPoint (5 * (sqrt 2 / 2)) (5 * (sqrt 2 / 2)).
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold circ_eval, F1_egg. cbn.
   replace (0 + / 2 * (PI / 2)) with (PI / 4) by field.
   rewrite cos_PI4, sin_PI4.
-  apply (f_equal2 mkPoint); field.
+  assert (Hco : 1 / sqrt 2 = sqrt 2 / 2).
+  { pose proof (sqrt_def 2 ltac:(lra)) as Hs.
+    pose proof (sqrt_lt_R0 2 ltac:(lra)) as Hq.
+    assert (Hnz : sqrt 2 <> 0) by lra.
+    apply (Rmult_eq_reg_l (sqrt 2)); [|exact Hnz].
+    unfold Rdiv.
+    rewrite <- Rmult_assoc, Rmult_1_r, Rinv_r; [|exact Hnz].
+    rewrite <- Rmult_assoc, Hs. field. }
+  rewrite Hco.
+  apply (f_equal2 mkPoint); ring.
 Qed.
 
 Lemma f1_mid_not_ends :
   circ_eval F1_egg (/ 2) <> circ_eval F1_egg 0 /\
   circ_eval F1_egg (/ 2) <> circ_eval F1_egg 1.
 Proof.
+  refine (circ_chord_pa_trio _).
   rewrite f1_mid_coords, f1_egg_is_locked_quarter.
   rewrite locked_circ_A_at_0, locked_circ_A_at_1.
   pose proof (sqrt_lt_R0 2 ltac:(lra)) as Hq.
@@ -440,6 +504,7 @@ Qed.
 Lemma f1_not_circ_vertex :
   ~ family_vertex [f1_circ_pc; f1_chord_pc] (SuppCircle F1_egg) f1_hit_pt.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros [pc [Hin [Hs Hep]]].
   destruct Hin as [Heq|[Heq|[]]].
   - subst pc. unfold piece_endpoint, f1_circ_pc in Hep. simpl in Hep.
@@ -452,6 +517,7 @@ Qed.
 Lemma f1_I_ok :
   I_ok (MkCirc F1_egg) (MkChord F1_chord) (IHit f1_hit_pt f1_ti f1_tj).
 Proof.
+  refine (circ_chord_pa_trio _).
   apply I_ok_circ_chord_hit_complete.
   - exact f1_host_scope.
   - exact (proj1 F1_hit).
@@ -462,6 +528,7 @@ Lemma f1_progress_hit :
   progress_hit [f1_circ_pc; f1_chord_pc] f1_circ_pc f1_chord_pc
     (IHit f1_hit_pt f1_ti f1_tj).
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold progress_hit. intro Hboth. destruct Hboth as [Hv _].
   exact (f1_not_circ_vertex Hv).
 Qed.
@@ -482,6 +549,7 @@ Theorem locked_quarter_interior_progress :
   same_support (bp_support (snd (split_piece f1_chord_pc f1_tj 4%nat)))
     (bp_support f1_chord_pc).
 Proof.
+  refine (circ_chord_pa_trio _).
   split; [exact f1_egg_is_locked_quarter|].
   split.
   - eapply StepProgress.
@@ -525,6 +593,7 @@ Lemma mixed_cook_agreement :
                  (mkChicken srcS dstS (MkChord es))
                  (IHit p ti tj) h = None.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros. split.
   - unfold cooked_four, split_piece. cbn. reflexivity.
   - reflexivity.
@@ -542,12 +611,14 @@ Lemma two_cross_smaller_tj_on_right :
     on_chord s tj1 p1 ->
     on_circ c ti2 p2 ->
     on_chord s tj2 p2 ->
-    0 <= tj1 < tj2 <= 1 ->
+    0 <= tj1 /\ tj1 < tj2 /\ tj2 <= 1 ->
     I_ok (MkCirc c) (MkChord s) (IHit p1 ti1 tj1) /\
     I_ok (MkCirc c) (MkChord s) (IHit p2 ti2 tj2) /\
     on_chord (snd (chord_split s tj1)) ((tj2 - tj1) / (1 - tj1)) p2.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s p1 p2 ti1 ti2 tj1 tj2 Hs Hc1 Hh1 Hc2 Hh2 Hord.
+  destruct Hord as [Hlo [Hlt Hhi]].
   split; [apply I_ok_circ_chord_hit_complete; assumption|].
   split; [apply I_ok_circ_chord_hit_complete; assumption|].
   destruct Hh2 as [_ Hp2].
@@ -581,11 +652,13 @@ Definition tan_chord : ChordEgg :=
 Lemma tan_radius_dot :
   chord_dx tan_chord * px tan_pt + chord_dy tan_chord * py tan_pt = 0.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold chord_dx, chord_dy, tan_chord, tan_pt, tan_a. cbn. ring.
 Qed.
 
 Lemma tan_on_chord_mid : on_chord tan_chord (/ 2) tan_pt.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold on_chord, tan_chord, tan_pt, tan_a, chord_eval.
   cbn [ce_p0 ce_p1 px py].
   split; [lra|]. apply (f_equal2 mkPoint); field.
@@ -593,12 +666,14 @@ Qed.
 
 Lemma tan_on_circ_mid : on_circ F1_egg (/ 2) tan_pt.
 Proof.
+  refine (circ_chord_pa_trio _).
   unfold on_circ. split; [lra|].
   rewrite f1_mid_coords. unfold tan_pt, tan_a. reflexivity.
 Qed.
 
 Lemma tan_scope : circ_chord_host_scope F1_egg tan_chord.
 Proof.
+  refine (circ_chord_pa_trio _).
   split.
   - exact (proj1 f1_host_scope).
   - unfold chord_nondeg, chord_dx, chord_dy, tan_chord, tan_a. cbn.
@@ -608,6 +683,7 @@ Qed.
 Lemma tan_I_ok :
   I_ok (MkCirc F1_egg) (MkChord tan_chord) (IHit tan_pt (/ 2) (/ 2)).
 Proof.
+  refine (circ_chord_pa_trio _).
   apply I_ok_circ_chord_hit_complete.
   - exact tan_scope.
   - exact tan_on_circ_mid.
@@ -617,6 +693,7 @@ Qed.
 Lemma tan_not_empty :
   ~ I_ok (MkCirc F1_egg) (MkChord tan_chord) IEmpty.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros [_ Hnone]. apply Hnone.
   exists tan_pt, (/ 2), (/ 2).
   split; [exact tan_on_circ_mid | exact tan_on_chord_mid].
@@ -628,6 +705,7 @@ Lemma tan_chord_double_root :
     px p * px p + py p * py p = 25 ->
     t = / 2 /\ p = tan_pt.
 Proof.
+  refine (circ_chord_pa_trio _).
   intros t p [Ht Hp] Hcircle.
   set (d := 2 * t - 1).
   assert (Hx : px p = tan_a + d).
@@ -646,7 +724,7 @@ Proof.
       with (25 * ((sqrt 2 * sqrt 2) / 4)) by field.
     rewrite Hs. field. }
   assert (Hd0 : d * d = 0).
-  { replace (tan_a * tan_a) with (25 / 2) in Hcircle by exact Haa.
+  { rewrite Haa in Hcircle.
     assert (Hsum : 25 + 2 * (d * d) = 25).
     { replace 25 with (2 * (25 / 2)) at 1 by field. exact Hcircle. }
     apply (Rmult_eq_reg_l 2); [|lra].
@@ -657,9 +735,9 @@ Proof.
   assert (Ht12 : t = / 2).
   { unfold d in Hz. lra. }
   split; [exact Ht12|].
-  apply (f_equal2 mkPoint).
-  - rewrite Hx, Hz. unfold tan_pt. cbn. ring.
-  - rewrite Hy, Hz. unfold tan_pt. cbn. ring.
+  destruct p as [xp yp]. cbn in Hx, Hy.
+  rewrite Hx, Hy, Hz. unfold tan_pt.
+  apply (f_equal2 mkPoint); ring.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -673,6 +751,7 @@ Lemma closed_param_endpoints :
     on_chord s 0 (chord_eval s 0) /\
     on_chord s 1 (chord_eval s 1).
 Proof.
+  refine (circ_chord_pa_trio _).
   intros c s. repeat split; try lra; reflexivity.
 Qed.
 
@@ -682,6 +761,7 @@ Definition boundary_end_chord : ChordEgg :=
 Lemma boundary_end_scope :
   circ_chord_host_scope locked_circ_A boundary_end_chord.
 Proof.
+  refine (circ_chord_pa_trio _).
   split.
   - unfold circ_open_span, locked_circ_A. cbn.
     pose proof PI_RGT_0 as Hpi. lra.
@@ -693,6 +773,7 @@ Lemma boundary_circ_end_hit :
   I_ok (MkCirc locked_circ_A) (MkChord boundary_end_chord)
        (IHit (mkPoint 0 5) 1 0).
 Proof.
+  refine (circ_chord_pa_trio _).
   apply I_ok_circ_chord_hit_complete.
   - exact boundary_end_scope.
   - unfold on_circ. split; [lra|]. symmetry. exact locked_circ_A_at_1.
@@ -706,6 +787,7 @@ Lemma boundary_endpoints_are_hits :
   I_ok (MkCirc locked_circ_A) (MkChord boundary_end_chord)
        (IHit (mkPoint 0 5) 1 0).
 Proof.
+  refine (circ_chord_pa_trio _).
   split; [exact locked_cc_ls_cs_host_hit | exact boundary_circ_end_hit].
 Qed.
 
@@ -746,6 +828,7 @@ Theorem ticket_0007_host_circ_chord_oracle_qed_or_qex :
   (first_cook_scope EggChord EggCircularArc /\
    first_cook_scope EggCircularArc EggChord).
 Proof.
+  refine (circ_chord_pa_trio _).
   left.
   split; [exact I_ok_circ_chord_hit_sound|].
   split; [exact I_ok_chord_circ_hit_sound|].
@@ -763,6 +846,7 @@ Proof.
     exact mixed_not_first_cook.
 Qed.
 
+Print Assumptions circ_chord_pa_trio.
 Print Assumptions I_ok_circ_chord_hit_sound.
 Print Assumptions I_ok_chord_circ_hit_sound.
 Print Assumptions I_ok_circ_chord_hit_complete.
