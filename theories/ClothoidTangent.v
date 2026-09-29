@@ -16,7 +16,10 @@
    the length parameter under the integral (moments P, Q, R, T), and
    H_fprime_pos is the sign of that derivative. Stdlib MVT prints
    Classical_Prop.classic, so H_mvt is not discharged here either.
-   claimId: none.
+   claimId: none. The tangent is an instance of
+   LipIntFTC.lipint_ftc (claimId 0001-lint-ftc) on cos and sin of psi,
+   plus the rigid frame and the chain rule. It does not mint a second
+   claim, and it does not take 0007-clothoid-first-cook.
    No Admitted / Axiom / Parameter. No Coquelicot. No RiemannInt.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7

@@ -27,7 +27,12 @@
    Halley d/dL (ClothoidResidual H_deriv, H_fprime_pos) is not this
    theorem: that residual differentiates under the integral in the
    length parameter. H_mvt stays a premise for the same classic reason.
-   claimId: none.
+   WITNESS topic: foundations · claimId: 0001-lint-ftc · witness: lipint_ftc
+   board: ADR-0001
+   The id is the ADR-0001 family (same shape as 0007- for ADR-0007).
+   ADR-0001 left FTC for lint on the Coquelicot lane; this file
+   discharges that FTC in Stdlib. Not a remint of 508-e (Fresnel
+   length). Not 0007-clothoid-first-cook.
    No Admitted / Axiom / Parameter.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
@@ -612,6 +617,18 @@ Proof.
   - exact Hm.
 Qed.
 
+(* WITNESS {"claimId":"0001-lint-ftc","topic":"foundations","lemma":"lipint_ftc","title":"FTC for the 3-axiom Lipschitz dyadic integral: lipF is derivable on the open interval with derivative f, and one-sided at the endpoints","file":"theories/LipIntFTC.v","witness":"lipint_ftc","board":"ADR-0001"} *)
+Theorem lipint_ftc :
+  (forall x, lo < x < hi -> derivable_pt_lim lipF x (f x)) /\
+  (lo < hi -> derivable_pt_lim_right lipF lo (f lo)) /\
+  (lo < hi -> derivable_pt_lim_left lipF hi (f hi)).
+Proof.
+  split; [| split].
+  - exact lip_ftc.
+  - exact lip_ftc_right.
+  - exact lip_ftc_left.
+Qed.
+
 End Prim.
 
 Print Assumptions clip.
@@ -631,3 +648,4 @@ Print Assumptions lipF_lip.
 Print Assumptions lipF_continuous.
 Print Assumptions lipF_continuous_interior.
 Print Assumptions lipPrim_ftc.
+Print Assumptions lipint_ftc.
