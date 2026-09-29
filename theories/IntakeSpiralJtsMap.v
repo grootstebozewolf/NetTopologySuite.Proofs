@@ -5,15 +5,17 @@
    (claimId 0007-intake-spiral, witness 0007-intake-spiral).
    Not a remint of 0007-intake-mkclothoid.
 
-   QED: clothoid SPIRALCURVE reuses map_clothoid; a non-locked
-   ISO payload bags a non-locked MkClothoid egg; every
+   QED: a start-placed clothoid SPIRALCURVE declines
+   ID_SpiralClothoidNotYet (it is not an IsoClothoid); every
    SpiralOther declines ID_SpiralOther; JTS L <= 0 declines
    ID_JtsNonPositiveLength before the example5 test; any other
    positive triple declines ID_JtsClothoidNotYet; example5
    still bags locked_clothoid_egg. MemberState projects.
 
-   QEX: parse ∘ emit = id, the compound member-state fold,
-   and JTS G1. Named missing constructors. Not inhabited.
+   QEX: normalizer 2 (iso_spiral_same_curve), parse ∘ emit = id,
+   the compound member-state fold, and JTS G1. Named missing
+   constructors. spiral_jts_missing is the corpus False marker
+   (same shape as intake_geodesic_qex_inhabits). Not inhabited.
 
    ADR-0005: lenient intake, not isValid. 3-axiom host.
    No Admitted / Axiom / Parameter.
@@ -31,47 +33,36 @@ Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
 
-Lemma spiral_clothoid_reuses_iso : forall s f,
-  intake_map s (TSpiralCurve (SpiralOfClothoid f)) =
-    intake_map s (TClothoidIso f).
+Lemma spiral_clothoid_declines : forall sh sc,
+  intake_map sh (TSpiralCurve (SpiralOfClothoid sc)) =
+    IntakeDecline ID_SpiralClothoidNotYet.
 Proof.
-  intros s f.
-  unfold intake_map, intake_map_atom, map_spiral, cert_of_spiral.
+  intros sh sc.
+  unfold intake_map, intake_map_atom, map_spiral, cert_of_spiral,
+    intake_decline_of.
   reflexivity.
 Qed.
 
-Lemma intake_matches_cert : forall s sp,
-  match cert_of_spiral sp with
-  | inr f =>
-      intake_map s (TSpiralCurve sp) = intake_map s (TClothoidIso f)
-  | inl d =>
-      intake_map s (TSpiralCurve sp) =
-        IntakeDecline (intake_decline_of d)
-  end.
+Lemma intake_matches_cert : forall sh sp,
+  intake_map sh (TSpiralCurve sp) =
+    IntakeDecline (intake_decline_of (cert_of_spiral sp)).
 Proof.
-  intros s sp.
+  intros sh sp.
   unfold intake_map, intake_map_atom, map_spiral.
-  destruct sp as [f|k]; reflexivity.
+  destruct sp as [sc|k]; reflexivity.
 Qed.
 
-Lemma spiral_clothoid_sample_hits :
-  exists b c,
-    intake_map default_sheet (TSpiralCurve (SpiralOfClothoid sample_iso)) =
-      IntakeBag b /\
-    b = clothoid_bag default_sheet sample_egg /\
-    In c (bag_chickens b) /\
-    ck_egg c = MkClothoid sample_egg /\
-    sample_egg <> locked_clothoid_egg /\
-    cloth_wf sample_egg.
+Lemma spiral_clothoid_not_iso :
+  intake_map default_sheet
+    (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) =
+    IntakeDecline ID_SpiralClothoidNotYet /\
+  intake_map default_sheet
+    (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) <>
+    intake_map default_sheet example5_jts_cst.
 Proof.
-  destruct iso_sample_intake_hits as [Hb [Hneq Hwf]].
-  exists (clothoid_bag default_sheet sample_egg).
-  exists (mkChicken 0%nat 1%nat (MkClothoid sample_egg)).
-  split; [rewrite spiral_clothoid_reuses_iso; exact Hb|].
-  split; [reflexivity|].
-  split; [now left|].
-  split; [reflexivity|].
-  split; [exact Hneq|exact Hwf].
+  split.
+  - exact (spiral_clothoid_declines default_sheet sample_spiral_clothoid).
+  - rewrite spiral_clothoid_declines, jts_clothoid_maps. discriminate.
 Qed.
 
 Lemma spiral_other_declines : forall k,
@@ -83,12 +74,6 @@ Proof.
     intake_decline_of.
   reflexivity.
 Qed.
-
-Lemma spiral_clothoid_nameplate_declines :
-  intake_map default_sheet
-    (TSpiralCurve (SpiralOther SOK_ClothoidNameplate)) =
-    IntakeDecline ID_SpiralOther.
-Proof. exact (spiral_other_declines SOK_ClothoidNameplate). Qed.
 
 Lemma jts_matches_class : forall s k0 k1 len,
   match classify_jts k0 k1 len with
@@ -130,11 +115,16 @@ Qed.
 (* -------------------------------------------------------------------------- *)
 
 Inductive SpiralJtsMissing : Type :=
+| SJ_Normalizer2
 | SJ_EmitParseId
 | SJ_CompoundFold
 | SJ_JtsG1.
 
 Definition spiral_jts_missing (_ : SpiralJtsMissing) : Prop := False.
+
+Lemma spiral_normalizer2_missing :
+  ~ spiral_jts_missing SJ_Normalizer2.
+Proof. intro H. exact H. Qed.
 
 Lemma spiral_emit_parse_missing :
   ~ spiral_jts_missing SJ_EmitParseId.
@@ -148,25 +138,20 @@ Lemma spiral_jts_g1_missing :
   ~ spiral_jts_missing SJ_JtsG1.
 Proof. intro H. exact H. Qed.
 
-(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"SPIRALCURVE clothoid kind reuses normalizer 1 and can bag a non-locked MkClothoid; every SpiralOther declines ID_SpiralOther; JTS L<=0 declines ID_JtsNonPositiveLength; other triples decline ID_JtsClothoidNotYet; example5 stays locked_clothoid_egg; MemberState projects (QED) or parse-emit id / compound fold / JTS G1 inhabit (QEX); discharged QED; not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Start-placed clothoid SPIRALCURVE declines ID_SpiralClothoidNotYet until normalizer 2; every SpiralOther declines ID_SpiralOther; JTS L<=0 declines ID_JtsNonPositiveLength; other triples decline ID_JtsClothoidNotYet; example5 stays locked_clothoid_egg; MemberState projects (QED) or normalizer 2 / parse-emit id / compound fold / JTS G1 inhabit (QEX); discharged QED; not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_spiral_qed_or_qex :
-  ((forall s f,
-      intake_map s (TSpiralCurve (SpiralOfClothoid f)) =
-        intake_map s (TClothoidIso f)) /\
-   (exists b c,
-      intake_map default_sheet (TSpiralCurve (SpiralOfClothoid sample_iso)) =
-        IntakeBag b /\
-      b = clothoid_bag default_sheet sample_egg /\
-      In c (bag_chickens b) /\
-      ck_egg c = MkClothoid sample_egg /\
-      sample_egg <> locked_clothoid_egg /\
-      cloth_wf sample_egg) /\
+  ((forall sh sc,
+      intake_map sh (TSpiralCurve (SpiralOfClothoid sc)) =
+        IntakeDecline ID_SpiralClothoidNotYet) /\
+   (intake_map default_sheet
+      (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) =
+      IntakeDecline ID_SpiralClothoidNotYet /\
+    intake_map default_sheet
+      (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) <>
+      intake_map default_sheet example5_jts_cst) /\
    (forall k,
       intake_map default_sheet (TSpiralCurve (SpiralOther k)) =
         IntakeDecline ID_SpiralOther) /\
-   intake_map default_sheet
-     (TSpiralCurve (SpiralOther SOK_ClothoidNameplate)) =
-     IntakeDecline ID_SpiralOther /\
    intake_map default_sheet
      (TClothoidJts example5_jts_k0 example5_jts_k1 0) =
      IntakeDecline ID_JtsNonPositiveLength /\
@@ -179,29 +164,29 @@ Theorem ticket_0007_intake_spiral_qed_or_qex :
       mst_dir (mkMemberState p d k) = d /\
       mst_curvature (mkMemberState p d k) = k))
   \/
-  (spiral_jts_missing SJ_EmitParseId /\
+  (spiral_jts_missing SJ_Normalizer2 /\
+   spiral_jts_missing SJ_EmitParseId /\
    spiral_jts_missing SJ_CompoundFold /\
    spiral_jts_missing SJ_JtsG1).
 Proof.
   left.
-  split; [exact spiral_clothoid_reuses_iso|].
-  split; [exact spiral_clothoid_sample_hits|].
+  split; [exact spiral_clothoid_declines|].
+  split; [exact spiral_clothoid_not_iso|].
   split; [exact spiral_other_declines|].
-  split; [exact spiral_clothoid_nameplate_declines|].
   split; [exact jts_length_before_example5|].
   split; [exact jts_other_triple_declines|].
   split; [exact jts_clothoid_maps|].
   exact member_state_proj.
 Qed.
 
-Print Assumptions spiral_clothoid_reuses_iso.
+Print Assumptions spiral_clothoid_declines.
 Print Assumptions intake_matches_cert.
-Print Assumptions spiral_clothoid_sample_hits.
+Print Assumptions spiral_clothoid_not_iso.
 Print Assumptions spiral_other_declines.
-Print Assumptions spiral_clothoid_nameplate_declines.
 Print Assumptions jts_matches_class.
 Print Assumptions jts_length_before_example5.
 Print Assumptions jts_nonpositive_length_declines.
+Print Assumptions spiral_normalizer2_missing.
 Print Assumptions spiral_emit_parse_missing.
 Print Assumptions spiral_compound_fold_missing.
 Print Assumptions spiral_jts_g1_missing.

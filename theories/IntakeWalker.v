@@ -29,7 +29,8 @@
    SPIRAL declines. ID_GeodesicString is not the well-formed
    answer. Not ellipsoid / WKB 13 / emit / first-cook expand.
 
-   SpiralOther declines. Clothoid kind reuses map_clothoid.
+   SpiralOther declines. Clothoid spirals decline
+   ID_SpiralClothoidNotYet until normalizer 2.
    CircUnknown well-formed CS/Circle now maps
    through IntakeAngles (claimId 0007-intake-angles): chart
    θ₀/Δθ via 3-axiom atan2, then MkCirc chickens.
@@ -131,6 +132,7 @@ Inductive IntakeDeclineReason : Type :=
 | ID_GeodesicString
 | ID_SpiralCurve
 | ID_SpiralOther
+| ID_SpiralClothoidNotYet
 | ID_IsoClothoid
 | ID_MkOutOfScope
 | ID_CircGammaLeftover
@@ -359,15 +361,13 @@ Definition map_clothoid (s : Sheet) (f : IsoClothoid) : IntakeResult :=
 Definition intake_decline_of (d : CertDecline) : IntakeDeclineReason :=
   match d with
   | CD_SpiralOther _ => ID_SpiralOther
+  | CD_SpiralClothoidNotYet _ => ID_SpiralClothoidNotYet
   | CD_JtsNonPositiveLength _ _ _ => ID_JtsNonPositiveLength
   | CD_JtsTripleNotYet _ _ _ => ID_JtsClothoidNotYet
   end.
 
 Definition map_spiral (s : Sheet) (sp : SpiralInput) : IntakeResult :=
-  match cert_of_spiral sp with
-  | inr f => map_clothoid s f
-  | inl d => IntakeDecline (intake_decline_of d)
-  end.
+  IntakeDecline (intake_decline_of (cert_of_spiral sp)).
 
 Definition map_jts_clothoid (s : Sheet) (k0 k1 len : R) : IntakeResult :=
   match classify_jts k0 k1 len with

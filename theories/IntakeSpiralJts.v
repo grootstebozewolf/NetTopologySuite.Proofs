@@ -5,12 +5,18 @@
    (claimId 0007-intake-spiral, witness 0007-intake-spiral).
    Not a remint of 0007-intake-mkclothoid.
 
-   Clothoid kind is SpiralOfClothoid of an IsoClothoid. The
-   walker runs that record through try_iso_clothoid / MkClothoid
-   (normalizer 1). Normalizer 2, (k0,k1,L) to (A,sd,ed), is not
-   this letter. Every other spiral kind is SpiralOther and is a
-   named decline, including a clothoid nameplate that does not
-   carry the ISO record.
+   ISO 13249-3 §4.2.12 SPIRALCURVE is start-placed: LOCATION
+   at the start, LENGTH, STARTCURVATURE, ENDCURVATURE. ISO
+   CLOTHOID is inflection-placed (A, sd, ed). No SPIRALCURVE
+   text produces an IsoClothoid. SpiralOfClothoid therefore
+   declines ID_SpiralClothoidNotYet until normalizer 2.
+   Normalizer 2 is the next letter, not this one: start state
+   (P0 = sc_loc, T0 from ref1, handedness from ref2) plus
+   (k0, k1, L), mapped to (A, sd, ed) and an inflection
+   placement via LipInt, with iso_spiral_same_curve. The JTS
+   form reuses that map; MemberState supplies its start state.
+   Every other spiral kind is SpiralOther and declines
+   ID_SpiralOther. Not a silent failure.
 
    JTS CLOTHOID(k0,k1,L) is the same taxonomy. Length is tested
    first: L <= 0 is CD_JtsNonPositiveLength. The example5 triple
@@ -38,19 +44,28 @@ From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance IsoClothoidIntake.
 Local Open Scope R_scope.
 
-(* ISO 13249-3 §4.2.12 names other than the clothoid egg.
-   SOK_ClothoidNameplate is the name without an IsoClothoid
-   payload: it declines, it does not silently hit. *)
+(* ISO 13249-3 §4.2.12 names other than clothoid. Clothoid is
+   SpiralOfClothoid, not a nameplate inside SpiralOther. *)
 Inductive SpiralOtherKind : Type :=
 | SOK_Bloss
 | SOK_Biquadratic
 | SOK_Sine
 | SOK_Cosine
-| SOK_Unknown
-| SOK_ClothoidNameplate.
+| SOK_Unknown.
+
+(* Start-placed clothoid spiral. Not an IsoClothoid. *)
+Record SpiralClothoid : Type := mkSpiralClothoid {
+  sc_loc : Point;
+  sc_ref1 : Point;
+  sc_ref2 : Point;
+  sc_len : R;
+  sc_k0 : R;
+  sc_k1 : R;
+  sc_m : option (R * R)
+}.
 
 Inductive SpiralInput : Type :=
-| SpiralOfClothoid : IsoClothoid -> SpiralInput
+| SpiralOfClothoid : SpiralClothoid -> SpiralInput
 | SpiralOther : SpiralOtherKind -> SpiralInput.
 
 Inductive JtsClass : Type :=
@@ -61,14 +76,21 @@ Inductive JtsClass : Type :=
 (* One taxonomy. Emit round-trip can match these constructors. *)
 Inductive CertDecline : Type :=
 | CD_SpiralOther : SpiralOtherKind -> CertDecline
+| CD_SpiralClothoidNotYet : SpiralClothoid -> CertDecline
 | CD_JtsNonPositiveLength : R -> R -> R -> CertDecline
 | CD_JtsTripleNotYet : R -> R -> R -> CertDecline.
 
-Definition cert_of_spiral (sp : SpiralInput) : CertDecline + IsoClothoid :=
+Definition cert_of_spiral (sp : SpiralInput) : CertDecline :=
   match sp with
-  | SpiralOfClothoid f => inr f
-  | SpiralOther k => inl (CD_SpiralOther k)
+  | SpiralOfClothoid sc => CD_SpiralClothoidNotYet sc
+  | SpiralOther k => CD_SpiralOther k
   end.
+
+(* Example5 numbers on a start-placed spiral. Still not the
+   inflection-placed locked ISO egg. *)
+Definition sample_spiral_clothoid : SpiralClothoid :=
+  mkSpiralClothoid (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+    example5_jts_L example5_jts_k0 example5_jts_k1 None.
 
 (* Length before the example5 match, so a non-positive copy of
    the example5 curvatures cannot hit. *)
@@ -123,12 +145,12 @@ Proof.
   - rewrite jts_is_example5_other. reflexivity.
 Qed.
 
-Lemma cert_spiral_clothoid : forall f,
-  cert_of_spiral (SpiralOfClothoid f) = inr f.
-Proof. intros f. reflexivity. Qed.
+Lemma cert_spiral_clothoid : forall sc,
+  cert_of_spiral (SpiralOfClothoid sc) = CD_SpiralClothoidNotYet sc.
+Proof. intros sc. reflexivity. Qed.
 
 Lemma cert_spiral_other : forall k,
-  cert_of_spiral (SpiralOther k) = inl (CD_SpiralOther k).
+  cert_of_spiral (SpiralOther k) = CD_SpiralOther k.
 Proof. intros k. reflexivity. Qed.
 
 Lemma member_state_proj : forall p d k,
