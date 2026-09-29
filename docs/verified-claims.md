@@ -2212,5 +2212,5 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairBound.v : bound_cells_iff` | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry` on `tri_inter` / `clip_correct`. claimId `tri-de9im-b` (witness `bound_cells_iff`). Exterior cells and `ii_entry_agrees_concrete` stay deferred `[exact]` | 3 |
+| `TrianglePairBound.v : bound_cells_iff` | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. claimId `tri-de9im-b` (witness `bound_cells_iff`). Exterior cells stay deferred `[exact]` | 3 |
 

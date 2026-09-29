@@ -422,7 +422,11 @@ Lemma bb_dim0_iff : forall A B C D E F,
   0 < cross A B C -> 0 < cross D E F ->
   bb_entry A B C D E F = Dim0 <->
   (exists X, on_bd A B C X /\ on_bd D E F X) /\
-  bb_entry A B C D E F <> Dim1.
+  ~ (exists P Q, P <> Q /\
+       (exists e, In e (e3 A B C) /\
+          forall X, on_seg P Q X -> on_seg (fst e) (snd e) X) /\
+       (exists f, In f (e3 D E F) /\
+          forall X, on_seg P Q X -> on_seg (fst f) (snd f) X)).
 Proof.
   intros A B C D E F HA HB. split.
   - intros Hent. split.
@@ -430,8 +434,15 @@ Proof.
       destruct (bb_overlap A B C D E F) eqn:Ho; [discriminate|].
       destruct (bb_touch A B C D E F) eqn:Ht; [| discriminate].
       apply touch_gives_point. exact Ht.
-    + intros E1. rewrite E1 in Hent. discriminate.
-  - intros [[X [HXA HXB]] Hnot].
+    + intros [P [Q [HPQ [He Hf]]]].
+      assert (H1 : bb_entry A B C D E F = Dim1).
+      { apply (proj2 (bb_dim1_iff A B C D E F HA HB)).
+        exists P, Q. repeat split; assumption. }
+      rewrite H1 in Hent. discriminate.
+  - intros [[X [HXA HXB]] Hnoseg].
+    assert (Hnot : bb_entry A B C D E F <> Dim1).
+    { intros H1. apply Hnoseg.
+      exact (proj1 (bb_dim1_iff A B C D E F HA HB) H1). }
     destruct (contact_bool A B C D E F X HA HB HXA HXB) as [Ho|Ht].
     + exfalso. apply Hnot. unfold bb_entry. rewrite Ho. reflexivity.
     + unfold bb_entry. destruct (bb_overlap A B C D E F) eqn:Ho2.
@@ -453,7 +464,11 @@ Theorem bound_cells_iff : forall A B C D E F,
           forall X, on_seg P Q X -> on_seg (fst f) (snd f) X)) /\
   (bb_entry A B C D E F = Dim0 <->
      (exists X, on_bd A B C X /\ on_bd D E F X) /\
-     bb_entry A B C D E F <> Dim1) /\
+     ~ (exists P Q, P <> Q /\
+          (exists e, In e (e3 A B C) /\
+             forall X, on_seg P Q X -> on_seg (fst e) (snd e) X) /\
+          (exists f, In f (e3 D E F) /\
+             forall X, on_seg P Q X -> on_seg (fst f) (snd f) X))) /\
   (bb_entry A B C D E F = DimF <->
      ~ exists X, on_bd A B C X /\ on_bd D E F X).
 Proof.
