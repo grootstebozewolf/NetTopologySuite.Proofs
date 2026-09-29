@@ -13,6 +13,7 @@
 
      sweep_ccw O A B
        :=  0 < cross(OA,OB)  ∨  (cross = 0 ∧ dot(OA,OB) < 0)
+   endpoint-only; not orientation; see sweep_ccw_not_orientation (IntakeAngles.v).
      central_angle O A B
        :=  angle_between (A−O) (B−O)   ∈ (−π, π]
 

@@ -202,9 +202,9 @@ emit of GEODESICSTRING, first-cook expand, new oracle keyword
 Intake construction of `CircularEgg` `(O,r,θ₀,Δθ)` from well-formed
 WKT circular control points. Three distinct non-collinear points
 determine a unique circumcircle; chickens are `MkCirc`. Angle fields
-are inhabited from that geometry (θ₀ = sheet e₁ ray, Δθ = oriented
-full span ±2π). Host interpolant stays atan2-free egg data, not
-Stdlib atan2 / Ratan classic. Collinear / duplicate / bad count
+are computed (CircleChart + 3-axiom atan2/atan3): θ₀ principal, Δθ chart sweep.
+Carried angles pass only when carry-and-check agrees. Not
+Stdlib Ratan classic. Collinear / duplicate / bad count
 Decline by name. Clothoid is the MkClothoid letter, not this one.
 _Avoid_: silent chord demote, host cook expand, new oracle keyword
 

@@ -1,5 +1,5 @@
 // Thin Cake entry — house style (.NET / PowerShell / Cake / RGR).
-// Targets: WktIntakeWalker (smoke.ps1) and SqlMmFactoryHunt (hunt.ps1).
+// Targets: WktIntakeWalker, SqlMmFactoryHunt, SqlMmWktAngleHunt.
 // claimId: none (tools). No new ADR-0006 keyword.
 // Assisted-by: Cursor Grok 4.6.
 
@@ -46,16 +46,35 @@ Task("SqlMmFactoryHunt")
         throw new CakeException($"SqlMmFactoryHunt exited {exit}");
 });
 
+Task("SqlMmWktAngleHunt")
+    .Does(() =>
+{
+    var script = MakeAbsolute(File("./tests/SqlMmWktAngleHunt/hunt.ps1"));
+    if (!FileExists(script))
+        throw new CakeException($"missing {script}");
+
+    var shell = FindPwsh();
+    var args = new ProcessArgumentBuilder()
+        .Append("-NoProfile")
+        .Append("-File").AppendQuoted(script.FullPath);
+
+    var exit = StartProcess(shell, new ProcessSettings { Arguments = args });
+    if (exit != 0)
+        throw new CakeException($"SqlMmWktAngleHunt exited {exit}");
+});
+
 Task("Default")
     .Does(() =>
 {
-    Information("Targets: WktIntakeWalker, SqlMmFactoryHunt");
+    Information("Targets: WktIntakeWalker, SqlMmFactoryHunt, SqlMmWktAngleHunt");
     Information("  pwsh ./tools/WktIntakeWalker/smoke.ps1");
     Information("  dotnet cake --target=WktIntakeWalker");
     Information("  dotnet run --project tools/WktIntakeWalker -- \"LINESTRING (0 0, 2 0)\"");
     Information("  dotnet cake --target=SqlMmFactoryHunt --budget=300 --seed=42");
     Information("  pwsh ./tests/SqlMmFactoryHunt/hunt.ps1 -Budget 300 -Seed 42");
     Information("  dotnet run --project tests/SqlMmFactoryHunt -- --budget 300 --seed 42");
+    Information("  pwsh ./tests/SqlMmWktAngleHunt/hunt.ps1");
+    Information("  dotnet cake --target=SqlMmWktAngleHunt");
 });
 
 RunTarget(target);
