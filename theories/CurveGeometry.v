@@ -189,16 +189,11 @@ Definition valid_curve_geometry (cg : CurveGeometry) : Prop :=
 (* -------------------------------------------------------------------------- *)
 (* §5  Chord approximation.                                                   *)
 (*                                                                            *)
-(* `chord_approx_arc a n` returns a list of points along `a` (the chord       *)
-(* endpoints of an n-chord polyline approximation).  The `n` parameter        *)
-(* controls the approximation tolerance: larger `n` => smaller sagitta.       *)
-(*                                                                            *)
-(* THIS SESSION (S2) lands the *degenerate* 3-point approximation             *)
-(* `[arc_start a; arc_mid a; arc_end a]` which ignores `n`.  This is an       *)
-(* honest valid Option B approximation (tolerance = sagitta of each half-arc) *)
-(* and proves the structural shape works.  The refined n-chord trigonometric  *)
-(* version + sagitta-bound proof lands in S6                                  *)
-(* (`chord_approx_error_bound`).                                              *)
+(* `chord_approx_arc` is the inscribed control polygon. It ignores `n`.       *)
+(* `RelateCurveArcSegment.ring_edges_arc_seg` and the vesica reduction        *)
+(* compute this list by reflexivity, so this definition is not the densifier. *)
+(* The GEOS-aligned walk on a certified egg is `ArcLinearize.lin_pts` /       *)
+(* `linearize`. Deviation: `ArcLinearizeBound.chord_approx_error_bound`.      *)
 (* -------------------------------------------------------------------------- *)
 
 Definition chord_approx_arc (a : CircularArc) (_n : nat) : list Point :=
@@ -261,8 +256,8 @@ Lemma chord_approx_segment_chord :
     chord_approx_segment (CSChord p q) n = [p; q].
 Proof. intros p q n. reflexivity. Qed.
 
-(* Arc segments approximate to the three control points (under the S2
-   degenerate stub).  S6 will refine this to an n-chord polyline. *)
+(* Arc segments approximate to the three control points. The GEOS
+   densifier is ArcLinearize, not this inscribed polygon. *)
 Lemma chord_approx_segment_arc_degenerate :
   forall a n,
     chord_approx_segment (CSArc a) n

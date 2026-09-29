@@ -304,6 +304,13 @@ theories/Overlay.v
 theories/CurveGeometry.v
 theories/ArcOrient.v
 theories/ArcChordApprox.v
+# GEOS-aligned uniform chord walk on a certified egg.
+# claimId: 0007-arc-linearize. 3-axiom. n = subdiv_n step Δθ
+# inhabits subdiv_ok (ceil via archimed / up). No Admitted.
+theories/ArcLinearize.v
+theories/LinearizeContract.v
+theories/ArcLinearizeBound.v
+theories/ArcLinearizeContract.v
 theories/ArcIntersect.v
 # Half-angle chart ζ = tan(φ/2), pole opposite the arc mid. ζ is not tag τ. Refs #771.
 # claimId: none. Freeze held. No Admitted.
