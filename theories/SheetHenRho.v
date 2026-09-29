@@ -1703,6 +1703,13 @@ Proof.
       * apply (image_on_circle pcs a). exact Iu.
       * apply (image_on_circle pcs b). exact Iv.
 Qed.
+(* Letter 3 first obligation, flagged on #816 as overlap_hits_are_endpoints.
+   An overlap has infinitely many common points, so this theorem counts p
+   only when it is an overlap endpoint. A progress hit strictly inside the
+   overlap interval is not in counted, and cooking there does not decrease ρ.
+   For overlapping supports, 𝓘 or the step may take progress hits only at
+   those endpoints. Once both endpoints are shared vertices, the coincident
+   pieces go to the merge step. *)
 Theorem rho_candidates_complete : forall pcs s1 s2 p,
   s1 <> s2 ->
   support_image pcs s1 p ->
@@ -1976,6 +1983,35 @@ Proof.
   unfold rho_pcs. rewrite iso_supports. cbn.
   rewrite iso_half_counted_nil. reflexivity.
 Qed.
+(* Concentric, distinct radii: not separated (circle_circle_le_2 does not
+   apply) and not the same circle (the overlap route does not apply).
+   circle_circle_pts returns nil because dist of the centres is 0. *)
+Definition conc_r5 : CircularEgg := mkCircularEgg (mkPoint 0 0) 5 0 PI.
+Definition conc_r3 : CircularEgg := mkCircularEgg (mkPoint 0 0) 3 0 PI.
+Lemma concentric_distinct_radii_empty : forall pcs,
+  same_circle_b conc_r5 conc_r3 = false /\
+  ~ (0 < dist (circ_o conc_r5) (circ_o conc_r3)) /\
+  circle_circle_pts conc_r5 conc_r3 = [] /\
+  raw_pts pcs (SuppCircle conc_r5) (SuppCircle conc_r3) = [].
+Proof.
+  intro pcs.
+  assert (Hs : same_circle_b conc_r5 conc_r3 = false).
+  { unfold same_circle_b, conc_r5, conc_r3. cbn.
+    assert (E : req_b (5 * 5) (3 * 3) = false).
+    { destruct (req_b (5 * 5) (3 * 3)) eqn:Eb; [| reflexivity].
+      apply req_b_true in Eb. lra. }
+    rewrite E. destruct (pt_eqb (mkPoint 0 0) (mkPoint 0 0)); reflexivity. }
+  assert (Hd : dist (circ_o conc_r5) (circ_o conc_r3) = 0).
+  { unfold conc_r5, conc_r3. cbn. apply dist_refl. }
+  assert (Hsep : ~ (0 < dist (circ_o conc_r5) (circ_o conc_r3))) by lra.
+  assert (Hc : circle_circle_pts conc_r5 conc_r3 = []).
+  { unfold circle_circle_pts. rewrite Hd.
+    assert (Eb : rle_b 0 0 = true) by (apply rle_b_true; lra).
+    rewrite Eb. reflexivity. }
+  assert (Hr : raw_pts pcs (SuppCircle conc_r5) (SuppCircle conc_r3) = []).
+  { unfold raw_pts. rewrite Hs. exact Hc. }
+  repeat split; assumption.
+Qed.
 Print Assumptions pt_eq_coords.
 Print Assumptions pt_eqb_true.
 Print Assumptions req_b_true.
@@ -2089,3 +2125,4 @@ Print Assumptions iso_canon.
 Print Assumptions iso_half_counted_nil.
 Print Assumptions iso_supports.
 Print Assumptions iso_half_pair_rho_zero.
+Print Assumptions concentric_distinct_radii_empty.
