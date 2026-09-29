@@ -19,9 +19,18 @@
 
    MkNurbs and MkClothoid are BagIntakeDecline at intake. That judgement
    is not oracle IDecline (DeclineTag). On a progress IHit both pieces
-   are replaced by cooked chord_split / circ_split pieces sharing one
-   minted hen. On IDecline the whole bag fails closed. IEmpty does not
-   step.
+   are replaced by cooked chord_split / circ_split pieces. The new
+   vertex is ShareOne (share_one_same_hen): one hen on every new joint,
+   not MintTwo.
+
+   bag_step supersedes leftover_bag_step (SheetHenCookLoopModulo,
+   LStepHit | LStepDecline; HostRhoModuloKissShare shows there is no
+   third constructor) and circ_leftover_bag_step (CStepHit |
+   CStepDecline). Those Decline constructors are identity. This Decline
+   is fail-closed: a live bag becomes BagDeclined, and that state only
+   stutters. IEmpty does not step. circ_leftover_bag_term_forall stays
+   unproved and unrefuted; this letter does not inhabit it. The locked
+   vesica |H|=2 measure stays the QED in CircularCookLeftoverTwoHit.
 
    TODO letter 3: StepCoincide is not a bag_step constructor. Identical
    support and window collapse to one egg carrying both provenance
@@ -252,7 +261,7 @@ Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Cooked split. Children copy the support. Windows are sub_lo / sub_hi.      *)
-(* Eggs are chord_split / circ_split. One minted hen is the new vertex.       *)
+(* Eggs are chord_split / circ_split. The new vertex is ShareOne h.           *)
 (* -------------------------------------------------------------------------- *)
 
 Definition split_piece (pc : BagPiece) (u : R) (h : Hen) : BagPiece * BagPiece :=
@@ -690,8 +699,57 @@ Inductive bag_decline_step : SheetBag -> SheetBag -> Prop :=
 | StepDeclineAbsorb :
     forall sh, bag_decline_step (BagDeclined sh) (BagDeclined sh).
 
+(* Hit or Decline only, same shape as leftover_bag_step / circ_leftover_bag_step.
+   No coincide constructor (letter 3). Decline is not the identity step. *)
 Definition bag_step (b b' : SheetBag) : Prop :=
   bag_progress_step b b' \/ bag_decline_step b b'.
+
+Lemma bag_step_progress_or_decline :
+  forall b b',
+    bag_step b b' ->
+    bag_progress_step b b' \/ bag_decline_step b b'.
+Proof. intros b b' H. exact H. Qed.
+
+Lemma split_joints_share_one :
+  forall pc u h,
+    piece_realizes pc ->
+    ck_dst (bp_ck (fst (split_piece pc u h))) =
+      fst (apply_id_decision (ShareOne h)) /\
+    ck_src (bp_ck (snd (split_piece pc u h))) =
+      snd (apply_id_decision (ShareOne h)).
+Proof.
+  intros [[src dst egg] sup w prov] u h Hr.
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e];
+    simpl in Hr; try contradiction; simpl; split; reflexivity.
+Qed.
+
+Lemma progress_pair_share_one :
+  forall a b ua ub h,
+    piece_realizes a ->
+    piece_realizes b ->
+    fst (apply_id_decision (ShareOne h)) =
+      snd (apply_id_decision (ShareOne h)) /\
+    ck_dst (bp_ck (fst (split_piece a ua h))) = h /\
+    ck_src (bp_ck (snd (split_piece a ua h))) = h /\
+    ck_dst (bp_ck (fst (split_piece b ub h))) = h /\
+    ck_src (bp_ck (snd (split_piece b ub h))) = h.
+Proof.
+  intros a b ua ub h Ha Hb.
+  destruct (split_joints_share_one a ua h Ha) as [HaL HaR].
+  destruct (split_joints_share_one b ub h Hb) as [HbL HbR].
+  unfold apply_id_decision in *. simpl in *.
+  split. { exact (share_one_same_hen h). }
+  repeat split; assumption.
+Qed.
+
+(* LStepDecline / CStepDecline leave the bag. A live IDecline does not. *)
+Lemma live_decline_not_identity :
+  forall sh pcs,
+    ~ bag_decline_step (BagLive sh pcs) (BagLive sh pcs).
+Proof.
+  intros sh pcs H.
+  inversion H.
+Qed.
 
 Lemma filter_idx_In :
   forall (A : Type) (keep : nat -> bool) (l : list A) (n : nat) (x : A),
@@ -1112,6 +1170,10 @@ Print Assumptions filter_idx_In.
 Print Assumptions keep_other_idx_true.
 Print Assumptions filter_idx_keep_In.
 Print Assumptions drop_pair_keeps.
+Print Assumptions bag_step_progress_or_decline.
+Print Assumptions split_joints_share_one.
+Print Assumptions progress_pair_share_one.
+Print Assumptions live_decline_not_identity.
 Print Assumptions step_preserves_sheet.
 Print Assumptions step_preserves_inv.
 Print Assumptions progress_preserves_support_image.
