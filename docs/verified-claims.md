@@ -965,13 +965,6 @@ the field failure modes each lemma guards.
 
 ## Curve ring contact, boundary meet and the inscribed reduction (`RingContactSound.v`, `RelateCurveArcSegment.v`, `RelateCurveBoundaryMeet.v`, `RelateCurveInscribedGeometry.v`, `OverlayContactSound.v`) <!-- feat:relate,overlay geom:arc,cs,cc,cp -->
 
-Backfilled 2026-08-23: these five files were **proved but never cited**, so the
-curve columns of the coverage matrix were being carried by blanket line-line
-tags instead of by their own theorems. A `CurveRing` here is a `list
-CurveSegment` (`CSChord` | `CSArc`) per `theories/CurveGeometry.v` — so an
-all-`CSArc` ring is a CircularString and a mixed ring is a CompoundCurve, which
-is why one family of lemmas serves both columns.
-
 Read the scope carefully: the ring results establish **simplicity / hole
 disjointness**, not DE-9IM cells, and the inscribed reduction is over
 *linearised* point sets, so it is arc-blind by construction. The arc-exact
@@ -2215,5 +2208,11 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairBound.v : bound_cells_iff` | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. claimId `tri-de9im-b` (witness `bound_cells_iff`). Exterior cells stay deferred `[exact]` | 3 |
+| `TrianglePairBound.v : bound_cells_iff` | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. claimId `tri-de9im-b` (witness `bound_cells_iff`). Exterior cells are T1c `[exact]` | 3 |
+
+## T1c — exterior cells and the nine-cell matrix <!-- feat:relate geom:poly -->
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `TrianglePairExterior.v : exterior_cells_iff` | I∩E is Dim2 and B∩E is Dim1 iff a vertex of A lies strictly outside closed B. A vertex only on the boundary of B does not (`be_boundary_closed`). E∩I and E∩B are the swap. E∩E is Dim2. `tri_de9im` assembles all nine cells. claimId `tri-de9im-c` (witness `exterior_cells_iff`) `[exact]` | 3 |
 

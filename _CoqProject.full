@@ -2577,6 +2577,7 @@ theories/TrianglePairCommon.v
 theories/TrianglePairClip.v
 theories/TrianglePairEdge.v
 theories/TrianglePairBound.v
+theories/TrianglePairExterior.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v
