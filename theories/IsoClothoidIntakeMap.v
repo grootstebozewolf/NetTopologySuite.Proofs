@@ -5,10 +5,12 @@
    not reminted). intake_map on TClothoidIso is map_clothoid.
    Hit builds a cloth_wf egg by direct field copy. Red CST
    examples: missing measure, unexpected measure, sheared frame
-   (cloth_wf still holds), degenerate window sd = ed, and
-   non-positive scale. sample_iso is a Hit that is not the
-   locked egg. The locked ISO fields evaluate as
-   locked_clothoid_egg. No new witness.
+   (cloth_wf still holds), tilted placement, degenerate window
+   sd = ed, and non-positive scale. sample_iso is a Hit that
+   is not the locked egg. A JTS triple other than example5
+   declines ID_JtsClothoidNotYet. Horizontal Z drops loc z.
+   The locked ISO fields evaluate as locked_clothoid_egg.
+   No new witness.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -87,6 +89,25 @@ Proof.
   rewrite nonpos_try. reflexivity.
 Qed.
 
+Lemma iso_tilted_placement_declines :
+  intake_map default_sheet (TClothoidIso tilted_iso) =
+    IntakeDecline ID_TiltedPlacement /\
+  similarity_ok (ic_ref1 tilted_iso) (ic_ref2 tilted_iso) = true.
+Proof.
+  split.
+  - unfold intake_map, intake_map_atom, map_clothoid, iso_fail_id.
+    rewrite tilted_try. reflexivity.
+  - unfold tilted_iso. exact unit_east_sim.
+Qed.
+
+Lemma iso_horizontal_z_hits :
+  intake_map default_sheet (TClothoidIso flat_z_iso) =
+    IntakeBag (clothoid_bag default_sheet locked_clothoid_egg).
+Proof.
+  unfold intake_map, intake_map_atom, map_clothoid.
+  rewrite flat_z_try. reflexivity.
+Qed.
+
 Lemma iso_sample_intake_hits :
   intake_map default_sheet (TClothoidIso sample_iso) =
     IntakeBag (clothoid_bag default_sheet sample_egg) /\
@@ -97,6 +118,15 @@ Proof.
   - unfold intake_map, intake_map_atom, map_clothoid.
     rewrite sample_try. reflexivity.
   - split; [exact sample_not_locked|exact sample_wf].
+Qed.
+
+(* Next to sample_not_locked: another triple is not the locked bag. *)
+Lemma jts_other_triple_declines :
+  intake_map default_sheet (TClothoidJts 0 0 1) =
+    IntakeDecline ID_JtsClothoidNotYet.
+Proof.
+  unfold intake_map, intake_map_atom, map_jts_clothoid.
+  rewrite jts_is_example5_other. reflexivity.
 Qed.
 
 Lemma locked_iso_intake_eval : forall t,
@@ -117,5 +147,8 @@ Print Assumptions iso_unexpected_measure_declines.
 Print Assumptions iso_shear_frame_declines.
 Print Assumptions iso_degenerate_window_declines.
 Print Assumptions iso_nonpositive_scale_declines.
+Print Assumptions iso_tilted_placement_declines.
+Print Assumptions iso_horizontal_z_hits.
 Print Assumptions iso_sample_intake_hits.
+Print Assumptions jts_other_triple_declines.
 Print Assumptions locked_iso_intake_eval.

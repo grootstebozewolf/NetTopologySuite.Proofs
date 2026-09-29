@@ -437,7 +437,7 @@ Definition bag_eggs (b : ShcBag) : list Egg :=
 Definition intake_rho (c : TaggedCst) (e : Egg) : option SqlMmSignedTag :=
   match c with
   | TLineString _ => Some TagLineString
-  | TClothoidJts => Some TagClothoid
+  | TClothoidJts _ _ _ => Some TagClothoid
   | TClothoidIso _ => Some TagClothoid
   | TCircle _ _ => Some TagCircle
   | TCircularString _ _ =>
@@ -455,7 +455,7 @@ Definition cst_prod_tag (c : TaggedCst) : option SqlMmSignedTag :=
   | TLineString _ => Some TagLineString
   | TCircularString _ _ => Some TagCircularString
   | TCircle _ _ => Some TagCircle
-  | TClothoidJts => Some TagClothoid
+  | TClothoidJts _ _ _ => Some TagClothoid
   | TClothoidIso _ => Some TagClothoid
   | TPoint _ | TCompoundCurve _ | TGeodesicString _
   | TSpiralCurve | TOutOfSlice => None
@@ -493,7 +493,7 @@ Definition cst_prod_name (c : TaggedCst) : CstProdName :=
   | TLineString _ => PiLineString
   | TCircularString _ _ => PiCircularString
   | TCircle _ _ => PiCircle
-  | TClothoidJts => PiClothoid
+  | TClothoidJts _ _ _ => PiClothoid
   | TClothoidIso _ => PiClothoid
   | TGeodesicString _ => PiGeodesicString
   | TPoint _ | TCompoundCurve _ | TSpiralCurve | TOutOfSlice => PiUnsigned
@@ -654,11 +654,11 @@ Qed.
 
 Lemma tau_mu_locked_clothoid_jts :
   exists b e,
-    intake_map default_sheet TClothoidJts = IntakeBag b /\
+    intake_map default_sheet example5_jts_cst = IntakeBag b /\
     bag_eggs b = [e] /\
     e = MkClothoid locked_clothoid_egg /\
     first_slice_tag e = Some TagClothoid /\
-    intake_rho TClothoidJts e = Some TagClothoid.
+    intake_rho example5_jts_cst e = Some TagClothoid.
 Proof.
   exists (clothoid_bag default_sheet locked_clothoid_egg).
   exists (MkClothoid locked_clothoid_egg).
@@ -910,7 +910,7 @@ Theorem ticket_sqlmm_tau_mu_qed_or_qex :
       bag_eggs b = [e] /\
       first_slice_tag e = Some TagClothoid) /\
    (exists b e,
-      intake_map default_sheet TClothoidJts = IntakeBag b /\
+      intake_map default_sheet example5_jts_cst = IntakeBag b /\
       bag_eggs b = [e] /\
       first_slice_tag e = Some TagClothoid) /\
    (exists b e,

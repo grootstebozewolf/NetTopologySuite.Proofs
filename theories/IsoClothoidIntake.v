@@ -9,7 +9,9 @@
    as cloth_place / cloth_A / cloth_sd / cloth_ed / cloth_m0 /
    cloth_m1. Handedness is not a field. h = sign(ref1 × ref2),
    the same Rle_dec test as cloth_sigma (0 would be +1; a
-   similarity frame has cross ≠ 0).
+   similarity frame has cross ≠ 0). sd and ed are arc length
+   from the inflection (our reading; GML's Clothoid uses the
+   normalized Fresnel parameter, s = A·√π·t).
 
    Planar similarity frame, required here and not by cloth_wf.
    cloth_wf accepts any nonzero ref1 whose cross with ref2 is
@@ -26,13 +28,20 @@
    present is ICF_UnexpectedMeasure. Success is both None or both
    Some, which is rule 8. A half pair never builds an egg.
 
+   Ref z is carried so a tilted placement is not read as planar.
+   Both ref z = 0 is horizontal (WD_Z / WD_ZM accepted; loc z is
+   elevation and is not copied). Any nonzero ref z is
+   ICF_TiltedPlacement. XY and M fixtures store z = 0.
+
    sd = ed is ICF_DegenerateWindow. The host still has a constant
    gamma on that window; intake does not accept it. A ≤ 0 is
    ICF_NonPositiveScale so a Hit egg meets cloth_wf.
 
-   Check order: measures, similarity, A > 0, sd ≠ ed.
-   JTS (k0, k1, L), SPIRALCURVE, and normalizer 2 are out of
-   scope. No FTC. No Admitted / Axiom / Parameter.
+   Check order: measures, horizontal refs, similarity, A > 0,
+   sd ≠ ed. jts_is_example5 is the example5 triple
+   (0, 5/1000, 80) only; other JTS triples are the walker's
+   ID_JtsClothoidNotYet. SPIRALCURVE and normalizer 2 are out
+   of scope. No FTC. No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -55,13 +64,17 @@ Inductive IsoClothoidFail : Type :=
 | ICF_UnexpectedMeasure
 | ICF_NotSimilarityFrame
 | ICF_NonPositiveScale
-| ICF_DegenerateWindow.
+| ICF_DegenerateWindow
+| ICF_TiltedPlacement.
 
 Record IsoClothoid : Type := mkIsoClothoid {
   ic_dim : WktDim;
   ic_loc : Point;
+  ic_loc_z : R;
   ic_ref1 : Point;
+  ic_ref1_z : R;
   ic_ref2 : Point;
+  ic_ref2_z : R;
   ic_A : R;
   ic_sd : R;
   ic_ed : R;
@@ -97,6 +110,12 @@ Definition measures_fail (d : WktDim) (m0 m1 : option R)
   | false, _, _ => Some ICF_UnexpectedMeasure
   end.
 
+(* Both ref z = 0: the placement is horizontal. loc z is elevation. *)
+Definition refs_horizontal (z1 z2 : R) : bool :=
+  if Req_EM_T z1 0 then
+    if Req_EM_T z2 0 then true else false
+  else false.
+
 Definition similarity_ok (a b : Point) : bool :=
   if Req_EM_T (frame_dot a b) 0 then
     if Req_EM_T (frame_h2 a) (frame_h2 b) then
@@ -108,13 +127,27 @@ Definition try_iso_clothoid (f : IsoClothoid) : IsoClothoidFail + ClothoidEgg :=
   match measures_fail (ic_dim f) (ic_m0 f) (ic_m1 f) with
   | Some r => inl r
   | None =>
-      if similarity_ok (ic_ref1 f) (ic_ref2 f) then
-        if Rle_dec (ic_A f) 0 then inl ICF_NonPositiveScale
-        else if Req_EM_T (ic_sd f) (ic_ed f) then inl ICF_DegenerateWindow
-        else inr (mk_cloth (mkAffPlace (ic_loc f) (ic_ref1 f) (ic_ref2 f))
-                   (ic_A f) (ic_sd f) (ic_ed f) (ic_m0 f) (ic_m1 f))
-      else inl ICF_NotSimilarityFrame
+      if refs_horizontal (ic_ref1_z f) (ic_ref2_z f) then
+        if similarity_ok (ic_ref1 f) (ic_ref2 f) then
+          if Rle_dec (ic_A f) 0 then inl ICF_NonPositiveScale
+          else if Req_EM_T (ic_sd f) (ic_ed f) then inl ICF_DegenerateWindow
+          else inr (mk_cloth (mkAffPlace (ic_loc f) (ic_ref1 f) (ic_ref2 f))
+                     (ic_A f) (ic_sd f) (ic_ed f) (ic_m0 f) (ic_m1 f))
+        else inl ICF_NotSimilarityFrame
+      else inl ICF_TiltedPlacement
   end.
+
+(* example5.txt JTS CLOTHOID (0, 0.005, 80). Other triples are not this. *)
+Definition example5_jts_k0 : R := 0.
+Definition example5_jts_k1 : R := 5 / 1000.
+Definition example5_jts_L : R := 80.
+
+Definition jts_is_example5 (k0 k1 len : R) : bool :=
+  if Req_EM_T k0 example5_jts_k0 then
+    if Req_EM_T k1 example5_jts_k1 then
+      if Req_EM_T len example5_jts_L then true else false
+    else false
+  else false.
 
 Lemma frame_lagrange : forall a b,
   frame_cross a b * frame_cross a b + frame_dot a b * frame_dot a b =
@@ -178,46 +211,70 @@ Proof.
   - right. exists a, b. split; reflexivity.
 Qed.
 
+Lemma refs_horizontal_spec : forall z1 z2,
+  refs_horizontal z1 z2 = true -> z1 = 0 /\ z2 = 0.
+Proof.
+  intros z1 z2 H.
+  unfold refs_horizontal in H.
+  destruct (Req_EM_T z1 0) as [H1|H1]; [|discriminate].
+  destruct (Req_EM_T z2 0) as [H2|H2]; [|discriminate].
+  split; assumption.
+Qed.
+
+Lemma refs_zero_horizontal : refs_horizontal 0 0 = true.
+Proof.
+  unfold refs_horizontal.
+  destruct (Req_EM_T 0 0) as [_|H]; [|exfalso; apply H; reflexivity].
+  destruct (Req_EM_T 0 0) as [_|H]; [|exfalso; apply H; reflexivity].
+  reflexivity.
+Qed.
+
 Lemma try_iso_hit_wf : forall f e,
   try_iso_clothoid f = inr e ->
   cloth_wf e /\
   e = mk_cloth (mkAffPlace (ic_loc f) (ic_ref1 f) (ic_ref2 f))
         (ic_A f) (ic_sd f) (ic_ed f) (ic_m0 f) (ic_m1 f) /\
   cloth_sigma e = frame_hand (ic_ref1 f) (ic_ref2 f) /\
-  ic_sd f <> ic_ed f.
+  ic_sd f <> ic_ed f /\
+  ic_ref1_z f = 0 /\
+  ic_ref2_z f = 0.
 Proof.
   intros f e H.
   unfold try_iso_clothoid in H.
   destruct (measures_fail (ic_dim f) (ic_m0 f) (ic_m1 f)) as [r|] eqn:Hm.
   - discriminate.
-  - destruct (similarity_ok (ic_ref1 f) (ic_ref2 f)) eqn:Hs.
-    + destruct (Rle_dec (ic_A f) 0) as [Ha|Ha].
-      * discriminate.
-      * destruct (Req_EM_T (ic_sd f) (ic_ed f)) as [Heq|Hneq].
+  - destruct (refs_horizontal (ic_ref1_z f) (ic_ref2_z f)) eqn:Hz.
+    + destruct (similarity_ok (ic_ref1 f) (ic_ref2 f)) eqn:Hs.
+      * destruct (Rle_dec (ic_A f) 0) as [Ha|Ha].
         -- discriminate.
-        -- inversion H. subst e.
-           destruct (similarity_ok_spec _ _ Hs) as [Hd [Hlen Hnz]].
-           assert (Hc : frame_cross (ic_ref1 f) (ic_ref2 f) <> 0).
-           { apply similarity_cross_nz; assumption. }
-           split.
-           { apply cloth_wf_mk.
-             - apply Rnot_le_lt. exact Ha.
-             - unfold aff_h2. cbn. exact Hnz.
-             - unfold aff_cross. cbn. exact Hc.
-             - apply (measures_none_coupled (ic_dim f) (ic_m0 f) (ic_m1 f)).
-               exact Hm. }
-           split. { reflexivity. }
-           split.
-           { unfold cloth_sigma, frame_hand, cloth_cross, aff_cross. cbn.
-             reflexivity. }
-           exact Hneq.
+        -- destruct (Req_EM_T (ic_sd f) (ic_ed f)) as [Heq|Hneq].
+           ** discriminate.
+           ** inversion H. subst e.
+              destruct (similarity_ok_spec _ _ Hs) as [Hd [Hlen Hnz]].
+              destruct (refs_horizontal_spec _ _ Hz) as [Hz1 Hz2].
+              assert (Hc : frame_cross (ic_ref1 f) (ic_ref2 f) <> 0).
+              { apply similarity_cross_nz; assumption. }
+              split.
+              { apply cloth_wf_mk.
+                - apply Rnot_le_lt. exact Ha.
+                - unfold aff_h2. cbn. exact Hnz.
+                - unfold aff_cross. cbn. exact Hc.
+                - apply (measures_none_coupled (ic_dim f) (ic_m0 f) (ic_m1 f)).
+                  exact Hm. }
+              split. { reflexivity. }
+              split.
+              { unfold cloth_sigma, frame_hand, cloth_cross, aff_cross. cbn.
+                reflexivity. }
+              split. { exact Hneq. }
+              split; assumption.
+      * discriminate.
     + discriminate.
 Qed.
 
 (* Locked #883 egg, as ISO fields. Unit east frame, A = 1, window
    [0,1], unmeasured XY. *)
 Definition locked_iso_clothoid : IsoClothoid :=
-  mkIsoClothoid WD_XY (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+  mkIsoClothoid WD_XY (mkPoint 0 0) 0 (mkPoint 1 0) 0 (mkPoint 0 1) 0
     1 0 1 None None.
 
 Lemma unit_east_sim :
@@ -233,7 +290,7 @@ Lemma locked_iso_try :
   try_iso_clothoid locked_iso_clothoid = inr locked_clothoid_egg.
 Proof.
   unfold try_iso_clothoid, locked_iso_clothoid. cbn.
-  rewrite unit_east_sim.
+  rewrite refs_zero_horizontal. rewrite unit_east_sim.
   destruct (Rle_dec 1 0) as [Ha|Ha]; [lra|].
   destruct (Req_EM_T 0 1) as [Hs|Hs]; [lra|].
   unfold locked_clothoid_egg, place_east. reflexivity.
@@ -248,7 +305,7 @@ Proof.
 Qed.
 
 Definition missing_iso : IsoClothoid :=
-  mkIsoClothoid WD_M (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+  mkIsoClothoid WD_M (mkPoint 0 0) 0 (mkPoint 1 0) 0 (mkPoint 0 1) 0
     1 0 1 None None.
 
 Lemma missing_try :
@@ -258,7 +315,7 @@ Proof.
 Qed.
 
 Definition unexpected_iso : IsoClothoid :=
-  mkIsoClothoid WD_XY (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+  mkIsoClothoid WD_XY (mkPoint 0 0) 0 (mkPoint 1 0) 0 (mkPoint 0 1) 0
     1 0 1 (Some 0) (Some 1).
 
 Lemma unexpected_try :
@@ -269,7 +326,7 @@ Qed.
 
 (* Sheared refs: cloth_wf holds, similarity does not. *)
 Definition shear_iso : IsoClothoid :=
-  mkIsoClothoid WD_XY (mkPoint 0 0) (mkPoint 2 0) (mkPoint 1 1)
+  mkIsoClothoid WD_XY (mkPoint 0 0) 0 (mkPoint 2 0) 0 (mkPoint 1 1) 0
     1 0 1 None None.
 
 Definition shear_egg : ClothoidEgg :=
@@ -289,6 +346,7 @@ Lemma shear_try :
   try_iso_clothoid shear_iso = inl ICF_NotSimilarityFrame.
 Proof.
   unfold try_iso_clothoid, shear_iso. cbn.
+  rewrite refs_zero_horizontal.
   unfold similarity_ok.
   destruct (Req_EM_T (frame_dot (mkPoint 2 0) (mkPoint 1 1)) 0) as [H|H].
   - exfalso. unfold frame_dot in H. cbn in H. lra.
@@ -296,35 +354,35 @@ Proof.
 Qed.
 
 Definition degenerate_iso : IsoClothoid :=
-  mkIsoClothoid WD_XY (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+  mkIsoClothoid WD_XY (mkPoint 0 0) 0 (mkPoint 1 0) 0 (mkPoint 0 1) 0
     1 0 0 None None.
 
 Lemma degenerate_try :
   try_iso_clothoid degenerate_iso = inl ICF_DegenerateWindow.
 Proof.
   unfold try_iso_clothoid, degenerate_iso. cbn.
-  rewrite unit_east_sim.
+  rewrite refs_zero_horizontal. rewrite unit_east_sim.
   destruct (Rle_dec 1 0) as [Ha|Ha]; [lra|].
   destruct (Req_EM_T 0 0) as [_|Hs]; [|exfalso; apply Hs; reflexivity].
   reflexivity.
 Qed.
 
 Definition nonpos_iso : IsoClothoid :=
-  mkIsoClothoid WD_XY (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+  mkIsoClothoid WD_XY (mkPoint 0 0) 0 (mkPoint 1 0) 0 (mkPoint 0 1) 0
     0 0 1 None None.
 
 Lemma nonpos_try :
   try_iso_clothoid nonpos_iso = inl ICF_NonPositiveScale.
 Proof.
   unfold try_iso_clothoid, nonpos_iso. cbn.
-  rewrite unit_east_sim.
+  rewrite refs_zero_horizontal. rewrite unit_east_sim.
   destruct (Rle_dec 0 0) as [_|Ha]; [|exfalso; apply Ha; lra].
   reflexivity.
 Qed.
 
 (* Rotated, scaled, shifted, measured. Not the locked egg. *)
 Definition sample_iso : IsoClothoid :=
-  mkIsoClothoid WD_M (mkPoint 3 4) (mkPoint 0 2) (mkPoint (-2) 0)
+  mkIsoClothoid WD_M (mkPoint 3 4) 0 (mkPoint 0 2) 0 (mkPoint (-2) 0) 0
     2 1 4 (Some 10) (Some 12).
 
 Definition sample_egg : ClothoidEgg :=
@@ -343,7 +401,7 @@ Qed.
 Lemma sample_try : try_iso_clothoid sample_iso = inr sample_egg.
 Proof.
   unfold try_iso_clothoid, sample_iso. cbn.
-  rewrite sample_sim.
+  rewrite refs_zero_horizontal. rewrite sample_sim.
   destruct (Rle_dec 2 0) as [Ha|Ha]; [lra|].
   destruct (Req_EM_T 1 4) as [Hs|Hs]; [lra|].
   unfold sample_egg. reflexivity.
@@ -352,6 +410,54 @@ Qed.
 Lemma sample_not_locked : sample_egg <> locked_clothoid_egg.
 Proof.
   intro H. apply (f_equal cloth_A) in H. cbn in H. lra.
+Qed.
+
+(* WD_Z, planar unit east, both ref z nonzero. 2D similarity holds. *)
+Definition tilted_iso : IsoClothoid :=
+  mkIsoClothoid WD_Z (mkPoint 0 0) 0 (mkPoint 1 0) 1 (mkPoint 0 1) 1
+    1 0 1 None None.
+
+Lemma tilted_try :
+  try_iso_clothoid tilted_iso = inl ICF_TiltedPlacement.
+Proof.
+  unfold try_iso_clothoid, tilted_iso. cbn.
+  unfold refs_horizontal.
+  destruct (Req_EM_T 1 0) as [H|H]; [lra|].
+  reflexivity.
+Qed.
+
+(* Horizontal WD_Z: ref z = 0, loc z is elevation and is dropped. *)
+Definition flat_z_iso : IsoClothoid :=
+  mkIsoClothoid WD_Z (mkPoint 0 0) 5 (mkPoint 1 0) 0 (mkPoint 0 1) 0
+    1 0 1 None None.
+
+Lemma flat_z_try :
+  try_iso_clothoid flat_z_iso = inr locked_clothoid_egg.
+Proof.
+  unfold try_iso_clothoid, flat_z_iso. cbn.
+  rewrite refs_zero_horizontal. rewrite unit_east_sim.
+  destruct (Rle_dec 1 0) as [Ha|Ha]; [lra|].
+  destruct (Req_EM_T 0 1) as [Hs|Hs]; [lra|].
+  unfold locked_clothoid_egg, place_east. reflexivity.
+Qed.
+
+Lemma jts_is_example5_yes :
+  jts_is_example5 example5_jts_k0 example5_jts_k1 example5_jts_L = true.
+Proof.
+  unfold jts_is_example5, example5_jts_k0, example5_jts_k1, example5_jts_L.
+  destruct (Req_EM_T 0 0) as [_|H]; [|exfalso; apply H; reflexivity].
+  destruct (Req_EM_T (5 / 1000) (5 / 1000)) as [_|H];
+    [|exfalso; apply H; reflexivity].
+  destruct (Req_EM_T 80 80) as [_|H]; [|exfalso; apply H; reflexivity].
+  reflexivity.
+Qed.
+
+Lemma jts_is_example5_other : jts_is_example5 0 0 1 = false.
+Proof.
+  unfold jts_is_example5, example5_jts_k0, example5_jts_k1, example5_jts_L.
+  destruct (Req_EM_T 0 0) as [_|H]; [|exfalso; apply H; reflexivity].
+  destruct (Req_EM_T 0 (5 / 1000)) as [H|H]; [lra|].
+  reflexivity.
 Qed.
 
 Lemma sample_wf : cloth_wf sample_egg.
@@ -378,4 +484,10 @@ Print Assumptions nonpos_try.
 Print Assumptions sample_sim.
 Print Assumptions sample_try.
 Print Assumptions sample_not_locked.
+Print Assumptions tilted_try.
+Print Assumptions flat_z_try.
+Print Assumptions jts_is_example5_yes.
+Print Assumptions jts_is_example5_other.
+Print Assumptions refs_horizontal_spec.
+Print Assumptions refs_zero_horizontal.
 Print Assumptions sample_wf.
