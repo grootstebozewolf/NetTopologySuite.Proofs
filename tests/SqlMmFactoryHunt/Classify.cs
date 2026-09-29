@@ -176,7 +176,8 @@ static class Classify
         var fields = HuntHost.ParseFields(stdout);
         string wkt = fields.GetValueOrDefault("WKT", "");
         var m = Wire.CatalogExpect(exampleId, fields);
-        var (_, iout, _) = HuntHost.Intake(wkt);
+        bool strict = exampleId.EndsWith("-strict", StringComparison.Ordinal);
+        var (_, iout, _) = HuntHost.Intake(wkt, strict);
         Trial($"pin:catalog:{exampleId}", wkt, fields.GetValueOrDefault("BAG", ""),
             fields.GetValueOrDefault("TAU", ""), iout.Trim(), fields, m, counts);
     }

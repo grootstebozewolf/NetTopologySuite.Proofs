@@ -118,9 +118,10 @@ Fixpoint go_arcs (pts : list Point) {struct pts}
       end
   end.
 
-(* CIRCULARSTRING(A,B,A) is the GEOS/PostGIS full-circle spelling.
-   ISO does not say that. First = last on a 3-control string Declines
-   before the duplicate check. A longer closed string is not this case. *)
+(* Angle layer still Declines a 3-control string with first = last,
+   before the duplicate check. ADR-0005 lenient normalization is
+   IntakeWalker.map_cs_unknown (CIRCLE(A,B,ogc_c)), not this function.
+   A longer closed string is not this case. *)
 Definition try_cs_eggs (pts : list Point)
   : AngleResult (list CircularEgg * list Point) :=
   match pts with

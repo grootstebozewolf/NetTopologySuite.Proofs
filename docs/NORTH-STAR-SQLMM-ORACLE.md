@@ -46,7 +46,7 @@ Every instantiable §5.1.67 type has a locked row:
 1. WKT the pinned grammar accepts (`wktLexer.g4` / `wktParser.g4`; clothoid fixture `example5.txt`, not `example3.txt`).
 2. Matching WKB hex, NDR and XDR.
 3. EMPTY / Z / M / ZM where the clause defines them.
-4. Mapper verdict: SHC bag **or** named Intake Decline (`ID_Collinear`, `ID_DuplicateControl`, `ID_CsClosedDegenerate`, `ID_MkOutOfScope`, fail-closed `GEODESICSTRING` / `SPIRALCURVE`, …).
+4. Mapper verdict: SHC bag **or** named Intake Decline (`ID_Collinear`, `ID_DuplicateControl`, `ID_CsClosedDegenerate` (strict; lenient normalizes), `ID_MkOutOfScope`, fail-closed `GEODESICSTRING` / `SPIRALCURVE`, …).
 5. JTS #7 reads both encodings and writes them back **without** `toLinear` / densify.
 6. Oracle engines see the bag (or never see the Decline). No new keyword.
 

@@ -8,8 +8,9 @@
    turns CCW and −2π when CW. γ(0)=γ(1)=A. The bag is not
    that egg: two half-turns of sweep ±π, hens at A and γ(1/2).
 
-   CIRCULARSTRING(A,B,A) is not this circle. That Decline is
-   try_cs_closed_degenerate / ID_CsClosedDegenerate.
+   try_cs_eggs still Declines CIRCULARSTRING(A,B,A). ADR-0005
+   lenient intake (IntakeWalker) normalizes that text, when B≠A,
+   to CIRCLE(A,B,ogc_c) before the angle layer. ogc_c picks CCW.
 
    NTS clean-room: γ(t) = O + r·(cos(θ₀+t·Δθ), sin(θ₀+t·Δθ))
    with θ₀ = atan2(Ay−Oy, Ax−Ox) and Δθ = sign(orient(A,B,C))·2π.
@@ -946,6 +947,188 @@ Proof.
   exact Hord.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* OGC full-circle spelling. (A,B,A) does not fix orientation.               *)
+(* C' = M + rot_{-90°}(A−M), M = midpoint(A,B): centre M, radius |AB|/2,    *)
+(* orient(A,B,C')>0 (CCW). PostGIS/GEOS spell a full circle CCW; that is a  *)
+(* behavioural reference only, not an axiom of this development.            *)
+(* -------------------------------------------------------------------------- *)
+
+Definition ogc_c (a b : Point) : Point :=
+  let m := midpoint a b in
+  let vx := px a - px m in
+  let vy := py a - py m in
+  mkPoint (px m + vy) (py m - vx).
+
+Lemma mkPoint_eq : forall p q : Point, px p = px q -> py p = py q -> p = q.
+Proof.
+  intros [] []. cbn. intros. subst. reflexivity.
+Qed.
+
+Lemma ogc_ab_four : forall a b,
+  dist_sq a b = 4 * dist_sq (midpoint a b) a.
+Proof.
+  intros a b. unfold dist_sq, midpoint. cbn. field.
+Qed.
+
+Lemma ogc_r2_nz : forall a b,
+  dist_sq a b <> 0 -> dist_sq (midpoint a b) a <> 0.
+Proof.
+  intros a b H Hz. apply H. rewrite ogc_ab_four, Hz. ring.
+Qed.
+
+Lemma ogc_frame : forall a b,
+  let m := midpoint a b in
+  let vx := px a - px m in
+  let vy := py a - py m in
+  px a = px m + vx /\ py a = py m + vy /\
+  px b = px m - vx /\ py b = py m - vy /\
+  px (ogc_c a b) = px m + vy /\ py (ogc_c a b) = py m - vx /\
+  dist_sq m a = vx * vx + vy * vy.
+Proof.
+  intros a b m vx vy.
+  unfold m, vx, vy, ogc_c, midpoint, dist_sq. cbn.
+  repeat split; field.
+Qed.
+
+Lemma ogc_orient_pos : forall a b,
+  dist_sq a b <> 0 ->
+  orient_pts a b (ogc_c a b) = 2 * dist_sq (midpoint a b) a /\
+  0 < orient_pts a b (ogc_c a b).
+Proof.
+  intros a b Hab.
+  unfold orient_pts, orient3, crs, ogc_c, dist_sq, midpoint. cbn.
+  split.
+  - field.
+  - pose proof (ogc_r2_nz a b Hab) as Hz.
+    pose proof (dist_sq_nonneg (midpoint a b) a) as Hnn.
+    unfold dist_sq, midpoint in Hz, Hnn. cbn in Hz, Hnn. lra.
+Qed.
+
+Lemma ogc_denom_nz : forall a b,
+  dist_sq a b <> 0 ->
+  circ_denom a b (ogc_c a b) = 4 * dist_sq (midpoint a b) a /\
+  circ_denom a b (ogc_c a b) <> 0.
+Proof.
+  intros a b Hab.
+  destruct (ogc_orient_pos a b Hab) as [Ho _].
+  rewrite circ_denom_orient, Ho.
+  split; [ring|].
+  intro Hz. apply (ogc_r2_nz a b Hab). nra.
+Qed.
+
+Lemma ogc_sep : forall a b,
+  dist_sq a b <> 0 ->
+  dist_sq a (ogc_c a b) = 2 * dist_sq (midpoint a b) a /\
+  dist_sq b (ogc_c a b) = 2 * dist_sq (midpoint a b) a /\
+  dist_sq a (ogc_c a b) <> 0 /\
+  dist_sq b (ogc_c a b) <> 0.
+Proof.
+  intros a b Hab.
+  unfold dist_sq, ogc_c, midpoint. cbn.
+  split; [field|].
+  split; [field|].
+  pose proof (ogc_r2_nz a b Hab) as Hz.
+  unfold dist_sq, midpoint in Hz. cbn in Hz.
+  split; intro H; apply Hz; nra.
+Qed.
+
+Lemma ogc_center : forall a b,
+  dist_sq a b <> 0 ->
+  circumcenter_of a b (ogc_c a b) = midpoint a b.
+Proof.
+  intros a b Hab.
+  destruct (ogc_denom_nz a b Hab) as [_ Hd].
+  unfold circumcenter_of, circ_denom, ogc_c, midpoint in *. cbn in *.
+  apply mkPoint_eq; cbn; field; nra.
+Qed.
+
+Lemma ogc_radius : forall a b,
+  dist_sq a b <> 0 ->
+  dist (midpoint a b) a = dist a b / 2.
+Proof.
+  intros a b Hab.
+  unfold dist. rewrite (ogc_ab_four a b).
+  rewrite (sqrt_mult 4 (dist_sq (midpoint a b) a)) by (lra || apply dist_sq_nonneg).
+  replace (sqrt 4) with 2.
+  - field.
+  - replace 4 with (2 * 2) by ring.
+    rewrite (sqrt_square 2) by lra. reflexivity.
+Qed.
+
+Lemma ogc_r_nz : forall a b,
+  dist_sq a b <> 0 ->
+  dist (circumcenter_of a b (ogc_c a b)) a <> 0.
+Proof.
+  intros a b Hab Hz.
+  apply (ogc_r2_nz a b Hab).
+  rewrite (ogc_center a b Hab) in Hz.
+  apply sqrt_eq_0 in Hz; [exact Hz | apply dist_sq_nonneg].
+Qed.
+
+Lemma ogc_antipode_is_b : forall a b,
+  dist_sq a b <> 0 ->
+  circle_antipode (egg_of_points a b (ogc_c a b)) a b (ogc_c a b) = b.
+Proof.
+  intros a b Hab.
+  set (c := ogc_c a b).
+  set (e := egg_of_points a b c).
+  set (f := circle_of_egg e a b c).
+  destruct (ogc_sep a b Hab) as [_ [_ [Hac Hbc]]].
+  destruct (ogc_denom_nz a b Hab) as [_ Hd].
+  pose proof (ogc_r_nz a b Hab) as Hr.
+  fold c in Hac, Hbc, Hd, Hr.
+  destruct (circle_full_param a b c Hab Hbc Hac Hd Hr) as
+    [He0 [_ [_ [_ [_ [_ [Hpos _]]]]]]].
+  fold f in He0, Hpos.
+  assert (Ho : 0 < orient_pts a b c) by (apply ogc_orient_pos; exact Hab).
+  assert (Hsw : circ_sweep f = 2 * PI) by (apply Hpos; exact Ho).
+  assert (Hom : circ_o f = midpoint a b).
+  { unfold f, circle_of_egg, e, egg_of_points. cbn.
+    apply ogc_center. exact Hab. }
+  unfold circle_antipode. fold e. fold f.
+  assert (Hfmk : f = mkCircularEgg (circ_o f) (circ_r f) (circ_theta0 f) (2 * PI)).
+  { rewrite <- Hsw. unfold f, circle_of_egg. reflexivity. }
+  rewrite Hfmk.
+  rewrite (circ_eval_half_is_opposite (circ_o f) (circ_r f) (circ_theta0 f) PI)
+    by (left; reflexivity).
+  assert (Hstart :
+    mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
+            (py (circ_o f) + circ_r f * sin (circ_theta0 f)) = a).
+  { rewrite <- (circ_eval_0_trig (circ_o f) (circ_r f) (circ_theta0 f) (2 * PI)).
+    rewrite <- Hfmk. exact He0. }
+  pose proof (f_equal px Hstart) as Hpx0.
+  pose proof (f_equal py Hstart) as Hpy0.
+  assert (Hpx : px (circ_o f) + circ_r f * cos (circ_theta0 f) = px a).
+  { transitivity (px (mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
+                              (py (circ_o f) + circ_r f * sin (circ_theta0 f)))).
+    - unfold px. reflexivity.
+    - exact Hpx0. }
+  assert (Hpy : py (circ_o f) + circ_r f * sin (circ_theta0 f) = py a).
+  { transitivity (py (mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
+                              (py (circ_o f) + circ_r f * sin (circ_theta0 f)))).
+    - unfold py. reflexivity.
+    - exact Hpy0. }
+  apply mkPoint_eq.
+  - replace (px (circ_o f) - circ_r f * cos (circ_theta0 f))
+      with (2 * px (circ_o f) - px a) by (rewrite <- Hpx; ring).
+    rewrite Hom. unfold midpoint. cbn. field.
+  - replace (py (circ_o f) - circ_r f * sin (circ_theta0 f))
+      with (2 * py (circ_o f) - py a) by (rewrite <- Hpy; ring).
+    rewrite Hom. unfold midpoint. cbn. field.
+Qed.
+
+Print Assumptions mkPoint_eq.
+Print Assumptions ogc_ab_four.
+Print Assumptions ogc_r2_nz.
+Print Assumptions ogc_frame.
+Print Assumptions ogc_orient_pos.
+Print Assumptions ogc_denom_nz.
+Print Assumptions ogc_sep.
+Print Assumptions ogc_center.
+Print Assumptions ogc_radius.
+Print Assumptions ogc_r_nz.
+Print Assumptions ogc_antipode_is_b.
 Print Assumptions half_sweep_double.
 Print Assumptions half_sweep_pi_or.
 Print Assumptions half_sweep_abs.

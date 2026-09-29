@@ -9,8 +9,17 @@ using Nts.Proofs.Intake.Gen;
 
 namespace Nts.Proofs.Intake;
 
+/// <summary>
+/// ADR-0005. Lenient is the default (<c>intake_map</c>). Strict declines
+/// a 3-control CIRCULARSTRING whose first control equals the last.
+/// </summary>
+enum IntakeMode { Lenient, Strict }
+
 sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
 {
+    readonly IntakeMode _mode;
+
+    internal IntakeVisitor(IntakeMode mode = IntakeMode.Lenient) { _mode = mode; }
     static readonly Pt P50 = new(5, 0);
     static readonly Pt P05 = new(0, 5);
     static readonly Pt PM50 = new(-5, 0);
@@ -58,7 +67,7 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
     {
         if (ctx.dim() != null)
             return IntakeResult.OfDecline(Reason.ID_NotFirstSlice);
-        return MapCircularString(PointsOf(ctx.lineStringText()));
+        return MapCircularString(PointsOf(ctx.lineStringText()), _mode);
     }
 
     public override IntakeResult VisitCircleGeometry([NotNull] wktParser.CircleGeometryContext ctx)
@@ -144,20 +153,42 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         return IntakeResult.OfBag(new Bag(Hens(pts.Count), pts, chickens));
     }
 
-    internal static IntakeResult MapCircularString(IReadOnlyList<Pt> pts)
+    /// <summary>
+    /// ADR-0005 lenient: CIRCULARSTRING(A,B,A) with B≠A is CIRCLE(A,B,C'),
+    /// C' = M + rot_−90°(A−M), M = midpoint(A,B). That triangle is CCW
+    /// (PostGIS/GEOS full-circle spelling; behavioural reference only).
+    /// Strict, and A=B, decline ID_CsClosedDegenerate.
+    /// </summary>
+    internal static IntakeResult MapCircularString(
+        IReadOnlyList<Pt> pts, IntakeMode mode = IntakeMode.Lenient)
     {
         if (pts.Count == 0)
             return IntakeResult.OfDecline(Reason.ID_Empty);
         if (pts.Count == 3)
         {
             var a = pts[0];
+            var b = pts[1];
             var c = pts[2];
             if (Eq(a, c))
-                return IntakeResult.OfDecline(Reason.ID_CsClosedDegenerate);
+            {
+                if (mode == IntakeMode.Strict || Eq(a, b))
+                    return IntakeResult.OfDecline(Reason.ID_CsClosedDegenerate);
+                return MapCircleUnknown([a, b, OgcC(a, b)]);
+            }
             if (Eq(a, P50) && Eq(c, P05))
                 return CircBag([P50, P05], "MkCirc:quarter");
         }
         return MapCsUnknown(pts);
+    }
+
+    /// <summary>CCW completion. Centre midpoint(A,B), radius |AB|/2.</summary>
+    internal static Pt OgcC(Pt a, Pt b)
+    {
+        double mx = (a.X + b.X) / 2.0;
+        double my = (a.Y + b.Y) / 2.0;
+        double vx = a.X - mx;
+        double vy = a.Y - my;
+        return new Pt(mx + vy, my - vx);
     }
 
     internal static IntakeResult MapCircle(IReadOnlyList<Pt> pts)

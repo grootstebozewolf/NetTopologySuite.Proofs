@@ -59,7 +59,7 @@ field() {
 }
 
 intake() {
-  "$DOTNET" "$INTAKE_DLL" "$1"
+  "$DOTNET" "$INTAKE_DLL" "$@"
 }
 
 fail=0
@@ -138,7 +138,14 @@ check_round point-00 "POINT (0 0)" "BAG hens=0 pts=0 0 chickens="
 check_round circularstring-quarter "CIRCULARSTRING (5 0, 3 4, 0 5)" \
   "BAG hens=0,1 pts=5 0;0 5 chickens=0-1:MkCirc:quarter"
 check_round circularstring-full "CIRCULARSTRING (5 0, 0 5, 5 0)" \
-  "DECLINE ID_CsClosedDegenerate"
+  "BAG hens=0,1 pts=5 0;0 5 chickens=0-1:MkCirc:half,1-0:MkCirc:half"
+strict_out="$(factory circularstring-full-strict)"
+strict_wkt="$(printf '%s\n' "$strict_out" | field WKT)"
+strict_bag="$(printf '%s\n' "$strict_out" | field BAG)"
+check_eq "circularstring-full-strict WKT" "CIRCULARSTRING (5 0, 0 5, 5 0)" "$strict_wkt"
+check_eq "circularstring-full-strict factory bag" "DECLINE ID_CsClosedDegenerate" "$strict_bag"
+check_eq "circularstring-full-strict intake" "DECLINE ID_CsClosedDegenerate" \
+  "$(intake --strict "$strict_wkt" || true)"
 check_round circle-full "CIRCLE (5 0, 0 5, -5 0)" \
   "BAG hens=0,1 pts=5 0;-5 0 chickens=0-1:MkCirc:half,1-0:MkCirc:half"
 check_round compound-ls-cs \

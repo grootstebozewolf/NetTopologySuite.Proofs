@@ -168,7 +168,7 @@ int CheckClosedCs(string name, Pt a, Pt b)
     if (parsed)
     {
         Console.WriteLine(
-            $"DECLINE {name} proof=ID_CsClosedDegenerate oracle={oracle}");
+            $"STRICT-DECLINE {name} proof=ID_CsClosedDegenerate lenient=ISO-circle oracle={oracle}");
         return 0;
     }
     Console.Error.WriteLine($"BUG {name} oracle={oracle}");

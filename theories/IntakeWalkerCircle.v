@@ -12,14 +12,19 @@
    (host_circ_chord_hit_ok) does not contain a full turn, so mixed
    pairs still decline. C1 is not discharged.
 
+   ADR-0005: ogc_iso_circle_same_egg is the lenient normalizer.
+   CIRCULARSTRING(A,B,A), B≠A, equals CIRCLE(A,B,ogc_c). ogc_c
+   picks CCW (PostGIS/GEOS behavioural reference only). The bag
+   is the item-1 two-hen half cycle. IntakeStrict declines.
+
    3-axiom host. No Admitted / Axiom / Parameter.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance CircleChart SheetHenCook IntakeAngles
-  IntakeWalker IntakeCircle.
+From NTS.Proofs Require Import Distance Segment CircleChart SheetHenCook
+  IntakeAngles IntakeWalker IntakeCircle.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -53,6 +58,59 @@ Proof.
     + apply NoDup_cons; [intros Hin; destruct Hin | apply NoDup_nil].
 Qed.
 
+(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"ogc_iso_circle_same_egg","title":"ADR-0005 lenient normalizer: CIRCULARSTRING(A,B,A) with B distinct from A equals ISO CIRCLE(A,B,ogc_c); centre midpoint(A,B), radius |AB|/2, CCW sweep +2pi, gamma(0)=A, gamma(1/2)=B, NoDup","file":"theories/IntakeWalkerCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
+Theorem ogc_iso_circle_same_egg : forall a b,
+  dist_sq a b <> 0 ->
+  let c := ogc_c a b in
+  let e := egg_of_points a b c in
+  let f := circle_of_egg e a b c in
+  intake_map default_sheet (TCircularString CircUnknown [a; b; a]) =
+    intake_map default_sheet (TCircle CircUnknown [a; b; c]) /\
+  intake_map default_sheet (TCircularString CircFullOgc [a; b; a]) =
+    intake_map default_sheet (TCircle CircUnknown [a; b; c]) /\
+  circ_o f = midpoint a b /\
+  circ_r f = dist a b / 2 /\
+  circ_sweep f = 2 * PI /\
+  circ_eval f 0 = a /\
+  circ_eval f (1 / 2) = b /\
+  NoDup [a; b].
+Proof.
+  intros a b Hab c e f.
+  destruct (cs_lenient_normalizes default_sheet a b Hab) as [Hu HoG].
+  fold c in Hu, HoG.
+  destruct (ogc_sep a b Hab) as [_ [_ [Hac Hbc]]].
+  destruct (ogc_denom_nz a b Hab) as [_ Hd].
+  pose proof (ogc_r_nz a b Hab) as Hr.
+  fold c in Hac, Hbc, Hd, Hr.
+  destruct (circle_full_param a b c Hab Hbc Hac Hd Hr) as
+    [He0 [_ [_ [_ [_ [_ [Hpos _]]]]]]].
+  fold f in He0, Hpos.
+  assert (Hori : 0 < orient_pts a b c) by (apply ogc_orient_pos; exact Hab).
+  assert (Hsw : circ_sweep f = 2 * PI) by (apply Hpos; exact Hori).
+  assert (Hoc : circ_o f = midpoint a b).
+  { unfold f, circle_of_egg, e, egg_of_points. cbn.
+    apply ogc_center. exact Hab. }
+  assert (Hrad : circ_r f = dist a b / 2).
+  { unfold f, circle_of_egg, e, egg_of_points, c. cbn.
+    rewrite (ogc_center a b Hab). apply ogc_radius. exact Hab. }
+  assert (Hhalf : circ_eval f (1 / 2) = b).
+  { unfold circle_antipode in *. fold e. fold f.
+    apply ogc_antipode_is_b. exact Hab. }
+  assert (Hnd : NoDup [a; b]).
+  { apply NoDup_cons.
+    - intros Hin. destruct Hin as [Heq|[]].
+      exact (dist_sq_neq_ne a b Hab (eq_sym Heq)).
+    - apply NoDup_cons; [intros Hin; destruct Hin | apply NoDup_nil]. }
+  split; [exact Hu|].
+  split; [exact HoG|].
+  split; [exact Hoc|].
+  split; [exact Hrad|].
+  split; [exact Hsw|].
+  split; [exact He0|].
+  split; [exact Hhalf|].
+  exact Hnd.
+Qed.
+
 Lemma locked_circle_is_half_cycle :
   map_circle default_sheet =
   mkShcBag default_sheet [0%nat; 1%nat] [p50; p_m50]
@@ -80,6 +138,7 @@ Proof.
   exact circle_full_mixed_still_declines.
 Qed.
 
+Print Assumptions ogc_iso_circle_same_egg.
 Print Assumptions circle_intake_bag.
 Print Assumptions locked_circle_is_half_cycle.
 Print Assumptions circle_full_mixed_still_declines.

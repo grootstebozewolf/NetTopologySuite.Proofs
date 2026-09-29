@@ -62,8 +62,9 @@
    ISO CIRCLE(A,B,C) is a full turn from A (θ₀ = angle of A,
    sweep ±2π) at egg level. The bag is A→antipode→A, two
    MkCirc of sweep ±π. Not a src=dst chicken.
-   CIRCULARSTRING(A,B,A) Declines ID_CsClosedDegenerate.
-   That is 0007-intake-angles law, not a GEOS full circle.
+   ADR-0005: intake_map is IntakeLenient. CIRCULARSTRING(A,B,A)
+   with B≠A normalizes to CIRCLE(A,B,ogc_c) (CCW). IntakeStrict
+   Declines ID_CsClosedDegenerate. try_cs_eggs still Declines.
 
    Visitor tags locked CircularString / Circle shapes (exact
    control-point match). Mapper is structural on those tags.
@@ -268,14 +269,6 @@ Definition map_cs_from_build (s : Sheet)
   (eggs : list CircularEgg) (ends : list Point) : ShcBag :=
   mkShcBag s (hens_of_n (length ends)) ends (circ_chickens eggs 0%nat).
 
-(* WKT CircUnknown: points only, so try_cs_eggs / egg_of_points.
-   Carried angles are IntakeCarried.map_cs_carried, not this path. *)
-Definition map_cs_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
-  match try_cs_eggs pts with
-  | inr f => IntakeDecline (angle_fail_reason f)
-  | inl (eggs, ends) => IntakeBag (map_cs_from_build s eggs ends)
-  end.
-
 Definition map_circle_of (s : Sheet) (eggs : list CircularEgg) (ends : list Point)
   : ShcBag :=
   match eggs with
@@ -287,6 +280,28 @@ Definition map_circle_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
   match try_circle_eggs pts with
   | inr f => IntakeDecline (angle_fail_reason f)
   | inl (eggs, ends) => IntakeBag (map_circle_of s eggs ends)
+  end.
+
+(* WKT CircUnknown: points only, so try_cs_eggs / egg_of_points.
+   Carried angles are IntakeCarried.map_cs_carried, not this path.
+   ADR-0005 lenient: a 3-control string with first = last and B≠A
+   is CIRCLE(A, B, ogc_c). ogc_c is the CCW completion
+   (centre midpoint(A,B), radius |AB|/2). PostGIS/GEOS spell that
+   full circle CCW; behavioural reference only. A=B still Declines. *)
+Definition map_cs_from_try (s : Sheet) (pts : list Point) : IntakeResult :=
+  match try_cs_eggs pts with
+  | inr f => IntakeDecline (angle_fail_reason f)
+  | inl (eggs, ends) => IntakeBag (map_cs_from_build s eggs ends)
+  end.
+
+Definition map_cs_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
+  match pts with
+  | a :: b :: c :: [] =>
+      if Req_EM_T (dist_sq a c) 0 then
+        if Req_EM_T (dist_sq a b) 0 then IntakeDecline ID_CsClosedDegenerate
+        else map_circle_unknown s [a; b; ogc_c a b]
+      else map_cs_from_try s pts
+  | _ => map_cs_from_try s pts
   end.
 
 Definition map_cs_quarter (s : Sheet) : ShcBag :=
@@ -394,6 +409,30 @@ Definition intake_map (s : Sheet) (t : TaggedCst) : IntakeResult :=
   match t with
   | TCompoundCurve ms => intake_map_members s ms
   | _ => intake_map_atom s t
+  end.
+
+(* ADR-0005. intake_map is the lenient default. Strict declines a
+   3-control CIRCULARSTRING whose first control equals the last.
+   No other CST changes. *)
+Inductive IntakeMode : Type :=
+| IntakeLenient
+| IntakeStrict.
+
+Definition intake_map_mode (mode : IntakeMode) (s : Sheet) (t : TaggedCst)
+  : IntakeResult :=
+  match mode with
+  | IntakeLenient => intake_map s t
+  | IntakeStrict =>
+      match t with
+      | TCircularString _ pts =>
+          match pts with
+          | a :: _ :: c :: [] =>
+              if Req_EM_T (dist_sq a c) 0 then IntakeDecline ID_CsClosedDegenerate
+              else intake_map s t
+          | _ => intake_map s t
+          end
+      | _ => intake_map s t
+      end
   end.
 
 (* -------------------------------------------------------------------------- *)
@@ -512,25 +551,86 @@ Proof.
   unfold locked_half_fst, locked_half_snd, ccw_a, ccw_c. reflexivity.
 Qed.
 
+Lemma map_cs_unknown_open : forall s a b c,
+  dist_sq a c <> 0 ->
+  map_cs_unknown s [a; b; c] = map_cs_from_try s [a; b; c].
+Proof.
+  intros s a b c Hac. unfold map_cs_unknown.
+  destruct (Req_EM_T (dist_sq a c) 0) as [E|E]; [contradiction|reflexivity].
+Qed.
+
 Lemma cs_closed_declines : forall a b,
+  intake_map_mode IntakeStrict default_sheet
+    (TCircularString CircUnknown [a; b; a]) =
+    IntakeDecline ID_CsClosedDegenerate /\
+  intake_map_mode IntakeStrict default_sheet
+    (TCircularString CircFullOgc [a; b; a]) =
+    IntakeDecline ID_CsClosedDegenerate.
+Proof.
+  intros a b. split; unfold intake_map_mode;
+    destruct (Req_EM_T (dist_sq a a) 0) as [_|H];
+    try reflexivity; exfalso; apply H; unfold dist_sq; ring.
+Qed.
+
+Lemma cs_lenient_normalizes : forall s a b,
+  dist_sq a b <> 0 ->
+  intake_map s (TCircularString CircUnknown [a; b; a]) =
+    intake_map s (TCircle CircUnknown [a; b; ogc_c a b]) /\
+  intake_map s (TCircularString CircFullOgc [a; b; a]) =
+    intake_map s (TCircle CircUnknown [a; b; ogc_c a b]).
+Proof.
+  intros s a b Hab. split.
+  - unfold intake_map, intake_map_atom, map_cs_unknown.
+    destruct (Req_EM_T (dist_sq a a) 0) as [_|Hz].
+    + destruct (Req_EM_T (dist_sq a b) 0) as [E|E]; [contradiction|].
+      unfold intake_map, intake_map_atom. reflexivity.
+    + exfalso. apply Hz. unfold dist_sq. ring.
+  - unfold intake_map, intake_map_atom, map_cs_unknown.
+    destruct (Req_EM_T (dist_sq a a) 0) as [_|Hz].
+    + destruct (Req_EM_T (dist_sq a b) 0) as [E|E]; [contradiction|].
+      unfold intake_map, intake_map_atom. reflexivity.
+    + exfalso. apply Hz. unfold dist_sq. ring.
+Qed.
+
+Lemma cs_lenient_coincident_declines : forall a b,
+  dist_sq a b = 0 ->
   intake_map default_sheet (TCircularString CircUnknown [a; b; a]) =
     IntakeDecline ID_CsClosedDegenerate /\
   intake_map default_sheet (TCircularString CircFullOgc [a; b; a]) =
     IntakeDecline ID_CsClosedDegenerate.
 Proof.
-  intros a b. split.
-  - unfold intake_map, intake_map_atom, map_cs_unknown, angle_fail_reason.
-    rewrite try_cs_closed_degenerate. reflexivity.
-  - unfold intake_map, intake_map_atom, map_cs_unknown, angle_fail_reason.
-    rewrite try_cs_closed_degenerate. reflexivity.
+  intros a b Hab. split.
+  - unfold intake_map, intake_map_atom, map_cs_unknown.
+    destruct (Req_EM_T (dist_sq a a) 0) as [_|Hz].
+    + destruct (Req_EM_T (dist_sq a b) 0) as [_|H];
+        [reflexivity|contradiction].
+    + exfalso. apply Hz. unfold dist_sq. ring.
+  - unfold intake_map, intake_map_atom, map_cs_unknown.
+    destruct (Req_EM_T (dist_sq a a) 0) as [_|Hz].
+    + destruct (Req_EM_T (dist_sq a b) 0) as [_|H];
+        [reflexivity|contradiction].
+    + exfalso. apply Hz. unfold dist_sq. ring.
 Qed.
 
 Lemma locked_cs_full_ogc_declines :
-  intake_map default_sheet locked_cs_full_ogc_cst =
+  intake_map_mode IntakeStrict default_sheet locked_cs_full_ogc_cst =
     IntakeDecline ID_CsClosedDegenerate.
 Proof.
   unfold locked_cs_full_ogc_cst.
   exact (proj2 (cs_closed_declines p50 p05)).
+Qed.
+
+Lemma locked_p50_p05_apart : dist_sq p50 p05 <> 0.
+Proof.
+  unfold dist_sq, p50, p05. cbn. lra.
+Qed.
+
+Lemma locked_cs_full_ogc_lenient :
+  intake_map default_sheet locked_cs_full_ogc_cst =
+    intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]).
+Proof.
+  unfold locked_cs_full_ogc_cst.
+  exact (proj2 (cs_lenient_normalizes default_sheet p50 p05 locked_p50_p05_apart)).
 Qed.
 
 Lemma locked_cc_maps :
@@ -691,12 +791,12 @@ Lemma unknown_cs_maps_mkcirc :
   intake_map default_sheet unknown_cs_cst =
     IntakeBag (map_cs_from_build default_sheet [ang_egg] [p00; mkPoint 3 1]).
 Proof.
-  unfold unknown_cs_cst, intake_map, intake_map_atom, map_cs_unknown.
+  unfold unknown_cs_cst, intake_map, intake_map_atom.
   change p00 with ang_a.
   change p20 with ang_b.
   change (mkPoint 3 1) with ang_c.
-  rewrite ang_cs_ok.
-  reflexivity.
+  rewrite (map_cs_unknown_open _ _ _ _ ang_dac_nz).
+  unfold map_cs_from_try. rewrite ang_cs_ok. reflexivity.
 Qed.
 
 Lemma unknown_cs_chickens_mkcirc :
@@ -734,25 +834,26 @@ Lemma collinear_cs_declines :
   intake_map default_sheet (TCircularString CircUnknown [col_a; col_b; col_c]) =
     IntakeDecline ID_Collinear.
 Proof.
-  unfold intake_map, intake_map_atom, map_cs_unknown.
-  rewrite col_cs_collinear.
-  reflexivity.
+  unfold intake_map, intake_map_atom.
+  rewrite (map_cs_unknown_open _ _ _ _ col_dac_nz).
+  unfold map_cs_from_try. rewrite col_cs_collinear. reflexivity.
 Qed.
 
 Lemma duplicate_cs_declines :
   intake_map default_sheet (TCircularString CircUnknown [dup_a; dup_b; dup_c]) =
     IntakeDecline ID_DuplicateControl.
 Proof.
-  unfold intake_map, intake_map_atom, map_cs_unknown.
-  rewrite dup_cs.
-  reflexivity.
+  unfold intake_map, intake_map_atom.
+  rewrite (map_cs_unknown_open _ _ _ _ dup_ac_nz).
+  unfold map_cs_from_try. rewrite dup_cs. reflexivity.
 Qed.
 
 Lemma badcount_cs_declines :
   intake_map default_sheet (TCircularString CircUnknown [p00; p20]) =
     IntakeDecline ID_BadPointCount.
 Proof.
-  unfold intake_map, intake_map_atom, map_cs_unknown, try_cs_eggs, go_arcs.
+  unfold intake_map, intake_map_atom, map_cs_unknown, map_cs_from_try,
+    try_cs_eggs, go_arcs.
   reflexivity.
 Qed.
 
@@ -914,22 +1015,25 @@ Lemma first_slice_inhabits :
     [circ_eval locked_full_circle_egg 0;
      circ_eval locked_full_circle_egg (1 / 2)] /\
   NoDup (bag_pts (map_circle default_sheet)) /\
-  intake_map default_sheet locked_cs_full_ogc_cst =
+  intake_map_mode IntakeStrict default_sheet locked_cs_full_ogc_cst =
     IntakeDecline ID_CsClosedDegenerate /\
+  intake_map default_sheet locked_cs_full_ogc_cst =
+    intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]) /\
   intake_map default_sheet TSpiralCurve =
     IntakeDecline ID_SpiralCurve /\
   intake_walker_kind = IW_FirstSlice.
 Proof.
   repeat split; try exact locked_circle_intake_ends;
     try exact locked_circle_pts_nodup;
-    try exact locked_cs_full_ogc_declines; reflexivity.
+    try exact locked_cs_full_ogc_declines;
+    try exact locked_cs_full_ogc_lenient; reflexivity.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Ticket-named QED ∨ QEX stops.                                              *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_walker_qed_or_qex","title":"First-slice intake maps Point/LineString/locked CircularString/Circle to SHC bag, Declines CIRCULARSTRING(A,B,A) by ID_CsClosedDegenerate, and fail-closes SPIRALCURVE (QED) or silently demotes remaining out-of-scope WKT to MkChord (QEX); discharged QED; well-formed GEODESICSTRING bagging is the 0007-intake-geodesic letter; grammar accept is CST only; Intake Decline is not cook IDecline; clothoid bagging is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-walker","topic":"overlay","lemma":"ticket_0007_intake_walker_qed_or_qex","title":"First-slice intake maps Point/LineString/locked CircularString/Circle to SHC bag; ADR-0005 IntakeLenient normalizes CIRCULARSTRING(A,B,A) to CIRCLE(A,B,ogc_c) and IntakeStrict Declines ID_CsClosedDegenerate; fail-closes SPIRALCURVE (QED) or silently demotes remaining out-of-scope WKT to MkChord (QEX); discharged QED; well-formed GEODESICSTRING bagging is the 0007-intake-geodesic letter; grammar accept is CST only; Intake Decline is not cook IDecline; clothoid bagging is the MkClothoid letter","file":"theories/IntakeWalker.v","witness":"0007-intake-walker","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_walker_qed_or_qex :
   (intake_map default_sheet locked_point_cst =
      IntakeBag (map_point default_sheet p00) /\
@@ -942,8 +1046,10 @@ Theorem ticket_0007_intake_walker_qed_or_qex :
      = EggCircularArc /\
    intake_map default_sheet locked_circle_cst =
      IntakeBag (map_circle default_sheet) /\
-   intake_map default_sheet locked_cs_full_ogc_cst =
+   intake_map_mode IntakeStrict default_sheet locked_cs_full_ogc_cst =
      IntakeDecline ID_CsClosedDegenerate /\
+   intake_map default_sheet locked_cs_full_ogc_cst =
+     intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]) /\
    intake_map default_sheet TSpiralCurve =
      IntakeDecline ID_SpiralCurve /\
    grammar_accept_not_valid /\ grammar_accept_not_cooked /\
@@ -958,6 +1064,7 @@ Theorem ticket_0007_intake_walker_qed_or_qex :
 Proof.
   left.
   repeat split; try exact locked_cs_full_ogc_declines;
+    try exact locked_cs_full_ogc_lenient;
     try reflexivity; try discriminate.
 Qed.
 
@@ -1036,8 +1143,13 @@ Print Assumptions locked_full_circle_egg_at_1.
 Print Assumptions locked_circle_intake_ends.
 Print Assumptions locked_circle_pts_nodup.
 Print Assumptions locked_circle_from_try.
+Print Assumptions map_cs_unknown_open.
 Print Assumptions cs_closed_declines.
+Print Assumptions cs_lenient_normalizes.
+Print Assumptions cs_lenient_coincident_declines.
 Print Assumptions locked_cs_full_ogc_declines.
+Print Assumptions locked_p50_p05_apart.
+Print Assumptions locked_cs_full_ogc_lenient.
 Print Assumptions locked_geodesic_maps.
 Print Assumptions locked_geodesic_same_bag_as_ls.
 Print Assumptions locked_geodesic_is_chord.

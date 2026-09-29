@@ -218,7 +218,11 @@ static class Wire
             var a = pts[0];
             var c = pts[2];
             if (SameXy(a, c))
-                return ("DECLINE", null, "ID_CsClosedDegenerate");
+            {
+                if (SameXy(a, pts[1]))
+                    return ("DECLINE", null, "ID_CsClosedDegenerate");
+                return ExpectCircle([a, pts[1], OgcC(a, pts[1])]);
+            }
             if (SameXy(a, new(5, 0)) && SameXy(c, new(0, 5)))
                 return ("BAG", new Bag([0, 1], [new(5, 0), new(0, 5)], [(0, 1, "MkCirc:quarter")]), null);
         }
@@ -237,6 +241,16 @@ static class Wire
             hen++;
         }
         return ("BAG", new Bag(Enumerable.Range(0, ends.Count), ends, chicks), null);
+    }
+
+    /// <summary>CCW completion: C' = M + rot_−90°(A−M). Same as IntakeVisitor.OgcC.</summary>
+    internal static Xy OgcC(Xy a, Xy b)
+    {
+        double mx = (a.X + b.X) / 2.0;
+        double my = (a.Y + b.Y) / 2.0;
+        double vx = a.X - mx;
+        double vy = a.Y - my;
+        return new Xy(mx + vy, my - vx);
     }
 
     internal static (string Kind, Bag? Bag, string? Decline) ExpectCircle(IReadOnlyList<Xy> pts)

@@ -19,8 +19,9 @@
    Full-span is CIRCLE and not CIRCULARSTRING. The full-turn
    egg (|sweep|=2π) tags CIRCLE. The intake bag stores two
    half-span MkCirc (|sweep|=π), so each egg's τ is
-   CIRCULARSTRING while ρ(TCircle) stays CIRCLE. CIRCULARSTRING
-   with first=last control Declines ID_CsClosedDegenerate.
+   CIRCULARSTRING while ρ(TCircle) stays CIRCLE. ADR-0005:
+   IntakeLenient normalizes CIRCULARSTRING(A,B,A) to that circle;
+   IntakeStrict Declines ID_CsClosedDegenerate.
    τ does not read ISO fields. Locked JTS and the locked ISO
    fixture share one ClothoidEgg; other ISO fields differ.
 
@@ -41,7 +42,7 @@
    Rung 4: after μ(c,S)=IntakeBag(b) and eggs(b)=[e],
    τ(e)=ρ(π(c)) on locked singleton CSTs. ρ is not τ.
    TCircle's bag is two half-span MkCirc; ρ is CIRCLE.
-   Closed CIRCULARSTRING Declines. Requires IntakeWalker.
+   ADR-0005: lenient closed CS normalizes; strict Declines. Requires IntakeWalker.
 
    intake_rho / cst_prod_tag here are the CST production tag
    in the τ=μ equation. They are not ADR-0007 park ρ
@@ -84,8 +85,8 @@
 
 From Stdlib Require Import Reals PeanoNat List.
 From NTS.Proofs Require Import Distance SheetHenCook ClothoidCookMkClothoid.
-From NTS.Proofs Require Import CircularCookMkCirc IntakeAngles IntakeWalker
-  IntakeWalkerClothoid IsoClothoidIntake.
+From NTS.Proofs Require Import CircularCookMkCirc IntakeAngles IntakeCircle
+  IntakeWalker IntakeWalkerClothoid IsoClothoidIntake.
 Import ListNotations.
 
 (* -------------------------------------------------------------------------- *)
@@ -627,10 +628,17 @@ Proof.
 Qed.
 
 Lemma tau_mu_cs_closed_declines :
-  intake_map default_sheet locked_cs_full_ogc_cst =
+  intake_map_mode IntakeStrict default_sheet locked_cs_full_ogc_cst =
     IntakeDecline ID_CsClosedDegenerate.
 Proof.
   exact locked_cs_full_ogc_declines.
+Qed.
+
+Lemma tau_mu_cs_closed_lenient :
+  intake_map default_sheet locked_cs_full_ogc_cst =
+    intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]).
+Proof.
+  exact locked_cs_full_ogc_lenient.
 Qed.
 
 Lemma tau_mu_locked_clothoid_iso :
@@ -733,12 +741,15 @@ Proof.
   split; [exact spiral_declines|intros e; reflexivity].
 Qed.
 
-(* Production-level τ=π on closed CIRCULARSTRING text would need a
-   bag whose τ equals cst_prod_tag (CIRCULARSTRING). Intake Declines
-   that CST, so the bag does not exist. Honest QEX park. *)
+(* Production-level τ=π on closed CIRCULARSTRING text, in
+   IntakeStrict, would need a bag whose τ equals cst_prod_tag.
+   Strict Declines that CST, so the bag does not exist. The
+   lenient bag is two half-span eggs, not this singleton.
+   Honest QEX park. *)
 Definition sqlmm_prod_tag_fullspan_cs_text : Prop :=
   exists b e,
-    intake_map default_sheet locked_cs_full_ogc_cst = IntakeBag b /\
+    intake_map_mode IntakeStrict default_sheet locked_cs_full_ogc_cst
+      = IntakeBag b /\
     bag_eggs b = [e] /\
     first_slice_tag e = cst_prod_tag locked_cs_full_ogc_cst.
 
@@ -864,7 +875,7 @@ Proof.
   exact hold_has_no_signed_tag.
 Qed.
 
-(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_tau_mu_qed_or_qex","title":"Locked exists-b-e tau=mu (not forall CSTs): first_slice_tag e equals intake_rho on locked LS, quarter CS, CIRCLE (|sweep|=2pi); CIRCULARSTRING(A,B,A) Declines ID_CsClosedDegenerate; both clothoid spellings, unknown-CS ang_egg partial CIRCULARSTRING; well-formed geodesic bags MkChord tau=LINESTRING cst_prod_tag None; spiral Decline and rho=None and first_slice_tag MkOutOfScope none (QED) or production-level tau=pi on closed CIRCULARSTRING text via cst_prod_tag (QEX, already missing); discharged QED; compound is not a singleton; intake_rho is egg-aware on CS and is not cst_prod_tag; not park rho; not WKT parse","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_tau_mu_qed_or_qex","title":"Locked exists-b-e tau=mu (not forall CSTs): first_slice_tag e equals intake_rho on locked LS, quarter CS, CIRCLE (|sweep|=2pi); ADR-0005 IntakeLenient normalizes CIRCULARSTRING(A,B,A) to the ISO circle and IntakeStrict Declines ID_CsClosedDegenerate; both clothoid spellings, unknown-CS ang_egg partial CIRCULARSTRING; well-formed geodesic bags MkChord tau=LINESTRING cst_prod_tag None; spiral Decline and rho=None and first_slice_tag MkOutOfScope none (QED) or production-level tau=pi on strict closed CIRCULARSTRING text via cst_prod_tag (QEX, already missing); discharged QED; compound is not a singleton; intake_rho is egg-aware on CS and is not cst_prod_tag; not park rho; not WKT parse","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
 Theorem ticket_sqlmm_tau_mu_qed_or_qex :
   ((exists b e,
       intake_map default_sheet locked_ls_cst = IntakeBag b /\
@@ -881,8 +892,10 @@ Theorem ticket_sqlmm_tau_mu_qed_or_qex :
       first_slice_tag e2 = Some TagCircularString /\
       intake_rho locked_circle_cst e1 = Some TagCircle /\
       first_slice_tag (MkCirc locked_full_circle_egg) = Some TagCircle) /\
-   intake_map default_sheet locked_cs_full_ogc_cst =
+   intake_map_mode IntakeStrict default_sheet locked_cs_full_ogc_cst =
      IntakeDecline ID_CsClosedDegenerate /\
+   intake_map default_sheet locked_cs_full_ogc_cst =
+     intake_map default_sheet (TCircle CircUnknown [p50; p05; ogc_c p50 p05]) /\
    (exists b e,
       intake_map default_sheet (TClothoidIso locked_iso_clothoid) = IntakeBag b /\
       bag_eggs b = [e] /\
@@ -924,6 +937,7 @@ Proof.
   split; [exists bq, eq; repeat split; assumption|].
   split; [exists bc, e1c, e2c; repeat split; assumption|].
   split; [exact tau_mu_cs_closed_declines|].
+  split; [exact tau_mu_cs_closed_lenient|].
   split; [exists bi, ei; repeat split; assumption|].
   split; [exists bj, ej; repeat split; assumption|].
   split; [exists bu, eu; repeat split; assumption|].
@@ -975,6 +989,7 @@ Print Assumptions pi_abs_neq_two_pi.
 Print Assumptions tau_locked_halves.
 Print Assumptions tau_mu_locked_circle.
 Print Assumptions tau_mu_cs_closed_declines.
+Print Assumptions tau_mu_cs_closed_lenient.
 Print Assumptions tau_mu_locked_clothoid_iso.
 Print Assumptions tau_mu_unknown_cs.
 Print Assumptions ang_egg_not_full_span.
