@@ -2534,9 +2534,11 @@ theories/ArcChordApprox.v
 # GEOS-aligned uniform chord walk on a certified egg (θ0, Δθ).
 # claimId: 0007-arc-linearize. 3-axiom. subdiv_n inhabits subdiv_ok
 # (ceil via archimed / up, which print only the allowlist trio).
-# Linearizes and arc_linearize_hausdorff are ArcLinearizeContract.
+# Linearizes is LinearizeContract (any sample sequence ts).
+# The arc instance arc_linearizes is ArcLinearizeContract.
 # No Admitted.
 theories/ArcLinearize.v
+theories/LinearizeContract.v
 theories/ArcLinearizeBound.v
 theories/ArcLinearizeContract.v
 # C0 stereographic / half-angle chart (ζ = tan(φ/2); not tag τ). Pole opposite M,

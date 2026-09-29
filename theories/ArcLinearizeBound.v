@@ -20,7 +20,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra Lia Field Psatz List.
-From NTS.Proofs Require Import Distance SheetHenCircEgg Atan2 ArcLinearize.
+From NTS.Proofs Require Import
+  Distance SheetHenCircEgg Atan2 LinearizeContract ArcLinearize.
 Local Open Scope R_scope.
 
 Definition clamp11 (x : R) : R := Rmax (-1) (Rmin 1 x).
@@ -43,10 +44,6 @@ Definition effective_step (ang dev : option R) (r : R) : option R :=
       else if Rle_dec r 0 then None
       else Some (Rmin a (dev_to_step r dv))
   end.
-
-Definition seg_at (a b : Point) (lam : R) : Point :=
-  mkPoint ((1 - lam) * px a + lam * px b)
-          ((1 - lam) * py a + lam * py b).
 
 Definition on_seg (a b q : Point) : Prop :=
   exists lam, 0 <= lam <= 1 /\ q = seg_at a b lam.

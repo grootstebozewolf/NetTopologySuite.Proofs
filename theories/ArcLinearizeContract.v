@@ -1,13 +1,12 @@
 (* ============================================================================
    NetTopologySuite.Proofs.ArcLinearizeContract
    ----------------------------------------------------------------------------
-   Generic linearization contract, and its arc instance.
+   Circular instance of LinearizeContract.Linearizes.
 
-   Linearizes γ revγ pts θ n tol packages the six facts a densifier owes
-   its consumer: vertices on the curve, exact ends, a monotone parameter,
-   Hausdorff distance at most tol, reversal swapping γ(t) with γ(1−t),
-   and n ≥ 2. arc_linearizes is that contract for circ_eval at
+   The record quantifies over an arbitrary sample sequence ts.
+   arc_linearizes uses the uniform sequence ts k = k/n, at
    n = subdiv_n step Δθ and tol = r·(1 − cos(step/2)).
+   Angle monotonicity is arc_theta_mono, not a record field.
 
    Both Hausdorff directions are named for a later contract to wrap:
    `arc_curve_near_polyline` (curve → polyline, via
@@ -26,36 +25,9 @@
 
 From Stdlib Require Import Reals Lra Lia Field Psatz List PeanoNat ZArith.
 From NTS.Proofs Require Import
-  Distance SheetHenCircEgg Atan2 Linearise ArcLinearize ArcLinearizeBound.
+  Distance SheetHenCircEgg Atan2 Linearise LinearizeContract
+  ArcLinearize ArcLinearizeBound.
 Local Open Scope R_scope.
-
-Definition curve_shape (g : R -> Point) : Shape :=
-  fun p => exists t, 0 <= t <= 1 /\ p = g t.
-
-Definition poly_shape (pts : list Point) : Shape :=
-  fun q => exists k lam d,
-    (S k < length pts)%nat /\
-    0 <= lam <= 1 /\
-    q = seg_at (nth k pts d) (nth (S k) pts d) lam.
-
-Record Linearizes
-    (g rev_g : R -> Point) (pts : list Point) (theta : nat -> R)
-    (n : nat) (tol : R) : Prop :=
-  Build_Linearizes {
-    lz_n : (2 <= n)%nat;
-    lz_length : length pts = S n;
-    lz_on_curve : forall k, (k <= n)%nat ->
-      nth k pts (g 0) = g (INR k / INR n);
-    lz_exact_start : nth 0 pts (g 0) = g 0;
-    lz_exact_end : nth n pts (g 0) = g 1;
-    lz_param_mono : forall i j, (i <= j)%nat -> (j <= n)%nat ->
-      INR i / INR n <= INR j / INR n /\
-      0 <= (theta j - theta i) * (theta n - theta 0%nat);
-    lz_hausdorff : hausdorff_le (curve_shape g) (poly_shape pts) tol;
-    lz_reverse_fun : forall t, rev_g t = g (1 - t);
-    lz_reverse_pts : forall k, (k <= n)%nat ->
-      nth k (rev pts) (g 0) = rev_g (INR k / INR n)
-  }.
 
 Definition radial_at (c : CircularEgg) (ang : R) : Point :=
   mkPoint (px (circ_o c) + circ_r c * cos ang)
@@ -649,47 +621,43 @@ Proof.
   - apply arc_polyline_near_curve; assumption.
 Qed.
 
+(* WITNESS {"claimId":"0007-arc-linearize","topic":"curves","lemma":"arc_linearizes","title":"Uniform arc densifier inhabits Linearizes at ts k = k/n, tol r*(1-cos(step/2)); subdiv_n is max(ceil(|sweep|/step),2); angle monotonicity is arc_theta_mono","file":"theories/ArcLinearizeContract.v","witness":"0007-arc-linearize","board":"ADR-0007"} *)
 Theorem arc_linearizes : forall c step,
   0 <= circ_r c ->
   0 < step <= 2 * PI ->
   Rabs (circ_sweep c) <= 2 * PI ->
   let n := subdiv_n step (circ_sweep c) in
+  let ts := fun k : nat => INR k / INR n in
   Linearizes (circ_eval c) (circ_eval (rev_egg c)) (lin_pts c n)
-    (lin_theta c n) n (circ_r c * (1 - cos (step / 2))).
+    ts n (circ_r c * (1 - cos (step / 2))).
 Proof.
   intros c step Hr Hstep Hsw.
   cbn zeta.
   set (n := subdiv_n step (circ_sweep c)).
+  set (ts := fun k : nat => INR k / INR n).
   destruct (subdiv_n_ok step (circ_sweep c) ltac:(lra)) as [Hn2 [Hs [Hcover _]]].
   apply Build_Linearizes.
   - exact Hn2.
   - apply lin_pts_length. lia.
+  - split.
+    + unfold ts. rewrite INR_0. unfold Rdiv. rewrite Rmult_0_l. reflexivity.
+    + unfold ts. field. apply not_0_INR. lia.
+  - intros i j Hij.
+    destruct Hij as [Hij Hjn].
+    assert (Hpos : 0 < INR n) by (apply lt_0_INR; lia).
+    unfold ts, Rdiv.
+    apply Rmult_lt_compat_r; [apply Rinv_0_lt_compat; exact Hpos|].
+    apply lt_INR. exact Hij.
   - intros k Hk.
     destruct (lin_vertex_on_arc c n k Hn2 Hk) as [Heq _].
-    cbn zeta in Heq. exact Heq.
-  - exact (lin_endpoint_start c n Hn2).
-  - unfold circ_end. exact (lin_endpoint_end c n Hn2).
-  - intros i j Hij Hjn. split.
-    + assert (Hpos : 0 < INR n) by (apply lt_0_INR; lia).
-      apply Rmult_le_compat_r; [apply Rlt_le, Rinv_0_lt_compat; exact Hpos|].
-      apply le_INR. exact Hij.
-    + destruct (Rle_dec 0 (circ_sweep c)) as [Hp|Hneg].
-      * pose proof (lin_theta_mono_pos c n i j ltac:(lia) Hij Hjn Hp) as Hm.
-        pose proof (lin_sweep_total c n ltac:(lia)) as Htot.
-        rewrite Htot. apply Rmult_le_pos; lra.
-      * assert (Hsle : circ_sweep c <= 0) by lra.
-        pose proof (lin_theta_mono_neg c n i j ltac:(lia) Hij Hjn Hsle) as Hm.
-        pose proof (lin_sweep_total c n ltac:(lia)) as Htot.
-        rewrite Htot.
-        assert (Hprod : 0 <= (lin_theta c n i - lin_theta c n j) * (- circ_sweep c))
-          by (apply Rmult_le_pos; lra).
-        replace ((lin_theta c n j - lin_theta c n i) * circ_sweep c)
-          with ((lin_theta c n i - lin_theta c n j) * (- circ_sweep c)) by ring.
-        exact Hprod.
+    cbn zeta in Heq. unfold ts. exact Heq.
   - apply arc_linearize_hausdorff; try assumption.
   - intros t. apply rev_egg_eval.
   - intros k Hk.
-    rewrite rev_egg_eval, (frac_complement n k ltac:(lia) Hk).
+    unfold ts.
+    rewrite rev_egg_eval.
+    replace (1 - (1 - INR (n - k)%nat / INR n))
+      with (INR (n - k)%nat / INR n) by ring.
     assert (Hlen : (k < length (rev (lin_pts c n)))%nat).
     { rewrite length_rev, lin_pts_length by lia. lia. }
     rewrite (@nth_indep Point (rev (lin_pts c n)) k
@@ -697,6 +665,30 @@ Proof.
     rewrite (nth_rev_lin c n k Hn2 Hk).
     destruct (lin_vertex_on_arc c n (n - k)%nat Hn2 ltac:(lia)) as [Heq _].
     cbn zeta in Heq. exact Heq.
+Qed.
+
+Lemma arc_theta_mono : forall c step i j,
+  0 < step ->
+  let n := subdiv_n step (circ_sweep c) in
+  (i <= j)%nat -> (j <= n)%nat ->
+  0 <= (lin_theta c n j - lin_theta c n i)
+       * (lin_theta c n n - lin_theta c n 0%nat).
+Proof.
+  intros c step i j Hs n Hij Hjn.
+  destruct (subdiv_n_ok step (circ_sweep c) Hs) as [Hn2 _].
+  destruct (Rle_dec 0 (circ_sweep c)) as [Hp|Hneg].
+  - pose proof (lin_theta_mono_pos c n i j ltac:(lia) Hij Hjn Hp) as Hm.
+    pose proof (lin_sweep_total c n ltac:(lia)) as Htot.
+    rewrite Htot. apply Rmult_le_pos; lra.
+  - assert (Hsle : circ_sweep c <= 0) by lra.
+    pose proof (lin_theta_mono_neg c n i j ltac:(lia) Hij Hjn Hsle) as Hm.
+    pose proof (lin_sweep_total c n ltac:(lia)) as Htot.
+    rewrite Htot.
+    assert (Hprod : 0 <= (lin_theta c n i - lin_theta c n j) * (- circ_sweep c))
+      by (apply Rmult_le_pos; lra).
+    replace ((lin_theta c n j - lin_theta c n i) * circ_sweep c)
+      with ((lin_theta c n i - lin_theta c n j) * (- circ_sweep c)) by ring.
+    exact Hprod.
 Qed.
 
 (* Assumptions: each block stays inside the 3-axiom allowlist. *)
@@ -727,3 +719,4 @@ Print Assumptions arc_curve_near_polyline.
 Print Assumptions arc_polyline_near_curve.
 Print Assumptions arc_linearize_hausdorff.
 Print Assumptions arc_linearizes.
+Print Assumptions arc_theta_mono.

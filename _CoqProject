@@ -308,6 +308,7 @@ theories/ArcChordApprox.v
 # claimId: 0007-arc-linearize. 3-axiom. n = subdiv_n step Δθ
 # inhabits subdiv_ok (ceil via archimed / up). No Admitted.
 theories/ArcLinearize.v
+theories/LinearizeContract.v
 theories/ArcLinearizeBound.v
 theories/ArcLinearizeContract.v
 theories/ArcIntersect.v
