@@ -59,10 +59,8 @@
    WITNESS topic: overlay · claimId: 0007-iota-interior-discharge
    witness: 0007-iota-interior-discharge
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via SidecarCircInterior /
-     CircularCookSpan). Category C audit-exception: same atan2
-     lineage as Parks ι; no extra axioms.
-   Host lane stays 3-axiom. No Admitted / Axiom / Parameter.
+   3-axiom (IVT atan2 via SidecarCircInterior / CircularCookSpan).
+   No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)

@@ -40,7 +40,7 @@
    WITNESS topic: overlay · claimId: 0007
    witness: 0007-II.2-span-split
    board: ADR-0007
-   4-axiom (atan2 / Classical_Prop.classic via CircularCookSpan).
+   3-axiom (IVT atan2 via CircularCookSpan).
    No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors

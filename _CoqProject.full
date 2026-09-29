@@ -471,8 +471,7 @@ theories/AngleBetween.v
 # order, plus rational unit-circle witness
 # (A=(1,0), P=(3/5,4/5), B=(0,1); major counter Q=(-1,0)).  Headlines
 # in_arc_point_on_minor_arc and in_arc_point_on_major_arc_rejected are Qed.
-# Headlines 3-axiom. in_arc_theta_P_eq and in_arc_theta_P_pos_lt_PI2
-# state atan (classic); file stays on audit-exceptions.
+# 3-axiom (IVT atan2). in_arc_theta_P_eq states atan3 (4/3).
 theories/InArc.v
 # Issue #64 subtask 64-b — GREEN: circular-arc sweep is CCW iff signed central
 # angle is strictly positive.  sweep_ccw is the orientation/cross-sign reading
@@ -2600,8 +2599,8 @@ theories/ArcChordDensity.v
 # subtends <= theta/n) into ArcChordDensity.v's chord budget, via the law
 # of cosines against the record's dist_sq, cos_angle_between, the
 # half-angle identity, and sin^2 x <= x^2.  Headline
-# equal_angle_chords_achieve_eps.  Category-C atan/sin lineage (4-axiom,
-# see docs/audit-exceptions.txt).  Closes the trigonometric half of
+# equal_angle_chords_achieve_eps.  3-axiom (local PI >= 2; no PI2_1).
+# Closes the trigonometric half of
 # ArcChordApprox.v section 6c's deferral.  No Admitteds.
 theories/ArcChordSubdivision.v
 
@@ -3012,7 +3011,7 @@ theories/CircularCookHit.v
 theories/CircularCookEmpty.v
 # Span-restricted γ on CircularArc (principal signed span). QED interpolant
 # + locked proper-arc Hit. Host CircGamma stays QEX (3-axiom / atan2 split).
-# 4-axiom atan2 sidecar. Not first cook scope.
+# 3-axiom atan2 sidecar. Not first cook scope.
 theories/CircularCookSpan.v
 # ADR-0007 letter: circular Hit (h*, p*, tᵢ, tⱼ) feeds a same-shape
 # split(t) cook on the locked discs. QED plus-root leftovers meet at p+.
@@ -3039,7 +3038,7 @@ theories/CircularCookClose.v
 # II.1 span filter as IResult on CircularArc γ (not γ_full).
 # Radical root is arc Hit iff on_arc_gamma both. Locked p+ Hit,
 # p− Empty. Host CircGamma stays QEX. II.2–II.4 / H⊥ / SQL/MM
-# cathedral stay parked. 4-axiom atan2 sidecar (classic via Span).
+# cathedral stay parked. 3-axiom atan2 sidecar (allowlist).
 # Not CircularString concat. Not first cook scope. Not a noder.
 theories/CircularCookSpanFilter.v
 # II.2 split γ_span at in-span t (leftovers meet at p*).
@@ -3047,15 +3046,15 @@ theories/CircularCookSpanFilter.v
 # γ_full. Locked p+ leftovers meet at p*; leftover stays on the
 # parent circle. Locked p− stays Empty — no invented span cook.
 # Host CircGamma stays QEX. II.3–II.4 / H⊥ / SQL/MM cathedral
-# stay parked. 4-axiom atan2 sidecar (classic via Span / Filter).
+# stay parked. 3-axiom atan2 sidecar (allowlist).
 # Not CircularString concat. Not first cook scope. Not a noder.
 theories/CircularCookSpanSplit.v
 # II.3 I_ok_circ on EggCircularArc × EggCircularArc (sidecar
 # arc_gamma). First glossary-type inhabitant. Locked p+ Hit
 # licenses span_split; locked far pair inhabits Empty.
 # Host CircGamma stays QEX. first_cook_scope stays chord–chord.
-# II.4 / H⊥ / SQL/MM cathedral stay parked. 4-axiom atan2
-# sidecar (classic via Span / Filter / Split). Not CS concat.
+# II.4 / H⊥ / SQL/MM cathedral stay parked. 3-axiom atan2
+# sidecar (allowlist). Not CS concat.
 # Not first cook scope. Not a noder. Not a computed classifier.
 theories/CircularCookOkCirc.v
 # II.4 Campaign-II close letter. I_ok_circ exists as sidecar
@@ -3063,8 +3062,8 @@ theories/CircularCookOkCirc.v
 # first_cook_scope stays chord–chord. H⊥ parked. Not a bag
 # noder. Phase B SQL/MM Part 3 required-type gaps named
 # (CircularString / CompoundCurve / CurvePolygon). Not
-# SQL/MM done. 4-axiom atan2 sidecar (classic via OkCirc /
-# Span). Not CS concat. Not first cook scope. No new kernel.
+# SQL/MM done. 3-axiom atan2 sidecar (allowlist).
+# Not CS concat. Not first cook scope. No new kernel.
 theories/CircularCookCloseII.v
 # Phase B.1 CircularString concat joints (sidecar reuse).
 # CS is a sequence of CircEgg; joint is I_ok_circ Hit at
@@ -3152,8 +3151,8 @@ theories/SidecarCircInterior.v
 # Host I_ok mixed stays Decline. Host CircGamma stays QEX.
 # first_cook_scope stays chord–chord. Host interior cook stays
 # parked. Letter landed ≠ host cook Landed / cathedral Landed /
-# Phase B done-when. 4-axiom atan2 sidecar (classic via
-# SidecarCircInterior / Span). No new kernel. Not first cook
+# Phase B done-when. 3-axiom atan2 sidecar (allowlist).
+# No new kernel. Not first cook
 # scope. Not a noder. Not a CRV-TOUCH kiss.
 theories/SidecarCircInteriorHit.v
 # ADR-0007 ι complete gate (SidecarCircIotaGate). Six exclusive complete
@@ -3161,7 +3160,7 @@ theories/SidecarCircInteriorHit.v
 # CircularString-as-chord is cell 1, never cell 4. Cook reuse: host I_ok
 # / CircularCook / I_ok_mixed. InteriorMixedHitArm stays missing (QEX);
 # do not drop mixed_joint_params; do not remint CircGamma / LoopDischarged.
-# 4-axiom atan2 sidecar (classic via Interior / Mixed / Span). No new
+# 3-axiom atan2 sidecar (allowlist). No new
 # kernel. Not first cook expand. Not a noder. Not Overlay / GEOS.
 theories/SidecarCircIotaGate.v
 # ADR-0007 ι cell-4 arm stop (SidecarCircIotaArm). claimId 0007-iota-arm.
@@ -3171,8 +3170,8 @@ theories/SidecarCircIotaGate.v
 # ctor is existing I_ok_interior, not host I_ok / first-cook remint.
 # Geometric chord_split + span_split meet at p+ and do not inhabit
 # the arm. Gate letter stays QED; cook stays this named QEX.
-# 4-axiom atan2 sidecar (classic via IotaGate / Interior / Mixed /
-# SpanSplit). No new kernel. Not first cook expand. Not a noder.
+# 3-axiom atan2 sidecar (allowlist). No new kernel. Not first cook
+# expand. Not a noder.
 theories/SidecarCircIotaArm.v
 theories/SidecarCircIotaTags.v
 # Lineal boundary-meet bridge: curve_segments_meet (chord-chord contact) =>

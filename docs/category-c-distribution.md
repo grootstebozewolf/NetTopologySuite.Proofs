@@ -44,7 +44,7 @@ the Ozaki DAG. The TSV still does not include this file.
 
 ## 1. Headline
 
-S1a exception list: 89 files (76 `theories-flocq/`, 13 `theories/`).
+S1b exception list: 78 files (76 `theories-flocq/`, 2 `theories/`).
 The 2026-08-16 audit below is 88 files (72 flocq, 16 theories) and
 **1002 Print Assumptions outputs** (TSV unchanged):
 

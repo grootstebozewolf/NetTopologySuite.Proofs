@@ -4,14 +4,14 @@
    JTS Math.atan2 / NTS Angle.  claimId: none.
 
    Category C bridge: the historical quadrant body of atan2, built on
-   Stdlib Ratan.atan, equals the 3-axiom Atan2.atan2.  Downstream
-   statements that still mention `atan` rewrite through atan2_eq_ratan.
-   This file pulls Classical_Prop.classic via Ratan and stays on
+   Stdlib Ratan.atan, equals the 3-axiom Atan2.atan2.  Readers who want
+   the Ratan form of atan3 rewrite through atan3_eq_atan.  This file
+   pulls Classical_Prop.classic via Ratan and stays on
    docs/audit-exceptions.txt.  No Axiom, Parameter, or Admitted.
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra.
-From NTS.Proofs Require Import Atan2.
+From NTS.Proofs Require Import Atan2 AtanIvt.
 Local Open Scope R_scope.
 
 (* Historical JTS quadrant form.  Range (-PI, PI], origin 0. *)
@@ -186,4 +186,18 @@ Proof.
   destruct (Rlt_dec 0 x) as [_|H]; [reflexivity | lra].
 Qed.
 
+(* Reader bridge: the 3-axiom half-angle root is Stdlib atan. *)
+Lemma atan3_eq_atan : forall u : R, atan3 u = atan u.
+Proof.
+  intro u. symmetry. apply atan3_unique.
+  - pose proof (atan_bound u). lra.
+  - pose proof (sin_atan u) as Hs.
+    pose proof (cos_atan u) as Hc.
+    assert (Hpos : 0 < sqrt (1 + Rsqr u)).
+    { apply sqrt_lt_R0.
+      assert (0 <= Rsqr u) by apply Rle_0_sqr. lra. }
+    rewrite Hs, Hc. field. lra.
+Qed.
+
 Print Assumptions atan2_eq_ratan.
+Print Assumptions atan3_eq_atan.

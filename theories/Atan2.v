@@ -396,6 +396,55 @@ Proof.
   rewrite cos_PI2 in Hd. lra.
 Qed.
 
+(* Positive cosine on the principal interval forces the open half-turn. *)
+Lemma cos_pos_principal_half : forall a : R,
+  - PI < a <= PI -> 0 < cos a -> - (PI / 2) < a < PI / 2.
+Proof.
+  intros a Ha Hc.
+  pose proof PI_RGT_0 as HPI.
+  assert (Hnot : a <> PI).
+  { intro E. subst a. rewrite cos_PI in Hc. lra. }
+  destruct (Rle_dec 0 a) as [Hnn|Hneg].
+  - destruct Hnn as [Hpos|Hz].
+    + split; [lra|]. apply cos_pos_below_half_pi; [lra|exact Hc].
+    + subst a. lra.
+  - assert (Hc' : 0 < cos (- a)) by (rewrite cos_neg; exact Hc).
+    assert (Hhi : - a < PI / 2).
+    { apply cos_pos_below_half_pi; [lra|exact Hc']. }
+    lra.
+Qed.
+
+(* Positive abscissa: atan2 is the half-angle atan3 of the slope. *)
+Lemma atan2_pos_x_eq_atan3 : forall y x : R, 0 < x ->
+  atan2 y x = atan3 (y / x).
+Proof.
+  intros y x Hx.
+  assert (Hne : ~ (x = 0 /\ y = 0)) by lra.
+  apply atan3_unique.
+  - pose proof (atan2_range x y Hne) as Hb.
+    pose proof (cos_atan2 x y Hne) as Hc.
+    pose proof (atan2_r_pos x y Hne) as Hr.
+    assert (Hcp : 0 < cos (atan2 y x)).
+    { rewrite Hc.
+      assert (0 < / sqrt (x * x + y * y)) by (apply Rinv_0_lt_compat; exact Hr).
+      nra. }
+    apply cos_pos_principal_half; assumption.
+  - pose proof (sin_atan2 x y Hne) as Hs.
+    pose proof (cos_atan2 x y Hne) as Hc.
+    pose proof (atan2_r_pos x y Hne) as Hr.
+    assert (Hx0 : x <> 0) by (apply Rgt_not_eq; exact Hx).
+    assert (Hr0 : sqrt (x * x + y * y) <> 0) by (apply Rgt_not_eq; exact Hr).
+    rewrite Hs, Hc. field. split; [exact Hr0 | exact Hx0].
+Qed.
+
+Lemma atan3_opp : forall u : R, atan3 (- u) = - atan3 u.
+Proof.
+  intro u. symmetry. apply atan3_unique.
+  - destruct (atan3_spec u) as [[Hlo Hhi] _]. lra.
+  - destruct (atan3_spec u) as [_ Hs].
+    rewrite sin_neg, cos_neg. lra.
+Qed.
+
 Lemma atan2_open_first_quadrant : forall x y : R,
   0 < x -> 0 < y -> 0 < atan2 y x < PI / 2.
 Proof.
@@ -492,3 +541,5 @@ Print Assumptions atan3.
 Print Assumptions cos_atan2.
 Print Assumptions sin_atan2.
 Print Assumptions atan2_unique.
+Print Assumptions atan2_pos_x_eq_atan3.
+Print Assumptions atan3_opp.

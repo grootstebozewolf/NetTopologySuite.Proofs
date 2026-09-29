@@ -31,10 +31,10 @@
    one-sided (0 <= phi): a CCW sub-arc convention, the mirrored case
    follows by symmetry of the consumer's encoding.
 
-   The axiom footprint is the atan/sin Category-C lineage (Atan2.v /
-   AngleBetween.v / ArcLength.v) -- Stdlib's `sin_lt_x` and the atan2
-   layer pull `Classical_Prop.classic`, so this file is 4-axiom; see
-   docs/audit-exceptions.txt.  No Admitted.
+   The axiom footprint is the 3-axiom atan2 / Taylor lane (Atan2.v /
+   AngleBetween.v / ArcLength.v).  `sin_sq_le_sq` uses a local
+   `2 <= PI` from `sin_le_x` (Stdlib `PI2_1` pulls classic via Ratan;
+   `sin_lt_x` is not used).  No Admitted.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -138,6 +138,15 @@ Qed.
 (* §4  sin^2 x <= x^2 for x >= 0 (case split at 1; SIN_bound above it).       *)
 (* -------------------------------------------------------------------------- *)
 
+(* 2 <= PI without Ratan.PI2_1 (that proof pulls classic). *)
+Lemma subdivision_PI_ge_2 : 2 <= PI.
+Proof.
+  pose proof PI_RGT_0 as Hpi.
+  assert (H : 1 <= PI / 2).
+  { rewrite <- sin_PI2. apply sin_le_x. lra. }
+  lra.
+Qed.
+
 Lemma sin_sq_le_sq :
   forall x : R, 0 <= x -> sin x * sin x <= x * x.
 Proof.
@@ -145,7 +154,7 @@ Proof.
   destruct (Rle_lt_dec x 1) as [Hle | Hgt].
   - assert (Hs0 : 0 <= sin x).
     { apply sin_ge_0; [exact Hx | ].
-      pose proof PI2_1. lra. }
+      pose proof subdivision_PI_ge_2. lra. }
     pose proof (sin_le_x x Hx). nra.
   - pose proof (SIN_bound x) as [Hlo Hhi]. nra.
 Qed.
@@ -232,9 +241,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Axiom audit.  Category-C atan/sin lineage (4-axiom; see                    *)
-(* docs/audit-exceptions.txt).  The pure-algebra lemmas in §2 stay on the     *)
-(* 3-axiom allowlist.                                                          *)
+(* Axiom audit.  3-axiom (local PI >= 2; no PI2_1 / sin_lt_x).                 *)
 (* -------------------------------------------------------------------------- *)
 
 Print Assumptions chord_sq_law_of_cosines.
