@@ -201,7 +201,8 @@ Definition degen_chord : ChordEgg :=
 Lemma degen_not_nondeg : ~ chord_nondeg degen_chord.
 Proof.
   unfold chord_nondeg, chord_dx, chord_dy, degen_chord. cbn.
-  intro H. apply H. f_equal2; ring.
+  intro H. apply H.
+  replace (0 - 0) with 0 by ring. reflexivity.
 Qed.
 
 Lemma degen_circ_chord_decline :
@@ -563,7 +564,7 @@ Proof.
       unfold Rdiv. rewrite Rmult_1_l, Rmult_assoc.
       rewrite Rinv_l; [|lra]. rewrite Rmult_1_r. lra. }
   unfold on_chord. split; [exact Hunit|].
-  rewrite chord_split_right_reparam. rewrite Hu. symmetry. exact Hp2.
+  rewrite chord_split_right_reparam. rewrite Hu. exact Hp2.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
