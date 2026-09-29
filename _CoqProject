@@ -285,6 +285,11 @@ theories/IntakeGeodesic.v
 # Science/arXiv 1804.07389 locked endpoints on existing μ.
 # claimId 0007-famous-geodesicstring. No Admitted.
 theories/IntakeFamousGeodesic.v
+# ADR-0007 planar geodesic cook (IntakeGeodesicCook) + Karney park
+# (IntakeKarneyPark). Cook supplies the G3 closed terms K2 pins;
+# park is not a first-cook expand. 3-axiom. No Admitted.
+theories/IntakeGeodesicCook.v
+theories/IntakeKarneyPark.v
 # RelateNG product face lives in _CoqProject.full (RelateNGFace.v):
 # it packages the DE-9IM / RelateNG zoo, which is not host-lane.
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
