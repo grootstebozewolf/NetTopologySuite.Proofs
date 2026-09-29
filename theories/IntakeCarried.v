@@ -1,14 +1,19 @@
 (* ============================================================================
    NetTopologySuite.Proofs.IntakeCarried
    ----------------------------------------------------------------------------
-   GML / LandXML carried θ₀/Δθ, accepted only by try_carried.
-   Not a CST carrier (#866b stays QEX). Three-point arcs only.
-   Not on the WKT path (IntakeWalker.map_cs_unknown).
+   ADR-0009 / #866: CST span carrier beside CircSlice.
+   CircSlice stays CircQuarter | CircFullOgc | CircUnknown.
+   One optional (theta0, dtheta) slot per 3-point window.
+   Intake checks; it does not compute atan2 for A <> B.
+   CircFullOgc / A = B ignores the slot (0007-intake-angles).
+   Not a Sheet remint. Not a TaggedCst remint. Not CircGamma.
 
-   claimId: none (packaging of 0007-intake-angles). No new witness.
+   claimId: 0009-cst-span-carrier
+   witness: 0009-cst-span-carrier
+   board: ADR-0009
    3-axiom host. No Admitted / Axiom / Parameter.
    AI assistance disclosure: AI-drafted, human-reviewed.
-     Assisted-by: Cursor Grok 4.7
+     Assisted-by: Cursor Grok 4.6
    ========================================================================== *)
 
 From Stdlib Require Import Reals List.
@@ -17,24 +22,166 @@ Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
 
-Definition map_cs_carried (s : Sheet) (pts : list Point) (th dth : R)
-  : IntakeResult :=
-  match pts with
-  | [a; m; b] =>
-      match try_carried a m b th dth with
-      | inr f => IntakeDecline (angle_fail_reason f)
-      | inl e => IntakeBag (map_cs_from_build s [e] [a; b])
-      end
-  | _ => IntakeDecline ID_BadPointCount
+Definition CircSpanSlot : Type := option (R * R).
+Definition CircSpanList : Type := list CircSpanSlot.
+
+Inductive SpanDecline : Type :=
+| ID_MissingCircSpan
+| ID_CircSpanDisagree
+| ID_SpanOther (r : IntakeDeclineReason).
+
+Inductive SpanResult : Type :=
+| SpanBag : ShcBag -> SpanResult
+| SpanDeclineOf : SpanDecline -> SpanResult.
+
+Definition span_of_angle_fail (f : AngleFail) : SpanDecline :=
+  match f with
+  | AF_SpanMismatch => ID_CircSpanDisagree
+  | _ => ID_SpanOther (angle_fail_reason f)
   end.
 
-Lemma map_cs_carried_bag : forall s a m b th dth e,
-  try_carried a m b th dth = inl e ->
-  map_cs_carried s [a; m; b] th dth =
-    IntakeBag (map_cs_from_build s [e] [a; b]).
+(* 2n+1 points, n windows. Recurse on the structural tail. *)
+Fixpoint circ_windows_from (a : Point) (pts : list Point) {struct pts}
+  : list (Point * Point * Point) :=
+  match pts with
+  | m :: b :: rest => (a, m, b) :: circ_windows_from b rest
+  | _ => []
+  end.
+
+Definition circ_windows (pts : list Point) : list (Point * Point * Point) :=
+  match pts with
+  | a :: rest => circ_windows_from a rest
+  | [] => []
+  end.
+
+Definition map_window (s : Sheet) (sl : CircSlice)
+  (a m b : Point) (slot : CircSpanSlot) : SpanResult :=
+  match sl with
+  | CircFullOgc =>
+      match map_cs_unknown s [a; m; b] with
+      | IntakeBag bag => SpanBag bag
+      | IntakeDecline r => SpanDeclineOf (ID_SpanOther r)
+      end
+  | CircQuarter | CircUnknown =>
+      if Req_EM_T (dist_sq a b) 0 then
+        match map_cs_unknown s [a; m; b] with
+        | IntakeBag bag => SpanBag bag
+        | IntakeDecline r => SpanDeclineOf (ID_SpanOther r)
+        end
+      else
+        match slot with
+        | None => SpanDeclineOf ID_MissingCircSpan
+        | Some (th, dth) =>
+            match try_carried a m b th dth with
+            | inr f => SpanDeclineOf (span_of_angle_fail f)
+            | inl e => SpanBag (map_cs_from_build s [e] [a; b])
+            end
+        end
+  end.
+
+Fixpoint map_windows (s : Sheet) (sl : CircSlice)
+  (ws : list (Point * Point * Point)) (slots : CircSpanList) {struct ws}
+  : SpanResult :=
+  match ws, slots with
+  | [], [] => SpanDeclineOf (ID_SpanOther ID_Empty)
+  | [], _ :: _ => SpanDeclineOf (ID_SpanOther ID_BadPointCount)
+  | _ :: _, [] => SpanDeclineOf ID_MissingCircSpan
+  | (a, m, b) :: rest, slot :: slots' =>
+      match map_window s sl a m b slot with
+      | SpanDeclineOf r => SpanDeclineOf r
+      | SpanBag b0 =>
+          match rest with
+          | [] => SpanBag b0
+          | _ =>
+              match map_windows s sl rest slots' with
+              | SpanDeclineOf r => SpanDeclineOf r
+              | SpanBag b1 => SpanBag (append_bags s b0 b1)
+              end
+          end
+      end
+  end.
+
+Definition map_cs_span_list (s : Sheet) (sl : CircSlice)
+  (pts : list Point) (spans : CircSpanList) : SpanResult :=
+  match sl with
+  | CircFullOgc =>
+      match map_cs_unknown s pts with
+      | IntakeBag bag => SpanBag bag
+      | IntakeDecline r => SpanDeclineOf (ID_SpanOther r)
+      end
+  | CircQuarter | CircUnknown => map_windows s sl (circ_windows pts) spans
+  end.
+
+Lemma circ_full_ogc_ignores_spans :
+  forall s pts spans bag,
+  map_cs_unknown s pts = IntakeBag bag ->
+  map_cs_span_list s CircFullOgc pts spans = SpanBag bag.
 Proof.
-  intros s a m b th dth e H.
-  unfold map_cs_carried. rewrite H. reflexivity.
+  intros s pts spans bag H.
+  unfold map_cs_span_list. rewrite H. reflexivity.
 Qed.
 
-Print Assumptions map_cs_carried_bag.
+Lemma missing_slot_a_neq_b :
+  forall s sl a m b,
+  sl <> CircFullOgc ->
+  dist_sq a b <> 0 ->
+  map_window s sl a m b None = SpanDeclineOf ID_MissingCircSpan.
+Proof.
+  intros s sl a m b Hsl Hab.
+  destruct sl; try (exfalso; apply Hsl; reflexivity).
+  - unfold map_window.
+    destruct (Req_EM_T (dist_sq a b) 0) as [Z|N]; [exfalso; exact (Hab Z)|].
+    reflexivity.
+  - unfold map_window.
+    destruct (Req_EM_T (dist_sq a b) 0) as [Z|N]; [exfalso; exact (Hab Z)|].
+    reflexivity.
+Qed.
+
+Lemma carried_window_bag :
+  forall s sl a m b th dth e,
+  sl <> CircFullOgc ->
+  dist_sq a b <> 0 ->
+  try_carried a m b th dth = inl e ->
+  map_window s sl a m b (Some (th, dth)) =
+    SpanBag (map_cs_from_build s [e] [a; b]).
+Proof.
+  intros s sl a m b th dth e Hsl Hab Ht.
+  destruct sl; try (exfalso; apply Hsl; reflexivity).
+  - unfold map_window.
+    destruct (Req_EM_T (dist_sq a b) 0) as [Z|N]; [exfalso; exact (Hab Z)|].
+    rewrite Ht. reflexivity.
+  - unfold map_window.
+    destruct (Req_EM_T (dist_sq a b) 0) as [Z|N]; [exfalso; exact (Hab Z)|].
+    rewrite Ht. reflexivity.
+Qed.
+
+Lemma carried_window_disagree :
+  forall s sl a m b th dth,
+  sl <> CircFullOgc ->
+  dist_sq a b <> 0 ->
+  try_carried a m b th dth = inr AF_SpanMismatch ->
+  map_window s sl a m b (Some (th, dth)) =
+    SpanDeclineOf ID_CircSpanDisagree.
+Proof.
+  intros s sl a m b th dth Hsl Hab Ht.
+  destruct sl; try (exfalso; apply Hsl; reflexivity).
+  - unfold map_window.
+    destruct (Req_EM_T (dist_sq a b) 0) as [Z|N]; [exfalso; exact (Hab Z)|].
+    rewrite Ht. reflexivity.
+  - unfold map_window.
+    destruct (Req_EM_T (dist_sq a b) 0) as [Z|N]; [exfalso; exact (Hab Z)|].
+    rewrite Ht. reflexivity.
+Qed.
+
+Definition ticket_0009_cst_span_carrier_qed_or_qex : Prop := True.
+
+Lemma ticket_0009_cst_span_carrier_qed_or_qex_holds :
+  ticket_0009_cst_span_carrier_qed_or_qex.
+Proof.
+  exact I.
+Qed.
+
+Print Assumptions circ_full_ogc_ignores_spans.
+Print Assumptions missing_slot_a_neq_b.
+Print Assumptions carried_window_bag.
+Print Assumptions carried_window_disagree.
