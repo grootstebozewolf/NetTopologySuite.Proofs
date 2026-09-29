@@ -2843,6 +2843,9 @@ theories/RelateCurveAlphabet.v
 # Host/pure-R. atan2-free angle interpolant. Required by SheetHenCook.
 theories/ChordCook.v
 theories/SheetHenCircEgg.v
+# Generic linearisation contract and the circular-arc instance.
+# claimId: none. Linearise.v regime theorems stay put.
+theories/LineariseContract.v
 # ADR-0007 ClothoidEgg payload for host MkClothoid
 # (claimId 0007-intake-mkclothoid / 0007-clothoid-first-cook).
 # Fresnel cloth_eval, split for the module gate: core, bounds, frames.

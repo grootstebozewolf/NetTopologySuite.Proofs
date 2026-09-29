@@ -407,6 +407,9 @@ Qed.
 (* closed: ArcChordDensity.v (chord-budget law) + ArcChordSubdivision.v       *)
 (* (angle-budget discharge, equal_angle_chords_achieve_eps).  The             *)
 (* list-of-arcs subdivision construction itself remains deferred.             *)
+(* [2026-09-29] The CircularEgg n-chord is Qed in LineariseContract           *)
+(* (chord_approx_error_bound, arc_linearizes) for |sweep| < 2*PI.             *)
+(* CurveGeometry.chord_approx_arc stays the 3-point stub.                     *)
 (* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
