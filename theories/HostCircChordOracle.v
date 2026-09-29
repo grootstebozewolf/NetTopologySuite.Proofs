@@ -21,8 +21,8 @@
    Boundary: on_circ / on_chord are closed [0,1], so t=0 and t=1 are
    hits (boundary_endpoints_are_hits), as for chord×chord.
 
-   QEX: after #892 every ISO CIRCLE is a Δθ = ±2π egg, so a full
-   circle meeting a chord Declines by name until chart-side F5.
+   QEX: after #892 an ISO CIRCLE bag is two |Δθ|=π hens, in scope
+   here. The single 2π egg still Declines until chart-side F5.
 
    The locked CC LS+CS joint is a host Hit, so the ∀-bag loop does not
    StepIDecline on that pair. The joint is already a vertex of both

@@ -19,6 +19,7 @@ enum Reason
     ID_Collinear,
     ID_DuplicateControl,
     ID_DegenerateArc,
+    ID_CsClosedDegenerate,
     ID_NotFirstSlice,
     ID_ParseFail,
 }

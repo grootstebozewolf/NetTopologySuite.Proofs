@@ -215,11 +215,16 @@ static class Wire
             return ("DECLINE", null, "ID_Empty");
         if (pts.Count == 3)
         {
-            var (a, b, c) = (pts[0], pts[1], pts[2]);
+            var a = pts[0];
+            var c = pts[2];
+            if (SameXy(a, c))
+            {
+                if (SameXy(a, pts[1]))
+                    return ("DECLINE", null, "ID_CsClosedDegenerate");
+                return ExpectCircle([a, pts[1], OgcC(a, pts[1])]);
+            }
             if (SameXy(a, new(5, 0)) && SameXy(c, new(0, 5)))
                 return ("BAG", new Bag([0, 1], [new(5, 0), new(0, 5)], [(0, 1, "MkCirc:quarter")]), null);
-            if (SameXy(a, new(5, 0)) && SameXy(b, new(0, 5)) && SameXy(c, new(5, 0)))
-                return ("BAG", new Bag([0, 1], [new(5, 0), new(5, 0)], [(0, 1, "MkCirc:full")]), null);
         }
         if (pts.Count < 3 || pts.Count % 2 == 0)
             return ("DECLINE", null, "ID_BadPointCount");
@@ -238,18 +243,34 @@ static class Wire
         return ("BAG", new Bag(Enumerable.Range(0, ends.Count), ends, chicks), null);
     }
 
+    /// <summary>CW completion: C' = M + rot_+90°(A−M). Same as IntakeVisitor.OgcC.</summary>
+    internal static Xy OgcC(Xy a, Xy b)
+    {
+        double mx = (a.X + b.X) / 2.0;
+        double my = (a.Y + b.Y) / 2.0;
+        double vx = a.X - mx;
+        double vy = a.Y - my;
+        return new Xy(mx - vy, my + vx);
+    }
+
     internal static (string Kind, Bag? Bag, string? Decline) ExpectCircle(IReadOnlyList<Xy> pts)
     {
         if (pts.Count == 0)
             return ("DECLINE", null, "ID_Empty");
         if (pts.Count != 3)
             return ("DECLINE", null, "ID_BadPointCount");
-        if (SameXy(pts[0], new(5, 0)) && SameXy(pts[2], new(-5, 0)))
-            return ("BAG", new Bag([0, 1], [new(5, 0), new(-5, 0)], [(0, 1, "MkCirc:full")]), null);
         var dec = TryTriple(pts[0], pts[1], pts[2]);
         if (dec != null)
             return ("DECLINE", null, dec);
-        return ("BAG", new Bag([0, 1], [pts[0], pts[2]], [(0, 1, "MkCirc")]), null);
+        double d = CircDenom(pts[0], pts[1], pts[2]);
+        double na = pts[0].X * pts[0].X + pts[0].Y * pts[0].Y;
+        double nb = pts[1].X * pts[1].X + pts[1].Y * pts[1].Y;
+        double nc = pts[2].X * pts[2].X + pts[2].Y * pts[2].Y;
+        double ox = (na * (pts[1].Y - pts[2].Y) + nb * (pts[2].Y - pts[0].Y) + nc * (pts[0].Y - pts[1].Y)) / d;
+        double oy = (na * (pts[2].X - pts[1].X) + nb * (pts[0].X - pts[2].X) + nc * (pts[1].X - pts[0].X)) / d;
+        var anti = new Xy(2 * ox - pts[0].X, 2 * oy - pts[0].Y);
+        return ("BAG", new Bag([0, 1], [pts[0], anti],
+            [(0, 1, "MkCirc:half"), (1, 0, "MkCirc:half")]), null);
     }
 
     internal static (string Kind, Bag? Bag, string? Decline) ExpectClothoid() =>

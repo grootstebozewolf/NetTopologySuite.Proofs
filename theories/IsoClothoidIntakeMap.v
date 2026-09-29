@@ -19,7 +19,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook IsoClothoidIntake IntakeWalker.
+From NTS.Proofs Require Import Distance SheetHenCook IsoClothoidIntake IntakeWalker
+  IntakeWalkerClothoid.
 Import ListNotations.
 Local Open Scope R_scope.
 

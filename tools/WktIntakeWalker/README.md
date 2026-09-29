@@ -31,14 +31,14 @@ documented smoke (same cases as the retired Java `smoke.sh`, including
 `GEODESICSTRING (0 0, 2 0)` = LineString `MkChord` bag).
 
 First slice: Point, LineString, CircularString, CompoundCurve of those,
-Circle-as-full-span-arc. Unknown well-formed CS/Circle maps to `MkCirc`
+Circle as two ±π `MkCirc` (A, antipode). Unknown CS/Circle maps to `MkCirc`
 via the unique circumcircle (angles letter). Both CLOTHOID surface
 forms (ISO REFERENCELOCATION, JTS `(k0,k1,L)`) map to the same
 `MkClothoid` bag (OGC≡ISO). Well-formed `GEODESICSTRING` (`n≥2`) maps
 to the same `MkChord` bag as `LINESTRING` (Rocq μ in #744
 `0007-intake-geodesic`). Fail-closed Declines: empty / singleton
 geodesic, `SPIRALCURVE`, collinear (`ID_Collinear`), duplicate control
-(`ID_DuplicateControl`), bad count / empty. `dim` → `ID_NotFirstSlice`.
+(`ID_DuplicateControl`), strict closed CS (`ID_CsClosedDegenerate`; lenient normalizes), bad count. `dim` → `ID_NotFirstSlice`.
 No silent chord demote.
 `ID_CircGammaLeftover` / `ID_IsoClothoid` / `ID_MkOutOfScope` stay
 on the Decline type; they are not the well-formed clothoid answer.

@@ -1,0 +1,1204 @@
+(* ============================================================================
+   NetTopologySuite.Proofs.IntakeCircle
+   ----------------------------------------------------------------------------
+   ISO/IEC 13249-3 CIRCLE (claimId 0007-intake-angles, not reminted).
+   Three controls A,B,C name a full circle. θ₀ is the chart angle of A
+   about the circumcentre (the same egg_of_points angle as
+   CIRCULARSTRING, equal to atan2(A−O)). Sweep is +2π when (A,B,C)
+   turns CCW and −2π when CW. γ(0)=γ(1)=A. The bag is not
+   that egg: two half-turns of sweep ±π, hens at A and γ(1/2).
+
+   try_cs_eggs still Declines CIRCULARSTRING(A,B,A). ADR-0005
+   lenient intake (IntakeWalker) normalizes that text, when B≠A,
+   to CIRCLE(A,B,ogc_c) before the angle layer. ogc_c picks CW.
+
+   NTS clean-room: γ(t) = O + r·(cos(θ₀+t·Δθ), sin(θ₀+t·Δθ))
+   with θ₀ = atan2(Ay−Oy, Ax−Ox) and Δθ = sign(orient(A,B,C))·2π.
+   GEOS is a behavioural reference only. No Admitted.
+
+   AI assistance disclosure: AI-drafted, human-reviewed.
+     Assisted-by: Cursor Grok 4.7
+   ========================================================================== *)
+
+From Stdlib Require Import Reals Lra Field List.
+From NTS.Proofs Require Import Distance Segment SheetHenCook CircleChart Atan2
+  IntakeAngles.
+Import ListNotations.
+Local Open Scope R_scope.
+Local Open Scope list_scope.
+
+Lemma orient_of_denom : forall a b c,
+  circ_denom a b c <> 0 -> orient_pts a b c <> 0.
+Proof.
+  intros a b c Hd Ho.
+  apply Hd. rewrite circ_denom_orient, Ho. ring.
+Qed.
+
+Lemma two_pi_neq0 : 2 * PI <> 0.
+Proof.
+  pose proof PI_RGT_0. lra.
+Qed.
+
+Lemma full_sweep_pos : forall a b c,
+  0 < orient_pts a b c -> full_sweep a b c = 2 * PI.
+Proof.
+  intros a b c H. unfold full_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)); [reflexivity|lra].
+Qed.
+
+Lemma full_sweep_neg : forall a b c,
+  orient_pts a b c < 0 -> full_sweep a b c = - (2 * PI).
+Proof.
+  intros a b c H. unfold full_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)); [lra|reflexivity].
+Qed.
+
+Lemma full_sweep_spec : forall a b c,
+  orient_pts a b c <> 0 ->
+  Rabs (full_sweep a b c) = 2 * PI /\
+  full_sweep a b c * orient_pts a b c > 0.
+Proof.
+  intros a b c Ho.
+  pose proof PI_RGT_0 as Hp.
+  unfold full_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)) as [Hle|Hlt].
+  - assert (0 < orient_pts a b c) by lra.
+    split.
+    + rewrite Rabs_right by lra. reflexivity.
+    + nra.
+  - assert (orient_pts a b c < 0) by lra.
+    split.
+    + rewrite Rabs_left by lra.
+      replace (- - (2 * PI)) with (2 * PI) by ring.
+      reflexivity.
+    + nra.
+Qed.
+
+Lemma div_pos : forall x y, y <> 0 -> x * y > 0 -> 0 < x / y.
+Proof.
+  intros x y Hy Hp. unfold Rdiv.
+  destruct (Rle_dec 0 y) as [Hy0|Hy0].
+  - assert (0 < y) by lra.
+    assert (0 < x) by nra.
+    apply Rmult_lt_0_compat; [exact H0|].
+    apply Rinv_0_lt_compat. exact H.
+  - assert (y < 0) by lra.
+    assert (x < 0) by nra.
+    assert (/ y < 0) by (apply Rinv_lt_0_compat; exact H).
+    assert (0 < (- x) * (- / y)).
+    { apply Rmult_lt_0_compat; lra. }
+    replace ((- x) * (- / y)) with (x * / y) in H2 by ring.
+    exact H2.
+Qed.
+
+Lemma abs_div_lt_1 : forall x y,
+  y <> 0 -> Rabs x < Rabs y -> Rabs (x / y) < 1.
+Proof.
+  intros x y Hy Hlt.
+  unfold Rdiv. rewrite Rabs_mult, Rabs_inv.
+  apply Rmult_lt_reg_r with (r := Rabs y).
+  - apply Rabs_pos_lt. exact Hy.
+  - rewrite Rmult_assoc, Rinv_l.
+    + rewrite Rmult_1_r, Rmult_1_l. exact Hlt.
+    + pose proof (Rabs_pos_lt y Hy). lra.
+Qed.
+
+Lemma arc_ratio_open : forall a b c,
+  dist_sq a b <> 0 ->
+  dist_sq b c <> 0 ->
+  dist_sq a c <> 0 ->
+  circ_denom a b c <> 0 ->
+  dist (circumcenter_of a b c) a <> 0 ->
+  let s := circ_sweep (egg_of_points a b c) in
+  let u := full_sweep a b c in
+  u <> 0 /\ 0 < s / u /\ s / u < 1.
+Proof.
+  intros a b c Hab Hbc Hac Hd Hr s u.
+  assert (Ho : orient_pts a b c <> 0) by (apply orient_of_denom; exact Hd).
+  destruct (full_sweep_spec a b c Ho) as [Huabs Hsign].
+  fold u in Huabs, Hsign.
+  assert (Hu : u <> 0).
+  { intros Z. rewrite Z, Rabs_R0 in Huabs.
+    exact (two_pi_neq0 (eq_sym Huabs)). }
+  pose proof (egg_sweep_sign a b c Hab Hbc Hac Hd Hr) as Hs.
+  pose proof (egg_sweep_open a b c Hab Hbc Hac Hd Hr) as [_ Hslt].
+  fold s in Hs, Hslt.
+  assert (Hprod : s * u > 0) by nra.
+  assert (Hpos : 0 < s / u) by (apply div_pos; assumption).
+  assert (Habs : Rabs (s / u) < 1).
+  { apply abs_div_lt_1; [exact Hu|]. rewrite Huabs. exact Hslt. }
+  split; [exact Hu|].
+  split; [exact Hpos|].
+  rewrite (Rabs_right (s / u)) in Habs by lra. exact Habs.
+Qed.
+
+Lemma circle_eval0_arc : forall a b c,
+  circ_eval (circle_of_egg (egg_of_points a b c) a b c) 0 =
+  circ_eval (egg_of_points a b c) 0.
+Proof.
+  intros a b c.
+  unfold circ_eval, circle_of_egg.
+  cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  replace (0 * full_sweep a b c)
+    with (0 * circ_sweep (egg_of_points a b c)) by ring.
+  reflexivity.
+Qed.
+
+Lemma circle_eval_at_arc : forall a b c t,
+  full_sweep a b c <> 0 ->
+  circ_eval (circle_of_egg (egg_of_points a b c) a b c)
+    (t * circ_sweep (egg_of_points a b c) / full_sweep a b c) =
+  circ_eval (egg_of_points a b c) t.
+Proof.
+  intros a b c t Hu.
+  unfold circ_eval, circle_of_egg.
+  cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  replace ((t * circ_sweep (egg_of_points a b c) / full_sweep a b c) *
+           full_sweep a b c)
+    with (t * circ_sweep (egg_of_points a b c)) by (field; exact Hu).
+  reflexivity.
+Qed.
+
+Lemma half_sweep_double : forall a b c,
+  full_sweep a b c = 2 * half_sweep a b c.
+Proof.
+  intros a b c. unfold full_sweep, half_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)); ring.
+Qed.
+
+Lemma half_sweep_pi_or : forall a b c,
+  half_sweep a b c = PI \/ half_sweep a b c = - PI.
+Proof.
+  intros a b c. unfold half_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)); [left | right]; reflexivity.
+Qed.
+
+Lemma half_sweep_abs : forall a b c, Rabs (half_sweep a b c) = PI.
+Proof.
+  intros a b c. unfold half_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)).
+  - rewrite Rabs_right; [reflexivity |]. pose proof PI_RGT_0. lra.
+  - rewrite Rabs_left; [ring |]. pose proof PI_RGT_0. lra.
+Qed.
+
+Lemma half_sweep_pos : forall a b c,
+  0 < orient_pts a b c -> half_sweep a b c = PI.
+Proof.
+  intros a b c H. unfold half_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)); [reflexivity | lra].
+Qed.
+
+Lemma half_sweep_neg : forall a b c,
+  orient_pts a b c < 0 -> half_sweep a b c = - PI.
+Proof.
+  intros a b c H. unfold half_sweep.
+  destruct (Rle_dec 0 (orient_pts a b c)); [lra | reflexivity].
+Qed.
+
+Lemma cos_shift_pi : forall a, cos (a + PI) = - cos a.
+Proof.
+  intro a. rewrite cos_plus, cos_PI, sin_PI. ring.
+Qed.
+
+Lemma sin_shift_pi : forall a, sin (a + PI) = - sin a.
+Proof.
+  intro a. rewrite sin_plus, cos_PI, sin_PI. ring.
+Qed.
+
+Lemma cos_shift_mpi : forall a, cos (a - PI) = - cos a.
+Proof.
+  intro a.
+  replace (a - PI) with (a + - PI) by ring.
+  rewrite cos_plus, cos_neg, sin_neg, cos_PI, sin_PI. ring.
+Qed.
+
+Lemma sin_shift_mpi : forall a, sin (a - PI) = - sin a.
+Proof.
+  intro a.
+  replace (a - PI) with (a + - PI) by ring.
+  rewrite sin_plus, cos_neg, sin_neg, cos_PI, sin_PI. ring.
+Qed.
+
+Lemma circ_eval_0_trig : forall o r th sw,
+  circ_eval (mkCircularEgg o r th sw) 0 =
+  mkPoint (px o + r * cos th) (py o + r * sin th).
+Proof.
+  intros o r th sw. unfold circ_eval. cbn.
+  replace (th + 0 * sw) with th by ring.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma circ_eval_half_is_opposite : forall o r th h,
+  h = PI \/ h = - PI ->
+  circ_eval (mkCircularEgg o r th (2 * h)) (1 / 2) =
+  mkPoint (px o - r * cos th) (py o - r * sin th).
+Proof.
+  intros o r th h [-> | ->].
+  - unfold circ_eval. cbn.
+    replace ((1 / 2) * (2 * PI)) with PI by field.
+    rewrite cos_shift_pi, sin_shift_pi.
+    apply (f_equal2 mkPoint); ring.
+  - unfold circ_eval. cbn.
+    replace (th + (1 / 2) * (2 * - PI)) with (th - PI) by field.
+    rewrite cos_shift_mpi, sin_shift_mpi.
+    apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma opposite_neq_start : forall o r th,
+  r <> 0 ->
+  mkPoint (px o + r * cos th) (py o + r * sin th) <>
+  mkPoint (px o - r * cos th) (py o - r * sin th).
+Proof.
+  intros o r th Hr Heq.
+  assert (Hx : px o + r * cos th = px o - r * cos th)
+    by (apply (f_equal px) in Heq; exact Heq).
+  assert (Hy : py o + r * sin th = py o - r * sin th)
+    by (apply (f_equal py) in Heq; exact Heq).
+  assert (Hc : r * cos th = 0) by lra.
+  assert (Hs : r * sin th = 0) by lra.
+  pose proof (sin2_cos2 th) as Htrig. unfold Rsqr in Htrig.
+  assert (Hr2 : r * r = 0) by nra.
+  apply Hr. nra.
+Qed.
+
+Lemma circle_start_neq_antipode : forall a b c,
+  dist (circumcenter_of a b c) a <> 0 ->
+  circ_eval (circle_of_egg (egg_of_points a b c) a b c) 0 <>
+  circle_antipode (egg_of_points a b c) a b c.
+Proof.
+  intros a b c Hr Heq.
+  set (e := egg_of_points a b c) in *.
+  set (h := half_sweep a b c) in *.
+  assert (Hh : h = PI \/ h = - PI) by (apply half_sweep_pi_or).
+  assert (Hf : circle_of_egg e a b c =
+               mkCircularEgg (circ_o e) (circ_r e) (circ_theta0 e) (2 * h)).
+  { unfold circle_of_egg. rewrite half_sweep_double. fold h. reflexivity. }
+  assert (Hr0 : circ_r e <> 0).
+  { unfold e, egg_of_points. cbn. exact Hr. }
+  rewrite Hf in Heq.
+  rewrite circ_eval_0_trig in Heq.
+  unfold circle_antipode in Heq. rewrite Hf in Heq.
+  rewrite (circ_eval_half_is_opposite (circ_o e) (circ_r e) (circ_theta0 e) h Hh)
+    in Heq.
+  exact (opposite_neq_start (circ_o e) (circ_r e) (circ_theta0 e) Hr0 Heq).
+Qed.
+
+Lemma half_fst_at : forall e a b c t,
+  circ_eval (circle_half_fst e a b c) t =
+  circ_eval (circle_of_egg e a b c) (t / 2).
+Proof.
+  intros e a b c t.
+  unfold circ_eval, circle_half_fst, circle_of_egg. cbn.
+  rewrite half_sweep_double.
+  replace (circ_theta0 e + (t / 2) * (2 * half_sweep a b c))
+    with (circ_theta0 e + t * half_sweep a b c) by field.
+  reflexivity.
+Qed.
+
+Lemma half_snd_at : forall e a b c t,
+  circ_eval (circle_half_snd e a b c) t =
+  circ_eval (circle_of_egg e a b c) ((1 + t) / 2).
+Proof.
+  intros e a b c t.
+  unfold circ_eval, circle_half_snd, circle_of_egg. cbn.
+  rewrite half_sweep_double.
+  replace (circ_theta0 e + half_sweep a b c +
+           t * half_sweep a b c)
+    with (circ_theta0 e + ((1 + t) / 2) * (2 * half_sweep a b c)) by field.
+  reflexivity.
+Qed.
+
+(* F5's chart side is not this letter. host_circ_chord_hit_ok asks
+   |Δθ| < 2π. A full turn sits on the boundary of that window.
+   C1 (classify_zeta) is not discharged here. *)
+Definition circle_c1_fullspan_discharged : Prop := False.
+
+Lemma full_sweep_outside_strict_window : forall a b c,
+  orient_pts a b c <> 0 ->
+  ~ (- (2 * PI) < full_sweep a b c < 2 * PI).
+Proof.
+  intros a b c Ho [Hlo Hhi].
+  destruct (full_sweep_spec a b c Ho) as [Ha _].
+  destruct (Rle_dec 0 (full_sweep a b c)) as [Hnn|Hneg].
+  - assert (Hge : full_sweep a b c >= 0) by lra.
+    rewrite (Rabs_right _ Hge) in Ha. lra.
+  - assert (Hlt : full_sweep a b c < 0) by lra.
+    rewrite (Rabs_left _ Hlt) in Ha. lra.
+Qed.
+
+Lemma circle_f5_c1_not_done : ~ circle_c1_fullspan_discharged.
+Proof.
+  intro H. exact H.
+Qed.
+
+Lemma circle_eval1_eval0 : forall a b c,
+  orient_pts a b c <> 0 ->
+  circ_eval (circle_of_egg (egg_of_points a b c) a b c) 1 =
+  circ_eval (circle_of_egg (egg_of_points a b c) a b c) 0.
+Proof.
+  intros a b c Ho.
+  unfold circ_eval, circle_of_egg.
+  cbn [px py circ_o circ_r circ_theta0 circ_sweep].
+  set (th := circ_theta0 (egg_of_points a b c)) in *.
+  replace (th + 0 * full_sweep a b c) with th by ring.
+  replace (th + 1 * full_sweep a b c) with (th + full_sweep a b c) by ring.
+  destruct (Rle_dec 0 (orient_pts a b c)) as [Hle|Hlt].
+  - assert (Hgt : 0 < orient_pts a b c) by lra.
+    rewrite (full_sweep_pos a b c Hgt).
+    rewrite cos_shift_2pi, sin_shift_2pi. reflexivity.
+  - assert (Hneg : orient_pts a b c < 0) by lra.
+    rewrite (full_sweep_neg a b c Hneg).
+    replace (th + - (2 * PI)) with (th - 2 * PI) by ring.
+    rewrite cos_shift_m2pi, sin_shift_m2pi. reflexivity.
+Qed.
+
+Lemma circle_controls_on : forall a b c,
+  circ_denom a b c <> 0 ->
+  dist (circumcenter_of a b c) a <> 0 ->
+  let o := circumcenter_of a b c in
+  let r := dist o a in
+  dist_sq o b = r * r /\ dist_sq o c = r * r.
+Proof.
+  intros a b c Hd Hr o r.
+  destruct (circum_equidistant a b c Hd) as [Hb Hc].
+  assert (Haa : dist_sq o a = r * r).
+  { unfold r, dist. rewrite sqrt_sqrt; [reflexivity|].
+    unfold dist_sq.
+    pose proof (Rle_0_sqr (px o - px a)) as Hx.
+    pose proof (Rle_0_sqr (py o - py a)) as Hy.
+    unfold Rsqr in Hx, Hy. lra. }
+  fold o in Hb, Hc.
+  split; [rewrite Hb; exact Haa|rewrite Hc; exact Haa].
+Qed.
+
+Lemma angle_cos1_sin0 : forall th,
+  - PI < th <= PI -> cos th = 1 -> sin th = 0 -> th = 0.
+Proof.
+  intros th Hr Hc Hs.
+  apply (angle_eq_of_trig th 0).
+  - rewrite cos_0. exact Hc.
+  - rewrite sin_0. exact Hs.
+  - pose proof PI_RGT_0. lra.
+Qed.
+
+Lemma angle_cosneg1_sin0 : forall th,
+  - PI < th <= PI -> cos th = -1 -> sin th = 0 -> th = PI.
+Proof.
+  intros th Hr Hc Hs.
+  apply (angle_eq_of_trig th PI).
+  - rewrite cos_PI. exact Hc.
+  - rewrite sin_PI. exact Hs.
+  - pose proof PI_RGT_0. lra.
+Qed.
+
+(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"circle_full_param","title":"ISO CIRCLE(A,B,C) is the full turn from A: theta0 is the chart angle of A, equal to atan2(A-O); sweep is +2pi CCW and -2pi CW; gamma(0)=gamma(1)=A; B then C lie on the circle with parameters in (0,1)","file":"theories/IntakeCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
+Theorem circle_full_param : forall a b c,
+  dist_sq a b <> 0 ->
+  dist_sq b c <> 0 ->
+  dist_sq a c <> 0 ->
+  circ_denom a b c <> 0 ->
+  dist (circumcenter_of a b c) a <> 0 ->
+  let f := circle_of_egg (egg_of_points a b c) a b c in
+  circ_eval f 0 = a /\
+  circ_eval f 1 = a /\
+  circ_theta0 f =
+    atan2 (py a - py (circ_o f)) (px a - px (circ_o f)) /\
+  - PI < circ_theta0 f <= PI /\
+  Rabs (circ_sweep f) = 2 * PI /\
+  circ_sweep f * orient_pts a b c > 0 /\
+  (0 < orient_pts a b c -> circ_sweep f = 2 * PI) /\
+  (orient_pts a b c < 0 -> circ_sweep f = - (2 * PI)) /\
+  dist_sq (circ_o f) b = circ_r f * circ_r f /\
+  dist_sq (circ_o f) c = circ_r f * circ_r f /\
+  exists tb tc,
+    0 < tb /\ tb < tc /\ tc < 1 /\
+    circ_eval f tb = b /\
+    circ_eval f tc = c.
+Proof.
+  intros a b c Hab Hbc Hac Hd Hr f.
+  set (e := egg_of_points a b c).
+  assert (Ho : orient_pts a b c <> 0) by (apply orient_of_denom; exact Hd).
+  destruct (egg_on_controls a b c Hab Hbc Hac Hd Hr) as [H0 [H1 Hm]].
+  fold e in H0, H1, Hm.
+  assert (He0 : circ_eval f 0 = a).
+  { unfold f. rewrite circle_eval0_arc. fold e. exact H0. }
+  assert (He1 : circ_eval f 1 = a).
+  { unfold f. rewrite (circle_eval1_eval0 a b c Ho).
+    rewrite circle_eval0_arc. fold e. exact H0. }
+  assert (Hth : - PI < circ_theta0 f <= PI).
+  { unfold f, circle_of_egg. cbn. fold e.
+    unfold e. apply egg_theta_range; assumption. }
+  assert (Hatan : circ_theta0 f =
+            atan2 (py a - py (circ_o f)) (px a - px (circ_o f))).
+  { apply theta_is_atan2.
+    - apply dist_pos_of_neq. unfold f, circle_of_egg. cbn. exact Hr.
+    - exact He0.
+    - exact Hth. }
+  destruct (full_sweep_spec a b c Ho) as [Habs Hsign].
+  assert (Hsw : circ_sweep f = full_sweep a b c).
+  { unfold f, circle_of_egg. reflexivity. }
+  assert (Hon : dist_sq (circ_o f) b = circ_r f * circ_r f /\
+                dist_sq (circ_o f) c = circ_r f * circ_r f).
+  { destruct (circle_controls_on a b c Hd Hr) as [Hb Hc].
+    unfold f, circle_of_egg, e, egg_of_points. cbn.
+    split; assumption. }
+  destruct (arc_ratio_open a b c Hab Hbc Hac Hd Hr) as [Hu [Hpos Hlt1]].
+  destruct Hm as [tm [Htm HM]].
+  destruct Htm as [Htm0 Htm1].
+  set (ratio := circ_sweep e / full_sweep a b c).
+  assert (Hratio_pos : 0 < ratio).
+  { unfold ratio. fold e. exact Hpos. }
+  assert (Hratio_lt : ratio < 1).
+  { unfold ratio. fold e. exact Hlt1. }
+  set (tb := tm * ratio).
+  assert (Htb0 : 0 < tb).
+  { unfold tb. apply Rmult_lt_0_compat; assumption. }
+  assert (Htb : tb < ratio).
+  { unfold tb.
+    assert (tm * ratio < 1 * ratio) by (apply Rmult_lt_compat_r; assumption).
+    rewrite Rmult_1_l in H. exact H. }
+  assert (HhitB : circ_eval f tb = b).
+  { unfold tb, ratio, f.
+    replace (tm * (circ_sweep e / full_sweep a b c))
+      with (tm * circ_sweep e / full_sweep a b c) by (field; exact Hu).
+    unfold e. rewrite (circle_eval_at_arc a b c tm Hu). fold e. exact HM. }
+  assert (HhitC : circ_eval f ratio = c).
+  { unfold ratio, f, e.
+    replace (circ_sweep (egg_of_points a b c) / full_sweep a b c)
+      with (1 * circ_sweep (egg_of_points a b c) / full_sweep a b c)
+      by (field; exact Hu).
+    rewrite (circle_eval_at_arc a b c 1 Hu). fold e. exact H1. }
+  split; [exact He0|].
+  split; [exact He1|].
+  split; [exact Hatan|].
+  split; [exact Hth|].
+  split; [rewrite Hsw; exact Habs|].
+  split; [rewrite Hsw; exact Hsign|].
+  split; [intros Hp; rewrite Hsw; apply full_sweep_pos; exact Hp|].
+  split; [intros Hn; rewrite Hsw; apply full_sweep_neg; exact Hn|].
+  split; [exact (proj1 Hon)|].
+  split; [exact (proj2 Hon)|].
+  exists tb, ratio.
+  split; [exact Htb0|].
+  split; [exact Htb|].
+  split; [exact Hratio_lt|].
+  split; [exact HhitB|exact HhitC].
+Qed.
+
+(* WITNESS {"claimId":"0007-intake-angles","topic":"core","lemma":"circle_halves_cover","title":"ISO CIRCLE bag is two half-turns: sweep ±π, hens at A and the antipode, NoDup; the full-turn egg stays circle_full_param","file":"theories/IntakeCircle.v","witness":"0007-intake-angles","board":"ADR-0007"} *)
+Theorem circle_halves_cover : forall a b c,
+  dist_sq a b <> 0 -> dist_sq b c <> 0 -> dist_sq a c <> 0 ->
+  circ_denom a b c <> 0 -> dist (circumcenter_of a b c) a <> 0 ->
+  let e := egg_of_points a b c in
+  let f := circle_of_egg e a b c in
+  let h1 := circle_half_fst e a b c in
+  let h2 := circle_half_snd e a b c in
+  let m := circle_antipode e a b c in
+  circ_eval h1 0 = a /\
+  circ_eval h1 1 = m /\
+  circ_eval h2 0 = m /\
+  circ_eval h2 1 = a /\
+  circ_theta0 h1 = circ_theta0 f /\
+  circ_theta0 h2 = circ_theta0 f + circ_sweep h1 /\
+  circ_sweep h1 = half_sweep a b c /\
+  circ_sweep h2 = half_sweep a b c /\
+  Rabs (circ_sweep h1) = PI /\
+  half_sweep a b c * orient_pts a b c > 0 /\
+  circ_sweep f = circ_sweep h1 + circ_sweep h2 /\
+  NoDup [a; m].
+Proof.
+  intros a b c Hab Hbc Hac Hd Hr e f h1 h2 m.
+  assert (Ho : orient_pts a b c <> 0) by (apply orient_of_denom; exact Hd).
+  pose proof (circle_full_param a b c Hab Hbc Hac Hd Hr) as Hp.
+  fold e in Hp. fold f in Hp.
+  destruct Hp as [H0 [H1 [_ [_ [_ [Hsign [_ [_ [_ [_ _]]]]]]]]]].
+  assert (Hh1_0 : circ_eval h1 0 = a).
+  { unfold h1. rewrite (half_fst_at e a b c 0).
+    replace (0 / 2) with 0 by field. unfold f in H0. exact H0. }
+  assert (Hh1_1 : circ_eval h1 1 = m).
+  { unfold h1. rewrite (half_fst_at e a b c 1).
+    unfold m, circle_antipode. reflexivity. }
+  assert (Hh2_0 : circ_eval h2 0 = m).
+  { unfold h2. rewrite (half_snd_at e a b c 0).
+    replace ((1 + 0) / 2) with (1 / 2) by field.
+    unfold m, circle_antipode. reflexivity. }
+  assert (Hh2_1 : circ_eval h2 1 = a).
+  { unfold h2. rewrite (half_snd_at e a b c 1).
+    replace ((1 + 1) / 2) with 1 by field.
+    unfold f in H1. exact H1. }
+  assert (Hth1 : circ_theta0 h1 = circ_theta0 f).
+  { unfold h1, f, circle_half_fst, circle_of_egg. reflexivity. }
+  assert (Hsw : circ_sweep h1 = half_sweep a b c /\
+                circ_sweep h2 = half_sweep a b c).
+  { split; unfold h1, h2, circle_half_fst, circle_half_snd; reflexivity. }
+  destruct Hsw as [Hsw1 Hsw2].
+  assert (Hth2 : circ_theta0 h2 = circ_theta0 f + circ_sweep h1).
+  { unfold h2, f, circle_half_snd, circle_of_egg. rewrite Hsw1. reflexivity. }
+  assert (Hsum : circ_sweep f = circ_sweep h1 + circ_sweep h2).
+  { unfold f, circle_of_egg. cbn [circ_sweep].
+    rewrite Hsw1, Hsw2, half_sweep_double. ring. }
+  assert (Hprod : half_sweep a b c * orient_pts a b c > 0).
+  { destruct (Rlt_dec 0 (orient_pts a b c)) as [Hp0|Hn0].
+    - rewrite (half_sweep_pos a b c Hp0). pose proof PI_RGT_0. nra.
+    - assert (Hneg : orient_pts a b c < 0) by lra.
+      rewrite (half_sweep_neg a b c Hneg). pose proof PI_RGT_0. nra. }
+  assert (Hneq : a <> m).
+  { rewrite <- H0. unfold m, f. apply circle_start_neq_antipode. exact Hr. }
+  assert (Hnodup : NoDup [a; m]).
+  { apply NoDup_cons.
+    - intros Hin. destruct Hin as [Heq|[]]. exact (Hneq (eq_sym Heq)).
+    - apply NoDup_cons; [intros Hin; destruct Hin | apply NoDup_nil]. }
+  repeat (split; [assumption|]).
+  split; [rewrite Hsw1; apply half_sweep_abs|].
+  repeat (split; [assumption|]).
+  assumption.
+Qed.
+
+
+(* -------------------------------------------------------------------------- *)
+(* Locked CCW fixture. A=(5,0), B=(0,5), C=(-5,0). Centre origin, θ₀=0.     *)
+(* -------------------------------------------------------------------------- *)
+
+Definition ccw_a : Point := mkPoint 5 0.
+Definition ccw_b : Point := mkPoint 0 5.
+Definition ccw_c : Point := mkPoint (-5) 0.
+
+Lemma ccw_dab : dist_sq ccw_a ccw_b <> 0.
+Proof. unfold dist_sq, ccw_a, ccw_b. cbn. lra. Qed.
+
+Lemma ccw_dbc : dist_sq ccw_b ccw_c <> 0.
+Proof. unfold dist_sq, ccw_b, ccw_c. cbn. lra. Qed.
+
+Lemma ccw_dac : dist_sq ccw_a ccw_c <> 0.
+Proof. unfold dist_sq, ccw_a, ccw_c. cbn. lra. Qed.
+
+Lemma ccw_denom : circ_denom ccw_a ccw_b ccw_c = 100.
+Proof. unfold circ_denom, ccw_a, ccw_b, ccw_c. cbn. ring. Qed.
+
+Lemma ccw_denom_nz : circ_denom ccw_a ccw_b ccw_c <> 0.
+Proof. rewrite ccw_denom. lra. Qed.
+
+Lemma ccw_center : circumcenter_of ccw_a ccw_b ccw_c = mkPoint 0 0.
+Proof.
+  symmetry. apply center_unique.
+  - exact ccw_denom_nz.
+  - unfold dist_sq, ccw_a, ccw_b. cbn. ring.
+  - unfold dist_sq, ccw_a, ccw_c. cbn. ring.
+Qed.
+
+Lemma ccw_radius : dist (circumcenter_of ccw_a ccw_b ccw_c) ccw_a = 5.
+Proof.
+  rewrite ccw_center. unfold dist, dist_sq, ccw_a. cbn.
+  replace ((0 - 5) * (0 - 5) + (0 - 0) * (0 - 0)) with (5 * 5) by ring.
+  apply sqrt_square. lra.
+Qed.
+
+Lemma ccw_r_nz : dist (circumcenter_of ccw_a ccw_b ccw_c) ccw_a <> 0.
+Proof. rewrite ccw_radius. lra. Qed.
+
+Lemma ccw_orient : 0 < orient_pts ccw_a ccw_b ccw_c.
+Proof. unfold orient_pts, orient3, crs, ccw_a, ccw_b, ccw_c. cbn. lra. Qed.
+
+Lemma ccw_theta0 : circ_theta0 (egg_of_points ccw_a ccw_b ccw_c) = 0.
+Proof.
+  set (e := egg_of_points ccw_a ccw_b ccw_c).
+  assert (Hrng : - PI < circ_theta0 e <= PI).
+  { unfold e. apply egg_theta_range; try assumption.
+    exact ccw_dab. exact ccw_dbc. exact ccw_dac.
+    exact ccw_denom_nz. exact ccw_r_nz. }
+  destruct (egg_on_controls ccw_a ccw_b ccw_c ccw_dab ccw_dbc ccw_dac
+              ccw_denom_nz ccw_r_nz) as [H0 _].
+  fold e in H0.
+  assert (Ho : circ_o e = mkPoint 0 0).
+  { unfold e, egg_of_points. exact ccw_center. }
+  assert (Hr : circ_r e = 5).
+  { unfold e, egg_of_points. exact ccw_radius. }
+  assert (Hx : px (circ_eval e 0) = px ccw_a) by (rewrite H0; reflexivity).
+  assert (Hy : py (circ_eval e 0) = py ccw_a) by (rewrite H0; reflexivity).
+  unfold circ_eval in Hx, Hy. rewrite Ho, Hr in Hx, Hy.
+  cbn [px py] in Hx, Hy.
+  replace (circ_theta0 e + 0 * circ_sweep e) with (circ_theta0 e) in Hx, Hy by ring.
+  unfold ccw_a in Hx, Hy. cbn [px py] in Hx, Hy.
+  assert (Hc : cos (circ_theta0 e) = 1).
+  { apply (Rmult_eq_reg_l 5).
+    - replace (5 * cos (circ_theta0 e)) with (0 + 5 * cos (circ_theta0 e)) by ring.
+      replace (5 * 1) with 5 by ring. exact Hx.
+    - lra. }
+  assert (Hs : sin (circ_theta0 e) = 0).
+  { apply (Rmult_eq_reg_l 5).
+    - replace (5 * sin (circ_theta0 e)) with (0 + 5 * sin (circ_theta0 e)) by ring.
+      replace (5 * 0) with 0 by ring. exact Hy.
+    - lra. }
+  apply angle_cos1_sin0; assumption.
+Qed.
+
+Lemma ccw_circle_concrete :
+  circle_of_egg (egg_of_points ccw_a ccw_b ccw_c) ccw_a ccw_b ccw_c =
+  mkCircularEgg (mkPoint 0 0) 5 0 (2 * PI).
+Proof.
+  unfold circle_of_egg.
+  rewrite ccw_theta0.
+  assert (Ho : circ_o (egg_of_points ccw_a ccw_b ccw_c) = mkPoint 0 0)
+    by (unfold egg_of_points; exact ccw_center).
+  assert (Hr : circ_r (egg_of_points ccw_a ccw_b ccw_c) = 5)
+    by (unfold egg_of_points; exact ccw_radius).
+  rewrite Ho, Hr, (full_sweep_pos _ _ _ ccw_orient).
+  reflexivity.
+Qed.
+
+Lemma ccw_triple :
+  try_triple ccw_a ccw_b ccw_c = inl (egg_of_points ccw_a ccw_b ccw_c).
+Proof.
+  unfold try_triple.
+  destruct (Req_EM_T (dist_sq ccw_a ccw_b) 0) as [H|H];
+    [exfalso; exact (ccw_dab H)|].
+  destruct (Req_EM_T (dist_sq ccw_b ccw_c) 0) as [H2|H2];
+    [exfalso; exact (ccw_dbc H2)|].
+  destruct (Req_EM_T (dist_sq ccw_a ccw_c) 0) as [H3|H3];
+    [exfalso; exact (ccw_dac H3)|].
+  destruct (Req_EM_T (circ_denom ccw_a ccw_b ccw_c) 0) as [H4|H4];
+    [exfalso; exact (ccw_denom_nz H4)|].
+  destruct (Req_EM_T (dist (circumcenter_of ccw_a ccw_b ccw_c) ccw_a) 0)
+    as [H5|H5];
+    [exfalso; exact (ccw_r_nz H5)|].
+  reflexivity.
+Qed.
+
+Lemma ccw_half_fst_concrete :
+  circle_half_fst (egg_of_points ccw_a ccw_b ccw_c) ccw_a ccw_b ccw_c =
+  mkCircularEgg (mkPoint 0 0) 5 0 PI.
+Proof.
+  unfold circle_half_fst.
+  rewrite ccw_theta0.
+  assert (Ho : circ_o (egg_of_points ccw_a ccw_b ccw_c) = mkPoint 0 0)
+    by (unfold egg_of_points; exact ccw_center).
+  assert (Hr : circ_r (egg_of_points ccw_a ccw_b ccw_c) = 5)
+    by (unfold egg_of_points; exact ccw_radius).
+  rewrite Ho, Hr, (half_sweep_pos _ _ _ ccw_orient).
+  reflexivity.
+Qed.
+
+Lemma ccw_half_snd_concrete :
+  circle_half_snd (egg_of_points ccw_a ccw_b ccw_c) ccw_a ccw_b ccw_c =
+  mkCircularEgg (mkPoint 0 0) 5 PI PI.
+Proof.
+  unfold circle_half_snd.
+  rewrite ccw_theta0.
+  assert (Ho : circ_o (egg_of_points ccw_a ccw_b ccw_c) = mkPoint 0 0)
+    by (unfold egg_of_points; exact ccw_center).
+  assert (Hr : circ_r (egg_of_points ccw_a ccw_b ccw_c) = 5)
+    by (unfold egg_of_points; exact ccw_radius).
+  rewrite Ho, Hr, (half_sweep_pos _ _ _ ccw_orient).
+  replace (0 + PI) with PI by ring.
+  reflexivity.
+Qed.
+
+Lemma ccw_antipode_c :
+  circle_antipode (egg_of_points ccw_a ccw_b ccw_c) ccw_a ccw_b ccw_c = ccw_c.
+Proof.
+  unfold circle_antipode. rewrite ccw_circle_concrete.
+  unfold circ_eval, ccw_c. cbn.
+  replace (0 + (1 / 2) * (2 * PI)) with PI by field.
+  rewrite cos_PI, sin_PI.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma ccw_try_circle :
+  try_circle_eggs [ccw_a; ccw_b; ccw_c] =
+    inl ([mkCircularEgg (mkPoint 0 0) 5 0 PI;
+          mkCircularEgg (mkPoint 0 0) 5 PI PI],
+         [ccw_a; ccw_c]).
+Proof.
+  unfold try_circle_eggs. rewrite ccw_triple.
+  rewrite ccw_half_fst_concrete, ccw_half_snd_concrete, ccw_antipode_c.
+  reflexivity.
+Qed.
+
+Theorem ccw_circle_fixture :
+  let f := circle_of_egg (egg_of_points ccw_a ccw_b ccw_c) ccw_a ccw_b ccw_c in
+  f = mkCircularEgg (mkPoint 0 0) 5 0 (2 * PI) /\
+  circ_eval f 0 = ccw_a /\
+  circ_eval f 1 = ccw_a /\
+  circ_theta0 f = 0 /\
+  circ_sweep f = 2 * PI /\
+  circ_sweep f * orient_pts ccw_a ccw_b ccw_c > 0 /\
+  exists tb tc,
+    0 < tb /\ tb < tc /\ tc < 1 /\
+    circ_eval f tb = ccw_b /\
+    circ_eval f tc = ccw_c.
+Proof.
+  intros f.
+  pose proof (circle_full_param ccw_a ccw_b ccw_c ccw_dab ccw_dbc ccw_dac
+              ccw_denom_nz ccw_r_nz) as Hp.
+  fold f in Hp.
+  destruct Hp as [H0 [H1 [_ [_ [_ [Hsign [_ [_ [_ [_ Hord]]]]]]]]]].
+  split; [unfold f; exact ccw_circle_concrete|].
+  split; [exact H0|].
+  split; [exact H1|].
+  split; [unfold f, circle_of_egg; cbn; exact ccw_theta0|].
+  split; [unfold f, circle_of_egg; cbn; apply full_sweep_pos; exact ccw_orient|].
+  split; [exact Hsign|].
+  exact Hord.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* CW fixture. Same A and C, B=(0,-5). θ₀ stays 0; sweep = −2π.              *)
+(* -------------------------------------------------------------------------- *)
+
+Definition cw_a : Point := mkPoint 5 0.
+Definition cw_b : Point := mkPoint 0 (-5).
+Definition cw_c : Point := mkPoint (-5) 0.
+
+Lemma cw_dab : dist_sq cw_a cw_b <> 0.
+Proof. unfold dist_sq, cw_a, cw_b. cbn. lra. Qed.
+
+Lemma cw_dbc : dist_sq cw_b cw_c <> 0.
+Proof. unfold dist_sq, cw_b, cw_c. cbn. lra. Qed.
+
+Lemma cw_dac : dist_sq cw_a cw_c <> 0.
+Proof. unfold dist_sq, cw_a, cw_c. cbn. lra. Qed.
+
+Lemma cw_denom_nz : circ_denom cw_a cw_b cw_c <> 0.
+Proof. unfold circ_denom, cw_a, cw_b, cw_c. cbn. lra. Qed.
+
+Lemma cw_center : circumcenter_of cw_a cw_b cw_c = mkPoint 0 0.
+Proof.
+  symmetry. apply center_unique.
+  - exact cw_denom_nz.
+  - unfold dist_sq, cw_a, cw_b. cbn. ring.
+  - unfold dist_sq, cw_a, cw_c. cbn. ring.
+Qed.
+
+Lemma cw_radius : dist (circumcenter_of cw_a cw_b cw_c) cw_a = 5.
+Proof.
+  rewrite cw_center. unfold dist, dist_sq, cw_a. cbn.
+  replace ((0 - 5) * (0 - 5) + (0 - 0) * (0 - 0)) with (5 * 5) by ring.
+  apply sqrt_square. lra.
+Qed.
+
+Lemma cw_r_nz : dist (circumcenter_of cw_a cw_b cw_c) cw_a <> 0.
+Proof. rewrite cw_radius. lra. Qed.
+
+Lemma cw_orient : orient_pts cw_a cw_b cw_c < 0.
+Proof. unfold orient_pts, orient3, crs, cw_a, cw_b, cw_c. cbn. lra. Qed.
+
+Lemma cw_theta0 : circ_theta0 (egg_of_points cw_a cw_b cw_c) = 0.
+Proof.
+  set (e := egg_of_points cw_a cw_b cw_c).
+  assert (Hrng : - PI < circ_theta0 e <= PI).
+  { unfold e. apply egg_theta_range.
+    exact cw_dab. exact cw_dbc. exact cw_dac. exact cw_denom_nz. exact cw_r_nz. }
+  destruct (egg_on_controls cw_a cw_b cw_c cw_dab cw_dbc cw_dac
+              cw_denom_nz cw_r_nz) as [H0 _].
+  fold e in H0.
+  assert (Ho : circ_o e = mkPoint 0 0).
+  { unfold e, egg_of_points. exact cw_center. }
+  assert (Hr : circ_r e = 5).
+  { unfold e, egg_of_points. exact cw_radius. }
+  assert (Hx : px (circ_eval e 0) = px cw_a) by (rewrite H0; reflexivity).
+  assert (Hy : py (circ_eval e 0) = py cw_a) by (rewrite H0; reflexivity).
+  unfold circ_eval in Hx, Hy. rewrite Ho, Hr in Hx, Hy.
+  cbn [px py] in Hx, Hy.
+  replace (circ_theta0 e + 0 * circ_sweep e) with (circ_theta0 e) in Hx, Hy by ring.
+  unfold cw_a in Hx, Hy. cbn [px py] in Hx, Hy.
+  assert (Hc : cos (circ_theta0 e) = 1).
+  { apply (Rmult_eq_reg_l 5).
+    - replace (5 * cos (circ_theta0 e)) with (0 + 5 * cos (circ_theta0 e)) by ring.
+      replace (5 * 1) with 5 by ring. exact Hx.
+    - lra. }
+  assert (Hs : sin (circ_theta0 e) = 0).
+  { apply (Rmult_eq_reg_l 5).
+    - replace (5 * sin (circ_theta0 e)) with (0 + 5 * sin (circ_theta0 e)) by ring.
+      replace (5 * 0) with 0 by ring. exact Hy.
+    - lra. }
+  apply angle_cos1_sin0; assumption.
+Qed.
+
+Theorem cw_circle_fixture :
+  let f := circle_of_egg (egg_of_points cw_a cw_b cw_c) cw_a cw_b cw_c in
+  circ_o f = mkPoint 0 0 /\
+  circ_r f = 5 /\
+  circ_theta0 f = 0 /\
+  circ_sweep f = - (2 * PI) /\
+  circ_eval f 0 = cw_a /\
+  circ_eval f 1 = cw_a /\
+  circ_sweep f * orient_pts cw_a cw_b cw_c > 0 /\
+  exists tb tc,
+    0 < tb /\ tb < tc /\ tc < 1 /\
+    circ_eval f tb = cw_b /\
+    circ_eval f tc = cw_c.
+Proof.
+  intros f.
+  pose proof (circle_full_param cw_a cw_b cw_c cw_dab cw_dbc cw_dac
+              cw_denom_nz cw_r_nz) as Hp.
+  fold f in Hp.
+  destruct Hp as [H0 [H1 [_ [_ [_ [Hsign [_ [Hneg [_ [_ Hord]]]]]]]]]].
+  split; [unfold f, circle_of_egg, egg_of_points; exact cw_center|].
+  split; [unfold f, circle_of_egg, egg_of_points; exact cw_radius|].
+  split; [unfold f, circle_of_egg; cbn; exact cw_theta0|].
+  split; [unfold f, circle_of_egg; cbn; apply full_sweep_neg; exact cw_orient|].
+  split; [exact H0|].
+  split; [exact H1|].
+  split; [exact Hsign|].
+  exact Hord.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Atan2 cut. A=(-1,0) sits on the negative x-axis, so θ₀ = π, not −π.       *)
+(* B=(0,-1), C=(1,0) is the CCW order from that start.                       *)
+(* -------------------------------------------------------------------------- *)
+
+Definition cut_a : Point := mkPoint (-1) 0.
+Definition cut_b : Point := mkPoint 0 (-1).
+Definition cut_c : Point := mkPoint 1 0.
+
+Lemma cut_dab : dist_sq cut_a cut_b <> 0.
+Proof. unfold dist_sq, cut_a, cut_b. cbn. lra. Qed.
+
+Lemma cut_dbc : dist_sq cut_b cut_c <> 0.
+Proof. unfold dist_sq, cut_b, cut_c. cbn. lra. Qed.
+
+Lemma cut_dac : dist_sq cut_a cut_c <> 0.
+Proof. unfold dist_sq, cut_a, cut_c. cbn. lra. Qed.
+
+Lemma cut_denom_nz : circ_denom cut_a cut_b cut_c <> 0.
+Proof. unfold circ_denom, cut_a, cut_b, cut_c. cbn. lra. Qed.
+
+Lemma cut_center : circumcenter_of cut_a cut_b cut_c = mkPoint 0 0.
+Proof.
+  symmetry. apply center_unique.
+  - exact cut_denom_nz.
+  - unfold dist_sq, cut_a, cut_b. cbn. ring.
+  - unfold dist_sq, cut_a, cut_c. cbn. ring.
+Qed.
+
+Lemma cut_radius : dist (circumcenter_of cut_a cut_b cut_c) cut_a = 1.
+Proof.
+  rewrite cut_center. unfold dist, dist_sq, cut_a. cbn.
+  replace ((0 - -1) * (0 - -1) + (0 - 0) * (0 - 0)) with 1 by ring.
+  rewrite sqrt_1. reflexivity.
+Qed.
+
+Lemma cut_r_nz : dist (circumcenter_of cut_a cut_b cut_c) cut_a <> 0.
+Proof. rewrite cut_radius. lra. Qed.
+
+Lemma cut_orient : 0 < orient_pts cut_a cut_b cut_c.
+Proof. unfold orient_pts, orient3, crs, cut_a, cut_b, cut_c. cbn. lra. Qed.
+
+Lemma cut_theta0 : circ_theta0 (egg_of_points cut_a cut_b cut_c) = PI.
+Proof.
+  set (e := egg_of_points cut_a cut_b cut_c).
+  assert (Hrng : - PI < circ_theta0 e <= PI).
+  { unfold e. apply egg_theta_range.
+    exact cut_dab. exact cut_dbc. exact cut_dac.
+    exact cut_denom_nz. exact cut_r_nz. }
+  destruct (egg_on_controls cut_a cut_b cut_c cut_dab cut_dbc cut_dac
+              cut_denom_nz cut_r_nz) as [H0 _].
+  fold e in H0.
+  assert (Ho : circ_o e = mkPoint 0 0).
+  { unfold e, egg_of_points. exact cut_center. }
+  assert (Hr : circ_r e = 1).
+  { unfold e, egg_of_points. exact cut_radius. }
+  assert (Hx : px (circ_eval e 0) = px cut_a) by (rewrite H0; reflexivity).
+  assert (Hy : py (circ_eval e 0) = py cut_a) by (rewrite H0; reflexivity).
+  unfold circ_eval in Hx, Hy. rewrite Ho, Hr in Hx, Hy.
+  cbn [px py] in Hx, Hy.
+  replace (circ_theta0 e + 0 * circ_sweep e) with (circ_theta0 e) in Hx, Hy by ring.
+  unfold cut_a in Hx, Hy. cbn [px py] in Hx, Hy.
+  assert (Hc : cos (circ_theta0 e) = -1).
+  { apply (Rmult_eq_reg_l 1).
+    - replace (1 * cos (circ_theta0 e)) with (0 + 1 * cos (circ_theta0 e)) by ring.
+      replace (1 * -1) with (-1) by ring. exact Hx.
+    - lra. }
+  assert (Hs : sin (circ_theta0 e) = 0).
+  { apply (Rmult_eq_reg_l 1).
+    - replace (1 * sin (circ_theta0 e)) with (0 + 1 * sin (circ_theta0 e)) by ring.
+      replace (1 * 0) with 0 by ring. exact Hy.
+    - lra. }
+  apply angle_cosneg1_sin0; assumption.
+Qed.
+
+Theorem cut_circle_fixture :
+  let f := circle_of_egg (egg_of_points cut_a cut_b cut_c) cut_a cut_b cut_c in
+  circ_o f = mkPoint 0 0 /\
+  circ_r f = 1 /\
+  circ_theta0 f = PI /\
+  circ_sweep f = 2 * PI /\
+  circ_eval f 0 = cut_a /\
+  circ_eval f 1 = cut_a /\
+  circ_sweep f * orient_pts cut_a cut_b cut_c > 0 /\
+  exists tb tc,
+    0 < tb /\ tb < tc /\ tc < 1 /\
+    circ_eval f tb = cut_b /\
+    circ_eval f tc = cut_c.
+Proof.
+  intros f.
+  pose proof (circle_full_param cut_a cut_b cut_c cut_dab cut_dbc cut_dac
+              cut_denom_nz cut_r_nz) as Hp.
+  fold f in Hp.
+  destruct Hp as [H0 [H1 [_ [_ [_ [Hsign [Hpos [_ [_ [_ Hord]]]]]]]]]].
+  split; [unfold f, circle_of_egg, egg_of_points; exact cut_center|].
+  split; [unfold f, circle_of_egg, egg_of_points; exact cut_radius|].
+  split; [unfold f, circle_of_egg; cbn; exact cut_theta0|].
+  split; [unfold f, circle_of_egg; cbn; apply full_sweep_pos; exact cut_orient|].
+  split; [exact H0|].
+  split; [exact H1|].
+  split; [exact Hsign|].
+  exact Hord.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* OGC full-circle spelling. (A,B,A) does not fix orientation.               *)
+(* C' = M + rot_{+90°}(A−M), M = midpoint(A,B): centre M, radius |AB|/2,    *)
+(* orient(A,B,C')<0, so the egg sweeps −2π (CW). GEOS 3.16                   *)
+(* CircularArc::addLinearizedPoints treats Orientation::index(A,B,A) as not  *)
+(* COUNTERCLOCKWISE (no isCircle override) and emits decreasing angles.      *)
+(* Behavioural reference only, not an axiom of this development.             *)
+(* -------------------------------------------------------------------------- *)
+
+Definition ogc_c (a b : Point) : Point :=
+  let m := midpoint a b in
+  let vx := px a - px m in
+  let vy := py a - py m in
+  mkPoint (px m - vy) (py m + vx).
+
+Lemma mkPoint_eq : forall p q : Point, px p = px q -> py p = py q -> p = q.
+Proof.
+  intros [] []. cbn. intros. subst. reflexivity.
+Qed.
+
+Lemma ogc_ab_four : forall a b,
+  dist_sq a b = 4 * dist_sq (midpoint a b) a.
+Proof.
+  intros a b. unfold dist_sq, midpoint. cbn. field.
+Qed.
+
+Lemma ogc_r2_nz : forall a b,
+  dist_sq a b <> 0 -> dist_sq (midpoint a b) a <> 0.
+Proof.
+  intros a b H Hz. apply H. rewrite ogc_ab_four, Hz. ring.
+Qed.
+
+Lemma ogc_frame : forall a b,
+  let m := midpoint a b in
+  let vx := px a - px m in
+  let vy := py a - py m in
+  px a = px m + vx /\ py a = py m + vy /\
+  px b = px m - vx /\ py b = py m - vy /\
+  px (ogc_c a b) = px m - vy /\ py (ogc_c a b) = py m + vx /\
+  dist_sq m a = vx * vx + vy * vy.
+Proof.
+  intros a b m vx vy.
+  unfold m, vx, vy, ogc_c, midpoint, dist_sq. cbn.
+  repeat split; field.
+Qed.
+
+Lemma ogc_orient_neg : forall a b,
+  dist_sq a b <> 0 ->
+  orient_pts a b (ogc_c a b) = - (2 * dist_sq (midpoint a b) a) /\
+  orient_pts a b (ogc_c a b) < 0.
+Proof.
+  intros a b Hab.
+  unfold orient_pts, orient3, crs, ogc_c, dist_sq, midpoint. cbn.
+  split.
+  - field.
+  - pose proof (ogc_r2_nz a b Hab) as Hz.
+    pose proof (dist_sq_nonneg (midpoint a b) a) as Hnn.
+    unfold dist_sq, midpoint in Hz, Hnn. cbn in Hz, Hnn. lra.
+Qed.
+
+Lemma ogc_denom_nz : forall a b,
+  dist_sq a b <> 0 ->
+  circ_denom a b (ogc_c a b) = - (4 * dist_sq (midpoint a b) a) /\
+  circ_denom a b (ogc_c a b) <> 0.
+Proof.
+  intros a b Hab.
+  destruct (ogc_orient_neg a b Hab) as [Ho _].
+  rewrite circ_denom_orient, Ho.
+  split; [ring|].
+  intro Hz. apply (ogc_r2_nz a b Hab). nra.
+Qed.
+
+Lemma ogc_sep : forall a b,
+  dist_sq a b <> 0 ->
+  dist_sq a (ogc_c a b) = 2 * dist_sq (midpoint a b) a /\
+  dist_sq b (ogc_c a b) = 2 * dist_sq (midpoint a b) a /\
+  dist_sq a (ogc_c a b) <> 0 /\
+  dist_sq b (ogc_c a b) <> 0.
+Proof.
+  intros a b Hab.
+  unfold dist_sq, ogc_c, midpoint. cbn.
+  split; [field|].
+  split; [field|].
+  pose proof (ogc_r2_nz a b Hab) as Hz.
+  unfold dist_sq, midpoint in Hz. cbn in Hz.
+  split; intro H; apply Hz; nra.
+Qed.
+
+Lemma ogc_center : forall a b,
+  dist_sq a b <> 0 ->
+  circumcenter_of a b (ogc_c a b) = midpoint a b.
+Proof.
+  intros a b Hab.
+  destruct (ogc_denom_nz a b Hab) as [_ Hd].
+  unfold circumcenter_of, circ_denom, ogc_c, midpoint in *. cbn in *.
+  apply mkPoint_eq; cbn; field; nra.
+Qed.
+
+Lemma ogc_radius : forall a b,
+  dist_sq a b <> 0 ->
+  dist (midpoint a b) a = dist a b / 2.
+Proof.
+  intros a b Hab.
+  unfold dist. rewrite (ogc_ab_four a b).
+  rewrite (sqrt_mult 4 (dist_sq (midpoint a b) a)) by (lra || apply dist_sq_nonneg).
+  replace (sqrt 4) with 2.
+  - field.
+  - replace 4 with (2 * 2) by ring.
+    rewrite (sqrt_square 2) by lra. reflexivity.
+Qed.
+
+Lemma ogc_r_nz : forall a b,
+  dist_sq a b <> 0 ->
+  dist (circumcenter_of a b (ogc_c a b)) a <> 0.
+Proof.
+  intros a b Hab Hz.
+  apply (ogc_r2_nz a b Hab).
+  rewrite (ogc_center a b Hab) in Hz.
+  apply sqrt_eq_0 in Hz; [exact Hz | apply dist_sq_nonneg].
+Qed.
+
+Lemma ogc_antipode_is_b : forall a b,
+  dist_sq a b <> 0 ->
+  circle_antipode (egg_of_points a b (ogc_c a b)) a b (ogc_c a b) = b.
+Proof.
+  intros a b Hab.
+  set (c := ogc_c a b).
+  set (e := egg_of_points a b c).
+  set (f := circle_of_egg e a b c).
+  destruct (ogc_sep a b Hab) as [_ [_ [Hac Hbc]]].
+  destruct (ogc_denom_nz a b Hab) as [_ Hd].
+  pose proof (ogc_r_nz a b Hab) as Hr.
+  fold c in Hac, Hbc, Hd, Hr.
+  destruct (circle_full_param a b c Hab Hbc Hac Hd Hr) as
+    [He0 [_ [_ [_ [_ [_ [_ [Hneg _]]]]]]]].
+  fold f in He0, Hneg.
+  assert (Ho : orient_pts a b c < 0) by (apply ogc_orient_neg; exact Hab).
+  assert (Hsw : circ_sweep f = 2 * - PI).
+  { unfold f, e. rewrite (Hneg Ho). ring. }
+  assert (Hom : circ_o f = midpoint a b).
+  { unfold f, circle_of_egg, e, egg_of_points. cbn.
+    apply ogc_center. exact Hab. }
+  unfold circle_antipode. fold e. fold f.
+  assert (Hfmk : f = mkCircularEgg (circ_o f) (circ_r f) (circ_theta0 f) (2 * - PI)).
+  { rewrite <- Hsw. unfold f, circle_of_egg. reflexivity. }
+  rewrite Hfmk.
+  rewrite (circ_eval_half_is_opposite (circ_o f) (circ_r f) (circ_theta0 f) (- PI))
+    by (right; reflexivity).
+  assert (Hstart :
+    mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
+            (py (circ_o f) + circ_r f * sin (circ_theta0 f)) = a).
+  { rewrite <- (circ_eval_0_trig (circ_o f) (circ_r f) (circ_theta0 f) (2 * - PI)).
+    rewrite <- Hfmk. exact He0. }
+  pose proof (f_equal px Hstart) as Hpx0.
+  pose proof (f_equal py Hstart) as Hpy0.
+  assert (Hpx : px (circ_o f) + circ_r f * cos (circ_theta0 f) = px a).
+  { transitivity (px (mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
+                              (py (circ_o f) + circ_r f * sin (circ_theta0 f)))).
+    - unfold px. reflexivity.
+    - exact Hpx0. }
+  assert (Hpy : py (circ_o f) + circ_r f * sin (circ_theta0 f) = py a).
+  { transitivity (py (mkPoint (px (circ_o f) + circ_r f * cos (circ_theta0 f))
+                              (py (circ_o f) + circ_r f * sin (circ_theta0 f)))).
+    - unfold py. reflexivity.
+    - exact Hpy0. }
+  apply mkPoint_eq.
+  - replace (px (circ_o f) - circ_r f * cos (circ_theta0 f))
+      with (2 * px (circ_o f) - px a) by (rewrite <- Hpx; ring).
+    rewrite Hom. unfold midpoint. cbn. field.
+  - replace (py (circ_o f) - circ_r f * sin (circ_theta0 f))
+      with (2 * py (circ_o f) - py a) by (rewrite <- Hpy; ring).
+    rewrite Hom. unfold midpoint. cbn. field.
+Qed.
+
+Print Assumptions mkPoint_eq.
+Print Assumptions ogc_ab_four.
+Print Assumptions ogc_r2_nz.
+Print Assumptions ogc_frame.
+Print Assumptions ogc_orient_neg.
+Print Assumptions ogc_denom_nz.
+Print Assumptions ogc_sep.
+Print Assumptions ogc_center.
+Print Assumptions ogc_radius.
+Print Assumptions ogc_r_nz.
+Print Assumptions ogc_antipode_is_b.
+Print Assumptions half_sweep_double.
+Print Assumptions half_sweep_pi_or.
+Print Assumptions half_sweep_abs.
+Print Assumptions half_sweep_pos.
+Print Assumptions half_sweep_neg.
+Print Assumptions cos_shift_pi.
+Print Assumptions sin_shift_pi.
+Print Assumptions cos_shift_mpi.
+Print Assumptions sin_shift_mpi.
+Print Assumptions circ_eval_0_trig.
+Print Assumptions circ_eval_half_is_opposite.
+Print Assumptions opposite_neq_start.
+Print Assumptions circle_start_neq_antipode.
+Print Assumptions half_fst_at.
+Print Assumptions half_snd_at.
+Print Assumptions circle_halves_cover.
+Print Assumptions full_sweep_outside_strict_window.
+Print Assumptions circle_f5_c1_not_done.
+Print Assumptions ccw_half_fst_concrete.
+Print Assumptions ccw_half_snd_concrete.
+Print Assumptions ccw_antipode_c.
+Print Assumptions orient_of_denom.
+Print Assumptions two_pi_neq0.
+Print Assumptions full_sweep_pos.
+Print Assumptions full_sweep_neg.
+Print Assumptions full_sweep_spec.
+Print Assumptions div_pos.
+Print Assumptions abs_div_lt_1.
+Print Assumptions arc_ratio_open.
+Print Assumptions circle_eval0_arc.
+Print Assumptions circle_eval_at_arc.
+Print Assumptions circle_eval1_eval0.
+Print Assumptions circle_controls_on.
+Print Assumptions angle_cos1_sin0.
+Print Assumptions angle_cosneg1_sin0.
+Print Assumptions circle_full_param.
+Print Assumptions ccw_dab.
+Print Assumptions ccw_dbc.
+Print Assumptions ccw_dac.
+Print Assumptions ccw_denom.
+Print Assumptions ccw_denom_nz.
+Print Assumptions ccw_center.
+Print Assumptions ccw_radius.
+Print Assumptions ccw_r_nz.
+Print Assumptions ccw_orient.
+Print Assumptions ccw_theta0.
+Print Assumptions ccw_circle_concrete.
+Print Assumptions ccw_triple.
+Print Assumptions ccw_try_circle.
+Print Assumptions ccw_circle_fixture.
+Print Assumptions cw_dab.
+Print Assumptions cw_dbc.
+Print Assumptions cw_dac.
+Print Assumptions cw_denom_nz.
+Print Assumptions cw_center.
+Print Assumptions cw_radius.
+Print Assumptions cw_r_nz.
+Print Assumptions cw_orient.
+Print Assumptions cw_theta0.
+Print Assumptions cw_circle_fixture.
+Print Assumptions cut_dab.
+Print Assumptions cut_dbc.
+Print Assumptions cut_dac.
+Print Assumptions cut_denom_nz.
+Print Assumptions cut_center.
+Print Assumptions cut_radius.
+Print Assumptions cut_r_nz.
+Print Assumptions cut_orient.
+Print Assumptions cut_theta0.
+Print Assumptions cut_circle_fixture.

@@ -49,6 +49,8 @@ public final class Example {
     public final String scaleFactor;
     public final String startDistance;
     public final String endDistance;
+    /** Non-null ⇒ bagWire is {@code DECLINE <reason>}. */
+    public final String decline;
 
     private Example(Builder b) {
         this.id = b.id;
@@ -77,6 +79,7 @@ public final class Example {
         this.scaleFactor = b.scaleFactor;
         this.startDistance = b.startDistance;
         this.endDistance = b.endDistance;
+        this.decline = b.decline;
     }
 
     public static Builder builder(String id, String keyword) {
@@ -88,6 +91,9 @@ public final class Example {
      * {@code DECLINE ID_Empty} for EMPTY surface forms (intake mapper).
      */
     public String bagWire() {
+        if (decline != null) {
+            return "DECLINE " + decline;
+        }
         if (empty) {
             return "DECLINE ID_Empty";
         }
@@ -173,6 +179,7 @@ public final class Example {
         String scaleFactor;
         String startDistance;
         String endDistance;
+        String decline;
 
         Builder(String id, String keyword) {
             this.id = id;
@@ -181,6 +188,11 @@ public final class Example {
 
         public Builder empty() {
             this.empty = true;
+            return this;
+        }
+
+        public Builder decline(String reason) {
+            this.decline = reason;
             return this;
         }
 
