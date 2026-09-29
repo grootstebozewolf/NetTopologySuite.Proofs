@@ -2532,10 +2532,13 @@ theories/ArcHotPixel.v
 # No Admitteds.
 theories/ArcChordApprox.v
 # GEOS-aligned uniform chord walk on a certified egg (θ0, Δθ).
-# claimId: none. 3-axiom. subdiv_ok specifies n; archimedean existence
-# is outside the allowlist and is not constructed. No Admitted.
+# claimId: 0007-arc-linearize. 3-axiom. subdiv_n inhabits subdiv_ok
+# (ceil via archimed / up, which print only the allowlist trio).
+# Linearizes and arc_linearize_hausdorff are ArcLinearizeContract.
+# No Admitted.
 theories/ArcLinearize.v
 theories/ArcLinearizeBound.v
+theories/ArcLinearizeContract.v
 # C0 stereographic / half-angle chart (ζ = tan(φ/2); not tag τ). Pole opposite M,
 # monotone off the pole, arc membership iff the bounded ζ interval,
 # and that interval iff ArcIntersect.arc_span_contains. Host/pure-R.

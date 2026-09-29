@@ -11,7 +11,7 @@
 
    This is the inequality deferred under the name chord_approx_error_bound
    in ArcChordApprox. Hot-pixel transport of the bound is not this file.
-   claimId: none. 3-axiom host. No Admitted / Axiom / Parameter.
+   claimId: 0007-arc-linearize. 3-axiom host. No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -690,6 +690,50 @@ Proof.
   lra.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Converse sagitta: a chord point lies inside the circle, at least          *)
+(* r·cos(δ) from the centre, so its distance to the arc is at most the       *)
+(* sagitta r·(1 − cos(δ)).                                                    *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma cos_diff_pos_quarter : forall x y,
+  0 <= x -> x < y -> y <= PI / 2 -> cos y < cos x.
+Proof.
+  intros x y Hx Hlt Hy.
+  pose proof PI_RGT_0 as HPI.
+  set (a := (x + y) / 2). set (b := (x - y) / 2).
+  assert (Hxab : x = a + b) by (unfold a, b; field).
+  assert (Hyab : y = a - b) by (unfold a, b; field).
+  assert (Hid : cos x - cos y = - (2 * sin a * sin b)).
+  { rewrite Hxab, Hyab. rewrite cos_plus, cos_minus. ring. }
+  assert (Hb : b = - ((y - x) / 2)) by (unfold b; field).
+  assert (Hs1 : 0 < sin a).
+  { apply sin_gt_0; unfold a; lra. }
+  assert (Hs2 : 0 < sin ((y - x) / 2)).
+  { apply sin_gt_0; lra. }
+  assert (Hsinb : sin b = - sin ((y - x) / 2)).
+  { rewrite Hb. rewrite sin_neg. reflexivity. }
+  assert (Hpos : 0 < cos x - cos y).
+  { rewrite Hid, Hsinb.
+    replace (- (2 * sin a * - sin ((y - x) / 2)))
+      with (2 * sin a * sin ((y - x) / 2)) by ring.
+    apply Rmult_lt_0_compat.
+    - apply Rmult_lt_0_compat; [lra|exact Hs1].
+    - exact Hs2. }
+  lra.
+Qed.
+
+Lemma cos_abs_le_inv : forall a b,
+  0 <= a <= PI / 2 -> 0 <= b <= PI / 2 -> cos a <= cos b -> b <= a.
+Proof.
+  intros a b Ha Hb Hc.
+  destruct Ha as [Ha0 Ha1]. destruct Hb as [Hb0 Hb1].
+  destruct (Rle_lt_dec b a) as [Hle|Hlt]; [exact Hle|].
+  assert (cos b < cos a).
+  { apply cos_diff_pos_quarter; [exact Ha0|exact Hlt|exact Hb1]. }
+  lra.
+Qed.
+
 (* Assumptions: each block stays inside the 3-axiom allowlist. *)
 Print Assumptions clamp11_bounds.
 Print Assumptions clamp11_id.
@@ -721,3 +765,5 @@ Print Assumptions sample_angle_start.
 Print Assumptions sample_angle_end.
 Print Assumptions nth_at_angle.
 Print Assumptions chord_approx_error_bound.
+Print Assumptions cos_diff_pos_quarter.
+Print Assumptions cos_abs_le_inv.

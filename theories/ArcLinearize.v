@@ -13,9 +13,10 @@
      p_n  = γ(1)           exactly (`circ_end`, not a fresh sample)
    CCW walk: sample the |Δθ|-sweep from its CCW start at k/n,
    reverse that interior list when Δθ < 0, then append γ(1).
-   n is a parameter satisfying `subdiv_ok` (n = max(ceil(|Δθ|/step), 2)).
-   Existence of that n uses archimedean `up`, outside the 3-axiom
-   allowlist, so it is not constructed here.
+   n = subdiv_n step Δθ = max(2, ceil(|Δθ|/step)). `up` (archimed) is the
+   least integer strictly above its argument, so on an exact multiple it
+   is ceil+1; subdiv_ceil subtracts one exactly then. archimed / up print
+   only sig_forall_dec and functional_extensionality_dep.
 
    Z/M: None is NaN. Exact at t=0, t=1, and at t_m when the ordinate
    and the parameter are both present. Otherwise piecewise linear in
@@ -25,7 +26,7 @@
    `CurveGeometry.chord_approx_arc` stays the inscribed control polygon.
    Densifying it falsifies the control-triangle reductions.
 
-   claimId: none. verified-claims.md has no chord-densifier id.
+   claimId: 0007-arc-linearize. witness: 0007-arc-linearize.
    ArcChordDensity / ArcChordSubdivision / Linearise are other witnesses.
    3-axiom host. No Admitted / Axiom / Parameter. No RiemannInt.
 
@@ -35,13 +36,13 @@
      Assisted-by: Cursor Grok 4.7
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra Lia Field Psatz List PeanoNat.
+From Stdlib Require Import Reals Lra Lia Field Psatz List PeanoNat ZArith.
 From NTS.Proofs Require Import Distance SheetHenCircEgg Atan2.
 Import ListNotations.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* Step count. The archimedean witness is the open gap (see the header).      *)
+(* Step count. archimed: IZR (up x) > x and IZR (up x) - x <= 1.             *)
 (* -------------------------------------------------------------------------- *)
 
 Definition subdiv_ok (step sweep : R) (n : nat) : Prop :=
@@ -49,6 +50,92 @@ Definition subdiv_ok (step sweep : R) (n : nat) : Prop :=
   0 < step /\
   Rabs sweep <= INR n * step /\
   ((n = 2)%nat \/ INR (n - 1) * step < Rabs sweep).
+
+(* Least integer >= x. `up x` is the least integer > x, so it equals ceil
+   except when `up x - x = 1`, in which case x itself is that integer. *)
+Definition subdiv_ceil (x : R) : Z :=
+  let u := up x in
+  if Req_EM_T (IZR u - x) 1 then (u - 1)%Z else u.
+
+Definition subdiv_n (step dth : R) : nat :=
+  Nat.max 2 (Z.to_nat (subdiv_ceil (Rabs dth / step))).
+
+Lemma izr_to_nat : forall z : Z,
+  (0 <= z)%Z -> IZR z = INR (Z.to_nat z).
+Proof.
+  intros z Hz. rewrite <- (Z2Nat.id z Hz) at 1. symmetry. apply INR_IZR_INZ.
+Qed.
+
+Lemma up_at_least_one : forall x, 0 <= x -> (1 <= up x)%Z.
+Proof.
+  intros x Hx.
+  destruct (archimed x) as [Hgt _].
+  assert (Hpos : (0 < up x)%Z).
+  { apply lt_IZR. lra. }
+  lia.
+Qed.
+
+Lemma subdiv_ceil_bounds : forall x,
+  0 <= x ->
+  (0 <= subdiv_ceil x)%Z /\
+  x <= IZR (subdiv_ceil x) /\
+  IZR (subdiv_ceil x) < x + 1.
+Proof.
+  intros x Hx.
+  destruct (archimed x) as [Hgt Hle].
+  set (u := up x).
+  assert (Hu : (1 <= u)%Z) by (unfold u; apply up_at_least_one; exact Hx).
+  unfold subdiv_ceil. fold u.
+  destruct (Req_EM_T (IZR u - x) 1) as [Heq|Hne].
+  - assert (Hz : IZR (u - 1) = x).
+    { rewrite minus_IZR. replace (IZR 1) with 1 by reflexivity. lra. }
+    split; [|split].
+    + lia.
+    + rewrite Hz. apply Rle_refl.
+    + rewrite Hz. lra.
+  - assert (Hstrict : IZR u - x < 1).
+    { destruct (Rle_lt_or_eq_dec (IZR u - x) 1 Hle) as [Hlt|Heq].
+      - exact Hlt.
+      - exfalso. apply Hne. exact Heq. }
+    split; [|split].
+    + lia.
+    + apply Rlt_le. exact Hgt.
+    + lra.
+Qed.
+
+Theorem subdiv_n_ok : forall step dth,
+  0 < step -> subdiv_ok step dth (subdiv_n step dth).
+Proof.
+  intros step dth Hs.
+  set (x := Rabs dth / step).
+  assert (Hx : 0 <= x).
+  { unfold x, Rdiv. apply Rmult_le_pos; [apply Rabs_pos|].
+    apply Rlt_le, Rinv_0_lt_compat. exact Hs. }
+  assert (Hmul : x * step = Rabs dth) by (unfold x; field; lra).
+  destruct (subdiv_ceil_bounds x Hx) as [Hz [Hle Hlt]].
+  set (m := Z.to_nat (subdiv_ceil x)).
+  assert (Hm : INR m = IZR (subdiv_ceil x)).
+  { unfold m. symmetry. apply izr_to_nat. exact Hz. }
+  set (n := Nat.max 2 m).
+  assert (Hn2 : (2 <= n)%nat) by (unfold n; apply Nat.le_max_l).
+  split; [exact Hn2|]. split; [exact Hs|].
+  assert (Hcover : Rabs dth <= INR n * step).
+  { rewrite <- Hmul. apply Rmult_le_compat_r; [lra|].
+    assert (INR m <= INR n) by (apply le_INR; unfold n; apply Nat.le_max_r).
+    rewrite <- Hm in Hle. lra. }
+  split; [exact Hcover|].
+  destruct (le_lt_dec m 2) as [Hsmall|Hbig].
+  - left. unfold subdiv_n, n, m, x.
+    rewrite Nat.max_l by exact Hsmall. reflexivity.
+  - right.
+    assert (Hn_eq : n = m).
+    { unfold n. rewrite Nat.max_r by lia. reflexivity. }
+    assert (Hnid : subdiv_n step dth = n) by (unfold n, m, subdiv_n, x; reflexivity).
+    rewrite Hnid, Hn_eq. rewrite (minus_INR m 1) by lia. rewrite INR_1.
+    assert (Hpred : INR m - 1 < x) by (rewrite Hm; lra).
+    apply (Rmult_lt_compat_r step) in Hpred; [|exact Hs].
+    rewrite Hmul in Hpred. exact Hpred.
+Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* CCW-normalized walk.                                                       *)
@@ -1043,6 +1130,10 @@ Proof.
 Qed.
 
 (* Assumptions: each block stays inside the 3-axiom allowlist. *)
+Print Assumptions izr_to_nat.
+Print Assumptions up_at_least_one.
+Print Assumptions subdiv_ceil_bounds.
+Print Assumptions subdiv_n_ok.
 Print Assumptions seq_snoc.
 Print Assumptions seq_shift.
 Print Assumptions rev_map_complement_m.
