@@ -2575,9 +2575,20 @@ theories/ConvexClipPoly.v
 theories/ConvexClipComplete.v
 theories/TrianglePairCommon.v
 theories/TrianglePairClip.v
+# ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
+# claimId none. 3-axiom. No Admitted.
+theories/SheetHenRhoCarrier.v
+theories/SheetHenRhoCount.v
+theories/SheetHenRhoWitness.v
 # ∀-bag letter 2. ρ and finiteness. claimId none.
 # 3-axiom. No Admitted.
 theories/SheetHenRho.v
+# ∀-bag letter 3. Admissible step, strict ρ, structural bag_run.
+# claimId 0007-loop-letter3-strict. 3-axiom. No Admitted.
+theories/SheetHenBagRun.v
+# Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
+# tangency, partial co-circular arcs. 3-axiom. No Admitted.
+theories/SheetHenBagRunFix.v
 
 # Companion counterexample for ArcOrient.arc_minor (in the style of
 # SpectreChordArcWitness.v): a concrete valid arc where arc_mid sits on the
