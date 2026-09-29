@@ -138,9 +138,9 @@ check_round point-00 "POINT (0 0)" "BAG hens=0 pts=0 0 chickens="
 check_round circularstring-quarter "CIRCULARSTRING (5 0, 3 4, 0 5)" \
   "BAG hens=0,1 pts=5 0;0 5 chickens=0-1:MkCirc:quarter"
 check_round circularstring-full "CIRCULARSTRING (5 0, 0 5, 5 0)" \
-  "BAG hens=0,1 pts=5 0;5 0 chickens=0-1:MkCirc:full"
+  "DECLINE ID_CsClosedDegenerate"
 check_round circle-full "CIRCLE (5 0, 0 5, -5 0)" \
-  "BAG hens=0,1 pts=5 0;-5 0 chickens=0-1:MkCirc:full"
+  "BAG hens=0,1 pts=5 0;-5 0 chickens=0-1:MkCirc:half,1-0:MkCirc:half"
 check_round compound-ls-cs \
   "COMPOUNDCURVE ((0 0, 5 0), CIRCULARSTRING (5 0, 3 4, 0 5))" \
   "BAG hens=0,1,2,3 pts=0 0;5 0;5 0;0 5 chickens=0-1:MkChord,2-3:MkCirc:quarter"

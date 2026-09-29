@@ -245,12 +245,18 @@ static class Wire
             return ("DECLINE", null, "ID_Empty");
         if (pts.Count != 3)
             return ("DECLINE", null, "ID_BadPointCount");
-        if (SameXy(pts[0], new(5, 0)) && SameXy(pts[2], new(-5, 0)))
-            return ("BAG", new Bag([0, 1], [new(5, 0), new(5, 0)], [(0, 1, "MkCirc:full")]), null);
         var dec = TryTriple(pts[0], pts[1], pts[2]);
         if (dec != null)
             return ("DECLINE", null, dec);
-        return ("BAG", new Bag([0, 1], [pts[0], pts[0]], [(0, 1, "MkCirc")]), null);
+        double d = CircDenom(pts[0], pts[1], pts[2]);
+        double na = pts[0].X * pts[0].X + pts[0].Y * pts[0].Y;
+        double nb = pts[1].X * pts[1].X + pts[1].Y * pts[1].Y;
+        double nc = pts[2].X * pts[2].X + pts[2].Y * pts[2].Y;
+        double ox = (na * (pts[1].Y - pts[2].Y) + nb * (pts[2].Y - pts[0].Y) + nc * (pts[0].Y - pts[1].Y)) / d;
+        double oy = (na * (pts[2].X - pts[1].X) + nb * (pts[0].X - pts[2].X) + nc * (pts[1].X - pts[0].X)) / d;
+        var anti = new Xy(2 * ox - pts[0].X, 2 * oy - pts[0].Y);
+        return ("BAG", new Bag([0, 1], [pts[0], anti],
+            [(0, 1, "MkCirc:half"), (1, 0, "MkCirc:half")]), null);
     }
 
     internal static (string Kind, Bag? Bag, string? Decline) ExpectClothoid() =>

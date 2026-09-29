@@ -31,7 +31,7 @@ documented smoke (same cases as the retired Java `smoke.sh`, including
 `GEODESICSTRING (0 0, 2 0)` = LineString `MkChord` bag).
 
 First slice: Point, LineString, CircularString, CompoundCurve of those,
-Circle-as-full-span-arc. Unknown well-formed CS/Circle maps to `MkCirc`
+Circle as two ±π `MkCirc` (A, antipode). Unknown CS/Circle maps to `MkCirc`
 via the unique circumcircle (angles letter). Both CLOTHOID surface
 forms (ISO REFERENCELOCATION, JTS `(k0,k1,L)`) map to the same
 `MkClothoid` bag (OGC≡ISO). Well-formed `GEODESICSTRING` (`n≥2`) maps

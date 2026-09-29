@@ -578,9 +578,9 @@ The repository has two source directories:
   directory split is about which CI runner builds the file (host vs
   container), not about which proof standard it meets.
 
-The host lane builds the 116 modules in `_CoqProject`, the
+The host lane builds the 118 modules in `_CoqProject`, the
 foundational `theories/` layer;
-the container `_CoqProject.full` builds the entire corpus (674 registered modules — 583 registered under `theories/`, 91 registered under `theories-flocq/`).
+the container `_CoqProject.full` builds the entire corpus (676 registered modules — 585 registered under `theories/`, 91 registered under `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,
 orientation, segment, bbox, triangle, convex, lex-order, plus their
@@ -769,8 +769,8 @@ for Scholar Sam / Tech-Lead Tess / Joost the BDFL paths.
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
 - This is **not** complete. Current coverage is over 7,600 Qed-closed
-  theorems across 674 registered modules — 583 registered under `theories/`,
-  91 registered under `theories-flocq/` (116 of them modules in `_CoqProject`
+  theorems across 676 registered modules — 585 registered under `theories/`,
+  91 registered under `theories-flocq/` (118 of them modules in `_CoqProject`
   as the host foundational target). There are **no
   `Admitted` theorems today** — both the counterexample and
   deferred-proof registries are empty (see the registries and
@@ -801,7 +801,7 @@ rocq makefile -f _CoqProject -o Makefile.gen
 make -f Makefile.gen
 ```
 
-This builds the 116 modules in `_CoqProject`, the foundational
+This builds the 118 modules in `_CoqProject`, the foundational
 Stdlib-only layer.
 Modules with external dependencies (Flocq), plus the Stdlib-only Phase
 3/4 modules built alongside them, live in `_CoqProject.full` and are

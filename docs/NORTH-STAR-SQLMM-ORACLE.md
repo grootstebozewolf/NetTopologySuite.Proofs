@@ -52,7 +52,7 @@ Every instantiable §5.1.67 type has a locked row:
 
 A type may meet (1)–(5) and stay cook-QEX.
 
-**Shelf A** (signed I/O destination): `POINT` / `LINESTRING` / `POLYGON` + Multi / Collection / EMPTY; `CIRCULARSTRING` 3 and 2n+1 (A,B,A Declines); `CIRCLE` as full-span `MkCirc` from A (not WKB 18); `COMPOUNDCURVE` LS+CS with named joints (`cs_joint_circ` / Mode D); `CURVEPOLYGON`; `MULTICURVE` / `MULTISURFACE`; `CLOTHOID` both surface forms → same `MkClothoid` + `cloth_joint` compound.
+**Shelf A** (signed I/O destination): `POINT` / `LINESTRING` / `POLYGON` + Multi / Collection / EMPTY; `CIRCULARSTRING` 3 and 2n+1 (A,B,A Declines); `CIRCLE` as two ±π `MkCirc` from A (not WKB 18); `COMPOUNDCURVE` LS+CS with named joints (`cs_joint_circ` / Mode D); `CURVEPOLYGON`; `MULTICURVE` / `MULTISURFACE`; `CLOTHOID` both surface forms → same `MkClothoid` + `cloth_joint` compound.
 
 **Shelf B** (grammar-complete, cook Decline / QEX destination): `ELLIPTICALCURVE`, `NURBSCURVE`, `GEODESICSTRING`, `SPIRALCURVE` (five ISO names only), `COMPOUNDSURFACE`, `BREPSOLID`, ISO `TRIANGLE` / `POLYHEDRALSURFACE PATCHES` / `TIN`. Mapper: named Decline or `MkOutOfScope`. #729 stays HOLD.
 

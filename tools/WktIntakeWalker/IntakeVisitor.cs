@@ -166,8 +166,6 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
             return IntakeResult.OfDecline(Reason.ID_Empty);
         if (pts.Count != 3)
             return IntakeResult.OfDecline(Reason.ID_BadPointCount);
-        if (Eq(pts[0], P50) && Eq(pts[2], PM50))
-            return CircBag([P50, P50], "MkCirc:full");
         return MapCircleUnknown(pts);
     }
 
@@ -193,7 +191,10 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         return IntakeResult.OfBag(new Bag(Hens(ends.Count), ends, chickens));
     }
 
-    /// <summary>Same table as theories/IntakeAnglesCore.v try_circle_eggs. Ends are [A; A].</summary>
+    /// <summary>
+    /// Same table as theories/IntakeAnglesCore.v try_circle_eggs.
+    /// Two hens: A and the antipode 2O−A. Chickens 0→1 and 1→0, each sweep ±π.
+    /// </summary>
     internal static IntakeResult MapCircleUnknown(IReadOnlyList<Pt> pts)
     {
         if (pts.Count == 0)
@@ -203,7 +204,13 @@ sealed class IntakeVisitor : wktParserBaseVisitor<IntakeResult>
         var triple = TryTriple(pts[0], pts[1], pts[2]);
         if (!triple.IsBag)
             return triple;
-        return CircBag([pts[0], pts[0]], "MkCirc");
+        double d = CircDenom(pts[0], pts[1], pts[2]);
+        var o = Circumcenter(pts[0], pts[1], pts[2], d);
+        var anti = new Pt(2 * o.X - pts[0].X, 2 * o.Y - pts[0].Y);
+        return IntakeResult.OfBag(new Bag(
+            [0, 1],
+            [pts[0], anti],
+            [new Chicken(0, 1, "MkCirc:half"), new Chicken(1, 0, "MkCirc:half")]));
     }
 
     internal static IntakeResult TryTriple(Pt a, Pt b, Pt c)

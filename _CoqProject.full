@@ -2997,6 +2997,14 @@ theories/IsoClothoidIntake.v
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
 # keyword. No Admitted.
 theories/IntakeWalker.v
+# Circle bag (IntakeWalkerCircle). Two half-span MkCirc,
+# hens at A and the antipode. claimId 0007-intake-angles.
+# Not a self-loop. F5 chart side stays open. No Admitted.
+theories/IntakeWalkerCircle.v
+# Clothoid lemmas split out of IntakeWalker
+# (IntakeWalkerClothoid). claimId 0007-intake-mkclothoid.
+# No Admitted.
+theories/IntakeWalkerClothoid.v
 # Carried θ₀/Δθ face (IntakeCarried). try_carried only.
 # Not the WKT path. Not a CST carrier. No new witness.
 theories/IntakeCarried.v

@@ -203,7 +203,7 @@ Intake construction of `CircularEgg` `(O,r,θ₀,Δθ)` from well-formed
 WKT circular control points. Three distinct non-collinear points
 determine a unique circumcircle; chickens are `MkCirc`. Angle fields
 are computed (CircleChart + 3-axiom atan2/atan3): θ₀ principal, Δθ chart sweep.
-ISO CIRCLE: θ₀=atan2(A−O), sweep=sign(orient)·2π, γ(0)=γ(1)=A. Carried angles agree by check.
+ISO CIRCLE: θ₀=atan2(A−O), sweep=sign(orient)·2π, γ(0)=γ(1)=A; bag is A and antipode, two ±π MkCirc. Carried angles agree by check.
 Not Stdlib Ratan classic. Collinear / duplicate / closed CS
 Decline by name. Clothoid is the MkClothoid letter, not this one.
 _Avoid_: silent chord demote, host cook expand, new oracle keyword
@@ -240,7 +240,7 @@ agreement (not ∀ on all CSTs). `τ = first_slice_tag` on eggs;
 mints a singleton bag, `τ(e)=ρ(π(c))`. `intake_rho` /
 `cst_prod_tag` here are the CST production tag in that equation
 — not ADR-0007 park ρ (`EmitRhoBagLoop` / bag-loop). ISO CIRCLE
-is one MkCirc (|sweep|=2π); CIRCULARSTRING(A,B,A) Declines.
+bag is two ±π MkCirc (ρ=CIRCLE); CIRCULARSTRING(A,B,A) Declines.
 `intake_rho` is egg-aware on CIRCULARSTRING and is not
 `cst_prod_tag`. Well-formed GeodesicString bags `MkChord`;
 τ is LINESTRING; `cst_prod_tag` stays None (production is not

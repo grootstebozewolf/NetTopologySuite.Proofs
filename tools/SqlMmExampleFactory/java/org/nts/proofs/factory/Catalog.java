@@ -21,6 +21,7 @@ public final class Catalog {
         add(m, linestring02());
         add(m, linestringEmpty());
         add(m, circularstringQuarter());
+        add(m, circularstringFull());
         add(m, circleFull());
         add(m, compoundLsCs());
         add(m, clothoidJts());
@@ -83,15 +84,27 @@ public final class Catalog {
                 .build();
     }
 
+    /** One line to flip if the closed-CS ruling changes: the decline token. */
+    static Example circularstringFull() {
+        return Example.builder("circularstring-full", "CIRCULARSTRING")
+                .control(5, 0)
+                .control(0, 5)
+                .control(5, 0)
+                .decline("ID_CsClosedDegenerate")
+                .tau("TagCircularString")
+                .build();
+    }
+
     static Example circleFull() {
         return Example.builder("circle-full", "CIRCLE")
                 .hens(0, 1)
                 .pt(5, 0)
-                .pt(5, 0)
+                .pt(-5, 0)
                 .control(5, 0)
                 .control(0, 5)
                 .control(-5, 0)
-                .chicken(0, 1, "MkCirc:full")
+                .chicken(0, 1, "MkCirc:half")
+                .chicken(1, 0, "MkCirc:half")
                 .tau("TagCircle")
                 .build();
     }

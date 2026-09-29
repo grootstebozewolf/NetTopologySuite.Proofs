@@ -34,7 +34,7 @@ Byte order: `00` XDR, `01` NDR. Doubles IEEE-754 binary64 (Java fills hex; group
 
 HOLD this slice: WKB **13–17** / **18–21**. Not first-cook expand. Polygon / Multi / CurvePolygon / MultiCurve / MultiSurface are later rows.
 
-Model fields match intake: `hens`, `pts`, `chickens` (`MkChord` / `MkCirc` / `MkCirc:quarter` / `MkCirc:full` / `MkClothoid`), `keyword`, `controls`, `children`, `tau`, clothoid `k0`/`k1`/`L` vs ISO placement.
+Model fields match intake: `hens`, `pts`, `chickens` (`MkChord` / `MkCirc` / `MkCirc:quarter` / `MkCirc:half` / `MkClothoid`), `keyword`, `controls`, `children`, `tau`, clothoid `k0`/`k1`/`L` vs ISO placement.
 
 `τ = first_slice_tag`: `MkChord ↦ TagLineString`. Well-formed geodesic CST bags the same `MkChord` as `LINESTRING`; emit is LINESTRING / WKB 2 — honest chord bag, not silent densify-as-curve, not signed geodesic I/O.
 

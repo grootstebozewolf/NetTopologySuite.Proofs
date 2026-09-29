@@ -16,8 +16,10 @@
      MkClothoid _   ↦ CLOTHOID
      MkOutOfScope _ ↦ undefined
 
-   Full-span is CIRCLE and not CIRCULARSTRING. ISO CIRCLE bags
-   one MkCirc with |sweep|=2π, so τ is CIRCLE. CIRCULARSTRING
+   Full-span is CIRCLE and not CIRCULARSTRING. The full-turn
+   egg (|sweep|=2π) tags CIRCLE. The intake bag stores two
+   half-span MkCirc (|sweep|=π), so each egg's τ is
+   CIRCULARSTRING while ρ(TCircle) stays CIRCLE. CIRCULARSTRING
    with first=last control Declines ID_CsClosedDegenerate.
    τ does not read ISO fields. Locked JTS and the locked ISO
    fixture share one ClothoidEgg; other ISO fields differ.
@@ -38,7 +40,7 @@
 
    Rung 4: after μ(c,S)=IntakeBag(b) and eggs(b)=[e],
    τ(e)=ρ(π(c)) on locked singleton CSTs. ρ is not τ.
-   TCircle mints MkCirc with |sweep|=2π; τ is CIRCLE.
+   TCircle's bag is two half-span MkCirc; ρ is CIRCLE.
    Closed CIRCULARSTRING Declines. Requires IntakeWalker.
 
    intake_rho / cst_prod_tag here are the CST production tag
@@ -50,15 +52,14 @@
    CIRCULARSTRING / CIRCLE from the CST constructor alone,
    without reading the egg.
 
-   TCircle's intake_rho ignores the egg (always CIRCLE). A
-   hypothetical non-full MkCirc under TCircle would give
-   ρ=CIRCLE and τ=CIRCULARSTRING; first slice does not
-   inhabit that bag; the function still allows it.
+   TCircle's intake_rho ignores the egg (always CIRCLE). The
+   half-span bag inhabits that split: ρ=CIRCLE and τ of each
+   half is CIRCULARSTRING. The full-turn egg is not a hen.
 
    unknown_cs / ang_egg is CIRCULARSTRING: chart Δθ is a
-   proper arc (0 < |Δθ| < 2π). ISO CIRCLE is TagCircle
+   proper arc (0 < |Δθ| < 2π). The full-turn egg is TagCircle
    (|sweep|=2π). CIRCULARSTRING(A,B,A) is a Decline, not
-   that egg. A non-full MkCirc under TCircle is not a bag.
+   that egg. The CIRCLE bag's halves are non-full MkCirc.
 
    QED: ticket_sqlmm_signed_tag_qed_or_qex — τ and κ.
         ticket_sqlmm_tau_mu_qed_or_qex — locked exists-b-e
@@ -83,7 +84,8 @@
 
 From Stdlib Require Import Reals PeanoNat List.
 From NTS.Proofs Require Import Distance SheetHenCook ClothoidCookMkClothoid.
-From NTS.Proofs Require Import CircularCookMkCirc IntakeAngles IntakeWalker IsoClothoidIntake.
+From NTS.Proofs Require Import CircularCookMkCirc IntakeAngles IntakeWalker
+  IntakeWalkerClothoid IsoClothoidIntake.
 Import ListNotations.
 
 (* -------------------------------------------------------------------------- *)
@@ -260,6 +262,13 @@ Proof.
   apply Rmult_lt_0_compat.
   - exact two_pos.
   - exact PI_RGT_0.
+Qed.
+
+Lemma pi_abs_neq_two_pi : Rabs PI <> 2 * PI.
+Proof.
+  rewrite Rabs_pos_eq.
+  - apply Rlt_not_eq. exact pi_lt_two_pi.
+  - apply Rlt_le. exact PI_RGT_0.
 Qed.
 
 Lemma half_pi_abs_neq_two_pi : Rabs (PI / 2) <> 2 * PI.
@@ -582,21 +591,39 @@ Proof.
     exact half_pi_abs_neq_two_pi.
 Qed.
 
+Lemma tau_locked_halves :
+  first_slice_tag (MkCirc locked_half_fst) = Some TagCircularString /\
+  first_slice_tag (MkCirc locked_half_snd) = Some TagCircularString.
+Proof.
+  split.
+  - change (Some (tau_circ locked_half_fst) = Some TagCircularString).
+    apply f_equal. apply tau_circ_not_full.
+    unfold locked_half_fst. cbn [circ_sweep]. exact pi_abs_neq_two_pi.
+  - change (Some (tau_circ locked_half_snd) = Some TagCircularString).
+    apply f_equal. apply tau_circ_not_full.
+    unfold locked_half_snd. cbn [circ_sweep]. exact pi_abs_neq_two_pi.
+Qed.
+
 Lemma tau_mu_locked_circle :
-  exists b e,
+  exists b e1 e2,
     intake_map default_sheet locked_circle_cst = IntakeBag b /\
-    bag_eggs b = [e] /\
-    first_slice_tag e = Some TagCircle /\
-    intake_rho locked_circle_cst e = Some TagCircle.
+    bag_eggs b = [e1; e2] /\
+    first_slice_tag e1 = Some TagCircularString /\
+    first_slice_tag e2 = Some TagCircularString /\
+    intake_rho locked_circle_cst e1 = Some TagCircle /\
+    first_slice_tag (MkCirc locked_full_circle_egg) = Some TagCircle.
 Proof.
   exists (map_circle default_sheet).
-  exists (MkCirc locked_full_circle_egg).
+  exists (MkCirc locked_half_fst).
+  exists (MkCirc locked_half_snd).
   split; [exact locked_circle_maps|].
   split.
-  - unfold bag_eggs, map_circle. reflexivity.
-  - split.
-    + rewrite <- locked_sqlmm_full_is_intake_full. exact tau_locked_full.
-    + reflexivity.
+  - unfold bag_eggs, map_circle, circle_cycle. reflexivity.
+  - destruct tau_locked_halves as [H1 H2].
+    split; [exact H1|].
+    split; [exact H2|].
+    split; [reflexivity|].
+    rewrite <- locked_sqlmm_full_is_intake_full. exact tau_locked_full.
 Qed.
 
 Lemma tau_mu_cs_closed_declines :
@@ -847,10 +874,13 @@ Theorem ticket_sqlmm_tau_mu_qed_or_qex :
       intake_map default_sheet locked_cs_quarter_cst = IntakeBag b /\
       bag_eggs b = [e] /\
       first_slice_tag e = Some TagCircularString) /\
-   (exists b e,
+   (exists b e1 e2,
       intake_map default_sheet locked_circle_cst = IntakeBag b /\
-      bag_eggs b = [e] /\
-      first_slice_tag e = Some TagCircle) /\
+      bag_eggs b = [e1; e2] /\
+      first_slice_tag e1 = Some TagCircularString /\
+      first_slice_tag e2 = Some TagCircularString /\
+      intake_rho locked_circle_cst e1 = Some TagCircle /\
+      first_slice_tag (MkCirc locked_full_circle_egg) = Some TagCircle) /\
    intake_map default_sheet locked_cs_full_ogc_cst =
      IntakeDecline ID_CsClosedDegenerate /\
    (exists b e,
@@ -882,7 +912,8 @@ Proof.
   left.
   destruct tau_mu_locked_ls as [bLS [eLS [HLS [HegLS [HtagLS _]]]]].
   destruct tau_mu_locked_cs_quarter as [bq [eq [Hq [Hegq [Htagq _]]]]].
-  destruct tau_mu_locked_circle as [bc [ec [Hc [Hegc [Htagc _]]]]].
+  destruct tau_mu_locked_circle as
+    [bc [e1c [e2c [Hc [Hegc [Ht1 [Ht2 [Hrho Hfull]]]]]]]].
   destruct tau_mu_locked_clothoid_iso as [bi [ei [Hi [Hegi [Htagi _]]]]].
   destruct tau_mu_locked_clothoid_jts as [bj [ej [Hj [Hegj [_ [Htagj _]]]]]].
   destruct tau_mu_unknown_cs as [bu [eu [Hu [Hegu [_ [Htagu _]]]]]].
@@ -891,7 +922,7 @@ Proof.
   destruct tau_mu_compound_not_singleton as [_ Hcc].
   split; [exists bLS, eLS; repeat split; assumption|].
   split; [exists bq, eq; repeat split; assumption|].
-  split; [exists bc, ec; repeat split; assumption|].
+  split; [exists bc, e1c, e2c; repeat split; assumption|].
   split; [exact tau_mu_cs_closed_declines|].
   split; [exists bi, ei; repeat split; assumption|].
   split; [exists bj, ej; repeat split; assumption|].
@@ -940,6 +971,8 @@ Print Assumptions out_of_scope_no_signed_tag.
 Print Assumptions ticket_sqlmm_signed_tag_qed_or_qex.
 Print Assumptions tau_mu_locked_ls.
 Print Assumptions tau_mu_locked_cs_quarter.
+Print Assumptions pi_abs_neq_two_pi.
+Print Assumptions tau_locked_halves.
 Print Assumptions tau_mu_locked_circle.
 Print Assumptions tau_mu_cs_closed_declines.
 Print Assumptions tau_mu_locked_clothoid_iso.
