@@ -240,10 +240,23 @@ Proof.
   - apply sidecar_clothoid_host_hit_false.
 Qed.
 
-(* Residual uniqueness is Qed on the half-branch
-   (RelateClothoid re-export of ClothoidResidual). No H_deriv /
-   H_fprime_pos premise. Metric, not a cook Hit. *)
+(* Residual uniqueness stays metric, not a cook Hit.
+   Full branch |κL| ≤ π keeps this name and takes ClothoidFPrimePos.
+   The half-branch |κL| ≤ 1/2 is unconditional. *)
 Lemma sidecar_clothoid_residual_is_metric :
+  forall (k0 k1 d L1 L2 : R),
+    ClothoidFPrimePos ->
+    0 < L1 -> 0 < L2 ->
+    Rabs (clothoid_kappa k0 k1 * L1) <= PI ->
+    Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
+    clothoid_f k0 k1 d L1 = 0 ->
+    clothoid_f k0 k1 d L2 = 0 ->
+    L1 = L2.
+Proof.
+  exact clothoid_L_unique_on_branch.
+Qed.
+
+Lemma sidecar_clothoid_residual_half_branch :
   forall (k0 k1 d L1 L2 : R),
     0 < L1 -> 0 < L2 ->
     Rabs (clothoid_kappa k0 k1 * L1) <= 1 / 2 ->
@@ -252,7 +265,7 @@ Lemma sidecar_clothoid_residual_is_metric :
     clothoid_f k0 k1 d L2 = 0 ->
     L1 = L2.
 Proof.
-  exact clothoid_L_unique_on_branch.
+  exact clothoid_L_unique_half_branch.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -602,6 +615,7 @@ Print Assumptions sidecar_clothoid_chord_seed.
 Print Assumptions sidecar_clothoid_demote_is_nodingng_crossing.
 Print Assumptions sidecar_clothoid_demote_hit_not_clothoid_I_ok.
 Print Assumptions sidecar_clothoid_residual_is_metric.
+Print Assumptions sidecar_clothoid_residual_half_branch.
 Print Assumptions sidecar_clothoid_mkclothoid_inhabits.
 Print Assumptions clothoid_egg_mkclothoid_or_tag.
 Print Assumptions mkclothoid_class.

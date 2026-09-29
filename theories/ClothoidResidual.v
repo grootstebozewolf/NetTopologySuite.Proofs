@@ -20,11 +20,16 @@
    LipIntLeibniz.cos_quot_modulus / sin_quot_modulus give an error
    <= psi(tau)^2 * |k| <= K * |k|.
 
-   H_fprime_pos is proved on the half-branch |clothoid_kappa * L| <= 1/2.
-   The closed branch |kappa * L| <= PI is not strictly positive (a circular
-   arc has f' = 0 at the endpoint).  The open gap 0 < |kappa L| < PI is
-   the named statement ClothoidFPrimePos, left uninhabited.  f'' and the
-   Kantorovich check are not this file.
+   H_fprime_pos is proved on the half-branch |clothoid_kappa * L| <= 1/2
+   (clothoid_L_unique_half_branch).  |kappa * L| is the total turning.
+   The full branch |kappa * L| <= PI stays clothoid_L_unique_on_branch,
+   with the single premise ClothoidFPrimePos (H_deriv and H_mvt are gone).
+   A circular arc has f' = 0 at the endpoint, so the closed bound is not
+   strict.  The cos lower bound cannot reach PI.  The intended discharge
+   of the open gap is geometric: while the total turning is below PI,
+   every tangent has a positive component along the chord, and that
+   chord direction is an atan3/atan2 angle already in the corpus.
+   f'' and the Kantorovich check are not this file.
 
    claimId: the residual headline keeps its existing (unnamed) claim.
    No Admitted / Axiom / Parameter.  No MVT, Rolle, RiemannInt, Coquelicot.
@@ -736,8 +741,13 @@ Proof.
   apply Rlt_le_trans with (1 / 64); [lra | exact Hsum].
 Qed.
 
-(* The open branch 0 < |κ L| < π is not discharged.  A circular arc has
-   derivative 0 at |κ L| = π, so the closed inequality is not the statement. *)
+(* Open gap 0 < |κ L| < π.  |κ L| is the total turning on [0, L].
+   A circular arc has derivative 0 at |κ L| = π, so the closed bound is
+   not this statement.  cos t ≥ 1 − t²/2 cannot reach π.  Intended
+   discharge: while the total turning is below π, every tangent has a
+   positive component along the chord direction, so the derivative of
+   chord length in L is positive.  That direction is atan3/atan2.
+   Uninhabited.  Not an axiom. *)
 Definition ClothoidFPrimePos : Prop :=
   forall k0 k1 L,
     0 < L ->
@@ -826,6 +836,81 @@ Proof.
   unfold clothoid_S. rewrite HP, HQ, HR, HT. ring.
 Qed.
 
+Lemma clothoid_kappa_nn :
+  forall k0 k1, 0 <= clothoid_kappa k0 k1.
+Proof.
+  intros k0 k1. unfold clothoid_kappa.
+  apply Rplus_le_le_0_compat; [apply Rabs_pos|].
+  apply Rmult_le_pos; [apply Rabs_pos|].
+  apply Rlt_le. apply Rinv_0_lt_compat. lra.
+Qed.
+
+Lemma clothoid_f_seg_continuous :
+  forall k0 k1 d a b, seg_continuous (clothoid_f k0 k1 d) a b.
+Proof.
+  intros k0 k1 d a b t _ eps Heps.
+  assert (Hd : derivable_pt (clothoid_f k0 k1 d) t).
+  { exists (clothoid_f' k0 k1 t). apply clothoid_f_deriv. }
+  pose proof (derivable_continuous_pt _ t Hd) as Hc.
+  unfold continuity_pt, continue_in, limit1_in, limit_in in Hc.
+  destruct (Hc eps Heps) as [delta [Hdelta Hball]].
+  exists delta. split; [exact Hdelta|].
+  intros h Hh _.
+  destruct (Req_dec h 0) as [Hz|Hnz].
+  - subst h. replace (t + 0) with t by ring. rewrite Rminus_diag_eq by reflexivity.
+    rewrite Rabs_R0. exact Heps.
+  - apply Hball. split.
+    + split; [exact I|].
+      intro Heq. apply Hnz. symmetry in Heq.
+      apply (Rplus_eq_reg_l t). rewrite Rplus_0_r. exact Heq.
+    + unfold dist. simpl. unfold Rdist.
+      replace (t + h - t) with h by ring. exact Hh.
+Qed.
+
+Lemma open_branch_fprime :
+  forall k0 k1 L2 t,
+    ClothoidFPrimePos ->
+    0 < t -> t < L2 ->
+    Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
+    0 < clothoid_f' k0 k1 t.
+Proof.
+  intros k0 k1 L2 t Hgap Ht HtL Hb.
+  apply Hgap; [exact Ht|].
+  set (k := clothoid_kappa k0 k1).
+  assert (Hk : 0 <= k) by (unfold k; apply clothoid_kappa_nn).
+  assert (Habs_t : Rabs (k * t) = k * t).
+  { apply Rabs_right. apply Rle_ge. apply Rmult_le_pos; [exact Hk|lra]. }
+  assert (Habs_L : Rabs (k * L2) = k * L2).
+  { apply Rabs_right. apply Rle_ge. apply Rmult_le_pos; [exact Hk|lra]. }
+  rewrite Habs_t.
+  destruct (Req_dec k 0) as [Hz|Hnz].
+  - rewrite Hz, Rmult_0_l. apply PI_RGT_0.
+  - assert (Hkpos : 0 < k).
+    { apply Rnot_le_lt. intro Hle. apply Hnz. apply Rle_antisym; assumption. }
+    apply Rlt_le_trans with (k * L2).
+    + apply Rmult_lt_compat_l; assumption.
+    + rewrite <- Habs_L. exact Hb.
+Qed.
+
+Theorem clothoid_residual_strictly_increasing_on_branch :
+  forall k0 k1 d L1 L2,
+    ClothoidFPrimePos ->
+    0 < L1 -> L1 < L2 ->
+    Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
+    clothoid_f k0 k1 d L1 < clothoid_f k0 k1 d L2.
+Proof.
+  intros k0 k1 d L1 L2 Hgap HL1 HL12 Hb.
+  apply (deriv_pos_strict_incr_open
+           (clothoid_f k0 k1 d) (clothoid_f' k0 k1) L1 L2 L1 L2).
+  - exact HL12.
+  - intros t _. apply clothoid_f_deriv.
+  - intros t Ht. apply (open_branch_fprime k0 k1 L2 t); [exact Hgap|lra|lra|exact Hb].
+  - apply clothoid_f_seg_continuous.
+  - lra.
+  - exact HL12.
+  - lra.
+Qed.
+
 Theorem clothoid_residual_strictly_increasing :
   forall k0 k1 d L1 L2,
     0 < L1 -> L1 < L2 ->
@@ -843,6 +928,25 @@ Proof.
 Qed.
 
 Corollary clothoid_residual_unique_root :
+  forall k0 k1 d L1 L2,
+    ClothoidFPrimePos ->
+    0 < L1 -> 0 < L2 ->
+    Rabs (clothoid_kappa k0 k1 * L1) <= PI ->
+    Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
+    clothoid_f k0 k1 d L1 = 0 ->
+    clothoid_f k0 k1 d L2 = 0 ->
+    L1 = L2.
+Proof.
+  intros k0 k1 d L1 L2 Hgap HL1 HL2 Hb1 Hb2 Hf1 Hf2.
+  destruct (Rtotal_order L1 L2) as [Hlt | [Heq | Hgt]].
+  - pose proof (clothoid_residual_strictly_increasing_on_branch
+                  k0 k1 d L1 L2 Hgap HL1 Hlt Hb2). lra.
+  - exact Heq.
+  - pose proof (clothoid_residual_strictly_increasing_on_branch
+                  k0 k1 d L2 L1 Hgap HL2 Hgt Hb1). lra.
+Qed.
+
+Corollary clothoid_residual_unique_root_half :
   forall k0 k1 d L1 L2,
     0 < L1 -> 0 < L2 ->
     Rabs (clothoid_kappa k0 k1 * L1) <= 1 / 2 ->
@@ -898,6 +1002,11 @@ Print Assumptions clothoid_fprime_pos.
 Print Assumptions clothoid_moments_flat.
 Print Assumptions clothoid_f_flat.
 Print Assumptions clothoid_fprime_flat.
+Print Assumptions clothoid_kappa_nn.
+Print Assumptions clothoid_f_seg_continuous.
+Print Assumptions open_branch_fprime.
+Print Assumptions clothoid_residual_strictly_increasing_on_branch.
 Print Assumptions clothoid_residual_strictly_increasing.
 Print Assumptions clothoid_residual_unique_root.
+Print Assumptions clothoid_residual_unique_root_half.
 

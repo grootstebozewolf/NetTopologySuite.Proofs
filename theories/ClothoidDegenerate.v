@@ -190,7 +190,7 @@ Theorem degenerate_unique_root_via_interface :
     L1 = L2.
 Proof.
   intros d L1 L2 HL1 HL2 Hf1 Hf2.
-  apply (clothoid_residual_unique_root 0 0 d L1 L2 HL1 HL2).
+  apply (clothoid_residual_unique_root_half 0 0 d L1 L2 HL1 HL2).
   - assert (Hk0 : clothoid_kappa 0 0 = 0).
     { unfold clothoid_kappa. rewrite Rabs_R0.
       replace (0 - 0) with 0 by ring. rewrite Rabs_R0. field. }
