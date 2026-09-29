@@ -10,6 +10,8 @@ var root = FindRepoRoot();
 int fails = 0;
 fails += CheckFixture("ccw", new(0, 0), new(2, 0), new(3, 1), expectPos: true);
 fails += CheckFixture("cw", new(0, 0), new(-1, 1), new(3, 1), expectPos: false);
+fails += CheckBranchCut("cut", new(0, 1), new(-1, 0), new(0, -1));
+fails += CheckCollinear("collinear", new(0, 0), new(1, 0), new(2, 0));
 if (fails != 0)
 {
     Console.Error.WriteLine($"SUMMARY bug ({fails} fixture(s))");
@@ -43,6 +45,61 @@ int CheckFixture(string name, Pt a, Pt m, Pt b, bool expectPos)
         $"sign={sign} cross={cross} oracle={oracle}");
     return 1;
 }
+
+// #770 F2: θ₀ = π/2, Δθ = π. The arc runs through θ = π. Endpoints are
+// antipodal, so the radius cross is 0; orientation is the sweep.
+int CheckBranchCut(string name, Pt a, Pt m, Pt b)
+{
+    var chart = ChartAngles(a, m, b);
+    var reference = Atan2Sweep(a, m, b);
+    double tol = 1e-9;
+    bool th = Math.Abs(Wrap(chart.Theta - reference.Theta)) < tol;
+    bool sw = Math.Abs(chart.Sweep - reference.Sweep) < tol;
+    bool start = Math.Abs(chart.Theta - Math.PI / 2) < tol;
+    bool span = Math.Abs(chart.Sweep - Math.PI) < tol;
+    bool straddle = chart.Theta < Math.PI && chart.Theta + chart.Sweep > Math.PI;
+    bool antipode = Math.Abs(EndpointCross(chart.O, a, b)) < tol;
+    string wkt = FormattableString.Invariant(
+        $"CIRCULARSTRING ({a.X} {a.Y}, {m.X} {m.Y}, {b.X} {b.Y})");
+    string oracle = OracleSqlmm(root, wkt);
+    bool parsed = oracle == "OK CIRCULARSTRING XY POINTS 3";
+    if (th && sw && start && span && straddle && antipode && parsed)
+    {
+        Console.WriteLine(
+            $"OK {name} theta={chart.Theta:R} sweep={chart.Sweep:R} straddle oracle={oracle}");
+        return 0;
+    }
+    Console.Error.WriteLine(
+        $"BUG {name} chart=({chart.Theta:R},{chart.Sweep:R}) " +
+        $"ref=({reference.Theta:R},{reference.Sweep:R}) " +
+        $"straddle={straddle} antipode={antipode} oracle={oracle}");
+    return 1;
+}
+
+// Proof fixture col_a, col_b, col_c. try_triple returns AF_Collinear.
+// SQLMM_WKT is structural type identity: the text is still a
+// CIRCULARSTRING, so the oracle accepts it. The angle chart declines.
+int CheckCollinear(string name, Pt a, Pt m, Pt b)
+{
+    double denom = CircDenom(a, m, b);
+    bool declined = denom == 0;
+    string wkt = FormattableString.Invariant(
+        $"CIRCULARSTRING ({a.X} {a.Y}, {m.X} {m.Y}, {b.X} {b.Y})");
+    string oracle = OracleSqlmm(root, wkt);
+    bool parsed = oracle == "OK CIRCULARSTRING XY POINTS 3";
+    if (declined && parsed)
+    {
+        Console.WriteLine(
+            $"DECLINE {name} denom=0 proof=AF_Collinear oracle={oracle}");
+        return 0;
+    }
+    Console.Error.WriteLine(
+        $"BUG {name} denom={denom:R} oracle={oracle}");
+    return 1;
+}
+
+static double CircDenom(Pt a, Pt mid, Pt b) =>
+    2 * (a.X * (mid.Y - b.Y) + mid.X * (b.Y - a.Y) + b.X * (a.Y - mid.Y));
 
 static Angles ChartAngles(Pt a, Pt mid, Pt b)
 {
