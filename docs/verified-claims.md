@@ -2208,3 +2208,9 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 | `TrianglePairClip.v : ii_entry_dimF_outer` | A separating edge forces the I∩I cell to F `[exact]` | 3 |
 | `TrianglePairClip.v : ii_entry_fixtures` | Concrete pairs, including the swapped nest, match `ii_entry`. General agreement with the five concrete `triangle_pair_fill` arms is deferred `[exact]` | 3 |
 
+## T1b — boundary cells I∩B, B∩I, B∩B <!-- feat:relate geom:poly -->
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `TrianglePairBound.v : bound_cells_iff` | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry` on `tri_inter` / `clip_correct`. claimId `tri-de9im-b` (witness `bound_cells_iff`). Exterior cells and `ii_entry_agrees_concrete` stay deferred `[exact]` | 3 |
+
