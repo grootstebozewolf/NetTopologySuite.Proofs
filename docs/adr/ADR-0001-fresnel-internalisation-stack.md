@@ -69,20 +69,19 @@ dyadic integral): axioms `sig_not_dec`, `sig_forall_dec`,
 `functional_extensionality_dep`. No `RiemannInt` (#883, `df31a4fe`;
 MkClothoid unlock #884, `b36c35d2`).
 
-`LipIntFTC.v : lipint_ftc` is FTC for `lint` (#896). `H_deriv` is
-`LipIntLeibniz.v : lint_leibniz`, instantiated as
-`ClothoidResidual.v : clothoid_f_deriv`. Half-branch `H_fprime_pos`
-(`|κL| ≤ 1/2`) is `clothoid_fprime_pos`; uniqueness is
-`RelateClothoid.v : clothoid_L_unique_half_branch`. `H_mvt` is gone
-(`RealMonotone.v : deriv_pos_strict_incr`). Full branch `|κL| ≤ π` is
-`clothoid_L_unique_on_branch` under uninhabited `ClothoidFPrimePos`.
-Coquelicot is not that discharge. Fresh BSD-3 scripts, no EUPL paste,
-the consumer gate, and the three-axiom allowlist stand.
+FTC for `lint` is #889: claimId `0001-lint-ftc`, witness
+`lipint_ftc` wrapping `lip_ftc`. Leibniz (#896) is `lint_leibniz`
+(claimId none), as `clothoid_f_deriv`. Those two show the Coquelicot
+lane is not needed for evaluation or derivatives. Half-branch
+`|κL| ≤ 1/2` is `clothoid_fprime_pos` (`clothoid_L_unique_half_branch`).
+`H_mvt` is gone (`deriv_pos_strict_incr`). Full branch `|κL| ≤ π` stays
+`clothoid_L_unique_on_branch` under `ClothoidFPrimePos`. Fresh BSD-3
+scripts, no EUPL paste, the consumer gate, and the allowlist stand.
 
 ## Consequences
 
 **Positive.**
-- FTC (`lipint_ftc`), `H_deriv` (`lint_leibniz`), and half-branch `H_fprime_pos` (`clothoid_fprime_pos`) are Stdlib. Full-branch `ClothoidFPrimePos` stays open; Halley end-to-end stays consumer-gated.
+- FTC (#889, claimId `0001-lint-ftc`, witness `lipint_ftc` wrapping `lip_ftc`) and Leibniz (#896, `lint_leibniz`) discharge evaluation and derivatives in Stdlib. Full-branch `ClothoidFPrimePos` stays open; Halley end-to-end stays consumer-gated.
 - The licence question dissolves rather than being adjudicated: no
   copyleft text enters the tree, so no per-file licence mixing, no
   reliance on interpreting the witness README's grant note.
