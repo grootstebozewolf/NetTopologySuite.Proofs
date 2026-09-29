@@ -1609,7 +1609,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — ctor inhabits; unknown CS bags `MkCirc`; not leftover; not chord demote | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc`, `IntakeAngles.v : ang_cs_ok`, `IntakeWalker.v : collinear_cs_declines`, `IntakeWalker.v : duplicate_cs_declines` |
+| `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — ctor inhabits; unknown CS bags `MkCirc`; not leftover; not chord demote | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc`, `IntakeAnglesCore.v : ang_cs_ok`, `IntakeWalker.v : collinear_cs_declines`, `IntakeWalker.v : duplicate_cs_declines` |
 | `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword parked; clothoid split out | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
 Witness: `0007-intake-angles`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724); this letter is intake egg data.

@@ -56,11 +56,10 @@
    ρ=CIRCLE and τ=CIRCULARSTRING; first slice does not
    inhabit that bag; the function still allows it.
 
-   unknown_cs / ang_egg is CIRCLE because ang_egg is
-   definitionally full-span (mkCircularEgg _ _ _ (2*PI) in
-   IntakeAngles), same policy as the OGC full-span CS clash
-   — not a fixture accident. A later angles letter that
-   minted a non-full unknown CS would be a new letter.
+   unknown_cs / ang_egg is CIRCULARSTRING: chart Δθ is a
+   proper arc (0 < |Δθ| < 2π), not the old ±2π full span.
+   ISO Circle / OGC full-span CS stay TagCircle. A non-full
+   MkCirc under TCircle is still not a first-slice bag.
 
    QED: ticket_sqlmm_signed_tag_qed_or_qex — τ and κ.
         ticket_sqlmm_tau_mu_qed_or_qex — locked exists-b-e
@@ -668,22 +667,15 @@ Proof.
   split; reflexivity.
 Qed.
 
-(* Rung 5: CIRCLE because ang_egg is definitionally full-span
-   (mkCircularEgg _ _ _ (2*PI) in IntakeAngles), same policy as
-   the OGC full-span CS clash — not a fixture accident. *)
-Lemma ang_egg_sweep_is_two_pi :
-  Rabs (circ_sweep ang_egg) = 2 * PI.
-Proof.
-  unfold ang_egg. cbn [circ_sweep]. exact rabs_two_pi.
-Qed.
-
+(* Rung 5: CIRCULARSTRING because chart Δθ is a proper arc
+   (ang_egg_not_full_span), not the old definitional ±2π. *)
 Lemma tau_mu_unknown_cs :
   exists b e,
     intake_map default_sheet unknown_cs_cst = IntakeBag b /\
     bag_eggs b = [e] /\
     e = MkCirc ang_egg /\
-    first_slice_tag e = Some TagCircle /\
-    intake_rho unknown_cs_cst e = Some TagCircle.
+    first_slice_tag e = Some TagCircularString /\
+    intake_rho unknown_cs_cst e = Some TagCircularString.
 Proof.
   exists (map_cs_from_build default_sheet [ang_egg] [p00; mkPoint 3 1]).
   exists (MkCirc ang_egg).
@@ -691,10 +683,10 @@ Proof.
   split; [reflexivity|].
   split; [reflexivity|].
   split.
-  - change (Some (tau_circ ang_egg) = Some TagCircle).
-    apply f_equal. apply tau_circ_full. exact ang_egg_sweep_is_two_pi.
-  - change (Some (tau_circ ang_egg) = Some TagCircle).
-    apply f_equal. apply tau_circ_full. exact ang_egg_sweep_is_two_pi.
+  - change (Some (tau_circ ang_egg) = Some TagCircularString).
+    apply f_equal. apply tau_circ_not_full. exact ang_egg_not_full_span.
+  - change (Some (tau_circ ang_egg) = Some TagCircularString).
+    apply f_equal. apply tau_circ_not_full. exact ang_egg_not_full_span.
 Qed.
 
 (* Two productions (LineString vs GeodesicString), one egg class
@@ -884,7 +876,7 @@ Proof.
   exact hold_has_no_signed_tag.
 Qed.
 
-(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_tau_mu_qed_or_qex","title":"Locked exists-b-e tau=mu (not forall CSTs): first_slice_tag e equals intake_rho on locked LS, quarter CS, CIRCLE, full-span CS (same MkCirc, tag CIRCLE), both clothoid spellings, unknown-CS ang_egg definitional full-span; well-formed geodesic bags MkChord tau=LINESTRING cst_prod_tag None; spiral Decline and rho=None and first_slice_tag MkOutOfScope none (QED) or production-level tau=pi on full-span CIRCULARSTRING text via cst_prod_tag (QEX, already missing); discharged QED; compound is not a singleton; intake_rho is egg-aware on CS and is not cst_prod_tag; not park rho; not WKT parse","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-sqlmm-signed-tag","topic":"overlay","lemma":"ticket_sqlmm_tau_mu_qed_or_qex","title":"Locked exists-b-e tau=mu (not forall CSTs): first_slice_tag e equals intake_rho on locked LS, quarter CS, CIRCLE, full-span CS (same MkCirc, tag CIRCLE), both clothoid spellings, unknown-CS ang_egg partial CIRCULARSTRING; well-formed geodesic bags MkChord tau=LINESTRING cst_prod_tag None; spiral Decline and rho=None and first_slice_tag MkOutOfScope none (QED) or production-level tau=pi on full-span CIRCULARSTRING text via cst_prod_tag (QEX, already missing); discharged QED; compound is not a singleton; intake_rho is egg-aware on CS and is not cst_prod_tag; not park rho; not WKT parse","file":"theories/SqlMmSignedTag.v","witness":"0007-sqlmm-signed-tag","board":"ADR-0007"} *)
 Theorem ticket_sqlmm_tau_mu_qed_or_qex :
   ((exists b e,
       intake_map default_sheet locked_ls_cst = IntakeBag b /\
@@ -916,7 +908,7 @@ Theorem ticket_sqlmm_tau_mu_qed_or_qex :
    (exists b e,
       intake_map default_sheet unknown_cs_cst = IntakeBag b /\
       bag_eggs b = [e] /\
-      first_slice_tag e = Some TagCircle) /\
+      first_slice_tag e = Some TagCircularString) /\
    (exists b e,
       intake_map default_sheet locked_geodesic_cst = IntakeBag b /\
       bag_eggs b = [e] /\
@@ -1000,7 +992,7 @@ Print Assumptions tau_mu_locked_cs_full_ogc.
 Print Assumptions tau_mu_full_span_shared_egg.
 Print Assumptions tau_mu_locked_clothoid_iso.
 Print Assumptions tau_mu_unknown_cs.
-Print Assumptions ang_egg_sweep_is_two_pi.
+Print Assumptions ang_egg_not_full_span.
 Print Assumptions tau_mu_locked_geodesic.
 Print Assumptions tau_mu_geodesic_prod_none.
 Print Assumptions kappa_not_13.

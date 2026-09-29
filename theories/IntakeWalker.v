@@ -31,8 +31,8 @@
 
    Fail closed: SPIRALCURVE, MkOutOfScope leftovers.
    CircUnknown well-formed CS/Circle now maps
-   through IntakeAngles (claimId 0007-intake-angles): unique
-   circumcircle + inhabited angle fields, MkCirc chickens.
+   through IntakeAngles (claimId 0007-intake-angles): chart
+   θ₀/Δθ via 3-axiom atan2, then MkCirc chickens.
    Collinear / duplicate / bad count / empty / zero-radius
    Decline by name. NO silent chord demote at intake. Demote
    is later cook/view. ID_CircGammaLeftover stays on the type
@@ -66,8 +66,8 @@
 
    Visitor tags locked CircularString / Circle shapes (exact
    control-point match). Mapper is structural on those tags.
-   CircUnknown uses IntakeAngles (Req_EM_T on denom / duplicates;
-   3-axiom classical reals, no Atan2.v / no Ratan classic).
+   CircUnknown uses IntakeAngles (chart + 3-axiom atan2 / atan3;
+   Req_EM_T on denom / duplicates; no Stdlib Ratan).
 
    What this is not:
      WKB-order Γ walk / Table 15. Lesson-1 packaging remints.
@@ -134,6 +134,7 @@ Inductive IntakeDeclineReason : Type :=
 | ID_Collinear
 | ID_DuplicateControl
 | ID_DegenerateArc
+| ID_SpanMismatch
 | ID_MissingMeasure
 | ID_UnexpectedMeasure
 | ID_NotSimilarityFrame
@@ -150,6 +151,7 @@ Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
   | AF_Duplicate => ID_DuplicateControl
   | AF_Collinear => ID_Collinear
   | AF_Degenerate => ID_DegenerateArc
+  | AF_SpanMismatch => ID_SpanMismatch
   end.
 
 Record ShcBag : Type := mkShcBag {
@@ -257,6 +259,8 @@ Definition map_cs_from_build (s : Sheet)
   (eggs : list CircularEgg) (ends : list Point) : ShcBag :=
   mkShcBag s (hens_of_n (length ends)) ends (circ_chickens eggs 0%nat).
 
+(* WKT CircUnknown: points only, so try_cs_eggs / egg_of_points.
+   Carried angles are IntakeCarried.map_cs_carried, not this path. *)
 Definition map_cs_unknown (s : Sheet) (pts : list Point) : IntakeResult :=
   match try_cs_eggs pts with
   | inr f => IntakeDecline (angle_fail_reason f)

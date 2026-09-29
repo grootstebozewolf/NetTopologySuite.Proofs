@@ -32,7 +32,7 @@
 
    Does not remint CircGamma, leftover Ⅹ, LoopDischarged, I_ok_mixed as
    host, MkNurbs, or 0007-intake-angles.  Does not inhabit
-   HostMixedHitSpan.  Carry-and-check on CircularEgg (#771) stands.
+   HostMixedHitSpan.  #771 carry-and-check is IntakeAngles.
    Refs #771 / #767.  Related, not discharged here: #770, #866.
    claimId: none.
 

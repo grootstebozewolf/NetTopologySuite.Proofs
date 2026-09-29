@@ -2967,10 +2967,12 @@ theories/SidecarGeodesicEgg.v
 # Not a spiral interpolant / noder. Not Campaign I–II. Not a noder.
 # No Admitted.
 theories/SidecarSpiralEgg.v
-# ADR-0007 intake angles-from-points (IntakeAngles). Circumcircle
-# + inhabited CircularEgg angle fields from control points.
-# Host/pure-R. 3-axiom. No Atan2.v. Not a CircGamma remint.
+# ADR-0007 intake angles-from-points. Core + chart slices, letter
+# in IntakeAngles. Circumcircle and chart theta0 / sweep.
+# Host/pure-R. 3-axiom atan2. Not a CircGamma remint.
 # Required by IntakeWalker CircUnknown. No Admitted.
+theories/IntakeAnglesCore.v
+theories/IntakeAnglesChart.v
 theories/IntakeAngles.v
 # ISO CLOTHOID normalizer 1 (IsoClothoidIntake). Direct field
 # copy into ClothoidEgg; similarity frame or named Decline.
@@ -2981,6 +2983,9 @@ theories/IsoClothoidIntake.v
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
 # keyword. No Admitted.
 theories/IntakeWalker.v
+# Carried θ₀/Δθ face (IntakeCarried). try_carried only.
+# Not the WKT path. Not a CST carrier. No new witness.
+theories/IntakeCarried.v
 # Walker face of ISO CLOTHOID normalizer 1. Hit implies cloth_wf;
 # red declines and the non-locked sample. No new witness.
 theories/IsoClothoidIntakeMap.v
