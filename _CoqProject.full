@@ -2972,11 +2972,18 @@ theories/SidecarSpiralEgg.v
 # Host/pure-R. 3-axiom. No Atan2.v. Not a CircGamma remint.
 # Required by IntakeWalker CircUnknown. No Admitted.
 theories/IntakeAngles.v
+# ISO CLOTHOID normalizer 1 (IsoClothoidIntake). Direct field
+# copy into ClothoidEgg; similarity frame or named Decline.
+# claimId 0007-intake-mkclothoid, not reminted. No Admitted.
+theories/IsoClothoidIntake.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
 # keyword. No Admitted.
 theories/IntakeWalker.v
+# Walker face of ISO CLOTHOID normalizer 1. Hit implies cloth_wf;
+# red declines and the non-locked sample. No new witness.
+theories/IsoClothoidIntakeMap.v
 # ADR-0007 SQL/MM signed tag maps (SqlMmSignedTag).
 # τ on eggs; ρ on IntakeWalker productions; τ=μ after
 # singleton bags. CIRCLE iff |sweep|=2π. κ: 2/8 or none.

@@ -19,9 +19,9 @@
    Full-span is CIRCLE and not CIRCULARSTRING. CIRCLE CST and
    full-span CIRCULARSTRING CST share one MkCirc
    (IntakeWalker.ogc_iso_circle_same_egg); τ classifies that
-   egg as CIRCLE. ISO / JTS clothoid spellings are not
-   arguments of τ — they are two intakes of the same
-   ClothoidEgg.
+   egg as CIRCLE. τ does not read ISO fields. Locked JTS and
+   the locked ISO fixture share one ClothoidEgg; other ISO
+   fields are a different egg.
 
    κ : T_signed ⇀ ℕ  (Table 15 on names that have a signed code)
      LINESTRING ↦ 2    CIRCULARSTRING ↦ 8
@@ -80,12 +80,12 @@
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
-     Assisted-by: Cursor Grok 4.6
+     Assisted-by: Cursor Grok 4.6, Cursor Grok 4.7
    ========================================================================== *)
 
 From Stdlib Require Import Reals PeanoNat List.
 From NTS.Proofs Require Import Distance SheetHenCook ClothoidCookMkClothoid.
-From NTS.Proofs Require Import CircularCookMkCirc IntakeAngles IntakeWalker.
+From NTS.Proofs Require Import CircularCookMkCirc IntakeAngles IntakeWalker IsoClothoidIntake.
 Import ListNotations.
 
 (* -------------------------------------------------------------------------- *)
@@ -437,8 +437,8 @@ Definition bag_eggs (b : ShcBag) : list Egg :=
 Definition intake_rho (c : TaggedCst) (e : Egg) : option SqlMmSignedTag :=
   match c with
   | TLineString _ => Some TagLineString
-  | TClothoidJts => Some TagClothoid
-  | TClothoidIso => Some TagClothoid
+  | TClothoidJts _ _ _ => Some TagClothoid
+  | TClothoidIso _ => Some TagClothoid
   | TCircle _ _ => Some TagCircle
   | TCircularString _ _ =>
       match e with
@@ -455,8 +455,8 @@ Definition cst_prod_tag (c : TaggedCst) : option SqlMmSignedTag :=
   | TLineString _ => Some TagLineString
   | TCircularString _ _ => Some TagCircularString
   | TCircle _ _ => Some TagCircle
-  | TClothoidJts => Some TagClothoid
-  | TClothoidIso => Some TagClothoid
+  | TClothoidJts _ _ _ => Some TagClothoid
+  | TClothoidIso _ => Some TagClothoid
   | TPoint _ | TCompoundCurve _ | TGeodesicString _
   | TSpiralCurve | TOutOfSlice => None
   end.
@@ -493,8 +493,8 @@ Definition cst_prod_name (c : TaggedCst) : CstProdName :=
   | TLineString _ => PiLineString
   | TCircularString _ _ => PiCircularString
   | TCircle _ _ => PiCircle
-  | TClothoidJts => PiClothoid
-  | TClothoidIso => PiClothoid
+  | TClothoidJts _ _ _ => PiClothoid
+  | TClothoidIso _ => PiClothoid
   | TGeodesicString _ => PiGeodesicString
   | TPoint _ | TCompoundCurve _ | TSpiralCurve | TOutOfSlice => PiUnsigned
   end.
@@ -640,12 +640,12 @@ Qed.
 
 Lemma tau_mu_locked_clothoid_iso :
   exists b e,
-    intake_map default_sheet TClothoidIso = IntakeBag b /\
+    intake_map default_sheet (TClothoidIso locked_iso_clothoid) = IntakeBag b /\
     bag_eggs b = [e] /\
     first_slice_tag e = Some TagClothoid /\
-    intake_rho TClothoidIso e = Some TagClothoid.
+    intake_rho (TClothoidIso locked_iso_clothoid) e = Some TagClothoid.
 Proof.
-  exists (map_clothoid default_sheet).
+  exists (clothoid_bag default_sheet locked_clothoid_egg).
   exists (MkClothoid locked_clothoid_egg).
   split; [exact iso_clothoid_maps|].
   split; [reflexivity|].
@@ -654,13 +654,13 @@ Qed.
 
 Lemma tau_mu_locked_clothoid_jts :
   exists b e,
-    intake_map default_sheet TClothoidJts = IntakeBag b /\
+    intake_map default_sheet example5_jts_cst = IntakeBag b /\
     bag_eggs b = [e] /\
     e = MkClothoid locked_clothoid_egg /\
     first_slice_tag e = Some TagClothoid /\
-    intake_rho TClothoidJts e = Some TagClothoid.
+    intake_rho example5_jts_cst e = Some TagClothoid.
 Proof.
-  exists (map_clothoid default_sheet).
+  exists (clothoid_bag default_sheet locked_clothoid_egg).
   exists (MkClothoid locked_clothoid_egg).
   split; [exact jts_clothoid_maps|].
   split; [reflexivity|].
@@ -906,11 +906,11 @@ Theorem ticket_sqlmm_tau_mu_qed_or_qex :
    bag_eggs (map_cs_full default_sheet)
      = bag_eggs (map_circle default_sheet) /\
    (exists b e,
-      intake_map default_sheet TClothoidIso = IntakeBag b /\
+      intake_map default_sheet (TClothoidIso locked_iso_clothoid) = IntakeBag b /\
       bag_eggs b = [e] /\
       first_slice_tag e = Some TagClothoid) /\
    (exists b e,
-      intake_map default_sheet TClothoidJts = IntakeBag b /\
+      intake_map default_sheet example5_jts_cst = IntakeBag b /\
       bag_eggs b = [e] /\
       first_slice_tag e = Some TagClothoid) /\
    (exists b e,
@@ -1017,3 +1017,40 @@ Print Assumptions sqlmm_tau_eq_pi_fullspan_cs_missing.
 Print Assumptions tau_mu_compound_not_singleton.
 Print Assumptions ticket_sqlmm_tau_mu_qed_or_qex.
 Print Assumptions ticket_sqlmm_factory_emit_qed_or_qex.
+Print Assumptions leb_true_le.
+Print Assumptions le_leb_true.
+Print Assumptions le_12_excl_13.
+Print Assumptions le_13_18.
+Print Assumptions tag_of_signed_wkb_none_ge_13.
+Print Assumptions kappa_signed_when_defined.
+Print Assumptions kappa_circle_none.
+Print Assumptions kappa_clothoid_none.
+Print Assumptions kappa_linestring_2.
+Print Assumptions kappa_circularstring_8.
+Print Assumptions two_pos.
+Print Assumptions two_neq_0.
+Print Assumptions half_pi_pos.
+Print Assumptions half_pi_lt_pi.
+Print Assumptions pi_lt_two_pi.
+Print Assumptions rabs_half_pi.
+Print Assumptions rabs_two_pi.
+Print Assumptions half_pi_abs_neq_two_pi.
+Print Assumptions first_slice_tag_chord.
+Print Assumptions first_slice_tag_clothoid.
+Print Assumptions tau_clothoid_ext.
+Print Assumptions tau_circ_full.
+Print Assumptions tau_circ_not_full.
+Print Assumptions tau_locked_chord.
+Print Assumptions locked_sqlmm_quarter_is_circ_A.
+Print Assumptions locked_sqlmm_full_is_intake_full.
+Print Assumptions cst_prod_tag_circularstring.
+Print Assumptions cst_prod_tag_circle.
+Print Assumptions pi_linestring.
+Print Assumptions tau_mu_locked_clothoid_jts.
+Print Assumptions sqlmm_wkt_emit_missing.
+Print Assumptions sqlmm_wkb_emit_missing.
+Print Assumptions sqlmm_antlr_missing.
+Print Assumptions sqlmm_no_new_keyword.
+Print Assumptions sqlmm_no_first_cook_expand.
+Print Assumptions sqlmm_no_nurbs_first_cook.
+Print Assumptions sqlmm_no_rho.

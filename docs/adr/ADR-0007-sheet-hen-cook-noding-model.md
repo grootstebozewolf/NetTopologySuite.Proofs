@@ -1639,7 +1639,7 @@ and first-cook expand are the first-cook letter
 Java visitor (`tools/WktIntakeWalker`) stays in sync. No new
 oracle keyword (ADR-0006).
 
-**QED.** `IntakeMkClothoid` inhabits. ISO and JTS clothoid CST
+**QED.** `IntakeMkClothoid` inhabits. ISO and example5 JTS CST
 → `IntakeBag` whose chickens use `MkClothoid` (`EggClothoid`).
 Same bag / same egg. `example5` no longer Declines ISO clothoid.
 
