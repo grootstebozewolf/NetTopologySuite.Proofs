@@ -2,57 +2,115 @@
    NetTopologySuite.Proofs.ClothoidCookMkClothoid
    ----------------------------------------------------------------------------
    ADR-0007 letter: clothoid×clothoid first-cook / Hit arm
-   (claimId 0007-clothoid-first-cook).
+   (claimId 0007-clothoid-first-cook). Same claimId, witness, ticket.
 
-   Host interpolant is the closed-form small-angle clothoid
-   (cos θ≈1, sin θ≈θ) in SheetHenClothoidEgg — not Fresnel, not
-   chord-parameter. Raw mkClothoidEgg is the record constructor;
-   the public host ctor is mk_cloth (sets p1:=γ(1)). Do not hide
-   the record. Cook fixtures go through mk_cloth only. Algebraic
-   model vs instance: locked A/B keep |θ| small on [0,1]
-   (named heading bounds).
+   Host gamma is the Fresnel clothoid in SheetHenClothoidEgg. The
+   parameterisation is OUR choice (egg header), not an ISO formula.
+   Planar. sigma is the sign of ref1×ref2. Endpoints are gamma(0)
+   and gamma(1). Fixtures go through mk_cloth only.
 
-   Fixture: two short bent clothoids (distinct x(t), ti≠tj).
-     A: p0=(0,0) κ: 0→1/10 L=1 θ0=1/20  γA(t)=(t, t/20+t³/60)
-     B: p0=(0,91/1620) κ: 0→-1/20 L=2 θ0=-1/40
-        γB(t)=(2t, 91/1620 − t/20 − t³/30)
-   Images cross at (ti,tj)=(2/3,1/3) → Hit (2/3, 31/810).
-   Endpoint-chords meet at named (14/27, 14/405) ≠ Hit.
-   locked_cloth_eval_neq_endpoint_chord: γ(ti) ≠ lerp(γ(0),γ(1))(ti)
-   (fails if cloth_eval is endpoint lerp). try_cook_hit = Some. bent ≠ zero-κ.
+   Fixture: mirror Fresnel windows, A = 1.
+     A: east frame at (-1/2, 0), sd = 0, ed = 1.
+        gamma_A(t) = (-1/2 + Cx(t), Cy(t))
+     B: west frame at (1/2, 0), sd = 1, ed = 0 (sigma = -1).
+        gamma_B(u) = (1/2 - Cx(1-u), Cy(1-u))
+   ti is the IVT root of Cx(t) = 1/2 on [1/2, 3/5]; tj = 1 - ti.
+   Both images meet at (0, Cy(ti)). That point is not the named
+   endpoint-chord crossing locked_cloth_chord_x, and gamma_A(ti) is
+   not the endpoint chord sampled at ti (that obligation fails if
+   gamma were endpoint lerp).
 
    Mode D host joint; first-cook interior Hit stays A×B;
    this is split-children meet, not example5.
 
    MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
    stays Decline. SIN / ellipse / spiral / geodesic stay out of
-   first cook. ρ / Campaign / Fresnel-as-noding stay parked.
+   first cook. rho / Campaign / Fresnel-as-noding stay parked.
+   first_cook_scope is not expanded.
 
    WITNESS topic: overlay · claimId: 0007-clothoid-first-cook
    witness: 0007-clothoid-first-cook
    board: ADR-0007
-   3-axiom. No Admitted / Axiom / Parameter.
+   The integral is LipInt (3-axiom, no RiemannInt) plus IVT.
+   No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
-     Assisted-by: Cursor Grok 4.6
+     Assisted-by: Cursor Grok 4.7
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lra.
+From Stdlib Require Import Reals Lra Ranalysis5.
 From NTS.Proofs Require Import Distance SheetHenCook.
 Local Open Scope R_scope.
 
 Definition locked_cloth_A : ClothoidEgg :=
-  mk_cloth (mkPoint 0 0) 0 (1 / 10) 1 (1 / 20).
+  mk_cloth (place_east (mkPoint (-1 / 2) 0)) 1 0 1 None None.
 
 Definition locked_cloth_B : ClothoidEgg :=
-  mk_cloth (mkPoint 0 (91 / 1620)) 0 (-1 / 20) 2 (-1 / 40).
+  mk_cloth (place_west (mkPoint (1 / 2) 0)) 1 1 0 None None.
 
-Definition locked_cloth_hit_pt : Point := mkPoint (2 / 3) (31 / 810).
-Definition locked_cloth_ti : R := 2 / 3.
-Definition locked_cloth_tj : R := 1 / 3.
-Definition locked_cloth_chord_x : Point := mkPoint (14 / 27) (14 / 405).
+Definition locked_cloth_gap (t : R) : R := cloth_Cx t - 1 / 2.
+
+Lemma half_lt_three_fifth : 1 / 2 < 3 / 5.
+Proof. lra. Qed.
+
+Lemma locked_cloth_gap_cont :
+  forall a, 1 / 2 <= a <= 3 / 5 -> continuity_pt locked_cloth_gap a.
+Proof.
+  intros a Ha. unfold locked_cloth_gap. apply cloth_axis_gap_cont. exact Ha.
+Qed.
+
+Lemma locked_cloth_gap_half : locked_cloth_gap (1 / 2) < 0.
+Proof.
+  unfold locked_cloth_gap. pose proof cloth_Cx_half_lt. lra.
+Qed.
+
+Lemma locked_cloth_gap_35 : 0 < locked_cloth_gap (3 / 5).
+Proof.
+  unfold locked_cloth_gap. pose proof cloth_Cx_three_fifth_gt. lra.
+Qed.
+
+Definition locked_cloth_ti_sig :
+  {z : R | 1 / 2 <= z <= 3 / 5 /\ locked_cloth_gap z = 0} :=
+  IVT_interv locked_cloth_gap (1 / 2) (3 / 5)
+    locked_cloth_gap_cont half_lt_three_fifth
+    locked_cloth_gap_half locked_cloth_gap_35.
+
+Definition locked_cloth_ti : R := proj1_sig locked_cloth_ti_sig.
+
+Definition locked_cloth_tj : R := 1 - locked_cloth_ti.
+
+Lemma locked_cloth_ti_bounds : 1 / 2 <= locked_cloth_ti <= 3 / 5.
+Proof.
+  unfold locked_cloth_ti. apply (proj1 (proj2_sig locked_cloth_ti_sig)).
+Qed.
+
+Lemma locked_cloth_ti_Cx : cloth_Cx locked_cloth_ti = 1 / 2.
+Proof.
+  unfold locked_cloth_ti.
+  pose proof (proj2 (proj2_sig locked_cloth_ti_sig)) as Hz.
+  unfold locked_cloth_gap in Hz. simpl in Hz.
+  apply Rminus_diag_uniq. exact Hz.
+Qed.
+
+Lemma locked_cloth_ti_gt_half : 1 / 2 < locked_cloth_ti.
+Proof.
+  destruct (proj1 locked_cloth_ti_bounds) as [Hlt|Heq].
+  - exact Hlt.
+  - exfalso.
+    assert (cloth_Cx (1 / 2) = 1 / 2).
+    { replace (cloth_Cx (1 / 2)) with (cloth_Cx locked_cloth_ti).
+      - apply locked_cloth_ti_Cx.
+      - rewrite <- Heq. reflexivity. }
+    pose proof cloth_Cx_half_lt. lra.
+Qed.
+
+Definition locked_cloth_hit_pt : Point :=
+  mkPoint 0 (cloth_Cy locked_cloth_ti).
+
+Definition locked_cloth_chord_x : Point :=
+  mkPoint 0 (cloth_Cy 1 / (2 * cloth_Cx 1)).
 
 Definition locked_cloth_ck1 : Chicken :=
   mkChicken 0%nat 1%nat (MkClothoid locked_cloth_A).
@@ -63,11 +121,19 @@ Definition locked_cloth_ck2 : Chicken :=
 Lemma locked_cloth_A_wf : cloth_wf locked_cloth_A.
 Proof.
   unfold locked_cloth_A. apply cloth_wf_mk.
+  - lra.
+  - rewrite east_h2. lra.
+  - rewrite east_cross. lra.
+  - left. split; reflexivity.
 Qed.
 
 Lemma locked_cloth_B_wf : cloth_wf locked_cloth_B.
 Proof.
   unfold locked_cloth_B. apply cloth_wf_mk.
+  - lra.
+  - rewrite west_h2. lra.
+  - rewrite west_cross. lra.
+  - left. split; reflexivity.
 Qed.
 
 Lemma locked_cloth_A_p1_is_gamma1 :
@@ -83,21 +149,15 @@ Proof.
 Qed.
 
 Lemma locked_cloth_A_th :
-  forall t, cloth_th locked_cloth_A t = 1 / 20 + (t * t) / 20.
+  forall t, cloth_th locked_cloth_A t = t * t / 2.
 Proof.
-  intros t.
-  unfold locked_cloth_A, mk_cloth, cloth_th.
-  cbn [cloth_th0 cloth_L cloth_k0 cloth_k1].
-  field.
+  intros t. unfold locked_cloth_A. apply th_east_01.
 Qed.
 
 Lemma locked_cloth_B_th :
-  forall t, cloth_th locked_cloth_B t = -1 / 40 - (t * t) / 20.
+  forall t, cloth_th locked_cloth_B t = - (1 - t) * (1 - t) / 2.
 Proof.
-  intros t.
-  unfold locked_cloth_B, mk_cloth, cloth_th.
-  cbn [cloth_th0 cloth_L cloth_k0 cloth_k1].
-  field.
+  intros t. unfold locked_cloth_B. apply th_west_10.
 Qed.
 
 Lemma locked_unit_sqr :
@@ -110,55 +170,72 @@ Proof.
 Qed.
 
 Lemma locked_cloth_A_heading_small :
-  forall t, 0 <= t <= 1 -> Rabs (cloth_th locked_cloth_A t) <= 1 / 10.
+  forall t, 0 <= t <= 1 -> Rabs (cloth_th locked_cloth_A t) <= 1 / 2.
 Proof.
   intros t Ht.
   rewrite locked_cloth_A_th.
   pose proof (locked_unit_sqr t Ht) as Ht2.
-  rewrite Rabs_right by lra.
-  lra.
+  assert (Hnn : 0 <= t * t / 2).
+  { destruct Ht2 as [H0 _]. unfold Rdiv.
+    apply Rmult_le_pos; [exact H0 | apply Rlt_le; apply Rinv_0_lt_compat; lra]. }
+  rewrite (Rabs_right _ (Rle_ge _ _ Hnn)).
+  destruct Ht2 as [_ H1].
+  unfold Rdiv. apply Rmult_le_compat_r;
+    [apply Rlt_le; apply Rinv_0_lt_compat; lra | exact H1].
 Qed.
 
 Lemma locked_cloth_B_heading_small :
-  forall t, 0 <= t <= 1 -> Rabs (cloth_th locked_cloth_B t) <= 3 / 40.
+  forall t, 0 <= t <= 1 -> Rabs (cloth_th locked_cloth_B t) <= 1 / 2.
 Proof.
   intros t Ht.
   rewrite locked_cloth_B_th.
-  pose proof (locked_unit_sqr t Ht) as Ht2.
-  rewrite Rabs_left1 by lra.
-  lra.
+  assert (Ht1 : 0 <= 1 - t <= 1) by lra.
+  pose proof (locked_unit_sqr (1 - t) Ht1) as Ht2.
+  assert (Hnn : - (1 - t) * (1 - t) / 2 <= 0).
+  { destruct Ht2 as [H0 _]. unfold Rdiv.
+    assert (0 <= (1 - t) * (1 - t) / 2).
+    { apply Rmult_le_pos; [exact H0 | apply Rlt_le; apply Rinv_0_lt_compat; lra]. }
+    lra. }
+  rewrite (Rabs_left1 _ Hnn).
+  destruct Ht2 as [_ H1].
+  replace (- (- (1 - t) * (1 - t) / 2)) with ((1 - t) * (1 - t) / 2) by field.
+  unfold Rdiv. apply Rmult_le_compat_r;
+    [apply Rlt_le; apply Rinv_0_lt_compat; lra | exact H1].
 Qed.
 
 Lemma locked_cloth_ti_in_01 : 0 <= locked_cloth_ti <= 1.
 Proof.
-  unfold locked_cloth_ti. lra.
+  pose proof locked_cloth_ti_bounds. lra.
 Qed.
 
 Lemma locked_cloth_tj_in_01 : 0 <= locked_cloth_tj <= 1.
 Proof.
-  unfold locked_cloth_tj. lra.
+  unfold locked_cloth_tj.
+  pose proof locked_cloth_ti_gt_half.
+  pose proof locked_cloth_ti_bounds. lra.
 Qed.
 
 Lemma locked_cloth_ti_neq_tj : locked_cloth_ti <> locked_cloth_tj.
 Proof.
-  unfold locked_cloth_ti, locked_cloth_tj. lra.
+  unfold locked_cloth_tj. pose proof locked_cloth_ti_gt_half. lra.
 Qed.
 
 Lemma locked_cloth_A_at_ti :
   cloth_eval locked_cloth_A locked_cloth_ti = locked_cloth_hit_pt.
 Proof.
-  unfold locked_cloth_A, locked_cloth_ti, locked_cloth_hit_pt, mk_cloth,
-         cloth_eval, cloth_eval_seed, cloth_y_off_seed.
-  cbn [px py cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0].
+  unfold locked_cloth_A, locked_cloth_hit_pt.
+  rewrite eval_east_01. cbn [px py].
+  rewrite locked_cloth_ti_Cx.
   apply (f_equal2 mkPoint); field.
 Qed.
 
 Lemma locked_cloth_B_at_tj :
   cloth_eval locked_cloth_B locked_cloth_tj = locked_cloth_hit_pt.
 Proof.
-  unfold locked_cloth_B, locked_cloth_tj, locked_cloth_hit_pt, mk_cloth,
-         cloth_eval, cloth_eval_seed, cloth_y_off_seed.
-  cbn [px py cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0].
+  unfold locked_cloth_B, locked_cloth_tj, locked_cloth_hit_pt.
+  rewrite eval_west_10. cbn [px py].
+  replace (1 - (1 - locked_cloth_ti)) with locked_cloth_ti by ring.
+  rewrite locked_cloth_ti_Cx.
   apply (f_equal2 mkPoint); field.
 Qed.
 
@@ -184,26 +261,94 @@ Proof.
   split; [exact locked_on_cloth_A | exact locked_on_cloth_B].
 Qed.
 
-(* Endpoint-chords of γ(0)–γ(1) meet at named (14/27, 14/405) ≠ Hit. *)
+Lemma locked_A_at_0 :
+  cloth_eval locked_cloth_A 0 = mkPoint (-1 / 2) 0.
+Proof.
+  unfold locked_cloth_A. rewrite eval_east_01. cbn [px py].
+  rewrite cloth_Cx_0, cloth_Cy_0. apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_A_at_1 :
+  cloth_eval locked_cloth_A 1 =
+    mkPoint (-1 / 2 + cloth_Cx 1) (cloth_Cy 1).
+Proof.
+  unfold locked_cloth_A. rewrite eval_east_01. cbn [px py].
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_B_at_0 :
+  cloth_eval locked_cloth_B 0 =
+    mkPoint (1 / 2 - cloth_Cx 1) (cloth_Cy 1).
+Proof.
+  unfold locked_cloth_B. rewrite eval_west_10. cbn [px py].
+  replace (1 - 0) with 1 by ring.
+  apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma locked_B_at_1 :
+  cloth_eval locked_cloth_B 1 = mkPoint (1 / 2) 0.
+Proof.
+  unfold locked_cloth_B. rewrite eval_west_10. cbn [px py].
+  replace (1 - 1) with 0 by ring.
+  rewrite cloth_Cx_0, cloth_Cy_0. apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma cloth_Cx_1_nz : cloth_Cx 1 <> 0.
+Proof.
+  pose proof cloth_Cx_ge_7_8. lra.
+Qed.
+
+(* Endpoint chords meet at the named point locked_cloth_chord_x,
+   which is not the interior Hit. *)
 Lemma locked_mkclothoid_hit_neq_endpoint_chord_x :
   let ca := mkChordEgg (cloth_p0 locked_cloth_A) (cloth_p1 locked_cloth_A) in
   let cb := mkChordEgg (cloth_p0 locked_cloth_B) (cloth_p1 locked_cloth_B) in
-  chord_eval ca (14 / 27) = locked_cloth_chord_x /\
-  chord_eval cb (7 / 27) = locked_cloth_chord_x /\
+  let sA := 1 / (2 * cloth_Cx 1) in
+  let sB := 1 - sA in
+  chord_eval ca sA = locked_cloth_chord_x /\
+  chord_eval cb sB = locked_cloth_chord_x /\
   locked_cloth_chord_x <> locked_cloth_hit_pt.
 Proof.
-  unfold locked_cloth_A, locked_cloth_B, locked_cloth_hit_pt,
-         locked_cloth_chord_x, mk_cloth, cloth_eval_seed, cloth_y_off_seed,
-         chord_eval.
-  cbn [px py ce_p0 ce_p1 cloth_p0 cloth_p1 cloth_k0 cloth_k1 cloth_L cloth_th0].
+  pose proof cloth_Cx_1_nz as Hnz.
+  unfold locked_cloth_chord_x, locked_cloth_hit_pt, cloth_p0, cloth_p1.
   split; [|split].
-  - apply (f_equal2 mkPoint); field.
-  - apply (f_equal2 mkPoint); field.
-  - intros H. apply (f_equal px) in H. cbn [px] in H. lra.
+  - unfold chord_eval. rewrite locked_A_at_0, locked_A_at_1.
+    cbn [ce_p0 ce_p1 px py].
+    apply (f_equal2 mkPoint); field; exact Hnz.
+  - unfold chord_eval. rewrite locked_B_at_0, locked_B_at_1.
+    cbn [ce_p0 ce_p1 px py].
+    apply (f_equal2 mkPoint); field; exact Hnz.
+  - intros Heq. apply (f_equal py) in Heq. cbn [py] in Heq.
+    assert (Hti : 0 <= locked_cloth_ti <= 3 / 5).
+    { pose proof locked_cloth_ti_bounds. lra. }
+    assert (Hy_ti : cloth_Cy locked_cloth_ti <= cloth_Cy (3 / 5)).
+    { apply cloth_Cy_mono_01; lra. }
+    assert (Hy35 : cloth_Cy (3 / 5) <= 27 / 750) by apply cloth_Cy_three_fifth_le.
+    assert (Hlt : 27 / 750 < 55 / 672).
+    { assert (27 / 750 = 18144 / 504000) by field.
+      assert (55 / 672 = 41250 / 504000) by field.
+      lra. }
+    pose proof cloth_Cy_ge_55_336 as Hcy.
+    assert (Heq672 : 55 / 336 / 2 = 55 / 672) by field.
+    assert (Hhalf : 55 / 672 <= cloth_Cy 1 / 2).
+    { rewrite <- Heq672. unfold Rdiv.
+      apply Rmult_le_compat_r;
+        [apply Rlt_le; apply Rinv_0_lt_compat; lra | exact Hcy]. }
+    assert (Hcx : 7 / 8 <= cloth_Cx 1 <= 1).
+    { split; [apply cloth_Cx_ge_7_8 | apply cloth_Cx_le_1]. }
+    assert (Hcypos : 0 < cloth_Cy 1) by lra.
+    assert (Hscale : cloth_Cy 1 / 2 <= cloth_Cy 1 / (2 * cloth_Cx 1)).
+    { unfold Rdiv. apply Rmult_le_compat_l; [lra|].
+      apply Rinv_le_contravar.
+      - apply Rmult_lt_0_compat; lra.
+      - replace 2 with (2 * 1) at 2 by field.
+        apply Rmult_le_compat_l; [lra | apply (proj2 Hcx)]. }
+    lra.
 Qed.
 
-(* Mirror of circle locked_circ_eval_neq_endpoint_chord: γ at ti is
-   not the endpoint-chord sample at the same parameter. *)
+(* gamma(ti) is not the endpoint chord at the same parameter.
+   An endpoint lerp would make this equality, so the obligation fails
+   under that reading of eval. *)
 Lemma locked_cloth_eval_neq_endpoint_chord :
   cloth_eval locked_cloth_A locked_cloth_ti
     <> chord_eval
@@ -211,11 +356,38 @@ Lemma locked_cloth_eval_neq_endpoint_chord :
                      (cloth_eval locked_cloth_A 1))
          locked_cloth_ti.
 Proof.
-  intros H.
-  apply (f_equal py) in H.
-  unfold locked_cloth_A, locked_cloth_ti, mk_cloth,
-         cloth_eval, cloth_eval_seed, cloth_y_off_seed, chord_eval in H.
-  cbn [px py ce_p0 ce_p1 cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0] in H.
+  intros Heq.
+  apply (f_equal py) in Heq.
+  unfold chord_eval in Heq.
+  rewrite locked_A_at_0, locked_A_at_1 in Heq.
+  rewrite locked_cloth_A_at_ti in Heq.
+  unfold locked_cloth_hit_pt in Heq.
+  cbn [ce_p0 ce_p1 px py] in Heq.
+  assert (Hti : 0 <= locked_cloth_ti <= 3 / 5).
+  { pose proof locked_cloth_ti_bounds. lra. }
+  assert (Hy_ti : cloth_Cy locked_cloth_ti <= 27 / 750).
+  { apply Rle_trans with (cloth_Cy (3 / 5)).
+    - apply cloth_Cy_mono_01; lra.
+    - apply cloth_Cy_three_fifth_le. }
+  assert (Hlt : 27 / 750 < 55 / 672).
+  { assert (27 / 750 = 18144 / 504000) by field.
+    assert (55 / 672 = 41250 / 504000) by field. lra. }
+  pose proof cloth_Cy_ge_55_336 as Hcy.
+  assert (Heq672 : 55 / 336 / 2 = 55 / 672) by field.
+  assert (Hhalf : 55 / 672 <= / 2 * cloth_Cy 1).
+  { rewrite <- Heq672.
+    replace (55 / 336 / 2) with (/ 2 * (55 / 336)) by field.
+    apply Rmult_le_compat_l;
+      [apply Rlt_le; apply Rinv_0_lt_compat; lra | exact Hcy]. }
+  pose proof locked_cloth_ti_gt_half as Hgt.
+  assert (Hcypos : 0 < cloth_Cy 1) by lra.
+  assert (Hinv : / 2 < locked_cloth_ti).
+  { assert (/ 2 = 1 / 2) by field. lra. }
+  assert (Hbig : / 2 * cloth_Cy 1 < locked_cloth_ti * cloth_Cy 1).
+  { apply Rmult_lt_compat_r; [exact Hcypos | exact Hinv]. }
+  assert (Hchord : (1 - locked_cloth_ti) * 0
+                    + locked_cloth_ti * cloth_Cy 1
+                    = locked_cloth_ti * cloth_Cy 1) by ring.
   lra.
 Qed.
 
@@ -229,18 +401,23 @@ Proof.
   split; [exact locked_cloth_A_wf|].
   split; [exact locked_cloth_B_wf|].
   split; [exact locked_clothoid_egg_wf|].
-  split; [apply cloth_wf_split_left|apply cloth_wf_split_right].
+  split; [apply cloth_wf_split_left; exact locked_cloth_A_wf
+         |apply cloth_wf_split_right; exact locked_cloth_A_wf].
 Qed.
 
 Lemma cloth_split_changes_k_on_locked_A :
-  cloth_k1 (fst (cloth_split locked_cloth_A locked_cloth_ti))
-    <> cloth_k1 locked_cloth_A /\
-  cloth_k0 (snd (cloth_split locked_cloth_A locked_cloth_ti))
-    <> cloth_k0 locked_cloth_A.
+  cloth_ed (fst (cloth_split locked_cloth_A locked_cloth_ti))
+    <> cloth_ed locked_cloth_A /\
+  cloth_sd (snd (cloth_split locked_cloth_A locked_cloth_ti))
+    <> cloth_sd locked_cloth_A.
 Proof.
-  unfold locked_cloth_A, locked_cloth_ti, cloth_split, cloth_k_at, mk_cloth.
-  cbn [fst snd cloth_k0 cloth_k1].
-  split; lra.
+  unfold cloth_split, locked_cloth_A. cbn [fst snd].
+  unfold mk_cloth. cbn [cloth_sd cloth_ed].
+  split.
+  - replace (0 + locked_cloth_ti * (1 - 0)) with locked_cloth_ti by ring.
+    pose proof locked_cloth_ti_bounds. lra.
+  - replace (0 + locked_cloth_ti * (1 - 0)) with locked_cloth_ti by ring.
+    pose proof locked_cloth_ti_gt_half. lra.
 Qed.
 
 Definition locked_mkclothoid_hit : IResult :=
@@ -326,11 +503,11 @@ Proof.
   split; [split; [lra|reflexivity]|split; [lra|reflexivity]].
 Qed.
 
-(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"locked_mkclothoid_I_ok","title":"Host I_ok Hits two MkClothoid chickens on the locked crossing small-angle clothoid pair","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"locked_mkclothoid_I_ok","title":"Host I_ok Hits two MkClothoid chickens on the locked crossing Fresnel clothoid pair","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
 
 (* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"cooked_mkclothoid_try","title":"try_cook_hit mints MkClothoid hens on the locked clothoid Hit","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
 
-(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"ticket_0007_clothoid_first_cook_qed_or_qex","title":"Clothoid times clothoid is first cook with a locked MkClothoid IHit that try_cook_hit mints (QED) or clothoid times clothoid stays QEX (QEX); discharged QED; small-angle interpolant not Fresnel not chord-parameter; tags and mixed stay Decline","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-clothoid-first-cook","topic":"overlay","lemma":"ticket_0007_clothoid_first_cook_qed_or_qex","title":"Clothoid times clothoid is first cook with a locked MkClothoid IHit that try_cook_hit mints (QED) or clothoid times clothoid stays QEX (QEX); discharged QED; Fresnel interpolant not chord-parameter; tags and mixed stay Decline","file":"theories/ClothoidCookMkClothoid.v","witness":"0007-clothoid-first-cook","board":"ADR-0007"} *)
 Theorem ticket_0007_clothoid_first_cook_qed_or_qex :
   (first_cook_scope EggClothoid EggClothoid /\
    interpolant_pair (MkClothoid locked_cloth_A) (MkClothoid locked_cloth_B) /\
@@ -455,23 +632,23 @@ Qed.
 Lemma locked_cloth_AB_not_joint :
   ~ cloth_joint locked_cloth_A locked_cloth_B.
 Proof.
-  unfold cloth_joint.
-  intros H.
+  unfold cloth_joint. intros H.
   apply (f_equal px) in H.
-  unfold locked_cloth_A, locked_cloth_B, mk_cloth,
-         cloth_eval, cloth_eval_seed in H.
-  cbn [px py cloth_p0 cloth_k0 cloth_k1 cloth_L cloth_th0] in H.
-  lra.
+  rewrite locked_A_at_1, locked_B_at_0 in H.
+  cbn [px] in H.
+  pose proof cloth_Cx_ge_7_8. lra.
 Qed.
 
 Lemma locked_cloth_joint_hit_neq_first_cook_hit :
   cloth_joint_hit locked_cloth_host_1 locked_cloth_host_2
     <> locked_mkclothoid_hit.
 Proof.
+  assert (Hti : locked_cloth_ti < 1).
+  { pose proof locked_cloth_ti_bounds. lra. }
+  assert (Htj : 0 < locked_cloth_tj).
+  { unfold locked_cloth_tj. pose proof locked_cloth_ti_bounds. lra. }
   unfold cloth_joint_hit, locked_mkclothoid_hit.
-  intros H.
-  inversion H.
-  lra.
+  intros H. inversion H. lra.
 Qed.
 
 Print Assumptions cloth_eval_at_0.
