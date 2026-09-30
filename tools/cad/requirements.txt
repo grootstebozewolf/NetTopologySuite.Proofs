@@ -1,0 +1,6 @@
+# Dev/test dependencies for tools/cad only. Not a Coq or runtime dependency.
+# ezdxf is MIT and is called as a DXF reader. Nothing from ezdxf, or from
+# any GPL/LGPL CAD library, is vendored or ported into this repository.
+ezdxf==1.4.4
+jsonschema==4.26.0
+pytest==8.4.2
