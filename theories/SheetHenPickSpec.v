@@ -2,10 +2,12 @@
    NetTopologySuite.Proofs.SheetHenPickSpec
    ----------------------------------------------------------------------------
    Headline: pick_bag_spec. claimId: 0007-loop-letter5-pick.
-   Witness: pick_bag_spec. Consumer: letter5_obligation.
+   Witness: pick_bag_spec. Consumer: letter5_obligation, bag_run_arm_spec.
    The concrete pick_bag has three arms. ArmHit is a returned hit.
    ArmDecline is a live IDecline pair, and pick_bag returns None.
    ArmStop is the None arm: no live IDecline pair, so rho is 0.
+   bag_run_arm steps on ArmHit, takes letter 1 StepIDecline to
+   BagDeclined on ArmDecline, and stops on ArmStop. bag_run is unchanged.
    Proved from scan completeness and hit_param_line_line,
    hit_param_line_circle, hit_param_circle_circle (via adm_list_covers).
    Does not remint 0007-loop-letter3-strict.
@@ -527,5 +529,222 @@ Print Assumptions declines_at_spec.
 Print Assumptions pair_ok_wf.
 Print Assumptions no_hit_pair.
 Print Assumptions pick_none_rho0.
+(* -------------------------------------------------------------------------- *)
+(* bag_run stays letter 3. bag_run_arm is the arm runner: hit steps, decline  *)
+(* goes to BagDeclined by letter 1 StepIDecline, stop stays.                  *)
+(* -------------------------------------------------------------------------- *)
+
+Definition step_decline (b : SheetBag) : SheetBag :=
+  match b with
+  | BagLive sh _ => BagDeclined sh
+  | BagDeclined sh => BagDeclined sh
+  end.
+
+Lemma arm_decline_step : forall b,
+  bag_inv b ->
+  pick_arm b = ArmDecline ->
+  bag_decline_step b (step_decline b).
+Proof.
+  intros [sh pcs|sh] Hinv Harm.
+  - unfold pick_arm in Harm.
+    destruct (pick pcs) as [w|] eqn:Ep; [discriminate|].
+    destruct (declines_at pcs) eqn:Ed; [|discriminate].
+    apply (proj1 (declines_at_spec pcs Hinv)) in Ed.
+    destruct Ed as [a [c [Ha [Hc [Hneq Hd]]]]].
+    destruct (In_nth_error _ _ Ha) as [i Hi].
+    destruct (In_nth_error _ _ Hc) as [j Hj].
+    unfold step_decline.
+    apply (StepIDecline sh pcs i j a c).
+    + exact Hi.
+    + exact Hj.
+    + intro Eij. subst j. rewrite Hi in Hj. inversion Hj. subst c.
+      exact (Hneq eq_refl).
+    + exact Hd.
+  - unfold pick_arm in Harm. discriminate.
+Qed.
+
+Definition arm_next (b : SheetBag) : option SheetBag :=
+  match pick_arm b with
+  | ArmStop => None
+  | ArmDecline => Some (step_decline b)
+  | ArmHit =>
+      match pick_bag b with
+      | Some w => Some (step_hit b w)
+      | None => None
+      end
+  end.
+
+Fixpoint bag_run_arm (fuel : nat) (b : SheetBag) : SheetBag :=
+  match fuel with
+  | O => b
+  | S n =>
+      match arm_next b with
+      | None => b
+      | Some b' => bag_run_arm n b'
+      end
+  end.
+
+Lemma arm_hit_preserves : forall sh pcs w,
+  bag_inv (BagLive sh pcs) ->
+  pick_bag (BagLive sh pcs) = Some w ->
+  bag_inv (step_hit (BagLive sh pcs) w) /\
+  (rho (step_hit (BagLive sh pcs) w) < rho (BagLive sh pcs))%nat.
+Proof.
+  intros sh pcs w Hinv Hw.
+  destruct (pick_bag_progress sh pcs w Hw)
+    as [e1 [e2 [Hi [Hj [Hij [Hw1 [Hw2 [Hdist Hadm]]]]]]]].
+  split.
+  - eapply admissible_step_preserves_inv; try eassumption.
+  - apply step_hit_rho_lt.
+    exists e1, e2.
+    split; [exact Hi|].
+    split; [exact Hj|].
+    split; [exact Hij|].
+    split; [exact Hw1|].
+    split; [exact Hw2|].
+    split; [exact Hdist|].
+    exact Hadm.
+Qed.
+
+Lemma zero_live_is_stop : forall b,
+  bag_inv b ->
+  rho b = 0%nat ->
+  no_live_decline b ->
+  pick_arm b = ArmStop.
+Proof.
+  intros b Hinv Hz Hnd.
+  pose proof (pick_bag_spec b Hinv) as Hs.
+  destruct (pick_arm b) eqn:Ea.
+  - destruct Hs as [w [_ Hok]].
+    destruct b as [sh pcs|sh].
+    + exfalso.
+      pose proof (step_hit_rho_lt (BagLive sh pcs) w Hok) as Hlt.
+      unfold rho in Hlt, Hz. rewrite Hz in Hlt.
+      exact (Nat.nlt_0_r _ Hlt).
+    + destruct Hok.
+  - destruct b as [sh pcs|sh].
+    + exfalso. destruct Hs as [_ Hd]. simpl in Hnd. exact (Hnd Hd).
+    + exfalso. destruct Hs as [_ F]. exact F.
+  - reflexivity.
+Qed.
+
+Lemma bag_run_arm_declined : forall fuel sh,
+  bag_run_arm fuel (BagDeclined sh) = BagDeclined sh.
+Proof.
+  intros fuel sh. destruct fuel as [|fuel]; simpl.
+  - reflexivity.
+  - unfold arm_next, pick_arm. simpl. reflexivity.
+Qed.
+
+Lemma bag_run_arm_one_decline : forall b,
+  bag_inv b ->
+  pick_arm b = ArmDecline ->
+  bag_decline_step b (bag_run_arm 1%nat b).
+Proof.
+  intros b Hinv Harm.
+  assert (E : bag_run_arm 1%nat b = step_decline b).
+  { cbn [bag_run_arm]. unfold arm_next. rewrite Harm. simpl. reflexivity. }
+  rewrite E. apply arm_decline_step; assumption.
+Qed.
+
+Lemma bag_run_arm_inv : forall fuel b,
+  bag_inv b ->
+  bag_inv (bag_run_arm fuel b).
+Proof.
+  induction fuel as [|fuel IH]; intros b Hinv.
+  - exact Hinv.
+  - cbn [bag_run_arm].
+    destruct (pick_arm b) eqn:Harm.
+    + pose proof (pick_bag_spec b Hinv) as Hs. rewrite Harm in Hs.
+      destruct Hs as [w [Hw _]].
+      assert (E : arm_next b = Some (step_hit b w)).
+      { unfold arm_next. rewrite Harm, Hw. reflexivity. }
+      rewrite E.
+      destruct b as [sh pcs|sh].
+      * apply IH. exact (proj1 (arm_hit_preserves sh pcs w Hinv Hw)).
+      * destruct (pick_bag (BagDeclined sh)); discriminate.
+    + destruct b as [sh pcs|sh].
+      * assert (E : arm_next (BagLive sh pcs) = Some (BagDeclined sh)).
+        { unfold arm_next, step_decline. rewrite Harm. reflexivity. }
+        rewrite E. apply IH. exact I.
+      * unfold pick_arm in Harm. discriminate.
+    + assert (E : arm_next b = None).
+      { unfold arm_next. rewrite Harm. reflexivity. }
+      rewrite E. exact Hinv.
+Qed.
+
+Lemma bag_run_arm_fuel : forall fuel b,
+  bag_inv b ->
+  (rho b < fuel)%nat ->
+  match bag_run_arm fuel b with
+  | BagDeclined _ => True
+  | BagLive _ _ as b' => rho b' = 0%nat /\ no_live_decline b'
+  end.
+Proof.
+  induction fuel as [|fuel IH]; intros b Hinv Hfuel.
+  - lia.
+  - cbn [bag_run_arm].
+    destruct (pick_arm b) eqn:Harm.
+    + pose proof (pick_bag_spec b Hinv) as Hs. rewrite Harm in Hs.
+      destruct Hs as [w [Hw Hok]].
+      assert (E : arm_next b = Some (step_hit b w)).
+      { unfold arm_next. rewrite Harm, Hw. reflexivity. }
+      rewrite E.
+      destruct b as [sh pcs|sh].
+      * destruct (arm_hit_preserves sh pcs w Hinv Hw) as [Hinv' Hlt].
+        apply IH; [exact Hinv'|].
+        apply Nat.lt_le_trans with (rho (BagLive sh pcs)).
+        -- exact Hlt.
+        -- apply Nat.lt_succ_r. exact Hfuel.
+      * destruct Hok.
+    + destruct b as [sh pcs|sh].
+      * assert (E : arm_next (BagLive sh pcs) = Some (BagDeclined sh)).
+        { unfold arm_next, step_decline. rewrite Harm. reflexivity. }
+        rewrite E. rewrite bag_run_arm_declined. exact I.
+      * exfalso.
+        pose proof (pick_bag_spec (BagDeclined sh) Hinv) as Hs.
+        rewrite Harm in Hs. destruct Hs as [_ F]. exact F.
+    + assert (E : arm_next b = None).
+      { unfold arm_next. rewrite Harm. reflexivity. }
+      rewrite E.
+      pose proof (pick_bag_spec b Hinv) as Hs. rewrite Harm in Hs.
+      destruct b as [sh pcs|sh].
+      * destruct Hs as [_ [Hz Hnd]]. split; [exact Hz| exact Hnd].
+      * exact I.
+Qed.
+
+Theorem bag_run_arm_spec : forall b,
+  bag_inv b ->
+  match bag_run_arm (S (rho b)) b with
+  | BagDeclined _ => True
+  | BagLive _ _ as b' => rho b' = 0%nat /\ no_live_decline b'
+  end.
+Proof.
+  intros b Hinv.
+  apply bag_run_arm_fuel; [exact Hinv | apply Nat.lt_succ_diag_r].
+Qed.
+
+Theorem bag_run_arm_terminates : forall b,
+  bag_inv b ->
+  pick_arm (bag_run_arm (S (rho b)) b) = ArmStop.
+Proof.
+  intros b Hinv.
+  pose proof (bag_run_arm_spec b Hinv) as Hs.
+  pose proof (bag_run_arm_inv (S (rho b)) b Hinv) as Hinv'.
+  destruct (bag_run_arm (S (rho b)) b) as [sh pcs|sh] eqn:Eb.
+  - destruct Hs as [Hz Hnd].
+    apply zero_live_is_stop; [exact Hinv'| exact Hz| exact Hnd].
+  - unfold pick_arm. reflexivity.
+Qed.
+
 Print Assumptions pick_bag_spec.
 Print Assumptions letter5_obligation.
+Print Assumptions arm_decline_step.
+Print Assumptions arm_hit_preserves.
+Print Assumptions zero_live_is_stop.
+Print Assumptions bag_run_arm_declined.
+Print Assumptions bag_run_arm_one_decline.
+Print Assumptions bag_run_arm_inv.
+Print Assumptions bag_run_arm_fuel.
+Print Assumptions bag_run_arm_spec.
+Print Assumptions bag_run_arm_terminates.
