@@ -380,3 +380,7 @@ def test_arc_end_before_start_is_kept_raw() -> None:
     assert rows[0]["params"]["endAngle"] == 10
     assert rows[0]["params"]["direction"] == "ccw-ocs"
     VALIDATOR.validate(rows[0])
+
+
+def test_scratch_gate_must_fail():
+    assert False, "scratch: gate fail-path probe"
