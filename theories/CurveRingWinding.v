@@ -1,45 +1,24 @@
 (* ============================================================================
    NetTopologySuite.Proofs.CurveRingWinding
-   ----------------------------------------------------------------------------
-   W1. Winding number of a curve ring (chords and CircularEgg arcs).
-
-   wind(ms, P) = (1 / 2π) · Σ member angles, for P off the ring.
-   A chord A→B contributes the signed visual angle ∠(A−P, B−P) ∈ (−π, π],
-   i.e. atan2(cross, dot). An arc contributes that chord angle plus
-   sweep_sign · 2π when P lies in the open circular segment between the
-   chord and the arc. Segment membership is the chord half-plane cut by
-   the open disk; on the circle that half-plane is the chart interval
-   (CircleChart.arc_member_iff_zeta_interval). Arc members are CircularEgg
-   values, not a parallel field record.
-
-   Headline: a closed adjacent ring and a probe off the image give
-   wind ∈ ℤ, because endpoint arguments telescope and every arc extra is
-   an integer number of turns.
-
-   Not discharged here (real Props, not False): wind_locally_constant,
-   simple_ring_wind_class, wind_agrees_taut_height (#791), and
-   area_sign_eq_winding_sign (#901). Does not import RelateNGFace and
-   does not flip RNG_JordanUncond. Not the ray-crossing count in
-   WindingNumber.v.
-
-   WITNESS topic: relate · claimId: 0007-curve-ring-wind
-   witness: 0007-curve-ring-wind · board: ADR-0007
-   3-axiom host lane (Stdlib Reals). No Admitted / Axiom / Parameter.
-
-   Author: NetTopologySuite.Proofs contributors
-   License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human-reviewed.
-     Assisted-by: Cursor Grok 4.7
+   W1. wind = (1/2π)·Σ member angles, probe off the ring.
+   Chord: atan2(cross, dot) ∈ (−π, π]. Arc extra (integer turns):
+   sweep_sign·2π on the open segment; −2π on the open chord of a clockwise
+   arc, so the member angle is sweep_sign·π (atan2 returns π either way).
+   Open segment: mid half-plane ∩ open disk; on the circle,
+   CircleChart.arc_member_iff_zeta_interval. Arcs are CircularEgg values.
+   Headline wind_integer: closed adjacent ring, probe off the image ⇒ ℤ.
+   Deferred Props (not False): wind_locally_constant, simple_ring_wind_class,
+   wind_agrees_taut_height, area_sign_eq_winding_sign.
+   Does not import RelateNGFace. Not the ray count in WindingNumber.v.
+   claimId / witness: 0007-curve-ring-wind · board ADR-0007. 3-axiom host lane.
+   No Admitted. License: BSD-3-Clause. AI-drafted (Cursor Grok 4.7), human-reviewed.
    ========================================================================== *)
-
 From Stdlib Require Import Reals Lra ZArith Lia List.
 From NTS.Proofs Require Import Distance Atan2 SheetHenCircEgg CircleChart Segment.
 Import ListNotations.
 Local Open Scope R_scope.
 
-(* -------------------------------------------------------------------------- *)
-(* §1  Members, visual angle, segment.                                        *)
-(* -------------------------------------------------------------------------- *)
+(* §1  Members, visual angle, segment. *)
 
 Inductive WindMember : Type :=
 | WMChord (A B : Point)
@@ -98,13 +77,28 @@ Definition sweep_sign (c : CircularEgg) : Z :=
 Definition chord_part (P : Point) (m : WindMember) : R :=
   chord_angle P (member_start m) (member_end m).
 
+(* Collinear and strictly between the endpoints: the two visual vectors
+   are opposite, so atan2(cross, dot) = π. Neither endpoint is P. *)
+Definition on_open_chord (P A B : Point) : Prop :=
+  vcross P A B = 0 /\ vdot P A B < 0.
+
+Definition on_open_chord_b (P A B : Point) : bool :=
+  if Rle_dec (Rabs (vcross P A B)) 0
+  then if Rlt_dec (vdot P A B) 0 then true else false
+  else false.
+
+(* Turns added to the chord angle. Open segment: sweep_sign.
+   Open chord of a clockwise arc: −1, so π − 2π = −π = sweep_sign · π.
+   A counterclockwise open chord stays at π (zero extra). *)
+Definition chord_tie_k (c : CircularEgg) (P : Point) : Z :=
+  if on_open_chord_b P (circ_start c) (circ_end c)
+  then if Z.eqb (sweep_sign c) (-1)%Z then (-1)%Z else 0%Z
+  else if in_circ_segment_b c P then sweep_sign c else 0%Z.
+
 Definition arc_extra (P : Point) (m : WindMember) : R :=
   match m with
   | WMChord _ _ => 0
-  | WMArc c =>
-      if in_circ_segment_b c P
-      then IZR (sweep_sign c) * (2 * PI)
-      else 0
+  | WMArc c => IZR (chord_tie_k c P) * (2 * PI)
   end.
 
 Definition member_angle (P : Point) (m : WindMember) : R :=
@@ -151,9 +145,7 @@ Definition off_ring (P : Point) (ms : list WindMember) : Prop :=
 Definition off_vertex (P : Point) (m : WindMember) : Prop :=
   member_start m <> P /\ member_end m <> P.
 
-(* -------------------------------------------------------------------------- *)
-(* §2  Argument step: chord angle = Δarg − 2π k, k ∈ {−1,0,1}.               *)
-(* -------------------------------------------------------------------------- *)
+(* §2  Argument step: chord angle = Δarg − 2π k, k ∈ {−1,0,1}. *)
 
 Lemma mkPoint_x_neq : forall x y x' y',
   x <> x' -> mkPoint x y <> mkPoint x' y'.
@@ -356,9 +348,7 @@ Proof.
       unfold t in Hz. lra.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* §3  Chart half-plane.                                                      *)
-(* -------------------------------------------------------------------------- *)
+(* §3  Chart half-plane. *)
 
 Lemma circ_eval_dist_sq : forall c t,
   dist_sq (circ_o c) (circ_eval c t) = circ_r c * circ_r c.
@@ -437,9 +427,7 @@ Proof.
     reflexivity.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* §4  Telescope.                                                             *)
-(* -------------------------------------------------------------------------- *)
+(* §4  Telescope. *)
 
 Fixpoint chain_k (P : Point) (ms : list WindMember) : Z :=
   match ms with
@@ -452,9 +440,7 @@ Fixpoint extra_k (P : Point) (ms : list WindMember) : Z :=
   match ms with
   | [] => 0%Z
   | WMChord _ _ :: rest => extra_k P rest
-  | WMArc c :: rest =>
-      ((if in_circ_segment_b c P then sweep_sign c else 0%Z)
-       + extra_k P rest)%Z
+  | WMArc c :: rest => (chord_tie_k c P + extra_k P rest)%Z
   end.
 
 Lemma last_default_irrel : forall (A : Type) (l : list A) (d1 d2 : A),
@@ -558,10 +544,7 @@ Proof.
   - cbn. replace (IZR 0) with 0 by reflexivity. ring.
   - destruct m as [A B|c].
     + cbn [sum_R arc_extra extra_k]. rewrite IH. ring.
-    + cbn [sum_R arc_extra extra_k].
-      destruct (in_circ_segment_b c P) eqn:Hb.
-      * rewrite IH. rewrite plus_IZR. ring.
-      * rewrite IH. rewrite Z.add_0_l. ring.
+    + cbn [sum_R arc_extra extra_k]. rewrite IH. rewrite plus_IZR. ring.
 Qed.
 
 Lemma sum_angle_split : forall P ms,
@@ -594,9 +577,7 @@ Proof.
   exists (extra_k P ms - chain_k P ms)%Z. reflexivity.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* §5  Fixtures from #804: locked_rect, locked_lens, grazing diamond.        *)
-(* -------------------------------------------------------------------------- *)
+(* §5  Fixtures: locked_rect, locked_lens, grazing diamond, CW halves. *)
 
 Definition rect_probe : Point := mkPoint (1 / 2) (1 / 2).
 
@@ -785,9 +766,19 @@ Proof.
       unfold orient_pts, orient3, crs, lens_probe. cbn. lra.
   - destruct lens_controls as [Hs [_ He]].
     unfold wind, angle_sum, locked_lens.
-    cbn [sum_R]. unfold member_angle, chord_part.
-    cbn [member_start member_end arc_extra].
-    rewrite lens_in_segment, lens_sweep_one.
+    cbn [sum_R]. unfold member_angle, chord_part, arc_extra, chord_tie_k.
+    cbn [member_start member_end].
+    assert (Hnot : on_open_chord_b lens_probe (circ_start lens_egg)
+                     (circ_end lens_egg) = false).
+    { assert (Hc0 : vcross lens_probe (circ_start lens_egg)
+                       (circ_end lens_egg) = -1).
+      { rewrite Hs, He. unfold vcross, dx, dy, lens_probe. cbn. field. }
+      unfold on_open_chord_b. rewrite Hc0.
+      replace (Rabs (-1)) with 1.
+      + destruct (Rle_dec 1 0); [lra | reflexivity].
+      + replace (-1) with (- (1)) by ring.
+        rewrite Rabs_Ropp, Rabs_R1. reflexivity. }
+    rewrite Hnot. rewrite lens_in_segment, lens_sweep_one.
     replace (IZR 1) with 1 by reflexivity.
     assert (HA : circ_start lens_egg <> lens_probe).
     { rewrite Hs. apply mkPoint_x_neq. unfold lens_probe. cbn. lra. }
@@ -966,9 +957,128 @@ Proof.
   - exact (proj2 grazing_A_wind).
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* §6  Deferred obligations. Real Props. Not discharged. Not False.          *)
-(* -------------------------------------------------------------------------- *)
+Lemma chord_angle_pi : forall P A B,
+  vcross P A B = 0 -> vdot P A B < 0 -> chord_angle P A B = PI.
+Proof.
+  intros P A B Hc Hd. unfold chord_angle. rewrite Hc.
+  apply atan2_neg_x_axis. exact Hd.
+Qed.
+
+Lemma on_open_chord_b_spec : forall P A B,
+  on_open_chord_b P A B = true <-> on_open_chord P A B.
+Proof.
+  intros P A B. unfold on_open_chord_b, on_open_chord. split.
+  - destruct (Rle_dec (Rabs (vcross P A B)) 0) as [Hz|]; [| discriminate].
+    destruct (Rlt_dec (vdot P A B) 0) as [Hd|]; [| discriminate].
+    split; [| exact Hd].
+    destruct (Rle_lt_dec 0 (vcross P A B)) as [Hp|Hn].
+    + rewrite <- (Rabs_pos_eq _ Hp).
+      apply Rle_antisym; [exact Hz | apply Rabs_pos].
+    + assert (Ha : Rabs (vcross P A B) = 0)
+        by (apply Rle_antisym; [exact Hz | apply Rabs_pos]).
+      rewrite Rabs_left in Ha by exact Hn. lra.
+  - intros [Hc Hd]. destruct (Rle_dec (Rabs (vcross P A B)) 0) as [_|Hn].
+    + destruct (Rlt_dec (vdot P A B) 0); [reflexivity | lra].
+    + exfalso. apply Hn. rewrite Hc, Rabs_R0. lra.
+Qed.
+
+(* Strictly between the chord endpoints: member angle = sweep_sign · π. *)
+Lemma arc_member_on_open_chord : forall c P,
+  circ_sweep c <> 0 ->
+  on_open_chord P (circ_start c) (circ_end c) ->
+  member_angle P (WMArc c) = IZR (sweep_sign c) * PI.
+Proof.
+  intros c P Hsw Ho.
+  assert (Hb : on_open_chord_b P (circ_start c) (circ_end c) = true)
+    by (apply on_open_chord_b_spec; exact Ho).
+  destruct Ho as [Hc Hd].
+  unfold member_angle, chord_part, arc_extra, chord_tie_k, sweep_sign.
+  cbn [member_start member_end].
+  rewrite Hb. rewrite (chord_angle_pi _ _ _ Hc Hd).
+  destruct (Rlt_dec 0 (circ_sweep c)) as [_|Hp].
+  - cbn. ring.
+  - destruct (Rlt_dec (circ_sweep c) 0) as [_|Hn].
+    + cbn. ring.
+    + exfalso. apply Hsw. lra.
+Qed.
+
+(* #892 clockwise CIRCLE halves. The centre lies on both open chords. *)
+Definition cw_half_east : CircularEgg := mkCircularEgg (mkPoint 0 0) 1 0 (- PI).
+Definition cw_half_west : CircularEgg := mkCircularEgg (mkPoint 0 0) 1 PI (- PI).
+Definition cw_circle_halves : list WindMember :=
+  [WMArc cw_half_east; WMArc cw_half_west].
+Definition cw_centre : Point := mkPoint 0 0.
+
+Lemma cw_half_ends :
+  circ_start cw_half_east = mkPoint 1 0 /\
+  circ_end cw_half_east = mkPoint (-1) 0 /\
+  circ_start cw_half_west = mkPoint (-1) 0 /\
+  circ_end cw_half_west = mkPoint 1 0.
+Proof.
+  unfold circ_start, circ_end, circ_eval, cw_half_east, cw_half_west. cbn.
+  assert (Ea0 : 0 + 0 * - PI = 0) by field.
+  assert (Ea1 : 0 + 1 * - PI = - PI) by field.
+  assert (Ew0 : PI + 0 * - PI = PI) by field.
+  assert (Ew1 : PI + 1 * - PI = 0) by field.
+  rewrite Ea0, Ea1, Ew0, Ew1, !cos_0, !sin_0, cos_neg, sin_neg, cos_PI, sin_PI.
+  repeat split; f_equal; field.
+Qed.
+
+Lemma cw_member_neg_pi : forall c,
+  circ_sweep c = - PI ->
+  on_open_chord cw_centre (circ_start c) (circ_end c) ->
+  member_angle cw_centre (WMArc c) = - PI.
+Proof.
+  intros c Hs Ho. rewrite (arc_member_on_open_chord c cw_centre).
+  - unfold sweep_sign. rewrite Hs. cbn.
+    destruct (Rlt_dec 0 (- PI)); [pose proof PI_RGT_0; lra |].
+    destruct (Rlt_dec (- PI) 0); [| pose proof PI_RGT_0; lra].
+    ring.
+  - rewrite Hs. pose proof PI_RGT_0. lra.
+  - exact Ho.
+Qed.
+
+Lemma centre_off_half : forall c,
+  circ_o c = cw_centre -> circ_r c = 1 ->
+  ~ on_member_image cw_centre (WMArc c).
+Proof.
+  intros c Ho Hr [t [_ Ht]].
+  assert (Hd : dist_sq (circ_o c) cw_centre = circ_r c * circ_r c)
+    by (rewrite Ht; apply circ_eval_dist_sq).
+  rewrite Ho, Hr in Hd. revert Hd. unfold dist_sq, cw_centre. cbn. lra.
+Qed.
+
+Lemma cw_halves_wind_neg_one :
+  members_closed cw_circle_halves /\
+  members_adjacent cw_circle_halves /\
+  off_ring cw_centre cw_circle_halves /\
+  wind cw_centre cw_circle_halves = -1.
+Proof.
+  destruct cw_half_ends as [Hes [Hee [Hws Hwe]]].
+  assert (Hdiam : forall A B,
+      A = mkPoint 1 0 /\ B = mkPoint (-1) 0 \/
+      A = mkPoint (-1) 0 /\ B = mkPoint 1 0 ->
+      on_open_chord cw_centre A B).
+  { intros A B [[HA HB]|[HA HB]]; rewrite HA, HB;
+      unfold on_open_chord, vcross, vdot, dx, dy, cw_centre; cbn; lra. }
+  assert (Hae : member_angle cw_centre (WMArc cw_half_east) = - PI).
+  { apply cw_member_neg_pi; [unfold cw_half_east; cbn; reflexivity |].
+    rewrite Hes, Hee. apply Hdiam. left. split; reflexivity. }
+  assert (Haw : member_angle cw_centre (WMArc cw_half_west) = - PI).
+  { apply cw_member_neg_pi; [unfold cw_half_west; cbn; reflexivity |].
+    rewrite Hws, Hwe. apply Hdiam. right. split; reflexivity. }
+  split; [| split; [| split]].
+  - cbn. rewrite Hwe, Hes. reflexivity.
+  - cbn. rewrite Hee, Hws. split; reflexivity.
+  - constructor; [apply centre_off_half; reflexivity |].
+    constructor; [apply centre_off_half; reflexivity | constructor].
+  - unfold wind, angle_sum, cw_circle_halves. cbn [sum_R].
+    rewrite Hae, Haw.
+    replace (- PI + (- PI + 0)) with (- (2 * PI)) by ring.
+    pose proof PI_RGT_0. field. lra.
+Qed.
+
+(* §6  Deferred obligations. Real Props. Not discharged. Not False. *)
 
 Definition lerp (P Q : Point) (t : R) : Point :=
   mkPoint (px P + t * (px Q - px P)) (py P + t * (py Q - py P)).
@@ -990,7 +1100,9 @@ Definition member_chord_cross (m1 m2 : WindMember) : Prop :=
 Definition endpoint_nocross (ms : list WindMember) : Prop :=
   forall m1 m2, In m1 ms -> In m2 ms -> ~ member_chord_cross m1 m2.
 
-(* Off the ring, winding is constant along a complement segment. *)
+(* Off the ring, winding is constant along a complement segment.
+   The open-chord tie equals the limit from both sides, so crossing a
+   chord interior while staying off the arc is not a jump. *)
 Definition wind_locally_constant : Prop :=
   forall ms P Q,
     members_closed ms ->
@@ -1049,7 +1161,7 @@ Definition area_sign_eq_winding_sign : Prop :=
     wind P ms <> 0 ->
     0 < wind_members_area ms * wind P ms.
 
-(* WITNESS {"claimId":"0007-curve-ring-wind","topic":"relate","lemma":"wind_integer","title":"closed curve ring, probe off the image: winding is an integer; locked_rect and locked_lens wind 1, grazing diamond winds -1 at the ray-graze point and at the odd-parity point","file":"theories/CurveRingWinding.v","witness":"0007-curve-ring-wind","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-curve-ring-wind","topic":"relate","lemma":"wind_integer","title":"closed curve ring, probe off the image: winding is an integer; open-chord member angle is sweep_sign*pi; locked_rect and locked_lens wind 1; grazing diamond winds -1; two clockwise half-circles wind -1 at the centre","file":"theories/CurveRingWinding.v","witness":"0007-curve-ring-wind","board":"ADR-0007"} *)
 Theorem ticket_0007_curve_ring_wind_qed_or_qex :
   (forall P ms,
       members_closed ms ->
@@ -1059,12 +1171,15 @@ Theorem ticket_0007_curve_ring_wind_qed_or_qex :
   wind rect_probe locked_rect = 1 /\
   wind lens_probe locked_lens = 1 /\
   wind graz_B grazing_diamond = -1 /\
-  wind graz_A grazing_diamond = -1.
+  wind graz_A grazing_diamond = -1 /\
+  wind cw_centre cw_circle_halves = -1.
 Proof.
   split; [exact wind_integer |].
   split; [exact (proj2 (proj2 (proj2 locked_rect_wind_one))) |].
   split; [exact (proj2 (proj2 (proj2 (proj2 locked_lens_wind_one)))) |].
-  exact grazing_diamond_wind_neg_one.
+  split; [exact (proj1 grazing_diamond_wind_neg_one) |].
+  split; [exact (proj2 grazing_diamond_wind_neg_one) |].
+  exact (proj2 (proj2 (proj2 cw_halves_wind_neg_one))).
 Qed.
 
 Print Assumptions mkPoint_x_neq.
@@ -1107,4 +1222,11 @@ Print Assumptions chord_angle_strict_neg.
 Print Assumptions izr_only_neg1.
 Print Assumptions grazing_A_wind.
 Print Assumptions grazing_diamond_wind_neg_one.
+Print Assumptions chord_angle_pi.
+Print Assumptions on_open_chord_b_spec.
+Print Assumptions arc_member_on_open_chord.
+Print Assumptions cw_half_ends.
+Print Assumptions cw_member_neg_pi.
+Print Assumptions centre_off_half.
+Print Assumptions cw_halves_wind_neg_one.
 Print Assumptions ticket_0007_curve_ring_wind_qed_or_qex.
