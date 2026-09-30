@@ -11,21 +11,22 @@ from __future__ import annotations
 
 import io
 import json
+import math
 from pathlib import Path
 
 import ezdxf
-from ezdxf.path import make_path
+from ezdxf.math import ConstructionArc, bulge_to_arc
 
 HERE = Path(__file__).resolve().parent
 DXF_PATH = HERE / "lwpolyline_mixed_bulges.dxf"
 JSON_PATH = HERE / "lwpolyline_mixed_bulges.flatten.json"
 
-# Path.flattening distance: max gap from the curve to a chord midpoint.
+# ConstructionArc.flattening distance: max gap from arc to chord midpoint.
 DISTANCE = 0.01
-SEGMENTS = 4
 
 OPEN = [(0.0, 0.0, 0.0), (4.0, 0.0, 1.0), (4.0, 2.0, -0.5), (0.0, 2.0, 0.0)]
-CLOSED = [(0.0, 0.0, 0.0), (3.0, 0.0, 0.4), (3.0, 3.0, -1.0), (0.0, 3.0, 0.0)]
+# The closing edge is the last vertex's bulge, back to the first vertex.
+CLOSED = [(0.0, 0.0, 0.0), (3.0, 0.0, 0.4), (3.0, 3.0, -1.0), (0.0, 3.0, 0.25)]
 
 
 def _drawing() -> ezdxf.document.Drawing:
@@ -41,12 +42,13 @@ def _drawing() -> ezdxf.document.Drawing:
 
 
 def _flatten_bulge(start: tuple[float, float], end: tuple[float, float], bulge: float) -> list[list[float]]:
-    tmp = ezdxf.new("R2000")
-    entity = tmp.modelspace().add_lwpolyline(
-        [(start[0], start[1], bulge), (end[0], end[1], 0.0)],
-        format="xyb",
-    )
-    return [[float(p.x), float(p.y)] for p in make_path(entity).flattening(DISTANCE, SEGMENTS)]
+    """Points on the circular arc. A negative bulge is stored CCW from the end."""
+    center, start_angle, end_angle, radius = bulge_to_arc(start, end, bulge)
+    arc = ConstructionArc(center, radius, math.degrees(start_angle), math.degrees(end_angle))
+    points = [[float(p.x), float(p.y)] for p in arc.flattening(DISTANCE)]
+    if bulge < 0.0:
+        points.reverse()
+    return points
 
 
 def _reference(doc: ezdxf.document.Drawing) -> bytes:
@@ -70,7 +72,7 @@ def _reference(doc: ezdxf.document.Drawing) -> bytes:
         polylines.append({"closed": closed, "arcs": arcs})
     payload = {
         "ezdxf": ezdxf.__version__,
-        "flattening": {"distance": DISTANCE, "segments": SEGMENTS},
+        "flattening": {"distance": DISTANCE},
         "polylines": polylines,
         "sagitta": DISTANCE,
     }
