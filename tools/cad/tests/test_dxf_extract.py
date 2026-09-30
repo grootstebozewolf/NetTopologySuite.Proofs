@@ -64,6 +64,24 @@ def _doc() -> ezdxf.document.Drawing:
     return doc
 
 
+def fixture_cases() -> list[tuple[str, ezdxf.document.Drawing, str]]:
+    """In-test drawings the schema CLI rechecks. Pytest still validates in-process."""
+    angdir = ezdxf.new("R2010")
+    angdir.header["$INSUNITS"] = 6
+    angdir.header["$AUNITS"] = 0
+    angdir.header["$ANGDIR"] = 1
+    angdir.header["$ANGBASE"] = 45.0
+    angdir.modelspace().add_arc((0, 0), radius=2, start_angle=10, end_angle=80)
+    raw = ezdxf.new("R2010")
+    raw.modelspace().add_arc((1, 2), radius=3, start_angle=350, end_angle=10)
+    return [
+        ("main-strict", _doc(), "strict"),
+        ("main-lenient", _doc(), "lenient"),
+        ("angdir1", angdir, "strict"),
+        ("raw-end", raw, "strict"),
+    ]
+
+
 def _rows(mode: str) -> list[dict]:
     doc = _doc()
     return dxf_extract.extract_document(doc, mode=mode, file_id="fixture")

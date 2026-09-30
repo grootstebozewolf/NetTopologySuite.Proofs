@@ -3,4 +3,5 @@
 # any GPL/LGPL CAD library, is vendored or ported into this repository.
 ezdxf==1.4.4
 jsonschema==4.26.0
+check-jsonschema==0.38.2
 pytest==8.4.2

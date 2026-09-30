@@ -88,7 +88,7 @@ help: status
 	@echo ""
 	@echo "  make cad-dxf       Run the DXF carrier extractor tests (tools/cad)."
 	@echo "                     Needs the dev pins in tools/cad/requirements.txt."
-	@echo "                     Not a CI job: the workflows have no pytest step."
+	@echo "                     CI: cad-carrier (path-filtered; not a Rocq job)."
 	@echo ""
 	@echo "  make check         Run the three main CI guardrails locally:"
 	@echo "                       scripts/check_admitted.sh"
@@ -215,10 +215,13 @@ ci-guards:
 	@echo ""
 	@echo "All guardrails passed (or see output above)."
 
-# CAD carrier extractor. Dev/test dependency only (ezdxf, jsonschema, pytest).
-# There is no pytest job in .github/workflows, so this target is local.
+# CAD carrier extractor. Dev/test pins only. CI is the path-filtered
+# cad-carrier job, separate from the Rocq jobs.
 cad-dxf:
-	python3 -m pytest tools/cad/tests -q
+	python3 -m pytest tools/cad -q
+	out=$$(mktemp -d); \
+	python3 tools/cad/export_fixture_json.py "$$out"; \
+	python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json "$$out"/*.json
 
 # ci-pr — the fast local PR pre-flight: guardrails + the Stdlib-only
 # `theories/` build (the same lane as CI's macOS `rocq` job).  Mirrors
