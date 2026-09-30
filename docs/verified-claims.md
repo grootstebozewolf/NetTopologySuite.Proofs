@@ -965,6 +965,13 @@ the field failure modes each lemma guards.
 
 ## Curve ring contact, boundary meet and the inscribed reduction (`RingContactSound.v`, `RelateCurveArcSegment.v`, `RelateCurveBoundaryMeet.v`, `RelateCurveInscribedGeometry.v`, `OverlayContactSound.v`) <!-- feat:relate,overlay geom:arc,cs,cc,cp -->
 
+Backfilled 2026-08-23: these five files were **proved but never cited**, so the
+curve columns of the coverage matrix were being carried by blanket line-line
+tags instead of by their own theorems. A `CurveRing` here is a `list
+CurveSegment` (`CSChord` | `CSArc`) per `theories/CurveGeometry.v` — so an
+all-`CSArc` ring is a CircularString and a mixed ring is a CompoundCurve, which
+is why one family of lemmas serves both columns.
+
 Read the scope carefully: the ring results establish **simplicity / hole
 disjointness**, not DE-9IM cells, and the inscribed reduction is over
 *linearised* point sets, so it is arc-blind by construction. The arc-exact
@@ -2214,5 +2221,5 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairExterior.v : exterior_cells_iff` | I∩E is Dim2 and B∩E is Dim1 iff a vertex of A lies strictly outside closed B. A vertex only on the boundary of B does not (`be_boundary_closed`). E∩I and E∩B are the swap. E∩E is Dim2. `tri_de9im` assembles all nine cells. claimId `tri-de9im-c` (witness `exterior_cells_iff`) `[exact]` | 3 |
+| `TrianglePairExterior.v : exterior_cells_iff` | I∩E is Dim2 iff an open point of A lies outside closed B. B∩E is Dim1 iff a positive-length subsegment of A's boundary lies outside closed B. E∩I and E∩B are those forms on the swapped pair. E∩E is constant Dim2, witnessed nonempty. `tri_de9im` is the CCW matrix; `tri_de9im_orient` swaps a clockwise triple first. claimId `tri-de9im-c` (witness `exterior_cells_iff`) `[exact]` | 3 |
 

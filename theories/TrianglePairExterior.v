@@ -1,14 +1,16 @@
 (* NetTopologySuite.Proofs.TrianglePairExterior
-   DE-9IM exterior cells for a CCW triangle pair, and the nine-cell
-   matrix tri_de9im. I∩E and B∩E are decided by a vertex of A lying
-   strictly outside closed B. A vertex that only lies on the boundary
-   of B stays in the closed triangle, so it does not meet the exterior
-   (be_boundary_closed). E∩I and E∩B are the swap. E∩E is dimension 2.
+   DE-9IM exterior cells for a triangle pair, and the nine-cell matrix.
+   tri_de9im takes CCW vertices. tri_de9im_orient swaps a clockwise
+   triple before calling it. I∩E is an open point of A outside closed B.
+   B∩E is a positive-length subsegment of A's boundary outside closed B.
+   E∩I and E∩B are the swap. E∩E is constantly dimension 2, witnessed
+   nonempty. A vertex only on the boundary of B stays closed
+   (be_boundary_closed).
    topic: relate
    claimId: tri-de9im-c
    witness: exterior_cells_iff
    3-axiom host. No Admitted. No Jordan.
-   AI-drafted (Cursor Grok 4.7), human-reviewed.
+   AI-drafted (Cursor Grok 4.7).
    License: BSD-3-Clause *)
 
 From Stdlib Require Import Reals Lra Lia List Bool.
@@ -402,22 +404,126 @@ Proof.
   - right. right. exact (proj1 (seg_ends C A)).
 Qed.
 
+Lemma combo_scale : forall V W t s,
+  convex_combination V (convex_combination V W t) s =
+  convex_combination V W (s * t).
+Proof.
+  intros V W t s. unfold convex_combination.
+  destruct V as [vx vy], W as [wx wy]. simpl. f_equal; ring.
+Qed.
+
+Lemma seg_on_edge : forall V W Q t,
+  Q = convex_combination V W t -> 0 <= t <= 1 ->
+  forall X, on_seg V Q X -> on_seg V W X.
+Proof.
+  intros V W Q t HQ Ht X [s [Hs HX]].
+  exists (s * t). split.
+  - destruct Hs as [Hs0 Hs1]. destruct Ht as [Ht0 Ht1]. split.
+    + apply Rmult_le_pos; assumption.
+    + apply Rle_trans with (r2 := s).
+      * assert (Hst : s * t <= s * 1).
+        { apply Rmult_le_compat_l; [exact Hs0 | exact Ht1]. }
+        rewrite Rmult_1_r in Hst. exact Hst.
+      * exact Hs1.
+  - rewrite HX, HQ. apply combo_scale.
+Qed.
+
+Lemma combo_neq : forall V W t,
+  V <> W -> 0 < t -> convex_combination V W t <> V.
+Proof.
+  intros V W t HV Ht Heq.
+  assert (Ez : t = 0).
+  { apply (combo_inj V W t 0 HV). rewrite (combo_left V W). exact Heq. }
+  lra.
+Qed.
+
+Lemma neg_cross_prefix : forall (bad : Point -> R) D E F V W,
+  0 < cross D E F -> V <> W -> bad V < 0 ->
+  (forall X, bad X < 0 -> ~ in_tri D E F X) ->
+  (forall r, bad (convex_combination V W r) =
+     (1 - r) * bad V + r * bad W) ->
+  exists P Q, P <> Q /\
+    (forall X, on_seg P Q X -> on_seg V W X) /\
+    (forall X, on_seg P Q X -> ~ in_tri D E F X).
+Proof.
+  intros bad D E F V W Harea HVW Hneg Hout Hlin.
+  destruct (neg_prefix (bad V) (bad W) Hneg) as [t [Ht Hall]].
+  set (Q := convex_combination V W t).
+  exists V, Q. split; [| split].
+  - intro Heq. symmetry in Heq.
+    exact (combo_neq V W t HVW (proj1 Ht) Heq).
+  - intros X HX.
+    assert (HQ : Q = convex_combination V W t) by reflexivity.
+    apply (seg_on_edge V W Q t HQ).
+    + split; [apply Rlt_le; exact (proj1 Ht) | exact (proj2 Ht)].
+    + exact HX.
+  - intros X [s [Hs HX]]. apply Hout.
+    assert (HQ : Q = convex_combination V W t) by reflexivity.
+    rewrite HX, HQ, combo_scale, Hlin. apply Hall. split.
+    + apply Rmult_le_pos; [exact (proj1 Hs) | apply Rlt_le; exact (proj1 Ht)].
+    + assert (Hle : s * t <= 1 * t).
+      { apply Rmult_le_compat_r; [apply Rlt_le; exact (proj1 Ht) | exact (proj2 Hs)]. }
+      rewrite Rmult_1_l in Hle. exact Hle.
+Qed.
+
+Lemma edge_out_prefix : forall D E F V W,
+  0 < cross D E F -> V <> W -> ~ in_tri D E F V ->
+  exists P Q, P <> Q /\
+    (forall X, on_seg P Q X -> on_seg V W X) /\
+    (forall X, on_seg P Q X -> ~ in_tri D E F X).
+Proof.
+  intros D E F V W Harea HVW Hout.
+  destruct (not_in_cross D E F V Harea Hout) as [Hc|[Hc|Hc]].
+  - apply (neg_cross_prefix (fun X => cross D E X) D E F V W Harea HVW Hc).
+    + intros X HX. apply (out_of_cross D E F X Harea). left. exact HX.
+    + intros r. apply (cross_combo D E V W r).
+  - apply (neg_cross_prefix (fun X => cross E F X) D E F V W Harea HVW Hc).
+    + intros X HX. apply (out_of_cross D E F X Harea). right. left. exact HX.
+    + intros r. apply (cross_combo E F V W r).
+  - apply (neg_cross_prefix (fun X => cross F D X) D E F V W Harea HVW Hc).
+    + intros X HX. apply (out_of_cross D E F X Harea). right. right. exact HX.
+    + intros r. apply (cross_combo F D V W r).
+Qed.
+
 Lemma be_bd_iff : forall A B C D E F,
   0 < cross A B C -> 0 < cross D E F ->
   be_entry A B C D E F = Dim1 <->
-  exists X, on_bd A B C X /\ ~ in_tri D E F X.
+  exists P Q, P <> Q /\
+    (exists e, In e (e3 A B C) /\
+       forall X, on_seg P Q X -> on_seg (fst e) (snd e) X) /\
+    (forall X, on_seg P Q X -> ~ in_tri D E F X).
 Proof.
   intros A B C D E F HA HB. split.
   - intros Hent.
     destruct (proj1 (be_cell_iff A B C D E F HA HB) Hent) as [H|[H|H]].
-    + exists A. split; [exact (proj1 (vertex_on_bd A B C)) | exact H].
-    + exists B. split; [exact (proj1 (proj2 (vertex_on_bd A B C))) | exact H].
-    + exists C. split; [exact (proj2 (proj2 (vertex_on_bd A B C))) | exact H].
-  - intros [X [Hb Hout]].
+    + destruct (edge_sep A B C HA) as [Hab _].
+      destruct (edge_out_prefix D E F A B HB Hab H)
+        as [P [Q [Hneq [Hon Hout]]]].
+      exists P, Q. split; [exact Hneq|]. split; [| exact Hout].
+      exists (A, B). split; [| simpl; exact Hon].
+      unfold e3. simpl. left. reflexivity.
+    + destruct (edge_sep A B C HA) as [_ [Hbc _]].
+      destruct (edge_out_prefix D E F B C HB Hbc H)
+        as [P [Q [Hneq [Hon Hout]]]].
+      exists P, Q. split; [exact Hneq|]. split; [| exact Hout].
+      exists (B, C). split; [| simpl; exact Hon].
+      unfold e3. simpl. right. left. reflexivity.
+    + destruct (edge_sep A B C HA) as [_ [_ Hca]].
+      destruct (edge_out_prefix D E F C A HB Hca H)
+        as [P [Q [Hneq [Hon Hout]]]].
+      exists P, Q. split; [exact Hneq|]. split; [| exact Hout].
+      exists (C, A). split; [| simpl; exact Hon].
+      unfold e3. simpl. right. right. left. reflexivity.
+  - intros [P [Q [_ [He Hout]]]].
+    destruct He as [e [Hin Hsub]].
+    assert (Hend : on_seg P Q P) by exact (proj1 (seg_ends P Q)).
+    assert (Hb : on_bd A B C P).
+    { apply (seg_e3_bd A B C e P Hin). apply Hsub. exact Hend. }
+    assert (Hp : ~ in_tri D E F P) by (apply Hout; exact Hend).
     apply be_cell_iff; try assumption.
     assert (Hall : ~ (in_tri D E F A /\ in_tri D E F B /\ in_tri D E F C)).
-    { intros [Ha [Hbv Hc]]. apply Hout.
-      apply (verts_in_subset A B C D E F X HB Ha Hbv Hc).
+    { intros [Ha [Hbv Hc]]. apply Hp.
+      apply (verts_in_subset A B C D E F P HB Ha Hbv Hc).
       apply on_bd_in_tri. exact Hb. }
     destruct (in_tri_dec D E F A HB) as [Ha|Ha];
     destruct (in_tri_dec D E F B HB) as [Hbv|Hbv];
@@ -430,6 +536,27 @@ Proof.
     + left. exact Ha.
     + left. exact Ha.
     + left. exact Ha.
+Qed.
+
+Lemma ei_open_iff : forall A B C D E F,
+  0 < cross A B C -> 0 < cross D E F ->
+  ei_entry A B C D E F = Dim2 <->
+  exists X, tri_open D E F X /\ ~ in_tri A B C X.
+Proof.
+  intros A B C D E F HA HB. unfold ei_entry.
+  apply (ie_open_iff D E F A B C HB HA).
+Qed.
+
+Lemma eb_bd_iff : forall A B C D E F,
+  0 < cross A B C -> 0 < cross D E F ->
+  eb_entry A B C D E F = Dim1 <->
+  exists P Q, P <> Q /\
+    (exists e, In e (e3 D E F) /\
+       forall X, on_seg P Q X -> on_seg (fst e) (snd e) X) /\
+    (forall X, on_seg P Q X -> ~ in_tri A B C X).
+Proof.
+  intros A B C D E F HA HB. unfold eb_entry.
+  apply (be_bd_iff D E F A B C HB HA).
 Qed.
 
 Lemma be_boundary_closed : forall A B C D E F,
@@ -524,25 +651,76 @@ Proof.
   intros. unfold tri_de9im, ei_entry, eb_entry. repeat split; reflexivity.
 Qed.
 
+Definition orient_ccw (A B C : Point) : Point * Point * Point :=
+  if Rlt_dec (cross A B C) 0 then ((A, C), B) else ((A, B), C).
+
+Definition tri_de9im_orient (A B C D E F : Point) : IntersectionMatrix :=
+  match orient_ccw A B C with
+  | ((A', B'), C') =>
+      match orient_ccw D E F with
+      | ((D', E'), F') => tri_de9im A' B' C' D' E' F'
+      end
+  end.
+
+Lemma orient_ccw_pos : forall A B C,
+  0 < cross A B C -> orient_ccw A B C = ((A, B), C).
+Proof.
+  intros A B C H. unfold orient_ccw.
+  destruct (Rlt_dec (cross A B C) 0) as [Hlt|Hnot].
+  - exfalso. apply (Rlt_not_le 0 (cross A B C) Hlt). apply Rlt_le. exact H.
+  - reflexivity.
+Qed.
+
+Lemma orient_ccw_neg : forall A B C,
+  cross A B C < 0 -> orient_ccw A B C = ((A, C), B).
+Proof.
+  intros A B C H. unfold orient_ccw.
+  destruct (Rlt_dec (cross A B C) 0) as [Hlt|Hnot].
+  - reflexivity.
+  - exfalso. exact (Hnot H).
+Qed.
+
+Lemma orient_swap_pos : forall A B C,
+  cross A B C < 0 -> 0 < cross A C B.
+Proof.
+  intros A B C H. rewrite (cross_swap A C B). lra.
+Qed.
+
+Lemma tri_de9im_orient_ccw : forall A B C D E F,
+  0 < cross A B C -> 0 < cross D E F ->
+  tri_de9im_orient A B C D E F = tri_de9im A B C D E F.
+Proof.
+  intros A B C D E F HA HB. unfold tri_de9im_orient.
+  rewrite (orient_ccw_pos A B C HA).
+  rewrite (orient_ccw_pos D E F HB).
+  reflexivity.
+Qed.
+
 Theorem exterior_cells_iff : forall A B C D E F,
   0 < cross A B C -> 0 < cross D E F ->
   (ie_entry A B C D E F = Dim2 <->
-     ~ in_tri D E F A \/ ~ in_tri D E F B \/ ~ in_tri D E F C) /\
+     exists X, tri_open A B C X /\ ~ in_tri D E F X) /\
   (be_entry A B C D E F = Dim1 <->
-     ~ in_tri D E F A \/ ~ in_tri D E F B \/ ~ in_tri D E F C) /\
+     exists P Q, P <> Q /\
+       (exists e, In e (e3 A B C) /\
+          forall X, on_seg P Q X -> on_seg (fst e) (snd e) X) /\
+       (forall X, on_seg P Q X -> ~ in_tri D E F X)) /\
   (ei_entry A B C D E F = Dim2 <->
-     ~ in_tri A B C D \/ ~ in_tri A B C E \/ ~ in_tri A B C F) /\
+     exists X, tri_open D E F X /\ ~ in_tri A B C X) /\
   (eb_entry A B C D E F = Dim1 <->
-     ~ in_tri A B C D \/ ~ in_tri A B C E \/ ~ in_tri A B C F) /\
+     exists P Q, P <> Q /\
+       (exists e, In e (e3 D E F) /\
+          forall X, on_seg P Q X -> on_seg (fst e) (snd e) X) /\
+       (forall X, on_seg P Q X -> ~ in_tri A B C X)) /\
   (ee_entry A B C D E F = Dim2) /\
   (exists X, ~ in_tri A B C X /\ ~ in_tri D E F X).
 Proof.
   intros A B C D E F HA HB.
   split; [| split; [| split; [| split; [| split]]]].
-  - apply ie_cell_iff; assumption.
-  - apply be_cell_iff; assumption.
-  - apply ei_cell_iff; assumption.
-  - apply eb_cell_iff; assumption.
+  - apply ie_open_iff; assumption.
+  - apply be_bd_iff; assumption.
+  - apply ei_open_iff; assumption.
+  - apply eb_bd_iff; assumption.
   - apply ee_always.
   - apply ee_witness.
 Qed.
@@ -685,11 +863,22 @@ Print Assumptions eb_cell_iff.
 Print Assumptions in_tri_dec.
 Print Assumptions ie_open_iff.
 Print Assumptions vertex_on_bd.
+Print Assumptions combo_scale.
+Print Assumptions seg_on_edge.
+Print Assumptions combo_neq.
+Print Assumptions neg_cross_prefix.
+Print Assumptions edge_out_prefix.
 Print Assumptions be_bd_iff.
+Print Assumptions ei_open_iff.
+Print Assumptions eb_bd_iff.
 Print Assumptions be_boundary_closed.
 Print Assumptions ee_always.
 Print Assumptions px_in_tri_le.
 Print Assumptions ee_witness.
 Print Assumptions tri_de9im_entries.
+Print Assumptions orient_ccw_pos.
+Print Assumptions orient_ccw_neg.
+Print Assumptions orient_swap_pos.
+Print Assumptions tri_de9im_orient_ccw.
 Print Assumptions exterior_cells_iff.
 Print Assumptions exterior_entry_fixtures.
