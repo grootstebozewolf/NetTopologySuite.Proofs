@@ -329,6 +329,10 @@ theories/AtanIvt.v
 # JTS Math.atan2 / NTS Angle. claimId: none.
 # 3-axiom IVT atan2. Not audit-excepted.
 theories/Atan2.v
+# W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
+# Headline wind_integer. Not the ray-crossing count in WindingNumber.v.
+# Does not flip RNG_JordanUncond.
+theories/CurveRingWinding.v
 # Category C: Ratan quadrant body equals Atan2.atan2. claimId: none.
 # Audit-excepted (Classical_Prop.classic via Ratan).
 theories/Atan2RatanBridge.v
