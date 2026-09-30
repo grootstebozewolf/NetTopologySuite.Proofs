@@ -578,9 +578,9 @@ The repository has two source directories:
   directory split is about which CI runner builds the file (host vs
   container), not about which proof standard it meets.
 
-The host lane builds the 137 modules in `_CoqProject`, the
+The host lane builds the 139 modules in `_CoqProject`, the
 foundational `theories/` layer;
-the container `_CoqProject.full` builds the entire corpus (693 registered modules — 602 registered under `theories/`, 91 registered under `theories-flocq/`).
+the container `_CoqProject.full` builds the entire corpus (695 registered modules — 604 registered under `theories/`, 91 registered under `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,
 orientation, segment, bbox, triangle, convex, lex-order, plus their
@@ -752,25 +752,12 @@ for Scholar Sam / Tech-Lead Tess / Joost the BDFL paths.
   proofs don't reach: floating-point rounding, exceptions, performance,
   cross-platform consistency, interaction with the rest of the runtime.
 - This is **not** complete. Current coverage is over 7,600 Qed-closed
-  theorems across 693 registered modules — 602 registered under `theories/`,
-  91 registered under `theories-flocq/` (137 of them modules in `_CoqProject`
+  theorems across 695 registered modules — 604 registered under `theories/`,
+  91 registered under `theories-flocq/` (139 of them modules in `_CoqProject`
   as the host foundational target). There are **no
   `Admitted` theorems today** — both the counterexample and
   deferred-proof registries are empty (see the registries and
   `scripts/check_admitted.sh`).
-  Coverage spans the algebraic foundations (real-number, vector, distance,
-  orientation, line, disk, lattice, lex order), segment and bounding-box
-  primitives, triangle / convex / centroid / reflection laws, the
-  curve-linearisation stack (`Linearise.v` → `Simplify.v` → `Tin.v` →
-  `Validate.v` → `Validate_decidable.v` + binary64 instance), and the
-  early-to-mid phases of the chokepoint (orientation + intersection under
-  binary64, snap-rounding foundations, overlay, chord-approximated arcs).
-  The Phase 0–7 roadmap (below and in the actor Reading Guide) outlines
-  what remains: full Stage D, open JCT / DCEL / Hobby pieces carried as
-  deferred proofs or named hypotheses, and native (non-chord) curve
-  primitives. Each phase ships independently with precise caveats; see the
-  dedicated phase completion/audit docs for current status rather than
-  this summary.
 
 ## Build
 
@@ -784,7 +771,7 @@ rocq makefile -f _CoqProject -o Makefile.gen
 make -f Makefile.gen
 ```
 
-This builds the 137 modules in `_CoqProject`, the foundational
+This builds the 139 modules in `_CoqProject`, the foundational
 Stdlib-only layer.
 Modules with external dependencies (Flocq), plus the Stdlib-only Phase
 3/4 modules built alongside them, live in `_CoqProject.full` and are
