@@ -582,6 +582,15 @@ The host lane builds the 140 modules in `_CoqProject`, the
 foundational `theories/` layer;
 the container `_CoqProject.full` builds the entire corpus (696 registered modules — 605 registered under `theories/`, 91 registered under `theories-flocq/`).
 
+**Status.** The foundational layer (real-number, vector, distance,
+orientation, segment, bbox, triangle, convex, lex-order, plus their
+companions) is Qed-closed.  The curve-linearisation stack
+(`Linearise` → `Simplify` → `Tin` → `Validate` → `Validate_decidable`)
+is Qed-closed in the abstract, and its binary64 instance
+(`Validate_binary64.v` + RocqRefRunner) ships to
+[NetTopologySuite.Curve](https://github.com/grootstebozewolf/NetTopologySuite.Curve).
+The Phase 0–7 chokepoint sequence has advanced well into its early phases: **Phase 0** (robust orientation) ships the Shewchuk Stage A filter with integer-regime soundness plus an exact full-`binary64` orientation predicate proven sound over the entire double-coordinate plane (`Orient_b64_exact_full.v` — `b64_orient2d_exact_sound`, at three axioms, no `Classical_Prop.classic`), with Stage D adaptive-filter arithmetic still under way. **Phase 1** (robust segment intersection) is shipped end-to-end (predicate + intersection-point forward-error bound + C# port). **Phase 2** (snap rounding) has hot-pixel foundations, the snap-rounding correctness invariant, a topological-correctness theorem at the level the infrastructure supports, and Hobby Theorem 4.1 stated as a Qed-closed conditional. **Phase 3** (planar overlay) reaches a Qed-closed conditional headline (`overlay_ng_correct_conditional`). **Phase 4** (native curves) reaches its own Qed-closed conditional headline via the Option-B chord-approximation route (`arc_overlay_correct_chord_approx`). The remaining gaps in Phases 2–4 are carried as explicit named hypotheses or registered deferred proofs, not silent stubs.
+
 ## Why this exists
 
 Computational-geometry algorithms have subtle robustness properties — the
