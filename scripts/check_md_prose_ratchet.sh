@@ -161,3 +161,4 @@ if net > 0:
 print("[md-prose-ratchet] OK: net non-blank .md lines ≤ 0")
 sys.exit(0)
 PY
+# scratch gate skip-path probe
