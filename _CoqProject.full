@@ -3052,6 +3052,9 @@ theories/IntakeSpiralJts.v
 # Normalizer 2 (ClothoidNorm2). Start state + (k0, k1, L)
 # builds a ClothoidEgg. claimId 0007-norm2-state. No Admitted.
 theories/ClothoidNorm2.v
+# Arc row of the compound fold (ArcMemberState). arc_exit / arc_entry
+# store MemberState from IntakeSpiralJts. claimId none. No Admitted.
+theories/ArcMemberState.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
