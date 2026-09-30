@@ -207,6 +207,7 @@ ci-guards:
 	bash scripts/validate-claims.sh
 	bash scripts/check_oracle_handrolled.sh
 	bash scripts/check_md_prose_ratchet.sh
+	python3 scripts/check_cite_or_cut.py
 	python3 oracle/rocqref/check_jts_nts_equiv.py
 	python3 scripts/check_module_split.py
 	python3 scripts/check_constructor_gate.py
