@@ -1115,11 +1115,15 @@ Proof.
   apply Nat.lt_succ_diag_r.
 Qed.
 
-(* -------------------------------------------------------------------------- *)
-(* Noded modulo the candidate list. A counted point is never a shared         *)
-(* vertex, so "every candidate is a shared vertex" is ρ = 0, and then no      *)
-(* admissible hit exists. Turning pick = None into that reading is letter 5.  *)
-(* -------------------------------------------------------------------------- *)
+Definition rho_adm_step_strict := rho_step_strict.
+
+(* Letter 5, unproved. bag_run never takes the IDecline arm. *)
+Definition letter5_obligation : Prop :=
+  forall pick b, (forall b0, pick_spec pick b0) -> pick b = None ->
+  rho b = 0%nat /\ match b with
+  | BagDeclined _ => True
+  | BagLive _ pcs => forall a c, In a pcs -> In c pcs -> a <> c ->
+      ~ I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck c)) IDecline end.
 
 Lemma counted_not_vertex : forall pcs s1 s2 p,
   In p (counted pcs s1 s2) -> ~ vertex_of_both pcs s1 s2 p.
