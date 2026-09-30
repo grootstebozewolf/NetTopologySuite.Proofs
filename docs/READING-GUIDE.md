@@ -769,8 +769,7 @@ rocq makefile -f _CoqProject -o Makefile.gen
 make -f Makefile.gen
 ```
 
-This builds the 145 modules in `_CoqProject`, the foundational
-Stdlib-only layer.
+This builds the 145 modules in `_CoqProject`, the foundational Stdlib-only layer.
 Modules with external dependencies (Flocq), plus the Stdlib-only Phase
 3/4 modules built alongside them, live in `_CoqProject.full` and are
 built inside the container only (see below).

@@ -20,7 +20,8 @@
 
 From Stdlib Require Import Reals Lra Lia List PeanoNat Bool.
 From NTS.Proofs Require Import Distance SheetHenCook SheetHenBag SheetHenRho
-  SheetHenBagRun SheetHenLoop3 SheetHenBagRunFix HostCircChordOracle.
+  SheetHenBagRun SheetHenLoop3 SheetHenBagRunFix SheetHenPickSpec
+  HostCircChordOracle.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -886,15 +887,60 @@ Proof.
     exfalso. apply Hij. reflexivity.
 Qed.
 
+Lemma iso_half_wf : forall n m c, piece_wf (iso_half_pc n m c).
+Proof.
+  intros n m c. unfold piece_wf, piece_realizes, iso_half_pc. cbn.
+  split; [reflexivity| unfold window_ordered; cbn; lra].
+Qed.
+
+Lemma iso_half_inv : bag_inv iso_half_bag.
+Proof.
+  unfold bag_inv, iso_half_bag, iso_half_pcs.
+  intros pc Hin. simpl in Hin.
+  destruct Hin as [<-|[<-|[]]].
+  - apply iso_half_wf.
+  - apply iso_half_wf.
+Qed.
+
+Lemma circ_pair_not_decline : forall n1 m1 c1 n2 m2 c2,
+  ~ I_ok (ck_egg (bp_ck (iso_half_pc n1 m1 c1)))
+         (ck_egg (bp_ck (iso_half_pc n2 m2 c2))) IDecline.
+Proof.
+  intros n1 m1 c1 n2 m2 c2 Hd.
+  assert (Hb : pair_declines_b (iso_half_pc n1 m1 c1) (iso_half_pc n2 m2 c2) = true).
+  { apply (proj2 (pair_declines_spec _ _
+       (iso_half_wf n1 m1 c1) (iso_half_wf n2 m2 c2))). exact Hd. }
+  unfold pair_declines_b, iso_half_pc in Hb. simpl in Hb. discriminate.
+Qed.
+
+Lemma iso_half_no_decline : no_live_decline iso_half_bag.
+Proof.
+  unfold no_live_decline, iso_half_bag, iso_half_pcs, live_decline.
+  intros [a [c [Ha [Hc [Hneq Hd]]]]].
+  simpl in Ha, Hc.
+  destruct Ha as [<-|[<-|[]]]; destruct Hc as [<-|[<-|[]]].
+  - exact (Hneq eq_refl).
+  - exact (circ_pair_not_decline 0 1 iso_half_fst 1 0 iso_half_snd Hd).
+  - exact (circ_pair_not_decline 1 0 iso_half_snd 0 1 iso_half_fst Hd).
+  - exact (Hneq eq_refl).
+Qed.
+
 Lemma halves_zero_ov :
   bag_noded_ov iso_half_bag /\
-  bag_run_steps (fun _ => None) (S (rho iso_half_bag)) iso_half_bag = 0%nat.
+  bag_run_arm (S (rho iso_half_bag)) iso_half_bag = iso_half_bag /\
+  rho iso_half_bag = 0%nat /\
+  no_live_decline iso_half_bag.
 Proof.
-  split.
-  - apply halves_bag_ov.
-  - destruct (halves_zero_steps (fun _ => None)
-               (fun b => none_pick_spec b)) as [Hs _].
-    exact Hs.
+  assert (Hr : rho iso_half_bag = 0%nat).
+  { unfold iso_half_bag, rho. exact iso_half_pair_rho_zero. }
+  assert (Hnd : no_live_decline iso_half_bag) by apply iso_half_no_decline.
+  assert (Harm : pick_arm iso_half_bag = ArmStop).
+  { apply zero_live_is_stop; [apply iso_half_inv| exact Hr| exact Hnd]. }
+  assert (E : arm_next iso_half_bag = None).
+  { unfold arm_next. rewrite Harm. reflexivity. }
+  split; [apply halves_bag_ov|].
+  split; [| split; assumption].
+  cbn [bag_run_arm]. rewrite E. reflexivity.
 Qed.
 
 (* The converse rho = 0 -> bag_noded_ov is refuted in
@@ -963,4 +1009,8 @@ Print Assumptions iso_east_snd.
 Print Assumptions iso_swap_hens.
 Print Assumptions none_pick_spec.
 Print Assumptions halves_bag_ov.
+Print Assumptions iso_half_wf.
+Print Assumptions iso_half_inv.
+Print Assumptions circ_pair_not_decline.
+Print Assumptions iso_half_no_decline.
 Print Assumptions halves_zero_ov.
