@@ -17,7 +17,7 @@ claimId `0009-cst-span-carrier`. Implements #866 / #771 carry-and-check. Does no
 
 ## Context
 
-Phase B letters B.1–B.3 and B-bags already inhabit concat / ring-close / membership joints. Host mixed `I_ok` stays Decline. Intake of a proper partial arc (`A ≠ B`) still writes `θ₀ = 0`, `Δθ = ±2π` (`0007-intake-angles`), so carry-and-check has nowhere to put the numbers (`#866`).
+Phase B letters B.1–B.3 and B-bags already inhabit concat / ring-close / membership joints. In-scope `MkCirc` × `MkChord` is a host `IHit` (`HostCircChordOracle.v : I_ok_circ_chord_hit_complete`, #894); out-of-scope mixed stays Decline. WKT computes `(θ₀, Δθ)` (`0007-intake-angles`). A slot `try_carried` accepts equals that pair (`IntakeCarried.v : carried_slot_is_computed`).
 
 ## Decision
 
@@ -42,10 +42,18 @@ Phase B letters B.1–B.3 and B-bags already inhabit concat / ring-close / membe
 - `#866` can land as a thin walker/CST patch plus `ID_*` reasons. No Sheet remint. No CircGamma remint.
 - Observatory can flip Phase B to Landed from the existing joint theorems plus the done-when letter.
 - `#767` remains the host mixed-`I` product decision. This ADR does not flip `first_cook_scope`.
-- Production WKT partial arcs Decline until a fixture/factory carries span. That is fail-closed, not a grammar change.
+- Production WKT computes `(θ₀, Δθ)`. A checked slot equals that pair (`IntakeCarried.v : carried_slot_is_computed`). A missing slot on `A ≠ B` stays `ID_MissingCircSpan`. Not a grammar change.
 
 ## Related
 
 - [`ADR-0005-lenient-intake-strict-isvalid-curve-types.md`](ADR-0005-lenient-intake-strict-isvalid-curve-types.md)
 - [`ADR-0007-sheet-hen-cook-noding-model.md`](ADR-0007-sheet-hen-cook-noding-model.md)
-- Proofs #866, #771, #767
+- Proofs #866, #771, #767, #894
+
+## Amendment (2026-09-30)
+
+Status stays **Accepted**. Does not reopen ADR-0005 or ADR-0007.
+
+The Context sentence "Host mixed `I_ok` stays Decline" is withdrawn for the in-scope arm (#894). `MkCirc` × `MkChord` is a host `IHit` both orders (`HostCircChordOracle.v : I_ok_circ_chord_hit_complete`; `HostCircChordOracle.v : I_ok_chord_circ_hit_complete`). Out-of-scope mixed stays Decline. `#767` is not that Decline.
+
+The Context sentence that intake still writes `θ₀ = 0`, `Δθ = ±2π` is withdrawn. WKT computes the pair. `carried_slot_is_computed` is `circ_egg_eq` after `intake_angles_agree` after `try_carried_check`: a slot `try_carried` accepts equals `(circ_theta0, circ_sweep)` of `egg_of_points` (`IntakeCarried.v : carried_slot_is_computed`; `IntakeCarried.v : ticket_0009_cst_span_carrier_qed_or_qex`).

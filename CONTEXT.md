@@ -208,18 +208,9 @@ Not Stdlib Ratan classic. Collinear / duplicate Decline by name. ADR-0005:
 lenient closed CS normalizes; strict Declines. Clothoid is the MkClothoid letter, not this one.
 _Avoid_: silent chord demote, host cook expand, new oracle keyword
 
-**Span carrier** (ADR-0009, #866 / #771):
-Numeric `(θ₀, Δθ)` per 3-point window of circular text with `A ≠ B`,
-carried on the CST as `list (option (R * R))` beside `CircSlice`, not
-on `Sheet`. `CircSlice` stays a shape tag (`CircQuarter | CircFullOgc |
-CircUnknown`). Intake *checks* each slot; it does not compute atan2 for
-`A ≠ B`. A missing slot on `A ≠ B` is `ID_MissingCircSpan`. A present
-slot that fails `γ(0)=A`, `γ(1)=B`, and mid-control `M` on-arc is
-`ID_CircSpanDisagree`. `A = B` / `CircFullOgc` ignores its slot and
-stays intake-angles. Fixtures and factory rows author the list;
-production WKT without a slot Declines.
-_Avoid_: span fields on Sheet, one pair for a multi-arc string,
-compute-and-store, minting CircularEgg before the CST can fail closed
+**Span carrier** (ADR-0009, #866 / #771, claimId `0009-cst-span-carrier`):
+One `(θ₀, Δθ)` slot per 3-point window beside `CircSlice`, not on `Sheet`. WKT computes the pair (intake angles). A slot `try_carried` accepts equals that pair (`IntakeCarried.v : carried_slot_is_computed`). A missing `A ≠ B` slot is `ID_MissingCircSpan`; a failed check is `ID_CircSpanDisagree`. `A = B` / `CircFullOgc` ignores the slot.
+_Avoid_: span on Sheet, one pair for a multi-arc string, minting the egg before fail-closed
 
 **Joint** (ADR-0007 Phase B, occupancy in ADR-0009):
 A cook Hit at a concat or ring-close endpoint: parameters
@@ -229,8 +220,8 @@ _Avoid_: interior mixed cook (ι), first-cook expand, host mixed I
 
 **Sidecar joint occupancy** (ADR-0009):
 A sidecar `I_ok_mixed` / `I_ok_circ` joint Hit is R5-agree occupancy
-for Mixed / CC / CP. Host mixed `I_ok` stays Decline and is the #767
-letter, not this occupancy.
+for Mixed / CC / CP. In-scope `MkCirc`×`MkChord` is a host `IHit`
+(`HostCircChordOracle.v : I_ok_circ_chord_hit_complete`, #894), not a Decline and not the #767 letter.
 _Avoid_: treating I_ok_mixed as host I_ok
 
 **Phase B done-when** (ADR-0007 letter after Accept):
