@@ -3,6 +3,10 @@
 theories/Real.v
 theories/Lattice.v
 theories/Distance.v
+theories/CurveLength.v
+theories/ArcLength.v
+theories/ArcRectifiable.v
+theories/ArcArea.v
 # WKT ↔ GeoJSON structural roundtrips on the shared OGC 2-D geometry tree
 # (AST identity, not string formatting).  No Admitted.
 theories/WktGeoJsonRoundtrip.v
@@ -110,6 +114,11 @@ theories/LipInt.v
 theories/LipIntFTC.v
 # Leibniz rule for lint (claimId: none). Uniform modulus, no MVT.
 theories/LipIntLeibniz.v
+theories/MetricSpeed.v
+theories/MetricEnvelope.v
+theories/MetricArea.v
+theories/MetricGreen.v
+theories/MetricCircleSmoke.v
 theories/SheetHenClothoidCore.v
 theories/ClothoidTangent.v
 theories/SheetHenClothoidBounds.v

@@ -54,7 +54,7 @@ names. Prefer a narrow section over a broad tag.
 
 **Index.** `##` anchors by area. Observatory still reads each feeding heading’s `<!-- feat:… geom:… -->`.
 
-- **Foundations.** [orientation](#phase-0--robust-orientation-ccw--orientationindex) · [integer DE-9IM substrate](#relate--de-9im-integer-coordinate-substrate-67) · [squared distance](#foundational--squared-distance--degenerate-cases-distancev) · [dyadic FTC](#adr-0001--ftc-for-the-dyadic-integral)
+- **Foundations.** [orientation](#phase-0--robust-orientation-ccw--orientationindex) · [integer DE-9IM substrate](#relate--de-9im-integer-coordinate-substrate-67) · [squared distance](#foundational--squared-distance--degenerate-cases-distancev) · [dyadic FTC](#adr-0001--ftc-for-the-dyadic-integral) · [metrics](#adr-0001--generic-curve-metrics)
 - **Intersection / overlay.** [segment intersection](#phase-1--robust-segment-intersection-robustlineintersector) · [snap rounding](#phase-2--snap-rounding-hobby--halperinpacker-noder) · [OverlayNG](#phase-3--planar-overlay-overlayng) · [OverlayNGCurve](#overlayngcurve-phase-0--the-exact-cell-kernel-of-the-four-ops-overlayngcurvev) · [ADR-0007](#adr-0007--sheet--hen--cook-noding-constructor-accepted)
 - **Curves.** [linearization](#phase-4--native-curves-linearization-chord-approx-arcs) · [Koc](#koc-compound-curves--satellite-survey-railway-alignment-compoundcurvekocv) · [ring contact](#curve-ring-contact-boundary-meet-and-the-inscribed-reduction-ringcontactsoundv-relatecurvearcsegmentv-relatecurveboundarymeetv-relatecurveinscribedgeometryv-overlaycontactsoundv) · [#508 length](#issue-508--the-canonical-metric-length-spec-curvelengthv)
 - **Construct.** [MIC](#mic--maximum-inscribed-circle-of-the-unit-square-maximuminscribedcirclev-board-9004--epic-813) · [LEC](#lec--largest-empty-circle-over-the-side-midpoints-largestemptycirclev-board-card-pending--epic-813) · [PIA](#pia-teaching-claim--poles-of-inaccessibility-planar-instance-evalclaim9005av-board-9005) · [topos](#discrete--shℝ²-bridge--spatial-topos-foundations-heytingopensv-planeconnectedv-discreteshbridgev)
@@ -1155,23 +1155,7 @@ are all instances.
 
 ## Issue #508 — clothoid rung 1: arc-length parameterization + the generic primitive engine (`ClothoidLength.v`) <!-- feat:arc-len geom:cs -->
 
-The zoo's clothoid lane opens with the fact that makes it special: the oracle
-`K` token is the ISO clothoid, parameterized BY ARC LENGTH, so its exact
-metric length over `[sd, ed]` is `ed − sd` — the closed form `LENGTH_UNIFIED`
-emits. On the way, the ellipse tier's conditional squeeze generalizes into
-the engine every integral lane instantiates:
-`curve_length_of_primitive` — a chord modulus `F` on `[a,b]` that is
-first-order tight on fine gaps within the window has `F b − F a` as THE
-metric length. The premises are deliberately WINDOWED: the Euler spiral
-wraps toward its asymptotic point, so no global tightness δ exists for it,
-while every compact window satisfies the contract. The ellipse tier is now
-the engine's instance at `F = elliptic-E`; the clothoid at `F = id` under
-the window-local unit-speed contract (ADR-0001 idiom, mirroring
-`ClothoidResidual.v`). Host Fresnel position is `LipInt` (`cloth_Icos`,
-`cloth_Isin`); this file's `g` stays abstract (`H_unit_chord`,
-`H_unit_approx`). FTC is #889 (`0001-lint-ftc`, `lipint_ftc` wrapping
-`lip_ftc`); Leibniz is #896 (`lint_leibniz` / `clothoid_f_deriv`).
-Oracle `K` quadrature remains the differential check.
+Oracle `K` is the ISO clothoid by arc length: length on `[sd, ed]` is `ed − sd`. Engine `ArcRectifiable.v : curve_length_of_primitive` (ellipse `F = elliptic-E`, clothoid `F = id` under `H_unit_chord` / `H_unit_approx`). FTC #889 (`0001-lint-ftc`, `lipint_ftc`); Leibniz #896 (`lint_leibniz`).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -1341,6 +1325,17 @@ discharges it in Stdlib. `H_deriv` is `lint_leibniz`. Unconditional on |κL| ≤
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `LipIntFTC.v : lipint_ftc` (+ `lip_ftc`, `lip_ftc_right`, `lip_ftc_left`) | **FTC for `lint` (ADR-0001, claimId: 0001-lint-ftc, witness: lipint_ftc):** `lo < x < hi` gives `derivable_pt_lim lipF x (f x)`; `lo < hi` gives the right derivative at `lo` and the left derivative at `hi`. No Coquelicot, no RiemannInt, no MVT `[exact]` | 3 |
+
+## ADR-0001 — generic curve metrics <!-- feat:arc-len geom:arc -->
+
+claimId `0001-metric-speed` witness `MetricSpeed.v : lip_speed_is_curve_length`. claimId `0001-metric-envelope` witness `MetricEnvelope.v : envelope_aabb`. claimId `0001-metric-area` witness `MetricArea.v : members_area_split`. claimId `0001-metric-green` witness `MetricGreen.v : members_area_is_green`. Circle smoke `MetricCircleSmoke.v : circle_speed_primitive_agrees` is claimId none; it cites `ArcRectifiable.v : arc_r_theta_is_curve_length`. General LipInt analysis under the #886 amendment, not Fresnel-specific.
+
+| `file : theorem` | Meaning | Ax |
+|---|---|---|
+| `MetricSpeed.v : lip_speed_is_curve_length` | **C1 speed is the metric length (ADR-0001, claimId: 0001-metric-speed, witness: lip_speed_is_curve_length):** general LipInt analysis under the #886 amendment, not a Fresnel result. `speedF b − speedF a = int_seg` of `|γ'|` and `is_curve_length γ a b` of that increment. Chord and O(h²) tightness from `lip_ftc` plus a Lipschitz derivative. No RiemannInt, no MVT, no Rolle. `lint_leibniz` is not this letter `[exact]` | 3 |
+| `MetricEnvelope.v : envelope_aabb` | **AABB at endpoints or supplied tangents (ADR-0001, claimId: 0001-metric-envelope, witness: envelope_aabb):** general LipInt/RealMonotone analysis under the #886 amendment, not a Fresnel result. Each sign piece stays between its endpoint values by `deriv_nonneg_incr`; interior knots have derivative 0 by hypothesis. x and y partitions may differ. Deferred: Rolle, and the clothoid, NURBS, and arc envelope instances. Arc breakpoints are the multiples of π/2 inside `[θ₀, θ₀+Δθ]`, by angle containment — the smallest next step `[exact]` | 3 |
+| `MetricArea.v : members_area_split` (+ `marc_from_egg`) | **The area formula decomposes as shoelace plus signed circular segments (ADR-0001, claimId: 0001-metric-area, witness: members_area_split):** general LipInt-side formula under the #886 amendment, not a Fresnel result. `MArc` is a `CircularEgg`: `p = γ(0)`, `q = γ(1)`, `r = circ_r`, `θ = circ_sweep`. A closed chain has area `signed_area2 (spine) / 2 + bulges`. Clothoid and NURBS members stay deferred `[exact]` | 3 |
+| `MetricGreen.v : members_area_is_green` (+ `arc_green_segment`, `chord_green_segment`) | **Signed area := ½∮(x dy − y dx) (ADR-0001, claimId: 0001-metric-green, witness: members_area_is_green):** general LipInt analysis under the #886 amendment, not a Fresnel result. On a `CircularEgg`, `½ int_seg (x y' − y x')` on `[0,1]` equals `½ edge_cross(γ(0), γ(1)) + segment_area`; a chord integral is the cross. The sum over members is `members_area`, and signed area := `½∮(x dy − y dx)`. Equality of that line integral with the enclosed region's measure (Green for regions + Jordan) is not claimed; the bridge is the deferred `CurveRingWinding.v : area_sign_eq_winding_sign`. `lip_ftc` on a window where the endpoints are interior. Clothoid and NURBS Green members stay deferred `[exact]` | 3 |
 
 ## Issue #508 — integral machinery: speed-integral premises (`SpeedIntegral.v`) <!-- feat:arc-len geom:arc -->
 
