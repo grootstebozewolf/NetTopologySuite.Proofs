@@ -96,7 +96,9 @@ the build inputs by
 [`scripts/check_readme_counts.py`](scripts/check_readme_counts.py); the
 claims around them by
 [`scripts/check_readme_claims.py`](scripts/check_readme_claims.py). Both run
-in `make ci-guards`.
+in `make ci-guards`. The separate `cad-carrier` check
+(`.github/workflows/cad-carrier.yml`) runs the `tools/cad` pytest and
+schema validation as a corpus guardrail; it is not a Rocq build.
 
 ## What this is not
 

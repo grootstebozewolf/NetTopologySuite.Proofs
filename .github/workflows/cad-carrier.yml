@@ -1,0 +1,43 @@
+# CAD carrier extractor. Path-filtered and independent of the Rocq jobs
+# in ci.yml: no needs:, and those workflows are not modified.
+
+name: cad-carrier
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/cad/**"
+      - ".github/workflows/cad-carrier.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/cad/**"
+      - ".github/workflows/cad-carrier.yml"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  cad-carrier:
+    name: cad-carrier
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools/cad requirements
+        run: pip install -r tools/cad/requirements.txt
+
+      - name: pytest tools/cad
+        run: pytest tools/cad
+
+      - name: Validate extractor output against the carrier schema
+        run: |
+          out="${RUNNER_TEMP}/cad-records"
+          python3 tools/cad/export_fixture_json.py "$out"
+          python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json "$out"/*.json

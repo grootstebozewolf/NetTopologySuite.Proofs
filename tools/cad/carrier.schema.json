@@ -1,0 +1,578 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nettopologysuite.proofs:cad:carrier.schema.json",
+  "title": "CAD carrier record",
+  "description": "Year-0 CAD-to-GIS carrier (CONTEXT.md, CAD-to-GIS bridging (year 0), The CAD carrier record). One JSON object is either an entity record or a Decline. Angle-carrying and fail-closed: every source entity yields a record or a named decline, and nothing is dropped. Format-neutral (DXF/DWG, DGN, fonts, IFC, SVG map into it). This file is the record definition; there is no companion Markdown. The year-1 IntakeCarrier.v reads this JSON through the same hunt harness as SqlMmWktAngleHunt, so this schema is the differential surface and no second format grows. Placement is an ordered chain of similarity links applied local-to-world (entity OCS, then inner block insert, then outer block insert, then georeference). Each link is a translation, a rotation in the record angle unit, a positive uniform scale, and a reflect flag. The derived determinant sign s is +1 or -1 and is -1 exactly when an odd number of links reflect; a DXF extrusion of -Z is one reflecting link. Shear and non-uniform scale are not links: they decline the whole entity. Params are the numbers the source states, with the angle unit of those numbers. Stored ARC angles (DXF group codes 50 and 51, degrees) are always CCW from the OCS x-axis, and ELLIPSE start and end params are always CCW about the major axis; both record direction as the const ccw-ocs. Header $ANGDIR and $ANGBASE affect display and input only and stay under units as provenance; they are not copied into arc, ellipse, or angleStep params. An angleStep tolerance read from the file uses that same const. Units carry the linear unit (DXF $INSUNITS), the angle unit (DXF $AUNITS), $ANGDIR (0 CCW, 1 CW) and $ANGBASE. Tolerance is one of sagitta d, segment count n, angle step alpha, or sourceDefault. Dimension is 2D, or 2D plus a constant elevation; varying Z declines. Provenance is format, version, handle, layer, block path, and file id. Modes follow ADR-0005: strict declines every named case; lenient additionally normalizes an ellipse of ratio 1 to an Arc and a closed polyline to a Ring. A non-finite bulge (NaN or infinity) is ID_DegenerateEntity in both modes. b = 0 is a Chord in both modes and the bulge value is kept. Bezier is degree p in {2,3}, n = p+1 control points, clamped knots with p+1 repeats at each end (quadratic 0,0,0,1,1,1; cubic 0,0,0,0,1,1,1,1), and unit weights: a single-span MkNurbs. Ring records contours plus a winding rule. Compound is an ordered member list. ID_NonzeroOverlapNotYet is a named decline for overlapping nonzero-winding contours; year 0 does not detect overlap, so a producer of this schema version does not emit that id. ezdxf (MIT) may read DXF into this schema; its code is not ported.",
+  "oneOf": [
+    { "$ref": "#/$defs/entity" },
+    { "$ref": "#/$defs/decline" }
+  ],
+  "$defs": {
+    "xy": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "kind": {
+      "enum": [
+        "Chord",
+        "BulgePolyline",
+        "Arc",
+        "Circle",
+        "Ellipse",
+        "BSpline",
+        "Bezier",
+        "Spiral",
+        "Ring",
+        "Compound",
+        "Unsupported"
+      ]
+    },
+    "declineId": {
+      "description": "Named refusals. ID_NonzeroOverlapNotYet is reserved: year 0 does not detect contour overlap, so it is not emitted.",
+      "enum": [
+        "ID_NotSimilarityPlacement",
+        "ID_TiltedPlacement",
+        "ID_ThreeDNotYet",
+        "ID_HatchRegion",
+        "ID_TextEntity",
+        "ID_DimensionEntity",
+        "ID_EllipseNotYet",
+        "ID_FitPointSpline",
+        "ID_UnclampedKnots",
+        "ID_PeriodicSpline",
+        "ID_UnknownUnit",
+        "ID_AngleConventionUnknown",
+        "ID_ToleranceNonPositive",
+        "ID_ToleranceKindUnsupported",
+        "ID_NonzeroOverlapNotYet",
+        "ID_DegenerateEntity",
+        "ID_UnsupportedEntity"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "version", "handle", "layer", "blockPath", "fileId"],
+      "properties": {
+        "format": { "type": "string", "minLength": 1 },
+        "version": { "type": "string" },
+        "handle": { "type": "string" },
+        "layer": { "type": "string" },
+        "blockPath": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fileId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One similarity. scale is positive and uniform. reflect is the link's contribution to det sign. rotate is in the record's angle unit.",
+      "required": ["translate", "rotate", "scale", "reflect"],
+      "properties": {
+        "translate": { "$ref": "#/$defs/xy" },
+        "rotate": { "type": "number" },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "reflect": { "type": "boolean" }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["links", "s"],
+      "properties": {
+        "links": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/link" }
+        },
+        "s": { "enum": [1, -1] }
+      }
+    },
+    "units": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "linear is the DXF $INSUNITS name (or unitless). angle is the $AUNITS name. angdir is $ANGDIR and angbase is $ANGBASE in degrees, kept as display and input provenance. They do not rewrite stored ARC or ELLIPSE angles or an angleStep.",
+      "required": ["linear", "angle", "angdir", "angbase"],
+      "properties": {
+        "linear": { "type": "string", "minLength": 1 },
+        "linearCode": { "type": "integer" },
+        "angle": {
+          "enum": ["degree", "dms", "grad", "radian", "surveyor"]
+        },
+        "angleCode": { "type": "integer" },
+        "angdir": { "enum": [0, 1] },
+        "angbase": { "type": "number" }
+      }
+    },
+    "tolerance": {
+      "description": "Sagitta d, segment count n, angle step alpha, or the source default. Non-positive d, n < 1, or non-positive alpha never appear here; those inputs are ID_ToleranceNonPositive.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "d"],
+          "properties": {
+            "kind": { "const": "sagitta" },
+            "d": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "n"],
+          "properties": {
+            "kind": { "const": "segmentCount" },
+            "n": { "type": "integer", "minimum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "alpha", "angleUnit", "direction"],
+          "properties": {
+            "kind": { "const": "angleStep" },
+            "alpha": { "type": "number", "exclusiveMinimum": 0 },
+            "angleUnit": { "type": "string", "minLength": 1 },
+            "direction": {
+              "description": "An angle step read from the file is swept CCW in the stored OCS convention. It is not taken from $ANGDIR.",
+              "const": "ccw-ocs"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "sourceDefault" }
+          }
+        }
+      ]
+    },
+    "dimension": {
+      "description": "2D, or 2D plus one constant elevation. Any Z variation is ID_ThreeDNotYet and is not a record.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["space"],
+          "properties": { "space": { "const": "2d" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["space", "elevation"],
+          "properties": {
+            "space": { "const": "2d+elevation" },
+            "elevation": { "type": "number" }
+          }
+        }
+      ]
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One bulge-polyline segment. bulge is the source bulge b = tan(delta-theta/4), kept even when kind is Chord (b = 0).",
+      "required": ["kind", "start", "end", "bulge"],
+      "properties": {
+        "kind": { "enum": ["Chord", "Arc"] },
+        "start": { "$ref": "#/$defs/xy" },
+        "end": { "$ref": "#/$defs/xy" },
+        "bulge": { "type": "number" }
+      }
+    },
+    "decline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record", "id", "provenance", "reason"],
+      "properties": {
+        "record": { "const": "decline" },
+        "id": { "$ref": "#/$defs/declineId" },
+        "name": {
+          "description": "Source entity name. Required when id is ID_UnsupportedEntity.",
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "id": { "const": "ID_UnsupportedEntity" } },
+            "required": ["id"]
+          },
+          "then": { "required": ["name"] }
+        }
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "record",
+        "kind",
+        "placement",
+        "params",
+        "units",
+        "tolerance",
+        "dimension",
+        "provenance"
+      ],
+      "properties": {
+        "record": { "const": "entity" },
+        "kind": { "$ref": "#/$defs/kind" },
+        "sourceName": {
+          "description": "Required when kind is Unsupported: the source entity name that was refused as a kind.",
+          "type": "string",
+          "minLength": 1
+        },
+        "placement": { "$ref": "#/$defs/placement" },
+        "params": { "type": "object" },
+        "units": { "$ref": "#/$defs/units" },
+        "tolerance": { "$ref": "#/$defs/tolerance" },
+        "dimension": { "$ref": "#/$defs/dimension" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "Unsupported" } },
+            "required": ["kind"]
+          },
+          "then": { "required": ["sourceName"] }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Chord" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["start", "end"],
+                "properties": {
+                  "start": { "$ref": "#/$defs/xy" },
+                  "end": { "$ref": "#/$defs/xy" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "BulgePolyline" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["closed", "segments"],
+                "properties": {
+                  "closed": { "type": "boolean" },
+                  "segments": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/$defs/segment" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Arc" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "center",
+                  "radius",
+                  "startAngle",
+                  "endAngle",
+                  "angleUnit",
+                  "direction"
+                ],
+                "properties": {
+                  "center": { "$ref": "#/$defs/xy" },
+                  "radius": { "type": "number", "exclusiveMinimum": 0 },
+                  "startAngle": {
+                    "description": "DXF group 50, degrees, copied raw. endAngle < startAngle is kept; the extractor does not add 360.",
+                    "type": "number"
+                  },
+                  "endAngle": {
+                    "description": "DXF group 51, degrees, copied raw.",
+                    "type": "number"
+                  },
+                  "angleUnit": {
+                    "enum": ["degree", "dms", "grad", "radian", "surveyor"]
+                  },
+                  "direction": {
+                    "description": "Stored ARC angles are always CCW from the OCS x-axis. Header $ANGDIR is not copied here.",
+                    "const": "ccw-ocs"
+                  },
+                  "frameAngle": {
+                    "description": "Zero-angle direction of an ellipse normalized to an arc, in angleUnit. Omitted for a source ARC, whose angles are already absolute in the OCS.",
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Circle" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["center", "radius"],
+                "properties": {
+                  "center": { "$ref": "#/$defs/xy" },
+                  "radius": { "type": "number", "exclusiveMinimum": 0 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Ellipse" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Source ellipse parameters. The DXF extractor does not emit this kind: ratio 1 becomes an Arc in lenient mode, and every other ellipse is ID_EllipseNotYet.",
+                "required": [
+                  "center",
+                  "majorAxis",
+                  "ratio",
+                  "startParam",
+                  "endParam",
+                  "angleUnit",
+                  "direction"
+                ],
+                "properties": {
+                  "center": { "$ref": "#/$defs/xy" },
+                  "majorAxis": { "$ref": "#/$defs/xy" },
+                  "ratio": { "type": "number", "exclusiveMinimum": 0 },
+                  "startParam": { "type": "number" },
+                  "endParam": { "type": "number" },
+                  "angleUnit": { "const": "radian" },
+                  "direction": {
+                    "description": "ELLIPSE start and end params are always CCW about the major axis.",
+                    "const": "ccw-ocs"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "BSpline" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["degree", "controlPoints", "weights", "knots", "clamped"],
+                "properties": {
+                  "degree": { "type": "integer", "minimum": 1 },
+                  "controlPoints": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": { "$ref": "#/$defs/xy" }
+                  },
+                  "weights": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": { "type": "number", "exclusiveMinimum": 0 }
+                  },
+                  "knots": {
+                    "type": "array",
+                    "minItems": 4,
+                    "items": { "type": "number" }
+                  },
+                  "clamped": { "const": true }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Bezier" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "description": "Single-span MkNurbs: degree p in {2,3}, n = p+1 control points, p+1 repeated knots at each end, unit weights.",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["degree", "controlPoints", "weights", "knots"],
+                    "properties": {
+                      "degree": { "const": 2 },
+                      "controlPoints": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": { "$ref": "#/$defs/xy" }
+                      },
+                      "weights": {
+                        "type": "array",
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "items": { "const": 1 }
+                      },
+                      "knots": { "const": [0, 0, 0, 1, 1, 1] }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["degree", "controlPoints", "weights", "knots"],
+                    "properties": {
+                      "degree": { "const": 3 },
+                      "controlPoints": {
+                        "type": "array",
+                        "minItems": 4,
+                        "maxItems": 4,
+                        "items": { "$ref": "#/$defs/xy" }
+                      },
+                      "weights": {
+                        "type": "array",
+                        "minItems": 4,
+                        "maxItems": 4,
+                        "items": { "const": 1 }
+                      },
+                      "knots": { "const": [0, 0, 0, 0, 1, 1, 1, 1] }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Spiral" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["family"],
+                "properties": {
+                  "family": {
+                    "enum": ["clothoid", "bloss", "sine", "cosine", "polynomial", "other"]
+                  },
+                  "source": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Ring" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Overlap of nonzero contours is not detected in year 0.",
+                "required": ["windingRule", "contours"],
+                "properties": {
+                  "windingRule": { "enum": ["nonzero", "evenodd"] },
+                  "contours": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "array",
+                      "minItems": 3,
+                      "items": { "$ref": "#/$defs/segment" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Compound" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Ordered members. Each member is a carrier entity.",
+                "required": ["members"],
+                "properties": {
+                  "members": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/$defs/entity" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "Unsupported" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["sourceName"],
+                "properties": {
+                  "sourceName": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
