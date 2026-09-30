@@ -6,6 +6,9 @@
    One optional (theta0, dtheta) slot per 3-point window.
    Intake checks; it does not compute atan2 for A <> B.
    CircFullOgc / A = B ignores the slot (0007-intake-angles).
+   A slot try_carried accepts equals the computed egg:
+   carried_slot_is_computed is circ_egg_eq after
+   intake_angles_agree after try_carried_check.
    Not a Sheet remint. Not a TaggedCst remint. Not CircGamma.
 
    claimId: 0009-cst-span-carrier
@@ -173,15 +176,44 @@ Proof.
     rewrite Ht. reflexivity.
 Qed.
 
-Definition ticket_0009_cst_span_carrier_qed_or_qex : Prop := True.
-
-Lemma ticket_0009_cst_span_carrier_qed_or_qex_holds :
-  ticket_0009_cst_span_carrier_qed_or_qex.
+(* F2 try_carried_check, F3 intake_angles_agree, F5 circ_egg_eq.
+   The slot (th, dth) is the (θ₀, Δθ) of that egg. *)
+Lemma carried_slot_is_computed : forall a m b th dth c,
+  try_carried a m b th dth = inl c ->
+  th = circ_theta0 (egg_of_points a m b) /\
+  dth = circ_sweep (egg_of_points a m b).
 Proof.
-  exact I.
+  intros a m b th dth c H.
+  destruct (try_carried_check a m b th dth c H) as [Hc Hmk].
+  destruct (intake_angles_agree c a m b Hc) as [Ho [Hr [Hth Hs]]].
+  assert (Heq : c = egg_of_points a m b).
+  { apply circ_egg_eq; assumption. }
+  assert (Hth' : circ_theta0 c = th).
+  { rewrite Hmk. reflexivity. }
+  assert (Hs' : circ_sweep c = dth).
+  { rewrite Hmk. reflexivity. }
+  rewrite Heq in Hth', Hs'.
+  split; symmetry; assumption.
+Qed.
+
+(* WITNESS {"claimId":"0009-cst-span-carrier","topic":"core","lemma":"ticket_0009_cst_span_carrier_qed_or_qex","title":"A span slot try_carried accepts equals the computed egg angles; QED arm is carried_slot_is_computed; a disagreeing success is not claimed","file":"theories/IntakeCarried.v","witness":"0009-cst-span-carrier","board":"ADR-0009"} *)
+Theorem ticket_0009_cst_span_carrier_qed_or_qex :
+  (forall a m b th dth c,
+     try_carried a m b th dth = inl c ->
+     th = circ_theta0 (egg_of_points a m b) /\
+     dth = circ_sweep (egg_of_points a m b))
+  \/
+  (exists a m b th dth c,
+     try_carried a m b th dth = inl c /\
+     (th <> circ_theta0 (egg_of_points a m b) \/
+      dth <> circ_sweep (egg_of_points a m b))).
+Proof.
+  left. exact carried_slot_is_computed.
 Qed.
 
 Print Assumptions circ_full_ogc_ignores_spans.
 Print Assumptions missing_slot_a_neq_b.
 Print Assumptions carried_window_bag.
 Print Assumptions carried_window_disagree.
+Print Assumptions carried_slot_is_computed.
+Print Assumptions ticket_0009_cst_span_carrier_qed_or_qex.
