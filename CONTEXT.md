@@ -37,8 +37,8 @@ arc, clothoid, sinusoid, ellipse, Bezier, NURBS), supporting `eval`,
 `tangent`, curvature where defined, `split` and `demote`.
 _Avoid_: curve, segment (both are classes of egg, not the concept)
 
-**Bézier egg**:
-A polynomial curve of degree 2 or 3 with control points; a single-span NURBS with unit weights; linearized by the convex-hull flatness bound. *Year 1+, not yet minted.*
+**Bézier**:
+A single-span `MkNurbs` with unit weights; degree *p* uses *p*+1 repeated knots at each end. No new egg, no new ADR.
 
 **Chicken**:
 Incidence, and only incidence: a directed use `(h_src, h_dst, egg)` of an egg
@@ -314,12 +314,12 @@ Year 0 means groundwork done before and outside the subsidy year; it produces su
 | DXF `LWPOLYLINE` with bulge | circular arc per segment, bulge b = tan(Δθ/4) | `MkCirc` | Δθ = 4·atan(b), which is `atan3`, 3-axiom; centre and radius follow from the chord |
 | DXF `ELLIPSE`, DGN elliptical arc (rotated) | elliptical arcs | SQL/MM `ELLIPTICALCURVE` (§4.2.9) | oracle-instantiable already; no host egg yet |
 | DXF `SPLINE`, DGN B-spline | NURBS (degree, knots, control points, weights, or fit points) | `MkNurbs` | fit-point splines need an interpolation step first |
-| TrueType `glyf` outlines | quadratic B-splines with implied on-curve midpoints | quadratic Bézier egg (new) | closed rings, nonzero winding |
-| CFF/PostScript, OpenType CFF2, SVG paths | cubic Béziers, SVG elliptical arcs | cubic Bézier egg (new); elliptical arc as above | SVG arcs use endpoint parameterization and need the centre conversion |
+| TrueType `glyf` outlines | quadratic B-splines with implied on-curve midpoints | `MkNurbs` (single-span, unit weights) | closed rings, nonzero winding |
+| CFF/PostScript, OpenType CFF2, SVG paths | cubic Béziers, SVG elliptical arcs | `MkNurbs` (single-span, unit weights); elliptical arc as above | SVG arcs use endpoint parameterization and need the centre conversion |
 | IFC 4.3 alignment segments | clothoid, Bloss, sine, cosine, polynomial spirals | `MkClothoid`; the other spiral kinds are named declines today | the same spiral families `SPIRALCURVE` names |
 | DXF `INSERT` / block references, DGN cells | affine placement of the above | the placement rules of the ISO clothoid intake | similarity placements only; general affine images of arcs are not arcs |
 
-**What is new, and what is not.** Two egg kinds are new: quadratic and cubic Béziers. Both are polynomial, so their `Linearizes` instances come from the convex-hull flatness bound that the NURBS lane needs anyway (a Bézier is a single-span NURBS with unit weights), and their metrics come from the generic speed and Green theorems. Nothing else is new: arcs, circles, clothoids, NURBS and placements all have a home. What year 0 must decide is the *carrier*: CAD is not text, so the intake is a structured record (entity, placement, parameters, units, layer) rather than a WKT string. The ADR-0009 span slot is the first such record; the CAD carrier generalizes it.
+**What is new, and what is not.** Nothing egg-wise is new. A Bézier of degree *p* is exactly a single-span clamped B-spline: the Bernstein basis is the B-spline basis on the knot vector (0..0, 1..1) with *p*+1 repeats at each end, so it is `MkNurbs` with all weights 1 and one span; de Boor on that knot vector is de Casteljau. Fonts and SVG paths join the NURBS lane; `nurbs_wf` holds by construction; the N-L3 hull-flatness bound is the linearizer. Rational Béziers (some CAD exports; conic arcs as rational quadratics, the ζ-chart form) are the same record with weights ≠ 1, i.e. general `MkNurbs`. No new egg and no new ADR. The only year-0 decision is the *carrier*: CAD is not text, so the intake is a structured record (entity, placement, parameters, units, layer) rather than a WKT string. The ADR-0009 span slot is the first such record; the CAD carrier generalizes it. Glyph contours are many spans: represent as a Compound of single-span pieces (exact, C0 at explicit on-curve points, which is what TrueType means), preferred because the fold and `MemberState` exist; the alternative, one multi-span quadratic B-spline with interior knot multiplicity 1 at implied midpoints and 2 at explicit on-curve points, is noted but not chosen. `MkNurbs` stays the fail-closed arm: eggs are constructible and well-formed, but cooks decline until the NURBS letters land; year 0 needs no cooks; year-1 NURBS work gets font fixtures for free.
 
 **Two things CAD does that GIS must not lose.** First, orientation and winding are semantic in fonts and in CAD hatches: glyph interiors are defined by the nonzero winding rule, and the corpus's curve-ring winding is exactly the predicate that decides them. Second, tolerance is expressed differently: CAD linearization is usually a chord-height (sagitta) limit in drawing units, sometimes a segment count, occasionally an angle step; GIS consumers think in coordinate tolerance. The contract's Hausdorff bound is the common currency, and year 0 should write down the conversion for each source's tolerance parameter.
 
@@ -350,7 +350,7 @@ every parameter the source states plus the frame it states it in.
 - BulgePolyline: *b* = tan(Δθ/4); centre rational in chord and *b* (offset along rot90(chord)); radius a square root; Δθ = 4·`atan3`(*b*); compute-then-certify via `egg_of_points` / `egg_of_points_certified`; *b* = 0 is a chord; *b* = ±1 is a half circle (Δθ = ±π); large |*b*| stays strictly inside (0, 2π); the full circle is not encodable in one bulge, so no decline is needed; only *b* = 0 (chord) and NaN/non-finite input are special.
 - Ellipse: no host egg; ratio 1 normalizes to Arc in lenient mode; otherwise `ID_EllipseNotYet`; DGN rotated elliptical arcs likewise.
 - BSpline: control-point form becomes `MkNurbs` payload under `nurbs_wf` (clamped knots, positive weights); unclamped and periodic decline by name; fit-point splines decline.
-- Bezier: knot vectors for degree *p* have *p*+1 repeated values at each end — quadratic (TrueType) 0,0,0,1,1,1; cubic (CFF, SVG) 0,0,0,0,1,1,1,1 — and unit weights in both. That is `nurbs_wf` with *n* = *p*+1 control points, so `MkNurbs` takes them unchanged. TrueType implied on-curve midpoints expanded first.
+- Bezier: a single-span clamped B-spline — Bernstein = B-spline basis on (0..0, 1..1) with *p*+1 repeats at each end; de Boor is de Casteljau. Knot vectors: quadratic (TrueType) 0,0,0,1,1,1; cubic (CFF, SVG) 0,0,0,0,1,1,1,1; unit weights in both. That is `nurbs_wf` with *n* = *p*+1 control points, so `MkNurbs` takes them unchanged. No new egg, no new ADR. Rational Béziers are the same record with weights ≠ 1. TrueType implied on-curve midpoints expanded first; a glyph contour is a Compound of those spans.
 - Spiral (IFC): clothoid takes norm2's start-state form; Bloss / sine / cosine / polynomial decline by name as `SPIRALCURVE` does.
 - Ring: closed chain plus winding rule; carrier records rule and contours; `wind_integer` decides interiors; overlapping nonzero contours → union = overlay, so `ID_NonzeroOverlapNotYet` until overlay exists.
 - Compound: ordered chain folded with `MemberState` (C0 required, G1/G2 reported), same fold as `COMPOUNDCURVE`.
