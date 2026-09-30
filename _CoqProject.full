@@ -3044,6 +3044,11 @@ theories/IntakeCircle.v
 # copy into ClothoidEgg; similarity frame or named Decline.
 # claimId 0007-intake-mkclothoid, not reminted. No Admitted.
 theories/IsoClothoidIntake.v
+# SPIRALCURVE intake and JTS clothoid decline taxonomy
+# (IntakeSpiralJts). Clothoid kind reuses try_iso_clothoid.
+# Other kinds are SpiralOther. claimId 0007-intake-spiral.
+# No Admitted.
+theories/IntakeSpiralJts.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
@@ -3063,6 +3068,10 @@ theories/IntakeCarried.v
 # Walker face of ISO CLOTHOID normalizer 1. Hit implies cloth_wf;
 # red declines and the non-locked sample. No new witness.
 theories/IsoClothoidIntakeMap.v
+# Walker face of SPIRALCURVE / JTS declines
+# (IntakeSpiralJtsMap). claimId 0007-intake-spiral.
+# No Admitted.
+theories/IntakeSpiralJtsMap.v
 # ADR-0007 SQL/MM signed tag maps (SqlMmSignedTag).
 # τ on eggs; ρ on IntakeWalker productions; τ=μ after
 # singleton bags. CIRCLE iff |sweep|=2π. κ: 2/8 or none.

@@ -267,7 +267,7 @@ Lemma famous_singleton_declines :
 Proof. exact geodesic_badcount_declines. Qed.
 
 Lemma famous_spiral_declines :
-  intake_map default_sheet TSpiralCurve = IntakeDecline ID_SpiralCurve.
+  intake_map default_sheet spiral_bloss = IntakeDecline ID_SpiralOther.
 Proof. exact spiral_declines. Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -303,7 +303,7 @@ Lemma famous_emit_wkb13_missing :
   ~ famous_geodesic_qex_inhabits FG_EmitWkb13SignedIo.
 Proof. intro H. exact H. Qed.
 
-(* WITNESS {"claimId":"0007-famous-geodesicstring","topic":"overlay","lemma":"ticket_0007_famous_geodesicstring_qed_or_qex","title":"Famous Science/arXiv 1804.07389 GEODESICSTRING fixtures: Sonmiani-Karaginsky water and Quanzhou-Sagres land bag as TGeodesicString MkChord-only IntakeBag, same bag as matching LINESTRING; tau=LINESTRING; cst_prod_tag None; no TagGeodesic; kappa not 13; empty/singleton/spiral still Decline (QED) or Earth great-circle length / ETOPO1 mask / sphere-vs-WGS84 / branch-and-bound optimality / emit-WKB-13 inhabit (QEX); discharged QED; not MkGeodesic; not a silent Earth-chord demote; not a remint of 0007-intake-geodesic","file":"theories/IntakeFamousGeodesic.v","witness":"0007-famous-geodesicstring","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-famous-geodesicstring","topic":"overlay","lemma":"ticket_0007_famous_geodesicstring_qed_or_qex","title":"Famous Science/arXiv 1804.07389 GEODESICSTRING fixtures: Sonmiani-Karaginsky water and Quanzhou-Sagres land bag as TGeodesicString MkChord-only IntakeBag, same bag as matching LINESTRING; tau=LINESTRING; cst_prod_tag None; no TagGeodesic; kappa not 13; empty/singleton/non-clothoid spiral still Decline (QED) or Earth great-circle length / ETOPO1 mask / sphere-vs-WGS84 / branch-and-bound optimality / emit-WKB-13 inhabit (QEX); discharged QED; not MkGeodesic; not a silent Earth-chord demote; not a remint of 0007-intake-geodesic","file":"theories/IntakeFamousGeodesic.v","witness":"0007-famous-geodesicstring","board":"ADR-0007"} *)
 Theorem ticket_0007_famous_geodesicstring_qed_or_qex :
   (famous_water_g_cst = TGeodesicString famous_water_pts /\
    famous_land_g_cst = TGeodesicString famous_land_pts /\
@@ -332,7 +332,7 @@ Theorem ticket_0007_famous_geodesicstring_qed_or_qex :
    intake_map default_sheet (TGeodesicString []) = IntakeDecline ID_Empty /\
    intake_map default_sheet (TGeodesicString [p00]) =
      IntakeDecline ID_BadPointCount /\
-   intake_map default_sheet TSpiralCurve = IntakeDecline ID_SpiralCurve)
+   intake_map default_sheet spiral_bloss = IntakeDecline ID_SpiralOther)
   \/
   (famous_geodesic_qex_inhabits FG_EarthGreatCircleLength /\
    famous_geodesic_qex_inhabits FG_Etopo1LandWaterMask /\

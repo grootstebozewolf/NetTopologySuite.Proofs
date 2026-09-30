@@ -13,7 +13,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals List.
-From NTS.Proofs Require Import SheetHenCook IntakeWalker IsoClothoidIntake.
+From NTS.Proofs Require Import SheetHenCook IntakeWalker IsoClothoidIntake IntakeSpiralJts.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -41,7 +41,7 @@ Lemma jts_clothoid_maps :
 Proof.
   unfold intake_map, intake_map_atom, map_jts_clothoid, map_clothoid,
     example5_jts_cst.
-  rewrite jts_is_example5_yes, locked_iso_try. reflexivity.
+  rewrite classify_example5, locked_iso_try. reflexivity.
 Qed.
 
 Lemma ogc_iso_clothoid_same_bag :
@@ -119,7 +119,7 @@ Lemma example5_cc_bags_both_clothoid :
 Proof.
   unfold intake_map, example5_cc_both_clothoid_cst, intake_map_members.
   simpl. unfold intake_map_atom, map_jts_clothoid, map_clothoid.
-  rewrite jts_is_example5_yes, !locked_iso_try.
+  rewrite classify_example5, !locked_iso_try.
   unfold map_cc_example5. reflexivity.
 Qed.
 

@@ -454,7 +454,7 @@ Definition intake_rho (c : TaggedCst) (e : Egg) : option SqlMmSignedTag :=
       | _ => None
       end
   | TPoint _ | TCompoundCurve _ | TGeodesicString _
-  | TSpiralCurve | TOutOfSlice => None
+  | TSpiralCurve _ | TOutOfSlice => None
   end.
 
 (* Pure production map: CST constructor name, no egg read. *)
@@ -466,7 +466,7 @@ Definition cst_prod_tag (c : TaggedCst) : option SqlMmSignedTag :=
   | TClothoidJts _ _ _ => Some TagClothoid
   | TClothoidIso _ => Some TagClothoid
   | TPoint _ | TCompoundCurve _ | TGeodesicString _
-  | TSpiralCurve | TOutOfSlice => None
+  | TSpiralCurve _ | TOutOfSlice => None
   end.
 
 Lemma cst_prod_tag_circularstring :
@@ -504,7 +504,7 @@ Definition cst_prod_name (c : TaggedCst) : CstProdName :=
   | TClothoidJts _ _ _ => PiClothoid
   | TClothoidIso _ => PiClothoid
   | TGeodesicString _ => PiGeodesicString
-  | TPoint _ | TCompoundCurve _ | TSpiralCurve | TOutOfSlice => PiUnsigned
+  | TPoint _ | TCompoundCurve _ | TSpiralCurve _ | TOutOfSlice => PiUnsigned
   end.
 
 Definition t_signed_of_prod (n : CstProdName) : option SqlMmSignedTag :=
@@ -735,8 +735,8 @@ Proof.
 Qed.
 
 Lemma tau_mu_spiral_decline :
-  intake_map default_sheet TSpiralCurve = IntakeDecline ID_SpiralCurve /\
-  (forall e, intake_rho TSpiralCurve e = None).
+  intake_map default_sheet spiral_bloss = IntakeDecline ID_SpiralOther /\
+  (forall e, intake_rho spiral_bloss e = None).
 Proof.
   split; [exact spiral_declines|intros e; reflexivity].
 Qed.
@@ -915,8 +915,8 @@ Theorem ticket_sqlmm_tau_mu_qed_or_qex :
       first_slice_tag e = Some TagLineString /\
       cst_prod_tag locked_geodesic_cst = None) /\
    first_slice_tag (MkOutOfScope EggGeodesicString) = None /\
-   intake_map default_sheet TSpiralCurve = IntakeDecline ID_SpiralCurve /\
-   (forall e, intake_rho TSpiralCurve e = None) /\
+   intake_map default_sheet spiral_bloss = IntakeDecline ID_SpiralOther /\
+   (forall e, intake_rho spiral_bloss e = None) /\
    first_slice_tag (MkOutOfScope EggSpiralCurve) = None /\
    length (bag_eggs (map_cc_locked default_sheet)) = 2%nat)
   \/
