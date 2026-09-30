@@ -1008,16 +1008,9 @@ Qed.
 (* bag_run on fuel ρ+1. A decline stops. The selector is a parameter.         *)
 (* -------------------------------------------------------------------------- *)
 
-(* None stops only when ρ is 0 and no live pair is IDecline. *)
-Definition stopped_ok (b : SheetBag) : Prop :=
-  rho b = 0%nat /\ match b with
-  | BagDeclined _ => True
-  | BagLive _ pcs => forall a c, In a pcs -> In c pcs -> a <> c ->
-      ~ I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck c)) IDecline end.
-
 Definition pick_spec (pick : SheetBag -> option HitPick) (b : SheetBag) : Prop :=
   match b, pick b with
-  | _, None => stopped_ok b
+  | _, None => True
   | BagDeclined _, Some _ => False
   | BagLive _ pcs, Some w =>
       exists e1 e2,

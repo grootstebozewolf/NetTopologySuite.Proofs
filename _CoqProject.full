@@ -2596,6 +2596,9 @@ theories/SheetHenBagRun.v
 # Letter 5: concrete pick and per-class hit parameters. Stacked on letter 3.
 # 3-axiom. No Admitted.
 theories/SheetHenLoop3.v
+# Headline: pick_bag_spec. claimId none. Consumer: letter5_obligation.
+# 3-axiom. No Admitted.
+theories/SheetHenPickSpec.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v

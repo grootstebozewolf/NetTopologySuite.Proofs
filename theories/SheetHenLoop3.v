@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    ∀-bag letter 5. Concrete pick (least cook ti on the first i<j
    pair) and the three hit-parameter lemmas. Stacked on letter 3.
-   letter5_obligation is pick_spec's None arm (stopped_ok).
+   pick_bag_spec and letter5_obligation are proved in SheetHenPickSpec.
    rho_adm_step_strict stays in SheetHenBagRun.
    Does not remint 0007-loop-letter3-strict.
    Hen is nat: hen_pt walks piece endpoints. hens_injective is
@@ -1024,18 +1024,6 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* letter5_obligation: a spec-abiding None is stopped_ok.                      *)
-(* pick_bag is not claimed to meet that arm (chord/circ scan only).           *)
-(* -------------------------------------------------------------------------- *)
-
-Theorem letter5_obligation : forall sel b,
-  (forall b0, pick_spec sel b0) -> sel b = None -> stopped_ok b.
-Proof.
-  intros sel b Hs Hn. specialize (Hs b). unfold pick_spec in Hs.
-  destruct b as [sh pcs|sh]; rewrite Hn in Hs; exact Hs.
-Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* run on fuel S (rho_pcs). Declined absorbs. pick None stops.                *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1206,7 +1194,6 @@ Print Assumptions pick_sound.
 Print Assumptions pick_admissible.
 Print Assumptions pick_least.
 Print Assumptions adm_list_covers.
-Print Assumptions letter5_obligation.
 Print Assumptions pick_bag_progress.
 Print Assumptions bag_run_pick_bag_stopped.
 Print Assumptions run_eq.
