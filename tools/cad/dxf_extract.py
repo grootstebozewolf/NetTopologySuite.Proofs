@@ -21,10 +21,18 @@ added to the source rotation) so two reflections are not stored as one.
 Modes (ADR-0005):
 
 * ``strict`` declines every named case below.
-* ``lenient`` also turns ellipse ratio 1 into an Arc, a closed polyline
-  into a Ring (winding rule ``nonzero``, because a polyline states no
-  hatch rule), and a non-finite bulge on a positive-length segment into
-  a Chord. ``b = 0`` is a Chord in both modes; the bulge value is kept.
+* ``lenient`` also turns ellipse ratio 1 into an Arc and a closed
+  polyline into a Ring (winding rule ``nonzero``, because a polyline
+  states no hatch rule). A non-finite bulge (NaN or infinity) is
+  ``ID_DegenerateEntity`` in both modes. ``b = 0`` is a Chord in both
+  modes; the bulge value is kept.
+
+Stored ARC angles (group codes 50 and 51, degrees) are always CCW from
+the OCS x-axis. ELLIPSE start and end params are always CCW about the
+major axis. Both record ``direction`` ``ccw-ocs``. ``$ANGDIR`` and
+``$ANGBASE`` stay on ``units`` as display and input provenance and are
+not copied into those params or into an angleStep. An arc whose end is
+less than its start is copied raw; 360 is not added.
 
 Named declines: ID_NotSimilarityPlacement, ID_TiltedPlacement,
 ID_ThreeDNotYet, ID_HatchRegion, ID_TextEntity, ID_DimensionEntity,
@@ -230,7 +238,12 @@ def parse_tolerance(spec: str) -> dict[str, Any] | str:
     if kind in ("angle", "alpha", "anglestep"):
         if not _finite(value) or value <= 0:
             return "ID_ToleranceNonPositive"
-        return {"kind": "angleStep", "alpha": value, "angleUnit": "degree"}
+        return {
+            "kind": "angleStep",
+            "alpha": value,
+            "angleUnit": "degree",
+            "direction": "ccw-ocs",
+        }
     return "ID_ToleranceKindUnsupported"
 
 
@@ -315,16 +328,23 @@ def _entity(
     return row
 
 
+def _stamp_tolerance(tolerance: dict[str, Any]) -> dict[str, Any]:
+    """Angle steps are the stored CCW OCS convention, never ``$ANGDIR``."""
+    if tolerance.get("kind") != "angleStep":
+        return tolerance
+    stamped = dict(tolerance)
+    stamped["direction"] = "ccw-ocs"
+    return stamped
+
+
 def _tolerance_ok(kind: str, tolerance: dict[str, Any]) -> str | None:
     if tolerance["kind"] in ("angleStep", "segmentCount") and kind not in CIRCULAR_KINDS:
         return "ID_ToleranceKindUnsupported"
     return None
 
 
-def _segment(start: list[float], end: list[float], bulge: float, mode: str) -> dict[str, Any] | str:
+def _segment(start: list[float], end: list[float], bulge: float) -> dict[str, Any] | str:
     if not _finite(bulge):
-        if mode == "lenient" and _dist(start, end) > _EPS:
-            return {"kind": "Chord", "start": start, "end": end, "bulge": 0.0}
         return "ID_DegenerateEntity"
     if _dist(start, end) <= _EPS:
         return "ID_DegenerateEntity"
@@ -333,7 +353,7 @@ def _segment(start: list[float], end: list[float], bulge: float, mode: str) -> d
     return {"kind": "Arc", "start": start, "end": end, "bulge": bulge}
 
 
-def _bulge_segments(points: list[tuple[float, float, float]], closed: bool, mode: str) -> list[dict[str, Any]] | str:
+def _bulge_segments(points: list[tuple[float, float, float]], closed: bool) -> list[dict[str, Any]] | str:
     if len(points) < 2:
         return "ID_DegenerateEntity"
     span = len(points) if closed else len(points) - 1
@@ -347,7 +367,7 @@ def _bulge_segments(points: list[tuple[float, float, float]], closed: bool, mode
         end = _xy(x1, y1)
         if start is None or end is None:
             return "ID_DegenerateEntity"
-        seg = _segment(start, end, _num(bulge), mode)
+        seg = _segment(start, end, _num(bulge))
         if isinstance(seg, str):
             return seg
         segments.append(seg)
@@ -429,11 +449,7 @@ def _map_spline(entity: Any) -> dict[str, Any] | str:
     }
 
 
-def _map_geometry(
-    entity: Any,
-    mode: str,
-    angdir: int,
-) -> dict[str, Any] | str:
+def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
     """Return a mapping dict or a decline id.
 
     The dict has kind, params, and elevation. Decline ids are strings.
@@ -461,7 +477,7 @@ def _map_geometry(
     if dxftype == "LWPOLYLINE":
         raw = [(_num(x), _num(y), _num(b)) for x, y, b in entity.get_points("xyb")]
         closed = bool(entity.closed)
-        segments = _bulge_segments(raw, closed, mode)
+        segments = _bulge_segments(raw, closed)
         if isinstance(segments, str):
             return segments
         elevation = _num(getattr(entity.dxf, "elevation", 0.0))
@@ -500,7 +516,7 @@ def _map_geometry(
                 "startAngle": start,
                 "endAngle": end,
                 "angleUnit": "degree",
-                "angdir": angdir,
+                "direction": "ccw-ocs",
             },
         }
     if dxftype == "CIRCLE":
@@ -548,7 +564,7 @@ def _map_geometry(
                 "startAngle": start,
                 "endAngle": end,
                 "angleUnit": "radian",
-                "angdir": angdir,
+                "direction": "ccw-ocs",
                 "frameAngle": math.atan2(_num(major[1]), _num(major[0])),
             },
         }
@@ -579,7 +595,7 @@ def extract_document(
         raise ValueError("mode must be strict or lenient")
     if OVERLAP_DETECTED:
         raise RuntimeError("year 0 does not detect nonzero contour overlap")
-    tol = tolerance if tolerance is not None else {"kind": "sourceDefault"}
+    tol = _stamp_tolerance(tolerance if tolerance is not None else {"kind": "sourceDefault"})
     version = str(doc.dxfversion)
     units = _header_units(doc)
     rows: list[dict[str, Any]] = []
@@ -631,7 +647,7 @@ def extract_document(
         if isinstance(extr, str):
             rows.append(_decl(extr, "extrusion is not +/- Z", prov))
             return
-        mapped = _map_geometry(entity, mode, int(units["angdir"]))
+        mapped = _map_geometry(entity, mode)
         if isinstance(mapped, str):
             if mapped == "ID_UnsupportedEntity":
                 name = entity.dxftype()

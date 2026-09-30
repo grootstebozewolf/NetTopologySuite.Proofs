@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:nettopologysuite.proofs:cad:carrier.schema.json",
   "title": "CAD carrier record",
-  "description": "Year-0 CAD-to-GIS carrier (draft #918 CONTEXT.md CAD section). One JSON object is either an entity record or a Decline. Angle-carrying and fail-closed: every source entity yields a record or a named decline, and nothing is dropped. Format-neutral (DXF/DWG, DGN, fonts, IFC, SVG map into it). This file is the record definition; there is no companion Markdown. Placement is an ordered chain of similarity links applied local-to-world (entity OCS, then inner block insert, then outer block insert, then georeference). Each link is a translation, a rotation in the record angle unit, a positive uniform scale, and a reflect flag. The derived determinant sign s is +1 or -1 and is -1 exactly when an odd number of links reflect; a DXF extrusion of -Z is one reflecting link. Shear and non-uniform scale are not links: they decline the whole entity. Params are the numbers the source states, with the angle unit and direction of those numbers. Units carry the linear unit (DXF $INSUNITS), the angle unit (DXF $AUNITS), $ANGDIR (0 CCW, 1 CW) and $ANGBASE. Tolerance is one of sagitta d, segment count n, angle step alpha, or sourceDefault. Dimension is 2D, or 2D plus a constant elevation; varying Z declines. Provenance is format, version, handle, layer, block path, and file id. Modes follow ADR-0005: strict declines every named case; lenient additionally normalizes an ellipse of ratio 1 to an Arc, a closed polyline to a Ring, and a degenerate bulge (non-finite bulge on a positive-length segment) to a Chord. b = 0 is a Chord in both modes and the bulge value is kept. Bezier is degree p in {2,3}, n = p+1 control points, clamped knots with p+1 repeats at each end (quadratic 0,0,0,1,1,1; cubic 0,0,0,0,1,1,1,1), and unit weights: a single-span MkNurbs. Ring records contours plus a winding rule. Compound is an ordered member list. ID_NonzeroOverlapNotYet is a named decline for overlapping nonzero-winding contours; year 0 does not detect overlap, so a producer of this schema version does not emit that id. ezdxf (MIT) may read DXF into this schema; its code is not ported.",
+  "description": "Year-0 CAD-to-GIS carrier (CONTEXT.md, CAD-to-GIS bridging (year 0), The CAD carrier record). One JSON object is either an entity record or a Decline. Angle-carrying and fail-closed: every source entity yields a record or a named decline, and nothing is dropped. Format-neutral (DXF/DWG, DGN, fonts, IFC, SVG map into it). This file is the record definition; there is no companion Markdown. The year-1 IntakeCarrier.v reads this JSON through the same hunt harness as SqlMmWktAngleHunt, so this schema is the differential surface and no second format grows. Placement is an ordered chain of similarity links applied local-to-world (entity OCS, then inner block insert, then outer block insert, then georeference). Each link is a translation, a rotation in the record angle unit, a positive uniform scale, and a reflect flag. The derived determinant sign s is +1 or -1 and is -1 exactly when an odd number of links reflect; a DXF extrusion of -Z is one reflecting link. Shear and non-uniform scale are not links: they decline the whole entity. Params are the numbers the source states, with the angle unit of those numbers. Stored ARC angles (DXF group codes 50 and 51, degrees) are always CCW from the OCS x-axis, and ELLIPSE start and end params are always CCW about the major axis; both record direction as the const ccw-ocs. Header $ANGDIR and $ANGBASE affect display and input only and stay under units as provenance; they are not copied into arc, ellipse, or angleStep params. An angleStep tolerance read from the file uses that same const. Units carry the linear unit (DXF $INSUNITS), the angle unit (DXF $AUNITS), $ANGDIR (0 CCW, 1 CW) and $ANGBASE. Tolerance is one of sagitta d, segment count n, angle step alpha, or sourceDefault. Dimension is 2D, or 2D plus a constant elevation; varying Z declines. Provenance is format, version, handle, layer, block path, and file id. Modes follow ADR-0005: strict declines every named case; lenient additionally normalizes an ellipse of ratio 1 to an Arc and a closed polyline to a Ring. A non-finite bulge (NaN or infinity) is ID_DegenerateEntity in both modes. b = 0 is a Chord in both modes and the bulge value is kept. Bezier is degree p in {2,3}, n = p+1 control points, clamped knots with p+1 repeats at each end (quadratic 0,0,0,1,1,1; cubic 0,0,0,0,1,1,1,1), and unit weights: a single-span MkNurbs. Ring records contours plus a winding rule. Compound is an ordered member list. ID_NonzeroOverlapNotYet is a named decline for overlapping nonzero-winding contours; year 0 does not detect overlap, so a producer of this schema version does not emit that id. ezdxf (MIT) may read DXF into this schema; its code is not ported.",
   "oneOf": [
     { "$ref": "#/$defs/entity" },
     { "$ref": "#/$defs/decline" }
@@ -98,7 +98,7 @@
     "units": {
       "type": "object",
       "additionalProperties": false,
-      "description": "linear is the DXF $INSUNITS name (or unitless). angle is the $AUNITS name. angdir is $ANGDIR. angbase is $ANGBASE in degrees, as DXF states it.",
+      "description": "linear is the DXF $INSUNITS name (or unitless). angle is the $AUNITS name. angdir is $ANGDIR and angbase is $ANGBASE in degrees, kept as display and input provenance. They do not rewrite stored ARC or ELLIPSE angles or an angleStep.",
       "required": ["linear", "angle", "angdir", "angbase"],
       "properties": {
         "linear": { "type": "string", "minLength": 1 },
@@ -135,11 +135,15 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "alpha", "angleUnit"],
+          "required": ["kind", "alpha", "angleUnit", "direction"],
           "properties": {
             "kind": { "const": "angleStep" },
             "alpha": { "type": "number", "exclusiveMinimum": 0 },
-            "angleUnit": { "type": "string", "minLength": 1 }
+            "angleUnit": { "type": "string", "minLength": 1 },
+            "direction": {
+              "description": "An angle step read from the file is swept CCW in the stored OCS convention. It is not taken from $ANGDIR.",
+              "const": "ccw-ocs"
+            }
           }
         },
         {
@@ -303,17 +307,26 @@
                   "startAngle",
                   "endAngle",
                   "angleUnit",
-                  "angdir"
+                  "direction"
                 ],
                 "properties": {
                   "center": { "$ref": "#/$defs/xy" },
                   "radius": { "type": "number", "exclusiveMinimum": 0 },
-                  "startAngle": { "type": "number" },
-                  "endAngle": { "type": "number" },
+                  "startAngle": {
+                    "description": "DXF group 50, degrees, copied raw. endAngle < startAngle is kept; the extractor does not add 360.",
+                    "type": "number"
+                  },
+                  "endAngle": {
+                    "description": "DXF group 51, degrees, copied raw.",
+                    "type": "number"
+                  },
                   "angleUnit": {
                     "enum": ["degree", "dms", "grad", "radian", "surveyor"]
                   },
-                  "angdir": { "enum": [0, 1] },
+                  "direction": {
+                    "description": "Stored ARC angles are always CCW from the OCS x-axis. Header $ANGDIR is not copied here.",
+                    "const": "ccw-ocs"
+                  },
                   "frameAngle": {
                     "description": "Zero-angle direction of an ellipse normalized to an arc, in angleUnit. Omitted for a source ARC, whose angles are already absolute in the OCS.",
                     "type": "number"
@@ -360,7 +373,7 @@
                   "startParam",
                   "endParam",
                   "angleUnit",
-                  "angdir"
+                  "direction"
                 ],
                 "properties": {
                   "center": { "$ref": "#/$defs/xy" },
@@ -369,7 +382,10 @@
                   "startParam": { "type": "number" },
                   "endParam": { "type": "number" },
                   "angleUnit": { "const": "radian" },
-                  "angdir": { "enum": [0, 1] }
+                  "direction": {
+                    "description": "ELLIPSE start and end params are always CCW about the major axis.",
+                    "const": "ccw-ocs"
+                  }
                 }
               }
             }

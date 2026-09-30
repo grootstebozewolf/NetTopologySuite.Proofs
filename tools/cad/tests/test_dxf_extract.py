@@ -132,7 +132,7 @@ def test_arc_and_circle() -> None:
     assert arc["params"]["radius"] == pytest.approx(2)
     assert arc["params"]["startAngle"] == pytest.approx(0)
     assert arc["params"]["endAngle"] == pytest.approx(90)
-    assert arc["params"]["angdir"] == 0
+    assert arc["params"]["direction"] == "ccw-ocs"
     circle = next(r for r in rows if r["record"] == "entity" and r["kind"] == "Circle")
     assert circle["params"]["radius"] == pytest.approx(3)
     assert circle["units"]["linear"] == "meter"
@@ -159,6 +159,7 @@ def test_ellipse_modes() -> None:
             assert len(ell) == 1
             assert len(arcs) == 1
             assert arcs[0]["params"]["radius"] == pytest.approx(4)
+            assert arcs[0]["params"]["direction"] == "ccw-ocs"
             assert "frameAngle" in arcs[0]["params"]
 
 
@@ -227,6 +228,9 @@ def test_tolerance_nonpositive_and_kind() -> None:
     assert dxf_extract.parse_tolerance("sagitta:0") == "ID_ToleranceNonPositive"
     assert dxf_extract.parse_tolerance("count:0") == "ID_ToleranceNonPositive"
     assert dxf_extract.parse_tolerance("angle:-1") == "ID_ToleranceNonPositive"
+    stepped = dxf_extract.parse_tolerance("angle:5")
+    assert stepped["direction"] == "ccw-ocs"
+    assert stepped["alpha"] == pytest.approx(5)
     doc = ezdxf.new("R2010")
     doc.modelspace().add_line((0, 0), (1, 0))
     rows = dxf_extract.extract_document(
@@ -247,6 +251,23 @@ def test_tolerance_nonpositive_and_kind() -> None:
     )
     assert arc_rows[0]["record"] == "entity"
     assert arc_rows[0]["tolerance"]["kind"] == "angleStep"
+    assert arc_rows[0]["tolerance"]["direction"] == "ccw-ocs"
+    VALIDATOR.validate(arc_rows[0])
+    cw = ezdxf.new("R2010")
+    cw.header["$ANGDIR"] = 1
+    cw.header["$ANGBASE"] = 90.0
+    cw.modelspace().add_arc((0, 0), radius=1, start_angle=0, end_angle=45)
+    cw_rows = dxf_extract.extract_document(
+        cw,
+        mode="strict",
+        tolerance={"kind": "angleStep", "alpha": 5.0, "angleUnit": "degree"},
+        file_id="fixture",
+    )
+    assert cw_rows[0]["tolerance"]["direction"] == "ccw-ocs"
+    assert cw_rows[0]["tolerance"]["alpha"] == pytest.approx(5)
+    assert cw_rows[0]["params"]["direction"] == "ccw-ocs"
+    assert cw_rows[0]["units"]["angdir"] == 1
+    VALIDATOR.validate(cw_rows[0])
 
 
 def test_tilted_extrusion_and_unknown_unit() -> None:
@@ -264,12 +285,80 @@ def test_tilted_extrusion_and_unknown_unit() -> None:
     assert rows[0]["id"] == "ID_AngleConventionUnknown"
 
 
-def test_degenerate_bulge_normalizes_only_in_lenient() -> None:
+@pytest.mark.parametrize("mode", ["strict", "lenient"])
+@pytest.mark.parametrize("bulge", [math.nan, math.inf, -math.inf])
+def test_nonfinite_bulge_declines_in_both_modes(mode: str, bulge: float) -> None:
     doc = ezdxf.new("R2010")
-    doc.modelspace().add_lwpolyline([(0, 0, math.nan), (1, 0, 0)], format="xyb")
-    strict = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
-    lenient = dxf_extract.extract_document(doc, mode="lenient", file_id="fixture")
-    assert strict[0]["id"] == "ID_DegenerateEntity"
-    assert lenient[0]["record"] == "entity"
-    assert lenient[0]["params"]["segments"][0]["kind"] == "Chord"
-    assert lenient[0]["params"]["segments"][0]["bulge"] == 0.0
+    doc.modelspace().add_lwpolyline([(0, 0, bulge), (1, 0, 0)], format="xyb")
+    rows = dxf_extract.extract_document(doc, mode=mode, file_id="fixture")
+    assert len(rows) == 1
+    assert rows[0]["record"] == "decline"
+    assert rows[0]["id"] == "ID_DegenerateEntity"
+    VALIDATOR.validate(rows[0])
+
+
+def test_angdir_does_not_rewrite_stored_arc() -> None:
+    def one(angdir: int, angbase: float) -> dict:
+        doc = ezdxf.new("R2010")
+        doc.header["$INSUNITS"] = 6
+        doc.header["$AUNITS"] = 0
+        doc.header["$ANGDIR"] = angdir
+        doc.header["$ANGBASE"] = angbase
+        doc.modelspace().add_arc((0, 0), radius=2, start_angle=10, end_angle=80)
+        rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+        assert len(rows) == 1
+        VALIDATOR.validate(rows[0])
+        return rows[0]
+
+    ccw = one(0, 0.0)
+    cw = one(1, 45.0)
+    assert ccw["params"]["direction"] == "ccw-ocs"
+    assert ccw["params"]["startAngle"] == pytest.approx(10)
+    assert ccw["params"]["endAngle"] == pytest.approx(80)
+    ccw_body = {key: value for key, value in ccw.items() if key != "units"}
+    cw_body = {key: value for key, value in cw.items() if key != "units"}
+    assert ccw_body == cw_body
+    assert {key: value for key, value in ccw["units"].items() if key not in ("angdir", "angbase")} == {
+        key: value for key, value in cw["units"].items() if key not in ("angdir", "angbase")
+    }
+    assert ccw["units"]["angdir"] == 0
+    assert ccw["units"]["angbase"] == pytest.approx(0)
+    assert cw["units"]["angdir"] == 1
+    assert cw["units"]["angbase"] == pytest.approx(45)
+
+
+def test_angdir_does_not_rewrite_ellipse_params() -> None:
+    def one(angdir: int, angbase: float) -> dict:
+        doc = ezdxf.new("R2010")
+        doc.header["$ANGDIR"] = angdir
+        doc.header["$ANGBASE"] = angbase
+        ell = doc.modelspace().add_ellipse(center=(0, 0), major_axis=(4, 0), ratio=1)
+        ell.dxf.start_param = 0.2
+        ell.dxf.end_param = 1.2
+        rows = dxf_extract.extract_document(doc, mode="lenient", file_id="fixture")
+        assert len(rows) == 1
+        VALIDATOR.validate(rows[0])
+        return rows[0]
+
+    ccw = one(0, 0.0)
+    cw = one(1, 30.0)
+    assert ccw["params"]["direction"] == "ccw-ocs"
+    assert ccw["params"]["angleUnit"] == "radian"
+    assert ccw["params"]["startAngle"] == pytest.approx(0.2)
+    assert ccw["params"]["endAngle"] == pytest.approx(1.2)
+    ccw_body = {key: value for key, value in ccw.items() if key != "units"}
+    cw_body = {key: value for key, value in cw.items() if key != "units"}
+    assert ccw_body == cw_body
+    assert cw["units"]["angdir"] == 1
+    assert cw["units"]["angbase"] == pytest.approx(30)
+
+
+def test_arc_end_before_start_is_kept_raw() -> None:
+    doc = ezdxf.new("R2010")
+    doc.modelspace().add_arc((1, 2), radius=3, start_angle=350, end_angle=10)
+    rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+    assert rows[0]["record"] == "entity"
+    assert rows[0]["params"]["startAngle"] == 350
+    assert rows[0]["params"]["endAngle"] == 10
+    assert rows[0]["params"]["direction"] == "ccw-ocs"
+    VALIDATOR.validate(rows[0])
