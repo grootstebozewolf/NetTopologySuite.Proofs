@@ -578,8 +578,7 @@ The repository has two source directories:
   directory split is about which CI runner builds the file (host vs
   container), not about which proof standard it meets.
 
-The host lane builds the 141 modules in `_CoqProject`, the
-foundational `theories/` layer;
+The host lane builds the 141 modules in `_CoqProject`, the foundational `theories/` layer;
 the container `_CoqProject.full` builds the entire corpus (697 registered modules — 606 registered under `theories/`, 91 registered under `theories-flocq/`).
 
 **Status.** The foundational layer (real-number, vector, distance,

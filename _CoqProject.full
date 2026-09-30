@@ -674,6 +674,10 @@ theories/PointInRingCorrect.v
 # simple-polygon characterisation stays deferred. Depends on Overlay +
 # PointInRingCorrect. Three-axiom.
 theories/WindingNumber.v
+# W1 curve-ring winding: signed visual-angle sum on chords and CircularEgg
+# arcs (wind_integer). Not the ray-crossing count above.
+# claimId 0007-curve-ring-wind. Does not flip RNG_JordanUncond.
+theories/CurveRingWinding.v
 # Issue #67 curve->matrix transport foundation: a zero-length edge (v,v) is
 # parity-neutral for the crossing-number point-in-ring test (it never
 # satisfies edge_crosses_ray's strict y-straddle).  Unblocks transporting
@@ -2577,6 +2581,7 @@ theories/TrianglePairCommon.v
 theories/TrianglePairClip.v
 theories/TrianglePairEdge.v
 theories/TrianglePairBound.v
+theories/TrianglePairExterior.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v
