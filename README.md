@@ -86,14 +86,19 @@ make help
 make host
 ```
 
-`make host` builds the 158 modules in `_CoqProject`, the foundational Stdlib-only layer. The full corpus is 710 registered modules — 619 registered under `theories/` and 91 registered under `theories-flocq/` — and is the pinned container. Toolchain: **Rocq 9.2.0 + Flocq 4.2.2**. Those counts, the two audit-exception counts above, and the `Defined.` count are checked against the build inputs by [`scripts/check_readme_counts.py`](scripts/check_readme_counts.py); the claims around them by [`scripts/check_readme_claims.py`](scripts/check_readme_claims.py). Both run in `make ci-guards`.
-
-## CI
-
-| Check | Kind |
-|---|---|
-| Corpus guardrails | build-independent, `ci.yml` |
-| `cad-carrier` | `tools/cad` pytest and schema; not a Rocq build |
+`make host` builds the 158 modules in `_CoqProject`, the foundational
+Stdlib-only layer. The full corpus is 710 registered modules —
+619 registered under `theories/` and 91 registered under
+`theories-flocq/` — and is the pinned container.
+Toolchain: **Rocq 9.2.0 + Flocq 4.2.2**. Those counts, the two
+audit-exception counts above, and the `Defined.` count are checked against
+the build inputs by
+[`scripts/check_readme_counts.py`](scripts/check_readme_counts.py); the
+claims around them by
+[`scripts/check_readme_claims.py`](scripts/check_readme_claims.py). Both run
+in `make ci-guards`. The separate `cad-carrier` check
+(`.github/workflows/cad-carrier.yml`) runs the `tools/cad` pytest and
+schema validation as a corpus guardrail; it is not a Rocq build.
 
 ## What this is not
 
