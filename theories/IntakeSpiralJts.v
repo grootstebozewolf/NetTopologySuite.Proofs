@@ -28,8 +28,8 @@
    MemberState is the carrier the compound fold will thread
    (end point, tangent, curvature). This letter does not fold
    members, does not discharge JTS G1, and does not prove
-   parse ∘ emit = id. Those are the named missing constructors
-   in IntakeSpiralJtsMap.
+   parse ∘ emit = id. Those three are Prop obligations in
+   IntakeSpiralJtsMap. Only normalizer 2 is a False marker.
 
    ADR-0005: this classification is lenient intake. It is not
    isValid. No Admitted / Axiom / Parameter.

@@ -12,10 +12,11 @@
    positive triple declines ID_JtsClothoidNotYet; example5
    still bags locked_clothoid_egg. MemberState projects.
 
-   QEX: normalizer 2 (iso_spiral_same_curve), parse ∘ emit = id,
-   the compound member-state fold, and JTS G1. Named missing
-   constructors. spiral_jts_missing is the corpus False marker
-   (same shape as intake_geodesic_qex_inhabits). Not inhabited.
+   QEX: normalizer 2 is the False marker (that definition does
+   not exist yet). Emit/parse identity on the JTS and spiral
+   forms, the MemberState compound fold, and JTS G1 are
+   Definitions of type Prop over types that exist. The ticket
+   lists them. It does not claim the negation of that list.
 
    ADR-0005: lenient intake, not isValid. 3-axiom host.
    No Admitted / Axiom / Parameter.
@@ -27,7 +28,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals List.
-From NTS.Proofs Require Import SheetHenCook IntakeWalker IntakeSpiralJts
+From NTS.Proofs Require Import Distance SheetHenCook IntakeWalker IntakeSpiralJts
   IsoClothoidIntake IsoClothoidIntakeMap IntakeWalkerClothoid.
 Import ListNotations.
 Local Open Scope R_scope.
@@ -111,14 +112,13 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Named QEX. Do not inhabit. Next letters, not this one.                     *)
+(* QEX. Normalizer 2 is a missing definition (False marker). The other       *)
+(* three gaps are proofs about types that already exist: named Props,        *)
+(* not Admitted, not proved, and their negation is not a lemma.              *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive SpiralJtsMissing : Type :=
-| SJ_Normalizer2
-| SJ_EmitParseId
-| SJ_CompoundFold
-| SJ_JtsG1.
+| SJ_Normalizer2.
 
 Definition spiral_jts_missing (_ : SpiralJtsMissing) : Prop := False.
 
@@ -126,19 +126,56 @@ Lemma spiral_normalizer2_missing :
   ~ spiral_jts_missing SJ_Normalizer2.
 Proof. intro H. exact H. Qed.
 
-Lemma spiral_emit_parse_missing :
-  ~ spiral_jts_missing SJ_EmitParseId.
-Proof. intro H. exact H. Qed.
+(* Decline ids drop the CST payload, so identity is on the intake
+   image: re-parsing an emit of the result recovers that result.
+   CST-level parse ∘ emit = id is not this statement. *)
+Definition spiral_emit_parse_id : Prop :=
+  exists emit : IntakeResult -> TaggedCst,
+    forall sh t,
+      (exists sp, t = TSpiralCurve sp) \/
+      (exists k0 k1 len, t = TClothoidJts k0 k1 len) ->
+      intake_map sh (emit (intake_map sh t)) = intake_map sh t.
 
-Lemma spiral_compound_fold_missing :
-  ~ spiral_jts_missing SJ_CompoundFold.
-Proof. intro H. exact H. Qed.
+(* Compound fold on MemberState. A joint carries the next member's
+   start state and its end state. Empty keeps the running state.
+   A joint whose start meets the predecessor in position, direction,
+   and curvature continues from that member's end. A mismatch is None. *)
+Definition spiral_compound_fold : Prop :=
+  exists fold : MemberState -> list (MemberState * MemberState) -> option MemberState,
+    (forall pred, fold pred [] = Some pred) /\
+    (forall pred start_s end_s rest,
+       mst_end pred = mst_end start_s /\
+       mst_dir pred = mst_dir start_s /\
+       mst_curvature pred = mst_curvature start_s ->
+       fold pred ((start_s, end_s) :: rest) = fold end_s rest) /\
+    (forall pred start_s end_s rest,
+       ~ (mst_end pred = mst_end start_s /\
+          mst_dir pred = mst_dir start_s /\
+          mst_curvature pred = mst_curvature start_s) ->
+       fold pred ((start_s, end_s) :: rest) = None).
 
-Lemma spiral_jts_g1_missing :
-  ~ spiral_jts_missing SJ_JtsG1.
-Proof. intro H. exact H. Qed.
+(* JTS G1 at the example5 bag, the JTS form that already has an egg.
+   Start position is cloth_p0, start direction is the unit tangent at
+   sd, and start curvature k0 equals sigma * sd / A^2. A MemberState
+   can carry that joint. Other positive triples have no egg until
+   normalizer 2. *)
+Definition spiral_jts_g1 : Prop :=
+  example5_jts_k0 =
+    cloth_sigma locked_clothoid_egg * cloth_sd locked_clothoid_egg /
+    (cloth_A locked_clothoid_egg * cloth_A locked_clothoid_egg) /\
+  cloth_vx locked_clothoid_egg (cloth_sd locked_clothoid_egg) *
+    cloth_vx locked_clothoid_egg (cloth_sd locked_clothoid_egg) +
+  cloth_vy locked_clothoid_egg (cloth_sd locked_clothoid_egg) *
+    cloth_vy locked_clothoid_egg (cloth_sd locked_clothoid_egg) = 1 /\
+  exists pred : MemberState,
+    mst_end pred = cloth_p0 locked_clothoid_egg /\
+    px (mst_dir pred) =
+      cloth_vx locked_clothoid_egg (cloth_sd locked_clothoid_egg) /\
+    py (mst_dir pred) =
+      cloth_vy locked_clothoid_egg (cloth_sd locked_clothoid_egg) /\
+    mst_curvature pred = example5_jts_k0.
 
-(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Start-placed clothoid SPIRALCURVE declines ID_SpiralClothoidNotYet until normalizer 2; every SpiralOther declines ID_SpiralOther; JTS L<=0 declines ID_JtsNonPositiveLength; other triples decline ID_JtsClothoidNotYet; example5 stays locked_clothoid_egg; MemberState projects (QED) or normalizer 2 / parse-emit id / compound fold / JTS G1 inhabit (QEX); discharged QED; not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Start-placed clothoid SPIRALCURVE declines ID_SpiralClothoidNotYet until normalizer 2; every SpiralOther declines ID_SpiralOther; JTS L<=0 declines ID_JtsNonPositiveLength; other triples decline ID_JtsClothoidNotYet; example5 stays locked_clothoid_egg; MemberState projects (QED). QEX lists SJ_Normalizer2 (missing definition) and obligations spiral_emit_parse_id, spiral_compound_fold, spiral_jts_g1; their negation is not claimed. Not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_spiral_qed_or_qex :
   ((forall sh sc,
       intake_map sh (TSpiralCurve (SpiralOfClothoid sc)) =
@@ -165,10 +202,11 @@ Theorem ticket_0007_intake_spiral_qed_or_qex :
       mst_curvature (mkMemberState p d k) = k))
   \/
   (spiral_jts_missing SJ_Normalizer2 /\
-   spiral_jts_missing SJ_EmitParseId /\
-   spiral_jts_missing SJ_CompoundFold /\
-   spiral_jts_missing SJ_JtsG1).
+   spiral_emit_parse_id /\
+   spiral_compound_fold /\
+   spiral_jts_g1).
 Proof.
+  (* QED arm. The right disjunct only names the gaps. *)
   left.
   split; [exact spiral_clothoid_declines|].
   split; [exact spiral_clothoid_not_iso|].
@@ -187,7 +225,4 @@ Print Assumptions jts_matches_class.
 Print Assumptions jts_length_before_example5.
 Print Assumptions jts_nonpositive_length_declines.
 Print Assumptions spiral_normalizer2_missing.
-Print Assumptions spiral_emit_parse_missing.
-Print Assumptions spiral_compound_fold_missing.
-Print Assumptions spiral_jts_g1_missing.
 Print Assumptions ticket_0007_intake_spiral_qed_or_qex.

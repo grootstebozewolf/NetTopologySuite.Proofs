@@ -15,6 +15,7 @@ Sam, Scrum-Master Sara, Tech-Lead Tess, and Joost the BDFL in the
   - `docs/admitted-deferred-proofs.txt` (theorem is true; proof structure documented; temporary; comes off when proved).
 - Run the gauntlet on changes: `make ci-guards` (plus `scripts/audit_axioms.sh` after an output-synced or -j1 build log; see the script header).
 - `Print Assumptions` must pass the allowlist (with documented exceptions in `audit-exceptions.txt`).
+- A False-valued marker names a missing definition/constructor; discharging it means defining the thing and proving a real statement, not proving the marker.
 
 Unregistered `Admitted` = build failure. No quiet stubs.
 
@@ -37,8 +38,7 @@ Successful sessions follow a consistent shape (see retros like `slice-a-retro.md
 Session essays under `docs/history/sessions/` were deleted
 (claimId `0007-prose-chip-sessions`). Recover them from git history
 at those paths on prior SHAs. Do not restate them. Start from the
-relevant `*-retro.md`. Joost the BDFL has final say on archive
-decisions.
+relevant `*-retro.md`. Joost the BDFL has final say on archive decisions.
 
 ## Joost the BDFL (Joost mag het weten)
 - You (or the human directing you) may be acting in this role.
