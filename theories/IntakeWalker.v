@@ -151,6 +151,9 @@ Inductive IntakeDeclineReason : Type :=
 | ID_TiltedPlacement
 | ID_JtsClothoidNotYet
 | ID_JtsNonPositiveLength
+| ID_JtsConstantCurvature
+| ID_ClothoidCurvatureJump
+| ID_ClothoidNoContext
 | ID_NotFirstSlice.
 
 Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
