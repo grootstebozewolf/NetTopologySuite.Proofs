@@ -221,6 +221,12 @@ A structured intake record for CAD-sourced entities, generalizing the ADR-0009 s
 **Bulge**:
 DXF's per-segment arc encoding, b = tan(Δθ/4); positive is counter-clockwise; the arc's centre and radius are derived from the chord.
 
+**Placement chain**:
+An ordered sequence of similarity placements (block inserts then
+georeference) that collapses to one similarity; a non-similarity
+link declines the whole entity. Year-1 lemma `similarity_chain_closed`
+tracks the sign of the determinant.
+
 **Joint** (ADR-0007 Phase B, occupancy in ADR-0009):
 A cook Hit at a concat or ring-close endpoint: parameters
 `(end, t=1, t=0)`. CS–CS uses sidecar `I_ok_circ`; LS–LS uses host
@@ -320,6 +326,86 @@ Year 0 means groundwork done before and outside the subsidy year; it produces su
 **Oracles and licences.** Year 0 chooses reference implementations for differential tests, not code to port. DXF: `ezdxf` (MIT) reads and linearizes bulges, arcs, ellipses and splines. DWG: the Open Design Alliance SDK (commercial) or `libredwg` (GPL, reference only). DGN: the ODA DGN module or Bentley's own SDK; both are reference only. Fonts: FreeType (FTL/GPL dual) and `fontTools` (MIT) for outline extraction; FreeType's rasterizer is the de facto authority on nonzero winding. IFC: `IfcOpenShell` (LGPL) for alignment segments. None of these code bases may be ported into NTS (BSD-3); they are behavioural references in the same sense GEOS is for arcs.
 
 **Year-0 deliverables.** A survey document per format naming the entities, their parameter conventions (angle direction and units, bulge sign, knot conventions, placement matrices) and the version-specific traps (DXF R12 versus R2000 polylines, DGN V7 versus V8 arcs). The mapping table above, extended with a claimId column that is empty until year 1 fills it. A CAD carrier record definition, with named declines for what is refused (3D solids, hatches as regions, text, dimensions, non-similarity placements). Three locked fixtures: a DXF `LWPOLYLINE` with mixed bulges, a DGN rotated elliptical arc, and one TrueType glyph with a hole (a lowercase "e" or "a"), each with its reference linearization from the chosen oracle. A tolerance-conversion note. Nothing here is a theorem; year 0 ends when a year-1 letter could start from these files without reading the format specifications again.
+
+**The CAD carrier record.**
+One structured intake for CAD-sourced geometry. Format-neutral
+(DXF/DWG, DGN, fonts, IFC, SVG map into it). Angle-carrying by
+construction: carry-and-check (`IntakeCarried` / `try_carried`).
+Fail-closed by name; provenance-preserving. Generalizes the ADR-0009
+span slot from one optional `(θ₀, Δθ)` beside a 3-point window to
+every parameter the source states plus the frame it states it in.
+
+| Field | Content | Why |
+|---|---|---|
+| kind | Chord, BulgePolyline, Arc, Circle, Ellipse, BSpline, Bezier, Spiral, Ring, Compound, or an Unsupported name; open set like SpiralOther | unknown kind is a named decline |
+| placement | similarity: translation, rotation, uniform scale, optional reflection, as an ordered chain (block insert(s) then georeference) | shear / non-uniform scale refused; #888 similarity-frame test is the template |
+| params | kind-specific numbers as the source states them, with source angle unit and direction | normalization inside intake, itself checked |
+| units | linear unit (DXF `$INSUNITS`, DGN master/sub-unit, font units-per-em, IFC unit context); angle unit, `$ANGDIR`, `$ANGBASE` | unknown unit declines |
+| tolerance | Sagitta *d* \| SegmentCount *n* \| AngleStep *α* \| SourceDefault | the `Linearizes` contract takes a Hausdorff bound; the D5 note converts |
+| dimension | 2D, or 2D plus constant elevation as an attribute as #888 treats horizontal Z | any Z variation declines |
+| provenance | format+version, entity handle, layer, block path, file identity | traceability and key for a future emit round trip |
+
+**How each kind lands.**
+- Arc / Circle / DGN arc: angles are data; intake derives three control points; `try_carried` checks (`carry_check`): endpoints and mid on the egg, span strictly inside (0, 2π); ADR-0009's slot made mandatory.
+- BulgePolyline: *b* = tan(Δθ/4); centre rational in chord and *b* (offset along rot90(chord)); radius a square root; Δθ = 4·`atan3`(*b*); compute-then-certify via `egg_of_points` / `egg_of_points_certified`; *b* = 0 is a chord.
+- Ellipse: no host egg; ratio 1 normalizes to Arc in lenient mode; otherwise `ID_EllipseNotYet`; DGN rotated elliptical arcs likewise.
+- BSpline: control-point form becomes `MkNurbs` payload under `nurbs_wf` (clamped knots, positive weights); unclamped and periodic decline by name; fit-point splines decline.
+- Bezier: single-span NURBS with unit weights, knots 0,0,0,1,1,1 for quadratics (TrueType) and 0,0,0,0,1,1,1,1 for cubics (CFF, SVG); lands in `MkNurbs` today without a new egg; TrueType implied on-curve midpoints expanded first.
+- Spiral (IFC): clothoid takes norm2's start-state form; Bloss / sine / cosine / polynomial decline by name as `SPIRALCURVE` does.
+- Ring: closed chain plus winding rule; carrier records rule and contours; `wind_integer` decides interiors; overlapping nonzero contours → union = overlay, so `ID_NonzeroOverlapNotYet` until overlay exists.
+- Compound: ordered chain folded with `MemberState` (C0 required, G1/G2 reported), same fold as `COMPOUNDCURVE`.
+
+**Named declines** (each carries provenance):
+
+| Decline | Fires when |
+|---|---|
+| `ID_NotSimilarityPlacement` | shear or non-uniform scale anywhere in the chain (e.g. `INSERT` xscale ≠ yscale, general affine georeference) |
+| `ID_TiltedPlacement` | OCS extrusion other than ±Z; −Z is a reflection and accepted |
+| `ID_ThreeDNotYet` | non-constant Z, 3D polylines, solids, meshes |
+| `ID_HatchRegion` | hatch as a region; a hatch boundary may be resubmitted as Rings |
+| `ID_TextEntity` | text / annotation |
+| `ID_DimensionEntity` | dimensions |
+| `ID_EllipseNotYet` | ratio ≠ 1 |
+| `ID_FitPointSpline` | fit-point spline |
+| `ID_UnclampedKnots` | unclamped knot vector |
+| `ID_PeriodicSpline` | periodic spline |
+| `ID_UnknownUnit` | unknown linear or angle unit |
+| `ID_AngleConventionUnknown` | unknown `$ANGDIR` / `$ANGBASE` (or equivalent) |
+| `ID_ToleranceNonPositive` | *d* ≤ 0, *n* < 1, or *α* ≤ 0 |
+| `ID_NonzeroOverlapNotYet` | overlapping nonzero-winding contours |
+| `ID_DegenerateEntity` | zero radius, zero-length chord, coincident arc angles, 2-point ring |
+| `ID_UnsupportedEntity` *name* | any kind outside the list; the name is kept |
+
+**Modes** (ADR-0005, as #892). Strict declines everything above.
+Lenient additionally normalizes ellipse ratio 1 → arc, closed
+polyline → ring, degenerate bulge → chord.
+
+**Settled.** (a) Placements compose: similarities are closed under
+composition, so nested blocks plus georeference collapse to one
+similarity; if any link is not a similarity the whole entity
+declines, never partially transformed. Year-1 lemma
+`similarity_chain_closed`, which also tracks the sign of the
+determinant; that is why the field is a chain, not a matrix.
+(b) Reflection reverses orientation: when the composed chain has
+negative determinant (including extrusion −Z), `carry_check` negates
+Δθ and a Ring's winding sign flips. (c) Tolerance transport: a
+Hausdorff bound scales linearly under a similarity, so a Sagitta in
+drawing units becomes a CRS bound by the chain's scale factor;
+SegmentCount and AngleStep are similarity-invariant and are
+converted to a Hausdorff bound after placement from the radius
+(for an arc *d* = *r*(1 − cos(α/2))); the record stores source
+values only; D5 states this once.
+
+**Year-1 certificate** (fixes the record's shape now; not year 0):
+`carrier_intake_certified` (every emitted egg satisfies its check —
+`carry_check`, `cloth_wf`, `nurbs_wf` — after the composed
+placement; every refusal is a named decline; nothing silently
+dropped) and `carrier_emit_parse_id` (the record round-trips).
+Year 0 concretely: the record as a JSON schema with these
+semantics, an `ezdxf`-based extractor that writes it (producer for
+D4's fixtures), and the DXF survey written against its fields. The
+Coq record `IntakeCarrier.v` is the first year-1 letter:
+`IntakeCarried` with more constructors.
 
 **Non-goals.** No DWG parsing in the corpus. No 3D. No rendering semantics for fonts beyond outlines and winding. No claim of round-trip fidelity to CAD; the bridge is one-way, CAD to GIS, through linearization and certified eggs.
 
