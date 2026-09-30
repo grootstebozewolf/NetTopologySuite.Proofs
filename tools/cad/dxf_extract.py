@@ -109,6 +109,14 @@ THREED_TYPES = {
     "SOLID",
 }
 CIRCULAR_KINDS = {"Arc", "Circle", "BulgePolyline", "Ring"}
+GEOMETRY_TYPES = frozenset(
+    {"LINE", "LWPOLYLINE", "ARC", "CIRCLE", "ELLIPSE", "SPLINE", "INSERT"}
+)
+HANDLED_ENTITIES = frozenset(
+    TEXT_TYPES | DIMENSION_TYPES | HATCH_TYPES | THREED_TYPES | GEOMETRY_TYPES
+)
+READ_HEADERS = frozenset({"$INSUNITS", "$AUNITS", "$ANGDIR", "$ANGBASE"})
+IGNORED_HEADERS = frozenset()
 _EPS = 1e-9
 
 
