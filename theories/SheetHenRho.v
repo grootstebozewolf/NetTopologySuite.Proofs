@@ -9,14 +9,13 @@
    ρ is the sum, over Leibniz-distinct support pairs, of the length of
    an explicit candidate list deduplicated with Req_EM_T. A pair is
    counted once (triple point). Line×line contributes at most one
-   point, line×circle at most two (host Hit iff incidence, C1
-   quadratic), circle×circle at most two (radical line). Geometrically
-   equal carriers contribute only the overlap-interval endpoints.
+   point, line×circle at most two. Coincident circles contribute the
+   symmetric endpoint list, not a parameter-interval hull.
    rho_candidates_complete: a common window point that is not a vertex
-   of both families is in that list, by class (transverse carriers from
-   the finiteness roots; equal carriers only when the point is an
-   overlap endpoint). #892's two half-turns contribute 0.
-   SPLIT: SheetHenRhoCarrier.v, SheetHenRhoCount.v, SheetHenRhoWitness.v.
+   of both families is in that list, by class. The circle side does
+   not quantify over canon order. #892's two half-turns contribute 0.
+   SPLIT: SheetHenRhoCarrier.v, SheetHenRhoCount.v, SheetHenRhoEnds.v,
+   SheetHenRhoWitness.v.
    This file is the Require Export umbrella. Declarations are unchanged.
    3-axiom host. No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
@@ -27,4 +26,5 @@
 
 From NTS.Proofs Require Export SheetHenRhoCarrier.
 From NTS.Proofs Require Export SheetHenRhoCount.
+From NTS.Proofs Require Export SheetHenRhoEnds.
 From NTS.Proofs Require Export SheetHenRhoWitness.

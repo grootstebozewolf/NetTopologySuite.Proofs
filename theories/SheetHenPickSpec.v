@@ -176,13 +176,15 @@ Lemma counted_is_overlap_end : forall pcs s1 s2 p,
   In p (overlap_endpoints pcs s1 s2).
 Proof.
   intros pcs s1 s2 p Hin Ho.
-  unfold counted in Hin. unfold overlap_endpoints.
+  unfold counted in Hin.
   destruct (canon2 s1 s2) as [u v] eqn:Ec.
   rewrite dedup_In in Hin. apply filter_In in Hin. destruct Hin as [Hraw _].
   unfold overlap_b in Ho. rewrite Ec in Ho.
   destruct u as [cu|cu]; destruct v as [cv|cv]; simpl in Ho; try discriminate.
-  - unfold raw_pts in Hraw. rewrite Ho in Hraw. exact Hraw.
-  - unfold raw_pts in Hraw. rewrite Ho in Hraw. exact Hraw.
+  - unfold overlap_endpoints. rewrite Ec. simpl.
+    unfold counted_raw, raw_pts in Hraw. rewrite Ho in Hraw. exact Hraw.
+  - unfold counted_raw in Hraw. rewrite Ho in Hraw.
+    unfold overlap_endpoints. rewrite Ec. simpl. exact Hraw.
 Qed.
 
 Definition pair_declines_b (a c : BagPiece) : bool :=

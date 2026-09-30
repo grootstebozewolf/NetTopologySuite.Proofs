@@ -12,6 +12,7 @@
    ========================================================================== *)
 
 From NTS.Proofs Require Export SheetHenRhoCount.
+From NTS.Proofs Require Import SheetHenRhoEnds.
 From Stdlib Require Import Reals Lra Lia List PeanoNat Bool Permutation ZArith.
 From NTS.Proofs Require Import
   Distance Polynomial CircleChart SheetHenCookCore SheetHenCircEgg
@@ -283,8 +284,8 @@ Theorem rho_candidates_complete : forall pcs s1 s2 p,
   ~ (family_vertex pcs s1 p /\ family_vertex pcs s2 p) ->
   (forall a b, canon2 s1 s2 = (SuppChord a, SuppChord b) ->
      same_line_b a b = false \/ In p (overlap_pts pcs (SuppChord a) (SuppChord b))) ->
-  (forall a b, canon2 s1 s2 = (SuppCircle a, SuppCircle b) ->
-     same_circle_b a b = false \/ In p (overlap_pts pcs (SuppCircle a) (SuppCircle b))) ->
+  (forall a b, s1 = SuppCircle a -> s2 = SuppCircle b ->
+     same_circle_b a b = false \/ In p (circ_overlap_pts pcs a b)) ->
   In p (counted pcs s1 s2).
 Proof.
   intros pcs s1 s2 p _ I1 I2 Nv Hline Hcirc.
@@ -300,13 +301,26 @@ Proof.
   assert (Hk : keep_b pcs u v p = true).
   { apply keep_of_images; [exact Iu| exact Iv|].
     intros [A B]. apply Nv. destruct Huv as [[-> ->]|[-> ->]]; split; assumption. }
-  assert (Hin : In p (raw_pts pcs u v)).
-  { apply raw_in_of_class; [exact Iu| exact Iv|].
-    destruct u as [a|a]; destruct v as [b|b]; simpl.
-    - apply Hline. reflexivity.
-    - exact I.
-    - exact I.
-    - apply Hcirc. reflexivity. }
+  assert (Hin : In p (counted_raw pcs u v)).
+  { destruct u as [a|a]; destruct v as [b|b]; unfold counted_raw.
+    - apply raw_in_of_class; [exact Iu| exact Iv|]. apply Hline. reflexivity.
+    - apply raw_in_of_class; [exact Iu| exact Iv|]. exact I.
+    - apply raw_in_of_class; [exact Iu| exact Iv|]. exact I.
+    - destruct (same_circle_b a b) eqn:Es.
+      + destruct Huv as [[Eu Ev]|[Eu Ev]].
+        * destruct (Hcirc a b (eq_sym Eu) (eq_sym Ev)) as [Bad|Hin];
+            [congruence| exact Hin].
+        * assert (Eba : same_circle_b b a = true).
+          { unfold same_circle_b in *. apply andb_prop in Es. destruct Es as [Ep Er].
+            apply andb_true_intro. split.
+            - apply pt_eqb_true. symmetry. apply pt_eqb_true. exact Ep.
+            - apply req_b_true. symmetry. apply req_b_true. exact Er. }
+          destruct (Hcirc b a (eq_sym Ev) (eq_sym Eu)) as [Bad|Hin];
+            [congruence|].
+          apply (proj1 (circ_overlap_in_sym pcs b a p)). exact Hin.
+      + apply circle_circle_in_pts; [exact Es| |].
+        * apply (image_on_circle pcs a). exact Iu.
+        * apply (image_on_circle pcs b). exact Iv. }
   rewrite dedup_In. apply filter_In. split; assumption.
 Qed.
 (* -------------------------------------------------------------------------- *)
@@ -531,12 +545,99 @@ Proof.
   - pose proof PI_RGT_0. lra.
   - destruct (Rle_dec 0 PI) as [_|Hle]; [| pose proof PI_RGT_0; lra]. reflexivity.
 Qed.
+Lemma filter_keep_false_nil : forall (k : Point -> bool) (l : list Point),
+  (forall p, In p l -> k p = false) -> filter k l = [].
+Proof.
+  intros k l Hk. induction l as [|p l IH]; [reflexivity|].
+  simpl. rewrite Hk by (left; reflexivity). apply IH. intros q Hq. apply Hk. right. exact Hq.
+Qed.
+
+Lemma iso_pt_fst0 : support_at (SuppCircle iso_half_fst) 0 = mkPoint 5 0.
+Proof.
+  unfold support_at, circ_eval, iso_half_fst. cbn.
+  replace (0 + 0 * PI) with 0 by ring.
+  rewrite cos_0, sin_0. apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma iso_pt_snd1 : support_at (SuppCircle iso_half_snd) 1 = mkPoint 5 0.
+Proof.
+  unfold support_at, circ_eval, iso_half_snd. cbn.
+  replace (PI + 1 * PI) with (2 * PI) by ring.
+  rewrite cos_2PI, sin_2PI. apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma iso_both_hens : forall p,
+  p = mkPoint 5 0 \/ p = mkPoint (-5) 0 ->
+  family_vertex iso_half_pcs (SuppCircle iso_half_fst) p /\
+  family_vertex iso_half_pcs (SuppCircle iso_half_snd) p.
+Proof.
+  intros p [->| ->].
+  - split.
+    + exists (iso_half_pc 0 1 iso_half_fst). split; [simpl; auto|]. split; [reflexivity|].
+      unfold piece_endpoint, iso_half_pc. cbn. left. symmetry. apply iso_pt_fst0.
+    + exists (iso_half_pc 1 0 iso_half_snd). split; [simpl; auto|]. split; [reflexivity|].
+      unfold piece_endpoint, iso_half_pc. cbn. right. symmetry. apply iso_pt_snd1.
+  - split.
+    + exists (iso_half_pc 0 1 iso_half_fst). split; [simpl; auto|]. split; [reflexivity|].
+      unfold piece_endpoint, iso_half_pc. cbn. right. symmetry. apply iso_antipode_end_fst.
+    + exists (iso_half_pc 1 0 iso_half_snd). split; [simpl; auto|]. split; [reflexivity|].
+      unfold piece_endpoint, iso_half_pc. cbn. left. symmetry. apply iso_antipode_start_snd.
+Qed.
+
+Lemma iso_fst_vertex_pts : forall p,
+  family_vertex iso_half_pcs (SuppCircle iso_half_fst) p ->
+  p = mkPoint 5 0 \/ p = mkPoint (-5) 0.
+Proof.
+  intros p [pc [Hin [Hs He]]].
+  unfold iso_half_pcs in Hin. simpl in Hin. destruct Hin as [|Hin].
+  - unfold piece_endpoint in He. simpl in He. rewrite <- H in He. destruct He as [He|He].
+    + left. rewrite He. apply iso_pt_fst0.
+    + right. rewrite He. apply iso_antipode_end_fst.
+  - destruct Hin as [|Hin0]; [|destruct Hin0].
+    exfalso. rewrite <- H in Hs. unfold iso_half_pc in Hs. simpl in Hs. inversion Hs.
+    pose proof PI_RGT_0. lra.
+Qed.
+
+Lemma iso_snd_vertex_pts : forall p,
+  family_vertex iso_half_pcs (SuppCircle iso_half_snd) p ->
+  p = mkPoint 5 0 \/ p = mkPoint (-5) 0.
+Proof.
+  intros p [pc [Hin [Hs He]]].
+  unfold iso_half_pcs in Hin. simpl in Hin. destruct Hin as [|Hin].
+  - exfalso. rewrite <- H in Hs. unfold iso_half_pc in Hs. simpl in Hs. inversion Hs.
+    pose proof PI_RGT_0. lra.
+  - destruct Hin as [|Hin0]; [|destruct Hin0].
+    unfold piece_endpoint in He. simpl in He. rewrite <- H in He. destruct He as [He|He].
+    + right. rewrite He. apply iso_antipode_start_snd.
+    + left. rewrite He. apply iso_pt_snd1.
+Qed.
+
+Lemma iso_overlap_hens : forall p,
+  In p (circ_overlap_pts iso_half_pcs iso_half_fst iso_half_snd) ->
+  keep_b iso_half_pcs (SuppCircle iso_half_fst) (SuppCircle iso_half_snd) p = false.
+Proof.
+  intros p Hin.
+  unfold circ_overlap_pts in Hin. rewrite dedup_In in Hin. apply filter_In in Hin.
+  destruct Hin as [_ Hb].
+  unfold circ_end_in_other_b in Hb. apply orb_prop in Hb.
+  assert (Hp : p = mkPoint 5 0 \/ p = mkPoint (-5) 0).
+  { destruct Hb as [Hb|Hb]; apply andb_prop in Hb; destruct Hb as [Bb _];
+      unfold boundary_end_b in Bb; apply andb_prop in Bb; destruct Bb as [Vb _];
+      apply vertex_spec in Vb.
+    - apply iso_fst_vertex_pts. exact Vb.
+    - apply iso_snd_vertex_pts. exact Vb. }
+  destruct (iso_both_hens p Hp) as [V1 V2].
+  unfold keep_b. rewrite (proj2 (vertex_spec _ _ _) V1), (proj2 (vertex_spec _ _ _) V2).
+  destruct (in_image_b iso_half_pcs (SuppCircle iso_half_fst) p &&
+            in_image_b iso_half_pcs (SuppCircle iso_half_snd) p); reflexivity.
+Qed.
+
 Lemma iso_half_counted_nil :
   counted iso_half_pcs (SuppCircle iso_half_fst) (SuppCircle iso_half_snd) = [].
 Proof.
   unfold counted. rewrite iso_canon. cbn [fst snd].
-  rewrite iso_halves_raw_overlap, iso_overlap_pts.
-  cbn. rewrite iso_keep_antipode. reflexivity.
+  unfold counted_raw. rewrite iso_same_circle.
+  rewrite (filter_keep_false_nil _ _ iso_overlap_hens). reflexivity.
 Qed.
 Lemma iso_supports :
   supports_of iso_half_pcs = [SuppCircle iso_half_fst; SuppCircle iso_half_snd].

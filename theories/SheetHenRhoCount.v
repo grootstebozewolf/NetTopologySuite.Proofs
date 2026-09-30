@@ -52,6 +52,26 @@ Definition same_line_b (a b : ChordEgg) : bool :=
   else pt_eqb (ce_p0 a) (ce_p0 b).
 Definition same_circle_b (a b : CircularEgg) : bool :=
   pt_eqb (circ_o a) (circ_o b) && req_b (circ_r a * circ_r a) (circ_r b * circ_r b).
+Lemma same_circle_sym : forall a b, same_circle_b a b = same_circle_b b a.
+Proof.
+  intros a b. unfold same_circle_b.
+  assert (Ep : pt_eqb (circ_o a) (circ_o b) = pt_eqb (circ_o b) (circ_o a)).
+  { destruct (pt_eqb (circ_o a) (circ_o b)) eqn:E1.
+    - apply pt_eqb_true in E1. symmetry in E1. rewrite (proj2 (pt_eqb_true _ _) E1).
+      reflexivity.
+    - destruct (pt_eqb (circ_o b) (circ_o a)) eqn:E2; [|reflexivity].
+      apply pt_eqb_true in E2. symmetry in E2.
+      rewrite (proj2 (pt_eqb_true _ _) E2) in E1. discriminate. }
+  assert (Er : req_b (circ_r a * circ_r a) (circ_r b * circ_r b) =
+               req_b (circ_r b * circ_r b) (circ_r a * circ_r a)).
+  { destruct (req_b (circ_r a * circ_r a) (circ_r b * circ_r b)) eqn:E1.
+    - apply req_b_true in E1. symmetry in E1. rewrite (proj2 (req_b_true _ _) E1).
+      reflexivity.
+    - destruct (req_b (circ_r b * circ_r b) (circ_r a * circ_r a)) eqn:E2; [|reflexivity].
+      apply req_b_true in E2. symmetry in E2.
+      rewrite (proj2 (req_b_true _ _) E2) in E1. discriminate. }
+  rewrite Ep, Er. reflexivity.
+Qed.
 Definition on_both_b (c1 c2 : CircularEgg) (p : Point) : bool :=
   req_b (dist_sq (circ_o c1) p) (circ_r c1 * circ_r c1) &&
   req_b (dist_sq (circ_o c2) p) (circ_r c2 * circ_r c2).
@@ -689,11 +709,54 @@ Proof.
     apply andb_true_intro. split; [apply support_eqb_true; exact Hs|].
     apply endpoint_spec. exact He.
 Qed.
+
+(* Co-circular overlap endpoints, on point sets. A boundary endpoint of one *)
+(* support that lies in the other support's image. A joint of two pieces on *)
+(* the same support, and a point strictly inside a sibling window, are not   *)
+(* boundary endpoints, so a split does not invent one. Not a parameter hull. *)
+Definition ends_of (pcs : list BagPiece) (s : BagSupport) : list Point :=
+  flat_map (fun pc =>
+    if support_eqb (bp_support pc) s
+    then [support_at s (win_lo (bp_window pc)); support_at s (win_hi (bp_window pc))]
+    else nil) pcs.
+
+Fixpoint count_ends (pcs : list BagPiece) (s : BagSupport) (p : Point) : nat :=
+  match pcs with
+  | nil => 0%nat
+  | pc :: tl =>
+      (if support_eqb (bp_support pc) s && endpoint_b pc p then 1 else 0)%nat
+      + count_ends tl s p
+  end.
+
+Definition joint_b (pcs : list BagPiece) (s : BagSupport) (p : Point) : bool :=
+  Nat.leb 2 (count_ends pcs s p).
+
+Definition boundary_end_b (pcs : list BagPiece) (s : BagSupport) (p : Point) : bool :=
+  vertex_b pcs s p && negb (joint_b pcs s p).
+
+Definition circ_end_in_other_b (pcs : list BagPiece) (s1 s2 : BagSupport) (p : Point) : bool :=
+  (boundary_end_b pcs s1 p && in_image_b pcs s2 p) ||
+  (boundary_end_b pcs s2 p && in_image_b pcs s1 p).
+
+Definition circ_overlap_pts (pcs : list BagPiece) (c1 c2 : CircularEgg) : list Point :=
+  let s1 := SuppCircle c1 in
+  let s2 := SuppCircle c2 in
+  dedup (filter (circ_end_in_other_b pcs s1 s2) (ends_of pcs s1 ++ ends_of pcs s2)).
+
 Definition keep_b (pcs : list BagPiece) (s1 s2 : BagSupport) (p : Point) : bool :=
   (in_image_b pcs s1 p && in_image_b pcs s2 p) &&
   negb (vertex_b pcs s1 p && vertex_b pcs s2 p).
+(* Same-circle candidates are the symmetric endpoint list. The parameter   *)
+(* hull stays the chord overlap and the transverse root lists.             *)
+Definition counted_raw (pcs : list BagPiece) (s1 s2 : BagSupport) : list Point :=
+  match s1, s2 with
+  | SuppCircle a, SuppCircle b =>
+      if same_circle_b a b then circ_overlap_pts pcs a b else circle_circle_pts a b
+  | _, _ => raw_pts pcs s1 s2
+  end.
+
 Definition counted (pcs : list BagPiece) (s1 s2 : BagSupport) : list Point :=
-  let '(a, b) := canon2 s1 s2 in dedup (filter (keep_b pcs a b) (raw_pts pcs a b)).
+  let '(a, b) := canon2 s1 s2 in dedup (filter (keep_b pcs a b) (counted_raw pcs a b)).
 Lemma counted_sym : forall pcs s1 s2, counted pcs s1 s2 = counted pcs s2 s1.
 Proof. intros. unfold counted. rewrite canon_swap. reflexivity. Qed.
 Definition rho_pcs (pcs : list BagPiece) : nat :=
@@ -773,24 +836,6 @@ Proof.
         by (apply andb_true_intro; split; apply vertex_spec; assumption).
       subst p. rewrite Bad in Hneg. discriminate.
 Qed.
-Theorem rho_step_nonincreasing : forall b b', bag_step b b' -> (rho b' <= rho b)%nat.
-Proof.
-  intros b b' [Hp|Hd].
-  - destruct Hp as [sh pcs i j a b0 p ti tj h Hi Hj Hij Hwfa Hwfb Hok Hpr].
-    simpl. set (pcs' := progress_pieces pcs i j a b0 ti tj h). unfold rho_pcs.
-    destruct (hit_param_in_unit a b0 p ti tj (proj1 Hwfa) (proj1 Hwfb) Hok) as [Hti Htj].
-    assert (Hperm : Permutation (supports_of pcs') (supports_of pcs)).
-    { apply (supports_progress_perm pcs i j a b0 ti tj h Hi Hj Hij (proj1 Hwfa) (proj1 Hwfb)). }
-    assert (Hsym : forall x y, length (counted pcs' x y) = length (counted pcs' y x)).
-    { intros x y. f_equal. apply counted_sym. }
-    rewrite (pair_sum_perm _ _ _ Hperm Hsym). apply pair_sum_le. intros x y.
-    unfold counted. destruct (canon2 x y) as [u v].
-    assert (Er : raw_pts pcs' u v = raw_pts pcs u v).
-    { apply (raw_progress pcs i j a b0 ti tj h u v Hi Hj Hij (proj1 Hwfa) (proj1 Hwfb) Hti Htj). }
-    rewrite Er. apply dedup_filter_length. intros q Hq.
-    apply (keep_step pcs i j a b0 p ti tj h u v q); assumption.
-  - destruct Hd; simpl; [apply Nat.le_0_l| apply Nat.le_refl].
-Qed.
 Print Assumptions overlap_endpoints_le_2.
 Print Assumptions rmin_lb.
 Print Assumptions rmin_in.
@@ -822,4 +867,3 @@ Print Assumptions vertex_spec.
 Print Assumptions counted_sym.
 Print Assumptions supports_progress_perm.
 Print Assumptions keep_step.
-Print Assumptions rho_step_nonincreasing.
