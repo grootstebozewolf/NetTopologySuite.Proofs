@@ -2215,5 +2215,5 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairBound.v : bound_cells_iff` | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. claimId `tri-de9im-b` (witness `bound_cells_iff`). Exterior cells stay deferred `[exact]` | 3 |
+| `TrianglePairBound.v : bound_cells_iff` (+ `TrianglePairExterior.v : exterior_cells_iff`) | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. claimId `tri-de9im-b` (witness `bound_cells_iff`). I∩E is Dim2 iff an open point of A lies outside closed B. B∩E is Dim1 iff a positive-length subsegment of A's boundary lies outside closed B. E∩I and E∩B are those forms on the swapped pair. E∩E is constant Dim2, witnessed nonempty. `tri_de9im` is the CCW matrix; `tri_de9im_orient` swaps a clockwise triple first. claimId `tri-de9im-c` (witness `exterior_cells_iff`) `[exact]` | 3 |
 
