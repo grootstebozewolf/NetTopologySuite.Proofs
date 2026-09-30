@@ -3,7 +3,8 @@
    ----------------------------------------------------------------------------
    ∀-bag letter 5. Concrete pick (least cook ti on the first i<j
    pair) and the three hit-parameter lemmas. Stacked on letter 3.
-   letter5_obligation and rho_adm_step_strict stay in SheetHenBagRun.
+   letter5_obligation is pick_spec's None arm (stopped_ok).
+   rho_adm_step_strict stays in SheetHenBagRun.
    Does not remint 0007-loop-letter3-strict.
    Hen is nat: hen_pt walks piece endpoints. hens_injective is
    "same endpoint point implies same hen".
@@ -1023,6 +1024,18 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* letter5_obligation: a spec-abiding None is stopped_ok.                      *)
+(* pick_bag is not claimed to meet that arm (chord/circ scan only).           *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem letter5_obligation : forall sel b,
+  (forall b0, pick_spec sel b0) -> sel b = None -> stopped_ok b.
+Proof.
+  intros sel b Hs Hn. specialize (Hs b). unfold pick_spec in Hs.
+  destruct b as [sh pcs|sh]; rewrite Hn in Hs; exact Hs.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* run on fuel S (rho_pcs). Declined absorbs. pick None stops.                *)
 (* -------------------------------------------------------------------------- *)
 
@@ -1055,16 +1068,45 @@ Fixpoint run (fuel : nat) (b : SheetBag) : SheetBag :=
       end
   end.
 
-Lemma pick_bag_spec : forall b, pick_spec pick_bag b.
+Lemma pick_bag_progress : forall sh pcs w,
+  pick_bag (BagLive sh pcs) = Some w ->
+  exists e1 e2,
+    nth_error pcs (hp_i w) = Some e1 /\
+    nth_error pcs (hp_j w) = Some e2 /\
+    hp_i w <> hp_j w /\
+    piece_wf e1 /\
+    piece_wf e2 /\
+    bp_support e1 <> bp_support e2 /\
+    admissible_hit pcs e1 e2 (hp_P w) (hp_ti w) (hp_tj w).
 Proof.
-  intros [sh pcs|sh]; unfold pick_spec, pick_bag.
-  - destruct (pick pcs) as [[[i j] [[p ti] tj]]|] eqn:Ep; [simpl| exact I].
-    destruct (pick_sound pcs i j p ti tj Ep)
-      as [a [b [Hi [Hj [Hij [Ha [Hb [Hd [_ Hadm]]]]]]]]].
-    exists a, b. split; [exact Hi|]. split; [exact Hj|]. split; [exact Hij|].
-    split; [exact Ha|]. split; [exact Hb|]. split; [exact Hd|].
-    apply admissible_alt. exact Hadm.
-  - exact I.
+  intros sh pcs w H. unfold pick_bag in H.
+  destruct (pick pcs) as [[[i j] [[p ti] tj]]|] eqn:Ep; [|discriminate].
+  inversion H; subst w. simpl.
+  destruct (pick_sound pcs i j p ti tj Ep)
+    as [a [b [Hi [Hj [Hij [Ha [Hb [Hd [_ Hadm]]]]]]]]].
+  exists a, b. split; [exact Hi|]. split; [exact Hj|]. split; [exact Hij|].
+  split; [exact Ha|]. split; [exact Hb|]. split; [exact Hd|].
+  apply admissible_alt. exact Hadm.
+Qed.
+
+Lemma bag_run_pick_bag_stopped : forall fuel b,
+  (rho b < fuel)%nat ->
+  run_stopped pick_bag (bag_run pick_bag fuel b).
+Proof.
+  induction fuel as [|fuel IH]; intros b Hfuel.
+  - lia.
+  - destruct b as [sh pcs|sh].
+    + cbn [bag_run].
+      destruct (pick_bag (BagLive sh pcs)) as [w|] eqn:Ep.
+      * assert (Hlt : (rho (step_hit (BagLive sh pcs) w) <
+                       rho (BagLive sh pcs))%nat).
+        { apply step_hit_rho_lt with (b := BagLive sh pcs) (w := w).
+          exact (pick_bag_progress sh pcs w Ep). }
+        apply IH.
+        apply Nat.lt_le_trans with (rho (BagLive sh pcs));
+          [exact Hlt | apply Nat.lt_succ_r; exact Hfuel].
+      * unfold run_stopped. exact Ep.
+    + cbn [bag_run]. exact I.
 Qed.
 
 Lemma run_eq : forall fuel b, run fuel b = bag_run pick_bag fuel b.
@@ -1117,7 +1159,7 @@ Proof.
   assert (Hs : run_stopped pick_bag (run (S (rho_pcs pcs)) (BagLive sh pcs))).
   { rewrite run_eq.
     change (S (rho_pcs pcs)) with (S (rho (BagLive sh pcs))).
-    apply bag_run_fixpoint. exact pick_bag_spec. }
+    apply bag_run_pick_bag_stopped. apply Nat.lt_succ_diag_r. }
   destruct (run (S (rho_pcs pcs)) (BagLive sh pcs)) as [sh' pcs'|sh']; simpl in Hs.
   - unfold pick_bag in Hs.
     destruct (pick pcs') as [[[i j] [[p ti] tj]]|] eqn:Ep.
@@ -1164,7 +1206,9 @@ Print Assumptions pick_sound.
 Print Assumptions pick_admissible.
 Print Assumptions pick_least.
 Print Assumptions adm_list_covers.
-Print Assumptions pick_bag_spec.
+Print Assumptions letter5_obligation.
+Print Assumptions pick_bag_progress.
+Print Assumptions bag_run_pick_bag_stopped.
 Print Assumptions run_eq.
 Print Assumptions run_step_or_stop.
 Print Assumptions run_terminates.
