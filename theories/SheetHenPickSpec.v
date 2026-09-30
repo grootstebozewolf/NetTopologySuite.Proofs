@@ -1,8 +1,8 @@
 (* ============================================================================
    NetTopologySuite.Proofs.SheetHenPickSpec
    ----------------------------------------------------------------------------
-   Headline: pick_bag_spec. claimId: none.
-   Consumer: letter5_obligation.
+   Headline: pick_bag_spec. claimId: 0007-loop-letter5-pick.
+   Witness: pick_bag_spec. Consumer: letter5_obligation.
    The concrete pick_bag has three arms. ArmHit is a returned hit.
    ArmDecline is a live IDecline pair, and pick_bag returns None.
    ArmStop is the None arm: no live IDecline pair, so rho is 0.
@@ -464,6 +464,7 @@ Definition no_live_decline (b : SheetBag) : Prop :=
   | BagLive _ pcs => ~ live_decline pcs
   end.
 
+(* WITNESS {"claimId":"0007-loop-letter5-pick","topic":"overlay","lemma":"pick_bag_spec","title":"concrete pick_bag has hit, decline, and stop arms","file":"theories/SheetHenPickSpec.v","witness":"pick_bag_spec","board":"ADR-0007"} *)
 Theorem pick_bag_spec : forall b, bag_inv b ->
   match pick_arm b with
   | ArmHit => exists w, pick_bag b = Some w /\ hit_ok b w
