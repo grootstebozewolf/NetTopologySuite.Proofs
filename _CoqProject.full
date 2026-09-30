@@ -2588,6 +2588,9 @@ theories/SheetHenRho.v
 # ∀-bag letter 3. Admissible step, strict ρ, structural bag_run.
 # claimId 0007-loop-letter3-strict. 3-axiom. No Admitted.
 theories/SheetHenBagRun.v
+# Letter 5: concrete pick and per-class hit parameters. Stacked on letter 3.
+# 3-axiom. No Admitted.
+theories/SheetHenLoop3.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
