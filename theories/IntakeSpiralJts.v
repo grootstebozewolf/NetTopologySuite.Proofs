@@ -7,16 +7,12 @@
 
    ISO 13249-3 §4.2.12 SPIRALCURVE is start-placed: LOCATION
    at the start, LENGTH, STARTCURVATURE, ENDCURVATURE. ISO
-   CLOTHOID is inflection-placed (A, sd, ed). No SPIRALCURVE
-   text produces an IsoClothoid. SpiralOfClothoid therefore
-   declines ID_SpiralClothoidNotYet until normalizer 2.
-   Normalizer 2 is the next letter, not this one: start state
-   (P0 = sc_loc, T0 from ref1, handedness from ref2) plus
-   (k0, k1, L), mapped to (A, sd, ed) and an inflection
-   placement via LipInt, with iso_spiral_same_curve. The JTS
-   form reuses that map; MemberState supplies its start state.
-   Every other spiral kind is SpiralOther and declines
-   ID_SpiralOther. Not a silent failure.
+   CLOTHOID is inflection-placed (A, sd, ed). The mapper is
+   IntakeSpiralFront: a clothoid spiral bags norm2 or declines
+   by name. cert_of_spiral still returns
+   CD_SpiralClothoidNotYet. That is the taxonomy, not the
+   mapper result. Every other spiral kind is SpiralOther and
+   declines ID_SpiralOther. Not a silent failure.
 
    JTS CLOTHOID(k0,k1,L) is the same taxonomy. Length is tested
    first: L <= 0 is CD_JtsNonPositiveLength. The example5 triple
@@ -28,8 +24,8 @@
    MemberState is the carrier the compound fold will thread
    (end point, tangent, curvature). This letter does not fold
    members, does not discharge JTS G1, and does not prove
-   parse ∘ emit = id. Those three are Prop obligations in
-   IntakeSpiralJtsMap. Only normalizer 2 is a False marker.
+   parse ∘ emit = id. Those three stay Prop obligations in
+   IntakeSpiralJtsMap. Norm2 is ClothoidNorm2, not a marker.
 
    ADR-0005: this classification is lenient intake. It is not
    isValid. No Admitted / Axiom / Parameter.

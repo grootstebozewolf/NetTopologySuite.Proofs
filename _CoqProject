@@ -272,6 +272,9 @@ theories/ClothoidNorm2.v
 # Arc row of the compound fold (ArcMemberState). arc_exit / arc_entry
 # store MemberState from IntakeSpiralJts. claimId none. No Admitted.
 theories/ArcMemberState.v
+# SPIRALCURVE front (IntakeSpiralFront). Start state onto norm2.
+# claimId none. No Admitted.
+theories/IntakeSpiralFront.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle

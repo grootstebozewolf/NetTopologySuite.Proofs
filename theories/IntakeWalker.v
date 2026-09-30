@@ -29,8 +29,8 @@
    SPIRAL declines. ID_GeodesicString is not the well-formed
    answer. Not ellipsoid / WKB 13 / emit / first-cook expand.
 
-   SpiralOther declines. Clothoid spirals decline
-   ID_SpiralClothoidNotYet until normalizer 2.
+   SpiralOther declines ID_SpiralOther. A clothoid spiral
+   bags norm2 or a named Decline (IntakeSpiralFront).
    CircUnknown well-formed CS/Circle now maps
    through IntakeAngles (claimId 0007-intake-angles): chart
    θ₀/Δθ via 3-axiom atan2, then MkCirc chickens.
@@ -98,7 +98,7 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake IntakeSpiralJts.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake IntakeSpiralJts IntakeSpiralFront.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -133,6 +133,8 @@ Inductive IntakeDeclineReason : Type :=
 | ID_SpiralCurve
 | ID_SpiralOther
 | ID_SpiralClothoidNotYet
+| ID_SpiralNonPositiveLength
+| ID_SpiralConstantCurvature
 | ID_IsoClothoid
 | ID_MkOutOfScope
 | ID_CircGammaLeftover
@@ -367,7 +369,16 @@ Definition intake_decline_of (d : CertDecline) : IntakeDeclineReason :=
   end.
 
 Definition map_spiral (s : Sheet) (sp : SpiralInput) : IntakeResult :=
-  IntakeDecline (intake_decline_of (cert_of_spiral sp)).
+  match sp with
+  | SpiralOther _ => IntakeDecline ID_SpiralOther
+  | SpiralOfClothoid sc =>
+      match try_spiral_clothoid sc with
+      | inl SFail_NonPositiveLength => IntakeDecline ID_SpiralNonPositiveLength
+      | inl SFail_ConstantCurvature => IntakeDecline ID_SpiralConstantCurvature
+      | inl SFail_NotSimilarity => IntakeDecline ID_NotSimilarityFrame
+      | inr e => IntakeBag (clothoid_bag s e)
+      end
+  end.
 
 Definition map_jts_clothoid (s : Sheet) (k0 k1 len : R) : IntakeResult :=
   match classify_jts k0 k1 len with
