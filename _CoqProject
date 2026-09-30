@@ -267,7 +267,7 @@ theories/IsoClothoidIntake.v
 # No Admitted.
 theories/IntakeSpiralJts.v
 # Normalizer 2 (ClothoidNorm2). Start state + (k0, k1, L)
-# builds a ClothoidEgg. claimId 0006-norm2-state. No Admitted.
+# builds a ClothoidEgg. claimId 0007-norm2-state. No Admitted.
 theories/ClothoidNorm2.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.

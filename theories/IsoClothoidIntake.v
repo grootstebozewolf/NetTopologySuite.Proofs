@@ -42,7 +42,7 @@
    (0, 5/1000, 80) only; other JTS triples are the walker's
    ID_JtsClothoidNotYet. Clothoid SPIRALCURVE is start-placed
    and declines until normalizer 2, which is ClothoidNorm2
-   (claimId 0006-norm2-state). This file stays the
+   (claimId 0007-norm2-state). This file stays the
    inflection-placed ISO form. No FTC. No Admitted.
 
    Author: NetTopologySuite.Proofs contributors

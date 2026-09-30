@@ -30,7 +30,7 @@
    cloth_cos0 / cloth_sin0 (division by cloth_hypot);
    cloth_cos0_same / cloth_sin0_same drop the window and the measures.
    No ODE uniqueness. No MVT, Rolle, or RiemannInt.
-   claimId: 0006-norm2-state
+   claimId: 0007-norm2-state
    witness: clothoid_state_unique
    consumer: norm2_is_the_state
    No Admitted / Axiom / Parameter.

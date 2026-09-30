@@ -235,7 +235,7 @@ _Avoid_: Phase B Open as if a theorem were missing, SQL/MM done,
 cathedral Landed
 
 **Intake MkClothoid** (ADR-0007, claimId `0007-intake-mkclothoid`):
-One host `MkClothoid` on `Egg` (parallel to `MkCirc`). Two surface forms (ISO REFERENCELOCATION, JTS `(k0,k1,L)`) map onto the same locked `ClothoidEgg` bag (OGC≡ISO); vertices are `γ(0)`, `γ(1)` of the locked Fresnel bag. Chickens use `MkClothoid` (`EggClothoid`), not silent `MkChord`. `example5` bags both forms in one COMPOUNDCURVE. Clothoid×clothoid first cook already landed (claimId `0007-clothoid-first-cook`, #730 Mode A on main). Intake stays bag/`MkClothoid` mapping; host Hit is the Clothoid first-cook paragraph. `EggClothoid` is not folded away. Start state plus law is claimId `0006-norm2-state` (`ClothoidNorm2.v : clothoid_state_unique`).
+One host `MkClothoid` on `Egg` (parallel to `MkCirc`). Two surface forms (ISO REFERENCELOCATION, JTS `(k0,k1,L)`) map onto the same locked `ClothoidEgg` bag (OGC≡ISO); vertices are `γ(0)`, `γ(1)` of the locked Fresnel bag. Chickens use `MkClothoid` (`EggClothoid`), not silent `MkChord`. `example5` bags both forms in one COMPOUNDCURVE. Clothoid×clothoid first cook already landed (claimId `0007-clothoid-first-cook`, #730 Mode A on main). Intake stays bag/`MkClothoid` mapping; host Hit is the Clothoid first-cook paragraph. `EggClothoid` is not folded away. Start state plus law is claimId `0007-norm2-state` (`ClothoidNorm2.v : clothoid_state_unique`).
 _Avoid_: two constructors, Fresnel-as-noding, silent chord demote,
 new oracle keyword
 
