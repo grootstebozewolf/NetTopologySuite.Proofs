@@ -2599,6 +2599,13 @@ theories/SheetHenLoop3.v
 # Headline: pick_bag_spec. claimId 0007-loop-letter5-pick. witness pick_bag_spec. Consumer: letter5_obligation.
 # 3-axiom. No Admitted.
 theories/SheetHenPickSpec.v
+# Headline: noded_ov_rho_zero. claimId 0007-loop-letter6. witness noded_ov_rho_zero.
+# Consumer: col_fixture_ov_not_noded. 3-axiom. No Admitted.
+# Converse rho=0 -> bag_noded_ov is refuted by rho_zero_not_ov.
+theories/SheetHenNodedOv.v
+# Headline: rho_zero_not_ov. claimId none. Consumer: SheetHenNodedOv.
+# 3-axiom. No Admitted.
+theories/SheetHenNodedOvGap.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
