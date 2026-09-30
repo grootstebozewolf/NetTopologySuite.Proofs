@@ -299,8 +299,10 @@ def test_tilted_extrusion_and_unknown_unit() -> None:
     assert rows[0]["id"] == "ID_UnknownUnit"
     doc.header["$INSUNITS"] = 0
     doc.header["$ANGDIR"] = 7
+    doc.header["$ANGBASE"] = 33.0
     rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
-    assert rows[0]["id"] == "ID_AngleConventionUnknown"
+    assert rows[0]["id"] == "ID_TiltedPlacement"
+    assert rows[0]["id"] != "ID_AngleConventionUnknown"
 
 
 @pytest.mark.parametrize("mode", ["strict", "lenient"])
@@ -313,6 +315,36 @@ def test_nonfinite_bulge_declines_in_both_modes(mode: str, bulge: float) -> None
     assert rows[0]["record"] == "decline"
     assert rows[0]["id"] == "ID_DegenerateEntity"
     VALIDATOR.validate(rows[0])
+
+
+def test_odd_angdir_and_angbase_match_the_arc_and_do_not_decline() -> None:
+    def one(angdir: int, angbase: float) -> dict:
+        doc = ezdxf.new("R2010")
+        doc.header["$INSUNITS"] = 6
+        doc.header["$AUNITS"] = 0
+        doc.header["$ANGDIR"] = angdir
+        doc.header["$ANGBASE"] = angbase
+        doc.modelspace().add_arc((0, 0), radius=2, start_angle=10, end_angle=80)
+        rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+        assert len(rows) == 1
+        assert rows[0]["record"] == "entity"
+        assert rows[0].get("id") != "ID_AngleConventionUnknown"
+        VALIDATOR.validate(rows[0])
+        return rows[0]
+
+    plain = one(0, 0.0)
+    odd = one(7, 33.0)
+    plain_body = {key: value for key, value in plain.items() if key != "units"}
+    odd_body = {key: value for key, value in odd.items() if key != "units"}
+    assert plain_body == odd_body
+    assert {key: value for key, value in plain["units"].items() if key not in ("angdir", "angbase")} == {
+        key: value for key, value in odd["units"].items() if key not in ("angdir", "angbase")
+    }
+    assert odd["units"]["angdir"] == 7
+    assert odd["units"]["angbase"] == pytest.approx(33)
+    assert odd["params"]["direction"] == "ccw-ocs"
+    assert odd["params"]["startAngle"] == pytest.approx(10)
+    assert odd["params"]["endAngle"] == pytest.approx(80)
 
 
 def test_angdir_does_not_rewrite_stored_arc() -> None:
