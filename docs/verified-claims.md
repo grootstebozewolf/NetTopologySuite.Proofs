@@ -2205,7 +2205,7 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairClip.v : ii_nonempty_iff` | Open interiors of two positive triangles meet iff the three half-plane clips have positive area. Headline witness. claimId `tri-de9im-a` (owner name still to confirm) `[exact]` | 3 |
+| `TrianglePairClip.v : ii_nonempty_iff` | Open interiors of two positive triangles meet iff the three half-plane clips have positive area. Family witness `TrianglePairMatrix.v : tri_de9im_correct`. claimId `tri-de9im-a` `[exact]` | 3 |
 | `ConvexClipComplete.v : clip_correct` | One half-plane clip equals the convex intersection. Secondary witness `[exact]` | 3 |
 | `TrianglePairClip.v : tri_inter_correct` | A point lies in both closed triangles iff it lies in `tri_inter` `[exact]` | 3 |
 | `TrianglePairClip.v : ii_entry` | I∩I is dimension 2 when the clip area is positive, otherwise F `[exact]` | 3 |
@@ -2216,5 +2216,5 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairBound.v : bound_cells_iff` (+ `TrianglePairExterior.v : exterior_cells_iff`) | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. claimId `tri-de9im-b` (witness `bound_cells_iff`). I∩E is Dim2 iff an open point of A lies outside closed B. B∩E is Dim1 iff a positive-length subsegment of A's boundary lies outside closed B. E∩I and E∩B are those forms on the swapped pair. E∩E is constant Dim2, witnessed nonempty. `tri_de9im` is the CCW matrix; `tri_de9im_orient` swaps a clockwise triple first. claimId `tri-de9im-c` (witness `exterior_cells_iff`) `[exact]` | 3 |
+| `TrianglePairBound.v : bound_cells_iff` (+ `TrianglePairExterior.v : exterior_cells_iff`) | I∩B, B∩I and B∩B are the edge-contact tests `ib_entry`, `bi_entry` and `bb_entry`. Dim0 is a shared boundary point and no positive edge segment. I∩E is Dim2 iff an open point of A lies outside closed B. B∩E is Dim1 iff a positive-length subsegment of A's boundary lies outside closed B. E∩I and E∩B are those forms on the swapped pair. E∩E is constant Dim2, witnessed nonempty. `tri_de9im` is the CCW matrix; `tri_de9im_orient` swaps a clockwise triple first. Consumed by `TrianglePairMatrix.v : tri_de9im_correct`. claimId `tri-de9im-b`, `tri-de9im-c` `[exact]` | 3 |
 
