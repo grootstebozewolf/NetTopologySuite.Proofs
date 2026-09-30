@@ -3,9 +3,9 @@
    ----------------------------------------------------------------------------
    Letter 6a-i gap bag. claimId: none.
    Headline: gap_not_ov. Consumer: SheetHenNodedOv.
-   Two co-circular arcs. (5, 0) is an endpoint of the short arc and lies
-   in the long arc's image, so it is a symmetric overlap endpoint and a
-   progress hit. bag_noded_ov fails. Does not claim rho = 0.
+   Regression: gap_counted, gap_rho_pos. Same consumer. No claimId.
+   (5, 0) is a symmetric overlap endpoint, so the gap bag is counted
+   and rho_pcs > 0. bag_noded_ov fails. Does not claim the iff.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -402,6 +402,43 @@ Proof.
   exact (Hnp Hprog).
 Qed.
 
+(* Regression. Consumer: SheetHenNodedOv. claimId: none. *)
+Lemma gap_admissible :
+  admissible_hit gap_pcs (gap_pc 0%nat 1%nat gap_l) (gap_pc 1%nat 0%nat gap_s)
+    gap_p (2 / 3) 0.
+Proof.
+  split; [| split].
+  - exact gap_hit.
+  - intro Hv. apply gap_not_vertex_l. exact (proj1 Hv).
+  - intros _. unfold overlap_endpoints, gap_pc.
+    cbn [bp_support]. rewrite gap_canon. simpl. exact gap_p_in_ends.
+Qed.
+
+Lemma gap_counted :
+  In gap_p (counted gap_pcs (SuppCircle gap_s) (SuppCircle gap_l)).
+Proof.
+  rewrite counted_sym.
+  apply (admissible_in_counted gap_pcs
+      (gap_pc 0%nat 1%nat gap_l) (gap_pc 1%nat 0%nat gap_s)
+      gap_p (2 / 3) 0).
+  - apply in_eq.
+  - right. apply in_eq.
+  - apply gap_wf.
+  - apply gap_wf.
+  - intro H. inversion H. pose proof PI_RGT_0. lra.
+  - exact gap_admissible.
+Qed.
+
+Lemma gap_rho_pos : (rho_pcs gap_pcs > 0)%nat.
+Proof.
+  unfold rho_pcs. rewrite gap_supports. simpl pair_sum. simpl map. simpl fold_right.
+  assert (Hin : In gap_p (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s))).
+  { rewrite counted_sym. exact gap_counted. }
+  destruct (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s)) as [|q tl].
+  - contradiction.
+  - simpl. lia.
+Qed.
+
 Print Assumptions gap_wf.
 Print Assumptions gap_distinct.
 Print Assumptions gap_circ_ls.
@@ -436,3 +473,6 @@ Print Assumptions gap_p_count_s.
 Print Assumptions gap_p_in_l.
 Print Assumptions gap_p_in_ends.
 Print Assumptions gap_not_ov.
+Print Assumptions gap_admissible.
+Print Assumptions gap_counted.
+Print Assumptions gap_rho_pos.
