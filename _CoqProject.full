@@ -2602,6 +2602,12 @@ theories/SheetHenPickSpec.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
+# Headline: noded_ov_rho_zero. claimId 0007-loop-letter6. Consumer: col_fixture_ov_not_noded.
+# 3-axiom. No Admitted. Converse rho=0 -> bag_noded_ov is refuted by rho_zero_not_ov.
+theories/SheetHenNodedOv.v
+# Headline: rho_zero_not_ov. claimId none. Consumer: SheetHenNodedOv.
+# 3-axiom. No Admitted.
+theories/SheetHenNodedOvGap.v
 
 # Companion counterexample for ArcOrient.arc_minor (in the style of
 # SpectreChordArcWitness.v): a concrete valid arc where arc_mid sits on the
