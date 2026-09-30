@@ -4,11 +4,10 @@
    Letter 6a-i. claimId: 0007-loop-letter6.
    Headline: noded_ov_rho_zero.
    Consumer: col_fixture_ov_not_noded.
-   bag_noded_ov is bag_noded weakened by the piece-order overlap antecedent.
+   bag_noded_ov is bag_noded weakened by an overlap-endpoint antecedent.
+   Two circles use circ_overlap_pts, the symmetric point-set list rho counts.
    That direction (ov + no declining pair -> rho = 0) is proved.
-   The converse is false: rho_zero_not_ov. Circle overlap_pts is not
-   symmetric, so a progress hit can sit in the piece-order endpoint list
-   while the canon frame that rho counts is empty.
+   The converse is not an inhabitant. This file does not claim the iff.
    Does not remint 0007-loop-letter3-strict. Does not redefine bag_noded.
    Does not define CookLoopRho. cook_loop_status unchanged.
    LeftoverBagTermArm stays refuted. 3-axiom host. No Admitted.
@@ -78,13 +77,23 @@ Lemma ov_counted_end : forall pcs s1 s2 p,
   In p (overlap_endpoints pcs s1 s2).
 Proof.
   intros pcs s1 s2 p Hin Ho.
-  unfold counted in Hin. unfold overlap_endpoints.
+  unfold counted in Hin.
   destruct (canon2 s1 s2) as [u v] eqn:Ec.
   rewrite dedup_In in Hin. apply filter_In in Hin. destruct Hin as [Hraw _].
   unfold overlap_b in Ho. rewrite Ec in Ho.
   destruct u as [cu|cu]; destruct v as [cv|cv]; simpl in Ho; try discriminate.
-  - unfold raw_pts in Hraw. rewrite Ho in Hraw. exact Hraw.
-  - unfold raw_pts in Hraw. rewrite Ho in Hraw. exact Hraw.
+  - unfold overlap_endpoints. rewrite Ec. simpl.
+    unfold counted_raw, raw_pts in Hraw. rewrite Ho in Hraw. exact Hraw.
+  - unfold counted_raw in Hraw. rewrite Ho in Hraw.
+    unfold overlap_endpoints. rewrite Ec. simpl. exact Hraw.
+Qed.
+
+Lemma overlap_endpoints_in_sym : forall pcs s1 s2 p,
+  In p (overlap_endpoints pcs s1 s2) ->
+  In p (overlap_endpoints pcs s2 s1).
+Proof.
+  intros pcs s1 s2 p Hin.
+  unfold overlap_endpoints in *. rewrite <- (canon_swap s1 s2). exact Hin.
 Qed.
 
 Lemma overlap_b_sym : forall s1 s2, overlap_b s1 s2 = overlap_b s2 s1.
@@ -204,7 +213,7 @@ Definition bag_noded_ov (b : SheetBag) : Prop :=
         i <> j ->
         I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck c)) (IHit p ti tj) ->
         (overlap_pair (bp_support a) (bp_support c) = true ->
-           In p (overlap_pts pcs (bp_support a) (bp_support c))) ->
+           In p (overlap_endpoints pcs (bp_support a) (bp_support c))) ->
         ~ progress_hit pcs a c (IHit p ti tj)
   end.
 
@@ -275,7 +284,6 @@ Qed.
 
 (* WITNESS {"claimId":"0007-loop-letter6","topic":"overlay","lemma":"noded_ov_rho_zero","title":"no declining pair and bag_noded_ov imply rho 0","file":"theories/SheetHenNodedOv.v","witness":"noded_ov_rho_zero","board":"ADR-0007"} *)
 (* L6.1 rho_zero_noded_ov and rho_zero_iff_noded_ov are not inhabitants. *)
-(* Circle overlap_pts is not symmetric. rho_zero_not_ov is the refutation. *)
 Theorem noded_ov_rho_zero : forall sh pcs,
   bag_inv (BagLive sh pcs) ->
   no_decline_pair pcs ->
@@ -328,8 +336,9 @@ Proof.
       { rewrite (canon_overlap_eq s1 s2 u v Ecan). rewrite <- HaS, <- HcS. exact Ho. }
       assert (He : In p (overlap_endpoints pcs s1 s2)).
       { apply ov_counted_end; assumption. }
-      unfold overlap_endpoints in He. rewrite Ecan in He.
-      rewrite HaS, HcS. exact He.
+      destruct Huv as [[Eu Ev]|[Eu Ev]].
+      * rewrite HaS, HcS, Eu, Ev. exact He.
+      * rewrite HaS, HcS, Eu, Ev. apply overlap_endpoints_in_sym. exact He.
     + exact Hprog.
 Qed.
 
@@ -684,27 +693,41 @@ Proof.
   destruct (col_support_kind a Ha) as [Ea|Ea];
   destruct (col_support_kind c Hc) as [Ec|Ec]; rewrite Ea, Ec in *.
   - assert (Hv : family_vertex col_pcs2 (SuppChord col_A) p).
-    { apply chord_self_overlap_vertex; [apply col_dd_A|].
-      apply Hante. apply overlap_b_same_chord. }
+    { assert (He : In p (overlap_endpoints col_pcs2 (SuppChord col_A) (SuppChord col_A))).
+      { apply Hante. apply overlap_b_same_chord. }
+      unfold overlap_endpoints in He.
+      destruct (canon2 (SuppChord col_A) (SuppChord col_A)) as [u v] eqn:Ecan.
+      destruct (canon_orient _ _ _ _ Ecan) as [[-> ->]|[-> ->]];
+        (simpl in He; apply chord_self_overlap_vertex; [apply col_dd_A| exact He]). }
     unfold progress_hit. intro Hp. apply Hp. split; assumption.
   - assert (Hv : family_vertex col_pcs2 (SuppChord col_A) p /\
                  family_vertex col_pcs2 (SuppChord col_B) p).
-    { apply (col_ov_point p (SuppChord col_A) (SuppChord col_B));
-        [left; split; reflexivity|].
-      apply Hante. unfold overlap_pair, overlap_b. rewrite col_canon.
-      apply col_same_line. }
+    { assert (He : In p (overlap_endpoints col_pcs2 (SuppChord col_A) (SuppChord col_B))).
+      { apply Hante. unfold overlap_pair, overlap_b. rewrite col_canon.
+        apply col_same_line. }
+      unfold overlap_endpoints in He. rewrite col_canon in He. simpl in He.
+      apply (col_ov_point p (SuppChord col_A) (SuppChord col_B));
+        [left; split; reflexivity| exact He]. }
     unfold progress_hit. intro Hp. apply Hp. exact Hv.
   - assert (Hv : family_vertex col_pcs2 (SuppChord col_A) p /\
                  family_vertex col_pcs2 (SuppChord col_B) p).
-    { apply (col_ov_point p (SuppChord col_B) (SuppChord col_A));
-        [right; split; reflexivity|].
-      apply Hante. unfold overlap_pair. rewrite overlap_b_sym.
-      unfold overlap_b. rewrite col_canon. apply col_same_line. }
+    { assert (He : In p (overlap_endpoints col_pcs2 (SuppChord col_B) (SuppChord col_A))).
+      { apply Hante. unfold overlap_pair. rewrite overlap_b_sym.
+        unfold overlap_b. rewrite col_canon. apply col_same_line. }
+      unfold overlap_endpoints in He.
+      rewrite <- (canon_swap (SuppChord col_A) (SuppChord col_B)) in He.
+      rewrite col_canon in He. simpl in He.
+      apply (col_ov_point p (SuppChord col_A) (SuppChord col_B));
+        [left; split; reflexivity| exact He]. }
     unfold progress_hit. intro Hp. apply Hp.
     destruct Hv as [VA VB]. split; assumption.
   - assert (Hv : family_vertex col_pcs2 (SuppChord col_B) p).
-    { apply chord_self_overlap_vertex; [apply col_dd_B|].
-      apply Hante. apply overlap_b_same_chord. }
+    { assert (He : In p (overlap_endpoints col_pcs2 (SuppChord col_B) (SuppChord col_B))).
+      { apply Hante. apply overlap_b_same_chord. }
+      unfold overlap_endpoints in He.
+      destruct (canon2 (SuppChord col_B) (SuppChord col_B)) as [u v] eqn:Ecan.
+      destruct (canon_orient _ _ _ _ Ecan) as [[-> ->]|[-> ->]];
+        (simpl in He; apply chord_self_overlap_vertex; [apply col_dd_B| exact He]). }
     unfold progress_hit. intro Hp. apply Hp. split; assumption.
 Qed.
 
@@ -858,6 +881,54 @@ Proof.
     unfold piece_endpoint, iso_half_pc. cbn. right. symmetry. apply iso_east_snd.
 Qed.
 
+Lemma iso_ends_fst :
+  ends_of iso_half_pcs (SuppCircle iso_half_fst) = [mkPoint 5 0; mkPoint (-5) 0].
+Proof.
+  Opaque support_at.
+  unfold ends_of, iso_half_pcs, iso_half_pc; simpl.
+  rewrite circ_eqb_refl, iso_circ_swap_false; simpl.
+  rewrite iso_east_fst, iso_antipode_end_fst. reflexivity.
+  Transparent support_at.
+Qed.
+
+Lemma iso_ends_snd :
+  ends_of iso_half_pcs (SuppCircle iso_half_snd) = [mkPoint (-5) 0; mkPoint 5 0].
+Proof.
+  Opaque support_at.
+  unfold ends_of, iso_half_pcs, iso_half_pc; simpl.
+  rewrite iso_circ_ord_false, circ_eqb_refl; simpl.
+  rewrite iso_antipode_start_snd, iso_east_snd. reflexivity.
+  Transparent support_at.
+Qed.
+
+Lemma iso_antipode_hens : forall p,
+  p = mkPoint 5 0 \/ p = mkPoint (-5) 0 ->
+  family_vertex iso_half_pcs (SuppCircle iso_half_fst) p /\
+  family_vertex iso_half_pcs (SuppCircle iso_half_snd) p.
+Proof.
+  intros p [E|E]; subst p; split.
+  - exists (iso_half_pc 0 1 iso_half_fst). split; [simpl; auto|]. split; [reflexivity|].
+    left. unfold iso_half_pc. simpl. symmetry. apply iso_east_fst.
+  - exists (iso_half_pc 1 0 iso_half_snd). split; [simpl; auto|]. split; [reflexivity|].
+    right. unfold iso_half_pc. simpl. symmetry. apply iso_east_snd.
+  - exists (iso_half_pc 0 1 iso_half_fst). split; [simpl; auto|]. split; [reflexivity|].
+    right. unfold iso_half_pc. simpl. symmetry. apply iso_antipode_end_fst.
+  - exists (iso_half_pc 1 0 iso_half_snd). split; [simpl; auto|]. split; [reflexivity|].
+    left. unfold iso_half_pc. simpl. symmetry. apply iso_antipode_start_snd.
+Qed.
+
+Lemma iso_circ_end_hens : forall p,
+  In p (circ_overlap_pts iso_half_pcs iso_half_fst iso_half_snd) ->
+  family_vertex iso_half_pcs (SuppCircle iso_half_fst) p /\
+  family_vertex iso_half_pcs (SuppCircle iso_half_snd) p.
+Proof.
+  intros p Hin.
+  unfold circ_overlap_pts in Hin. rewrite dedup_In in Hin.
+  apply filter_In in Hin. destruct Hin as [Hend _].
+  rewrite iso_ends_fst, iso_ends_snd in Hend. simpl in Hend.
+  destruct Hend as [<-|[<-|[<-|[<-|[]]]]]; apply iso_antipode_hens; auto.
+Qed.
+
 Lemma none_pick_spec : forall b, pick_spec (fun _ => None) b.
 Proof.
   intros b. unfold pick_spec. destruct b; simpl; exact I.
@@ -875,15 +946,23 @@ Proof.
     simpl in Hi, Hj. inversion Hi. inversion Hj. subst a c.
     assert (Hv : family_vertex iso_half_pcs (SuppCircle iso_half_fst) p /\
                  family_vertex iso_half_pcs (SuppCircle iso_half_snd) p).
-    { apply iso_half_overlap_are_hens. apply Hante. unfold overlap_pair.
-      apply iso_overlap_b. }
+    { assert (He : In p (overlap_endpoints iso_half_pcs
+                       (SuppCircle iso_half_fst) (SuppCircle iso_half_snd))).
+      { apply Hante. unfold overlap_pair. apply iso_overlap_b. }
+      unfold overlap_endpoints in He. rewrite iso_canon in He. simpl in He.
+      apply iso_circ_end_hens. exact He. }
     unfold progress_hit. intro Hp. apply Hp. exact Hv.
   - destruct i as [|i]; [| lia].
     simpl in Hi, Hj. inversion Hi. inversion Hj. subst a c.
     assert (Hv : family_vertex iso_half_pcs (SuppCircle iso_half_fst) p /\
                  family_vertex iso_half_pcs (SuppCircle iso_half_snd) p).
-    { apply iso_swap_hens. apply Hante. unfold overlap_pair.
-      rewrite overlap_b_sym. apply iso_overlap_b. }
+    { assert (He : In p (overlap_endpoints iso_half_pcs
+                       (SuppCircle iso_half_snd) (SuppCircle iso_half_fst))).
+      { apply Hante. unfold overlap_pair. rewrite overlap_b_sym. apply iso_overlap_b. }
+      unfold overlap_endpoints in He.
+      rewrite <- (canon_swap (SuppCircle iso_half_fst) (SuppCircle iso_half_snd)) in He.
+      rewrite iso_canon in He. simpl in He.
+      apply iso_circ_end_hens. exact He. }
     unfold progress_hit. cbn [bp_support iso_half_pc]. intro Hp.
     destruct Hv as [Vf Vs]. apply Hp. split; [exact Vs| exact Vf].
   - destruct i as [|i]; [| lia]. destruct j as [|j]; [| lia].
@@ -946,14 +1025,14 @@ Proof.
   cbn [bag_run_arm]. rewrite E. reflexivity.
 Qed.
 
-(* The converse rho = 0 -> bag_noded_ov is refuted in
-   SheetHenNodedOvGap.v : rho_zero_not_ov. *)
+(* The converse rho = 0 -> bag_noded_ov is not an inhabitant here. *)
 
 Print Assumptions nth_length.
 Print Assumptions ov_fold_zero.
 Print Assumptions ov_pair_sum_zero.
 Print Assumptions ov_counted_images.
 Print Assumptions ov_counted_end.
+Print Assumptions overlap_endpoints_in_sym.
 Print Assumptions overlap_b_sym.
 Print Assumptions canon_fixed.
 Print Assumptions canon_overlap_eq.
@@ -1010,6 +1089,10 @@ Print Assumptions iso_swap_overlap.
 Print Assumptions iso_east_fst.
 Print Assumptions iso_east_snd.
 Print Assumptions iso_swap_hens.
+Print Assumptions iso_ends_fst.
+Print Assumptions iso_ends_snd.
+Print Assumptions iso_antipode_hens.
+Print Assumptions iso_circ_end_hens.
 Print Assumptions none_pick_spec.
 Print Assumptions halves_bag_ov.
 Print Assumptions iso_half_wf.
