@@ -1,26 +1,49 @@
-# CAD carrier extractor. Path-filtered and independent of the Rocq jobs
-# in ci.yml: no needs:, and those workflows are not modified.
+# CAD carrier extractor. Always runs on pull_request and on push to main.
+# Independent of the Rocq jobs in ci.yml: no needs: on those workflows,
+# and they are not modified.
+#
+# `changes` sets `cad` when tools/cad/** or this file changed, including
+# deletions. Pull requests use the GitHub file list, so a fork PR still
+# runs the gate; pytest and schema skip unless those paths changed.
+# The check to require in branch protection is the `cad-carrier` job.
 
 name: cad-carrier
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "tools/cad/**"
-      - ".github/workflows/cad-carrier.yml"
   push:
     branches: [main]
-    paths:
-      - "tools/cad/**"
-      - ".github/workflows/cad-carrier.yml"
+
+permissions:
+  contents: read
+  pull-requests: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  cad-carrier:
-    name: cad-carrier
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      cad: ${{ steps.filter.outputs.cad }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # v4.0.3. Default matching includes added, modified, and deleted paths.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
+        id: filter
+        with:
+          filters: |
+            cad:
+              - 'tools/cad/**'
+              - '.github/workflows/cad-carrier.yml'
+
+  pytest:
+    name: pytest
+    needs: changes
+    if: needs.changes.outputs.cad == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,8 +59,54 @@ jobs:
       - name: pytest tools/cad
         run: pytest tools/cad
 
+  schema:
+    name: schema
+    needs: changes
+    if: needs.changes.outputs.cad == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools/cad requirements
+        run: pip install -r tools/cad/requirements.txt
+
       - name: Validate extractor output against the carrier schema
         run: |
           out="${RUNNER_TEMP}/cad-records"
           python3 tools/cad/export_fixture_json.py "$out"
           python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json "$out"/*.json
+
+  cad-carrier:
+    name: cad-carrier
+    needs: [changes, pytest, schema]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pass only when changes succeeded and tests succeeded or were skipped
+        run: |
+          changes="${{ needs.changes.result }}"
+          pytest_result="${{ needs.pytest.result }}"
+          schema_result="${{ needs.schema.result }}"
+          printf 'changes=%s pytest=%s schema=%s\n' "$changes" "$pytest_result" "$schema_result"
+          if [ "$changes" != "success" ]; then
+            echo "changes result is $changes"
+            exit 1
+          fi
+          for result in "$pytest_result" "$schema_result"; do
+            case "$result" in
+              success|skipped) ;;
+              failure|cancelled)
+                echo "test result is $result"
+                exit 1
+                ;;
+              *)
+                echo "test result is $result"
+                exit 1
+                ;;
+            esac
+          done
