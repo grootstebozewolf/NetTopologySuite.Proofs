@@ -37,6 +37,9 @@ arc, clothoid, sinusoid, ellipse, Bezier, NURBS), supporting `eval`,
 `tangent`, curvature where defined, `split` and `demote`.
 _Avoid_: curve, segment (both are classes of egg, not the concept)
 
+**Bézier egg**:
+A polynomial curve of degree 2 or 3 with control points; a single-span NURBS with unit weights; linearized by the convex-hull flatness bound. *Year 1+, not yet minted.*
+
 **Chicken**:
 Incidence, and only incidence: a directed use `(h_src, h_dst, egg)` of an egg
 between two hens. Its twin reverses orientation. A hen incident to no chicken
@@ -212,6 +215,12 @@ _Avoid_: silent chord demote, host cook expand, new oracle keyword
 One `(θ₀, Δθ)` slot per 3-point window beside `CircSlice`, not on `Sheet`. WKT computes the pair (intake angles). A slot `try_carried` accepts equals that pair (`IntakeCarried.v : carried_slot_is_computed`). A missing `A ≠ B` slot is `ID_MissingCircSpan`; a failed check is `ID_CircSpanDisagree`. `A = B` / `CircFullOgc` ignores the slot.
 _Avoid_: span on Sheet, one pair for a multi-arc string, minting the egg before fail-closed
 
+**CAD carrier**:
+A structured intake record for CAD-sourced entities, generalizing the ADR-0009 span slot; angle-carrying by construction, so it takes the carry-and-check path.
+
+**Bulge**:
+DXF's per-segment arc encoding, b = tan(Δθ/4); positive is counter-clockwise; the arc's centre and radius are derived from the chord.
+
 **Joint** (ADR-0007 Phase B, occupancy in ADR-0009):
 A cook Hit at a concat or ring-close endpoint: parameters
 `(end, t=1, t=0)`. CS–CS uses sidecar `I_ok_circ`; LS–LS uses host
@@ -283,6 +292,36 @@ rules fail closed (throw naming the missing rung) — never an unchecked
 `true`.
 _Avoid_: invalid (for merely un-checked values), IsValid returns true (until
 the rung that checks it lands)
+
+### CAD-to-GIS bridging (year 0)
+
+**Why a second source family.** SQL/MM Part 3 is where curves are *stored* in GIS. It is not where most curves *originate*. Road and rail design, cadastral survey drawings, utility as-builts and signage all arrive as CAD: DWG/DXF (Autodesk), DGN (Bentley MicroStation), and increasingly IFC alignments. Glyph outlines from fonts are the same problem in miniature: closed curve rings that must be linearized faithfully before any GIS operation can touch them. Every one of these formats reaches GIS through linearization, and today that step is unspecified and unverified. The corpus already owns the pieces that make it specifiable: the `Linearizes` contract with its two-sided Hausdorff bound, the angle-carrying intake path (ADR-0009's slot), the certified circular egg, `LipInt` for anything defined by an integral, and the winding number for ring interiors. The CAD target reuses all of them and adds only the source-side mappings.
+
+Year 0 means groundwork done before and outside the subsidy year; it produces surveys, mappings, fixtures and oracle choices, not theorems.
+
+**What the formats contain, and where each entity lands.**
+
+| Source entity | Geometry | Corpus home | Notes |
+|---|---|---|---|
+| DXF `LINE`, `LWPOLYLINE` straight segments, DGN line/linestring | chords | `MkChord` | |
+| DXF `ARC` (centre, radius, start/end angle), `CIRCLE`; DGN circular arc | circular arcs | `MkCirc` via the **carried** path | angles are data, so this is carry-and-check, not compute-then-certify |
+| DXF `LWPOLYLINE` with bulge | circular arc per segment, bulge b = tan(Δθ/4) | `MkCirc` | Δθ = 4·atan(b), which is `atan3`, 3-axiom; centre and radius follow from the chord |
+| DXF `ELLIPSE`, DGN elliptical arc (rotated) | elliptical arcs | SQL/MM `ELLIPTICALCURVE` (§4.2.9) | oracle-instantiable already; no host egg yet |
+| DXF `SPLINE`, DGN B-spline | NURBS (degree, knots, control points, weights, or fit points) | `MkNurbs` | fit-point splines need an interpolation step first |
+| TrueType `glyf` outlines | quadratic B-splines with implied on-curve midpoints | quadratic Bézier egg (new) | closed rings, nonzero winding |
+| CFF/PostScript, OpenType CFF2, SVG paths | cubic Béziers, SVG elliptical arcs | cubic Bézier egg (new); elliptical arc as above | SVG arcs use endpoint parameterization and need the centre conversion |
+| IFC 4.3 alignment segments | clothoid, Bloss, sine, cosine, polynomial spirals | `MkClothoid`; the other spiral kinds are named declines today | the same spiral families `SPIRALCURVE` names |
+| DXF `INSERT` / block references, DGN cells | affine placement of the above | the placement rules of the ISO clothoid intake | similarity placements only; general affine images of arcs are not arcs |
+
+**What is new, and what is not.** Two egg kinds are new: quadratic and cubic Béziers. Both are polynomial, so their `Linearizes` instances come from the convex-hull flatness bound that the NURBS lane needs anyway (a Bézier is a single-span NURBS with unit weights), and their metrics come from the generic speed and Green theorems. Nothing else is new: arcs, circles, clothoids, NURBS and placements all have a home. What year 0 must decide is the *carrier*: CAD is not text, so the intake is a structured record (entity, placement, parameters, units, layer) rather than a WKT string. The ADR-0009 span slot is the first such record; the CAD carrier generalizes it.
+
+**Two things CAD does that GIS must not lose.** First, orientation and winding are semantic in fonts and in CAD hatches: glyph interiors are defined by the nonzero winding rule, and the corpus's curve-ring winding is exactly the predicate that decides them. Second, tolerance is expressed differently: CAD linearization is usually a chord-height (sagitta) limit in drawing units, sometimes a segment count, occasionally an angle step; GIS consumers think in coordinate tolerance. The contract's Hausdorff bound is the common currency, and year 0 should write down the conversion for each source's tolerance parameter.
+
+**Oracles and licences.** Year 0 chooses reference implementations for differential tests, not code to port. DXF: `ezdxf` (MIT) reads and linearizes bulges, arcs, ellipses and splines. DWG: the Open Design Alliance SDK (commercial) or `libredwg` (GPL, reference only). DGN: the ODA DGN module or Bentley's own SDK; both are reference only. Fonts: FreeType (FTL/GPL dual) and `fontTools` (MIT) for outline extraction; FreeType's rasterizer is the de facto authority on nonzero winding. IFC: `IfcOpenShell` (LGPL) for alignment segments. None of these code bases may be ported into NTS (BSD-3); they are behavioural references in the same sense GEOS is for arcs.
+
+**Year-0 deliverables.** A survey document per format naming the entities, their parameter conventions (angle direction and units, bulge sign, knot conventions, placement matrices) and the version-specific traps (DXF R12 versus R2000 polylines, DGN V7 versus V8 arcs). The mapping table above, extended with a claimId column that is empty until year 1 fills it. A CAD carrier record definition, with named declines for what is refused (3D solids, hatches as regions, text, dimensions, non-similarity placements). Three locked fixtures: a DXF `LWPOLYLINE` with mixed bulges, a DGN rotated elliptical arc, and one TrueType glyph with a hole (a lowercase "e" or "a"), each with its reference linearization from the chosen oracle. A tolerance-conversion note. Nothing here is a theorem; year 0 ends when a year-1 letter could start from these files without reading the format specifications again.
+
+**Non-goals.** No DWG parsing in the corpus. No 3D. No rendering semantics for fonts beyond outlines and winding. No claim of round-trip fidelity to CAD; the bridge is one-way, CAD to GIS, through linearization and certified eggs.
 
 ### Exact curves
 
@@ -425,6 +464,9 @@ Together with the IEEE↔R bridge it is the test surface for NodingNG /
 OverlayNG / RelateNG (ADR-0006 line protocol only).
 _Avoid_: reference implementation, ground truth binary
 
+**Reference-only oracle**:
+An implementation used for differential testing but never ported, because of licence or provenance (ODA, libredwg, FreeType, IfcOpenShell).
+
 **Harness**:
 A runner that puts one engine's answers against the Oracle's on the same inputs
 and emits an ok/warn/bug verdict summary.
@@ -451,6 +493,9 @@ The guarded route from computed to specified interior
 `ray_avoids_vertices` — are **permanent and load-bearing**, proven maximal by a
 Qed refutation of the guard-free form.
 _Avoid_: deferral, side condition (both imply temporary)
+
+**Nonzero winding**:
+The interior rule for glyph outlines and CAD hatches; decided by the corpus's curve-ring winding number.
 
 ### Relate regimes
 
