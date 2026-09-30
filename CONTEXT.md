@@ -347,10 +347,10 @@ every parameter the source states plus the frame it states it in.
 
 **How each kind lands.**
 - Arc / Circle / DGN arc: angles are data; intake derives three control points; `try_carried` checks (`carry_check`): endpoints and mid on the egg, span strictly inside (0, 2π); ADR-0009's slot made mandatory.
-- BulgePolyline: *b* = tan(Δθ/4); centre rational in chord and *b* (offset along rot90(chord)); radius a square root; Δθ = 4·`atan3`(*b*); compute-then-certify via `egg_of_points` / `egg_of_points_certified`; *b* = 0 is a chord.
+- BulgePolyline: *b* = tan(Δθ/4); centre rational in chord and *b* (offset along rot90(chord)); radius a square root; Δθ = 4·`atan3`(*b*); compute-then-certify via `egg_of_points` / `egg_of_points_certified`; *b* = 0 is a chord; *b* = ±1 is a half circle (Δθ = ±π); large |*b*| stays strictly inside (0, 2π); the full circle is not encodable in one bulge, so no decline is needed; only *b* = 0 (chord) and NaN/non-finite input are special.
 - Ellipse: no host egg; ratio 1 normalizes to Arc in lenient mode; otherwise `ID_EllipseNotYet`; DGN rotated elliptical arcs likewise.
 - BSpline: control-point form becomes `MkNurbs` payload under `nurbs_wf` (clamped knots, positive weights); unclamped and periodic decline by name; fit-point splines decline.
-- Bezier: single-span NURBS with unit weights, knots 0,0,0,1,1,1 for quadratics (TrueType) and 0,0,0,0,1,1,1,1 for cubics (CFF, SVG); lands in `MkNurbs` today without a new egg; TrueType implied on-curve midpoints expanded first.
+- Bezier: knot vectors for degree *p* have *p*+1 repeated values at each end — quadratic (TrueType) 0,0,0,1,1,1; cubic (CFF, SVG) 0,0,0,0,1,1,1,1 — and unit weights in both. That is `nurbs_wf` with *n* = *p*+1 control points, so `MkNurbs` takes them unchanged. TrueType implied on-curve midpoints expanded first.
 - Spiral (IFC): clothoid takes norm2's start-state form; Bloss / sine / cosine / polynomial decline by name as `SPIRALCURVE` does.
 - Ring: closed chain plus winding rule; carrier records rule and contours; `wind_integer` decides interiors; overlapping nonzero contours → union = overlay, so `ID_NonzeroOverlapNotYet` until overlay exists.
 - Compound: ordered chain folded with `MemberState` (C0 required, G1/G2 reported), same fold as `COMPOUNDCURVE`.
@@ -372,8 +372,9 @@ every parameter the source states plus the frame it states it in.
 | `ID_UnknownUnit` | unknown linear or angle unit |
 | `ID_AngleConventionUnknown` | unknown `$ANGDIR` / `$ANGBASE` (or equivalent) |
 | `ID_ToleranceNonPositive` | *d* ≤ 0, *n* < 1, or *α* ≤ 0 |
+| `ID_ToleranceKindUnsupported` | AngleStep or SegmentCount on a non-circular kind when the kind's `Linearizes` instance cannot convert |
 | `ID_NonzeroOverlapNotYet` | overlapping nonzero-winding contours |
-| `ID_DegenerateEntity` | zero radius, zero-length chord, coincident arc angles, 2-point ring |
+| `ID_DegenerateEntity` | zero radius, zero-length chord, coincident arc angles, 2-point ring, or non-finite parameters |
 | `ID_UnsupportedEntity` *name* | any kind outside the list; the name is kept |
 
 **Modes** (ADR-0005, as #892). Strict declines everything above.
@@ -386,15 +387,8 @@ similarity; if any link is not a similarity the whole entity
 declines, never partially transformed. Year-1 lemma
 `similarity_chain_closed`, which also tracks the sign of the
 determinant; that is why the field is a chain, not a matrix.
-(b) Reflection reverses orientation: when the composed chain has
-negative determinant (including extrusion −Z), `carry_check` negates
-Δθ and a Ring's winding sign flips. (c) Tolerance transport: a
-Hausdorff bound scales linearly under a similarity, so a Sagitta in
-drawing units becomes a CRS bound by the chain's scale factor;
-SegmentCount and AngleStep are similarity-invariant and are
-converted to a Hausdorff bound after placement from the radius
-(for an arc *d* = *r*(1 − cos(α/2))); the record stores source
-values only; D5 states this once.
+(b) The composed placement carries a sign *s* ∈ {+1, −1}, the sign of its determinant; with *s* = −1 every orientation-dependent quantity is negated before checking: Δθ for arcs (`carry_check` sees *s*·Δθ), the winding sign for rings (`wind_integer`'s value is multiplied by *s*), and σ for clothoids (the ref1 × ref2 sign flips, which the ISO intake already tolerates by deriving handedness rather than storing it). `similarity_chain_closed` states closure under composition with *s* multiplicative, *s* = −1 when an odd number of links reflect; a DXF extrusion of −Z is one reflecting link. NURBS and chords need no adjustment (control points and endpoints are mapped; nothing orientation-signed is stored).
+(c) Sagitta *d* is transported by the chain's scale factor *k*, giving a Hausdorff bound *k*·*d* after placement. AngleStep *α* and SegmentCount *n* are similarity-invariant (no scaling); convert after placement to a Hausdorff bound from the placed radius: arc of radius *r*, step *α*: *d* = *r*·(1 − cos(*α*/2)); *n* segments over sweep Δθ: *α* = |Δθ|/*n* first. For non-circular kinds (clothoids, NURBS) the angle-step and count forms have no closed-form bound: they are converted through the kind's own `Linearizes` instance (curvature bound for clothoids, hull flatness for NURBS), and otherwise decline `ID_ToleranceKindUnsupported`.
 
 **Year-1 certificate** (fixes the record's shape now; not year 0):
 `carrier_intake_certified` (every emitted egg satisfies its check —
