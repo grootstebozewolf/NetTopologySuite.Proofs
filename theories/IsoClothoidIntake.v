@@ -41,7 +41,8 @@
    sd ≠ ed. jts_is_example5 is the example5 triple
    (0, 5/1000, 80) only; other JTS triples are the walker's
    ID_JtsClothoidNotYet. Clothoid SPIRALCURVE is start-placed
-   and declines until normalizer 2. This file stays the
+   and declines until normalizer 2, which is ClothoidNorm2
+   (claimId 0006-norm2-state). This file stays the
    inflection-placed ISO form. No FTC. No Admitted.
 
    Author: NetTopologySuite.Proofs contributors
