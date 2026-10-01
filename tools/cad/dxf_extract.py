@@ -113,6 +113,8 @@ THREED_TYPES = {
     "SOLID",
 }
 CIRCULAR_KINDS = {"Arc", "Circle", "BulgePolyline", "Ring"}
+# Spiral uses the clothoid Linearizes bound on these tolerances.
+STEPPED_KINDS = CIRCULAR_KINDS | {"Spiral"}
 GEOMETRY_TYPES = frozenset(
     {"LINE", "LWPOLYLINE", "ARC", "CIRCLE", "ELLIPSE", "SPLINE", "INSERT"}
 )
@@ -348,7 +350,7 @@ def _stamp_tolerance(tolerance: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tolerance_ok(kind: str, tolerance: dict[str, Any]) -> str | None:
-    if tolerance["kind"] in ("angleStep", "segmentCount") and kind not in CIRCULAR_KINDS:
+    if tolerance["kind"] in ("angleStep", "segmentCount") and kind not in STEPPED_KINDS:
         return "ID_ToleranceKindUnsupported"
     return None
 

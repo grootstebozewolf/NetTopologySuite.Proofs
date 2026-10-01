@@ -23,19 +23,19 @@
       "kind": "segmentCount",
       "placement": "invariant",
       "hausdorff": "r*(1-cos(abs(deltaTheta)/(2*n)))",
-      "geometryKinds": ["BulgePolyline", "Arc", "Circle", "Ring"],
+      "geometryKinds": ["BulgePolyline", "Arc", "Circle", "Ring", "Spiral"],
       "declineId": "ID_ToleranceKindUnsupported",
-      "note": "Segment count n is invariant under placement, and a circular kind of placed radius r converts it to the Hausdorff bound r*(1-cos(abs(deltaTheta)/(2*n))) once the sweep is in radians, while every other kind declines as ID_ToleranceKindUnsupported (The CAD carrier record).",
-      "spiralNote": "Spiral converts once the clothoid Linearizes bound kappa_max*h^2/8 lands (lane C1, claimId 0007-clothoid-linearize)."
+      "spiralHausdorff": "kappa_max*(L/n)^2/8",
+      "note": "Segment count n is invariant under placement, and a circular kind of placed radius r converts it to the Hausdorff bound r*(1-cos(abs(deltaTheta)/(2*n))) once the sweep is in radians, while a Spiral converts through the clothoid Linearizes bound kappa_max*(L/n)^2/8 with h = L/n, computed from the placed kappa_max and L (under similarity scale k, curvature scales 1/k and length scales k) (claimId 0007-clothoid-linearize), and every other kind declines as ID_ToleranceKindUnsupported (The CAD carrier record)."
     },
     {
       "kind": "angleStep",
       "placement": "invariant",
       "hausdorff": "r*(1-cos(alpha/2))",
-      "geometryKinds": ["BulgePolyline", "Arc", "Circle", "Ring"],
+      "geometryKinds": ["BulgePolyline", "Arc", "Circle", "Ring", "Spiral"],
       "declineId": "ID_ToleranceKindUnsupported",
-      "note": "Angle step alpha is invariant under placement, and a circular kind of placed radius r converts it to the Hausdorff bound r*(1-cos(alpha/2)) once alpha is in radians, while every other kind declines as ID_ToleranceKindUnsupported (The CAD carrier record).",
-      "spiralNote": "Spiral converts once the clothoid Linearizes bound kappa_max*h^2/8 lands (lane C1, claimId 0007-clothoid-linearize)."
+      "spiralHausdorff": "alpha^2/(8*kappa_max)",
+      "note": "Angle step alpha is invariant under placement, and a circular kind of placed radius r converts it to the Hausdorff bound r*(1-cos(alpha/2)) once alpha is in radians, while a Spiral converts through the clothoid Linearizes bound alpha^2/(8*kappa_max) with h = alpha/kappa_max and n = ceil(L*kappa_max/alpha) at n >= 2 (kappa_max > 0 because k0 != k1), computed from the placed kappa_max and L (under similarity scale k, curvature scales 1/k and length scales k) (claimId 0007-clothoid-linearize), and every other kind declines as ID_ToleranceKindUnsupported (The CAD carrier record)."
     },
     {
       "kind": "sourceDefault",
