@@ -496,3 +496,9 @@ theories/SnyderMercatorSphere.v
 # 3-axiom corpus logarithm: IVT inverse of exp, built like AtanIvt.atan3.
 # claimId ln3-ivt. 3-axiom. No Admitted.
 theories/LnIvt.v
+# lane D
+# W2 off-image local constancy. claimId 0007-curve-ring-wind-local.
+# witness 0007-curve-ring-wind-local. Imports CurveRingWinding.
+# Not a ray-cast. 3-axiom. No Admitted.
+# AreaWindingSign follows this file.
+theories/CurveRingWindingLocal.v
