@@ -1651,7 +1651,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; compound declines gap | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalkerClothoid.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalkerClothoid.v : example5_cc_gap`, `IntakeWalkerClothoid.v : iso_clothoid_chickens_mkclothoid` |
+| `IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5's compound is not C0, so intake declines `ID_CompoundGap`; the atom path still bags `locked_clothoid_egg` | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalkerClothoid.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalkerClothoid.v : example5_cc_gap`, `IntakeWalkerClothoid.v : iso_clothoid_chickens_mkclothoid` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit; `MkClothoid` inhabits | `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : mkclothoid_pair_hit_I_ok` |
 | `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword / ρ parked | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 
