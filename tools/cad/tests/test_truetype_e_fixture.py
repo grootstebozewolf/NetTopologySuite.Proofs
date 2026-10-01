@@ -8,14 +8,15 @@ from fractions import Fraction
 from pathlib import Path
 
 import freetype
+from fontTools.pens.recordingPen import RecordingPen
 from fontTools.ttLib import TTFont
 from jsonschema import Draft202012Validator
 
 import dxf_extract
 from fixtures.gen_truetype_e import JSON_PATH, TTF_PATH, glyph_spans, render
 
-TTF_SHA256 = "4a700442e3ad99aa44455ac927ab1f8fab8c8d791a273a44d0779a447c5e046c"
-JSON_SHA256 = "48bf0d46c34bb513e4cea44c136c32d361c2495dd1bd500e22f8a97cceb4b9d9"
+TTF_SHA256 = "0f7de5d9741a277b29a9054f6cdf46a17790746894e827befa0268ba75e5cb76"
+JSON_SHA256 = "0704bfb1e6d81e3d8658a84f9e66c32505a1dbd366080a959715f7b040f875ec"
 
 SCHEMA = json.loads(dxf_extract.SCHEMA_PATH.read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
@@ -74,6 +75,34 @@ def _freetype_spans(path: Path) -> list[list[tuple[tuple[int, int], tuple[int, i
     return contours
 
 
+def _fonttools_spans(path: Path) -> list[list[tuple[tuple[int, int], tuple[int, int], tuple[int, int]]]]:
+    """Quadratic spans from the glyf, including implied on-curve midpoints."""
+    font = TTFont(path)
+    pen = RecordingPen()
+    font.getGlyphSet()["e"].draw(pen)
+    contours: list[list[tuple[tuple[int, int], tuple[int, int], tuple[int, int]]]] = []
+    current: tuple[int, int] | None = None
+    for op, args in pen.value:
+        if op == "moveTo":
+            contours.append([])
+            point = args[0]
+            current = (int(point[0]), int(point[1]))
+        elif op == "qCurveTo":
+            assert current is not None
+            points = [(int(x), int(y)) for x, y in args]
+            for index in range(len(points) - 1):
+                control = points[index]
+                nxt = points[index + 1]
+                end = nxt if index == len(points) - 2 else ((control[0] + nxt[0]) // 2, (control[1] + nxt[1]) // 2)
+                contours[-1].append((current, control, end))
+                current = end
+        elif op in ("closePath", "endPath"):
+            continue
+        else:
+            raise AssertionError(op)
+    return contours
+
+
 def _shoelace(spans: list[tuple[tuple[int, int], tuple[int, int], tuple[int, int]]]) -> int:
     points = [start for start, _control, _end in spans]
     total = 0
@@ -93,9 +122,16 @@ def test_e_is_nonzero_ring_of_quadratic_nurbs_and_the_hole_winds_opposite() -> N
     assert hole_member["kind"] == "Compound"
 
     expanded = glyph_spans()
-    reference = _freetype_spans(TTF_PATH)
-    assert reference == expanded
-    assert len(reference) == 2
+    freetype_spans = _freetype_spans(TTF_PATH)
+    fonttools_spans = _fonttools_spans(TTF_PATH)
+    assert freetype_spans == fonttools_spans == expanded
+    assert len(freetype_spans) == 2
+    for spans in (freetype_spans, fonttools_spans):
+        outer_area = _shoelace(spans[0])
+        hole_area = _shoelace(spans[1])
+        assert outer_area < 0
+        assert hole_area > 0
+        assert outer_area * hole_area < 0
 
     font = TTFont(TTF_PATH)
     glyf = font["glyf"]["e"]
@@ -104,7 +140,7 @@ def test_e_is_nonzero_ring_of_quadratic_nurbs_and_the_hole_winds_opposite() -> N
 
     for contour, spans, chords in zip(
         (outer_member, hole_member),
-        reference,
+        freetype_spans,
         ring["params"]["contours"],
         strict=True,
     ):
@@ -122,10 +158,8 @@ def test_e_is_nonzero_ring_of_quadratic_nurbs_and_the_hole_winds_opposite() -> N
                 "end": [span[2][0], span[2][1]],
                 "bulge": 0,
             }
-    implied = [span[2] for span in reference[0] + reference[1] if span[2] not in stored]
+    implied = [span[2] for span in freetype_spans[0] + freetype_spans[1] if span[2] not in stored]
     assert implied
-    assert _shoelace(reference[0]) > 0
-    assert _shoelace(reference[1]) < 0
 
 
 def _quad(p0: tuple[Fraction, Fraction], p1: tuple[Fraction, Fraction], p2: tuple[Fraction, Fraction], t: Fraction) -> tuple[Fraction, Fraction]:
@@ -177,6 +211,6 @@ def test_sample_winding_is_nonzero_in_the_ink_and_zero_in_the_counter_and_outsid
     record = json.loads(JSON_PATH.read_text(encoding="utf-8"))
     _ring, outer, hole = record["params"]["members"]
     contours = [_flatten(outer), _flatten(hole)]
-    assert _nonzero_winding(contours, _INK) != 0
+    assert _nonzero_winding(contours, _INK) == -1
     assert _nonzero_winding(contours, _COUNTER) == 0
     assert _nonzero_winding(contours, _OUTSIDE) == 0

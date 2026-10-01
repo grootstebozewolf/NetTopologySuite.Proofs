@@ -5,8 +5,8 @@ on-curve midpoint, and each quadratic span is one single-span unit-weight
 MkNurbs (schema kind Bezier). The ring winding rule is nonzero. FreeType's
 decomposed outline is the reference for those spans.
 
-The outer contour is counterclockwise and the hole is clockwise, so the
-counter is empty under the nonzero rule.
+The outer contour is clockwise and the hole is counterclockwise, in y-up
+font units, so the counter is empty under the nonzero rule.
 """
 
 from __future__ import annotations
@@ -28,21 +28,22 @@ _KNOTS = [0, 0, 0, 1, 1, 1]
 _WEIGHTS = [1, 1, 1]
 
 # (x, y, on_curve). Each contour is closed back to its first on-curve point.
+# TrueType, y-up: the outer contour travels clockwise and the hole counterclockwise.
 _OUTER = [
-    (100, 200, True),
-    (100, 80, False),
-    (400, 80, False),
-    (700, 200, True),
-    (700, 700, False),
     (100, 700, False),
+    (700, 700, False),
+    (700, 200, True),
+    (400, 80, False),
+    (100, 80, False),
+    (100, 200, True),
 ]
 _HOLE = [
-    (250, 300, True),
-    (250, 450, False),
-    (550, 450, False),
-    (550, 300, True),
-    (400, 250, False),
     (250, 250, False),
+    (400, 250, False),
+    (550, 300, True),
+    (550, 450, False),
+    (250, 450, False),
+    (250, 300, True),
 ]
 
 
