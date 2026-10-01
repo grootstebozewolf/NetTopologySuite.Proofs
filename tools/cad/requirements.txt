@@ -1,11 +1,13 @@
 # Dev/test dependencies for tools/cad only. Not a Coq or runtime dependency.
 # ezdxf is MIT and is called as a DXF reader. fontTools is MIT and reads
 # TrueType outlines. freetype-py calls the system FreeType library as a
-# reference oracle. Nothing from those libraries, or from any GPL/LGPL CAD
-# library, is vendored or ported into this repository.
+# reference oracle. ifcopenshell is LGPLv3+ and is a reference oracle for
+# the IFC fixture only. Nothing from those libraries, or from any GPL/LGPL
+# CAD library, is vendored or ported into this repository.
 ezdxf==1.4.4
 fonttools==4.66.1
 freetype-py==2.5.1
+ifcopenshell==0.8.5
 jsonschema==4.26.0
 check-jsonschema==0.38.2
 pytest==8.4.2

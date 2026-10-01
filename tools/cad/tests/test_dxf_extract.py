@@ -141,6 +141,8 @@ def test_extractor_does_not_reverse_contour_orientation() -> None:
             VALIDATOR.validate(row)
             if mode == "lenient":
                 assert row["kind"] == "Ring"
+                assert row["params"]["windingRule"] == "nonzero"
+                assert row["params"]["orientation"] == ["cw" if name == "cw" else "ccw"]
                 segments = row["params"]["contours"][0]
             else:
                 assert row["kind"] == "BulgePolyline"
@@ -168,6 +170,7 @@ def test_closed_polyline_is_ring_only_when_lenient() -> None:
     rings = [r for r in lenient if r["record"] == "entity" and r["kind"] == "Ring"]
     assert len(rings) == 1
     assert rings[0]["params"]["windingRule"] == "nonzero"
+    assert rings[0]["params"]["orientation"] == ["ccw"]
     assert len(rings[0]["params"]["contours"]) == 1
     assert len(rings[0]["params"]["contours"][0]) == 4
     assert not any(r["record"] == "entity" and r["kind"] == "Ring" for r in strict)
@@ -430,6 +433,96 @@ def test_angdir_does_not_rewrite_ellipse_params() -> None:
     assert ccw_body == cw_body
     assert cw["units"]["angdir"] == 1
     assert cw["units"]["angbase"] == pytest.approx(30)
+
+
+def _hatch(style: int):
+    doc = ezdxf.new("R2010")
+    hatch = doc.modelspace().add_hatch()
+    hatch.dxf.hatch_style = style
+    hatch.paths.add_polyline_path([(0, 0, 0), (4, 0, 0), (4, 4, 0), (0, 4, 0)], is_closed=True)
+    # Clockwise hole. Source order is kept.
+    hatch.paths.add_polyline_path([(1, 1, 0), (1, 2, 0), (2, 2, 0), (2, 1, 0)], is_closed=True)
+    return doc
+
+
+def test_hatch_boundary_is_a_ring_and_is_not_flipped() -> None:
+    for style, rule in ((0, "evenodd"), (2, "nonzero")):
+        for mode in ("strict", "lenient"):
+            rows = dxf_extract.extract_document(_hatch(style), mode=mode, file_id="fixture")
+            assert len(rows) == 1
+            row = rows[0]
+            VALIDATOR.validate(row)
+            assert row["kind"] == "Ring"
+            assert row["params"]["windingRule"] == rule
+            assert row["params"]["orientation"] == ["ccw", "cw"]
+            outer, hole = row["params"]["contours"]
+            assert [tuple(seg["start"]) for seg in outer] == [(0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)]
+            assert [tuple(seg["start"]) for seg in hole] == [(1.0, 1.0), (1.0, 2.0), (2.0, 2.0), (2.0, 1.0)]
+
+
+def test_hatch_arc_edge_keeps_clockwise_bulge() -> None:
+    doc = ezdxf.new("R2010")
+    hatch = doc.modelspace().add_hatch()
+    hatch.dxf.hatch_style = 0
+    edge = hatch.paths.add_edge_path()
+    edge.add_arc((0, 0), radius=1, start_angle=0, end_angle=180, ccw=False)
+    edge.add_line((-1, 0), (0, 1))
+    edge.add_line((0, 1), (1, 0))
+    rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+    assert len(rows) == 1
+    row = rows[0]
+    VALIDATOR.validate(row)
+    assert row["kind"] == "Ring"
+    first = row["params"]["contours"][0][0]
+    assert first["kind"] == "Arc"
+    assert first["start"] == pytest.approx([1.0, 0.0])
+    assert first["end"] == pytest.approx([-1.0, 0.0])
+    assert first["bulge"] == pytest.approx(-1.0)
+    assert first["bulge"] < 0
+
+
+def test_hatch_without_a_boundary_still_declines() -> None:
+    doc = ezdxf.new("R2010")
+    doc.modelspace().add_hatch()
+    outermost = ezdxf.new("R2010")
+    hatch = outermost.modelspace().add_hatch()
+    hatch.dxf.hatch_style = 1
+    hatch.paths.add_polyline_path([(0, 0), (1, 0), (1, 1), (0, 1)], is_closed=True)
+    spline = ezdxf.new("R2010")
+    edged = spline.modelspace().add_hatch()
+    path = edged.paths.add_edge_path()
+    path.add_ellipse(center=(0, 0), major_axis=(1, 0), ratio=0.5)
+    path.add_line((1, 0), (0, 0))
+    path.add_line((0, 0), (0, 1))
+    for drawing in (doc, outermost, spline):
+        rows = dxf_extract.extract_document(drawing, mode="lenient", file_id="fixture")
+        assert len(rows) == 1
+        assert rows[0]["record"] == "decline"
+        assert rows[0]["id"] == "ID_HatchRegion"
+        VALIDATOR.validate(rows[0])
+
+
+def test_polyline_chain_is_a_compound_in_source_order() -> None:
+    doc = ezdxf.new("R2010")
+    doc.modelspace().add_polyline2d([(0, 0, 0), (0, 1, -0.5), (1, 1, 0)], format="xyb", close=True)
+    doc.modelspace().add_polyline3d([(0, 0, 0), (1, 0, 1), (0, 1, 2)])
+    rows = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+    assert len(rows) == 2
+    chain, declined = rows
+    VALIDATOR.validate(chain)
+    VALIDATOR.validate(declined)
+    assert chain["kind"] == "Compound"
+    assert declined["id"] == "ID_ThreeDNotYet"
+    members = chain["params"]["members"]
+    assert [member["kind"] for member in members] == ["Chord", "BulgePolyline", "Chord"]
+    assert members[0]["params"]["start"] == [0.0, 0.0]
+    assert members[0]["params"]["end"] == [0.0, 1.0]
+    bulge = members[1]["params"]["segments"][0]
+    assert bulge["start"] == [0.0, 1.0]
+    assert bulge["end"] == [1.0, 1.0]
+    assert bulge["bulge"] == pytest.approx(-0.5)
+    assert members[2]["params"]["start"] == [1.0, 1.0]
+    assert members[2]["params"]["end"] == [0.0, 0.0]
 
 
 def test_arc_end_before_start_is_kept_raw() -> None:

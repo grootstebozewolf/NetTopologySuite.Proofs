@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 import dxf_extract
+from fixtures.gen_ifc_clothoid import json_bytes
 from tests.test_dxf_extract import fixture_cases
 
 
@@ -30,7 +31,8 @@ def write_records(dest: Path) -> int:
                 encoding="utf-8",
             )
             count += 1
-    return count
+    (dest / "ifc-clothoid.json").write_bytes(json_bytes())
+    return count + 1
 
 
 def main(argv: list[str]) -> int:

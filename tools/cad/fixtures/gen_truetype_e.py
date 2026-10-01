@@ -174,8 +174,16 @@ def _bezier(span: tuple[tuple[int, int], tuple[int, int], tuple[int, int]]) -> d
 
 def _ring(contours: list[list[tuple[tuple[int, int], tuple[int, int], tuple[int, int]]]]) -> dict:
     rings = []
+    orientation = []
     for spans in contours:
         segments = []
+        area = 0
+        points = [start for start, _control, _end in spans]
+        for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]):
+            area += x1 * y2 - x2 * y1
+        if area == 0:
+            raise ValueError("contour area is zero")
+        orientation.append("ccw" if area > 0 else "cw")
         for start, _control, end in spans:
             segments.append(
                 {
@@ -186,7 +194,7 @@ def _ring(contours: list[list[tuple[tuple[int, int], tuple[int, int], tuple[int,
                 }
             )
         rings.append(segments)
-    return _entity("Ring", {"windingRule": "nonzero", "contours": rings})
+    return _entity("Ring", {"windingRule": "nonzero", "contours": rings, "orientation": orientation})
 
 
 def carrier_record() -> dict:
