@@ -623,6 +623,77 @@ def selfcheck_relate_token() -> None:
         hit("FAIL", "REL/matrix_all_unknown", str(e))
 
 
+# Proved tri_de9im cells on the TIN fixtures (TrianglePairDe9imQ.v).
+# `?` is uncomputed and does not constrain GEOS.  EE is Dim2.
+TRI_DE9IM_Q_FIXTURES = (
+    (
+        "strip",
+        "POLYGON ((1 0, 0 1, 0 0, 1 0))",
+        "POLYGON ((0 1, 1 0, 1 1, 0 1))",
+        "F????1??2",
+    ),
+    (
+        "overlap",
+        "POLYGON ((0 0, 1 0, 0 1, 0 0))",
+        "POLYGON ((0.25 0.25, 1.25 0.25, 0.25 1.25, 0.25 0.25))",
+        "2???????2",
+    ),
+    (
+        "tjunction",
+        "POLYGON ((0 0, 2 0, 1 2, 0 0))",
+        "POLYGON ((1 0, 0 -1, 2 -1, 1 0))",
+        "????0???2",
+    ),
+    (
+        "fan_opposite",
+        "POLYGON ((0 0, 1 0, 0.5 0.5, 0 0))",
+        "POLYGON ((1 1, 0 1, 0.5 0.5, 1 1))",
+        "F????0??2",
+    ),
+)
+
+
+def pinned_cells_agree(pin: str, got: str) -> bool:
+    """A `?` pin cell is uncomputed and does not constrain GEOS."""
+    if len(pin) != 9 or len(got) != 9:
+        return False
+    return all(p == "?" or p == g for p, g in zip(pin, got))
+
+
+def hunt_tri_de9im_q_oracle() -> None:
+    """Oracle pin-table lookup.  Does not call geosop."""
+    print("=== TRI_DE9IM_FIXTURE_PINS_Q (oracle lookup) ===")
+    if not os.path.isfile(ORACLE):
+        hit("WARN", "TDQ/oracle_missing", f"ORACLE not a file: {ORACLE}")
+        return
+    for name, _wa, _wb, pin in TRI_DE9IM_Q_FIXTURES:
+        try:
+            out = oracle(f"TRI_DE9IM_FIXTURE_PINS_Q\n{name}\n").strip()
+        except Exception as e:
+            hit("FAIL", f"TDQ/{name}_oracle", str(e))
+            continue
+        if out == pin:
+            hit("OK", f"TDQ/{name}_oracle", out)
+        else:
+            hit("FAIL", f"TDQ/{name}_oracle", f"{out} exp {pin}")
+
+
+def hunt_tri_de9im_q() -> None:
+    """GEOS relate against the proved cells.  `?` is not a mismatch."""
+    print("=== TRI_DE9IM_FIXTURE_PINS_Q (GEOS relate vs pinned cells) ===")
+    for name, wa, wb, pin in TRI_DE9IM_Q_FIXTURES:
+        try:
+            got = geosop("-a", wa, "-b", wb, "relate").strip().split()[0]
+        except Exception as e:
+            hit("FAIL", f"TDQ/{name}", str(e))
+            continue
+        if pinned_cells_agree(pin, got):
+            hit("OK", f"TDQ/{name}", f"GEOS {got} pin {pin}")
+        else:
+            hit("BUG", f"TDQ/{name}", f"GEOS {got} pin {pin}")
+    hunt_tri_de9im_q_oracle()
+
+
 def hunt_relate_matrix() -> None:
     """Drive classifier fill keys.  Does not remint the pins.  No GEOS compare."""
     print("=== RELATE_MATRIX golden vectors (oracle catalog; #575 / 522-f) ===")
@@ -660,6 +731,7 @@ def main() -> int:
     except Exception as e:
         print(f"FATAL: cannot run geosop: {e}", file=sys.stderr)
         hunt_relate_matrix()
+        hunt_tri_de9im_q_oracle()
         print()
         print(f"SUMMARY\tok={ok}\twarn={warn}\tbug={bug}\tfail={fail}")
         return 2
@@ -674,6 +746,7 @@ def main() -> int:
     hunt_split_1497()
     hunt_multipoint_ms()
     hunt_relate_matrix()
+    hunt_tri_de9im_q()
     print()
     print(f"SUMMARY\tok={ok}\twarn={warn}\tbug={bug}\tfail={fail}")
     return 1 if (bug + fail) > 0 else 0

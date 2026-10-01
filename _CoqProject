@@ -421,6 +421,9 @@ theories/TrianglePairTin.v
 theories/TrianglePairTinSurface.v
 # TIN × triangle. claimId tri-de9im-t5. 3-axiom. No Admitted.
 theories/TrianglePairTinRelate.v
+# Pinned tri_de9im fixture table. claimId tri-de9im-q. Not a Q clip.
+# 3-axiom. No Admitted.
+theories/TrianglePairDe9imQ.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v

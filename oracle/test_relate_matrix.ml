@@ -135,4 +135,9 @@ let () =
   assert_pred "cap_matrix_rect_contains_point" "Contains" true;
   assert_pred "cap_matrix_rect_touches_boundary" "Touches" true;
 
+  assert_eq "tri strip" (lookup_tri_de9im_q "strip") "F????1??2";
+  assert_eq "tri overlap" (lookup_tri_de9im_q "overlap") "2???????2";
+  assert_eq "tri tjunction" (lookup_tri_de9im_q "tjunction") "????0???2";
+  assert_eq "tri fan" (lookup_tri_de9im_q "fan_opposite") "F????0??2";
+
   print_endline "OK: relate_matrix catalog + predicate pins"
