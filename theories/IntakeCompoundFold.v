@@ -20,9 +20,9 @@
    member, and an ISO tail whose window starts at the norm2
    exit bags, with C0, G1, and G2 at both joints.
    Each clothoid member carries its own M bit: ISO dim_has_m,
-   JTS none, a spiral Some iff sc_m is Some. A later member
-   whose bit disagrees declines ID_MixedMeasure. A member's
-   own pair still declines ID_MissingMeasure or
+   JTS Some false, a spiral Some iff sc_m is Some. A later
+   member whose bit disagrees declines ID_MixedMeasure. A
+   member's own pair still declines ID_MissingMeasure or
    ID_UnexpectedMeasure. Lines and arcs carry no bit.
    claimId: none.
    No Admitted. No classic. No MVT / Rolle / RiemannInt.
