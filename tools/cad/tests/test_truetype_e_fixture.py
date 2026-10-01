@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from fractions import Fraction
 from pathlib import Path
 
 import freetype
@@ -19,6 +20,11 @@ JSON_SHA256 = "48bf0d46c34bb513e4cea44c136c32d361c2495dd1bd500e22f8a97cceb4b9d9"
 SCHEMA = json.loads(dxf_extract.SCHEMA_PATH.read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
 _LOAD = freetype.FT_LOAD_NO_SCALE | freetype.FT_LOAD_NO_HINTING | freetype.FT_LOAD_NO_BITMAP
+# Fixed rational samples of each quadratic. The same probes classify at 4, 8, 16, and 32.
+_FLATTEN_STEPS = 8
+_INK = (400, 500)
+_COUNTER = (400, 350)
+_OUTSIDE = (0, 0)
 
 
 def test_font_requirements_are_exact_pins() -> None:
@@ -120,3 +126,57 @@ def test_e_is_nonzero_ring_of_quadratic_nurbs_and_the_hole_winds_opposite() -> N
     assert implied
     assert _shoelace(reference[0]) > 0
     assert _shoelace(reference[1]) < 0
+
+
+def _quad(p0: tuple[Fraction, Fraction], p1: tuple[Fraction, Fraction], p2: tuple[Fraction, Fraction], t: Fraction) -> tuple[Fraction, Fraction]:
+    u = 1 - t
+    return (
+        u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0],
+        u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1],
+    )
+
+
+def _flatten(member: dict) -> list[tuple[Fraction, Fraction]]:
+    """Polygon of one contour. The closing vertex is the first sample, not a duplicate."""
+    polygon: list[tuple[Fraction, Fraction]] = []
+    for bezier in member["params"]["members"]:
+        raw = bezier["params"]["controlPoints"]
+        assert len(raw) == 3
+        points = [(Fraction(x), Fraction(y)) for x, y in raw]
+        for step in range(_FLATTEN_STEPS):
+            polygon.append(_quad(points[0], points[1], points[2], Fraction(step, _FLATTEN_STEPS)))
+    return polygon
+
+
+def _on_segment(a: tuple[Fraction, Fraction], b: tuple[Fraction, Fraction], p: tuple[Fraction, Fraction]) -> bool:
+    cross = (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+    if cross != 0:
+        return False
+    return min(a[0], b[0]) <= p[0] <= max(a[0], b[0]) and min(a[1], b[1]) <= p[1] <= max(a[1], b[1])
+
+
+def _nonzero_winding(contours: list[list[tuple[Fraction, Fraction]]], point: tuple[int, int]) -> int:
+    """Dan Sunday winding. A probe on a flattened edge is rejected."""
+    probe = (Fraction(point[0]), Fraction(point[1]))
+    total = 0
+    for polygon in contours:
+        count = len(polygon)
+        for index in range(count):
+            start = polygon[index]
+            end = polygon[(index + 1) % count]
+            assert not _on_segment(start, end, probe)
+            cross = (end[0] - start[0]) * (probe[1] - start[1]) - (end[1] - start[1]) * (probe[0] - start[0])
+            if start[1] <= probe[1] < end[1] and cross > 0:
+                total += 1
+            elif start[1] > probe[1] >= end[1] and cross < 0:
+                total -= 1
+    return total
+
+
+def test_sample_winding_is_nonzero_in_the_ink_and_zero_in_the_counter_and_outside() -> None:
+    record = json.loads(JSON_PATH.read_text(encoding="utf-8"))
+    _ring, outer, hole = record["params"]["members"]
+    contours = [_flatten(outer), _flatten(hole)]
+    assert _nonzero_winding(contours, _INK) != 0
+    assert _nonzero_winding(contours, _COUNTER) == 0
+    assert _nonzero_winding(contours, _OUTSIDE) == 0

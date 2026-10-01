@@ -521,7 +521,7 @@
               "params": {
                 "type": "object",
                 "additionalProperties": false,
-                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Overlap of nonzero contours is not detected in year 0.",
+                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Overlap of nonzero contours is not detected in year 0. TrueType outer contours are clockwise in y-up coordinates, while GIS exterior rings are counter-clockwise: the carrier records the source orientation and intake reverses it, so the extractor must not silently flip it.",
                 "required": ["windingRule", "contours"],
                 "properties": {
                   "windingRule": { "enum": ["nonzero", "evenodd"] },
