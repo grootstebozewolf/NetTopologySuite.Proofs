@@ -34,7 +34,7 @@
       ]
     },
     "declineId": {
-      "description": "Named refusals. ID_NonzeroOverlapNotYet is reserved: year 0 does not detect contour overlap, so it is not emitted. ID_AngleConventionUnknown is for a non-DXF source whose angle convention cannot be recorded. DXF never emits it: $ANGDIR and $ANGBASE are display provenance and are not a decline.",
+      "description": "Named refusals. ID_NonzeroOverlapNotYet is reserved: year 0 does not detect contour overlap, so it is not emitted. ID_AngleConventionUnknown stays for other formats. DXF never emits it, because $ANGDIR and $ANGBASE are provenance only and stored angles stay degrees CCW from the OCS x-axis.",
       "enum": [
         "ID_NotSimilarityPlacement",
         "ID_TiltedPlacement",
