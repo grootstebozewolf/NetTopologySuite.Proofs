@@ -119,7 +119,7 @@ Lemma example5_cc_gap :
 Proof.
   unfold intake_map, example5_cc_both_clothoid_cst, intake_map_members,
     example5_jts_cst, p00.
-  apply example5_compound_gap.
+  apply example5_cc_fold_declines.
 Qed.
 
 Lemma example5_cc_not_iso_decline :

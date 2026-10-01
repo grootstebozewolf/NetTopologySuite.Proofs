@@ -13,8 +13,10 @@
    example5_via_fold is the evaluation equality of fold_clothoid
    on law (example5_jts_k0, example5_jts_k1, example5_jts_L)
    from the example5 line exit. That egg is the norm2 egg of
-   the example5 law. The ISO tail of the compound does not
-   C0-join it. claimId: none.
+   the example5 law. It is not locked_clothoid_egg shifted by
+   (100,0): the windows are 80 and 1. example5_compound_gap is
+   that fold's exit missing the locked start. The three-member
+   compound still declines ID_CompoundGap. claimId: none.
    No Admitted. No classic. No MVT / Rolle / RiemannInt.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
@@ -391,10 +393,106 @@ Proof.
   rewrite Hms, He. unfold build_clothoid, cloth_exit. cbn. reflexivity.
 Qed.
 
+(* The JTS fold of the example5 law exits off the locked egg's
+   start. locked_clothoid_egg is the ISO atom; this fold is not. *)
+Lemma example5_compound_gap : forall e ms,
+  fold_clothoid IntakeLenient (Some example5_line)
+    example5_jts_k0 example5_jts_k1 example5_jts_L = inr (e, ms) ->
+  mst_end ms <> cloth_eval locked_clothoid_egg 0.
+Proof.
+  intros e ms H Heq.
+  rewrite (example5_fold_exit e ms H) in Heq.
+  rewrite locked_clothoid_at_0 in Heq.
+  destruct example5_line_unit as [Hu [Hp _]].
+  unfold example5_line in Hu, Hp, H.
+  assert (Hpx : px (cloth_eval e 1) <> 0).
+  { apply example5_end_misses_origin.
+    - rewrite (fold_c0 IntakeLenient (line_exit (mkPoint 0 0) (mkPoint 100 0))
+                 example5_jts_k0 example5_jts_k1 example5_jts_L e ms Hu H).
+      exact Hp.
+    - apply (proj2 (fold_length IntakeLenient
+                     (line_exit (mkPoint 0 0) (mkPoint 100 0))
+                     example5_jts_k0 example5_jts_k1 example5_jts_L
+                     e ms Hu H)). }
+  apply Hpx. rewrite Heq. reflexivity.
+Qed.
+
+(* example5_two_spellings (pointwise eval of the JTS norm2 egg equals
+   the locked egg plus (100,0)) is false. clothoid_state_unique does
+   not apply: the windows and the end curvatures differ. The ISO atom
+   is locked_clothoid_egg; the JTS member is example5_egg. *)
+Lemma example5_members_differ :
+  cloth_A locked_clothoid_egg = 1 /\
+  cloth_ed locked_clothoid_egg - cloth_sd locked_clothoid_egg = 1 /\
+  cloth_eval locked_clothoid_egg 0 = mkPoint 0 0 /\
+  cloth_curv locked_clothoid_egg 1 = 1 /\
+  cloth_A example5_egg * cloth_A example5_egg = 16000 /\
+  cloth_ed example5_egg - cloth_sd example5_egg = 80 /\
+  cloth_eval example5_egg 0 = mkPoint 100 0 /\
+  cloth_curv example5_egg 1 = 5 / 1000 /\
+  cloth_ed example5_egg - cloth_sd example5_egg <>
+    cloth_ed locked_clothoid_egg - cloth_sd locked_clothoid_egg /\
+  cloth_curv example5_egg 1 <> cloth_curv locked_clothoid_egg 1.
+Proof.
+  assert (HlA : cloth_A locked_clothoid_egg = 1) by reflexivity.
+  assert (HlW : cloth_ed locked_clothoid_egg - cloth_sd locked_clothoid_egg = 1).
+  { unfold locked_clothoid_egg. cbn. ring. }
+  assert (Hl0 : cloth_eval locked_clothoid_egg 0 = mkPoint 0 0).
+  { exact locked_clothoid_at_0. }
+  assert (Hlk : cloth_curv locked_clothoid_egg 1 = 1).
+  { unfold cloth_curv, cloth_kappa.
+    assert (Hs : cloth_s locked_clothoid_egg 1 = 1).
+    { unfold cloth_s, locked_clothoid_egg. cbn. ring. }
+    rewrite Hs. unfold locked_clothoid_egg.
+    rewrite (east_sigma (mkPoint 0 0)).
+    change (cloth_A (mk_cloth (place_east (mkPoint 0 0)) 1 0 1 None None))
+      with 1.
+    unfold Rdiv. field. }
+  assert (HjA : cloth_A example5_egg * cloth_A example5_egg = 16000).
+  { unfold example5_egg, cloth_A, norm2, mk_cloth.
+    cbn [cloth_A].
+    assert (HA : law_A example5_law * law_A example5_law = law_A2 example5_law).
+    { apply law_A_sq.
+      - unfold example5_law, example5_jts_L. cbn. lra.
+      - unfold example5_law, example5_jts_k0, example5_jts_k1. cbn. lra. }
+    rewrite HA. unfold example5_law, example5_jts_k0, example5_jts_k1,
+      example5_jts_L. exact example5_A2. }
+  assert (HjW : cloth_ed example5_egg - cloth_sd example5_egg = 80).
+  { unfold example5_egg, norm2, mk_cloth. cbn [cloth_ed cloth_sd].
+    unfold example5_law. rewrite law_ed_sd.
+    - unfold example5_jts_L. reflexivity.
+    - cbn. unfold example5_jts_k0, example5_jts_k1. intro E. lra. }
+  assert (Hj0 : cloth_eval example5_egg 0 = mkPoint 100 0).
+  { destruct example5_line_unit as [Hu [Hp _]].
+    unfold example5_egg.
+    rewrite (norm2_start (pred_state example5_line example5_jts_k0)
+                         example5_law None None Hu).
+    unfold pred_state, example5_line. cbn [st_pos]. exact Hp. }
+  assert (Hjk : cloth_curv example5_egg 1 = 5 / 1000).
+  { destruct example5_line_unit as [Hu _].
+    assert (HL : 0 < sl_len (mkLaw example5_jts_k0 example5_jts_k1
+                               example5_jts_L)).
+    { unfold example5_jts_L. cbn. lra. }
+    assert (Hne : sl_k0 (mkLaw example5_jts_k0 example5_jts_k1
+                           example5_jts_L) <>
+                  sl_k1 (mkLaw example5_jts_k0 example5_jts_k1
+                           example5_jts_L)).
+    { cbn. unfold example5_jts_k0, example5_jts_k1. intro E. lra. }
+    unfold example5_egg, example5_law.
+    rewrite (proj2 (norm2_curv
+              (pred_state example5_line example5_jts_k0)
+              (mkLaw example5_jts_k0 example5_jts_k1 example5_jts_L)
+              None None HL Hne Hu)).
+    unfold example5_jts_k1. reflexivity. }
+  repeat split; try assumption.
+  - rewrite HjW, HlW. lra.
+  - rewrite Hjk, Hlk. lra.
+Qed.
+
 (* The line joins the JTS fold of the example5 law. The ISO egg
    starts at the origin, and that fold's end is not the origin, so
    the three-member compound declines ID_CompoundGap. *)
-Lemma example5_compound_gap :
+Lemma example5_cc_fold_declines :
   forall s map_line map_quarter map_atom bag append,
   intake_cc_fold IntakeLenient s map_line map_quarter map_atom bag append
     [TLineString [mkPoint 0 0; mkPoint 100 0];
@@ -435,6 +533,37 @@ Proof.
     - rewrite Hend. cbn. exact Hmiss. }
   unfold intake_cc_fold. rewrite Hline. cbn [cc_go].
   rewrite Hjts. cbn [cc_go]. rewrite Hiso. reflexivity.
+Qed.
+
+(* Fixture. The example5 line followed by its JTS clothoid is a bag.
+   The three-member compound adds the locked ISO atom and declines. *)
+Lemma example5_line_jts_bags :
+  forall s map_line map_quarter map_atom bag append,
+  exists e,
+    intake_cc_fold IntakeLenient s map_line map_quarter map_atom bag append
+      [TLineString [mkPoint 0 0; mkPoint 100 0];
+       TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L] =
+      IntakeBag (append s (map_line s [mkPoint 0 0; mkPoint 100 0]) (bag s e)).
+Proof.
+  intros s map_line map_quarter map_atom bag append.
+  destruct (example5_fold IntakeLenient) as [e [ms [Hfold [Hc0 _]]]].
+  exists e.
+  assert (Hline :
+    @cc_step IntakeLenient s map_line map_quarter map_atom bag
+      None (TLineString [mkPoint 0 0; mkPoint 100 0]) =
+    inr (map_line s [mkPoint 0 0; mkPoint 100 0],
+         line_exit (mkPoint 0 0) (mkPoint 100 0))).
+  { reflexivity. }
+  assert (Hjts :
+    @cc_step IntakeLenient s map_line map_quarter map_atom bag
+      (Some (line_exit (mkPoint 0 0) (mkPoint 100 0)))
+      (TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L) =
+    inr (bag s e, ms)).
+  { unfold cc_step. rewrite Hfold. rewrite Hc0.
+    rewrite check_c0_at_end by (symmetry; apply line_exit_end).
+    reflexivity. }
+  unfold intake_cc_fold. rewrite Hline. cbn [cc_go].
+  rewrite Hjts. cbn [cc_go]. reflexivity.
 Qed.
 
 (* Fixture. A two-arc CIRCULARSTRING followed by a LINESTRING that
@@ -510,4 +639,7 @@ Print Assumptions fixture_last_unit.
 Print Assumptions locked_clothoid_at_0.
 Print Assumptions example5_fold_exit.
 Print Assumptions example5_compound_gap.
+Print Assumptions example5_members_differ.
+Print Assumptions example5_cc_fold_declines.
+Print Assumptions example5_line_jts_bags.
 Print Assumptions fixture_multi_arc_cs_join.
