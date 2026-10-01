@@ -867,8 +867,34 @@ Qed.
 
 
 Print Assumptions vset_step_grows.
+Print Assumptions vmem_spec.
+Print Assumptions hit_not_decline.
+Print Assumptions decline_swap.
+Print Assumptions hit_in_windows.
+Print Assumptions chord_window_const.
+Print Assumptions chord_point_nondeg.
+Print Assumptions no_decline_scope.
+Print Assumptions split_parent_chord.
+Print Assumptions split_circ_child_open.
+Print Assumptions progress_scope_ready.
+Print Assumptions wf_egg_class.
+Print Assumptions pair_share_nondecline.
+Print Assumptions pending_not_vmem_hit.
+Print Assumptions keep_nonhit.
+Print Assumptions circ_overlap_vertex.
+Print Assumptions pending_nonhit_step.
 Print Assumptions target_step_invariant.
+Print Assumptions has_adm_ordered.
+Print Assumptions pick_bag_lawful.
+Print Assumptions scan_j_down_spec.
+Print Assumptions scan_i_down_spec.
+Print Assumptions scan_j_down_nil.
+Print Assumptions scan_i_down_nil.
+Print Assumptions pick_rev_lawful.
+Print Assumptions bag_run_stopped_id.
+Print Assumptions bag_run_plus.
+Print Assumptions run_after_step.
+Print Assumptions run_vmem_target_le.
+Print Assumptions run_vmem_target.
 Print Assumptions run_vset_determined.
 Print Assumptions cook_loop_rho_holds.
-Print Assumptions pick_bag_lawful.
-Print Assumptions pick_rev_lawful.

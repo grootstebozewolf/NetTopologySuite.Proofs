@@ -416,6 +416,45 @@ Proof.
           pick_bag_lawful pick_rev_lawful x3_inv x3_no_decline).
 Qed.
 
+Print Assumptions x3_wf.
+Print Assumptions x3_wfb.
+Print Assumptions x3_cross_AB.
+Print Assumptions x3_cross_BC.
+Print Assumptions x3_not_same_AB.
+Print Assumptions x3_not_same_BC.
+Print Assumptions x3_canon_AB.
+Print Assumptions x3_canon_BC.
+Print Assumptions x3_ll_AB.
+Print Assumptions x3_ll_BC.
+Print Assumptions x3_img_A_AB.
+Print Assumptions x3_img_B_AB.
+Print Assumptions x3_img_B_BC.
+Print Assumptions x3_img_C_BC.
+Print Assumptions x3_not_vert_A_AB.
+Print Assumptions x3_not_vert_B_BC.
+Print Assumptions x3_ov_AB.
+Print Assumptions x3_ov_BC.
+Print Assumptions x3_keep_AB.
+Print Assumptions x3_keep_BC.
+Print Assumptions x3_counted_AB.
+Print Assumptions x3_counted_BC.
+Print Assumptions x3_dd_A.
+Print Assumptions x3_dd_B.
+Print Assumptions x3_dd_C.
+Print Assumptions x3_cook_A_AB.
+Print Assumptions x3_cook_B_AB.
+Print Assumptions x3_cook_B_BC.
+Print Assumptions x3_cook_C_BC.
+Print Assumptions x3_hit_AB.
+Print Assumptions x3_hit_BC.
+Print Assumptions x3_least_AB.
+Print Assumptions x3_least_BC.
+Print Assumptions x3_sup_AB.
+Print Assumptions x3_sup_BC.
+Print Assumptions x3_pok_AB.
+Print Assumptions x3_pok_BC.
 Print Assumptions x3_pick_bag_first.
 Print Assumptions x3_rev_first.
+Print Assumptions x3_inv.
+Print Assumptions x3_no_decline.
 Print Assumptions x3_selectors_agree.
