@@ -224,6 +224,7 @@ cad-dxf:
 	out=$$(mktemp -d); \
 	python3 tools/cad/export_fixture_json.py "$$out"; \
 	python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json "$$out"/*.json; \
+	python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json tools/cad/fixtures/truetype_e.json; \
 	python3 -m check_jsonschema --schemafile tools/cad/tolerance.schema.json tools/cad/tolerance.json
 
 # ci-pr — the fast local PR pre-flight: guardrails + the Stdlib-only

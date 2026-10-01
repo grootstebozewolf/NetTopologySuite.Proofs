@@ -69,6 +69,9 @@ jobs:
           cache: pip
           cache-dependency-path: tools/cad/requirements.txt
 
+      - name: Install FreeType
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libfreetype6
+
       - name: Install tools/cad requirements
         run: pip install -r tools/cad/requirements.txt
 
@@ -98,6 +101,7 @@ jobs:
           out="${RUNNER_TEMP}/cad-records"
           python3 tools/cad/export_fixture_json.py "$out"
           python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json "$out"/*.json
+          python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json tools/cad/fixtures/truetype_e.json
           python3 -m check_jsonschema --schemafile tools/cad/tolerance.schema.json tools/cad/tolerance.json
           python3 -m check_jsonschema --schemafile tools/cad/survey/survey.schema.json tools/cad/survey/dxf.json tools/cad/survey/dgn.json tools/cad/survey/font.json
 

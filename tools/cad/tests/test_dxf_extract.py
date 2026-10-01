@@ -126,6 +126,35 @@ def test_mixed_bulge_polyline_keeps_source_bulges() -> None:
     assert [seg["kind"] for seg in poly["params"]["segments"]] == ["Chord", "Arc", "Arc", "Arc"]
 
 
+def test_extractor_does_not_reverse_contour_orientation() -> None:
+    squares = {
+        "cw": [(0, 0), (0, 1), (1, 1), (1, 0)],
+        "ccw": [(0, 0), (1, 0), (1, 1), (0, 1)],
+    }
+    for name, points in squares.items():
+        doc = ezdxf.new("R2010")
+        doc.modelspace().add_lwpolyline(points, close=True)
+        for mode in ("strict", "lenient"):
+            rows = dxf_extract.extract_document(doc, mode=mode, file_id="fixture")
+            assert len(rows) == 1
+            row = rows[0]
+            VALIDATOR.validate(row)
+            if mode == "lenient":
+                assert row["kind"] == "Ring"
+                segments = row["params"]["contours"][0]
+            else:
+                assert row["kind"] == "BulgePolyline"
+                assert row["params"]["closed"] is True
+                segments = row["params"]["segments"]
+            assert [tuple(seg["start"]) for seg in segments] == [(float(x), float(y)) for x, y in points]
+            area = 0.0
+            for seg in segments:
+                x1, y1 = seg["start"]
+                x2, y2 = seg["end"]
+                area += x1 * y2 - x2 * y1
+            assert area < 0 if name == "cw" else area > 0
+
+
 def test_closed_polyline_is_ring_only_when_lenient() -> None:
     strict = _rows("strict")
     lenient = _rows("lenient")
