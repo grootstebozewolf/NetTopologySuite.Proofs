@@ -43,19 +43,7 @@ Definition span_of_angle_fail (f : AngleFail) : SpanDecline :=
   | _ => ID_SpanOther (angle_fail_reason f)
   end.
 
-(* 2n+1 points, n windows. Recurse on the structural tail. *)
-Fixpoint circ_windows_from (a : Point) (pts : list Point) {struct pts}
-  : list (Point * Point * Point) :=
-  match pts with
-  | m :: b :: rest => (a, m, b) :: circ_windows_from b rest
-  | _ => []
-  end.
-
-Definition circ_windows (pts : list Point) : list (Point * Point * Point) :=
-  match pts with
-  | a :: rest => circ_windows_from a rest
-  | [] => []
-  end.
+(* circ_windows / circ_windows_from live in IntakeCompoundFold. *)
 
 Definition map_window (s : Sheet) (sl : CircSlice)
   (a m b : Point) (slot : CircSpanSlot) : SpanResult :=

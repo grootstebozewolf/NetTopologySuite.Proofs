@@ -46,7 +46,7 @@
    Similarity frame or a named Decline. The locked fixture's
    fields map to locked_clothoid_egg (eval-level). JTS
    example5 (0, 5/1000, 80) is that bag; L <= 0 and other
-   triples decline by name. example5 bags both.
+   triples decline by name. The compound computes the fold.
    ID_IsoClothoid is not the well-formed answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
 
@@ -337,14 +337,6 @@ Definition map_jts_clothoid (s : Sheet) (k0 k1 len : R) : IntakeResult :=
       IntakeDecline (intake_decline_of (CD_JtsTripleNotYet k0 k1 len))
   end.
 
-Definition map_cc_example5 (s : Sheet) : ShcBag :=
-  append_bags s
-    (append_bags s
-       (mkShcBag s [0%nat; 1%nat] [p00; mkPoint 100 0]
-          [mkChicken 0%nat 1%nat (MkChord (mkChordEgg p00 (mkPoint 100 0)))])
-       (clothoid_bag s locked_clothoid_egg))
-    (clothoid_bag s locked_clothoid_egg).
-
 Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
   match t with
   | TPoint p => IntakeBag (map_point s p)
@@ -370,7 +362,7 @@ Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
 (* Compounds dispatch. The atom path, including the JTS singleton, stays. *)
 Definition intake_map_members (s : Sheet) (ms : list TaggedCst) : IntakeResult :=
   intake_cc_fold IntakeLenient s map_ls map_cs_quarter intake_map_atom
-    clothoid_bag append_bags map_cc_example5 ms.
+    clothoid_bag append_bags ms.
 
 Definition intake_map (s : Sheet) (t : TaggedCst) : IntakeResult :=
   match t with
@@ -389,7 +381,7 @@ Definition intake_map_mode (mode : IntakeMode) (s : Sheet) (t : TaggedCst)
       match t with
       | TCompoundCurve ms =>
           intake_cc_fold IntakeStrict s map_ls map_cs_quarter intake_map_atom
-            clothoid_bag append_bags map_cc_example5 ms
+            clothoid_bag append_bags ms
       | TCircularString _ pts =>
           match pts with
           | a :: _ :: c :: [] =>
@@ -604,7 +596,7 @@ Lemma locked_cc_maps :
     IntakeBag (map_cc_locked default_sheet).
 Proof.
   unfold intake_map, locked_cc_cst, intake_map_members, locked_cs_quarter_cst,
-    intake_cc_fold, cc_example5_hit.
+    intake_cc_fold.
   cbn [cc_step check_c0 line_last cc_go].
   rewrite c0_join_refl.
   unfold map_cc_locked, map_ls, map_cs_quarter, hens_of_n, chords_of_pts,

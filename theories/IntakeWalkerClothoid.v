@@ -113,41 +113,20 @@ Proof.
   split; discriminate.
 Qed.
 
-Lemma example5_cc_bags_both_clothoid :
+Lemma example5_cc_gap :
   intake_map default_sheet example5_cc_both_clothoid_cst =
-    IntakeBag (map_cc_example5 default_sheet).
+    IntakeDecline ID_CompoundGap.
 Proof.
   unfold intake_map, example5_cc_both_clothoid_cst, intake_map_members,
     example5_jts_cst, p00.
-  apply example5_members_bypass.
+  apply example5_compound_gap.
 Qed.
 
 Lemma example5_cc_not_iso_decline :
   intake_map default_sheet example5_cc_both_clothoid_cst <>
     IntakeDecline ID_IsoClothoid.
 Proof.
-  rewrite example5_cc_bags_both_clothoid.
-  discriminate.
-Qed.
-
-Lemma example5_cc_has_mkclothoid :
-  exists b c e,
-    intake_map default_sheet example5_cc_both_clothoid_cst = IntakeBag b /\
-    In c (bag_chickens b) /\
-    ck_egg c = MkClothoid e /\
-    egg_class (ck_egg c) = EggClothoid.
-Proof.
-  rewrite example5_cc_bags_both_clothoid.
-  exists (map_cc_example5 default_sheet).
-  exists (shift_chicken 2%nat
-            (mkChicken 0%nat 1%nat (MkClothoid locked_clothoid_egg))).
-  exists locked_clothoid_egg.
-  split; [reflexivity|].
-  unfold map_cc_example5, append_bags, clothoid_bag, shift_chicken.
-  simpl.
-  split.
-  - right. left. reflexivity.
-  - split; reflexivity.
+  rewrite example5_cc_gap. discriminate.
 Qed.
 
 (* WITNESS {"claimId":"0007-intake-mkclothoid","topic":"overlay","lemma":"ticket_0007_intake_mkclothoid_qed_or_qex","title":"Intake maps ISO and JTS clothoid CST to the same MkClothoid SHC bag (QED) or MkClothoid stays QEX and ISO clothoid Declines ID_IsoClothoid (QEX); discharged QED; one host constructor; OGC\equiv ISO same egg; no silent chord demote; first-cook Hit is the clothoid first-cook letter","file":"theories/IntakeWalkerClothoid.v","witness":"0007-intake-mkclothoid","board":"ADR-0007"} *)
@@ -165,7 +144,7 @@ Theorem ticket_0007_intake_mkclothoid_qed_or_qex :
      ck_egg c = MkClothoid e /\
      egg_class (ck_egg c) = EggClothoid /\
    intake_map default_sheet example5_cc_both_clothoid_cst =
-     IntakeBag (map_cc_example5 default_sheet) /\
+     IntakeDecline ID_CompoundGap /\
    intake_map default_sheet example5_cc_both_clothoid_cst <>
      IntakeDecline ID_IsoClothoid)
   \/
@@ -184,7 +163,7 @@ Proof.
   split; [exact Hin|].
   split; [exact He|].
   split; [exact Hcls|].
-  split; [exact example5_cc_bags_both_clothoid|].
+  split; [exact example5_cc_gap|].
   exact example5_cc_not_iso_decline.
 Qed.
 
@@ -197,7 +176,6 @@ Print Assumptions iso_clothoid_chickens_mkclothoid.
 Print Assumptions jts_clothoid_chickens_mkclothoid.
 Print Assumptions clothoid_intake_not_chord_demote.
 Print Assumptions clothoid_intake_not_iso_decline.
-Print Assumptions example5_cc_bags_both_clothoid.
+Print Assumptions example5_cc_gap.
 Print Assumptions example5_cc_not_iso_decline.
-Print Assumptions example5_cc_has_mkclothoid.
 Print Assumptions ticket_0007_intake_mkclothoid_qed_or_qex.

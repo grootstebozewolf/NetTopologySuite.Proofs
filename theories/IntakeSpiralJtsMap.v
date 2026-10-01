@@ -282,7 +282,6 @@ Qed.
 Lemma spiral_jts_g1_qed : spiral_jts_g1.
 Proof.
   unfold spiral_jts_g1.
-  destruct example5_via_fold as [e [ms [Hfold [Hc0 [Hg1 Heval]]]]].
   split.
   - unfold example5_jts_k0, locked_clothoid_egg.
     rewrite (east_sigma (mkPoint 0 0)).
@@ -293,25 +292,20 @@ Proof.
       unfold fresnel_cx_integrand, fresnel_cy_integrand, fresnel_angle.
       assert (Hz : 0 * 0 / 2 = 0) by field.
       rewrite Hz. rewrite cos_0, sin_0. ring.
-    + exists locked_fold_pred. split.
-      { rewrite <- Hc0. rewrite <- (Heval 0). unfold cloth_p0. reflexivity. }
-      { split.
-        { assert (Hpx : px (cloth_tangent e 0) = 1).
-          { rewrite Hg1. unfold locked_fold_pred. reflexivity. }
-          unfold locked_fold_pred. cbn.
-          unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
-          rewrite east_vx. unfold fresnel_cx_integrand, fresnel_angle.
-          replace (0 * 0 / 2) with 0 by field.
-          rewrite cos_0. rewrite <- Hpx at 1. exact Hpx. }
-        { split.
-          { assert (Hpy : py (cloth_tangent e 0) = 0).
-            { rewrite Hg1. unfold locked_fold_pred. reflexivity. }
-            unfold locked_fold_pred. cbn.
-            unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
-            rewrite east_vy. unfold fresnel_cy_integrand, fresnel_angle.
-            replace (0 * 0 / 2) with 0 by field.
-            rewrite sin_0. rewrite <- Hpy at 1. exact Hpy. }
-          { unfold locked_fold_pred. cbn. reflexivity. } } }
+    + exists (mkMemberState (cloth_p0 locked_clothoid_egg)
+               (mkPoint 1 0) example5_jts_k0).
+      split; [reflexivity|].
+      split.
+      { cbn. unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
+        rewrite east_vx. unfold fresnel_cx_integrand, fresnel_angle.
+        assert (Hz : 0 * 0 / 2 = 0) by field.
+        rewrite Hz. rewrite cos_0. reflexivity. }
+      split.
+      { cbn. unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
+        rewrite east_vy. unfold fresnel_cy_integrand, fresnel_angle.
+        assert (Hz : 0 * 0 / 2 = 0) by field.
+        rewrite Hz. rewrite sin_0. reflexivity. }
+      { cbn. reflexivity. }
 Qed.
 
 (* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Statement change, claimId not reminted: a clothoid SPIRALCURVE bags norm2 on try hit and otherwise declines ID_SpiralNonPositiveLength, ID_SpiralConstantCurvature, or ID_NotSimilarityFrame; sample cloth_A <> 1 so it is not the locked example5 bag; SpiralOther declines ID_SpiralOther; JTS L<=0, other triples, and example5 stay; MemberState projects (QED). QEX is spiral_emit_parse_id; the compound fold and JTS G1 are discharged; SJ_Normalizer2 stays dropped because norm2 exists. Negation of the QEX obligation is not claimed. Not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
