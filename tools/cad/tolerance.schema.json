@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:nettopologysuite.proofs:cad:tolerance.schema.json",
   "title": "CAD tolerance conversion",
-  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant and use the placed radius on circular kinds; every other kind declines.",
+  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant: circular kinds use the placed radius, and Spiral uses the clothoid Linearizes bound kappa_max*h^2/8. Every other kind declines.",
   "type": "object",
   "additionalProperties": false,
   "required": ["conversions"],
@@ -31,7 +31,8 @@
         },
         "declineId": {"const": "ID_ToleranceKindUnsupported"},
         "note": {"type": "string", "minLength": 1, "maxLength": 400},
-        "spiralNote": {"type": "string", "minLength": 1, "maxLength": 240}
+        "spiralNote": {"type": "string", "minLength": 1, "maxLength": 240},
+        "spiralHausdorff": {"const": "kappa_max*h^2/8"}
       },
       "allOf": [
         {
@@ -78,6 +79,23 @@
             "properties": {"geometryKinds": {"contains": {"const": "Spiral"}}}
           },
           "then": {"not": {"required": ["spiralNote"]}}
+        },
+        {
+          "if": {
+            "required": ["placement", "geometryKinds"],
+            "properties": {
+              "placement": {"const": "invariant"},
+              "geometryKinds": {"contains": {"const": "Spiral"}}
+            }
+          },
+          "then": {"required": ["spiralHausdorff"]}
+        },
+        {
+          "if": {
+            "required": ["placement"],
+            "properties": {"placement": {"enum": ["scales", "unstated"]}}
+          },
+          "then": {"not": {"required": ["spiralHausdorff"]}}
         }
       ]
     }

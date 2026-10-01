@@ -32,10 +32,8 @@ SAMPLES = {
 }
 
 
-SPIRAL_NOTE = (
-    "Spiral converts once the clothoid Linearizes bound kappa_max*h^2/8 lands "
-    "(lane C1, claimId 0007-clothoid-linearize)."
-)
+SPIRAL_HAUSDORFF = "kappa_max*h^2/8"
+STEPPED_KINDS = dxf_extract.CIRCULAR_KINDS | {"Spiral"}
 
 
 def _one_sentence(note: str) -> None:
@@ -84,10 +82,9 @@ def test_tolerance_conversion_record() -> None:
         if row["placement"] == "invariant":
             assert row["declineId"] == "ID_ToleranceKindUnsupported"
             assert row["declineId"] in declines
-            assert set(row["geometryKinds"]) == set(dxf_extract.CIRCULAR_KINDS)
-            assert "Spiral" not in row["geometryKinds"]
-            _one_sentence(row["spiralNote"])
-            assert row["spiralNote"] == SPIRAL_NOTE
+            assert set(row["geometryKinds"]) == STEPPED_KINDS
+            assert row["spiralHausdorff"] == SPIRAL_HAUSDORFF
+            assert "spiralNote" not in row
         else:
             assert "declineId" not in row
             assert "spiralNote" not in row
