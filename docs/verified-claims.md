@@ -2205,12 +2205,12 @@ without hypotheses and Touches-vs-Share fill split remain S15l+.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `TrianglePairClip.v : ii_nonempty_iff` | Open interiors of two positive triangles meet iff the three half-plane clips have positive area. Family witness `TrianglePairMatrix.v : tri_de9im_correct`. claimId `tri-de9im-a` `[exact]` | 3 |
+| `TrianglePairClip.v : ii_nonempty_iff` | Open interiors of two positive triangles meet iff the three half-plane clips have positive area. Family witness `TrianglePairMatrix.v : tri_de9im_correct`. claimId `tri-de9im-a`. Five-arm fill cells: `TrianglePairAgree.v : tri_de9im_fill_arms`, claimId `tri-de9im-agree` `[exact]` | 3 |
 | `ConvexClipComplete.v : clip_correct` | One half-plane clip equals the convex intersection. Secondary witness `[exact]` | 3 |
 | `TrianglePairClip.v : tri_inter_correct` | A point lies in both closed triangles iff it lies in `tri_inter` `[exact]` | 3 |
 | `TrianglePairClip.v : ii_entry` | I∩I is dimension 2 when the clip area is positive, otherwise F `[exact]` | 3 |
 | `TrianglePairClip.v : ii_entry_dimF_outer` | A separating edge forces the I∩I cell to F `[exact]` | 3 |
-| `TrianglePairClip.v : ii_entry_fixtures` | Concrete pairs, including the swapped nest, match `ii_entry`. General agreement with the five concrete `triangle_pair_fill` arms is deferred `[exact]` | 3 |
+| `TrianglePairClip.v : ii_entry_fixtures` | Concrete pairs, including the swapped nest, match `ii_entry`. Five-arm cells: `TrianglePairAgree.v : tri_de9im_fill_arms` `[exact]` | 3 |
 
 ## T1b — boundary cells I∩B, B∩I, B∩B <!-- feat:relate geom:poly -->
 
