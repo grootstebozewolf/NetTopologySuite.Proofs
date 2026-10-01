@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    Letter 6a-i gap bag. claimId: none.
    Headline: gap_not_ov. Consumer: SheetHenNodedOv.
-   Regression: gap_counted, gap_rho_pos. Same consumer. No claimId.
+   Regression: gap_counted, gap_bag_counted, gap_rho_pos. Same consumer. No claimId.
    (5, 0) is a symmetric overlap endpoint, so the gap bag is counted
    and rho_pcs > 0. bag_noded_ov fails. Does not claim the iff.
    3-axiom host. No Admitted.
@@ -429,11 +429,17 @@ Proof.
   - exact gap_admissible.
 Qed.
 
+Theorem gap_bag_counted :
+  In gap_p (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s)).
+Proof.
+  rewrite counted_sym. exact gap_counted.
+Qed.
+
 Lemma gap_rho_pos : (rho_pcs gap_pcs > 0)%nat.
 Proof.
   unfold rho_pcs. rewrite gap_supports. simpl pair_sum. simpl map. simpl fold_right.
   assert (Hin : In gap_p (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s))).
-  { rewrite counted_sym. exact gap_counted. }
+  { exact gap_bag_counted. }
   destruct (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s)) as [|q tl].
   - contradiction.
   - simpl. lia.
@@ -475,4 +481,5 @@ Print Assumptions gap_p_in_ends.
 Print Assumptions gap_not_ov.
 Print Assumptions gap_admissible.
 Print Assumptions gap_counted.
+Print Assumptions gap_bag_counted.
 Print Assumptions gap_rho_pos.

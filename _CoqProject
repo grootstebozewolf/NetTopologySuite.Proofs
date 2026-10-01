@@ -427,11 +427,15 @@ theories/SheetHenLoop3.v
 theories/SheetHenPickSpec.v
 # Headline: noded_ov_rho_zero. claimId 0007-loop-letter6. witness noded_ov_rho_zero.
 # Consumer: col_fixture_ov_not_noded. 3-axiom. No Admitted.
-# Converse rho=0 -> bag_noded_ov is refuted by rho_zero_not_ov.
+# Converse is SheetHenRhoLoop. This file does not claim the iff.
 theories/SheetHenNodedOv.v
-# Headline: rho_zero_not_ov. claimId none. Consumer: SheetHenNodedOv.
-# 3-axiom. No Admitted.
+# Headline: gap_not_ov. claimId none. Consumer: SheetHenNodedOv.
+# Regression gap_counted, gap_bag_counted, gap_rho_pos. 3-axiom. No Admitted.
 theories/SheetHenNodedOvGap.v
+# Letter 6a-ii. claimId none. Headline: bag_run_arm_noded.
+# CookLoopRho carries that universal arm. Selector confluence is 6a-iii.
+# cook_loop_status stays LoopObligation. 3-axiom. No Admitted.
+theories/SheetHenRhoLoop.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
