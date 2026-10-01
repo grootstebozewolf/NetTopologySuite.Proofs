@@ -268,4 +268,21 @@ let check_predicate matrix_key predicate =
   let m = lookup_matrix matrix_key in
   predicate_holds predicate (matrix_cells m)
 
+(* Pinned table for TrianglePairDe9imQ.tri_de9im_fixture_pins_Q.
+   Not a Q clip. Result strings, not catalog keys: `?` is uncomputed
+   (523-b). EE is Dim2. II and BB only where TrianglePairTin proves them. *)
+let tri_de9im_q_pins = [
+  "strip", "F????1??2";
+  "overlap", "2???????2";
+  "tjunction", "????0???2";
+  "fan_opposite", "F????0??2";
+]
+
+let lookup_tri_de9im_q key =
+  let k = String.trim key in
+  match List.assoc_opt k tri_de9im_q_pins with
+  | Some m when is_valid_de9im_result m -> m
+  | Some m -> invalid_arg ("relate_matrix: bad tri_de9im_q pin: " ^ m)
+  | None -> invalid_arg ("relate_matrix: unknown tri_de9im_q key: " ^ k)
+
 let catalog_entries () = catalog
