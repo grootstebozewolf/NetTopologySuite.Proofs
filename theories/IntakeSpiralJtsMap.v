@@ -5,18 +5,17 @@
    (claimId 0007-intake-spiral, witness 0007-intake-spiral).
    Not a remint of 0007-intake-mkclothoid.
 
-   QED: a start-placed clothoid SPIRALCURVE declines
-   ID_SpiralClothoidNotYet (it is not an IsoClothoid); every
-   SpiralOther declines ID_SpiralOther; JTS L <= 0 declines
-   ID_JtsNonPositiveLength before the example5 test; any other
-   positive triple declines ID_JtsClothoidNotYet; example5
-   still bags locked_clothoid_egg. MemberState projects.
+   QED: a clothoid SPIRALCURVE bags norm2 when try hits, and
+   otherwise declines by name (length, k0 = k1, similarity).
+   SpiralOther declines ID_SpiralOther. The sample bag is not
+   the locked example5 egg (cloth_A <> 1). JTS L <= 0, other
+   triples, and example5 are unchanged. MemberState projects.
+   Statement change: the universal ID_SpiralClothoidNotYet
+   arm is gone. claimId 0007-intake-spiral is not reminted.
 
-   QEX: normalizer 2 is the False marker (that definition does
-   not exist yet). Emit/parse identity on the JTS and spiral
-   forms, the MemberState compound fold, and JTS G1 are
-   Definitions of type Prop over types that exist. The ticket
-   lists them. It does not claim the negation of that list.
+   QEX: emit/parse identity, the compound fold, and JTS G1.
+   Normalizer 2 exists (ClothoidNorm2). The ticket lists the
+   three Props. It does not claim their negation.
 
    ADR-0005: lenient intake, not isValid. 3-axiom host.
    No Admitted / Axiom / Parameter.
@@ -29,51 +28,94 @@
 
 From Stdlib Require Import Reals List.
 From NTS.Proofs Require Import Distance SheetHenCook IntakeWalker IntakeSpiralJts
-  IsoClothoidIntake IsoClothoidIntakeMap IntakeWalkerClothoid.
+  IsoClothoidIntake IsoClothoidIntakeMap IntakeWalkerClothoid IntakeSpiralFront.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
 
-Lemma spiral_clothoid_declines : forall sh sc,
+Lemma spiral_clothoid_bags : forall sh sc e,
+  try_spiral_clothoid sc = inr e ->
   intake_map sh (TSpiralCurve (SpiralOfClothoid sc)) =
-    IntakeDecline ID_SpiralClothoidNotYet.
+    IntakeBag (clothoid_bag sh e).
 Proof.
-  intros sh sc.
-  unfold intake_map, intake_map_atom, map_spiral, cert_of_spiral,
-    intake_decline_of.
-  reflexivity.
+  intros sh sc e H.
+  unfold intake_map, intake_map_atom, map_spiral. rewrite H. reflexivity.
 Qed.
 
-Lemma intake_matches_cert : forall sh sp,
-  intake_map sh (TSpiralCurve sp) =
-    IntakeDecline (intake_decline_of (cert_of_spiral sp)).
+Lemma intake_matches_cert : forall sh k,
+  intake_map sh (TSpiralCurve (SpiralOther k)) =
+    IntakeDecline (intake_decline_of (cert_of_spiral (SpiralOther k))).
 Proof.
-  intros sh sp.
-  unfold intake_map, intake_map_atom, map_spiral.
-  destruct sp as [sc|k]; reflexivity.
+  intros sh k.
+  unfold intake_map, intake_map_atom, map_spiral, cert_of_spiral,
+    intake_decline_of. reflexivity.
 Qed.
 
 Lemma spiral_clothoid_not_iso :
-  intake_map default_sheet
-    (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) =
-    IntakeDecline ID_SpiralClothoidNotYet /\
-  intake_map default_sheet
-    (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) <>
-    intake_map default_sheet example5_jts_cst.
+  exists e,
+    intake_map default_sheet
+      (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) =
+      IntakeBag (clothoid_bag default_sheet e) /\
+    cloth_A e <> 1 /\
+    intake_map default_sheet
+      (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) <>
+      intake_map default_sheet example5_jts_cst.
 Proof.
-  split.
-  - exact (spiral_clothoid_declines default_sheet sample_spiral_clothoid).
-  - rewrite spiral_clothoid_declines, jts_clothoid_maps. discriminate.
+  destruct sample_spiral_hits as [e [Ht HA]].
+  exists e.
+  split; [exact (spiral_clothoid_bags _ _ _ Ht)|].
+  split; [exact HA|].
+  intro H.
+  rewrite (spiral_clothoid_bags _ _ _ Ht), jts_clothoid_maps in H.
+  apply (f_equal (fun r => match r with
+    | IntakeBag b => bag_chickens b
+    | IntakeDecline _ => []
+    end)) in H.
+  cbn in H. injection H as He. rewrite He in HA.
+  unfold locked_clothoid_egg in HA. cbn in HA. contradiction.
 Qed.
 
 Lemma spiral_other_declines : forall k,
   intake_map default_sheet (TSpiralCurve (SpiralOther k)) =
     IntakeDecline ID_SpiralOther.
 Proof.
-  intros k.
-  unfold intake_map, intake_map_atom, map_spiral, cert_of_spiral,
-    intake_decline_of.
-  reflexivity.
+  intros k. unfold intake_map, intake_map_atom, map_spiral. reflexivity.
+Qed.
+
+Lemma spiral_length_first :
+  intake_map default_sheet
+    (TSpiralCurve (SpiralOfClothoid zero_len_spiral)) =
+    IntakeDecline ID_SpiralNonPositiveLength.
+Proof.
+  unfold intake_map, intake_map_atom, map_spiral.
+  rewrite zero_len_even_equal_k. reflexivity.
+Qed.
+
+Lemma spiral_constant_curvature :
+  intake_map default_sheet
+    (TSpiralCurve (SpiralOfClothoid const_k_spiral)) =
+    IntakeDecline ID_SpiralConstantCurvature.
+Proof.
+  unfold intake_map, intake_map_atom, map_spiral.
+  rewrite const_k_unit_frame. reflexivity.
+Qed.
+
+Lemma spiral_not_similarity :
+  intake_map default_sheet
+    (TSpiralCurve (SpiralOfClothoid shear_spiral)) =
+    IntakeDecline ID_NotSimilarityFrame.
+Proof.
+  unfold intake_map, intake_map_atom, map_spiral.
+  rewrite shear_spiral_fails. reflexivity.
+Qed.
+
+Lemma spiral_parallel_refs :
+  intake_map default_sheet
+    (TSpiralCurve (SpiralOfClothoid parallel_spiral)) =
+    IntakeDecline ID_NotSimilarityFrame.
+Proof.
+  unfold intake_map, intake_map_atom, map_spiral.
+  rewrite parallel_spiral_fails. reflexivity.
 Qed.
 
 Lemma jts_matches_class : forall s k0 k1 len,
@@ -112,19 +154,9 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* QEX. Normalizer 2 is a missing definition (False marker). The other       *)
-(* three gaps are proofs about types that already exist: named Props,        *)
-(* not Admitted, not proved, and their negation is not a lemma.              *)
+(* QEX. Three proofs about types that already exist: named Props, not        *)
+(* Admitted, not proved, and their negation is not a lemma.                  *)
 (* -------------------------------------------------------------------------- *)
-
-Inductive SpiralJtsMissing : Type :=
-| SJ_Normalizer2.
-
-Definition spiral_jts_missing (_ : SpiralJtsMissing) : Prop := False.
-
-Lemma spiral_normalizer2_missing :
-  ~ spiral_jts_missing SJ_Normalizer2.
-Proof. intro H. exact H. Qed.
 
 (* Decline ids drop the CST payload, so identity is on the intake
    image: re-parsing an emit of the result recovers that result.
@@ -157,8 +189,7 @@ Definition spiral_compound_fold : Prop :=
 (* JTS G1 at the example5 bag, the JTS form that already has an egg.
    Start position is cloth_p0, start direction is the unit tangent at
    sd, and start curvature k0 equals sigma * sd / A^2. A MemberState
-   can carry that joint. Other positive triples have no egg until
-   normalizer 2. *)
+   can carry that joint. Other positive JTS triples still decline. *)
 Definition spiral_jts_g1 : Prop :=
   example5_jts_k0 =
     cloth_sigma locked_clothoid_egg * cloth_sd locked_clothoid_egg /
@@ -175,20 +206,35 @@ Definition spiral_jts_g1 : Prop :=
       cloth_vy locked_clothoid_egg (cloth_sd locked_clothoid_egg) /\
     mst_curvature pred = example5_jts_k0.
 
-(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Start-placed clothoid SPIRALCURVE declines ID_SpiralClothoidNotYet until normalizer 2; every SpiralOther declines ID_SpiralOther; JTS L<=0 declines ID_JtsNonPositiveLength; other triples decline ID_JtsClothoidNotYet; example5 stays locked_clothoid_egg; MemberState projects (QED). QEX lists SJ_Normalizer2 (missing definition) and obligations spiral_emit_parse_id, spiral_compound_fold, spiral_jts_g1; their negation is not claimed. Not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Statement change, claimId not reminted: a clothoid SPIRALCURVE bags norm2 on try hit and otherwise declines ID_SpiralNonPositiveLength, ID_SpiralConstantCurvature, or ID_NotSimilarityFrame; sample cloth_A <> 1 so it is not the locked example5 bag; SpiralOther declines ID_SpiralOther; JTS L<=0, other triples, and example5 stay; MemberState projects (QED). QEX is spiral_emit_parse_id, spiral_compound_fold, spiral_jts_g1; SJ_Normalizer2 is dropped because norm2 exists. Negation of the QEX list is not claimed. Not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_spiral_qed_or_qex :
-  ((forall sh sc,
+  ((forall sh sc e,
+      try_spiral_clothoid sc = inr e ->
       intake_map sh (TSpiralCurve (SpiralOfClothoid sc)) =
-        IntakeDecline ID_SpiralClothoidNotYet) /\
-   (intake_map default_sheet
-      (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) =
-      IntakeDecline ID_SpiralClothoidNotYet /\
-    intake_map default_sheet
-      (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) <>
-      intake_map default_sheet example5_jts_cst) /\
+        IntakeBag (clothoid_bag sh e)) /\
+   (exists e,
+      intake_map default_sheet
+        (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) =
+        IntakeBag (clothoid_bag default_sheet e) /\
+      cloth_A e <> 1 /\
+      intake_map default_sheet
+        (TSpiralCurve (SpiralOfClothoid sample_spiral_clothoid)) <>
+        intake_map default_sheet example5_jts_cst) /\
    (forall k,
       intake_map default_sheet (TSpiralCurve (SpiralOther k)) =
         IntakeDecline ID_SpiralOther) /\
+   intake_map default_sheet
+     (TSpiralCurve (SpiralOfClothoid zero_len_spiral)) =
+     IntakeDecline ID_SpiralNonPositiveLength /\
+   intake_map default_sheet
+     (TSpiralCurve (SpiralOfClothoid const_k_spiral)) =
+     IntakeDecline ID_SpiralConstantCurvature /\
+   intake_map default_sheet
+     (TSpiralCurve (SpiralOfClothoid shear_spiral)) =
+     IntakeDecline ID_NotSimilarityFrame /\
+   intake_map default_sheet
+     (TSpiralCurve (SpiralOfClothoid parallel_spiral)) =
+     IntakeDecline ID_NotSimilarityFrame /\
    intake_map default_sheet
      (TClothoidJts example5_jts_k0 example5_jts_k1 0) =
      IntakeDecline ID_JtsNonPositiveLength /\
@@ -201,28 +247,34 @@ Theorem ticket_0007_intake_spiral_qed_or_qex :
       mst_dir (mkMemberState p d k) = d /\
       mst_curvature (mkMemberState p d k) = k))
   \/
-  (spiral_jts_missing SJ_Normalizer2 /\
-   spiral_emit_parse_id /\
+  (spiral_emit_parse_id /\
    spiral_compound_fold /\
    spiral_jts_g1).
 Proof.
   (* QED arm. The right disjunct only names the gaps. *)
   left.
-  split; [exact spiral_clothoid_declines|].
+  split; [exact spiral_clothoid_bags|].
   split; [exact spiral_clothoid_not_iso|].
   split; [exact spiral_other_declines|].
+  split; [exact spiral_length_first|].
+  split; [exact spiral_constant_curvature|].
+  split; [exact spiral_not_similarity|].
+  split; [exact spiral_parallel_refs|].
   split; [exact jts_length_before_example5|].
   split; [exact jts_other_triple_declines|].
   split; [exact jts_clothoid_maps|].
   exact member_state_proj.
 Qed.
 
-Print Assumptions spiral_clothoid_declines.
+Print Assumptions spiral_clothoid_bags.
 Print Assumptions intake_matches_cert.
 Print Assumptions spiral_clothoid_not_iso.
 Print Assumptions spiral_other_declines.
+Print Assumptions spiral_length_first.
+Print Assumptions spiral_constant_curvature.
+Print Assumptions spiral_not_similarity.
+Print Assumptions spiral_parallel_refs.
 Print Assumptions jts_matches_class.
 Print Assumptions jts_length_before_example5.
 Print Assumptions jts_nonpositive_length_declines.
-Print Assumptions spiral_normalizer2_missing.
 Print Assumptions ticket_0007_intake_spiral_qed_or_qex.
