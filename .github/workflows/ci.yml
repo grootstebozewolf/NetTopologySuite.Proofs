@@ -130,10 +130,14 @@ jobs:
 
       - name: Show Rocq version
         id: rocqv
-        # The image is pinned to Rocq 9.2.0. Refuse any other version so
-        # the matrix cannot drift from the container. The cache key still
-        # records the sanitized `rocq --version` line (not the matrix
-        # string): a compiler bump must not load incompatible .vo.
+        # The image is pinned to Rocq 9.2.0 (Dockerfile FROM
+        # rocq/rocq-prover:9.2.0-...). `rocq --version` prints that
+        # release as "9.2": trailing ".0" components are omitted, and a
+        # patch or "+rc" suffix is printed when it is not that release.
+        # Accept the matrix string or that elided form; reject anything
+        # else. The cache key still records the sanitized version line
+        # (not the matrix string) so a compiler bump cannot load
+        # incompatible .vo.
         run: |
           out="$(docker run --rm nts-proofs-toolchain:ci bash -lc 'set -eu; rocq -v >&2; rocq --version')"
           raw="${out%%$'\n'*}"
@@ -147,10 +151,22 @@ jobs:
           echo "ver=${ver}" >> "$GITHUB_OUTPUT"
           echo "cache version token: ${ver}"
           expected="${{ matrix.rocq-version }}"
-          escaped="${expected//./\\.}"
-          # Token match: 9.2.0 must not accept 9.2.0.1, 9.20.0, or 9.2.0-beta.
-          if [[ ! "$raw" =~ (^|[^0-9.])${escaped}($|[^0-9.A-Za-z+-]) ]]; then
-            echo "::error::expected Rocq ${expected}, container reports: ${raw}"
+          # 9.2.0 -> 9.2, matching Rocq's printer. Stop at the first
+          # component that is not a trailing 0.
+          printed="$expected"
+          while [[ "$printed" == *.0 ]]; do
+            printed="${printed%.0}"
+          done
+          accept=0
+          for candidate in "$expected" "$printed"; do
+            escaped="${candidate//./\\.}"
+            if [[ "$raw" =~ (^|[^0-9.])${escaped}($|[^0-9.A-Za-z+-]) ]]; then
+              accept=1
+              break
+            fi
+          done
+          if [ "$accept" -ne 1 ]; then
+            echo "::error::expected Rocq ${expected} (prints as ${printed}), container reports: ${raw}"
             exit 1
           fi
 
