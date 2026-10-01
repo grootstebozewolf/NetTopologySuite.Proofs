@@ -989,3 +989,225 @@ Proof.
   { apply Rmult_lt_0_compat; assumption. }
   lra.
 Qed.
+
+(* §5  atan2 approaches ±π as the cross term hits the negative abscissa.
+   Rmin stays a hypothesis: lra does not reduce it. *)
+
+Lemma atan2_near_pi : forall eps y x,
+  0 < eps -> x < 0 -> 0 < y ->
+  y < Rmin eps 1 * (- x) ->
+  Rabs (atan2 y x - PI) < eps.
+Proof.
+  intros eps y x Heps Hx Hy Hyb.
+  set (e0 := Rmin eps 1).
+  assert (He0 : 0 < e0) by (unfold e0; apply Rmin_glb_lt; lra).
+  assert (He0_le : e0 <= 1) by (unfold e0; apply Rmin_r).
+  assert (He0_eps : e0 <= eps) by (unfold e0; apply Rmin_l).
+  assert (Hy0 : y < e0 * (- x)) by exact Hyb.
+  set (r := sqrt (x * x + y * y)).
+  assert (Hr2 : r * r = x * x + y * y).
+  { unfold r. apply sqrt_sqrt.
+    pose proof (sqr_nonneg x) as Hx2. pose proof (sqr_nonneg y) as Hy2. lra. }
+  assert (Hr : 0 < r).
+  { unfold r. apply sqrt_lt_R0.
+    assert (0 < y * y).
+    { destruct (Rle_lt_or_eq_dec 0 (y * y) (sqr_nonneg y)) as [Hlt|Heq];
+        [exact Hlt | assert (y = 0) by (apply sqr_eq_zero; symmetry; exact Heq); lra]. }
+    pose proof (sqr_nonneg x) as Hx2. lra. }
+  assert (Habs : - x < r).
+  { pose proof (atan2_r_abs_x x y) as Ha.
+    rewrite (Rabs_left x Hx) in Ha.
+    destruct (Rle_lt_or_eq_dec _ _ Ha) as [Hlt|Heq]; [exact Hlt|].
+    assert (EQ : r = - x) by (unfold r; exact (eq_sym Heq)).
+    assert (y * y = 0).
+    { apply (Rplus_eq_reg_l (x * x)). rewrite Rplus_0_r. rewrite <- Hr2.
+      rewrite EQ. replace ((- x) * (- x)) with (x * x) by ring. reflexivity. }
+    apply sqr_eq_zero in H. lra. }
+  assert (Hsum : 0 < r + x) by lra.
+  rewrite (atan2_formula y x Hsum).
+  set (t0 := y / (r + x)).
+  assert (Ht0 : t0 = (r - x) / y).
+  { unfold t0. apply (Rmult_eq_reg_r (y * (r + x))).
+    - replace (y / (r + x) * (y * (r + x))) with (y * y) by (field; lra).
+      replace ((r - x) / y * (y * (r + x))) with (r * r - x * x) by (field; lra).
+      rewrite Hr2. ring.
+    - apply Rmult_integral_contrapositive_currified; lra. }
+  assert (Hbig : 2 / e0 < t0).
+  { assert (Hcmp : 2 * (- x) / y < t0).
+    { rewrite Ht0. unfold Rdiv. apply Rmult_lt_compat_r.
+      - apply Rinv_0_lt_compat. exact Hy.
+      - lra. }
+    assert (H2 : 2 / e0 < 2 * (- x) / y).
+    { assert (HL : (2 / e0) * (e0 * y) = 2 * y) by (unfold Rdiv; field; lra).
+      assert (HR : (2 * (- x) / y) * (e0 * y) = 2 * e0 * (- x))
+        by (unfold Rdiv; field; lra).
+      apply (Rmult_lt_reg_r (e0 * y)); [apply Rmult_lt_0_compat; assumption|].
+      rewrite HL, HR.
+      replace (2 * e0 * (- x)) with (2 * (e0 * (- x))) by ring.
+      apply Rmult_lt_compat_l; [lra | exact Hy0]. }
+    lra. }
+  assert (Htwo : 2 <= 2 / e0).
+  { apply Rmult_le_reg_r with (r := e0); [exact He0|].
+    unfold Rdiv. replace ((2 * / e0) * e0) with 2 by (field; lra).
+    assert (2 * e0 <= 2 * 1) by (apply Rmult_le_compat_l; [lra | exact He0_le]).
+    rewrite Rmult_1_r in H. exact H. }
+  assert (Ht1 : 1 < t0) by lra.
+  pose proof (atan3_lt 1 t0 Ht1) as Hat.
+  rewrite atan3_1 in Hat.
+  set (eta := PI / 2 - atan3 t0).
+  assert (Heta : 0 < eta < PI / 4).
+  { destruct (atan3_spec t0) as [[Hlo Hhi] _]. unfold eta. lra. }
+  assert (Htan : tan eta = 1 / t0).
+  { set (a := atan3 t0).
+    assert (Hta : tan a = t0) by (unfold a; apply tan_atan3).
+    destruct (atan3_spec t0) as [[Ha_lo Ha_hi] _].
+    pose proof PI_RGT_0 as Hpi.
+    assert (Hpos : 0 < a).
+    { apply Rlt_trans with (PI / 4); [apply Rdiv_lt_0_compat; [exact Hpi | lra] | unfold a; exact Hat]. }
+    assert (Hltpi : a < PI).
+    { apply Rlt_trans with (PI / 2); [unfold a; exact Ha_hi|].
+      apply (Rmult_lt_reg_r 2); [lra|]. unfold Rdiv.
+      replace ((PI * / 2) * 2) with PI by (field; lra).
+      assert (PI * 1 < PI * 2) by (apply Rmult_lt_compat_l; [exact Hpi | lra]).
+      rewrite Rmult_1_r in H. exact H. }
+    pose proof (sin_gt_0 a Hpos Hltpi) as Hs.
+    pose proof (cos_gt_0 a ltac:(unfold a; exact Ha_lo) ltac:(unfold a; exact Ha_hi)) as Hc.
+    unfold eta. replace (atan3 t0) with a by reflexivity.
+    unfold tan at 1. rewrite sin_minus, cos_minus, sin_PI2, cos_PI2.
+    replace (1 * cos a - 0 * sin a) with (cos a) by ring.
+    replace (0 * cos a + 1 * sin a) with (sin a) by ring.
+    unfold Rdiv. rewrite <- Hta. unfold tan. unfold Rdiv.
+    apply (Rmult_eq_reg_l (sin a)); [| lra].
+    rewrite (Rmult_comm (sin a) (cos a * / sin a)).
+    rewrite Rmult_assoc. rewrite Rinv_l by lra. rewrite Rmult_1_r.
+    apply (Rmult_eq_reg_r (sin a * / cos a)).
+    - replace (cos a * (sin a * / cos a)) with (sin a) by (field; lra).
+      replace (sin a * (1 * / (sin a * / cos a)) * (sin a * / cos a))
+        with (sin a) by (field; lra).
+      reflexivity.
+    - apply Rmult_integral_contrapositive_currified.
+      + intro E; lra.
+      + apply Rinv_neq_0_compat. intro E; lra. }
+  assert (Hone : eta < tan eta) by (apply tan_gt_arg; lra).
+  assert (Htiny : tan eta < e0 / 2).
+  { rewrite Htan.
+    assert (0 < t0) by lra.
+    assert (HL : (1 / t0) * (t0 * 2) = 2) by (unfold Rdiv; field; lra).
+    assert (HR : (e0 / 2) * (t0 * 2) = e0 * t0) by (unfold Rdiv; field; lra).
+    assert (Hbg : 2 < e0 * t0).
+    { apply (Rmult_lt_compat_l e0) in Hbig; [| exact He0].
+      unfold Rdiv in Hbig.
+      replace (e0 * (2 * / e0)) with 2 in Hbig by (field; lra).
+      exact Hbig. }
+    apply (Rmult_lt_reg_r (t0 * 2)); [apply Rmult_lt_0_compat; lra|].
+    rewrite HL, HR. exact Hbg. }
+  assert (H2 : 2 * eta < e0) by lra.
+  assert (Heq_eta : 2 * atan3 t0 - PI = - (2 * eta)) by (unfold eta, Rdiv; field).
+  unfold t0, r in Heq_eta. rewrite Heq_eta.
+  rewrite Rabs_Ropp. rewrite Rabs_right by lra.
+  apply Rlt_le_trans with e0; [exact H2 | exact He0_eps].
+Qed.
+
+Lemma atan2_near_neg_pi : forall eps y x,
+  0 < eps -> x < 0 -> y < 0 ->
+  - y < Rmin eps 1 * (- x) ->
+  Rabs (atan2 y x + PI) < eps.
+Proof.
+  intros eps y x Heps Hx Hy Hyb.
+  assert (Hopp : atan2 y x = - atan2 (- y) x).
+  { assert (Hdd : atan2 (- (- y)) x = - atan2 (- y) x).
+    { apply atan2_opp.
+      - intro H0. destruct H0 as [Hx0 Hy0]. lra.
+      - intro E. lra. }
+    replace (- (- y)) with y in Hdd by ring. exact Hdd. }
+  rewrite Hopp.
+  replace (- atan2 (- y) x + PI) with (- (atan2 (- y) x - PI)) by ring.
+  rewrite Rabs_Ropp. apply atan2_near_pi; lra.
+Qed.
+
+(* §6  A segment in an open disc stays in it. An integer-valued
+   continuous function on that segment is constant. The remaining gap
+   for wind_locally_constant is continuity of an arc's member angle
+   across its open chord (tie jumps, atan2 meets ±π). *)
+
+Lemma lerp_in_open_disc : forall (C P Q : Point) (rho t : R),
+  0 <= t <= 1 ->
+  dist_sq C P < rho -> dist_sq C Q < rho ->
+  dist_sq C (lerp P Q t) < rho.
+Proof.
+  intros C P Q rho t Ht Hp Hq.
+  eapply Rle_lt_trans; [apply dist_sq_lerp_le; exact Ht|].
+  destruct (Req_dec t 0) as [E0|N0].
+  - subst t. replace ((1 - 0) * dist_sq C P + 0 * dist_sq C Q) with (dist_sq C P) by ring.
+    exact Hp.
+  - destruct (Req_dec t 1) as [E1|N1].
+    + subst t. replace ((1 - 1) * dist_sq C P + 1 * dist_sq C Q) with (dist_sq C Q) by ring.
+      exact Hq.
+    + assert ((1 - t) * dist_sq C P + t * dist_sq C Q < (1 - t) * rho + t * rho).
+      { apply Rplus_lt_compat; apply Rmult_lt_compat_l; lra. }
+      replace ((1 - t) * rho + t * rho) with rho in H by ring. exact H.
+Qed.
+
+Lemma half_not_integer : forall k n : Z, IZR k - IZR n <> / 2.
+Proof.
+  intros k n E.
+  assert ((2 * (k - n) = 1)%Z).
+    { apply eq_IZR. rewrite mult_IZR, minus_IZR.
+      replace (2 * (IZR k - IZR n)) with 1 by lra. reflexivity. }
+  lia.
+Qed.
+
+Lemma cont_integer_jump : forall (f : R -> R) (a b : Z),
+  (a < b)%Z ->
+  (forall t, 0 <= t <= 1 -> continuity_pt f t) ->
+  (forall t, 0 <= t <= 1 -> exists k : Z, f t = IZR k) ->
+  f 0 = IZR a -> f 1 = IZR b -> False.
+Proof.
+  intros f a b Hab Hc Hi Ha Hb.
+  set (g := fun t => f t - (IZR a + / 2)).
+  assert (Hg : forall t, 0 <= t <= 1 -> continuity_pt g t).
+  { intros t Ht. unfold g. apply continuity_pt_minus.
+    - apply Hc. exact Ht.
+    - apply continuity_pt_const. intros ? ?. reflexivity. }
+  assert (Hg0 : g 0 < 0) by (unfold g; rewrite Ha; lra).
+  assert (Hg1 : 0 < g 1).
+  { unfold g. rewrite Hb.
+    assert ((a + 1 <= b)%Z) by lia.
+    apply IZR_le in H. rewrite plus_IZR in H. lra. }
+  destruct (IVT_interv g 0 1 Hg ltac:(lra) Hg0 Hg1) as [z [Hz Hz0]].
+  destruct (Hi z Hz) as [k Hk].
+  apply (half_not_integer k a). unfold g in Hz0. rewrite Hk in Hz0. lra.
+Qed.
+
+Lemma cont_rev : forall (f : R -> R) t,
+  continuity_pt f (1 - t) -> continuity_pt (fun s => f (1 - s)) t.
+Proof.
+  intros f t Hc.
+  eapply continuity_pt_locally_ext
+    with (a := 1) (f := comp f (fun s => 1 + s * (-1))).
+  - lra.
+  - intros y _. unfold comp.
+    replace (1 - y) with (1 + y * (-1)) by ring. reflexivity.
+  - apply continuity_pt_comp; [apply continuity_pt_affine|].
+    unfold comp. replace (1 + t * (-1)) with (1 - t) by ring. exact Hc.
+Qed.
+
+Lemma cont_integer_const : forall f : R -> R,
+  (forall t, 0 <= t <= 1 -> continuity_pt f t) ->
+  (forall t, 0 <= t <= 1 -> exists k : Z, f t = IZR k) ->
+  f 0 = f 1.
+Proof.
+  intros f Hc Hi.
+  destruct (Hi 0 ltac:(lra)) as [n Hn].
+  destruct (Hi 1 ltac:(lra)) as [m Hm].
+  destruct (Z.eq_dec n m) as [E|N]; [rewrite Hn, Hm, E; reflexivity|].
+  exfalso.
+  assert ((n < m \/ m < n)%Z) by lia.
+  destruct H as [Hlt|Hlt].
+  - exact (cont_integer_jump f n m Hlt Hc Hi Hn Hm).
+  - apply (cont_integer_jump (fun s => f (1 - s)) m n Hlt).
+    + intros t Ht. apply cont_rev. apply Hc. lra.
+    + intros t Ht. apply Hi. lra.
+    + replace (1 - 0) with 1 by ring. exact Hm.
+    + replace (1 - 1) with 0 by ring. exact Hn.
+Qed.
