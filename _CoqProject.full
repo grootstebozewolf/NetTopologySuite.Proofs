@@ -3490,6 +3490,7 @@ theories/RelateNGTouchEdgeCells.v
 # IB/BI/IE/EI/BE/EB.  Witness pair stays in RelateNGTouchEdgeCells.
 # No ring_complement / ray_avoids_vertices guard.
 theories/RelateNGTouchEdgeCellsGeneral.v
+# relate
 # #847 / ADR-0003: forall vertical/horizontal rect touch, the six
 # spec-tier cells IB/BI/IE/EI/BE/EB.  IB and BI use rect_interior.
 # Coded-tier IB is a separate conjunct.  Not host-lane.
