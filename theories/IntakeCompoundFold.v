@@ -16,7 +16,9 @@
    the example5 law. It is not locked_clothoid_egg shifted by
    (100,0): the windows are 80 and 1. example5_compound_gap is
    that fold's exit missing the locked start. The three-member
-   compound still declines ID_CompoundGap. claimId: none.
+   compound still declines ID_CompoundGap. A line, that JTS
+   member, and an ISO tail whose window starts at the norm2
+   exit bags, with C0, G1, and G2 at both joints. claimId: none.
    No Admitted. No classic. No MVT / Rolle / RiemannInt.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
@@ -566,6 +568,200 @@ Proof.
   rewrite Hjts. cbn [cc_go]. reflexivity.
 Qed.
 
+(* Same place and scale: the second window starts where the first
+   ends, so position, tangent, and curvature agree there. *)
+Lemma cloth_window_join : forall pl A sd ed ed2 m0 m1,
+  let e1 := mk_cloth pl A sd ed m0 m1 in
+  let e2 := mk_cloth pl A ed ed2 None None in
+  cloth_eval e2 0 = cloth_eval e1 1 /\
+  cloth_tangent e2 0 = cloth_tangent e1 1 /\
+  cloth_curv e2 0 = cloth_curv e1 1.
+Proof.
+  intros pl A sd ed ed2 m0 m1 e1 e2.
+  assert (Hs1 : cloth_s e1 1 = ed).
+  { unfold cloth_s, e1. cbn. ring. }
+  assert (Hs2 : cloth_s e2 0 = ed).
+  { unfold cloth_s, e2. cbn. ring. }
+  split; [|split].
+  - unfold cloth_eval, cloth_P. rewrite Hs1, Hs2. apply point_eq.
+    + unfold cloth_Px, e1, e2.
+      rewrite (cloth_cos0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_sin0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_Icos_same_place pl A ed ed2 sd ed None None m0 m1 ed).
+      rewrite (cloth_Isin_same_place pl A ed ed2 sd ed None None m0 m1 ed).
+      reflexivity.
+    + unfold cloth_Py, e1, e2.
+      rewrite (cloth_cos0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_sin0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_Icos_same_place pl A ed ed2 sd ed None None m0 m1 ed).
+      rewrite (cloth_Isin_same_place pl A ed ed2 sd ed None None m0 m1 ed).
+      reflexivity.
+  - unfold cloth_tangent. rewrite Hs1, Hs2. apply point_eq.
+    + unfold cloth_vx, e1, e2.
+      rewrite (cloth_cos0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_sin0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_psi_same_place pl A ed ed2 sd ed None None m0 m1 ed).
+      reflexivity.
+    + unfold cloth_vy, e1, e2.
+      rewrite (cloth_cos0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_sin0_same pl A ed ed2 sd ed None None m0 m1).
+      rewrite (cloth_psi_same_place pl A ed ed2 sd ed None None m0 m1 ed).
+      reflexivity.
+  - unfold cloth_curv, cloth_kappa. rewrite Hs1, Hs2.
+    unfold e1, e2, cloth_sigma, cloth_cross, mk_cloth. cbn. reflexivity.
+Qed.
+
+(* ISO tail of the example5 norm2 egg. The window starts at that
+   egg's ed, so the curve starts at norm2_exit. *)
+Definition example5_iso_tail : IsoClothoid :=
+  let e := example5_egg in
+  mkIsoClothoid WD_XY
+    (aff_loc (cloth_place e)) 0
+    (aff_ref1 (cloth_place e)) 0
+    (aff_ref2 (cloth_place e)) 0
+    (cloth_A e) (cloth_ed e) (cloth_ed e + 1)
+    None None.
+
+Definition example5_iso_egg : ClothoidEgg :=
+  let e := example5_egg in
+  mk_cloth (mkAffPlace (aff_loc (cloth_place e))
+                       (aff_ref1 (cloth_place e))
+                       (aff_ref2 (cloth_place e)))
+    (cloth_A e) (cloth_ed e) (cloth_ed e + 1) None None.
+
+Lemma example5_iso_try :
+  try_iso_clothoid example5_iso_tail = inr example5_iso_egg.
+Proof.
+  unfold try_iso_clothoid, example5_iso_tail.
+  cbn [ic_dim ic_m0 ic_m1 ic_ref1_z ic_ref2_z ic_loc ic_ref1 ic_ref2
+       ic_A ic_sd ic_ed measures_fail dim_has_m].
+  rewrite refs_zero_horizontal.
+  assert (Hs : similarity_ok (aff_ref1 (cloth_place example5_egg))
+                             (aff_ref2 (cloth_place example5_egg)) = true).
+  { unfold example5_egg, norm2, mk_cloth.
+    cbn [cloth_place aff_ref1 aff_ref2].
+    apply norm2_refs_sim.
+    unfold pred_state. cbn [st_dir]. unfold example5_line.
+    exact (proj1 example5_line_unit). }
+  rewrite Hs.
+  assert (HA : 0 < cloth_A example5_egg).
+  { unfold example5_egg, cloth_A, norm2, mk_cloth. cbn [cloth_A].
+    apply law_A_pos.
+    - unfold example5_law, example5_jts_L. cbn. lra.
+    - unfold example5_law, example5_jts_k0, example5_jts_k1. cbn. intro E. lra. }
+  destruct (Rle_dec (cloth_A example5_egg) 0) as [Hle|Hgt]; [lra|].
+  destruct (Req_EM_T (cloth_ed example5_egg) (cloth_ed example5_egg + 1))
+    as [Heq|Hne]; [lra|].
+  unfold example5_iso_egg. reflexivity.
+Qed.
+
+Lemma example5_iso_at_exit :
+  cloth_eval example5_iso_egg 0 = st_pos (cloth_exit example5_egg) /\
+  cloth_tangent example5_iso_egg 0 = st_dir (cloth_exit example5_egg) /\
+  cloth_curv example5_iso_egg 0 = st_curv (cloth_exit example5_egg).
+Proof.
+  assert (Hj := cloth_window_join (cloth_place example5_egg)
+                  (cloth_A example5_egg) (cloth_sd example5_egg)
+                  (cloth_ed example5_egg) (cloth_ed example5_egg + 1)
+                  None None).
+  assert (He1 : mk_cloth (cloth_place example5_egg) (cloth_A example5_egg)
+                  (cloth_sd example5_egg) (cloth_ed example5_egg) None None
+                = example5_egg).
+  { unfold example5_egg, norm2, mk_cloth. cbn. reflexivity. }
+  assert (He2 : mk_cloth (cloth_place example5_egg) (cloth_A example5_egg)
+                  (cloth_ed example5_egg) (cloth_ed example5_egg + 1) None None
+                = example5_iso_egg).
+  { unfold example5_iso_egg, example5_egg, norm2, mk_cloth.
+    cbn [cloth_place aff_loc aff_ref1 aff_ref2 cloth_A cloth_ed].
+    reflexivity. }
+  destruct Hj as [Hc0 [Hg1 Hg2]].
+  rewrite He1, He2 in Hc0, Hg1, Hg2.
+  assert (Hs : cloth_s example5_egg 1 = cloth_ed example5_egg).
+  { unfold cloth_s, example5_egg, norm2, mk_cloth. cbn. ring. }
+  split; [|split].
+  - rewrite Hc0. unfold cloth_exit. cbn [st_pos]. reflexivity.
+  - rewrite Hg1. unfold cloth_exit, cloth_tangent. cbn [st_dir].
+    rewrite Hs. reflexivity.
+  - rewrite Hg2. unfold cloth_exit, cloth_curv. cbn [st_curv].
+    rewrite Hs. reflexivity.
+Qed.
+
+(* Fixture. Line, example5 JTS clothoid, ISO tail at norm2_exit.
+   C0, G1, and G2 hold at both joints, and the fold bags. *)
+Lemma example5_line_jts_iso_bags :
+  forall s map_line map_quarter map_atom bag append,
+  exists e,
+    intake_cc_fold IntakeLenient s map_line map_quarter map_atom bag append
+      [TLineString [mkPoint 0 0; mkPoint 100 0];
+       TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L;
+       TClothoidIso example5_iso_tail] =
+      IntakeBag (append s
+                   (append s (map_line s [mkPoint 0 0; mkPoint 100 0])
+                      (bag s e))
+                   (bag s example5_iso_egg)) /\
+    e = example5_egg /\
+    cloth_eval e 0 = mst_end example5_line /\
+    cloth_tangent e 0 = mst_dir example5_line /\
+    cloth_curv e 0 = mst_curvature example5_line /\
+    cloth_eval example5_iso_egg 0 = st_pos (cloth_exit e) /\
+    cloth_tangent example5_iso_egg 0 = st_dir (cloth_exit e) /\
+    cloth_curv example5_iso_egg 0 = st_curv (cloth_exit e).
+Proof.
+  intros s map_line map_quarter map_atom bag append.
+  destruct (example5_fold IntakeLenient) as [e [ms [Hfold [Hc0 [Hg1 _]]]]].
+  destruct example5_line_unit as [Hu [Hp Hk]].
+  unfold example5_line in Hu, Hp, Hk.
+  assert (He : e = example5_egg).
+  { destruct (fold_hit_egg IntakeLenient
+               (line_exit (mkPoint 0 0) (mkPoint 100 0))
+               example5_jts_k0 example5_jts_k1 example5_jts_L e ms Hfold)
+      as [_ [_ [Heq _]]].
+    rewrite Heq. unfold build_clothoid, example5_egg, example5_law. cbn.
+    reflexivity. }
+  assert (Hg2 : cloth_curv e 0 = 0).
+  { rewrite (fold_g2_recorded (line_exit (mkPoint 0 0) (mkPoint 100 0))
+               example5_jts_k0 example5_jts_k1 example5_jts_L e ms Hu Hfold).
+    unfold example5_jts_k0. reflexivity. }
+  assert (Hend : mst_end ms = cloth_eval e 1).
+  { apply example5_fold_exit. unfold example5_line. exact Hfold. }
+  destruct example5_iso_at_exit as [Hc0i [Hg1i Hg2i]].
+  rewrite <- He in Hc0i, Hg1i, Hg2i.
+  assert (Hline :
+    @cc_step IntakeLenient s map_line map_quarter map_atom bag
+      None (TLineString [mkPoint 0 0; mkPoint 100 0]) =
+    inr (map_line s [mkPoint 0 0; mkPoint 100 0],
+         line_exit (mkPoint 0 0) (mkPoint 100 0))).
+  { reflexivity. }
+  assert (Hjts :
+    @cc_step IntakeLenient s map_line map_quarter map_atom bag
+      (Some (line_exit (mkPoint 0 0) (mkPoint 100 0)))
+      (TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L) =
+    inr (bag s e, ms)).
+  { unfold cc_step. rewrite Hfold. rewrite Hc0.
+    rewrite check_c0_at_end by (symmetry; apply line_exit_end).
+    reflexivity. }
+  assert (Hiso :
+    @cc_step IntakeLenient s map_line map_quarter map_atom bag
+      (Some ms) (TClothoidIso example5_iso_tail) =
+    inr (bag s example5_iso_egg, state_of_exit (cloth_exit example5_iso_egg))).
+  { unfold cc_step. rewrite example5_iso_try.
+    rewrite check_c0_at_end.
+    - reflexivity.
+    - rewrite Hend. rewrite Hc0i.
+      unfold cloth_exit. cbn [st_pos]. reflexivity. }
+  exists e. unfold example5_line.
+  split.
+  - unfold intake_cc_fold. rewrite Hline. cbn [cc_go].
+    rewrite Hjts. cbn [cc_go]. rewrite Hiso. cbn [cc_go]. reflexivity.
+  - split; [exact He|].
+    split; [rewrite Hc0; exact Hp|].
+    split; [exact Hg1|].
+    split; [rewrite Hg2, Hk; reflexivity|].
+    split; [exact Hc0i|].
+    split; [exact Hg1i|].
+    exact Hg2i.
+Qed.
+
 (* Fixture. A two-arc CIRCULARSTRING followed by a LINESTRING that
    starts at the string's last point is a bag. A JTS clothoid after
    the same string starts on the last window's tangent. *)
@@ -642,4 +838,8 @@ Print Assumptions example5_compound_gap.
 Print Assumptions example5_members_differ.
 Print Assumptions example5_cc_fold_declines.
 Print Assumptions example5_line_jts_bags.
+Print Assumptions cloth_window_join.
+Print Assumptions example5_iso_try.
+Print Assumptions example5_iso_at_exit.
+Print Assumptions example5_line_jts_iso_bags.
 Print Assumptions fixture_multi_arc_cs_join.
