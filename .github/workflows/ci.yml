@@ -46,21 +46,34 @@ jobs:
         #   check_oracle_handrolled      hand-rolled float-kernel ratchet
         #   check_md_prose_ratchet       net-non-positive .md prose vs base
         #   hunt.py --selfcheck          RELATE_MATRIX token allowlist (no oracle)
-        # The macOS `rocq` job below no longer repeats these — this job is
+        # The `rocq` job below no longer repeats these — this job is
         # the single source of the guardrail verdict on every PR and push.
         run: make ci-guards
 
   rocq:
     name: Build with Rocq ${{ matrix.rocq-version }}
-    # Gate the (slow, paid-runner) build on the fast guardrails: a
-    # registry/doc/allowlist failure skips this job entirely instead of
-    # burning a full macOS compile, and keeps the guardrail verdict a
-    # hard prerequisite of this build even though it now lives in its own
+    # Gate the build on the fast guardrails: a registry/doc/allowlist
+    # failure skips this job entirely instead of burning a full
+    # theories/ compile, and keeps the guardrail verdict a hard
+    # prerequisite of this build even though it now lives in its own
     # job (so branch protection on this build still implies guards pass).
+    #
+    # ubuntu-latest. Rocq is the pinned toolchain image (Dockerfile
+    # `--target toolchain`, FROM rocq/rocq-prover:9.2.0), the same GHCR
+    # image the `rocq-flocq` job pulls. That image has Flocq installed so
+    # the pin matches; this lane still compiles only `_CoqProject`
+    # (Stdlib). A GHCR miss builds the image locally and does not publish
+    # it (publish stays on `rocq-flocq`).
     needs: guards
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     # A full theories/ build is well under this; the ceiling caps a runaway.
     timeout-minutes: 60
+    # actions: write — save/restore the .vo cache.
+    # packages: read — pull the toolchain image from GHCR.
+    permissions:
+      actions: write
+      contents: read
+      packages: read
     strategy:
       fail-fast: false
       matrix:
@@ -68,27 +81,103 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Rocq via Homebrew
-        # Bottled install ~30s; caching the Cellar misses Homebrew's
-        # config files under /opt/homebrew/etc/, which breaks ocamlfind.
-        # Easier to install fresh each run.
-        run: brew install rocq
+      - name: Compute toolchain tag (content-addressed by Dockerfile)
+        id: toolchain
+        # GHCR repository names must be lowercase.
+        # `github.repository_owner` preserves the account's casing, and
+        # Actions expressions have no lowercasing function, so fold the
+        # case here with bash parameter expansion. Same tag the
+        # `rocq-flocq` job publishes.
+        run: |
+          echo "tag=df-$(sha256sum Dockerfile | cut -c1-16)" >> "$GITHUB_OUTPUT"
+          echo "TOOLCHAIN_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/nts-proofs-toolchain" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        continue-on-error: true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull toolchain image from GHCR
+        id: pull
+        run: |
+          if docker pull "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}"; then
+            docker tag "$TOOLCHAIN_IMAGE:${{ steps.toolchain.outputs.tag }}" nts-proofs-toolchain:ci
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build toolchain image (GHCR miss)
+        # Local only. Publishing the content-addressed tag stays on the
+        # `rocq-flocq` job, on main. This fallback exists so a Dockerfile
+        # change does not fail the Stdlib lane before that publish.
+        if: steps.pull.outputs.hit != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: toolchain
+          load: true
+          tags: nts-proofs-toolchain:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Show Rocq version
         id: rocqv
-        # Capture the ACTUAL installed version: `brew install rocq` is
-        # unpinned, so the .vo cache key must track what Homebrew shipped
-        # (not the cosmetic matrix string) or a compiler bump would try to
-        # load version-incompatible cached .vo.
+        # The image is pinned to Rocq 9.2.0 (Dockerfile FROM
+        # rocq/rocq-prover:9.2.0-...). `rocq --version` prints that
+        # release as "9.2": trailing ".0" components are omitted, and a
+        # patch or "+rc" suffix is printed when it is not that release.
+        # Accept the matrix string or that elided form; reject anything
+        # else. The cache key still records the sanitized version line
+        # (not the matrix string) so a compiler bump cannot load
+        # incompatible .vo.
         run: |
-          rocq -v
-          echo "ver=$(rocq --version | head -1 | tr -cd '[:alnum:].-')" >> "$GITHUB_OUTPUT"
+          out="$(docker run --rm nts-proofs-toolchain:ci bash -lc 'set -eu; rocq -v >&2; rocq --version')"
+          raw="${out%%$'\n'*}"
+          raw="${raw%%$'\r'}"
+          echo "rocq --version: ${raw}"
+          ver="$(printf '%s' "$raw" | tr -cd '[:alnum:].-')"
+          if [ -z "$ver" ]; then
+            echo "::error::rocq --version produced an empty string"
+            exit 1
+          fi
+          echo "ver=${ver}" >> "$GITHUB_OUTPUT"
+          echo "cache version token: ${ver}"
+          expected="${{ matrix.rocq-version }}"
+          # 9.2.0 -> 9.2, matching Rocq's printer. Stop at the first
+          # component that is not a trailing 0.
+          printed="$expected"
+          while [[ "$printed" == *.0 ]]; do
+            printed="${printed%.0}"
+          done
+          accept=0
+          for candidate in "$expected" "$printed"; do
+            escaped="${candidate//./\\.}"
+            if [[ "$raw" =~ (^|[^0-9.])${escaped}($|[^0-9.A-Za-z+-]) ]]; then
+              accept=1
+              break
+            fi
+          done
+          if [ "$accept" -ne 1 ]; then
+            echo "::error::expected Rocq ${expected} (prints as ${printed}), container reports: ${raw}"
+            exit 1
+          fi
 
       - name: Restore theories/ .vo cache (PRs only)
         # PR == "theories-quick": restore the previous run's .vo + manifest so
         # only changed files + dependents recompile.  Pushes to main skip this
         # and build "theories-full" from clean, re-seeding the cache — the
         # integrity anchor (every merge revalidates the whole lane).
+        # runner.os is in the key: .vo files are not portable from macOS to
+        # Linux, and this lane used to run on macos-latest. A key without the
+        # OS would restore those artefacts here.
         if: github.event_name == 'pull_request'
         uses: actions/cache/restore@v4
         with:
@@ -97,16 +186,22 @@ jobs:
             theories/*.glob
             theories/.*.aux
             .vo-manifest-theories
-          key: theories-vo-${{ steps.rocqv.outputs.ver }}-${{ github.run_id }}
+          key: theories-vo-${{ runner.os }}-${{ steps.rocqv.outputs.ver }}-${{ github.run_id }}
           restore-keys: |
-            theories-vo-${{ steps.rocqv.outputs.ver }}-
+            theories-vo-${{ runner.os }}-${{ steps.rocqv.outputs.ver }}-
 
       - name: Generate Makefile (parity with container + docs)
         # Use the same modern driver + .gen naming as the container job,
         # Dockerfile, README, and the committed convenience Makefile.
         # Never write to plain "Makefile" — that is the safe committed
         # convenience layer (make help, make host, etc.).
-        run: rocq makefile -f _CoqProject -o Makefile.gen
+        # Run inside the toolchain image so the generated paths are Linux.
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            nts-proofs-toolchain:ci \
+            bash -lc 'rm -f Makefile.gen Makefile.gen.conf .Makefile.d .Makefile.gen.d && rocq makefile -f _CoqProject -o Makefile.gen'
+          sudo chown -R "$(id -u):$(id -g)" .
 
       - name: Invalidate stale artefacts (content-addressed, theories/ lane)
         # Same content-addressed pass as the flocq job, pointed at the
@@ -119,11 +214,15 @@ jobs:
 
       - name: Build proofs
         # Parallel + output-sync for readable logs (matches container job).
-        # This job now does exactly one thing — compile the Stdlib-only
-        # `theories/` lane end to end.  The build-independent guardrails
-        # run separately in the `guards` job above (fast, parallel), and
-        # the Admitted scan there covers this lane's sources too.
-        run: make -f Makefile.gen -j"$(sysctl -n hw.ncpu)" --output-sync=target || make -f Makefile.gen -j"$(sysctl -n hw.ncpu)"
+        # This job compiles the Stdlib-only `theories/` lane (`_CoqProject`)
+        # end to end. It does not build `_CoqProject.full`. The
+        # build-independent guardrails run in the `guards` job.
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            nts-proofs-toolchain:ci \
+            bash -lc 'make -f Makefile.gen -j"$(nproc)" --output-sync=target || make -f Makefile.gen -j"$(nproc)" --output-sync=target'
+          sudo chown -R "$(id -u):$(id -g)" .
 
       - name: Refresh theories/ manifest
         # Only reached when the build passed: records the content hash of every
@@ -140,7 +239,7 @@ jobs:
             theories/*.glob
             theories/.*.aux
             .vo-manifest-theories
-          key: theories-vo-${{ steps.rocqv.outputs.ver }}-${{ github.run_id }}
+          key: theories-vo-${{ runner.os }}-${{ steps.rocqv.outputs.ver }}-${{ github.run_id }}
 
   rocq-flocq:
     # Container-based build of the Flocq-dependent corpus
