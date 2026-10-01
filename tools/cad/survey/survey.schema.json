@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nettopologysuite.proofs:cad:survey.schema.json",
+  "title": "DXF entity survey",
+  "description": "One entry per DXF entity the extractor handles. note is one sentence and cites a DXF reference section.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entities", "headers"],
+  "properties": {
+    "entities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/entity"}
+    },
+    "headers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/header"}
+    }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity", "groupCodes", "convention", "versions", "traps", "note"],
+      "anyOf": [
+        {"required": ["kind"]},
+        {"required": ["declineId"]}
+      ],
+      "properties": {
+        "entity": {"type": "string", "minLength": 1},
+        "groupCodes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 0}
+        },
+        "convention": {"type": "string", "minLength": 1, "maxLength": 240},
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "traps": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "kind": {"type": "string", "minLength": 1},
+        "declineId": {"type": "string", "minLength": 1},
+        "declineIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "note": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "note"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^\\$[A-Z][A-Z0-9]*$"},
+        "note": {"type": "string", "minLength": 1, "maxLength": 240},
+        "traps": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

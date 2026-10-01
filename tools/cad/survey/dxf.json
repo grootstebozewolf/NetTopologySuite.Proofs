@@ -1,0 +1,265 @@
+{
+  "entities": [
+    {
+      "entity": "LINE",
+      "groupCodes": [10, 20, 30, 11, 21, 31, 210, 220, 230],
+      "convention": "The stored segment is a start point and an end point.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "kind": "Chord",
+      "note": "Groups 10 and 11 are the segment ends (Autodesk DXF Reference, LINE)."
+    },
+    {
+      "entity": "LWPOLYLINE",
+      "groupCodes": [10, 20, 38, 42, 70, 90, 210, 220, 230],
+      "convention": "Each vertex bulge applies to the segment that starts there, and the closing segment uses the last vertex bulge.",
+      "versions": ["R2000+"],
+      "traps": [
+        "R12 POLYLINE/VERTEX vs R2000 LWPOLYLINE",
+        "bulge sign"
+      ],
+      "kind": "BulgePolyline",
+      "note": "Group 42 is tan of one quarter of the included angle and is positive to the left of the chord (Autodesk DXF Reference, LWPOLYLINE)."
+    },
+    {
+      "entity": "ARC",
+      "groupCodes": [10, 20, 30, 40, 50, 51, 210, 220, 230],
+      "convention": "Start and end angles are degrees counterclockwise from the OCS x-axis.",
+      "versions": ["R12", "R2000+"],
+      "traps": [
+        "OCS and extrusion via the arbitrary-axis algorithm",
+        "stored angles in degrees CCW, with $ANGDIR/$ANGBASE display-only"
+      ],
+      "kind": "Arc",
+      "declineIds": ["ID_TiltedPlacement"],
+      "note": "Groups 50 and 51 stay counterclockwise degrees even when the header display direction changes (Autodesk DXF Reference, ARC)."
+    },
+    {
+      "entity": "CIRCLE",
+      "groupCodes": [10, 20, 30, 40, 210, 220, 230],
+      "convention": "The circle is a center and a radius in the OCS.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "kind": "Circle",
+      "note": "Group 40 is the radius (Autodesk DXF Reference, CIRCLE)."
+    },
+    {
+      "entity": "ELLIPSE",
+      "groupCodes": [10, 20, 30, 11, 21, 31, 40, 41, 42, 210, 220, 230],
+      "convention": "Start and end are parameters about the major axis, not degree angles.",
+      "versions": ["R13", "R2000+"],
+      "traps": ["ELLIPSE params vs angles"],
+      "declineId": "ID_EllipseNotYet",
+      "note": "Groups 41 and 42 are parametric angles about the major axis (Autodesk DXF Reference, ELLIPSE)."
+    },
+    {
+      "entity": "SPLINE",
+      "groupCodes": [10, 20, 30, 11, 21, 31, 40, 41, 70, 71, 72, 73, 74],
+      "convention": "A clamped unit-weight degree 2 or 3 spline is Bezier and every other clamped spline is BSpline.",
+      "versions": ["R13", "R2000+"],
+      "traps": ["SPLINE flags (closed, periodic, rational)"],
+      "kind": "BSpline",
+      "declineIds": ["ID_PeriodicSpline", "ID_FitPointSpline", "ID_UnclampedKnots"],
+      "note": "Group 70 bits mark closed, periodic, and rational splines (Autodesk DXF Reference, SPLINE)."
+    },
+    {
+      "entity": "INSERT",
+      "groupCodes": [2, 10, 20, 30, 41, 42, 43, 44, 45, 50, 70, 71, 210, 220, 230],
+      "convention": "A similarity insert expands its block and unequal x and y scales decline.",
+      "versions": ["R12", "R2000+"],
+      "traps": ["INSERT scale, rotation and column/row arrays"],
+      "declineId": "ID_NotSimilarityPlacement",
+      "note": "Groups 41 and 42 are scales, group 50 is rotation, and groups 70 and 71 are the column and row counts (Autodesk DXF Reference, INSERT)."
+    },
+    {
+      "entity": "POLYLINE",
+      "groupCodes": [10, 20, 30, 66, 70, 210, 220, 230],
+      "convention": "Vertices are following VERTEX entities, not inline bulge pairs.",
+      "versions": ["R12"],
+      "traps": ["R12 POLYLINE/VERTEX vs R2000 LWPOLYLINE"],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "An R12 POLYLINE is followed by VERTEX entities until SEQEND (Autodesk DXF Reference, POLYLINE)."
+    },
+    {
+      "entity": "TEXT",
+      "groupCodes": [1, 10, 20, 30, 40, 50],
+      "convention": "The entity is text, not a curve.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "declineId": "ID_TextEntity",
+      "note": "Group 1 is the text string (Autodesk DXF Reference, TEXT)."
+    },
+    {
+      "entity": "MTEXT",
+      "groupCodes": [1, 3, 10, 20, 30, 40],
+      "convention": "The entity is multiline text, not a curve.",
+      "versions": ["R13", "R2000+"],
+      "traps": [],
+      "declineId": "ID_TextEntity",
+      "note": "Groups 1 and 3 hold the text (Autodesk DXF Reference, MTEXT)."
+    },
+    {
+      "entity": "ATTRIB",
+      "groupCodes": [1, 2, 10, 20, 30, 40],
+      "convention": "The entity is an attribute value, not a curve.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "declineId": "ID_TextEntity",
+      "note": "Group 1 is the attribute value (Autodesk DXF Reference, ATTRIB)."
+    },
+    {
+      "entity": "ATTDEF",
+      "groupCodes": [1, 2, 3, 10, 20, 30, 40],
+      "convention": "The entity is an attribute definition, not a curve.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "declineId": "ID_TextEntity",
+      "note": "Group 2 is the attribute tag (Autodesk DXF Reference, ATTDEF)."
+    },
+    {
+      "entity": "ARCALIGNEDTEXT",
+      "groupCodes": [1, 10, 40, 50],
+      "convention": "The entity is text drawn along an arc, not the arc itself.",
+      "versions": ["R2000+"],
+      "traps": [],
+      "declineId": "ID_TextEntity",
+      "note": "Group 1 is the arc-aligned text string (Autodesk DXF Reference, ARCALIGNEDTEXT)."
+    },
+    {
+      "entity": "DIMENSION",
+      "groupCodes": [1, 10, 13, 14, 70],
+      "convention": "The entity is a dimension, not a curve.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "declineId": "ID_DimensionEntity",
+      "note": "Group 1 is the dimension text (Autodesk DXF Reference, DIMENSION)."
+    },
+    {
+      "entity": "LEADER",
+      "groupCodes": [3, 10, 76, 210],
+      "convention": "The entity is a leader, not a curve.",
+      "versions": ["R13", "R2000+"],
+      "traps": [],
+      "declineId": "ID_DimensionEntity",
+      "note": "Group 10 repeats the leader vertices (Autodesk DXF Reference, LEADER)."
+    },
+    {
+      "entity": "MULTILEADER",
+      "groupCodes": [10, 290, 300],
+      "convention": "The entity is a multileader, not a curve.",
+      "versions": ["R2000+"],
+      "traps": [],
+      "declineId": "ID_DimensionEntity",
+      "note": "Group 300 carries the multileader context (Autodesk DXF Reference, MULTILEADER)."
+    },
+    {
+      "entity": "MLEADER",
+      "groupCodes": [10, 290, 300],
+      "convention": "MLEADER is the same multileader entity under its short name.",
+      "versions": ["R2000+"],
+      "traps": [],
+      "declineId": "ID_DimensionEntity",
+      "note": "The short name uses the same groups as MULTILEADER (Autodesk DXF Reference, MULTILEADER)."
+    },
+    {
+      "entity": "HATCH",
+      "groupCodes": [10, 70, 71, 75, 91, 210],
+      "convention": "The entity is a hatch region, not an outline to emit.",
+      "versions": ["R14", "R2000+"],
+      "traps": [],
+      "declineId": "ID_HatchRegion",
+      "note": "Group 91 is the boundary-path count (Autodesk DXF Reference, HATCH)."
+    },
+    {
+      "entity": "MPOLYGON",
+      "groupCodes": [10, 70, 91],
+      "convention": "The entity is a polygon hatch, not an outline to emit.",
+      "versions": ["R2000+"],
+      "traps": [],
+      "declineId": "ID_HatchRegion",
+      "note": "MPOLYGON stores hatch-style boundary paths (Autodesk DXF Reference, MPOLYGON)."
+    },
+    {
+      "entity": "3DFACE",
+      "groupCodes": [10, 11, 12, 13, 70],
+      "convention": "The entity is a 3D face.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "Groups 10 through 13 are the four corners (Autodesk DXF Reference, 3DFACE)."
+    },
+    {
+      "entity": "3DSOLID",
+      "groupCodes": [1, 3],
+      "convention": "The entity is an ACIS solid.",
+      "versions": ["R13", "R2000+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "Groups 1 and 3 hold the ACIS data (Autodesk DXF Reference, 3DSOLID)."
+    },
+    {
+      "entity": "BODY",
+      "groupCodes": [1, 3],
+      "convention": "The entity is an ACIS body.",
+      "versions": ["R13", "R2000+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "Groups 1 and 3 hold the ACIS body (Autodesk DXF Reference, BODY)."
+    },
+    {
+      "entity": "REGION",
+      "groupCodes": [1, 3],
+      "convention": "The entity is an ACIS region.",
+      "versions": ["R13", "R2000+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "Groups 1 and 3 hold the ACIS region (Autodesk DXF Reference, REGION)."
+    },
+    {
+      "entity": "SURFACE",
+      "groupCodes": [1, 3],
+      "convention": "The entity is a surface, not a planar curve.",
+      "versions": ["R2000+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "SURFACE is declined with the other 3D entities (Autodesk DXF Reference, SURFACE)."
+    },
+    {
+      "entity": "MESH",
+      "groupCodes": [10, 91, 92],
+      "convention": "The entity is a polygon mesh.",
+      "versions": ["R2010+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "Groups 91 and 92 count the mesh vertices and faces (Autodesk DXF Reference, MESH)."
+    },
+    {
+      "entity": "SOLID",
+      "groupCodes": [10, 11, 12, 13],
+      "convention": "The entity is a filled quadrilateral, not a curve.",
+      "versions": ["R12", "R2000+"],
+      "traps": [],
+      "declineId": "ID_ThreeDNotYet",
+      "note": "Groups 10 through 13 are the quadrilateral corners (Autodesk DXF Reference, SOLID)."
+    }
+  ],
+  "headers": [
+    {
+      "name": "$INSUNITS",
+      "traps": ["$INSUNITS=0 unitless"],
+      "note": "A value of 0 means the drawing is unitless (Autodesk DXF Reference, HEADER)."
+    },
+    {
+      "name": "$AUNITS",
+      "note": "This header selects the displayed angle format (Autodesk DXF Reference, HEADER)."
+    },
+    {
+      "name": "$ANGDIR",
+      "note": "This header selects the displayed angle direction (Autodesk DXF Reference, HEADER)."
+    },
+    {
+      "name": "$ANGBASE",
+      "note": "This header is the displayed angle origin (Autodesk DXF Reference, HEADER)."
+    }
+  ]
+}
