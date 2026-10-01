@@ -1,0 +1,29 @@
+{
+  "entities": [
+    {
+      "entity": "arc",
+      "convention": "An arc is element type 16 in both V7 and V8.",
+      "versions": ["V7", "V8"],
+      "traps": ["V7 vs V8 arcs"],
+      "kind": "Arc",
+      "note": "V7 and V8 both store an arc as element type 16, and the design-file container differs (Bentley MicroStation DGN, element type 16)."
+    },
+    {
+      "entity": "elliptical arc",
+      "convention": "Rotation sits in the primary axis, and start and sweep are measured in that frame.",
+      "versions": ["V7", "V8"],
+      "traps": ["rotated elliptical-arc parameters"],
+      "kind": "Ellipse",
+      "note": "A rotated elliptical arc keeps rotation in the primary axis, and start and sweep are measured in that axis frame (Bentley MicroStation DGN, element type 16)."
+    },
+    {
+      "entity": "cell",
+      "convention": "A cell places a definition by origin, rotation, and scale.",
+      "versions": ["V7", "V8"],
+      "traps": ["cell placement"],
+      "declineId": "ID_NotSimilarityPlacement",
+      "note": "Cell placement is an origin, a rotation, and a scale, and unequal scales are not a similarity (Bentley MicroStation DGN, cell header)."
+    }
+  ],
+  "headers": []
+}
