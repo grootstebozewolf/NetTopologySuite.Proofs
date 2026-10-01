@@ -359,6 +359,14 @@ theories/AtanIvt.v
 # JTS Math.atan2 / NTS Angle. claimId: none.
 # 3-axiom IVT atan2. Not audit-excepted.
 theories/Atan2.v
+# Host clothoid length |ed-sd|. claimId 0007-clothoid-length.
+theories/ClothoidLengthAbs.v
+# Heading multiples of pi/2. claimId none. Envelope letter is next.
+theories/ClothoidAxis.v
+# Strict knot list of those stations. claimId none.
+theories/ClothoidKnots.v
+# AABB via envelope_aabb. claimId 0007-clothoid-envelope.
+theories/ClothoidEnvelope.v
 # W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
 # Headline wind_integer. Not the ray-crossing count in WindingNumber.v.
 # Does not flip RNG_JordanUncond.

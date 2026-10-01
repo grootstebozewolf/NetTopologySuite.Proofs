@@ -3066,6 +3066,14 @@ theories/IntakeSpiralJts.v
 # Normalizer 2 (ClothoidNorm2). Start state + (k0, k1, L)
 # builds a ClothoidEgg. claimId 0007-norm2-state. No Admitted.
 theories/ClothoidNorm2.v
+# Host clothoid length |ed-sd|. claimId 0007-clothoid-length.
+theories/ClothoidLengthAbs.v
+# Heading multiples of pi/2. claimId none.
+theories/ClothoidAxis.v
+# Strict knot list of those stations. claimId none.
+theories/ClothoidKnots.v
+# AABB via envelope_aabb. claimId 0007-clothoid-envelope.
+theories/ClothoidEnvelope.v
 # Arc row of the compound fold (ArcMemberState). arc_exit / arc_entry
 # store MemberState from IntakeSpiralJts. claimId none. No Admitted.
 theories/ArcMemberState.v
