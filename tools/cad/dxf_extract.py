@@ -30,16 +30,20 @@ Modes (ADR-0005):
 Stored ARC angles (group codes 50 and 51, degrees) are always CCW from
 the OCS x-axis. ELLIPSE start and end params are always CCW about the
 major axis. Both record ``direction`` ``ccw-ocs``. ``$ANGDIR`` and
-``$ANGBASE`` stay on ``units`` as display and input provenance and are
-not copied into those params or into an angleStep. An arc whose end is
-less than its start is copied raw; 360 is not added.
+``$ANGBASE`` stay on ``units`` as display and input provenance, whatever
+integer and number the header holds, and are not copied into those
+params or into an angleStep. They never decline an entity. An arc whose
+end is less than its start is copied raw; 360 is not added.
 
 Named declines: ID_NotSimilarityPlacement, ID_TiltedPlacement,
 ID_ThreeDNotYet, ID_HatchRegion, ID_TextEntity, ID_DimensionEntity,
 ID_EllipseNotYet, ID_FitPointSpline, ID_UnclampedKnots,
-ID_PeriodicSpline, ID_UnknownUnit, ID_AngleConventionUnknown,
-ID_ToleranceNonPositive, ID_ToleranceKindUnsupported,
+ID_PeriodicSpline, ID_UnknownUnit, ID_ToleranceNonPositive,
+ID_ToleranceKindUnsupported,
 ID_DegenerateEntity, ID_UnsupportedEntity (with the source name).
+DXF does not emit ID_AngleConventionUnknown. ``$ANGDIR`` and
+``$ANGBASE`` are display provenance, not a decline. Another format may
+emit that id.
 
 ID_NonzeroOverlapNotYet is in the schema for overlapping nonzero-winding
 contours. Year 0 does not detect overlap, so this extractor never emits
@@ -192,18 +196,16 @@ def _header_units(doc: Any) -> dict[str, Any] | str:
     if ins not in INSUNITS:
         return "ID_UnknownUnit"
     aunits = int(doc.header.get("$AUNITS", 0))
-    if aunits not in AUNITS:
-        return "ID_AngleConventionUnknown"
+    # $ANGDIR (integer) and $ANGBASE (degrees) are display/input provenance.
+    # Any value is kept. They do not decline the entity.
     angdir = int(doc.header.get("$ANGDIR", 0))
-    if angdir not in (0, 1):
-        return "ID_AngleConventionUnknown"
     angbase = _num(doc.header.get("$ANGBASE", 0.0))
     if not _finite(angbase):
-        return "ID_AngleConventionUnknown"
+        angbase = None
     return {
         "linear": INSUNITS[ins],
         "linearCode": ins,
-        "angle": AUNITS[aunits],
+        "angle": AUNITS.get(aunits, str(aunits)),
         "angleCode": aunits,
         "angdir": angdir,
         "angbase": angbase,
