@@ -910,10 +910,8 @@ Proof.
     apply strict3_outer; exact H.
 Qed.
 
-(* Deferred: ii_entry_agrees_concrete.
-   On each concrete triangle_pair_fill arm (Disjoint, Overlap, Contains,
-   TouchEdge, TouchVertex) the II cell should equal ii_entry. Stating
-   that here would import RelateMatrixTriangle and with it
+(* Five-arm fill samples live in TrianglePairAgree, full project only.
+   Stating them here would import RelateMatrixTriangle and
    GeneralTriangleSeparation. Not Admitted. The pairs below are the
    concrete check, including the swapped nest (0,0)(4,0)(0,4) against
    (0,0)(4,0)(1,1). *)
