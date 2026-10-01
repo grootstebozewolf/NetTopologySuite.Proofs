@@ -4,8 +4,8 @@
    Co-circular overlap endpoints are boundary endpoints of one support
    that lie in the other support's image. A joint of two pieces on the
    same support is not a boundary, so a progress split does not add one.
-   rho_step_nonincreasing carries: the candidate list of every pair is
-   finite and does not grow. claimId: none.
+   The symmetric count is a larger finite set than the parameter hull.
+   An admissible step still drops that set by one. claimId: none.
    3-axiom host. No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
