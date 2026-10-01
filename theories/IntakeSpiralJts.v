@@ -21,11 +21,10 @@
    CD_JtsTripleNotYet (intake id ID_JtsClothoidNotYet).
 
    CertDecline is the decline taxonomy later emit can reuse.
-   MemberState is the carrier the compound fold will thread
+   MemberState is the carrier the compound fold threads
    (end point, tangent, curvature). This letter does not fold
-   members, does not discharge JTS G1, and does not prove
-   parse ∘ emit = id. Those three stay Prop obligations in
-   IntakeSpiralJtsMap. Norm2 is ClothoidNorm2, not a marker.
+   members. Emit/parse stays a Prop in IntakeSpiralJtsMap.
+   Norm2 is ClothoidNorm2, not a marker.
 
    ADR-0005: this classification is lenient intake. It is not
    isValid. No Admitted / Axiom / Parameter.
@@ -154,6 +153,45 @@ Lemma member_state_proj : forall p d k,
   mst_dir (mkMemberState p d k) = d /\
   mst_curvature (mkMemberState p d k) = k.
 Proof. intros p d k. repeat split; reflexivity. Qed.
+
+(* Intake decline and mode. Defined here so the clothoid fold can
+   name them without importing the walker. ID_CompoundGap is the
+   compound C0 failure. The singleton JTS recogniser is not this
+   inductive's job. *)
+Inductive IntakeDeclineReason : Type :=
+| ID_Empty
+| ID_BadPointCount
+| ID_GeodesicString
+| ID_SpiralCurve
+| ID_SpiralOther
+| ID_SpiralClothoidNotYet
+| ID_SpiralNonPositiveLength
+| ID_SpiralConstantCurvature
+| ID_IsoClothoid
+| ID_MkOutOfScope
+| ID_CircGammaLeftover
+| ID_Collinear
+| ID_DuplicateControl
+| ID_DegenerateArc
+| ID_CsClosedDegenerate
+| ID_SpanMismatch
+| ID_MissingMeasure
+| ID_UnexpectedMeasure
+| ID_NotSimilarityFrame
+| ID_NonPositiveScale
+| ID_DegenerateWindow
+| ID_TiltedPlacement
+| ID_JtsClothoidNotYet
+| ID_JtsNonPositiveLength
+| ID_JtsConstantCurvature
+| ID_ClothoidCurvatureJump
+| ID_ClothoidNoContext
+| ID_CompoundGap
+| ID_NotFirstSlice.
+
+Inductive IntakeMode : Type :=
+| IntakeLenient
+| IntakeStrict.
 
 Print Assumptions classify_example5.
 Print Assumptions classify_jts_nonpos.

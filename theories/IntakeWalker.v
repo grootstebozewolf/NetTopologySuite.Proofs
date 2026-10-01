@@ -46,7 +46,7 @@
    Similarity frame or a named Decline. The locked fixture's
    fields map to locked_clothoid_egg (eval-level). JTS
    example5 (0, 5/1000, 80) is that bag; L <= 0 and other
-   triples decline by name. example5 bags both.
+   triples decline by name. The compound computes the fold.
    ID_IsoClothoid is not the well-formed answer.
    Clothoid×clothoid stays not-first-cook / IDecline.
 
@@ -98,7 +98,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals Lra List.
-From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake IntakeSpiralJts IntakeSpiralFront.
+From NTS.Proofs Require Import Distance SheetHenCook CircularCookMkCirc IntakeAngles IntakeCircle IsoClothoidIntake IntakeSpiralFront.
+From NTS.Proofs Require Export IntakeSpiralJts IntakeCompoundFold.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -108,53 +109,8 @@ Local Open Scope list_scope.
 (* CircSlice is the visitor's locked-shape tag — not a second grammar.        *)
 (* -------------------------------------------------------------------------- *)
 
-Inductive CircSlice : Type :=
-| CircQuarter
-| CircFullOgc
-| CircUnknown.
-
-Inductive TaggedCst : Type :=
-| TPoint : Point -> TaggedCst
-| TLineString : list Point -> TaggedCst
-| TCircularString : CircSlice -> list Point -> TaggedCst
-| TCircle : CircSlice -> list Point -> TaggedCst
-| TCompoundCurve : list TaggedCst -> TaggedCst
-| TClothoidJts : R -> R -> R -> TaggedCst
-| TClothoidIso : IsoClothoid -> TaggedCst
-| TGeodesicString : list Point -> TaggedCst
-| TSpiralCurve : SpiralInput -> TaggedCst
-| TOutOfSlice : TaggedCst.
-
-(* Intake Decline. Distinct type from cook IResult / IDecline. *)
-Inductive IntakeDeclineReason : Type :=
-| ID_Empty
-| ID_BadPointCount
-| ID_GeodesicString
-| ID_SpiralCurve
-| ID_SpiralOther
-| ID_SpiralClothoidNotYet
-| ID_SpiralNonPositiveLength
-| ID_SpiralConstantCurvature
-| ID_IsoClothoid
-| ID_MkOutOfScope
-| ID_CircGammaLeftover
-| ID_Collinear
-| ID_DuplicateControl
-| ID_DegenerateArc
-| ID_CsClosedDegenerate
-| ID_SpanMismatch
-| ID_MissingMeasure
-| ID_UnexpectedMeasure
-| ID_NotSimilarityFrame
-| ID_NonPositiveScale
-| ID_DegenerateWindow
-| ID_TiltedPlacement
-| ID_JtsClothoidNotYet
-| ID_JtsNonPositiveLength
-| ID_JtsConstantCurvature
-| ID_ClothoidCurvatureJump
-| ID_ClothoidNoContext
-| ID_NotFirstSlice.
+(* CircSlice, TaggedCst, ShcBag, IntakeResult: IntakeCompoundFold.
+   IntakeDeclineReason, IntakeMode: IntakeSpiralJts. Both exported. *)
 
 Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
   match f with
@@ -166,17 +122,6 @@ Definition angle_fail_reason (f : AngleFail) : IntakeDeclineReason :=
   | AF_CsClosedDegenerate => ID_CsClosedDegenerate
   | AF_SpanMismatch => ID_SpanMismatch
   end.
-
-Record ShcBag : Type := mkShcBag {
-  bag_sheet : Sheet;
-  bag_hens : list Hen;
-  bag_pts : list Point;
-  bag_chickens : list Chicken
-}.
-
-Inductive IntakeResult : Type :=
-| IntakeBag : ShcBag -> IntakeResult
-| IntakeDecline : IntakeDeclineReason -> IntakeResult.
 
 Lemma intake_bag_neq_decline :
   forall b r, IntakeBag b <> IntakeDecline r.
@@ -392,14 +337,6 @@ Definition map_jts_clothoid (s : Sheet) (k0 k1 len : R) : IntakeResult :=
       IntakeDecline (intake_decline_of (CD_JtsTripleNotYet k0 k1 len))
   end.
 
-Definition map_cc_example5 (s : Sheet) : ShcBag :=
-  append_bags s
-    (append_bags s
-       (mkShcBag s [0%nat; 1%nat] [p00; mkPoint 100 0]
-          [mkChicken 0%nat 1%nat (MkChord (mkChordEgg p00 (mkPoint 100 0)))])
-       (clothoid_bag s locked_clothoid_egg))
-    (clothoid_bag s locked_clothoid_egg).
-
 Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
   match t with
   | TPoint p => IntakeBag (map_point s p)
@@ -422,25 +359,10 @@ Definition intake_map_atom (s : Sheet) (t : TaggedCst) : IntakeResult :=
   | TOutOfSlice => IntakeDecline ID_NotFirstSlice
   end.
 
-Fixpoint intake_map_members (s : Sheet) (ms : list TaggedCst) {struct ms}
-  : IntakeResult :=
-  match ms with
-  | [] => IntakeDecline ID_Empty
-  | m :: rest =>
-      match intake_map_atom s m with
-      | IntakeDecline r => IntakeDecline r
-      | IntakeBag b0 =>
-          (fix go (acc : ShcBag) (xs : list TaggedCst) : IntakeResult :=
-             match xs with
-             | [] => IntakeBag acc
-             | y :: ys =>
-                 match intake_map_atom s y with
-                 | IntakeDecline r => IntakeDecline r
-                 | IntakeBag b1 => go (append_bags s acc b1) ys
-                 end
-             end) b0 rest
-      end
-  end.
+(* Compounds dispatch. The atom path, including the JTS singleton, stays. *)
+Definition intake_map_members (s : Sheet) (ms : list TaggedCst) : IntakeResult :=
+  intake_cc_fold IntakeLenient s map_ls map_cs_quarter intake_map_atom
+    clothoid_bag append_bags ms.
 
 Definition intake_map (s : Sheet) (t : TaggedCst) : IntakeResult :=
   match t with
@@ -450,17 +372,16 @@ Definition intake_map (s : Sheet) (t : TaggedCst) : IntakeResult :=
 
 (* ADR-0005. intake_map is the lenient default. Strict declines a
    3-control CIRCULARSTRING whose first control equals the last.
-   No other CST changes. *)
-Inductive IntakeMode : Type :=
-| IntakeLenient
-| IntakeStrict.
-
+   A strict compound passes IntakeStrict to the fold. *)
 Definition intake_map_mode (mode : IntakeMode) (s : Sheet) (t : TaggedCst)
   : IntakeResult :=
   match mode with
   | IntakeLenient => intake_map s t
   | IntakeStrict =>
       match t with
+      | TCompoundCurve ms =>
+          intake_cc_fold IntakeStrict s map_ls map_cs_quarter intake_map_atom
+            clothoid_bag append_bags ms
       | TCircularString _ pts =>
           match pts with
           | a :: _ :: c :: [] =>
@@ -674,6 +595,12 @@ Lemma locked_cc_maps :
   intake_map default_sheet locked_cc_cst =
     IntakeBag (map_cc_locked default_sheet).
 Proof.
+  unfold intake_map, locked_cc_cst, intake_map_members, locked_cs_quarter_cst,
+    intake_cc_fold.
+  cbn [cc_step check_c0 line_last cc_go].
+  rewrite c0_join_refl.
+  unfold map_cc_locked, map_ls, map_cs_quarter, hens_of_n, chords_of_pts,
+    append_bags, shift_chicken. cbn.
   reflexivity.
 Qed.
 

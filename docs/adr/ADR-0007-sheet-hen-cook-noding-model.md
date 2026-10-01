@@ -1626,8 +1626,8 @@ Locked inhabitance record (`SheetHenClothoidEgg.v`): chord-seed
 ends plus JTS `(k0,k1,L)` from `example5.txt` (landed record; ISO Fresnel host remint unlocked, #883). Not clothoid×clothoid first cook. `EggClothoid`
 stays; spiral's clothoid nameplate stays distinct.
 
-`example5.txt` / `example5_cc_both_clothoid_cst` bags the
-LineString plus both clothoid members. `ID_IsoClothoid` /
+`example5_cc_both_clothoid_cst` declines `ID_CompoundGap` (not C0);
+members bag individually (ISO atom `locked_clothoid_egg`, JTS its norm2 egg). supersedes the compound-bags claim (`IntakeWalkerClothoid.v : example5_cc_gap`). `ID_IsoClothoid` /
 `ID_MkOutOfScope` stay on the Decline type; they are not the
 well-formed clothoid answer. No silent chord demote.
 
@@ -1651,7 +1651,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5 bags | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalkerClothoid.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalkerClothoid.v : example5_cc_bags_both_clothoid`, `IntakeWalkerClothoid.v : iso_clothoid_chickens_mkclothoid` |
+| `IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5's compound declines `ID_CompoundGap` (not C0); its members bag individually, the ISO atom as `locked_clothoid_egg` and the JTS member as its norm2 egg; supersedes the compound-bags claim | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalkerClothoid.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalkerClothoid.v : example5_cc_gap`, `IntakeCompoundFold.v : example5_members_differ`, `IntakeWalkerClothoid.v : iso_clothoid_chickens_mkclothoid` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit; `MkClothoid` inhabits | `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : mkclothoid_pair_hit_I_ok` |
 | `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword / ρ parked | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
 

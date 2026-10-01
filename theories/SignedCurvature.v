@@ -12,8 +12,8 @@
    curvature. k0 = k1 declines ID_JtsConstantCurvature in both
    modes. No chord or circle dispatch. A missing predecessor
    is ID_ClothoidNoContext. No proof of C0, G1, or length
-   assumes the G2 equality. fold_clothoid is not applied by
-   intake_map; that wiring is N2c-iii. claimId: none.
+   assumes the G2 equality. Compound wiring is IntakeCompoundFold.
+   claimId: none.
    No Admitted. No classic. No MVT / Rolle / RiemannInt.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
@@ -21,7 +21,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance SheetHenClothoidCore ClothoidNorm2
-  CurveLength IntakeWalker IntakeSpiralJts IsoClothoidIntake SheetHenCircEgg.
+  CurveLength IntakeSpiralJts IsoClothoidIntake SheetHenCircEgg.
 From NTS.Proofs Require ArcMemberState.
 Local Open Scope R_scope.
 
