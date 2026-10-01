@@ -230,19 +230,12 @@ _Avoid_: Fresnel noding, Halley noding, mixed first cook, NURBS
 first cook, Campaign I, new oracle keyword
 
 **SQL/MM signed tag** (ADR-0007, claimId `0007-sqlmm-signed-tag`):
-Rungs 3–6 of τ=μ. Achievable ring is locked `exists b e`
-agreement (not ∀ on all CSTs). `τ = first_slice_tag` on eggs;
-`μ = intake_map` on CSTs. They do not share a domain. After μ
-mints a singleton bag, `τ(e)=ρ(π(c))`. `intake_rho` /
-`cst_prod_tag` here are the CST production tag in that equation
-— not ADR-0007 park ρ (`EmitRhoBagLoop` / bag-loop). ISO CIRCLE
-bag is two ±π MkCirc (ρ=CIRCLE); ADR-0005 lenient closed CS normalizes, strict Declines.
-`intake_rho` is egg-aware on CIRCULARSTRING and is not
-`cst_prod_tag`. Well-formed GeodesicString bags `MkChord`;
-τ is LINESTRING; `cst_prod_tag` stays None (production is not
-signed I/O). SpiralCurve still Declines (τ unused). `κ` is 2/8
-or none (not 13). Emit / WKT parse stay QEX. Production-level
-τ=π on closed CIRCULARSTRING text stays QEX.
+Locked `exists b e` τ=μ (`SqlMmSignedTag.v : ticket_sqlmm_tau_mu_qed_or_qex` LEFT).
+`τ = first_slice_tag`; `μ = intake_map`; not ∀ CSTs. ISO CIRCLE bag is two ±π MkCirc (ρ=CIRCLE).
+`intake_rho` is egg-aware on CS, not `cst_prod_tag`, not park ρ.
+Geodesic bags MkChord (τ=LINESTRING, `cst_prod_tag` None). Spiral Declines.
+κ 2/8 or none (`SqlMmSignedTag.v : ticket_sqlmm_signed_tag_qed_or_qex` LEFT).
+Emit / WKT parse stay QEX (`SqlMmSignedTag.v : ticket_sqlmm_factory_emit_qed_or_qex` RIGHT). Production-level τ=π on closed CIRCULARSTRING text stays QEX (`SqlMmSignedTag.v : sqlmm_tau_eq_pi_fullspan_cs_missing`).
 _Avoid_: ∀-mapper on all CSTs, Circle-as-18, compound-as-τ,
 park-ρ remint, new oracle keyword
 
@@ -302,6 +295,8 @@ Membership criterion: curves living in the wild engines — never "curves that a
 easy to prove". The other ISO 13249-3 curve types (SPIRALCURVE's bloss,
 biquadratic, sine and cosine; CIRCLE; GEODESICSTRING) are expansion backlog per
 Bible §5 Year 5–7, not members.
+Not year-1 `CurveSegment` (`ExactCurveEpic508.v : ticket_508_qed_or_qex` RIGHT on `ECZ_Ellipse`;
+`ExactCurveEpic508.v : ticket_508_carrier_qed_or_qex` LEFT `CSChord|CSArc`).
 _Avoid_: curve types (broader), Exact family (vague), ExactCurve (the protocol, not the roster)
 
 **Exact**:

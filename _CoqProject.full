@@ -3474,6 +3474,8 @@ theories/RelateNGFace.v
 # Bible / CONTEXT prose ratchet (claimId 508-context-prose-ratchet).
 # Citation-only QED∨QEX stop. No new geometry. No Admitted.
 theories/ContextProseRatchet.v
+# Pass 2 (claimId 508-context-prose-ratchet-2). Same shape.
+theories/ContextProseRatchet2.v
 # Ticket 509 F-CP/F-MC/F-MS struct vs true-region QED ∨ QEX stop
 # (prelude only). Named QEX CurvePolygonTrueRegionSound. Cites
 # F-CP structural chord-floor Qed and #791 polygonal taut ceiling.
