@@ -436,6 +436,13 @@ theories/SheetHenNodedOvGap.v
 # CookLoopRho := rho_loop_discharged. Confluence conjunct is 6a-iii.
 # cook_loop_status stays LoopObligation. 3-axiom. No Admitted.
 theories/SheetHenRhoLoop.v
+# Letter 6a-iii. claimId none. Headline: run_vset_determined.
+# cook_loop_rho_holds discharges CookLoopRho. cook_loop_status stays LoopObligation.
+# 3-axiom. No Admitted.
+theories/SheetHenRhoConf.v
+# Letter 6a-iii fixture. claimId none. pick_bag and pick_rev on three chords.
+# 3-axiom. No Admitted.
+theories/SheetHenRhoConfFix.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
