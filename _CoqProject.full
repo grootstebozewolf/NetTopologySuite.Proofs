@@ -4380,3 +4380,7 @@ theories-flocq/SpectrePassesThroughWitness.v
 # straight chord clips but the arc misses (companion to theories/SpectreExample.v
 # and the chord-overfitting theme, docs/audit-phase4-chord-overfitting.md).
 theories/SpectreChordArcWitness.v
+# lane C
+# TIN topology. claimId tri-de9im-t4. 3-axiom. No Admitted.
+theories/TinSurfaceTopo.v
+theories/TinSurfaceVertex.v
