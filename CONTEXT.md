@@ -255,9 +255,9 @@ Status is derived from `docs/verified-claims.md` for every cited `claimId`.
 | ENDDISTANCE (ISO 4.2.11 / 7.8) | Present | ic_ed / cloth_ed; `0007-intake-mkclothoid` |
 | STARTM (ISO 7.8) | Present, dimension-coupled | IsoClothoidIntake.v : measures_none_coupled; `0007-intake-mkclothoid` |
 | ENDM (ISO 7.8) | Present, dimension-coupled | ic_m1 / cloth_m1; `0007-intake-mkclothoid` |
-| LENGTH (ISO 4.2.12 / 7.9) | Parsed; clothoid form pending normalizer 2 | IntakeSpiralJtsMap.v : spiral_clothoid_declines (ID_SpiralClothoidNotYet); `0007-intake-spiral` |
-| STARTCURVATURE (ISO 4.2.12 / 7.9) | Parsed; pending normalizer 2 | 0007-intake-spiral; `0007-intake-spiral` |
-| ENDCURVATURE (ISO 4.2.12 / 7.9) | Parsed; pending normalizer 2 | 0007-intake-spiral; `0007-intake-spiral` |
+| LENGTH (ISO 4.2.12 / 7.9) | Present | spiral_clothoid_bags / norm2_length; `0007-intake-spiral`, `0007-norm2-state` |
+| STARTCURVATURE (ISO 4.2.12 / 7.9) | Present | norm2_curv k0; `0007-intake-spiral`, `0007-norm2-state` |
+| ENDCURVATURE (ISO 4.2.12 / 7.9) | Present | norm2_curv k1; `0007-intake-spiral`, `0007-norm2-state` |
 | SPIRALTYPE (ISO 4.2.12) | Parsed (open string set) | ID_SpiralCurve / ID_SpiralClothoidNotYet; `0007-intake-spiral`, `0007-intake-walker` |
 | DEGREE (ISO 4.9.4 / 7.7) | Spec present, intake pending | NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex; `0007-mk-nurbs` |
 | CONTROLPOINTS (ISO 4.9.4 / 7.7) | Spec present, intake pending | NurbsNet.nn_ctrl; `0007-mk-nurbs` |
