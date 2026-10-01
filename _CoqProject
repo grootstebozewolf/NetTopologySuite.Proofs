@@ -472,3 +472,10 @@ theories/TinSurfaceVertex.v
 theories/BernsteinBasis.v
 theories/NurbsSumBridge.v
 theories/NurbsBezierSpan.v
+# lane A
+# CS/CC IsSimple: no interior vertex added and no coincident pieces.
+# claimId 0007-cscc-issimple. Reads the loop. 3-axiom. No Admitted.
+theories/SheetHenSimple.v
+# CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
+# Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
+theories/CurvePolygonLoopValid.v
