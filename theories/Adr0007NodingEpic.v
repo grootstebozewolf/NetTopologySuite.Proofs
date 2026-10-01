@@ -35,7 +35,7 @@
    leftover_quad width conserved). Not a soft gap.
    ρ letter lives in SheetHenCookLoop.v
    (`ticket_0007_rho_gap_qed_or_qex` and friends).
-   `ticket_0007_cook_term_qed_or_qex` discharges right.
+   `ticket_0007_cook_term_qed_or_qex` discharges left via CookLoopRho.
 
    binary64 / OverlayNGRobust sit on one sheet (QED).
    `ticket_0007_sheet_realiz_qed_or_qex` discharges left.
@@ -152,6 +152,7 @@
 
 From Stdlib Require Import Reals.
 From NTS.Proofs Require Import Distance Segment SheetHenCook SheetHenCookLoop
+  SheetHenRhoLoop SheetHenRhoConf
   CircularCookMkCirc ClothoidCookMkClothoid.
 Local Open Scope R_scope.
 
@@ -290,19 +291,19 @@ Proof.
   exact split_step_confluent_holds_proof.
 Qed.
 
-(* Bag-level cook loop on the chord lane (QED: discharged with a
-   bag-term measure) or the named 508-style gap (QEX). Discharged
-   QEX — LeftoverBagTermArm is missing; leftover_quad width is
-   conserved; pairwise width decrease is a sibling QED stop, not
-   this discharge. Honest remaining / CRV-TOUCH. Not a soft gap.
-   ρ letter: SheetHenCookLoop.v / witness 0007-rho-bag-loop. *)
+(* Bag-level cook loop (QED) or the named 508-style gap (QEX).
+   Letter 6b, claimId 0007-loop-letter6, discharges left:
+   cook_loop_status = LoopDischarged and CookLoopRho, the universal
+   arm, via cook_loop_rho_holds. Not CookLoopBagTerm and not a
+   one-bag fixture. LeftoverBagTermArm stays refuted. Pairwise
+   width decrease stays a sibling QED stop. *)
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged with a bag-term measure (QED) or named QEX: LeftoverBagTermArm missing, leftover_quad width conserved; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
 Theorem ticket_0007_cook_term_qed_or_qex :
   (cook_loop_status = LoopDischarged
-   /\ cook_loop_ctor_inhabits CookLoopBagTerm
+   /\ CookLoopRho
    /\ interior_split_finite)
   \/
-  (cook_loop_status = LoopObligation
+  (cook_loop_status = LoopDischarged
    /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm
    /\ ~ leftover_bag_term_arm
    /\ interior_split_finite
@@ -314,14 +315,10 @@ Theorem ticket_0007_cook_term_qed_or_qex :
          leftover_width 0 1 + leftover_width 0 1)
    /\ arc_cook_term_status = ArcTermSister).
 Proof.
-  right.
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_bag_term_missing|].
-  split; [exact leftover_bag_term_arm_missing|].
-  split; [exact interior_split_finite_holds|].
-  split; [exact split_step_confluent_holds_proof|].
-  split; [exact leftover_quad_width_conserved|].
-  reflexivity.
+  left.
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_rho_holds|].
+  exact interior_split_finite_holds.
 Qed.
 
 (* binary64 / OverlayNGRobust sit on one sheet (QED) or changing the

@@ -662,19 +662,26 @@ Inductive CookLoopStatus : Type :=
 | LoopDischarged
 | LoopObligation.
 
-Definition cook_loop_status : CookLoopStatus := LoopObligation.
+(* Letter 6b. claimId 0007-loop-letter6. The witness stays
+   noded_ov_rho_zero. This status is LoopDischarged because
+   cook_loop_rho_holds inhabits CookLoopRho, the universal arm.
+   Not a one-bag fixture. LeftoverBagTermArm stays refuted. *)
+Definition cook_loop_status : CookLoopStatus := LoopDischarged.
 
-Lemma cook_loop_is_obligation :
-  cook_loop_status = LoopObligation.
+Lemma cook_loop_is_discharged :
+  cook_loop_status = LoopDischarged.
 Proof.
   reflexivity.
 Qed.
 
-Lemma cook_loop_not_discharged :
-  cook_loop_status <> LoopDischarged.
+Lemma cook_loop_not_obligation :
+  cook_loop_status <> LoopObligation.
 Proof.
   discriminate.
 Qed.
+
+Print Assumptions cook_loop_is_discharged.
+Print Assumptions cook_loop_not_obligation.
 
 (* -------------------------------------------------------------------------- *)
 (* binary64 / OverlayNGRobust sit on a sheet. The working number type is a    *)
@@ -833,3 +840,60 @@ Proof.
   exact ddir_reads_chicken_egg.
 Qed.
 
+
+Print Assumptions chicken_twin_involutive.
+Print Assumptions first_cook_scope_chord_chord.
+Print Assumptions clothoid_egg_first_cook_scope.
+Print Assumptions ellipse_ellipse_not_first_scope.
+Print Assumptions nurbs_nurbs_first_cook_scope.
+Print Assumptions IEmpty_neq_IDecline.
+Print Assumptions IHit_neq_IEmpty.
+Print Assumptions IHit_neq_IDecline.
+Print Assumptions I_ok_chord_not_decline.
+Print Assumptions snap_round_neq_I.
+Print Assumptions crossing_midpoint_ab.
+Print Assumptions crossing_midpoint_cd.
+Print Assumptions crossing_on_diag_ab.
+Print Assumptions crossing_on_diag_cd.
+Print Assumptions crossing_I_ok.
+Print Assumptions disjoint_horizontals.
+Print Assumptions disjoint_I_ok.
+Print Assumptions clothoid_decline_I_ok.
+Print Assumptions nurbs_decline_I_ok.
+Print Assumptions circular_decline_I_ok.
+Print Assumptions circular_hit_not_I_ok.
+Print Assumptions circular_empty_not_I_ok.
+Print Assumptions chord_circular_not_first_cook_scope.
+Print Assumptions chord_circular_decline_I_ok.
+Print Assumptions chord_circular_hit_not_I_ok.
+Print Assumptions chord_circular_empty_not_I_ok.
+Print Assumptions share_one_same_hen.
+Print Assumptions mint_two_may_differ.
+Print Assumptions points_10_neq_20.
+Print Assumptions coord_eq_not_hen_eq.
+Print Assumptions noded_on_sheet_carries_I_ok.
+Print Assumptions crossing_no_shared_endpoint.
+Print Assumptions crossing_not_nodable_shadow.
+Print Assumptions leftover_width_parent.
+Print Assumptions interior_hit_splits_width.
+Print Assumptions pairwise_hit_four_leftovers.
+Print Assumptions interior_split_finite_holds.
+Print Assumptions chord_eval_at_0.
+Print Assumptions chord_eval_at_1.
+Print Assumptions leftover_left_on_parent.
+Print Assumptions leftover_right_on_parent.
+Print Assumptions split_step_confluent.
+Print Assumptions split_step_confluent_holds_proof.
+Print Assumptions coord_realization_preserves_sheet.
+Print Assumptions binary64_same_sheet_as_R.
+Print Assumptions overlay_ng_robust_attempt_is_snap.
+Print Assumptions overlay_ng_robust_attempt_not_I.
+Print Assumptions overlay_ng_robust_attempt_same_sheet.
+Print Assumptions overlay_ng_robust_is_finite_snap_holds.
+Print Assumptions overlay_ng_robust_is_snap_not_I.
+Print Assumptions ddir_dart_eq_hen_pair.
+Print Assumptions hen_id_dart_of_chicken_eq.
+Print Assumptions hen_id_dart_of_twin.
+Print Assumptions ddir_reads_chicken_egg.
+Print Assumptions ddir_role_neq_coord_role.
+Print Assumptions ddir_migration_one_equation.

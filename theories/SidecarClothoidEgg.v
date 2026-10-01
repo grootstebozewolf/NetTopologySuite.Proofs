@@ -580,8 +580,8 @@ Theorem ticket_0007_clothoid_parks_qed_or_qex :
    sidecar_clothoid_kind <> SCE_CampaignI /\
    sidecar_clothoid_kind <> SCE_FresnelNoding /\
    sidecar_clothoid_kind <> SCE_LoopNoder /\
-   cook_loop_status = LoopObligation /\
-   cook_loop_status <> LoopDischarged /\
+   cook_loop_status = LoopDischarged /\
+   cook_loop_status <> LoopObligation /\
    first_cook_scope EggChord EggChord /\
    first_cook_scope EggClothoid EggClothoid /\
    first_cook_scope EggNurbs EggNurbs).
@@ -593,8 +593,8 @@ Proof.
   split; [exact sidecar_clothoid_not_campaign_i|].
   split; [exact sidecar_clothoid_not_fresnel_noding|].
   split; [exact sidecar_clothoid_not_loop_noder|].
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact clothoid_egg_first_cook_scope|].
   exact nurbs_nurbs_first_cook_scope.

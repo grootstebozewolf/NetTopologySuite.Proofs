@@ -5,8 +5,9 @@
    Headline: run_vset_determined.
    Two lawful selectors finish with the same vertex set.
    target_step_invariant and vset_step_grows are the step facts.
-   cook_loop_rho_holds discharges CookLoopRho. cook_loop_status stays
-   LoopObligation. Does not remint 0007-loop-letter6.
+   cook_loop_rho_holds discharges CookLoopRho, the universal arm.
+   Letter 6b sets cook_loop_status to LoopDischarged from that
+   theorem. Does not remint 0007-loop-letter6.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
