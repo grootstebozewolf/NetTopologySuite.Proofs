@@ -1,0 +1,60 @@
+{
+  "conversions": [
+    {
+      "kind": "sagitta",
+      "placement": "scales",
+      "hausdorff": "k*d",
+      "geometryKinds": [
+        "Chord",
+        "BulgePolyline",
+        "Arc",
+        "Circle",
+        "Ellipse",
+        "BSpline",
+        "Bezier",
+        "Spiral",
+        "Ring",
+        "Compound",
+        "Unsupported"
+      ],
+      "note": "Chord-height sagitta d scales with placement scale k to the Hausdorff bound k*d on every carrier kind (The CAD carrier record)."
+    },
+    {
+      "kind": "segmentCount",
+      "placement": "invariant",
+      "hausdorff": "r*(1-cos(abs(deltaTheta)/(2*n)))",
+      "geometryKinds": ["BulgePolyline", "Arc", "Circle", "Ring"],
+      "declineId": "ID_ToleranceKindUnsupported",
+      "note": "Segment count n is invariant under placement, and a circular kind of placed radius r converts it to the Hausdorff bound r*(1-cos(abs(deltaTheta)/(2*n))) once the sweep is in radians, while every other kind declines as ID_ToleranceKindUnsupported (The CAD carrier record).",
+      "spiralNote": "Spiral converts once the clothoid Linearizes bound kappa_max*h^2/8 lands (lane C1, claimId 0007-clothoid-linearize)."
+    },
+    {
+      "kind": "angleStep",
+      "placement": "invariant",
+      "hausdorff": "r*(1-cos(alpha/2))",
+      "geometryKinds": ["BulgePolyline", "Arc", "Circle", "Ring"],
+      "declineId": "ID_ToleranceKindUnsupported",
+      "note": "Angle step alpha is invariant under placement, and a circular kind of placed radius r converts it to the Hausdorff bound r*(1-cos(alpha/2)) once alpha is in radians, while every other kind declines as ID_ToleranceKindUnsupported (The CAD carrier record).",
+      "spiralNote": "Spiral converts once the clothoid Linearizes bound kappa_max*h^2/8 lands (lane C1, claimId 0007-clothoid-linearize)."
+    },
+    {
+      "kind": "sourceDefault",
+      "placement": "unstated",
+      "hausdorff": null,
+      "geometryKinds": [
+        "Chord",
+        "BulgePolyline",
+        "Arc",
+        "Circle",
+        "Ellipse",
+        "BSpline",
+        "Bezier",
+        "Spiral",
+        "Ring",
+        "Compound",
+        "Unsupported"
+      ],
+      "note": "Source default states no tolerance number, so it has no Hausdorff bound after placement and is not a decline (The CAD carrier record)."
+    }
+  ]
+}

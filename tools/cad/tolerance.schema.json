@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nettopologysuite.proofs:cad:tolerance.schema.json",
+  "title": "CAD tolerance conversion",
+  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant and use the placed radius on circular kinds; every other kind declines.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["conversions"],
+  "properties": {
+    "conversions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/conversion"}
+    }
+  },
+  "$defs": {
+    "conversion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "placement", "hausdorff", "geometryKinds", "note"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "placement": {"enum": ["scales", "invariant", "unstated"]},
+        "hausdorff": {"type": ["string", "null"], "minLength": 1},
+        "geometryKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "declineId": {"const": "ID_ToleranceKindUnsupported"},
+        "note": {"type": "string", "minLength": 1, "maxLength": 400},
+        "spiralNote": {"type": "string", "minLength": 1, "maxLength": 240}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"placement": {"const": "invariant"}},
+            "required": ["placement"]
+          },
+          "then": {"required": ["declineId"]}
+        },
+        {
+          "if": {
+            "properties": {"placement": {"enum": ["scales", "unstated"]}},
+            "required": ["placement"]
+          },
+          "then": {"not": {"required": ["declineId"]}}
+        },
+        {
+          "if": {
+            "properties": {"placement": {"const": "unstated"}},
+            "required": ["placement"]
+          },
+          "then": {"properties": {"hausdorff": {"type": "null"}}}
+        },
+        {
+          "if": {
+            "properties": {"placement": {"enum": ["scales", "invariant"]}},
+            "required": ["placement"]
+          },
+          "then": {"properties": {"hausdorff": {"type": "string", "minLength": 1}}}
+        },
+        {
+          "if": {
+            "required": ["declineId", "geometryKinds"],
+            "properties": {
+              "declineId": {"const": "ID_ToleranceKindUnsupported"},
+              "geometryKinds": {"not": {"contains": {"const": "Spiral"}}}
+            }
+          },
+          "then": {"required": ["spiralNote"]}
+        },
+        {
+          "if": {
+            "required": ["geometryKinds"],
+            "properties": {"geometryKinds": {"contains": {"const": "Spiral"}}}
+          },
+          "then": {"not": {"required": ["spiralNote"]}}
+        }
+      ]
+    }
+  }
+}
