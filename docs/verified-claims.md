@@ -759,6 +759,7 @@ that map. This ADR is not edited by those tickets.
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex` (+ `SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`, `SidecarNurbsEgg.v : sidecar_nurbs_chord_seed`, `SidecarNurbsEgg.v : sidecar_nurbs_host_decline`) | **NURBS egg sidecar QED:** EggNurbs packaging; host Decline; locked demoted-chord seed; demote-to-chord is NodingNG first cook, not a NURBS Hit; #508 length stays metric `[exact]` | C |
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex` (+ `SheetHenCookCore.v : nurbs_nurbs_first_cook_scope`, `SidecarNurbsEgg.v : sidecar_nurbs_mknurbs_missing`, `SidecarNurbsEgg.v : sidecar_nurbs_hit_arm_missing`, `NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex`, `NurbsMkNurbs.v : egg_nurbs_tag_or_arm`, `NurbsMkNurbs.v : on_nurbs_missing`, `NurbsMkNurbs.v : nurbs_gamma_on_sheet_missing`) | **NURBS egg sidecar QEX:** scope inhabited; `MkNurbs` is a fail-closed arm; `OnNurbs` / `NurbsGammaOnSheet` stay missing; do not fake Hit `[exact]` | C |
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` (+ `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged`) | **NURBS egg sidecar QEX:** Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks Γ / ι / ρ cited once `[exact]` | 0 |
+| `NurbsBezierSpan.v : a41_eq_definition_bz` (+ `bezier_eval`, `bz_basis_bern`, `bz_deboor_bern`, `conic_quad_fixtures`) | **Single clamped span** (claimId `0007-nurbs-bezier-span`, witness `a41_eq_definition_bz`): one Bézier span is the Bernstein basis, de Boor on that knot vector is de Casteljau, and the homogeneous evaluator is the rational Bernstein combination with a positive denominator; unit weights are the polynomial `bezier_eval`; the quadratic font span, the cubic at `1/3`, and the chart-weight conic equal `circ_eval` `[exact]` | 3 |
 | `SidecarSinEgg.v : ticket_0007_sin_egg_qed_or_qex` (+ `SidecarSinEgg.v : sidecar_sin_egg_inhabits`, `SidecarSinEgg.v : sidecar_sin_chord_seed`, `SidecarSinEgg.v : sidecar_sin_host_decline`) | **Sinusoid egg sidecar QED:** EggSinusoid packaging; host Decline; locked demoted-chord seed; demote-to-chord is NodingNG first cook, not a sinusoid Hit; Spectre profile stays research `[exact]` | C |
 | `SidecarSinEgg.v : ticket_0007_sin_not_first_cook_qed_or_qex` (+ `SidecarSinEgg.v : sinusoid_sinusoid_not_first_scope`, `SidecarSinEgg.v : sidecar_sin_mksinusoid_missing`, `SidecarSinEgg.v : sidecar_sin_hit_arm_missing`) | **Sinusoid egg sidecar QEX:** sinusoid×sinusoid stays out of first cook; `MkSinusoid` / Hit-arm missing; do not fake first-cook expand `[exact]` | C |
 | `SidecarSinEgg.v : ticket_0007_sin_parks_qed_or_qex` (+ `SidecarSinEgg.v : sidecar_sin_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged`) | **Sinusoid egg sidecar QEX:** Campaign I–II / profile-as-noding / bag loop parked; Parks Γ / ι / ρ cited once `[exact]` | 0 |
@@ -1183,9 +1184,7 @@ over CONSECUTIVE edges only (the same meaning as the Bézier row's net, and
 a free tightening: `M = 1` on the golden quarter circle where the diagonal
 is `√2`); the denominator has the least weight as a floor, so with
 `0 < wmin ≤ w_i ≤ wmax` the metric length is control-net bounded — the
-crude net bound, not the tight conic bound. General degree, knot spans,
-and the conditional exact tier (the rational arc-length primitive through
-the engine) are future rungs.
+crude net bound, not the tight conic bound.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
