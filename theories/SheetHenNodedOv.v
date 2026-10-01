@@ -7,7 +7,7 @@
    bag_noded_ov is bag_noded weakened by an overlap-endpoint antecedent.
    Two circles use circ_overlap_pts, the symmetric point-set list rho counts.
    That direction (ov + no declining pair -> rho = 0) is proved.
-   The converse is not an inhabitant. This file does not claim the iff.
+   The converse is SheetHenRhoLoop. This file does not claim the iff.
    Does not remint 0007-loop-letter3-strict. Does not redefine bag_noded.
    Does not define CookLoopRho. cook_loop_status unchanged.
    LeftoverBagTermArm stays refuted. 3-axiom host. No Admitted.
@@ -283,7 +283,7 @@ Proof.
 Qed.
 
 (* WITNESS {"claimId":"0007-loop-letter6","topic":"overlay","lemma":"noded_ov_rho_zero","title":"no declining pair and bag_noded_ov imply rho 0","file":"theories/SheetHenNodedOv.v","witness":"noded_ov_rho_zero","board":"ADR-0007"} *)
-(* L6.1 rho_zero_noded_ov and rho_zero_iff_noded_ov are not inhabitants. *)
+(* L6.1 rho_zero_noded_ov and the iff are SheetHenRhoLoop. claimId stays here. *)
 Theorem noded_ov_rho_zero : forall sh pcs,
   bag_inv (BagLive sh pcs) ->
   no_decline_pair pcs ->
@@ -1025,7 +1025,7 @@ Proof.
   cbn [bag_run_arm]. rewrite E. reflexivity.
 Qed.
 
-(* The converse rho = 0 -> bag_noded_ov is not an inhabitant here. *)
+(* The converse rho = 0 -> bag_noded_ov is SheetHenRhoLoop.rho_zero_noded_ov. *)
 
 Print Assumptions nth_length.
 Print Assumptions ov_fold_zero.
