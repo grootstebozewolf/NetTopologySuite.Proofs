@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:nettopologysuite.proofs:cad:tolerance.schema.json",
   "title": "CAD tolerance conversion",
-  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant and use the placed radius on circular kinds; every other kind declines.",
+  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant: circular kinds use the placed radius, and Spiral uses kappa_max*(L/n)^2/8 or alpha^2/(8*kappa_max) from the placed kappa_max and L. Every other kind declines.",
   "type": "object",
   "additionalProperties": false,
   "required": ["conversions"],
@@ -30,8 +30,9 @@
           "items": {"type": "string", "minLength": 1}
         },
         "declineId": {"const": "ID_ToleranceKindUnsupported"},
-        "note": {"type": "string", "minLength": 1, "maxLength": 400},
-        "spiralNote": {"type": "string", "minLength": 1, "maxLength": 240}
+        "note": {"type": "string", "minLength": 1, "maxLength": 640},
+        "spiralNote": {"type": "string", "minLength": 1, "maxLength": 240},
+        "spiralHausdorff": {"type": "string", "minLength": 1}
       },
       "allOf": [
         {
@@ -78,6 +79,41 @@
             "properties": {"geometryKinds": {"contains": {"const": "Spiral"}}}
           },
           "then": {"not": {"required": ["spiralNote"]}}
+        },
+        {
+          "if": {
+            "required": ["placement", "geometryKinds"],
+            "properties": {
+              "placement": {"const": "invariant"},
+              "geometryKinds": {"contains": {"const": "Spiral"}}
+            }
+          },
+          "then": {"required": ["spiralHausdorff"]}
+        },
+        {
+          "if": {
+            "required": ["placement"],
+            "properties": {"placement": {"enum": ["scales", "unstated"]}}
+          },
+          "then": {"not": {"required": ["spiralHausdorff"]}}
+        },
+        {
+          "if": {
+            "required": ["kind"],
+            "properties": {"kind": {"const": "segmentCount"}}
+          },
+          "then": {
+            "properties": {"spiralHausdorff": {"const": "kappa_max*(L/n)^2/8"}}
+          }
+        },
+        {
+          "if": {
+            "required": ["kind"],
+            "properties": {"kind": {"const": "angleStep"}}
+          },
+          "then": {
+            "properties": {"spiralHausdorff": {"const": "alpha^2/(8*kappa_max)"}}
+          }
         }
       ]
     }

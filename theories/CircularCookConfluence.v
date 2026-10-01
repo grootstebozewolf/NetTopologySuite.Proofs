@@ -10,7 +10,7 @@
    plus / minus cooks recover it.
 
    QED: leftovers_ab = leftovers_ba on γ_full; cook bag inhabits it;
-   one-step ≠ bag loop (cook_loop stays LoopObligation).
+   one-step ≠ bag loop (cook_loop_status is LoopDischarged via CookLoopRho; this letter is not that discharge).
    QEX: CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
    first cook is SheetHenCook first_cook_scope_* (not chord-only). Not the bag-level repeat-until-noded loop.
 
@@ -129,11 +129,11 @@ Lemma i8_one_step_not_bag_loop :
   (forall O1 r1 O2 r2 ti tj,
      circ_leftovers_ab O1 r1 O2 r2 ti tj =
      circ_leftovers_ba O1 r1 O2 r2 ti tj)
-  /\ cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  /\ cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
   split; [exact circ_split_step_confluent|].
-  split; [exact cook_loop_is_obligation|exact cook_loop_not_discharged].
+  split; [exact cook_loop_is_discharged|exact cook_loop_not_obligation].
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -184,8 +184,8 @@ Theorem ticket_0007_i8_neq_bag_qed_or_qex :
   ((forall O1 r1 O2 r2 ti tj,
       circ_leftovers_ab O1 r1 O2 r2 ti tj =
       circ_leftovers_ba O1 r1 O2 r2 ti tj)
-   /\ cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged)
+   /\ cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation)
   \/
   cook_loop_status = LoopDischarged.
 Proof.
@@ -203,12 +203,12 @@ Theorem ticket_0007_i8_scope_qed_or_qex :
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
   (circular_gamma_status = CircGammaDischarged
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc).
 Proof.
   right.
   split; [exact circular_gamma_is_discharged|].
-  split; [exact cook_loop_is_obligation|exact circular_is_first_cook_scope].
+  split; [exact cook_loop_is_discharged|exact circular_is_first_cook_scope].
 Qed.
 
 Print Assumptions circ_split_step_confluent.
@@ -219,3 +219,5 @@ Print Assumptions ticket_0007_i8_confluent_qed_or_qex.
 Print Assumptions ticket_0007_i8_cook_qed_or_qex.
 Print Assumptions ticket_0007_i8_neq_bag_qed_or_qex.
 Print Assumptions ticket_0007_i8_scope_qed_or_qex.
+Print Assumptions cook_circ_root_is_leftovers_ba.
+Print Assumptions i8_recovers_locked_minus.

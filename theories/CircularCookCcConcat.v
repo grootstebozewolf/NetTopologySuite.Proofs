@@ -651,11 +651,11 @@ Proof.
 Qed.
 
 Lemma b2_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma b2_rest_parked :
@@ -665,7 +665,7 @@ Lemma b2_rest_parked :
   /\ b2_hperp_status = B2HperpParked
   /\ b2_circgamma_remint_status = B2CircGammaRemintParked
   /\ b2_sql_mm_status = B2SqlMmNotDone
-  /\ cook_loop_status = LoopObligation.
+  /\ cook_loop_status = LoopDischarged.
 Proof.
   repeat split; reflexivity.
 Qed.
@@ -808,7 +808,7 @@ Theorem ticket_0007_b2_park_qed_or_qex :
    /\ b2_hperp_status = B2HperpParked
    /\ b2_circgamma_remint_status = B2CircGammaRemintParked
    /\ b2_sql_mm_status = B2SqlMmNotDone
-   /\ cook_loop_status = LoopObligation).
+   /\ cook_loop_status = LoopDischarged).
 Proof.
   right.
   exact b2_rest_parked.
@@ -840,3 +840,27 @@ Print Assumptions ticket_0007_b2_park_qed_or_qex.
 Print Assumptions locked_cc_joint_host_endpoints.
 Print Assumptions locked_cc_joint_host_eval_eq.
 Print Assumptions locked_cc_intake_ls_cs_host_hit.
+Print Assumptions b2_host_not_first_cook.
+Print Assumptions b2_first_cook_stays_chord_chord.
+Print Assumptions b2_host_circular_decline.
+Print Assumptions b2_host_circular_hit_false.
+Print Assumptions b2_mixed_not_first_cook.
+Print Assumptions on_chord_at_start.
+Print Assumptions on_chord_at_end.
+Print Assumptions cc_mixed_cs_ls_host_decline.
+Print Assumptions cc_mixed_ls_cs_hit_not_I_ok.
+Print Assumptions cc_mixed_cs_ls_hit_not_I_ok.
+Print Assumptions cc_mixed_ls_cs_empty_not_I_ok.
+Print Assumptions locked_cc_mixed_is_mixed.
+Print Assumptions locked_cc_mixed_ls_cs_joint.
+Print Assumptions locked_cc_mixed_hit_not_I_ok.
+Print Assumptions locked_cc_mixed_empty_not_I_ok.
+Print Assumptions locked_cc_ls_ls_joint_chords.
+Print Assumptions locked_cc_ls_ls_contiguous.
+Print Assumptions locked_cc_cs_cs_joint_arcs.
+Print Assumptions locked_cc_cs_cs_contiguous.
+Print Assumptions joint_params_not_interior.
+Print Assumptions b2_host_stays_qex.
+Print Assumptions b2_hperp_is_parked.
+Print Assumptions b2_circgamma_remint_is_parked.
+Print Assumptions b2_rest_parked.

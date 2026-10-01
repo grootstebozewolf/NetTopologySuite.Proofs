@@ -551,8 +551,8 @@ Theorem ticket_0007_sin_parks_qed_or_qex :
    sidecar_sin_kind <> SSE_CampaignI /\
    sidecar_sin_kind <> SSE_ProfileNoding /\
    sidecar_sin_kind <> SSE_LoopNoder /\
-   cook_loop_status = LoopObligation /\
-   cook_loop_status <> LoopDischarged /\
+   cook_loop_status = LoopDischarged /\
+   cook_loop_status <> LoopObligation /\
    first_cook_scope EggChord EggChord /\
    ~ first_cook_scope EggSinusoid EggSinusoid).
 Proof.
@@ -563,8 +563,8 @@ Proof.
   split; [exact sidecar_sin_not_campaign_i|].
   split; [exact sidecar_sin_not_profile_noding|].
   split; [exact sidecar_sin_not_loop_noder|].
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact first_cook_scope_chord_chord|].
   exact sinusoid_sinusoid_not_first_scope.
 Qed.
@@ -581,3 +581,27 @@ Print Assumptions sidecar_sin_egg_inhabits.
 Print Assumptions ticket_0007_sin_egg_qed_or_qex.
 Print Assumptions ticket_0007_sin_not_first_cook_qed_or_qex.
 Print Assumptions ticket_0007_sin_parks_qed_or_qex.
+Print Assumptions sidecar_sin_only_out_of_scope.
+Print Assumptions locked_sin_demote_is_host_crossing.
+Print Assumptions locked_sin_same_sheet_as_nodingng.
+Print Assumptions sinusoid_sinusoid_not_first_scope.
+Print Assumptions sinusoid_decline_I_ok.
+Print Assumptions sidecar_sin_host_hit_false.
+Print Assumptions sidecar_sin_host_empty_false.
+Print Assumptions sidecar_sin_try_cook_hit_none.
+Print Assumptions sidecar_sin_empty_neq_decline.
+Print Assumptions locked_sin_chord_proper_cross.
+Print Assumptions sidecar_sin_demote_hit_not_sin_I_ok.
+Print Assumptions sidecar_sin_metric_is_profile.
+Print Assumptions sidecar_sin_first_cook_expand_missing.
+Print Assumptions sidecar_sin_not_first_cook.
+Print Assumptions sidecar_sin_first_cook_stays_chord_chord.
+Print Assumptions sidecar_sin_is_egg_packaging.
+Print Assumptions sidecar_sin_not_host_cook.
+Print Assumptions sidecar_sin_not_nodingng.
+Print Assumptions sidecar_sin_not_profile_noding.
+Print Assumptions sidecar_sin_not_campaign_i.
+Print Assumptions sidecar_sin_not_loop_noder.
+Print Assumptions sidecar_sin_letter_is_landed.
+Print Assumptions sidecar_sin_not_first_cook_expanded.
+Print Assumptions sidecar_sin_campaign_not_discharged.

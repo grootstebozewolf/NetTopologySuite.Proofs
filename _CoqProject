@@ -463,3 +463,7 @@ theories/SheetHenRhoConfFix.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
+# lane C
+# TIN topology. claimId tri-de9im-t4. 3-axiom. No Admitted.
+theories/TinSurfaceTopo.v
+theories/TinSurfaceVertex.v

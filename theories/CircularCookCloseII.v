@@ -216,11 +216,11 @@ Qed.
 
 (* Bag-level repeat-until-noded loop. Campaign II did not discharge it. *)
 Lemma ii4_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 (* Phase B = SQL/MM Part 3 required types (CS / CC / CP). Named gaps.
@@ -274,7 +274,7 @@ Lemma ii4_phase_b_gaps_named :
   /\ phase_b_curve_polygon_status = II4PhaseBRequiredGap
   /\ ii4_sql_mm_status = II4SqlMmNotDone
   /\ ii4_hperp_status = II4HperpParked
-  /\ cook_loop_status = LoopObligation.
+  /\ cook_loop_status = LoopDischarged.
 Proof.
   repeat split; reflexivity.
 Qed.
@@ -374,7 +374,7 @@ Theorem ticket_0007_ii4_phase_b_qed_or_qex :
    /\ phase_b_circular_string_status = II4PhaseBRequiredGap
    /\ phase_b_compound_curve_status = II4PhaseBRequiredGap
    /\ phase_b_curve_polygon_status = II4PhaseBRequiredGap
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ ii4_hperp_status = II4HperpParked
    /\ ii4_sql_mm_status = II4SqlMmNotDone).
 Proof.
@@ -405,3 +405,11 @@ Print Assumptions ticket_0007_ii4_inhabitant_qed_or_qex.
 Print Assumptions ticket_0007_ii4_not_kiss_qed_or_qex.
 Print Assumptions ticket_0007_ii4_host_qed_or_qex.
 Print Assumptions ticket_0007_ii4_phase_b_qed_or_qex.
+Print Assumptions ii4_host_not_first_cook.
+Print Assumptions ii4_first_cook_stays_chord_chord.
+Print Assumptions ii4_host_circular_decline.
+Print Assumptions ii4_host_circular_hit_false.
+Print Assumptions campaign_ii_is_closed.
+Print Assumptions campaign_ii4_letter_is_landed.
+Print Assumptions ii4_hperp_is_parked.
+Print Assumptions ii4_phase_b_gaps_named.

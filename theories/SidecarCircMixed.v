@@ -530,11 +530,11 @@ Proof.
 Qed.
 
 Lemma mixed_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma mixed_rest_parked :
@@ -543,7 +543,7 @@ Lemma mixed_rest_parked :
   /\ mixed_hperp_status = MixedHperpParked
   /\ mixed_circgamma_remint_status = MixedCircGammaRemintParked
   /\ mixed_sql_mm_status = MixedSqlMmNotDone
-  /\ cook_loop_status = LoopObligation.
+  /\ cook_loop_status = LoopDischarged.
 Proof.
   repeat split; reflexivity.
 Qed.
@@ -650,7 +650,7 @@ Theorem ticket_0007_b_mixed_park_qed_or_qex :
    /\ mixed_hperp_status = MixedHperpParked
    /\ mixed_circgamma_remint_status = MixedCircGammaRemintParked
    /\ mixed_sql_mm_status = MixedSqlMmNotDone
-   /\ cook_loop_status = LoopObligation).
+   /\ cook_loop_status = LoopDischarged).
 Proof.
   right.
   exact mixed_rest_parked.
@@ -673,3 +673,30 @@ Print Assumptions ticket_0007_b_mixed_hit_qed_or_qex.
 Print Assumptions ticket_0007_b_mixed_license_qed_or_qex.
 Print Assumptions ticket_0007_b_mixed_host_qed_or_qex.
 Print Assumptions ticket_0007_b_mixed_park_qed_or_qex.
+Print Assumptions mixed_host_not_first_cook.
+Print Assumptions mixed_first_cook_stays_chord_chord.
+Print Assumptions mixed_not_first_cook.
+Print Assumptions mixed_host_ls_cs_decline.
+Print Assumptions mixed_host_cs_ls_decline.
+Print Assumptions mixed_host_ls_cs_hit_false.
+Print Assumptions mixed_host_cs_ls_hit_false.
+Print Assumptions mixed_host_ls_cs_empty_false.
+Print Assumptions mixed_on_chord_at_start.
+Print Assumptions mixed_on_chord_at_end.
+Print Assumptions mixed_joint_params_end_start.
+Print Assumptions mixed_joint_params_not_interior.
+Print Assumptions I_ok_mixed_rev_hit_licenses_joint_hen.
+Print Assumptions I_ok_mixed_rev_hit_not_host_I_ok.
+Print Assumptions I_ok_mixed_empty_false.
+Print Assumptions I_ok_mixed_empty_neq_decline.
+Print Assumptions mixed_interior_not_first_cook.
+Print Assumptions locked_mixed_ls_cs_joint.
+Print Assumptions locked_mixed_cs_ls_joint.
+Print Assumptions locked_mixed_cs_ls_host_decline.
+Print Assumptions locked_mixed_ls_cs_hit_not_host_I_ok.
+Print Assumptions locked_mixed_cs_ls_hit_not_host_I_ok.
+Print Assumptions locked_mixed_joint_pt_eq.
+Print Assumptions mixed_host_stays_qex.
+Print Assumptions mixed_hperp_is_parked.
+Print Assumptions mixed_circgamma_remint_is_parked.
+Print Assumptions mixed_rest_parked.
