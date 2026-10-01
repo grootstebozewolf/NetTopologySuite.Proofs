@@ -93,11 +93,12 @@ jobs:
       - name: Install tools/cad requirements
         run: pip install -r tools/cad/requirements.txt
 
-      - name: Validate extractor output against the carrier schema
+      - name: Validate extractor output and the tolerance conversion
         run: |
           out="${RUNNER_TEMP}/cad-records"
           python3 tools/cad/export_fixture_json.py "$out"
           python3 -m check_jsonschema --schemafile tools/cad/carrier.schema.json "$out"/*.json
+          python3 -m check_jsonschema --schemafile tools/cad/tolerance.schema.json tools/cad/tolerance.json
 
   cad-carrier:
     name: cad-carrier
