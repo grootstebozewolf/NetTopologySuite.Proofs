@@ -312,7 +312,9 @@ Qed.
 
 Print Assumptions spiral_world_curv.
 Print Assumptions spiral_measures_coupled.
+Print Assumptions frame_h2_nonneg.
 Print Assumptions spiral_dir_unit.
+Print Assumptions frame_hand_sq.
 Print Assumptions try_spiral_spec.
 Print Assumptions spiral_k_sep.
 Print Assumptions norm2_refs_sim.
@@ -321,4 +323,5 @@ Print Assumptions zero_len_even_equal_k.
 Print Assumptions const_k_unit_frame.
 Print Assumptions shear_spiral_fails.
 Print Assumptions parallel_spiral_fails.
+Print Assumptions sample_law_A2.
 Print Assumptions sample_spiral_hits.
