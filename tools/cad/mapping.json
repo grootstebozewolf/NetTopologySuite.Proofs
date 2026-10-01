@@ -1,0 +1,144 @@
+{
+  "rows": [
+    {
+      "source": {"format": "DXF", "entity": "LINE"},
+      "kind": "Chord",
+      "egg": "MkChord",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "LWPOLYLINE straight segment"},
+      "kind": "Chord",
+      "egg": "MkChord",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DGN", "entity": "line"},
+      "kind": "Chord",
+      "egg": "MkChord",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DGN", "entity": "linestring"},
+      "kind": "Chord",
+      "egg": "MkChord",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "ARC"},
+      "kind": "Arc",
+      "egg": "MkCirc",
+      "linearizer": "arc_linearizes",
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "CIRCLE"},
+      "kind": "Circle",
+      "egg": "MkCirc",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DGN", "entity": "circular arc"},
+      "kind": "Arc",
+      "egg": "MkCirc",
+      "linearizer": "arc_linearizes",
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "LWPOLYLINE bulge"},
+      "kind": "BulgePolyline",
+      "egg": "MkCirc",
+      "linearizer": "arc_linearizes",
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "ELLIPSE"},
+      "kind": "Ellipse",
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DGN", "entity": "elliptical arc"},
+      "kind": "Ellipse",
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "SPLINE"},
+      "kind": "BSpline",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DGN", "entity": "B-spline"},
+      "kind": "BSpline",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "TrueType", "entity": "glyf"},
+      "kind": "Bezier",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "CFF", "entity": "CharString"},
+      "kind": "Bezier",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "OpenType", "entity": "CFF2"},
+      "kind": "Bezier",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "SVG", "entity": "path"},
+      "kind": "Bezier",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "SVG", "entity": "elliptical arc"},
+      "kind": "Ellipse",
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "IFC", "entity": "alignment segment"},
+      "kind": "Spiral",
+      "egg": "MkClothoid",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "INSERT"},
+      "kind": null,
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DGN", "entity": "cell"},
+      "kind": null,
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    }
+  ]
+}
