@@ -210,7 +210,11 @@ Definition overlap (s1 s2 : BagSupport) : Prop := overlap_b s1 s2 = true.
 
 Definition overlap_endpoints (pcs : list BagPiece) (s1 s2 : BagSupport)
   : list Point :=
-  let '(u, v) := canon2 s1 s2 in overlap_pts pcs u v.
+  let '(u, v) := canon2 s1 s2 in
+  match u, v with
+  | SuppCircle c1, SuppCircle c2 => circ_overlap_pts pcs c1 c2
+  | _, _ => overlap_pts pcs u v
+  end.
 
 Lemma overlap_b_circ_chord : forall c s,
   overlap_b (SuppCircle c) (SuppChord s) = false.
@@ -681,9 +685,8 @@ Lemma admissible_class : forall pcs e1 e2 P ti tj,
   (forall a b, canon2 (bp_support e1) (bp_support e2) = (SuppChord a, SuppChord b) ->
      same_line_b a b = false \/
      In P (overlap_pts pcs (SuppChord a) (SuppChord b))) /\
-  (forall a b, canon2 (bp_support e1) (bp_support e2) = (SuppCircle a, SuppCircle b) ->
-     same_circle_b a b = false \/
-     In P (overlap_pts pcs (SuppCircle a) (SuppCircle b))).
+  (forall a b, bp_support e1 = SuppCircle a -> bp_support e2 = SuppCircle b ->
+     same_circle_b a b = false \/ In P (circ_overlap_pts pcs a b)).
 Proof.
   intros pcs e1 e2 P ti tj [_ [_ Hov]].
   set (s1 := bp_support e1). set (s2 := bp_support e2). split.
@@ -696,15 +699,20 @@ Proof.
                  overlap_pts pcs (SuppChord a) (SuppChord b)).
     { unfold overlap_endpoints. rewrite Hc. reflexivity. }
     rewrite <- He. apply Hov. exact Ho.
-  - intros a b Hc.
+  - intros a b Ha Hb.
     destruct (same_circle_b a b) eqn:Es; [|left; reflexivity].
     right.
     assert (Ho : overlap s1 s2).
-    { unfold overlap, overlap_b. rewrite Hc. exact Es. }
-    assert (He : overlap_endpoints pcs s1 s2 =
-                 overlap_pts pcs (SuppCircle a) (SuppCircle b)).
-    { unfold overlap_endpoints. rewrite Hc. reflexivity. }
-    rewrite <- He. apply Hov. exact Ho.
+    { unfold overlap, overlap_b. rewrite Ha, Hb.
+      destruct (canon2 (SuppCircle a) (SuppCircle b)) as [u v] eqn:Ec.
+      destruct (canon_orient _ _ _ _ Ec) as [[-> ->]|[-> ->]];
+        [exact Es|rewrite same_circle_sym; exact Es]. }
+    specialize (Hov Ho).
+    unfold s1 in Ha. unfold s2 in Hb. rewrite Ha, Hb in Hov.
+    unfold overlap_endpoints in Hov.
+    destruct (canon2 (SuppCircle a) (SuppCircle b)) as [u v] eqn:Ec.
+    destruct (canon_orient _ _ _ _ Ec) as [[-> ->]|[-> ->]]; simpl in Hov;
+      [exact Hov|apply (proj1 (circ_overlap_in_sym pcs b a P)); exact Hov].
 Qed.
 
 Lemma admissible_in_counted : forall pcs e1 e2 P ti tj,
@@ -791,11 +799,9 @@ Proof.
   set (pcs' := progress_pieces pcs i j e1 e2 ti tj h) in *.
   unfold counted in Hin. destruct (canon2 s1 s2) as [u v] eqn:Ec.
   rewrite dedup_In in Hin. apply filter_In in Hin. destruct Hin as [Hraw Hkeep].
-  destruct (hit_param_in_unit e1 e2 P ti tj (proj1 Hw1) (proj1 Hw2) Hok) as [Hti Htj].
-  assert (Hr : raw_pts pcs' u v = raw_pts pcs u v).
-  { apply (raw_progress pcs i j e1 e2 ti tj h u v Hi Hj Hij
-            (proj1 Hw1) (proj1 Hw2) Hti Htj). }
-  rewrite Hr in Hraw.
+  assert (Hr : In q (counted_raw pcs u v)).
+  { exact (counted_raw_old pcs i j e1 e2 P ti tj h u v q
+            Hi Hj Hij Hw1 Hw2 Hok Hraw). }
   assert (Hk : keep_b pcs u v q = true).
   { eapply keep_step.
     - exact Hi. - exact Hj. - exact Hij. - exact Hw1. - exact Hw2.
@@ -817,14 +823,14 @@ Proof.
   intros pcs i j e1 e2 P ti tj h s1 s2 Hi Hj Hij Hw1 Hw2 Hok Hpr.
   set (pcs' := progress_pieces pcs i j e1 e2 ti tj h).
   unfold counted. destruct (canon2 s1 s2) as [u v].
-  destruct (hit_param_in_unit e1 e2 P ti tj (proj1 Hw1) (proj1 Hw2) Hok) as [Hti Htj].
-  assert (Er : raw_pts pcs' u v = raw_pts pcs u v).
-  { apply (raw_progress pcs i j e1 e2 ti tj h u v Hi Hj Hij
-            (proj1 Hw1) (proj1 Hw2) Hti Htj). }
-  rewrite Er. apply dedup_filter_length. intros q Hq.
-  eapply keep_step.
-  - exact Hi. - exact Hj. - exact Hij. - exact Hw1. - exact Hw2.
-  - exact Hok. - exact Hpr. - exact Hq.
+  apply NoDup_incl_length; [apply dedup_NoDup|].
+  intros q Hq. rewrite dedup_In in Hq. rewrite dedup_In.
+  apply filter_In in Hq. destruct Hq as [Hr Hk].
+  apply filter_In. split.
+  - exact (counted_raw_old pcs i j e1 e2 P ti tj h u v q
+           Hi Hj Hij Hw1 Hw2 Hok Hr).
+  - unfold pcs' in Hk.
+    exact (keep_step pcs i j e1 e2 P ti tj h u v q Hi Hj Hij Hw1 Hw2 Hok Hpr Hk).
 Qed.
 
 Lemma hit_leaves_counted : forall pcs i j e1 e2 P ti tj h,

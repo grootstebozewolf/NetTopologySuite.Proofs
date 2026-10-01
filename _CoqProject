@@ -398,6 +398,7 @@ theories/TrianglePairMatrix.v
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v
 theories/SheetHenRhoCount.v
+theories/SheetHenRhoEnds.v
 theories/SheetHenRhoWitness.v
 # ∀-bag letter 2. ρ and finiteness. claimId none.
 # 3-axiom. No Admitted.

@@ -936,26 +936,6 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma arc_key_qq : forall t,
-  key_param (SuppCircle arc_q) (SuppCircle arc_q) t = t * (PI / 2).
-Proof.
-  intro t. unfold key_param, arc_q. cbn.
-  assert (Eb : rle_b 0 (5 * 5) = true) by (apply rle_b_true; lra).
-  rewrite Eb. cbv beta iota zeta.
-  replace (0 + 0) with 0 by ring.
-  rewrite align_k_same. replace (IZR 0) with 0 by reflexivity. ring.
-Qed.
-
-Lemma arc_key_qs : forall t,
-  key_param (SuppCircle arc_q) (SuppCircle iso_half_fst) t = t * PI.
-Proof.
-  intro t. unfold key_param, arc_q, iso_half_fst. cbn.
-  assert (Eb : rle_b 0 (5 * 5) = true) by (apply rle_b_true; lra).
-  rewrite Eb. cbv beta iota zeta.
-  replace (0 + 0) with 0 by ring.
-  rewrite align_k_same. replace (IZR 0) with 0 by reflexivity. ring.
-Qed.
-
 Lemma arc_circ_sq : circ_eqb iso_half_fst arc_q = false.
 Proof.
   unfold circ_eqb, iso_half_fst, arc_q. cbn.
@@ -966,88 +946,6 @@ Proof.
     by (destruct (req_b PI (PI / 2)) eqn:Eb; [|reflexivity];
         apply req_b_true in Eb; pose proof PI_RGT_0; lra).
   rewrite E5, E0, Ep. reflexivity.
-Qed.
-
-Lemma arc_circ_qs : circ_eqb arc_q iso_half_fst = false.
-Proof.
-  unfold circ_eqb, arc_q, iso_half_fst. cbn.
-  rewrite (proj2 (pt_eqb_true _ _) eq_refl).
-  assert (E5 : req_b 5 5 = true) by (apply req_b_true; lra).
-  assert (E0 : req_b 0 0 = true) by (apply req_b_true; lra).
-  assert (Ep : req_b (PI / 2) PI = false)
-    by (destruct (req_b (PI / 2) PI) eqn:Eb; [|reflexivity];
-        apply req_b_true in Eb; pose proof PI_RGT_0; lra).
-  rewrite E5, E0, Ep. reflexivity.
-Qed.
-
-Lemma arc_keys_qq :
-  all_keys (SuppCircle arc_q) (SuppCircle arc_q) arc_pcs = [0; PI / 2].
-Proof.
-  Opaque key_param.
-  unfold all_keys, arc_pcs, piece_keys, arc_pcS, arc_pcQ. cbn.
-  rewrite arc_circ_sq. rewrite circ_eqb_refl. cbn.
-  rewrite arc_key_qq, arc_key_qq.
-  unfold unit_win. cbn.
-  replace (0 * (PI / 2)) with 0 by ring.
-  replace (1 * (PI / 2)) with (PI / 2) by ring.
-  reflexivity.
-  Transparent key_param.
-Qed.
-
-Lemma arc_keys_qs :
-  all_keys (SuppCircle arc_q) (SuppCircle iso_half_fst) arc_pcs = [0; PI].
-Proof.
-  Opaque key_param.
-  unfold all_keys, arc_pcs, piece_keys, arc_pcS, arc_pcQ. cbn.
-  rewrite circ_eqb_refl. rewrite arc_circ_qs. cbn.
-  rewrite arc_key_qs, arc_key_qs.
-  unfold unit_win. cbn.
-  replace (0 * PI) with 0 by ring.
-  replace (1 * PI) with PI by ring.
-  reflexivity.
-  Transparent key_param.
-Qed.
-
-Lemma arc_pok0 : point_of_key (SuppCircle arc_q) 0 = mkPoint 5 0.
-Proof.
-  unfold point_of_key, arc_q. cbn [circ_sweep circ_theta0 circ_o circ_r px py].
-  destruct (req_b (PI / 2) 0) eqn:E.
-  - apply req_b_true in E. pose proof PI_RGT_0. lra.
-  - unfold circ_eval. cbn [circ_o circ_r circ_theta0 circ_sweep px py].
-    replace (0 + ((0 - 0) / (PI / 2)) * (PI / 2)) with 0
-      by (field; pose proof PI_RGT_0; lra).
-    rewrite cos_0, sin_0. apply (f_equal2 mkPoint); ring.
-Qed.
-
-Lemma arc_pok1 : point_of_key (SuppCircle arc_q) (PI / 2) = arc_P.
-Proof.
-  unfold point_of_key, arc_q, arc_P.
-  cbn [circ_sweep circ_theta0 circ_o circ_r px py].
-  destruct (req_b (PI / 2) 0) eqn:E.
-  - apply req_b_true in E. pose proof PI_RGT_0. lra.
-  - unfold circ_eval. cbn [circ_o circ_r circ_theta0 circ_sweep px py].
-    replace (0 + (((PI / 2) - 0) / (PI / 2)) * (PI / 2)) with (PI / 2)
-      by (field; pose proof PI_RGT_0; lra).
-    rewrite cos_PI2, sin_PI2. apply (f_equal2 mkPoint); ring.
-Qed.
-
-Lemma arc_overlap :
-  overlap_pts arc_pcs (SuppCircle arc_q) (SuppCircle iso_half_fst) =
-  [mkPoint 5 0; arc_P].
-Proof.
-  unfold overlap_pts. rewrite arc_keys_qq, arc_keys_qs. cbn [rmin_list rmax_list].
-  pose proof PI_RGT_0 as Hpi.
-  assert (A0 : Rmin 0 (PI / 2) = 0) by (apply Rmin_left; lra).
-  assert (A1 : Rmax 0 (PI / 2) = PI / 2) by (apply Rmax_right; lra).
-  assert (B0 : Rmin 0 PI = 0) by (apply Rmin_left; lra).
-  assert (B1 : Rmax 0 PI = PI) by (apply Rmax_right; lra).
-  rewrite A0, A1, B0, B1.
-  assert (Lo : Rmax 0 0 = 0) by (apply Rmax_left; lra).
-  assert (Hi : Rmin (PI / 2) PI = PI / 2) by (apply Rmin_left; lra).
-  rewrite Lo, Hi.
-  assert (Er : rle_b 0 (PI / 2) = true) by (apply rle_b_true; lra).
-  rewrite Er. rewrite arc_pok0, arc_pok1.
-  apply dedup_two_neq. intro H. apply (f_equal py) in H. cbn in H. lra.
 Qed.
 
 Lemma arc_end_S0 : support_at (SuppCircle iso_half_fst) 0 = mkPoint 5 0.
@@ -1090,6 +988,56 @@ Proof.
     rewrite cos_PI2, sin_PI2. apply (f_equal2 mkPoint); ring.
 Qed.
 
+Lemma arc_Q_hi : support_at (SuppCircle arc_q) 1 = arc_P.
+Proof.
+  unfold support_at, circ_eval, arc_q, arc_P. cbn.
+  replace (0 + 1 * (PI / 2)) with (PI / 2) by field.
+  rewrite cos_PI2, sin_PI2. apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma arc_S_mid : support_at (SuppCircle iso_half_fst) (1 / 2) = arc_P.
+Proof.
+  unfold support_at, circ_eval, iso_half_fst, arc_P. cbn.
+  replace (0 + (1 / 2) * PI) with (PI / 2) by field.
+  rewrite cos_PI2, sin_PI2. apply (f_equal2 mkPoint); ring.
+Qed.
+
+Lemma arc_P_count_Q : count_ends arc_pcs (SuppCircle arc_q) arc_P = 1%nat.
+Proof.
+  unfold arc_pcs, count_ends. simpl.
+  unfold arc_pcS, arc_pcQ. simpl. rewrite arc_circ_sq. simpl.
+  rewrite circ_eqb_refl. simpl.
+  assert (Eb : endpoint_b
+      (mkBagPiece (mkChicken 2%nat 3%nat (MkCirc arc_q))
+         (SuppCircle arc_q) unit_win []) arc_P = true).
+  { apply endpoint_spec. right. unfold unit_win. cbn [win_hi].
+    symmetry. exact arc_Q_hi. }
+  rewrite Eb. reflexivity.
+Qed.
+
+Lemma arc_P_in_circ :
+  In arc_P (circ_overlap_pts arc_pcs iso_half_fst arc_q).
+Proof.
+  unfold circ_overlap_pts. rewrite dedup_In. apply filter_In. split.
+  - apply in_or_app. right. unfold ends_of, arc_pcs. simpl.
+    unfold arc_pcS, arc_pcQ. simpl. rewrite arc_circ_sq. simpl.
+    rewrite circ_eqb_refl. simpl.
+    pose proof arc_Q_hi as Ehi. unfold support_at in Ehi.
+    right. left. exact Ehi.
+  - unfold circ_end_in_other_b. apply orb_true_intro. right.
+    apply andb_true_intro. split.
+    + unfold boundary_end_b. apply andb_true_intro. split.
+      * apply vertex_spec. exists arc_pcQ. split.
+        -- unfold arc_pcs. right. left. reflexivity.
+        -- split; [reflexivity|]. right. unfold arc_pcQ, unit_win. cbn [win_hi bp_support bp_window].
+           symmetry. exact arc_Q_hi.
+      * apply negb_true_iff. unfold joint_b. rewrite arc_P_count_Q. reflexivity.
+    + apply in_image_spec. exists arc_pcS. split; [apply in_eq|].
+      split; [reflexivity|]. exists (1 / 2). split.
+      * unfold arc_pcS, unit_win. simpl. split; lra.
+      * unfold arc_pcS, support_at. cbn. symmetry. exact arc_S_mid.
+Qed.
+
 Lemma arc_admissible :
   admissible_hit arc_pcs arc_pcS arc_pcQ arc_P (1 / 2) 1.
 Proof.
@@ -1097,7 +1045,9 @@ Proof.
   - unfold arc_pcS, arc_pcQ. simpl. exact arc_I_ok.
   - intro Hv. apply arc_P_not_S. exact (proj1 Hv).
   - intros _. unfold overlap_endpoints, arc_pcS, arc_pcQ. simpl.
-    rewrite arc_canon. simpl. rewrite arc_overlap. right. left. reflexivity.
+    rewrite arc_canon. simpl.
+    apply (proj2 (circ_overlap_in_sym arc_pcs arc_q iso_half_fst arc_P)).
+    exact arc_P_in_circ.
 Qed.
 
 Lemma arc_supports :
@@ -1213,19 +1163,15 @@ Print Assumptions arc_wf_Q.
 Print Assumptions arc_distinct.
 Print Assumptions arc_same.
 Print Assumptions arc_canon.
-Print Assumptions arc_key_qq.
-Print Assumptions arc_key_qs.
 Print Assumptions arc_circ_sq.
-Print Assumptions arc_circ_qs.
-Print Assumptions arc_keys_qq.
-Print Assumptions arc_keys_qs.
-Print Assumptions arc_pok0.
-Print Assumptions arc_pok1.
-Print Assumptions arc_overlap.
 Print Assumptions arc_end_S0.
 Print Assumptions arc_end_S1.
 Print Assumptions arc_P_not_S.
 Print Assumptions arc_I_ok.
+Print Assumptions arc_Q_hi.
+Print Assumptions arc_S_mid.
+Print Assumptions arc_P_count_Q.
+Print Assumptions arc_P_in_circ.
 Print Assumptions arc_admissible.
 Print Assumptions arc_supports.
 Print Assumptions arc_rho_pos.

@@ -1,12 +1,11 @@
 (* ============================================================================
    NetTopologySuite.Proofs.SheetHenNodedOvGap
    ----------------------------------------------------------------------------
-   Letter 6a-i counterexample. claimId: none.
-   Headline: rho_zero_not_ov. Consumer: SheetHenNodedOv.
-   Two co-circular arcs. Canon frame S counts only a double vertex, so
-   rho_pcs is 0. Piece order (L, S) has a progress hit at (5, 0) that is
-   an overlap endpoint in that frame and not a vertex of L, so
-   bag_noded_ov fails. Refutes rho = 0 -> bag_noded_ov.
+   Letter 6a-i gap bag. claimId: none.
+   Headline: gap_not_ov. Consumer: SheetHenNodedOv.
+   Regression: gap_counted, gap_rho_pos. Same consumer. No claimId.
+   (5, 0) is a symmetric overlap endpoint, so the gap bag is counted
+   and rho_pcs > 0. bag_noded_ov fails. Does not claim the iff.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -22,9 +21,8 @@ Import ListNotations.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
-(* Converse fails. Two co-circular arcs. Canon frame S sees only a double    *)
-(* vertex, so rho is 0. Piece order (L, S) has a progress hit at (5, 0),     *)
-(* which is an overlap endpoint in that frame and not a vertex of L.         *)
+(* Gap bag. (5, 0) is a symmetric overlap endpoint and a progress hit, so     *)
+(* bag_noded_ov fails. The parameter hull of frame S still misses it.        *)
 (* -------------------------------------------------------------------------- *)
 
 Definition gap_s : CircularEgg := mkCircularEgg (mkPoint 0 0) 5 0 PI.
@@ -333,17 +331,55 @@ Proof.
             in_image_b gap_pcs (SuppCircle gap_l) (mkPoint (-5) 0)); reflexivity.
 Qed.
 
-Lemma gap_counted_nil :
-  counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s) = [].
+Lemma gap_p_on_l : support_at (SuppCircle gap_l) (2 / 3) = gap_p.
 Proof.
-  unfold counted. rewrite gap_canon. cbn [fst snd].
-  unfold raw_pts. rewrite gap_same. rewrite gap_overlap_sl. cbn.
-  rewrite gap_keep_west. reflexivity.
+  unfold support_at, circ_eval, gap_l, gap_p. cbn.
+  replace (PI + (2 / 3) * (3 * PI / 2)) with (2 * PI) by field.
+  rewrite cos_2PI, sin_2PI. apply (f_equal2 mkPoint); ring.
 Qed.
 
-Lemma gap_rho : rho_pcs gap_pcs = 0%nat.
+Lemma gap_p_count_s : count_ends gap_pcs (SuppCircle gap_s) gap_p = 1%nat.
 Proof.
-  unfold rho_pcs. rewrite gap_supports. cbn. rewrite gap_counted_nil. reflexivity.
+  unfold gap_pcs.
+  rewrite (count_ends_cons_bit (gap_pc 0%nat 1%nat gap_l)). unfold endbit.
+  replace (support_eqb (bp_support (gap_pc 0%nat 1%nat gap_l)) (SuppCircle gap_s))
+    with false by (unfold gap_pc; simpl; symmetry; exact gap_circ_ls).
+  rewrite andb_false_l. change (if false then 1%nat else 0%nat) with 0%nat.
+  rewrite Nat.add_0_l.
+  rewrite (count_ends_cons_bit (gap_pc 1%nat 0%nat gap_s)). unfold endbit.
+  replace (support_eqb (bp_support (gap_pc 1%nat 0%nat gap_s)) (SuppCircle gap_s))
+    with true by (unfold gap_pc; simpl; symmetry; apply circ_eqb_refl).
+  rewrite andb_true_l.
+  replace (endpoint_b (gap_pc 1%nat 0%nat gap_s) gap_p) with true.
+  - change (if true then 1%nat else 0%nat) with 1%nat. simpl. reflexivity.
+  - symmetry. apply endpoint_spec. left.
+    unfold gap_pc. simpl. symmetry. exact gap_s_start.
+Qed.
+
+Lemma gap_p_in_l : in_image_b gap_pcs (SuppCircle gap_l) gap_p = true.
+Proof.
+  apply in_image_spec. exists (gap_pc 0%nat 1%nat gap_l).
+  split; [apply in_eq|]. split; [reflexivity|].
+  exists (2 / 3). split.
+  - unfold gap_pc. simpl. split; lra.
+  - unfold gap_pc. simpl. symmetry. exact gap_p_on_l.
+Qed.
+
+Lemma gap_p_in_ends :
+  In gap_p (circ_overlap_pts gap_pcs gap_s gap_l).
+Proof.
+  unfold circ_overlap_pts. rewrite dedup_In. apply filter_In. split.
+  - apply in_or_app. left. unfold ends_of, gap_pcs. simpl.
+    unfold gap_pc. simpl. rewrite gap_circ_ls. simpl.
+    rewrite circ_eqb_refl. simpl. refine (or_introl gap_s_start).
+  - unfold circ_end_in_other_b. apply orb_true_intro. left.
+    apply andb_true_intro. split.
+    + unfold boundary_end_b. apply andb_true_intro. split.
+      * apply vertex_spec. exists (gap_pc 1%nat 0%nat gap_s).
+        split; [unfold gap_pcs; right; left; reflexivity|].
+        split; [reflexivity|]. left. unfold gap_pc. simpl. symmetry. exact gap_s_start.
+      * apply negb_true_iff. unfold joint_b. rewrite gap_p_count_s. reflexivity.
+    + exact gap_p_in_l.
 Qed.
 
 Lemma gap_not_ov : ~ bag_noded_ov (BagLive default_sheet gap_pcs).
@@ -360,20 +396,47 @@ Proof.
   { apply (Hov 0%nat 1%nat a c gap_p (2 / 3) 0 Ha Hc).
     - discriminate.
     - apply gap_hit.
-    - intro Hoverlap. exact gap_overlap_ls_in. }
+    - intros _. unfold a, c, overlap_endpoints.
+      cbn [bp_support gap_pc]. rewrite gap_canon. simpl.
+      exact gap_p_in_ends. }
   exact (Hnp Hprog).
 Qed.
 
-Theorem rho_zero_not_ov :
-  exists pcs,
-    bag_inv (BagLive default_sheet pcs) /\
-    rho_pcs pcs = 0%nat /\
-    ~ bag_noded_ov (BagLive default_sheet pcs).
+(* Regression. Consumer: SheetHenNodedOv. claimId: none. *)
+Lemma gap_admissible :
+  admissible_hit gap_pcs (gap_pc 0%nat 1%nat gap_l) (gap_pc 1%nat 0%nat gap_s)
+    gap_p (2 / 3) 0.
 Proof.
-  exists gap_pcs. split; [| split].
-  - unfold bag_inv. intros pc Hin. destruct Hin as [<-|[<-|[]]]; apply gap_wf.
-  - exact gap_rho.
-  - exact gap_not_ov.
+  split; [| split].
+  - exact gap_hit.
+  - intro Hv. apply gap_not_vertex_l. exact (proj1 Hv).
+  - intros _. unfold overlap_endpoints, gap_pc.
+    cbn [bp_support]. rewrite gap_canon. simpl. exact gap_p_in_ends.
+Qed.
+
+Lemma gap_counted :
+  In gap_p (counted gap_pcs (SuppCircle gap_s) (SuppCircle gap_l)).
+Proof.
+  rewrite counted_sym.
+  apply (admissible_in_counted gap_pcs
+      (gap_pc 0%nat 1%nat gap_l) (gap_pc 1%nat 0%nat gap_s)
+      gap_p (2 / 3) 0).
+  - apply in_eq.
+  - right. apply in_eq.
+  - apply gap_wf.
+  - apply gap_wf.
+  - intro H. inversion H. pose proof PI_RGT_0. lra.
+  - exact gap_admissible.
+Qed.
+
+Lemma gap_rho_pos : (rho_pcs gap_pcs > 0)%nat.
+Proof.
+  unfold rho_pcs. rewrite gap_supports. simpl pair_sum. simpl map. simpl fold_right.
+  assert (Hin : In gap_p (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s))).
+  { rewrite counted_sym. exact gap_counted. }
+  destruct (counted gap_pcs (SuppCircle gap_l) (SuppCircle gap_s)) as [|q tl].
+  - contradiction.
+  - simpl. lia.
 Qed.
 
 Print Assumptions gap_wf.
@@ -405,7 +468,11 @@ Print Assumptions gap_overlap_b.
 Print Assumptions gap_hit.
 Print Assumptions gap_supports.
 Print Assumptions gap_keep_west.
-Print Assumptions gap_counted_nil.
-Print Assumptions gap_rho.
+Print Assumptions gap_p_on_l.
+Print Assumptions gap_p_count_s.
+Print Assumptions gap_p_in_l.
+Print Assumptions gap_p_in_ends.
 Print Assumptions gap_not_ov.
-Print Assumptions rho_zero_not_ov.
+Print Assumptions gap_admissible.
+Print Assumptions gap_counted.
+Print Assumptions gap_rho_pos.
