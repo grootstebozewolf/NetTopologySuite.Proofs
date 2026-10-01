@@ -12,7 +12,8 @@
    curvature. k0 = k1 declines ID_JtsConstantCurvature in both
    modes. No chord or circle dispatch. A missing predecessor
    is ID_ClothoidNoContext. No proof of C0, G1, or length
-   assumes the G2 equality. claimId: none.
+   assumes the G2 equality. fold_clothoid is not applied by
+   intake_map; that wiring is N2c-iii. claimId: none.
    No Admitted. No classic. No MVT / Rolle / RiemannInt.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
@@ -385,11 +386,14 @@ Print Assumptions line_exit_unit.
 Print Assumptions fold_no_context.
 Print Assumptions fold_length_first.
 Print Assumptions fold_constant_both.
+Print Assumptions fold_hit_egg.
 Print Assumptions fold_c0.
 Print Assumptions fold_g1_jts.
 Print Assumptions fold_length.
 Print Assumptions fold_g2_checked.
 Print Assumptions fold_g2_recorded.
+Print Assumptions example5_A2.
+Print Assumptions example5_line_unit.
 Print Assumptions example5_fold.
 Print Assumptions fold_strict_jump.
 Print Assumptions fold_lenient_records_jump.
