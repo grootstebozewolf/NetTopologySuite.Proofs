@@ -76,3 +76,7 @@ def test_dxf_survey_cross_checks() -> None:
         assert name not in header_source
 
     assert REQUIRED_TRAPS <= traps
+    _one_sentence(survey["dwg"]["note"])
+    assert "Open Design Alliance" in survey["dwg"]["note"]
+    assert "libredwg" in survey["dwg"]["note"]
+    assert "R12 through R2018" in survey["dwg"]["note"]
