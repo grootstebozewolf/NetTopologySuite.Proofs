@@ -74,11 +74,12 @@
     {
       "entity": "POLYLINE",
       "groupCodes": [10, 20, 30, 66, 70, 210, 220, 230],
-      "convention": "Vertices are following VERTEX entities, not inline bulge pairs.",
+      "convention": "A 2D vertex chain is a Compound in source order, and a 3D or mesh polyline declines.",
       "versions": ["R12"],
       "traps": ["R12 POLYLINE/VERTEX vs R2000 LWPOLYLINE"],
+      "kind": "Compound",
       "declineId": "ID_ThreeDNotYet",
-      "note": "An R12 POLYLINE is followed by VERTEX entities until SEQEND (Autodesk DXF Reference, POLYLINE)."
+      "note": "A 2D POLYLINE is an ordered VERTEX chain until SEQEND (Autodesk DXF Reference, POLYLINE)."
     },
     {
       "entity": "TEXT",
@@ -164,19 +165,21 @@
     {
       "entity": "HATCH",
       "groupCodes": [10, 70, 71, 75, 91, 210],
-      "convention": "The entity is a hatch region, not an outline to emit.",
+      "convention": "Boundary paths stay in source order, and group 75 odd parity is evenodd while entire area is nonzero.",
       "versions": ["R14", "R2000+"],
-      "traps": [],
-      "declineId": "ID_HatchRegion",
-      "note": "Group 91 is the boundary-path count (Autodesk DXF Reference, HATCH)."
+      "traps": ["hatch style outermost is not a winding rule"],
+      "kind": "Ring",
+      "declineIds": ["ID_HatchRegion"],
+      "note": "Group 75 is the hatch style and group 91 counts boundary paths (Autodesk DXF Reference, HATCH)."
     },
     {
       "entity": "MPOLYGON",
       "groupCodes": [10, 70, 91],
-      "convention": "The entity is a polygon hatch, not an outline to emit.",
+      "convention": "Boundary paths stay in source order, and group 75 odd parity is evenodd while entire area is nonzero.",
       "versions": ["R2000+"],
-      "traps": [],
-      "declineId": "ID_HatchRegion",
+      "traps": ["hatch style outermost is not a winding rule"],
+      "kind": "Ring",
+      "declineIds": ["ID_HatchRegion"],
       "note": "MPOLYGON stores hatch-style boundary paths (Autodesk DXF Reference, MPOLYGON)."
     },
     {

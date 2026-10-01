@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:nettopologysuite.proofs:cad:tolerance.schema.json",
   "title": "CAD tolerance conversion",
-  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant: circular kinds use the placed radius, and Spiral uses kappa_max*(L/n)^2/8 or alpha^2/(8*kappa_max) from the placed kappa_max and L. Every other kind declines.",
+  "description": "Each carrier tolerance kind converts to a Hausdorff bound after placement. Sagitta scales by the placement scale. Segment count and angle step are invariant: circular kinds use the placed radius, and Spiral uses kappa_max*(L/n)^2/8 or alpha^2/(8*kappa_max) from the placed kappa_max and L. On segment count a Bezier count passes through directly as Wang's n (claimId 0007-bezier-linearize, pending). Every other kind declines.",
   "type": "object",
   "additionalProperties": false,
   "required": ["conversions"],

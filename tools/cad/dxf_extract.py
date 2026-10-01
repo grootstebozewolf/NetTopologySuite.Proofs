@@ -27,6 +27,15 @@ Modes (ADR-0005):
   ``ID_DegenerateEntity`` in both modes. ``b = 0`` is a Chord in both
   modes; the bulge value is kept.
 
+A Ring records ``orientation`` (``cw`` or ``ccw``) from the source
+contour sign, one entry per contour. Vertices are copied in source
+order and are not reversed. A hatch with boundary paths is a Ring in
+both modes: group 75 odd parity is ``evenodd`` and entire area is
+``nonzero``. An empty hatch, outermost style, or an ellipse or spline
+edge stays ``ID_HatchRegion``. A 2D POLYLINE is a Compound of chord and
+one-segment bulge members in vertex order. A 3D or mesh POLYLINE stays
+``ID_ThreeDNotYet``.
+
 Stored ARC angles (group codes 50 and 51, degrees) are always CCW from
 the OCS x-axis. ELLIPSE start and end params are always CCW about the
 major axis. Both record ``direction`` ``ccw-ocs``. ``$ANGDIR`` and
@@ -107,7 +116,6 @@ THREED_TYPES = {
     "3DSOLID",
     "BODY",
     "MESH",
-    "POLYLINE",
     "SURFACE",
     "REGION",
     "SOLID",
@@ -115,8 +123,10 @@ THREED_TYPES = {
 CIRCULAR_KINDS = {"Arc", "Circle", "BulgePolyline", "Ring"}
 # Spiral uses the clothoid Linearizes bound on these tolerances.
 STEPPED_KINDS = CIRCULAR_KINDS | {"Spiral"}
+# Segment count also passes a Bezier count through as Wang's n.
+SEGMENT_COUNT_KINDS = STEPPED_KINDS | {"Bezier"}
 GEOMETRY_TYPES = frozenset(
-    {"LINE", "LWPOLYLINE", "ARC", "CIRCLE", "ELLIPSE", "SPLINE", "INSERT"}
+    {"LINE", "LWPOLYLINE", "ARC", "CIRCLE", "ELLIPSE", "SPLINE", "INSERT", "POLYLINE"}
 )
 HANDLED_ENTITIES = frozenset(
     TEXT_TYPES | DIMENSION_TYPES | HATCH_TYPES | THREED_TYPES | GEOMETRY_TYPES
@@ -350,7 +360,9 @@ def _stamp_tolerance(tolerance: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tolerance_ok(kind: str, tolerance: dict[str, Any]) -> str | None:
-    if tolerance["kind"] in ("angleStep", "segmentCount") and kind not in STEPPED_KINDS:
+    if tolerance["kind"] == "segmentCount" and kind not in SEGMENT_COUNT_KINDS:
+        return "ID_ToleranceKindUnsupported"
+    if tolerance["kind"] == "angleStep" and kind not in STEPPED_KINDS:
         return "ID_ToleranceKindUnsupported"
     return None
 
@@ -461,6 +473,183 @@ def _map_spline(entity: Any) -> dict[str, Any] | str:
     }
 
 
+def _signed_area(segments: list[dict[str, Any]]) -> float:
+    area = 0.0
+    for seg in segments:
+        x1, y1 = seg["start"]
+        x2, y2 = seg["end"]
+        area += x1 * y2 - x2 * y1
+    return area
+
+
+def _orientation(segments: list[dict[str, Any]]) -> str | None:
+    """Source contour sign. None when the polygon area is degenerate."""
+    area = _signed_area(segments)
+    if abs(area) <= _EPS:
+        return None
+    return "ccw" if area > 0 else "cw"
+
+
+def _ring(contours: list[list[dict[str, Any]]], rule: str, elevation: float) -> dict[str, Any] | str:
+    orientations: list[str] = []
+    for contour in contours:
+        sign = _orientation(contour)
+        if sign is None:
+            return "ID_DegenerateEntity"
+        orientations.append(sign)
+    return {
+        "kind": "Ring",
+        "elevation": elevation,
+        "params": {"windingRule": rule, "contours": contours, "orientation": orientations},
+    }
+
+
+def _chain_member(segment: dict[str, Any]) -> dict[str, Any]:
+    """One source segment, in its own direction. A bulge is not rewritten as a reversed arc."""
+    if segment["kind"] == "Chord":
+        return {"kind": "Chord", "params": {"start": segment["start"], "end": segment["end"]}}
+    return {"kind": "BulgePolyline", "params": {"closed": False, "segments": [segment]}}
+
+
+def _map_polyline(entity: Any) -> dict[str, Any] | str:
+    if entity.is_3d_polyline or entity.is_polygon_mesh or entity.is_poly_face_mesh or not entity.is_2d_polyline:
+        return "ID_ThreeDNotYet"
+    points: list[tuple[float, float, float]] = []
+    for vertex in entity.vertices:
+        loc = vertex.dxf.location
+        z = _num(loc[2])
+        if not _finite(z) or abs(z) > _EPS:
+            return "ID_ThreeDNotYet"
+        points.append((_num(loc[0]), _num(loc[1]), _num(getattr(vertex.dxf, "bulge", 0.0))))
+    segments = _bulge_segments(points, bool(entity.is_closed))
+    if isinstance(segments, str):
+        return segments
+    return {
+        "kind": "Compound",
+        "elevation": 0.0,
+        "params": {"members": [_chain_member(segment) for segment in segments]},
+    }
+
+
+def _hatch_rule(entity: Any) -> str | None:
+    """Group 75. 0 is odd parity, 2 is entire area. Outermost is not a winding rule."""
+    style = int(getattr(entity.dxf, "hatch_style", 0))
+    if style == 0:
+        return "evenodd"
+    if style == 2:
+        return "nonzero"
+    return None
+
+
+def _arc_edge_segment(edge: Any) -> dict[str, Any] | str:
+    radius = _num(edge.radius)
+    start = _num(edge.start_angle)
+    end = _num(edge.end_angle)
+    center = edge.center
+    if not (_finite(radius) and _finite(start) and _finite(end)) or radius <= _EPS:
+        return "ID_DegenerateEntity"
+    cx, cy = _num(center[0]), _num(center[1])
+    if not (_finite(cx) and _finite(cy)):
+        return "ID_DegenerateEntity"
+
+    def at(degrees: float) -> list[float] | None:
+        radians = math.radians(degrees)
+        return _xy(cx + radius * math.cos(radians), cy + radius * math.sin(radians))
+
+    # Travel follows the edge flag. Endpoints stay on the stated angles.
+    sweep = (end - start) % 360.0 if edge.ccw else (start - end) % 360.0
+    if sweep <= _EPS or abs(sweep - 360.0) <= _EPS:
+        return "ID_DegenerateEntity"
+    bulge = math.tan(math.radians(sweep) / 4.0) * (1.0 if edge.ccw else -1.0)
+    a = at(start)
+    b = at(end)
+    if a is None or b is None:
+        return "ID_DegenerateEntity"
+    return _segment(a, b, bulge)
+
+
+def _edge_segment(edge: Any) -> dict[str, Any] | str:
+    name = type(edge).__name__
+    if name == "LineEdge":
+        start = _xy(edge.start[0], edge.start[1])
+        end = _xy(edge.end[0], edge.end[1])
+        if start is None or end is None:
+            return "ID_DegenerateEntity"
+        return _segment(start, end, 0.0)
+    if name == "ArcEdge":
+        return _arc_edge_segment(edge)
+    return "ID_HatchRegion"
+
+
+def _path_contour(path: Any) -> list[dict[str, Any]] | str:
+    if type(path).__name__ == "PolylinePath":
+        if not path.is_closed:
+            return "ID_HatchRegion"
+        points = [(_num(x), _num(y), _num(b)) for x, y, b in path.vertices]
+        return _bulge_segments(points, True)
+    if type(path).__name__ != "EdgePath":
+        return "ID_HatchRegion"
+    segments: list[dict[str, Any]] = []
+    for edge in path.edges:
+        segment = _edge_segment(edge)
+        if isinstance(segment, str):
+            return segment
+        segments.append(segment)
+    if len(segments) < 3:
+        return "ID_HatchRegion"
+    if _dist(segments[0]["start"], segments[-1]["end"]) > _EPS:
+        return "ID_HatchRegion"
+    return segments
+
+
+def _hatch_elevation(entity: Any) -> float | str:
+    elev = getattr(entity.dxf, "elevation", None)
+    if elev is None:
+        return 0.0
+    z = _num(elev[2]) if len(elev) > 2 else 0.0
+    if not _finite(z):
+        return "ID_DegenerateEntity"
+    return z
+
+
+def _map_hatch(entity: Any) -> dict[str, Any] | str:
+    rule = _hatch_rule(entity)
+    if rule is None:
+        return "ID_HatchRegion"
+    paths = list(entity.paths)
+    if not paths:
+        return "ID_HatchRegion"
+    contours: list[list[dict[str, Any]]] = []
+    for path in paths:
+        contour = _path_contour(path)
+        if isinstance(contour, str):
+            return contour
+        contours.append(contour)
+    elevation = _hatch_elevation(entity)
+    if isinstance(elevation, str):
+        return elevation
+    return _ring(contours, rule, elevation)
+
+
+def _materialize(
+    kind: str,
+    params: dict[str, Any],
+    links: list[dict[str, Any]],
+    units: dict[str, Any],
+    tolerance: dict[str, Any],
+    elevation: float,
+    provenance: dict[str, Any],
+) -> dict[str, Any]:
+    """Compound members are carrier entities, still in source order."""
+    if kind != "Compound":
+        return params
+    members = []
+    for spec in params["members"]:
+        child = _materialize(spec["kind"], spec["params"], links, units, tolerance, elevation, provenance)
+        members.append(_entity(spec["kind"], child, links, units, tolerance, elevation, provenance))
+    return {"members": members}
+
+
 def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
     """Return a mapping dict or a decline id.
 
@@ -472,7 +661,9 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
     if dxftype in DIMENSION_TYPES:
         return "ID_DimensionEntity"
     if dxftype in HATCH_TYPES:
-        return "ID_HatchRegion"
+        return _map_hatch(entity)
+    if dxftype == "POLYLINE":
+        return _map_polyline(entity)
     if dxftype in THREED_TYPES:
         return "ID_ThreeDNotYet"
     if dxftype == "LINE":
@@ -496,11 +687,7 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
         if not _finite(elevation):
             return "ID_DegenerateEntity"
         if mode == "lenient" and closed:
-            return {
-                "kind": "Ring",
-                "elevation": elevation,
-                "params": {"windingRule": "nonzero", "contours": [segments]},
-            }
+            return _ring([segments], "nonzero", elevation)
         return {
             "kind": "BulgePolyline",
             "elevation": elevation,
@@ -676,17 +863,8 @@ def extract_document(
         if not _finite(elevation):
             rows.append(_decl("ID_DegenerateEntity", "non-finite elevation", prov))
             return
-        rows.append(
-            _entity(
-                mapped["kind"],
-                mapped["params"],
-                links,
-                units,
-                tol,
-                elevation,
-                prov,
-            )
-        )
+        params = _materialize(mapped["kind"], mapped["params"], links, units, tol, elevation, prov)
+        rows.append(_entity(mapped["kind"], params, links, units, tol, elevation, prov))
 
     for entity in doc.modelspace():
         emit(entity, [], [], 0.0, ())

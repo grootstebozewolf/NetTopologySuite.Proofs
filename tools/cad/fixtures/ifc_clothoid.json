@@ -1,0 +1,44 @@
+{
+  "record": "entity",
+  "kind": "Spiral",
+  "placement": {
+    "links": [],
+    "s": 1
+  },
+  "params": {
+    "family": "clothoid",
+    "source": {
+      "predefinedType": "CLOTHOID",
+      "startPoint": [
+        0.0,
+        0.0
+      ],
+      "startDirection": 0.0,
+      "startRadiusOfCurvature": null,
+      "endRadiusOfCurvature": 100.0,
+      "segmentLength": 25.0,
+      "clothoidConstant": 50.0,
+      "note": "The segment is IfcAlignmentHorizontalSegment PredefinedType CLOTHOID (buildingSMART IFC4X3, IfcAlignmentHorizontalSegment)."
+    }
+  },
+  "units": {
+    "linear": "unitless",
+    "angle": "radian",
+    "angdir": 0,
+    "angbase": 0.0
+  },
+  "tolerance": {
+    "kind": "sourceDefault"
+  },
+  "dimension": {
+    "space": "2d"
+  },
+  "provenance": {
+    "format": "IFC",
+    "version": "IFC4X3_ADD2",
+    "handle": "0000000010080000000001",
+    "layer": "",
+    "blockPath": [],
+    "fileId": "ifc-clothoid"
+  }
+}

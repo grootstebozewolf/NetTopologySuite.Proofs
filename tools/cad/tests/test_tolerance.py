@@ -87,11 +87,17 @@ def test_tolerance_conversion_record() -> None:
         if row["placement"] == "invariant":
             assert row["declineId"] == "ID_ToleranceKindUnsupported"
             assert row["declineId"] in declines
-            assert set(row["geometryKinds"]) == STEPPED_KINDS
             assert row["spiralHausdorff"] == SPIRAL_HAUSDORFF[row["kind"]]
             assert "placed kappa_max and L" in row["note"]
             assert "curvature scales 1/k and length scales k" in row["note"]
             assert "spiralNote" not in row
+            if row["kind"] == "segmentCount":
+                assert set(row["geometryKinds"]) == set(dxf_extract.SEGMENT_COUNT_KINDS)
+                assert "Wang's n" in row["note"]
+                assert "claimId 0007-bezier-linearize, pending" in row["note"]
+            else:
+                assert set(row["geometryKinds"]) == STEPPED_KINDS
+                assert "Bezier" not in row["geometryKinds"]
         else:
             assert "declineId" not in row
             assert "spiralNote" not in row
