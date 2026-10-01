@@ -117,10 +117,9 @@ Lemma example5_cc_bags_both_clothoid :
   intake_map default_sheet example5_cc_both_clothoid_cst =
     IntakeBag (map_cc_example5 default_sheet).
 Proof.
-  unfold intake_map, example5_cc_both_clothoid_cst, intake_map_members.
-  simpl. unfold intake_map_atom, map_jts_clothoid, map_clothoid.
-  rewrite classify_example5, !locked_iso_try.
-  unfold map_cc_example5. reflexivity.
+  unfold intake_map, example5_cc_both_clothoid_cst, intake_map_members,
+    example5_jts_cst, p00.
+  apply example5_members_bypass.
 Qed.
 
 Lemma example5_cc_not_iso_decline :

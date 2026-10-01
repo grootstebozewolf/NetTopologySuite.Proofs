@@ -13,9 +13,9 @@
    Statement change: the universal ID_SpiralClothoidNotYet
    arm is gone. claimId 0007-intake-spiral is not reminted.
 
-   QEX: emit/parse identity, the compound fold, and JTS G1.
-   Normalizer 2 exists (ClothoidNorm2). The ticket lists the
-   three Props. It does not claim their negation.
+   QEX: emit/parse identity only. Fold and JTS G1 are discharged.
+   Normalizer 2 exists (ClothoidNorm2). The ticket lists emit/parse.
+   It does not claim the negation of that obligation.
 
    ADR-0005: lenient intake, not isValid. 3-axiom host.
    No Admitted / Axiom / Parameter.
@@ -26,9 +26,11 @@
      Assisted-by: Cursor Grok 4.7
    ========================================================================== *)
 
-From Stdlib Require Import Reals List.
+From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance SheetHenCook IntakeWalker IntakeSpiralJts
-  IsoClothoidIntake IsoClothoidIntakeMap IntakeWalkerClothoid IntakeSpiralFront.
+  IsoClothoidIntake IsoClothoidIntakeMap IntakeWalkerClothoid IntakeSpiralFront
+  SignedCurvature ClothoidNorm2 SheetHenClothoidFrames SheetHenClothoidBounds
+  IntakeCompoundFold.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Open Scope list_scope.
@@ -154,8 +156,8 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* QEX. Three proofs about types that already exist: named Props, not        *)
-(* Admitted, not proved, and their negation is not a lemma.                  *)
+(* Emit/parse stays an unproved Prop. The fold and JTS G1 are proved.        *)
+(* Their negation is not a lemma.                                             *)
 (* -------------------------------------------------------------------------- *)
 
 (* Decline ids drop the CST payload, so identity is on the intake
@@ -206,7 +208,113 @@ Definition spiral_jts_g1 : Prop :=
       cloth_vy locked_clothoid_egg (cloth_sd locked_clothoid_egg) /\
     mst_curvature pred = example5_jts_k0.
 
-(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Statement change, claimId not reminted: a clothoid SPIRALCURVE bags norm2 on try hit and otherwise declines ID_SpiralNonPositiveLength, ID_SpiralConstantCurvature, or ID_NotSimilarityFrame; sample cloth_A <> 1 so it is not the locked example5 bag; SpiralOther declines ID_SpiralOther; JTS L<=0, other triples, and example5 stay; MemberState projects (QED). QEX is spiral_emit_parse_id, spiral_compound_fold, spiral_jts_g1; SJ_Normalizer2 is dropped because norm2 exists. Negation of the QEX list is not claimed. Not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
+Definition reals5_meet (pred start_s : MemberState) : bool :=
+  if Req_EM_T (px (mst_end pred)) (px (mst_end start_s)) then
+    if Req_EM_T (py (mst_end pred)) (py (mst_end start_s)) then
+      if Req_EM_T (px (mst_dir pred)) (px (mst_dir start_s)) then
+        if Req_EM_T (py (mst_dir pred)) (py (mst_dir start_s)) then
+          if Req_EM_T (mst_curvature pred) (mst_curvature start_s) then true
+          else false
+        else false
+      else false
+    else false
+  else false.
+
+Fixpoint ms_fold (pred : MemberState) (xs : list (MemberState * MemberState))
+  : option MemberState :=
+  match xs with
+  | [] => Some pred
+  | (start_s, end_s) :: rest =>
+      if reals5_meet pred start_s then ms_fold end_s rest else None
+  end.
+
+Lemma reals5_meet_spec : forall pred start_s,
+  reals5_meet pred start_s = true <->
+  mst_end pred = mst_end start_s /\
+  mst_dir pred = mst_dir start_s /\
+  mst_curvature pred = mst_curvature start_s.
+Proof.
+  intros pred start_s. split.
+  - intro Hm. unfold reals5_meet in Hm.
+    destruct (Req_EM_T (px (mst_end pred)) (px (mst_end start_s))) as [Hx|Hx];
+      [|discriminate].
+    destruct (Req_EM_T (py (mst_end pred)) (py (mst_end start_s))) as [Hy|Hy];
+      [|discriminate].
+    destruct (Req_EM_T (px (mst_dir pred)) (px (mst_dir start_s))) as [Hdx|Hdx];
+      [|discriminate].
+    destruct (Req_EM_T (py (mst_dir pred)) (py (mst_dir start_s))) as [Hdy|Hdy];
+      [|discriminate].
+    destruct (Req_EM_T (mst_curvature pred) (mst_curvature start_s)) as [Hk|Hk];
+      [|discriminate].
+    split; [|split].
+    + destruct (mst_end pred) as [x1 y1], (mst_end start_s) as [x2 y2].
+      cbn in Hx, Hy. subst. reflexivity.
+    + destruct (mst_dir pred) as [u1 v1], (mst_dir start_s) as [u2 v2].
+      cbn in Hdx, Hdy. subst. reflexivity.
+    + exact Hk.
+  - intros [He [Hd Hk]]. unfold reals5_meet. rewrite He, Hd, Hk.
+    destruct (Req_EM_T (px (mst_end start_s)) (px (mst_end start_s))) as [_|H];
+      [|exfalso; apply H; reflexivity].
+    destruct (Req_EM_T (py (mst_end start_s)) (py (mst_end start_s))) as [_|H];
+      [|exfalso; apply H; reflexivity].
+    destruct (Req_EM_T (px (mst_dir start_s)) (px (mst_dir start_s))) as [_|H];
+      [|exfalso; apply H; reflexivity].
+    destruct (Req_EM_T (py (mst_dir start_s)) (py (mst_dir start_s))) as [_|H];
+      [|exfalso; apply H; reflexivity].
+    destruct (Req_EM_T (mst_curvature start_s) (mst_curvature start_s)) as [_|H];
+      [|exfalso; apply H; reflexivity].
+    reflexivity.
+Qed.
+
+Lemma spiral_compound_fold_qed : spiral_compound_fold.
+Proof.
+  unfold spiral_compound_fold. exists ms_fold. split; [|split].
+  - intros pred. reflexivity.
+  - intros pred start_s end_s rest Hmeet. simpl.
+    apply (proj2 (reals5_meet_spec pred start_s)) in Hmeet.
+    rewrite Hmeet. reflexivity.
+  - intros pred start_s end_s rest Hmiss. simpl.
+    destruct (reals5_meet pred start_s) eqn:Hm.
+    + exfalso. apply Hmiss. apply (proj1 (reals5_meet_spec pred start_s)). exact Hm.
+    + reflexivity.
+Qed.
+
+Lemma spiral_jts_g1_qed : spiral_jts_g1.
+Proof.
+  unfold spiral_jts_g1.
+  destruct example5_via_fold as [e [ms [Hfold [Hc0 [Hg1 Heval]]]]].
+  split.
+  - unfold example5_jts_k0, locked_clothoid_egg.
+    rewrite (east_sigma (mkPoint 0 0)).
+    cbn [cloth_sd cloth_A mk_cloth]. field.
+  - split.
+    + unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
+      rewrite east_vx, east_vy.
+      unfold fresnel_cx_integrand, fresnel_cy_integrand, fresnel_angle.
+      assert (Hz : 0 * 0 / 2 = 0) by field.
+      rewrite Hz. rewrite cos_0, sin_0. ring.
+    + exists locked_fold_pred. split.
+      { rewrite <- Hc0. rewrite <- (Heval 0). unfold cloth_p0. reflexivity. }
+      { split.
+        { assert (Hpx : px (cloth_tangent e 0) = 1).
+          { rewrite Hg1. unfold locked_fold_pred. reflexivity. }
+          unfold locked_fold_pred. cbn.
+          unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
+          rewrite east_vx. unfold fresnel_cx_integrand, fresnel_angle.
+          replace (0 * 0 / 2) with 0 by field.
+          rewrite cos_0. rewrite <- Hpx at 1. exact Hpx. }
+        { split.
+          { assert (Hpy : py (cloth_tangent e 0) = 0).
+            { rewrite Hg1. unfold locked_fold_pred. reflexivity. }
+            unfold locked_fold_pred. cbn.
+            unfold locked_clothoid_egg. cbn [cloth_sd mk_cloth].
+            rewrite east_vy. unfold fresnel_cy_integrand, fresnel_angle.
+            replace (0 * 0 / 2) with 0 by field.
+            rewrite sin_0. rewrite <- Hpy at 1. exact Hpy. }
+          { unfold locked_fold_pred. cbn. reflexivity. } } }
+Qed.
+
+(* WITNESS {"claimId":"0007-intake-spiral","topic":"overlay","lemma":"ticket_0007_intake_spiral_qed_or_qex","title":"Statement change, claimId not reminted: a clothoid SPIRALCURVE bags norm2 on try hit and otherwise declines ID_SpiralNonPositiveLength, ID_SpiralConstantCurvature, or ID_NotSimilarityFrame; sample cloth_A <> 1 so it is not the locked example5 bag; SpiralOther declines ID_SpiralOther; JTS L<=0, other triples, and example5 stay; MemberState projects (QED). QEX is spiral_emit_parse_id; the compound fold and JTS G1 are discharged; SJ_Normalizer2 stays dropped because norm2 exists. Negation of the QEX obligation is not claimed. Not a remint of 0007-intake-mkclothoid","file":"theories/IntakeSpiralJtsMap.v","witness":"0007-intake-spiral","board":"ADR-0007"} *)
 Theorem ticket_0007_intake_spiral_qed_or_qex :
   ((forall sh sc e,
       try_spiral_clothoid sc = inr e ->
@@ -247,9 +355,7 @@ Theorem ticket_0007_intake_spiral_qed_or_qex :
       mst_dir (mkMemberState p d k) = d /\
       mst_curvature (mkMemberState p d k) = k))
   \/
-  (spiral_emit_parse_id /\
-   spiral_compound_fold /\
-   spiral_jts_g1).
+  spiral_emit_parse_id.
 Proof.
   (* QED arm. The right disjunct only names the gaps. *)
   left.
@@ -278,3 +384,6 @@ Print Assumptions jts_matches_class.
 Print Assumptions jts_length_before_example5.
 Print Assumptions jts_nonpositive_length_declines.
 Print Assumptions ticket_0007_intake_spiral_qed_or_qex.
+Print Assumptions reals5_meet_spec.
+Print Assumptions spiral_compound_fold_qed.
+Print Assumptions spiral_jts_g1_qed.
