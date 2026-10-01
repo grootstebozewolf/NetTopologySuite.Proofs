@@ -17,10 +17,11 @@
    Locked unit-square diag_ab × diag_cd: parent measure 1; after Hit,
    quad measure 0 (join pair Declines; no invented extra Hits).
    QEX: leftover_quad_kiss_arm, leftover_quad_share_mint_arm,
-   LeftoverBagTermArm as a whole, cook_loop_status = LoopObligation.
+   LeftoverBagTermArm as a whole. cook_loop_status is LoopDischarged
+   (letter 6b, CookLoopRho).
 
    Honesty fences:
-     Do not fake LoopDischarged. Do not remint I.8 / pairwise width as
+     Do not inhabit LeftoverBagTermArm. Do not remint I.8 / pairwise width as
      bag discharge. Do not remint kiss/share as width. Do not remint
      leftover_quad_width as this measure. Do not remint CircGamma / ι /
      mixed_joint_params / first_cook expand / Multi bags as ρ.
@@ -468,8 +469,8 @@ Proof.
 Qed.
 
 Lemma leftover_term_park_unchanged :
-  cook_loop_status = LoopObligation /\
-  cook_loop_status <> LoopDischarged /\
+  cook_loop_status = LoopDischarged /\
+  cook_loop_status <> LoopObligation /\
   ~ leftover_bag_term_arm /\
   LeftoverBagTermArm = leftover_bag_term_arm /\
   leftover_bag_term_arm =
@@ -480,8 +481,8 @@ Lemma leftover_term_park_unchanged :
   ~ leftover_quad_kiss_arm /\
   ~ leftover_quad_share_mint_arm.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact leftover_bag_term_arm_missing|].
   split; [reflexivity|].
   split; [reflexivity|].
@@ -526,8 +527,8 @@ Qed.
 Theorem ticket_0007_rho_bag_term_park_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/
-  (cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged
+  (cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation
    /\ ~ leftover_bag_term_arm
    /\ LeftoverBagTermArm = leftover_bag_term_arm
    /\ leftover_bag_term_arm =
@@ -557,3 +558,15 @@ Print Assumptions leftover_bag_term_measure_sum_conserved.
 Print Assumptions leftover_term_park_unchanged.
 Print Assumptions ticket_0007_rho_bag_term_measure_qed_or_qex.
 Print Assumptions ticket_0007_rho_bag_term_park_qed_or_qex.
+Print Assumptions leftover_pair_step_ok_sym.
+Print Assumptions lbag_nth_some_lt.
+Print Assumptions leftover_hit_pair_bounded.
+Print Assumptions leftover_hit_listing_same_in.
+Print Assumptions locked_A_hi_egg.
+Print Assumptions locked_B_hi_egg.
+Print Assumptions locked_quad_Alo_Ahi_no_hit.
+Print Assumptions locked_quad_Alo_Bhi_no_hit.
+Print Assumptions locked_quad_Ahi_Blo_no_hit.
+Print Assumptions locked_quad_Ahi_Bhi_no_hit.
+Print Assumptions locked_quad_Blo_Bhi_no_hit.
+Print Assumptions locked_quad_nth.
