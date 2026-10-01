@@ -4384,3 +4384,6 @@ theories/SpectreChordArcWitness.v
 # TIN topology. claimId tri-de9im-t4. 3-axiom. No Admitted.
 theories/TinSurfaceTopo.v
 theories/TinSurfaceVertex.v
+# lane B
+theories/NurbsSumBridge.v
+theories/NurbsBezierSpan.v
