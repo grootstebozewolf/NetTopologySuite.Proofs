@@ -6,10 +6,11 @@
    rho_zero_noded_ov and rho_zero_iff_noded_ov under bag_inv and
    no_decline_pair. gap_bag_counted is the gap regression in
    SheetHenNodedOvGap. rho_zero_arm_fix is the identity at rho zero.
-   CookLoopRho carries that universal arm, not one bag.
-   Selector confluence is letter 6a-iii and is not a conjunct here.
-   The iso-half bag is a fixture, not the discharge.
-   cook_loop_status stays LoopObligation. Does not remint 0007-loop-letter6.
+   CookLoopRho is rho_loop_discharged: the universal arm and selector
+   confluence. The confluence conjunct is letter 6a-iii
+   (run_vset_determined). cook_loop_rho_fixture is the iso-half bag
+   alone. claimId: none on that fixture. cook_loop_status stays
+   LoopObligation. Does not remint 0007-loop-letter6.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -266,37 +267,78 @@ Proof.
   - exact I.
 Qed.
 
-(* Selector confluence (lawful picks, vertex-set independent of the
-   selector) is letter 6a-iii. It is not proved here and is not a
-   conjunct of CookLoopRho. CookLoopRho carries only the universal arm. *)
+(* A selector is lawful when every answer is a real admissible hit and an
+   existing admissible hit is not answered by None. *)
+Definition selector : Type := SheetBag -> option HitPick.
 
-Inductive CookLoopRho : Prop :=
-| MkCookLoopRho :
-    (forall sh pcs,
-       bag_inv (BagLive sh pcs) ->
-       match bag_run_arm (S (rho_pcs pcs)) (BagLive sh pcs) with
-       | BagDeclined _ => True
-       | BagLive _ pcs' =>
-           bag_noded_ov (BagLive sh pcs') /\ bag_inv (BagLive sh pcs')
-       end) ->
-    CookLoopRho.
+Definition has_adm_hit (pcs : list BagPiece) : Prop :=
+  exists i j a c p ti tj,
+    nth_error pcs i = Some a /\
+    nth_error pcs j = Some c /\
+    i <> j /\
+    piece_wf a /\
+    piece_wf c /\
+    bp_support a <> bp_support c /\
+    admissible_hit pcs a c p ti tj.
 
-Lemma cook_loop_rho_universal : CookLoopRho.
-Proof.
-  apply MkCookLoopRho. exact bag_run_arm_noded.
-Qed.
+Definition lawful (pick : selector) : Prop :=
+  (forall b, pick_spec pick b) /\
+  (forall sh pcs,
+     bag_inv (BagLive sh pcs) ->
+     has_adm_hit pcs ->
+     pick (BagLive sh pcs) <> None).
 
-(* Fixture. The iso-half bag is one live bag the universal arm covers.
-   It does not inhabit CookLoopRho by itself. claimId: none. *)
-Lemma iso_half_arm_fixture :
-  match bag_run_arm (S (rho_pcs iso_half_pcs)) iso_half_bag with
-  | BagDeclined _ => True
-  | BagLive _ pcs' =>
-      bag_noded_ov (BagLive default_sheet pcs') /\
-      bag_inv (BagLive default_sheet pcs')
+Definition vmem (pcs : list BagPiece) (p : Point) : Prop :=
+  exists pc, In pc pcs /\ piece_endpoint pc p.
+
+Definition vset_eq (pcs1 pcs2 : list BagPiece) : Prop :=
+  forall p, vmem pcs1 p <-> vmem pcs2 p.
+
+Definition run_pcs (pick : selector) (b : SheetBag) : list BagPiece :=
+  match bag_run pick (S (rho b)) b with
+  | BagLive _ pcs => pcs
+  | BagDeclined _ => nil
   end.
+
+(* Universal arm, and vertex-set independence of two lawful selectors.
+   The second conjunct is discharged by run_vset_determined (6a-iii). *)
+Definition rho_loop_discharged : Prop :=
+  (forall sh pcs,
+     bag_inv (BagLive sh pcs) ->
+     match bag_run_arm (S (rho_pcs pcs)) (BagLive sh pcs) with
+     | BagDeclined _ => True
+     | BagLive _ pcs' =>
+         bag_noded_ov (BagLive sh pcs') /\ bag_inv (BagLive sh pcs')
+     end) /\
+  (forall pick1 pick2 sh pcs,
+     lawful pick1 ->
+     lawful pick2 ->
+     bag_inv (BagLive sh pcs) ->
+     no_decline_pair pcs ->
+     vset_eq (run_pcs pick1 (BagLive sh pcs))
+             (run_pcs pick2 (BagLive sh pcs))).
+
+Definition CookLoopRho : Prop := rho_loop_discharged.
+
+(* Fixture. One already-noded bag. claimId: none. This is not CookLoopRho. *)
+Lemma cook_loop_rho_fixture :
+  bag_inv iso_half_bag /\
+  no_decline_pair iso_half_pcs /\
+  (rho_pcs iso_half_pcs = 0%nat <-> bag_noded_ov iso_half_bag) /\
+  (forall fuel, bag_run_arm fuel iso_half_bag = iso_half_bag).
 Proof.
-  unfold iso_half_bag. apply bag_run_arm_noded. apply iso_half_inv.
+  assert (Hinv : bag_inv iso_half_bag) by apply iso_half_inv.
+  assert (Hnd : no_decline_pair iso_half_pcs).
+  { unfold no_decline_pair.
+    apply (proj1 (live_decline_forall iso_half_pcs)).
+    exact iso_half_no_decline. }
+  assert (Hz : rho_pcs iso_half_pcs = 0%nat) by exact iso_half_pair_rho_zero.
+  split; [exact Hinv|].
+  split; [exact Hnd|].
+  split.
+  - apply rho_zero_iff_noded_ov; [exact Hinv| exact Hnd].
+  - intro fuel. unfold iso_half_bag.
+    apply rho_zero_arm_fix; [exact Hinv| exact Hnd| exact Hz].
 Qed.
 
 Lemma cook_loop_rho_status :
@@ -320,6 +362,5 @@ Print Assumptions rho_zero_arm_fix.
 Print Assumptions step_hit_sheet.
 Print Assumptions bag_run_arm_keeps_sheet.
 Print Assumptions bag_run_arm_noded.
-Print Assumptions cook_loop_rho_universal.
-Print Assumptions iso_half_arm_fixture.
+Print Assumptions cook_loop_rho_fixture.
 Print Assumptions cook_loop_rho_status.

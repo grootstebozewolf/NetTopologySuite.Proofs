@@ -2614,7 +2614,7 @@ theories/SheetHenNodedOv.v
 # Regression gap_counted, gap_bag_counted, gap_rho_pos. 3-axiom. No Admitted.
 theories/SheetHenNodedOvGap.v
 # Letter 6a-ii. claimId none. Headline: bag_run_arm_noded.
-# CookLoopRho carries that universal arm. Selector confluence is 6a-iii.
+# CookLoopRho := rho_loop_discharged. Confluence conjunct is 6a-iii.
 # cook_loop_status stays LoopObligation. 3-axiom. No Admitted.
 theories/SheetHenRhoLoop.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
