@@ -2935,6 +2935,9 @@ theories/SheetHenClothoidEgg.v
 # types/oracle/identity/noded/leftover-confluence/overlay/ddir. Required
 # by SheetHenCook. No Admitted.
 theories/SheetHenCookCore.v
+# Clothoid × chord signed distance. No FTC. claimId 0007-clothoid-chord-rho.
+# Does not wire bag_run_arm. No new Egg arm.
+theories/ClothoidChordRho.v
 # ADR-0007 chord_split / try_cook_hit + constructive 𝓘, split from
 # SheetHenCook (module-split gate). Required by SheetHenCook. No Admitted.
 theories/SheetHenCookConstructed.v

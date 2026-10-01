@@ -370,6 +370,9 @@ theories/ClothoidAxis.v
 theories/ClothoidKnots.v
 # AABB via envelope_aabb. claimId 0007-clothoid-envelope.
 theories/ClothoidEnvelope.v
+# Clothoid × chord signed distance. No FTC. claimId 0007-clothoid-chord-rho.
+# Does not wire bag_run_arm. No new Egg arm.
+theories/ClothoidChordRho.v
 # W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
 # Headline wind_integer. Not the ray-crossing count in WindingNumber.v.
 # Does not flip RNG_JordanUncond.
