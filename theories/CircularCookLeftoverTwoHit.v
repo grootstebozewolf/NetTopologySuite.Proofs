@@ -18,12 +18,13 @@
    example. Endpoint-only meets Decline. Cocircular overlap Decline,
    not a Hit. After the two Hits, leftover pairs have no interior Hit;
    leftover circular eggs meet only at the two point-hens.
-   QEX: general circ bag-term / LoopDischarged-for-circ, kiss/share
-   identity, chord LeftoverBagTermArm. cook_loop_status stays
-   LoopObligation.
+   QEX: general circ bag-term, kiss/share identity, chord
+   LeftoverBagTermArm. Letter 6b sets cook_loop_status to
+   LoopDischarged via CookLoopRho. This file does not remint
+   claimId 0007-loop-letter6.
 
    Honesty fences:
-     Do not fake LoopDischarged. Do not remint leftover_quad_width.
+     Do not inhabit LeftoverBagTermArm. Do not remint leftover_quad_width.
      Do not remint CircGamma / ι / first-cook expand / NURBS / Overlay.
      Host CircGamma is CircGammaDischarged (MkCirc). Reuse circ_split /
      I_ok / cook_hit_circs. Sidecar I_circles_gamma / CircLeftover are
@@ -2037,12 +2038,12 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Park: this letter does not flip cook_loop_status / LeftoverBagTermArm.     *)
+(* Park: LeftoverBagTermArm stays refuted. cook_loop_status is LoopDischarged (letter 6b). *)
 (* -------------------------------------------------------------------------- *)
 
 Lemma circ_leftover_park_unchanged :
-  cook_loop_status = LoopObligation /\
-  cook_loop_status <> LoopDischarged /\
+  cook_loop_status = LoopDischarged /\
+  cook_loop_status <> LoopObligation /\
   ~ leftover_bag_term_arm /\
   LeftoverBagTermArm = leftover_bag_term_arm /\
   leftover_bag_term_arm =
@@ -2053,8 +2054,8 @@ Lemma circ_leftover_park_unchanged :
   ~ leftover_quad_kiss_arm /\
   ~ leftover_quad_share_mint_arm.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact leftover_bag_term_arm_missing|].
   split; [reflexivity|].
   split; [reflexivity|].
@@ -2063,15 +2064,15 @@ Proof.
   exact leftover_quad_share_mint_arm_missing.
 Qed.
 
-(* General circ bag-term / LoopDischarged-for-circ stays missing. *)
+(* Host cook_loop_status is LoopDischarged (letter 6b). General circ bag-term stays missing. *)
 Definition circ_leftover_loop_discharged : Prop :=
   cook_loop_status = LoopDischarged.
 
-Lemma circ_leftover_loop_discharged_missing :
-  ~ circ_leftover_loop_discharged.
+Lemma circ_leftover_loop_is_discharged :
+  circ_leftover_loop_discharged.
 Proof.
   unfold circ_leftover_loop_discharged.
-  exact cook_loop_not_discharged.
+  exact cook_loop_is_discharged.
 Qed.
 
 Definition circ_leftover_general_term : Prop :=
@@ -2144,8 +2145,8 @@ Qed.
 Theorem ticket_0007_circ_leftover_two_hit_park_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/
-  (cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged
+  (cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation
    /\ ~ leftover_bag_term_arm
    /\ LeftoverBagTermArm = leftover_bag_term_arm
    /\ leftover_bag_term_arm =
@@ -2155,7 +2156,7 @@ Theorem ticket_0007_circ_leftover_two_hit_park_qed_or_qex :
    /\ ~ leftover_quad_width_decreases
    /\ ~ leftover_quad_kiss_arm
    /\ ~ leftover_quad_share_mint_arm
-   /\ ~ circ_leftover_loop_discharged
+   /\ circ_leftover_loop_discharged
    /\ ~ circ_leftover_general_term).
 Proof.
   right.
@@ -2168,7 +2169,7 @@ Proof.
   split; [exact H6|].
   split; [exact H7|].
   split; [exact H8|].
-  split; [exact circ_leftover_loop_discharged_missing|].
+  split; [exact circ_leftover_loop_is_discharged|].
   exact circ_leftover_general_term_missing.
 Qed.
 
@@ -2190,6 +2191,117 @@ Print Assumptions locked_cocircular_overlap_decline.
 Print Assumptions locked_endpoint_only_decline.
 Print Assumptions locked_noded_meet_only_at_hens.
 Print Assumptions circ_leftover_park_unchanged.
+Print Assumptions circ_leftover_loop_is_discharged.
 Print Assumptions ticket_0007_circ_leftover_two_hit_qed_or_qex.
 Print Assumptions ticket_0007_circ_leftover_two_hit_park_qed_or_qex.
 
+Print Assumptions circ_leftover_egg_or.
+Print Assumptions circ_leftover_egg_parent.
+Print Assumptions circ_leftover_span_parent_ok.
+Print Assumptions leftover_div_lt_1.
+Print Assumptions circ_leftover_span_parent_at.
+Print Assumptions circ_leftover_children_stay_circular.
+Print Assumptions cbag_nth_some_lt.
+Print Assumptions circ_leftover_hit_occ_bounded.
+Print Assumptions circ_leftover_hit_listing_same_in.
+Print Assumptions circ_leftover_bag_measure_unique.
+Print Assumptions point_eq_xy.
+Print Assumptions sin_neg_on_neg.
+Print Assumptions locked_twohit_A_at_0.
+Print Assumptions locked_twohit_A_at_1.
+Print Assumptions locked_twohit_B_at_0.
+Print Assumptions locked_twohit_B_at_1.
+Print Assumptions locked_A_angle_plus.
+Print Assumptions locked_A_angle_minus.
+Print Assumptions locked_B_angle_plus.
+Print Assumptions locked_B_angle_minus.
+Print Assumptions cos_4PI3.
+Print Assumptions sin_4PI3.
+Print Assumptions locked_twohit_A_at_plus.
+Print Assumptions locked_twohit_A_at_minus.
+Print Assumptions locked_twohit_B_at_plus.
+Print Assumptions locked_twohit_B_at_minus.
+Print Assumptions locked_p_plus_neq_minus.
+Print Assumptions locked_on_A_plus.
+Print Assumptions locked_on_A_minus.
+Print Assumptions locked_on_B_plus.
+Print Assumptions locked_on_B_minus.
+Print Assumptions locked_A_B_not_same_circle.
+Print Assumptions locked_leftover_eggs_not_same.
+Print Assumptions two_unit_circles_x.
+Print Assumptions two_unit_circles_y2.
+Print Assumptions rsqr_three_quarters.
+Print Assumptions locked_centers_radii.
+Print Assumptions cos_strict_dec_0_PI.
+Print Assumptions cos_inj_0_PI.
+Print Assumptions locked_A_eval_trig.
+Print Assumptions locked_B_eval_trig.
+Print Assumptions locked_A_eval_inj.
+Print Assumptions locked_B_eval_inj.
+Print Assumptions locked_on_A_plus_t.
+Print Assumptions locked_on_A_minus_t.
+Print Assumptions locked_on_B_plus_t.
+Print Assumptions locked_on_B_minus_t.
+Print Assumptions circ_leftover_on_parent.
+Print Assumptions locked_span_A_parent.
+Print Assumptions locked_span_B_parent.
+Print Assumptions locked_A_B_leftover_not_same.
+Print Assumptions locked_pair_hit_is_root.
+Print Assumptions locked_pair_hit_from_open_plus.
+Print Assumptions locked_pair_hit_from_open_minus.
+Print Assumptions locked_parent_plus_hit.
+Print Assumptions locked_parent_minus_hit.
+Print Assumptions locked_parent_plus_step_ok.
+Print Assumptions locked_parent_minus_step_ok.
+Print Assumptions locked_parent_replace.
+Print Assumptions locked_mid_minus_hit.
+Print Assumptions locked_mid_minus_step_ok.
+Print Assumptions locked_mid_replace.
+Print Assumptions locked_mid_children_circular.
+Print Assumptions circ_same_parent_no_hit.
+Print Assumptions locked_span_ok_A_lo.
+Print Assumptions locked_span_ok_A_hi.
+Print Assumptions locked_span_ok_B_lo.
+Print Assumptions locked_span_ok_B_hi.
+Print Assumptions locked_mid_endpoint_pair_decline.
+Print Assumptions locked_circ_decline_idle.
+Print Assumptions locked_parent_nth.
+Print Assumptions locked_parent_only_pair.
+Print Assumptions locked_mid_nth.
+Print Assumptions locked_A_lo_no_plus_open.
+Print Assumptions locked_A_hi_no_root_open.
+Print Assumptions locked_B_lo_no_root_open.
+Print Assumptions locked_B_hi_no_plus_open.
+Print Assumptions locked_mid_cross_no_hit.
+Print Assumptions locked_mid_only_minus.
+Print Assumptions locked_final_nth.
+Print Assumptions locked_final_span_ok.
+Print Assumptions locked_final_span_no_root_open.
+Print Assumptions locked_final_span_parent.
+Print Assumptions locked_final_span_parent_B.
+Print Assumptions locked_final_nth_span.
+Print Assumptions locked_final_is_A.
+Print Assumptions locked_final_is_B.
+Print Assumptions locked_final_pair_no_hit.
+Print Assumptions locked_final_no_hit_occ.
+Print Assumptions circ_leftover_bag_measure_decline_idle.
+Print Assumptions locked_noded_hens_are_the_two_hits.
+Print Assumptions locked_noded_chickens_circular.
+Print Assumptions locked_noded_pairs_no_interior_hit.
+Print Assumptions locked_leftover_start_end.
+Print Assumptions locked_A0_endpoints.
+Print Assumptions locked_A1_endpoints.
+Print Assumptions locked_A2_endpoints.
+Print Assumptions locked_B0_endpoints.
+Print Assumptions locked_B1_endpoints.
+Print Assumptions locked_B2_endpoints.
+Print Assumptions locked_on_leftover_parent_t.
+Print Assumptions leftover_span_at_between.
+Print Assumptions at_hen_from_parent_join.
+Print Assumptions locked_final_parent_is_A.
+Print Assumptions locked_final_parent_is_B.
+Print Assumptions locked_A_windows_join.
+Print Assumptions locked_B_windows_join.
+Print Assumptions locked_root_is_leftover_end.
+Print Assumptions locked_noded_egg_span.
+Print Assumptions circ_leftover_general_term_missing.

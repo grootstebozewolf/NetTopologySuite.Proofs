@@ -4,7 +4,7 @@
    ADR-0007 letter after Accept: ρ bag-loop stop (claimId 0007-ρ-bag-loop).
 
    Honest QED ∨ QEX for the bag-level repeat-until-noded cook loop
-   (SheetHenCook.cook_loop_status = LoopObligation;
+   (SheetHenCook.cook_loop_status = LoopDischarged;
     Adr0007NodingEpic.ticket_0007_cook_term_qed_or_qex).
 
    QED would be LoopDischarged with a real termination + confluence
@@ -57,6 +57,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance SheetHenCook.
+From NTS.Proofs Require SheetHenRhoLoop.
 Local Open Scope R_scope.
 
 (* WITNESS: campaign=rho rung=bag-loop claim=0007
@@ -83,7 +84,8 @@ Definition leftover_quad_width (ti tj : R) : R :=
 (* Discharge constructor: a well-founded measure on leftover bags that
    decreases under Hit-split / kiss / ShareOne / MintTwo. *)
 Inductive CookLoopConstructor : Type :=
-| CookLoopBagTerm.
+| CookLoopBagTerm
+| CookLoopRho.
 
 (* Hit-split arm: leftover_quad_width strictly decreases. Conserved
    at 2, so this Prop is uninhabited. *)
@@ -119,6 +121,7 @@ Definition LeftoverBagTermArm : Prop := leftover_bag_term_arm.
 Definition cook_loop_ctor_inhabits (c : CookLoopConstructor) : Prop :=
   match c with
   | CookLoopBagTerm => leftover_bag_term_arm
+  | CookLoopRho => SheetHenRhoLoop.CookLoopRho
   end.
 
 Lemma leftover_quad_width_conserved :
@@ -279,22 +282,22 @@ Definition arc_cook_term_status : ArcCookTermStatus := ArcTermSister.
 
 Lemma arc_cook_term_is_sister :
   arc_cook_term_status = ArcTermSister /\
-  cook_loop_status = LoopObligation /\
-  cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged /\
+  cook_loop_status <> LoopObligation.
 Proof.
   split; [reflexivity|].
-  split; [exact cook_loop_is_obligation|exact cook_loop_not_discharged].
+  split; [exact cook_loop_is_discharged|exact cook_loop_not_obligation].
 Qed.
 
 Lemma pairwise_qed_not_bag_discharge :
   interior_split_finite /\
   split_step_confluent_holds /\
-  cook_loop_status = LoopObligation /\
-  cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged /\
+  cook_loop_status <> LoopObligation.
 Proof.
   split; [exact interior_split_finite_holds|].
   split; [exact split_step_confluent_holds_proof|].
-  split; [exact cook_loop_is_obligation|exact cook_loop_not_discharged].
+  split; [exact cook_loop_is_discharged|exact cook_loop_not_obligation].
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -305,7 +308,7 @@ Qed.
 Theorem ticket_0007_rho_gap_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/
-  (cook_loop_status = LoopObligation
+  (cook_loop_status = LoopDischarged
    /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm
    /\ ~ leftover_bag_term_arm
    /\ ~ leftover_quad_width_decreases
@@ -318,7 +321,7 @@ Theorem ticket_0007_rho_gap_qed_or_qex :
          leftover_width 0 1 + leftover_width 0 1)).
 Proof.
   right.
-  split; [exact cook_loop_is_obligation|].
+  split; [exact cook_loop_is_discharged|].
   split; [exact cook_loop_bag_term_missing|].
   split; [exact leftover_bag_term_arm_missing|].
   split; [exact leftover_quad_width_does_not_decrease|].
@@ -332,7 +335,7 @@ Theorem ticket_0007_rho_cycles_qed_or_qex :
   (cook_loop_status = LoopDischarged
    /\ leftover_width 0 1 < leftover_width 0 1)
   \/
-  (cook_loop_status = LoopObligation
+  (cook_loop_status = LoopDischarged
    /\ leftover_width 0 1 = 1
    /\ (forall c1 c2 h, try_cook_hit c1 c2 IEmpty h = None)
    /\ (forall c1 c2 h, try_cook_hit c1 c2 IDecline h = None)
@@ -344,7 +347,7 @@ Theorem ticket_0007_rho_cycles_qed_or_qex :
          snd (apply_id_decision (MintTwo a b)))).
 Proof.
   right.
-  split; [exact cook_loop_is_obligation|].
+  split; [exact cook_loop_is_discharged|].
   destruct no_hit_no_leftover_split as [Hw [He Hd]].
   split; [exact Hw|].
   split; [exact He|].
@@ -358,8 +361,8 @@ Qed.
 Theorem ticket_0007_rho_neq_pairwise_qed_or_qex :
   (interior_split_finite
    /\ split_step_confluent_holds
-   /\ cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged)
+   /\ cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation)
   \/
   cook_loop_status = LoopDischarged.
 Proof.
@@ -373,7 +376,7 @@ Theorem ticket_0007_rho_scope_qed_or_qex :
    /\ arc_cook_term_status = ArcTermDischarged
    /\ first_cook_scope EggCircularArc EggCircularArc)
   \/
-  (cook_loop_status = LoopObligation
+  (cook_loop_status = LoopDischarged
    /\ pairwise_hit_leftover_count = 4%nat
    /\ arc_cook_term_status = ArcTermSister
    /\ first_cook_scope EggChord EggChord
@@ -381,7 +384,7 @@ Theorem ticket_0007_rho_scope_qed_or_qex :
    /\ first_cook_scope EggNurbs EggNurbs).
 Proof.
   right.
-  split; [exact cook_loop_is_obligation|].
+  split; [exact cook_loop_is_discharged|].
   split; [reflexivity|].
   split; [reflexivity|].
   split; [exact first_cook_scope_chord_chord|].

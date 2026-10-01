@@ -683,8 +683,8 @@ Theorem ticket_0007_spiral_parks_qed_or_qex :
    sidecar_spiral_kind <> SSP_SpiralNoding /\
    sidecar_spiral_kind <> SSP_CircGamma /\
    sidecar_spiral_kind <> SSP_LoopNoder /\
-   cook_loop_status = LoopObligation /\
-   cook_loop_status <> LoopDischarged /\
+   cook_loop_status = LoopDischarged /\
+   cook_loop_status <> LoopObligation /\
    first_cook_scope EggChord EggChord /\
    ~ first_cook_scope EggSpiralCurve EggSpiralCurve /\
    egg_class (MkOutOfScope EggClothoid) = EggClothoid).
@@ -697,8 +697,8 @@ Proof.
   split; [exact sidecar_spiral_not_spiral_noding|].
   split; [exact sidecar_spiral_not_circgamma|].
   split; [exact sidecar_spiral_not_loop_noder|].
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact first_cook_scope_chord_chord|].
   split; [exact spiral_spiral_not_first_scope|].
   apply egg_clothoid_still_present.
@@ -718,3 +718,31 @@ Print Assumptions sidecar_spiral_egg_inhabits.
 Print Assumptions ticket_0007_spiral_egg_qed_or_qex.
 Print Assumptions ticket_0007_spiral_not_first_cook_qed_or_qex.
 Print Assumptions ticket_0007_spiral_parks_qed_or_qex.
+Print Assumptions sidecar_spiral_only_out_of_scope.
+Print Assumptions sidecar_spiral_kinds_one_host_egg.
+Print Assumptions sidecar_spiral_clothoid_nameplate_not_eggclothoid.
+Print Assumptions locked_spi_demote_is_host_crossing.
+Print Assumptions locked_spi_same_sheet_as_nodingng.
+Print Assumptions locked_spi_nameplate_is_clothoid.
+Print Assumptions spiral_spiral_not_first_scope.
+Print Assumptions spiral_decline_I_ok.
+Print Assumptions sidecar_spiral_host_hit_false.
+Print Assumptions sidecar_spiral_host_empty_false.
+Print Assumptions sidecar_spiral_try_cook_hit_none.
+Print Assumptions sidecar_spiral_empty_neq_decline.
+Print Assumptions locked_spi_chord_proper_cross.
+Print Assumptions sidecar_spiral_demote_hit_not_spiral_I_ok.
+Print Assumptions sidecar_spiral_metric_is_type_zoo.
+Print Assumptions sidecar_spiral_first_cook_expand_missing.
+Print Assumptions sidecar_spiral_not_first_cook.
+Print Assumptions sidecar_spiral_first_cook_stays_chord_chord.
+Print Assumptions sidecar_spiral_is_egg_packaging.
+Print Assumptions sidecar_spiral_not_host_cook.
+Print Assumptions sidecar_spiral_not_nodingng.
+Print Assumptions sidecar_spiral_not_spiral_noding.
+Print Assumptions sidecar_spiral_not_circgamma.
+Print Assumptions sidecar_spiral_not_campaign_i.
+Print Assumptions sidecar_spiral_not_loop_noder.
+Print Assumptions sidecar_spiral_letter_is_landed.
+Print Assumptions sidecar_spiral_not_first_cook_expanded.
+Print Assumptions sidecar_spiral_campaign_not_discharged.
