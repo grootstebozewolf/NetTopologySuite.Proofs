@@ -3100,6 +3100,10 @@ theories/SignedCurvature.v
 # Compound MemberState fold (IntakeCompoundFold). claimId none.
 # No Admitted.
 theories/IntakeCompoundFold.v
+# Clothoid uniform linearizer. claimId 0007-clothoid-linearize.
+theories/ClothoidFresnelInc.v
+theories/ClothoidLinearize.v
+theories/ClothoidLinearizeContract.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle

@@ -373,6 +373,10 @@ theories/ClothoidEnvelope.v
 # Clothoid × chord signed distance. No FTC. claimId 0007-clothoid-chord-rho.
 # Does not wire bag_run_arm. No new Egg arm.
 theories/ClothoidChordRho.v
+# Clothoid uniform linearizer. claimId 0007-clothoid-linearize.
+theories/ClothoidFresnelInc.v
+theories/ClothoidLinearize.v
+theories/ClothoidLinearizeContract.v
 # W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
 # Headline wind_integer. Not the ray-crossing count in WindingNumber.v.
 # Does not flip RNG_JordanUncond.
