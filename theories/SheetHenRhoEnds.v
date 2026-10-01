@@ -518,4 +518,27 @@ Proof.
     + eapply (keep_step pcs i j a b0 p ti tj h u v q); eassumption.
   - destruct Hd; simpl; [apply Nat.le_0_l| apply Nat.le_refl].
 Qed.
+Print Assumptions count_ends_app.
+Print Assumptions count_ends_cons_bit.
+Print Assumptions split_keeps_endbit.
+Print Assumptions filter_idx_count_le.
+Print Assumptions split_point_both_ends.
+Print Assumptions joint_at_split.
+Print Assumptions filter_idx_ext.
+Print Assumptions filter_idx_succ.
+Print Assumptions keep_other_swap.
+Print Assumptions drop_pair_swap.
+Print Assumptions filter_idx_after.
+Print Assumptions count_drop_one_gen.
+Print Assumptions count_drop_one.
+Print Assumptions count_drop_two_ord.
+Print Assumptions count_drop_two.
+Print Assumptions le_split_sum_drop.
+Print Assumptions count_ends_progress_ge.
+Print Assumptions joint_progress_mono.
+Print Assumptions boundary_progress_old.
+Print Assumptions circ_overlap_in_sym.
+Print Assumptions in_ends_vertex.
+Print Assumptions circ_overlap_old.
+Print Assumptions counted_raw_old.
 Print Assumptions rho_step_nonincreasing.

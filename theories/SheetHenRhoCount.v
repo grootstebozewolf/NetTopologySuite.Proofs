@@ -836,6 +836,7 @@ Proof.
         by (apply andb_true_intro; split; apply vertex_spec; assumption).
       subst p. rewrite Bad in Hneg. discriminate.
 Qed.
+Print Assumptions same_circle_sym.
 Print Assumptions overlap_endpoints_le_2.
 Print Assumptions rmin_lb.
 Print Assumptions rmin_in.

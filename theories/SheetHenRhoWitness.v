@@ -717,6 +717,13 @@ Print Assumptions iso_half_overlap_are_hens.
 Print Assumptions iso_keep_antipode.
 Print Assumptions iso_halves_raw_overlap.
 Print Assumptions iso_canon.
+Print Assumptions filter_keep_false_nil.
+Print Assumptions iso_pt_fst0.
+Print Assumptions iso_pt_snd1.
+Print Assumptions iso_both_hens.
+Print Assumptions iso_fst_vertex_pts.
+Print Assumptions iso_snd_vertex_pts.
+Print Assumptions iso_overlap_hens.
 Print Assumptions iso_half_counted_nil.
 Print Assumptions iso_supports.
 Print Assumptions iso_half_pair_rho_zero.
