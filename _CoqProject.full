@@ -2586,6 +2586,8 @@ theories/TrianglePairExterior.v
 theories/TrianglePairMatrix.v
 # Five-arm fill fixtures. claimId none. 3-axiom. No Admitted.
 theories/TrianglePairAgree.v
+# TIN validity. claimId tri-de9im-t3. 3-axiom. No Admitted.
+theories/TrianglePairTin.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v

@@ -397,6 +397,8 @@ theories/TrianglePairBound.v
 theories/TrianglePairExterior.v
 # Family witness tri_de9im_correct. claimId tri-de9im-a. 3-axiom. No Admitted.
 theories/TrianglePairMatrix.v
+# TIN validity. claimId tri-de9im-t3. 3-axiom. No Admitted.
+theories/TrianglePairTin.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v
