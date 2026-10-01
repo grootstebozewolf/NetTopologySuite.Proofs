@@ -419,6 +419,8 @@ theories/TrianglePairMatrix.v
 theories/TrianglePairTin.v
 # TIN surface. claimId tri-de9im-tin-surface. 3-axiom. No Admitted.
 theories/TrianglePairTinSurface.v
+# TIN × triangle. claimId tri-de9im-t5. 3-axiom. No Admitted.
+theories/TrianglePairTinRelate.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.
 theories/SheetHenRhoCarrier.v
