@@ -4380,3 +4380,11 @@ theories-flocq/SpectrePassesThroughWitness.v
 # straight chord clips but the arc misses (companion to theories/SpectreExample.v
 # and the chord-overfitting theme, docs/audit-phase4-chord-overfitting.md).
 theories/SpectreChordArcWitness.v
+
+# lane A
+# CS/CC IsSimple iff the loop fixpoint adds no interior vertex.
+# claimId 0007-cscc-issimple. Reads the loop. 3-axiom. No Admitted.
+theories/SheetHenSimple.v
+# CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
+# Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
+theories/CurvePolygonLoopValid.v

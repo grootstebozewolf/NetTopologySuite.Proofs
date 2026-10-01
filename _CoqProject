@@ -463,3 +463,10 @@ theories/SheetHenRhoConfFix.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
+# lane A
+# CS/CC IsSimple iff the loop fixpoint adds no interior vertex.
+# claimId 0007-cscc-issimple. Reads the loop. 3-axiom. No Admitted.
+theories/SheetHenSimple.v
+# CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
+# Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
+theories/CurvePolygonLoopValid.v
