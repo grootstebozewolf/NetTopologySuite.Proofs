@@ -212,6 +212,7 @@ ci-guards:
 	python3 scripts/check_module_split.py
 	python3 scripts/check_constructor_gate.py
 	python3 scripts/check_adr_status.py
+	python3 scripts/check_sqlmm_named_fields.py
 	python3 tests/GeosOracleBugHunt/hunt.py --selfcheck
 	@echo ""
 	@echo "All guardrails passed (or see output above)."

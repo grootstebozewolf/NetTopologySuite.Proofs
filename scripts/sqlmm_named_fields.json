@@ -1,0 +1,33 @@
+{
+  "pin": "antlr/grammars-v4 PR #4997 (ISO/IEC 13249-3 §5.1.67)",
+  "tokens": [
+    {"token": "AFFINEPLACEMENT", "iso": "4.9.3", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "IsoClothoidIntake.v"},
+    {"token": "LOCATION", "iso": "4.9.3", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "IsoClothoidIntake.v"},
+    {"token": "REFERENCEDIRECTIONS", "iso": "4.9.3", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "IsoClothoidIntake.v (ic_ref1/ic_ref2)"},
+    {"token": "REFERENCELOCATION", "iso": "4.2.11 / 7.8", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex"},
+    {"token": "SCALEFACTOR", "iso": "4.2.11 / 7.8", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "ISO CLOTHOID normalizer 1 (IsoClothoidIntake.v)"},
+    {"token": "STARTDISTANCE", "iso": "4.2.11 / 7.8", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "ic_sd / cloth_sd"},
+    {"token": "ENDDISTANCE", "iso": "4.2.11 / 7.8", "status": "Present", "claimIds": ["0007-intake-mkclothoid"], "consumer": "ic_ed / cloth_ed"},
+    {"token": "STARTM", "iso": "7.8", "status": "Present, dimension-coupled", "claimIds": ["0007-intake-mkclothoid"], "consumer": "IsoClothoidIntake.v : measures_none_coupled"},
+    {"token": "ENDM", "iso": "7.8", "status": "Present, dimension-coupled", "claimIds": ["0007-intake-mkclothoid"], "consumer": "ic_m1 / cloth_m1"},
+    {"token": "LENGTH", "iso": "4.2.12 / 7.9", "status": "Parsed; clothoid form pending normalizer 2", "claimIds": ["0007-intake-spiral"], "consumer": "IntakeSpiralJtsMap.v : spiral_clothoid_declines (ID_SpiralClothoidNotYet)"},
+    {"token": "STARTCURVATURE", "iso": "4.2.12 / 7.9", "status": "Parsed; pending normalizer 2", "claimIds": ["0007-intake-spiral"], "consumer": "0007-intake-spiral"},
+    {"token": "ENDCURVATURE", "iso": "4.2.12 / 7.9", "status": "Parsed; pending normalizer 2", "claimIds": ["0007-intake-spiral"], "consumer": "0007-intake-spiral"},
+    {"token": "SPIRALTYPE", "iso": "4.2.12", "status": "Parsed (open string set)", "claimIds": ["0007-intake-spiral", "0007-intake-walker"], "consumer": "ID_SpiralCurve / ID_SpiralClothoidNotYet"},
+    {"token": "DEGREE", "iso": "4.9.4 / 7.7", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex"},
+    {"token": "CONTROLPOINTS", "iso": "4.9.4 / 7.7", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "NurbsNet.nn_ctrl"},
+    {"token": "WEIGHT", "iso": "4.9.4 / 7.7", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "NurbsNet.nn_weight"},
+    {"token": "KNOTS", "iso": "4.9.5 / 7.7", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "NurbsNet.nn_knot"},
+    {"token": "NURBSPOINT", "iso": "4.9.4", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "flattened into nn_ctrl/nn_weight"},
+    {"token": "WEIGHTEDPOINT", "iso": "4.9.4", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "same"},
+    {"token": "KNOT", "iso": "4.9.5", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "flat nn_knot list"},
+    {"token": "VALUE", "iso": "4.9.5", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "knot abscissa in nn_knot"},
+    {"token": "MULTIPLICITY", "iso": "4.9.5", "status": "Spec present, intake pending", "claimIds": ["0007-mk-nurbs"], "consumer": "NurbsDeBoor.v repeated knots"},
+    {"token": "UAXISLENGTH", "iso": "4.2.9", "status": "Parsed; intake Declined", "claimIds": ["0007-intake-walker"], "consumer": "TOutOfSlice / ID_NotFirstSlice"},
+    {"token": "VAXISLENGTH", "iso": "4.2.9", "status": "Parsed; intake Declined", "claimIds": ["0007-intake-walker"], "consumer": "same"},
+    {"token": "STARTANGLE", "iso": "4.2.9", "status": "Parsed; intake Declined", "claimIds": ["0007-intake-walker"], "consumer": "SQLMM_WKT named-field reader; ID_NotFirstSlice"},
+    {"token": "ENDANGLE", "iso": "4.2.9", "status": "Parsed; intake Declined", "claimIds": ["0007-intake-walker"], "consumer": "same"},
+    {"token": "STARTH", "iso": "", "status": "Absent", "claimIds": [], "consumer": "not in the #4997 pin"},
+    {"token": "PATCHES / ELEMENTS / POINTS / HOLE / VOID / BREAKVOID / DRAPEVOID / BREAKLINE / SOFTBREAK / STOPLINE / BOUNDARY / CONTROL CONTOUR / GROUPSPOT / MAXSIDELENGTH", "iso": "surface / TIN text", "status": "Absent", "claimIds": ["0007-intake-walker"], "consumer": "TOutOfSlice / ID_NotFirstSlice"}
+  ]
+}
