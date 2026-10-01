@@ -463,9 +463,3 @@ theories/SheetHenRhoConfFix.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
-# lane D
-# W2 off-image local constancy. claimId 0007-curve-ring-wind-local.
-# witness 0007-curve-ring-wind-local. Imports CurveRingWinding.
-# Not a ray-cast. 3-axiom. No Admitted.
-# AreaWindingSign follows this file.
-theories/CurveRingWindingLocal.v
