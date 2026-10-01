@@ -597,7 +597,7 @@ Lemma locked_cc_maps :
 Proof.
   unfold intake_map, locked_cc_cst, intake_map_members, locked_cs_quarter_cst,
     intake_cc_fold.
-  cbn [cc_step check_c0 line_last cc_go].
+  cbn [measure_step member_m cc_step check_c0 line_last cc_go].
   rewrite c0_join_refl.
   unfold map_cc_locked, map_ls, map_cs_quarter, hens_of_n, chords_of_pts,
     append_bags, shift_chicken. cbn.

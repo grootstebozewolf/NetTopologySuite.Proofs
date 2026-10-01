@@ -18,7 +18,13 @@
    that fold's exit missing the locked start. The three-member
    compound still declines ID_CompoundGap. A line, that JTS
    member, and an ISO tail whose window starts at the norm2
-   exit bags, with C0, G1, and G2 at both joints. claimId: none.
+   exit bags, with C0, G1, and G2 at both joints.
+   Each clothoid member carries its own M bit: ISO dim_has_m,
+   JTS none, a spiral Some iff sc_m is Some. A later member
+   whose bit disagrees declines ID_MixedMeasure. A member's
+   own pair still declines ID_MissingMeasure or
+   ID_UnexpectedMeasure. Lines and arcs carry no bit.
+   claimId: none.
    No Admitted. No classic. No MVT / Rolle / RiemannInt.
    AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Cursor Grok 4.7
@@ -247,14 +253,45 @@ Definition cc_step (pred : option MemberState) (t : TaggedCst)
       end
   end.
 
-Fixpoint cc_go (acc : ShcBag) (pred : MemberState) (xs : list TaggedCst) {struct xs}
-  : IntakeResult :=
+(* None: this member has no M bit (line, arc, point, circle).
+   Some false: unmeasured clothoid (JTS, or ISO/spiral without M).
+   Some true: dimension M or ZM, or a spiral measure pair. *)
+Definition member_m (t : TaggedCst) : option bool :=
+  match t with
+  | TClothoidIso f => Some (dim_has_m (ic_dim f))
+  | TClothoidJts _ _ _ => Some false
+  | TSpiralCurve (SpiralOfClothoid sc) =>
+      Some (match sc_m sc with Some _ => true | None => false end)
+  | _ => None
+  end.
+
+Definition measure_step (mode : option bool) (t : TaggedCst)
+  : IntakeDeclineReason + option bool :=
+  match member_m t with
+  | None => inr mode
+  | Some b =>
+      match mode with
+      | None => inr (Some b)
+      | Some b0 =>
+          match b0, b with
+          | true, true | false, false => inr mode
+          | _, _ => inl ID_MixedMeasure
+          end
+      end
+  end.
+
+Fixpoint cc_go (acc : ShcBag) (pred : MemberState) (mode : option bool)
+  (xs : list TaggedCst) {struct xs} : IntakeResult :=
   match xs with
   | [] => IntakeBag acc
   | y :: ys =>
-      match cc_step (Some pred) y with
+      match measure_step mode y with
       | inl r => IntakeDecline r
-      | inr (b, st) => cc_go (append s acc b) st ys
+      | inr mode' =>
+          match cc_step (Some pred) y with
+          | inl r => IntakeDecline r
+          | inr (b, st) => cc_go (append s acc b) st mode' ys
+          end
       end
   end.
 
@@ -262,9 +299,13 @@ Definition intake_cc_fold (ms : list TaggedCst) : IntakeResult :=
   match ms with
   | [] => IntakeDecline ID_Empty
   | m :: rest =>
-      match cc_step None m with
+      match measure_step None m with
       | inl r => IntakeDecline r
-      | inr (b0, st0) => cc_go b0 st0 rest
+      | inr mode =>
+          match cc_step None m with
+          | inl r => IntakeDecline r
+          | inr (b0, st0) => cc_go b0 st0 mode rest
+          end
       end
   end.
 
@@ -274,14 +315,15 @@ Lemma compound_jts_no_context : forall mode s map_line map_quarter map_atom bag 
   intake_cc_fold mode s map_line map_quarter map_atom bag append
     [TClothoidJts k0 k1 len] = IntakeDecline ID_ClothoidNoContext.
 Proof.
-  intros. unfold intake_cc_fold, cc_step, fold_clothoid. reflexivity.
+  intros. unfold intake_cc_fold, measure_step, member_m, cc_step, fold_clothoid.
+  reflexivity.
 Qed.
 
 Lemma empty_cs_declines : forall mode s map_line map_quarter map_atom bag append sl,
   intake_cc_fold mode s map_line map_quarter map_atom bag append
     [TCircularString sl []] = IntakeDecline ID_Empty.
 Proof.
-  intros. unfold intake_cc_fold, cc_step. reflexivity.
+  intros. unfold intake_cc_fold, measure_step, member_m, cc_step. reflexivity.
 Qed.
 
 Definition example5_line : MemberState :=
@@ -533,8 +575,24 @@ Proof.
     rewrite (c0_join_px_false (mst_end ms) (mkPoint 0 0)).
     - reflexivity.
     - rewrite Hend. cbn. exact Hmiss. }
-  unfold intake_cc_fold. rewrite Hline. cbn [cc_go].
-  rewrite Hjts. cbn [cc_go]. rewrite Hiso. reflexivity.
+  assert (Hmline :
+    measure_step
+      None (TLineString [mkPoint 0 0; mkPoint 100 0]) = inr None).
+  { reflexivity. }
+  assert (Hmjts :
+    measure_step
+      None (TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L) =
+    inr (Some false)).
+  { reflexivity. }
+  assert (Hmiso :
+    measure_step
+      (Some false) (TClothoidIso locked_iso_clothoid) = inr (Some false)).
+  { reflexivity. }
+  unfold intake_cc_fold. rewrite Hmline. cbn beta iota.
+  rewrite Hline. cbn beta iota. unfold cc_go. cbn beta iota.
+  rewrite Hmjts. cbn beta iota. rewrite Hjts. cbn beta iota.
+  unfold cc_go. cbn beta iota. rewrite Hmiso. cbn beta iota.
+  rewrite Hiso. reflexivity.
 Qed.
 
 (* Fixture. The example5 line followed by its JTS clothoid is a bag.
@@ -564,8 +622,19 @@ Proof.
   { unfold cc_step. rewrite Hfold. rewrite Hc0.
     rewrite check_c0_at_end by (symmetry; apply line_exit_end).
     reflexivity. }
-  unfold intake_cc_fold. rewrite Hline. cbn [cc_go].
-  rewrite Hjts. cbn [cc_go]. reflexivity.
+  assert (Hmline :
+    measure_step
+      None (TLineString [mkPoint 0 0; mkPoint 100 0]) = inr None).
+  { reflexivity. }
+  assert (Hmjts :
+    measure_step
+      None (TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L) =
+    inr (Some false)).
+  { reflexivity. }
+  unfold intake_cc_fold. rewrite Hmline. cbn beta iota.
+  rewrite Hline. cbn beta iota. unfold cc_go. cbn beta iota.
+  rewrite Hmjts. cbn beta iota. rewrite Hjts. cbn beta iota.
+  unfold cc_go. cbn beta iota. reflexivity.
 Qed.
 
 (* Same place and scale: the second window starts where the first
@@ -751,8 +820,24 @@ Proof.
       unfold cloth_exit. cbn [st_pos]. reflexivity. }
   exists e. unfold example5_line.
   split.
-  - unfold intake_cc_fold. rewrite Hline. cbn [cc_go].
-    rewrite Hjts. cbn [cc_go]. rewrite Hiso. cbn [cc_go]. reflexivity.
+  - assert (Hmline :
+      measure_step
+        None (TLineString [mkPoint 0 0; mkPoint 100 0]) = inr None).
+    { reflexivity. }
+    assert (Hmjts :
+      measure_step
+        None (TClothoidJts example5_jts_k0 example5_jts_k1 example5_jts_L) =
+      inr (Some false)).
+    { reflexivity. }
+    assert (Hmiso :
+      measure_step
+        (Some false) (TClothoidIso example5_iso_tail) = inr (Some false)).
+    { reflexivity. }
+    unfold intake_cc_fold. rewrite Hmline. cbn beta iota.
+    rewrite Hline. cbn beta iota. unfold cc_go. cbn beta iota.
+    rewrite Hmjts. cbn beta iota. rewrite Hjts. cbn beta iota.
+    unfold cc_go. cbn beta iota. rewrite Hmiso. cbn beta iota.
+    rewrite Hiso. cbn beta iota. unfold cc_go. cbn beta iota. reflexivity.
   - split; [exact He|].
     split; [rewrite Hc0; exact Hp|].
     split; [exact Hg1|].
@@ -794,8 +879,18 @@ Proof.
            line_exit (mkPoint 0 2) (mkPoint 3 2))).
     { unfold cc_step, line_last, fixture_last_exit.
       rewrite check_c0_at_end by reflexivity. reflexivity. }
-    unfold intake_cc_fold. rewrite Hcs. cbn [cc_go].
-    rewrite Hln. cbn [cc_go]. reflexivity.
+    assert (Hmcs :
+      measure_step
+        None (TCircularString CircQuarter fixture_arc_pts) = inr None).
+    { reflexivity. }
+    assert (Hmln :
+      measure_step
+        None (TLineString [mkPoint 0 2; mkPoint 3 2]) = inr None).
+    { reflexivity. }
+    unfold intake_cc_fold. rewrite Hmcs. cbn beta iota.
+    rewrite Hcs. cbn beta iota. unfold cc_go. cbn beta iota.
+    rewrite Hmln. cbn beta iota. rewrite Hln. cbn beta iota.
+    unfold cc_go. cbn beta iota. reflexivity.
   - set (m := fixture_last_exit).
     assert (Hu := fixture_last_unit). fold m in Hu.
     set (b := build_clothoid m 0 1 1).
@@ -815,8 +910,118 @@ Proof.
     { unfold cc_step. rewrite Hfold. rewrite Hc0.
       rewrite check_c0_at_end by reflexivity. reflexivity. }
     exists e. split; [|exact Hg1].
-    unfold intake_cc_fold. fold m in Hcs. rewrite Hcs. cbn [cc_go].
-    rewrite Hcl. cbn [cc_go]. reflexivity.
+    assert (Hmcs :
+      measure_step
+        None (TCircularString CircQuarter fixture_arc_pts) = inr None).
+    { reflexivity. }
+    assert (Hmcl :
+      measure_step
+        None (TClothoidJts 0 1 1) = inr (Some false)).
+    { reflexivity. }
+    unfold intake_cc_fold. fold m in Hcs. rewrite Hmcs. cbn beta iota.
+    rewrite Hcs. cbn beta iota. unfold cc_go. cbn beta iota.
+    rewrite Hmcl. cbn beta iota. rewrite Hcl. cbn beta iota.
+    unfold cc_go. cbn beta iota. reflexivity.
+Qed.
+
+(* Fixture. XY clothoid then a dimension-M clothoid declines by name,
+   before the second member's joint or its own measure pair is read.
+   A one-member compound still names the pair failure. *)
+Lemma mixed_measure_declines :
+  forall mode s map_line map_quarter map_atom bag append,
+  intake_cc_fold mode s map_line map_quarter map_atom bag append
+    [TClothoidIso locked_iso_clothoid; TClothoidIso missing_iso] =
+  IntakeDecline ID_MixedMeasure.
+Proof.
+  intros mode s map_line map_quarter map_atom bag append.
+  assert (Hm0 :
+    measure_step
+      None (TClothoidIso locked_iso_clothoid) = inr (Some false)).
+  { reflexivity. }
+  assert (H0 :
+    @cc_step mode s map_line map_quarter map_atom bag
+      None (TClothoidIso locked_iso_clothoid) =
+    inr (bag s locked_clothoid_egg,
+         state_of_exit (cloth_exit locked_clothoid_egg))).
+  { unfold cc_step. rewrite locked_iso_try. unfold check_c0. reflexivity. }
+  assert (Hm1 :
+    measure_step
+      (Some false) (TClothoidIso missing_iso) = inl ID_MixedMeasure).
+  { reflexivity. }
+  unfold intake_cc_fold. rewrite Hm0. cbn beta iota.
+  rewrite H0. cbn beta iota. unfold cc_go. cbn beta iota.
+  rewrite Hm1. reflexivity.
+Qed.
+
+Lemma compound_missing_measure :
+  forall mode s map_line map_quarter map_atom bag append,
+  intake_cc_fold mode s map_line map_quarter map_atom bag append
+    [TClothoidIso missing_iso] = IntakeDecline ID_MissingMeasure.
+Proof.
+  intros mode s map_line map_quarter map_atom bag append.
+  assert (Hm :
+    measure_step
+      None (TClothoidIso missing_iso) = inr (Some true)).
+  { reflexivity. }
+  assert (Hs :
+    @cc_step mode s map_line map_quarter map_atom bag
+      None (TClothoidIso missing_iso) = inl ID_MissingMeasure).
+  { unfold cc_step. rewrite missing_try. unfold iso_fail_of. reflexivity. }
+  unfold intake_cc_fold. rewrite Hm. cbn beta iota.
+  rewrite Hs. reflexivity.
+Qed.
+
+Lemma compound_unexpected_measure :
+  forall mode s map_line map_quarter map_atom bag append,
+  intake_cc_fold mode s map_line map_quarter map_atom bag append
+    [TClothoidIso unexpected_iso] = IntakeDecline ID_UnexpectedMeasure.
+Proof.
+  intros mode s map_line map_quarter map_atom bag append.
+  assert (Hm :
+    measure_step
+      None (TClothoidIso unexpected_iso) = inr (Some false)).
+  { reflexivity. }
+  assert (Hs :
+    @cc_step mode s map_line map_quarter map_atom bag
+      None (TClothoidIso unexpected_iso) = inl ID_UnexpectedMeasure).
+  { unfold cc_step. rewrite unexpected_try. unfold iso_fail_of. reflexivity. }
+  unfold intake_cc_fold. rewrite Hm. cbn beta iota.
+  rewrite Hs. reflexivity.
+Qed.
+
+(* A spiral measure after an unmeasured ISO is the same name.
+   The spiral's own try is not reached. *)
+Definition fixture_measured_spiral : SpiralClothoid :=
+  mkSpiralClothoid (mkPoint 0 0) (mkPoint 1 0) (mkPoint 0 1)
+    1 0 1 (Some (0, 1)).
+
+Lemma mixed_iso_spiral_declines :
+  forall mode s map_line map_quarter map_atom bag append,
+  intake_cc_fold mode s map_line map_quarter map_atom bag append
+    [TClothoidIso locked_iso_clothoid;
+     TSpiralCurve (SpiralOfClothoid fixture_measured_spiral)] =
+  IntakeDecline ID_MixedMeasure.
+Proof.
+  intros mode s map_line map_quarter map_atom bag append.
+  assert (Hm0 :
+    measure_step
+      None (TClothoidIso locked_iso_clothoid) = inr (Some false)).
+  { reflexivity. }
+  assert (H0 :
+    @cc_step mode s map_line map_quarter map_atom bag
+      None (TClothoidIso locked_iso_clothoid) =
+    inr (bag s locked_clothoid_egg,
+         state_of_exit (cloth_exit locked_clothoid_egg))).
+  { unfold cc_step. rewrite locked_iso_try. unfold check_c0. reflexivity. }
+  assert (Hm1 :
+    measure_step
+      (Some false)
+      (TSpiralCurve (SpiralOfClothoid fixture_measured_spiral)) =
+    inl ID_MixedMeasure).
+  { unfold measure_step, member_m, fixture_measured_spiral. reflexivity. }
+  unfold intake_cc_fold. rewrite Hm0. cbn beta iota.
+  rewrite H0. cbn beta iota. unfold cc_go. cbn beta iota.
+  rewrite Hm1. reflexivity.
 Qed.
 
 Print Assumptions line_exit_end.
@@ -843,3 +1048,7 @@ Print Assumptions example5_iso_try.
 Print Assumptions example5_iso_at_exit.
 Print Assumptions example5_line_jts_iso_bags.
 Print Assumptions fixture_multi_arc_cs_join.
+Print Assumptions mixed_measure_declines.
+Print Assumptions compound_missing_measure.
+Print Assumptions compound_unexpected_measure.
+Print Assumptions mixed_iso_spiral_declines.
