@@ -8,10 +8,9 @@
    SheetHenNodedOvGap. rho_zero_arm_fix is the identity at rho zero.
    CookLoopRho is rho_loop_discharged: the universal arm and selector
    confluence. The confluence conjunct is letter 6a-iii
-   (run_vset_determined). cook_loop_rho_fixtures is the iso-half bag
-   alone. claimId: none on that fixture. Letter 6b sets
-   cook_loop_status to LoopDischarged via cook_loop_rho_holds.
-   Does not remint 0007-loop-letter6.
+   (run_vset_determined). cook_loop_rho_fixture is the iso-half bag
+   alone. claimId: none on that fixture. cook_loop_status is
+   LoopDischarged. Does not remint 0007-loop-letter6.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -322,7 +321,7 @@ Definition rho_loop_discharged : Prop :=
 Definition CookLoopRho : Prop := rho_loop_discharged.
 
 (* Fixture. One already-noded bag. claimId: none. This is not CookLoopRho. *)
-Lemma cook_loop_rho_fixtures :
+Lemma cook_loop_rho_fixture :
   bag_inv iso_half_bag /\
   no_decline_pair iso_half_pcs /\
   (rho_pcs iso_half_pcs = 0%nat <-> bag_noded_ov iso_half_bag) /\
@@ -363,5 +362,5 @@ Print Assumptions rho_zero_arm_fix.
 Print Assumptions step_hit_sheet.
 Print Assumptions bag_run_arm_keeps_sheet.
 Print Assumptions bag_run_arm_noded.
-Print Assumptions cook_loop_rho_fixtures.
+Print Assumptions cook_loop_rho_fixture.
 Print Assumptions cook_loop_rho_status.

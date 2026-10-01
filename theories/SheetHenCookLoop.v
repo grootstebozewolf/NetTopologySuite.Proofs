@@ -57,6 +57,7 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance SheetHenCook.
+From NTS.Proofs Require SheetHenRhoLoop.
 Local Open Scope R_scope.
 
 (* WITNESS: campaign=rho rung=bag-loop claim=0007
@@ -83,7 +84,8 @@ Definition leftover_quad_width (ti tj : R) : R :=
 (* Discharge constructor: a well-founded measure on leftover bags that
    decreases under Hit-split / kiss / ShareOne / MintTwo. *)
 Inductive CookLoopConstructor : Type :=
-| CookLoopBagTerm.
+| CookLoopBagTerm
+| CookLoopRho.
 
 (* Hit-split arm: leftover_quad_width strictly decreases. Conserved
    at 2, so this Prop is uninhabited. *)
@@ -119,6 +121,7 @@ Definition LeftoverBagTermArm : Prop := leftover_bag_term_arm.
 Definition cook_loop_ctor_inhabits (c : CookLoopConstructor) : Prop :=
   match c with
   | CookLoopBagTerm => leftover_bag_term_arm
+  | CookLoopRho => SheetHenRhoLoop.CookLoopRho
   end.
 
 Lemma leftover_quad_width_conserved :

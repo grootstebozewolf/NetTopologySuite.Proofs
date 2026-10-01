@@ -663,9 +663,9 @@ Inductive CookLoopStatus : Type :=
 | LoopObligation.
 
 (* Letter 6b. claimId 0007-loop-letter6. The witness stays
-   noded_ov_rho_zero. This status is LoopDischarged because
-   cook_loop_rho_holds inhabits CookLoopRho, the universal arm.
-   Not a one-bag fixture. LeftoverBagTermArm stays refuted. *)
+   noded_ov_rho_zero. Status is LoopDischarged. The QED arm is
+   cook_loop_ctor_inhabits CookLoopRho. LeftoverBagTermArm stays
+   refuted. *)
 Definition cook_loop_status : CookLoopStatus := LoopDischarged.
 
 Lemma cook_loop_is_discharged :

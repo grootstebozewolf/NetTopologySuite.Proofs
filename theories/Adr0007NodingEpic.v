@@ -152,8 +152,8 @@
 
 From Stdlib Require Import Reals.
 From NTS.Proofs Require Import Distance Segment SheetHenCook SheetHenCookLoop
-  SheetHenRhoLoop SheetHenRhoConf
   CircularCookMkCirc ClothoidCookMkClothoid.
+From NTS.Proofs Require SheetHenRhoConf.
 Local Open Scope R_scope.
 
 (* ADR-0007 stop: every egg-class pair is in first cook scope (QED)
@@ -292,15 +292,14 @@ Proof.
 Qed.
 
 (* Bag-level cook loop (QED) or the named 508-style gap (QEX).
-   Letter 6b, claimId 0007-loop-letter6, discharges left:
-   cook_loop_status = LoopDischarged and CookLoopRho, the universal
-   arm, via cook_loop_rho_holds. Not CookLoopBagTerm and not a
-   one-bag fixture. LeftoverBagTermArm stays refuted. Pairwise
-   width decrease stays a sibling QED stop. *)
+   claimId 0007-loop-letter6. Witness stays noded_ov_rho_zero.
+   supersedes: 0007-cook-term QEX (LoopObligation / CookLoopBagTerm).
+   QED arm is cook_loop_ctor_inhabits CookLoopRho, the universal
+   arm. Not a one-bag fixture. LeftoverBagTermArm stays refuted. *)
 (* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_cook_term_qed_or_qex","title":"ADR-0007 bag cook loop is discharged with a bag-term measure (QED) or named QEX: LeftoverBagTermArm missing, leftover_quad width conserved; pairwise split is a sibling QED stop","file":"theories/Adr0007NodingEpic.v","witness":"0007-cook-term","board":"ADR-0007"} *)
 Theorem ticket_0007_cook_term_qed_or_qex :
   (cook_loop_status = LoopDischarged
-   /\ CookLoopRho
+   /\ cook_loop_ctor_inhabits CookLoopRho
    /\ interior_split_finite)
   \/
   (cook_loop_status = LoopDischarged
@@ -317,8 +316,10 @@ Theorem ticket_0007_cook_term_qed_or_qex :
 Proof.
   left.
   split; [exact cook_loop_is_discharged|].
-  split; [exact cook_loop_rho_holds|].
-  exact interior_split_finite_holds.
+  split.
+  - unfold cook_loop_ctor_inhabits. simpl.
+    exact SheetHenRhoConf.cook_loop_rho_holds.
+  - exact interior_split_finite_holds.
 Qed.
 
 (* binary64 / OverlayNGRobust sit on one sheet (QED) or changing the
