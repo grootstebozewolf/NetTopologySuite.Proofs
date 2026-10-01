@@ -261,5 +261,8 @@
       "name": "$ANGBASE",
       "note": "This header is the displayed angle origin (Autodesk DXF Reference, HEADER)."
     }
-  ]
+  ],
+  "dwg": {
+    "note": "DWG shares this DXF entity model from R12 through R2018, and the Open Design Alliance SDK and libredwg are reference-only oracles (Autodesk DXF Reference, HEADER)."
+  }
 }
