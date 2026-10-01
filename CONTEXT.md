@@ -239,6 +239,43 @@ Emit / WKT parse stay QEX (`SqlMmSignedTag.v : ticket_sqlmm_factory_emit_qed_or_
 _Avoid_: ∀-mapper on all CSTs, Circle-as-18, compound-as-τ,
 park-ρ remint, new oracle keyword
 
+<!-- BEGIN generated: sqlmm-named-fields -->
+**Named-field inventory** (SQL/MM WKT fields, not types):
+Grammar pin antlr/grammars-v4 PR #4997 (ISO/IEC 13249-3 §5.1.67).
+Status is derived from `docs/verified-claims.md` for every cited `claimId`.
+
+| Token | Status | Consumer |
+|---|---|---|
+| AFFINEPLACEMENT (ISO 4.9.3) | Present | IsoClothoidIntake.v; `0007-intake-mkclothoid` |
+| LOCATION (ISO 4.9.3) | Present | IsoClothoidIntake.v; `0007-intake-mkclothoid` |
+| REFERENCEDIRECTIONS (ISO 4.9.3) | Present | IsoClothoidIntake.v (ic_ref1/ic_ref2); `0007-intake-mkclothoid` |
+| REFERENCELOCATION (ISO 4.2.11 / 7.8) | Present | IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex; `0007-intake-mkclothoid` |
+| SCALEFACTOR (ISO 4.2.11 / 7.8) | Present | ISO CLOTHOID normalizer 1 (IsoClothoidIntake.v); `0007-intake-mkclothoid` |
+| STARTDISTANCE (ISO 4.2.11 / 7.8) | Present | ic_sd / cloth_sd; `0007-intake-mkclothoid` |
+| ENDDISTANCE (ISO 4.2.11 / 7.8) | Present | ic_ed / cloth_ed; `0007-intake-mkclothoid` |
+| STARTM (ISO 7.8) | Present, dimension-coupled | IsoClothoidIntake.v : measures_none_coupled; `0007-intake-mkclothoid` |
+| ENDM (ISO 7.8) | Present, dimension-coupled | ic_m1 / cloth_m1; `0007-intake-mkclothoid` |
+| LENGTH (ISO 4.2.12 / 7.9) | Present | spiral_clothoid_bags / norm2_length; `0007-intake-spiral`, `0007-norm2-state` |
+| STARTCURVATURE (ISO 4.2.12 / 7.9) | Present | norm2_curv k0; `0007-intake-spiral`, `0007-norm2-state` |
+| ENDCURVATURE (ISO 4.2.12 / 7.9) | Present | norm2_curv k1; `0007-intake-spiral`, `0007-norm2-state` |
+| SPIRALTYPE (ISO 4.2.12) | Parsed (open string set) | ID_SpiralCurve / ID_SpiralClothoidNotYet; `0007-intake-spiral`, `0007-intake-walker` |
+| DEGREE (ISO 4.9.4 / 7.7) | Spec present, intake pending | NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex; `0007-mk-nurbs` |
+| CONTROLPOINTS (ISO 4.9.4 / 7.7) | Spec present, intake pending | NurbsNet.nn_ctrl; `0007-mk-nurbs` |
+| WEIGHT (ISO 4.9.4 / 7.7) | Spec present, intake pending | NurbsNet.nn_weight; `0007-mk-nurbs` |
+| KNOTS (ISO 4.9.5 / 7.7) | Spec present, intake pending | NurbsNet.nn_knot; `0007-mk-nurbs` |
+| NURBSPOINT (ISO 4.9.4) | Spec present, intake pending | flattened into nn_ctrl/nn_weight; `0007-mk-nurbs` |
+| WEIGHTEDPOINT (ISO 4.9.4) | Spec present, intake pending | same; `0007-mk-nurbs` |
+| KNOT (ISO 4.9.5) | Spec present, intake pending | flat nn_knot list; `0007-mk-nurbs` |
+| VALUE (ISO 4.9.5) | Spec present, intake pending | knot abscissa in nn_knot; `0007-mk-nurbs` |
+| MULTIPLICITY (ISO 4.9.5) | Spec present, intake pending | NurbsDeBoor.v repeated knots; `0007-mk-nurbs` |
+| UAXISLENGTH (ISO 4.2.9) | Parsed; intake Declined | TOutOfSlice / ID_NotFirstSlice; `0007-intake-walker` |
+| VAXISLENGTH (ISO 4.2.9) | Parsed; intake Declined | same; `0007-intake-walker` |
+| STARTANGLE (ISO 4.2.9) | Parsed; intake Declined | SQLMM_WKT named-field reader; ID_NotFirstSlice; `0007-intake-walker` |
+| ENDANGLE (ISO 4.2.9) | Parsed; intake Declined | same; `0007-intake-walker` |
+| STARTH | Absent | not in the #4997 pin |
+| PATCHES / ELEMENTS / POINTS / HOLE / VOID / BREAKVOID / DRAPEVOID / BREAKLINE / SOFTBREAK / STOPLINE / BOUNDARY / CONTROL CONTOUR / GROUPSPOT / MAXSIDELENGTH (ISO surface / TIN text) | Absent | TOutOfSlice / ID_NotFirstSlice; `0007-intake-walker` |
+<!-- END generated -->
+
 **ISO validity**:
 Every spec "shall" beyond representability, owned by arc-aware `ST_IsValid`:
 implemented rules answer definite-false naming their clause; unimplemented
@@ -512,11 +549,7 @@ decidable equality.
 _Avoid_: dart (coordinate pair), edge (unqualified)
 
 **Cook / 𝓘**:
-The pairwise constructor: Hit `(p*, tᵢ, tⱼ)`, Empty (disjoint images),
-or 𝓘 Decline (no algorithm). Predicates never mint hens. On a Hit the
-cook may `split(t)` and mint hens (`ShareOne` / `MintTwo`). Empty /
-Decline / Touch mint nothing. Leftover shared endpoint is not a kiss.
-First cook: Egg entry above. Sidecar Hit ≠ host `I_ok`.
+Pairwise Hit / Empty / Decline; sidecar Hit ≠ host `I_ok`.
 _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared endpoint)
 
 **Parks ι / ρ / Γ**:
@@ -526,50 +559,19 @@ _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared end
 _Avoid_: reminting sidecar `I_ok_circ` as host Γ
 
 **NodingNG (chord)**:
-The product face of ADR-0007 first-cook on one sheet: pairwise 𝓘 +
-one cook step (or a finite locked bag of one-steps) yielding
-`NodedOnSheet`. Chord–chord only (`NodingNG.v : nodingng_chord_inhabits`,
-`NodingNG.v : ticket_0007_nodingng_chord_qed_or_qex`). Empty ≠ Decline.
-Snap ≠ 𝓘. Identity is structural (`ShareOne` / `MintTwo`). Not OverlayNG.
-Not RelateNG. Not the bag-level repeat-until-noded loop (Parks ρ;
-`NodingNG.v : ticket_0007_nodingng_rho_qed_or_qex`).
+`NodingNG.v : ticket_0007_nodingng_chord_qed_or_qex`.
 _Avoid_: noder (the full loop), OverlayNG, RelateNG, DCEL
 
 **OverlayNG (sheet)**:
-The product face of Accepted ADR-0007 OverlayNGRobust: a finite
-sequence of snap maps `S → Λ` attempted until validate or give up,
-on the same sheet as ℝ realization, assuming already-noded `G`
-(`OverlayNG.v : overlayng_sheet_inhabits`,
-`OverlayNG.v : ticket_0007_overlayng_sheet_qed_or_qex`). Hobby-shaped:
-`G` was already noded (`NodingNG.v : nodingng_crossing_noded`;
-`SheetHenCook.v : noded_crossing`). Not `𝓘` / cook / NodingNG. Not
-OverlayNGCurve Phase-0 point-set algebra (G1–G5). Not Shewchuk A–D.
-Not Hobby 4.1 Discharge (`OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex`).
-Not Jordan / RelateNG. Not DCEL / Geometry subclass.
+`OverlayNG.v : ticket_0007_overlayng_sheet_qed_or_qex`.
 _Avoid_: NodingNG, OverlayNGCurve, RelateNG, Hobby 4.1 Discharge, 𝓘
 
 **RelateNG (face)**:
-The product face of Accepted DE-9IM / RelateNG chord-lane facts:
-matrix algebra + witnesses, honesty decline, and the locked 67-c
-line×line exterior-row pin (`RelateNGFace.v : relateng_face_inhabits`,
-`RelateNGFace.v : ticket_0007_relateng_face_qed_or_qex`). Consumes
-NodingNG / `NodedOnSheet`; does not cook. Not OverlayNG snap. Not
-Shewchuk A–D / Hobby / Priest. Jordan: JCT entry above (taut QED; `RNG_JordanUncond` park). Not
-#522 leftover remint / T-junction complete / nine-cell
-`geom_de9im_pointset`. Not SQL/MM cathedral / DCEL / Geometry subclass.
-Completeness stays false (`RelateNGFace.v : ticket_0007_relateng_complete_qed_or_qex`).
+`RelateNGFace.v : ticket_0007_relateng_face_qed_or_qex`.
 _Avoid_: NodingNG, OverlayNG, RelateNG.v (the umbrella), 522-n
 
 **IEEE↔R bridge**:
-The two-way binary64 ↔ ℝ coordinate realization the Oracle uses to
-generate tests against NodingNG / OverlayNG / RelateNG
-(`IeeeRBridge.v : ticket_0007_ieee_bridge_qed_or_qex`). IEEE→ℝ is
-`B2R` / `B2R_bp`; ℝ→IEEE is `round` / `ieee_of_Z` under the finite /
-no-overflow / int-safe window. Same sheet as ℝ realization. Bridge
-≠ `𝓘` / ≠ cook / ≠ OverlayNG snap. Not a full FP noder. Unrestricted
-round-trip and kiss-on-binary64 stay named QEX
-(`IeeeRBridge.v : ticket_0007_ieee_bridge_fp_noder_qed_or_qex`,
-`IeeeRBridge.v : ticket_0007_ieee_bridge_unrestricted_qed_or_qex`).
+`IeeeRBridge.v : ticket_0007_ieee_bridge_qed_or_qex`.
 _Avoid_: cook, OverlayNG snap, FP noder, unrestricted bit-exact
 
 **Clothoid egg (sidecar)**:
