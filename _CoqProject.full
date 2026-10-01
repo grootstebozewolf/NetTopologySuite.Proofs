@@ -2584,7 +2584,7 @@ theories/TrianglePairBound.v
 theories/TrianglePairExterior.v
 # Family witness tri_de9im_correct. claimId tri-de9im-a. 3-axiom. No Admitted.
 theories/TrianglePairMatrix.v
-# Five-arm fill agreement. claimId tri-de9im-agree. 3-axiom. No Admitted.
+# Five-arm fill fixtures. claimId none. 3-axiom. No Admitted.
 theories/TrianglePairAgree.v
 # ∀-bag letter 2 slices. SheetHenRho.v re-exports them.
 # claimId none. 3-axiom. No Admitted.

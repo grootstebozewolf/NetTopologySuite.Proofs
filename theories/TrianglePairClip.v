@@ -910,8 +910,8 @@ Proof.
     apply strict3_outer; exact H.
 Qed.
 
-(* Five-arm fill agreement is TrianglePairAgree.tri_de9im_fill_arms.
-   Stating it here would import RelateMatrixTriangle and
+(* Five-arm fill samples live in TrianglePairAgree, full project only.
+   Stating them here would import RelateMatrixTriangle and
    GeneralTriangleSeparation. Not Admitted. The pairs below are the
    concrete check, including the swapped nest (0,0)(4,0)(0,4) against
    (0,0)(4,0)(1,1). *)

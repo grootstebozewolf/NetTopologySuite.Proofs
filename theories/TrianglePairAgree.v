@@ -21,12 +21,17 @@
    (2,0)(3,0)(2,1). Overlap (1/4,1/4)(5/4,1/4)(1/4,5/4). Contains
    (1/4,1/4)(1/2,1/4)(1/4,1/2). TouchEdge (1,0)(1,1)(0,1).
    TouchVertex (0,0)(2,0)(0,2) against (0,0)(-2,0)(0,-2).
+   tri_de9im_fill_ii_fixtures is one sample pair per arm. The regime
+   implication fails on TPR_Contains: contains_b asks only that A be
+   CCW and that B's three vertices lie in A's open triangle. A
+   clockwise triangle strictly inside A is still TPR_Contains.
+   tri_open of a clockwise listing is empty, so ii_entry is DimF,
+   while the Contains fill's II cell is Dim2.
    Registered only in _CoqProject.full. RelateMatrixTriangle imports
    GeneralTriangleSeparation, which is outside the host _CoqProject.
    The pinned flocq job compiles _CoqProject.full.
    topic: relate
-   claimId: tri-de9im-agree
-   witness: tri_de9im_fill_arms
+   claimId: none
    3-axiom. No Admitted. No Jordan in this file's own proof.
    AI-drafted (Cursor Grok 4.7).
    License: BSD-3-Clause *)
@@ -496,7 +501,7 @@ Proof.
   repeat split; close_cell.
 Qed.
 
-Theorem tri_de9im_fill_ii :
+Theorem tri_de9im_fill_ii_fixtures :
   im_ii (tri_de9im fxA0 fxA1 fxA2 disB0 disB1 disB2)
     = im_ii (triangle_pair_fill TPR_Disjoint) /\
   im_ii (tri_de9im fxA0 fxA1 fxA2 ovB0 ovB1 ovB2)
@@ -528,4 +533,4 @@ Print Assumptions co_entries.
 Print Assumptions te_entries.
 Print Assumptions tv_entries.
 Print Assumptions tri_de9im_fill_arms.
-Print Assumptions tri_de9im_fill_ii.
+Print Assumptions tri_de9im_fill_ii_fixtures.
