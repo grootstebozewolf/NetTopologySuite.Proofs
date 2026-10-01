@@ -50,6 +50,7 @@ def test_dxf_survey_cross_checks() -> None:
     traps: set[str] = set()
     for row in survey["entities"]:
         _one_sentence(row["note"])
+        assert row["groupCodes"]
         assert "\n" not in row["convention"]
         traps.update(row["traps"])
         if "kind" in row:

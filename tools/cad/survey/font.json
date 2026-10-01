@@ -1,0 +1,34 @@
+{
+  "entities": [
+    {
+      "entity": "glyf",
+      "convention": "Contours are quadratic, and consecutive off-curve points expand to an on-curve midpoint.",
+      "versions": ["TrueType", "OpenType"],
+      "traps": ["implied on-curve midpoint"],
+      "kind": "Bezier",
+      "note": "TrueType glyf curves are quadratic, and two consecutive off-curve points imply an on-curve midpoint (OpenType Specification, glyf)."
+    },
+    {
+      "entity": "CharString",
+      "convention": "CFF curves are cubic Béziers on the em square.",
+      "versions": ["CFF"],
+      "traps": ["TrueType quadratic vs CFF cubic"],
+      "kind": "Bezier",
+      "note": "CFF CharStrings are cubic Béziers rather than TrueType quadratics (Adobe Technical Note 5177, Type 2 Charstring Format)."
+    },
+    {
+      "entity": "CFF2",
+      "convention": "CFF2 CharStrings are cubic Béziers on the same em square.",
+      "versions": ["CFF2"],
+      "traps": ["TrueType quadratic vs CFF cubic"],
+      "kind": "Bezier",
+      "note": "CFF2 CharStrings are cubic Béziers on the same em square as CFF (Adobe Technical Note 5177, Type 2 Charstring Format)."
+    }
+  ],
+  "headers": [
+    {
+      "name": "unitsPerEm",
+      "note": "unitsPerEm is the em square for TrueType and for CFF (OpenType Specification, head)."
+    }
+  ]
+}
