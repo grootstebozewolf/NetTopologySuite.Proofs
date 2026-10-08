@@ -1,8 +1,8 @@
 (* NetTopologySuite.Proofs.TrianglePairTinRelate2
    Remaining TIN x triangle DE-9IM cells, against the metric interior
    and boundary (tin_interior_eq / tin_boundary_eq). A is the TIN, B the
-   CCW query. II stays in TrianglePairTinRelate. No computed matrix
-   (that is rung 5).
+   CCW query. II stays in TrianglePairTinRelate. Each cell is a
+   nonemptiness characterization; no assembled nine-cell tin_de9im here.
    IB: metric interior meets the query boundary. The open-triangle arm
    is ib_entry = Dim1; a shared edge or an internal vertex can meet the
    query boundary without being tri_open.
@@ -31,7 +31,8 @@ Import ListNotations.
 From NTS.Proofs Require Import Distance Orientation Convex ConvexClip
   DE9IM TrianglePairCommon TrianglePairClip TrianglePairEdge
   TrianglePairBound TrianglePairExterior TrianglePairTin
-  TrianglePairTinSurface TinSurfaceTopo TinSurfaceVertex.
+  TrianglePairTinSurface TrianglePairTinRelate TinSurfaceTopo
+  TinSurfaceVertex.
 Local Open Scope R_scope.
 
 Lemma valid_sem : forall ts,
@@ -330,11 +331,9 @@ Proof.
   - intros Hb. apply Hout. apply boundary_in_carrier; assumption.
 Qed.
 
-(* Samples on the centre fan. *)
+(* Samples on the centre fan. inA/inB/inC, crA/crB/crC, tcB/tcC and
+   djA/djB/djC are reused from TrianglePairTinRelate. *)
 
-Definition inA : Point := mkPoint (1 / 4) (1 / 16).
-Definition inB : Point := mkPoint (1 / 2) (1 / 16).
-Definition inC : Point := mkPoint (3 / 8) (1 / 8).
 Definition inM : Point := mkPoint (3 / 8) (1 / 16).
 
 Lemma fan_inside_relate_fixtures :
@@ -357,9 +356,6 @@ Proof.
     + right. left. unfold cross, inA, inB, inC, fanC. simpl. lra.
 Qed.
 
-Definition crA : Point := mkPoint (1 / 4) (- (1 / 4)).
-Definition crB : Point := mkPoint (3 / 4) (- (1 / 4)).
-Definition crC : Point := mkPoint (1 / 2) (1 / 4).
 Definition crM : Point := mkPoint (2 / 5) (1 / 20).
 Definition crE : Point := mkPoint (1 / 2) 0.
 
@@ -383,9 +379,6 @@ Proof.
       unfold convex_combination, fanSW, fanSE, crE. simpl. f_equal; lra.
   - unfold tri_open, cross, crA, crB, crC, crE. simpl. repeat split; lra.
 Qed.
-
-Definition tcB : Point := mkPoint 2 0.
-Definition tcC : Point := mkPoint 2 1.
 
 Lemma fan_touch_centre_relate_fixtures :
   interior_pt (tin_carrier fan_ts) fanC /\ on_bd fanC tcB tcC fanC /\
@@ -417,9 +410,6 @@ Proof.
     unfold convex_combination, fanSW, fanSE, fan_base. simpl. f_equal; lra.
 Qed.
 
-Definition djA : Point := mkPoint 3 3.
-Definition djB : Point := mkPoint 4 3.
-Definition djC : Point := mkPoint 3 4.
 Definition djP : Point := mkPoint (10 / 3) (10 / 3).
 Definition djM : Point := mkPoint (7 / 2) 3.
 Definition eeP : Point := mkPoint 5 0.
@@ -501,25 +491,14 @@ Print Assumptions rmax3_le.
 Print Assumptions span_verts.
 Print Assumptions carrier_px_le.
 Print Assumptions tin_query_ee.
-Print Assumptions inA.
-Print Assumptions inB.
-Print Assumptions inC.
 Print Assumptions inM.
 Print Assumptions fan_inside_relate_fixtures.
-Print Assumptions crA.
-Print Assumptions crB.
-Print Assumptions crC.
 Print Assumptions crM.
 Print Assumptions crE.
 Print Assumptions fan_cross_relate_fixtures.
-Print Assumptions tcB.
-Print Assumptions tcC.
 Print Assumptions fan_touch_centre_relate_fixtures.
 Print Assumptions esB.
 Print Assumptions fan_edge_relate_fixtures.
-Print Assumptions djA.
-Print Assumptions djB.
-Print Assumptions djC.
 Print Assumptions djP.
 Print Assumptions djM.
 Print Assumptions eeP.
