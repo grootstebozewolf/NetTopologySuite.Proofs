@@ -3,8 +3,9 @@
    ----------------------------------------------------------------------------
    Multi rung 5, M2. claimId: 0007-cp-loop-rings.
    witness: curve_polygon_from_loop.
-   Ring validity from the loop fixpoint: closed, simple per ring via
-   SheetHenSimple.cscc_issimple, and noded (bag_noded_ov).
+   Ring validity from the loop fixpoint plus no coincident pieces:
+   closed, simple per ring via SheetHenSimple.cscc_issimple, and noded
+   (bag_noded_ov).
    theories/CurvePolygonValid.v is the earlier holes-inside-shell slice.
    This file does not edit it and does not import CurveRingWinding.
    holes_nest_in_outer is the lane-D nesting hypothesis.
@@ -63,15 +64,16 @@ Lemma loop_ring_of_fixpoint : forall r b,
   ring_realized r b ->
   loop_carrier b ->
   loop_fixpoint_adds_no_interior b ->
+  no_coincident_pieces b ->
   loop_ring_from_fixpoint r b.
 Proof.
-  intros r b Hc Hr Hcar Hfix.
+  intros r b Hc Hr Hcar Hfix Hnc.
   assert (Hs : cscc_IsSimple b).
-  { apply (proj2 (cscc_issimple b Hcar)). exact Hfix. }
+  { apply (proj2 (cscc_issimple b Hcar)). split; [exact Hfix| exact Hnc]. }
   split; [exact Hc|]. split; [exact Hr|]. split; [exact Hcar|].
   split; [exact Hs|].
   destruct b as [sh pcs|sh].
-  - apply cscc_IsSimple_noded_ov. exact Hs.
+  - apply meets_at_vertices_noded_ov. exact (proj1 Hs).
   - exact Hcar.
 Qed.
 
@@ -83,7 +85,7 @@ Fixpoint hole_fixpoint_premises (rs : list CurveRing) (bs : list SheetBag)
   | r :: rt, b :: bt =>
       curve_ring_closed r /\ ring_realized r b /\
       loop_carrier b /\ loop_fixpoint_adds_no_interior b /\
-      hole_fixpoint_premises rt bt
+      no_coincident_pieces b /\ hole_fixpoint_premises rt bt
   | _, _ => False
   end.
 
@@ -102,7 +104,7 @@ Proof.
   induction rs as [|r rt IH]; intros bs H.
   - destruct bs as [|b bt]; [exact H| exact H].
   - destruct bs as [|b bt]; [exact H|].
-    simpl in H. destruct H as [Hc [Hr [Hcar [Hfix Ht]]]].
+    simpl in H. destruct H as [Hc [Hr [Hcar [Hfix [Hnc Ht]]]]].
     split.
     + apply loop_ring_of_fixpoint; assumption.
     + apply IH. exact Ht.
@@ -114,17 +116,18 @@ Definition curve_polygon_loop_valid (cp : CurvePolygon) (ou : SheetBag)
   rings_from_fixpoint (curve_holes cp) hs /\
   holes_nest_in_outer.
 
-(* WITNESS {"claimId":"0007-cp-loop-rings","topic":"overlay","lemma":"curve_polygon_from_loop","title":"CurvePolygon rings are closed, simple, and noded from the loop fixpoint","file":"theories/CurvePolygonLoopValid.v","witness":"curve_polygon_from_loop","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-cp-loop-rings","topic":"overlay","lemma":"curve_polygon_from_loop","title":"CurvePolygon rings are closed, simple, and noded from the loop fixpoint with no coincident pieces","file":"theories/CurvePolygonLoopValid.v","witness":"curve_polygon_from_loop","board":"ADR-0007"} *)
 Theorem curve_polygon_from_loop : forall cp ou hs (holes_nest_in_outer : Prop),
   curve_ring_closed (curve_outer cp) ->
   ring_realized (curve_outer cp) ou ->
   loop_carrier ou ->
   loop_fixpoint_adds_no_interior ou ->
+  no_coincident_pieces ou ->
   hole_fixpoint_premises (curve_holes cp) hs ->
   holes_nest_in_outer ->
   curve_polygon_loop_valid cp ou hs holes_nest_in_outer.
 Proof.
-  intros cp ou hs holes_nest_in_outer Hc Hr Hcar Hfix Hh Hnest.
+  intros cp ou hs holes_nest_in_outer Hc Hr Hcar Hfix Hnc Hh Hnest.
   split.
   - apply loop_ring_of_fixpoint; assumption.
   - split.
@@ -238,6 +241,17 @@ Proof.
   rewrite E. intros s p Hv. exact Hv.
 Qed.
 
+Lemma hole_no_coincident : no_coincident_pieces poly_hole_bag.
+Proof.
+  unfold no_coincident_pieces, poly_hole_bag, poly_hole_pcs.
+  intros i j a c Hi Hj Hij.
+  destruct i as [|i]; destruct j as [|j].
+  - exfalso. apply Hij. reflexivity.
+  - destruct j; discriminate Hj.
+  - destruct i; discriminate Hi.
+  - destruct i; discriminate Hi.
+Qed.
+
 Lemma hole_realized : ring_realized poly_hole_ring poly_hole_bag.
 Proof.
   unfold ring_realized, poly_hole_bag, poly_hole_ring, poly_hole_pcs,
@@ -257,13 +271,15 @@ Proof.
     + exact outer_closed.
     + exact outer_realized.
     + exact (proj1 simple_cscc_egg_fixtures).
-    + exact (proj2 (proj2 simple_cscc_egg_fixtures)).
+    + exact (proj1 (proj2 (proj2 simple_cscc_egg_fixtures))).
+    + exact (proj2 (proj2 (proj2 simple_cscc_egg_fixtures))).
   - split.
     + apply loop_ring_of_fixpoint.
       * exact hole_closed.
       * exact hole_realized.
       * exact hole_carrier.
       * exact hole_no_interior.
+      * exact hole_no_coincident.
     + reflexivity.
 Qed.
 
@@ -279,5 +295,6 @@ Print Assumptions hole_piece_wf.
 Print Assumptions hole_carrier.
 Print Assumptions hole_rho.
 Print Assumptions hole_no_interior.
+Print Assumptions hole_no_coincident.
 Print Assumptions hole_realized.
 Print Assumptions hole_polygon_fixtures.

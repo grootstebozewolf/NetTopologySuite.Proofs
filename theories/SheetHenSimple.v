@@ -2,9 +2,13 @@
    NetTopologySuite.Proofs.SheetHenSimple
    ----------------------------------------------------------------------------
    CS/CC rung 3. claimId: 0007-cscc-issimple. witness: cscc_issimple.
-   A carrier the loop accepts is simple iff the arm fixpoint adds no
-   interior vertex. Reads the loop. Does not edit it.
-   simple_cscc_egg_fixtures / touch_egg_fixtures are samples. claimId: none.
+   On a carrier the loop accepts, IsSimple (pieces meet only at shared
+   vertices, and no two pieces coincide_same) holds iff the arm fixpoint
+   adds no interior vertex and no two pieces coincide. A retrace adds no
+   vertex yet is not simple: bag_noded_ov allows coincident pieces.
+   Reads the loop. Does not edit it.
+   simple_cscc_egg_fixtures / touch_egg_fixtures / retrace_fixtures /
+   spike_ring_fixtures are samples. claimId: none.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -12,11 +16,12 @@
      Assisted-by: Cursor Grok 4.7
    ========================================================================== *)
 
-From Stdlib Require Import Reals Lia List PeanoNat Bool.
+From Stdlib Require Import Reals Lra Lia List PeanoNat Bool.
 From NTS.Proofs Require Import
-  Distance SheetHenCook SheetHenCookCore SheetHenBag
+  Distance SheetHenCook SheetHenCookCore SheetHenCircEgg SheetHenBag
   SheetHenRho SheetHenBagRun SheetHenLoop3 SheetHenPickSpec
-  SheetHenNodedOv SheetHenRhoLoop SheetHenBagRunFix SheetHenRhoConfFix.
+  SheetHenNodedOv SheetHenRhoLoop SheetHenBagRunFix SheetHenRhoConfFix
+  SheetHenRhoWitness SheetHenRhoCount SheetHenRhoCarrier.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -27,9 +32,8 @@ Definition loop_carrier (b : SheetBag) : Prop :=
   | BagLive _ pcs => bag_inv b /\ no_decline_pair pcs
   end.
 
-(* Every oracle hit the overlap rule still sees is already a vertex of
-   both supports. That is the carrier meeting only at vertices. *)
-Definition cscc_IsSimple (b : SheetBag) : Prop :=
+(* Every common point of two pieces is a vertex of both supports. *)
+Definition cscc_meets_at_vertices (b : SheetBag) : Prop :=
   match b with
   | BagDeclined _ => False
   | BagLive _ pcs =>
@@ -38,10 +42,41 @@ Definition cscc_IsSimple (b : SheetBag) : Prop :=
         nth_error pcs j = Some c ->
         i <> j ->
         I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck c)) (IHit p ti tj) ->
-        (overlap (bp_support a) (bp_support c) ->
-           In p (overlap_endpoints pcs (bp_support a) (bp_support c))) ->
         family_vertex pcs (bp_support a) p /\
         family_vertex pcs (bp_support c) p
+  end.
+
+(* Letter 1's coincide_same at two indices: a piece laid twice. *)
+Definition cscc_no_same_pieces (b : SheetBag) : Prop :=
+  match b with
+  | BagDeclined _ => False
+  | BagLive _ pcs =>
+      forall i j a c,
+        nth_error pcs i = Some a ->
+        nth_error pcs j = Some c ->
+        i <> j -> ~ coincide_same a c
+  end.
+
+Definition cscc_IsSimple (b : SheetBag) : Prop :=
+  cscc_meets_at_vertices b /\ cscc_no_same_pieces b.
+
+(* Two pieces coincide: coincide_same, or overlapping supports sharing a
+   point that is not a vertex of both. bag_noded_ov allows the second. *)
+Definition pieces_coincide (pcs : list BagPiece) (a c : BagPiece) : Prop :=
+  coincide_same a c \/
+  (overlap (bp_support a) (bp_support c) /\
+   exists p ti tj,
+     I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck c)) (IHit p ti tj) /\
+     ~ vertex_of_both pcs (bp_support a) (bp_support c) p).
+
+Definition no_coincident_pieces (b : SheetBag) : Prop :=
+  match b with
+  | BagDeclined _ => False
+  | BagLive _ pcs =>
+      forall i j a c,
+        nth_error pcs i = Some a ->
+        nth_error pcs j = Some c ->
+        i <> j -> ~ pieces_coincide pcs a c
   end.
 
 (* The arm fixpoint minted no vertex that the carrier did not already have. *)
@@ -69,17 +104,35 @@ Proof.
   - exfalso. apply Hnn. intros [H1 _]. apply vertex_spec in H1. congruence.
 Qed.
 
-Lemma cscc_IsSimple_noded_ov : forall sh pcs,
-  cscc_IsSimple (BagLive sh pcs) <-> bag_noded_ov (BagLive sh pcs).
+Lemma meets_at_vertices_noded_ov : forall sh pcs,
+  cscc_meets_at_vertices (BagLive sh pcs) -> bag_noded_ov (BagLive sh pcs).
 Proof.
-  intros sh pcs. split.
-  - intros H i j a c p ti tj Hi Hj Hij Hok Hante.
-    unfold progress_hit. intros Hnot. apply Hnot.
-    apply (H i j a c p ti tj Hi Hj Hij Hok).
-    intros Ho. apply Hante. exact Ho.
-  - intros H i j a c p ti tj Hi Hj Hij Hok Hante.
-    apply vertex_both_nn.
-    exact (H i j a c p ti tj Hi Hj Hij Hok Hante).
+  intros sh pcs H i j a c p ti tj Hi Hj Hij Hok _.
+  unfold progress_hit. intros Hnot. apply Hnot.
+  exact (H i j a c p ti tj Hi Hj Hij Hok).
+Qed.
+
+Lemma noded_ov_meets_at_vertices : forall sh pcs,
+  bag_noded_ov (BagLive sh pcs) ->
+  no_coincident_pieces (BagLive sh pcs) ->
+  cscc_meets_at_vertices (BagLive sh pcs).
+Proof.
+  intros sh pcs Hov Hnc i j a c p ti tj Hi Hj Hij Hok.
+  apply vertex_both_nn. intros Hnv.
+  destruct (overlap_b (bp_support a) (bp_support c)) eqn:Eo.
+  - apply (Hnc i j a c Hi Hj Hij). right. split; [exact Eo|].
+    exists p, ti, tj. split; [exact Hok| exact Hnv].
+  - apply (Hov i j a c p ti tj Hi Hj Hij Hok).
+    + intros Ho. unfold overlap_pair in Ho. congruence.
+    + exact Hnv.
+Qed.
+
+Lemma simple_no_coincident : forall sh pcs,
+  cscc_IsSimple (BagLive sh pcs) -> no_coincident_pieces (BagLive sh pcs).
+Proof.
+  intros sh pcs [Hm Hs] i j a c Hi Hj Hij [Hsame|[_ [p [ti [tj [Hok Hnv]]]]]].
+  - exact (Hs i j a c Hi Hj Hij Hsame).
+  - apply Hnv. exact (Hm i j a c p ti tj Hi Hj Hij Hok).
 Qed.
 
 Lemma missing_support_vertex : forall pcs e1 e2 p,
@@ -199,25 +252,13 @@ Proof.
     unfold rho in Hz. rewrite Hz in Hpos. exact (Nat.nlt_0_r _ Hpos).
 Qed.
 
-(* WITNESS {"claimId":"0007-cscc-issimple","topic":"overlay","lemma":"cscc_issimple","title":"CS/CC IsSimple iff the loop fixpoint adds no interior vertex","file":"theories/SheetHenSimple.v","witness":"cscc_issimple","board":"ADR-0007"} *)
-Theorem cscc_issimple : forall b,
-  loop_carrier b ->
-  cscc_IsSimple b <-> loop_fixpoint_adds_no_interior b.
+Lemma fixpoint_iff_noded_ov : forall sh pcs,
+  loop_carrier (BagLive sh pcs) ->
+  loop_fixpoint_adds_no_interior (BagLive sh pcs) <->
+  bag_noded_ov (BagLive sh pcs).
 Proof.
-  intros b Hcar. destruct b as [sh pcs|sh]; [| exact (False_rect _ Hcar)].
-  destruct Hcar as [Hinv Hnd]. split.
-  - intros Hs.
-    apply cscc_IsSimple_noded_ov in Hs.
-    assert (Hz : rho_pcs pcs = 0%nat).
-    { apply (noded_ov_rho_zero sh pcs Hinv Hnd Hs). }
-    assert (Erun : bag_run_arm (S (rho (BagLive sh pcs))) (BagLive sh pcs) =
-                   BagLive sh pcs).
-    { unfold rho. rewrite Hz.
-      apply (rho_zero_arm_fix 1%nat sh pcs Hinv Hnd Hz). }
-    unfold loop_fixpoint_adds_no_interior. rewrite Erun.
-    intros s p Hv. exact Hv.
+  intros sh pcs [Hinv Hnd]. split.
   - intros Hfix.
-    apply cscc_IsSimple_noded_ov.
     apply (proj1 (rho_zero_iff_noded_ov sh pcs Hinv Hnd)).
     destruct (Nat.eq_dec (rho_pcs pcs) 0%nat) as [Hz|Hnz].
     + exact Hz.
@@ -231,13 +272,109 @@ Proof.
         as [sh' pcs'|sh'] eqn:Eb.
       * apply Hmiss. apply Hfix. exact Hfin.
       * exact Hfix.
+  - intros Hov.
+    assert (Hz : rho_pcs pcs = 0%nat).
+    { apply (noded_ov_rho_zero sh pcs Hinv Hnd Hov). }
+    assert (Erun : bag_run_arm (S (rho (BagLive sh pcs))) (BagLive sh pcs) =
+                   BagLive sh pcs).
+    { unfold rho. rewrite Hz.
+      apply (rho_zero_arm_fix 1%nat sh pcs Hinv Hnd Hz). }
+    unfold loop_fixpoint_adds_no_interior. rewrite Erun.
+    intros s p Hv. exact Hv.
 Qed.
 
-(* Sample. Two half-turns of one circle meet at their endpoints. *)
+(* WITNESS {"claimId":"0007-cscc-issimple","topic":"overlay","lemma":"cscc_issimple","title":"CS/CC IsSimple iff the loop fixpoint adds no interior vertex and no two pieces coincide","file":"theories/SheetHenSimple.v","witness":"cscc_issimple","board":"ADR-0007"} *)
+Theorem cscc_issimple : forall b,
+  loop_carrier b ->
+  cscc_IsSimple b <->
+  loop_fixpoint_adds_no_interior b /\ no_coincident_pieces b.
+Proof.
+  intros b Hcar. destruct b as [sh pcs|sh]; [| exact (False_rect _ Hcar)].
+  split.
+  - intros Hs. split.
+    + apply (proj2 (fixpoint_iff_noded_ov sh pcs Hcar)).
+      apply meets_at_vertices_noded_ov. exact (proj1 Hs).
+    + apply simple_no_coincident. exact Hs.
+  - intros [Hfix Hnc]. split.
+    + apply noded_ov_meets_at_vertices; [| exact Hnc].
+      apply (proj1 (fixpoint_iff_noded_ov sh pcs Hcar)). exact Hfix.
+    + intros i j a c Hi Hj Hij Hsame.
+      apply (Hnc i j a c Hi Hj Hij). left. exact Hsame.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Sample. Two half-turns of one circle meet only at their two endpoints.   *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma iso_halves_meet_at_ends : forall ti tj p,
+  on_circ (window_circ iso_half_fst (mkWindow 0 1)) ti p ->
+  on_circ (window_circ iso_half_snd (mkWindow 0 1)) tj p ->
+  p = mkPoint 5 0 \/ p = mkPoint (-5) 0.
+Proof.
+  intros ti tj p [Hti Hp] [Htj Hq].
+  unfold window_circ, circ_eval, iso_half_fst, iso_half_snd in Hp, Hq.
+  cbn [circ_o circ_r circ_theta0 circ_sweep win_lo win_hi px py] in Hp, Hq.
+  rewrite Hp in Hq. injection Hq as _ Hy.
+  replace (0 + 0 * PI + ti * ((1 - 0) * PI)) with (ti * PI) in Hp, Hy by ring.
+  replace (PI + 0 * PI + tj * ((1 - 0) * PI)) with (tj * PI + PI) in Hy by ring.
+  rewrite neg_sin in Hy.
+  pose proof PI_RGT_0 as Hpi.
+  assert (Si : 0 <= sin (ti * PI)).
+  { apply sin_ge_0; nra. }
+  assert (Sj : 0 <= sin (tj * PI)).
+  { apply sin_ge_0; nra. }
+  assert (Z : sin (ti * PI) = 0) by lra.
+  destruct (Req_dec ti 0) as [E0|N0].
+  - left. rewrite Hp, E0.
+    replace (0 * PI) with 0 by ring. rewrite cos_0, sin_0.
+    apply (f_equal2 mkPoint); ring.
+  - destruct (Req_dec ti 1) as [E1|N1].
+    + right. rewrite Hp, E1.
+      replace (1 * PI) with PI by ring. rewrite cos_PI, sin_PI.
+      apply (f_equal2 mkPoint); ring.
+    + exfalso.
+      assert (Pos : 0 < sin (ti * PI)).
+      { apply sin_gt_0.
+        - apply Rmult_lt_0_compat; [lra| exact Hpi].
+        - assert (ti < 1) by lra. nra. }
+      lra.
+Qed.
+
+Lemma iso_half_meets_at_vertices : cscc_meets_at_vertices iso_half_bag.
+Proof.
+  unfold iso_half_bag, cscc_meets_at_vertices.
+  intros i j a c p ti tj Hi Hj Hij Hok.
+  assert (Hi2 : (i < 2)%nat) by (apply (nth_length _ _ _ _ Hi)).
+  assert (Hj2 : (j < 2)%nat) by (apply (nth_length _ _ _ _ Hj)).
+  destruct i as [|[|i]]; destruct j as [|[|j]]; try lia.
+  - simpl in Hi, Hj. inversion Hi. inversion Hj. subst a c.
+    destruct Hok as [Ha Hc].
+    exact (iso_antipode_hens p (iso_halves_meet_at_ends ti tj p Ha Hc)).
+  - simpl in Hi, Hj. inversion Hi. inversion Hj. subst a c.
+    destruct Hok as [Ha Hc].
+    destruct (iso_antipode_hens p (iso_halves_meet_at_ends tj ti p Hc Ha))
+      as [Vf Vs].
+    split; [exact Vs| exact Vf].
+Qed.
+
+Lemma iso_half_no_same_pieces : cscc_no_same_pieces iso_half_bag.
+Proof.
+  unfold iso_half_bag, cscc_no_same_pieces.
+  intros i j a c Hi Hj Hij [Hs _].
+  assert (Hi2 : (i < 2)%nat) by (apply (nth_length _ _ _ _ Hi)).
+  assert (Hj2 : (j < 2)%nat) by (apply (nth_length _ _ _ _ Hj)).
+  destruct i as [|[|i]]; destruct j as [|[|j]]; try lia.
+  - simpl in Hi, Hj. inversion Hi. inversion Hj. subst a c.
+    apply iso_supports_distinct. exact Hs.
+  - simpl in Hi, Hj. inversion Hi. inversion Hj. subst a c.
+    apply iso_supports_distinct. symmetry. exact Hs.
+Qed.
+
 Lemma simple_cscc_egg_fixtures :
   loop_carrier iso_half_bag /\
   cscc_IsSimple iso_half_bag /\
-  loop_fixpoint_adds_no_interior iso_half_bag.
+  loop_fixpoint_adds_no_interior iso_half_bag /\
+  no_coincident_pieces iso_half_bag.
 Proof.
   assert (Hinv : bag_inv iso_half_bag) by apply iso_half_inv.
   assert (Hnl : ~ live_decline iso_half_pcs).
@@ -248,16 +385,10 @@ Proof.
     repeat split; assumption. }
   assert (Hcar : loop_carrier iso_half_bag).
   { unfold loop_carrier, iso_half_bag. split; assumption. }
-  assert (Hz : rho_pcs iso_half_pcs = 0%nat) by exact iso_half_pair_rho_zero.
-  assert (Hfix : loop_fixpoint_adds_no_interior iso_half_bag).
-  { unfold loop_fixpoint_adds_no_interior, iso_half_bag, rho. rewrite Hz.
-    assert (E : bag_run_arm 1%nat (BagLive default_sheet iso_half_pcs) =
-                BagLive default_sheet iso_half_pcs).
-    { apply (rho_zero_arm_fix 1%nat default_sheet iso_half_pcs Hinv Hpair Hz). }
-    rewrite E. intros s p Hv. exact Hv. }
-  split; [exact Hcar|]. split.
-  - apply (proj2 (cscc_issimple iso_half_bag Hcar)). exact Hfix.
-  - exact Hfix.
+  assert (Hs : cscc_IsSimple iso_half_bag).
+  { split; [exact iso_half_meets_at_vertices| exact iso_half_no_same_pieces]. }
+  destruct (proj1 (cscc_issimple iso_half_bag Hcar) Hs) as [Hfix Hnc].
+  exact (conj Hcar (conj Hs (conj Hfix Hnc))).
 Qed.
 
 (* Sample. Three chords meet off their vertices, so the carrier is not simple
@@ -269,29 +400,149 @@ Lemma touch_egg_fixtures :
 Proof.
   assert (Hcar : loop_carrier x3_bag).
   { unfold loop_carrier, x3_bag. split; [apply x3_inv | apply x3_no_decline]. }
+  pose proof (proj1 (admissible_hit_spec x3_pcs x3_pcA x3_pcB
+                       x3_pAB (1 / 2) (1 / 2)) x3_hit_AB) as Hadm.
+  destruct Hadm as [Hok [Hnv Hov]].
   assert (Hnot : ~ cscc_IsSimple x3_bag).
-  { intros Hs.
-    pose proof (proj1 (admissible_hit_spec x3_pcs x3_pcA x3_pcB
-                         x3_pAB (1 / 2) (1 / 2)) x3_hit_AB) as Hadm.
-    destruct Hadm as [Hok [Hnv Hov]].
-    apply Hnv.
-    unfold x3_bag in Hs. apply (Hs 0%nat 1%nat x3_pcA x3_pcB x3_pAB (1 / 2) (1 / 2)).
-    - reflexivity.
-    - reflexivity.
-    - discriminate.
-    - exact Hok.
-    - intros Ho. apply Hov. exact Ho. }
+  { intros [Hs _]. apply Hnv.
+    unfold x3_bag in Hs.
+    apply (Hs 0%nat 1%nat x3_pcA x3_pcB x3_pAB (1 / 2) (1 / 2));
+      [reflexivity| reflexivity| discriminate| exact Hok]. }
   split; [exact Hcar|]. split; [exact Hnot|].
-  intros Hfix. apply Hnot.
-  apply (proj2 (cscc_issimple x3_bag Hcar)). exact Hfix.
+  intros Hfix.
+  apply (proj1 (fixpoint_iff_noded_ov default_sheet x3_pcs Hcar)) in Hfix.
+  apply (Hfix 0%nat 1%nat x3_pcA x3_pcB x3_pAB (1 / 2) (1 / 2));
+    [reflexivity| reflexivity| discriminate| exact Hok| | exact Hnv].
+  intros Ho. apply Hov. exact Ho.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Retrace A -> B -> A. Piece 1 lays piece 0's chord again, so coincide_same. *)
+(* The fixpoint adds no vertex (rho = 0), yet the carrier is not simple.    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition retrace_A : Point := mkPoint 0 0.
+Definition retrace_B : Point := mkPoint 1 0.
+Definition retrace_chord : ChordEgg := mkChordEgg retrace_A retrace_B.
+Definition unit_chord_pc (src dst : nat) (c : ChordEgg) : BagPiece :=
+  mkBagPiece (mkChicken src dst (MkChord (window_chord c (mkWindow 0 1))))
+             (SuppChord c) (mkWindow 0 1) nil.
+Definition retrace_pcs : list BagPiece :=
+  [unit_chord_pc 0 1 retrace_chord; unit_chord_pc 1 0 retrace_chord].
+Definition retrace_bag : SheetBag := BagLive default_sheet retrace_pcs.
+
+Lemma unit_chord_pc_wf : forall n m c, piece_wf (unit_chord_pc n m c).
+Proof.
+  intros n m c. unfold piece_wf, piece_realizes, unit_chord_pc. cbn.
+  split; [reflexivity| unfold window_ordered; cbn; lra].
+Qed.
+
+Lemma unit_chord_pcs_inv : forall sh pcs,
+  (forall pc, In pc pcs -> exists n m c, pc = unit_chord_pc n m c) ->
+  bag_inv (BagLive sh pcs).
+Proof.
+  intros sh pcs H pc Hin. destruct (H pc Hin) as [n [m [c ->]]].
+  apply unit_chord_pc_wf.
+Qed.
+
+Lemma retrace_rho : rho_pcs retrace_pcs = 0%nat.
+Proof.
+  unfold rho_pcs, retrace_pcs. cbn [supports_of bp_support unit_chord_pc existsb].
+  rewrite support_eqb_refl. reflexivity.
+Qed.
+
+Lemma retrace_carrier : loop_carrier retrace_bag.
+Proof.
+  unfold loop_carrier, retrace_bag. split.
+  - apply unit_chord_pcs_inv. intros pc Hin.
+    destruct Hin as [<-|[<-|[]]]; eexists; eexists; eexists; reflexivity.
+  - intros a c Ha Hc _ Hd.
+    destruct Ha as [<-|[<-|[]]]; destruct Hc as [<-|[<-|[]]]; exact Hd.
+Qed.
+
+Lemma retrace_fixtures :
+  loop_carrier retrace_bag /\
+  loop_fixpoint_adds_no_interior retrace_bag /\
+  ~ no_coincident_pieces retrace_bag /\
+  ~ cscc_IsSimple retrace_bag.
+Proof.
+  assert (Hsame : ~ cscc_no_same_pieces retrace_bag).
+  { intros H. apply (H 0%nat 1%nat (unit_chord_pc 0 1 retrace_chord)
+                      (unit_chord_pc 1 0 retrace_chord));
+      [reflexivity| reflexivity| discriminate|].
+    split; reflexivity. }
+  split; [exact retrace_carrier|]. split.
+  - unfold loop_fixpoint_adds_no_interior, retrace_bag, rho.
+    rewrite retrace_rho.
+    assert (E : bag_run_arm 1%nat (BagLive default_sheet retrace_pcs) =
+                BagLive default_sheet retrace_pcs).
+    { apply (rho_zero_arm_fix 1%nat default_sheet retrace_pcs).
+      - exact (proj1 retrace_carrier).
+      - exact (proj2 retrace_carrier).
+      - exact retrace_rho. }
+    rewrite E. intros s p Hv. exact Hv.
+  - split.
+    + intros Hnc. apply Hsame. intros i j a c Hi Hj Hij Hs.
+      apply (Hnc i j a c Hi Hj Hij). left. exact Hs.
+    + intros [_ Hs]. exact (Hsame Hs).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* Zero-area spike. Triangle A -> B -> C -> A with the spike B -> S -> B     *)
+(* laid at B: the out and back pieces coincide_same. Not simple.            *)
+(* -------------------------------------------------------------------------- *)
+
+Definition spike_A : Point := mkPoint 0 0.
+Definition spike_B : Point := mkPoint 2 0.
+Definition spike_C : Point := mkPoint 1 2.
+Definition spike_S : Point := mkPoint 3 (-1).
+Definition spike_pcs : list BagPiece :=
+  [unit_chord_pc 0 1 (mkChordEgg spike_A spike_B);
+   unit_chord_pc 1 2 (mkChordEgg spike_B spike_S);
+   unit_chord_pc 2 1 (mkChordEgg spike_B spike_S);
+   unit_chord_pc 1 3 (mkChordEgg spike_B spike_C);
+   unit_chord_pc 3 0 (mkChordEgg spike_C spike_A)].
+Definition spike_bag : SheetBag := BagLive default_sheet spike_pcs.
+
+Lemma spike_ring_fixtures :
+  bag_inv spike_bag /\
+  ~ no_coincident_pieces spike_bag /\
+  ~ cscc_IsSimple spike_bag.
+Proof.
+  assert (Hsame : ~ cscc_no_same_pieces spike_bag).
+  { intros H.
+    apply (H 1%nat 2%nat (unit_chord_pc 1 2 (mkChordEgg spike_B spike_S))
+             (unit_chord_pc 2 1 (mkChordEgg spike_B spike_S)));
+      [reflexivity| reflexivity| discriminate|].
+    split; reflexivity. }
+  split.
+  - apply unit_chord_pcs_inv. intros pc Hin.
+    destruct Hin as [<-|[<-|[<-|[<-|[<-|[]]]]]];
+      eexists; eexists; eexists; reflexivity.
+  - split.
+    + intros Hnc. apply Hsame. intros i j a c Hi Hj Hij Hs.
+      apply (Hnc i j a c Hi Hj Hij). left. exact Hs.
+    + intros [_ Hs]. exact (Hsame Hs).
 Qed.
 
 Print Assumptions step_hit_pieces.
 Print Assumptions vertex_both_nn.
-Print Assumptions cscc_IsSimple_noded_ov.
+Print Assumptions meets_at_vertices_noded_ov.
+Print Assumptions noded_ov_meets_at_vertices.
+Print Assumptions simple_no_coincident.
 Print Assumptions missing_support_vertex.
 Print Assumptions arm_keeps_family_vertex.
 Print Assumptions positive_rho_adds_vertex.
+Print Assumptions fixpoint_iff_noded_ov.
 Print Assumptions cscc_issimple.
+Print Assumptions iso_halves_meet_at_ends.
+Print Assumptions iso_half_meets_at_vertices.
+Print Assumptions iso_half_no_same_pieces.
 Print Assumptions simple_cscc_egg_fixtures.
 Print Assumptions touch_egg_fixtures.
+Print Assumptions unit_chord_pc_wf.
+Print Assumptions unit_chord_pcs_inv.
+Print Assumptions retrace_rho.
+Print Assumptions retrace_carrier.
+Print Assumptions retrace_fixtures.
+Print Assumptions spike_ring_fixtures.
