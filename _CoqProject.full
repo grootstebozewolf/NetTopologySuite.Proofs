@@ -4393,5 +4393,5 @@ theories/NurbsBezierSpan.v
 theories/ArcSimilarityStmt.v
 theories/ArcSimilarityImage.v
 # lane arc-sim, optional item: planar pole-triangle product (claimId
-# polar-tri-27-4). 3-axiom. No Admitted.
-theories/PolarTriangleProduct.v
+# pole-tri-27-4; the polar body is not proved). 3-axiom. No Admitted.
+theories/PoleTriangleProduct.v

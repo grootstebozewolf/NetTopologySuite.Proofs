@@ -8,7 +8,8 @@
      arc_similarity_witness    : ArcSimilarityStmt.witness     (witness)
    (pinned by scripts/check_claim_statements.py, docs/claim-statements.json).
 
-   A similarity z |-> a z + b or z |-> a conj(z) + b (a^2 + b^2 <> 0) maps the
+   A similarity z |-> (a + b i) z + t or z |-> (a + b i) conj(z) + t
+   (a + b i <> 0, i.e. sim_k2 = a^2 + b^2 <> 0; t the translation) maps the
    SQL/MM three-point arc `CurveGeometry.CircularArc` to the arc through the
    images of its three control points:
      sim_dist_sq      squared distance scales by a^2 + b^2;
@@ -25,7 +26,10 @@
    image (6/5,4/5) of the arc point (3/5,4/5) is off the circle through the
    three moved controls.  The Q twin computes that residual from the controls
    (`q_circ_resid`, centre via CircularCookLineArcZ.qOx/qOy, bridged to
-   arc_center by `q_circ_resid_R`): 12/25, not 0.
+   arc_center by `q_circ_resid_R`): 12/25, not 0.  That is the squared
+   residual at the single point (3/5, 4/5).  Over the whole arc the residual
+   is 3 y (1 - y) (`scale21_resid_formula`), so its maximum is 3/4, at
+   (sqrt 3 / 2, 1/2) (`scale21_resid_max`); 12/25 is not the maximum.
 
    Suspected consumer (a suspicion, not a verified finding): GEOS
    GEOSGeom_transformXY moves arc control points independently, which by the
@@ -347,6 +351,89 @@ Lemma scale21_arc_D_neq : ~ (qarc_D (qaff_q scale21 q_upA) (qaff_q scale21 q_upM
                                     (qaff_q scale21 q_upC) == 0)%Q.
 Proof. vm_compute. discriminate. Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* §6  The (2,1) residual over the whole arc: 3 y (1 - y), maximum 3/4.       *)
+(*     12/25 above is its value at the one point (3/5, 4/5), not the max.    *)
+(* -------------------------------------------------------------------------- *)
+
+Definition scale21_image_arc : CircularArc := map_arc (qaff_R scale21) unit_upper_arc.
+
+(* |f X - O'|^2 - |f A - O'|^2, with O' the centre of the image arc. *)
+Definition scale21_resid (X : Point) : R :=
+  dist_sq (qaff_R scale21 X) (arc_center scale21_image_arc)
+  - dist_sq (arc_start scale21_image_arc) (arc_center scale21_image_arc).
+
+Definition upper_pt_half : Point := mkPoint (sqrt 3 / 2) (1 / 2).
+
+Lemma scale21_qaff_R : forall X, qaff_R scale21 X = mkPoint (2 * px X) (py X).
+Proof.
+  intros X. unfold qaff_R, scale21. cbn [qm11 qm12 qm21 qm22 qtx qty].
+  rewrite Q2R_2, RMicromega.Q2R_1, RMicromega.Q2R_0. f_equal; ring.
+Qed.
+
+Lemma scale21_image_center : arc_center scale21_image_arc = mkPoint 0 (-3 / 2).
+Proof.
+  unfold scale21_image_arc, map_arc. rewrite !scale21_qaff_R.
+  unfold arc_center, unit_upper_arc. cbn [arc_start arc_mid arc_end px py].
+  f_equal; field.
+Qed.
+
+Lemma scale21_resid_formula : forall X,
+  px X * px X + py X * py X = 1 -> scale21_resid X = 3 * py X * (1 - py X).
+Proof.
+  intros [x y] Hc. cbn [px py] in Hc. unfold scale21_resid.
+  rewrite scale21_image_center. unfold scale21_image_arc, map_arc.
+  rewrite !scale21_qaff_R. unfold dist_sq, unit_upper_arc.
+  cbn [arc_start px py]. nra.
+Qed.
+
+Lemma unit_upper_arc_on : forall X, on_arc unit_upper_arc X ->
+  px X * px X + py X * py X = 1 /\ 0 <= py X.
+Proof.
+  intros [x y] [Hc Hs].
+  unfold inCircle_R, unit_upper_arc in Hc. cbn [arc_start arc_mid arc_end px py] in Hc.
+  split; [cbn [px py]; nra|].
+  destruct Hs as [Hi | [He | He]].
+  - unfold arc_interior_side, arc_side_chord, cross_R_pt, unit_upper_arc in Hi.
+    cbn [arc_start arc_mid arc_end px py] in Hi. cbn [py]. nra.
+  - unfold unit_upper_arc in He. cbn [arc_start] in He. inversion He. cbn [py]. lra.
+  - unfold unit_upper_arc in He. cbn [arc_end] in He. inversion He. cbn [py]. lra.
+Qed.
+
+Theorem scale21_resid_max :
+  (forall X, on_arc unit_upper_arc X -> 0 <= scale21_resid X <= 3 / 4) /\
+  on_arc unit_upper_arc upper_pt_half /\ scale21_resid upper_pt_half = 3 / 4.
+Proof.
+  assert (Hs3 : sqrt 3 * sqrt 3 = 3) by (apply sqrt_sqrt; lra).
+  assert (Hon : on_arc unit_upper_arc upper_pt_half).
+  { split.
+    - unfold inCircle_R, unit_upper_arc, upper_pt_half.
+      cbn [arc_start arc_mid arc_end px py]. nra.
+    - left. unfold arc_interior_side, arc_side_chord, cross_R_pt, unit_upper_arc, upper_pt_half.
+      cbn [arc_start arc_mid arc_end px py]. lra. }
+  split; [|split; [exact Hon|]].
+  - intros X HX. destruct (unit_upper_arc_on X HX) as [Hc Hy].
+    rewrite (scale21_resid_formula X Hc).
+    pose proof (Rle_0_sqr (px X)) as Hx2. pose proof (Rle_0_sqr (py X - 1 / 2)) as Hh.
+    unfold Rsqr in Hx2, Hh.
+    assert (Hy1 : py X <= 1) by nra.
+    split; [apply Rmult_le_pos; lra | nra].
+  - rewrite scale21_resid_formula.
+    + unfold upper_pt_half. cbn [py]. field.
+    + unfold upper_pt_half. cbn [px py]. nra.
+Qed.
+
+(* The Q sample, now an R theorem about the image arc's own centre. *)
+Lemma scale21_resid_pt35_fixtures :
+  scale21_resid upper_pt35 = 12 / 25 /\
+  Q2R (q_circ_resid (qaff_q scale21 q_upA) (qaff_q scale21 q_upM)
+                    (qaff_q scale21 q_upC) (qaff_q scale21 q_pt35)) = 12 / 25.
+Proof.
+  split.
+  - rewrite scale21_resid_formula; unfold upper_pt35; cbn [px py]; field.
+  - rewrite scale21_unit_arc_resid_fixtures. unfold Q2R. cbn. field.
+Qed.
+
 Print Assumptions sim_sign_sq.
 Print Assumptions sim_dist_sq.
 Print Assumptions sim_cross.
@@ -375,3 +462,9 @@ Print Assumptions unit_arc_resid_fixtures.
 Print Assumptions scale21_unit_arc_resid_fixtures.
 Print Assumptions scale21_unit_arc_resid_neq.
 Print Assumptions scale21_arc_D_neq.
+Print Assumptions scale21_qaff_R.
+Print Assumptions scale21_image_center.
+Print Assumptions scale21_resid_formula.
+Print Assumptions unit_upper_arc_on.
+Print Assumptions scale21_resid_max.
+Print Assumptions scale21_resid_pt35_fixtures.

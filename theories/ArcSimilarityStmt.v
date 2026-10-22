@@ -16,8 +16,10 @@
    Objects: the repo's own SQL/MM three-point arc `CurveGeometry.CircularArc`
    (with `valid_arc`, `arc_center`, `arc_radius`) and the algebraic arc
    membership `CurveRingSimple.on_arc` (on the circumcircle and in the sweep).
-   A similarity is z |-> a z + b (sim_refl = false) or z |-> a conj(z) + b
-   (sim_refl = true), with scale^2 = a^2 + b^2.
+   A similarity is z |-> (a + b i) z + t (sim_refl = false) or
+   z |-> (a + b i) conj(z) + t (sim_refl = true), with a = sim_a, b = sim_b,
+   t = sim_tx + sim_ty i, a + b i <> 0, and scale sqrt (a^2 + b^2)
+   (sim_k2 = a^2 + b^2).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
