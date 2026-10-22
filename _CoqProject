@@ -481,3 +481,8 @@ theories/SheetHenSimple.v
 # CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
 # Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
 theories/CurvePolygonLoopValid.v
+# lane G (#805)
+# Hobby 4.1 host letter (claimId 0007-hobby-41-host).
+# Host/pure-R. Parks HostSnapRound / HostHobby41 / HostPairPreservation.
+# fully_intersected_host stays the #518 hyp, not 4.1. No Admitted.
+theories/Hobby41Host.v
