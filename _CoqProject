@@ -467,6 +467,8 @@ theories/SheetHenBagRunFix.v
 # TIN topology. claimId tri-de9im-t4. 3-axiom. No Admitted.
 theories/TinSurfaceTopo.v
 theories/TinSurfaceVertex.v
+# TIN x triangle remaining DE-9IM cells. claimId tri-de9im-t6. 3-axiom. No Admitted.
+theories/TrianglePairTinRelate2.v
 # lane B
 # bern is the host name in bz_basis_bern. BernsteinBasis was full-only.
 theories/BernsteinBasis.v
