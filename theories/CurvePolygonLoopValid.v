@@ -8,7 +8,7 @@
    (bag_noded_ov).
    theories/CurvePolygonValid.v is the earlier holes-inside-shell slice.
    This file does not edit it and does not import CurveRingWinding.
-   holes_nest_in_outer is the lane-D nesting hypothesis.
+   Hole nesting is not claimed (lane D); no nesting Prop is carried.
    hole_polygon_fixtures is one polygon with a hole. claimId: none.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
@@ -110,29 +110,28 @@ Proof.
     + apply IH. exact Ht.
 Qed.
 
-Definition curve_polygon_loop_valid (cp : CurvePolygon) (ou : SheetBag)
-    (hs : list SheetBag) (holes_nest_in_outer : Prop) : Prop :=
+(* Every ring of cp comes from the loop fixpoint.  Ring-level only: hole
+   nesting is not part of this predicate and is not claimed here (it is
+   lane D's, and needs winding).  So this is not CurvePolygon validity. *)
+Definition curve_polygon_loop_rings (cp : CurvePolygon) (ou : SheetBag)
+    (hs : list SheetBag) : Prop :=
   loop_ring_from_fixpoint (curve_outer cp) ou /\
-  rings_from_fixpoint (curve_holes cp) hs /\
-  holes_nest_in_outer.
+  rings_from_fixpoint (curve_holes cp) hs.
 
-(* WITNESS {"claimId":"0007-cp-loop-rings","topic":"overlay","lemma":"curve_polygon_from_loop","title":"CurvePolygon rings are closed, simple, and noded from the loop fixpoint with no coincident pieces","file":"theories/CurvePolygonLoopValid.v","witness":"curve_polygon_from_loop","board":"ADR-0007"} *)
-Theorem curve_polygon_from_loop : forall cp ou hs (holes_nest_in_outer : Prop),
+(* WITNESS {"claimId":"0007-cp-loop-rings","topic":"overlay","lemma":"curve_polygon_from_loop","title":"CurvePolygon rings are closed, simple, and noded from the loop fixpoint with no coincident pieces; hole nesting not claimed","file":"theories/CurvePolygonLoopValid.v","witness":"curve_polygon_from_loop","board":"ADR-0007"} *)
+Theorem curve_polygon_from_loop : forall cp ou hs,
   curve_ring_closed (curve_outer cp) ->
   ring_realized (curve_outer cp) ou ->
   loop_carrier ou ->
   loop_fixpoint_adds_no_interior ou ->
   no_coincident_pieces ou ->
   hole_fixpoint_premises (curve_holes cp) hs ->
-  holes_nest_in_outer ->
-  curve_polygon_loop_valid cp ou hs holes_nest_in_outer.
+  curve_polygon_loop_rings cp ou hs.
 Proof.
-  intros cp ou hs holes_nest_in_outer Hc Hr Hcar Hfix Hnc Hh Hnest.
+  intros cp ou hs Hc Hr Hcar Hfix Hnc Hh.
   split.
   - apply loop_ring_of_fixpoint; assumption.
-  - split.
-    + apply holes_from_fixpoint. exact Hh.
-    + exact Hnest.
+  - apply holes_from_fixpoint. exact Hh.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
