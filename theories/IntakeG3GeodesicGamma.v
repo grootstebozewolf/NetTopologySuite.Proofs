@@ -22,7 +22,7 @@
    chord-hit on_chord membership of the G3 pole. K0 μ = MkChord is
    not reminted as a geodesic. first_cook_scope is not expanded.
 
-   ADR-0007 stays Accepted. ADR-0008 stays Proposed.
+   ADR-0007 stays Accepted. ADR-0008 is Accepted.
 
    WITNESS topic: overlay · claimId: 0007-g3-geodesic-gamma
    witness: 0007-g3-geodesic-gamma · board: ADR-0007
@@ -74,7 +74,7 @@ Lemma g3_no_first_cook_geodesicstring :
   ~ first_cook_scope EggGeodesicString EggGeodesicString.
 Proof. intro H. exact H. Qed.
 
-(* WITNESS {"claimId":"0007-g3-geodesic-gamma","topic":"overlay","lemma":"ticket_0007_g3_geodesic_gamma_qed_or_qex","title":"G3 geodesic_gamma on Sheet S: GeodesicGammaOnSheet inhabits as a host MkGeodesic / named geodesic_gamma (QED); or that ctor is missing, the closed term is sheet_chord_misses_pole (not g), K1 owns the inverse, K2 stays the chord-hit, K0 MkChord is not reminted as a geodesic, and first_cook_scope is not expanded (QEX); discharged QEX; ADR-0008 stays Proposed","file":"theories/IntakeG3GeodesicGamma.v","witness":"0007-g3-geodesic-gamma","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-g3-geodesic-gamma","topic":"overlay","lemma":"ticket_0007_g3_geodesic_gamma_qed_or_qex","title":"G3 geodesic_gamma on Sheet S: GeodesicGammaOnSheet inhabits as a host MkGeodesic / named geodesic_gamma (QED); or that ctor is missing, the closed term is sheet_chord_misses_pole (not g), K1 owns the inverse, K2 stays the chord-hit, K0 MkChord is not reminted as a geodesic, and first_cook_scope is not expanded (QEX); discharged QEX; ADR-0008 is Accepted","file":"theories/IntakeG3GeodesicGamma.v","witness":"0007-g3-geodesic-gamma","board":"ADR-0007"} *)
 Theorem ticket_0007_g3_geodesic_gamma_qed_or_qex :
   g3_geodesic_gamma_ctor_inhabits GeodesicGammaOnSheet
   \/
