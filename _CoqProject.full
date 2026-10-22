@@ -4397,3 +4397,10 @@ theories/ArcSimilarityImage.v
 # lane arc-sim, optional item: planar pole-triangle product (claimId
 # pole-tri-27-4; the polar body is not proved). 3-axiom. No Admitted.
 theories/PoleTriangleProduct.v
+# lane A
+# CS/CC IsSimple: no interior vertex added and no coincident pieces.
+# claimId 0007-cscc-issimple. Reads the loop. 3-axiom. No Admitted.
+theories/SheetHenSimple.v
+# CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
+# Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
+theories/CurvePolygonLoopValid.v
