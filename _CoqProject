@@ -481,3 +481,7 @@ theories/SheetHenSimple.v
 # CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
 # Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
 theories/CurvePolygonLoopValid.v
+# lane D
+# Winding fixtures only (five sample rings). No local-constancy or convex-class
+# headline. 3-axiom. No Admitted.
+theories/CurveRingWindFixtures.v
