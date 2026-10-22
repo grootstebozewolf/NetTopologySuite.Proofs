@@ -177,6 +177,7 @@ Inductive IntakeDeclineReason : Type :=
 | ID_SpanMismatch
 | ID_MissingMeasure
 | ID_UnexpectedMeasure
+| ID_MixedMeasure
 | ID_NotSimilarityFrame
 | ID_NonPositiveScale
 | ID_DegenerateWindow

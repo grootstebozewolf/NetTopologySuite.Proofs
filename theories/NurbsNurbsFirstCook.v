@@ -207,11 +207,11 @@ Proof.
 Qed.
 
 Lemma leftover_loop_stays_obligation :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma ellipse_still_not_first_cook :
@@ -256,8 +256,8 @@ Theorem ticket_0007_nurbs_nurbs_first_cook_qed_or_qex :
    /\ ~ interpolant_pair (MkOutOfScope EggNurbs) (MkOutOfScope EggNurbs)
    /\ ~ first_cook_scope EggChord EggCircularArc
    /\ ~ first_cook_scope EggCircularArc EggChord
-   /\ cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged
+   /\ cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation
    /\ ~ first_cook_scope EggEllipse EggEllipse
    /\ ~ first_cook_scope EggSinusoid EggSinusoid
    /\ ~ first_cook_scope EggGeodesicString EggGeodesicString
@@ -284,8 +284,8 @@ Proof.
   split; [exact interpolant_pair_nurbs_tag_false|].
   split; [exact chord_circular_not_first_cook_scope|].
   split; [intro H; exact H|].
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact ellipse_ellipse_not_first_scope|].
   destruct other_eggs_stay_out as [Hsin [Hgeo Hspi]].
   split; [exact Hsin|].
@@ -309,3 +309,7 @@ Print Assumptions circ_chord_stays_767.
 Print Assumptions leftover_loop_stays_obligation.
 Print Assumptions other_eggs_stay_out.
 Print Assumptions ticket_0007_nurbs_nurbs_first_cook_qed_or_qex.
+Print Assumptions nurbs_tag_not_mkclothoid.
+Print Assumptions nurbs_tag_empty_false.
+Print Assumptions nurbs_try_cook_still_none.
+Print Assumptions ellipse_still_not_first_cook.

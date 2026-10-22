@@ -566,8 +566,8 @@ Theorem ticket_0007_geodesic_parks_qed_or_qex :
    sidecar_geodesic_kind <> SGE_GeodeticNoding /\
    sidecar_geodesic_kind <> SGE_CircGamma /\
    sidecar_geodesic_kind <> SGE_LoopNoder /\
-   cook_loop_status = LoopObligation /\
-   cook_loop_status <> LoopDischarged /\
+   cook_loop_status = LoopDischarged /\
+   cook_loop_status <> LoopObligation /\
    first_cook_scope EggChord EggChord /\
    ~ first_cook_scope EggGeodesicString EggGeodesicString).
 Proof.
@@ -579,8 +579,8 @@ Proof.
   split; [exact sidecar_geodesic_not_geodetic_noding|].
   split; [exact sidecar_geodesic_not_circgamma|].
   split; [exact sidecar_geodesic_not_loop_noder|].
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact first_cook_scope_chord_chord|].
   exact geodesic_geodesic_not_first_scope.
 Qed.
@@ -597,3 +597,28 @@ Print Assumptions sidecar_geodesic_egg_inhabits.
 Print Assumptions ticket_0007_geodesic_egg_qed_or_qex.
 Print Assumptions ticket_0007_geodesic_not_first_cook_qed_or_qex.
 Print Assumptions ticket_0007_geodesic_parks_qed_or_qex.
+Print Assumptions sidecar_geodesic_only_out_of_scope.
+Print Assumptions locked_geo_demote_is_host_crossing.
+Print Assumptions locked_geo_same_sheet_as_nodingng.
+Print Assumptions geodesic_geodesic_not_first_scope.
+Print Assumptions geodesic_decline_I_ok.
+Print Assumptions sidecar_geodesic_host_hit_false.
+Print Assumptions sidecar_geodesic_host_empty_false.
+Print Assumptions sidecar_geodesic_try_cook_hit_none.
+Print Assumptions sidecar_geodesic_empty_neq_decline.
+Print Assumptions locked_geo_chord_proper_cross.
+Print Assumptions sidecar_geodesic_demote_hit_not_geodesic_I_ok.
+Print Assumptions sidecar_geodesic_metric_is_type_zoo.
+Print Assumptions sidecar_geodesic_first_cook_expand_missing.
+Print Assumptions sidecar_geodesic_not_first_cook.
+Print Assumptions sidecar_geodesic_first_cook_stays_chord_chord.
+Print Assumptions sidecar_geodesic_is_egg_packaging.
+Print Assumptions sidecar_geodesic_not_host_cook.
+Print Assumptions sidecar_geodesic_not_nodingng.
+Print Assumptions sidecar_geodesic_not_geodetic_noding.
+Print Assumptions sidecar_geodesic_not_circgamma.
+Print Assumptions sidecar_geodesic_not_campaign_i.
+Print Assumptions sidecar_geodesic_not_loop_noder.
+Print Assumptions sidecar_geodesic_letter_is_landed.
+Print Assumptions sidecar_geodesic_not_first_cook_expanded.
+Print Assumptions sidecar_geodesic_campaign_not_discharged.

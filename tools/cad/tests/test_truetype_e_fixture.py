@@ -16,7 +16,7 @@ import dxf_extract
 from fixtures.gen_truetype_e import JSON_PATH, TTF_PATH, glyph_spans, render
 
 TTF_SHA256 = "0f7de5d9741a277b29a9054f6cdf46a17790746894e827befa0268ba75e5cb76"
-JSON_SHA256 = "0704bfb1e6d81e3d8658a84f9e66c32505a1dbd366080a959715f7b040f875ec"
+JSON_SHA256 = "14e7a1435709e13ab5cf31b2d5d4bc0049252b3d20b74df97af0362a29f6115a"
 
 SCHEMA = json.loads(dxf_extract.SCHEMA_PATH.read_text(encoding="utf-8"))
 VALIDATOR = Draft202012Validator(SCHEMA)
@@ -118,6 +118,7 @@ def test_e_is_nonzero_ring_of_quadratic_nurbs_and_the_hole_winds_opposite() -> N
     ring, outer_member, hole_member = record["params"]["members"]
     assert ring["kind"] == "Ring"
     assert ring["params"]["windingRule"] == "nonzero"
+    assert ring["params"]["orientation"] == ["cw", "ccw"]
     assert outer_member["kind"] == "Compound"
     assert hole_member["kind"] == "Compound"
 

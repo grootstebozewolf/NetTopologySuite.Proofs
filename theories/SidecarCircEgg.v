@@ -616,8 +616,8 @@ Theorem ticket_0007_circle_parks_qed_or_qex :
    sidecar_circ_egg_kind <> CCE_CampaignI /\
    sidecar_circ_egg_kind <> CCE_CircGammaDischarge /\
    sidecar_circ_egg_kind <> CCE_LoopNoder /\
-   cook_loop_status = LoopObligation /\
-   cook_loop_status <> LoopDischarged /\
+   cook_loop_status = LoopDischarged /\
+   cook_loop_status <> LoopObligation /\
    first_cook_scope EggChord EggChord /\
    first_cook_scope EggCircularArc EggCircularArc).
 Proof.
@@ -628,8 +628,8 @@ Proof.
   split; [exact sidecar_circ_egg_not_campaign_i|].
   split; [exact sidecar_circ_egg_not_circgamma_discharge|].
   split; [exact sidecar_circ_egg_not_loop_noder|].
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact first_cook_scope_chord_chord|].
   exact circular_egg_first_cook_scope.
 Qed.
@@ -648,3 +648,29 @@ Print Assumptions sidecar_circ_egg_inhabits.
 Print Assumptions ticket_0007_circle_egg_qed_or_qex.
 Print Assumptions ticket_0007_circle_not_first_cook_qed_or_qex.
 Print Assumptions ticket_0007_circle_parks_qed_or_qex.
+Print Assumptions sidecar_circ_egg_only_out_of_scope.
+Print Assumptions sidecar_circ_egg_host_only_out_of_scope.
+Print Assumptions locked_circ_demote_is_host_crossing.
+Print Assumptions locked_circ_same_sheet_as_nodingng.
+Print Assumptions sidecar_circ_egg_host_hit_false.
+Print Assumptions sidecar_circ_egg_host_empty_false.
+Print Assumptions sidecar_circ_egg_try_cook_hit_none.
+Print Assumptions sidecar_circ_egg_empty_neq_decline.
+Print Assumptions sidecar_circ_egg_chord_circ_hit_false.
+Print Assumptions sidecar_circ_egg_demote_chord_circ_decline.
+Print Assumptions locked_circ_chord_proper_cross.
+Print Assumptions sidecar_circ_egg_demote_hit_not_circ_I_ok.
+Print Assumptions sidecar_circ_egg_campaign_is_host_decline.
+Print Assumptions sidecar_circ_egg_campaign_not_hit.
+Print Assumptions sidecar_circ_egg_first_cook_expand_missing.
+Print Assumptions sidecar_circ_egg_not_first_cook.
+Print Assumptions sidecar_circ_egg_first_cook_stays_chord_chord.
+Print Assumptions sidecar_circ_egg_is_egg_packaging.
+Print Assumptions sidecar_circ_egg_not_host_cook.
+Print Assumptions sidecar_circ_egg_not_nodingng.
+Print Assumptions sidecar_circ_egg_not_circgamma_discharge.
+Print Assumptions sidecar_circ_egg_not_campaign_i.
+Print Assumptions sidecar_circ_egg_not_loop_noder.
+Print Assumptions sidecar_circ_egg_letter_is_landed.
+Print Assumptions sidecar_circ_egg_not_first_cook_expanded.
+Print Assumptions sidecar_circ_egg_circgamma_not_discharged.

@@ -161,18 +161,21 @@ Theorem ticket_0007_linear_donut_rho_qed_or_qex :
    /\ (forall t, (t = 0 \/ t = 1) ->
          leftover_width 0 t + leftover_width t 1 = leftover_width 0 1
          /\ (leftover_width 0 t = leftover_width 0 1 \/ leftover_width t 1 = leftover_width 0 1))
-   /\ cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged)
+   /\ cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation)
   \/
   (exists ij, In ij linear_donut_pairs /\ ~ corner_hit (linear_donut_verdict (fst ij) (snd ij))).
 Proof.
   left.
   split; [exact linear_donut_noded_on_S |].
   split; [exact corner_split_width_constant |].
-  split; [exact cook_loop_is_obligation | exact cook_loop_not_discharged].
+  split; [exact cook_loop_is_discharged | exact cook_loop_not_obligation].
 Qed.
 
 Print Assumptions linear_donut_pairs_classified.
 Print Assumptions linear_donut_no_decline.
 Print Assumptions linear_donut_noded_on_S.
 Print Assumptions ticket_0007_linear_donut_rho_qed_or_qex.
+Print Assumptions linear_donut_no_arc.
+Print Assumptions linear_donut_pairs_count.
+Print Assumptions corner_split_width_constant.

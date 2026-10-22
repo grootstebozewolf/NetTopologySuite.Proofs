@@ -45,3 +45,17 @@ def test_mapping_validates_and_kinds_and_claim_ids_resolve() -> None:
             assert row["claimId"] in registry
         if row["linearizer"] == "arc_linearizes":
             assert row["egg"] == "MkCirc"
+        if "declineId" in row:
+            assert row["declineId"] in set(json.loads(CARRIER_SCHEMA_PATH.read_text(encoding="utf-8"))["$defs"]["declineId"]["enum"])
+            assert row["kind"] is None
+    assert "0007-clothoid-linearize" in registry
+    assert "0007-bezier-linearize" not in registry
+    by_source = {(row["source"]["format"], row["source"]["entity"]): row for row in mapping["rows"]}
+    assert by_source[("DXF", "closed LWPOLYLINE")]["kind"] == "Ring"
+    assert by_source[("DXF", "2D POLYLINE chain")]["kind"] == "Compound"
+    assert by_source[("TrueType", "quadratic Bezier span")]["claimId"] is None
+    clothoid = by_source[("IFC", "clothoid alignment segment")]
+    assert clothoid["linearizer"] == "clothoid_linearizes"
+    assert clothoid["claimId"] is None
+    for name in ("Bloss curve", "sine curve", "cosine curve"):
+        assert by_source[("IFC", name)]["declineId"] == "ID_SpiralFamilyUnsupported"

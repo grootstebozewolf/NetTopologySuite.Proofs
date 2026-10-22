@@ -34,7 +34,7 @@
       ]
     },
     "declineId": {
-      "description": "Named refusals. ID_NonzeroOverlapNotYet is reserved: year 0 does not detect contour overlap, so it is not emitted. ID_AngleConventionUnknown stays for other formats. DXF never emits it, because $ANGDIR and $ANGBASE are provenance only and stored angles stay degrees CCW from the OCS x-axis.",
+      "description": "Named refusals. ID_NonzeroOverlapNotYet is reserved: year 0 does not detect contour overlap, so it is not emitted. ID_AngleConventionUnknown stays for other formats. DXF never emits it, because $ANGDIR and $ANGBASE are provenance only and stored angles stay degrees CCW from the OCS x-axis. ID_SpiralFamilyUnsupported names an IFC alignment family other than clothoid (Bloss, sine, cosine); the DXF extractor does not emit it.",
       "enum": [
         "ID_NotSimilarityPlacement",
         "ID_TiltedPlacement",
@@ -50,6 +50,7 @@
         "ID_AngleConventionUnknown",
         "ID_ToleranceNonPositive",
         "ID_ToleranceKindUnsupported",
+        "ID_SpiralFamilyUnsupported",
         "ID_NonzeroOverlapNotYet",
         "ID_DegenerateEntity",
         "ID_UnsupportedEntity"
@@ -521,10 +522,15 @@
               "params": {
                 "type": "object",
                 "additionalProperties": false,
-                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Overlap of nonzero contours is not detected in year 0. TrueType outer contours are clockwise in y-up coordinates, while GIS exterior rings are counter-clockwise: the carrier records the source orientation and intake reverses it, so the extractor must not silently flip it.",
-                "required": ["windingRule", "contours"],
+                "description": "Contours plus a winding rule. A lenient closed DXF polyline is one contour and records nonzero, because a polyline does not carry a hatch rule. Overlap of nonzero contours is not detected in year 0. TrueType outer contours are clockwise in y-up coordinates, while GIS exterior rings are counter-clockwise: the carrier records the source orientation and intake reverses it, so the extractor must not silently flip it. orientation is that source sign, cw or ccw, one entry per contour.",
+                "required": ["windingRule", "contours", "orientation"],
                 "properties": {
                   "windingRule": { "enum": ["nonzero", "evenodd"] },
+                  "orientation": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "enum": ["cw", "ccw"] }
+                  },
                   "contours": {
                     "type": "array",
                     "minItems": 1,

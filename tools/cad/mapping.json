@@ -139,6 +139,65 @@
       "egg": null,
       "linearizer": null,
       "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "closed LWPOLYLINE"},
+      "kind": "Ring",
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "HATCH boundary path"},
+      "kind": "Ring",
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "DXF", "entity": "2D POLYLINE chain"},
+      "kind": "Compound",
+      "egg": null,
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "TrueType", "entity": "quadratic Bezier span"},
+      "kind": "Bezier",
+      "egg": "MkNurbs",
+      "linearizer": null,
+      "claimId": null
+    },
+    {
+      "source": {"format": "IFC", "entity": "clothoid alignment segment"},
+      "kind": "Spiral",
+      "egg": "MkClothoid",
+      "linearizer": "clothoid_linearizes",
+      "claimId": null
+    },
+    {
+      "source": {"format": "IFC", "entity": "Bloss curve"},
+      "kind": null,
+      "egg": null,
+      "linearizer": null,
+      "claimId": null,
+      "declineId": "ID_SpiralFamilyUnsupported"
+    },
+    {
+      "source": {"format": "IFC", "entity": "sine curve"},
+      "kind": null,
+      "egg": null,
+      "linearizer": null,
+      "claimId": null,
+      "declineId": "ID_SpiralFamilyUnsupported"
+    },
+    {
+      "source": {"format": "IFC", "entity": "cosine curve"},
+      "kind": null,
+      "egg": null,
+      "linearizer": null,
+      "claimId": null,
+      "declineId": "ID_SpiralFamilyUnsupported"
     }
   ]
 }

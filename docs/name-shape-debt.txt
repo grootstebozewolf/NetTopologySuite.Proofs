@@ -1,0 +1,267 @@
+# Frozen name/shape debt for scripts/check_name_shape.py (rules in its
+# docstring).  Lines are `rule :: path :: name`, or `name.unique :: name :: files`.
+# This file only shrinks: fix an entry, then delete its line.  Never add one.
+name.head :: theories/ArcChordApprox.v :: OM_perp_chord
+name.head :: theories/BufferBridge.v :: H_bridge_of_sound_complete
+name.head :: theories/CircularCookLineArcR.v :: AC_nondegenerate
+name.head :: theories/CircularCookLineArcR.v :: HaR
+name.head :: theories/CircularCookLineArcR.v :: Hva
+name.head :: theories/CircularCookLineArcZ.v :: I_line_arc_lift_agrees
+name.head :: theories/CircularCookLineArcZ.v :: I_line_arc_lift_agrees_nondeg
+name.head :: theories/CircularCookLineArcZ.v :: I_line_arc_lift_decline_iff
+name.head :: theories/CircularCookOkCirc.v :: I_ok_circ_decline_no_cook
+name.head :: theories/CircularCookOkCirc.v :: I_ok_circ_empty_neq_decline
+name.head :: theories/CircularCookOkCirc.v :: I_ok_circ_empty_no_cook
+name.head :: theories/ClothoidResidual.v :: Pp_eq_neg_T
+name.head :: theories/EdgeFaceBridgeCapstone.v :: H_bridge_well_noded
+name.head :: theories/EulerBridge.v :: H_bridge_core_conclusion_from_euler
+name.head :: theories/ExtractBufferRings.v :: H_valid_of_chain_extractor
+name.head :: theories/ExtractRingsShell.v :: H_valid_of_chain_extractor_holes
+name.head :: theories/MetricSpeed.v :: HLs
+name.head :: theories/NextOrientationWitness.v :: FH_E
+name.head :: theories/NextOrientationWitness.v :: FH_N
+name.head :: theories/NextOrientationWitness.v :: NFH_S
+name.head :: theories/NextOrientationWitness.v :: NFH_W
+name.head :: theories/OverlaySelfKiss.v :: G1_ne_selfkiss
+name.head :: theories/OverlayTouchRow.v :: T_cap_not_2cell
+name.head :: theories/OverlayTouchRow.v :: T_ext_cap_not_2cell
+name.head :: theories/OverlayTouchRow.v :: T_int_cap_empty_interior_hypothesis_refuted
+name.head :: theories/RelateEdgePosMerge.v :: HdRel_eple_cons
+name.head :: theories/RelateNGDisjoint.v :: A_vertices_ne_B_of_separated
+name.head :: theories/SheetHenClothoidBounds.v :: PI2_bounds
+name.head :: theories/SidecarCircMixed.v :: I_ok_mixed_empty_neq_decline
+name.head :: theories/TrianglePairDe9imQ.v :: Q2R_nz2
+name.head :: theories/TrianglePairDe9imQ.v :: Q2R_nz4
+name.head :: theories/ZetaHostHit.v :: F1_hit
+name.head :: theories/ZetaHostHit.v :: F2_hit
+name.head :: theories/ZetaHostHit.v :: F3_hit
+name.head :: theories/ZetaHostHit.v :: F4_endpoint
+name.hygiene :: theories/CircularCookLineArcZ.v :: zA__as_Z
+name.hygiene :: theories/CircularCookLineArcZ.v :: zA__scaled
+name.hygiene :: theories/CircularCookLineArcZ.v :: zB__scaled
+name.hygiene :: theories/CircularCookLineArcZ.v :: zC__scaled
+name.hygiene :: theories/CircularCookLineArcZ.v :: zDisc__scaled
+name.hygiene :: theories/CircularCookLineArcZ.v :: zKap__scaled
+name.hygiene :: theories/CircularCookLineArcZ.v :: zTs__scaled
+name.hygiene :: theories/CircularCookLineArcZ.v :: zU__scaled
+name.placeholder :: theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v :: test_invariant_implies_h_prev_bound
+name.placeholder :: theories-flocq/B64_Overlap_Hierarchy.v :: thm13_witness_nonoverlapping
+name.unique :: B2R_b64_zero :: theories-flocq/B64_FastExpansionSum_Shewchuk_Route2.v theories-flocq/PassesThrough_b64_grid_bounds.v
+name.unique :: B2R_finite_signed :: theories-flocq/B64_lib.v theories-flocq/Orient_geos968_onsegment_pins.v
+name.unique :: B2R_finite_unsigned :: theories-flocq/B64_lib.v theories-flocq/Orient_geos968_onsegment_pins.v
+name.unique :: IZR_pos_INR :: theories/ClothoidAxis.v theories/SheetHenRhoCarrier.v
+name.unique :: Q2R_2 :: theories/CircularCookLineArcR.v theories/TrianglePairDe9imQ.v
+name.unique :: Q2R_4 :: theories/CircularCookLineArcR.v theories/TrianglePairDe9imQ.v
+name.unique :: Rabs_lt_between :: theories/RelateNGRingInclusion.v theories/RelateNGTouchRectCellsGeneral.v
+name.unique :: Rabs_mul_self :: theories/RelateNGBoundaryGraph.v theories/RelateNGMatrixEqual.v theories/RelateNGRingInclusion.v theories/RelateNGTouchEdgeCellsGeneral.v theories/RelateNGTouchRectCellsGeneral.v
+name.unique :: Rabs_sin_le_abs :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: Rmin_nonneg :: theories/EllipseSpeedIntegral.v theories/Lattice.v
+name.unique :: abs_coord_le_dist_x :: theories/RelateNGBoundaryGraph.v theories/RelateNGMatrixEqual.v theories/RelateNGRingInclusion.v theories/RelateNGTouchEdgeCellsGeneral.v theories/RelateNGTouchRectCellsGeneral.v
+name.unique :: abs_coord_le_dist_y :: theories/RelateNGBoundaryGraph.v theories/RelateNGMatrixEqual.v theories/RelateNGRingInclusion.v theories/RelateNGTouchEdgeCellsGeneral.v theories/RelateNGTouchRectCellsGeneral.v
+name.unique :: abs_seg :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: arc_or_outside :: theories/PermCycleMerge.v theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: atan2_pos_iff :: theories/ArcSweepCcw.v theories/Atan2.v
+name.unique :: atan2_pos_scale :: theories/Atan2.v theories/BufferJoin.v theories/CircularCookSpan.v
+name.unique :: atan2_range :: theories/AngleBetween.v theories/Atan2.v
+name.unique :: atan2_sin_cos :: theories/CircularCookSpan.v theories/SheetHenRhoCarrier.v
+name.unique :: atan3_strict :: theories/IntakeAnglesCore.v theories/ZetaEggBridge.v
+name.unique :: b64Z_R :: theories-flocq/InCircle_b64_exact.v theories-flocq/KakeyaOrient2d_b64.v
+name.unique :: b64Z_coord_int_safe :: theories-flocq/KakeyaOrient2d_b64.v theories-flocq/SpectrePassesThroughWitness.v
+name.unique :: b64_max_B2R :: theories-flocq/ClothoidHalley_b64.v theories-flocq/PassesThrough_b64_grid_core.v
+name.unique :: b64_round_0 :: theories-flocq/B64_TwoSum_sterbenz.v theories-flocq/B64_bridge.v
+name.unique :: b64_ulp_le_at_magnitude_uniform :: theories-flocq/ArcLineIntersect_b64_exact.v theories-flocq/Intersect_b64_exact_forward_error.v
+name.unique :: between_py_le_max :: theories/RelateNodingLineLineStrata.v theories/Segment.v
+name.unique :: between_strict_implies_between :: theories/RelateEdgePairNoding.v theories/RelateNodingLineLineStrata.v
+name.unique :: buffer_spec_empty :: theories/BufferBridge.v theories/BufferDepth.v
+name.unique :: campaign_ii3_is_parked :: theories/CircularCookSpanFilter.v theories/CircularCookSpanSplit.v
+name.unique :: campaign_ii4_is_parked :: theories/CircularCookOkCirc.v theories/CircularCookSpanFilter.v theories/CircularCookSpanSplit.v
+name.unique :: cauchy_schwarz_2d :: theories/Distance.v theories/GeneralTriangleExterior.v
+name.unique :: circ_eval_dist_sq :: theories/CurveRingWinding.v theories/IntakeAngles.v
+name.unique :: circ_eval_on_circle :: theories/ArcLinearize.v theories/CircularCookMkCirc.v
+name.unique :: circ_split_ends :: theories/CircularCookSplit.v theories/SheetHenCircEgg.v
+name.unique :: circ_split_join :: theories/CircularCookSplit.v theories/SheetHenCircEgg.v
+name.unique :: circular_gamma_host_still_qex :: theories/CircularCookSpan.v theories/CircularCookSplit.v
+name.unique :: circular_still_not_first_cook_scope :: theories/CircularCookHit.v theories/CircularCookSpan.v theories/CircularCookSplit.v
+name.unique :: cloth_frame_sumsq :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v theories/ClothoidTangent.v
+name.unique :: cloth_sigma_sq :: theories/ClothoidLengthAbs.v theories/ClothoidNorm2.v
+name.unique :: combo_sep :: theories/TinSurfaceTopo.v theories/TrianglePairEdge.v
+name.unique :: connected_in_complement_refl :: theories/BoundedComponent.v theories/PointInRingTangents.v
+name.unique :: const_lip :: theories/MetricGreen.v theories/MetricSpeed.v theories/SheetHenClothoidBounds.v
+name.unique :: cont_ext :: theories/ClothoidChordRho.v theories/ClothoidEnvelope.v
+name.unique :: contains_not_overlap :: theories/RelateMatrixRect.v theories/RelateMatrixTriangle.v
+name.unique :: continuity_psi :: theories/ClothoidChordRho.v theories/ClothoidEnvelope.v
+name.unique :: conv_min_le_in :: theories/DiamondOffringSeam.v theories/HexagonOffringSeam.v
+name.unique :: conv_min_nonneg :: theories/DiamondOffringSeam.v theories/HexagonOffringSeam.v
+name.unique :: conv_min_nonneg_Forall :: theories/DiamondOffringSeam.v theories/HexagonOffringSeam.v
+name.unique :: conv_min_zero_inv :: theories/DiamondOffringSeam.v theories/HexagonOffringSeam.v
+name.unique :: cos_abs_le_1 :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: cos_lip_flip :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: cos_lip_prefix :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: cos_lip_tail :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: cos_on_rad :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: cos_period_Z :: theories/ClothoidAxis.v theories/SheetHenRhoCarrier.v
+name.unique :: cos_psi_ball :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: cos_s_minus_cos_t :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: cross_rev :: theories/RelateNGTouchEdgeCellsGeneral.v theories/TinSurfaceTopo.v
+name.unique :: cw_center :: theories/IntakeAngles.v theories/IntakeCircle.v
+name.unique :: cw_denom_nz :: theories/IntakeAngles.v theories/IntakeCircle.v
+name.unique :: cw_orient :: theories/IntakeAngles.v theories/IntakeCircle.v
+name.unique :: cw_r_nz :: theories/IntakeAngles.v theories/IntakeCircle.v
+name.unique :: cycle_count_as_count_classes :: theories/PermCycleIsolate.v theories/PermCycleMerge.v theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: dart_ltb_irrefl :: theories/DartNextSpec.v theories/EulerWitness.v
+name.unique :: dbase_fstep :: theories/NoShortFaces.v theories/WalkStepChain.v
+name.unique :: dec_cross_count_le_one :: theories/ConvexRayCrossing.v theories/MonotoneChainParity.v
+name.unique :: deriv_pt_sub :: theories/MetricGreen.v theories/MetricSpeed.v
+name.unique :: diamond_ring_closed :: theories/DiamondOffringSeam.v theories/JCT_VertexGrazingCounterexample.v
+name.unique :: diamond_ring_simple :: theories/DiamondOffringSeam.v theories/JCT_VertexGrazingCounterexample.v
+name.unique :: dist_eq_of_dist_sq :: theories/DelaunayEdgeEmptyCircle.v theories/LECObstacleDistance.v
+name.unique :: dist_mul_self :: theories/ArcDistance.v theories/Distance.v theories/LECCandidateComplete.v
+name.unique :: dist_nonneg :: theories/Distance.v theories/Linearise.v
+name.unique :: dist_self :: theories/BufferCorrectness.v theories/Linearise.v
+name.unique :: dist_shift_x :: theories/RelateNGBoundaryGraph.v theories/RelateNGMatrixEqual.v
+name.unique :: dist_shift_y :: theories/RelateNGBoundaryGraph.v theories/RelateNGMatrixEqual.v
+name.unique :: dist_sq_of_dist :: theories/ArcOffsetThreePoint.v theories/LECCandidateComplete.v
+name.unique :: dist_triangle :: theories/Distance.v theories/Linearise.v
+name.unique :: empty_cs_declines :: theories/IntakeCompoundFold.v theories/IntakeWalker.v
+name.unique :: f'_closes_outside :: theories/PermCycleMerge.v theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: f'_eq_f_outside :: theories/PermCycleMerge.v theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: f'_orbit_preserves_outside :: theories/PermCycleMerge.v theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: greedy_simplify_preserves_head :: theories-flocq/Validate_binary64.v theories/Validate.v
+name.unique :: gtri_le_gsA :: theories/RelateMatrixTriangle.v theories/RelateNGRingInclusion.v
+name.unique :: gtri_le_gsB :: theories/RelateMatrixTriangle.v theories/RelateNGRingInclusion.v
+name.unique :: gtri_le_gsC :: theories/RelateMatrixTriangle.v theories/RelateNGRingInclusion.v
+name.unique :: heading_frame :: theories/ClothoidAxis.v theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: holder_window_lt :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: hperp_ii_is_parked :: theories/CircularCookOkCirc.v theories/CircularCookSpanFilter.v theories/CircularCookSpanSplit.v
+name.unique :: icos_nonneg :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: icos_nonpos :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: icos_ordered :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: icos_straddle :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: inCircle_R_cyclic :: theories/ArcOrient.v theories/DelaunayFlipWitness.v
+name.unique :: inCircle_R_swap_AB :: theories/ArcOrient.v theories/DelaunayFlipWitness.v
+name.unique :: inCircle_R_swap_AC :: theories/ArcOrient.v theories/DelaunayFlipWitness.v
+name.unique :: inCircle_R_swap_BC :: theories/ArcOrient.v theories/DelaunayFlipWitness.v
+name.unique :: inCircle_R_swap_CP :: theories/ArcOrient.v theories/DelaunayFlipWitness.v
+name.unique :: inO_complement_eq :: theories/PermCycleIsolate.v theories/PermCycleShrink.v
+name.unique :: inc_cross_count_le_one :: theories/ConvexRayCrossing.v theories/MonotoneChainParity.v
+name.unique :: inside_b_true :: theories/ConvexClip.v theories/RelateNGUnnamedCex.v
+name.unique :: int_seg_const :: theories/MetricGreen.v theories/MetricSpeed.v
+name.unique :: int_seg_mono :: theories/MetricSpeed.v theories/SheetHenClothoidBounds.v
+name.unique :: interior_maximiser_hypothesis_refuted :: theories/LECCandidateVertex.v theories/LECObstacleDistance.v
+name.unique :: isin_nonneg :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: isin_nonpos :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: isin_ordered :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: isin_straddle :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: it_mod_per :: theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: iter_f'_eq_iter_f_outside :: theories/PermCycleMerge.v theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: iter_period_mult :: theories/FaceOrbitSep.v theories/PermCycleCount.v
+name.unique :: ivt_cross :: theories/ClothoidChordRho.v theories/ClothoidEnvelope.v
+name.unique :: joint_params_not_interior :: theories/CircularCookCcConcat.v theories/CircularCookCpConcat.v theories/CircularCookCsConcat.v
+name.unique :: last_default_irrel :: theories/CurveLinearise.v theories/CurveRingWinding.v
+name.unique :: last_indep :: theories/BufferAssembly.v theories/TinSurfaceVertex.v
+name.unique :: last_snoc :: theories/BufferAssembly.v theories/CurveOffsetAssembly.v theories/JCTRingCycle.v
+name.unique :: le_2p52_le_2pprec :: theories-flocq/InCircle_b64_exact.v theories-flocq/Orient_b64_exact.v
+name.unique :: leftover_III_still_onesided :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchObtuse.v theories/RelateNGTouchSameCone.v
+name.unique :: leftover_II_still_obtuse :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchSameCone.v
+name.unique :: leftover_IV_still_onesided :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchObtuse.v theories/RelateNGTouchSameCone.v
+name.unique :: leftover_I_still_partial :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchObtuse.v theories/RelateNGTouchOnesided.v theories/RelateNGTouchSameCone.v
+name.unique :: leftover_VII_still_lens :: theories/RelateNGTouchInside.v theories/RelateNGTouchNest.v
+name.unique :: leftover_VI_still_samecone :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchNest.v
+name.unique :: leftover_V_still_mixedcone :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchNest.v theories/RelateNGTouchSameCone.v
+name.unique :: lerp_0 :: theories/ArcLinearize.v theories/RelateEdgeSplit.v
+name.unique :: lerp_1 :: theories/ArcLinearize.v theories/RelateEdgeSplit.v
+name.unique :: list_max_ge :: theories/HausdorffDensify.v theories/SheetHenBagRun.v
+name.unique :: locked_cc_joint_host_endpoints :: theories/CircularCookCcConcat.v theories/IntakeWalker.v
+name.unique :: locked_cc_joint_host_eval_eq :: theories/CircularCookCcConcat.v theories/IntakeWalker.v
+name.unique :: locked_h2 :: theories/CircularCookSplit.v theories/DiscOverlay.v
+name.unique :: locked_h_pos :: theories/CircularCookSplit.v theories/DiscOverlay.v
+name.unique :: locked_p_plus_neq_minus :: theories/CircularCookLeftoverTwoHit.v theories/CircularCookSplit.v
+name.unique :: locked_parent_replace :: theories/CircularCookLeftoverTwoHit.v theories/SheetHenCookLoopModulo.v
+name.unique :: locked_parent_term_measure :: theories/CircularCookLeftoverTwoHit.v theories/SheetHenCookLoopTerm.v
+name.unique :: locked_radical_a :: theories/CircularCookSplit.v theories/DiscOverlay.v
+name.unique :: locked_radical_ux :: theories/CircularCookSplit.v theories/DiscOverlay.v
+name.unique :: locked_radical_uy :: theories/CircularCookSplit.v theories/DiscOverlay.v
+name.unique :: mixed_not_first_cook :: theories/HostCircChordOracle.v theories/SidecarCircMixed.v
+name.unique :: neg_abs_le :: theories/CornerSamples.v theories/TinSurfaceTopo.v
+name.unique :: nodup_map_inj :: theories/ClassCount.v theories/JCTHugMirror.v
+name.unique :: nth_length :: theories/SheetHenNodedOv.v theories/SheetHenPickSpec.v
+name.unique :: odd_controls_valid :: theories/CircularStringOddCount.v theories/CircularStringValid.v
+name.unique :: on_bd_rot :: theories/TinSurfaceTopo.v theories/TrianglePairMatrix.v
+name.unique :: orbit_in_S :: theories/PermCycleShrink.v theories/PermCycleSplice.v
+name.unique :: phase_b_cc_is_gap :: theories/CircularCookCloseII.v theories/CircularCookCsConcat.v
+name.unique :: phase_b_cc_is_landed :: theories/CircularCookCcConcat.v theories/CircularCookCpConcat.v
+name.unique :: phase_b_cp_is_gap :: theories/CircularCookCcConcat.v theories/CircularCookCloseII.v theories/CircularCookCsConcat.v
+name.unique :: phase_b_cs_is_gap :: theories/CircularCookCloseII.v theories/CircularCookCpConcat.v
+name.unique :: point_eq :: theories/ArcLinearizeContract.v theories/ArcOffsetThreePoint.v theories/ClothoidNorm2.v
+name.unique :: point_eq_of_coords :: theories/ArcArcCircles.v theories/HausdorffMetricInstance.v theories/JCTCornerSector.v theories/WalkVertexPack.v
+name.unique :: point_eqb_true :: theories/ConvexClip.v theories/RelateNGTouch.v
+name.unique :: point_ext :: theories/ArcChordSound.v theories/ArcParamBridge.v theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: prod_sqr_nonneg :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: psi_lip_ball :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: pt_eqb_true :: theories/IntakeAngles.v theories/SheetHenRhoCarrier.v
+name.unique :: ray_parity_even_not_odd :: theories/BufferDepthEnclosureCounterexample.v theories/HatMonotileExterior.v theories/JCT_Counterexample.v theories/JCT_HorizontalEdgeCounterexample.v theories/JCT_VertexGrazingCounterexample.v theories/SpectreConcaveFamily.v
+name.unique :: reduce_angle_period :: theories/ClothoidAxis.v theories/SheetHenRhoCarrier.v
+name.unique :: reduce_angle_spec :: theories/ClothoidAxis.v theories/SheetHenRhoCarrier.v
+name.unique :: rho_A :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: rho_L_nn :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: rho_h2 :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: rho_rad_nn :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: ring_edges_cons2 :: theories/HexXScaleBridge.v theories/MonotoneChainConstruction.v theories/RingExtract.v
+name.unique :: ring_edges_endpoints_in :: theories/ConvexOffringSeam.v theories/RelateCurveMatrix.v
+name.unique :: seg_in_rad :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: seg_properly_crosses_reversal :: theories-flocq/ExtractFacesBridge.v theories/EdgeFaceBridgeBarrier.v
+name.unique :: seg_t_combo :: theories/TinSurfaceTopo.v theories/TrianglePairEdge.v
+name.unique :: sign_holds :: theories/ClothoidChordRho.v theories/ClothoidEnvelope.v
+name.unique :: sin_abs_lipschitz :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: sin_approx_1 :: theories/ArcRectifiable.v theories/SheetHenClothoidBounds.v
+name.unique :: sin_head_lip :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: sin_lip_flip :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: sin_lip_prefix :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: sin_lip_tail :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: sin_on_rad :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: sin_period_Z :: theories/ClothoidAxis.v theories/SheetHenRhoCarrier.v
+name.unique :: sin_psi_ball :: theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: sin_s_minus_sin_t :: theories/ClothoidFresnel.v theories/EllipseSpeedIntegral.v
+name.unique :: sq_monotone_nonneg :: theories/Distance.v theories/RelateNGMatrixEqual.v theories/RelateNGRingInclusion.v
+name.unique :: sql_mm_cathedral_is_parked :: theories/CircularCookOkCirc.v theories/CircularCookSpanFilter.v theories/CircularCookSpanSplit.v
+name.unique :: sqr_nonneg :: theories/Distance.v theories/GeneralTriangleExterior.v
+name.unique :: sqrt2_lt_2 :: theories/LECChordGap.v theories/NurbsConicExact.v
+name.unique :: sqrt2_neq_0 :: theories/CircularCook.v theories/NurbsConicExact.v
+name.unique :: sqrt2_pos :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: sqrt2_sq :: theories/CircularCook.v theories/LECChordGap.v
+name.unique :: sqrt2_sqr :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: ticket_0007_iota_cook_qed_or_qex :: theories/SidecarCircIotaGate.v theories/SidecarCircIotaTags.v
+name.unique :: ticket_423_t10_line2_qed_or_qex :: theories/HausdorffDensifyLine2.v theories/HausdorffDiscreteQ.v
+name.unique :: tri_open_in :: theories/TinSurfaceTopo.v theories/TrianglePairEdge.v
+name.unique :: tri_open_not_bd :: theories/TrianglePairAgree.v theories/TrianglePairTinSurface.v
+name.unique :: triangle_pair_regime_ccw_stop :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchObtuse.v theories/RelateNGTouchSameCone.v
+name.unique :: triangle_pair_regime_ccw_stop_not_tjunction :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchObtuse.v theories/RelateNGTouchSameCone.v
+name.unique :: twice_half_sqrt2 :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: twice_half_sqrt2_1 :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: two_circles_radical_point_unique :: theories/ArcArcCircles.v theories/SheetHenRhoCarrier.v
+name.unique :: two_den_uden :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: two_numx_uden :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: two_numy_uden :: theories/NurbsBezierSpan.v theories/NurbsConicExact.v
+name.unique :: unnamed_ccw_still_unsupported :: theories/RelateNGTouchInside.v theories/RelateNGTouchLens.v theories/RelateNGTouchMixedCone.v theories/RelateNGTouchNest.v theories/RelateNGTouchSameCone.v
+name.unique :: vcross_add_l :: theories/CornerSamples.v theories/Vec.v
+name.unique :: vcross_add_r :: theories/CornerSamples.v theories/Vec.v
+name.unique :: vcross_antisym :: theories/TinSurfaceVertex.v theories/Vec.v
+name.unique :: vcross_neg_l :: theories/SectorPath.v theories/Vec.v
+name.unique :: vcross_neg_r :: theories/SectorPath.v theories/Vec.v
+name.unique :: vcross_scale_l :: theories/CornerSamples.v theories/Vec.v
+name.unique :: vcross_scale_r :: theories/SectorPath.v theories/Vec.v
+name.unique :: vcross_self :: theories/CornerSamples.v theories/Vec.v
+name.unique :: vcross_zero_l :: theories/CornerConnector.v theories/Vec.v
+name.unique :: vcross_zero_r :: theories/CornerConnector.v theories/TinSurfaceVertex.v theories/Vec.v
+name.unique :: vmag_sq_eq :: theories/BufferMiter.v theories/CurveJoinClassify.v
+name.unique :: vmag_vneg :: theories/BufferMiterAngle.v theories/CurveReverse.v
+name.unique :: vneg_nonzero :: theories/BufferMiterAngle.v theories/CurveJoinClassify.v
+name.unique :: vx_heading :: theories/ClothoidAxis.v theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+name.unique :: vy_heading :: theories/ClothoidAxis.v theories/ClothoidChordRho.v theories/ClothoidFresnelInc.v
+shape.dec :: theories-flocq/Orient_geos968_onsegment_pins.v :: geos968_b64_02_gt_dec
+shape.dec :: theories-flocq/Orient_geos968_onsegment_pins.v :: geos968_b64_09_gt_dec
+shape.exists :: theories/MinimumBoundingTriangle.v :: minimum_bounding_triangle_exists
+shape.iff :: theories/Real.v :: Rmult_zero_l_iff
+shape.neq :: theories/BufferAssembly.v :: last_cons_ne
+shape.neq :: theories/SheetHenBagRunFix.v :: dedup_two_neq
+shape.neq :: theories/TrianglePairEdge.v :: dist_pos_neq

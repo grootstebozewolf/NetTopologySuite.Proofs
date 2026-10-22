@@ -9,8 +9,8 @@
    CookLoopRho is rho_loop_discharged: the universal arm and selector
    confluence. The confluence conjunct is letter 6a-iii
    (run_vset_determined). cook_loop_rho_fixture is the iso-half bag
-   alone. claimId: none on that fixture. cook_loop_status stays
-   LoopObligation. Does not remint 0007-loop-letter6.
+   alone. claimId: none on that fixture. cook_loop_status is
+   LoopDischarged. Does not remint 0007-loop-letter6.
    3-axiom host. No Admitted.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -342,9 +342,9 @@ Proof.
 Qed.
 
 Lemma cook_loop_rho_status :
-  cook_loop_status = LoopObligation /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [apply cook_loop_is_obligation| apply cook_loop_not_discharged].
+  split; [apply cook_loop_is_discharged| apply cook_loop_not_obligation].
 Qed.
 
 Print Assumptions fold_nat_in_zero.

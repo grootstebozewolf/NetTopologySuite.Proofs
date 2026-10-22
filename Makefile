@@ -36,7 +36,7 @@ SHELL := /bin/bash
 ROCQ := $(shell command -v rocq 2>/dev/null || command -v coqc 2>/dev/null || echo "")
 
 # Phony targets only — this file never produces real build artefacts.
-.PHONY: help status host full check ci-guards ci-pr ci-full theories-changed oracle oracle-ffi clean-env env-info hunt-probes cad-dxf
+.PHONY: help status host full check claim-elab ci-guards ci-pr ci-full theories-changed oracle oracle-ffi clean-env env-info hunt-probes cad-dxf
 
 # Base ref for `make theories-changed` (override: make theories-changed BASE=main).
 BASE ?= origin/main
@@ -192,6 +192,12 @@ full:
 
 check: ci-guards
 
+# claim-elab — the build-dependent half of check_claim_statements.py: probes
+# the built .vo files (exact elaborated type, Print Assumptions, elaborated
+# statement pin).  Needs `make full` first.  CI runs it in the rocq-flocq job.
+claim-elab:
+	python3 scripts/check_claim_statements.py --elaborate
+
 # ci-guards — the complete set of build-INDEPENDENT corpus guardrails.
 # These are pure grep/perl/python (no .vo, no `rocq`), so they run in
 # seconds and give fast fail-feedback decoupled from the proof build.
@@ -211,6 +217,8 @@ ci-guards:
 	python3 oracle/rocqref/check_jts_nts_equiv.py
 	python3 scripts/check_module_split.py
 	python3 scripts/check_constructor_gate.py
+	python3 scripts/check_name_shape.py
+	python3 scripts/check_claim_statements.py
 	python3 scripts/check_adr_status.py
 	python3 scripts/check_sqlmm_named_fields.py
 	python3 tests/GeosOracleBugHunt/hunt.py --selfcheck

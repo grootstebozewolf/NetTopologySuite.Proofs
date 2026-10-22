@@ -521,7 +521,7 @@ Theorem ticket_0007_clothoid_first_cook_qed_or_qex :
    I_ok (MkChord hor_bot) (MkClothoid locked_cloth_A) IDecline /\
    ~ first_cook_scope EggClothoid EggChord /\
    first_cook_scope EggNurbs EggNurbs /\
-   cook_loop_status = LoopObligation)
+   cook_loop_status = LoopDischarged)
   \/
   (~ first_cook_scope EggClothoid EggClothoid /\
    forall p ti tj,
@@ -539,7 +539,7 @@ Proof.
   split; [exact mkclothoid_mixed_still_decline|].
   split; [exact clothoid_chord_not_first_cook_scope|].
   split; [exact nurbs_nurbs_first_cook_scope|].
-  exact cook_loop_is_obligation.
+  exact cook_loop_is_discharged.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -688,3 +688,29 @@ Print Assumptions locked_cloth_host_joint_end.
 Print Assumptions locked_cloth_host_joint_is_endpoint_hit.
 Print Assumptions locked_cloth_AB_not_joint.
 Print Assumptions locked_cloth_joint_hit_neq_first_cook_hit.
+Print Assumptions half_lt_three_fifth.
+Print Assumptions locked_cloth_gap_cont.
+Print Assumptions locked_cloth_gap_half.
+Print Assumptions locked_cloth_gap_35.
+Print Assumptions locked_cloth_ti_bounds.
+Print Assumptions locked_cloth_ti_Cx.
+Print Assumptions locked_cloth_ti_gt_half.
+Print Assumptions locked_cloth_A_wf.
+Print Assumptions locked_cloth_B_wf.
+Print Assumptions locked_cloth_A_th.
+Print Assumptions locked_cloth_B_th.
+Print Assumptions locked_unit_sqr.
+Print Assumptions locked_cloth_ti_in_01.
+Print Assumptions locked_cloth_tj_in_01.
+Print Assumptions locked_on_cloth_A.
+Print Assumptions locked_on_cloth_B.
+Print Assumptions locked_A_at_0.
+Print Assumptions locked_A_at_1.
+Print Assumptions locked_B_at_0.
+Print Assumptions locked_B_at_1.
+Print Assumptions cloth_Cx_1_nz.
+Print Assumptions cloth_split_changes_k_on_locked_A.
+Print Assumptions mkclothoid_tag_still_decline.
+Print Assumptions mkclothoid_tag_hit_false.
+Print Assumptions clothoid_chord_not_first_cook_scope.
+Print Assumptions mkclothoid_neq_mkchord_locked.

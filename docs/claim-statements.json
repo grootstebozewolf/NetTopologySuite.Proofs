@@ -1,0 +1,50 @@
+{
+  "schema": "nts-claim-statements/1",
+  "about": "Statement/proof split registry, checked by scripts/check_claim_statements.py. Field names follow formalization.yaml v0.4 (main_results scope, literature_dependencies, fidelity.divergences, review.status, automation.methods); ideas only, nothing from openai/math@1581d4cb is cited as proved.",
+  "axiom_allowlist": "docs/axiom-allowlist.txt",
+  "claims": [
+    {
+      "claimId": "arc-sim-image",
+      "statement_module": "theories/ArcSimilarityStmt.v",
+      "statement_sha256": "a70ea9a7b8f6af72a7ab035db8012335b2e7deaca9bc4141e02e948eff1466bd",
+      "elaborated_sha256": "ba30a4a2f142f7526436e490e96858e538b21ae339714d61a09c9fc6e66a7c9f",
+      "proof_module": "theories/ArcSimilarityImage.v",
+      "regime": "exact",
+      "results": [
+        {
+          "scope": "main",
+          "statement": "ArcSimilarityStmt.claim",
+          "proof": "arc_similarity_claim",
+          "meaning": "A similarity z |-> (a + b i) z + t or (a + b i) conj(z) + t, with a + b i <> 0 (sim_k2 = a^2 + b^2 <> 0), maps the CircularArc through three controls to the arc through their images: squared distance scales by a^2 + b^2, validity, centre and radius are transported, and on_arc membership is preserved both ways."
+        },
+        {
+          "scope": "supporting",
+          "statement": "ArcSimilarityStmt.supporting",
+          "proof": "arc_similarity_supporting",
+          "meaning": "Every rational affine map accepted by is_similarity_q (decided by is_similarity_q_dec) is exact on arcs when applied to the three control points."
+        },
+        {
+          "scope": "witness",
+          "statement": "ArcSimilarityStmt.witness",
+          "proof": "arc_similarity_witness",
+          "meaning": "One sample, not a converse: the non-similarity scale (2,1) moves the controls of the unit upper arc so that the image (6/5,4/5) of the arc point (3/5,4/5) is off the image arc; the Q twin computes the squared residual 12/25 at that single point (3/5,4/5). It is not the maximum: over the arc the residual is 3y(1-y), maximum 3/4 at (sqrt 3/2, 1/2) (ArcSimilarityImage.v : scale21_resid_max)."
+        }
+      ],
+      "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
+      "sorry_count": 0,
+      "literature_dependencies": [],
+      "fidelity_divergences": [
+        "R, not binary64: JTS/NTS/GEOS transform doubles; rounding of the moved controls is not modelled.",
+        "3-point SQL/MM arc (CurveGeometry.CircularArc), not a centre/radius arc; ExactCircularArc is the JTS Java class and is not modelled here.",
+        "Suspected, not verified: GEOS GEOSGeom_transformXY (curve support since 3.13) moves arc control points independently, so for a non-similarity callback the output is the circle through the moved controls, not the image of the arc. The witness shows one such map; the GEOS behaviour itself is being reproduced separately.",
+        "The converse (an affine map exact on every arc is a similarity) is not claimed."
+      ],
+      "related": {
+        "inspired_by": "openai/math@1581d4cb lean/docs/071 (Koebe rigidity) and the Comparator statement/solution split; ideas only",
+        "backs": ["GEOS GEOSGeom_transformXY / _XYZ on CIRCULARSTRING (suspected)", "JTS-fork / NTS AffineTransformation on curve types"]
+      },
+      "review": {"status": "unchecked", "reviewers": [], "notes": "AI-drafted and machine-checked (Qed, Print Assumptions); awaiting human review."},
+      "automation": {"methods": [{"method": "agent"}]}
+    }
+  ]
+}

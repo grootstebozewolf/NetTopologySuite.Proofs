@@ -15,10 +15,10 @@
    Identity is structural (ShareOne / MintTwo). A locked two-pair
    bag (Hit cook + Empty no-mint) is still pairwise / one-step.
 
-   QEX: the full repeat-until-noded bag loop stays LoopObligation.
-   Cite Parks ρ — LeftoverBagTermArm missing; leftover_quad width
-   conserved. Do not fake LoopDischarged. NodingNG chord is not
-   a bag noder.
+   QEX: NodingNG stays pairwise / one-step. Cite Parks ρ —
+   LeftoverBagTermArm missing; leftover_quad width conserved.
+   cook_loop_status is LoopDischarged (letter 6b, CookLoopRho).
+   NodingNG chord is not a bag noder.
 
    Parks ι / ρ (named QEX, landed). Γ CircGamma is discharged by
    MkCirc. This letter cites ρ; it does not remint CircGamma, ι,
@@ -307,11 +307,11 @@ Definition nodingng_letter_status : NodingNGLetterStatus :=
 
 Lemma nodingng_letter_is_landed :
   nodingng_letter_status = NodingNGChordLanded /\
-  cook_loop_status = LoopObligation /\
-  cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged /\
+  cook_loop_status <> LoopObligation.
 Proof.
   split; [reflexivity|].
-  split; [exact cook_loop_is_obligation|exact cook_loop_not_discharged].
+  split; [exact cook_loop_is_discharged|exact cook_loop_not_obligation].
 Qed.
 
 (* Named QED package: the chord inhabitant + laws. *)
@@ -401,10 +401,10 @@ Proof.
   exact nodingng_not_relateng.
 Qed.
 
-(* Parks ρ: NodingNG chord is pairwise / one-step, not LoopDischarged.
-   Cite leftover_quad_width_conserved / LeftoverBagTermArm missing.
-   Sibling park HostRhoLeftoverBagTerm.ticket_0007_rho_leftover_qed_or_qex
-   (QEX; LoopObligation). Do not fake Discharge. *)
+(* Parks ρ: NodingNG chord is pairwise / one-step.
+   cook_loop_status is LoopDischarged (letter 6b); this letter does
+   not inhabit CookLoopBagTerm. Cite leftover_quad_width_conserved /
+   LeftoverBagTermArm missing. *)
 (* WITNESS {"claimId":"0007-nodingng-chord","topic":"overlay","lemma":"ticket_0007_nodingng_rho_qed_or_qex","title":"NodingNG chord discharges the bag-level repeat-until-noded loop (QED) or stays pairwise/one-step while Parks rho LeftoverBagTermArm is missing (QEX); discharged QEX; leftover_quad width conserved","file":"theories/NodingNG.v","witness":"0007-nodingng-chord","board":"ADR-0007"} *)
 Theorem ticket_0007_nodingng_rho_qed_or_qex :
   (nodingng_letter_status = NodingNGLoopDischarged
@@ -412,7 +412,7 @@ Theorem ticket_0007_nodingng_rho_qed_or_qex :
    /\ cook_loop_ctor_inhabits CookLoopBagTerm)
   \/
   (nodingng_letter_status = NodingNGChordLanded
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm
    /\ ~ leftover_bag_term_arm
    /\ (forall ti tj,
@@ -426,7 +426,7 @@ Theorem ticket_0007_nodingng_rho_qed_or_qex :
 Proof.
   right.
   split; [reflexivity|].
-  split; [exact cook_loop_is_obligation|].
+  split; [exact cook_loop_is_discharged|].
   split; [exact cook_loop_bag_term_missing|].
   split; [exact leftover_bag_term_arm_missing|].
   split; [exact leftover_quad_width_conserved|].
@@ -435,8 +435,9 @@ Proof.
   exact nodingng_locked_bag_inhabits.
 Qed.
 
-(* Scope fence: NodingNG stays chord product + LoopObligation. Host
-   first cook includes circular / clothoid / NURBS. *)
+(* Scope fence: NodingNG stays the chord product. Host first cook
+   includes circular / clothoid / NURBS. cook_loop_status is
+   LoopDischarged (letter 6b). *)
 (* WITNESS {"claimId":"0007-nodingng-chord","topic":"overlay","lemma":"ticket_0007_nodingng_scope_qed_or_qex","title":"NodingNG discharges the bag loop (QED) or stays pairwise/one-step while host first cook includes chord/circular/clothoid/NURBS (QEX); discharged QEX","file":"theories/NodingNG.v","witness":"0007-nodingng-chord","board":"ADR-0007"} *)
 Theorem ticket_0007_nodingng_scope_qed_or_qex :
   (first_cook_scope EggCircularArc EggCircularArc
@@ -447,7 +448,7 @@ Theorem ticket_0007_nodingng_scope_qed_or_qex :
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ first_cook_scope EggClothoid EggClothoid
    /\ first_cook_scope EggNurbs EggNurbs
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ nodingng_letter_status = NodingNGChordLanded).
 Proof.
   right.
@@ -455,7 +456,7 @@ Proof.
   split; [exact circular_egg_first_cook_scope|].
   split; [exact clothoid_egg_first_cook_scope|].
   split; [exact nurbs_nurbs_first_cook_scope|].
-  split; [exact cook_loop_is_obligation|].
+  split; [exact cook_loop_is_discharged|].
   reflexivity.
 Qed.
 
@@ -468,3 +469,17 @@ Print Assumptions nodingng_chord_inhabits.
 Print Assumptions ticket_0007_nodingng_chord_qed_or_qex.
 Print Assumptions ticket_0007_nodingng_rho_qed_or_qex.
 Print Assumptions ticket_0007_nodingng_scope_qed_or_qex.
+Print Assumptions nodingng_noded_same_sheet.
+Print Assumptions nodingng_crossing_eggs_are_chords.
+Print Assumptions nodingng_crossing_is_noded.
+Print Assumptions nodingng_disjoint_is_noded.
+Print Assumptions nodingng_empty_neq_decline.
+Print Assumptions nodingng_snap_neq_I.
+Print Assumptions nodingng_share_one_same_hen.
+Print Assumptions nodingng_mint_two_may_differ.
+Print Assumptions nodingng_not_overlay_ng_robust.
+Print Assumptions nodingng_is_I_plus_cook.
+Print Assumptions nodingng_not_overlayng.
+Print Assumptions nodingng_not_relateng.
+Print Assumptions nodingng_not_loop_noder.
+Print Assumptions nodingng_letter_is_landed.

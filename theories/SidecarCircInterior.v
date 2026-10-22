@@ -390,11 +390,11 @@ Proof.
 Qed.
 
 Lemma iota_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma iota_rest_parked :
@@ -404,7 +404,7 @@ Lemma iota_rest_parked :
   /\ iota_circgamma_remint_status = IotaCircGammaRemintParked
   /\ iota_sql_mm_status = IotaSqlMmNotDone
   /\ iota_cathedral_status = IotaCathedralNotLanded
-  /\ cook_loop_status = LoopObligation
+  /\ cook_loop_status = LoopDischarged
   /\ CircularCookCpConcat.phase_b_status = CircularCookCpConcat.PhaseBOpen.
 Proof.
   repeat split; reflexivity.
@@ -514,7 +514,7 @@ Theorem ticket_0007_iota_park_qed_or_qex :
    /\ iota_circgamma_remint_status = IotaCircGammaRemintParked
    /\ iota_sql_mm_status = IotaSqlMmNotDone
    /\ iota_cathedral_status = IotaCathedralNotLanded
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ CircularCookCpConcat.phase_b_status = CircularCookCpConcat.PhaseBOpen).
 Proof.
   right.
@@ -540,3 +540,15 @@ Print Assumptions ticket_0007_iota_gap_qed_or_qex.
 Print Assumptions ticket_0007_iota_mu_qed_or_qex.
 Print Assumptions ticket_0007_iota_host_qed_or_qex.
 Print Assumptions ticket_0007_iota_park_qed_or_qex.
+Print Assumptions iota_host_not_first_cook.
+Print Assumptions iota_first_cook_stays_chord_chord.
+Print Assumptions iota_not_first_cook_mixed.
+Print Assumptions iota_host_ls_cs_decline.
+Print Assumptions iota_host_ls_cs_hit_false.
+Print Assumptions iota_host_cs_ls_hit_false.
+Print Assumptions iota_host_stays_qex.
+Print Assumptions iota_hperp_is_parked.
+Print Assumptions iota_sql_mm_is_not_done.
+Print Assumptions iota_circgamma_remint_is_parked.
+Print Assumptions iota_cathedral_is_not_landed.
+Print Assumptions iota_rest_parked.

@@ -463,3 +463,21 @@ theories/SheetHenRhoConfFix.v
 # Letter 3 fixtures: locked quarter, #892 halves, collinear overlap,
 # tangency, partial co-circular arcs. 3-axiom. No Admitted.
 theories/SheetHenBagRunFix.v
+# lane C
+# TIN topology. claimId tri-de9im-t4. 3-axiom. No Admitted.
+theories/TinSurfaceTopo.v
+theories/TinSurfaceVertex.v
+# TIN x triangle remaining DE-9IM cells. claimId tri-de9im-t6. 3-axiom. No Admitted.
+theories/TrianglePairTinRelate2.v
+# lane B
+# bern is the host name in bz_basis_bern. BernsteinBasis was full-only.
+theories/BernsteinBasis.v
+theories/NurbsSumBridge.v
+theories/NurbsBezierSpan.v
+# lane A
+# CS/CC IsSimple: no interior vertex added and no coincident pieces.
+# claimId 0007-cscc-issimple. Reads the loop. 3-axiom. No Admitted.
+theories/SheetHenSimple.v
+# CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
+# Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
+theories/CurvePolygonLoopValid.v

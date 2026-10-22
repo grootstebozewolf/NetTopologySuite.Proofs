@@ -451,11 +451,11 @@ Proof.
 Qed.
 
 Lemma iota_interior_hit_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma iota_interior_hit_rest_parked :
@@ -465,7 +465,7 @@ Lemma iota_interior_hit_rest_parked :
   /\ iota_interior_hit_circgamma_remint_status
      = IotaInteriorHitCircGammaRemintParked
   /\ iota_interior_hit_sql_mm_status = IotaInteriorHitSqlMmNotDone
-  /\ cook_loop_status = LoopObligation
+  /\ cook_loop_status = LoopDischarged
   /\ CircularCookCpConcat.phase_b_status = CircularCookCpConcat.PhaseBOpen
   /\ SidecarCircInterior.iota_interior_cook_status
      = SidecarCircInterior.IotaInteriorCookParked.
@@ -604,7 +604,7 @@ Theorem ticket_0007_iota_interior_park_qed_or_qex :
    /\ iota_interior_hit_circgamma_remint_status
       = IotaInteriorHitCircGammaRemintParked
    /\ iota_interior_hit_sql_mm_status = IotaInteriorHitSqlMmNotDone
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ CircularCookCpConcat.phase_b_status = CircularCookCpConcat.PhaseBOpen
    /\ SidecarCircInterior.iota_interior_cook_status
       = SidecarCircInterior.IotaInteriorCookParked).
@@ -631,3 +631,20 @@ Print Assumptions ticket_0007_iota_interior_hit_qed_or_qex.
 Print Assumptions ticket_0007_iota_interior_not_mixed_qed_or_qex.
 Print Assumptions ticket_0007_iota_interior_host_qed_or_qex.
 Print Assumptions ticket_0007_iota_interior_park_qed_or_qex.
+Print Assumptions iota_hit_host_circgamma_qex.
+Print Assumptions iota_hit_first_cook_stays_chord_chord.
+Print Assumptions iota_hit_not_first_cook_mixed.
+Print Assumptions iota_hit_host_ls_cs_decline.
+Print Assumptions iota_hit_host_ls_cs_hit_false.
+Print Assumptions I_ok_interior_empty_false.
+Print Assumptions locked_p_plus_neq_span_A_start.
+Print Assumptions locked_p_plus_neq_span_A_end.
+Print Assumptions locked_interior_params_rev.
+Print Assumptions locked_interior_host_decline.
+Print Assumptions iota_interior_hit_host_cook_stays_parked.
+Print Assumptions iota_interior_hit_hperp_is_parked.
+Print Assumptions iota_interior_hit_sql_mm_is_not_done.
+Print Assumptions iota_interior_hit_circgamma_remint_is_parked.
+Print Assumptions iota_interior_hit_phase_b_stays_open.
+Print Assumptions iota_interior_hit_not_bag_noder.
+Print Assumptions iota_interior_hit_rest_parked.

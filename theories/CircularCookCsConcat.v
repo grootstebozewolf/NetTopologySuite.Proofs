@@ -503,11 +503,11 @@ Proof.
 Qed.
 
 Lemma b1_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma b1_rest_parked :
@@ -516,7 +516,7 @@ Lemma b1_rest_parked :
   /\ b1_hperp_status = B1HperpParked
   /\ b1_circgamma_remint_status = B1CircGammaRemintParked
   /\ b1_sql_mm_status = B1SqlMmNotDone
-  /\ cook_loop_status = LoopObligation.
+  /\ cook_loop_status = LoopDischarged.
 Proof.
   repeat split; reflexivity.
 Qed.
@@ -630,7 +630,7 @@ Theorem ticket_0007_b1_park_qed_or_qex :
    /\ b1_hperp_status = B1HperpParked
    /\ b1_circgamma_remint_status = B1CircGammaRemintParked
    /\ b1_sql_mm_status = B1SqlMmNotDone
-   /\ cook_loop_status = LoopObligation).
+   /\ cook_loop_status = LoopDischarged).
 Proof.
   right.
   split; [exact phase_b1_is_landed|].
@@ -663,3 +663,18 @@ Print Assumptions cs_joint_hit_circ_not_host_I_ok.
 Print Assumptions locked_cs_host_joint.
 Print Assumptions locked_cs_host_joint_circ_end.
 Print Assumptions locked_cs_host_joint_is_endpoint_hit.
+Print Assumptions b1_host_not_first_cook.
+Print Assumptions b1_first_cook_stays_chord_chord.
+Print Assumptions b1_host_circular_decline.
+Print Assumptions b1_host_circular_hit_false.
+Print Assumptions on_arc_gamma_at_start.
+Print Assumptions on_arc_gamma_at_end.
+Print Assumptions cs_joint_hit_not_interior.
+Print Assumptions cs_joint_hit_not_host_I_ok.
+Print Assumptions locked_cs_arc_1_valid.
+Print Assumptions locked_cs_arc_2_valid.
+Print Assumptions locked_cs_joint_pt_eq.
+Print Assumptions b1_host_stays_qex.
+Print Assumptions b1_hperp_is_parked.
+Print Assumptions b1_circgamma_remint_is_parked.
+Print Assumptions b1_rest_parked.

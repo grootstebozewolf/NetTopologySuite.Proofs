@@ -604,11 +604,11 @@ Proof.
 Qed.
 
 Lemma b3_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 Lemma b3_rest_parked :
@@ -620,7 +620,7 @@ Lemma b3_rest_parked :
   /\ b3_hperp_status = B3HperpParked
   /\ b3_circgamma_remint_status = B3CircGammaRemintParked
   /\ b3_sql_mm_status = B3SqlMmNotDone
-  /\ cook_loop_status = LoopObligation.
+  /\ cook_loop_status = LoopDischarged.
 Proof.
   repeat split; reflexivity.
 Qed.
@@ -765,7 +765,7 @@ Theorem ticket_0007_b3_park_qed_or_qex :
    /\ b3_hperp_status = B3HperpParked
    /\ b3_circgamma_remint_status = B3CircGammaRemintParked
    /\ b3_sql_mm_status = B3SqlMmNotDone
-   /\ cook_loop_status = LoopObligation).
+   /\ cook_loop_status = LoopDischarged).
 Proof.
   right.
   exact b3_rest_parked.
@@ -797,3 +797,27 @@ Print Assumptions ticket_0007_b3_reuse_qed_or_qex.
 Print Assumptions ticket_0007_b3_not_interior_qed_or_qex.
 Print Assumptions ticket_0007_b3_host_qed_or_qex.
 Print Assumptions ticket_0007_b3_park_qed_or_qex.
+Print Assumptions b3_host_not_first_cook.
+Print Assumptions b3_first_cook_stays_chord_chord.
+Print Assumptions b3_host_circular_decline.
+Print Assumptions b3_host_circular_hit_false.
+Print Assumptions b3_mixed_not_first_cook.
+Print Assumptions cp_closing_mixed_ls_cs_host_decline.
+Print Assumptions cp_closing_mixed_cs_ls_hit_not_I_ok.
+Print Assumptions cp_closing_mixed_ls_cs_hit_not_I_ok.
+Print Assumptions joint_params_not_interior.
+Print Assumptions locked_cp_cs_ring_nonempty.
+Print Assumptions locked_cp_cs_ring_contiguous.
+Print Assumptions locked_cp_cs_ring_ok.
+Print Assumptions locked_cp_cs_closing_joint.
+Print Assumptions locked_cp_cs_close_pt_eq.
+Print Assumptions locked_cp_mixed_ring_nonempty.
+Print Assumptions locked_cp_mixed_ring_contiguous.
+Print Assumptions locked_cp_mixed_ring_ok.
+Print Assumptions locked_cp_mixed_closing_joint.
+Print Assumptions locked_cp_mixed_closing_hit_not_I_ok.
+Print Assumptions locked_cp_mixed_is_mixed.
+Print Assumptions b3_host_stays_qex.
+Print Assumptions b3_hperp_is_parked.
+Print Assumptions b3_circgamma_remint_is_parked.
+Print Assumptions b3_rest_parked.

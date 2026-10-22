@@ -12,7 +12,7 @@
 
    QED would add leftover_pair_kiss_ok and leftover_pair_share_mint_ok
    as leftover_bag_step constructors leftover_bag_cook_fuel can
-   consume on leftover quads, keep cook_loop_status = LoopObligation,
+   consume on leftover quads, keep cook_loop_status = LoopDischarged,
    and leave leftover_quad_width_decreases uninhabited. That needs a
    third leftover_bag_step constructor and leftover_quad_kiss_arm /
    leftover_quad_share_mint_arm. Wiring kiss/share-mint as Hit or
@@ -206,14 +206,14 @@ Proof.
 Qed.
 
 Lemma modulo_kiss_share_loop_unchanged :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation
   /\ ~ leftover_quad_width_decreases
   /\ ~ leftover_bag_term_arm
   /\ ~ cook_loop_ctor_inhabits CookLoopBagTerm.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact leftover_quad_width_does_not_decrease|].
   split; [exact leftover_bag_term_arm_missing|].
   exact cook_loop_bag_term_missing.
@@ -222,13 +222,13 @@ Qed.
 Lemma modulo_kiss_share_scope_unchanged :
   first_cook_scope EggChord EggChord
   /\ first_cook_scope EggNurbs EggNurbs
-  /\ cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  /\ cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
   split; [exact nurbs_nurbs_first_cook_scope|].
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -241,8 +241,8 @@ Lemma sibling_modulo_iter_not_kiss_share :
        cross_pt (1 / 2) (1 / 2)
   /\ leftover_bag_cook_fuel 1 locked_quad_bag locked_quad_bag
   /\ leftover_pair_decline locked_quad_bag 0 2
-  /\ cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged
+  /\ cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation
   /\ ~ leftover_pair_kiss_ok
   /\ ~ leftover_pair_share_mint_ok.
 Proof.
@@ -256,7 +256,14 @@ Proof.
     split; [exact Hnd|].
     split; [exact leftover_pair_kiss_ok_missing|].
     exact leftover_pair_share_mint_ok_missing.
-  - exfalso. exact (cook_loop_not_discharged Hdis).
+  - split; [exact locked_hit_nstep|].
+    split; [exact locked_parent_step_ok|].
+    split; [exact locked_decline_nstep|].
+    split; [exact locked_quad_decline|].
+    split; [exact Hdis|].
+    split; [exact cook_loop_not_obligation|].
+    split; [exact leftover_pair_kiss_ok_missing|].
+    exact leftover_pair_share_mint_ok_missing.
 Qed.
 
 Lemma sibling_leftover_kiss_share_not_modulo_step :
@@ -267,8 +274,8 @@ Lemma sibling_leftover_kiss_share_not_modulo_step :
   /\ ~ leftover_pair_kiss_ok
   /\ ~ leftover_pair_share_mint_ok
   /\ ~ leftover_bag_term_arm
-  /\ cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  /\ cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
   split; [exact leftover_kiss_arm_missing|].
   split; [exact leftover_share_mint_arm_missing|].
@@ -277,8 +284,8 @@ Proof.
   split; [exact leftover_pair_kiss_ok_missing|].
   split; [exact leftover_pair_share_mint_ok_missing|].
   split; [exact leftover_bag_term_arm_missing|].
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -289,11 +296,11 @@ Qed.
 Theorem ticket_0007_rho_modulo_kiss_share_qed_or_qex :
   (leftover_pair_kiss_ok
    /\ leftover_pair_share_mint_ok
-   /\ cook_loop_status = LoopObligation
+   /\ cook_loop_status = LoopDischarged
    /\ ~ leftover_quad_width_decreases)
   \/
-  (cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged
+  (cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation
    /\ ~ leftover_pair_kiss_ok
    /\ ~ leftover_pair_share_mint_ok
    /\ ~ modulo_kiss_share_ctor_inhabits ModuloKissStep
@@ -315,8 +322,8 @@ Theorem ticket_0007_rho_modulo_kiss_share_qed_or_qex :
    /\ first_cook_scope EggNurbs EggNurbs).
 Proof.
   right.
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact leftover_pair_kiss_ok_missing|].
   split; [exact leftover_pair_share_mint_ok_missing|].
   split; [exact modulo_kiss_step_missing|].

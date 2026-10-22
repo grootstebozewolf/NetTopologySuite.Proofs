@@ -101,11 +101,11 @@ Proof.
 Qed.
 
 Lemma iota_gate_not_bag_noder :
-  cook_loop_status = LoopObligation
-  /\ cook_loop_status <> LoopDischarged.
+  cook_loop_status = LoopDischarged
+  /\ cook_loop_status <> LoopObligation.
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -908,8 +908,8 @@ Theorem ticket_0007_iota_cook_qed_or_qex :
    /\ first_cook_scope EggChord EggChord
    /\ first_cook_scope EggCircularArc EggCircularArc
    /\ ~ first_cook_scope EggChord EggCircularArc
-   /\ cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged
+   /\ cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation
    /\ SidecarCircInterior.iota_interior_cook_status
       = SidecarCircInterior.IotaInteriorCookParked).
 Proof.
@@ -959,3 +959,23 @@ Print Assumptions cell6_mixed_decline.
 Print Assumptions cell6_mixed_half_open_hit.
 Print Assumptions ticket_0007_iota_gate_qed_or_qex.
 Print Assumptions ticket_0007_iota_cook_qed_or_qex.
+Print Assumptions iota_gate_first_cook_stays_chord_chord.
+Print Assumptions iota_gate_circular_is_first_cook.
+Print Assumptions iota_gate_not_first_cook_mixed.
+Print Assumptions win_demotes_xor_circ.
+Print Assumptions sort_cc_not_aa.
+Print Assumptions sort_cc_not_mixed.
+Print Assumptions sort_aa_not_mixed.
+Print Assumptions interior_or_not.
+Print Assumptions joint_or_not.
+Print Assumptions joint_not_interior.
+Print Assumptions IotaGate_iff_pred.
+Print Assumptions iota_cell_pred_exclusive.
+Print Assumptions col_cs_times_col_cs_is_cell1.
+Print Assumptions col_cs_times_col_cs_not_cell4.
+Print Assumptions locked_col_cs_invalid.
+Print Assumptions cell1_reuses_host_empty_I_ok.
+Print Assumptions locked_col_on_demoted_chord.
+Print Assumptions locked_col_on_cross_chord.
+Print Assumptions locked_mixed_cs_valid.
+Print Assumptions locked_interior_cs_valid.

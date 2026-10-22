@@ -435,7 +435,7 @@ Print Assumptions interior_split_finite_holds.
 Print Assumptions split_step_confluent.
 Print Assumptions leftover_left_on_parent.
 Print Assumptions leftover_right_on_parent.
-Print Assumptions cook_loop_is_obligation.
+Print Assumptions cook_loop_is_discharged.
 Print Assumptions coord_realization_preserves_sheet.
 Print Assumptions binary64_same_sheet_as_R.
 Print Assumptions overlay_ng_robust_is_snap_not_I.
@@ -463,3 +463,16 @@ Print Assumptions disjoint_not_proper_cross.
 Print Assumptions constructed_hit_sym_same_p.
 Print Assumptions equal_constructed_p_share.
 Print Assumptions cooked_constructed_crossing.
+Print Assumptions chord_split_join.
+Print Assumptions chord_split_ends.
+Print Assumptions chord_split_right_reparam.
+Print Assumptions try_cook_hit_decline_none.
+Print Assumptions try_cook_hit_empty_none.
+Print Assumptions try_cook_hit_out_of_scope_none.
+Print Assumptions try_cook_hit_chord_hit_some.
+Print Assumptions cooked_crossing_shares.
+Print Assumptions proper_cross_signs_sym.
+Print Assumptions constructed_hit_on_c1.
+Print Assumptions constructed_hit_on_c2.
+Print Assumptions crossing_proper_cross_signs.
+Print Assumptions constructed_p_unique.

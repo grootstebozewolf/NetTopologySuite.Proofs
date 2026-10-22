@@ -9,9 +9,9 @@
      leftover_quad_width_decreases
      ∧ leftover_quad_kiss_arm
      ∧ leftover_quad_share_mint_arm.
-   Each conjunct uninhabited. cook_loop_status stays LoopObligation.
-   This letter does not inhabit LeftoverBagTermArm and does not flip
-   LoopDischarged.
+   Each conjunct uninhabited. Letter 6b sets cook_loop_status to
+   LoopDischarged via CookLoopRho. This letter does not inhabit
+   LeftoverBagTermArm.
 
    Constructive cook, given that hole:
      * leftover_span — one parent chord on [t0,t1]
@@ -34,10 +34,11 @@
 
    QED: leftover-pair Hit-split / Decline step; leftover_quad as
    one pair Hit; n-step cook on the locked crossing.
-   QEX: LeftoverBagTermArm / LoopObligation restated unchanged.
+   QEX: LeftoverBagTermArm stays missing. cook_loop_status is
+   LoopDischarged (letter 6b).
 
    Honesty fences:
-     Do not fake LoopDischarged. Do not remint I.8 / pairwise as bag
+     Do not inhabit LeftoverBagTermArm. Do not remint I.8 / pairwise as bag
      discharge. Do not remint leftover_quad_width as a bag measure.
      Do not remint CircGamma / ι / mixed_joint_params / first_cook
      expand / Multi bags as ρ. Host CircGamma is CircGammaDischarged
@@ -645,8 +646,8 @@ Proof.
 Qed.
 
 Lemma leftover_modulo_park_unchanged :
-  cook_loop_status = LoopObligation /\
-  cook_loop_status <> LoopDischarged /\
+  cook_loop_status = LoopDischarged /\
+  cook_loop_status <> LoopObligation /\
   ~ leftover_bag_term_arm /\
   LeftoverBagTermArm = leftover_bag_term_arm /\
   leftover_bag_term_arm =
@@ -654,8 +655,8 @@ Lemma leftover_modulo_park_unchanged :
      /\ leftover_quad_kiss_arm
      /\ leftover_quad_share_mint_arm).
 Proof.
-  split; [exact cook_loop_is_obligation|].
-  split; [exact cook_loop_not_discharged|].
+  split; [exact cook_loop_is_discharged|].
+  split; [exact cook_loop_not_obligation|].
   split; [exact leftover_bag_term_arm_missing|].
   split; [reflexivity|].
   reflexivity.
@@ -711,8 +712,8 @@ Theorem ticket_0007_rho_modulo_iter_qed_or_qex :
    leftover_bag_cook_fuel 1 locked_quad_bag locked_quad_bag /\
    leftover_pair_decline locked_quad_bag 0 2 /\
    lbag_sum locked_quad_bag = lbag_sum locked_parent_bag /\
-   cook_loop_status = LoopObligation /\
-   cook_loop_status <> LoopDischarged)
+   cook_loop_status = LoopDischarged /\
+   cook_loop_status <> LoopObligation)
   \/ cook_loop_status = LoopDischarged.
 Proof.
   left.
@@ -722,16 +723,16 @@ Proof.
   split; [exact locked_decline_nstep|].
   split; [exact locked_quad_decline|].
   split; [exact locked_hit_sum|].
-  split; [exact cook_loop_is_obligation|].
-  exact cook_loop_not_discharged.
+  split; [exact cook_loop_is_discharged|].
+  exact cook_loop_not_obligation.
 Qed.
 
 (* WITNESS {"claimId":"0007-rho-modulo-qex","topic":"overlay","lemma":"ticket_0007_rho_modulo_park_qed_or_qex","title":"rho modulo QEX: LeftoverBagTermArm inhabits leftover_quad_width_decreases and kiss/share/mint leftover-quad rewrites (QED) or that ctor stays missing and cook_loop stays LoopObligation (QEX); discharged QEX; same LeftoverBagTermArm hole as 0007-rho-bag-loop; do not fake LoopDischarged","file":"theories/SheetHenCookLoopModulo.v","witness":"0007-rho-modulo-qex","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_modulo_park_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/
-  (cook_loop_status = LoopObligation
-   /\ cook_loop_status <> LoopDischarged
+  (cook_loop_status = LoopDischarged
+   /\ cook_loop_status <> LoopObligation
    /\ ~ leftover_bag_term_arm
    /\ LeftoverBagTermArm = leftover_bag_term_arm
    /\ leftover_bag_term_arm =
@@ -775,3 +776,18 @@ Print Assumptions ticket_0007_rho_modulo_step_qed_or_qex.
 Print Assumptions ticket_0007_rho_modulo_bag_qed_or_qex.
 Print Assumptions ticket_0007_rho_modulo_iter_qed_or_qex.
 Print Assumptions ticket_0007_rho_modulo_park_qed_or_qex.
+Print Assumptions leftover_half_parent.
+Print Assumptions leftover_span_parent_ok.
+Print Assumptions leftover_span_parent_width.
+Print Assumptions leftover_span_parent_at.
+Print Assumptions lbag_sum_remove.
+Print Assumptions lbag_nth_remove_before.
+Print Assumptions leftover_bag_step_hit_sum.
+Print Assumptions leftover_bag_step_decline_id.
+Print Assumptions locked_parent_step_ok.
+Print Assumptions locked_parent_replace.
+Print Assumptions locked_hit_step.
+Print Assumptions locked_A_lo_egg.
+Print Assumptions locked_B_lo_egg.
+Print Assumptions locked_quad_pair_no_interior_hit.
+Print Assumptions locked_decline_step.
