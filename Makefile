@@ -36,7 +36,7 @@ SHELL := /bin/bash
 ROCQ := $(shell command -v rocq 2>/dev/null || command -v coqc 2>/dev/null || echo "")
 
 # Phony targets only — this file never produces real build artefacts.
-.PHONY: help status host full check ci-guards ci-pr ci-full theories-changed oracle oracle-ffi clean-env env-info hunt-probes cad-dxf
+.PHONY: help status host full check claim-elab ci-guards ci-pr ci-full theories-changed oracle oracle-ffi clean-env env-info hunt-probes cad-dxf
 
 # Base ref for `make theories-changed` (override: make theories-changed BASE=main).
 BASE ?= origin/main
@@ -191,6 +191,12 @@ full:
 	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
 check: ci-guards
+
+# claim-elab — the build-dependent half of check_claim_statements.py: probes
+# the built .vo files (exact elaborated type, Print Assumptions, elaborated
+# statement pin).  Needs `make full` first.  CI runs it in the rocq-flocq job.
+claim-elab:
+	python3 scripts/check_claim_statements.py --elaborate
 
 # ci-guards — the complete set of build-INDEPENDENT corpus guardrails.
 # These are pure grep/perl/python (no .vo, no `rocq`), so they run in

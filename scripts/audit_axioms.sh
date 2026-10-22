@@ -62,7 +62,17 @@ sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$ALLOWLIST"  > "$ALLOWED_FILE
 sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$EXCEPTIONS" > "$EXEMPT_FILE"
 
 is_allowed() {
-  grep -qFx -- "$1" "$ALLOWED_FILE"
+  grep -qFx -- "$1" "$ALLOWED_FILE" && return 0
+  # Undotted: Rocq prints an allowlisted axiom unqualified when the file
+  # imports its module (functional_extensionality_dep).  Accept the bare
+  # basename of an allowlist entry; any other undotted name (an Admitted
+  # constant, a Local Axiom) is a violation.  A Local Axiom reusing an
+  # allowlisted basename is stopped earlier by check_admitted.sh, which
+  # rejects every Axiom/Parameter declaration.
+  case "$1" in
+    *.*) return 1 ;;
+  esac
+  sed -e 's/.*\.//' "$ALLOWED_FILE" | grep -qFx -- "$1"
 }
 
 is_exempt_file() {
@@ -143,7 +153,11 @@ while IFS= read -r line; do
     # where the name MUST contain at least one `.` (module-path
     # separator).  This excludes lines like `Warning: ...`, `File "...":`,
     # and other Coq diagnostic output that happens to contain a colon.
-    if echo "$line" | grep -qE '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+[[:space:]]*:'; then
+    # An UNdotted name followed by ` :` is also an axiom: Rocq prints an
+    # Admitted constant of the same file (`claim : False`) or a Local Axiom
+    # that way (#965 adversarial review, findings 2 and 3).  Diagnostics
+    # (`Warning:`, `File "...":`) have no space before the colon.
+    if echo "$line" | grep -qE "^[A-Za-z_][A-Za-z0-9_']*(\.[A-Za-z_][A-Za-z0-9_']*)+[[:space:]]*:|^[A-Za-z_][A-Za-z0-9_']*[[:space:]]+:"; then
       ax="$(echo "$line" | sed -e 's/[[:space:]]*:.*//' -e 's/[[:space:]]//g')"
       if [ -z "$block_axioms" ]; then
         block_axioms="$ax"

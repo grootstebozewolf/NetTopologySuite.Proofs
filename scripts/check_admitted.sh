@@ -53,9 +53,35 @@ parse_registry() {
 COUNTEREXAMPLE_KEYS=$(parse_registry "$COUNTEREXAMPLE_REGISTRY")
 DEFERRED_KEYS=$(parse_registry "$DEFERRED_REGISTRY")
 
-# Hard fail on Axiom / Parameter / admit. (these are never allowed).
-if grep -nE '^[[:space:]]*Axiom\b|^[[:space:]]*Parameter\b|\badmit\.' \
-     theories/*.v theories-flocq/*.v 2>/dev/null; then
+# Comment-stripped token scan (perl; nested (* *) comments removed, line
+# numbers kept).  Prints file:line:TOKEN for every hit of the regex in $1
+# over theories/*.v theories-flocq/*.v.  The line-anchored greps used to
+# miss a one-line `Proof. Admitted.`, `Local Axiom` and `#[local] Axiom`
+# (#965 adversarial review, findings 2 and 3).
+code_scan() {
+  perl -e '
+    my $re = shift @ARGV;
+    for my $f (@ARGV) {
+      open(my $fh, "<", $f) or next; local $/; my $t = <$fh>; close $fh;
+      my ($o, $d, $i, $n) = ("", 0, 0, length $t);
+      while ($i < $n) {
+        my $two = substr($t, $i, 2);
+        if ($two eq "(*") { $d++; $o .= "  "; $i += 2; next; }
+        if ($two eq "*)" && $d) { $d--; $o .= "  "; $i += 2; next; }
+        my $c = substr($t, $i, 1);
+        $o .= ($d && $c ne "\n") ? " " : $c; $i++;
+      }
+      my $ln = 0;
+      for my $line (split /\n/, $o, -1) {
+        $ln++;
+        while ($line =~ /$re/g) { print "$f:$ln:$1\n"; }
+      }
+    }' "$1" theories/*.v theories-flocq/*.v 2>/dev/null
+}
+
+# Hard fail on Axiom / Parameter / Conjecture / admit (these are never
+# allowed), in any spelling: Local / Global / #[attr] prefixes included.
+if code_scan '(?<![\w.])((?:Axioms?|Parameters?|Conjecture)\b|admit\s*\.|give_up\b)' | grep . ; then
   echo "::error::Found Axiom/Parameter/admit. -- these are never allowed."
   echo "Use Admitted with a registry entry."
   exit 1
@@ -94,8 +120,7 @@ while IFS= read -r line; do
     echo "    - Close the proof."
     violations=$((violations + 1))
   fi
-done < <(grep -rnE '^[[:space:]]*Admitted[[:space:]]*\.' \
-           theories/ theories-flocq/ --include='*.v' 2>/dev/null)
+done < <(code_scan '(\bAdmitted\s*\.)')
 
 if [ "$violations" -gt 0 ]; then
   echo ""

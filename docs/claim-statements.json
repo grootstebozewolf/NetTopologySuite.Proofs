@@ -7,6 +7,7 @@
       "claimId": "arc-sim-image",
       "statement_module": "theories/ArcSimilarityStmt.v",
       "statement_sha256": "a70ea9a7b8f6af72a7ab035db8012335b2e7deaca9bc4141e02e948eff1466bd",
+      "elaborated_sha256": "ba30a4a2f142f7526436e490e96858e538b21ae339714d61a09c9fc6e66a7c9f",
       "proof_module": "theories/ArcSimilarityImage.v",
       "regime": "exact",
       "results": [

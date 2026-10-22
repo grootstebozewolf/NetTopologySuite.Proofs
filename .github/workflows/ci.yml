@@ -399,6 +399,23 @@ jobs:
             }
           sudo chown -R "$(id -u):$(id -g)" .
 
+      - name: Claim statements, elaborated (exact type, Print Assumptions, pinned elaborated statement)
+        # Build-dependent half of scripts/check_claim_statements.py (the text
+        # half runs in `make ci-guards`).  Per registered claim it compiles a
+        # probe against the .vo files just built: `Check (proof : Stmt.c)`
+        # with the printed type literally `Stmt.c` (a Section Hypothesis
+        # fails), `Print Assumptions` within the three allowlisted axioms by
+        # fully qualified name (an Admitted or Local Axiom fails), and a
+        # sha256 over `Print` of the statement and every NTS.Proofs
+        # definition it reaches (an imported Notation that changes the
+        # meaning without changing the source hash fails).  Python runs on
+        # the runner; rocq runs in the same pinned image as the build.
+        run: |
+          chmod -R a+rwX .
+          ROCQ_CMD="docker run --rm -v $PWD:/workspace -w /workspace nts-proofs-flocq:ci rocq" \
+            python3 scripts/check_claim_statements.py --elaborate
+          sudo chown -R "$(id -u):$(id -g)" .
+
       - name: Smoke hunt probes (docs/h1-vacuity)
         # Qed-claiming hunt probes live next to the H1 pair and are
         # evidence, not _CoqProject.full product modules.  Compile them
