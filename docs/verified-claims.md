@@ -1318,12 +1318,12 @@ claimId `0001-lint-ftc`. Witness `LipIntFTC.v : lipint_ftc`.
 `lipF` of a Lipschitz integrand is `derivable_pt_lim` on the open
 interval, derivative the integrand, and one-sided at the endpoints.
 ADR-0001 left this FTC on the Coquelicot lane; the dyadic secant bound
-discharges it in Stdlib. `H_deriv` is `lint_leibniz`. Unconditional on |κL| ≤ 1/2; full branch |κL| ≤ π conditional on `ClothoidFPrimePos`. Not
-`H_mvt` (`MVT` prints `classic`). Not a remint of `508-e`.
+discharges it in Stdlib. `H_deriv` is `lint_leibniz`. Unconditional on |κL| ≤ 1/2; full branch |κL| ≤ π conditional on `ClothoidFPrimePos`. Not `H_mvt` (`MVT` prints `classic`). Not a remint of `508-e`.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `LipIntFTC.v : lipint_ftc` (+ `lip_ftc`, `lip_ftc_right`, `lip_ftc_left`) | **FTC for `lint` (ADR-0001, claimId: 0001-lint-ftc, witness: lipint_ftc):** `lo < x < hi` gives `derivable_pt_lim lipF x (f x)`; `lo < hi` gives the right derivative at `lo` and the left derivative at `hi`. No Coquelicot, no RiemannInt, no MVT `[exact]` | 3 |
+| `SnyderMercatorSphere.v : merc_sphere_tan_eq_exp_iff_phi_of_y` (+ `SnyderMercatorSphere.v : merc_sphere_phi_of_y_of_tan_eq_exp`, `SnyderMercatorSphere.v : merc_sphere_phi_of_y_range`, `SnyderMercatorSphere.v : merc_sphere_tan_of_phi_of_y`, `SnyderMercatorSphere.v : merc_sphere_phi_of_y_eq_atan3_sinh`, `SnyderMercatorSphere.v : merc_sphere_tan_sq_eq_sin_ratio`, `SnyderMercatorSphere.v : merc_sphere_tan_eq_sin_ratio_cos`, `SnyderMercatorSphere.v : merc_sphere_tan_eq_sec_add_tan`, `SnyderMercatorSphere.v : merc_sphere_sinh_eq_tan_of_tan_eq_exp`, `SnyderMercatorSphere.v : merc_sphere_tan_derivative`, `SnyderMercatorSphere.v : merc_sphere_lam_of_x_of_lam`) | **Snyder 1987 spherical Mercator (#970, claimId: snyder-merc-sphere, witness: merc_sphere_tan_eq_exp_iff_phi_of_y):** (7-4) p. 44 `φ = π/2 − 2·atan3(e^(−y/R))` is the unique solution with |φ| < π/2 of (7-2) p. 41 in exp form `tan(π/4 + φ/2) = e^(y/R)` (one iff); (7-4) = (7-4a) `atan3(sinh(y/R))`; on the band tan(π/4 + φ/2) = (1 + sin φ)/cos φ = sec φ + tan φ, exp forms of (7-2a)/(7-2b) (plus the squared (1 + sin φ)/(1 − sin φ)); tan(π/4 + φ/2) = e^t implies sinh t = tan φ (PROJ `merc_s_forward` in exp form); d/dφ tan(π/4 + φ/2) = tan(π/4 + φ/2)/cos φ; (7-5) undoes (7-1). No ln (Stdlib ln prints `classic`), so the literal (7-2), the asinh form, dy/dφ = R sec φ and (7-3) h = k = sec φ are not claimed. No ℚ twin `[exact]` | 3 |
 
 ## ADR-0001 — generic curve metrics <!-- feat:arc-len geom:arc -->
 
