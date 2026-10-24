@@ -1324,6 +1324,7 @@ discharges it in Stdlib. `H_deriv` is `lint_leibniz`. Unconditional on |κL| ≤
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `LipIntFTC.v : lipint_ftc` (+ `lip_ftc`, `lip_ftc_right`, `lip_ftc_left`) | **FTC for `lint` (ADR-0001, claimId: 0001-lint-ftc, witness: lipint_ftc):** `lo < x < hi` gives `derivable_pt_lim lipF x (f x)`; `lo < hi` gives the right derivative at `lo` and the left derivative at `hi`. No Coquelicot, no RiemannInt, no MVT `[exact]` | 3 |
+| `LnIvt.v : exp_ln3` (+ `LnIvt.v : ln3_exp`, `LnIvt.v : ln3_unique`, `LnIvt.v : ln3_nonpos`, `LnIvt.v : ln3_1`, `LnIvt.v : ln3_mult`, `LnIvt.v : ln3_inv`, `LnIvt.v : ln3_increasing`, `LnIvt.v : ln3_le`, `LnIvt.v : ln3_lt_inv`, `LnIvt.v : continuity_pt_ln3`, `LnIvt.v : derivable_pt_lim_ln3`, `LnIvt.v : exp_one_plus_lt_pos`, `LnIvt.v : exp_increasing3`, `LnIvt.v : exp_le3`, `LnIvt.v : exp_lt_inv3`, `LnIvt.v : exp_inj3`) | **3-axiom logarithm (#972, claimId: ln3-ivt, witness: exp_ln3):** `ln3 y` is the IVT root of `exp t − y` on `[−1/y, y]` for `y > 0` (`0` for `y ≤ 0`, `ln3_nonpos`), built like `AtanIvt.atan3`; `exp (ln3 y) = y` for `y > 0`, `ln3 (exp x) = x`, unique, `ln3 1 = 0`, products and inverses, strictly increasing on `(0, ∞)`, continuous, `derivable_pt_lim ln3 x (/ x)` for `x > 0`. 3-axiom `exp` monotonicity from the series bound `1 + x < exp x` (`x > 0`). Not `ln3 = ln` (Stdlib `ln_exp`, `exp_ln`, `derivable_pt_lim_ln`, `exp_increasing` print `classic`). No ℚ twin `[exact]` | 3 |
 
 ## ADR-0001 — generic curve metrics <!-- feat:arc-len geom:arc -->
 

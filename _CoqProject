@@ -488,3 +488,7 @@ theories/CurvePolygonLoopValid.v
 # claimId none new. 3-axiom. No Admitted.
 theories/ClothoidTraversal.v
 theories/ClothoidPlacement.v
+# lane ln3 (#972)
+# 3-axiom corpus logarithm: IVT inverse of exp, built like AtanIvt.atan3.
+# claimId ln3-ivt. 3-axiom. No Admitted.
+theories/LnIvt.v
