@@ -496,3 +496,8 @@ theories/LnIvt.v
 # Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
 # claimId snyder-merc-sphere. 3-axiom. No Admitted.
 theories/SnyderMercatorSphere.v
+# lane snyder-ln (#972)
+# Snyder 1987 sphere Mercator, literal ln form of (7-2) via LnIvt.ln3:
+# both round trips with (7-4), dy/dphi = R sec phi. claimId snyder-merc-sphere-ln.
+# 3-axiom. No Admitted.
+theories/SnyderMercatorLn.v
