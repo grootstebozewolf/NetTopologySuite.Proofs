@@ -4411,3 +4411,7 @@ theories/CurvePolygonLoopValid.v
 # claimId none new. 3-axiom. No Admitted.
 theories/ClothoidTraversal.v
 theories/ClothoidPlacement.v
+# lane snyder (#970)
+# Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
+# claimId snyder-merc-sphere. 3-axiom. No Admitted.
+theories/SnyderMercatorSphere.v
