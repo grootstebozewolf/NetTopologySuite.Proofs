@@ -8,6 +8,7 @@
      (7-1)  x   = R (lam - lam0)                 p. 41
      (7-2)  y   = R ln tan (PI/4 + phi/2)        p. 41
      (7-2a) y   = (R/2) ln ((1 + sin phi) / (1 - sin phi))   p. 41
+     (7-2b) y   = R ln (tan phi + sec phi)       p. 41
      (7-3)  h = k = sec phi                      p. 44
      (7-4)  phi = PI/2 - 2 arctan (e^(-y/R))     p. 44
      (7-4a) phi = arctan (sinh (y/R))            p. 44
@@ -19,11 +20,15 @@
    3-axiom AtanIvt.atan3. The literal ln statements are not in this file.
 
    Lemmas:
+     merc_sphere_tan_eq_exp_iff_phi_of_y  band /\ (7-2) exp form <-> (7-4)
      merc_sphere_phi_of_y_of_tan_eq_exp  (7-4) inverts (7-2), exp form
      merc_sphere_phi_of_y_range          (7-4) lands in the open band
      merc_sphere_tan_of_phi_of_y         (7-4) satisfies (7-2), exp form
      merc_sphere_phi_of_y_eq_atan3_sinh  (7-4) = (7-4a) (Gudermannian)
      merc_sphere_tan_sq_eq_sin_ratio     (7-2) = (7-2a), squared exp form
+     merc_sphere_tan_eq_sin_ratio_cos    (7-2) = (7-2a), unsquared exp form
+     merc_sphere_tan_eq_sec_add_tan      (7-2) = (7-2b), exp form
+     merc_sphere_sinh_eq_tan_of_tan_eq_exp  (7-2) exp form -> sinh = tan
      merc_sphere_tan_derivative          d/dphi tan(PI/4 + phi/2)
      merc_sphere_lam_of_x_of_lam         (7-5) undoes (7-1)
 
@@ -43,14 +48,17 @@
    merc_s_inverse computes phi = atan (sinh (y / k0)), which is (7-4a);
    merc_sphere_phi_of_y_eq_atan3_sinh ties it to Snyder's (7-4). PROJ's
    merc_s_forward uses y = k0 asinh (tan phi), one of the p. 41 forms
-   of (7-2); that form is not proved here.
+   of (7-2). Its exp form, e^(y/R) = tan (PI/4 + phi/2) implies
+   sinh (y/R) = tan phi, is merc_sphere_sinh_eq_tan_of_tan_eq_exp, so
+   both PROJ directions are tied to Snyder without ln. The literal
+   asinh statement waits for a 3-axiom ln (ln3 lane).
    No Q twin: every statement is transcendental. Numbers from an mpmath
    / PROJ checker of Snyder's worked examples were review aids only and
    are not pinned here.
 
    topic: foundations
    claimId: snyder-merc-sphere (ticket #970)
-   witness: merc_sphere_phi_of_y_of_tan_eq_exp
+   witness: merc_sphere_tan_eq_exp_iff_phi_of_y
    3-axiom host. No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -82,24 +90,37 @@ Proof.
   unfold tan. rewrite sin_shift, cos_shift. field. split; lra.
 Qed.
 
-Local Lemma atan3_pos_of_pos (v : R) : 0 < v -> 0 < atan3 v < PI / 2.
-Proof.
-  intros Hv. destruct (atan3_spec v) as [[Hl Hh] Hs].
-  split; [|exact Hh].
-  assert (Hc : 0 < cos (atan3 v)) by (apply cos_gt_0; lra).
-  assert (Hsn : 0 < sin (atan3 v)) by (rewrite Hs; nra).
-  destruct (Rle_dec (atan3 v) 0) as [Hn|Hn]; [|lra].
-  destruct (Req_dec (atan3 v) 0) as [Hz|Hz].
-  - rewrite Hz, sin_0 in Hsn. lra.
-  - pose proof (sin_gt_0 (- atan3 v) ltac:(lra) ltac:(pose proof PI_RGT_0; lra)).
-    rewrite sin_neg in H. lra.
-Qed.
-
 Local Lemma tan_atan3 (v : R) : tan (atan3 v) = v.
 Proof.
   destruct (atan3_spec v) as [[Hl Hh] Hs].
   assert (0 < cos (atan3 v)) by (apply cos_gt_0; lra).
   unfold tan. rewrite Hs. field. lra.
+Qed.
+
+(* atan3_le / atan3_0 give 0 <= atan3 v; tan_atan3 rules out 0. *)
+Local Lemma atan3_pos_of_pos (v : R) : 0 < v -> 0 < atan3 v < PI / 2.
+Proof.
+  intros Hv. destruct (atan3_spec v) as [[_ Hh] _].
+  split; [|exact Hh].
+  assert (H0 : 0 <= atan3 v) by (rewrite <- atan3_0; apply atan3_le; lra).
+  destruct H0 as [H0|H0]; [exact H0|].
+  pose proof (tan_atan3 v) as Ht. rewrite <- H0, tan_0 in Ht. lra.
+Qed.
+
+(* phi in terms of the half-angle u = PI/4 + phi/2. *)
+Local Lemma merc_sin_phi_half (phi : R) :
+  sin phi = - cos (2 * (PI / 4 + phi / 2)).
+Proof.
+  replace phi with (- (PI / 2 - 2 * (PI / 4 + phi / 2))) at 1 by field.
+  rewrite sin_neg, sin_shift. reflexivity.
+Qed.
+
+Local Lemma merc_cos_phi_half (phi : R) :
+  cos phi = 2 * sin (PI / 4 + phi / 2) * cos (PI / 4 + phi / 2).
+Proof.
+  rewrite <- sin_2a.
+  replace (2 * (PI / 4 + phi / 2)) with (PI / 2 - - phi) by field.
+  rewrite sin_shift, cos_neg. reflexivity.
 Qed.
 
 Local Lemma inv_exp_neg (t : R) : / exp (- t) = exp t.
@@ -205,14 +226,12 @@ Proof.
   unfold merc_sphere_tan. fold u.
   replace (tan u / cos phi) with ((cos u * cos u - (- sin u) * sin u) / (cos u)² * / 2).
   { exact D. }
-  assert (Hc2 : cos phi = 2 * sin u * cos u).
-  { rewrite <- sin_2a. unfold u.
-    replace (2 * (PI / 4 + phi / 2)) with (PI / 2 - - phi) by field.
-    rewrite sin_shift, cos_neg. reflexivity. }
-  rewrite Hc2. unfold tan, Rsqr.
+  rewrite (merc_cos_phi_half phi). fold u. unfold tan, Rsqr.
   pose proof (sin2_cos2 u) as Hpy. unfold Rsqr in Hpy.
-  field_simplify; try lra.
-  replace (cos u ^ 2 + sin u ^ 2) with 1 by (rewrite <- Hpy; ring). reflexivity.
+  replace (sin u / cos u / (2 * sin u * cos u)) with (/ (cos u * cos u) * / 2)
+    by (field; lra).
+  replace (cos u * cos u - - sin u * sin u) with 1 by lra.
+  field. lra.
 Qed.
 
 
@@ -228,17 +247,79 @@ Proof.
   assert (Hu : 0 < u < PI / 2) by (unfold u; lra).
   assert (Hs : 0 < sin u) by (apply sin_gt_0; lra).
   assert (Hc : 0 < cos u) by (apply cos_gt_0; lra).
-  assert (Hsp : sin phi = - cos (2 * u)).
-  { unfold u. replace phi with (- (PI / 2 - 2 * (PI / 4 + phi / 2))) at 1 by field.
-    rewrite sin_neg, sin_shift. reflexivity. }
-  rewrite Hsp, cos_2a. unfold tan.
+  rewrite (merc_sin_phi_half phi). fold u. rewrite cos_2a. unfold tan.
   pose proof (sin2_cos2 u) as Hpy. unfold Rsqr in Hpy.
   replace (1 + - (cos u * cos u - sin u * sin u)) with (2 * (sin u * sin u)) by lra.
   replace (1 - - (cos u * cos u - sin u * sin u)) with (2 * (cos u * cos u)) by lra.
   field. lra.
 Qed.
 
-(* WITNESS {"claimId":"snyder-merc-sphere","topic":"foundations","lemma":"merc_sphere_phi_of_y_of_tan_eq_exp","title":"Snyder 1987 spherical Mercator: (7-4) is the open-band inverse of (7-2) in exp form; (7-4) = (7-4a); (7-2) = (7-2a) squared; derivative of tan(PI/4 + phi/2)","file":"theories/SnyderMercatorSphere.v","witness":"merc_sphere_phi_of_y_of_tan_eq_exp","board":"#970"} *)
+(* ---------- (7-2) = (7-2a) = (7-2b), p. 41, unsquared ----------
+   On the open band, tan (PI/4 + phi/2) = (1 + sin phi) / cos phi
+   = sec phi + tan phi. This is the exp form of Snyder's p. 41 variant
+   y = R ln (tan phi + sec phi), and is stronger than the squared form
+   above. The ln itself is not stated. *)
+Lemma merc_sphere_tan_eq_sin_ratio_cos (phi : R) :
+  -(PI / 2) < phi < PI / 2 ->
+  merc_sphere_tan phi = (1 + sin phi) / cos phi.
+Proof.
+  intros [Hl Hh]. pose proof PI_RGT_0.
+  unfold merc_sphere_tan.
+  rewrite (merc_sin_phi_half phi), (merc_cos_phi_half phi).
+  set (u := PI / 4 + phi / 2).
+  assert (Hu : 0 < u < PI / 2) by (unfold u; lra).
+  assert (Hs : 0 < sin u) by (apply sin_gt_0; lra).
+  assert (Hc : 0 < cos u) by (apply cos_gt_0; lra).
+  rewrite cos_2a. unfold tan.
+  pose proof (sin2_cos2 u) as Hpy. unfold Rsqr in Hpy.
+  replace (1 + - (cos u * cos u - sin u * sin u)) with (2 * (sin u * sin u)) by lra.
+  field. lra.
+Qed.
+
+Lemma merc_sphere_tan_eq_sec_add_tan (phi : R) :
+  -(PI / 2) < phi < PI / 2 ->
+  merc_sphere_tan phi = 1 / cos phi + tan phi.
+Proof.
+  intros Hb. rewrite (merc_sphere_tan_eq_sin_ratio_cos phi Hb).
+  destruct Hb as [Hl Hh].
+  assert (0 < cos phi) by (apply cos_gt_0; lra).
+  unfold tan. field. lra.
+Qed.
+
+(* ---------- PROJ merc_s_forward, exp form ----------
+   PROJ computes y = k0 asinh (tan phi). Without ln: if
+   T = tan (PI/4 + phi/2) = e^t then sinh t = tan phi, since
+   T = (1 + s)/c, 1/T = (1 - s)/c and (T - 1/T)/2 = s/c. *)
+Lemma merc_sphere_sinh_eq_tan_of_tan_eq_exp (phi t : R) :
+  -(PI / 2) < phi < PI / 2 ->
+  merc_sphere_tan phi = exp t ->
+  sinh t = tan phi.
+Proof.
+  intros [Hl Hh] Ht. pose proof PI_RGT_0.
+  unfold merc_sphere_tan in Ht. unfold sinh.
+  rewrite exp_Ropp, <- Ht.
+  change (tan phi) with (sin phi / cos phi).
+  rewrite (merc_sin_phi_half phi), (merc_cos_phi_half phi).
+  set (u := PI / 4 + phi / 2) in *.
+  assert (Hu : 0 < u < PI / 2) by (unfold u; lra).
+  assert (Hs : 0 < sin u) by (apply sin_gt_0; lra).
+  assert (Hc : 0 < cos u) by (apply cos_gt_0; lra).
+  rewrite cos_2a. unfold tan. field. lra.
+Qed.
+
+(* ---------- packaged inverse (claim witness) ----------
+   (7-4) is the unique open-band solution phi of
+   tan (PI/4 + phi/2) = e^(y/R), the exp form of (7-2). *)
+Lemma merc_sphere_tan_eq_exp_iff_phi_of_y (Rs y phi : R) :
+  (-(PI / 2) < phi < PI / 2 /\ merc_sphere_tan phi = exp (y / Rs)) <->
+  phi = merc_sphere_phi_of_y Rs y.
+Proof.
+  split.
+  - intros [Hb Hy]. symmetry. exact (merc_sphere_phi_of_y_of_tan_eq_exp Rs y phi Hb Hy).
+  - intros ->. split; [apply merc_sphere_phi_of_y_range | apply merc_sphere_tan_of_phi_of_y].
+Qed.
+
+(* WITNESS {"claimId":"snyder-merc-sphere","topic":"foundations","lemma":"merc_sphere_tan_eq_exp_iff_phi_of_y","title":"Snyder 1987 spherical Mercator: (7-4) is the unique open-band solution of (7-2) in exp form; (7-4) = (7-4a); (7-2) = (7-2a) = (7-2b) in exp form; PROJ forward sinh = tan; derivative of tan(PI/4 + phi/2)","file":"theories/SnyderMercatorSphere.v","witness":"merc_sphere_tan_eq_exp_iff_phi_of_y","board":"#970"} *)
 
 (* ---------- axiom audit (allowlisted trio only) ---------- *)
 Print Assumptions merc_sphere_phi_of_y_of_tan_eq_exp.
@@ -248,3 +329,7 @@ Print Assumptions merc_sphere_tan_of_phi_of_y.
 Print Assumptions merc_sphere_phi_of_y_eq_atan3_sinh.
 Print Assumptions merc_sphere_tan_derivative.
 Print Assumptions merc_sphere_tan_sq_eq_sin_ratio.
+Print Assumptions merc_sphere_tan_eq_sin_ratio_cos.
+Print Assumptions merc_sphere_tan_eq_sec_add_tan.
+Print Assumptions merc_sphere_sinh_eq_tan_of_tan_eq_exp.
+Print Assumptions merc_sphere_tan_eq_exp_iff_phi_of_y.
