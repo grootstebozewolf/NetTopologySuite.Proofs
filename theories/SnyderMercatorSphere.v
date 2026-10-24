@@ -27,10 +27,23 @@
      merc_sphere_tan_derivative          d/dphi tan(PI/4 + phi/2)
      merc_sphere_lam_of_x_of_lam         (7-5) undoes (7-1)
 
-   Scope. Snyder's closed spherical formulas, |phi| < PI/2. Not the
+   Scope. Snyder's closed spherical formulas, |phi| < PI/2. Not
+   claimed: the literal ln form of (7-2), dy/dphi = R sec phi, and
+   (7-3) h = k = sec phi (no ln, no scale-factor definition). Not the
    ellipsoid ((7-6)..(7-13)), not the (3-5) series, not transverse
    Mercator (ch. 8), not a float implementation. (7-1) is taken as
    printed; the +-180 deg reduction of lam - lam0 is not modelled.
+   Radius. Snyder's R > 0 is not a hypothesis: with Rocq's y / 0 = 0
+   the band lemmas also hold at Rs = 0, where (7-4) is constantly 0.
+   Only merc_sphere_lam_of_x_of_lam needs Rs <> 0.
+
+   Counterparts (not verified here). JTS and NTS core do not project.
+   Consumers: ProjNet CoordinateSystems/Projections/Mercator.cs, and
+   PROJ src/projections/merc.cpp, spherical branch. PROJ's
+   merc_s_inverse computes phi = atan (sinh (y / k0)), which is (7-4a);
+   merc_sphere_phi_of_y_eq_atan3_sinh ties it to Snyder's (7-4). PROJ's
+   merc_s_forward uses y = k0 asinh (tan phi), one of the p. 41 forms
+   of (7-2); that form is not proved here.
    No Q twin: every statement is transcendental. Numbers from an mpmath
    / PROJ checker of Snyder's worked examples were review aids only and
    are not pinned here.
@@ -60,14 +73,6 @@ Definition merc_sphere_phi_of_y (Rs y : R) : R := PI / 2 - 2 * atan3 (exp (- (y 
 Definition merc_sphere_lam_of_x (Rs lam0 x : R) : R := x / Rs + lam0.
 
 (* ---------- local trig kit ---------- *)
-
-Local Lemma tan_pos_open_quarter_turn (u : R) : 0 < u < PI / 2 -> 0 < tan u.
-Proof.
-  intros [H0 H1]. pose proof PI_RGT_0.
-  assert (0 < sin u) by (apply sin_gt_0; lra).
-  assert (0 < cos u) by (apply cos_gt_0; lra).
-  unfold tan. apply Rdiv_lt_0_compat; assumption.
-Qed.
 
 Local Lemma tan_complement_inv (u : R) : 0 < u < PI / 2 -> tan (PI / 2 - u) = / tan u.
 Proof.
