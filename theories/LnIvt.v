@@ -10,10 +10,12 @@
 
    Why not Stdlib ln.  Stdlib ln_exp, exp_ln and derivable_pt_lim_ln print
    Classical_Prop.classic, and so do exp_increasing, exp_lt_inv, exp_inv
-   and exp_ineq1 (all through MVT / positive_derivative).  This file only
-   uses exp_pos, exp_plus, exp_0, derivable_pt_lim_exp, the exp series
-   (exist_exp, sum_incr), IVT, and Ranalysis5 continuity_pt_recip_interv /
-   derivable_pt_lim_recip_interv, which are 3-axiom.
+   and exp_ineq1 (all through MVT / positive_derivative).  From the exp
+   and analysis side this file only uses exp_pos, exp_plus, exp_0,
+   derivable_pt_lim_exp, derivable_exp, derivable_continuous(_pt), the exp
+   series (exist_exp, sum_incr), IVT, Rlt_le_dec, Rtotal_order, and
+   Ranalysis5 continuity_pt_recip_interv / derivable_pt_lim_recip_interv,
+   all of which are 3-axiom (Print Assumptions below).
 
    Lemmas:
      exp_one_plus_lt_pos   1 + x < exp x for 0 < x (series partial sum)
@@ -217,6 +219,8 @@ Qed.
 
 Print Assumptions exp_one_plus_lt_pos.
 Print Assumptions exp_increasing3.
+Print Assumptions exp_le3.
+Print Assumptions exp_lt_inv3.
 Print Assumptions exp_inj3.
 Print Assumptions exp_ln3.
 Print Assumptions ln3_exp.
