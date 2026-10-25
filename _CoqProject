@@ -496,3 +496,7 @@ theories/SnyderMercatorSphere.v
 # 3-axiom corpus logarithm: IVT inverse of exp, built like AtanIvt.atan3.
 # claimId ln3-ivt. 3-axiom. No Admitted.
 theories/LnIvt.v
+# lane D
+# Winding fixtures only (five sample rings). No local-constancy or convex-class
+# headline. 3-axiom. No Admitted.
+theories/CurveRingWindFixtures.v
