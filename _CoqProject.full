@@ -4420,3 +4420,14 @@ theories/ClothoidAffineStmt.v
 theories/ClothoidAffine.v
 theories/ClothoidShearLawStmt.v
 theories/ClothoidShearLaw.v
+# lane shear, statement C (claimId cloth-sheet-transport): the clothoid x
+# clothoid oracle transports along an invertible affine change of sheet
+# (pull back, host cook, push forward); mixed frames decline. 3-axiom.
+theories/ClothoidSheetStmt.v
+theories/ClothoidSheet.v
+# lane shear, statement C point location (claimId sheet-pip-transport): the
+# canonical half-open east-ray test agrees across an invertible affine change
+# of sheet for seam rings, routed through the affine-invariant topological
+# interior and the JCT seam (JCTEscapeDescentHolds). 3-axiom.
+theories/SheetRingPipStmt.v
+theories/SheetRingPip.v
