@@ -252,6 +252,12 @@ let is_unsupported_key key =
   k = "UNSUPPORTED"
   || k = "triangle_pair_fill TPR_Unsupported"
   || k = "triangle_pair_fill TPR_TouchPartialEdge"
+  || k = "triangle_pair_fill TPR_TouchObtuse"
+  || k = "triangle_pair_fill TPR_MixedCone"
+  || k = "triangle_pair_fill TPR_SameCone"
+  || k = "triangle_pair_fill TPR_Lens"
+  || k = "triangle_pair_fill TPR_Inside"
+  || k = "triangle_pair_fill TPR_Nest"
   || k = "im_unsupported"
 
 let lookup_result key =
