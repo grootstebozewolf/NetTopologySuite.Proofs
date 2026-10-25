@@ -29,9 +29,9 @@
        abscissae, because a shared crossing point is interior to both
        (strict straddles!) and would be a proper intersection.
 
-   Next rungs (docs/jct-escape-descent-plan.md): the corner corridor around
-   the first edge's nearer endpoint, the recursive boundary walk, and the
-   assembly `escape_descent_holds` closing H1.
+   Rung 1 of the escape-descent ladder, now closed by
+   JCTEscapeDescentHolds.escape_descent_holds (H1 for taut, proper,
+   horizontal-free rings).
 
    Pure-R; three-axiom.  No `Admitted`/`Axiom`/`Parameter`.
 
