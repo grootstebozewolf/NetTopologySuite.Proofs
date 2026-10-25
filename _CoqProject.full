@@ -4431,3 +4431,7 @@ theories/ClothoidSheet.v
 # interior and the JCT seam (JCTEscapeDescentHolds). 3-axiom.
 theories/SheetRingPipStmt.v
 theories/SheetRingPip.v
+# lane snyder (#970)
+# Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
+# claimId snyder-merc-sphere. 3-axiom. No Admitted.
+theories/SnyderMercatorSphere.v
