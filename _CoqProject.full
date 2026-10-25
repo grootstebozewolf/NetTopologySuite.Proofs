@@ -4411,6 +4411,30 @@ theories/CurvePolygonLoopValid.v
 # claimId none new. 3-axiom. No Admitted.
 theories/ClothoidTraversal.v
 theories/ClothoidPlacement.v
+# lane shear (claimIds cloth-affine-closure, cloth-linear-law-iff-similarity):
+# statement/proof split. *Stmt.v = statements only (pinned by
+# check_claim_statements.py). Placed clothoids closed under affine maps;
+# curvature linear in placed arc length iff the placement is a similarity.
+# 3-axiom. No Admitted.
+theories/ClothoidAffineStmt.v
+theories/ClothoidAffine.v
+theories/ClothoidShearLawStmt.v
+theories/ClothoidShearLaw.v
+# lane shear, statement C (claimId cloth-sheet-transport): the clothoid x
+# clothoid oracle transports along an invertible affine change of sheet
+# (pull back, host cook, push forward); mixed frames decline. 3-axiom.
+theories/ClothoidSheetStmt.v
+theories/ClothoidSheet.v
+# lane shear, statement C point location (claimId sheet-pip-transport): the
+# canonical half-open east-ray test agrees across an invertible affine change
+# of sheet for seam rings, routed through the affine-invariant topological
+# interior and the JCT seam (JCTEscapeDescentHolds). 3-axiom.
+theories/SheetRingPipStmt.v
+theories/SheetRingPip.v
+# lane snyder (#970)
+# Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
+# claimId snyder-merc-sphere. 3-axiom. No Admitted.
+theories/SnyderMercatorSphere.v
 # lane ln3 (#972)
 # 3-axiom corpus logarithm: IVT inverse of exp, built like AtanIvt.atan3.
 # claimId ln3-ivt. 3-axiom. No Admitted.

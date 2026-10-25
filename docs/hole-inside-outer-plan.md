@@ -98,14 +98,10 @@ Assembly complete: `GeneralTriangleHoleNesting.v` (hole_inside_outer_triangle + 
 
 (Note: general triangle also enables right-triangle "for free" in ConvexOffringSeam.v.)
 
-### Stage E — General simple-polygon JCT — *research-grade, stays the residual*
+### Stage E — General simple-polygon JCT — *closed for taut rings*
 
-`parity_characterises_interior_cont_strict` *unconditionally* for an arbitrary
-simple ring is the registered H1/JCT gap. `JCT.v` has the topological scaffolding
-(`no_path_from_interior_to_exterior`, `interior_component_bounded`,
-`far_point_not_interior`); the general parity characterisation is the open work.
-**This stays deferred / conditional** — it is not closeable by a quick slice, and
-no plan here pretends otherwise.
+`JCTEscapeDescentHolds.v : parity_seam_offring_taut` discharges the off-ring seam for
+taut, proper, horizontal-free rings; general `ring_simple` (T-touches) stays open.
 
 ### Stage F — Shape recognition + `extract` rewire (structural)
 
@@ -122,15 +118,7 @@ hypothesis. Structural; depends on the real pipeline types.
   real class of inputs (boxes, convex overlays/buffers) outright.
 - **Conditional, now reachable:** the full `extract_rings_valid` headline modulo a
   *named* JCT hypothesis (Stage A) — the corpus-standard honest form.
-- **Genuinely open:** the unconditional general-simple-polygon JCT (Stage E) — the
-  long-standing H1 residual. Everything else is built; this is the one hard rung.
-
-## 4. Recommended order
-
-**A then B** — both ~1 slice, high confidence, and together they (i) land the
-headline conditionally and (ii) close the analytic seam unconditionally for the
-rectangle class. Then **C** (convex) widens the unconditional class. **E** is the
-research residual and should get its own deliberate effort, not a rushed slice.
+- **Open:** Stage E beyond taut, proper, horizontal-free rings, and Stage F.
 
 ---
 
