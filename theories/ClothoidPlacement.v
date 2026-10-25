@@ -28,6 +28,9 @@
    split / linear-curvature law of ClothoidTraversal carries over to
    placed curves only for similarity placements: the sheared curvature
    is not monotone along the window (geos_shear_curvature_not_affine).
+   The converse for every window and every M is ClothoidShearLaw.v
+   (claimId cloth-linear-law-iff-similarity); closure of placements under
+   affine maps is ClothoidAffine.v (claimId cloth-affine-closure).
 
    GEOS #1566 (libgeos/geos PR, pinned at 6eb13d1; fixed later on
    libgeos/geos#1566 by 78df3cf "Return the placed curvature of a
