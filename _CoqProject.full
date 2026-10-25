@@ -4435,3 +4435,7 @@ theories/SheetRingPip.v
 # Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
 # claimId snyder-merc-sphere. 3-axiom. No Admitted.
 theories/SnyderMercatorSphere.v
+# lane ln3 (#972)
+# 3-axiom corpus logarithm: IVT inverse of exp, built like AtanIvt.atan3.
+# claimId ln3-ivt. 3-axiom. No Admitted.
+theories/LnIvt.v

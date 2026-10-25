@@ -6,8 +6,7 @@
 > a renamed or removed theorem orphans its claim and fails the build. (Qed-
 > closure itself is enforced corpus-wide by `scripts/check_admitted.sh`.)
 
-Citable index of what is actually proved (Rocq 9.2.0; Flocq 4.2.2 for the
-binary64 layer). Each row: `file : theorem`, plain meaning, axiom footprint,
+Citable index of what is actually proved (Rocq 9.2.0; Flocq 4.2.2 for the binary64 layer). Each row: `file : theorem`, plain meaning, axiom footprint,
 regime. These are *soundness* statements, not a verified re-implementation.
 
 **Regimes.** `[exact]` exact reals · `[int-b64]` integer-coordinate binary64
@@ -1332,6 +1331,7 @@ discharges it in Stdlib. `H_deriv` is `lint_leibniz`. Unconditional on |κL| ≤
 |---|---|---|
 | `LipIntFTC.v : lipint_ftc` (+ `lip_ftc`, `lip_ftc_right`, `lip_ftc_left`) | **FTC for `lint` (ADR-0001, claimId: 0001-lint-ftc, witness: lipint_ftc):** `lo < x < hi` gives `derivable_pt_lim lipF x (f x)`; `lo < hi` gives the right derivative at `lo` and the left derivative at `hi`. No Coquelicot, no RiemannInt, no MVT `[exact]` | 3 |
 | `SnyderMercatorSphere.v : merc_sphere_tan_eq_exp_iff_phi_of_y` (+ `SnyderMercatorSphere.v : merc_sphere_phi_of_y_of_tan_eq_exp`, `SnyderMercatorSphere.v : merc_sphere_phi_of_y_range`, `SnyderMercatorSphere.v : merc_sphere_tan_of_phi_of_y`, `SnyderMercatorSphere.v : merc_sphere_phi_of_y_eq_atan3_sinh`, `SnyderMercatorSphere.v : merc_sphere_tan_sq_eq_sin_ratio`, `SnyderMercatorSphere.v : merc_sphere_tan_eq_sin_ratio_cos`, `SnyderMercatorSphere.v : merc_sphere_tan_eq_sec_add_tan`, `SnyderMercatorSphere.v : merc_sphere_sinh_eq_tan_of_tan_eq_exp`, `SnyderMercatorSphere.v : merc_sphere_tan_derivative`, `SnyderMercatorSphere.v : merc_sphere_lam_of_x_of_lam`) | **Snyder 1987 spherical Mercator (#970, claimId: snyder-merc-sphere, witness: merc_sphere_tan_eq_exp_iff_phi_of_y):** (7-4) p. 44 `φ = π/2 − 2·atan3(e^(−y/R))` is the unique solution with |φ| < π/2 of (7-2) p. 41 in exp form `tan(π/4 + φ/2) = e^(y/R)` (one iff); (7-4) = (7-4a) `atan3(sinh(y/R))`; on the band tan(π/4 + φ/2) = (1 + sin φ)/cos φ = sec φ + tan φ, exp forms of (7-2a)/(7-2b) (plus the squared (1 + sin φ)/(1 − sin φ)); tan(π/4 + φ/2) = e^t implies sinh t = tan φ (PROJ `merc_s_forward` in exp form); d/dφ tan(π/4 + φ/2) = tan(π/4 + φ/2)/cos φ; (7-5) undoes (7-1). No ln (Stdlib ln prints `classic`), so the literal (7-2), the asinh form, dy/dφ = R sec φ and (7-3) h = k = sec φ are not claimed. No ℚ twin `[exact]` | 3 |
+| `LnIvt.v : exp_ln3` (+ `LnIvt.v : ln3_exp`, `LnIvt.v : ln3_unique`, `LnIvt.v : ln3_nonpos`, `LnIvt.v : ln3_1`, `LnIvt.v : ln3_mult`, `LnIvt.v : ln3_inv`, `LnIvt.v : ln3_increasing`, `LnIvt.v : ln3_le`, `LnIvt.v : ln3_lt_inv`, `LnIvt.v : continuity_pt_ln3`, `LnIvt.v : derivable_pt_lim_ln3`, `LnIvt.v : exp_one_plus_lt_pos`, `LnIvt.v : exp_increasing3`, `LnIvt.v : exp_le3`, `LnIvt.v : exp_lt_inv3`, `LnIvt.v : exp_inj3`) | **3-axiom logarithm (#972, claimId: ln3-ivt, witness: exp_ln3):** `ln3 y` is the IVT root of `exp t − y` on `[−1/y, y]` for `y > 0` (`0` for `y ≤ 0`, `ln3_nonpos`), built like `AtanIvt.atan3`; `exp (ln3 y) = y` for `y > 0`, `ln3 (exp x) = x`, unique, `ln3 1 = 0`, products and inverses, strictly increasing on `(0, ∞)`, continuous, `derivable_pt_lim ln3 x (/ x)` for `x > 0`. 3-axiom `exp` monotonicity from the series bound `1 + x < exp x` (`x > 0`). Not `ln3 = ln` (Stdlib `ln_exp`, `exp_ln`, `derivable_pt_lim_ln`, `exp_increasing` print `classic`). No ℚ twin `[exact]` | 3 |
 
 ## ADR-0001 — generic curve metrics <!-- feat:arc-len geom:arc -->
 
