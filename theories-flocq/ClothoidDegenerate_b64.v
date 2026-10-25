@@ -4,7 +4,7 @@
    binary64 mirror of the degenerate straight-chord clothoid regime -- the
    `_small_int` integer-exactness pattern (Orient_b64_exact.v) applied to the
    residual f(L) = L^2 - d^2.  Route (A) follow-up slice of
-   docs/clothoid-open-questions-triage.md (queued in its section 8).
+   docs/clothoid-open-questions-triage.md (routes table, section 3).
 
    Context.  theories/ClothoidDegenerate.v proves, on the R side, that in the
    degenerate regime k0 = k1 = 0 the clothoid chord-length residual collapses

@@ -481,6 +481,21 @@ theories/SheetHenSimple.v
 # CurvePolygon rings from that fixpoint. claimId 0007-cp-loop-rings.
 # Does not replace CurvePolygonValid.v. 3-axiom. No Admitted.
 theories/CurvePolygonLoopValid.v
+# lane clothoid-harden
+# Mode A on the host Fresnel clothoid (#883): window-start Fresnel form,
+# unit speed, curvature linear in arc length, reverse and split laws,
+# placed curvature (similarity kappa/lam; GEOS #1566 shear enclosure).
+# claimId none new. 3-axiom. No Admitted.
+theories/ClothoidTraversal.v
+theories/ClothoidPlacement.v
+# lane snyder (#970)
+# Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
+# claimId snyder-merc-sphere. 3-axiom. No Admitted.
+theories/SnyderMercatorSphere.v
+# lane ln3 (#972)
+# 3-axiom corpus logarithm: IVT inverse of exp, built like AtanIvt.atan3.
+# claimId ln3-ivt. 3-axiom. No Admitted.
+theories/LnIvt.v
 # lane D
 # Winding fixtures only (five sample rings). No local-constancy or convex-class
 # headline. 3-axiom. No Admitted.
