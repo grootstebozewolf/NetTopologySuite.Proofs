@@ -25,10 +25,10 @@
    spec I_ok of SheetHenCookCore; Orientation.cross (orientation of three
    points); RingArea979.signed_area2 (cyclic shoelace of a vertex ring).
 
-   Point location by the canonical ray parity (JCTHalfOpenParity) is NOT
-   stated: its east ray and half-open y test are tied to the axes of S, so
-   on S' it needs direction-independence of parity (JCT level).  Only the
-   on-boundary part of point location is stated here.
+   Point location: only the on-boundary part is stated here.  The canonical
+   ray-parity test (JCTHalfOpenParity) has its east ray and half-open y test
+   tied to the axes of S; its agreement across the change of sheet is the
+   sibling claim sheet-pip-transport (SheetRingPipStmt.v).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
