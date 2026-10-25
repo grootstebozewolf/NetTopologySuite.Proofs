@@ -1,4 +1,4 @@
-# ISO/IEC 13249-3 curve-type bindings vs. NTS `feat/curves-structure-wkt-foundation`
+# ISO/IEC 13249-3 curve-type bindings vs. NTS `feat/curves-metrics-followup`
 
 topic: docs
 topics: arc, wkt, relate
@@ -15,7 +15,7 @@ issue: none
   are from that text; the published IS may differ in wording detail. The spec is
   **copyrighted and is not in this repo** — citations are by clause number only,
   paraphrased, no long verbatim passages.
-- **Branch**: `NetTopologySuite` `feat/curves-structure-wkt-foundation` at commit
+- **Branch**: `NetTopologySuite` `feat/curves-metrics-followup` at commit
   `e84458e` ("Merge branch 'develop' into feat/curves-structure-wkt-foundation"),
   clone at `/home/user/NetTopologySuite`. File:line citations are into that tree.
 - **Prior distillation**: `EXACT_CURVE_BIBLE.md` (scratchpad; the *JTS Arc-Native

@@ -12,7 +12,7 @@
 
 ## Context (self-contained)
 
-The NTS donor branch `feat/curves-structure-wkt-foundation`
+The NTS donor branch `feat/curves-metrics-followup`
 (`grootstebozewolf/NetTopologySuite`) carries the SQL/MM curve types
 (CircularString, CompoundCurve, CurvePolygon — CONTEXT.md, *Curve types*).
 Since NetTopologySuite#857 moved curve work in-tree, nothing pulls the branch,
