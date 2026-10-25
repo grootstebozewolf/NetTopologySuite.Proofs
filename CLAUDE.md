@@ -26,7 +26,7 @@ failure (the message is a finding, not noise — e.g. "side location conflict")
 · `4` curve WKT in a lines-only build.
 
 **Curve dependency:** SQL/MM curves (CIRCULARSTRING/…) need the sibling clone
-`../NetTopologySuite` (branch `feat/curves-structure-wkt-foundation`), wired
+`../NetTopologySuite` (branch `feat/curves-metrics-followup`), wired
 via `-p:NtsProject=...` with an existence check. Without it the build falls
 back to NuGet NTS (lines only) and curve WKT **exits 4 by design** — never
 render a chord approximation of an arc.

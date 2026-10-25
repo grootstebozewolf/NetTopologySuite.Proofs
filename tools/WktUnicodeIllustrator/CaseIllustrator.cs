@@ -86,7 +86,7 @@ public static class CaseIllustrator
             return ComposeResult.Fail(4,
                 "Curve WKT requires the curve-aware NetTopologySuite clone; this build uses "
                 + "NuGet NetTopologySuite (lines only). Clone NetTopologySuite (branch "
-                + "feat/curves-structure-wkt-foundation) next to this repo or pass "
+                + "feat/curves-metrics-followup) next to this repo or pass "
                 + "-p:NtsProject=<path-to-NetTopologySuite.csproj>.");
         }
 
