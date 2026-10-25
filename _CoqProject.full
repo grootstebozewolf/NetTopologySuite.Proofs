@@ -4420,3 +4420,8 @@ theories/ClothoidAffineStmt.v
 theories/ClothoidAffine.v
 theories/ClothoidShearLawStmt.v
 theories/ClothoidShearLaw.v
+# lane shear, statement C (claimId cloth-sheet-transport): the clothoid x
+# clothoid oracle transports along an invertible affine change of sheet
+# (pull back, host cook, push forward); mixed frames decline. 3-axiom.
+theories/ClothoidSheetStmt.v
+theories/ClothoidSheet.v

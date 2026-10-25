@@ -164,6 +164,67 @@
           }
         ]
       }
+    },
+    {
+      "claimId": "cloth-sheet-transport",
+      "statement_module": "theories/ClothoidSheetStmt.v",
+      "statement_sha256": "b310a5eceeec8312ade286dca1f6ed18fedac448aa8f624440d441ba253fb529",
+      "elaborated_sha256": "db92381fbabbdc1e44e670bd8c92471a4f350b3887162d30fb9e73c5f1454e8c",
+      "proof_module": "theories/ClothoidSheet.v",
+      "regime": "exact",
+      "results": [
+        {
+          "scope": "main",
+          "statement": "ClothoidSheetStmt.claim",
+          "proof": "cloth_sheet_claim",
+          "meaning": "The clothoid x clothoid oracle is equivariant under any invertible affine map f: a correct result for two placed clothoids moves to a correct result for their images and back (Hit keeps (ti, tj) and moves p* to f(p*), Empty stays Empty, Decline stays Decline); on the host sheet the placed spec is the clothoid arm of I_ok; and pull-back / host cook / push-forward meets the sheet spec pair by pair: a pair on one common frame (o, M) with det M <> 0 gets the pushed host result, any other pair declines."
+        },
+        {
+          "scope": "supporting",
+          "statement": "ClothoidSheetStmt.supporting",
+          "proof": "cloth_sheet_supporting",
+          "meaning": "The boolean scope test decides pc_scope; sheet change composes and scales the frame cross product by det L; a list of correct pairwise results (noding) transports; tangency (parallel tangents), split vertices and on-boundary location transport; Orientation.cross of three points and RingArea979.signed_area2 of a vertex ring scale by det L, so orientation flips exactly when det L < 0."
+        },
+        {
+          "scope": "witness",
+          "statement": "ClothoidSheetStmt.witness",
+          "proof": "cloth_sheet_witness",
+          "meaning": "The locked clothoid Hit of ClothoidCookMkClothoid with both eggs on the GEOS #1566 shear frame is a correct sheared Hit at the sheared point with the host parameters; the host egg against the sheared GEOS egg is out of scope and declines, and pulling the second back by the first's frame leaves it sheared with no window of curvature linear in arc length (cloth-linear-law-iff-similarity)."
+        }
+      ],
+      "axioms": [
+        "sig_not_dec",
+        "sig_forall_dec",
+        "functional_extensionality_dep"
+      ],
+      "sorry_count": 0,
+      "literature_dependencies": [],
+      "fidelity_divergences": [
+        "R, not binary64: f(p*) is exact here; in doubles it differs by rounding, so vertex identity stays structural (coord_eq_not_hen_eq), not a coordinate comparison.",
+        "Conditional on the host result: the sheet cook is correct whenever the host clothoid x clothoid result meets I_ok; no total clothoid cook is claimed.",
+        "Scope is one common frame (o, M) by representation; pairs whose frames differ by a similarity, or represent the same sheet through the host egg's own frame, also decline (similarity absorption is not claimed).",
+        "Point location by the canonical ray parity (JCTHalfOpenParity) is not claimed: its east ray and half-open y test are tied to the axes of S, so on S' it needs direction-independence of parity; only on-boundary location is stated.",
+        "Snap rounding and the metric operations (distance, length, buffer) do not transport and are not stated."
+      ],
+      "related": {
+        "backs": [
+          "ADR-0007 sheet / cook model under a change of sheet",
+          "NTS.Proofs issue #13 transform work",
+          "shear plan statement C"
+        ]
+      },
+      "review": {
+        "status": "unchecked",
+        "reviewers": [],
+        "notes": "AI-drafted and machine-checked (Qed, Print Assumptions); awaiting human review."
+      },
+      "automation": {
+        "methods": [
+          {
+            "method": "agent"
+          }
+        ]
+      }
     }
   ]
 }
