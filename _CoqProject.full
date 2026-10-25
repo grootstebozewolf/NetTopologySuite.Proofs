@@ -4411,3 +4411,12 @@ theories/CurvePolygonLoopValid.v
 # claimId none new. 3-axiom. No Admitted.
 theories/ClothoidTraversal.v
 theories/ClothoidPlacement.v
+# lane shear (claimIds cloth-affine-closure, cloth-linear-law-iff-similarity):
+# statement/proof split. *Stmt.v = statements only (pinned by
+# check_claim_statements.py). Placed clothoids closed under affine maps;
+# curvature linear in placed arc length iff the placement is a similarity.
+# 3-axiom. No Admitted.
+theories/ClothoidAffineStmt.v
+theories/ClothoidAffine.v
+theories/ClothoidShearLawStmt.v
+theories/ClothoidShearLaw.v

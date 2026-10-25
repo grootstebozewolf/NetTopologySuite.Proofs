@@ -45,6 +45,125 @@
       },
       "review": {"status": "unchecked", "reviewers": [], "notes": "AI-drafted and machine-checked (Qed, Print Assumptions); awaiting human review."},
       "automation": {"methods": [{"method": "agent"}]}
+    },
+    {
+      "claimId": "cloth-affine-closure",
+      "statement_module": "theories/ClothoidAffineStmt.v",
+      "statement_sha256": "f12d8fcf3935e07e530689c152e5e4a6597d8b0b266d59c4e42223d92e717686",
+      "elaborated_sha256": "e69432d8da77ba48279337468542e43b23ebe3bf564b062388d594c048fa4e1b",
+      "proof_module": "theories/ClothoidAffine.v",
+      "regime": "exact",
+      "results": [
+        {
+          "scope": "main",
+          "statement": "ClothoidAffineStmt.claim",
+          "proof": "cloth_affine_claim",
+          "meaning": "A placed clothoid o + M c (host Fresnel egg c, any 2x2 M) under an affine map f(p) = b + L p is the placed clothoid (f(o), L M) over the same egg; the action is a left action (identity, composition), multiplies det M by det L, and commutes with split, reverse and the chord demote."
+        },
+        {
+          "scope": "supporting",
+          "statement": "ClothoidAffineStmt.supporting",
+          "proof": "cloth_affine_supporting",
+          "meaning": "Every affine map with det L <> 0 has a two-sided inverse in the group; the image's arc-length point is f of the point and its tangent is L of the tangent; that tangent is the derivative of the placed arc; tangent cross products scale by det L, so parallel (touching) tangents stay parallel."
+        },
+        {
+          "scope": "witness",
+          "statement": "ClothoidAffineStmt.witness",
+          "proof": "cloth_affine_witness",
+          "meaning": "One sample: the GEOS #1566 shear (u, v) = ((2, 0), (1/2, 1)), det 2, columns of unequal length, is the image of the identity placement of geos_shear_egg under one linear map."
+        }
+      ],
+      "axioms": [
+        "sig_not_dec",
+        "sig_forall_dec",
+        "functional_extensionality_dep"
+      ],
+      "sorry_count": 0,
+      "literature_dependencies": [],
+      "fidelity_divergences": [
+        "R, not binary64: the moved origin and the product L M are exact; GEOS / NTS compute them in doubles.",
+        "Placement is planar (no Z / M), as in ClothoidPlacement.v.",
+        "Representation level only: curvature and arc length of the image are claim cloth-linear-law-iff-similarity; equivariance of intersection / noding (ADR-0007 sheet transport) is not claimed here.",
+        "Not claimed: absorbing a similarity lam R into the host egg (lam c_A(t) = c_{lam A}(lam t)), so a similarity placement is not yet shown to be a host MkClothoid."
+      ],
+      "related": {
+        "backs": [
+          "GEOS Clothoid placement frame (libgeos/geos#1566)",
+          "ISO 19107 Clothoid refLocation / scaleFactor",
+          "NTS.Proofs issue #13 transform work"
+        ]
+      },
+      "review": {
+        "status": "unchecked",
+        "reviewers": [],
+        "notes": "AI-drafted and machine-checked (Qed, Print Assumptions); awaiting human review."
+      },
+      "automation": {
+        "methods": [
+          {
+            "method": "agent"
+          }
+        ]
+      }
+    },
+    {
+      "claimId": "cloth-linear-law-iff-similarity",
+      "statement_module": "theories/ClothoidShearLawStmt.v",
+      "statement_sha256": "60b936d66028688acf1fc9a3efe541fbf7066c68eb747c8708e463125f541fc6",
+      "elaborated_sha256": "9b7b1a9752147aa7c6ff7c88bb4440225caf2590ce6515826f8ff40c4c8f63f7",
+      "proof_module": "theories/ClothoidShearLaw.v",
+      "regime": "exact",
+      "results": [
+        {
+          "scope": "main",
+          "statement": "ClothoidShearLawStmt.claim",
+          "proof": "cloth_shear_law_claim",
+          "meaning": "For a non-degenerate host clothoid (A, h2, d <> 0) and det M <> 0, on any window s1 < s2 the placed curvature signed_curv (M v) (M a) is a + b * sg for some sg with sg' = |M v| (curvature linear in placed arc length) if and only if M^T M = lam^2 I (M is a similarity, rotation or reflection)."
+        },
+        {
+          "scope": "supporting",
+          "statement": "ClothoidShearLawStmt.supporting",
+          "proof": "cloth_shear_law_supporting",
+          "meaning": "Pointwise rigidity: at one unit vector v, M v . M J v = 0 and |M J v| = |M v| already force M^T M = lam^2 I; the converse ends on this step."
+        },
+        {
+          "scope": "witness",
+          "statement": "ClothoidShearLawStmt.witness",
+          "proof": "cloth_shear_law_witness",
+          "meaning": "The GEOS #1566 sheared placement (u, v) = ((2, 0), (1/2, 1)) over geos_shear_egg has no window, however short, with curvature linear in placed arc length (geos_shear_curvature_not_affine was the window (0, 11) in host arc length only)."
+        }
+      ],
+      "axioms": [
+        "sig_not_dec",
+        "sig_forall_dec",
+        "functional_extensionality_dep"
+      ],
+      "sorry_count": 0,
+      "literature_dependencies": [],
+      "fidelity_divergences": [
+        "R, not binary64.",
+        "Linearity in placed arc length is stated through any antiderivative sg of the placed speed on the open window, not through a placed-length integral (placed length itself stays parked in ClothoidPlacement.v).",
+        "Planar placement only (no Z / M).",
+        "Proof route: one derivative of the law and one of its consequence, elimination to a quartic in Q = |M v|^2 with nonzero constant term 4 g D^3, IVT and a five-root count; no analytic continuation."
+      ],
+      "related": {
+        "backs": [
+          "GEOS Clothoid::curvatureOf on sheared frames (libgeos/geos#1566)",
+          "sheared clothoids need their own curve class (shear plan, statement B)"
+        ]
+      },
+      "review": {
+        "status": "unchecked",
+        "reviewers": [],
+        "notes": "AI-drafted and machine-checked (Qed, Print Assumptions); awaiting human review."
+      },
+      "automation": {
+        "methods": [
+          {
+            "method": "agent"
+          }
+        ]
+      }
     }
   ]
 }
