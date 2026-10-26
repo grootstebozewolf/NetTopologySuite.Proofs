@@ -26,7 +26,8 @@
    identity, not the inverse. K0 μ = MkChord on planar S, cited not reminted.
    K1 / K2 cited, not reminted. K3 stays QEX. GeodesicGammaOnSheet stays
    missing on planar S (#803). MkGeodesic stays the Egg hole (#807).
-   ADR-0008 Status stays Proposed. ADR-0007 stays Accepted.
+   ADR-0008 is Accepted (2026-09-19); this letter does not change its
+   Status. ADR-0007 stays Accepted.
    No first_cook_scope EggGeodesicString / EggEllipsoid. No Vincenty iterator.
    No "geodesic closed". No LeftoverBagTermArm / RNG_JordanUncond.
 
@@ -95,7 +96,7 @@ Lemma geodesic_string_not_first_cook :
   ~ first_cook_scope EggGeodesicString EggGeodesicString.
 Proof. intro H. exact H. Qed.
 
-(* WITNESS {"claimId":"0008-ellipsoid-sheet-class","topic":"overlay","lemma":"ticket_0008_ellipsoid_sheet_qed_or_qex","title":"E0-E4 ellipsoid sheet: EllipsoidSheetClass / GeodesicGammaOnEllipsoid / InverseIResult / AntipodeNotSilentHit / VincentyTotalOnEllipsoid inhabit (QED); or all five missing, ADR-0007 Sheet stays (O; e1, e2), K3 park KP_EllipsoidSheetClass stays uninhabited, K1 Vincenty total and K2 on_chord pole-miss cited not reminted, first_cook_scope EggGeodesicString stays false (QEX); discharged QEX; ADR-0008 stays Proposed","file":"theories/EllipsoidSheetPark.v","witness":"0008-ellipsoid-sheet-class","board":"ADR-0008"} *)
+(* WITNESS {"claimId":"0008-ellipsoid-sheet-class","topic":"overlay","lemma":"ticket_0008_ellipsoid_sheet_qed_or_qex","title":"E0-E4 ellipsoid sheet: EllipsoidSheetClass / GeodesicGammaOnEllipsoid / InverseIResult / AntipodeNotSilentHit / VincentyTotalOnEllipsoid inhabit (QED); or all five missing, ADR-0007 Sheet stays (O; e1, e2), K3 park KP_EllipsoidSheetClass stays uninhabited, K1 Vincenty total and K2 on_chord pole-miss cited not reminted, first_cook_scope EggGeodesicString stays false (QEX); discharged QEX; ADR-0008 status unchanged (Accepted)","file":"theories/EllipsoidSheetPark.v","witness":"0008-ellipsoid-sheet-class","board":"ADR-0008"} *)
 Theorem ticket_0008_ellipsoid_sheet_qed_or_qex :
   (ellipsoid_sheet_park_inhabits EllipsoidSheetClass
    /\ ellipsoid_sheet_park_inhabits GeodesicGammaOnEllipsoid
@@ -185,7 +186,8 @@ Qed.
 Lemma mk_geodesic_egg_hole_not_mk_ellipsoid :
   (forall e : Egg,
      (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/
-     (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls))
+     (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls) \/
+     (exists ne, e = MkNurbs ne))
   /\ MkEllipsoid = EllipsoidSheetClass.
 Proof. split; [exact egg_no_mkgeodesic | reflexivity]. Qed.
 
@@ -198,7 +200,7 @@ Proof.
   split; [exact geodesic_string_not_first_cook | exact chord_arc_not_first_cook].
 Qed.
 
-(* WITNESS {"claimId":"0008-mk-ellipsoid","topic":"overlay","lemma":"ticket_0008_mk_ellipsoid_qed_or_qex","title":"MkEllipsoid host ctor: MkEllipsoid carrier inhabits with E0-E4 on a type distinct from Sheet S=(O; e1, e2) and on_ellipsoid not on_chord (QED); or MkEllipsoid is the missing EllipsoidSheetClass hole (not MkChord, not #807 MkGeodesic), E0-E4 stay uninhabited, K0 mu stays MkChord on planar S, GeodesicGammaOnSheet stays missing (#803), first_cook_scope EggGeodesicString stays false (QEX); discharged QEX; ADR-0008 stays Proposed","file":"theories/EllipsoidSheetPark.v","witness":"0008-mk-ellipsoid","board":"ADR-0008"} *)
+(* WITNESS {"claimId":"0008-mk-ellipsoid","topic":"overlay","lemma":"ticket_0008_mk_ellipsoid_qed_or_qex","title":"MkEllipsoid host ctor: MkEllipsoid carrier inhabits with E0-E4 on a type distinct from Sheet S=(O; e1, e2) and on_ellipsoid not on_chord (QED); or MkEllipsoid is the missing EllipsoidSheetClass hole (not MkChord, not #807 MkGeodesic), E0-E4 stay uninhabited, K0 mu stays MkChord on planar S, GeodesicGammaOnSheet stays missing (#803), first_cook_scope EggGeodesicString stays false (QEX); discharged QEX; ADR-0008 status unchanged (Accepted)","file":"theories/EllipsoidSheetPark.v","witness":"0008-mk-ellipsoid","board":"ADR-0008"} *)
 Theorem ticket_0008_mk_ellipsoid_qed_or_qex :
   (ellipsoid_sheet_park_inhabits MkEllipsoid
    /\ ellipsoid_sheet_park_inhabits EllipsoidSheetClass
@@ -223,7 +225,8 @@ Theorem ticket_0008_mk_ellipsoid_qed_or_qex :
    /\ ~ (exists t, on_chord g3_chord t g3_pole)
    /\ (forall e : Egg,
          (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/
-         (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls))
+         (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls) \/
+         (exists ne, e = MkNurbs ne))
    /\ first_cook_scope EggChord EggChord
    /\ ~ first_cook_scope EggGeodesicString EggGeodesicString
    /\ ~ first_cook_scope EggChord EggCircularArc

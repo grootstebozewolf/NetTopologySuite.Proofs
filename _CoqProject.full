@@ -3153,7 +3153,7 @@ theories/IntakeKarneyPark.v
 # ADR-0008 ellipsoid sheet park (EllipsoidSheetPark).
 # E0–E4 QEX + MkEllipsoid := EllipsoidSheetClass hole.
 # claimId 0008-ellipsoid-sheet-class / 0008-mk-ellipsoid.
-# ADR-0008 stays Proposed. 3-axiom host. No Admitted.
+# ADR-0008 is Accepted. 3-axiom host. No Admitted.
 theories/EllipsoidSheetPark.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v
