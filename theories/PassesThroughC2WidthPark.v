@@ -15,8 +15,10 @@
 
    Already QEX — do not flip to LEFT / Discharge:
      OverlayNG.v : ticket_0007_overlayng_hobby41_qed_or_qex RIGHT
-     #805 draft QEX HostSnapRound / HostHobby41 / HostPairPreservation
-          HOLD; do not remint as Discharge; do not merge #805.
+     #805 Hobby41Host.v : ticket_0007_hobby_41_host_qed_or_qex RIGHT.
+          No host_snap on the host lane; the bare 4.1 shape is
+          witnessed by id. Hold consumed; status stays
+          OverlayNGHobby41Qex. Do not remint as Discharge.
      C2 rounded-filter completeness (spec ⇒ compute off-grid / full b64)
           is STOP-chased (docs/snap-rounding-rgr-pivot.md).
 
@@ -40,7 +42,7 @@
      Do not remint HobbyFullyIntersectedToHost or HostHobby41 as Discharge.
      Do not reopen CircGamma; no first-cook mixed; no CS extend.
      Do not remint 522 / 523 / 508 stops.
-     Do not merge #805 from this card.
+     Do not flip #805 to Discharge from this card.
 
    Stdlib-only host park. Flocq C1 is cited, not Required.
    0-axiom. No Admitted / Axiom / Parameter.
@@ -60,9 +62,9 @@
    park=C2WidthSplit
    missing=PassesThroughWidth25,RoundedFilterC2,ArcHobbyAnalog
    cite=66-c1-C1-2^22-Qed,518-HobbyFullyIntersectedToHost-QEX
-   cite=overlayng-hobby41-RIGHT,805-HostSnapRound-HostHobby41-HostPairPreservation-HOLD
+   cite=overlayng-hobby41-RIGHT,805-Hobby41Host-RIGHT-hold-consumed
    not=C1-weaken,C2-completeness-fake,Hobby41-Discharge,518-remint
-   not=CircGamma-reopen,first-cook-mixed,CS-extend,522,523,508,805-merge
+   not=CircGamma-reopen,first-cook-mixed,CS-extend,522,523,508,805-Discharge
    note=QEX-not-owner-accept;#66-stays-Urgent-closing-gaps *)
 
 (* -------------------------------------------------------------------------- *)
@@ -164,9 +166,9 @@ Proof.
   discriminate.
 Qed.
 
+(* #805 landed as Hobby41Host.v (QEX), so its hold constructor is gone. *)
 Inductive Hobby41HostStatus : Type :=
 | OverlayNGHobby41Qex
-| Draft805HostHobby41Hold
 | Hobby41Discharged.
 
 Definition hobby41_host_status : Hobby41HostStatus := OverlayNGHobby41Qex.
@@ -183,6 +185,7 @@ Proof.
   discriminate.
 Qed.
 
+(* #805 did not discharge 4.1, so Draft805Hold still reads true here. *)
 Inductive Draft805Park : Type :=
 | Draft805Hold
 | Draft805Discharge.

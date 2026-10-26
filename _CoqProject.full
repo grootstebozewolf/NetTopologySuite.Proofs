@@ -4454,3 +4454,10 @@ theories/RelateNGJordanUncond.v
 # Closed term is sheet_chord_misses_pole, not g. Inverse is K1.
 # ADR-0007 stays Accepted. ADR-0008 is Accepted. No Admitted.
 theories/IntakeG3GeodesicGamma.v
+# Hobby 4.1 host letter (claimId 0007-hobby-41-host). Full only:
+# NodedGeneralPositionHost is not on the host target. No host_snap on the
+# host lane; CtorSnapRound is a kind tag, not an arrangement map. The bare
+# 4.1 shape is witnessed by id, so 4.1 needs a host_snap spec.
+# fully_intersected_host stays the #518 hyp, not 4.1. Consumes the #805
+# hold; hobby41_host_status stays OverlayNGHobby41Qex. 3-axiom. No Admitted.
+theories/Hobby41Host.v
