@@ -407,10 +407,12 @@ static class Program
         // rung refute a CurvePolygon ring pair only at >= 2 boundary
         // contacts or a shared 1-D piece (8.2.1 Desc 11), and a
         // MultiSurface element pair only at a shared 1-D piece (4.2.27
-        // permits finitely many POINT contacts) -- one contact and pure
-        // nesting stay fail-closed pending the containment machinery
-        // (ticket 615-h continuation, #641). OracleExpected is a verdict
-        // PREFIX: CROSS rows carry indices and a hex-float point after it.
+        // permits finitely many POINT contacts). Since rung 5 (#641) the
+        // containment machinery decides one-contact tangency, nesting and
+        // interiors-disjoint, so a single boundary meet (oracle CROSS) can
+        // be a VALID polygon (a tangent hole) or MultiSurface (a corner
+        // touch). OracleExpected is a verdict PREFIX: CROSS rows carry
+        // indices and a hex-float point after it.
         foreach (var v in Cases.HolesDisjoint)
         {
             string stdin = $"HOLES_DISJOINT\n{v.SegsA.Length}\n" + string.Join("\n", v.SegsA)
@@ -448,6 +450,36 @@ static class Program
                     Hit("BUG", $"HOLES/{v.Name}",
                         $"oracle={oOut}; nts answered {nts} but this row's contract is fail-closed");
             }
+        }
+
+        Console.WriteLine("=== CP containment / MS interiors vs NTS IsValid rung 5 (615-h / #641) ===");
+        // POINT_IN_CURVE_RING (arc-aware ray cast) and HOLES_DISJOINT
+        // (boundary meet + nesting) against NTS's exact point-in-ring, as
+        // observed through public IsValid: a hole sample IN the shell <-> the
+        // hole is contained; nested / overlapping regions <-> invalid. Query
+        // points stay in the oracle lane's generic position (no ray through a
+        // vertex, no boundary point). The lens row is the #981 frontier:
+        // the oracle decides, NTS must throw. (Tangent / far-outside / corner
+        // rows live in the HOLES_DISJOINT section above.)
+        foreach (var v in Cases.Containment)
+        {
+            string oOut;
+            try { oOut = Oracle.Run(v.Stdin); }
+            catch (Exception ex) { Hit("FAIL", $"CONTAIN/{v.Name}", $"oracle: {ex.Message}"); continue; }
+            if (!oOut.StartsWith(v.OracleExpected, StringComparison.Ordinal))
+            {
+                Hit("FAIL", $"CONTAIN/{v.Name}", $"oracle={oOut} (exp {v.OracleExpected})");
+                continue;
+            }
+            bool? nts;
+            try { nts = v.Geometry(gf).IsValid; }
+            catch (NotSupportedException) { nts = null; }
+            if (nts == v.NtsExpected)
+                Hit("OK", $"CONTAIN/{v.Name}",
+                    $"oracle={oOut} nts={(nts is null ? "fail-closed (contract)" : nts.ToString())}");
+            else
+                Hit("BUG", $"CONTAIN/{v.Name}",
+                    $"oracle={oOut} nts={(object?)nts ?? "throw"} (exp {(object?)v.NtsExpected ?? "throw"})");
         }
 
         Console.WriteLine();
@@ -630,13 +662,12 @@ static class Cases
             gf => Cs(gf, (0, 0), (1, 1), (2, 2))),
         ("single_degenerate_closed", new[] { "A 1 0 0 1 1 0" }, "DEGENERATE", null,
             gf => Cs(gf, (1, 0), (0, 1), (1, 0))),
-        // Flipped TWICE: rung 2 (#630) decided it, the rung-4 review
-        // fail-closed it again — the two circles are exactly tangent at the
-        // shared vertex, and inside the tangency band a touch cannot be
-        // told from a close crossing pair at double precision (wrong
-        // checked verdicts were demonstrated both ways). The exact-rational
-        // oracle decides SIMPLE; NTS refuses until #641's exact arithmetic.
-        ("two_arcs_tangent_at_vertex", new[] { "A 0 0 1 1 2 0", "A 2 0 3 -1 4 0" }, "SIMPLE", null,
+        // Flipped three times: rung 2 (#630) decided it, the rung-4 review
+        // fail-closed it (inside the tangency band a touch cannot be told
+        // from a close crossing pair at double precision), and rung 5 (#641)
+        // decides the band's exact discriminant: an exact external tangency
+        // at the permitted shared vertex — SIMPLE, as the oracle says.
+        ("two_arcs_tangent_at_vertex", new[] { "A 0 0 1 1 2 0", "A 2 0 3 -1 4 0" }, "SIMPLE", true,
             gf => Cs(gf, (0, 0), (1, 1), (2, 0), (3, -1), (4, 0))),
         // Transversal replacement pin: both connecting vertices are genuine
         // crossings (discriminants far above the band), so a multi-arc
@@ -662,12 +693,11 @@ static class Cases
                 Cs(gf, (0, 0), (1, 1), (2, 0)),
                 gf.CreateLineString(new[] { new Coordinate(2, 0), new Coordinate(0, 0) }),
             }, gf)),
-        // Rung-4 review flip: both refuting contacts here are exact LINE
-        // tangencies (x = 2 at (2,0), y = 1 at (1,1)) — inside the
-        // circle-chord tangency band, where the old definite false rested
-        // on exact-zero discriminants. The exact-rational oracle still
-        // decides NOT_SIMPLE; NTS refuses until #641.
-        ("cc_line_tangent_arc", new[] { "A 0 0 1 1 2 0", "C 2 0 2 1", "C 2 1 0 1" }, "NOT_SIMPLE", null,
+        // Both refuting contacts here are exact LINE tangencies (x = 2 at
+        // (2,0), y = 1 at (1,1)). Fail-closed after the rung-4 review;
+        // rung 5 (#641) decides them exactly (rational foot of the
+        // perpendicular): the y = 1 touch at (1,1) refutes — NOT_SIMPLE.
+        ("cc_line_tangent_arc", new[] { "A 0 0 1 1 2 0", "C 2 0 2 1", "C 2 1 0 1" }, "NOT_SIMPLE", false,
             gf => new CompoundCurve(new Curve[]
             {
                 Cs(gf, (0, 0), (1, 1), (2, 0)),
@@ -697,9 +727,8 @@ static class Cases
     /// and SegsB are the two rings on the oracle wire; Geometry composes the
     /// same rings into the NTS value whose IsValid is probed (a CurvePolygon
     /// shell+hole, or a two-element MultiSurface). NtsExpected: a bool for a
-    /// decided verdict, null for the fail-closed contract (the #641
-    /// frontier: one-contact tangency, containment/nesting, and the
-    /// interiors-disjoint condition).
+    /// decided verdict, null for the fail-closed contract (none since rung 5,
+    /// #641; the remaining frontier rows live in Cases.Containment).
     /// </summary>
     public static readonly (string Name, string[] SegsA, string[] SegsB, string OracleExpected, bool? NtsExpected, Func<GeometryFactory, Geometry> Geometry)[] HolesDisjoint =
     {
@@ -711,34 +740,36 @@ static class Cases
             "NOT_DISJOINT CROSS", false,
             gf => new CurvePolygon(Cs(gf, (0, 0), (2, 2), (4, 0), (2, -2), (0, 0)),
                 new Curve[] { Cs(gf, (3, 1), (5, 3), (7, 1), (5, -1), (3, 1)) }, gf)),
-        // Internal tangency at (4,0): the oracle reports the boundary meet;
-        // NTS fail-closes in the kernel's tangency refusal band (rung-4
-        // review) — and even past it, ONE contact passes Desc 11 with
-        // Desc 12-14 still pending. Fail-closed either way (#641).
+        // Internal tangency at (4,0) — #641's canonical witness. The oracle
+        // reports the boundary meet; rung 5 decides the touch exactly (one
+        // contact passes Desc 11), the hole is inside the shell and the
+        // touch graph is a tree: a VALID polygon.
         ("cp_hole_tangent_internal",
             new[] { "A 0 0 2 2 4 0", "A 4 0 2 -2 0 0" },
             new[] { "A 2 0 3 1 4 0", "A 4 0 3 -1 2 0" },
-            "NOT_DISJOINT CROSS", null,
+            "NOT_DISJOINT CROSS", true,
             gf => new CurvePolygon(Cs(gf, (0, 0), (2, 2), (4, 0), (2, -2), (0, 0)),
                 new Curve[] { Cs(gf, (2, 0), (3, 1), (4, 0), (3, -1), (2, 0)) }, gf)),
-        // Hole region fully outside the shell: zero contacts -- hole-inside-
-        // shell containment is the #641 frontier, so NTS stays fail-closed
-        // where the oracle answers DISJOINT.
+        // Hole region fully outside the shell (oracle: DISJOINT regions):
+        // since rung 5 the exact containment check refutes it (8.2.1
+        // Desc 12) — definite false.
         ("cp_hole_far_outside",
             new[] { "A 0 0 2 2 4 0", "A 4 0 2 -2 0 0" },
             new[] { "A 10 0 12 2 14 0", "A 14 0 12 -2 10 0" },
-            "DISJOINT", null,
+            "DISJOINT", false,
             gf => new CurvePolygon(Cs(gf, (0, 0), (2, 2), (4, 0), (2, -2), (0, 0)),
                 new Curve[] { Cs(gf, (10, 0), (12, 2), (14, 0), (12, -2), (10, 0)) }, gf)),
         // Proper nesting with no boundary contact (the legal hole shape):
-        // the oracle certifies B_IN_A; NTS cannot yet confirm containment,
-        // so the row's contract is the fail-closed throw. The inner ring
-        // sits off-axis so the lane's nesting ray cast does not pass
-        // through an outer-ring vertex.
+        // the oracle certifies B_IN_A and rung 5 confirms containment —
+        // VALID. (The hole's two arcs have non-dyadic intermediates, so their
+        // exact circles differ; both pass through the shared vertices, which
+        // anchor the exact crossing-pair placement.) The inner ring sits
+        // off-axis so the lane's nesting ray cast does not pass through an
+        // outer-ring vertex.
         ("cp_hole_nested_offaxis",
             new[] { "A 0 0 2 2 4 0", "A 4 0 2 -2 0 0" },
             new[] { "A 1 0.2 2 1.2 3 0.2", "A 3 0.2 2 -0.8 1 0.2" },
-            "NOT_DISJOINT B_IN_A", null,
+            "NOT_DISJOINT B_IN_A", true,
             gf => new CurvePolygon(Cs(gf, (0, 0), (2, 2), (4, 0), (2, -2), (0, 0)),
                 new Curve[] { Cs(gf, (1, 0.2), (2, 1.2), (3, 0.2), (2, -0.8), (1, 0.2)) }, gf)),
         // Two surface elements whose boundaries share the whole upper
@@ -765,14 +796,94 @@ static class Cases
             "NOT_DISJOINT CROSS", false,
             gf => new MultiSurface(new Geometry[] { Sq(gf, 0, 0, 4), Sq(gf, 4, 0, 4) }, gf)),
         // Corner touch: a POINT contact is permitted boundary contact under
-        // 4.2.27, and the interiors-disjoint condition is the #641
-        // frontier -- fail-closed, never an unchecked verdict either way.
+        // 4.2.27, and since rung 5 the all-classical MultiSurface takes the
+        // classical MultiPolygon rule (which IS 4.2.27): VALID.
         ("ms_corner_touch_squares",
             new[] { "C 0 0 4 0", "C 4 0 4 4", "C 4 4 0 4", "C 0 4 0 0" },
             new[] { "C 4 4 8 4", "C 8 4 8 8", "C 8 8 4 8", "C 4 8 4 4" },
-            "NOT_DISJOINT CROSS", null,
+            "NOT_DISJOINT CROSS", true,
             gf => new MultiSurface(new Geometry[] { Sq(gf, 0, 0, 4), Sq(gf, 4, 4, 4) }, gf)),
     };
+
+    /// <summary>
+    /// Containment vectors (Proofs #615 ticket 615-h, #641 rung 5). Stdin is
+    /// the full oracle input; OracleExpected a prefix of its verdict;
+    /// NtsExpected the IsValid verdict of the geometry built from the same
+    /// rings (null: the fail-closed contract — NTS must throw).
+    /// </summary>
+    public static readonly (string Name, string Stdin, string OracleExpected, bool? NtsExpected, Func<GeometryFactory, Geometry> Geometry)[] Containment =
+        BuildContainment();
+
+    private static (string, string, string, bool?, Func<GeometryFactory, Geometry>)[] BuildContainment()
+    {
+        static string Ring(params string[] segs) => $"{segs.Length}\n" + string.Join("\n", segs) + "\n";
+        static string Pir(string ring, string query) => "POINT_IN_CURVE_RING\n" + ring + query + "\n";
+        static string Hd(string a, string b) => "HOLES_DISJOINT\n" + a + b;
+        // Circles as the two-segment five-point idiom (WKT order).
+        static CircularString Circle(GeometryFactory gf, double cx, double cy, double r) =>
+            Cs(gf, (cx - r, cy), (cx, cy + r), (cx + r, cy), (cx, cy - r), (cx - r, cy));
+        static string CircleRing(double cx, double cy, double r)
+        {
+            string F(double d) => d.ToString("R", CultureInfo.InvariantCulture);
+            return Ring($"A {F(cx - r)} {F(cy)} {F(cx)} {F(cy + r)} {F(cx + r)} {F(cy)}",
+                        $"A {F(cx + r)} {F(cy)} {F(cx)} {F(cy - r)} {F(cx - r)} {F(cy)}");
+        }
+        static CurvePolygon Cp(GeometryFactory gf, Curve shell, params Curve[] holes) => new CurvePolygon(shell, holes, gf);
+
+        const double hx = 0.7865526304750483, hy = 1.213447369524952;
+        return new (string, string, string, bool?, Func<GeometryFactory, Geometry>)[]
+        {
+            ("cp_concentric_hole", Pir(CircleRing(2, 0, 2), "2 1"), "IN", true,
+                gf => Cp(gf, Circle(gf, 2, 0, 2), Circle(gf, 2, 0, 1))),
+            ("cp_externally_tangent_hole", Pir(CircleRing(2, 0, 2), "5 1"), "OUT", false,
+                gf => Cp(gf, Circle(gf, 2, 0, 2), Circle(gf, 5, 0, 1))),
+            // Rung-4 review witness W2 (exactly tangent at (2,0)).
+            ("cp_w2_tangent_compound_hole",
+                Pir(Ring("A 0 2 2 0 0 -2", "A 0 -2 -2 0 0 2"),
+                    $"{hx.ToString("R", CultureInfo.InvariantCulture)} {hy.ToString("R", CultureInfo.InvariantCulture)}"),
+                "IN", true,
+                gf => Cp(gf, Cs(gf, (0, 2), (2, 0), (0, -2), (-2, 0), (0, 2)),
+                    new CompoundCurve(new Curve[]
+                    {
+                        Cs(gf, (hx, hy), (2, 0), (hx, -hy)),
+                        gf.CreateLineString(new[]
+                        {
+                            new Coordinate(hx, -hy), new Coordinate(hx - 0.3, 0), new Coordinate(hx, hy),
+                        }),
+                    }, gf))),
+            // The inner ring starts at its top vertex: the lane tests nesting
+            // from ring B's first vertex, and from (-1,0) the ray would pass
+            // through ring A's shared arc endpoint (2,0) (not generic).
+            ("cp_nested_holes", Hd(CircleRing(0, 0, 2), Ring("A 0 1 1 0 0 -1", "A 0 -1 -1 0 0 1")),
+                "NOT_DISJOINT B_IN_A", false,
+                gf => Cp(gf, Circle(gf, 0, 0, 4), Circle(gf, 0, 0, 2),
+                    Cs(gf, (0, 1), (1, 0), (0, -1), (-1, 0), (0, 1)))),
+            ("cp_two_separate_holes", Hd(CircleRing(-2, 0, 1), CircleRing(2, 0, 1)), "DISJOINT", true,
+                gf => Cp(gf, Circle(gf, 0, 0, 4), Circle(gf, -2, 0, 1), Circle(gf, 2, 0, 1))),
+            ("ms_disjoint_circles", Hd(CircleRing(1, 0, 1), CircleRing(6, 0, 1)), "DISJOINT", true,
+                gf => new MultiSurface(new Geometry[]
+                    { Cp(gf, Circle(gf, 1, 0, 1)), Cp(gf, Circle(gf, 6, 0, 1)) }, gf)),
+            ("ms_island_in_annulus_hole", Pir(CircleRing(0, 0, 2), "0 1"), "IN", true,
+                gf => new MultiSurface(new Geometry[]
+                {
+                    Cp(gf, Circle(gf, 0, 0, 4), Circle(gf, 0, 0, 2)),
+                    Cp(gf, Circle(gf, 0, 0, 1)),
+                }, gf)),
+            ("ms_overlapping_circles", Hd(CircleRing(0, 0, 2), CircleRing(3, 0, 2)), "NOT_DISJOINT", false,
+                gf => new MultiSurface(new Geometry[]
+                    { Cp(gf, Circle(gf, 0, 0, 2)), Cp(gf, Circle(gf, 3, 0, 2)) }, gf)),
+            // The #981 frontier: a thin lens with no control point inside the
+            // other circle and crossings away from any vertex.
+            ("ms_lens_frontier",
+                Hd(Ring("A 5 0 0 5 -5 0", "A -5 0 0 -5 5 0"), Ring("A 12 7 7 12 2 7", "A 2 7 7 2 12 7")),
+                "NOT_DISJOINT", null,
+                gf => new MultiSurface(new Geometry[]
+                {
+                    Cp(gf, Cs(gf, (5, 0), (0, 5), (-5, 0), (0, -5), (5, 0))),
+                    Cp(gf, Cs(gf, (12, 7), (7, 12), (2, 7), (7, 2), (12, 7))),
+                }, gf)),
+        };
+    }
 
     /// <summary>
     /// ENVELOPE_UNIFIED golden vectors (Proofs #615 ticket 615-e), mirroring
