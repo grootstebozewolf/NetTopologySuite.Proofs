@@ -54,11 +54,12 @@ Lemma mk_geodesic_missing :
   ~ mk_geodesic_ctor_inhabits MkGeodesic.
 Proof. intro H. exact H. Qed.
 
-(* Egg remains MkChord | MkCirc | MkClothoid | MkOutOfScope. Cited, not reminted. *)
+(* Egg remains MkChord | MkCirc | MkClothoid | MkOutOfScope | MkNurbs. Cited, not reminted. *)
 Lemma mk_geodesic_egg_has_no_ctor :
   forall e : Egg,
     (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/
-    (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls).
+    (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls) \/
+    (exists ne, e = MkNurbs ne).
 Proof. exact egg_no_mkgeodesic. Qed.
 
 (* K0 μ = MkChord on planar S. Cited, not reminted as a geodesic. *)
@@ -94,7 +95,8 @@ Theorem ticket_0007_mk_geodesic_qed_or_qex :
   (~ mk_geodesic_ctor_inhabits MkGeodesic
    /\ (forall e : Egg,
          (exists c, e = MkChord c) \/ (exists g, e = MkCirc g) \/
-         (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls))
+         (exists k, e = MkClothoid k) \/ (exists cls, e = MkOutOfScope cls) \/
+         (exists ne, e = MkNurbs ne))
    /\ (forall s : Sheet,
          s = mkSheet (sheet_origin s) (sheet_e1 s) (sheet_e2 s) (sheet_has_lattice s))
    /\ (forall s p q rest ck,
