@@ -3153,7 +3153,7 @@ theories/IntakeKarneyPark.v
 # ADR-0007 host Egg ctor hole (IntakeMkGeodesic).
 # claimId 0007-mk-geodesic. MkGeodesic missing. Distinct from
 # GeodesicGammaOnSheet (#803 interpolant g). K0 μ = MkChord.
-# ADR-0007 stays Accepted. ADR-0008 stays Proposed. No Admitted.
+# ADR-0007 stays Accepted. ADR-0008 is Accepted. No Admitted.
 theories/IntakeMkGeodesic.v
 # Integer circle–circle discriminant + hen mint (I_circles_z). 0-axiom.
 theories/CircularCookZ.v

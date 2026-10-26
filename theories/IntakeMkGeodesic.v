@@ -17,13 +17,13 @@
    not on_chord on a locked fixture; first_cook_scope
    EggGeodesicString EggGeodesicString only after that; mixed
    geodesic×chord stays Decline; GeodesicGammaOnSheet inhabits as that
-   interpolant, not a rename of MkChord; ADR-0008 Accepted only if
-   E0–E4 inhabit in this same letter.
+   interpolant, not a rename of MkChord; the ADR-0008 ellipsoid sheet
+   class (E0–E4) inhabits.
 
    QEX arm (this letter): do not add MkGeodesic; do not flip
    first_cook_scope EggGeodesicString; name MkGeodesic; keep
-   GeodesicGammaOnSheet missing (#803); cite K0; ADR-0008 stays
-   Proposed.
+   GeodesicGammaOnSheet missing (#803); cite K0. ADR-0008 is
+   Accepted (2026-09-19); this letter does not change its status.
 
    WITNESS topic: overlay · claimId: 0007-mk-geodesic
    witness: 0007-mk-geodesic · board: ADR-0007
@@ -88,7 +88,7 @@ Proof.
   split; [intro H; exact H | exact chord_arc_not_first_cook].
 Qed.
 
-(* WITNESS {"claimId":"0007-mk-geodesic","topic":"overlay","lemma":"ticket_0007_mk_geodesic_qed_or_qex","title":"Host Egg MkGeodesic: MkGeodesic : GeodesicEgg to Egg inhabits with egg_class EggGeodesicString and on_geodesic not on_chord (QED); or MkGeodesic is the missing Egg ctor distinct from GeodesicGammaOnSheet (#803 interpolant g), K0 mu stays MkChord on planar S, first_cook_scope EggGeodesicString stays false, ADR-0008 stays Proposed (QEX); discharged QEX; MkGeodesic := MkChord is QEX not QED","file":"theories/IntakeMkGeodesic.v","witness":"0007-mk-geodesic","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-mk-geodesic","topic":"overlay","lemma":"ticket_0007_mk_geodesic_qed_or_qex","title":"Host Egg MkGeodesic: MkGeodesic : GeodesicEgg to Egg inhabits with egg_class EggGeodesicString and on_geodesic not on_chord (QED); or MkGeodesic is the missing Egg ctor distinct from GeodesicGammaOnSheet (#803 interpolant g), K0 mu stays MkChord on planar S, first_cook_scope EggGeodesicString stays false, ADR-0008 status unchanged (Accepted) (QEX); discharged QEX; MkGeodesic := MkChord is QEX not QED","file":"theories/IntakeMkGeodesic.v","witness":"0007-mk-geodesic","board":"ADR-0007"} *)
 Theorem ticket_0007_mk_geodesic_qed_or_qex :
   mk_geodesic_ctor_inhabits MkGeodesic
   \/
