@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 79 files (76 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 80 files (77 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -60,6 +60,12 @@ theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 # module above. Print Assumptions emits the footprint. No Admitteds. Qed-closed.
 # Keep listed: MerkatorBV-only; fork audit-exceptions must not drop this row.
 theories-flocq/B64_Overlap_Hierarchy.v
+# Priest-route QEX (fast_expansion_sum does not preserve priest_chain).
+# The concrete cascade trace `fes_witness` evaluates Bplus/Bminus, so every
+# headline downstream of it inherits Classical_Prop.classic via Flocq C1;
+# the predicate-only lemmas (w_in_priest, sort_witness, o2_o3_overlap, ...)
+# stay inside the allowlist.  Print Assumptions emits the footprint.
+theories-flocq/B64_Priest_FES_counterexample.v
 theories-flocq/B64_pathB_trace_4A.v
 theories-flocq/B64_Shewchuk_Thm13_pathAB.v
 theories-flocq/DivRoundPow2_b64.v

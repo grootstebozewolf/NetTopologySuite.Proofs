@@ -7,6 +7,50 @@ QED, or a documented counterexample (QEX).
 This document records why that route exists and what it needs. It states no
 theorem and proves nothing.
 
+## Status (2026-10-28): closed as QEX
+
+The corpus's `fast_expansion_sum` does **not** preserve Priest's condition
+(`B64_Priest_FES_counterexample.v : fes_priest_preservation_false`). It also
+fails the weaker claim: Priest-valid inputs do not always give a
+Shewchuk-nonoverlapping output
+(`B64_Priest_FES_counterexample.v : fes_priest_to_nonoverlapping_false`).
+Both are Qed, with no `Admitted`.
+
+The witness is Shewchuk's own. His §2.4 counterexample, `11110000 + 1111 +
+0.1111` added to itself in 4-bit arithmetic, has normalised exponents 4, 0 and
+−4. That is a gap of exactly *p*, so it is already a Priest expansion. Lifted
+to binary64 with `M = 2^53 − 1`:
+
+```
+e = f = [M·2^106, M·2^53, M]                              (gaps 53, 53)
+fast_expansion_sum e f = [2^160, −2^106, 2^106, −2^53, 2^53 − 2, +0]
+```
+
+The neighbours `−2^106` and `2^106` have the same magnitude, so they overlap
+in Shewchuk's sense. No zero sits between them, so the failure survives
+`compress`. The whole trace is machine-checked
+(`B64_Priest_FES_counterexample.v : fes_witness`), including the magnitude
+sort (`B64_Priest_FES_counterexample.v : sort_witness`). The Theorem 13
+counterexample left that sort as a hand-trace.
+
+What the QEX means: without a renormalization pass, the algorithm falls two
+rungs of `B64_Overlap_Hierarchy.v` on Priest-valid input. This matches
+Shewchuk's account of why Priest renormalizes. It does not touch Theorem 13
+itself, because the witness input is not *strongly* nonoverlapping:
+`M·2^53` and `M` are adjacent, and neither is a power of two.
+
+**Still open, and not part of this lane's stop condition:** whether the
+output stays within Priest's *one-digit* overlap. The offending pair is within
+one bit of slack (`B64_Priest_FES_counterexample.v :
+witness_overlap_within_1`), but that is one witness, not a theorem. A
+randomised binary64 search (2·10^5 cases) and an exhaustive p = 3 search
+(length ≤ 2) found no `overlap_within 1` failure. That is evidence only.
+Stating that bound faithfully needs Priest's exact one-digit wording first.
+
+There is no entry in `docs/admitted-counterexamples.txt`. That registry
+tracks `Admitted` statements that are false, and this lane never had an
+`Admitted` headline. Its QEX is a Qed negation.
+
 ## 1. Where the lane actually stands
 
 `fast_expansion_sum_nonoverlap_shewchuk` is **archived false-as-stated**

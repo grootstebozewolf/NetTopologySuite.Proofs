@@ -27,7 +27,8 @@
    `fast_expansion_sum` preserves anything; `fast_expansion_sum` does not
    appear in it.  The lane's stop condition (QED or QEX) is NOT met here --
    what is delivered is the predicate layer that a preservation attempt needs,
-   plus the measured separations between the three predicates.  See
+   plus the measured separations between the three predicates.  (The stop
+   condition was later met as QEX in B64_Priest_FES_counterexample.v.)  See
    docs/thm13-priest-route.md, which also records that obtaining Priest 1991
    is the first task on this route.  IT HAS SINCE BEEN OBTAINED
    (doi:10.1109/ARITH.1991.145549, 2026-09-05), which removes the guesswork an

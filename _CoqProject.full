@@ -4036,6 +4036,12 @@ theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 # proves nothing about fast_expansion_sum.  Both links of the ordering are
 # shown strict by witnesses: (256,1) and (256,256).
 theories-flocq/B64_Overlap_Hierarchy.v
+# Priest route stop condition, met as QEX: fast_expansion_sum does NOT
+# preserve Priest's gap-t condition, and on Priest-valid input need not even
+# give a Shewchuk-nonoverlapping output.  Witness is Shewchuk's own 4-bit
+# "11110000+1111+0.1111 added to itself", lifted to binary64 (it is already a
+# Priest expansion); the full trace, sort step included, is machine-checked.
+theories-flocq/B64_Priest_FES_counterexample.v
 # Shewchuk Theorem 13, §4.A verification (gating O1 integration):
 # vm_compute cascade traces refuting pathB_fires_only_when_output_compressed_empty.
 # Three cross-sign concrete witnesses (Traces A/B/C) on Route-2 cascade_state;
