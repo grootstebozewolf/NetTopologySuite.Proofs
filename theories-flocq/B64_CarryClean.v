@@ -44,7 +44,10 @@
    (each returns its result paired with the number of `b64_plus` /
    `b64_minus` / `b64_mult` calls it made); `carry_clean` and
    `shewchuk_compress` are the first projections.  Comparisons are not
-   counted: Compress makes 2(m-1) zero tests, carry_clean at most 3m tests.
+   counted: Compress makes 2(m-1) zero tests; carry_clean makes at most 5m
+   (one zero test per component, up to two equality tests per stack step,
+   at most 2m steps).  On witness 1 the counts are pinned exactly: 1 flop
+   for carry_clean (`q1_carry_flops`), 21 for Compress (`q1_compress_flops`).
 
    WHAT IS NOT PROVED (do not overclaim).  The correctness claim that would
    make the cost result matter -- that `carry_clean` output IS nonoverlapping
@@ -57,13 +60,20 @@
    420,560,896 pairs), against 680 failures for `cancel_clean` at p = 3;
    600,000 adversarial binary64 cases agree.  Evidence, not proof.  Nor is
    `carry_clean` a drop-in replacement for Compress: QEX 2 shows its domain
-   is narrower, and Compress repairs both QEX witnesses.
+   is narrower, and Compress repairs both QEX witnesses
+   (`q1_compress_nonoverlapping`, `q2_compress_nonoverlapping`).
 
    THE BASELINE.  `shewchuk_compress` transcribes Fig. 15: a top-down sweep
    of Fast-Two-Sum keeping each nonzero error as the new accumulator, then a
    bottom-up sweep emitting nonzero errors.  `b64_Fast2Sum` (B64_Pff_bridge)
    is three operations, so Compress costs 3 (m - 1) + 3 g flops, g the number
    of components kept by the first sweep.
+
+   NTS / JTS COUNTERPART.  None in-library: JTS and NTS compute robust
+   orientation with double-double arithmetic (`CGAlgorithmsDD`, `DD`), not
+   with Shewchuk expansions.  This lane serves the corpus's exact
+   orientation (Orient_b64_expansion.v), the predicate behind
+   `Orientation.Index`, where expansion sums are chained.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -665,6 +675,51 @@ Proof.
     + apply abs_scaled_lt_bpow; zdec.
 Qed.
 
+(* Mutation pins for witness 1: the exact flop counts of both cleanups, the
+   exact Compress output, and Compress's own repair of the witness. *)
+Lemma q1_carry_flops :
+  snd (carry_clean_cost (fast_expansion_sum q1_e q1_f)) = 1%nat.
+Proof. unfold fast_expansion_sum. rewrite q1_sort. vm_compute. reflexivity. Qed.
+
+Definition q1_cM105 : binary64 := Binary.B754_finite prec emax false mant_M (-105) eq_refl.
+
+Lemma q1_compress :
+  shewchuk_compress (fast_expansion_sum q1_e q1_f) = [q1_A; q1_cM105; q1_G].
+Proof.
+  apply map_B2FF_inj. unfold fast_expansion_sum. rewrite q1_sort.
+  vm_compute. reflexivity.
+Qed.
+
+Lemma q1_compress_flops :
+  snd (shewchuk_compress_cost (fast_expansion_sum q1_e q1_f)) = 21%nat.
+Proof. unfold fast_expansion_sum. rewrite q1_sort. vm_compute. reflexivity. Qed.
+
+Lemma q1_compress_nonoverlapping :
+  nonoverlapping_chain (shewchuk_compress (fast_expansion_sum q1_e q1_f)).
+Proof.
+  rewrite q1_compress. cbn [nonoverlapping_chain]. unfold nonoverlapping_b64.
+  unfold q1_A, q1_cM105, q1_G, mant_M. rewrite !B2R_fin. cbn [cond_Zopp].
+  repeat split.
+  - apply (nonov_scaled _ _ 4503599627370496 0); [ reflexivity | ].
+    apply abs_scaled_lt_bpow; zdec.
+  - apply (nonov_scaled _ _ 9007199254740991 (-105)); [ reflexivity | ].
+    apply abs_scaled_lt_bpow; zdec.
+Qed.
+
+(* Compress's second sweep drops zero errors; no witness above produces one,
+   so pin the branch on a total-function input (not an expansion): the
+   first sweep stores 2^53 (2^53 + 1 ties to 2^53), the second sweep adds
+   2^53 + 2 exactly and must drop the zero error. *)
+Definition b2p53 : binary64 := Binary.B754_finite prec emax false 4503599627370496 1 eq_refl.
+Definition b2p53p2 : binary64 := Binary.B754_finite prec emax false 4503599627370497 1 eq_refl.
+
+Lemma compress_drops_zero_error : shewchuk_compress [b2p53; b1; b1] = [b2p53p2].
+Proof. apply map_B2FF_inj. vm_compute. reflexivity. Qed.
+
+(* The cancel branch is exercised by no sum trace above; pin it directly. *)
+Lemma carry_clean_cancels_pair : carry_clean [q1_p53; b64_neg q1_p53] = [].
+Proof. vm_compute. reflexivity. Qed.
+
 (* --------------------------------------------------------------------------
    QEX 2 -- carry_clean needs BOTH inputs Priest-valid.
 
@@ -795,6 +850,54 @@ Proof.
   intros e f He Hf. apply H; [ apply priest_chain_nonoverlapping_chain, He | exact Hf ].
 Qed.
 
+(* Compress repairs witness 2 as well: the domain of carry_clean is
+   narrower than Compress's. *)
+Definition q2_nhalf : binary64 := Binary.B754_finite prec emax true 4503599627370496 (-53) eq_refl.
+
+Lemma q2_compress :
+  shewchuk_compress (fast_expansion_sum q2_e q2_f) = [q2_e1; q2_nhalf; q2_p105].
+Proof.
+  apply map_B2FF_inj. unfold fast_expansion_sum. rewrite q2_sort.
+  vm_compute. reflexivity.
+Qed.
+
+Lemma q2_compress_nonoverlapping :
+  nonoverlapping_chain (shewchuk_compress (fast_expansion_sum q2_e q2_f)).
+Proof.
+  rewrite q2_compress. cbn [nonoverlapping_chain]. unfold nonoverlapping_b64.
+  unfold q2_e1, q2_nhalf, q2_p105. rewrite !B2R_fin. cbn [cond_Zopp].
+  repeat split.
+  - apply (nonov_scaled _ _ (-4503599627370496) 0); [ reflexivity | ].
+    apply abs_scaled_lt_bpow; zdec.
+  - apply (nonov_scaled _ _ (-1) (-1)).
+    + change (Z.neg 4503599627370496) with (- 4503599627370496)%Z.
+      rewrite opp_IZR, IZR_mant_bpow.
+      replace (bpow radix2 (-1)) with (bpow radix2 52 * bpow radix2 (-53))
+        by (rewrite <- bpow_plus; f_equal; lia).
+      ring.
+    + apply abs_scaled_lt_bpow; zdec.
+Qed.
+
+(* --------------------------------------------------------------------------
+   Mutation replay (in-tree; not an ADR-0004 mint).  Flip exactly one line
+   of the definitions above, rebuild, then restore it.  Only the concrete
+   pins below may kill a mutant; any other proof that breaks is admitted for
+   the run (scratch only).  Each flip loses Qed on the named pin:
+     C1. `cc_push`: carry branch off (`if false then`)     pin: `q1_carry`
+     C2. `cc_push`: cancel branch off              pin: `carry_clean_cancels_pair`
+     C3. `cc_push`: carry pushes x, not 2x                 pin: `q1_carry`
+     C4. `cc_push`: flop counter `S n` -> `n`              pin: `q1_carry_flops`
+     C5. `compress_up`: `3 + n` -> `4 + n`                 pin: `q1_compress_flops`
+     C6. `cc_run`: zeros no longer skipped                 pin: `q1_cancel`
+     C7. `cc_run`: result `rev st` -> `st`                 pin: `q1_cancel`
+     C8. `compress_down`: stored component dropped         pin: `q1_compress`
+     C9. `compress_up`: zero errors kept           pin: `compress_drops_zero_error`
+   C4 is the reason the flop pins exist: without `q1_carry_flops` it
+   survives, because `carry_clean_cheaper` is an inequality and an
+   undercounting counter only strengthens it.  Replayed 2026-10-29 on
+   Rocq 9.2 + Flocq 4.2.2.
+   -------------------------------------------------------------------------- *)
+
 (* --------------------------------------------------------------------------
    Assumption audit.
    -------------------------------------------------------------------------- *)
@@ -811,6 +914,12 @@ Print Assumptions q1_cancel.
 Print Assumptions q1_carry.
 Print Assumptions cancel_clean_priest_false.
 Print Assumptions q1_carry_nonoverlapping.
+Print Assumptions q1_carry_flops.
+Print Assumptions q1_compress.
+Print Assumptions q1_compress_flops.
+Print Assumptions q1_compress_nonoverlapping.
+Print Assumptions carry_clean_cancels_pair.
+Print Assumptions compress_drops_zero_error.
 Print Assumptions q2_e_priest.
 Print Assumptions q2_f_nonoverlapping.
 Print Assumptions q2_sort.
@@ -818,3 +927,5 @@ Print Assumptions q2_carry.
 Print Assumptions q2_pair_overlap.
 Print Assumptions carry_clean_beyond_priest_false.
 Print Assumptions carry_clean_nonoverlapping_false.
+Print Assumptions q2_compress.
+Print Assumptions q2_compress_nonoverlapping.
