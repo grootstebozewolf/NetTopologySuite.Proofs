@@ -30,6 +30,7 @@
      2  -8   3 4   1    0    148581504       0
      5 -10   5 2   1    0    420560896       0
      4  -9   3 3   1    0   2146417920       0
+     3 -10   2 4   1    0   4670763328       0
      3  -7   2 3   1    1    130842880     758   carry_clean, nonoverlapping
    Every Priest-class overlap before cleanup (p = 3, [-7,2], 22,576,768
    pairs) was a pair of equal-magnitude powers of two.  The CLASS 1 failure
