@@ -67,6 +67,11 @@
    (`sort_witness`), closing the structural gap that
    B64_Shewchuk_Thm13_counterexample.v left as a hand-trace.
 
+   NTS / JTS COUNTERPART.  None in-library: JTS and NTS compute robust
+   orientation with double-double arithmetic (`CGAlgorithmsDD`, `DD`), not
+   with Shewchuk expansions.  This lane feeds the corpus's exact orientation
+   (Orient_b64_expansion.v), the predicate behind `Orientation.Index`.
+
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted, human-reviewed.
@@ -336,6 +341,27 @@ Proof.
   intro H. apply fes_witness_not_priest.
   apply H; exact fes_input_priest.
 Qed.
+
+(* --------------------------------------------------------------------------
+   Mutation replay (in-tree; not an ADR-0004 mint).  Flip exactly one
+   definition, rebuild the chain up to this file, then restore it.  Proofs
+   upstream that only break as scripts (their statements stay true) are
+   admitted for the run; each flip then loses Qed on the named pin here:
+     1. `priest_nonoverlapping_R` (B64_Overlap_Hierarchy): gap
+        `kx - ky >= prec` -> `>= prec + 1`
+        pin: `priest_bM_scaled` (the witness sits exactly at gap = prec)
+     2. `fast_expansion_sum`: output `qfinal :: rev hs` -> `qfinal :: hs`
+        pin: `fes_witness`
+     3. `compress`: keep zero components (`Eq => x :: compress xs'`)
+        pin: `compress_witness`
+     4. `insert_by_abs`: on a tie the incoming element goes after
+        pin: `insert_by_abs_le`
+     5. `nonoverlapping_R`: slack `overlap_within 0` -> `overlap_within 1`
+        no pin HERE, by design: `equal_magnitude_overlaps` becomes false
+        (`witness_overlap_within_1` is the reason) and its pin lives in
+        B64_Overlap_Hierarchy (`nonoverlapping_b64_256_256_false`).
+   Replayed 2026-10-29 on Rocq 9.2 + Flocq 4.2.2.
+   -------------------------------------------------------------------------- *)
 
 (* --------------------------------------------------------------------------
    Assumption audit.
