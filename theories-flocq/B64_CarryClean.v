@@ -56,8 +56,9 @@
    exhaustive check in a p-bit round-to-nearest-even model of the same
    algorithm (tests/CarryCleanExhaustive) finds no failure over every
    Priest-valid input pair with p = 3 (lengths <= 3, 366,766,976 pairs),
-   p = 2 (lengths <= 4, 148,581,504 pairs) and p = 5 (lengths <= 2,
-   420,560,896 pairs), against 680 failures for `cancel_clean` at p = 3;
+   p = 4 (lengths <= 3, 2,146,417,920 pairs), p = 2 (lengths <= 4,
+   148,581,504 pairs) and p = 5 (lengths <= 2, 420,560,896 pairs), against
+   680 failures for `cancel_clean` at p = 3;
    600,000 adversarial binary64 cases agree.  Evidence, not proof.  Nor is
    `carry_clean` a drop-in replacement for Compress: QEX 2 shows its domain
    is narrower, and Compress repairs both QEX witnesses
