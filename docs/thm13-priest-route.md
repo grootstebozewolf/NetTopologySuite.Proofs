@@ -25,6 +25,11 @@ offending pair is within one bit
 (`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); random and
 small-*p* searches found no `overlap_within 1` failure. Evidence only.
 
+**Beyond the route (2026-10-29):** `carry_clean` cleans the sum's output without
+rounding (cancel x, −x; carry x, x → 2x). It is exact and cheaper than Compress
+(`B64_CarryClean.v : carry_clean_cheaper`); its nonoverlap on Priest input is
+open (`carry_clean_priest_target`), and two refuted plans are recorded as QEX.
+
 ## 1. Where the lane actually stands
 
 `fast_expansion_sum_nonoverlap_shewchuk` is **archived false-as-stated**

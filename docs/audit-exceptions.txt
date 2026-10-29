@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 80 files (77 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 81 files (78 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -59,6 +59,13 @@ theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 # -- C1 cannot leave while Flocq's binary model is in use
 # (category-c-policy).  Keep listed while `fes_witness` computes in Flocq.
 theories-flocq/B64_Priest_FES_counterexample.v
+# carry_clean vs Compress.  Both algorithms are defined over b64_plus /
+# b64_mult / b64_Fast2Sum, so every result mentioning them (cost and
+# exactness included) inherits Classical_Prop.classic via Flocq C1; the
+# witness inputs, sorts and the odd-significand overlap lemma stay inside the
+# allowlist.  Plan: none while Flocq's binary model is in use
+# (category-c-policy).  Keep listed while the algorithms compute in Flocq.
+theories-flocq/B64_CarryClean.v
 
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
 # results are LEM-free (Priest link + arithmetic separations). The remaining five
