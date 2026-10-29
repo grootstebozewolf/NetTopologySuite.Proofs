@@ -7,26 +7,23 @@ QED, or a documented counterexample (QEX).
 This document records why that route exists and what it needs. It states no
 theorem and proves nothing.
 
-## Status (2026-10-28): closed as QEX
+## Status (2026-10-29): open — one QEX on the way, the bound still open
 
-`fast_expansion_sum` does **not** preserve Priest's condition
-(`B64_Priest_FES_counterexample.v : fes_priest_preservation_false`), nor does
-Priest-valid input even give a Shewchuk-nonoverlapping output
+**Refuted (QEX):** `fast_expansion_sum` does not carry Priest's §2 gap
+condition from input to output
+(`B64_Priest_FES_counterexample.v : fes_priest_gap_preservation_false`), and
+Priest-valid input need not give even a Shewchuk-nonoverlapping output
 (`B64_Priest_FES_counterexample.v : fes_priest_to_nonoverlapping_false`).
-The witness is Shewchuk's own 4-bit example from §2 below: its exponents
-4, 0, −4 have a gap of exactly *p*, so it is already a Priest expansion.
-Lifted to binary64 with `M = 2^53 − 1`, `e = f = [M·2^106, M·2^53, M]` gives
-`[2^160, −2^106, 2^106, −2^53, 2^53 − 2, +0]`; the equal-magnitude neighbours
-overlap, and survive `compress`. The trace, sort step included, is
-machine-checked (`B64_Priest_FES_counterexample.v : fes_witness`). Theorem 13
-itself is untouched: the input is not *strongly* nonoverlapping.
+Priest never claims either: he renormalizes. The witness is Shewchuk's 4-bit
+example from §2, already a Priest expansion (gap exactly *p*). Lifted with
+`M = 2^53 − 1`, `e = f = [M·2^106, M·2^53, M]` gives
+`[2^160, −2^106, 2^106, −2^53, 2^53 − 2, +0]`, machine-checked
+(`B64_Priest_FES_counterexample.v : fes_witness`).
 
-**Still open, outside this lane's stop condition:** Priest's *one-digit*
-bound. The offending pair is within one bit of slack
+**Open — the stop condition's target:** Priest's one-digit bound. The
+offending pair is within one bit
 (`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); random and
-exhaustive small-*p* searches found no `overlap_within 1` failure. Evidence
-only. The QEX is a Qed negation, so `docs/admitted-counterexamples.txt` gets no
-entry.
+small-*p* searches found no `overlap_within 1` failure. Evidence only.
 
 ## 1. Where the lane actually stands
 
@@ -89,14 +86,22 @@ from the other side.
 Obtained 2026-09-05 (doi:10.1109/ARITH.1991.145549). His §2 condition is a gap
 of *t* digits between normalised exponents, under faithful arithmetic; it is
 `priest_nonoverlapping_R` in `B64_Overlap_Hierarchy.v`, proved strictly
-stronger than Shewchuk's nonoverlapping. The corpus's `fast_expansion_sum`
-has no renormalization pass, which is what the QEX above measures.
+stronger than Shewchuk's nonoverlapping. Still to transcribe: his theorem on
+the *output* of his sum, which the target must be stated from.
+
+**Scope decision (2026-10-29):** pre-renormalization. The corpus's
+`fast_expansion_sum` has no renormalization pass, so the target is the
+one-digit overlap bound on its raw output, not Priest's condition after
+renormalizing.
 
 ## 4. Stop condition
 
 QED — the Priest-style bound proved for the corpus's `fast_expansion_sum` — or
 QEX, a Qed-closed counterexample showing the bound fails as stated here.
-Either outcome closes the lane. What it must not do is leave a third
+(Deviation, 2026-10-29: the original also said "filed in
+`docs/admitted-counterexamples.txt`"; that registry tracks unproved
+statements only, so a Qed negation gets no entry.) Either outcome closes the
+lane. What it must not do is leave a third
 over-strong statement half-proved.
 
 ## References

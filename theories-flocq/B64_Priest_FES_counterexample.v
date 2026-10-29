@@ -1,14 +1,18 @@
 (* ============================================================================
    NetTopologySuite.Proofs.Flocq.B64_Priest_FES_counterexample
    ----------------------------------------------------------------------------
-   The Priest route's stop condition, met as QEX: the corpus's
-   `fast_expansion_sum` does NOT preserve Priest's component condition --
-   and does not even land in Shewchuk's weaker nonoverlapping relation.
+   QEX on the Priest route: the corpus's `fast_expansion_sum` does NOT carry
+   Priest's gap condition from input to output -- and its output on
+   Priest-valid input need not even be Shewchuk-nonoverlapping.  This is NOT
+   the route's stop condition: Priest's one-digit bound is still open.
 
-   THE QUESTION (docs/thm13-priest-route.md §5).  With Priest 1991 §2's
-   condition stated as `priest_nonoverlapping_b64` (B64_Overlap_Hierarchy.v):
-   if both inputs are Priest expansions, is the output of
-   `fast_expansion_sum` one?
+   THE QUESTION ANSWERED.  With Priest 1991 §2's component condition stated
+   as `priest_nonoverlapping_b64` and `priest_chain`
+   (B64_Overlap_Hierarchy.v): if both inputs are Priest expansions, is the
+   output of `fast_expansion_sum` one?  Priest himself never claims this --
+   his summation is followed by a renormalization pass, which the corpus's
+   algorithm lacks -- so a NO here measures the missing pass; it does not
+   refute Priest.
 
    THE ANSWER IS NO, on Shewchuk's own example.  Shewchuk 1997 §2.4, after
    Theorem 13, gives the four-bit expansion
@@ -35,27 +39,21 @@
 
    WHAT THIS SETTLES, all Qed:
 
-     priest in  =/=>  priest out          (fes_priest_preservation_false)
+     priest in  =/=>  priest out          (fes_priest_gap_preservation_false)
      priest in  =/=>  nonoverlapping out  (fes_priest_to_nonoverlapping_false)
 
    The second is strictly stronger (priest => nonoverlapping, rung proved in
-   B64_Overlap_Hierarchy.v): the corpus's algorithm, on Priest-valid input,
-   falls TWO rungs of the hierarchy, not one.  This is exactly the shape
-   Shewchuk describes for Priest's own merge-and-sum: without a
-   renormalization pass the output components may overlap, and Priest
-   renormalizes for that reason.  `fast_expansion_sum` has no
-   renormalization pass.
+   B64_Overlap_Hierarchy.v): on Priest-valid input the algorithm falls TWO
+   rungs of the hierarchy, not one.
 
    WHAT THIS DOES NOT SETTLE (do not overclaim).
-     - Priest's ONE-DIGIT bound.  The offending pair sits inside the
-       one-bit slack (`witness_overlap_within_1`), consistent with Shewchuk's
-       summary that Priest's components "overlap by at most one digit".  That
-       is ONE witness, not a theorem; whether `fast_expansion_sum` preserves
-       `overlap_within 1` (or Priest's exact one-digit statement) under
-       Priest-valid inputs is not decided here.  Randomised binary64 search
-       (2e5 cases) and exhaustive p = 3 search (length <= 2, exponents in
-       [-4, 4]) found no `overlap_within 1` failure; that is evidence, not
-       proof.
+     - Priest's ONE-DIGIT bound -- the "Priest-style bound" of the route's
+       stop condition (docs/thm13-priest-route.md §4).  The offending pair
+       sits inside the one-bit slack (`witness_overlap_within_1`), so this
+       witness is CONSISTENT with that bound.  Whether `fast_expansion_sum`
+       keeps Priest-valid inputs within it is open.  Randomised binary64
+       search (2e5 cases) and exhaustive p = 3 search (length <= 2, exponents
+       in [-4, 4]) found no `overlap_within 1` failure; evidence, not proof.
      - Shewchuk's Theorem 13 itself (strongly nonoverlapping in and out,
        round-to-even).  The witness input is Priest-valid but NOT strongly
        nonoverlapping (M * 2^53 and M are adjacent and not powers of two), so
@@ -85,112 +83,93 @@ Import ListNotations.
 Local Open Scope R_scope.
 
 (* --------------------------------------------------------------------------
-   Priest's condition along an expansion, mirroring `nonoverlapping_chain`.
-   A zero component has no normalised significand, so a Priest chain is
-   zero-free; inputs are compared raw, outputs after `compress`.
+   The witness.  M = 2^53 - 1, a full 53-bit significand; the input
+   components are M * 2^k.
    -------------------------------------------------------------------------- *)
 
-Fixpoint priest_chain (e : b64_expansion) : Prop :=
-  match e with
-  | nil => True
-  | _ :: nil => True
-  | a :: (b :: _) as rest =>
-      priest_nonoverlapping_b64 a b /\ priest_chain rest
-  end.
+Definition mant_M : positive := 9007199254740991.
 
-Lemma priest_chain_nonoverlapping_chain :
-  forall e : b64_expansion, priest_chain e -> nonoverlapping_chain e.
-Proof.
-  induction e as [| a e' IH]; [ simpl; trivial | ].
-  destruct e' as [| b e'']; [ simpl; trivial | ].
-  intros [Hp Hrest]. simpl. split.
-  - apply priest_nonoverlapping_weaker. exact Hp.
-  - apply IH. exact Hrest.
-Qed.
+Definition bM_scaled (k : Z) (H : SpecFloat.bounded prec emax mant_M k = true)
+  : binary64 := Binary.B754_finite prec emax false mant_M k H.
 
-(* --------------------------------------------------------------------------
-   The witness.  M = 2^53 - 1 = 9007199254740991, a full 53-bit significand.
-   -------------------------------------------------------------------------- *)
+Definition bM_2p106 : binary64 := bM_scaled 106 eq_refl.   (* M * 2^106 *)
+Definition bM_2p53  : binary64 := bM_scaled 53 eq_refl.    (* M * 2^53  *)
+Definition bM       : binary64 := bM_scaled 0 eq_refl.     (* M         *)
 
-Definition pM (k : Z) (H : SpecFloat.bounded prec emax 9007199254740991 k = true)
-  : binary64 := Binary.B754_finite prec emax false 9007199254740991 k H.
+Definition fes_input : list binary64 := [bM_2p106; bM_2p53; bM].
 
-Definition wA : binary64 := pM 106 eq_refl.   (* M * 2^106 *)
-Definition wB : binary64 := pM 53 eq_refl.    (* M * 2^53  *)
-Definition wC : binary64 := pM 0 eq_refl.     (* M         *)
-
-Definition w_in : list binary64 := [wA; wB; wC].
-
-(* The output, as `vm_compute` reports it. *)
-Definition o1 : binary64 :=   (*  2^160   *)
+(* The output, as `vm_compute` reports it.  Mantissa 2^52 at exponent e is
+   2^(52+e). *)
+Definition b2p160    : binary64 :=
   Binary.B754_finite prec emax false 4503599627370496 108 eq_refl.
-Definition o2 : binary64 :=   (* -2^106   *)
+Definition bneg2p106 : binary64 :=
   Binary.B754_finite prec emax true  4503599627370496 54 eq_refl.
-Definition o3 : binary64 :=   (*  2^106   *)
+Definition b2p106    : binary64 :=
   Binary.B754_finite prec emax false 4503599627370496 54 eq_refl.
-Definition o4 : binary64 :=   (* -2^53    *)
+Definition bneg2p53  : binary64 :=
   Binary.B754_finite prec emax true  4503599627370496 1 eq_refl.
-Definition o5 : binary64 :=   (*  2^53-2  *)
+Definition b2p53m2   : binary64 :=   (* 2^53 - 2 *)
   Binary.B754_finite prec emax false 9007199254740990 0 eq_refl.
-Definition o6 : binary64 := Binary.B754_zero prec emax false.
+Definition bposzero  : binary64 := Binary.B754_zero prec emax false.
 
 (* --------------------------------------------------------------------------
    Concrete magnitudes.
    -------------------------------------------------------------------------- *)
 
-Lemma IZR_M_pos : 0 < IZR 9007199254740991.
-Proof. apply IZR_lt. lia. Qed.
+Lemma IZR_M_pos : 0 < IZR (Z.pos mant_M).
+Proof. apply IZR_lt. unfold mant_M. lia. Qed.
 
-Lemma pM_R : forall k H, Binary.B2R prec emax (pM k H)
-                         = IZR 9007199254740991 * bpow radix2 k.
+Lemma bM_scaled_R : forall k H, Binary.B2R prec emax (bM_scaled k H)
+                                = IZR (Z.pos mant_M) * bpow radix2 k.
 Proof. intros k H. reflexivity. Qed.
 
-Lemma pM_abs : forall k H, Rabs (Binary.B2R prec emax (pM k H))
-                           = IZR 9007199254740991 * bpow radix2 k.
+Lemma bM_scaled_abs : forall k H, Rabs (Binary.B2R prec emax (bM_scaled k H))
+                                  = IZR (Z.pos mant_M) * bpow radix2 k.
 Proof.
-  intros k H. rewrite pM_R. apply Rabs_pos_eq.
+  intros k H. rewrite bM_scaled_R. apply Rabs_pos_eq.
   pose proof IZR_M_pos. pose proof (bpow_gt_0 radix2 k). nra.
 Qed.
 
-Lemma abs_C_lt_B :
-  Rabs (Binary.B2R prec emax wC) < Rabs (Binary.B2R prec emax wB).
+Lemma abs_bM_lt_bM_2p53 :
+  Rabs (Binary.B2R prec emax bM) < Rabs (Binary.B2R prec emax bM_2p53).
 Proof.
-  unfold wB, wC. rewrite !pM_abs. pose proof IZR_M_pos.
+  unfold bM_2p53, bM. rewrite !bM_scaled_abs. pose proof IZR_M_pos.
   apply Rmult_lt_compat_l; [ lra | apply bpow_lt; lia ].
 Qed.
 
-Lemma abs_B_lt_A :
-  Rabs (Binary.B2R prec emax wB) < Rabs (Binary.B2R prec emax wA).
+Lemma abs_bM_2p53_lt_bM_2p106 :
+  Rabs (Binary.B2R prec emax bM_2p53) < Rabs (Binary.B2R prec emax bM_2p106).
 Proof.
-  unfold wA, wB. rewrite !pM_abs. pose proof IZR_M_pos.
+  unfold bM_2p106, bM_2p53. rewrite !bM_scaled_abs. pose proof IZR_M_pos.
   apply Rmult_lt_compat_l; [ lra | apply bpow_lt; lia ].
 Qed.
 
 (* --------------------------------------------------------------------------
-   The inputs are Priest expansions: gap 53 = prec at each link.
+   The input is a Priest expansion: gap 53 = prec at each link.
    -------------------------------------------------------------------------- *)
 
 Lemma mantissa_M_normalised :
-  bpow radix2 (prec - 1) <= Rabs (IZR 9007199254740991) < bpow radix2 prec.
+  bpow radix2 (prec - 1) <= Rabs (IZR (Z.pos mant_M)) < bpow radix2 prec.
 Proof.
   rewrite Rabs_pos_eq by (left; exact IZR_M_pos).
   unfold prec. rewrite <- !IZR_Zpower by lia.
   split; [ apply IZR_le | apply IZR_lt ]; vm_compute; congruence.
 Qed.
 
-Lemma priest_pM :
+Lemma priest_bM_scaled :
   forall kx ky Hx Hy, (kx - ky >= prec)%Z ->
-    priest_nonoverlapping_b64 (pM kx Hx) (pM ky Hy).
+    priest_nonoverlapping_b64 (bM_scaled kx Hx) (bM_scaled ky Hy).
 Proof.
   intros kx ky Hx Hy Hgap.
-  exists 9007199254740991%Z, 9007199254740991%Z, kx, ky.
-  repeat split; try (apply pM_R); try apply mantissa_M_normalised; exact Hgap.
+  exists (Z.pos mant_M), (Z.pos mant_M), kx, ky.
+  repeat split; try (apply bM_scaled_R); try apply mantissa_M_normalised;
+    exact Hgap.
 Qed.
 
-Lemma w_in_priest : priest_chain w_in.
+Lemma fes_input_priest : priest_chain fes_input.
 Proof.
-  unfold w_in, wA, wB, wC. simpl.
-  repeat split; try apply priest_pM; unfold prec; lia.
+  unfold fes_input, bM_2p106, bM_2p53, bM. simpl.
+  repeat split; try apply priest_bM_scaled; unfold prec; lia.
 Qed.
 
 (* --------------------------------------------------------------------------
@@ -218,11 +197,13 @@ Proof.
   intros x y ys H. simpl. destruct (Rle_dec _ _) as [Hle | _]; [ lra | reflexivity ].
 Qed.
 
-Lemma sort_witness : sort_by_abs (w_in ++ w_in) = [wC; wC; wB; wB; wA; wA].
+Lemma sort_witness :
+  sort_by_abs (fes_input ++ fes_input)
+  = [bM; bM; bM_2p53; bM_2p53; bM_2p106; bM_2p106].
 Proof.
-  pose proof abs_C_lt_B as HCB.
-  pose proof abs_B_lt_A as HBA.
-  unfold w_in. cbn [app sort_by_abs].
+  pose proof abs_bM_lt_bM_2p53 as Hlo.
+  pose proof abs_bM_2p53_lt_bM_2p106 as Hhi.
+  unfold fes_input. cbn [app sort_by_abs].
   repeat first [ rewrite insert_by_abs_nil
                | rewrite insert_by_abs_le by lra
                | rewrite insert_by_abs_gt by lra ].
@@ -244,7 +225,8 @@ Proof.
 Qed.
 
 Lemma fes_witness :
-  fast_expansion_sum w_in w_in = [o1; o2; o3; o4; o5; o6].
+  fast_expansion_sum fes_input fes_input
+  = [b2p160; bneg2p106; b2p106; bneg2p53; b2p53m2; bposzero].
 Proof.
   apply map_B2FF_inj.
   unfold fast_expansion_sum. rewrite sort_witness.
@@ -252,10 +234,11 @@ Proof.
 Qed.
 
 Lemma compress_witness :
-  compress [o1; o2; o3; o4; o5; o6] = [o1; o2; o3; o4; o5].
+  compress [b2p160; bneg2p106; b2p106; bneg2p53; b2p53m2; bposzero]
+  = [b2p160; bneg2p106; b2p106; bneg2p53; b2p53m2].
 Proof.
   cbn [compress].
-  assert (Hpos : forall s m e H,
+  assert (Hsign : forall s m e H,
              Rcompare (Binary.B2R prec emax
                          (Binary.B754_finite prec emax s m e H)) 0
              = if s then Lt else Gt).
@@ -267,7 +250,8 @@ Proof.
       apply Rmult_lt_0_compat; [ apply IZR_lt; simpl; lia | exact He ].
     - apply Rcompare_Gt.
       apply Rmult_lt_0_compat; [ apply IZR_lt; simpl; lia | exact He ]. }
-  unfold o1, o2, o3, o4, o5, o6. rewrite !Hpos.
+  unfold b2p160, bneg2p106, b2p106, bneg2p53, b2p53m2, bposzero.
+  rewrite !Hsign.
   cbn [Binary.B2R]. rewrite Rcompare_Eq by reflexivity.
   reflexivity.
 Qed.
@@ -276,66 +260,41 @@ Qed.
    The offending pair: -2^106 followed by 2^106.
    -------------------------------------------------------------------------- *)
 
-Lemma o2_R : Binary.B2R prec emax o2 = - bpow radix2 106.
+(* Mantissa 2^52 at exponent e, either sign, is +/- 2^(52+e). *)
+Lemma pow2_mantissa_R :
+  forall s e H,
+    Binary.B2R prec emax (Binary.B754_finite prec emax s 4503599627370496 e H)
+    = (if s then -1 else 1) * bpow radix2 (52 + e).
 Proof.
-  unfold o2. cbn [Binary.B2R]. unfold F2R; cbn [Fnum Fexp].
-  change (cond_Zopp true (Z.pos 4503599627370496))
-    with (- Z.pos 4503599627370496)%Z.
-  rewrite opp_IZR, IZR_mant_bpow, Ropp_mult_distr_l_reverse, <- bpow_plus.
-  reflexivity.
+  intros s e H. cbn [Binary.B2R]. unfold F2R; cbn [Fnum Fexp].
+  rewrite bpow_plus, <- IZR_mant_bpow.
+  destruct s; cbn [cond_Zopp].
+  - change (Z.neg 4503599627370496) with (- Z.pos 4503599627370496)%Z.
+    rewrite opp_IZR. ring.
+  - ring.
 Qed.
 
-Lemma o3_R : Binary.B2R prec emax o3 = bpow radix2 106.
+Lemma bneg2p106_b2p106_overlap : ~ nonoverlapping_b64 bneg2p106 b2p106.
 Proof.
-  unfold o3. cbn [Binary.B2R]. unfold F2R; cbn [Fnum Fexp].
-  change (cond_Zopp false (Z.pos 4503599627370496))
-    with (Z.pos 4503599627370496).
-  rewrite IZR_mant_bpow, <- bpow_plus. reflexivity.
-Qed.
-
-(* Two nonzero reals of equal magnitude never satisfy Shewchuk's relation:
-   x = r 2^s with |y| = |x| < 2^s forces 0 < |r| < 1. *)
-Lemma equal_magnitude_overlaps :
-  forall x y : R, x <> 0 -> Rabs x = Rabs y -> ~ nonoverlapping_R x y.
-Proof.
-  assert (Hcore : forall x y r s,
-             x <> 0 -> Rabs x = Rabs y ->
-             x = IZR r * bpow radix2 s -> Rabs y < bpow radix2 s -> False).
-  { intros x y r s Hx0 Habs Hx Hy.
-    pose proof (bpow_gt_0 radix2 s) as Hs.
-    rewrite <- Habs, Hx, Rabs_mult, (Rabs_pos_eq (bpow radix2 s)) in Hy
-      by lra.
-    rewrite <- abs_IZR in Hy.
-    assert (Hlt1 : IZR (Z.abs r) < 1) by nra.
-    apply lt_IZR in Hlt1.
-    assert (r = 0%Z) by lia. subst r.
-    apply Hx0. rewrite Hx. simpl. lra. }
-  intros x y Hx0 Habs.
-  unfold nonoverlapping_R, overlap_within.
-  intros [ [r [s [Hx Hy]]] | [r [s [Hy Hx]]] ];
-    rewrite Z.add_0_r in *.
-  - exact (Hcore x y r s Hx0 Habs Hx Hy).
-  - apply (Hcore y x r s); [ | symmetry; exact Habs | exact Hy | exact Hx ].
-    intro Hy0. pose proof (Rabs_pos_lt x Hx0) as Hp.
-    rewrite Habs, Hy0, Rabs_R0 in Hp. lra.
-Qed.
-
-Lemma o2_o3_overlap : ~ nonoverlapping_b64 o2 o3.
-Proof.
-  unfold nonoverlapping_b64. rewrite o2_R, o3_R.
-  apply equal_magnitude_overlaps.
-  - pose proof (bpow_gt_0 radix2 106). lra.
-  - rewrite Rabs_Ropp. reflexivity.
+  unfold nonoverlapping_b64, bneg2p106, b2p106.
+  rewrite !pow2_mantissa_R. cbv iota.
+  pose proof (bpow_gt_0 radix2 (52 + 54)) as Hp.
+  apply equal_magnitude_overlaps; [ lra | ].
+  rewrite Rabs_left, Rabs_right by lra. lra.
 Qed.
 
 (* The same pair IS within one bit of slack: -2^106 = (-1) * 2^106 and
    |2^106| < 2^107.  A fact about this witness only. *)
-Lemma witness_overlap_within_1 : overlap_within_b64 1 o2 o3.
+Lemma witness_overlap_within_1 : overlap_within_b64 1 bneg2p106 b2p106.
 Proof.
-  unfold overlap_within_b64, overlap_within. rewrite o2_R, o3_R.
-  left. exists (-1)%Z, 106%Z. split.
-  - simpl. lra.
-  - rewrite Rabs_pos_eq by (left; apply bpow_gt_0). apply bpow_lt. lia.
+  unfold overlap_within_b64, overlap_within, bneg2p106, b2p106.
+  rewrite !pow2_mantissa_R. cbv iota.
+  pose proof (bpow_gt_0 radix2 (52 + 54)) as Hp.
+  left. exists (-1)%Z, (52 + 54)%Z. split.
+  - reflexivity.
+  - rewrite Rabs_right by lra.
+    apply Rlt_le_trans with (bpow radix2 (52 + 54 + 1)); [ | right; reflexivity ].
+    rewrite Rmult_1_l. apply bpow_lt. lia.
 Qed.
 
 (* --------------------------------------------------------------------------
@@ -343,14 +302,14 @@ Qed.
    -------------------------------------------------------------------------- *)
 
 Theorem fes_witness_not_nonoverlapping :
-  ~ nonoverlapping_chain (compress (fast_expansion_sum w_in w_in)).
+  ~ nonoverlapping_chain (compress (fast_expansion_sum fes_input fes_input)).
 Proof.
   rewrite fes_witness, compress_witness.
-  simpl. intros [_ [H _]]. exact (o2_o3_overlap H).
+  simpl. intros [_ [H _]]. exact (bneg2p106_b2p106_overlap H).
 Qed.
 
 Theorem fes_witness_not_priest :
-  ~ priest_chain (compress (fast_expansion_sum w_in w_in)).
+  ~ priest_chain (compress (fast_expansion_sum fes_input fes_input)).
 Proof.
   intro H. apply fes_witness_not_nonoverlapping.
   apply priest_chain_nonoverlapping_chain. exact H.
@@ -364,33 +323,32 @@ Theorem fes_priest_to_nonoverlapping_false :
         nonoverlapping_chain (compress (fast_expansion_sum e f))).
 Proof.
   intro H. apply fes_witness_not_nonoverlapping.
-  apply H; exact w_in_priest.
+  apply H; exact fes_input_priest.
 Qed.
 
-(* QEX, the Priest route's stop condition: Priest's condition is not
-   preserved by the corpus's `fast_expansion_sum`. *)
-Theorem fes_priest_preservation_false :
+(* QEX: Priest's gap condition is not carried from input to output.  Not
+   Priest's own claim (he renormalizes); his one-digit bound stays open. *)
+Theorem fes_priest_gap_preservation_false :
   ~ (forall e f : b64_expansion,
         priest_chain e -> priest_chain f ->
         priest_chain (compress (fast_expansion_sum e f))).
 Proof.
   intro H. apply fes_witness_not_priest.
-  apply H; exact w_in_priest.
+  apply H; exact fes_input_priest.
 Qed.
 
 (* --------------------------------------------------------------------------
    Assumption audit.
    -------------------------------------------------------------------------- *)
 
-Print Assumptions priest_chain_nonoverlapping_chain.
-Print Assumptions w_in_priest.
+Print Assumptions fes_input_priest.
 Print Assumptions sort_witness.
 Print Assumptions fes_witness.
 Print Assumptions compress_witness.
-Print Assumptions equal_magnitude_overlaps.
-Print Assumptions o2_o3_overlap.
+Print Assumptions pow2_mantissa_R.
+Print Assumptions bneg2p106_b2p106_overlap.
 Print Assumptions witness_overlap_within_1.
 Print Assumptions fes_witness_not_nonoverlapping.
 Print Assumptions fes_witness_not_priest.
 Print Assumptions fes_priest_to_nonoverlapping_false.
-Print Assumptions fes_priest_preservation_false.
+Print Assumptions fes_priest_gap_preservation_false.
