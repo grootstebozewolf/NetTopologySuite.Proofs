@@ -7,7 +7,7 @@ QED, or a documented counterexample (QEX).
 This document records why that route exists and what it needs. It states no
 theorem and proves nothing.
 
-## Status (2026-10-29): open — one QEX on the way, the bound still open
+## Status (2026-10-29): open — one QEX along the way, the bound still open
 
 **Refuted (QEX):** `fast_expansion_sum` does not carry Priest's §2 gap
 condition from input to output
@@ -22,8 +22,9 @@ example from §2, already a Priest expansion (gap exactly *p*). Lifted with
 
 **Open — the stop condition's target:** Priest's one-digit bound. The
 offending pair is within one bit
-(`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); random and
-small-*p* searches found no `overlap_within 1` failure. Evidence only.
+(`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); a random
+binary64 search and an exhaustive *p* = 3 search to length 2 (review aids,
+scripts not in tree) found no `overlap_within 1` failure. Evidence only.
 
 ## 1. Where the lane actually stands
 

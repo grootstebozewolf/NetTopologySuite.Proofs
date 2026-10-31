@@ -20,8 +20,10 @@
        11110000 + 1111 + 0.1111            added to itself
 
    to show that plain nonoverlapping is not preserved.  At p = 4 those three
-   components have normalised exponents 4, 0, -4: a gap of exactly p between
-   neighbours.  So Shewchuk's counterexample input is ALREADY a Priest
+   components have normalised exponents 4, 0, -4 -- in the integer-significand
+   convention x = m * 2^k with 2^(p-1) <= |m| < 2^p used by
+   `priest_nonoverlapping_R`; the IEEE 1.f * 2^E exponents are 7, 3, -1 --
+   a gap of exactly p between neighbours.  So Shewchuk's counterexample input is ALREADY a Priest
    expansion -- a fact the corpus had not noticed.  Its binary64 lift, with
    M = 2^53 - 1, is
 
@@ -36,6 +38,15 @@
    Shewchuk's sense, so a fortiori they violate Priest's 53-digit gap.  The
    pair survives `compress` (no zero sits between them), so the failure is
    not an artefact of zero padding.
+
+   ROUNDING MODE.  The trace above is round-to-nearest-even specific: the
+   ties at 2^53 + 2^-53 and 2^-53 + 2^-53 go to even, and switching
+   `mode_b64` to ties-away kills `fes_witness` (mutation flip 6 below).  The
+   OVERLAP is not specific to it, though: an exact rational model of the same
+   algorithm under ties-away gives [2^160; 2^106; -2^106; -2^53; 2^53 - 2],
+   the same pair with signs swapped, and Shewchuk's 4-bit example behaves
+   the same way (512, -16, 16, -1, 7/8 under even; 512, 16, -16, ... away).
+   That model is a review aid, not machine-checked here.
 
    WHAT THIS SETTLES, all Qed:
 
@@ -74,12 +85,13 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human-reviewed.
+   AI assistance disclosure: AI-drafted, human review pending.
      Assisted-by: Claude
    ========================================================================== *)
 
 From Stdlib Require Import Reals ZArith Lia Lra List.
 From Flocq Require Import IEEE754.Binary Core.
+(* B64_Shewchuk_Thm13_counterexample supplies `IZR_mant_bpow` only. *)
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_Expansion
      B64_Expansion_Shewchuk B64_FastExpansionSum_Shewchuk
      B64_Shewchuk_Thm13_counterexample B64_Overlap_Hierarchy.
@@ -355,12 +367,18 @@ Qed.
      3. `compress`: keep zero components (`Eq => x :: compress xs'`)
         pin: `compress_witness`
      4. `insert_by_abs`: on a tie the incoming element goes after
-        pin: `insert_by_abs_le`
+        pin: `insert_by_abs_le` -- by its STATEMENT only: the witness's
+        ties are between identical components, so the sorted list and the
+        output do not change
      5. `nonoverlapping_R`: slack `overlap_within 0` -> `overlap_within 1`
         no pin HERE, by design: `equal_magnitude_overlaps` becomes false
         (`witness_overlap_within_1` is the reason) and its pin lives in
-        B64_Overlap_Hierarchy (`nonoverlapping_b64_256_256_false`).
-   Replayed 2026-10-29 on Rocq 9.2 + Flocq 4.2.2.
+        B64_Overlap_Hierarchy (`nonoverlapping_b64_256_256_false`); the
+        headline leans on that upstream pin.
+     6. `mode_b64` (Validate_binary64): `mode_NE` -> `mode_NA` (ties away)
+        pin: `fes_witness` (the trace changes; see ROUNDING MODE above)
+   Replayed 2026-10-29 (flips 1-5) and 2026-10-31 (flip 6) on Rocq 9.2 +
+   Flocq 4.2.2.
    -------------------------------------------------------------------------- *)
 
 (* --------------------------------------------------------------------------

@@ -4036,19 +4036,6 @@ theories-flocq/B64_Shewchuk_Thm13_counterexample.v
 # proves nothing about fast_expansion_sum.  Both links of the ordering are
 # shown strict by witnesses: (256,1) and (256,256).
 theories-flocq/B64_Overlap_Hierarchy.v
-# Priest route QEX (not its stop condition): fast_expansion_sum does NOT
-# carry Priest's gap-t condition input -> output, and on Priest-valid input
-# need not even give a Shewchuk-nonoverlapping output.  Witness is Shewchuk's
-# 4-bit "11110000+1111+0.1111 added to itself", lifted to binary64; the full
-# trace, sort step included, is machine-checked.  One-digit bound stays open.
-theories-flocq/B64_Priest_FES_counterexample.v
-# Beyond Priest and Shewchuk: carry_clean, a cleanup for fast_expansion_sum
-# output that never rounds (cancel x,-x; carry x,x -> 2x).  QED: at most |e|
-# flops vs >= 3(|e|-1) for Shewchuk's Compress (Fig. 15, instrumented), and
-# exact.  QEX: cancel-only fails on Priest input; carry_clean fails when one
-# input is only nonoverlapping.  Correctness on Priest input stays OPEN
-# (carry_clean_priest_target; exhaustive p-bit evidence in tests/).
-theories-flocq/B64_CarryClean.v
 # Shewchuk Theorem 13, §4.A verification (gating O1 integration):
 # vm_compute cascade traces refuting pathB_fires_only_when_output_compressed_empty.
 # Three cross-sign concrete witnesses (Traces A/B/C) on Route-2 cascade_state;
@@ -4474,3 +4461,16 @@ theories/IntakeG3GeodesicGamma.v
 # fully_intersected_host stays the #518 hyp, not 4.1. Consumes the #805
 # hold; hobby41_host_status stays OverlayNGHobby41Qex. 3-axiom. No Admitted.
 theories/Hobby41Host.v
+# Priest route QEX (not its stop condition): fast_expansion_sum does NOT
+# carry Priest's gap-t condition input -> output, and on Priest-valid input
+# need not even give a Shewchuk-nonoverlapping output.  Witness is Shewchuk's
+# 4-bit "11110000+1111+0.1111 added to itself", lifted to binary64; the full
+# trace, sort step included, is machine-checked.  One-digit bound stays open.
+theories-flocq/B64_Priest_FES_counterexample.v
+# Beyond Priest and Shewchuk: carry_clean, a cleanup for fast_expansion_sum
+# output that never rounds (cancel x,-x; carry x,x -> 2x).  QED: at most |e|
+# flops vs >= 3(|e|-1) for Shewchuk's Compress (Fig. 15, instrumented), and
+# exact.  QEX: cancel-only fails on Priest input; carry_clean fails when one
+# input is only nonoverlapping.  Correctness on Priest input stays OPEN
+# (carry_clean_priest_target; exhaustive p-bit evidence in tests/).
+theories-flocq/B64_CarryClean.v

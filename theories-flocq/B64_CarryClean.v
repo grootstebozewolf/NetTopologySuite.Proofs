@@ -79,7 +79,7 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human-reviewed.
+   AI assistance disclosure: AI-drafted, human review pending.
      Assisted-by: Claude
    ========================================================================== *)
 
