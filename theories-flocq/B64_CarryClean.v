@@ -62,6 +62,9 @@
                                          fes_priest_..._n 3 -- (b) for every
                                          decomposition -- and the target for
                                          totals <= 3; margin 2^(emax-5)
+     RUNG 3   (B64_CarryCleanRung3.v)    four components in total: the
+                                         same, fes_priest_..._n 4, target for
+                                         totals <= 4; still all singles
      BASE     fes_carry_bridge_base_case the trivial base case: at most two
                                          components in total, one TwoSum, no
                                          twins or anti pairs; the shape for
