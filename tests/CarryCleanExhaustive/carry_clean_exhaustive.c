@@ -38,7 +38,8 @@
 
    Build and run:
      cc -O2 -o carry_clean_exhaustive carry_clean_exhaustive.c
-     ./carry_clean_exhaustive P KLO KHI L MODE CLASS [FLOOR]
+     ./carry_clean_exhaustive P KLO KHI L MODE CLASS [FLOOR [TOTAL]]
+   TOTAL keeps only pairs whose lengths sum to at most TOTAL.
 
    Recorded results (2026-10-29 .. 2026-10-31), CLASS 0 unless stated:
      p KLO KHI L MODE FLOOR        pairs  fails  notes
@@ -59,7 +60,25 @@
    Pattern/reduction/cascade counts are noted on the rows whose run printed
    them; the other MODE 1 rows predate those counters (rerun to see them).
 
-   Prints FAIL lines (up to five), a SHAPE line in MODE 1, and a SUMMARY.
+   By total length (MODE 1, CLASS 0, TOTAL given; 2026-10-31).  "raw" is the
+   zero-filtered output before carry_clean: pairs whose raw output is not
+   strictly decreasing.  Every row has pattern 0, reduction 0, cascades 0.
+     p KLO KHI L FLOOR TOTAL      pairs  fails  twins  antis  raw
+     2 -10   2 4    0     4      299408      0      0      0    0
+     3 -16   2 4    0     4    15005888      0      0      0    0
+     4 -12   2 4    0     4    60006144      0      0      0    0
+     5  -7   2 4    0     4    48670720      0      0      0    0
+     2   0   9 4    1     4      852420      0      0      0    0  underflow floor
+     3   0   8 4    1     4     4644676      0      0      0    0  underflow floor
+     4   0   7 4    1     4    17929028      0      0      0    0  underflow floor
+     2  -8   2 5    0     5     1630000      0      8      8   16
+     3  -8   2 5    0     5    15474368      0     16     16   32
+   Through total 4 the raw output is already strictly decreasing (all
+   singles; B64_CarryCleanRung3.v proves it); twins and anti pairs first
+   occur at total 5.
+
+   Prints FAIL lines (up to five), SHAPE and RAW lines in MODE 1, and a
+   SUMMARY.
    Exit status 1 on any failure or (MODE 1) any pattern/reduction violation.
 
    Assisted-by: Claude
@@ -148,11 +167,14 @@ static int clean(const I *o, int n, I *st) {
 
 /* Greedy block decomposition of the zero-filtered raw output. */
 static long long pattern_bad, reduction_bad, twins, antis;
+static long long raw_overlap, raw_notdesc;   /* the zero-filtered raw output */
 
 static void shape(const I *o, int n) {
   I z[16], key[16], red[16];
   int nz = 0, nb = 0, nr = 0;
   for (int i = 0; i < n; i++) if (o[i]) z[nz++] = o[i];
+  for (int i = 0; i + 1 < nz; i++) if (!overlap_within(0, z[i], z[i + 1])) { raw_overlap++; break; }
+  for (int i = 0; i + 1 < nz; i++) if (!(iabs(z[i]) > iabs(z[i + 1]))) { raw_notdesc++; break; }
   for (int j = 0; j < nz;) {
     if (j + 1 < nz && z[j + 1] == z[j])       { key[nb++] = 2 * iabs(z[j]); red[nr++] = 2 * z[j]; j += 2; twins++; }
     else if (j + 1 < nz && z[j + 1] == -z[j]) { key[nb++] = iabs(z[j]); j += 2; antis++; }
@@ -167,6 +189,7 @@ static int ck[8192], nc;
 static long long tot, bad;
 static I E[8], F[8];
 static int ne, nf;
+static int TOTAL = 99;                       /* only pairs with ne + nf <= TOTAL */
 
 static void pr(const char *t, const I *v, int n) {
   printf(" %s=", t);
@@ -203,7 +226,7 @@ static int ok_next(I prev, int lastk, int i) {
 
 static void genF(int depth, int lastk) {
   if (depth > 0) { nf = depth; check(); }
-  if (depth == L) return;
+  if (depth == L || ne + depth >= TOTAL) return;
   for (int i = 0; i < nc; i++) {
     if (depth > 0 && !ok_next(F[depth - 1], lastk, i)) continue;
     F[depth] = comps[i];
@@ -213,7 +236,7 @@ static void genF(int depth, int lastk) {
 
 static void genE(int depth, int lastk) {
   if (depth > 0) { ne = depth; genF(0, 0); }
-  if (depth == L) return;
+  if (depth == L || depth >= TOTAL) return;
   for (int i = 0; i < nc; i++) {
     if (depth == 0 && !FLOOR && ck[i] != 0) continue;
     if (depth > 0 && !ok_next(E[depth - 1], lastk, i)) continue;
@@ -224,12 +247,13 @@ static void genE(int depth, int lastk) {
 
 int main(int argc, char **argv) {
   if (argc < 7) {
-    fprintf(stderr, "usage: %s P KLO KHI L MODE CLASS [FLOOR]\n", argv[0]);
+    fprintf(stderr, "usage: %s P KLO KHI L MODE CLASS [FLOOR [TOTAL]]\n", argv[0]);
     return 2;
   }
   p = atoi(argv[1]); KLO = atoi(argv[2]); KHI = atoi(argv[3]);
   L = atoi(argv[4]); MODE = atoi(argv[5]); CLASS = atoi(argv[6]);
   FLOOR = argc > 7 ? atoi(argv[7]) : 0;
+  if (argc > 8) TOTAL = atoi(argv[8]);
   if (p < 2 || L < 1 || L > 7 || KHI < KLO || MODE < 0 || MODE > 2) { fprintf(stderr, "bad arguments\n"); return 2; }
   int SH = FLOOR ? -KLO : -(KLO - 3 * p);
   for (int k = KLO; k <= KHI; k++)
@@ -252,6 +276,8 @@ int main(int argc, char **argv) {
   if (MODE == 1)
     printf("SHAPE pattern=%lld reduction=%lld cascades=%lld twins=%lld antis=%lld\n",
            pattern_bad, reduction_bad, cascades, twins, antis);
+  if (MODE == 1)
+    printf("RAW overlap=%lld not_strictly_desc=%lld\n", raw_overlap, raw_notdesc);
   printf("SUMMARY p=%d K=[%d,%d] L=%d mode=%d class=%d floor=%d pairs=%lld fails=%lld\n",
          p, KLO, KHI, L, MODE, CLASS, FLOOR, tot, bad);
   return (bad || (MODE == 1 && (pattern_bad || reduction_bad))) ? 1 : 0;
