@@ -4476,3 +4476,18 @@ theories-flocq/B64_Priest_FES_counterexample.v
 # than Compress (comparisons not counted).  OPEN: the two-part FP bridge
 # (fes_priest_carry_pattern, fes_priest_reduction_nonoverlap), the target.
 theories-flocq/B64_CarryClean.v
+# carry_clean bridge, rung 2: three components in total (two TwoSums).  Both
+# bridge parts and the target are proved there (fes_carry_bridge_rung2,
+# carry_clean_priest_target_rung2): two of three components share a Priest
+# expansion, so |g1| < ulp(g3), the first error is below 2^c and the later
+# outputs are multiples of 2^c.  Four or more components stay OPEN.
+theories-flocq/B64_CarryCleanRung2.v
+# B64_CarryClean split (module split gate: the umbrella gained a dependent,
+# B64_CarryCleanRung2).  B64_CarryClean.v stays as a Require Export umbrella
+# with the full header; declarations byte-identical, each part with its own
+# Print Assumptions footer.  Algo: algorithms, cost, exactness, target,
+# helpers.  Witness: the two QEX, mutation pins and replay.  Core: core slice,
+# two-part bridge, base case, cascade safety.
+theories-flocq/B64_CarryCleanAlgo.v
+theories-flocq/B64_CarryCleanWitness.v
+theories-flocq/B64_CarryCleanCore.v

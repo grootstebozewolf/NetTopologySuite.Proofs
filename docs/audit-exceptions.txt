@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 81 files (78 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 84 files (81 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -65,7 +65,16 @@ theories-flocq/B64_Priest_FES_counterexample.v
 # witness inputs, sorts and the odd-significand overlap lemma stay inside the
 # allowlist.  Plan: none while Flocq's binary model is in use
 # (category-c-policy).  Keep listed while the algorithms compute in Flocq.
-theories-flocq/B64_CarryClean.v
+# (split into three parts; the B64_CarryClean.v umbrella has no PA blocks
+# and is not listed, like the other umbrellas.)
+theories-flocq/B64_CarryCleanAlgo.v
+theories-flocq/B64_CarryCleanWitness.v
+theories-flocq/B64_CarryCleanCore.v
+# carry_clean bridge, rung 2.  The sorting lemmas stay inside the allowlist;
+# everything that rounds (round_mult_of, the TwoSum facts) inherits
+# Classical_Prop.classic via Flocq C1.  Plan: none while Flocq's binary model
+# is in use (category-c-policy).  Keep listed while the rung rounds in Flocq.
+theories-flocq/B64_CarryCleanRung2.v
 
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
 # results are LEM-free (Priest link + arithmetic separations). The remaining five
