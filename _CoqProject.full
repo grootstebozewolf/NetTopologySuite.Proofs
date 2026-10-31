@@ -4497,3 +4497,10 @@ theories-flocq/B64_CarryCleanCore.v
 # rest), hence strictly decreasing, nonoverlapping and all singles.  Five or
 # more components stay OPEN; twins and anti pairs first occur at five.
 theories-flocq/B64_CarryCleanRung3.v
+# carry_clean bridge, rung 4: five components in total -- the first rung with
+# twins and anti pairs.  Three Priest keys by counting; the fourth TwoSum's
+# error is at most ulp(g5), with equality only at one midpoint, after which
+# the output carries one anti pair or one twin over a layered tail.  The
+# pattern decomposition is unique (pattern_unique), so part (b) holds for
+# every decomposition.  Six or more components stay OPEN.
+theories-flocq/B64_CarryCleanRung4.v
