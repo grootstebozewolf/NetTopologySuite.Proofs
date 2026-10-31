@@ -109,8 +109,9 @@
    4,670,763,328), p = 4 (lengths <= 3, 2,146,417,920), p = 2 (lengths
    <= 4, 148,581,504; lengths <= 5, 1,196,510,640) and p = 5 (lengths <= 2,
    420,560,896), and under an underflow floor at p = 2, 3, 4; against 680
-   failures for `cancel_clean` at p = 3.  The same runs count bridge parts
-   (a) and (b) and carry cascades; the counts are in the harness header.
+   failures for `cancel_clean` at p = 3.  The harness also counts bridge
+   parts (a) and (b) and carry cascades; its header records those counts
+   per run (p = 3, lengths <= 3: 0, 0 and 0).
    Nor is `carry_clean` a drop-in replacement for Compress: QEX 2 shows its
    domain is narrower, and Compress repairs both QEX witnesses
    (`q1_compress_nonoverlapping`, `q2_compress_nonoverlapping`).

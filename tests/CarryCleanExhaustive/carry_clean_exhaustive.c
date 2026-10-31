@@ -56,8 +56,8 @@
      4  -9   3 3   2    0     2146417920      0  one-digit bound, raw output
      3 -10   2 4   2    0     4670763328      0  one-digit bound, raw output
      3  -7   2 3   1    0      130842880    758  CLASS 1: nonoverlapping inputs
-   Pattern/reduction/cascade counts are recorded only where the run that
-   printed them is listed in B64_CarryClean.v's header; rerun to see them.
+   Pattern/reduction/cascade counts are noted on the rows whose run printed
+   them; the other MODE 1 rows predate those counters (rerun to see them).
 
    Prints FAIL lines (up to five), a SHAPE line in MODE 1, and a SUMMARY.
    Exit status 1 on any failure or (MODE 1) any pattern/reduction violation.
