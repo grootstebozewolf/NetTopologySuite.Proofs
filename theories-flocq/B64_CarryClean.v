@@ -28,7 +28,8 @@
 
      COST     carry_clean_flops_le       flops(carry_clean e) <= |e|
               compress_flops_ge          flops(Compress e)    >= 3 (|e| - 1)
-              carry_clean_cheaper        strictly fewer for |e| >= 2
+              carry_clean_fewer_flops    strictly fewer flops for |e| >= 2;
+                                         comparisons NOT counted (below)
      EXACT    carry_clean_exact          the exact sum is preserved, given
                                          finite components whose absolute
                                          values sum below 2^emax
@@ -43,53 +44,75 @@
                                          nonzero components split into
                                          singles, twins (x, x) and anti pairs
                                          (x, -x) with strictly decreasing
-                                         block magnitudes and a nonoverlapping
-                                         reduction, carry_clean IS that
-                                         reduction -- anti pairs deleted,
-                                         twins doubled exactly -- the sum is
-                                         preserved and the result is
-                                         nonoverlapping
-     BRIDGE   carry_clean_priest_target_of_shape
-                                         fes_priest_carry_shape implies
-                                         carry_clean_priest_target
-     RUNG 1   fes_carry_shape_rung1      the bridge holds when e ++ f has
-                                         at most two components (one
-                                         TwoSum; Priest not needed), hence
-              carry_clean_priest_target_rung1   the target there too;
-              b64_TwoSum_safe_bound      one TwoSum never overflows for
+                                         block magnitudes (the PATTERN),
+                                         carry_clean IS the block reduction
+                                         -- anti pairs deleted, twins doubled
+                                         exactly -- and the sum is preserved.
+                                         Nonoverlap is not concluded here.
+              carry_clean_nonoverlap_of_shape
+                                         if the reduction is also
+                                         nonoverlapping, so is the output
+                                         (that hypothesis passed through)
+     BRIDGE   carry_clean_priest_target_of_bridge
+                                         the two open parts below imply
+                                         carry_clean_priest_target -- ONE
+                                         way: the bridge is strictly stronger
+     BASE     fes_carry_bridge_base_case the trivial base case: at most two
+                                         components in total, one TwoSum, no
+                                         twins or anti pairs; and
+              carry_clean_priest_target_base_case   the target there
+     SAFETY   b64_TwoSum_safe_bound      one TwoSum never overflows for
                                          |x|, |y| <= 2^(emax-4)
+              fes_cascade_safe           no TwoSum of the sum's cascade
+                                         overflows when abs_sum e + abs_sum f
+                                         <= 2^(emax-5): every accumulator
+                                         stays below 2 * abs_sum, because
+                                         RN(q + e) is no further from q + e
+                                         than q is
 
    The flop counts are produced by the algorithm definitions themselves
    (each returns its result paired with the number of `b64_plus` /
    `b64_minus` / `b64_mult` calls it made); `carry_clean` and
-   `shewchuk_compress` are the first projections.  Comparisons are not
+   `shewchuk_compress` are the first projections.  Comparisons are NOT
    counted: Compress makes 2(m-1) zero tests; carry_clean makes at most 5m
    (one zero test per component, up to two equality tests per stack step,
-   at most 2m steps).  On witness 1 the counts are pinned exactly: 1 flop
-   for carry_clean (`q1_carry_flops`), 21 for Compress (`q1_compress_flops`).
+   at most 2m steps).  Counting everything, carry_clean is at most 6m and
+   Compress at least 5(m-1): fewer flops, not proved cheaper overall, and
+   carry_clean's branches are data-dependent.  On witness 1 the flop counts
+   are pinned: 1 for carry_clean (`q1_carry_flops`), 21 for Compress
+   (`q1_compress_flops`).
 
    WHAT IS NOT PROVED (do not overclaim).  The correctness claim that would
    make the cost result matter -- that `carry_clean` output IS nonoverlapping
    on `fast_expansion_sum` of two Priest-valid inputs -- is stated below as
-   `carry_clean_priest_target`, a Definition, and is OPEN.  After the core
-   slice, all that it lacks is `fes_priest_carry_shape` (also a Definition,
-   also OPEN): that the floating-point sum of two Priest-valid inputs has
-   the block shape.  That bridge is the round-to-even part, and it is the
-   whole of what remains; `q1_carry_shape` shows the shape is attained by a
-   real sum, so the bridge is not vacuous.  A counterexample to it would
-   refute the target as stated, not the core.  "Rounding-free" describes the
+   `carry_clean_priest_target`, a Definition, and is OPEN.  The core reduces
+   it to a two-part bridge, both parts Definitions, both OPEN:
+     (a) `fes_priest_carry_pattern`: the sum's zero-filtered output splits
+         into blocks with strictly decreasing magnitudes;
+     (b) `fes_priest_reduction_nonoverlap`: the block reduction of such an
+         output is nonoverlapping -- the round-to-even content.
+   The implication is one way (`carry_clean_priest_target_of_bridge`).  The
+   bridge is strictly STRONGER than the target: strict keys exclude carry
+   cascades (a 2x followed by a twin (x, x) carries twice, which `cc_push`
+   handles and `carry_pattern` rejects).  So a counterexample to the bridge
+   refutes the bridge only; whether it also refutes the target has to be
+   checked on its own.  `q1_carry_shape` shows a real sum attains the
+   shape, so the bridge is not vacuous.  "Rounding-free" describes the
    CONTENT of the core: its axiom footprint still carries `classic`, because
-   `cblock_reduce` mentions `b64_mult` (Flocq C1).  Evidence: an
-   exhaustive check in a p-bit round-to-nearest-even model of the same
-   algorithm (tests/CarryCleanExhaustive) finds no failure over every
-   Priest-valid input pair with p = 3 (lengths <= 3, 366,766,976 pairs),
-   p = 4 (lengths <= 3, 2,146,417,920 pairs), p = 3 again with lengths
-   <= 4 (4,670,763,328 pairs), p = 2 (lengths <= 4, 148,581,504 pairs) and
-   p = 5 (lengths <= 2, 420,560,896 pairs), against
-   680 failures for `cancel_clean` at p = 3;
-   600,000 adversarial binary64 cases agree.  Evidence, not proof.  Nor is
-   `carry_clean` a drop-in replacement for Compress: QEX 2 shows its domain
-   is narrower, and Compress repairs both QEX witnesses
+   `cblock_reduce` mentions `b64_mult` (Flocq C1).
+
+   EVIDENCE (reconnaissance, not proof obligation; every number below is
+   reproducible with tests/CarryCleanExhaustive, whose header lists the
+   exact command lines): an exhaustive check in a p-bit round-to-nearest-
+   even model finds carry_clean nonoverlapping on every Priest-valid input
+   pair at p = 3 (lengths <= 3, 366,766,976 pairs; lengths <= 4,
+   4,670,763,328), p = 4 (lengths <= 3, 2,146,417,920), p = 2 (lengths
+   <= 4, 148,581,504; lengths <= 5, 1,196,510,640) and p = 5 (lengths <= 2,
+   420,560,896), and under an underflow floor at p = 2, 3, 4; against 680
+   failures for `cancel_clean` at p = 3.  The same runs count bridge parts
+   (a) and (b) and carry cascades; the counts are in the harness header.
+   Nor is `carry_clean` a drop-in replacement for Compress: QEX 2 shows its
+   domain is narrower, and Compress repairs both QEX witnesses
    (`q1_compress_nonoverlapping`, `q2_compress_nonoverlapping`).
 
    THE BASELINE.  `shewchuk_compress` transcribes Fig. 15: a top-down sweep
@@ -301,8 +324,12 @@ Proof.
   simpl in *. lia.
 Qed.
 
-(* The headline cost comparison. *)
-Theorem carry_clean_cheaper :
+(* The cost comparison, in FLOPS ONLY.  Comparisons are not counted:
+   carry_clean makes at most 5m, Compress 2(m-1), so on total operations
+   this does not show carry_clean cheaper, and its branches are
+   data-dependent.  The two algorithms also have different domains:
+   Compress repairs inputs carry_clean does not (QEX 2 below). *)
+Theorem carry_clean_fewer_flops :
   forall e : list binary64,
     (2 <= length e)%nat ->
     (snd (carry_clean_cost e) < snd (shewchuk_compress_cost e))%nat.
@@ -464,16 +491,17 @@ Qed.
 
 (* --------------------------------------------------------------------------
    The open target.  Stated, not claimed.  The overflow margin
-   2^(emax-4) keeps every TwoSum intermediate finite
-   (`b64_TwoSum_safe_bound`); it was 2^(emax-2) before rung 1 showed why
-   that was not enough for the crude bound.
+   2^(emax-5) keeps every accumulator of the cascade below 2^(emax-4)
+   (`fes_accumulators_bounded`), where every TwoSum is overflow-free
+   (`b64_TwoSum_safe_bound`).  It started at 2^(emax-2); the crude per-step
+   bound forced 2^(emax-4), the accumulator bound one more bit.
    -------------------------------------------------------------------------- *)
 
 Definition carry_clean_priest_target : Prop :=
   forall e f : list binary64,
     priest_chain e -> priest_chain f ->
     Forall b64_fin e -> Forall b64_fin f ->
-    abs_sum e + abs_sum f <= bpow radix2 (emax - 4) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
     nonoverlapping_chain (carry_clean (fast_expansion_sum e f)).
 
 (* --------------------------------------------------------------------------
@@ -914,17 +942,17 @@ Qed.
 
    `carry_clean` performs no arithmetic that can round.  On any input whose
    nonzero components split into BLOCKS -- a single u, a twin (x, x), or an
-   anti pair (x, -x) -- with strictly decreasing block magnitudes and a
-   nonoverlapping reduced list, the sweep acts block by block: anti pairs
-   are DELETED, twins are replaced by their exact double, singles pass
-   through.  `carry_clean_priest_core` states exactly that, plus exactness
-   of the sum and nonoverlap of the result.  No property of
-   `fast_expansion_sum` or of rounding enters.
+   anti pair (x, -x) -- with strictly decreasing block magnitudes (the
+   PATTERN), the sweep acts block by block: anti pairs are DELETED, twins
+   are replaced by their exact double, singles pass through.
+   `carry_clean_priest_core` states exactly that, plus exactness of the sum.
+   No property of `fast_expansion_sum` or of rounding enters.
 
-   The bridge from Priest's floating-point conditions to this shape is the
-   OPEN part: `fes_priest_carry_shape` says the sum of two Priest-valid
-   inputs always has the shape.  `carry_clean_priest_target_of_shape` proves
-   that it implies `carry_clean_priest_target`; nothing here proves it.
+   The bridge from Priest's floating-point conditions is the OPEN part, in
+   two Definitions: (a) the pattern (`fes_priest_carry_pattern`) and (b)
+   nonoverlap of the reduction (`fes_priest_reduction_nonoverlap`).
+   `carry_clean_priest_target_of_bridge` proves that they imply
+   `carry_clean_priest_target` -- one way only; nothing here proves them.
    ========================================================================== *)
 
 Inductive cblock : Type :=
@@ -973,6 +1001,11 @@ Fixpoint keys_decreasing (bs : list cblock) : Prop :=
       end /\ keys_decreasing rest
   end.
 
+(* (a) the block PATTERN: valid blocks, strictly decreasing magnitudes. *)
+Definition carry_pattern (bs : list cblock) : Prop :=
+  Forall block_ok bs /\ keys_decreasing bs.
+
+(* (a) and (b): the pattern, plus nonoverlap of the reduction. *)
 Definition carry_shape (bs : list cblock) : Prop :=
   Forall block_ok bs /\ keys_decreasing bs
   /\ nonoverlapping_chain (flat_map cblock_reduce bs).
@@ -1157,52 +1190,81 @@ Proof.
     [ rewrite (b64_is_zero_R x Hz); ring | reflexivity ].
 Qed.
 
-(* THE CORE THEOREM.  Rounding-free: the output is the block reduction,
-   the sum is preserved exactly, the result is nonoverlapping, and the only
-   arithmetic performed is the exact doubling of twins. *)
+(* THE CORE THEOREM.  Rounding-free: on the block PATTERN alone, the stack
+   sweep computes exactly the block reduction -- anti pairs deleted, twins
+   doubled exactly -- and preserves the sum.  Nonoverlap is NOT concluded
+   here: it is part (b) of the shape, a property of the reduction. *)
 Theorem carry_clean_priest_core :
   forall (l : list binary64) (bs : list cblock),
-    drop_zeros l = flat_map cblock_expand bs -> carry_shape bs ->
+    drop_zeros l = flat_map cblock_expand bs -> carry_pattern bs ->
     carry_clean l = flat_map cblock_reduce bs
     /\ expansion_R (carry_clean l) = expansion_R l
-    /\ nonoverlapping_chain (carry_clean l)
     /\ (forall x, In (CTwin x) bs ->
           Binary.B2R prec emax (b64_mult x b64_two_unit)
           = 2 * Binary.B2R prec emax x).
 Proof.
-  intros l bs Hl [Hok [Hdec Hno]].
+  intros l bs Hl [Hok Hdec].
   assert (Hcc : carry_clean l = flat_map cblock_reduce bs).
   { rewrite <- carry_clean_drop_zeros, Hl.
     unfold carry_clean, carry_clean_cost. rewrite cc_run_fst.
     rewrite (run_stack_blocks bs nil Hok Hdec (Forall_nil _));
       [ rewrite app_nil_r, rev_involutive; reflexivity | ].
     destruct bs; exact I. }
-  split; [ exact Hcc | split; [ | split ] ].
+  split; [ exact Hcc | split ].
   - rewrite Hcc, reduce_sum, <- Hl, expansion_R_drop_zeros by exact Hok. reflexivity.
-  - rewrite Hcc. exact Hno.
   - intros x Hin. rewrite Forall_forall in Hok. specialize (Hok _ Hin).
     destruct Hok as [[Hxf _] Hov]. apply (double_exact x Hxf Hov).
 Qed.
 
+(* With the reduction nonoverlapping too, so is carry_clean's output.  This
+   conclusion is part (b) passed through; the content is the core above. *)
+Corollary carry_clean_nonoverlap_of_shape :
+  forall (l : list binary64) (bs : list cblock),
+    drop_zeros l = flat_map cblock_expand bs -> carry_shape bs ->
+    nonoverlapping_chain (carry_clean l).
+Proof.
+  intros l bs Hl [Hok [Hdec Hno]].
+  destruct (carry_clean_priest_core l bs Hl (conj Hok Hdec)) as [Hcc _].
+  rewrite Hcc. exact Hno.
+Qed.
+
 (* --------------------------------------------------------------------------
-   The open bridge, stated as a Definition so that nothing reads as proved.
+   The open bridge, in two parts, stated as Definitions so that nothing reads
+   as proved.  (a) is a pattern on the raw output; (b) is where the
+   round-to-even content sits.  The proved implication runs ONE way:
+   bridge -> target.  The bridge is strictly stronger than the target --
+   strict keys exclude carry cascades (a 2x followed by a twin (x, x) carries
+   twice, which `cc_push` handles and `carry_pattern` rejects) -- so a
+   counterexample to the bridge refutes only the bridge.
    -------------------------------------------------------------------------- *)
 
-Definition fes_priest_carry_shape : Prop :=
+Definition fes_priest_carry_pattern : Prop :=
   forall e f : list binary64,
     priest_chain e -> priest_chain f ->
     Forall b64_fin e -> Forall b64_fin f ->
-    abs_sum e + abs_sum f <= bpow radix2 (emax - 4) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
     exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
-               /\ carry_shape bs.
+               /\ carry_pattern bs.
 
-(* The core reduces the target to the bridge -- and to nothing else. *)
-Theorem carry_clean_priest_target_of_shape :
-  fes_priest_carry_shape -> carry_clean_priest_target.
+Definition fes_priest_reduction_nonoverlap : Prop :=
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    forall bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs ->
+               carry_pattern bs ->
+               nonoverlapping_chain (flat_map cblock_reduce bs).
+
+(* The core reduces the target to the two bridge parts -- one way only. *)
+Theorem carry_clean_priest_target_of_bridge :
+  fes_priest_carry_pattern -> fes_priest_reduction_nonoverlap ->
+  carry_clean_priest_target.
 Proof.
-  intros Hshape e f He Hf Hef Hff Hov.
-  destruct (Hshape e f He Hf Hef Hff Hov) as [bs [Hl Hs]].
-  apply (carry_clean_priest_core _ bs Hl Hs).
+  intros Hpat Hred e f He Hf Hef Hff Hov.
+  destruct (Hpat e f He Hf Hef Hff Hov) as [bs [Hl [Hok Hdec]]].
+  apply (carry_clean_nonoverlap_of_shape _ bs Hl).
+  split; [ exact Hok | split; [ exact Hdec | ] ].
+  apply (Hred e f He Hf Hef Hff Hov bs Hl (conj Hok Hdec)).
 Qed.
 
 Lemma two_scaled :
@@ -1247,13 +1309,15 @@ Proof.
 Qed.
 
 (* ==========================================================================
-   BRIDGE, RUNG 1 -- at most two components in total.
+   BRIDGE, BASE CASE (trivial) -- at most two components in total.
 
-   The base rung of `fes_priest_carry_shape`: when `e ++ f` has at most two
-   components the sum is at most one TwoSum, and its output always has the
-   block shape (as singles).  The Priest hypothesis is not even needed here;
-   it starts to bite from three components, where the twin and anti blocks
-   first appear.
+   When `e ++ f` has at most two components the sum is at most one TwoSum,
+   and its output has the shape (as singles): this is `b64_TwoSum_nonoverlap`
+   plus the overflow bound below.  No twins or anti pairs occur, so carry and
+   cancel never run, and the Priest hypothesis is not needed.  The reusable
+   results of this section are the overflow bounds: one TwoSum
+   (`b64_TwoSum_safe_bound`) and every TwoSum of the cascade
+   (`fes_cascade_safe`).
 
    Overflow: `b64_TwoSum_safe_bound` discharges all six per-operation
    no-overflow conditions of one TwoSum from |x|, |y| <= 2^(emax - 4).  In
@@ -1444,8 +1508,8 @@ Proof.
   eapply Forall_impl; [ | exact IH ]. intros y Hy. cbn beta in Hy. lra.
 Qed.
 
-(* RUNG 1. *)
-Theorem fes_carry_shape_rung1 :
+(* The trivial base case. *)
+Theorem fes_carry_bridge_base_case :
   forall e f : list binary64,
     (length e + length f <= 2)%nat ->
     Forall b64_fin e -> Forall b64_fin f ->
@@ -1479,8 +1543,8 @@ Proof.
   - cbn [length] in Hl. lia.
 Qed.
 
-(* The target, on the first rung, through the core. *)
-Corollary carry_clean_priest_target_rung1 :
+(* The target on the base case. *)
+Corollary carry_clean_priest_target_base_case :
   forall e f : list binary64,
     (length e + length f <= 2)%nat ->
     Forall b64_fin e -> Forall b64_fin f ->
@@ -1488,8 +1552,111 @@ Corollary carry_clean_priest_target_rung1 :
     nonoverlapping_chain (carry_clean (fast_expansion_sum e f)).
 Proof.
   intros e f Hlen He Hf Hov.
-  destruct (fes_carry_shape_rung1 e f Hlen He Hf Hov) as [bs [Hl Hs]].
-  apply (carry_clean_priest_core _ bs Hl Hs).
+  destruct (fes_carry_bridge_base_case e f Hlen He Hf Hov) as [bs [Hl Hs]].
+  apply (carry_clean_nonoverlap_of_shape _ bs Hl Hs).
+Qed.
+
+(* --------------------------------------------------------------------------
+   Every TwoSum of the cascade is overflow-free (for every later rung).
+
+   Round-to-nearest returns a float at least as close to q + e as q itself,
+   so the rounding error is at most |e| and |RN(q + e)| <= |q| + 2|e|.
+   Hence every accumulator stays below 2 * abs_sum, and with
+   abs_sum e + abs_sum f <= 2^(emax-5) every TwoSum's inputs are at most
+   2^(emax-4) -- where `b64_TwoSum_safe_bound` applies.
+   -------------------------------------------------------------------------- *)
+
+Lemma round_N_err_le_operand :
+  forall a b : R,
+    generic_format radix2 (SpecFloat.fexp prec emax) a ->
+    Rabs (round radix2 (SpecFloat.fexp prec emax)
+            (BinarySingleNaN.round_mode mode_b64) (a + b) - (a + b)) <= Rabs b.
+Proof.
+  intros a b Ha.
+  change (BinarySingleNaN.round_mode mode_b64) with (Znearest (fun x => negb (Z.even x))).
+  destruct (round_N_pt radix2 (SpecFloat.fexp prec emax)
+              (fun x => negb (Z.even x)) (a + b)) as [_ Hmin].
+  specialize (Hmin a Ha).
+  replace (a - (a + b)) with (- b) in Hmin by ring.
+  rewrite Rabs_Ropp in Hmin. exact Hmin.
+Qed.
+
+Fixpoint cascade_safe (q : binary64) (es : list binary64) : Prop :=
+  match es with
+  | nil => True
+  | e :: es' => b64_TwoSum_safe e q /\ cascade_safe (fst (b64_TwoSum e q)) es'
+  end.
+
+Lemma cascade_safe_bounded :
+  forall es q,
+    b64_fin q -> Forall b64_fin es ->
+    Rabs (Binary.B2R prec emax q) + 2 * abs_sum es <= bpow radix2 (emax - 4) ->
+    cascade_safe q es.
+Proof.
+  induction es as [| e es IH]; intros q Hq Hes Hb; [ exact I | ].
+  inversion Hes as [| ? ? He Hes']; subst. cbn [cascade_safe abs_sum] in *.
+  pose proof (abs_sum_nonneg es) as Hsn.
+  pose proof (Rabs_pos (Binary.B2R prec emax e)) as Hep.
+  pose proof (Rabs_pos (Binary.B2R prec emax q)) as Hqp.
+  assert (Heb : Rabs (Binary.B2R prec emax e) <= bpow radix2 (emax - 4)) by lra.
+  assert (Hqb : Rabs (Binary.B2R prec emax q) <= bpow radix2 (emax - 4)) by lra.
+  pose proof (b64_TwoSum_safe_bound e q He Hq Heb Hqb) as Hsafe.
+  split; [ exact Hsafe | ].
+  destruct Hsafe as [S1 _].
+  destruct (b64_plus_correct e q S1) as [HR Hf].
+  change (fst (b64_TwoSum e q)) with (b64_plus e q).
+  apply IH; [ exact Hf | exact Hes' | ].
+  (* |RN(e + q)| <= |q| + 2 |e| *)
+  assert (Hstep : Rabs (Binary.B2R prec emax (b64_plus e q))
+                  <= Rabs (Binary.B2R prec emax q) + 2 * Rabs (Binary.B2R prec emax e)).
+  { rewrite HR, Rplus_comm.
+    pose proof (round_N_err_le_operand (Binary.B2R prec emax q) (Binary.B2R prec emax e)
+                  (Binary.generic_format_B2R prec emax q)) as Herr.
+    pose proof (Rabs_triang (Binary.B2R prec emax q) (Binary.B2R prec emax e)) as Ht.
+    set (r := round radix2 (SpecFloat.fexp prec emax) (BinarySingleNaN.round_mode mode_b64)
+                (Binary.B2R prec emax q + Binary.B2R prec emax e)) in *.
+    replace r with ((r - (Binary.B2R prec emax q + Binary.B2R prec emax e))
+                    + (Binary.B2R prec emax q + Binary.B2R prec emax e)) by ring.
+    pose proof (Rabs_triang (r - (Binary.B2R prec emax q + Binary.B2R prec emax e))
+                  (Binary.B2R prec emax q + Binary.B2R prec emax e)). lra. }
+  lra.
+Qed.
+
+Lemma abs_sum_insert :
+  forall x l, abs_sum (insert_by_abs x l) = Rabs (Binary.B2R prec emax x) + abs_sum l.
+Proof.
+  intros x l. induction l as [| y l IH]; [ reflexivity | ].
+  cbn [insert_by_abs]. destruct (Rle_dec _ _); cbn [abs_sum]; [ reflexivity | rewrite IH; ring ].
+Qed.
+
+Lemma abs_sum_sort : forall l, abs_sum (sort_by_abs l) = abs_sum l.
+Proof.
+  induction l as [| x l IH]; [ reflexivity | ].
+  cbn [sort_by_abs abs_sum]. rewrite abs_sum_insert, IH. reflexivity.
+Qed.
+
+(* The cascade of `fast_expansion_sum` never overflows. *)
+Theorem fes_cascade_safe :
+  forall e f : list binary64,
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    match sort_by_abs (e ++ f) with
+    | nil => True
+    | x :: xs => cascade_safe x xs
+    end.
+Proof.
+  intros e f He Hf Hov.
+  assert (Hfin : Forall b64_fin (sort_by_abs (e ++ f)))
+    by (apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hsum : abs_sum (sort_by_abs (e ++ f)) <= bpow radix2 (emax - 5))
+    by (rewrite abs_sum_sort, abs_sum_app; exact Hov).
+  destruct (sort_by_abs (e ++ f)) as [| x xs]; [ exact I | ].
+  inversion Hfin as [| ? ? Hx Hxs]; subst. cbn [abs_sum] in Hsum.
+  apply cascade_safe_bounded; [ exact Hx | exact Hxs | ].
+  assert (H45 : bpow radix2 (emax - 4) = 2 * bpow radix2 (emax - 5)).
+  { replace (emax - 4)%Z with ((emax - 5) + 1)%Z by ring.
+    rewrite bpow_plus. rewrite (bpow_1 radix2). simpl. ring. }
+  pose proof (Rabs_pos (Binary.B2R prec emax x)). lra.
 Qed.
 
 (* --------------------------------------------------------------------------
@@ -1507,7 +1674,7 @@ Qed.
      C8. `compress_down`: stored component dropped         pin: `q1_compress`
      C9. `compress_up`: zero errors kept           pin: `compress_drops_zero_error`
    C4 is the reason the flop pins exist: without `q1_carry_flops` it
-   survives, because `carry_clean_cheaper` is an inequality and an
+   survives, because `carry_clean_fewer_flops` is an inequality and an
    undercounting counter only strengthens it.  Replayed 2026-10-29 on
    Rocq 9.2 + Flocq 4.2.2.
    -------------------------------------------------------------------------- *)
@@ -1518,7 +1685,7 @@ Qed.
 
 Print Assumptions carry_clean_flops_le.
 Print Assumptions compress_flops_ge.
-Print Assumptions carry_clean_cheaper.
+Print Assumptions carry_clean_fewer_flops.
 Print Assumptions carry_clean_exact.
 Print Assumptions cancel_clean_exact.
 Print Assumptions B2R_fin_nonzero.
@@ -1548,10 +1715,13 @@ Print Assumptions run_stack_block.
 Print Assumptions run_stack_blocks.
 Print Assumptions reduce_sum.
 Print Assumptions carry_clean_priest_core.
-Print Assumptions carry_clean_priest_target_of_shape.
+Print Assumptions carry_clean_nonoverlap_of_shape.
+Print Assumptions carry_clean_priest_target_of_bridge.
 Print Assumptions q1_drop_zeros.
 Print Assumptions q1_carry_shape.
 Print Assumptions b64_TwoSum_safe_bound.
 Print Assumptions twosum_carry_shape.
-Print Assumptions fes_carry_shape_rung1.
-Print Assumptions carry_clean_priest_target_rung1.
+Print Assumptions fes_carry_bridge_base_case.
+Print Assumptions carry_clean_priest_target_base_case.
+Print Assumptions cascade_safe_bounded.
+Print Assumptions fes_cascade_safe.
