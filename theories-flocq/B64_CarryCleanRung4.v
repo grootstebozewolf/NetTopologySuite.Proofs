@@ -47,7 +47,7 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; reviewed on PR #988 (2026-10-31).
      Assisted-by: Claude
    ========================================================================== *)
 
