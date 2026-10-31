@@ -52,6 +52,12 @@
      BRIDGE   carry_clean_priest_target_of_shape
                                          fes_priest_carry_shape implies
                                          carry_clean_priest_target
+     RUNG 1   fes_carry_shape_rung1      the bridge holds when e ++ f has
+                                         at most two components (one
+                                         TwoSum; Priest not needed), hence
+              carry_clean_priest_target_rung1   the target there too;
+              b64_TwoSum_safe_bound      one TwoSum never overflows for
+                                         |x|, |y| <= 2^(emax-4)
 
    The flop counts are produced by the algorithm definitions themselves
    (each returns its result paired with the number of `b64_plus` /
@@ -106,7 +112,7 @@
 
 From Stdlib Require Import Reals ZArith Lia Lra List.
 From Flocq Require Import IEEE754.Binary Core.
-From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_Pff_bridge
+From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib B64_Pff_bridge
      B64_Expansion B64_FastExpansionSum B64_FastExpansionSum_Shewchuk
      B64_Shewchuk_Thm13_counterexample B64_Overlap_Hierarchy
      B64_Priest_FES_counterexample DivRoundPow2_b64.
@@ -457,15 +463,17 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   The open target.  Stated, not claimed.  The overflow margin keeps every
-   intermediate of the cascade finite.
+   The open target.  Stated, not claimed.  The overflow margin
+   2^(emax-4) keeps every TwoSum intermediate finite
+   (`b64_TwoSum_safe_bound`); it was 2^(emax-2) before rung 1 showed why
+   that was not enough for the crude bound.
    -------------------------------------------------------------------------- *)
 
 Definition carry_clean_priest_target : Prop :=
   forall e f : list binary64,
     priest_chain e -> priest_chain f ->
     Forall b64_fin e -> Forall b64_fin f ->
-    abs_sum e + abs_sum f < bpow radix2 (emax - 2) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 4) ->
     nonoverlapping_chain (carry_clean (fast_expansion_sum e f)).
 
 (* --------------------------------------------------------------------------
@@ -1184,7 +1192,7 @@ Definition fes_priest_carry_shape : Prop :=
   forall e f : list binary64,
     priest_chain e -> priest_chain f ->
     Forall b64_fin e -> Forall b64_fin f ->
-    abs_sum e + abs_sum f < bpow radix2 (emax - 2) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 4) ->
     exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
                /\ carry_shape bs.
 
@@ -1236,6 +1244,252 @@ Proof.
     repeat split; apply scaled_lt'; zdec.
   - rewrite q1_reduce. pose proof q1_carry_nonoverlapping as H.
     rewrite q1_carry in H. exact H.
+Qed.
+
+(* ==========================================================================
+   BRIDGE, RUNG 1 -- at most two components in total.
+
+   The base rung of `fes_priest_carry_shape`: when `e ++ f` has at most two
+   components the sum is at most one TwoSum, and its output always has the
+   block shape (as singles).  The Priest hypothesis is not even needed here;
+   it starts to bite from three components, where the twin and anti blocks
+   first appear.
+
+   Overflow: `b64_TwoSum_safe_bound` discharges all six per-operation
+   no-overflow conditions of one TwoSum from |x|, |y| <= 2^(emax - 4).  In
+   units of u = 2^(emax - 4) the six intermediates stay below 2u, 3u, 5u,
+   6u, 4u and 10u, all under 16u = 2^emax.  This is why the target's margin
+   is `abs_sum e + abs_sum f <= 2^(emax - 4)`.
+   ========================================================================== *)
+
+Lemma format_k_u :
+  forall k : Z, (Z.abs k <= 2 ^ prec)%Z ->
+    generic_format radix2 (SpecFloat.fexp prec emax) (IZR k * bpow radix2 (emax - 4)).
+Proof.
+  intros k Hk.
+  change (IZR k * bpow radix2 (emax - 4)) with (F2R (Float radix2 k (emax - 4))).
+  apply generic_format_F2R_le_pow_prec; [ exact Hk | unfold emax, prec; lia ].
+Qed.
+
+(* One safe operation, with the bound its rounded result inherits. *)
+Lemma safe_within :
+  forall (op : R -> R -> R) (x y : binary64) (k : Z),
+    b64_fin x -> b64_fin y -> (0 <= k < 16)%Z ->
+    Rabs (op (Binary.B2R prec emax x) (Binary.B2R prec emax y))
+      <= IZR k * bpow radix2 (emax - 4) ->
+    b64_safe op x y
+    /\ Rabs (round radix2 (SpecFloat.fexp prec emax) (BinarySingleNaN.round_mode mode_b64)
+               (op (Binary.B2R prec emax x) (Binary.B2R prec emax y)))
+       <= IZR k * bpow radix2 (emax - 4).
+Proof.
+  intros op x y k Hx Hy Hk Hb.
+  assert (Hr : Rabs (round radix2 (SpecFloat.fexp prec emax) (BinarySingleNaN.round_mode mode_b64)
+                       (op (Binary.B2R prec emax x) (Binary.B2R prec emax y)))
+               <= IZR k * bpow radix2 (emax - 4)).
+  { apply abs_round_le_generic;
+      [ typeclasses eauto | apply BinarySingleNaN.valid_rnd_round_mode
+      | apply format_k_u; unfold prec; lia | exact Hb ]. }
+  split; [ | exact Hr ].
+  split; [ exact Hx | split; [ exact Hy | ] ].
+  eapply Rle_lt_trans; [ exact Hr | ].
+  replace (bpow radix2 emax) with (IZR 16 * bpow radix2 (emax - 4)).
+  - apply Rmult_lt_compat_r; [ apply bpow_gt_0 | apply IZR_lt; lia ].
+  - replace emax with (4 + (emax - 4))%Z at 2 by ring.
+    rewrite bpow_plus. reflexivity.
+Qed.
+
+Lemma b64_TwoSum_safe_bound :
+  forall x y : binary64,
+    b64_fin x -> b64_fin y ->
+    Rabs (Binary.B2R prec emax x) <= bpow radix2 (emax - 4) ->
+    Rabs (Binary.B2R prec emax y) <= bpow radix2 (emax - 4) ->
+    b64_TwoSum_safe x y.
+Proof.
+  intros x y Hx Hy Hxb Hyb.
+  assert (Hu : 0 < bpow radix2 (emax - 4)) by apply bpow_gt_0.
+  (* a = x + y *)
+  destruct (safe_within Rplus x y 2 Hx Hy ltac:(lia)) as [S1 B1].
+  { eapply Rle_trans; [ apply Rabs_triang | ]. lra. }
+  destruct (b64_plus_correct x y S1) as [Ra Fa].
+  set (a := b64_plus x y) in *. rewrite <- Ra in B1.
+  (* x' = a - x *)
+  destruct (safe_within Rminus a x 3 Fa Hx ltac:(lia)) as [S2 B2].
+  { unfold Rminus. eapply Rle_trans; [ apply Rabs_triang | ].
+    rewrite Rabs_Ropp. lra. }
+  destruct (b64_minus_correct a x S2) as [Rx' Fx'].
+  set (x' := b64_minus a x) in *. rewrite <- Rx' in B2.
+  (* y' = a - x' *)
+  destruct (safe_within Rminus a x' 5 Fa Fx' ltac:(lia)) as [S3 B3].
+  { unfold Rminus. eapply Rle_trans; [ apply Rabs_triang | ].
+    rewrite Rabs_Ropp. lra. }
+  destruct (b64_minus_correct a x' S3) as [Ry' Fy'].
+  set (y' := b64_minus a x') in *. rewrite <- Ry' in B3.
+  (* dx = x - y' *)
+  destruct (safe_within Rminus x y' 6 Hx Fy' ltac:(lia)) as [S4 B4].
+  { unfold Rminus. eapply Rle_trans; [ apply Rabs_triang | ].
+    rewrite Rabs_Ropp. lra. }
+  destruct (b64_minus_correct x y' S4) as [Rdx Fdx].
+  rewrite <- Rdx in B4.
+  (* dy = y - x' *)
+  destruct (safe_within Rminus y x' 4 Hy Fx' ltac:(lia)) as [S5 B5].
+  { unfold Rminus. eapply Rle_trans; [ apply Rabs_triang | ].
+    rewrite Rabs_Ropp. lra. }
+  destruct (b64_minus_correct y x' S5) as [Rdy Fdy].
+  rewrite <- Rdy in B5.
+  (* b = dx + dy *)
+  destruct (safe_within Rplus (b64_minus x y') (b64_minus y x') 10 Fdx Fdy ltac:(lia))
+    as [S6 _].
+  { eapply Rle_trans; [ apply Rabs_triang | ]. lra. }
+  exact (conj S1 (conj S2 (conj S3 (conj S4 (conj S5 S6))))).
+Qed.
+
+Lemma b64_fin_zero_is_zero :
+  forall x, b64_fin x -> Binary.B2R prec emax x = 0 -> b64_is_zero x = true.
+Proof.
+  intros [s | s | s pl Hpl | s m e H] Hf Hx; try reflexivity; try discriminate.
+  exfalso. exact (B2R_fin_nonzero s m e H Hx).
+Qed.
+
+Lemma b64_nz_of_not_zero :
+  forall x, b64_fin x -> b64_is_zero x = false -> b64_nz x.
+Proof.
+  intros [s | s | s pl Hpl | s m e H] Hf Hz; try discriminate.
+  split; [ exact Hf | apply B2R_fin_nonzero ].
+Qed.
+
+(* One TwoSum's output always has the shape (as at most two singles). *)
+Lemma twosum_carry_shape :
+  forall v u : binary64,
+    b64_fin v -> b64_fin u ->
+    Rabs (Binary.B2R prec emax v) <= bpow radix2 (emax - 4) ->
+    Rabs (Binary.B2R prec emax u) <= bpow radix2 (emax - 4) ->
+    exists bs,
+      drop_zeros [fst (b64_TwoSum v u); snd (b64_TwoSum v u)]
+      = flat_map cblock_expand bs
+      /\ carry_shape bs.
+Proof.
+  intros v u Hv Hu Hvb Hub.
+  pose proof (b64_TwoSum_safe_bound v u Hv Hu Hvb Hub) as Hsafe.
+  destruct Hsafe as (S1 & S2 & S3 & S4 & S5 & S6).
+  pose proof (b64_TwoSum_nonoverlap v u S1 S2 S3 S4 S5 S6) as Hno.
+  destruct (b64_plus_correct v u S1) as [_ Fs].
+  destruct (b64_plus_correct _ _ S6) as [_ Fh].
+  unfold b64_TwoSum in *. cbn [fst snd] in *.
+  set (s := b64_plus v u) in *.
+  set (h := b64_plus _ _) in Hno, Fh |- *.
+  destruct (Req_dec (Binary.B2R prec emax s) 0) as [Hs0 | Hs0].
+  - (* s = 0: then |h| <= ulp(0)/2 < 2^emin, so h = 0 too *)
+    assert (Hh0 : Binary.B2R prec emax h = 0).
+    { apply binary64_below_emin_is_zero.
+      rewrite Hs0 in Hno.
+      change (ulp radix2 (SpecFloat.fexp prec emax) 0) with (b64_ulp 0) in Hno.
+      rewrite b64_ulp_FLT_0 in Hno.
+      pose proof (bpow_gt_0 radix2 (3 - emax - prec)). lra. }
+    exists []. split; [ | repeat split; constructor ].
+    unfold drop_zeros. cbn [filter].
+    rewrite (b64_fin_zero_is_zero s Fs Hs0), (b64_fin_zero_is_zero h Fh Hh0).
+    reflexivity.
+  - assert (Hsz : b64_is_zero s = false).
+    { destruct (b64_is_zero s) eqn:E; [ | reflexivity ].
+      exfalso. apply Hs0. apply b64_is_zero_R, E. }
+    pose proof (b64_nz_of_not_zero s Fs Hsz) as Hsnz.
+    destruct (b64_is_zero h) eqn:Hhz.
+    + exists [CSingle s]. split.
+      * unfold drop_zeros. cbn [filter]. rewrite Hsz, Hhz. reflexivity.
+      * repeat split; [ constructor; [ exact Hsnz | constructor ] ].
+    + pose proof (b64_nz_of_not_zero h Fh Hhz) as Hhnz.
+      exists [CSingle s; CSingle h]. split.
+      * unfold drop_zeros. cbn [filter]. rewrite Hsz, Hhz. reflexivity.
+      * split; [ constructor; [ exact Hsnz | constructor; [ exact Hhnz | constructor ] ] | split ].
+        -- (* |h| <= ulp(s)/2 <= |s|/2 < |s| *)
+           cbn [keys_decreasing block_key]. split; [ | exact (conj I I) ].
+           pose proof (ulp_le_abs radix2 (SpecFloat.fexp prec emax)
+                         (Binary.B2R prec emax s) Hs0
+                         (Binary.generic_format_B2R prec emax s)) as Hulp.
+           pose proof (Rabs_pos_lt _ Hs0). lra.
+        -- cbn [flat_map cblock_reduce app nonoverlapping_chain].
+           split; [ | exact I ].
+           apply strict_succ_b64_nonoverlapping. exact Hno.
+Qed.
+
+Lemma sort_by_abs_Forall :
+  forall (P : binary64 -> Prop) l, Forall P l -> Forall P (sort_by_abs l).
+Proof.
+  intros P l. induction l as [| x l IH]; intro H; [ constructor | ].
+  inversion H as [| ? ? Hx Hl]; subst. cbn [sort_by_abs].
+  specialize (IH Hl). clear H Hl.
+  induction (sort_by_abs l) as [| y ys IHy]; cbn [insert_by_abs].
+  - constructor; [ exact Hx | constructor ].
+  - inversion IH as [| ? ? Hy Hys]; subst.
+    destruct (Rle_dec _ _); [ constructor; assumption | ].
+    constructor; [ exact Hy | apply IHy, Hys ].
+Qed.
+
+Lemma sort_by_abs_length : forall l, length (sort_by_abs l) = length l.
+Proof.
+  induction l as [| x l IH]; [ reflexivity | ]. cbn [sort_by_abs length].
+  rewrite <- IH. clear IH. induction (sort_by_abs l) as [| y ys IHy]; [ reflexivity | ].
+  cbn [insert_by_abs]. destruct (Rle_dec _ _); cbn [length]; [ reflexivity | rewrite IHy; reflexivity ].
+Qed.
+
+Lemma abs_sum_app : forall l1 l2, abs_sum (l1 ++ l2) = abs_sum l1 + abs_sum l2.
+Proof. induction l1 as [| x l1 IH]; intro l2; cbn [app abs_sum]; [ lra | rewrite IH; lra ]. Qed.
+
+Lemma abs_le_abs_sum :
+  forall l, Forall (fun x => Rabs (Binary.B2R prec emax x) <= abs_sum l) l.
+Proof.
+  induction l as [| x l IH]; [ constructor | ]. cbn [abs_sum].
+  pose proof (abs_sum_nonneg l). pose proof (Rabs_pos (Binary.B2R prec emax x)).
+  constructor; [ lra | ].
+  eapply Forall_impl; [ | exact IH ]. intros y Hy. cbn beta in Hy. lra.
+Qed.
+
+(* RUNG 1. *)
+Theorem fes_carry_shape_rung1 :
+  forall e f : list binary64,
+    (length e + length f <= 2)%nat ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 4) ->
+    exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
+               /\ carry_shape bs.
+Proof.
+  intros e f Hlen He Hf Hov.
+  assert (Hfin : Forall b64_fin (sort_by_abs (e ++ f)))
+    by (apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hbnd : Forall (fun x => Rabs (Binary.B2R prec emax x) <= bpow radix2 (emax - 4))
+                   (sort_by_abs (e ++ f))).
+  { apply sort_by_abs_Forall. eapply Forall_impl; [ | apply abs_le_abs_sum ].
+    intros x Hx. cbn beta in Hx. rewrite abs_sum_app in Hx. lra. }
+  assert (Hl : (length (sort_by_abs (e ++ f)) <= 2)%nat)
+    by (rewrite sort_by_abs_length, length_app; exact Hlen).
+  unfold fast_expansion_sum.
+  destruct (sort_by_abs (e ++ f)) as [| a [| b [| c rest]]].
+  - exists []. split; [ reflexivity | repeat split; constructor ].
+  - cbn [b64_grow_expansion_aux rev]. inversion Hfin as [| ? ? Ha _]; subst.
+    destruct (b64_is_zero a) eqn:Hz.
+    + exists []. split; [ unfold drop_zeros; cbn [filter]; rewrite Hz; reflexivity | ].
+      repeat split; constructor.
+    + exists [CSingle a]. split; [ unfold drop_zeros; cbn [filter]; rewrite Hz; reflexivity | ].
+      repeat split; [ constructor; [ apply b64_nz_of_not_zero; assumption | constructor ] ].
+  - inversion Hfin as [| ? ? Ha Hb']; subst. inversion Hb' as [| ? ? Hb _]; subst.
+    inversion Hbnd as [| ? ? Hab Hbb']; subst. inversion Hbb' as [| ? ? Hbb _]; subst.
+    destruct (twosum_carry_shape b a Hb Ha Hbb Hab) as [bs [Hd Hs]].
+    exists bs. split; [ | exact Hs ]. rewrite <- Hd.
+    cbn [b64_grow_expansion_aux]. destruct (b64_TwoSum b a) as [s h]. reflexivity.
+  - cbn [length] in Hl. lia.
+Qed.
+
+(* The target, on the first rung, through the core. *)
+Corollary carry_clean_priest_target_rung1 :
+  forall e f : list binary64,
+    (length e + length f <= 2)%nat ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 4) ->
+    nonoverlapping_chain (carry_clean (fast_expansion_sum e f)).
+Proof.
+  intros e f Hlen He Hf Hov.
+  destruct (fes_carry_shape_rung1 e f Hlen He Hf Hov) as [bs [Hl Hs]].
+  apply (carry_clean_priest_core _ bs Hl Hs).
 Qed.
 
 (* --------------------------------------------------------------------------
@@ -1297,3 +1551,7 @@ Print Assumptions carry_clean_priest_core.
 Print Assumptions carry_clean_priest_target_of_shape.
 Print Assumptions q1_drop_zeros.
 Print Assumptions q1_carry_shape.
+Print Assumptions b64_TwoSum_safe_bound.
+Print Assumptions twosum_carry_shape.
+Print Assumptions fes_carry_shape_rung1.
+Print Assumptions carry_clean_priest_target_rung1.
