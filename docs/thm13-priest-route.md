@@ -14,17 +14,14 @@ condition from input to output
 (`B64_Priest_FES_counterexample.v : fes_priest_gap_preservation_false`), and
 Priest-valid input need not give even a Shewchuk-nonoverlapping output
 (`B64_Priest_FES_counterexample.v : fes_priest_to_nonoverlapping_false`).
-Priest never claims either: he renormalizes. The witness is Shewchuk's 4-bit
-example from §2, already a Priest expansion (gap exactly *p*). Lifted with
-`M = 2^53 − 1`, `e = f = [M·2^106, M·2^53, M]` gives
-`[2^160, −2^106, 2^106, −2^53, 2^53 − 2, +0]`, machine-checked
-(`B64_Priest_FES_counterexample.v : fes_witness`).
+Priest never claims either: he renormalizes. Witness: Shewchuk's 4-bit
+example from §2, lifted (`B64_Priest_FES_counterexample.v : fes_witness`).
 
 **Open — the stop condition's target:** Priest's one-digit bound. The
 offending pair is within one bit
-(`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); a random
-binary64 search and an exhaustive *p* = 3 search to length 2 (review aids,
-scripts not in tree) found no `overlap_within 1` failure. Evidence only.
+(`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); exhaustive
+*p*-bit searches (to *p* = 3, length 4; `tests/CarryCleanExhaustive` mode 2)
+found no `overlap_within 1` failure. Evidence only.
 
 ## 1. Where the lane actually stands
 
