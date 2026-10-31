@@ -30,21 +30,24 @@
                                       for EVERY decomposition (`desc_all_singles`)
      carry_clean_priest_target_rung3  the target for every total <= 4
    The Priest hypothesis enters only through `priest_keys4`; everything
-   after it is `fes4_shape_of_keys`, which takes the two key bounds as
-   hypotheses.  Overflow margin 2^(emax-5).
+   after it is `fes4_shape_of_keys`, which takes the two key bounds and
+   |g3| <= |g4| -- not the full ordering -- as hypotheses.  Overflow margin
+   2^(emax-5).
 
    NOT COVERED.  Five or more components.  In the harness windows
    (tests/CarryCleanExhaustive, TOTAL argument) twins and anti pairs first
    occur at total length 5, so the next rung cannot be all singles: carry
-   and cancel do real work there.  Neither key alone suffices: dropping
-   either one admits overlapping outputs (a p = 3 search, not recorded).
+   and cancel do real work there.  Neither key alone suffices in the p-bit
+   model: dropping either one admits overlapping outputs
+   (tests/CarryCleanExhaustive/keys4_tight.c, results in its header; no
+   binary64 witness is pinned).
 
    NTS / JTS COUNTERPART.  None in-library (JTS/NTS use `CGAlgorithmsDD`,
    double-double); this lane serves the corpus's exact orientation.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; reviewed on PR #987 (2026-10-31).
      Assisted-by: Claude
    ========================================================================== *)
 
@@ -450,7 +453,10 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   Three chained TwoSums, given the keys.  No Priest hypothesis here.
+   Three chained TwoSums, given the keys.  No Priest hypothesis here, and
+   no full ordering either: only |g3| <= |g4| and the two keys (`keys4`).
+   The ordering of g1, g2 among themselves and below g3 is not used, which
+   leaves a later rung less to establish before reusing it.
    -------------------------------------------------------------------------- *)
 
 Definition fes4 (g1 g2 g3 g4 : binary64) : list binary64 :=

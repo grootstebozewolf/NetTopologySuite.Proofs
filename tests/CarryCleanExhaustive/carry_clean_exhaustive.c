@@ -39,7 +39,8 @@
    Build and run:
      cc -O2 -o carry_clean_exhaustive carry_clean_exhaustive.c
      ./carry_clean_exhaustive P KLO KHI L MODE CLASS [FLOOR [TOTAL]]
-   TOTAL keeps only pairs whose lengths sum to at most TOTAL.
+   TOTAL (at least 2; default 99, i.e. no limit) keeps only pairs whose
+   lengths sum to at most TOTAL; SUMMARY echoes it.
 
    Recorded results (2026-10-29 .. 2026-10-31), CLASS 0 unless stated:
      p KLO KHI L MODE FLOOR        pairs  fails  notes
@@ -60,22 +61,25 @@
    Pattern/reduction/cascade counts are noted on the rows whose run printed
    them; the other MODE 1 rows predate those counters (rerun to see them).
 
-   By total length (MODE 1, CLASS 0, TOTAL given; 2026-10-31).  "raw" is the
-   zero-filtered output before carry_clean: pairs whose raw output is not
-   strictly decreasing.  Every row has pattern 0, reduction 0, cascades 0.
-     p KLO KHI L FLOOR TOTAL      pairs  fails  twins  antis  raw
-     2 -10   2 4    0     4      299408      0      0      0    0
-     3 -16   2 4    0     4    15005888      0      0      0    0
-     4 -12   2 4    0     4    60006144      0      0      0    0
-     5  -7   2 4    0     4    48670720      0      0      0    0
-     2   0   9 4    1     4      852420      0      0      0    0  underflow floor
-     3   0   8 4    1     4     4644676      0      0      0    0  underflow floor
-     4   0   7 4    1     4    17929028      0      0      0    0  underflow floor
-     2  -8   2 5    0     5     1630000      0      8      8   16
-     3  -8   2 5    0     5    15474368      0     16     16   32
-   Through total 4 the raw output is already strictly decreasing (all
-   singles; B64_CarryCleanRung3.v proves it); twins and anti pairs first
-   occur at total 5.
+   By total length (MODE 1, CLASS 0, TOTAL given; 2026-10-31).  The RAW
+   line counts pairs whose zero-filtered output BEFORE carry_clean has an
+   overlapping neighbour pair (ovl) or is not strictly decreasing (desc).
+   Every row has pattern 0, reduction 0, cascades 0.
+     p KLO KHI L FLOOR TOTAL      pairs  fails  twins  antis  ovl  desc
+     2 -10   2 4    0     4      299408      0      0      0    0     0
+     3 -16   2 4    0     4    15005888      0      0      0    0     0
+     4 -12   2 4    0     4    60006144      0      0      0    0     0
+     5  -7   2 4    0     4    48670720      0      0      0    0     0
+     2   0   9 4    1     4      852420      0      0      0    0     0  underflow floor
+     3   0   8 4    1     4     4644676      0      0      0    0     0  underflow floor
+     4   0   7 4    1     4    17929028      0      0      0    0     0  underflow floor
+     2  -8   2 5    0     5     1630000      0      8      8   16    16
+     3  -8   2 5    0     5    15474368      0     16     16   32    32
+   Through total 4 the raw output is already strictly decreasing and
+   nonoverlapping (all singles; B64_CarryCleanRung3.v proves it).  Twins
+   and anti pairs first occur at total 5; there ovl = desc = twins + antis,
+   i.e. every raw defect is one equal-magnitude neighbour pair, which
+   carry_clean then merges or cancels.
 
    Prints FAIL lines (up to five), SHAPE and RAW lines in MODE 1, and a
    SUMMARY.
@@ -236,7 +240,7 @@ static void genF(int depth, int lastk) {
 
 static void genE(int depth, int lastk) {
   if (depth > 0) { ne = depth; genF(0, 0); }
-  if (depth == L || depth >= TOTAL) return;
+  if (depth == L || depth + 1 >= TOTAL) return;     /* f is never empty */
   for (int i = 0; i < nc; i++) {
     if (depth == 0 && !FLOOR && ck[i] != 0) continue;
     if (depth > 0 && !ok_next(E[depth - 1], lastk, i)) continue;
@@ -254,7 +258,7 @@ int main(int argc, char **argv) {
   L = atoi(argv[4]); MODE = atoi(argv[5]); CLASS = atoi(argv[6]);
   FLOOR = argc > 7 ? atoi(argv[7]) : 0;
   if (argc > 8) TOTAL = atoi(argv[8]);
-  if (p < 2 || L < 1 || L > 7 || KHI < KLO || MODE < 0 || MODE > 2) { fprintf(stderr, "bad arguments\n"); return 2; }
+  if (p < 2 || L < 1 || L > 7 || KHI < KLO || MODE < 0 || MODE > 2 || TOTAL < 2) { fprintf(stderr, "bad arguments\n"); return 2; }
   int SH = FLOOR ? -KLO : -(KLO - 3 * p);
   for (int k = KLO; k <= KHI; k++)
     for (int m = 1 << (p - 1); m < (1 << p); m++)
@@ -278,7 +282,7 @@ int main(int argc, char **argv) {
            pattern_bad, reduction_bad, cascades, twins, antis);
   if (MODE == 1)
     printf("RAW overlap=%lld not_strictly_desc=%lld\n", raw_overlap, raw_notdesc);
-  printf("SUMMARY p=%d K=[%d,%d] L=%d mode=%d class=%d floor=%d pairs=%lld fails=%lld\n",
-         p, KLO, KHI, L, MODE, CLASS, FLOOR, tot, bad);
+  printf("SUMMARY p=%d K=[%d,%d] L=%d mode=%d class=%d floor=%d total=%d pairs=%lld fails=%lld\n",
+         p, KLO, KHI, L, MODE, CLASS, FLOOR, TOTAL, tot, bad);
   return (bad || (MODE == 1 && (pattern_bad || reduction_bad))) ? 1 : 0;
 }
