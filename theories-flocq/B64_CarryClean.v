@@ -39,6 +39,19 @@
                                          carry_clean does not give one when
                                          only ONE input is Priest-valid and
                                          the other is merely nonoverlapping
+     CORE     carry_clean_priest_core    rounding-free: on any list whose
+                                         nonzero components split into
+                                         singles, twins (x, x) and anti pairs
+                                         (x, -x) with strictly decreasing
+                                         block magnitudes and a nonoverlapping
+                                         reduction, carry_clean IS that
+                                         reduction -- anti pairs deleted,
+                                         twins doubled exactly -- the sum is
+                                         preserved and the result is
+                                         nonoverlapping
+     BRIDGE   carry_clean_priest_target_of_shape
+                                         fes_priest_carry_shape implies
+                                         carry_clean_priest_target
 
    The flop counts are produced by the algorithm definitions themselves
    (each returns its result paired with the number of `b64_plus` /
@@ -52,7 +65,15 @@
    WHAT IS NOT PROVED (do not overclaim).  The correctness claim that would
    make the cost result matter -- that `carry_clean` output IS nonoverlapping
    on `fast_expansion_sum` of two Priest-valid inputs -- is stated below as
-   `carry_clean_priest_target`, a Definition, and is OPEN.  Evidence: an
+   `carry_clean_priest_target`, a Definition, and is OPEN.  After the core
+   slice, all that it lacks is `fes_priest_carry_shape` (also a Definition,
+   also OPEN): that the floating-point sum of two Priest-valid inputs has
+   the block shape.  That bridge is the round-to-even part, and it is the
+   whole of what remains; `q1_carry_shape` shows the shape is attained by a
+   real sum, so the bridge is not vacuous.  A counterexample to it would
+   refute the target as stated, not the core.  "Rounding-free" describes the
+   CONTENT of the core: its axiom footprint still carries `classic`, because
+   `cblock_reduce` mentions `b64_mult` (Flocq C1).  Evidence: an
    exhaustive check in a p-bit round-to-nearest-even model of the same
    algorithm (tests/CarryCleanExhaustive) finds no failure over every
    Priest-valid input pair with p = 3 (lengths <= 3, 366,766,976 pairs),
@@ -880,6 +901,343 @@ Proof.
     + apply abs_scaled_lt_bpow; zdec.
 Qed.
 
+(* ==========================================================================
+   THE CORE SLICE -- rounding-free.
+
+   `carry_clean` performs no arithmetic that can round.  On any input whose
+   nonzero components split into BLOCKS -- a single u, a twin (x, x), or an
+   anti pair (x, -x) -- with strictly decreasing block magnitudes and a
+   nonoverlapping reduced list, the sweep acts block by block: anti pairs
+   are DELETED, twins are replaced by their exact double, singles pass
+   through.  `carry_clean_priest_core` states exactly that, plus exactness
+   of the sum and nonoverlap of the result.  No property of
+   `fast_expansion_sum` or of rounding enters.
+
+   The bridge from Priest's floating-point conditions to this shape is the
+   OPEN part: `fes_priest_carry_shape` says the sum of two Priest-valid
+   inputs always has the shape.  `carry_clean_priest_target_of_shape` proves
+   that it implies `carry_clean_priest_target`; nothing here proves it.
+   ========================================================================== *)
+
+Inductive cblock : Type :=
+  | CSingle (u : binary64)
+  | CTwin (x : binary64)
+  | CAnti (x : binary64).
+
+Definition cblock_expand (b : cblock) : list binary64 :=
+  match b with
+  | CSingle u => [u]
+  | CTwin x => [x; x]
+  | CAnti x => [x; b64_neg x]
+  end.
+
+Definition cblock_reduce (b : cblock) : list binary64 :=
+  match b with
+  | CSingle u => [u]
+  | CTwin x => [b64_mult x b64_two_unit]
+  | CAnti _ => []
+  end.
+
+Definition block_key (b : cblock) : R :=
+  match b with
+  | CSingle u => Rabs (Binary.B2R prec emax u)
+  | CTwin x => 2 * Rabs (Binary.B2R prec emax x)
+  | CAnti x => Rabs (Binary.B2R prec emax x)
+  end.
+
+Definition b64_nz (x : binary64) : Prop :=
+  b64_fin x /\ Binary.B2R prec emax x <> 0.
+
+Definition block_ok (b : cblock) : Prop :=
+  match b with
+  | CSingle u => b64_nz u
+  | CTwin x => b64_nz x /\ 2 * Rabs (Binary.B2R prec emax x) < bpow radix2 emax
+  | CAnti x => b64_nz x
+  end.
+
+Fixpoint keys_decreasing (bs : list cblock) : Prop :=
+  match bs with
+  | nil => True
+  | b :: rest =>
+      match rest with
+      | nil => True
+      | b' :: _ => block_key b' < block_key b
+      end /\ keys_decreasing rest
+  end.
+
+Definition carry_shape (bs : list cblock) : Prop :=
+  Forall block_ok bs /\ keys_decreasing bs
+  /\ nonoverlapping_chain (flat_map cblock_reduce bs).
+
+Definition drop_zeros (l : list binary64) : list binary64 :=
+  filter (fun x => negb (b64_is_zero x)) l.
+
+(* The sweep's stack after a prefix, without the flop count. *)
+Fixpoint run_stack (carry : bool) (xs st : list binary64) : list binary64 :=
+  match xs with
+  | nil => st
+  | x :: xs' =>
+      if b64_is_zero x then run_stack carry xs' st
+      else run_stack carry xs' (fst (cc_push carry x st))
+  end.
+
+Lemma cc_run_fst :
+  forall carry xs st, fst (cc_run carry xs st) = rev (run_stack carry xs st).
+Proof.
+  intros carry xs. induction xs as [| x xs' IH]; intro st; [ reflexivity | ].
+  cbn [cc_run run_stack]. destruct (b64_is_zero x); [ apply IH | ].
+  destruct (cc_push carry x st) as [st1 n1].
+  specialize (IH st1). destruct (cc_run carry xs' st1) as [r n2].
+  cbn [fst] in *. exact IH.
+Qed.
+
+Lemma run_stack_app :
+  forall carry l1 l2 st,
+    run_stack carry (l1 ++ l2) st = run_stack carry l2 (run_stack carry l1 st).
+Proof.
+  intros carry l1. induction l1 as [| x l1 IH]; intros l2 st; [ reflexivity | ].
+  cbn [app run_stack]. destruct (b64_is_zero x); apply IH.
+Qed.
+
+Lemma run_stack_drop_zeros :
+  forall carry l st, run_stack carry (drop_zeros l) st = run_stack carry l st.
+Proof.
+  intros carry l. induction l as [| x l IH]; intro st; [ reflexivity | ].
+  unfold drop_zeros in *. cbn [filter run_stack].
+  destruct (b64_is_zero x) eqn:Hz; cbn [negb run_stack]; rewrite ?Hz; apply IH.
+Qed.
+
+Lemma carry_clean_drop_zeros :
+  forall l, carry_clean (drop_zeros l) = carry_clean l.
+Proof.
+  intro l. unfold carry_clean, carry_clean_cost.
+  rewrite !cc_run_fst, run_stack_drop_zeros. reflexivity.
+Qed.
+
+Lemma b64_same_refl : forall x, b64_fin x -> b64_same x x = true.
+Proof.
+  intros x Hx. unfold b64_same.
+  rewrite (Binary.Bcompare_correct prec emax x x Hx Hx), Rcompare_Eq; reflexivity.
+Qed.
+
+Lemma b64_same_abs_neq :
+  forall a b, b64_fin a -> b64_fin b ->
+    Rabs (Binary.B2R prec emax a) <> Rabs (Binary.B2R prec emax b) ->
+    b64_same a b = false.
+Proof.
+  intros a b Ha Hb Hne. destruct (b64_same a b) eqn:H; [ | reflexivity ].
+  exfalso. apply Hne. rewrite (b64_same_R a b Ha Hb H). reflexivity.
+Qed.
+
+(* A nonzero component never cancels against itself. *)
+Lemma b64_same_neg_self : forall x, b64_nz x -> b64_same x (b64_neg x) = false.
+Proof.
+  intros x [Hxf Hx0]. destruct (b64_same x (b64_neg x)) eqn:H; [ | reflexivity ].
+  exfalso. apply b64_same_R in H; [ | exact Hxf | apply b64_neg_fin, Hxf ].
+  rewrite b64_neg_R in H. apply Hx0. lra.
+Qed.
+
+Lemma b64_nz_not_zero : forall x, b64_nz x -> b64_is_zero x = false.
+Proof. intros [s | s | s pl Hpl | s m e H] [_ Hx]; try reflexivity. exfalso; apply Hx; reflexivity. Qed.
+
+Lemma b64_neg_neg : forall x, b64_neg (b64_neg x) = x.
+Proof. intros [s | s | s pl Hpl | s m e H]; try reflexivity. simpl. rewrite Bool.negb_involutive. reflexivity. Qed.
+
+Lemma b64_neg_nz : forall x, b64_nz x -> b64_nz (b64_neg x).
+Proof.
+  intros x [Hf Hx]. split; [ apply b64_neg_fin, Hf | ].
+  rewrite b64_neg_R. intro H. apply Hx. lra.
+Qed.
+
+Definition top_above (st : list binary64) (k : R) : Prop :=
+  match st with nil => True | t :: _ => k < Rabs (Binary.B2R prec emax t) end.
+
+(* A component strictly below the stack top is pushed unchanged. *)
+Lemma cc_push_fresh :
+  forall x st, b64_nz x -> Forall b64_fin st ->
+    top_above st (Rabs (Binary.B2R prec emax x)) ->
+    fst (cc_push true x st) = x :: st.
+Proof.
+  intros x [| t st'] Hx Hst Htop; [ reflexivity | ].
+  inversion Hst as [| ? ? Ht _]; subst. destruct Hx as [Hxf Hx0].
+  cbn [top_above] in Htop. cbn [cc_push].
+  rewrite (b64_same_abs_neq t (b64_neg x)); [ | exact Ht | apply b64_neg_fin, Hxf | ].
+  2: { rewrite b64_neg_R, Rabs_Ropp. lra. }
+  rewrite (b64_same_abs_neq t x); [ reflexivity | exact Ht | exact Hxf | lra ].
+Qed.
+
+(* One block: the stack grows by the block's reduction, nothing else. *)
+Lemma run_stack_block :
+  forall b st, block_ok b -> Forall b64_fin st -> top_above st (block_key b) ->
+    run_stack true (cblock_expand b) st = rev (cblock_reduce b) ++ st
+    /\ Forall b64_fin (rev (cblock_reduce b) ++ st).
+Proof.
+  intros [u | x | x] st Hok Hst Htop; cbn [block_ok block_key] in Hok, Htop.
+  - (* single *)
+    cbn [cblock_expand cblock_reduce run_stack rev app].
+    rewrite (b64_nz_not_zero u Hok), (cc_push_fresh u st Hok Hst Htop).
+    split; [ reflexivity | constructor; [ apply Hok | exact Hst ] ].
+  - (* twin: push x, then x meets x and carries 2x *)
+    destruct Hok as [Hx Hov]. pose proof Hx as [Hxf Hx0].
+    assert (Hpos : 0 < Rabs (Binary.B2R prec emax x)) by (apply Rabs_pos_lt; exact Hx0).
+    destruct (double_exact x Hxf Hov) as [HdR Hdf].
+    cbn [cblock_expand cblock_reduce run_stack rev app].
+    rewrite (b64_nz_not_zero x Hx).
+    rewrite (cc_push_fresh x st Hx Hst);
+      [ | destruct st as [| t st']; cbn [top_above] in *; lra ].
+    cbn [cc_push].
+    rewrite (b64_same_neg_self x Hx), (b64_same_refl x Hxf). cbn [andb].
+    assert (Hd : b64_nz (b64_mult x b64_two_unit)).
+    { split; [ exact Hdf | rewrite HdR; lra ]. }
+    pose proof (cc_push_fresh (b64_mult x b64_two_unit) st Hd Hst) as Hp.
+    destruct (cc_push true (b64_mult x b64_two_unit) st) as [r n] eqn:E.
+    cbn [fst] in *. rewrite Hp.
+    + split; [ reflexivity | constructor; [ exact Hdf | exact Hst ] ].
+    + rewrite HdR, Rabs_mult, (Rabs_pos_eq 2) by lra. exact Htop.
+  - (* anti: push x, then -x cancels it *)
+    pose proof Hok as [Hxf Hx0].
+    cbn [cblock_expand cblock_reduce run_stack rev app].
+    rewrite (b64_nz_not_zero x Hok), (cc_push_fresh x st Hok Hst Htop).
+    rewrite (b64_nz_not_zero (b64_neg x) (b64_neg_nz x Hok)).
+    cbn [cc_push]. rewrite b64_neg_neg, (b64_same_refl x Hxf).
+    split; [ reflexivity | exact Hst ].
+Qed.
+
+Lemma run_stack_blocks :
+  forall bs st,
+    Forall block_ok bs -> keys_decreasing bs -> Forall b64_fin st ->
+    (match bs with nil => True | b :: _ => top_above st (block_key b) end) ->
+    run_stack true (flat_map cblock_expand bs) st = rev (flat_map cblock_reduce bs) ++ st.
+Proof.
+  induction bs as [| b bs IH]; intros st Hok Hdec Hst Htop; [ reflexivity | ].
+  inversion Hok as [| ? ? Hb Hbs]; subst. destruct Hdec as [Hnext Hdec].
+  cbn [flat_map]. rewrite run_stack_app.
+  destruct (run_stack_block b st Hb Hst Htop) as [Hrun Hfin].
+  rewrite Hrun, (IH _ Hbs Hdec Hfin).
+  - rewrite rev_app_distr, app_assoc. reflexivity.
+  - (* the next block sits strictly below the new top *)
+    destruct bs as [| b' bs']; [ exact I | ].
+    destruct b as [u | x | x]; cbn [cblock_reduce rev app top_above block_key] in *.
+    + exact Hnext.
+    + destruct Hb as [[Hxf _] Hov]. destruct (double_exact x Hxf Hov) as [HdR _].
+      rewrite HdR, Rabs_mult, (Rabs_pos_eq 2) by lra. exact Hnext.
+    + destruct st as [| t st']; cbn [top_above] in *; [ exact I | lra ].
+Qed.
+
+(* Sum preservation of one reduction: deletion of x, -x and the exact
+   double of x, x.  No rounding. *)
+Lemma reduce_sum :
+  forall bs, Forall block_ok bs ->
+    expansion_R (flat_map cblock_reduce bs) = expansion_R (flat_map cblock_expand bs).
+Proof.
+  induction bs as [| b bs IH]; intro Hok; [ reflexivity | ].
+  inversion Hok as [| ? ? Hb Hbs]; subst. cbn [flat_map].
+  rewrite !expansion_R_app, (IH Hbs). f_equal.
+  destruct b as [u | x | x]; cbn [cblock_reduce cblock_expand expansion_R].
+  - reflexivity.
+  - destruct Hb as [[Hxf _] Hov]. destruct (double_exact x Hxf Hov) as [HdR _].
+    rewrite HdR. ring.
+  - rewrite b64_neg_R. ring.
+Qed.
+
+Lemma expansion_R_drop_zeros :
+  forall l, expansion_R (drop_zeros l) = expansion_R l.
+Proof.
+  induction l as [| x l IH]; [ reflexivity | ].
+  unfold drop_zeros in *. cbn [filter expansion_R].
+  destruct (b64_is_zero x) eqn:Hz; cbn [negb expansion_R]; rewrite IH;
+    [ rewrite (b64_is_zero_R x Hz); ring | reflexivity ].
+Qed.
+
+(* THE CORE THEOREM.  Rounding-free: the output is the block reduction,
+   the sum is preserved exactly, the result is nonoverlapping, and the only
+   arithmetic performed is the exact doubling of twins. *)
+Theorem carry_clean_priest_core :
+  forall (l : list binary64) (bs : list cblock),
+    drop_zeros l = flat_map cblock_expand bs -> carry_shape bs ->
+    carry_clean l = flat_map cblock_reduce bs
+    /\ expansion_R (carry_clean l) = expansion_R l
+    /\ nonoverlapping_chain (carry_clean l)
+    /\ (forall x, In (CTwin x) bs ->
+          Binary.B2R prec emax (b64_mult x b64_two_unit)
+          = 2 * Binary.B2R prec emax x).
+Proof.
+  intros l bs Hl [Hok [Hdec Hno]].
+  assert (Hcc : carry_clean l = flat_map cblock_reduce bs).
+  { rewrite <- carry_clean_drop_zeros, Hl.
+    unfold carry_clean, carry_clean_cost. rewrite cc_run_fst.
+    rewrite (run_stack_blocks bs nil Hok Hdec (Forall_nil _));
+      [ rewrite app_nil_r, rev_involutive; reflexivity | ].
+    destruct bs; exact I. }
+  split; [ exact Hcc | split; [ | split ] ].
+  - rewrite Hcc, reduce_sum, <- Hl, expansion_R_drop_zeros by exact Hok. reflexivity.
+  - rewrite Hcc. exact Hno.
+  - intros x Hin. rewrite Forall_forall in Hok. specialize (Hok _ Hin).
+    destruct Hok as [[Hxf _] Hov]. apply (double_exact x Hxf Hov).
+Qed.
+
+(* --------------------------------------------------------------------------
+   The open bridge, stated as a Definition so that nothing reads as proved.
+   -------------------------------------------------------------------------- *)
+
+Definition fes_priest_carry_shape : Prop :=
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f < bpow radix2 (emax - 2) ->
+    exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
+               /\ carry_shape bs.
+
+(* The core reduces the target to the bridge -- and to nothing else. *)
+Theorem carry_clean_priest_target_of_shape :
+  fes_priest_carry_shape -> carry_clean_priest_target.
+Proof.
+  intros Hshape e f He Hf Hef Hff Hov.
+  destruct (Hshape e f He Hf Hef Hff Hov) as [bs [Hl Hs]].
+  apply (carry_clean_priest_core _ bs Hl Hs).
+Qed.
+
+Lemma two_scaled :
+  forall (m : Z) (e : Z), 2 * (IZR m * bpow radix2 e) = IZR m * bpow radix2 (e + 1).
+Proof.
+  intros m e. rewrite bpow_plus.
+  assert (H2 : bpow radix2 1 = 2) by (rewrite bpow_1; reflexivity).
+  rewrite H2. ring.
+Qed.
+
+(* The bridge's shape is attained by a real sum: witness 1 (two Priest
+   inputs) decomposes as single, twin, single, single. *)
+Definition q1_blocks : list cblock :=
+  [CSingle q1_A; CTwin q1_p53; CSingle q1_n106; CSingle q1_n107].
+
+Lemma q1_drop_zeros :
+  drop_zeros (fast_expansion_sum q1_e q1_f) = flat_map cblock_expand q1_blocks.
+Proof.
+  apply map_B2FF_inj. unfold fast_expansion_sum. rewrite q1_sort.
+  vm_compute. reflexivity.
+Qed.
+
+Lemma q1_reduce : flat_map cblock_reduce q1_blocks = [q1_A; q1_p52; q1_n106; q1_n107].
+Proof. apply map_B2FF_inj. vm_compute. reflexivity. Qed.
+
+Lemma q1_carry_shape : carry_shape q1_blocks.
+Proof.
+  assert (Hnz : forall s m e H, b64_nz (Binary.B754_finite prec emax s m e H))
+    by (intros; split; [ reflexivity | apply B2R_fin_nonzero ]).
+  split; [ | split ].
+  - unfold q1_blocks. repeat constructor; try apply Hnz.
+    unfold q1_p53. rewrite abs_B2R_fin, two_scaled.
+    apply Rle_lt_trans
+      with (Rabs (IZR (Z.pos 4503599627370496) * bpow radix2 (-105 + 1)));
+      [ apply Rle_abs | apply abs_scaled_lt_bpow; unfold emax; zdec ].
+  - unfold q1_blocks, q1_A, q1_p53, q1_n106, q1_n107.
+    cbn [keys_decreasing block_key]. rewrite !abs_B2R_fin.
+    rewrite two_scaled.
+    repeat split; apply scaled_lt'; zdec.
+  - rewrite q1_reduce. pose proof q1_carry_nonoverlapping as H.
+    rewrite q1_carry in H. exact H.
+Qed.
+
 (* --------------------------------------------------------------------------
    Mutation replay (in-tree; not an ADR-0004 mint).  Flip exactly one line
    of the definitions above, rebuild, then restore it.  Only the concrete
@@ -931,3 +1289,11 @@ Print Assumptions carry_clean_beyond_priest_false.
 Print Assumptions carry_clean_nonoverlapping_false.
 Print Assumptions q2_compress.
 Print Assumptions q2_compress_nonoverlapping.
+Print Assumptions carry_clean_drop_zeros.
+Print Assumptions run_stack_block.
+Print Assumptions run_stack_blocks.
+Print Assumptions reduce_sum.
+Print Assumptions carry_clean_priest_core.
+Print Assumptions carry_clean_priest_target_of_shape.
+Print Assumptions q1_drop_zeros.
+Print Assumptions q1_carry_shape.

@@ -9,9 +9,8 @@ theorem and proves nothing.
 
 ## Status (2026-10-29): open — one QEX along the way, the bound still open
 
-**Refuted (QEX):** `fast_expansion_sum` does not carry Priest's §2 gap
-condition from input to output
-(`B64_Priest_FES_counterexample.v : fes_priest_gap_preservation_false`), and
+**Refuted (QEX):** `fast_expansion_sum` does not carry Priest's §2 gap condition
+from input to output (`B64_Priest_FES_counterexample.v : fes_priest_gap_preservation_false`), and
 Priest-valid input need not give even a Shewchuk-nonoverlapping output
 (`B64_Priest_FES_counterexample.v : fes_priest_to_nonoverlapping_false`).
 Priest never claims either: he renormalizes. The witness is Shewchuk's 4-bit

@@ -4471,6 +4471,7 @@ theories-flocq/B64_Priest_FES_counterexample.v
 # output that never rounds (cancel x,-x; carry x,x -> 2x).  QED: at most |e|
 # flops vs >= 3(|e|-1) for Shewchuk's Compress (Fig. 15, instrumented), and
 # exact.  QEX: cancel-only fails on Priest input; carry_clean fails when one
-# input is only nonoverlapping.  Correctness on Priest input stays OPEN
-# (carry_clean_priest_target; exhaustive p-bit evidence in tests/).
+# input is only nonoverlapping.  Core slice QED: carry_clean on block-shaped
+# input is deletion + exact doubling (carry_clean_priest_core).  OPEN: the FP
+# bridge fes_priest_carry_shape, hence carry_clean_priest_target.
 theories-flocq/B64_CarryClean.v
