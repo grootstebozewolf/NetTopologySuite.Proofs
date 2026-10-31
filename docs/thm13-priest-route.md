@@ -7,6 +7,25 @@ QED, or a documented counterexample (QEX).
 This document records why that route exists and what it needs. It states no
 theorem and proves nothing.
 
+## Status (2026-10-29): open — one QEX along the way, the bound still open
+
+**Refuted (QEX):** `fast_expansion_sum` does not carry Priest's §2 gap
+condition from input to output
+(`B64_Priest_FES_counterexample.v : fes_priest_gap_preservation_false`), and
+Priest-valid input need not give even a Shewchuk-nonoverlapping output
+(`B64_Priest_FES_counterexample.v : fes_priest_to_nonoverlapping_false`).
+Priest never claims either: he renormalizes. The witness is Shewchuk's 4-bit
+example from §2, already a Priest expansion (gap exactly *p*). Lifted with
+`M = 2^53 − 1`, `e = f = [M·2^106, M·2^53, M]` gives
+`[2^160, −2^106, 2^106, −2^53, 2^53 − 2, +0]`, machine-checked
+(`B64_Priest_FES_counterexample.v : fes_witness`).
+
+**Open — the stop condition's target:** Priest's one-digit bound. The
+offending pair is within one bit
+(`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); a random
+binary64 search and an exhaustive *p* = 3 search to length 2 (review aids,
+scripts not in tree) found no `overlap_within 1` failure. Evidence only.
+
 ## 1. Where the lane actually stands
 
 `fast_expansion_sum_nonoverlap_shewchuk` is **archived false-as-stated**
@@ -63,57 +82,27 @@ that "several conjectures were laboriously examined and discarded" before he
 converged on strongly nonoverlapping. The corpus rediscovered the same wall
 from the other side.
 
-## 3. Why the weaker target looks reachable
+## 3. Priest's statement
 
-The corpus's own witness is evidence *for* the Priest postcondition rather than
-against it. `B64_Shewchuk_Thm13_counterexample.v` shows that
-`fast_expansion_sum` emits components that are **bit-disjoint but not within a
-half-ulp** — the concrete witness being 257 = 256 + 1, where `256` and `1` are a
-legitimate Shewchuk expansion yet fail `strict_succ_b64`.
+Obtained 2026-09-05 (doi:10.1109/ARITH.1991.145549). His §2 condition is a gap
+of *t* digits between normalised exponents, under faithful arithmetic; it is
+`priest_nonoverlapping_R` in `B64_Overlap_Hierarchy.v`, proved strictly
+stronger than Shewchuk's nonoverlapping. Still to transcribe: his theorem on
+the *output* of his sum, which the target must be stated from.
 
-Bit-disjoint output satisfies "overlap by at most one bit" with room to spare.
-So the very behaviour that refuted the strong statement is consistent with the
-weaker one.
+**Scope decision (2026-10-29):** pre-renormalization. The corpus's
+`fast_expansion_sum` has no renormalization pass, so the target is the
+one-digit overlap bound on its raw output, not Priest's condition after
+renormalizing.
 
-**This is an observation, not a result.** It says the route is worth taking; it
-does not say the theorem holds. One witness is not a proof, and the corpus has
-already been wrong once about what `fast_expansion_sum` preserves.
-
-## 4. What this needs before it can start
-
-**Priest's actual statement.** Shewchuk's sentence is a paraphrase, not a
-specification, and "proves under general conditions" is doing load-bearing
-work: those conditions are the whole content of what would have to be
-formalised. They are not recoverable from Shewchuk.
-
-The source is Shewchuk's reference [23]:
-
-> D. M. Priest, *Algorithms for Arbitrary Precision Floating Point Arithmetic*,
-> Proceedings of the Tenth Symposium on Computer Arithmetic, pages 132–143,
-> IEEE Computer Society Press, 1991.
-
-with the thesis as [24] (*On Properties of Floating Point Arithmetics:
-Numerical Stability and the Cost of Accurate Computations*, Ph.D., UC Berkeley
-— dated November 1992 by Shewchuk and 1993 by Fortune and Van Wyk; the two
-bibliographies disagree, so pin it before citing).
-
-Neither is currently cited anywhere in this corpus, and neither has a DOI
-recorded here. **Obtaining [23] is the first task on this route**, ahead of any
-Rocq work.
-
-**A renormalization story.** Priest's guarantee comes with an expensive
-renormalization step. Deciding whether the corpus states the theorem with
-renormalization, or states the pre-renormalization overlap bound only, is a
-scope decision to take before the first `Lemma`.
-
-## 5. Stop condition
+## 4. Stop condition
 
 QED — the Priest-style bound proved for the corpus's `fast_expansion_sum` — or
-QEX, a Qed-closed counterexample showing the bound fails as stated here, filed
-in `docs/admitted-counterexamples.txt` the way the Theorem 13 headline itself
-was.
-
-Either outcome closes the lane. What it must not do is leave a third
+QEX, a Qed-closed counterexample showing the bound fails as stated here.
+(Deviation, 2026-10-29: the original also said "filed in
+`docs/admitted-counterexamples.txt`"; that registry tracks unproved
+statements only, so a Qed negation gets no entry.) Either outcome closes the
+lane. What it must not do is leave a third
 over-strong statement half-proved.
 
 ## References
@@ -121,7 +110,8 @@ over-strong statement half-proved.
 - Shewchuk, *Adaptive Precision Floating-Point Arithmetic and Fast Robust
   Geometric Predicates*, Discrete & Computational Geometry 18:305–363 (1997),
   doi:10.1007/PL00009321. Theorem 13 and the Priest comparison are in §2.4.
-- Priest (1991), reference [23] above — **not yet obtained**.
+- Priest (1991), *Algorithms for Arbitrary Precision Floating Point
+  Arithmetic*, Proc. 10th ARITH 132–143, doi:10.1109/ARITH.1991.145549.
 - `theories-flocq/B64_Shewchuk_Thm13_counterexample.v` — the Qed-closed
   disproof of the corpus headline, with the 257 = 256 + 1 witness.
 - `docs/shewchuk-theorem-13-proof-structure.md` — the archived Route 1/2/3

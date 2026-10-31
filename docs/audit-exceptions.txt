@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 79 files (76 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 80 files (77 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -52,9 +52,16 @@ theories-flocq/B64_TwoSum_sterbenz.v
 theories-flocq/B64_residue_granularity.v
 theories-flocq/B64_nonoverlap_head.v
 theories-flocq/B64_Shewchuk_Thm13_counterexample.v
+# Priest-route QEX: fast_expansion_sum does not carry Priest's gap condition
+# input -> output.  The cascade trace `fes_witness` evaluates Bplus/Bminus,
+# so it and the four headlines inherit Classical_Prop.classic via Flocq C1;
+# the input, sort and overlap lemmas stay inside the allowlist.  Plan: none
+# -- C1 cannot leave while Flocq's binary model is in use
+# (category-c-policy).  Keep listed while `fes_witness` computes in Flocq.
+theories-flocq/B64_Priest_FES_counterexample.v
 
-# Predicate-ordering module (MerkatorBV #21 Priest). Ten of fifteen results
-# are LEM-free (Priest link + arithmetic separations). The remaining five
+# Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
+# results are LEM-free (Priest link + arithmetic separations). The remaining five
 # route through strict_succ_b64 → b64_format_B2R / b64_ulp_FLT_0 and inherit
 # Classical_Prop.classic via Flocq real/ulp — same lineage as the counterexample
 # module above. Print Assumptions emits the footprint. No Admitteds. Qed-closed.

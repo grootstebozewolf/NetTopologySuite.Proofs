@@ -27,11 +27,12 @@
    `fast_expansion_sum` preserves anything; `fast_expansion_sum` does not
    appear in it.  The lane's stop condition (QED or QEX) is NOT met here --
    what is delivered is the predicate layer that a preservation attempt needs,
-   plus the measured separations between the three predicates.  See
-   docs/thm13-priest-route.md, which also records that obtaining Priest 1991
-   is the first task on this route.  IT HAS SINCE BEEN OBTAINED
-   (doi:10.1109/ARITH.1991.145549, 2026-09-05), which removes the guesswork an
-   earlier draft of this file needed.
+   plus the measured separations between the three predicates.  The first
+   preservation result built on it, a QEX that `fast_expansion_sum` does not
+   preserve Priest's gap condition, is in B64_Priest_FES_counterexample.v;
+   Priest's one-digit bound stays open (docs/thm13-priest-route.md).  Priest
+   1991 is in hand (doi:10.1109/ARITH.1991.145549, obtained 2026-09-05),
+   which removes the guesswork an earlier draft of this file needed.
 
    Two things that guess got wrong, now corrected from the paper:
 
@@ -72,8 +73,8 @@
      - (256, 256) fails nonoverlapping, satisfies overlap_within 1.
 
    AXIOM FOOTPRINT, measured 2026-09-09 on Rocq 9.2.0 + Flocq 4.2.2 by the
-   `Print Assumptions` block at the end of this file, not by prose.  Ten of
-   the fifteen headlines are LEM-free, resting only on
+   `Print Assumptions` block at the end of this file, not by prose.  Twelve
+   of the seventeen headlines are LEM-free, resting only on
    `ClassicalDedekindReals.sig_forall_dec` and
    `FunctionalExtensionality.functional_extensionality_dep`.  Five carry
    `Classical_Prop.classic` as well, and the split is not arbitrary: every
@@ -484,6 +485,58 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
+   Priest's condition along an expansion, mirroring `nonoverlapping_chain`.
+   A zero component has no normalised significand, so a Priest chain is
+   zero-free.
+   -------------------------------------------------------------------------- *)
+
+Fixpoint priest_chain (e : b64_expansion) : Prop :=
+  match e with
+  | nil => True
+  | _ :: nil => True
+  | a :: (b :: _) as rest =>
+      priest_nonoverlapping_b64 a b /\ priest_chain rest
+  end.
+
+Lemma priest_chain_nonoverlapping_chain :
+  forall e : b64_expansion, priest_chain e -> nonoverlapping_chain e.
+Proof.
+  induction e as [| a e' IH]; [ simpl; trivial | ].
+  destruct e' as [| b e'']; [ simpl; trivial | ].
+  intros [Hp Hrest]. simpl. split.
+  - apply priest_nonoverlapping_weaker. exact Hp.
+  - apply IH. exact Hrest.
+Qed.
+
+(* Two nonzero reals of equal magnitude never satisfy Shewchuk's relation:
+   x = r 2^s with |y| = |x| < 2^s forces 0 < |r| < 1.  The general form of
+   the (256, 256) separation above. *)
+Lemma equal_magnitude_overlaps :
+  forall x y : R, x <> 0 -> Rabs x = Rabs y -> ~ nonoverlapping_R x y.
+Proof.
+  assert (Hcore : forall x y r s,
+             x <> 0 -> Rabs x = Rabs y ->
+             x = IZR r * bpow radix2 s -> Rabs y < bpow radix2 s -> False).
+  { intros x y r s Hx0 Habs Hx Hy.
+    pose proof (bpow_gt_0 radix2 s) as Hs.
+    rewrite <- Habs, Hx, Rabs_mult, (Rabs_pos_eq (bpow radix2 s)) in Hy
+      by lra.
+    rewrite <- abs_IZR in Hy.
+    assert (Hlt1 : IZR (Z.abs r) < 1) by nra.
+    apply lt_IZR in Hlt1.
+    assert (r = 0%Z) by lia. subst r.
+    apply Hx0. rewrite Hx. simpl. lra. }
+  intros x y Hx0 Habs.
+  unfold nonoverlapping_R, overlap_within.
+  intros [ [r [s [Hx Hy]]] | [r [s [Hy Hx]]] ];
+    rewrite Z.add_0_r in *.
+  - exact (Hcore x y r s Hx0 Habs Hx Hy).
+  - apply (Hcore y x r s); [ | symmetry; exact Habs | exact Hy | exact Hx ].
+    intro Hy0. pose proof (Rabs_pos_lt x Hx0) as Hp.
+    rewrite Habs, Hy0, Rabs_R0 in Hp. lra.
+Qed.
+
+(* --------------------------------------------------------------------------
    Assumption audit.
 
    House convention (see B64_Shewchuk_Thm13_counterexample.v): every headline
@@ -506,3 +559,5 @@ Print Assumptions nonoverlap_strict_chain.
 Print Assumptions strict_succ_overlap_within_1.
 Print Assumptions predicate_hierarchy_strict.
 Print Assumptions thm13_witness_nonoverlapping.
+Print Assumptions priest_chain_nonoverlapping_chain.
+Print Assumptions equal_magnitude_overlaps.
