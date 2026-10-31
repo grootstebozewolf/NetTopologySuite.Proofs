@@ -57,6 +57,8 @@
                                          the two open parts below imply
                                          carry_clean_priest_target -- ONE
                                          way: the bridge is strictly stronger
+     RUNG 2   (B64_CarryCleanRung2.v)    three components in total: both
+                                         bridge parts and the target, proved
      BASE     fes_carry_bridge_base_case the trivial base case: at most two
                                          components in total, one TwoSum, no
                                          twins or anti pairs; and
@@ -111,7 +113,7 @@
    420,560,896), and under an underflow floor at p = 2, 3, 4; against 680
    failures for `cancel_clean` at p = 3.  The harness also counts bridge
    parts (a) and (b) and carry cascades; its header records those counts
-   per run (p = 3, lengths <= 3: 0, 0 and 0).
+   per run (0, 0 and 0 on every run that printed them).
    Nor is `carry_clean` a drop-in replacement for Compress: QEX 2 shows its
    domain is narrower, and Compress repairs both QEX witnesses
    (`q1_compress_nonoverlapping`, `q2_compress_nonoverlapping`).

@@ -45,13 +45,13 @@
      3  -9   4 3   0    0      366766976    680  cancel_clean refuted
      3  -9   4 3   1    0      366766976      0  pattern 0, reduction 0, cascades 0
      2  -8   3 4   1    0      148581504      0
-     2 -10   0 5   1    0     1196510640      0
+     2 -10   0 5   1    0     1196510640      0  pattern 0, reduction 0, cascades 0
      5 -10   5 2   1    0      420560896      0
-     4  -9   3 3   1    0     2146417920      0
+     4  -9   3 3   1    0     2146417920      0  pattern 0, reduction 0, cascades 0
      3 -10   2 4   1    0     4670763328      0
-     3   0   8 3   1    1      129367876      0  underflow floor
-     2   0   9 4   1    1      346332100      0  underflow floor
-     4   0   7 3   1    1      147428164      0  underflow floor
+     3   0   8 3   1    1      129367876      0  underflow floor; pattern 0, reduction 0, cascades 0
+     2   0   9 4   1    1      346332100      0  underflow floor; pattern 0, reduction 0, cascades 0
+     4   0   7 3   1    1      147428164      0  underflow floor; pattern 0, reduction 0, cascades 0
      3  -9   4 3   2    0      366766976      0  one-digit bound, raw output
      4  -9   3 3   2    0     2146417920      0  one-digit bound, raw output
      3 -10   2 4   2    0     4670763328      0  one-digit bound, raw output
