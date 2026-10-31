@@ -101,8 +101,7 @@ QEX, a Qed-closed counterexample showing the bound fails as stated here.
 (Deviation, 2026-10-29: the original also said "filed in
 `docs/admitted-counterexamples.txt`"; that registry tracks unproved
 statements only, so a Qed negation gets no entry.) Either outcome closes the
-lane. What it must not do is leave a third
-over-strong statement half-proved.
+lane. What it must not do is leave a third over-strong statement half-proved.
 
 ## References
 
