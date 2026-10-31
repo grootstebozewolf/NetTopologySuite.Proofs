@@ -4482,3 +4482,12 @@ theories-flocq/B64_CarryClean.v
 # expansion, so |g1| < ulp(g3), the first error is below 2^c and the later
 # outputs are multiples of 2^c.  Four or more components stay OPEN.
 theories-flocq/B64_CarryCleanRung2.v
+# B64_CarryClean split (module split gate: the umbrella gained a dependent,
+# B64_CarryCleanRung2).  B64_CarryClean.v stays as a Require Export umbrella
+# with the full header; declarations byte-identical, each part with its own
+# Print Assumptions footer.  Algo: algorithms, cost, exactness, target,
+# helpers.  Witness: the two QEX, mutation pins and replay.  Core: core slice,
+# two-part bridge, base case, cascade safety.
+theories-flocq/B64_CarryCleanAlgo.v
+theories-flocq/B64_CarryCleanWitness.v
+theories-flocq/B64_CarryCleanCore.v

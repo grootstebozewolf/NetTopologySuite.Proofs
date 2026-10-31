@@ -32,7 +32,7 @@
      Assisted-by: Claude
    ========================================================================== *)
 
-From Stdlib Require Import Reals ZArith Lia Lra List Sorting Permutation.
+From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
 From Flocq Require Import IEEE754.Binary Core.
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib
      B64_Pff_bridge B64_Expansion B64_FastExpansionSum
@@ -42,7 +42,8 @@ Import ListNotations.
 Local Open Scope R_scope.
 
 (* --------------------------------------------------------------------------
-   Sorting: `sort_by_abs` returns a permutation, sorted by magnitude.
+   Sorting: `sort_by_abs` returns a permutation (sortedness is
+   `sort_by_abs_sorted` in B64_FastExpansionSum_Shewchuk).
    -------------------------------------------------------------------------- *)
 
 Definition abs_le (x y : binary64) : Prop :=
@@ -62,25 +63,6 @@ Proof.
   eapply perm_trans; [ apply perm_skip, IH | apply insert_by_abs_perm ].
 Qed.
 
-Lemma insert_by_abs_sorted :
-  forall x l, Sorted abs_le l -> Sorted abs_le (insert_by_abs x l).
-Proof.
-  intros x l. induction l as [| y l IH]; intro Hs; [ repeat constructor | ].
-  cbn [insert_by_abs]. destruct (Rle_dec _ _) as [Hle | Hgt].
-  - constructor; [ exact Hs | constructor; exact Hle ].
-  - apply Sorted_inv in Hs as [Hl Hhd]. constructor; [ apply IH, Hl | ].
-    destruct l as [| z l]; cbn [insert_by_abs].
-    + constructor. unfold abs_le. lra.
-    + destruct (Rle_dec _ _); constructor; unfold abs_le in *; [ lra | ].
-      inversion Hhd; assumption.
-Qed.
-
-Lemma sort_by_abs_sorted : forall l, Sorted abs_le (sort_by_abs l).
-Proof.
-  induction l as [| x l IH]; [ constructor | ]. cbn [sort_by_abs].
-  apply insert_by_abs_sorted, IH.
-Qed.
-
 (* For a sorted three-element list, the first is the minimum and the last
    the maximum of every element of the original list. *)
 Lemma sorted3_bounds :
@@ -91,8 +73,8 @@ Proof.
   pose proof (sort_by_abs_sorted l) as Hsort. rewrite Hs in Hsort.
   assert (Hin : In y [g1; g2; g3]).
   { rewrite <- Hs. eapply Permutation_in; [ apply sort_by_abs_perm | exact Hy ]. }
-  apply Sorted_inv in Hsort as [Hs23 H12]. apply Sorted_inv in Hs23 as [_ H23].
-  inversion H12; subst. inversion H23; subst. unfold abs_le in *.
+  inversion Hsort as [ | | ? ? ? H12 Hs23 ]; subst.
+  inversion Hs23 as [ | | ? ? ? H23 _ ]; subst. unfold abs_le.
   destruct Hin as [<- | [<- | [<- | []]]]; split; lra.
 Qed.
 
@@ -418,7 +400,6 @@ Proof.
 Qed.
 
 Print Assumptions sort_by_abs_perm.
-Print Assumptions sort_by_abs_sorted.
 Print Assumptions sorted3_bounds.
 Print Assumptions priest_pair_lt_ulp.
 Print Assumptions round_mult_of.
