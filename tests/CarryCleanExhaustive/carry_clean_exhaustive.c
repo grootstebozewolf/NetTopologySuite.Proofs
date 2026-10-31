@@ -48,7 +48,7 @@
      2 -10   0 5   1    0     1196510640      0  pattern 0, reduction 0, cascades 0
      5 -10   5 2   1    0      420560896      0
      4  -9   3 3   1    0     2146417920      0  pattern 0, reduction 0, cascades 0
-     3 -10   2 4   1    0     4670763328      0
+     3 -10   2 4   1    0     4670763328      0  pattern 0, reduction 0, cascades 0
      3   0   8 3   1    1      129367876      0  underflow floor; pattern 0, reduction 0, cascades 0
      2   0   9 4   1    1      346332100      0  underflow floor; pattern 0, reduction 0, cascades 0
      4   0   7 3   1    1      147428164      0  underflow floor; pattern 0, reduction 0, cascades 0
