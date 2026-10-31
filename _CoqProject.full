@@ -4491,3 +4491,9 @@ theories-flocq/B64_CarryCleanRung2.v
 theories-flocq/B64_CarryCleanAlgo.v
 theories-flocq/B64_CarryCleanWitness.v
 theories-flocq/B64_CarryCleanCore.v
+# carry_clean bridge, rung 3: four components in total.  Any three of the four
+# contain a Priest pair, so |g1| < ulp(g3) and |g2| < ulp(g4); the output is
+# then layered (each component a multiple of a power of two bounding the
+# rest), hence strictly decreasing, nonoverlapping and all singles.  Five or
+# more components stay OPEN; twins and anti pairs first occur at five.
+theories-flocq/B64_CarryCleanRung3.v
