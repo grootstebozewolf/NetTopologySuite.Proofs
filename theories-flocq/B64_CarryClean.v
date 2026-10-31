@@ -57,11 +57,16 @@
                                          the two open parts below imply
                                          carry_clean_priest_target -- ONE
                                          way: the bridge is strictly stronger
-     RUNG 2   (B64_CarryCleanRung2.v)    three components in total: both
-                                         bridge parts and the target, proved
+     RUNG 2   (B64_CarryCleanRung2.v)    three components in total: bridge
+                                         parts (a) and (b) as
+                                         fes_priest_..._n 3 -- (b) for every
+                                         decomposition -- and the target for
+                                         totals <= 3; margin 2^(emax-5)
      BASE     fes_carry_bridge_base_case the trivial base case: at most two
                                          components in total, one TwoSum, no
-                                         twins or anti pairs; and
+                                         twins or anti pairs; the shape for
+                                         the exhibited decomposition (what
+                                         the target consumes), and
               carry_clean_priest_target_base_case   the target there
      SAFETY   b64_TwoSum_safe_bound      one TwoSum never overflows for
                                          |x|, |y| <= 2^(emax-4)
@@ -132,12 +137,12 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human review pending.
+   AI assistance disclosure: AI-drafted; reviewed on PRs #985 and #986 (2026-10-31).
      Assisted-by: Claude
    ========================================================================== *)
 
 (* Umbrella.  The declarations live in three parts, byte-identical, each with
    its own `Print Assumptions` footer (docs/macro-meso-micro.md, module split
    gate). *)
-From NTS.Proofs.Flocq Require Export B64_CarryCleanAlgo B64_CarryCleanWitness
-     B64_CarryCleanCore.
+From NTS.Proofs.Flocq Require Export B64_CarryCleanAlgo B64_CarryCleanCore
+     B64_CarryCleanWitness.

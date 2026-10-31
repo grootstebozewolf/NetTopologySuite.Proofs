@@ -2,14 +2,15 @@
    NetTopologySuite.Proofs.Flocq.B64_CarryCleanWitness
    ----------------------------------------------------------------------------
    The two QEX waypoints (cancel-only on Priest input; carry_clean beyond
-   Priest), the concrete mutation pins, and the mutation replay block.
+   Priest), the concrete mutation pins, the witness shape (`q1_carry_shape`)
+   and the mutation replay block.
 
    Part of the B64_CarryClean split (umbrella: B64_CarryClean.v, which keeps
    the full module header: what is proved, what is open, the evidence).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human review pending.
+   AI assistance disclosure: AI-drafted; reviewed on PRs #985 and #986 (2026-10-31).
      Assisted-by: Claude
    ========================================================================== *)
 
@@ -19,7 +20,7 @@ From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib B64_Pf
      B64_Expansion B64_FastExpansionSum B64_FastExpansionSum_Shewchuk
      B64_Shewchuk_Thm13_counterexample B64_Overlap_Hierarchy
      B64_Priest_FES_counterexample DivRoundPow2_b64.
-From NTS.Proofs.Flocq Require Import B64_CarryCleanAlgo.
+From NTS.Proofs.Flocq Require Import B64_CarryCleanAlgo B64_CarryCleanCore.
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -327,6 +328,39 @@ Proof.
     + apply abs_scaled_lt_bpow; zdec.
 Qed.
 
+(* The bridge's shape is attained by a real sum: witness 1 (two Priest
+   inputs) decomposes as single, twin, single, single. *)
+Definition q1_blocks : list cblock :=
+  [CSingle q1_A; CTwin q1_p53; CSingle q1_n106; CSingle q1_n107].
+
+Lemma q1_drop_zeros :
+  drop_zeros (fast_expansion_sum q1_e q1_f) = flat_map cblock_expand q1_blocks.
+Proof.
+  apply map_B2FF_inj. unfold fast_expansion_sum. rewrite q1_sort.
+  vm_compute. reflexivity.
+Qed.
+
+Lemma q1_reduce : flat_map cblock_reduce q1_blocks = [q1_A; q1_p52; q1_n106; q1_n107].
+Proof. apply map_B2FF_inj. vm_compute. reflexivity. Qed.
+
+Lemma q1_carry_shape : carry_shape q1_blocks.
+Proof.
+  assert (Hnz : forall s m e H, b64_nz (Binary.B754_finite prec emax s m e H))
+    by (intros; split; [ reflexivity | apply B2R_fin_nonzero ]).
+  split; [ | split ].
+  - unfold q1_blocks. repeat constructor; try apply Hnz.
+    unfold q1_p53. rewrite abs_B2R_fin, two_scaled.
+    apply Rle_lt_trans
+      with (Rabs (IZR (Z.pos 4503599627370496) * bpow radix2 (-105 + 1)));
+      [ apply Rle_abs | apply abs_scaled_lt_bpow; unfold emax; zdec ].
+  - unfold q1_blocks, q1_A, q1_p53, q1_n106, q1_n107.
+    cbn [keys_decreasing block_key]. rewrite !abs_B2R_fin.
+    rewrite two_scaled.
+    repeat split; apply scaled_lt'; zdec.
+  - rewrite q1_reduce. pose proof q1_carry_nonoverlapping as H.
+    rewrite q1_carry in H. exact H.
+Qed.
+
 (* --------------------------------------------------------------------------
    Mutation replay (in-tree; not an ADR-0004 mint).  Flip exactly one line
    of the definitions above, rebuild, then restore it.  Only the concrete
@@ -372,3 +406,5 @@ Print Assumptions carry_clean_beyond_priest_false.
 Print Assumptions carry_clean_nonoverlapping_false.
 Print Assumptions q2_compress.
 Print Assumptions q2_compress_nonoverlapping.
+Print Assumptions q1_drop_zeros.
+Print Assumptions q1_carry_shape.

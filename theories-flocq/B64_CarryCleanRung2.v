@@ -20,15 +20,25 @@
         decreasing magnitudes: Q3/h3 by the TwoSum half-ulp bound, h3/h2 (or
         Q3/h2 when h3 = 0) by 2 and 3.  No twins or anti pairs occur.
 
-   This file proves both bridge parts on this rung, and with them the
-   target.  It says nothing about four or more components.
+   PROVED HERE, at total length 3:
+     fes_carry_pattern_rung2          part (a): fes_priest_carry_pattern_n 3
+     fes_reduction_nonoverlap_rung2   part (b): fes_priest_reduction_nonoverlap_n 3,
+                                      for EVERY decomposition -- the output is
+                                      strictly decreasing, so every
+                                      decomposition is all singles
+                                      (`desc_all_singles`)
+     carry_clean_priest_target_rung2  the target for every total <= 3
+   The Priest hypothesis enters only through `key_lt_ulp`; everything after
+   it is `fes3_shape_of_key`, which takes |g1| < ulp(g3) as a hypothesis.
+   Overflow margin 2^(emax-5) (the base case alone needs 2^(emax-4)).
+   Nothing here covers four or more components.
 
    NTS / JTS COUNTERPART.  None in-library (JTS/NTS use `CGAlgorithmsDD`,
    double-double); this lane serves the corpus's exact orientation.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human review pending.
+   AI assistance disclosure: AI-drafted; reviewed on PR #986 (2026-10-31).
      Assisted-by: Claude
    ========================================================================== *)
 
@@ -36,45 +46,31 @@ From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
 From Flocq Require Import IEEE754.Binary Core.
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib
      B64_Pff_bridge B64_Expansion B64_FastExpansionSum
-     B64_FastExpansionSum_Shewchuk B64_Overlap_Hierarchy B64_CarryClean.
+     B64_FastExpansionSum_Shewchuk B64_Overlap_Hierarchy B64_CarryCleanAlgo
+     B64_CarryCleanCore.
 
 Import ListNotations.
 Local Open Scope R_scope.
 
 (* --------------------------------------------------------------------------
-   Sorting: `sort_by_abs` returns a permutation (sortedness is
-   `sort_by_abs_sorted` in B64_FastExpansionSum_Shewchuk).
+   Sorting (`sort_by_abs_perm`, `sort_by_abs_sorted`: B64_FastExpansionSum_Shewchuk).
    -------------------------------------------------------------------------- *)
 
-Definition abs_le (x y : binary64) : Prop :=
+Definition b64_abs_le (x y : binary64) : Prop :=
   Rabs (Binary.B2R prec emax x) <= Rabs (Binary.B2R prec emax y).
-
-Lemma insert_by_abs_perm :
-  forall x l, Permutation (x :: l) (insert_by_abs x l).
-Proof.
-  intros x l. induction l as [| y l IH]; [ reflexivity | ].
-  cbn [insert_by_abs]. destruct (Rle_dec _ _); [ reflexivity | ].
-  eapply perm_trans; [ apply perm_swap | ]. apply perm_skip, IH.
-Qed.
-
-Lemma sort_by_abs_perm : forall l, Permutation l (sort_by_abs l).
-Proof.
-  induction l as [| x l IH]; [ reflexivity | ]. cbn [sort_by_abs].
-  eapply perm_trans; [ apply perm_skip, IH | apply insert_by_abs_perm ].
-Qed.
 
 (* For a sorted three-element list, the first is the minimum and the last
    the maximum of every element of the original list. *)
 Lemma sorted3_bounds :
   forall l g1 g2 g3, sort_by_abs l = [g1; g2; g3] ->
-    forall y, In y l -> abs_le g1 y /\ abs_le y g3.
+    forall y, In y l -> b64_abs_le g1 y /\ b64_abs_le y g3.
 Proof.
   intros l g1 g2 g3 Hs y Hy.
   pose proof (sort_by_abs_sorted l) as Hsort. rewrite Hs in Hsort.
   assert (Hin : In y [g1; g2; g3]).
   { rewrite <- Hs. eapply Permutation_in; [ apply sort_by_abs_perm | exact Hy ]. }
   inversion Hsort as [ | | ? ? ? H12 Hs23 ]; subst.
-  inversion Hs23 as [ | | ? ? ? H23 _ ]; subst. unfold abs_le.
+  inversion Hs23 as [ | | ? ? ? H23 _ ]; subst. unfold b64_abs_le.
   destruct Hin as [<- | [<- | [<- | []]]]; split; lra.
 Qed.
 
@@ -118,25 +114,25 @@ Qed.
    Multiples of 2^c.
    -------------------------------------------------------------------------- *)
 
-Definition mult_of (c : Z) (x : R) : Prop := exists n : Z, x = IZR n * bpow radix2 c.
+Definition pow2_multiple (c : Z) (x : R) : Prop := exists n : Z, x = IZR n * bpow radix2 c.
 
-Lemma mult_of_le : forall c c' x, (c <= c')%Z -> mult_of c' x -> mult_of c x.
+Lemma pow2_multiple_le : forall c c' x, (c <= c')%Z -> pow2_multiple c' x -> pow2_multiple c x.
 Proof.
   intros c c' x Hc [n Hn]. exists (n * Zpower radix2 (c' - c))%Z.
   rewrite Hn. replace c' with (c + (c' - c))%Z at 1 by ring.
   apply IZR_scaled_shift. lia.
 Qed.
 
-Lemma mult_of_plus : forall c x y, mult_of c x -> mult_of c y -> mult_of c (x + y).
+Lemma pow2_multiple_plus : forall c x y, pow2_multiple c x -> pow2_multiple c y -> pow2_multiple c (x + y).
 Proof. intros c x y [n Hn] [m Hm]. exists (n + m)%Z. rewrite Hn, Hm, plus_IZR. ring. Qed.
 
-Lemma mult_of_minus : forall c x y, mult_of c x -> mult_of c y -> mult_of c (x - y).
+Lemma pow2_multiple_minus : forall c x y, pow2_multiple c x -> pow2_multiple c y -> pow2_multiple c (x - y).
 Proof. intros c x y [n Hn] [m Hm]. exists (n - m)%Z. rewrite Hn, Hm, minus_IZR. ring. Qed.
 
 (* A binary64 value is a multiple of 2^(cexp of itself). *)
-Lemma b64_mult_of_cexp :
+Lemma b64_pow2_multiple_cexp :
   forall x : binary64,
-    mult_of (cexp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax x))
+    pow2_multiple (cexp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax x))
             (Binary.B2R prec emax x).
 Proof.
   intro x. pose proof (Binary.generic_format_B2R prec emax x) as Hf.
@@ -145,8 +141,8 @@ Proof.
 Qed.
 
 (* Rounding a multiple of 2^c gives a multiple of 2^c. *)
-Lemma round_mult_of :
-  forall c z, mult_of c z -> mult_of c (round radix2 (SpecFloat.fexp prec emax)
+Lemma round_pow2_multiple :
+  forall c z, pow2_multiple c z -> pow2_multiple c (round radix2 (SpecFloat.fexp prec emax)
                                 (BinarySingleNaN.round_mode mode_b64) z).
 Proof.
   intros c z [m Hm].
@@ -160,8 +156,65 @@ Proof.
                (BinarySingleNaN.round_mode mode_b64) z Hfz).
     exists m. exact Hm.
   - (* the rounded value is a multiple of 2^(cexp z), and cexp z > c *)
-    apply (mult_of_le c (cexp radix2 (SpecFloat.fexp prec emax) z)); [ lia | ].
+    apply (pow2_multiple_le c (cexp radix2 (SpecFloat.fexp prec emax) z)); [ lia | ].
     unfold round, F2R. cbn [Fnum Fexp]. eexists. reflexivity.
+Qed.
+
+(* --------------------------------------------------------------------------
+   Singles and uniqueness.  A list with strictly decreasing magnitudes has no
+   adjacent equal magnitudes, so EVERY block decomposition of it is all
+   singles and its reduction is the list itself.
+   -------------------------------------------------------------------------- *)
+
+Definition is_single (b : cblock) : Prop :=
+  match b with CSingle _ => True | _ => False end.
+
+Fixpoint strict_desc (l : list binary64) : Prop :=
+  match l with
+  | a :: ((b :: _) as rest) =>
+      Rabs (Binary.B2R prec emax b) < Rabs (Binary.B2R prec emax a) /\ strict_desc rest
+  | _ => True
+  end.
+
+Lemma strict_desc_tail : forall a l, strict_desc (a :: l) -> strict_desc l.
+Proof. intros a [| b l] H; [ exact I | exact (proj2 H) ]. Qed.
+
+Lemma singles_reduce :
+  forall bs, Forall is_single bs -> flat_map cblock_reduce bs = flat_map cblock_expand bs.
+Proof.
+  induction bs as [| b bs IH]; intro H; [ reflexivity | ].
+  inversion H as [| ? ? Hb Hbs]; subst.
+  destruct b as [u | x | x]; cbn [is_single] in Hb; try contradiction.
+  cbn [flat_map cblock_reduce cblock_expand app]. rewrite (IH Hbs). reflexivity.
+Qed.
+
+Lemma singles_strict_desc :
+  forall bs, Forall is_single bs -> keys_decreasing bs ->
+    strict_desc (flat_map cblock_expand bs).
+Proof.
+  induction bs as [| b bs IH]; intros H Hk; [ exact I | ].
+  inversion H as [| ? ? Hb Hbs]; subst. destruct Hk as [Hk1 Hk2].
+  destruct b as [u | x | x]; cbn [is_single] in Hb; try contradiction.
+  cbn [flat_map cblock_expand app].
+  specialize (IH Hbs Hk2).
+  destruct bs as [| b' bs']; [ exact I | ].
+  inversion Hbs as [| ? ? Hb' _]; subst.
+  destruct b' as [v | y | y]; cbn [is_single] in Hb'; try contradiction.
+  cbn [flat_map cblock_expand app block_key] in *.
+  split; [ exact Hk1 | exact IH ].
+Qed.
+
+(* Uniqueness: on a strictly decreasing list, every decomposition reduces
+   to the list itself. *)
+Lemma desc_all_singles :
+  forall bs, strict_desc (flat_map cblock_expand bs) ->
+    flat_map cblock_reduce bs = flat_map cblock_expand bs.
+Proof.
+  induction bs as [| b bs IH]; intro Hd; [ reflexivity | ].
+  destruct b as [u | x | x]; cbn [flat_map cblock_reduce cblock_expand app] in *.
+  - rewrite (IH (strict_desc_tail _ _ Hd)). reflexivity.
+  - destruct Hd as [Hlt _]. lra.
+  - destruct Hd as [Hlt _]. rewrite b64_neg_R, Rabs_Ropp in Hlt. lra.
 Qed.
 
 (* --------------------------------------------------------------------------
@@ -169,7 +222,7 @@ Qed.
    2^c and |d| < 2^c, then [a; b; d] (zeros dropped) has the shape.
    -------------------------------------------------------------------------- *)
 
-Lemma b64_zero_or_nz :
+Lemma b64_fin_zero_or_nz :
   forall x, b64_fin x ->
     (b64_is_zero x = true /\ Binary.B2R prec emax x = 0)
     \/ (b64_is_zero x = false /\ b64_nz x).
@@ -179,30 +232,22 @@ Proof.
   - right. split; [ reflexivity | apply b64_nz_of_not_zero; assumption ].
 Qed.
 
-Lemma half_ulp_lt_abs :
-  forall x : R, x <> 0 ->
-    generic_format radix2 (SpecFloat.fexp prec emax) x ->
-    ulp radix2 (SpecFloat.fexp prec emax) x / 2 < Rabs x.
-Proof.
-  intros x Hx Hf.
-  pose proof (ulp_le_abs radix2 (SpecFloat.fexp prec emax) x Hx Hf).
-  pose proof (Rabs_pos_lt x Hx). lra.
-Qed.
 
 Lemma three_singles_shape :
   forall (a b d : binary64) (c : Z),
     b64_fin a -> b64_fin b -> b64_fin d ->
     strict_succ_b64 a b ->
-    mult_of c (Binary.B2R prec emax a) ->
-    mult_of c (Binary.B2R prec emax b) ->
+    pow2_multiple c (Binary.B2R prec emax a) ->
+    pow2_multiple c (Binary.B2R prec emax b) ->
     Rabs (Binary.B2R prec emax d) < bpow radix2 c ->
-    exists bs, drop_zeros [a; b; d] = flat_map cblock_expand bs /\ carry_shape bs.
+    exists bs, drop_zeros [a; b; d] = flat_map cblock_expand bs /\ carry_shape bs
+               /\ Forall is_single bs.
 Proof.
   intros a b d c Ha Hb Hd Hab [na Hna] [nb Hnb] Hdc.
   unfold strict_succ_b64 in Hab.
-  destruct (b64_zero_or_nz a Ha) as [[Hza Ha0] | [Hza Hanz]];
-  destruct (b64_zero_or_nz b Hb) as [[Hzb Hb0] | [Hzb Hbnz]];
-  destruct (b64_zero_or_nz d Hd) as [[Hzd Hd0] | [Hzd Hdnz]];
+  destruct (b64_fin_zero_or_nz a Ha) as [[Hza Ha0] | [Hza Hanz]];
+  destruct (b64_fin_zero_or_nz b Hb) as [[Hzb Hb0] | [Hzb Hbnz]];
+  destruct (b64_fin_zero_or_nz d Hd) as [[Hzd Hd0] | [Hzd Hdnz]];
   unfold drop_zeros; cbn [filter]; rewrite ?Hza, ?Hzb, ?Hzd; cbn [negb].
   (* a = 0 forces b = 0 *)
   all: try (exfalso; destruct Hbnz as [_ Hb0']; apply Hb0';
@@ -211,13 +256,13 @@ Proof.
             rewrite b64_ulp_FLT_0 in Hab;
             pose proof (bpow_gt_0 radix2 (3 - emax - prec)); lra).
   (* the shapes that remain *)
-  - exists []. split; [ reflexivity | repeat split; constructor ].
-  - exists [CSingle d]. split; [ reflexivity | ].
+  - exists []. split; [ reflexivity | split; [ repeat split; constructor | constructor ] ].
+  - exists [CSingle d]. split; [ reflexivity | split; [ | repeat (apply Forall_cons; [ exact I | ]); apply Forall_nil ] ].
     split; [ apply Forall_cons; [ exact Hdnz | apply Forall_nil ] | repeat split ].
-  - exists [CSingle a]. split; [ reflexivity | ].
+  - exists [CSingle a]. split; [ reflexivity | split; [ | repeat (apply Forall_cons; [ exact I | ]); apply Forall_nil ] ].
     split; [ apply Forall_cons; [ exact Hanz | apply Forall_nil ] | repeat split ].
   - (* [a; d] *)
-    exists [CSingle a; CSingle d]. split; [ reflexivity | ].
+    exists [CSingle a; CSingle d]. split; [ reflexivity | split; [ | repeat (apply Forall_cons; [ exact I | ]); apply Forall_nil ] ].
     destruct Hanz as [Haf Han0].
     assert (Hge : bpow radix2 c <= Rabs (Binary.B2R prec emax a))
       by (apply (scaled_nonzero_ge _ na c Hna Han0)).
@@ -227,18 +272,20 @@ Proof.
     cbn [flat_map cblock_reduce app nonoverlapping_chain]. split; [ | exact I ].
     apply (nonov_scaled _ _ na c Hna Hdc).
   - (* [a; b] *)
-    exists [CSingle a; CSingle b]. split; [ reflexivity | ].
+    exists [CSingle a; CSingle b]. split; [ reflexivity | split; [ | repeat (apply Forall_cons; [ exact I | ]); apply Forall_nil ] ].
     destruct Hanz as [Haf Han0].
-    pose proof (half_ulp_lt_abs _ Han0 (Binary.generic_format_B2R prec emax a)).
+    pose proof (b64_ulp_le_abs _ Han0 (Binary.generic_format_B2R prec emax a)).
+    pose proof (Rabs_pos_lt _ Han0).
     split; [ apply Forall_cons; [ split; assumption
                                 | apply Forall_cons; [ exact Hbnz | apply Forall_nil ] ] | ].
     split; [ cbn [keys_decreasing block_key]; split; [ lra | exact (conj I I) ] | ].
     cbn [flat_map cblock_reduce app nonoverlapping_chain]. split; [ | exact I ].
     apply strict_succ_b64_nonoverlapping. exact Hab.
   - (* [a; b; d] *)
-    exists [CSingle a; CSingle b; CSingle d]. split; [ reflexivity | ].
+    exists [CSingle a; CSingle b; CSingle d]. split; [ reflexivity | split; [ | repeat (apply Forall_cons; [ exact I | ]); apply Forall_nil ] ].
     destruct Hanz as [Haf Han0]. pose proof Hbnz as [Hbf Hbn0].
-    pose proof (half_ulp_lt_abs _ Han0 (Binary.generic_format_B2R prec emax a)).
+    pose proof (b64_ulp_le_abs _ Han0 (Binary.generic_format_B2R prec emax a)).
+    pose proof (Rabs_pos_lt _ Han0).
     assert (Hge : bpow radix2 c <= Rabs (Binary.B2R prec emax b))
       by (apply (scaled_nonzero_ge _ nb c Hnb Hbn0)).
     split; [ apply Forall_cons; [ split; assumption | ];
@@ -282,7 +329,7 @@ Proof.
   destruct (priest_pair_lt_ulp a b Hab) as [Ha0 Hbu].
   destruct (sorted3_bounds _ g1 g2 g3 Hs b Hb) as [H1b _].
   destruct (sorted3_bounds _ g1 g2 g3 Hs a Ha) as [_ Ha3].
-  unfold abs_le in *.
+  unfold b64_abs_le in *.
   assert (Hg30 : Binary.B2R prec emax g3 <> 0).
   { intro H0. rewrite H0, Rabs_R0 in Ha3. pose proof (Rabs_pos_lt _ Ha0). lra. }
   split; [ exact Hg30 | ].
@@ -292,32 +339,26 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   RUNG 2.
+   Two chained TwoSums, given the key bound.  No Priest hypothesis here: it
+   enters only through |g1| < ulp(g3).
    -------------------------------------------------------------------------- *)
 
-Theorem fes_carry_bridge_rung2 :
-  forall e f : list binary64,
-    priest_chain e -> priest_chain f ->
-    Forall b64_fin e -> Forall b64_fin f ->
-    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
-    (length e + length f = 3)%nat ->
-    exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
-               /\ carry_shape bs.
+Definition fes3 (g1 g2 g3 : binary64) : list binary64 :=
+  let '(hs, q) := b64_grow_expansion_aux g1 [g2; g3] in q :: rev hs.
+
+Lemma fes3_shape_of_key :
+  forall g1 g2 g3 : binary64,
+    b64_fin g1 -> b64_fin g2 -> b64_fin g3 ->
+    cascade_safe g1 [g2; g3] ->
+    Binary.B2R prec emax g3 <> 0 ->
+    Rabs (Binary.B2R prec emax g1)
+      < ulp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax g3) ->
+    exists bs, drop_zeros (fes3 g1 g2 g3) = flat_map cblock_expand bs
+               /\ carry_shape bs /\ Forall is_single bs.
 Proof.
-  intros e f He Hf Hef Hff Hov Hlen.
-  pose proof (fes_cascade_safe e f Hef Hff Hov) as Hsafe.
-  assert (Hfin : Forall b64_fin (sort_by_abs (e ++ f)))
-    by (apply sort_by_abs_Forall, Forall_app; split; assumption).
-  assert (Hl3 : length (sort_by_abs (e ++ f)) = 3%nat)
-    by (rewrite sort_by_abs_length, length_app; exact Hlen).
-  destruct (sort_by_abs (e ++ f)) as [| g1 [| g2 [| g3 [| g4 rest]]]] eqn:Hs;
-    cbn [length] in Hl3; try lia.
-  destruct (key_lt_ulp e f g1 g2 g3 He Hf Hlen Hs) as [Hg30 Hkey].
-  inversion Hfin as [| ? ? F1 Hfin2]; subst.
-  inversion Hfin2 as [| ? ? F2 Hfin3]; subst.
-  inversion Hfin3 as [| ? ? F3 _]; subst.
+  intros g1 g2 g3 F1 F2 F3 Hsafe Hg30 Hkey.
   cbn [cascade_safe] in Hsafe. destruct Hsafe as [S12 [S3 _]].
-  unfold fast_expansion_sum. rewrite Hs. cbn [b64_grow_expansion_aux].
+  unfold fes3. cbn [b64_grow_expansion_aux].
   (* first TwoSum: (Q2, h2) = TwoSum(g2, g1) *)
   pose proof S12 as (A1 & A2 & A3 & A4 & A5 & A6).
   pose proof (b64_TwoSum_correct g2 g1 A1 A2 A3 A4 A5 A6) as Hex2.
@@ -343,17 +384,17 @@ Proof.
   (* 2^c with c = min(cexp g3, cexp Q2) *)
   set (c := Z.min (cexp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax g3))
                   (cexp radix2 (SpecFloat.fexp prec emax) (Binary.B2R prec emax Q2))).
-  assert (Mg3 : mult_of c (Binary.B2R prec emax g3))
-    by (apply (mult_of_le _ _ _ (Z.le_min_l _ _)), b64_mult_of_cexp).
-  assert (MQ2 : mult_of c (Binary.B2R prec emax Q2))
-    by (apply (mult_of_le _ _ _ (Z.le_min_r _ _)), b64_mult_of_cexp).
-  assert (MQ3 : mult_of c (Binary.B2R prec emax Q3)).
-  { rewrite RQ3. apply round_mult_of, mult_of_plus; assumption. }
-  assert (Mh3 : mult_of c (Binary.B2R prec emax h3)).
+  assert (Mg3 : pow2_multiple c (Binary.B2R prec emax g3))
+    by (apply (pow2_multiple_le _ _ _ (Z.le_min_l _ _)), b64_pow2_multiple_cexp).
+  assert (MQ2 : pow2_multiple c (Binary.B2R prec emax Q2))
+    by (apply (pow2_multiple_le _ _ _ (Z.le_min_r _ _)), b64_pow2_multiple_cexp).
+  assert (MQ3 : pow2_multiple c (Binary.B2R prec emax Q3)).
+  { rewrite RQ3. apply round_pow2_multiple, pow2_multiple_plus; assumption. }
+  assert (Mh3 : pow2_multiple c (Binary.B2R prec emax h3)).
   { replace (Binary.B2R prec emax h3)
       with ((Binary.B2R prec emax g3 + Binary.B2R prec emax Q2) - Binary.B2R prec emax Q3)
       by lra.
-    apply mult_of_minus; [ apply mult_of_plus | ]; assumption. }
+    apply pow2_multiple_minus; [ apply pow2_multiple_plus | ]; assumption. }
   (* |h2| < 2^c *)
   assert (Hh2g1 : Rabs (Binary.B2R prec emax h2) <= Rabs (Binary.B2R prec emax g1)).
   { replace (Binary.B2R prec emax h2)
@@ -381,6 +422,71 @@ Proof.
   apply (three_singles_shape Q3 h3 h2 c FQ3 Fh3 Fh2 Hno3 MQ3 Mh3 Hh2c).
 Qed.
 
+(* --------------------------------------------------------------------------
+   RUNG 2.
+   -------------------------------------------------------------------------- *)
+
+(* The exhibited decomposition, as singles. *)
+Lemma fes_rung2_singles :
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    (length e + length f = 3)%nat ->
+    exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
+               /\ carry_shape bs /\ Forall is_single bs.
+Proof.
+  intros e f He Hf Hef Hff Hov Hlen.
+  pose proof (fes_cascade_safe e f Hef Hff Hov) as Hsafe.
+  assert (Hfin : Forall b64_fin (sort_by_abs (e ++ f)))
+    by (apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hl3 : length (sort_by_abs (e ++ f)) = 3%nat)
+    by (rewrite sort_by_abs_length, length_app; exact Hlen).
+  destruct (sort_by_abs (e ++ f)) as [| g1 [| g2 [| g3 [| g4 rest]]]] eqn:Hs;
+    cbn [length] in Hl3; try lia.
+  destruct (key_lt_ulp e f g1 g2 g3 He Hf Hlen Hs) as [Hg30 Hkey].
+  inversion Hfin as [| ? ? F1 Hfin2]; subst.
+  inversion Hfin2 as [| ? ? F2 Hfin3]; subst.
+  inversion Hfin3 as [| ? ? F3 _]; subst.
+  unfold fast_expansion_sum. rewrite Hs.
+  exact (fes3_shape_of_key g1 g2 g3 F1 F2 F3 Hsafe Hg30 Hkey).
+Qed.
+
+(* The shape for the exhibited decomposition (what the target consumes). *)
+Theorem fes_carry_bridge_rung2 :
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    (length e + length f = 3)%nat ->
+    exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
+               /\ carry_shape bs.
+Proof.
+  intros e f He Hf Hef Hff Hov Hlen.
+  destruct (fes_rung2_singles e f He Hf Hef Hff Hov Hlen) as [bs [Hl [Hs _]]].
+  exists bs. split; assumption.
+Qed.
+
+(* Bridge part (a) at total length 3. *)
+Theorem fes_carry_pattern_rung2 : fes_priest_carry_pattern_n 3.
+Proof.
+  intros e f He Hf Hef Hff Hov Hlen.
+  destruct (fes_rung2_singles e f He Hf Hef Hff Hov Hlen) as [bs [Hl [[Hok [Hdec _]] _]]].
+  exists bs. split; [ exact Hl | split; assumption ].
+Qed.
+
+(* Bridge part (b) at total length 3, for EVERY decomposition. *)
+Theorem fes_reduction_nonoverlap_rung2 : fes_priest_reduction_nonoverlap_n 3.
+Proof.
+  intros e f He Hf Hef Hff Hov Hlen bs Hl _.
+  destruct (fes_rung2_singles e f He Hf Hef Hff Hov Hlen)
+    as [bs0 [Hl0 [[Hok0 [Hdec0 Hno0]] Hsg0]]].
+  assert (Hdesc : strict_desc (flat_map cblock_expand bs)).
+  { rewrite <- Hl, Hl0. apply singles_strict_desc; assumption. }
+  rewrite (desc_all_singles bs Hdesc), <- Hl, Hl0, <- (singles_reduce bs0 Hsg0).
+  exact Hno0.
+Qed.
+
 (* The target on rung 2, and on all of rungs 1-2 together. *)
 Corollary carry_clean_priest_target_rung2 :
   forall e f : list binary64,
@@ -399,11 +505,14 @@ Proof.
     lra.
 Qed.
 
-Print Assumptions sort_by_abs_perm.
 Print Assumptions sorted3_bounds.
 Print Assumptions priest_pair_lt_ulp.
-Print Assumptions round_mult_of.
+Print Assumptions round_pow2_multiple.
 Print Assumptions three_singles_shape.
 Print Assumptions key_lt_ulp.
 Print Assumptions fes_carry_bridge_rung2.
 Print Assumptions carry_clean_priest_target_rung2.
+Print Assumptions desc_all_singles.
+Print Assumptions fes3_shape_of_key.
+Print Assumptions fes_carry_pattern_rung2.
+Print Assumptions fes_reduction_nonoverlap_rung2.

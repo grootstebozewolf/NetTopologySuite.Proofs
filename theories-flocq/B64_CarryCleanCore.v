@@ -2,14 +2,15 @@
    NetTopologySuite.Proofs.Flocq.B64_CarryCleanCore
    ----------------------------------------------------------------------------
    The core slice (carry_clean computes the block reduction), the two-part
-   open bridge, the trivial base case and cascade safety.
+   open bridge (also length-indexed, `..._n`), the trivial base case (the
+   shape for the exhibited decomposition) and cascade safety.
 
    Part of the B64_CarryClean split (umbrella: B64_CarryClean.v, which keeps
    the full module header: what is proved, what is open, the evidence).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted, human review pending.
+   AI assistance disclosure: AI-drafted; reviewed on PRs #985 and #986 (2026-10-31).
      Assisted-by: Claude
    ========================================================================== *)
 
@@ -19,7 +20,7 @@ From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib B64_Pf
      B64_Expansion B64_FastExpansionSum B64_FastExpansionSum_Shewchuk
      B64_Shewchuk_Thm13_counterexample B64_Overlap_Hierarchy
      B64_Priest_FES_counterexample DivRoundPow2_b64.
-From NTS.Proofs.Flocq Require Import B64_CarryCleanAlgo B64_CarryCleanWitness.
+From NTS.Proofs.Flocq Require Import B64_CarryCleanAlgo.
 
 Import ListNotations.
 Local Open Scope R_scope.
@@ -342,6 +343,36 @@ Definition fes_priest_reduction_nonoverlap : Prop :=
                carry_pattern bs ->
                nonoverlapping_chain (flat_map cblock_reduce bs).
 
+(* Length-indexed bridge parts: rung n proves them at total length n, and
+   together they give the unindexed parts.  Each rung therefore has a stated
+   target, and an induction over n has a shape. *)
+Definition fes_priest_carry_pattern_n (n : nat) : Prop :=
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    (length e + length f = n)%nat ->
+    exists bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs
+               /\ carry_pattern bs.
+
+Definition fes_priest_reduction_nonoverlap_n (n : nat) : Prop :=
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    (length e + length f = n)%nat ->
+    forall bs, drop_zeros (fast_expansion_sum e f) = flat_map cblock_expand bs ->
+               carry_pattern bs ->
+               nonoverlapping_chain (flat_map cblock_reduce bs).
+
+Lemma fes_priest_carry_pattern_of_n :
+  (forall n, fes_priest_carry_pattern_n n) -> fes_priest_carry_pattern.
+Proof. intros H e f He Hf Hef Hff Hov. exact (H _ e f He Hf Hef Hff Hov eq_refl). Qed.
+
+Lemma fes_priest_reduction_nonoverlap_of_n :
+  (forall n, fes_priest_reduction_nonoverlap_n n) -> fes_priest_reduction_nonoverlap.
+Proof. intros H e f He Hf Hef Hff Hov. exact (H _ e f He Hf Hef Hff Hov eq_refl). Qed.
+
 (* The core reduces the target to the two bridge parts -- one way only. *)
 Theorem carry_clean_priest_target_of_bridge :
   fes_priest_carry_pattern -> fes_priest_reduction_nonoverlap ->
@@ -362,38 +393,6 @@ Proof.
   rewrite H2. ring.
 Qed.
 
-(* The bridge's shape is attained by a real sum: witness 1 (two Priest
-   inputs) decomposes as single, twin, single, single. *)
-Definition q1_blocks : list cblock :=
-  [CSingle q1_A; CTwin q1_p53; CSingle q1_n106; CSingle q1_n107].
-
-Lemma q1_drop_zeros :
-  drop_zeros (fast_expansion_sum q1_e q1_f) = flat_map cblock_expand q1_blocks.
-Proof.
-  apply map_B2FF_inj. unfold fast_expansion_sum. rewrite q1_sort.
-  vm_compute. reflexivity.
-Qed.
-
-Lemma q1_reduce : flat_map cblock_reduce q1_blocks = [q1_A; q1_p52; q1_n106; q1_n107].
-Proof. apply map_B2FF_inj. vm_compute. reflexivity. Qed.
-
-Lemma q1_carry_shape : carry_shape q1_blocks.
-Proof.
-  assert (Hnz : forall s m e H, b64_nz (Binary.B754_finite prec emax s m e H))
-    by (intros; split; [ reflexivity | apply B2R_fin_nonzero ]).
-  split; [ | split ].
-  - unfold q1_blocks. repeat constructor; try apply Hnz.
-    unfold q1_p53. rewrite abs_B2R_fin, two_scaled.
-    apply Rle_lt_trans
-      with (Rabs (IZR (Z.pos 4503599627370496) * bpow radix2 (-105 + 1)));
-      [ apply Rle_abs | apply abs_scaled_lt_bpow; unfold emax; zdec ].
-  - unfold q1_blocks, q1_A, q1_p53, q1_n106, q1_n107.
-    cbn [keys_decreasing block_key]. rewrite !abs_B2R_fin.
-    rewrite two_scaled.
-    repeat split; apply scaled_lt'; zdec.
-  - rewrite q1_reduce. pose proof q1_carry_nonoverlapping as H.
-    rewrite q1_carry in H. exact H.
-Qed.
 
 (* ==========================================================================
    BRIDGE, BASE CASE (trivial) -- at most two components in total.
@@ -757,11 +756,11 @@ Print Assumptions reduce_sum.
 Print Assumptions carry_clean_priest_core.
 Print Assumptions carry_clean_nonoverlap_of_shape.
 Print Assumptions carry_clean_priest_target_of_bridge.
-Print Assumptions q1_drop_zeros.
-Print Assumptions q1_carry_shape.
 Print Assumptions b64_TwoSum_safe_bound.
 Print Assumptions twosum_carry_shape.
 Print Assumptions fes_carry_bridge_base_case.
 Print Assumptions carry_clean_priest_target_base_case.
 Print Assumptions cascade_safe_bounded.
 Print Assumptions fes_cascade_safe.
+Print Assumptions fes_priest_carry_pattern_of_n.
+Print Assumptions fes_priest_reduction_nonoverlap_of_n.

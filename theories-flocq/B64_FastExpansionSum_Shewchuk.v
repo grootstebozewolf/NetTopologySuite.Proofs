@@ -46,6 +46,7 @@ From Stdlib Require Import Reals.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lra.
 From Stdlib Require Import List.
+From Stdlib Require Import Permutation.
 
 From Flocq Require Import IEEE754.Binary.
 From Flocq Require Import IEEE754.BinarySingleNaN.
@@ -254,6 +255,21 @@ Proof.
   induction xs as [|x xs IH].
   - cbn. apply sorted_asc_nil.
   - cbn. apply insert_by_abs_sorted. exact IH.
+Qed.
+
+(* `sort_by_abs` is a permutation of its input. *)
+Lemma insert_by_abs_perm :
+  forall x l, Permutation (x :: l) (insert_by_abs x l).
+Proof.
+  intros x l. induction l as [| y l IH]; [ reflexivity | ].
+  cbn [insert_by_abs]. destruct (Rle_dec _ _); [ reflexivity | ].
+  eapply perm_trans; [ apply perm_swap | ]. apply perm_skip, IH.
+Qed.
+
+Lemma sort_by_abs_perm : forall l, Permutation l (sort_by_abs l).
+Proof.
+  induction l as [| x l IH]; [ reflexivity | ]. cbn [sort_by_abs].
+  eapply perm_trans; [ apply perm_skip, IH | apply insert_by_abs_perm ].
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -517,6 +533,8 @@ Print Assumptions fast_expansion_sum.
 Print Assumptions expansion_R_sort_by_abs.
 Print Assumptions fast_expansion_sum_correct.
 Print Assumptions sort_by_abs_sorted.
+Print Assumptions insert_by_abs_perm.
+Print Assumptions sort_by_abs_perm.
 Print Assumptions b64_plus_geq_pos.
 Print Assumptions b64_plus_leq_neg.
 Print Assumptions b64_TwoSum_step_dominates_pos.
