@@ -4504,3 +4504,11 @@ theories-flocq/B64_CarryCleanRung3.v
 # pattern decomposition is unique (pattern_unique), so part (b) holds for
 # every decomposition.  Six or more components stay OPEN.
 theories-flocq/B64_CarryCleanRung4.v
+# carry_clean ladder: rung-independent machinery -- keys at any length
+# (|g_j| < ulp(g_(j+2)) by per-chain counting), the layered state and its
+# step, the tie as values, the step after a tie (absorb / anti kept below).
+theories-flocq/B64_CarryCleanLadder.v
+# carry_clean bridge, rung 5: six components in total, composed from the
+# ladder; a tie at step 5 is carried through step 6.  Seven or more stay OPEN
+# (this supersedes the rung-4 entry's "six or more" line above).
+theories-flocq/B64_CarryCleanRung5.v

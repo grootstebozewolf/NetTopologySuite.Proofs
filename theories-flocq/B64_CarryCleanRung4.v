@@ -40,7 +40,8 @@
    Outcomes (ii) and (iv) need |Q3| = 3u exactly; the proof covers them
    without deciding whether they occur.
 
-   NOT COVERED.  Six or more components.
+   NOT COVERED HERE.  Six components: B64_CarryCleanRung5.v.  Seven or more
+   stay open.
 
    NTS / JTS COUNTERPART.  None in-library (JTS/NTS use `CGAlgorithmsDD`,
    double-double); this lane serves the corpus's exact orientation.

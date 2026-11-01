@@ -68,6 +68,10 @@
      RUNG 4   (B64_CarryCleanRung4.v)    five components: fes_priest_..._n 5,
                                          target for totals <= 5; one anti
                                          pair or one twin at a midpoint tie
+     RUNG 5   (B64_CarryCleanRung5.v)    six components: fes_priest_..._n 6,
+                                         target for totals <= 6; composed
+                                         from B64_CarryCleanLadder.v (keys
+                                         at any length, layered state)
      BASE     fes_carry_bridge_base_case the trivial base case: at most two
                                          components in total, one TwoSum, no
                                          twins or anti pairs; the shape for

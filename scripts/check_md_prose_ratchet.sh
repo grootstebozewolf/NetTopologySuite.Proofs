@@ -5,6 +5,8 @@
 # PR-diff ratchet on markdown prose (AGENTS.md).  A PR may only delete .md
 # prose, or amend so net non-blank .md lines shrink while content diverges
 # to MMF (gate / ticket / claim / fixture).  Global net > 0 fails.
+# Table rows (lines whose first non-blank character is `|`) are exempt:
+# structured status tables are the MMF shape, not narrative prose.
 #
 # MMF shape (imported, not restated): docs/scout/map-opam-mmf-release-bar.md
 #
@@ -108,6 +110,7 @@ except subprocess.CalledProcessError as e:
 
 added = {}
 deleted = {}
+table_rows = 0
 path = None
 for line in diff.splitlines():
     if line.startswith("diff --git "):
@@ -121,12 +124,18 @@ for line in diff.splitlines():
         continue
     if path is None:
         continue
-    if line.startswith("+") and line[1:].strip():
+    body = line[1:].strip()
+    if line[:1] in "+-" and body.startswith("|"):
+        table_rows += 1          # table row: exempt from the ratchet
+        continue
+    if line.startswith("+") and body:
         added[path] = added.get(path, 0) + 1
-    elif line.startswith("-") and line[1:].strip():
+    elif line.startswith("-") and body:
         deleted[path] = deleted.get(path, 0) + 1
 
-files = sorted(set(added) | set(deleted))
+files = sorted(f for f in set(added) | set(deleted) if added.get(f, 0) or deleted.get(f, 0))
+if table_rows:
+    print(f"[md-prose-ratchet] {table_rows} changed table row(s) exempt")
 if not files:
     print(f"[md-prose-ratchet] OK: no *.md changes vs {base}")
     sys.exit(0)
