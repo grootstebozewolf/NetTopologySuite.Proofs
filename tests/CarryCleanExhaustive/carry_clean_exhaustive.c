@@ -78,18 +78,31 @@
      2  -8   2 6    0     6    10772272      0    372    372  744   744
      3  -7   2 6    0     6    23920256      0    200    200  400   400
      2   0   8 6    1     6    19297828      0   1264   1264 2528  2528  underflow floor
+     2 -14   2 6    0     6   296188752      0    948    948 1896  1896
      2 -14   2 7    0     7  3345873744      0  44140  44140 88264 88264
    Through total 4 the raw output is already strictly decreasing and
    nonoverlapping (all singles; B64_CarryCleanRung3.v proves it).  Twins
    and anti pairs first occur at total 5; at totals 5 and 6 ovl = desc =
    twins + antis, i.e. every raw defect is one equal-magnitude pair, which
    carry_clean then merges or cancels.  At total 7, twins + antis exceeds
-   ovl by 16: sixteen outputs carry two pairs (two ties in one cascade),
-   and carry_clean still has no failure, pattern or reduction violation.
+   ovl by 16: some outputs carry more than one pair (two ties in one TwoSum
+   chain), and carry_clean still has no failure, pattern or reduction
+   violation.
+
+   Ties of the TwoSum chain (TIE lines; 2026-11-01), by chain length n and
+   step k, as anti/twin counts.  No tie ever resolves as singles.  PAIRS:
+   at totals <= 6 every defective output carries exactly one pair.
+     p KLO KHI FLOOR TOTAL   n=5 k=5    n=6 k=5    n=6 k=6
+     3  -8   2    0     5     16/16
+     3  -7   2    0     6     16/16         -      184/184
+     2  -8   2    0     6      8/8     128/128    236/236
+     2 -14   2    0     6      8/8     320/320    620/620
+     2   0   8    1     6     44/44    512/512    708/708
 
    Prints FAIL lines (up to five); in MODE 1 a SHAPE line, a RAW line, the
    number of outputs by count of twin/anti pairs (PAIRS), and the ties of the
-   TwoSum chain by step and outcome (TIE: at step k, |h_(k-1)| = ulp(g_k);
+   TwoSum chain by its length n, step and outcome (TIE: at step k,
+   |h_(k-1)| = ulp(g_k);
    anti if h_k = -h_(k-1), twin if h_k = 0 and Q_k = h_(k-1), else singles);
    and a SUMMARY.  "cascades" in the SHAPE line counts carry cascades inside
    carry_clean (a carry or cancel that triggers another), not the TwoSum
@@ -192,7 +205,7 @@ static int clean(const I *o, int n, I *st) {
 /* Greedy block decomposition of the zero-filtered raw output. */
 static long long pattern_bad, reduction_bad, twins, antis;
 static long long pairs_hist[8];   /* outputs by number of twin/anti pairs */
-static long long tie_at[16][3];   /* tie at step k: anti, twin, singles */
+static long long tie_at[16][16][3];   /* chain length n, tie at step k: anti, twin, singles */
 static long long raw_overlap, raw_notdesc;   /* the zero-filtered raw output */
 
 static void shape(const I *o, int n) {
@@ -218,9 +231,9 @@ static void shape(const I *o, int n) {
     int sh = nbits - p;
     if (sh < 0) sh = 0;
     if (iabs(ch[k - 1]) != (((I)1) << sh)) continue;
-    if (ch[k] == -ch[k - 1]) tie_at[k][0]++;
-    else if (ch[k] == 0 && cQ[k] == ch[k - 1]) tie_at[k][1]++;
-    else tie_at[k][2]++;
+    if (ch[k] == -ch[k - 1]) tie_at[cn][k][0]++;
+    else if (ch[k] == 0 && cQ[k] == ch[k - 1]) tie_at[cn][k][1]++;
+    else tie_at[cn][k][2]++;
   }
   for (int b = 0; b + 1 < nb; b++) if (!(key[b] > key[b + 1])) { pattern_bad++; return; }
   for (int r = 0; r + 1 < nr; r++) if (!overlap_within(0, red[r], red[r + 1])) { reduction_bad++; return; }
@@ -323,9 +336,11 @@ int main(int argc, char **argv) {
     printf("PAIRS per output:");
     for (int k = 0; k < 8; k++) if (pairs_hist[k]) printf(" %d:%lld", k, pairs_hist[k]);
     printf("\n");
-    for (int k = 3; k < 16; k++)
-      if (tie_at[k][0] || tie_at[k][1] || tie_at[k][2])
-        printf("TIE step %d: anti=%lld twin=%lld singles=%lld\n", k, tie_at[k][0], tie_at[k][1], tie_at[k][2]);
+    for (int n = 3; n < 16; n++)
+      for (int k = 3; k <= n; k++)
+        if (tie_at[n][k][0] || tie_at[n][k][1] || tie_at[n][k][2])
+          printf("TIE n=%d step %d: anti=%lld twin=%lld singles=%lld\n", n, k,
+                 tie_at[n][k][0], tie_at[n][k][1], tie_at[n][k][2]);
   }
   printf("SUMMARY p=%d K=[%d,%d] L=%d mode=%d class=%d floor=%d total=%d pairs=%lld fails=%lld\n",
          p, KLO, KHI, L, MODE, CLASS, FLOOR, TOTAL, tot, bad);
