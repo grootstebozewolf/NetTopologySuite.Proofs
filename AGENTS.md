@@ -42,10 +42,10 @@ Adapted from [NetTopologySuite#875](https://github.com/NetTopologySuite/NetTopol
   unless a letter explicitly does.
 - Markdown ratchet: PRs may only **delete** `.md` prose, or **amend** so
   net prose shrinks while content **diverges to MMF** (gate / ticket /
-  claim / fixture). Net-positive `.md` line/byte growth is forbidden
-  unless the added path is an MMF ticket/bar artifact that simultaneously
-  retires prose elsewhere in the same PR. No new essay docs; no expanding
-  CONTEXT/ADR/README for narrative filler. MMF shape:
+  claim / fixture); table rows (`|` lines) are exempt. Net-positive `.md`
+  growth is forbidden unless the added path is an MMF ticket/bar artifact
+  that retires prose elsewhere in the same PR. No new essay docs; no
+  expanding CONTEXT/ADR/README for narrative filler. MMF shape:
   [`docs/scout/map-opam-mmf-release-bar.md`](docs/scout/map-opam-mmf-release-bar.md).
 
 ## Before finishing
