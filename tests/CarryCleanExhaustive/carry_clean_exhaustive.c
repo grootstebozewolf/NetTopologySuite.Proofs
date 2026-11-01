@@ -61,7 +61,7 @@
    Pattern/reduction/cascade counts are noted on the rows whose run printed
    them; the other MODE 1 rows predate those counters (rerun to see them).
 
-   By total length (MODE 1, CLASS 0, TOTAL given; 2026-10-31).  The RAW
+   By total length (MODE 1, CLASS 0, TOTAL given; 2026-10-31 .. 11-01).  The RAW
    line counts pairs whose zero-filtered output BEFORE carry_clean has an
    overlapping neighbour pair (ovl) or is not strictly decreasing (desc).
    Every row has pattern 0, reduction 0, cascades 0.
@@ -75,10 +75,13 @@
      4   0   7 4    1     4    17929028      0      0      0    0     0  underflow floor
      2  -8   2 5    0     5     1630000      0      8      8   16    16
      3  -8   2 5    0     5    15474368      0     16     16   32    32
+     2  -8   2 6    0     6    10772272      0    372    372  744   744
+     3  -7   2 6    0     6    23920256      0    200    200  400   400
+     2   0   8 6    1     6    19297828      0   1264   1264 2528  2528  underflow floor
    Through total 4 the raw output is already strictly decreasing and
    nonoverlapping (all singles; B64_CarryCleanRung3.v proves it).  Twins
-   and anti pairs first occur at total 5; there ovl = desc = twins + antis,
-   i.e. every raw defect is one equal-magnitude neighbour pair, which
+   and anti pairs first occur at total 5; at totals 5 and 6 ovl = desc =
+   twins + antis, i.e. every raw defect is one equal-magnitude pair, which
    carry_clean then merges or cancels.
 
    Prints FAIL lines (up to five), SHAPE and RAW lines in MODE 1, and a
