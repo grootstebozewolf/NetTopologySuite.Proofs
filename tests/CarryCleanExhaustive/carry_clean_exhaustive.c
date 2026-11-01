@@ -78,11 +78,14 @@
      2  -8   2 6    0     6    10772272      0    372    372  744   744
      3  -7   2 6    0     6    23920256      0    200    200  400   400
      2   0   8 6    1     6    19297828      0   1264   1264 2528  2528  underflow floor
+     2 -14   2 7    0     7  3345873744      0  44140  44140 88264 88264
    Through total 4 the raw output is already strictly decreasing and
    nonoverlapping (all singles; B64_CarryCleanRung3.v proves it).  Twins
    and anti pairs first occur at total 5; at totals 5 and 6 ovl = desc =
    twins + antis, i.e. every raw defect is one equal-magnitude pair, which
-   carry_clean then merges or cancels.
+   carry_clean then merges or cancels.  At total 7, twins + antis exceeds
+   ovl by 16: sixteen outputs carry two pairs (two ties in one cascade),
+   and carry_clean still has no failure, pattern or reduction violation.
 
    Prints FAIL lines (up to five), SHAPE and RAW lines in MODE 1, and a
    SUMMARY.
