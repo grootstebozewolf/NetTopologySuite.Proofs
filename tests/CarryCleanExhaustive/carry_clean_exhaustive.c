@@ -84,10 +84,12 @@
    nonoverlapping (all singles; B64_CarryCleanRung3.v proves it).  Twins
    and anti pairs first occur at total 5; at totals 5 and 6 ovl = desc =
    twins + antis, i.e. every raw defect is one equal-magnitude pair, which
-   carry_clean then merges or cancels.  At total 7, twins + antis exceeds
-   ovl by 16: some outputs carry more than one pair (two ties in one TwoSum
-   chain), and carry_clean still has no failure, pattern or reduction
-   violation.
+   carry_clean then merges or cancels.  At total 7 (PAIRS line of the
+   2 -14 2 7 row): 88,248 outputs carry one pair and 16 carry two -- two ties
+   in one TwoSum chain -- none carry three, and carry_clean still has no
+   failure, pattern or reduction violation.  Ties at steps 5, 6 and 7 of
+   that run (all chain lengths <= 7 together): 11976, 11676 and 20488 each
+   as anti and as twin, none as singles.
 
    Ties of the TwoSum chain (TIE lines; 2026-11-01), by chain length n and
    step k, as anti/twin counts.  No tie ever resolves as singles.  PAIRS:
