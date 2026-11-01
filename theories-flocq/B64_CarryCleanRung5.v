@@ -123,7 +123,7 @@ Qed.
    -------------------------------------------------------------------------- *)
 
 Definition fes6 (g1 g2 g3 g4 g5 g6 : binary64) : list binary64 :=
-  let '(hs, q) := b64_grow_expansion_aux g1 [g2; g3; g4; g5; g6] in q :: rev hs.
+  fes_chain g1 [g2; g3; g4; g5; g6].
 
 Lemma fes6_shape_of_keys :
   forall g1 g2 g3 g4 g5 g6 : binary64,
@@ -141,7 +141,7 @@ Lemma fes6_shape_of_keys :
 Proof.
   intros g1 g2 g3 g4 g5 g6 F1 F2 F3 F4 F5 F6 Hsafe H34 H45 H56 N3 N4 N5 N6 K1 K2 K3 K4 Hov6.
   cbn [cascade_safe] in Hsafe. destruct Hsafe as [S2 [S3 [S4 [S5 [S6 _]]]]].
-  unfold fes6. cbn [b64_grow_expansion_aux].
+  unfold fes6, fes_chain. cbn [b64_grow_expansion_aux].
   (* step 2 *)
   pose proof (sstate_step _ _ _ _ g2 (sstate_init g1 0%Z F1) F2 S2 (Forall_nil _)) as St2.
   pose proof (ts_facts g2 g1 S2) as T2. cbv zeta in St2, T2.

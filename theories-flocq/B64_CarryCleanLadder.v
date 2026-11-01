@@ -30,9 +30,11 @@
                               anti pair below everything new, or absorbs the
                               tiny running sum so the twin moves up
 
-   NOT HERE.  An induction over n: after a tie, a later step could tie again
-   in principle; this module handles the step right after a tie, which is
-   what rung 5 needs.
+   NOT HERE.  An induction over n.  A TwoSum chain can tie more than once
+   (the harness records two ties in one chain at total 7: PAIRS / TIE lines
+   in tests/CarryCleanExhaustive); this module handles the step right after
+   one tie, which is what rung 5 needs.  `fes_chain` is the chain for any n;
+   `keys5_of_general` recovers rung 4's keys from `priest_keys_general`.
 
    NTS / JTS COUNTERPART.  None in-library (JTS/NTS use `CGAlgorithmsDD`,
    double-double); this lane serves the corpus's exact orientation.
@@ -262,6 +264,9 @@ Definition sstate (Q : binary64) (E : list binary64) (L K : Z) : Prop :=
   b64_fin Q /\ Forall b64_fin E /\ pow2_multiple L (b2r Q)
   /\ Forall (below L) E /\ layered E /\ Forall (below K) (tl E).
 
+(* The start of a chain: one component, no errors.  K constrains only the
+   errors before the newest one (`tl E`), which here is empty, so any K
+   will do. *)
 Lemma sstate_init : forall g K, b64_fin g -> sstate g [] (cexp radix2 b64_fexp (b2r g)) K.
 Proof.
   intros g K Hg. repeat split; try constructor; try exact I; [ exact Hg | ].
@@ -274,6 +279,10 @@ Proof.
   assert (bpow radix2 c <= bpow radix2 c') by (apply bpow_le, Hc). lra.
 Qed.
 
+(* One TwoSum (Q', h) = TwoSum(g, Q) that does not tie: every error so far
+   lies below ulp(g).  The input K is not used -- the precondition on E
+   already covers the older errors -- and the output K is the level c, so
+   that the next step can check its own precondition from the state. *)
 Lemma sstate_step :
   forall Q E L K g,
     sstate Q E L K -> b64_fin g -> b64_TwoSum_safe g Q ->
@@ -782,8 +791,37 @@ Proof.
       * apply (below_mono c); [ lia | apply Forall_filter_sub, Bt ].
 Qed.
 
+(* --------------------------------------------------------------------------
+   The chain itself, for any number of components, and rung 4's keys as an
+   instance of the general ones.
+   -------------------------------------------------------------------------- *)
+
+Definition fes_chain (g : binary64) (gs : list binary64) : list binary64 :=
+  let '(hs, q) := b64_grow_expansion_aux g gs in q :: rev hs.
+
+Lemma fes_chain_sorted :
+  forall e f g gs, sort_by_abs (e ++ f) = g :: gs -> fast_expansion_sum e f = fes_chain g gs.
+Proof. intros e f g gs Hs. unfold fast_expansion_sum, fes_chain. rewrite Hs. reflexivity. Qed.
+
+Corollary keys5_of_general :
+  forall e f g1 g2 g3 g4 g5,
+    priest_chain e -> priest_chain f ->
+    sort_by_abs (e ++ f) = [g1; g2; g3; g4; g5] -> keys5 g1 g2 g3 g4 g5.
+Proof.
+  intros e f g1 g2 g3 g4 g5 He Hf Hs.
+  pose proof (fun j => priest_keys_general e f j He Hf) as Hk.
+  pose proof (fun j => priest_third_nonzero e f j He Hf) as Hnz.
+  cbv zeta in Hk, Hnz. rewrite Hs in Hk, Hnz.
+  pose proof (Hk 0%nat ltac:(cbn; lia)). pose proof (Hk 1%nat ltac:(cbn; lia)).
+  pose proof (Hk 2%nat ltac:(cbn; lia)).
+  pose proof (Hnz 2%nat ltac:(lia) ltac:(cbn; lia)). pose proof (Hnz 3%nat ltac:(lia) ltac:(cbn; lia)).
+  pose proof (Hnz 4%nat ltac:(lia) ltac:(cbn; lia)).
+  cbn [nth Nat.add] in *. unfold keys5. repeat split; assumption.
+Qed.
+
 Print Assumptions ts_facts.
 Print Assumptions priest_keys_general.
+Print Assumptions keys5_of_general.
 Print Assumptions priest_third_nonzero.
 Print Assumptions sstate_step.
 Print Assumptions tie_values.

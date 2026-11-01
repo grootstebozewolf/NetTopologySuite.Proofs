@@ -6,7 +6,7 @@
    Models, in p-bit binary arithmetic with round-to-nearest-even, exactly the
    corpus algorithms:
      - fast_expansion_sum (B64_FastExpansionSum_Shewchuk.v): insertion sort
-       by |x| (x goes before y iff |x| <= |y|), TwoSum cascade
+       by |x| (x goes before y iff |x| <= |y|), TwoSum chain
        (Q, h) := TwoSum(g_i, Q), output Q :: rev hs;
      - cc_push / cc_run (B64_CarryClean.v): MODE 0 = cancel_clean,
        MODE 1 = carry_clean (cancel is not re-tested after a cancel; a carry
@@ -87,8 +87,13 @@
    ovl by 16: sixteen outputs carry two pairs (two ties in one cascade),
    and carry_clean still has no failure, pattern or reduction violation.
 
-   Prints FAIL lines (up to five), SHAPE and RAW lines in MODE 1, and a
-   SUMMARY.
+   Prints FAIL lines (up to five); in MODE 1 a SHAPE line, a RAW line, the
+   number of outputs by count of twin/anti pairs (PAIRS), and the ties of the
+   TwoSum chain by step and outcome (TIE: at step k, |h_(k-1)| = ulp(g_k);
+   anti if h_k = -h_(k-1), twin if h_k = 0 and Q_k = h_(k-1), else singles);
+   and a SUMMARY.  "cascades" in the SHAPE line counts carry cascades inside
+   carry_clean (a carry or cancel that triggers another), not the TwoSum
+   chain.
    Exit status 1 on any failure or (MODE 1) any pattern/reduction violation.
 
    Assisted-by: Claude
@@ -133,6 +138,11 @@ static int overlap_within(int k, I a, I b) {
   return iabs(b) < (((I)1) << (lsb(a) + k)) || iabs(a) < (((I)1) << (lsb(b) + k));
 }
 
+/* The last sum's TwoSum chain, 1-based: g[k] sorted, Q[k] and h[k] from
+   step k (k >= 2), Q[1] = g[1]. */
+static I cg[16], cQ[16], ch[16];
+static int cn;
+
 static int fes(const I *e, int ne, const I *f, int nf, I *out) {
   I all[16], s[16] = {0}, hs[16];
   int n = 0, ns = 0, nh = 0;
@@ -147,7 +157,11 @@ static int fes(const I *e, int ne, const I *f, int nf, I *out) {
     ns++;
   }
   I q = s[0];
-  for (int i = 1; i < ns; i++) { I a, b; two_sum(s[i], q, &a, &b); q = a; hs[nh++] = b; }
+  cn = ns; cg[1] = s[0]; cQ[1] = q;
+  for (int i = 1; i < ns; i++) {
+    I a, b; two_sum(s[i], q, &a, &b); q = a; hs[nh++] = b;
+    cg[i + 1] = s[i]; cQ[i + 1] = a; ch[i + 1] = b;
+  }
   out[0] = q;
   for (int i = 0; i < nh; i++) out[1 + i] = hs[nh - 1 - i];
   return 1 + nh;
@@ -177,6 +191,8 @@ static int clean(const I *o, int n, I *st) {
 
 /* Greedy block decomposition of the zero-filtered raw output. */
 static long long pattern_bad, reduction_bad, twins, antis;
+static long long pairs_hist[8];   /* outputs by number of twin/anti pairs */
+static long long tie_at[16][3];   /* tie at step k: anti, twin, singles */
 static long long raw_overlap, raw_notdesc;   /* the zero-filtered raw output */
 
 static void shape(const I *o, int n) {
@@ -185,10 +201,26 @@ static void shape(const I *o, int n) {
   for (int i = 0; i < n; i++) if (o[i]) z[nz++] = o[i];
   for (int i = 0; i + 1 < nz; i++) if (!overlap_within(0, z[i], z[i + 1])) { raw_overlap++; break; }
   for (int i = 0; i + 1 < nz; i++) if (!(iabs(z[i]) > iabs(z[i + 1]))) { raw_notdesc++; break; }
+  int npairs = 0;
   for (int j = 0; j < nz;) {
-    if (j + 1 < nz && z[j + 1] == z[j])       { key[nb++] = 2 * iabs(z[j]); red[nr++] = 2 * z[j]; j += 2; twins++; }
-    else if (j + 1 < nz && z[j + 1] == -z[j]) { key[nb++] = iabs(z[j]); j += 2; antis++; }
+    if (j + 1 < nz && z[j + 1] == z[j])       { key[nb++] = 2 * iabs(z[j]); red[nr++] = 2 * z[j]; j += 2; twins++; npairs++; }
+    else if (j + 1 < nz && z[j + 1] == -z[j]) { key[nb++] = iabs(z[j]); j += 2; antis++; npairs++; }
     else                                      { key[nb++] = iabs(z[j]); red[nr++] = z[j]; j += 1; }
+  }
+  pairs_hist[npairs < 7 ? npairs : 7]++;
+  /* ties in the TwoSum chain: at step k, |h[k-1]| = ulp(g[k]); the outcome
+     is read off step k's own TwoSum (Q[k], h[k]) */
+  for (int k = 3; k <= cn; k++) {
+    I g = cg[k];
+    if (!g) continue;
+    int nbits = 0;
+    for (I t = iabs(g); t; t >>= 1) nbits++;
+    int sh = nbits - p;
+    if (sh < 0) sh = 0;
+    if (iabs(ch[k - 1]) != (((I)1) << sh)) continue;
+    if (ch[k] == -ch[k - 1]) tie_at[k][0]++;
+    else if (ch[k] == 0 && cQ[k] == ch[k - 1]) tie_at[k][1]++;
+    else tie_at[k][2]++;
   }
   for (int b = 0; b + 1 < nb; b++) if (!(key[b] > key[b + 1])) { pattern_bad++; return; }
   for (int r = 0; r + 1 < nr; r++) if (!overlap_within(0, red[r], red[r + 1])) { reduction_bad++; return; }
@@ -286,8 +318,15 @@ int main(int argc, char **argv) {
   if (MODE == 1)
     printf("SHAPE pattern=%lld reduction=%lld cascades=%lld twins=%lld antis=%lld\n",
            pattern_bad, reduction_bad, cascades, twins, antis);
-  if (MODE == 1)
+  if (MODE == 1) {
     printf("RAW overlap=%lld not_strictly_desc=%lld\n", raw_overlap, raw_notdesc);
+    printf("PAIRS per output:");
+    for (int k = 0; k < 8; k++) if (pairs_hist[k]) printf(" %d:%lld", k, pairs_hist[k]);
+    printf("\n");
+    for (int k = 3; k < 16; k++)
+      if (tie_at[k][0] || tie_at[k][1] || tie_at[k][2])
+        printf("TIE step %d: anti=%lld twin=%lld singles=%lld\n", k, tie_at[k][0], tie_at[k][1], tie_at[k][2]);
+  }
   printf("SUMMARY p=%d K=[%d,%d] L=%d mode=%d class=%d floor=%d total=%d pairs=%lld fails=%lld\n",
          p, KLO, KHI, L, MODE, CLASS, FLOOR, TOTAL, tot, bad);
   return (bad || (MODE == 1 && (pattern_bad || reduction_bad))) ? 1 : 0;

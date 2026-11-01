@@ -4509,5 +4509,6 @@ theories-flocq/B64_CarryCleanRung4.v
 # step, the tie as values, the step after a tie (absorb / anti kept below).
 theories-flocq/B64_CarryCleanLadder.v
 # carry_clean bridge, rung 5: six components in total, composed from the
-# ladder; a tie at step 5 is carried through step 6.  Seven or more stay OPEN.
+# ladder; a tie at step 5 is carried through step 6.  Seven or more stay OPEN
+# (this supersedes the rung-4 entry's "six or more" line above).
 theories-flocq/B64_CarryCleanRung5.v
