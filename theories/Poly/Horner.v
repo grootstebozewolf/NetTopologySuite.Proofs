@@ -4,6 +4,15 @@
    Univariate core: Horner's scheme equals the monomial (power-sum) form over R.
    Coefficients are ascending: [a0; a1; ...; an] encodes a0 + a1 x + ... + an x^n.
    Pure real arithmetic; no Flocq, no Admitted.
+
+   Ancestry:
+     Horner, W. G. (1819). "A new method of solving numerical equations of all
+     orders, by continuous approximation." Philosophical Transactions of the
+     Royal Society of London, 109, 308-335.  doi:10.1098/rstl.1819.0023
+   Horner CLAIMS a method of solving numerical equations by continuous
+   approximation, whose evaluation kernel is the nested form.  This file
+   PROVES only that kernel: nested form = power-sum form over R.  None of the
+   root-solving method, and no cost or floating-point claim.
    ========================================================================== *)
 
 From Stdlib Require Import List.

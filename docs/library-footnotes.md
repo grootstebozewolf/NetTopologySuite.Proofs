@@ -15,7 +15,7 @@
 
 ## Cited in the corpus
 
-Four of the eleven filed papers have an existing module that is genuinely
+Four of the eleven filed papers (plus Horner 1819, added later) have an existing module that is genuinely
 their descendant. Each got a header block in house style (authors, title,
 venue, `doi:…`, and an explicit paper-CLAIMS vs file-PROVES separation).
 
@@ -25,6 +25,7 @@ venue, `doi:…`, and an explicit paper-CLAIMS vs file-PROVES separation).
 | Hobby 1999, *Practical segment intersection with finite precision output* | 10.1016/S0925-7721(99)00021-8 | `theories-flocq/HobbyTheorem_b64.v` | Already mechanised Hobby §4 Theorem 4.1 over the corpus's own `snap_round`; the header carried the paper but no DOI. DOI + paper-vs-file paragraph added; no proof touched. |
 | Greene & Yao 1986, *Finite-Resolution Computational Geometry* | 10.1109/SFCS.1986.19 | `theories-flocq/TopologicalCorrectness_b64.v` | The file's `no_spurious_intersections` — the milestone-4 half it explicitly does *not* prove — is Greene–Yao failure mode (1). Ancestry block names the catalogue, and marks the direction the file *does* prove ("no meeting is lost") against the one it does not ("no meeting is invented"). |
 | Fortune 1987, *A Sweepline Algorithm for Voronoi Diagrams* | 10.1007/BF01840357 | `theories/DelaunayEdgeEmptyCircle.v` | The empty-circumcircle characterisation is the Delaunay side of Fortune's Voronoi dual; #68 is the lane that descends from his sweepline. The file proves the predicate side under a weak triangulation skeleton — no sweep, no beach line, no diagram construction. |
+| Horner 1819, *A new method of solving numerical equations of all orders, by continuous approximation* | 10.1098/rstl.1819.0023 | `theories/Poly/Horner.v` | Only the evaluation kernel: `horner_correct` (nested form = power-sum form over R). None of the root-solving method; operation counts and floating-point error live in `PolyExpr.v` and the later `HornerFP` lane. |
 
 Deliberately **not** stamped elsewhere: Hobby is already named (without DOI) in
 several downstream snap-rounding files, and Fortune's lane has four more
