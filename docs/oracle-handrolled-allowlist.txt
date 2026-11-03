@@ -128,9 +128,9 @@ run_arc_area_centroid
 run_arc_distance
 
 # --- point_on_arc_sector (shared helper for arc-arc / distance sector tests) -
-# Is a circle point within an arc's angular span? CCW angle-interval test via
-# atan2 (transcendental) -- shared by ARC_ARC_XY (and matching ARC_DISTANCE's
-# inline sector test).  Interface-boundary helper off the exact circumcentre.
+# Is a COMPUTED (float-rounded) intersection point within an arc's span? atan2
+# CCW interval test.  Exact queries moved to the extracted asxq_sector
+# (ArcSectorExact.v); this one stays until intersections are exact (T4b).
 point_on_arc_sector
 
 # --- arc_seg_pts / arc_arc_pts / chord_chord_pts (hoisted intersection kernels)

@@ -1328,6 +1328,72 @@ let run_arc_area_centroid () =
 
    Input:  lines 2..5 = arc_start, arc_mid, arc_end, query point P ("x y").
    Output: "<dist>" (%h); "DEGENERATE" (collinear arc); "NAN" (non-finite). *)
+(* Is (qx,qy) within the angular span of arc A->B->C about its centre?
+   Inclusive at both end rays.  EXACT (no atan2): ArcSectorExact.asxq_sector,
+   extracted, decides it in Q from the exact circumcentre_q of A, B, C and
+   the exact rational values of the float inputs.  Spec: on the circumcircle
+   it is ArcIntersect.arc_span_contains (asx_sector_on_circle_iff); off it,
+   arc_span_contains of the radial projection (asx_sector_radial_iff);
+   asxq_sector_correct ties the Q boolean to the R predicate.  The first
+   argument (the float-rounded centre the callers already hold) is no longer
+   read: the decision uses the exact centre.  Non-finite queries and
+   collinear controls answer false.  Use for EXACT queries only: input
+   points, and radial feet passed as their exact direction point (by
+   asx_sector_radial_iff any point on the ray answers the same). *)
+let rec coq_pos_of_bigz (z : BigZ.t) : positive =
+  if BigZ.equal z BigZ.one then XH
+  else
+    let q = BigZ.shift_right z 1 in
+    if BigZ.equal (BigZ.logand z BigZ.one) BigZ.zero then XO (coq_pos_of_bigz q)
+    else XI (coq_pos_of_bigz q)
+
+let coq_z_of_bigz (z : BigZ.t) : z =
+  let c = BigZ.compare z BigZ.zero in
+  if c = 0 then Z0
+  else if c > 0 then Zpos (coq_pos_of_bigz z)
+  else Zneg (coq_pos_of_bigz (BigZ.neg z))
+
+let coq_q_of_q (x : Q.t) : q =
+  { qnum = coq_z_of_bigz (Q.num x); qden = coq_pos_of_bigz (Q.den x) }
+
+let point_on_arc_sector_q (a : bPoint) (b : bPoint) (c : bPoint) (xq, yq) =
+  match circumcentre_q (qf a.bx, qf a.by_) (qf b.bx, qf b.by_)
+                       (qf c.bx, qf c.by_) with
+  | None -> false
+  | Some (ox, oy, _) ->
+      let k x = coq_q_of_q x and kf x = coq_q_of_q (qf x) in
+      asxq_sector (k ox) (k oy) (kf a.bx) (kf a.by_) (kf b.bx) (kf b.by_)
+        (kf c.bx) (kf c.by_) (k xq) (k yq)
+
+let point_on_arc_sector_exact (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy) =
+  finite_float qx && finite_float qy
+  && point_on_arc_sector_q a b c (qf qx, qf qy)
+
+(* Is the circle point (qx,qy) -- assumed ON the circumcircle of arc A->B->C
+   about centre (ox,oy) -- within the arc's angular span?  CCW angle-interval
+   test from A through B to C (the same membership ARC_DISTANCE uses inline);
+   inclusive at the endpoints.  atan2 (transcendental) -> interface-boundary.
+   Kept ONLY for computed (float-rounded) intersection points: an exact test
+   on a rounded point loses exact shared-vertex hits (differential test,
+   2026-11-03: 527 lost ARC_SEGMENT_XY endpoint intersections).  Their exact
+   path is membership of the algebraic intersection in Q(sqrt disc)
+   (docs/transcendental-inventory.tsv T4b).  Input points and radial feet
+   use point_on_arc_sector_exact / point_on_arc_sector_q below. *)
+let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy) =
+  let twopi = 2.0 *. Float.pi in
+  let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
+  let ang px py = atan2 (py -. oy) (px -. ox) in
+  let angA = ang a.bx a.by_ in
+  let dAB = ccw angA (ang b.bx b.by_) in
+  let dAC = ccw angA (ang c.bx c.by_) in
+  let dAQ = ccw angA (ang qx qy) in
+  (* Inclusive at BOTH endpoints.  In the clockwise-swept branch (dAB > dAC)
+     the in-span set is {A} U [dAC, 2pi): the start A wraps to dAQ = 0, so a
+     bare `dAQ >= dAC` would drop A (orientation-dependent endpoint loss --
+     e.g. a tangency or shared vertex exactly at A).  Re-include dAQ = 0. *)
+  if dAB <= dAC then dAQ <= dAC else (dAQ >= dAC || dAQ = 0.0)
+
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -1347,38 +1413,15 @@ let run_arc_distance () =
         let cand = ref (if dpA <= dpC then dpA else dpC) in
         let d = hypot2 (p.bx -. oxf) (p.by_ -. oyf) in
         if d > 0.0 then begin
-          let twopi = 2.0 *. Float.pi in
-          let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
-          let ang qx qy = atan2 (qy -. oyf) (qx -. oxf) in
-          let angA = ang a.bx a.by_ in
-          let dAB = ccw angA (ang b.bx b.by_) in
-          let dAC = ccw angA (ang c.bx c.by_) in
-          let dAP = ccw angA (ang p.bx p.by_) in
-          let on_arc = if dAB <= dAC then dAP <= dAC else dAP >= dAC in
+          (* exact sector test (ArcSectorExact; the radial-projection form
+             asx_sector_radial_iff is exactly this question) *)
+          let on_arc = point_on_arc_sector_exact a b c (p.bx, p.by_) in
           if on_arc then begin
             let radial = abs_float (d -. r) in
             if radial < !cand then cand := radial
           end
         end;
         Printf.printf "%h\n" !cand
-
-(* Is the circle point (qx,qy) -- assumed ON the circumcircle of arc A->B->C
-   about centre (ox,oy) -- within the arc's angular span?  CCW angle-interval
-   test from A through B to C (the same membership ARC_DISTANCE uses inline);
-   inclusive at the endpoints.  atan2 (transcendental) -> interface-boundary. *)
-let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy) =
-  let twopi = 2.0 *. Float.pi in
-  let ccw f t = let x = mod_float (t -. f) twopi in if x < 0.0 then x +. twopi else x in
-  let ang px py = atan2 (py -. oy) (px -. ox) in
-  let angA = ang a.bx a.by_ in
-  let dAB = ccw angA (ang b.bx b.by_) in
-  let dAC = ccw angA (ang c.bx c.by_) in
-  let dAQ = ccw angA (ang qx qy) in
-  (* Inclusive at BOTH endpoints.  In the clockwise-swept branch (dAB > dAC)
-     the in-span set is {A} U [dAC, 2pi): the start A wraps to dAQ = 0, so a
-     bare `dAQ >= dAC` would drop A (orientation-dependent endpoint loss --
-     e.g. a tangency or shared vertex exactly at A).  Re-include dAQ = 0. *)
-  if dAB <= dAC then dAQ <= dAC else (dAQ >= dAC || dAQ = 0.0)
 
 (* chord-chord segment intersection (proper crossing or collinear overlap) *)
 let chord_chord_pts (p1, q1) (p2, q2) =
@@ -1607,19 +1650,6 @@ let parse_centre_radius_z line =
       | _ -> None
       end
   | _ -> None
-
-let rec coq_pos_of_bigz (z : BigZ.t) : positive =
-  if BigZ.equal z BigZ.one then XH
-  else
-    let q = BigZ.shift_right z 1 in
-    if BigZ.equal (BigZ.logand z BigZ.one) BigZ.zero then XO (coq_pos_of_bigz q)
-    else XI (coq_pos_of_bigz q)
-
-let coq_z_of_bigz (z : BigZ.t) : z =
-  let c = BigZ.compare z BigZ.zero in
-  if c = 0 then Z0
-  else if c > 0 then Zpos (coq_pos_of_bigz z)
-  else Zneg (coq_pos_of_bigz (BigZ.neg z))
 
 let rec int_of_coq_nat = function
   | O -> 0
@@ -2123,7 +2153,7 @@ let run_obstacle_distance () =
         let cand = ref (if dpA <= dpC then dpA else dpC) in
         let d = euclid oxf oyf in
         if d > 0.0 then begin
-          if point_on_arc_sector (oxf, oyf) a b c (p.bx, p.by_) then begin
+          if point_on_arc_sector_exact a b c (p.bx, p.by_) then begin
             let radial = abs_float (d -. r) in
             if radial < !cand then cand := radial
           end
@@ -2281,7 +2311,7 @@ let run_arc_arc_distance () =
           let dpC = hypot2 (px -. c.bx) (py -. c.by_) in
           let best = ref (if dpA <= dpC then dpA else dpC) in
           let dp = hypot2 (px -. oxf) (py -. oyf) in
-          if dp > 0.0 && point_on_arc_sector (oxf, oyf) a b c (px, py) then begin
+          if dp > 0.0 && point_on_arc_sector_exact a b c (px, py) then begin
             let radial = abs_float (dp -. r) in
             if radial < !best then best := radial
           end;
@@ -2298,18 +2328,17 @@ let run_arc_arc_distance () =
           (* (a) interior radial feet when the circumcircles are DISJOINT *)
           if d >= r1 +. r2 then begin
             (* external: feet face each other along the line O1 O2 *)
-            let f1 = (o1xf +. r1 *. ux, o1yf +. r1 *. uy) in
-            let f2 = (o2xf -. r2 *. ux, o2yf -. r2 *. uy) in
-            if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1
-               && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+            (* exact: f1's ray from O1 is toward O2, f2's from O2 toward O1 *)
+            if point_on_arc_sector_q a1 b1 c1 (o2x, o2y)
+               && point_on_arc_sector_q a2 b2 c2 (o1x, o1y)
             then upd (d -. r1 -. r2)
           end else if d < abs_float (r1 -. r2) then begin
             (* internal (nested): both feet on the larger-radius side *)
-            let s = if r1 >= r2 then 1.0 else -1.0 in
-            let f1 = (o1xf +. s *. r1 *. ux, o1yf +. s *. r1 *. uy) in
-            let f2 = (o2xf +. s *. r2 *. ux, o2yf +. s *. r2 *. uy) in
-            if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1
-               && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+            (* exact: both feet lie on the ray direction s (O2 - O1) *)
+            let sq = if r1 >= r2 then Q.one else Q.minus_one in
+            let ex = Q.mul sq (Q.sub o2x o1x) and ey = Q.mul sq (Q.sub o2y o1y) in
+            if point_on_arc_sector_q a1 b1 c1 (Q.add o1x ex, Q.add o1y ey)
+               && point_on_arc_sector_q a2 b2 c2 (Q.add o2x ex, Q.add o2y ey)
             then upd (abs_float (r1 -. r2) -. d)
           end;
           (* (b) 0 when the circumcircles intersect in both sweeps *)
@@ -2375,7 +2404,7 @@ let run_arc_segment_distance () =
           let dpC = hypot2 (px -. c.bx) (py -. c.by_) in
           let best = ref (if dpA <= dpC then dpA else dpC) in
           let dp = hypot2 (px -. oxf) (py -. oyf) in
-          if dp > 0.0 && point_on_arc_sector (oxf, oyf) a b c (px, py) then begin
+          if dp > 0.0 && point_on_arc_sector_exact a b c (px, py) then begin
             let radial = abs_float (dp -. r) in
             if radial < !best then best := radial
           end;
@@ -2415,9 +2444,8 @@ let run_arc_segment_distance () =
           let lf   = sqrt (Q.to_float l2q) in
           (* (a) foot on segment, line outside circle, radial point in sweep *)
           if sf >= 0.0 && sf <= 1.0 && perp >= r then begin
-            let rx = oxf +. r *. (fxf -. oxf) /. perp
-            and ry = oyf +. r *. (fyf -. oyf) /. perp in
-            if point_on_arc_sector (oxf, oyf) a b c (rx, ry) then upd (perp -. r)
+            (* exact: the radial point lies on the ray O -> foot G *)
+            if point_on_arc_sector_q a b c (fxq, fyq) then upd (perp -. r)
           end;
           (* (b) line meets circle: crossing on segment and in sweep => 0 *)
           let h2 = Q.to_float r2 -. Q.to_float d2q in
@@ -2473,7 +2501,7 @@ let run_distance_unified () =
     let dpC = hypot2 (px -. c.bx) (py -. c.by_) in
     let best = ref (if dpA <= dpC then dpA else dpC) in
     let dp = hypot2 (px -. oxf) (py -. oyf) in
-    if dp > 0.0 && point_on_arc_sector (oxf, oyf) a b c (px, py) then begin
+    if dp > 0.0 && point_on_arc_sector_exact a b c (px, py) then begin
       let radial = abs_float (dp -. r) in
       if radial < !best then best := radial
     end;
@@ -2527,9 +2555,8 @@ let run_distance_unified () =
                let fxf = Q.to_float fxq and fyf = Q.to_float fyq in
                let lf = sqrt (Q.to_float l2q) in
                if sf >= 0.0 && sf <= 1.0 && perp >= r then begin
-                 let rx = oxf +. r *. (fxf -. oxf) /. perp
-                 and ry = oyf +. r *. (fyf -. oyf) /. perp in
-                 if point_on_arc_sector (oxf, oyf) a b c (rx, ry) then upd (perp -. r)
+                 (* exact: the radial point lies on the ray O -> foot G *)
+                 if point_on_arc_sector_q a b c (fxq, fyq) then upd (perp -. r)
                end;
                let h2 = Q.to_float r2 -. Q.to_float d2q in
                if h2 >= 0.0 then begin
@@ -2566,17 +2593,16 @@ let run_distance_unified () =
              if d > 0.0 then begin
                let ux = (o2xf -. o1xf) /. d and uy = (o2yf -. o1yf) /. d in
                if d >= r1 +. r2 then begin
-                 let f1 = (o1xf +. r1 *. ux, o1yf +. r1 *. uy) in
-                 let f2 = (o2xf -. r2 *. ux, o2yf -. r2 *. uy) in
-                 if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1
-                    && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+                 (* exact: f1's ray from O1 is toward O2, f2's from O2 toward O1 *)
+                 if point_on_arc_sector_q a1 b1 c1 (o2x, o2y)
+                    && point_on_arc_sector_q a2 b2 c2 (o1x, o1y)
                  then upd (d -. r1 -. r2)
                end else if d < abs_float (r1 -. r2) then begin
-                 let s = if r1 >= r2 then 1.0 else -1.0 in
-                 let f1 = (o1xf +. s *. r1 *. ux, o1yf +. s *. r1 *. uy) in
-                 let f2 = (o2xf +. s *. r2 *. ux, o2yf +. s *. r2 *. uy) in
-                 if point_on_arc_sector (o1xf, o1yf) a1 b1 c1 f1
-                    && point_on_arc_sector (o2xf, o2yf) a2 b2 c2 f2
+                 (* exact: both feet lie on the ray direction s (O2 - O1) *)
+                 let sq = if r1 >= r2 then Q.one else Q.minus_one in
+                 let ex = Q.mul sq (Q.sub o2x o1x) and ey = Q.mul sq (Q.sub o2y o1y) in
+                 if point_on_arc_sector_q a1 b1 c1 (Q.add o1x ex, Q.add o1y ey)
+                    && point_on_arc_sector_q a2 b2 c2 (Q.add o2x ex, Q.add o2y ey)
                  then upd (abs_float (r1 -. r2) -. d)
                end;
                if d <= r1 +. r2 && d >= abs_float (r1 -. r2) then begin

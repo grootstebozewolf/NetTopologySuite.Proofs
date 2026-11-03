@@ -57,6 +57,7 @@ From NTS.Proofs.Flocq Require Import ArcCircle_b64_compute.  (* b64_chord_crosse
 From NTS.Proofs.Flocq Require Import ArcPixel_b64_compute.   (* b64_arc_passes_through_hot_pixel *)
 From NTS.Proofs.Flocq Require Import SnapRoundingScale_b64.  (* b64_snap_coord_scaled (C1 power-of-two grid) *)
 From NTS.Proofs.Flocq Require Import Orient_b64_exact_full.  (* b64_orient2d_exact (full-plane exact sign) *)
+From NTS.Proofs       Require Import ArcSectorExact.  (* asxq_sector: exact arc sector, replaces atan2 *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -234,4 +235,5 @@ Extraction "oracle/extracted.ml"
   b64_orient2d_exact
   I_circles_z
   q_ddh_sq
-  q_hsymm_sq.
+  q_hsymm_sq
+  asxq_sector.
