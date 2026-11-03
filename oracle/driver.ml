@@ -1457,6 +1457,28 @@ let run_b64_arc_pt () =
     done
   with End_of_file -> ()
 
+(* ----- B64_FRESNEL (claimId s7-b64-fresnel).  Extracted
+   B64_Fresnel.b64_fresnel_C / b64_fresnel_S / fresnel_accept_b: the
+   canonical Fresnel integrals int_0^x cos(t^2), int_0^x sin(t^2), each
+   within 2^-42 for |x| <= 5/2 (b64_fresnel_C_err / b64_fresnel_S_err).
+   Input: one 16-hex-digit bit pattern per line; output "C S" as bit
+   patterns, or DECLINE_FRESNEL_RANGE outside the intake (asymptotics are
+   deferred, D2/D4). *)
+let run_b64_fresnel () =
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then begin
+        let x = Int64.float_of_bits (Int64.of_string ("0x" ^ line)) in
+        if fresnel_accept_b x then
+          Printf.printf "%016Lx %016Lx\n"
+            (Int64.bits_of_float (b64_fresnel_C x))
+            (Int64.bits_of_float (b64_fresnel_S x))
+        else print_endline "DECLINE_FRESNEL_RANGE"
+      end
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -5012,6 +5034,7 @@ let () =
        | "B64_SIN"                  -> run_b64_sin ()
        | "B64_COS"                  -> run_b64_cos ()
        | "B64_ARC_PT"               -> run_b64_arc_pt ()
+       | "B64_FRESNEL"              -> run_b64_fresnel ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()

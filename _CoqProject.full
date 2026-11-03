@@ -3919,6 +3919,10 @@ theories-flocq/B64_Sin.v
 theories-flocq/B64_CosPoly.v
 theories-flocq/B64_Cos.v
 theories-flocq/B64_ArcPoint.v
+theories-flocq/B64_FresnelPolyC.v
+theories-flocq/B64_FresnelPolyS.v
+theories-flocq/B64_FresnelPoly.v
+theories-flocq/B64_Fresnel.v
 # Arc-spline tolerance gate in binary64 RNE (sound) and binary64 points for
 # every CasB64ArcOracle; no oracle inhabitant (QEX). claimId 0007-clothoid-arc-spline.
 theories-flocq/ClothoidArcSpline_b64.v

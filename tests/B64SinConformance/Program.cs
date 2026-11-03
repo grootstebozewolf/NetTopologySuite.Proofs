@@ -1,6 +1,6 @@
-// S3/S4/S5 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY vs the
-// Rocq-extracted oracle (modes B64_SIN, B64_COS, B64_ARC_PT), compared on
-// output BITS.  Corpus: seeded uniform inputs on [-10, 10],
+// S3-S7 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY / FresnelC /
+// FresnelS vs the Rocq-extracted oracle (modes B64_SIN, B64_COS, B64_ARC_PT,
+// B64_FRESNEL), compared on output BITS.  Corpus: seeded uniform inputs on [-10, 10],
 // random bit patterns in the accepted range (all binades, subnormals),
 // thresholds / caps / multiples of pi +-4 ulp, signed zeros, and rejected
 // inputs (NaN, infinities, just outside the cap) for DECLINE parity.
@@ -131,6 +131,58 @@ foreach (var c in new[] { cap, Math.BitDecrement(cap), Math.BitIncrement(cap), -
                 Console.WriteLine($"!! {mode} in={Bits(cx):x16} {Bits(cy):x16} {Bits(r):x16} {Bits(t):x16} csharp={mine} oracle={theirs}");
         }
     Console.WriteLine($"# {mode} inputs {quads.Count}, of which declined {declined}");
+    Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
+    totalBug += bug;
+}
+
+// B64_FRESNEL: uniform on [-5/2, 5/2], random accepted bit patterns, the cap
+// +-4 ulp, signed zeros, subnormals, NaN / inf.
+var fx = new List<double>();
+for (int i = 0; i < 200_000; i++) fx.Add(rng.NextDouble() * 5.0 - 2.5);
+for (int kept2 = 0; kept2 < 50_000;)
+{
+    rng.NextBytes(buf);
+    double v = FromBits(BitConverter.ToUInt64(buf, 0));
+    if (double.IsFinite(v) && Math.Abs(v) <= 2.5) { fx.Add(v); kept2++; }
+}
+foreach (var m in new[] { 2.5, 2.298, 1.0, 0.0, double.Epsilon, 2.2250738585072014e-308 })
+{
+    double up = m, dn = m;
+    fx.Add(m); fx.Add(-m);
+    for (int k = 0; k < 4; k++)
+    {
+        up = Math.BitIncrement(up); dn = Math.BitDecrement(dn);
+        fx.Add(up); fx.Add(-up); fx.Add(dn); fx.Add(-dn);
+    }
+}
+fx.AddRange(new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 3.0, -1e300 });
+{
+    const string mode = "B64_FRESNEL";
+    var psi = new ProcessStartInfo(oracle)
+    {
+        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
+    };
+    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
+    var outputTask = proc.StandardOutput.ReadToEndAsync();
+    proc.StandardInput.WriteLine(mode);
+    foreach (var x in fx) proc.StandardInput.WriteLine(Bits(x).ToString("x16"));
+    proc.StandardInput.Close();
+    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    proc.WaitForExit();
+    int ok = 0, bug = 0, declined = 0;
+    if (lines.Length != fx.Count) bug = 1;
+    else
+        for (int i = 0; i < fx.Count; i++)
+        {
+            double x = fx[i];
+            string mine = B64Sin.FresnelAccept(x)
+                ? $"{Bits(B64Sin.FresnelC(x)):x16} {Bits(B64Sin.FresnelS(x)):x16}" : "DECLINE_FRESNEL_RANGE";
+            string theirs = lines[i].Trim();
+            if (mine == theirs) { ok++; if (mine.StartsWith("DECLINE")) declined++; }
+            else if (++bug <= 10)
+                Console.WriteLine($"!! {mode} x={Bits(x):x16} ({x:R}) csharp={mine} oracle={theirs}");
+        }
+    Console.WriteLine($"# {mode} inputs {fx.Count}, of which declined {declined}");
     Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
     totalBug += bug;
 }

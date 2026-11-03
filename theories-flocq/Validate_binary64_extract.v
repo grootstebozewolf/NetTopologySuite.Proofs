@@ -61,6 +61,7 @@ From NTS.Proofs       Require Import ArcSectorExact.  (* asxq_sector: exact arc 
 From NTS.Proofs.Flocq Require Import B64_SinPoly B64_Sin.  (* b64_sin, sin_accept_b: S2 proved sine *)
 From NTS.Proofs.Flocq Require Import B64_CosPoly B64_Cos.  (* b64_cos: S4 proved cosine *)
 From NTS.Proofs.Flocq Require Import B64_ArcPoint.  (* b64_arc_x/y, arc_accept_b: S5 arc point *)
+From NTS.Proofs.Flocq Require Import B64_FresnelPoly B64_Fresnel.  (* S7 canonical Fresnel *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -243,6 +244,47 @@ Extract Constant B64_Sin.sn_ten => "(0x1.4000000000000p+3)".
 Extract Constant B64_Sin.sn_mten => "(-0x1.4000000000000p+3)".
 Extract Constant B64_ArcPoint.ap_cap => "(0x1.0000000000000p+998)".
 Extract Constant B64_ArcPoint.ap_mcap => "(-0x1.0000000000000p+998)".
+Extract Constant B64_FresnelPolyC.frc_c0 => "(0x1.0000000000000p+0)".
+Extract Constant B64_FresnelPolyC.frc_c1 => "(-0x1.999999999999ap-4)".
+Extract Constant B64_FresnelPolyC.frc_c2 => "(0x1.2f684bda12f68p-8)".
+Extract Constant B64_FresnelPolyC.frc_c3 => "(-0x1.c01c01c01c01cp-14)".
+Extract Constant B64_FresnelPolyC.frc_c4 => "(0x1.87a00187a0018p-20)".
+Extract Constant B64_FresnelPolyC.frc_c5 => "(-0x1.c2e3054870b38p-27)".
+Extract Constant B64_FresnelPolyC.frc_c6 => "(0x1.6f448e13e85e1p-34)".
+Extract Constant B64_FresnelPolyC.frc_c7 => "(-0x1.bd577e658d020p-42)".
+Extract Constant B64_FresnelPolyC.frc_c8 => "(0x1.a173a167fba4dp-50)".
+Extract Constant B64_FresnelPolyC.frc_c9 => "(-0x1.377c2110f2083p-58)".
+Extract Constant B64_FresnelPolyC.frc_c10 => "(0x1.7abd72258fb6ep-67)".
+Extract Constant B64_FresnelPolyC.frc_c11 => "(-0x1.7e6b81382cd42p-76)".
+Extract Constant B64_FresnelPolyC.frc_c12 => "(0x1.45c0a838efe59p-85)".
+Extract Constant B64_FresnelPolyC.frc_c13 => "(-0x1.da7460554e5dbp-95)".
+Extract Constant B64_FresnelPolyC.frc_c14 => "(0x1.2ac65385f79acp-104)".
+Extract Constant B64_FresnelPolyC.frc_c15 => "(-0x1.4899fcdef0a8dp-114)".
+Extract Constant B64_FresnelPolyC.frc_c16 => "(0x1.3e53defc4e233p-124)".
+Extract Constant B64_FresnelPolyC.frc_c17 => "(-0x1.11ae81077a49ep-134)".
+Extract Constant B64_FresnelPolyC.frc_c18 => "(0x1.a47767f2a3c32p-145)".
+Extract Constant B64_FresnelPolyC.frc_c19 => "(-0x1.22521d98f98a9p-155)".
+Extract Constant B64_FresnelPolyS.frs_c0 => "(0x1.5555555555555p-2)".
+Extract Constant B64_FresnelPolyS.frs_c1 => "(-0x1.8618618618618p-6)".
+Extract Constant B64_FresnelPolyS.frs_c2 => "(0x1.8d3018d3018d3p-11)".
+Extract Constant B64_FresnelPolyS.frs_c3 => "(-0x1.bbd779334ef0bp-17)".
+Extract Constant B64_FresnelPolyS.frs_c4 => "(0x1.3777c55568ccdp-23)".
+Extract Constant B64_FresnelPolyS.frs_c5 => "(-0x1.2b67310aa9f3ap-30)".
+Extract Constant B64_FresnelPolyS.frs_c6 => "(0x1.a289ee7e40f74p-38)".
+Extract Constant B64_FresnelPolyS.frs_c7 => "(-0x1.bc6250fb14231p-46)".
+Extract Constant B64_FresnelPolyS.frs_c8 => "(0x1.7271cbe5863ecp-54)".
+Extract Constant B64_FresnelPolyS.frs_c9 => "(-0x1.f1b4073b34a68p-63)".
+Extract Constant B64_FresnelPolyS.frs_c10 => "(0x1.13246abce1bddp-71)".
+Extract Constant B64_FresnelPolyS.frs_c11 => "(-0x1.fd6bebd65107ap-81)".
+Extract Constant B64_FresnelPolyS.frs_c12 => "(0x1.909c9de3a31c5p-90)".
+Extract Constant B64_FresnelPolyS.frs_c13 => "(-0x1.0eef30fa10d2cp-99)".
+Extract Constant B64_FresnelPolyS.frs_c14 => "(0x1.3e81bb5701ac5p-109)".
+Extract Constant B64_FresnelPolyS.frs_c15 => "(-0x1.486eea20c2656p-119)".
+Extract Constant B64_FresnelPolyS.frs_c16 => "(0x1.2b778acc3dedfp-129)".
+Extract Constant B64_FresnelPolyS.frs_c17 => "(-0x1.e6597092ccbf0p-140)".
+Extract Constant B64_FresnelPolyS.frs_c18 => "(0x1.61f30bc3acd1ap-150)".
+Extract Constant B64_Fresnel.fr_X => "(0x1.4000000000000p+1)".
+Extract Constant B64_Fresnel.fr_mX => "(-0x1.4000000000000p+1)".
 (* END b64_sin constants *)
 
 Extraction Language OCaml.
@@ -284,4 +326,7 @@ Extraction "oracle/extracted.ml"
   sin_accept_b
   b64_arc_x
   b64_arc_y
-  arc_accept_b.
+  arc_accept_b
+  b64_fresnel_C
+  b64_fresnel_S
+  fresnel_accept_b.

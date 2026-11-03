@@ -1,6 +1,7 @@
 // Port of theories-flocq/B64_Sin.v : b64_sin / sin_accept_b and
 // theories-flocq/B64_Cos.v : b64_cos and theories-flocq/B64_ArcPoint.v :
-// b64_arc_x / b64_arc_y / arc_accept_b, operation for operation.  Every line
+// b64_arc_x / b64_arc_y / arc_accept_b and theories-flocq/B64_Fresnel.v :
+// b64_fresnel_C / b64_fresnel_S / fresnel_accept_b, operation for operation.  Every line
 // below is one binary64 round-to-nearest-even operation of the Rocq
 // definition, in the same order; no FMA, no reordering (.NET does not
 // contract a*b+c on its own).  Proved contracts: B64_Sin.b64_sin_err_b and
@@ -87,4 +88,28 @@ public static class B64Sin
     // B64_ArcPoint.b64_arc_x cx r t = fl(cx + fl(r * b64_cos t)), b64_arc_y likewise
     public static double ArcX(double cx, double r, double t) { double p = r * Cos(t); return cx + p; }
     public static double ArcY(double cy, double r, double t) { double p = r * Sin(t); return cy + p; }
+
+    // B64_FresnelPoly.frc_coeffs / frs_coeffs
+    private static readonly double[] FresnelCCoeffs =
+    {
+        frc_c0, frc_c1, frc_c2, frc_c3, frc_c4, frc_c5, frc_c6, frc_c7, frc_c8, frc_c9,
+        frc_c10, frc_c11, frc_c12, frc_c13, frc_c14, frc_c15, frc_c16, frc_c17, frc_c18, frc_c19,
+    };
+    private static readonly double[] FresnelSCoeffs =
+    {
+        frs_c0, frs_c1, frs_c2, frs_c3, frs_c4, frs_c5, frs_c6, frs_c7, frs_c8, frs_c9,
+        frs_c10, frs_c11, frs_c12, frs_c13, frs_c14, frs_c15, frs_c16, frs_c17, frs_c18,
+    };
+
+    // B64_Fresnel.fresnel_accept_b x = b64_le (-5/2) x && b64_le x (5/2)
+    public static bool FresnelAccept(double x) => fr_mX <= x && x <= fr_X;
+
+    // fr_t x = fl(x * x); fr_z x = fl(fr_t x * fr_t x)
+    private static double FrZ(double x) { double t = x * x; return t * t; }
+
+    // b64_fresnel_C x = fl(x * horner(frc, fr_z x))
+    public static double FresnelC(double x) => x * Horner(FresnelCCoeffs, FrZ(x));
+
+    // b64_fresnel_S x = fl(fl(x * fr_t x) * horner(frs, fr_z x))
+    public static double FresnelS(double x) { double w = x * (x * x); return w * Horner(FresnelSCoeffs, FrZ(x)); }
 }
