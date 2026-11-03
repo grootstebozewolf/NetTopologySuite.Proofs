@@ -377,6 +377,9 @@ theories/ClothoidChordRho.v
 theories/ClothoidFresnelInc.v
 theories/ClothoidLinearize.v
 theories/ClothoidLinearizeContract.v
+# Biarc / N-arc spline of a clothoid window within (b-a)^3/(8 A^2 N^2);
+# claimId 0007-clothoid-biarc (binary64 gate: ClothoidBiarc_b64.v, full).
+theories/ClothoidBiarc.v
 # W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
 # Headline wind_integer. Not the ray-crossing count in WindingNumber.v.
 # Does not flip RNG_JordanUncond.
