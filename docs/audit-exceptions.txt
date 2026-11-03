@@ -35,6 +35,7 @@ theories-flocq/B64_SinPoly.v
 theories-flocq/B64_Sin.v
 theories-flocq/B64_CosPoly.v
 theories-flocq/B64_Cos.v
+theories-flocq/B64_ArcPoint.v
 theories-flocq/Intersect_b64.v
 theories-flocq/B64_bridge.v
 theories-flocq/Intersect_b64_exact_core.v

@@ -1433,6 +1433,30 @@ let run_b64_cos () =
     done
   with End_of_file -> ()
 
+(* ----- B64_ARC_PT (claimId s5-b64-arc-point).  Extracted
+   B64_ArcPoint.b64_arc_x / b64_arc_y / arc_accept_b: the binary64 arc point
+   (cx + r cos t, cy + r sin t), each coordinate within arc_E of the exact
+   point (B64_ArcPoint.b64_arc_pt_err_b).  Input per line: four 16-hex-digit
+   bit patterns "cx cy r t"; output "x y" as bit patterns, or DECLINE when
+   arc_accept_b rejects (|cx|, |cy|, |r| > 2^998, |t| > 10, NaN, inf). *)
+let run_b64_arc_pt () =
+  let b h = Int64.float_of_bits (Int64.of_string ("0x" ^ h)) in
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then
+        match String.split_on_char ' ' line with
+        | [hx; hy; hr; ht] ->
+            let cx = b hx and cy = b hy and r = b hr and t = b ht in
+            if arc_accept_b cx cy r t then
+              Printf.printf "%016Lx %016Lx\n"
+                (Int64.bits_of_float (b64_arc_x cx r t))
+                (Int64.bits_of_float (b64_arc_y cy r t))
+            else print_endline "DECLINE"
+        | _ -> failwith "oracle: B64_ARC_PT line must be 'cx cy r t' (hex bits)"
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -4987,6 +5011,7 @@ let () =
        | "ARC_DISTANCE"             -> run_arc_distance ()
        | "B64_SIN"                  -> run_b64_sin ()
        | "B64_COS"                  -> run_b64_cos ()
+       | "B64_ARC_PT"               -> run_b64_arc_pt ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()

@@ -1,5 +1,6 @@
 // Port of theories-flocq/B64_Sin.v : b64_sin / sin_accept_b and
-// theories-flocq/B64_Cos.v : b64_cos, operation for operation.  Every line
+// theories-flocq/B64_Cos.v : b64_cos and theories-flocq/B64_ArcPoint.v :
+// b64_arc_x / b64_arc_y / arc_accept_b, operation for operation.  Every line
 // below is one binary64 round-to-nearest-even operation of the Rocq
 // definition, in the same order; no FMA, no reordering (.NET does not
 // contract a*b+c on its own).  Proved contracts: B64_Sin.b64_sin_err_b and
@@ -75,4 +76,15 @@ public static class B64Sin
 
     // b64_cos x = if b64_le 0 x then cs_pos x else cs_pos (sn_neg x)
     public static double Cos(double x) => (0.0 <= x) ? Pos(CosCore, x) : Pos(CosCore, Neg(x));
+
+    // B64_ArcPoint.ap_in x = b64_le (-2^998) x && b64_le x 2^998
+    private static bool In(double x) => ap_mcap <= x && x <= ap_cap;
+
+    // B64_ArcPoint.arc_accept_b cx cy r t
+    public static bool ArcAccept(double cx, double cy, double r, double t) =>
+        In(cx) && In(cy) && In(r) && Accept(t);
+
+    // B64_ArcPoint.b64_arc_x cx r t = fl(cx + fl(r * b64_cos t)), b64_arc_y likewise
+    public static double ArcX(double cx, double r, double t) { double p = r * Cos(t); return cx + p; }
+    public static double ArcY(double cy, double r, double t) { double p = r * Sin(t); return cy + p; }
 }

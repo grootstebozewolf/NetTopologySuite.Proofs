@@ -60,6 +60,7 @@ From NTS.Proofs.Flocq Require Import Orient_b64_exact_full.  (* b64_orient2d_exa
 From NTS.Proofs       Require Import ArcSectorExact.  (* asxq_sector: exact arc sector, replaces atan2 *)
 From NTS.Proofs.Flocq Require Import B64_SinPoly B64_Sin.  (* b64_sin, sin_accept_b: S2 proved sine *)
 From NTS.Proofs.Flocq Require Import B64_CosPoly B64_Cos.  (* b64_cos: S4 proved cosine *)
+From NTS.Proofs.Flocq Require Import B64_ArcPoint.  (* b64_arc_x/y, arc_accept_b: S5 arc point *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -240,6 +241,8 @@ Extract Constant B64_Sin.sn_T3 => "(0x1.2d80000000000p+2)".
 Extract Constant B64_Sin.sn_T5 => "(0x1.f680000000000p+2)".
 Extract Constant B64_Sin.sn_ten => "(0x1.4000000000000p+3)".
 Extract Constant B64_Sin.sn_mten => "(-0x1.4000000000000p+3)".
+Extract Constant B64_ArcPoint.ap_cap => "(0x1.0000000000000p+998)".
+Extract Constant B64_ArcPoint.ap_mcap => "(-0x1.0000000000000p+998)".
 (* END b64_sin constants *)
 
 Extraction Language OCaml.
@@ -278,4 +281,7 @@ Extraction "oracle/extracted.ml"
   asxq_sector
   b64_sin
   b64_cos
-  sin_accept_b.
+  sin_accept_b
+  b64_arc_x
+  b64_arc_y
+  arc_accept_b.

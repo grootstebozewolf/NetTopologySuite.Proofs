@@ -1,5 +1,6 @@
-// S3/S4 conformance harness: C# B64Sin.Sin / B64Sin.Cos vs the Rocq-extracted
-// oracle (modes B64_SIN, B64_COS), compared on output BITS.  Corpus: seeded uniform inputs on [-10, 10],
+// S3/S4/S5 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY vs the
+// Rocq-extracted oracle (modes B64_SIN, B64_COS, B64_ARC_PT), compared on
+// output BITS.  Corpus: seeded uniform inputs on [-10, 10],
 // random bit patterns in the accepted range (all binades, subnormals),
 // thresholds / caps / multiples of pi +-4 ulp, signed zeros, and rejected
 // inputs (NaN, infinities, just outside the cap) for DECLINE parity.
@@ -80,6 +81,56 @@ foreach (var (mode, fn) in new (string, Func<double, double>)[] { ("B64_SIN", B6
         }
     }
     Console.WriteLine($"# {mode} inputs {corpus.Count}, of which declined {declined}");
+    Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
+    totalBug += bug;
+}
+
+// B64_ARC_PT: (cx, cy, r, t) quadruples; magnitudes from 2^-60 to 2^60 and
+// the 2^998 intake cap +-1 ulp, t drawn from the accepted corpus above.
+double Mag(Random g)
+{
+    double m = Math.ScaleB(1.0 + g.NextDouble(), g.Next(-60, 61));
+    return g.Next(2) == 0 ? m : -m;
+}
+var quads = new List<(double cx, double cy, double r, double t)>();
+var acc = corpus.Where(B64Sin.Accept).ToArray();
+for (int i = 0; i < 200_000; i++)
+    quads.Add((Mag(rng), Mag(rng), Mag(rng), acc[rng.Next(acc.Length)]));
+double cap = Math.ScaleB(1.0, 998);
+foreach (var c in new[] { cap, Math.BitDecrement(cap), Math.BitIncrement(cap), -cap, -Math.BitIncrement(cap),
+                          0.0, -0.0, double.Epsilon, double.NaN, double.PositiveInfinity })
+{
+    quads.Add((c, 1.0, 1.0, 1.0)); quads.Add((1.0, c, 1.0, 2.0)); quads.Add((1.0, 1.0, c, 3.0));
+    quads.Add((c, c, c, 5.0)); quads.Add((c, -c, cap, -7.0));
+}
+{
+    const string mode = "B64_ARC_PT";
+    var psi = new ProcessStartInfo(oracle)
+    {
+        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
+    };
+    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
+    var outputTask = proc.StandardOutput.ReadToEndAsync();
+    proc.StandardInput.WriteLine(mode);
+    foreach (var q in quads)
+        proc.StandardInput.WriteLine($"{Bits(q.cx):x16} {Bits(q.cy):x16} {Bits(q.r):x16} {Bits(q.t):x16}");
+    proc.StandardInput.Close();
+    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    proc.WaitForExit();
+    int ok = 0, bug = 0, declined = 0;
+    if (lines.Length != quads.Count) bug = 1;
+    else
+        for (int i = 0; i < quads.Count; i++)
+        {
+            var (cx, cy, r, t) = quads[i];
+            string mine = B64Sin.ArcAccept(cx, cy, r, t)
+                ? $"{Bits(B64Sin.ArcX(cx, r, t)):x16} {Bits(B64Sin.ArcY(cy, r, t)):x16}" : "DECLINE";
+            string theirs = lines[i].Trim();
+            if (mine == theirs) { ok++; if (mine == "DECLINE") declined++; }
+            else if (++bug <= 10)
+                Console.WriteLine($"!! {mode} in={Bits(cx):x16} {Bits(cy):x16} {Bits(r):x16} {Bits(t):x16} csharp={mine} oracle={theirs}");
+        }
+    Console.WriteLine($"# {mode} inputs {quads.Count}, of which declined {declined}");
     Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
     totalBug += bug;
 }
