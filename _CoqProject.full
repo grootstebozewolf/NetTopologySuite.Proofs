@@ -3111,9 +3111,13 @@ theories/IntakeCompoundFold.v
 theories/ClothoidFresnelInc.v
 theories/ClothoidLinearize.v
 theories/ClothoidLinearizeContract.v
-# Biarc / N-arc spline of a clothoid window within (b-a)^3/(8 A^2 N^2);
-# claimId 0007-clothoid-biarc.
-theories/ClothoidBiarc.v
+# derivable_pt_lim rules in lambda shape (moved from ClothoidShearLaw) and the
+# planar vector mean-value inequality (deriv_nonneg_incr, no classic).
+theories/DerivAlgebra.v
+theories/VecMVI.v
+# Heading-interpolating N-arc spline of a clothoid window within
+# (b-a)^3/(8 A^2 N^2); end not interpolated. claimId 0007-clothoid-arc-spline.
+theories/ClothoidArcSpline.v
 # ADR-0007 first-slice intake walker (IntakeWalker). Tagged CST →
 # SHC bag | Intake Decline. Reuses MkChord / MkCirc / MkClothoid.
 # Host/pure-R. Grammar pin: grammars-v4 #4997. No new oracle
@@ -3898,9 +3902,9 @@ theories-flocq/Orient_b64_exact.v
 # comparison; composes with theories/ClothoidDegenerate.v's unique-root
 # theorem.  Route (A) b64 slice of docs/clothoid-open-questions-triage.md.
 theories-flocq/ClothoidDegenerate_b64.v
-# Biarc tolerance gate in binary64 RNE, sound for the R contract of
-# ClothoidBiarc.v; arc points QEX (CbiB64ArcEval). claimId 0007-clothoid-biarc.
-theories-flocq/ClothoidBiarc_b64.v
+# Arc-spline tolerance gate in binary64 RNE (sound) and binary64 points for
+# every CasB64ArcOracle; no oracle inhabitant (QEX). claimId 0007-clothoid-arc-spline.
+theories-flocq/ClothoidArcSpline_b64.v
 # Scope-A residual-assembly exactness (route (C) of the clothoid triage):
 # the polynomial assembly L^2(p^2+q^2) - d^2*s2 over oracle-supplied
 # fixed-point P/Q approximants is bit-exact in the integer window; the b64
