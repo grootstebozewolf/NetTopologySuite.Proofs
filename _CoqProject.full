@@ -2939,6 +2939,7 @@ theories/MetricGreen.v
 theories/MetricCircleSmoke.v
 theories/SheetHenClothoidCore.v
 theories/ClothoidTangent.v
+theories/FresnelSeries.v
 theories/SheetHenClothoidBounds.v
 theories/SheetHenClothoidFrames.v
 theories/SheetHenClothoidEgg.v
