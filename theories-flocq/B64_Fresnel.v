@@ -13,10 +13,13 @@
    S8 maps a general clothoid onto this canonical problem).
 
    Intake X_F = 5/2 (fresnel_accept_b: -5/2 <= x <= 5/2, false on NaN and
-   infinities): an engineering result, not an input.  The corpus maximum is
-   x = s / (sqrt 2 A) = 2.298 (LENGTH_UNIFIED clothoid fixture A = 1,
-   s = 3.25); X_F = 2 would decline it, 5/2 is the next simple dyadic, and
-   costs ~3.5 bits against 2 (z = x^4 <= 39 makes Horner cancel).  Outside:
+   infinities).  Geometrically x^2 = s^2 / (2 A^2) = |psi(s)|, so the intake
+   is |psi| <= 25/4: at most 6.25 rad of tangent rotation measured from the
+   inflection point.  Transition curves in practice have tau << 1 rad; the
+   corpus extreme (LENGTH_UNIFIED fixture A = 1, s = 3.25: psi = 5.28 rad,
+   x = 2.298) is evidence the cap is not too tight, not its definition.
+   X_F = 2 (psi <= 4 rad) would decline that fixture; 5/2 costs ~3.5 bits
+   against 2 (z = x^4 <= 39 makes Horner cancel).  Outside:
    DECLINE_FRESNEL_RANGE; asymptotics stay deferred (D2/D4).
 
    Algorithm (RNE binary64, extractable, no FMA):
@@ -230,7 +233,7 @@ Proof.
   unfold fr_EC. lra.
 Qed.
 
-(* WITNESS {"claimId":"s7-b64-fresnel","topic":"numerics","lemma":"b64_fresnel_C_err","title":"Binary64 canonical Fresnel integrals: for |x| <= 5/2 (fresnel_accept_b; X_F from the corpus maximum 2.298) b64_fresnel_C / b64_fresnel_S are finite and within 2^-42 of every primitive F of cos(s^2) / sin(s^2) with F 0 = 0","file":"theories-flocq/B64_Fresnel.v","witness":"b64_fresnel_C_err","board":"ADR-0006"} *)
+(* WITNESS {"claimId":"s7-b64-fresnel","topic":"numerics","lemma":"b64_fresnel_C_err","title":"Binary64 canonical Fresnel integrals: for |x| <= 5/2 (fresnel_accept_b; tangent rotation |psi| = x^2 <= 25/4 rad) b64_fresnel_C / b64_fresnel_S are finite and within 2^-42 of every primitive F of cos(s^2) / sin(s^2) with F 0 = 0","file":"theories-flocq/B64_Fresnel.v","witness":"b64_fresnel_C_err","board":"ADR-0006"} *)
 Theorem b64_fresnel_C_err : forall (F : R -> R),
   F 0 = 0 -> (forall s, derivable_pt_lim F s (cos (s * s))) ->
   forall x, fresnel_accept_b x = true ->

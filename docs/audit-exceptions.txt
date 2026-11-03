@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 93 files (90 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 101 files (98 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via

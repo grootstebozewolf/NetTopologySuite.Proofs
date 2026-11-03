@@ -7,8 +7,16 @@
 // inputs (NaN, infinities, just outside the cap) for DECLINE parity.
 // Usage: dotnet run --project tests/B64SinConformance [-- ORACLE_BIN]
 //        (default: $ORACLE or oracle/oracle_bin).  Exit 0 = bit-identical.
+//   GOLDEN_OUT=dir   also write the oracle's answers to dir/<MODE>.out with the
+//                    corpus hash dir/<MODE>.in.sha256 (CI x64 job);
+//   GOLDEN_IN=dir    compare against those files instead of running the oracle
+//                    (CI arm64 job: the x86-64 oracle_bin cannot run there).
+//                    The corpus is seeded, so both sides see identical inputs;
+//                    the hash check fails loudly if they do not.
 // AI assistance disclosure: AI-drafted; human review pending.
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using NTS.Proofs.Numerics;
 
 static ulong Bits(double v) => unchecked((ulong)BitConverter.DoubleToInt64Bits(v));
@@ -47,9 +55,24 @@ foreach (var m in marks)
 corpus.AddRange(new[] { double.NaN, -double.NaN, double.PositiveInfinity,
     double.NegativeInfinity, 1e300, -1e300, FromBits(0x7FF0000000000001UL) });
 
-int totalBug = 0;
-foreach (var (mode, fn) in new (string, Func<double, double>)[] { ("B64_SIN", B64Sin.Sin), ("B64_COS", B64Sin.Cos) })
+
+var goldenIn = Environment.GetEnvironmentVariable("GOLDEN_IN");
+var goldenOut = Environment.GetEnvironmentVariable("GOLDEN_OUT");
+if (!string.IsNullOrEmpty(goldenOut)) Directory.CreateDirectory(goldenOut);
+
+// One oracle query: the mode header, then one input line per case.
+string[] Query(string mode, IEnumerable<string> inputs)
 {
+    var inLines = inputs.ToList();
+    string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", inLines))));
+    if (!string.IsNullOrEmpty(goldenIn))
+    {
+        string want = File.ReadAllText(Path.Combine(goldenIn, mode + ".in.sha256")).Trim();
+        if (want != hash)
+            throw new InvalidOperationException($"{mode}: corpus hash {hash} differs from golden {want}");
+        return File.ReadAllText(Path.Combine(goldenIn, mode + ".out"))
+                   .Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    }
     var psi = new ProcessStartInfo(oracle)
     {
         RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
@@ -57,10 +80,22 @@ foreach (var (mode, fn) in new (string, Func<double, double>)[] { ("B64_SIN", B6
     using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
     var outputTask = proc.StandardOutput.ReadToEndAsync();
     proc.StandardInput.WriteLine(mode);
-    foreach (var x in corpus) proc.StandardInput.WriteLine(Bits(x).ToString("x16"));
+    foreach (var l in inLines) proc.StandardInput.WriteLine(l);
     proc.StandardInput.Close();
-    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    string text = outputTask.Result;
     proc.WaitForExit();
+    if (!string.IsNullOrEmpty(goldenOut))
+    {
+        File.WriteAllText(Path.Combine(goldenOut, mode + ".out"), text);
+        File.WriteAllText(Path.Combine(goldenOut, mode + ".in.sha256"), hash + "\n");
+    }
+    return text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+
+int totalBug = 0;
+foreach (var (mode, fn) in new (string, Func<double, double>)[] { ("B64_SIN", B64Sin.Sin), ("B64_COS", B64Sin.Cos) })
+{
+    var lines = Query(mode, corpus.Select(x => Bits(x).ToString("x16")));
     if (lines.Length != corpus.Count)
     {
         Console.WriteLine($"SUMMARY {mode} ok=0 warn=0 bug=1 (oracle returned {lines.Length} lines for {corpus.Count} inputs)");
@@ -106,18 +141,7 @@ foreach (var c in new[] { cap, Math.BitDecrement(cap), Math.BitIncrement(cap), -
 }
 {
     const string mode = "B64_ARC_PT";
-    var psi = new ProcessStartInfo(oracle)
-    {
-        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
-    };
-    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
-    var outputTask = proc.StandardOutput.ReadToEndAsync();
-    proc.StandardInput.WriteLine(mode);
-    foreach (var q in quads)
-        proc.StandardInput.WriteLine($"{Bits(q.cx):x16} {Bits(q.cy):x16} {Bits(q.r):x16} {Bits(q.t):x16}");
-    proc.StandardInput.Close();
-    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    proc.WaitForExit();
+    var lines = Query(mode, quads.Select(q => $"{Bits(q.cx):x16} {Bits(q.cy):x16} {Bits(q.r):x16} {Bits(q.t):x16}"));
     int ok = 0, bug = 0, declined = 0;
     if (lines.Length != quads.Count) bug = 1;
     else
@@ -159,17 +183,7 @@ foreach (var m in new[] { 2.5, 2.298, 1.0, 0.0, double.Epsilon, 2.22507385850720
 fx.AddRange(new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 3.0, -1e300 });
 {
     const string mode = "B64_FRESNEL";
-    var psi = new ProcessStartInfo(oracle)
-    {
-        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
-    };
-    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
-    var outputTask = proc.StandardOutput.ReadToEndAsync();
-    proc.StandardInput.WriteLine(mode);
-    foreach (var x in fx) proc.StandardInput.WriteLine(Bits(x).ToString("x16"));
-    proc.StandardInput.Close();
-    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    proc.WaitForExit();
+    var lines = Query(mode, fx.Select(x => Bits(x).ToString("x16")));
     int ok = 0, bug = 0, declined = 0;
     if (lines.Length != fx.Count) bug = 1;
     else
@@ -207,17 +221,7 @@ foreach (var a in new[] { cm500, Math.BitDecrement(cm500), Math.BitIncrement(cm5
     }
 {
     const string mode = "B64_CLOTHOID";
-    var psi = new ProcessStartInfo(oracle)
-    {
-        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
-    };
-    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
-    var outputTask = proc.StandardOutput.ReadToEndAsync();
-    proc.StandardInput.WriteLine(mode);
-    foreach (var q in cq) proc.StandardInput.WriteLine($"{Bits(q.a):x16} {Bits(q.s):x16} {(q.neg ? 1 : 0)}");
-    proc.StandardInput.Close();
-    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    proc.WaitForExit();
+    var lines = Query(mode, cq.Select(q => $"{Bits(q.a):x16} {Bits(q.s):x16} {(q.neg ? 1 : 0)}"));
     int ok = 0, bug = 0, declined = 0;
     if (lines.Length != cq.Count) bug = 1;
     else
@@ -248,17 +252,7 @@ foreach (var m in new[] { 2.7e-5, 2.8e-5, 2.9e-5 })
 }
 {
     const string mode = "B64_SEG_G";
-    var psi = new ProcessStartInfo(oracle)
-    {
-        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
-    };
-    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
-    var outputTask = proc.StandardOutput.ReadToEndAsync();
-    proc.StandardInput.WriteLine(mode);
-    foreach (var t in gx) proc.StandardInput.WriteLine(Bits(t).ToString("x16"));
-    proc.StandardInput.Close();
-    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    proc.WaitForExit();
+    var lines = Query(mode, gx.Select(t => Bits(t).ToString("x16")));
     int ok = 0, bug = 0, pos = 0, neg = 0, dec = 0;
     if (lines.Length != gx.Count) bug = 1;
     else

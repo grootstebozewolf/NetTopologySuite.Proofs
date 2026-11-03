@@ -6,9 +6,9 @@
      C(x) = int_0^x cos(t^2) dt = x   P(x^4),  P(z) = sum_{k<=19} (-1)^k z^k / ((2k)!   (4k+1))
      S(x) = int_0^x sin(t^2) dt = x^3 Q(x^4),  Q(z) = sum_{k<=18} (-1)^k z^k / ((2k+1)! (4k+3))
    on the B64_Horner kernel, for |z| <= 40 (the intake |x| <= 5/2 gives
-   x^4 <= 625/16, plus the rounding of z).  X_F = 5/2 is the smallest simple
-   dyadic cap above the corpus maximum x = 2.298 (LENGTH_UNIFIED clothoid
-   fixture, A = 1, s = 3.25; inventory T7).
+   x^4 <= 625/16, plus the rounding of z).  X_F = 5/2 is the tangent-rotation
+   cap |psi| = x^2 <= 25/4 rad from the inflection point (B64_Fresnel.v
+   header); the corpus extreme x = 2.298 (inventory T7) lies inside it.
    Budget lines, each a theorem: frc_eval_err / frs_eval_err (binary64
    Horner vs the same coefficients exact), frc_coef_err / frs_coef_err,
    frc_M/L_bound, frs_M/L_bound, and frc_fz_eq / frs_fz_eq: the exact
