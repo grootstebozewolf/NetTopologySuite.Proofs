@@ -131,6 +131,29 @@ Proof.
 Qed.
 
 
+(* b64_le on finite operands, both directions. *)
+Lemma b64ae_le_true : forall a b, fin a = true -> fin b = true ->
+  b64_le a b = true -> B2R a <= B2R b.
+Proof.
+  intros a b Fa Fb Hle.
+  unfold b64_le, b64_compare in Hle.
+  pose proof (b64_compare_payload a b Fa Fb) as Hp.
+  destruct (Binary.Bcompare prec emax a b) as [[]|]; try discriminate Hle.
+  - rewrite Hp. apply Rle_refl.
+  - apply Rlt_le. exact Hp.
+Qed.
+
+Lemma b64ae_le_false : forall a b, fin a = true -> fin b = true ->
+  b64_le a b = false -> B2R b < B2R a.
+Proof.
+  intros a b Fa Fb Hle.
+  unfold b64_le, b64_compare in Hle.
+  pose proof (b64_compare_payload a b Fa Fb) as Hp.
+  destruct (Binary.Bcompare prec emax a b) as [[]|]; try discriminate Hle.
+  - exact Hp.
+  - contradiction.
+Qed.
+
 Print Assumptions b64ae_u_small.
 Print Assumptions b64ae_e0_small.
 Print Assumptions b64ae_round_err.
@@ -140,3 +163,5 @@ Print Assumptions b64ae_plus_err.
 Print Assumptions b64ae_minus_err.
 Print Assumptions b64ae_abs_mult_le.
 Print Assumptions b64ae_u_mul_le.
+Print Assumptions b64ae_le_true.
+Print Assumptions b64ae_le_false.

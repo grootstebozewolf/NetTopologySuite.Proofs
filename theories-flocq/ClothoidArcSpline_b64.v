@@ -154,17 +154,6 @@ Definition cas_b64_gate (L A n eps : binary64) : bool :=
 Definition cas_b64_in_range (x : binary64) : Prop :=
   fin x = true /\ bpow radix2 (-100) <= B2R x <= bpow radix2 100.
 
-Lemma cas_b64_le_R : forall a b, fin a = true -> fin b = true ->
-  b64_le a b = true -> B2R a <= B2R b.
-Proof.
-  intros a b Fa Fb Hle.
-  unfold b64_le, b64_compare in Hle.
-  pose proof (b64_compare_payload a b Fa Fb) as Hp.
-  destruct (Binary.Bcompare prec emax a b) as [[]|]; try discriminate Hle.
-  - rewrite Hp. apply Rle_refl.
-  - apply Rlt_le. exact Hp.
-Qed.
-
 Lemma cas_round_margin :
   (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u)
   <= (1 + bpow radix2 (-49)) * ((1 - b64ae_u) * (1 - b64ae_u) * (1 - b64ae_u)).
@@ -226,7 +215,7 @@ Proof.
   destruct (cas_b64_mult_pos _ eps 407 100 G4 Fe ltac:(lia) ltac:(lia) ltac:(lia)
               ltac:(exact C4) He) as [G5 [S5 _]].
   unfold cas_b64_gate in Hg.
-  pose proof (cas_b64_le_R _ _ F3 G5 Hg) as Hle.
+  pose proof (b64ae_le_true _ _ F3 G5 Hg) as Hle.
   set (l := B2R L). set (a := B2R A). set (m := B2R n). set (e := B2R eps).
   fold l in R1, R2. fold a in S1, S2. fold m in S3, S4. fold e in S5.
   rewrite E8 in S1. rewrite EM in R3.

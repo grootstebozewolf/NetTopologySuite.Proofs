@@ -170,6 +170,48 @@ Proof.
     apply b64ae_abs_mult_le; assumption.
 Qed.
 
+(* Lipschitz constant of the exact polynomial on [-Z, Z]. *)
+Fixpoint hz_L (ms : list R) (Z : R) : R :=
+  match ms with
+  | [] => 0
+  | m :: ms' => hz_L ms' Z * Z + hz_M ms' Z
+  end.
+
+(* Magnitude bound for a REAL coefficient list. *)
+Lemma hz_horner_R_bound_R : forall (cs ms : list R) x Z,
+  Forall2 (fun c m => Rabs c <= m) cs ms -> Rabs x <= Z ->
+  Rabs (hz_horner_R cs x) <= hz_M ms Z.
+Proof.
+  intros cs ms x Z H Hx.
+  induction H as [|c m cs ms Hm _ IH]; cbn.
+  - rewrite Rabs_R0. lra.
+  - eapply Rle_trans; [apply Rabs_triang|].
+    apply Rplus_le_compat; [|exact Hm].
+    apply b64ae_abs_mult_le; assumption.
+Qed.
+
+Lemma hz_horner_R_lip : forall (cs ms : list R) x y Z,
+  Forall2 (fun c m => Rabs c <= m) cs ms -> Rabs x <= Z -> Rabs y <= Z ->
+  Rabs (hz_horner_R cs x - hz_horner_R cs y) <= hz_L ms Z * Rabs (x - y).
+Proof.
+  intros cs ms x y Z H Hx Hy.
+  induction H as [|c m cs ms Hm Hrest IH]; cbn.
+  - rewrite Rminus_diag, Rabs_R0. lra.
+  - replace (hz_horner_R cs x * x + c - (hz_horner_R cs y * y + c))
+      with ((hz_horner_R cs x - hz_horner_R cs y) * x
+            + hz_horner_R cs y * (x - y)) by ring.
+    eapply Rle_trans; [apply Rabs_triang|].
+    assert (HM := hz_horner_R_bound_R cs ms y Z Hrest Hy).
+    assert (A : Rabs ((hz_horner_R cs x - hz_horner_R cs y) * x)
+                <= hz_L ms Z * Rabs (x - y) * Z)
+      by (apply b64ae_abs_mult_le; assumption).
+    assert (B : Rabs (hz_horner_R cs y * (x - y)) <= hz_M ms Z * Rabs (x - y))
+      by (apply b64ae_abs_mult_le; [exact HM | apply Rle_refl]).
+    replace ((hz_L ms Z * Z + hz_M ms Z) * Rabs (x - y))
+      with (hz_L ms Z * Rabs (x - y) * Z + hz_M ms Z * Rabs (x - y)) by ring.
+    lra.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §3  The kernel theorem.                                                    *)
 (* -------------------------------------------------------------------------- *)
@@ -258,6 +300,8 @@ Proof.
 Qed.
 
 Print Assumptions hz_E_cons_le.
+Print Assumptions hz_horner_R_bound_R.
+Print Assumptions hz_horner_R_lip.
 Print Assumptions hz_horner_R_bound.
 Print Assumptions hz_step.
 Print Assumptions b64_horner_err.
