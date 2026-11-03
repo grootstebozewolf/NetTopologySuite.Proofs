@@ -248,30 +248,43 @@ jobs:
             > oracle/ieee_oracle_bridge_run.txt
           ORACLE_BIN=oracle/oracle_bin python3 oracle/red_sqlmm_wkt_tests.py
 
-      - name: Set up .NET (B64 conformance harness)
+      - name: Set up .NET (B64 conformance)
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: B64 conformance gate, x64 (C# port == extracted oracle, bit for bit)
-        # tests/B64SinConformance: the op-for-op C# ports of the proved
-        # binary64 sin / cos / arc point / Fresnel / clothoid map / margin
-        # filter against the freshly extracted oracle_bin, compared on output
-        # bits and decisions (exit 1 on any mismatch).  The constants-sync
-        # half (gen_constants.py --check) runs in `make ci-guards`.  The
-        # oracle's answers are kept as golden files for the arm64 job.
+      - name: Set up Java (B64 conformance)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: B64 conformance corpus (contract boundaries, oracle answers)
+        # tests/B64SinConformance/corpus.py: inputs generated from the Coq
+        # literals (intake caps, reduction transitions, signed zero,
+        # subnormal transitions, the margin flip and the clothoid
+        # computed-argument transition found by bisection with the oracle,
+        # seeded random values), answered once by the freshly extracted
+        # oracle_bin.  The constants-sync half (gen_constants.py --check)
+        # runs in `make ci-guards`.
+        run: python3 tests/B64SinConformance/corpus.py --oracle oracle/oracle_bin --out b64-corpus
+
+      - name: B64 conformance gate, x64 (C# == oracle, Java == oracle)
+        # Both ports replay the same oracle answers bit for bit (exit 1 on
+        # any mismatch), so oracle == C# == Java.
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: '1'
           DOTNET_NOLOGO: '1'
-          ORACLE: oracle/oracle_bin
-          GOLDEN_OUT: b64-golden
-        run: dotnet run --project tests/B64SinConformance -c Release
+        run: |
+          dotnet run --project tests/B64SinConformance -c Release -- b64-corpus
+          javac -d b64-java tests/B64SinConformance/java/nts/proofs/numerics/*.java
+          java -cp b64-java nts.proofs.numerics.Conformance b64-corpus
 
-      - name: Upload B64 conformance golden answers
+      - name: Upload B64 conformance corpus (inputs + oracle answers)
         uses: actions/upload-artifact@v4
         with:
-          name: b64-golden
-          path: b64-golden
+          name: b64-corpus
+          path: b64-corpus
           retention-days: 7
 
       - name: Upload oracle_bin artifact (90-day retention)
@@ -303,11 +316,10 @@ jobs:
             oracle/nts_ffi.h
 
   b64-conformance-arm64:
-    # The same C# ports on arm64 against the x64 oracle's golden answers
-    # (oracle_bin is an x86-64 binary).  .NET on arm64 is where an FMA
-    # contraction or other platform drift in the ports would surface; the
-    # harness corpus is seeded and its SHA-256 is checked against the x64 run.
-    name: B64 conformance gate, arm64 (C# port == x64 oracle answers)
+    # The same C# and Java ports on arm64 against the x64 oracle's answers
+    # (oracle_bin is an x86-64 binary).  arm64 is where an FMA contraction or
+    # other platform drift in either runtime would surface.
+    name: B64 conformance gate, arm64 (C# and Java == x64 oracle answers)
     needs: build-oracle
     runs-on: ubuntu-24.04-arm
     permissions:
@@ -320,15 +332,23 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Download golden answers
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download corpus and oracle answers
         uses: actions/download-artifact@v4
         with:
-          name: b64-golden
-          path: b64-golden
+          name: b64-corpus
+          path: b64-corpus
 
       - name: B64 conformance gate, arm64
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: '1'
           DOTNET_NOLOGO: '1'
-          GOLDEN_IN: b64-golden
-        run: dotnet run --project tests/B64SinConformance -c Release
+        run: |
+          dotnet run --project tests/B64SinConformance -c Release -- b64-corpus
+          javac -d b64-java tests/B64SinConformance/java/nts/proofs/numerics/*.java
+          java -cp b64-java nts.proofs.numerics.Conformance b64-corpus
