@@ -2816,6 +2816,7 @@ theories/ArcSpanAtan2.v
 # oracle's atan2 sector gate for exact queries; = arc_span_contains on the
 # circle, of the radial projection off it.  claimId s0-t4-sector-exact.
 theories/ArcSectorExact.v
+theories/ArcSectorSurd.v
 # Issue #64 round-2 item ④ — N-AA Vieta coordinate identities
 # (radical_point plus/minus x/y sum and product).  Pure ring, 3-axiom.
 # Item ② atan2 discharge lives in ArcSpanAtan2.v.

@@ -58,6 +58,7 @@ From NTS.Proofs.Flocq Require Import ArcPixel_b64_compute.   (* b64_arc_passes_t
 From NTS.Proofs.Flocq Require Import SnapRoundingScale_b64.  (* b64_snap_coord_scaled (C1 power-of-two grid) *)
 From NTS.Proofs.Flocq Require Import Orient_b64_exact_full.  (* b64_orient2d_exact (full-plane exact sign) *)
 From NTS.Proofs       Require Import ArcSectorExact.  (* asxq_sector: exact arc sector, replaces atan2 *)
+From NTS.Proofs       Require Import ArcSectorSurd.  (* asxs_sector, qs_*: exact sector on Q(sqrt D) points (T4b) *)
 From NTS.Proofs.Flocq Require Import B64_SinPoly B64_Sin.  (* b64_sin, sin_accept_b: S2 proved sine *)
 From NTS.Proofs.Flocq Require Import B64_CosPoly B64_Cos.  (* b64_cos: S4 proved cosine *)
 From NTS.Proofs.Flocq Require Import B64_ArcPoint.  (* b64_arc_x/y, arc_accept_b: S5 arc point *)
@@ -328,6 +329,10 @@ Extraction "oracle/extracted.ml"
   q_ddh_sq
   q_hsymm_sq
   asxq_sector
+  asxs_sector
+  qs_nonneg
+  qs_pos
+  qs_zero
   b64_sin
   b64_cos
   sin_accept_b
