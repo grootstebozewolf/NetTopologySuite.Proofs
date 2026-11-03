@@ -186,59 +186,95 @@ Proof.
   lra.
 Qed.
 
+Lemma sn_z_facts : forall r, fin r = true -> Rabs (B2R r) <= 8 / 5 ->
+  fin (b64_mult r r) = true /\
+  Rabs (B2R (b64_mult r r) - B2R r * B2R r) <= / 9007199254740992 * (64 / 25) + b64ae_e0 /\
+  Rabs (B2R (b64_mult r r)) <= 41 / 16.
+Proof.
+  intros r Fr Hr.
+  pose proof sp_u_val as Uv. pose proof sp_e0_bounds as [He0 He1].
+  assert (Hb : 4 <= bpow radix2 1000) by exact sp_bpow1000.
+  assert (Bz : Rabs (B2R r * B2R r) <= 8 / 5 * (8 / 5)) by (apply b64ae_abs_mult_le; assumption).
+  destruct (b64ae_mult_err r r Fr Fr ltac:(lra)) as [Fz Ez].
+  pose proof (b64ae_u_mul_le _ _ Bz) as Uz.
+  rewrite Uv in Uz, Ez.
+  assert (Ez' : Rabs (B2R (b64_mult r r) - B2R r * B2R r)
+                <= / 9007199254740992 * (64 / 25) + b64ae_e0) by lra.
+  split; [exact Fz|]. split; [exact Ez'|].
+  pose proof (Rabs_triang_inv (B2R (b64_mult r r)) (B2R r * B2R r)). lra.
+Qed.
+
+Lemma sn_P_bound : forall y, Rabs y <= 41 / 16 ->
+  Rabs (hz_horner_R (map B2R sp_coeffs) y) <= 7 / 4.
+Proof.
+  intros y Hy.
+  eapply Rle_trans; [apply (hz_horner_R_bound sp_coeffs sp_ms y sp_Z sp_coeffs_ok);
+                     unfold sp_Z; exact Hy|].
+  exact sp_M_bound.
+Qed.
+
+Lemma sn_P_lip : forall y w, Rabs y <= 41 / 16 -> Rabs w <= 41 / 16 ->
+  Rabs (hz_horner_R (map B2R sp_coeffs) y - hz_horner_R (map B2R sp_coeffs) w)
+    <= 11 / 32 * Rabs (y - w).
+Proof.
+  intros y w Hy Hw.
+  eapply Rle_trans;
+    [apply (hz_horner_R_lip (map B2R sp_coeffs) sp_ms y w sp_Z sp_coeffs_ok_R);
+     unfold sp_Z; assumption|].
+  apply Rmult_le_compat_r; [apply Rabs_pos | exact sp_L_bound].
+Qed.
+
+Lemma sn_p_facts : forall z, fin z = true -> Rabs (B2R z) <= 41 / 16 ->
+  fin (b64_horner sp_coeffs z) = true /\
+  Rabs (B2R (b64_horner sp_coeffs z) - hz_horner_R (map B2R sp_coeffs) (B2R z))
+    <= / 2251799813685248 /\
+  Rabs (B2R (b64_horner sp_coeffs z)) <= 7 / 4 + / 2251799813685248.
+Proof.
+  intros z Fz Hz.
+  destruct (b64_sinpoly_eval_err z Fz Hz) as [Fp Ep].
+  replace (bpow radix2 (-51)) with (/ 2251799813685248) in Ep by (cbn; reflexivity).
+  pose proof (sn_P_bound _ Hz) as HP.
+  split; [exact Fp|]. split; [exact Ep|].
+  pose proof (Rabs_triang_inv (B2R (b64_horner sp_coeffs z))
+                              (hz_horner_R (map B2R sp_coeffs) (B2R z))). lra.
+Qed.
+
+Lemma sn_s_facts : forall r p, fin r = true -> fin p = true ->
+  Rabs (B2R r) <= 8 / 5 -> Rabs (B2R p) <= 7 / 4 + / 2251799813685248 ->
+  fin (b64_mult r p) = true /\
+  Rabs (B2R (b64_mult r p) - B2R r * B2R p)
+    <= / 9007199254740992 * (8 / 5 * (7 / 4 + / 2251799813685248)) + b64ae_e0.
+Proof.
+  intros r p Fr Fp Hr Hp.
+  pose proof sp_u_val as Uv.
+  assert (Hb : 4 <= bpow radix2 1000) by exact sp_bpow1000.
+  assert (Bs : Rabs (B2R r * B2R p) <= 8 / 5 * (7 / 4 + / 2251799813685248))
+    by (apply b64ae_abs_mult_le; assumption).
+  destruct (b64ae_mult_err r p Fr Fp ltac:(lra)) as [Fs Es].
+  pose proof (b64ae_u_mul_le _ _ Bs) as Us.
+  rewrite Uv in Us, Es.
+  split; [exact Fs | lra].
+Qed.
+
 Lemma sn_core_err : forall r, fin r = true -> Rabs (B2R r) <= 8 / 5 ->
   fin (sn_core r) = true /\ Rabs (B2R (sn_core r) - sin (B2R r)) <= sn_Ecore.
 Proof.
   intros r Fr Hr. unfold sn_core.
-  pose proof b64ae_u_small as [Hu0 _]. pose proof sp_u_val as Uv.
-  pose proof sp_e0_bounds as He. destruct He as [He0 He1].
-  set (x := B2R r) in *.
-  assert (Hb : 4 <= bpow radix2 1000) by exact sp_bpow1000.
-  (* z = fl(r r) *)
-  assert (Bz : Rabs (x * x) <= 8 / 5 * (8 / 5)) by (apply b64ae_abs_mult_le; assumption).
-  destruct (b64ae_mult_err r r Fr Fr ltac:(fold x; lra)) as [Fz Ez].
-  fold x in Ez.
-  pose proof (b64ae_u_mul_le _ _ Bz) as Uz.
-  set (z := b64_mult r r) in *. clearbody z.
-  assert (Ez' : Rabs (B2R z - x * x) <= / 9007199254740992 * (64 / 25) + b64ae_e0).
-  { rewrite Uv in Uz, Ez. lra. }
-  assert (Hz : Rabs (B2R z) <= 41 / 16).
-  { replace (B2R z) with ((B2R z - x * x) + x * x) by ring.
-    eapply Rle_trans; [apply Rabs_triang|]. lra. }
-  assert (Hxx : Rabs (x * x) <= 41 / 16) by lra.
-  (* p = Horner(z) *)
-  destruct (b64_sinpoly_eval_err z Fz Hz) as [Fp Ep].
-  set (p := b64_horner sp_coeffs z) in *. clearbody p.
-  replace (bpow radix2 (-51)) with (/ 2251799813685248) in Ep by (cbn; reflexivity).
-  set (Pz := hz_horner_R (map B2R sp_coeffs) (B2R z)) in *.
-  set (Pxx := hz_horner_R (map B2R sp_coeffs) (x * x)).
-  set (Exx := hz_horner_R sp_exact (x * x)).
-  assert (HPz : Rabs Pz <= 7 / 4).
-  { eapply Rle_trans; [apply (hz_horner_R_bound sp_coeffs sp_ms (B2R z) sp_Z sp_coeffs_ok);
-                        unfold sp_Z; exact Hz|].
-    exact sp_M_bound. }
-  assert (Hp : Rabs (B2R p) <= 7 / 4 + / 2251799813685248).
-  { replace (B2R p) with ((B2R p - Pz) + Pz) by ring.
-    eapply Rle_trans; [apply Rabs_triang|]. lra. }
-  (* s = fl(r p) *)
-  assert (Bs : Rabs (x * B2R p) <= 8 / 5 * (7 / 4 + / 2251799813685248))
-    by (apply b64ae_abs_mult_le; assumption).
-  destruct (b64ae_mult_err r p Fr Fp ltac:(fold x; lra)) as [Fs Es].
-  fold x in Es.
-  pose proof (b64ae_u_mul_le _ _ Bs) as Us.
+  pose proof sp_e0_bounds as [He0 He1].
+  destruct (sn_z_facts r Fr Hr) as [Fz [Ez Hz]].
+  destruct (sn_p_facts _ Fz Hz) as [Fp [Ep Hp]].
+  destruct (sn_s_facts r _ Fr Fp Hr Hp) as [Fs Es].
+  assert (Hxx : Rabs (B2R r * B2R r) <= 41 / 16).
+  { assert (Rabs (B2R r * B2R r) <= 8 / 5 * (8 / 5)) by (apply b64ae_abs_mult_le; assumption).
+    lra. }
   split; [exact Fs|].
-  (* hand the facts to the pure-real budget *)
-  apply (sn_core_alg x (B2R z) (B2R p) (B2R (b64_mult r p)) Pz Pxx Exx b64ae_e0
-           (conj He0 He1) Hr).
-  - rewrite Uv in Us, Es. lra.
-  - exact Ep.
-  - eapply Rle_trans;
-      [apply (hz_horner_R_lip (map B2R sp_coeffs) sp_ms (B2R z) (x * x) sp_Z
-                sp_coeffs_ok_R); unfold sp_Z; assumption|].
-    apply Rmult_le_compat_r; [apply Rabs_pos | exact sp_L_bound].
-  - exact Ez'.
-  - apply sp_coef_err. exact Hxx.
-  - apply sp_trunc. exact Hr.
+  exact (sn_core_alg (B2R r) (B2R (b64_mult r r)) (B2R (b64_horner sp_coeffs (b64_mult r r)))
+           (B2R (b64_mult r (b64_horner sp_coeffs (b64_mult r r))))
+           (hz_horner_R (map B2R sp_coeffs) (B2R (b64_mult r r)))
+           (hz_horner_R (map B2R sp_coeffs) (B2R r * B2R r))
+           (hz_horner_R sp_exact (B2R r * B2R r)) b64ae_e0
+           (conj He0 He1) Hr Es Ep (sn_P_lip _ _ Hz Hxx) Ez
+           (sp_coef_err _ Hxx) (sp_trunc _ Hr)).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -255,6 +291,128 @@ Lemma sn_red_budget : forall e, 0 < e <= / 9007199254740992 / 9007199254740992 -
   + 3 * / 4611686018427387904 <= sn_Ered.
 Proof. intros e He. unfold sn_Ered, sn_c2. lra. Qed.
 
+Lemma sn_c_vals : sn_c1 = (884279719003555 / 281474976710656) /\ sn_c2 = (4967757600021511 / 40564819207303340847894502572032).
+Proof. split; reflexivity. Qed.
+
+Lemma sn_t1_exact : forall (kf kc1 : binary64) (k : R),
+  fin kf = true -> B2R kf = k -> B2R kc1 = k * sn_c1 ->
+  fin (b64_mult kf sn_C1) = true /\ B2R (b64_mult kf sn_C1) = B2R kc1.
+Proof.
+  intros kf kc1 k Fk Ek Ekc.
+  destruct sn_C1_R as [EC1 FC1].
+  assert (Et1r : b64_round (B2R kf * B2R sn_C1) = B2R kc1).
+  { rewrite Ek, EC1. fold sn_c1. rewrite <- Ekc.
+    apply b64_round_generic. apply b64_format_B2R. }
+  assert (St1 : b64_safe Rmult kf sn_C1).
+  { split; [exact Fk|]. split; [exact FC1|]. rewrite Et1r.
+    apply (Binary.abs_B2R_lt_emax prec emax). }
+  destruct (b64_mult_correct _ _ St1) as [Et1 Ft1].
+  split; [exact Ft1|]. rewrite Et1. exact Et1r.
+Qed.
+
+Lemma sn_r1_exact : forall (x kf kc1 : binary64) (k : R),
+  fin x = true -> fin kf = true -> B2R kf = k -> 1 <= k <= 3 ->
+  B2R kc1 = k * sn_c1 -> B2R kc1 / 2 <= B2R x <= 2 * B2R kc1 ->
+  Rabs (B2R x - k * PI) <= (15733 / 10000) ->
+  fin (b64_minus x (b64_mult kf sn_C1)) = true /\
+  B2R (b64_minus x (b64_mult kf sn_C1)) = B2R x - k * sn_c1.
+Proof.
+  intros x kf kc1 k Fx Fk Ek Hk Ekc Hst Hr.
+  destruct (sn_t1_exact kf kc1 k Fk Ek Ekc) as [Ft1 Et1].
+  pose proof sn_pi_range as [Pl Ph]. destruct sn_c_vals as [Hc1 _].
+  assert (Fmt : b64_format (B2R x - B2R kc1)).
+  { apply (sterbenz radix2 (SpecFloat.fexp prec emax));
+      [apply b64_format_B2R | apply b64_format_B2R | exact Hst]. }
+  assert (Er1r : b64_round (B2R x - B2R (b64_mult kf sn_C1)) = B2R x - B2R kc1).
+  { rewrite Et1. apply b64_round_generic. exact Fmt. }
+  assert (Hsm : Rabs (B2R x - B2R kc1) <= 2).
+  { rewrite Ekc. replace (B2R x - k * sn_c1) with ((B2R x - k * PI) + k * (PI - sn_c1)) by ring.
+    eapply Rle_trans; [apply Rabs_triang|].
+    assert (Rabs (k * (PI - sn_c1)) <= 3 * / 1000000000000000).
+    { rewrite Rabs_mult, Rabs_pos_eq by lra.
+      assert (Rabs (PI - sn_c1) <= / 1000000000000000)
+        by (rewrite Hc1; apply Rabs_le; split; lra).
+      apply Rmult_le_compat; try lra; apply Rabs_pos. }
+    lra. }
+  assert (Sr1 : b64_safe Rminus x (b64_mult kf sn_C1)).
+  { split; [exact Fx|]. split; [exact Ft1|]. rewrite Er1r.
+    apply Rle_lt_trans with 2; [exact Hsm|].
+    apply Rle_lt_trans with (bpow radix2 2); [cbn; lra | apply bpow_lt; unfold emax; lia]. }
+  destruct (b64_minus_correct _ _ Sr1) as [Er1 Fr1].
+  split; [exact Fr1|]. rewrite Er1, Er1r, Ekc. reflexivity.
+Qed.
+
+Lemma sn_t2_facts : forall (kf : binary64) (k : R),
+  fin kf = true -> B2R kf = k -> 1 <= k <= 3 ->
+  fin (b64_mult kf sn_C2) = true /\
+  Rabs (B2R (b64_mult kf sn_C2) - k * sn_c2)
+    <= / 9007199254740992 * (3 * sn_c2) + b64ae_e0 /\
+  Rabs (B2R (b64_mult kf sn_C2)) <= / 1000000000000000.
+Proof.
+  intros kf k Fk Ek Hk.
+  destruct sn_C2_R as [EC2 FC2]. fold sn_c2 in EC2. destruct sn_c_vals as [_ Hc2].
+  pose proof sp_u_val as Uv. pose proof sp_e0_bounds as [He0 He1].
+  assert (Bt2 : Rabs (B2R kf * B2R sn_C2) <= 3 * sn_c2).
+  { rewrite Ek, EC2, Rabs_mult, (Rabs_pos_eq k), (Rabs_pos_eq sn_c2) by (rewrite ?Hc2; lra).
+    apply Rmult_le_compat_r; [rewrite Hc2; lra | lra]. }
+  assert (B1 : Rabs (B2R kf * B2R sn_C2) <= bpow radix2 1000).
+  { eapply Rle_trans; [exact Bt2|]. rewrite Hc2.
+    apply Rle_trans with 4; [lra | exact sp_bpow1000]. }
+  destruct (b64ae_mult_err kf sn_C2 Fk FC2 B1) as [Ft2 Et2].
+  pose proof (b64ae_u_mul_le _ _ Bt2) as Ut2.
+  rewrite Uv in Ut2, Et2. rewrite Ek, EC2 in Et2, Ut2.
+  split; [exact Ft2|]. split; [lra|].
+  pose proof (Rabs_triang_inv (B2R (b64_mult kf sn_C2)) (k * sn_c2)).
+  assert (Rabs (k * sn_c2) <= 3 * sn_c2)
+    by (rewrite <- EC2, <- Ek; exact Bt2).
+  assert (Rabs (B2R (b64_mult kf sn_C2) - k * sn_c2) <= / 9007199254740992 * (3 * sn_c2) + b64ae_e0)
+    by lra.
+  rewrite Hc2 in *. lra.
+Qed.
+
+Lemma sn_r_facts : forall (a b : binary64), fin a = true -> fin b = true ->
+  Rabs (B2R a - B2R b) <= 8 / 5 ->
+  fin (b64_minus a b) = true /\
+  Rabs (B2R (b64_minus a b) - (B2R a - B2R b)) <= / 9007199254740992 * (8 / 5) + b64ae_e0.
+Proof.
+  intros a b Fa Fb Hab. pose proof sp_u_val as Uv.
+  destruct (b64ae_minus_err a b Fa Fb
+              ltac:(eapply Rle_trans; [exact Hab|];
+                    apply Rle_trans with 4; [lra | exact sp_bpow1000])) as [Fr Er].
+  pose proof (b64ae_u_mul_le _ _ Hab) as U3. rewrite Uv in U3, Er.
+  split; [exact Fr | lra].
+Qed.
+
+(* The reduction budget as pure real algebra. *)
+Lemma sn_red_alg : forall (xr k r1 t2 rr e : R),
+  0 < e <= / 9007199254740992 / 9007199254740992 -> 1 <= k <= 3 ->
+  r1 = xr - k * sn_c1 ->
+  Rabs (t2 - k * sn_c2) <= / 9007199254740992 * (3 * sn_c2) + e ->
+  Rabs (rr - (r1 - t2)) <= / 9007199254740992 * (8 / 5) + e ->
+  Rabs (xr - k * PI) <= (15733 / 10000) ->
+  Rabs (rr - (xr - k * PI)) <= sn_Ered /\ Rabs rr <= 8 / 5.
+Proof.
+  intros xr k r1 t2 rr e He Hk Er1 Et2 Er Hr.
+  pose proof sn_pi_gap as Gap.
+  pose proof (sn_red_budget e He) as Bud.
+  assert (G : Rabs (k * (PI - (sn_c1 + sn_c2))) <= 3 * / 4611686018427387904).
+  { rewrite Rabs_mult, (Rabs_pos_eq k) by lra.
+    apply Rmult_le_compat; try lra; apply Rabs_pos. }
+  assert (E : rr - (xr - k * PI)
+              = (rr - (r1 - t2)) + (k * sn_c2 - t2) + k * (PI - (sn_c1 + sn_c2)))
+    by (rewrite Er1; ring).
+  assert (Hred : Rabs (rr - (xr - k * PI)) <= sn_Ered).
+  { rewrite E.
+    pose proof (Rabs_triang ((rr - (r1 - t2)) + (k * sn_c2 - t2))
+                            (k * (PI - (sn_c1 + sn_c2)))) as T1.
+    pose proof (Rabs_triang (rr - (r1 - t2)) (k * sn_c2 - t2)) as T2.
+    rewrite <- Rabs_Ropp in Et2. rewrite Ropp_minus_distr in Et2.
+    lra. }
+  split; [exact Hred|].
+  pose proof (Rabs_triang_inv rr (xr - k * PI)) as T.
+  unfold sn_Ered in Hred. lra.
+Qed.
+
 Lemma sn_red_err : forall (x kf kc1 : binary64) (k : R),
   fin x = true -> fin kf = true -> B2R kf = k -> 1 <= k <= 3 ->
   B2R kc1 = k * sn_c1 ->
@@ -265,87 +423,28 @@ Lemma sn_red_err : forall (x kf kc1 : binary64) (k : R),
   Rabs (B2R (sn_red x kf)) <= 8 / 5.
 Proof.
   intros x kf kc1 k Fx Fk Ek Hk Ekc Hst Hr. unfold sn_red.
-  destruct sn_C1_R as [EC1 FC1]. destruct sn_C2_R as [EC2 FC2].
-  pose proof b64ae_u_small as [Hu0 _]. pose proof sp_u_val as Uv.
   pose proof sp_e0_bounds as [He0 He1].
-  pose proof sn_pi_gap as Gap. pose proof sn_pi_range as [Pl Ph].
-  fold sn_c2 in EC2. fold sn_c1 in EC1.
-  assert (Hc1 : sn_c1 = (884279719003555 / 281474976710656)) by reflexivity.
-  assert (Hc2 : sn_c2 = (4967757600021511 / 40564819207303340847894502572032)) by reflexivity.
-  (* t1 = fl(k C1) = k C1 exactly *)
-  assert (Et1r : b64_round (B2R kf * B2R sn_C1) = B2R kc1).
-  { rewrite Ek, EC1, <- Ekc. apply b64_round_generic. apply b64_format_B2R. }
-  assert (St1 : b64_safe Rmult kf sn_C1).
-  { split; [exact Fk|]. split; [exact FC1|]. rewrite Et1r.
-    apply (Binary.abs_B2R_lt_emax prec emax). }
-  destruct (b64_mult_correct _ _ St1) as [Et1 Ft1]. rewrite Et1r in Et1.
-  set (t1 := b64_mult kf sn_C1) in *.
-  (* r1 = x - t1 exactly (Sterbenz) *)
-  assert (Fmt : b64_format (B2R x - B2R kc1)).
-  { apply (sterbenz radix2 (SpecFloat.fexp prec emax));
-      [apply b64_format_B2R | apply b64_format_B2R | exact Hst]. }
-  assert (Er1r : b64_round (B2R x - B2R t1) = B2R x - B2R kc1).
-  { rewrite Et1. apply b64_round_generic. exact Fmt. }
-  assert (Hr1 : Rabs (B2R x - B2R kc1) <= (15733 / 10000) + 3 * / 1000000000000000).
-  { rewrite Ekc. replace (B2R x - k * sn_c1) with ((B2R x - k * PI) + k * (PI - sn_c1)) by ring.
-    eapply Rle_trans; [apply Rabs_triang|].
+  pose proof sn_pi_range as [Pl Ph]. destruct sn_c_vals as [Hc1 Hc2].
+  destruct (sn_r1_exact x kf kc1 k Fx Fk Ek Hk Ekc Hst Hr) as [Fr1 Er1].
+  destruct (sn_t2_facts kf k Fk Ek Hk) as [Ft2 [Et2 Bt2]].
+  assert (Hdiff : Rabs (B2R (b64_minus x (b64_mult kf sn_C1)) - B2R (b64_mult kf sn_C2)) <= 8 / 5).
+  { rewrite Er1.
+    replace (B2R x - k * sn_c1 - B2R (b64_mult kf sn_C2))
+      with ((B2R x - k * PI) + k * (PI - sn_c1) - B2R (b64_mult kf sn_C2)) by ring.
     assert (Rabs (k * (PI - sn_c1)) <= 3 * / 1000000000000000).
     { rewrite Rabs_mult, Rabs_pos_eq by lra.
       assert (Rabs (PI - sn_c1) <= / 1000000000000000)
         by (rewrite Hc1; apply Rabs_le; split; lra).
       apply Rmult_le_compat; try lra; apply Rabs_pos. }
-    lra. }
-  assert (Sr1 : b64_safe Rminus x t1).
-  { split; [exact Fx|]. split; [exact Ft1|]. rewrite Er1r.
-    apply Rle_lt_trans with 2; [lra|].
-    apply Rle_lt_trans with (bpow radix2 2); [cbn; lra | apply bpow_lt; unfold emax; lia]. }
-  destruct (b64_minus_correct _ _ Sr1) as [Er1 Fr1]. rewrite Er1r in Er1.
-  set (r1 := b64_minus x t1) in *.
-  (* t2 = fl(k C2) *)
-  assert (Bt2 : Rabs (B2R kf * B2R sn_C2) <= 3 * sn_c2).
-  { rewrite Ek, EC2, Rabs_mult, (Rabs_pos_eq k), (Rabs_pos_eq sn_c2) by (rewrite ?Hc2; lra).
-    apply Rmult_le_compat_r; [rewrite Hc2; lra | lra]. }
-  destruct (b64ae_mult_err kf sn_C2 Fk FC2
-              ltac:(eapply Rle_trans; [exact Bt2|]; rewrite Hc2;
-                    apply Rle_trans with 1; [lra|];
-                    apply Rle_trans with (bpow radix2 0); [cbn; lra | apply bpow_le; lia]))
-    as [Ft2 Et2].
-  pose proof (b64ae_u_mul_le _ _ Bt2) as Ut2.
-  set (t2 := b64_mult kf sn_C2) in *.
-  clearbody r1. clearbody t2. clearbody t1.
-  (* r = fl(r1 - t2) *)
-  assert (Ht2 : Rabs (B2R t2) <= / 1000000000000000).
-  { replace (B2R t2) with ((B2R t2 - B2R kf * B2R sn_C2) + B2R kf * B2R sn_C2) by ring.
-    eapply Rle_trans; [apply Rabs_triang|]. rewrite Uv in Ut2, Et2. rewrite Hc2 in Bt2, Ut2. lra. }
-  assert (B3 : Rabs (B2R r1 - B2R t2) <= 8 / 5).
-  { rewrite Er1. eapply Rle_trans; [apply Rabs_triang|]. rewrite Rabs_Ropp. lra. }
-  destruct (b64ae_minus_err r1 t2 Fr1 Ft2
-              ltac:(eapply Rle_trans; [exact B3|];
-                    apply Rle_trans with 4; [lra | exact sp_bpow1000])) as [Fr Er].
-  pose proof (b64ae_u_mul_le _ _ B3) as U3.
+    pose proof (Rabs_triang ((B2R x - k * PI) + k * (PI - sn_c1)) (- B2R (b64_mult kf sn_C2))) as T1.
+    pose proof (Rabs_triang (B2R x - k * PI) (k * (PI - sn_c1))) as T2.
+    rewrite Rabs_Ropp in T1. unfold Rminus at 1. lra. }
+  destruct (sn_r_facts _ _ Fr1 Ft2 Hdiff) as [Fr Er].
   split; [exact Fr|].
-  assert (Hred : Rabs (B2R (b64_minus r1 t2) - (B2R x - k * PI)) <= sn_Ered).
-  { pose proof (sn_red_budget b64ae_e0 (conj He0 He1)) as Bud.
-    replace (B2R (b64_minus r1 t2) - (B2R x - k * PI))
-      with ((B2R (b64_minus r1 t2) - (B2R r1 - B2R t2))
-            + (B2R kf * B2R sn_C2 - B2R t2) + k * (PI - (sn_c1 + sn_c2)))
-      by (rewrite Er1, Ek, EC2, Ekc; ring).
-    pose proof (Rabs_triang ((B2R (b64_minus r1 t2) - (B2R r1 - B2R t2))
-                             + (B2R kf * B2R sn_C2 - B2R t2)) (k * (PI - (sn_c1 + sn_c2)))) as T1.
-    pose proof (Rabs_triang (B2R (b64_minus r1 t2) - (B2R r1 - B2R t2))
-                            (B2R kf * B2R sn_C2 - B2R t2)) as T2.
-    assert (G : Rabs (k * (PI - (sn_c1 + sn_c2))) <= 3 * / 4611686018427387904).
-    { rewrite Rabs_mult, (Rabs_pos_eq k) by lra.
-      apply Rmult_le_compat; try lra; apply Rabs_pos. }
-    rewrite <- Rabs_Ropp in Et2. rewrite Ropp_minus_distr in Et2.
-    rewrite Uv in U3, Ut2, Er, Et2.
-    clear - T1 T2 G Er Et2 U3 Ut2 Bud.
-    lra. }
-  split; [exact Hred|].
-  replace (B2R (b64_minus r1 t2))
-    with ((B2R (b64_minus r1 t2) - (B2R x - k * PI)) + (B2R x - k * PI)) by ring.
-  eapply Rle_trans; [apply Rabs_triang|].
-  unfold sn_Ered in Hred. lra.
+  exact (sn_red_alg (B2R x) k (B2R (b64_minus x (b64_mult kf sn_C1)))
+           (B2R (b64_mult kf sn_C2)) (B2R (b64_minus (b64_minus x (b64_mult kf sn_C1))
+                                                      (b64_mult kf sn_C2)))
+           b64ae_e0 (conj He0 He1) Hk Er1 Et2 Er Hr).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -396,7 +495,7 @@ Proof.
   assert (E : sg * c - sin (B2R x) = sg * ((c - sin r) + (sin r - sin (B2R x - k * PI)))).
   { rewrite Hsin. destruct Hsg as [-> | ->]; ring. }
   rewrite E, Rabs_mult.
-  assert (Hs : Rabs sg = 1) by (destruct Hsg as [-> | ->]; [apply Rabs_R1 | rewrite Rabs_Ropp; apply Rabs_R1]).
+  assert (Hs : Rabs sg = 1) by (destruct Hsg as [-> | ->]; [apply Rabs_R1 | rewrite Rabs_left by lra; ring]).
   rewrite Hs, Rmult_1_l.
   eapply Rle_trans; [apply Rabs_triang|]. lra.
 Qed.
@@ -425,7 +524,7 @@ Proof.
     destruct (b64_le x sn_T3) eqn:L3.
     + apply b64ae_le_true in L3; [|exact Fx|exact FT3]. rewrite ET3 in L3.
       destruct (sn_branch x sn_one sn_C1 1 (-1) Fx F1 E1 ltac:(lra)
-                  ltac:(rewrite EC1; unfold sn_c1; ring)
+                  ltac:(rewrite EC1; unfold sn_c1; lra)
                   ltac:(rewrite EC1; split; lra)
                   ltac:(apply Rabs_le; split; lra)
                   ltac:(right; reflexivity)
@@ -438,7 +537,7 @@ Proof.
       destruct (b64_le x sn_T5) eqn:L5.
       * apply b64ae_le_true in L5; [|exact Fx|exact FT5]. rewrite ET5 in L5.
         destruct (sn_branch x sn_two sn_two_C1 2 1 Fx F2 E2 ltac:(lra)
-                    ltac:(rewrite E2C; unfold sn_c1; ring)
+                    ltac:(rewrite E2C; unfold sn_c1; lra)
                     ltac:(rewrite E2C; split; lra)
                     ltac:(apply Rabs_le; split; lra)
                     ltac:(left; reflexivity)
@@ -446,7 +545,7 @@ Proof.
         split; [exact Fc|]. rewrite <- (Rmult_1_l (B2R (sn_core (sn_red x sn_two)))). exact Ec.
       * apply b64ae_le_false in L5; [|exact Fx|exact FT5]. rewrite ET5 in L5.
         destruct (sn_branch x sn_three sn_three_C1 3 (-1) Fx F3 E3 ltac:(lra)
-                    ltac:(rewrite E3C; unfold sn_c1; ring)
+                    ltac:(rewrite E3C; unfold sn_c1; lra)
                     ltac:(rewrite E3C; split; lra)
                     ltac:(apply Rabs_le; split; lra)
                     ltac:(right; reflexivity)
@@ -485,7 +584,9 @@ Proof.
 Qed.
 
 Print Assumptions sn_neg_ok.
+Print Assumptions sn_core_alg.
 Print Assumptions sn_core_err.
+Print Assumptions sn_red_alg.
 Print Assumptions sn_red_err.
 Print Assumptions sn_pos_err.
 Print Assumptions b64_sin_err.

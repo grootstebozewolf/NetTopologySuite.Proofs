@@ -3912,6 +3912,9 @@ theories-flocq/B64_AbsErr.v
 # and its degree-15 reduced-sine instance (<= 2^-52).  claimId s1-b64-horner.
 theories-flocq/B64_Horner.v
 theories-flocq/B64_SinPoly.v
+# S2: binary64 sine, |x| <= 10, error <= 2^-49 (Sterbenz mod-pi reduction +
+# degree-21 Horner).  claimId s2-b64-sin.
+theories-flocq/B64_Sin.v
 # Arc-spline tolerance gate in binary64 RNE (sound) and binary64 points for
 # every CasB64ArcOracle; no oracle inhabitant (QEX). claimId 0007-clothoid-arc-spline.
 theories-flocq/ClothoidArcSpline_b64.v

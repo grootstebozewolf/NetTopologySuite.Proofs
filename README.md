@@ -30,7 +30,7 @@ does rest on is emitted by its own `Print Assumptions` block, so the audit
 reads the footprint from the build log rather than from prose.
 
 The ceiling has named exceptions rather than silent ones: 2 files under
-`theories/` and 89 files under `theories-flocq/` inherit further axioms
+`theories/` and 90 files under `theories-flocq/` inherit further axioms
 from their dependencies — in the Flocq lane typically
 `Classical_Prop.classic`, by way of the binary64 format layer. They are
 listed in [`docs/audit-exceptions.txt`](docs/audit-exceptions.txt), and the
@@ -87,8 +87,8 @@ make host
 ```
 
 `make host` builds the 194 modules in `_CoqProject`, the foundational
-Stdlib-only layer. The full corpus is 777 registered modules —
-672 registered under `theories/` and 105 registered under
+Stdlib-only layer. The full corpus is 778 registered modules —
+672 registered under `theories/` and 106 registered under
 `theories-flocq/` — and is the pinned container.
 Toolchain: **Rocq 9.2.0 + Flocq 4.2.2**. Those counts, the two
 audit-exception counts above, and the `Defined.` count are checked against
