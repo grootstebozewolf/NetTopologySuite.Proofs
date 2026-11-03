@@ -1,7 +1,7 @@
-// S3-S8 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY / FresnelC /
-// FresnelS / ClothoidIcos / ClothoidIsin vs the Rocq-extracted oracle (modes
-// B64_SIN, B64_COS, B64_ARC_PT, B64_FRESNEL, B64_CLOTHOID), compared on
-// output BITS.  Corpus: seeded uniform inputs on [-10, 10],
+// S3-S9 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY / FresnelC /
+// FresnelS / ClothoidIcos / ClothoidIsin / SegGOutcome vs the Rocq-extracted
+// oracle (modes B64_SIN, B64_COS, B64_ARC_PT, B64_FRESNEL, B64_CLOTHOID,
+// B64_SEG_G), compared on output BITS and decisions.  Corpus: seeded uniform inputs on [-10, 10],
 // random bit patterns in the accepted range (all binades, subnormals),
 // thresholds / caps / multiples of pi +-4 ulp, signed zeros, and rejected
 // inputs (NaN, infinities, just outside the cap) for DECLINE parity.
@@ -233,6 +233,48 @@ foreach (var a in new[] { cm500, Math.BitDecrement(cm500), Math.BitIncrement(cm5
                 Console.WriteLine($"!! {mode} in={Bits(a):x16} {Bits(s):x16} {neg} csharp={mine} oracle={theirs}");
         }
     Console.WriteLine($"# {mode} inputs {cq.Count}, of which declined {declined}");
+    Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
+    totalBug += bug;
+}
+
+// B64_SEG_G: the margin boundary of g = t - sin t against 2^-48 lies near
+// |t| = 2.6e-5 .. 2.9e-5; sweep it ulp by ulp, plus the accepted corpus.
+var gx = new List<double>(corpus);
+for (double t0 = 2.0e-5; t0 < 3.5e-5; t0 += 1e-9) { gx.Add(t0); gx.Add(-t0); }
+foreach (var m in new[] { 2.7e-5, 2.8e-5, 2.9e-5 })
+{
+    double up = m, dn = m;
+    for (int k = 0; k < 2000; k++) { up = Math.BitIncrement(up); dn = Math.BitDecrement(dn); gx.Add(up); gx.Add(dn); gx.Add(-up); }
+}
+{
+    const string mode = "B64_SEG_G";
+    var psi = new ProcessStartInfo(oracle)
+    {
+        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
+    };
+    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
+    var outputTask = proc.StandardOutput.ReadToEndAsync();
+    proc.StandardInput.WriteLine(mode);
+    foreach (var t in gx) proc.StandardInput.WriteLine(Bits(t).ToString("x16"));
+    proc.StandardInput.Close();
+    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    proc.WaitForExit();
+    int ok = 0, bug = 0, pos = 0, neg = 0, dec = 0;
+    if (lines.Length != gx.Count) bug = 1;
+    else
+        for (int i = 0; i < gx.Count; i++)
+        {
+            string mine = B64Sin.SegGOutcome(gx[i]);
+            string theirs = lines[i].Trim();
+            if (mine == theirs)
+            {
+                ok++;
+                if (mine.StartsWith("POSITIVE")) pos++; else if (mine.StartsWith("NEGATIVE")) neg++; else dec++;
+            }
+            else if (++bug <= 10)
+                Console.WriteLine($"!! {mode} t={Bits(gx[i]):x16} ({gx[i]:R}) csharp={mine} oracle={theirs}");
+        }
+    Console.WriteLine($"# {mode} inputs {gx.Count}: POSITIVE {pos}, NEGATIVE {neg}, DECLINE {dec}");
     Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
     totalBug += bug;
 }

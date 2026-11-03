@@ -63,6 +63,7 @@ From NTS.Proofs.Flocq Require Import B64_CosPoly B64_Cos.  (* b64_cos: S4 proved
 From NTS.Proofs.Flocq Require Import B64_ArcPoint.  (* b64_arc_x/y, arc_accept_b: S5 arc point *)
 From NTS.Proofs.Flocq Require Import B64_FresnelPoly B64_Fresnel.  (* S7 canonical Fresnel *)
 From NTS.Proofs.Flocq Require Import B64_ClothoidMap.  (* S8 clothoid -> canonical Fresnel *)
+From NTS.Proofs.Flocq Require Import B64_MarginFilter.  (* S9 margin-filtered sign *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -290,6 +291,7 @@ Extract Constant B64_ClothoidMap.cm_r2 => "(0x1.6a09e667f3bcdp+0)".
 Extract Constant B64_ClothoidMap.cm_Alo => "(0x1.0000000000000p-500)".
 Extract Constant B64_ClothoidMap.cm_cap => "(0x1.0000000000000p+500)".
 Extract Constant B64_ClothoidMap.cm_mcap => "(-0x1.0000000000000p+500)".
+Extract Constant B64_MarginFilter.mf_seg_thr => "(0x1.0000000000000p-48)".
 (* END b64_sin constants *)
 
 Extraction Language OCaml.
@@ -337,4 +339,6 @@ Extraction "oracle/extracted.ml"
   fresnel_accept_b
   cm_Icos
   cm_Isin
-  cm_accept.
+  cm_accept
+  mf_seg_g
+  mf_seg_g_outcome.

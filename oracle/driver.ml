@@ -1504,6 +1504,27 @@ let run_b64_clothoid () =
     done
   with End_of_file -> ()
 
+(* ----- B64_SEG_G (claimId s9-margin-filter).  Extracted
+   B64_MarginFilter.mf_seg_g / mf_seg_g_outcome: the ARC_AREA_CENTROID
+   denominator g = theta - sin theta as a margin-filtered sign.  POSITIVE
+   certifies g >= v - 2^-48 > 0 (b64_seg_g_positive_lb); this consumer has
+   no exact path, so UNDECIDED and out-of-intake both DECLINE.
+   Input: one 16-hex-digit bit pattern per line; output "POSITIVE v",
+   "NEGATIVE v" (v = fl(theta - b64_sin theta) as bits) or "DECLINE". *)
+let run_b64_seg_g () =
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then begin
+        let t = Int64.float_of_bits (Int64.of_string ("0x" ^ line)) in
+        match mf_seg_g_outcome t with
+        | MO_Positive -> Printf.printf "POSITIVE %016Lx\n" (Int64.bits_of_float (mf_seg_g t))
+        | MO_Negative -> Printf.printf "NEGATIVE %016Lx\n" (Int64.bits_of_float (mf_seg_g t))
+        | MO_Exact | MO_Decline -> print_endline "DECLINE"
+      end
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -5061,6 +5082,7 @@ let () =
        | "B64_ARC_PT"               -> run_b64_arc_pt ()
        | "B64_FRESNEL"              -> run_b64_fresnel ()
        | "B64_CLOTHOID"             -> run_b64_clothoid ()
+       | "B64_SEG_G"                -> run_b64_seg_g ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()

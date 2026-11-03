@@ -2,8 +2,9 @@
 // theories-flocq/B64_Cos.v : b64_cos and theories-flocq/B64_ArcPoint.v :
 // b64_arc_x / b64_arc_y / arc_accept_b and theories-flocq/B64_Fresnel.v :
 // b64_fresnel_C / b64_fresnel_S / fresnel_accept_b and
-// theories-flocq/B64_ClothoidMap.v : cm_Icos / cm_Isin / cm_accept, operation
-// for operation.  Every line
+// theories-flocq/B64_ClothoidMap.v : cm_Icos / cm_Isin / cm_accept and
+// theories-flocq/B64_MarginFilter.v : mf_decide / mf_seg_g / mf_seg_g_outcome,
+// operation for operation.  Every line
 // below is one binary64 round-to-nearest-even operation of the Rocq
 // definition, in the same order; no FMA, no reordering (.NET does not
 // contract a*b+c on its own).  Proved contracts: B64_Sin.b64_sin_err_b and
@@ -131,5 +132,26 @@ public static class B64Sin
     {
         double v = CmW(a) * FresnelS(CmX(a, s));
         return neg ? Neg(v) : v;
+    }
+
+    // B64_MarginFilter.mf_lt x y = b64_le x y && !(b64_le y x)  (false on NaN)
+    private static bool MfLt(double x, double y) => x <= y && !(y <= x);
+
+    // mf_decide v thr: +1 POSITIVE, -1 NEGATIVE, 0 UNDECIDED
+    public static int MarginDecide(double v, double thr) =>
+        MfLt(thr, v) ? 1 : MfLt(v, Neg(thr)) ? -1 : 0;
+
+    // mf_seg_g t = fl(t - b64_sin t)
+    public static double SegG(double t) => t - Sin(t);
+
+    // mf_seg_g_outcome t = mf_policy MF_DeclineFallback (sin_accept_b t) (mf_decide (mf_seg_g t) 2^-48):
+    // "POSITIVE v" / "NEGATIVE v" / "DECLINE"
+    public static string SegGOutcome(double t)
+    {
+        if (!Accept(t)) return "DECLINE";
+        double v = SegG(t);
+        int d = MarginDecide(v, mf_seg_thr);
+        string bits = unchecked((ulong)BitConverter.DoubleToInt64Bits(v)).ToString("x16");
+        return d > 0 ? "POSITIVE " + bits : d < 0 ? "NEGATIVE " + bits : "DECLINE";
     }
 }

@@ -40,6 +40,7 @@ theories-flocq/B64_FresnelPolyC.v
 theories-flocq/B64_FresnelPolyS.v
 theories-flocq/B64_Fresnel.v
 theories-flocq/B64_ClothoidMap.v
+theories-flocq/B64_MarginFilter.v
 theories-flocq/Intersect_b64.v
 theories-flocq/B64_bridge.v
 theories-flocq/Intersect_b64_exact_core.v
