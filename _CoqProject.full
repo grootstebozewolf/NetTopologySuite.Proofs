@@ -3906,6 +3906,12 @@ theories-flocq/Orient_b64_exact.v
 # comparison; composes with theories/ClothoidDegenerate.v's unique-root
 # theorem.  Route (A) b64 slice of docs/clothoid-open-questions-triage.md.
 theories-flocq/ClothoidDegenerate_b64.v
+# Shared binary64 RNE absolute-error lemmas (u|x| + e0, normal and subnormal).
+theories-flocq/B64_AbsErr.v
+# S1: binary64 Horner kernel (evaluation error vs the same coefficients exact)
+# and its degree-15 reduced-sine instance (<= 2^-52).  claimId s1-b64-horner.
+theories-flocq/B64_Horner.v
+theories-flocq/B64_SinPoly.v
 # Arc-spline tolerance gate in binary64 RNE (sound) and binary64 points for
 # every CasB64ArcOracle; no oracle inhabitant (QEX). claimId 0007-clothoid-arc-spline.
 theories-flocq/ClothoidArcSpline_b64.v

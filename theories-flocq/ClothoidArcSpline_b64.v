@@ -42,23 +42,12 @@
    ========================================================================== *)
 From Stdlib Require Import Reals Lra Lia ZArith List.
 From Flocq Require Import Core Relative IEEE754.Binary IEEE754.BinarySingleNaN.
-From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib.
+From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib B64_AbsErr.
 From NTS.Proofs Require Import Distance SheetHenClothoidCore ClothoidTangent ClothoidArcSpline.
 Local Open Scope R_scope.
 
 Local Notation B2R := (Binary.B2R prec emax).
 Local Notation fin := (Binary.is_finite prec emax).
-
-(* Unit roundoff of binary64 round-to-nearest. *)
-Definition cas_u : R := bpow radix2 (-53).
-
-Lemma cas_u_small : 0 < cas_u <= / 1000.
-Proof.
-  unfold cas_u. split; [apply bpow_gt_0|].
-  apply Rle_trans with (bpow radix2 (-10)).
-  - apply bpow_le. lia.
-  - cbn. lra.
-Qed.
 
 (* -------------------------------------------------------------------------- *)
 (* Constants.                                                                 *)
@@ -104,8 +93,8 @@ Lemma cas_b64_mult_pos : forall x y ex ey,
   bpow radix2 (- ex) <= B2R x <= bpow radix2 ex ->
   bpow radix2 (- ey) <= B2R y <= bpow radix2 ey ->
   fin (b64_mult x y) = true /\
-  B2R x * B2R y * (1 - cas_u) <= B2R (b64_mult x y)
-    <= B2R x * B2R y * (1 + cas_u) /\
+  B2R x * B2R y * (1 - b64ae_u) <= B2R (b64_mult x y)
+    <= B2R x * B2R y * (1 + b64ae_u) /\
   bpow radix2 (- (ex + ey + 1)) <= B2R (b64_mult x y)
     <= bpow radix2 (ex + ey + 1).
 Proof.
@@ -127,20 +116,20 @@ Proof.
     eapply Rle_lt_trans; [exact Hround|]. apply bpow_lt. unfold emax. lia. }
   destruct (b64_mult_correct x y Hsafe) as [HB HF].
   fold z in HB.
-  assert (Hrel : Rabs (b64_round z - z) <= cas_u * Rabs z).
+  assert (Hrel : Rabs (b64_round z - z) <= b64ae_u * Rabs z).
   { assert (Hn : bpow radix2 (3 - emax - prec + prec - 1) <= Rabs z).
     { rewrite Rabs_pos_eq by lra. eapply Rle_trans; [|exact Hz0].
       apply bpow_le. unfold emax, prec. lia. }
     pose proof (relative_error_N_FLT radix2 (3 - emax - prec) prec
                   prec_gt_0_b64 (fun t => negb (Z.even t)) z Hn) as H.
-    replace cas_u with (/ 2 * bpow radix2 (- prec + 1)).
+    replace b64ae_u with (/ 2 * bpow radix2 (- prec + 1)).
     - exact H.
-    - unfold cas_u, prec.
+    - unfold b64ae_u, prec.
       replace (/ 2) with (bpow radix2 (-1)) by reflexivity.
       rewrite <- bpow_plus. f_equal. }
   rewrite (Rabs_pos_eq z) in Hrel by lra.
   apply Rabs_le_inv in Hrel.
-  pose proof cas_u_small as Hu.
+  pose proof b64ae_u_small as Hu.
   split; [exact HF|]. rewrite HB. split; [lra|].
   split.
   - replace (- (ex + ey + 1))%Z with (- (ex + ey) + -1)%Z by lia.
@@ -177,22 +166,22 @@ Proof.
 Qed.
 
 Lemma cas_round_margin :
-  (1 + cas_u) * (1 + cas_u) * (1 + cas_u) * (1 + cas_u) * (1 + cas_u)
-  <= (1 + bpow radix2 (-49)) * ((1 - cas_u) * (1 - cas_u) * (1 - cas_u)).
+  (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u)
+  <= (1 + bpow radix2 (-49)) * ((1 - b64ae_u) * (1 - b64ae_u) * (1 - b64ae_u)).
 Proof.
-  assert (E : bpow radix2 (-49) = 16 * cas_u).
-  { unfold cas_u. replace (-49)%Z with (4 + -53)%Z by lia.
+  assert (E : bpow radix2 (-49) = 16 * b64ae_u).
+  { unfold b64ae_u. replace (-49)%Z with (4 + -53)%Z by lia.
     rewrite bpow_plus. reflexivity. }
-  rewrite E. pose proof cas_u_small as [H0 H1].
-  assert (Hlo : (1 + 13 * cas_u - 51 * (cas_u * cas_u))
-                <= (1 + 16 * cas_u) * ((1 - cas_u) * (1 - cas_u) * (1 - cas_u)))
+  rewrite E. pose proof b64ae_u_small as [H0 H1].
+  assert (Hlo : (1 + 13 * b64ae_u - 51 * (b64ae_u * b64ae_u))
+                <= (1 + 16 * b64ae_u) * ((1 - b64ae_u) * (1 - b64ae_u) * (1 - b64ae_u)))
     by nra.
-  assert (Hhi : (1 + cas_u) * (1 + cas_u) * (1 + cas_u) * (1 + cas_u) * (1 + cas_u)
-                <= 1 + 5 * cas_u + 11 * (cas_u * cas_u)).
-  { assert (Hc : cas_u * cas_u <= cas_u / 1000) by nra.
-    assert (Hc2 : cas_u * cas_u * cas_u <= cas_u * cas_u / 1000) by nra.
-    assert (Hc3 : cas_u * cas_u * cas_u * cas_u <= cas_u * cas_u / 1000) by nra.
-    assert (Hc4 : cas_u * cas_u * cas_u * cas_u * cas_u <= cas_u * cas_u / 1000)
+  assert (Hhi : (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u) * (1 + b64ae_u)
+                <= 1 + 5 * b64ae_u + 11 * (b64ae_u * b64ae_u)).
+  { assert (Hc : b64ae_u * b64ae_u <= b64ae_u / 1000) by nra.
+    assert (Hc2 : b64ae_u * b64ae_u * b64ae_u <= b64ae_u * b64ae_u / 1000) by nra.
+    assert (Hc3 : b64ae_u * b64ae_u * b64ae_u * b64ae_u <= b64ae_u * b64ae_u / 1000) by nra.
+    assert (Hc4 : b64ae_u * b64ae_u * b64ae_u * b64ae_u * b64ae_u <= b64ae_u * b64ae_u / 1000)
       by nra.
     nra. }
   nra.
@@ -217,7 +206,7 @@ Proof.
       pose proof (bpow_ge_0 radix2 (-49)). lra.
     - assert (bpow radix2 (-49) <= 1) by (apply (bpow_le radix2 (-49) 0); lia).
       replace (bpow radix2 1) with 2 by reflexivity. lra. }
-  pose proof cas_u_small as Hu.
+  pose proof b64ae_u_small as Hu.
   (* left: ((L*L)*L)*M *)
   destruct (cas_b64_mult_pos L L 100 100 FL FL ltac:(lia) ltac:(lia) ltac:(lia) HL HL)
     as [F1 [R1 B1]].
@@ -241,7 +230,7 @@ Proof.
   set (l := B2R L). set (a := B2R A). set (m := B2R n). set (e := B2R eps).
   fold l in R1, R2. fold a in S1, S2. fold m in S3, S4. fold e in S5.
   rewrite E8 in S1. rewrite EM in R3.
-  set (v := cas_u) in *.
+  set (v := b64ae_u) in *.
   assert (Hl : 0 < l) by (eapply Rlt_le_trans; [apply bpow_gt_0 | exact (proj1 HL)]).
   assert (Ha : 0 < a) by (eapply Rlt_le_trans; [apply bpow_gt_0 | exact (proj1 HA)]).
   assert (Hm : 0 < m) by (eapply Rlt_le_trans; [apply bpow_gt_0 | exact (proj1 Hn)]).
@@ -395,90 +384,6 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* 2a. Absolute error of one RNE op (normal or subnormal, no overflow).       *)
-(* -------------------------------------------------------------------------- *)
-
-(* Half the smallest subnormal: the absolute floor of an RNE rounding. *)
-Definition cas_e0 : R := bpow radix2 (-1075).
-
-Lemma cas_e0_small : 0 < cas_e0 <= / 1000.
-Proof.
-  unfold cas_e0. split; [apply bpow_gt_0|].
-  apply Rle_trans with (bpow radix2 (-10)).
-  - apply bpow_le. lia.
-  - cbn. lra.
-Qed.
-
-Lemma cas_round_err : forall z,
-  Rabs (b64_round z - z) <= cas_u * Rabs z + cas_e0.
-Proof.
-  intro z.
-  destruct (error_N_FLT radix2 (3 - emax - prec) prec prec_gt_0_b64
-              (fun t => negb (Z.even t)) z) as [d [e [Hd [He [_ Hr]]]]].
-  assert (Hr' : b64_round z = z * (1 + d) + e) by exact Hr.
-  rewrite Hr'.
-  replace (z * (1 + d) + e - z) with (z * d + e) by ring.
-  assert (Eu : / 2 * bpow radix2 (- prec + 1) = cas_u).
-  { unfold cas_u, prec. replace (/ 2) with (bpow radix2 (-1)) by reflexivity.
-    rewrite <- bpow_plus. f_equal. }
-  assert (Ee : / 2 * bpow radix2 (3 - emax - prec) = cas_e0).
-  { unfold cas_e0, emax, prec. replace (/ 2) with (bpow radix2 (-1)) by reflexivity.
-    rewrite <- bpow_plus. f_equal. }
-  rewrite Eu in Hd. rewrite Ee in He.
-  eapply Rle_trans; [apply Rabs_triang|].
-  rewrite Rabs_mult.
-  pose proof (Rabs_pos z).
-  apply Rplus_le_compat; [|exact He].
-  rewrite Rmult_comm. apply Rmult_le_compat_r; [exact H | exact Hd].
-Qed.
-
-Lemma cas_b64_safe_of : forall (op : R -> R -> R) x y,
-  fin x = true -> fin y = true ->
-  Rabs (op (B2R x) (B2R y)) <= bpow radix2 1000 -> b64_safe op x y.
-Proof.
-  intros op x y Fx Fy Hb. split; [exact Fx|]. split; [exact Fy|].
-  eapply Rle_lt_trans.
-  - apply (b64_round_abs_le_bpow _ 1000); [unfold emax; lia | exact Hb].
-  - apply bpow_lt. unfold emax. lia.
-Qed.
-
-Lemma cas_b64_mult_err : forall x y,
-  fin x = true -> fin y = true ->
-  Rabs (B2R x * B2R y) <= bpow radix2 1000 ->
-  fin (b64_mult x y) = true /\
-  Rabs (B2R (b64_mult x y) - B2R x * B2R y)
-    <= cas_u * Rabs (B2R x * B2R y) + cas_e0.
-Proof.
-  intros x y Fx Fy Hb.
-  destruct (b64_mult_correct x y (cas_b64_safe_of Rmult x y Fx Fy Hb)) as [E F].
-  split; [exact F|]. rewrite E. apply cas_round_err.
-Qed.
-
-Lemma cas_b64_plus_err : forall x y,
-  fin x = true -> fin y = true ->
-  Rabs (B2R x + B2R y) <= bpow radix2 1000 ->
-  fin (b64_plus x y) = true /\
-  Rabs (B2R (b64_plus x y) - (B2R x + B2R y))
-    <= cas_u * Rabs (B2R x + B2R y) + cas_e0.
-Proof.
-  intros x y Fx Fy Hb.
-  destruct (b64_plus_correct x y (cas_b64_safe_of Rplus x y Fx Fy Hb)) as [E F].
-  split; [exact F|]. rewrite E. apply cas_round_err.
-Qed.
-
-Lemma cas_b64_minus_err : forall x y,
-  fin x = true -> fin y = true ->
-  Rabs (B2R x - B2R y) <= bpow radix2 1000 ->
-  fin (b64_minus x y) = true /\
-  Rabs (B2R (b64_minus x y) - (B2R x - B2R y))
-    <= cas_u * Rabs (B2R x - B2R y) + cas_e0.
-Proof.
-  intros x y Fx Fy Hb.
-  destruct (b64_minus_correct x y (cas_b64_safe_of Rminus x y Fx Fy Hb)) as [E F].
-  split; [exact F|]. rewrite E. apply cas_round_err.
-Qed.
-
-(* -------------------------------------------------------------------------- *)
 (* 2b. One frame step in binary64.                                            *)
 (* -------------------------------------------------------------------------- *)
 
@@ -490,20 +395,7 @@ Definition cas_b64_frame (S T : BPoint) (X Y : binary64) : BPoint :=
        (b64_plus (b64_plus (by_ S) (b64_mult (by_ T) X)) (b64_mult (bx T) Y)).
 
 (* Per-step rounding at coordinate scale M. *)
-Definition cas_rho (M : R) : R := 8 * cas_u * M + 4 * cas_e0.
-
-Lemma cas_abs_mult_le : forall p q P Q,
-  Rabs p <= P -> Rabs q <= Q -> Rabs (p * q) <= P * Q.
-Proof.
-  intros. rewrite Rabs_mult.
-  apply Rmult_le_compat; try apply Rabs_pos; assumption.
-Qed.
-
-Lemma cas_u_mul_le : forall z M, Rabs z <= M -> cas_u * Rabs z <= cas_u * M.
-Proof.
-  intros z M H. apply Rmult_le_compat_l; [|exact H].
-  apply Rlt_le, cas_u_small.
-Qed.
+Definition cas_rho (M : R) : R := 8 * b64ae_u * M + 4 * b64ae_e0.
 
 (* One axis: fl(fl(s + fl(t1 X)) +- fl(t2 Y)) against s + t1 X +- t2 Y. *)
 Lemma cas_b64_axis : forall (plus : bool) s t1 X t2 Y C H,
@@ -523,55 +415,55 @@ Proof.
   set (M := C + 4 * H + 1) in *.
   assert (HMd : M = C + 4 * H + 1) by reflexivity.
   pose proof (bpow_gt_0 radix2 998) as Hb0.
-  pose proof cas_u_small as [Hu0 Hu1]. pose proof cas_e0_small as [He0 He1].
+  pose proof b64ae_u_small as [Hu0 Hu1]. pose proof b64ae_e0_small as [He0 He1].
   assert (Hb : bpow radix2 998 * 4 <= bpow radix2 1000).
   { replace 4 with (bpow radix2 2) by reflexivity. rewrite <- bpow_plus.
     apply bpow_le. lia. }
   assert (HM1 : 1 <= M) by (unfold M; lra).
   (* p = fl(t1 X) *)
-  assert (B1 : Rabs (B2R t1 * B2R X) <= 2 * H) by (apply cas_abs_mult_le; assumption).
-  destruct (cas_b64_mult_err t1 X Ft1 FX ltac:(lra)) as [Fp Ep].
-  pose proof (cas_u_mul_le _ _ B1) as U1.
+  assert (B1 : Rabs (B2R t1 * B2R X) <= 2 * H) by (apply b64ae_abs_mult_le; assumption).
+  destruct (b64ae_mult_err t1 X Ft1 FX ltac:(lra)) as [Fp Ep].
+  pose proof (b64ae_u_mul_le _ _ B1) as U1.
   set (p := b64_mult t1 X) in *.
   apply Rabs_le_inv in Ep. apply Rabs_le_inv in B1.
   assert (Hp : Rabs (B2R p) <= 3 * H + 1).
-  { apply Rabs_le. assert (cas_u * (2 * H) <= H) by nra. lra. }
+  { apply Rabs_le. assert (b64ae_u * (2 * H) <= H) by nra. lra. }
   (* r = fl(s + p) *)
   assert (B3 : Rabs (B2R s + B2R p) <= M).
   { eapply Rle_trans; [apply Rabs_triang|]. unfold M. lra. }
-  destruct (cas_b64_plus_err s p Fs Fp ltac:(lra)) as [Fr Er].
-  pose proof (cas_u_mul_le _ _ B3) as U3.
+  destruct (b64ae_plus_err s p Fs Fp ltac:(lra)) as [Fr Er].
+  pose proof (b64ae_u_mul_le _ _ B3) as U3.
   fold r in Fr, Er.
   apply Rabs_le_inv in Er.
   assert (Hr : Rabs (B2R r) <= 2 * M).
-  { apply Rabs_le. apply Rabs_le_inv in B3. assert (cas_u * M <= M / 2) by nra.
+  { apply Rabs_le. apply Rabs_le_inv in B3. assert (b64ae_u * M <= M / 2) by nra.
     lra. }
   (* q = fl(t2 Y) *)
-  assert (B2 : Rabs (B2R t2 * B2R Y) <= 2 * H) by (apply cas_abs_mult_le; assumption).
-  destruct (cas_b64_mult_err t2 Y Ft2 FY ltac:(lra)) as [Fq Eq].
-  pose proof (cas_u_mul_le _ _ B2) as U2.
+  assert (B2 : Rabs (B2R t2 * B2R Y) <= 2 * H) by (apply b64ae_abs_mult_le; assumption).
+  destruct (b64ae_mult_err t2 Y Ft2 FY ltac:(lra)) as [Fq Eq].
+  pose proof (b64ae_u_mul_le _ _ B2) as U2.
   fold q in Fq, Eq.
   apply Rabs_le_inv in Eq. apply Rabs_le_inv in B2.
   assert (Hq : Rabs (B2R q) <= M).
-  { apply Rabs_le. assert (cas_u * (2 * H) <= H) by nra. unfold M. lra. }
+  { apply Rabs_le. assert (b64ae_u * (2 * H) <= H) by nra. unfold M. lra. }
   apply Rabs_le_inv in Hr. apply Rabs_le_inv in Hq.
   unfold o, z, cas_rho. fold M.
   destruct plus.
   - assert (B4 : Rabs (B2R r + B2R q) <= 3 * M)
       by (apply Rabs_le; lra).
-    destruct (cas_b64_plus_err r q Fr Fq ltac:(lra)) as [Fo Eo].
-    pose proof (cas_u_mul_le _ _ B4) as U4.
+    destruct (b64ae_plus_err r q Fr Fq ltac:(lra)) as [Fo Eo].
+    pose proof (b64ae_u_mul_le _ _ B4) as U4.
     split; [exact Fo|]. apply Rabs_le_inv in Eo. apply Rabs_le.
-    assert (cas_u * (2 * H) <= cas_u * M) by (apply Rmult_le_compat_l; unfold M; lra).
-    assert (0 <= cas_u * M) by nra.
+    assert (b64ae_u * (2 * H) <= b64ae_u * M) by (apply Rmult_le_compat_l; unfold M; lra).
+    assert (0 <= b64ae_u * M) by nra.
     lra.
   - assert (B4 : Rabs (B2R r - B2R q) <= 3 * M)
       by (apply Rabs_le; lra).
-    destruct (cas_b64_minus_err r q Fr Fq ltac:(lra)) as [Fo Eo].
-    pose proof (cas_u_mul_le _ _ B4) as U4.
+    destruct (b64ae_minus_err r q Fr Fq ltac:(lra)) as [Fo Eo].
+    pose proof (b64ae_u_mul_le _ _ B4) as U4.
     split; [exact Fo|]. apply Rabs_le_inv in Eo. apply Rabs_le.
-    assert (cas_u * (2 * H) <= cas_u * M) by (apply Rmult_le_compat_l; unfold M; lra).
-    assert (0 <= cas_u * M) by nra.
+    assert (b64ae_u * (2 * H) <= b64ae_u * M) by (apply Rmult_le_compat_l; unfold M; lra).
+    assert (0 <= b64ae_u * M) by nra.
     lra.
 Qed.
 
@@ -616,7 +508,7 @@ Proof.
   cbn zeta iota in Fo, Eo, Fo', Eo'.
   split; [exact Fo|]. split; [exact Fo'|].
   apply cas_dist_le_coords.
-  - unfold cas_rho. pose proof cas_u_small. pose proof cas_e0_small. nra.
+  - unfold cas_rho. pose proof b64ae_u_small. pose proof b64ae_e0_small. nra.
   - exact Eo.
   - exact Eo'.
 Qed.
@@ -707,7 +599,7 @@ Qed.
 
 Lemma cas_rho_nonneg : forall M, 0 <= M -> 0 <= cas_rho M.
 Proof.
-  intros M HM. unfold cas_rho. pose proof cas_u_small. pose proof cas_e0_small. nra.
+  intros M HM. unfold cas_rho. pose proof b64ae_u_small. pose proof b64ae_e0_small. nra.
 Qed.
 
 Lemma cas_step_err_nonneg : 0 <= cas_step_err orc C0.
@@ -980,7 +872,6 @@ Print Assumptions cas_b64_gate_sound.
 Print Assumptions cas_b64_gate_real.
 Print Assumptions cas_b64_arc_spline_contract.
 Print Assumptions cas_b64_two_arc_contract.
-Print Assumptions cas_round_err.
 Print Assumptions cas_b64_axis.
 Print Assumptions cas_b64_frame_err.
 Print Assumptions cas_b64_start_err.
