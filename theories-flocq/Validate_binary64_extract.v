@@ -59,6 +59,7 @@ From NTS.Proofs.Flocq Require Import SnapRoundingScale_b64.  (* b64_snap_coord_s
 From NTS.Proofs.Flocq Require Import Orient_b64_exact_full.  (* b64_orient2d_exact (full-plane exact sign) *)
 From NTS.Proofs       Require Import ArcSectorExact.  (* asxq_sector: exact arc sector, replaces atan2 *)
 From NTS.Proofs.Flocq Require Import B64_SinPoly B64_Sin.  (* b64_sin, sin_accept_b: S2 proved sine *)
+From NTS.Proofs.Flocq Require Import B64_CosPoly B64_Cos.  (* b64_cos: S4 proved cosine *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -217,6 +218,18 @@ Extract Constant B64_SinPoly.sp_c7 => "(-0x1.ae7f3e733b81fp-41)".
 Extract Constant B64_SinPoly.sp_c8 => "(0x1.952c77030ad4ap-49)".
 Extract Constant B64_SinPoly.sp_c9 => "(-0x1.2f49b46814157p-57)".
 Extract Constant B64_SinPoly.sp_c10 => "(0x1.71b8ef6dcf572p-66)".
+Extract Constant B64_CosPoly.cq_c0 => "(0x1.0000000000000p+0)".
+Extract Constant B64_CosPoly.cq_c1 => "(-0x1.0000000000000p-1)".
+Extract Constant B64_CosPoly.cq_c2 => "(0x1.5555555555555p-5)".
+Extract Constant B64_CosPoly.cq_c3 => "(-0x1.6c16c16c16c17p-10)".
+Extract Constant B64_CosPoly.cq_c4 => "(0x1.a01a01a01a01ap-16)".
+Extract Constant B64_CosPoly.cq_c5 => "(-0x1.27e4fb7789f5cp-22)".
+Extract Constant B64_CosPoly.cq_c6 => "(0x1.1eed8eff8d898p-29)".
+Extract Constant B64_CosPoly.cq_c7 => "(-0x1.93974a8c07c9dp-37)".
+Extract Constant B64_CosPoly.cq_c8 => "(0x1.ae7f3e733b81fp-45)".
+Extract Constant B64_CosPoly.cq_c9 => "(-0x1.6827863b97d97p-53)".
+Extract Constant B64_CosPoly.cq_c10 => "(0x1.e542ba4020225p-62)".
+Extract Constant B64_CosPoly.cq_c11 => "(-0x1.0ce396db7f853p-70)".
 Extract Constant B64_Sin.sn_C1 => "(0x1.921fb54442d18p+1)".
 Extract Constant B64_Sin.sn_C2 => "(0x1.1a62633145c07p-53)".
 Extract Constant B64_Sin.sn_one => "(0x1.0000000000000p+0)".
@@ -264,4 +277,5 @@ Extraction "oracle/extracted.ml"
   q_hsymm_sq
   asxq_sector
   b64_sin
+  b64_cos
   sin_accept_b.

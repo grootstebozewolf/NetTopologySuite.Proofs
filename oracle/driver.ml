@@ -1417,6 +1417,22 @@ let run_b64_sin () =
     done
   with End_of_file -> ()
 
+(* ----- B64_COS (claimId s4-b64-cos).  Same protocol as B64_SIN, for the
+   extracted B64_Cos.b64_cos (|b64_cos x - cos x| <= 2^-49 on |x| <= 10,
+   B64_Cos.b64_cos_err_b; the intake is the sine's sin_accept_b). *)
+let run_b64_cos () =
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then begin
+        let x = Int64.float_of_bits (Int64.of_string ("0x" ^ line)) in
+        if sin_accept_b x then
+          Printf.printf "%016Lx\n" (Int64.bits_of_float (b64_cos x))
+        else print_endline "DECLINE"
+      end
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -4970,6 +4986,7 @@ let () =
        | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
        | "ARC_DISTANCE"             -> run_arc_distance ()
        | "B64_SIN"                  -> run_b64_sin ()
+       | "B64_COS"                  -> run_b64_cos ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()

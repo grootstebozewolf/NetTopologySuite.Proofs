@@ -1,5 +1,5 @@
-// S3 conformance harness: C# B64Sin vs the Rocq-extracted oracle (B64_SIN),
-// compared on output BITS.  Corpus: seeded uniform inputs on [-10, 10],
+// S3/S4 conformance harness: C# B64Sin.Sin / B64Sin.Cos vs the Rocq-extracted
+// oracle (modes B64_SIN, B64_COS), compared on output BITS.  Corpus: seeded uniform inputs on [-10, 10],
 // random bit patterns in the accepted range (all binades, subnormals),
 // thresholds / caps / multiples of pi +-4 ulp, signed zeros, and rejected
 // inputs (NaN, infinities, just outside the cap) for DECLINE parity.
@@ -45,37 +45,42 @@ foreach (var m in marks)
 corpus.AddRange(new[] { double.NaN, -double.NaN, double.PositiveInfinity,
     double.NegativeInfinity, 1e300, -1e300, FromBits(0x7FF0000000000001UL) });
 
-var psi = new ProcessStartInfo(oracle)
+int totalBug = 0;
+foreach (var (mode, fn) in new (string, Func<double, double>)[] { ("B64_SIN", B64Sin.Sin), ("B64_COS", B64Sin.Cos) })
 {
-    RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
-};
-using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
-var outputTask = proc.StandardOutput.ReadToEndAsync();
-proc.StandardInput.WriteLine("B64_SIN");
-foreach (var x in corpus) proc.StandardInput.WriteLine(Bits(x).ToString("x16"));
-proc.StandardInput.Close();
-var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-proc.WaitForExit();
-if (lines.Length != corpus.Count)
-{
-    Console.WriteLine($"SUMMARY ok=0 warn=0 bug=1 (oracle returned {lines.Length} lines for {corpus.Count} inputs)");
-    return 1;
-}
-
-int ok = 0, bug = 0, declined = 0;
-for (int i = 0; i < corpus.Count; i++)
-{
-    double x = corpus[i];
-    string mine = B64Sin.Accept(x) ? Bits(B64Sin.Sin(x)).ToString("x16") : "DECLINE";
-    string theirs = lines[i].Trim();
-    if (mine == theirs) { ok++; if (mine == "DECLINE") declined++; }
-    else
+    var psi = new ProcessStartInfo(oracle)
     {
-        bug++;
-        if (bug <= 10)
-            Console.WriteLine($"!! x={Bits(x):x16} ({x:R}) csharp={mine} oracle={theirs}");
+        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
+    };
+    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
+    var outputTask = proc.StandardOutput.ReadToEndAsync();
+    proc.StandardInput.WriteLine(mode);
+    foreach (var x in corpus) proc.StandardInput.WriteLine(Bits(x).ToString("x16"));
+    proc.StandardInput.Close();
+    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    proc.WaitForExit();
+    if (lines.Length != corpus.Count)
+    {
+        Console.WriteLine($"SUMMARY {mode} ok=0 warn=0 bug=1 (oracle returned {lines.Length} lines for {corpus.Count} inputs)");
+        totalBug++;
+        continue;
     }
+    int ok = 0, bug = 0, declined = 0;
+    for (int i = 0; i < corpus.Count; i++)
+    {
+        double x = corpus[i];
+        string mine = B64Sin.Accept(x) ? Bits(fn(x)).ToString("x16") : "DECLINE";
+        string theirs = lines[i].Trim();
+        if (mine == theirs) { ok++; if (mine == "DECLINE") declined++; }
+        else
+        {
+            bug++;
+            if (bug <= 10)
+                Console.WriteLine($"!! {mode} x={Bits(x):x16} ({x:R}) csharp={mine} oracle={theirs}");
+        }
+    }
+    Console.WriteLine($"# {mode} inputs {corpus.Count}, of which declined {declined}");
+    Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
+    totalBug += bug;
 }
-Console.WriteLine($"# inputs {corpus.Count}, of which declined {declined}");
-Console.WriteLine($"SUMMARY ok={ok} warn=0 bug={bug}");
-return bug == 0 ? 0 : 1;
+return totalBug == 0 ? 0 : 1;

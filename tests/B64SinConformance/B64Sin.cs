@@ -1,8 +1,10 @@
-// Port of theories-flocq/B64_Sin.v : b64_sin / sin_accept_b, operation for
-// operation.  Every line below is one binary64 round-to-nearest-even
-// operation of the Rocq definition, in the same order; no FMA, no reordering
-// (.NET does not contract a*b+c on its own).  The proved contract is
-// B64_Sin.b64_sin_err_b: Accept(x) => |Sin(x) - sin x| <= 2^-49.
+// Port of theories-flocq/B64_Sin.v : b64_sin / sin_accept_b and
+// theories-flocq/B64_Cos.v : b64_cos, operation for operation.  Every line
+// below is one binary64 round-to-nearest-even operation of the Rocq
+// definition, in the same order; no FMA, no reordering (.NET does not
+// contract a*b+c on its own).  Proved contracts: B64_Sin.b64_sin_err_b and
+// B64_Cos.b64_cos_err_b: Accept(x) => |Sin(x) - sin x|, |Cos(x) - cos x|
+// <= 2^-49.
 // AI assistance disclosure: AI-drafted; human review pending.
 using static NTS.Proofs.Numerics.B64SinConstants;
 
@@ -11,26 +13,37 @@ namespace NTS.Proofs.Numerics;
 public static class B64Sin
 {
     // B64_SinPoly.sp_coeffs = [c0; ...; c10]
-    private static readonly double[] Coeffs =
+    private static readonly double[] SinCoeffs =
         { sp_c0, sp_c1, sp_c2, sp_c3, sp_c4, sp_c5, sp_c6, sp_c7, sp_c8, sp_c9, sp_c10 };
 
+    // B64_CosPoly.cq_coeffs = [c0; ...; c11]
+    private static readonly double[] CosCoeffs =
+        { cq_c0, cq_c1, cq_c2, cq_c3, cq_c4, cq_c5, cq_c6, cq_c7, cq_c8, cq_c9, cq_c10, cq_c11 };
+
     // B64_Horner.b64_horner: [c] -> c ; c :: cs -> fl(fl(horner cs z * z) + c)
-    private static double Horner(double z)
+    private static double Horner(double[] cs, double z)
     {
-        double p = Coeffs[10];
-        for (int k = 9; k >= 0; k--)
+        double p = cs[cs.Length - 1];
+        for (int k = cs.Length - 2; k >= 0; k--)
         {
             double t = p * z;
-            p = t + Coeffs[k];
+            p = t + cs[k];
         }
         return p;
     }
 
     // sn_core r = fl(r * horner(fl(r * r)))
-    private static double Core(double r)
+    private static double SinCore(double r)
     {
         double z = r * r;
-        return r * Horner(z);
+        return r * Horner(SinCoeffs, z);
+    }
+
+    // cs_core r = horner(fl(r * r))
+    private static double CosCore(double r)
+    {
+        double z = r * r;
+        return Horner(CosCoeffs, z);
     }
 
     // sn_red x k = fl(fl(x - fl(k * C1)) - fl(k * C2))
@@ -45,18 +58,21 @@ public static class B64Sin
     // sn_neg s = fl(0 - s), hz_zero = +0
     private static double Neg(double s) => 0.0 - s;
 
-    // sn_pos: b64_le x T is x <= T on finite inputs
-    private static double Pos(double x)
+    // sn_pos / cs_pos: b64_le x T is x <= T on finite inputs
+    private static double Pos(Func<double, double> core, double x)
     {
-        if (x <= sn_T1) return Core(x);
-        if (x <= sn_T3) return Neg(Core(Red(x, sn_one)));
-        if (x <= sn_T5) return Core(Red(x, sn_two));
-        return Neg(Core(Red(x, sn_three)));
+        if (x <= sn_T1) return core(x);
+        if (x <= sn_T3) return Neg(core(Red(x, sn_one)));
+        if (x <= sn_T5) return core(Red(x, sn_two));
+        return Neg(core(Red(x, sn_three)));
     }
 
     // sin_accept_b x = b64_le (-10) x && b64_le x 10  (false on NaN, +-inf)
     public static bool Accept(double x) => sn_mten <= x && x <= sn_ten;
 
     // b64_sin x = if b64_le 0 x then sn_pos x else sn_neg (sn_pos (sn_neg x))
-    public static double Sin(double x) => (0.0 <= x) ? Pos(x) : Neg(Pos(Neg(x)));
+    public static double Sin(double x) => (0.0 <= x) ? Pos(SinCore, x) : Neg(Pos(SinCore, Neg(x)));
+
+    // b64_cos x = if b64_le 0 x then cs_pos x else cs_pos (sn_neg x)
+    public static double Cos(double x) => (0.0 <= x) ? Pos(CosCore, x) : Pos(CosCore, Neg(x));
 }

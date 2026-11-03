@@ -212,6 +212,29 @@ Proof.
     lra.
 Qed.
 
+(* The exact polynomial is differentiable; its derivative is again a Horner
+   recursion (used by truncation proofs that go through monotonicity). *)
+Fixpoint hz_horner_dR (cs : list R) (x : R) : R :=
+  match cs with
+  | [] => 0
+  | c :: cs' => hz_horner_dR cs' x * x + hz_horner_R cs' x
+  end.
+
+Lemma hz_horner_R_deriv : forall cs x,
+  derivable_pt_lim (fun y => hz_horner_R cs y) x (hz_horner_dR cs x).
+Proof.
+  induction cs as [|c cs IH]; intro x; cbn [hz_horner_R hz_horner_dR].
+  - eapply derivable_pt_lim_ext; [| apply (derivable_pt_lim_const 0)].
+    intro z. reflexivity.
+  - assert (Hm := derivable_pt_lim_mult (fun y => hz_horner_R cs y) id x _ _
+                    (IH x) (derivable_pt_lim_id x)).
+    assert (Hp := derivable_pt_lim_plus _ (fct_cte c) x _ _ Hm (derivable_pt_lim_const c x)).
+    replace (hz_horner_dR cs x * x + hz_horner_R cs x)
+      with (hz_horner_dR cs x * id x + hz_horner_R cs x * 1 + 0) by (unfold id; ring).
+    eapply derivable_pt_lim_ext; [| exact Hp].
+    intro z. unfold plus_fct, mult_fct, fct_cte, id. reflexivity.
+Qed.
+
 (* -------------------------------------------------------------------------- *)
 (* §3  The kernel theorem.                                                    *)
 (* -------------------------------------------------------------------------- *)
@@ -302,6 +325,7 @@ Qed.
 Print Assumptions hz_E_cons_le.
 Print Assumptions hz_horner_R_bound_R.
 Print Assumptions hz_horner_R_lip.
+Print Assumptions hz_horner_R_deriv.
 Print Assumptions hz_horner_R_bound.
 Print Assumptions hz_step.
 Print Assumptions b64_horner_err.
