@@ -377,6 +377,13 @@ theories/ClothoidChordRho.v
 theories/ClothoidFresnelInc.v
 theories/ClothoidLinearize.v
 theories/ClothoidLinearizeContract.v
+# derivable_pt_lim rules in lambda shape (moved from ClothoidShearLaw) and the
+# planar vector mean-value inequality (deriv_nonneg_incr, no classic).
+theories/DerivAlgebra.v
+theories/VecMVI.v
+# Heading-interpolating N-arc spline of a clothoid window within
+# (b-a)^3/(8 A^2 N^2); end not interpolated. claimId 0007-clothoid-arc-spline.
+theories/ClothoidArcSpline.v
 # W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
 # Headline wind_integer. Not the ray-crossing count in WindingNumber.v.
 # Does not flip RNG_JordanUncond.
