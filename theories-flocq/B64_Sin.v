@@ -583,6 +583,24 @@ Proof.
     rewrite Rabs_Ropp. lra.
 Qed.
 
+(* Extractable intake: the two comparisons alone already reject NaN and
+   both infinities, so is_finite is redundant (and is a binary_float match,
+   which the native-float extraction does not support). *)
+Definition sin_accept_b (x : binary64) : bool :=
+  b64_le sn_mten x && b64_le x sn_ten.
+
+Lemma sin_accept_b_eq : forall x, sin_accept_b x = sin_accept x.
+Proof.
+  intros [s|s|s pl Hpl|s m e Hb]; unfold sin_accept_b, sin_accept; cbn [Binary.is_finite andb];
+    try reflexivity.
+  all: try (destruct s; vm_compute; reflexivity).
+  all: vm_compute; reflexivity.
+Qed.
+
+Corollary b64_sin_err_b : forall x, sin_accept_b x = true ->
+  fin (b64_sin x) = true /\ Rabs (B2R (b64_sin x) - sin (B2R x)) <= bpow radix2 (-49).
+Proof. intros x H. rewrite sin_accept_b_eq in H. exact (b64_sin_err x H). Qed.
+
 Print Assumptions sn_neg_ok.
 Print Assumptions sn_core_alg.
 Print Assumptions sn_core_err.
@@ -590,4 +608,6 @@ Print Assumptions sn_red_alg.
 Print Assumptions sn_red_err.
 Print Assumptions sn_pos_err.
 Print Assumptions b64_sin_err.
+Print Assumptions sin_accept_b_eq.
+Print Assumptions b64_sin_err_b.
 

@@ -1394,6 +1394,29 @@ let point_on_arc_sector (ox, oy) (a : bPoint) (b : bPoint) (c : bPoint) (qx, qy)
   if dAB <= dAC then dAQ <= dAC else (dAQ >= dAC || dAQ = 0.0)
 
 
+(* ----- B64_SIN (claimId s2-b64-sin).
+   ---------------------------------------------------------------------------
+   Extracted B64_Sin.b64_sin / sin_accept_b: the proved binary64 sine
+   (|b64_sin x - sin x| <= 2^-49 on |x| <= 10, B64_Sin.b64_sin_err_b).
+   Input: one IEEE binary64 bit pattern per line, 16 hex digits.
+   Output per line: the result's 16-hex-digit bit pattern, or DECLINE when
+   sin_accept_b rejects the input (|x| > 10, NaN, infinities).  Bits in, bits
+   out, so a port can be compared bit for bit (S3 conformance,
+   tests/B64SinConformance).  No float arithmetic here: all of it is
+   extracted. *)
+let run_b64_sin () =
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then begin
+        let x = Int64.float_of_bits (Int64.of_string ("0x" ^ line)) in
+        if sin_accept_b x then
+          Printf.printf "%016Lx\n" (Int64.bits_of_float (b64_sin x))
+        else print_endline "DECLINE"
+      end
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -4946,6 +4969,7 @@ let () =
        | "ARC_CENTROID"             -> run_arc_centroid ()
        | "ARC_AREA_CENTROID"        -> run_arc_area_centroid ()
        | "ARC_DISTANCE"             -> run_arc_distance ()
+       | "B64_SIN"                  -> run_b64_sin ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()
