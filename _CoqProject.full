@@ -3861,6 +3861,16 @@ theories/CurveCapWalk.v
 # pinned by oracle/gen_buffer_region_tests.py.
 theories/CurveBufferArea.v
 
+# Horner vs expanded polynomial evaluation (pure R/Q; no Flocq, no Admitted).
+# Horner.v: horner = power-sum form.  PolyExpr.v: Expr AST, Q/R denotations,
+# explicit multiplication-count conventions (pow-naive, square-multiply, cached),
+# horner n mults vs naive n(n+1)/2 (or 2n-1 cached).  MultiHorner.v: factor on
+# one variable, factor_sound, and the honest cost split (raw factor is not
+# cost-monotone; conditional Section hypothesis).
+theories/Poly/Horner.v
+theories/Poly/PolyExpr.v
+theories/Poly/MultiHorner.v
+
 # Flocq-dependent modules (built only in the container; require coq-flocq).
 # Live in theories-flocq/ rather than theories/ so the host CI grep for
 # Admitted markers does not pick up in-progress soundness bridges.
