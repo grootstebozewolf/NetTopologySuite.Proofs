@@ -1,6 +1,7 @@
-// S3-S7 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY / FresnelC /
-// FresnelS vs the Rocq-extracted oracle (modes B64_SIN, B64_COS, B64_ARC_PT,
-// B64_FRESNEL), compared on output BITS.  Corpus: seeded uniform inputs on [-10, 10],
+// S3-S8 conformance harness: C# B64Sin.Sin / Cos / ArcX / ArcY / FresnelC /
+// FresnelS / ClothoidIcos / ClothoidIsin vs the Rocq-extracted oracle (modes
+// B64_SIN, B64_COS, B64_ARC_PT, B64_FRESNEL, B64_CLOTHOID), compared on
+// output BITS.  Corpus: seeded uniform inputs on [-10, 10],
 // random bit patterns in the accepted range (all binades, subnormals),
 // thresholds / caps / multiples of pi +-4 ulp, signed zeros, and rejected
 // inputs (NaN, infinities, just outside the cap) for DECLINE parity.
@@ -183,6 +184,55 @@ fx.AddRange(new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity
                 Console.WriteLine($"!! {mode} x={Bits(x):x16} ({x:R}) csharp={mine} oracle={theirs}");
         }
     Console.WriteLine($"# {mode} inputs {fx.Count}, of which declined {declined}");
+    Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
+    totalBug += bug;
+}
+
+// B64_CLOTHOID: (A, s, sigma); A over 2^-40..2^40, s = x sqrt2 A with x near
+// the 5/2 cap, the A / s caps +-1 ulp, zeros, NaN / inf.
+var cq = new List<(double a, double s, bool neg)>();
+for (int i = 0; i < 150_000; i++)
+{
+    double a = Math.ScaleB(1.0 + rng.NextDouble(), rng.Next(-40, 41));
+    double x = rng.NextDouble() * 5.2 - 2.6;
+    cq.Add((a, x * Math.Sqrt(2.0) * a, rng.Next(2) == 1));
+}
+double c500 = Math.ScaleB(1.0, 500), cm500 = Math.ScaleB(1.0, -500);
+foreach (var a in new[] { cm500, Math.BitDecrement(cm500), Math.BitIncrement(cm500), c500, Math.BitIncrement(c500),
+                          1.0, 100.0, 0.0, -1.0, double.NaN, double.PositiveInfinity })
+    foreach (var s in new[] { 0.0, -0.0, 1.0, 3.25, -3.25, 3.5355339059327373, c500, Math.BitIncrement(c500),
+                              double.Epsilon, double.NaN, double.NegativeInfinity })
+    {
+        cq.Add((a, s, false)); cq.Add((a, s, true));
+    }
+{
+    const string mode = "B64_CLOTHOID";
+    var psi = new ProcessStartInfo(oracle)
+    {
+        RedirectStandardInput = true, RedirectStandardOutput = true, UseShellExecute = false,
+    };
+    using var proc = Process.Start(psi) ?? throw new InvalidOperationException("cannot start " + oracle);
+    var outputTask = proc.StandardOutput.ReadToEndAsync();
+    proc.StandardInput.WriteLine(mode);
+    foreach (var q in cq) proc.StandardInput.WriteLine($"{Bits(q.a):x16} {Bits(q.s):x16} {(q.neg ? 1 : 0)}");
+    proc.StandardInput.Close();
+    var lines = outputTask.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    proc.WaitForExit();
+    int ok = 0, bug = 0, declined = 0;
+    if (lines.Length != cq.Count) bug = 1;
+    else
+        for (int i = 0; i < cq.Count; i++)
+        {
+            var (a, s, neg) = cq[i];
+            string mine = B64Sin.ClothoidAccept(a, s)
+                ? $"{Bits(B64Sin.ClothoidIcos(a, s)):x16} {Bits(B64Sin.ClothoidIsin(neg, a, s)):x16}"
+                : "DECLINE_FRESNEL_RANGE";
+            string theirs = lines[i].Trim();
+            if (mine == theirs) { ok++; if (mine.StartsWith("DECLINE")) declined++; }
+            else if (++bug <= 10)
+                Console.WriteLine($"!! {mode} in={Bits(a):x16} {Bits(s):x16} {neg} csharp={mine} oracle={theirs}");
+        }
+    Console.WriteLine($"# {mode} inputs {cq.Count}, of which declined {declined}");
     Console.WriteLine($"SUMMARY {mode} ok={ok} warn=0 bug={bug}");
     totalBug += bug;
 }

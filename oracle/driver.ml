@@ -1479,6 +1479,31 @@ let run_b64_fresnel () =
     done
   with End_of_file -> ()
 
+(* ----- B64_CLOTHOID (claimId s8-b64-clothoid-map).  Extracted
+   B64_ClothoidMap.cm_Icos / cm_Isin / cm_accept: the clothoid integrals
+   int_0^s cos / sin (sigma u^2 / (2 A^2)) du through the canonical Fresnel
+   evaluator, each within A / 2^41 (b64_clothoid_Icos_err / _Isin_err).
+   Input per line: "A s sg" -- A and s as 16-hex-digit bit patterns, sg = 1
+   for sigma = -1, 0 for sigma = +1; output "Icos Isin" as bit patterns, or
+   DECLINE_FRESNEL_RANGE when cm_accept rejects. *)
+let run_b64_clothoid () =
+  let b h = Int64.float_of_bits (Int64.of_string ("0x" ^ h)) in
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then
+        match String.split_on_char ' ' line with
+        | [ha; hs; sg] ->
+            let a = b ha and s = b hs and neg = (sg = "1") in
+            if cm_accept a s then
+              Printf.printf "%016Lx %016Lx\n"
+                (Int64.bits_of_float (cm_Icos a s))
+                (Int64.bits_of_float (cm_Isin neg a s))
+            else print_endline "DECLINE_FRESNEL_RANGE"
+        | _ -> failwith "oracle: B64_CLOTHOID line must be 'A s sg' (hex bits, sg 0/1)"
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -5035,6 +5060,7 @@ let () =
        | "B64_COS"                  -> run_b64_cos ()
        | "B64_ARC_PT"               -> run_b64_arc_pt ()
        | "B64_FRESNEL"              -> run_b64_fresnel ()
+       | "B64_CLOTHOID"             -> run_b64_clothoid ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()

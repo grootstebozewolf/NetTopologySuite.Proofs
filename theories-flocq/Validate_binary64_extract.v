@@ -62,6 +62,7 @@ From NTS.Proofs.Flocq Require Import B64_SinPoly B64_Sin.  (* b64_sin, sin_accep
 From NTS.Proofs.Flocq Require Import B64_CosPoly B64_Cos.  (* b64_cos: S4 proved cosine *)
 From NTS.Proofs.Flocq Require Import B64_ArcPoint.  (* b64_arc_x/y, arc_accept_b: S5 arc point *)
 From NTS.Proofs.Flocq Require Import B64_FresnelPoly B64_Fresnel.  (* S7 canonical Fresnel *)
+From NTS.Proofs.Flocq Require Import B64_ClothoidMap.  (* S8 clothoid -> canonical Fresnel *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -285,6 +286,10 @@ Extract Constant B64_FresnelPolyS.frs_c17 => "(-0x1.e6597092ccbf0p-140)".
 Extract Constant B64_FresnelPolyS.frs_c18 => "(0x1.61f30bc3acd1ap-150)".
 Extract Constant B64_Fresnel.fr_X => "(0x1.4000000000000p+1)".
 Extract Constant B64_Fresnel.fr_mX => "(-0x1.4000000000000p+1)".
+Extract Constant B64_ClothoidMap.cm_r2 => "(0x1.6a09e667f3bcdp+0)".
+Extract Constant B64_ClothoidMap.cm_Alo => "(0x1.0000000000000p-500)".
+Extract Constant B64_ClothoidMap.cm_cap => "(0x1.0000000000000p+500)".
+Extract Constant B64_ClothoidMap.cm_mcap => "(-0x1.0000000000000p+500)".
 (* END b64_sin constants *)
 
 Extraction Language OCaml.
@@ -329,4 +334,7 @@ Extraction "oracle/extracted.ml"
   arc_accept_b
   b64_fresnel_C
   b64_fresnel_S
-  fresnel_accept_b.
+  fresnel_accept_b
+  cm_Icos
+  cm_Isin
+  cm_accept.

@@ -1,7 +1,9 @@
 // Port of theories-flocq/B64_Sin.v : b64_sin / sin_accept_b and
 // theories-flocq/B64_Cos.v : b64_cos and theories-flocq/B64_ArcPoint.v :
 // b64_arc_x / b64_arc_y / arc_accept_b and theories-flocq/B64_Fresnel.v :
-// b64_fresnel_C / b64_fresnel_S / fresnel_accept_b, operation for operation.  Every line
+// b64_fresnel_C / b64_fresnel_S / fresnel_accept_b and
+// theories-flocq/B64_ClothoidMap.v : cm_Icos / cm_Isin / cm_accept, operation
+// for operation.  Every line
 // below is one binary64 round-to-nearest-even operation of the Rocq
 // definition, in the same order; no FMA, no reordering (.NET does not
 // contract a*b+c on its own).  Proved contracts: B64_Sin.b64_sin_err_b and
@@ -112,4 +114,22 @@ public static class B64Sin
 
     // b64_fresnel_S x = fl(fl(x * fr_t x) * horner(frs, fr_z x))
     public static double FresnelS(double x) { double w = x * (x * x); return w * Horner(FresnelSCoeffs, FrZ(x)); }
+
+    // B64_ClothoidMap: cm_w A = fl(fl(sqrt 2) * A); cm_x A s = fl(s / cm_w A)
+    private static double CmW(double a) => cm_r2 * a;
+    private static double CmX(double a, double s) => s / CmW(a);
+
+    // cm_accept A s = (2^-500 <= A <= 2^500) && (|s| <= 2^500) && fresnel_accept_b (cm_x A s)
+    public static bool ClothoidAccept(double a, double s) =>
+        (cm_Alo <= a && a <= cm_cap) && (cm_mcap <= s && s <= cm_cap) && FresnelAccept(CmX(a, s));
+
+    // cm_Icos A s = fl(cm_w A * b64_fresnel_C (cm_x A s))
+    public static double ClothoidIcos(double a, double s) => CmW(a) * FresnelC(CmX(a, s));
+
+    // cm_Isin neg A s = +-fl(cm_w A * b64_fresnel_S (cm_x A s)), negation as fl(0 - v)
+    public static double ClothoidIsin(bool neg, double a, double s)
+    {
+        double v = CmW(a) * FresnelS(CmX(a, s));
+        return neg ? Neg(v) : v;
+    }
 }
