@@ -19,12 +19,14 @@
      mf_seg_g_poly_rel   fin a, 2^-338 <= a <= 1 ->
                          |g^ - (a - sin a)| <= 24 u (a - sin a)      (u = 2^-53)
    Budget (units of u a^3): final product + absorbed underflow ~1.17,
-   (w - a^3) q ~0.84, Q error (Horner sp_E1 + argument rounding through the
-   Lipschitz bound sp_L1 + coefficients, <= u) 1, truncation ~0;  total ~3.02
-   u a^3, and a^3 <= (120/19)(a - sin a) gives ~19.1 u g, stated as 24.
-   The floor 2^-338 makes a^3 >= 2^-1014 normal, so the underflow term 2^-1075
-   is absorbed (B64_SinRel.tiny_abs_to_rel); g itself stops being normal near
-   a ~ 2^-340, so this is the intrinsic floor, not an artefact of the method.
+   (w - a^3) q ~0.67, Q error (Horner sp_E1 + argument rounding through the
+   Lipschitz bound sp_L1 + coefficients, <= u) 1, truncation ~0.001; total
+   ~2.85, proved as 2.9 u a^3, and a^3 <= (120/19)(a - sin a) gives ~18.3 u g,
+   stated as 24 (the extra headroom is deliberate).
+   Floor.  The proof needs a^3 >= 2^-1022 so that the underflow term 2^-1075 is
+   absorbed (B64_SinRel.tiny_abs_to_rel), i.e. a >= 2^-340.67; and g ~ a^3/6
+   leaves the normal range near a ~ 2^-339.8.  2^-338 is a round value about two
+   binades more conservative than either; it is a choice, not a proof limit.
    Evaluation only: no extraction, no oracle mode, no port, no consumer switch.
    claimId: t3-seg-g-rel.  No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
@@ -159,7 +161,6 @@ Qed.
 Lemma sg_alg : forall (a zr wr Tr fr Qx e : R),
   0 < a <= 1 ->
   e <= / 9007199254740992 * (a * (a * a)) ->
-  e <= / 9007199254740992 * (a * a) ->
   Rabs (zr - a * a) <= / 9007199254740992 * Rabs (a * a) + e ->
   Rabs (wr - a * zr) <= / 9007199254740992 * Rabs (a * zr) + e ->
   Rabs (fr - wr * Tr) <= / 9007199254740992 * Rabs (wr * Tr) + e ->
@@ -169,13 +170,16 @@ Lemma sg_alg : forall (a zr wr Tr fr Qx e : R),
   19 / 120 * (a * (a * a)) <= a - sin a ->
   Rabs ((- fr) - (a - sin a)) <= 24 * (/ 9007199254740992 * (a - sin a)).
 Proof.
-  intros a zr wr Tr fr Qx e Ha He3 He2 Hz Hw Hf HT HQ Hg Hgl.
+  intros a zr wr Tr fr Qx e Ha He3 Hz Hw Hf HT HQ Hg Hgl.
   set (U := / 9007199254740992) in *.
   assert (HU : 0 < U <= / 1000) by (unfold U; split; lra).
   set (A := a * (a * a)) in *.
   assert (HA : 0 < A) by (unfold A; apply Rmult_lt_0_compat; [lra | apply Rmult_lt_0_compat; lra]).
   assert (HA1 : A <= 1) by (unfold A; nra).
   assert (Haa : 0 <= a * a) by nra.
+  assert (He2 : e <= U * (a * a)).
+  { assert (A <= a * a) by (unfold A; nra).
+    assert (U * A <= U * (a * a)) by (apply Rmult_le_compat_l; lra). lra. }
   rewrite (Rabs_right (a * a)) in Hz by lra.
   assert (Hz2 : Rabs (zr - a * a) <= 2 * U * (a * a)) by lra.
   apply Rabs_le_inv in Hz2 as [Hz2l Hz2u].
@@ -189,29 +193,29 @@ Proof.
   pose proof (Rabs_le_inv _ _ S3) as [S3l S3u].
   assert (Hazr : Rabs (a * zr) <= A * (1 + 2 * U)).
   { rewrite Rabs_right by (apply Rle_ge; nra). lra. }
-  assert (Hw' : Rabs (wr - A) <= 5 * U * A).
+  assert (Hw' : Rabs (wr - A) <= 401 / 100 * U * A).
   { assert (Rabs (wr - A) <= Rabs (wr - a * zr) + Rabs (a * zr - A)).
     { replace (wr - A) with ((wr - a * zr) + (a * zr - A)) by ring. apply Rabs_triang. }
     assert (U * Rabs (a * zr) <= U * (A * (1 + 2 * U))) by (apply Rmult_le_compat_l; lra).
-    assert (U * (A * (1 + 2 * U)) <= 2 * U * A) by nra.
+    assert (U * (A * (1 + 2 * U)) <= 101 / 100 * U * A) by nra.
     nra. }
   apply Rabs_le_inv in Hw' as [Hw'l Hw'u].
-  assert (Hwr : Rabs wr <= A * (1 + 5 * U)) by (apply Rabs_le; split; nra).
+  assert (Hwr : Rabs wr <= A * (1 + 401 / 100 * U)) by (apply Rabs_le; split; nra).
   assert (Hq : Rabs (- Tr) <= 168 / 1000).
   { apply Rabs_le_inv in HT as [HTl HTu]. apply Rabs_le. split; lra. }
   rewrite Rabs_Ropp in Hq.
   assert (Hwt : Rabs (wr * Tr) <= A * (17 / 100)).
   { rewrite Rabs_mult.
-    assert (Rabs wr * Rabs Tr <= (A * (1 + 5 * U)) * (168 / 1000))
+    assert (Rabs wr * Rabs Tr <= (A * (1 + 401 / 100 * U)) * (168 / 1000))
       by (apply Rmult_le_compat; [apply Rabs_pos | apply Rabs_pos | exact Hwr | exact Hq]).
     nra. }
   assert (Hf' : Rabs (fr - wr * Tr) <= U * (A * (17 / 100)) + U * A).
   { assert (U * Rabs (wr * Tr) <= U * (A * (17 / 100))) by (apply Rmult_le_compat_l; lra).
     lra. }
-  assert (Hmid : Rabs (wr * (- Tr) - A * Qx) <= (5 * U * A) * (168 / 1000) + A * U).
+  assert (Hmid : Rabs (wr * (- Tr) - A * Qx) <= (401 / 100 * U * A) * (168 / 1000) + A * U).
   { replace (wr * (- Tr) - A * Qx) with ((wr - A) * (- Tr) + A * ((- Tr) - Qx)) by ring.
     eapply Rle_trans; [apply Rabs_triang|].
-    assert (X1 : Rabs ((wr - A) * (- Tr)) <= (5 * U * A) * (168 / 1000)).
+    assert (X1 : Rabs ((wr - A) * (- Tr)) <= (401 / 100 * U * A) * (168 / 1000)).
     { rewrite Rabs_mult, Rabs_Ropp. apply Rmult_le_compat; [apply Rabs_pos | apply Rabs_pos | | exact Hq].
       apply Rabs_le; split; lra. }
     assert (X2 : Rabs (A * ((- Tr) - Qx)) <= A * U).
@@ -226,23 +230,23 @@ Proof.
   { rewrite <- Rabs_Ropp. replace (- (A * Qx - (a - sin a))) with ((a - sin a) - A * Qx) by ring.
     exact Hg. }
   (* The chain, one closed step at a time:
-       |g^ - g| <= 3.03 U A            (sum of the three budget lines)
+       |g^ - g| <= 2.9 U A             (sum of the budget lines, ~2.85)
        A <= 120/19 g                   (from 19/120 A <= g)
-       3.03 * 120/19 = 19.14 <= 24. *)
+       2.9 * 120/19 = 18.32 <= 24. *)
   assert (Hfin2 : A / 25852016738884976640000 <= U * A / 1000) by (unfold U; lra).
   assert (Hlin : Rabs (fr - wr * Tr)
                  + Rabs (wr * (- Tr) - A * Qx) + Rabs (A * Qx - (a - sin a))
-                 <= U * A * (303 / 100)) by lra.
+                 <= U * A * (29 / 10)) by lra.
   assert (Hgpos : A <= 120 / 19 * (a - sin a)) by lra.
   assert (Hg0 : 0 <= a - sin a) by lra.
   assert (HUg : 0 <= U * (a - sin a)) by (apply Rmult_le_pos; lra).
-  assert (Hconv : U * A * (303 / 100) <= U * (120 / 19 * (a - sin a)) * (303 / 100)).
+  assert (Hconv : U * A * (29 / 10) <= U * (120 / 19 * (a - sin a)) * (29 / 10)).
   { assert (U * A <= U * (120 / 19 * (a - sin a))) by (apply Rmult_le_compat_l; lra).
     lra. }
-  assert (Hrat : U * (120 / 19 * (a - sin a)) * (303 / 100)
+  assert (Hrat : U * (120 / 19 * (a - sin a)) * (29 / 10)
                  <= 24 * (U * (a - sin a))).
-  { replace (U * (120 / 19 * (a - sin a)) * (303 / 100))
-      with ((120 / 19 * (303 / 100)) * (U * (a - sin a))) by ring.
+  { replace (U * (120 / 19 * (a - sin a)) * (29 / 10))
+      with ((120 / 19 * (29 / 10)) * (U * (a - sin a))) by ring.
     apply Rmult_le_compat_r; [exact HUg | lra]. }
   lra.
 Qed.
@@ -340,8 +344,6 @@ Proof.
   assert (Haa1 : a * a <= 1) by nra.
   assert (Hcube : 0 <= a * (a * a) <= 1) by (split; nra).
   assert (R2 : Rabs (a * a) = a * a) by (apply Rabs_right; lra).
-  assert (T2 : b64ae_e0 <= b64ae_u * (a * a)).
-  { pose proof (tiny_abs_to_rel (a * a)) as H. rewrite R2 in H. apply H. exact Fl2. }
   assert (T3 : b64ae_e0 <= b64ae_u * (a * (a * a))).
   { pose proof (tiny_abs_to_rel (a * (a * a))) as H.
     rewrite (Rabs_right (a * (a * a))) in H by lra. apply H. exact Fl3. }
@@ -350,6 +352,12 @@ Proof.
               ltac:(change (B2R t) with a; rewrite R2; lra)) as [Fz Ez].
   change (B2R t) with a in Ez. rewrite R2 in Ez.
   set (z := b64_mult t t) in *. set (zr := B2R z) in *.
+  assert (T2 : b64ae_e0 <= b64ae_u * (a * a)).
+  { assert (Hc : a * (a * a) <= a * a) by nra.
+    pose proof b64ae_u_small as [Hu0 _].
+    assert (b64ae_u * (a * (a * a)) <= b64ae_u * (a * a))
+      by (apply Rmult_le_compat_l; lra).
+    lra. }
   assert (Hz2 : Rabs (zr - a * a) <= 2 * b64ae_u * (a * a)) by lra.
   pose proof (Rabs_le_inv _ _ Hz2) as [Hz2l Hz2u].
   assert (Hu1 : b64ae_u <= / 1000) by (rewrite Uv; lra).
@@ -422,7 +430,7 @@ Proof.
   assert (Ez0 : Rabs (zr - a * a) <= / 9007199254740992 * Rabs (a * a) + b64ae_e0)
     by (rewrite R2; exact Ez).
   exact (sg_alg a zr wr Tr (B2R (b64_mult w (sg_T z))) (sg_Qex (a * a)) b64ae_e0
-           (conj Ha Hhi) T3 T2 Ez0 Ew Ep HT HQ Gp Gl).
+           (conj Ha Hhi) T3 Ez0 Ew Ep HT HQ Gp Gl).
 Qed.
 
 (* A positive computed value: the relative bound forces g^ > 0. *)
