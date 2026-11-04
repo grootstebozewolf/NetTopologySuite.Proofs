@@ -9,7 +9,7 @@
      tiny_abs_to_rel   2^-1022 <= |x|  ->  2^-1075 <= u |x|
      sn_core_rel       fin r, 2^-1022 <= |r| <= 8/5 ->
                        |B2R (sn_core r) - sin r| <= 10 u |r|       (u = 2^-53)
-     b64_sin_rel       the k = 0 branch of b64_sin, signed inputs,
+     b64_sin_rel       (input-relative) the k = 0 branch of b64_sin, signed inputs,
                        2^-1022 <= |x| <= 1609/1024: same 10 u |x| bound
 
    Why a floor.  Every absolute budget line in B64_AbsErr carries the
@@ -17,9 +17,11 @@
    relative budget exactly when |x| >= 2^-1022 (tiny_abs_to_rel).  Below the
    floor the relative statement is NOT claimed here.
 
-   Budget (units of u |r|):  final product 7/4 + e0 -> 1, Horner 4, argument
-   rounding through the Lipschitz bound 11/32 (64/25 + tiny) ~ 0.9, coefficients
-   ~ 0.34, truncation 2^-6.  Total ~ 8.3, stated as 10.
+   Budget (units of u |r|):  final multiplication ~ 2.75 (7/4 from its relative
+   rounding + 1 from the absorbed underflow term), Horner 4, argument rounding
+   through the Lipschitz bound 11/32 (64/25 + tiny) ~ 0.9, coefficients ~ 0.34,
+   truncation 2^-6.  Total ~ 8.01, stated as 10.  The bound is input-relative
+   (denominator |r|), not |sin r|.
    claimId: t3-b64-sin-rel.  Evaluation only; extraction / oracle mode / C#
    port are NOT part of this module.  No Admitted / Axiom / Parameter.
    Author: NetTopologySuite.Proofs contributors
