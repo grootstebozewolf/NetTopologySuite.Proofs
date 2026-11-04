@@ -22,6 +22,8 @@
       "unblock_when": [
         "mf_seg_offset_rel (division) and the policy rung (sgp_outcome_*) are merged",
         "intake for theta >= 1 and below 2^-338 is decided and proved (decline or fallback)",
+        "explicit theta = 1 seam: above 1 the existing absolute mf_seg_g path applies, so the consumer needs a branch and a matching proof",
+        "odd symmetry for negative theta (g^(-t) = -g^(t) via sn_neg, as b64_sin_rel) if the sweep can be negative",
         "extraction plus an oracle_bin mode for mf_seg_g_poly and mf_seg_offset",
         "corpus run: zero new UNDECIDED results compared with the current Taylor driver",
         "C# and Java ports bit-identical to the extracted result, or the unavailability is recorded"
