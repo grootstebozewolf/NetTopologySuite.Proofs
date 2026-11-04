@@ -3917,6 +3917,7 @@ theories-flocq/B64_SinPoly.v
 # S2: binary64 sine, |x| <= 10, error <= 2^-49 (Sterbenz mod-pi reduction +
 # degree-21 Horner).  claimId s2-b64-sin.
 theories-flocq/B64_Sin.v
+theories-flocq/B64_SinRel.v
 theories-flocq/B64_CosPoly.v
 theories-flocq/B64_Cos.v
 theories-flocq/B64_ArcPoint.v
