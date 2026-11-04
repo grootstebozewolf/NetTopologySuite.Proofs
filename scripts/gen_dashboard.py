@@ -37,22 +37,9 @@ OUT = os.path.join(ROOT, "dashboard", "index.html")
 
 REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "int", "b64-rne",
            "structural", "cond", "oracle"]
-# Tags that appear in docs/verified-claims.md but are spelled differently from the
-# canonical regime they count toward.  Deliberately conservative: a tag whose rows
-# hold only under named premises maps to "cond", never to a proven regime.
-REGIME_ALIAS = {
-    "conditional": "cond",      # spelled-out form of [cond]
-    "round-chain": "cond",      # b64 round-chain equalities hold under b64_safe premises
-    "b64": "int-b64",           # Kakeya coord_int_safe window facts
-}
-ALIASES_OF = {r: [r] + [a for a, c in REGIME_ALIAS.items() if c == r] for r in REGIMES}
-KNOWN_TAGS = set(REGIMES) | set(REGIME_ALIAS)
-
-
 def regime_hits(text, regime):
-    """Occurrences of [regime] or any alias spelling in a claims-table line."""
-    return sum(len(re.findall(r"\[" + re.escape(t) + r"\]", text))
-               for t in ALIASES_OF[regime])
+    """Occurrences of [regime] in a claims-table line."""
+    return len(re.findall(r"\[" + re.escape(regime) + r"\]", text))
 REGIME_LABEL = {
     "exact": "exact reals",
     "full-b64": "all finite binary64",
@@ -64,11 +51,18 @@ REGIME_LABEL = {
     "cond": "conditional (named hyps)",
     "oracle": "extracted / differential",
 }
-# proven (unconditional soundness) vs conditional vs oracle-only
+# proven (unconditional soundness) vs conditional vs oracle-only vs structural.
+# Rule separating proven from conditional for binary64 rows: a regime is "proven"
+# when every hypothesis is on the INPUTS and is checked by the evaluator's own
+# intake predicate or an explicit argument bound (b64-rne: sin_accept,
+# fresnel_accept, cm_accept, |z| <= Z); it is "conditional" when the hypotheses are
+# premises on intermediate values that the caller must discharge (round-chain's
+# b64_safe).  "structural" rows (a guard or shape lemma with no numeric content)
+# are counted and shown but are NOT in the headline proven total.
 REGIME_KIND = {
     "exact": "proven", "full-b64": "proven", "int-b64": "proven",
     "int-b64-arc": "proven", "int": "proven", "b64-rne": "proven",
-    "structural": "proven", "cond": "conditional", "oracle": "oracle",
+    "structural": "structural", "cond": "conditional", "oracle": "oracle",
 }
 REGIME_COLOR = {
     "exact": "#16a34a", "full-b64": "#15803d", "int-b64": "#65a30d",
@@ -95,8 +89,7 @@ def git(*args, default=""):
 
 # -- verified-claims.md ------------------------------------------------------
 
-PROVEN_REGIMES = {"exact", "full-b64", "int-b64", "int-b64-arc", "int", "b64-rne",
-                  "structural"}
+PROVEN_REGIMES = {"exact", "full-b64", "int-b64", "int-b64-arc", "int", "b64-rne"}
 
 
 def parse_claims():
@@ -219,7 +212,10 @@ def parse_oracle():
             elif fn.startswith("red_") and fn.endswith("_tests.py"):
                 kind, name = "red-tests", fn[:-len("_tests.py")]
                 with open(fpath, encoding="utf-8") as f:
-                    n = sum(1 for ln in f if "= run(" in ln)
+                    # two styles: `x = run(...)` cases, or assert_eq/assert_true calls
+                    n = sum(1 for ln in f
+                            if "= run(" in ln
+                            or re.match(r"\s*(assert_eq|assert_true)\(", ln))
             else:
                 continue
             coverage_tags = _parse_coverage_tag(fpath)
@@ -1003,7 +999,7 @@ def _check_grounding():
             errors.append(f"{path} not found (referenced in audit table)")
     # 3. Every [tag] in table rows of verified-claims.md must be a known regime
     txt = read("docs/verified-claims.md") or ""
-    known = KNOWN_TAGS
+    known = set(REGIMES)
     seen_unknown = set()
     for line in txt.splitlines():
         if not (line.startswith("|") and "`" in line):
@@ -1013,7 +1009,7 @@ def _check_grounding():
                 seen_unknown.add(tag)
                 errors.append(
                     f"unknown regime tag [{tag}] in docs/verified-claims.md table "
-                    f"(known: {', '.join(sorted(KNOWN_TAGS))})")
+                    f"(known: {', '.join(REGIMES)})")
     # 4. No file:line references in the coverage notes.  Line numbers rot on the
     #    first refactor and nothing recompiles a prose hook, so cite a theorem by
     #    NAME -- which validate-claims.sh actually verifies.  This mirrors the
@@ -1079,16 +1075,24 @@ def build():
     return render(data)
 
 
-# Paths whose change alters the generated page; mirrors the `paths:` filter of
-# .github/workflows/pages.yml (the committed HTML itself is excluded, otherwise
-# regenerating it would always look stale).
-DASHBOARD_INPUTS = [
-    "docs/verified-claims.md", "docs/laser-ratchet.json", "TRIAGE_NTS_JTS_ISSUES.md",
-    "oracle", "docs/admitted-counterexamples.txt", "docs/admitted-deferred-proofs.txt",
-    "docs/oracle-handrolled-allowlist.txt", "scripts/gen_dashboard.py",
-    "docs/macro-meso-micro.md", "dashboard", ".github/workflows/pages.yml",
-    ":(exclude)dashboard/index.html",
-]
+def dashboard_inputs():
+    """Paths whose change alters the generated page: the `paths:` filter of
+    .github/workflows/pages.yml (single source, parsed here so the two cannot
+    drift), minus the committed page itself.  None if pages.yml has no list."""
+    txt = read(".github/workflows/pages.yml")
+    if txt is None:
+        return None
+    paths, in_paths = [], False
+    for ln in txt.splitlines():
+        if re.match(r"^\s+paths:\s*$", ln):
+            in_paths = True
+            continue
+        m = re.match(r"^\s+-\s+(\S+)\s*$", ln)
+        if in_paths and m:
+            paths.append(m.group(1).rstrip("*").rstrip("/"))
+        elif in_paths:
+            break
+    return (paths + [":(exclude)dashboard/index.html"]) if paths else None
 
 
 def check_freshness(strict):
@@ -1110,12 +1114,18 @@ def check_freshness(strict):
     if not git("cat-file", "-t", sha + "^{commit}"):
         return warn(f"dashboard shows commit {sha}, which is not in this clone "
                     "(shallow history?): freshness not verified")
-    behind_all = git("rev-list", "--count", f"{sha}..HEAD", default="?")
+    inputs = dashboard_inputs()
+    if inputs is None:
+        return warn("cannot read the paths: filter of .github/workflows/pages.yml")
+    # default=None: a failing git call must not read as "nothing changed"
+    behind_all = git("rev-list", "--count", f"{sha}..HEAD", default=None)
+    touching = git("rev-list", f"{sha}..HEAD", "--", *inputs, default=None)
+    if behind_all is None or touching is None:
+        return warn(f"git could not list {sha}..HEAD: freshness not verified")
     # The commit that last stored the page contains its own regeneration, so
     # its input changes are already reflected and must not count as stale.
     stored_by = git("log", "-1", "--format=%H", "--", "dashboard/index.html")
-    touching = git("rev-list", f"{sha}..HEAD", "--", *DASHBOARD_INPUTS).split()
-    behind_in = str(len([c for c in touching if c != stored_by]))
+    behind_in = str(len([c for c in touching.split() if c != stored_by]))
     if behind_in == "0":
         print(f"dashboard fresh: shows {sha}; {behind_all} commit(s) behind HEAD, "
               "none touching dashboard inputs")
