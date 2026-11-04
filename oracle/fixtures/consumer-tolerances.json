@@ -17,10 +17,10 @@
         "theta_certified": false,
         "theta_source": "libm asin (inventory T1, deferred D3): the bounds are conditional on the supplied theta"
       },
-      "lemmas": ["b64_sin_rel", "tiny_abs_to_rel", "mf_seg_g_poly_rel", "mf_seg_g_poly_pos"],
-      "pending_lemmas": ["mf_seg_offset_rel", "sgp_outcome_sound", "sgp_outcome_complete"],
+      "lemmas": ["b64_sin_rel", "tiny_abs_to_rel", "mf_seg_g_poly_rel", "mf_seg_g_poly_pos", "mf_seg_offset_rel"],
+      "pending_lemmas": ["sgp_outcome_sound", "sgp_outcome_complete"],
       "unblock_when": [
-        "mf_seg_offset_rel (division) and the policy rung (sgp_outcome_*) are merged",
+        "the policy rung (sgp_outcome_*) is merged and the division is wired to its total evaluator",
         "intake for theta >= 1 and below 2^-338 is decided and proved (decline or fallback)",
         "explicit theta = 1 seam: above 1 the existing absolute mf_seg_g path applies, so the consumer needs a branch and a matching proof",
         "odd symmetry for negative theta (g^(-t) = -g^(t) via sn_neg, as b64_sin_rel) if the sweep can be negative",
