@@ -3918,6 +3918,7 @@ theories-flocq/B64_SinPoly.v
 # degree-21 Horner).  claimId s2-b64-sin.
 theories-flocq/B64_Sin.v
 theories-flocq/B64_SinRel.v
+theories-flocq/B64_SegGRel.v
 theories-flocq/B64_CosPoly.v
 theories-flocq/B64_Cos.v
 theories-flocq/B64_ArcPoint.v

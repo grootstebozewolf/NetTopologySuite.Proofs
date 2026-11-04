@@ -225,9 +225,225 @@ Proof.
   assert (Hg' : Rabs (A * Qx - (a - sin a)) <= A / 25852016738884976640000).
   { rewrite <- Rabs_Ropp. replace (- (A * Qx - (a - sin a))) with ((a - sin a) - A * Qx) by ring.
     exact Hg. }
+  (* The chain, one closed step at a time:
+       |g^ - g| <= 3.03 U A            (sum of the three budget lines)
+       A <= 120/19 g                   (from 19/120 A <= g)
+       3.03 * 120/19 = 19.14 <= 24. *)
+  assert (Hfin2 : A / 25852016738884976640000 <= U * A / 1000) by (unfold U; lra).
+  assert (Hlin : Rabs (fr - wr * Tr)
+                 + Rabs (wr * (- Tr) - A * Qx) + Rabs (A * Qx - (a - sin a))
+                 <= U * A * (303 / 100)) by lra.
   assert (Hgpos : A <= 120 / 19 * (a - sin a)) by lra.
-  assert (Hfin : U * A <= U * (120 / 19 * (a - sin a))) by (apply Rmult_le_compat_l; lra).
-  assert (Hfin2 : A / 25852016738884976640000 <= U * A).
-  { unfold U. lra. }
+  assert (Hg0 : 0 <= a - sin a) by lra.
+  assert (HUg : 0 <= U * (a - sin a)) by (apply Rmult_le_pos; lra).
+  assert (Hconv : U * A * (303 / 100) <= U * (120 / 19 * (a - sin a)) * (303 / 100)).
+  { assert (U * A <= U * (120 / 19 * (a - sin a))) by (apply Rmult_le_compat_l; lra).
+    lra. }
+  assert (Hrat : U * (120 / 19 * (a - sin a)) * (303 / 100)
+                 <= 24 * (U * (a - sin a))).
+  { replace (U * (120 / 19 * (a - sin a)) * (303 / 100))
+      with ((120 / 19 * (303 / 100)) * (U * (a - sin a))) by ring.
+    apply Rmult_le_compat_r; [exact HUg | lra]. }
+  lra.
+Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* §3  The binary64 pipeline.                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+Definition sg_T (z : binary64) : binary64 := b64_horner (tl sp_coeffs) z.
+
+Definition mf_seg_g_poly (t : binary64) : binary64 :=
+  sn_neg (b64_mult (b64_mult t (b64_mult t t)) (sg_T (b64_mult t t))).
+
+Lemma sg_floor : forall a, bpow radix2 (-338) <= a ->
+  bpow radix2 (-1022) <= a * a /\ bpow radix2 (-1022) <= a * (a * a).
+Proof.
+  intros a H.
+  assert (Hb : 0 < bpow radix2 (-338)) by apply bpow_gt_0.
+  assert (H2 : bpow radix2 (-338) * bpow radix2 (-338) <= a * a)
+    by (apply Rmult_le_compat; lra).
+  assert (H3 : bpow radix2 (-338) * (bpow radix2 (-338) * bpow radix2 (-338)) <= a * (a * a)).
+  { apply Rmult_le_compat; [lra | nra | exact H | exact H2]. }
+  assert (E2 : bpow radix2 (-338) * bpow radix2 (-338) = bpow radix2 (-676))
+    by (rewrite <- bpow_plus; reflexivity).
+  assert (E3 : bpow radix2 (-338) * (bpow radix2 (-338) * bpow radix2 (-338))
+               = bpow radix2 (-1014)) by (rewrite <- !bpow_plus; reflexivity).
+  assert (L2 : bpow radix2 (-1022) <= bpow radix2 (-676)) by (apply bpow_le; lia).
+  assert (L3 : bpow radix2 (-1022) <= bpow radix2 (-1014)) by (apply bpow_le; lia).
+  split; lra.
+Qed.
+
+Lemma sg_coeffs_ok : hz_coeffs_ok (tl sp_coeffs) sp_S1.
+Proof.
+  pose proof sp_coeffs_ok as H. unfold hz_coeffs_ok in *.
+  unfold sp_coeffs, sp_ms, sp_S0 in H. inversion H; subst. cbn [tl]. assumption.
+Qed.
+
+Lemma sg_coeffs_ok_R :
+  Forall2 (fun c m => Rabs c <= m) (map B2R (tl sp_coeffs)) sp_S1.
+Proof.
+  pose proof sp_coeffs_ok_R as H.
+  unfold sp_coeffs, sp_ms, sp_S0 in H. cbn [map] in H. inversion H; subst.
+  unfold sp_coeffs. cbn [tl map]. assumption.
+Qed.
+
+Lemma sg_delta_ok : Forall2 (fun c m => Rabs c <= m) (tl sp_delta) (tl sp_ds).
+Proof.
+  pose proof sp_delta_ok as H.
+  unfold sp_delta, sp_ds in H. inversion H; subst.
+  unfold sp_delta, sp_ds. cbn [tl]. assumption.
+Qed.
+
+Lemma sg_delta_eq : forall x,
+  hz_horner_R (map B2R (tl sp_coeffs)) x - hz_horner_R (tl sp_exact) x
+  = hz_horner_R (tl sp_delta) x.
+Proof. intro x. unfold sp_coeffs, sp_exact, sp_delta. cbn [map tl hz_horner_R]. ring. Qed.
+
+Lemma sg_ds_M : hz_M (tl sp_ds) sp_Z <= 11182133 / 302231454903657293676544.
+Proof. unfold sp_ds, sp_Z. cbn [tl hz_M]. lra. Qed.
+
+Lemma sg_T_err : forall z, fin z = true -> Rabs (B2R z) <= sp_Z ->
+  fin (sg_T z) = true /\
+  Rabs (B2R (sg_T z) - hz_horner_R (map B2R (tl sp_coeffs)) (B2R z))
+    <= 12704089 / 302231454903657293676544.
+Proof.
+  intros z Fz Hz.
+  destruct (b64_horner_err (tl sp_coeffs) sp_S1 z sp_Z sg_coeffs_ok Fz Hz
+              sp_Z_nonneg sp_safe1) as [F E].
+  split; [exact F|]. eapply Rle_trans; [exact E | exact sp_E1].
+Qed.
+
+Lemma sg_tri3 : forall t h1 h2 e : R,
+  (- t) - (- e) = - ((t - h1) + (h1 - h2) + (h2 - e)).
+Proof. intros. ring. Qed.
+
+Lemma sg_Q_numeric :
+  12704089 / 302231454903657293676544 + / 50 * (2 * / 9007199254740992)
+  + 11182133 / 302231454903657293676544 <= / 9007199254740992.
+Proof. lra. Qed.
+
+(* WITNESS-free: registered in verified-claims.md (claimId t3-seg-g-rel). *)
+Theorem mf_seg_g_poly_rel : forall t, fin t = true ->
+  bpow radix2 (-338) <= B2R t -> B2R t <= 1 ->
+  fin (mf_seg_g_poly t) = true /\
+  Rabs (B2R (mf_seg_g_poly t) - (B2R t - sin (B2R t)))
+    <= 24 * (b64ae_u * (B2R t - sin (B2R t))).
+Proof.
+  intros t Ft Hlo Hhi.
+  set (a := B2R t) in *.
+  pose proof sp_u_val as Uv. pose proof sp_e0_bounds as [He0 He1].
+  assert (Hb : 4 <= bpow radix2 1000) by exact sp_bpow1000.
+  assert (Ha : 0 < a) by (pose proof (bpow_gt_0 radix2 (-338)); lra).
+  destruct (sg_floor a Hlo) as [Fl2 Fl3].
+  assert (Haa : 0 <= a * a) by nra.
+  assert (Haa1 : a * a <= 1) by nra.
+  assert (Hcube : 0 <= a * (a * a) <= 1) by (split; nra).
+  assert (R2 : Rabs (a * a) = a * a) by (apply Rabs_right; lra).
+  assert (T2 : b64ae_e0 <= b64ae_u * (a * a)).
+  { pose proof (tiny_abs_to_rel (a * a)) as H. rewrite R2 in H. apply H. exact Fl2. }
+  assert (T3 : b64ae_e0 <= b64ae_u * (a * (a * a))).
+  { pose proof (tiny_abs_to_rel (a * (a * a))) as H.
+    rewrite (Rabs_right (a * (a * a))) in H by lra. apply H. exact Fl3. }
+  (* z = fl(a a) *)
+  destruct (b64ae_mult_err t t Ft Ft
+              ltac:(change (B2R t) with a; rewrite R2; lra)) as [Fz Ez].
+  change (B2R t) with a in Ez. rewrite R2 in Ez.
+  set (z := b64_mult t t) in *. set (zr := B2R z) in *.
+  assert (Hz2 : Rabs (zr - a * a) <= 2 * b64ae_u * (a * a)) by lra.
+  pose proof (Rabs_le_inv _ _ Hz2) as [Hz2l Hz2u].
+  assert (Hu1 : b64ae_u <= / 1000) by (rewrite Uv; lra).
+  assert (Hzr : Rabs zr <= 41 / 16) by (apply Rabs_le; split; nra).
+  (* T = Horner of the tail at zr *)
+  destruct (sg_T_err z Fz ltac:(unfold sp_Z; exact Hzr)) as [FT ET'].
+  set (Tr := B2R (sg_T z)) in *.
+  (* the real tail: Lipschitz and coefficient errors *)
+  assert (Hxx : Rabs (a * a) <= sp_Z) by (unfold sp_Z; rewrite R2; lra).
+  pose proof (hz_horner_R_lip _ _ zr (a * a) sp_Z sg_coeffs_ok_R
+                ltac:(unfold sp_Z; exact Hzr) Hxx) as Lip.
+  assert (Lb : hz_L sp_S1 sp_Z <= / 50)
+    by (eapply Rle_trans; [exact sp_L1|]; lra).
+  assert (Hd : Rabs (zr - a * a) <= 2 * b64ae_u) by (rewrite Uv in *; lra).
+  assert (Lip' : Rabs (hz_horner_R (map B2R (tl sp_coeffs)) zr
+                       - hz_horner_R (map B2R (tl sp_coeffs)) (a * a))
+                 <= / 50 * (2 * b64ae_u)).
+  { eapply Rle_trans; [exact Lip|].
+    assert (hz_L sp_S1 sp_Z * Rabs (zr - a * a) <= / 50 * Rabs (zr - a * a))
+      by (apply Rmult_le_compat_r; [apply Rabs_pos | exact Lb]).
+    assert (/ 50 * Rabs (zr - a * a) <= / 50 * (2 * b64ae_u))
+      by (apply Rmult_le_compat_l; [lra | exact Hd]).
+    lra. }
+  assert (Hcoef : Rabs (hz_horner_R (map B2R (tl sp_coeffs)) (a * a)
+                        - hz_horner_R (tl sp_exact) (a * a))
+                  <= 11182133 / 302231454903657293676544).
+  { rewrite sg_delta_eq.
+    eapply Rle_trans; [apply (hz_horner_R_bound_R _ _ (a * a) sp_Z sg_delta_ok Hxx)|].
+    exact sg_ds_M. }
+  (* Q error: |(-Tr) - Qex(a a)| <= u *)
+  assert (HT : Rabs ((- Tr) - sg_Qex (a * a)) <= / 9007199254740992).
+  { unfold sg_Qex.
+    rewrite (sg_tri3 Tr (hz_horner_R (map B2R (tl sp_coeffs)) zr)
+                     (hz_horner_R (map B2R (tl sp_coeffs)) (a * a))
+                     (hz_horner_R (tl sp_exact) (a * a))).
+    rewrite Rabs_Ropp.
+    eapply Rle_trans; [apply Rabs_triang|].
+    eapply Rle_trans; [apply Rplus_le_compat_r; apply Rabs_triang|].
+    rewrite Uv in Lip'.
+    exact (Rle_trans _ _ _
+             (Rplus_le_compat _ _ _ _ (Rplus_le_compat _ _ _ _ ET' Lip') Hcoef)
+             sg_Q_numeric). }
+  pose proof (sg_Qex_range a ltac:(lra)) as HQ.
+  assert (HTr : Rabs Tr <= 168 / 1000).
+  { pose proof (Rabs_le_inv _ _ HT) as [HTl HTu]. apply Rabs_le. split; lra. }
+  (* w = fl(a z) *)
+  assert (Hzr0 : 0 <= zr) by nra.
+  assert (Hzr1 : zr <= 2) by nra.
+  assert (Hazr : Rabs (a * zr) <= 2).
+  { rewrite Rabs_mult, (Rabs_right a) by lra. rewrite (Rabs_right zr) by lra. nra. }
+  destruct (b64ae_mult_err t z Ft Fz ltac:(change (B2R t) with a; change (B2R z) with zr; lra)) as [Fw Ew].
+  change (B2R t) with a in Ew. change (B2R z) with zr in Ew.
+  set (w := b64_mult t z) in *. set (wr := B2R w) in *.
+  assert (Hwr : Rabs wr <= 3).
+  { pose proof (Rabs_triang_inv wr (a * zr)).
+    assert (b64ae_u * Rabs (a * zr) <= b64ae_u * 2) by (apply Rmult_le_compat_l; lra).
+    lra. }
+  (* p = fl(w Tm) *)
+  assert (Hwt : Rabs (wr * Tr) <= 3 * (168 / 1000))
+    by (apply b64ae_abs_mult_le; assumption).
+  destruct (b64ae_mult_err w (sg_T z) Fw FT ltac:(change (B2R w) with wr; change (B2R (sg_T z)) with Tr; lra))
+    as [Fp Ep].
+  change (B2R w) with wr in Ep. change (B2R (sg_T z)) with Tr in Ep.
+  destruct (sn_neg_ok _ Fp) as [Fn En].
+  assert (Hmf : mf_seg_g_poly t = sn_neg (b64_mult w (sg_T z))) by reflexivity.
+  rewrite Hmf. split; [exact Fn|]. rewrite En.
+  pose proof (sg_g_enclosure a ltac:(lra)) as [Gl _].
+  pose proof (sg_g_poly a ltac:(lra)) as Gp.
+  rewrite Uv in *.
+  assert (Ez0 : Rabs (zr - a * a) <= / 9007199254740992 * Rabs (a * a) + b64ae_e0)
+    by (rewrite R2; exact Ez).
+  exact (sg_alg a zr wr Tr (B2R (b64_mult w (sg_T z))) (sg_Qex (a * a)) b64ae_e0
+           (conj Ha Hhi) T3 T2 Ez0 Ew Ep HT HQ Gp Gl).
+Qed.
+
+(* A positive computed value: the relative bound forces g^ > 0. *)
+Corollary mf_seg_g_poly_pos : forall t, fin t = true ->
+  bpow radix2 (-338) <= B2R t -> B2R t <= 1 ->
+  0 < B2R (mf_seg_g_poly t).
+Proof.
+  intros t Ft Hlo Hhi.
+  destruct (mf_seg_g_poly_rel t Ft Hlo Hhi) as [_ E].
+  pose proof sp_u_val as Uv. rewrite Uv in E.
+  assert (Ha : 0 < B2R t) by (pose proof (bpow_gt_0 radix2 (-338)); lra).
+  pose proof (sg_g_enclosure (B2R t) ltac:(lra)) as [Gl _].
+  assert (0 < B2R t * (B2R t * B2R t)) by (apply Rmult_lt_0_compat; [lra | nra]).
+  pose proof (Rabs_le_inv _ _ E) as [E1 _].
+  assert (0 < B2R t - sin (B2R t)) by lra.
   nra.
 Qed.
+
+Print Assumptions sg_g_enclosure.
+Print Assumptions sg_g_poly.
+Print Assumptions sg_Qex_range.
+Print Assumptions sg_alg.
+Print Assumptions mf_seg_g_poly_rel.
+Print Assumptions mf_seg_g_poly_pos.
