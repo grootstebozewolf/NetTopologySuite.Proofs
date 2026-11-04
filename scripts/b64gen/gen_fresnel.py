@@ -50,10 +50,10 @@ w(f"""(* =======================================================================
    Intake X_F = 5/2 (fresnel_accept_b: -5/2 <= x <= 5/2, false on NaN and
    infinities).  Geometrically x^2 = s^2 / (2 A^2) = |psi(s)|, so the intake
    is |psi| <= 25/4: at most 6.25 rad of tangent rotation measured from the
-   inflection point.  Transition curves in practice have tau << 1 rad; the
-   corpus extreme (LENGTH_UNIFIED fixture A = 1, s = 3.25: psi = 5.28 rad,
-   x = 2.298) is evidence the cap is not too tight, not its definition.
-   X_F = 2 (psi <= 4 rad) would decline that fixture; 5/2 costs ~3.5 bits
+   inflection point.  Proved as B64_ClothoidMap.xf_psi_bound (|y| <= 5/2 iff
+   |psi| <= 25/4) and xf_accept_psi (fresnel_accept_b x = true gives it);
+   the cap is that lemma, not a corpus maximum.
+   X_F = 2 (psi <= 4 rad) is the same lemma, smaller cap; 5/2 costs ~3.5 bits
    against 2 (z = x^4 <= 39 makes Horner cancel).  Outside:
    DECLINE_FRESNEL_RANGE; asymptotics stay deferred (D2/D4).
 

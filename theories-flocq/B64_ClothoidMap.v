@@ -71,6 +71,31 @@ Proof.
   rewrite H2. field. lra.
 Qed.
 
+(* The S7 cap X_F = 5/2 stated geometrically: with y = s / w, y^2 = |psi(s)|,
+   so |y| <= 5/2 holds exactly when the magnitude of tangent rotation from
+   the inflection point is at most 25/4 rad.  This (not a corpus maximum) is
+   the meaning of the intake. *)
+Lemma xf_psi_bound : forall c y, 0 < cloth_A c ->
+  (Rabs y <= 5 / 2 <-> Rabs (cloth_psi c (cm_W c * y)) <= 25 / 4).
+Proof.
+  intros c y HA. rewrite cm_psi_scaled by exact HA.
+  assert (Habs : Rabs (cloth_sigma c * (y * y)) = y * y).
+  { assert (Hs : Rabs (cloth_sigma c) = 1).
+    { destruct (cm_sigma_pm c) as [H|H]; rewrite H;
+        [apply Rabs_right; lra | rewrite Rabs_left by lra; lra]. }
+    rewrite Rabs_mult, Hs, (Rabs_right (y * y)) by nra. ring. }
+  rewrite Habs. split; intro H.
+  - apply Rabs_le_inv in H as [H1 H2]. nra.
+  - apply Rabs_le. split; nra.
+Qed.
+
+Lemma xf_accept_psi : forall c x, 0 < cloth_A c -> fresnel_accept_b x = true ->
+  Rabs (cloth_psi c (cm_W c * B2R x)) <= 25 / 4.
+Proof.
+  intros c x HA Hacc. destruct (fresnel_accept_ok x Hacc) as [_ Hx].
+  exact (proj1 (xf_psi_bound c (B2R x) HA) Hx).
+Qed.
+
 Lemma cm_lin_deriv : forall K t, derivable_pt_lim (fun y => K * y) t K.
 Proof.
   intros K t.
@@ -543,6 +568,8 @@ Proof.
     exact Out'.
 Qed.
 
+Print Assumptions xf_psi_bound.
+Print Assumptions xf_accept_psi.
 Print Assumptions cm_FC_deriv.
 Print Assumptions cm_FS_deriv.
 Print Assumptions cm_prim_lip.
