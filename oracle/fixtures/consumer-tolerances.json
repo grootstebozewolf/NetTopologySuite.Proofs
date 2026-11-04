@@ -12,15 +12,16 @@
       "tolerance": {
         "kind": "relative",
         "g_poly": {"bound": "24 u g", "domain": "2^-338 <= theta <= 1", "g": "theta - sin theta"},
-        "quotient": {"bound": "28 u |n/g|", "floors": ["2^-1022 <= |n/g|", "|n/g| <= 2^900"]},
+        "quotient": {"bound": "28 u |n/g|", "floors": ["2^-1022 <= |n/g|", "|n/g| <= 2^900"], "scope": "poly path, 2^-338 <= theta <= 1 (B64_SegGDiv)"},
+        "quotient_total": {"bound": "260 u |n/g|", "floors": ["2^-1022 <= |n/g|", "|n/g| <= 2^900"], "domain": "2^-338 <= |theta| <= 10, signed (B64_SegGWire)", "floors_are": "hypotheses about the exact quotient, not runtime checks"},
+        "g_total": {"bound": "256 u |g|", "domain": "2^-338 <= |theta| <= 10, signed (B64_SegGPolicy)"},
         "sine_core": {"bound": "10 u |x|", "domain": "2^-1022 <= |x| <= 1609/1024", "kind": "input-relative"},
         "theta_certified": false,
         "theta_source": "libm asin (inventory T1, deferred D3): the bounds are conditional on the supplied theta"
       },
-      "lemmas": ["b64_sin_rel", "tiny_abs_to_rel", "mf_seg_g_poly_rel", "mf_seg_g_poly_pos", "mf_seg_offset_rel", "sgp_outcome_sound", "sgp_outcome_complete", "sgp_signed_rel"],
+      "lemmas": ["b64_sin_rel", "tiny_abs_to_rel", "mf_seg_g_poly_rel", "mf_seg_g_poly_pos", "mf_seg_offset_rel", "sgp_outcome_sound", "sgp_outcome_complete", "sgp_signed_rel", "sgw_offset_rel", "sgw_outcome_value"],
       "pending_lemmas": [],
       "unblock_when": [
-        "the division is wired to the total evaluator of B64_SegGPolicy (intake, seam, negative theta and decline are proved there)",
         "extraction plus an oracle_bin mode for mf_seg_g_poly and mf_seg_offset",
         "corpus run: zero new UNDECIDED results compared with the current Taylor driver",
         "C# and Java ports bit-identical to the extracted result, or the unavailability is recorded"
