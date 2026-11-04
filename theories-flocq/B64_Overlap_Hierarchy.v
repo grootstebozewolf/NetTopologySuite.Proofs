@@ -561,3 +561,141 @@ Print Assumptions predicate_hierarchy_strict.
 Print Assumptions thm13_witness_nonoverlapping.
 Print Assumptions priest_chain_nonoverlapping_chain.
 Print Assumptions equal_magnitude_overlaps.
+
+(* --------------------------------------------------------------------------
+   Appended for the one-bit chain bound (B64_CarryCleanOneBit.v); nothing
+   above is changed, and these results are not among the seventeen the
+   header counts.  The chain form of `overlap_within k`, its k = 0 instance
+   (Shewchuk's chain), monotonicity in k, the chain over an append, and how
+   the relation moves when one or both sides are doubled.  Real arithmetic
+   only: no rounding.  AI-drafted; human review pending (this appendix only).
+   -------------------------------------------------------------------------- *)
+
+Fixpoint overlap_within_chain (k : Z) (e : b64_expansion) : Prop :=
+  match e with
+  | nil => True
+  | _ :: nil => True
+  | a :: (b :: _) as rest =>
+      overlap_within_b64 k a b /\ overlap_within_chain k rest
+  end.
+
+Lemma overlap_within_chain_0_iff :
+  forall e : b64_expansion, overlap_within_chain 0 e <-> nonoverlapping_chain e.
+Proof.
+  induction e as [| a e IH]; [ split; intro; exact I | ].
+  destruct e as [| b e]; [ split; intro; exact I | ].
+  split; intros [H1 H2]; split; [ exact H1 | apply IH, H2 | exact H1 | apply IH, H2 ].
+Qed.
+
+Lemma overlap_within_chain_mono :
+  forall (k1 k2 : Z) (e : b64_expansion),
+    (k1 <= k2)%Z -> overlap_within_chain k1 e -> overlap_within_chain k2 e.
+Proof.
+  intros k1 k2 e Hk. induction e as [| a e IH]; [ intro; exact I | ].
+  destruct e as [| b e]; [ intro; exact I | ].
+  intros [H1 H2]. split; [ apply (overlap_within_mono k1 k2); assumption | apply IH, H2 ].
+Qed.
+
+Corollary nonoverlapping_chain_overlap_within_1 :
+  forall e : b64_expansion, nonoverlapping_chain e -> overlap_within_chain 1 e.
+Proof.
+  intros e H. apply (overlap_within_chain_mono 0 1); [ lia | ].
+  apply overlap_within_chain_0_iff, H.
+Qed.
+
+(* Two chains joined: the chain holds on the append when it holds on both
+   parts and on the one new adjacent pair. *)
+Lemma overlap_within_chain_app :
+  forall (k : Z) (l1 l2 : b64_expansion) (d : binary64),
+    overlap_within_chain k l1 -> overlap_within_chain k l2 ->
+    (l1 <> nil -> l2 <> nil -> overlap_within_b64 k (last l1 d) (hd d l2)) ->
+    overlap_within_chain k (l1 ++ l2).
+Proof.
+  intros k l1 l2 d. induction l1 as [| a l1 IH]; intros H1 H2 Hl; [ exact H2 | ].
+  destruct l1 as [| b l1].
+  - destruct l2 as [| c l2]; [ exact I | ].
+    split; [ apply Hl; discriminate | exact H2 ].
+  - destruct H1 as [Hab H1]. split; [ exact Hab | ].
+    apply (IH H1 H2). intros _ Hn. apply (Hl ltac:(discriminate) Hn).
+Qed.
+
+Lemma nonoverlapping_chain_app_r :
+  forall l1 l2 : b64_expansion, nonoverlapping_chain (l1 ++ l2) -> nonoverlapping_chain l2.
+Proof.
+  induction l1 as [| a l1 IH]; intros l2 H; [ exact H | ].
+  apply IH. destruct l1 as [| b l1].
+  - destruct l2 as [| c l2]; [ exact I | exact (proj2 H) ].
+  - exact (proj2 H).
+Qed.
+
+Lemma overlap_within_swap :
+  forall (k : Z) (x y : R), overlap_within k x y -> overlap_within k y x.
+Proof. intros k x y [H | H]; [ right | left ]; exact H. Qed.
+
+Lemma bpow_succ_double : forall e : Z, bpow radix2 (e + 1) = 2 * bpow radix2 e.
+Proof. intro e. rewrite bpow_plus. change (bpow radix2 1) with 2. ring. Qed.
+
+(* Halving both sides keeps the slack. *)
+Lemma overlap_within_half_both :
+  forall (k : Z) (x y : R), overlap_within k (2 * x) (2 * y) -> overlap_within k x y.
+Proof.
+  intros k x y [[r [s [Hx Hy]]] | [r [s [Hy Hx]]]].
+  - left. exists r, (s - 1)%Z.
+    pose proof (bpow_succ_double (s - 1)) as Hs. replace (s - 1 + 1)%Z with s in Hs by ring.
+    pose proof (bpow_succ_double (s - 1 + k)) as Hsk.
+    replace (s - 1 + k + 1)%Z with (s + k)%Z in Hsk by ring.
+    rewrite Rabs_mult, Rabs_pos_eq in Hy by lra.
+    split; [ rewrite Hs in Hx; lra | lra ].
+  - right. exists r, (s - 1)%Z.
+    pose proof (bpow_succ_double (s - 1)) as Hs. replace (s - 1 + 1)%Z with s in Hs by ring.
+    pose proof (bpow_succ_double (s - 1 + k)) as Hsk.
+    replace (s - 1 + k + 1)%Z with (s + k)%Z in Hsk by ring.
+    rewrite Rabs_mult, Rabs_pos_eq in Hx by lra.
+    split; [ rewrite Hs in Hy; lra | lra ].
+Qed.
+
+(* Halving one side costs at most one bit of slack. *)
+Lemma overlap_within_half_l :
+  forall (k : Z) (x y : R), overlap_within k (2 * x) y -> overlap_within (k + 1) x y.
+Proof.
+  intros k x y [[r [s [Hx Hy]]] | [r [s [Hy Hx]]]].
+  - left. exists r, (s - 1)%Z.
+    pose proof (bpow_succ_double (s - 1)) as Hs. replace (s - 1 + 1)%Z with s in Hs by ring.
+    replace (s - 1 + (k + 1))%Z with (s + k)%Z by ring.
+    split; [ rewrite Hs in Hx; lra | exact Hy ].
+  - right. exists r, s. split; [ exact Hy | ].
+    rewrite Rabs_mult, Rabs_pos_eq in Hx by lra.
+    pose proof (bpow_succ_double (s + k)) as Hsk. replace (s + k + 1)%Z with (s + (k + 1))%Z in Hsk by ring.
+    pose proof (bpow_gt_0 radix2 (s + k)). lra.
+Qed.
+
+Lemma overlap_within_half_r :
+  forall (k : Z) (x y : R), overlap_within k x (2 * y) -> overlap_within (k + 1) x y.
+Proof.
+  intros k x y H. apply overlap_within_swap, overlap_within_half_l, overlap_within_swap, H.
+Qed.
+
+(* A multiple of 2^c and anything below 2^(c+1): within one bit. *)
+Lemma overlap_within_1_multiple :
+  forall (r c : Z) (x y : R),
+    x = IZR r * bpow radix2 c -> Rabs y < bpow radix2 (c + 1) -> overlap_within 1 x y.
+Proof. intros r c x y Hx Hy. left. exists r, c. split; assumption. Qed.
+
+Lemma overlap_within_1_pow2 :
+  forall (c : Z) (x y : R),
+    Rabs x = bpow radix2 c -> Rabs y < bpow radix2 (c + 1) -> overlap_within 1 x y.
+Proof.
+  intros c x y Hx Hy. destruct (Rcase_abs x) as [Hn | Hp].
+  - rewrite Rabs_left in Hx by exact Hn. apply (overlap_within_1_multiple (-1) c); [ cbn; lra | exact Hy ].
+  - rewrite Rabs_right in Hx by exact Hp. apply (overlap_within_1_multiple 1 c); [ cbn; lra | exact Hy ].
+Qed.
+
+Print Assumptions overlap_within_chain_0_iff.
+Print Assumptions overlap_within_chain_mono.
+Print Assumptions nonoverlapping_chain_overlap_within_1.
+Print Assumptions overlap_within_chain_app.
+Print Assumptions nonoverlapping_chain_app_r.
+Print Assumptions overlap_within_half_both.
+Print Assumptions overlap_within_half_l.
+Print Assumptions overlap_within_half_r.
+Print Assumptions overlap_within_1_pow2.
