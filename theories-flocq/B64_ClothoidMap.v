@@ -72,9 +72,9 @@ Proof.
 Qed.
 
 (* The S7 cap X_F = 5/2 stated geometrically: with y = s / w, y^2 = |psi(s)|,
-   so |y| <= 5/2 holds exactly when the tangent has turned at most 25/4 rad
-   from the inflection point.  This (not a corpus maximum) is the meaning of
-   the intake. *)
+   so |y| <= 5/2 holds exactly when the magnitude of tangent rotation from
+   the inflection point is at most 25/4 rad.  This (not a corpus maximum) is
+   the meaning of the intake. *)
 Lemma xf_psi_bound : forall c y, 0 < cloth_A c ->
   (Rabs y <= 5 / 2 <-> Rabs (cloth_psi c (cm_W c * y)) <= 25 / 4).
 Proof.
