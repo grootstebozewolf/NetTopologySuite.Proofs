@@ -97,9 +97,6 @@ Proof. intros [u | x | x] d; reflexivity. Qed.
 Lemma expand_hd : forall b r d, hd d (flat_map cblock_expand (b :: r)) = block_first b.
 Proof. intros [u | x | x] r d; reflexivity. Qed.
 
-Lemma bpow_lt_succ : forall c : Z, bpow radix2 c < bpow radix2 (c + 1).
-Proof. intro c. apply bpow_lt. lia. Qed.
-
 Lemma within_block :
   forall b, block_ok b -> block_pow2 b -> overlap_within_chain 1 (cblock_expand b).
 Proof.
@@ -1220,10 +1217,6 @@ Definition fes_overlap_within_1_n (n : nat) : Prop :=
     abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
     (length e + length f = n)%nat ->
     overlap_within_chain 1 (drop_zeros (fast_expansion_sum e f)).
-
-Lemma overlap_within_chain_short :
-  forall (k : Z) (l : list binary64), (length l <= 1)%nat -> overlap_within_chain k l.
-Proof. intros k [| a [| b l]] H; cbn [length] in H; try lia; exact I. Qed.
 
 (* Totals 0 .. 2: at most one TwoSum, whose output is strictly successive. *)
 Theorem fes_overlap_within_1_short : forall n, (n <= 2)%nat -> fes_overlap_within_1_n n.

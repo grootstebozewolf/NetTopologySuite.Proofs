@@ -699,3 +699,12 @@ Print Assumptions overlap_within_half_both.
 Print Assumptions overlap_within_half_l.
 Print Assumptions overlap_within_half_r.
 Print Assumptions overlap_within_1_pow2.
+
+Lemma bpow_lt_succ : forall c : Z, bpow radix2 c < bpow radix2 (c + 1).
+Proof. intro c. apply bpow_lt. lia. Qed.
+
+Lemma overlap_within_chain_short :
+  forall (k : Z) (e : b64_expansion), (length e <= 1)%nat -> overlap_within_chain k e.
+Proof. intros k [| a [| b e]] H; cbn [length] in H; try lia; exact I. Qed.
+
+Print Assumptions overlap_within_chain_short.
