@@ -127,37 +127,29 @@ run_arc_area_centroid
 # circumcentre_q centre.  The JTS/NTS point-to-arc distance interface value.
 run_arc_distance
 
-# --- point_on_arc_sector (shared helper for arc-arc / distance sector tests) -
-# Is a circle point within an arc's angular span? CCW angle-interval test via
-# atan2 (transcendental) -- shared by ARC_ARC_XY (and matching ARC_DISTANCE's
-# inline sector test).  Interface-boundary helper off the exact circumcentre.
-point_on_arc_sector
+# --- point_on_arc_sector : MIGRATED ----------------------------------------
+# (T4b, done) The atan2 sweep test is deleted.  Exact queries use the extracted
+# asxq_sector (ArcSectorExact.v); computed intersection points are decided
+# exactly in Q(sqrt D) by the extracted asxs_sector / qs_* (ArcSectorSurd.v,
+# driver seg_circle_exact / circ_circ_exact / ray crossings).
 
-# --- arc_seg_pts / arc_arc_pts / chord_chord_pts (hoisted intersection kernels)
-# Shared implementations of the three point calculators, hoisted for
-# deduplication (see goal: deduplicate the three contact kernels against
-# run_ring_simple's *_pts helpers).  They contain the projection/radical/cramer
-# math + sqrt (for chord length / h) + point_on_arc_sector (atan2 for sweep).
-# The transcendental parts (sqrt + atan2) have no Coq-extractable form; the
-# float IS the interface for RING_SIMPLE (witness points), OVERLAY_UNIFIED
-# (contact via non-empty), HOLES_DISJOINT, CURVE_RELATE_MATRIX, etc.
-# (justification same as point_on_arc_sector / run_ring_simple).
-# The previous duplicate bodies inside run_overlay_unified were removed
-# (now thin delegates); run_overlay_unified itself no longer performs the
-# arithmetic.
-arc_seg_pts
-arc_arc_pts
+# --- arc_seg_core / arc_arc_core / chord_chord_pts (intersection kernels) -----
+# Shared point calculators behind every arc/segment and arc/arc enumeration
+# (arc_seg_pts / arc_arc_pts and the RING_SIMPLE / OVERLAY_UNIFIED /
+# CURVE_RELATE_MATRIX copies, ARC_ARC_XY, ARC_SEGMENT_XY).  Since T4b every
+# DECISION (existence, tangency, segment range, sweep membership) is exact in
+# Q(sqrt D) through the extracted ArcSectorSurd.asxs_sector / qs_* (driver
+# seg_circle_exact / circ_circ_exact); the cores keep only the float OUTPUT
+# coordinates of the kept points, which carry an irrational sqrt(D) and have
+# no Coq-extractable float form -- the float IS the interface value.
+arc_seg_core
+arc_arc_core
 chord_chord_pts
 
-# --- ARC_ARC_XY (N-AA, issue #64 #5b) ---------------------------------------
-# Mode ARC_ARC_XY emits the intersection POINTS of two circular arcs.  Two
-# circumcircles meet on the radical line; the coordinates carry an irrational
-# sqrt(discriminant) (no Coq-extractable form, like ARC_LINE_XY), computed off
-# the EXACT circumcentre_q centres/radii so only the final sqrt/atan2 rounds.
-# Points kept iff in both arc spans (point_on_arc_sector).  The JTS/NTS arc-arc
-# intersection interface value (N-AA); the coordinate soundness proof is the
-# deferred #5b frontier (theories/ArcArcSound.v has the slice).
-run_arc_arc_xy
+# --- ARC_ARC_XY : MIGRATED ----------------------------------------------------
+# (T4b, done) The mode now only prints arc_arc_core's points; existence,
+# tangency and both-span membership are exact (circ_circ_exact).  The float
+# output coordinates live in arc_arc_core (allowlisted above).
 
 # --- DISC_OVERLAY (OV-DISC / OverlayNGCurve two-disc closed form) ------------
 # Mode DISC_OVERLAY emits the two radical-axis nodes and the closed-form area
@@ -217,18 +209,10 @@ run_lec_circle
 # where the line foot says 4) are asserted bit-exact by the generator.
 run_obstacle_distance
 
-# --- ARC_SEGMENT_XY (N-AL, issue #224 W1) -----------------------------------
-# Mode ARC_SEGMENT_XY emits the intersection POINTS of a circular arc with a
-# line SEGMENT (the segment analogue of ARC_ARC_XY; replaces the single-point
-# ARC_LINE_XY).  The coordinates carry an irrational sqrt(r^2 - d^2) (no
-# Coq-extractable form, like ARC_LINE_XY / ARC_ARC_XY); the count decision
-# r^2 - d^2 >/=/< 0 and the perpendicular foot are computed in EXACT Q off the
-# circumcentre_q centre/radius, so only the final sqrt and emitted coordinates
-# round.  Points kept iff in the arc span (point_on_arc_sector) AND on the
-# segment (0 <= t <= 1).  The JTS/NTS CircularArcs.intersectSegment interface
-# value (N-AL); coordinate existence proven in theories/ArcSegmentCircles.v
-# (line_circle_radical_point / arc_line_circle_intersect).
-run_arc_segment_xy
+# --- ARC_SEGMENT_XY : MIGRATED ------------------------------------------------
+# (T4b, done) The mode now only prints arc_seg_core's points; the segment
+# range, tangency and span membership are exact (seg_circle_exact).  The
+# float output coordinates live in arc_seg_core (allowlisted above).
 
 # --- ARC_ARC_DISTANCE (D-AA, JTS #1195 §7) ----------------------------------
 # Mode ARC_ARC_DISTANCE emits the shortest distance between two circular arcs.

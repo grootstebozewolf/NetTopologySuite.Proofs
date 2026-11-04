@@ -2812,6 +2812,11 @@ theories/ArcArcCirclesSpan.v
 # plus a same-sign combinator (no iff fed to nra).  3-axiom (IVT atan2).
 # No Admitted.
 theories/ArcSpanAtan2.v
+# Exact arc sector test (cross/dot signs about the circumcentre): replaces the
+# oracle's atan2 sector gate for exact queries; = arc_span_contains on the
+# circle, of the radial projection off it.  claimId s0-t4-sector-exact.
+theories/ArcSectorExact.v
+theories/ArcSectorSurd.v
 # Issue #64 round-2 item ④ — N-AA Vieta coordinate identities
 # (radical_point plus/minus x/y sum and product).  Pure ring, 3-axiom.
 # Item ② atan2 discharge lives in ArcSpanAtan2.v.
@@ -2935,6 +2940,7 @@ theories/MetricGreen.v
 theories/MetricCircleSmoke.v
 theories/SheetHenClothoidCore.v
 theories/ClothoidTangent.v
+theories/FresnelSeries.v
 theories/SheetHenClothoidBounds.v
 theories/SheetHenClothoidFrames.v
 theories/SheetHenClothoidEgg.v
@@ -3902,6 +3908,24 @@ theories-flocq/Orient_b64_exact.v
 # comparison; composes with theories/ClothoidDegenerate.v's unique-root
 # theorem.  Route (A) b64 slice of docs/clothoid-open-questions-triage.md.
 theories-flocq/ClothoidDegenerate_b64.v
+# Shared binary64 RNE absolute-error lemmas (u|x| + e0, normal and subnormal).
+theories-flocq/B64_AbsErr.v
+# S1: binary64 Horner kernel (evaluation error vs the same coefficients exact)
+# and its degree-15 reduced-sine instance (<= 2^-52).  claimId s1-b64-horner.
+theories-flocq/B64_Horner.v
+theories-flocq/B64_SinPoly.v
+# S2: binary64 sine, |x| <= 10, error <= 2^-49 (Sterbenz mod-pi reduction +
+# degree-21 Horner).  claimId s2-b64-sin.
+theories-flocq/B64_Sin.v
+theories-flocq/B64_CosPoly.v
+theories-flocq/B64_Cos.v
+theories-flocq/B64_ArcPoint.v
+theories-flocq/B64_FresnelPolyC.v
+theories-flocq/B64_FresnelPolyS.v
+theories-flocq/B64_FresnelPoly.v
+theories-flocq/B64_Fresnel.v
+theories-flocq/B64_ClothoidMap.v
+theories-flocq/B64_MarginFilter.v
 # Arc-spline tolerance gate in binary64 RNE (sound) and binary64 points for
 # every CasB64ArcOracle; no oracle inhabitant (QEX). claimId 0007-clothoid-arc-spline.
 theories-flocq/ClothoidArcSpline_b64.v

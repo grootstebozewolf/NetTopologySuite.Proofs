@@ -34,6 +34,7 @@ on:
       - 'theories-flocq/**'
       - '_CoqProject.full'
       - 'Dockerfile'
+      - 'tests/B64SinConformance/**'
       - '.github/workflows/build-oracle.yml'
   # Gate `oracle/driver.ml` (the RocqRefRunner sources) on PRs into main.
   # Without this trigger the oracle is only compiled AFTER merge to main:
@@ -48,6 +49,7 @@ on:
       - 'theories-flocq/**'
       - '_CoqProject.full'
       - 'Dockerfile'
+      - 'tests/B64SinConformance/**'
       - '.github/workflows/build-oracle.yml'
   workflow_dispatch:
   release:
@@ -246,6 +248,45 @@ jobs:
             > oracle/ieee_oracle_bridge_run.txt
           ORACLE_BIN=oracle/oracle_bin python3 oracle/red_sqlmm_wkt_tests.py
 
+      - name: Set up .NET (B64 conformance)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Set up Java (B64 conformance)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: B64 conformance corpus (contract boundaries, oracle answers)
+        # tests/B64SinConformance/corpus.py: inputs generated from the Coq
+        # literals (intake caps, reduction transitions, signed zero,
+        # subnormal transitions, the margin flip and the clothoid
+        # computed-argument transition found by bisection with the oracle,
+        # seeded random values), answered once by the freshly extracted
+        # oracle_bin.  The constants-sync half (gen_constants.py --check)
+        # runs in `make ci-guards`.
+        run: python3 tests/B64SinConformance/corpus.py --oracle oracle/oracle_bin --out b64-corpus
+
+      - name: B64 conformance gate, x64 (C# == oracle, Java == oracle)
+        # Both ports replay the same oracle answers bit for bit (exit 1 on
+        # any mismatch), so oracle == C# == Java.
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+          DOTNET_NOLOGO: '1'
+        run: |
+          dotnet run --project tests/B64SinConformance -c Release -- b64-corpus
+          javac -d b64-java tests/B64SinConformance/java/nts/proofs/numerics/*.java
+          java -cp b64-java nts.proofs.numerics.Conformance b64-corpus
+
+      - name: Upload B64 conformance corpus (inputs + oracle answers)
+        uses: actions/upload-artifact@v4
+        with:
+          name: b64-corpus
+          path: b64-corpus
+          retention-days: 7
+
       - name: Upload oracle_bin artifact (90-day retention)
         uses: actions/upload-artifact@v4
         with:
@@ -273,3 +314,41 @@ jobs:
             oracle/oracle_bin
             oracle/libntsrocq.so
             oracle/nts_ffi.h
+
+  b64-conformance-arm64:
+    # The same C# and Java ports on arm64 against the x64 oracle's answers
+    # (oracle_bin is an x86-64 binary).  arm64 is where an FMA contraction or
+    # other platform drift in either runtime would surface.
+    name: B64 conformance gate, arm64 (C# and Java == x64 oracle answers)
+    needs: build-oracle
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download corpus and oracle answers
+        uses: actions/download-artifact@v4
+        with:
+          name: b64-corpus
+          path: b64-corpus
+
+      - name: B64 conformance gate, arm64
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+          DOTNET_NOLOGO: '1'
+        run: |
+          dotnet run --project tests/B64SinConformance -c Release -- b64-corpus
+          javac -d b64-java tests/B64SinConformance/java/nts/proofs/numerics/*.java
+          java -cp b64-java nts.proofs.numerics.Conformance b64-corpus

@@ -75,6 +75,43 @@ def audit_exceptions(lane_prefix):
     return len(seen)
 
 
+def audit_exception_files():
+    """All distinct .v files listed (outside comments) in audit-exceptions."""
+    path = os.path.join(ROOT, "docs", "audit-exceptions.txt")
+    seen = set()
+    if not os.path.exists(path):
+        return seen
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for raw in fh:
+            for m in re.finditer(r"([A-Za-z0-9_./-]+\.v)", raw.split("#", 1)[0]):
+                seen.add(m.group(1))
+    return seen
+
+
+def audit_live_header_failures():
+    """The '# LIVE: N files (F theories-flocq/ + T theories/ + H hunt probe)'
+    header of docs/audit-exceptions.txt must match the list below it."""
+    path = os.path.join(ROOT, "docs", "audit-exceptions.txt")
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        head = fh.read()
+    m = re.search(r"#\s*LIVE:\s*([0-9]+)\s+files\s+\(([0-9]+)\s+theories-flocq/\s*\+\s*"
+                  r"([0-9]+)\s+theories/\s*\+\s*([0-9]+)\s+hunt\s+probe", head)
+    if not m:
+        return ["docs/audit-exceptions.txt: no '# LIVE: N files (F theories-flocq/ + "
+                "T theories/ + H hunt probe)' header found"]
+    files = audit_exception_files()
+    fl = sum(1 for f in files if f.startswith("theories-flocq/"))
+    th = sum(1 for f in files if f.startswith("theories/"))
+    other = len(files) - fl - th
+    claimed = tuple(int(g) for g in m.groups())
+    actual = (len(files), fl, th, other)
+    if claimed != actual:
+        return ["docs/audit-exceptions.txt: LIVE header claims %d files (%d theories-flocq/ "
+                "+ %d theories/ + %d hunt probe), the list has %d (%d + %d + %d)"
+                % (claimed + actual)]
+    return []
+
+
 def terminator_count(word):
     n = 0
     for lane in ("theories", "theories-flocq"):
@@ -178,6 +215,8 @@ def main():
             failures.append(
                 "%s: no '%s' claim found; the anchor phrase was edited away"
                 % (REQUIRED_IN, label))
+
+    failures.extend(audit_live_header_failures())
 
     if failures:
         print("[readme-counts] FAIL")
