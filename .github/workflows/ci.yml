@@ -50,6 +50,13 @@ jobs:
         # the single source of the guardrail verdict on every PR and push.
         run: make ci-guards
 
+      - name: Dashboard freshness (warn only)
+        # Warns when the commit shown in the committed dashboard is behind HEAD
+        # for the dashboard's input paths.  Needs history, hence the unshallow.
+        run: |
+          git fetch --quiet --unshallow || true
+          python3 scripts/gen_dashboard.py --check-freshness
+
   rocq:
     name: Build with Rocq ${{ matrix.rocq-version }}
     # Gate the build on the fast guardrails: a registry/doc/allowlist
