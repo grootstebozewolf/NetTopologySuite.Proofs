@@ -3919,6 +3919,7 @@ theories-flocq/B64_SinPoly.v
 theories-flocq/B64_Sin.v
 theories-flocq/B64_SinRel.v
 theories-flocq/B64_SegGRel.v
+theories-flocq/B64_SegGDiv.v
 theories-flocq/B64_CosPoly.v
 theories-flocq/B64_Cos.v
 theories-flocq/B64_ArcPoint.v
