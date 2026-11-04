@@ -106,7 +106,7 @@ w("""(* ========================================================================
    on the B64_Horner kernel, for |z| <= 40 (the intake |x| <= 5/2 gives
    x^4 <= 625/16, plus the rounding of z).  X_F = 5/2 is the tangent-rotation
    cap |psi| = x^2 <= 25/4 rad from the inflection point (B64_Fresnel.v
-   header); the corpus extreme x = 2.298 (inventory T7) lies inside it.
+   header; lemma B64_ClothoidMap.xf_psi_bound states the equivalence).
    Budget lines, each a theorem: frc_eval_err / frs_eval_err (binary64
    Horner vs the same coefficients exact), frc_coef_err / frs_coef_err,
    frc_M/L_bound, frs_M/L_bound, and frc_fz_eq / frs_fz_eq: the exact
