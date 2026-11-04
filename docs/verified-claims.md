@@ -395,8 +395,8 @@ Packaging (PR #534, `claimId: none`): `JordanRingKit.v` is a Require-Export faca
 Packaging (`claimId: none`): `JctSeamPack.v` is a Require-Export facade for the JCT seam clique (`JordanRingKit` · `ConvexOffringSeam` · `JCTParityTransport` · `JCTHalfOpenParity` · `JCTGenericStability` · `JCTLevelJump` · `JCTTrappedHalf`). Full-pack importers plus near-clique JCT theorems (`JCTSeamAssembly`, H-bridge / straddle / trapped / offring families). No new theorem. Not `JctSeamPack7`. Convex-layer leaves stay off the pack. Blast-cone survivor is `JctSeamPack.v` (gates may name an importer). Not laser-ml2 / laser-ov / 69-c / 424-b.
 
 | `TriangleValidPolygon.v : triangle_with_hole_valid` (+ `gtri_ring_simple`) | **First with-holes `valid_polygon`, UNCONDITIONAL (no JCT).** The triangle-in-triangle polygon — outer `(0,0),(6,0),(0,6)`, hole `(1,1),(3,1),(1,3)` — satisfies all of `Overlay.valid_polygon`: outer + hole each `ring_closed` / `ring_simple` / `ring_has_minimum_points`, and the hole `hole_inside_outer` the outer. The only analytic clause (`hole_inside_outer`, the polygonal-JCT residual that gated `extract_rings_valid`'s with-holes case) is discharged by `hole_inside_outer_triangle` with **no named hypothesis**. `gtri_ring_simple` (a non-degenerate triangle ring is simple — every edge pair shares a vertex, via `KakeyaOverlay.sip_shared_no_cross`) is the reusable `gtri_ring` analogue of `perron_tri_ring_simple` `[exact]` | 3 |
-| `KakeyaPerron_b64.v : perron_tri_b64_orient_exact` (+ `perron_b64_inputs_int_safe`, `perron_tri_b64_cross_positive`) | **Perron binary64 soundness (stage ≤ 24):** the scaled stage-n Perron triangles are `coord_int_safe`, so `b64_orient2d` is bit-exact and the sliver orientation (cross = 2^(n+2) > 0) is computed correctly — however thin the area 1/2ⁿ `[b64]` | 4 |
-| `KakeyaPerron_b64.v : perron_b64_apex_unsafe_at_25` | **The soundness diameter brink:** at stage 25 the scaled apex y-coordinate 2^26 leaves the 2^25 `coord_int_safe` window — the first unsafe stage (a float-window fact, not an exact-ℝ crossing; see docs/kakeya-soundness.md) `[b64]` | 4 |
+| `KakeyaPerron_b64.v : perron_tri_b64_orient_exact` (+ `perron_b64_inputs_int_safe`, `perron_tri_b64_cross_positive`) | **Perron binary64 soundness (stage ≤ 24):** the scaled stage-n Perron triangles are `coord_int_safe`, so `b64_orient2d` is bit-exact and the sliver orientation (cross = 2^(n+2) > 0) is computed correctly — however thin the area 1/2ⁿ `[int-b64]` | 4 |
+| `KakeyaPerron_b64.v : perron_b64_apex_unsafe_at_25` | **The soundness diameter brink:** at stage 25 the scaled apex y-coordinate 2^26 leaves the 2^25 `coord_int_safe` window — the first unsafe stage (a float-window fact, not an exact-ℝ crossing; see docs/kakeya-soundness.md) `[int-b64]` | 4 |
 | `HatMonotileInterior.v : hat_point_in_ring` (+ `hat_hole_inside_outer`) | **The "hat" einstein, via ray parity.** The corpus's `point_in_ring` crossing-number test applied to the *actual* (NON-CONVEX) aperiodic monotile (`HatMonotile.hat_ring`, 13-gon, exact `sqrt 3` coords): the witness `(17/4, 5·√3/4)` in the hat's top bump has crossing-number **1** (only the right bump edge `(4,2)→(3,3)` is crossed; the other 12 edges sit at/below height `√3 < py p`, or to the left) ⇒ odd ⇒ inside. `hat_hole_inside_outer` nests a hole. Demonstrates the ray-parity interior holds for non-convex rings; **not** the JCT topological-interior equivalence (that's the polygonal-JCT residual) `[exact]` | 3 |
 | `HatMonotileExterior.v : hat_pocket_not_in_ring` (+ `hat_parity_classification`) | **The "hat" einstein's concave pocket, via ray parity — the corpus's first genuinely concave point-in-polygon classification.** A point in one of the hat's REFLEX NOTCHES — `(7/2, √3/4)`, inside the spike `(2,0)→(3,1)→(4,0)` whose apex `(3,1)` is the reflex vertex (`HatMonotile.hat_reflex_turn`, `cross<0`) — is inside the convex hull but OUTSIDE the tile. The rightward ray meets exactly two edges to its right (the down-edge `(3,1)→(4,0)` and the up-edge `(6,0)→(7,1)`), crossing-number **2** ⇒ even ⇒ `~ point_in_ring`. No convex polygon can present such a hull-interior exterior point. `hat_parity_classification` bundles it with `hat_point_in_ring` into the einstein's first in/out pair. Choosing `py = √3/4` (a rational multiple of `√3`) keeps every per-edge `nra` homogeneous in `√3`. Convexity-INDEPENDENT ray-parity layer only; **not** the JCT topological-interior equivalence `[exact]` | 3 |
 | `GeneralTriangleHoleNesting.v : hole_inside_outer_triangle` (+ `gtri_band_in_ring`) | **GREEN — arbitrary-triangle hole nesting, UNCONDITIONAL (no JCT).** The corrected, TRUE parity direction: for an interior-side point (`0 < gtri p`, all three inward slacks positive) whose `py` lies in one of the three **directed height bands** (`ay<py<by_ ∨ by_<py<cy ∨ cy<py<ay`), `point_in_ring p (gtri_ring …)` holds — `edge_cross_sign` collapses each edge's ray-crossing to its band (the opposite slack-disjunct is dead under `0<slack`), the bands are disjoint, so exactly one edge crosses ⇒ odd parity. Composes (`gtri_band_in_ring` + `In p hole`) to `hole_inside_outer_triangle`, the triangle analogue of `HoleInsideOuterRect.hole_inside_outer_rect` — the directed band plays the role of the rectangle's explicit `y0<py<y1`. Chips the `hole_inside_outer` polygonal-JCT residual of `extract_rings_valid` `[exact]` | 3 |
@@ -1108,7 +1108,7 @@ the elliptic-E primitive. Meanwhile the oracle's `LENGTH_UNIFIED` quadrature
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `EllipseLength.v : ellipse_length_upper` (+ `ellipse_chord_le`, `ellipse_polyline_le`, `trig_gap_sq`) | **Tier 0, unconditional:** rotation is an isometry, every chord ≤ `Rmax rx ry · gap` (half-angle + the 3-axiom `\|sin x\| ≤ x`), so any `is_curve_length` value satisfies `L ≤ Rmax rx ry · (b−a)`; the chord lower bound is `curve_length_ge_chord`, free `[exact]` | 3 |
-| `EllipseLength.v : ellipse_conditional_is_curve_length` | **Tier 1, conditional (named hypotheses `H_E_chord`, `H_E_approx`):** the ellipse's metric length is `E b − E a` in the `is_curve_length` sense — via the generic first-order-tight primitive engine (`ArcRectifiable.v : curve_length_of_primitive`) at `F = E`. The Section hypotheses themselves stay GLOBAL (`forall s t`, the #553-contracted form, unchanged); only the engine's premises are windowed, and the instance weakens the global contract into them `[conditional]` | 3 |
+| `EllipseLength.v : ellipse_conditional_is_curve_length` | **Tier 1, conditional (named hypotheses `H_E_chord`, `H_E_approx`):** the ellipse's metric length is `E b − E a` in the `is_curve_length` sense — via the generic first-order-tight primitive engine (`ArcRectifiable.v : curve_length_of_primitive`) at `F = E`. The Section hypotheses themselves stay GLOBAL (`forall s t`, the #553-contracted form, unchanged); only the engine's premises are windowed, and the instance weakens the global contract into them `[cond]` | 3 |
 
 ## Issue #508 — ellipse rung 2: shift invariance + the rx = ry circular bridge <!-- feat:arc-len geom:cs,arc -->
 
@@ -1177,7 +1177,7 @@ Oracle `K` is the ISO clothoid by arc length: length on `[sd, ed]` is `ed − sd
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `ArcRectifiable.v : curve_length_of_primitive` (+ `uniform_lower_primitive`) | **The first-order-tight primitive engine:** if every chord within `[a,b]` is ≤ its `F`-increment and, on fine gaps within the window, the increment exceeds the chord by at most `ε·gap`, then `is_curve_length g a b (F b − F a)` — upper half by chord-modulus telescoping; least half by uniform partitions, instantiating the tightness at `ε = slack/(b−a+1)` where slack is the lub gap being refuted; no limits library; the conditional-tier headline of every integral lane `[exact]` | 3 |
-| `ClothoidLength.v : clothoid_arclength_is_curve_length` (+ `clothoid_length_upper`) | **The window-local unit-speed tier (named hypotheses `H_unit_chord`, `H_unit_approx` on the K token's own `[sd, ed]`):** a clothoid parameterized by arc length has metric length exactly `ed − sd` — the engine at `F = id`; the upper bound needs only the chord hypothesis (chord-modulus telescoping, not the full engine). Host position is LipInt (#889 `lipint_ftc`); this row's windowed contract stays `H_unit_chord` / `H_unit_approx` `[conditional]` | 3 |
+| `ClothoidLength.v : clothoid_arclength_is_curve_length` (+ `clothoid_length_upper`) | **The window-local unit-speed tier (named hypotheses `H_unit_chord`, `H_unit_approx` on the K token's own `[sd, ed]`):** a clothoid parameterized by arc length has metric length exactly `ed − sd` — the engine at `F = id`; the upper bound needs only the chord hypothesis (chord-modulus telescoping, not the full engine). Host position is LipInt (#889 `lipint_ftc`); this row's windowed contract stays `H_unit_chord` / `H_unit_approx` `[cond]` | 3 |
 
 ## Shear — placed clothoids under affine maps and the similarity-only linear law (`ClothoidAffine.v`, `ClothoidShearLaw.v`) <!-- feat:curves geom:cs -->
 
@@ -1238,7 +1238,7 @@ is named and sandwiched; the missing method remains the integral of `√σ²`.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `EllipseLength_E.v : ellipse_circular_E_discharges` (+ `ellipse_circular_E_chord`, `ellipse_circular_E_approx`, `ellipse_speed_sq_sandwich`) | **Circular discharge + parked integrand:** `is_curve_length` at `E b − E a = r·(b−a)` from the #553 engine; `σ²` sandwiched between `Rmin/Rmax` of the squared semi-axes `[exact]` / `[conditional]` | 3 |
+| `EllipseLength_E.v : ellipse_circular_E_discharges` (+ `ellipse_circular_E_chord`, `ellipse_circular_E_approx`, `ellipse_speed_sq_sandwich`) | **Circular discharge + parked integrand:** `is_curve_length` at `E b − E a = r·(b−a)` from the #553 engine; `σ²` sandwiched between `Rmin/Rmax` of the squared semi-axes `[exact]` / `[cond]` | 3 |
 
 ## Issue #508 — clothoid P1: windowed unit-speed discharge (`ClothoidLength_unit.v`) <!-- feat:arc-len geom:cs -->
 
@@ -1259,7 +1259,7 @@ conditional primitive.  Oracle `N` stays single-span.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `NurbsGeneralLength.v : nurbs3_equal_weights_length` (+ `nurbs_knot_span_additive`, `nurbs_conditional_is_curve_length`) | **General degree + knot spans + parked primitive:** equal-weight rational cubic iff polynomial cubic; abutting windows add; `curve_length_of_primitive` at an abstract `F` `[exact]` / `[conditional]` | 3 |
+| `NurbsGeneralLength.v : nurbs3_equal_weights_length` (+ `nurbs_knot_span_additive`, `nurbs_conditional_is_curve_length`) | **General degree + knot spans + parked primitive:** equal-weight rational cubic iff polynomial cubic; abutting windows add; `curve_length_of_primitive` at an abstract `F` `[exact]` / `[cond]` | 3 |
 
 ## Issue #508 — arc P2: through-mid point-set + valid_arc sweep pin (`ArcMidSweep.v`) <!-- feat:arc-len geom:arc -->
 
@@ -1388,8 +1388,8 @@ epic 508 (that is #566). Does not remint SpeedIntegral.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `EllipseSpeedIntegral.v : ellipse_speed_integral_is_curve_length` (+ `ellipse_speed_uc`, `ellipse_chord_rate`, `ellipse_speed_bounds`, `ellipse_chord_eq_speed`) | **Elliptic pack instance (#508/#563, claimId: 508-d, witness: 508-d-elliptic-e):** `increment_squeezed E (ellipse_speed rx ry) a b` implies `is_curve_length (ellipse_param …) a b (E b − E a)`. UC is Hölder 1/2; chords equal `2|sin(gap/2)|·σ(mid)`. No Heine–Cantor, no Coquelicot. Does not retire epic 508 `[exact]` / `[conditional]` | 3 |
-| `EllipseSpeedIntegral.v : ellipse_34_quarter_E_sandwich` (+ `ellipse_E_increment_sandwich`, `ellipse_34_quarter_via_speed_integral`) | **3×4 quarter witness:** any squeezed E-increment on `[0, π/2]` lies in `[3π/2, 4π/2]`; the same E is a metric length through the pack `[exact]` / `[conditional]` | 3 |
+| `EllipseSpeedIntegral.v : ellipse_speed_integral_is_curve_length` (+ `ellipse_speed_uc`, `ellipse_chord_rate`, `ellipse_speed_bounds`, `ellipse_chord_eq_speed`) | **Elliptic pack instance (#508/#563, claimId: 508-d, witness: 508-d-elliptic-e):** `increment_squeezed E (ellipse_speed rx ry) a b` implies `is_curve_length (ellipse_param …) a b (E b − E a)`. UC is Hölder 1/2; chords equal `2|sin(gap/2)|·σ(mid)`. No Heine–Cantor, no Coquelicot. Does not retire epic 508 `[exact]` / `[cond]` | 3 |
+| `EllipseSpeedIntegral.v : ellipse_34_quarter_E_sandwich` (+ `ellipse_E_increment_sandwich`, `ellipse_34_quarter_via_speed_integral`) | **3×4 quarter witness:** any squeezed E-increment on `[0, π/2]` lies in `[3π/2, 4π/2]`; the same E is a metric length through the pack `[exact]` / `[cond]` | 3 |
 
 ## Issue #508 — Bernstein / rational framework (`BernsteinBasis.v`) <!-- feat:arc-len geom:cs -->
 
@@ -1457,8 +1457,8 @@ window. Category C via `RiemannInt` → `classic`
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `ClothoidFresnel.v : fresnel_is_curve_length` (+ `fresnel_chord_rate`, `fresnel_speed_integral_premises`, `fresnel_primitives`) | **Conditional pack instance (#508/#564, claimId: 508-e, witness: 508-e-fresnel):** if `increment_squeezed Cx fresnel_vx` and `increment_squeezed Cy fresnel_vy` on `[a,b]`, then `is_curve_length (fresnel_curve Cx Cy) a b (b − a)`. Pack `F = fun t => 1 * t`. Speed constantly 1. No Heine–Cantor, no Coquelicot `[conditional]` | 3 |
-| `ClothoidFresnel.v : fresnel_unit_window_length` | **`[0,1]` specialization of the pack:** still conditional on primitives `[conditional]` | 3 |
+| `ClothoidFresnel.v : fresnel_is_curve_length` (+ `fresnel_chord_rate`, `fresnel_speed_integral_premises`, `fresnel_primitives`) | **Conditional pack instance (#508/#564, claimId: 508-e, witness: 508-e-fresnel):** if `increment_squeezed Cx fresnel_vx` and `increment_squeezed Cy fresnel_vy` on `[a,b]`, then `is_curve_length (fresnel_curve Cx Cy) a b (b − a)`. Pack `F = fun t => 1 * t`. Speed constantly 1. No Heine–Cantor, no Coquelicot `[cond]` | 3 |
+| `ClothoidFresnel.v : fresnel_unit_window_length` | **`[0,1]` specialization of the pack:** still conditional on primitives `[cond]` | 3 |
 | `ClothoidFresnelInhab.v : fresnel_param_is_curve_length` (+ `fresnel_Cx`, `fresnel_Cy`, `fresnel_primitives_inhab`) | **Concrete Fresnel inhabitant (#508/#564, witness: 508-e-fresnel-inhab):** Stdlib RiemannInt of `(cos,sin)(t²/2)` from 0; length `b − a` on any window `[exact]` | C |
 | `ClothoidFresnelInhab.v : fresnel_unit_window_length_inhab` | **`[0,1]` curved unconditional window:** metric length exactly `1` `[exact]` | C |
 
@@ -1512,7 +1512,7 @@ accept. This letter does not retire epic 508.
 |---|---|---|
 | `ArcRectifiable.v : arc_r_theta_is_curve_length` | **Wrap-up pin (CircularArc):** `r·θ` is the metric length. Not reminted here `[exact]` | 3 |
 | `NurbsKnotSpans.v : nurbs_spans_additive` | **Wrap-up pin (knot list):** span lengths sum. Not reminted here; not Cox-de Boor `[exact]` | 3 |
-| `ClothoidFresnel.v : fresnel_is_curve_length` | **Wrap-up park (clothoid pack):** engine-conditional; inhabitant is `ClothoidFresnelInhab.v` `[conditional]` | 3 |
+| `ClothoidFresnel.v : fresnel_is_curve_length` | **Wrap-up park (clothoid pack):** engine-conditional; inhabitant is `ClothoidFresnelInhab.v` `[cond]` | 3 |
 | `ClothoidFresnelInhab.v : fresnel_unit_window_length_inhab` | **Wrap-up park (clothoid inhabitant):** `[0,1]` length 1 via Stdlib RiemannInt `[exact]` | C |
 | `ExactCurveEpic508.v : ticket_508_qed_or_qex` | **Wrap-up park (carrier):** QEX on missing Exact* constructors. Not owner accept `[exact]` | 3 |
 
@@ -1908,8 +1908,8 @@ only. Chord coords: `|n| ≤ 2¹¹` (`arc_coord_int_safe`); scalar moments:
 | `ClothoidResidual_b64_exact.v : b64_clothoid_residual_prime_exact` | Derivative assembly `2L(P²+Q²)+2L²(Q·Rm−P·T)` bit-exact `[int-b64]` | 4 |
 | `ClothoidResidual_b64_exact.v : b64_clothoid_residual_unit_moments` | Unit moments `P=1`, `Q=0` ⇒ residual reduces to `L⊗L⊗1 ⊖ d2` `[int-b64]` | 4 |
 | `ClothoidHalley_b64.v : b64_clothoid_residual_second_prime_exact` | Second derivative `f''` assembly bit-exact under eight-scalar `clothoid_scalar_int_safe` `[int-b64]` | 4 |
-| `ClothoidHalley_b64.v : b64_clothoid_halley_denom_round` | Halley denom `2f′²−f·f''` matches composed `b64_minus`/`b64_mult` round-chain under `b64_safe` premises `[round-chain]` | 4 |
-| `ClothoidHalley_b64.v : b64_clothoid_halley_step_round` | Halley step `2f·f′/(2f′²−f·f'')` matches composed `b64_div` round-chain under `b64_safe` premises `[round-chain]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_halley_denom_round` | Halley denom `2f′²−f·f''` matches composed `b64_minus`/`b64_mult` round-chain under `b64_safe` premises `[cond]` | 4 |
+| `ClothoidHalley_b64.v : b64_clothoid_halley_step_round` | Halley step `2f·f′/(2f′²−f·f'')` matches composed `b64_div` round-chain under `b64_safe` premises `[cond]` | 4 |
 | `ClothoidHalley_b64.v : b64_clothoid_halley_l_update_converged` | Converged guard: `l_update` is a no-op when `converged_bool` is true `[structural]` | 4 |
 | `ClothoidHalley_b64.v : b64_clothoid_halley_filtered_corpus_le_four` | **Conditional headline (b64 fuel model):** filtered corpus ≤4 iterations, discharged as `H_filtered_corpus_le_four` `[cond]` | 4 |
 | `ClothoidHalley_b64.v : b64_degenerate_halley_fixed_at_root` | Degenerate moments: b64 Halley `l_update` is a no-op at chord root `L = d` when converged guard fires (route A + comparison bridge; explicit positive threshold premise) `[int-b64]` | 4 |

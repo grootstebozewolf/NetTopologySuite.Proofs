@@ -21,6 +21,9 @@
 #
 # Usage:  python3 scripts/gen_dashboard.py            # writes dashboard/index.html
 #         python3 scripts/gen_dashboard.py --check    # fail if regenerated HTML differs
+#         python3 scripts/gen_dashboard.py --check-freshness [--strict]
+#                 # warn (fail with --strict) when the commit shown in the committed
+#                 # dashboard is behind HEAD for the dashboard's INPUT paths
 #
 # License: BSD-3-Clause (see LICENSE)
 # AI assistance disclosure: AI-drafted, human-reviewed.  Assisted-by: Claude
@@ -32,24 +35,39 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "dashboard", "index.html")
 
-REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "int", "cond", "oracle"]
+REGIMES = ["exact", "full-b64", "int-b64", "int-b64-arc", "int", "b64-rne",
+           "structural", "cond", "oracle"]
+def regime_hits(text, regime):
+    """Occurrences of [regime] in a claims-table line."""
+    return len(re.findall(r"\[" + re.escape(regime) + r"\]", text))
 REGIME_LABEL = {
     "exact": "exact reals",
     "full-b64": "all finite binary64",
     "int-b64": "int-coord binary64",
     "int-b64-arc": "int-coord binary64 (arc)",
     "int": "exact integer (0 axioms)",
+    "b64-rne": "binary64 RNE, stated intake and budget",
+    "structural": "structure / guard (no numeric claim)",
     "cond": "conditional (named hyps)",
     "oracle": "extracted / differential",
 }
-# proven (unconditional soundness) vs conditional vs oracle-only
+# proven (unconditional soundness) vs conditional vs oracle-only vs structural.
+# Rule separating proven from conditional for binary64 rows: a regime is "proven"
+# when every hypothesis is on the INPUTS and is checked by the evaluator's own
+# intake predicate or an explicit argument bound (b64-rne: sin_accept,
+# fresnel_accept, cm_accept, |z| <= Z); it is "conditional" when the hypotheses are
+# premises on intermediate values that the caller must discharge (round-chain's
+# b64_safe).  "structural" rows (a guard or shape lemma with no numeric content)
+# are counted and shown but are NOT in the headline proven total.
 REGIME_KIND = {
     "exact": "proven", "full-b64": "proven", "int-b64": "proven",
-    "int-b64-arc": "proven", "int": "proven", "cond": "conditional", "oracle": "oracle",
+    "int-b64-arc": "proven", "int": "proven", "b64-rne": "proven",
+    "structural": "structural", "cond": "conditional", "oracle": "oracle",
 }
 REGIME_COLOR = {
     "exact": "#16a34a", "full-b64": "#15803d", "int-b64": "#65a30d",
-    "int-b64-arc": "#84cc16", "int": "#0891b2", "cond": "#d97706", "oracle": "#2563eb",
+    "int-b64-arc": "#84cc16", "int": "#0891b2", "b64-rne": "#a3e635",
+    "structural": "#64748b", "cond": "#d97706", "oracle": "#2563eb",
 }
 
 
@@ -71,7 +89,7 @@ def git(*args, default=""):
 
 # -- verified-claims.md ------------------------------------------------------
 
-PROVEN_REGIMES = {"exact", "full-b64", "int-b64", "int-b64-arc", "int"}
+PROVEN_REGIMES = {"exact", "full-b64", "int-b64", "int-b64-arc", "int", "b64-rne"}
 
 
 def parse_claims():
@@ -80,8 +98,7 @@ def parse_claims():
                      if re.match(r'^\| `[^`]+ : ', ln)]
     total = len(theorem_lines)
     # count regime tags only in actual theorem rows, not headers/legends
-    regime_counts = {r: sum(len(re.findall(r'\[' + re.escape(r) + r'\]', ln))
-                             for ln in theorem_lines)
+    regime_counts = {r: sum(regime_hits(ln, r) for ln in theorem_lines)
                      for r in REGIMES}
     # per-section row + regime breakdown; all Issue #67 sections are merged
     def _is_67(title):
@@ -121,12 +138,11 @@ def parse_claims():
         elif cur is not None and re.match(r'^\| `[^`]+ : ', line):
             cur["rows"] += 1
             for r in REGIMES:
-                cur["regimes"][r] += len(re.findall(r'\[' + re.escape(r) + r'\]', line))
+                cur["regimes"][r] += regime_hits(line, r)
             # accumulate coverage matrix counts
             if cur_feats and cur_geoms:
-                row_proven = sum(len(re.findall(r'\[' + re.escape(r) + r'\]', line))
-                                 for r in PROVEN_REGIMES)
-                row_cond   = len(re.findall(r'\[cond\]', line))
+                row_proven = sum(regime_hits(line, r) for r in PROVEN_REGIMES)
+                row_cond   = regime_hits(line, "cond")
                 row_oracle = len(re.findall(r'\[oracle\]', line))
                 for ftag in cur_feats:
                     if ftag in coverage_cells:
@@ -196,7 +212,10 @@ def parse_oracle():
             elif fn.startswith("red_") and fn.endswith("_tests.py"):
                 kind, name = "red-tests", fn[:-len("_tests.py")]
                 with open(fpath, encoding="utf-8") as f:
-                    n = sum(1 for ln in f if "= run(" in ln)
+                    # two styles: `x = run(...)` cases, or assert_eq/assert_true calls
+                    n = sum(1 for ln in f
+                            if "= run(" in ln
+                            or re.match(r"\s*(assert_eq|assert_true)\(", ln))
             else:
                 continue
             coverage_tags = _parse_coverage_tag(fpath)
@@ -1056,7 +1075,69 @@ def build():
     return render(data)
 
 
+def dashboard_inputs():
+    """Paths whose change alters the generated page: the `paths:` filter of
+    .github/workflows/pages.yml (single source, parsed here so the two cannot
+    drift), minus the committed page itself.  None if pages.yml has no list."""
+    txt = read(".github/workflows/pages.yml")
+    if txt is None:
+        return None
+    paths, in_paths = [], False
+    for ln in txt.splitlines():
+        if re.match(r"^\s+paths:\s*$", ln):
+            in_paths = True
+            continue
+        m = re.match(r"^\s+-\s+(\S+)\s*$", ln)
+        if in_paths and m:
+            paths.append(m.group(1).rstrip("*").rstrip("/"))
+        elif in_paths:
+            break
+    return (paths + [":(exclude)dashboard/index.html"]) if paths else None
+
+
+def check_freshness(strict):
+    """Warn when the corpus commit shown in dashboard/index.html is behind HEAD
+    for the dashboard's input paths.  The page embeds the commit it was generated
+    from, which is always at least one behind the commit that stores it, so the
+    test counts only commits since then that touched an input.  Warn-only unless
+    strict.  Returns the process exit code."""
+    def warn(msg):
+        print(("::warning::" if os.environ.get("GITHUB_ACTIONS") else "warning: ") + msg)
+        return 1 if strict else 0
+    html = read("dashboard/index.html")
+    if html is None:
+        return warn("dashboard/index.html not found")
+    m = re.search(r"corpus commit\s*<code>([0-9a-f]{7,40})</code>", html)
+    if not m:
+        return warn("dashboard/index.html shows no corpus commit")
+    sha = m.group(1)
+    if not git("cat-file", "-t", sha + "^{commit}"):
+        return warn(f"dashboard shows commit {sha}, which is not in this clone "
+                    "(shallow history?): freshness not verified")
+    inputs = dashboard_inputs()
+    if inputs is None:
+        return warn("cannot read the paths: filter of .github/workflows/pages.yml")
+    # default=None: a failing git call must not read as "nothing changed"
+    behind_all = git("rev-list", "--count", f"{sha}..HEAD", default=None)
+    touching = git("rev-list", f"{sha}..HEAD", "--", *inputs, default=None)
+    if behind_all is None or touching is None:
+        return warn(f"git could not list {sha}..HEAD: freshness not verified")
+    # The commit that last stored the page contains its own regeneration, so
+    # its input changes are already reflected and must not count as stale.
+    stored_by = git("log", "-1", "--format=%H", "--", "dashboard/index.html")
+    behind_in = str(len([c for c in touching.split() if c != stored_by]))
+    if behind_in == "0":
+        print(f"dashboard fresh: shows {sha}; {behind_all} commit(s) behind HEAD, "
+              "none touching dashboard inputs")
+        return 0
+    return warn(f"dashboard shows corpus commit {sha}, {behind_in} commit(s) behind HEAD "
+                f"touched its inputs ({behind_all} behind in total): regenerate with "
+                "python3 scripts/gen_dashboard.py")
+
+
 def main():
+    if "--check-freshness" in sys.argv:
+        sys.exit(check_freshness("--strict" in sys.argv))
     if "--check-grounding" in sys.argv:
         build()
         n = count_entries("docs/axiom-allowlist.txt") or 0

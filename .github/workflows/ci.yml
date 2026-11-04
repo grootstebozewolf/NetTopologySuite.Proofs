@@ -36,6 +36,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # the dashboard freshness step reads history
 
       - name: Run all corpus guardrails (make ci-guards)
         # Covers, in one fast pass (see the per-script headers for detail):
@@ -49,6 +51,12 @@ jobs:
         # The `rocq` job below no longer repeats these — this job is
         # the single source of the guardrail verdict on every PR and push.
         run: make ci-guards
+
+      - name: Dashboard freshness (warn only)
+        # Warns when the commit shown in the committed dashboard is behind HEAD
+        # for the dashboard's input paths (parsed from pages.yml).  Needs the
+        # full history, hence fetch-depth: 0 on the checkout above.
+        run: python3 scripts/gen_dashboard.py --check-freshness
 
   rocq:
     name: Build with Rocq ${{ matrix.rocq-version }}
