@@ -1,0 +1,81 @@
+{
+  "schema": "consumer-tolerances/1",
+  "unit_roundoff": {"u": "2^-53", "e0": "2^-1075"},
+  "note": "Tolerances and decisions as DATA (step 5 of the #993 follow-up). status: decided = tolerance accepted and recorded, switch not implied; blocked = switch must not happen until every item in unblock_when holds; recorded = already switched, difference accepted. Prose rationale stays in docs/consumer-switch-decisions.tsv. lemmas are checked to exist by scripts/check_consumer_tolerances.py; pending names are not.",
+  "consumers": [
+    {
+      "id": "t3-arc-area-centroid-denominator",
+      "inventory": "T3",
+      "consumer": "ARC_AREA_CENTROID denominator",
+      "status": "blocked",
+      "decision": "do not switch the driver division away from the Taylor recurrence yet",
+      "tolerance": {
+        "kind": "relative",
+        "g_poly": {"bound": "24 u g", "domain": "2^-338 <= theta <= 1", "g": "theta - sin theta"},
+        "quotient": {"bound": "28 u |n/g|", "floors": ["2^-1022 <= |n/g|", "|n/g| <= 2^900"]},
+        "sine_core": {"bound": "10 u |x|", "domain": "2^-1022 <= |x| <= 1609/1024", "kind": "input-relative"},
+        "theta_certified": false,
+        "theta_source": "libm asin (inventory T1, deferred D3): the bounds are conditional on the supplied theta"
+      },
+      "lemmas": ["b64_sin_rel", "tiny_abs_to_rel", "mf_seg_g_poly_rel", "mf_seg_g_poly_pos"],
+      "pending_lemmas": ["mf_seg_offset_rel", "sgp_outcome_sound", "sgp_outcome_complete"],
+      "unblock_when": [
+        "mf_seg_offset_rel (division) and the policy rung (sgp_outcome_*) are merged",
+        "intake for theta >= 1 and below 2^-338 is decided and proved (decline or fallback)",
+        "explicit theta = 1 seam: above 1 the existing absolute mf_seg_g path applies, so the consumer needs a branch and a matching proof",
+        "odd symmetry for negative theta (g^(-t) = -g^(t) via sn_neg, as b64_sin_rel) if the sweep can be negative",
+        "extraction plus an oracle_bin mode for mf_seg_g_poly and mf_seg_offset",
+        "corpus run: zero new UNDECIDED results compared with the current Taylor driver",
+        "C# and Java ports bit-identical to the extracted result, or the unavailability is recorded"
+      ],
+      "stop_conditions": [
+        "any new UNDECIDED in the corpus run: do not switch",
+        "a non-dyadic constant needed in a relative bound: stop and re-split the polynomial"
+      ]
+    },
+    {
+      "id": "t4a-arc-distance-exact-sector",
+      "inventory": "T4a",
+      "consumer": "ARC_DISTANCE exact sector (already switched)",
+      "status": "recorded",
+      "decision": "accepted: 65 of 286 changed ARC_DISTANCE outputs moved further from the 60-digit truth",
+      "tolerance": {
+        "kind": "differential-record",
+        "date": "2026-11-03",
+        "changed_outputs": 286,
+        "moved_closer": 221,
+        "moved_further": 65,
+        "cause": "|d - r| cancellation in the distance itself, not the sector decision",
+        "sector_decision": "exact (no atan2)"
+      },
+      "lemmas": ["asxq_sector_correct"],
+      "pending_lemmas": [],
+      "unblock_when": [],
+      "stop_conditions": []
+    },
+    {
+      "id": "t7-clothoid-segment-integrals",
+      "inventory": "T7",
+      "consumer": "LENGTH_UNIFIED clothoid densify / segment integrals",
+      "status": "decided",
+      "decision": "tolerance is ABSOLUTE A*2^-40 per segment integral; no relative guarantee for short segments; decline when |psi| > 25/4 rad at either endpoint (DECLINE_FRESNEL_RANGE). The switch from composite Simpson is not performed by this record.",
+      "tolerance": {
+        "kind": "absolute",
+        "per_endpoint": {"bound": "A * 2^-41", "lemma": "b64_clothoid_Icos_err", "anchor": "inflection point"},
+        "segment_difference": {"expression": "Icos(ed) - Icos(sd)", "bound": "A * 2^-40", "derivation": "two endpoint errors of A*2^-41 each"},
+        "relative_growth": {
+          "formula": "A * 2^-40 / |Icos(ed) - Icos(sd)|",
+          "note": "grows without bound as the segment shortens (|ed - sd| near A*2^-40 or below leaves no relative guarantee); clothoids are anchored at the inflection, so short segments far from it are the worst case"
+        },
+        "intake": {"psi_cap_rad": "25/4", "lemma": "xf_psi_bound", "outside": "DECLINE_FRESNEL_RANGE (asymptotics deferred: D2, D4)"}
+      },
+      "lemmas": ["b64_clothoid_Icos_err", "b64_clothoid_Isin_err", "xf_psi_bound", "xf_accept_psi"],
+      "pending_lemmas": [],
+      "unblock_when": [
+        "fixture tolerances in the LENGTH_UNIFIED tests use the absolute bound above",
+        "decline behaviour for |psi| > 25/4 is exercised by a fixture at the boundary and one ulp past it"
+      ],
+      "stop_conditions": []
+    }
+  ]
+}
