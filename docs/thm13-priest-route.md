@@ -21,7 +21,7 @@ example from §2, lifted (`B64_Priest_FES_counterexample.v : fes_witness`).
 offending pair is within one bit
 (`B64_Priest_FES_counterexample.v : witness_overlap_within_1`); exhaustive
 *p*-bit searches (to *p* = 3, length 4; `tests/CarryCleanExhaustive` mode 2)
-found no `overlap_within 1` failure. Evidence only.
+found no `overlap_within 1` failure (evidence only); totals ≤ 6 are Qed (`B64_CarryCleanOneBit.v : fes_overlap_within_1_le6`).
 
 ## 1. Where the lane actually stands
 

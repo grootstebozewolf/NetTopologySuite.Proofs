@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 105 files (102 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 106 files (103 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -113,6 +113,13 @@ theories-flocq/B64_CarryCleanRung4.v
 # the ladder rounds in Flocq.
 theories-flocq/B64_CarryCleanLadder.v
 theories-flocq/B64_CarryCleanRung5.v
+# one-bit overlap of the raw output (fes_overlap_within_1_le6).  The aligned
+# rung-4/5 siblings round like the rungs, and the rounding-free step
+# `overlap_within_1_of_aligned_shape` uses `double_exact` (b64_mult), so every
+# headline inherits Classical_Prop.classic via Flocq C1.  Plan: none while
+# Flocq's binary model is in use (category-c-policy).  Keep listed while the
+# rungs round in Flocq.
+theories-flocq/B64_CarryCleanOneBit.v
 
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
 # results are LEM-free (Priest link + arithmetic separations). The remaining five

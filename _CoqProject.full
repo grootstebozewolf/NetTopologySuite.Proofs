@@ -4550,3 +4550,7 @@ theories-flocq/B64_CarryCleanLadder.v
 # ladder; a tie at step 5 is carried through step 6.  Seven or more stay OPEN
 # (this supersedes the rung-4 entry's "six or more" line above).
 theories-flocq/B64_CarryCleanRung5.v
+# one-bit overlap of the raw Fast-Expansion-Sum output, totals <= 6: the
+# rung decompositions plus two alignment facts (twin/anti components are
+# +-2^c; the element before an anti pair is a multiple of it).
+theories-flocq/B64_CarryCleanOneBit.v
