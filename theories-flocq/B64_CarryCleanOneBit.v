@@ -15,18 +15,25 @@
        (`anti_step`).
    `overlap_within_1_of_aligned_shape` is the rounding-free step from such
    a decomposition to the one-bit chain.  Rungs 2 and 3 are all singles, so
-   their outputs are nonoverlapping outright; rungs 4 and 5 re-run the rung
-   proofs as `_aligned` siblings that also return the two facts.  The rung
-   files are untouched.
+   their outputs are nonoverlapping outright.  Totals 5 and 6 run through a
+   block-layered state `bstate Q E L bs`: the running sum Q is a multiple of
+   2^L, the errors so far expand to blocks bs, each below 2^L, already in
+   aligned carry shape.  Three step lemmas move it one TwoSum on: no tie
+   (`bstate_step`), a tie (`bstate_tie`), and the twin that absorbs a
+   pending tie (`bstate_twin`); `bstate_top` packages the last step.  The
+   rung files are untouched.
 
    PROVED HERE:
      overlap_within_1_of_aligned_shape  blocks with the two facts -> one bit
      fes_overlap_within_1_short         totals 0 .. 2
      fes_overlap_within_1_rung2 .. 5    totals 3 .. 6
      fes_overlap_within_1_le6           every total <= 6
+     bstate_step / _tie / _twin / _top  the block-state ladder (also used
+                                        by B64_CarryCleanSeven)
 
-   NOT COVERED.  Seven or more components.  This is NOT Priest's bound or
-   any general Fast-Expansion-Sum theorem: it is the n <= 6 instance only.
+   NOT COVERED.  Seven or more components (total 7: B64_CarryCleanSeven).
+   This is NOT Priest's bound or any general Fast-Expansion-Sum theorem: it
+   is the n <= 6 instance only.
 
    topic: binary64
    claimId: fes-overlap-within-1-le6
@@ -213,331 +220,564 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   Rung 4 leaves, aligned (copies of B64_CarryCleanRung4's, one more bullet).
+   The block-layered state.  After each TwoSum, the running sum Q is a
+   multiple of 2^L and the errors so far, zeros dropped, expand an aligned
+   carry-shaped block list whose keys all lie below 2^L.  Three steps keep
+   it: no tie (`bstate_step`), the tie (`bstate_tie`), and the step after a
+   pending twin (`bstate_twin`); anti pairs and singles need no special
+   after-tie step.  `bstate_shape` reads off the final output.
    -------------------------------------------------------------------------- *)
 
-Lemma shape_anti_aligned :
-  forall (q a b : binary64) (t : list binary64) (c : Z),
-    b64_fin q -> b64_fin a -> b64_fin b -> Forall b64_fin t ->
-    b2r b = - b2r a -> Rabs (b2r a) = bpow radix2 c -> Rabs (b2r a) < Rabs (b2r q) ->
-    pow2_multiple c (b2r q) -> Forall (below c) t -> layered t ->
-    exists bs, drop_zeros (q :: a :: b :: t) = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
+Definition key_below (L : Z) (b : cblock) : Prop := block_key b < bpow radix2 L.
+
+Definition push (h : binary64) (bs : list cblock) : list cblock :=
+  if b64_is_zero h then bs else CSingle h :: bs.
+
+Definition bstate (Q : binary64) (E : list binary64) (L : Z) (bs : list cblock) : Prop :=
+  b64_fin Q /\ Forall b64_fin E /\ pow2_multiple L (b2r Q)
+  /\ drop_zeros E = flat_map cblock_expand bs
+  /\ carry_shape bs /\ pairs_aligned bs /\ Forall (key_below L) bs.
+
+Lemma key_below_mono :
+  forall L L' bs, (L <= L')%Z -> Forall (key_below L) bs -> Forall (key_below L') bs.
 Proof.
-  intros q a b t c Fq Fa Fb Ft Hba Hea Haq Mq Bt Lt.
-  assert (Hca : bpow radix2 c <= Rabs (b2r a)) by lra.
-  pose proof (bpow_gt_0 radix2 c) as Hc0.
-  assert (Ha0 : b2r a <> 0) by (intro H; rewrite H, Rabs_R0 in Hca; lra).
-  assert (Hq0 : b2r q <> 0) by (intro H; rewrite H, Rabs_R0 in Haq; pose proof (Rabs_pos (b2r a)); lra).
-  assert (Hb0 : b2r b <> 0) by (rewrite Hba; intro H; apply Ha0; lra).
-  assert (Eb : b = b64_neg a).
-  { apply b64_eq_of_R; [ exact Fb | apply b64_neg_fin, Fa | rewrite b64_neg_R; exact Hba | exact Hb0 ]. }
-  set (t0 := drop_zeros t).
-  pose proof (drop_zeros_nz t Ft) as Nt. fold t0 in Nt.
-  assert (Bt0 : Forall (below c) t0) by (apply Forall_filter_sub, Bt).
-  assert (Lt0 : layered t0) by (apply layered_filter, Lt).
-  destruct (layered_desc t0 Lt0 Nt) as [Dt0 Ct0].
-  exists (CSingle q :: CAnti a :: map CSingle t0).
-  split.
-  { unfold drop_zeros. cbn [filter].
-    rewrite (b64_is_zero_false q Fq Hq0), (b64_is_zero_false a Fa Ha0), (b64_is_zero_false b Fb Hb0).
-    cbn [negb flat_map cblock_expand app]. rewrite Eb, expand_singles. reflexivity. }
+  intros L L' bs HL H. eapply Forall_impl; [ | exact H ]. unfold key_below. intros b Hb.
+  apply Rlt_le_trans with (1 := Hb). apply bpow_le, HL.
+Qed.
+
+Lemma key_below_min :
+  forall a b bs, Forall (key_below a) bs -> Forall (key_below b) bs -> Forall (key_below (Z.min a b)) bs.
+Proof.
+  intros a b bs Ha Hb. destruct (Z.min_spec a b) as [[_ Hm] | [_ Hm]]; rewrite Hm; assumption.
+Qed.
+
+Lemma reduce_le_key :
+  forall b, block_ok b -> Forall (fun y => Rabs (b2r y) <= block_key b) (cblock_reduce b).
+Proof.
+  intros [u | x | x] Hok; cbn [cblock_reduce block_key]; [ | | constructor ].
+  - constructor; [ lra | constructor ].
+  - destruct Hok as [[Fx _] Hov]. destruct (double_exact x Fx Hov) as [Hd _].
+    constructor; [ rewrite Hd, Rabs_mult, (Rabs_pos_eq 2) by lra; lra | constructor ].
+Qed.
+
+Lemma reduce_below :
+  forall L bs, Forall block_ok bs -> Forall (key_below L) bs -> Forall (below L) (flat_map cblock_reduce bs).
+Proof.
+  intros L bs Hok Hk. apply Forall_forall. intros y Hy.
+  apply in_flat_map in Hy. destruct Hy as [b [Hb Hy]].
+  rewrite Forall_forall in Hok, Hk.
+  pose proof (reduce_le_key b (Hok b Hb)) as R. rewrite Forall_forall in R.
+  pose proof (R y Hy). pose proof (Hk b Hb). unfold key_below in *. unfold below. lra.
+Qed.
+
+Lemma nonoverlap_cons_mult :
+  forall L x l, pow2_multiple L (b2r x) -> Forall (below L) l -> nonoverlapping_chain l ->
+    nonoverlapping_chain (x :: l).
+Proof.
+  intros L x [| y l] [n Hn] Hb Hl; [ exact I | ]. split; [ | exact Hl ].
+  unfold nonoverlapping_b64, nonoverlapping_R, overlap_within. left. exists n, L.
+  split; [ exact Hn | ]. rewrite Z.add_0_r. inversion Hb; assumption.
+Qed.
+
+Lemma anti_step_mult :
+  forall L b b', pow2_multiple L (b2r (block_last b)) -> key_below L b' -> anti_step b b'.
+Proof.
+  intros L b [v | y | y] Hm Hk; try exact I. intros c Hc. unfold key_below in Hk. cbn [block_key] in Hk.
+  rewrite Hc in Hk. apply lt_bpow in Hk. apply (pow2_multiple_le c L); [ lia | exact Hm ].
+Qed.
+
+(* Three ways to put a block on top of an aligned, carry-shaped stack. *)
+Lemma cons_single :
+  forall L x bs, b64_nz x -> pow2_multiple L (b2r x) ->
+    carry_shape bs -> pairs_aligned bs -> Forall (key_below L) bs ->
+    carry_shape (CSingle x :: bs) /\ pairs_aligned (CSingle x :: bs).
+Proof.
+  intros L x bs Nx Mx (Ok & Kd & No) Al Kb.
+  assert (Hge : bpow radix2 L <= Rabs (b2r x))
+    by (destruct Mx as [n Hn]; exact (scaled_nonzero_ge _ n L Hn (proj2 Nx))).
   split; [ split; [ | split ] | ].
-  - repeat constructor; try assumption. apply Forall_map, Nt.
-  - split; [ cbn [block_key]; lra | ].
-    apply keys_prefix; [ | exact Dt0 ].
-    intros y Hy. cbn [block_key]. pose proof (below_in _ _ _ Bt0 Hy). lra.
-  - cbn [flat_map cblock_reduce app]. rewrite reduce_singles.
-    assert (Nq : b64_nz q) by (split; assumption).
-    apply (layered_desc (q :: t0)); [ | constructor; assumption ].
-    split; [ exists c; split; assumption | exact Lt0 ].
-  - change (CSingle q :: CAnti a :: map CSingle t0) with (map CSingle [q] ++ CAnti a :: map CSingle t0).
-    apply aligned_insert; [ exists c; exact Hea | ].
-    constructor; [ apply (anti_step_single q a c Hea Mq) | constructor ].
-Qed.
-
-Lemma shape_twin_aligned :
-  forall (q b : binary64) (t : list binary64) (c : Z),
-    b64_fin q -> b64_fin b -> Forall b64_fin t ->
-    b2r b = b2r q -> Rabs (b2r q) = bpow radix2 c ->
-    2 * Rabs (b2r q) < bpow radix2 emax ->
-    pow2_multiple c (b2r q) -> Forall (below c) t -> layered t ->
-    exists bs, drop_zeros (q :: b :: t) = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
-Proof.
-  intros q b t c Fq Fb Ft Hbq Heq Hov [nq Hnq] Bt Lt.
-  assert (Hcq : bpow radix2 c <= Rabs (b2r q)) by lra.
-  pose proof (bpow_gt_0 radix2 c) as Hc0.
-  assert (Hq0 : b2r q <> 0) by (intro H; rewrite H, Rabs_R0 in Hcq; lra).
-  assert (Eb : b = q) by (apply b64_eq_of_R; [ exact Fb | exact Fq | exact Hbq | rewrite Hbq; exact Hq0 ]).
-  destruct (double_exact q Fq Hov) as [Hd Fd].
-  set (t0 := drop_zeros t).
-  pose proof (drop_zeros_nz t Ft) as Nt. fold t0 in Nt.
-  assert (Bt0 : Forall (below c) t0) by (apply Forall_filter_sub, Bt).
-  assert (Lt0 : layered t0) by (apply layered_filter, Lt).
-  destruct (layered_desc t0 Lt0 Nt) as [Dt0 Ct0].
-  exists (CTwin q :: map CSingle t0).
-  split.
-  { unfold drop_zeros. cbn [filter]. subst b.
-    rewrite (b64_is_zero_false q Fq Hq0). cbn [negb flat_map cblock_expand app].
-    rewrite expand_singles. reflexivity. }
-  split; [ split; [ | split ] | ].
-  - constructor; [ split; [ split; assumption | exact Hov ] | apply Forall_map, Nt ].
-  - apply keys_prefix; [ | exact Dt0 ].
-    intros y Hy. cbn [block_key]. pose proof (below_in _ _ _ Bt0 Hy).
-    pose proof (Rabs_pos (b2r q)). lra.
-  - cbn [flat_map cblock_reduce app]. rewrite reduce_singles.
-    assert (Nd : b64_nz (b64_mult q b64_two_unit)) by (split; [ exact Fd | rewrite Hd; lra ]).
-    apply (layered_desc (b64_mult q b64_two_unit :: t0)); [ | constructor; assumption ].
-    split; [ | exact Lt0 ].
-    exists c. split; [ exists (2 * nq)%Z; rewrite Hd, Hnq, mult_IZR; ring | exact Bt0 ].
-  - change (CTwin q :: map CSingle t0) with (map CSingle [] ++ CTwin q :: map CSingle t0).
-    apply aligned_insert; [ exists c; exact Heq | constructor ].
-Qed.
-
-Lemma tie_finish_aligned :
-  forall (Q5 h5 h4 h3 h2 : binary64) (c : Z),
-    b64_fin Q5 -> b64_fin h5 -> b64_fin h4 -> b64_fin h3 -> b64_fin h2 ->
-    Forall (below c) [h3; h2] -> layered [h3; h2] ->
-    2 * bpow radix2 c < bpow radix2 emax ->
-    Rabs (b2r h4) = bpow radix2 c ->
-    (   (b2r h5 = - b2r h4 /\ pow2_multiple c (b2r Q5) /\ bpow radix2 c < Rabs (b2r Q5))
-     \/ (b2r h5 = 0 /\ b2r Q5 = b2r h4)
-     \/ (b2r h5 = 0 /\ pow2_multiple (c + 1) (b2r Q5) /\ b2r Q5 <> 0)) ->
-    exists bs, drop_zeros [Q5; h5; h4; h3; h2] = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
-Proof.
-  intros Q5 h5 h4 h3 h2 c FQ Fh5 Fh4 Fh3 Fh2 Bt Lt Hov Hh4 Hcase.
-  pose proof (bpow_gt_0 radix2 c) as Hc0.
-  assert (Ft : Forall b64_fin [h3; h2]) by (repeat constructor; assumption).
-  assert (Hh40 : b2r h4 <> 0) by (intro H; rewrite H, Rabs_R0 in Hh4; lra).
-  destruct Hcase as [(Ha & Mq & Hq) | [(Hz & Hq) | (Hz & Mq & Hq0)]].
-  - apply (shape_anti_aligned Q5 h5 h4 [h3; h2] c); try assumption.
-    + lra.
-    + rewrite Ha, Rabs_Ropp. lra.
-    + rewrite Ha, Rabs_Ropp. lra.
-  - rewrite drop_zeros_skip2 by (apply b64_is_zero_true; assumption).
-    apply (shape_twin_aligned Q5 h4 [h3; h2] c); try assumption.
-    + lra.
-    + rewrite Hq. lra.
-    + rewrite Hq. lra.
-    + apply pow2_multiple_pm. rewrite Hq. exact Hh4.
-  - destruct (singles_shape_of_layered [Q5; h5; h4; h3; h2]) as [bs [E [S Sg]]].
-    + repeat constructor; assumption.
-    + rewrite drop_zeros_skip2 by (apply b64_is_zero_true; assumption).
-      rewrite (drop_zeros_cons_nz Q5) by (apply b64_is_zero_false; assumption).
-      rewrite (drop_zeros_cons_nz h4) by (apply b64_is_zero_false; assumption).
-      assert (Bt0 : Forall (below c) (drop_zeros [h3; h2])) by (apply Forall_filter_sub, Bt).
-      assert (H2c : bpow radix2 c < bpow radix2 (c + 1)) by (apply bpow_lt; lia).
-      split; [ exists (c + 1)%Z; split; [ exact Mq | ] | ].
-      { constructor; [ unfold below; lra | ].
-        eapply Forall_impl; [ | exact Bt0 ]. unfold below. intros y Hy. lra. }
-      split; [ exists c; split; [ apply pow2_multiple_pm, Hh4 | exact Bt0 ] | ].
-      apply layered_filter, Lt.
-    + exists bs. split; [ exact E | split; [ exact S | apply aligned_of_singles, Sg ] ].
-Qed.
-
-(* --------------------------------------------------------------------------
-   Ladder leaves, aligned (copies of B64_CarryCleanLadder's).
-   -------------------------------------------------------------------------- *)
-
-Lemma sstate_shape_aligned :
-  forall Q E L K, sstate Q E L K ->
-    exists bs, drop_zeros (Q :: E) = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
-Proof.
-  intros Q E L K (FQ & FE & MQ & BE & LE & _).
-  destruct (singles_shape_of_layered (Q :: E)) as [bs [Hl [Hs Sg]]].
   - constructor; assumption.
-  - apply layered_filter. split; [ exists L; split; assumption | exact LE ].
-  - exists bs. split; [ exact Hl | split; [ exact Hs | apply aligned_of_singles, Sg ] ].
+  - split; [ | exact Kd ]. destruct bs as [| b' r]; [ exact I | ].
+    inversion Kb as [| ? ? Hk _]; subst. unfold key_below in Hk. cbn [block_key]. lra.
+  - cbn [flat_map cblock_reduce app]. apply (nonoverlap_cons_mult L); [ exact Mx | | exact No ].
+    apply reduce_below; assumption.
+  - cbn [pairs_aligned]. split; [ exact I | split; [ | exact Al ] ].
+    destruct bs as [| b' r]; [ exact I | ].
+    inversion Kb as [| ? ? Hk _]; subst. exact (anti_step_mult L (CSingle x) b' Mx Hk).
 Qed.
 
-Lemma shape_insert_anti_aligned :
-  forall (pre t : list binary64) (a b : binary64) (c : Z),
-    Forall b64_nz pre -> Forall b64_nz t -> b64_fin a -> b64_fin b ->
-    b2r b = - b2r a -> b2r a <> 0 ->
-    Forall (fun x => Rabs (b2r a) < Rabs (b2r x)) pre ->
-    Forall (fun x => Rabs (b2r x) < Rabs (b2r a)) t ->
-    layered (pre ++ t) ->
-    Rabs (b2r a) = bpow radix2 c -> Forall (fun x => pow2_multiple c (b2r x)) pre ->
-    exists bs, pre ++ a :: b :: t = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
+Lemma cons_twin :
+  forall c x bs, b64_fin x -> Rabs (b2r x) = bpow radix2 c -> 2 * bpow radix2 c < bpow radix2 emax ->
+    carry_shape bs -> pairs_aligned bs -> Forall (key_below c) bs ->
+    carry_shape (CTwin x :: bs) /\ pairs_aligned (CTwin x :: bs).
 Proof.
-  intros pre t a b c Np Nt Fa Fb Hba Ha0 Hp Ht Lpt Hea Mp.
-  assert (Nb : b2r b <> 0) by (rewrite Hba; intro H; apply Ha0; lra).
-  assert (Eb : b = b64_neg a).
-  { apply b64_eq_of_R; [ exact Fb | apply b64_neg_fin, Fa | rewrite b64_neg_R; exact Hba | exact Nb ]. }
-  assert (Npt : Forall b64_nz (pre ++ t)) by (apply Forall_app; split; assumption).
-  destruct (layered_desc _ Lpt Npt) as [Dpt Cpt].
-  destruct (strict_desc_app _ _ Dpt) as [Dp Dt].
-  exists (map CSingle pre ++ CAnti a :: map CSingle t).
-  split; [ rewrite expand_insert, Eb; reflexivity | ].
-  split; [ split; [ | split ] | ].
-  - apply Forall_app. split; [ apply Forall_map, Np | ].
-    constructor; [ split; assumption | apply Forall_map, Nt ].
-  - apply keys_insert; assumption.
-  - rewrite reduce_insert. cbn [cblock_reduce app]. exact Cpt.
-  - apply aligned_insert; [ exists c; exact Hea | ].
-    eapply Forall_impl; [ | exact Mp ]. intros y My. exact (anti_step_single y a c Hea My).
-Qed.
-
-Lemma shape_insert_twin_aligned :
-  forall (pre t : list binary64) (x : binary64) (c : Z),
-    Forall b64_nz pre -> Forall b64_nz t -> b64_fin x -> b2r x <> 0 ->
-    2 * Rabs (b2r x) < bpow radix2 emax ->
-    Forall (fun y => 2 * Rabs (b2r x) < Rabs (b2r y)) pre ->
-    Forall (fun y => Rabs (b2r y) < 2 * Rabs (b2r x)) t ->
-    layered (pre ++ b64_mult x b64_two_unit :: t) ->
-    Rabs (b2r x) = bpow radix2 c ->
-    exists bs, pre ++ x :: x :: t = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
-Proof.
-  intros pre t x c Np Nt Fx Hx0 Hov Hp Ht Lpt Hex.
-  destruct (double_exact x Fx Hov) as [Hd Fd].
-  assert (Nd : b64_nz (b64_mult x b64_two_unit)) by (split; [ exact Fd | rewrite Hd; lra ]).
-  assert (Npt : Forall b64_nz (pre ++ b64_mult x b64_two_unit :: t))
-    by (apply Forall_app; split; [ exact Np | constructor; assumption ]).
-  destruct (layered_desc _ Lpt Npt) as [Dpt Cpt].
-  destruct (strict_desc_app _ _ Dpt) as [Dp Dt]. pose proof (strict_desc_tail _ _ Dt) as Dt'.
-  exists (map CSingle pre ++ CTwin x :: map CSingle t).
-  split; [ rewrite expand_insert; reflexivity | ].
-  split; [ split; [ | split ] | ].
-  - apply Forall_app. split; [ apply Forall_map, Np | ].
-    constructor; [ split; [ split; assumption | exact Hov ] | apply Forall_map, Nt ].
-  - apply keys_insert; assumption.
-  - rewrite reduce_insert. cbn [cblock_reduce app]. exact Cpt.
-  - apply aligned_insert; [ exists c; exact Hex | ].
-    apply Forall_forall. intros y _. exact I.
-Qed.
-
-Lemma tie_finish_tail_aligned :
-  forall (Q h' h : binary64) (t : list binary64) (c : Z),
-    b64_fin Q -> b64_fin h' -> b64_fin h -> Forall b64_fin t ->
-    Forall (below c) t -> layered t ->
-    2 * bpow radix2 c < bpow radix2 emax ->
-    Rabs (b2r h) = bpow radix2 c ->
-    (   (b2r h' = - b2r h /\ pow2_multiple c (b2r Q) /\ bpow radix2 c < Rabs (b2r Q))
-     \/ (b2r h' = 0 /\ b2r Q = b2r h)
-     \/ (b2r h' = 0 /\ pow2_multiple (c + 1) (b2r Q) /\ b2r Q <> 0)) ->
-    exists bs, drop_zeros (Q :: h' :: h :: t) = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
-Proof.
-  intros Q h' h t c FQ Fh' Fh Ft Bt Lt Hov Hh Hcase.
+  intros c x bs Fx Hx Hov (Ok & Kd & No) Al Kb.
   pose proof (bpow_gt_0 radix2 c) as Hc0.
-  assert (Hh0 : b2r h <> 0) by (intro H; rewrite H, Rabs_R0 in Hh; lra).
-  destruct Hcase as [(Ha & Mq & Hq) | [(Hz & Hq) | (Hz & Mq & Hq0)]].
-  - apply (shape_anti_aligned Q h' h t c); try assumption.
-    + lra.
-    + rewrite Ha, Rabs_Ropp. lra.
-    + rewrite Ha, Rabs_Ropp. lra.
-  - rewrite drop_zeros_skip2 by (apply b64_is_zero_true; assumption).
-    apply (shape_twin_aligned Q h t c); try assumption.
-    + lra.
-    + rewrite Hq. lra.
-    + rewrite Hq. lra.
-    + apply pow2_multiple_pm. rewrite Hq. exact Hh.
-  - destruct (singles_shape_of_layered (Q :: h' :: h :: t)) as [bs [E [S Sg]]].
-    + repeat constructor; assumption.
-    + rewrite drop_zeros_skip2 by (apply b64_is_zero_true; assumption).
-      rewrite (drop_zeros_cons_nz Q) by (apply b64_is_zero_false; assumption).
-      rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
-      assert (Bt0 : Forall (below c) (drop_zeros t)) by (apply Forall_filter_sub, Bt).
-      assert (H2c : bpow radix2 c < bpow radix2 (c + 1)) by (apply bpow_lt; lia).
-      split; [ exists (c + 1)%Z; split; [ exact Mq | ] | ].
-      { constructor; [ unfold below; lra | ].
-        eapply Forall_impl; [ | exact Bt0 ]. unfold below. intros y Hy. lra. }
-      split; [ exists c; split; [ apply pow2_multiple_pm, Hh | exact Bt0 ] | ].
-      apply layered_filter, Lt.
-    + exists bs. split; [ exact E | split; [ exact S | apply aligned_of_singles, Sg ] ].
+  assert (Nx : b64_nz x) by (split; [ exact Fx | intro H; rewrite H, Rabs_R0 in Hx; lra ]).
+  assert (Hov' : 2 * Rabs (b2r x) < bpow radix2 emax) by (rewrite Hx; exact Hov).
+  assert (Mx : pow2_multiple c (b2r x)) by (apply pow2_multiple_pm, Hx).
+  split; [ split; [ | split ] | ].
+  - constructor; [ split; assumption | exact Ok ].
+  - split; [ | exact Kd ]. destruct bs as [| b' r]; [ exact I | ].
+    inversion Kb as [| ? ? Hk _]; subst. unfold key_below in Hk. cbn [block_key]. lra.
+  - cbn [flat_map cblock_reduce app]. apply (nonoverlap_cons_mult c); [ | | exact No ].
+    + destruct (double_exact x Fx Hov') as [Hd _]. rewrite Hd. destruct Mx as [n Hn].
+      exists (2 * n)%Z. rewrite Hn, mult_IZR. cbn [IZR IPR IPR_2]. ring.
+    + apply reduce_below; assumption.
+  - cbn [pairs_aligned]. split; [ exists c; exact Hx | split; [ | exact Al ] ].
+    destruct bs as [| b' r]; [ exact I | ].
+    inversion Kb as [| ? ? Hk _]; subst. exact (anti_step_mult c (CTwin x) b' Mx Hk).
 Qed.
 
-Lemma anti_final_aligned :
-  forall (g Q a b : binary64) (t : list binary64) (Mlev c : Z),
-    b64_fin g -> b64_TwoSum_safe g Q -> b64_fin a -> b64_fin b -> Forall b64_fin t ->
-    pow2_multiple Mlev (b2r Q) -> (Mlev <= cexp radix2 b64_fexp (b2r g))%Z -> (c < Mlev)%Z ->
-    b2r b = - b2r a -> Rabs (b2r a) = bpow radix2 c ->
-    Forall (below c) t -> layered t ->
+Lemma cons_anti :
+  forall c x bs, b64_fin x -> Rabs (b2r x) = bpow radix2 c ->
+    carry_shape bs -> pairs_aligned bs -> Forall (key_below c) bs ->
+    carry_shape (CAnti x :: bs) /\ pairs_aligned (CAnti x :: bs).
+Proof.
+  intros c x bs Fx Hx (Ok & Kd & No) Al Kb.
+  pose proof (bpow_gt_0 radix2 c) as Hc0.
+  assert (Nx : b64_nz x) by (split; [ exact Fx | intro H; rewrite H, Rabs_R0 in Hx; lra ]).
+  assert (Mx : pow2_multiple c (b2r (b64_neg x)))
+    by (apply pow2_multiple_pm; rewrite b64_neg_R, Rabs_Ropp; exact Hx).
+  split; [ split; [ | split ] | ].
+  - constructor; [ exact Nx | exact Ok ].
+  - split; [ | exact Kd ]. destruct bs as [| b' r]; [ exact I | ].
+    inversion Kb as [| ? ? Hk _]; subst. unfold key_below in Hk. cbn [block_key]. lra.
+  - exact No.
+  - cbn [pairs_aligned]. split; [ exists c; exact Hx | split; [ | exact Al ] ].
+    destruct bs as [| b' r]; [ exact I | ].
+    inversion Kb as [| ? ? Hk _]; subst. exact (anti_step_mult c (CAnti x) b' Mx Hk).
+Qed.
+
+Lemma drop_zeros_push :
+  forall h E bs, drop_zeros E = flat_map cblock_expand bs ->
+    drop_zeros (h :: E) = flat_map cblock_expand (push h bs).
+Proof.
+  intros h E bs H. unfold push. destruct (b64_is_zero h) eqn:Hz.
+  - rewrite drop_zeros_cons_zero by exact Hz. exact H.
+  - rewrite drop_zeros_cons_nz by exact Hz. cbn [flat_map cblock_expand app]. rewrite H. reflexivity.
+Qed.
+
+Lemma push_nz : forall h bs, b64_fin h -> b2r h <> 0 -> push h bs = CSingle h :: bs.
+Proof. intros h bs Fh Hh. unfold push. rewrite (b64_is_zero_false h Fh Hh). reflexivity. Qed.
+
+Lemma key_below_push :
+  forall L h bs, Rabs (b2r h) < bpow radix2 L -> Forall (key_below L) bs -> Forall (key_below L) (push h bs).
+Proof.
+  intros L h bs Hh Hb. unfold push. destruct (b64_is_zero h); [ exact Hb | constructor; assumption ].
+Qed.
+
+(* Pushing a fresh error h, a multiple of 2^c over a stack below 2^c. *)
+Lemma bstate_push :
+  forall Q h E bs L c,
+    b64_fin Q -> b64_fin h -> Forall b64_fin E -> pow2_multiple L (b2r Q) ->
+    drop_zeros E = flat_map cblock_expand bs -> carry_shape bs -> pairs_aligned bs ->
+    Forall (key_below c) bs -> pow2_multiple c (b2r h) -> Rabs (b2r h) < bpow radix2 L -> (c <= L)%Z ->
+    bstate Q (h :: E) L (push h bs).
+Proof.
+  intros Q h E bs L c FQ Fh FE MQ DE Sh Al Kc Mh Hh HcL.
+  refine (conj FQ (conj (Forall_cons _ Fh FE) (conj MQ (conj (drop_zeros_push h E bs DE) _)))).
+  assert (KL : Forall (key_below L) bs) by exact (key_below_mono c L bs HcL Kc).
+  unfold push. destruct (b64_is_zero h) eqn:Hz.
+  - split; [ exact Sh | split; [ exact Al | exact KL ] ].
+  - destruct (cons_single c h bs (b64_nz_of_not_zero h Fh Hz) Mh Sh Al Kc) as [S' A'].
+    split; [ exact S' | split; [ exact A' | constructor; [ exact Hh | exact KL ] ] ].
+Qed.
+
+Lemma bstate_init : forall g, b64_fin g -> bstate g [] (cexp radix2 b64_fexp (b2r g)) [].
+Proof.
+  intros g Fg. repeat split; try constructor; try exact I; try reflexivity; try assumption.
+  apply b64_pow2_multiple_cexp.
+Qed.
+
+(* The final output Q :: E. *)
+Lemma bstate_shape :
+  forall Q E L bs, bstate Q E L bs ->
+    exists bs', drop_zeros (Q :: E) = flat_map cblock_expand bs' /\ carry_shape bs' /\ pairs_aligned bs'.
+Proof.
+  intros Q E L bs (FQ & FE & MQ & DE & Sh & Al & Kb).
+  exists (push Q bs). split; [ exact (drop_zeros_push Q E bs DE) | ].
+  unfold push. destruct (b64_is_zero Q) eqn:Hz; [ split; assumption | ].
+  exact (cons_single L Q bs (b64_nz_of_not_zero Q FQ Hz) MQ Sh Al Kb).
+Qed.
+
+(* STEP 1, no tie: every block so far lies below ulp(g). *)
+Lemma bstate_step :
+  forall Q E L bs g,
+    bstate Q E L bs -> b64_fin g -> b64_TwoSum_safe g Q ->
+    Forall (key_below (cexp radix2 b64_fexp (b2r g))) bs ->
+    let Q' := fst (b64_TwoSum g Q) in
+    let h := snd (b64_TwoSum g Q) in
+    let c := Z.min (cexp radix2 b64_fexp (b2r g)) L in
+    bstate Q' (h :: E) (Z.max c (cexp radix2 b64_fexp (b2r Q'))) (push h bs)
+    /\ Forall (key_below c) bs.
+Proof.
+  intros Q E L bs g (FQ & FE & MQ & DE & Sh & Al & Kb) Fg S Kg Q' h c.
+  destruct (ts_facts g Q S) as (FQ' & Fh & RQ' & Hex & Hno & _). fold Q' h in FQ', Fh, RQ', Hex, Hno.
+  assert (Mg : pow2_multiple c (b2r g))
+    by (apply (pow2_multiple_le _ _ _ (Z.le_min_l _ _)), b64_pow2_multiple_cexp).
+  assert (MQc : pow2_multiple c (b2r Q)) by (apply (pow2_multiple_le _ _ _ (Z.le_min_r _ _)), MQ).
+  assert (MQ' : pow2_multiple c (b2r Q'))
+    by (rewrite RQ'; apply round_pow2_multiple, pow2_multiple_plus; assumption).
+  assert (Mh : pow2_multiple c (b2r h)).
+  { replace (b2r h) with ((b2r g + b2r Q) - b2r Q') by lra.
+    apply pow2_multiple_minus; [ apply pow2_multiple_plus | ]; assumption. }
+  assert (Kc : Forall (key_below c) bs) by (apply key_below_min; assumption).
+  unfold strict_succ_b64 in Hno. pose proof (half_ulp_below Q' h Hno) as Hh.
+  split; [ | exact Kc ].
+  apply (bstate_push Q' h E bs _ c); try assumption.
+  - destruct (Z.max_spec c (cexp radix2 b64_fexp (b2r Q'))) as [[_ Hm] | [_ Hm]];
+      rewrite Hm; [ apply b64_pow2_multiple_cexp | exact MQ' ].
+  - apply Rlt_le_trans with (1 := Hh); apply bpow_le, Z.le_max_r.
+  - apply Z.le_max_l.
+Qed.
+
+(* STEP 2, the tie: Q = s 2^M and the newest error h = s 2^c sit at a
+   midpoint for g.  Anti pair, a pending twin (Q' = h), or a single. *)
+Lemma bstate_tie :
+  forall (g Q h : binary64) (E0 : list binary64) (bs0 : list cblock) (s : R),
+    b64_fin g -> b64_TwoSum_safe g Q -> (s = 1 \/ s = -1) ->
+    let c := cexp radix2 b64_fexp (b2r g) in
+    let M := mag radix2 (b2r g) in
+    b2r g <> 0 -> (2 <= M - c)%Z -> b64_fexp (M + 1) = (c + 1)%Z ->
+    b2r Q = s * bpow radix2 M -> b2r h = s * bpow radix2 c ->
+    bpow radix2 M - 2 * bpow radix2 c <= Rabs (b2r g) ->
+    b64_fin h -> Forall b64_fin E0 -> drop_zeros E0 = flat_map cblock_expand bs0 ->
+    carry_shape bs0 -> pairs_aligned bs0 -> Forall (key_below c) bs0 ->
     let Q' := fst (b64_TwoSum g Q) in
     let h' := snd (b64_TwoSum g Q) in
-    exists bs, drop_zeros (Q' :: h' :: a :: b :: t) = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
+       bstate Q' (h' :: h :: E0) M (CAnti h' :: bs0)
+    \/ (b2r h' = 0 /\ Q' = h)
+    \/ bstate Q' (h' :: h :: E0) (c + 1) (CSingle h :: bs0).
 Proof.
-  intros g Q a b t Mlev c Fg S Fa Fb Ft MQ HMg HcM Hba Ha Bt Lt Q' h'.
-  destruct (ts_facts g Q S) as (FQ' & Fh & RQ' & Hex & Hno & _). fold Q' h' in FQ', Fh, RQ', Hex, Hno.
+  intros g Q h E0 bs0 s Fg S Hs c M Hg0 HMc HfM HQ Hh Hgl Fh FE DE Sh Al Kb Q' h'.
+  pose proof (tie_values g Q s Fg S Hs Hg0 HMc HfM HQ Hgl) as TV. cbv zeta in TV. fold c M Q' h' in TV.
+  destruct (ts_facts g Q S) as (FQ' & Fh' & _ & _ & _ & _). fold Q' h' in FQ', Fh'.
   pose proof (bpow_gt_0 radix2 c) as Hc0.
-  assert (HcM' : bpow radix2 c < bpow radix2 Mlev) by (apply bpow_lt, HcM).
-  assert (Ha0 : b2r a <> 0) by (intro H; rewrite H, Rabs_R0 in Ha; lra).
-  assert (Hb0 : b2r b <> 0) by (rewrite Hba; intro H; apply Ha0; lra).
-  assert (Mg : pow2_multiple Mlev (b2r g)) by (apply (pow2_multiple_le _ _ _ HMg), b64_pow2_multiple_cexp).
-  assert (MQ' : pow2_multiple Mlev (b2r Q'))
-    by (rewrite RQ'; apply round_pow2_multiple, pow2_multiple_plus; assumption).
-  assert (Mh : pow2_multiple Mlev (b2r h')).
-  { replace (b2r h') with ((b2r g + b2r Q) - b2r Q') by lra.
-    apply pow2_multiple_minus; [ apply pow2_multiple_plus | ]; assumption. }
-  assert (BtM : Forall (below Mlev) t) by (apply (below_mono c); [ lia | exact Bt ]).
-  pose proof (head_pair_layered Q' h' t Mlev FQ' Fh Hno MQ' Mh BtM Lt) as Lall.
-  change (Q' :: h' :: t) with ([Q'; h'] ++ t) in Lall. rewrite drop_zeros_app in Lall.
-  change (Q' :: h' :: a :: b :: t) with ([Q'; h'] ++ a :: b :: t).
-  rewrite drop_zeros_app.
-  rewrite (drop_zeros_cons_nz a) by (apply b64_is_zero_false; assumption).
-  rewrite (drop_zeros_cons_nz b) by (apply b64_is_zero_false; assumption).
-  apply (shape_insert_anti_aligned _ _ _ _ c); try assumption.
-  - apply drop_zeros_nz. repeat constructor; assumption.
-  - apply drop_zeros_nz, Ft.
-  - pose proof (drop_zeros_nonzero_mult Mlev [Q'; h']) as Hge.
-    assert (Hm2 : Forall (pow2_multiple Mlev) (map b2r [Q'; h'])) by (repeat constructor; assumption).
-    specialize (Hge Hm2 ltac:(repeat constructor; assumption)).
-    eapply Forall_impl; [ | exact Hge ]. cbn beta. intros y Hy. lra.
-  - eapply Forall_impl; [ | apply Forall_filter_sub, Bt ]. unfold below. intros y Hy. lra.
-  - (* everything above the pair is a multiple of 2^Mlev, hence of 2^c *)
-    apply Forall_filter_sub. constructor; [ exact (pow2_multiple_le c Mlev _ ltac:(lia) MQ') | ].
-    constructor; [ exact (pow2_multiple_le c Mlev _ ltac:(lia) Mh) | constructor ].
+  assert (Hhc : Rabs (b2r h) = bpow radix2 c) by (rewrite Hh; apply abs_sign; [ exact Hs | lra ]).
+  assert (Hh0 : b2r h <> 0) by (intro H; rewrite H, Rabs_R0 in Hhc; lra).
+  assert (HcM : bpow radix2 c < bpow radix2 M) by (apply bpow_lt; lia).
+  destruct TV as [(Ha & HQ') | [(Hz & HQ') | (Hz & MQ' & NQ')]].
+  - left.
+    assert (Hac : Rabs (b2r h') = bpow radix2 c) by (rewrite Ha, Rabs_Ropp, <- Hh; exact Hhc).
+    assert (Ha0 : b2r h' <> 0) by (intro H; rewrite H, Rabs_R0 in Hac; lra).
+    assert (Eh : h = b64_neg h').
+    { apply b64_eq_of_R; [ exact Fh | apply b64_neg_fin, Fh' | rewrite b64_neg_R, Ha; lra | exact Hh0 ]. }
+    destruct (cons_anti c h' bs0 Fh' Hac Sh Al Kb) as [S' A'].
+    refine (conj FQ' (conj _ (conj _ (conj _ (conj S' (conj A' _)))))).
+    + repeat constructor; assumption.
+    + rewrite HQ'. destruct Hs as [-> | ->]; [ exists 2%Z | exists (-2)%Z ]; cbn [IZR IPR IPR_2]; ring.
+    + rewrite (drop_zeros_cons_nz h') by (apply b64_is_zero_false; assumption).
+      rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
+      rewrite DE, Eh. reflexivity.
+    + constructor; [ unfold key_below; cbn [block_key]; lra | ].
+      apply (key_below_mono c); [ lia | exact Kb ].
+  - right; left. split; [ exact Hz | ].
+    apply b64_eq_of_R; [ exact FQ' | exact Fh | rewrite HQ', Hh; reflexivity | rewrite HQ', <- Hh; exact Hh0 ].
+  - right; right.
+    assert (Mh : pow2_multiple c (b2r h)) by (apply pow2_multiple_pm, Hhc).
+    destruct (cons_single c h bs0 (conj Fh Hh0) Mh Sh Al Kb) as [S' A'].
+    refine (conj FQ' (conj _ (conj MQ' (conj _ (conj S' (conj A' _)))))).
+    + repeat constructor; assumption.
+    + rewrite (drop_zeros_cons_zero h') by (apply b64_is_zero_true; assumption).
+      rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
+      rewrite DE. reflexivity.
+    + assert (H2c : bpow radix2 c < bpow radix2 (c + 1)) by (apply bpow_lt; lia).
+      constructor; [ unfold key_below; cbn [block_key]; lra | ].
+      apply (key_below_mono c); [ lia | exact Kb ].
 Qed.
 
-Lemma twin_final_aligned :
-  forall (g Q z h : binary64) (t : list binary64) (c : Z),
-    b64_fin g -> b2r g <> 0 -> b64_TwoSum_safe g Q -> b64_fin z -> b64_fin h -> Forall b64_fin t ->
-    b2r z = 0 -> b2r Q = b2r h -> Rabs (b2r h) = bpow radix2 c ->
+(* STEP 3a, after a pending twin (Q = h at 2^c): g absorbs Q, the twin
+   (h', h) settles below g. *)
+Lemma bstate_twin :
+  forall (g Q z h : binary64) (E0 : list binary64) (bs0 : list cblock) (c : Z),
+    b64_fin g -> b2r g <> 0 -> b64_TwoSum_safe g Q -> b64_fin z -> b64_fin h -> Forall b64_fin E0 ->
+    b2r z = 0 -> Q = h -> Rabs (b2r h) = bpow radix2 c ->
     bpow radix2 c < ulp radix2 b64_fexp (b2r g) / 4 ->
     2 * bpow radix2 c < bpow radix2 emax ->
-    Forall (below c) t -> layered t ->
+    drop_zeros E0 = flat_map cblock_expand bs0 ->
+    carry_shape bs0 -> pairs_aligned bs0 -> Forall (key_below c) bs0 ->
     let Q' := fst (b64_TwoSum g Q) in
     let h' := snd (b64_TwoSum g Q) in
-    exists bs, drop_zeros (Q' :: h' :: z :: h :: t) = flat_map cblock_expand bs /\ carry_shape bs /\ pairs_aligned bs.
+    bstate Q' (h' :: z :: h :: E0) (cexp radix2 b64_fexp (b2r g)) (CTwin h :: bs0).
 Proof.
-  intros g Q z h t c Fg Hg0 S Fz Fh Ft Hz HQh Hh Hsmall Hov Bt Lt Q' h'.
+  intros g Q z h E0 bs0 c Fg Hg0 S Fz Fh FE Hz HQh Hh Hsmall Hov DE Sh Al Kb Q' h'.
   destruct (ts_facts g Q S) as (FQ' & Fh' & RQ' & Hex & _ & _). fold Q' h' in FQ', Fh', RQ', Hex.
-  pose proof (bpow_gt_0 radix2 c) as Hc0.
+  pose proof (bpow_gt_0 radix2 c) as Hc0. subst Q.
   assert (Hh0 : b2r h <> 0) by (intro H; rewrite H, Rabs_R0 in Hh; lra).
-  assert (HQ' : b2r Q' = b2r g) by (rewrite RQ'; apply rn_absorb; [ exact Hg0 | rewrite HQh, Hh; exact Hsmall ]).
+  assert (HQ' : b2r Q' = b2r g) by (rewrite RQ'; apply rn_absorb; [ exact Hg0 | rewrite Hh; exact Hsmall ]).
   assert (Hh' : b2r h' = b2r h) by lra.
-  assert (Eh : h = h') by (apply b64_eq_of_R; [ exact Fh | exact Fh' | symmetry; exact Hh' | exact Hh0 ]).
-  assert (HQ0 : b2r Q' <> 0) by (rewrite HQ'; exact Hg0).
-  rewrite (drop_zeros_cons_nz Q') by (apply b64_is_zero_false; assumption).
-  rewrite (drop_zeros_cons_nz h') by (apply b64_is_zero_false; [ exact Fh' | rewrite Hh'; exact Hh0 ]).
-  rewrite (drop_zeros_cons_zero z) by (apply b64_is_zero_true; assumption).
-  rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
-  rewrite <- Eh.
-  change (Q' :: h :: h :: drop_zeros t) with ([Q'] ++ h :: h :: drop_zeros t).
-  assert (Hov' : 2 * Rabs (b2r h) < bpow radix2 emax) by (rewrite Hh; exact Hov).
-  pose proof (ulp_le_abs_b64 g Hg0) as Hug.
-  set (eg := cexp radix2 b64_fexp (b2r g)).
-  assert (Hue : ulp radix2 b64_fexp (b2r g) = bpow radix2 eg) by (apply ulp_neq_0, Hg0).
-  destruct (double_exact h Fh Hov') as [Hd Fd].
-  apply (shape_insert_twin_aligned _ _ _ c); try assumption.
-  - constructor; [ split; assumption | constructor ].
-  - apply drop_zeros_nz, Ft.
-  - constructor; [ rewrite HQ', Hh; lra | constructor ].
-  - eapply Forall_impl; [ | apply Forall_filter_sub, Bt ]. unfold below. intros y Hy. rewrite Hh. lra.
-  - (* layered [Q'; 2h] ++ tail *)
-    cbn [app]. split.
-    + exists eg. split.
-      * rewrite HQ'. apply b64_pow2_multiple_cexp.
-      * constructor.
-        { unfold below. rewrite Hd, Rabs_mult, Rabs_pos_eq by lra. rewrite <- Hue. lra. }
-        eapply Forall_impl; [ | apply Forall_filter_sub, Bt ]. unfold below. intros y Hy. rewrite <- Hue. lra.
-    + split; [ | apply layered_filter, Lt ].
-      exists (c + 1)%Z. split.
-      * rewrite Hd. destruct (pow2_multiple_pm c (b2r h) Hh) as [n Hn].
-        exists n. rewrite Hn, bpow_plus. change (bpow radix2 1) with 2. ring.
-      * apply (below_mono c); [ lia | apply Forall_filter_sub, Bt ].
+  assert (Eh : h' = h) by (apply b64_eq_of_R; [ exact Fh' | exact Fh | exact Hh' | rewrite Hh'; exact Hh0 ]).
+  assert (Hue : ulp radix2 b64_fexp (b2r g) = bpow radix2 (cexp radix2 b64_fexp (b2r g))) by (apply ulp_neq_0, Hg0).
+  destruct (cons_twin c h bs0 Fh Hh Hov Sh Al Kb) as [S' A'].
+  refine (conj FQ' (conj _ (conj _ (conj _ (conj S' (conj A' _)))))).
+  - repeat constructor; assumption.
+  - rewrite HQ'. apply b64_pow2_multiple_cexp.
+  - rewrite Eh. rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
+    rewrite (drop_zeros_cons_zero z) by (apply b64_is_zero_true; assumption).
+    rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
+    rewrite DE. reflexivity.
+  - constructor.
+    + unfold key_below. cbn [block_key]. rewrite <- Hue, Hh. lra.
+    + eapply Forall_impl; [ | exact Kb ]. unfold key_below. intros b Hb. rewrite <- Hue. lra.
 Qed.
 
+(* STEP 3b, a pending twin at the top of the output. *)
+Lemma twin_top_shape :
+  forall (Q z h : binary64) (E0 : list binary64) (bs0 : list cblock) (c : Z),
+    b64_fin z -> b64_fin h -> b2r z = 0 -> Q = h -> Rabs (b2r h) = bpow radix2 c ->
+    2 * bpow radix2 c < bpow radix2 emax ->
+    drop_zeros E0 = flat_map cblock_expand bs0 ->
+    carry_shape bs0 -> pairs_aligned bs0 -> Forall (key_below c) bs0 ->
+    exists bs, drop_zeros (Q :: z :: h :: E0) = flat_map cblock_expand bs
+               /\ carry_shape bs /\ pairs_aligned bs.
+Proof.
+  intros Q z h E0 bs0 c Fz Fh Hz HQh Hh Hov DE Sh Al Kb. subst Q.
+  pose proof (bpow_gt_0 radix2 c) as Hc0.
+  assert (Hh0 : b2r h <> 0) by (intro H; rewrite H, Rabs_R0 in Hh; lra).
+  exists (CTwin h :: bs0). split; [ | exact (cons_twin c h bs0 Fh Hh Hov Sh Al Kb) ].
+  rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
+  rewrite (drop_zeros_cons_zero z) by (apply b64_is_zero_true; assumption).
+  rewrite (drop_zeros_cons_nz h) by (apply b64_is_zero_false; assumption).
+  rewrite DE. reflexivity.
+Qed.
+
+Lemma bpre_step :
+  forall K h bs g, Forall (key_below K) bs -> (K <= cexp radix2 b64_fexp (b2r g))%Z ->
+    Rabs (b2r h) < bpow radix2 (cexp radix2 b64_fexp (b2r g)) ->
+    Forall (key_below (cexp radix2 b64_fexp (b2r g))) (push h bs).
+Proof. intros K h bs g Hb HK Hh. apply key_below_push; [ exact Hh | exact (key_below_mono K _ bs HK Hb) ]. Qed.
+
+
 (* --------------------------------------------------------------------------
-   Rung 4, aligned: B64_CarryCleanRung4's case analysis, aligned leaves.
+   The top step.  The last TwoSum of a chain may meet an incoming error that
+   ties ulp(g); `tie_analysis` (rung 4) allows a partner up to 3 ulp(g), the
+   wide form below up to 4 ulp(g), which the seventh step needs.
+   -------------------------------------------------------------------------- *)
+
+(* A tie at the top is still the canonical one when |y| < 4 ulp(g). *)
+Lemma tie_analysis_wide :
+  forall (g : binary64) (x y : R),
+    b2r g <> 0 -> Rabs x <= Rabs (b2r g) ->
+    Rabs y < 4 * ulp radix2 b64_fexp (b2r g) ->
+    let M := mag radix2 (b2r g) in
+    let c := cexp radix2 b64_fexp (b2r g) in
+    let z := x + y in
+    let r := round radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) z in
+    Rabs (r - z) <= bpow radix2 c
+    /\ (Rabs (r - z) = bpow radix2 c ->
+          (2 <= M - c)%Z /\ b64_fexp (M + 1) = (c + 1)%Z
+          /\ ((z = bpow radix2 M + bpow radix2 c /\ r = bpow radix2 M)
+              \/ (z = - (bpow radix2 M + bpow radix2 c) /\ r = - bpow radix2 M))).
+Proof.
+  intros g x y Hg0 Hx Hy M c z r.
+  rewrite ulp_neq_0 in Hy by exact Hg0. fold c in Hy.
+  assert (Hc : c = b64_fexp M) by reflexivity.
+  pose proof (mag_generic_gt radix2 b64_fexp (b2r g) Hg0 (Binary.generic_format_B2R prec emax g))
+    as Hgt. fold c M in Hgt.
+  assert (Hu : 0 < bpow radix2 c) by apply bpow_gt_0.
+  assert (FB : generic_format radix2 b64_fexp (bpow radix2 M))
+    by (apply generic_format_bpow, fexp_succ_le; rewrite <- Hc; exact Hgt).
+  assert (Hg : Rabs (b2r g) <= bpow radix2 M - bpow radix2 c).
+  { rewrite Hc, <- pred_bpow.
+    exact (pred_ge_gt radix2 b64_fexp _ _
+             (generic_format_abs _ _ _ (Binary.generic_format_B2R prec emax g)) FB
+             (bpow_mag_gt radix2 (b2r g))). }
+  assert (HcM : bpow radix2 c <= bpow radix2 (M - 1)) by (apply bpow_le; lia).
+  assert (HM : bpow radix2 M = 2 * bpow radix2 (M - 1)).
+  { replace (bpow radix2 M) with (bpow radix2 ((M - 1) + 1)) by (f_equal; ring).
+    rewrite bpow_plus. change (bpow radix2 1) with 2. ring. }
+  assert (Hz : Rabs z < bpow radix2 M + 3 * bpow radix2 c)
+    by (unfold z; pose proof (Rabs_triang x y); lra).
+  change (BinarySingleNaN.round_mode mode_b64) with (Znearest (fun t => negb (Z.even t))) in r.
+  destruct (Req_dec z 0) as [Hz0 | Hz0].
+  { assert (Hr0 : r = 0) by (unfold r; rewrite Hz0; apply round_0, valid_rnd_N).
+    rewrite Hr0, Hz0, Rminus_0_r, Rabs_R0. split; [ lra | intro H; lra ]. }
+  (* the exponent of z is at most c + 1 *)
+  set (ez := cexp radix2 b64_fexp z).
+  assert (Hmz : (mag radix2 z <= M + 2)%Z).
+  { apply mag_le_bpow; [ exact Hz0 | ].
+    rewrite bpow_plus. change (bpow radix2 2) with 4. pose proof (bpow_gt_0 radix2 M). lra. }
+  assert (Hmz1 : (c + 1 < M)%Z -> (mag radix2 z <= M + 1)%Z).
+  { intro Hlt. apply mag_le_bpow; [ exact Hz0 | ].
+    assert (H : bpow radix2 (c + 1) <= bpow radix2 (M - 1)) by (apply bpow_le; lia).
+    rewrite bpow_plus in H. change (bpow radix2 1) with 2 in H.
+    rewrite bpow_plus. change (bpow radix2 1) with 2. lra. }
+  assert (Hez : (ez <= c + 1)%Z).
+  { unfold ez, cexp.
+    destruct (Z_lt_le_dec (c + 1) M) as [Hlt | Hge].
+    - specialize (Hmz1 Hlt).
+      rewrite Hc in *. unfold SpecFloat.fexp in *. unfold prec in *. lia.
+    - rewrite Hc in *. unfold SpecFloat.fexp in *. unfold prec in *. lia. }
+  pose proof (error_le_half_ulp radix2 b64_fexp (fun t => negb (Z.even t)) z) as Hhalf.
+  fold r in Hhalf. rewrite ulp_neq_0 in Hhalf by exact Hz0. fold ez in Hhalf.
+  assert (Hbez : bpow radix2 ez <= 2 * bpow radix2 c).
+  { replace (2 * bpow radix2 c) with (bpow radix2 (c + 1))
+      by (rewrite bpow_plus; change (bpow radix2 1) with 2; ring).
+    apply bpow_le, Hez. }
+  split; [ lra | ].
+  intro Htie.
+  (* the tie: ez = c + 1, so |z| >= 2^M *)
+  assert (Hez1 : ez = (c + 1)%Z).
+  { destruct (Z.eq_dec ez (c + 1)) as [E | E]; [ exact E | exfalso ].
+    assert (bpow radix2 ez <= bpow radix2 c) by (apply bpow_le; lia). lra. }
+  assert (HmzM : (M < mag radix2 z)%Z).
+  { destruct (Z_lt_le_dec M (mag radix2 z)) as [H | H]; [ exact H | exfalso ].
+    assert (b64_fexp (mag radix2 z) <= b64_fexp M)%Z
+      by (unfold SpecFloat.fexp; apply Z.max_le_compat_r; lia).
+    unfold ez, cexp in Hez1. lia. }
+  assert (HzB : bpow radix2 M <= Rabs z).
+  { apply Rle_trans with (bpow radix2 (mag radix2 z - 1)); [ apply bpow_le; lia | ].
+    apply bpow_mag_le, Hz0. }
+  assert (Hk : (2 <= M - c)%Z /\ b64_fexp (M + 1) = (c + 1)%Z).
+  { unfold ez, cexp in Hez1.
+    destruct (Z_lt_le_dec (c + 1) M) as [Hlt | Hge]; [ specialize (Hmz1 Hlt) | ];
+      rewrite Hc in *; unfold SpecFloat.fexp in *; unfold prec in *; lia. }
+  split; [ apply Hk | split; [ apply Hk | ] ].
+  (* z is a midpoint: z = (n + 1/2) 2^(c+1) *)
+  assert (Hr : r = IZR (Znearest (fun t => negb (Z.even t)) (scaled_mantissa radix2 b64_fexp z))
+                   * bpow radix2 ez) by reflexivity.
+  set (m := Znearest (fun t => negb (Z.even t)) (scaled_mantissa radix2 b64_fexp z)) in Hr.
+  assert (He2 : bpow radix2 ez = 2 * bpow radix2 c)
+    by (rewrite Hez1, bpow_plus; change (bpow radix2 1) with 2; ring).
+  set (k := (M - c - 1)%Z).
+  set (N := Zpower radix2 k).
+  assert (HBk : bpow radix2 M = IZR N * bpow radix2 ez).
+  { unfold N. rewrite IZR_Zpower by (unfold k; lia). rewrite <- bpow_plus. f_equal. unfold k. lia. }
+  assert (HNe : Z.even N = true).
+  { unfold N. replace k with (1 + (k - 1))%Z by ring.
+    rewrite Zpower_plus by (unfold k; lia). cbn [Zpower Z.pow_pos Pos.iter radix_val radix2].
+    rewrite Z.even_mul. reflexivity. }
+  assert (Hk1 : (1 <= k)%Z) by (unfold k; lia).
+  assert (He0 : 0 < bpow radix2 ez) by apply bpow_gt_0.
+  (* |r - z| = 2^c = 2^ez / 2: z = (m -+ 1/2) 2^ez *)
+  assert (Hmid : exists n : Z, z = (IZR n + / 2) * bpow radix2 ez).
+  { destruct (Rcase_abs (r - z)) as [Ha | Ha];
+      [ rewrite Rabs_left in Htie by exact Ha | rewrite Rabs_right in Htie by exact Ha ].
+    - exists m. lra.
+    - exists (m - 1)%Z. rewrite minus_IZR. lra. }
+  destruct Hmid as [n Hn].
+  assert (Hzu : Rabs z < (IZR N + 3 / 2) * bpow radix2 ez) by lra.
+  assert (Hzl : IZR N * bpow radix2 ez <= Rabs z) by lra.
+  rewrite Hn, Rabs_mult, (Rabs_pos_eq (bpow radix2 ez)) in Hzu, Hzl by lra.
+  apply Rmult_lt_reg_r in Hzu; [ | exact He0 ].
+  rewrite Rmult_comm in Hzl. rewrite (Rmult_comm (Rabs _)) in Hzl.
+  apply Rmult_le_reg_l in Hzl; [ | exact He0 ].
+  destruct (Rle_or_lt 0 (IZR n + / 2)) as [Hpos | Hneg].
+  - (* n = N = 2^k : z = B + u, rounds down to the even B *)
+    rewrite Rabs_pos_eq in Hzu, Hzl by exact Hpos.
+    assert (Hn1 : n = N).
+    { apply Z.le_antisymm.
+      - apply Z.lt_succ_r, lt_IZR. rewrite succ_IZR. lra.
+      - apply Z.lt_pred_le, lt_IZR. rewrite <- Z.sub_1_r, minus_IZR. lra. }
+    left. split.
+    + rewrite Hn, Hn1, HBk, He2. field.
+    + unfold r. change (Znearest (fun t => negb (Z.even t))) with (BinarySingleNaN.round_mode mode_b64).
+      rewrite (round_NE_mid z n); fold ez; [ | rewrite <- Hn; reflexivity ].
+      rewrite Hn1, HNe, HBk. reflexivity.
+  - (* n = -N - 1 : z = -(B + u), rounds up to the even -B *)
+    rewrite Rabs_left in Hzu, Hzl by exact Hneg.
+    assert (Hn1 : n = (- N - 1)%Z).
+    { apply Z.le_antisymm.
+      - apply Z.lt_succ_r, lt_IZR. rewrite succ_IZR, minus_IZR, opp_IZR. lra.
+      - apply Z.lt_pred_le, lt_IZR. rewrite <- Z.sub_1_r, !minus_IZR, opp_IZR. lra. }
+    right. split.
+    + rewrite Hn, Hn1, minus_IZR, opp_IZR, HBk, He2. field.
+    + unfold r. change (Znearest (fun t => negb (Z.even t))) with (BinarySingleNaN.round_mode mode_b64).
+      rewrite (round_NE_mid z n); fold ez; [ | rewrite <- Hn; reflexivity ].
+      assert (Hodd : Z.even n = false).
+      { rewrite Hn1, Z.even_sub, Z.even_opp, HNe. reflexivity. }
+      rewrite Hodd, Hn1. replace (- N - 1 + 1)%Z with (- N)%Z by ring.
+      rewrite opp_IZR, HBk. ring.
+Qed.
+
+(* Half-units j * 2^(c-1), j <= 7, are representable above the subnormal floor. *)
+Lemma fmt_half_units :
+  forall (c j : Z), (3 - emax - prec < c)%Z -> (0 < j <= 7)%Z ->
+    generic_format radix2 b64_fexp (IZR j * bpow radix2 (c - 1)).
+Proof.
+  intros c j Hc Hj.
+  apply (fmt_scaled j (c - 1) (c + 2)).
+  - rewrite Rabs_mult, (Rabs_pos_eq (bpow _ _)) by (left; apply bpow_gt_0).
+    rewrite Rabs_pos_eq by (apply IZR_le; lia).
+    replace (bpow radix2 (c + 2)) with (8 * bpow radix2 (c - 1))
+      by (replace (c + 2)%Z with ((c - 1) + 3)%Z by ring; rewrite bpow_plus; change (bpow radix2 3) with 8; ring).
+    pose proof (bpow_gt_0 radix2 (c - 1)). assert (IZR j <= 7) by (apply IZR_le; lia). nra.
+  - unfold SpecFloat.fexp, SpecFloat.emin. unfold prec in *. lia.
+Qed.
+
+(* THE TOP STEP: the last TwoSum of a chain, whose incoming error h may tie
+   ulp(g).  The block state below h must already sit under ulp(g). *)
+Lemma bstate_top :
+  forall (g Q h Q' h' : binary64) (E0 : list binary64) (bs0 : list cblock) (L : Z) (x y : R),
+    b64_fin g -> b2r g <> 0 -> b64_TwoSum_safe g Q -> b64_TwoSum g Q = (Q', h') ->
+    bstate Q (h :: E0) L (push h bs0) ->
+    Forall b64_fin E0 -> drop_zeros E0 = flat_map cblock_expand bs0 ->
+    carry_shape bs0 -> pairs_aligned bs0 ->
+    Forall (key_below (cexp radix2 b64_fexp (b2r g))) bs0 ->
+    Rabs x <= Rabs (b2r g) -> Rabs y <= 7 / 2 * ulp radix2 b64_fexp (b2r g) ->
+    b2r Q = RN (x + y) -> b2r Q + b2r h = x + y ->
+    2 * ulp radix2 b64_fexp (b2r g) < bpow radix2 emax ->
+    exists bs, drop_zeros (Q' :: h' :: h :: E0) = flat_map cblock_expand bs
+               /\ carry_shape bs /\ pairs_aligned bs.
+Proof.
+  intros g Q h Q' h' E0 bs0 L x y Fg Hg0 S Heq St FE DE Sh Al Kb Hx Hy RQ Hex Hov.
+  assert (Hu0 : 0 < ulp radix2 b64_fexp (b2r g)) by (rewrite ulp_neq_0 by exact Hg0; apply bpow_gt_0).
+  pose proof (tie_analysis_wide g x y Hg0 Hx ltac:(lra)) as Tie.
+  cbv zeta in Tie. rewrite <- RQ in Tie. destruct Tie as [Bnd Tie].
+  assert (Eh : Rabs (b2r Q - (x + y)) = Rabs (b2r h)).
+  { replace (b2r Q - (x + y)) with (- b2r h) by lra. apply Rabs_Ropp. }
+  rewrite Eh in Bnd, Tie.
+  set (c := cexp radix2 b64_fexp (b2r g)) in *.
+  assert (Hu : ulp radix2 b64_fexp (b2r g) = bpow radix2 c) by (apply ulp_neq_0, Hg0).
+  rewrite Hu in Hy, Hov.
+  pose proof (bpow_gt_0 radix2 c) as Hc0.
+  pose proof St as (FQ & FEh & _ & _ & _ & _ & _).
+  inversion FEh as [| ? ? Fh _]; subst.
+  destruct (Req_dec (Rabs (b2r h)) (bpow radix2 c)) as [Ht | Hnt].
+  - destruct (Tie Ht) as (HMc & HfM & Hz).
+    set (M := mag radix2 (b2r g)) in *.
+    pose proof (bpow_gt_0 radix2 M) as HB.
+    assert (Hsign : exists s : R, (s = 1 \/ s = -1) /\ b2r Q = s * bpow radix2 M
+                                  /\ b2r h = s * bpow radix2 c).
+    { destruct Hz as [[Hz HQ] | [Hz HQ]].
+      - exists 1. split; [ left; reflexivity | split; lra ].
+      - exists (-1). split; [ right; reflexivity | split; lra ]. }
+    destruct Hsign as (s & Hs & HQs & Hhs).
+    assert (Hgl : bpow radix2 M - 2 * bpow radix2 c <= Rabs (b2r g)).
+    { destruct (b64_pow2_multiple_cexp g) as [n Hn].
+      apply (mult_gap _ n c M Hn ltac:(lia)).
+      pose proof (Rabs_triang_inv (x + y) y) as Ht'.
+      replace (x + y - y) with x in Ht' by ring.
+      destruct Hz as [[Hz _] | [Hz _]]; rewrite Hz in Ht';
+        [ rewrite Rabs_pos_eq in Ht' by lra | rewrite Rabs_Ropp, Rabs_pos_eq in Ht' by lra ]; lra. }
+    pose proof (bstate_tie g Q h E0 bs0 s Fg S Hs Hg0 HMc HfM HQs Hhs Hgl Fh FE DE Sh Al Kb) as TS.
+    cbv zeta in TS. rewrite Heq in TS. cbn [fst snd] in TS.
+    pose proof (ts_facts g Q S) as T. rewrite Heq in T. cbn [fst snd] in T.
+    destruct T as (_ & Fh' & _ & _ & _ & _).
+    destruct TS as [St' | [(Hz' & HQh) | St']].
+    + exact (bstate_shape _ _ _ _ St').
+    + exact (twin_top_shape Q' h' h E0 bs0 c Fh' Fh Hz' HQh Ht Hov DE Sh Al Kb).
+    + exact (bstate_shape _ _ _ _ St').
+  - assert (P : Forall (key_below c) (push h bs0)) by (apply key_below_push; [ lra | exact Kb ]).
+    pose proof (bstate_step _ _ _ _ g St Fg S P) as [St' _].
+    cbv zeta in St'. rewrite Heq in St'. cbn [fst snd] in St'.
+    exact (bstate_shape _ _ _ _ St').
+Qed.
+
+(* RN of a value below j half-units of 2^c stays within j half-units. *)
+Lemma rn_le_half_units :
+  forall (c j : Z) (z : R), (3 - emax - prec < c)%Z -> (0 < j <= 7)%Z ->
+    Rabs z <= IZR j * bpow radix2 (c - 1) -> Rabs (RN z) <= IZR j * bpow radix2 (c - 1).
+Proof.
+  intros c j z Hc Hj Hz.
+  exact (abs_round_le_generic radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) _ _
+           (fmt_half_units c j Hc Hj) Hz).
+Qed.
+
+
+(* --------------------------------------------------------------------------
+   Rung 4 through the block state.
    -------------------------------------------------------------------------- *)
 
 Lemma fes5_shape_of_keys_aligned :
@@ -550,338 +790,60 @@ Lemma fes5_shape_of_keys_aligned :
     exists bs, drop_zeros (fes5 g1 g2 g3 g4 g5) = flat_map cblock_expand bs
                /\ carry_shape bs /\ pairs_aligned bs.
 Proof.
-  intros g1 g2 g3 g4 g5 F1 F2 F3 F4 F5 Hsafe H34 H45 Hov5 (Hg30 & Hg40 & Hg50 & K1 & K2 & K3).
-  cbn [cascade_safe] in Hsafe. destruct Hsafe as [S12 [S3 [S4 [S5 _]]]].
-  change (fst (b64_TwoSum g2 g1)) with (b64_plus g2 g1) in S3, S4, S5.
+  intros g1 g2 g3 g4 g5 F1 F2 F3 F4 F5 Hsafe H34 H45 Hov5 (N3 & N4 & N5 & K1 & K2 & K3).
+  cbn [cascade_safe] in Hsafe. destruct Hsafe as [S2 [S3 [S4 [S5 _]]]].
   unfold fes5. cbn [b64_grow_expansion_aux].
-  (* first TwoSum: (Q2, h2) = TwoSum(g2, g1) *)
-  pose proof S12 as (A1 & A2 & A3 & A4 & A5 & A6).
-  pose proof (b64_TwoSum_correct g2 g1 A1 A2 A3 A4 A5 A6) as Hex2.
-  pose proof (b64_TwoSum_nonoverlap g2 g1 A1 A2 A3 A4 A5 A6) as Hno2.
-  destruct (b64_plus_correct g2 g1 A1) as [RQ2 FQ2].
-  destruct (b64_plus_correct _ _ A6) as [_ Fh2].
-  destruct (b64_TwoSum g2 g1) as [Q2 h2] eqn:E2.
-  cbv iota beta in Hex2, Hno2.
-  unfold b64_TwoSum in E2. injection E2 as EQ2 Eh2.
-  rewrite EQ2 in RQ2, FQ2, S3, S4, S5. rewrite Eh2 in Fh2.
-  change (fst (b64_TwoSum g3 Q2)) with (b64_plus g3 Q2) in S4, S5.
-  (* second TwoSum: (Q3, h3) = TwoSum(g3, Q2) *)
-  pose proof S3 as (B1 & B2 & B3 & B4 & B5 & B6).
-  pose proof (b64_TwoSum_correct g3 Q2 B1 B2 B3 B4 B5 B6) as Hex3.
-  pose proof (b64_TwoSum_nonoverlap g3 Q2 B1 B2 B3 B4 B5 B6) as Hno3.
-  destruct (b64_plus_correct g3 Q2 B1) as [RQ3 FQ3].
-  destruct (b64_plus_correct _ _ B6) as [_ Fh3].
-  destruct (b64_TwoSum g3 Q2) as [Q3 h3] eqn:E3.
-  cbv iota beta in Hex3, Hno3.
-  unfold b64_TwoSum in E3. injection E3 as EQ3 Eh3.
-  rewrite EQ3 in RQ3, FQ3, S4, S5. rewrite Eh3 in Fh3.
-  change (fst (b64_TwoSum g4 Q3)) with (b64_plus g4 Q3) in S5.
-  (* third TwoSum: (Q4, h4) = TwoSum(g4, Q3) *)
-  pose proof S4 as (C1 & C2 & C3 & C4 & C5 & C6).
-  pose proof (b64_TwoSum_correct g4 Q3 C1 C2 C3 C4 C5 C6) as Hex4.
-  pose proof (b64_TwoSum_nonoverlap g4 Q3 C1 C2 C3 C4 C5 C6) as Hno4.
-  destruct (b64_plus_correct g4 Q3 C1) as [RQ4 FQ4].
-  destruct (b64_plus_correct _ _ C6) as [_ Fh4].
-  destruct (b64_TwoSum g4 Q3) as [Q4 h4] eqn:E4.
-  cbv iota beta in Hex4, Hno4.
-  unfold b64_TwoSum in E4. injection E4 as EQ4 Eh4.
-  rewrite EQ4 in RQ4, FQ4, S5. rewrite Eh4 in Fh4.
-  (* fourth TwoSum: (Q5, h5) = TwoSum(g5, Q4) *)
-  pose proof S5 as (D1 & D2 & D3 & D4 & D5 & D6).
-  pose proof (b64_TwoSum_correct g5 Q4 D1 D2 D3 D4 D5 D6) as Hex5.
-  pose proof (b64_TwoSum_nonoverlap g5 Q4 D1 D2 D3 D4 D5 D6) as Hno5.
-  destruct (b64_plus_correct g5 Q4 D1) as [RQ5 FQ5].
-  destruct (b64_plus_correct _ _ D6) as [_ Fh5].
-  destruct (b64_TwoSum g5 Q4) as [Q5 h5] eqn:E5.
-  cbv iota beta in Hex5, Hno5.
-  unfold b64_TwoSum in E5. injection E5 as EQ5 Eh5.
-  rewrite EQ5 in RQ5, FQ5. rewrite Eh5 in Fh5.
-  cbn [rev app].
-  unfold strict_succ_b64 in Hno2, Hno3, Hno4.
-  (* ulp facts *)
-  pose proof (ulp_mono _ _ H34) as U34. pose proof (ulp_mono _ _ H45) as U45.
-  assert (HQ2 : Rabs (b2r Q2) < 2 * ulp radix2 b64_fexp (b2r g4)).
-  { rewrite RQ2. apply rn_sum_lt_two_ulp; [ exact Hg40 | exact K2 | lra ]. }
-  set (c5 := cexp radix2 b64_fexp (b2r g5)).
-  assert (Hu5 : ulp radix2 b64_fexp (b2r g5) = bpow radix2 c5) by (apply ulp_neq_0, Hg50).
-  assert (Hu4 : ulp radix2 b64_fexp (b2r g4) = bpow radix2 (cexp radix2 b64_fexp (b2r g4)))
-    by (apply ulp_neq_0, Hg40).
-  assert (Hu3 : ulp radix2 b64_fexp (b2r g3) = bpow radix2 (cexp radix2 b64_fexp (b2r g3)))
-    by (apply ulp_neq_0, Hg30).
-  assert (Hc45 : (cexp radix2 b64_fexp (b2r g4) <= c5)%Z)
-    by (apply (le_bpow radix2); rewrite <- Hu4, <- Hu5; exact U45).
-  (* layers 2 and 1, as on rung 3 *)
-  set (c2 := Z.min (cexp radix2 b64_fexp (b2r g3)) (cexp radix2 b64_fexp (b2r Q2))).
-  assert (Mg3 : pow2_multiple c2 (b2r g3))
-    by (apply (pow2_multiple_le _ _ _ (Z.le_min_l _ _)), b64_pow2_multiple_cexp).
-  assert (MQ2 : pow2_multiple c2 (b2r Q2))
-    by (apply (pow2_multiple_le _ _ _ (Z.le_min_r _ _)), b64_pow2_multiple_cexp).
-  assert (MQ3 : pow2_multiple c2 (b2r Q3))
-    by (rewrite RQ3; apply round_pow2_multiple, pow2_multiple_plus; assumption).
-  assert (Mh3 : pow2_multiple c2 (b2r h3)).
-  { replace (b2r h3) with ((b2r g3 + b2r Q2) - b2r Q3) by lra.
-    apply pow2_multiple_minus; [ apply pow2_multiple_plus | ]; assumption. }
-  assert (Hh2g1 : Rabs (b2r h2) <= Rabs (b2r g1)).
-  { replace (b2r h2)
-      with (- (round radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) (b2r g2 + b2r g1)
-               - (b2r g2 + b2r g1)))
-      by (rewrite <- RQ2; lra).
+  (* step 2 *)
+  pose proof (bstate_step _ _ _ _ g2 (bstate_init g1 F1) F2 S2 (Forall_nil _)) as [St2 _].
+  pose proof (ts_facts g2 g1 S2) as T2. cbv zeta in St2, T2.
+  destruct (b64_TwoSum g2 g1) as [Q2 h2] eqn:E2. cbn [fst snd] in St2, T2, S3, S4, S5.
+  destruct T2 as (FQ2 & Fh2 & RQ2 & Hex2 & _ & _).
+  (* step 3: h2 below ulp(g3) *)
+  assert (Hh2 : Rabs (b2r h2) <= Rabs (b2r g1)).
+  { replace (b2r h2) with (- (RN (b2r g2 + b2r g1) - (b2r g2 + b2r g1))) by (rewrite <- RQ2; lra).
     rewrite Rabs_Ropp. apply round_N_err_le_operand, Binary.generic_format_B2R. }
-  assert (Hh2Q2 := half_ulp_below Q2 h2 Hno2).
-  assert (Hh2c2 : Rabs (b2r h2) < bpow radix2 c2).
-  { unfold c2. destruct (Z.min_spec (cexp radix2 b64_fexp (b2r g3))
-                                    (cexp radix2 b64_fexp (b2r Q2))) as [[_ Hm] | [_ Hm]];
-      rewrite Hm; lra. }
-  set (L3 := Z.max c2 (cexp radix2 b64_fexp (b2r Q3))).
-  assert (MQ3L : pow2_multiple L3 (b2r Q3)).
-  { unfold L3. destruct (Z.max_spec c2 (cexp radix2 b64_fexp (b2r Q3))) as [[_ Hm] | [_ Hm]];
-      rewrite Hm; [ apply b64_pow2_multiple_cexp | exact MQ3 ]. }
-  set (c1 := Z.min (cexp radix2 b64_fexp (b2r g4)) L3).
-  assert (Mg4 : pow2_multiple c1 (b2r g4))
-    by (apply (pow2_multiple_le _ _ _ (Z.le_min_l _ _)), b64_pow2_multiple_cexp).
-  assert (MQ3c1 : pow2_multiple c1 (b2r Q3))
-    by (apply (pow2_multiple_le _ _ _ (Z.le_min_r _ _)), MQ3L).
-  assert (MQ4 : pow2_multiple c1 (b2r Q4))
-    by (rewrite RQ4; apply round_pow2_multiple, pow2_multiple_plus; assumption).
-  assert (Mh4 : pow2_multiple c1 (b2r h4)).
-  { replace (b2r h4) with ((b2r g4 + b2r Q3) - b2r Q4) by lra.
-    apply pow2_multiple_minus; [ apply pow2_multiple_plus | ]; assumption. }
-  assert (Hh3g4 : Rabs (b2r h3) < bpow radix2 (cexp radix2 b64_fexp (b2r g4))).
-  { replace (b2r h3)
-      with (- (round radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) (b2r g3 + b2r Q2)
-               - (b2r g3 + b2r Q2)))
-      by (rewrite <- RQ3; lra).
-    rewrite Rabs_Ropp, <- Hu4.
-    apply rn_err_lt_ulp_top; [ exact Hg40 | exact H34 | exact HQ2 ]. }
-  assert (Hh3Q3 := half_ulp_below Q3 h3 Hno3).
-  assert (Hh3c1 : below c1 h3).
-  { unfold below, c1, L3.
-    destruct (Z.min_spec (cexp radix2 b64_fexp (b2r g4))
-                         (Z.max c2 (cexp radix2 b64_fexp (b2r Q3)))) as [[_ Hm] | [_ Hm]];
-      rewrite Hm; [ exact Hh3g4 | ].
-    apply Rlt_le_trans with (1 := Hh3Q3). apply bpow_le, Z.le_max_r. }
-  assert (Hh2c1 : below c1 h2).
-  { unfold below, c1, L3.
-    destruct (Z.min_spec (cexp radix2 b64_fexp (b2r g4))
-                         (Z.max c2 (cexp radix2 b64_fexp (b2r Q3)))) as [[_ Hm] | [_ Hm]];
-      rewrite Hm; [ rewrite <- Hu4; lra | ].
-    apply Rlt_le_trans with (1 := Hh2c2). apply bpow_le, Z.le_max_l. }
-  assert (Lt : layered [h3; h2]).
-  { split; [ exists c2; split; [ exact Mh3 | constructor; [ exact Hh2c2 | constructor ] ] | ].
-    split; [ exists (cexp radix2 b64_fexp (b2r h2));
-             split; [ apply b64_pow2_multiple_cexp | constructor ] | exact I ]. }
-  assert (Hc15 : (c1 <= c5)%Z) by (unfold c1; lia).
-  assert (Bt5 : Forall (below c5) [h3; h2]).
-  { assert (bpow radix2 c1 <= bpow radix2 c5) by (apply bpow_le, Hc15).
-    unfold below in *. repeat constructor; lra. }
-  (* the fourth TwoSum's input error h4: at most ulp(g5), equal only at the tie *)
-  assert (F3u : generic_format radix2 b64_fexp (IZR 3 * bpow radix2 c5)).
-  { apply (fmt_scaled 3 c5 (c5 + 2)).
-    - rewrite Rabs_mult, Rabs_pos_eq by lra. rewrite (Rabs_pos_eq (bpow _ _)) by (left; apply bpow_gt_0).
-      rewrite bpow_plus. change (bpow radix2 2) with 4. pose proof (bpow_gt_0 radix2 c5). lra.
-    - unfold c5, cexp, SpecFloat.fexp. unfold prec. lia. }
+  assert (P3 : Forall (key_below (cexp radix2 b64_fexp (b2r g3))) (push h2 [])).
+  { apply key_below_push; [ apply below_of_ulp; [ exact N3 | lra ] | constructor ]. }
+  pose proof (bstate_step _ _ _ _ g3 St2 F3 S3 P3) as [St3 Kb3].
+  pose proof (ts_facts g3 Q2 S3) as T3. cbv zeta in St3, Kb3, T3.
+  destruct (b64_TwoSum g3 Q2) as [Q3 h3] eqn:E3. cbn [fst snd] in St3, T3, S4, S5.
+  destruct T3 as (FQ3 & Fh3 & RQ3 & Hex3 & _ & _).
+  (* step 4: h3 below ulp(g4) *)
+  pose proof (ulp_mono _ _ H34) as U34. pose proof (ulp_mono _ _ H45) as U45.
+  assert (HQ2 : Rabs (b2r Q2) < 2 * ulp radix2 b64_fexp (b2r g4))
+    by (rewrite RQ2; apply rn_sum_lt_two_ulp; [ exact N4 | exact K2 | lra ]).
+  assert (Hh3 : Rabs (b2r h3) < ulp radix2 b64_fexp (b2r g4)).
+  { replace (b2r h3) with (- (RN (b2r g3 + b2r Q2) - (b2r g3 + b2r Q2))) by (rewrite <- RQ3; lra).
+    rewrite Rabs_Ropp. apply rn_err_lt_ulp_top; [ exact N4 | exact H34 | exact HQ2 ]. }
+  assert (P4 : Forall (key_below (cexp radix2 b64_fexp (b2r g4))) (push h3 (push h2 []))).
+  { apply (bpre_step _ h3 _ g4 Kb3); [ | apply below_of_ulp; assumption ].
+    apply Z.le_trans with (cexp radix2 b64_fexp (b2r g3)); [ apply Z.le_min_l | apply cexp_mono_nz; assumption ]. }
+  pose proof (bstate_step _ _ _ _ g4 St3 F4 S4 P4) as [St4 Kb4].
+  pose proof (ts_facts g4 Q3 S4) as T4. cbv zeta in St4, Kb4, T4.
+  destruct (b64_TwoSum g4 Q3) as [Q4 h4] eqn:E4. cbn [fst snd] in St4, T4, S5.
+  destruct T4 as (FQ4 & Fh4 & RQ4 & Hex4 & _ & _).
+  set (c4 := Z.min (cexp radix2 b64_fexp (b2r g4)) _) in Kb4.
+  assert (Hc4 : (c4 <= cexp radix2 b64_fexp (b2r g4))%Z) by apply Z.le_min_l.
+  (* step 5, the top: h4 is at most ulp(g5) and may tie it *)
   assert (HQ3 : Rabs (b2r Q3) <= 3 * ulp radix2 b64_fexp (b2r g5)).
-  { rewrite RQ3, Hu5. change 3 with (IZR 3).
-    apply (abs_round_le_generic radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) _ _ F3u).
-    pose proof (Rabs_triang (b2r g3) (b2r Q2)). rewrite <- Hu5. cbn [IZR IPR IPR_2]. lra. }
-  pose proof (tie_analysis g5 (b2r g4) (b2r Q3) Hg50 H45 HQ3) as Htie.
-  cbv zeta in Htie. rewrite <- RQ4 in Htie. fold c5 in Htie.
-  destruct Htie as [Hbound Htie].
-  assert (Hh4e : Rabs (b2r Q4 - (b2r g4 + b2r Q3)) = Rabs (b2r h4)).
-  { replace (b2r Q4 - (b2r g4 + b2r Q3)) with (- b2r h4) by lra. apply Rabs_Ropp. }
-  rewrite Hh4e in Hbound, Htie.
-  pose proof (bpow_gt_0 radix2 c5) as Hc5p.
-  destruct (Req_dec (Rabs (b2r h4)) (bpow radix2 c5)) as [Ht | Hnt].
-  2: {
-    (* NO TIE: the output is layered, all singles *)
-    set (L4 := Z.max c1 (cexp radix2 b64_fexp (b2r Q4))).
-    assert (MQ4L : pow2_multiple L4 (b2r Q4)).
-    { unfold L4. destruct (Z.max_spec c1 (cexp radix2 b64_fexp (b2r Q4))) as [[_ Hm] | [_ Hm]];
-        rewrite Hm; [ apply b64_pow2_multiple_cexp | exact MQ4 ]. }
-    set (c0 := Z.min c5 L4).
-    assert (Mg5 : pow2_multiple c0 (b2r g5))
-      by (apply (pow2_multiple_le _ _ _ (Z.le_min_l _ _)), b64_pow2_multiple_cexp).
-    assert (MQ4c0 : pow2_multiple c0 (b2r Q4))
-      by (apply (pow2_multiple_le _ _ _ (Z.le_min_r _ _)), MQ4L).
-    assert (MQ5 : pow2_multiple c0 (b2r Q5))
-      by (rewrite RQ5; apply round_pow2_multiple, pow2_multiple_plus; assumption).
-    assert (Mh5 : pow2_multiple c0 (b2r h5)).
-    { replace (b2r h5) with ((b2r g5 + b2r Q4) - b2r Q5) by lra.
-      apply pow2_multiple_minus; [ apply pow2_multiple_plus | ]; assumption. }
-    assert (Hh4Q4 := half_ulp_below Q4 h4 Hno4).
-    assert (Hh4c0 : below c0 h4).
-    { unfold below, c0, L4.
-      destruct (Z.min_spec c5 (Z.max c1 (cexp radix2 b64_fexp (b2r Q4)))) as [[_ Hm] | [_ Hm]];
-        rewrite Hm; [ lra | ].
-      apply Rlt_le_trans with (1 := Hh4Q4). apply bpow_le, Z.le_max_r. }
-    assert (Hc10 : (c1 <= c0)%Z) by (unfold c0, L4; lia).
-    assert (Hb10 : bpow radix2 c1 <= bpow radix2 c0) by (apply bpow_le, Hc10).
-    destruct (singles_shape_of_layered [Q5; h5; h4; h3; h2]) as [bs [E [Sh Sg]]].
-    - repeat constructor; assumption.
-    - apply (head_pair_layered Q5 h5 [h4; h3; h2] c0 FQ5 Fh5 Hno5 MQ5 Mh5).
-      + unfold below in *. repeat constructor; lra.
-      + split; [ exists c1; split; [ exact Mh4 | repeat constructor; assumption ] | exact Lt ].
-    - exists bs. split; [ exact E | split; [ exact Sh | apply aligned_of_singles, Sg ] ]. }
-  (* THE TIE: Q4 = +-2^M, h4 = +-2^c5 *)
-  destruct (Htie Ht) as (HMc & HfM & Hz).
-  set (M := mag radix2 (b2r g5)) in *.
-  set (B := bpow radix2 M) in *.
-  set (u := bpow radix2 c5) in *.
-  assert (HB0 : 0 < B) by apply bpow_gt_0.
-  assert (HcM : c5 = b64_fexp M) by reflexivity.
-  set (K := Zpower radix2 (M - c5)).
-  assert (HBK : B = IZR K * u).
-  { unfold B, u, K. rewrite IZR_Zpower by lia. rewrite <- bpow_plus. f_equal. lia. }
-  assert (HKe : Z.even K = true).
-  { unfold K. replace (M - c5)%Z with (1 + (M - c5 - 1))%Z by ring.
-    rewrite Zpower_plus by lia. cbn [Zpower Z.pow_pos Pos.iter radix_val radix2].
-    rewrite Z.even_mul. reflexivity. }
-  assert (HK4 : (4 <= K)%Z).
-  { unfold K. replace (M - c5)%Z with (2 + (M - c5 - 2))%Z by ring.
-    rewrite Zpower_plus by lia. cbn [Zpower Z.pow_pos Pos.iter radix_val radix2].
-    assert (0 < Zpower radix2 (M - c5 - 2))%Z by (apply Zpower_gt_0; lia). lia. }
-  assert (HK4R : 4 <= IZR K) by (apply IZR_le; exact HK4).
-  assert (FB : generic_format radix2 b64_fexp B).
-  { apply generic_format_bpow. unfold SpecFloat.fexp in *. unfold prec in *. lia. }
-  assert (Hg5B : Rabs (b2r g5) <= B - u).
-  { unfold B, u. rewrite HcM, <- pred_bpow.
-    exact (pred_ge_gt radix2 b64_fexp _ _
-             (generic_format_abs _ _ _ (Binary.generic_format_B2R prec emax g5)) FB
-             (bpow_mag_gt radix2 (b2r g5))). }
-  assert (Hg4l : B - 2 * u <= Rabs (b2r g4)).
-  { rewrite Hu5 in HQ3. fold u in HQ3. destruct Hz as [[Hz _] | [Hz _]].
-    - pose proof (Rabs_triang_inv (b2r g4 + b2r Q3) (b2r Q3)).
-      replace (b2r g4 + b2r Q3 - b2r Q3) with (b2r g4) in H by ring.
-      rewrite Hz, Rabs_pos_eq in H by lra. unfold b64_abs_le in H45. lra.
-    - pose proof (Rabs_triang_inv (b2r g4 + b2r Q3) (b2r Q3)).
-      replace (b2r g4 + b2r Q3 - b2r Q3) with (b2r g4) in H by ring.
-      rewrite Hz, Rabs_Ropp, Rabs_pos_eq in H by lra. lra. }
-  unfold b64_abs_le in H45.
-  destruct (b64_pow2_multiple_cexp g5) as [m Hm]. fold c5 u in Hm.
-  assert (Hmb : (K - 2 <= Z.abs m <= K - 1)%Z).
-  { rewrite Hm, Rabs_mult, (Rabs_pos_eq u) in Hg5B, H45 by lra.
-    rewrite <- abs_IZR in Hg5B, H45. rewrite HBK in Hg5B, Hg4l.
-    split.
-    - apply le_IZR. rewrite minus_IZR.
-      apply Rmult_le_reg_r with u; [ lra | ]. lra.
-    - apply le_IZR. rewrite minus_IZR.
-      apply Rmult_le_reg_r with u; [ lra | ]. lra. }
-  assert (Hm4 : m = (K - 1)%Z \/ m = (K - 2)%Z \/ m = (- (K - 1))%Z \/ m = (- (K - 2))%Z) by lia.
-  (* the exponent of the fifth sum near 2B *)
-  assert (Hce : forall v, B <= Rabs v < 2 * B -> cexp radix2 b64_fexp v = (c5 + 1)%Z).
-  { intros v [Hl Hh]. unfold cexp.
-    assert (Hmv : mag radix2 v = (M + 1)%Z :> Z).
-    { apply mag_unique. rewrite Z.add_simpl_r. split; [ exact Hl | ].
-      rewrite bpow_plus. change (bpow radix2 1) with 2. unfold B in Hh. lra. }
-    rewrite Hmv. exact HfM. }
-  assert (Hu2 : 2 * u = bpow radix2 (c5 + 1))
-    by (unfold u; rewrite bpow_plus; change (bpow radix2 1) with 2; ring).
-  assert (Hfmt : forall j : Z, Rabs (IZR j * (2 * u)) < 2 * B ->
-                   generic_format radix2 b64_fexp (IZR j * (2 * u))).
-  { intros j Hj. rewrite Hu2. apply (fmt_scaled j (c5 + 1) (M + 1)).
-    - rewrite <- Hu2. rewrite bpow_plus. change (bpow radix2 1) with 2. unfold B in Hj. lra.
-    - lia. }
-  assert (Hfu : generic_format radix2 b64_fexp u).
-  { apply generic_format_bpow. unfold c5, cexp, SpecFloat.fexp. unfold prec. lia. }
-  assert (Hov2 : 2 * u < bpow radix2 emax).
-  { assert (u <= Rabs (b2r g5)) by (rewrite <- Hu5; apply ulp_le_abs_b64, Hg50).
-    assert (bpow radix2 (emax - 5) < bpow radix2 emax) by (apply bpow_lt; lia).
-    assert (8 * bpow radix2 (emax - 5) <= bpow radix2 emax).
-    { replace emax with ((emax - 5) + 5)%Z at 2 by ring. rewrite bpow_plus.
-      change (bpow radix2 5) with 32. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
-    lra. }
-  apply (tie_finish_aligned Q5 h5 h4 h3 h2 c5 FQ5 Fh5 Fh4 Fh3 Fh2 Bt5 Lt Hov2 Ht). fold u.
-  assert (HK : IZR K * u = B) by (symmetry; exact HBK).
-  assert (Hrnd : forall v, generic_format radix2 b64_fexp v ->
-                   round radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) v = v)
-    by (intros v Hv; apply round_generic; [ apply valid_rnd_N | exact Hv ]).
-  destruct Hz as [[Hz HQ4] | [Hz HQ4]].
-  - (* Q4 = B, h4 = u *)
-    assert (Hh4u : b2r h4 = u) by lra.
-    destruct Hm4 as [Em | [Em | [Em | Em]]]; rewrite Em in Hm.
-    + (* g5 = B - u: Q5 = 2B (midpoint, to even), h5 = -u : anti pair *)
-      assert (Hv : b2r g5 + b2r Q4 = (IZR (K - 1) + / 2) * bpow radix2 (c5 + 1)).
-      { rewrite Hm, HQ4, <- Hu2, minus_IZR. rewrite <- HK. field. }
-      assert (HcV : cexp radix2 b64_fexp (b2r g5 + b2r Q4) = (c5 + 1)%Z).
-      { apply Hce. rewrite Hm, HQ4, minus_IZR, <- HK.
-        rewrite Rabs_pos_eq; [ | nra ]. split; nra. }
-      assert (HQ5 : b2r Q5 = 2 * B).
-      { rewrite RQ5, round_NE_mid with (n := (K - 1)%Z); [ | rewrite HcV; exact Hv ].
-        rewrite HcV, Z.even_sub, HKe. cbn. replace (K - 1 + 1)%Z with K by ring.
-        rewrite <- Hu2, <- HK. ring. }
-      left. split; [ | split ].
-      * rewrite Hh4u. rewrite Hm, HQ4, HQ5, minus_IZR, <- HK in Hex5. lra.
-      * rewrite HQ5, <- HK. exists (2 * K)%Z. rewrite mult_IZR. unfold u. ring.
-      * rewrite HQ5, Rabs_pos_eq by (unfold B; pose proof (bpow_gt_0 radix2 M); lra).
-        rewrite <- HK. assert (4 <= IZR K) by (apply IZR_le; lia). nra.
-    + (* g5 = B - 2u: Q5 = 2B - 2u exactly, h5 = 0 *)
-      assert (Hv : b2r g5 + b2r Q4 = IZR (K - 1) * (2 * u)).
-      { rewrite Hm, HQ4, !minus_IZR, <- HK. ring. }
-      assert (HQ5 : b2r Q5 = IZR (K - 1) * (2 * u)).
-      { rewrite RQ5, Hv. apply Hrnd, Hfmt. rewrite minus_IZR, Rabs_pos_eq.
-        - rewrite <- HK. lra.
-        - assert (4 <= IZR K) by (apply IZR_le; lia). nra. }
-      right; right. split; [ | split ].
-      * rewrite Hm, HQ4, HQ5, !minus_IZR, <- HK in Hex5. lra.
-      * rewrite HQ5, Hu2. exists (K - 1)%Z. reflexivity.
-      * rewrite HQ5. assert (4 <= IZR K) by (apply IZR_le; lia). rewrite minus_IZR. nra.
-    + (* g5 = -(B - u): Q5 = u exactly, h5 = 0 : twin with h4 *)
-      assert (Hv : b2r g5 + b2r Q4 = u) by (rewrite Hm, HQ4, opp_IZR, minus_IZR, <- HK; ring).
-      assert (HQ5 : b2r Q5 = u) by (rewrite RQ5, Hv; apply Hrnd, Hfu).
-      right; left. split; [ lra | lra ].
-    + (* g5 = -(B - 2u): Q5 = 2u exactly, h5 = 0 *)
-      assert (Hv : b2r g5 + b2r Q4 = IZR 1 * (2 * u))
-        by (rewrite Hm, HQ4, opp_IZR, minus_IZR, <- HK; cbn; ring).
-      assert (HQ5 : b2r Q5 = IZR 1 * (2 * u)).
-      { rewrite RQ5, Hv. apply Hrnd, Hfmt. rewrite Rabs_pos_eq by (cbn; lra).
-        assert (4 <= IZR K) by (apply IZR_le; lia). rewrite <- HK. cbn. nra. }
-      right; right. split; [ | split ].
-      * cbn in HQ5. lra.
-      * rewrite HQ5, Hu2. exists 1%Z. reflexivity.
-      * rewrite HQ5. cbn. lra.
-  - (* Q4 = -B, h4 = -u : the mirror image *)
-    assert (Hh4u : b2r h4 = - u) by lra.
-    destruct Hm4 as [Em | [Em | [Em | Em]]]; rewrite Em in Hm.
-    + (* g5 = B - u: Q5 = -u exactly : twin with h4 *)
-      assert (Hv : b2r g5 + b2r Q4 = - u) by (rewrite Hm, HQ4, minus_IZR, <- HK; ring).
-      assert (HQ5 : b2r Q5 = - u)
-        by (rewrite RQ5, Hv; apply Hrnd, generic_format_opp, Hfu).
-      right; left. split; [ lra | lra ].
-    + (* g5 = B - 2u: Q5 = -2u exactly *)
-      assert (Hv : b2r g5 + b2r Q4 = IZR (-1) * (2 * u))
-        by (rewrite Hm, HQ4, minus_IZR, <- HK; cbn; ring).
-      assert (HQ5 : b2r Q5 = IZR (-1) * (2 * u)).
-      { rewrite RQ5, Hv. apply Hrnd, Hfmt. cbn. rewrite Rabs_left by lra.
-        assert (4 <= IZR K) by (apply IZR_le; lia). rewrite <- HK. nra. }
-      right; right. split; [ | split ].
-      * cbn in HQ5. lra.
-      * rewrite HQ5, Hu2. exists (-1)%Z. reflexivity.
-      * rewrite HQ5. cbn. lra.
-    + (* g5 = -(B - u): Q5 = -2B (midpoint, to even), h5 = u : anti pair *)
-      assert (Hv : b2r g5 + b2r Q4 = (IZR (- K) + / 2) * bpow radix2 (c5 + 1)).
-      { rewrite Hm, HQ4, <- Hu2, opp_IZR, minus_IZR, opp_IZR. rewrite <- HK. field. }
-      assert (HcV : cexp radix2 b64_fexp (b2r g5 + b2r Q4) = (c5 + 1)%Z).
-      { apply Hce. rewrite Hm, HQ4, opp_IZR, minus_IZR, <- HK.
-        rewrite Rabs_left; [ | nra ]. split; nra. }
-      assert (HQ5 : b2r Q5 = - (2 * B)).
-      { rewrite RQ5, round_NE_mid with (n := (- K)%Z); [ | rewrite HcV; exact Hv ].
-        rewrite HcV, Z.even_opp, HKe. rewrite opp_IZR, <- Hu2, <- HK. ring. }
-      left. split; [ | split ].
-      * rewrite Hh4u. rewrite Hm, HQ4, HQ5, opp_IZR, minus_IZR, <- HK in Hex5. lra.
-      * rewrite HQ5, <- HK. exists (- (2 * K))%Z. rewrite opp_IZR, mult_IZR. unfold u. ring.
-      * rewrite HQ5, Rabs_Ropp, Rabs_pos_eq by (unfold B; pose proof (bpow_gt_0 radix2 M); lra).
-        rewrite <- HK. assert (4 <= IZR K) by (apply IZR_le; lia). nra.
-    + (* g5 = -(B - 2u): Q5 = -(2B - 2u) exactly *)
-      assert (Hv : b2r g5 + b2r Q4 = IZR (- (K - 1)) * (2 * u)).
-      { rewrite Hm, HQ4, !opp_IZR, !minus_IZR, <- HK. ring. }
-      assert (HQ5 : b2r Q5 = IZR (- (K - 1)) * (2 * u)).
-      { rewrite RQ5, Hv. apply Hrnd, Hfmt. rewrite opp_IZR, minus_IZR, Rabs_left.
-        - rewrite <- HK. lra.
-        - assert (4 <= IZR K) by (apply IZR_le; lia). nra. }
-      right; right. split; [ | split ].
-      * rewrite Hm, HQ4, HQ5, !opp_IZR, !minus_IZR, <- HK in Hex5. lra.
-      * rewrite HQ5, Hu2. exists (- (K - 1))%Z. reflexivity.
-      * rewrite HQ5. assert (4 <= IZR K) by (apply IZR_le; lia). rewrite opp_IZR, minus_IZR. nra.
+  { rewrite RQ3. change 3 with (IZR 3).
+    apply (abs_round_le_generic radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) _ _
+             (fmt_k_ulp g5 3 N5 ltac:(lia))).
+    pose proof (Rabs_triang (b2r g3) (b2r Q2)). cbn [IZR IPR IPR_2]. lra. }
+  pose proof (ulp_ge_0 radix2 b64_fexp (b2r g5)) as Hu5.
+  pose proof (ulp_le_abs_b64 g5 N5) as Hg5u.
+  assert (Hov5' : 2 * ulp radix2 b64_fexp (b2r g5) < bpow radix2 emax).
+  { assert (8 * bpow radix2 (emax - 5) <= bpow radix2 emax).
+    { replace (bpow radix2 emax) with (bpow radix2 ((emax - 5) + 5)) by (f_equal; ring).
+      rewrite bpow_plus. change (bpow radix2 5) with 32. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
+    pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
+  pose proof St3 as (_ & FE3 & _ & DE3 & Sh3 & Al3 & _).
+  assert (Kb4' : Forall (key_below (cexp radix2 b64_fexp (b2r g5))) (push h3 (push h2 []))).
+  { apply (key_below_mono c4); [ | exact Kb4 ].
+    apply (Z.le_trans _ _ _ Hc4). apply cexp_mono_nz; assumption. }
+  destruct (b64_TwoSum g5 Q4) as [Q5 h5] eqn:E5.
+  exact (bstate_top g5 Q4 h4 Q5 h5 _ _ _ (b2r g4) (b2r Q3) F5 N5 S5 E5 St4 FE3 DE3 Sh3 Al3 Kb4'
+           H45 ltac:(lra) RQ4 Hex4 Hov5').
 Qed.
 
 Lemma fes_rung4_shape_aligned :
@@ -920,7 +882,7 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   Rung 5, aligned: B64_CarryCleanRung5's case analysis, aligned leaves.
+   Rung 5 through the block state.
    -------------------------------------------------------------------------- *)
 
 Lemma fes6_shape_of_keys_aligned :
@@ -941,7 +903,7 @@ Proof.
   cbn [cascade_safe] in Hsafe. destruct Hsafe as [S2 [S3 [S4 [S5 [S6 _]]]]].
   unfold fes6, fes_chain. cbn [b64_grow_expansion_aux].
   (* step 2 *)
-  pose proof (sstate_step _ _ _ _ g2 (sstate_init g1 0%Z F1) F2 S2 (Forall_nil _)) as St2.
+  pose proof (bstate_step _ _ _ _ g2 (bstate_init g1 F1) F2 S2 (Forall_nil _)) as [St2 _].
   pose proof (ts_facts g2 g1 S2) as T2. cbv zeta in St2, T2.
   destruct (b64_TwoSum g2 g1) as [Q2 h2] eqn:E2. cbn [fst snd] in St2, T2, S3, S4, S5, S6.
   destruct T2 as (FQ2 & Fh2 & RQ2 & Hex2 & _ & _).
@@ -949,10 +911,10 @@ Proof.
   assert (Hh2 : Rabs (b2r h2) <= Rabs (b2r g1)).
   { replace (b2r h2) with (- (RN (b2r g2 + b2r g1) - (b2r g2 + b2r g1))) by (rewrite <- RQ2; lra).
     rewrite Rabs_Ropp. apply round_N_err_le_operand, Binary.generic_format_B2R. }
-  assert (P3 : Forall (below (cexp radix2 b64_fexp (b2r g3))) [h2])
-    by (constructor; [ apply below_of_ulp; [ exact N3 | lra ] | constructor ]).
-  pose proof (sstate_step _ _ _ _ g3 St2 F3 S3 P3) as St3.
-  pose proof (ts_facts g3 Q2 S3) as T3. cbv zeta in St3, T3.
+  assert (P3 : Forall (key_below (cexp radix2 b64_fexp (b2r g3))) (push h2 [])).
+  { apply key_below_push; [ apply below_of_ulp; [ exact N3 | lra ] | constructor ]. }
+  pose proof (bstate_step _ _ _ _ g3 St2 F3 S3 P3) as [St3 Kb3].
+  pose proof (ts_facts g3 Q2 S3) as T3. cbv zeta in St3, Kb3, T3.
   destruct (b64_TwoSum g3 Q2) as [Q3 h3] eqn:E3. cbn [fst snd] in St3, T3, S4, S5, S6.
   destruct T3 as (FQ3 & Fh3 & RQ3 & Hex3 & _ & _).
   (* step 4: h3 below ulp(g4) *)
@@ -963,14 +925,14 @@ Proof.
   assert (Hh3 : Rabs (b2r h3) < ulp radix2 b64_fexp (b2r g4)).
   { replace (b2r h3) with (- (RN (b2r g3 + b2r Q2) - (b2r g3 + b2r Q2))) by (rewrite <- RQ3; lra).
     rewrite Rabs_Ropp. apply rn_err_lt_ulp_top; [ exact N4 | exact H34 | exact HQ2 ]. }
-  assert (P4 : Forall (below (cexp radix2 b64_fexp (b2r g4))) [h3; h2]).
-  { apply (pre_step Q3 h3 [h2] _ _ g4 St3); [ | apply below_of_ulp; assumption ].
+  assert (P4 : Forall (key_below (cexp radix2 b64_fexp (b2r g4))) (push h3 (push h2 []))).
+  { apply (bpre_step _ h3 _ g4 Kb3); [ | apply below_of_ulp; assumption ].
     apply Z.le_trans with (cexp radix2 b64_fexp (b2r g3)); [ apply Z.le_min_l | apply cexp_mono_nz; assumption ]. }
-  pose proof (sstate_step _ _ _ _ g4 St3 F4 S4 P4) as St4.
-  pose proof (ts_facts g4 Q3 S4) as T4. cbv zeta in St4, T4.
+  pose proof (bstate_step _ _ _ _ g4 St3 F4 S4 P4) as [St4 Kb4].
+  pose proof (ts_facts g4 Q3 S4) as T4. cbv zeta in St4, Kb4, T4.
   destruct (b64_TwoSum g4 Q3) as [Q4 h4] eqn:E4. cbn [fst snd] in St4, T4, S5, S6.
   destruct T4 as (FQ4 & Fh4 & RQ4 & Hex4 & _ & _).
-  set (c4 := Z.min (cexp radix2 b64_fexp (b2r g4)) (Z.max (Z.min (cexp radix2 b64_fexp (b2r g3)) _) (cexp radix2 b64_fexp (b2r Q3)))) in St4.
+  set (c4 := Z.min (cexp radix2 b64_fexp (b2r g4)) _) in Kb4.
   assert (Hc4 : (c4 <= cexp radix2 b64_fexp (b2r g4))%Z) by apply Z.le_min_l.
   (* step 5: h4 is at most ulp(g5); a tie is possible *)
   assert (HQ3 : Rabs (b2r Q3) <= 3 * ulp radix2 b64_fexp (b2r g5)).
@@ -995,6 +957,7 @@ Proof.
     { replace (bpow radix2 emax) with (bpow radix2 ((emax - 5) + 5)) by (f_equal; ring).
       rewrite bpow_plus. change (bpow radix2 5) with 32. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
     unfold b64_abs_le in H56. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
+  destruct St3 as (_ & FE3 & _ & DE3 & Sh3 & Al3 & _).
   destruct (Req_dec (Rabs (b2r h4)) (bpow radix2 c5)) as [Tie | NoTie].
   - (* TIE AT STEP 5 *)
     destruct (Tie5 Tie) as (HMc & HfM & Hz).
@@ -1023,11 +986,6 @@ Proof.
         - replace (bpow radix2 M5) with (bpow radix2 ((M5 - 1) + 1)) by (f_equal; ring).
           rewrite bpow_plus. change (bpow radix2 1) with 2. ring. }
       apply lt_bpow in Hlt. lia. }
-    (* the tail [h3; h2] below u5, layered *)
-    destruct St4 as (_ & Ft4 & _ & _ & Lt4 & Bt4).
-    inversion Ft4 as [| ? ? _ Ft]; subst.
-    cbn [tl] in Bt4. destruct Lt4 as [_ Lt].
-    assert (Bt : Forall (below c5) [h3; h2]) by (apply (below_mono c4); [ lia | exact Bt4 ]).
     assert (Hsign : exists s : R, (s = 1 \/ s = -1) /\ b2r Q4 = s * bpow radix2 M5
                                   /\ b2r h4 = s * bpow radix2 c5).
     { destruct Hz as [[Hz HQ] | [Hz HQ]].
@@ -1035,54 +993,40 @@ Proof.
       - exists (-1). split; [ right; reflexivity | split; lra ]. }
     destruct Hsign as (s & Hs & HQ4 & Hh4s).
     assert (Hg5l : bpow radix2 M5 - 2 * bpow radix2 c5 <= Rabs (b2r g5)) by (unfold b64_abs_le in H45; lra).
-    pose proof (tie_values g5 Q4 s F5 S5 Hs N5 HMc HfM HQ4 Hg5l) as TV. cbv zeta in TV.
-    pose proof (ts_facts g5 Q4 S5) as T5. cbv zeta in T5.
-    destruct (b64_TwoSum g5 Q4) as [Q5 h5] eqn:E5. cbn [fst snd] in TV, T5, S6.
-    fold M5 c5 in TV.
-    destruct T5 as (FQ5 & Fh5 & RQ5 & Hex5 & Hno5 & _).
-    destruct TV as [(Ha & HQ5) | [(Hz5 & HQ5) | (Hz5 & MQ5 & NQ5)]].
-    + (* anti pair (h5, h4) *)
-      apply (anti_final_aligned g6 Q5 h5 h4 [h3; h2] M5 c5); try assumption.
-      * rewrite HQ5. unfold pow2_multiple.
-        destruct Hs as [-> | ->]; [ exists 2%Z | exists (-2)%Z ];
-          cbn [IZR IPR IPR_2]; ring.
-      * lia.
-      * rewrite Hh4s, Ha. ring.
-      * rewrite Ha, Rabs_Ropp. apply abs_sign; [ exact Hs | lra ].
-    + (* twin (Q5, h4), h5 = 0 *)
-      apply (twin_final_aligned g6 Q5 h5 h4 [h3; h2] c5); try assumption.
-      * lra.
-      * rewrite Hu6.
-        assert (bpow radix2 (c5 + 2) < bpow radix2 c6) by (apply bpow_lt; lia).
-        rewrite bpow_plus in H. change (bpow radix2 2) with 4 in H. lra.
-    + (* singles: the state stays layered at level c5 + 1 *)
-      assert (Hh4u : Rabs (b2r h4) = bpow radix2 c5).
-      { rewrite Hh4s. apply abs_sign; [ exact Hs | lra ]. }
-      assert (H2c : bpow radix2 c5 < bpow radix2 (c5 + 1)) by (apply bpow_lt; lia).
-      assert (St5 : sstate Q5 [h5; h4; h3; h2] (c5 + 1) (c5 + 1)).
-      { assert (Bt1 : Forall (below (c5 + 1)) [h3; h2]) by (apply (below_mono c5); [ lia | exact Bt ]).
-        assert (Bh4 : below (c5 + 1) h4) by (unfold below; lra).
-        refine (conj FQ5 (conj _ (conj MQ5 (conj _ (conj _ _))))).
-        - repeat constructor; assumption.
-        - constructor; [ unfold below; rewrite Hz5, Rabs_R0; apply bpow_gt_0 | ].
-          constructor; [ exact Bh4 | exact Bt1 ].
-        - split; [ exists (c5 + 1)%Z; split; [ exists 0%Z; rewrite Hz5; cbn [IZR]; ring | ] | ].
-          + constructor; [ exact Bh4 | exact Bt1 ].
-          + split; [ exists c5; split; [ apply pow2_multiple_pm, Hh4u | exact Bt ] | exact Lt ].
-        - cbn [tl]. constructor; [ exact Bh4 | exact Bt1 ]. }
-      assert (P6 : Forall (below c6) [h5; h4; h3; h2]).
-      { destruct St5 as (_ & _ & _ & B5 & _). apply (below_mono (c5 + 1)); [ lia | exact B5 ]. }
-      pose proof (sstate_step _ _ _ _ g6 St5 F6 S6 P6) as St6. cbv zeta in St6.
-      destruct (b64_TwoSum g6 Q5) as [Q6 h6] eqn:E6. cbn [fst snd] in St6.
-      exact (sstate_shape_aligned _ _ _ _ St6).
+    assert (Kb4' : Forall (key_below c5) (push h3 (push h2 []))) by (apply (key_below_mono c4); [ lia | exact Kb4 ]).
+    pose proof (bstate_tie g5 Q4 h4 [h3; h2] _ s F5 S5 Hs N5 HMc HfM HQ4 Hh4s Hg5l Fh4 FE3 DE3 Sh3 Al3 Kb4') as TS.
+    cbv zeta in TS. fold M5 c5 in TS.
+    destruct (b64_TwoSum g5 Q4) as [Q5 h5] eqn:E5. cbn [fst snd] in TS, S6.
+    destruct TS as [St5 | [(Hz5 & HQh) | St5]].
+    + (* anti pair (h5, h4); g6 sits above it *)
+      assert (P6 : Forall (key_below c6) (CAnti h5 :: push h3 (push h2 [])))
+        by (destruct St5 as (_ & _ & _ & _ & _ & _ & K5); apply (key_below_mono M5); [ exact Hc6M | exact K5 ]).
+      pose proof (bstate_step _ _ _ _ g6 St5 F6 S6 P6) as [St6 _]. cbv zeta in St6.
+      exact (bstate_shape _ _ _ _ St6).
+    + (* twin (Q5, h4), h5 = 0: g6 absorbs Q5 *)
+      pose proof (ts_facts g5 Q4 S5) as T5. rewrite E5 in T5. cbn [fst snd] in T5.
+      destruct T5 as (_ & Fh5 & _ & _ & _ & _).
+      assert (Hh4u : Rabs (b2r h4) = bpow radix2 c5) by exact Tie.
+      assert (Hq : bpow radix2 c5 < ulp radix2 b64_fexp (b2r g6) / 4).
+      { rewrite Hu6. assert (bpow radix2 (c5 + 2) < bpow radix2 c6) by (apply bpow_lt; lia).
+        rewrite bpow_plus in H. change (bpow radix2 2) with 4 in H. lra. }
+      pose proof (bstate_twin g6 Q5 h5 h4 [h3; h2] _ c5 F6 N6 S6 Fh5 Fh4 FE3 Hz5 HQh Hh4u Hq Hov5
+                   DE3 Sh3 Al3 Kb4') as St6.
+      exact (bstate_shape _ _ _ _ St6).
+    + (* single h4; the state stays layered at level c5 + 1 *)
+      assert (P6 : Forall (key_below c6) (CSingle h4 :: push h3 (push h2 [])))
+        by (destruct St5 as (_ & _ & _ & _ & _ & _ & K5); apply (key_below_mono (c5 + 1)); [ lia | exact K5 ]).
+      pose proof (bstate_step _ _ _ _ g6 St5 F6 S6 P6) as [St6 _]. cbv zeta in St6.
+      exact (bstate_shape _ _ _ _ St6).
   - (* NO TIE AT STEP 5 *)
     assert (Hh4lt : Rabs (b2r h4) < bpow radix2 c5) by lra.
-    assert (P5 : Forall (below c5) [h4; h3; h2]).
-    { apply (pre_step Q4 h4 [h3; h2] _ _ g5 St4); [ lia | exact Hh4lt ]. }
-    pose proof (sstate_step _ _ _ _ g5 St4 F5 S5 P5) as St5.
-    pose proof (ts_facts g5 Q4 S5) as T5. cbv zeta in St5, T5.
+    assert (P5 : Forall (key_below c5) (push h4 (push h3 (push h2 [])))).
+    { apply (bpre_step c4 h4 _ g5 Kb4); [ lia | exact Hh4lt ]. }
+    pose proof St4 as St4'.
+    pose proof (bstate_step _ _ _ _ g5 St4 F5 S5 P5) as [St5 Kb5].
+    pose proof (ts_facts g5 Q4 S5) as T5. cbv zeta in St5, Kb5, T5.
     destruct (b64_TwoSum g5 Q4) as [Q5 h5] eqn:E5. cbn [fst snd] in St5, T5, S6.
-    fold c5 in St5.
+    fold c5 in St5, Kb5.
     destruct T5 as (FQ5 & Fh5 & RQ5 & Hex5 & _ & _).
     (* step 6: h5 is at most ulp(g6) *)
     assert (Hug4 : 2 * ulp radix2 b64_fexp (b2r g4) <= ulp radix2 b64_fexp (b2r g6))
@@ -1098,64 +1042,19 @@ Proof.
       apply (abs_round_le_generic radix2 b64_fexp (BinarySingleNaN.round_mode mode_b64) _ _
                (fmt_k_ulp g6 3 N6 ltac:(lia))).
       pose proof (Rabs_triang (b2r g4) (b2r Q3)). cbn [IZR IPR IPR_2]. lra. }
-    pose proof (tie_analysis g6 (b2r g5) (b2r Q4) N6 H56 HQ4) as Tie6.
-    cbv zeta in Tie6. rewrite <- RQ5 in Tie6. destruct Tie6 as [Bnd6 Tie6].
-    assert (Eh5 : Rabs (b2r Q5 - (b2r g5 + b2r Q4)) = Rabs (b2r h5)).
-    { replace (b2r Q5 - (b2r g5 + b2r Q4)) with (- b2r h5) by lra. apply Rabs_Ropp. }
-    rewrite Eh5 in Bnd6, Tie6. fold c6 in Bnd6, Tie6.
-    destruct (Req_dec (Rabs (b2r h5)) (bpow radix2 c6)) as [Tie' | NoTie'].
-    + (* tie at step 6: the top, as on rung 4 *)
-      destruct (Tie6 Tie') as (HMc & HfM & Hz).
-      set (M6 := mag radix2 (b2r g6)) in *.
-      assert (Hsign : exists s : R, (s = 1 \/ s = -1) /\ b2r Q5 = s * bpow radix2 M6
-                                    /\ b2r h5 = s * bpow radix2 c6).
-      { destruct Hz as [[Hz HQ] | [Hz HQ]].
-        - exists 1. split; [ left; reflexivity | split; lra ].
-        - exists (-1). split; [ right; reflexivity | split; lra ]. }
-      destruct Hsign as (s & Hs & HQ5 & Hh5s).
-      assert (Hg6l : bpow radix2 M6 - 2 * bpow radix2 c6 <= Rabs (b2r g6)).
-      { rewrite Hu6 in HQ4.
-        pose proof (Rabs_triang_inv (b2r g5 + b2r Q4) (b2r Q4)) as Ht.
-        replace (b2r g5 + b2r Q4 - b2r Q4) with (b2r g5) in Ht by ring.
-        pose proof (bpow_gt_0 radix2 M6).
-        destruct Hz as [[Hz _] | [Hz _]]; rewrite Hz in Ht;
-          [ rewrite Rabs_pos_eq in Ht by lra | rewrite Rabs_Ropp, Rabs_pos_eq in Ht by lra ];
-          unfold b64_abs_le in H56; lra. }
-      pose proof (tie_values g6 Q5 s F6 S6 Hs N6 HMc HfM HQ5 Hg6l) as TV. cbv zeta in TV.
-      pose proof (ts_facts g6 Q5 S6) as T6. cbv zeta in T6.
-      destruct (b64_TwoSum g6 Q5) as [Q6 h6] eqn:E6. cbn [fst snd] in TV, T6.
-      fold M6 c6 in TV.
-      destruct T6 as (FQ6 & Fh6 & _ & _ & _ & _).
-      destruct St5 as (_ & Ft5 & _ & _ & Lt5 & Bt5).
-      inversion Ft5 as [| ? ? _ Ft]; subst. cbn [tl] in Bt5. destruct Lt5 as [_ Lt].
-      assert (Hh5u : Rabs (b2r h5) = bpow radix2 c6) by exact Tie'.
-      assert (Hov6' : 2 * bpow radix2 c6 < bpow radix2 emax).
-      { assert (bpow radix2 c6 <= Rabs (b2r g6)) by (rewrite <- Hu6; apply ulp_le_abs_b64, N6).
-        assert (8 * bpow radix2 (emax - 5) <= bpow radix2 emax).
-        { replace (bpow radix2 emax) with (bpow radix2 ((emax - 5) + 5)) by (f_equal; ring).
-          rewrite bpow_plus. change (bpow radix2 5) with 32. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
-        pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
-      pose proof (bpow_gt_0 radix2 M6).
-      assert (HcM6 : bpow radix2 c6 < bpow radix2 M6) by (apply bpow_lt; lia).
-      apply (tie_finish_tail_aligned Q6 h6 h5 [h4; h3; h2] c6); try assumption.
-      * eapply below_mono; [ | exact Bt5 ]. lia.
-      * destruct TV as [(Ha & HQ6) | [(Hz6 & HQ6) | (Hz6 & MQ6 & NQ6)]].
-        { left. split; [ rewrite Ha, Hh5s; ring | split ].
-          - rewrite HQ6.
-            assert (HZ : IZR (Zpower radix2 (M6 - c6)) * bpow radix2 c6 = bpow radix2 M6).
-            { rewrite IZR_Zpower by lia. rewrite <- bpow_plus. f_equal. ring. }
-            destruct Hs as [-> | ->];
-              [ exists (2 * Zpower radix2 (M6 - c6))%Z | exists (- (2 * Zpower radix2 (M6 - c6)))%Z ];
-              rewrite ?opp_IZR, mult_IZR; rewrite <- HZ; cbn [IZR IPR IPR_2]; ring.
-          - rewrite HQ6, abs_sign; [ lra | exact Hs | lra ]. }
-        { right; left. split; [ exact Hz6 | rewrite HQ6, Hh5s; ring ]. }
-        { right; right. split; [ exact Hz6 | split; assumption ]. }
-    + (* no tie at step 6: layered throughout *)
-      assert (P6 : Forall (below c6) [h5; h4; h3; h2]).
-      { apply (pre_step Q5 h5 [h4; h3; h2] _ _ g6 St5); [ fold c6; lia | unfold below; fold c6; lra ]. }
-      pose proof (sstate_step _ _ _ _ g6 St5 F6 S6 P6) as St6. cbv zeta in St6.
-      destruct (b64_TwoSum g6 Q5) as [Q6 h6] eqn:E6. cbn [fst snd] in St6.
-      exact (sstate_shape_aligned _ _ _ _ St6).
+    (* step 6, the top *)
+    assert (Kb5' : Forall (key_below c6) (push h4 (push h3 (push h2 []))))
+      by (refine (key_below_mono _ c6 _ _ Kb5); lia).
+    assert (Hov6' : 2 * ulp radix2 b64_fexp (b2r g6) < bpow radix2 emax).
+    { assert (bpow radix2 c6 <= Rabs (b2r g6)) by (rewrite <- Hu6; apply ulp_le_abs_b64, N6).
+      assert (8 * bpow radix2 (emax - 5) <= bpow radix2 emax).
+      { replace (bpow radix2 emax) with (bpow radix2 ((emax - 5) + 5)) by (f_equal; ring).
+        rewrite bpow_plus. change (bpow radix2 5) with 32. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
+      rewrite Hu6. pose proof (bpow_gt_0 radix2 (emax - 5)). lra. }
+    destruct St4' as (_ & FE4 & _ & DE4 & Sh4 & Al4 & _).
+    destruct (b64_TwoSum g6 Q5) as [Q6 h6] eqn:E6.
+    exact (bstate_top g6 Q5 h5 Q6 h6 _ _ _ (b2r g5) (b2r Q4) F6 N6 S6 E6 St5 FE4 DE4 Sh4 Al4 Kb5'
+             H56 ltac:(lra) RQ5 Hex5 Hov6').
 Qed.
 
 Lemma fes_rung5_shape_aligned :

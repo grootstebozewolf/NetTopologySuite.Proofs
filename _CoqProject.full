@@ -4554,3 +4554,7 @@ theories-flocq/B64_CarryCleanRung5.v
 # rung decompositions plus two alignment facts (twin/anti components are
 # +-2^c; the element before an anti pair is a multiple of it).
 theories-flocq/B64_CarryCleanOneBit.v
+# one-bit overlap at total 7, the first two-tie total: the block-layered
+# state of B64_CarryCleanOneBit run to step 7; also the carry pattern,
+# reduction and carry_clean target at 7.
+theories-flocq/B64_CarryCleanSeven.v
