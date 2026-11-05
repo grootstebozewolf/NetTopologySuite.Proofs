@@ -235,7 +235,7 @@ Locked `exists b e` τ=μ (`SqlMmSignedTag.v : ticket_sqlmm_tau_mu_qed_or_qex` L
 `intake_rho` is egg-aware on CS, not `cst_prod_tag`, not park ρ.
 Geodesic bags MkChord (τ=LINESTRING, `cst_prod_tag` None). Spiral Declines.
 κ 2/8 or none (`SqlMmSignedTag.v : ticket_sqlmm_signed_tag_qed_or_qex` LEFT).
-Emit / WKT parse stay QEX (`SqlMmSignedTag.v : ticket_sqlmm_factory_emit_qed_or_qex` RIGHT). Production-level τ=π on closed CIRCULARSTRING text stays QEX (`SqlMmSignedTag.v : sqlmm_tau_eq_pi_fullspan_cs_missing`).
+Emit / WKT parse stay QEX (claimId `0007-sqlmm-signed-tag`; `SqlMmSignedTag.v : ticket_sqlmm_factory_emit_qed_or_qex` RIGHT). Production-level τ=π on closed CIRCULARSTRING text stays QEX (`SqlMmSignedTag.v : sqlmm_tau_eq_pi_fullspan_cs_missing`).
 _Avoid_: ∀-mapper on all CSTs, Circle-as-18, compound-as-τ,
 park-ρ remint, new oracle keyword
 
