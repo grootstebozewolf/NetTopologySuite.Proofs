@@ -710,7 +710,7 @@ Proof. intros k [| a [| b e]] H; cbn [length] in H; try lia; exact I. Qed.
 Print Assumptions overlap_within_chain_short.
 
 (* Two power-of-two facts for the top step of B64_CarryCleanOneBit. *)
-Lemma bpow_half : forall c, bpow radix2 c = 2 * bpow radix2 (c - 1).
+Lemma bpow_succ_pred : forall c, bpow radix2 c = 2 * bpow radix2 (c - 1).
 Proof.
   intro c. replace c with ((c - 1) + 1)%Z at 1 by ring.
   rewrite bpow_plus. change (bpow radix2 1) with 2. ring.
@@ -737,5 +737,5 @@ Proof.
   rewrite minus_IZR in H2. nra.
 Qed.
 
-Print Assumptions bpow_half.
+Print Assumptions bpow_succ_pred.
 Print Assumptions mult_gap.

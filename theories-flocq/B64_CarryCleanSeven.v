@@ -179,7 +179,7 @@ Proof.
     assert (Hc6M : (M5 <= c6)%Z).
     { rewrite Hu6 in K4.
       assert (Hlt : bpow radix2 (M5 - 1) < bpow radix2 c6).
-      { rewrite (bpow_half M5) in Hg4l, HK4u. lra. }
+      { rewrite (bpow_succ_pred M5) in Hg4l, HK4u. lra. }
       apply lt_bpow in Hlt. lia. }
     assert (Hsign : exists s : R, (s = 1 \/ s = -1) /\ b2r Q4 = s * bpow radix2 M5
                                   /\ b2r h4 = s * bpow radix2 c5).
@@ -194,7 +194,7 @@ Proof.
     pose proof (ts_facts g5 Q4 S5) as T5.
     destruct (b64_TwoSum g5 Q4) as [Q5 h5] eqn:E5. cbn [fst snd] in TS, T5, S6, S7.
     destruct T5 as (FQ5 & Fh5 & RQ5 & Hex5 & _ & _).
-    (* |Q5| <= 2 B5 <= 2 u7 *)
+    (* |Q5| <= 2 B5 <= 2 u7, then weakened to the 7/2 u7 that bstate_top takes *)
     assert (HQ5 : Rabs (b2r Q5) <= 7 / 2 * ulp radix2 b64_fexp (b2r g7)).
     { assert (F2B : generic_format radix2 b64_fexp (2 * bpow radix2 M5)).
       { replace (2 * bpow radix2 M5) with (bpow radix2 (M5 + 1))
@@ -305,7 +305,7 @@ Proof.
       assert (Hc7M : (M6 <= c7)%Z).
       { rewrite Hu7 in K5.
         assert (Hlt : bpow radix2 (M6 - 1) < bpow radix2 c7).
-        { rewrite (bpow_half M6) in Hg5l, HK5u. lra. }
+        { rewrite (bpow_succ_pred M6) in Hg5l, HK5u. lra. }
         apply lt_bpow in Hlt. lia. }
       assert (Hsign : exists s : R, (s = 1 \/ s = -1) /\ b2r Q5 = s * bpow radix2 M6
                                     /\ b2r h5 = s * bpow radix2 c6).
@@ -346,7 +346,7 @@ Proof.
       destruct (b64_TwoSum g6 Q5) as [Q6 h6] eqn:E6. cbn [fst snd] in St6, T6, S7.
       destruct T6 as (FQ6 & Fh6 & RQ6 & Hex6 & _ & _).
       (* |Q5| <= 7/2 u7, in half-units of u7 *)
-      rewrite (bpow_half c7) in Hu7.
+      rewrite (bpow_succ_pred c7) in Hu7.
       assert (B3 : Rabs (b2r Q3) <= IZR 3 * bpow radix2 (c7 - 1)).
       { rewrite RQ3. apply rn_le_half_units; [ exact Hc7e | lia | ].
         pose proof (Rabs_triang (b2r g3) (b2r Q2)). cbn [IZR IPR IPR_2]. lra. }
