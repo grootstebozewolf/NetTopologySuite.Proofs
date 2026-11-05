@@ -40,13 +40,13 @@ Adapted from [NetTopologySuite#875](https://github.com/NetTopologySuite/NetTopol
 - ADR-0007 is Accepted. First cook scope is chord–chord and
   circular–circular (`MkCirc`). Do not expand it to other egg classes
   unless a letter explicitly does.
-- Markdown ratchet: PRs may only **delete** `.md` prose, or **amend** so
-  net prose shrinks while content **diverges to MMF** (gate / ticket /
-  claim / fixture); table rows (`|` lines) are exempt. Net-positive `.md`
-  growth is forbidden unless the added path is an MMF ticket/bar artifact
-  that retires prose elsewhere in the same PR. No new essay docs; no
-  expanding CONTEXT/ADR/README for narrative filler. MMF shape:
-  [`docs/scout/map-opam-mmf-release-bar.md`](docs/scout/map-opam-mmf-release-bar.md).
+- Markdown ratchet (`scripts/check_md_prose_ratchet.sh` on `make ci-guards`):
+  hard global net ≤ 0. Exempt (reported): `|` rows; append-only claim rows
+  in `docs/verified-claims.md` and `eval/README.md`; the `## Status
+  (YYYY-MM-DD):` line in `docs/thm13-priest-route.md`. Not exempt:
+  CONTEXT/ADR/README essays. No soft +N budget. Cite-or-cut
+  (`scripts/check_cite_or_cut.py`, #846): gated "stays QED/QEX" cites that
+  theorem's known `claimId` or is cut. MMF: `docs/scout/map-opam-mmf-release-bar.md`.
 
 ## Before finishing
 

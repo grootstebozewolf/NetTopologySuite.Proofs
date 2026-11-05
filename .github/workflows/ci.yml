@@ -46,7 +46,8 @@ jobs:
         #   check_deferred_registry_sync doc <-> Admitted-registry drift
         #   validate-claims              verified-claims.md references resolve
         #   check_oracle_handrolled      hand-rolled float-kernel ratchet
-        #   check_md_prose_ratchet       net-non-positive .md prose vs base
+        #   check_md_prose_ratchet       net ≤ 0 .md prose; claim-row and route-status whitelist
+        #   check_cite_or_cut            #846: gated QED/QEX restatement cites its claimId
         #   hunt.py --selfcheck          RELATE_MATRIX token allowlist (no oracle)
         # The `rocq` job below no longer repeats these — this job is
         # the single source of the guardrail verdict on every PR and push.
