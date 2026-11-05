@@ -13,8 +13,8 @@
    (`bstate_top`), after a twin it is a plain step.  A tie at step 6 makes
    step 7 a plain step or the twin step.  With no earlier tie, step 7's
    partner Q5 is at most 7/2 ulp(g7) (half-unit bounds on Q3, Q4, Q5), inside
-   the 4 ulp(g7) range of `tie_analysis_wide`.  No carry meets a twin: the
-   steps never stack a doubled twin on another.
+   the 4 ulp(g7) range of `tie_analysis_wide`.  No carry cascade: a twin
+   pending after step 5 or 6 is closed by the next step and meets no tie.
 
    PROVED HERE:
      fes7_shape_of_keys_aligned       the seven-step chain, aligned shape
