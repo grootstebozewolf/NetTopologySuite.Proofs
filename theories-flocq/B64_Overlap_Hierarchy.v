@@ -708,3 +708,34 @@ Lemma overlap_within_chain_short :
 Proof. intros k [| a [| b e]] H; cbn [length] in H; try lia; exact I. Qed.
 
 Print Assumptions overlap_within_chain_short.
+
+(* Two power-of-two facts for the top step of B64_CarryCleanOneBit. *)
+Lemma bpow_half : forall c, bpow radix2 c = 2 * bpow radix2 (c - 1).
+Proof.
+  intro c. replace c with ((c - 1) + 1)%Z at 1 by ring.
+  rewrite bpow_plus. change (bpow radix2 1) with 2. ring.
+Qed.
+
+(* A multiple of 2^c within three units of 2^M from below is within two. *)
+Lemma mult_gap :
+  forall (x : R) (n c M : Z), x = IZR n * bpow radix2 c -> (c <= M)%Z ->
+    bpow radix2 M - 3 * bpow radix2 c < Rabs x -> bpow radix2 M - 2 * bpow radix2 c <= Rabs x.
+Proof.
+  intros x n c M Hx HcM H.
+  set (P := Zpower radix2 (M - c)).
+  assert (HP : bpow radix2 M = IZR P * bpow radix2 c).
+  { unfold P. rewrite IZR_Zpower by lia. rewrite <- bpow_plus. f_equal. ring. }
+  assert (Ha : Rabs x = IZR (Z.abs n) * bpow radix2 c).
+  { rewrite Hx, Rabs_mult, <- abs_IZR, (Rabs_pos_eq (bpow radix2 c)) by (left; apply bpow_gt_0). reflexivity. }
+  pose proof (bpow_gt_0 radix2 c) as Hc0.
+  rewrite Ha, HP in *.
+  assert (H1 : IZR (P - 3) < IZR (Z.abs n)).
+  { rewrite minus_IZR. apply Rmult_lt_reg_r with (bpow radix2 c); [ exact Hc0 | ].
+    replace ((IZR P - 3) * bpow radix2 c) with (IZR P * bpow radix2 c - 3 * bpow radix2 c) by ring. lra. }
+  apply lt_IZR in H1.
+  assert (H2 : IZR (P - 2) <= IZR (Z.abs n)) by (apply IZR_le; lia).
+  rewrite minus_IZR in H2. nra.
+Qed.
+
+Print Assumptions bpow_half.
+Print Assumptions mult_gap.

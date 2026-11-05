@@ -31,8 +31,9 @@
      bstate_step / _tie / _twin / _top  the block-state ladder (also used
                                         by B64_CarryCleanSeven)
 
-   NOT COVERED.  Seven or more components.  This is NOT Priest's bound or
-   any general Fast-Expansion-Sum theorem: it is the n <= 6 instance only.
+   NOT COVERED.  Seven or more components (total 7: B64_CarryCleanSeven).
+   This is NOT Priest's bound or any general Fast-Expansion-Sum theorem: it
+   is the n <= 6 instance only.
 
    topic: binary64
    claimId: fes-overlap-within-1-le6
@@ -690,27 +691,6 @@ Proof.
       rewrite opp_IZR, HBk. ring.
 Qed.
 
-(* A multiple of 2^c within three units of 2^M from below is within two. *)
-Lemma mult_gap :
-  forall (x : R) (n c M : Z), x = IZR n * bpow radix2 c -> (c <= M)%Z ->
-    bpow radix2 M - 3 * bpow radix2 c < Rabs x -> bpow radix2 M - 2 * bpow radix2 c <= Rabs x.
-Proof.
-  intros x n c M Hx HcM H.
-  set (P := Zpower radix2 (M - c)).
-  assert (HP : bpow radix2 M = IZR P * bpow radix2 c).
-  { unfold P. rewrite IZR_Zpower by lia. rewrite <- bpow_plus. f_equal. ring. }
-  assert (Ha : Rabs x = IZR (Z.abs n) * bpow radix2 c).
-  { rewrite Hx, Rabs_mult, <- abs_IZR, (Rabs_pos_eq (bpow radix2 c)) by (left; apply bpow_gt_0). reflexivity. }
-  pose proof (bpow_gt_0 radix2 c) as Hc0.
-  rewrite Ha, HP in *.
-  assert (H1 : IZR (P - 3) < IZR (Z.abs n)).
-  { rewrite minus_IZR. apply Rmult_lt_reg_r with (bpow radix2 c); [ exact Hc0 | ].
-    replace ((IZR P - 3) * bpow radix2 c) with (IZR P * bpow radix2 c - 3 * bpow radix2 c) by ring. lra. }
-  apply lt_IZR in H1.
-  assert (H2 : IZR (P - 2) <= IZR (Z.abs n)) by (apply IZR_le; lia).
-  rewrite minus_IZR in H2. nra.
-Qed.
-
 (* Half-units j * 2^(c-1), j <= 7, are representable above the subnormal floor. *)
 Lemma fmt_half_units :
   forall (c j : Z), (3 - emax - prec < c)%Z -> (0 < j <= 7)%Z ->
@@ -795,11 +775,6 @@ Proof.
            (fmt_half_units c j Hc Hj) Hz).
 Qed.
 
-Lemma bpow_half : forall c, bpow radix2 c = 2 * bpow radix2 (c - 1).
-Proof.
-  intro c. replace c with ((c - 1) + 1)%Z at 1 by ring.
-  rewrite bpow_plus. change (bpow radix2 1) with 2. ring.
-Qed.
 
 (* --------------------------------------------------------------------------
    Rung 4 through the block state.
