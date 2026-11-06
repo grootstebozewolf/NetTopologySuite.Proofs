@@ -2704,6 +2704,9 @@ theories/ArcChordSubdivision.v
 # (max_sagitta_nonneg, arcs_of_nil/_cons/_segment_chord/_segment_arc,
 # forward corollary).  No Admitteds; no classical-prop pulls.
 theories/ArcOverlay.v
+# Directed-approximation probe (docs/directed-approximation-2026-11.md).
+theories/DirectedApprox.v
+theories/ArcOverlayDirected.v
 
 # IVT gap closure: chord_crosses_arc_circle_implies_circle_intersection.
 # Defines chord_point (parametric chord at t in [0,1]) and
@@ -4337,6 +4340,7 @@ theories-flocq/PassesThrough_b64_spec_symmetric.v
 theories-flocq/PassesThrough_b64_grid_core.v
 theories-flocq/PassesThrough_b64_grid_bounds.v
 theories-flocq/PassesThrough_b64_grid_complete.v
+theories-flocq/DirectedApprox_b64.v
 theories-flocq/PassesThrough_b64_grid_gap_kernel.v
 theories-flocq/PassesThrough_b64_grid_separation.v
 theories-flocq/PassesThrough_b64_grid_exact.v
