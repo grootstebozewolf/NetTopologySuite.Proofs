@@ -30,16 +30,18 @@ an otherwise identical mathematical object.
 topic: numerics · claimId: s1-b64-horner-gamma · witness: b64_horner_gamma
 topic: numerics · claimId: s1-b64-decasteljau · witness: b64_decasteljau_err
 topic: numerics · claimId: s1-b64-bezier-stability · witness: bezier_vs_horner_bound
+topic: numerics · claimId: s1-b64-decasteljau-eval · witness: dc_eval_certified
 
 Provenance: Rocq 9.2.0 + Flocq 4.2.2 (opam switch `nts-flocq`), repo base
 `e198ea1`; modules `theories-flocq/B64_HornerGamma.v`,
-`B64_DeCasteljau.v`, `B64_BezierStability.v`. Measurements:
+`B64_DeCasteljau.v`, `B64_BezierStability.v`, `B64_DeCasteljauEval.v`. Measurements:
 `tests/B64CurveEvalMeasure/cmp.py` (CPython IEEE binary64, exact `Fraction`
 reference, seed 1).
 
-SUMMARY ok=3 warn=1 bug=0 — three Qed-closed results with the same four
+SUMMARY ok=4 warn=1 bug=0 — four Qed-closed results with the same four
 Stdlib-Reals axioms as every module in the Flocq lane (`Print Assumptions` in
-each file); the warning is the scope limit in §4 and §5 (bound-versus-bound,
+each file), plus a bit-identical C# port of the guarded de Casteljau evaluator
+(§5); the warning is the scope limit in §4 and §5 (bound-versus-bound,
 max-norm, Bézier only).
 
 ## 1. Starting point: Horner was already proved
@@ -171,14 +173,23 @@ where that separation is provable, not a general theorem about all curves.
 - an explicit overflow guard;
 - exact and rounded `1 − t`;
 - the exact de Casteljau value equals the Bernstein sum;
-- the γ₂ₙ Horner bound and the Horner-versus-de Casteljau bound comparison.
+- the γ₂ₙ Horner bound and the Horner-versus-de Casteljau bound comparison;
+- a guarded extractable evaluator (`B64_DeCasteljauEval.v : dc_eval`, explicit
+  `DECLINE_*` outcomes) and its soundness (`dc_eval_certified`), extracted as
+  `oracle_bin B64_DECASTELJAU`; `tests/B64DeCasteljauConformance` replays 229 343
+  cases bit for bit between the C# port, the oracle and (on 226 107 queries) an
+  independent Python IEEE evaluator, with 0 mismatches. 89 844 results change if
+  the node is fused, so FMA contraction is observable; no FMA instruction is in
+  the oracle binary or the .NET JIT output (x64, .NET 8 only).
 
 **Not proved here**
 - NURBS: rational weights and de Boor (the real-valued span reduction is
   `NurbsBezierSpan.v`);
-- FMA variants;
-- GEOS or NTS implementation correctness;
-- extraction correspondence (no `oracle_bin` mode, no C#/Java port).
+- FMA variants (they need their own theorem and oracle mode);
+- GEOS or NTS correctness, or any consumer of the C# port: the result is
+  traceability from a Qed-closed floating-point model to one bit-identical C#
+  implementation, not correctness of a geometry library;
+- a Java port (only C# exists).
 
 `ClothoidResidual.v` could consume `b64_horner_gamma` for its polynomial
 residual; that wiring is not done here.
@@ -195,7 +206,8 @@ residual; that wiring is not done here.
 > the overflow guard. Measured errors at n = 30: 5.7e-5 (Horner) vs 7.5e-22
 > (de Casteljau); the comparison is of upper bounds, not true errors.
 > `theories-flocq/B64_DeCasteljau.v` in NetTopologySuite.Proofs. Scope: Bézier
-> (not NURBS), max norm, no FMA, proof only.
+> (not NURBS), max norm, no FMA. A bit-identical C# port of the guarded
+> evaluator exists; no GEOS/NTS consumer is wired.
 
 Posting it is a decision for the repository owner; the claims above are
 exactly what the Qed-closed files state.
