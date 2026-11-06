@@ -1605,6 +1605,34 @@ let run_b64_seg_g () =
     done
   with End_of_file -> ()
 
+(* ----- B64_DECASTELJAU (claimId s1-b64-decasteljau-eval).  Extracted
+   B64_DeCasteljauEval.dc_eval: the guarded binary64 de Casteljau evaluator
+   (s = fl(1 - t); per node fl(fl(s x) + fl(t y)); n = #controls - 1 rounds).
+   Input per line: "t c0 c1 ... cn" -- t and every control as a 16-hex-digit
+   bit pattern (a line with only t has no controls).  Output, one line:
+     CERTIFIED <value bits>                   within dc_eval_certified's bound
+     DECLINE_EMPTY | DECLINE_DEGREE | DECLINE_NONFINITE | DECLINE_PARAM
+     | DECLINE_OVERFLOW_GUARD                 (checked in that order). *)
+let run_b64_decasteljau () =
+  let b h = Int64.float_of_bits (Int64.of_string ("0x" ^ h)) in
+  try
+    while true do
+      let line = String.trim (input_line stdin) in
+      if line <> "" then begin
+        match List.filter (fun w -> w <> "") (String.split_on_char ' ' line) with
+        | [] -> ()
+        | ht :: hcs ->
+            (match dc_eval (List.map b hcs) (b ht) with
+             | DC_Certified v -> Printf.printf "CERTIFIED %016Lx\n" (Int64.bits_of_float v)
+             | DC_DeclineEmpty -> print_endline "DECLINE_EMPTY"
+             | DC_DeclineDegree -> print_endline "DECLINE_DEGREE"
+             | DC_DeclineNonfinite -> print_endline "DECLINE_NONFINITE"
+             | DC_DeclineParam -> print_endline "DECLINE_PARAM"
+             | DC_DeclineGuard -> print_endline "DECLINE_OVERFLOW_GUARD")
+      end
+    done
+  with End_of_file -> ()
+
 let run_arc_distance () =
   let a = parse_point (input_line stdin) in
   let b = parse_point (input_line stdin) in
@@ -4909,6 +4937,7 @@ let () =
        | "B64_FRESNEL"              -> run_b64_fresnel ()
        | "B64_CLOTHOID"             -> run_b64_clothoid ()
        | "B64_SEG_G"                -> run_b64_seg_g ()
+       | "B64_DECASTELJAU"          -> run_b64_decasteljau ()
        | "ARC_ARC_XY"               -> run_arc_arc_xy ()
        | "I_CIRCULAR"               -> run_i_circular ()
        | "HAUSDORFF_DIRECTED"       -> run_hausdorff_directed ()

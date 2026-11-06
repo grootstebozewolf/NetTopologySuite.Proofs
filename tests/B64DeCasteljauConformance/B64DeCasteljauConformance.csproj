@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Proof-to-code conformance: the C# port of the proved binary64 de
+       Casteljau evaluator (B64DeCasteljau.cs) is compared bit for bit with the
+       Rocq-extracted oracle (oracle_bin B64_DECASTELJAU).  See the contract in
+       B64DeCasteljau.cs. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+</Project>

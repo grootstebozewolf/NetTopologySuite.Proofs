@@ -3921,6 +3921,10 @@ theories-flocq/B64_Horner.v
 theories-flocq/B64_HornerGamma.v
 theories-flocq/B64_DeCasteljau.v
 theories-flocq/B64_BezierStability.v
+# S1 guarded extractable de Casteljau entry point (dc_eval) and its soundness
+# (dc_eval_certified, claimId s1-b64-decasteljau-eval); extracted as the
+# B64_DECASTELJAU oracle mode.
+theories-flocq/B64_DeCasteljauEval.v
 theories-flocq/B64_SinPoly.v
 # S2: binary64 sine, |x| <= 10, error <= 2^-49 (Sterbenz mod-pi reduction +
 # degree-21 Horner).  claimId s2-b64-sin.
