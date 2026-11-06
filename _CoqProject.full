@@ -3913,6 +3913,14 @@ theories-flocq/B64_AbsErr.v
 # S1: binary64 Horner kernel (evaluation error vs the same coefficients exact)
 # and its degree-15 reduced-sine instance (<= 2^-52).  claimId s1-b64-horner.
 theories-flocq/B64_Horner.v
+# S1 closed forms on the Horner kernel and the Bezier lane: gamma_{2n} Horner
+# bound (claimId s1-b64-horner-gamma); RNE de Casteljau forward error bound,
+# gamma_n(kappa) form, s = fl(1-t) corollary (s1-b64-decasteljau); dcR is the
+# Bernstein sum and the Horner-vs-de-Casteljau bound comparison on (1-2t)^n
+# (s1-b64-bezier-stability).  Docs: docs/b64-curve-eval-error-bounds-2026-11.md.
+theories-flocq/B64_HornerGamma.v
+theories-flocq/B64_DeCasteljau.v
+theories-flocq/B64_BezierStability.v
 theories-flocq/B64_SinPoly.v
 # S2: binary64 sine, |x| <= 10, error <= 2^-49 (Sterbenz mod-pi reduction +
 # degree-21 Horner).  claimId s2-b64-sin.
