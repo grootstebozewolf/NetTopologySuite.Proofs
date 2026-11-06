@@ -2707,6 +2707,7 @@ theories/ArcOverlay.v
 # Directed-approximation probe (docs/directed-approximation-2026-11.md).
 theories/DirectedApprox.v
 theories/ArcOverlayDirected.v
+theories/ArcSBiarcWitness.v
 
 # IVT gap closure: chord_crosses_arc_circle_implies_circle_intersection.
 # Defines chord_point (parametric chord at t in [0,1]) and
