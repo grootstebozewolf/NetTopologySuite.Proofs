@@ -22,7 +22,7 @@
       "lemmas": ["b64_sin_rel", "tiny_abs_to_rel", "mf_seg_g_poly_rel", "mf_seg_g_poly_pos", "mf_seg_offset_rel", "sgp_outcome_sound", "sgp_outcome_complete", "sgp_signed_rel", "sgw_offset_rel", "sgw_outcome_value"],
       "pending_lemmas": [],
       "unblock_when": [
-        "extraction plus an oracle_bin mode for mf_seg_g_poly and mf_seg_offset",
+        "extraction plus an oracle_bin mode for mf_seg_g_poly, mf_seg_g_signed and the offset (mf_seg_offset_total / mf_seg_offset_outcome)",
         "corpus run: zero new UNDECIDED results compared with the current Taylor driver",
         "C# and Java ports bit-identical to the extracted result, or the unavailability is recorded"
       ],
