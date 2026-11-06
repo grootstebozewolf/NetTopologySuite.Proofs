@@ -65,6 +65,7 @@ From NTS.Proofs.Flocq Require Import B64_ArcPoint.  (* b64_arc_x/y, arc_accept_b
 From NTS.Proofs.Flocq Require Import B64_FresnelPoly B64_Fresnel.  (* S7 canonical Fresnel *)
 From NTS.Proofs.Flocq Require Import B64_ClothoidMap.  (* S8 clothoid -> canonical Fresnel *)
 From NTS.Proofs.Flocq Require Import B64_MarginFilter.  (* S9 margin-filtered sign *)
+From NTS.Proofs.Flocq Require Import B64_DeCasteljauEval.  (* S1 guarded de Casteljau: dc_eval *)
 From Flocq Require Import IEEE754.Binary.
 From Stdlib Require Import Extraction.
 From Stdlib Require Import ExtrOcamlBasic.
@@ -293,6 +294,13 @@ Extract Constant B64_ClothoidMap.cm_Alo => "(0x1.0000000000000p-500)".
 Extract Constant B64_ClothoidMap.cm_cap => "(0x1.0000000000000p+500)".
 Extract Constant B64_ClothoidMap.cm_mcap => "(-0x1.0000000000000p+500)".
 Extract Constant B64_MarginFilter.mf_seg_thr => "(0x1.0000000000000p-48)".
+(* de Casteljau guard constants (B64_DeCasteljauEval.v): exact hex literals,  *)
+(* same reason as cm_cap (the B754_finite ctor is a stub under extraction).   *)
+Extract Constant B64_DeCasteljauEval.dc_one   => "(0x1.0000000000000p+0)".
+Extract Constant B64_DeCasteljauEval.dc_cap   => "(0x1.0000000000000p+500)".
+Extract Constant B64_DeCasteljauEval.dc_mcap  => "(-0x1.0000000000000p+500)".
+Extract Constant B64_DeCasteljauEval.dc_fmax  => "(0x1.fffffffffffffp+1023)".
+Extract Constant B64_DeCasteljauEval.dc_mfmax => "(-0x1.fffffffffffffp+1023)".
 (* END b64_sin constants *)
 
 Extraction Language OCaml.
@@ -346,4 +354,5 @@ Extraction "oracle/extracted.ml"
   cm_Isin
   cm_accept
   mf_seg_g
-  mf_seg_g_outcome.
+  mf_seg_g_outcome
+  dc_eval.
