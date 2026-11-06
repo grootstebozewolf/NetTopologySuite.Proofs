@@ -72,7 +72,7 @@ mixed instance. Machinery already present: `in_circular_segment` and
 | # | Rung | Cost | Risk | Status |
 |---|------|------|------|--------|
 | 1 | Region model R=(P u O)\I; no-in => under, no-out => over, mixed => neither (`SignedBulge` in DirectedApprox.v) | tiny | none (pure set logic) | **done** |
-| 2 | Concrete S-biarc witness: exhibit o in O\P, i in I n P with `in_circular_segment` on two rational arcs | low-medium | low (rational inCircle arithmetic) | next |
+| 2 | Concrete S-biarc witness: exhibit o in O\P, i in I n P with `in_circular_segment` on two rational arcs | low-medium | low (rational inCircle arithmetic) | **done** (`ArcSBiarcWitness.v`: `sbiarc_chord_neither`) |
 | 3 | Bridge `in_circular_segment` + chord half-plane to O/I membership for one arc | medium | medium | after 2 |
 | 4 | Justify R=(P u O)\I from the actual region boundary | high | high (Jordan-class; same wall as WindingNumber.v) | keep as named hypothesis |
 | 5 | b64 off-grid completeness C2 / gap bound | high | high (known blocked) | defer |
@@ -81,4 +81,11 @@ Rung 1 caveat: the decomposition is an assumption, so rung 1 proves the
 logic of direction, not that real regions satisfy it. Rung 4 is what would
 discharge it.
 
-SUMMARY ok=4 warn=2 bug=0
+Rung 2 result: two semicircles (0,0)-(2,0) bulging below and (2,0)-(4,0)
+bulging above, G1 at the join (vertical tangent), P=[0,4]x[0,2]. Proved: both
+arcs valid, mids on opposite chord sides, o=(1,-1/2) in seg(a1)\P not in
+seg(a2), i=(3,1/2) in seg(a2) and P; hence `sbiarc_chord_neither`. The
+decomposition R=(P u seg a1)\seg a2 is still the assumed rung-4 hypothesis;
+G1 is noted in the comment, not proved.
+
+SUMMARY ok=5 warn=2 bug=0
