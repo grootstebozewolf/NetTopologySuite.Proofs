@@ -62,4 +62,23 @@ bulge-out, reverse for bulge-in) per arc and combine with `over_diff`; and
 prove a gap bound for b64 off-grid. Until one of those exists the framework
 has two instances with different halves, not two proofs sharing structure.
 
-SUMMARY ok=3 warn=2 bug=0
+## Rung ladder, ordered by risk/cost (added after the biarc question)
+
+Context: the per-arc direction claim is about one arc and its chord, not a
+biarc. An S-type biarc (arcs curving in opposite senses) is the smallest
+mixed instance. Machinery already present: `in_circular_segment` and
+`arc_control_triangle_in_circular_segment` (ArcControlTriangleInSegment.v).
+
+| # | Rung | Cost | Risk | Status |
+|---|------|------|------|--------|
+| 1 | Region model R=(P u O)\I; no-in => under, no-out => over, mixed => neither (`SignedBulge` in DirectedApprox.v) | tiny | none (pure set logic) | **done** |
+| 2 | Concrete S-biarc witness: exhibit o in O\P, i in I n P with `in_circular_segment` on two rational arcs | low-medium | low (rational inCircle arithmetic) | next |
+| 3 | Bridge `in_circular_segment` + chord half-plane to O/I membership for one arc | medium | medium | after 2 |
+| 4 | Justify R=(P u O)\I from the actual region boundary | high | high (Jordan-class; same wall as WindingNumber.v) | keep as named hypothesis |
+| 5 | b64 off-grid completeness C2 / gap bound | high | high (known blocked) | defer |
+
+Rung 1 caveat: the decomposition is an assumption, so rung 1 proves the
+logic of direction, not that real regions satisfy it. Rung 4 is what would
+discharge it.
+
+SUMMARY ok=4 warn=2 bug=0

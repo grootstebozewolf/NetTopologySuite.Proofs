@@ -160,3 +160,38 @@ Proof.
   assert (Hs : True /\ ~ (false = true)) by (split; [exact I | discriminate]).
   destruct (H Hs) as [_ Hn]. apply Hn. exact I.
 Qed.
+
+(* ---- Signed-bulge region model (per-arc direction) -----------------------
+   A curved region R differs from its chord polygon P by circular segments:
+   out-bulging ones O are added, in-bulging ones I are carved away:
+       R = (P \/ O) \ I.
+   That decomposition is the *assumed* (Jordan-class) hypothesis; given it,
+   the direction of the chord approximation is pure set logic.  The "true
+   region" is `spec`, the chord polygon is `comp`. *)
+Section SignedBulge.
+  Context {X : Type}.
+  Variables (P O Ib : X -> Prop).
+  Let R (x : X) : Prop := (P x \/ O x) /\ ~ Ib x.
+
+  (* No in-bulging arcs: the chord polygon under-approximates R. *)
+  Lemma chord_under_of_no_in :
+    (forall x, ~ Ib x) -> under_on (fun _ => True) R P.
+  Proof. intros H x _ Hp. split; [left; exact Hp | apply H]. Qed.
+
+  (* No out-bulging arcs (O inside P): the chord polygon over-approximates R. *)
+  Lemma chord_over_of_no_out :
+    (forall x, O x -> P x) -> over_on (fun _ => True) R P.
+  Proof. intros H x _ [[Hp|Ho] _]; [exact Hp | apply H, Ho]. Qed.
+
+  (* Mixed: one out-segment point outside P and not carved, plus one carved
+     point of P => the chord polygon is neither over nor under. *)
+  Lemma chord_neither_of_mixed :
+    (exists o, O o /\ ~ P o /\ ~ Ib o) ->
+    (exists i, Ib i /\ P i) ->
+    ~ over_on (fun _ => True) R P /\ ~ under_on (fun _ => True) R P.
+  Proof.
+    intros (o & Ho & Hnp & Hni) (i & Hi & Hpi). split.
+    - intro H. apply Hnp, (H o I). split; [right; exact Ho | exact Hni].
+    - intro H. destruct (H i I Hpi) as [_ Hn]. exact (Hn Hi).
+  Qed.
+End SignedBulge.
