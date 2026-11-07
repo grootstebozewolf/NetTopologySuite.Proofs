@@ -4286,6 +4286,7 @@ theories-flocq/PassesThrough_b64_compute.v
 # the exact-real spec (compute=true, spec=false on an oracle-confirmed sub-ulp
 # tangency witness).  Promotes docs/oracle-soundness-finding.md to a Qed.
 theories-flocq/PassesThrough_b64_compute_unsound.v
+theories-flocq/PassesThrough_b64_c2_counterexample.v
 # Issue #66 guard-discharge audit (round 2, item 1): machine-checked witness
 # that snap-rounding to the integer grid can CREATE a horizontal dart from a
 # non-horizontal input pair (0 and 1/2 both round-to-nearest-even to 0). So
