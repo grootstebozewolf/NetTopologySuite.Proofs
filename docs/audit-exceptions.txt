@@ -10,7 +10,7 @@
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
 #
-# LIVE: 108 files (105 theories-flocq/ + 2 theories/ + 1 hunt probe).
+# LIVE: 111 files (108 theories-flocq/ + 2 theories/ + 1 hunt probe).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -204,3 +204,8 @@ theories/Atan2RatanBridge.v
 # R-side C1 — RiemannInt (#564 Fresnel inhabitant; pack stays 3-axiom).
 # Culprit: RInt_cont_le (continuity_implies_RiemannInt).
 theories/ClothoidFresnelInhab.v
+
+# Flocq C1 -- binary64 Horner / de Casteljau evaluation (#1009)
+theories-flocq/B64_HornerGamma.v
+theories-flocq/B64_DeCasteljau.v
+theories-flocq/B64_DeCasteljauEval.v
