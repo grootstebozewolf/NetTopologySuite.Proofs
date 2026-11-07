@@ -4288,6 +4288,7 @@ theories-flocq/PassesThrough_b64_compute_unsound.v
 theories-flocq/PassesThrough_b64_c2_counterexample.v
 theories-flocq/PassesThrough_b64_conservative.v
 theories-flocq/PassesThrough_b64_conservative_replay.v
+theories-flocq/PassesThrough_b64_c2_qex_record.v
 # Issue #66 guard-discharge audit (round 2, item 1): machine-checked witness
 # that snap-rounding to the integer grid can CREATE a horizontal dart from a
 # non-horizontal input pair (0 and 1/2 both round-to-nearest-even to 0). So
