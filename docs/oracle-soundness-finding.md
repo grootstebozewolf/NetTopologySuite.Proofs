@@ -114,6 +114,12 @@ provable, useful statements are:
 What is **not** provable, and should not be claimed: `compute = true ⇒` exact
 geometric pass for arbitrary binary64 inputs (disproved above).
 
+> **CORRECTION (2026-11).** C2 below is **false**: see
+> [`c2-completeness-counterexample-2026-11.md`](c2-completeness-counterexample-2026-11.md)
+> (`PassesThrough_b64_c2_counterexample.v`, `c2_false`, Qed). The "0 violations"
+> sampling never contained exactly corner-collinear off-grid segments. The text
+> below is kept as the historical analysis.
+
 ## C2 — completeness (`spec ⇒ compute`): strongly evidenced, proof BLOCKED
 
 **This is COMPLETENESS, not soundness** — the snap-rounding-noder safety
