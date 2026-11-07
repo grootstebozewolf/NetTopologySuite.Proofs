@@ -3964,6 +3964,7 @@ theories-flocq/ClothoidResidual_b64_exact.v
 # See docs/clothoid-open-questions-triage.md section 13.
 theories-flocq/ClothoidHalley_b64.v
 theories-flocq/Orient_b64_exact_full.v
+theories-flocq/Orient_b64_R2.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
 # on top of Stage A filter.  Five-valued result (None / Point / Collinear /
 # Nan / Uncertain).  Ships the predicate, structural lemmas (decidability,
