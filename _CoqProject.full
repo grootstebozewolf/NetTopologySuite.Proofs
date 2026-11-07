@@ -2704,6 +2704,10 @@ theories/ArcChordSubdivision.v
 # (max_sagitta_nonneg, arcs_of_nil/_cons/_segment_chord/_segment_arc,
 # forward corollary).  No Admitteds; no classical-prop pulls.
 theories/ArcOverlay.v
+# Directed-approximation probe (docs/directed-approximation-2026-11.md).
+theories/DirectedApprox.v
+theories/ArcOverlayDirected.v
+theories/ArcSBiarcWitness.v
 
 # IVT gap closure: chord_crosses_arc_circle_implies_circle_intersection.
 # Defines chord_point (parametric chord at t in [0,1]) and
@@ -3959,6 +3963,7 @@ theories-flocq/ClothoidResidual_b64_exact.v
 # See docs/clothoid-open-questions-triage.md section 13.
 theories-flocq/ClothoidHalley_b64.v
 theories-flocq/Orient_b64_exact_full.v
+theories-flocq/Orient_b64_R2.v
 # Phase 1 first slice: binary64 segment-pair intersection predicate built
 # on top of Stage A filter.  Five-valued result (None / Point / Collinear /
 # Nan / Uncertain).  Ships the predicate, structural lemmas (decidability,
@@ -4280,6 +4285,10 @@ theories-flocq/PassesThrough_b64_compute.v
 # the exact-real spec (compute=true, spec=false on an oracle-confirmed sub-ulp
 # tangency witness).  Promotes docs/oracle-soundness-finding.md to a Qed.
 theories-flocq/PassesThrough_b64_compute_unsound.v
+theories-flocq/PassesThrough_b64_c2_counterexample.v
+theories-flocq/PassesThrough_b64_conservative.v
+theories-flocq/PassesThrough_b64_conservative_replay.v
+theories-flocq/PassesThrough_b64_c2_qex_record.v
 # Issue #66 guard-discharge audit (round 2, item 1): machine-checked witness
 # that snap-rounding to the integer grid can CREATE a horizontal dart from a
 # non-horizontal input pair (0 and 1/2 both round-to-nearest-even to 0). So
@@ -4337,6 +4346,7 @@ theories-flocq/PassesThrough_b64_spec_symmetric.v
 theories-flocq/PassesThrough_b64_grid_core.v
 theories-flocq/PassesThrough_b64_grid_bounds.v
 theories-flocq/PassesThrough_b64_grid_complete.v
+theories-flocq/DirectedApprox_b64.v
 theories-flocq/PassesThrough_b64_grid_gap_kernel.v
 theories-flocq/PassesThrough_b64_grid_separation.v
 theories-flocq/PassesThrough_b64_grid_exact.v
