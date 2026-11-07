@@ -74,7 +74,8 @@ P1 = (1-s) P0 + s K, s odd 3..13) found 8,758 violations of the same shape.
   the rounded filter rejects it.
 * The on-grid result (C1, `compute = spec` for |n| <= 2^22) is unaffected;
   there the operands are exact integers and the quotient is round(a/b).
-* A conservative filter would need outward rounding (or a widened pixel);
-  that is a design change, not a proof gap.
+* A conservative filter needs outward rounding. It is now constructed and proved
+  complete in [`c2-conservative-repair-2026-11.md`](c2-conservative-repair-2026-11.md)
+  (`PassesThrough_b64_conservative.v`); it accepts this witness.
 
 SUMMARY ok=2 warn=1 bug=1
