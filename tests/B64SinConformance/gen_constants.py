@@ -18,20 +18,21 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 SRC = ["theories-flocq/B64_SinPoly.v", "theories-flocq/B64_Sin.v", "theories-flocq/B64_CosPoly.v",
        "theories-flocq/B64_ArcPoint.v", "theories-flocq/B64_FresnelPolyC.v", "theories-flocq/B64_FresnelPolyS.v",
        "theories-flocq/B64_Fresnel.v", "theories-flocq/B64_ClothoidMap.v",
-       "theories-flocq/B64_MarginFilter.v"]
+       "theories-flocq/B64_MarginFilter.v", "theories-flocq/B64_DeCasteljauEval.v"]
 USED = ["sp_c%d" % k for k in range(11)] + ["cq_c%d" % k for k in range(12)] + [
     "sn_C1", "sn_C2", "sn_one", "sn_two", "sn_three",
     "sn_T1", "sn_T3", "sn_T5", "sn_ten", "sn_mten", "ap_cap", "ap_mcap"] + [
-    "frc_c%d" % k for k in range(20)] + ["frs_c%d" % k for k in range(19)] + ["fr_X", "fr_mX", "cm_r2", "cm_Alo", "cm_cap", "cm_mcap", "mf_seg_thr"]
+    "frc_c%d" % k for k in range(20)] + ["frs_c%d" % k for k in range(19)] + ["fr_X", "fr_mX", "cm_r2", "cm_Alo", "cm_cap", "cm_mcap", "mf_seg_thr",
+    "dc_one", "dc_cap", "dc_mcap", "dc_fmax", "dc_mfmax"]
 PAT = re.compile(r"Definition (\w+) : binary64 :=\s*Binary\.B754_finite prec emax "
-                 r"(true|false) (\d+) \((-?\d+)\) eq_refl\.")
+                 r"(true|false) (\d+) (?:\((-?\d+)\)|(\d+)) eq_refl\.")
 
 def literals():
     found = {}
     for f in SRC:
         mod = os.path.splitext(os.path.basename(f))[0]
         for m in PAT.finditer(open(os.path.join(ROOT, f)).read()):
-            name, s, man, e = m.group(1), m.group(2) == "true", int(m.group(3)), int(m.group(4))
+            name, s, man, e = m.group(1), m.group(2) == "true", int(m.group(3)), int(m.group(4) or m.group(5))
             v = man * 2.0 ** e           # exact: 53-bit mantissa, normal exponent
             assert int(v / 2.0 ** e) == man
             found[name] = (mod, -v if s else v)

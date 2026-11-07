@@ -85,4 +85,9 @@ internal static class B64SinConstants
     internal static readonly double cm_cap = System.BitConverter.Int64BitsToDouble(unchecked((long)0x5F30000000000000UL)); // 0x1.0000000000000p+500
     internal static readonly double cm_mcap = System.BitConverter.Int64BitsToDouble(unchecked((long)0xDF30000000000000UL)); // -0x1.0000000000000p+500
     internal static readonly double mf_seg_thr = System.BitConverter.Int64BitsToDouble(unchecked((long)0x3CF0000000000000UL)); // 0x1.0000000000000p-48
+    internal static readonly double dc_one = System.BitConverter.Int64BitsToDouble(unchecked((long)0x3FF0000000000000UL)); // 0x1.0000000000000p+0
+    internal static readonly double dc_cap = System.BitConverter.Int64BitsToDouble(unchecked((long)0x5F30000000000000UL)); // 0x1.0000000000000p+500
+    internal static readonly double dc_mcap = System.BitConverter.Int64BitsToDouble(unchecked((long)0xDF30000000000000UL)); // -0x1.0000000000000p+500
+    internal static readonly double dc_fmax = System.BitConverter.Int64BitsToDouble(unchecked((long)0x7FEFFFFFFFFFFFFFUL)); // 0x1.fffffffffffffp+1023
+    internal static readonly double dc_mfmax = System.BitConverter.Int64BitsToDouble(unchecked((long)0xFFEFFFFFFFFFFFFFUL)); // -0x1.fffffffffffffp+1023
 }

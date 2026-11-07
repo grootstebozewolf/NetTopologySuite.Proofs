@@ -294,12 +294,10 @@ Extract Constant B64_ClothoidMap.cm_Alo => "(0x1.0000000000000p-500)".
 Extract Constant B64_ClothoidMap.cm_cap => "(0x1.0000000000000p+500)".
 Extract Constant B64_ClothoidMap.cm_mcap => "(-0x1.0000000000000p+500)".
 Extract Constant B64_MarginFilter.mf_seg_thr => "(0x1.0000000000000p-48)".
-(* de Casteljau guard constants (B64_DeCasteljauEval.v): exact hex literals,  *)
-(* same reason as cm_cap (the B754_finite ctor is a stub under extraction).   *)
-Extract Constant B64_DeCasteljauEval.dc_one   => "(0x1.0000000000000p+0)".
-Extract Constant B64_DeCasteljauEval.dc_cap   => "(0x1.0000000000000p+500)".
-Extract Constant B64_DeCasteljauEval.dc_mcap  => "(-0x1.0000000000000p+500)".
-Extract Constant B64_DeCasteljauEval.dc_fmax  => "(0x1.fffffffffffffp+1023)".
+Extract Constant B64_DeCasteljauEval.dc_one => "(0x1.0000000000000p+0)".
+Extract Constant B64_DeCasteljauEval.dc_cap => "(0x1.0000000000000p+500)".
+Extract Constant B64_DeCasteljauEval.dc_mcap => "(-0x1.0000000000000p+500)".
+Extract Constant B64_DeCasteljauEval.dc_fmax => "(0x1.fffffffffffffp+1023)".
 Extract Constant B64_DeCasteljauEval.dc_mfmax => "(-0x1.fffffffffffffp+1023)".
 (* END b64_sin constants *)
 
