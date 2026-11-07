@@ -85,4 +85,9 @@ final class B64Constants {
     static final double cm_cap = Double.longBitsToDouble(0x5F30000000000000L); // 0x1.0000000000000p+500
     static final double cm_mcap = Double.longBitsToDouble(0xDF30000000000000L); // -0x1.0000000000000p+500
     static final double mf_seg_thr = Double.longBitsToDouble(0x3CF0000000000000L); // 0x1.0000000000000p-48
+    static final double dc_one = Double.longBitsToDouble(0x3FF0000000000000L); // 0x1.0000000000000p+0
+    static final double dc_cap = Double.longBitsToDouble(0x5F30000000000000L); // 0x1.0000000000000p+500
+    static final double dc_mcap = Double.longBitsToDouble(0xDF30000000000000L); // -0x1.0000000000000p+500
+    static final double dc_fmax = Double.longBitsToDouble(0x7FEFFFFFFFFFFFFFL); // 0x1.fffffffffffffp+1023
+    static final double dc_mfmax = Double.longBitsToDouble(0xFFEFFFFFFFFFFFFFL); // -0x1.fffffffffffffp+1023
 }
