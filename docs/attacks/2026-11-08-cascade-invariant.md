@@ -66,3 +66,30 @@ Consequences:
 - Not shown: "worse than equality". The model never saw `|h| > ulp(g_next)` (class Y).
   The true general look-ahead to prove is `|h| <= ulp(g_next)`, with `<` => N and `=` => T.
 - The pending-twin equality (P, p = 2) is untouched, as agreed.
+
+## Rung 3: closed look-ahead |h| <= ulp(g_next) — OPEN (no QED, no QEX)
+
+OUTCOME: OPEN. No counterexample found; no Rocq proof. SUMMARY ok=0 warn=1 bug=0
+
+Search for `|h_k| > ulp(g_{k+1})` (scripts in `tests/CascadeInvariantProbe/`, p-bit RN-even model):
+
+| search | p | pairs | max `|h|/ulp(next)` | violations |
+|---|---|---|---|---|
+| exhaustive Priest pairs, lengths <= 4, total <= 7 (`gt.py`) | 2 | 40,928,160 | 1.0 | 0 |
+| edge mantissas {100..0, 100..01, 11..10, 11..1}, gaps p/p+1, len <= 3 each (`edge.py`) | 3 | 19,079,424 | 1.0 | 0 |
+| same | 4 | 23,849,280 | 1.0 | 0 |
+| same | 5 | 28,619,136 | 1.0 | 0 |
+| same | 6 | 33,388,992 | 1.0 | 0 |
+| random, len <= 6 | 2..8 | 150,000 each | 1.0 (p=2,3), <=0.875 (p>=4: ties rare) | 0 |
+
+The maximum is exactly 1.0, attained: the bound `<=` is tight (the T witness).
+
+Reduction (paper argument, NOT yet in Rocq): if the tail bound
+`|Q_{k-1} - g_{k-1}| <= 2 ulp(g_k)` holds, then Q_{k-1} (representable, g_{k-1} <= 2^m - u)
+is at most 2^m in magnitude, so `|g_k + Q_{k-1}| < 2^(m+1)`, the rounding spacing is at most
+2u and `|h_k| <= u <= ulp(g_{k+1})`. Empirically the tail bound holds with 2.0 attained at
+p = 2..5 (`tail.py`, random). So the open content is the tail bound at arbitrary length:
+`T_{k-1} = Q_{k-2} - h_{k-1}` and `|Q_{k-2}|` is NOT bounded by u_k on its own (it is
+about |g_{k-2}| + a tail), so the induction needs the sharper joint invariant, tight at 2.
+Priest keys alone give `|g_j| < ulp(g_{j+2})`, but the finite geometric sums per chain
+and the accumulated errors meet the bound with no slack to spare.
