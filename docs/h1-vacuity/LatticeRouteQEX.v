@@ -15,7 +15,13 @@
    first, d >= 2^-59 the second) -- whatever d | 2U says.  The bound itself
    holds here (|rho| = 2^-60 <= 2 ulp(2) = 2^-50).  For bstate's own scale
    (keys < 2^L, Q multiple of 2^L forces d in [2^-59, 2^-7]) the fact that
-   fails is rho in dZ, because g_1 = M 2^-60 is not on the d-lattice. *)
+   fails is rho in dZ, because g_1 = M 2^-60 is not on the d-lattice. 
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted; human review pending.
+     Assisted-by: Claude
+*)
 From Stdlib Require Import Reals ZArith Lia Lra List.
 From Flocq Require Import IEEE754.Binary Core Ulp.
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib B64_Pff_bridge

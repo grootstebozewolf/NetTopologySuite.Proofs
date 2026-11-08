@@ -8,7 +8,13 @@
    computed cascade `q_cascade`).  The TwoSum of M and 2 is 2^53 + 1, a
    midpoint of the binade [2^53, 2^54) (spacing 2); round-half-even picks
    2^53 (even mantissa), error +1 = ulp(M).  This is exactly the T state:
-   Q = 2^53 = s 2^M, h = 1 = s 2^c with M = mag M = 53, c = 0. *)
+   Q = 2^53 = s 2^M, h = 1 = s 2^c with M = mag M = 53, c = 0. 
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted; human review pending.
+     Assisted-by: Claude
+*)
 From Stdlib Require Import Reals ZArith Lia Lra List.
 From Flocq Require Import IEEE754.Binary Core Ulp.
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_bridge B64_lib B64_Pff_bridge

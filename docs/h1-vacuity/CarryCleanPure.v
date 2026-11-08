@@ -1,8 +1,16 @@
 (* CarryCleanPure.v -- the "pure finite-sequence" carry_clean theorem.
    No floating point: signed dyadics (reals of the form m*2^k), exact rewrites
-   only.  Outcome: QED, arbitrary length -- and VACUOUS for the real bridge,
-   because a Priest chain is a normal form of the rewrite system (see
-   docs/attacks/2026-11-08-carry-clean-pure.md). *)
+   only.  Outcome: QED, arbitrary length -- and VACUOUS for the real bridge:
+   Priest's relation forces strictly decreasing magnitudes (priest_lt), so a
+   zero-free Priest chain is already a normal form of the rewrite system and
+   carry_clean is the identity on it.  carry_clean only matters on
+   fast_expansion_sum output, which is not a Priest chain.
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted; human review pending.
+     Assisted-by: Claude
+*)
 From Stdlib Require Import Reals ZArith Lia Lra List.
 From Flocq Require Import Core.
 Import ListNotations.

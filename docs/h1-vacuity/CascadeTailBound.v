@@ -1,37 +1,58 @@
 (* CascadeTailBound.v -- arbitrary-length tail bound and closed look-ahead
-   for the TwoSum cascade of Fast-Expansion-Sum, in Flocq's FLX format
-   (radix 2, precision p >= 2, unbounded exponents), round-to-nearest-even.
-   Mechanizes docs/cascade-tail-bound-2026-11.md.  All Qed, no Admitted.
+   for the TwoSum cascade of Fast-Expansion-Sum.  Evidence probe (smoke-
+   compiled by scripts/hunt_probe_smoke.sh), not a product module.  All Qed.
 
-   HEADLINE  cascade_tail_bound : for two Priest chains e, f (chainR p) whose
-     components, sorted by |.| ascending, are g_0 .. g_n (Permutation of
-     e ++ f; nonzero; FLX-representable), the cascade Q_0 = g_0,
-     Q_j = RN(g_j + Q_(j-1)), h_j = g_j + Q_(j-1) - Q_j satisfies, for every
-     1 <= k <= n,
-         |Q_(k-1) - g_(k-1)| <= 2 ulp(g_k)      (tail bound)
-         |h_k| <= ulp(g_k)                      (error bound)
-   and cascade_closed_lookahead : |h_k| <= ulp(g_(k+1)).
+   SETTING  Flocq FLX (radix 2, precision p >= 2, unbounded exponents),
+     round-to-nearest ties-to-even.  e, f Priest chains (chainR p); g_0..g_n
+     their components sorted by |.| ascending (Permutation of e ++ f),
+     nonzero, representable.  Q_0 = g_0, Q_j = RN(g_j + Q_(j-1)),
+     h_j = g_j + Q_(j-1) - Q_j (exact), U_j = ulp(g_j).
 
-   STRUCTURE  stepA (tail bound => error bound); tie_even, gap, case_half,
-     case_full (monotone rounding near 2^e); Tsum_bound (ulp sum), lemma_B
-     (|Q_(k-2)| <= 2U); tail_bound_and_lookahead (strong induction, keys and
-     Lemma S as hypotheses); chain_count / keys_derived (the Priest keys
-     |g_j| < ulp(g_(j+2)) by counting) and tail_lt / chain_small /
-     HS_derived (Lemma S by per-chain telescoping) discharge them.
+   HEADLINE  cascade_tail_bound: for 1 <= k <= n
+       T(k)   |Q_(k-1) - g_(k-1)| <= 2 U_k
+       LA(k)  |h_k| <= U_k,   hence (cascade_closed_lookahead) |h_k| <= U_(k+1).
+     Both are tight: 2 U_k is attained (model); |h| = U_(k+1) is attained in
+     binary64 (LookaheadQEX.v).
 
-   BINARY64  b64_cascade_tail_bound / b64_closed_lookahead: the same bounds,
-     with binary64 ulp, for the actual b64_grow_expansion_aux on
-     sort_by_abs (e ++ f), from priest_chain e, priest_chain f, finite
-     nonzero components and the corpus margin abs_sum e + abs_sum f <=
-     2^(emax-5).  Bridge: RN_agree (binary64 RN = FLX RN on every sum of two
-     binary64 values -- the sum is exact below the subnormal threshold, so
-     underflow needs no case of its own), ulp_X_le_64 (FLX ulp <= binary64
-     ulp), acc/nth_hs/acc_real/h_real (the implementation's recurrence is
-     the FLX recurrence), chain_of_priest (priest_chain = chainR 53).
+   PROOF (paper argument, mechanized below)
+     (F1) keys |g_j| < U_(j+2)  [chain_count, keys_derived: at most one
+          component per chain lies in [ulp G, |G|]].
+     Lemma S  |S_(k-2)| < 2 U_k, S = exact partial sum  [tail_lt,
+          chain_small, HS_derived: per chain the consumed components
+          telescope below U_k, using the full Priest gap].
+     Lemma U  sum_(j<=k-2) U_j < 2 U_k / (2^p - 1)  [Tsum_bound].
+     Step A  T(k) => LA(k): |Q_(k-1)| <= 2^m, so |g_k + Q_(k-1)| < 2^(m+1)
+          and the rounding error is at most U_k  [stepA, gap].
+     Lemma B  |Q_(k-2)| <= 2 U_k: Q = S - H, |H| < 2U/(2^p-1) by LA and
+          Lemma U, and nothing is representable just above 2U  [lemma_B].
+     Step B  T(k) from T(k-1), LA(k-1) by cases on w = U_(k-1) vs U = U_k:
+          w <= U/4 triangle (< 7U/4); w = U/2 and w = U monotone rounding,
+          with ties-to-even at 2^m + U  [case_half, case_full, tie_even,
+          TB_step].  Strong induction: tail_bound_and_lookahead.
+     Sharpness (model evidence, exact rationals, not mechanized): with
+          Priest gap p - 1 the tail bound fails (p = 3 witness, ratio 5/2).
+     Under round-half-away, the w = U boundary case would give 3U.
 
-   NOT COVERED  zero components (excluded by hypothesis) and
-     CascadeInvariant.cascade_step_obligation (see
-     docs/attacks/2026-11-08-cascade-invariant.md, rung 9). *)
+   BINARY64  b64_cascade_tail_bound, b64_closed_lookahead,
+     fes_output_error_bound: the same bounds with binary64 ulp for the actual
+     b64_grow_expansion_aux on sort_by_abs (e ++ f), from priest_chain e, f,
+     finite nonzero components and abs_sum e + abs_sum f <= 2^(emax-5).
+     Bridge: RN_agree (binary64 RN = FLX RN on every sum of two binary64
+     values; below the subnormal threshold the sum is exact, so underflow
+     needs no case), ulp_X_le_64, acc / nth_hs / acc_real / h_real (the
+     implementation's recurrence is the FLX one), chain_of_priest.
+     priest_chains_nonzero: the nonzero hypothesis follows from the chains
+     except for singleton chains (chain_nz).
+
+   N -> T ENTRY  tie_shape, eq_shape, b64_equality_entry: equality
+     |h_k| = ulp(g_(k+1)) forces Q_k = s 2^M, h_k = s 2^c, g_(k+1) normal,
+     and |g_k| = 2^M - 2^c <= |g_(k+1)| (consumed by CascadeInvariant.v).
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted; human review pending.
+     Assisted-by: Claude
+*)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
 Import ListNotations.
 From Flocq Require Import Core IEEE754.Binary.
@@ -1211,6 +1232,60 @@ Proof.
   split; [ exact Hg | ].
   assert (Hle : Rabs (g (S j')) <= Rabs (g (S (S j')))) by (apply Hso; lia).
   split; [ exact Hle | ]. pose proof (bpow_gt_0 radix2 c). lra.
+Qed.
+
+(* Only singleton chains can hold a zero: Priest's relation normalises both
+   members of every adjacent pair.  So the zero-free hypothesis of the
+   binary64 theorems reduces to the singleton case. *)
+Definition chain_nz (c : list binary64) : Prop :=
+  match c with x :: nil => b2r x <> 0 | _ => True end.
+
+Lemma priest_chain_nonzero : forall c, priest_chain c -> chain_nz c -> Forall (fun x => b2r x <> 0) c.
+Proof.
+  induction c as [| a c IH]; intros Hc Hn; [ constructor | ].
+  destruct c as [| b c'].
+  - constructor; [ exact Hn | constructor ].
+  - destruct Hc as [Hab Hrest].
+    destruct Hab as (mx & my & kx & ky & Hx & Hy & Nx & Ny & _).
+    destruct (norm_facts prec prec2 mx kx Nx) as (Ha0 & _). destruct (norm_facts prec prec2 my ky Ny) as (Hb0 & _).
+    constructor; [ rewrite Hx; exact Ha0 | ].
+    apply IH; [ exact Hrest | ]. destruct c'; [ simpl; rewrite Hy; exact Hb0 | exact I ].
+Qed.
+
+Corollary priest_chains_nonzero : forall e f, priest_chain e -> priest_chain f ->
+  chain_nz e -> chain_nz f -> Forall (fun x => b2r x <> 0) (e ++ f).
+Proof.
+  intros e f Pe Pf Ne Nf. apply Forall_app. split; apply priest_chain_nonzero; assumption.
+Qed.
+
+Lemma grow_len : forall xs q, length (fst (b64_grow_expansion_aux q xs)) = length xs.
+Proof.
+  induction xs as [| x xs IH]; intro q; [ reflexivity | ].
+  cbn [b64_grow_expansion_aux]. destruct (b64_TwoSum x q) as [qn h0].
+  specialize (IH qn). destruct (b64_grow_expansion_aux qn xs) as [hs qf]. simpl in *. rewrite IH. reflexivity.
+Qed.
+
+(* The error bound read off fast_expansion_sum's own output
+   qfinal :: rev hs: the component at position (length xs - j + 1) is h_j. *)
+Corollary fes_output_error_bound :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j <= length xs)%nat ->
+      Rabs (b2r (nth (length xs - j + 1) (fast_expansion_sum e f) d))
+        <= ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth j (x0 :: xs) d)).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj.
+  destruct (b64_cascade_tail_bound e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj) as [_ L].
+  unfold fast_expansion_sum. rewrite Hs.
+  pose proof (grow_len xs x0) as Hl.
+  destruct (b64_grow_expansion_aux x0 xs) as [hs qf] eqn:E. cbn [fst] in Hl, L.
+  replace (length xs - j + 1)%nat with (S (length xs - j)) by lia. cbn [nth].
+  rewrite rev_nth by lia. rewrite Hl. replace (length xs - S (length xs - j))%nat with (j - 1)%nat by lia.
+  exact L.
 Qed.
 
 End B64.
