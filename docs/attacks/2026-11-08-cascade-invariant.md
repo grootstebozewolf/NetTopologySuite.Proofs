@@ -93,3 +93,30 @@ p = 2..5 (`tail.py`, random). So the open content is the tail bound at arbitrary
 about |g_{k-2}| + a tail), so the induction needs the sharper joint invariant, tight at 2.
 Priest keys alone give `|g_j| < ulp(g_{j+2})`, but the finite geometric sums per chain
 and the accumulated errors meet the bound with no slack to spare.
+
+## Rung 4: tail bound |Q_{k-1} - g_{k-1}| <= 2 ulp(g_k) — OPEN (no QED, no QEX)
+
+OUTCOME: OPEN. SUMMARY ok=0 warn=1 bug=0
+
+Definitions (to avoid a recurring slip): `Q_j` is the ROUNDED TwoSum accumulator after
+absorbing sorted inputs g_0..g_j, not an exact tail; `rho_{k-1} = Q_{k-1} - g_{k-1}
+= Q_{k-2} - h_{k-1}`; `u_k = ulp(g_k)` (nondecreasing in k); exact `Q_j + sum_{i<=j} h_i = sum_{i<=j} g_i`.
+
+Paper-proved (NOT in Rocq): exact partial sum `|sum_{i<=k-2} g_i| < 2 u_k`.
+Each `|g_i| < u_{i+2} <= u_k` (priest_keys_general). Per chain the included elements are the
+smallest ones a_1 > a_2 > ...; a_1 is a multiple of 2^{k1} and < u_k = 2^t, and 2^{k1} | 2^t,
+so |a_1| <= u_k - 2^{k1}; Priest gives |a_{i+1}| < 2^{k_i}, multiple of 2^{k_{i+1}}, so
+|a_{i+1}| <= 2^{k_i} - 2^{k_{i+1}}; telescoping: chain sum <= u_k - 2^{k_last} < u_k. Two
+chains: < 2 u_k. (No underflow assumed.)
+
+Why it does not close: `rho_{k-1} = S_{k-2} - H_{k-1}` with `H = sum h_i`, and bounding
+`|S| + |H|` by the triangle inequality gives about 4 u_k, not 2. In the model the pieces
+are tight but correlated: max `|Q_{k-2}|/u_k = 2.0` (attained), max `|h_{k-1}|/u_k = 1.0`,
+max `|S_{k-2}|/u_k` = 1.94..1.96 (< 2, matching the lemma), yet max `|rho|/u_k = 2.0`.
+The 2.0 in `Q_{k-2}` is a binade boundary (rounding up to the power of two 2^{t+1}).
+A proof needs the joint invariant on (Q, H), e.g. `|H_j| <= ulp(Q_j)`, which FAILS when
+Q cancels (g_j = -g_{j-1}); that is the carry-shape machinery, not a one-line bound.
+
+QEX hunt (targeted hill-climb on the ratio, `tests/CascadeInvariantProbe/climb.py`,
+p = 3, 4, 5, 7, lengths <= 6, 150 restarts x 400 steps each): best ratio exactly 2.0,
+no case above. Bounded search; not completion.
