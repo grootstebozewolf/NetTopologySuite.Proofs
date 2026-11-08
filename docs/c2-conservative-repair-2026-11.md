@@ -6,6 +6,17 @@ Provenance: Rocq 9.2.0 + Flocq 4.2.2, local `Makefile.gen` build on branch tip
 `theories-flocq/PassesThrough_b64_conservative_replay.v` (witness replay).
 Outcome: **REPAIR-QED**.
 
+## Architecture note
+
+The geometry is proved ONCE, generically, over an enclosure contract on six
+directed primitives (`dprims`; theorems `g_q_lower_ok`, `g_q_upper_ok`,
+`g_axis_lo_ok`, `g_axis_hi_ok`, `g_touches_complete`). The Flocq-mode filter described
+below is the instance `flocq_prims`; its theorem names (`q_lower_ok` ... in the table)
+are now aliases/instances of the generic ones. The nearest-plus-pred/succ filter is a
+second instance: [`c2-executable-repair-2026-11.md`](c2-executable-repair-2026-11.md).
+The contract is enclosure, not equality with Flocq (equality is false for the
+executable instance).
+
 ## Theorems (all Qed, no Admitted)
 
 | claim | theorem |

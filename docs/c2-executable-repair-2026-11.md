@@ -33,28 +33,27 @@ For guarded finite operands with |exact result| <= 2^k (0 <= k <= 1000; division
 is representable, exec_DN = pred(z) < z = Flocq_DN: `ex_sub_dn_not_flocq` (1 - 0:
 exec DN = 1 - 2^-53 < 1). That is why the refinement is the weak form above.
 
-## Connection to the existing construction
+## Connection to the existing construction (one canonical proof)
 
-Equality with Flocq would have let the old proof be reused verbatim; since it is
-false, and wider bounds can change the sign-selected quotient branches, the
-conservative geometry is re-instantiated ONCE, generically, over a record
-`dprims` carrying exactly the laws the enclosure proofs use (finite, enclosure,
-magnitude <= 2^(k+1)). All pure-real and structural lemmas are imported
-unchanged from `PassesThrough_b64_conservative.v` (`lowP1`..`upN2`,
-`inv_neg_mono`, `ub_max_ok`, `dom_ok`, `Rmin_mono`, the constants). Re-proved
-generically: `g_q_lower_ok`, `g_q_upper_ok` (computed lower <= a/b <= computed
-upper), `g_axis_facts`, `g_axis_lo_ok`, `g_axis_hi_ok` (polarity),
-`g_axis_guard_ok`, `g_touches_complete`. The only constant change: numerators are
-bounded by 2^504 (not 2^502), because each directed step may widen by one binade;
-quotients by 2^1004 < 2^1024. The coordinate guard (2^500) and the denominator
-guard (2^-500) are unchanged.
+Equality with Flocq's directed rounding is false (above), and wider bounds can
+change the sign-selected quotient branches, so the old Flocq-specific proof could
+not simply be reused. Instead the proof was made generic and the duplicate removed:
 
 ```
-executable primitives (ex_*)  --ne_pred_ok/ne_succ_ok-->  dprims laws
-  --g_q_*_ok--> quotient enclosures --g_axis_*_ok--> lower <= exact lower,
-  exact upper <= upper --g_touches_complete--> nonempty interval
-  --> exact touch => `b64_touches_exec` = true
+pure real lemmas (lowP1..upN2, ...)          PassesThrough_b64_conservative.v
+   -> dprims : the ENCLOSURE CONTRACT (finite, enclosure, magnitude <= 2^(k+1))
+   -> g_q_*_ok -> g_axis_*_ok -> g_touches_complete      (proved once)
+        +-- flocq_prims : mode_DN / mode_UP                (same file)
+        +-- exec_prims  : nearest + pred/succ              PassesThrough_b64_executable.v
 ```
+
+The Flocq-mode filter is now an instance (`b64_touches_cons := g_touches
+flocq_prims`); the old names (`axis_lo`, `axis_lo_ok`, `b64_touches_complete_cons`,
+`b64_passes_through_complete_cons`) are thin aliases, so dependents are unchanged.
+This module contains no geometry, only the executable primitives, their
+refinement lemmas, and the instance. Numerators are bounded by 2^504 (each directed
+step may widen by one binade; true of both instances), quotients by 2^1004; the
+2^500 coordinate guard and 2^-500 denominator guard are unchanged.
 
 ## Final theorems
 
