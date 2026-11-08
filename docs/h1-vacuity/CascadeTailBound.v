@@ -1182,7 +1182,8 @@ Theorem b64_equality_entry :
       /\ SpecFloat.fexp prec emax (M + 1) = (c + 1)%Z
       /\ Rabs (b2r gj) = bpow radix2 M - bpow radix2 c
       /\ Rabs (b2r gj) <= Rabs (b2r g2)
-      /\ bpow radix2 M - 2 * bpow radix2 c <= Rabs (b2r g2).
+      /\ bpow radix2 M - 2 * bpow radix2 c <= Rabs (b2r g2)
+      /\ c = (M - prec)%Z.
 Proof.
   intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 gj g2 q Heq M c.
   set (s0 := x0 :: xs). set (g := fun j => b2r (nth j s0 d)).
@@ -1231,7 +1232,34 @@ Proof.
   split; [ rewrite Hc; unfold prec; lia | ]. split; [ unfold SpecFloat.fexp, SpecFloat.emin; change IntDef.Z.max with Z.max; lia | ].
   split; [ exact Hg | ].
   assert (Hle : Rabs (g (S j')) <= Rabs (g (S (S j')))) by (apply Hso; lia).
-  split; [ exact Hle | ]. pose proof (bpow_gt_0 radix2 c). lra.
+  split; [ exact Hle | ]. split; [ pose proof (bpow_gt_0 radix2 c); lra | exact Hc ].
+Qed.
+
+(* The Priest keys on the binary64 sorted list, with binary64 ulp. *)
+Theorem b64_keys :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (j + 2 <= length xs)%nat ->
+      Rabs (b2r (nth j (x0 :: xs) d)) < ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth (j + 2) (x0 :: xs) d)).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hs j Hj.
+  set (s0 := x0 :: xs). set (g := fun j => b2r (nth j s0 d)).
+  assert (Hperm : Permutation (e ++ f) s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Hsorted : sorted_asc s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_sorted).
+  assert (Nz' : forall j, (j <= length xs)%nat -> g j <> 0).
+  { intros i Hi. unfold g. rewrite Forall_forall in Nz. apply Nz.
+    apply (Permutation_in _ (Permutation_sym Hperm)). apply nth_In. unfold s0. simpl. lia. }
+  assert (Hpm : Permutation (map g (seq 0 (S (length xs)))) (map b2r e ++ map b2r f)).
+  { unfold g. change (S (length xs)) with (length s0). rewrite map_g_seq, <- map_app.
+    apply Permutation_map, Permutation_sym, Hperm. }
+  pose proof (keys_derived prec prec2 g (length xs) (map b2r e) (map b2r f) Nz'
+                (fun i (Hi : (S i <= length xs)%nat) => sorted_g s0 Hsorted i ltac:(unfold s0; simpl; lia))
+                (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm j Hj) as K.
+  assert (H2 : g (j + 2)%nat <> 0) by (apply Nz'; lia).
+  pose proof (ulp_X_le_64 _ H2). unfold g in *. lra.
 Qed.
 
 (* Only singleton chains can hold a zero: Priest's relation normalises both

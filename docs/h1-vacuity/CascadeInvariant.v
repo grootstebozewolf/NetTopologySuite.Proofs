@@ -14,6 +14,11 @@
        chains, N -> N or N -> T (strict vs equal look-ahead, from
        CascadeTailBound).  N_to_T_entry: the T-entry contract holds; the
        bstate_tie bound 2^M - 2*2^c <= |g_next| has one ulp of slack.
+     cinv_T_step / T_step_reachable: T -> N (anti pair or single outcome of
+       bstate_tie) or T -> P (pending twin), on the actual cascade; the
+       look-ahead for the following input comes from |g_j| = 2^M - 2^c and
+       the Priest key |g_j| < ulp(g_(j+2)), so 2^M <= ulp(g3) and, at p = 53,
+       4*2^c < ulp(g3) (the p = 2 pending-twin equality does not arise here).
      cascade_step_obligation_false: the step obligation as stated (over
        ARBITRARY (Q, E, rest)) is FALSE -- Q = 1, g = 2^54, next 2^-100.
 
@@ -21,8 +26,8 @@
      cascade_step_obligation, which is refuted.  Not citable.  A usable form
      must quantify over reachable states (as N_step_reachable does).
 
-   OPEN  T -> {N, P, anti}, P -> N, and the p = 2 pending-twin equality
-     (model only: 4*2^c = ulp(g_next) is reached at p = 2).
+   OPEN  P -> N (bstate_twin / twin_top_shape on the actual cascade), and
+     chaining the per-step theorems into one reachable-state induction.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -302,7 +307,7 @@ Theorem N_to_T_entry :
 Proof.
   intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j E rest Hj1 Hj2 d gj g2 q HN Heq.
   destruct (CascadeTailBound.b64_equality_entry e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 Heq)
-    as (sg & Hsg & HQ & Hh & HMc & Hf & _ & Hle & Hgl).
+    as (sg & Hsg & HQ & Hh & HMc & Hf & _ & Hle & Hgl & _).
   assert (Hperm : Permutation (e ++ f) (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_perm).
   assert (Fs : Forall b64_fin (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
   assert (In2 : In g2 (x0 :: xs)) by (apply nth_In; simpl; lia).
@@ -382,6 +387,141 @@ Proof.
   exact (N_step_reachable e f x0 xs Pe Pf Fe Ff Nz Hov Hs j E rest Hj1 Hj2).
 Qed.
 
+(* ---- RUNG: T -> {N, P} -------------------------------------------------
+   From a T state, bstate_tie's three outcomes land in the machine:
+   anti pair -> N, single -> N, pending twin -> P.  The look-ahead for the
+   following input g3 is a hypothesis of the machine half (cinv_T_step) and
+   is PROVED on the actual cascade (T_step_reachable), from the entry fact
+   |g_j| = 2^M - 2^c and the Priest key |g_j| < ulp(g_(j+2)). *)
+
+Lemma cinv_T_step :
+  forall Q E g2 rest,
+    cinv_T Q E (g2 :: rest) ->
+    let M := mag radix2 (b2r g2) in
+    let c := cexp radix2 b64_fexp (b2r g2) in
+    let Q' := fst (b64_TwoSum g2 Q) in
+    let h' := snd (b64_TwoSum g2 Q) in
+    2 * bpow radix2 c < bpow radix2 emax ->
+    match rest with
+    | nil => True
+    | g3 :: _ => b64_fin g3 /\ b2r g3 <> 0 /\ b64_TwoSum_safe g3 Q'
+                 /\ bpow radix2 M <= ulp radix2 b64_fexp (b2r g3) /\ (c + 2 < M)%Z
+    end ->
+    cinv_N Q' (h' :: E) rest \/ cinv_P Q' (h' :: E) rest.
+Proof.
+  intros Q E g2 rest HT M c Q' h' Hov Hlook.
+  destruct HT as (g & rest' & Hr & h & E0 & bs0 & L & s & HE & St & Fg & S & Hs & T).
+  injection Hr as <- <-. cbv zeta in T.
+  destruct T as (Hg0 & HMc & Hf & HQ & Hh & Hgl & Fh & FE & DE & Sh & Al & Kb).
+  fold M c in HMc, Hf, HQ, Hh, Hgl, Kb.
+  pose proof (bstate_tie g2 Q h E0 bs0 s Fg S Hs Hg0 HMc Hf HQ Hh Hgl Fh FE DE Sh Al Kb) as TS.
+  cbv zeta in TS. fold Q' h' in TS. subst E.
+  (* keys below 2^M stay below ulp(g3) *)
+  assert (Lift : forall bs L', (L' <= M)%Z -> Forall (key_below L') bs ->
+            match rest with nil => True | g3 :: _ => Forall (key_below (cexp radix2 b64_fexp (b2r g3))) bs end).
+  { intros bs L' HL K. destruct rest as [| g3 r]; [ exact I | ].
+    destruct Hlook as (_ & N3 & _ & HM3 & _). rewrite ulp_neq_0 in HM3 by exact N3.
+    apply le_bpow in HM3. apply (key_below_mono L'); [ lia | exact K ]. }
+  destruct TS as [Anti | [(Hz & HQ') | Single]].
+  - left. exists M, (CAnti h' :: bs0). split; [ exact Anti | ].
+    pose proof (Lift _ M (Z.le_refl M) (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 Anti))))))) as K.
+    destruct rest as [| g3 r]; [ exact I | ].
+    destruct Hlook as (F3 & N3 & S3 & _ & _). exact (conj F3 (conj N3 (conj S3 K))).
+  - right. destruct (ts_facts g2 Q S) as (_ & Fh' & _ & _ & _ & _). fold Q' h' in Fh'.
+    exists h', h, E0, bs0, c. split; [ reflexivity | ]. split; [ exact HQ' | ].
+    split; [ exact Fh' | ]. split; [ exact Fh | ]. split; [ exact FE | ]. split; [ exact Hz | ].
+    split.
+    { rewrite Hh, Rabs_mult. pose proof (bpow_gt_0 radix2 c).
+      destruct Hs as [-> | ->]; [ rewrite Rabs_R1 | rewrite (Rabs_left (-1)) by lra ];
+      rewrite Rabs_pos_eq by lra; ring. }
+    split; [ exact Hov | ]. split; [ exact DE | ]. split; [ exact Sh | ]. split; [ exact Al | ].
+    split; [ exact Kb | ].
+    destruct rest as [| g3 r]; [ exact I | ].
+    destruct Hlook as (F3 & N3 & S3 & HM3 & Hc2). split; [ exact F3 | ]. split; [ exact N3 | ].
+    split; [ exact S3 | ].
+    assert (H4 : 4 * bpow radix2 c = bpow radix2 (c + 2))
+      by (rewrite bpow_plus; change (bpow radix2 2) with 4; ring).
+    assert (bpow radix2 (c + 2) < bpow radix2 M) by (apply bpow_lt; lia). lra.
+  - left. exists (c + 1)%Z, (CSingle h :: bs0). split; [ exact Single | ].
+    pose proof (Lift _ (c + 1)%Z ltac:(lia) (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 Single))))))) as K.
+    destruct rest as [| g3 r]; [ exact I | ].
+    destruct Hlook as (F3 & N3 & S3 & _ & _). exact (conj F3 (conj N3 (conj S3 K))).
+Qed.
+
+(* On the actual cascade: the T state entered at step j (equality in the
+   look-ahead) steps to N or P, with the real remaining inputs. *)
+Theorem T_step_reachable :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j E0, (1 <= j)%nat -> (j < length xs)%nat ->
+    let d := Binary.B754_zero prec emax false in
+    let gj := nth j (x0 :: xs) d in
+    let g2 := nth (S j) (x0 :: xs) d in
+    let q := CascadeTailBound.acc x0 xs (j - 1) in
+    let Q := fst (b64_TwoSum gj q) in
+    let h := snd (b64_TwoSum gj q) in
+    let rest := skipn (S (S j)) (x0 :: xs) in
+    Rabs (b2r h) = ulp radix2 b64_fexp (b2r g2) ->
+    cinv_T Q (h :: E0) (g2 :: rest) ->
+    cinv_N (fst (b64_TwoSum g2 Q)) (snd (b64_TwoSum g2 Q) :: h :: E0) rest
+    \/ cinv_P (fst (b64_TwoSum g2 Q)) (snd (b64_TwoSum g2 Q) :: h :: E0) rest.
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j E0 Hj1 Hj2 d gj g2 q Q h rest Heq HT.
+  destruct (CascadeTailBound.b64_equality_entry e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 Heq)
+    as (sg & _ & _ & _ & HMc & _ & Hgj & _ & _ & Hc).
+  set (M := (mag radix2 (b2r g2) : Z)). set (c := cexp radix2 b64_fexp (b2r g2)).
+  assert (Hc' : c = (M - prec)%Z) by exact Hc.
+  assert (Hgj' : Rabs (b2r gj) = bpow radix2 M - bpow radix2 c) by exact Hgj.
+  clear Hc Hgj HMc.
+  assert (Fs : Forall b64_fin (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hperm : Permutation (e ++ f) (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_perm).
+  assert (HMe : (M <= emax)%Z).
+  { assert (Hg20 : b2r g2 <> 0).
+    { rewrite Forall_forall in Nz. apply Nz. apply (Permutation_in _ (Permutation_sym Hperm)). apply nth_In. simpl. lia. }
+    apply mag_le_bpow; [ exact Hg20 | apply Binary.abs_B2R_lt_emax ]. }
+  assert (Hov2 : 2 * bpow radix2 c < bpow radix2 emax).
+  { assert (E2 : 2 * bpow radix2 c = bpow radix2 (c + 1)) by (rewrite bpow_plus; change (bpow radix2 1) with 2; ring).
+    rewrite E2. apply bpow_lt. unfold prec in Hc'. lia. }
+  apply (cinv_T_step Q (h :: E0) g2 rest HT Hov2).
+  unfold rest. destruct (Nat.lt_ge_cases (S j) (length xs)) as [Lt | Ge].
+  - (* g3 exists *)
+    assert (Hsk : skipn (S (S j)) (x0 :: xs) = nth (S (S j)) (x0 :: xs) d :: skipn (S (S (S j))) (x0 :: xs)).
+    { cbn [skipn]. clear -Lt. revert xs Lt. induction j as [| j' IH]; intros [| y ys] Lt; simpl in Lt |- *; try lia.
+      - destruct ys as [| z zs]; simpl in Lt |- *; [ lia | reflexivity ].
+      - apply IH. lia. }
+    rewrite Hsk. set (g3 := nth (S (S j)) (x0 :: xs) d).
+    assert (In3 : In g3 (x0 :: xs)) by (apply nth_In; simpl; lia).
+    split; [ rewrite Forall_forall in Fs; apply Fs, In3 | ].
+    assert (N3 : b2r g3 <> 0).
+    { rewrite Forall_forall in Nz. apply Nz. apply (Permutation_in _ (Permutation_sym Hperm)), In3. }
+    split; [ exact N3 | ].
+    split.
+    { pose proof (fes_cascade_safe e f Fe Ff Hov) as C. rewrite Hs in C.
+      pose proof (CascadeTailBound.safe_nth xs x0 (S j) C Lt) as Sj.
+      destruct j as [| j']; [ lia | ]. unfold g3, Q, gj, q. simpl Nat.sub. rewrite Nat.sub_0_r. exact Sj. }
+    split; [ | unfold prec in Hc'; lia ].
+    (* 2^M <= ulp(g3): ulp(g3) > |g_j| = 2^M - 2^c > 2^(M-1) *)
+    pose proof (CascadeTailBound.b64_keys e f x0 xs Pe Pf Fe Ff Nz Hs j ltac:(lia)) as K.
+    replace (j + 2)%nat with (S (S j)) in K by lia.
+    assert (K' : Rabs (b2r gj) < ulp radix2 b64_fexp (b2r g3)) by exact K. rewrite Hgj' in K'. clear K. rewrite ulp_neq_0 in K' |- * by exact N3.
+    assert (Hhalf : bpow radix2 (M - 1) < bpow radix2 M - bpow radix2 c).
+    { assert (bpow radix2 c <= bpow radix2 (M - 2)) by (apply bpow_le; unfold prec in Hc'; lia).
+      assert (D1 : bpow radix2 (M - 1) = 2 * bpow radix2 (M - 2))
+        by (replace (M - 1)%Z with ((M - 2) + 1)%Z by ring; rewrite bpow_plus; change (bpow radix2 1) with 2; ring).
+      assert (D2 : bpow radix2 M = 2 * bpow radix2 (M - 1))
+        by (replace M with ((M - 1) + 1)%Z at 1 by ring; rewrite bpow_plus; change (bpow radix2 1) with 2; ring).
+      pose proof (bpow_gt_0 radix2 (M - 2)). lra. }
+    apply bpow_le. assert (Hlt : bpow radix2 (M - 1) < bpow radix2 (cexp radix2 b64_fexp (b2r g3))) by lra.
+    apply lt_bpow in Hlt. lia.
+  - (* no g3 *)
+    rewrite skipn_all2 by (simpl; lia). exact I.
+Qed.
+
+Print Assumptions T_step_reachable.
 Print Assumptions N_step_reachable.
 Print Assumptions N_to_T_entry.
 Print Assumptions cascade_step_obligation_false.

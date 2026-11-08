@@ -8,4 +8,5 @@
 | 5 | N -> T entry; `2^M - 2*2^c <= \|g_next\|` | QED | `CascadeInvariant.v : N_to_T_entry` |
 | 6 | N step on reachable states: N -> N or N -> T | QED | `CascadeInvariant.v : N_step_reachable, N_step_actual` |
 | 7 | `cascade_step_obligation` over arbitrary states | QEX (false); `cascade_aligned_shape` vacuous | `CascadeInvariant.v : cascade_step_obligation_false` |
-| 8 | T -> {N, P, anti}, P -> N | OPEN | — |
+| 8 | T -> {N, P} (anti/single -> N, pending twin -> P) on reachable states | QED | `CascadeInvariant.v : cinv_T_step, T_step_reachable` |
+| 9 | P -> N; one reachable-state induction chaining the steps | OPEN | — |
