@@ -120,3 +120,31 @@ Q cancels (g_j = -g_{j-1}); that is the carry-shape machinery, not a one-line bo
 QEX hunt (targeted hill-climb on the ratio, `tests/CascadeInvariantProbe/climb.py`,
 p = 3, 4, 5, 7, lengths <= 6, 150 restarts x 400 steps each): best ratio exactly 2.0,
 no case above. Bounded search; not completion.
+
+## Rung 5: joint (Q, H) invariant — OPEN; one rigorous obstruction recorded
+
+OUTCOME: OPEN (no invariant proved, no QEX under Priest). SUMMARY ok=0 warn=1 bug=0
+
+Rigorous obstruction (exact rational arithmetic, independent of the integer model;
+`tests/CascadeInvariantProbe/shrink.py`): the tail bound `|Q_{k-1} - g_{k-1}| <= 2 ulp(g_k)`
+is FALSE when the Priest exponent gap `p` is weakened to `p - 1`. Minimal witness, p = 3
+(round-to-nearest-even, unbounded exponent), every adjacent gap is 2 = p - 1:
+
+    e = [6, 7/4, 7/16]      f = [7/8, 7/32]        (6 = 6*2^0, 7/4 = 7*2^-2, 7/16 = 7*2^-4, ...)
+    sorted g = 7/32, 7/16, 7/8, 7/4, 6
+    Q        = 7/32, 5/8,  3/2, 3,   8
+    k = 3:  |Q_2 - g_2| = |3/2 - 7/8| = 5/8,  ulp(g_3 = 7/4) = 1/4   ->  ratio 5/2 > 2
+
+Larger searches with gap p - 1 reach ratio 6 (p = 3), 5 (p = 4), 4 (p = 5); with gap p
+the same searches stay at exactly 2.0 (`gapk.py`). This witness also violates
+`|g_j| < ulp(g_{j+2})` (7/32 > ulp(7/8) = 1/8), so it does not contradict the Priest case.
+
+What this narrows: the hypothesis is sharp. Any proof of the two-ulp bound must use the full
+gap `p` (via `priest_keys_general` and the per-chain telescoping sum), and cannot go through
+a one-bit-slack (`overlap_within 1`) description of the inputs. It does not supply the joint
+invariant: the `(Q_j, H_j)` relation surviving cancellation is still unproved.
+
+Unproved sketch (NOT a result): the bstate content already gives `Q_j` a multiple of 2^L with
+`|H_j| < 2^L` (errors below Q's lowest bit, carry-shaped), which is cancellation-stable.
+Whether that plus `|S_{k-2}| < 2 ulp(g_k)` forces `|S_{k-2} - H_{k-1}| <= 2 ulp(g_k)` was
+not established; the triangle inequality gives about 4.
