@@ -177,3 +177,17 @@ where no d fits have |rho| <= 1.25 U, while the steps reaching |rho| = 2U all ad
 the route may survive as a case split: magnitude when |rho| is small, lattice near 2U. The
 missing lemma would be: |rho| > (5/4) U (or some threshold in (U, 2U)) implies a common d with
 |H_{k-1}| < d, rho in dZ, d | 2U. Unproved.
+
+## Rung 7: tail bound and closed look-ahead — QED on paper (not mechanized)
+
+OUTCOME: QED (paper). Proof in [`docs/cascade-tail-bound-2026-11.md`](../cascade-tail-bound-2026-11.md).
+SUMMARY ok=1 warn=1 bug=0 (warn: not in Rocq)
+
+Statement: for Priest-valid nonzero inputs, p >= 2, round-to-nearest ties-to-even, no
+under/overflow, every cascade step has `|Q_{k-1} - g_{k-1}| <= 2 ulp(g_k)` (T) and
+`|h_k| <= ulp(g_k) <= ulp(g_{k+1})` (LA). Proof: strong induction. T implies LA by rounding
+spacing below `2^(m+1)`. T(k) splits on `ulp(g_{k-1})` versus `U = ulp(g_k)`:
+`<= U/4` by the triangle inequality (< 7U/4); `= U/2` and `= U` by monotone rounding, using a
+lattice gap lemma `|Q_{k-2}| <= 2U` (from Lemma S and the ulp sum) and ties-to-even at `2^m + U`.
+The rung-6 lattice route and the c-dichotomy are not needed. All intermediate lemmas were
+checked in the model with no violation (`lemmas.py`, `lemmas_rand.py`).
