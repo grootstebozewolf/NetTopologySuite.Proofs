@@ -130,4 +130,38 @@ Proof.
     refine (conj Fg2 (conj H0 (conj S2 _))). constructor.
 Qed.
 
+(* ---- RUNG: the N -> N step, structural half PROVED --------------------
+   One TwoSum from an N state, next input g2 with |g| <= |g2| (sortedness).
+   Everything in N for g2 follows from `bstate_step` and monotonicity of ulp,
+   EXCEPT the one arithmetic fact kept as a hypothesis:
+       LOOKAHEAD_h :  |h| < ulp(g2)   (the new error, below the next input's ulp)
+   That is what remains of the obligation on this branch: it needs
+   |Q'| to be at most a small multiple of |g2| (Priest keys), not structure. *)
+Lemma cinv_N_step :
+  forall Q E g g2 rest,
+    cinv_N Q E (g :: g2 :: rest) ->
+    Rabs (b2r g) <= Rabs (b2r g2) ->
+    b64_fin g2 -> b2r g2 <> 0 ->
+    b64_TwoSum_safe g2 (fst (b64_TwoSum g Q)) ->
+    Rabs (b2r (snd (b64_TwoSum g Q))) < ulp radix2 b64_fexp (b2r g2) ->
+    cinv_N (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) (g2 :: rest).
+Proof.
+  intros Q E g g2 rest (L & bs & H & Fg & Hg0 & S & Kg) Hle Fg2 Hg20 S2 Hlook.
+  destruct (bstate_step Q E L bs g H Fg S Kg) as [St _]. cbv zeta in St.
+  exists (Z.max (Z.min (cexp radix2 b64_fexp (b2r g)) L)
+                (cexp radix2 b64_fexp (b2r (fst (b64_TwoSum g Q))))),
+         (push (snd (b64_TwoSum g Q)) bs).
+  refine (conj St (conj Fg2 (conj Hg20 (conj S2 _)))).
+  assert (Hu : ulp radix2 b64_fexp (b2r g2) = bpow radix2 (cexp radix2 b64_fexp (b2r g2)))
+    by (apply ulp_neq_0, Hg20).
+  assert (Hu1 : ulp radix2 b64_fexp (b2r g) = bpow radix2 (cexp radix2 b64_fexp (b2r g)))
+    by (apply ulp_neq_0, Hg0).
+  pose proof (ulp_le radix2 b64_fexp (b2r g) (b2r g2) Hle) as Hmono.
+  apply key_below_push.
+  - rewrite <- Hu. exact Hlook.
+  - eapply Forall_impl; [ | exact Kg ]. unfold key_below. intros b Hb.
+    apply Rlt_le_trans with (1 := Hb). rewrite <- Hu1, <- Hu. exact Hmono.
+Qed.
+
+Print Assumptions cinv_N_step.
 Print Assumptions cascade_aligned_shape.

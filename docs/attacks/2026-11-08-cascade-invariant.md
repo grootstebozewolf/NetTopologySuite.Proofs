@@ -34,3 +34,13 @@ power of two, tie rounds to its even mantissa, still absorbed). `bstate_twin`
 requires the strict `2^c < ulp(g)/4`, so it does not cover that case at p = 2.
 Not seen at p >= 3 in these samples (not a proof it is unreachable at p = 53).
 Random sampling only; the exhaustive harness does not check this invariant.
+
+## Rung 1 (N -> N, structural half) — Qed
+
+`cinv_N_step` in `CascadeInvariant.v`: from an N state, given sortedness
+`|g| <= |g2|`, finiteness/nonzero/safety of `g2`, and ONE arithmetic hypothesis
+`|h| < ulp(g2)` for the new TwoSum error `h`, the next state is N. Proof: `bstate_step`
++ `ulp_le` (old blocks stay below `ulp(g2)`) + `key_below_push`. Remaining on this
+branch: derive `|h| < ulp(g2)` (needs `|Q'|` bounded by a small multiple of `|g2|`,
+i.e. Priest keys). Branches T and P, and the T/P entry from N (`|h| = ulp(g2)` tie,
+`h = 0 /\ Q' = h`), are untouched.
