@@ -335,7 +335,7 @@ Definition opt_max (a b : option binary64) : option binary64 :=
 
 (* Lower t-bound of the axis (None = no information = -infinity). *)
 (* Magnitude arithmetic. *)
-Lemma bpow_double : forall k : Z, bpow radix2 k + bpow radix2 k = bpow radix2 (k + 1).
+Lemma bpow_double_sum : forall k : Z, bpow radix2 k + bpow radix2 k = bpow radix2 (k + 1).
 Proof.
   intro k. rewrite bpow_plus.
   replace (bpow radix2 1) with 2 by (simpl; lra). lra.
@@ -679,7 +679,7 @@ Proof.
   { rewrite Bh, Rabs_right by lra. exact half_le_500. }
   assert (Hdb : forall z, Rabs z <= bpow radix2 500 + bpow radix2 500 ->
                           Rabs z <= bpow radix2 501).
-  { intros z Hz. pose proof (bpow_double 500) as D.
+  { intros z Hz. pose proof (bpow_double_sum 500) as D.
     replace (500 + 1)%Z with 501%Z in D by reflexivity. lra. }
   destruct (sdn_ok P cc b64_half 501 Fc Fh ltac:(lia)
               (Hdb _ (abs_diff_le _ _ _ _ Hc Hh))) as [Flm [Rlm Alm]].
@@ -693,7 +693,7 @@ Proof.
   replace (501 + 1)%Z with 502%Z in Alm, Alp, Ahm, Ahp by reflexivity.
   (* numerators: |lo_m - c0| <= 2^502 + 2^500 <= 2^503 *)
   assert (H503 : bpow radix2 502 + bpow radix2 500 <= bpow radix2 503).
-  { pose proof (bpow_double 502) as D.
+  { pose proof (bpow_double_sum 502) as D.
     replace (502 + 1)%Z with 503%Z in D by reflexivity.
     pose proof (bpow_mono 500 502 ltac:(lia)). lra. }
   assert (Hst : forall z, Rabs z <= bpow radix2 502 + bpow radix2 500 ->
