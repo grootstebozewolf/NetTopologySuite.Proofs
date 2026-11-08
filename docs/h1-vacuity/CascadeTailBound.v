@@ -373,6 +373,73 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ *)
+(* Tie geometry: an error of exactly 2^(m-p) below 2^m + 2^(m+1-p)     *)
+(* ------------------------------------------------------------------ *)
+
+Lemma tie_shape_pos : forall m x, bpow m <= x -> x < bpow m + 2 * bpow (m - p) ->
+  Rabs (x - RN x) = bpow (m - p) -> RN x = bpow m /\ x = bpow m + bpow (m - p).
+Proof.
+  intros m x Hlo Hhi He. set (u := bpow (m - p)) in *.
+  assert (Hu : 0 < u) by apply bpow_gt_0.
+  assert (H2u : bpow (m + 1 - p) = 2 * u) by (unfold u; rewrite <- pow_double; f_equal; ring).
+  assert (H4u : 4 * u <= bpow m) by (unfold u; replace 4 with (bpow 2) by reflexivity; rewrite <- bpow_plus; apply bpow_le; lia).
+  assert (Fm : F (bpow m)) by (apply generic_format_bpow; unfold FLX_exp; lia).
+  assert (Fq : F (RN x)) by (apply generic_format_round; auto with typeclass_instances).
+  assert (Hq1 : bpow m <= RN x).
+  { rewrite <- (round_generic radix2 fexp ZnearestE (bpow m) Fm). apply round_le; auto with typeclass_instances. }
+  assert (Hqm : RN x = bpow m).
+  { destruct (Req_dec (RN x) (bpow m)) as [E | Ne]; [ exact E | exfalso ].
+    assert (Hgt : bpow m < RN x) by lra.
+    assert (Hq2 : bpow m + 2 * u <= RN x).
+    { destruct (Rlt_or_le (RN x) (bpow m + 2 * u)) as [L | L]; [ | exact L ].
+      pose proof (gap m (RN x) Fq) as G. rewrite H2u in G.
+      rewrite Rabs_pos_eq in G by lra. pose proof (G ltac:(lra)). lra. }
+    assert (Hd : RN x - x = u).
+    { rewrite <- Rabs_Ropp in He. replace (- (x - RN x)) with (RN x - x) in He by ring.
+      rewrite Rabs_pos_eq in He by lra. exact He. }
+    assert (Hmq : mag (RN x) = (m + 1)%Z :> Z).
+    { apply mag_unique. replace (m + 1 - 1)%Z with m by ring. rewrite pow_double.
+      rewrite Rabs_pos_eq by lra. split; lra. }
+    pose proof (F_mult _ Fq) as Mq. rewrite Hmq in Mq.
+    assert (Mc : mult (m + 1 - p) (bpow m + 2 * u)).
+    { apply mult_plus; [ apply mult_bpow; lia | exists 1%Z; rewrite H2u; ring ]. }
+    assert (Hq3 : RN x = bpow m + 2 * u).
+    { destruct (Rlt_or_le (bpow m + 2 * u) (RN x)) as [L | L]; [ | lra ].
+      pose proof (mult_step _ _ _ Mc Mq L) as St. rewrite H2u in St. lra. }
+    assert (Hx : x = bpow m + u) by lra.
+    pose proof (tie_even m) as T. fold u in T. rewrite <- Hx in T. lra. }
+  split; [ exact Hqm | ]. rewrite Hqm in He.
+  rewrite Rabs_pos_eq in He by lra. lra.
+Qed.
+
+Lemma tie_shape : forall m x, Rabs x < bpow m + 2 * bpow (m - p) ->
+  Rabs (x - RN x) = bpow (m - p) ->
+  exists s, (s = 1 \/ s = -1) /\ RN x = s * bpow m /\ x = s * (bpow m + bpow (m - p)).
+Proof.
+  intros m x Hx He. set (u := bpow (m - p)) in *. assert (Hu : 0 < u) by apply bpow_gt_0.
+  assert (Hx0 : x <> 0).
+  { intro Z. rewrite Z, round_0, Rminus_0_r, Rabs_R0 in He by auto with typeclass_instances. lra. }
+  assert (Hbig : bpow m <= Rabs x).
+  { destruct (Rlt_or_le (Rabs x) (bpow m)) as [L | L]; [ exfalso | exact L ].
+    pose proof (error_le_half_ulp radix2 fexp (fun t => negb (Z.even t)) x) as E.
+    rewrite <- Rabs_Ropp in E. replace (- (RN x - x)) with (x - RN x) in E by ring. rewrite He in E.
+    rewrite (ulp_eq x Hx0) in E. assert (Hm : (mag x <= m)%Z) by (apply mag_le_bpow; assumption).
+    assert (bpow (mag x - p) <= u) by (apply bpow_le; lia). lra. }
+  destruct (Rlt_or_le 0 x) as [Hp0 | Hn0].
+  - rewrite Rabs_pos_eq in Hbig, Hx by lra.
+    destruct (tie_shape_pos m x Hbig Hx He) as [A B]. fold u in A, B. exists 1. split; [ left; reflexivity | split; lra ].
+  - assert (Hneg : x < 0) by (destruct Hn0 as [L | L]; [ exact L | exfalso; apply Hx0, L ]).
+    rewrite Rabs_left in Hbig, Hx by exact Hneg.
+    assert (He' : Rabs (- x - RN (- x)) = u).
+    { rewrite round_NE_opp. replace (- x - - RN x) with (- (x - RN x)) by ring. rewrite Rabs_Ropp. exact He. }
+    destruct (tie_shape_pos m (- x) Hbig Hx He') as [A B]. fold u in A, B. rewrite round_NE_opp in A.
+    exists (-1). split; [ right; reflexivity | split; lra ].
+Qed.
+
+Lemma mult_abs : forall s x, mult s x -> mult s (Rabs x).
+Proof. intros s x [n ->]. exists (Z.abs n). apply abs_mult. Qed.
+
+(* ------------------------------------------------------------------ *)
 (* The cascade                                                         *)
 (* ------------------------------------------------------------------ *)
 
@@ -574,6 +641,51 @@ Corollary closed_lookahead :
 Proof.
   intros k Hk Hk'. destruct (tail_bound_and_lookahead k ltac:(lia)) as [_ L]. unfold LA in L.
   apply Rle_trans with (1 := L). apply ulp_mono. exact Hk'.
+Qed.
+
+(* Equality in the look-ahead forces the tie shape (N -> T entry). *)
+Lemma eq_shape : forall k, (1 <= k)%nat -> (S k <= n)%nat -> Rabs (h k) = ulp (g (S k)) ->
+  mag (g k) = mag (g (S k)) :> Z /\
+  exists s, (s = 1 \/ s = -1) /\ Q k = s * bpow (mag (g (S k))) /\ h k = s * ulp (g (S k))
+    /\ Rabs (g k) = bpow (mag (g (S k))) - ulp (g (S k)).
+Proof.
+  intros k Hk1 Hk2 Heq.
+  destruct (tail_bound_and_lookahead k ltac:(lia)) as [TBk LAk]. unfold TB, LA in TBk, LAk.
+  assert (Hk0 : g k <> 0) by (apply Hnz; lia). assert (HS0 : g (S k) <> 0) by (apply Hnz; lia).
+  pose proof (ulp_mono k Hk2) as M.
+  assert (Uk : ulp (g k) = ulp (g (S k))) by lra.
+  assert (Hmag : mag (g k) = mag (g (S k)) :> Z).
+  { rewrite !ulp_eq in Uk by assumption. apply bpow_inj in Uk. lia. }
+  split; [ exact Hmag | ].
+  set (m := (mag (g (S k)) : Z)) in *. set (u := ulp (g (S k))) in *.
+  assert (Hu : u = bpow (m - p)) by (unfold u, m; apply ulp_eq, HS0).
+  destruct k as [| k']; [ lia | ].
+  replace (S k' - 1)%nat with k' in TBk by lia. rewrite Uk in TBk.
+  pose proof (Hkey k' ltac:(lia)) as K. replace (k' + 2)%nat with (S (S k')) in K by lia. fold u in K.
+  assert (HQ3 : Rabs (Q k') < 3 * u) by (pose proof (Rabs_triang_inv (Q k') (g k')); lra).
+  pose proof (mag_bounds _ Hk0) as [_ Hg2]. rewrite Hmag in Hg2. fold m in Hg2.
+  assert (Mg : mult (m - p) (g (S k'))) by (pose proof (F_mult _ (Hf (S k') ltac:(lia))) as Mf; rewrite Hmag in Mf; exact Mf).
+  assert (Hgu : Rabs (g (S k')) <= bpow m - u) by (rewrite Hu; apply mult_below; [ exact Mg | lia | exact Hg2 ]).
+  set (x := g (S k') + Q k').
+  assert (HQS : Q (S k') = RN x) by reflexivity.
+  assert (HhS : h (S k') = x - RN x) by (unfold h; rewrite HQS; reflexivity).
+  assert (Hx : Rabs x < bpow m + 2 * bpow (m - p)) by (unfold x; pose proof (Rabs_triang (g (S k')) (Q k')); lra).
+  rewrite HhS in Heq. fold u in Heq. rewrite Hu in Heq.
+  destruct (tie_shape m x Hx Heq) as (s & Hs & HR & Hxs).
+  exists s. split; [ exact Hs | ]. split; [ rewrite HQS; exact HR | ]. split.
+  - rewrite HhS, HR, Hxs, Hu. ring.
+  - assert (Habs_x : Rabs x = bpow m + u).
+    { rewrite Hxs, Rabs_mult, <- Hu. pose proof (bpow_gt_0 radix2 m).
+      assert (0 < u) by (rewrite Hu; apply bpow_gt_0).
+      rewrite (Rabs_pos_eq (bpow m + u)) by lra.
+      destruct Hs as [-> | ->]; [ rewrite Rabs_R1 | rewrite (Rabs_left (-1)) by lra ]; ring. }
+    assert (Hlow : bpow m - 2 * u < Rabs (g (S k'))).
+    { replace (g (S k')) with (x - Q k') by (unfold x; ring).
+      pose proof (Rabs_triang_inv x (Q k')). lra. }
+    assert (Mc : mult (m - p) (bpow m - 2 * u)).
+    { replace (bpow m - 2 * u) with (bpow m + IZR (-2) * bpow (m - p)) by (rewrite Hu; replace (IZR (-2)) with (-2) by reflexivity; ring).
+      apply mult_plus; [ apply mult_bpow; lia | apply mult_k ]. }
+    pose proof (mult_step _ _ _ Mc (mult_abs _ _ Mg) Hlow) as St. rewrite <- Hu in St. lra.
 Qed.
 
 End Run.
@@ -812,6 +924,13 @@ Corollary cascade_closed_lookahead :
   forall k, (1 <= k)%nat -> (S k <= n)%nat -> Rabs (h g k) <= ulp (g (S k)).
 Proof. exact (closed_lookahead g n Hf Hnz Hsort keys_derived HS_derived). Qed.
 
+Corollary cascade_eq_shape : forall k, (1 <= k)%nat -> (S k <= n)%nat ->
+  Rabs (h g k) = ulp (g (S k)) ->
+  mag (g k) = mag (g (S k)) :> Z /\
+  exists s, (s = 1 \/ s = -1) /\ Q g k = s * bpow (mag (g (S k))) /\ h g k = s * ulp (g (S k))
+    /\ Rabs (g k) = bpow (mag (g (S k))) - ulp (g (S k)).
+Proof. exact (eq_shape g n Hf Hnz Hsort keys_derived HS_derived). Qed.
+
 End Merge.
 
 End Cascade.
@@ -1017,6 +1136,81 @@ Proof.
   assert (Hle : Rabs (b2r (nth j (x0 :: xs) d)) <= Rabs (b2r (nth (S j) (x0 :: xs) d)))
     by (apply (sorted_g (x0 :: xs)); [ rewrite <- Hs; apply sort_by_abs_sorted | simpl; lia ]).
   apply ulp_le; try typeclasses eauto. exact Hle.
+Qed.
+
+(* N -> T entry, binary64: equality in the closed look-ahead gives every
+   numeric conjunct of CascadeInvariant.cinv_T for the next state. *)
+Theorem b64_equality_entry :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j)%nat -> (j < length xs)%nat ->
+    let gj := nth j (x0 :: xs) d in
+    let g2 := nth (S j) (x0 :: xs) d in
+    let q := acc x0 xs (j - 1) in
+    Rabs (b2r (snd (b64_TwoSum gj q))) = ulp radix2 (SpecFloat.fexp prec emax) (b2r g2) ->
+    let M := mag radix2 (b2r g2) in
+    let c := cexp radix2 (SpecFloat.fexp prec emax) (b2r g2) in
+    exists sg : R, (sg = 1 \/ sg = -1)
+      /\ b2r (fst (b64_TwoSum gj q)) = sg * bpow radix2 M
+      /\ b2r (snd (b64_TwoSum gj q)) = sg * bpow radix2 c
+      /\ (2 <= M - c)%Z
+      /\ SpecFloat.fexp prec emax (M + 1) = (c + 1)%Z
+      /\ Rabs (b2r gj) = bpow radix2 M - bpow radix2 c
+      /\ Rabs (b2r gj) <= Rabs (b2r g2)
+      /\ bpow radix2 M - 2 * bpow radix2 c <= Rabs (b2r g2).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 gj g2 q Heq M c.
+  set (s0 := x0 :: xs). set (g := fun j => b2r (nth j s0 d)).
+  assert (Hperm : Permutation (e ++ f) s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Fs : Forall b64_fin s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hsafe : cascade_safe x0 xs) by (pose proof (fes_cascade_safe e f Fe Ff Hov) as C; rewrite Hs in C; exact C).
+  assert (Hfin0 : b64_fin x0) by (inversion Fs; assumption).
+  assert (Hsorted : sorted_asc s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_sorted).
+  assert (Nz' : forall j, (j <= length xs)%nat -> g j <> 0).
+  { intros i Hi. unfold g. rewrite Forall_forall in Nz. apply Nz.
+    apply (Permutation_in _ (Permutation_sym Hperm)). apply nth_In. unfold s0. simpl. lia. }
+  assert (Hpm : Permutation (map g (seq 0 (S (length xs)))) (map b2r e ++ map b2r f)).
+  { unfold g. change (S (length xs)) with (length s0). rewrite map_g_seq, <- map_app.
+    apply Permutation_map, Permutation_sym, Hperm. }
+  pose proof (fun i (_ : (i <= length xs)%nat) => fmtX (nth i s0 d)) as HfX.
+  pose proof (fun i (Hi : (S i <= length xs)%nat) => sorted_g s0 Hsorted i ltac:(unfold s0; simpl; lia)) as Hso.
+  (* the implementation values are the FLX values *)
+  destruct j as [| j']; [ lia | ].
+  assert (RQ : b2r (fst (b64_TwoSum gj q)) = Q prec g (S j')).
+  { destruct (acc_real x0 xs Hfin0 Hsafe (S j') ltac:(lia)) as [_ R]. unfold gj, q. simpl Nat.sub. rewrite Nat.sub_0_r. exact R. }
+  assert (Rh : b2r (snd (b64_TwoSum gj q)) = h prec g (S j')).
+  { pose proof (h_real x0 xs Hfin0 Hsafe (S j') ltac:(lia)) as R. replace (S j' - 1)%nat with j' in R by lia.
+    rewrite nth_hs in R by lia. unfold gj, q. simpl Nat.sub. rewrite Nat.sub_0_r. exact R. }
+  change (b2r g2) with (g (S (S j'))) in *. change (b2r gj) with (g (S j')) in *.
+  (* binary64 equality forces FLX equality and the normal range *)
+  destruct (cascade_tail_bound prec prec2 g (length xs) (map b2r e) (map b2r f) HfX Nz' Hso
+              (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm (S j') ltac:(lia)) as [_ LA].
+  assert (H20 : g (S (S j')) <> 0) by (apply Nz'; lia).
+  pose proof (ulp_X_le_64 _ H20) as U64.
+  assert (UX : ulp radix2 (FLX_exp prec) (g (S j')) <= ulp radix2 (FLX_exp prec) (g (S (S j')))).
+  { apply ulp_le; try typeclasses eauto. apply Hso. lia. }
+  rewrite Rh in Heq.
+  assert (EqX : Rabs (h prec g (S j')) = ulp radix2 (FLX_exp prec) (g (S (S j')))) by lra.
+  assert (E64 : ulp radix2 (FLX_exp prec) (g (S (S j'))) = ulp radix2 (SpecFloat.fexp prec emax) (g (S (S j')))) by lra.
+  assert (Hc : c = (M - prec)%Z /\ (3 - emax - prec <= M - prec)%Z).
+  { rewrite !ulp_neq_0 in E64 by exact H20. apply bpow_inj in E64.
+    unfold c, M. change (b2r g2) with (g (S (S j'))). unfold cexp, FLX_exp, SpecFloat.fexp in *. unfold SpecFloat.emin in *. change IntDef.Z.max with Z.max in *. split; lia. }
+  destruct Hc as [Hc Hnorm].
+  destruct (cascade_eq_shape prec prec2 g (length xs) (map b2r e) (map b2r f) HfX Nz' Hso
+              (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm (S j') ltac:(lia) ltac:(lia) EqX)
+    as [_ (sg & Hsg & HQ & Hh & Hg)].
+  assert (UXc : ulp radix2 (FLX_exp prec) (g (S (S j'))) = bpow radix2 c).
+  { rewrite ulp_neq_0 by exact H20. rewrite Hc. reflexivity. }
+  fold M in HQ, Hg. rewrite UXc in Hh, Hg.
+  exists sg. split; [ exact Hsg | ]. split; [ rewrite RQ; exact HQ | ]. split; [ rewrite Rh; exact Hh | ].
+  split; [ rewrite Hc; unfold prec; lia | ]. split; [ unfold SpecFloat.fexp, SpecFloat.emin; change IntDef.Z.max with Z.max; lia | ].
+  split; [ exact Hg | ].
+  assert (Hle : Rabs (g (S j')) <= Rabs (g (S (S j')))) by (apply Hso; lia).
+  split; [ exact Hle | ]. pose proof (bpow_gt_0 radix2 c). lra.
 Qed.
 
 End B64.

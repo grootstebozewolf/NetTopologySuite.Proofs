@@ -244,3 +244,31 @@ MISSING LEMMA (precise): the remaining conjuncts of `cinv_T` at the N -> T entry
 (b) is not implied by anything proved here. If it fails on some Priest-valid input, the T
 state of `CascadeInvariant.v` is too narrow (the machine needs a wider T), and the
 realization is not at fault. The T -> {N, P, anti} and P -> N transitions are untouched.
+
+## Rung 10: N -> T entry — QED (cinv_T is justified at entry)
+
+OUTCOME: QED. SUMMARY ok=1 warn=0 bug=0. No QEX: the T state is not too narrow at entry.
+
+- FLX geometry (`CascadeTailBound.v`):
+  - `tie_shape`: an error of exactly `2^(m-p)` with `|x| < 2^m + 2^(m+1-p)` forces
+    `x = s(2^m + 2^(m-p))` and `RN x = s 2^m`.
+  - `eq_shape` / `cascade_eq_shape`: if `|h_k| = ulp(g_{k+1})`, then `mag g_k = mag g_{k+1}`,
+    `Q_k = s 2^M`, `h_k = s ulp(g_{k+1})`, and `|g_k| = 2^M - ulp(g_{k+1})`.
+- binary64 (`b64_equality_entry`, actual `b64_grow_expansion_aux`). Binary64 equality forces
+  FLX equality and `cexp64 = cexpX` at `g_{k+1}`, so `g_{k+1}` is normal. This gives
+  `b64_fexp (M+1) = c+1`, `2 <= M - c`, `Q' = s 2^M`, `h = s 2^c`,
+  `|g_k| = 2^M - 2^c <= |g_{k+1}|`, hence `2^M - 2*2^c <= |g_{k+1}|`.
+- Machine (`CascadeInvariant.v`):
+  - `cinv_N_to_T`: an N state plus those facts gives `cinv_T`, via `bstate_step` and
+    `key_below_mono`.
+  - `N_to_T_entry`: the same on the actual cascade, from an N state and look-ahead equality.
+
+Why the inherited bound holds: the tail bound plus the keys give `|Q_{k-1}| < 3u`, so the tie
+point `2^M + u` leaves `|g_k| > 2^M - 2u`, and `g_k` is a multiple of u, so `|g_k| = 2^M - u`.
+The `bstate_tie` constant 2 is slack by one ulp at entry.
+
+Contract note: `cascade_step_obligation` as stated quantifies over arbitrary
+`(Q, E, rest)`, not over reachable states. The entry lemma needs the Priest/cascade facts
+(keys, tail bound), so the obligation should be restated over reachable states
+(e.g. indexed by `acc x0 xs (j-1)` as in `N_to_T_entry`) before it can be discharged.
+Remaining: T -> {N, P, anti} and P -> N, untouched as agreed.
