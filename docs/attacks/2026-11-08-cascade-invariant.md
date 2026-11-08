@@ -204,3 +204,43 @@ Hypotheses: precision p >= 2, FLX (unbounded exponent), ties-to-even; two Priest
 `|Q_{k-1} - g_{k-1}| <= 2 ulp(g_k)` and `|h_k| <= ulp(g_k)`; corollary `|h_k| <= ulp(g_{k+1})`.
 The Priest keys and Lemma S are proved inside from the chains. Not covered: binary64 FLT
 underflow and the link to `b64_grow_expansion_aux`.
+
+## Rung 9: binary64 realization — QED for the bounds; step obligation OPEN (one missing lemma)
+
+OUTCOME: QED (realization) / OPEN (cascade_step_obligation). SUMMARY ok=1 warn=1 bug=0
+
+Proved (`docs/h1-vacuity/CascadeTailBound.v`, Qed, no Admitted, corpus axioms):
+`b64_cascade_tail_bound`, `b64_closed_lookahead`. For `priest_chain e`, `priest_chain f`,
+finite nonzero components, `abs_sum e + abs_sum f <= 2^(emax-5)` and
+`sort_by_abs (e ++ f) = x0 :: xs`, the actual `b64_grow_expansion_aux x0 xs` has, for every
+step j, `|acc_{j-1} - g_{j-1}| <= 2 ulp64(g_j)` and `|h_j| <= ulp64(g_j)`, and
+`|h_j| <= ulp64(g_{j+1})`.
+
+Transfer, and why there is no QEX for it:
+- RN: binary64 RN equals FLX RN on every sum of two binary64 values (`RN_agree`). Above
+  `2^(emin+p-1)` this is `round_FLT_FLX`; below it the sum is FLT-representable
+  (`FLT_format_plus_small`) and both roundings are the identity. So subnormal spacing and
+  underflow rounding cannot break the transfer.
+- ulp: FLX ulp <= binary64 ulp (`ulp_X_le_64`), so the bounds only get weaker in binary64.
+- Recurrence: `nth_hs` and `acc_real` show that `b64_grow_expansion_aux` is exactly the FLX
+  recurrence. Safety comes from the corpus `fes_cascade_safe`.
+- Model differences that remain are hypotheses, not failures: zero components (a
+  singleton chain [0]) and the overflow margin.
+
+Why `cascade_step_obligation` is still OPEN: it is the whole N/T/P machine, and the
+realization only supplies the look-ahead. With it:
+- `|h| < ulp(g_next)`: N -> N by `cinv_N_step`. Its other hypotheses, safety and
+  finiteness, are available.
+- `|h| = ulp(g_next)`: by `|h_k| <= ulp(g_k) <= ulp(g_next)`, g_k and g_next share a binade
+  (u = ulp, m = mag). The keys give `|g_{k-1}| < u`, and the tail bound gives
+  `|Q_{k-1}| < 3u`, so `|g_k + Q_{k-1}| < 2^m + 2u`. The only possible tie is at `2^m + u`,
+  so `Q' = s 2^M` and `h = s 2^c` (M = mag g_next, c = M - p, M - c = p >= 2). This is a
+  paper argument, not yet in Rocq.
+
+MISSING LEMMA (precise): the remaining conjuncts of `cinv_T` at the N -> T entry, namely
+  (a) `b64_fexp (M + 1) = c + 1` (normal range at g_next), and
+  (b) `bpow M - 2 bpow c <= |g_next|`, the hypothesis `bstate_tie` inherits from
+      `tie_values`.
+(b) is not implied by anything proved here. If it fails on some Priest-valid input, the T
+state of `CascadeInvariant.v` is too narrow (the machine needs a wider T), and the
+realization is not at fault. The T -> {N, P, anti} and P -> N transitions are untouched.

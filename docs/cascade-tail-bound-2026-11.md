@@ -136,9 +136,13 @@ In all cases `|rho| <= 2U`, which is T(k). Step A then gives LA(k). ∎
 | Step B cases | `TB_step` with `case_half_any`, `case_full_any`, `tie_even` |
 | Theorem | `tail_bound_and_lookahead`, `cascade_tail_bound`, `cascade_closed_lookahead` |
 
-## Not done
+## binary64
 
-- binary64: the FLT format (underflow floor), the binary64 cascade
-  `b64_grow_expansion_aux` and its correspondence with this FLX cascade.
-- binary64 near underflow, where `ulp` becomes the FLT floor and the formulas above change.
+Realized in the same file: `b64_cascade_tail_bound`, `b64_closed_lookahead`, for the actual
+`b64_grow_expansion_aux` on `sort_by_abs (e ++ f)` (rung 9 of
+`docs/attacks/2026-11-08-cascade-invariant.md`). Underflow needs no separate case:
+binary64 RN equals FLX RN on every sum of two binary64 values (`RN_agree`), and FLX ulp <=
+binary64 ulp.
+
+## Not done
 - Zero components (at most one per chain, at the bottom), excluded by hypothesis.
