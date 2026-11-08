@@ -148,3 +148,32 @@ Unproved sketch (NOT a result): the bstate content already gives `Q_j` a multipl
 `|H_j| < 2^L` (errors below Q's lowest bit, carry-shaped), which is cancellation-stable.
 Whether that plus `|S_{k-2}| < 2 ulp(g_k)` forces `|S_{k-2} - H_{k-1}| <= 2 ulp(g_k)` was
 not established; the triangle inequality gives about 4.
+
+## Rung 6: lattice route to the tail bound — QEX for the route (not for the bound)
+
+OUTCOME: QEX (route). `docs/h1-vacuity/LatticeRouteQEX.v : lattice_route_false` (Qed, binary64,
+corpus definitions). SUMMARY ok=1 warn=0 bug=0
+
+Route: U = ulp(g_k), d = 2^L, rho = Q_{k-1} - g_{k-1} = S_{k-2} - H_{k-1}. If |S_{k-2}| < 2U,
+|H_{k-1}| < d, rho in dZ and d | 2U, then |rho| < 2U + d with both sides on the d-lattice gives
+|rho| <= 2U. The lattice lemma is sound (and only needs d | 2U).
+
+Witness (M = 2^53 - 1):
+
+    e = [2 ; 2^-59]     f = [M 2^-60]          Priest (gap 60), finite
+    sorted: 2^-59, M 2^-60, 2
+    TwoSum(M 2^-60, 2^-59): exact (2^53 + 1) 2^-60 -> tie -> even 2^-7;  h_1 = 2^-60
+    k = 2:  rho = 2^-7 - M 2^-60 = 2^-60,   H_1 = 2^-60,   U = ulp(2) = 2^-51
+
+No power of two d satisfies both |H_1| < d and rho in dZ (d <= 2^-60 fails the first,
+d >= 2^-59 the second), independent of d | U or d | 2U. With bstate's own scale (keys < 2^L,
+Q_1 a multiple of 2^L, so d in [2^-59, 2^-7]) the failing fact is rho in dZ: g_1 = M 2^-60 is
+not on the d-lattice, exactly the "g_{k-1} in dZ" caveat. The bound itself holds here
+(|rho| = 2^-60 <= 2^-50; proved in the same theorem). Cross-checked with hardware doubles.
+
+Supporting evidence for a repair (NOT a result; exact model, `lattice2.py`): over exhaustive
+Priest pairs (p = 2: 1,219,520 pairs, total <= 6; p = 3: 6,912,064 pairs, total <= 5) the steps
+where no d fits have |rho| <= 1.25 U, while the steps reaching |rho| = 2U all admit a d. So
+the route may survive as a case split: magnitude when |rho| is small, lattice near 2U. The
+missing lemma would be: |rho| > (5/4) U (or some threshold in (U, 2U)) implies a common d with
+|H_{k-1}| < d, rho in dZ, d | 2U. Unproved.
