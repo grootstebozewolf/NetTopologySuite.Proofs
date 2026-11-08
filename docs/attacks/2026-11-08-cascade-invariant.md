@@ -191,3 +191,16 @@ spacing below `2^(m+1)`. T(k) splits on `ulp(g_{k-1})` versus `U = ulp(g_k)`:
 lattice gap lemma `|Q_{k-2}| <= 2U` (from Lemma S and the ulp sum) and ties-to-even at `2^m + U`.
 The rung-6 lattice route and the c-dichotomy are not needed. All intermediate lemmas were
 checked in the model with no violation (`lemmas.py`, `lemmas_rand.py`).
+
+## Rung 8: tail bound and closed look-ahead — QED in Rocq (FLX model)
+
+OUTCOME: QED. `docs/h1-vacuity/CascadeTailBound.v : cascade_tail_bound`,
+`cascade_closed_lookahead` (Qed, no Admitted; Reals + classic + funext). SUMMARY ok=1 warn=1 bug=0
+(warn: FLX model; binary64 link open)
+
+Hypotheses: precision p >= 2, FLX (unbounded exponent), ties-to-even; two Priest chains
+`e`, `f` (`chainR p`); `g_0..g_n` nonzero, representable, sorted ascending by `|.|`, and
+`Permutation (map g (seq 0 (S n))) (e ++ f)`. Conclusion for 1 <= k <= n:
+`|Q_{k-1} - g_{k-1}| <= 2 ulp(g_k)` and `|h_k| <= ulp(g_k)`; corollary `|h_k| <= ulp(g_{k+1})`.
+The Priest keys and Lemma S are proved inside from the chains. Not covered: binary64 FLT
+underflow and the link to `b64_grow_expansion_aux`.

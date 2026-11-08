@@ -42,6 +42,11 @@ fi
 # `rocq c -Q theories NTS.Proofs` only; they do not need this script).
 PROBES=(
   docs/h1-vacuity/HobbyHlemma43Check.v
+  docs/h1-vacuity/CarryCleanPure.v
+  docs/h1-vacuity/CascadeTailBound.v
+  docs/h1-vacuity/CascadeInvariant.v
+  docs/h1-vacuity/LookaheadQEX.v
+  docs/h1-vacuity/LatticeRouteQEX.v
 )
 
 fail=0

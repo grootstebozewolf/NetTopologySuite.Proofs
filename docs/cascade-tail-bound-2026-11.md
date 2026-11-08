@@ -1,10 +1,11 @@
 # Cascade tail bound and closed look-ahead, arbitrary length (paper proof)
 
-Status: **paper proof, not mechanized.** Every intermediate lemma was checked against the exact
-p-bit model with no violation (`tests/CascadeInvariantProbe/lemmas.py`: exhaustive Priest pairs,
-p = 2 total <= 6, 1,219,520 pairs; p = 3 total <= 5, 2,580,480 pairs; `lemmas_rand.py`: random,
-p = 4, 5, 6, 8). That is a check of the proof's steps, not the proof. SUMMARY ok=1 warn=1 bug=0
-(warn: not yet in Rocq).
+Status: **mechanized in Rocq** (FLX model) — `docs/h1-vacuity/CascadeTailBound.v :
+cascade_tail_bound`, `cascade_closed_lookahead` (Qed, no Admitted; axioms: Reals + `classic` +
+functional extensionality, as the corpus). The keys (F1) and Lemma S are proved there from the
+Priest chains, not assumed. Not covered: binary64 underflow and the link to
+`b64_grow_expansion_aux`. Model checks of every step: `tests/CascadeInvariantProbe/lemmas.py`,
+`lemmas_rand.py`. SUMMARY ok=1 warn=1 bug=0 (warn: FLX model, not binary64).
 
 ## Model and hypotheses
 
@@ -123,9 +124,21 @@ In all cases `|rho| <= 2U`, which is T(k). Step A then gives LA(k). ∎
   `|h| <= ulp(g_next)` with `<` going to N and `=` going to T, as planned. This proof gives the
   `<=`. The N/T split and the P state are untouched.
 
+## Rocq map
+
+| paper | Rocq (`CascadeTailBound.v`) |
+|---|---|
+| (F1) keys | `chain_count`, `keys_derived` (counting, from Priest chains) |
+| Lemma S | `tail_lt`, `chain_small`, `HS_derived` |
+| Lemma U | `Tsum_bound` (division-free form) |
+| Lemma B | `lemma_B` (with `gap`) |
+| Step A | `stepA`, `LA_of_TB` |
+| Step B cases | `TB_step` with `case_half_any`, `case_full_any`, `tie_even` |
+| Theorem | `tail_bound_and_lookahead`, `cascade_tail_bound`, `cascade_closed_lookahead` |
+
 ## Not done
 
-- Rocq mechanization. The pieces are Lemma S (chain telescoping), Lemma U, Lemma B
-  (representable gap) and the three-case monotone-rounding step.
+- binary64: the FLT format (underflow floor), the binary64 cascade
+  `b64_grow_expansion_aux` and its correspondence with this FLX cascade.
 - binary64 near underflow, where `ulp` becomes the FLT floor and the formulas above change.
 - Zero components (at most one per chain, at the bottom), excluded by hypothesis.
