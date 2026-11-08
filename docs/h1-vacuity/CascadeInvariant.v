@@ -11,9 +11,8 @@
      P  pending twin : Q = h, newest error 0, |h| = 2^c,
                    4*2^c <= ulp(g_next)                             [bstate_twin]
 
-   STATUS: NOT YET COMPILE-CHECKED when first committed (dependency build
-   pending); treat every Qed below as a claim until the smoke job passes.
-   Definitions + the induction that makes length irrelevant are
+   STATUS: compiles against the built corpus (Rocq 9.2; axioms: Reals +
+   classic + funext, as the corpus).  Definitions + the induction that makes length irrelevant are
    proved below (Qed, no new axioms beyond the corpus's).  The single OPEN
    obligation is `cascade_step_obligation`: that one TwoSum preserves the
    machine, i.e. that the LOOK-AHEAD conjuncts hold for the next input.
@@ -127,8 +126,8 @@ Lemma cinv_init :
 Proof.
   intros g rest Fg Hr. exists (cexp radix2 b64_fexp (b2r g)), []. split.
   - exact (bstate_init g Fg).
-  - destruct rest as [| g2 r]; [ exact I | ]. destruct Hr as (H0 & F2 & S2).
-    repeat split; try assumption. constructor.
+  - destruct rest as [| g2 r]; [ exact I | ]. cbn in Hr; destruct Hr as (H0 & Fg2 & S2).
+    refine (conj Fg2 (conj H0 (conj S2 _))). constructor.
 Qed.
 
 Print Assumptions cascade_aligned_shape.
