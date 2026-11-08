@@ -44,3 +44,25 @@ Random sampling only; the exhaustive harness does not check this invariant.
 branch: derive `|h| < ulp(g2)` (needs `|Q'|` bounded by a small multiple of `|g2|`,
 i.e. Priest keys). Branches T and P, and the T/P entry from N (`|h| = ulp(g2)` tie,
 `h = 0 /\ Q' = h`), are untouched.
+
+## Rung 2: strict look-ahead |h| < ulp(g_next) — QEX (equality)
+
+OUTCOME: QEX. `docs/h1-vacuity/LookaheadQEX.v : lookahead_strict_false` (Qed, binary64,
+corpus definitions: `priest_chain`, `sort_by_abs`, `b64_grow_expansion_aux`, Flocq `ulp`).
+
+    M = 2^53 - 1
+    e = [M ; M 2^-53]        f = [M ; M 2^-53 ; 2^-54]       (Priest, finite, abs-sum < 2^53 * 5)
+    sorted:  2^-54, M2^-53, M2^-53, M, M
+    errors (oldest first): -2^-54, -2^-53, +1, -1;  accumulators 1, 2, 2^53, 2^54
+
+The third error is `h = 1 = ulp(M)`, M being the next input: equality. Cross-checked
+with hardware IEEE doubles (Python floats, `math.ulp`). The same shape works for every
+precision tried (p = 2, 3 by enumeration; p = 53 above): ε = 2^-(p+1).
+
+Consequences:
+- The strict N-step hypothesis of `cinv_N_step` cannot be derived from Priest input;
+  it fails exactly on a tie. T is mathematically necessary, not a probe artifact: this
+  state is a T instance (Q = 2^53 = s 2^M, h = 1 = s 2^c, M = mag M = 53, c = 0).
+- Not shown: "worse than equality". The model never saw `|h| > ulp(g_next)` (class Y).
+  The true general look-ahead to prove is `|h| <= ulp(g_next)`, with `<` => N and `=` => T.
+- The pending-twin equality (P, p = 2) is untouched, as agreed.
