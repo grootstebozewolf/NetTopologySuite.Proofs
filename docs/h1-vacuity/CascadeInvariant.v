@@ -26,8 +26,14 @@
      cascade_step_obligation, which is refuted.  Not citable.  A usable form
      must quantify over reachable states (as N_step_reachable does).
 
-   OPEN  P -> N (bstate_twin / twin_top_shape on the actual cascade), and
-     chaining the per-step theorems into one reachable-state induction.
+   P -> N (QED): cinv_P_step / P_step_reachable / P_last_step /
+     pending_twin_settles.  A pending twin settles in exactly ONE step: with
+     |h| = 2^c < ulp(g)/4 the TwoSum(g, h) is exact, Q' = g, and bstate_twin
+     files (h, 0, h) as CTwin h below g.  No look-ahead beyond what
+     T_step_reachable already proves is needed; cinv_P was not strengthened.
+
+   OPEN  chaining the per-step theorems (N, T, P) into one reachable-state
+     induction (index bookkeeping only; every single step is now proved).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -521,6 +527,109 @@ Proof.
     rewrite skipn_all2 by (simpl; lia). exact I.
 Qed.
 
+(* ---- RUNG 9a: P -> N -- a pending twin settles in ONE step ------------------
+   Question: can a Priest-valid pending twin stay pending indefinitely?
+   ANSWER: NO.  cinv_P holds Q = h with |h| = 2^c and the look-ahead
+   4*2^c < ulp(g) for the next input g.  Then |h| < ulp(g)/4 < half the
+   spacing on either side of g, so TwoSum(g, h) = (g, h) EXACTLY: g absorbs the
+   old accumulator, and h reappears as the new error.  The pending carry is
+   discharged by that single TwoSum -- bstate_twin turns (h, 0, h) into the
+   twin block CTwin h below g.  The consumed resource is the accumulator
+   itself: after the step Q' = g, which is no longer a tiny carry, so there
+   is nothing left to sustain a pending twin.  The settling time is exactly 1.
+
+   The machine half below needs from the following input g2 only what N needs
+   (finite, nonzero, TwoSum-safe) plus sortedness |g| <= |g2|, which lifts
+   the twin key 2*2^c < ulp(g) <= ulp(g2).  No strengthening of cinv_P was
+   needed: the look-ahead conjunct is exactly what T_step_reachable proves. *)
+Lemma cinv_P_step :
+  forall Q E g rest,
+    cinv_P Q E (g :: rest) ->
+    match rest with
+    | nil => True
+    | g2 :: _ => Rabs (b2r g) <= Rabs (b2r g2) /\ b64_fin g2 /\ b2r g2 <> 0
+                 /\ b64_TwoSum_safe g2 (fst (b64_TwoSum g Q))
+    end ->
+    cinv_N (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) rest.
+Proof.
+  intros Q E g rest HP Hnext.
+  destruct HP as (z & h & E0 & bs0 & c & HE & HQ & Fz & Fh & FE0 & Hz & Hh & Hov & DE & Sh & Al & Kb & Fg & Hg0 & S & Hsmall).
+  subst E Q.
+  pose proof (bstate_twin g h z h E0 bs0 c Fg Hg0 S Fz Fh FE0 Hz eq_refl Hh Hsmall Hov DE Sh Al Kb) as B.
+  cbv zeta in B.
+  exists (cexp radix2 b64_fexp (b2r g)), (CTwin h :: bs0). split; [ exact B | ].
+  destruct rest as [| g2 rest']; [ exact I | ].
+  destruct Hnext as (Hle & Fg2 & Hg20 & S2).
+  refine (conj Fg2 (conj Hg20 (conj S2 _))).
+  assert (Hu : ulp radix2 b64_fexp (b2r g2) = bpow radix2 (cexp radix2 b64_fexp (b2r g2)))
+    by (apply ulp_neq_0, Hg20).
+  assert (Hu1 : ulp radix2 b64_fexp (b2r g) = bpow radix2 (cexp radix2 b64_fexp (b2r g)))
+    by (apply ulp_neq_0, Hg0).
+  pose proof (ulp_le radix2 b64_fexp (b2r g) (b2r g2) Hle) as Hmono.
+  pose proof (bpow_gt_0 radix2 c) as Hc0.
+  constructor.
+  - unfold key_below. cbn [block_key]. rewrite <- Hu, Hh. lra.
+  - eapply Forall_impl; [ | exact Kb ]. unfold key_below. intros b Hb. rewrite <- Hu. lra.
+Qed.
+
+(* On the actual cascade: a pending twin at accumulator acc(j-1) with inputs
+   g_j, g_(j+1) steps to N.  Same ingredients as N_step_reachable. *)
+Theorem P_step_reachable :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j E rest, (1 <= j)%nat -> (j < length xs)%nat ->
+    let d := Binary.B754_zero prec emax false in
+    let gj := nth j (x0 :: xs) d in
+    let g2 := nth (S j) (x0 :: xs) d in
+    let q := CascadeTailBound.acc x0 xs (j - 1) in
+    cinv_P q E (gj :: g2 :: rest) ->
+    cinv_N (fst (b64_TwoSum gj q)) (snd (b64_TwoSum gj q) :: E) (g2 :: rest).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j E rest Hj1 Hj2 d gj g2 q HP.
+  assert (Hperm : Permutation (e ++ f) (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Fs : Forall b64_fin (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (In2 : In g2 (x0 :: xs)) by (apply nth_In; simpl; lia).
+  assert (Fg2 : b64_fin g2) by (rewrite Forall_forall in Fs; apply Fs, In2).
+  assert (Hg20 : b2r g2 <> 0).
+  { rewrite Forall_forall in Nz. apply Nz. apply (Permutation_in _ (Permutation_sym Hperm)), In2. }
+  pose proof (fes_cascade_safe e f Fe Ff Hov) as C. rewrite Hs in C.
+  assert (S2 : b64_TwoSum_safe g2 (fst (b64_TwoSum gj q))).
+  { pose proof (CascadeTailBound.safe_nth xs x0 j C Hj2) as Sj.
+    destruct j as [| j']; [ lia | ]. unfold g2, gj, q. simpl Nat.sub. rewrite Nat.sub_0_r. exact Sj. }
+  assert (Hle : Rabs (b2r gj) <= Rabs (b2r g2)).
+  { apply (CascadeTailBound.sorted_g (x0 :: xs)); [ rewrite <- Hs; apply sort_by_abs_sorted | simpl; lia ]. }
+  exact (cinv_P_step q E gj (g2 :: rest) HP (conj Hle (conj Fg2 (conj Hg20 S2)))).
+Qed.
+
+(* No next input: a pending twin at the last step also lands in N (and so in
+   the final aligned shape, via cinv_final_shape). *)
+Corollary P_last_step :
+  forall Q E g,
+    cinv_P Q E [g] -> cinv_N (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) [].
+Proof. intros Q E g HP. exact (cinv_P_step Q E g [] HP I). Qed.
+
+(* Machine-level classification: from P, ONE step is N.  So P is never
+   followed by P, and a pending twin never propagates. *)
+Corollary pending_twin_settles :
+  forall Q E g rest,
+    cinv_P Q E (g :: rest) ->
+    match rest with
+    | nil => True
+    | g2 :: _ => Rabs (b2r g) <= Rabs (b2r g2) /\ b64_fin g2 /\ b2r g2 <> 0
+                 /\ b64_TwoSum_safe g2 (fst (b64_TwoSum g Q))
+    end ->
+    exists L bs, bstate (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) L bs.
+Proof.
+  intros Q E g rest HP Hn. destruct (cinv_P_step Q E g rest HP Hn) as (L & bs & H & _).
+  exists L, bs. exact H.
+Qed.
+
+Print Assumptions cinv_P_step.
+Print Assumptions P_step_reachable.
 Print Assumptions T_step_reachable.
 Print Assumptions N_step_reachable.
 Print Assumptions N_to_T_entry.
