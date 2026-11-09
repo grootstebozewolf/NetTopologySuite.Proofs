@@ -7,19 +7,23 @@
 #
 # Sources (each entry is one exception):
 #   docs/audit-exceptions.txt          files allowed axioms beyond the
-#                                      allowlist; class from the nearest
-#                                      `# class: <name>` tag above the entry
+#                                      allowlist; class from the `# class:`
+#                                      tag of the entry's block (a blank line
+#                                      ends a block; tags do not carry over)
 #   docs/oracle-handrolled-allowlist.txt  frozen hand-rolled kernels
 #                                      -> implementation
 #   docs/admitted-deferred-proofs.txt  deferred Admitted -> debt
 #   docs/admitted-counterexamples.txt  Admitted verified counterexamples -> qex
 #
-# Classes:
+# Classes (for audit exceptions the class says why the AXIOM is needed, not
+# whether the claim is a counterexample):
 #   debt            avoidable; target 0
 #   implementation  inherited from the implementation model (Flocq binary64,
 #                   interface kernels); minimize
-#   library         inherited from the Stdlib real-analysis library; explicit
-#   qex             the stronger claim is false; preserve
+#   library         inherited from the Stdlib real-analysis library
+#                   (Ratan, RiemannInt); enumerated
+#   qex             kept because the stronger (axiom-free / Admitted-free)
+#                   claim is false; preserve
 #   unclassified    untagged audit exception; must be 0
 #
 # Usage:
@@ -48,7 +52,7 @@ LABELS = {
 TARGETS = {
     "debt": "0",
     "implementation": "minimize",
-    "library": "explicit",
+    "library": "enumerated (Ratan, RiemannInt)",
     "qex": "preserve",
     "unclassified": "0",
 }
@@ -60,6 +64,7 @@ FIXED = (
     ("docs/admitted-counterexamples.txt", "qex"),
 )
 TAG = re.compile(r"^#\s*class:\s*(\S+)\s*$")
+TAGLIKE = re.compile(r"^#\s*class\b", re.IGNORECASE)
 
 
 def _lines(rel):
@@ -89,6 +94,9 @@ def budget():
     current = None
     for n, ln in enumerate(lines, 1):
         s = ln.strip()
+        if not s:
+            current = None          # a tag does not reach past a blank line
+            continue
         m = TAG.match(s)
         if m:
             current = m.group(1)
@@ -96,13 +104,18 @@ def budget():
                 problems.append(f"{AUDIT}:{n}: unknown class '{current}' "
                                 f"(one of: {', '.join(CLASSES)})")
             continue
-        if not s or s.startswith("#"):
+        if TAGLIKE.match(s):
+            current = None
+            problems.append(f"{AUDIT}:{n}: malformed class line {s!r} "
+                            "(write exactly `# class: <name>`)")
+            continue
+        if s.startswith("#"):
             continue
         if current in CLASSES:
             counts[current] += 1
         else:
             counts["unclassified"] += 1
-            problems.append(f"{AUDIT}:{n}: {s} has no `# class:` tag above it")
+            problems.append(f"{AUDIT}:{n}: {s} has no `# class:` tag in its block")
 
     for rel, cls in FIXED:
         fl = _lines(rel)
@@ -116,10 +129,12 @@ def budget():
 
 
 def accounted_pct(counts):
+    """100 only when nothing is unclassified; otherwise rounded down, so a
+    single unclassified entry never displays as 100%."""
     total = counts["total"]
-    if total == 0:
+    if counts["unclassified"] == 0:
         return 100
-    return round(100 * (total - counts["unclassified"]) / total)
+    return min(99, (100 * (total - counts["unclassified"])) // total)
 
 
 def main(argv):

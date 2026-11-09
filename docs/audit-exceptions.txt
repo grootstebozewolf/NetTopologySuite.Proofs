@@ -9,16 +9,19 @@
 #   - A file leaves this list only when every PA block is within
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
-#   - Every file sits under a `# class: <name>` tag (the nearest one above
-#     it), one of: debt, implementation, library, qex.  The Observatory's
-#     exception budget reads these tags; scripts/exception_budget.py --check
-#     (in ci-guards) fails on an untagged file or an unknown class.
-#       implementation  inherited from the implementation model (Flocq's
-#                       binary64 format: Flocq C1)
-#       library         inherited from the Stdlib real-analysis library
-#                       (Ratan, RiemannInt)
-#       debt            avoidable; to be removed
-#       qex             kept because the stronger claim is false
+#   - Every block of files (lines between blank lines) carries its own
+#     `# class: <name>` line; a tag does not reach past a blank line.  The
+#     Observatory's exception budget reads these tags;
+#     scripts/exception_budget.py --check (in ci-guards) fails on a block
+#     without a tag, an unknown class, or a malformed `class` line.
+#     The class names WHY THE AXIOM IS NEEDED, not the status of the claim:
+#     a QEX module whose axiom comes from Flocq is `implementation`.
+#       implementation  axiom inherited from the implementation model
+#                       (Flocq's binary64 format: Flocq C1)
+#       library         axiom inherited from the Stdlib real-analysis
+#                       library (Ratan, RiemannInt)
+#       debt            axiom avoidable; to be removed
+#       qex             axiom kept because the axiom-free claim is false
 #
 # LIVE: 122 files (115 theories-flocq/ + 2 theories/ + 5 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
@@ -80,6 +83,7 @@ theories-flocq/HotPixel_b64.v
 theories-flocq/B64_Pff_bridge.v
 theories-flocq/Orient_b64_sound.v
 
+# class: implementation
 # Flocq C1 — Shewchuk / expansion / Stage D
 theories-flocq/B64_TwoSum_sterbenz.v
 theories-flocq/B64_residue_granularity.v
@@ -142,6 +146,7 @@ theories-flocq/B64_CarryCleanOneBit.v
 # Flocq's binary model is in use (category-c-policy).
 theories-flocq/B64_CarryCleanSeven.v
 
+# class: implementation
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
 # results are LEM-free (Priest link + arithmetic separations). The remaining five
 # route through strict_succ_b64 → b64_format_B2R / b64_ulp_FLT_0 and inherit
@@ -175,6 +180,7 @@ theories-flocq/OrientHybridPackage.v
 theories-flocq/Orient_geos968_onsegment_pins.v
 theories-flocq/OrientStratifiedAPF.v
 
+# class: implementation
 # Flocq C1 — snap / Hobby / passes-through
 theories-flocq/SnapRoundingScale_b64.v
 theories-flocq/SnapRounding_b64.v
@@ -220,6 +226,7 @@ theories-flocq/PassesThrough_b64_grid_complete.v
 theories-flocq/PassesThrough_b64_grid_separation.v
 theories-flocq/SpectrePassesThroughWitness.v
 
+# class: implementation
 # Flocq C1 — overlay / ring-extract (classic via Hobby snap_round)
 theories-flocq/OverlayBridge.v
 theories-flocq/OverlayBridgeUnconditional.v
@@ -235,6 +242,7 @@ theories-flocq/OverlayCorrectness.v
 # stays: atan3_eq_atan / atan2_eq_ratan pull classic via Ratan.atan.
 theories/Atan2RatanBridge.v
 
+# class: library
 # R-side C1 — RiemannInt (#564 Fresnel inhabitant; pack stays 3-axiom).
 # Culprit: RInt_cont_le (continuity_implies_RiemannInt).
 theories/ClothoidFresnelInhab.v

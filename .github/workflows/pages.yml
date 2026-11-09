@@ -19,6 +19,8 @@ on:
       - docs/admitted-counterexamples.txt
       - docs/admitted-deferred-proofs.txt
       - docs/oracle-handrolled-allowlist.txt
+      - docs/audit-exceptions.txt
+      - scripts/exception_budget.py
       - scripts/gen_dashboard.py
       - docs/macro-meso-micro.md
       - dashboard/**

@@ -735,7 +735,15 @@ def render(data):
                  "docs/oracle-handrolled-allowlist.txt (frozen ratchet)"))
 
     # ---- exception budget (scripts/exception_budget.py is the source)
-    bcounts, _bproblems = exception_budget.budget()
+    bcounts, bproblems = exception_budget.budget()
+    for p in bproblems:
+        print(f"warning: exception budget: {p}", file=sys.stderr)
+    budget_problems = ""
+    if bproblems:
+        budget_problems = (
+            '<p style="color:#b91c1c"><b>Budget not verified:</b></p><ul>'
+            + "".join(f"<li><code>{e(p)}</code></li>" for p in bproblems)
+            + "</ul>")
     budget_marks = {"debt": "\U0001F534", "implementation": "\U0001F7E1",
                     "library": "\U0001F535", "qex": "\U0001F48E",
                     "unclassified": "\u26AA"}
@@ -752,6 +760,7 @@ def render(data):
 
     return TEMPLATE.format(
         budget_rows=budget_rows, budget_total=bcounts["total"],
+        budget_problems=budget_problems,
         sha_short=e(sha_short), sha=e(sha), when=e(when),
         card_html=card_html, regime_legend=regime_legend(),
         issue_rows=issue_rows, sec_rows=sec_rows, mode_rows=mode_rows,
@@ -980,19 +989,26 @@ witness: empty-circle</div>
   </section>
 
   <section>
-    <h2>Exception budget &mdash; {budget_total} explicit exceptions</h2>
+    <h2>Exception budget &mdash; {budget_total} registered exceptions</h2>
     <p class="muted">The objective is not zero exceptions but <b>zero
       unexplained exceptions</b>. Each entry is an axiom exception
       (<code>docs/audit-exceptions.txt</code>, classed by its
       <code># class:</code> tag), a frozen interface kernel, or a registered
       <code>Admitted</code>. The total is shown as is: a new, justified
       boundary raises it. Checked by <code>scripts/exception_budget.py --check</code>.</p>
+    {budget_problems}
     <table><thead><tr><th>Class</th><th>Count</th><th>Target</th></tr>
       </thead><tbody>{budget_rows}</tbody></table>
-    <p class="muted">Proof debt: avoidable assumptions. Implementation boundary:
-      inherited from the implementation model (Flocq binary64, interface
-      kernels). Library boundary: inherited from Stdlib real analysis (Ratan,
-      RiemannInt). QEX boundary: the stronger claim is false.</p>
+    <p class="muted">Units differ by source: an axiom exception counts one
+      file, an interface kernel one kernel name (the same 30 as the
+      hand-rolled row in the table above), an <code>Admitted</code> one theorem.
+      For axiom exceptions the class says why the axiom is needed, not what
+      the theorem claims: a counterexample module whose axiom comes from
+      Flocq counts as an implementation boundary. Proof debt: avoidable.
+      Implementation boundary: inherited from the implementation model
+      (Flocq binary64, interface kernels). Library boundary: inherited from
+      Stdlib real analysis (Ratan, RiemannInt). QEX boundary: kept because the
+      stronger claim is false.</p>
   </section>
 </main>
 
