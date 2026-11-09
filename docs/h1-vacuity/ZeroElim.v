@@ -15,7 +15,7 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (PR #1014).
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.

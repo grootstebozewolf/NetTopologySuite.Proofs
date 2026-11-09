@@ -46,7 +46,9 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted.  Human-reviewed (PR #1014): rungs 9a/9b
+     (P -> N, cascade_stage_invariant, cascade_reachable_shape, fes_carry_clean_nonoverlap).
+     Rungs 0-8 above: human review pending.
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.

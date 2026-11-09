@@ -16,7 +16,8 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (PR #1014).
+     Relies on vm_compute for the concrete run (trusted base; fine for a probe).
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals ZArith Lia Lra List.
