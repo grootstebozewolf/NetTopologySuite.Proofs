@@ -5,7 +5,7 @@
 # Compile Qed-claiming hunt probes under docs/h1-vacuity/ that are NOT in
 # _CoqProject / _CoqProject.full (evidence, not product headlines).
 #
-# Flocq-lane probes need HobbyCounterexample_b64.vo (and its closure)
+# Flocq-lane probes need HobbyCounterexample_b64.vo and B64_CarryCleanCascade.vo (and their closures)
 # already built — after `make full` or the CI flocq corpus compile.
 #
 # Usage:
@@ -32,11 +32,15 @@ if ! command -v rocq >/dev/null 2>&1; then
   exit 2
 fi
 
-if [ ! -f theories-flocq/HobbyCounterexample_b64.vo ]; then
-  echo "[hunt-probes] missing theories-flocq/HobbyCounterexample_b64.vo" >&2
-  echo "  build the flocq corpus first (make full / CI rocq-flocq job)." >&2
-  exit 2
-fi
+# HobbyCounterexample_b64 is the classic proxy for "make full ran";
+# PendingTwinWitness also needs the carry_clean cascade (not in its closure).
+for vo in theories-flocq/HobbyCounterexample_b64.vo theories-flocq/B64_CarryCleanCascade.vo; do
+  if [ ! -f "$vo" ]; then
+    echo "[hunt-probes] missing $vo" >&2
+    echo "  build the flocq corpus first (make full / CI rocq-flocq job)." >&2
+    exit 2
+  fi
+done
 
 # Flocq-lane hunt probes (host-lane VacuityCheck / WitnessCheck stay
 # `rocq c -Q theories NTS.Proofs` only; they do not need this script).

@@ -145,11 +145,12 @@ theories-flocq/B64_CarryCleanOneBit.v
 # headline inherits Classical_Prop.classic via Flocq C1.  Plan: none while
 # Flocq's binary model is in use (category-c-policy).
 theories-flocq/B64_CarryCleanSeven.v
-# carry_clean target at every length (promoted probes, #1015): the cascade
-# tail bound (FLX model and binary64 realization), the cascade invariant and
-# zero elimination all round in Flocq (RN, b64_TwoSum), so every headline
+# carry_clean target at every length (promoted probes, ticket #1015).
+# TailModel: FLX model only, no binary64; classic comes from Flocq Core
+# itself (round_N_pt, ulp, Plus_error.plus_error all carry it).  TailBound,
+# Cascade, Target: b64_TwoSum / b64_plus on top of the same.  Every headline
 # inherits Classical_Prop.classic via Flocq C1.  Plan: none while Flocq's
-# binary model is in use (category-c-policy).
+# rounding model is in use (category-c-policy).
 theories-flocq/B64_CarryCleanTailModel.v
 theories-flocq/B64_CarryCleanTailBound.v
 theories-flocq/B64_CarryCleanCascade.v
