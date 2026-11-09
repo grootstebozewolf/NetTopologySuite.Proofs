@@ -40,8 +40,8 @@
      pure index bookkeeping (acc_final, rev_firstn_S, skipn_nth_cons) is new.
      fes_carry_clean_nonoverlap composes it with carry_clean_nonoverlap_of_shape:
      carry_clean (fast_expansion_sum e f) is nonoverlapping under cascade_hyps
-     (nonzero inputs).  Not discharged: the zero-input case of the bridges
-     fes_priest_carry_pattern / fes_priest_reduction_nonoverlap.
+     (nonzero inputs).  The zero-input case and both bridge Definitions are
+     discharged in ZeroElim.v (carry_clean_priest_target_proved).
      Non-vacuity: PendingTwinWitness.v (T -> P -> N on a concrete Priest pair).
 
    Author: NetTopologySuite.Proofs contributors

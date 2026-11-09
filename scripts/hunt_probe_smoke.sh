@@ -45,6 +45,7 @@ PROBES=(
   docs/h1-vacuity/CarryCleanPure.v
   docs/h1-vacuity/CascadeTailBound.v
   docs/h1-vacuity/CascadeInvariant.v
+  docs/h1-vacuity/ZeroElim.v
   docs/h1-vacuity/PendingTwinWitness.v
   docs/h1-vacuity/LookaheadQEX.v
   docs/h1-vacuity/LatticeRouteQEX.v
