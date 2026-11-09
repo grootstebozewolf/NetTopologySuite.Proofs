@@ -23,8 +23,8 @@
        ARBITRARY (Q, E, rest)) is FALSE -- Q = 1, g = 2^54, next 2^-100.
 
    VACUOUS  cascade_aligned_shape is Qed but conditional on
-     cascade_step_obligation, which is refuted.  Not citable.  A usable form
-     must quantify over reachable states (as N_step_reachable does).
+     cascade_step_obligation, which is refuted.  Not citable.  Its usable
+     replacement is cascade_reachable_shape (reachable states, below).
 
    P -> N (QED): cinv_P_step / P_step_reachable / P_last_step /
      pending_twin_settles.  A pending twin settles in exactly ONE step: with
@@ -38,6 +38,11 @@
      cascade_reachable_shape: for any Priest-valid input pair and any length,
      drop_zeros (cascade_out x0 [] xs) is the aligned carry shape.  Only the
      pure index bookkeeping (acc_final, rev_firstn_S, skipn_nth_cons) is new.
+     fes_carry_clean_nonoverlap composes it with carry_clean_nonoverlap_of_shape:
+     carry_clean (fast_expansion_sum e f) is nonoverlapping under cascade_hyps
+     (nonzero inputs).  Not discharged: the zero-input case of the bridges
+     fes_priest_carry_pattern / fes_priest_reduction_nonoverlap.
+     Non-vacuity: PendingTwinWitness.v (T -> P -> N on a concrete Priest pair).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -616,8 +621,19 @@ Corollary P_last_step :
     cinv_P Q E [g] -> cinv_N (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) [].
 Proof. intros Q E g HP. exact (cinv_P_step Q E g [] HP I). Qed.
 
-(* Machine-level classification: from P, ONE step is N.  So P is never
-   followed by P, and a pending twin never propagates. *)
+(* P is never followed by P: the next error list is h' :: z :: ..., so a P
+   successor would need z (value 0) as its twin h'' with |h''| = 2^c > 0. *)
+Lemma cinv_P_not_next :
+  forall Q E r Q' h' r', cinv_P Q E r -> ~ cinv_P Q' (h' :: E) r'.
+Proof.
+  intros Q E r Q' h' r' (z & h & E0 & bs0 & c & HE & _ & _ & _ & _ & Hz & _)
+    (z' & h2 & E1 & bs1 & c' & HE' & _ & _ & _ & _ & _ & Hh2 & _).
+  subst E. injection HE' as _ Hzh _. subst h2.
+  rewrite Hz, Rabs_R0 in Hh2. pose proof (bpow_gt_0 radix2 c'). lra.
+Qed.
+
+(* One step from P lands in N (settled) and not in P, so a pending twin
+   neither persists nor propagates; settling time is exactly 1. *)
 Corollary pending_twin_settles :
   forall Q E g rest,
     cinv_P Q E (g :: rest) ->
@@ -626,10 +642,11 @@ Corollary pending_twin_settles :
     | g2 :: _ => Rabs (b2r g) <= Rabs (b2r g2) /\ b64_fin g2 /\ b2r g2 <> 0
                  /\ b64_TwoSum_safe g2 (fst (b64_TwoSum g Q))
     end ->
-    exists L bs, bstate (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) L bs.
+    cinv_N (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) rest
+    /\ forall r', ~ cinv_P (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) r'.
 Proof.
-  intros Q E g rest HP Hn. destruct (cinv_P_step Q E g rest HP Hn) as (L & bs & H & _).
-  exists L, bs. exact H.
+  intros Q E g rest HP Hn. split; [ exact (cinv_P_step Q E g rest HP Hn) | ].
+  intro r'. exact (cinv_P_not_next _ _ _ _ _ r' HP).
 Qed.
 
 (* ---- RUNG 9b: the global induction ------------------------------------
@@ -707,7 +724,7 @@ Proof.
     assert (HE : rev (firstn (S k) hs) = snd (b64_TwoSum (nth (S k) (x0 :: xs) dz) (CascadeTailBound.acc x0 xs k))
                                          :: rev (firstn k hs)).
     { rewrite rev_firstn_S by lia. unfold hs. rewrite CascadeTailBound.nth_hs by lia. reflexivity. }
-    rewrite HE. 
+    rewrite HE.
     assert (HQ : CascadeTailBound.acc x0 xs (S k) = fst (b64_TwoSum (nth (S k) (x0 :: xs) dz) (CascadeTailBound.acc x0 xs k))) by reflexivity.
     rewrite HQ.
     assert (Hlt : (S k < length (x0 :: xs))%nat) by (simpl; lia).
@@ -742,7 +759,7 @@ Proof.
         rewrite Hh, Rabs_mult. pose proof (bpow_gt_0 radix2 (cexp radix2 b64_fexp (b2r g))).
         destruct Hsg as [-> | ->]; [ rewrite Rabs_R1 | rewrite (Rabs_left (-1)) by lra ];
           rewrite Rabs_pos_eq by lra; ring. }
-      pose proof (T_step_reachable e f x0 xs Pe Pf Fe Ff Nz Hov Hs (S k') (rev (firstn k' hs)) ltac:(lia) Hk) as R0.
+      pose proof (T_step_reachable e f x0 xs Pe Pf Fe Ff Nz Hov Hs (S k') (rev (firstn k' hs)) ltac:(lia) ltac:(lia)) as R0.
       cbv zeta in R0. replace (S k' - 1)%nat with k' in R0 by lia.
       rewrite HEeq, Hh1, <- Hnh in HT0. rewrite HEeq, Hh1, <- Hnh.
       destruct (R0 Heq HT0) as [R | R]; [ left | right; right ]; exact R.
@@ -758,7 +775,8 @@ Proof.
 Qed.
 
 (* RUNG 9b, QED: the full output of the actual recurrence has the aligned
-   carry shape -- arbitrary length, no hypothesis beyond Priest validity. *)
+   carry shape, for any length.  Hypotheses: cascade_hyps (Priest chains,
+   finite, NONZERO inputs, abs_sum <= 2^(emax-5), the sort equation). *)
 Theorem cascade_reachable_shape :
   forall e f x0 xs, cascade_hyps e f x0 xs ->
     exists bs, drop_zeros (cascade_out x0 [] xs) = flat_map cblock_expand bs
@@ -776,6 +794,21 @@ Proof.
   cbn [fst]. rewrite <- Hl, firstn_all, app_nil_r. reflexivity.
 Qed.
 
+(* Headline: the carry_clean of the actual fast_expansion_sum is
+   nonoverlapping, for every cascade_hyps input (nonzero inputs). *)
+Corollary fes_carry_clean_nonoverlap :
+  forall e f x0 xs, cascade_hyps e f x0 xs ->
+    nonoverlapping_chain (carry_clean (fast_expansion_sum e f)).
+Proof.
+  intros e f x0 xs HH.
+  destruct (cascade_reachable_shape e f x0 xs HH) as (bs & Hb & Hs & _).
+  apply (carry_clean_nonoverlap_of_shape _ bs); [ | exact Hs ].
+  destruct HH as (_ & _ & _ & _ & _ & _ & Hsort).
+  unfold fast_expansion_sum. rewrite Hsort, <- Hb. unfold cascade_out.
+  destruct (b64_grow_expansion_aux x0 xs) as [hs q]. rewrite app_nil_r. reflexivity.
+Qed.
+
+Print Assumptions fes_carry_clean_nonoverlap.
 Print Assumptions cascade_reachable_shape.
 Print Assumptions cinv_P_step.
 Print Assumptions P_step_reachable.
