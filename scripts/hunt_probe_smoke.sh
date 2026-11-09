@@ -42,6 +42,11 @@ fi
 # `rocq c -Q theories NTS.Proofs` only; they do not need this script).
 PROBES=(
   docs/h1-vacuity/HobbyHlemma43Check.v
+  docs/h1-vacuity/CarryCleanPure.v
+  docs/h1-vacuity/CascadeTailBound.v
+  docs/h1-vacuity/CascadeInvariant.v
+  docs/h1-vacuity/LookaheadQEX.v
+  docs/h1-vacuity/LatticeRouteQEX.v
 )
 
 fail=0
@@ -49,7 +54,7 @@ for probe in "${PROBES[@]}"; do
   echo "[hunt-probes] rocq c $probe"
   # Marker so scripts/audit_axioms.sh attributes the following PA blocks.
   echo "ROCQ compile $probe"
-  if ! rocq c -Q theories NTS.Proofs -Q theories-flocq NTS.Proofs.Flocq "$probe"
+  if ! rocq c -Q theories NTS.Proofs -Q theories-flocq NTS.Proofs.Flocq -Q docs/h1-vacuity NTS.Proofs.Probes "$probe"
   then
     echo "[hunt-probes] FAIL: $probe" >&2
     fail=1

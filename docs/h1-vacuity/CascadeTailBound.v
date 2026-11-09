@@ -1,0 +1,1324 @@
+(* CascadeTailBound.v -- arbitrary-length tail bound and closed look-ahead
+   for the TwoSum cascade of Fast-Expansion-Sum.  Evidence probe (smoke-
+   compiled by scripts/hunt_probe_smoke.sh), not a product module.  All Qed.
+
+   SETTING  Flocq FLX (radix 2, precision p >= 2, unbounded exponents),
+     round-to-nearest ties-to-even.  e, f Priest chains (chainR p); g_0..g_n
+     their components sorted by |.| ascending (Permutation of e ++ f),
+     nonzero, representable.  Q_0 = g_0, Q_j = RN(g_j + Q_(j-1)),
+     h_j = g_j + Q_(j-1) - Q_j (exact), U_j = ulp(g_j).
+
+   HEADLINE  cascade_tail_bound: for 1 <= k <= n
+       T(k)   |Q_(k-1) - g_(k-1)| <= 2 U_k
+       LA(k)  |h_k| <= U_k,   hence (cascade_closed_lookahead) |h_k| <= U_(k+1).
+     Both are tight: 2 U_k is attained (model); |h| = U_(k+1) is attained in
+     binary64 (LookaheadQEX.v).
+
+   PROOF (paper argument, mechanized below)
+     (F1) keys |g_j| < U_(j+2)  [chain_count, keys_derived: at most one
+          component per chain lies in [ulp G, |G|]].
+     Lemma S  |S_(k-2)| < 2 U_k, S = exact partial sum  [tail_lt,
+          chain_small, HS_derived: per chain the consumed components
+          telescope below U_k, using the full Priest gap].
+     Lemma U  sum_(j<=k-2) U_j < 2 U_k / (2^p - 1)  [Tsum_bound].
+     Step A  T(k) => LA(k): |Q_(k-1)| <= 2^m, so |g_k + Q_(k-1)| < 2^(m+1)
+          and the rounding error is at most U_k  [stepA, gap].
+     Lemma B  |Q_(k-2)| <= 2 U_k: Q = S - H, |H| < 2U/(2^p-1) by LA and
+          Lemma U, and nothing is representable just above 2U  [lemma_B].
+     Step B  T(k) from T(k-1), LA(k-1) by cases on w = U_(k-1) vs U = U_k:
+          w <= U/4 triangle (< 7U/4); w = U/2 and w = U monotone rounding,
+          with ties-to-even at 2^m + U  [case_half, case_full, tie_even,
+          TB_step].  Strong induction: tail_bound_and_lookahead.
+     Sharpness (model evidence, exact rationals, not mechanized): with
+          Priest gap p - 1 the tail bound fails (p = 3 witness, ratio 5/2).
+     Under round-half-away, the w = U boundary case would give 3U.
+
+   BINARY64  b64_cascade_tail_bound, b64_closed_lookahead,
+     fes_output_error_bound: the same bounds with binary64 ulp for the actual
+     b64_grow_expansion_aux on sort_by_abs (e ++ f), from priest_chain e, f,
+     finite nonzero components and abs_sum e + abs_sum f <= 2^(emax-5).
+     Bridge: RN_agree (binary64 RN = FLX RN on every sum of two binary64
+     values; below the subnormal threshold the sum is exact, so underflow
+     needs no case), ulp_X_le_64, acc / nth_hs / acc_real / h_real (the
+     implementation's recurrence is the FLX one), chain_of_priest.
+     priest_chains_nonzero: the nonzero hypothesis follows from the chains
+     except for singleton chains (chain_nz).
+
+   N -> T ENTRY  tie_shape, eq_shape, b64_equality_entry: equality
+     |h_k| = ulp(g_(k+1)) forces Q_k = s 2^M, h_k = s 2^c, g_(k+1) normal,
+     and |g_k| = 2^M - 2^c <= |g_(k+1)| (consumed by CascadeInvariant.v).
+
+   Author: NetTopologySuite.Proofs contributors
+   License: BSD-3-Clause (see LICENSE)
+   AI assistance disclosure: AI-drafted; human review pending.
+     Assisted-by: Claude
+*)
+From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
+Import ListNotations.
+From Flocq Require Import Core IEEE754.Binary.
+From Flocq.Prop Require Import Plus_error.
+From NTS.Proofs.Flocq Require Import Validate_binary64 B64_lib B64_Pff_bridge
+     B64_Expansion B64_FastExpansionSum B64_FastExpansionSum_Shewchuk
+     B64_Overlap_Hierarchy B64_CarryCleanAlgo B64_CarryCleanCore B64_CarryCleanLadder.
+
+Local Open Scope R_scope.
+
+Section Cascade.
+
+Variable p : Z.
+Hypothesis Hp : (2 <= p)%Z.
+
+Local Instance p_gt_0 : Prec_gt_0 p.
+Proof. unfold Prec_gt_0. lia. Qed.
+Local Instance p_NE : Exists_NE radix2 (FLX_exp p).
+Proof. apply exists_NE_FLX. right. lia. Qed.
+
+Local Abbreviation fexp := (FLX_exp p).
+Local Abbreviation F := (generic_format radix2 fexp).
+Local Abbreviation RN := (round radix2 fexp ZnearestE).
+Local Abbreviation ulp := (ulp radix2 fexp).
+Local Abbreviation bpow := (bpow radix2).
+Local Abbreviation mag := (mag radix2).
+
+Definition mult (s : Z) (x : R) : Prop := exists n : Z, x = IZR n * bpow s.
+
+(* ------------------------------------------------------------------ *)
+(* Format facts                                                        *)
+(* ------------------------------------------------------------------ *)
+
+Lemma F_mult : forall x, F x -> mult (mag x - p) x.
+Proof.
+  intros x H. exists (Ztrunc (scaled_mantissa radix2 fexp x)).
+  unfold generic_format, F2R in H. simpl in H. exact H.
+Qed.
+
+Lemma ulp_eq : forall x, x <> 0 -> ulp x = bpow (mag x - p).
+Proof. intros x Hx. rewrite ulp_neq_0 by exact Hx. reflexivity. Qed.
+
+Lemma bpow_split : forall s t, (s <= t)%Z -> bpow t = IZR (Zpower radix2 (t - s)) * bpow s.
+Proof.
+  intros s t H. rewrite IZR_Zpower by lia. rewrite <- bpow_plus. f_equal. ring.
+Qed.
+
+Lemma abs_mult : forall n s, Rabs (IZR n * bpow s) = IZR (Z.abs n) * bpow s.
+Proof.
+  intros n s. rewrite Rabs_mult, abs_IZR, (Rabs_pos_eq (bpow s)) by apply bpow_ge_0. reflexivity.
+Qed.
+
+(* A multiple of 2^s strictly below 2^t is at most 2^t - 2^s. *)
+Lemma mult_below : forall s t x, mult s x -> (s <= t)%Z -> Rabs x < bpow t -> Rabs x <= bpow t - bpow s.
+Proof.
+  intros s t x [n ->] Hst H. rewrite abs_mult in *. rewrite (bpow_split s t Hst) in *.
+  pose proof (bpow_gt_0 radix2 s) as Hs.
+  assert (H1 : IZR (Z.abs n) < IZR (Zpower radix2 (t - s))).
+  { apply Rmult_lt_reg_r with (bpow s); assumption. }
+  apply lt_IZR in H1. assert (H2 : (Z.abs n <= Zpower radix2 (t - s) - 1)%Z) by lia.
+  apply IZR_le in H2. rewrite minus_IZR in H2. nra.
+Qed.
+
+(* A multiple of 2^s of magnitude at most 2^(s+p) is representable. *)
+Lemma rep : forall s x, mult s x -> Rabs x <= bpow (s + p) -> F x.
+Proof.
+  intros s x [n ->] H. rewrite abs_mult in H. rewrite (bpow_split s (s + p)) in H by lia.
+  replace (s + p - s)%Z with p in H by ring.
+  pose proof (bpow_gt_0 radix2 s) as Hs.
+  assert (H1 : IZR (Z.abs n) <= IZR (Zpower radix2 p)).
+  { apply Rmult_le_reg_r with (bpow s); assumption. }
+  apply le_IZR in H1.
+  destruct (Z.eq_dec (Z.abs n) (Zpower radix2 p)) as [He | Hne].
+  - assert (Hb : F (bpow (s + p))) by (apply generic_format_bpow; unfold FLX_exp; lia).
+    assert (Ev : IZR (Zpower radix2 p) * bpow s = bpow (s + p))
+      by (rewrite (bpow_split s (s + p)) by lia; replace (s + p - s)%Z with p by ring; reflexivity).
+    destruct (Z.abs_spec n) as [[_ Hn] | [_ Hn]]; rewrite Hn in He.
+    + rewrite He, Ev. exact Hb.
+    + replace n with (- Zpower radix2 p)%Z by lia. rewrite opp_IZR.
+      replace (- IZR (Zpower radix2 p) * bpow s) with (- (IZR (Zpower radix2 p) * bpow s)) by ring.
+      rewrite Ev. apply generic_format_opp, Hb.
+  - apply generic_format_FLX. apply (FLX_spec _ _ _ (Float radix2 n s)); [ reflexivity | cbn [Fnum]; lia ].
+Qed.
+
+(* Nothing representable lies strictly between 2^e and 2^e + 2^(e+1-p). *)
+Lemma gap : forall e x, F x -> Rabs x < bpow e + bpow (e + 1 - p) -> Rabs x <= bpow e.
+Proof.
+  intros e x Fx H. destruct (Rle_or_lt (Rabs x) (bpow e)) as [Hle | Hgt]; [ exact Hle | exfalso ].
+  assert (Hx0 : x <> 0) by (intro Z; rewrite Z, Rabs_R0 in Hgt; pose proof (bpow_gt_0 radix2 e); lra).
+  assert (Hsm : bpow (e + 1 - p) <= bpow e) by (apply bpow_le; lia).
+  assert (Hm : mag x = (e + 1)%Z :> Z).
+  { apply mag_unique. replace (e + 1 - 1)%Z with e by ring.
+    rewrite bpow_plus. change (bpow 1) with 2. split; lra. }
+  destruct (F_mult x Fx) as [n Hn]. rewrite Hm in Hn. rewrite Hn, abs_mult in Hgt, H.
+  rewrite (bpow_split (e + 1 - p) e) in Hgt by lia.
+  pose proof (bpow_gt_0 radix2 (e + 1 - p)) as Hs.
+  assert (H1 : IZR (Zpower radix2 (e - (e + 1 - p))) < IZR (Z.abs n))
+    by (apply Rmult_lt_reg_r with (bpow (e + 1 - p)); assumption).
+  apply lt_IZR in H1. assert (H2 : (Zpower radix2 (e - (e + 1 - p)) + 1 <= Z.abs n)%Z) by lia.
+  apply IZR_le in H2. rewrite plus_IZR in H2.
+  rewrite (bpow_split (e + 1 - p) e) in H by lia. nra.
+Qed.
+
+(* Ties-to-even just above a power of two. *)
+Lemma tie_even : forall e, RN (bpow e + bpow (e - p)) = bpow e.
+Proof.
+  intro e.
+  assert (Hlt : bpow (e - p) < bpow e) by (apply bpow_lt; lia).
+  assert (Hm : mag (bpow e + bpow (e - p)) = (e + 1)%Z :> Z).
+  { apply mag_unique. replace (e + 1 - 1)%Z with e by ring. pose proof (bpow_gt_0 radix2 (e - p)).
+    rewrite Rabs_pos_eq by (pose proof (bpow_gt_0 radix2 e); lra).
+    rewrite bpow_plus. change (bpow 1) with 2. split; lra. }
+  unfold round, scaled_mantissa, cexp. rewrite Hm. unfold FLX_exp, F2R. simpl.
+  set (N := Zpower radix2 (p - 1)).
+  assert (HN : IZR N = bpow (p - 1)) by (unfold N; apply IZR_Zpower; lia).
+  assert (Hsc : (bpow e + bpow (e - p)) * bpow (- (e + 1 - p)) = IZR N + / 2).
+  { rewrite HN, Rmult_plus_distr_r, <- !bpow_plus.
+    replace (e + - (e + 1 - p))%Z with (p - 1)%Z by ring.
+    replace (e - p + - (e + 1 - p))%Z with (-1)%Z by ring. reflexivity. }
+  rewrite Hsc.
+  assert (Hfl : Zfloor (IZR N + / 2) = N).
+  { apply Zfloor_imp. rewrite plus_IZR. simpl. lra. }
+  assert (Hev : Z.even N = true).
+  { unfold N. replace (p - 1)%Z with (1 + (p - 2))%Z by ring.
+    rewrite Zpower_plus by lia. rewrite Z.even_mul. reflexivity. }
+  unfold Znearest. rewrite Hfl.
+  replace (IZR N + / 2 - IZR N) with (/ 2) by ring. rewrite Rcompare_Eq by reflexivity.
+  rewrite Hev. simpl. rewrite HN, <- bpow_plus. f_equal. ring.
+Qed.
+
+
+Lemma mag_bounds : forall x, x <> 0 -> bpow (mag x - 1) <= Rabs x < bpow (mag x).
+Proof. intros x Hx. split; [ apply bpow_mag_le | apply bpow_mag_gt ]; exact Hx. Qed.
+
+Lemma pow_double : forall e, bpow (e + 1) = 2 * bpow e.
+Proof. intro e. rewrite bpow_plus. change (bpow 1) with 2. ring. Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Step A: the tail bound at k gives the error bound at k              *)
+(* ------------------------------------------------------------------ *)
+
+Lemma stepA :
+  forall g a Q, F g -> g <> 0 -> F a -> Rabs a <= Rabs g -> F Q ->
+    Rabs (Q - a) <= 2 * ulp g ->
+    Rabs (g + Q - RN (g + Q)) <= ulp g.
+Proof.
+  intros g a Q Fg Hg0 Fa Hag FQ HQa.
+  rewrite (ulp_eq g Hg0) in *. set (m := (mag g : Z)). fold m in HQa |- *.
+  set (u := bpow (m - p)) in *.
+  pose proof (mag_bounds g Hg0) as [Hg1 Hg2]. fold m in Hg1, Hg2.
+  assert (Hu2 : 2 * u = bpow (m + 1 - p)) by (unfold u; rewrite <- pow_double; f_equal; ring).
+  assert (Hgu : Rabs g <= bpow m - u) by (apply mult_below; [ apply F_mult, Fg | lia | exact Hg2 ]).
+  assert (Hu0 : 0 < u) by apply bpow_gt_0.
+  (* |Q| <= 2^m *)
+  assert (HQ : Rabs Q <= bpow m).
+  { destruct (Rlt_or_le (Rabs a) (bpow (m - 1))) as [Hsmall | Hbig].
+    - assert (H2u : 2 * u <= bpow (m - 1)) by (rewrite Hu2; apply bpow_le; lia).
+      pose proof (Rabs_triang_inv Q a). pose proof (pow_double (m - 1)) as Hd.
+      replace (m - 1 + 1)%Z with m in Hd by ring. lra.
+    - assert (Ha0 : a <> 0) by (intro Z; rewrite Z, Rabs_R0 in Hbig; pose proof (bpow_gt_0 radix2 (m - 1)); lra).
+      assert (Hma : mag a = m :> Z).
+      { apply mag_unique. split; [ exact Hbig | lra ]. }
+      assert (Hau : Rabs a <= bpow m - u).
+      { apply mult_below; [ | lia | lra ]. pose proof (F_mult a Fa) as Hm. rewrite Hma in Hm. exact Hm. }
+      apply gap; [ exact FQ | ]. pose proof (Rabs_triang_inv Q a). lra. }
+  (* the sum stays below 2^(m+1) *)
+  set (x := g + Q).
+  assert (Hx : Rabs x < bpow (m + 1)).
+  { unfold x. pose proof (Rabs_triang g Q). rewrite pow_double. lra. }
+  pose proof (error_le_half_ulp radix2 fexp (fun t => negb (Z.even t)) x) as He.
+  replace (x - RN x) with (- (RN x - x)) by ring. rewrite Rabs_Ropp.
+  apply Rle_trans with (1 := He).
+  destruct (Req_dec x 0) as [Hx0 | Hx0].
+  - rewrite Hx0, ulp_FLX_0; [ lra | exact p_gt_0 ].
+  - rewrite (ulp_eq x Hx0). assert (Hmx : (mag x <= m + 1)%Z) by (apply mag_le_bpow; assumption).
+    assert (bpow (mag x - p) <= bpow (m + 1 - p)) by (apply bpow_le; lia). lra.
+Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Lattice helpers                                                     *)
+(* ------------------------------------------------------------------ *)
+
+Lemma mult_plus : forall s x y, mult s x -> mult s y -> mult s (x + y).
+Proof. intros s x y [n ->] [m ->]. exists (n + m)%Z. rewrite plus_IZR. ring. Qed.
+
+Lemma mult_k : forall s k, mult s (IZR k * bpow s).
+Proof. intros s k. exists k. reflexivity. Qed.
+
+Lemma mult_bpow : forall s t, (s <= t)%Z -> mult s (bpow t).
+Proof. intros s t H. exists (Zpower radix2 (t - s)). apply bpow_split, H. Qed.
+
+(* consecutive multiples of 2^s are 2^s apart *)
+Lemma mult_step : forall s x y, mult s x -> mult s y -> x < y -> x + bpow s <= y.
+Proof.
+  intros s x y [n ->] [m ->] H. pose proof (bpow_gt_0 radix2 s).
+  assert (H1 : IZR n < IZR m) by (apply Rmult_lt_reg_r with (bpow s); assumption).
+  apply lt_IZR in H1. assert (H2 : (n + 1 <= m)%Z) by lia. apply IZR_le in H2. rewrite plus_IZR in H2. nra.
+Qed.
+
+Lemma succ_pow : forall e, succ radix2 fexp (bpow e) = bpow e + bpow (e + 1 - p).
+Proof.
+  intro e. rewrite succ_eq_pos by apply bpow_ge_0. rewrite ulp_bpow. reflexivity.
+Qed.
+
+Lemma bpow_e_p : forall e, bpow e = IZR (Zpower radix2 p) * bpow (e - p).
+Proof. intro e. rewrite (bpow_split (e - p) e) by lia. replace (e - (e - p))%Z with p by ring. reflexivity. Qed.
+
+(* ------------------------------------------------------------------ *)
+(* The two monotone-rounding cases, for a positive a in [2^(e-1), 2^e) *)
+(* ------------------------------------------------------------------ *)
+
+Section Pos.
+Variables (e : Z) (a b : R).
+Hypothesis Fa : F a.
+Hypothesis Ha : bpow (e - 1) <= a < bpow e.
+Let w := bpow (e - p).
+
+Lemma a_mult : mult (e - p) a.
+Proof.
+  assert (Hm : mag a = e :> Z) by (apply mag_unique; rewrite Rabs_pos_eq by (pose proof (bpow_gt_0 radix2 (e - 1)); lra); exact Ha).
+  pose proof (F_mult a Fa) as H. rewrite Hm in H. exact H.
+Qed.
+
+Lemma a_top : a <= bpow e - w.
+Proof.
+  assert (Hpos : 0 <= a) by (pose proof (bpow_gt_0 radix2 (e - 1)); lra).
+  pose proof (mult_below (e - p) e a a_mult ltac:(lia) ltac:(rewrite Rabs_pos_eq by exact Hpos; apply Ha)) as H.
+  rewrite Rabs_pos_eq in H by exact Hpos. exact H.
+Qed.
+
+Lemma w_facts : 0 < w /\ 4 * w <= bpow e /\ 2 * w = bpow (e + 1 - p) /\ bpow (e - 1) * 2 = bpow e.
+Proof.
+  unfold w. split; [ apply bpow_gt_0 | ]. split.
+  - replace 4 with (bpow 2) by reflexivity. rewrite <- bpow_plus. apply bpow_le. lia.
+  - split; [ rewrite <- pow_double; f_equal; ring | ].
+    pose proof (pow_double (e - 1)) as H. replace (e - 1 + 1)%Z with e in H by ring. lra.
+Qed.
+
+(* a shifted by k*w stays representable while within [-2^e, 2^e] *)
+Lemma shift_F : forall k, Rabs (a + IZR k * w) <= bpow e -> F (a + IZR k * w).
+Proof.
+  intros k H. apply (rep (e - p)); [ apply mult_plus; [ exact a_mult | apply mult_k ] | ].
+  replace (e - p + p)%Z with e by ring. exact H.
+Qed.
+
+Lemma case_half : Rabs b < 4 * w -> Rabs (RN (a + b) - a) <= 4 * w.
+Proof.
+  intro Hb. destruct w_facts as (Hw & H4 & H2 & Hd). pose proof a_top as Ht.
+  pose proof (Rabs_def2 _ _ Hb) as [Hb1 Hb2].
+  apply Rabs_le. split.
+  - (* lower: a - 4w is representable *)
+    assert (Fz : F (a + IZR (-4) * w)).
+    { apply shift_F. apply Rabs_le. replace (IZR (-4)) with (-4) by reflexivity. split; lra. }
+    pose proof (round_le radix2 fexp ZnearestE (a + IZR (-4) * w) (a + b) ltac:(replace (IZR (-4)) with (-4) by reflexivity; lra)) as R.
+    rewrite (round_generic radix2 fexp ZnearestE _ Fz) in R. replace (IZR (-4)) with (-4) in R by reflexivity. lra.
+  - (* upper *)
+    destruct (Rle_or_lt (a + 4 * w) (bpow e)) as [Hy | Hy].
+    + assert (Fy : F (a + IZR 4 * w)) by (apply shift_F; rewrite Rabs_pos_eq; replace (IZR 4) with 4 by reflexivity; lra).
+      pose proof (round_le radix2 fexp ZnearestE (a + b) (a + IZR 4 * w) ltac:(replace (IZR 4) with 4 by reflexivity; lra)) as R.
+      rewrite (round_generic radix2 fexp ZnearestE _ Fy) in R. replace (IZR 4) with 4 in R by reflexivity. lra.
+    + assert (Fe : F (bpow e)) by (apply generic_format_bpow; unfold FLX_exp; lia).
+      destruct (Rlt_or_le (a + b) (bpow e + w)) as [Hx | Hx].
+      * assert (Hmid : a + b < (bpow e + succ radix2 fexp (bpow e)) / 2) by (rewrite succ_pow; lra).
+        pose proof (round_N_le_midp radix2 fexp (fun t => negb (Z.even t)) (bpow e) (a + b) Fe Hmid). lra.
+      * (* a + 4w > 2^e + w, so a + 4w >= 2^e + 2w *)
+        assert (My : mult (e - p) (a + IZR 4 * w)) by (apply mult_plus; [ exact a_mult | apply mult_k ]).
+        assert (Mx : mult (e - p) (bpow e + w)) by (apply mult_plus; [ apply mult_bpow; lia | exists 1%Z; unfold w; ring ]).
+        pose proof (mult_step (e - p) _ _ Mx My ltac:(replace (IZR 4) with 4 by reflexivity; lra)) as Hst.
+        replace (IZR 4) with 4 in Hst by reflexivity. fold w in Hst.
+        set (c := bpow e + 2 * w).
+        assert (Fc : F c).
+        { unfold c. rewrite H2. apply (rep (e + 1 - p)).
+          - apply mult_plus; [ apply mult_bpow; lia | exists 1%Z; ring ].
+          - rewrite Rabs_pos_eq by (pose proof (bpow_gt_0 radix2 e); pose proof (bpow_gt_0 radix2 (e + 1 - p)); lra).
+            replace (e + 1 - p + p)%Z with (e + 1)%Z by ring. rewrite pow_double. rewrite <- H2. lra. }
+        assert (Hmc : mag c = (e + 1)%Z :> Z).
+        { apply mag_unique. replace (e + 1 - 1)%Z with e by ring. rewrite pow_double.
+          rewrite Rabs_pos_eq by (unfold c; lra). unfold c. split; lra. }
+        assert (Hsc : succ radix2 fexp c = c + 2 * w).
+        { rewrite succ_eq_pos by (unfold c; lra). rewrite ulp_eq by (unfold c; lra). rewrite Hmc. rewrite H2. reflexivity. }
+        assert (Hmid : a + b < (c + succ radix2 fexp c) / 2) by (rewrite Hsc; unfold c; lra).
+        pose proof (round_N_le_midp radix2 fexp (fun t => negb (Z.even t)) c (a + b) Fc Hmid). unfold c in *. lra.
+Qed.
+
+Lemma case_full : Rabs b <= 2 * w -> Rabs (RN (a + b) - a) <= 2 * w.
+Proof.
+  intro Hb. destruct w_facts as (Hw & H4 & H2 & Hd). pose proof a_top as Ht.
+  pose proof (Rabs_le_inv _ _ Hb) as [Hb1 Hb2].
+  apply Rabs_le. split.
+  - assert (Fz : F (a + IZR (-2) * w)).
+    { apply shift_F. apply Rabs_le. replace (IZR (-2)) with (-2) by reflexivity. split; lra. }
+    pose proof (round_le radix2 fexp ZnearestE (a + IZR (-2) * w) (a + b) ltac:(replace (IZR (-2)) with (-2) by reflexivity; lra)) as R.
+    rewrite (round_generic radix2 fexp ZnearestE _ Fz) in R. replace (IZR (-2)) with (-2) in R by reflexivity. lra.
+  - destruct (Rle_or_lt (a + 2 * w) (bpow e)) as [Hy | Hy].
+    + assert (Fy : F (a + IZR 2 * w)) by (apply shift_F; rewrite Rabs_pos_eq; replace (IZR 2) with 2 by reflexivity; lra).
+      pose proof (round_le radix2 fexp ZnearestE (a + b) (a + IZR 2 * w) ltac:(replace (IZR 2) with 2 by reflexivity; lra)) as R.
+      rewrite (round_generic radix2 fexp ZnearestE _ Fy) in R. replace (IZR 2) with 2 in R by reflexivity. lra.
+    + (* then a = 2^e - w *)
+      assert (Mz : mult (e - p) (bpow e + IZR (-2) * w)) by (apply mult_plus; [ apply mult_bpow; lia | apply mult_k ]).
+      pose proof (mult_step (e - p) _ _ Mz a_mult ltac:(replace (IZR (-2)) with (-2) by reflexivity; lra)) as Hst.
+      replace (IZR (-2)) with (-2) in Hst by reflexivity. fold w in Hst.
+      assert (Ha' : a = bpow e - w) by lra.
+      assert (Fe : F (bpow e)) by (apply generic_format_bpow; unfold FLX_exp; lia).
+      destruct (Rlt_or_le (a + b) (bpow e + w)) as [Hx | Hx].
+      * assert (Hmid : a + b < (bpow e + succ radix2 fexp (bpow e)) / 2) by (rewrite succ_pow; lra).
+        pose proof (round_N_le_midp radix2 fexp (fun t => negb (Z.even t)) (bpow e) (a + b) Fe Hmid). lra.
+      * assert (Hx' : a + b = bpow e + w) by lra.
+        rewrite Hx'. unfold w. rewrite tie_even. fold w. lra.
+Qed.
+
+End Pos.
+
+(* Both signs, via odd symmetry of ties-to-even. *)
+Lemma RN_shift_opp : forall a b, RN (a + b) - a = - (RN (- a + - b) - - a).
+Proof.
+  intros a b. replace (- a + - b) with (- (a + b)) by ring. rewrite round_NE_opp. ring.
+Qed.
+
+Lemma case_half_any : forall a b, F a -> a <> 0 ->
+  Rabs b < 4 * bpow (mag a - p) -> Rabs (RN (a + b) - a) <= 4 * bpow (mag a - p).
+Proof.
+  intros a b Fa Ha0 Hb. pose proof (mag_bounds a Ha0) as Hm.
+  destruct (Rle_or_lt 0 a) as [Hpos | Hneg].
+  - rewrite Rabs_pos_eq in Hm by exact Hpos. apply case_half; assumption.
+  - rewrite RN_shift_opp, Rabs_Ropp. rewrite <- (mag_opp radix2 a) in Hb |- *.
+    rewrite Rabs_left in Hm by exact Hneg. rewrite <- (mag_opp radix2 a) in Hm.
+    apply case_half; [ apply generic_format_opp, Fa | exact Hm | rewrite Rabs_Ropp; exact Hb ].
+Qed.
+
+Lemma case_full_any : forall a b, F a -> a <> 0 ->
+  Rabs b <= 2 * bpow (mag a - p) -> Rabs (RN (a + b) - a) <= 2 * bpow (mag a - p).
+Proof.
+  intros a b Fa Ha0 Hb. pose proof (mag_bounds a Ha0) as Hm.
+  destruct (Rle_or_lt 0 a) as [Hpos | Hneg].
+  - rewrite Rabs_pos_eq in Hm by exact Hpos. apply case_full; assumption.
+  - rewrite RN_shift_opp, Rabs_Ropp. rewrite <- (mag_opp radix2 a) in Hb |- *.
+    rewrite Rabs_left in Hm by exact Hneg. rewrite <- (mag_opp radix2 a) in Hm.
+    apply case_full; [ apply generic_format_opp, Fa | exact Hm | rewrite Rabs_Ropp; exact Hb ].
+Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Tie geometry: an error of exactly 2^(m-p) below 2^m + 2^(m+1-p)     *)
+(* ------------------------------------------------------------------ *)
+
+Lemma tie_shape_pos : forall m x, bpow m <= x -> x < bpow m + 2 * bpow (m - p) ->
+  Rabs (x - RN x) = bpow (m - p) -> RN x = bpow m /\ x = bpow m + bpow (m - p).
+Proof.
+  intros m x Hlo Hhi He. set (u := bpow (m - p)) in *.
+  assert (Hu : 0 < u) by apply bpow_gt_0.
+  assert (H2u : bpow (m + 1 - p) = 2 * u) by (unfold u; rewrite <- pow_double; f_equal; ring).
+  assert (H4u : 4 * u <= bpow m) by (unfold u; replace 4 with (bpow 2) by reflexivity; rewrite <- bpow_plus; apply bpow_le; lia).
+  assert (Fm : F (bpow m)) by (apply generic_format_bpow; unfold FLX_exp; lia).
+  assert (Fq : F (RN x)) by (apply generic_format_round; auto with typeclass_instances).
+  assert (Hq1 : bpow m <= RN x).
+  { rewrite <- (round_generic radix2 fexp ZnearestE (bpow m) Fm). apply round_le; auto with typeclass_instances. }
+  assert (Hqm : RN x = bpow m).
+  { destruct (Req_dec (RN x) (bpow m)) as [E | Ne]; [ exact E | exfalso ].
+    assert (Hgt : bpow m < RN x) by lra.
+    assert (Hq2 : bpow m + 2 * u <= RN x).
+    { destruct (Rlt_or_le (RN x) (bpow m + 2 * u)) as [L | L]; [ | exact L ].
+      pose proof (gap m (RN x) Fq) as G. rewrite H2u in G.
+      rewrite Rabs_pos_eq in G by lra. pose proof (G ltac:(lra)). lra. }
+    assert (Hd : RN x - x = u).
+    { rewrite <- Rabs_Ropp in He. replace (- (x - RN x)) with (RN x - x) in He by ring.
+      rewrite Rabs_pos_eq in He by lra. exact He. }
+    assert (Hmq : mag (RN x) = (m + 1)%Z :> Z).
+    { apply mag_unique. replace (m + 1 - 1)%Z with m by ring. rewrite pow_double.
+      rewrite Rabs_pos_eq by lra. split; lra. }
+    pose proof (F_mult _ Fq) as Mq. rewrite Hmq in Mq.
+    assert (Mc : mult (m + 1 - p) (bpow m + 2 * u)).
+    { apply mult_plus; [ apply mult_bpow; lia | exists 1%Z; rewrite H2u; ring ]. }
+    assert (Hq3 : RN x = bpow m + 2 * u).
+    { destruct (Rlt_or_le (bpow m + 2 * u) (RN x)) as [L | L]; [ | lra ].
+      pose proof (mult_step _ _ _ Mc Mq L) as St. rewrite H2u in St. lra. }
+    assert (Hx : x = bpow m + u) by lra.
+    pose proof (tie_even m) as T. fold u in T. rewrite <- Hx in T. lra. }
+  split; [ exact Hqm | ]. rewrite Hqm in He.
+  rewrite Rabs_pos_eq in He by lra. lra.
+Qed.
+
+Lemma tie_shape : forall m x, Rabs x < bpow m + 2 * bpow (m - p) ->
+  Rabs (x - RN x) = bpow (m - p) ->
+  exists s, (s = 1 \/ s = -1) /\ RN x = s * bpow m /\ x = s * (bpow m + bpow (m - p)).
+Proof.
+  intros m x Hx He. set (u := bpow (m - p)) in *. assert (Hu : 0 < u) by apply bpow_gt_0.
+  assert (Hx0 : x <> 0).
+  { intro Z. rewrite Z, round_0, Rminus_0_r, Rabs_R0 in He by auto with typeclass_instances. lra. }
+  assert (Hbig : bpow m <= Rabs x).
+  { destruct (Rlt_or_le (Rabs x) (bpow m)) as [L | L]; [ exfalso | exact L ].
+    pose proof (error_le_half_ulp radix2 fexp (fun t => negb (Z.even t)) x) as E.
+    rewrite <- Rabs_Ropp in E. replace (- (RN x - x)) with (x - RN x) in E by ring. rewrite He in E.
+    rewrite (ulp_eq x Hx0) in E. assert (Hm : (mag x <= m)%Z) by (apply mag_le_bpow; assumption).
+    assert (bpow (mag x - p) <= u) by (apply bpow_le; lia). lra. }
+  destruct (Rlt_or_le 0 x) as [Hp0 | Hn0].
+  - rewrite Rabs_pos_eq in Hbig, Hx by lra.
+    destruct (tie_shape_pos m x Hbig Hx He) as [A B]. fold u in A, B. exists 1. split; [ left; reflexivity | split; lra ].
+  - assert (Hneg : x < 0) by (destruct Hn0 as [L | L]; [ exact L | exfalso; apply Hx0, L ]).
+    rewrite Rabs_left in Hbig, Hx by exact Hneg.
+    assert (He' : Rabs (- x - RN (- x)) = u).
+    { rewrite round_NE_opp. replace (- x - - RN x) with (- (x - RN x)) by ring. rewrite Rabs_Ropp. exact He. }
+    destruct (tie_shape_pos m (- x) Hbig Hx He') as [A B]. fold u in A, B. rewrite round_NE_opp in A.
+    exists (-1). split; [ right; reflexivity | split; lra ].
+Qed.
+
+Lemma mult_abs : forall s x, mult s x -> mult s (Rabs x).
+Proof. intros s x [n ->]. exists (Z.abs n). apply abs_mult. Qed.
+
+(* ------------------------------------------------------------------ *)
+(* The cascade                                                         *)
+(* ------------------------------------------------------------------ *)
+
+Section Run.
+Variable g : nat -> R.     (* sorted inputs g_0 .. g_n, ascending |.| *)
+Variable n : nat.
+
+Fixpoint Q (j : nat) : R :=
+  match j with O => g O | S j' => RN (g (S j') + Q j') end.
+Definition h (j : nat) : R :=
+  match j with O => 0 | S j' => g (S j') + Q j' - Q (S j') end.
+Fixpoint Ssum (j : nat) : R :=
+  match j with O => g O | S j' => Ssum j' + g (S j') end.
+Fixpoint Hsum (j : nat) : R :=
+  match j with O => 0 | S j' => Hsum j' + h (S j') end.
+Fixpoint Tsum (j : nat) : R :=
+  match j with O => ulp (g O) | S j' => Tsum j' + ulp (g (S j')) end.
+
+Hypothesis Hf : forall j, (j <= n)%nat -> F (g j).
+Hypothesis Hnz : forall j, (j <= n)%nat -> g j <> 0.
+Hypothesis Hsort : forall j, (S j <= n)%nat -> Rabs (g j) <= Rabs (g (S j)).
+(* priest_keys_general *)
+Hypothesis Hkey : forall j, (j + 2 <= n)%nat -> Rabs (g j) < ulp (g (j + 2)).
+(* Lemma S (exact partial sum of two Priest chains) *)
+Hypothesis HS : forall k, (2 <= k <= n)%nat -> Rabs (Ssum (k - 2)) < 2 * ulp (g k).
+
+Lemma FQ : forall j, (j <= n)%nat -> F (Q j).
+Proof.
+  intros [| j] H; [ apply Hf, H | ]. simpl. apply generic_format_round; auto with typeclass_instances.
+Qed.
+
+Lemma SQH : forall j, Ssum j = Q j + Hsum j.
+Proof. induction j as [| j IH]; simpl; [ ring | ]. rewrite IH. unfold h. simpl. ring. Qed.
+
+Let r := bpow (- p).
+
+Lemma r_facts : 0 < r /\ r <= / 4.
+Proof.
+  unfold r. split; [ apply bpow_gt_0 | ].
+  replace (/ 4) with (bpow (-2)) by reflexivity. apply bpow_le. lia.
+Qed.
+
+Lemma ulp_key : forall j, (j + 2 <= n)%nat -> ulp (g j) <= r * ulp (g (j + 2)).
+Proof.
+  intros j Hj. pose proof (Hkey j Hj) as K.
+  assert (H0 : g j <> 0) by (apply Hnz; lia). assert (H2 : g (j + 2)%nat <> 0) by (apply Hnz; lia).
+  rewrite (ulp_eq _ H2) in *. rewrite (ulp_eq _ H0).
+  assert (Hm : (mag (g j) <= mag (g (j + 2)%nat) - p)%Z) by (apply mag_le_bpow; assumption).
+  unfold r. rewrite <- bpow_plus. apply bpow_le. lia.
+Qed.
+
+Lemma ulp_mono : forall j, (S j <= n)%nat -> ulp (g j) <= ulp (g (S j)).
+Proof. intros j Hj. apply ulp_le; auto with typeclass_instances. Qed.
+
+Lemma ulp_nonneg : forall x, 0 <= ulp x.
+Proof. intro x. apply ulp_ge_0. Qed.
+
+(* Lemma U, in division-free form *)
+Lemma Tsum_bound : forall j, (1 <= j <= n)%nat ->
+  (1 - r) * Tsum j <= ulp (g j) + ulp (g (j - 1)).
+Proof.
+  destruct r_facts as [Hr0 Hr1].
+  intro j. induction j as [j IH] using (well_founded_induction lt_wf). intros Hj.
+  destruct j as [| [| i]]; [ lia | | ].
+  - simpl. pose proof (ulp_nonneg (g O)). pose proof (ulp_nonneg (g 1%nat)). nra.
+  - cbn [Tsum]. replace (S (S i) - 1)%nat with (S i) by lia.
+    pose proof (ulp_nonneg (g (S i))). pose proof (ulp_nonneg (g (S (S i)))).
+    destruct i as [| i'].
+    + cbn [Tsum]. pose proof (ulp_key 0 ltac:(lia)) as K. simpl in K.
+      pose proof (ulp_nonneg (g O)). nra.
+    + pose proof (IH (S i') ltac:(lia) ltac:(lia)) as IHi.
+      replace (S i' - 1)%nat with i' in IHi by lia.
+      pose proof (ulp_key (S i') ltac:(lia)) as K1. replace (S i' + 2)%nat with (S (S (S i'))) in K1 by lia.
+      pose proof (ulp_key i' ltac:(lia)) as K2. replace (i' + 2)%nat with (S (S i')) in K2 by lia.
+      nra.
+Qed.
+
+Definition LA (j : nat) : Prop := Rabs (h j) <= ulp (g j).
+Definition TB (j : nat) : Prop := Rabs (Q (j - 1) - g (j - 1)) <= 2 * ulp (g j).
+
+Lemma Hsum_bound : forall j, (forall i, (1 <= i <= j)%nat -> LA i) -> Rabs (Hsum j) <= Tsum j.
+Proof.
+  induction j as [| j IH]; intro HL; cbn [Hsum Tsum].
+  - rewrite Rabs_R0. apply ulp_nonneg.
+  - pose proof (Rabs_triang (Hsum j) (h (S j))).
+    pose proof (IH (fun i Hi => HL i ltac:(lia))). pose proof (HL (S j) ltac:(lia)). unfold LA in *. lra.
+Qed.
+
+(* Lemma B *)
+Lemma lemma_B : forall k, (2 <= k <= n)%nat -> (forall i, (1 <= i <= k - 2)%nat -> LA i) ->
+  Rabs (Q (k - 2)) <= 2 * ulp (g k).
+Proof.
+  intros k Hk HL. destruct r_facts as [Hr0 Hr1].
+  assert (Hk0 : g k <> 0) by (apply Hnz; lia).
+  set (U := ulp (g k)). set (m := (mag (g k) : Z)).
+  assert (HU : U = bpow (m - p)) by (unfold U, m; apply ulp_eq, Hk0).
+  set (t := (m - p + 1)%Z).
+  assert (H2U : 2 * U = bpow t) by (rewrite HU; unfold t; rewrite pow_double; ring).
+  assert (Hsp : bpow (t + 1 - p) = 4 * r * U).
+  { rewrite HU. unfold r, t. replace (m - p + 1 + 1 - p)%Z with ((m - p) + - p + 2)%Z by ring.
+    rewrite !bpow_plus. change (bpow 2) with 4. ring. }
+  pose proof (HS k Hk) as Hs. fold U in Hs. rewrite SQH in Hs.
+  assert (HH : Rabs (Hsum (k - 2)) <= 4 * r * U).
+  { destruct (Nat.eq_dec (k - 2) 0) as [E | E].
+    - rewrite E. simpl. rewrite Rabs_R0. pose proof (ulp_nonneg (g k)). fold U in H. nra.
+    - pose proof (Hsum_bound (k - 2) HL) as HB.
+      pose proof (Tsum_bound (k - 2) ltac:(lia)) as TB2.
+      pose proof (ulp_key (k - 2) ltac:(lia)) as K1. replace (k - 2 + 2)%nat with k in K1 by lia. fold U in K1.
+      pose proof (ulp_key (k - 2 - 1) ltac:(lia)) as K2. replace (k - 2 - 1 + 2)%nat with (S (k - 2)) in K2 by lia.
+      pose proof (ulp_mono (k - 2 + 1) ltac:(lia)) as M. replace (S (k - 2 + 1)) with k in M by lia.
+      replace (k - 2 + 1)%nat with (S (k - 2)) in M by lia. fold U in M.
+      assert (Tnn : 0 <= Tsum (k - 2)) by (pose proof (Rabs_pos (Hsum (k - 2))); lra).
+      nra. }
+  apply Rle_trans with (bpow t); [ | lra ].
+  apply gap; [ apply FQ; lia | ].
+  replace (Q (k - 2)) with (Ssum (k - 2) - Hsum (k - 2)) by (rewrite SQH; ring).
+  pose proof (Rabs_triang (Ssum (k - 2)) (- Hsum (k - 2))) as Tr. rewrite Rabs_Ropp in Tr.
+  unfold Rminus. rewrite Hsp. rewrite SQH. replace (Q (k - 2) + Hsum (k - 2) + - Hsum (k - 2)) with (Q (k - 2)) by ring.
+  pose proof (Rabs_triang (Q (k - 2) + Hsum (k - 2)) (- Hsum (k - 2))) as Tr2.
+  replace (Q (k - 2) + Hsum (k - 2) + - Hsum (k - 2)) with (Q (k - 2)) in Tr2 by ring.
+  rewrite Rabs_Ropp in Tr2. lra.
+Qed.
+
+(* ------------------------------------------------------------------ *)
+(* Main theorem: T(k) and LA(k) for every 1 <= k <= n                  *)
+(* ------------------------------------------------------------------ *)
+
+Lemma LA_of_TB : forall k, (1 <= k <= n)%nat -> TB k -> LA k.
+Proof.
+  intros [| k'] Hk HT; [ lia | ]. unfold LA, TB in *. replace (S k' - 1)%nat with k' in HT by lia.
+  unfold h. cbn [Q].
+  apply (stepA (g (S k')) (g k') (Q k')); [ apply Hf; lia | apply Hnz; lia | apply Hf; lia
+    | apply Hsort; lia | apply FQ; lia | exact HT ].
+Qed.
+
+Lemma TB_step : forall k, (2 <= k <= n)%nat ->
+  (forall i, (1 <= i < k)%nat -> TB i /\ LA i) -> TB k.
+Proof.
+  intros k Hk IH. destruct k as [| [| k']]; [ lia | lia | ].
+  set (K := S (S k')). unfold TB. replace (K - 1)%nat with (S k') by (unfold K; lia).
+  set (a := g (S k')). set (b := Q k').
+  assert (HQ : Q (S k') = RN (a + b)) by reflexivity.
+  assert (Ha0 : a <> 0) by (apply Hnz; lia). assert (HK0 : g K <> 0) by (apply Hnz; unfold K; lia).
+  assert (Fa : F a) by (apply Hf; lia).
+  set (U := ulp (g K)). set (mK := (mag (g K) : Z)). set (ma := (mag a : Z)).
+  assert (HU : U = bpow (mK - p)) by (apply ulp_eq, HK0).
+  assert (Hw : ulp a = bpow (ma - p)) by (apply ulp_eq, Ha0).
+  assert (Hma : (ma <= mK)%Z).
+  { apply mag_le_abs; [ exact Ha0 | ]. apply Hsort. unfold K; lia. }
+  (* facts from the induction hypothesis at S k' *)
+  destruct (IH (S k') ltac:(lia)) as [TBk LAk]. unfold TB, LA in TBk, LAk.
+  replace (S k' - 1)%nat with k' in TBk by lia. fold a b in TBk. fold a in LAk.
+  rewrite Hw in TBk, LAk.
+  assert (Hhk : h (S k') = a + b - RN (a + b)) by reflexivity.
+  assert (Key : Rabs (g k') < U).
+  { pose proof (Hkey k' ltac:(unfold K in *; lia)) as Kk.
+    replace (k' + 2)%nat with K in Kk by (unfold K; lia). exact Kk. }
+  assert (Hb : Rabs b < U + 2 * bpow (ma - p)).
+  { pose proof (Rabs_triang_inv b (g k')). lra. }
+  assert (Hrho : RN (a + b) - a = b - h (S k')) by (rewrite Hhk; ring).
+  rewrite HQ.
+  destruct (Z_le_gt_dec ma (mK - 2)) as [C1 | C1].
+  - (* w <= U/4 *)
+    assert (Hw4 : 4 * bpow (ma - p) <= U).
+    { rewrite HU. replace 4 with (bpow 2) by reflexivity. rewrite <- bpow_plus. apply bpow_le. lia. }
+    rewrite Hrho. pose proof (Rabs_triang b (- h (S k'))) as Tr. rewrite Rabs_Ropp in Tr.
+    unfold Rminus. pose proof (bpow_gt_0 radix2 (ma - p)). lra.
+  - destruct (Z.eq_dec ma (mK - 1)) as [C2 | C2].
+    + (* w = U/2 *)
+      assert (HwU : 2 * bpow (ma - p) = U).
+      { rewrite HU, C2, <- pow_double. f_equal. ring. }
+      assert (Hb' : Rabs b < 4 * bpow (ma - p)) by lra.
+      pose proof (case_half_any a b Fa Ha0 Hb') as R. fold ma in R. lra.
+    + (* w = U *)
+      assert (C3 : ma = mK) by lia.
+      assert (HwU : bpow (ma - p) = U) by (rewrite HU, C3; reflexivity).
+      assert (HB : Rabs b <= 2 * U).
+      { pose proof (lemma_B K ltac:(unfold K; lia)
+                      (fun i Hi => proj2 (IH i ltac:(unfold K in Hi; lia)))) as LB.
+        replace (K - 2)%nat with k' in LB by (unfold K; lia). exact LB. }
+      assert (Hb' : Rabs b <= 2 * bpow (mag a - p)) by (fold ma; lra).
+      pose proof (case_full_any a b Fa Ha0 Hb') as R. fold ma in R. lra.
+Qed.
+
+Theorem tail_bound_and_lookahead :
+  forall k, (1 <= k <= n)%nat -> TB k /\ LA k.
+Proof.
+  intro k. induction k as [k IH] using (well_founded_induction lt_wf). intro Hk.
+  assert (HT : TB k).
+  { destruct (Nat.eq_dec k 1) as [E | E].
+    - subst k. unfold TB. simpl. rewrite Rminus_diag, Rabs_R0. pose proof (ulp_nonneg (g 1%nat)). lra.
+    - apply TB_step; [ lia | ]. intros i Hi. apply IH; lia. }
+  split; [ exact HT | apply LA_of_TB; assumption ].
+Qed.
+
+(* The closed look-ahead used by the cascade invariant: |h_k| <= ulp(g_{k+1}). *)
+Corollary closed_lookahead :
+  forall k, (1 <= k)%nat -> (S k <= n)%nat -> Rabs (h k) <= ulp (g (S k)).
+Proof.
+  intros k Hk Hk'. destruct (tail_bound_and_lookahead k ltac:(lia)) as [_ L]. unfold LA in L.
+  apply Rle_trans with (1 := L). apply ulp_mono. exact Hk'.
+Qed.
+
+(* Equality in the look-ahead forces the tie shape (N -> T entry). *)
+Lemma eq_shape : forall k, (1 <= k)%nat -> (S k <= n)%nat -> Rabs (h k) = ulp (g (S k)) ->
+  mag (g k) = mag (g (S k)) :> Z /\
+  exists s, (s = 1 \/ s = -1) /\ Q k = s * bpow (mag (g (S k))) /\ h k = s * ulp (g (S k))
+    /\ Rabs (g k) = bpow (mag (g (S k))) - ulp (g (S k)).
+Proof.
+  intros k Hk1 Hk2 Heq.
+  destruct (tail_bound_and_lookahead k ltac:(lia)) as [TBk LAk]. unfold TB, LA in TBk, LAk.
+  assert (Hk0 : g k <> 0) by (apply Hnz; lia). assert (HS0 : g (S k) <> 0) by (apply Hnz; lia).
+  pose proof (ulp_mono k Hk2) as M.
+  assert (Uk : ulp (g k) = ulp (g (S k))) by lra.
+  assert (Hmag : mag (g k) = mag (g (S k)) :> Z).
+  { rewrite !ulp_eq in Uk by assumption. apply bpow_inj in Uk. lia. }
+  split; [ exact Hmag | ].
+  set (m := (mag (g (S k)) : Z)) in *. set (u := ulp (g (S k))) in *.
+  assert (Hu : u = bpow (m - p)) by (unfold u, m; apply ulp_eq, HS0).
+  destruct k as [| k']; [ lia | ].
+  replace (S k' - 1)%nat with k' in TBk by lia. rewrite Uk in TBk.
+  pose proof (Hkey k' ltac:(lia)) as K. replace (k' + 2)%nat with (S (S k')) in K by lia. fold u in K.
+  assert (HQ3 : Rabs (Q k') < 3 * u) by (pose proof (Rabs_triang_inv (Q k') (g k')); lra).
+  pose proof (mag_bounds _ Hk0) as [_ Hg2]. rewrite Hmag in Hg2. fold m in Hg2.
+  assert (Mg : mult (m - p) (g (S k'))) by (pose proof (F_mult _ (Hf (S k') ltac:(lia))) as Mf; rewrite Hmag in Mf; exact Mf).
+  assert (Hgu : Rabs (g (S k')) <= bpow m - u) by (rewrite Hu; apply mult_below; [ exact Mg | lia | exact Hg2 ]).
+  set (x := g (S k') + Q k').
+  assert (HQS : Q (S k') = RN x) by reflexivity.
+  assert (HhS : h (S k') = x - RN x) by (unfold h; rewrite HQS; reflexivity).
+  assert (Hx : Rabs x < bpow m + 2 * bpow (m - p)) by (unfold x; pose proof (Rabs_triang (g (S k')) (Q k')); lra).
+  rewrite HhS in Heq. fold u in Heq. rewrite Hu in Heq.
+  destruct (tie_shape m x Hx Heq) as (s & Hs & HR & Hxs).
+  exists s. split; [ exact Hs | ]. split; [ rewrite HQS; exact HR | ]. split.
+  - rewrite HhS, HR, Hxs, Hu. ring.
+  - assert (Habs_x : Rabs x = bpow m + u).
+    { rewrite Hxs, Rabs_mult, <- Hu. pose proof (bpow_gt_0 radix2 m).
+      assert (0 < u) by (rewrite Hu; apply bpow_gt_0).
+      rewrite (Rabs_pos_eq (bpow m + u)) by lra.
+      destruct Hs as [-> | ->]; [ rewrite Rabs_R1 | rewrite (Rabs_left (-1)) by lra ]; ring. }
+    assert (Hlow : bpow m - 2 * u < Rabs (g (S k'))).
+    { replace (g (S k')) with (x - Q k') by (unfold x; ring).
+      pose proof (Rabs_triang_inv x (Q k')). lra. }
+    assert (Mc : mult (m - p) (bpow m - 2 * u)).
+    { replace (bpow m - 2 * u) with (bpow m + IZR (-2) * bpow (m - p)) by (rewrite Hu; replace (IZR (-2)) with (-2) by reflexivity; ring).
+      apply mult_plus; [ apply mult_bpow; lia | apply mult_k ]. }
+    pose proof (mult_step _ _ _ Mc (mult_abs _ _ Mg) Hlow) as St. rewrite <- Hu in St. lra.
+Qed.
+
+End Run.
+
+(* ------------------------------------------------------------------ *)
+(* Discharging the keys and Lemma S from two Priest chains             *)
+(* ------------------------------------------------------------------ *)
+
+(* Priest's relation (B64_Overlap_Hierarchy.priest_nonoverlapping_R with
+   prec generalised to p) and chains, largest first. *)
+Definition priestR (x y : R) : Prop :=
+  exists (mx my kx ky : Z),
+    x = IZR mx * bpow kx /\ y = IZR my * bpow ky /\
+    bpow (p - 1) <= Rabs (IZR mx) < bpow p /\
+    bpow (p - 1) <= Rabs (IZR my) < bpow p /\
+    (kx - ky >= p)%Z.
+
+Fixpoint chainR (l : list R) : Prop :=
+  match l with
+  | nil => True
+  | x :: r => match r with nil => True | y :: _ => priestR x y /\ chainR r end
+  end.
+
+Lemma chainR_tail : forall x c, chainR (x :: c) -> chainR c.
+Proof. intros x [| y c] H; [ exact I | apply H ]. Qed.
+
+Fixpoint sumf (phi : R -> R) (l : list R) : R :=
+  match l with nil => 0 | x :: r => phi x + sumf phi r end.
+
+Lemma sumf_app : forall phi l1 l2, sumf phi (l1 ++ l2) = sumf phi l1 + sumf phi l2.
+Proof. intros phi l1 l2. induction l1 as [| x l1 IH]; simpl; [ ring | rewrite IH; ring ]. Qed.
+
+Lemma sumf_perm : forall phi l l', Permutation l l' -> sumf phi l = sumf phi l'.
+Proof. intros phi l l' H. induction H; simpl; lra. Qed.
+
+Lemma sumf_nonneg : forall phi l, (forall x, 0 <= phi x) -> 0 <= sumf phi l.
+Proof. intros phi l H. induction l as [| x l IH]; simpl; [ lra | pose proof (H x); lra ]. Qed.
+
+Lemma sumf_ext : forall phi psi l, (forall x, In x l -> phi x = psi x) -> sumf phi l = sumf psi l.
+Proof.
+  intros phi psi l H. induction l as [| x l IH]; simpl; [ reflexivity | ].
+  rewrite (H x (or_introl eq_refl)), IH; [ reflexivity | intros y Hy; apply H; right; exact Hy ].
+Qed.
+
+Lemma sumf_le : forall phi psi l, (forall x, phi x <= psi x) -> sumf phi l <= sumf psi l.
+Proof. intros phi psi l H. induction l as [| x l IH]; simpl; [ lra | pose proof (H x); lra ]. Qed.
+
+Lemma in_le_sum : forall y l, In y l -> Rabs y <= sumf Rabs l.
+Proof.
+  intros y l. induction l as [| x l IH]; intro Hin; [ destruct Hin | ].
+  pose proof (sumf_nonneg Rabs l Rabs_pos). simpl. destruct Hin as [-> | Hin].
+  - lra.
+  - pose proof (IH Hin). pose proof (Rabs_pos x). lra.
+Qed.
+
+Lemma abs_sum_le : forall l, Rabs (sumf (fun x => x) l) <= sumf Rabs l.
+Proof.
+  induction l as [| x l IH]; simpl; [ rewrite Rabs_R0; lra | ].
+  pose proof (Rabs_triang x (sumf (fun x => x) l)). lra.
+Qed.
+
+(* normalised representation facts *)
+Lemma norm_facts : forall m k, bpow (p - 1) <= Rabs (IZR m) < bpow p ->
+  let x := IZR m * bpow k in
+  x <> 0 /\ ulp x = bpow k /\ mult k x /\ Rabs x <= bpow (k + p) - bpow k
+  /\ bpow (k + p - 1) <= Rabs x.
+Proof.
+  intros m k [H1 H2] x. pose proof (bpow_gt_0 radix2 k) as Hk.
+  assert (Ha : Rabs x = Rabs (IZR m) * bpow k)
+    by (unfold x; rewrite Rabs_mult, (Rabs_pos_eq (bpow k)) by lra; reflexivity).
+  assert (Lo : bpow (k + p - 1) <= Rabs x)
+    by (rewrite Ha; replace (k + p - 1)%Z with ((p - 1) + k)%Z by ring; rewrite bpow_plus; nra).
+  assert (Hi : Rabs x < bpow (k + p))
+    by (rewrite Ha; rewrite Zplus_comm, bpow_plus; nra).
+  assert (Hx0 : x <> 0) by (intro Z; rewrite Z, Rabs_R0 in Lo; pose proof (bpow_gt_0 radix2 (k + p - 1)); lra).
+  assert (Hm : mag x = (k + p)%Z :> Z) by (apply mag_unique; split; [ exact Lo | exact Hi ]).
+  split; [ exact Hx0 | ]. split; [ rewrite ulp_eq by exact Hx0; rewrite Hm; f_equal; ring | ].
+  split; [ exists m; reflexivity | ]. split; [ | exact Lo ].
+  apply mult_below; [ exists m; reflexivity | lia | exact Hi ].
+Qed.
+
+(* Every component after x in a Priest chain sums to less than ulp x. *)
+Lemma tail_lt : forall c x y, chainR (x :: y :: c) -> sumf Rabs (y :: c) < ulp x.
+Proof.
+  induction c as [| z c IH]; intros x y H.
+  - destruct H as [(mx & my & kx & ky & Hx & Hy & Nx & Ny & Hg) _].
+    destruct (norm_facts mx kx Nx) as (_ & Ux & _ & _ & _). destruct (norm_facts my ky Ny) as (_ & _ & _ & Uy & _).
+    rewrite <- Hx in Ux. rewrite <- Hy in Uy. rewrite Ux. simpl.
+    assert (bpow (ky + p) <= bpow kx) by (apply bpow_le; lia). pose proof (bpow_gt_0 radix2 ky). lra.
+  - destruct H as [(mx & my & kx & ky & Hx & Hy & Nx & Ny & Hg) Hr].
+    pose proof (IH y z Hr) as IHyz.
+    destruct (norm_facts mx kx Nx) as (_ & Ux & _ & _ & _). destruct (norm_facts my ky Ny) as (_ & Uy & _ & Ay & _).
+    rewrite <- Hx in Ux. rewrite <- Hy in Uy, Ay. rewrite Uy in IHyz. rewrite Ux.
+    change (sumf Rabs (y :: z :: c)) with (Rabs y + sumf Rabs (z :: c)).
+    assert (bpow (ky + p) <= bpow kx) by (apply bpow_le; lia). lra.
+Qed.
+
+Section Keys.
+Variable G : R.
+Definition phiK (x : R) : R :=
+  if Rle_dec (ulp G) (Rabs x) then if Rle_dec (Rabs x) (Rabs G) then 1 else 0 else 0.
+
+Lemma phiK_one : forall x, ulp G <= Rabs x -> Rabs x <= Rabs G -> phiK x = 1.
+Proof.
+  intros x H1 H2. unfold phiK.
+  destruct (Rle_dec _ _) as [_ | N1]; [ | contradiction ].
+  destruct (Rle_dec _ _) as [_ | N2]; [ reflexivity | contradiction ].
+Qed.
+
+Lemma phiK_nonneg : forall x, 0 <= phiK x.
+Proof. intro x. unfold phiK. destruct (Rle_dec _ _); [ destruct (Rle_dec _ _) | ]; lra. Qed.
+
+(* at most one component per chain lies in [ulp G, |G|] *)
+Lemma chain_count : forall c, chainR c -> sumf phiK c <= 1.
+Proof.
+  induction c as [| x c IH]; intro Hc; simpl; [ lra | ].
+  unfold phiK at 1. destruct (Rle_dec (ulp G) (Rabs x)) as [H1 | H1];
+    [ destruct (Rle_dec (Rabs x) (Rabs G)) as [H2 | H2] | ].
+  - destruct c as [| y c']; [ simpl; lra | ].
+    pose proof (tail_lt c' x y Hc) as T.
+    assert (Ux : ulp x <= ulp G) by (apply ulp_le; auto with typeclass_instances).
+    rewrite (sumf_ext phiK (fun _ => 0) (y :: c')).
+    + simpl. assert (Hz : forall l, sumf (fun _ => 0) l = 0) by (induction l; simpl; lra). rewrite Hz. lra.
+    + intros z Hz. pose proof (in_le_sum z (y :: c') Hz). unfold phiK.
+      destruct (Rle_dec (ulp G) (Rabs z)); [ lra | reflexivity ].
+  - pose proof (IH (chainR_tail x c Hc)). lra.
+  - pose proof (IH (chainR_tail x c Hc)). lra.
+Qed.
+End Keys.
+
+Section Small.
+Variable t : Z.
+Definition phiS (x : R) : R := if Rlt_dec (Rabs x) (bpow t) then Rabs x else 0.
+
+Lemma phiS_le : forall x, phiS x <= Rabs x.
+Proof. intro x. unfold phiS. destruct (Rlt_dec _ _); [ lra | apply Rabs_pos ]. Qed.
+Lemma phiS_nonneg : forall x, 0 <= phiS x.
+Proof. intro x. unfold phiS. destruct (Rlt_dec _ _); [ apply Rabs_pos | lra ]. Qed.
+
+(* the components of one chain below 2^t sum to less than 2^t *)
+Lemma chain_small : forall c, chainR c -> sumf phiS c < bpow t.
+Proof.
+  induction c as [| x c IH]; intro Hc; simpl; [ apply bpow_gt_0 | ].
+  unfold phiS at 1. destruct (Rlt_dec (Rabs x) (bpow t)) as [H1 | H1].
+  - destruct c as [| y c']; [ simpl; lra | ].
+    pose proof (tail_lt c' x y Hc) as T.
+    destruct Hc as [(mx & my & kx & ky & Hx & Hy & Nx & Ny & Hg) _].
+    destruct (norm_facts mx kx Nx) as (_ & Ux & Mx & _ & Lo). rewrite <- Hx in Ux, Mx, Lo.
+    assert (Hkt : (kx <= t)%Z).
+    { assert (bpow (kx + p - 1) < bpow t) by lra. apply lt_bpow in H. lia. }
+    pose proof (mult_below kx t x Mx Hkt H1) as Hb.
+    pose proof (sumf_le phiS Rabs (y :: c') phiS_le) as L. simpl in L, T. rewrite Ux in T. cbn [sumf]. lra.
+  - pose proof (IH (chainR_tail x c Hc)). lra.
+Qed.
+End Small.
+
+Section Merge.
+Variable g : nat -> R.
+Variable n : nat.
+Variables e f : list R.
+Hypothesis Hf : forall j, (j <= n)%nat -> F (g j).
+Hypothesis Hnz : forall j, (j <= n)%nat -> g j <> 0.
+Hypothesis Hsort : forall j, (S j <= n)%nat -> Rabs (g j) <= Rabs (g (S j)).
+Hypothesis Hce : chainR e.
+Hypothesis Hcf : chainR f.
+Hypothesis Hperm : Permutation (map g (seq 0 (S n))) (e ++ f).
+
+Lemma sorted_le : forall i j, (i <= j <= n)%nat -> Rabs (g i) <= Rabs (g j).
+Proof.
+  intros i j [Hij Hjn]. induction Hij as [| j Hij IH]; [ lra | ].
+  pose proof (IH ltac:(lia)). pose proof (Hsort j Hjn). lra.
+Qed.
+
+Lemma seq_split : forall a b, (a <= b)%nat -> seq 0 b = seq 0 a ++ seq a (b - a).
+Proof. intros a b H. replace b with (a + (b - a))%nat at 1 by lia. rewrite seq_app. reflexivity. Qed.
+
+Lemma keys_derived : forall j, (j + 2 <= n)%nat -> Rabs (g j) < ulp (g (j + 2)).
+Proof.
+  intros j Hj. replace (j + 2)%nat with (S (S j)) by lia.
+  destruct (Rlt_or_le (Rabs (g j)) (ulp (g (S (S j))))) as [H | H]; [ exact H | exfalso ].
+  set (G := g (S (S j))) in *.
+  assert (HG0 : G <> 0) by (apply Hnz; lia).
+  assert (HGu : ulp G <= Rabs G).
+  { rewrite ulp_eq by exact HG0. pose proof (mag_bounds G HG0) as [Lo _].
+    assert (bpow (mag G - p) <= bpow (mag G - 1)) by (apply bpow_le; lia). lra. }
+  pose proof (sorted_le j (S j) ltac:(lia)) as S1. pose proof (sorted_le (S j) (S (S j)) ltac:(lia)) as S2.
+  fold G in S2.
+  assert (Three : sumf (phiK G) (map g (seq j 3)) = 3).
+  { cbn [seq map sumf]. fold G.
+    rewrite (phiK_one G (g j)) by lra. rewrite (phiK_one G (g (S j))) by lra.
+    rewrite (phiK_one G G) by lra. ring. }
+  assert (Big : 3 <= sumf (phiK G) (map g (seq 0 (S n)))).
+  { rewrite (seq_split j (S n)) by lia. rewrite map_app, sumf_app.
+    replace (S n - j)%nat with (3 + (S n - j - 3))%nat by lia. rewrite seq_app, map_app, sumf_app.
+    rewrite Three. pose proof (sumf_nonneg (phiK G) (map g (seq 0 j)) (phiK_nonneg G)).
+    pose proof (sumf_nonneg (phiK G) (map g (seq (j + 3) (S n - j - 3))) (phiK_nonneg G)). lra. }
+  rewrite (sumf_perm _ _ _ Hperm), sumf_app in Big.
+  pose proof (chain_count G e Hce). pose proof (chain_count G f Hcf). lra.
+Qed.
+
+Lemma Ssum_seq : forall j, Ssum g j = sumf (fun x => x) (map g (seq 0 (S j))).
+Proof.
+  induction j as [| j IH]; [ simpl; ring | ].
+  rewrite seq_S, map_app, sumf_app. cbn [Ssum]. rewrite IH. simpl. ring.
+Qed.
+
+Lemma HS_derived : forall k, (2 <= k <= n)%nat -> Rabs (Ssum g (k - 2)) < 2 * ulp (g k).
+Proof.
+  intros k Hk. assert (Hk0 : g k <> 0) by (apply Hnz; lia).
+  set (t := (mag (g k) - p)%Z). assert (HU : ulp (g k) = bpow t) by (apply ulp_eq, Hk0).
+  rewrite HU, Ssum_seq. replace (S (k - 2)) with (k - 1)%nat by lia.
+  set (l1 := map g (seq 0 (k - 1))). set (l2 := map g (seq (k - 1) (S n - (k - 1)))).
+  assert (Hgl : map g (seq 0 (S n)) = l1 ++ l2) by (unfold l1, l2; rewrite (seq_split (k - 1) (S n)) by lia; apply map_app).
+  assert (Small : forall z, In z l1 -> Rabs z < bpow t).
+  { intros z Hz. unfold l1 in Hz. apply in_map_iff in Hz as [i [<- Hi]]. apply in_seq in Hi.
+    pose proof (sorted_le i (k - 2) ltac:(lia)) as L. pose proof (keys_derived (k - 2) ltac:(lia)) as K.
+    replace (k - 2 + 2)%nat with k in K by lia. rewrite HU in K. lra. }
+  assert (E1 : sumf Rabs l1 = sumf (phiS t) l1).
+  { apply sumf_ext. intros z Hz. unfold phiS. destruct (Rlt_dec _ _) as [_ | N]; [ reflexivity | ].
+    exfalso. apply N, Small, Hz. }
+  pose proof (abs_sum_le l1) as A.
+  pose proof (sumf_nonneg (phiS t) l2 (phiS_nonneg t)) as N2.
+  pose proof (sumf_perm (phiS t) _ _ Hperm) as P. rewrite Hgl, !sumf_app in P.
+  pose proof (chain_small t e Hce). pose proof (chain_small t f Hcf). lra.
+Qed.
+
+(* THE THEOREM, from two Priest chains and their sorted merge. *)
+Theorem cascade_tail_bound :
+  forall k, (1 <= k <= n)%nat ->
+    Rabs (Q g (k - 1) - g (k - 1)) <= 2 * ulp (g k) /\ Rabs (h g k) <= ulp (g k).
+Proof.
+  intros k Hk. exact (tail_bound_and_lookahead g n Hf Hnz Hsort keys_derived HS_derived k Hk).
+Qed.
+
+Corollary cascade_closed_lookahead :
+  forall k, (1 <= k)%nat -> (S k <= n)%nat -> Rabs (h g k) <= ulp (g (S k)).
+Proof. exact (closed_lookahead g n Hf Hnz Hsort keys_derived HS_derived). Qed.
+
+Corollary cascade_eq_shape : forall k, (1 <= k)%nat -> (S k <= n)%nat ->
+  Rabs (h g k) = ulp (g (S k)) ->
+  mag (g k) = mag (g (S k)) :> Z /\
+  exists s, (s = 1 \/ s = -1) /\ Q g k = s * bpow (mag (g (S k))) /\ h g k = s * ulp (g (S k))
+    /\ Rabs (g k) = bpow (mag (g (S k))) - ulp (g (S k)).
+Proof. exact (eq_shape g n Hf Hnz Hsort keys_derived HS_derived). Qed.
+
+End Merge.
+
+End Cascade.
+
+
+(* ==================================================================== *)
+(* binary64 realization: b64_grow_expansion_aux runs the FLX cascade    *)
+(* ==================================================================== *)
+
+Section B64.
+
+Local Abbreviation b2r := (Binary.B2R prec emax).
+Local Abbreviation emin64 := (3 - emax - prec)%Z.
+Local Abbreviation FLT := (FLT_exp emin64 prec).
+Let d : binary64 := Binary.B754_zero prec emax false.
+
+Local Instance prec_gt_0_64 : Prec_gt_0 prec.
+Proof. unfold Prec_gt_0, prec. lia. Qed.
+
+Lemma prec2 : (2 <= prec)%Z.
+Proof. unfold prec. lia. Qed.
+
+Lemma fmt64 : forall x : binary64, generic_format radix2 FLT (b2r x).
+Proof. intro x. exact (Binary.generic_format_B2R prec emax x). Qed.
+
+Lemma fmtX : forall x : binary64, generic_format radix2 (FLX_exp prec) (b2r x).
+Proof. intro x. apply (generic_format_FLX_FLT radix2 emin64). apply fmt64. Qed.
+
+(* RN of binary64 agrees with FLX RN on every sum of two binary64 values:
+   above the subnormal threshold by round_FLT_FLX, below it the sum is
+   exact in both formats.  So underflow costs nothing here. *)
+Lemma RN_agree : forall a b,
+  generic_format radix2 FLT a -> generic_format radix2 FLT b ->
+  round radix2 (SpecFloat.fexp prec emax) (BinarySingleNaN.round_mode mode_b64) (a + b)
+  = round radix2 (FLX_exp prec) ZnearestE (a + b).
+Proof.
+  intros a b Fa Fb.
+  change (BinarySingleNaN.round_mode mode_b64) with ZnearestE.
+  change (SpecFloat.fexp prec emax) with FLT.
+  destruct (Rle_or_lt (bpow radix2 (emin64 + prec - 1)) (Rabs (a + b))) as [H | H].
+  - apply round_FLT_FLX. exact H.
+  - assert (Fs : generic_format radix2 FLT (a + b)).
+    { apply (FLT_format_plus_small radix2 emin64 prec a b Fa Fb).
+      assert (bpow radix2 (emin64 + prec - 1) <= bpow radix2 (prec + emin64)) by (apply bpow_le; lia). lra. }
+    rewrite (round_generic radix2 FLT ZnearestE _ Fs).
+    rewrite round_generic; [ reflexivity | auto with typeclass_instances | ].
+    apply (generic_format_FLX_FLT radix2 emin64). exact Fs.
+Qed.
+
+Lemma ulp_X_le_64 : forall x, x <> 0 ->
+  ulp radix2 (FLX_exp prec) x <= ulp radix2 (SpecFloat.fexp prec emax) x.
+Proof.
+  intros x Hx. rewrite !ulp_neq_0 by exact Hx. apply bpow_le.
+  unfold cexp, FLX_exp, SpecFloat.fexp. lia.
+Qed.
+
+(* the accumulator after j steps of b64_grow_expansion_aux *)
+Fixpoint acc (q : binary64) (xs : list binary64) (j : nat) : binary64 :=
+  match j with O => q | S j' => fst (b64_TwoSum (nth j' xs d) (acc q xs j')) end.
+
+Lemma acc_shift : forall j q x xs, acc q (x :: xs) (S j) = acc (fst (b64_TwoSum x q)) xs j.
+Proof.
+  induction j as [| j IH]; intros q x xs; [ reflexivity | ].
+  change (acc q (x :: xs) (S (S j))) with (fst (b64_TwoSum (nth (S j) (x :: xs) d) (acc q (x :: xs) (S j)))).
+  rewrite IH. reflexivity.
+Qed.
+
+Lemma nth_hs : forall xs q j, (j < length xs)%nat ->
+  nth j (fst (b64_grow_expansion_aux q xs)) d = snd (b64_TwoSum (nth j xs d) (acc q xs j)).
+Proof.
+  induction xs as [| x xs IH]; intros q j Hj; [ simpl in Hj; lia | ].
+  cbn [b64_grow_expansion_aux]. destruct (b64_TwoSum x q) as [qn h0] eqn:E.
+  destruct (b64_grow_expansion_aux qn xs) as [hs qf] eqn:E2. cbn [fst].
+  destruct j as [| j].
+  - cbn [nth acc]. rewrite E. reflexivity.
+  - cbn [nth]. rewrite acc_shift, E. cbn [fst].
+    specialize (IH qn j ltac:(simpl in Hj; lia)). rewrite E2 in IH. exact IH.
+Qed.
+
+Lemma safe_nth : forall xs q j, cascade_safe q xs -> (j < length xs)%nat ->
+  b64_TwoSum_safe (nth j xs d) (acc q xs j).
+Proof.
+  induction xs as [| x xs IH]; intros q j Hs Hj; [ simpl in Hj; lia | ].
+  destruct Hs as [S1 S2]. destruct j as [| j]; [ exact S1 | ].
+  rewrite acc_shift. apply IH; [ exact S2 | simpl in Hj; lia ].
+Qed.
+
+Section Run64.
+Variables (x0 : binary64) (xs : list binary64).
+Let s := x0 :: xs.
+Let g := fun j => b2r (nth j s d).
+Hypothesis Hfin0 : b64_fin x0.
+Hypothesis Hsafe : cascade_safe x0 xs.
+
+Lemma acc_real : forall j, (j <= length xs)%nat ->
+  b64_fin (acc x0 xs j) /\ b2r (acc x0 xs j) = Q prec g j.
+Proof.
+  induction j as [| j IH]; intro Hj; [ split; [ exact Hfin0 | reflexivity ] | ].
+  destruct (IH ltac:(lia)) as [Fj Rj].
+  pose proof (ts_facts _ _ (safe_nth xs x0 j Hsafe ltac:(lia))) as (FQ & _ & RQ & _ & _ & _).
+  change (acc x0 xs (S j)) with (fst (b64_TwoSum (nth j xs d) (acc x0 xs j))).
+  split; [ exact FQ | ]. rewrite RQ, RN_agree by apply fmt64.
+  change (Q prec g (S j)) with (round radix2 (FLX_exp prec) ZnearestE (g (S j) + Q prec g j)).
+  rewrite <- Rj. reflexivity.
+Qed.
+
+Lemma h_real : forall j, (1 <= j <= length xs)%nat ->
+  b2r (nth (j - 1) (fst (b64_grow_expansion_aux x0 xs)) d) = h prec g j.
+Proof.
+  intros [| j] Hj; [ lia | ]. replace (S j - 1)%nat with j by lia.
+  rewrite nth_hs by lia.
+  pose proof (ts_facts _ _ (safe_nth xs x0 j Hsafe ltac:(lia))) as (_ & _ & _ & Ex & _ & _).
+  destruct (acc_real j ltac:(lia)) as [_ Rj]. destruct (acc_real (S j) ltac:(lia)) as [_ RSj].
+  change (acc x0 xs (S j)) with (fst (b64_TwoSum (nth j xs d) (acc x0 xs j))) in RSj.
+  unfold h. rewrite <- Rj, <- RSj. change (g (S j)) with (b2r (nth j xs d)). lra.
+Qed.
+
+End Run64.
+
+Lemma chain_of_priest : forall e, priest_chain e -> chainR prec (map b2r e).
+Proof.
+  induction e as [| a e IH]; intro H; [ exact I | ].
+  destruct e as [| b e']; [ exact I | ]. destruct H as [H1 H2].
+  split; [ exact H1 | exact (IH H2) ].
+Qed.
+
+Lemma map_nth_seq_s : forall l : list binary64, map (fun j => nth j l d) (seq 0 (length l)) = l.
+Proof.
+  induction l as [| x l IH]; [ reflexivity | ].
+  cbn [length seq map nth]. f_equal. rewrite <- seq_shift, map_map. exact IH.
+Qed.
+
+Lemma map_g_seq : forall s : list binary64,
+  map (fun j => b2r (nth j s d)) (seq 0 (length s)) = map b2r s.
+Proof.
+  intro s0. rewrite <- (map_nth_seq_s s0) at 2. rewrite map_map. reflexivity.
+Qed.
+
+Lemma sorted_g : forall s, sorted_asc s -> forall j, (S j < length s)%nat ->
+  Rabs (b2r (nth j s d)) <= Rabs (b2r (nth (S j) s d)).
+Proof.
+  intros s0 Hs. induction Hs as [| x | x y rest Hxy Hs IH]; intros j Hj; simpl in Hj; [ lia | lia | ].
+  destruct j as [| j]; [ exact Hxy | ]. apply (IH j). simpl. lia.
+Qed.
+
+(* THE binary64 THEOREM: the actual implementation's accumulators and
+   errors obey the tail bound and the error bound, with binary64 ulp. *)
+Theorem b64_cascade_tail_bound :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j <= length xs)%nat ->
+      Rabs (b2r (acc x0 xs (j - 1)) - b2r (nth (j - 1) (x0 :: xs) d))
+        <= 2 * ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth j (x0 :: xs) d))
+      /\ Rabs (b2r (nth (j - 1) (fst (b64_grow_expansion_aux x0 xs)) d))
+        <= ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth j (x0 :: xs) d)).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj.
+  set (s0 := x0 :: xs). set (g := fun j => b2r (nth j s0 d)).
+  assert (Hperm : Permutation (e ++ f) s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Fs : Forall b64_fin s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hsafe : cascade_safe x0 xs) by (pose proof (fes_cascade_safe e f Fe Ff Hov) as C; rewrite Hs in C; exact C).
+  assert (Hfin0 : b64_fin x0) by (inversion Fs; assumption).
+  assert (Hsorted : sorted_asc s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_sorted).
+  assert (Nz' : forall j, (j <= length xs)%nat -> g j <> 0).
+  { intros i Hi. unfold g. rewrite Forall_forall in Nz. apply Nz.
+    apply (Permutation_in _ (Permutation_sym Hperm)). apply nth_In. unfold s0. simpl. lia. }
+  assert (Hpm : Permutation (map g (seq 0 (S (length xs)))) (map b2r e ++ map b2r f)).
+  { unfold g. change (S (length xs)) with (length s0). rewrite map_g_seq, <- map_app.
+    apply Permutation_map, Permutation_sym, Hperm. }
+  destruct (cascade_tail_bound prec prec2 g (length xs) (map b2r e) (map b2r f)
+              (fun i _ => fmtX (nth i s0 d)) Nz'
+              (fun i Hi => sorted_g s0 Hsorted i ltac:(unfold s0; simpl; lia))
+              (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm j Hj) as [T L].
+  assert (Hg0 : g j <> 0) by (apply Nz'; lia).
+  pose proof (ulp_X_le_64 (g j) Hg0) as U.
+  destruct (acc_real x0 xs Hfin0 Hsafe (j - 1) ltac:(lia)) as [_ R].
+  rewrite (h_real x0 xs Hfin0 Hsafe j Hj).
+  fold s0 g in R. rewrite R.
+  change (b2r (nth (j - 1) s0 d)) with (g (j - 1)%nat). change (b2r (nth j s0 d)) with (g j).
+  change (h prec (fun j0 : nat => b2r (nth j0 (x0 :: xs) d)) j) with (h prec g j).
+  split; lra.
+Qed.
+
+(* The closed look-ahead on the implementation: error <= ulp(next input). *)
+Corollary b64_closed_lookahead :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j)%nat -> (j < length xs)%nat ->
+      Rabs (b2r (nth (j - 1) (fst (b64_grow_expansion_aux x0 xs)) d))
+        <= ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth (S j) (x0 :: xs) d)).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj Hj'.
+  destruct (b64_cascade_tail_bound e f x0 xs Pe Pf Fe Ff Nz Hov Hs j ltac:(lia)) as [_ L].
+  apply Rle_trans with (1 := L).
+  assert (Hle : Rabs (b2r (nth j (x0 :: xs) d)) <= Rabs (b2r (nth (S j) (x0 :: xs) d)))
+    by (apply (sorted_g (x0 :: xs)); [ rewrite <- Hs; apply sort_by_abs_sorted | simpl; lia ]).
+  apply ulp_le; try typeclasses eauto. exact Hle.
+Qed.
+
+(* N -> T entry, binary64: equality in the closed look-ahead gives every
+   numeric conjunct of CascadeInvariant.cinv_T for the next state. *)
+Theorem b64_equality_entry :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j)%nat -> (j < length xs)%nat ->
+    let gj := nth j (x0 :: xs) d in
+    let g2 := nth (S j) (x0 :: xs) d in
+    let q := acc x0 xs (j - 1) in
+    Rabs (b2r (snd (b64_TwoSum gj q))) = ulp radix2 (SpecFloat.fexp prec emax) (b2r g2) ->
+    let M := mag radix2 (b2r g2) in
+    let c := cexp radix2 (SpecFloat.fexp prec emax) (b2r g2) in
+    exists sg : R, (sg = 1 \/ sg = -1)
+      /\ b2r (fst (b64_TwoSum gj q)) = sg * bpow radix2 M
+      /\ b2r (snd (b64_TwoSum gj q)) = sg * bpow radix2 c
+      /\ (2 <= M - c)%Z
+      /\ SpecFloat.fexp prec emax (M + 1) = (c + 1)%Z
+      /\ Rabs (b2r gj) = bpow radix2 M - bpow radix2 c
+      /\ Rabs (b2r gj) <= Rabs (b2r g2)
+      /\ bpow radix2 M - 2 * bpow radix2 c <= Rabs (b2r g2)
+      /\ c = (M - prec)%Z.
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 gj g2 q Heq M c.
+  set (s0 := x0 :: xs). set (g := fun j => b2r (nth j s0 d)).
+  assert (Hperm : Permutation (e ++ f) s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Fs : Forall b64_fin s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (Hsafe : cascade_safe x0 xs) by (pose proof (fes_cascade_safe e f Fe Ff Hov) as C; rewrite Hs in C; exact C).
+  assert (Hfin0 : b64_fin x0) by (inversion Fs; assumption).
+  assert (Hsorted : sorted_asc s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_sorted).
+  assert (Nz' : forall j, (j <= length xs)%nat -> g j <> 0).
+  { intros i Hi. unfold g. rewrite Forall_forall in Nz. apply Nz.
+    apply (Permutation_in _ (Permutation_sym Hperm)). apply nth_In. unfold s0. simpl. lia. }
+  assert (Hpm : Permutation (map g (seq 0 (S (length xs)))) (map b2r e ++ map b2r f)).
+  { unfold g. change (S (length xs)) with (length s0). rewrite map_g_seq, <- map_app.
+    apply Permutation_map, Permutation_sym, Hperm. }
+  pose proof (fun i (_ : (i <= length xs)%nat) => fmtX (nth i s0 d)) as HfX.
+  pose proof (fun i (Hi : (S i <= length xs)%nat) => sorted_g s0 Hsorted i ltac:(unfold s0; simpl; lia)) as Hso.
+  (* the implementation values are the FLX values *)
+  destruct j as [| j']; [ lia | ].
+  assert (RQ : b2r (fst (b64_TwoSum gj q)) = Q prec g (S j')).
+  { destruct (acc_real x0 xs Hfin0 Hsafe (S j') ltac:(lia)) as [_ R]. unfold gj, q. simpl Nat.sub. rewrite Nat.sub_0_r. exact R. }
+  assert (Rh : b2r (snd (b64_TwoSum gj q)) = h prec g (S j')).
+  { pose proof (h_real x0 xs Hfin0 Hsafe (S j') ltac:(lia)) as R. replace (S j' - 1)%nat with j' in R by lia.
+    rewrite nth_hs in R by lia. unfold gj, q. simpl Nat.sub. rewrite Nat.sub_0_r. exact R. }
+  change (b2r g2) with (g (S (S j'))) in *. change (b2r gj) with (g (S j')) in *.
+  (* binary64 equality forces FLX equality and the normal range *)
+  destruct (cascade_tail_bound prec prec2 g (length xs) (map b2r e) (map b2r f) HfX Nz' Hso
+              (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm (S j') ltac:(lia)) as [_ LA].
+  assert (H20 : g (S (S j')) <> 0) by (apply Nz'; lia).
+  pose proof (ulp_X_le_64 _ H20) as U64.
+  assert (UX : ulp radix2 (FLX_exp prec) (g (S j')) <= ulp radix2 (FLX_exp prec) (g (S (S j')))).
+  { apply ulp_le; try typeclasses eauto. apply Hso. lia. }
+  rewrite Rh in Heq.
+  assert (EqX : Rabs (h prec g (S j')) = ulp radix2 (FLX_exp prec) (g (S (S j')))) by lra.
+  assert (E64 : ulp radix2 (FLX_exp prec) (g (S (S j'))) = ulp radix2 (SpecFloat.fexp prec emax) (g (S (S j')))) by lra.
+  assert (Hc : c = (M - prec)%Z /\ (3 - emax - prec <= M - prec)%Z).
+  { rewrite !ulp_neq_0 in E64 by exact H20. apply bpow_inj in E64.
+    unfold c, M. change (b2r g2) with (g (S (S j'))). unfold cexp, FLX_exp, SpecFloat.fexp in *. unfold SpecFloat.emin in *. change IntDef.Z.max with Z.max in *. split; lia. }
+  destruct Hc as [Hc Hnorm].
+  destruct (cascade_eq_shape prec prec2 g (length xs) (map b2r e) (map b2r f) HfX Nz' Hso
+              (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm (S j') ltac:(lia) ltac:(lia) EqX)
+    as [_ (sg & Hsg & HQ & Hh & Hg)].
+  assert (UXc : ulp radix2 (FLX_exp prec) (g (S (S j'))) = bpow radix2 c).
+  { rewrite ulp_neq_0 by exact H20. rewrite Hc. reflexivity. }
+  fold M in HQ, Hg. rewrite UXc in Hh, Hg.
+  exists sg. split; [ exact Hsg | ]. split; [ rewrite RQ; exact HQ | ]. split; [ rewrite Rh; exact Hh | ].
+  split; [ rewrite Hc; unfold prec; lia | ]. split; [ unfold SpecFloat.fexp, SpecFloat.emin; change IntDef.Z.max with Z.max; lia | ].
+  split; [ exact Hg | ].
+  assert (Hle : Rabs (g (S j')) <= Rabs (g (S (S j')))) by (apply Hso; lia).
+  split; [ exact Hle | ]. split; [ pose proof (bpow_gt_0 radix2 c); lra | exact Hc ].
+Qed.
+
+(* The Priest keys on the binary64 sorted list, with binary64 ulp. *)
+Theorem b64_keys :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (j + 2 <= length xs)%nat ->
+      Rabs (b2r (nth j (x0 :: xs) d)) < ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth (j + 2) (x0 :: xs) d)).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hs j Hj.
+  set (s0 := x0 :: xs). set (g := fun j => b2r (nth j s0 d)).
+  assert (Hperm : Permutation (e ++ f) s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Hsorted : sorted_asc s0) by (unfold s0; rewrite <- Hs; apply sort_by_abs_sorted).
+  assert (Nz' : forall j, (j <= length xs)%nat -> g j <> 0).
+  { intros i Hi. unfold g. rewrite Forall_forall in Nz. apply Nz.
+    apply (Permutation_in _ (Permutation_sym Hperm)). apply nth_In. unfold s0. simpl. lia. }
+  assert (Hpm : Permutation (map g (seq 0 (S (length xs)))) (map b2r e ++ map b2r f)).
+  { unfold g. change (S (length xs)) with (length s0). rewrite map_g_seq, <- map_app.
+    apply Permutation_map, Permutation_sym, Hperm. }
+  pose proof (keys_derived prec prec2 g (length xs) (map b2r e) (map b2r f) Nz'
+                (fun i (Hi : (S i <= length xs)%nat) => sorted_g s0 Hsorted i ltac:(unfold s0; simpl; lia))
+                (chain_of_priest e Pe) (chain_of_priest f Pf) Hpm j Hj) as K.
+  assert (H2 : g (j + 2)%nat <> 0) by (apply Nz'; lia).
+  pose proof (ulp_X_le_64 _ H2). unfold g in *. lra.
+Qed.
+
+(* Only singleton chains can hold a zero: Priest's relation normalises both
+   members of every adjacent pair.  So the zero-free hypothesis of the
+   binary64 theorems reduces to the singleton case. *)
+Definition chain_nz (c : list binary64) : Prop :=
+  match c with x :: nil => b2r x <> 0 | _ => True end.
+
+Lemma priest_chain_nonzero : forall c, priest_chain c -> chain_nz c -> Forall (fun x => b2r x <> 0) c.
+Proof.
+  induction c as [| a c IH]; intros Hc Hn; [ constructor | ].
+  destruct c as [| b c'].
+  - constructor; [ exact Hn | constructor ].
+  - destruct Hc as [Hab Hrest].
+    destruct Hab as (mx & my & kx & ky & Hx & Hy & Nx & Ny & _).
+    destruct (norm_facts prec prec2 mx kx Nx) as (Ha0 & _). destruct (norm_facts prec prec2 my ky Ny) as (Hb0 & _).
+    constructor; [ rewrite Hx; exact Ha0 | ].
+    apply IH; [ exact Hrest | ]. destruct c'; [ simpl; rewrite Hy; exact Hb0 | exact I ].
+Qed.
+
+Corollary priest_chains_nonzero : forall e f, priest_chain e -> priest_chain f ->
+  chain_nz e -> chain_nz f -> Forall (fun x => b2r x <> 0) (e ++ f).
+Proof.
+  intros e f Pe Pf Ne Nf. apply Forall_app. split; apply priest_chain_nonzero; assumption.
+Qed.
+
+Lemma grow_len : forall xs q, length (fst (b64_grow_expansion_aux q xs)) = length xs.
+Proof.
+  induction xs as [| x xs IH]; intro q; [ reflexivity | ].
+  cbn [b64_grow_expansion_aux]. destruct (b64_TwoSum x q) as [qn h0].
+  specialize (IH qn). destruct (b64_grow_expansion_aux qn xs) as [hs qf]. simpl in *. rewrite IH. reflexivity.
+Qed.
+
+(* The error bound read off fast_expansion_sum's own output
+   qfinal :: rev hs: the component at position (length xs - j + 1) is h_j. *)
+Corollary fes_output_error_bound :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j <= length xs)%nat ->
+      Rabs (b2r (nth (length xs - j + 1) (fast_expansion_sum e f) d))
+        <= ulp radix2 (SpecFloat.fexp prec emax) (b2r (nth j (x0 :: xs) d)).
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj.
+  destruct (b64_cascade_tail_bound e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj) as [_ L].
+  unfold fast_expansion_sum. rewrite Hs.
+  pose proof (grow_len xs x0) as Hl.
+  destruct (b64_grow_expansion_aux x0 xs) as [hs qf] eqn:E. cbn [fst] in Hl, L.
+  replace (length xs - j + 1)%nat with (S (length xs - j)) by lia. cbn [nth].
+  rewrite rev_nth by lia. rewrite Hl. replace (length xs - S (length xs - j))%nat with (j - 1)%nat by lia.
+  exact L.
+Qed.
+
+End B64.
+
+Print Assumptions cascade_tail_bound.
+Print Assumptions cascade_closed_lookahead.
+Print Assumptions b64_cascade_tail_bound.
+Print Assumptions b64_closed_lookahead.

@@ -56,7 +56,7 @@ Lemma c2_compute_snap_touch_true :
 Proof. vm_compute. reflexivity. Qed.
 
 (* ---- exact values ------------------------------------------------------- *)
-Lemma Bfin_val : forall s m e (pf : _),
+Lemma Bfin_val_c2 : forall s m e (pf : _),
   Binary.B2R prec emax (Binary.B754_finite prec emax s m e pf)
     = IZR (cond_Zopp s (Z.pos m)) * bpow radix2 e.
 Proof. intros. reflexivity. Qed.
@@ -66,35 +66,35 @@ Proof. intros k Hk. rewrite bpow_opp. f_equal. rewrite <- IZR_Zpower by exact Hk
 
 Lemma v_x0 : Binary.B2R prec emax c2_x0 = (-1888912008722237 / 562949953421312).
 Proof.
-  unfold c2_x0. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR.
+  unfold c2_x0. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR.
   replace (-51)%Z with (-(51))%Z by reflexivity. rewrite bpn by lia.
   replace (2 ^ 51)%Z with 2251799813685248%Z by reflexivity.
   lra.
 Qed.
 Lemma v_y0 : Binary.B2R prec emax c2_y0 = (839343893073 / 549755813888).
 Proof.
-  unfold c2_y0. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR.
+  unfold c2_y0. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR.
   replace (-52)%Z with (-(52))%Z by reflexivity. rewrite bpn by lia.
   replace (2 ^ 52)%Z with 4503599627370496%Z by reflexivity.
   lra.
 Qed.
 Lemma v_x1 : Binary.B2R prec emax c2_x1 = (2205571357521725 / 70368744177664).
 Proof.
-  unfold c2_x1. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR.
+  unfold c2_x1. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR.
   replace (-48)%Z with (-(48))%Z by reflexivity. rewrite bpn by lia.
   replace (2 ^ 48)%Z with 281474976710656%Z by reflexivity.
   lra.
 Qed.
 Lemma v_y1 : Binary.B2R prec emax c2_y1 = (-1148581538385 / 68719476736).
 Proof.
-  unfold c2_y1. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR.
+  unfold c2_y1. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR.
   replace (-48)%Z with (-(48))%Z by reflexivity. rewrite bpn by lia.
   replace (2 ^ 48)%Z with 281474976710656%Z by reflexivity.
   lra.
 Qed.
 Lemma v_cx : Binary.B2R prec emax c2_cx = (1).
 Proof.
-  unfold c2_cx. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR.
+  unfold c2_cx. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR.
   replace (-52)%Z with (-(52))%Z by reflexivity. rewrite bpn by lia.
   replace (2 ^ 52)%Z with 4503599627370496%Z by reflexivity.
   lra.
@@ -102,7 +102,7 @@ Qed.
 Lemma v_cy : Binary.B2R prec emax c2_cy = 0.
 Proof. reflexivity. Qed.
 
-Lemma snap_round_coord_1_nearest : forall (x : R) (n : Z),
+Lemma snap_round_coord_1_nearest_c2 : forall (x : R) (n : Z),
   Rabs (x - IZR n) < /2 -> snap_round_coord x 1 = IZR n.
 Proof.
   intros x n H. unfold snap_round_coord. rewrite Rmult_1_r.
@@ -115,25 +115,25 @@ Lemma sn_x0 : Binary.B2R prec emax (b64_snap_coord c2_x0) = -3.
 Proof.
   rewrite b64_snap_coord_B2R, v_x0.
   replace (-3) with (IZR (-3)) by (simpl; lra).
-  apply snap_round_coord_1_nearest. rewrite <- (Rabs_Ropp). apply Rabs_def1; lra.
+  apply snap_round_coord_1_nearest_c2. rewrite <- (Rabs_Ropp). apply Rabs_def1; lra.
 Qed.
 Lemma sn_y0 : Binary.B2R prec emax (b64_snap_coord c2_y0) = 2.
 Proof.
   rewrite b64_snap_coord_B2R, v_y0.
   replace 2 with (IZR 2) by (simpl; lra).
-  apply snap_round_coord_1_nearest. apply Rabs_def1; lra.
+  apply snap_round_coord_1_nearest_c2. apply Rabs_def1; lra.
 Qed.
 Lemma sn_x1 : Binary.B2R prec emax (b64_snap_coord c2_x1) = 31.
 Proof.
   rewrite b64_snap_coord_B2R, v_x1.
   replace 31 with (IZR 31) by (simpl; lra).
-  apply snap_round_coord_1_nearest. apply Rabs_def1; lra.
+  apply snap_round_coord_1_nearest_c2. apply Rabs_def1; lra.
 Qed.
 Lemma sn_y1 : Binary.B2R prec emax (b64_snap_coord c2_y1) = -17.
 Proof.
   rewrite b64_snap_coord_B2R, v_y1.
   replace (-17) with (IZR (-17)) by (simpl; lra).
-  apply snap_round_coord_1_nearest. apply Rabs_def1; lra.
+  apply snap_round_coord_1_nearest_c2. apply Rabs_def1; lra.
 Qed.
 
 (* ---- exact-real touch of a segment, all four coordinates numeric -------- *)
@@ -206,17 +206,17 @@ Definition lit_by : binary64 := Binary.B754_finite prec emax true 51343340544783
 Definition lit_ty : binary64 := Binary.B754_finite prec emax false 8006399337547548 (-56) eq_refl.
 
 Lemma val_ax : Binary.B2R prec emax lit_ax = (2170386985432893 / 562949953421312).
-Proof. unfold lit_ax. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-51)%Z with (-(51))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 51)%Z with 2251799813685248%Z by reflexivity. lra. Qed.
+Proof. unfold lit_ax. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-51)%Z with (-(51))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 51)%Z with 2251799813685248%Z by reflexivity. lra. Qed.
 Lemma val_bx : Binary.B2R prec emax lit_bx = (4883370717224009 / 140737488355328).
-Proof. unfold lit_bx. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-47)%Z with (-(47))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 47)%Z with 140737488355328%Z by reflexivity. lra. Qed.
+Proof. unfold lit_bx. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-47)%Z with (-(47))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 47)%Z with 140737488355328%Z by reflexivity. lra. Qed.
 Lemma val_tx : Binary.B2R prec emax lit_tx = (8006399337547549 / 72057594037927936).
-Proof. unfold lit_tx. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-56)%Z with (-(56))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 56)%Z with 72057594037927936%Z by reflexivity. lra. Qed.
+Proof. unfold lit_tx. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-56)%Z with (-(56))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 56)%Z with 72057594037927936%Z by reflexivity. lra. Qed.
 Lemma val_ay : Binary.B2R prec emax lit_ay = (-1114221800017 / 549755813888).
-Proof. unfold lit_ay. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-51)%Z with (-(51))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 51)%Z with 2251799813685248%Z by reflexivity. lra. Qed.
+Proof. unfold lit_ay. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-51)%Z with (-(51))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 51)%Z with 2251799813685248%Z by reflexivity. lra. Qed.
 Lemma val_by : Binary.B2R prec emax lit_by = (-10027996200153 / 549755813888).
-Proof. unfold lit_by. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-48)%Z with (-(48))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 48)%Z with 281474976710656%Z by reflexivity. lra. Qed.
+Proof. unfold lit_by. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-48)%Z with (-(48))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 48)%Z with 281474976710656%Z by reflexivity. lra. Qed.
 Lemma val_ty : Binary.B2R prec emax lit_ty = (2001599834386887 / 18014398509481984).
-Proof. unfold lit_ty. rewrite Bfin_val. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-56)%Z with (-(56))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 56)%Z with 72057594037927936%Z by reflexivity. lra. Qed.
+Proof. unfold lit_ty. rewrite Bfin_val_c2. cbn [cond_Zopp]. try rewrite opp_IZR. replace (-56)%Z with (-(56))%Z by reflexivity. rewrite bpn by lia. replace (2 ^ 56)%Z with 72057594037927936%Z by reflexivity. lra. Qed.
 
 (* x axis (the lower bound that is pushed UP).  Exact: a = xlo-x0, b = x1-x0. *)
 Theorem c2_report_x_axis :
