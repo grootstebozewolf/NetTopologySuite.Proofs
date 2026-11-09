@@ -10,7 +10,7 @@
    error 0 (P), and X absorbs it (P -> N, pending_twin_settles).
 
    PROVED: cascade_hyps holds for (e, f); the actual run reaches cinv_P at
-   stage 4 with the next input X.  So the P branch of CascadeInvariant is
+   stage 4 with the next input X.  So the P branch of B64_CarryCleanCascade is
    inhabited by a Priest-valid input; cascade_reachable_shape and
    fes_carry_clean_nonoverlap are not vacuous there.
 
@@ -27,8 +27,9 @@ From NTS.Proofs.Flocq Require Import Validate_binary64 B64_lib B64_Pff_bridge
      B64_Overlap_Hierarchy B64_Priest_FES_counterexample
      B64_CarryCleanAlgo B64_CarryCleanCore B64_CarryCleanLadder
      B64_CarryCleanRung2 B64_CarryCleanRung4 B64_CarryCleanOneBit.
-From NTS.Proofs.Probes Require Import LookaheadQEX CascadeInvariant.
-From NTS.Proofs.Probes Require CascadeTailBound.
+From NTS.Proofs.Probes Require Import LookaheadQEX.
+From NTS.Proofs.Flocq Require Import B64_CarryCleanCascade.
+From NTS.Proofs.Flocq Require B64_CarryCleanTailBound.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Abbreviation b2r := (Binary.B2R prec emax).
@@ -140,7 +141,7 @@ Local Definition wxs : list binary64 := [wB; wB; wA; wAn; wX].
 
 (* the real run: accumulator and error prefix after four TwoSums *)
 Lemma w_run :
-  [CascadeTailBound.acc wG wxs 4] ++ rev (firstn 4 (fst (b64_grow_expansion_aux wG wxs)))
+  [B64_CarryCleanTailBound.acc wG wxs 4] ++ rev (firstn 4 (fst (b64_grow_expansion_aux wG wxs)))
   = [one_b; w_zero; one_b; w_m253; w_m254].
 Proof. apply map_B2FF_inj. unfold wxs. vm_compute. reflexivity. Qed.
 
@@ -153,11 +154,11 @@ Qed.
 Theorem pending_twin_witness :
   cascade_hyps we wf wG wxs /\
   fast_expansion_sum we wf = [wX; one_b; w_zero; one_b; w_m253; w_m254] /\
-  cinv_P (CascadeTailBound.acc wG wxs 4) (rev (firstn 4 (fst (b64_grow_expansion_aux wG wxs))))
+  cinv_P (B64_CarryCleanTailBound.acc wG wxs 4) (rev (firstn 4 (fst (b64_grow_expansion_aux wG wxs))))
          (skipn 5 (wG :: wxs)).
 Proof.
   split; [ exact w_hyps | split; [ exact w_fes | ] ].
-  assert (HQ : CascadeTailBound.acc wG wxs 4 = one_b)
+  assert (HQ : B64_CarryCleanTailBound.acc wG wxs 4 = one_b)
     by exact (f_equal (fun l => nth 0 l w_zero) w_run).
   assert (HE : rev (firstn 4 (fst (b64_grow_expansion_aux wG wxs))) = [w_zero; one_b; w_m253; w_m254])
     by exact (f_equal (fun l => tl l) w_run).

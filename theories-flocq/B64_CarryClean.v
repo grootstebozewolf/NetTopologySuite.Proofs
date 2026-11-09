@@ -103,9 +103,9 @@
    make the cost result matter -- that `carry_clean` output IS nonoverlapping
    on `fast_expansion_sum` of two Priest-valid inputs -- is stated below as
    `carry_clean_priest_target`, a Definition; it was OPEN in this lane and is
-   now proved in the probe lane (docs/h1-vacuity/ZeroElim.v :
-   carry_clean_priest_target_proved, not yet in _CoqProject.full).  The core
-   reduces it to a two-part bridge, both parts Definitions here (proved there):
+   now proved in B64_CarryCleanTarget.v (carry_clean_priest_target_proved,
+   unfolded as carry_clean_fes_priest_nonoverlap).  The core reduces it to a
+   two-part bridge, both parts Definitions here (proved there):
      (a) `fes_priest_carry_pattern`: the sum's zero-filtered output splits
          into blocks with strictly decreasing magnitudes;
      (b) `fes_priest_reduction_nonoverlap`: the block reduction of such an

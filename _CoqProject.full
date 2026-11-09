@@ -4536,8 +4536,9 @@ theories-flocq/B64_Priest_FES_counterexample.v
 # exact.  QEX: cancel-only fails on Priest input; carry_clean fails when one
 # input is only nonoverlapping.  Core slice QED: carry_clean on block-shaped
 # input is deletion + exact doubling (carry_clean_priest_core); fewer FLOPS
-# than Compress (comparisons not counted).  OPEN: the two-part FP bridge
-# (fes_priest_carry_pattern, fes_priest_reduction_nonoverlap), the target.
+# than Compress (comparisons not counted).  The two-part FP bridge
+# (fes_priest_carry_pattern, fes_priest_reduction_nonoverlap) and the target
+# are proved in B64_CarryCleanTarget.v (below).
 theories-flocq/B64_CarryClean.v
 # carry_clean bridge, rung 2: three components in total (two TwoSums).  Both
 # bridge parts and the target are proved there (fes_carry_bridge_rung2,
@@ -4583,3 +4584,14 @@ theories-flocq/B64_CarryCleanOneBit.v
 # state of B64_CarryCleanOneBit run to step 7; also the carry pattern,
 # reduction and carry_clean target at 7.
 theories-flocq/B64_CarryCleanSeven.v
+# carry_clean target at every length (#1015, promoted from the #1012/#1014
+# probes): the cascade tail bound in the FLX model and its binary64
+# realization (one probe file, split by the module split gate), the N/T/P
+# cascade invariant on the actual run, and zero-input elimination plus
+# pattern uniqueness, which discharge both bridge Definitions of
+# B64_CarryCleanCore.  carry_clean_priest_target_proved supersedes the <= 7
+# rungs above as the general statement; they stay as evidence.
+theories-flocq/B64_CarryCleanTailModel.v
+theories-flocq/B64_CarryCleanTailBound.v
+theories-flocq/B64_CarryCleanCascade.v
+theories-flocq/B64_CarryCleanTarget.v

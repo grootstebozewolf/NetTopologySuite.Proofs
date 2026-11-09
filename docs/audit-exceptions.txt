@@ -23,7 +23,7 @@
 #       debt            axiom avoidable; to be removed
 #       qex             axiom kept because the axiom-free claim is false
 #
-# LIVE: 124 files (115 theories-flocq/ + 2 theories/ + 7 hunt probes).
+# LIVE: 125 files (119 theories-flocq/ + 2 theories/ + 4 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -145,6 +145,16 @@ theories-flocq/B64_CarryCleanOneBit.v
 # headline inherits Classical_Prop.classic via Flocq C1.  Plan: none while
 # Flocq's binary model is in use (category-c-policy).
 theories-flocq/B64_CarryCleanSeven.v
+# carry_clean target at every length (promoted probes, ticket #1015).
+# TailModel: FLX model only, no binary64; classic comes from Flocq Core
+# itself (round_N_pt, ulp, Plus_error.plus_error all carry it).  TailBound,
+# Cascade, Target: b64_TwoSum / b64_plus on top of the same.  Every headline
+# inherits Classical_Prop.classic via Flocq C1.  Plan: none while Flocq's
+# rounding model is in use (category-c-policy).
+theories-flocq/B64_CarryCleanTailModel.v
+theories-flocq/B64_CarryCleanTailBound.v
+theories-flocq/B64_CarryCleanCascade.v
+theories-flocq/B64_CarryCleanTarget.v
 
 # class: implementation
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
@@ -194,9 +204,6 @@ docs/h1-vacuity/HobbyHlemma43Check.v
 # (classic via b64_plus / round in b64_TwoSum and the FLX round, imported
 # from the B64_CarryClean* rungs, which are listed above).  CarryCleanPure.v
 # stays inside the allowlist and is not listed.  Plan: leave with Flocq C1.
-docs/h1-vacuity/CascadeTailBound.v
-docs/h1-vacuity/CascadeInvariant.v
-docs/h1-vacuity/ZeroElim.v
 docs/h1-vacuity/PendingTwinWitness.v
 docs/h1-vacuity/LookaheadQEX.v
 docs/h1-vacuity/LatticeRouteQEX.v

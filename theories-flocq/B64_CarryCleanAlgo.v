@@ -370,7 +370,8 @@ Proof.
 Qed.
 
 (* --------------------------------------------------------------------------
-   The open target.  Stated, not claimed.  The overflow margin
+   The target.  Stated here, proved downstream in B64_CarryCleanTarget.v
+   (carry_clean_priest_target_proved).  The overflow margin
    2^(emax-5) keeps every accumulator of the cascade below 2^(emax-4)
    (`fes_accumulators_bounded`), where every TwoSum is overflow-free
    (`b64_TwoSum_safe_bound`).  It started at 2^(emax-2); the crude per-step
