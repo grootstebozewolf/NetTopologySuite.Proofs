@@ -1,4 +1,15 @@
-(* ZeroElim.v -- zero inputs and the carry_clean bridges.
+(* ============================================================================
+   NetTopologySuite.Proofs.Flocq.B64_CarryCleanTarget
+   ----------------------------------------------------------------------------
+   carry_clean_priest_target, unconditionally: for every finite Priest-valid
+   e, f with abs_sum e + abs_sum f <= 2^(emax-5), carry_clean
+   (fast_expansion_sum e f) is nonoverlapping.  Promoted from the probe lane
+   (docs/h1-vacuity/ZeroElim.v, PR #1014) for #1015.  The bridge Definitions
+   of B64_CarryCleanCore.v are discharged here (no file keeps them as
+   hypotheses); carry_clean_fes_priest_nonoverlap is the unfolded form for
+   consumers.
+
+   Zero inputs and the carry_clean bridges.
 
    A Priest chain of length >= 2 has no zero entry (priest_nonoverlapping_R
    needs normalized, hence nonzero, mantissas), so a zero input is exactly a
@@ -13,18 +24,22 @@
    Definition quantifies over every bs with that pattern), and hence
    carry_clean_priest_target, unconditionally.
 
+   topic: binary64
+   claimId: carry-clean-priest-target
+   witness: carry_clean_priest_target_proved
+
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted; human-reviewed (PR #1014).
      Assisted-by: Claude
-*)
+   ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
 From Flocq Require Import IEEE754.Binary Core.
 From NTS.Proofs.Flocq Require Import Validate_binary64 B64_lib B64_Pff_bridge
      B64_Expansion B64_FastExpansionSum B64_Overlap_Hierarchy B64_CarryCleanAlgo
      B64_CarryCleanCore B64_CarryCleanLadder B64_CarryCleanOneBit B64_FastExpansionSum_Shewchuk
      B64_CarryCleanRung4 B64_Priest_FES_counterexample.
-From NTS.Proofs.Probes Require Import CascadeInvariant.
+From NTS.Proofs.Flocq Require Import B64_CarryCleanCascade.
 Import ListNotations.
 Local Open Scope R_scope.
 Local Abbreviation b2r := (Binary.B2R prec emax).
@@ -93,7 +108,7 @@ Qed.
 
 (* a zero accumulator absorbs a zero prefix, then the first nonzero input
    exactly: the whole cascade equals the nonzero cascade up to zero errors. *)
-Lemma aux_zeros : forall zs q nz,
+Lemma cascade_zero_prefix : forall zs q nz,
   Forall (fun z => b64_fin z /\ b64_is_zero z = true) zs ->
   Forall (fun y => b64_fin y /\ b64_is_zero y = false) nz ->
   b64_fin q -> b64_is_zero q = true ->
@@ -158,7 +173,7 @@ Proof.
     assert (HN : Forall (fun y => b64_fin y /\ b64_is_zero y = false) (sort_by_abs (drop_zeros (e ++ f)))).
     { pose proof (Forall_drop_zeros_nz (e ++ f) Fef) as D.
       apply (sort_by_abs_Forall (fun y => b64_fin y /\ b64_is_zero y = false)). exact D. }
-    pose proof (aux_zeros zs' z (sort_by_abs (drop_zeros (e ++ f))) HZ HN Fz Zz C) as A.
+    pose proof (cascade_zero_prefix zs' z (sort_by_abs (drop_zeros (e ++ f))) HZ HN Fz Zz C) as A.
     cbn [fes_list]. exact A.
 Qed.
 
@@ -264,76 +279,8 @@ Proof.
 Qed.
 
 
-(* ---- uniqueness of carry_pattern block decompositions --------------------- *)
-
-Lemma key_ge_first : forall b, Rabs (b2r (block_first b)) <= block_key b.
-Proof.
-  intros [u | x | x]; cbn [block_first block_key]; [ lra | | lra ].
-  pose proof (Rabs_pos (b2r x)). lra.
-Qed.
-
-(* the first element of a nonempty block list is the first element of its head *)
-Lemma flat_cons_first : forall c r1 x l,
-  flat_map cblock_expand (c :: r1) = x :: l -> block_first c = x.
-Proof. intros [u | y | y] r1 x l H; cbn in H; injection H as <- _; reflexivity. Qed.
-
-Lemma single_not_twin : forall u r x r',
-  keys_decreasing (CSingle u :: r) ->
-  flat_map cblock_expand (CSingle u :: r) = flat_map cblock_expand (CTwin x :: r') -> False.
-Proof.
-  intros u r x r' Hk H. cbn [flat_map cblock_expand app] in H. injection H as Hu Hr.
-  destruct r as [| c r1]; [ cbn in Hr; discriminate | ].
-  cbn [keys_decreasing] in Hk. destruct Hk as [Hk _].
-  pose proof (flat_cons_first c r1 x _ Hr) as Hc.
-  pose proof (key_ge_first c) as Hg. rewrite Hc in Hg. cbn [block_key] in Hk. subst u. lra.
-Qed.
-
-Lemma single_not_anti : forall u r x r',
-  keys_decreasing (CSingle u :: r) ->
-  flat_map cblock_expand (CSingle u :: r) = flat_map cblock_expand (CAnti x :: r') -> False.
-Proof.
-  intros u r x r' Hk H. cbn [flat_map cblock_expand app] in H. injection H as Hu Hr.
-  destruct r as [| c r1]; [ cbn in Hr; discriminate | ].
-  cbn [keys_decreasing] in Hk. destruct Hk as [Hk _].
-  pose proof (flat_cons_first c r1 _ _ Hr) as Hc.
-  pose proof (key_ge_first c) as Hg. rewrite Hc, b64_neg_R, Rabs_Ropp in Hg.
-  cbn [block_key] in Hk. subst u. lra.
-Qed.
-
-Lemma twin_not_anti : forall x r y r',
-  block_ok (CTwin x) ->
-  flat_map cblock_expand (CTwin x :: r) = flat_map cblock_expand (CAnti y :: r') -> False.
-Proof.
-  intros x r y r' Hok H. cbn [flat_map cblock_expand app] in H. injection H as Hxy Hx _.
-  subst y. destruct Hok as [[_ Nx] _]. apply Nx.
-  assert (b2r x = - b2r x) by (rewrite <- b64_neg_R; f_equal; exact Hx). lra.
-Qed.
-
-Lemma pattern_unique : forall bs bs',
-  carry_pattern bs -> carry_pattern bs' ->
-  flat_map cblock_expand bs = flat_map cblock_expand bs' -> bs = bs'.
-Proof.
-  induction bs as [| b r IH]; intros [| b' r'] P P' H.
-  - reflexivity.
-  - destruct b' as [u | x | x]; cbn in H; discriminate.
-  - destruct b as [u | x | x]; cbn in H; discriminate.
-  - destruct P as [Ok K], P' as [Ok' K'].
-    inversion Ok as [| ? ? Hb Hr]; subst. inversion Ok' as [| ? ? Hb' Hr']; subst.
-    assert (Kr : keys_decreasing r) by (destruct r; [ exact I | exact (proj2 K) ]).
-    assert (Kr' : keys_decreasing r') by (destruct r'; [ exact I | exact (proj2 K') ]).
-    destruct b as [u | x | x], b' as [u' | x' | x'];
-      try (exfalso; first
-        [ exact (single_not_twin _ _ _ _ K H)
-        | exact (single_not_anti _ _ _ _ K H)
-        | exact (single_not_twin _ _ _ _ K' (eq_sym H))
-        | exact (single_not_anti _ _ _ _ K' (eq_sym H))
-        | exact (twin_not_anti _ _ _ _ Hb H)
-        | exact (twin_not_anti _ _ _ _ Hb' (eq_sym H)) ]);
-      cbn [flat_map cblock_expand app] in H.
-    + injection H as H1 H2. subst u'. f_equal. f_equal. apply IH; [ split; assumption | split; assumption | exact H2 ].
-    + injection H as H1 H2 H3. subst x'. f_equal. f_equal. apply IH; [ split; assumption | split; assumption | exact H3 ].
-    + injection H as H1 H2 H3. subst x'. f_equal. f_equal. apply IH; [ split; assumption | split; assumption | exact H3 ].
-Qed.
+(* ---- uniqueness of carry_pattern block decompositions: B64_CarryCleanRung4 *)
+(*      pattern_unique (same statement; the probe's duplicate is dropped).    *)
 
 Theorem fes_priest_reduction_nonoverlap_proved : fes_priest_reduction_nonoverlap.
 Proof.
@@ -350,4 +297,14 @@ Proof.
   exact (carry_clean_priest_target_of_bridge fes_priest_carry_pattern_proved fes_priest_reduction_nonoverlap_proved).
 Qed.
 
+(* The target, unfolded: what a consumer applies. *)
+Corollary carry_clean_fes_priest_nonoverlap :
+  forall e f : list binary64,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    nonoverlapping_chain (carry_clean (fast_expansion_sum e f)).
+Proof. exact carry_clean_priest_target_proved. Qed.
+
 Print Assumptions carry_clean_priest_target_proved.
+Print Assumptions carry_clean_fes_priest_nonoverlap.
