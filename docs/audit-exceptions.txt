@@ -23,7 +23,7 @@
 #       debt            axiom avoidable; to be removed
 #       qex             axiom kept because the axiom-free claim is false
 #
-# LIVE: 122 files (115 theories-flocq/ + 2 theories/ + 5 hunt probes).
+# LIVE: 124 files (115 theories-flocq/ + 2 theories/ + 7 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -196,6 +196,8 @@ docs/h1-vacuity/HobbyHlemma43Check.v
 # stays inside the allowlist and is not listed.  Plan: leave with Flocq C1.
 docs/h1-vacuity/CascadeTailBound.v
 docs/h1-vacuity/CascadeInvariant.v
+docs/h1-vacuity/ZeroElim.v
+docs/h1-vacuity/PendingTwinWitness.v
 docs/h1-vacuity/LookaheadQEX.v
 docs/h1-vacuity/LatticeRouteQEX.v
 theories-flocq/NodingSeparation_b64.v

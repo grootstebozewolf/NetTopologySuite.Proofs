@@ -54,7 +54,7 @@
                                          nonoverlapping, so is the output
                                          (that hypothesis passed through)
      BRIDGE   carry_clean_priest_target_of_bridge
-                                         the two open parts below imply
+                                         the two bridge parts below imply
                                          carry_clean_priest_target -- ONE
                                          way: the bridge is strictly stronger
      RUNG 2   (B64_CarryCleanRung2.v)    three components in total: bridge
@@ -102,8 +102,10 @@
    WHAT IS NOT PROVED (do not overclaim).  The correctness claim that would
    make the cost result matter -- that `carry_clean` output IS nonoverlapping
    on `fast_expansion_sum` of two Priest-valid inputs -- is stated below as
-   `carry_clean_priest_target`, a Definition, and is OPEN.  The core reduces
-   it to a two-part bridge, both parts Definitions, both OPEN:
+   `carry_clean_priest_target`, a Definition; it was OPEN in this lane and is
+   now proved in the probe lane (docs/h1-vacuity/ZeroElim.v :
+   carry_clean_priest_target_proved, not yet in _CoqProject.full).  The core
+   reduces it to a two-part bridge, both parts Definitions here (proved there):
      (a) `fes_priest_carry_pattern`: the sum's zero-filtered output splits
          into blocks with strictly decreasing magnitudes;
      (b) `fes_priest_reduction_nonoverlap`: the block reduction of such an

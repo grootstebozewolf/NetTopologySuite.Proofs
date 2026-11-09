@@ -9,4 +9,7 @@
 | 6 | N step on reachable states: N -> N or N -> T | QED | `CascadeInvariant.v : N_step_reachable, N_step_actual` |
 | 7 | `cascade_step_obligation` over arbitrary states | QEX (false); `cascade_aligned_shape` vacuous | `CascadeInvariant.v : cascade_step_obligation_false` |
 | 8 | T -> {N, P} (anti/single -> N, pending twin -> P) on reachable states | QED | `CascadeInvariant.v : cinv_T_step, T_step_reachable` |
-| 9 | P -> N; one reachable-state induction chaining the steps | OPEN | — |
+| 9a | P -> N: a pending twin settles in exactly one step, never P again | QED | `CascadeInvariant.v : cinv_P_step, P_step_reachable, pending_twin_settles` |
+| 9b | global induction: output of the real run has the aligned carry shape; `carry_clean (fast_expansion_sum e f)` nonoverlapping (nonzero Priest inputs) | QED | `CascadeInvariant.v : cascade_stage_invariant, cascade_reachable_shape, fes_carry_clean_nonoverlap` |
+| 9c | non-vacuity: Priest pair whose run reaches `cinv_P` at stage 4 and settles to N (errors `-2^-54, -2^-53, 1, 0, 1`; the tie before it is computed, not a proved `cinv_T`) | QED | `PendingTwinWitness.v : pending_twin_witness, pending_twin_witness_settles` |
+| 9d | zero inputs + uniqueness of block decompositions: `fes_priest_carry_pattern`, `fes_priest_reduction_nonoverlap`, `carry_clean_priest_target` for ALL Priest inputs | QED | `ZeroElim.v : fes_priest_carry_pattern_proved, fes_priest_reduction_nonoverlap_proved, carry_clean_priest_target_proved` |
