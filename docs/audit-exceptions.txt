@@ -9,6 +9,16 @@
 #   - A file leaves this list only when every PA block is within
 #     `docs/axiom-allowlist.txt` (verified, not hoped).
 #   - Adding a file requires a comment above it (Category C reason + plan).
+#   - Every file sits under a `# class: <name>` tag (the nearest one above
+#     it), one of: debt, implementation, library, qex.  The Observatory's
+#     exception budget reads these tags; scripts/exception_budget.py --check
+#     (in ci-guards) fails on an untagged file or an unknown class.
+#       implementation  inherited from the implementation model (Flocq's
+#                       binary64 format: Flocq C1)
+#       library         inherited from the Stdlib real-analysis library
+#                       (Ratan, RiemannInt)
+#       debt            avoidable; to be removed
+#       qex             kept because the stronger claim is false
 #
 # LIVE: 122 files (115 theories-flocq/ + 2 theories/ + 5 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
@@ -22,6 +32,7 @@
 # HotPixel_b64_refs.v, InCircle_b64_exact_refs.v, ClothoidFresnel.v,
 # PassesThrough_b64_grid_exact.v (umbrella, no PA).
 
+# class: implementation
 # Flocq C1 — binary-op / clothoid / intersect foundation
 theories-flocq/Orient_b64_exact.v
 theories-flocq/ClothoidDegenerate_b64.v
@@ -217,6 +228,7 @@ theories-flocq/RingCurvatureModels.v
 theories-flocq/ExtractFacesBridge.v
 theories-flocq/OverlayCorrectness.v
 
+# class: library
 # R-side C1 — still off the allowlist after the S1b atan3 restatement.
 # Atan2.v is 3-axiom (IVT). The circular-cook cone, InArc, and
 # ArcChordSubdivision are 3-axiom and left this list. The Ratan bridge
@@ -227,6 +239,7 @@ theories/Atan2RatanBridge.v
 # Culprit: RInt_cont_le (continuity_implies_RiemannInt).
 theories/ClothoidFresnelInhab.v
 
+# class: implementation
 # Flocq C1 -- binary64 Horner / de Casteljau evaluation (#1009)
 theories-flocq/B64_HornerGamma.v
 theories-flocq/B64_DeCasteljau.v

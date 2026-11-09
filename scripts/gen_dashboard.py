@@ -32,6 +32,9 @@
 import os, re, sys, html, json, subprocess
 from datetime import datetime, timezone
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import exception_budget  # noqa: E402  (scripts/exception_budget.py)
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "dashboard", "index.html")
 
@@ -731,7 +734,24 @@ def render(data):
         + regrow("Hand-rolled interface-boundary kernels", reg["handroll"],
                  "docs/oracle-handrolled-allowlist.txt (frozen ratchet)"))
 
+    # ---- exception budget (scripts/exception_budget.py is the source)
+    bcounts, _bproblems = exception_budget.budget()
+    budget_marks = {"debt": "\U0001F534", "implementation": "\U0001F7E1",
+                    "library": "\U0001F535", "qex": "\U0001F48E",
+                    "unclassified": "\u26AA"}
+    budget_rows = ""
+    for c in exception_budget.CLASSES + ("unclassified",):
+        budget_rows += (
+            f'<tr><td>{budget_marks[c]} {e(exception_budget.LABELS[c])}</td>'
+            f'<td class="num">{bcounts[c]}</td>'
+            f'<td class="muted">{e(exception_budget.TARGETS[c])}</td></tr>')
+    budget_rows += (
+        f'<tr style="font-weight:600"><td>Accounted for</td>'
+        f'<td class="num">{exception_budget.accounted_pct(bcounts)}%</td>'
+        f'<td class="muted">100%</td></tr>')
+
     return TEMPLATE.format(
+        budget_rows=budget_rows, budget_total=bcounts["total"],
         sha_short=e(sha_short), sha=e(sha), when=e(when),
         card_html=card_html, regime_legend=regime_legend(),
         issue_rows=issue_rows, sec_rows=sec_rows, mode_rows=mode_rows,
@@ -957,6 +977,22 @@ witness: empty-circle</div>
       registered as either a verified counterexample or a structured deferral.</p>
     <table><thead><tr><th>Item</th><th>Count</th><th>Source of record</th></tr>
       </thead><tbody>{audit_rows}</tbody></table>
+  </section>
+
+  <section>
+    <h2>Exception budget &mdash; {budget_total} explicit exceptions</h2>
+    <p class="muted">The objective is not zero exceptions but <b>zero
+      unexplained exceptions</b>. Each entry is an axiom exception
+      (<code>docs/audit-exceptions.txt</code>, classed by its
+      <code># class:</code> tag), a frozen interface kernel, or a registered
+      <code>Admitted</code>. The total is shown as is: a new, justified
+      boundary raises it. Checked by <code>scripts/exception_budget.py --check</code>.</p>
+    <table><thead><tr><th>Class</th><th>Count</th><th>Target</th></tr>
+      </thead><tbody>{budget_rows}</tbody></table>
+    <p class="muted">Proof debt: avoidable assumptions. Implementation boundary:
+      inherited from the implementation model (Flocq binary64, interface
+      kernels). Library boundary: inherited from Stdlib real analysis (Ratan,
+      RiemannInt). QEX boundary: the stronger claim is false.</p>
   </section>
 </main>
 
