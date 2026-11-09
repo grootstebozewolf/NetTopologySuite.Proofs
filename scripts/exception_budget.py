@@ -32,7 +32,7 @@
 #                                                entry or an unknown class
 #
 # License: BSD-3-Clause (see LICENSE)
-# AI assistance disclosure: AI-drafted; human review pending.
+# AI assistance disclosure: AI-drafted, human-reviewed (PR #1013).
 # =============================================================================
 
 import os
