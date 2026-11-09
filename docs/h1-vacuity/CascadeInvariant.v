@@ -32,8 +32,12 @@
      files (h, 0, h) as CTwin h below g.  No look-ahead beyond what
      T_step_reachable already proves is needed; cinv_P was not strengthened.
 
-   OPEN  chaining the per-step theorems (N, T, P) into one reachable-state
-     induction (index bookkeeping only; every single step is now proved).
+   GLOBAL INDUCTION (QED): cascade_stage_invariant -- at every stage k the
+     machine state cinv (acc k) (rev (firstn k hs)) (skipn (S k) s) holds
+     (N/T/P steps chained, last-input forms at the end) -- and
+     cascade_reachable_shape: for any Priest-valid input pair and any length,
+     drop_zeros (cascade_out x0 [] xs) is the aligned carry shape.  Only the
+     pure index bookkeeping (acc_final, rev_firstn_S, skipn_nth_cons) is new.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -628,6 +632,151 @@ Proof.
   exists L, bs. exact H.
 Qed.
 
+(* ---- RUNG 9b: the global induction ------------------------------------
+   Everything below is bookkeeping: each stage k (k TwoSums done) carries
+   cinv (acc k) (rev (firstn k hs)) (skipn (S k) s), s = x0 :: xs, hs the
+   errors of b64_grow_expansion_aux.  The step is N_step_reachable /
+   T_step_reachable / P_step_reachable (or their last-input forms); no new
+   arithmetic.  Conclusion: the FULL output of the actual recurrence on any
+   Priest-valid input pair has the aligned carry shape, for any length. *)
+
+Definition cascade_hyps (e f : list binary64) (x0 : binary64) (xs : list binary64) : Prop :=
+  priest_chain e /\ priest_chain f /\ Forall b64_fin e /\ Forall b64_fin f /\
+  Forall (fun x => b2r x <> 0) (e ++ f) /\
+  abs_sum e + abs_sum f <= bpow radix2 (emax - 5) /\
+  sort_by_abs (e ++ f) = x0 :: xs.
+
+Local Definition dz : binary64 := Binary.B754_zero prec emax false.
+
+Lemma cinv_N_last :
+  forall Q E g, cinv_N Q E [g] -> cinv_N (fst (b64_TwoSum g Q)) (snd (b64_TwoSum g Q) :: E) [].
+Proof.
+  intros Q E g (L & bs & H & Fg & Hg0 & S & Kg).
+  destruct (bstate_step Q E L bs g H Fg S Kg) as [St _].
+  exact (ex_intro _ _ (ex_intro _ _ (conj St I))).
+Qed.
+
+Lemma acc_final : forall xs q, snd (b64_grow_expansion_aux q xs) = CascadeTailBound.acc q xs (length xs).
+Proof.
+  induction xs as [| x xs IH]; intro q; [ reflexivity | ].
+  cbn [b64_grow_expansion_aux length]. destruct (b64_TwoSum x q) as [qn h0] eqn:E.
+  destruct (b64_grow_expansion_aux qn xs) as [hs qf] eqn:E2. cbn [snd].
+  rewrite CascadeTailBound.acc_shift, E. cbn [fst]. specialize (IH qn). rewrite E2 in IH. exact IH.
+Qed.
+
+Lemma rev_firstn_S : forall (l : list binary64) k, (k < length l)%nat ->
+  rev (firstn (S k) l) = nth k l dz :: rev (firstn k l).
+Proof.
+  induction l as [| a l IH]; intros k Hk; [ simpl in Hk; lia | ].
+  destruct k as [| k]; [ reflexivity | ].
+  assert (Hk' : (k < length l)%nat) by (simpl in Hk; lia).
+  change (firstn (S (S k)) (a :: l)) with (a :: firstn (S k) l).
+  change (firstn (S k) (a :: l)) with (a :: firstn k l).
+  change (nth (S k) (a :: l) dz) with (nth k l dz).
+  cbn [rev]. rewrite (IH k Hk'). reflexivity.
+Qed.
+
+Lemma skipn_nth_cons : forall (l : list binary64) n, (n < length l)%nat ->
+  skipn n l = nth n l dz :: skipn (S n) l.
+Proof.
+  induction l as [| a l IH]; intros n Hn; [ simpl in Hn; lia | ].
+  destruct n as [| n]; [ reflexivity | ]. cbn [skipn nth]. apply IH. simpl in Hn; lia.
+Qed.
+
+Theorem cascade_stage_invariant :
+  forall e f x0 xs, cascade_hyps e f x0 xs ->
+  forall k, (k <= length xs)%nat ->
+    cinv (CascadeTailBound.acc x0 xs k) (rev (firstn k (fst (b64_grow_expansion_aux x0 xs))))
+         (skipn (S k) (x0 :: xs)).
+Proof.
+  intros e f x0 xs HH. pose proof HH as (Pe & Pf & Fe & Ff & Nz & Hov & Hs).
+  assert (Hperm : Permutation (e ++ f) (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_perm).
+  assert (Fs : Forall b64_fin (x0 :: xs)) by (rewrite <- Hs; apply sort_by_abs_Forall, Forall_app; split; assumption).
+  assert (C : cascade_safe x0 xs) by (pose proof (fes_cascade_safe e f Fe Ff Hov) as C0; rewrite Hs in C0; exact C0).
+  induction k as [| k IH]; intro Hk.
+  - (* stage 0 *)
+    left. cbn [CascadeTailBound.acc firstn rev skipn].
+    apply cinv_init; [ rewrite Forall_forall in Fs; apply Fs; left; reflexivity | ].
+    destruct xs as [| g2 r]; [ exact I | ].
+    destruct C as [S1 _]. split; [ | split; [ | exact S1 ] ].
+    + rewrite Forall_forall in Nz. apply Nz. apply (Permutation_in _ (Permutation_sym Hperm)). right; left; reflexivity.
+    + rewrite Forall_forall in Fs; apply Fs; right; left; reflexivity.
+  - specialize (IH ltac:(lia)).
+    set (hs := fst (b64_grow_expansion_aux x0 xs)) in *.
+    assert (Hlen : length hs = length xs) by apply CascadeTailBound.grow_len.
+    assert (HE : rev (firstn (S k) hs) = snd (b64_TwoSum (nth (S k) (x0 :: xs) dz) (CascadeTailBound.acc x0 xs k))
+                                         :: rev (firstn k hs)).
+    { rewrite rev_firstn_S by lia. unfold hs. rewrite CascadeTailBound.nth_hs by lia. reflexivity. }
+    rewrite HE. 
+    assert (HQ : CascadeTailBound.acc x0 xs (S k) = fst (b64_TwoSum (nth (S k) (x0 :: xs) dz) (CascadeTailBound.acc x0 xs k))) by reflexivity.
+    rewrite HQ.
+    assert (Hlt : (S k < length (x0 :: xs))%nat) by (simpl; lia).
+    rewrite (skipn_nth_cons (x0 :: xs) (S k) Hlt) in IH.
+    set (gj := nth (S k) (x0 :: xs) dz) in *.
+    set (q := CascadeTailBound.acc x0 xs k) in *.
+    set (E := rev (firstn k hs)) in *.
+    destruct IH as [HN | [HT | HP]].
+    + (* N *)
+      destruct (Nat.lt_ge_cases (S k) (length xs)) as [Lg2 | Nog2].
+      * assert (Hlt2 : (S (S k) < length (x0 :: xs))%nat) by (simpl; lia).
+        rewrite (skipn_nth_cons (x0 :: xs) (S (S k)) Hlt2) in HN |- *.
+        pose proof (N_step_reachable e f x0 xs Pe Pf Fe Ff Nz Hov Hs (S k) E (skipn (S (S (S k))) (x0 :: xs)) ltac:(lia) Lg2) as R0.
+        cbv zeta in R0. replace (S k - 1)%nat with k in R0 by lia.
+        destruct (R0 HN) as [R | R]; [ left | right; left ]; exact R.
+      * assert (Hnil : skipn (S (S k)) (x0 :: xs) = []) by (apply skipn_all2; simpl; lia).
+        rewrite Hnil in HN |- *. left. exact (cinv_N_last _ _ _ HN).
+    + (* T *)
+      destruct k as [| k'].
+      { destruct HT as (g & r & Hr & h & E0 & bs0 & L & sg & HE0 & _). unfold E in HE0. cbn in HE0. discriminate. }
+      pose proof HT as HT0.
+      destruct HT as (g & r & Hr & h & E0 & bs0 & L & sg & HE0 & St & Fg & S0 & Hsg & T).
+      injection Hr as Hg Hr'.
+      cbv zeta in T. destruct T as (Hg0 & HMc & Hf & HQh & Hh & _).
+      assert (HEeq : E = nth k' hs dz :: rev (firstn k' hs)) by (unfold E; apply rev_firstn_S; lia).
+      rewrite HEeq in HE0. injection HE0 as Hh1 Hh2.
+      assert (Hnh : snd (b64_TwoSum (nth (S k') (x0 :: xs) dz) (CascadeTailBound.acc x0 xs k')) = h)
+        by (rewrite <- Hh1; unfold hs; rewrite CascadeTailBound.nth_hs by lia; reflexivity).
+      assert (Heq : Rabs (b2r (snd (b64_TwoSum (nth (S k') (x0 :: xs) dz) (CascadeTailBound.acc x0 xs k'))))
+                    = ulp radix2 b64_fexp (b2r (nth (S (S k')) (x0 :: xs) dz))).
+      { rewrite Hnh. change (nth (S (S k')) (x0 :: xs) dz) with gj. rewrite Hg, ulp_neq_0 by exact Hg0.
+        rewrite Hh, Rabs_mult. pose proof (bpow_gt_0 radix2 (cexp radix2 b64_fexp (b2r g))).
+        destruct Hsg as [-> | ->]; [ rewrite Rabs_R1 | rewrite (Rabs_left (-1)) by lra ];
+          rewrite Rabs_pos_eq by lra; ring. }
+      pose proof (T_step_reachable e f x0 xs Pe Pf Fe Ff Nz Hov Hs (S k') (rev (firstn k' hs)) ltac:(lia) Hk) as R0.
+      cbv zeta in R0. replace (S k' - 1)%nat with k' in R0 by lia.
+      rewrite HEeq, Hh1, <- Hnh in HT0. rewrite HEeq, Hh1, <- Hnh.
+      destruct (R0 Heq HT0) as [R | R]; [ left | right; right ]; exact R.
+    + (* P *)
+      destruct (Nat.lt_ge_cases (S k) (length xs)) as [Lg2 | Nog2].
+      * assert (Hlt2 : (S (S k) < length (x0 :: xs))%nat) by (simpl; lia).
+        rewrite (skipn_nth_cons (x0 :: xs) (S (S k)) Hlt2) in HP |- *.
+        pose proof (P_step_reachable e f x0 xs Pe Pf Fe Ff Nz Hov Hs (S k) E (skipn (S (S (S k))) (x0 :: xs)) ltac:(lia) Lg2) as R0.
+        cbv zeta in R0. replace (S k - 1)%nat with k in R0 by lia.
+        left. exact (R0 HP).
+      * assert (Hnil : skipn (S (S k)) (x0 :: xs) = []) by (apply skipn_all2; simpl; lia).
+        rewrite Hnil in HP |- *. left. exact (P_last_step _ _ _ HP).
+Qed.
+
+(* RUNG 9b, QED: the full output of the actual recurrence has the aligned
+   carry shape -- arbitrary length, no hypothesis beyond Priest validity. *)
+Theorem cascade_reachable_shape :
+  forall e f x0 xs, cascade_hyps e f x0 xs ->
+    exists bs, drop_zeros (cascade_out x0 [] xs) = flat_map cblock_expand bs
+               /\ carry_shape bs /\ pairs_aligned bs.
+Proof.
+  intros e f x0 xs HH.
+  pose proof (cascade_stage_invariant e f x0 xs HH (length xs) (Nat.le_refl _)) as I.
+  rewrite skipn_all2 in I by (simpl; lia).
+  destruct (cinv_final_shape _ _ I) as (bs & H1 & H2 & H3). exists bs.
+  split; [ | split; assumption ].
+  rewrite <- H1. unfold cascade_out.
+  destruct (b64_grow_expansion_aux x0 xs) as [hs q] eqn:Eg.
+  pose proof (acc_final xs x0) as Hq. rewrite Eg in Hq. cbn [snd] in Hq. rewrite <- Hq.
+  assert (Hl : length hs = length xs) by (pose proof (CascadeTailBound.grow_len xs x0) as L; rewrite Eg in L; exact L).
+  cbn [fst]. rewrite <- Hl, firstn_all, app_nil_r. reflexivity.
+Qed.
+
+Print Assumptions cascade_reachable_shape.
 Print Assumptions cinv_P_step.
 Print Assumptions P_step_reachable.
 Print Assumptions T_step_reachable.

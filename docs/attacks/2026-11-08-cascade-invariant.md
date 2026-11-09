@@ -10,7 +10,7 @@
 | 7 | `cascade_step_obligation` over arbitrary states | QEX (false); `cascade_aligned_shape` vacuous | `CascadeInvariant.v : cascade_step_obligation_false` |
 | 8 | T -> {N, P} (anti/single -> N, pending twin -> P) on reachable states | QED | `CascadeInvariant.v : cinv_T_step, T_step_reachable` |
 | 9a | P -> N: a pending twin settles in exactly one step (no persistence) | QED | `CascadeInvariant.v : cinv_P_step, P_step_reachable, P_last_step, pending_twin_settles` |
-| 9b | one reachable-state induction chaining N/T/P steps | OPEN | — |
+| 9b | one reachable-state induction chaining N/T/P steps; full output has aligned carry shape, any length | QED | `CascadeInvariant.v : cascade_stage_invariant, cascade_reachable_shape` |
 
 OUTCOME: QED (rung 9a). A Priest-valid pending twin cannot remain pending:
 `cinv_P` forces `|h| = 2^c < ulp(g)/4`, so `TwoSum(g,h) = (g,h)` exactly and
@@ -20,3 +20,12 @@ itself (Q' = g afterwards). `cinv_P` needed no strengthening: its look-ahead
 conjunct is what `T_step_reachable` already proves at p = 53. Axioms: corpus
 standard (Reals, funext, classic). No bounded search was used or needed.
 Reproduce: `scripts/hunt_probe_smoke.sh` (compiles CascadeInvariant.v).
+
+
+OUTCOME (rung 9b): QED. `cascade_stage_invariant` proves cinv at every stage
+of the actual `b64_grow_expansion_aux` run (T entry needs no extra conjunct:
+`|h| = ulp(g)` follows from cinv_T itself); `cascade_reachable_shape` reads the
+final shape off `cascade_out`. Only index bookkeeping was added. Axioms: corpus
+standard, no Admitted. Note: this does not prove carry_clean's final reduction
+or fast_expansion_sum nonoverlap; it proves the aligned carry-shape hypothesis
+those bridges consume.
