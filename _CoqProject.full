@@ -4620,3 +4620,9 @@ theories-flocq/B64_NonoverlapSign.v
 theories-flocq/B64_CarryCleanSign.v
 theories-flocq/Orient_b64_expansion_cc.v
 theories-flocq/Orient_b64_stage_d_cc.v
+# Stage D on a common binary grid (n * 2^k, one k, |n| < 2^52,
+# -484 <= k <= 426): the grid alone implies the coordinate domain and every
+# per-operation hypothesis (exact differences, Dekker overflow safety, Dekker
+# no-underflow).  QEX: the magnitude bound alone gives neither exactness
+# (1 - 2^-60) nor no-underflow (2^-600 coordinates).
+theories-flocq/Orient_b64_grid_cc.v
