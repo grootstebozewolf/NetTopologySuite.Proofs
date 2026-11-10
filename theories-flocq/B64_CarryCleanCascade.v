@@ -68,9 +68,10 @@
      Human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6): rung 5
      (N_to_T_entry), rung 7 (cascade_step_obligation_false;
      cascade_aligned_shape vacuous, not citable), rung 8 (cinv_T_step,
-     cascade_T_step_reachable).  Rung 8 covers the wiring only: the tie
-     trichotomy is bstate_tie (B64_CarryCleanOneBit.v), whose review is
-     pending.  Added after the review, pending: cascade_step_obligation_false_sorted.
+     cascade_T_step_reachable).  Rung 8 covers the wiring; the tie
+     trichotomy it relies on, bstate_tie (B64_CarryCleanOneBit.v) with
+     tie_values (B64_CarryCleanLadder.v), was human-reviewed the same day.
+     Added after the review, pending: cascade_step_obligation_false_sorted.
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
@@ -479,7 +480,8 @@ Qed.
 
 (* ---- RUNG: T -> {N, P} -------------------------------------------------
    From a T state, bstate_tie's three outcomes land in the machine:
-   anti pair -> N, single -> N, pending twin -> P.  The look-ahead for the
+   anti pair -> N, single -> N, pending twin -> P.  (On the actual cascade
+   the single outcome never occurs: see the note at bstate_tie.)  The look-ahead for the
    following input g3 is a hypothesis of the machine half (cinv_T_step) and
    is PROVED on the actual cascade (cascade_T_step_reachable), from the entry fact
    |g_j| = 2^M - 2^c and the Priest key |g_j| < ulp(g_(j+2)). *)
