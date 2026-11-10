@@ -20,7 +20,7 @@
      b64_equality_entry, b64_keys: the N -> T entry and the keys
        |g_j| < ulp(g_(j+2)) on the actual run (B64_CarryCleanCascade.v).
      b64_equality_entry_twin: at a tie |g_(j+1)| = |g_j| = 2^M - 2^c (added
-       after the rung 4 review; human review pending).
+       after the rung 4 review; human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47)).
      priest_chains_nonzero: the nonzero hypothesis follows from the chains
        except for singleton chains (chain_nz).
 

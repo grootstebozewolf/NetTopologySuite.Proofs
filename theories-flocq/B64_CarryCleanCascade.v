@@ -71,7 +71,8 @@
      cascade_T_step_reachable).  Rung 8 covers the wiring; the tie
      trichotomy it relies on, bstate_tie (B64_CarryCleanOneBit.v) with
      tie_values (B64_CarryCleanLadder.v), was human-reviewed the same day.
-     Added after the review, pending: cascade_step_obligation_false_sorted.
+     Added after the review: cascade_step_obligation_false_sorted,
+     human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47).
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.

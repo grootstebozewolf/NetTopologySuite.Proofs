@@ -20,7 +20,7 @@
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted; human-reviewed (PR #1014).
-     tie_witness (added 2026-11-10 for the rung 8 review): human review pending.
+     tie_witness (added 2026-11-10 for the rung 8 review): human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47).
      Relies on vm_compute for the concrete run (trusted base; fine for a probe).
      Assisted-by: Claude
 *)
