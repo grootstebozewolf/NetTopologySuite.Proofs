@@ -244,7 +244,9 @@ Proof.
 Qed.
 
 (* Beyond the integer regime: the carry_clean exact decoder is always definite
-   and agrees with the exact integer-determinant model on |coord| <= 2^507. *)
+   and agrees with the exact integer-determinant model on |coord| <= 2^507,
+   under b64_orient2d_expansion_cc_safe (exact coordinate differences, Dekker
+   overflow safety, Dekker no-underflow). *)
 Theorem orient2d_exact_cc_agrees_with_exact_intdet :
   forall P0 P1 Q : BPoint,
     orient2d_inputs_cc_domain P0 P1 Q ->
