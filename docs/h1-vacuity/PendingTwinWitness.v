@@ -13,10 +13,14 @@
    stage 4 with the next input X.  So the P branch of B64_CarryCleanCascade is
    inhabited by a Priest-valid input; cascade_reachable_shape and
    fes_carry_clean_nonoverlap are not vacuous there.
+   tie_witness: cinv_T at stage 3 is the conclusion of N_to_T_entry (j = 3)
+   on this run, from a hand-built stage-2 cinv_N -- T is reached through the
+   machine, not only inside vm_compute.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted; human-reviewed (PR #1014).
+     tie_witness (added 2026-11-10 for the rung 8 review): human review pending.
      Relies on vm_compute for the concrete run (trusted base; fine for a probe).
      Assisted-by: Claude
 *)
@@ -222,5 +226,94 @@ Proof.
   exact (ex_intro _ _ (ex_intro _ _ (conj HN HnP))).
 Qed.
 
+(* T is reached THROUGH THE MACHINE on the real run (rung 8 non-vacuity):
+   at stage 2 the accumulator is 2 and the errors are [-2^-53; -2^-54]
+   (newest first); that is a cinv_N state built by hand, and the third
+   TwoSum(M, 2) = (2^53, +1) has |h| = 1 = ulp(-M), so N_to_T_entry at j = 3
+   yields cinv_T.  The tie itself is computed (vm_compute); the T state is
+   the proved conclusion of N_to_T_entry, not a hand construction. *)
+Definition w_two : binary64 := Binary.B754_finite prec emax false 4503599627370496 (-51) eq_refl.
+Definition w_p253 : binary64 := Binary.B754_finite prec emax false 4503599627370496 1 eq_refl.
+
+Lemma w_run2 :
+  [B64_CarryCleanTailBound.acc wG wxs 2] ++ rev (firstn 2 (fst (b64_grow_expansion_aux wG wxs)))
+  = [w_two; w_m253; w_m254].
+Proof. apply map_B2FF_inj. unfold wxs. vm_compute. reflexivity. Qed.
+
+Lemma w_tie_step : [fst (b64_TwoSum wA w_two); snd (b64_TwoSum wA w_two)] = [w_p253; one_b].
+Proof. apply map_B2FF_inj. vm_compute. reflexivity. Qed.
+
+Theorem tie_witness :
+  let q := B64_CarryCleanTailBound.acc wG wxs 2 in
+  let E := rev (firstn 2 (fst (b64_grow_expansion_aux wG wxs))) in
+  cinv_T (fst (b64_TwoSum wA q)) (snd (b64_TwoSum wA q) :: E) [wAn; wX].
+Proof.
+  intros q E.
+  destruct w_priest as [Pe Pf]. destruct w_finite as [Fe Ff].
+  pose proof (N_to_T_entry we wf wG wxs Pe Pf Fe Ff w_nonzero w_small w_sort 3 E [wX]
+                ltac:(lia) ltac:(unfold wxs; cbn; lia)) as H.
+  cbv zeta in H.
+  change (nth 3 (wG :: wxs) (Binary.B754_zero prec emax false)) with wA in H.
+  change (nth 4 (wG :: wxs) (Binary.B754_zero prec emax false)) with wAn in H.
+  change (3 - 1)%nat with 2%nat in H. fold q in H.
+  assert (HQ : q = w_two) by exact (f_equal (fun l => nth 0 l w_zero) w_run2).
+  assert (HE : E = [w_m253; w_m254]) by exact (f_equal (fun l => tl l) w_run2).
+  apply H; rewrite HQ; [ rewrite HE | ].
+  - (* cinv_N at stage 2, built by hand *)
+    assert (Hfm3 : b64_fin w_m253) by reflexivity.
+    assert (Hfm4 : b64_fin w_m254) by reflexivity.
+    assert (Habs3 : Rabs (b2r w_m253) = bpow radix2 (-53)) by exact (abs_p52 true (-105) eq_refl).
+    assert (Habs4 : Rabs (b2r w_m254) = bpow radix2 (-54)) by exact (abs_p52 true (-106) eq_refl).
+    assert (Hnil : carry_shape [] /\ pairs_aligned []).
+    { split; [ split; [ constructor | split; [ exact I | exact I ] ] | exact I ]. }
+    destruct Hnil as [Sh0 Al0].
+    assert (N3 : b64_nz w_m253) by (split; [ exact Hfm3 | apply fin_nz ]).
+    assert (N4 : b64_nz w_m254) by (split; [ exact Hfm4 | apply fin_nz ]).
+    destruct (cons_single (-54) w_m254 [] N4 (pow2_multiple_pm (-54) _ Habs4) Sh0 Al0 (Forall_nil _))
+      as [Sh1 Al1].
+    assert (Kb1 : Forall (key_below (-53)) [CSingle w_m254]).
+    { constructor; [ | constructor ]. unfold key_below. cbn [block_key]. rewrite Habs4.
+      apply bpow_lt. lia. }
+    destruct (cons_single (-53) w_m253 _ N3 (pow2_multiple_pm (-53) _ Habs3) Sh1 Al1 Kb1) as [Sh2 Al2].
+    assert (V2 : b2r w_two = 2).
+    { unfold w_two. rewrite B2R_fin. cbn [cond_Zopp].
+      replace (IZR (Z.pos 4503599627370496)) with (bpow radix2 52)
+        by (change (bpow radix2 52) with (IZR (2 ^ 52)); apply f_equal; reflexivity).
+      rewrite <- bpow_plus. reflexivity. }
+    assert (FA : b64_fin wA) by reflexivity.
+    assert (HcA : bpow radix2 (cexp radix2 b64_fexp (b2r wA)) = 1).
+    { rewrite <- ulp_neq_0 by (unfold wA, bM_scaled; apply fin_nz). exact ulp_qA. }
+    assert (Kb2 : forall L, (-52 <= L)%Z -> Forall (key_below L) [CSingle w_m253; CSingle w_m254]).
+    { intros L HL. constructor; [ | constructor; [ | constructor ] ]; unfold key_below; cbn [block_key].
+      - rewrite Habs3. apply bpow_lt. lia.
+      - rewrite Habs4. apply bpow_lt. lia. }
+    exists 0%Z, [CSingle w_m253; CSingle w_m254].
+    split; [ | split; [ exact FA | split; [ unfold wA, bM_scaled; apply fin_nz | split ] ] ].
+    + (* bstate *)
+      refine (conj (eq_refl : b64_fin w_two) (conj _ (conj _ (conj _ (conj Sh2 (conj Al2 (Kb2 0%Z ltac:(lia)))))))).
+      * repeat constructor; assumption.
+      * exists 2%Z. rewrite V2. change (bpow radix2 0) with 1. ring.
+      * vm_compute. reflexivity.
+    + (* TwoSum safety *)
+      apply b64_TwoSum_safe_bound; [ exact FA | reflexivity | | ].
+      * unfold wA, bM_scaled, mant_M. rewrite abs_B2R_fin.
+        pose proof (term_bnd 9007199254740991 0 ltac:(lia) ltac:(lia)).
+        pose proof (bpow_le radix2 106 (emax - 4) ltac:(unfold emax; lia)). lra.
+      * rewrite V2, Rabs_pos_eq by lra. change 2 with (bpow radix2 1). apply bpow_le. unfold emax. lia.
+    + (* keys below the next input's ulp: cexp(M) = 0 *)
+      assert (Hc0 : cexp radix2 b64_fexp (b2r wA) = 0%Z).
+      { apply (bpow_inj radix2). rewrite HcA. reflexivity. }
+      rewrite Hc0. apply Kb2. lia.
+  - (* the tie: |h| = 1 = ulp(-M) *)
+    assert (Sh : snd (b64_TwoSum wA w_two) = one_b) by exact (f_equal (fun l => nth 1 l w_two) w_tie_step).
+    assert (H1 : Rabs (b2r one_b) = bpow radix2 0) by exact (abs_p52 false (-52) eq_refl).
+    rewrite Sh, H1.
+    assert (Hn : b2r wAn = - b2r qA).
+    { unfold wAn, qA, bM_scaled. rewrite !B2R_fin. cbn [cond_Zopp].
+      change (Zneg mant_M) with (- Zpos mant_M)%Z. rewrite opp_IZR. ring. }
+    rewrite Hn, ulp_opp, ulp_qA. reflexivity.
+Qed.
+
 Print Assumptions pending_twin_witness.
+Print Assumptions tie_witness.
 Print Assumptions pending_twin_witness_settles.
