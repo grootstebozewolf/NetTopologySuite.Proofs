@@ -31,7 +31,17 @@
         expansion safety (for the fallback path).  In small-int regime
         these can be discharged simultaneously.
 
-   The headline of Slice A is `b64_orient_sign_stage_d_sound`, completing
+   STATUS (2026-11): REFUTED HYPOTHESIS / SUPERSEDED.
+   `b64_orient_sign_exact_sound` and `b64_orient_sign_stage_d_sound` take
+   `fast_expansion_sum_strong_nonoverlap_headline`, which is REFUTED
+   (B64_Shewchuk_Thm13_counterexample.v).  They are kept as history and are
+   SUPERSEDED by Orient_b64_stage_d_cc.v (`b64_orient_sign_exact_cc_sound`,
+   `b64_orient_sign_stage_d_cc_sound`), which decode the carry_clean
+   expansion and carry no such hypothesis.  The decoders defined here are
+   unchanged; `b64_orient_sign_stage_d_tiny_regime_decisive` does not use the
+   headline and stands.
+
+   The headline of Slice A was `b64_orient_sign_stage_d_sound`, completing
    the path from the existing Path A's Qed-closed dominated-case work
    through the Slice A fast-expansion-sum machinery to the Stage D
    top-level theorem.

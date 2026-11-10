@@ -23,7 +23,7 @@
 #       debt            axiom avoidable; to be removed
 #       qex             axiom kept because the axiom-free claim is false
 #
-# LIVE: 125 files (119 theories-flocq/ + 2 theories/ + 4 hunt probes).
+# LIVE: 128 files (122 theories-flocq/ + 2 theories/ + 4 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -155,6 +155,17 @@ theories-flocq/B64_CarryCleanTailModel.v
 theories-flocq/B64_CarryCleanTailBound.v
 theories-flocq/B64_CarryCleanCascade.v
 theories-flocq/B64_CarryCleanTarget.v
+# Stage D rebuilt on carry_clean (no refuted headline).  CarryCleanSign:
+# the target's block reduction is descending and sums exactly
+# (fast_expansion_sum_correct, fes_shape_all).  Orient_b64_expansion_cc:
+# Dekker pairs are Priest chains (round / ulp / mag) and the coordinate
+# overflow margin.  Orient_b64_stage_d_cc: the decoders.  Every headline
+# inherits Classical_Prop.classic via Flocq C1.  B64_NonoverlapSign.v (the
+# real-valued sign core) is NOT listed: it is within the allowlist.  Plan:
+# none while Flocq's rounding model is in use (category-c-policy).
+theories-flocq/B64_CarryCleanSign.v
+theories-flocq/Orient_b64_expansion_cc.v
+theories-flocq/Orient_b64_stage_d_cc.v
 
 # class: implementation
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen

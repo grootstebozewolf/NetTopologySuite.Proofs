@@ -439,6 +439,18 @@ jobs:
             | tee /tmp/hunt_probe_smoke.log
           sudo chown -R "$(id -u):$(id -g)" .
 
+      - name: Stage D carry_clean chain is headline-free
+        # The refuted fast_expansion_sum_strong_nonoverlap_headline is a
+        # Definition taken as a hypothesis, so Print Assumptions cannot see
+        # it.  Recompile the carry_clean Stage D chain in a scratch copy with
+        # the headline and every theorem that takes it deleted.
+        run: |
+          chmod -R a+rwX .
+          docker run --rm -v "$PWD:/workspace" -w /workspace \
+            nts-proofs-flocq:ci \
+            bash -lc 'bash scripts/check_stage_d_headline_free.sh'
+          sudo chown -R "$(id -u):$(id -g)" .
+
       - name: Update per-file Print Assumptions chunks
         run: bash scripts/ci_update_palog.sh /tmp/build_sync.log
 

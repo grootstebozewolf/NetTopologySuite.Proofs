@@ -73,6 +73,8 @@ From NTS.Proofs.Flocq Require Import Orient_b64_exact.
 From NTS.Proofs.Flocq Require Import Orient_b64_exact_full.
 From NTS.Proofs.Flocq Require Import Orient_b64_expansion.
 From NTS.Proofs.Flocq Require Import Orient_b64_stage_d.
+From NTS.Proofs.Flocq Require Import Orient_b64_expansion_cc.
+From NTS.Proofs.Flocq Require Import Orient_b64_stage_d_cc.
 
 Local Open Scope R_scope.
 
@@ -93,6 +95,16 @@ Proof.
   destruct Hxq as (Fxq & _). destruct Hyq as (Fyq & _).
   unfold all_finite. repeat split; assumption.
 Qed.
+
+(* -------------------------------------------------------------------------- *)
+(* SUPERSEDED (refuted hypothesis).  The two theorems below,                  *)
+(* `shewchuk_stage_d_agrees_with_exact_intdet` and                            *)
+(* `shewchuk_vs_z2_tiny_headline`, take                                       *)
+(* `fast_expansion_sum_strong_nonoverlap_headline`, which is REFUTED          *)
+(* (B64_Shewchuk_Thm13_counterexample.v).  They are kept unchanged as         *)
+(* history and are superseded by the `_cc` theorems at the end of this file,  *)
+(* which decode the carry_clean expansion and carry no such hypothesis.       *)
+(* -------------------------------------------------------------------------- *)
 
 (* -------------------------------------------------------------------------- *)
 (* POWER.  When the Shewchuk Stage D decoder commits to a definite sign       *)
@@ -168,9 +180,104 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
+(* REBUILT ON carry_clean (no refuted hypothesis).                            *)
+(*                                                                            *)
+(* Same statements with the carry_clean decoders of Orient_b64_stage_d_cc.v   *)
+(* and Stage D's safety minus fast_expansion_sum_safe (now derived).  The     *)
+(* third theorem drops the integer regime: on the coordinate domain           *)
+(* |coord| <= 2^507 the carry_clean exact decoder agrees with the exact       *)
+(* integer-determinant model.                                                 *)
+(* -------------------------------------------------------------------------- *)
+
+Theorem shewchuk_stage_d_cc_agrees_with_exact_intdet :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_int_safe P0 P1 Q ->
+    b64_orient2d_expansion_cc_safe P0 P1 Q ->
+    match b64_orient_sign_stage_d_cc P0 P1 Q with
+    | OrientRPos       => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = 1%Z
+    | OrientRNeg       => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = (-1)%Z
+    | OrientRZero      => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = 0%Z
+    | OrientRNan       => True
+    | OrientRUncertain => True
+    end.
+Proof.
+  intros P0 P1 Q Hint Hexp.
+  pose proof (int_safe_all_finite P0 P1 Q Hint) as Hfin.
+  pose proof (b64_orient_sign_stage_d_cc_sound P0 P1 Q Hint Hexp) as Hsd.
+  pose proof (Orient_b64_exact_full.b64_orient2d_exact_sound P0 P1 Q Hfin)
+    as (Hpos & Hneg & Hzero).
+  destruct (b64_orient_sign_stage_d_cc P0 P1 Q).
+  - apply (proj1 Hpos).  exact Hsd.
+  - apply (proj1 Hneg).  exact Hsd.
+  - apply (proj1 Hzero). exact Hsd.
+  - exact I.
+  - exact I.
+Qed.
+
+Theorem shewchuk_vs_z2_tiny_headline_cc :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_tiny_int_safe P0 P1 Q ->
+    b64_orient2d_expansion_cc_safe P0 P1 Q ->
+    cross_R_BP P0 P1 Q <> 0 ->
+    b64_orient_sign_stage_d_cc P0 P1 Q <> OrientRUncertain
+    /\ match b64_orient_sign_stage_d_cc P0 P1 Q with
+       | OrientRPos       => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = 1%Z
+       | OrientRNeg       => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = (-1)%Z
+       | OrientRZero      => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = 0%Z
+       | OrientRNan       => True
+       | OrientRUncertain => True
+       end.
+Proof.
+  intros P0 P1 Q Htiny Hexp Hnz.
+  split.
+  - exact (b64_orient_sign_stage_d_cc_tiny_regime_decisive P0 P1 Q Htiny Hnz).
+  - apply shewchuk_stage_d_cc_agrees_with_exact_intdet.
+    + exact (orient2d_inputs_tiny_int_safe_imp_int_safe P0 P1 Q Htiny).
+    + exact Hexp.
+Qed.
+
+Lemma cc_domain_all_finite :
+  forall P0 P1 Q : BPoint, orient2d_inputs_cc_domain P0 P1 Q -> all_finite P0 P1 Q.
+Proof.
+  intros P0 P1 Q ((F1 & _) & (F2 & _) & (F3 & _) & (F4 & _) & (F5 & _) & (F6 & _)).
+  unfold all_finite. repeat split; assumption.
+Qed.
+
+(* Beyond the integer regime: the carry_clean exact decoder is always definite
+   and agrees with the exact integer-determinant model on |coord| <= 2^507. *)
+Theorem orient2d_exact_cc_agrees_with_exact_intdet :
+  forall P0 P1 Q : BPoint,
+    orient2d_inputs_cc_domain P0 P1 Q ->
+    b64_orient2d_expansion_cc_safe P0 P1 Q ->
+    match b64_orient_sign_exact_cc P0 P1 Q with
+    | OrientRPos       => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = 1%Z
+    | OrientRNeg       => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = (-1)%Z
+    | OrientRZero      => Orient_b64_exact_full.b64_orient2d_exact P0 P1 Q = 0%Z
+    | OrientRNan       => False
+    | OrientRUncertain => False
+    end.
+Proof.
+  intros P0 P1 Q Hd Hexp.
+  pose proof (b64_orient_sign_exact_cc_sound P0 P1 Q Hd Hexp) as Hsd.
+  pose proof (b64_orient_sign_exact_cc_definite P0 P1 Q) as [HnN HnU].
+  pose proof (Orient_b64_exact_full.b64_orient2d_exact_sound P0 P1 Q
+                (cc_domain_all_finite P0 P1 Q Hd)) as (Hpos & Hneg & Hzero).
+  destruct (b64_orient_sign_exact_cc P0 P1 Q).
+  - apply (proj1 Hpos).  exact Hsd.
+  - apply (proj1 Hneg).  exact Hsd.
+  - apply (proj1 Hzero). exact Hsd.
+  - exact (HnN eq_refl).
+  - exact (HnU eq_refl).
+Qed.
+
+(* -------------------------------------------------------------------------- *)
 (* Audit footprint.                                                           *)
 (* -------------------------------------------------------------------------- *)
 
+Print Assumptions shewchuk_stage_d_cc_agrees_with_exact_intdet.
+Print Assumptions shewchuk_vs_z2_tiny_headline_cc.
+Print Assumptions cc_domain_all_finite.
+Print Assumptions orient2d_exact_cc_agrees_with_exact_intdet.
 Print Assumptions shewchuk_stage_d_agrees_with_exact_intdet.
 Print Assumptions shewchuk_vs_z2_tiny_headline.
 Print Assumptions int_safe_all_finite.

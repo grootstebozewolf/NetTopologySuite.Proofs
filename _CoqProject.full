@@ -4595,3 +4595,18 @@ theories-flocq/B64_CarryCleanTailModel.v
 theories-flocq/B64_CarryCleanTailBound.v
 theories-flocq/B64_CarryCleanCascade.v
 theories-flocq/B64_CarryCleanTarget.v
+# Stage D rebuilt on carry_clean, with no dependence on the refuted
+# fast_expansion_sum_strong_nonoverlap_headline.  NonoverlapSign: the sign of
+# a nonoverlapping chain in descending magnitude order is the sign of its
+# leading component (real core; QEX: without the order it fails, [-4; 1; 8]).
+# CarryCleanSign: carry_clean (fast_expansion_sum e f) on Priest input is
+# descending, nonoverlapping and exact, so its sign is that of e + f.
+# Orient_b64_expansion_cc: Dekker pairs are Priest chains; the carry_clean
+# overflow margin follows from |coord| <= 2^507; the carry_clean orient2d
+# expansion has the sign of cross_R_BP.  Orient_b64_stage_d_cc: the Stage D
+# decoders on carry_clean and their soundness (supersede the conditional
+# Orient_b64_stage_d theorems).
+theories-flocq/B64_NonoverlapSign.v
+theories-flocq/B64_CarryCleanSign.v
+theories-flocq/Orient_b64_expansion_cc.v
+theories-flocq/Orient_b64_stage_d_cc.v
