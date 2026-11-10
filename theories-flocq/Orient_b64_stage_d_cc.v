@@ -37,9 +37,9 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47),
-     except the non-vacuity witness (b64_small .. orient2d_cc_witness),
-     added after that review: human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47);
+     the non-vacuity witness (b64_small .. orient2d_cc_witness), added after
+     that review, approved with the file (PR #1017 @ 55b9089).
      Assisted-by: Claude
    ========================================================================== *)
 
