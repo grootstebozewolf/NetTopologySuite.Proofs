@@ -11,9 +11,6 @@
 | 3+ | `fast_expansion_sum_safe` derived from the same margin (dropped from the hypotheses) | QED | `B64_CarryCleanSign.v : fes_safe_of_overflow`; `Orient_b64_expansion_cc.v : b64_orient2d_expansion_cc_safe_full` |
 | 4 | Stage D on `carry_clean (fast_expansion_sum …)`: value, nonoverlap, sign, Stage D soundness, orient2d soundness on the domain | QED | `Orient_b64_expansion_cc.v : b64_orient2d_expansion_cc_props, b64_orient2d_expansion_cc_sign_correct`; `Orient_b64_stage_d_cc.v : b64_orient_sign_exact_cc_sound, b64_orient_sign_stage_d_cc_sound`; `Shewchuk_vs_Z2.v : orient2d_exact_cc_agrees_with_exact_intdet` |
 | 4+ | no use of `fast_expansion_sum_strong_nonoverlap_headline`, directly or transitively | QED (mechanical: chain recompiles with the headline and its five consumers deleted; mutation caught) | `scripts/check_stage_d_headline_free.sh` (CI) |
-
-OUTCOME: QED — Stage D and the orient2d exact-path soundness headline are rebuilt on carry_clean with no dependence on the refuted headline. The literal step-2 statement (bare `nonoverlapping_chain`) is QEX; the missing hypothesis (descending magnitude) is documented and then proved for carry_clean's output from the existing block pattern, not assumed.
-
-Scope that stays a hypothesis: Stage D's safety predicate minus `fast_expansion_sum_safe` — difference ops safe and exact, Dekker op safety, Dekker no-underflow. The integer-regime filter path is unchanged.
-
-Release gate: rungs 0–8 human review is pending, so these results stay internal (no press-release link, no opam 0.1.1) until it clears.
+| OUTCOME | Stage D + orient2d exact-path soundness rebuilt on carry_clean, headline-free | QED; literal step 2 (bare `nonoverlapping_chain`) is QEX, its missing hypothesis proved for carry_clean output, not assumed | this table |
+| scope | still hypotheses: diffs safe and exact, Dekker op safety, Dekker no-underflow; filter path integer-only | unchanged | `Orient_b64_expansion_cc.v : b64_orient2d_expansion_cc_safe` |
+| release | rungs 0–8 review pending: no press-release link, no opam 0.1.1 | BLOCKED (human gate) | — |
