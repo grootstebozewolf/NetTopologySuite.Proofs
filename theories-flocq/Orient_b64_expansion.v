@@ -71,6 +71,13 @@ Local Open Scope R_scope.
 (* general form awaits weakening `nonoverlap_strict` to bit-disjoint.         *)
 (* -------------------------------------------------------------------------- *)
 
+(* STATUS (2026-11): REFUTED / SUPERSEDED.  The headline is false as stated  *)
+(* (B64_Shewchuk_Thm13_counterexample.v).  Every theorem below that takes it  *)
+(* -- b64_orient2d_expansion_nonoverlap, b64_orient2d_expansion_sign_correct  *)
+(* -- is kept as history only and is SUPERSEDED by the carry_clean path       *)
+(* (Orient_b64_expansion_cc.v: b64_orient2d_expansion_cc_sign_correct),      *)
+(* which needs no such hypothesis.  Do not cite these two as soundness.       *)
+
 Definition fast_expansion_sum_strong_nonoverlap_headline : Prop :=
   forall e f : list binary64,
     fast_expansion_sum_safe e f ->

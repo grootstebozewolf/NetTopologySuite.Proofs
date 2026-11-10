@@ -44,7 +44,10 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human review pending, except
+     bstate_tie: human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6), with tie_values
+     (B64_CarryCleanLadder.v).  The rest of this file (fes_overlap_within_1_le6
+     and the <= 6 rungs) is not covered by that review.
      Assisted-by: Grok Bot
    ========================================================================== *)
 
@@ -433,7 +436,13 @@ Proof.
 Qed.
 
 (* STEP 2, the tie: Q = s 2^M and the newest error h = s 2^c sit at a
-   midpoint for g.  Anti pair, a pending twin (Q' = h), or a single. *)
+   midpoint for g.  Anti pair, a pending twin (Q' = h), or a single.
+   On the actual cascade only the first two occur: there |g| = 2^M - 2^c
+   (B64_CarryCleanTailBound.b64_equality_entry_twin), so g = +-(K-1) 2^c,
+   and the sign of g against s picks anti (same sign) or twin (opposite).
+   The single outcome needs |g| = 2^M - 2 2^c, the slack in the entry
+   bound; it is kept so the lemma covers that bound, but is never reached
+   (reasoning, not mechanized). *)
 Lemma bstate_tie :
   forall (g Q h : binary64) (E0 : list binary64) (bs0 : list cblock) (s : R),
     b64_fin g -> b64_TwoSum_safe g Q -> (s = 1 \/ s = -1) ->

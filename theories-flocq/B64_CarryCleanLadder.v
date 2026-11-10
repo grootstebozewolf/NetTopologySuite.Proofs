@@ -41,7 +41,9 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human review pending, except
+     tie_values: human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6; all 8 cases of
+     s = +-1, m = +-(K-1), +-(K-2) checked under round-half-even).
      Assisted-by: Claude
    ========================================================================== *)
 

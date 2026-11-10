@@ -19,12 +19,19 @@
        the FLX one), chain_of_priest.
      b64_equality_entry, b64_keys: the N -> T entry and the keys
        |g_j| < ulp(g_(j+2)) on the actual run (B64_CarryCleanCascade.v).
+     b64_equality_entry_twin: at a tie |g_(j+1)| = |g_j| = 2^M - 2^c (added
+       after the rung 4 review; human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47)).
      priest_chains_nonzero: the nonzero hypothesis follows from the chains
        except for singleton chains (chain_nz).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10,
+     J. Bloemscheer, on main @ 4eb6c4b6): rung 4 (b64_cascade_tail_bound,
+     fes_output_error_bound: statement, adequacy to the corpus
+     fast_expansion_sum, FLX->binary64 bridge), with rung 3
+     (B64_CarryCleanTailModel.v), which it builds on.  Adequacy is to the
+     corpus fast_expansion_sum (sort + TwoSum), not Shewchuk's merge.
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
@@ -376,6 +383,50 @@ Qed.
 
 (* The error bound read off fast_expansion_sum's own output
    qfinal :: rev hs: the component at position (length xs - j + 1) is h_j. *)
+(* What a tie looks like: the two inputs have EQUAL magnitude, at the top of
+   their binade.  g2 is a multiple of 2^c strictly below 2^M, so
+   |g2| <= 2^M - 2^c = |gj| <= |g2| (sortedness).  The entry bound
+   2^M - 2 2^c <= |g2| has one ulp of slack that never occurs. *)
+Corollary b64_equality_entry_twin :
+  forall e f x0 xs,
+    priest_chain e -> priest_chain f ->
+    Forall b64_fin e -> Forall b64_fin f ->
+    Forall (fun x => b2r x <> 0) (e ++ f) ->
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) ->
+    sort_by_abs (e ++ f) = x0 :: xs ->
+    forall j, (1 <= j)%nat -> (j < length xs)%nat ->
+    let gj := nth j (x0 :: xs) d in
+    let g2 := nth (S j) (x0 :: xs) d in
+    let q := acc x0 xs (j - 1) in
+    Rabs (b2r (snd (b64_TwoSum gj q))) = ulp radix2 (SpecFloat.fexp prec emax) (b2r g2) ->
+    let M := mag radix2 (b2r g2) in
+    let c := cexp radix2 (SpecFloat.fexp prec emax) (b2r g2) in
+    Rabs (b2r g2) = Rabs (b2r gj) /\ Rabs (b2r gj) = bpow radix2 M - bpow radix2 c.
+Proof.
+  intros e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 gj g2 q Heq M c.
+  pose proof (b64_equality_entry e f x0 xs Pe Pf Fe Ff Nz Hov Hs j Hj1 Hj2 Heq) as H.
+  cbv zeta in H. fold gj g2 q M c in H.
+  destruct H as (_ & _ & _ & _ & HMc & _ & Hgj & Hle & _ & _).
+  assert (Hup : Rabs (b2r g2) <= bpow radix2 M - bpow radix2 c).
+  { pose proof (Binary.generic_format_B2R prec emax g2) as Hf.
+    unfold generic_format, F2R in Hf. cbn [Fnum Fexp] in Hf. fold c in Hf.
+    set (m := Ztrunc (scaled_mantissa radix2 (SpecFloat.fexp prec emax) (b2r g2))) in Hf.
+    pose proof (bpow_mag_gt radix2 (b2r g2)) as Hlt. fold M in Hlt.
+    assert (Hpc : 0 < bpow radix2 c) by apply bpow_gt_0.
+    assert (Hsplit : bpow radix2 M = IZR (Zpower radix2 (M - c)) * bpow radix2 c).
+    { rewrite IZR_Zpower by lia. rewrite <- bpow_plus. f_equal. ring. }
+    assert (Habs : Rabs (b2r g2) = IZR (Z.abs m) * bpow radix2 c).
+    { rewrite Hf at 1. rewrite Rabs_mult, (Rabs_pos_eq (bpow radix2 c)) by lra.
+      rewrite abs_IZR. reflexivity. }
+    rewrite Habs, Hsplit in Hlt |- *.
+    assert (Hz : (Z.abs m < Zpower radix2 (M - c))%Z).
+    { apply lt_IZR. apply Rmult_lt_reg_r with (bpow radix2 c); assumption. }
+    assert (Hz' : IZR (Z.abs m) <= IZR (Zpower radix2 (M - c)) - 1).
+    { rewrite <- minus_IZR. apply IZR_le. lia. }
+    nra. }
+  split; lra.
+Qed.
+
 Corollary fes_output_error_bound :
   forall e f x0 xs,
     priest_chain e -> priest_chain f ->
@@ -401,3 +452,5 @@ End B64.
 
 Print Assumptions b64_cascade_tail_bound.
 Print Assumptions b64_closed_lookahead.
+Print Assumptions fes_output_error_bound.
+Print Assumptions b64_equality_entry_twin.

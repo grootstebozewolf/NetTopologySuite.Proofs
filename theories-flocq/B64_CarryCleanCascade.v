@@ -16,14 +16,19 @@
      N_step_reachable / N_step_actual: on the actual cascade of two Priest
        chains, N -> N or N -> T (strict vs equal look-ahead, from
        B64_CarryCleanTailBound).  N_to_T_entry: the T-entry contract holds; the
-       bstate_tie bound 2^M - 2*2^c <= |g_next| has one ulp of slack.
+       bstate_tie bound 2^M - 2*2^c <= |g_next| has one ulp of slack, never
+       used: in fact |g_next| = |g_j| = 2^M - 2^c
+       (B64_CarryCleanTailBound.b64_equality_entry_twin).
      cinv_T_step / cascade_T_step_reachable: T -> N (anti pair or single outcome of
        bstate_tie) or T -> P (pending twin), on the actual cascade; the
        look-ahead for the following input comes from |g_j| = 2^M - 2^c and
        the Priest key |g_j| < ulp(g_(j+2)), so 2^M <= ulp(g3) and, at p = 53,
        4*2^c < ulp(g3) (the p = 2 pending-twin equality does not arise here).
      cascade_step_obligation_false: the step obligation as stated (over
-       ARBITRARY (Q, E, rest)) is FALSE -- Q = 1, g = 2^54, next 2^-100.
+       ARBITRARY (Q, E, rest)) is FALSE -- Q = 1, g = 2^54, next 2^-100
+       (inputs unsorted); cascade_step_obligation_false_sorted: also FALSE on
+       sorted inputs -- Q = 2^54, rest = [1; 1].  cinv_N lacks the
+       accumulator bound |Q - g| <= 2 ulp, which only reachability gives.
 
    VACUOUS  cascade_aligned_shape is Qed but conditional on
      cascade_step_obligation, which is refuted.  Not citable.  Its usable
@@ -46,13 +51,28 @@
      (nonzero inputs).  The zero-input case and both bridge Definitions are
      discharged in B64_CarryCleanTarget.v (carry_clean_priest_target_proved).
      Non-vacuity: docs/h1-vacuity/PendingTwinWitness.v (T -> P -> N on a
-     concrete Priest pair; probe lane, vm_compute).
+     concrete Priest pair; probe lane, vm_compute).  cinv_T is reached
+     through the machine there (tie_witness: N_to_T_entry at j = 3 from a
+     hand-built stage-2 cinv_N); cinv_P is built by hand.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted.  Human-reviewed (PR #1014): rungs 9a/9b
      (P -> N, cascade_stage_invariant, cascade_reachable_shape, fes_carry_clean_nonoverlap).
-     Rungs 0-8 above: human review pending.
+     Human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6): rung 4
+     (B64_CarryCleanTailBound: b64_cascade_tail_bound, fes_output_error_bound)
+     and rung 6 (N_step_reachable, N_step_actual).
+     Rungs 0-3 (CarryCleanPure, LookaheadQEX, LatticeRouteQEX in
+     docs/h1-vacuity; B64_CarryCleanTailModel) human-reviewed the same day
+     in their own files.
+     Human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6): rung 5
+     (N_to_T_entry), rung 7 (cascade_step_obligation_false;
+     cascade_aligned_shape vacuous, not citable), rung 8 (cinv_T_step,
+     cascade_T_step_reachable).  Rung 8 covers the wiring; the tie
+     trichotomy it relies on, bstate_tie (B64_CarryCleanOneBit.v) with
+     tie_values (B64_CarryCleanLadder.v), was human-reviewed the same day.
+     Added after the review: cascade_step_obligation_false_sorted,
+     human-reviewed (2026-11-10, J. Bloemscheer, PR #1017 @ 16a1b47).
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
@@ -158,7 +178,8 @@ Qed.
 
 (* ---- QEX: cascade_step_obligation is FALSE as stated -----------------
    It quantifies over arbitrary (Q, E, rest), but cinv only looks one input
-   ahead.  Q = 1, g = 2^54, next input g3 = 2^-100: the N state holds before
+   ahead.  Q = 1, g = 2^54, next input g3 = 2^-100 (rest UNSORTED; see
+   cascade_step_obligation_false_sorted below for a sorted witness): the N state holds before
    the step (E = []), and after TwoSum(2^54, 1) = (2^54, 1) the error 1 is
    far above ulp(2^-100), so neither N, T (2^54 is not +-2^mag(g3)) nor P
    (needs two errors) holds.  So cascade_aligned_shape is VACUOUS as a
@@ -219,6 +240,53 @@ Proof.
   - destruct P as (z & h & E0 & bs0 & c & HE & _). injection HE as _ HE. discriminate.
 Qed.
 
+(* The witness above also violates sortedness (rest = [2^54; 2^-100] is
+   descending), which hides the real defect.  A SORTED witness fails the same
+   way: Q = 2^54, E = [], rest = [1; 1].  TwoSum(1, 2^54) = (2^54, 1); N needs
+   the key 1 < ulp(1), T needs 2^54 = +-2^mag(1) = +-2, P needs two errors.
+   What cinv_N lacks is the accumulator bound |Q - g| <= 2 ulp (rungs 3-4),
+   which only reachability supplies: Q = 2^54 before inputs of size 1 is not
+   a state of any sorted cascade. *)
+Lemma qx_step_sorted :
+  [fst (b64_TwoSum qx_one qx_g); snd (b64_TwoSum qx_one qx_g)] = [qx_g; qx_one].
+Proof. apply map_B2FF_inj. vm_compute. reflexivity. Qed.
+
+Theorem cascade_step_obligation_false_sorted :
+  (Rabs (b2r qx_one) <= Rabs (b2r qx_one)) /\
+  cinv qx_g [] [qx_one; qx_one] /\
+  ~ cinv (fst (b64_TwoSum qx_one qx_g)) [snd (b64_TwoSum qx_one qx_g)] [qx_one].
+Proof.
+  destruct qx_vals as (V1 & Vg & _).
+  assert (Fone : b64_fin qx_one) by reflexivity. assert (Fg : b64_fin qx_g) by reflexivity.
+  assert (Hsm : forall k, (k <= 54)%Z -> bpow radix2 k <= bpow radix2 (emax - 4)) by (intros k Hk; apply bpow_le; unfold emax; lia).
+  assert (S : b64_TwoSum_safe qx_one qx_g).
+  { apply b64_TwoSum_safe_bound; try assumption.
+    - rewrite V1, Rabs_R1. replace 1 with (bpow radix2 0) by reflexivity. apply Hsm. lia.
+    - rewrite Vg, Rabs_pos_eq by apply bpow_ge_0. apply Hsm. lia. }
+  split; [ apply Rle_refl | split ].
+  { left. exists (cexp radix2 b64_fexp (b2r qx_g)), []. split; [ apply bstate_init, Fg | ].
+    split; [ exact Fone | ]. split; [ rewrite V1; lra | ]. split; [ exact S | constructor ]. }
+  intro Post.
+  assert (SQ : fst (b64_TwoSum qx_one qx_g) = qx_g) by exact (f_equal (fun l => nth 0 l qx_g) qx_step_sorted).
+  assert (Sh : snd (b64_TwoSum qx_one qx_g) = qx_one) by exact (f_equal (fun l => nth 1 l qx_g) qx_step_sorted).
+  rewrite SQ, Sh in Post.
+  assert (Hm1 : mag radix2 (b2r qx_one) = 1%Z :> Z).
+  { apply mag_unique. rewrite V1, Rabs_R1. change (bpow radix2 (1 - 1)) with 1. change (bpow radix2 1) with 2. lra. }
+  assert (Hc1 : (cexp radix2 b64_fexp (b2r qx_one) <= 0)%Z).
+  { unfold cexp. rewrite Hm1. unfold SpecFloat.fexp, SpecFloat.emin, prec, emax. cbn. lia. }
+  destruct Post as [N | [T | P]].
+  - destruct N as (L & bs & (_ & _ & _ & DE & _ & _ & _) & _ & _ & _ & K).
+    rewrite drop_zeros_cons_nz in DE by (apply b64_is_zero_false; [ exact Fone | rewrite V1; lra ]).
+    cbn [drop_zeros filter] in DE. destruct (flat_single bs qx_one (eq_sym DE)) as [bs' ->].
+    inversion K as [| ? ? Kb _]. unfold key_below in Kb. cbn [block_key] in Kb. rewrite V1, Rabs_R1 in Kb.
+    rewrite V1 in Hc1. pose proof (bpow_le radix2 _ 0 Hc1) as Hb. change (bpow radix2 0) with 1 in Hb. lra.
+  - destruct T as (g & rest' & Hr & h & E0 & bs0 & L & s & HE & _ & _ & _ & Hs & T).
+    injection Hr as <- _. cbv zeta in T. destruct T as (_ & _ & _ & HQ & _).
+    rewrite Vg, Hm1 in HQ. pose proof (bpow_lt radix2 1 54 ltac:(lia)) as Hlt.
+    pose proof (bpow_gt_0 radix2 1). destruct Hs as [-> | ->]; lra.
+  - destruct P as (z & h & E0 & bs0 & c & HE & _). discriminate HE.
+Qed.
+
 (* The initial state: the first sorted input is the accumulator. *)
 Lemma cinv_init :
   forall g rest, b64_fin g ->
@@ -238,7 +306,9 @@ Qed.
    EXCEPT the one arithmetic fact kept as a hypothesis:
        LOOKAHEAD_h :  |h| < ulp(g2)   (the new error, below the next input's ulp)
    That is what remains of the obligation on this branch: it needs
-   |Q'| to be at most a small multiple of |g2| (Priest keys), not structure. *)
+   |Q'| to be at most a small multiple of |g2| (Priest keys), not structure.
+   On the actual cascade N_step_reachable discharges it (strict case of the
+   closed look-ahead, B64_CarryCleanTailBound.b64_closed_lookahead). *)
 Lemma cinv_N_step :
   forall Q E g g2 rest,
     cinv_N Q E (g :: g2 :: rest) ->
@@ -344,7 +414,8 @@ Qed.
 
 (* The N branch on reachable states: N -> N (strict look-ahead) or N -> T
    (equality).  This discharges the N branch of the step for the actual
-   cascade; T -> {N, P, anti} and P -> N remain. *)
+   cascade.  The T and P branches are cascade_T_step_reachable (rung 8) and
+   cascade_P_step_reachable (rung 9a), below. *)
 Theorem N_step_reachable :
   forall e f x0 xs,
     priest_chain e -> priest_chain f ->
@@ -410,7 +481,8 @@ Qed.
 
 (* ---- RUNG: T -> {N, P} -------------------------------------------------
    From a T state, bstate_tie's three outcomes land in the machine:
-   anti pair -> N, single -> N, pending twin -> P.  The look-ahead for the
+   anti pair -> N, single -> N, pending twin -> P.  (On the actual cascade
+   the single outcome never occurs: see the note at bstate_tie.)  The look-ahead for the
    following input g3 is a hypothesis of the machine half (cinv_T_step) and
    is PROVED on the actual cascade (cascade_T_step_reachable), from the entry fact
    |g_j| = 2^M - 2^c and the Priest key |g_j| < ulp(g_(j+2)). *)
@@ -820,7 +892,9 @@ Print Assumptions cinv_P_step.
 Print Assumptions cascade_P_step_reachable.
 Print Assumptions cascade_T_step_reachable.
 Print Assumptions N_step_reachable.
+Print Assumptions N_step_actual.
 Print Assumptions N_to_T_entry.
 Print Assumptions cascade_step_obligation_false.
+Print Assumptions cascade_step_obligation_false_sorted.
 Print Assumptions cinv_N_step.
 Print Assumptions cascade_aligned_shape.

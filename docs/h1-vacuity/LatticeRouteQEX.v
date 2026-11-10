@@ -16,10 +16,15 @@
    holds here (|rho| = 2^-60 <= 2 ulp(2) = 2^-50).  For bstate's own scale
    (keys < 2^L, Q multiple of 2^L forces d in [2^-59, 2^-7]) the fact that
    fails is rho in dZ, because g_1 = M 2^-60 is not on the d-lattice. 
+   Attribution: an internal proof route (PR #1012), not a published one; this
+   header is the only record of it.  The statement drops two of the route's
+   premises (|S_(k-2)| < 2U, d | 2U), which strengthens the refutation, and
+   carries the rung-4 hypotheses (overflow margin, nonzero components).
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6):
+     rung 2, on the reading that the route above is the one attempted.
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals ZArith Lia Lra List.
@@ -59,6 +64,32 @@ Proof.
                | rewrite insert_by_abs_le by lra
                | rewrite insert_by_abs_gt by lra ].
   reflexivity.
+Qed.
+
+(* Inside the rung-4 hypothesis set: the overflow margin and nonzero
+   components (f is a singleton chain, so priest_chain alone does not give
+   the latter). *)
+Lemma l_small : abs_sum le_ + abs_sum lf <= bpow radix2 (emax - 5).
+Proof.
+  assert (Hb : forall s m k H, (k <= 2)%Z -> (Z.pos m < Zpower radix2 (2 - k))%Z ->
+             Rabs (b2r (Binary.B754_finite prec emax s m k H)) < bpow radix2 2).
+  { intros s m k H Hk Hm. rewrite B2R_fin.
+    apply abs_scaled_lt_bpow; [ exact Hk | destruct s; cbn [cond_Zopp]; lia ]. }
+  assert (A : Rabs (b2r lc) < bpow radix2 2)
+    by (unfold lc; apply Hb; [ lia | vm_compute; reflexivity ]).
+  assert (B : Rabs (b2r la) < bpow radix2 2)
+    by (unfold la; apply Hb; [ lia | vm_compute; reflexivity ]).
+  assert (C : Rabs (b2r lb) < bpow radix2 2)
+    by (unfold lb, bM_scaled, mant_M; apply Hb; [ lia | vm_compute; reflexivity ]).
+  assert (H16 : 16 <= bpow radix2 (emax - 5))
+    by (change 16 with (bpow radix2 4); apply bpow_le; unfold emax; lia).
+  unfold le_, lf. cbn [abs_sum]. change (bpow radix2 2) with 4 in A, B, C. lra.
+Qed.
+
+Lemma l_nonzero : Forall (fun x => b2r x <> 0) (le_ ++ lf).
+Proof.
+  unfold le_, lf, la, lb, lc, bM_scaled. cbn [app].
+  repeat (apply Forall_cons; [ apply B2R_fin_nonzero | ]). apply Forall_nil.
 Qed.
 
 (* The first cascade step is TwoSum(g_1, g_0) = TwoSum(lb, la). *)
@@ -120,6 +151,8 @@ Qed.
 Theorem lattice_route_false :
   exists e f g0 g1 g2,
     priest_chain e /\ priest_chain f /\ Forall b64_fin e /\ Forall b64_fin f /\
+    abs_sum e + abs_sum f <= bpow radix2 (emax - 5) /\
+    Forall (fun x => b2r x <> 0) (e ++ f) /\
     sort_by_abs (e ++ f) = [g0; g1; g2] /\
     let Q1 := fst (b64_TwoSum g1 g0) in
     let h1 := snd (b64_TwoSum g1 g0) in
@@ -131,7 +164,8 @@ Theorem lattice_route_false :
 Proof.
   destruct l_priest as [Pe Pf]. destruct l_finite as [Fe Ff].
   exists le_, lf, la, lb, lc.
-  refine (conj Pe (conj Pf (conj Fe (conj Ff (conj l_sort _))))). cbv zeta.
+  refine (conj Pe (conj Pf (conj Fe (conj Ff (conj l_small (conj l_nonzero (conj l_sort _))))))).
+  cbv zeta.
   assert (SQ : fst (b64_TwoSum lb la) = lQ1) by exact (f_equal (fun l => nth 0 l lQ1) l_step).
   assert (Sh : snd (b64_TwoSum lb la) = lh1) by exact (f_equal (fun l => nth 1 l lQ1) l_step).
   rewrite SQ, Sh.
@@ -142,4 +176,6 @@ Proof.
     pose proof (bpow_le radix2 (-60) (-51) ltac:(lia)). pose proof (bpow_gt_0 radix2 (-51)). lra.
 Qed.
 
+Print Assumptions l_small.
+Print Assumptions l_nonzero.
 Print Assumptions lattice_route_false.

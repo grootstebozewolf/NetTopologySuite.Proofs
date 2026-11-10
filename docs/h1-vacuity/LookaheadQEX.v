@@ -9,10 +9,14 @@
    midpoint of the binade [2^53, 2^54) (spacing 2); round-half-even picks
    2^53 (even mantissa), error +1 = ulp(M).  This is exactly the T state:
    Q = 2^53 = s 2^M, h = 1 = s 2^c with M = mag M = 53, c = 0. 
+   Attribution: the strict look-ahead was the corpus's own proof obligation
+   (LOOKAHEAD_h in B64_CarryCleanCascade.cinv_N_step), not a claim of any
+   published source.  An internal dead route, not an external erratum.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6):
+     rung 1 (cascade re-derived by hand under RNE).
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals ZArith Lia Lra List.
