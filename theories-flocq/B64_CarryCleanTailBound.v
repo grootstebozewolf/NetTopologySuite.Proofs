@@ -24,7 +24,11 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human review pending.  Rung 4
+     (b64_cascade_tail_bound, fes_output_error_bound: statement, adequacy to
+     the corpus fast_expansion_sum, FLX->binary64 bridge) human-reviewed
+     2026-11-10 (J. Bloemscheer); the file stays pending until rung 3
+     (B64_CarryCleanTailModel.v, which it builds on) is reviewed.
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
@@ -401,3 +405,4 @@ End B64.
 
 Print Assumptions b64_cascade_tail_bound.
 Print Assumptions b64_closed_lookahead.
+Print Assumptions fes_output_error_bound.

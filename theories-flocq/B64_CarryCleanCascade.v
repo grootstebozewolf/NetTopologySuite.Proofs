@@ -52,7 +52,10 @@
    License: BSD-3-Clause (see LICENSE)
    AI assistance disclosure: AI-drafted.  Human-reviewed (PR #1014): rungs 9a/9b
      (P -> N, cascade_stage_invariant, cascade_reachable_shape, fes_carry_clean_nonoverlap).
-     Rungs 0-8 above: human review pending.
+     Human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6): rung 4
+     (B64_CarryCleanTailBound: b64_cascade_tail_bound, fes_output_error_bound)
+     and rung 6 (N_step_reachable, N_step_actual).
+     Rungs 0-3, 5, 7, 8: human review pending.
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.
@@ -238,7 +241,9 @@ Qed.
    EXCEPT the one arithmetic fact kept as a hypothesis:
        LOOKAHEAD_h :  |h| < ulp(g2)   (the new error, below the next input's ulp)
    That is what remains of the obligation on this branch: it needs
-   |Q'| to be at most a small multiple of |g2| (Priest keys), not structure. *)
+   |Q'| to be at most a small multiple of |g2| (Priest keys), not structure.
+   On the actual cascade N_step_reachable discharges it (strict case of the
+   closed look-ahead, B64_CarryCleanTailBound.b64_closed_lookahead). *)
 Lemma cinv_N_step :
   forall Q E g g2 rest,
     cinv_N Q E (g :: g2 :: rest) ->
@@ -344,7 +349,8 @@ Qed.
 
 (* The N branch on reachable states: N -> N (strict look-ahead) or N -> T
    (equality).  This discharges the N branch of the step for the actual
-   cascade; T -> {N, P, anti} and P -> N remain. *)
+   cascade.  The T and P branches are cascade_T_step_reachable (rung 8) and
+   cascade_P_step_reachable (rung 9a), below. *)
 Theorem N_step_reachable :
   forall e f x0 xs,
     priest_chain e -> priest_chain f ->
@@ -820,6 +826,7 @@ Print Assumptions cinv_P_step.
 Print Assumptions cascade_P_step_reachable.
 Print Assumptions cascade_T_step_reachable.
 Print Assumptions N_step_reachable.
+Print Assumptions N_step_actual.
 Print Assumptions N_to_T_entry.
 Print Assumptions cascade_step_obligation_false.
 Print Assumptions cinv_N_step.
