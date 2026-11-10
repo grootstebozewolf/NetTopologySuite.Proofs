@@ -55,7 +55,10 @@
      Human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6): rung 4
      (B64_CarryCleanTailBound: b64_cascade_tail_bound, fes_output_error_bound)
      and rung 6 (N_step_reachable, N_step_actual).
-     Rungs 0-3, 5, 7, 8: human review pending.
+     Rungs 0-3 (CarryCleanPure, LookaheadQEX, LatticeRouteQEX in
+     docs/h1-vacuity; B64_CarryCleanTailModel) human-reviewed the same day
+     in their own files.
+     Rungs 5, 7, 8: human review pending.
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.

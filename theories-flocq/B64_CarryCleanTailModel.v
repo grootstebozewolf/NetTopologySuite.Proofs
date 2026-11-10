@@ -16,10 +16,12 @@
    HEADLINE  cascade_tail_bound: for 1 <= k <= n
        T(k)   |Q_(k-1) - g_(k-1)| <= 2 U_k
        LA(k)  |h_k| <= U_k,   hence (cascade_closed_lookahead) |h_k| <= U_(k+1).
-     Both are tight: 2 U_k is attained (model); |h| = U_(k+1) is attained in
-     binary64 (LookaheadQEX.v).
+     |h| = U_(k+1) is attained in binary64 (LookaheadQEX.v).  That 2 U_k is
+     attained is NOT mechanized (no witness in the corpus); do not cite the
+     tail bound as tight.
 
-   PROOF (paper argument, mechanized below)
+   PROOF (the corpus's own hand argument, written out here; not a published
+     source; mechanized below)
      (F1) keys |g_j| < U_(j+2)  [chainR_count, keys_derived: at most one
           component per chain lies in [ulp G, |G|]].
      Lemma S  |S_(k-2)| < 2 U_k, S = exact partial sum  [tail_lt,
@@ -55,7 +57,8 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6):
+     rung 3 (cascade_tail_bound, cascade_closed_lookahead).
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.

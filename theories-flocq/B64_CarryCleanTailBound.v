@@ -24,11 +24,12 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.  Rung 4
-     (b64_cascade_tail_bound, fes_output_error_bound: statement, adequacy to
-     the corpus fast_expansion_sum, FLX->binary64 bridge) human-reviewed
-     2026-11-10 (J. Bloemscheer); the file stays pending until rung 3
-     (B64_CarryCleanTailModel.v, which it builds on) is reviewed.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10,
+     J. Bloemscheer, on main @ 4eb6c4b6): rung 4 (b64_cascade_tail_bound,
+     fes_output_error_bound: statement, adequacy to the corpus
+     fast_expansion_sum, FLX->binary64 bridge), with rung 3
+     (B64_CarryCleanTailModel.v), which it builds on.  Adequacy is to the
+     corpus fast_expansion_sum (sort + TwoSum), not Shewchuk's merge.
      Assisted-by: Claude
    ========================================================================== *)
 From Stdlib Require Import Reals ZArith Lia Lra List Permutation.

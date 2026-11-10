@@ -5,10 +5,13 @@
    zero-free Priest chain is already a normal form of the rewrite system and
    carry_clean is the identity on it.  carry_clean only matters on
    fast_expansion_sum output, which is not a Priest chain.
+   NOT CITABLE.  The rewrite system `steps` is not the product carry_clean
+   (B64_CarryCleanAlgo.v) and no lemma links the two; the result is vacuous.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted; human-reviewed (2026-11-10, J. Bloemscheer, on main @ 4eb6c4b6):
+     rung 0, signed off as vacuous and not citable.
      Assisted-by: Claude
 *)
 From Stdlib Require Import Reals ZArith Lia Lra List.
@@ -106,10 +109,6 @@ Lemma priest_seq_head_lt :
   forall a b r, priest_seq (a :: b :: r) -> Rabs b < Rabs a.
 Proof. intros a b r [H _]. apply priest_lt, H. Qed.
 
-(* No Priest chain has a rewritable pair: it is a normal form. *)
-Lemma priest_seq_nz : forall l1 x l2, priest_seq (l1 ++ x :: l2) -> l1 ++ x :: l2 <> nil.
-Proof. intros; destruct l1; discriminate. Qed.
-
 Lemma priest_seq_app_r : forall l1 l2, priest_seq (l1 ++ l2) -> priest_seq l2.
 Proof.
   induction l1 as [| a l1 IH]; intros l2 H; [ exact H | ].
@@ -167,8 +166,9 @@ Proof.
   intros [H1 H2]. split; [ apply priest_nonov, H1 | apply IH, H2 ].
 Qed.
 
-(* THE THEOREM, arbitrary length: value preserved, terminating, nonoverlap
-   preserved -- the last because the rewriting is the identity. *)
+(* THE THEOREM, arbitrary length: value preserved and nonoverlap preserved
+   -- the latter because the rewriting is the identity.  Termination of
+   `steps` is the separate lemma step_wf, not part of this statement. *)
 Theorem carry_clean_pure :
   forall e, priest_seq e -> Forall (fun x => x <> 0) e ->
     (forall e', steps e e' -> sumR e' = sumR e /\ e' = e /\ nonov_seq e').
