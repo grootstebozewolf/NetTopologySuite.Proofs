@@ -171,41 +171,84 @@ Proof.
     lra.
 Qed.
 
+(* Squared-distance balls first: the per-edge lower bound m is already a
+   bound on dist_sq, so these never take a square root.  Stdlib sqrt pulls
+   sig_not_dec; the dist_sq forms stay on sig_forall_dec +
+   functional_extensionality_dep, and so do callers whose statements avoid
+   dist (SheetRingPip.guard_move). *)
+Lemma not_on_edge_imp_ball_sq : forall p a b,
+  ~ on_edge_pt p (a, b) ->
+  exists m, 0 < m /\ forall q, dist_sq p q < m -> ~ on_edge_pt q (a, b).
+Proof.
+  intros p a b Hoff.
+  assert (Hlow : exists m, 0 < m /\ forall t, 0 <= t <= 1 -> m <= seg_dsq p a b t).
+  { destruct (Rle_lt_or_eq_dec 0 (seg_D a b) (seg_D_nonneg a b))
+      as [Hpos | Hzero].
+    - exact (seg_dsq_lower_nondeg p a b Hpos Hoff).
+    - exact (seg_dsq_lower_deg p a b (eq_sym Hzero) Hoff). }
+  destruct Hlow as [m [Hm Hlb]].
+  exists m. split; [ exact Hm | ].
+  intros q Hq [t [Ht [Hx Hy]]].
+  assert (Hd : dist_sq p q = seg_dsq p a b t).
+  { unfold dist_sq, seg_dsq. cbn [fst snd] in *. rewrite Hx, Hy. ring. }
+  pose proof (Hlb t Ht). lra.
+Qed.
+
+(* A squared-distance ball avoiding every edge of a finite list. *)
+Lemma off_edges_imp_ball_sq : forall (L : list Edge) (p : Point),
+  (forall e, In e L -> ~ on_edge_pt p e) ->
+  exists m, 0 < m /\
+    forall q, dist_sq p q < m -> forall e, In e L -> ~ on_edge_pt q e.
+Proof.
+  induction L as [| e es IH]; intros p Hoff.
+  - exists 1. split; [ lra | ]. intros q _ e [].
+  - destruct e as [a b].
+    destruct (not_on_edge_imp_ball_sq p a b (Hoff (a, b) (or_introl eq_refl)))
+      as [m1 [Hm1 Hb1]].
+    destruct (IH p (fun f Hf => Hoff f (or_intror Hf))) as [m2 [Hm2 Hb2]].
+    exists (Rmin m1 m2). split; [ apply Rmin_glb_lt; lra | ].
+    intros q Hq f Hf.
+    destruct Hf as [<- | Hf].
+    + apply (Hb1 q). eapply Rlt_le_trans; [ exact Hq | apply Rmin_l ].
+    + apply (Hb2 q); [ eapply Rlt_le_trans; [ exact Hq | apply Rmin_r ] | exact Hf ].
+Qed.
+
+(* The complement of the ring image is open, in squared distance. *)
+Theorem ring_complement_open_sq : forall r p,
+  ring_complement r p ->
+  exists m, 0 < m /\ forall q, dist_sq p q < m -> ring_complement r q.
+Proof.
+  intros r p Hp.
+  assert (Hoff : forall e, In e (ring_edges r) -> ~ on_edge_pt p e).
+  { intros e He Hone. apply Hp. apply ring_image_iff_on_edge. exists e; auto. }
+  destruct (off_edges_imp_ball_sq (ring_edges r) p Hoff) as [m [Hm Hball]].
+  exists m. split; [ exact Hm | ].
+  intros q Hq Himg. apply ring_image_iff_on_edge in Himg.
+  destruct Himg as [e [He Hone]]. exact (Hball q Hq e He Hone).
+Qed.
+
+(* dist forms, from the squared ones: radius sqrt m. *)
+Lemma ball_of_ball_sq : forall (P : Point -> Prop) p m, 0 < m ->
+  (forall q, dist_sq p q < m -> P q) ->
+  exists eps, 0 < eps /\ forall q, dist p q < eps -> P q.
+Proof.
+  intros P p m Hm Hb. exists (sqrt m). split; [ apply sqrt_lt_R0; exact Hm | ].
+  intros q Hq. apply Hb.
+  pose proof (dist_nonneg p q) as Hdn.
+  pose proof (dist_mul_self p q) as Hms.
+  pose proof (sqrt_sqrt m (Rlt_le _ _ Hm)) as Hsm.
+  assert (Hsq : dist p q * dist p q < sqrt m * sqrt m)
+    by (apply Rmult_le_0_lt_compat; lra).
+  lra.
+Qed.
+
 Lemma not_on_edge_imp_ball : forall p a b,
   ~ on_edge_pt p (a, b) ->
   exists eps, 0 < eps /\ forall q, dist p q < eps -> ~ on_edge_pt q (a, b).
 Proof.
   intros p a b Hoff.
-  destruct (Rle_lt_or_eq_dec 0 (seg_D a b) (seg_D_nonneg a b))
-    as [Hpos | Hzero].
-  - (* nondegenerate *)
-    destruct (seg_dsq_lower_nondeg p a b Hpos Hoff) as [m [Hm Hlb]].
-    exists (sqrt m). split.
-    + apply sqrt_lt_R0; exact Hm.
-    + intros q Hq [t [Ht [Hx Hy]]].
-      assert (Hd : dist_sq p q = seg_dsq p a b t).
-      { unfold dist_sq, seg_dsq. cbn [fst snd] in *. rewrite Hx, Hy. ring. }
-      pose proof (Hlb t Ht) as Hmle.
-      pose proof (dist_nonneg p q) as Hdn.
-      pose proof (dist_mul_self p q) as Hms.
-      pose proof (sqrt_sqrt m (Rlt_le _ _ Hm)) as Hsm.
-      assert (Hsq : dist p q * dist p q < sqrt m * sqrt m)
-        by (apply Rmult_le_0_lt_compat; lra).
-      lra.
-  - (* degenerate *)
-    destruct (seg_dsq_lower_deg p a b (eq_sym Hzero) Hoff) as [m [Hm Hlb]].
-    exists (sqrt m). split.
-    + apply sqrt_lt_R0; exact Hm.
-    + intros q Hq [t [Ht [Hx Hy]]].
-      assert (Hd : dist_sq p q = seg_dsq p a b t).
-      { unfold dist_sq, seg_dsq. cbn [fst snd] in *. rewrite Hx, Hy. ring. }
-      pose proof (Hlb t Ht) as Hmle.
-      pose proof (dist_nonneg p q) as Hdn.
-      pose proof (dist_mul_self p q) as Hms.
-      pose proof (sqrt_sqrt m (Rlt_le _ _ Hm)) as Hsm.
-      assert (Hsq : dist p q * dist p q < sqrt m * sqrt m)
-        by (apply Rmult_le_0_lt_compat; lra).
-      lra.
+  destruct (not_on_edge_imp_ball_sq p a b Hoff) as [m [Hm Hb]].
+  exact (ball_of_ball_sq _ p m Hm Hb).
 Qed.
 
 (* A ball avoiding every edge of a finite list. *)
@@ -214,17 +257,9 @@ Lemma off_edges_imp_ball : forall (L : list Edge) (p : Point),
   exists eps, 0 < eps /\
     forall q, dist p q < eps -> forall e, In e L -> ~ on_edge_pt q e.
 Proof.
-  induction L as [| e es IH]; intros p Hoff.
-  - exists 1. split; [ lra | ]. intros q _ e [].
-  - destruct e as [a b].
-    destruct (not_on_edge_imp_ball p a b (Hoff (a, b) (or_introl eq_refl)))
-      as [eps1 [He1 Hb1]].
-    destruct (IH p (fun f Hf => Hoff f (or_intror Hf))) as [eps2 [He2 Hb2]].
-    exists (Rmin eps1 eps2). split; [ apply Rmin_glb_lt; lra | ].
-    intros q Hq f Hf.
-    destruct Hf as [<- | Hf].
-    + apply (Hb1 q). eapply Rlt_le_trans; [ exact Hq | apply Rmin_l ].
-    + apply (Hb2 q); [ eapply Rlt_le_trans; [ exact Hq | apply Rmin_r ] | exact Hf ].
+  intros L p Hoff.
+  destruct (off_edges_imp_ball_sq L p Hoff) as [m [Hm Hb]].
+  exact (ball_of_ball_sq (fun q => forall e, In e L -> ~ on_edge_pt q e) p m Hm Hb).
 Qed.
 
 (* The complement of the ring image is open. *)
@@ -233,12 +268,9 @@ Theorem ring_complement_open : forall r p,
   exists eps, 0 < eps /\ forall q, dist p q < eps -> ring_complement r q.
 Proof.
   intros r p Hp.
-  assert (Hoff : forall e, In e (ring_edges r) -> ~ on_edge_pt p e).
-  { intros e He Hone. apply Hp. apply ring_image_iff_on_edge. exists e; auto. }
-  destruct (off_edges_imp_ball (ring_edges r) p Hoff) as [eps [Heps Hball]].
-  exists eps. split; [ exact Heps | ].
-  intros q Hq Himg. apply ring_image_iff_on_edge in Himg.
-  destruct Himg as [e [He Hone]]. exact (Hball q Hq e He Hone).
+  destruct (ring_complement_open_sq r p Hp) as [m [Hm Hb]].
+  exact (ball_of_ball_sq (ring_complement r) p m Hm Hb).
 Qed.
 
 Print Assumptions ring_complement_open.
+Print Assumptions ring_complement_open_sq.

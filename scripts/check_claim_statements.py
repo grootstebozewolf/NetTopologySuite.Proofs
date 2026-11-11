@@ -26,7 +26,11 @@ Registry: docs/claim-statements.json.  For every registered claim:
                   main result appear in docs/verified-claims.md.
   meta            scope is main|supporting|witness; review.status is in the
                   v0.4 enum; regime `cond` needs non-empty
-                  literature_dependencies, each with a named source.
+                  literature_dependencies, each with a named source; every
+                  result's `axioms` is a duplicate-free list of allowlist
+                  short names (e.g. `sig_forall_dec`), checked against the
+                  kernel by `--elaborate` (elab.ratchet); the claim-level
+                  `axioms` is their union.
   orphan          every theories*/ *Stmt.v file is registered.
   proof.pure      the proof module (comments stripped) has no Admitted /
                   admit / Axiom / Parameter / Hypothesis / Variable /
@@ -52,6 +56,11 @@ right after the corpus compile) generates a Rocq probe per claim under
                   `Proof. Admitted.` shows up as an undotted axiom `proof`, a
                   `Local Axiom` as `NTS.Proofs.<M>.<name>`; both fail.  Any
                   unparsed line in the block fails closed.
+  elab.ratchet    each result's `Print Assumptions` equals that result's
+                  declared `axioms` exactly.  The allowlist trio is a ceiling;
+                  `axioms` is the result's own footprint.  A proof that gains
+                  an axiom fails, and so does one that sheds an axiom while the
+                  registry still declares it: the declaration only moves down.
   elab.hash       the elaborated statement is pinned: `Print` (Printing All,
                   fully qualified) of every statement constant and of every
                   NTS.Proofs definition they reach, transitively, hashed into
@@ -146,7 +155,8 @@ def check_claim(c, mods, doc, errs):
         errs.append("[claim-statements] %s %s: %s" % (rule, cid, msg))
 
     for key in ("claimId", "statement_module", "statement_sha256",
-                "elaborated_sha256", "proof_module", "regime", "results", "review"):
+                "elaborated_sha256", "proof_module", "regime", "results", "review",
+                "axioms"):
         if key not in c:
             err("meta", "missing field `%s`" % key)
             return
@@ -222,6 +232,31 @@ def check_claim(c, mods, doc, errs):
                 err("meta", "literature dependency needs `statement` and `source`")
     if not isinstance(c.get("fidelity_divergences", []), list):
         err("meta", "fidelity_divergences must be a list")
+    shorts = {short_axiom(a) for a in ALLOWED_AXIOMS}
+
+    def axiom_list(where, ax):
+        if not (isinstance(ax, list) and all(isinstance(a, str) for a in ax)):
+            err("meta", "%s `axioms` must be a list of allowlist short names"
+                % where)
+            return set()
+        if len(set(ax)) != len(ax):
+            err("meta", "%s `axioms` lists a name twice: %s" % (where, ax))
+        for a in ax:
+            if a not in shorts:
+                err("meta", "%s `axioms` entry `%s` is not an allowlist short "
+                    "name %s" % (where, a, sorted(shorts)))
+        return set(ax)
+
+    union = set()
+    for r in c["results"]:
+        if "axioms" not in r:
+            err("meta", "result `%s` needs `axioms` (its own footprint)"
+                % r.get("proof"))
+            continue
+        union |= axiom_list("result `%s`" % r.get("proof"), r["axioms"])
+    if axiom_list("claim", c["axioms"]) != union:
+        err("meta", "claim `axioms` %s must be the union of the results' %s"
+            % (sorted(c["axioms"]), sorted(union)))
 
 
 # ---------------------------------------------------------------------------
@@ -279,6 +314,11 @@ def sections(out):
 
 def norm(text):
     return " ".join(text.split())
+
+
+def short_axiom(name):
+    """`Stdlib.Reals.ClassicalDedekindReals.sig_not_dec` -> `sig_not_dec`."""
+    return name.rsplit(".", 1)[-1]
 
 
 def parse_assumptions(text):
@@ -396,6 +436,15 @@ def elaborate_claim(c, errs, print_hash):
         for p in problems:
             err("elab.assume", "%s: %s" % (r["proof"], p))
         allowed = set(ALLOWED_AXIOMS.values())
+        used = {short_axiom(a) for a in axioms if a in allowed}
+        declared = set(r.get("axioms") or [])
+        if not problems and used != declared:
+            gained, shed = sorted(used - declared), sorted(declared - used)
+            err("elab.ratchet", "`%s` kernel footprint %s != declared `axioms` "
+                "%s%s%s" % (r["proof"], sorted(used), sorted(declared),
+                "; gained %s (the proof grew its footprint)" % gained
+                if gained else "",
+                "; shed %s (lower the declaration)" % shed if shed else ""))
         for a in axioms:
             if a not in allowed:
                 err("elab.assume", "`%s` depends on `%s`, which is not an "

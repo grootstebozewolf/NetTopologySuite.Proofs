@@ -17,10 +17,9 @@
          list is decidably odd-or-even), `ray_parity_excl` (never both),
          `point_in_ring_dec`.
      §2  `invariant_transport_along_path` : a pointwise-DECIDABLE predicate
-         that is locally stable along a path is constant along it.  Pure
-         completeness-of-R (lub) argument; the decidability replaces the
-         classical choice the textbook proof hides, so the corpus's 3-axiom
-         budget is preserved.
+         that is locally stable along a path is constant along it.  Bisection
+         on a nested-interval limit (NestedIntervals), not the Stdlib lub:
+         the decidability drives the halving, and no sig_not_dec.
      §3  `invariant_traps` / `odd_parity_trapped_of_invariant` : ANY ring,
          ANY point.  Given an invariant Q that is (i) decidable, (ii) locally
          constant along complement paths, (iii) false beyond some radius, and
@@ -46,7 +45,8 @@
    and proving (ii) is the y-monotone vertex-pairing argument -- the isolated
    remaining work.
 
-   Pure-R; three-axiom.  No `Admitted`/`Axiom`/`Parameter`.
+   Pure-R; sig_forall_dec + functional_extensionality_dep (no sig_not_dec).
+   No `Admitted`/`Axiom`/`Parameter`.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -56,7 +56,7 @@
 
 From Stdlib Require Import Reals Lra List.
 From Stdlib Require Import Ranalysis.
-From NTS.Proofs Require Import JordanRingKit.
+From NTS.Proofs Require Import JordanRingKit NestedIntervals.
 From NTS.Proofs Require Import RectangleJCT RectangleSeparation RectangleOffringSeam.
 Import ListNotations.
 
@@ -135,8 +135,90 @@ Qed.
 
 (* ---------------------------------------------------------------------------
    §2  The transport engine: a decidable, locally-stable predicate is
-       constant along a path.  Completeness-of-R; no new axioms.
+       constant along a path.  Nested intervals; no sig_not_dec.
    --------------------------------------------------------------------------- *)
+
+(* Bisection, not a supremum: Stdlib `completeness` pulls sig_not_dec, the
+   nested-interval limit (NestedIntervals) does not.  While Q(g t) <-> Q(g 0)
+   holds at a and fails at b, halve [a,b] keeping that shape; the common
+   point c of the intervals has a stability ball containing both ends of a
+   short enough interval, so the two ends agree -- contradiction. *)
+Lemma inv_pow2_le_inv_IPR : forall p : positive,
+  / 2 ^ Pos.to_nat p <= / IPR p.
+Proof.
+  intro p.
+  assert (HN : forall k, INR k <= 2 ^ k).
+  { induction k as [| k IH]; cbn [pow]; [ cbn; lra | ].
+    rewrite S_INR. assert (1 <= 2 ^ k) by (apply pow_R1_Rle; lra). lra. }
+  assert (HI : IPR p = INR (Pos.to_nat p)) by (rewrite INR_IPR; reflexivity).
+  assert (Hpos : 0 < IPR p) by exact (IZR_lt 0 (Z.pos p) (Pos2Z.is_pos p)).
+  pose proof (HN (Pos.to_nat p)). apply Rinv_le_contravar; lra.
+Qed.
+
+Section Bisect.
+
+Variable P : R -> Prop.
+Hypothesis Pdec : forall t, {P t} + {~ P t}.
+
+Fixpoint bisect (n : nat) : R * R :=
+  match n with
+  | O => (0, 1)
+  | S k => let ab := bisect k in
+           let m := (fst ab + snd ab) / 2 in
+           if Pdec m then (m, snd ab) else (fst ab, m)
+  end.
+
+Lemma bisect_step : forall n,
+  let a := fst (bisect n) in let b := snd (bisect n) in
+  a <= b ->
+  a <= fst (bisect (S n)) /\ snd (bisect (S n)) <= b /\
+  snd (bisect (S n)) - fst (bisect (S n)) = (b - a) / 2.
+Proof.
+  intros n a b Hab. cbn [bisect]. fold a b.
+  destruct (Pdec ((a + b) / 2)); cbn [fst snd]; repeat split; lra.
+Qed.
+
+Lemma bisect_props : forall n,
+  0 <= fst (bisect n) /\ fst (bisect n) <= fst (bisect (S n)) /\
+  snd (bisect (S n)) <= snd (bisect n) /\ snd (bisect n) <= 1 /\
+  snd (bisect n) - fst (bisect n) = / 2 ^ n.
+Proof.
+  assert (W : forall n, 0 <= fst (bisect n) /\ snd (bisect n) <= 1 /\
+            snd (bisect n) - fst (bisect n) = / 2 ^ n).
+  { induction n as [| k (H0 & H1 & H2)]; [ cbn; repeat split; lra | ].
+    assert (Hp : 0 < / 2 ^ k) by (apply Rinv_0_lt_compat, pow_lt; lra).
+    destruct (bisect_step k ltac:(lra)) as (S1 & S2 & S3).
+    cbn [pow]. rewrite Rinv_mult. repeat split; lra. }
+  intro n. destruct (W n) as (H0 & H1 & H2).
+  assert (Hp : 0 < / 2 ^ n) by (apply Rinv_0_lt_compat, pow_lt; lra).
+  destruct (bisect_step n ltac:(lra)) as (S1 & S2 & S3).
+  repeat split; lra.
+Qed.
+
+Lemma bisect_ends : P 0 -> ~ P 1 -> forall n,
+  P (fst (bisect n)) /\ ~ P (snd (bisect n)).
+Proof.
+  intros H0 H1. induction n as [| k IH]; cbn [bisect fst snd]; [ tauto | ].
+  destruct (Pdec ((fst (bisect k) + snd (bisect k)) / 2)); cbn [fst snd]; tauto.
+Qed.
+
+Lemma bisect_point : { c : R | forall n,
+  fst (bisect n) <= c <= snd (bisect n) }.
+Proof.
+  apply nested_intervals_limit.
+  - intro n. apply (bisect_props n).
+  - intro n. apply (bisect_props n).
+  - intro n. destruct (bisect_props n) as (_ & _ & _ & _ & E).
+    pose proof (pow_lt 2 n ltac:(lra)) as Hp.
+    assert (0 < / 2 ^ n) by (apply Rinv_0_lt_compat; exact Hp). lra.
+  - intros e He. destruct (inv_pos_lt e He) as [p Hp].
+    exists (Pos.to_nat p).
+    destruct (bisect_props (Pos.to_nat p)) as (_ & _ & _ & _ & ->).
+    apply (Rle_lt_trans _ (/ IPR p)); [ | exact Hp ].
+    apply inv_pow2_le_inv_IPR.
+Qed.
+
+End Bisect.
 
 Theorem invariant_transport_along_path :
   forall (Q : Point -> Prop) (g : R -> Point),
@@ -147,43 +229,29 @@ Theorem invariant_transport_along_path :
     (Q (g 0) <-> Q (g 1)).
 Proof.
   intros Q g Qdec Hstab.
-  set (E := fun t : R => 0 <= t <= 1 /\ (Q (g t) <-> Q (g 0))).
-  assert (HE0 : E 0) by (split; [ lra | tauto ]).
-  assert (Hbnd : bound E) by (exists 1; intros t [Ht _]; lra).
-  destruct (completeness E Hbnd (ex_intro _ 0 HE0)) as [m [Hub Hleast]].
-  assert (Hm0 : 0 <= m) by (apply Hub; exact HE0).
-  assert (Hm1 : m <= 1) by (apply Hleast; intros t [Ht _]; lra).
-  destruct (Hstab m (conj Hm0 Hm1)) as [d [Hd Hball]].
-  (* Step 1: Q (g m) <-> Q (g 0).  The goal is decidable; in the two "bad"
-     cases every E-element is forced below m - d/2, contradicting leastness. *)
-  assert (Hgm : Q (g m) <-> Q (g 0)).
-  { assert (Hupb : (Q (g m) <-> Q (g 0)) \/ is_upper_bound E (m - d / 2)).
-    { destruct (Qdec (g m)) as [Hq | Hq]; destruct (Qdec (g 0)) as [H0 | H0];
-        try (left; tauto);
-        right; intros t [Htr Hiff];
-        destruct (Rle_or_lt t (m - d / 2)) as [Hle | Hgt]; try exact Hle;
-        exfalso;
-        assert (Hlem : t <= m) by (apply Hub; split; assumption);
-        assert (Htm : Rabs (t - m) < d)
-          by (unfold Rabs; destruct (Rcase_abs (t - m)); lra);
-        pose proof (Hball t Htr Htm) as Hiff2; tauto. }
-    destruct Hupb as [Hgood | Hupb]; [ exact Hgood | exfalso ].
-    pose proof (Hleast _ Hupb). lra. }
-  (* Step 2: the supremum is 1 -- otherwise the ball extends E past m. *)
-  destruct (Rlt_le_dec m 1) as [Hlt | Hge].
-  - exfalso.
-    set (s := Rmin 1 (m + d / 2)).
-    assert (Hs01 : 0 <= s <= 1).
-    { unfold s; split; [ apply Rmin_glb; lra | apply Rmin_l ]. }
-    assert (Hsm : Rabs (s - m) < d).
-    { unfold s, Rmin; destruct (Rle_dec 1 (m + d / 2));
-        unfold Rabs; destruct (Rcase_abs _); lra. }
-    pose proof (Hball s Hs01 Hsm) as Hiff.
-    assert (HsE : E s) by (split; [ exact Hs01 | tauto ]).
-    pose proof (Hub s HsE) as Hsub.
-    unfold s, Rmin in Hsub; destruct (Rle_dec 1 (m + d / 2)); lra.
-  - assert (Hm : m = 1) by lra.
-    rewrite Hm in Hgm. tauto.
+  set (P := fun t : R => Q (g t) <-> Q (g 0)).
+  assert (Pdec : forall t, {P t} + {~ P t}).
+  { intro t. unfold P.
+    destruct (Qdec (g t)), (Qdec (g 0)); [ left | right | right | left ]; tauto. }
+  destruct (Pdec 1) as [H1 | H1]; [ unfold P in H1; tauto | exfalso ].
+  assert (H0 : P 0) by (unfold P; tauto).
+  destruct (bisect_point P Pdec) as [c Hc].
+  pose proof (Hc O) as Hc0. cbn [bisect fst snd] in Hc0.
+  destruct (Hstab c Hc0) as [d [Hd Hball]].
+  destruct (inv_pos_lt d Hd) as [p Hp].
+  set (n := Pos.to_nat p).
+  destruct (bisect_props P Pdec n) as (Ha0 & _ & _ & Hb1 & Ew).
+  destruct (bisect_ends P Pdec H0 H1 n) as [Pa Pb].
+  pose proof (Hc n) as [Hac Hcb].
+  pose proof (inv_pow2_le_inv_IPR p) as Hw. fold n in Hw.
+  set (a := fst (bisect P Pdec n)) in *. set (b := snd (bisect P Pdec n)) in *.
+  assert (Ha : Q (g a) <-> Q (g c)).
+  { apply Hball; [ lra | ].
+    unfold Rabs; destruct (Rcase_abs (a - c)); lra. }
+  assert (Hb : Q (g b) <-> Q (g c)).
+  { apply Hball; [ lra | ].
+    unfold Rabs; destruct (Rcase_abs (b - c)); lra. }
+  unfold P in Pa, Pb. tauto.
 Qed.
 
 (* ---------------------------------------------------------------------------

@@ -199,8 +199,9 @@ Proof.
   assert (HB : 0 <= B) by (unfold B; nra).
   assert (HT : 0 <= T) by (unfold T; nra).
   assert (HK : 0 <= K) by (unfold K; nra).
-  pose proof (sqrt_pos K) as Hs. pose proof (sqrt_sqrt K HK) as Hss.
-  exists (sqrt K + 1). split; [lra|].
+  (* Radius K + 1, not sqrt K + 1: (K + 1)^2 >= K without Stdlib sqrt, whose
+     definition pulls sig_not_dec (the claim's statements do not). *)
+  exists (K + 1). split; [lra|].
   intros q Hq.
   pose proof (connected_act (aff_inv f) _ _ _ (aff_inv_det f HD) Hq) as Hq'.
   rewrite ring_act_inv, aff_inv_ap_l in Hq' by exact HD.
@@ -210,8 +211,8 @@ Proof.
   rewrite Eq. eapply Rle_trans; [apply aff_norm_bound|]. fold B T.
   assert (Hm : T * (px x * px x + py x * py x) <= T * (M * M))
     by (apply Rmult_le_compat_l; assumption).
-  replace ((sqrt K + 1) * (sqrt K + 1)) with (sqrt K * sqrt K + 2 * sqrt K + 1) by ring.
-  rewrite Hss. assert (HKd : K = 2 * B + 2 * T * (M * M)) by reflexivity. lra.
+  assert (HKd : K = 2 * B + 2 * T * (M * M)) by reflexivity.
+  assert (HK2 : K <= (K + 1) * (K + 1)) by nra. lra.
 Qed.
 
 Lemma geo_act_fwd : forall f r p, lin_det (af_L f) <> 0 ->
@@ -337,7 +338,7 @@ Lemma guard_move : forall f r p, lin_det (af_L f) <> 0 -> ring_complement r p ->
     ray_avoids_vertices (aff_ap f (g 1)) (ring_act f r).
 Proof.
   intros f r p HD Hc.
-  destruct (ring_complement_open r p Hc) as (dl & Hdl & Hball).
+  destruct (ring_complement_open_sq r p Hc) as (m & Hm & Hball).
   set (wx := if Req_EM_T (l22 (af_L f)) 0 then 1 else 0).
   set (cy := l21 (af_L f) * wx + l22 (af_L f)).
   assert (Hcy : cy <> 0).
@@ -349,31 +350,26 @@ Proof.
     by (unfold wx; destruct (Req_EM_T (l22 (af_L f)) 0); lra).
   set (bad := map (fun v => py v - py p) r
               ++ map (fun v => (py (aff_ap f v) - py (aff_ap f p)) / cy) r).
-  destruct (avoid_list bad (dl / 2) ltac:(lra)) as (e & He & Hav).
+  assert (Hd0 : 0 < Rmin 1 (m / 4)) by (apply Rmin_glb_lt; lra).
+  destruct (avoid_list bad (Rmin 1 (m / 4)) Hd0) as (e & He & Hav).
+  pose proof (Rmin_l 1 (m / 4)) as Hd1. pose proof (Rmin_r 1 (m / 4)) as Hd2.
   exists (fun t => mkPoint (px p + t * (e * wx)) (py p + t * e)).
   split; [apply seg_path_cont|].
   split; [apply pip_pt_ext; cbn; ring|].
   split; [|split].
-  - intros t Ht. apply Hball. unfold dist, dist_sq. cbn [px py].
+  - (* squared distance, no sqrt: (t e)^2 (wx^2 + 1) <= 2 e^2 < 2 e < m / 2. *)
+    intros t Ht. apply Hball. unfold dist_sq. cbn [px py].
     replace ((px p - (px p + t * (e * wx))) * (px p - (px p + t * (e * wx)))
              + (py p - (py p + t * e)) * (py p - (py p + t * e)))
       with ((t * e) * (t * e) * (wx * wx + 1)) by ring.
-    assert (H1 : 0 <= (t * e) * (t * e) * (wx * wx + 1) < dl * dl).
-    { split; [apply Rmult_le_pos; [apply Rle_0_sqr | nra]|].
-      assert (Hu : 0 <= t * e <= e) by nra.
-      assert (Hu2 : (t * e) * (t * e) <= e * e)
-        by (apply Rmult_le_compat; lra).
-      assert (Hw2 : wx * wx + 1 <= 2) by nra.
-      assert (He2 : e * e < (dl / 2) * (dl / 2)) by (apply Rmult_le_0_lt_compat; lra).
-      assert (Hp : (t * e) * (t * e) * (wx * wx + 1) <= (t * e) * (t * e) * 2)
-        by (apply Rmult_le_compat_l; [apply Rle_0_sqr | exact Hw2]).
-      replace ((dl / 2) * (dl / 2)) with ((dl * dl) / 4) in He2 by field.
-      assert (Hd2 : 0 < dl * dl) by nra.
-      set (A := (t * e) * (t * e)) in *. set (W := wx * wx + 1) in *.
-      set (E2 := e * e) in *. set (D2 := dl * dl) in *.
-      lra. }
-    rewrite <- (sqrt_square dl) by lra.
-    apply sqrt_lt_1_alt. exact H1.
+    assert (Hu : 0 <= t * e <= e) by nra.
+    assert (Hu2 : (t * e) * (t * e) <= e * e)
+      by (apply Rmult_le_compat; lra).
+    assert (Hw2 : wx * wx + 1 <= 2) by nra.
+    assert (Hp : (t * e) * (t * e) * (wx * wx + 1) <= (t * e) * (t * e) * 2)
+      by (apply Rmult_le_compat_l; [apply Rle_0_sqr | exact Hw2]).
+    assert (He2 : e * e < e) by nra.
+    lra.
   - intros v Hv [Hy _]. cbn [px py] in Hy.
     apply (Hav (py v - py p)); [apply in_or_app; left; apply in_map_iff; exists v; split; [reflexivity | exact Hv] | lra].
   - intros v' Hv' [Hy _].

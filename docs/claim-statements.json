@@ -15,18 +15,21 @@
           "scope": "main",
           "statement": "ArcSimilarityStmt.claim",
           "proof": "arc_similarity_claim",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "A similarity z |-> (a + b i) z + t or (a + b i) conj(z) + t, with a + b i <> 0 (sim_k2 = a^2 + b^2 <> 0), maps the CircularArc through three controls to the arc through their images: squared distance scales by a^2 + b^2, validity, centre and radius are transported, and on_arc membership is preserved both ways."
         },
         {
           "scope": "supporting",
           "statement": "ArcSimilarityStmt.supporting",
           "proof": "arc_similarity_supporting",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "Every rational affine map accepted by is_similarity_q (decided by is_similarity_q_dec) is exact on arcs when applied to the three control points."
         },
         {
           "scope": "witness",
           "statement": "ArcSimilarityStmt.witness",
           "proof": "arc_similarity_witness",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "One sample, not a converse: the non-similarity scale (2,1) moves the controls of the unit upper arc so that the image (6/5,4/5) of the arc point (3/5,4/5) is off the image arc; the Q twin computes the squared residual 12/25 at that single point (3/5,4/5). It is not the maximum: over the arc the residual is 3y(1-y), maximum 3/4 at (sqrt 3/2, 1/2) (ArcSimilarityImage.v : scale21_resid_max)."
         }
       ],
@@ -58,26 +61,25 @@
           "scope": "main",
           "statement": "ClothoidAffineStmt.claim",
           "proof": "cloth_affine_claim",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "A placed clothoid o + M c (host Fresnel egg c, any 2x2 M) under an affine map f(p) = b + L p is the placed clothoid (f(o), L M) over the same egg; the action is a left action (identity, composition), multiplies det M by det L, and commutes with split, reverse and the chord demote."
         },
         {
           "scope": "supporting",
           "statement": "ClothoidAffineStmt.supporting",
           "proof": "cloth_affine_supporting",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "Every affine map with det L <> 0 has a two-sided inverse in the group; the image's arc-length point is f of the point and its tangent is L of the tangent; that tangent is the derivative of the placed arc; tangent cross products scale by det L, so parallel (touching) tangents stay parallel."
         },
         {
           "scope": "witness",
           "statement": "ClothoidAffineStmt.witness",
           "proof": "cloth_affine_witness",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "One sample: the GEOS #1566 shear (u, v) = ((2, 0), (1/2, 1)), det 2, columns of unequal length, is the image of the identity placement of geos_shear_egg under one linear map."
         }
       ],
-      "axioms": [
-        "sig_not_dec",
-        "sig_forall_dec",
-        "functional_extensionality_dep"
-      ],
+      "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
       "sorry_count": 0,
       "literature_dependencies": [],
       "fidelity_divergences": [
@@ -118,26 +120,25 @@
           "scope": "main",
           "statement": "ClothoidShearLawStmt.claim",
           "proof": "cloth_shear_law_claim",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "For a non-degenerate host clothoid (A, h2, d <> 0) and det M <> 0, on any window s1 < s2 the placed curvature signed_curv (M v) (M a) is a + b * sg for some sg with sg' = |M v| (curvature linear in placed arc length) if and only if M^T M = lam^2 I (M is a similarity, rotation or reflection)."
         },
         {
           "scope": "supporting",
           "statement": "ClothoidShearLawStmt.supporting",
           "proof": "cloth_shear_law_supporting",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "Pointwise rigidity: at one unit vector v, M v . M J v = 0 and |M J v| = |M v| already force M^T M = lam^2 I; the converse ends on this step."
         },
         {
           "scope": "witness",
           "statement": "ClothoidShearLawStmt.witness",
           "proof": "cloth_shear_law_witness",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "The GEOS #1566 sheared placement (u, v) = ((2, 0), (1/2, 1)) over geos_shear_egg has no window, however short, with curvature linear in placed arc length (geos_shear_curvature_not_affine was the window (0, 11) in host arc length only)."
         }
       ],
-      "axioms": [
-        "sig_not_dec",
-        "sig_forall_dec",
-        "functional_extensionality_dep"
-      ],
+      "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
       "sorry_count": 0,
       "literature_dependencies": [],
       "fidelity_divergences": [
@@ -177,26 +178,25 @@
           "scope": "main",
           "statement": "ClothoidSheetStmt.claim",
           "proof": "cloth_sheet_claim",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "The clothoid x clothoid oracle is equivariant under any invertible affine map f: a correct result for two placed clothoids moves to a correct result for their images and back (Hit keeps (ti, tj) and moves p* to f(p*), Empty stays Empty, Decline stays Decline); on the host sheet the placed spec is the clothoid arm of I_ok; and pull-back / host cook / push-forward meets the sheet spec pair by pair: a pair on one common frame (o, M) with det M <> 0 gets the pushed host result, any other pair declines."
         },
         {
           "scope": "supporting",
           "statement": "ClothoidSheetStmt.supporting",
           "proof": "cloth_sheet_supporting",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "The boolean scope test decides pc_scope; sheet change composes and scales the frame cross product by det L; a list of correct pairwise results (noding) transports; tangency (parallel tangents), split vertices and on-boundary location transport; Orientation.cross of three points and RingArea979.signed_area2 of a vertex ring scale by det L, so orientation flips exactly when det L < 0."
         },
         {
           "scope": "witness",
           "statement": "ClothoidSheetStmt.witness",
           "proof": "cloth_sheet_witness",
+          "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "The locked clothoid Hit of ClothoidCookMkClothoid with both eggs on the GEOS #1566 shear frame is a correct sheared Hit at the sheared point with the host parameters; the host egg against the sheared GEOS egg is out of scope and declines, and pulling the second back by the first's frame leaves it sheared with no window of curvature linear in arc length (cloth-linear-law-iff-similarity)."
         }
       ],
-      "axioms": [
-        "sig_not_dec",
-        "sig_forall_dec",
-        "functional_extensionality_dep"
-      ],
+      "axioms": ["sig_not_dec", "sig_forall_dec", "functional_extensionality_dep"],
       "sorry_count": 0,
       "literature_dependencies": [],
       "fidelity_divergences": [
@@ -238,26 +238,25 @@
           "scope": "main",
           "statement": "SheetRingPipStmt.claim",
           "proof": "sheet_pip_claim",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "For an invertible affine change of sheet f and a ring that is a seam ring (taut, vertex-proper, at least four points, no horizontal edge) with no horizontal edge also on the target sheet, the canonical half-open east-ray point-in-ring test at any off-ring point gives the same answer for (p, r) and (f p, f r), although f turns the target sheet's east ray into another direction on the source sheet."
         },
         {
           "scope": "supporting",
           "statement": "SheetRingPipStmt.supporting",
           "proof": "sheet_pip_supporting",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "For every ring and invertible f: off-ring is preserved both ways, the topological interior (off the ring and in a bounded complement component) is preserved both ways, and tautness, vertex-properness and the four-point minimum transport."
         },
         {
           "scope": "witness",
           "statement": "SheetRingPipStmt.witness",
           "proof": "sheet_pip_witness",
+          "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
           "meaning": "The corpus diamond and its image under the vertical shear (x, y) -> (x, y + x/2), not a similarity, satisfy every hypothesis; the origin is off the ring and inside by the canonical test on both sheets."
         }
       ],
-      "axioms": [
-        "sig_not_dec",
-        "sig_forall_dec",
-        "functional_extensionality_dep"
-      ],
+      "axioms": ["sig_forall_dec", "functional_extensionality_dep"],
       "sorry_count": 0,
       "literature_dependencies": [],
       "fidelity_divergences": [

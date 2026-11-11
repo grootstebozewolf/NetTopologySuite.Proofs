@@ -1535,11 +1535,16 @@ theories/ConvexJCT.v
 # Honest residual: the same Prop on a general simple / taut non-convex ring.
 # Three-axiom.  No Admitted.
 theories/JCTTwoComponentsConvex.v
+# Nested-interval completeness without sig_not_dec: monotone a, b with
+# b - a eventually small share a point (Cauchy limit in CReal via Rrepr /
+# Rabst; Stdlib's lub `completeness` pulls sig_not_dec).  Feeds the
+# bisection in JCTParityTransport.  sig_forall_dec + funext only.
+theories/NestedIntervals.v
 # H1 PROPER, part 1: the transport engine + the reduction of the "trapped"
 # half to one analytic kernel.  Parity decidability (edge_crosses_ray_dec,
 # ray_parity_dec/_excl, point_in_ring_dec); invariant_transport_along_path
-# (a decidable locally-stable predicate is constant along a path -- pure
-# completeness-of-R, the decidability replaces hidden classical choice);
+# (a decidable locally-stable predicate is constant along a path -- bisection
+# on NestedIntervals, the decidability drives the halving; no sig_not_dec);
 # invariant_traps / odd_parity_trapped_of_invariant (ANY ring: an odd-parity
 # point agreeing with a decidable, complement-locally-constant, far-false
 # invariant is in a bounded component).  The remaining kernel is constructing
@@ -1547,7 +1552,7 @@ theories/JCTTwoComponentsConvex.v
 # strict parity is NOT locally constant: a far-west point's count jumps at a
 # pass-through-vertex height).  Non-vacuity: the rectangle instantiates the
 # reduction via the box-field sign (rect_trapped_via_invariant).
-# Three-axiom.  No Admitted.
+# sig_forall_dec + funext (no sig_not_dec).  No Admitted.
 theories/JCTParityTransport.v
 # H1 PROPER, part 2: the HALF-OPEN ray parity (edge counts when vy <= h < wy)
 # -- the locally-constant invariant the transport engine was built for.
