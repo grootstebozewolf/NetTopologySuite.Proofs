@@ -537,7 +537,7 @@ topic: overlay · claimId: laser-ov · witness: kiss-discs — unit discs at (0,
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `OverlayTouchRow.v : candidate_complete` (+ `seven_row_family`, `eight_row_family`) | **Named pin.** A relation family is candidate-complete iff it classifies every positive-radius disc pair — not op-exactness; seven-row content = `phase0_relation`; eight-row = that plus TOUCH `[exact]` | 0 |
+| `OverlayTouchRow.v : candidate_complete` (+ `seven_row_family`, `eight_row_family`) | **Named pin.** A relation family is candidate-complete iff it classifies every positive-radius disc pair — not op-exactness; seven-row content = `phase0_relation`; eight-row = that plus TOUCH `[exact]` | 3 |
 | `OverlayTouchRow.v : disc_relations_complete_with_touch` (+ `disks_touch`, `phase0_relation`, `eight_row_is_candidate_complete`) | **Headline (positive half).** Adding the single TOUCH row (nonempty ∩, disjoint interiors) makes the Phase 0 relation matrix COMPLETE over positive discs: every pair is same/disjoint/covers/coveredBy/crossing or touching — trichotomy on d vs |r1 − r2| and r1 + r2, radial kiss witness `[exact]` | 3 |
 | `OverlayTouchRow.v : phase0_relation_complete_hypothesis_refuted` (+ `seven_row_not_candidate_complete`, `t_ext_misses_seven_row`, `ext_not_disjoint`, `ext_not_covers`, `ext_not_coveredBy`, `ext_not_same`, `ext_not_crossing`) | **Negative half.** The five-relation / seven-row matrix WITHOUT touch misses the externally tangent pair — each row killed at the witness, crossing by its strict inequality at d = r1 + r2 `[exact]` | 3 |
 | `OverlayTouchRow.v : ext_cap_singleton` (+ `ext_cap_interiors_empty`, `ext_touch`) | **Dimension collapse.** At external tangency CAP is EXACTLY the singleton kiss point — 2-D ∩ 2-D answering in dimension 0; the regularized CAP is empty, and R1's "representable as CurvePolygon" is unmeetable for a point `[exact]` | 3 |
@@ -575,7 +575,7 @@ topic: overlay · claimId: ov-g1-ne-selfkiss · witness: figure8-bowtie — righ
 | `OverlaySelfKiss.v : self_kiss_vertex` (+ `consecutive_ring_edges`, `geometry_self_kiss`) | Narrow combinatorial pinch: two non-adjacent ring edges share a vertex `[exact]` | 0 |
 | `OverlaySelfKiss.v : figure8_ring_simple` (+ `figure8_not_injective`, `figure8_right_ccw`, `figure8_left_ccw`, `figure8_valid_polygon`) | Fixture is `ring_simple` (kiss, not a proper cross) and `valid_polygon` as currently stated, yet revisits the origin — injectivity is a separate premise `[exact]` | 2 |
 | `OverlaySelfKiss.v : figure8_open_wedges_disjoint` (+ `figure8_right_open_inhabited`, `figure8_left_open_inhabited`) | Local side-interiors stay disjoint; each open lobe is inhabited `[exact]` | 2 |
-| `OverlaySelfKiss.v : curved_polygon_selfkiss_qex` | **QEX obligation (named, not a flag).** Domain: a Jordan-style self-kiss Prop on (possibly circular) CurvePolygon. Conclusion: that Prop agrees with `self_kiss_vertex` + disjoint open wedges on this fixture. Not discharged `[exact]` | 0 |
+| `OverlaySelfKiss.v : curved_polygon_selfkiss_qex` | **QEX obligation (named, not a flag).** Domain: a Jordan-style self-kiss Prop on (possibly circular) CurvePolygon. Conclusion: that Prop agrees with `self_kiss_vertex` + disjoint open wedges on this fixture. Not discharged `[exact]` | 3 |
 
 ## Curved-polygon CAP after exact noding — named obligation, disc slice Qed (`CurvedCapObligation.v`) <!-- feat:overlay geom:arc,cp -->
 
@@ -584,7 +584,7 @@ topic: overlay · claimId: ov-curved-cap-qex · witness: disc-cap-lens — locke
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `CurvedCapObligation.v : curved_cap_exact_noding_obligation` (+ `point_set_intersection`; carrier in `CurvedFilledDisc.v : disc_pair_exactly_noded`) | **The obligation (a Prop).** Domain = finite chord/arc boundaries; noding hyp supplied by the consumer; conclusion `extracted_cap_faces = A ∩ B`. Not a bool / status enum `[exact]` | 0 |
+| `CurvedCapObligation.v : curved_cap_exact_noding_obligation` (+ `point_set_intersection`; carrier in `CurvedFilledDisc.v : disc_pair_exactly_noded`) | **The obligation (a Prop).** Domain = finite chord/arc boundaries; noding hyp supplied by the consumer; conclusion `extracted_cap_faces = A ∩ B`. Not a bool / status enum `[exact]` | 3 |
 | `CurvedCapObligation.v : curved_cap_on_curve_polygons` (+ `CurvedFilledDisc.v : valid_curve_polygon_inhabits_domain`) | **Named residual QEX.** Same obligation on a `CurvePolygon` pair with abstract Jordan/parity fill. Domain is inhabited from `valid_curve_polygon`; noding + extract are not constructed `[exact]` | 1 |
 | `CurvedCapObligation.v : curved_cap_obligation_specializes_to_disc_lens` (+ `disc_intersection_is_lens`, `disc_overlay_cap_is_lens`) | On full discs the conclusion *is* `lens` / `disc_overlay Intersection` (`boolean_op` CAP on discs) `[exact]` | 1 |
 | `CurvedCapObligation.v : two_disc_cap_discharges_curved_obligation` (+ `CurvedFilledDisc.v : disc_pair_exactly_noded_hold`, `disc_pair_domain`) | **Qed inhabitant.** Positive-radius discs discharge the Record: domain = two valid semicircles; noding = radical-node uniqueness; CAP = lens `[exact]` | 3 |
@@ -598,7 +598,7 @@ topic: overlay · claimId: ov-curved-ops-qex · witness: disc-ops-closed-form �
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `CurvedOpObligation.v : curved_op_exact_noding_obligation` (+ `point_set_op`, `CurvedCupExactNodingObligation`, `CurvedSubExactNodingObligation`, `CurvedXorExactNodingObligation`) | **The obligation (a Prop), parameterized by `BooleanOp`.** Domain = finite chord/arc boundaries; noding hyp supplied by the consumer; conclusion `extracted_faces = boolean_op`. Named CUP/SUB/XOR aliases are the same Record at Union / Difference / SymDiff. Not a bool / status enum `[exact]` | 0 |
+| `CurvedOpObligation.v : curved_op_exact_noding_obligation` (+ `point_set_op`, `CurvedCupExactNodingObligation`, `CurvedSubExactNodingObligation`, `CurvedXorExactNodingObligation`) | **The obligation (a Prop), parameterized by `BooleanOp`.** Domain = finite chord/arc boundaries; noding hyp supplied by the consumer; conclusion `extracted_faces = boolean_op`. Named CUP/SUB/XOR aliases are the same Record at Union / Difference / SymDiff. Not a bool / status enum `[exact]` | 3 |
 | `CurvedOpObligation.v : curved_op_on_curve_polygons` (+ `curved_cup_on_curve_polygons`, `curved_sub_on_curve_polygons`, `curved_xor_on_curve_polygons`) | **Named residual QEX.** Same obligation on a `CurvePolygon` pair with abstract Jordan/parity fill. Domain is inhabited from `valid_curve_polygon`; noding + extract are not constructed `[exact]` | 1 |
 | `CurvedOpObligation.v : curved_cap_is_op_intersection` (+ `curved_cap_on_curve_polygons_is_op_intersection`, `point_set_op_intersection`) | **CAP is the Intersection instance.** The #679 Record is equivalent to this Record at `Intersection` — no rewrite of `CurvedCapObligation.v` `[exact]` | 1 |
 | `CurvedOpObligation.v : curved_op_obligation_specializes_to_disc` (+ `point_set_op_disc_overlay`, `curved_cup_obligation_specializes_to_disc_blob`, `curved_sub_obligation_specializes_to_disc_crescent`, `curved_xor_obligation_specializes_to_disc_crescents`) | On full discs the conclusion *is* `disc_overlay op` — CUP = blob, SUB = crescent, XOR = crescents (`boolean_op` on discs) `[exact]` | 1 |
@@ -613,7 +613,7 @@ topic: overlay · claimId: ov-curved-kiss-qex · witness: kiss-discs — T-ext u
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `CurvedKissObligation.v : curved_kiss_exact_noding_obligation` (+ `bodies_kiss`, `kiss_external`, `closure_internal`, `disc_bb_contact`, `disc_no_II`) | **The obligation (a Prop).** Domain = finite chord/arc boundaries; interiors supplied; noding hyp supplied by the consumer; conclusion `kiss ↔ (extracted BB ∧ extracted no-II)`. Not a bool / status enum `[exact]` | 0 |
+| `CurvedKissObligation.v : curved_kiss_exact_noding_obligation` (+ `bodies_kiss`, `kiss_external`, `closure_internal`, `disc_bb_contact`, `disc_no_II`) | **The obligation (a Prop).** Domain = finite chord/arc boundaries; interiors supplied; noding hyp supplied by the consumer; conclusion `kiss ↔ (extracted BB ∧ extracted no-II)`. Not a bool / status enum `[exact]` | 3 |
 | `CurvedKissObligation.v : curved_kiss_on_curve_polygons` (+ `valid_curve_polygon_inhabits_kiss_domain`) | **Named residual QEX.** Same obligation on a `CurvePolygon` pair with abstract Jordan/parity fill and specified interiors. Domain is inhabited from `valid_curve_polygon`; noding + BB extract are not constructed `[exact]` | 1 |
 | `CurvedKissObligation.v : bodies_kiss_disc_iff_touch` (+ `fill_covers_disc_iff`) | On full discs the geometric kiss *is* `disks_touch`; closure-containment *is* `disk_covers` `[exact]` | 1 |
 | `CurvedKissObligation.v : disks_touch_iff_bb_and_no_II` (+ `disks_touch_bb_contact`, `touch_point_on_both_circles`) | **Disc characterisation.** TOUCH ↔ circle–circle BB contact ∧ interiors disjoint — the noded-overlay conclusion, specialised `[exact]` | 3 |
@@ -643,14 +643,14 @@ that map. This ADR is not edited by those tickets.
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` (+ `SheetHenCookCore.v : ellipse_ellipse_not_first_scope`) | **ADR-0007 QED ∨ QEX:** first cook scope is complete, or a documented pair is missing. Discharged QEX on ellipse–ellipse `[exact]` | 0 |
-| `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` (+ `SheetHenCookCore.v : first_cook_scope_chord_chord`, `SheetHenCookCore.v : crossing_witness`, `SheetHenCookCore.v : disjoint_witness`, `SheetHenCookCore.v : I_ok_chord_not_decline`) | **Chord–chord cook inhabitance:** Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope `[exact]` | C |
+| `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` (+ `SheetHenCookCore.v : first_cook_scope_chord_chord`, `SheetHenCookCore.v : crossing_witness`, `SheetHenCookCore.v : disjoint_witness`, `SheetHenCookCore.v : I_ok_chord_not_decline`) | **Chord–chord cook inhabitance:** Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope `[exact]` | 3 |
 | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` (+ `SheetHenCookCore.v : IEmpty_neq_IDecline`) | **Empty ≠ Decline** as distinct `𝓘` constructors `[exact]` | 0 |
 | `Adr0007NodingEpic.v : ticket_0007_identity_qed_or_qex` (+ `SheetHenCookCore.v : share_one_same_hen`) | **Structural identity:** `ShareOne` yields one hen `[exact]` | 0 |
 | `Adr0007NodingEpic.v : ticket_0007_dart_eq_qed_or_qex` (+ `SheetHenCookCore.v : coord_eq_not_hen_eq`) | **QEX:** coord-pair equality is not hen identity. Local `CoordDart` mirrors the `Dart` coordinate-pair type; not a remint `[exact]` | 3 |
-| `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` (+ `SheetHenCookCore.v : noded_crossing`) | **Noded on S** is cook evidence `[exact]` | C |
+| `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` (+ `SheetHenCookCore.v : noded_crossing`) | **Noded on S** is cook evidence `[exact]` | 3 |
 | `Adr0007NodingEpic.v : ticket_0007_silent_nodable_qed_or_qex` (+ `SheetHenCookCore.v : crossing_not_nodable_shadow`) | **QEX:** silent `pairwise_nodable` excludes the proper-crossing case `[exact]` | 3 |
 | `SheetHenCookCore.v : snap_round_neq_I` | Snap-rounding is a different constructor than `𝓘` `[exact]` | 0 |
-| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` (+ `SheetHenCookLoop.v : cook_loop_ctor_inhabits`, `SheetHenRhoConf.v : cook_loop_rho_holds`, `SheetHenCookCore.v : cook_loop_is_discharged`, `SheetHenCookLoop.v : leftover_bag_term_arm_missing`) | **QED (claimId 0007-loop-letter6):** left arm via `cook_loop_ctor_inhabits CookLoopRho`; `LeftoverBagTermArm` stays refuted; supersedes the 0007-cook-term QEX `[exact]` | 0 |
+| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` (+ `SheetHenCookLoop.v : cook_loop_ctor_inhabits`, `SheetHenRhoConf.v : cook_loop_rho_holds`, `SheetHenCookCore.v : cook_loop_is_discharged`, `SheetHenCookLoop.v : leftover_bag_term_arm_missing`) | **QED (claimId 0007-loop-letter6):** left arm via `cook_loop_ctor_inhabits CookLoopRho`; `LeftoverBagTermArm` stays refuted; supersedes the 0007-cook-term QEX `[exact]` | 3 |
 | `SheetHenCookCore.v : coord_realization_preserves_sheet` | binary64 is a coordinate realization of the same sheet, not a second instance `[exact]` | 0 |
 | `SheetHenCookCore.v : overlay_ng_robust_is_snap_not_I` | OverlayNGRobust is a snap-sequence, not `𝓘` `[exact]` | 0 |
 | `SheetHenCookCore.v : hen_id_dart_of_chicken` | `Dart` := hen-id pair is one view of a chicken; not a remint of `Dart.v` `[exact]` | 0 |
@@ -1468,8 +1468,8 @@ window. Category C via `RiemannInt` → `classic`
 |---|---|---|
 | `ClothoidFresnel.v : fresnel_is_curve_length` (+ `fresnel_chord_rate`, `fresnel_speed_integral_premises`, `fresnel_primitives`) | **Conditional pack instance (#508/#564, claimId: 508-e, witness: 508-e-fresnel):** if `increment_squeezed Cx fresnel_vx` and `increment_squeezed Cy fresnel_vy` on `[a,b]`, then `is_curve_length (fresnel_curve Cx Cy) a b (b − a)`. Pack `F = fun t => 1 * t`. Speed constantly 1. No Heine–Cantor, no Coquelicot `[cond]` | 3 |
 | `ClothoidFresnel.v : fresnel_unit_window_length` | **`[0,1]` specialization of the pack:** still conditional on primitives `[cond]` | 3 |
-| `ClothoidFresnelInhab.v : fresnel_param_is_curve_length` (+ `fresnel_Cx`, `fresnel_Cy`, `fresnel_primitives_inhab`) | **Concrete Fresnel inhabitant (#508/#564, witness: 508-e-fresnel-inhab):** Stdlib RiemannInt of `(cos,sin)(t²/2)` from 0; length `b − a` on any window `[exact]` | C |
-| `ClothoidFresnelInhab.v : fresnel_unit_window_length_inhab` | **`[0,1]` curved unconditional window:** metric length exactly `1` `[exact]` | C |
+| `ClothoidFresnelInhab.v : fresnel_param_is_curve_length` (+ `fresnel_Cx`, `fresnel_Cy`, `fresnel_primitives_inhab`) | **Concrete Fresnel inhabitant (#508/#564, witness: 508-e-fresnel-inhab):** Stdlib RiemannInt of `(cos,sin)(t²/2)` from 0; length `b − a` on any window `[exact]` | 4 |
+| `ClothoidFresnelInhab.v : fresnel_unit_window_length_inhab` | **`[0,1]` curved unconditional window:** metric length exactly `1` `[exact]` | 4 |
 
 ## Issue #508 — multi-span NURBS: knot-vector additivity (`NurbsKnotSpans.v`) <!-- feat:arc-len geom:cs -->
 
@@ -1522,7 +1522,7 @@ accept. This letter does not retire epic 508.
 | `ArcRectifiable.v : arc_r_theta_is_curve_length` | **Wrap-up pin (CircularArc):** `r·θ` is the metric length. Not reminted here `[exact]` | 3 |
 | `NurbsKnotSpans.v : nurbs_spans_additive` | **Wrap-up pin (knot list):** span lengths sum. Not reminted here; not Cox-de Boor `[exact]` | 3 |
 | `ClothoidFresnel.v : fresnel_is_curve_length` | **Wrap-up park (clothoid pack):** engine-conditional; inhabitant is `ClothoidFresnelInhab.v` `[cond]` | 3 |
-| `ClothoidFresnelInhab.v : fresnel_unit_window_length_inhab` | **Wrap-up park (clothoid inhabitant):** `[0,1]` length 1 via Stdlib RiemannInt `[exact]` | C |
+| `ClothoidFresnelInhab.v : fresnel_unit_window_length_inhab` | **Wrap-up park (clothoid inhabitant):** `[0,1]` length 1 via Stdlib RiemannInt `[exact]` | 4 |
 | `ExactCurveEpic508.v : ticket_508_qed_or_qex` | **Wrap-up park (carrier):** QEX on missing Exact* constructors. Not owner accept `[exact]` | 3 |
 
 ## Discrete → Sh(ℝ²) bridge — spatial-topos foundations (`HeytingOpens.v`, `PlaneConnected.v`, `DiscreteShBridge.v`) <!-- feat:foundations geom:poly -->
@@ -1731,9 +1731,9 @@ paper matrices (S3) remain oracle pins, not selection targets.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateLineLine.v : line_line_proper_cross_geom` | **Geometry:** strict opposite-sign crosses ⇒ the segments share a point (`strict_completeness`) `[exact]` | 0 |
-| `RelateLineLine.v : line_line_rejected_not_share` | **Geometry:** same-side sign rejection ⇒ no shared point (soundness of NTS rejection) `[exact]` | 0 |
-| `RelateLineLine.v : line_line_collinear_overlap_share` | **Geometry:** both endpoints of CD on AB ⇒ shared point `[exact]` | 0 |
+| `RelateLineLine.v : line_line_proper_cross_geom` | **Geometry:** strict opposite-sign crosses ⇒ the segments share a point (`strict_completeness`) `[exact]` | 3 |
+| `RelateLineLine.v : line_line_rejected_not_share` | **Geometry:** same-side sign rejection ⇒ no shared point (soundness of NTS rejection) `[exact]` | 3 |
+| `RelateLineLine.v : line_line_collinear_overlap_share` | **Geometry:** both endpoints of CD on AB ⇒ shared point `[exact]` | 3 |
 | `RelateLineLine.v : ll_matrix_point_ii_crosses_ll` / `_intersects` | **Witness:** the point matrix satisfies `Crosses` (LL) / `Intersects` `[exact]` | 0 |
 | `RelateLineLine.v : ll_matrix_disjoint_witness` | **Witness:** the empty matrix satisfies `Disjoint` `[exact]` | 0 |
 | `RelateLineLine.v : ll_matrix_overlap_ii_overlaps` | **Witness:** the overlap matrix satisfies `Overlaps` (LL) `[exact]` | 0 |
@@ -1746,8 +1746,8 @@ paper matrices (S3) remain oracle pins, not selection targets.
 | `RelateMatrixLineLine.v : line_fill_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `line_pair_fill LPR_ProperCross` `[exact]` | 0 |
 | `RelateMatrixLineLine.v : line_fill_share_witness` | **Witness:** `Intersects` on `line_pair_fill LPR_Share` `[exact]` | 0 |
 | `RelateMatrixLineLine.v : line_fill_collinear_overlap_witness` | **Witness:** `Overlaps` on `line_pair_fill LPR_CollinearOverlap` `[exact]` | 0 |
-| `RelateMatrixLineLine.v : rejection_not_share` | **Geometry:** same-side rejection excludes segment share `[exact]` | 0 |
-| `RelateMatrixLineLine.v : collinear_overlap_not_proper_cross` | **Geometry:** collinear overlap excludes proper crossing `[exact]` | 0 |
+| `RelateMatrixLineLine.v : rejection_not_share` | **Geometry:** same-side rejection excludes segment share `[exact]` | 3 |
+| `RelateMatrixLineLine.v : collinear_overlap_not_proper_cross` | **Geometry:** collinear overlap excludes proper crossing `[exact]` | 3 |
 
 ## Issue #67 — boundary / MOD2 policy (`RelateBoundary.v`) <!-- feat:relate geom:ls,poly -->
 
@@ -1756,7 +1756,7 @@ Line-line endpoint classification and JTS#1175 regression class.
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
 | `RelateBoundary.v : mod2_endpoint_is_boundary` | MOD2 rule: incidence count `1` is a boundary node (line endpoint) `[exact]` | 0 |
-| `RelateBoundary.v : endpoint_contact_share` | **Geometry:** shared-endpoint contact ⇒ the segments share a point `[exact]` | 0 |
+| `RelateBoundary.v : endpoint_contact_share` | **Geometry:** shared-endpoint contact ⇒ the segments share a point `[exact]` | 3 |
 | `RelateBoundary.v : ll_matrix_touches_endpoint_witness` | **Witness:** the endpoint-only matrix (`pat_touches_0`, IB=0) satisfies `Touches` `[exact]` | 0 |
 | `RelateBoundary.v : jts1175_boundary_cells_preclude_disjoint` | Romanschek test 10 / JTS#1175 class: `intersects` yet not `disjoint` (BI=0 boundary visibility) `[exact]` | 0 |
 
@@ -1768,10 +1768,10 @@ geometry).
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateAreaPoint.v : strict_interior_in_rect_polygon` | **Geometry:** `x0 < px < x1` and `y0 < py < y1` ⇒ point ∈ rectangle polygon `[exact]` | 0 |
-| `RelateAreaPoint.v : strict_interior_in_rect_geometry` | **Geometry:** strict-interior point lies in `point_set` of the single-rectangle geometry `[exact]` | 0 |
+| `RelateAreaPoint.v : strict_interior_in_rect_polygon` | **Geometry:** `x0 < px < x1` and `y0 < py < y1` ⇒ point ∈ rectangle polygon `[exact]` | 3 |
+| `RelateAreaPoint.v : strict_interior_in_rect_geometry` | **Geometry:** strict-interior point lies in `point_set` of the single-rectangle geometry `[exact]` | 3 |
 | `RelateAreaPoint.v : ap_matrix_rect_contains_point_witness` | **Witness:** the hand-specified matrix satisfies `Contains` `[exact]` | 0 |
-| `RelateAreaPoint.v : left_boundary_in_polygon_not_strict` | **Geometry:** a left-edge point is in the polygon but outside the strict interior (`px = x0`) `[exact]` | 0 |
+| `RelateAreaPoint.v : left_boundary_in_polygon_not_strict` | **Geometry:** a left-edge point is in the polygon but outside the strict interior (`px = x0`) `[exact]` | 3 |
 | `RelateAreaPoint.v : ap_matrix_rect_touches_boundary_witness` | **Witness:** the S4b boundary matrix (`pat_touches_3`, EB=0) satisfies `Touches` `[exact]` | 0 |
 
 ## Issue #67 — area-line: witnesses + geometry (`RelateAreaLine.v`) <!-- feat:relate,area geom:poly,ls -->
@@ -1783,7 +1783,7 @@ Guarded axis-aligned rectangle vs closed segment. Regime→witness selection via
 |---|---|---|
 | `RelateAreaLine.v : al_matrix_segment_interior_intersects` | **Witness:** the interior matrix (II=1) satisfies `Intersects` `[exact]` | 0 |
 | `RelateAreaLine.v : al_matrix_segment_crosses_witness` | **Witness:** the pierce matrix (`pat_crosses_lp_ap_al`, II=1 BE=0) satisfies `Crosses` `[exact]` | 0 |
-| `RelateAreaLine.v : segment_pierces_rect_share` | **Geometry:** a horizontal pierce shares a point with the crossed vertical edge (`strict_completeness`) `[exact]` | 0 |
+| `RelateAreaLine.v : segment_pierces_rect_share` | **Geometry:** a horizontal pierce shares a point with the crossed vertical edge (`strict_completeness`) `[exact]` | 3 |
 | `RelateAreaLine.v : al_matrix_disjoint_witness` | **Witness:** the empty matrix satisfies `Disjoint` (segment-above regime) `[exact]` | 0 |
 | `RelateAreaLine.v : al_matrix_boundary_touch_witness` | **Witness:** the boundary matrix (`pat_touches_1`, BB=0) satisfies `Touches` `[exact]` | 0 |
 
@@ -1813,8 +1813,8 @@ regime; the `*_fill_witness` facts are constant (regime hypothesis not consumed)
 | `RelateMatrixRect.v : rect_fill_overlap_witness` | **Witness:** `Overlaps` + `Intersects` on `rect_pair_fill RPR_Overlap` `[exact]` | 0 |
 | `RelateMatrixRect.v : rect_fill_contains_witness` | **Witness:** `Contains` + `Intersects` on `rect_pair_fill RPR_Contains` `[exact]` | 0 |
 | `RelateMatrixRect.v : rect_fill_touch_witness` | **Witness:** `Touches` on `rect_pair_fill RPR_TouchVert` `[exact]` | 0 |
-| `RelateMatrixRect.v : overlap_not_strictly_separated` | **Geometry:** partial overlap excludes strict horizontal separation (`ax1 < bx0`) `[exact]` | 0 |
-| `RelateMatrixRect.v : touch_not_overlap` | **Geometry:** vertical edge touch excludes partial overlap `[exact]` | 0 |
+| `RelateMatrixRect.v : overlap_not_strictly_separated` | **Geometry:** partial overlap excludes strict horizontal separation (`ax1 < bx0`) `[exact]` | 3 |
+| `RelateMatrixRect.v : touch_not_overlap` | **Geometry:** vertical edge touch excludes partial overlap `[exact]` | 3 |
 
 ## Issue #67 — area×line regime→witness (`RelateMatrixAreaLine.v`) <!-- feat:relate geom:poly,ls -->
 
@@ -1829,8 +1829,8 @@ vocabulary for all fill APIs is seeded in
 | `RelateMatrixAreaLine.v : area_line_fill_pierce_witness` | **Witness:** `Crosses` + `Intersects` on `area_line_fill ALR_Pierce` `[exact]` | 0 |
 | `RelateMatrixAreaLine.v : area_line_fill_disjoint_witness` | **Witness:** `Disjoint` on `area_line_fill ALR_Disjoint` `[exact]` | 0 |
 | `RelateMatrixAreaLine.v : area_line_fill_boundary_touch_witness` | **Witness:** `Touches` on `area_line_fill ALR_BoundaryTouch` `[exact]` | 0 |
-| `RelateMatrixAreaLine.v : interior_not_disjoint` | **Geometry:** strict interior excludes the segment-above-rect disjoint guard `[exact]` | 0 |
-| `RelateMatrixAreaLine.v : pierce_not_touch` | **Geometry:** horizontal pierce excludes left-boundary touch (given `x0 < x1`) `[exact]` | 0 |
+| `RelateMatrixAreaLine.v : interior_not_disjoint` | **Geometry:** strict interior excludes the segment-above-rect disjoint guard `[exact]` | 3 |
+| `RelateMatrixAreaLine.v : pierce_not_touch` | **Geometry:** horizontal pierce excludes left-boundary touch (given `x0 < x1`) `[exact]` | 3 |
 
 ## Issue #67 — arc×line: chord geometry + witnesses (`RelateArcChord.v`) <!-- feat:relate,distance geom:arc,ls -->
 
@@ -1841,10 +1841,10 @@ analytic regimes landed in S10b.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateArcChord.v : arc_chord_proper_cross_share` | **Geometry:** arc chord properly crosses segment ⇒ shared point (S2 delegate) `[exact]` | 0 |
-| `RelateArcChord.v : arc_chord_rejected_not_share` | **Geometry:** same-side rejection on arc chord vs segment ⇒ no shared point `[exact]` | 0 |
-| `RelateArcChord.v : arc_circle_chord_cross_on_circle` | **Geometry:** `chord_crosses_arc_circle` ⇒ ∃ on-circle hit on chord `PQ` (IVT) `[exact]` | 0 |
-| `RelateArcChord.v : arc_chord_proper_cross_not_rejected` | **Geometry:** proper cross excludes same-side rejection on arc chord `[exact]` | 0 |
+| `RelateArcChord.v : arc_chord_proper_cross_share` | **Geometry:** arc chord properly crosses segment ⇒ shared point (S2 delegate) `[exact]` | 3 |
+| `RelateArcChord.v : arc_chord_rejected_not_share` | **Geometry:** same-side rejection on arc chord vs segment ⇒ no shared point `[exact]` | 3 |
+| `RelateArcChord.v : arc_circle_chord_cross_on_circle` | **Geometry:** `chord_crosses_arc_circle` ⇒ ∃ on-circle hit on chord `PQ` (IVT) `[exact]` | 3 |
+| `RelateArcChord.v : arc_chord_proper_cross_not_rejected` | **Geometry:** proper cross excludes same-side rejection on arc chord `[exact]` | 3 |
 | `RelateArcChord.v : ac_matrix_point_ii_crosses` / `_intersects` / `ac_matrix_disjoint_witness` | **Witness:** the reused S2 matrices satisfy `Crosses`/`Intersects`/`Disjoint` `[exact]` | 0 |
 
 ## Issue #67 — arc×line regime→witness (`RelateMatrixArcChord.v`) <!-- feat:relate geom:arc,ls -->
@@ -1856,7 +1856,7 @@ Regime-indexed `arc_chord_fill` selects the S10 witness matrices.
 | `RelateMatrixArcChord.v : arc_fill_chord_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `arc_chord_fill ACR_ChordProperCross` `[exact]` | 0 |
 | `RelateMatrixArcChord.v : arc_fill_chord_disjoint_witness` | **Witness:** `Disjoint` on `arc_chord_fill ACR_ChordDisjoint` `[exact]` | 0 |
 | `RelateMatrixArcChord.v : arc_fill_circle_cross_witness` | **Witness:** `Intersects` on `arc_chord_fill ACR_CircleCross` `[exact]` | 0 |
-| `RelateMatrixArcChord.v : chord_rejected_not_share` | **Geometry:** chord rejection excludes chord share `[exact]` | 0 |
+| `RelateMatrixArcChord.v : chord_rejected_not_share` | **Geometry:** chord rejection excludes chord share `[exact]` | 3 |
 
 ## Issue #67 — arc×line analytic: geometry + witnesses (`RelateArcAnalytic.v`) <!-- feat:relate,arc-len,distance geom:arc,ls -->
 
@@ -1889,10 +1889,10 @@ Minimal `ClothoidChord` carrier; witnesses reuse S2 line-line matrices.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateClothoid.v : clothoid_chord_proper_cross_share` | **Geometry:** clothoid chord properly crosses segment ⇒ shared point `[exact]` | 0 |
-| `RelateClothoid.v : clothoid_chord_rejected_not_share` | **Geometry:** same-side rejection on clothoid chord ⇒ no shared point `[exact]` | 0 |
+| `RelateClothoid.v : clothoid_chord_proper_cross_share` | **Geometry:** clothoid chord properly crosses segment ⇒ shared point `[exact]` | 3 |
+| `RelateClothoid.v : clothoid_chord_rejected_not_share` | **Geometry:** same-side rejection on clothoid chord ⇒ no shared point `[exact]` | 3 |
 | `RelateClothoid.v : cl_matrix_point_ii_crosses` / `_intersects` / `cl_matrix_disjoint_witness` | **Witness:** the reused S2 matrices satisfy `Crosses`/`Intersects`/`Disjoint` `[exact]` | 0 |
-| `RelateClothoid.v : clothoid_L_unique_on_branch` (+ `RelateClothoid.v : clothoid_L_unique_half_branch`) | Unconditional on |κL| ≤ 1/2; full branch |κL| ≤ π conditional on `ClothoidFPrimePos` `[exact]` | 0 |
+| `RelateClothoid.v : clothoid_L_unique_on_branch` (+ `RelateClothoid.v : clothoid_L_unique_half_branch`) | Unconditional on |κL| ≤ 1/2; full branch |κL| ≤ π conditional on `ClothoidFPrimePos` `[exact]` | 3 |
 | `RelateMatrixClothoid.v : clothoid_fill_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `clothoid_fill CLR_ChordProperCross` `[exact]` | 0 |
 | `RelateMatrixClothoid.v : clothoid_fill_disjoint_witness` | **Witness:** `Disjoint` on `clothoid_fill CLR_ChordDisjoint` `[exact]` | 0 |
 | `RelateMatrixClothoid.v : clothoid_fill_share_witness` | **Witness:** `Intersects` on `clothoid_fill CLR_ChordShare` `[exact]` | 0 |
@@ -1923,7 +1923,7 @@ only. Chord coords: `|n| ≤ 2¹¹` (`arc_coord_int_safe`); scalar moments:
 | `ClothoidHalley_b64.v : b64_clothoid_halley_filtered_corpus_le_four` | **Conditional headline (b64 fuel model):** filtered corpus ≤4 iterations, discharged as `H_filtered_corpus_le_four` `[cond]` | 4 |
 | `ClothoidHalley_b64.v : b64_degenerate_halley_fixed_at_root` | Degenerate moments: b64 Halley `l_update` is a no-op at chord root `L = d` when converged guard fires (route A + comparison bridge; explicit positive threshold premise) `[int-b64]` | 4 |
 | `ClothoidHalley.v : clothoid_halley_filtered_corpus_le_four` | **Conditional headline:** filtered ProRail corpus Halley solve uses ≤4 iterations, discharged as `H_filtered_corpus_le_four` (witness: `golden_vectors.json`) `[cond]` | 0 |
-| `ClothoidHalley.v : degenerate_halley_fixed_at_root` | Degenerate moments: Halley update is a no-op at the chord root `L = d` (composes route A) `[exact]` | 0 |
+| `ClothoidHalley.v : degenerate_halley_fixed_at_root` | Degenerate moments: Halley update is a no-op at the chord root `L = d` (composes route A) `[exact]` | 3 |
 | `ClothoidArcSpline_b64.v : cas_b64_gate_sound` (+ `ClothoidArcSpline_b64.v : cas_b64_gate_real`) | RNE gate `fl(fl(fl(L·L)·L)·(1+2⁻⁴⁹)) ≤ fl(8·A·A·n·n·ε)` true ⇒ real `L³ ≤ 8A²n²ε`, finite inputs in `[2⁻¹⁰⁰, 2¹⁰⁰]`; rounded-down `A ≤ A_true`, `n ≤ N` admissible `[b64-rne]` | 4 |
 | `ClothoidArcSpline_b64.v : cas_b64_arc_spline_contract` (+ `ClothoidArcSpline_b64.v : cas_b64_two_arc_contract`) | Gate true for a window of length `≤ L` ⇒ every spline point within `ε` of the clothoid; two arcs use the fixed constant `cas_b64_two` `[b64-rne]` | 4 |
 | `ClothoidArcSpline_b64.v : cas_b64_points_contract` (+ `ClothoidArcSpline_b64.v : cas_b64_point_err`, `ClothoidArcSpline_b64.v : cas_b64_frame_err`) | For **every** `CasB64ArcOracle` (Fresnel start within `η_P`, node tangents within `τ`, local arc coordinates on `[0, h]` within `η`): binary64 shot-spline points (RNE frame steps and N-step accumulation proved) within `ε + η_P + N(τh + (1+τ)η + 2ρ)`, `ρ = 8uM + 4·2⁻¹⁰⁷⁵` `[b64-rne]` | 4 |
@@ -2142,11 +2142,11 @@ so the S4 facts transport to the curve geometry's point set.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
-| `RelateCurveAreaPoint.v : valid_rect_curve_polygon` | **Geometry:** chord rect COMPOUNDCURVE satisfies `valid_curve_polygon` `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : valid_rect_curve_polygon` | **Geometry:** chord rect COMPOUNDCURVE satisfies `valid_curve_polygon` `[exact]` | 3 |
 | `RelateCurveAreaPoint.v : rect_curve_linearised_ring_closed` | **Geometry:** `chord_approx_ring` of the rect curve outer is `ring_closed` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_contains_point_witness` | **Witness:** the reused S4 matrix satisfies `Contains` `[exact]` | 0 |
 | `RelateCurveAreaPoint.v : cap_matrix_rect_touches_boundary_witness` | **Witness:** the reused S4 matrix satisfies `Touches` `[exact]` | 0 |
-| `RelateCurveAreaPoint.v : point_in_rect_curve_geometry_iff_polygon` | **Bridge (S12b):** the curve geometry's point set (`point_set ∘ to_geometry`) coincides with `point_in_polygon` of the single linearised rectangle ring — `to_geometry` is the singleton chord-approx map (no holes), `point_set` over a singleton is membership in its sole element. Lets the S4 Contains/Touches facts transport to curve-polygon×point unchanged. Pure structural computation (**0 axioms**) `[exact]` | 0 |
+| `RelateCurveAreaPoint.v : point_in_rect_curve_geometry_iff_polygon` | **Bridge (S12b):** the curve geometry's point set (`point_set ∘ to_geometry`) coincides with `point_in_polygon` of the single linearised rectangle ring — `to_geometry` is the singleton chord-approx map (no holes), `point_set` over a singleton is membership in its sole element. Lets the S4 Contains/Touches facts transport to curve-polygon×point unchanged. Pure structural computation (**0 axioms**) `[exact]` | 3 |
 | `RayParityDegenerate.v : ray_parity_zero_edge_irrelevant` (+ `edge_crosses_ray_degenerate`, `rpo_cons_iff`, `rpe_cons_iff`, `point_in_ring_dup_head`) | **Curve→matrix transport foundation (issue #67):** a zero-length edge `(v,v)` is parity-neutral for the crossing-number `point_in_ring` test — it never meets `edge_crosses_ray`'s strict y-straddle, so it always takes the `_skip` branch; inserting/removing one anywhere preserves both parities. Unblocks transporting Phase-3 `point_in_ring` facts to `flat_map` chord rings, which carry `(v,v)` edges at every segment join. Pure inductive + `lra` `[exact]` | 3 |
 | `RelateCurveAreaPointSound.v : point_in_rect_curve_geometry_characterisation` (+ `point_in_ring_chord_rect_iff`, `point_in_rect_curve_polygon_characterisation`, `not_in_box_not_in_rect_curve_geometry`, `strict_interior_in_rect_curve_geometry`, `left_boundary_in_rect_curve_polygon_not_strict`, `ring_edges_chord_rect`) | **Curve→matrix soundness (issue #67):** the **complete** membership characterisation for the chord-rectangle curve geometry — `point_in_rect_curve_geometry x0 y0 x1 y1 n p <-> (y0 < py p < y1 /\ x0 <= px p < x1)` — subsuming Contains (strict interior), Touches (boundary, not strict), and Disjoint (exterior, `not_in_box_*`). `point_in_ring_chord_rect_iff` strips the chord ring's three degenerate `(v,v)` join edges (`ray_parity_zero_edge_irrelevant`) so the linearised ring matches `rect_ring`, then `RectangleJCT.point_in_ring_rect_iff` transports through the S12b point-set bridge. n-independent (all-chord ring) `[exact]` | 3 |
 
@@ -2158,7 +2158,7 @@ so the S4 facts transport to the curve geometry's point set.
 |---|---|---|
 | `RelateMatrixCurveAreaPoint.v : curve_point_fill_contains_witness` | **Witness:** `Contains` on `curve_point_fill CPR_StrictInterior` `[exact]` | 0 |
 | `RelateMatrixCurveAreaPoint.v : curve_point_fill_touch_witness` | **Witness:** `Touches` on `curve_point_fill CPR_LeftBoundaryTouch` `[exact]` | 0 |
-| `RelateMatrixCurveAreaPoint.v : strict_interior_not_left_boundary_touch` | **Geometry:** strict interior excludes left-boundary touch `[exact]` | 0 |
+| `RelateMatrixCurveAreaPoint.v : strict_interior_not_left_boundary_touch` | **Geometry:** strict interior excludes left-boundary touch `[exact]` | 3 |
 
 ## Issue #67 — prepared-mode cache refinement (`RelatePreparedCache.v`) <!-- feat:relate geom:ls,poly -->
 
