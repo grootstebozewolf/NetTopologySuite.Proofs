@@ -1,5 +1,5 @@
 <!-- doc-kind: guide
-doc-kinds-sha256: ba15ce08f91d1159d82b709507c305ac67cf5e7d8133d6b9ca972b1f8b69c896
+doc-kinds-sha256: b4a578f0beb80fd1a1ce4452722aebe6c696fc7409048444fd588d9bde0d53e8
 -->
 # Agent Instructions
 
@@ -49,7 +49,7 @@ Adapted from [NetTopologySuite#875](https://github.com/NetTopologySuite/NetTopol
   Findings (scout, attacks, dated writeups): `date:`, `Provenance: <sha>`, `Theorems:`, SUMMARY/OUTCOME; immutable once
   merged: new finding with `Supersedes: <old>`, plus `> Superseded-by: <new>` in the old. Ledger `[cond]`/Ax (0–4, no `C`) = `Print
   Assumptions` (`check_ledger_assumptions.py`, blocking). Override: label `ratchet-override` + `Ratchet-Override-Reason:` in PR body.
-  Edit either script → edit this bullet + `doc-kinds-sha256`. Cite-or-cut (#846): "stays QED/QEX" cites its `claimId`.
+  A PR changing either script or doc-kinds.yml must reword this bullet (hash bump alone fails). Cite-or-cut (#846): cite `claimId`.
 
 ## Before finishing
 

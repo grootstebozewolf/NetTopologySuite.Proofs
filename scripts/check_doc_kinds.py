@@ -33,8 +33,9 @@
 #               deleted. Findings are not re-anchored at HEAD: they are
 #               checked once, when added.
 #   same-PR     AGENTS.md's header carries `doc-kinds-sha256:` = sha256 of
-#               this script + check_ledger_assumptions.py. Changing either
-#               without touching AGENTS.md fails.
+#               the HASHED files (this script, check_ledger_assumptions.py,
+#               .github/workflows/doc-kinds.yml), and AGENTS.md has a
+#               `- Doc kinds (` bullet describing them.
 #
 # DIFF checks (PR diff vs base; skipped on push / no base):
 #   finding immutable  a file that is `finding` at base may only be renamed
@@ -50,6 +51,9 @@
 #   baseline    a line added to docs/doc-anchor-baseline.txt with reason
 #               `dead` fails: fix the anchor. `dead` lines only shrink. (The
 #               diff that creates the file is the bootstrap and may add them.)
+#   same-PR     when a HASHED file differs from base, the AGENTS.md
+#               `- Doc kinds (` bullet must differ too (whitespace-only
+#               edits do not count). Bumping the hash alone fails.
 #   guide budget  net non-blank lines <= 0 over guide and ledger files.
 #               Exempt (reported): header lines; `|` table rows; claim rows
 #               in ledgers (`|` rows and `topic: … claimId:` stamps); the
@@ -108,7 +112,9 @@ DEF = re.compile(
 CTOR = re.compile(r"\|\s*([A-Za-z_][\w']*)\s*(?::|\n|\||\.)")
 FIELD = re.compile(r"[{;]\s*([A-Za-z_][\w']*)\s*:")
 BASELINE = "docs/doc-anchor-baseline.txt"
-HASHED = ("scripts/check_doc_kinds.py", "scripts/check_ledger_assumptions.py")
+HASHED = ("scripts/check_doc_kinds.py", "scripts/check_ledger_assumptions.py",
+          ".github/workflows/doc-kinds.yml")
+BULLET = "- Doc kinds ("
 OVERRIDE_LABEL = "ratchet-override"
 OVERRIDE_REASON = re.compile(r"^Ratchet-Override-Reason:\s*(\S.*)$", re.M)
 
@@ -275,14 +281,45 @@ def load_baseline(root, errs=None):
     return parse_baseline(read(root, BASELINE), errs)
 
 
-def scripts_hash(root):
+def scripts_hash(root, rev=None):
     h = hashlib.sha256()
     for p in HASHED:
+        txt = read(root, p) if rev is None else show(root, rev, p)
         h.update(p.encode())
         h.update(b"\0")
-        h.update((read(root, p) or "").encode())
+        h.update((txt or "").encode())
         h.update(b"\0")
     return h.hexdigest()
+
+
+def agents_bullet(text):
+    """The AGENTS.md `- Doc kinds (` list item, whitespace-normalised, or
+    None. The item runs until the next line that is not indented."""
+    lines = (text or "").split("\n")
+    for i, ln in enumerate(lines):
+        if ln.startswith(BULLET):
+            item = [ln]
+            for nxt in lines[i + 1:]:
+                if not nxt.startswith("  ") or not nxt.strip():
+                    break
+                item.append(nxt)
+            return " ".join(" ".join(item).split())
+    return None
+
+
+def same_pr_check(root, base, errs):
+    if all(show(root, base, p) is None for p in HASHED):
+        return                      # bootstrap: nothing to compare against
+    changed = [p for p in HASHED if show(root, base, p) != show(root, "HEAD", p)]
+    if not changed:
+        return
+    old_b = agents_bullet(show(root, base, "AGENTS.md"))
+    new_b = agents_bullet(show(root, "HEAD", "AGENTS.md"))
+    if new_b is None or old_b == new_b:
+        errs.append("same-PR: %s changed but AGENTS.md's `%s…` bullet did "
+                    "not; describe the change there in this PR (bumping "
+                    "`doc-kinds-sha256` alone is not enough)"
+                    % (", ".join(changed), BULLET))
 
 
 # --------------------------------------------------------------------------
@@ -321,6 +358,9 @@ def state_checks(root, errs, notes, hashed=True):
         notes.append("anchors: %s declared non-resolving in %s" % (
             ", ".join("%d %s" % (n, k) for k, n in sorted(by.items())), BASELINE))
     if hashed:
+        if agents_bullet(read(root, "AGENTS.md")) is None:
+            errs.append("same-PR: AGENTS.md has no `%s` bullet describing "
+                        "the doc-kinds checks" % BULLET)
         agents = headers.get("AGENTS.md")
         want = scripts_hash(root)
         got = agents.get("doc-kinds-sha256") if agents else []
@@ -455,6 +495,7 @@ def validate_new_finding(root, path, h, text, head_idx, head_hdrs, errs):
 
 
 def diff_checks(root, base, head_hdrs, errs, notes):
+    same_pr_check(root, base, errs)
     old_txt = show(root, base, BASELINE)
     old_bl = parse_baseline(old_txt)
     new_bl = parse_baseline(show(root, "HEAD", BASELINE))
@@ -646,6 +687,10 @@ OLD_FINDING = ("<!-- doc-kind: finding\ndate: 2026-01-01\nProvenance: pre-ratche
                "Theorems: `Foo.v : good_thm`\n-->\n# Old\n\nC2 holds.\n")
 
 
+AGENTS = ("<!-- doc-kind: guide -->\n# A\n\n- Doc kinds (`x`): rule one.\n"
+          "  More of rule one.\n- Other bullet.\n")
+
+
 def finding(prov, thm="`Foo.v : good_thm`", summary=True, sup=None):
     s = ("<!-- doc-kind: finding\ndate: 2026-11-14\nProvenance: %s\n"
          "Theorems: %s\n" % (prov, thm))
@@ -684,6 +729,8 @@ def selftest():
         "docs/verified-claims.md": LEDGER,
         "docs/old.md": OLD_FINDING,
         BASELINE: "# b\n",
+        HASHED[0]: "# v1\n",
+        "AGENTS.md": AGENTS,
     }
     # (name, change(sha_of_base) -> files, expect_rc, must_contain)
     cases = [
@@ -731,6 +778,22 @@ def selftest():
         ("stale baseline entry",
          lambda s: {BASELINE: "docs/guide.md\t`Foo.v : good_thm`\tdead\n"},
          1, "no longer dangles"),
+        ("check script changes, AGENTS bullet does not",
+         lambda s: {HASHED[0]: "# v2\n"}, 1, "bumping"),
+        ("check script changes, only the hash line moves",
+         lambda s: {HASHED[0]: "# v2\n",
+                    "AGENTS.md": AGENTS.replace("<!-- doc-kind: guide -->",
+                                                "<!-- doc-kind: guide\ndoc-kinds-sha256: 0\n-->")},
+         1, "bumping"),
+        ("check script changes, bullet re-wrapped only",
+         lambda s: {HASHED[0]: "# v2\n",
+                    "AGENTS.md": AGENTS.replace("rule one.\n  More", "rule\n  one. More")},
+         1, "bumping"),
+        ("check script changes with the bullet",
+         lambda s: {HASHED[0]: "# v2\n",
+                    "AGENTS.md": AGENTS.replace("rule one.", "rule two.")}, 0, None),
+        ("bullet edited, scripts unchanged",
+         lambda s: {"AGENTS.md": AGENTS.replace("rule one.", "rule two.")}, 0, None),
         ("over-claim lookalike: ledger row with dead theorem",
          lambda s: {"docs/verified-claims.md": LEDGER + "| `Foo.v : bad_thm` | m | 0 |\n"},
          1, "anchor: docs/verified-claims.md"),
