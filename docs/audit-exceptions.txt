@@ -23,7 +23,7 @@
 #       debt            axiom avoidable; to be removed
 #       qex             axiom kept because the axiom-free claim is false
 #
-# LIVE: 128 files (122 theories-flocq/ + 2 theories/ + 4 hunt probes).
+# LIVE: 131 files (123 theories-flocq/ + 2 theories/ + 6 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -254,6 +254,15 @@ theories-flocq/CurveLineariseGuardBridge.v
 theories-flocq/RingCurvatureModels.v
 theories-flocq/ExtractFacesBridge.v
 theories-flocq/OverlayCorrectness.v
+# Guarded restatement of the overlay headline: same Flocq C1 route
+# (classic via snap_round in noded_labeled_graph).  Plan: leave with Flocq C1.
+theories-flocq/OverlayCorrectnessGuarded.v
+# Overlay QEX probes (off _CoqProject.full, flocq smoke): import
+# OverlayCorrectness, so the same Flocq C1 route.  The refutations
+# themselves (overlay_H1_refuted, overlay_H2_refuted) print within the
+# allowlist; the file is listed for its headline-bound corollaries.
+docs/h1-vacuity/OverlayH1ContQEX.v
+docs/h1-vacuity/OverlayGuardedVacuityQEX.v
 
 # class: library
 # R-side C1 — still off the allowlist after the S1b atan3 restatement.

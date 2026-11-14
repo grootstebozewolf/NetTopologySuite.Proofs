@@ -237,6 +237,7 @@ ci-guards:
 	python3 tests/B64SinConformance/gen_constants.py --check
 	python3 scripts/b64gen/check.py
 	python3 scripts/check_consumer_tolerances.py
+	python3 scripts/check_hypothesis_ledger.py
 	@echo ""
 	@echo "All guardrails passed (or see output above)."
 

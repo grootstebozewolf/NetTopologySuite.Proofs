@@ -2707,6 +2707,11 @@ theories/ArcOverlay.v
 # Directed-approximation probe (docs/directed-approximation-2026-11.md).
 theories/DirectedApprox.v
 theories/ArcOverlayDirected.v
+# Arc overlay restated as region closeness: chord overlay = curved-region
+# overlay (segment-parity model) outside the max_sagitta band, minor arcs;
+# minor premise shown necessary.  Replaces the refuted curve-closeness
+# conclusion of ArcOverlay.  3-axiom.
+theories/ArcOverlayRegion.v
 theories/ArcSBiarcWitness.v
 
 # IVT gap closure: chord_crosses_arc_circle_implies_circle_intersection.
@@ -4433,6 +4438,11 @@ theories-flocq/ExtractFacesBridge.v
 # theorem under three named hypotheses (JCT, DCEL, semantic bridge).
 # Mirrors hobby_theorem_4_1_conditional's Phase 2 pattern.
 theories-flocq/OverlayCorrectness.v
+# overlay_ng_correct_guarded: H1 of overlay_ng_correct_conditional restated
+# with the JCT guards (taut, core-nodup, horizontal-free, >= 4 points; point
+# off-ring, ray avoids vertices) and discharged from taut_seam_at /
+# parity_seam_offring_taut.  H2, H_bridge stay open.  Reals + classic.
+theories-flocq/OverlayCorrectnessGuarded.v
 
 
 # Witness test: the on-grid passes-through (C1) machinery exercised on a
