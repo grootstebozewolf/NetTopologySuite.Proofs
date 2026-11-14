@@ -107,11 +107,10 @@ set is empty.
 Done on this branch: H1 of the overlay headline restated and discharged
 (`OverlayCorrectnessGuarded.v : overlay_ng_correct_guarded`); QEX for the arc
 bridges and the arc headline's conclusion
-(`docs/h1-vacuity/ArcOverlayBridgeQEX.v`); all names itemised. Open:
+(`docs/h1-vacuity/ArcOverlayBridgeQEX.v`) and its region restatement
+(`ArcOverlayRegion.v : arc_overlay_region_close`); all names itemised. Open:
 
 - H2 and H_bridge of the overlay headline.
-- A correct conclusion for `arc_overlay_correct_chord_approx` (region
-  closeness, e.g. Hausdorff, not closeness to the arc curve).
 - Derive `b64_orient2d_expansion_cc_safe` from the coordinate domain.
 - Either formalise the curvature-model correspondences or drop the names.
 

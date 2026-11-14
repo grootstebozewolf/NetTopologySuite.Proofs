@@ -33,7 +33,8 @@
 
 From Stdlib Require Import Reals Lra List.
 From NTS.Proofs Require Import Distance Overlay CurveGeometry ArcOrient
-  ArcIntersect ArcHotPixel ArcChordApprox ArcDistance ArcOverlay.
+  ArcIntersect ArcHotPixel ArcChordApprox ArcDistance ArcOverlay
+  ArcOverlayRegion.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -214,5 +215,36 @@ Proof.
            arc_bridge_witness_valid arc_bridge_witness_valid HA HB).
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* §5  The region restatement holds on this same witness.                     *)
+(* -------------------------------------------------------------------------- *)
+
+Lemma qa_minor : arc_minor qa.
+Proof.
+  unfold arc_minor, arc_side_chord, cross_R_pt, arc_center, qa. cbn.
+  unfold Rdiv. ring_simplify. lra.
+Qed.
+
+(* ArcOverlayRegion.arc_overlay_region_close applies at (5,5), the point that
+   refuted the curve-closeness conclusion: chord and curved overlays agree
+   there, and both contain it. *)
+Theorem region_restatement_holds_at_witness : forall n : nat,
+  boolean_op Union (to_geometry qgeom n) (to_geometry qgeom n) qpt /\
+  region_op Union (curve_region qgeom n) (curve_region qgeom n) qpt.
+Proof.
+  intro n.
+  assert (Hmin : forall a, In a (arcs_of qgeom ++ arcs_of qgeom) -> arc_minor a).
+  { intros a Ha.
+    unfold arcs_of, qgeom, arcs_of_polygon, arcs_of_ring, qring in Ha. cbn in Ha.
+    destruct Ha as [<- | [<- | []]]; exact qa_minor. }
+  assert (Hb : boolean_op Union (to_geometry qgeom n) (to_geometry qgeom n) qpt)
+    by (cbn; left; exact (qpt_in_point_set n)).
+  split; [ exact Hb |].
+  exact (proj1 (arc_overlay_region_close qgeom qgeom Union n qpt
+                  arc_bridge_witness_valid arc_bridge_witness_valid Hmin
+                  qpt_not_arc_close) Hb).
+Qed.
+
+Print Assumptions region_restatement_holds_at_witness.
 Print Assumptions H_A_bridge_refuted.
 Print Assumptions arc_overlay_conclusion_refuted.

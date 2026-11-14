@@ -2707,6 +2707,11 @@ theories/ArcOverlay.v
 # Directed-approximation probe (docs/directed-approximation-2026-11.md).
 theories/DirectedApprox.v
 theories/ArcOverlayDirected.v
+# Arc overlay restated as region closeness: chord overlay = curved-region
+# overlay (segment-parity model) outside the max_sagitta band, minor arcs;
+# minor premise shown necessary.  Replaces the refuted curve-closeness
+# conclusion of ArcOverlay.  3-axiom.
+theories/ArcOverlayRegion.v
 theories/ArcSBiarcWitness.v
 
 # IVT gap closure: chord_crosses_arc_circle_implies_circle_intersection.

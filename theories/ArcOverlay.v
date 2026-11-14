@@ -20,6 +20,11 @@
    formal Option B guarantee: chord approximation is correct up to the
    sagitta-bounded tolerance.
 
+   SUPERSEDED: this conclusion (closeness to an arc CURVE) is false for
+   interior points (docs/h1-vacuity/ArcOverlayBridgeQEX.v), so the bridges
+   cannot be discharged.  The region-closeness restatement, with no bridge
+   hypotheses, is ArcOverlayRegion.arc_overlay_region_close.
+
    See `docs/audit-phase4-chord-overfitting.md` §5 (Session 7 in the
    7-session plan).
 
