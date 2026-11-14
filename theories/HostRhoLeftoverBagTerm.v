@@ -244,7 +244,7 @@ Qed.
 (* Ticket-named QED ∨ QEX stop.                                               *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-rho-leftover-bag-term","topic":"overlay","lemma":"ticket_0007_rho_leftover_qed_or_qex","title":"rho leftover-bag term: LeftoverWidthDecreases LeftoverKissArm LeftoverShareMintArm inhabit leftover_quad_width_decreases kiss/share/mint leftover-quad rewrites and cook_loop is LoopDischarged (QED) or those ctors stay missing leftover_quad width is conserved and cook_loop stays LoopObligation (QEX); discharged QEX; sibling I.8 / term-measure / modulo-iter / circ |H|=2 / donut T5 are not bag Discharge","file":"theories/HostRhoLeftoverBagTerm.v","witness":"0007-rho-leftover-bag-term","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-rho-leftover-bag-term","topic":"overlay","lemma":"ticket_0007_rho_leftover_qed_or_qex","title":"rho leftover-bag term: LeftoverWidthDecreases LeftoverKissArm LeftoverShareMintArm inhabit leftover_quad_width_decreases kiss/share/mint leftover-quad rewrites and cook_loop is LoopDischarged (QED) or those ctors stay missing leftover_quad width is conserved and cook_loop is LoopDischarged (letter 6b, #954) (QEX); discharged QEX; sibling I.8 / term-measure / modulo-iter / circ |H|=2 / donut T5 are not bag Discharge","file":"theories/HostRhoLeftoverBagTerm.v","witness":"0007-rho-leftover-bag-term","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_leftover_qed_or_qex :
   (leftover_bag_term_ctor_inhabits LeftoverWidthDecreases
    /\ leftover_bag_term_ctor_inhabits LeftoverKissArm

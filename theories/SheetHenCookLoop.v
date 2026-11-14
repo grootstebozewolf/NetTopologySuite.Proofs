@@ -370,7 +370,7 @@ Proof.
   exact pairwise_qed_not_bag_discharge.
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_rho_scope_qed_or_qex","title":"rho bag-loop discharges Multi bags and arc cook termination (QED) or leftover_quad is one Hit-split, arc term stays sister, bag loop stays obligation (QEX); discharged QEX; rho != eta Multi bags","file":"theories/SheetHenCookLoop.v","witness":"0007-rho-bag-loop","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_rho_scope_qed_or_qex","title":"rho bag-loop discharges Multi bags and arc cook termination (QED) or leftover_quad is one Hit-split, arc term stays sister, cook loop is LoopDischarged (letter 6b, #954) (QEX); discharged QEX; rho != eta Multi bags","file":"theories/SheetHenCookLoop.v","witness":"0007-rho-bag-loop","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_scope_qed_or_qex :
   (cook_loop_status = LoopDischarged
    /\ arc_cook_term_status = ArcTermDischarged

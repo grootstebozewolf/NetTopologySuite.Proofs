@@ -2141,7 +2141,7 @@ Proof.
   exact circ_leftover_bag_measure_nat_wf.
 Qed.
 
-(* WITNESS {"claimId":"0007-circ-leftover-two-hit","topic":"overlay","lemma":"ticket_0007_circ_leftover_two_hit_park_qed_or_qex","title":"circ leftover |H|=2 park: general circ bag-term / LoopDischarged-for-circ and kiss/share identity inhabit (QED) or those stay missing, chord LeftoverBagTermArm stays missing, and cook_loop stays LoopObligation (QEX); discharged QEX; this letter is not rho discharge","file":"theories/CircularCookLeftoverTwoHit.v","witness":"0007-circ-leftover-two-hit","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-circ-leftover-two-hit","topic":"overlay","lemma":"ticket_0007_circ_leftover_two_hit_park_qed_or_qex","title":"circ leftover |H|=2 park: general circ bag-term / LoopDischarged-for-circ and kiss/share identity inhabit (QED) or those stay missing, chord LeftoverBagTermArm stays missing, and cook_loop is LoopDischarged (letter 6b, #954) (QEX); discharged QEX; this letter is not the rho discharge","file":"theories/CircularCookLeftoverTwoHit.v","witness":"0007-circ-leftover-two-hit","board":"ADR-0007"} *)
 Theorem ticket_0007_circ_leftover_two_hit_park_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/

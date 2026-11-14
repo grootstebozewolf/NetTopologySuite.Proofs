@@ -703,7 +703,7 @@ Proof.
   apply leftover_quad_as_bag_sum.
 Qed.
 
-(* WITNESS {"claimId":"0007-rho-modulo-qex","topic":"overlay","lemma":"ticket_0007_rho_modulo_iter_qed_or_qex","title":"rho modulo QEX: leftover-pair cook Hit-splits the locked parent bag and Declines on a leftover-quad join pair (QED) or cook_loop is LoopDischarged (QEX); discharged QED; leftover_pair_step_ok required for Hit; Decline leaves the bag; LoopObligation stands","file":"theories/SheetHenCookLoopModulo.v","witness":"0007-rho-modulo-qex","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-rho-modulo-qex","topic":"overlay","lemma":"ticket_0007_rho_modulo_iter_qed_or_qex","title":"rho modulo QEX: leftover-pair cook Hit-splits the locked parent bag and Declines on a leftover-quad join pair (QED) or cook_loop is LoopDischarged (QEX); discharged QED; leftover_pair_step_ok required for Hit; Decline leaves the bag; cook_loop is LoopDischarged (letter 6b, #954)","file":"theories/SheetHenCookLoopModulo.v","witness":"0007-rho-modulo-qex","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_modulo_iter_qed_or_qex :
   (leftover_bag_cook_fuel 0 locked_parent_bag locked_parent_bag /\
    leftover_bag_cook_fuel 1 locked_parent_bag locked_quad_bag /\
@@ -727,7 +727,7 @@ Proof.
   exact cook_loop_not_obligation.
 Qed.
 
-(* WITNESS {"claimId":"0007-rho-modulo-qex","topic":"overlay","lemma":"ticket_0007_rho_modulo_park_qed_or_qex","title":"rho modulo QEX: LeftoverBagTermArm inhabits leftover_quad_width_decreases and kiss/share/mint leftover-quad rewrites (QED) or that ctor stays missing and cook_loop stays LoopObligation (QEX); discharged QEX; same LeftoverBagTermArm hole as 0007-rho-bag-loop; do not fake LoopDischarged","file":"theories/SheetHenCookLoopModulo.v","witness":"0007-rho-modulo-qex","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-rho-modulo-qex","topic":"overlay","lemma":"ticket_0007_rho_modulo_park_qed_or_qex","title":"rho modulo QEX: LeftoverBagTermArm inhabits leftover_quad_width_decreases and kiss/share/mint leftover-quad rewrites (QED) or that ctor stays missing and cook_loop is LoopDischarged (letter 6b, #954) (QEX); discharged QEX; same LeftoverBagTermArm hole as 0007-rho-bag-loop; LoopDischarged comes from CookLoopRho, not this arm","file":"theories/SheetHenCookLoopModulo.v","witness":"0007-rho-modulo-qex","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_modulo_park_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/
