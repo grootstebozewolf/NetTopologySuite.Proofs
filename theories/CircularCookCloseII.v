@@ -13,7 +13,7 @@
    arc_gamma / span filter / span split). Host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc).
    first_cook_scope stays chord–chord. Host circular I_ok stays
    Decline. I_ok_circ Hit ≠ host I_ok. Not a bag noder
-   (cook_loop stays obligation). H⊥ stays parked.
+   (cook_loop is LoopDischarged, letter 6b #954). H⊥ stays parked.
 
    Phase B SQL/MM Part 3 *required* types are named as gaps —
    CircularString / CompoundCurve / CurvePolygon — so AFK Phase B
@@ -25,7 +25,7 @@
    locked fixtures; leftover meet is Hit incidence (= ¬Empty),
    not a kiss certificate; Campaign II is closed as a letter.
    QEX: host CircGamma is CircGammaDischarged (CircularCook.v ticket_64_circ_gamma_qed_or_qex LEFT / MkCirc);
-   first cook is SheetHenCook first_cook_scope_* (not chord-only); bag loop stays obligation; H⊥ stays parked;
+   first cook is SheetHenCook first_cook_scope_* (not chord-only); cook loop LoopDischarged (letter 6b, #954); H⊥ stays parked;
    Phase B CS / CC / CP gaps named; SQL/MM is not done.
 
    Honesty fences:

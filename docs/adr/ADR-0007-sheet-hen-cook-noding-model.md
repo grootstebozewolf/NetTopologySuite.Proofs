@@ -314,8 +314,8 @@ Do not start H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
 | — | I.3 not arc membership | `CircularCookEmpty.v : ticket_0007_i3_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma is CircGammaDischarged; sidecar cook stays locked | `CircularCook.v : circular_gamma_is_discharged`, `CircularCook.v : circular_is_first_cook_scope` |
 | — | I.8 leftover confluence | `CircularCookConfluence.v : ticket_0007_i8_confluent_qed_or_qex` | **QED** — `leftovers_ab` = `leftovers_ba` on γ_full; circular analogue of `split_step_confluent` | `CircularCookConfluence.v : circ_split_step_confluent` |
 | — | I.8 cook bag inhabits leftovers | `CircularCookConfluence.v : ticket_0007_i8_cook_qed_or_qex` | **QED** — `cook_circ_root` leftovers are that bag; locked plus/minus recovered | `CircularCookConfluence.v : cook_circ_root_is_leftovers_ab`, `CircularCookConfluence.v : i8_recovers_locked_plus` |
-| — | I.8 one-step ≠ bag loop | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — confluence is one Hit-split; `cook_loop` stays obligation | `CircularCookConfluence.v : i8_one_step_not_bag_loop`, `SheetHenCook.v : cook_loop_is_obligation` |
-| — | I.8 not arc / not bag discharge | `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma is CircGammaDischarged; bag loop stays QEX | `CircularCook.v : circular_gamma_is_discharged`, `SheetHenCook.v : cook_loop_is_obligation` |
+| — | I.8 one-step ≠ bag loop | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — confluence is one Hit-split; `cook_loop` is LoopDischarged (letter 6b, #954) | `CircularCookConfluence.v : i8_one_step_not_bag_loop`, `SheetHenCookCore.v : cook_loop_is_discharged` |
+| — | I.8 not arc / not bag discharge | `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — γ_full only; CircGamma is CircGammaDischarged; cook loop LoopDischarged (letter 6b, #954) | `CircularCook.v : circular_gamma_is_discharged`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 | — | I.9 classifier hens are tags | `CircularCookLicense.v : ticket_0007_i9_tags_qed_or_qex` | **QED** — hens 0/1; ∀ IZHit is those tags; `I_CIRCULAR` HIT 0 1 | `CircularCookZ.v : classifier_hens_are_tags`, `CircularCookZ.v : iz_hit_only_tags` |
 | — | I.9 Z Hit ⇏ host cook | `CircularCookLicense.v : ticket_0007_i9_not_host_cook_qed_or_qex` | **QED** — I_circles_z Hit does not feed `try_cook_hit` and does not expand first cook scope | `CircularCookLicense.v : i9_z_hit_not_try_cook_hit`, `CircularCookLicense.v : i9_z_hit_not_first_cook_scope` |
 | — | I.9 Z Hit ⇏ circ_split | `CircularCookLicense.v : ticket_0007_i9_not_circ_split_qed_or_qex` | **QED** — same tags; plus/minus leftovers meet at distinct `p*`; t comes from γ | `CircularCookLicense.v : i9_z_hit_not_circ_split_license` |
@@ -387,7 +387,7 @@ QEX is not acceptance. Supporting shapes are not a noder.
 closed checklist rows: pairwise chord-split finiteness plus one-step
 confluence is QED; binary64 / OverlayNGRobust sit on one sheet is QED;
 `DdirDart` := `(Hen * Hen)` = chicken ends is QED. The bag-level cook
-loop is Parks ρ (named 508-style QEX), not a soft gap. **Accepted**
+loop is Parks ρ (named 508-style QEX; discharged later by letter 6b, #954), not a soft gap. **Accepted**
 by Joost (BDFL) 2026-09-07.
 
 ### Four prior review conditions — discharged
@@ -407,7 +407,7 @@ Former named soft gaps (a)(b)(c) are checklist rows, not open naming.
 
 | Former | Stop | Arm | Settled as |
 |--------|------|-----|------------|
-| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is Parks ρ (`ticket_0007_cook_term_qed_or_qex` **QEX**) — not a soft gap |
+| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The cook loop is `LoopDischarged` via `CookLoopRho` (`ticket_0007_cook_term_qed_or_qex` **QED**, letter 6b, #954) |
 | (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
 | (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
 | (d) This memo | this section | brief only | Soft gaps closed; **Accepted** 2026-09-07 |
@@ -665,7 +665,7 @@ Status.
 | `CircularCookConfluence.v : ticket_0007_i8_confluent_qed_or_qex` | **QED** — ∀ leftovers_ab = leftovers_ba on γ_full | `CircularCookConfluence.v : circ_split_step_confluent` |
 | `CircularCookConfluence.v : ticket_0007_i8_cook_qed_or_qex` | **QED** — cook leftovers inhabit the bag; locked plus/minus recovered | `CircularCookConfluence.v : cook_circ_root_is_leftovers_ab` |
 | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — one-step ≠ bag loop | `CircularCookConfluence.v : i8_one_step_not_bag_loop` |
-| `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma is CircGammaDischarged; bag loop stays obligation | `CircularCook.v : circular_gamma_is_discharged` |
+| `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma is CircGammaDischarged; cook loop LoopDischarged (letter 6b, #954) | `CircularCook.v : circular_gamma_is_discharged` |
 
 Witness: `0007-I.8-leftover-confluence`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -826,7 +826,7 @@ Does not reopen Status.
 | `CircularCookCloseII.v : ticket_0007_ii4_inhabitant_qed_or_qex` | **QED** — sidecar `I_ok_circ` Hit / Empty / Decline on locked fixtures; one Arc | `CircularCookCloseII.v : ii4_sidecar_inhabitant`, `CircularCookCloseII.v : ii4_inhabitant_is_one_arc` |
 | `CircularCookCloseII.v : ticket_0007_ii4_not_kiss_qed_or_qex` | **QED** — leftover meet is Hit and ¬Empty; `I_ok_circ` Hit ≠ host `I_ok` | `CircularCookCloseII.v : ii4_leftover_meet_not_empty`, `CircularCookCloseII.v : ii4_I_ok_circ_hit_not_host_I_ok` |
 | `CircularCookCloseII.v : ticket_0007_ii4_host_qed_or_qex` | **QEX** — CircGamma is CircGammaDischarged; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_discharged`, `SheetHenCookCore.v : first_cook_scope_chord_chord` |
-| `CircularCookCloseII.v : ticket_0007_ii4_phase_b_qed_or_qex` | **QEX** — Phase B CS / CC / CP gaps named; bag loop stays obligation; H⊥ parked; SQL/MM not done; Campaign II closed | `CircularCookCloseII.v : phase_b_cs_is_gap`, `CircularCookCloseII.v : ii4_not_bag_noder`, `CircularCookCloseII.v : campaign_ii_is_closed` |
+| `CircularCookCloseII.v : ticket_0007_ii4_phase_b_qed_or_qex` | **QEX** — Phase B CS / CC / CP gaps named; cook loop LoopDischarged (letter 6b, #954); H⊥ parked; SQL/MM not done; Campaign II closed | `CircularCookCloseII.v : phase_b_cs_is_gap`, `CircularCookCloseII.v : ii4_not_bag_noder`, `CircularCookCloseII.v : campaign_ii_is_closed` |
 
 Witness: `0007-II.4-campaign-ii-close`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1119,11 +1119,11 @@ Phase B done-when / SQL/MM cathedral. Does not reopen Status.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — `LoopObligation`; `LeftoverBagTermArm` missing; leftover_quad width conserved; pairwise split stays sibling QED | `SheetHenCookLoop.v : leftover_bag_term_arm_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
+| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QED** (letter 6b, #954) — `LoopDischarged` via `CookLoopRho`; `LeftoverBagTermArm` stays missing; leftover_quad width conserved; pairwise split stays sibling QED | `SheetHenRhoConf.v : cook_loop_rho_holds`, `SheetHenCookLoop.v : leftover_bag_term_arm_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
 | `SheetHenCookLoop.v : ticket_0007_rho_gap_qed_or_qex` | **QEX** — named missing constructor + conserved bag-sum | `SheetHenCookLoop.v : leftover_bag_term_arm_missing` |
 | `SheetHenCookLoop.v : ticket_0007_rho_cycles_qed_or_qex` | **QEX** — Empty / Decline mint nothing; ShareOne ignores width; MintTwo is not a width bound | `SheetHenCookLoop.v : no_hit_no_leftover_split`, `SheetHenCookLoop.v : mint_two_not_width_bound` |
-| `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` stays obligation | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
-| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; bag loop stays obligation; NURBS stays out | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
+| `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` is LoopDischarged (letter 6b, #954) | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
+| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; cook loop LoopDischarged (letter 6b, #954); NURBS stays out | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
 
 Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1140,8 +1140,8 @@ step yield `NodedOnSheet` evidence. Empty ≠ Decline. Snap ≠ `𝓘`.
 Identity is structural (`ShareOne` / `MintTwo`). A locked two-pair
 bag (Hit cook + Empty no-mint) is still pairwise / one-step.
 
-**QEX.** The full repeat-until-noded bag loop stays obligation.
-Parks ρ — `LeftoverBagTermArm` missing; leftover_quad width conserved.
+**QED (letter 6b, #954).** The repeat-until-noded cook loop is `LoopDischarged` via `CookLoopRho`.
+`LeftoverBagTermArm` stays missing; leftover_quad width conserved.
 First cook stays chord–chord.
 Shewchuk A–D / Hobby / Priest / Jordan are not dependencies.
 
@@ -1267,7 +1267,7 @@ ship Campaign I–II.
 chord-seed reuse (`RelateClothoid.v : clothoid_chord_proper_cross_share`).
 Demote-to-chord is NodingNG / host first cook, not a clothoid Hit.
 
-**QEX parks.** Campaign I–II / Fresnel-as-noding / bag loop.
+**QEX parks.** Campaign I–II / Fresnel-as-noding (the cook loop itself is discharged, letter 6b, #954).
 Host `MkClothoid` inhabits `Egg` (intake letter
 `0007-intake-mkclothoid`). Hit-arm / first-cook expand are
 discharged QED by claimId `0007-clothoid-first-cook`. Parks ι / ρ cited once.
@@ -1278,7 +1278,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_egg_qed_or_qex` | **QED** — EggClothoid packaging; host Decline; locked chord-seed; demote is NodingNG first cook | `SidecarClothoidEgg.v : sidecar_clothoid_egg_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_chord_seed`, `SidecarClothoidEgg.v : sidecar_clothoid_host_decline` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — clothoid×clothoid is first cook; `MkClothoid` / Hit-arm / first-cook expand inhabit | `SheetHenCookCore.v : clothoid_egg_first_cook_scope`, `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits` |
-| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / bag loop parked; Parks ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_first_cook_expanded`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign I–II / Fresnel-as-noding / cook loop discharged by letter 6b (#954); Parks ι / ρ | `SidecarClothoidEgg.v : sidecar_clothoid_letter_is_first_cook_expanded`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-clothoid-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1345,7 +1345,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_egg_qed_or_qex` | **QED** — EggNurbs packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; length stays metric | `SidecarNurbsEgg.v : sidecar_nurbs_egg_inhabits`, `SidecarNurbsEgg.v : sidecar_nurbs_chord_seed`, `SidecarNurbsEgg.v : sidecar_nurbs_host_decline` |
 | `SidecarNurbsEgg.v : ticket_0007_nurbs_not_first_cook_qed_or_qex` | **QEX** — scope inhabited; `MkNurbs` / `OnNurbs` / `NurbsGammaOnSheet` missing | `SheetHenCookCore.v : nurbs_nurbs_first_cook_scope`, `SidecarNurbsEgg.v : sidecar_nurbs_mknurbs_missing`, `NurbsMkNurbs.v : ticket_0007_mk_nurbs_qed_or_qex` |
-| `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / bag loop parked; Parks Γ / ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarNurbsEgg.v : ticket_0007_nurbs_parks_qed_or_qex` | **QEX** — Campaign I–II / length-as-noding / Cox-de-Boor / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarNurbsEgg.v : sidecar_nurbs_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-nurbs-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1378,7 +1378,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `SidecarSinEgg.v : ticket_0007_sin_egg_qed_or_qex` | **QED** — EggSinusoid packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; profile stays research | `SidecarSinEgg.v : sidecar_sin_egg_inhabits`, `SidecarSinEgg.v : sidecar_sin_chord_seed`, `SidecarSinEgg.v : sidecar_sin_host_decline` |
 | `SidecarSinEgg.v : ticket_0007_sin_not_first_cook_qed_or_qex` | **QEX** — sinusoid×sinusoid stays out of first cook; `MkSinusoid` / Hit-arm missing | `SidecarSinEgg.v : sinusoid_sinusoid_not_first_scope`, `SidecarSinEgg.v : sidecar_sin_mksinusoid_missing`, `SidecarSinEgg.v : sidecar_sin_hit_arm_missing` |
-| `SidecarSinEgg.v : ticket_0007_sin_parks_qed_or_qex` | **QEX** — Campaign I–II / profile-as-noding / bag loop parked; Parks Γ / ι / ρ | `SidecarSinEgg.v : sidecar_sin_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarSinEgg.v : ticket_0007_sin_parks_qed_or_qex` | **QEX** — Campaign I–II / profile-as-noding / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarSinEgg.v : sidecar_sin_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-sin-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1411,7 +1411,7 @@ Parks Γ / ι / ρ cited once.
 |------|-----|-------|
 | `SidecarCircEgg.v : ticket_0007_circle_egg_qed_or_qex` | **QED** — EggCircularArc packaging; host Decline; try_cook None even on IHit; locked demoted-chord seed; demote is NodingNG first cook; chord×circular Decline | `SidecarCircEgg.v : sidecar_circ_egg_inhabits`, `SidecarCircEgg.v : sidecar_circ_egg_chord_seed`, `SidecarCircEgg.v : sidecar_circ_egg_host_decline` |
 | `SidecarCircEgg.v : ticket_0007_circle_not_first_cook_qed_or_qex` | **QEX** — circular×circular stays out of first cook; `MkCirc` / CircGamma / Hit-arm / first-cook-expand missing; cite Parks Γ | `SheetHenCookConstructed.v : circular_egg_first_cook_scope`, `SidecarCircEgg.v : sidecar_circ_egg_mkcirc_missing`, `SidecarCircEgg.v : sidecar_circ_egg_circgamma_missing` |
-| `SidecarCircEgg.v : ticket_0007_circle_parks_qed_or_qex` | **QEX** — CircGamma Discharge / Campaign I–II remint / bag loop parked; Parks Γ / ι / ρ | `SidecarCircEgg.v : sidecar_circ_egg_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarCircEgg.v : ticket_0007_circle_parks_qed_or_qex` | **QEX** — CircGamma Discharge / Campaign I–II remint / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarCircEgg.v : sidecar_circ_egg_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-circle-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1444,7 +1444,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `SidecarEllipticEgg.v : ticket_0007_elliptic_egg_qed_or_qex` | **QED** — EggEllipse packaging; host Decline; locked RelateEllipticArc chord-seed; demote is NodingNG first cook; #508 ellipse length / elliptic-E stay metric | `SidecarEllipticEgg.v : sidecar_elliptic_egg_inhabits`, `SidecarEllipticEgg.v : sidecar_elliptic_chord_seed`, `SidecarEllipticEgg.v : sidecar_elliptic_host_decline` |
 | `SidecarEllipticEgg.v : ticket_0007_elliptic_not_first_cook_qed_or_qex` | **QEX** — ellipse×ellipse stays out of first cook; `MkElliptic` / Hit-arm missing | `SheetHenCookCore.v : ellipse_ellipse_not_first_scope`, `SidecarEllipticEgg.v : sidecar_elliptic_mkelliptic_missing`, `SidecarEllipticEgg.v : sidecar_elliptic_hit_arm_missing` |
-| `SidecarEllipticEgg.v : ticket_0007_elliptic_parks_qed_or_qex` | **QEX** — Campaign I–II / EllipseLength-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarEllipticEgg.v : sidecar_elliptic_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarEllipticEgg.v : ticket_0007_elliptic_parks_qed_or_qex` | **QEX** — Campaign I–II / EllipseLength-as-noding / CircGamma remint / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarEllipticEgg.v : sidecar_elliptic_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-elliptical-curve-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1478,7 +1478,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `SidecarGeodesicEgg.v : ticket_0007_geodesic_egg_qed_or_qex` | **QED** — EggGeodesicString packaging; host Decline; locked demoted-chord seed; demote is NodingNG first cook; SQL/MM type zoo stays packaging | `SidecarGeodesicEgg.v : sidecar_geodesic_egg_inhabits`, `SidecarGeodesicEgg.v : sidecar_geodesic_chord_seed`, `SidecarGeodesicEgg.v : sidecar_geodesic_host_decline` |
 | `SidecarGeodesicEgg.v : ticket_0007_geodesic_not_first_cook_qed_or_qex` · planar machine `IntakeGeodesicCook.v : ticket_0007_geodesic_cook_qed_or_qex` | **QEX** as a class — geodesic×geodesic stays out of first cook; `MkGeodesic` / Hit-arm missing. **QED** as the planar machine — on \(S\) the geodesic is the chord: well-formed GEODESICSTRING is a function to the LINESTRING bag (`IntakeGeodesicCook.v : ticket_0007_geodesic_intake_fn_qed_or_qex`), the locked bow-tie polyline cooks by host `I_ok` + `try_cook_hit` on chord×chord, one fresh hen, leftovers meet, τ = LINESTRING; famous nets are chord bags (`IntakeGeodesicCook.v : ticket_0007_geodesic_famous_chords_qed_or_qex`); ambient manifold / wire stay **QEX** with closed terms (`IntakeGeodesicCook.v : ticket_0007_geodesic_ambient_qed_or_qex`, `IntakeGeodesicCook.v : ticket_0007_geodesic_wire_qed_or_qex`); scope not expanded (`IntakeGeodesicCook.v : ticket_0007_geodesic_scope_qed_or_qex`) | `SidecarGeodesicEgg.v : geodesic_geodesic_not_first_scope`, `SidecarGeodesicEgg.v : sidecar_geodesic_mkgeodesic_missing`, `SidecarGeodesicEgg.v : sidecar_geodesic_hit_arm_missing`, `IntakeGeodesicCook.v : gx_cross_hit`, `IntakeGeodesicCook.v : gx_try_cook_some`, `IntakeGeodesicCook.v : sheet_chord_misses_pole` |
-| `SidecarGeodesicEgg.v : ticket_0007_geodesic_parks_qed_or_qex` | **QEX** — Campaign I–II / geodetic-interpolant-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarGeodesicEgg.v : sidecar_geodesic_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarGeodesicEgg.v : ticket_0007_geodesic_parks_qed_or_qex` | **QEX** — Campaign I–II / geodetic-interpolant-as-noding / CircGamma remint / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarGeodesicEgg.v : sidecar_geodesic_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-geodesicstring-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1517,7 +1517,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `SidecarSpiralEgg.v : ticket_0007_spiral_egg_qed_or_qex` | **QED** — EggSpiralCurve packaging; host Decline; five ISO names + Unknown; EggClothoid stays; locked demoted-chord seed; demote is NodingNG first cook; SQL/MM type zoo stays packaging | `SidecarSpiralEgg.v : sidecar_spiral_egg_inhabits`, `SidecarSpiralEgg.v : sidecar_spiral_chord_seed`, `SidecarSpiralEgg.v : sidecar_spiral_host_decline`, `SidecarSpiralEgg.v : sidecar_spiral_iso_names_inhabit`, `SidecarSpiralEgg.v : egg_clothoid_still_present` |
 | `SidecarSpiralEgg.v : ticket_0007_spiral_not_first_cook_qed_or_qex` | **QEX** — spiral×spiral stays out of first cook; `MkSpiral` / Hit-arm missing | `SidecarSpiralEgg.v : spiral_spiral_not_first_scope`, `SidecarSpiralEgg.v : sidecar_spiral_mkspiral_missing`, `SidecarSpiralEgg.v : sidecar_spiral_hit_arm_missing` |
-| `SidecarSpiralEgg.v : ticket_0007_spiral_parks_qed_or_qex` | **QEX** — Campaign I–II / spiral-interpolant-as-noding / CircGamma remint / bag loop parked; Parks Γ / ι / ρ | `SidecarSpiralEgg.v : sidecar_spiral_letter_is_landed`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarSpiralEgg.v : ticket_0007_spiral_parks_qed_or_qex` | **QEX** — Campaign I–II / spiral-interpolant-as-noding / CircGamma remint / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarSpiralEgg.v : sidecar_spiral_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-spiral-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1564,7 +1564,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `IntakeWalker.v : ticket_0007_intake_walker_qed_or_qex` | **QED** — first-slice bag; non-clothoid SPIRALCURVE declines; ADR-0005 lenient normalizes CIRCULARSTRING(A,B,A), strict Declines; grammar accept is CST only; well-formed GEODESICSTRING is `0007-intake-geodesic` | `IntakeWalker.v : first_slice_inhabits`, `IntakeWalker.v : locked_cs_full_ogc_declines`, `IntakeWalker.v : spiral_declines` |
 | `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — see the angles letter below | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc` |
-| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; bag loop stays obligation; clothoid split out | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB-order Γ walk / WKT zoo / Lesson-1 remints / host cook / new keyword parked; cook loop discharged by letter 6b (#954); clothoid split out | `IntakeWalker.v : intake_walker_letter_is_landed`, `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-intake-walker`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). Angles-from-points is the next letter (`0007-intake-angles`).
 
@@ -1610,7 +1610,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `IntakeWalker.v : ticket_0007_intake_angles_qed_or_qex` | **QED** — ctor inhabits; unknown CS bags `MkCirc`; not leftover; not chord demote | `IntakeWalker.v : intake_angles_from_points_inhabits`, `IntakeWalker.v : unknown_cs_chickens_mkcirc`, `IntakeAnglesCore.v : ang_cs_ok`, `IntakeWalker.v : collinear_cs_declines`, `IntakeWalker.v : duplicate_cs_declines` |
-| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword parked; clothoid split out | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword parked; clothoid split out | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-intake-angles`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724); this letter is intake egg data.
 
@@ -1653,7 +1653,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `IntakeWalkerClothoid.v : ticket_0007_intake_mkclothoid_qed_or_qex` | **QED** — ctor inhabits; ISO≡JTS same `MkClothoid` bag; example5's compound declines `ID_CompoundGap` (not C0); its members bag individually, the ISO atom as `locked_clothoid_egg` and the JTS member as its norm2 egg; supersedes the compound-bags claim | `IntakeWalker.v : intake_mkclothoid_inhabits`, `IntakeWalkerClothoid.v : ogc_iso_clothoid_same_mkclothoid`, `IntakeWalkerClothoid.v : example5_cc_gap`, `IntakeCompoundFold.v : example5_members_differ`, `IntakeWalkerClothoid.v : iso_clothoid_chickens_mkclothoid` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit; `MkClothoid` inhabits | `SidecarClothoidEgg.v : sidecar_clothoid_mkclothoid_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : mkclothoid_pair_hit_I_ok` |
-| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword / ρ parked | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `IntakeWalker.v : ticket_0007_intake_parks_qed_or_qex` | **QEX** — WKB / zoo / Lesson-1 / host cook / new keyword / ρ parked | `IntakeWalker.v : intake_wkb_order_missing`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-intake-mkclothoid`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is intake egg inhabitance, not Fresnel noding. First-cook expand is the next letter.
 
@@ -1688,7 +1688,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 |------|-----|-------|
 | `ClothoidCookMkClothoid.v : ticket_0007_clothoid_first_cook_qed_or_qex` | **QED** — scope + locked Hit + mint; tags / mixed Decline; NURBS / ρ parked | `ClothoidCookMkClothoid.v : locked_mkclothoid_I_ok`, `ClothoidCookMkClothoid.v : cooked_mkclothoid_try`, `SheetHenCookCore.v : clothoid_egg_first_cook_scope` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit | `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_first_cook_expand_inhabits` |
-| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign / Fresnel-as-noding / ρ parked | `SidecarClothoidEgg.v : sidecar_clothoid_not_fresnel_noding`, `SheetHenCook.v : cook_loop_is_obligation` |
+| `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign / Fresnel-as-noding / ρ parked | `SidecarClothoidEgg.v : sidecar_clothoid_not_fresnel_noding`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses ellipse–ellipse | `SheetHenCookCore.v : ellipse_ellipse_not_first_scope` |
 
 Witness: `0007-clothoid-first-cook`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is first cook only, not a noder and not Fresnel-as-noding.
