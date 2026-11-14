@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-11-10
+Provenance: d8941061bdb7355a2635f68460b198d545b70521
+Theorems: `Orient_b64_grid_cc.v : b64_orient_sign_exact_cc_grid_sound`, `Orient_b64_grid_cc.v : orient2d_grid_hyps`, `Orient_b64_grid_cc.v : b64_orient_sign_stage_d_cc_int_sound`, `Orient_b64_grid_cc.v : cc_domain_diffs_not_exact`, `Orient_b64_grid_cc.v : cc_domain_underflow`
+-->
 | step | claim | OUTCOME | artifact |
 |---|---|---|---|
 | 0 | derive Stage D's per-operation hypotheses from `\|coord\| ≤ 2^507` alone | QEX: exactness fails (`P0.x = 2^-60`, `P1.x = 1`); no-underflow fails (coordinates `2^-600`) | `Orient_b64_grid_cc.v : cc_domain_diffs_not_exact, cc_domain_underflow` |
