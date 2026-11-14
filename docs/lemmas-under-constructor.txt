@@ -90,6 +90,9 @@ theories-flocq/OverlayBridge.v :: snap_noding_bridge
 theories-flocq/OverlayCorrectness.v :: overlay_ng_correct_backward
 theories-flocq/OverlayCorrectness.v :: overlay_ng_correct_conditional
 theories-flocq/OverlayCorrectness.v :: overlay_ng_correct_forward
+# The guarded restatement keeps the same premise unchanged: it only replaces
+# the refuted H1 with the guarded, proved one, so it inherits this debt.
+theories-flocq/OverlayCorrectnessGuarded.v :: overlay_ng_correct_guarded
 
 # #518 core slice (theories/NodedGeneralPositionHost.v).  The lemma consumes
 # `fully_intersected_host` -- Hobby's "only at endpoints" read on Overlay's

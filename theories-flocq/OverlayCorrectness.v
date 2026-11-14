@@ -71,8 +71,11 @@ From NTS.Proofs.Flocq  Require Import OverlayBridge.
 (* docs/jct-vacuity-finding.md).  `geometric_interior_cont` requires          *)
 (* continuous complement paths, and `JordanCurveSeam.jct_cont_interior_is_    *)
 (* geometric` shows it is genuinely inhabited under `JCT_two_components_cont`, *)
-(* so H1 is now an honest, satisfiable (and still-undischarged) JCT gap rather *)
-(* than a contradiction.  See docs/audit-phase3-milestone5.md.                *)
+(* so H1 is no longer the stdlib contradiction.  It is STILL FALSE, though:   *)
+(* it lacks the off-ring / horizontal-edge / vertex guards, and the notch     *)
+(* hexagon refutes it (docs/h1-vacuity/OverlayH1ContQEX.v), so this headline  *)
+(* is vacuous.  The guarded H1 is proved and the headline restated in         *)
+(* OverlayCorrectnessGuarded.v (overlay_ng_correct_guarded).                  *)
 (* -------------------------------------------------------------------------- *)
 
   (* ------------------------------------------------------------------------ *)
