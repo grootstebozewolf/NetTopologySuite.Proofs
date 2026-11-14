@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0006 — Oracle protocol is the test surface
 
 | Field         | Value                                                        |

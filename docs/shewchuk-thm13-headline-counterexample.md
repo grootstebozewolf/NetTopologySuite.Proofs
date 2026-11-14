@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-08
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Shewchuk Theorem 13 headline — counterexample to the corpus statement
 
 **Finding.** The headline `fast_expansion_sum_nonoverlap_shewchuk`

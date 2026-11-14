@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Orientation lane — JTS #1093 Ozaki filter differential (session)
 
 **Date**: 2026-08-05.  

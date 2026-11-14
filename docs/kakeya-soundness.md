@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Perron / Besicovitch–Kakeya shape — binary64 soundness diameter (2026-06-13)
 
 ## The well-posed stress question

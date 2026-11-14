@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # JCT path to `point_in_ring_correct` — minimal hypothesis set
 
 **Status.**  Documentation only.  No Coq written.  Maps the precise

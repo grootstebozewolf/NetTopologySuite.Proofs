@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0009 — CST carries circular span; sidecar joints occupy R5-agree
 
 Sheet S is a plane, not an arc. A concat-endpoint Hit on sidecar `I_ok_mixed` / `I_ok_circ` is R5-agree occupancy and is not host `I`.
@@ -23,7 +24,7 @@ Phase B letters B.1–B.3 and B-bags already inhabit concat / ring-close / membe
 
 1. **Span carrier lives on the CST**, as `list (option (R * R))` beside `CircSlice` — one slot per 3-point window. `CircSlice` stays `CircQuarter | CircFullOgc | CircUnknown`. `Sheet` stays `(O; e₁, e₂)` + lattice. One pair for a whole multi-arc string is forbidden.
 2. **Sidecar joint occupancy counts for R5-agree.** A Hit at `(end, t=1, t=0)` on `I_ok_circ` or `I_ok_mixed` is enough. Host mixed `I` is `#767`, not this occupancy.
-3. **Phase B done-when** is the joints conjunction B.1 ∧ B.2 ∧ B.3 ∧ B-bags. Parks: `ι`, host mixed `I`, CircGamma, ρ: letters 1-3 landed (#887, #897, #903; `SheetHenBagRun.v : rho_step_strict`); letters 4-6 (noded fixpoint) parked (`SheetHenBagRun.v : letter5_obligation`), Multi required-type. Multi Gap does not block Landed. Paperwork is a letter after Accept on ADR-0007, not this ADR.
+3. **Phase B done-when** is the joints conjunction B.1 ∧ B.2 ∧ B.3 ∧ B-bags. Parks: `ι`, host mixed `I`, CircGamma, ρ: letters 1-3 landed (#887, #897, #903; `SheetHenBagRun.v : rho_step_strict`); letters 4-6 (noded fixpoint) parked (`SheetHenPickSpec.v : letter5_obligation`), Multi required-type. Multi Gap does not block Landed. Paperwork is a letter after Accept on ADR-0007, not this ADR.
 4. **Authorship and reasons.** Fixtures and factory rows supply the list. A window with `A ≠ B` and `None` is `ID_MissingCircSpan`. A present slot that fails the check is `ID_CircSpanDisagree`. `A = B` / `CircFullOgc` ignores that window's slot and stays intake-angles. The check for a window `(A M B)` is `γ(0)=A`, `γ(1)=B`, and `M` on-arc.
 
 ## Considered options

@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-09
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Archive — deferred-proof registry historical entries
 
 > Forensic archive. These are the **closed / moved / superseded** narrative

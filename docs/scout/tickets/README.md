@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Tickets — Retire the epic block #64–#69
 
 One ticket per session. A ticket is **takeable** when every ticket blocking it is

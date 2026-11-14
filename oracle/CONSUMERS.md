@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Phase 5 consumer bindings
 
 In-process bindings for `libntsrocq` (`oracle/nts_ffi.h`). These replace the

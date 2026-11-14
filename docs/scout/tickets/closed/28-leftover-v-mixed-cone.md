@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Leftover `Ⅴ` — classify the mixed-cone pair
 
 **Type:** task · **Map:** [#522 leftovers](../../map-522-leftovers.md)

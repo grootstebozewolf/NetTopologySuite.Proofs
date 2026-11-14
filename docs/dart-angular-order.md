@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Dart angular comparator — `extract_rings_valid` R5, slice 2a
 
 **Coq artifact:** [`theories/DartAngularOrder.v`](../theories/DartAngularOrder.v)

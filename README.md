@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # NetTopologySuite.Proofs
 
 [![build proofs](https://github.com/MerkatorBV/NetTopologySuite.Proofs/actions/workflows/ci.yml/badge.svg)](https://github.com/MerkatorBV/NetTopologySuite.Proofs/actions/workflows/ci.yml)

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # SqlMmExampleFactory
 
 claimId: none (tools / docs)

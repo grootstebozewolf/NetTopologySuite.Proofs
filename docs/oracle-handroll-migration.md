@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Oracle hand-roll → extracted migration backlog
 
 The oracle binary (`oracle/driver.ml`, the RocqRefRunner) is credible only

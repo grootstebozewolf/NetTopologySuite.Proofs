@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-11-08
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 | rung | claim | OUTCOME | artifact (docs/h1-vacuity/) |
 |---|---|---|---|
 | 0 | pure carry_clean on a Priest chain preserves nonoverlap | QED, vacuous (chain is a normal form) | `CarryCleanPure.v : carry_clean_pure` |

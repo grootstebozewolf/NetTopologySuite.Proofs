@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-28
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Library audit: overlay correctness for Phase 3
 
 > **Superseded (stub, 2026-09-19).** This audit is a dated snapshot whose

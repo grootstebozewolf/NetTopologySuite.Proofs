@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Hat monotile soundness — correction & scope (2026-06-13)
 
 ## The "growing supertile breaks ring_simple" idea is ill-posed

@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-08
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Archive — Issue #67 RelateNG / DE-9IM research & gap triage
 
 > **Tombstone (2026-08-29, #569 / 522-k).** This file is chronology, not a

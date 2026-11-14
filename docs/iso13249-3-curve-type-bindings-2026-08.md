@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # ISO/IEC 13249-3 curve-type bindings vs. NTS `feat/curves-metrics-followup`
 
 topic: docs

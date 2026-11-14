@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # The LEC optimal-path ledger — failed hypotheses as guides
 
 **Lane**: LargestEmptyCircle (construct) · **updated**: 16 Aug 2026 ·

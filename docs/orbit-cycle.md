@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Orbit cycle — `face_orbit_finite` core — `extract_rings_valid` R5, slice 2e
 
 **Coq artifact:** [`theories/OrbitCycle.v`](../theories/OrbitCycle.v)

@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Spec — #523 `CURVE_RELATE_MATRIX` alphabet
 
 An implementation spec. Written 2026-08-30 from the grill

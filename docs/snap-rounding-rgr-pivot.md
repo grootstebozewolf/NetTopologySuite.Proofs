@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Snap-rounding passes-through: RGR pivot on risk/cost
 
 **Status.** Written 2026-06-03 (issue #66, the snap-rounding / passes-through

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Stage D feasibility: scoped-bounded orient2d exact predicate
 
 **Status**: Feasibility report + scaffolding plan (no proofs landed yet).

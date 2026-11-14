@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Discussion #839 MRE harness
 
 Replays

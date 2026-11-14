@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-31
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # #508 closing summary — owner sign-off requested
 
 claimId: `508-h` · witness: `508-h-wrap-up`

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0001 — Stack and licence path for Fresnel internalisation (route D)
 
 | Field         | Value                                                        |

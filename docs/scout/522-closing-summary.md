@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # #522 closing summary — owner ratified 2026-09-19
 
 claimId: `522-l` · witness: `522-l-wrap-up`

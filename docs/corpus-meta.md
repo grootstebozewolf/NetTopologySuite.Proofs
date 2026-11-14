@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Corpus metadata (source of record)
 
 > Generated 2026-08-15 from dashboard field snapshot + in-tree PA backfill (B1).

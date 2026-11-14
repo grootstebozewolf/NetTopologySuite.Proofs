@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # `point_in_ring_correct` — seam attempts
 
 **Companion to** `theories/PointInRingCorrect.v` and

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Directed Hausdorff lane: shape matching and penetration depth, mechanised
 
 **Sources.**

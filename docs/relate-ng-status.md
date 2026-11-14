@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # RelateNG / DE-9IM — living status (Scholar Sam)
 
 Successor of the archived pre-#530 triage

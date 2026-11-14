@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # North star — SQL/MM Part 3 example oracle (JTS #7)
 
 claimId: `0007-north-star-sqlmm-oracle`

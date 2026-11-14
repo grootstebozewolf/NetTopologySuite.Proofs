@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Macro · Meso · Micro
 
 **Status:** living paradigm for NetTopologySuite.Proofs  

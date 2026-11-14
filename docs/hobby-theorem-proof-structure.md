@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Hobby Theorem 4.1 — proof structure
 
 > **Status.** Live headline is `hobby_theorem_4_1_conditional` (Qed

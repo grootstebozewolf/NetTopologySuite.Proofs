@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Spectre monotile — `point_in_ring` regression anchor
 
 **Coq artifact:** [`theories/SpectreExample.v`](../theories/SpectreExample.v)

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # RocqRefRunner JTS ↔ NTS equivalence
 
 The catalyst is NTS. JTS already ships a Java reconstruction of the

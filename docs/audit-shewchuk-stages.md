@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-15
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Library audit: Shewchuk Stages B/C/D in Flocq 4.2.2
 
 **New here (Scholar Sam / Tech-Lead Tess / Joost the BDFL)?** Start with [`docs/HELP.md`](HELP.md) and [`docs/READING-GUIDE.md`](READING-GUIDE.md). This is deep proof-structure / soundness-strategy material.

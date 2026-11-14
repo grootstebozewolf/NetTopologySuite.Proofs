@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Issue #67 — Romanschek line–line DE-9IM oracle (S3 seed)
 
 > **Status:** predicate pins in `RelateLineLine.v`; `RELATE_MATRIX` oracle mode

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # `hole_inside_outer` — grounded status + concrete witness
 
 **Coq artifact:** [`theories/HoleInsideOuterExample.v`](../theories/HoleInsideOuterExample.v)

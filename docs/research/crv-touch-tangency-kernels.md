@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-08
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # CRV-TOUCH · What do exact and robust kernels do at a tangency?
 
 topic: docs

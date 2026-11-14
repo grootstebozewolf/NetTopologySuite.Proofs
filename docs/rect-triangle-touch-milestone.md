@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-21
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Milestone: Rect + Triangle Touch / Pointset / Relate (S15l)
 
 **Status:** Skeleton + helpers + EE cell + prepared wrappers + honest DEFERRED registry entries (2026-06-21). Full capstone cells + regime decision remain work in progress (registered).

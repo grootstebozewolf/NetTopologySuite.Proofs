@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Closing `hole_inside_outer` — honest, grounded, multi-beachhead plan
 
 > **Status: PLAN.** No proof attempted in this document. Every primitive,

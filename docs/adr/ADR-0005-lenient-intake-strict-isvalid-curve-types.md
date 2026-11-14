@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0005 — Lenient intake, strict IsValid for SQL/MM curve types
 
 | Field         | Value                                                        |

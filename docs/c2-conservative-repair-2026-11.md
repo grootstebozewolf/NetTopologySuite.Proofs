@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-11-08
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Conservative (outward-rounded) repair of the closed Liang-Barsky filter (2026-11)
 
 Provenance: Rocq 9.2.0 + Flocq 4.2.2, local `Makefile.gen` build on branch tip

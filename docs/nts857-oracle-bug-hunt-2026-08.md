@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-21
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Oracle bug hunt — NTS#857 curves vs Rocq `oracle_bin`
 
 **Date**: 2026-08-08  

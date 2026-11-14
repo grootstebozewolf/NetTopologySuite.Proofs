@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-11-10
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 | step | claim | OUTCOME | artifact |
 |---|---|---|---|
 | G0 | baseline: CI green on `main` @ `4eb6c4b` with the full corpus build and `audit_axioms.sh` | PASS (run 42722911910) | CI |

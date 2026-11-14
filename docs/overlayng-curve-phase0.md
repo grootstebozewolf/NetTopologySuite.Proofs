@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # OverlayNGCurve Phase 0 — ops mnemonics and the exact-cell kernel (2026-08-15)
 
 topic: overlay

@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-22
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Write the module-split gate: policy and ratchet guard
 
 **Type:** task · **Map:** [Retire the epic block #64–#69](../../map-epic-block-64-69.md)

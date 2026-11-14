@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # `point_in_ring_correct` Seams 3 / 5 / 7 — red workflow
 
 **Status.**  Documentation only.  No Coq written.  Tangent map for

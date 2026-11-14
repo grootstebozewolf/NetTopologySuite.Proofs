@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Grammar pin — antlr/grammars-v4 PR #4997
 
 Source of truth for ISO/IEC 13249-3 §5.1.67 WKT syntax.

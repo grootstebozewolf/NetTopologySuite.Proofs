@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-25
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Phase 1 Scope C.2-tight Retro — forward-error theorem
 
 **Date.** May 2026. 6 sessions across two engagements.  Session 6

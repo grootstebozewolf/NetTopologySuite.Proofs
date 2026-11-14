@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Besicovitch–Kakeya Set Plan (Non-Dumb Version)
 
 **Status:** Phase A landed (`theories/PerronStage.v`). Phases B–D are design only.

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Standalone packages
 
 Self-contained, reusable Rocq packages extracted from this corpus. Each is a

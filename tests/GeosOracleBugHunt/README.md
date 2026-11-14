@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # GEOS ↔ Rocq oracle differential hunt
 
 Gates GEOS curve / predicate behaviour against NetTopologySuite.Proofs `oracle_bin`.

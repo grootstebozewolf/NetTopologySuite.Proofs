@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # JCT proof structure — the continuous-component spine
 
 **Date:** 2026-06-04.

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Hole-free face → valid_polygon — `extract_rings_valid` R5, slice 3c
 
 **Coq artifact:** [`theories/FacePolygon.v`](../theories/FacePolygon.v)

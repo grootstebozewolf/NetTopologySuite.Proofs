@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-02
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Grill — HausdorffDistance functions
 
 A grilling record. Charted 2026-09-02. This is **not** leftover `Ⅰ`–`Ⅹ`,

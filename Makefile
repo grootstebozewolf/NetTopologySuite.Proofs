@@ -36,7 +36,7 @@ SHELL := /bin/bash
 ROCQ := $(shell command -v rocq 2>/dev/null || command -v coqc 2>/dev/null || echo "")
 
 # Phony targets only — this file never produces real build artefacts.
-.PHONY: help status host full check claim-elab ci-guards ci-pr ci-full theories-changed oracle oracle-ffi clean-env env-info hunt-probes cad-dxf
+.PHONY: help status host full check claim-elab doc-kinds ledger-assumptions ci-guards ci-pr ci-full theories-changed oracle oracle-ffi clean-env env-info hunt-probes cad-dxf
 
 # Base ref for `make theories-changed` (override: make theories-changed BASE=main).
 BASE ?= origin/main
@@ -190,13 +190,25 @@ full:
 	rocq makefile -f _CoqProject.full -o Makefile.gen
 	$(MAKE) -f Makefile.gen -j"$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
-check: ci-guards
+check: ci-guards doc-kinds
 
 # claim-elab — the build-dependent half of check_claim_statements.py: probes
 # the built .vo files (exact elaborated type, Print Assumptions, elaborated
 # statement pin).  Needs `make full` first.  CI runs it in the rocq-flocq job.
 claim-elab:
 	python3 scripts/check_claim_statements.py --elaborate
+
+# doc-kinds — typed-doc ratchet (scripts/check_doc_kinds.py): doc-kind
+# headers, anchors, finding immutability / supersession, guide budget. Runs
+# in its own required workflow (.github/workflows/doc-kinds.yml) so a
+# `ratchet-override` label or PR-body edit re-runs it; not part of ci-guards.
+doc-kinds:
+	python3 scripts/check_doc_kinds.py
+
+# ledger-assumptions — build-dependent: verified-claims.md Ax / [cond] per
+# row against `Print Assumptions`. Needs `make full`; CI: rocq-flocq job.
+ledger-assumptions:
+	python3 scripts/check_ledger_assumptions.py
 
 # ci-guards — the complete set of build-INDEPENDENT corpus guardrails.
 # These are pure grep/perl/python (no .vo, no `rocq`), so they run in
@@ -212,7 +224,6 @@ ci-guards:
 	bash scripts/check_deferred_registry_sync.sh
 	bash scripts/validate-claims.sh
 	bash scripts/check_oracle_handrolled.sh
-	bash scripts/check_md_prose_ratchet.sh
 	python3 scripts/check_cite_or_cut.py
 	python3 oracle/rocqref/check_jts_nts_equiv.py
 	python3 scripts/check_module_split.py
@@ -243,7 +254,7 @@ cad-dxf:
 # `theories/` build (the same lane as CI's macOS `rocq` job).  Mirrors
 # what a typical proof/doc PR must satisfy without paying for the Flocq
 # lane or the oracle link.
-ci-pr: ci-guards host
+ci-pr: ci-guards doc-kinds host
 
 # ci-full — the full local gate: guardrails + the whole corpus
 # (`_CoqProject.full`, needs Flocq) + the oracle binary.  Matches what

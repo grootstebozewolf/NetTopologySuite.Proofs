@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # The extract rewire — `extract_rings_valid` R5, slice 3g
 
 **Coq artifact:** [`theories/ExtractFaces.v`](../theories/ExtractFaces.v)

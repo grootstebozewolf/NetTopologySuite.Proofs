@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # #508 Phase 7 — P* rungs
 
 Observatory note for Proofs #508 remaining rungs (Notion plan
@@ -105,7 +106,7 @@ Wrap-up letter. TRIAGE `M-LEN-ZOO` flips to ✅ with honest scope
 notes. Bible §4.2 satisfaction is
 [`docs/scout/508-closing-summary.md`](scout/508-closing-summary.md).
 Does not remint `NurbsKnotSpans.v : nurbs_spans_additive` or
-`NurbsKnotSpans.v : golden_half_circle_length`. Does not remint
+`NurbsConicExact.v : golden_half_circle_length`. Does not remint
 `SpeedIntegral.v` / `ClothoidLength_unit.v` / `ClothoidFresnel.v`.
 Fresnel inhabitant is a later #564 letter (`ClothoidFresnelInhab.v`).
 QEX is not owner accept. This letter does

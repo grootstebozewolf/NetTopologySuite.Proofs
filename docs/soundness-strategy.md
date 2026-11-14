@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Soundness strategy for `b64_orient_sign_filtered`
 
 **Status.** Written 2026-05-15 after pivoting away from a Shewchuk-style

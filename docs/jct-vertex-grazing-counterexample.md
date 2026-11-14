@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # The vertex-grazing counterexample: `no_horizontal_edge_at` is not enough
 
 **Coq artifact:** [`theories/JCT_VertexGrazingCounterexample.v`](../theories/JCT_VertexGrazingCounterexample.v)

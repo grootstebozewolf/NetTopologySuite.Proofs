@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-31
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Map — ISO ST_Relate · QEX Ⅰ–Ⅹ
 
 A wayfinder catalog. Charted 2026-08-31. This is **not** leftover

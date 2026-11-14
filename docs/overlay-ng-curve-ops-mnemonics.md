@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # OverlayNGCurve · ops mnemonics
 
 **Name:** `OverlayNGCurve` (NTSC0001: never `OverlayNGCurved`)

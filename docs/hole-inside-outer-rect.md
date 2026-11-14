@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Rectangle `hole_inside_outer` (unconditional) — R5 analytic seam, Stage B
 
 **Coq artifact:** [`theories/HoleInsideOuterRect.v`](../theories/HoleInsideOuterRect.v)

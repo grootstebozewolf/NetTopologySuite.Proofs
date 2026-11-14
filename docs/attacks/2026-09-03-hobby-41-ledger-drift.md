@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-03
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # ATTACK hobby-41-ledger-drift
 - claimId: none
 - file:lemma: theories-flocq/HobbyTheorem_b64.v:hobby_theorem_4_1_conditional

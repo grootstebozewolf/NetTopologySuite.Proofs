@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Getting Started
 
 Welcome to **NetTopologySuite.Proofs**.

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Ring orientation primitive — `extract_rings_valid` R5, slice 3d
 
 **Coq artifact:** [`theories/RingOrientation.v`](../theories/RingOrientation.v)

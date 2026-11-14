@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-21
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # GEOS overlay differential gallery — rung 3 (August 2026)
 
 **topic:** `overlay` / `docs` · issues [libgeos/geos#1342](https://github.com/libgeos/geos/issues/1342), [libgeos/geos#1344](https://github.com/libgeos/geos/issues/1344)

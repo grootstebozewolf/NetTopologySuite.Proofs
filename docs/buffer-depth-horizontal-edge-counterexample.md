@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # `depth_region`: closure is necessary but not sufficient — the horizontal-edge case
 
 **Coq artifact:** [`theories/BufferDepthHorizontalEdgeCounterexample.v`](../theories/BufferDepthHorizontalEdgeCounterexample.v)

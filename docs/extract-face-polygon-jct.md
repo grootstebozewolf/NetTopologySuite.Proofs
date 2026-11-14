@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Conditional `valid_polygon` headline via the JCT bridge — R5 seam, Stage A
 
 **Coq artifact:** [`theories/ExtractFacePolygonJCT.v`](../theories/ExtractFacePolygonJCT.v)

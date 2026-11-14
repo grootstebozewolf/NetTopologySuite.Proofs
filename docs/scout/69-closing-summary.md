@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-01
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # #69 owner-retire packet — umbrella role ends
 
 claimId: none · witness: none

@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-16
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Phase 4 Audit: Native Curve Primitives in NetTopologySuite
 
 **Status**: Strategic scoping document (not formal proof work)

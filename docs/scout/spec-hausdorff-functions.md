@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-02
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Spec — Directed Hausdorff on NTS and GEOS
 
 An implementation spec. Written 2026-09-02 from the grill

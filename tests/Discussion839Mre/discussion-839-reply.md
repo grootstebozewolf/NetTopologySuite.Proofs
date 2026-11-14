@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 Thanks for the clear MRE and screenshots — there are really **two separate questions** mixed in here:
 
 1. Whether an edge is "non-Delaunay" under `ConformingDelaunayTriangulationBuilder`

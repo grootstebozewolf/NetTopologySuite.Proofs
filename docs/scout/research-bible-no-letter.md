@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-19
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Research — NO-LETTER on Bible after #810
 
 topic: docs · claimId: none · witness: none

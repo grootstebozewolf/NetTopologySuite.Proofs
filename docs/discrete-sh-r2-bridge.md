@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Discrete → Sh(ℝ²) bridge — Boolean stalks, Heyting globe (2026-08-13)
 
 topic: foundations

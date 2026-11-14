@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Guardrails from CurvePolygon self-overlay dumps
 
 **Source.** FunctionRegistry / overlay-function bench on identical inputs

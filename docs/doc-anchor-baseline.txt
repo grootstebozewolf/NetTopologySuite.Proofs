@@ -1,0 +1,16 @@
+# Anchors in guide/ledger docs that do not resolve, declared on purpose.
+# Format: path<TAB>token<TAB>reason; reason planned|external|dead.
+# scripts/check_doc_kinds.py fails a listed token that resolves or is gone,
+# and fails any newly added `dead` line: dead entries only shrink.
+docs/READING-GUIDE.md	`theories-flocq/ArcOrient_b64.v`	dead
+docs/READING-GUIDE.md	`theories-flocq/ArcIntersect_b64.v`	dead
+docs/READING-GUIDE.md	`theories-flocq/ArcHotPixel_b64.v`	dead
+docs/adr/ADR-0007-sheet-hen-cook-noding-model.md	`SheetHenCook.v : cook_loop_is_obligation`	dead
+docs/adr/ADR-0008-ellipsoid-sheet-inverse-is-a-constructor.md	`theories/EllipsoidInverseCtor.v`	planned
+docs/library-footnotes.md	`MedialAxis.v`	planned
+docs/library-footnotes.md	`KdTree.v`	planned
+docs/library-footnotes.md	`ConcaveHull.v`	planned
+docs/library-footnotes.md	`AlphaShape.v`	planned
+docs/overlayng-curve-phase0.md	`eval/ClaimNNN.v`	planned
+docs/stage-d-feasibility.md	`theories-flocq/B64_twoSum.v`	planned
+docs/verified-claims.md	`Clothoid_L.v`	external

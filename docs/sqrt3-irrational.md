@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # sqrt(3) is irrational — scope and honesty note
 
 This document records what the accompanying Coq development

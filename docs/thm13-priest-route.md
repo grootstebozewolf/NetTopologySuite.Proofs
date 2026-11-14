@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Theorem 13 — the Priest route
 
 **Decision.** The Shewchuk Theorem 13 lane closes by proving *Priest's*

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Category C policy — per-theorem axiom footprint
 
 **Status**: Draft, pending decision.
