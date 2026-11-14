@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # `extract_rings_valid` — proof structure & plan (hole-topology route)
 
 > **Status: PLAN ONLY.** No Coq in this document; no proof attempted yet.

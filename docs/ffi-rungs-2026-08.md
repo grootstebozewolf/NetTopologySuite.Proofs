@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # FFI rungs — restore full `libntsrocq` + orientation lane (2026-08)
 
 **Date**: 2026-08-05.  

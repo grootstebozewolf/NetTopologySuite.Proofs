@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # The bridge discharge — `extract_rings_valid` R5, slice 3i (RED)
 
 **Coq artifact:** [`theories-flocq/ExtractFacesBridge.v`](../theories-flocq/ExtractFacesBridge.v)

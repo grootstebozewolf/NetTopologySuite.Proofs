@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-04
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # JCT seam — the corpus interior predicate is vacuous
 
 **Date:** 2026-06-04.

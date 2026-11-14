@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-19
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Karney 2013 · Algorithms for geodesics — research ingest
 
 claimId: 0007-karney-2013-ingest · board: ADR-0007 · kind: research · source: Karney CFF, J Geod 87:43–55 (2013), doi 10.1007/s00190-012-0578-z, open access (CC-BY, p. 54) · PDF sha256 1eb833d9acf94d03d94a7b8237971c881ad946ea9d3af3e00b739f7826ccf0f1 · Coq: `IntakeKarneyPark.v`. AI-drafted, human-reviewed.

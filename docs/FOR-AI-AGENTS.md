@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # For AI Agents (and deep contributors using agent workflows)
 
 Root baseline (disclosure, smallest change, guards): [`AGENTS.md`](../AGENTS.md).

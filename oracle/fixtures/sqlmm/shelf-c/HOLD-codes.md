@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # HOLD WKB codes (not signed I/O)
 
 claimId: none (docs)

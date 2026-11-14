@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Lemma Reuse Map — CURVE_RELATE_MATRIX (lineal analytical slice, R-PR / JTS #1195)
 
 This map was produced during the mandatory READ phase before any code changes.

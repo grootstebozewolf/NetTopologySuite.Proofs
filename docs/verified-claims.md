@@ -1,3 +1,4 @@
+<!-- doc-kind: ledger -->
 # Verified Claims — NetTopologySuite.Proofs
 
 > **Living, CI-verified document.** Every theorem cited below (in

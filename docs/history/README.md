@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # History / Archive
 
 Forensic artifacts from completed engagements. Actor paths stay in

@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-24
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Decide the shape of the manifest-closure gate
 
 **Type:** grilling · **Map:** [An MMF release bar for the opam packages](../map-opam-mmf-release-bar.md)

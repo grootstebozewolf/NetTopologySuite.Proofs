@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Category C distribution — the full A/C1/C2 classification pass
 
 **Status**: evidence artifact (machine-generated 2026-08-16); discharges

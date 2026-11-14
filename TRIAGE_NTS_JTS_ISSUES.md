@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Triage — NTS / JTS open issues vs. NetTopologySuite.Proofs corpus
 
 > **Source of record for the curve-awareness proof batch (#64–#69).** This is

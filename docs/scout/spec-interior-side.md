@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Spec — leftover `Ⅳ` (interior-side stem)
 
 A takeable implementation spec. Written 2026-08-30 from the grill

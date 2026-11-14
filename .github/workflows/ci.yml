@@ -46,7 +46,7 @@ jobs:
         #   check_deferred_registry_sync doc <-> Admitted-registry drift
         #   validate-claims              verified-claims.md references resolve
         #   check_oracle_handrolled      hand-rolled float-kernel ratchet
-        #   check_md_prose_ratchet       net ≤ 0 .md prose; claim-row and route-status whitelist
+        #   (doc kinds / prose ratchet: own workflow, doc-kinds.yml)
         #   check_cite_or_cut            #846: gated QED/QEX restatement cites its claimId
         #   hunt.py --selfcheck          RELATE_MATRIX token allowlist (no oracle)
         # The `rocq` job below no longer repeats these — this job is
@@ -423,6 +423,18 @@ jobs:
           chmod -R a+rwX .
           ROCQ_CMD="docker run --rm -v $PWD:/workspace -w /workspace nts-proofs-flocq:ci rocq" \
             python3 scripts/check_claim_statements.py --elaborate
+          sudo chown -R "$(id -u):$(id -g)" .
+
+      - name: Ledger claims vs Print Assumptions (verified-claims.md Ax / [cond])
+        # scripts/check_ledger_assumptions.py: every `Mod.v : name` in a
+        # `| file : theorem | Meaning | Ax |` row is Located in its module and
+        # its Print Assumptions compared with the row. A theorem resting on a
+        # non-allowlisted assumption must be tagged `[cond]`; the Ax cell may
+        # not under-state the axioms used. Same probe runner as above.
+        run: |
+          chmod -R a+rwX .
+          ROCQ_CMD="docker run --rm -v $PWD:/workspace -w /workspace nts-proofs-flocq:ci rocq" \
+            python3 scripts/check_ledger_assumptions.py
           sudo chown -R "$(id -u):$(id -g)" .
 
       - name: Smoke hunt probes (docs/h1-vacuity)

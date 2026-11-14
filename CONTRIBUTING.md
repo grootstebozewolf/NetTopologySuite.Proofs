@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Contributing to NetTopologySuite.Proofs
 
 Thank you for your interest in contributing to this corpus of mechanically-verified Rocq proofs for NetTopologySuite / JTS geometry algorithms.

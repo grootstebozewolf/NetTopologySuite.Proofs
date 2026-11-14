@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-04
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # `hobby_lemma_4_3_no_proper` is false as stated — refutation
 
 > **Status (this session).** The deferred-proof entry

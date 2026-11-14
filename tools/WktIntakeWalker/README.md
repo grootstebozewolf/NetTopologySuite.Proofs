@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # WktIntakeWalker
 
 Intake seam for ADR-0007 (claimId `0007-intake-walker`, angles

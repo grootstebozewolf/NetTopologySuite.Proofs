@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-21
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # GEOS rock-solid rung — oracle differential (2026-08-10)
 
 **Trigger:** [libgeos/geos#1500](https://github.com/libgeos/geos/pull/1500) merged (`14fd2d7`) — GeometrySplitter/GeometryNoder fix for CurvePolygon drop (#1497).  

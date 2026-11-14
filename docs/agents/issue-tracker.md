@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Issue tracker: GitHub
 
 Issues and specs for this repo live as GitHub issues

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Stage D chain composition — design choice for nonoverlap preservation
 
 **Status**: Design committed (Approach A). Proof deferred to follow-up

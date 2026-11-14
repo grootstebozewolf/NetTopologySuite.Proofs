@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Mesh in-circle lane — JTS #1212 differential (session 1)
 
 **Date**: 2026-08-05.  

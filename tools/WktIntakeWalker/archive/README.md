@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Archived Java intake (not primary)
 
 The Java visitor (`org.nts.proofs.intake`) and bash `generate.sh` /

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Help — pick your path
 
 Who are you? Find your card; the OPEN action is enough for the first

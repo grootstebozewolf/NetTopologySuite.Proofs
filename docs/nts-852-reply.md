@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-17
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Paste-ready reply for [NTS #852](https://github.com/NetTopologySuite/NetTopologySuite/pull/852)
 
 The GitHub token on this lane cannot comment on `NetTopologySuite/NetTopologySuite` (403). Someone with write access should paste the block below on #852.

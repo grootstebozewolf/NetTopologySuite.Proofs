@@ -1,3 +1,4 @@
+<!-- doc-kind: ledger -->
 # nts-eval micro units
 
 Self-contained Rocq units for the `nts-eval` micro-kernel harness.

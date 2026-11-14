@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0004 — Zoo length via a thin ExactCurve interface; cubic Bézier replaces quadratic in the Bible
 
 | Field         | Value                                                        |

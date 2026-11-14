@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # H1 vacuity finding — the OverlayNG/buffer headline's JCT hypothesis is uninstantiable
 
 **Status:** confirmed (mechanically, in Rocq 9.1.1).

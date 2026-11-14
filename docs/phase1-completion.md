@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-15
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Phase 1 completion: robust segment-pair intersection
 
 **Status.** Written 2026-05-15 after the integer-regime soundness

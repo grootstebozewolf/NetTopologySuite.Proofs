@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # `next` injectivity / cyclic permutation — `extract_rings_valid` R5, slice 2d
 
 **Coq artifact:** [`theories/DartNextInjective.v`](../theories/DartNextInjective.v)

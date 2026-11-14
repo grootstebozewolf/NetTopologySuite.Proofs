@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0008 — Ellipsoid sheet: the inverse geodesic is a constructor
 
 | Field | Value |

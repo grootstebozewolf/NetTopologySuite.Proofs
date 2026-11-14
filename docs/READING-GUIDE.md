@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Reading guide — who reads what
 
 The corpus's docs cover several actors with different reading needs.

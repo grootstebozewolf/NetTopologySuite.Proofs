@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Stratified Adaptive Precision Filter (APF) for orient2d
 
 *Companion to `theories-flocq/OrientStratifiedAPF.v`.*

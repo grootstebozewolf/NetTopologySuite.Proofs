@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Convex `hole_inside_outer` — Stage C opened (concrete instance)
 
 **Coq artifact:** [`theories/HoleInsideOuterConvexExample.v`](../theories/HoleInsideOuterConvexExample.v)

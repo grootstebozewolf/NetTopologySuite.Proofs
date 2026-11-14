@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Development environment
 
 **New here?** See your role card in [`docs/HELP.md`](HELP.md) or the full [`docs/READING-GUIDE.md`](READING-GUIDE.md). Newbie Nate (and CI / Quality Gatekeeper) paths explicitly need this document.

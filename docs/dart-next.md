@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Cyclic `next` operator — `extract_rings_valid` R5, slice 2b
 
 **Coq artifact:** [`theories/DartNext.v`](../theories/DartNext.v)

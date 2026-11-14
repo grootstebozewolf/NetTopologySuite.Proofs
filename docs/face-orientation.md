@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Face orientation classification — `extract_rings_valid` R5, slice 3e
 
 **Coq artifact:** [`theories/FaceOrientation.v`](../theories/FaceOrientation.v)

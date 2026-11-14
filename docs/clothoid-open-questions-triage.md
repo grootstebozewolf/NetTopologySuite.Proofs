@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-12
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Clothoid lane — what is proved, what transports, what is open
 
 > **Status:** living page for the clothoid lane, the main curve push. Claims of

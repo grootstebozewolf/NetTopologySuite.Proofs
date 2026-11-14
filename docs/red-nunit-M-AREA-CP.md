@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-03
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Red NUnit tests for M-AREA-CP (curve area)
 
 Following the pattern from orientation/arc length hardening:

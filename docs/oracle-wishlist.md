@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 **Oracle Wishlist v7.0** (15 Aug 2026, Amsterdam)
 
 **Milestone**: JTS two-disc overlay is exact; oracle mode **`DISC_OVERLAY`** is the Rocq twin (this accept).

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Phase 5 — extraction toolchain + C# FFI: `libntsrocq`
 
 Status doc and ABI contract for the Phase 5 lane of the roadmap

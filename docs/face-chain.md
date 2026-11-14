@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Face orbit → closed chain → ring — `extract_rings_valid` R5, slice 3a
 
 **Coq artifact:** [`theories/FaceChain.v`](../theories/FaceChain.v)

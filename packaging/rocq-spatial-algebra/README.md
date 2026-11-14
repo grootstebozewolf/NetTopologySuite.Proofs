@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # rocq-spatial-algebra
 
 A tiny, **dependency-free, axiom-free** Rocq library of spatial-relation

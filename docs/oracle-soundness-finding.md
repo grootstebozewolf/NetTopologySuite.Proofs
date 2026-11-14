@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-01
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Oracle soundness finding — the `compute ⇒ spec` bridge is FALSE
 
 > **Filename caveat (read first).** This file records that *soundness* vs the

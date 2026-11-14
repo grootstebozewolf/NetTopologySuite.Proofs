@@ -1,0 +1,30 @@
+name: doc kinds
+
+# Typed-doc ratchet (scripts/check_doc_kinds.py; AGENTS.md "Doc kinds").
+# Separate from ci.yml so label and PR-body edits re-run only this check:
+# the `ratchet-override` label plus a `Ratchet-Override-Reason:` line in the
+# PR body is the one escape hatch. Make this check required in branch
+# protection (no admin bypass) or the gate is decoration.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  doc-kinds:
+    name: Doc kinds (headers, anchors, findings, guide budget)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # Provenance must be an ancestor of HEAD
+      - name: Check
+        run: python3 scripts/check_doc_kinds.py

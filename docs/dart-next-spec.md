@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # `next` rotational-successor correctness — `extract_rings_valid` R5, slice 2c
 
 **Coq artifact:** [`theories/DartNextSpec.v`](../theories/DartNextSpec.v)

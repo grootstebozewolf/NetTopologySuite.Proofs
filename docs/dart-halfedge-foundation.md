@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # The half-edge (dart) foundation — `extract_rings_valid` R5, slice 1
 
 **Coq artifact:** [`theories/Dart.v`](../theories/Dart.v)

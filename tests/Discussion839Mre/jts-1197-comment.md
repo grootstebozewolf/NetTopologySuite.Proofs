@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 ## Keep-green + merge ping (2026-08-05)
 
 Rebased this branch onto current `master` (was ~29 commits behind) and

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # rocq-robust-geometric-predicates
 
 Machine-checked **robust geometric predicates for binary64 (IEEE-754 double)

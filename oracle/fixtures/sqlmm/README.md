@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # oracle/fixtures/sqlmm
 
 claimId: none (docs / packaging)

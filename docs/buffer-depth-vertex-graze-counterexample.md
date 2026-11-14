@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # `depth_region`: completing the guard set — the vertex-graze case
 
 **Coq artifact:** [`theories/BufferDepthVertexGrazeCounterexample.v`](../theories/BufferDepthVertexGrazeCounterexample.v)

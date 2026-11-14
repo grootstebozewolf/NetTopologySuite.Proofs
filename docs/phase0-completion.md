@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-25
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Phase 0 completion: robust orientation predicate
 
 **Status.** Written 2026-05-25 retroactively.  Phase 0's deliverable —

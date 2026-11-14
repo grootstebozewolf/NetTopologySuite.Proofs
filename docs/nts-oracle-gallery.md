@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # NTS Oracle Gallery — machine-verified point-in-polygon edge cases
 
 A copy-paste gallery of **point-in-polygon / ray-crossing edge cases whose answer is

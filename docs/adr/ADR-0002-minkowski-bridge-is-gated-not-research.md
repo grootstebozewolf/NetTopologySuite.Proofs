@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0002 — The Minkowski buffer bridge is dependency-gated, not research-scale
 
 | Field | Value |

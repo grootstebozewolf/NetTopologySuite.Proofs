@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # BufferDepth REFACTOR: the guarded depth-region predicate
 
 **Coq artifact:** [`theories/BufferDepthGuarded.v`](../theories/BufferDepthGuarded.v)

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Tickets — An MMF release bar for the opam packages
 
 Map: [An MMF release bar for the opam packages](../map-opam-mmf-release-bar.md)

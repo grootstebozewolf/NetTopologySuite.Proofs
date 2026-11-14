@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 Thanks for leaving this draft open — scoped from the NetTopologySuite.Proofs snap / precision lane against current master + NTS 2.6.
 
 ### What we checked

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # ADR-0003 — Interior is two-tier: OGC open interior specifies, ray parity computes
 
 | Field | Value |

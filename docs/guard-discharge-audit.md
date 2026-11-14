@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-07-05
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Guard-discharge audit — issue #66 round 2, item 1
 
 **Status.** Written 2026-07-04. Scope: this track's ownership

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # NetTopologySuite.Proofs — agent notes
 
 Proofs repo: validates NetTopologySuite (NTS) and GEOS behaviour against a

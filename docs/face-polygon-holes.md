@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Valid polygon with holes, modulo one analytic seam — R5 slice 3f
 
 **Coq artifact:** [`theories/FacePolygonHoles.v`](../theories/FacePolygonHoles.v)

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Shewchuk Theorem 13 proof structure
 
 **Target theorem**: `fast_expansion_sum_nonoverlap_shewchuk` in

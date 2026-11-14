@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-06-23
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # DISTANCE cluster increment (2026-06)
 
 Axis chosen: DISTANCE cluster (max surface / min new geometry among the three candidates).

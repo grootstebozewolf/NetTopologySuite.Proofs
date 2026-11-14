@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-11-06
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Binary64 Bézier evaluation: a proved stability gap between Horner and de Casteljau
 
 Two algebraically equivalent representations of the same polynomial need not

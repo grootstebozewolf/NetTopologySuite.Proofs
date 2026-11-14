@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-05-25
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Slice A Piece 5b Retro — fast_expansion_sum_nonoverlap_shewchuk
 
 **Date.** May–June 2026.  17 sessions across one sustained engagement.

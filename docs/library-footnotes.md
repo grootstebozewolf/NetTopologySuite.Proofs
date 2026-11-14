@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Library footnotes — papers filed, and where (if anywhere) they land
 
 > **What this file is.** The operator's paper library grew faster than the

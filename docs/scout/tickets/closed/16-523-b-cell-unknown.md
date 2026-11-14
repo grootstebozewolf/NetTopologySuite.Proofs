@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-30
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # `523-b` — consumers accept `?` as a DE-9IM matrix cell
 
 **Type:** task · **Map:** [Retire the epic block #64–#69](../../map-epic-block-64-69.md)

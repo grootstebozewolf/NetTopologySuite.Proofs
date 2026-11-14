@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Observatory dashboard
 
 A single-page **status view of this proof corpus**, generated entirely from

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # The buffer / noder pipeline — end-to-end seam map
 
 > **Status (design doc, no proofs).** This document maps the JTS buffer

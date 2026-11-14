@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-24
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Establish why `opam publish` never landed a package
 
 **Type:** research · **Map:** [An MMF release bar for the opam packages](../map-opam-mmf-release-bar.md)

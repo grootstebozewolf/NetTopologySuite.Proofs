@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-09-10
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # NTS#875 AGENTS.md — QED stop
 
 topic: docs

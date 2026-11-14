@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # WktUnicodeIllustrator
 
 ANSI-coloured **Unicode sketches** of spatial cases from WKT — lines **and** SQL/MM curves.

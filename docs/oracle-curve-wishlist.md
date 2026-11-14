@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Oracle Wishlist for Curve Awareness (JTS Epic #1195 + NTS port)
 
 [Full source content as provided in user query -- summarized here for workspace; see conversation for complete original.]

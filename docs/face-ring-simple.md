@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Face ring is simple — `extract_rings_valid` R5, slice 3b
 
 **Coq artifact:** [`theories/FaceRingSimple.v`](../theories/FaceRingSimple.v)

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Koc compound curves: satellite-survey railway alignment, mechanised
 
 **Source.** W. Koc, *"Design of compound curves adapted to the satellite

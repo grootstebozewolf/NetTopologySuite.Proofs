@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Face step + face orbit finiteness — `extract_rings_valid` R5, slice 2f
 
 **Coq artifact:** [`theories/DartFace.v`](../theories/DartFace.v)

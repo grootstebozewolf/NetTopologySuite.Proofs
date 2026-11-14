@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # Session archive (git history)
 
 claimId: 0007-prose-chip-sessions

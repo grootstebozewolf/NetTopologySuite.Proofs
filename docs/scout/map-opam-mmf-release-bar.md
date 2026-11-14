@@ -1,3 +1,8 @@
+<!-- doc-kind: finding
+date: 2026-08-24
+Provenance: pre-ratchet
+Theorems: none — pre-ratchet record; anchors in the body are not re-checked
+-->
 # Map — An MMF release bar for the opam packages
 
 Charted 2026-08-24 · Tickets: [`docs/scout/tickets-opam-mmf/`](tickets-opam-mmf/README.md)

@@ -1,3 +1,4 @@
+<!-- doc-kind: guide -->
 # `face_twin_free` closure plan
 
 *Session: `claude/dcel-seams-env-setup-11ec9n` (2026-06-16).*
