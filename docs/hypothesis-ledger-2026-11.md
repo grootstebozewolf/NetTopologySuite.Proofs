@@ -19,17 +19,20 @@ inline premise `H -> concl`, which is how two of the defects below passed.
 
 ## Coverage
 
-All 76 theorems cited in conditional rows (`[cond]`, or "cond per entry"
-in the batch rows) are itemised: 103 hypotheses. The script's `UNAUDITED`
-set is empty.
+All 83 theorems cited in conditional rows (`[cond]`, or "cond per entry"
+in the batch rows) are itemised: 109 hypotheses. The script's `UNAUDITED`
+set is empty. 702 theorems cited in NON-conditional rows have premises but
+no ledger lines; they are frozen as debt in
+`hypothesis-ledger-premise-baseline.txt` (shrink-only), and any new one
+fails the check.
 
 | status | count | meaning |
 |---|---|---|
-| discharged | 34 | a Qed theorem proves it outright (incl. 25 theorems with no deferred premise, cited in mixed batch rows) |
+| discharged | 40 | a Qed theorem proves it outright, or it is a decidable input guard |
 | reduced | 11 | proved from per-input guards that are themselves open |
 | instance | 4 | proved for named instances only (circle, Fresnel, balanced convex) |
-| open | 44 | nothing proves or refutes it |
-| refuted | 6 | a Qed theorem proves it false |
+| open | 43 | nothing proves or refutes it |
+| refuted | 7 | a Qed theorem proves it false |
 | circular | 2 | the hypothesis is the conclusion |
 | placeholder | 2 | the named Prop is defined as `True`; its content is a comment |
 
@@ -45,9 +48,12 @@ set is empty.
    satisfiable"; it was satisfiable only before the JCT lane found the
    guards. The fix is cheap: the guarded off-ring seam is proved for taut,
    core-nodup, horizontal-free rings
-   (`JCTEscapeDescentHolds.v : parity_seam_offring_taut`), so restating H1
-   with those guards discharges it. H2 (universal over every valid graph)
-   and H_bridge stay open.
+   (`JCTEscapeDescentHolds.v : parity_seam_offring_taut`). That alone does
+   NOT rescue the headline (PR #1024 review): H2 (`extract` valid on every
+   valid topology graph) is false too
+   (`docs/h1-vacuity/OverlayGuardedVacuityQEX.v : overlay_H2_refuted`, a
+   one-edge graph gives a 2-point ring), and `extract` is a placeholder that
+   puts every result edge in one ring. See defect 11 for the restatement.
 2. **`hobby_theorem_4_1_conditional` is vacuous.** Already machine-checked
    (`docs/h1-vacuity/HobbyHlemma43Check.v : Hlemma43_uninhabitable`), but
    the ledger row still read as a plain conditional headline. Relabelled.
@@ -101,6 +107,25 @@ set is empty.
     sagitta band). Fixed: per-ring caps, outer minus holes, union of
     polygons, needing no disjointness.
 
+11. **My first `overlay_ng_correct_guarded` (this branch) was still
+    vacuous** (PR #1024 review). It kept H2 and H_bridge universal over all
+    topology graphs and the placeholder `extract`: H2 is refuted (defect 1),
+    and a universal H_bridge forces an empty result, because the empty graph
+    is valid with vacuously correct labels
+    (`docs/h1-vacuity/OverlayGuardedVacuityQEX.v : overlay_universal_bridge_forces_empty`).
+    Passing it the proved guarded H1 was inert. Restated: at
+    `noded_labeled_graph A B` only, over `extract_faces`, with output
+    validity proved from the guards of `extract_rings_valid_of_guards`; the
+    per-input semantic bridge is the whole open content.
+12. **Two holes in this branch's checker** (PR #1024 review). "vacuous"
+    matched "non-vacuous"; now negations do not count. And coverage only
+    looked at `[cond]` rows, so an `[exact]` row with inline premises and no
+    ledger lines -- the ArcOverlay bug -- passed. Now every theorem cited in
+    a non-conditional row is checked for source-level premises (top-level
+    `->`, open-Section hypotheses); existing debt is frozen in a shrink-only
+    baseline. The detector is textual, and `discharged` still trusts its
+    evidence anchor; both limits are stated in the script header.
+
 ## Not defects, but worth stating
 
 - The JCT lane's chain of `[cond]` rows (trapped half, level jump, escape
@@ -120,10 +145,13 @@ bridges and the arc headline's conclusion
 (`docs/h1-vacuity/ArcOverlayBridgeQEX.v`) and its region restatement
 (`ArcOverlayRegion.v : arc_overlay_region_close`); all names itemised. Open:
 
-- H2 and H_bridge of the overlay headline.
+- The per-input semantic bridge of `overlay_ng_correct_guarded`, and a noder
+  theorem producing its guards.
+- Shrink `hypothesis-ledger-premise-baseline.txt` (702 entries).
+- Tighten the arc band to the S–M / M–E cap sagitta (about 4×).
 - Derive `b64_orient2d_expansion_cc_safe` from the coordinate domain.
 - Either formalise the curvature-model correspondences or drop the names.
 - Tie `ArcOverlayRegion.v : curve_region` (even-odd per ring) to the
   POINT_IN_CURVE_RING oracle, or prove it equals an arc-aware ray parity.
 
-SUMMARY ok=61 warn=6 bug=10 — of 76 itemised theorems, 9 were vacuous, circular, placeholder-backed or mis-labelled (defects 1–6, 8, 9) and 6 carry an unproved "REFUTED" label (defect 7); defect 10 was this branch's own region model, fixed; 44 of 103 hypotheses are open.
+SUMMARY ok=66 warn=6 bug=12 — of 83 itemised theorems, 11 were vacuous, circular, placeholder-backed or mis-labelled (defects 1–6, 8, 9, 11) and 6 carry an unproved "REFUTED" label (defect 7); defects 10–12 were this branch's own (region model, first guarded headline, checker), fixed; 43 of 109 hypotheses are open; 702 premise-bearing unconditional citations frozen as debt.

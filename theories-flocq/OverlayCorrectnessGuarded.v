@@ -1,8 +1,9 @@
 (* ============================================================================
    NetTopologySuite.Proofs.Flocq.OverlayCorrectnessGuarded
    ----------------------------------------------------------------------------
-   The OverlayNG headline with its JCT hypothesis H1 restated under the
-   guards the JCT lane found necessary, and discharged.
+   The JCT hypothesis H1 of the OverlayNG headline, restated under the
+   guards the JCT lane found necessary and proved; and the headline restated
+   at the noded input over the real face extractor.
 
    `overlay_ng_correct_conditional` (OverlayCorrectness.v) takes as H1
 
@@ -28,20 +29,20 @@
    (`overlay_H1_guarded_nonvacuous`), and a concrete triangle satisfies
    every ring guard (`overlay_H1_guarded_triangle`).
 
-   `overlay_ng_correct_guarded` is the headline with H1 gone from the
-   premises: H_bridge receives the guarded H1 as a proved fact.  What
-   stays open is unchanged and now honest:
-     - H2       extract is valid on every valid topology graph;
-     - H_bridge point_set (extract op g) <-> boolean_op op A B, which can
-                use H1 only on guarded rings.  The guards are restrictive:
-                `no_horizontal_edges` excludes every axis-aligned ring, and
-                snapping can create horizontal darts
-                (SnapRoundingGuardAudit.v : snap_can_introduce_horizontal_dart).
-   Discharging H_bridge therefore needs either guarded overlay output or a
-   half-open-parity H1 that drops the horizontal guard.
+   `overlay_ng_correct_guarded` (§3) is the headline at
+   `noded_labeled_graph A B` over the face extractor `extract_faces`: output
+   validity is proved from the guard set of `extract_rings_valid_of_guards`;
+   the semantic bridge (point_set of the output = boolean_op A B) is a premise
+   about this input and is the whole open content.  H1 is NOT a premise: a
+   proved Prop as a premise is inert.  `overlay_H1_guarded_holds` stands as
+   the JCT fact a future proof of the bridge can use -- only on guarded rings:
+   `no_horizontal_edges` excludes every axis-aligned ring, and snapping can
+   create horizontal darts
+   (SnapRoundingGuardAudit.v : snap_can_introduce_horizontal_dart).
 
    No Admitted / Axiom / Parameter.  Reals axioms plus Flocq's `classic`
-   through the noded_labeled_graph closure, as OverlayCorrectness.v.
+   through the noded_labeled_graph closure; `extract_rings_valid_of_guards`
+   adds what its own Print Assumptions lists.
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
@@ -54,7 +55,9 @@ From NTS.Proofs        Require Import PointInRingTangents PointInRingCorrect Jor
 From NTS.Proofs        Require Import GeneralTriangleSeparation.
 From NTS.Proofs        Require Import JCTTautClearance JCTRingCycle JCTHugStep.
 From NTS.Proofs        Require Import RelateNGJordanTrueRegion TriangleTautBridge.
-From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64 OverlayBridge.
+From NTS.Proofs        Require Import Dart ExtractFaces FaceTwinAware NoShortFaces EdgeConnectivity
+                              HBridgeCoreSlice VertexGeneralPosition.
+From NTS.Proofs.Flocq  Require Import HobbyTheorem_b64 OverlayBridge OverlayBridgeUnconditional.
 Import ListNotations.
 Local Open Scope R_scope.
 
@@ -130,34 +133,43 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* §3  The headline, H1 discharged.                                           *)
+(* §3  The headline, at this input, over the real extractor.                  *)
+(*                                                                            *)
+(* The first version of this theorem kept H2 and H_bridge quantified over ALL *)
+(* topology graphs, over the placeholder `extract` (every result edge in one  *)
+(* ring).  Both are false (docs/h1-vacuity/OverlayGuardedVacuityQEX.v): a     *)
+(* one-edge graph breaks H2, and the empty graph makes a universal H_bridge   *)
+(* deny every point.  Passing it the proved guarded H1 added nothing.         *)
+(*                                                                            *)
+(* Restated: the noded graph `noded_labeled_graph A B` only, the face         *)
+(* extractor `extract_faces`, and the guard set of                            *)
+(* `extract_rings_valid_of_guards`.  Validity of the output is then PROVED.   *)
+(* The semantic bridge is a premise about this one input; it is the whole     *)
+(* open content, and the second conjunct is just that premise.                *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem overlay_ng_correct_guarded :
   forall (A B : Geometry) (op : BooleanOp) (p : Point),
-    valid_geometry A ->
-    valid_geometry B ->
-    fully_intersected (noded_segments A B) ->
-    (* H2 (DCEL gap), unchanged. *)
-    (forall (op' : BooleanOp) (g : TopologyGraph),
-       valid_topology_graph g ->
-       valid_geometry (extract op' g)) ->
-    (* H_bridge (semantic gap): may use H1 only on guarded rings. *)
-    (forall (g : TopologyGraph),
-       valid_topology_graph g ->
-       correct_labels op g A B ->
-       valid_geometry (extract op g) ->
-       overlay_H1_guarded ->
-       (point_set (extract op g) p <-> boolean_op op A B p)) ->
-    point_set (extract op (noded_labeled_graph A B)) p <->
-    boolean_op op A B p.
+    well_noded_darts (result_edges op (noded_labeled_graph A B)) ->
+    no_spurs (result_darts op (noded_labeled_graph A B)) ->
+    edge_2_connected (result_edges op (noded_labeled_graph A B)) ->
+    pairwise_no_proper_cross_twin_aware
+      (darts_of (result_edges op (noded_labeled_graph A B))) ->
+    no_horizontal_darts
+      (darts_of (result_edges op (noded_labeled_graph A B))) ->
+    no_foreign_vertex_twin_aware
+      (darts_of (result_edges op (noded_labeled_graph A B))) ->
+    (* H_bridge (semantic gap), for this input only. *)
+    (point_set (extract_faces op (noded_labeled_graph A B)) p <->
+     boolean_op op A B p) ->
+    valid_geometry (extract_faces op (noded_labeled_graph A B)) /\
+    (point_set (extract_faces op (noded_labeled_graph A B)) p <->
+     boolean_op op A B p).
 Proof.
-  intros A B op p _ _ _ H2 H_bridge.
-  apply H_bridge.
-  - apply valid_topology_graph_noded_labeled_graph.
-  - apply correct_labels_all_ops.
-  - apply H2. apply valid_topology_graph_noded_labeled_graph.
-  - exact overlay_H1_guarded_holds.
+  intros A B op p Hwn Hns H2ec Hpw Hnh Hnfv H_bridge.
+  split; [| exact H_bridge].
+  intros poly Hin.
+  exact (extract_rings_valid_of_guards op A B Hwn Hns H2ec Hpw Hnh Hnfv poly Hin).
 Qed.
 
 Print Assumptions overlay_H1_guarded_holds.

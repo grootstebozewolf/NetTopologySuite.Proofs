@@ -35,6 +35,12 @@
        hypotheses.  Directed form: a point where they disagree is not outside
        the band (`arc_overlay_region_disagree_near_arc`).
 
+   Reading: relative to the even-odd cap model, off the caps the flip is
+   inert, so §3 is near-definitional; the content is §1.  The band is about
+   4x pessimistic: the caps hang off S-M and M-E, whose sagitta is roughly a
+   quarter of the S-E sagitta that `max_sagitta` measures.  Tightening it is
+   a follow-up.
+
    Pure R; three-axiom.  No Admitted / Axiom / Parameter.
 
    Author: NetTopologySuite.Proofs contributors
@@ -206,6 +212,14 @@ Qed.
    that triangle: the two caps between the polyline and the arc. *)
 Definition arc_triangle (a : CircularArc) : Ring :=
   [arc_start a; arc_mid a; arc_end a; arc_start a].
+
+(* Guard: `arc_triangle` must be the closed chord approximation of the arc.
+   `chord_approx_arc` ignores `n` today (always S M E); if it is ever
+   refined, this lemma breaks and `arc_flip` must be rebuilt from the new
+   polyline. *)
+Lemma arc_triangle_is_chord_approx : forall a n,
+  arc_triangle a = chord_approx_arc a n ++ [arc_start a].
+Proof. reflexivity. Qed.
 
 Definition arc_flip (a : CircularArc) (p : Point) : Prop :=
   in_circular_segment a p /\ ~ point_in_ring p (arc_triangle a).

@@ -35,10 +35,21 @@
 #               "vacuous" in the row (nothing satisfies it); a `circular`
 #               one needs "circular"; a `placeholder` one needs
 #               "placeholder" (case-insensitive).
+#   premise     a theorem cited in a NON-conditional row whose source
+#               statement has premises (count_premises: top-level `->`,
+#               open-Section Hypothesis/Context) needs ledger lines (a guard
+#               is `discharged`), unless frozen in
+#               docs/hypothesis-ledger-premise-baseline.txt (shrink-only:
+#               an entry that is no longer debt fails). Textual detector;
+#               limits listed at premise_count().
 #   resolve     every theorem and evidence anchor names a definition in
 #               theories/, theories-flocq/ or docs/h1-vacuity/.
 #   fields      status, scope in vocabulary; evidence present where the
 #               status needs it.
+#
+# Known limit: `discharged` / `reduced` / `refuted` trust the evidence
+# anchor -- this script checks that it resolves, not that its statement
+# matches the hypothesis.  That match is reviewed by hand.
 #
 # Static: no rocq needed. Kernel facts behind `refuted` evidence are
 # compiled by the rocq jobs (product modules) and hunt_probe_smoke.sh.
@@ -61,6 +72,8 @@ from collections import Counter, OrderedDict
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER = os.path.join(ROOT, "docs", "hypothesis-ledger.tsv")
 CLAIMS = os.path.join(ROOT, "docs", "verified-claims.md")
+PREMISE_BASELINE = os.path.join(ROOT, "docs",
+                                "hypothesis-ledger-premise-baseline.txt")
 LANES = ("theories", "theories-flocq", os.path.join("docs", "h1-vacuity"))
 TAG = "[hyp-ledger]"
 
@@ -191,7 +204,175 @@ def check(rows, claims):
     for u in stale:
         fails.append((os.path.relpath(__file__, ROOT), "coverage",
                       "`%s` is itemised; delete it from UNAUDITED" % u))
+    debt = premise_debt(claims, by_thm)
+    base = read_baseline()
+    bpath = os.path.relpath(PREMISE_BASELINE, ROOT)
+    for ref, (lineno, k) in sorted(debt.items()):
+        if ref not in base:
+            fails.append(("%s:%d" % (claims_path, lineno), "premise",
+                          "`%s` has %d premise(s) but its row is not "
+                          "conditional and it has no ledger lines; ledger "
+                          "them (a guard is `discharged`)" % (ref, k)))
+    for ref in sorted(base - set(debt)):
+        fails.append((bpath, "premise", "`%s` is no longer premise debt "
+                      "(ledgered, conditional, premise-free or uncited); "
+                      "delete it from the baseline" % ref))
     return fails, by_thm
+
+
+def says(word, ln):
+    """`word` in the row, not negated: "non-vacuous" / "not circular" /
+    "no placeholder" do not count."""
+    return re.search(r"(?<![\w-])(?<!non-)(?<!not )(?<!no )%s" % word, ln,
+                     re.I) is not None
+
+
+# --- premise detection (textual) -------------------------------------------
+# Counts the premises of a cited theorem from its SOURCE statement: top-level
+# `->` antecedents after `forall` binders (an `<->` is not one), binders
+# before the colon that are not types of values are not counted, plus every
+# Hypothesis / Hypotheses / Context declared in a Section still open at the
+# theorem.  Known limits: a premise hidden inside a named Prop that is the
+# CONCLUSION (e.g. `Theorem t : jordan_true_region_taut.`) is not seen;
+# premises written as binders `(H : P)` before the colon are not counted;
+# notations that expand to implications are not seen.  It flags candidates;
+# `check_ledger_assumptions.py` remains the kernel-level check.
+
+THM_DEF = (r"^\s*(?:Local\s+|Global\s+)?(?:Theorem|Lemma|Corollary|"
+           r"Proposition|Fact|Remark|Example)\s+%s\b")
+
+
+def strip_comments(s):
+    out, depth, i = [], 0, 0
+    while i < len(s):
+        if s.startswith("(*", i):
+            depth += 1
+            i += 2
+        elif depth and s.startswith("*)", i):
+            depth -= 1
+            i += 2
+        else:
+            if not depth:
+                out.append(s[i])
+            i += 1
+    return "".join(out)
+
+
+def split_arrows(s):
+    parts, depth, cur, i = [], 0, "", 0
+    while i < len(s):
+        ch = s[i]
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        if (depth == 0 and s.startswith("->", i)
+                and not (i > 0 and s[i - 1] == "<")):
+            parts.append(cur)
+            cur = ""
+            i += 2
+            continue
+        cur += ch
+        i += 1
+    parts.append(cur)
+    return parts
+
+
+def count_premises(stmt):
+    s, n = stmt.strip(), 0
+    while True:
+        if re.match(r"forall\b", s):
+            depth = 0
+            for i, ch in enumerate(s):
+                if ch in "([{":
+                    depth += 1
+                elif ch in ")]}":
+                    depth -= 1
+                elif ch == "," and depth == 0:
+                    s = s[i + 1:].strip()
+                    break
+            else:
+                return n
+            continue
+        parts = split_arrows(s)
+        if len(parts) == 1:
+            return n
+        n += len(parts) - 1
+        s = parts[-1].strip()
+
+
+_strip_cache = {}
+
+
+def premise_count(base, name):
+    """Premises of `base : name` read from source, or None (not a theorem
+    in this tree, e.g. a Definition)."""
+    for lane in LANES:
+        path = os.path.join(ROOT, lane, base)
+        if not os.path.isfile(path):
+            continue
+        if path not in _strip_cache:
+            with open(path, encoding="utf-8") as fh:
+                _strip_cache[path] = strip_comments(fh.read())
+        src = _strip_cache[path]
+        m = re.search(THM_DEF % re.escape(name), src, re.M)
+        if not m:
+            continue
+        rest = src[m.end():]
+        cut = [x for x in (rest.find("Proof."), rest.find(":=")) if x >= 0]
+        stmt = rest[:min(cut)] if cut else rest
+        depth, colon = 0, None
+        for i, ch in enumerate(stmt):
+            if ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                depth -= 1
+            elif ch == ":" and depth == 0 and not stmt.startswith(":=", i):
+                colon = i
+                break
+        body = stmt[colon + 1:] if colon is not None else stmt
+        n = count_premises(body.rstrip().rstrip("."))
+        stack = []
+        for mm in re.finditer(r"^\s*(?:Section\s+(\w+)|End\s+(\w+)|"
+                              r"(Hypothesis|Hypotheses|Context)\b[^.]*)\.",
+                              src[:m.start()], re.M):
+            if mm.group(1):
+                stack.append([mm.group(1), 0])
+            elif mm.group(2):
+                if stack and stack[-1][0] == mm.group(2):
+                    stack.pop()
+            elif mm.group(3) and stack:
+                stack[-1][1] += 1
+        return n + sum(h for _, h in stack)
+    return None
+
+
+def read_baseline():
+    out = set()
+    if os.path.isfile(PREMISE_BASELINE):
+        with open(PREMISE_BASELINE, encoding="utf-8") as fh:
+            for ln in fh:
+                ln = ln.split("#", 1)[0].strip()
+                if ln:
+                    out.add(ln)
+    return out
+
+
+def premise_debt(claims, by_thm):
+    """Theorems cited in non-conditional rows, with premises, without
+    ledger lines -> {ref: (lineno, count)}."""
+    out = {}
+    for lineno, ln, cond, refs in claims:
+        if cond:
+            continue
+        for ref in refs:
+            if ref in by_thm or ref in out:
+                continue
+            base, name = ref.split(" : ")
+            k = premise_count(base, name)
+            if k:
+                out[ref] = (lineno, k)
+    return out
 
 
 def row_verdict(ln, cond, ref, hs):
@@ -209,16 +390,13 @@ def row_verdict(ln, cond, ref, hs):
             if not re.search(r"(?<![\w'])%s(?![\w'])" % re.escape(name), ln):
                 out.append(("refuted", "%s is refuted by `%s`; the row must "
                             "cite it" % (what, name)))
-            if h["scope"] == "universal" and not re.search(r"vacuous", ln,
-                                                           re.I):
+            if h["scope"] == "universal" and not says("vacuous", ln):
                 out.append(("vacuous", "%s is refuted for every input; the "
                             "row must say \"vacuous\"" % what))
-        elif h["status"] == "circular" and not re.search(r"circular", ln,
-                                                           re.I):
+        elif h["status"] == "circular" and not says("circular", ln):
             out.append(("vacuous", "%s restates the conclusion; the row "
                         "must say \"circular\"" % what))
-        elif h["status"] == "placeholder" and not re.search(
-                r"placeholder", ln, re.I):
+        elif h["status"] == "placeholder" and not says("placeholder", ln):
             out.append(("placeholder", "%s is defined as True; the row must "
                         "say \"placeholder\"" % what))
     return out
@@ -248,7 +426,23 @@ def selftest():
         ("| x (placeholder) `[cond]` |", True, hs("placeholder", "universal"),
          []),
     ]
+    cases += [
+        ("| non-vacuous x h_refuted `[cond]` |", True,
+         hs("refuted", "universal", ev), ["vacuous"]),
+        ("| not circular `[cond]` |", True, hs("circular", "universal"),
+         ["vacuous"]),
+    ]
     bad = 0
+    for stmt, want in [
+            ("forall a b, P a -> Q b -> R", 2),
+            ("forall (f : R -> R) x, f x = 0", 0),
+            ("forall a, P a <-> Q a", 0),
+            ("forall a, (P a -> Q a) -> forall b, S b -> T", 2),
+            ("A -> B -> C", 2)]:
+        if count_premises(stmt) != want:
+            bad += 1
+            print("%s selftest FAIL: count_premises(%r) != %d"
+                  % (TAG, stmt, want), file=sys.stderr)
     for ln, cond, h, want in cases:
         got = [r for r, _ in row_verdict(ln, cond, "T.v : t", h)]
         if got != want:
@@ -257,7 +451,7 @@ def selftest():
                   file=sys.stderr)
     if bad:
         return 2
-    print("%s selftest ok (%d cases)" % (TAG, len(cases)))
+    print("%s selftest ok (%d cases)" % (TAG, len(cases) + 5))
     return 0
 
 
