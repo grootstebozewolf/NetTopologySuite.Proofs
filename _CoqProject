@@ -164,11 +164,11 @@ theories/SheetHenCookLoop.v
 # ρ bag-loop cook modulo the named LeftoverBagTermArm QEX
 # (claimId 0007-rho-modulo-qex). Host/pure-R. Inductive leftover
 # Hit-split + fuel iterator; pairwise leftover_width, not bag-sum
-# measure. Park stays LoopObligation. No Axiom / Parameter / stub.
+# measure. cook_loop is LoopDischarged (letter 6b, #954). No Axiom / Parameter / stub.
 theories/SheetHenCookLoopModulo.v
 # ρ leftover-bag term measure (claimId 0007-rho-bag-term-measure).
 # Host/pure-R. leftover_hit_pair count; LStepHit decreases; LStepDecline
-# idle. leftover_quad_width stays conserved. Park stays LoopObligation.
+# idle. leftover_quad_width stays conserved. cook_loop is LoopDischarged (letter 6b, #954).
 # NURBS belayed. No Axiom / Parameter / stub.
 theories/SheetHenCookLoopTerm.v
 # forall-bag letter 1 (claimId 0007-forall-bag, #816). Host/pure-R.
@@ -177,18 +177,18 @@ theories/SheetHenCookLoopTerm.v
 theories/SheetHenBag.v
 # Circ leftover bag for |H|=2 + noded G on the locked vesica
 # (claimId 0007-circ-leftover-two-hit). Host/pure-R. Reuses leftover-bag
-# shape (interior 𝓘 Hit / Decline idle). Locked measure 2→1→0. Parks ρ
-# stays LoopObligation. Not leftover_quad_width. No Axiom / Parameter / stub.
+# shape (interior 𝓘 Hit / Decline idle). Locked measure 2→1→0. Parks ρ;
+# cook_loop is LoopDischarged (letter 6b, #954). Not leftover_quad_width. No Axiom / Parameter / stub.
 theories/CircularCookLeftoverTwoHit.v
 theories/Adr0007NodingEpic.v
 # Parks ρ leftover-bag term (claimId 0007-rho-leftover-bag-term).
 # Host/pure-R. Named missing ctors LeftoverWidthDecreases /
-# LeftoverKissArm / LeftoverShareMintArm. LoopObligation stands.
+# LeftoverKissArm / LeftoverShareMintArm. cook_loop is LoopDischarged (letter 6b, #954).
 # Sibling QED stays sibling. No Axiom / Parameter / stub.
 theories/HostRhoLeftoverBagTerm.v
 # Parks ρ modulo kiss / share-mint (claimId 0007-rho-modulo-kiss-share).
 # Host/pure-R. Named missing ctors ModuloKissStep / ModuloShareMintStep.
-# leftover_bag_step stays Hit-or-Decline. LoopObligation stands.
+# leftover_bag_step stays Hit-or-Decline. cook_loop is LoopDischarged (letter 6b, #954).
 # Sibling modulo-iter / LeftoverKissArm stay sibling. No Axiom / Parameter / stub.
 theories/HostRhoModuloKissShare.v
 # NodingNG chord-lane product face: 𝓘 + one cook step on one sheet.
@@ -459,10 +459,10 @@ theories/SheetHenNodedOv.v
 theories/SheetHenNodedOvGap.v
 # Letter 6a-ii. claimId none. Headline: bag_run_arm_noded.
 # CookLoopRho := rho_loop_discharged. Confluence conjunct is 6a-iii.
-# cook_loop_status stays LoopObligation. 3-axiom. No Admitted.
+# cook_loop_status is LoopDischarged (letter 6b, #954). 3-axiom. No Admitted.
 theories/SheetHenRhoLoop.v
 # Letter 6a-iii. claimId none. Headline: run_vset_determined.
-# cook_loop_rho_holds discharges CookLoopRho. cook_loop_status stays LoopObligation.
+# cook_loop_rho_holds discharges CookLoopRho. cook_loop_status is LoopDischarged (letter 6b, #954).
 # 3-axiom. No Admitted.
 theories/SheetHenRhoConf.v
 # Letter 6a-iii fixture. claimId none. pick_bag and pick_rev on three chords.

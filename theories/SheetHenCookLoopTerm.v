@@ -523,7 +523,7 @@ Proof.
   exact leftover_bag_term_measure_nat_wf.
 Qed.
 
-(* WITNESS {"claimId":"0007-rho-bag-term-measure","topic":"overlay","lemma":"ticket_0007_rho_bag_term_park_qed_or_qex","title":"rho bag-term measure park: LeftoverBagTermArm inhabits leftover_quad_width_decreases and kiss/share/mint leftover-quad rewrites (QED) or that ctor stays missing, leftover_quad_kiss_arm and leftover_quad_share_mint_arm stay uninhabited, and cook_loop stays LoopObligation (QEX); discharged QEX; measure letter is not LoopDischarged; do not remint kiss/share as width","file":"theories/SheetHenCookLoopTerm.v","witness":"0007-rho-bag-term-measure","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-rho-bag-term-measure","topic":"overlay","lemma":"ticket_0007_rho_bag_term_park_qed_or_qex","title":"rho bag-term measure park: LeftoverBagTermArm inhabits leftover_quad_width_decreases and kiss/share/mint leftover-quad rewrites (QED) or that ctor stays missing, leftover_quad_kiss_arm and leftover_quad_share_mint_arm stay uninhabited, and cook_loop is LoopDischarged (letter 6b, #954) (QEX); discharged QEX; this measure letter is not the 6b discharge; do not remint kiss/share as width","file":"theories/SheetHenCookLoopTerm.v","witness":"0007-rho-bag-term-measure","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_bag_term_park_qed_or_qex :
   cook_loop_ctor_inhabits CookLoopBagTerm
   \/

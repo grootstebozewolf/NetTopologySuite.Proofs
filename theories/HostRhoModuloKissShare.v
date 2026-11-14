@@ -292,7 +292,7 @@ Qed.
 (* Ticket-named QED ∨ QEX stop.                                               *)
 (* -------------------------------------------------------------------------- *)
 
-(* WITNESS {"claimId":"0007-rho-modulo-kiss-share","topic":"overlay","lemma":"ticket_0007_rho_modulo_kiss_share_qed_or_qex","title":"rho modulo kiss/share-mint: leftover_pair_kiss_ok and leftover_pair_share_mint_ok inhabit leftover-quad leftover_bag_step constructors leftover_bag_cook_fuel can consume while cook_loop stays LoopObligation and leftover_quad_width_decreases stays false (QED) or ModuloKissStep and ModuloShareMintStep stay missing leftover_bag_step stays Hit-or-Decline and cook_loop stays LoopObligation (QEX); discharged QEX; sibling modulo-iter QED and LeftoverKissArm/LeftoverShareMintArm are not bag Discharge","file":"theories/HostRhoModuloKissShare.v","witness":"0007-rho-modulo-kiss-share","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007-rho-modulo-kiss-share","topic":"overlay","lemma":"ticket_0007_rho_modulo_kiss_share_qed_or_qex","title":"rho modulo kiss/share-mint: leftover_pair_kiss_ok and leftover_pair_share_mint_ok inhabit leftover-quad leftover_bag_step constructors leftover_bag_cook_fuel can consume while cook_loop is LoopDischarged and leftover_quad_width_decreases stays false (QED) or ModuloKissStep and ModuloShareMintStep stay missing leftover_bag_step stays Hit-or-Decline and cook_loop is LoopDischarged (letter 6b, #954) (QEX); discharged QEX; sibling modulo-iter QED and LeftoverKissArm/LeftoverShareMintArm are not bag Discharge","file":"theories/HostRhoModuloKissShare.v","witness":"0007-rho-modulo-kiss-share","board":"ADR-0007"} *)
 Theorem ticket_0007_rho_modulo_kiss_share_qed_or_qex :
   (leftover_pair_kiss_ok
    /\ leftover_pair_share_mint_ok
