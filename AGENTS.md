@@ -1,5 +1,5 @@
 <!-- doc-kind: guide
-doc-kinds-sha256: 16ad4a1c61da60b8289b7b571f12d347ca63053b0c2516bb0eb4328bce4b2a01
+doc-kinds-sha256: ba15ce08f91d1159d82b709507c305ac67cf5e7d8133d6b9ca972b1f8b69c896
 -->
 # Agent Instructions
 
@@ -47,8 +47,8 @@ Adapted from [NetTopologySuite#875](https://github.com/NetTopologySuite/NetTopol
   guide|ledger|finding -->`. Guides/ledgers: net ≤ 0 prose (exempt: header, `|` rows, ledger claim rows, thm13 `## Status
   (date):`); each theorem anchor / `.v` reference resolves or is listed in `docs/doc-anchor-baseline.txt` (`dead` only shrinks).
   Findings (scout, attacks, dated writeups): `date:`, `Provenance: <sha>`, `Theorems:`, SUMMARY/OUTCOME; immutable once
-  merged: new finding with `Supersedes: <old>`, plus `> Superseded-by: <new>` in the old. Ledger `[cond]`/Ax = `Print
-  Assumptions` (`check_ledger_assumptions.py`). Override: label `ratchet-override` + `Ratchet-Override-Reason:` in PR body.
+  merged: new finding with `Supersedes: <old>`, plus `> Superseded-by: <new>` in the old. Ledger `[cond]`/Ax (0–4, no `C`) = `Print
+  Assumptions` (`check_ledger_assumptions.py`, blocking). Override: label `ratchet-override` + `Ratchet-Override-Reason:` in PR body.
   Edit either script → edit this bullet + `doc-kinds-sha256`. Cite-or-cut (#846): "stays QED/QEX" cites its `claimId`.
 
 ## Before finishing

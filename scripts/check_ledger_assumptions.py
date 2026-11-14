@@ -16,9 +16,11 @@
 #                  never closed over, an Axiom/Parameter, an Admitted). A
 #                  conditional or axiom-dependent theorem cannot be listed
 #                  as unconditional.
-#   ax             the Ax cell over-claims: `0`/`C` but not closed; `3` but
+#   ax             the Ax cell over-claims: `0` but not closed; `3` but
 #                  outside A; `4` but outside F; `1`/`2` but more axioms
 #                  than that. Under-claiming (Ax 3, closed) is allowed.
+#                  `C` is refused: the ledger used it both for "closed" and
+#                  for Category C (`classic`), so it states neither.
 #   resolve        a cited name has no definition in its module.
 # Rows in a `[cond]` row may carry extra assumptions; their Ax cell is then
 # checked against the allowlisted part only.
@@ -154,7 +156,7 @@ def verdict(ax_cell, cond, axioms, allow):
         out.append(("unconditional", "listed without `[cond]` but rests on "
                     "%s" % ", ".join(extra)))
     used = known if cond else names
-    if ax_cell in ("0", "C"):
+    if ax_cell == "0":
         if used:
             out.append(("ax", "Ax `%s` claims closed; uses %s"
                         % (ax_cell, ", ".join(used))))
@@ -172,8 +174,8 @@ def verdict(ax_cell, cond, axioms, allow):
             out.append(("ax", "Ax `%s` but uses %d: %s"
                         % (ax_cell, len(used), ", ".join(used))))
     else:
-        out.append(("ax", "unrecognised Ax cell `%s` (want 0|C|1|2|3|4)"
-                    % ax_cell))
+        out.append(("ax", "unrecognised Ax cell `%s` (want 0|1|2|3|4; `C` "
+                    "is ambiguous)" % ax_cell))
     return out
 
 
@@ -253,7 +255,7 @@ def selftest():
         ("3", False, R, []),
         ("3", False, [], []),                               # under-claim ok
         ("0", False, R, ["ax"]),
-        ("C", False, [], []),
+        ("C", False, [], ["ax"]),
         ("3", False, R + [CLASSIC], ["ax"]),
         ("4", False, R + [CLASSIC], []),
         ("3", False, R + ["NTS.Proofs.Foo.H"], ["unconditional", "ax"]),
