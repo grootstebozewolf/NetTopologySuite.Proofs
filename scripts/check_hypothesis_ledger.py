@@ -22,9 +22,13 @@
 #               declared in UNAUDITED below (a shrinking list).
 #   tag         a ledger theorem with any non-discharged hypothesis is cited
 #               only in rows tagged `[cond]` (no `[exact]`-only row).
-#   vacuous     a theorem with a `universal` + `refuted` or a `circular`
-#               hypothesis is cited only in rows that say "vacuous" or
-#               "circular" (case-insensitive).
+#   refuted     a theorem with a `refuted` hypothesis (any scope) is cited
+#               only in rows that name the refuting theorem (the evidence's
+#               bare name). A per-input refutation shrinks what the row
+#               covers; a reader must be able to find the witness.
+#   vacuous     a `universal` + `refuted` hypothesis also needs the word
+#               "vacuous" in the row (nothing satisfies it); a `circular`
+#               one needs "circular" (case-insensitive).
 #   resolve     every theorem and evidence anchor names a definition in
 #               theories/, theories-flocq/ or docs/h1-vacuity/.
 #   fields      status, scope in vocabulary; evidence present where the
@@ -33,8 +37,9 @@
 # Static: no rocq needed. Kernel facts behind `refuted` evidence are
 # compiled by the rocq jobs (product modules) and hunt_probe_smoke.sh.
 #
-# Usage: check_hypothesis_ledger.py [--summary]
+# Usage: check_hypothesis_ledger.py [--summary | --selftest]
 #   --summary   also print per-theorem and total status counts.
+#   --selftest  row-rule checks on canned rows only (also run first always).
 # Exit: 0 ok · 1 violation · 2 usage / IO error.
 #
 # License: BSD-3-Clause (see LICENSE)
@@ -184,21 +189,72 @@ def check(rows, claims):
                               "but has no hypothesis-ledger line" % ref))
             if hs is None:
                 continue
-            if not cond and any(h["status"] != "discharged" for h in hs):
-                fails.append((where, "tag", "`%s` has open/reduced/refuted "
-                              "hypotheses but the row is not [cond]" % ref))
-            vac = [h for h in hs if h["status"] == "circular" or
-                   (h["status"] == "refuted" and h["scope"] == "universal")]
-            if vac and not re.search(r"vacuous|circular", ln, re.I):
-                fails.append((where, "vacuous", "`%s` rests on a %s "
-                              "hypothesis (`%s`); the row must say so"
-                              % (ref, vac[0]["status"],
-                                 vac[0]["hypothesis"][:60])))
+            for rule, detail in row_verdict(ln, cond, ref, hs):
+                fails.append((where, rule, detail))
     stale = sorted(u for u in UNAUDITED if u in by_thm)
     for u in stale:
         fails.append((os.path.relpath(__file__, ROOT), "coverage",
                       "`%s` is itemised; delete it from UNAUDITED" % u))
     return fails, by_thm
+
+
+def row_verdict(ln, cond, ref, hs):
+    """Rules for one claims row `ln` citing theorem `ref`, whose ledger
+    lines are `hs`. -> [(rule, detail)]."""
+    out = []
+    if not cond and any(h["status"] != "discharged" for h in hs):
+        out.append(("tag", "`%s` has open/reduced/refuted hypotheses but "
+                    "the row is not [cond]" % ref))
+    for h in hs:
+        what = "`%s` (`%s`)" % (ref, h["hypothesis"][:60])
+        if h["status"] == "refuted":
+            e = ANCHOR.fullmatch(h["evidence"].strip())
+            name = e.group(2) if e else h["evidence"].strip()
+            if not re.search(r"(?<![\w'])%s(?![\w'])" % re.escape(name), ln):
+                out.append(("refuted", "%s is refuted by `%s`; the row must "
+                            "cite it" % (what, name)))
+            if h["scope"] == "universal" and not re.search(r"vacuous", ln,
+                                                           re.I):
+                out.append(("vacuous", "%s is refuted for every input; the "
+                            "row must say \"vacuous\"" % what))
+        elif h["status"] == "circular" and not re.search(r"circular", ln,
+                                                           re.I):
+            out.append(("vacuous", "%s restates the conclusion; the row "
+                        "must say \"circular\"" % what))
+    return out
+
+
+def selftest():
+    hs = lambda st, sc, ev="": [{"hypothesis": "H", "status": st,
+                                 "scope": sc, "evidence": ev}]
+    ev = "Q.v : h_refuted"
+    cases = [
+        ("| x `[cond]` |", True, hs("open", "per-input"), []),
+        ("| x `[exact]` |", False, hs("open", "per-input"), ["tag"]),
+        ("| x `[exact]` |", False, hs("discharged", "per-input", ev), []),
+        ("| x `[cond]` |", True, hs("refuted", "per-input", ev), ["refuted"]),
+        ("| x `Q.v : h_refuted` `[cond]` |", True,
+         hs("refuted", "per-input", ev), []),
+        ("| x h_refuted_more `[cond]` |", True,
+         hs("refuted", "per-input", ev), ["refuted"]),
+        ("| x h_refuted `[cond]` |", True,
+         hs("refuted", "universal", ev), ["vacuous"]),
+        ("| VACUOUS x h_refuted `[cond]` |", True,
+         hs("refuted", "universal", ev), []),
+        ("| x `[cond]` |", True, hs("circular", "universal"), ["vacuous"]),
+        ("| CIRCULAR x `[cond]` |", True, hs("circular", "universal"), []),
+    ]
+    bad = 0
+    for ln, cond, h, want in cases:
+        got = [r for r, _ in row_verdict(ln, cond, "T.v : t", h)]
+        if got != want:
+            bad += 1
+            print("%s selftest FAIL: %r -> %s, want %s" % (TAG, ln, got, want),
+                  file=sys.stderr)
+    if bad:
+        return 2
+    print("%s selftest ok (%d cases)" % (TAG, len(cases)))
+    return 0
 
 
 def summary(by_thm):
@@ -215,6 +271,9 @@ def summary(by_thm):
 
 
 def main(argv):
+    rc = selftest()
+    if rc or "--selftest" in argv:
+        return rc
     try:
         rows = read_ledger()
         claims = claim_rows()
