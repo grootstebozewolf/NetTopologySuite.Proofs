@@ -178,7 +178,7 @@ Proof.
   split; [exact i8_recovers_locked_plus|exact i8_recovers_locked_minus].
 Qed.
 
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i8_neq_bag_qed_or_qex","title":"I.8 one-step leftover confluence is not the bag cook loop (QED) or the bag loop is discharged (QEX); discharged QED; cook_loop stays LoopObligation","file":"theories/CircularCookConfluence.v","witness":"0007-I.8-leftover-confluence","board":"ADR-0007"} *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_i8_neq_bag_qed_or_qex","title":"I.8 one-step leftover confluence is not the bag cook loop (QED) or the bag loop is discharged (QEX); discharged QED; cook_loop is LoopDischarged (letter 6b, #954)","file":"theories/CircularCookConfluence.v","witness":"0007-I.8-leftover-confluence","board":"ADR-0007"} *)
 
 Theorem ticket_0007_i8_neq_bag_qed_or_qex :
   ((forall O1 r1 O2 r2 ti tj,

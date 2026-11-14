@@ -387,7 +387,7 @@ QEX is not acceptance. Supporting shapes are not a noder.
 closed checklist rows: pairwise chord-split finiteness plus one-step
 confluence is QED; binary64 / OverlayNGRobust sit on one sheet is QED;
 `DdirDart` := `(Hen * Hen)` = chicken ends is QED. The bag-level cook
-loop is Parks ρ (named 508-style QEX), not a soft gap. **Accepted**
+loop is Parks ρ (named 508-style QEX; discharged later by letter 6b, #954), not a soft gap. **Accepted**
 by Joost (BDFL) 2026-09-07.
 
 ### Four prior review conditions — discharged
@@ -407,7 +407,7 @@ Former named soft gaps (a)(b)(c) are checklist rows, not open naming.
 
 | Former | Stop | Arm | Settled as |
 |--------|------|-----|------------|
-| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The bag loop is Parks ρ (`ticket_0007_cook_term_qed_or_qex` **QEX**) — not a soft gap |
+| (a) Cook termination / confluence on the chord lane | `ticket_0007_pairwise_split_qed_or_qex` | **QED** — pairwise leftover-width split is finite; one Hit-split is confluent | Host-lane close. The cook loop is `LoopDischarged` via `CookLoopRho` (`ticket_0007_cook_term_qed_or_qex` **QED**, letter 6b, #954) |
 | (b) How binary64 / OverlayNGRobust sit on a sheet | `ticket_0007_sheet_realiz_qed_or_qex` | **QED** — realization preserves `S`; OverlayNGRobust is a finite snap-sequence, not `𝓘` | Host-lane close. A binary64 noder, including sheet vs kiss, stays Honest remaining / CRV-TOUCH |
 | (c) Chicken vs Dart so `ddir` reviewers do not invent three types | `ticket_0007_chicken_dart_qed_or_qex` | **QED** — `DdirDart` := `(Hen * Hen)` = chicken ends; CoordDart ≠ that role | Host-lane close. Reminting the `Dart.v` coordinate-pair definition is a later letter, not a third type |
 | (d) This memo | this section | brief only | Soft gaps closed; **Accepted** 2026-09-07 |
@@ -665,7 +665,7 @@ Status.
 | `CircularCookConfluence.v : ticket_0007_i8_confluent_qed_or_qex` | **QED** — ∀ leftovers_ab = leftovers_ba on γ_full | `CircularCookConfluence.v : circ_split_step_confluent` |
 | `CircularCookConfluence.v : ticket_0007_i8_cook_qed_or_qex` | **QED** — cook leftovers inhabit the bag; locked plus/minus recovered | `CircularCookConfluence.v : cook_circ_root_is_leftovers_ab` |
 | `CircularCookConfluence.v : ticket_0007_i8_neq_bag_qed_or_qex` | **QED** — one-step ≠ bag loop | `CircularCookConfluence.v : i8_one_step_not_bag_loop` |
-| `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma is CircGammaDischarged; bag loop stays obligation | `CircularCook.v : circular_gamma_is_discharged` |
+| `CircularCookConfluence.v : ticket_0007_i8_scope_qed_or_qex` | **QEX** — CircGamma is CircGammaDischarged; cook loop LoopDischarged (letter 6b, #954) | `CircularCook.v : circular_gamma_is_discharged` |
 
 Witness: `0007-I.8-leftover-confluence`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -826,7 +826,7 @@ Does not reopen Status.
 | `CircularCookCloseII.v : ticket_0007_ii4_inhabitant_qed_or_qex` | **QED** — sidecar `I_ok_circ` Hit / Empty / Decline on locked fixtures; one Arc | `CircularCookCloseII.v : ii4_sidecar_inhabitant`, `CircularCookCloseII.v : ii4_inhabitant_is_one_arc` |
 | `CircularCookCloseII.v : ticket_0007_ii4_not_kiss_qed_or_qex` | **QED** — leftover meet is Hit and ¬Empty; `I_ok_circ` Hit ≠ host `I_ok` | `CircularCookCloseII.v : ii4_leftover_meet_not_empty`, `CircularCookCloseII.v : ii4_I_ok_circ_hit_not_host_I_ok` |
 | `CircularCookCloseII.v : ticket_0007_ii4_host_qed_or_qex` | **QEX** — CircGamma is CircGammaDischarged; first cook stays chord–chord | `CircularCook.v : circular_gamma_is_discharged`, `SheetHenCookCore.v : first_cook_scope_chord_chord` |
-| `CircularCookCloseII.v : ticket_0007_ii4_phase_b_qed_or_qex` | **QEX** — Phase B CS / CC / CP gaps named; bag loop stays obligation; H⊥ parked; SQL/MM not done; Campaign II closed | `CircularCookCloseII.v : phase_b_cs_is_gap`, `CircularCookCloseII.v : ii4_not_bag_noder`, `CircularCookCloseII.v : campaign_ii_is_closed` |
+| `CircularCookCloseII.v : ticket_0007_ii4_phase_b_qed_or_qex` | **QEX** — Phase B CS / CC / CP gaps named; cook loop LoopDischarged (letter 6b, #954); H⊥ parked; SQL/MM not done; Campaign II closed | `CircularCookCloseII.v : phase_b_cs_is_gap`, `CircularCookCloseII.v : ii4_not_bag_noder`, `CircularCookCloseII.v : campaign_ii_is_closed` |
 
 Witness: `0007-II.4-campaign-ii-close`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1119,11 +1119,11 @@ Phase B done-when / SQL/MM cathedral. Does not reopen Status.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
-| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QEX** — `LoopObligation`; `LeftoverBagTermArm` missing; leftover_quad width conserved; pairwise split stays sibling QED | `SheetHenCookLoop.v : leftover_bag_term_arm_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
+| `Adr0007NodingEpic.v : ticket_0007_cook_term_qed_or_qex` | **QED** (letter 6b, #954) — `LoopDischarged` via `CookLoopRho`; `LeftoverBagTermArm` stays missing; leftover_quad width conserved; pairwise split stays sibling QED | `SheetHenRhoConf.v : cook_loop_rho_holds`, `SheetHenCookLoop.v : leftover_bag_term_arm_missing`, `SheetHenCookLoop.v : leftover_quad_width_conserved` |
 | `SheetHenCookLoop.v : ticket_0007_rho_gap_qed_or_qex` | **QEX** — named missing constructor + conserved bag-sum | `SheetHenCookLoop.v : leftover_bag_term_arm_missing` |
 | `SheetHenCookLoop.v : ticket_0007_rho_cycles_qed_or_qex` | **QEX** — Empty / Decline mint nothing; ShareOne ignores width; MintTwo is not a width bound | `SheetHenCookLoop.v : no_hit_no_leftover_split`, `SheetHenCookLoop.v : mint_two_not_width_bound` |
-| `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` stays obligation | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
-| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; bag loop stays obligation; NURBS stays out | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
+| `SheetHenCookLoop.v : ticket_0007_rho_neq_pairwise_qed_or_qex` | **QED** — pairwise + one-step confluence hold; `cook_loop` is LoopDischarged (letter 6b, #954) | `SheetHenCookLoop.v : pairwise_qed_not_bag_discharge` |
+| `SheetHenCookLoop.v : ticket_0007_rho_scope_qed_or_qex` | **QEX** — leftover_quad is one Hit-split; arc term stays sister; cook loop LoopDischarged (letter 6b, #954); NURBS stays out | `SheetHenCookLoop.v : leftover_quad_is_one_hit`, `SheetHenCookLoop.v : arc_cook_term_is_sister` |
 
 Witness: `0007-rho-bag-loop`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
@@ -1140,8 +1140,8 @@ step yield `NodedOnSheet` evidence. Empty ≠ Decline. Snap ≠ `𝓘`.
 Identity is structural (`ShareOne` / `MintTwo`). A locked two-pair
 bag (Hit cook + Empty no-mint) is still pairwise / one-step.
 
-**QEX.** The full repeat-until-noded bag loop stays obligation.
-Parks ρ — `LeftoverBagTermArm` missing; leftover_quad width conserved.
+**QED (letter 6b, #954).** The repeat-until-noded cook loop is `LoopDischarged` via `CookLoopRho`.
+`LeftoverBagTermArm` stays missing; leftover_quad width conserved.
 First cook stays chord–chord.
 Shewchuk A–D / Hobby / Priest / Jordan are not dependencies.
 
@@ -1267,7 +1267,7 @@ ship Campaign I–II.
 chord-seed reuse (`RelateClothoid.v : clothoid_chord_proper_cross_share`).
 Demote-to-chord is NodingNG / host first cook, not a clothoid Hit.
 
-**QEX parks.** Campaign I–II / Fresnel-as-noding / bag loop.
+**QEX parks.** Campaign I–II / Fresnel-as-noding (the cook loop itself is discharged, letter 6b, #954).
 Host `MkClothoid` inhabits `Egg` (intake letter
 `0007-intake-mkclothoid`). Hit-arm / first-cook expand are
 discharged QED by claimId `0007-clothoid-first-cook`. Parks ι / ρ cited once.
