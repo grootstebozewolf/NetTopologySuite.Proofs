@@ -50,6 +50,7 @@ PROBES=(
   docs/h1-vacuity/LookaheadQEX.v
   docs/h1-vacuity/LatticeRouteQEX.v
   docs/h1-vacuity/PendingTwinWitness.v
+  docs/h1-vacuity/OverlayH1ContQEX.v
 )
 
 fail=0
