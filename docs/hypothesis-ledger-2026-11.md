@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-14
 Provenance: e2ddc4d519d4725a5c765f191c32fc5712227d89
-Theorems: `OverlayCorrectness.v : overlay_ng_correct_conditional`, `HobbyTheorem_b64.v : hobby_theorem_4_1_conditional`, `ArcOverlay.v : arc_overlay_correct_chord_approx`, `ExtractFacesHoles.v : extract_faces_holes_valid`, `ClothoidHalley.v : clothoid_halley_filtered_corpus_le_four`, `ClothoidHalley_b64.v : b64_clothoid_halley_filtered_corpus_le_four`, `RelateClothoid.v : clothoid_L_unique_on_branch`, `JCTEscapeDescentHolds.v : parity_seam_offring_taut`
+Theorems: `OverlayCorrectness.v : overlay_ng_correct_conditional`, `HobbyTheorem_b64.v : hobby_theorem_4_1_conditional`, `ArcOverlay.v : arc_overlay_correct_chord_approx`, `ExtractFacesHoles.v : extract_faces_holes_valid`, `ClothoidHalley.v : clothoid_halley_filtered_corpus_le_four`, `ClothoidHalley_b64.v : b64_clothoid_halley_filtered_corpus_le_four`, `RelateClothoid.v : clothoid_L_unique_on_branch`, `JCTEscapeDescentHolds.v : parity_seam_offring_taut`, `RingCurvatureModels.v : extract_rings_valid_hyperbolic_of_guards`
 -->
 # Hypothesis ledger — what the conditionals actually assume (2026-11)
 
@@ -17,22 +17,21 @@ looked up for a discharging, reducing or refuting theorem. The result is
 complements `check_ledger_assumptions.py`: `Print Assumptions` never sees an
 inline premise `H -> concl`, which is how two of the defects below passed.
 
-## Coverage at this commit
+## Coverage
 
-42 theorems itemised, 57 hypotheses:
+All 76 theorems cited in conditional rows (`[cond]`, or "cond per entry"
+in the batch rows) are itemised: 103 hypotheses. The script's `UNAUDITED`
+set is empty.
 
 | status | count | meaning |
 |---|---|---|
-| discharged | 10 | a Qed theorem proves it outright |
+| discharged | 34 | a Qed theorem proves it outright (incl. 25 theorems with no deferred premise, cited in mixed batch rows) |
 | reduced | 11 | proved from per-input guards that are themselves open |
 | instance | 4 | proved for named instances only (circle, Fresnel, balanced convex) |
-| open | 26 | nothing proves or refutes it |
-| refuted | 4 | a Qed theorem proves it false |
+| open | 44 | nothing proves or refutes it |
+| refuted | 6 | a Qed theorem proves it false |
 | circular | 2 | the hypothesis is the conclusion |
-
-30 theorems cited in `[cond]` rows are not itemised yet (the three
-PARALLEL TRACK batch rows and the Stage D sibling names). They are listed by
-name in the script's `UNAUDITED` set, which may only shrink.
+| placeholder | 2 | the named Prop is defined as `True`; its content is a comment |
 
 ## Defects found
 
@@ -81,6 +80,17 @@ name in the script's `UNAUDITED` set, which may only shrink.
    `[256; 1]`. Ledger status `open`. It is superseded, so this is a
    labelling gap, not a soundness one.
 
+8. **The curvature-model corollaries rest on placeholders.**
+   `RingCurvatureModels.v : extract_rings_valid_hyperbolic_of_guards` and
+   `extract_rings_valid_spherical_hemisphere_of_guards` take
+   `beltrami_klein_correspondence` / `gnomonic_correspondence`, both defined
+   as `True` with the geometry in a comment. They are the planar guarded
+   theorem renamed and prove nothing about curved geometry. Row now says so.
+9. **`point_in_ring_correct_jct_cont`'s row called it "non-vacuous"** without
+   saying its seam is false at on-edge points
+   (`JCT_OnEdgeCounterexample.v : parity_seam_strict_refuted_on_edge`).
+   Found by the per-input refutation rule; row fixed.
+
 ## Not defects, but worth stating
 
 - The JCT lane's chain of `[cond]` rows (trapped half, level jump, escape
@@ -94,8 +104,15 @@ name in the script's `UNAUDITED` set, which may only shrink.
 
 ## Follow-ups
 
-- Restate H1 of `overlay_ng_correct_conditional` with the off-ring + taut
-  guards and discharge it from `parity_seam_offring_taut`.
-- Itemise the 30 `UNAUDITED` names.
+Done on this branch: H1 of the overlay headline restated and discharged
+(`OverlayCorrectnessGuarded.v : overlay_ng_correct_guarded`); QEX for the arc
+bridges and the arc headline's conclusion
+(`docs/h1-vacuity/ArcOverlayBridgeQEX.v`); all names itemised. Open:
 
-SUMMARY ok=32 warn=3 bug=7 — of 42 itemised theorems, 7 were vacuous, circular or mis-tagged (defects 1–6) and 3 carry an unproved "REFUTED" label (defect 7); 26 of 57 hypotheses are open.
+- H2 and H_bridge of the overlay headline.
+- A correct conclusion for `arc_overlay_correct_chord_approx` (region
+  closeness, e.g. Hausdorff, not closeness to the arc curve).
+- Derive `b64_orient2d_expansion_cc_safe` from the coordinate domain.
+- Either formalise the curvature-model correspondences or drop the names.
+
+SUMMARY ok=61 warn=6 bug=9 — of 76 itemised theorems, 9 were vacuous, circular, placeholder-backed or mis-labelled (defects 1–6, 8, 9) and 6 carry an unproved "REFUTED" label (defect 7); 44 of 103 hypotheses are open.

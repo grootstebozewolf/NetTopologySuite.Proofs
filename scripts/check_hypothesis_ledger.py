@@ -13,13 +13,18 @@
 #   refuted     a Qed theorem proves it false (evidence). With scope
 #               `universal` the headline is vacuous: nothing satisfies it.
 #   circular    the hypothesis restates the conclusion.
+#   placeholder the named Prop is defined as `True`: it holds trivially and
+#               the content it names (in a comment) is not formalised.
 #
 # check_ledger_assumptions.py reads `Print Assumptions`, which never sees an
 # inline premise (`H -> concl`). This check is the other half:
 #
-#   coverage    every `Mod.v : name` in the first cell of a `[cond]` row of
-#               docs/verified-claims.md has at least one ledger line, unless
-#               declared in UNAUDITED below (a shrinking list).
+#   coverage    every `Mod.v : name` in the first cell of a conditional row
+#               of docs/verified-claims.md (tagged `[cond]` or "cond per
+#               entry", as check_ledger_assumptions.py reads it) has at least
+#               one ledger line, unless declared in UNAUDITED below (a
+#               shrinking list, now empty). A `name*` cite expands to every
+#               definition with that prefix.
 #   tag         a ledger theorem with any non-discharged hypothesis is cited
 #               only in rows tagged `[cond]` (no `[exact]`-only row).
 #   refuted     a theorem with a `refuted` hypothesis (any scope) is cited
@@ -28,7 +33,8 @@
 #               covers; a reader must be able to find the witness.
 #   vacuous     a `universal` + `refuted` hypothesis also needs the word
 #               "vacuous" in the row (nothing satisfies it); a `circular`
-#               one needs "circular" (case-insensitive).
+#               one needs "circular"; a `placeholder` one needs
+#               "placeholder" (case-insensitive).
 #   resolve     every theorem and evidence anchor names a definition in
 #               theories/, theories-flocq/ or docs/h1-vacuity/.
 #   fields      status, scope in vocabulary; evidence present where the
@@ -58,46 +64,17 @@ CLAIMS = os.path.join(ROOT, "docs", "verified-claims.md")
 LANES = ("theories", "theories-flocq", os.path.join("docs", "h1-vacuity"))
 TAG = "[hyp-ledger]"
 
-STATUS = ("discharged", "reduced", "instance", "open", "refuted", "circular")
+STATUS = ("discharged", "reduced", "instance", "open", "refuted", "circular",
+          "placeholder")
 NEEDS_EVIDENCE = ("discharged", "reduced", "instance", "refuted")
 SCOPE = ("universal", "per-input")
 ANCHOR = re.compile(r"`?([A-Za-z0-9_]+\.v)\s*:\s*([A-Za-z0-9_']+)`?")
-COND = re.compile(r"\[cond\]")
+COND = re.compile(r"\[cond\]|\bcond per entry\b")  # as check_ledger_assumptions
 DEF = r"^\s*(?:Local\s+|Global\s+)?(?:Theorem|Lemma|Corollary|Proposition|Fact|Remark|Definition|Fixpoint|Inductive|Record)\s+%s\b"
 
-# [cond] ledger theorems not yet itemised. Shrink only.
-UNAUDITED = {
-    "DelaunayEmptyCircle.v : in_circle_test_iff_b64_inCircle_exact_pos",
-    "OverlayBridgeUnconditional.v : extract_rings_valid_holes_of_guards",
-    "TriangleContainmentConvex.v : gtri_region_is_convex",
-    "TriangleContainmentConvex.v : gtri_region_contains_segment",
-    "CurveLineariseGuardBridge.v : to_geometry_result_valid_of_guards",
-    "RelateNGContains.v : triangle_pair_regime_contains",
-    "RelateNGContains.v : contains_b_ring_inside",
-    "ArcArcCirclesSpan.v : arc_arc_intersects_of_circles_and_span",
-    "RelateCurveMatrix.v : geom_de9im_ii_cell_dim2_sound",
-    "ArcControlTriangleInSegment.v : arc_control_triangle_in_circular_segment",
-    "BufferAssembly.v : assemble_open_miter_chain",
-    "BufferAssembly.v : assemble_closed_miter_closed",
-    "BufferEndcap.v : flat_cap_ring_closed",
-    "RingCurvatureModels.v : extract_rings_valid_hyperbolic_of_guards",
-    "RingCurvatureModels.v : extract_rings_valid_spherical_hemisphere_of_guards",
-    "DelaunayFlipWitness.v : inCircle_R_double_swap",
-    "DelaunayFlipWitness.v : inCircle_R_flip_witness_iff",
-    "DelaunayFlipWitness.v : inCircle_R_flip_witness",
-    "TriangleContainmentConvex.v : gtri_region_strict_is_convex",
-    "TriangleContainmentConvex.v : gtri_region_strict_contains_segment",
-    "RelateNGContains.v : contains_b_ring_strictly_inside",
-    "CurveLineariseGuardBridge.v : to_geometry_result_valid_holes_of_guards",
-    "BufferAssembly.v : two_sided_walk_closed",
-    "Orient_b64_stage_d_cc.v : b64_orient_sign_stage_d_cc_sound",
-    "Shewchuk_vs_Z2.v : shewchuk_stage_d_cc_agrees_with_exact_intdet",
-    "Orient_b64_stage_d.v : b64_orient_sign_exact_sound",
-    "Orient_b64_expansion.v : b64_orient2d_expansion_nonoverlap",
-    "Shewchuk_vs_Z2.v : shewchuk_vs_z2_tiny_headline",
-    "Shewchuk_vs_Z2.v : shewchuk_vs_z2_tiny_headline_cc",
-    "Shewchuk_vs_Z2.v : orient2d_exact_cc_agrees_with_exact_intdet_cc",
-}
+# [cond] ledger theorems not yet itemised. Shrink only (empty since the
+# 2026-11 itemisation; a new [cond] row needs ledger lines, not an entry here).
+UNAUDITED = set()
 
 _src_cache = {}
 
@@ -117,6 +94,19 @@ def sources(base):
 def resolves(base, name):
     pat = re.compile(DEF % re.escape(name), re.M)
     return any(pat.search(t) for t in sources(base))
+
+
+def prefixed(base, pre):
+    """Names defined in `base` that start with `pre` (for `pre*` cites)."""
+    pat = re.compile(DEF % (re.escape(pre) + r"[A-Za-z0-9_']*"), re.M)
+    out = []
+    for src in sources(base):
+        for m in pat.finditer(src):
+            n = re.search(r"\b(%s[A-Za-z0-9_']*)" % re.escape(pre),
+                          m.group(0)).group(1)
+            if n not in out:
+                out.append(n)
+    return out or [pre + "*"]
 
 
 def key(base, name):
@@ -141,7 +131,13 @@ def claim_rows():
             if not ln.startswith("| `") and not ln.startswith("| eval"):
                 continue
             first = ln.split(" | ", 1)[0]
-            refs = [key(m.group(1), m.group(2)) for m in ANCHOR.finditer(first)]
+            refs = []
+            for m in ANCHOR.finditer(first):
+                if first[m.end(2):m.end(2) + 1] == "*":   # `Mod.v : pre_*`
+                    refs += [key(m.group(1), n)
+                             for n in prefixed(m.group(1), m.group(2))]
+                else:
+                    refs.append(key(m.group(1), m.group(2)))
             if refs:
                 out.append((i, ln, bool(COND.search(ln)), refs))
     return out
@@ -221,6 +217,10 @@ def row_verdict(ln, cond, ref, hs):
                                                            re.I):
             out.append(("vacuous", "%s restates the conclusion; the row "
                         "must say \"circular\"" % what))
+        elif h["status"] == "placeholder" and not re.search(
+                r"placeholder", ln, re.I):
+            out.append(("placeholder", "%s is defined as True; the row must "
+                        "say \"placeholder\"" % what))
     return out
 
 
@@ -243,6 +243,10 @@ def selftest():
          hs("refuted", "universal", ev), []),
         ("| x `[cond]` |", True, hs("circular", "universal"), ["vacuous"]),
         ("| CIRCULAR x `[cond]` |", True, hs("circular", "universal"), []),
+        ("| x `[cond]` |", True, hs("placeholder", "universal"),
+         ["placeholder"]),
+        ("| x (placeholder) `[cond]` |", True, hs("placeholder", "universal"),
+         []),
     ]
     bad = 0
     for ln, cond, h, want in cases:
