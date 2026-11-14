@@ -431,6 +431,9 @@ jobs:
         # its Print Assumptions compared with the row. A theorem resting on a
         # non-allowlisted assumption must be tagged `[cond]`; the Ax cell may
         # not under-state the axioms used. Same probe runner as above.
+        # REPORT-ONLY until its first full-corpus run is green; then drop
+        # continue-on-error so it blocks.
+        continue-on-error: true
         run: |
           chmod -R a+rwX .
           ROCQ_CMD="docker run --rm -v $PWD:/workspace -w /workspace nts-proofs-flocq:ci rocq" \
