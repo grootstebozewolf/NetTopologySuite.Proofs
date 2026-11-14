@@ -55,7 +55,9 @@ name in the script's `UNAUDITED` set, which may only shrink.
 3. **`arc_overlay_correct_chord_approx` was listed as "Unconditional".** It
    takes `H_A_bridge` / `H_B_bridge` as inline premises; the proof is a case
    split on `op`. The source's own §3 says the bridges fail for any polygon
-   wider than the sagitta. Retagged `[cond]`; no QEX yet.
+   wider than the sagitta. Retagged `[cond]`. Follow-up QEX:
+   `docs/h1-vacuity/ArcOverlayBridgeQEX.v` refutes both bridges and the
+   conclusion on a valid input.
 4. **`extract_faces_holes_valid` is vacuous on non-empty results.** Its
    `pairwise_no_proper_cross (result_darts …)` premise forces every edge
    degenerate (`ExtractFacesBridge.v : pairwise_darts_of_forces_degenerate`).
@@ -94,8 +96,6 @@ name in the script's `UNAUDITED` set, which may only shrink.
 
 - Restate H1 of `overlay_ng_correct_conditional` with the off-ring + taut
   guards and discharge it from `parity_seam_offring_taut`.
-- QEX for `H_A_bridge` (a chord square with a short arc and a centre point
-  far from it), or drop the headline.
 - Itemise the 30 `UNAUDITED` names.
 
 SUMMARY ok=32 warn=3 bug=7 — of 42 itemised theorems, 7 were vacuous, circular or mis-tagged (defects 1–6) and 3 carry an unproved "REFUTED" label (defect 7); 26 of 57 hypotheses are open.
