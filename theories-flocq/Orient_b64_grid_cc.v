@@ -1,9 +1,28 @@
 (* ============================================================================
    NetTopologySuite.Proofs.Flocq.Orient_b64_grid_cc
    ----------------------------------------------------------------------------
-   Stage D on carry_clean with NO per-operation hypotheses: on a common
-   binary grid, the coordinate domain alone implies every hypothesis of
-   b64_orient_sign_exact_cc_sound (Orient_b64_stage_d_cc.v).
+   The SHARED BINARY-LATTICE theorem: Stage D on carry_clean with NO
+   per-operation hypotheses.  On a shared binary lattice, the coordinate
+   domain alone implies every hypothesis of b64_orient_sign_exact_cc_sound
+   (Orient_b64_stage_d_cc.v).
+
+   WHAT "SHARED" COSTS.  Any six finite doubles lie on SOME common lattice
+   (take k as the smallest of their exponents), so sharing k is free.  The
+   restriction is the coefficient bound |n| < 2^52 on that common lattice,
+   i.e. a bounded DYNAMIC RANGE: the six coordinates' scales span at most
+   about 52 bits.  1 and 2^-60 fail exactly there (on the 2^-112 lattice, 1
+   has coefficient 2^112).  The lattice then gives both ends of the
+   numerical argument: bounded coefficients make differences exact and
+   bound every intermediate from above; the lattice spacing keeps every
+   nonzero product away from zero.
+
+   PROVENANCE.  The idea is classical in robust geometry (bounded-integer or
+   fixed-point inputs make coordinate differences exact; cf. Fortune and
+   Van Wyk, and the input assumptions behind Shewchuk's predicates).  What
+   is new here is the mechanized derivation for this Dekker implementation
+   (all 17 operations), the no-underflow side, and the two QEX showing a
+   magnitude bound cannot replace the lattice.  The ceiling 426 comes from
+   the crude per-step bounds, not from anything intrinsic.
 
    THE DOMAIN (orient2d_inputs_on_grid k).  All six coordinates are
    n * 2^k with ONE shared k and |n| < 2^52, grid_lo <= k <= grid_hi:

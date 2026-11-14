@@ -1,7 +1,7 @@
 | step | claim | OUTCOME | artifact |
 |---|---|---|---|
 | 0 | derive Stage D's per-operation hypotheses from `\|coord\| ≤ 2^507` alone | QEX: exactness fails (`P0.x = 2^-60`, `P1.x = 1`); no-underflow fails (coordinates `2^-600`) | `Orient_b64_grid_cc.v : cc_domain_diffs_not_exact, cc_domain_underflow` |
-| 1 | domain: one shared grid `n·2^k`, `\|n\| < 2^52`, `-484 ≤ k ≤ 426` (owner-approved shape; ceiling 426 not 455 because the per-step Dekker bounds are crude) | definition | `Orient_b64_grid_cc.v : orient2d_inputs_on_grid` |
+| 1 | domain: one shared binary lattice `n·2^k`, `\|n\| < 2^52`, `-484 ≤ k ≤ 426` (sharing `k` is free; the restriction is the coefficient bound, i.e. dynamic range; owner-approved shape; ceiling 426 not 455 because the per-step Dekker bounds are crude) | definition | `Orient_b64_grid_cc.v : orient2d_inputs_on_grid` |
 | 2 | exact differences on the grid | QED | `grid_minus` |
 | 3 | Dekker overflow safety from one magnitude bound per step | QED | `b64_Dekker_safe_of_bound` |
 | 4 | Dekker no-underflow on the grid (`2^(2k) ≥ 2^-968`) | QED | `grid_no_underflow` |
