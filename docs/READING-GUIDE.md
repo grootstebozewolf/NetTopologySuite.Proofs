@@ -61,13 +61,9 @@ and is not the curve.
   3. [`theories/ArcOrient.v`](../theories/ArcOrient.v), [`theories/ArcIntersect.v`](../theories/ArcIntersect.v),
      [`theories/ArcHotPixel.v`](../theories/ArcHotPixel.v) file headers — the R-side arc
      predicates.
-  4. `theories-flocq/ArcOrient_b64.v`,
-     `theories-flocq/ArcIntersect_b64.v`,
-     `theories-flocq/ArcHotPixel_b64.v` file headers — the binary64
-     mirrors. (NB: the live b64 arc files are
-     [`theories-flocq/ArcCircle_b64_compute.v`](../theories-flocq/ArcCircle_b64_compute.v) and
-     [`theories-flocq/ArcPixel_b64_compute.v`](../theories-flocq/ArcPixel_b64_compute.v); the three names
-     above are stale.)
+  4. [`theories-flocq/ArcCircle_b64_compute.v`](../theories-flocq/ArcCircle_b64_compute.v) and
+     [`theories-flocq/ArcPixel_b64_compute.v`](../theories-flocq/ArcPixel_b64_compute.v) file headers —
+     the binary64 arc mirrors.
 
 The curve-awareness proof needs and their status across issues #64–#69
 are triaged in [`../TRIAGE_NTS_JTS_ISSUES.md`](../TRIAGE_NTS_JTS_ISSUES.md) (umbrella) and the
