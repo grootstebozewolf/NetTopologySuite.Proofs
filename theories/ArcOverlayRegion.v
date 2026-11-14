@@ -18,11 +18,17 @@
        arc.  Witness: the radial foot.  The minor-arc premise is necessary: a
        major arc's segment contains its centre, which is a full radius from
        the arc (`segment_point_near_arc_needs_minor`, §4).
-   §2  True region (`curve_region`).  The chord polygon, flipped inside each
-       arc's circular segment (segment parity).  This is the standard curved
-       region when the segments are pairwise disjoint and each lies wholly
-       inside or wholly outside the chord polygon -- a DEFINITION, not tied
-       by any theorem to the POINT_IN_CURVE_RING oracle.
+   §2  True region (`curve_region`).  Per ring: the chord polygon, flipped
+       in each of the ring's caps (`arc_flip`: circular segment minus the
+       polyline triangle S M E, since the chord approximation already runs
+       through the arc midpoint).  Per polygon: outer minus holes.  Per
+       geometry: union of polygons, as `point_set`.  So no disjointness of
+       caps or polygons is needed -- which matters, because
+       `valid_curve_geometry` implies neither
+       (docs/h1-vacuity/CurveRegionModelQEX.v).  What remains is a
+       DEFINITION: a ring's region is its even-odd region, which is the
+       Jordan interior for simple rings (not required by validity), and no
+       theorem ties it to the POINT_IN_CURVE_RING oracle.
    §3  Headline (`arc_overlay_region_close`).  For valid inputs whose arcs are
        all minor, at every point outside the `max_sagitta` band the chord
        overlay and the true-region overlay agree, for every op.  No bridge
@@ -194,46 +200,109 @@ Qed.
 (* §2  The true curved region: chord polygon, flipped by segment parity.      *)
 (* -------------------------------------------------------------------------- *)
 
+(* The chord approximation of an arc is the polyline S -> M -> E
+   (`chord_approx_arc`), so the triangle S M E is already inside the chord
+   polygon.  What the curve adds or removes is the circular segment MINUS
+   that triangle: the two caps between the polyline and the arc. *)
+Definition arc_triangle (a : CircularArc) : Ring :=
+  [arc_start a; arc_mid a; arc_end a; arc_start a].
+
+Definition arc_flip (a : CircularArc) (p : Point) : Prop :=
+  in_circular_segment a p /\ ~ point_in_ring p (arc_triangle a).
+
 Inductive seg_odd (p : Point) : list CircularArc -> Prop :=
 | so_in : forall a l,
-    in_circular_segment a p -> seg_even p l -> seg_odd p (a :: l)
+    arc_flip a p -> seg_even p l -> seg_odd p (a :: l)
 | so_out : forall a l,
-    ~ in_circular_segment a p -> seg_odd p l -> seg_odd p (a :: l)
+    ~ arc_flip a p -> seg_odd p l -> seg_odd p (a :: l)
 with seg_even (p : Point) : list CircularArc -> Prop :=
 | se_nil : seg_even p []
 | se_in : forall a l,
-    in_circular_segment a p -> seg_odd p l -> seg_even p (a :: l)
+    arc_flip a p -> seg_odd p l -> seg_even p (a :: l)
 | se_out : forall a l,
-    ~ in_circular_segment a p -> seg_even p l -> seg_even p (a :: l).
+    ~ arc_flip a p -> seg_even p l -> seg_even p (a :: l).
 
-(* p is in the curved region of A: in the chord polygon and in an even number
-   of A's circular segments, or outside it and in an odd number. *)
+(* One ring: its chord polygon, flipped in each of its own arcs' caps (the
+   even-odd region of the curved ring).  Parity is per ring, so caps of one
+   ring may overlap each other (a crescent is fine). *)
+Definition ring_region (r : CurveRing) (n : nat) (p : Point) : Prop :=
+  (point_in_ring p (chord_approx_ring r n) /\ seg_even p (arcs_of_ring r)) \/
+  (~ point_in_ring p (chord_approx_ring r n) /\ seg_odd p (arcs_of_ring r)).
+
+(* One polygon: in the outer region and in no hole region (as
+   `point_in_polygon` for chord polygons). *)
+Definition polygon_region (cp : CurvePolygon) (n : nat) (p : Point) : Prop :=
+  ring_region (curve_outer cp) n p /\
+  forall h, In h (curve_holes cp) -> ~ ring_region h n p.
+
+(* A geometry: the union of its polygons (as `point_set`).  Overlapping
+   polygons are therefore fine; `valid_curve_geometry` does not exclude them. *)
 Definition curve_region (A : CurveGeometry) (n : nat) (p : Point) : Prop :=
-  (point_set (to_geometry A n) p /\ seg_even p (arcs_of A)) \/
-  (~ point_set (to_geometry A n) p /\ seg_odd p (arcs_of A)).
+  exists cp, In cp A /\ polygon_region cp n p.
 
 Lemma off_segments_even : forall p l,
-  (forall a, In a l -> ~ in_circular_segment a p) ->
+  (forall a, In a l -> ~ arc_flip a p) ->
   seg_even p l /\ ~ seg_odd p l.
 Proof.
   intros p l. induction l as [| a l IH]; intros Hoff.
   - split; [ constructor | intro H; inversion H ].
-  - assert (Ha : ~ in_circular_segment a p) by (apply Hoff; left; reflexivity).
+  - assert (Ha : ~ arc_flip a p) by (apply Hoff; left; reflexivity).
     destruct IH as [He Hno]; [ intros b Hb; apply Hoff; right; exact Hb |].
     split.
     + apply se_out; assumption.
     + intro H; inversion H; subst; contradiction.
 Qed.
 
-(* Off every segment, the curved region is the chord polygon. *)
-Lemma curve_region_off_segments : forall A n p,
-  (forall a, In a (arcs_of A) -> ~ in_circular_segment a p) ->
-  (curve_region A n p <-> point_set (to_geometry A n) p).
+Lemma ring_region_off : forall r n p,
+  (forall a, In a (arcs_of_ring r) -> ~ arc_flip a p) ->
+  (ring_region r n p <-> point_in_ring p (chord_approx_ring r n)).
 Proof.
-  intros A n p Hoff. destruct (off_segments_even p (arcs_of A) Hoff) as [He Ho].
-  unfold curve_region. split.
+  intros r n p Hoff. destruct (off_segments_even p _ Hoff) as [He Ho].
+  unfold ring_region. split.
   - intros [[H _] | [_ H]]; [ exact H | contradiction ].
   - intro H. left. split; assumption.
+Qed.
+
+(* Off every cap of A, the curved region is the chord geometry's point set. *)
+Lemma curve_region_off_segments : forall A n p,
+  (forall a, In a (arcs_of A) -> ~ arc_flip a p) ->
+  (curve_region A n p <-> point_set (to_geometry A n) p).
+Proof.
+  intros A n p Hoff.
+  assert (Hcp : forall cp, In cp A ->
+            (polygon_region cp n p <->
+             point_in_polygon p
+               (mkPolygon (chord_approx_ring (curve_outer cp) n)
+                  (map (fun h => chord_approx_ring h n) (curve_holes cp))))).
+  { intros cp Hin.
+    assert (Harc : forall a, In a (arcs_of_polygon cp) -> ~ arc_flip a p).
+    { intros a Ha. apply Hoff. unfold arcs_of. apply in_flat_map.
+      exists cp. split; assumption. }
+    assert (Hout := ring_region_off (curve_outer cp) n p
+                      (fun a Ha => Harc a (in_or_app _ _ _ (or_introl Ha)))).
+    assert (Hh : forall h, In h (curve_holes cp) ->
+              (ring_region h n p <-> point_in_ring p (chord_approx_ring h n))).
+    { intros h Hh. apply ring_region_off. intros a Ha. apply Harc.
+      unfold arcs_of_polygon. apply in_or_app. right.
+      apply in_flat_map. exists h. split; assumption. }
+    unfold polygon_region, point_in_polygon. cbn [outer_ring hole_rings].
+    rewrite Hout. split.
+    - intros [Ho Hn]. split; [ exact Ho |].
+      intros hr Hhr. apply in_map_iff in Hhr. destruct Hhr as [h [<- Hh']].
+      rewrite <- (Hh h Hh'). exact (Hn h Hh').
+    - intros [Ho Hn]. split; [ exact Ho |].
+      intros h Hh' Hr. apply (Hn (chord_approx_ring h n)).
+      + apply in_map_iff. exists h. split; [ reflexivity | exact Hh' ].
+      + exact (proj1 (Hh h Hh') Hr). }
+  unfold curve_region, point_set, to_geometry. split.
+  - intros [cp [Hin Hreg]].
+    exists (mkPolygon (chord_approx_ring (curve_outer cp) n)
+              (map (fun h => chord_approx_ring h n) (curve_holes cp))).
+    split; [ apply in_map_iff; exists cp; split; [ reflexivity | exact Hin ] |].
+    exact (proj1 (Hcp cp Hin) Hreg).
+  - intros [poly [Hin Hpp]]. apply in_map_iff in Hin.
+    destruct Hin as [cp [<- Hin]].
+    exists cp. split; [ exact Hin |]. exact (proj2 (Hcp cp Hin) Hpp).
 Qed.
 
 (* -------------------------------------------------------------------------- *)
@@ -329,9 +398,8 @@ Theorem arc_overlay_region_close :
      region_op op (curve_region A n) (curve_region B n) p).
 Proof.
   intros A B op n p HA HB Hmin Hfar.
-  assert (Hoff : forall a, In a (arcs_of A ++ arcs_of B) ->
-                   ~ in_circular_segment a p).
-  { intros a Ha Hseg.
+  assert (Hoff : forall a, In a (arcs_of A ++ arcs_of B) -> ~ arc_flip a p).
+  { intros a Ha [Hseg _].
     exact (Hfar (in_segment_arc_close A B a p HA HB Ha (Hmin a Ha) Hseg)). }
   rewrite boolean_op_is_region_op.
   apply region_op_ext; symmetry; apply curve_region_off_segments;

@@ -52,6 +52,7 @@ PROBES=(
   docs/h1-vacuity/PendingTwinWitness.v
   docs/h1-vacuity/OverlayH1ContQEX.v
   docs/h1-vacuity/ArcOverlayBridgeQEX.v
+  docs/h1-vacuity/CurveRegionModelQEX.v
 )
 
 fail=0

@@ -91,6 +91,16 @@ set is empty.
    (`JCT_OnEdgeCounterexample.v : parity_seam_strict_refuted_on_edge`).
    Found by the per-input refutation rule; row fixed.
 
+10. **My own first `curve_region` (this branch) was wrong.** It flipped each
+    arc's whole circular segment over the whole geometry. The chord
+    approximation runs through the arc midpoint, so the triangle S M E was
+    flipped out of the region
+    (`docs/h1-vacuity/CurveRegionModelQEX.v : old_model_wrong_in_triangle`),
+    and its stated side condition (disjoint segments) does not follow from
+    `valid_curve_geometry`. The headline survived (the triangle lies in the
+    sagitta band). Fixed: per-ring caps, outer minus holes, union of
+    polygons, needing no disjointness.
+
 ## Not defects, but worth stating
 
 - The JCT lane's chain of `[cond]` rows (trapped half, level jump, escape
@@ -113,5 +123,7 @@ bridges and the arc headline's conclusion
 - H2 and H_bridge of the overlay headline.
 - Derive `b64_orient2d_expansion_cc_safe` from the coordinate domain.
 - Either formalise the curvature-model correspondences or drop the names.
+- Tie `ArcOverlayRegion.v : curve_region` (even-odd per ring) to the
+  POINT_IN_CURVE_RING oracle, or prove it equals an arc-aware ray parity.
 
-SUMMARY ok=61 warn=6 bug=9 — of 76 itemised theorems, 9 were vacuous, circular, placeholder-backed or mis-labelled (defects 1–6, 8, 9) and 6 carry an unproved "REFUTED" label (defect 7); 44 of 103 hypotheses are open.
+SUMMARY ok=61 warn=6 bug=10 — of 76 itemised theorems, 9 were vacuous, circular, placeholder-backed or mis-labelled (defects 1–6, 8, 9) and 6 carry an unproved "REFUTED" label (defect 7); defect 10 was this branch's own region model, fixed; 44 of 103 hypotheses are open.
