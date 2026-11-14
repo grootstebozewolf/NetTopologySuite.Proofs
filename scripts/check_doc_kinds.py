@@ -48,7 +48,8 @@
 #   superseded-by  every added `> Superseded-by: X` names a finding at HEAD
 #               whose Supersedes lists this file.
 #   baseline    a line added to docs/doc-anchor-baseline.txt with reason
-#               `dead` fails: fix the anchor. `dead` lines only shrink.
+#               `dead` fails: fix the anchor. `dead` lines only shrink. (The
+#               diff that creates the file is the bootstrap and may add them.)
 #   guide budget  net non-blank lines <= 0 over guide and ledger files.
 #               Exempt (reported): header lines; `|` table rows; claim rows
 #               in ledgers (`|` rows and `topic: … claimId:` stamps); the
@@ -454,8 +455,13 @@ def validate_new_finding(root, path, h, text, head_idx, head_hdrs, errs):
 
 
 def diff_checks(root, base, head_hdrs, errs, notes):
-    old_bl = parse_baseline(show(root, base, BASELINE))
+    old_txt = show(root, base, BASELINE)
+    old_bl = parse_baseline(old_txt)
     new_bl = parse_baseline(show(root, "HEAD", BASELINE))
+    if old_txt is None and new_bl:
+        notes.append("baseline: %s is new in this diff (bootstrap); its "
+                     "`dead` lines are accepted once" % BASELINE)
+        new_bl = {}
     for key, why in sorted(new_bl.items()):
         if why == "dead" and old_bl.get(key) != "dead":
             errs.append("baseline: %s gains `%s\t%s\tdead`; fix the anchor "
@@ -677,6 +683,7 @@ def selftest():
         "docs/guide.md": GUIDE,
         "docs/verified-claims.md": LEDGER,
         "docs/old.md": OLD_FINDING,
+        BASELINE: "# b\n",
     }
     # (name, change(sha_of_base) -> files, expect_rc, must_contain)
     cases = [
@@ -713,9 +720,13 @@ def selftest():
         ("planned module declared in baseline",
          lambda s: {"docs/guide.md": GUIDE.replace("Cites", "Plan `KdTree.v`; cites"),
                     BASELINE: "docs/guide.md\t`KdTree.v`\tplanned\n"}, 0, None),
-        ("new dead anchor baselined as dead",
+        ("bootstrap baseline may hold dead entries",
          lambda s: {"docs/guide.md": GUIDE.replace("good_thm", "gone_thm"),
                     BASELINE: "docs/guide.md\t`Foo.v : gone_thm`\tdead\n"},
+         0, None),
+        ("new dead anchor baselined as dead",
+         lambda s: {"docs/guide.md": GUIDE.replace("good_thm", "gone_thm"),
+                    BASELINE: "# b\ndocs/guide.md\t`Foo.v : gone_thm`\tdead\n"},
          1, "dead entries only shrink"),
         ("stale baseline entry",
          lambda s: {BASELINE: "docs/guide.md\t`Foo.v : good_thm`\tdead\n"},
@@ -755,7 +766,8 @@ def selftest():
     fails = 0
     for name, change, want_rc, want_msg in cases:
         with tempfile.TemporaryDirectory() as d:
-            s = mk_repo(d, base_files)
+            s = mk_repo(d, {k: v for k, v in base_files.items()
+                            if not (name.startswith("bootstrap") and k == BASELINE)})
             # legacy-migration case needs a header-less base file
             if name.startswith("legacy"):
                 write(d, {"docs/legacy.md": "# L\nx\n"})
