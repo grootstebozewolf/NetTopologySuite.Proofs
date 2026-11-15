@@ -19,7 +19,7 @@
 #                            shewchuk_vs_z2_tiny_headline
 #
 # and then recompiles, in dependency order, those three files plus
-# Orient_b64_expansion_cc.v and Orient_b64_stage_d_cc.v.  If any rebuilt
+# Orient_b64_expansion_cc.v, Orient_b64_stage_d_cc.v and Orient_b64_grid_cc.v.  If any rebuilt
 # theorem reached the headline, its file would fail to compile here.  The
 # script also fails if the stripped copies still mention the headline
 # outside comments, or if a removed name is missing (the strip went stale).
@@ -92,7 +92,8 @@ strip "$FQ/Shewchuk_vs_Z2.v" \
 # No live (non-comment) mention may remain in the rebuilt chain.
 STATUS=0
 for f in Orient_b64_expansion.v Orient_b64_stage_d.v Orient_b64_expansion_cc.v \
-         Orient_b64_stage_d_cc.v Shewchuk_vs_Z2.v B64_CarryCleanSign.v B64_NonoverlapSign.v; do
+         Orient_b64_stage_d_cc.v Orient_b64_grid_cc.v Shewchuk_vs_Z2.v \
+         B64_CarryCleanSign.v B64_NonoverlapSign.v; do
   # drop (* ... *) comments (single- and multi-line), then search
   if perl -0777 -pe 's/\(\*.*?\*\)//gs' "$FQ/$f" \
        | grep -q "fast_expansion_sum_strong_nonoverlap_headline"; then
@@ -103,7 +104,7 @@ done
 [ "$STATUS" -eq 0 ] || exit 1
 
 for f in Orient_b64_expansion.v Orient_b64_stage_d.v Orient_b64_expansion_cc.v \
-         Orient_b64_stage_d_cc.v Shewchuk_vs_Z2.v; do
+         Orient_b64_stage_d_cc.v Orient_b64_grid_cc.v Shewchuk_vs_Z2.v; do
   echo "[headline-free] compile $f (headline and its consumers removed)"
   if ! (cd "$WORK" && rocq c -Q "$REPO_ROOT/theories" NTS.Proofs -Q theories-flocq NTS.Proofs.Flocq \
           "theories-flocq/$f" > "$WORK/$f.log" 2>&1); then

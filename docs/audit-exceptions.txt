@@ -23,7 +23,7 @@
 #       debt            axiom avoidable; to be removed
 #       qex             axiom kept because the axiom-free claim is false
 #
-# LIVE: 131 files (123 theories-flocq/ + 2 theories/ + 6 hunt probes).
+# LIVE: 132 files (124 theories-flocq/ + 2 theories/ + 6 hunt probes).
 # Chip 2 peeled NurbsKnotSpans.v + ArcArcQuartic.v (atan/atan2 instances
 # moved into already-excepted siblings).  Remaining R-side files carry
 # classic via atan2/Ratan or RiemannInt.  Flocq C1 (`classic` via
@@ -166,6 +166,7 @@ theories-flocq/B64_CarryCleanTarget.v
 theories-flocq/B64_CarryCleanSign.v
 theories-flocq/Orient_b64_expansion_cc.v
 theories-flocq/Orient_b64_stage_d_cc.v
+theories-flocq/Orient_b64_grid_cc.v
 
 # class: implementation
 # Predicate-ordering module (MerkatorBV #21 Priest). Twelve of seventeen
