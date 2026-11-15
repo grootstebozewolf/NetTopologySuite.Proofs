@@ -391,7 +391,8 @@ theories/VecMVI.v
 # (b-a)^3/(8 A^2 N^2); end not interpolated. claimId 0007-clothoid-arc-spline.
 theories/ClothoidArcSpline.v
 # The arc spline realised as chords: Hausdorff budget
-# (b-a)^3/(8 A^2 N^2) + r_max (1 - cos(step/2)). claimId: none.
+# (b-a)^3/(8 A^2 N^2) + r_max (1 - cos(step/2)).
+# claimId 0007-clothoid-arc-spline-chords.
 theories/ClothoidArcChords.v
 # W1 curve-ring winding (signed visual-angle sum). claimId 0007-curve-ring-wind.
 # Headline wind_integer. Not the ray-crossing count in WindingNumber.v.

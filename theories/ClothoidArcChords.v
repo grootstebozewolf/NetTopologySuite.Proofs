@@ -48,7 +48,8 @@
    theorem.  cac_pts repeats each junction vertex (last point of one
    piece, first of the next); the extra segment is a point.
 
-   claimId: none.  No claim row is minted here; that is the owner's call.
+   claimId: 0007-clothoid-arc-spline-chords.
+   witness: clothoid_arc_spline_chords_hausdorff.
    3-axiom host.  No Admitted / Axiom / Parameter.  No MVT, RiemannInt.
 
    Author: NetTopologySuite.Proofs contributors
@@ -594,7 +595,8 @@ Qed.
 (* The end-to-end budget is eps (clothoid -> arc spline) plus cac_tol
    (arc spline -> chords).  Each term is the bound of the theorem it comes
    from; nothing is traded between them. *)
-Theorem clothoid_arc_chords_polyline :
+(* WITNESS {"claimId":"0007-clothoid-arc-spline-chords","topic":"curves","lemma":"clothoid_arc_spline_chords_hausdorff","title":"Arc-preserving approximation of a host clothoid window realised as chords: the N-piece heading-interpolating arc spline, each arc densified at one angular step, is a polyline within eps + r_max (1 - cos(step/2)) of the clothoid in Hausdorff distance, (b-a)^3 <= 8 A^2 N^2 eps; the terms are the clothoid-to-spline and spline-to-chords budgets. Not a Linearizes instance and not tighter than clothoid_linearizes","file":"theories/ClothoidArcChords.v","witness":"clothoid_arc_spline_chords_hausdorff","board":"ADR-0007"} *)
+Theorem clothoid_arc_spline_chords_hausdorff :
   forall c a b N step eps,
     cloth_wf c -> a < b -> (N <> 0)%nat ->
     (b - a) * (b - a) * (b - a)
@@ -648,4 +650,4 @@ Print Assumptions cac_piece_at_node.
 Print Assumptions cac_piece_pts_ends.
 Print Assumptions cac_pts_end.
 Print Assumptions cac_pts_shape.
-Print Assumptions clothoid_arc_chords_polyline.
+Print Assumptions clothoid_arc_spline_chords_hausdorff.
