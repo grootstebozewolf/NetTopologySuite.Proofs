@@ -6,8 +6,8 @@
    Minimal clothoid relate carrier: a G¹ Hermite clothoid transition is
    approximated by its chord (`cc_start`–`cc_end`), mirroring S10's Option-B
    chord path.  `clothoid_L_unique_on_branch` is the full branch
-   |κL| ≤ π given `ClothoidFPrimePos`.  `clothoid_L_unique_half_branch`
-   is unconditional on |κL| ≤ 1/2.
+   |κL| ≤ π, unconditional (`ClothoidResidual.clothoid_fprime_pos_branch`).
+   `clothoid_L_unique_half_branch` is the |κL| ≤ 1/2 instance.
 
    Delivers (no geometry→matrix bridge — see the section comment):
 
@@ -16,8 +16,8 @@
        constant predicate lemmas
      - Genuine chord geometry: proper cross ⇒ shared point; rejection ⇒ no
        shared point
-     - `clothoid_L_unique_on_branch` — full branch, premise `ClothoidFPrimePos`
-     - `clothoid_L_unique_half_branch` — unconditional on |κL| ≤ 1/2
+     - `clothoid_L_unique_on_branch` — full branch |κL| ≤ π, unconditional
+     - `clothoid_L_unique_half_branch` — the |κL| ≤ 1/2 instance
 
    Honest scoping: no `ClothoidSegment` geometry type or Flocq intersection
    yet; full clothoid-clothoid relate is S11+.  Regime→witness selection via
@@ -100,14 +100,13 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Solver well-posedness.  Full branch keeps its name and the π guard,       *)
-(* with ClothoidFPrimePos as the only remaining analytic premise.             *)
-(* The half-branch is a separate unconditional theorem.                       *)
+(* Solver well-posedness.  Full branch keeps its name and the π guard;        *)
+(* ClothoidFPrimePos is proved (ClothoidResidual.clothoid_fprime_pos_branch). *)
+(* The half-branch is a separate theorem.                                     *)
 (* -------------------------------------------------------------------------- *)
 
 Theorem clothoid_L_unique_on_branch :
   forall (k0 k1 d L1 L2 : R),
-    ClothoidFPrimePos ->
     0 < L1 -> 0 < L2 ->
     Rabs (clothoid_kappa k0 k1 * L1) <= PI ->
     Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
@@ -115,9 +114,9 @@ Theorem clothoid_L_unique_on_branch :
     clothoid_f k0 k1 d L2 = 0 ->
     L1 = L2.
 Proof.
-  intros k0 k1 d L1 L2 Hgap HL1 HL2 Hb1 Hb2 Hf1 Hf2.
+  intros k0 k1 d L1 L2 HL1 HL2 Hb1 Hb2 Hf1 Hf2.
   exact (clothoid_residual_unique_root k0 k1 d L1 L2
-           Hgap HL1 HL2 Hb1 Hb2 Hf1 Hf2).
+           HL1 HL2 Hb1 Hb2 Hf1 Hf2).
 Qed.
 
 Theorem clothoid_L_unique_half_branch :

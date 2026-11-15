@@ -20,15 +20,16 @@
    LipIntLeibniz.cos_quot_modulus / sin_quot_modulus give an error
    <= psi(tau)^2 * |k| <= K * |k|.
 
-   H_fprime_pos is proved on the half-branch |clothoid_kappa * L| <= 1/2
-   (clothoid_L_unique_half_branch).  |kappa * L| is the total turning.
-   The full branch |kappa * L| <= PI stays clothoid_L_unique_on_branch,
-   with the single premise ClothoidFPrimePos (H_deriv and H_mvt are gone).
-   A circular arc has f' = 0 at the endpoint, so the closed bound is not
-   strict.  The cos lower bound cannot reach PI.  The intended discharge
-   of the open gap is geometric: while the total turning is below PI,
-   every tangent has a positive component along the chord, and that
-   chord direction is an atan3/atan2 angle already in the corpus.
+   H_fprime_pos is proved twice.  clothoid_fprime_pos is the half-branch
+   |clothoid_kappa * L| <= 1/2, from cos t >= 1 - t^2/2.
+   clothoid_fprime_pos_branch is the open branch |clothoid_kappa * L| < PI
+   (the Prop ClothoidFPrimePos), from ClothoidFPrimeCore: in the frame
+   centred on the midpoint of the arc, f' / (2 L) is
+   cos(W/2) * A + (A * Be - B * Ae) with both terms nonnegative and the
+   first positive, W the total turning.  A circular arc has f' = 0 at
+   |kappa * L| = PI, so the open bound is sharp, and the headlines on
+   the closed branch |kappa * L| <= PI use only interior points.
+   No premise is left: H_mvt, H_deriv and H_fprime_pos are all discharged.
    f'' and the Kantorovich check are not this file.
 
    claimId: the residual headline keeps its existing (unnamed) claim.
@@ -44,6 +45,7 @@ From Stdlib Require Import Reals Lra.
 From Stdlib Require Import Ranalysis1.
 From NTS.Proofs Require Import Real RealMonotone Azimuth.
 From NTS.Proofs Require Import LipInt LipIntLeibniz.
+From NTS.Proofs Require Import LipIntUnit ClothoidFPrimeCore.
 Local Open Scope R_scope.
 
 Definition clothoid_psi (k0 k1 tau : R) : R :=
@@ -741,13 +743,9 @@ Proof.
   apply Rlt_le_trans with (1 / 64); [lra | exact Hsum].
 Qed.
 
-(* Open gap 0 < |κ L| < π.  |κ L| is the total turning on [0, L].
+(* Open branch 0 < |κ L| < π.  |κ L| bounds the total turning on [0, L].
    A circular arc has derivative 0 at |κ L| = π, so the closed bound is
-   not this statement.  cos t ≥ 1 − t²/2 cannot reach π.  Intended
-   discharge: while the total turning is below π, every tangent has a
-   positive component along the chord direction, so the derivative of
-   chord length in L is positive.  That direction is atan3/atan2.
-   Uninhabited.  Not an axiom. *)
+   not this statement.  Proved below as clothoid_fprime_pos_branch. *)
 Definition ClothoidFPrimePos : Prop :=
   forall k0 k1 L,
     0 < L ->
@@ -867,15 +865,96 @@ Proof.
       replace (t + h - t) with h by ring. exact Hh.
 Qed.
 
+(* The unit moments as uint, in the heading u = p x + D x^2 / 2 with
+   p = L k0 and D = L (k1 - k0). *)
+
+Lemma pint_uint :
+  forall g lipg Hn Hlip L (H : ULip (fun t => g t L)),
+    pint g lipg Hn Hlip L = uint (fun t => g t L) H.
+Proof. intros. rewrite pint_ext. apply uint_of_lint. Qed.
+
+Lemma clothoid_heading_scaled :
+  forall k0 k1 L x,
+    L * clothoid_psi k0 k1 x = cf_u (L * k0) (L * (k1 - k0)) x.
+Proof. intros. unfold clothoid_psi, cf_u. field. Qed.
+
+Lemma clothoid_moments_uint :
+  forall k0 k1 L,
+    clothoid_P k0 k1 L
+    = uint _ (cf_cosu_lip (L * k0) (L * (k1 - k0))) /\
+    clothoid_Q k0 k1 L
+    = uint _ (cf_sinu_lip (L * k0) (L * (k1 - k0))) /\
+    L * clothoid_R k0 k1 L
+    = uint _ (cf_ucosu_lip (L * k0) (L * (k1 - k0))) /\
+    L * clothoid_T k0 k1 L
+    = uint _ (cf_usinu_lip (L * k0) (L * (k1 - k0))).
+Proof.
+  intros k0 k1 L.
+  assert (HgP : ULip (fun t => g_cos k0 k1 t L))
+    by (unfold g_cos, clothoid_psi; ulip).
+  assert (HgQ : ULip (fun t => g_sin k0 k1 t L))
+    by (unfold g_sin, clothoid_psi; ulip).
+  assert (HgR : ULip (fun t => unit_cos k0 k1 t L))
+    by (unfold unit_cos, clothoid_psi; ulip).
+  assert (HgT : ULip (fun t => unit_sin k0 k1 t L))
+    by (unfold unit_sin, clothoid_psi; ulip).
+  assert (HsR : ULip (fun t => L * unit_cos k0 k1 t L))
+    by (unfold unit_cos, clothoid_psi; ulip).
+  assert (HsT : ULip (fun t => L * unit_sin k0 k1 t L))
+    by (unfold unit_sin, clothoid_psi; ulip).
+  repeat split.
+  - unfold clothoid_P. rewrite (pint_uint _ _ _ _ L HgP).
+    apply uint_ext. intros x _. unfold g_cos.
+    rewrite clothoid_heading_scaled. reflexivity.
+  - unfold clothoid_Q. rewrite (pint_uint _ _ _ _ L HgQ).
+    apply uint_ext. intros x _. unfold g_sin.
+    rewrite clothoid_heading_scaled. reflexivity.
+  - unfold clothoid_R. rewrite (pint_uint _ _ _ _ L HgR).
+    rewrite <- (uint_scal L _ HgR HsR).
+    apply uint_ext. intros x _. unfold unit_cos.
+    rewrite <- clothoid_heading_scaled. ring.
+  - unfold clothoid_T. rewrite (pint_uint _ _ _ _ L HgT).
+    rewrite <- (uint_scal L _ HgT HsT).
+    apply uint_ext. intros x _. unfold unit_sin.
+    rewrite <- clothoid_heading_scaled. ring.
+Qed.
+
+Theorem clothoid_fprime_pos_branch : ClothoidFPrimePos.
+Proof.
+  intros k0 k1 L HL Hb.
+  destruct (clothoid_moments_uint k0 k1 L) as [HP [HQ [HR HT]]].
+  assert (Hbr : Rabs (L * k0) + Rabs (L * (k1 - k0)) / 2 < PI).
+  { rewrite !Rabs_mult, (Rabs_pos_eq L) by lra.
+    rewrite Rabs_pos_eq in Hb
+      by (apply Rmult_le_pos; [apply clothoid_kappa_nn | lra]).
+    unfold clothoid_kappa in Hb.
+    replace (L * Rabs k0 + L * Rabs (k1 - k0) / 2)
+      with ((Rabs k0 + Rabs (k1 - k0) / 2) * L) by field.
+    exact Hb. }
+  pose proof (clothoid_fprime_core_pos (L * k0) (L * (k1 - k0))
+                (cf_cosu_lip _ _) (cf_sinu_lip _ _)
+                (cf_ucosu_lip _ _) (cf_usinu_lip _ _) Hbr) as Hc.
+  rewrite <- HP, <- HQ, <- HR, <- HT in Hc.
+  unfold clothoid_f', clothoid_S.
+  replace (2 * L * (clothoid_P k0 k1 L * clothoid_P k0 k1 L +
+                    clothoid_Q k0 k1 L * clothoid_Q k0 k1 L) +
+           2 * L * L * (clothoid_Q k0 k1 L * clothoid_R k0 k1 L -
+                        clothoid_P k0 k1 L * clothoid_T k0 k1 L))
+    with (2 * L *
+          (clothoid_P k0 k1 L * (clothoid_P k0 k1 L - L * clothoid_T k0 k1 L) +
+           clothoid_Q k0 k1 L * (clothoid_Q k0 k1 L + L * clothoid_R k0 k1 L)))
+    by ring.
+  apply Rmult_lt_0_compat; [lra | exact Hc].
+Qed.
+
 Lemma open_branch_fprime :
   forall k0 k1 L2 t,
-    ClothoidFPrimePos ->
     0 < t -> t < L2 ->
     Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
     0 < clothoid_f' k0 k1 t.
 Proof.
-  intros k0 k1 L2 t Hgap Ht HtL Hb.
-  apply Hgap; [exact Ht|].
+  intros k0 k1 L2 t Ht HtL Hb.
+  apply clothoid_fprime_pos_branch; [exact Ht|].
   set (k := clothoid_kappa k0 k1).
   assert (Hk : 0 <= k) by (unfold k; apply clothoid_kappa_nn).
   assert (Habs_t : Rabs (k * t) = k * t).
@@ -894,17 +973,16 @@ Qed.
 
 Theorem clothoid_residual_strictly_increasing_on_branch :
   forall k0 k1 d L1 L2,
-    ClothoidFPrimePos ->
     0 < L1 -> L1 < L2 ->
     Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
     clothoid_f k0 k1 d L1 < clothoid_f k0 k1 d L2.
 Proof.
-  intros k0 k1 d L1 L2 Hgap HL1 HL12 Hb.
+  intros k0 k1 d L1 L2 HL1 HL12 Hb.
   apply (deriv_pos_strict_incr_open
            (clothoid_f k0 k1 d) (clothoid_f' k0 k1) L1 L2 L1 L2).
   - exact HL12.
   - intros t _. apply clothoid_f_deriv.
-  - intros t Ht. apply (open_branch_fprime k0 k1 L2 t); [exact Hgap|lra|lra|exact Hb].
+  - intros t Ht. apply (open_branch_fprime k0 k1 L2 t); [lra|lra|exact Hb].
   - apply clothoid_f_seg_continuous.
   - lra.
   - exact HL12.
@@ -929,7 +1007,6 @@ Qed.
 
 Corollary clothoid_residual_unique_root :
   forall k0 k1 d L1 L2,
-    ClothoidFPrimePos ->
     0 < L1 -> 0 < L2 ->
     Rabs (clothoid_kappa k0 k1 * L1) <= PI ->
     Rabs (clothoid_kappa k0 k1 * L2) <= PI ->
@@ -937,13 +1014,13 @@ Corollary clothoid_residual_unique_root :
     clothoid_f k0 k1 d L2 = 0 ->
     L1 = L2.
 Proof.
-  intros k0 k1 d L1 L2 Hgap HL1 HL2 Hb1 Hb2 Hf1 Hf2.
+  intros k0 k1 d L1 L2 HL1 HL2 Hb1 Hb2 Hf1 Hf2.
   destruct (Rtotal_order L1 L2) as [Hlt | [Heq | Hgt]].
   - pose proof (clothoid_residual_strictly_increasing_on_branch
-                  k0 k1 d L1 L2 Hgap HL1 Hlt Hb2). lra.
+                  k0 k1 d L1 L2 HL1 Hlt Hb2). lra.
   - exact Heq.
   - pose proof (clothoid_residual_strictly_increasing_on_branch
-                  k0 k1 d L2 L1 Hgap HL2 Hgt Hb1). lra.
+                  k0 k1 d L2 L1 HL2 Hgt Hb1). lra.
 Qed.
 
 Corollary clothoid_residual_unique_root_half :
@@ -1004,6 +1081,10 @@ Print Assumptions clothoid_f_flat.
 Print Assumptions clothoid_fprime_flat.
 Print Assumptions clothoid_kappa_nn.
 Print Assumptions clothoid_f_seg_continuous.
+Print Assumptions pint_uint.
+Print Assumptions clothoid_heading_scaled.
+Print Assumptions clothoid_moments_uint.
+Print Assumptions clothoid_fprime_pos_branch.
 Print Assumptions open_branch_fprime.
 Print Assumptions clothoid_residual_strictly_increasing_on_branch.
 Print Assumptions clothoid_residual_strictly_increasing.

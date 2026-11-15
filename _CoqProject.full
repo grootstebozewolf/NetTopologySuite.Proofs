@@ -275,6 +275,11 @@ theories/RealMonotone.v
 # RealMonotone.deriv_pos_strict_incr (no equality-form MVT).  Listed here too
 # so the per-theorem Print Assumptions audit (scripts/audit_axioms.sh) checks
 # it against the three-axiom allowlist.  No Admitted, no Axiom, no Parameter.
+# Unit-interval calculus for lint (FTC second form, reflection) and the
+# full-branch sign of the clothoid chord derivative.  Discharge
+# ClothoidResidual's former ClothoidFPrimePos premise.  claimId: none.
+theories/LipIntUnit.v
+theories/ClothoidFPrimeCore.v
 theories/ClothoidResidual.v
 # Koc (2015) compound-curve railway alignment core: system-2000<->local frame
 # round-trips + isometry, clothoid end conditions (theta' = k, theta(L)=L/2R),
