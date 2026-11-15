@@ -621,6 +621,32 @@ Proof.
   - apply arc_polyline_near_curve; assumption.
 Qed.
 
+(* The same bound at the angle a chord actually subtends, |sweep| / n,
+   instead of a nominal step.  arc_linearize_hausdorff at
+   step = |sweep| / n; a zero sweep is excluded because that step must be
+   positive.  The tolerance no longer grows with the radius at a fixed
+   arc length: r (1 - cos (|sweep| / (2 n))) <= (r |sweep|)^2 / (8 r n^2). *)
+Corollary arc_linearize_hausdorff_subtended : forall c n,
+  (2 <= n)%nat ->
+  0 <= circ_r c ->
+  circ_sweep c <> 0 ->
+  Rabs (circ_sweep c) <= 2 * PI ->
+  hausdorff_le (curve_shape (circ_eval c)) (poly_shape (lin_pts c n))
+    (circ_r c * (1 - cos (Rabs (circ_sweep c) / INR n / 2))).
+Proof.
+  intros c n Hn Hr Hs Hc.
+  assert (HNp : 0 < INR n) by (apply lt_0_INR; lia).
+  assert (HN2 : 2 <= INR n) by (pose proof (le_INR 2 n Hn) as H; simpl in H; lra).
+  assert (Hpos : 0 < Rabs (circ_sweep c)) by (apply Rabs_pos_lt; exact Hs).
+  pose proof PI_RGT_0 as Hpi.
+  apply (arc_linearize_hausdorff c (Rabs (circ_sweep c) / INR n) n Hn Hr).
+  - split; [apply Rdiv_lt_0_compat; assumption|].
+    apply Rmult_le_reg_r with (INR n); [exact HNp|].
+    unfold Rdiv. rewrite Rmult_assoc, Rinv_l by lra. nra.
+  - exact Hc.
+  - right. field. lra.
+Qed.
+
 (* WITNESS {"claimId":"0007-arc-linearize","topic":"curves","lemma":"arc_linearizes","title":"Uniform arc densifier inhabits Linearizes at ts k = k/n, tol r*(1-cos(step/2)); subdiv_n is max(ceil(|sweep|/step),2); angle monotonicity is arc_theta_mono","file":"theories/ArcLinearizeContract.v","witness":"0007-arc-linearize","board":"ADR-0007"} *)
 Theorem arc_linearizes : forall c step,
   0 <= circ_r c ->
@@ -720,3 +746,4 @@ Print Assumptions arc_polyline_near_curve.
 Print Assumptions arc_linearize_hausdorff.
 Print Assumptions arc_linearizes.
 Print Assumptions arc_theta_mono.
+Print Assumptions arc_linearize_hausdorff_subtended.
