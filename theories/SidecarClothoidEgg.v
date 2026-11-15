@@ -241,11 +241,10 @@ Proof.
 Qed.
 
 (* Residual uniqueness stays metric, not a cook Hit.
-   Full branch |κL| ≤ π keeps this name and takes ClothoidFPrimePos.
-   The half-branch |κL| ≤ 1/2 is unconditional. *)
+   Full branch |κL| ≤ π keeps this name and is unconditional.
+   The half-branch |κL| ≤ 1/2 is its instance. *)
 Lemma sidecar_clothoid_residual_is_metric :
   forall (k0 k1 d L1 L2 : R),
-    ClothoidFPrimePos ->
     0 < L1 -> 0 < L2 ->
     Rabs (clothoid_kappa k0 k1 * L1) <= PI ->
     Rabs (clothoid_kappa k0 k1 * L2) <= PI ->

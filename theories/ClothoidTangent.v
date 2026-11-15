@@ -14,8 +14,8 @@
 
    This is not Halley d/dL. ClothoidResidual.H_deriv differentiates
    the length parameter under the integral (moments P, Q, R, T), and
-   H_fprime_pos is the sign of that derivative. Stdlib MVT prints
-   Classical_Prop.classic, so H_mvt is not discharged here either.
+   H_fprime_pos is the sign of that derivative. Both, and H_mvt, are
+   discharged in ClothoidResidual.v, not here.
    claimId: none. The tangent is an instance of
    LipIntFTC.lipint_ftc (claimId 0001-lint-ftc) on cos and sin of psi,
    plus the rigid frame and the chain rule. It does not mint a second

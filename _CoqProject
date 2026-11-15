@@ -42,6 +42,11 @@ theories/Azimuth.v
 # good set).  No MVT / Rolle / classic.  Discharges ClothoidResidual's
 # former H_mvt premise.  claimId: none.
 theories/RealMonotone.v
+# Unit-interval calculus for lint (FTC second form, reflection) and the
+# full-branch sign of the clothoid chord derivative.  Discharge
+# ClothoidResidual's former ClothoidFPrimePos premise.  claimId: none.
+theories/LipIntUnit.v
+theories/ClothoidFPrimeCore.v
 theories/ClothoidResidual.v
 theories/ClothoidDegenerate.v
 theories/ClothoidHalley.v

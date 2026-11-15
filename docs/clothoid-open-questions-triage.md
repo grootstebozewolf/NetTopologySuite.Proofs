@@ -150,3 +150,5 @@ A shear is a change of sheet `S → S′ = (f O; L e₁, L e₂)` (ADR-0007), `d
   chord in a lines-only build.
 - Data: the 9,058-record `golden_vectors.json` of the companion repo (CC BY 4.0,
   derived from ProRail Spoorgeometrie).
+
+> Superseded-by: docs/clothoid-fprime-full-branch-2026-11.md
