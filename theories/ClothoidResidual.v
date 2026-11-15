@@ -22,8 +22,11 @@
 
    H_fprime_pos is proved twice.  clothoid_fprime_pos is the half-branch
    |clothoid_kappa * L| <= 1/2, from cos t >= 1 - t^2/2.
-   clothoid_fprime_pos_branch is the open branch |clothoid_kappa * L| < PI
-   (the Prop ClothoidFPrimePos), from ClothoidFPrimeCore: in the frame
+   clothoid_fprime_pos_turning needs |L (k0 + k1) / 2| < PI and
+   |L (k1 - k0)| <= 2 PI, both invariant under reversing the arc.
+   clothoid_fprime_pos_branch is its corollary on the open branch
+   |clothoid_kappa * L| < PI (the Prop ClothoidFPrimePos), a stronger and
+   direction-dependent condition.  Both are from ClothoidFPrimeCore: in the frame
    centred on the midpoint of the arc, f' / (2 L) is
    cos(W/2) * A + (A * Be - B * Ae) with both terms nonnegative and the
    first positive, W the total turning.  A circular arc has f' = 0 at
@@ -919,21 +922,25 @@ Proof.
     rewrite <- clothoid_heading_scaled. ring.
 Qed.
 
-Theorem clothoid_fprime_pos_branch : ClothoidFPrimePos.
+(* Sign of f' in terms of the total turning W = L (k0 + k1) / 2 and the
+   curvature change D = L (k1 - k0).  Both are unchanged when the arc is
+   traversed the other way, (k0, k1) -> (- k1, - k0). *)
+Theorem clothoid_fprime_pos_turning :
+  forall k0 k1 L,
+    0 < L ->
+    Rabs (L * (k0 + k1) / 2) < PI ->
+    Rabs (L * (k1 - k0)) <= 2 * PI ->
+    0 < clothoid_f' k0 k1 L.
 Proof.
-  intros k0 k1 L HL Hb.
+  intros k0 k1 L HL HW HD.
   destruct (clothoid_moments_uint k0 k1 L) as [HP [HQ [HR HT]]].
-  assert (Hbr : Rabs (L * k0) + Rabs (L * (k1 - k0)) / 2 < PI).
-  { rewrite !Rabs_mult, (Rabs_pos_eq L) by lra.
-    rewrite Rabs_pos_eq in Hb
-      by (apply Rmult_le_pos; [apply clothoid_kappa_nn | lra]).
-    unfold clothoid_kappa in Hb.
-    replace (L * Rabs k0 + L * Rabs (k1 - k0) / 2)
-      with ((Rabs k0 + Rabs (k1 - k0) / 2) * L) by field.
-    exact Hb. }
+  assert (HW' : Rabs (cf_W (L * k0) (L * (k1 - k0))) < PI).
+  { unfold cf_W.
+    replace (L * k0 + L * (k1 - k0) / 2) with (L * (k0 + k1) / 2) by field.
+    exact HW. }
   pose proof (clothoid_fprime_core_pos (L * k0) (L * (k1 - k0))
                 (cf_cosu_lip _ _) (cf_sinu_lip _ _)
-                (cf_ucosu_lip _ _) (cf_usinu_lip _ _) Hbr) as Hc.
+                (cf_ucosu_lip _ _) (cf_usinu_lip _ _) HW' HD) as Hc.
   rewrite <- HP, <- HQ, <- HR, <- HT in Hc.
   unfold clothoid_f', clothoid_S.
   replace (2 * L * (clothoid_P k0 k1 L * clothoid_P k0 k1 L +
@@ -945,6 +952,31 @@ Proof.
            clothoid_Q k0 k1 L * (clothoid_Q k0 k1 L + L * clothoid_R k0 k1 L)))
     by ring.
   apply Rmult_lt_0_compat; [lra | exact Hc].
+Qed.
+
+(* |kappa L| < PI implies both conditions of clothoid_fprime_pos_turning.
+   It is the stronger of the two statements, and it depends on the
+   direction of traversal through |k0|. *)
+Theorem clothoid_fprime_pos_branch : ClothoidFPrimePos.
+Proof.
+  intros k0 k1 L HL Hb.
+  rewrite Rabs_pos_eq in Hb
+    by (apply Rmult_le_pos; [apply clothoid_kappa_nn | lra]).
+  unfold clothoid_kappa in Hb.
+  assert (Hp : Rabs (L * k0) = L * Rabs k0)
+    by (rewrite Rabs_mult, (Rabs_pos_eq L) by lra; reflexivity).
+  assert (Hd : Rabs (L * (k1 - k0)) = L * Rabs (k1 - k0))
+    by (rewrite Rabs_mult, (Rabs_pos_eq L) by lra; reflexivity).
+  assert (Hsum : L * Rabs k0 + L * Rabs (k1 - k0) / 2 < PI) by lra.
+  pose proof (Rabs_pos (L * k0)) as Hp0.
+  pose proof (Rabs_pos (L * (k1 - k0))) as Hd0.
+  apply clothoid_fprime_pos_turning; [exact HL | |].
+  - replace (L * (k0 + k1) / 2) with (L * k0 + L * (k1 - k0) / 2) by field.
+    eapply Rle_lt_trans; [apply Rabs_triang|].
+    assert (Hh : Rabs (L * (k1 - k0) / 2) = Rabs (L * (k1 - k0)) / 2)
+      by (split_Rabs; lra).
+    lra.
+  - lra.
 Qed.
 
 Lemma open_branch_fprime :
@@ -1084,6 +1116,7 @@ Print Assumptions clothoid_f_seg_continuous.
 Print Assumptions pint_uint.
 Print Assumptions clothoid_heading_scaled.
 Print Assumptions clothoid_moments_uint.
+Print Assumptions clothoid_fprime_pos_turning.
 Print Assumptions clothoid_fprime_pos_branch.
 Print Assumptions open_branch_fprime.
 Print Assumptions clothoid_residual_strictly_increasing_on_branch.

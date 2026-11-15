@@ -8,9 +8,14 @@
      P = ∫ cos u,  Q = ∫ sin u,  R = ∫ u cos u,  T = ∫ u sin u.
    Half the derivative of the squared chord in the length parameter is
      N = P (P - T) + Q (Q + R).
-   Theorem clothoid_fprime_core_pos:  |p| + |D| / 2 < PI  ->  0 < N.
+   Write W = p + D / 2 for the total turning.
+   Theorem clothoid_fprime_core_pos:  |W| < PI  ->  |D| <= 2 PI  ->  0 < N.
+   Both conditions are invariant under reversing the arc, which sends
+   (p, D) to (-(p + D), D).  |p| + |D| / 2 < PI implies them and is not
+   invariant: it is the stronger, direction-dependent branch condition
+   of ClothoidResidual.
 
-   Proof.  Write W = p + D / 2 (total turning) and centre the parameter:
+   Proof.  Centre the parameter:
      u(x) = W / 2 + b(x) + e(x),  b = W (x - 1/2),  e = D x (x - 1) / 2,
    b odd and e even about 1/2.  With
      A = ∫ cos b cos e,  B = ∫ cos b sin e,
@@ -18,8 +23,8 @@
    two integrations by parts (primitives (x - 1/2) cos u, (x - 1/2) sin u)
    and the vanishing of the odd integrals give the identity
      N = cos (W / 2) * A + (A * Be - B * Ae).
-   On the branch |W| < PI and |D| < 2 PI, so |b| < PI / 2 and
-   |e| <= |D| / 8 < PI / 4 on [0, 1]: cos b > 0, cos e > 0, A > 0,
+   With |W| < PI and |D| <= 2 PI, |b| < PI / 2 and
+   |e| <= |D| / 8 <= PI / 4 on [0, 1]: cos b > 0, cos e > 0, A > 0,
    |B| <= A.  For the second term put theta = ∫ e cos b / ∫ cos b and
    n(y) = A sin y - B cos y.  Since ∫ cos b * n(e) = 0,
      A * Be - B * Ae = ∫ cos b * (e - theta) * (n(e) - n(theta)),
@@ -364,10 +369,11 @@ Qed.
 
 (* Positivity on the branch. *)
 
-Hypothesis Hbr : Rabs p + Rabs D / 2 < PI.
+Hypothesis HW : Rabs (cf_W p D) < PI.
+Hypothesis HD : Rabs D <= 2 * PI.
 
 Lemma cf_W_lt : Rabs W < PI.
-Proof. unfold W, cf_W. split_Rabs; lra. Qed.
+Proof. exact HW. Qed.
 
 Lemma cf_b_bound :
   forall x, 0 <= x <= 1 -> Rabs (cf_b p D x) <= Rabs W / 2.
@@ -404,7 +410,7 @@ Qed.
 Lemma cf_e_quarter :
   forall x, 0 <= x <= 1 -> Rabs (cf_e D x) <= PI / 4.
 Proof.
-  intros x Hx. pose proof (cf_e_bound x Hx). pose proof (Rabs_pos p). lra.
+  intros x Hx. pose proof (cf_e_bound x Hx). lra.
 Qed.
 
 Lemma cf_ca_pos : 0 < ca.
@@ -543,11 +549,12 @@ Theorem clothoid_fprime_core_pos :
     (HQ : ULip (fun x => sin (cf_u p D x)))
     (HR : ULip (fun x => cf_u p D x * cos (cf_u p D x)))
     (HT : ULip (fun x => cf_u p D x * sin (cf_u p D x))),
-    Rabs p + Rabs D / 2 < PI ->
+    Rabs (cf_W p D) < PI ->
+    Rabs D <= 2 * PI ->
     0 < uint _ HP * (uint _ HP - uint _ HT) + uint _ HQ * (uint _ HQ + uint _ HR).
 Proof.
-  intros p D HP HQ HR HT Hbr.
-  pose proof (cf_core_pos p D Hbr) as H.
+  intros p D HP HQ HR HT HW HD.
+  pose proof (cf_core_pos p D HW HD) as H.
   rewrite (uint_ext _ _ HP (cf_cosu_lip p D)) by (intros; reflexivity).
   rewrite (uint_ext _ _ HQ (cf_sinu_lip p D)) by (intros; reflexivity).
   rewrite (uint_ext _ _ HR (cf_ucosu_lip p D)) by (intros; reflexivity).

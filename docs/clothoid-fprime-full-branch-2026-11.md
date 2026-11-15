@@ -1,7 +1,7 @@
 <!-- doc-kind: finding
 date: 2026-11-15
 Provenance: c575ff389b37bf4b9e1cc0fc2dc08c82d6c17d5a
-Theorems: `ClothoidResidual.v : clothoid_fprime_pos_branch`, `ClothoidFPrimeCore.v : clothoid_fprime_core_pos`, `ClothoidResidual.v : clothoid_residual_strictly_increasing_on_branch`, `ClothoidResidual.v : clothoid_residual_unique_root`, `RelateClothoid.v : clothoid_L_unique_on_branch`, `LipIntUnit.v : lint_ftc_eval`
+Theorems: `ClothoidResidual.v : clothoid_fprime_pos_branch`, `ClothoidResidual.v : clothoid_fprime_pos_turning`, `ClothoidFPrimeCore.v : clothoid_fprime_core_pos`, `ClothoidResidual.v : clothoid_residual_strictly_increasing_on_branch`, `ClothoidResidual.v : clothoid_residual_unique_root`, `RelateClothoid.v : clothoid_L_unique_on_branch`, `LipIntUnit.v : lint_ftc_eval`
 Supersedes: docs/hypothesis-ledger-2026-11.md
 Supersedes: docs/clothoid-open-questions-triage.md
 -->
@@ -21,18 +21,32 @@ for the chord residual `f(L) = L²(P² + Q²) − d²` — true, and provable on
 3-axiom R baseline without `MVT`, `Rolle`, `RiemannInt` or Coquelicot?
 
 **Answer.** Yes. `ClothoidResidual.v : clothoid_fprime_pos_branch` proves it,
-and the premise is removed from the four theorems that took it.
+and the premise is removed from the four theorems that took it. It is a
+corollary of `ClothoidResidual.v : clothoid_fprime_pos_turning`, whose
+hypotheses are `|L (k₀ + k₁)/2| < π` and `|L (k₁ − k₀)| ≤ 2π`. Those are
+unchanged when the arc is traversed the other way, `(k₀, k₁) → (−k₁, −k₀)`;
+`|κL| < π` is not, because `κ = |k₀| + |k₁ − k₀|/2` reads `|k₀|`. For
+`k₀ = 0`, `k₁ = k` the branch condition is `|Lk| < 2π`; for the same arc
+reversed it is `|Lk| < 2π/3`. The turning form covers `|Lk| < 2π` both ways.
+
+**Process note.** The task brief for this work ruled out prose changes and
+new `.md` files. The repository owner overrode both for PR #1025: the
+module counts, two ledger rows, `verified-claims.md`, ADR-0001 and this
+finding were changed or added on that instruction.
 
 ## What was wrong with the recorded route
 
 The header of `ClothoidResidual.v` gave the intended discharge as "while the
 total turning is below π, every tangent has a positive component along the
 chord". That is not sufficient. With `v` the heading relative to the chord,
-`f' > 0` is `∫ (cos v − v sin v) > 0` under `∫ sin v = 0`, and:
+`f' > 0` is `∫ (cos v − v sin v) > 0` under `∫ sin v = 0`. The two
+counterexamples below are hand and floating-point calculations, not Rocq
+theorems; nothing in the corpus states them:
 
-- a two-point heading distribution at `±β` gives `cos β − β sin β`, negative
-  for `β > 0.87`;
-- a monotone two-step weight on the window `[−1.09, 2.05]` gives `−0.23`.
+- a two-point heading distribution at `±β` gives `cos β − β sin β` (by hand),
+  negative for `β > 0.87` (root of `β tan β = 1`, numeric);
+- a monotone two-step weight on the window `[−1.09, 2.05]` gives `−0.23`
+  (numeric search).
 
 Both satisfy the stated condition. A proof has to use that the heading is
 quadratic in the parameter. Two further candidates were checked numerically
@@ -56,8 +70,9 @@ versions `Ae`, `Be`:
    on `[−π/4, π/4]`; the integrand is pointwise nonnegative.
 
 The circle (`D = 0`) gives `cos(W/2) · sin(W/2)/(W/2)`, zero at `|W| = π`:
-the open bound is sharp, and the same identity holds on the larger region
-`|W| < π`, `|D| < 4π`.
+the bound on `W` is sharp. Step 1 holds for every `p`, `D`; steps 2 and 3
+are proved for `|W| < π`, `|D| ≤ 2π`. Whether `2π` can be raised is not
+examined.
 
 Stdlib `atan` (`atan_bound`, `tan_atan`) prints `Classical_Prop.classic`,
 so the chord direction is not taken as an angle; `θ` is a weighted mean.
@@ -71,7 +86,8 @@ invariance under `x → 1 − x` (`uint_refl`). Neither existed.
 - Toolchain: Rocq 9.2, Stdlib 9.2.0, Flocq 4.2.2. PR #1025, branch head at
   the Provenance commit.
 - `Print Assumptions` on `clothoid_fprime_pos_branch`,
-  `clothoid_fprime_core_pos`,
+  `clothoid_fprime_pos_turning`, `clothoid_fprime_core_pos`,
+  `sidecar_clothoid_residual_is_metric`,
   `clothoid_residual_strictly_increasing_on_branch`,
   `clothoid_residual_unique_root` and `clothoid_L_unique_on_branch`:
   `sig_not_dec`, `sig_forall_dec`, `functional_extensionality_dep` only.
