@@ -61,17 +61,17 @@ Three axioms, no `Admitted`. **U** = unconditional (domain premises only);
 | Arc spline (heading-interpolating) | `ClothoidArcSpline.v`, `ClothoidArcSpline_b64.v` (`0007-clothoid-arc-spline`) | `cas_two_arc_within_eps` (tol `(b−a)³/(32A²)`; N arcs `(b−a)³/(8A²N²)`, A only), `cas_end_gap` (end not interpolated), `cas_b64_points_contract` (binary64 points per oracle) | U; oracle `CasB64ArcOracle` uninhabited (QEX) |
 | Length | `ClothoidLengthAbs.v` (`0007-clothoid-length`), `ClothoidLength.v` | `clothoid_length_abs`; `clothoid_arclength_is_curve_length` | U; C on `H_unit_chord`, `H_unit_approx` |
 | Offset, buffer | `ClothoidOffsetContact.v`, `ClothoidBufferBridge.v`, `ClothoidBufferAssembly.v` | `clothoid_buffer_assembly_sound`, `clothoid_offset_below_min_radius_fails` | U |
-| Residual | `ClothoidResidual.v`, `ClothoidDegenerate.v`, b64 mirrors | `clothoid_residual_unique_root_half`, `degenerate_unique_positive_root`; `clothoid_residual_unique_root` | U |
+| Residual | `ClothoidResidual.v`, `ClothoidDegenerate.v`, b64 mirrors | `clothoid_residual_unique_root_half`, `degenerate_unique_positive_root`; `clothoid_residual_unique_root` | U; C on `ClothoidFPrimePos` |
 | Halley | `ClothoidHalley.v`, `ClothoidHalley_b64.v` | `clothoid_halley_filtered_corpus_le_four` | C on `H_filtered_corpus_le_four` |
-| Relate | `RelateClothoid.v`, `RelateMatrixClothoid.v` | `clothoid_L_unique_on_branch`, `clothoid_fill_*` | U |
+| Relate | `RelateClothoid.v`, `RelateMatrixClothoid.v` | `clothoid_L_unique_half_branch`, `clothoid_fill_*` | U; on-branch C |
 
 ## 4. The three original questions
 
 1. **Fresnel support.** On the R side the host eval *is* the Fresnel integral,
-   with FTC and Leibniz in the corpus. The sign of the residual
-   derivative is proved on the full branch `|κL| ≤ π`
-   (`clothoid_fprime_pos_branch`), so `ClothoidFPrimePos` is no longer a premise;
-   [`clothoid-halley-coq`](https://github.com/grootstebozewolf/clothoid-halley-coq) witnesses it externally.
+   with FTC and Leibniz in the corpus. The half branch is discharged
+   (`clothoid_fprime_pos`); the full branch `|κL| ≤ π` stays the named premise
+   `ClothoidFPrimePos`, witnessed externally in
+   [`clothoid-halley-coq`](https://github.com/grootstebozewolf/clothoid-halley-coq).
    There is no binary64 Fresnel evaluator.
 2. **Exact integer regime.** Bit-exact end to end is impossible (the Fresnel
    stage is transcendental). Exact where it can be: the straight-chord regime
@@ -86,7 +86,7 @@ Three axioms, no `Admitted`. **U** = unconditional (domain premises only);
 | (A) | degenerate-chord exact regime | `ClothoidDegenerate.v`, `ClothoidDegenerate_b64.v` |
 | (B) | sagitta-density bound, equal-angle budget | `ArcChordDensity.v`, `ArcChordSubdivision.v` |
 | (C), (C′) | Scope-A residual assembly; conditional Halley bound and step | `ClothoidScopeA_b64.v`, `ClothoidResidual_b64_exact.v`, `ClothoidHalley.v`, `ClothoidHalley_b64.v` |
-| (D) | full Fresnel internalisation | `ClothoidFPrimePos` proved: `ClothoidFPrimeCore.v`, `ClothoidResidual.v` (ADR-0001) |
+| (D) | full Fresnel internalisation | open: only `ClothoidFPrimePos` remains (ADR-0001) |
 
 ## 5. Shear: what transports along a change of sheet
 
@@ -132,7 +132,7 @@ A shear is a change of sheet `S → S′ = (f O; L e₁, L e₂)` (ADR-0007), `d
 7. **Far-field Fresnel quadrature.** GEOS uses 0.5-wide 16-point
    Gauss–Legendre panels past the series window; the corpus has no
    Gauss–Legendre remainder theorem.
-8. **Route (D)** is closed: `clothoid_fprime_pos_branch`.
+8. **Route (D)**, the full branch `ClothoidFPrimePos`.
 9. **Point location beyond seam rings** (horizontal edges, T-touches): needs
    the escape half of the Jordan seam beyond taut rings.
 10. **Parked:** Z / M placements; the CompoundCurve junction snap (GEOS 458f82e);
@@ -150,3 +150,5 @@ A shear is a change of sheet `S → S′ = (f O; L e₁, L e₂)` (ADR-0007), `d
   chord in a lines-only build.
 - Data: the 9,058-record `golden_vectors.json` of the companion repo (CC BY 4.0,
   derived from ProRail Spoorgeometrie).
+
+> Superseded-by: docs/clothoid-fprime-full-branch-2026-11.md

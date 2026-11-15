@@ -155,3 +155,5 @@ bridges and the arc headline's conclusion
   POINT_IN_CURVE_RING oracle, or prove it equals an arc-aware ray parity.
 
 SUMMARY ok=66 warn=6 bug=12 — of 83 itemised theorems, 11 were vacuous, circular, placeholder-backed or mis-labelled (defects 1–6, 8, 9, 11) and 6 carry an unproved "REFUTED" label (defect 7); defects 10–12 were this branch's own (region model, first guarded headline, checker), fixed; 43 of 109 hypotheses are open; 702 premise-bearing unconditional citations frozen as debt.
+
+> Superseded-by: docs/clothoid-fprime-full-branch-2026-11.md
