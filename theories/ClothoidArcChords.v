@@ -41,6 +41,26 @@
      * 0 < step <= 2 PI                      (from the arc contract);
      * |kappa_k h| <= 2 PI for every piece   (from the arc contract: a
        piece may not wind more than once).
+   clothoid_arc_spline_chords_hausdorff_window replaces the second by a
+   condition on the window alone,
+     max(|a|, |b|) * (b - a) <= 2 PI * N * A^2   (cac_sweep_bound).
+
+   CAVEAT: the chord budget degenerates near the inflection.  kappa_k is
+   sigma * m_k / A^2 with m_k = x_k + h / 2 the piece midpoint, so the
+   piece radius is A^2 / |m_k| and cac_rmax = A^2 / min |m_k|.  For a
+   window that contains or approaches station 0 it is unbounded: with
+   a = 0, piece 0 has radius 2 A^2 / h and cac_tol is about
+   A^2 step^2 / (4 h), which GROWS with N.  The budget is therefore not
+   monotone in N unless step shrinks too, and it is discontinuous at
+   kappa = 0 (tolerance 0 there, unbounded next to it).  The theorem is
+   true and exact as stated; near the inflection it is close to vacuous.
+   The true chord error there is small (about h^3 / (64 A^2) for piece 0).
+   The slack comes from arc_linearize_hausdorff, which bounds a chord by
+   the nominal angle step, not by the angle |kappa_k h| / n_k the chord
+   actually subtends.  A per-chord-angle arc contract would give
+   |kappa_k| h^2 / (8 n_k^2) per piece and a closed-form chord budget
+   max(|a|, |b|) (b - a)^2 / (32 A^2 N^2), with no cac_rmax.  Not done
+   here.
 
    Not here: no Linearizes instance (chord vertices lie on the arcs, up
    to eps from the clothoid, so lz_on_curve fails); no binary64; no
@@ -54,7 +74,7 @@
 
    Author: NetTopologySuite.Proofs contributors
    License: BSD-3-Clause (see LICENSE)
-   AI assistance disclosure: AI-drafted; human review pending.
+   AI assistance disclosure: AI-drafted, human-reviewed.
      Assisted-by: Claude Code
    ========================================================================== *)
 
@@ -623,6 +643,73 @@ Proof.
     exact Hq.
 Qed.
 
+(* ---- the winding premise from the window alone --------------------------- *)
+
+Lemma cac_sigma_abs : forall c, Rabs (cloth_sigma c) = 1.
+Proof.
+  intro c. unfold cloth_sigma. destruct (Rle_dec 0 (cloth_cross c)).
+  - apply Rabs_R1.
+  - unfold Rabs. destruct (Rcase_abs (-1)); lra.
+Qed.
+
+(* Turning of piece k, bounded in the window and N. *)
+Lemma cac_sweep_bound :
+  forall c a b N k, 0 < cloth_A c -> a < b -> (k < N)%nat ->
+    Rabs (cas_kap c (cas_node a (cas_step a b N) k) (cas_step a b N)
+          * cas_step a b N)
+    <= Rmax (Rabs a) (Rabs b) * (b - a) / (INR N * (cloth_A c * cloth_A c)).
+Proof.
+  intros c a b N k HA Hab Hk.
+  assert (HN : (N <> 0)%nat) by lia.
+  assert (HNp : 0 < INR N) by (apply lt_0_INR; lia).
+  pose proof (cac_step_pos a b N Hab HN) as Hh.
+  destruct (cac_node_in_window a b N k (Rlt_le _ _ Hab) Hk) as [Hlo Hhi].
+  rewrite cas_node_S in Hhi.
+  set (h := cas_step a b N) in *. set (x := cas_node a h k) in *.
+  set (M := Rmax (Rabs a) (Rabs b)).
+  assert (HAA : 0 < cloth_A c * cloth_A c) by (apply Rmult_lt_0_compat; exact HA).
+  assert (Hq : 0 < h / (cloth_A c * cloth_A c)) by (apply Rdiv_lt_0_compat; assumption).
+  assert (Hm : Rabs (x + h / 2) <= M).
+  { pose proof (Rmax_l (Rabs a) (Rabs b)). pose proof (Rmax_r (Rabs a) (Rabs b)).
+    pose proof (Rle_abs b). pose proof (Rle_abs (- a)) as Ha'.
+    rewrite Rabs_Ropp in Ha'. unfold M.
+    apply Rabs_le. lra. }
+  unfold cas_kap.
+  replace (cloth_sigma c * (x + h / 2) / (cloth_A c * cloth_A c) * h)
+    with (cloth_sigma c * ((x + h / 2) * (h / (cloth_A c * cloth_A c))))
+    by (field; lra).
+  rewrite Rabs_mult, cac_sigma_abs, Rmult_1_l, Rabs_mult.
+  rewrite (Rabs_pos_eq (h / (cloth_A c * cloth_A c))) by lra.
+  replace (M * (b - a) / (INR N * (cloth_A c * cloth_A c)))
+    with (M * (h / (cloth_A c * cloth_A c)))
+    by (unfold h, cas_step; field; split; lra).
+  apply Rmult_le_compat_r; [lra | exact Hm].
+Qed.
+
+(* The headline with the winding premise stated on the window. *)
+Corollary clothoid_arc_spline_chords_hausdorff_window :
+  forall c a b N step eps,
+    cloth_wf c -> a < b -> (N <> 0)%nat ->
+    (b - a) * (b - a) * (b - a)
+      <= 8 * (cloth_A c * cloth_A c) * (INR N * INR N) * eps ->
+    0 < step <= 2 * PI ->
+    Rmax (Rabs a) (Rabs b) * (b - a)
+      <= 2 * PI * (INR N * (cloth_A c * cloth_A c)) ->
+    hausdorff_le (cac_window_shape c a b)
+      (poly_shape (cac_pts c a (cas_step a b N) step N))
+      (eps + cac_tol c a b N step).
+Proof.
+  intros c a b N step eps Hwf Hab HN Hgate Hstep Hwin.
+  apply clothoid_arc_spline_chords_hausdorff; try assumption.
+  intros k Hk. destruct Hwf as [HA _].
+  eapply Rle_trans; [apply cac_sweep_bound; assumption|].
+  assert (HNp : 0 < INR N) by (apply lt_0_INR; lia).
+  assert (Hd : 0 < INR N * (cloth_A c * cloth_A c))
+    by (repeat apply Rmult_lt_0_compat; assumption).
+  apply Rmult_le_reg_r with (INR N * (cloth_A c * cloth_A c)); [exact Hd|].
+  unfold Rdiv. rewrite Rmult_assoc, Rinv_l by lra. lra.
+Qed.
+
 Print Assumptions within_eps_trans.
 Print Assumptions hausdorff_le_trans.
 Print Assumptions within_eps_weaken.
@@ -651,3 +738,6 @@ Print Assumptions cac_piece_pts_ends.
 Print Assumptions cac_pts_end.
 Print Assumptions cac_pts_shape.
 Print Assumptions clothoid_arc_spline_chords_hausdorff.
+Print Assumptions cac_sigma_abs.
+Print Assumptions cac_sweep_bound.
+Print Assumptions clothoid_arc_spline_chords_hausdorff_window.
