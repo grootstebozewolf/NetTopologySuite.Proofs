@@ -75,14 +75,14 @@ FTC for `lint` is #889: claimId `0001-lint-ftc`, witness
 (claimId none), as `clothoid_f_deriv`. Those two show the Coquelicot
 lane is not needed for evaluation or derivatives. Half-branch
 `|κL| ≤ 1/2` is `clothoid_fprime_pos` (`clothoid_L_unique_half_branch`).
-`H_mvt` is gone (`deriv_pos_strict_incr`). Full branch `|κL| ≤ π` stays
-`clothoid_L_unique_on_branch` under `ClothoidFPrimePos`. Fresh BSD-3
+`H_mvt` is gone (`deriv_pos_strict_incr`). Full branch `|κL| ≤ π` is
+`clothoid_L_unique_on_branch`, by `clothoid_fprime_pos_branch`. Fresh BSD-3
 scripts, no EUPL paste, the consumer gate, and the allowlist stand.
 
 ## Consequences
 
 **Positive.**
-- FTC (#889, claimId `0001-lint-ftc`, witness `lipint_ftc` wrapping `lip_ftc`) and Leibniz (#896, `lint_leibniz`) discharge evaluation and derivatives in Stdlib. Full-branch `ClothoidFPrimePos` stays open; Halley end-to-end stays consumer-gated.
+- FTC (#889, claimId `0001-lint-ftc`, witness `lipint_ftc` wrapping `lip_ftc`) and Leibniz (#896, `lint_leibniz`) discharge evaluation and derivatives in Stdlib. Full-branch `ClothoidFPrimePos` is proved (`clothoid_fprime_pos_branch`); Halley end-to-end stays consumer-gated.
 - The licence question dissolves rather than being adjudicated: no
   copyleft text enters the tree, so no per-file licence mixing, no
   reliance on interpreting the witness README's grant note.

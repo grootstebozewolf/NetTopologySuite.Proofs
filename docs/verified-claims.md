@@ -1354,7 +1354,7 @@ claimId `0001-lint-ftc`. Witness `LipIntFTC.v : lipint_ftc`.
 `lipF` of a Lipschitz integrand is `derivable_pt_lim` on the open
 interval, derivative the integrand, and one-sided at the endpoints.
 ADR-0001 left this FTC on the Coquelicot lane; the dyadic secant bound
-discharges it in Stdlib. `H_deriv` is `lint_leibniz`. Unconditional on |κL| ≤ 1/2; full branch |κL| ≤ π conditional on `ClothoidFPrimePos`. Not `H_mvt` (`MVT` prints `classic`). Not a remint of `508-e`.
+discharges it in Stdlib. `H_deriv` is `lint_leibniz`. `H_fprime_pos` is `ClothoidResidual.v : clothoid_fprime_pos_branch`, so the full branch |κL| ≤ π is unconditional. `H_mvt` is `RealMonotone.v : deriv_pos_strict_incr`, not Stdlib `MVT` (which prints `classic`). Not a remint of `508-e`.
 
 | `file : theorem` | Meaning | Ax |
 |---|---|---|
@@ -1885,8 +1885,8 @@ IVT `atan2` (allowlist trio only). The file is not in
 ## Issue #67 — clothoid×line (`RelateClothoid.v`, `RelateMatrixClothoid.v`) <!-- feat:relate geom:cc,ls -->
 
 Minimal `ClothoidChord` carrier; witnesses reuse S2 line-line matrices.
-`clothoid_L_unique_on_branch` is |κL| ≤ π given `ClothoidFPrimePos`;
-`clothoid_L_unique_half_branch` is unconditional on |κL| ≤ 1/2.
+`clothoid_L_unique_on_branch` is the full branch |κL| ≤ π, unconditional;
+`clothoid_L_unique_half_branch` is its |κL| ≤ 1/2 instance.
 
 `clothoid_fill` selects the S10b witness matrices.
 
@@ -1895,7 +1895,7 @@ Minimal `ClothoidChord` carrier; witnesses reuse S2 line-line matrices.
 | `RelateClothoid.v : clothoid_chord_proper_cross_share` | **Geometry:** clothoid chord properly crosses segment ⇒ shared point `[exact]` | 3 |
 | `RelateClothoid.v : clothoid_chord_rejected_not_share` | **Geometry:** same-side rejection on clothoid chord ⇒ no shared point `[exact]` | 3 |
 | `RelateClothoid.v : cl_matrix_point_ii_crosses` / `_intersects` / `cl_matrix_disjoint_witness` | **Witness:** the reused S2 matrices satisfy `Crosses`/`Intersects`/`Disjoint` `[exact]` | 0 |
-| `RelateClothoid.v : clothoid_L_unique_on_branch` (+ `RelateClothoid.v : clothoid_L_unique_half_branch`) | Unconditional on |κL| ≤ 1/2 `[exact]`; full branch |κL| ≤ π takes `ClothoidFPrimePos` as a premise (open) `[cond]` | 3 |
+| `RelateClothoid.v : clothoid_L_unique_on_branch` (+ `RelateClothoid.v : clothoid_L_unique_half_branch`) | Root of the chord residual is unique on the full branch |κL| ≤ π, and on |κL| ≤ 1/2; `ClothoidFPrimePos` is proved (`ClothoidResidual.v : clothoid_fprime_pos_branch`) `[exact]` | 3 |
 | `RelateMatrixClothoid.v : clothoid_fill_proper_cross_witness` | **Witness:** `Crosses` + `Intersects` on `clothoid_fill CLR_ChordProperCross` `[exact]` | 0 |
 | `RelateMatrixClothoid.v : clothoid_fill_disjoint_witness` | **Witness:** `Disjoint` on `clothoid_fill CLR_ChordDisjoint` `[exact]` | 0 |
 | `RelateMatrixClothoid.v : clothoid_fill_share_witness` | **Witness:** `Intersects` on `clothoid_fill CLR_ChordShare` `[exact]` | 0 |

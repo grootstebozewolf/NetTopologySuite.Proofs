@@ -26,7 +26,7 @@
 
    Halley d/dL (ClothoidResidual H_deriv, H_fprime_pos) is not this
    theorem: that residual differentiates under the integral in the
-   length parameter. H_mvt stays a premise for the same classic reason.
+   length parameter. All three are discharged in ClothoidResidual.v.
    WITNESS topic: foundations · claimId: 0001-lint-ftc · witness: lipint_ftc
    board: ADR-0001
    The id is the ADR-0001 family (same shape as 0007- for ADR-0007).
