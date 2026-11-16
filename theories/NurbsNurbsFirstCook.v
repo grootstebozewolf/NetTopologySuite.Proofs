@@ -139,7 +139,7 @@ Lemma egg_nurbs_is_tag :
     e = MkOutOfScope EggNurbs \/ exists ne, e = MkNurbs ne.
 Proof.
   intros e H.
-  destruct e as [ch|ce|cl|k|ne]; simpl in H; try discriminate.
+  destruct e as [ch|ce|cl|k|ne|el]; simpl in H; try discriminate.
   - left. rewrite H. reflexivity.
   - right. exists ne. reflexivity.
 Qed.
@@ -214,10 +214,10 @@ Proof.
   exact cook_loop_not_obligation.
 Qed.
 
-Lemma ellipse_still_not_first_cook :
-  ~ first_cook_scope EggEllipse EggEllipse.
+Lemma ellipse_now_first_cook :
+  first_cook_scope EggEllipse EggEllipse.
 Proof.
-  exact ellipse_ellipse_not_first_scope.
+  exact ellipse_ellipse_first_cook_scope.
 Qed.
 
 Lemma other_eggs_stay_out :
@@ -258,7 +258,7 @@ Theorem ticket_0007_nurbs_nurbs_first_cook_qed_or_qex :
    /\ ~ first_cook_scope EggCircularArc EggChord
    /\ cook_loop_status = LoopDischarged
    /\ cook_loop_status <> LoopObligation
-   /\ ~ first_cook_scope EggEllipse EggEllipse
+   /\ first_cook_scope EggEllipse EggEllipse
    /\ ~ first_cook_scope EggSinusoid EggSinusoid
    /\ ~ first_cook_scope EggGeodesicString EggGeodesicString
    /\ ~ first_cook_scope EggSpiralCurve EggSpiralCurve)
@@ -286,7 +286,7 @@ Proof.
   split; [intro H; exact H|].
   split; [exact cook_loop_is_discharged|].
   split; [exact cook_loop_not_obligation|].
-  split; [exact ellipse_ellipse_not_first_scope|].
+  split; [exact ellipse_ellipse_first_cook_scope|].
   destruct other_eggs_stay_out as [Hsin [Hgeo Hspi]].
   split; [exact Hsin|].
   split; [exact Hgeo|].
@@ -312,4 +312,4 @@ Print Assumptions ticket_0007_nurbs_nurbs_first_cook_qed_or_qex.
 Print Assumptions nurbs_tag_not_mkclothoid.
 Print Assumptions nurbs_tag_empty_false.
 Print Assumptions nurbs_try_cook_still_none.
-Print Assumptions ellipse_still_not_first_cook.
+Print Assumptions ellipse_now_first_cook.

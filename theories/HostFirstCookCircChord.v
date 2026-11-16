@@ -28,7 +28,7 @@
      Do not remint I_ok_mixed / I_ok_interior as host I_ok.
      No atan2, no classic, no Category C on host.
      No LeftoverBagTermArm, no LoopDischarged.
-     No SIN / ellipse / geodesic expand. NURBS×NURBS is first cook.
+     No SIN / geodesic expand. NURBS×NURBS and ellipse×ellipse are first cook.
      No I_CIRC_CHORD keyword. No #518 / #423 / Karney / ADR-0008 Status
      flip. Not “ι closed”. Not “first cook complete”.
 
@@ -70,7 +70,7 @@ Lemma first_cook_scope_same_kind_unchanged :
   /\ first_cook_scope EggCircularArc EggCircularArc
   /\ first_cook_scope EggClothoid EggClothoid
   /\ first_cook_scope EggNurbs EggNurbs
-  /\ ~ first_cook_scope EggEllipse EggEllipse
+  /\ first_cook_scope EggEllipse EggEllipse
   /\ ~ first_cook_scope EggSinusoid EggSinusoid
   /\ ~ first_cook_scope EggGeodesicString EggGeodesicString.
 Proof.
@@ -78,7 +78,7 @@ Proof.
   split; [exact circular_egg_first_cook_scope |].
   split; [exact clothoid_egg_first_cook_scope |].
   split; [exact nurbs_nurbs_first_cook_scope |].
-  split; [exact ellipse_ellipse_not_first_scope |].
+  split; [exact ellipse_ellipse_first_cook_scope |].
   split; [intro H; exact H |].
   intro H. exact H.
 Qed.

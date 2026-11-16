@@ -283,7 +283,9 @@ Do not start H⊥ / Multi Landed / Phase B done-when / MerkatorBV / `522-n`.
 | 1b | Numeric `dart_eq_dec` does not decide vertex identity | `Adr0007NodingEpic.v : ticket_0007_dart_eq_qed_or_qex` | **QEX** — coord-pair `=` is not hen `=` | `SheetHenCookCore.v : coord_eq_not_hen_eq` |
 | 2 | Minimal `𝓘` obligations for the segment/chord lane | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** — Hit on unit-square diagonals; Empty on disjoint horizontals; never Decline in scope | `SheetHenCookCore.v : crossing_witness`, `SheetHenCookCore.v : disjoint_witness`, `SheetHenCookCore.v : I_ok_chord_not_decline` |
 | 3 | Cross-link to accepted ADR-0006 | header of both modules + this addendum | comment / docs (no second seam) | — |
-| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — ellipse–ellipse missing; NURBS×NURBS is first cook | `SheetHenCookCore.v : ellipse_ellipse_not_first_scope`, `SheetHenCookCore.v : nurbs_nurbs_first_cook_scope` |
+| 4 | First cook scope completeness | `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — sinusoid–sinusoid missing; NURBS×NURBS and ellipse×ellipse are first cook | `EllipseCookMkEllipse.v : sinusoid_not_first_cook_after_ellipse`, `SheetHenCookCore.v : nurbs_nurbs_first_cook_scope`, `SheetHenCookCore.v : ellipse_ellipse_first_cook_scope` |
+| 4c | Ellipse×ellipse inhabits the cook interface (claimId `0007-ellipse-first-cook`, owner decision #1031) | `EllipseCookMkEllipse.v : ticket_0007_ellipse_first_cook_qed_or_qex` | **QED** — host `MkEllipse`; locked interior Hit, locked Empty, `try_cook_hit` mint; tags / mixed Decline; a locked pair, not a general ellipse root finder | `EllipseCookMkEllipse.v : locked_mkellipse_I_ok`, `EllipseCookMkEllipse.v : locked_mkellipse_empty_I_ok`, `EllipseCookMkEllipse.v : cooked_mkellipse_try` |
+| 4d | Ellipse host joint (same claimId, owner #1031) | `EllipseCookMkEllipse.v : ticket_0007_ellipse_joint_qed_or_qex` | **QED** — consecutive `MkEllipse` eggs meeting end to start are a host Hit at `(1, 0)`; split children of the locked egg as fixture; endpoint incidence, not interior; no CompoundEgg / G¹ / ring closure | `EllipseCookMkEllipse.v : ell_joint_I_ok`, `EllipseCookMkEllipse.v : locked_ell_host_joint_I_ok`, `EllipseCookMkEllipse.v : locked_ell_AB_not_joint` |
 | 4b | Chord–chord inhabits the cook interface | `Adr0007NodingEpic.v : ticket_0007_chord_chord_qed_or_qex` | **QED** | `SheetHenCookCore.v : first_cook_scope_chord_chord` |
 | — | Empty ≠ Decline | `Adr0007NodingEpic.v : ticket_0007_empty_neq_decline_qed_or_qex` | **QED** | `SheetHenCookCore.v : IEmpty_neq_IDecline` |
 | — | “Noded on S” is cook evidence | `Adr0007NodingEpic.v : ticket_0007_noded_cook_qed_or_qex` | **QED** | `SheetHenCookCore.v : noded_crossing` |
@@ -1419,7 +1421,7 @@ Witness: `0007-circle-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
 
 Cook-axis sidecar: Elliptical Curve / EllipticArc as an EggClass on
 the ADR-0007 vocabulary. Host already has `EggEllipse` /
-`MkOutOfScope EggEllipse` and `ellipse_ellipse_not_first_scope`.
+`MkOutOfScope EggEllipse`; ellipse×ellipse was then out of first cook.
 `SheetHenCook.v` is at the module-split ceiling after Circle #720 —
 this letter does not grow it. Decline / not-first-cook / try_cook
 None live in `SidecarEllipticEgg.v` and cite existing
@@ -1434,16 +1436,17 @@ fixture. Do not ship an elliptic×elliptic noder or Campaign I–II.
 chord-seed (`RelateEllipticArc.v : elliptic_arc_chord_proper_cross_share`).
 Demote-to-chord is NodingNG / host first cook, not an elliptic Hit.
 
-**QEX.** Ellipse×ellipse is not first cook (checklist 4). Named
-missing constructors: no `MkElliptic` on `Egg`; no `I_ok` Hit arm;
-no first-cook expand. Do not fake first-cook expand. Parks Γ / ι / ρ cited once.
+**QEX then, QED since claimId `0007-ellipse-first-cook`.** Host `MkEllipse`,
+an `I_ok` Hit arm on a locked pair and the first-cook expand now inhabit
+(checklist 4c). The sidecar tag stays Decline. Parks Γ / ι / ρ cited once.
 
 Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 
 | Stop | Arm | Lemma |
 |------|-----|-------|
 | `SidecarEllipticEgg.v : ticket_0007_elliptic_egg_qed_or_qex` | **QED** — EggEllipse packaging; host Decline; locked RelateEllipticArc chord-seed; demote is NodingNG first cook; #508 ellipse length / elliptic-E stay metric | `SidecarEllipticEgg.v : sidecar_elliptic_egg_inhabits`, `SidecarEllipticEgg.v : sidecar_elliptic_chord_seed`, `SidecarEllipticEgg.v : sidecar_elliptic_host_decline` |
-| `SidecarEllipticEgg.v : ticket_0007_elliptic_not_first_cook_qed_or_qex` | **QEX** — ellipse×ellipse stays out of first cook; `MkElliptic` / Hit-arm missing | `SheetHenCookCore.v : ellipse_ellipse_not_first_scope`, `SidecarEllipticEgg.v : sidecar_elliptic_mkelliptic_missing`, `SidecarEllipticEgg.v : sidecar_elliptic_hit_arm_missing` |
+| `SidecarEllipticEgg.v : ticket_0007_elliptic_not_first_cook_qed_or_qex` | **QED** — `MkElliptic` / Hit-arm / first-cook expand inhabit (host letter `0007-ellipse-first-cook`) | `SheetHenCookCore.v : ellipse_ellipse_first_cook_scope`, `SidecarEllipticEgg.v : sidecar_elliptic_mkelliptic_inhabits`, `SidecarEllipticEgg.v : sidecar_elliptic_hit_arm_inhabits` |
+| `EllipseCookMkEllipse.v : ticket_0007_ellipse_first_cook_qed_or_qex` | **QED** — scope + locked interior Hit + locked Empty + mint; tags / mixed Decline; sinusoid / ρ-intake parked | `EllipseCookMkEllipse.v : locked_mkellipse_I_ok`, `EllipseCookMkEllipse.v : cooked_mkellipse_try`, `SheetHenCookCore.v : ellipse_ellipse_first_cook_scope` |
 | `SidecarEllipticEgg.v : ticket_0007_elliptic_parks_qed_or_qex` | **QEX** — Campaign I–II / EllipseLength-as-noding / CircGamma remint / cook loop discharged by letter 6b (#954); Parks Γ / ι / ρ | `SidecarEllipticEgg.v : sidecar_elliptic_letter_is_landed`, `SheetHenCookCore.v : cook_loop_is_discharged` |
 
 Witness: `0007-elliptical-curve-egg`. Status stays **Accepted**. Parks Γ / ι / ρ.
@@ -1689,7 +1692,7 @@ Status stays **Accepted**. ADR-0006 Status stays **Accepted**.
 | `ClothoidCookMkClothoid.v : ticket_0007_clothoid_first_cook_qed_or_qex` | **QED** — scope + locked Hit + mint; tags / mixed Decline; NURBS / ρ parked | `ClothoidCookMkClothoid.v : locked_mkclothoid_I_ok`, `ClothoidCookMkClothoid.v : cooked_mkclothoid_try`, `SheetHenCookCore.v : clothoid_egg_first_cook_scope` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_not_first_cook_qed_or_qex` | **QED** — Hit-arm / first-cook expand inhabit | `SidecarClothoidEgg.v : sidecar_clothoid_hit_arm_inhabits`, `SidecarClothoidEgg.v : sidecar_clothoid_first_cook_expand_inhabits` |
 | `SidecarClothoidEgg.v : ticket_0007_clothoid_parks_qed_or_qex` | **QEX** — Campaign / Fresnel-as-noding / ρ parked | `SidecarClothoidEgg.v : sidecar_clothoid_not_fresnel_noding`, `SheetHenCookCore.v : cook_loop_is_discharged` |
-| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses ellipse–ellipse | `SheetHenCookCore.v : ellipse_ellipse_not_first_scope` |
+| `Adr0007NodingEpic.v : ticket_0007_qed_or_qex` | **QEX** — completeness still misses sinusoid–sinusoid | `EllipseCookMkEllipse.v : sinusoid_not_first_cook_after_ellipse` |
 
 Witness: `0007-clothoid-first-cook`. Status stays **Accepted**. Parks ι / ρ. Γ is discharged (#724). This letter is first cook only, not a noder and not Fresnel-as-noding.
 

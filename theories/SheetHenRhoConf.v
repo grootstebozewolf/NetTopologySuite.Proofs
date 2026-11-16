@@ -139,7 +139,7 @@ Proof.
   apply req_b_true in Ex. apply req_b_true in Ey.
   destruct Hwf as [Hr Ho].
   destruct pc as [[src dst egg] sup w prov].
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e];
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e];
     simpl in Hr, Hs, Hpt, Hne; try contradiction; try discriminate.
   injection Hs as ->.
   unfold window_chord in Hr.
@@ -185,8 +185,9 @@ Lemma split_parent_chord : forall pc u h ch,
   exists ch0, ck_egg (bp_ck pc) = MkChord ch0.
 Proof.
   intros [[src dst egg] sup w prov] u h ch H.
-  destruct egg as [e|e|e|e|e]; simpl in H.
+  destruct egg as [e|e|e|e|e|e]; simpl in H.
   - exists e. reflexivity.
+  - destruct H as [H|H]; discriminate.
   - destruct H as [H|H]; discriminate.
   - destruct H as [H|H]; discriminate.
   - destruct H as [H|H]; discriminate.
@@ -201,13 +202,14 @@ Lemma split_circ_child_open : forall pc u h c,
   circ_open_span c.
 Proof.
   intros [[src dst egg] sup w prov] u h c Hu Hop Hch.
-  destruct egg as [e|e|e|e|e]; simpl in Hch.
+  destruct egg as [e|e|e|e|e|e]; simpl in Hch.
   - destruct Hch as [H|H]; discriminate.
   - assert (Ho : circ_open_span e) by (apply Hop; reflexivity).
     destruct Ho as [Hlo Hhi].
     destruct Hch as [H|H]; injection H as <-.
     + unfold circ_open_span, circ_split. cbn [fst circ_sweep]. nra.
     + unfold circ_open_span, circ_split. cbn [snd circ_sweep]. nra.
+  - destruct Hch as [H|H]; discriminate.
   - destruct Hch as [H|H]; discriminate.
   - destruct Hch as [H|H]; discriminate.
   - destruct Hch as [H|H]; discriminate.
@@ -265,7 +267,7 @@ Lemma wf_egg_class : forall pc,
   (exists c, ck_egg (bp_ck pc) = MkCirc c).
 Proof.
   intros [[src dst egg] sup w prov] [Hr _].
-  destruct sup as [cs|cc]; destruct egg as [e|e|e|e|e]; simpl in Hr; try contradiction.
+  destruct sup as [cs|cc]; destruct egg as [e|e|e|e|e|e]; simpl in Hr; try contradiction.
   - left. exists e. reflexivity.
   - right. exists e. reflexivity.
 Qed.

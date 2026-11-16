@@ -24,7 +24,7 @@
    this is split-children meet, not example5.
 
    MkOutOfScope EggClothoid stays Decline. Mixed clothoid×chord
-   stays Decline. SIN / ellipse / spiral / geodesic stay out of
+   stays Decline. SIN / spiral / geodesic stay out of
    first cook. rho / Campaign / Fresnel-as-noding stay parked.
    first_cook_scope is not expanded.
 

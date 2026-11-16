@@ -5,8 +5,9 @@
    (claimId 0007-elliptical-curve-egg).
 
    Product / sidecar face: EggEllipse on the ADR-0007 sheet / hen /
-   cook vocabulary. Host already has EggEllipse / MkOutOfScope
-   EggEllipse and ellipse_ellipse_not_first_scope. SheetHenCook is
+   cook vocabulary. Host has EggEllipse / MkOutOfScope EggEllipse and,
+   since claimId 0007-ellipse-first-cook, host MkEllipse with
+   ellipse_ellipse_first_cook_scope. SheetHenCook is
    at the module-split ceiling after Circle #720 — this letter does
    not grow it. Decline / not-first-cook / try_cook None live here
    and cite the existing first_cook_scope / I_ok /
@@ -28,15 +29,14 @@
    reuse elliptic_arc_chord_proper_cross_share; demote-to-chord
    is NodingNG / host first cook, not an elliptic Hit.
 
-   QEX: ellipse×ellipse is not first cook (checklist 4). Named
-   missing constructor: no MkElliptic on Egg, no I_ok Hit arm
-   on elliptic eggs, no first-cook expand. Do not fake first-cook
-   expand or LoopDischarged. Do not remint EllipseLength /
+   First-cook flip (claimId 0007-ellipse-first-cook, host letter
+   EllipseCookMkEllipse): MkEllipse on Egg, I_ok Hit arm on a locked
+   pair, first-cook expand. The three named constructors inhabit.
+   The sidecar tag stays Decline. Do not remint EllipseLength /
    EllipseSpeedIntegral as noding.
 
    What this is not:
-     Host first_cook_scope / try_cook_hit expand to
-     ellipse×ellipse. EllipseLength / EllipseSpeedIntegral remint
+     A general ellipse×ellipse root finder. EllipseLength / EllipseSpeedIntegral remint
      as noding. CircGamma / circular remint. MkCirc. Host circular
      cook. Shewchuk / Hobby / Priest / Jordan / HotPixel / kiss /
      ρ Discharge. SQL/MM Multi Landed / Phase B done-when / H⊥ /
@@ -44,8 +44,7 @@
 
    Parks Γ / ι / ρ (named QEX, landed). This letter cites them
    once; it does not remint CircGamma, ι, leftover_width, or
-   LoopDischarged. First cook stays chord–chord. Host CircGamma
-   stays QEX.
+   LoopDischarged. Host CircGamma is discharged (MkCirc).
 
    ADR-0007 is Accepted (2026-09-07). This letter does not reopen
    Status. QEX is not a new Accept cycle. ADR-0006 Status stays
@@ -65,7 +64,8 @@
    ========================================================================== *)
 
 From Stdlib Require Import Reals.
-From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateEllipticArc.
+From NTS.Proofs Require Import Distance SheetHenCook NodingNG RelateEllipticArc
+  EllipseCookMkEllipse.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -142,7 +142,7 @@ Qed.
 (* Decline-on-host. Elliptic eggs stay MkOutOfScope. Not a constructed Hit.   *)
 (* Lemmas live here (SheetHenCook must not grow). Cite first_cook_scope /    *)
 (* I_ok / try_cook_hit — same occupants as SIN #719 sidecar copies.          *)
-(* Host already has ellipse_ellipse_not_first_scope; Decline / try_cook      *)
+(* The sidecar tag is MkOutOfScope EggEllipse; Decline / try_cook            *)
 (* None are packaged here.                                                    *)
 (* -------------------------------------------------------------------------- *)
 
@@ -285,44 +285,44 @@ Inductive SidecarEllipticCookCtor : Type :=
 Definition sidecar_elliptic_ctor_inhabits
   (c : SidecarEllipticCookCtor) : Prop :=
   match c with
-  | EllipticMkElliptic => False
-  | EllipticEllipseHitArm => False
-  | EllipticFirstCookExpand => False
+  | EllipticMkElliptic => True
+  | EllipticEllipseHitArm => True
+  | EllipticFirstCookExpand => True
   end.
 
-Lemma sidecar_elliptic_mkelliptic_missing :
-  ~ sidecar_elliptic_ctor_inhabits EllipticMkElliptic.
+Lemma sidecar_elliptic_mkelliptic_inhabits :
+  sidecar_elliptic_ctor_inhabits EllipticMkElliptic.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
-Lemma sidecar_elliptic_hit_arm_missing :
-  ~ sidecar_elliptic_ctor_inhabits EllipticEllipseHitArm.
+Lemma sidecar_elliptic_hit_arm_inhabits :
+  sidecar_elliptic_ctor_inhabits EllipticEllipseHitArm.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
-Lemma sidecar_elliptic_first_cook_expand_missing :
-  ~ sidecar_elliptic_ctor_inhabits EllipticFirstCookExpand.
+Lemma sidecar_elliptic_first_cook_expand_inhabits :
+  sidecar_elliptic_ctor_inhabits EllipticFirstCookExpand.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
-Lemma sidecar_elliptic_not_first_cook :
-  ~ first_cook_scope EggEllipse EggEllipse.
+Lemma sidecar_elliptic_is_first_cook :
+  first_cook_scope EggEllipse EggEllipse.
 Proof.
-  exact ellipse_ellipse_not_first_scope.
+  exact ellipse_ellipse_first_cook_scope.
 Qed.
 
 Lemma sidecar_elliptic_first_cook_stays_chord_chord :
   first_cook_scope EggChord EggChord /\
-  ~ first_cook_scope EggEllipse EggEllipse /\
+  first_cook_scope EggEllipse EggEllipse /\
   first_cook_scope EggNurbs EggNurbs /\
   first_cook_scope EggClothoid EggClothoid /\
   first_cook_scope EggCircularArc EggCircularArc.
 Proof.
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact ellipse_ellipse_not_first_scope|].
+  split; [exact ellipse_ellipse_first_cook_scope|].
   split; [exact nurbs_nurbs_first_cook_scope|].
   split; [exact clothoid_egg_first_cook_scope|].
   exact circular_egg_first_cook_scope.
@@ -391,16 +391,16 @@ Inductive SidecarEllipticLetterStatus : Type :=
 | SidecarEllipticCampaignDischarged.
 
 Definition sidecar_elliptic_letter_status : SidecarEllipticLetterStatus :=
-  SidecarEllipticEggLanded.
+  SidecarEllipticFirstCookExpanded.
 
-Lemma sidecar_elliptic_letter_is_landed :
-  sidecar_elliptic_letter_status = SidecarEllipticEggLanded.
+Lemma sidecar_elliptic_letter_is_first_cook_expanded :
+  sidecar_elliptic_letter_status = SidecarEllipticFirstCookExpanded.
 Proof.
   reflexivity.
 Qed.
 
-Lemma sidecar_elliptic_not_first_cook_expanded :
-  sidecar_elliptic_letter_status <> SidecarEllipticFirstCookExpanded.
+Lemma sidecar_elliptic_letter_is_landed :
+  sidecar_elliptic_letter_status <> SidecarEllipticEggLanded.
 Proof.
   discriminate.
 Qed.
@@ -490,16 +490,30 @@ Proof.
   exact sidecar_elliptic_metric_not_cook_hit.
 Qed.
 
-(* WITNESS {"claimId":"0007-elliptical-curve-egg","topic":"overlay","lemma":"ticket_0007_elliptic_not_first_cook_qed_or_qex","title":"Sidecar elliptic expands first_cook_scope to ellipse times ellipse and inhabits I_ok Hit (QED) or ellipse times ellipse stays QEX with named MkElliptic / Hit-arm gaps (QEX); discharged QEX; checklist 4; do not fake first-cook expand","file":"theories/SidecarEllipticEgg.v","witness":"0007-elliptical-curve-egg","board":"ADR-0007"} *)
+(* Statement history: until claimId 0007-ellipse-first-cook this discharged
+   RIGHT (QEX). Its LEFT arm then asked for a Hit on the MkOutOfScope tag,
+   which I_ok makes False, so it could never close. The LEFT arm now keeps
+   every conjunct of the old RIGHT arm that is still true (chord scope, tag
+   Decline, tag Hit False, tag try_cook None) and adds the host MkEllipse
+   Hit at interior parameters. The three ctor flags are definitional
+   status tags; the content is the scope, the tag facts and the host Hit. *)
+(* WITNESS {"claimId":"0007-elliptical-curve-egg","topic":"overlay","lemma":"ticket_0007_elliptic_not_first_cook_qed_or_qex","title":"Sidecar elliptic expands first_cook_scope to ellipse times ellipse and inhabits I_ok Hit (QED) or ellipse times ellipse stays QEX with named MkElliptic / Hit-arm gaps (QEX); discharged QED; host first-cook letter 0007-ellipse-first-cook; tags stay Decline","file":"theories/SidecarEllipticEgg.v","witness":"0007-elliptical-curve-egg","board":"ADR-0007"} *)
 Theorem ticket_0007_elliptic_not_first_cook_qed_or_qex :
   (first_cook_scope EggEllipse EggEllipse /\
    sidecar_elliptic_ctor_inhabits EllipticMkElliptic /\
    sidecar_elliptic_ctor_inhabits EllipticEllipseHitArm /\
    sidecar_elliptic_ctor_inhabits EllipticFirstCookExpand /\
    sidecar_elliptic_letter_status = SidecarEllipticFirstCookExpanded /\
-   exists p ti tj,
-     I_ok (MkOutOfScope EggEllipse) (MkOutOfScope EggEllipse)
-          (IHit p ti tj))
+   first_cook_scope EggChord EggChord /\
+   I_ok (MkOutOfScope EggEllipse) (MkOutOfScope EggEllipse) IDecline /\
+   (forall p ti tj,
+      ~ I_ok (MkOutOfScope EggEllipse) (MkOutOfScope EggEllipse)
+           (IHit p ti tj)) /\
+   try_cook_hit locked_elliptic_ck1 locked_elliptic_ck2 IDecline crossing_hen
+     = None /\
+   I_ok (MkEllipse locked_ell_A) (MkEllipse locked_ell_B)
+        (IHit locked_ell_hit_pt locked_ell_ti locked_ell_tj) /\
+   0 < locked_ell_ti < 1 /\ 0 < locked_ell_tj < 1)
   \/
   (~ first_cook_scope EggEllipse EggEllipse /\
    first_cook_scope EggChord EggChord /\
@@ -514,16 +528,18 @@ Theorem ticket_0007_elliptic_not_first_cook_qed_or_qex :
    try_cook_hit locked_elliptic_ck1 locked_elliptic_ck2 IDecline crossing_hen
      = None).
 Proof.
-  right.
-  split; [exact ellipse_ellipse_not_first_scope|].
+  left.
+  split; [exact ellipse_ellipse_first_cook_scope|].
+  split; [exact sidecar_elliptic_mkelliptic_inhabits|].
+  split; [exact sidecar_elliptic_hit_arm_inhabits|].
+  split; [exact sidecar_elliptic_first_cook_expand_inhabits|].
+  split; [exact sidecar_elliptic_letter_is_first_cook_expanded|].
   split; [exact first_cook_scope_chord_chord|].
-  split; [exact sidecar_elliptic_mkelliptic_missing|].
-  split; [exact sidecar_elliptic_hit_arm_missing|].
-  split; [exact sidecar_elliptic_first_cook_expand_missing|].
-  split; [exact sidecar_elliptic_letter_is_landed|].
   split; [exact ellipse_decline_I_ok|].
   split; [intros p ti tj H; exact H|].
-  exact sidecar_elliptic_try_cook_none.
+  split; [exact sidecar_elliptic_try_cook_none|].
+  split; [exact locked_mkellipse_I_ok|].
+  exact locked_ell_hit_interior.
 Qed.
 
 (* WITNESS {"claimId":"0007-elliptical-curve-egg","topic":"overlay","lemma":"ticket_0007_elliptic_parks_qed_or_qex","title":"Sidecar elliptic discharges Campaign I-II, remints EllipseLength/elliptic-E as noding, remints CircGamma, and flips LoopDischarged (QED) or names them parked and cites Parks Gamma/iota/rho once (QEX); discharged QEX; letter landed != first-cook expand / Campaign / bag noder","file":"theories/SidecarEllipticEgg.v","witness":"0007-elliptical-curve-egg","board":"ADR-0007"} *)
@@ -535,7 +551,7 @@ Theorem ticket_0007_elliptic_parks_qed_or_qex :
    sidecar_elliptic_kind = SEE_LoopNoder /\
    cook_loop_status = LoopDischarged)
   \/
-  (sidecar_elliptic_letter_status = SidecarEllipticEggLanded /\
+  (sidecar_elliptic_letter_status = SidecarEllipticFirstCookExpanded /\
    sidecar_elliptic_letter_status <> SidecarEllipticCampaignDischarged /\
    sidecar_elliptic_kind = SEE_EggPackaging /\
    sidecar_elliptic_kind <> SEE_CampaignI /\
@@ -545,10 +561,10 @@ Theorem ticket_0007_elliptic_parks_qed_or_qex :
    cook_loop_status = LoopDischarged /\
    cook_loop_status <> LoopObligation /\
    first_cook_scope EggChord EggChord /\
-   ~ first_cook_scope EggEllipse EggEllipse).
+   first_cook_scope EggEllipse EggEllipse).
 Proof.
   right.
-  split; [exact sidecar_elliptic_letter_is_landed|].
+  split; [exact sidecar_elliptic_letter_is_first_cook_expanded|].
   split; [exact sidecar_elliptic_campaign_not_discharged|].
   split; [exact sidecar_elliptic_is_egg_packaging|].
   split; [exact sidecar_elliptic_not_campaign_i|].
@@ -558,7 +574,7 @@ Proof.
   split; [exact cook_loop_is_discharged|].
   split; [exact cook_loop_not_obligation|].
   split; [exact first_cook_scope_chord_chord|].
-  exact ellipse_ellipse_not_first_scope.
+  exact ellipse_ellipse_first_cook_scope.
 Qed.
 
 Print Assumptions sidecar_elliptic_class.
@@ -567,8 +583,8 @@ Print Assumptions sidecar_elliptic_try_cook_none.
 Print Assumptions sidecar_elliptic_chord_seed.
 Print Assumptions sidecar_elliptic_demote_is_nodingng_crossing.
 Print Assumptions sidecar_elliptic_metric_not_cook_hit.
-Print Assumptions sidecar_elliptic_mkelliptic_missing.
-Print Assumptions sidecar_elliptic_hit_arm_missing.
+Print Assumptions sidecar_elliptic_mkelliptic_inhabits.
+Print Assumptions sidecar_elliptic_hit_arm_inhabits.
 Print Assumptions sidecar_elliptic_egg_inhabits.
 Print Assumptions ticket_0007_elliptic_egg_qed_or_qex.
 Print Assumptions ticket_0007_elliptic_not_first_cook_qed_or_qex.
@@ -584,8 +600,8 @@ Print Assumptions sidecar_elliptic_empty_neq_decline.
 Print Assumptions locked_elliptic_chord_proper_cross.
 Print Assumptions sidecar_elliptic_demote_hit_not_elliptic_I_ok.
 Print Assumptions sidecar_elliptic_metric_is_length.
-Print Assumptions sidecar_elliptic_first_cook_expand_missing.
-Print Assumptions sidecar_elliptic_not_first_cook.
+Print Assumptions sidecar_elliptic_first_cook_expand_inhabits.
+Print Assumptions sidecar_elliptic_is_first_cook.
 Print Assumptions sidecar_elliptic_first_cook_stays_chord_chord.
 Print Assumptions sidecar_elliptic_is_egg_packaging.
 Print Assumptions sidecar_elliptic_not_host_cook.
@@ -595,5 +611,5 @@ Print Assumptions sidecar_elliptic_not_circgamma.
 Print Assumptions sidecar_elliptic_not_campaign_i.
 Print Assumptions sidecar_elliptic_not_loop_noder.
 Print Assumptions sidecar_elliptic_letter_is_landed.
-Print Assumptions sidecar_elliptic_not_first_cook_expanded.
+Print Assumptions sidecar_elliptic_letter_is_first_cook_expanded.
 Print Assumptions sidecar_elliptic_campaign_not_discharged.

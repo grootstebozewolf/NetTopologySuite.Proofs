@@ -146,6 +146,7 @@ Definition I_ok_hit_b (e1 e2 : Egg) (p : Point) (ti tj : R) : bool :=
       circ_open_span_b c && chord_nondeg_b s &&
       on_chord_b s ti p && on_circ_b c tj p
   | MkClothoid c1, MkClothoid c2 => on_cloth_b c1 ti p && on_cloth_b c2 tj p
+  | MkEllipse c1, MkEllipse c2 => on_ell_b c1 ti p && on_ell_b c2 tj p
   | _, _ => false
   end.
 
@@ -162,6 +163,7 @@ Proof.
     rewrite scope_spec, on_circ_spec, on_chord_spec. tauto.
   - rewrite andb_true_iff, on_circ_spec, on_circ_spec. reflexivity.
   - rewrite andb_true_iff, on_cloth_spec, on_cloth_spec. reflexivity.
+  - rewrite andb_true_iff, on_ell_spec, on_ell_spec. reflexivity.
 Qed.
 
 (* vertex_of_both is letter 1's family_vertex on both supports. *)
@@ -457,7 +459,7 @@ Lemma lo_child_sits : forall pc u h hq q,
    q = support_at (bp_support pc) (win_abs (bp_window pc) u)).
 Proof.
   intros [[src dst egg] sup w prov] u h hq q Hr Hsit.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e];
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e];
     simpl in Hr; try contradiction; simpl in Hsit;
     destruct Hsit as [[Hq Hp]|[Hq Hp]].
   - left. split; [symmetry; exact Hq| exact Hp].
@@ -475,7 +477,7 @@ Lemma hi_child_sits : forall pc u h hq q,
    q = support_at (bp_support pc) (win_hi (bp_window pc))).
 Proof.
   intros [[src dst egg] sup w prov] u h hq q Hr Hsit.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e];
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e];
     simpl in Hr; try contradiction; simpl in Hsit;
     destruct Hsit as [[Hq Hp]|[Hq Hp]].
   - left. split; [symmetry; exact Hq| exact Hp].

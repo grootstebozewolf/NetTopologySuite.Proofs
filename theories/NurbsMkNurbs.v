@@ -26,12 +26,13 @@
    Host class EggNurbs is the tag MkOutOfScope EggNurbs or the arm.
    The tag is not an interpolant pair. Not a silent MkCirc / MkChord /
    MkClothoid.
-   Ellipse / sinusoid / geodesic / spiral stay tags. No IEEE evaluator.
+   Sinusoid / geodesic / spiral stay tags. No IEEE evaluator.
 
    Honesty fences:
      Do not remint CircGamma / MkCirc / LoopDischarged.
      Do not remint leftover Ⅹ. I_ok_mixed is not host I_ok.
-     Do not inhabit MkEllipse / MkSinusoid / MkGeodesic / MkSpiral.
+     Do not inhabit MkSinusoid / MkGeodesic / MkSpiral here. MkEllipse
+     is a later letter (claimId 0007-ellipse-first-cook, owner #1031).
      Do not start ExactNurbsSegment. No new oracle keyword.
      #508 length stays metric (sidecar_nurbs_metric_not_cook_hit).
      ADR-0007 stays Accepted. QEX is not owner accept.
@@ -88,7 +89,7 @@ Lemma egg_nurbs_tag_or_arm :
     e = MkOutOfScope EggNurbs \/ exists ne, e = MkNurbs ne.
 Proof.
   intros e H.
-  destruct e as [ch|ce|cl|k|ne]; simpl in H; try discriminate.
+  destruct e as [ch|ce|cl|k|ne|el]; simpl in H; try discriminate.
   - left. rewrite <- H. reflexivity.
   - right. exists ne. reflexivity.
 Qed.
@@ -130,17 +131,21 @@ Proof.
   repeat split; intro c; discriminate.
 Qed.
 
-(* Ellipse / sinusoid / geodesic / spiral: same host fact, not new ctors. *)
+(* Sinusoid / geodesic / spiral: tags only. Ellipse: tag or host MkEllipse
+   (claimId 0007-ellipse-first-cook). *)
 Lemma other_tagged_eggs_stay_out_of_scope :
-  (forall e, egg_class e = EggEllipse -> e = MkOutOfScope EggEllipse) /\
+  (forall e, egg_class e = EggEllipse ->
+             e = MkOutOfScope EggEllipse \/ exists ee, e = MkEllipse ee) /\
   (forall e, egg_class e = EggSinusoid -> e = MkOutOfScope EggSinusoid) /\
   (forall e, egg_class e = EggGeodesicString ->
              e = MkOutOfScope EggGeodesicString) /\
   (forall e, egg_class e = EggSpiralCurve -> e = MkOutOfScope EggSpiralCurve).
 Proof.
-  repeat split; intros e H;
-    destruct e as [ch|ce|cl|k|ne]; simpl in H; try discriminate;
-    rewrite <- H; reflexivity.
+  split; [|repeat split]; intros e H;
+    destruct e as [ch|ce|cl|k|ne|ee]; simpl in H; try discriminate;
+    try (rewrite <- H; reflexivity).
+  - left. rewrite <- H. reflexivity.
+  - right. exists ee. reflexivity.
 Qed.
 
 (* #508 length lane is not this ctor. Sidecar already records that. *)

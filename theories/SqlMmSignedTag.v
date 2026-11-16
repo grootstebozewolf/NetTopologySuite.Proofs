@@ -291,6 +291,7 @@ Definition first_slice_tag (e : Egg) : option SqlMmSignedTag :=
   | MkCirc γ => Some (tau_circ γ)
   | MkClothoid _ => Some TagClothoid
   | MkNurbs _ => None
+  | MkEllipse _ => None
   | MkOutOfScope _ => None
   end.
 

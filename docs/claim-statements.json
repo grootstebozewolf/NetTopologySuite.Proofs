@@ -169,7 +169,7 @@
       "claimId": "cloth-sheet-transport",
       "statement_module": "theories/ClothoidSheetStmt.v",
       "statement_sha256": "b310a5eceeec8312ade286dca1f6ed18fedac448aa8f624440d441ba253fb529",
-      "elaborated_sha256": "db92381fbabbdc1e44e670bd8c92471a4f350b3887162d30fb9e73c5f1454e8c",
+      "elaborated_sha256": "98035af60bbf1a20ca7adf8ef552c553ea9e50e11d90835daab045f4dce0d1d9",
       "proof_module": "theories/ClothoidSheet.v",
       "regime": "exact",
       "results": [

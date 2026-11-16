@@ -197,7 +197,7 @@ Definition pair_declines_b (a c : BagPiece) : bool :=
 Lemma pair_declines_irrefl : forall a, pair_declines_b a a = false.
 Proof.
   intros [[src dst egg] sup w prov]. simpl.
-  destruct egg as [e|e|e|e|e]; reflexivity.
+  destruct egg as [e|e|e|e|e|e]; reflexivity.
 Qed.
 
 Lemma pair_declines_spec : forall a c,
@@ -210,13 +210,13 @@ Proof.
   destruct c as [[sc dc ec] supc wc pc0].
   destruct Ha as [Hra _]. destruct Hc as [Hrc _]. simpl in *.
   destruct supa as [ua|ua].
-  - destruct ea as [ea|ea|ea|ea|ea];
+  - destruct ea as [ea|ea|ea|ea|ea|ea];
       try (solve [simpl in Hra; exfalso; exact Hra]).
     destruct supc as [uc|uc].
-    + destruct ec as [ec|ec|ec|ec|ec];
+    + destruct ec as [ec|ec|ec|ec|ec|ec];
         try (solve [simpl in Hrc; exfalso; exact Hrc]).
       simpl. split; intro H; [discriminate| contradiction].
-    + destruct ec as [ec|ec|ec|ec|ec];
+    + destruct ec as [ec|ec|ec|ec|ec|ec];
         try (solve [simpl in Hrc; exfalso; exact Hrc]).
       simpl. split; intro H.
       * apply negb_true_iff in H. intro Hs. apply scope_spec in Hs. congruence.
@@ -224,10 +224,10 @@ Proof.
         destruct (circ_open_span_b ec && chord_nondeg_b ea) eqn:Eb;
           [| reflexivity].
         exfalso. apply H. apply scope_spec. exact Eb.
-  - destruct ea as [ea|ea|ea|ea|ea];
+  - destruct ea as [ea|ea|ea|ea|ea|ea];
       try (solve [simpl in Hra; exfalso; exact Hra]).
     destruct supc as [uc|uc].
-    + destruct ec as [ec|ec|ec|ec|ec];
+    + destruct ec as [ec|ec|ec|ec|ec|ec];
         try (solve [simpl in Hrc; exfalso; exact Hrc]).
       simpl. split; intro H.
       * apply negb_true_iff in H. intro Hs. apply scope_spec in Hs. congruence.
@@ -235,7 +235,7 @@ Proof.
         destruct (circ_open_span_b ea && chord_nondeg_b ec) eqn:Eb;
           [| reflexivity].
         exfalso. apply H. apply scope_spec. exact Eb.
-    + destruct ec as [ec|ec|ec|ec|ec];
+    + destruct ec as [ec|ec|ec|ec|ec|ec];
         try (solve [simpl in Hrc; exfalso; exact Hrc]).
       simpl. split; intro H; [discriminate| contradiction].
 Qed.
@@ -256,28 +256,28 @@ Proof.
   destruct b as [[sb db eb] supb wb pb].
   destruct Ha as [Hra _]. destruct Hb as [Hrb _]. simpl in *.
   destruct supa as [ua|ua].
-  - destruct ea as [ea|ea|ea|ea|ea];
+  - destruct ea as [ea|ea|ea|ea|ea|ea];
       try (solve [simpl in Hra; exfalso; exact Hra]).
     destruct supb as [ub|ub].
-    + destruct eb as [eb|eb|eb|eb|eb];
+    + destruct eb as [eb|eb|eb|eb|eb|eb];
         try (solve [simpl in Hrb; exfalso; exact Hrb]).
       exact I.
-    + destruct eb as [eb|eb|eb|eb|eb];
+    + destruct eb as [eb|eb|eb|eb|eb|eb];
         try (solve [simpl in Hrb; exfalso; exact Hrb]).
       destruct (circ_open_span_b eb && chord_nondeg_b ea) eqn:Es.
       * apply scope_spec. exact Es.
       * exfalso. apply Hnd. simpl. intro Hs.
         apply scope_spec in Hs. congruence.
-  - destruct ea as [ea|ea|ea|ea|ea];
+  - destruct ea as [ea|ea|ea|ea|ea|ea];
       try (solve [simpl in Hra; exfalso; exact Hra]).
     destruct supb as [ub|ub].
-    + destruct eb as [eb|eb|eb|eb|eb];
+    + destruct eb as [eb|eb|eb|eb|eb|eb];
         try (solve [simpl in Hrb; exfalso; exact Hrb]).
       destruct (circ_open_span_b ea && chord_nondeg_b eb) eqn:Es.
       * apply scope_spec. exact Es.
       * exfalso. apply Hnd. simpl. intro Hs.
         apply scope_spec in Hs. congruence.
-    + destruct eb as [eb|eb|eb|eb|eb];
+    + destruct eb as [eb|eb|eb|eb|eb|eb];
         try (solve [simpl in Hrb; exfalso; exact Hrb]).
       exact I.
 Qed.

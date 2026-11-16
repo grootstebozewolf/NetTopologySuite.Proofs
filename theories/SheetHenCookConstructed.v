@@ -103,6 +103,16 @@ Definition cook_hit_clothoids
     (mkChicken (ck_src c2) h_new (MkClothoid (fst s2)))
     (mkChicken h_new (ck_dst c2) (MkClothoid (snd s2))).
 
+Definition cook_hit_ellipses
+    (c1 c2 : Chicken) (e1 e2 : EllipticEgg) (ti tj : R) (h_new : Hen)
+    : CookedPair :=
+  let s1 := ell_split e1 ti in let s2 := ell_split e2 tj in
+  mkCookedPair h_new
+    (mkChicken (ck_src c1) h_new (MkEllipse (fst s1)))
+    (mkChicken h_new (ck_dst c1) (MkEllipse (snd s1)))
+    (mkChicken (ck_src c2) h_new (MkEllipse (fst s2)))
+    (mkChicken h_new (ck_dst c2) (MkEllipse (snd s2))).
+
 Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
   : option CookedPair :=
   match ck_egg c1, ck_egg c2, o with
@@ -111,6 +121,7 @@ Definition try_cook_hit (c1 c2 : Chicken) (o : IResult) (h_new : Hen)
   | MkCirc e1, MkCirc e2, IHit _ ti tj =>
       Some (cook_hit_circs c1 c2 e1 e2 ti tj h_new)
   | MkClothoid e1, MkClothoid e2, IHit _ ti tj => Some (cook_hit_clothoids c1 c2 e1 e2 ti tj h_new)
+  | MkEllipse e1, MkEllipse e2, IHit _ ti tj => Some (cook_hit_ellipses c1 c2 e1 e2 ti tj h_new)
   | MkNurbs _, _, _ => None
   | _, MkNurbs _, _ => None
   | _, _, _ => None

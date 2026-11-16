@@ -17,7 +17,8 @@
 
 From Stdlib Require Import Reals Lra.
 From NTS.Proofs Require Import Distance Orientation Segment Intersect.
-From NTS.Proofs Require Export SheetHenCircEgg SheetHenClothoidEgg.
+From NTS.Proofs Require Export SheetHenCircEgg SheetHenClothoidEgg
+  SheetHenEllipseEgg.
 Local Open Scope R_scope.
 
 (* -------------------------------------------------------------------------- *)
@@ -75,7 +76,8 @@ Inductive Egg : Type :=
 | MkCirc : CircularEgg -> Egg
 | MkClothoid : ClothoidEgg -> Egg
 | MkOutOfScope : EggClass -> Egg
-| MkNurbs : NurbsNet -> Egg.
+| MkNurbs : NurbsNet -> Egg
+| MkEllipse : EllipticEgg -> Egg.
 
 Definition egg_class (e : Egg) : EggClass :=
   match e with
@@ -84,11 +86,13 @@ Definition egg_class (e : Egg) : EggClass :=
   | MkClothoid _ => EggClothoid
   | MkOutOfScope c => c
   | MkNurbs _ => EggNurbs
+  | MkEllipse _ => EggEllipse
   end.
 
 Definition interpolant_pair (e1 e2 : Egg) : Prop :=
   match e1, e2 with
-  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _ => True
+  | MkChord _, MkChord _ | MkCirc _, MkCirc _ | MkClothoid _, MkClothoid _
+  | MkEllipse _, MkEllipse _ => True
   | _, _ => False
   end.
 
@@ -109,7 +113,7 @@ Proof.
 Qed.
 
 (* -------------------------------------------------------------------------- *)
-(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid / NURBS pairs. *)
+(* Pairwise oracle 𝓘. Empty ≠ Decline. Scope: chord / circ / clothoid / NURBS / ellipse pairs. *)
 (* -------------------------------------------------------------------------- *)
 
 Inductive IResult : Type :=
@@ -123,6 +127,7 @@ Definition first_cook_scope (a b : EggClass) : Prop :=
   | EggCircularArc, EggCircularArc => True
   | EggClothoid, EggClothoid => True
   | EggNurbs, EggNurbs => True
+  | EggEllipse, EggEllipse => True
   | _, _ => False
   end.
 
@@ -175,6 +180,10 @@ Definition I_ok (e1 e2 : Egg) (o : IResult) : Prop :=
   | MkClothoid c1, MkClothoid c2, IEmpty =>
       ~ exists X t1 t2, on_cloth c1 t1 X /\ on_cloth c2 t2 X
   | MkClothoid _, MkClothoid _, IDecline => False
+  | MkEllipse c1, MkEllipse c2, IHit p ti tj => on_ell c1 ti p /\ on_ell c2 tj p
+  | MkEllipse c1, MkEllipse c2, IEmpty =>
+      ~ exists X t1 t2, on_ell c1 t1 X /\ on_ell c2 t2 X
+  | MkEllipse _, MkEllipse _, IDecline => False
   | MkNurbs _, _, IHit _ _ _ => False
   | MkNurbs _, _, IEmpty => False
   | MkNurbs _, _, IDecline => True
@@ -205,10 +214,13 @@ Proof.
   exact I.
 Qed.
 
-Lemma ellipse_ellipse_not_first_scope :
-  ~ first_cook_scope EggEllipse EggEllipse.
+(* Old pin ellipse_ellipse_not_first_scope discharged by host MkEllipse
+   (claimId 0007-ellipse-first-cook, owner #1031). Hit / Empty:
+   EllipseCookMkEllipse. *)
+Lemma ellipse_ellipse_first_cook_scope :
+  first_cook_scope EggEllipse EggEllipse.
 Proof.
-  intro H. exact H.
+  exact I.
 Qed.
 
 (* Class-pair flag only. Not a year-1 exact-cook claim: NTS
@@ -844,7 +856,7 @@ Qed.
 Print Assumptions chicken_twin_involutive.
 Print Assumptions first_cook_scope_chord_chord.
 Print Assumptions clothoid_egg_first_cook_scope.
-Print Assumptions ellipse_ellipse_not_first_scope.
+Print Assumptions ellipse_ellipse_first_cook_scope.
 Print Assumptions nurbs_nurbs_first_cook_scope.
 Print Assumptions IEmpty_neq_IDecline.
 Print Assumptions IHit_neq_IEmpty.

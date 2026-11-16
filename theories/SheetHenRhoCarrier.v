@@ -58,6 +58,24 @@ Proof.
   - discriminate.
   - congruence.
 Qed.
+
+(* Decidable mirror of on_ell (host MkEllipse, claimId 0007-ellipse-first-cook).
+   Consumed by SheetHenBagRun.I_ok_hit_b. *)
+Definition on_ell_b (e : EllipticEgg) (t : R) (p : Point) : bool :=
+  rle_b 0 t && rle_b t 1 && pt_eqb p (ell_eval e t).
+
+Lemma on_ell_spec : forall e t p, on_ell_b e t p = true <-> on_ell e t p.
+Proof.
+  intros e t p. unfold on_ell_b, on_ell. split; intro H.
+  - apply andb_prop in H. destruct H as [Hb Hp].
+    apply andb_prop in Hb. destruct Hb as [H0 H1].
+    split; [split; apply rle_b_true; assumption|].
+    apply pt_eqb_true. exact Hp.
+  - destruct H as [[H0 H1] Hp].
+    apply andb_true_intro. split.
+    + apply andb_true_intro. split; apply rle_b_true; assumption.
+    + apply pt_eqb_true. exact Hp.
+Qed.
 Fixpoint dedup (ps : list Point) : list Point :=
   match ps with
   | nil => nil
@@ -713,3 +731,4 @@ Print Assumptions chart_disc_geometric.
 Print Assumptions line_circle_hits_le_2.
 Print Assumptions two_circles_radical_point_unique.
 Print Assumptions circle_circle_le_2.
+Print Assumptions on_ell_spec.
