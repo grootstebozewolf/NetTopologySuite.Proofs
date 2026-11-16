@@ -22,6 +22,10 @@
    reading of gamma fails locked_ell_eval_neq_endpoint_chord.
      C: A translated to centre (0,5). A × C is Empty: y_A <= 1 < 4 <= y_C.
 
+   Host joint (second rung, same claimId): consecutive eggs with
+   gamma_A(1) = gamma_B(0) are a host Hit at (1, 0); fixture is the
+   split children of A. Endpoint incidence, not an interior Hit.
+
    MkOutOfScope EggEllipse stays Decline. Mixed ellipse×chord and
    ellipse×circular stay Decline. SIN / spiral / geodesic stay out
    of first cook. This is a locked pair plus the Hit / Empty / mint
@@ -396,6 +400,131 @@ Proof.
   exact cook_loop_is_discharged.
 Qed.
 
+(* -------------------------------------------------------------------------- *)
+(* Host joint: consecutive host EllipticEggs on ell_eval (same rung as the    *)
+(* clothoid Mode D joint; claimId 0007-ellipse-first-cook, owner #1031).      *)
+(* A joint is concat incidence: gamma_A(1) = gamma_B(0). It is a host I_ok    *)
+(* Hit at parameters (1, 0), which are endpoints, not an interior Hit.        *)
+(* Fixture: the ell_split children of locked_ell_A at locked_ell_ti (they     *)
+(* meet by ell_split_join). Not A×B as the joint: those cross in the          *)
+(* interior. No CompoundEgg / compound_eval, no G1 claim, no ring closure.    *)
+(* Cooking a joint Hit splits nothing: the child past t = 1 has zero sweep.   *)
+(* -------------------------------------------------------------------------- *)
+
+Definition ell_joint (A B : EllipticEgg) : Prop :=
+  ell_eval A 1 = ell_eval B 0.
+
+Definition ell_joint_hit (A B : EllipticEgg) : IResult :=
+  IHit (ell_eval A 1) 1 0.
+
+Lemma ell_split_ell_joint :
+  forall e t, ell_joint (fst (ell_split e t)) (snd (ell_split e t)).
+Proof.
+  intros e t. unfold ell_joint.
+  destruct (ell_split_join e t) as [Hl Hr].
+  rewrite Hl, Hr. reflexivity.
+Qed.
+
+(* WITNESS {"claimId":"0007-ellipse-first-cook","topic":"overlay","lemma":"ell_joint_I_ok","title":"Ellipse host joint: two consecutive host EllipticEggs with ell_eval A 1 = ell_eval B 0 are a host I_ok Hit at parameters (1, 0); concat incidence at endpoints, not an interior Hit","file":"theories/EllipseCookMkEllipse.v","witness":"0007-ellipse-first-cook","board":"ADR-0007"} *)
+Theorem ell_joint_I_ok :
+  forall A B : EllipticEgg,
+    ell_joint A B ->
+    I_ok (MkEllipse A) (MkEllipse B) (ell_joint_hit A B).
+Proof.
+  intros A B H. unfold ell_joint_hit, I_ok, on_ell.
+  split; (split; [lra|]); [reflexivity | exact H].
+Qed.
+
+(* The converse: a host Hit at (1, 0) is exactly a joint. *)
+Lemma ell_joint_iff_endpoint_hit :
+  forall A B : EllipticEgg,
+    ell_joint A B <->
+    exists p, I_ok (MkEllipse A) (MkEllipse B) (IHit p 1 0).
+Proof.
+  intros A B. split.
+  - intro H. exists (ell_eval A 1). exact (ell_joint_I_ok A B H).
+  - intros [p [[_ HA] [_ HB]]]. unfold ell_joint. rewrite <- HA. exact HB.
+Qed.
+
+(* Cooking at a joint parameter does not divide the egg: the child of A
+   past t = 1 and the child of B before t = 0 are zero-sweep (constant). *)
+Lemma ell_joint_cook_degenerate :
+  forall A B : EllipticEgg,
+    ell_sweep (snd (ell_split A 1)) = 0 /\
+    ell_sweep (fst (ell_split B 0)) = 0.
+Proof.
+  intros A B. unfold ell_split. cbn [fst snd ell_sweep]. split; ring.
+Qed.
+
+Definition locked_ell_host_1 : EllipticEgg :=
+  fst (ell_split locked_ell_A locked_ell_ti).
+
+Definition locked_ell_host_2 : EllipticEgg :=
+  snd (ell_split locked_ell_A locked_ell_ti).
+
+Lemma locked_ell_host_joint :
+  ell_joint locked_ell_host_1 locked_ell_host_2.
+Proof.
+  unfold locked_ell_host_1, locked_ell_host_2. apply ell_split_ell_joint.
+Qed.
+
+Lemma locked_ell_host_joint_pt :
+  ell_eval locked_ell_host_1 1 = locked_ell_hit_pt.
+Proof.
+  unfold locked_ell_host_1.
+  rewrite (proj1 (ell_split_join locked_ell_A locked_ell_ti)).
+  exact locked_ell_A_at_ti.
+Qed.
+
+Lemma locked_ell_host_joint_I_ok :
+  I_ok (MkEllipse locked_ell_host_1) (MkEllipse locked_ell_host_2)
+       (IHit locked_ell_hit_pt 1 0).
+Proof.
+  rewrite <- locked_ell_host_joint_pt.
+  exact (ell_joint_I_ok _ _ locked_ell_host_joint).
+Qed.
+
+(* First-cook interior Hit stays A×B. Those do not meet end to start. *)
+Lemma locked_ell_AB_not_joint :
+  ~ ell_joint locked_ell_A locked_ell_B.
+Proof.
+  unfold ell_joint. intros H.
+  rewrite locked_ell_A_at_1, locked_ell_B_at_0 in H.
+  apply (f_equal px) in H. cbn [px] in H. lra.
+Qed.
+
+Lemma locked_ell_joint_hit_neq_first_cook_hit :
+  ell_joint_hit locked_ell_host_1 locked_ell_host_2 <> locked_mkellipse_hit.
+Proof.
+  unfold ell_joint_hit, locked_mkellipse_hit, locked_ell_ti.
+  intros H. inversion H. lra.
+Qed.
+
+(* WITNESS {"claimId":"0007-ellipse-first-cook","topic":"overlay","lemma":"ticket_0007_ellipse_joint_qed_or_qex","title":"Ellipse host joint: the split children of the locked ellipse meet end to start and are a host I_ok Hit at (1, 0) on the first-cook point (QED) or no host joint exists on MkEllipse (QEX); discharged QED; endpoint incidence not interior Hit; A times B is not a joint; no CompoundEgg, no G1, no ring closure","file":"theories/EllipseCookMkEllipse.v","witness":"0007-ellipse-first-cook","board":"ADR-0007"} *)
+Theorem ticket_0007_ellipse_joint_qed_or_qex :
+  ((forall A B, ell_joint A B ->
+      I_ok (MkEllipse A) (MkEllipse B) (ell_joint_hit A B)) /\
+   (forall e t, ell_joint (fst (ell_split e t)) (snd (ell_split e t))) /\
+   ell_joint locked_ell_host_1 locked_ell_host_2 /\
+   I_ok (MkEllipse locked_ell_host_1) (MkEllipse locked_ell_host_2)
+        (IHit locked_ell_hit_pt 1 0) /\
+   ~ ell_joint locked_ell_A locked_ell_B /\
+   ell_joint_hit locked_ell_host_1 locked_ell_host_2 <> locked_mkellipse_hit /\
+   (forall A B, ell_sweep (snd (ell_split A 1)) = 0 /\
+                ell_sweep (fst (ell_split B 0)) = 0))
+  \/
+  (forall A B p, ~ I_ok (MkEllipse A) (MkEllipse B) (IHit p 1 0)).
+Proof.
+  left.
+  split; [exact ell_joint_I_ok|].
+  split; [exact ell_split_ell_joint|].
+  split; [exact locked_ell_host_joint|].
+  split; [exact locked_ell_host_joint_I_ok|].
+  split; [exact locked_ell_AB_not_joint|].
+  split; [exact locked_ell_joint_hit_neq_first_cook_hit|].
+  exact ell_joint_cook_degenerate.
+Qed.
+
 Print Assumptions locked_ell_A_eval.
 Print Assumptions locked_ell_B_eval.
 Print Assumptions locked_ell_C_eval.
@@ -424,3 +553,12 @@ Print Assumptions ellipse_circular_not_first_cook_scope.
 Print Assumptions mkellipse_neq_tag.
 Print Assumptions sinusoid_not_first_cook_after_ellipse.
 Print Assumptions ticket_0007_ellipse_first_cook_qed_or_qex.
+Print Assumptions ell_split_ell_joint.
+Print Assumptions ell_joint_I_ok.
+Print Assumptions ell_joint_iff_endpoint_hit.
+Print Assumptions ell_joint_cook_degenerate.
+Print Assumptions locked_ell_host_joint.
+Print Assumptions locked_ell_host_joint_I_ok.
+Print Assumptions locked_ell_AB_not_joint.
+Print Assumptions locked_ell_joint_hit_neq_first_cook_hit.
+Print Assumptions ticket_0007_ellipse_joint_qed_or_qex.
