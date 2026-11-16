@@ -130,6 +130,10 @@ theories/FresnelSeries.v
 theories/SheetHenClothoidBounds.v
 theories/SheetHenClothoidFrames.v
 theories/SheetHenClothoidEgg.v
+# ADR-0007 EllipticEgg payload for host MkEllipse
+# (claimId 0007-ellipse-first-cook). Eccentric-anomaly interpolant,
+# rotated frame. Required by SheetHenCook. No Admitted.
+theories/SheetHenEllipseEgg.v
 # ADR-0007 sheet/hen/cook vocabulary, split (module-split gate): core
 # types/oracle/identity/noded/leftover-confluence/overlay/ddir. Required
 # by SheetHenCook. No Admitted.
@@ -139,7 +143,8 @@ theories/SheetHenCookCore.v
 theories/SheetHenCookConstructed.v
 # ADR-0007 sheet/hen/cook noding constructor vocabulary + QED∨QEX stops.
 # Host/pure-R. First cook scope is chord–chord, circular–circular
-# (MkCirc), clothoid–clothoid (MkClothoid), NURBS–NURBS (scope).
+# (MkCirc), clothoid–clothoid (MkClothoid), NURBS–NURBS (scope),
+# ellipse–ellipse (MkEllipse).
 # Does not remint CurveSegment / Dart / Hobby. No Admitted.
 # Umbrella re-export of SheetHenCookCore + SheetHenCookConstructed.
 theories/SheetHenCook.v
@@ -156,6 +161,10 @@ theories/ClothoidCookMkClothoid.v
 # nurbs_nurbs_not_first_scope ceiling retired. Tags Decline.
 # No MkNurbs / on_nurbs / silent MkCirc / MkChord. 3-axiom.
 theories/NurbsNurbsFirstCook.v
+# ADR-0007 ellipse×ellipse first-cook Hit (claimId 0007-ellipse-first-cook).
+# Host/pure-R. Locked MkEllipse pair; I_ok Hit / Empty + try_cook_hit
+# mint. Tags / mixed stay Decline. Not EllipseLength. 3-axiom.
+theories/EllipseCookMkEllipse.v
 # ADR-0007 host first-cook park (claimId 0007-host-first-cook-circ-chord).
 # Host/pure-R. Mixed circ×chord stays out of first_cook_scope. Named
 # QEX HostMixedHitTi / HostMixedHitSpan. Sidecar I_ok_mixed cited.
@@ -180,6 +189,9 @@ theories/SheetHenCookLoopTerm.v
 # Support, window, bag, progress hit, step, noded. Invariant only.
 # Not LeftoverBagTermArm / LoopDischarged. No Axiom / Parameter / stub.
 theories/SheetHenBag.v
+# ADR-0007 MkEllipse vs the rho bag loop (claimId: none). Intake
+# declines MkEllipse; no realizing piece carries one. No Admitted.
+theories/EllipseBagIntake.v
 # Circ leftover bag for |H|=2 + noded G on the locked vesica
 # (claimId 0007-circ-leftover-two-hit). Host/pure-R. Reuses leftover-bag
 # shape (interior 𝓘 Hit / Decline idle). Locked measure 2→1→0. Parks ρ;

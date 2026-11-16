@@ -367,7 +367,7 @@ Lemma I_ok_at_cook : forall e1 e2 p ti tj,
   I_ok e1 e2 (IHit p (cook_t_egg e1 p) (cook_t_egg e2 p)).
 Proof.
   intros e1 e2 p ti tj Hcl H.
-  destruct e1 as [c1|c1|c1|cl|nu]; destruct e2 as [c2|c2|c2|cl2|nu2];
+  destruct e1 as [c1|c1|c1|cl|nu|el]; destruct e2 as [c2|c2|c2|cl2|nu2|el2];
     simpl in Hcl, H; try contradiction; simpl.
   - destruct (cook_chord_le c1 ti p (proj1 H)) as [_ H1].
     destruct (cook_chord_le c2 tj p (proj2 H)) as [_ H2].
@@ -402,15 +402,15 @@ Proof.
                 | MkCirc c => on_circ c ti p
                 | _ => False
                 end).
-  { destruct (ck_egg (bp_ck a)) as [c|c|c|cl|nu];
-      destruct (ck_egg (bp_ck b)) as [c2|c2|c2|cl2|nu2];
+  { destruct (ck_egg (bp_ck a)) as [c|c|c|cl|nu|el];
+      destruct (ck_egg (bp_ck b)) as [c2|c2|c2|cl2|nu2|el2];
       simpl in Hok, Hcl; try contradiction.
     - exact (proj1 Hok).
     - exact (proj1 (proj2 Hok)).
     - exact (proj1 (proj2 Hok)).
     - exact (proj1 Hok). }
   assert (Hle : cook_t_egg (ck_egg (bp_ck a)) p <= ti).
-  { destruct (ck_egg (bp_ck a)) as [c|c|c|cl|nu]; simpl in Hon; try contradiction; simpl.
+  { destruct (ck_egg (bp_ck a)) as [c|c|c|cl|nu|el]; simpl in Hon; try contradiction; simpl.
     - exact (proj1 (cook_chord_le c ti p Hon)).
     - exact (proj1 (cook_circ_le c ti p Hon)). }
   split; [| exact Hle].
@@ -462,7 +462,7 @@ Proof.
   intros pc p u Hr Hu Hp.
   destruct pc as [[src dst egg] sup w prov].
   unfold piece_realizes in Hr. simpl in Hr.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e]; simpl in Hr; try contradiction.
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e]; simpl in Hr; try contradiction.
   - rewrite Hr. simpl in Hp. simpl. split; [exact Hu|].
     rewrite Hp. rewrite <- (chord_window_eval c w u). reflexivity.
   - rewrite Hr. simpl in Hp. simpl. split; [exact Hu|].
@@ -495,8 +495,8 @@ Proof.
   destruct b as [[sb db eb] supb wb pb].
   simpl in Pa, Pb, Ea, Eb. destruct supa as [ca'|ca']; [| discriminate].
   destruct supb as [cb'|cb']; [| discriminate].
-  destruct ea as [ea|ea|ea|ea|ea]; try contradiction.
-  destruct eb as [eb|eb|eb|eb|eb]; try contradiction.
+  destruct ea as [ea|ea|ea|ea|ea|ea]; try contradiction.
+  destruct eb as [eb|eb|eb|eb|eb|eb]; try contradiction.
   simpl. split; assumption.
 Qed.
 
@@ -525,8 +525,8 @@ Proof.
                | MkCirc e => on_circ e (unit_param (bp_window b) tb) p
                | _ => False end).
   { apply piece_param_on; [exact Hrb| exact Hub|]. rewrite Eb. exact Hb2. }
-  destruct (ck_egg (bp_ck a)) as [ca|ca|ca|cla|na];
-    destruct (ck_egg (bp_ck b)) as [cb|cb|cb|clb|nb];
+  destruct (ck_egg (bp_ck a)) as [ca|ca|ca|cla|na|ela];
+    destruct (ck_egg (bp_ck b)) as [cb|cb|cb|clb|nb|elb];
     simpl in Pa, Pb, Hscope; try contradiction.
   - split; [exact Hscope| split; assumption].
   - split; [exact Hscope| split; assumption].
@@ -563,13 +563,13 @@ Proof.
   assert (Hega : exists ea, ck_egg (bp_ck a) = MkCirc ea /\
                           on_circ ea (unit_param (bp_window a) ta) p).
   { unfold piece_realizes in Hra. rewrite Ea in Hra. simpl in Hra.
-    destruct (ck_egg (bp_ck a)) as [e|e|e|e|e] eqn:Eg;
+    destruct (ck_egg (bp_ck a)) as [e|e|e|e|e|e] eqn:Eg;
       try (solve [destruct Hra]).
     exists e. split; [reflexivity|]. exact Pa. }
   assert (Hegb : exists eb, ck_egg (bp_ck b) = MkCirc eb /\
                           on_circ eb (unit_param (bp_window b) tb) p).
   { unfold piece_realizes in Hrb. rewrite Eb in Hrb. simpl in Hrb.
-    destruct (ck_egg (bp_ck b)) as [e|e|e|e|e] eqn:Eg;
+    destruct (ck_egg (bp_ck b)) as [e|e|e|e|e|e] eqn:Eg;
       try (solve [destruct Hrb]).
     exists e. split; [reflexivity|]. exact Pb. }
   destruct Hega as [ea [Ega Haok]].
@@ -742,7 +742,7 @@ Lemma piece_wf_b_spec : forall pc, piece_wf_b pc = true <-> piece_wf pc.
 Proof.
   intros [[src dst egg] sup w prov].
   unfold piece_wf_b, piece_wf, piece_realizes. simpl.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e]; simpl; split; intro H.
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e]; simpl; split; intro H.
   all: try discriminate.
   all: try (solve [destruct H as [F _]; destruct F]).
   - apply andb_prop in H. destruct H as [He Ho].
@@ -932,13 +932,17 @@ Proof.
             (mkHitCand p' (cook_t_egg (ck_egg (bp_ck a)) p')
                        (cook_t_egg (ck_egg (bp_ck b)) p')) Hel Ic). }
   destruct Hadm as [Hok _].
-  destruct (ck_egg (bp_ck a)) as [ea|ea|ea|cla|na] eqn:Ea;
-    destruct (ck_egg (bp_ck b)) as [eb|eb|eb|clb|nb] eqn:Eb;
+  destruct (ck_egg (bp_ck a)) as [ea|ea|ea|cla|na|ela] eqn:Ea;
+    destruct (ck_egg (bp_ck b)) as [eb|eb|eb|clb|nb|elb] eqn:Eb;
     simpl in Hok; try contradiction.
   - apply Hgeom. exact I.
   - apply Hgeom. exact I.
   - apply Hgeom. exact I.
   - apply Hgeom. exact I.
+  - assert (Eti : ti = 0).
+    { destruct (cands_cook pcs a b _ (mkHitCand p ti tj) (least_in _ _ Hel)) as [Et _].
+      simpl in Et. rewrite Ea in Et. simpl in Et. exact Et. }
+    rewrite Eti. exact (proj1 (proj1 (proj1 Hok))).
   - assert (Eti : ti = 0).
     { destruct (cands_cook pcs a b _ (mkHitCand p ti tj) (least_in _ _ Hel)) as [Et _].
       simpl in Et. rewrite Ea in Et. simpl in Et. exact Et. }
@@ -966,8 +970,8 @@ Proof.
   intros pcs a b p Ha Hb Hwa Hwb Hin Hv Hov Hclass.
   assert (Hhit : exists ti tj,
             I_ok (ck_egg (bp_ck a)) (ck_egg (bp_ck b)) (IHit p ti tj)).
-  { destruct (ck_egg (bp_ck a)) as [ca|ca|ca|cla|na] eqn:Ega;
-      destruct (ck_egg (bp_ck b)) as [cb|cb|cb|clb|nb] eqn:Egb;
+  { destruct (ck_egg (bp_ck a)) as [ca|ca|ca|cla|na|ela] eqn:Ega;
+      destruct (ck_egg (bp_ck b)) as [cb|cb|cb|clb|nb|elb] eqn:Egb;
       simpl in Hclass; try contradiction.
     - destruct (bp_support a) as [sa|sa] eqn:Ea;
         destruct (bp_support b) as [sb|sb] eqn:Eb.

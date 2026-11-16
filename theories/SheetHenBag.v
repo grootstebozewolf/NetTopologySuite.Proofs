@@ -446,7 +446,7 @@ Lemma split_windows_sub :
     bp_window (snd (split_piece pc u h)) = sub_hi (bp_window pc) u.
 Proof.
   intros [[src dst egg] sup w prov] u h Hr.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e];
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e];
     simpl in Hr; try contradiction; simpl; repeat split; reflexivity.
 Qed.
 
@@ -477,7 +477,7 @@ Proof.
   destruct pc as [[src dst egg] sup w prov].
   destruct (subwindow_ordered w u Ho Hu) as [HordL HordR].
   unfold piece_realizes in Hr.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e]; simpl in Hr; try contradiction.
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e]; simpl in Hr; try contradiction.
   - subst e. simpl.
     destruct (chord_split_windows c w u) as [HL HR].
     unfold piece_wf, piece_realizes. simpl.
@@ -503,25 +503,25 @@ Proof.
   destruct a as [[sa da ea] supa wa pa].
   destruct b as [[sb db eb] supb wb pb].
   unfold piece_realizes in Ha, Hb. unfold I_ok in Hok.
-  destruct supa as [ca|ca]; destruct ea as [ea|ea|ea|ea|ea];
+  destruct supa as [ca|ca]; destruct ea as [ea|ea|ea|ea|ea|ea];
     simpl in Ha, Hb, Hok; try contradiction.
   - subst ea.
     destruct supb as [cb|cb].
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [[Hti _] [Htj _]].
       split; assumption.
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [_ [[Hti _] [Htj _]]].
       split; assumption.
   - subst ea.
     destruct supb as [cb|cb].
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [_ [[Hti _] [Htj _]]].
       split; assumption.
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [[Hti _] [Htj _]].
       split; assumption.
@@ -539,17 +539,17 @@ Proof.
   destruct a as [[sa da ea] supa wa pa].
   destruct b as [[sb db eb] supb wb pb].
   unfold piece_realizes in Ha, Hb. unfold I_ok in Hok.
-  destruct supa as [ca|ca]; destruct ea as [ea|ea|ea|ea|ea];
+  destruct supa as [ca|ca]; destruct ea as [ea|ea|ea|ea|ea|ea];
     simpl in Ha, Hb, Hok; try contradiction.
   - subst ea.
     destruct supb as [cb|cb].
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [[_ Hp1] [_ Hp2]].
       split.
       * rewrite Hp1. unfold support_at. simpl. apply chord_window_eval.
       * rewrite Hp2. unfold support_at. simpl. apply chord_window_eval.
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [_ [[_ Hp1] [_ Hp2]]].
       split.
@@ -557,13 +557,13 @@ Proof.
       * rewrite Hp2. unfold support_at. simpl. apply circ_window_eval.
   - subst ea.
     destruct supb as [cb|cb].
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [_ [[_ Hp1] [_ Hp2]]].
       split.
       * rewrite Hp1. unfold support_at. simpl. apply circ_window_eval.
       * rewrite Hp2. unfold support_at. simpl. apply chord_window_eval.
-    + destruct eb as [eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
+    + destruct eb as [eb|eb|eb|eb|eb|eb]; simpl in Hb, Hok; try contradiction.
       subst eb.
       destruct Hok as [[_ Hp1] [_ Hp2]].
       split.
@@ -586,6 +586,7 @@ Proof.
   - destruct Hep as [Hep|Hep].
     + left. left. exact Hep.
     + right. right. exact Hep.
+  - left. exact Hep.
   - left. exact Hep.
   - left. exact Hep.
   - left. exact Hep.
@@ -615,6 +616,8 @@ Proof.
   - destruct Hep as [Hep|Hep].
     + right. exact Hep.
     + left. right. exact Hep.
+  - left. exact Hep.
+  - left. exact Hep.
   - left. exact Hep.
   - left. exact Hep.
   - left. exact Hep.
@@ -741,7 +744,7 @@ Lemma split_joints_share_one :
       snd (apply_id_decision (ShareOne h)).
 Proof.
   intros [[src dst egg] sup w prov] u h Hr.
-  destruct sup as [c|c]; destruct egg as [e|e|e|e|e];
+  destruct sup as [c|c]; destruct egg as [e|e|e|e|e|e];
     simpl in Hr; try contradiction; simpl; split; reflexivity.
 Qed.
 

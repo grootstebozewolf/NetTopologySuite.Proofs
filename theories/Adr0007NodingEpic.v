@@ -7,7 +7,8 @@
    The noding constructor is part of the specification: sheet, hen,
    egg, chicken, cook / 𝓘. First cook scope is chord–chord,
    circular–circular (MkCirc), clothoid–clothoid (MkClothoid),
-   and NURBS–NURBS (scope). Mixed and tags stay Decline.
+   NURBS–NURBS (scope), and ellipse–ellipse (MkEllipse). Mixed and
+   tags stay Decline.
 
    QED: chord–chord inhabits the cook interface; Empty ≠ Decline;
    ShareOne mints one hen; noded-on-S is cook evidence.
@@ -16,12 +17,13 @@
    `ticket_0007_identity_qed_or_qex` discharges left.
    `ticket_0007_noded_cook_qed_or_qex` discharges left.
 
-   QEX: a documented out-of-scope pair (ellipse–ellipse) is missing
+   QEX: a documented out-of-scope pair (sinusoid–sinusoid) is missing
    from first cook scope; numeric coord-pair equality does not decide
    hen identity; silent pairwise_nodable excludes the proper-crossing
    case a noder exists for.
-   `ticket_0007_qed_or_qex` discharges right on ellipse–ellipse
-   (`ellipse_ellipse_not_first_scope`), 508-style.
+   `ticket_0007_qed_or_qex` discharges right on sinusoid–sinusoid
+   (`EllipseCookMkEllipse.v : sinusoid_not_first_cook_after_ellipse`),
+   508-style.
    `ticket_0007_dart_eq_qed_or_qex` discharges right.
    `ticket_0007_silent_nodable_qed_or_qex` discharges right.
 
@@ -124,7 +126,8 @@
    SidecarCircInteriorHit.v (4-axiom sidecar; I_ok_interior
    ≠ I_ok_mixed; joint gate stands; not Required here).
    First cook is chord–chord, circular–circular (MkCirc),
-   clothoid–clothoid (MkClothoid), and NURBS–NURBS (scope).
+   clothoid–clothoid (MkClothoid), NURBS–NURBS (scope), and
+   ellipse–ellipse (MkEllipse).
 
    QEX is not a new Accept cycle. ADR-0007 is Accepted (2026-09-07).
    These letters do not reopen Status. Constructed chord-chord I is
@@ -158,9 +161,9 @@ Local Open Scope R_scope.
 
 (* ADR-0007 stop: every egg-class pair is in first cook scope (QED)
    or a documented out-of-scope pair is missing (QEX). Discharged QEX
-   on ellipse–ellipse. NURBS×NURBS is first cook
-   (claimId 0007-nurbs-nurbs-first-cook). *)
-(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_qed_or_qex","title":"ADR-0007 stop is first-cook-scope completeness (QED) or a documented out-of-scope pair (QEX); discharged QEX on ellipse-ellipse","file":"theories/Adr0007NodingEpic.v","witness":"0007-qed-qex","board":"ADR-0007"} *)
+   on sinusoid–sinusoid. Ellipse×ellipse is first cook
+   (claimId 0007-ellipse-first-cook). *)
+(* WITNESS {"claimId":"0007","topic":"overlay","lemma":"ticket_0007_qed_or_qex","title":"ADR-0007 stop is first-cook-scope completeness (QED) or a documented out-of-scope pair (QEX); discharged QEX on sinusoid-sinusoid","file":"theories/Adr0007NodingEpic.v","witness":"0007-qed-qex","board":"ADR-0007"} *)
 
 Theorem ticket_0007_qed_or_qex :
   (forall a b : EggClass, first_cook_scope a b)
@@ -168,8 +171,8 @@ Theorem ticket_0007_qed_or_qex :
   (exists a b : EggClass, ~ first_cook_scope a b).
 Proof.
   right.
-  exists EggEllipse, EggEllipse.
-  exact ellipse_ellipse_not_first_scope.
+  exists EggSinusoid, EggSinusoid.
+  intro H. exact H.
 Qed.
 
 (* Chord–chord inhabits the cook interface (QED) or a documented

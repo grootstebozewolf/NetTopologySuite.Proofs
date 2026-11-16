@@ -5,7 +5,7 @@
    Thin host-lane types for Adr0007NodingEpic.v. Not a noder / Geometry
    subclass / remint of CurveSegment, Exact* zoo, Dart, or Hobby.
    First cook: chord–chord, circular–circular (MkCirc), clothoid–clothoid
-   (MkClothoid), NURBS–NURBS (scope). Tags Decline. In-scope circ×chord
+   (MkClothoid), NURBS–NURBS (scope), ellipse–ellipse (MkEllipse). Tags Decline. In-scope circ×chord
    is a host Hit; full-span and degenerate chords Decline. Empty ≠ Decline. Snap ≠ 𝓘.
    Bag cook loop is LoopDischarged via CookLoopRho (letter 6b);
    LeftoverBagTermArm stays refuted. CircGamma discharged by MkCirc. No new oracle keyword (ADR-0006). Accepted 2026-09-07.

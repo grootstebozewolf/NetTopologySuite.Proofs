@@ -209,7 +209,7 @@ Lemma split_ends : forall pc u h, piece_realizes pc ->
   win_hi (bp_window (snd (split_piece pc u h))) = win_hi (bp_window pc).
 Proof.
   intros [[src dst egg] sup w prov] u h Hr.
-  destruct sup as [c|c]; destruct egg as [ch|ci|cl|co|nu];
+  destruct sup as [c|c]; destruct egg as [ch|ci|cl|co|nu|el];
     unfold piece_realizes in Hr; simpl in Hr; try contradiction.
   - subst ch. simpl. repeat split; reflexivity.
   - subst ci. simpl. repeat split; reflexivity.

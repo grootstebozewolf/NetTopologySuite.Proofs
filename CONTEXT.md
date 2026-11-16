@@ -537,8 +537,8 @@ _Avoid_: vertex (the owned point), dart (a coordinate pair)
 **Egg**:
 An interpolant `γ : [0,1] → S` of a named class.
 First cook: `SheetHenCookCore.v : first_cook_scope_chord_chord` /
-`circular_egg_first_cook_scope` / `clothoid_egg_first_cook_scope` / `nurbs_nurbs_first_cook_scope` IN;
-mixed/ellipse/sin/geodesic/spiral QEX.
+`circular_egg_first_cook_scope` / `clothoid_egg_first_cook_scope` / `nurbs_nurbs_first_cook_scope` / `ellipse_ellipse_first_cook_scope` IN;
+mixed/sin/geodesic/spiral QEX.
 _Avoid_: CurveSegment (`ExactCurveEpic508.v : ticket_508_carrier_qed_or_qex` LEFT: year-1 `CSChord | CSArc`)
 
 **Chicken**:
@@ -598,8 +598,8 @@ only; host cook is `MkCirc` (`0007-gamma-mkcirc`).
 _Avoid_: sidecar as host MkCirc, `I_ok_circ` remint
 
 **Elliptic egg (sidecar)**:
-`SidecarEllipticEgg.v : ticket_0007_elliptic_egg_qed_or_qex`. Host
-Decline; #508 ellipse length stays metric.
+`SidecarEllipticEgg.v : ticket_0007_elliptic_egg_qed_or_qex`. Tag Declines; host `MkEllipse` is first cook
+(`EllipseCookMkEllipse.v : ticket_0007_ellipse_first_cook_qed_or_qex`); #508 ellipse length stays metric.
 _Avoid_: EllipseLength noding, Campaign I
 
 **GeodesicString egg (sidecar)**:

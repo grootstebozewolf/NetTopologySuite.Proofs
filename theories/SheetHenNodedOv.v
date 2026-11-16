@@ -250,8 +250,8 @@ Proof.
     + exists sa. exact Ea.
     + exists sc. exact Ec.
   - unfold piece_realizes in Hra, Hrc. rewrite Ea in Hra. rewrite Ec in Hrc.
-    destruct (ck_egg (bp_ck a)) as [ea|ea|ea|ea|ea] eqn:Ega; try contradiction.
-    destruct (ck_egg (bp_ck c)) as [ec|ec|ec|ec|ec] eqn:Egc; try contradiction.
+    destruct (ck_egg (bp_ck a)) as [ea|ea|ea|ea|ea|ea] eqn:Ega; try contradiction.
+    destruct (ck_egg (bp_ck c)) as [ec|ec|ec|ec|ec|ec] eqn:Egc; try contradiction.
     destruct (circ_open_span_b ec && chord_nondeg_b ea) eqn:Es.
     + pose proof hit_param_line_circle as Htmp.
       rewrite <- Ega. rewrite <- Egc. rewrite <- Ea in Wa. rewrite <- Ec in Wc.
@@ -264,8 +264,8 @@ Proof.
     + exfalso. apply Hnd. simpl. intro Hs.
       apply scope_spec in Hs. congruence.
   - unfold piece_realizes in Hra, Hrc. rewrite Ea in Hra. rewrite Ec in Hrc.
-    destruct (ck_egg (bp_ck a)) as [ea|ea|ea|ea|ea] eqn:Ega; try contradiction.
-    destruct (ck_egg (bp_ck c)) as [ec|ec|ec|ec|ec] eqn:Egc; try contradiction.
+    destruct (ck_egg (bp_ck a)) as [ea|ea|ea|ea|ea|ea] eqn:Ega; try contradiction.
+    destruct (ck_egg (bp_ck c)) as [ec|ec|ec|ec|ec|ec] eqn:Egc; try contradiction.
     destruct (circ_open_span_b ea && chord_nondeg_b ec) eqn:Es.
     + rewrite <- Ega. rewrite <- Egc. rewrite <- Ea in Wa. rewrite <- Ec in Wc.
       apply hit_param_line_circle.
