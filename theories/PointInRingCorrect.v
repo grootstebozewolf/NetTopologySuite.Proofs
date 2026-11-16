@@ -477,9 +477,13 @@ Definition no_horizontal_edge_at (p : Point) (r : Ring) : Prop :=
    closed rightward ray from p (same height, at or to the right of p).  Together
    with `no_horizontal_edge_at` this is exactly what the crossing-number test
    needs -- the former stops the ray from running ALONG a horizontal edge, the
-   latter from GRAZING a vertex.  Both are necessary: see
-   theories/JCT_HorizontalEdgeCounterexample.v (horizontal-edge necessity) and
-   theories/JCT_VertexGrazingCounterexample.v (vertex-graze sufficiency gap).
+   latter from GRAZING a vertex.  `ray_avoids_vertices` is necessary
+   (theories/JCT_VertexGrazingCounterexample.v).  `no_horizontal_edge_at` is
+   necessary only ABSENT `ray_avoids_vertices`
+   (theories/JCT_HorizontalEdgeCounterexample.v: the notch witness has vertices
+   on its east ray).  Under `ray_avoids_vertices` every horizontal edge at p's
+   height lies strictly west and never matters; on taut, core-nodup rings the
+   guard is redundant (JCTShearLift.v : parity_seam_offring_taut_guard_free).
    Used to strengthen the parity seam `parity_characterises_interior_cont_strict`
    (JCT.v). *)
 Definition ray_avoids_vertices (p : Point) (r : Ring) : Prop :=

@@ -4513,6 +4513,12 @@ theories/ClothoidSheet.v
 # interior and the JCT seam (JCTEscapeDescentHolds). 3-axiom.
 theories/SheetRingPipStmt.v
 theories/SheetRingPip.v
+# lane shear, the horizontal guard dropped: a small vertical shear keeps the
+# east-ray parity edge by edge (cross product is det-1 invariant; vertices at
+# p's height sit strictly west under ray_avoids_vertices) and makes the ring
+# horizontal-free, so parity_seam_offring_taut transports back.  The off-ring
+# Jordan seam holds for every taut, core-nodup ring.  3-axiom.
+theories/JCTShearLift.v
 # lane snyder (#970)
 # Snyder 1987 spherical Mercator, exp form of (7-2), atan3 inverse.
 # claimId snyder-merc-sphere. 3-axiom. No Admitted.
