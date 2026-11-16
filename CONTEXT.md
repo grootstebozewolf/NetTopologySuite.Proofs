@@ -555,8 +555,8 @@ _Avoid_: noder (the full loop), snap-rounding (not 𝓘), kiss (for a shared end
 
 **Parks ι / ρ / Γ**:
 `CircularCook.v : ticket_64_circ_gamma_qed_or_qex` LEFT (CircGammaDischarged / MkCirc).
-ι / ρ stay named QEX (`SidecarCircIotaArm.v : ticket_0007_iota_arm_qed_or_qex`;
-`SheetHenCookLoop.v : leftover_bag_term_arm_missing`).
+ι stays named QEX (`SidecarCircIotaArm.v : ticket_0007_iota_arm_qed_or_qex`);
+ρ is QED via `CookLoopRho` (`SheetHenRhoConf.v : cook_loop_rho_holds`, letter 6b).
 _Avoid_: reminting sidecar `I_ok_circ` as host Γ
 
 **NodingNG (chord)**:
