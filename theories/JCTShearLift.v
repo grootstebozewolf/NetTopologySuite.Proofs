@@ -16,8 +16,9 @@
         condition is a sign test on cross(a - p, b - p), which S_k preserves
         (det 1); every vertex height off p's height keeps its sign for small
         k; and a vertex AT p's height is strictly west of p (the ray guard),
-        where the sign test rejects the edge on both sheets, whichever sign k
-        has.  So `point_in_ring` is unchanged (`point_in_ring_shear`).
+        where the sign test rejects the edge on both sheets (the arithmetic
+        core `ray_sign_shear_core` holds for either sign of k; the headline
+        picks k > 0).  So `point_in_ring` is unchanged (`point_in_ring_shear`).
      3. The interior transports along any invertible affine map
         (`SheetRingPip.v : geo_act`), and so do tautness, core-nodup and the
         point count; the horizontal-free seam applies on the sheared sheet.
@@ -338,7 +339,12 @@ Qed.
 (* §7  The headline.                                                          *)
 (* -------------------------------------------------------------------------- *)
 
-(* The corrected off-ring seam with the horizontal-edge guard dropped. *)
+(* The corrected off-ring seam with the horizontal-edge guard dropped.  Its
+   premise list mirrors `parity_characterises_interior_cont_offring` minus
+   `no_horizontal_edge_at`, for shape parity with the guarded seam; the proof
+   of `parity_seam_offring_taut_nh` does not use `ring_simple` / `ring_closed`
+   (taut and core-nodup imply them).  `parity_seam_offring_taut_guard_free` is
+   the same fact with only the premises it needs. *)
 Definition parity_characterises_interior_cont_offring_nh (p : Point) (r : Ring) : Prop :=
   ring_simple r -> ring_closed r -> ring_has_minimum_points r ->
   ring_complement r p ->

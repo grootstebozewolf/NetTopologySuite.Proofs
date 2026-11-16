@@ -52,8 +52,13 @@
        so `parity_characterises_interior_cont pext notch` holds vacuously --
        the guard is necessary and already neutralises this witness.
 
+   SCOPE (added later): "necessary" here means necessary for the seam that
+   lacks `ray_avoids_vertices`.  The witness pext = (-1,1) has the vertices
+   (0,1) and (2,1) on its east ray, so it fails that guard.  Under
+   `ray_avoids_vertices` the horizontal guard is redundant on taut, core-nodup
+   rings: JCTShearLift.v : parity_seam_offring_taut_guard_free.
    Together with the vertex-graze finding this pins the seam's correct guard
-   SET: `no_horizontal_edge_at` (necessary -- this file) AND `ray_avoids_vertices`
+   SET (absent the vertex guard): `no_horizontal_edge_at` (necessary -- this file) AND `ray_avoids_vertices`
    (additionally required -- the vertex-graze file).
 
    Pure-R; no atan / Flocq / `Classical_Prop.classic`.  No `Admitted`,
@@ -240,7 +245,9 @@ Qed.
 
 (* Therefore the EXISTING seam already neutralises this witness vacuously: its
    `no_horizontal_edge_at` premise is unsatisfiable at pext.  The guard is
-   doing real work -- it is necessary, not redundant. *)
+   doing real work -- it is necessary, not redundant, for this seam (which has
+   no `ray_avoids_vertices`; with that guard it becomes redundant, see
+   JCTShearLift.v : parity_seam_offring_taut_guard_free). *)
 Theorem notch_excluded_by_existing_seam :
   parity_characterises_interior_cont pext notch.
 Proof.
