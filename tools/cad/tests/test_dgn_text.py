@@ -150,9 +150,10 @@ def test_rows_account_for_every_graphic_element(dgn: Path, ttf: Path) -> None:
     assert out["polygons"] == 3
 
 
-def test_squeezed_text_is_not_a_similarity(dgn: Path, ttf: Path) -> None:
+def test_squeezed_text_declines_only_for_its_missing_glyphs(dgn: Path, ttf: Path) -> None:
+    # Length half the height is a width factor of 0.5, applied to the glyphs. The font has no "s".
     rows = dgn_text.extract_path(dgn, fonts={41: ttf, 7: ttf})
-    assert rows[3]["id"] == "ID_NotSimilarityPlacement"
+    assert (rows[3]["id"], rows[3]["reason"]) == ("ID_TextEntity", "font has no glyph for U+0073")
 
 
 def test_text_without_fonts_declines(dgn: Path) -> None:

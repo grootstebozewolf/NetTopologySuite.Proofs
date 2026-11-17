@@ -215,3 +215,15 @@ def test_stroke_ink_reach_follows_the_arcs(shp: Path) -> None:
     link = aligned["params"]["members"][0]["placement"]["links"][1]
     assert (link["scale"], link["rotate"]) == pytest.approx((2.0, 90.0))
     assert _place((10.5, 0), aligned["params"]["members"][1]["placement"]["links"]) == pytest.approx((0, 57))
+
+
+def test_stretched_stroke_text_keeps_chords_and_refuses_arcs(shp: Path) -> None:
+    row = _row(shp, "L", width_factor=0.5, oblique=45.0)
+    (stroke,) = row["params"]["members"][0]["params"]["members"]
+    # x becomes 0.5 * (x + y): the top of L leans right, and the foot is half as long.
+    flat = [v for s in stroke["params"]["segments"] for v in s["start"] + s["end"]]
+    assert flat == pytest.approx([10.5, 21, 0, 0, 0, 0, 6, 0])
+    out = text_glyphs.run_record(
+        text_glyphs.TextRun(text="LO", font=shp, height=7.0, insert=(0.0, 0.0), width_factor=0.8), **_DGN_CTX
+    )
+    assert out == ("ID_NotSimilarityPlacement", "arc in a stretched or slanted stroke font")

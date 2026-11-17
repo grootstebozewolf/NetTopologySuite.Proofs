@@ -312,9 +312,8 @@ def test_text_in_a_mirrored_insert_and_negative_extrusion_composes(ttf: Path) ->
 @pytest.mark.parametrize(
     ("attribs", "text", "decline", "reason"),
     [
-        ({"width": 0.8}, "l", "ID_NotSimilarityPlacement", "width factor"),
-        ({"oblique": 15}, "l", "ID_NotSimilarityPlacement", "oblique"),
-        ({"halign": 5, "align_point": (5, 0)}, "ll", "ID_NotSimilarityPlacement", "fit text"),
+        ({"oblique": 89}, "l", "ID_DegenerateEntity", "out of range"),
+        ({"halign": 5, "align_point": (0, 0)}, "ll", "ID_DegenerateEntity", "no length"),
         ({"halign": 3, "align_point": (0, 0)}, "ll", "ID_DegenerateEntity", "no length"),
         ({}, "lx", "ID_TextEntity", "U+0078"),
         ({}, "  ", "ID_TextEntity", "no inked glyph"),
@@ -480,8 +479,9 @@ def test_dgn_text_element_yields_the_same_outlines_as_dxf(tmp_path: Path, ttf: P
 
 def test_dgn_named_declines(ttf: Path) -> None:
     base = {"type": 17, "text": "l", "origin": [0, 0], "height": 2.0, "width": 2.0, "font": 41}
-    squeezed = text_glyphs.dgn_text_run({**base, "width": 1.5}, {41: ttf})
-    assert text_glyphs.run_record(squeezed, **_DGN_CTX)[0] == "ID_NotSimilarityPlacement"
+    squeezed = text_glyphs.run_record(text_glyphs.dgn_text_run({**base, "width": 1.5}, {41: ttf}), **_DGN_CTX)
+    stem = squeezed["params"]["members"][0]["params"]["members"][1]["params"]["members"]
+    assert [m["params"]["start"] for m in stem] == [[75, 0], [75, 700], [150, 700], [150, 0]]
     flat = text_glyphs.dgn_text_run({**base, "height": 0.0, "width": 0.0}, {41: ttf})
     assert text_glyphs.run_record(flat, **_DGN_CTX)[0] == "ID_DegenerateEntity"
     odd = text_glyphs.TextRun(text="l", font=ttf, height=2.0, insert=(0.0, 0.0), halign="diagonal")
@@ -558,8 +558,6 @@ def test_mtext_text_direction_wins_over_rotation(ttf: Path) -> None:
         (r"\S1/2;", {}, "ID_TextEntity", "stacked"),
         (r"\Ll\l", {}, "ID_TextEntity", "underline"),
         (r"\Ol\o", {}, "ID_TextEntity", "underline"),
-        (r"\W0.8;l", {}, "ID_NotSimilarityPlacement", "width factor"),
-        (r"\Q15;l", {}, "ID_NotSimilarityPlacement", "oblique"),
         (r"\T1.5;l", {}, "ID_TextEntity", "tracking"),
         (r"\pi2,l4;l", {}, "ID_TextEntity", "indents"),
         (r"\pxqj;l", {}, "ID_TextEntity", "justified"),
@@ -582,12 +580,20 @@ def test_mtext_fits_a_wide_enough_column_and_scales_line_spacing(ttf: Path) -> N
     assert last["placement"]["links"][0]["translate"] == pytest.approx([0, -_CAP - 1.5 * _PITCH])
 
 
-def test_mtext_style_stretch_is_not_a_similarity(ttf: Path) -> None:
+def test_mtext_takes_the_style_width_and_inline_width_and_oblique(ttf: Path) -> None:
     doc = _doc()
     doc.styles.get("GLYPH").dxf.width = 0.8
-    doc.modelspace().add_mtext("l", dxfattribs={"style": "GLYPH", "char_height": 7})
+    doc.modelspace().add_mtext(r"ll{\W2;l}{\Q45;l}", dxfattribs={"style": "GLYPH", "char_height": 7})
     (row,) = _rows(doc, {"carriertext.ttf": ttf})
-    assert row["id"] == "ID_NotSimilarityPlacement"
+    # Advances 240, 240, then 600 at width 2; the braces end that, so the leaning one is 0.8 wide again.
+    assert [pen[0] for pen in _pens(row)] == pytest.approx([0, 240, 480, 1080])
+    starts = lambda glyph: [m["params"]["start"] for m in glyph["params"]["members"][1]["params"]["members"]]
+    narrow, _, wide, leaning = row["params"]["members"]
+    assert starts(narrow) == [[80, 0], [80, 700], [160, 700], [160, 0]]
+    assert starts(wide) == [[200, 0], [200, 700], [400, 700], [400, 0]]
+    flat = [v for point in starts(leaning) for v in point]
+    assert flat == pytest.approx([80, 0, 0.8 * (100 + 700), 700, 0.8 * (200 + 700), 700, 160, 0])
+    assert all(g["placement"]["links"][1]["scale"] == pytest.approx(7 / _CAP) for g in row["params"]["members"])
 
 
 def test_mtext_without_fonts_still_declines_and_linearizes_with_them(ttf: Path) -> None:
@@ -702,3 +708,49 @@ def test_mtext_font_switch_takes_its_own_file_and_matches_cap_height(ttf: Path, 
     assert [pen[0] for pen in _pens(stroke)] == pytest.approx([0, 300, 300 + 28 * fit, 300 + 46 * fit])
     assert math.dist(_place((0, 21), ell["placement"]["links"]), _place((0, 0), ell["placement"]["links"])) == pytest.approx(7)
     assert (italic["id"], italic["reason"]) == ("ID_TextEntity", "no font file given for other|b0|i1")
+
+
+def test_width_factor_and_oblique_shape_the_glyph_not_the_placement(ttf: Path) -> None:
+    import glyph_linearize
+    import shapely
+
+    def row(**attribs) -> dict:
+        doc = _doc()
+        doc.modelspace().add_text("el", height=7, dxfattribs={"style": "GLYPH", **attribs})
+        (out,) = _rows(doc, {"carriertext.ttf": ttf})
+        return out
+
+    plain, wide, leaning = row(), row(width=1.6), row(oblique=20)
+    lean = math.tan(math.radians(20))
+    for shaped in (wide, leaning):
+        assert shaped["placement"] == plain["placement"]
+        assert shaped["params"]["members"][0]["placement"]["links"][1] == plain["params"]["members"][0]["placement"]["links"][1]
+    # The pen advance takes the width factor; the lean leaves it alone.
+    assert [pen[0] for pen in _pens(wide)] == pytest.approx([0, 1.6 * _ADVANCE["e"]])
+    assert [pen[0] for pen in _pens(leaning)] == [0, _ADVANCE["e"]]
+    # Every Bezier control point is mapped, so the curve is the mapped curve.
+    quad = lambda r: r["params"]["members"][0]["params"]["members"][1]["params"]["members"][0]["params"]["controlPoints"]
+    for (x, y), (wx, wy), (lx, ly) in zip(quad(plain), quad(wide), quad(leaning)):
+        assert (wx, wy) == pytest.approx((1.6 * x, y))
+        assert (lx, ly) == pytest.approx((x + y * lean, y))
+    # A stretch scales the filled area by the width factor; a lean keeps it.
+    area = lambda r: shapely.from_wkt(glyph_linearize.linearize_row(r, hausdorff=1e-4)["wkt"]).area
+    assert area(wide) == pytest.approx(1.6 * area(plain), rel=1e-4)
+    assert area(leaning) == pytest.approx(area(plain), rel=1e-4)
+    assert leaning["params"]["members"][0]["params"]["members"][0]["params"]["orientation"] == ["cw", "ccw"]
+
+
+def test_fit_text_stretches_the_ink_between_its_two_points(ttf: Path) -> None:
+    doc = _doc()
+    # "ll" has ink from 100 to 500. At height 7 that is 4 units; the span is 10 units, straight up.
+    attribs = {"style": "GLYPH", "insert": (10, 20), "align_point": (10, 30), "halign": 5, "width": 99}
+    doc.modelspace().add_text("ll", height=7, dxfattribs=attribs)
+    (row,) = _rows(doc, {"carriertext.ttf": ttf})
+    first, second = row["params"]["members"]
+    link = first["placement"]["links"][1]
+    assert (link["scale"], link["rotate"]) == pytest.approx((7 / _CAP, 90))
+    stem = [m["params"]["start"] for m in first["params"]["members"][1]["params"]["members"]]
+    assert stem == [[250, 0], [250, 700], [500, 700], [500, 0]]
+    assert _place((250, 0), first["placement"]["links"]) == pytest.approx((10, 20))
+    assert _place((500, 0), second["placement"]["links"]) == pytest.approx((10, 30))
+    assert _place((250, 700), first["placement"]["links"]) == pytest.approx((10 - 7, 20))

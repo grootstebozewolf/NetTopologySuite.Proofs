@@ -22,8 +22,7 @@ cap height, bottom is the hhea descent, and the DXF ``Middle`` alignment
 is the middle of cap height and descent at the ink centre. ``aligned``
 puts the ink between two baseline points: rotation and scale come from
 those points, and the stated height and rotation are not used. ``fit``
-keeps the height, so it is a similarity only when the ink already spans
-the two points. These follow ezdxf's text2path, the DXF reference reader.
+keeps the height and stretches the glyphs between the two points. These follow ezdxf's text2path, the DXF reference reader.
 
 ``TextBlock`` is multiline text (DXF MTEXT). A line is as tall as its
 tallest word, and the next line starts ``5/3`` of that height times the
@@ -40,7 +39,7 @@ MTEXT inline codes are read by ezdxf's parser. Colour is ignored: the
 carrier has none. A height change scales the word inside its pen link. A
 paragraph alignment of left, centre or right is applied. Every other
 code declines by name: stacked text, tabulators, underline, overline and
-strike-through, width factor and oblique (not similarities), tracking,
+strike-through, tracking,
 indents and tab stops, and justified or distributed paragraphs.
 
 A font switch (``\f``) needs its own font file from the font map: a
@@ -54,8 +53,16 @@ TEXT, which also serves DWG once a reference converter has produced the
 DXF entity model. ``dgn_text_run`` takes the fields of a DGN type 17 text
 element as a reference reader reports them, in master units and degrees.
 
-Named declines: ID_NotSimilarityPlacement for a width factor other than 1
-or a nonzero oblique angle; ID_DegenerateEntity for non-finite or
+A width factor ``w`` and an oblique angle are applied to the glyph
+numbers, not to the placement: ``x`` becomes ``w * (x + y * tan(oblique))``
+for control points, chord ends and pen positions. That is exact for
+chords and Beziers, so the placement stays a similarity and the record
+needs no new link kind. Fit alignment is the width factor that makes the
+ink span its two points. A stroke glyph with an arc cannot be stretched
+or slanted into another circular arc and declines.
+
+Named declines: ID_NotSimilarityPlacement for an arc in a stretched or
+slanted stroke font; ID_DegenerateEntity for non-finite or
 non-positive numbers and a glyph whose contours all enclose no area; ID_TextEntity for everything
 this slice does not resolve (no font for the style, a
 missing glyph, no cap height, an unknown alignment, the MTEXT codes named
@@ -122,11 +129,14 @@ class TextBlock:
     valign: str = "top"  # top | middle | bottom
     line_spacing: float = 1.0
     column_width: float = 0.0
+    width_factor: float = 1.0
+    oblique: float = 0.0
     # Optional rich form, used instead of ``lines``. A paragraph is
     # ``(align or None, items)`` and an item is ``(kind, text, rel)`` or
     # ``(kind, text, rel, font)``: kind is word, space (a break point) or
     # nbsp, ``rel`` is the item's cap height over ``height``, and ``font``
-    # is a font file for that item when it is not the block's.
+    # is a font file for that item when it is not the block's. A fifth
+    # entry ``(width factor, oblique degrees)`` overrides the block's.
     paragraphs: tuple[tuple[str | None, tuple[tuple, ...]], ...] | None = None
 
 
@@ -283,11 +293,7 @@ def _span_placement(run: TextRun, cap: float, ink: tuple[float, float]) -> tuple
         return ("ID_DegenerateEntity", "aligned text has no length")
     rotation = math.degrees(math.atan2(dy, dx))
     stretch = length / (ink[1] - ink[0])
-    if run.span_mode == "aligned":
-        return (rotation, stretch)
-    if not math.isclose(stretch, scale, rel_tol=1e-9, abs_tol=_EPS):
-        return ("ID_NotSimilarityPlacement", "fit text stretches the width only")
-    return (rotation, scale)
+    return (rotation, stretch if run.span_mode == "aligned" else scale)
 
 
 def _entity(
@@ -432,6 +438,13 @@ class _OutlineFace:
     def extent(self, placed: list) -> tuple[float, float] | Decline:
         return ink_extent([(x, contours) for x, _y, contours in placed])
 
+    def sheared(self, payload: Any, width: float, lean: float) -> Any:
+        # An affine image of a Bezier is the Bezier of the mapped control points.
+        return [
+            [(span[0],) + tuple((width * (x + y * lean), y) for x, y in span[1:]) for span in contour]
+            for contour in payload
+        ]
+
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         return _glyph_member(payload, links, ctx)
 
@@ -462,6 +475,19 @@ class _StrokeFace:
 
         return stroke_glyphs.ink_x_extent(placed)
 
+    def sheared(self, payload: Any, width: float, lean: float) -> Any:
+        # A stretched or slanted circular arc is not a circular arc.
+        if any(segment["kind"] == "Arc" for stroke in payload for segment in stroke):
+            return ("ID_NotSimilarityPlacement", "arc in a stretched or slanted stroke font")
+
+        def move(point: list[float]) -> list[float]:
+            return [width * (point[0] + point[1] * lean), point[1]]
+
+        return [
+            [{**segment, "start": move(segment["start"]), "end": move(segment["end"])} for segment in stroke]
+            for stroke in payload
+        ]
+
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         strokes = [_entity("BulgePolyline", {"closed": False, "segments": stroke}, links, ctx) for stroke in payload]
         return _entity("Compound", {"members": strokes}, links, ctx)
@@ -484,6 +510,31 @@ def _open_face(path: Path) -> Any:
         face.close()
         return refusal
     return face
+
+
+def _shape_numbers(width: float, oblique: float) -> tuple[float, float] | Decline:
+    """Width factor and the tangent of the oblique angle, or a decline."""
+    if not (math.isfinite(width) and math.isfinite(oblique)) or width <= _EPS or abs(oblique) >= 85.0:
+        return ("ID_DegenerateEntity", "text width factor or oblique angle is out of range")
+    return (width, math.tan(math.radians(oblique)))
+
+
+def _shaped_line(face: Any, text: str, width: float, lean: float) -> tuple[list, float] | Decline:
+    """A line with the width factor and oblique lean applied to its geometry.
+
+    ``x`` becomes ``width * (x + y * lean)`` and ``y`` stays, for the pen
+    positions and for every glyph number. The placement stays a similarity.
+    """
+    line = face.line(text)
+    if isinstance(line[0], str) or (width == 1.0 and lean == 0.0):
+        return line
+    placed = []
+    for pen_x, pen_y, payload in line[0]:
+        shaped = face.sheared(payload, width, lean)
+        if isinstance(shaped, tuple):
+            return shaped
+        placed.append((width * (pen_x + pen_y * lean), pen_y, shaped))
+    return (placed, line[1] * width)
 
 
 def _pen_link(x: float, y: float) -> dict[str, Any]:
@@ -546,7 +597,10 @@ def block_record(
                     faces[own] = opened
                 item_face = faces[own]
                 fit = rel * cap / item_face.cap
-                measured = item_face.line(" " if kind != "word" else text)
+                shape = _shape_numbers(*(item[4] if len(item) > 4 else (block.width_factor, block.oblique)))
+                if isinstance(shape[0], str):
+                    return shape
+                measured = _shaped_line(item_face, " " if kind != "word" else text, shape[0], shape[1])
                 if isinstance(measured[0], str):
                     return measured
                 placed, advance = measured[0], measured[1] * fit
@@ -613,17 +667,29 @@ def run_record(
     numbers = (run.height, run.insert[0], run.insert[1], run.rotation, run.width_factor, run.oblique)
     if not all(math.isfinite(float(value)) for value in numbers) or run.height <= _EPS:
         return ("ID_DegenerateEntity", "text height, insert, or angle is not a positive finite number")
-    if not math.isclose(run.width_factor, 1.0, rel_tol=1e-9, abs_tol=_EPS):
-        return ("ID_NotSimilarityPlacement", "text width factor is not 1")
-    if abs(run.oblique) > _EPS:
-        return ("ID_NotSimilarityPlacement", "text oblique angle is not 0")
+    shape = _shape_numbers(run.width_factor, run.oblique)
+    if isinstance(shape[0], str):
+        return shape
+    width_factor, lean = shape
     face = _open_face(run.font)
     if isinstance(face, tuple):
         return face
     try:
         cap = face.cap
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
-        line = face.line(run.text)
+        if run.span_mode == "fit":
+            # Fit keeps the height and takes the width factor that makes the ink span the two points.
+            natural = _shaped_line(face, run.text, 1.0, lean)
+            if isinstance(natural[0], str):
+                return natural
+            if not natural[0]:
+                return ("ID_TextEntity", "text has no inked glyph")
+            reach = face.extent(natural[0])
+            span = math.dist(run.insert, run.span_to) if run.span_to is not None else 0.0
+            if not math.isfinite(span) or span <= _EPS or reach[1] - reach[0] <= _EPS:
+                return ("ID_DegenerateEntity", "aligned text has no length")
+            width_factor = span / ((reach[1] - reach[0]) * run.height / cap)
+        line = _shaped_line(face, run.text, width_factor, lean)
         if isinstance(line[0], str):
             return line
         placed = line[0]
@@ -728,7 +794,11 @@ def resolve_face(face: Any, fonts: Mapping[str, Path | str]) -> Path | Decline:
 
 
 def _mtext_paragraphs(
-    content: str, char_height: float, fonts: Mapping[str, Path | str] | None = None
+    content: str,
+    char_height: float,
+    fonts: Mapping[str, Path | str] | None = None,
+    width_factor: float = 1.0,
+    oblique: float = 0.0,
 ) -> tuple | Decline:
     """MTEXT content as paragraphs of sized words, or the first code this slice refuses."""
     import re
@@ -738,6 +808,8 @@ def _mtext_paragraphs(
 
     start = MTextContext()
     start.cap_height = char_height
+    start.width_factor = width_factor
+    start.oblique = oblique
     aligns = {
         MTextParagraphAlignment.DEFAULT: None,
         MTextParagraphAlignment.LEFT: "left",
@@ -765,10 +837,6 @@ def _mtext_paragraphs(
         if token.type == TokenType.WORD:
             if ctx.underline or ctx.overline or ctx.strike_through:
                 return ("ID_TextEntity", "MTEXT underline, overline or strike-through")
-            if not math.isclose(ctx.width_factor, 1.0, rel_tol=1e-9):
-                return ("ID_NotSimilarityPlacement", "MTEXT width factor is not 1")
-            if abs(ctx.oblique) > _EPS:
-                return ("ID_NotSimilarityPlacement", "MTEXT oblique angle is not 0")
             if not math.isclose(ctx.char_tracking_factor, 1.0, rel_tol=1e-9):
                 return ("ID_TextEntity", "MTEXT character tracking")
             if ctx.align != MTextLineAlignment.BOTTOM:
@@ -780,6 +848,7 @@ def _mtext_paragraphs(
                 return ("ID_TextEntity", "MTEXT justified or distributed paragraph")
         if char_height > _EPS:
             rel = ctx.cap_height / char_height
+        shape = (float(ctx.width_factor), float(ctx.oblique))
         own: Path | None = None
         if ctx.font_face != start.font_face and token.type in (TokenType.WORD, TokenType.SPACE, TokenType.NBSP):
             found = resolve_face(ctx.font_face, fonts or {})
@@ -789,11 +858,11 @@ def _mtext_paragraphs(
         if token.type == TokenType.WORD:
             align = aligns[ctx.paragraph.align]
             word = re.sub(r"\\U\+([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), str(token.data))
-            items.append(("word", word, rel, own))
+            items.append(("word", word, rel, own, shape))
         elif token.type == TokenType.SPACE:
-            items.append(("space", " ", rel, own))
+            items.append(("space", " ", rel, own, shape))
         elif token.type == TokenType.NBSP:
-            items.append(("nbsp", " ", rel, own))
+            items.append(("nbsp", " ", rel, own, shape))
         elif token.type == TokenType.NEW_PARAGRAPH:
             # An empty paragraph keeps a slot as tall as the text around it.
             paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
@@ -816,11 +885,9 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
     font = resolve_font(str(style.dxf.get("font", "")) if style is not None else "", fonts)
     if isinstance(font, tuple):
         return font
-    # MTEXT has no width factor or oblique of its own. The style's apply.
-    if not math.isclose(float(style.dxf.get("width", 1.0)), 1.0, rel_tol=1e-9, abs_tol=_EPS):
-        return ("ID_NotSimilarityPlacement", "text style width factor is not 1")
-    if abs(float(style.dxf.get("oblique", 0.0))) > _EPS:
-        return ("ID_NotSimilarityPlacement", "text style oblique angle is not 0")
+    # MTEXT starts from the style's width factor and oblique; inline W and Q codes change them.
+    style_width = float(style.dxf.get("width", 1.0))
+    style_oblique = float(style.dxf.get("oblique", 0.0))
     if dxf.hasattr("text_direction"):
         direction = dxf.text_direction
         if abs(float(direction[2])) > _EPS:
@@ -830,7 +897,7 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
         rotation = float(dxf.get("rotation", 0.0))
     insert = dxf.insert
     height = float(dxf.get("char_height", 0.0))
-    paragraphs = _mtext_paragraphs(str(entity.text), height, fonts)
+    paragraphs = _mtext_paragraphs(str(entity.text), height, fonts, style_width, style_oblique)
     if paragraphs and isinstance(paragraphs[0], str):
         return paragraphs
     return TextBlock(
@@ -844,6 +911,8 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
         valign=("top", "middle", "bottom")[(attachment - 1) // 3],
         line_spacing=float(dxf.get("line_spacing_factor", 1.0)),
         column_width=float(dxf.get("width", 0.0)),
+        width_factor=style_width,
+        oblique=style_oblique,
     )
 
 
