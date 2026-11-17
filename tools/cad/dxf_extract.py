@@ -54,6 +54,13 @@ DXF does not emit ID_AngleConventionUnknown. ``$ANGDIR`` and
 ``$ANGBASE`` are display provenance, not a decline. Another format may
 emit that id.
 
+A TEXT stays ``ID_TextEntity`` unless ``fonts`` maps its style font file
+name to an outline font. Then ``text_glyphs`` writes one Compound of glyph
+outlines (Ring plus Chord and Bezier members), or a named decline. A
+``.dwg`` path is converted by the ODA File Converter through
+``ezdxf.addons.odafc`` and read as the same entity model, with provenance
+format ``DWG``. The corpus does not parse DWG.
+
 ID_NonzeroOverlapNotYet is in the schema for overlapping nonzero-winding
 contours. Year 0 does not detect overlap, so this extractor never emits
 that id.
@@ -198,11 +205,12 @@ def _provenance(
     version: str,
     file_id: str,
     block_path: list[str],
+    source_format: str = "DXF",
 ) -> dict[str, Any]:
     layer = getattr(entity.dxf, "layer", "0") or "0"
     handle = str(getattr(entity.dxf, "handle", "") or "")
     return {
-        "format": "DXF",
+        "format": source_format,
         "version": version,
         "handle": handle,
         "layer": str(layer),
@@ -772,6 +780,42 @@ def _map_geometry(entity: Any, mode: str) -> dict[str, Any] | str:
     return "ID_UnsupportedEntity"
 
 
+def _text_row(
+    entity: Any,
+    doc: Any,
+    fonts: dict[str, Any],
+    extr: dict[str, Any] | None,
+    prefix: list[dict[str, Any]],
+    units: dict[str, Any],
+    tolerance: dict[str, Any],
+    z_offset: float,
+    provenance: dict[str, Any],
+) -> dict[str, Any]:
+    """One TEXT as a Compound of glyph outlines, or its named decline."""
+    import text_glyphs
+
+    bad = _tolerance_ok("Compound", tolerance)
+    if bad:
+        return _decl(bad, f"{tolerance['kind']} on Compound", provenance)
+    elevation = _num(entity.dxf.insert[2]) + z_offset
+    if not _finite(elevation):
+        return _decl("ID_DegenerateEntity", "non-finite elevation", provenance)
+    run = text_glyphs.dxf_text_run(entity, doc, fonts)
+    if isinstance(run, tuple):
+        return _decl(run[0], run[1], provenance)
+    row = text_glyphs.run_record(
+        run,
+        links=([extr] + prefix) if extr else list(prefix),
+        units=units,
+        tolerance=tolerance,
+        dimension=_dimension(elevation),
+        provenance=provenance,
+    )
+    if isinstance(row, tuple):
+        return _decl(row[0], row[1], provenance)
+    return row
+
+
 def _iter_block(doc: Any, name: str) -> Iterator[Any]:
     for entity in doc.blocks.get(name):
         if entity.dxftype() != "ENDBLK":
@@ -784,11 +828,14 @@ def extract_document(
     mode: str = "strict",
     tolerance: dict[str, Any] | None = None,
     file_id: str = "unnamed",
+    fonts: dict[str, Any] | None = None,
+    source_format: str = "DXF",
 ) -> list[dict[str, Any]]:
     """Extract carrier records and declines from an ezdxf document.
 
     ``mode`` is ``strict`` or ``lenient``. ``tolerance`` is a schema
-    tolerance object; the default is sourceDefault.
+    tolerance object; the default is sourceDefault. ``fonts`` maps a font
+    file name to an outline font path; without it every TEXT declines.
     """
     if mode not in ("strict", "lenient"):
         raise ValueError("mode must be strict or lenient")
@@ -806,7 +853,7 @@ def extract_document(
         z_offset: float,
         stack: tuple[str, ...],
     ) -> None:
-        prov = _provenance(entity, version, file_id, block_path)
+        prov = _provenance(entity, version, file_id, block_path, source_format)
         if isinstance(units, str):
             rows.append(_decl(units, f"header convention {units}", prov))
             return
@@ -846,6 +893,9 @@ def extract_document(
         if isinstance(extr, str):
             rows.append(_decl(extr, "extrusion is not +/- Z", prov))
             return
+        if entity.dxftype() == "TEXT" and fonts:
+            rows.append(_text_row(entity, doc, fonts, extr, prefix, units, tol, z_offset, prov))
+            return
         mapped = _map_geometry(entity, mode)
         if isinstance(mapped, str):
             if mapped == "ID_UnsupportedEntity":
@@ -882,15 +932,25 @@ def extract_path(
     mode: str = "strict",
     tolerance: dict[str, Any] | None = None,
     file_id: str | None = None,
+    fonts: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    import ezdxf
+    """Read a ``.dxf``, or a ``.dwg`` through the ODA File Converter."""
+    is_dwg = path.suffix.lower() == ".dwg"
+    if is_dwg:
+        from ezdxf.addons import odafc
 
-    doc = ezdxf.readfile(path)
+        doc = odafc.readfile(str(path))
+    else:
+        import ezdxf
+
+        doc = ezdxf.readfile(path)
     return extract_document(
         doc,
         mode=mode,
         tolerance=tolerance,
         file_id=file_id if file_id is not None else file_identity(path),
+        fonts=fonts,
+        source_format="DWG" if is_dwg else "DXF",
     )
 
 
@@ -901,7 +961,7 @@ def write_jsonl(rows: Iterable[dict[str, Any]], dest: Any) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Extract a DXF into CAD carrier JSON lines.")
+    parser = argparse.ArgumentParser(description="Extract a DXF or DWG into CAD carrier JSON lines.")
     parser.add_argument("dxf", type=Path)
     parser.add_argument("output", type=Path, nargs="?", help="JSON lines path, or stdout if omitted")
     parser.add_argument("--mode", choices=("strict", "lenient"), default="strict")
@@ -911,7 +971,21 @@ def main(argv: list[str] | None = None) -> int:
         help="source | sagitta:d | count:n | angle:alpha",
     )
     parser.add_argument("--file-id", default=None)
+    parser.add_argument(
+        "--font",
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="outline font for a text style font file name; repeatable",
+    )
     args = parser.parse_args(argv)
+    fonts: dict[str, Any] = {}
+    for item in args.font:
+        name, sep, font_path = item.partition("=")
+        if not sep or not name or not Path(font_path).is_file():
+            print(f"bad font: {item}", file=sys.stderr)
+            return 2
+        fonts[name] = Path(font_path)
     tol = parse_tolerance(args.tolerance)
     if isinstance(tol, str):
         print(f"bad tolerance: {tol}", file=sys.stderr)
@@ -919,7 +993,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.dxf.is_file():
         print(f"not a file: {args.dxf}", file=sys.stderr)
         return 2
-    rows = extract_path(args.dxf, mode=args.mode, tolerance=tol, file_id=args.file_id)
+    rows = extract_path(args.dxf, mode=args.mode, tolerance=tol, file_id=args.file_id, fonts=fonts)
     if args.output is None:
         write_jsonl(rows, sys.stdout)
     else:
