@@ -25,12 +25,24 @@ those points, and the stated height and rotation are not used. ``fit``
 keeps the height, so it is a similarity only when the ink already spans
 the two points. These follow ezdxf's text2path, the DXF reference reader.
 
-``TextBlock`` is plain multiline text (DXF MTEXT without inline codes).
-Baselines step down by ``5/3`` of the cap height times the line spacing
-factor. The box runs from the cap top of the first line to the baseline
-of the last, and each line is as wide as its advances. The attachment
-point picks the box corner, edge, or centre that lands on the insert
-point. A line wider than a stated column width would wrap, and declines.
+``TextBlock`` is multiline text (DXF MTEXT). A line is as tall as its
+tallest word, and the next line starts ``5/3`` of that height times the
+line spacing factor lower. The box runs from the cap top of the first
+line to the baseline of the last. It is as wide as the column width, or
+as the widest line when none is stated. With a column width, a line
+breaks at the last space that still fits, and the spaces at the break
+are dropped; a single word wider than the column overflows. A paragraph
+is set left, centre or right in the box, by its own alignment or else by
+the attachment point, which also picks the box point that lands on the
+insert point.
+
+MTEXT inline codes are read by ezdxf's parser. Colour is ignored: the
+carrier has none. A height change scales the word inside its pen link. A
+paragraph alignment of left, centre or right is applied. Every other
+code declines by name: stacked text, tabulators, underline, overline and
+strike-through, width factor and oblique (not similarities), tracking, a
+font switch (bold and italic included), indents and tab stops, and
+justified or distributed paragraphs.
 
 ``TextRun`` is the format-neutral input. ``dxf_text_run`` reads an ezdxf
 TEXT, which also serves DWG once a reference converter has produced the
@@ -41,8 +53,8 @@ Named declines: ID_NotSimilarityPlacement for a width factor other than 1
 or a nonzero oblique angle; ID_DegenerateEntity for non-finite or
 non-positive numbers and a glyph whose contours all enclose no area; ID_TextEntity for everything
 this slice does not resolve (no font for the style, a
-missing glyph, no cap height, an unknown alignment, MTEXT inline codes,
-columns, a wrapping line or top-to-bottom flow, a DGN justification
+missing glyph, no cap height, an unknown alignment, the MTEXT codes named
+above, columns or top-to-bottom flow, a DGN justification
 other than left baseline, a text with no ink).
 
 A font file ending in ``.shx`` or ``.shp`` is a stroke font
@@ -106,6 +118,25 @@ class TextBlock:
     valign: str = "top"  # top | middle | bottom
     line_spacing: float = 1.0
     column_width: float = 0.0
+    # Optional rich form, used instead of ``lines``. A paragraph is
+    # ``(align or None, items)`` and an item is ``(kind, text, rel)``:
+    # kind is word, space (a break point) or nbsp, and ``rel`` is the
+    # item's cap height over ``height``.
+    paragraphs: tuple[tuple[str | None, tuple[tuple[str, str, float], ...]], ...] | None = None
+
+
+def _plain_paragraphs(lines: tuple[str, ...]) -> tuple:
+    """Each line is a paragraph; every space is a break point."""
+    out = []
+    for line in lines:
+        items: list[tuple[str, str, float]] = []
+        for index, word in enumerate(line.split(" ")):
+            if index:
+                items.append(("space", " ", 1.0))
+            if word:
+                items.append(("word", word, 1.0))
+        out.append((None, tuple(items)))
+    return tuple(out)
 
 
 def _pt(point: Any) -> Point:
@@ -476,29 +507,69 @@ def block_record(
         cap = face.cap
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
         scale = block.height / cap
-        pitch = cap * 5.0 / 3.0 * block.line_spacing
-        depth = cap + pitch * (len(block.lines) - 1)
+        column = block.column_width / scale if block.column_width > _EPS else 0.0
         text_link = {
             "translate": [float(block.insert[0]), float(block.insert[1])],
             "rotate": block.rotation,
             "scale": scale,
             "reflect": False,
         }
+        paragraphs = block.paragraphs if block.paragraphs is not None else _plain_paragraphs(block.lines)
+        # A laid-out line: alignment share, width, tallest relative height, cells.
+        laid: list[tuple[float, float, float, list[tuple[float, float, list]]]] = []
+        for align, items in paragraphs:
+            if align is not None and align not in shifts:
+                return ("ID_TextEntity", f"unknown text alignment {align}")
+            share = shifts[align if align is not None else block.halign]
+            cells: list[tuple[float, float, list]] = []
+            width = 0.0
+            tallest = 0.0
+            waiting: list[tuple[float, float]] = []  # spaces not yet committed: (width, rel)
+            for kind, text, rel in items:
+                if not (math.isfinite(rel) and rel > _EPS):
+                    return ("ID_DegenerateEntity", "text height is not a positive finite number")
+                measured = face.line(" " if kind != "word" else text)
+                if isinstance(measured[0], str):
+                    return measured
+                placed, advance = measured[0], measured[1] * rel
+                if kind == "space":
+                    waiting.append((advance, rel))
+                    continue
+                gap = sum(w for w, _ in waiting)
+                if column and waiting and cells and width + gap + advance > column * (1 + 1e-9):
+                    # Break at the spaces; they belong to neither line.
+                    laid.append((share, width, tallest, cells))
+                    cells, width, tallest, waiting, gap = [], 0.0, 0.0, [], 0.0
+                tallest = max([tallest, rel] + [r for _, r in waiting])
+                width += gap
+                waiting = []
+                cells.append((width, rel, placed))
+                width += advance
+            # Spaces that end a paragraph stay in its width.
+            width += sum(w for w, _ in waiting)
+            tallest = max([tallest] + [r for _, r in waiting]) or (items[-1][2] if items else 1.0)
+            laid.append((share, width, tallest, cells))
+
+        box = column if column else max(width for _, width, _, _ in laid)
+        left = -shifts[block.halign] * box
+        baselines = []
+        top = 0.0
+        for _share, _width, tallest, _cells in laid:
+            baselines.append(top - cap * tallest)
+            top -= cap * tallest * 5.0 / 3.0 * block.line_spacing
+        depth = -baselines[-1]
         members = []
-        for index, text in enumerate(block.lines):
-            line = face.line(text)
-            if isinstance(line[0], str):
-                return line
-            placed, width = line
-            if block.column_width > _EPS and width * scale > block.column_width * (1 + 1e-9):
-                return ("ID_TextEntity", "a line is wider than the column and would wrap")
-            dx = -shifts[block.halign] * width
-            dy = drops[block.valign] * depth - cap - pitch * index
-            for pen_x, pen_y, payload in placed:
-                member = face.member(payload, [_pen_link(pen_x + dx, pen_y + dy), text_link] + links, ctx)
-                if isinstance(member, tuple):
-                    return member
-                members.append(member)
+        for (share, width, _tallest, cells), baseline in zip(laid, baselines):
+            x0 = left + (box - width) * share
+            y0 = baseline + drops[block.valign] * depth
+            for cell_x, rel, placed in cells:
+                for pen_x, pen_y, payload in placed:
+                    pen = _pen_link(x0 + cell_x + rel * pen_x, y0 + rel * pen_y)
+                    pen["scale"] = rel
+                    member = face.member(payload, [pen, text_link] + links, ctx)
+                    if isinstance(member, tuple):
+                        return member
+                    members.append(member)
     finally:
         face.close()
     if not members:
@@ -618,14 +689,78 @@ def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> Text
     )
 
 
-def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> TextBlock | Decline:
-    """A DXF MTEXT (ezdxf entity) as a plain block. DWG shares this entity model."""
-    from ezdxf.tools.text import fast_plain_mtext, has_inline_formatting_codes
+def _mtext_paragraphs(content: str, char_height: float) -> tuple | Decline:
+    """MTEXT content as paragraphs of sized words, or the first code this slice refuses."""
+    import re
 
+    from ezdxf.enums import MTextLineAlignment, MTextParagraphAlignment
+    from ezdxf.tools.text import MTextContext, MTextParser, TokenType
+
+    start = MTextContext()
+    start.cap_height = char_height
+    aligns = {
+        MTextParagraphAlignment.DEFAULT: None,
+        MTextParagraphAlignment.LEFT: "left",
+        MTextParagraphAlignment.CENTER: "center",
+        MTextParagraphAlignment.RIGHT: "right",
+    }
+    refused = {
+        TokenType.STACK: "MTEXT stacked text",
+        TokenType.TABULATOR: "MTEXT tabulator",
+        TokenType.NEW_COLUMN: "MTEXT columns",
+        TokenType.WRAP_AT_DIMLINE: "MTEXT dimension line wrap",
+    }
+    paragraphs: list[tuple[str | None, tuple]] = []
+    items: list[tuple[str, str, float]] = []
+    align: str | None = None
+    rel = 1.0
+    try:
+        tokens = list(MTextParser(content, start))
+    except Exception as error:
+        return ("ID_TextEntity", f"MTEXT content is not readable: {type(error).__name__}")
+    for token in tokens:
+        ctx = token.ctx
+        if token.type in refused:
+            return ("ID_TextEntity", refused[token.type])
+        if token.type == TokenType.WORD:
+            if ctx.underline or ctx.overline or ctx.strike_through:
+                return ("ID_TextEntity", "MTEXT underline, overline or strike-through")
+            if not math.isclose(ctx.width_factor, 1.0, rel_tol=1e-9):
+                return ("ID_NotSimilarityPlacement", "MTEXT width factor is not 1")
+            if abs(ctx.oblique) > _EPS:
+                return ("ID_NotSimilarityPlacement", "MTEXT oblique angle is not 0")
+            if not math.isclose(ctx.char_tracking_factor, 1.0, rel_tol=1e-9):
+                return ("ID_TextEntity", "MTEXT character tracking")
+            if ctx.font_face != start.font_face:
+                return ("ID_TextEntity", "MTEXT font switch")
+            if ctx.align != MTextLineAlignment.BOTTOM:
+                return ("ID_TextEntity", "MTEXT line alignment is not bottom")
+            para = ctx.paragraph
+            if para.indent or para.left or para.right or para.tab_stops:
+                return ("ID_TextEntity", "MTEXT paragraph indents or tab stops")
+            if para.align not in aligns:
+                return ("ID_TextEntity", "MTEXT justified or distributed paragraph")
+        if char_height > _EPS:
+            rel = ctx.cap_height / char_height
+        if token.type == TokenType.WORD:
+            align = aligns[ctx.paragraph.align]
+            word = re.sub(r"\\U\+([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), str(token.data))
+            items.append(("word", word, rel))
+        elif token.type == TokenType.SPACE:
+            items.append(("space", " ", rel))
+        elif token.type == TokenType.NBSP:
+            items.append(("nbsp", " ", rel))
+        elif token.type == TokenType.NEW_PARAGRAPH:
+            # An empty paragraph keeps a slot as tall as the text around it.
+            paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
+            items = []
+    paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
+    return tuple(paragraphs)
+
+
+def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> TextBlock | Decline:
+    """A DXF MTEXT (ezdxf entity) as a block. DWG shares this entity model."""
     dxf = entity.dxf
-    content = str(entity.text)
-    if has_inline_formatting_codes(content):
-        return ("ID_TextEntity", "MTEXT inline formatting codes")
     if entity.has_columns:
         return ("ID_TextEntity", "MTEXT columns")
     if int(dxf.get("flow_direction", 1)) == 3:
@@ -650,11 +785,15 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
     else:
         rotation = float(dxf.get("rotation", 0.0))
     insert = dxf.insert
-    lines = fast_plain_mtext(content.replace("\\~", " "), split=True)
+    height = float(dxf.get("char_height", 0.0))
+    paragraphs = _mtext_paragraphs(str(entity.text), height)
+    if paragraphs and isinstance(paragraphs[0], str):
+        return paragraphs
     return TextBlock(
-        lines=tuple(lines),
+        lines=(),
+        paragraphs=paragraphs,
         font=font,
-        height=float(dxf.get("char_height", 0.0)),
+        height=height,
         insert=(float(insert[0]), float(insert[1])),
         rotation=rotation,
         halign=("left", "center", "right")[(attachment - 1) % 3],

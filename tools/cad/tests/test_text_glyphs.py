@@ -553,11 +553,18 @@ def test_mtext_text_direction_wins_over_rotation(ttf: Path) -> None:
 @pytest.mark.parametrize(
     ("content", "attribs", "decline", "reason"),
     [
-        (r"{\fArial|b1;l}", {}, "ID_TextEntity", "inline formatting"),
-        (r"\H2x;l", {}, "ID_TextEntity", "inline formatting"),
-        ("lll", {"width": 0.05}, "ID_TextEntity", "would wrap"),
+        (r"{\fArial|b1;l}", {}, "ID_TextEntity", "font switch"),
+        (r"\S1/2;", {}, "ID_TextEntity", "stacked"),
+        (r"\Ll\l", {}, "ID_TextEntity", "underline"),
+        (r"\Ol\o", {}, "ID_TextEntity", "underline"),
+        (r"\W0.8;l", {}, "ID_NotSimilarityPlacement", "width factor"),
+        (r"\Q15;l", {}, "ID_NotSimilarityPlacement", "oblique"),
+        (r"\T1.5;l", {}, "ID_TextEntity", "tracking"),
+        (r"\pi2,l4;l", {}, "ID_TextEntity", "indents"),
+        (r"\pxqj;l", {}, "ID_TextEntity", "justified"),
+        (r"l\U+00B0", {}, "ID_TextEntity", "U+00B0"),
         ("l", {"flow_direction": 3}, "ID_TextEntity", "top-to-bottom"),
-        ("l^Il", {}, "ID_TextEntity", "U+0009"),
+        ("l^Il", {}, "ID_TextEntity", "tabulator"),
         (r"\P ", {}, "ID_TextEntity", "no inked glyph"),
     ],
 )
@@ -622,3 +629,50 @@ def test_two_span_and_one_span_contours_get_an_on_curve_skeleton() -> None:
 def test_style_font_without_an_extension_is_a_shape_font(ttf: Path) -> None:
     assert text_glyphs.resolve_font("txt", {"TXT.SHX": ttf}) == ttf
     assert "txt.shx" in text_glyphs.resolve_font("txt", {})[1]
+
+
+def _pens(row: dict) -> list[list[float]]:
+    return [glyph["placement"]["links"][0]["translate"] for glyph in row["params"]["members"]]
+
+
+def test_mtext_wraps_at_the_last_space_that_fits(ttf: Path) -> None:
+    # At height 7 one drawing unit is 100 font units. "ll" is 600 wide and a space 250.
+    (row,) = _mtext_rows(ttf, "ll ll  ll", width=15.0)
+    flat = [v for pen in _pens(row) for v in pen]
+    assert flat == pytest.approx([0, -_CAP, 300, -_CAP, 850, -_CAP, 1150, -_CAP, 0, -_CAP - _PITCH, 300, -_CAP - _PITCH])
+    # Top right: the box is the column, and each line ends at its right edge.
+    (row,) = _mtext_rows(ttf, "ll ll  ll", width=15.0, attachment_point=3)
+    xs = [pen[0] for pen in _pens(row)]
+    assert xs == pytest.approx([-1450, -1150, -600, -300, -600, -300])
+    # Without a width nothing wraps.
+    (row,) = _mtext_rows(ttf, "ll ll  ll")
+    assert {pen[1] for pen in _pens(row)} == {-_CAP}
+
+
+def test_mtext_long_word_overflows_and_nbsp_does_not_break(ttf: Path) -> None:
+    (row,) = _mtext_rows(ttf, "lll", width=0.05)
+    assert {pen[1] for pen in _pens(row)} == {-_CAP}
+    (row,) = _mtext_rows(ttf, r"ll\~ll ll", width=12.0)
+    ys = [pen[1] for pen in _pens(row)]
+    assert ys == pytest.approx([-_CAP] * 4 + [-_CAP - _PITCH] * 2)
+
+
+def test_mtext_height_change_scales_the_word_and_its_line(ttf: Path) -> None:
+    (row,) = _mtext_rows(ttf, r"l{\H2x;l}l\Pl")
+    small, big, after, below = row["params"]["members"]
+    assert [g["placement"]["links"][0]["scale"] for g in (small, big, after, below)] == [1, 2, 1, 1]
+    # The first line is two caps tall; the doubled l advances by 600.
+    flat = [v for pen in _pens(row) for v in pen]
+    assert flat == pytest.approx([0, -2 * _CAP, 300, -2 * _CAP, 900, -2 * _CAP, 0, -2 * _PITCH - _CAP])
+    top = _place((100, 700), big["placement"]["links"])
+    foot = _place((100, 0), big["placement"]["links"])
+    assert math.dist(top, foot) == pytest.approx(14)
+    assert top[1] == pytest.approx(20)
+
+
+def test_mtext_paragraph_alignment_and_colour(ttf: Path) -> None:
+    (row,) = _mtext_rows(ttf, r"\pxqc;{\C1;l}\P\pxqr;l\P\pxql;l", width=10.0)
+    assert [pen[0] for pen in _pens(row)] == pytest.approx([350, 700, 0])
+    # A paragraph alignment overrides the attachment's, inside the same box.
+    (row,) = _mtext_rows(ttf, r"\pxql;l", width=10.0, attachment_point=3)
+    assert _pens(row)[0][0] == pytest.approx(-1000)
