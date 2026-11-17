@@ -534,3 +534,49 @@ def test_arc_end_before_start_is_kept_raw() -> None:
     assert rows[0]["params"]["endAngle"] == 10
     assert rows[0]["params"]["direction"] == "ccw-ocs"
     VALIDATOR.validate(rows[0])
+
+
+@pytest.mark.parametrize("mode", ["strict", "lenient"])
+def test_closed_polyline_repeating_its_first_vertex_drops_the_repeat(mode: str) -> None:
+    square = [(0, 0, 0), (4, 0, 0.5), (4, 3, 0), (0, 3, 0)]
+    doc = ezdxf.new("R2010")
+    msp = doc.modelspace()
+    msp.add_lwpolyline(square + [(0, 0, 0)], format="xyb", close=True)
+    msp.add_lwpolyline(square, format="xyb", close=True)
+    repeated, plain = dxf_extract.extract_document(doc, mode=mode, file_id="fixture")
+    for row in (repeated, plain):
+        VALIDATOR.validate(row)
+    assert repeated["record"] == "entity"
+    assert repeated["params"] == plain["params"]
+    contour = repeated["params"]["contours"][0] if mode == "lenient" else repeated["params"]["segments"]
+    assert len(contour) == 4
+    assert contour[1]["kind"] == "Arc"
+
+
+@pytest.mark.parametrize(
+    "points",
+    [
+        # A bulge on the repeat would be an arc of no length.
+        [(0, 0, 0), (4, 0, 0), (4, 3, 0), (0, 0, 0.3)],
+        # A repeat inside the polyline is not the closing vertex.
+        [(0, 0, 0), (4, 0, 0), (4, 0, 0), (4, 3, 0)],
+    ],
+)
+def test_other_zero_length_segments_still_decline(points) -> None:
+    doc = ezdxf.new("R2010")
+    doc.modelspace().add_lwpolyline(points, format="xyb", close=True)
+    (row,) = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+    assert (row["record"], row["id"]) == ("decline", "ID_DegenerateEntity")
+
+
+def test_closed_2d_polyline_and_hatch_path_repeating_the_first_vertex() -> None:
+    doc = ezdxf.new("R2010")
+    msp = doc.modelspace()
+    msp.add_polyline2d([(0, 0), (4, 0), (4, 3), (0, 0)], close=True)
+    hatch = msp.add_hatch()
+    hatch.paths.add_polyline_path([(0, 0, 0), (4, 0, 0), (4, 3, 0), (0, 0, 0)], is_closed=True)
+    polyline, ring = dxf_extract.extract_document(doc, mode="strict", file_id="fixture")
+    VALIDATOR.validate(polyline)
+    VALIDATOR.validate(ring)
+    assert len(polyline["params"]["members"]) == 3
+    assert len(ring["params"]["contours"][0]) == 3

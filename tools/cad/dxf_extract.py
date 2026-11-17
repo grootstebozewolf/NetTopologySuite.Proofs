@@ -25,7 +25,11 @@ Modes (ADR-0005):
   polyline into a Ring (winding rule ``nonzero``, because a polyline
   states no hatch rule). A non-finite bulge (NaN or infinity) is
   ``ID_DegenerateEntity`` in both modes. ``b = 0`` is a Chord in both
-  modes; the bulge value is kept.
+  modes; the bulge value is kept. A closed polyline whose last vertex
+  repeats its first exactly, with bulge 0, drops that vertex in both
+  modes: the closing segment it makes has no length and draws nothing.
+  With a nonzero bulge there, or a repeat anywhere else, the zero-length
+  segment is still ``ID_DegenerateEntity``.
 
 A Ring records ``orientation`` (``cw`` or ``ccw``) from the source
 contour sign, one entry per contour. Vertices are copied in source
@@ -386,6 +390,10 @@ def _segment(start: list[float], end: list[float], bulge: float) -> dict[str, An
 
 
 def _bulge_segments(points: list[tuple[float, float, float]], closed: bool) -> list[dict[str, Any]] | str:
+    if closed and len(points) > 1 and points[-1][:2] == points[0][:2] and points[-1][2] == 0:
+        # A closed polyline that repeats its first vertex at the end has a zero-length
+        # closing segment. With no bulge on it, it draws nothing, so it is dropped.
+        points = points[:-1]
     if len(points) < 2:
         return "ID_DegenerateEntity"
     span = len(points) if closed else len(points) - 1
