@@ -43,7 +43,17 @@ strike-through are drawn as described below. Every other code declines
 by name: overline, tracking, and distributed paragraphs (ezdxf's own
 layout engine cannot do those either).
 
-Stacked text (``\S``) is one cell, laid out as ezdxf's ``Fraction`` does:
+Columns follow ezdxf too. Each column is the MTEXT column width wide, and
+text wraps to it. Lines fill a column while they fit its height; then the
+next column starts, the gutter further right, and when the stated columns
+are used up more columns follow, each as tall as the last one; a growing
+last column passes on the height it had filled when the new one began. A column break
+(the MTEXT N code) starts the next column. Without columns, it opens another
+column as wide as the text with no gutter, as in ezdxf. The box is all
+the columns wide and as tall as the tallest column, so the attachment
+point uses that box. Reversed column flow declines.
+
+Stacked text (the MTEXT S code) is one cell, laid out as ezdxf's ``Fraction`` does:
 both parts at the current height; ``/`` and ``^`` stack them centred in a
 cell 1.2 times their two heights tall, ``#`` sets them diagonally. The
 bar of ``/`` (halfway up) and of ``#`` (diagonal) is a hairline in ezdxf.
@@ -184,8 +194,14 @@ class TextBlock:
     # nbsp, ``rel`` is the item's cap height over ``height``, and ``font``
     # is a font file for that item when it is not the block's. A fifth
     # entry ``(width factor, oblique degrees)`` overrides the block's, and
-    # a sixth holds its marks: "u" underline, "s" strike-through.
+    # a sixth holds its marks: "u" underline, "s" strike-through. A
+    # paragraph's third entry holds its indents and tab stops, and a fourth,
+    # when true, starts it in the next column.
     paragraphs: tuple[tuple[str | None, tuple[tuple, ...]], ...] | None = None
+    # Column heights in drawing units (None for a column that grows), and
+    # the gap between columns. Each column is ``column_width`` wide.
+    columns: tuple[float | None, ...] | None = None
+    gutter: float = 0.0
 
 
 def _plain_paragraphs(lines: tuple[str, ...]) -> tuple:
@@ -797,6 +813,73 @@ def _stacked(face: Any, parts: tuple[str, str, str], width: float, lean: float) 
     return (placed, advance, height / cap)
 
 
+def _flow_columns(
+    laid: list[dict[str, Any]], block: TextBlock, cap: float, scale: float
+) -> tuple[list[float], list[float], float | None, float] | Decline:
+    """Baselines and column x offsets of the lines, the box width (None: the caller's), and the box depth.
+
+    Without columns the lines run down one column. With columns they flow as
+    in ezdxf's layout engine: a line goes into the current column while its
+    bottom fits the column height, and otherwise starts the next column; when
+    the given columns are used up, more of the last one's height follow. A
+    column break (the MTEXT N code) starts the next column. ezdxf leaves out the
+    gap after the previous paragraph when it tests a paragraph's lines, and
+    so does this.
+    """
+    pitch = 5.0 / 3.0 * block.line_spacing
+    if not block.columns:
+        baselines, top = [], 0.0
+        for line in laid:
+            baselines.append(top - cap * line["tallest"])
+            top -= cap * line["tallest"] * pitch
+        return baselines, [0.0] * len(laid), None, -baselines[-1]
+
+    heights = [None if h is None else h / scale for h in block.columns]
+    step = block.column_width / scale + block.gutter / scale
+    baselines, offsets, used = [], [], []
+    index, top, paragraph, gap_before, gap_last = 0, 0.0, None, 0.0, 0.0
+
+    def limit(i: int) -> float | None:
+        return heights[i]
+
+    def next_column() -> None:
+        nonlocal index, top, paragraph, gap_before, gap_last
+        filled = top - gap_last if top else 0.0
+        if index + 1 >= len(heights):
+            # ezdxf copies the last column; a growing column copies the height it has filled so far.
+            heights.append(heights[-1] if heights[-1] is not None else filled)
+        used.append(filled)
+        index, top, paragraph, gap_before, gap_last = index + 1, 0.0, None, 0.0, 0.0
+
+    for line in laid:
+        if line["breaks_column"]:
+            next_column()
+        height = cap * line["tallest"]
+        while True:
+            if line["paragraph"] != paragraph:
+                # A new paragraph in this column: ezdxf measures it from the end of the
+                # previous paragraph's last line, without the gap that follows that line.
+                gap_before = gap_last
+            room = limit(index)
+            if room is None or top + height - gap_before <= room * (1 + 1e-12):
+                break
+            if paragraph is None and top == 0.0:
+                return ("ID_TextEntity", "an MTEXT line is taller than its column")
+            next_column()
+        paragraph = line["paragraph"]
+        baselines.append(-top - height)
+        offsets.append(index * step)
+        top += height * pitch
+        gap_last = height * pitch - height
+    used.append(top - gap_last if top else 0.0)
+    count = len(heights)
+    box = count * block.column_width / scale + (count - 1) * block.gutter / scale
+    depth = max(
+        (limit(i) if limit(i) is not None else (used[i] if i < len(used) else 0.0)) for i in range(count)
+    )
+    return baselines, offsets, box, depth
+
+
 def _pen_link(x: float, y: float) -> dict[str, Any]:
     return {"translate": [x, y], "rotate": 0.0, "scale": 1.0, "reflect": False}
 
@@ -837,9 +920,10 @@ def block_record(
         paragraphs = block.paragraphs if block.paragraphs is not None else _plain_paragraphs(block.lines)
         # A laid-out line. Cell and mark x values are relative to the line start.
         laid: list[dict[str, Any]] = []
-        for paragraph in paragraphs:
+        for number, paragraph in enumerate(paragraphs):
             align, items = paragraph[0], paragraph[1]
             props = paragraph[2] if len(paragraph) > 2 else (0.0, 0.0, 0.0, ())
+            breaks_column = bool(paragraph[3]) if len(paragraph) > 3 else False
             justify = align == "justified"
             if align is not None and align not in shifts and not justify:
                 return ("ID_TextEntity", f"unknown text alignment {align}")
@@ -869,6 +953,7 @@ def block_record(
                     "share": share, "indent": indent, "right": indent_right, "avail": avail,
                     "width": 0.0, "tallest": 0.0, "cells": [], "marked": [], "glue": [],
                     "anchor": None, "justify": justify, "last": False,
+                    "paragraph": number, "breaks_column": breaks_column and first,
                 }
 
             line = open_line()
@@ -1008,16 +1093,15 @@ def block_record(
             line["last"] = True
             laid.append(line)
 
-        box = column if column else max(line["indent"] + line["width"] + line["right"] for line in laid)
+        flowed = _flow_columns(laid, block, cap, scale)
+        if isinstance(flowed[0], str):
+            return flowed
+        baselines, offsets, box, depth = flowed
+        if box is None:
+            box = column if column else max(line["indent"] + line["width"] + line["right"] for line in laid)
         left = -shifts[block.halign] * box
-        baselines = []
-        top = 0.0
-        for line in laid:
-            baselines.append(top - cap * line["tallest"])
-            top -= cap * line["tallest"] * 5.0 / 3.0 * block.line_spacing
-        depth = -baselines[-1]
         members = []
-        for line, baseline in zip(laid, baselines):
+        for line, baseline, offset in zip(laid, baselines, offsets):
             avail = line["avail"] if line["avail"] is not None else box - line["indent"] - line["right"]
             cells, marked = line["cells"], line["marked"]
             if line["justify"] and not line["last"]:
@@ -1033,7 +1117,7 @@ def block_record(
                         (moved(x), advance + (step if any(abs(g - x) <= _EPS for g in glue) else 0.0), marks, face, fit)
                         for x, advance, marks, face, fit in marked
                     ]
-            x0 = left + line["indent"] + (avail - line["width"]) * line["share"]
+            x0 = left + offset + line["indent"] + (avail - line["width"]) * line["share"]
             y0 = baseline + drops[block.valign] * depth
             bars = _bar_members(_mark_runs(marked), x0, y0, [text_link] + links, ctx)
             if isinstance(bars, tuple):
@@ -1273,13 +1357,13 @@ def _mtext_paragraphs(
         MTextParagraphAlignment.JUSTIFIED: "justified",
     }
     refused = {
-        TokenType.NEW_COLUMN: "MTEXT columns",
         TokenType.WRAP_AT_DIMLINE: "MTEXT dimension line wrap",
     }
     paragraphs: list[tuple[str | None, tuple]] = []
     items: list[tuple] = []
     align: str | None = None
     props: tuple = (0.0, 0.0, 0.0, ())
+    breaks = False  # the next paragraph starts a new column
     rel = 1.0
     try:
         tokens = list(MTextParser(content, start))
@@ -1333,19 +1417,38 @@ def _mtext_paragraphs(
             else:
                 # No stacking character: ezdxf sets the text as a plain word.
                 items.append(("word", str(upper), rel, own, shape, marks))
-        elif token.type == TokenType.NEW_PARAGRAPH:
+        elif token.type in (TokenType.NEW_PARAGRAPH, TokenType.NEW_COLUMN):
             # An empty paragraph keeps a slot as tall as the text around it.
-            paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props))
+            paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props, breaks))
             items = []
-    paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props))
+            breaks = token.type == TokenType.NEW_COLUMN
+    paragraphs.append((align, tuple(items) if items else (("word", "", rel),), props, breaks))
     return tuple(paragraphs)
 
 
 def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> TextBlock | Decline:
     """A DXF MTEXT (ezdxf entity) as a block. DWG shares this entity model."""
     dxf = entity.dxf
+    content = str(entity.text)
+    width = float(dxf.get("width", 0.0))
+    columns: tuple[float | None, ...] | None = None
+    gutter = 0.0
     if entity.has_columns:
-        return ("ID_TextEntity", "MTEXT columns")
+        from ezdxf.render.abstract_mtext_renderer import column_heights
+
+        spec = entity.columns
+        if spec.reversed_column_flow:
+            return ("ID_TextEntity", "MTEXT reversed column flow")
+        if not (math.isfinite(spec.width) and spec.width > _EPS and math.isfinite(spec.gutter_width)):
+            return ("ID_DegenerateEntity", "MTEXT column width is not a positive finite number")
+        columns = tuple(column_heights(spec))
+        width, gutter = float(spec.width), float(spec.gutter_width)
+        content = entity.all_columns_raw_content()
+    if "\\N" in content.replace("\\\\", ""):
+        if width <= _EPS:
+            return ("ID_TextEntity", "MTEXT column break without a width")
+        # ezdxf: a column break without columns opens another column as wide as the text, with no gap.
+        columns = columns or (None,)
     if int(dxf.get("flow_direction", 1)) == 3:
         return ("ID_TextEntity", "MTEXT top-to-bottom flow")
     attachment = int(dxf.get("attachment_point", 1))
@@ -1367,7 +1470,7 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
         rotation = float(dxf.get("rotation", 0.0))
     insert = dxf.insert
     height = float(dxf.get("char_height", 0.0))
-    paragraphs = _mtext_paragraphs(str(entity.text), height, fonts, style_width, style_oblique)
+    paragraphs = _mtext_paragraphs(content, height, fonts, style_width, style_oblique)
     if paragraphs and isinstance(paragraphs[0], str):
         return paragraphs
     return TextBlock(
@@ -1380,9 +1483,11 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
         halign=("left", "center", "right")[(attachment - 1) % 3],
         valign=("top", "middle", "bottom")[(attachment - 1) // 3],
         line_spacing=float(dxf.get("line_spacing_factor", 1.0)),
-        column_width=float(dxf.get("width", 0.0)),
+        column_width=width,
         width_factor=style_width,
         oblique=style_oblique,
+        columns=columns,
+        gutter=gutter,
     )
 
 
