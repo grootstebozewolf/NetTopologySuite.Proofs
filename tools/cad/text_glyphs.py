@@ -37,10 +37,24 @@ insert point.
 
 MTEXT inline codes are read by ezdxf's parser. Colour is ignored: the
 carrier has none. A height change scales the word inside its pen link. A
-paragraph alignment of left, centre or right is applied. Every other
-code declines by name: stacked text, tabulators, underline, overline and
-strike-through, tracking,
-indents and tab stops, and justified or distributed paragraphs.
+paragraph alignment of left, centre or right is applied. Underline and
+strike-through are drawn as described below. Every other code declines
+by name: stacked text, tabulators, overline, tracking, indents and tab
+stops, and justified or distributed paragraphs.
+
+Underline and strike-through are filled bars whose band comes from the
+font: ``post.underlinePosition`` is the top of the underline and
+``underlineThickness`` its height; ``OS/2.yStrikeoutPosition`` is the top
+of the strike-through and ``yStrikeoutSize`` its height. A bar spans the
+advances of the marked words and of the marked spaces between them, and
+is not slanted by an oblique angle. It winds like the font's outer
+contours, read from the largest contour of a plain letter (the spec
+convention, clockwise for glyf and counter-clockwise for CFF, is only
+the fallback), so where it crosses a descender the nonzero fill adds
+rather than cancels. Overline
+declines: no font table states where it goes. A stroke font states no
+bands either, so a marked stroke-font word declines. TEXT carries the
+same marks as the ``%%u`` and ``%%k`` toggles; ``%%o`` declines.
 
 A font switch (``\f``) needs its own font file from the font map: a
 regular face by family name, a bold or italic face as ``family|b1|i0``.
@@ -114,6 +128,8 @@ class TextRun:
     valign: str = "baseline"  # baseline | bottom | middle | top | cap-descent-middle
     span_to: tuple[float, float] | None = None  # second baseline point
     span_mode: str | None = None  # aligned | fit
+    # Per character of ``text``: the decorations on it, "u" underline, "s" strike-through.
+    marks: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -136,7 +152,8 @@ class TextBlock:
     # ``(kind, text, rel, font)``: kind is word, space (a break point) or
     # nbsp, ``rel`` is the item's cap height over ``height``, and ``font``
     # is a font file for that item when it is not the block's. A fifth
-    # entry ``(width factor, oblique degrees)`` overrides the block's.
+    # entry ``(width factor, oblique degrees)`` overrides the block's, and
+    # a sixth holds its marks: "u" underline, "s" strike-through.
     paragraphs: tuple[tuple[str | None, tuple[tuple, ...]], ...] | None = None
 
 
@@ -413,6 +430,39 @@ class _OutlineFace:
         self.descent = float(self.font["hhea"].descent)
         self.cmap = self.font.getBestCmap() or {}
         self.advances = self.font["hmtx"].metrics
+        # (bottom, top) of each decoration band, in font units, when the font states it.
+        self.bands: dict[str, tuple[float, float]] = {}
+        if "post" in self.font and self.font["post"].underlineThickness > 0:
+            top = float(self.font["post"].underlinePosition)
+            self.bands["u"] = (top - float(self.font["post"].underlineThickness), top)
+        os2 = self.font["OS/2"] if "OS/2" in self.font else None
+        if os2 is not None and getattr(os2, "yStrikeoutSize", 0) > 0:
+            top = float(os2.yStrikeoutPosition)
+            self.bands["s"] = (top - float(os2.yStrikeoutSize), top)
+        self.outer_clockwise = self._outer_clockwise()
+
+    def _outer_clockwise(self) -> bool:
+        """How this font winds a filled outer contour, read from its own glyphs.
+
+        The largest contour of a plain letter is an outer one. The spec
+        convention (clockwise in glyf, counter-clockwise in CFF) is only
+        the fallback, since fonts do not all follow it.
+        """
+        for char in "HIlLoOx":
+            name = self.cmap.get(ord(char))
+            if name is None:
+                continue
+            try:
+                contours = glyph_contours(self.font, name)
+            except Exception:
+                continue
+            areas = [
+                sum(a[1][0] * b[1][1] - b[1][0] * a[1][1] for a, b in zip(contour, contour[1:] + contour[:1]))
+                for contour in contours
+            ]
+            if areas and max(abs(area) for area in areas) > _EPS:
+                return max(areas, key=abs) < 0
+        return "glyf" in self.font
 
     def refusal(self) -> Decline | None:
         if "glyf" not in self.font and "CFF " not in self.font and "CFF2" not in self.font:
@@ -447,6 +497,17 @@ class _OutlineFace:
 
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         return _glyph_member(payload, links, ctx)
+
+    def bar(self, mark: str, length: float) -> list[list[Span]] | Decline:
+        """A decoration band as one glyph contour from x = 0 to ``length``."""
+        if mark not in self.bands:
+            name = {"u": "underline", "s": "strike-through"}[mark]
+            return ("ID_TextEntity", f"font states no {name} position")
+        low, high = self.bands[mark]
+        corners = [(0.0, low), (0.0, high), (length, high), (length, low)]
+        if not self.outer_clockwise:
+            corners.reverse()
+        return [[("L", a, b) for a, b in zip(corners, corners[1:] + corners[:1])]]
 
     def close(self) -> None:
         self.font.close()
@@ -491,6 +552,10 @@ class _StrokeFace:
     def member(self, payload: Any, links: list[dict[str, Any]], ctx: dict[str, Any]) -> dict[str, Any] | Decline:
         strokes = [_entity("BulgePolyline", {"closed": False, "segments": stroke}, links, ctx) for stroke in payload]
         return _entity("Compound", {"members": strokes}, links, ctx)
+
+    def bar(self, mark: str, length: float) -> list[list[Span]] | Decline:
+        name = {"u": "underline", "s": "strike-through"}[mark]
+        return ("ID_TextEntity", f"a stroke font states no {name} position")
 
     def close(self) -> None:
         pass
@@ -537,6 +602,49 @@ def _shaped_line(face: Any, text: str, width: float, lean: float) -> tuple[list,
     return (placed, line[1] * width)
 
 
+def _mark_runs(cells: list[tuple[float, float, str, Any, float]]) -> list[tuple[str, float, float, Any, float]]:
+    """Merge touching marked cells into bars.
+
+    A cell is ``(x, advance, marks, face, fit)`` in one line's coordinates;
+    a bar is ``(mark, x, length, face, fit)`` and needs one face and fit.
+    """
+    bars: list[tuple[str, float, float, Any, float]] = []
+    for mark in ("u", "s"):
+        run: list[Any] | None = None
+        for x, advance, marks, face, fit in cells:
+            if mark not in marks:
+                run = None
+                continue
+            if run is not None and run[3] is face and run[4] == fit and abs(run[1] + run[2] - x) <= _EPS:
+                run[2] += advance
+                continue
+            run = [mark, x, advance, face, fit]
+            bars.append(run)  # type: ignore[arg-type]
+    return [tuple(bar) for bar in bars if bar[2] > _EPS]  # type: ignore[misc]
+
+
+def _bar_members(
+    bars: list[tuple[str, float, float, Any, float]],
+    x0: float,
+    y0: float,
+    outer: list[dict[str, Any]],
+    ctx: dict[str, Any],
+) -> list[dict[str, Any]] | Decline:
+    """Glyph-shaped members for the bars of one line. ``outer`` is the text link and what follows it."""
+    members = []
+    for mark, x, length, face, fit in bars:
+        contour = face.bar(mark, length / fit)
+        if isinstance(contour, tuple):
+            return contour
+        pen = _pen_link(x0 + x, y0)
+        pen["scale"] = fit
+        member = _glyph_member(contour, [pen] + outer, ctx)
+        if isinstance(member, tuple):
+            return member
+        members.append(member)
+    return members
+
+
 def _pen_link(x: float, y: float) -> dict[str, Any]:
     return {"translate": [x, y], "rotate": 0.0, "scale": 1.0, "reflect": False}
 
@@ -581,9 +689,10 @@ def block_record(
                 return ("ID_TextEntity", f"unknown text alignment {align}")
             share = shifts[align if align is not None else block.halign]
             cells: list[tuple[float, float, list, Any]] = []
+            marked: list[tuple[float, float, str, Any, float]] = []  # (x, advance, marks, face, fit)
             width = 0.0
             tallest = 0.0
-            waiting: list[tuple[float, float]] = []  # spaces not yet committed: (width, rel)
+            waiting: list[tuple[float, float, str, Any, float]] = []  # spaces not yet committed
             for item in items:
                 kind, text, rel = item[0], item[1], item[2]
                 if not (math.isfinite(rel) and rel > _EPS):
@@ -604,36 +713,49 @@ def block_record(
                 if isinstance(measured[0], str):
                     return measured
                 placed, advance = measured[0], measured[1] * fit
+                marks = item[5] if len(item) > 5 else ""
                 if kind == "space":
-                    waiting.append((advance, rel))
+                    waiting.append((advance, rel, marks, item_face, fit))
                     continue
-                gap = sum(w for w, _ in waiting)
+                gap = sum(w[0] for w in waiting)
                 if column and waiting and cells and width + gap + advance > column * (1 + 1e-9):
                     # Break at the spaces; they belong to neither line.
-                    laid.append((share, width, tallest, cells))
-                    cells, width, tallest, waiting, gap = [], 0.0, 0.0, [], 0.0
-                tallest = max([tallest, rel] + [r for _, r in waiting])
-                width += gap
+                    laid.append((share, width, tallest, cells, marked))
+                    cells, marked, width, tallest, waiting, gap = [], [], 0.0, 0.0, [], 0.0
+                tallest = max([tallest, rel] + [w[1] for w in waiting])
+                for space_advance, _rel, space_marks, space_face, space_fit in waiting:
+                    if space_marks:
+                        marked.append((width, space_advance, space_marks, space_face, space_fit))
+                    width += space_advance
                 waiting = []
                 cells.append((width, fit, placed, item_face))
+                if marks:
+                    marked.append((width, advance, marks, item_face, fit))
                 width += advance
             # Spaces that end a paragraph stay in its width.
-            width += sum(w for w, _ in waiting)
-            tallest = max([tallest] + [r for _, r in waiting]) or (items[-1][2] if items else 1.0)
-            laid.append((share, width, tallest, cells))
+            for space_advance, _rel, space_marks, space_face, space_fit in waiting:
+                if space_marks:
+                    marked.append((width, space_advance, space_marks, space_face, space_fit))
+                width += space_advance
+            tallest = max([tallest] + [w[1] for w in waiting]) or (items[-1][2] if items else 1.0)
+            laid.append((share, width, tallest, cells, marked))
 
-        box = column if column else max(width for _, width, _, _ in laid)
+        box = column if column else max(line[1] for line in laid)
         left = -shifts[block.halign] * box
         baselines = []
         top = 0.0
-        for _share, _width, tallest, _cells in laid:
+        for _share, _width, tallest, _cells, _marked in laid:
             baselines.append(top - cap * tallest)
             top -= cap * tallest * 5.0 / 3.0 * block.line_spacing
         depth = -baselines[-1]
         members = []
-        for (share, width, _tallest, cells), baseline in zip(laid, baselines):
+        for (share, width, _tallest, cells, marked), baseline in zip(laid, baselines):
             x0 = left + (box - width) * share
             y0 = baseline + drops[block.valign] * depth
+            bars = _bar_members(_mark_runs(marked), x0, y0, [text_link] + links, ctx)
+            if isinstance(bars, tuple):
+                return bars
+            members.extend(bars)
             for cell_x, fit, placed, item_face in cells:
                 for pen_x, pen_y, payload in placed:
                     pen = _pen_link(x0 + cell_x + fit * pen_x, y0 + fit * pen_y)
@@ -714,6 +836,20 @@ def run_record(
             if isinstance(member, tuple):
                 return member
             members.append(member)
+        if run.marks and any(run.marks):
+            marked = []
+            pen = 0.0
+            for char, marks in zip(run.text, run.marks):
+                single = _shaped_line(face, char, width_factor, lean)
+                if isinstance(single[0], str):
+                    return single
+                if marks:
+                    marked.append((pen, single[1], marks, face, 1.0))
+                pen += single[1]
+            bars = _bar_members(_mark_runs(marked), -anchor[0], -anchor[1], [text_link] + links, ctx)
+            if isinstance(bars, tuple):
+                return bars
+            members.extend(bars)
     finally:
         face.close()
     return _entity("Compound", {"members": members}, list(links), ctx)
@@ -739,6 +875,38 @@ _DXF_HALIGN = {0: "left", 1: "center", 2: "right", 3: "left", 4: "center", 5: "l
 _DXF_VALIGN = {0: "baseline", 1: "bottom", 2: "middle", 3: "top"}
 
 
+def text_marks(raw: str) -> tuple[str, tuple[str, ...]] | Decline:
+    """TEXT content as plain text and per-character marks from the %%u and %%k toggles."""
+    import re
+
+    from ezdxf.tools.text import plain_text
+
+    text = ""
+    marks: list[str] = []
+    state = ""
+    at = 0
+    def plain(piece: str) -> str:
+        # %%% is a literal percent sign.
+        return "%".join(plain_text(part) for part in piece.split("%%%"))
+
+    for match in re.finditer(r"%%%|%%[uUkKoO]", raw):
+        if match.group() == "%%%":
+            continue
+        chunk = plain(raw[at : match.start()])
+        text += chunk
+        marks.extend([state] * len(chunk))
+        code = match.group()[2].lower()
+        if code == "o":
+            return ("ID_TextEntity", "TEXT overline: no font table states where it goes")
+        flag = "u" if code == "u" else "s"
+        state = state.replace(flag, "") if flag in state else "".join(sorted(state + flag))
+        at = match.end()
+    chunk = plain(raw[at:])
+    text += chunk
+    marks.extend([state] * len(chunk))
+    return (text, tuple(marks))
+
+
 def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> TextRun | Decline:
     """A DXF TEXT (ezdxf entity) as a run. DWG shares this entity model."""
     dxf = entity.dxf
@@ -751,6 +919,9 @@ def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> Text
     if isinstance(font, tuple):
         return font
     flags = int(dxf.get("text_generation_flag", 0))
+    content = text_marks(str(dxf.get("text", "")))
+    if isinstance(content[0], str) and len(content) == 2 and isinstance(content[1], str):
+        return content
     insert = dxf.insert
     # Group 11 is the anchor for every alignment except left baseline.
     second = dxf.get("align_point", insert)
@@ -762,7 +933,8 @@ def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> Text
         valign="cap-descent-middle" if halign == 4 else _DXF_VALIGN[valign],
         span_to=(float(second[0]), float(second[1])) if span_mode else None,
         span_mode=span_mode,
-        text=entity.plain_text(),
+        text=content[0],
+        marks=content[1] if any(content[1]) else None,
         font=font,
         height=float(dxf.get("height", 0.0)),
         insert=(float(insert[0]), float(insert[1])),
@@ -835,8 +1007,8 @@ def _mtext_paragraphs(
         if token.type in refused:
             return ("ID_TextEntity", refused[token.type])
         if token.type == TokenType.WORD:
-            if ctx.underline or ctx.overline or ctx.strike_through:
-                return ("ID_TextEntity", "MTEXT underline, overline or strike-through")
+            if ctx.overline:
+                return ("ID_TextEntity", "MTEXT overline: no font table states where it goes")
             if not math.isclose(ctx.char_tracking_factor, 1.0, rel_tol=1e-9):
                 return ("ID_TextEntity", "MTEXT character tracking")
             if ctx.align != MTextLineAlignment.BOTTOM:
@@ -849,6 +1021,7 @@ def _mtext_paragraphs(
         if char_height > _EPS:
             rel = ctx.cap_height / char_height
         shape = (float(ctx.width_factor), float(ctx.oblique))
+        marks = ("u" if ctx.underline else "") + ("s" if ctx.strike_through else "")
         own: Path | None = None
         if ctx.font_face != start.font_face and token.type in (TokenType.WORD, TokenType.SPACE, TokenType.NBSP):
             found = resolve_face(ctx.font_face, fonts or {})
@@ -858,11 +1031,11 @@ def _mtext_paragraphs(
         if token.type == TokenType.WORD:
             align = aligns[ctx.paragraph.align]
             word = re.sub(r"\\U\+([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), str(token.data))
-            items.append(("word", word, rel, own, shape))
+            items.append(("word", word, rel, own, shape, marks))
         elif token.type == TokenType.SPACE:
-            items.append(("space", " ", rel, own, shape))
+            items.append(("space", " ", rel, own, shape, marks))
         elif token.type == TokenType.NBSP:
-            items.append(("nbsp", " ", rel, own, shape))
+            items.append(("nbsp", " ", rel, own, shape, marks))
         elif token.type == TokenType.NEW_PARAGRAPH:
             # An empty paragraph keeps a slot as tall as the text around it.
             paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
