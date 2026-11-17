@@ -40,9 +40,14 @@ MTEXT inline codes are read by ezdxf's parser. Colour is ignored: the
 carrier has none. A height change scales the word inside its pen link. A
 paragraph alignment of left, centre or right is applied. Every other
 code declines by name: stacked text, tabulators, underline, overline and
-strike-through, width factor and oblique (not similarities), tracking, a
-font switch (bold and italic included), indents and tab stops, and
-justified or distributed paragraphs.
+strike-through, width factor and oblique (not similarities), tracking,
+indents and tab stops, and justified or distributed paragraphs.
+
+A font switch (``\f``) needs its own font file from the font map: a
+regular face by family name, a bold or italic face as ``family|b1|i0``.
+The word is scaled so its cap height matches, whatever the font's units.
+Without that file the text declines; a bold face is never faked from the
+regular one.
 
 ``TextRun`` is the format-neutral input. ``dxf_text_run`` reads an ezdxf
 TEXT, which also serves DWG once a reference converter has produced the
@@ -119,10 +124,11 @@ class TextBlock:
     line_spacing: float = 1.0
     column_width: float = 0.0
     # Optional rich form, used instead of ``lines``. A paragraph is
-    # ``(align or None, items)`` and an item is ``(kind, text, rel)``:
-    # kind is word, space (a break point) or nbsp, and ``rel`` is the
-    # item's cap height over ``height``.
-    paragraphs: tuple[tuple[str | None, tuple[tuple[str, str, float], ...]], ...] | None = None
+    # ``(align or None, items)`` and an item is ``(kind, text, rel)`` or
+    # ``(kind, text, rel, font)``: kind is word, space (a break point) or
+    # nbsp, ``rel`` is the item's cap height over ``height``, and ``font``
+    # is a font file for that item when it is not the block's.
+    paragraphs: tuple[tuple[str | None, tuple[tuple, ...]], ...] | None = None
 
 
 def _plain_paragraphs(lines: tuple[str, ...]) -> tuple:
@@ -503,6 +509,7 @@ def block_record(
     face = _open_face(block.font)
     if isinstance(face, tuple):
         return face
+    faces: dict[Path, Any] = {Path(block.font): face}
     try:
         cap = face.cap
         ctx = {"units": units, "tolerance": tolerance, "dimension": dimension, "provenance": provenance}
@@ -521,17 +528,27 @@ def block_record(
             if align is not None and align not in shifts:
                 return ("ID_TextEntity", f"unknown text alignment {align}")
             share = shifts[align if align is not None else block.halign]
-            cells: list[tuple[float, float, list]] = []
+            cells: list[tuple[float, float, list, Any]] = []
             width = 0.0
             tallest = 0.0
             waiting: list[tuple[float, float]] = []  # spaces not yet committed: (width, rel)
-            for kind, text, rel in items:
+            for item in items:
+                kind, text, rel = item[0], item[1], item[2]
                 if not (math.isfinite(rel) and rel > _EPS):
                     return ("ID_DegenerateEntity", "text height is not a positive finite number")
-                measured = face.line(" " if kind != "word" else text)
+                # A word in another font is scaled so its cap height matches.
+                own = Path(item[3]) if len(item) > 3 and item[3] is not None else Path(block.font)
+                if own not in faces:
+                    opened = _open_face(own)
+                    if isinstance(opened, tuple):
+                        return opened
+                    faces[own] = opened
+                item_face = faces[own]
+                fit = rel * cap / item_face.cap
+                measured = item_face.line(" " if kind != "word" else text)
                 if isinstance(measured[0], str):
                     return measured
-                placed, advance = measured[0], measured[1] * rel
+                placed, advance = measured[0], measured[1] * fit
                 if kind == "space":
                     waiting.append((advance, rel))
                     continue
@@ -543,7 +560,7 @@ def block_record(
                 tallest = max([tallest, rel] + [r for _, r in waiting])
                 width += gap
                 waiting = []
-                cells.append((width, rel, placed))
+                cells.append((width, fit, placed, item_face))
                 width += advance
             # Spaces that end a paragraph stay in its width.
             width += sum(w for w, _ in waiting)
@@ -562,16 +579,17 @@ def block_record(
         for (share, width, _tallest, cells), baseline in zip(laid, baselines):
             x0 = left + (box - width) * share
             y0 = baseline + drops[block.valign] * depth
-            for cell_x, rel, placed in cells:
+            for cell_x, fit, placed, item_face in cells:
                 for pen_x, pen_y, payload in placed:
-                    pen = _pen_link(x0 + cell_x + rel * pen_x, y0 + rel * pen_y)
-                    pen["scale"] = rel
-                    member = face.member(payload, [pen, text_link] + links, ctx)
+                    pen = _pen_link(x0 + cell_x + fit * pen_x, y0 + fit * pen_y)
+                    pen["scale"] = fit
+                    member = item_face.member(payload, [pen, text_link] + links, ctx)
                     if isinstance(member, tuple):
                         return member
                     members.append(member)
     finally:
-        face.close()
+        for opened in faces.values():
+            opened.close()
     if not members:
         return ("ID_TextEntity", "text has no inked glyph")
     return _entity("Compound", {"members": members}, list(links), ctx)
@@ -689,7 +707,28 @@ def dxf_text_run(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> Text
     )
 
 
-def _mtext_paragraphs(content: str, char_height: float) -> tuple | Decline:
+def resolve_face(face: Any, fonts: Mapping[str, Path | str]) -> Path | Decline:
+    """An MTEXT ``\\f`` font face as a font file.
+
+    A regular face is looked up by family name, then by family plus
+    ``.ttf``. A bold or italic face is a different file and is looked up
+    only as ``family|b1|i0`` (the flags as written in the code).
+    """
+    family = str(face.family).casefold()
+    table = {str(k).casefold(): Path(v) for k, v in fonts.items()}
+    if face.is_bold or face.is_italic:
+        keys = [f"{family}|b{int(face.is_bold)}|i{int(face.is_italic)}"]
+    else:
+        keys = [family, family + ".ttf"]
+    for key in keys:
+        if key in table:
+            return table[key]
+    return ("ID_TextEntity", f"no font file given for {keys[0]}")
+
+
+def _mtext_paragraphs(
+    content: str, char_height: float, fonts: Mapping[str, Path | str] | None = None
+) -> tuple | Decline:
     """MTEXT content as paragraphs of sized words, or the first code this slice refuses."""
     import re
 
@@ -711,7 +750,7 @@ def _mtext_paragraphs(content: str, char_height: float) -> tuple | Decline:
         TokenType.WRAP_AT_DIMLINE: "MTEXT dimension line wrap",
     }
     paragraphs: list[tuple[str | None, tuple]] = []
-    items: list[tuple[str, str, float]] = []
+    items: list[tuple] = []
     align: str | None = None
     rel = 1.0
     try:
@@ -731,8 +770,6 @@ def _mtext_paragraphs(content: str, char_height: float) -> tuple | Decline:
                 return ("ID_NotSimilarityPlacement", "MTEXT oblique angle is not 0")
             if not math.isclose(ctx.char_tracking_factor, 1.0, rel_tol=1e-9):
                 return ("ID_TextEntity", "MTEXT character tracking")
-            if ctx.font_face != start.font_face:
-                return ("ID_TextEntity", "MTEXT font switch")
             if ctx.align != MTextLineAlignment.BOTTOM:
                 return ("ID_TextEntity", "MTEXT line alignment is not bottom")
             para = ctx.paragraph
@@ -742,14 +779,20 @@ def _mtext_paragraphs(content: str, char_height: float) -> tuple | Decline:
                 return ("ID_TextEntity", "MTEXT justified or distributed paragraph")
         if char_height > _EPS:
             rel = ctx.cap_height / char_height
+        own: Path | None = None
+        if ctx.font_face != start.font_face and token.type in (TokenType.WORD, TokenType.SPACE, TokenType.NBSP):
+            found = resolve_face(ctx.font_face, fonts or {})
+            if isinstance(found, tuple):
+                return found
+            own = found
         if token.type == TokenType.WORD:
             align = aligns[ctx.paragraph.align]
             word = re.sub(r"\\U\+([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), str(token.data))
-            items.append(("word", word, rel))
+            items.append(("word", word, rel, own))
         elif token.type == TokenType.SPACE:
-            items.append(("space", " ", rel))
+            items.append(("space", " ", rel, own))
         elif token.type == TokenType.NBSP:
-            items.append(("nbsp", " ", rel))
+            items.append(("nbsp", " ", rel, own))
         elif token.type == TokenType.NEW_PARAGRAPH:
             # An empty paragraph keeps a slot as tall as the text around it.
             paragraphs.append((align, tuple(items) if items else (("word", "", rel),)))
@@ -786,7 +829,7 @@ def dxf_mtext_block(entity: Any, doc: Any, fonts: Mapping[str, Path | str]) -> T
         rotation = float(dxf.get("rotation", 0.0))
     insert = dxf.insert
     height = float(dxf.get("char_height", 0.0))
-    paragraphs = _mtext_paragraphs(str(entity.text), height)
+    paragraphs = _mtext_paragraphs(str(entity.text), height, fonts)
     if paragraphs and isinstance(paragraphs[0], str):
         return paragraphs
     return TextBlock(

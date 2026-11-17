@@ -553,7 +553,8 @@ def test_mtext_text_direction_wins_over_rotation(ttf: Path) -> None:
 @pytest.mark.parametrize(
     ("content", "attribs", "decline", "reason"),
     [
-        (r"{\fArial|b1;l}", {}, "ID_TextEntity", "font switch"),
+        (r"{\fArial|b1;l}", {}, "ID_TextEntity", "no font file given for arial|b1|i0"),
+        (r"{\fArial;l}", {}, "ID_TextEntity", "no font file given for arial"),
         (r"\S1/2;", {}, "ID_TextEntity", "stacked"),
         (r"\Ll\l", {}, "ID_TextEntity", "underline"),
         (r"\Ol\o", {}, "ID_TextEntity", "underline"),
@@ -676,3 +677,28 @@ def test_mtext_paragraph_alignment_and_colour(ttf: Path) -> None:
     # A paragraph alignment overrides the attachment's, inside the same box.
     (row,) = _mtext_rows(ttf, r"\pxql;l", width=10.0, attachment_point=3)
     assert _pens(row)[0][0] == pytest.approx(-1000)
+
+
+def test_mtext_font_switch_takes_its_own_file_and_matches_cap_height(ttf: Path, otf: Path, tmp_path: Path) -> None:
+    from test_stroke_glyphs import _SHP
+
+    shp = tmp_path / "carrierstroke.shp"
+    shp.write_bytes(_SHP)
+    fonts = {"carriertext.ttf": ttf, "Other": otf, "other|b1|i0": otf, "CarrierStroke.shp": shp}
+    doc = _doc()
+    msp = doc.modelspace()
+    for content in (r"l{\fOther|b0|i0|c0|p34;o}l", r"l{\fOther|b1|i0;o}l", r"l{\fCarrierStroke.shp;L L}l", r"{\fOther|b0|i1;o}"):
+        msp.add_mtext(content, dxfattribs={"style": "GLYPH", "char_height": 7})
+    regular, bold, stroke, italic = _rows(doc, fonts)
+    for row in (regular, bold):
+        assert [pen[0] for pen in _pens(row)] == pytest.approx([0, 300, 1000])
+        cubic = row["params"]["members"][1]["params"]["members"][1]["params"]["members"][0]
+        assert cubic["params"]["degree"] == 3
+    # The stroke font is 21 units tall, so it is scaled by 700 / 21; L advances 18, its space 10.
+    fit = _CAP / 21
+    ell = stroke["params"]["members"][1]
+    assert ell["params"]["members"][0]["kind"] == "BulgePolyline"
+    assert ell["placement"]["links"][0]["scale"] == pytest.approx(fit)
+    assert [pen[0] for pen in _pens(stroke)] == pytest.approx([0, 300, 300 + 28 * fit, 300 + 46 * fit])
+    assert math.dist(_place((0, 21), ell["placement"]["links"]), _place((0, 0), ell["placement"]["links"])) == pytest.approx(7)
+    assert (italic["id"], italic["reason"]) == ("ID_TextEntity", "no font file given for other|b0|i1")
